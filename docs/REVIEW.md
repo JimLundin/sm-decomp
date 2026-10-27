@@ -8,6 +8,151 @@ earlier versions; this file holds only current findings.
 
 ## Milestone plan (2026-10-24)
 
+**Active oversight directive (2026-10-27 09:50 CET).** The user assigns this
+session independent, proactive oversight alongside the running implementer.
+This directive supersedes older work-order and pacing advice below; PLAN's
+Fast loop, resource limits and landing rules remain in force. Existing source
+owners and the sole Windows integrator retain their assignments.
+
+Measured main `6ad82e25`: production 111,924, legacy 17,353, unsafe-containing
+lines 2,712, verification 40,385 (`progress.sh`, independently run). Between
+`2adc3ae3` at 02:24 and main at 07:07, production fell 181 (~38/hour), legacy
+12 and unsafe-containing lines 2. Reported 44/44 is retained scenario evidence,
+not a fresh run or complete-engine proof. The joint WRAM/Execution change is
+unlanded; its larger draft savings cannot be added to main's progress.
+Mailbox compiler failures show incomplete macro-consumer closure. Resources
+were sufficient in the implementer's latest report: failure is source/integration.
+
+Next work, in order:
+
+1. **Close and land the current WRAM/Execution integration.** Current owners
+   correct the complete A6/A7/A9 diagnostic groups, including macro definitions,
+   affected expansions, import scopes and width semantics. Use the compiler
+   result from the full composition to find remaining groups; do not repair
+   one emitted error at a time. Preserve byte/failure/effect order and transitive
+   unsafe contracts. Freeze the reviewed composition, qualify its actual
+   codec with genuine captures and required replay rows, reconcile main and
+   land promptly. Keep the existing oracle and identity guards.
+2. **Overlap useful disjoint source work with qualification.** Continue the
+   already assigned sm_8b and Linux sm_aa family work outside the frozen join.
+   Oversight prepares independent source findings and the next complete scope;
+   it must not create another shared-file owner or duplicate the donor reviews.
+3. **After landing, select the next complete responsibility from actual main.**
+   Choose the largest removable unsafe dependency or duplicated family whose
+   callers and required rows are understood. State the expected net benefit
+   and removal condition before implementation. Several matching functions can
+   share one coherent commit and one affected-row campaign. Tiny cleanups are
+   useful when they unblock this work; they should not consume the integrator's
+   qualification path as the primary output.
+
+Apply review effort to risk. For an unchanged private numerical helper, review
+its callers and run PLAN's affected rows plus smokes. Ownership, macros, callbacks,
+reset/load and codec changes need explicit source reasoning for those boundaries
+and their required execution evidence. Transfer exact unchanged leaf proofs only
+when the shared API/dependency relationship still matches. Repeat checks only for
+changed source, failed results or a concrete unresolved concern; retain scoped
+mutation before bank deletion and full-corpus waypoint policy.
+
+At the next completed qualification cycle, report landed net deltas and time in
+source/review/build/capture/replay/landing; use that to choose the next bottleneck
+correction. If integration still has no compiler pass after one hour, give the
+exact remaining group and recovery action, following PLAN's stall rule. Estimates
+must name the next observable result, separately from finished qualification.
+Do not invent a new deadline from unsafe line counts: these include attributes
+and scopes and can fall without removing raw operations. Keep raw-operation
+removal and closed ownership dependencies explicit beside the existing Score.
+Bank deletion, safe wrappers and replay passes remain intermediate achievements;
+owned Session, independent media and Map Rando acceptance remain the destination.
+
+**Size feasibility, final reviewed ce8b.** Independent `progress.sh` and Linux's
+final review agree: production 114,244, legacy 18,459, unsafe-containing 2,637
+and verification 41,828. Versus main `6ad82e25`: +2,320 production, +1,106 legacy,
+-75 unsafe-containing and +1,443 verification. Source/format/library/DLL pass;
+at 10:08 CET all14 genuine captures pass, while full22 restore/final10 rows and
+landing remain unfinished. Reaching 100,000 needs 14,244 net production lines
+removed. If only banks changed, their replacements could total at most 4,215
+lines (22.8%); at 80% replacement, another ~10,552 lines must disappear elsewhere.
+Bank moves alone cannot substantiate the existing size promise. After this cut,
+select whole-domain duplication in the existing enemy-projectile and actor
+modules alongside bank closures; report concrete expected savings before a
+campaign. Include future adapters/media cost and remeasure actual main; do not
+trade behavioral fidelity or source readability for an arithmetic target.
+
+**Prepared next primitive: fixed DMA-register writes for HDMA allocation.**
+After the current join lands, investigate the existing owned DMA writer as the
+leaf for `visual_runtime::{initialize_hdma,spawn_hdma,spawn_hdma_last,
+spawn_hdma_words}` and their fixed initializers. Allocation only selects slots
+0..5; control/target writes therefore use 0x4320/21 through 0x4370/71. The
+current generic `WriteRegWord` makes these wrappers unsafe although the joined
+backend's DMA-register mutation is safe. This is a scoped opportunity, not an
+approved source change or a new claimed reduction.
+
+Preserve the entire register-write protocol: low byte, post-write observer,
+high byte, post-write observer; original missing-backend failure point; original
+definition read(1), publication and later read(0); u16::MAX on exhausted slots.
+Do not directly substitute Game's seed writer: it omits the generic write
+observer. Generic bus writes also call the cartridge after register dispatch;
+prove that tail inert for these exact bank-0 addresses and all supported mapper
+types. Reuse the existing observer, including its ROM mutation/failed-observation
+behavior. HDMA interpreter channel bytes can select outside this range and must
+retain the general path. Qualify the complete initializer cohort once with its
+named Ceres/intro/Morph/boss/X-ray rows plus PLAN smokes. Count actual leaf and
+caller removal; keep unrelated bus, HDMA execution, reset and renderer contracts.
+
+**Ready support handoff: fail before compiling an incomplete source inventory.**
+The isolated `tools/verify_dll.py` draft in [mailbox6437909267](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6437909267)
+reuses the loaded-library guard's exact expected-file classification and checks
+literal FILES bindings before compiler startup. Actual569 bindings pass; missing,
+duplicate, wrong-path and inactive/conditional entries fail before the compiler.
+The runtime source/native guards remain unchanged. Cost +42 support Python lines,
++1,904 raw bytes; production/legacy/unsafe/verification Rust all0. Warm preflight
+median130ms is measured, not a claimed build-time reduction. Sole integrator may
+adopt the lossless exact-parent patch beside the next code change; it must not
+alter or delay current ce8b qualification/landing.
+
+**Prepared architecture closure: owned continuation and checkpoint locality.**
+This is design ahead of the existing queue, not a second work order. Keep the
+accepted Session seam: `open`, `step`, `checkpoint`. A sealed owned Checkpoint
+describes a complete committed Tick; validated NewGame/PlayerSave/Scenario starts
+serve tools and Map Rando without arbitrary mutable field access. Our gameplay
+Checkpoint and the existing full verifier `.smvchk` have distinct purposes: the
+latter still needs both PPUs, CPU/DMA/APU/SPC/DSP/native player, recorder, SRAM,
+Actor lineage and allocation-equivalence state.
+
+Current `verify/checkpoint.rs::machine` reaches Game's scratch/recorder/tracing
+storage, WorkRam, devices and post-load ROM patch behavior. New `Execution` only
+borrows a `HostContext`; it does not own the persisted fields. Prepare one complete
+storage cohort with its initializers and actual reset/load/Runtime consumers,
+remove the original fields, then move private capture/preflight/ordered adoption
+to that owner and the existing concrete backend adapters. Preserve each store,
+partial-failure publication, fresh selector and allocation identity. Do not
+replace the traversal with a participant registry, raw struct dump or mirrored
+state. Classify new persistent fields deliberately as encoded, reconstructed
+or unnecessary. No first scalar extraction earns removal of whole Game from
+codec compatibility; initialization, restore, RAM/ROM and backend dependencies
+must close before a contributor can disappear. Prepare the coherent closure
+before one codec freeze/capture campaign, rather than recapturing per extraction.
+
+The existing runner already reuses complete DLLs and exact-source prefixes.
+Its56-byte checkpoint header lacks capture-source/native/build-profile context;
+switching caches to codec-only or scanning opaque old directories would lose a
+guard. Future genuinely captured envelopes can own immutable provenance, including
+where the current producer's executed interval began. Inherited prefix history
+must remain distinct from current execution. Keep configured setup gaps, both
+independent Kago14350 approaches, full input/prefix/origin checks and source/native
+build guards. No sidecar registry, backfill or restamp. Cross-source development
+reuse needs that context and equal validated codec/native/profile; target gameplay
+Checkpoints still require the exact gameplay fingerprint, including topology/options.
+
+Removal evidence: the schema and every initialize/capture/preflight/adopt path no
+longer call an excluded implementation. Then use the existing full original
+Morph1200 continuation with one unrelated private numerical edit: changed checked
+build source, unchanged genuinely captured codec, identical end machine/Actor
+payload and zero failures. This is a deferred falsifier, not a run or present speed
+claim. Rust changes still compile; prepared-content changes can avoid compilation
+only after those definitions are actual data. Current process/source owners and
+PLAN's Fast loop, deletion and waypoint checks retain their authority.
+
 At each item's start, check the user-requested Windows/Linux
 [coordination mailbox](https://github.com/JimLundin/sm-decomp/issues/2) for ownership and handoffs.
 

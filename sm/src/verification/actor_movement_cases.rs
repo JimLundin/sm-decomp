@@ -20,10 +20,10 @@ pub(crate) fn offset(address: u32) -> usize {
     crate::rtl::lorom_offset(address) as usize
 }
 pub(crate) fn put(g: &mut Game, at: usize, v: u16) {
-    g.g_ram[at..at + 2].copy_from_slice(&v.to_le_bytes());
+    g.ram().copy_in(at, &v.to_le_bytes());
 }
 pub(crate) fn read(g: &Game, at: usize) -> u16 {
-    u16::from_le_bytes([g.g_ram[at], g.g_ram[at + 1]])
+    u16::from_le_bytes([g.ram().read_byte(at), g.ram().read_byte(at + 1)])
 }
 pub(crate) fn set_actor_word(g: &mut Game, k: u16, field: usize, value: u16) {
     put(g, 0xf78 + usize::from(k) + field, value);
@@ -39,8 +39,8 @@ fn rw(image: &RomImage, address: u32, value: u16) {
 }
 fn actor(g: &mut Game, k: u16, x: u16, y: u16, radius: u16) {
     let at = 0xf78 + usize::from(k);
-    assert!(at + size_of::<EnemyData>() <= g.g_ram.len());
-    g.g_ram[at..at + size_of::<EnemyData>()].fill(0);
+    assert!(at + size_of::<EnemyData>() <= g.ram().len());
+    g.ram().fill(at..at + size_of::<EnemyData>(), 0);
     for (field, value) in [
         (offset_of!(EnemyData, x_pos), x),
         (offset_of!(EnemyData, y_pos), y),
@@ -60,12 +60,13 @@ fn room(g: &mut Game, kind: u16, bts: u8) {
     put(g, w::room_width_in_blocks, 32);
     for block in 0..1024 {
         put(g, 0x10002 + block * 2, kind << 12);
-        g.g_ram[0x16402 + block] = bts;
+        g.ram().write_byte(0x16402 + block, bts);
     }
 }
 fn seed(g: &mut Game, loaded: &RomImage, native: &RomImage) {
-    for (i, b) in g.g_ram.iter_mut().enumerate() {
-        *b = (i.wrapping_mul(29) ^ (i >> 7) ^ 0xa3) as u8;
+    for i in 0..g.ram().len() {
+        g.ram()
+            .write_byte(i, (i.wrapping_mul(29) ^ (i >> 7) ^ 0xa3) as u8);
     }
     g.loaded_rom = Some(loaded.clone());
     g.register_native_rom(native.clone());
@@ -250,9 +251,9 @@ fn fixture(id: u32, g: &mut Game, loaded: &RomImage) -> Operation {
         }
         24 => {
             put(g, 0x10002 + 264 * 2, 0x5000);
-            g.g_ram[0x16402 + 264] = 1;
+            g.ram().write_byte(0x16402 + 264, 1);
             put(g, 0x10002 + 265 * 2, 0xd000);
-            g.g_ram[0x16402 + 265] = 1;
+            g.ram().write_byte(0x16402 + 265, 1);
             Operation::Right {
                 k: 0,
                 amount: 0x10001,
@@ -261,9 +262,9 @@ fn fixture(id: u32, g: &mut Game, loaded: &RomImage) -> Operation {
         }
         25 => {
             put(g, 0x10002 + 264 * 2, 0xd000);
-            g.g_ram[0x16402 + 264] = 0xff;
+            g.ram().write_byte(0x16402 + 264, 0xff);
             put(g, 0x10002 + 232 * 2, 0x5000);
-            g.g_ram[0x16402 + 232] = 0xff;
+            g.ram().write_byte(0x16402 + 232, 0xff);
             put(g, 0x10002 + 231 * 2, 0x8000);
             Operation::Down {
                 k: 0,
@@ -489,7 +490,9 @@ fn capture_prepared_case(
     } else {
         table_cases::fixture(id - CASES, &mut g, &loaded)
     };
-    let before = g.g_ram.to_vec();
+    let before = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<_>>();
     crate::actor_movement_observer::begin(id);
     let _observer_guard = ObserverGuard;
     let result = catch_unwind(AssertUnwindSafe(|| dispatch(op, &mut g)));
@@ -518,7 +521,9 @@ fn capture_prepared_case(
     };
     if id == 8 {
         assert_eq!(
-            &g.g_ram[..],
+            &(0..g.ram().len())
+                .map(|at| g.ram().read_byte(at))
+                .collect::<Vec<_>>(),
             before.as_slice(),
             "read-only wide probe failure has no writes"
         );
@@ -528,7 +533,9 @@ fn capture_prepared_case(
         table_cases::checks(id - CASES, &g, &before, &native);
     }
     let trace = crate::actor_movement_observer::finish();
-    let mut out = g.g_ram.to_vec();
+    let mut out = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<_>>();
     for v in [
         g.eproj_spawn_rect.x,
         g.eproj_spawn_rect.y,

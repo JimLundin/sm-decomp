@@ -23,7 +23,8 @@ pub(crate) enum Operation {
 }
 pub(crate) const CASES: u32 = 224;
 fn put(game: &mut Game, at: usize, value: u16) {
-    game.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    let _ = &[(); 0x20000][at..at + 2];
+    game.ram().copy_in(at, &value.to_le_bytes());
 }
 fn word(image: &RomImage, address: u32, value: u16) {
     let at = crate::rtl::lorom_offset(address) as usize;
@@ -32,8 +33,9 @@ fn word(image: &RomImage, address: u32, value: u16) {
     }
 }
 fn seed(id: u32, game: &mut Game) -> Operation {
-    game.g_ram.fill(0);
-    game.g_ram[0x1ffff] = 1;
+    game.ram().fill(0..game.ram().len(), 0);
+    let value = 1;
+    game.ram().write_byte(0x1ffff, value);
     for at in (0xc000..0xc400).step_by(2) {
         put(game, at, 0x7777);
     }
@@ -172,7 +174,8 @@ fn seed(id: u32, game: &mut Game) -> Operation {
             put(game, 0xace, 6);
             put(game, 0xad0, 4);
             put(game, 0xaae, if n & 2 == 0 { 0 } else { 0xffff });
-            game.g_ram[0xa1e] = if n & 4 == 0 { 4 } else { 8 };
+            let value = if n & 4 == 0 { 4 } else { 8 };
+            game.ram().write_byte(0xa1e, value);
             Operation::Cancel
         }
         196 => Operation::CopyCurrent,
@@ -213,7 +216,9 @@ pub(crate) fn capture_case(id: u32, run: fn(Operation, &mut Game) -> u16) -> Opt
         !game.g_fail,
         "visual.samus.defined.{id}: unexpected diagnostic"
     );
-    let mut bytes = game.g_ram.to_vec();
+    let mut bytes = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<_>>();
     bytes.extend_from_slice(&result.unwrap().to_le_bytes());
     Some(bytes)
 }

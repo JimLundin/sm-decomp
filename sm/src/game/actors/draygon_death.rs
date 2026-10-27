@@ -21,8 +21,8 @@ pub(crate) fn damage_palette(native: bool, game: &mut Game) {
         if native {
             let bytes = value.to_ne_bytes();
             let at = 0xc000 + index * 2;
-            game.g_ram[at] = bytes[0];
-            game.g_ram[at + 1] = bytes[1];
+            game.ram().write_byte(at, bytes[0]);
+            game.ram().write_byte(at + 1, bytes[1]);
         } else {
             word!(game.palette_buffer[index] = value);
         }
@@ -44,7 +44,7 @@ fn copy_hurt_palette(default: u16, target: usize, game: &mut Game) {
     let source = crate::rtl::lorom_offset(address) as usize;
     for offset in 0..32 {
         let byte = image.read(source + offset);
-        game.g_ram[target + offset] = byte;
+        game.ram().write_byte(target + offset, byte);
     }
 }
 pub(crate) fn hurt(game: &mut Game) {

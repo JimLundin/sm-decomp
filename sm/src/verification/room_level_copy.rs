@@ -1,4 +1,5 @@
 use super::{Game, decompress_level};
+use crate::room_background_support::{ram_bytes, ram_span};
 
 /// Synthetic regression for the actual decoder and room-array split.
 /// Cases: overlapping large room, nonoverlap boundary, checked failure prefix.
@@ -15,8 +16,8 @@ pub(crate) fn check_level_copy(case: u32) {
     let pattern =
         |i: usize, salt: u8| (i.wrapping_mul(73) as u8) ^ ((i >> 8) as u8).wrapping_mul(29) ^ salt;
     let mut game = Game::new();
-    for (i, b) in game.g_ram.iter_mut().enumerate() {
-        *b = pattern(i, 0x5d);
+    for i in 0..game.ram().len() {
+        game.ram().write_byte(i, pattern(i, 0x5d));
     }
     let mut raw = (size as u16).to_le_bytes().to_vec();
     // The malformed case intentionally decompresses only its two-byte header.
@@ -37,8 +38,8 @@ pub(crate) fn check_level_copy(case: u32) {
         rom.write(i, b);
     }
     game.loaded_rom = Some(rom);
-    game.g_ram[0x7bd..0x7c1].copy_from_slice(&0x808000u32.to_ne_bytes());
-    let mut expected = game.g_ram.to_vec();
+    game.ram().copy_in(0x7bd, &0x808000u32.to_ne_bytes());
+    let mut expected = ram_bytes(&game);
     expected[0x10000..0x10000 + raw.len()].copy_from_slice(&raw);
     if case == 2 {
         // Source 1A802 reaches RAM's end after 57FE bytes; destination remains
@@ -49,14 +50,16 @@ pub(crate) fn check_level_copy(case: u32) {
         expected[0x19602..0x19602 + size].copy_from_slice(&raw[2 + size + size / 2..]);
         expected[0x16402..0x16402 + size / 2].copy_from_slice(&raw[2 + size..2 + size + size / 2]);
     }
-    let source = u32::from_ne_bytes(game.g_ram[0x7bd..0x7c1].try_into().unwrap()) & 0xffffff;
+    let source = u32::from_ne_bytes(ram_span::<4>(&game, 0x7bd)) & 0xffffff;
     let outcome = catch_unwind(AssertUnwindSafe(|| decompress_level(source, &mut game)));
     assert_eq!(
         outcome.is_err(),
         case == 2,
         "room copy case {case} panic status"
     );
-    let first = game.g_ram.iter().zip(&expected).position(|(a, b)| a != b);
+    let first = (0..game.ram().len())
+        .zip(&expected)
+        .position(|(at, b)| game.ram().read_byte(at) != *b);
     assert!(
         first.is_none(),
         "room copy case {case}: first RAM mismatch {first:x?}"

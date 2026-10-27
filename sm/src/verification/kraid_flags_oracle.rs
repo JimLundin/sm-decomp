@@ -1,9 +1,6 @@
 //! Original CPU Kraid read and complete palette/music/native-store caller.
 use super::Game;
-use crate::{
-    kraid_flags_case as case,
-    snes::cpu::{cpu_getFlags, cpu_runOpcode},
-};
+use crate::{kraid_flags_case as case, snes::cpu::cpu_getFlags};
 use std::collections::BTreeSet;
 fn offset(address: u32) -> usize {
     crate::rtl::lorom_offset(address) as usize
@@ -89,7 +86,9 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             guard(game, original)?;
             let fade = case::seed(id, game)?;
             let (_, area, bit) = case::parameters(id)?;
-            let initial = game.g_ram.to_vec();
+            let initial = (0..game.ram().len())
+                .map(|at| game.ram().read_byte(at))
+                .collect::<Vec<_>>();
             let saved_sram = game.g_sram.bytes(0..8192);
             let c = &mut *game.g_cpu;
             c.a = 0xa55a;
@@ -138,7 +137,10 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                 let c = &*game.g_cpu;
                 let pc = u32::from(c.k) << 16 | u32::from(c.pc);
                 if pc == pcs[stage] {
-                    for (at, (&before, &after)) in initial.iter().zip(game.g_ram.iter()).enumerate()
+                    for (at, (&before, after)) in initial
+                        .iter()
+                        .zip((0..game.ram().len()).map(|at| game.ram().read_byte(at)))
+                        .enumerate()
                     {
                         if before != after && !abi.contains(&at) && !ram.contains(&at) {
                             return Err(format!(
@@ -149,7 +151,12 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                     if game.g_sram.bytes(0..8192) != saved_sram {
                         return Err("Kraid unexpectedly modified SRAM".into());
                     }
-                    if game.g_ram[0x5e7..0x5e9] != initial[0x5e7..0x5e9] {
+                    if (0x5e7..0x5e9)
+                        .map(|at| game.ram().read_byte(at))
+                        .collect::<Vec<_>>()
+                        .as_slice()
+                        != &initial[0x5e7..0x5e9]
+                    {
                         return Err("raw Kraid native access changed scratch".into());
                     }
                     let result = if !fade && stage == 1 { c.a } else { 0xffff };
@@ -190,8 +197,8 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                     music_calls += 1;
                 }
                 writes(pc, c.sp, c.x, &mut abi, &mut ram);
-                cpu_runOpcode(game.g_cpu, game);
-                if (*(*game.g_snes).dma).dmaBusy {
+                game.execution().step_cpu();
+                if game.dma_busy() {
                     return Err("unexpected DMA in Kraid capsule".into());
                 }
             }

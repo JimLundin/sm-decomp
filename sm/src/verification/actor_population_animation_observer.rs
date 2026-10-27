@@ -1,7 +1,11 @@
 //! Verification-only actual-boundary trace. Dormant outside this fixture carrier.
 #![forbid(unsafe_code)]
-use crate::actor_population_animation_cases::{get, offset, put, snapshot};
-use crate::{game_state::Game, rom::RomImage, types::EnemyDef as D};
+use crate::actor_population_animation_cases::{get, get_parts, offset, put, snapshot_parts};
+use crate::{
+    game_state::{Game, WorkRam},
+    rom::RomImage,
+    types::{EnemyDef as D, Point16U, Rect16U},
+};
 use core::mem::offset_of;
 use std::cell::RefCell;
 struct Capture {
@@ -32,13 +36,48 @@ pub(crate) fn clear() {
     });
 }
 fn append(c: &mut Capture, event: u16, key: u16, address: u32, g: &Game) {
+    append_parts(
+        c,
+        event,
+        key,
+        address,
+        g.ram(),
+        &g.loaded_rom,
+        &g.g_fail,
+        &g.eproj_spawn_rect,
+        &g.eproj_spawn_r22,
+        &g.eproj_spawn_pt,
+        &g.eproj_spawn_varE24,
+    );
+}
+fn append_parts(
+    c: &mut Capture,
+    event: u16,
+    key: u16,
+    address: u32,
+    ram: &WorkRam,
+    loaded_rom: &Option<RomImage>,
+    fail: &bool,
+    spawn_rect: &Rect16U,
+    spawn_r22: &u16,
+    spawn_pt: &Point16U,
+    spawn_varE24: &u16,
+) {
     c.events.push(event);
     c.bytes.extend_from_slice(&event.to_le_bytes());
     c.bytes.extend_from_slice(&key.to_le_bytes());
     c.bytes.extend_from_slice(&address.to_le_bytes());
     c.bytes
-        .extend_from_slice(&(g.loaded_rom.as_ref().map_or(0, RomImage::len) as u32).to_le_bytes());
-    snapshot(&mut c.bytes, g);
+        .extend_from_slice(&(loaded_rom.as_ref().map_or(0, RomImage::len) as u32).to_le_bytes());
+    snapshot_parts(
+        &mut c.bytes,
+        ram,
+        fail,
+        spawn_rect,
+        spawn_r22,
+        spawn_pt,
+        spawn_varE24,
+    );
 }
 pub(crate) fn stage(event: u16, key: u16, g: &mut Game) -> bool {
     ACTIVE.with(|a| {
@@ -110,6 +149,28 @@ pub(crate) fn opcode(event: u16, address: u32, key: u16, g: &mut Game) {
     });
 }
 pub(crate) fn diagnostic(address: u32, g: &mut Game) {
+    let (_, host) = g.execution_parts();
+    diagnostic_parts(
+        address,
+        host.ram,
+        host.loaded_rom,
+        host.g_fail,
+        host.eproj_spawn_rect,
+        host.eproj_spawn_r22,
+        host.eproj_spawn_pt,
+        host.eproj_spawn_varE24,
+    );
+}
+pub(crate) fn diagnostic_parts(
+    address: u32,
+    ram: &WorkRam,
+    loaded_rom: &mut Option<RomImage>,
+    fail: &bool,
+    spawn_rect: &Rect16U,
+    spawn_r22: &u16,
+    spawn_pt: &Point16U,
+    spawn_varE24: &u16,
+) {
     ACTIVE.with(|a| {
         let mut active = a.borrow_mut();
         let Some(c) = active.as_mut() else {
@@ -118,12 +179,18 @@ pub(crate) fn diagnostic(address: u32, g: &mut Game) {
         assert!(matches!(c.id, 11 | 17 | 18 | 20), "unexpected diagnostic");
         assert_eq!(address, 0xa01000);
         c.diagnostics += 1;
-        append(
+        append_parts(
             c,
             18,
-            get(g, crate::ram_map::words::cur_enemy_index),
+            get_parts(ram, crate::ram_map::words::cur_enemy_index),
             address,
-            g,
+            ram,
+            loaded_rom,
+            fail,
+            spawn_rect,
+            spawn_r22,
+            spawn_pt,
+            spawn_varE24,
         );
         if c.id != 11 || c.diagnostics == 2 {
             // Actual diagnostic precedes this new RomRecord acquisition. Already captured
@@ -135,18 +202,24 @@ pub(crate) fn diagnostic(address: u32, g: &mut Game) {
                     20 => offset_of!(D, layer),
                     _ => unreachable!(),
                 };
-            let old = g.loaded_rom.as_ref().unwrap();
+            let old = loaded_rom.as_ref().unwrap();
             let short = RomImage::zeroed(end);
             for i in 0..end {
                 short.write(i, old.read(i));
             }
-            g.loaded_rom = Some(short);
-            append(
+            *loaded_rom = Some(short);
+            append_parts(
                 c,
                 19,
-                get(g, crate::ram_map::words::cur_enemy_index),
+                get_parts(ram, crate::ram_map::words::cur_enemy_index),
                 address,
-                g,
+                ram,
+                loaded_rom,
+                fail,
+                spawn_rect,
+                spawn_r22,
+                spawn_pt,
+                spawn_varE24,
             );
         }
     });

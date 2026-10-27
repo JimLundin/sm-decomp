@@ -30,7 +30,7 @@ pub(crate) mod checks;
 pub(crate) fn prepare(game: &mut Game) {
     let address = 0x900000
         | u32::from(encoding::read(
-            &game.g_ram,
+            &|at| game.ram().read_byte(at),
             crate::ram_map::words::frame_handler_alfa,
         ));
     prepare_entry(address, game);

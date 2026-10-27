@@ -15,7 +15,7 @@ use crate::rtl::{
 fn clear_work_ram(bytes: usize, game: &mut Game) {
     let bug_fix_counter = word!(game.bug_fix_counter);
     for offset in 0..bytes {
-        game.g_ram[offset] = 0;
+        game.ram().write_byte(offset, 0);
     }
     word!(game.bug_fix_counter = bug_fix_counter);
 }
@@ -25,7 +25,7 @@ pub(crate) unsafe fn resume(game: &mut Game) -> u8 {
     unsafe {
         crate::verify_probe::hit("coroutine.reset");
         // Callbacks may change RAM; dispatch uses the captured resume byte.
-        let resume = game.g_ram[0x611];
+        let resume = game.ram().read_byte(0x611);
         if resume == 1 {
             crate::rtl::write_register_and_mirror(MEMSEL as u16, 1, 0x86, false, game);
             clear_work_ram(0x2000, game);
@@ -33,7 +33,7 @@ pub(crate) unsafe fn resume(game: &mut Game) -> u8 {
         if matches!(resume, 1 | 2) {
             let yielded: u8 = InitializeIoDisplayLogo_Async(game);
             if yielded != 0 {
-                game.g_ram[0x611] = 2;
+                game.ram().write_byte(0x611, 2);
                 return yielded;
             }
         }
@@ -42,18 +42,18 @@ pub(crate) unsafe fn resume(game: &mut Game) -> u8 {
             WriteReg(INIDISP as u16, 0x8f, game);
             clear_work_ram(0x10000, game);
             crate::rtl::write_register_and_mirror(NMITIMEN as u16, 0, 0x84, false, game);
-            game.g_ram[0x51] = 0x8f;
+            game.ram().write_byte(0x51, 0x8f);
             initialize_registers(game);
             for target in [0x3000, 0x4000, 0x6000] {
                 word_transfers!(game, ascending, 1024; native(target) <- value(0x1c2f));
             }
             for base in [0x643, 0x646, 0x649, 0x64d, 0x650] {
                 for offset in 0..3 {
-                    game.g_ram[base + offset] = 0;
+                    game.ram().write_byte(base + offset, 0);
                 }
             }
             for address in [0x656, 0x666, 0x676] {
-                game.g_ram[address] = 0;
+                game.ram().write_byte(address, 0);
             }
             word! { game, 0; oam_next_ptr, reg_OAMaddr_UNUSED }
             clear_high_table(game);
@@ -72,7 +72,7 @@ pub(crate) unsafe fn resume(game: &mut Game) -> u8 {
             save_slots::verify_boot(game);
             word! { game, 0; debug_disable_sounds, sound_handler_downtime }
         }
-        game.g_ram[0x611] = 2;
+        game.ram().write_byte(0x611, 2);
         0
     }
 }
@@ -101,7 +101,7 @@ unsafe fn initialize_registers(game: &mut Game) {
             mirror(WOBJSEL as u16, 0, 0x62, false); mirror(WH0 as u16, 0, 0x63, false);
             byte(WH1 as u16, 0xf8);
         }
-        game.g_ram[0x64] = 0xf8;
+        game.ram().write_byte(0x64, 0xf8);
         crate::rtl::register_writes! { game;
             mirror(WH2 as u16, 0, 0x65, false); mirror(WH3 as u16, 0, 0x66, false);
             mirror(WBGLOG as u16, 0, 0x67, false); mirror(WOBJLOG as u16, 0, 0x68, false);
@@ -109,16 +109,16 @@ unsafe fn initialize_registers(game: &mut Game) {
             mirror(TS as u16, 2, 0x6b, false); mirror(TSW as u16, 2, 0x6d, false);
             mirror(CGWSEL as u16, 2, 0x6e, false); byte(CGADSUB as u16, 0xa1);
         }
-        game.g_ram[0x71] = 0xa1;
+        game.ram().write_byte(0x71, 0xa1);
         crate::rtl::register_writes! { game;
             byte(COLDATA as u16, 0xe0); byte(COLDATA as u16, 0xe0);
             byte(COLDATA as u16, 0x80);
         }
-        game.g_ram[0x74] = 0x80;
+        game.ram().write_byte(0x74, 0x80);
         WriteReg(COLDATA as u16, 0x40, game);
-        game.g_ram[0x75] = 64;
+        game.ram().write_byte(0x75, 64);
         WriteReg(COLDATA as u16, 0x20, game);
-        game.g_ram[0x76] = 32;
+        game.ram().write_byte(0x76, 32);
         crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game);
     }
 }

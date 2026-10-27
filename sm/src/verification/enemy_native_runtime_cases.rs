@@ -164,14 +164,20 @@ fn callback(game: &mut Game, published: &[u8], callback_ram: &[u8], trace: &mut 
         "native callback publication",
     );
     assert_eq!(
-        &game.g_ram[..],
+        &(0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<_>>(),
         published,
         "native callback whole RAM publication"
     );
     // Capture only after observing the actual published state against literals.
     record(1, OWNED, trace);
     set_native_game(game, CALLBACK.native);
-    game.g_ram.copy_from_slice(callback_ram);
+    {
+        let bytes = callback_ram;
+        [(); 131072].copy_from_slice(&vec![(); bytes.len()]);
+        game.ram().copy_in(0, bytes);
+    }
     let image = RomImage::zeroed(3);
     image.write(0, 0x92);
     game.loaded_rom = Some(image);
@@ -188,17 +194,32 @@ fn intentional_unwind(result: Result<(), Box<dyn std::any::Any + Send>>, message
 
 fn capture_checked(id: u32) -> Vec<u8> {
     let mut game = Game::new();
-    for (index, byte) in game.g_ram.iter_mut().enumerate() {
-        *byte = (index.wrapping_mul(37) ^ (index >> 8)) as u8;
+    for index in 0..game.ram().len() {
+        game.ram()
+            .write_byte(index, (index.wrapping_mul(37) ^ (index >> 8)) as u8);
     }
-    let initial_ram = expected_ram(&game.g_ram, INITIAL);
-    game.g_ram.copy_from_slice(&initial_ram);
+    let initial_ram = expected_ram(
+        &(0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<_>>(),
+        INITIAL,
+    );
+    {
+        let bytes = &initial_ram;
+        [(); 131072].copy_from_slice(&vec![(); bytes.len()]);
+        game.ram().copy_in(0, bytes);
+    }
     set_native_game(&mut game, INITIAL.native);
-    game.g_ram[0x613] = 0x77;
+    game.ram().write_byte(0x613, 0x77);
     let old_image = RomImage::zeroed(2);
     old_image.write(0, 0x31);
     game.loaded_rom = Some(old_image.clone());
-    let published = expected_ram(&game.g_ram, OWNED);
+    let published = expected_ram(
+        &(0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<_>>(),
+        OWNED,
+    );
     let mut callback_ram = expected_ram(&published, CALLBACK);
     callback_ram[0x20] = 0xaf;
     callback_ram[0x613] = 0x88;
@@ -238,7 +259,9 @@ fn capture_checked(id: u32) -> Vec<u8> {
                 "native final Drop publication",
             );
             assert_eq!(
-                &game.g_ram[..],
+                &(0..game.ram().len())
+                    .map(|at| game.ram().read_byte(at))
+                    .collect::<Vec<_>>(),
                 &final_ram[..],
                 "native final Drop whole RAM"
             );
@@ -269,7 +292,9 @@ fn capture_checked(id: u32) -> Vec<u8> {
                 "native foreign panic retained callback",
             );
             assert_eq!(
-                &game.g_ram[..],
+                &(0..game.ram().len())
+                    .map(|at| game.ram().read_byte(at))
+                    .collect::<Vec<_>>(),
                 &callback_ram[..],
                 "native foreign panic whole RAM"
             );
@@ -293,7 +318,9 @@ fn capture_checked(id: u32) -> Vec<u8> {
                 "native core panic publication",
             );
             assert_eq!(
-                &game.g_ram[..],
+                &(0..game.ram().len())
+                    .map(|at| game.ram().read_byte(at))
+                    .collect::<Vec<_>>(),
                 &published[..],
                 "native core panic whole RAM"
             );
@@ -301,7 +328,9 @@ fn capture_checked(id: u32) -> Vec<u8> {
         }
     };
     assert!(!game.g_fail, "native Runtime diagnostic {id}");
-    let mut output = game.g_ram.to_vec();
+    let mut output = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<_>>();
     for value in native_game(&game) {
         output.extend_from_slice(&value.to_le_bytes());
     }

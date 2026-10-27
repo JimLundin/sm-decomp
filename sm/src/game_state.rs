@@ -4,17 +4,101 @@ use crate::game::room_entry::world::WorldBinding;
 use crate::initial_state::InitialState;
 use crate::rtl::StateRecorder;
 use crate::types::*;
+use std::cell::Cell;
 use std::ffi::c_int;
+use std::ops::Range;
+use std::rc::Rc;
 use std::sync::Arc;
-/// State for one game and its differential oracle. Keep this heap allocation
-/// fixed while the emulated hardware holds pointers into `g_ram`.
+// Cell preserves the native byte representation while permitting shared byte
+// writes. Both owners copy byte values; no live u8 reference or raw base escapes.
+#[repr(C, align(16))]
+struct RamBytes {
+    bytes: [Cell<u8>; 0x20000],
+}
+const _: () = {
+    assert!(std::mem::size_of::<Cell<u8>>() == 1);
+    assert!(std::mem::align_of::<Cell<u8>>() == 1);
+    assert!(std::mem::offset_of!(RamBytes, bytes) == 0);
+    assert!(std::mem::size_of::<RamBytes>() == 0x20000);
+    assert!(std::mem::align_of::<RamBytes>() == 16);
+};
+
+/// The compatibility allocation shared only by Game and its retained backend.
+/// Safe operations copy values; they never borrow live bytes as u8 references.
+pub struct WorkRam(Rc<RamBytes>);
+#[forbid(unsafe_code)]
+impl WorkRam {
+    fn new() -> Self {
+        Self(Rc::new(RamBytes {
+            bytes: [const { Cell::new(0) }; 0x20000],
+        }))
+    }
+
+    pub fn read_byte(&self, at: usize) -> u8 {
+        self.0.bytes[at].get()
+    }
+
+    pub fn write_byte(&self, at: usize, value: u8) {
+        self.0.bytes[at].set(value);
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.bytes.len()
+    }
+
+    pub fn copy_within(&self, source: Range<usize>, destination: usize) {
+        // Check the entire source range, then the destination, before any store.
+        let count = self.0.bytes[source.clone()].len();
+        assert!(destination <= self.len() - count, "dest is out of bounds");
+        if destination > source.start {
+            for offset in (0..count).rev() {
+                let byte = self.0.bytes[source.start + offset].get();
+                self.0.bytes[destination + offset].set(byte);
+            }
+        } else {
+            for offset in 0..count {
+                let byte = self.0.bytes[source.start + offset].get();
+                self.0.bytes[destination + offset].set(byte);
+            }
+        }
+    }
+
+    pub fn copy_out(&self, at: usize, out: &mut [u8]) {
+        let end = at.checked_add(out.len()).expect("RAM range overflow");
+        let cells = &self.0.bytes[at..end];
+        for (byte, cell) in out.iter_mut().zip(cells) {
+            *byte = cell.get();
+        }
+    }
+
+    pub fn copy_in(&self, at: usize, input: &[u8]) {
+        let end = at.checked_add(input.len()).expect("RAM range overflow");
+        let cells = &self.0.bytes[at..end];
+        for (cell, &byte) in cells.iter().zip(input) {
+            cell.set(byte);
+        }
+    }
+
+    pub fn fill(&self, range: Range<usize>, value: u8) {
+        for cell in &self.0.bytes[range] {
+            cell.set(value);
+        }
+    }
+
+    pub(crate) fn share_for_backend(&self) -> Self {
+        Self(Rc::clone(&self.0))
+    }
+}
+
+/// State for one game and its differential oracle. The backend retains the same
+/// stable RAM allocation independently of this Game's address.
 pub struct Game {
     backend: Option<crate::snes::snes::Backend>,
     _native_player: Option<crate::spc_player::NativePlayer>,
     actor_identity: Option<crate::game::actors::identity::ActorIdentityState>,
     pub(crate) actor_snapshots: crate::game::actors::snapshot::ActorSnapshotSidecars,
     world: Arc<WorldBinding>,
-    pub g_ram: [u8; 131072],
+    ram: WorkRam,
     pub(crate) loaded_rom: Option<crate::rom::RomImage>,
     native_rom: Option<crate::rom::RomImage>,
     pub decompress_src: u32,
@@ -68,7 +152,7 @@ macro_rules! ram_word_accessors {
         $(
             $(#[$meta])*
             pub fn $name(&self) -> u16 {
-                u16::from_le_bytes([self.g_ram[$address], self.g_ram[$address + 1]])
+                u16::from_le_bytes([self.ram.read_byte($address), self.ram.read_byte($address + 1)])
             }
         )*
     };
@@ -76,7 +160,7 @@ macro_rules! ram_word_accessors {
         $(
             $(#[$meta])*
             pub fn $name(&mut self, value: u16) {
-                self.g_ram[$address..$address + 2].copy_from_slice(&value.to_le_bytes());
+                self.ram.copy_in($address, &value.to_le_bytes());
             }
         )*
     };
@@ -84,12 +168,230 @@ macro_rules! ram_word_accessors {
 
 // Oracle snapshots own separate allocations, keeping construction stack usage bounded.
 impl Game {
+    fn execution_parts_and_recorder(
+        &mut self,
+    ) -> (
+        Option<&mut crate::snes::snes::Backend>,
+        crate::execution::HostContext<'_>,
+        &mut StateRecorder,
+    ) {
+        let Self {
+            backend,
+            state_recorder,
+            ram,
+            loaded_rom,
+            native_rom,
+            g_fail,
+            hookmode,
+            hookcnt,
+            hookadr,
+            hook_fixbug_orgbyte,
+            kPatchedCarrysOrg,
+            g_calling_asm_from_c,
+            g_calling_asm_from_c_ret,
+            pc_hist,
+            pc_hist_ctr,
+            snes_frame_counter,
+            apu_queue,
+            g_debug_apu_cycles,
+            g_new_ppu,
+            decompress_src,
+            eproj_spawn_rect,
+            eproj_spawn_r22,
+            eproj_spawn_pt,
+            eproj_spawn_varE24,
+            ..
+        } = self;
+        (
+            backend.as_mut(),
+            crate::execution::HostContext {
+                ram,
+                loaded_rom,
+                native_rom,
+                g_fail,
+                hookmode,
+                hookcnt,
+                hookadr,
+                hook_fixbug_orgbyte,
+                kPatchedCarrysOrg,
+                g_calling_asm_from_c,
+                g_calling_asm_from_c_ret,
+                pc_hist,
+                pc_hist_ctr,
+                snes_frame_counter,
+                apu_queue,
+                g_debug_apu_cycles,
+                g_new_ppu,
+                decompress_src,
+                eproj_spawn_rect,
+                eproj_spawn_r22,
+                eproj_spawn_pt,
+                eproj_spawn_varE24,
+            },
+            state_recorder,
+        )
+    }
+
+    pub(crate) fn execution_parts(
+        &mut self,
+    ) -> (
+        Option<&mut crate::snes::snes::Backend>,
+        crate::execution::HostContext<'_>,
+    ) {
+        let (backend, host, _) = self.execution_parts_and_recorder();
+        (backend, host)
+    }
+
+    pub(crate) unsafe fn execution_and_recorder(
+        &mut self,
+    ) -> (crate::execution::Execution<'_>, &mut StateRecorder) {
+        let (backend, host, recorder) = self.execution_parts_and_recorder();
+        (
+            crate::execution::Execution {
+                backend: backend.expect("execution requires an owned backend"),
+                host,
+            },
+            recorder,
+        )
+    }
+
+    /// Requires the live, exclusive retained backend; callbacks must not recover
+    /// a Game borrow while this execution interval is active.
+    pub(crate) unsafe fn execution(&mut self) -> crate::execution::Execution<'_> {
+        let (backend, host) = self.execution_parts();
+        crate::execution::Execution {
+            backend: backend.expect("execution requires an owned backend"),
+            host,
+        }
+    }
+
+    /// Step the retained reference CPU for the external verifier binary.
+    /// # Safety
+    /// The owned backend must be live and exclusive. Native callbacks must not
+    /// recover Game, and no device borrow may survive this operation.
+    pub unsafe fn step_reference_opcode(&mut self) -> i32 {
+        let selected_cpu = self.g_cpu;
+        unsafe {
+            let mut execution = self.execution();
+            assert_eq!(
+                selected_cpu,
+                execution.cpu(),
+                "reference opcode requires the owned CPU"
+            );
+            execution.step_cpu()
+        }
+    }
+
+    pub fn ram(&self) -> &WorkRam {
+        &self.ram
+    }
+
+    // These borrows expose only detached snapshot/recording storage alongside
+    // the opaque live RAM owner. Callers capture raw device views beforehand.
+    pub(crate) fn ram_and_recorder(&mut self) -> (&WorkRam, &mut StateRecorder) {
+        (&self.ram, &mut self.state_recorder)
+    }
+
+    pub(crate) fn ram_and_snapshots(
+        &mut self,
+    ) -> (
+        &crate::snes::snes::Backend,
+        &WorkRam,
+        &mut Snapshot,
+        &mut Snapshot,
+        &mut Snapshot,
+    ) {
+        (
+            self.backend
+                .as_ref()
+                .expect("snapshot requires an owned backend"),
+            &self.ram,
+            &mut self.g_snapshot_mine,
+            &mut self.g_snapshot_theirs,
+            &mut self.g_snapshot_before,
+        )
+    }
+
+    /// Create absent retained storage; an existing backend and its views stay owned.
+    pub(crate) fn ensure_backend(&mut self) {
+        if self.backend.is_none() {
+            let backend = crate::snes::snes::Backend::new(self.ram.share_for_backend());
+            (self.g_snes, self.g_cpu) = backend.views();
+            self.backend = Some(backend);
+        }
+    }
+
+    /// Borrow the first retained input port only until the next callback.
+    pub fn input1_mut(&mut self) -> &mut Input {
+        self.backend
+            .as_mut()
+            .expect("input access requires an owned backend")
+            .input1_mut()
+    }
+
+    /// Borrow the second retained input port only until the next callback.
+    pub fn input2_mut(&mut self) -> &mut Input {
+        self.backend
+            .as_mut()
+            .expect("input access requires an owned backend")
+            .input2_mut()
+    }
+
+    /// Copy channels from the owned DMA storage, without following routing links.
+    pub(crate) fn dma_channels(&self) -> [DmaChannel; 8] {
+        self.backend
+            .as_ref()
+            .expect("DMA observation requires an owned backend")
+            .dma_channels()
+    }
+
+    /// Copy inert DMA values from the retained owner; no device link escapes.
+    pub fn dma_state(&self) -> Dma {
+        self.backend
+            .as_ref()
+            .expect("DMA access requires an owned backend")
+            .dma_state()
+    }
+
+    /// Adopt a detached snapshot at a quiescent save/load phase.
+    pub fn set_dma_state(&mut self, state: Dma) {
+        self.backend
+            .as_ref()
+            .expect("DMA access requires an owned backend")
+            .set_dma_state(state);
+    }
+
+    /// Apply one captured register byte before the next seed field is validated.
+    pub fn write_dma_register(&mut self, address: u16, value: u8) {
+        self.backend
+            .as_ref()
+            .expect("DMA access requires an owned backend")
+            .write_dma_register(address, value);
+    }
+
+    pub(crate) fn dma_busy(&self) -> bool {
+        self.backend
+            .as_ref()
+            .expect("DMA access requires an owned backend")
+            .dma_busy()
+    }
+
+    /// Transfer retained storage after its users have stopped.
+    /// # Safety
+    /// All device/native callbacks, references and raw borrowers must be quiescent.
+    /// The caller must retain the returned owner until its shutdown drop point.
+    pub(crate) unsafe fn take_backend_for_shutdown(
+        &mut self,
+    ) -> Option<crate::snes::snes::Backend> {
+        self.backend.take()
+    }
+
     /// Replace the complete backend, including failed-initialization storage.
     /// # Safety
     /// No device reference or raw consumer may survive replacement. Keep this
-    /// Game's RAM allocation fixed until all backend execution has stopped.
+    /// retained RAM handle alive until all backend execution has stopped.
     pub(crate) unsafe fn initialize_backend(&mut self) {
-        let backend = crate::snes::snes::Backend::new((&raw mut self.g_ram).cast());
+        let backend = crate::snes::snes::Backend::new(self.ram.share_for_backend());
         (self.g_snes, self.g_cpu) = backend.views();
         self.backend = Some(backend);
     }
@@ -112,8 +414,9 @@ impl Game {
     }
 
     pub(crate) fn next_random(&mut self) -> u16 {
-        let mut product = (u16::from(self.g_ram[0x5e5]) * 5).to_ne_bytes();
-        let carry = u16::from(product[1]) + u16::from(self.g_ram[0x5e6].wrapping_mul(5)) + 1;
+        let mut product = (u16::from(self.ram.read_byte(0x5e5)) * 5).to_ne_bytes();
+        let carry =
+            u16::from(product[1]) + u16::from(self.ram.read_byte(0x5e6).wrapping_mul(5)) + 1;
         product[1] = carry as u8;
         let result = u16::from_ne_bytes(product).wrapping_add(17 + (carry >> 8));
         crate::ram_map::checked_word!(self.random_number = result);
@@ -123,8 +426,8 @@ impl Game {
     }
 
     pub(crate) fn multiply_with_scratch(&mut self, a: u16, b: u16) -> u32 {
-        self.g_ram[0x5e9..0x5eb].copy_from_slice(&a.to_le_bytes());
-        self.g_ram[0x5eb..0x5ed].copy_from_slice(&b.to_le_bytes());
+        self.ram.copy_in(0x5e9, &a.to_le_bytes());
+        self.ram.copy_in(0x5eb, &b.to_le_bytes());
         let result: u32 = (a as u32).wrapping_mul(b as u32);
         result
     }
@@ -144,7 +447,7 @@ impl Game {
 
     /// APU upload flag at $7E:0617.
     pub fn uploading_apu(&self) -> bool {
-        self.g_ram[0x617] != 0 || self.g_ram[0x618] != 0
+        self.ram.read_byte(0x617) != 0 || self.ram.read_byte(0x618) != 0
     }
 
     ram_word_accessors! {
@@ -633,15 +936,19 @@ impl Game {
 
     /// sfx_readpos / sfx_writepos ($7E:0643/0646 in ram_map).
     pub fn sfx_queue_is_empty(&self, channel: usize) -> bool {
-        self.g_ram[0x646 + channel].wrapping_sub(self.g_ram[0x643 + channel]) & 0xf == 0
+        self.ram
+            .read_byte(0x646 + channel)
+            .wrapping_sub(self.ram.read_byte(0x643 + channel))
+            & 0xf
+            == 0
     }
 
     /// coroutine_state_1 ($7E:0612 in ram_map).
     pub fn coroutine_state_1(&self) -> u8 {
-        self.g_ram[0x612]
+        self.ram.read_byte(0x612)
     }
     pub fn set_coroutine_state_1(&mut self, value: u8) {
-        self.g_ram[0x612] = value;
+        self.ram.write_byte(0x612, value);
     }
 
     fn long_pointer_bytes(pointer: LongPtr) -> [u8; 3] {
@@ -651,46 +958,56 @@ impl Game {
 
     /// room_compr_level_data_ptr ($7E:07BD in ram_map).
     pub fn set_room_compr_level_data_ptr(&mut self, value: LongPtr) {
-        self.g_ram[0x7bd..0x7c0].copy_from_slice(&Self::long_pointer_bytes(value));
+        self.ram.copy_in(0x7bd, &Self::long_pointer_bytes(value));
     }
 
     /// tileset_tile_table_pointer ($7E:07C0 in ram_map).
     pub fn set_tileset_tile_table_pointer(&mut self, value: LongPtr) {
-        self.g_ram[0x7c0..0x7c3].copy_from_slice(&Self::long_pointer_bytes(value));
+        self.ram.copy_in(0x7c0, &Self::long_pointer_bytes(value));
     }
 
     /// Compressed tileset graphics address ($7E:07C3 in ram_map).
     pub fn tileset_tiles_pointer(&self) -> u32 {
-        u32::from_le_bytes([self.g_ram[0x7c3], self.g_ram[0x7c4], self.g_ram[0x7c5], 0])
+        u32::from_le_bytes([
+            self.ram.read_byte(0x7c3),
+            self.ram.read_byte(0x7c4),
+            self.ram.read_byte(0x7c5),
+            0,
+        ])
     }
 
     pub fn set_tileset_tiles_pointer(&mut self, value: LongPtr) {
-        self.g_ram[0x7c3..0x7c6].copy_from_slice(&Self::long_pointer_bytes(value));
+        self.ram.copy_in(0x7c3, &Self::long_pointer_bytes(value));
     }
 
     /// Compressed tileset palette address ($7E:07C6 in ram_map).
     pub fn tileset_compr_palette_ptr(&self) -> u32 {
-        u32::from_le_bytes([self.g_ram[0x7c6], self.g_ram[0x7c7], self.g_ram[0x7c8], 0])
+        u32::from_le_bytes([
+            self.ram.read_byte(0x7c6),
+            self.ram.read_byte(0x7c7),
+            self.ram.read_byte(0x7c8),
+            0,
+        ])
     }
 
     pub fn set_tileset_compr_palette_ptr(&mut self, value: LongPtr) {
-        self.g_ram[0x7c6..0x7c9].copy_from_slice(&Self::long_pointer_bytes(value));
+        self.ram.copy_in(0x7c6, &Self::long_pointer_bytes(value));
     }
 
     /// layer2_scroll_x/y ($7E:091B/091C in ram_map).
     pub fn set_layer2_scroll_x_and_y(&mut self, x: u8, y: u8) {
-        self.g_ram[0x91b..0x91d].copy_from_slice(&[x, y]);
+        self.ram.copy_in(0x91b, &[x, y]);
     }
 
     /// samus_pose_x_dir / samus_movement_type ($7E:0A1E/0A1F).
     /// Preserve the original paired-byte word store.
     pub fn set_samus_pose_direction_and_movement_type(&mut self, direction: u8, movement_type: u8) {
-        self.g_ram[0xa1e..0xa20].copy_from_slice(&[direction, movement_type]);
+        self.ram.copy_in(0xa1e, &[direction, movement_type]);
     }
 
     /// samus_movement_type ($7E:0A1F in ram_map).
     pub fn samus_movement_type(&self) -> u8 {
-        self.g_ram[0xa1f]
+        self.ram.read_byte(0xa1f)
     }
 
     /// samus_prev_pose_x_dir / samus_prev_movement_type2 ($7E:0A22/0A23).
@@ -700,7 +1017,7 @@ impl Game {
         direction: u8,
         movement_type: u8,
     ) {
-        self.g_ram[0xa22..0xa24].copy_from_slice(&[direction, movement_type]);
+        self.ram.copy_in(0xa22, &[direction, movement_type]);
     }
 
     /// samus_last_different_pose_x_dir / samus_last_different_pose_movement_type ($7E:0A26/0A27).
@@ -710,41 +1027,42 @@ impl Game {
         direction: u8,
         movement_type: u8,
     ) {
-        self.g_ram[0xa26..0xa28].copy_from_slice(&[direction, movement_type]);
+        self.ram.copy_in(0xa26, &[direction, movement_type]);
     }
 
     /// samus_last_different_pose_movement_type ($7E:0A27 in ram_map).
     pub fn samus_last_different_pose_movement_type(&self) -> u8 {
-        self.g_ram[0xa27]
+        self.ram.read_byte(0xa27)
     }
 
     /// samus_pose_x_dir ($7E:0A1E in ram_map); this is a byte, not a word.
     pub fn samus_pose_x_dir(&self) -> u8 {
-        self.g_ram[0xa1e]
+        self.ram.read_byte(0xa1e)
     }
 
     /// Read a word of interactive_enemy_indexes ($7E:17EC in ram_map).
     /// Sentinel traversal uses backing RAM, including words beyond the list.
     pub fn interactive_enemy_index(&self, index: usize) -> u16 {
         let offset = 0x17ec + index * 2;
-        u16::from_le_bytes([self.g_ram[offset], self.g_ram[offset + 1]])
+        u16::from_le_bytes([self.ram.read_byte(offset), self.ram.read_byte(offset + 1)])
     }
 
     /// enemy_index_colliding_dirs ($7E:182C in ram_map).
     pub fn set_enemy_index_colliding_dir(&mut self, direction: u16, index: u16) {
         let offset = 0x182c + usize::from(direction & 3) * 2;
-        self.g_ram[offset..offset + 2].copy_from_slice(&index.to_le_bytes());
+        self.ram.copy_in(offset, &index.to_le_bytes());
     }
 
     /// BTS behavior byte for the live collision block ($7F:6402 in ram_map).
     pub fn current_block_bts(&self) -> u8 {
-        self.g_ram[0x16402 + usize::from(self.cur_block_index())]
+        self.ram
+            .read_byte(0x16402 + usize::from(self.cur_block_index()))
     }
 
     /// Live level-data word selected by the collision block index.
     pub fn current_level_block(&self) -> u16 {
         let offset = 0x10002 + usize::from(self.cur_block_index()) * 2;
-        u16::from_le_bytes([self.g_ram[offset], self.g_ram[offset + 1]])
+        u16::from_le_bytes([self.ram.read_byte(offset), self.ram.read_byte(offset + 1)])
     }
 
     /// Follow extension blocks until the selected reaction finishes.
@@ -763,17 +1081,18 @@ impl Game {
     pub fn set_projectile_bomb_pre_instruction(&mut self, slot: usize, value: u16) {
         assert!(slot < 10);
         let offset = 0xc68 + slot * 2;
-        self.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+        self.ram.copy_in(offset, &value.to_le_bytes());
     }
 
     pub fn write_vram_queue_byte(&mut self, cursor: u16, field: usize, value: u8) {
-        self.g_ram[0xd0 + usize::from(cursor) + field] = value;
+        self.ram
+            .write_byte(0xd0 + usize::from(cursor) + field, value);
     }
 
     /// Write a word in the backing VRAM queue, including overlapping fields.
     pub fn write_vram_queue_word(&mut self, cursor: u16, field: usize, value: u16) {
         let offset = 0xd0 + usize::from(cursor) + field;
-        self.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+        self.ram.copy_in(offset, &value.to_le_bytes());
     }
 
     /// Preserve the original zero initialization, including RM_BOTH (0).
@@ -796,7 +1115,7 @@ impl Game {
             world,
             actor_identity: Some(crate::game::actors::identity::ActorIdentityState::empty()),
             actor_snapshots: Default::default(),
-            g_ram: [0; 131072],
+            ram: WorkRam::new(),
             loaded_rom: None,
             native_rom: None,
             decompress_src: 0,
@@ -927,10 +1246,11 @@ impl Game {
     ) {
         let retain_poison =
             !self.supports_legacy_persistence() && self.actor_identity().is_poisoned();
+        let ram = &self.ram;
         self.actor_identity
             .as_mut()
             .expect("Game owns actors during canonical adoption")
-            .commit_canonical_transition(transition, &self.g_ram);
+            .commit_canonical_transition(transition, &|at| ram.read_byte(at));
         if retain_poison {
             self.actor_identity_mut().retain_poison();
         }

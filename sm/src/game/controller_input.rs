@@ -149,7 +149,10 @@ const BINDING_BUTTONS: [u16; 9] = [
 pub(crate) fn load_binding_choices(game: &mut Game) {
     for index in 0..7 {
         let address = crate::rtl::rom_table_word!(game, 0x82f54a, index) as usize;
-        let binding = u16::from_ne_bytes([game.g_ram[address], game.g_ram[address + 1]]);
+        let binding = u16::from_ne_bytes([
+            game.ram().read_byte(address),
+            game.ram().read_byte(address + 1),
+        ]);
         let choice = BINDING_BUTTONS[..7]
             .iter()
             .position(|button| binding & button != 0)
@@ -189,7 +192,11 @@ pub(crate) fn remap_binding(game: &mut Game) {
     // Malformed choice lists retain the cursor after the sixth unsuccessful advance.
     for _ in 0..6 {
         let address = 0x1b23 + 2 * ((next as usize >> 1) + 13);
-        if u16::from_ne_bytes([game.g_ram[address], game.g_ram[address + 1]]) == choice as u16 {
+        if u16::from_ne_bytes([
+            game.ram().read_byte(address),
+            game.ram().read_byte(address + 1),
+        ]) == choice as u16
+        {
             break;
         }
         next = next.wrapping_add(2);

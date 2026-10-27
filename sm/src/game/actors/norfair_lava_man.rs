@@ -13,7 +13,7 @@ use crate::ram_map::{slot, word};
 use crate::rtl::rom_table_word;
 
 fn native_word(at: usize, game: &Game) -> u16 {
-    u16::from_ne_bytes([game.g_ram[at], game.g_ram[at + 1]])
+    u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])
 }
 fn spawn(k: u16) -> usize {
     0x7000 + usize::from(k) + 31 * core::mem::size_of::<crate::types::EnemySpawnData>()
@@ -76,8 +76,8 @@ pub(crate) fn initialize(game: &mut Game) {
     slot!(game, Lava[E]; var_08 = rom_table_word!(game, 0xa28187, speed), var_07 = rom_table_word!(game, 0xa28187, speed + 1),
         var_0A = rom_table_word!(game, 0xa28187, speed + 2), var_09 = rom_table_word!(game, 0xa28187, speed + 3));
     let k = word!(game.cur_enemy_index) as i32;
-    game.g_ram[0x178c..0x178e].copy_from_slice(&0xb0b2u16.to_ne_bytes());
-    game.g_ram[0x178e..0x1790].copy_from_slice(&0xa8u16.to_ne_bytes());
+    game.ram().copy_in(0x178c, &0xb0b2u16.to_ne_bytes());
+    game.ram().copy_in(0x178e, &0xa8u16.to_ne_bytes());
     word!(
         game.variables_for_enemy_graphics_drawn_hook[0] =
             ((slot!(game, Lava[k].base.palette_index) & 0xe00) >> 4) + 256
@@ -231,7 +231,7 @@ pub(crate) fn ascend(game: &mut Game) {
     if height >= 0 {
         slot!(game, Lava[E].var_0D = 1);
         let at = spawn(k) + 4;
-        game.g_ram[at..at + 2].copy_from_slice(&0u16.to_ne_bytes());
+        game.ram().copy_in(at, &0u16.to_ne_bytes());
         slot!(game, Lava[E].var_F = 0xb1dd);
     } else if ((-(height as i32)
         - rom_table_word!(
@@ -317,10 +317,10 @@ pub(crate) fn advance(state: u16, game: &mut Game) {
                 slot!(game, Lava[E].var_D = 0xae0c);
                 animate(game);
                 let at = 0xf68 + 2 * ((word!(game.cur_enemy_index) as usize >> 1) + 5);
-                game.g_ram[at..at + 2].copy_from_slice(&0xb295u16.to_ne_bytes());
+                game.ram().copy_in(at, &0xb295u16.to_ne_bytes());
                 slot!(game, Lava[E].var_F = 0xb3a7);
                 let at = spawn(word!(game.cur_enemy_index)) + 0x18;
-                game.g_ram[at..at + 2].copy_from_slice(&0u16.to_ne_bytes());
+                game.ram().copy_in(at, &0u16.to_ne_bytes());
                 slot!(game, Lava[E].base.x_pos = slot!(game, Lava[E].var_12));
                 slot!(game, Lava[E].base.y_pos = slot!(game, Lava[E].var_13));
             }

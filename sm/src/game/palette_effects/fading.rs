@@ -51,7 +51,7 @@ fn blend(index: usize, step: u16, native: bool, game: &mut Game) {
             color.to_le_bytes()
         };
         let at = 0xc000 + index * 2;
-        game.g_ram[at..at + 2].copy_from_slice(&bytes);
+        game.ram().copy_in(at, &bytes);
     }
 }
 

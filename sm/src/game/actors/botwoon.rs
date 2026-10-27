@@ -416,8 +416,10 @@ pub(crate) fn spit(wide: bool, game: &mut Game) {
     if wide && slot!(game, Boss[e].var_5A) == 0 {
         return;
     }
-    game.g_ram[0x60b] =
-        (slot!(game, Boss[e].var_3D) as u8).wrapping_sub(if wide { 32 } else { 16 });
+    game.ram().write_byte(
+        0x60b,
+        (slot!(game, Boss[e].var_3D) as u8).wrapping_sub(if wide { 32 } else { 16 }),
+    );
     let speed = [2u16, 3, 4][slot!(game, Boss[e].var_3F) as usize];
     for _ in 0..if wide { 5 } else { 3 } {
         SpawnEprojWithGfx(
@@ -426,7 +428,8 @@ pub(crate) fn spit(wide: bool, game: &mut Game) {
             addr_kEproj_BotwoonsSpit as u16,
             game,
         );
-        game.g_ram[0x60b] = game.g_ram[0x60b].wrapping_add(16);
+        game.ram()
+            .write_byte(0x60b, game.ram().read_byte(0x60b).wrapping_add(16));
     }
     let target = if wide {
         slot!(game, Boss[e].var_5A = 0);

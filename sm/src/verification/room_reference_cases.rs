@@ -1,5 +1,9 @@
 //! Frozen synthetic inputs for actual room predecessor execution. No ROM assets.
-use crate::{game_state::Game, rom::RomImage};
+use crate::room_background_support::{ram_bytes, ram_bytes_parts};
+use crate::{
+    game_state::{Game, WorkRam},
+    rom::RomImage,
+};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 pub(crate) const CASES: u32 = 36;
 const DEFAULT: u32 = 9430502;
@@ -17,7 +21,7 @@ pub(crate) enum Operation {
     Door,
 }
 pub(crate) fn put(g: &mut Game, at: usize, v: u16) {
-    g.g_ram[at..at + 2].copy_from_slice(&v.to_le_bytes());
+    g.ram().copy_in(at, &v.to_le_bytes());
 }
 fn exp(e: &mut [u8], at: usize, v: u16) {
     e[at..at + 2].copy_from_slice(&v.to_le_bytes());
@@ -48,8 +52,11 @@ fn state(r: &RomImage) {
 }
 const ASSETS: [u8; 9] = [0x21, 0x43, 0xa1, 0x65, 0x87, 0xb2, 0xa9, 0xcb, 0xc3];
 pub(crate) fn snapshot(out: &mut Vec<u8>, g: &Game) {
-    out.extend_from_slice(&g.g_ram);
-    out.push(u8::from(g.g_fail));
+    snapshot_parts(out, g.ram(), &g.g_fail);
+}
+pub(crate) fn snapshot_parts(out: &mut Vec<u8>, ram: &WorkRam, fail: &bool) {
+    out.extend_from_slice(&ram_bytes_parts(ram));
+    out.push(u8::from(*fail));
 }
 fn expect_header(e: &mut [u8]) {
     for (a, v) in [
@@ -104,8 +111,9 @@ pub(crate) fn capture_case(
         };
         let r = RomImage::zeroed(length);
         let mut g = Game::new();
-        for (i, b) in g.g_ram.iter_mut().enumerate() {
-            *b = (i.wrapping_mul(37) ^ (i >> 8) ^ 0x5a) as u8;
+        for i in 0..g.ram().len() {
+            g.ram()
+                .write_byte(i, (i.wrapping_mul(37) ^ (i >> 8) ^ 0x5a) as u8);
         }
         g.loaded_rom = Some(r.clone());
         g.g_fail = false;
@@ -118,9 +126,9 @@ pub(crate) fn capture_case(
         put(&mut g, 0x9a4, 0);
         put(&mut g, 0x9c8, 0);
         put(&mut g, 0x9d0, 0);
-        g.g_ram[0xd820] = 0;
-        g.g_ram[0xd828] = 0;
-        g.g_ram[0xd829] = 0;
+        g.ram().write_byte(0xd820, 0);
+        g.ram().write_byte(0xd828, 0);
+        g.ram().write_byte(0xd829, 0);
         let mut op = Operation::Entry(DEFAULT, 0x9000);
         let mut return_value = Some(0);
         let mut panics = false;
@@ -150,15 +158,17 @@ pub(crate) fn capture_case(
                     rw(&r, 0x8f9000, 0xabcd);
                     scratch = Some(0xa501);
                     if taken {
-                        g.g_ram[0xd828] = 1;
+                        g.ram().write_byte(0xd828, 1);
                     }
                 } else {
                     bytes(&r, 0x8f9000, &[if code == EVENT { 6 } else { 4 }]);
                     rw(&r, 0x8f9001, 0xabcd);
                     scratch = Some(if code == EVENT { 0x40 } else { 0xa504 });
                     if taken {
-                        g.g_ram[if code == EVENT { 0xd820 } else { 0xd828 }] =
-                            if code == EVENT { 0x40 } else { 4 };
+                        g.ram().write_byte(
+                            if code == EVENT { 0xd820 } else { 0xd828 },
+                            if code == EVENT { 0x40 } else { 4 },
+                        );
                     }
                 }
                 if taken {
@@ -195,7 +205,7 @@ pub(crate) fn capture_case(
                 bytes(&r, 0x8f9000, &[6]);
                 scratch = Some(0x40);
                 if id == 14 {
-                    g.g_ram[0xd820] = 0x40;
+                    g.ram().write_byte(0xd820, 0x40);
                     panics = true;
                 } else {
                     return_value = Some(0x9003);
@@ -247,8 +257,8 @@ pub(crate) fn capture_case(
                 rw(&r, 0x8f900b, BOSS1 as u16);
                 rw(&r, 0x8f900d, 0xabcd);
                 rw(&r, 0x8f900f, DEFAULT as u16);
-                g.g_ram[0xd828] = if id == 21 { 1 } else { 0 };
-                g.g_ram[0xd829] = if id == 22 { 1 } else { 0 };
+                g.ram().write_byte(0xd828, if id == 21 { 1 } else { 0 });
+                g.ram().write_byte(0xd829, if id == 22 { 1 } else { 0 });
                 scratch = Some(0xa501);
                 selected = Some(if id == 21 { 0x9011 } else { 0xabcd });
             }
@@ -318,7 +328,7 @@ pub(crate) fn capture_case(
                 rw(&r, 0x8f900b, EVENT as u16);
                 bytes(&r, 0x8f900d, &[6]);
                 rw(&r, 0x8f900e, 0xabcd);
-                g.g_ram[0xd820] = 0x40;
+                g.ram().write_byte(0xd820, 0x40);
                 scratch = Some(0x40);
                 selected = Some(0xabcd);
             }
@@ -334,7 +344,7 @@ pub(crate) fn capture_case(
             }
             _ => unreachable!(),
         }
-        let mut expected = g.g_ram.to_vec();
+        let mut expected = ram_bytes(&g);
         if let Some(v) = selected {
             exp(&mut expected, 0x7bb, v);
         }
@@ -425,7 +435,7 @@ pub(crate) fn capture_case(
             }
         }
         assert_eq!(
-            &g.g_ram[..],
+            &ram_bytes(&g),
             &expected[..],
             "room {id} complete expected RAM"
         );

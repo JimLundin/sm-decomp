@@ -284,11 +284,15 @@ pub(crate) fn foreign_sequence_then_move(game: &mut crate::game_state::Game) {
     }
     rt.foreign(|g| {
         assert_eq!(
-            &g.g_ram[0xdee..0xdf0],
+            &{
+                let mut bytes = [0; 2];
+                g.ram().copy_out(0xdee, &mut bytes);
+                bytes
+            },
             &[0x5a, 0x80],
             "collision.owned.foreign_published_sequence"
         );
-        g.g_ram[0xdef] = 0x40;
+        g.ram().write_byte(0xdef, 0x40);
     });
     operations::shinespark(&mut rt, Axis::Y);
     let s = rt.session();
@@ -336,10 +340,16 @@ pub(crate) fn transition_a7_single_commit(
         (0xb2e, 7),
         (0xb36, 2),
     ] {
-        g.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+        g.ram().copy_in(at, &value.to_le_bytes());
     }
     let (_, launches) = observed(|| invoke(g));
-    let word = |at: usize| u16::from_le_bytes(g.g_ram[at..at + 2].try_into().unwrap());
+    let word = |at: usize| {
+        u16::from_le_bytes({
+            let mut bytes = [0; 2];
+            g.ram().copy_out(at, &mut bytes);
+            bytes
+        })
+    };
     assert_eq!(
         (word(0xafa), word(0xafc)),
         (105, 0x7fff),

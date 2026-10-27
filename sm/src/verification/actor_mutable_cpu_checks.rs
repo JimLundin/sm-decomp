@@ -11,32 +11,36 @@ pub(crate) unsafe fn run(game: &mut Game) -> Vec<u8> {
             "actor.mutable.initialized_hardware_required"
         );
         let snes = game.g_snes;
-        assert_eq!(
-            (*snes).ram,
-            game.g_ram.as_mut_ptr(),
-            "actor.mutable.actual_ram_binding"
-        );
         assert!(
             !(*snes).ppu.is_null()
                 && !(*snes).my_ppu.is_null()
                 && !(*snes).snes_ppu.is_null()
                 && !(*snes).apu.is_null()
-                && !(*snes).dma.is_null()
                 && !(*snes).cart.is_null()
         );
         // Cart retains its original owned allocation and valid reset vector. Only game
         // native/loaded readers use this synthetic image; no CPU frame is executed.
         let image = fixture::image();
         fixture::seed(game, &image);
-        let before_ram = game.g_ram.to_vec();
+        let before_ram = (0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<_>>();
         fixture::consume_checked(game, false, "hardware_before_writer_positive_control");
-        game.g_ram.copy_from_slice(&before_ram);
-        super::MakeSnapshot(
-            &mut game.g_snapshot_before,
-            &*snes,
-            &*game.g_cpu,
-            game.g_spc_player,
-        );
+        game.ram().copy_in(0, &before_ram);
+        {
+            let snapshot_snes = snes;
+            let snapshot_cpu = game.g_cpu;
+            let snapshot_player = game.g_spc_player;
+            let (backend, ram, _, _, before) = game.ram_and_snapshots();
+            super::MakeSnapshot(
+                before,
+                &*snapshot_snes,
+                &*snapshot_cpu,
+                snapshot_player,
+                ram,
+                backend,
+            )
+        };
         game.actor_snapshots.before = Some(game.capture_actor_snapshot());
         let queue = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
         let expected_image = fixture::written_image(&image);
@@ -53,10 +57,24 @@ pub(crate) unsafe fn run(game: &mut Game) -> Vec<u8> {
             .unwrap()
             .preflight(game.actor_identity(), game.world())
             .unwrap();
-        super::RestoreSnapshot(&game.g_snapshot_before, &mut *snes, &mut *game.g_cpu);
+        {
+            let snapshot_snes = snes;
+            let snapshot_cpu = game.g_cpu;
+            let (backend, ram, _, _, before) = game.ram_and_snapshots();
+            super::RestoreSnapshot(
+                before,
+                &mut *snapshot_snes,
+                &mut *snapshot_cpu,
+                ram,
+                backend,
+            )
+        };
         restore.commit(game.actor_identity_mut());
         assert_eq!(
-            game.g_ram.as_slice(),
+            (0..game.ram().len())
+                .map(|at| game.ram().read_byte(at))
+                .collect::<Vec<_>>()
+                .as_slice(),
             before_ram.as_slice(),
             "actor.mutable.actual_cpu_restores_all_ram"
         );
@@ -73,9 +91,9 @@ pub(crate) unsafe fn run(game: &mut Game) -> Vec<u8> {
             game.g_snes, snes,
             "actor.mutable.reset_preserves_snes_owner"
         );
-        assert_eq!((*snes).ram, game.g_ram.as_mut_ptr());
         assert_eq!(
-            game.g_ram[0x611], 1,
+            game.ram().read_byte(0x611),
+            1,
             "actor.mutable.actual_reset_entry_pending"
         );
         assert_eq!(
@@ -86,7 +104,7 @@ pub(crate) unsafe fn run(game: &mut Game) -> Vec<u8> {
         fixture::consume_checked(game, true, "after_actual_rtl_reset");
         fixture::assert_image(game, &image, &expected_image, "after_actual_reset_consumer");
         let mut output = b"AKMC1".to_vec();
-        output.extend_from_slice(&game.g_ram);
+        output.extend((0..game.ram().len()).map(|at| game.ram().read_byte(at)));
         output.extend_from_slice(&[0x4c, 0x80]);
         output
     }
@@ -98,7 +116,9 @@ fn cpu_writer_admission(world: std::sync::Arc<crate::game::room_entry::world::Wo
     use std::panic::{AssertUnwindSafe, catch_unwind};
     unsafe {
         GameOwner::with_world(world).with(|g| {
-            let ram = g.g_ram.to_vec();
+            let ram = (0..g.ram().len())
+                .map(|at| g.ram().read_byte(at))
+                .collect::<Vec<_>>();
             let identity = g.actor_identity().clone();
             for direct in [false, true] {
                 let rejected = catch_unwind(AssertUnwindSafe(|| {
@@ -119,7 +139,13 @@ fn cpu_writer_admission(world: std::sync::Arc<crate::game::room_entry::world::Wo
                 };
                 assert_eq!(rejected.downcast_ref::<&str>(), Some(&expected));
                 assert!(g.g_cpu.is_null() && g.g_snes.is_null());
-                assert_eq!(g.g_ram.as_slice(), ram.as_slice());
+                assert_eq!(
+                    (0..g.ram().len())
+                        .map(|at| g.ram().read_byte(at))
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                    ram.as_slice()
+                );
                 assert_eq!(g.actor_identity(), &identity);
                 assert!(
                     !g.actor_identity_is_with_session() && !g.g_calling_asm_from_c && !g.g_fail
@@ -137,7 +163,7 @@ fn cpu_writer_admission(world: std::sync::Arc<crate::game::room_entry::world::Wo
                 } else {
                     &[0x8f, 0x38, 0x17, 0x7e, 0x6b]
                 };
-                g.g_ram[0x8000..0x8000 + program.len()].copy_from_slice(program);
+                g.ram().copy_in(0x8000, program);
                 if failure {
                     (*cart).rom = RomImage::zeroed(1);
                 }
@@ -158,11 +184,18 @@ fn cpu_writer_admission(world: std::sync::Arc<crate::game::room_entry::world::Wo
                     assert_eq!(result.unwrap(), 0);
                     assert_eq!(((*g.g_cpu).sp, (*g.g_cpu).pc), (0x1ff, 0));
                 }
-                assert_eq!(&g.g_ram[0x1738..0x173a], &value.to_le_bytes());
-                assert_eq!(g.g_ram[0x1ffff], 1);
+                assert_eq!(
+                    &{
+                        let mut bytes = [0; 0x173a - (0x1738)];
+                        g.ram().copy_out(0x1738, &mut bytes);
+                        bytes
+                    },
+                    &value.to_le_bytes()
+                );
+                assert_eq!(g.ram().read_byte(0x1ffff), 1);
                 assert_eq!(g.g_calling_asm_from_c, failure);
                 assert!(!g.actor_identity_is_with_session());
-                expected.commit_canonical_transition(transition, &g.g_ram);
+                expected.commit_canonical_transition(transition, &|at| g.ram().read_byte(at));
                 assert_eq!(g.actor_identity(), &expected);
             }
         });

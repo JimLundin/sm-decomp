@@ -83,11 +83,19 @@ thread_local! {
 fn put(bytes: &mut [u8], at: usize, value: u16) {
     bytes[at..at + 2].copy_from_slice(&value.to_le_bytes());
 }
-fn record(bytes: &[u8], resource: u8, phase: u8, amount: u16, trace: &mut Vec<u8>) {
+fn record(
+    mut read: impl FnMut(usize, &mut [u8]),
+    resource: u8,
+    phase: u8,
+    amount: u16,
+    trace: &mut Vec<u8>,
+) {
     trace.extend_from_slice(&[resource, phase]);
     trace.extend_from_slice(&amount.to_le_bytes());
     for at in OBSERVED {
-        trace.extend_from_slice(&bytes[at..at + 2]);
+        let mut bytes = [0; 2];
+        read(at, &mut bytes);
+        trace.extend_from_slice(&bytes);
     }
 }
 /// Observer only; never changes the behavior or supplies a restoration result.
@@ -95,7 +103,13 @@ fn record(bytes: &[u8], resource: u8, phase: u8, amount: u16, trace: &mut Vec<u8
 pub(crate) fn observe(resource: u8, phase: u8, amount: u16, game: &Game) {
     TRACE.with(|trace| {
         if let Some(trace) = trace.borrow_mut().as_mut() {
-            record(&game.g_ram, resource, phase, amount, trace);
+            record(
+                |at, span| game.ram().copy_out(at, span),
+                resource,
+                phase,
+                amount,
+                trace,
+            );
         }
     });
 }
@@ -152,18 +166,26 @@ fn boundary(id: u32, game: &mut Game) {
         (w::samus_max_reserve_health, capacity),
         (w::reserve_health_mode, mode),
     ] {
-        put(&mut game.g_ram, at, value);
+        game.ram().copy_in(at, &(value as u16).to_le_bytes());
     }
-    let mut expected_ram = game.g_ram.to_vec();
+    let mut expected_ram = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     put(&mut expected_ram, current_at, expected[0]);
     put(&mut expected_ram, reserve_at, expected[1]);
     put(&mut expected_ram, w::reserve_health_mode, expected[2]);
     restore(resource, amount, game);
     let resource_name = ["health", "missile", "super-missile", "power-bomb"][resource as usize];
     let actual = [current_at, reserve_at, w::reserve_health_mode]
-        .map(|at| u16::from_le_bytes([game.g_ram[at], game.g_ram[at + 1]]));
+        .map(|at| u16::from_le_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]));
     assert_eq!(actual, expected, "{resource_name} restore boundary {id}");
-    assert_eq!(&game.g_ram[..], &expected_ram[..], "restore boundary {id}");
+    assert_eq!(
+        &(0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<u8>>()[..],
+        &expected_ram[..],
+        "restore boundary {id}"
+    );
 }
 
 unsafe fn crystal_flash(id: u32, game: &mut Game) -> Vec<u8> {
@@ -182,9 +204,11 @@ unsafe fn crystal_flash(id: u32, game: &mut Game) -> Vec<u8> {
         (w::which_item_to_pickup, lane as u16),
         (w::nmi_frame_counter_word, if variant == 2 { 1 } else { 8 }),
     ] {
-        put(&mut game.g_ram, at, value);
+        game.ram().copy_in(at, &(value as u16).to_le_bytes());
     }
-    let mut expected_ram = game.g_ram.to_vec();
+    let mut expected_ram = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     if variant != 2 {
         put(&mut expected_ram, AMMO[lane], 9);
         for (at, value) in [
@@ -217,7 +241,9 @@ unsafe fn crystal_flash(id: u32, game: &mut Game) -> Vec<u8> {
     put(&mut expected_ram, w::samus_invincibility_timer, 0);
     put(&mut expected_ram, w::samus_knockback_timer, 0);
     assert_eq!(
-        &game.g_ram[..],
+        &(0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<u8>>()[..],
         &expected_ram[..],
         "crystal flash final state {id}"
     );
@@ -249,14 +275,22 @@ unsafe fn gunship(id: u32, game: &mut Game) -> Vec<u8> {
         (w::samus_max_power_bombs, 5),
         (SHIP_STATE, 0xcafe),
     ] {
-        put(&mut game.g_ram, at, value);
+        game.ram().copy_in(at, &(value as u16).to_le_bytes());
     }
-    game.g_ram[0xd821] = 0; // Tourian event14 is clear: ordinary refill branch.
-    let mut expected_ram = game.g_ram.to_vec();
+    game.ram().write_byte(0xd821, 0); // Tourian event14 is clear: ordinary refill branch.
+    let mut expected_ram = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     put(&mut expected_ram, w::bitmask, 0x40); // Actual CheckEventHappened precedes refill.
     let mut expected_trace = Vec::new();
     for resource in 0..4 {
-        record(&expected_ram, resource, 0, 2, &mut expected_trace);
+        record(
+            |at, span| span.copy_from_slice(&expected_ram[at..at + span.len()]),
+            resource,
+            0,
+            2,
+            &mut expected_trace,
+        );
         match resource {
             0 if id == 0 => put(&mut expected_ram, w::samus_health, 98),
             0 => {
@@ -279,7 +313,13 @@ unsafe fn gunship(id: u32, game: &mut Game) -> Vec<u8> {
                 if id == 0 { 3 } else { 5 },
             ),
         }
-        record(&expected_ram, resource, 1, 2, &mut expected_trace);
+        record(
+            |at, span| span.copy_from_slice(&expected_ram[at..at + span.len()]),
+            resource,
+            1,
+            2,
+            &mut expected_trace,
+        );
     }
     if id == 1 {
         put(&mut expected_ram, SHIP_STATE, 0xab1f);
@@ -289,7 +329,9 @@ unsafe fn gunship(id: u32, game: &mut Game) -> Vec<u8> {
     let trace = finish_trace();
     assert_eq!(trace, expected_trace, "gunship restore ordering {id}");
     assert_eq!(
-        &game.g_ram[..],
+        &(0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<u8>>()[..],
         &expected_ram[..],
         "gunship completion after refill {id}"
     );
@@ -299,7 +341,7 @@ unsafe fn gunship(id: u32, game: &mut Game) -> Vec<u8> {
 fn capture_checked(id: u32) -> Vec<u8> {
     let mut game = Game::new();
     // Nonzero unchanged surroundings catch collateral writes and owner defaults.
-    game.g_ram.fill(0x5a);
+    game.ram().fill(0..game.ram().len(), 0x5a);
     let trace = if id < BOUNDARIES {
         boundary(id, &mut game);
         Vec::new()
@@ -309,7 +351,9 @@ fn capture_checked(id: u32) -> Vec<u8> {
         unsafe { gunship(id - BOUNDARIES - 9, &mut game) }
     };
     assert!(!game.g_fail, "restore caller diagnostic {id}");
-    let mut output = game.g_ram.to_vec();
+    let mut output = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     for value in [
         game.eproj_spawn_rect.x,
         game.eproj_spawn_rect.y,

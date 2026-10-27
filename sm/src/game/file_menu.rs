@@ -59,7 +59,7 @@ fn border(sprite: u16, game: &mut Game) {
 unsafe fn prepare(game: &mut Game) {
     unsafe {
         crate::game::display_refresh::fade(false, game);
-        if (game.g_ram[0x51] & 0xf) != 0 {
+        if (game.ram().read_byte(0x51) & 0xf) != 0 {
             return;
         }
         crate::game::display_refresh::set_blank(true, game);
@@ -79,7 +79,7 @@ fn fade_to_options(game: &mut Game) {
     border(0x48, game);
     sprite_output::file_helmets(false, game);
     crate::game::display_refresh::fade(false, game);
-    if (game.g_ram[0x51] & 0xf) == 0 {
+    if (game.ram().read_byte(0x51) & 0xf) == 0 {
         word! {game; game_state = kGameState_2_GameOptionsMenu as u16; menu_index = 0; }
         word_transfers!(game, ascending, 24; native(0x198d) <- value(0));
     }
@@ -88,7 +88,7 @@ fn fade_to_title(game: &mut Game) {
     border(0x48, game);
     sprite_output::file_helmets(false, game);
     crate::game::display_refresh::fade(false, game);
-    if (game.g_ram[0x51] & 0xf) == 0 {
+    if (game.ram().read_byte(0x51) & 0xf) == 0 {
         game.request_reset();
     }
 }
@@ -98,9 +98,12 @@ fn fade_from_main(game: &mut Game) {
 }
 fn fade_to_main(game: &mut Game) {
     crate::game::display_refresh::fade(false, game);
-    game.g_ram[0x57] =
-        (game.g_ram[0x57] as i32 & 0xf | 16 * (game.g_ram[0x51] as i32 & 0xf) ^ 0xf0) as u8;
-    if (game.g_ram[0x51] & 0xf) == 0 {
+    game.ram().write_byte(
+        0x57,
+        (game.ram().read_byte(0x57) as i32 & 0xf
+            | 16 * (game.ram().read_byte(0x51) as i32 & 0xf) ^ 0xf0) as u8,
+    );
+    if (game.ram().read_byte(0x51) & 0xf) == 0 {
         crate::game::display_refresh::set_blank(true, game);
         word!(game.menu_index += 1);
     }
@@ -112,9 +115,12 @@ fn restore_cursor(game: &mut Game) {
 fn fade_in(game: &mut Game) {
     sprite_output::menu_selection(game);
     crate::game::display_refresh::fade(true, game);
-    game.g_ram[0x57] =
-        (game.g_ram[0x57] as i32 & 0xf | 16 * (game.g_ram[0x51] as i32 & 0xf) ^ 0xf0) as u8;
-    if (game.g_ram[0x51] & 0xf) == 15 {
+    game.ram().write_byte(
+        0x57,
+        (game.ram().read_byte(0x57) as i32 & 0xf
+            | 16 * (game.ram().read_byte(0x51) as i32 & 0xf) ^ 0xf0) as u8,
+    );
+    if (game.ram().read_byte(0x51) & 0xf) == 15 {
         word!(game.menu_index += 1);
     }
 }
@@ -177,7 +183,7 @@ fn next_occupied_slot(game: &mut Game) -> Option<u8> {
 fn choose_source<const COPY: bool>(game: &mut Game) {
     border(if COPY { 0x49 } else { 0x4a }, game);
     sprite_output::menu_selection(game);
-    let movement_high = if COPY { 0 } else { game.g_ram[0x90] };
+    let movement_high = if COPY { 0 } else { game.ram().read_byte(0x90) };
     if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
         QueueSfx1_Max6(0x37, game);
         if word!(game.eproj_id[15]) != 3 {
@@ -197,7 +203,7 @@ fn choose_source<const COPY: bool>(game: &mut Game) {
         }
     } else {
         if let Some(slot) = next_occupied_slot(game) {
-            game.g_ram[0x19b5] = slot;
+            game.ram().write_byte(0x19b5, slot);
             let sound = if COPY {
                 0x37
             } else {
@@ -524,7 +530,7 @@ fn fade_in_main(game: &mut Game) {
     sprite_output::menu_selection(game);
     border(0x48, game);
     crate::game::display_refresh::fade(true, game);
-    if (game.g_ram[0x51] & 0xf) == 15 {
+    if (game.ram().read_byte(0x51) & 0xf) == 15 {
         word!(game.menu_index += 1);
     }
 }
@@ -620,9 +626,12 @@ unsafe fn choose_main(game: &mut Game) {
 }
 
 fn native_word(offset: usize, game: &Game) -> u16 {
-    u16::from_ne_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
+    u16::from_ne_bytes([
+        game.ram().read_byte(offset),
+        game.ram().read_byte(offset + 1),
+    ])
 }
 
 fn set_native_word(offset: usize, value: u16, game: &mut Game) {
-    game.g_ram[offset..offset + 2].copy_from_slice(&value.to_ne_bytes());
+    game.ram().copy_in(offset, &value.to_ne_bytes());
 }

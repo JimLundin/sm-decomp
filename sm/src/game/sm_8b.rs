@@ -190,7 +190,7 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
             crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game);
             GraphicsAsset::Decompress(0x9580d8, 0x15000).load(game);
             GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
-            game.g_ram[0x51] = 0x80;
+            game.ram().write_byte(0x51, 0x80);
             word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce1e9, 0));
             crate::game::display_refresh::enable(true, game);
             word! { game, 1; screen_fade_delay, screen_fade_counter }
@@ -312,7 +312,7 @@ pub unsafe fn HandleCinematicsTransitions_2(game: &mut Game) {
         palette_effects::spawn(addr_kPalfx_E1A0 as u16, game);
         palette_effects::spawn(addr_kPalfx_E1A4 as u16, game);
         set_cinematic_backdrop(false, game);
-        game.g_ram[0x69] = 17;
+        game.ram().write_byte(0x69, 17);
         initialize_title_gradient(game);
     }
 }
@@ -363,7 +363,7 @@ pub unsafe fn LoadTitleSequenceGraphics(game: &mut Game) {
 macro_rules! finish_cinematic_and_clear_effects {
     ($game:ident, $next_state:literal, $index_field:ident) => {
         crate::game::display_refresh::enable(true, $game);
-        $game.g_ram[0x55] = 1;
+        $game.ram().write_byte(0x55, 1);
         word! { $game, 0;
             screen_fade_delay, screen_fade_counter, reg_BG2HOFS, reg_BG3HOFS, reg_BG2VOFS,
             reg_BG3VOFS, cinematic_var5,
@@ -555,7 +555,7 @@ crate::game::callback_dispatch! {
         );
         word_transfers!(game, ascending, 128; pause_map(768) <- rom(0x8ba72b, 0));
         let at = 0x3000 + core::mem::offset_of!(Ram3000, menu.menu_tilemap) + 286;
-        game.g_ram[at..at + 4].copy_from_slice(&472456233u32.to_ne_bytes());
+        game.ram().copy_in(at, &472456233u32.to_ne_bytes());
         CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCE6D as u16, 0x1c29, game);
         word!(game.cinematic_var4 = 127);
         CinematicBackground.spawn(addr_kCinematicBgObjectDef_8BCF63 as u16, 0x4c00, game);
@@ -592,14 +592,14 @@ crate::game::callback_dispatch! {
     };
     [9158116] CinematicFunction_Intro_Func55 [] {
         if HasQueuedMusic(game) & 1 == 0 {
-            game.g_ram[0x51] = 15;
+            game.ram().write_byte(0x51, 15);
             word!(game.cinematic_function = (0x8bbdf9i32) as u16);
         }
     };
     [9158137] CinematicFunction_Intro_Func56 [] {
         if word!(game.cinematic_var6) as i32 - 32i32 & 0x8000 != 0 {
-            game.g_ram[0x6f] = 0;
-            game.g_ram[0x72] = 49;
+            game.ram().write_byte(0x6f, 0);
+            game.ram().write_byte(0x72, 49);
             set_fixed_color([63, 95, -97i32 as u8], game);
             clear_cinematic_sprites(game);
             enqueue_rom(0x8b, addr_kCinematicFunction_Intro_Func56_M7 as u16, game);
@@ -634,11 +634,11 @@ crate::game::callback_dispatch! {
         } else if word!(game.cinematic_var6) as i32 - 0x2000i32 & 0x8000 != 0 {
             word!(game.cinematic_var6 += 32);
         } else {
-            game.g_ram[0x69] = 17;
-            game.g_ram[0x55] = 1;
-            game.g_ram[0x5f] = 0;
-            game.g_ram[0x58] = 92;
-            game.g_ram[0x5d] = 6;
+            game.ram().write_byte(0x69, 17);
+            game.ram().write_byte(0x55, 1);
+            game.ram().write_byte(0x5f, 0);
+            game.ram().write_byte(0x58, 92);
+            game.ram().write_byte(0x5d, 6);
             word!(game.cinematic_var6 = 256);
             word! { game, 0;
                 cinematic_var5, cinematic_var7, cinematic_var8, cinematic_var9, cinematic_var10,
@@ -714,7 +714,7 @@ crate::game::callback_dispatch! {
         words!(game.cinematic_var8, cinematic_var7 += -0x4000i32 as u32);
         word!(game.cinematic_var6 += 1);
         crate::game::display_refresh::fade(true, game);
-        if game.g_ram[0x51] == 15 {
+        if game.ram().read_byte(0x51) == 15 {
             word! { game, 0; screen_fade_delay, screen_fade_counter }
             word! {game; cinematic_function = ((0x8bc345i32) as u16); cinematic_var4 = 1;
                 cinematic_var13 = 0; }
@@ -734,8 +734,8 @@ crate::game::callback_dispatch! {
             }
             set_hdma_enabled(true, game);
             spawn_power_bomb(game);
-            game.g_ram[0x6f] = 16;
-            game.g_ram[0x72] = 55;
+            game.ram().write_byte(0x6f, 16);
+            game.ram().write_byte(0x72, 55);
             word!(game.cinematic_var6 = 768);
             CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF2D as u16, 0, game);
             if word!(game.game_state) == 37 {
@@ -748,8 +748,8 @@ crate::game::callback_dispatch! {
         };
     };
     [9160138] CinematicFunction_Intro_Func77 [] {
-        game.g_ram[0x6f] = 16;
-        game.g_ram[0x72] = 55;
+        game.ram().write_byte(0x6f, 16);
+        game.ram().write_byte(0x72, 55);
         word!(game.cinematic_var8 += 2);
         word!(game.cinematic_var5 = (((word!(game.cinematic_var5)) as u8).wrapping_sub(1)) as u16);
         if word!(game.cinematic_var6) as i32 - 16i32 & 0x8000 != 0 {
@@ -760,7 +760,7 @@ crate::game::callback_dispatch! {
     };
     [9160231] CinematicFunction_Intro_Func85 [] {
         crate::game::display_refresh::fade(false, game);
-        if game.g_ram[0x51] == 0x80 {
+        if game.ram().read_byte(0x51) == 0x80 {
             crate::game::display_refresh::enable(true, game);
             word! { game, 0; screen_fade_delay, screen_fade_counter }
             if word!(game.game_state) as i32 == kGameState_37_CeresGoesBoomWithSamus as i32 {
@@ -772,13 +772,13 @@ crate::game::callback_dispatch! {
                 clear_hdma(game);
                 crate::game::scanline_irq::disable(game);
                 word!(game.fx_layer_blending_config_a = 0);
-                game.g_ram[0x6e] = 0;
-                game.g_ram[0x71] = 0;
-                game.g_ram[0x69] = 16;
-                game.g_ram[0x6b] = 0;
-                game.g_ram[0x6c] = 0;
-                game.g_ram[0x6d] = 0;
-                game.g_ram[0x55] = 9;
+                game.ram().write_byte(0x6e, 0);
+                game.ram().write_byte(0x71, 0);
+                game.ram().write_byte(0x69, 16);
+                game.ram().write_byte(0x6b, 0);
+                game.ram().write_byte(0x6c, 0);
+                game.ram().write_byte(0x6d, 0);
+                game.ram().write_byte(0x55, 9);
                 word! { game, 0; game_options_screen_index, menu_index }
                 word_transfers!(game, descending, 128; le(cinematicbg_arr7, 135) <- value(0));
                 word!(game.game_state = kGameState_25_SamusNoHealth as u16);
@@ -802,14 +802,14 @@ crate::game::callback_dispatch! {
         clear_hdma(game);
         palette_effects::clear(game);
         palette_effects::set_enabled(true, game);
-        game.g_ram[0x57] = -127i32 as u8;
+        game.ram().write_byte(0x57, -127i32 as u8);
         palette_effects::spawn(addr_kPalfx_E1A8 as u16, game);
         word!(game.cinematic_function = (0x8bc79ci32) as u16);
         crate::game::display_refresh::enable(true, game);
         word! { game, 1; screen_fade_delay, screen_fade_counter }
     };
     [9161439] CinematicFunction_Intro_Func95 [] {
-        game.g_ram[0x51] = 0x80;
+        game.ram().write_byte(0x51, 0x80);
         word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
         word!(game.game_state = kGameState_6_LoadingGameData as u16);
         word!(game.samus_health = word!(game.samus_max_health));
@@ -887,7 +887,7 @@ crate::game::callback_dispatch! {
         GraphicsAsset::VramWords(0x7ff000, 0x7800, 0x800).load(game);
         GraphicsAsset::VramWords(0x7ff800, 0x7c00, 0x800).load(game);
         GraphicsAsset::VramWords(0x7ea000, 0x5000, 0x1000).load(game);
-        game.g_ram[0x52] = 2;
+        game.ram().write_byte(0x52, 2);
         palette_effects::clear(game);
         clear_cinematic_sprites(game);
         word_transfers!(game, ascending, 128; le(palette_buffer, 128) <- rom(0x8cebe9, 128));
@@ -927,24 +927,24 @@ crate::game::callback_dispatch! {
         }
         if (word!(game.cinematic_var4 -= 1, reread) & 0x8000) != 0 {
             word_transfers!(game, ascending, 128; le(palette_buffer, 0) <- rom(0x8cebe9, 0));
-            game.g_ram[0x5f] = 0;
-            game.g_ram[0x58] = 112;
-            game.g_ram[0x59] = 120;
-            game.g_ram[0x5a] = 0;
-            game.g_ram[0x5c] = 0;
-            game.g_ram[0x5d] = 68;
-            game.g_ram[0x5e] = 0;
-            game.g_ram[0x69] = 16;
-            game.g_ram[0x6b] = 0;
-            game.g_ram[0x6c] = 0;
-            game.g_ram[0x6d] = 0;
-            game.g_ram[0x6e] = 0;
-            game.g_ram[0x71] = 0;
-            game.g_ram[0x6f] = 0;
-            game.g_ram[0x72] = 0;
+            game.ram().write_byte(0x5f, 0);
+            game.ram().write_byte(0x58, 112);
+            game.ram().write_byte(0x59, 120);
+            game.ram().write_byte(0x5a, 0);
+            game.ram().write_byte(0x5c, 0);
+            game.ram().write_byte(0x5d, 68);
+            game.ram().write_byte(0x5e, 0);
+            game.ram().write_byte(0x69, 16);
+            game.ram().write_byte(0x6b, 0);
+            game.ram().write_byte(0x6c, 0);
+            game.ram().write_byte(0x6d, 0);
+            game.ram().write_byte(0x6e, 0);
+            game.ram().write_byte(0x71, 0);
+            game.ram().write_byte(0x6f, 0);
+            game.ram().write_byte(0x72, 0);
             WriteReg(COLDATA as u16, 0xe0, game);
             set_fixed_color([32, 64, 0x80], game);
-            game.g_ram[0x57] = 0;
+            game.ram().write_byte(0x57, 0);
             word! { game, 0;
                 cinematic_var7, cinematic_var8, cinematic_var9, cinematic_var10, g_word_7E1999,
                 g_word_7E199B, g_word_7E199D, g_word_7E199F, fx_layer_blending_config_a, reg_BG2HOFS,
@@ -956,12 +956,12 @@ crate::game::callback_dispatch! {
     };
     [9165764] CinematicFunction_Intro_Func120 [] {
         if HasQueuedMusic(game) & 1 == 0 {
-            game.g_ram[0x55] = 7;
-            game.g_ram[0x5f] = 0x80;
+            game.ram().write_byte(0x55, 7);
+            game.ram().write_byte(0x5f, 0x80);
             set_cinematic_blend(17, 0, 0, 48, game);
             set_fixed_color([63, 95, -97i32 as u8], game);
-            game.g_ram[0x58] = 0;
-            game.g_ram[0x5d] = 0;
+            game.ram().write_byte(0x58, 0);
+            game.ram().write_byte(0x5d, 0);
             word! { game, 0; palette_buffer[0], palette_buffer[16], palette_buffer[128] }
             palette_effects::spawn(addr_kPalfx_E1D4 as u16, game);
             palette_effects::spawn(addr_kPalfx_E1E4 as u16, game);
@@ -1042,7 +1042,7 @@ crate::game::callback_dispatch! {
         word! {game; cinematic_var8 = -8i32 as u16; cinematic_var10 = -24i32 as u16;
             cinematic_var5 = 0; cinematic_var6 = 2304; }
         crate::game::display_refresh::enable(true, game);
-        game.g_ram[0x51] = 15;
+        game.ram().write_byte(0x51, 15);
         word! { game, 0; layer1_x_pos, layer1_y_pos }
         set_hdma_enabled(true, game);
         word_transfers!(game, descending, 256; le(hdma_table_1, 255) <- value(0));
@@ -1055,7 +1055,7 @@ crate::game::callback_dispatch! {
     };
     [9167120] CinematicFunction_Intro_Func130 [] {
         crate::game::display_refresh::fade(true, game);
-        if game.g_ram[0x51] == 15 {
+        if game.ram().read_byte(0x51) == 15 {
             set_cinematic_blend(2, 16, 2, 34, game);
             word! { game, 0; screen_fade_delay, screen_fade_counter }
             capture_cinematic_palette(game);
@@ -1160,7 +1160,7 @@ crate::game::callback_dispatch! {
     };
     [9167092] CinematicFunction_Intro_Func129 {
         word! {game; cinematic_function = ((0x8be110i32) as u16); cinematic_var4 = 120; }
-        game.g_ram[0x69] = 16;
+        game.ram().write_byte(0x69, 16);
     };
     @external {
         9167314 => [crate::game::visual_runtime::advance_postcredits_samus_reveal(0, game)];
@@ -1231,7 +1231,10 @@ macro_rules! advance_particle_axis {
     ($game:ident, $k:ident, $slot:ident, $vertical:literal, $table:ident;
         $label:lifetime, $index:ident, $limit:literal;
         $expression:literal, $line:literal, $function:literal) => {
-        let $index: i32 = 2 * $game.g_ram[0x1b7d + 2 * $slot as usize + $vertical as usize] as i32;
+        let $index: i32 = 2 * $game
+            .ram()
+            .read_byte(0x1b7d + 2 * $slot as usize + $vertical as usize)
+            as i32;
         crate::native_assertion! {
             $label: ($index + 1) < $limit;
             $expression, b"src/sm_8b.c\0", $line, $function
@@ -1249,7 +1252,7 @@ crate::game::callback_dispatch! {
     call (j, game); default { Unreachable(game); };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
     [9149647] sub_8B9CCF [] {
-        game.g_ram[0x51] = 15;
+        game.ram().write_byte(0x51, 15);
         word!(game.cinematicspr_preinstr_func[(k >> 1)] = (0x8b93d9i32) as u16);
     };
     [9152744] SetSomeStuffForSpriteObject_4_MetroidEgg [] {

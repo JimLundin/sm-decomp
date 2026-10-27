@@ -2,14 +2,15 @@
 //! tiles and packed transfers independently of the production renderer.
 use super::{put, rom_word};
 use crate::game::{enemy_script::EnemyScript, room_mechanisms as mechanisms};
+use crate::room_background_support::ram_span;
 use crate::{game_state::Game, rom::RomImage};
 
 fn word(game: &Game, at: usize) -> u16 {
-    u16::from_le_bytes([game.g_ram[at], game.g_ram[at + 1]])
+    u16::from_le_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])
 }
 
 fn prepare(game: &mut Game, image: &RomImage) {
-    game.g_ram.fill(0);
+    game.ram().fill(0..game.ram().len(), 0);
     put(game, 0x7a5, 16);
     put(game, 0x7a9, 16);
     put(game, 0x1c87, 34);
@@ -43,10 +44,10 @@ fn tiles(game: &Game, at: usize, expected: &[u16]) {
 fn transfer(game: &Game, index: usize, size: u16, source: u16, destination: u16) {
     let at = 0xd0 + index * 7;
     // Queue words have native serialization, independently asserted bytewise.
-    assert_eq!(&game.g_ram[at..at + 2], &size.to_ne_bytes());
-    assert_eq!(&game.g_ram[at + 2..at + 4], &source.to_ne_bytes());
-    assert_eq!(game.g_ram[at + 4], 0x7e);
-    assert_eq!(&game.g_ram[at + 5..at + 7], &destination.to_ne_bytes());
+    assert_eq!(&ram_span::<2>(&game, at), &size.to_ne_bytes());
+    assert_eq!(&ram_span::<2>(&game, at + 2), &source.to_ne_bytes());
+    assert_eq!(game.ram().read_byte(at + 4), 0x7e);
+    assert_eq!(&ram_span::<2>(&game, at + 5), &destination.to_ne_bytes());
 }
 
 fn pair(game: &Game, destination: u16) {

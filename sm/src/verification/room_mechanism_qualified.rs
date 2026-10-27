@@ -5,6 +5,7 @@ use super::{checks, content::Script};
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::session_runtime::Runtime;
 use crate::rom::RomRecord;
+use crate::room_background_support::{ram_bytes, ram_span, ram_word};
 use crate::{game_state::Game, rom::RomImage};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 fn put(bytes: &mut [u8], at: usize, value: u16) {
@@ -17,11 +18,11 @@ fn rom(image: &RomImage, address: u32, bytes: &[u8]) {
     }
 }
 fn prepare(game: &mut Game, image: &RomImage) {
-    game.g_ram.fill(0);
-    put(&mut game.g_ram, 0x7a5, 16);
-    put(&mut game.g_ram, 0x1c87, 34);
+    game.ram().fill(0..game.ram().len(), 0);
+    ram_word(game.ram(), 0x7a5, 16);
+    ram_word(game.ram(), 0x1c87, 34);
     // Force Draw's ordinary queue-full return after its stream/visibility reads.
-    put(&mut game.g_ram, 0x330, 480);
+    ram_word(game.ram(), 0x330, 480);
     game.loaded_rom = Some(image.clone());
     game.register_native_rom(image.clone());
 }
@@ -29,14 +30,14 @@ fn script(image: &RomImage) -> EnemyScript {
     EnemyScript::at(image.clone(), crate::rtl::lorom_offset(0x849000) as usize)
 }
 fn record_call(identity: u32, game: &mut Game) {
-    game.g_ram[0x20..0x24].copy_from_slice(&identity.to_le_bytes());
+    game.ram().copy_in(0x20, &identity.to_le_bytes());
     // A mutation in the callback must not change the already captured identity.
     let image = game.loaded_rom.as_ref().unwrap();
     rom(image, 0x849000, &[0, 0, 0, 0]);
 }
 fn observe_station(game: &mut Game) {
-    assert_eq!(&game.g_ram[0xaf6..0xaf8], &[0x30, 0x12]);
-    game.g_ram[0x20] = 0xa5;
+    assert_eq!(&ram_span::<2>(&game, 0xaf6), &[0x30, 0x12]);
+    game.ram().write_byte(0x20, 0xa5);
 }
 // These verification-only adapters preserve the old qualified mock interval.
 // They exercise maintained Script reads/advancement and aggregate publication,
@@ -86,35 +87,35 @@ fn qualified_place_on_station(
     returned(position)
 }
 pub(super) fn run(game: &mut Game) -> bool {
-    let saved_ram = game.g_ram.to_vec();
+    let saved_ram = ram_bytes(&game);
     let saved_rom = game.loaded_rom.clone();
     let saved_native = game.capture_native_rom_binding();
     let result = catch_unwind(AssertUnwindSafe(|| {
         let image = RomImage::zeroed(0x300000);
         // Grey-door selector reads the deliberately odd native table as two bytes.
         prepare(game, &image);
-        put(&mut game.g_ram, 0x1e17, 2);
+        ram_word(game.ram(), 0x1e17, 2);
         rom(&image, 0x84be4d, &[0x34, 0x12]);
-        let mut expected = game.g_ram.to_vec();
+        let mut expected = ram_bytes(&game);
         put(&mut expected, 0x1cd7, u16::from_ne_bytes([0x34, 0x12]));
         // SAFETY: prepare registered the complete synthetic ROM and initialized
         // the RAM inputs required by this selected command fixture.
         let returned = unsafe { checks::command(0x84be3f, script(&image), 0, game) };
         assert_eq!(returned.offset_from(bank_base(0x84)), 0x9000);
-        assert_eq!(&game.g_ram[..], &expected[..]);
+        assert_eq!(&ram_bytes(&game), &expected[..]);
         // Both identities retain the command slot for terrain, but use Selected
         // for coordinates/drawing. The second selection has a separate valid stream.
         for opcode in [0x848b05, 0x848b17] {
             for selected in [0u16, 2] {
                 prepare(game, &image);
-                put(&mut game.g_ram, 0x1e17, 0x123);
-                put(&mut game.g_ram, 0x1c27, selected);
-                put(&mut game.g_ram, 0x1c89, 100);
-                put(&mut game.g_ram, 0xde6e, 0xa020);
+                ram_word(game.ram(), 0x1e17, 0x123);
+                ram_word(game.ram(), 0x1c27, selected);
+                ram_word(game.ram(), 0x1c89, 100);
+                ram_word(game.ram(), 0xde6e, 0xa020);
                 rom(&image, 0x84a020, &1u16.to_ne_bytes());
                 rom(&image, 0x84a022, &0x999u16.to_ne_bytes());
                 rom(&image, 0x84a024, &0u16.to_ne_bytes());
-                let mut expected = game.g_ram.to_vec();
+                let mut expected = ram_bytes(&game);
                 for (at, value) in [
                     (0x10024, 0x123),
                     (0x1e69, 0x123),
@@ -132,20 +133,20 @@ pub(super) fn run(game: &mut Game) -> bool {
                 // the RAM inputs required by this selected command fixture.
                 let returned = unsafe { checks::command(opcode, script(&image), 0, game) };
                 assert!(matches!(returned, EnemyScript::Stop));
-                assert_eq!(&game.g_ram[..], &expected[..]);
+                assert_eq!(&ram_bytes(&game), &expected[..]);
             }
         }
         // The target pointer overwrites Selected, so the lower row uses slot zero
         // even though the command's captured slot is one.
         prepare(game, &image);
-        put(&mut game.g_ram, 0x1c87, 98);
-        put(&mut game.g_ram, 0x1c89, 34);
-        put(&mut game.g_ram, 0x1e19, 0x1c27);
-        put(&mut game.g_ram, 0x1c27, 0x44);
+        ram_word(game.ram(), 0x1c87, 98);
+        ram_word(game.ram(), 0x1c89, 34);
+        ram_word(game.ram(), 0x1e19, 0x1c27);
+        ram_word(game.ram(), 0x1c27, 0x44);
         for block in [34usize, 36, 130, 132] {
-            game.g_ram[0x10003 + block] = 0x55;
+            game.ram().write_byte(0x10003 + block, 0x55);
         }
-        let mut expected = game.g_ram.to_vec();
+        let mut expected = ram_bytes(&game);
         expected[0x1c27..0x1c29].copy_from_slice(&1u16.to_ne_bytes());
         for (block, high, bts) in [
             (34usize, 0xa5, 3),
@@ -160,16 +161,16 @@ pub(super) fn run(game: &mut Game) -> bool {
         // the RAM inputs required by this selected command fixture.
         let returned = unsafe { checks::command(0x84dbb8, script(&image), 2, game) };
         assert_eq!(returned.offset_from(bank_base(0x84)), 0x9000);
-        assert_eq!(&game.g_ram[..], &expected[..]);
+        assert_eq!(&ram_bytes(&game), &expected[..]);
         // Both frame tables, both adjacent cells, and Selected != command slot.
         for (opcode, table) in [(0x84e04f, 0x84e05f), (0x84e067, 0x84e077)] {
             for graphic in [0u16, 2] {
                 for selected in [0u16, 2] {
                     prepare(game, &image);
-                    put(&mut game.g_ram, 0xdf0c, graphic);
-                    put(&mut game.g_ram, 0x1c27, selected);
-                    put(&mut game.g_ram, 0x1c89, 100);
-                    put(&mut game.g_ram, 0xde6e, 0xa020);
+                    ram_word(game.ram(), 0xdf0c, graphic);
+                    ram_word(game.ram(), 0x1c27, selected);
+                    ram_word(game.ram(), 0x1c89, 100);
+                    ram_word(game.ram(), 0xde6e, 0xa020);
                     for (address, tile) in [(0xa000u16, 0x321u16), (0xa010, 0x456), (0xa020, 0x999)]
                     {
                         rom(&image, 0x840000 + u32::from(address), &1u16.to_ne_bytes());
@@ -183,7 +184,7 @@ pub(super) fn run(game: &mut Game) -> bool {
                     } else {
                         (0xa010, 0x456)
                     };
-                    let mut expected = game.g_ram.to_vec();
+                    let mut expected = ram_bytes(&game);
                     for (at, value) in [
                         (0x10024, tile),
                         (0xde1c, 4),
@@ -198,7 +199,7 @@ pub(super) fn run(game: &mut Game) -> bool {
                     // the RAM inputs required by this selected command fixture.
                     let returned = unsafe { checks::command(opcode, script(&image), 0, game) };
                     assert!(matches!(returned, EnemyScript::Stop));
-                    assert_eq!(&game.g_ram[..], &expected[..]);
+                    assert_eq!(&ram_bytes(&game), &expected[..]);
                 }
             }
         }
@@ -209,7 +210,7 @@ pub(super) fn run(game: &mut Game) -> bool {
             let bytes = (identity | 0xa5000000).to_ne_bytes();
             rom(&image, 0x849000, &bytes);
             let returned = qualified_call_function(game, script(&image), record_call);
-            assert_eq!(&game.g_ram[0x20..0x24], &identity.to_le_bytes());
+            assert_eq!(&ram_span::<4>(&game, 0x20), &identity.to_le_bytes());
             assert_eq!(returned.offset_from(bank_base(0x84)), 0x9003);
         }
         // The fourth byte must be readable even though it is masked out.
@@ -219,14 +220,14 @@ pub(super) fn run(game: &mut Game) -> bool {
             qualified_call_function(game, EnemyScript::at(short, 0), record_call);
         }));
         assert!(failed.is_err());
-        assert_eq!(&game.g_ram[0x20..0x24], &[0, 0, 0, 0]);
+        assert_eq!(&ram_span::<4>(&game, 0x20), &[0, 0, 0, 0]);
         prepare(game, &image);
-        put(&mut game.g_ram, 0xaf6, 0x1229);
+        ram_word(game.ram(), 0xaf6, 0x1229);
         let returned = qualified_place_on_station(game, script(&image), observe_station);
         assert_eq!(returned.offset_from(bank_base(0x84)), 0x9000);
-        assert_eq!(game.g_ram[0x20], 0xa5);
+        assert_eq!(game.ram().read_byte(0x20), 0xa5);
     }));
-    game.g_ram.copy_from_slice(&saved_ram);
+    game.ram().copy_in(0, &saved_ram);
     game.loaded_rom = saved_rom;
     game.restore_native_rom_binding(saved_native);
     result.is_ok()

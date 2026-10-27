@@ -11,8 +11,8 @@ use crate::rtl::abs16;
 fn write_height(cursor: u16, value: u16, game: &mut Game) {
     let at = 0x9002 + usize::from(cursor);
     let bytes = value.to_ne_bytes();
-    game.g_ram[at] = bytes[0];
-    game.g_ram[at + 1] = bytes[1];
+    game.ram().write_byte(at, bytes[0]);
+    game.ram().write_byte(at + 1, bytes[1]);
 }
 fn build_path(game: &mut Game) {
     let (mut height, mut velocity, mut cursor) = (384u16, 0u16, 0u16);
@@ -88,7 +88,7 @@ pub(crate) fn advance(right: bool, returning: bool, game: &mut Game) {
         slot!(game, Draygon[0xc0].base; current_instruction = instruction, instruction_timer = 1);
     }
     let at = 0x9002 + usize::from(cursor);
-    let height = u16::from_ne_bytes([game.g_ram[at], game.g_ram[at + 1]]);
+    let height = u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]);
     slot!(
         game,
         Draygon[word!(game.cur_enemy_index) as i32].base.y_pos = height

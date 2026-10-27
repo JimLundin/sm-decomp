@@ -1,10 +1,9 @@
-use crate::c_library::{__assert_fail, printf};
+use crate::c_library::printf;
 use crate::initial_state::InitialState;
 use crate::snes::dsp::{Dsp, dsp_cycle, dsp_reset, dsp_write};
 pub use crate::types::{
     Channel, DspRegWriteHistory, NativePlayerState, SfxChan, SfxRegs, SpcPlayer, size_t,
 };
-use ::core::ffi::c_char;
 use ::core::mem::size_of;
 use std::{cell::UnsafeCell, rc::Rc};
 pub const EVOLL: DspReg = 44;

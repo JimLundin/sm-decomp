@@ -1,10 +1,8 @@
-use crate::c_library::{__assert_fail, printf};
-use crate::cpu_infra::{CpuOpcodeHook, HookedFunctionRts};
-use crate::game_state::Game;
+use crate::c_library::printf;
+use crate::execution::Execution;
 use crate::host::Die;
 use crate::rtl::words;
-use crate::snes::snes::{snes_cpuRead, snes_cpuWrite};
-use crate::types::{Cpu, Snes};
+use crate::types::Cpu;
 use ::core::ffi::{c_char, c_void};
 static CYCLES_PER_OPCODE: [u8; 256] = [
     7, 6, 7, 4, 5, 3, 5, 6, 3, 2, 2, 4, 6, 4, 6, 5, 2, 5, 5, 7, 5, 4, 6, 6, 2, 4, 2, 2, 6, 4, 7, 5,
@@ -17,14 +15,13 @@ static CYCLES_PER_OPCODE: [u8; 256] = [
     2, 6, 3, 4, 3, 3, 5, 6, 2, 2, 2, 3, 4, 4, 6, 5, 2, 5, 5, 7, 5, 4, 6, 6, 2, 4, 4, 2, 8, 4, 7, 5,
 ];
 
-unsafe fn read_byte(cpu: *mut Cpu, adr: u32, game: &mut Game) -> u8 {
-    unsafe { snes_cpuRead((*cpu).mem as *mut Snes, adr, game) }
+// Instruction algorithms execute through the live owned backend context.
+unsafe fn cpu_read_byte(address: u32, context: &mut Execution<'_>) -> u8 {
+    unsafe { context.cpu_read(address) }
 }
 
-unsafe fn write_byte(cpu: *mut Cpu, adr: u32, val: u8, game: &mut Game) {
-    unsafe {
-        snes_cpuWrite((*cpu).mem as *mut Snes, adr, val, game);
-    }
+unsafe fn cpu_write_byte(address: u32, value: u8, context: &mut Execution<'_>) {
+    unsafe { context.cpu_write(address, value) }
 }
 
 fn finish_reset(cpu: &mut Cpu) {
@@ -34,11 +31,11 @@ fn finish_reset(cpu: &mut Cpu) {
     stopped = false, cyclesUsed = 0, };
 }
 
-pub unsafe fn cpu_reset(cpu: *mut Cpu, game: &mut Game) {
+unsafe fn reset_cpu(cpu: *mut Cpu, context: &mut Execution<'_>) {
     unsafe {
         set_fields! {[(*cpu)], 0; a, x, y}
         (*cpu).sp = 0x100;
-        (*cpu).pc = read_word(cpu, 0xfffc, 0xfffd, game);
+        (*cpu).pc = read_word(0xfffc, 0xfffd, context);
         finish_reset(&mut *cpu);
     }
 }
@@ -50,7 +47,7 @@ pub unsafe fn cpu_saveload(cpu: *mut Cpu, io: &mut crate::snapshot_io::SnapshotI
     }
 }
 
-pub unsafe fn cpu_runOpcode(cpu: *mut Cpu, game: &mut Game) -> i32 {
+unsafe fn run_opcode(cpu: *mut Cpu, context: &mut Execution<'_>) -> i32 {
     unsafe {
         (*cpu).cyclesUsed = 0;
         if (*cpu).stopped {
@@ -67,16 +64,16 @@ pub unsafe fn cpu_runOpcode(cpu: *mut Cpu, game: &mut Game) -> i32 {
             (*cpu).cyclesUsed = 7;
             if (*cpu).nmiWanted {
                 (*cpu).nmiWanted = false;
-                service_interrupt(cpu, false, game);
+                service_interrupt(cpu, false, context);
             } else {
-                service_interrupt(cpu, true, game);
+                service_interrupt(cpu, true, context);
             }
         }
-        let opcode = fetch_byte(cpu, game);
+        let opcode = fetch_byte(cpu, context);
         (*cpu).cyclesUsed = (*cpu)
             .cyclesUsed
             .wrapping_add(CYCLES_PER_OPCODE[usize::from(opcode)]);
-        dispatch_opcode(cpu, opcode, game);
+        dispatch_opcode(cpu, opcode, context);
         i32::from((*cpu).cyclesUsed)
     }
 }
@@ -86,17 +83,17 @@ fn next_program_address(cpu: &mut Cpu) -> u32 {
     u32::from(cpu.k) << 16 | u32::from(pc)
 }
 
-unsafe fn fetch_byte(cpu: *mut Cpu, game: &mut Game) -> u8 {
+unsafe fn fetch_byte(cpu: *mut Cpu, context: &mut Execution<'_>) -> u8 {
     unsafe {
         let address = next_program_address(&mut *cpu);
-        read_byte(cpu, address, game)
+        cpu_read_byte(address, context)
     }
 }
 
-unsafe fn fetch_word(cpu: *mut Cpu, game: &mut Game) -> u16 {
+unsafe fn fetch_word(cpu: *mut Cpu, context: &mut Execution<'_>) -> u16 {
     unsafe {
-        let low = fetch_byte(cpu, game);
-        let high = fetch_byte(cpu, game);
+        let low = fetch_byte(cpu, context);
+        let high = fetch_byte(cpu, context);
         u16::from_le_bytes([low, high])
     }
 }
@@ -134,54 +131,54 @@ fn adjust_stack_pointer(delta: u16, cpu: &mut Cpu) {
     }
 }
 
-unsafe fn pull_byte(cpu: *mut Cpu, game: &mut Game) -> u8 {
+unsafe fn pull_byte(cpu: *mut Cpu, context: &mut Execution<'_>) -> u8 {
     unsafe {
         adjust_stack_pointer(1, &mut *cpu);
-        read_byte(cpu, u32::from((*cpu).sp), game)
+        cpu_read_byte(u32::from((*cpu).sp), context)
     }
 }
 
-unsafe fn push_byte(cpu: *mut Cpu, value: u8, game: &mut Game) {
+unsafe fn push_byte(cpu: *mut Cpu, value: u8, context: &mut Execution<'_>) {
     unsafe {
-        write_byte(cpu, u32::from((*cpu).sp), value, game);
+        cpu_write_byte(u32::from((*cpu).sp), value, context);
         adjust_stack_pointer(u16::MAX, &mut *cpu);
     }
 }
 
-unsafe fn pull_word(cpu: *mut Cpu, game: &mut Game) -> u16 {
+unsafe fn pull_word(cpu: *mut Cpu, context: &mut Execution<'_>) -> u16 {
     unsafe {
-        let low = pull_byte(cpu, game);
-        let high = pull_byte(cpu, game);
+        let low = pull_byte(cpu, context);
+        let high = pull_byte(cpu, context);
         u16::from_le_bytes([low, high])
     }
 }
 
-unsafe fn push_word(cpu: *mut Cpu, value: u16, game: &mut Game) {
+unsafe fn push_word(cpu: *mut Cpu, value: u16, context: &mut Execution<'_>) {
     unsafe {
         let [low, high] = value.to_le_bytes();
-        push_byte(cpu, high, game);
-        push_byte(cpu, low, game);
+        push_byte(cpu, high, context);
+        push_byte(cpu, low, context);
     }
 }
 
-unsafe fn read_word(cpu: *mut Cpu, adrl: u32, adrh: u32, game: &mut Game) -> u16 {
+unsafe fn read_word(adrl: u32, adrh: u32, context: &mut Execution<'_>) -> u16 {
     unsafe {
-        let low = read_byte(cpu, adrl, game);
-        let high = read_byte(cpu, adrh, game);
+        let low = cpu_read_byte(adrl, context);
+        let high = cpu_read_byte(adrh, context);
         u16::from_le_bytes([low, high])
     }
 }
 
-unsafe fn service_interrupt(cpu: *mut Cpu, irq: bool, game: &mut Game) {
+unsafe fn service_interrupt(cpu: *mut Cpu, irq: bool, context: &mut Execution<'_>) {
     unsafe {
         if !(*cpu).e {
-            push_byte(cpu, (*cpu).k, game);
+            push_byte(cpu, (*cpu).k, context);
             (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         }
-        push_word(cpu, (*cpu).pc, game);
+        push_word(cpu, (*cpu).pc, context);
         let flags = cpu_getFlags(&*cpu);
         // Bit 4 is the cleared B flag on an emulation-mode hardware interrupt.
-        push_byte(cpu, if (*cpu).e { flags & !0x10 } else { flags }, game);
+        push_byte(cpu, if (*cpu).e { flags & !0x10 } else { flags }, context);
         (*cpu).i = true;
         (*cpu).d = false;
         (*cpu).k = 0;
@@ -191,23 +188,23 @@ unsafe fn service_interrupt(cpu: *mut Cpu, irq: bool, game: &mut Game) {
             (true, false) => 0xfffa,
             (true, true) => 0xfffe,
         };
-        (*cpu).pc = read_word(cpu, vector, vector + 1, game);
+        (*cpu).pc = read_word(vector, vector + 1, context);
     }
 }
 
-unsafe fn fetch_long_address(cpu: *mut Cpu, game: &mut Game) -> u32 {
+unsafe fn fetch_long_address(cpu: *mut Cpu, context: &mut Execution<'_>) -> u32 {
     unsafe {
-        let offset = fetch_word(cpu, game);
-        let bank = fetch_byte(cpu, game);
+        let offset = fetch_word(cpu, context);
+        let bank = fetch_byte(cpu, context);
         u32::from(bank) << 16 | u32::from(offset)
     }
 }
 
-unsafe fn address_absolute_indexed_indirect(cpu: *mut Cpu, game: &mut Game) -> u16 {
+unsafe fn address_absolute_indexed_indirect(cpu: *mut Cpu, context: &mut Execution<'_>) -> u16 {
     unsafe {
-        let adr = fetch_word(cpu, game);
+        let adr = fetch_word(cpu, context);
         let (low, high) = indexed_jump_pointer(adr, &*cpu);
-        read_word(cpu, low, high, game)
+        read_word(low, high, context)
     }
 }
 
@@ -220,22 +217,32 @@ fn indexed_jump_pointer(offset: u16, cpu: &Cpu) -> (u32, u32) {
     )
 }
 
-pub unsafe fn DumpCpuHistory(game: &mut Game) {
+unsafe fn print_cpu_history(mut sample: impl FnMut(u32) -> u32) {
     unsafe {
         for i in 0i32..8 {
-            printf(
-                c"PC history: 0x%x\n".as_ptr(),
-                game.pc_hist[(game.pc_hist_ctr.wrapping_add(i as u32) & 7_) as usize],
-            );
+            // Sample live fields separately for every line; their borrows end
+            // before entering the native formatter.
+            let value = sample(i as u32);
+            printf(c"PC history: 0x%x\n".as_ptr(), value);
         }
     }
 }
 
-fn record_opcode_history(bank: u8, pc: u16, game: &mut Game) {
+unsafe fn dump_cpu_history(context: &mut Execution<'_>) {
+    unsafe {
+        print_cpu_history(|offset| {
+            let (history, counter) = (&mut *context.host.pc_hist, &mut *context.host.pc_hist_ctr);
+            history[(counter.wrapping_add(offset) & 7_) as usize]
+        })
+    }
+}
+
+fn record_opcode_history(bank: u8, pc: u16, context: &mut Execution<'_>) {
     // Preserve the inherited history value of 0xffffffff when PC is zero.
     let cur_pc = (i32::from(bank) << 16 | (i32::from(pc) - 1)) as u32;
-    game.pc_hist[game.pc_hist_ctr as usize] = cur_pc;
-    game.pc_hist_ctr = game.pc_hist_ctr.wrapping_add(1) & 7;
+    let (history, counter) = (&mut *context.host.pc_hist, &mut *context.host.pc_hist_ctr);
+    history[*counter as usize] = cur_pc;
+    *counter = counter.wrapping_add(1) & 7;
 }
 
 // Public Cpu layout from unmodified dinkc64/LakeSnes 048a0d72568668f74e0cdf371dcd9e8efd614965.
@@ -270,10 +277,9 @@ macro_rules! transfer_registers {
         d = source.d, xf = source.xf, mf = source.mf, e = source.e, };
     }};
 }
-struct LakeBus {
-    cpu: *mut Cpu,
+struct LakeBus<'a, 'backend> {
     core: *mut LakeCpu,
-    game: *mut Game,
+    context: &'a mut Execution<'backend>,
     opcode: Option<u8>,
     cycles: u8,
     accesses: u8,
@@ -281,7 +287,7 @@ struct LakeBus {
     indexed_write: bool,
     index: u16,
 }
-impl LakeBus {
+impl LakeBus<'_, '_> {
     unsafe fn access(&mut self, address: u32) {
         unsafe {
             self.cycles = self.cycles.wrapping_add(1);
@@ -309,33 +315,37 @@ impl LakeBus {
 }
 unsafe extern "C" fn lake_read(context: *mut c_void, address: u32) -> u8 {
     unsafe {
-        let bus = &mut *context.cast::<LakeBus>();
+        let bus = &mut *context.cast::<LakeBus<'_, '_>>();
         bus.access(address);
         if let Some(opcode) = bus.opcode.take() {
             return opcode;
         }
-        transfer_registers!(&mut *bus.cpu, &*bus.core);
-        let value = read_byte(bus.cpu, address, &mut *bus.game);
-        transfer_registers!(&mut *bus.core, &*bus.cpu);
+        let cpu = bus.context.cpu();
+        transfer_registers!(&mut *cpu, &*bus.core);
+        let value = cpu_read_byte(address, bus.context);
+        let cpu = bus.context.cpu();
+        transfer_registers!(&mut *bus.core, &*cpu);
         value
     }
 }
 unsafe extern "C" fn lake_write(context: *mut c_void, address: u32, value: u8) {
     unsafe {
-        let bus = &mut *context.cast::<LakeBus>();
+        let bus = &mut *context.cast::<LakeBus<'_, '_>>();
         bus.access(address);
-        transfer_registers!(&mut *bus.cpu, &*bus.core);
-        write_byte(bus.cpu, address, value, &mut *bus.game);
-        transfer_registers!(&mut *bus.core, &*bus.cpu);
+        let cpu = bus.context.cpu();
+        transfer_registers!(&mut *cpu, &*bus.core);
+        cpu_write_byte(address, value, bus.context);
+        let cpu = bus.context.cpu();
+        transfer_registers!(&mut *bus.core, &*cpu);
     }
 }
 unsafe extern "C" fn lake_idle(context: *mut c_void, _waiting: bool) {
     unsafe {
-        let bus = &mut *context.cast::<LakeBus>();
+        let bus = &mut *context.cast::<LakeBus<'_, '_>>();
         bus.cycles = bus.cycles.wrapping_add(1);
     }
 }
-unsafe fn execute_upstream(cpu: *mut Cpu, opcode: u8, game: &mut Game) {
+unsafe fn execute_upstream(cpu: *mut Cpu, opcode: u8, context: &mut Execution<'_>) {
     unsafe {
         // No foreign state persists across instruction boundaries or snapshots.
         let mut core: LakeCpu = core::mem::zeroed();
@@ -356,9 +366,8 @@ unsafe fn execute_upstream(cpu: *mut Cpu, opcode: u8, game: &mut Game) {
             core.x
         };
         let mut bus = LakeBus {
-            cpu,
             core: &mut core,
-            game,
+            context,
             opcode: Some(opcode),
             cycles: 0,
             accesses: 0,
@@ -370,7 +379,7 @@ unsafe fn execute_upstream(cpu: *mut Cpu, opcode: u8, game: &mut Game) {
             indexed_write: opcode != 0xbe && (opcode >> 5 == 4 || mode == 0x1e),
             index,
         };
-        core.mem = (&mut bus as *mut LakeBus).cast();
+        core.mem = (&mut bus as *mut LakeBus<'_, '_>).cast();
         // The existing wrapper already fetched the opcode and serviced interrupts.
         // Its base cost belongs to the original byte, even when a hook replaced it.
         lake_run_opcode(&mut core);
@@ -381,21 +390,21 @@ unsafe fn execute_upstream(cpu: *mut Cpu, opcode: u8, game: &mut Game) {
     }
 }
 
-unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
+unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, context: &mut Execution<'_>) {
     unsafe {
-        record_opcode_history((*cpu).k, (*cpu).pc, game);
+        record_opcode_history((*cpu).k, (*cpu).pc, context);
         if opcode == 0 {
             let addr = (u32::from((*cpu).k) << 16) | u32::from((*cpu).pc) | 0x800000;
-            opcode = CpuOpcodeHook(addr.wrapping_sub(1), game) as u8;
+            opcode = crate::cpu_infra::opcode_hook(context, addr.wrapping_sub(1)) as u8;
             match opcode {
                 0x00 => return,
                 0x01 => {
-                    (*cpu).pc = pull_word(cpu, game).wrapping_add(1);
+                    (*cpu).pc = pull_word(cpu, context).wrapping_add(1);
                     return;
                 }
                 0x02 => {
-                    (*cpu).pc = pull_word(cpu, game).wrapping_add(1);
-                    (*cpu).k = pull_byte(cpu, game);
+                    (*cpu).pc = pull_word(cpu, context).wrapping_add(1);
+                    (*cpu).k = pull_byte(cpu, context);
                     return;
                 }
                 0xe5 | 0xe9 | 0xed => (*cpu).c = true,
@@ -405,43 +414,42 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
         }
         match opcode {
             0x02 => {
-                fetch_byte(cpu, game);
-                push_byte(cpu, (*cpu).k, game);
-                push_word(cpu, (*cpu).pc, game);
-                push_byte(cpu, cpu_getFlags(&*cpu), game);
+                fetch_byte(cpu, context);
+                push_byte(cpu, (*cpu).k, context);
+                push_word(cpu, (*cpu).pc, context);
+                push_byte(cpu, cpu_getFlags(&*cpu), context);
                 set_fields! {[(*cpu)]; cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1), i = true,
-                d = false, k = 0_, pc = read_word(cpu, 0xffe4_, 0xffe5_, game), };
+                d = false, k = 0_, pc = read_word(0xffe4_, 0xffe5_, context), };
             }
             0x1b => (*cpu).sp = (*cpu).a,
             0x22 => {
-                let address = fetch_long_address(cpu, game);
+                let address = fetch_long_address(cpu, context);
                 let target = address as u16;
                 let newK = (address >> 16) as u8;
-                push_byte(cpu, (*cpu).k, game);
-                push_word(cpu, (*cpu).pc.wrapping_sub(1), game);
+                push_byte(cpu, (*cpu).k, context);
+                push_word(cpu, (*cpu).pc.wrapping_sub(1), context);
                 (*cpu).pc = target;
                 (*cpu).k = newK;
             }
             0x40 => {
-                cpu_setFlags(pull_byte(cpu, game), &mut *cpu);
-                (*cpu).pc = pull_word(cpu, game);
+                cpu_setFlags(pull_byte(cpu, context), &mut *cpu);
+                (*cpu).pc = pull_word(cpu, context);
                 if !(*cpu).e {
                     (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-                    (*cpu).k = pull_byte(cpu, game);
+                    (*cpu).k = pull_byte(cpu, context);
                 }
             }
             0x42 => {
-                fetch_byte(cpu, game);
+                fetch_byte(cpu, context);
             }
             0x44 => {
-                let dest = fetch_byte(cpu, game);
-                let src = fetch_byte(cpu, game);
+                let dest = fetch_byte(cpu, context);
+                let src = fetch_byte(cpu, context);
                 (*cpu).db = dest;
-                write_byte(
-                    cpu,
+                cpu_write_byte(
                     u32::from(dest) << 16 | u32::from((*cpu).y),
-                    read_byte(cpu, u32::from(src) << 16 | u32::from((*cpu).x), game),
-                    game,
+                    cpu_read_byte(u32::from(src) << 16 | u32::from((*cpu).x), context),
+                    context,
                 );
                 (*cpu).a = (*cpu).a.wrapping_sub(1);
                 (*cpu).x = (*cpu).x.wrapping_sub(1);
@@ -455,14 +463,13 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 }
             }
             0x54 => {
-                let dest_0 = fetch_byte(cpu, game);
-                let src_0 = fetch_byte(cpu, game);
+                let dest_0 = fetch_byte(cpu, context);
+                let src_0 = fetch_byte(cpu, context);
                 (*cpu).db = dest_0;
-                write_byte(
-                    cpu,
+                cpu_write_byte(
                     u32::from(dest_0) << 16 | u32::from((*cpu).y),
-                    read_byte(cpu, u32::from(src_0) << 16 | u32::from((*cpu).x), game),
-                    game,
+                    cpu_read_byte(u32::from(src_0) << 16 | u32::from((*cpu).x), context),
+                    context,
                 );
                 (*cpu).a = (*cpu).a.wrapping_sub(1);
                 (*cpu).x = (*cpu).x.wrapping_add(1);
@@ -476,7 +483,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 }
             }
             0x5c => {
-                let address = fetch_long_address(cpu, game);
+                let address = fetch_long_address(cpu, context);
                 let target = address as u16;
                 let target_bank = (address >> 16) as u8;
                 if target_bank == 0x80 && target == 0x8573 {
@@ -484,7 +491,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                         b"Current PC = 0x%x\n\0" as *const u8 as *const c_char,
                         words!(i32, (*cpu), k, pc),
                     );
-                    DumpCpuHistory(game);
+                    dump_cpu_history(context);
                     Die(b"The game has crashed!\n\0" as *const u8 as *const c_char);
                 }
                 (*cpu).k = target_bank;
@@ -501,11 +508,11 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                         };
                     }
                     (*cpu).spBreakpoint = 0;
-                    if HookedFunctionRts(i32::from(delta == 2), game) {
+                    if crate::cpu_infra::hooked_return(context, i32::from(delta == 2)) {
                         return;
                     }
                 }
-                (*cpu).pc = pull_word(cpu, game).wrapping_add(1);
+                (*cpu).pc = pull_word(cpu, context).wrapping_add(1);
             }
             0x6b => {
                 if (*cpu).sp >= (*cpu).spBreakpoint && (*cpu).spBreakpoint != 0 {
@@ -517,29 +524,51 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                         };
                     }
                     (*cpu).spBreakpoint = 0;
-                    if HookedFunctionRts(0, game) {
+                    if crate::cpu_infra::hooked_return(context, 0) {
                         return;
                     }
                 }
-                (*cpu).pc = pull_word(cpu, game).wrapping_add(1);
-                (*cpu).k = pull_byte(cpu, game);
+                (*cpu).pc = pull_word(cpu, context).wrapping_add(1);
+                (*cpu).k = pull_byte(cpu, context);
             }
             0x9a => (*cpu).sp = (*cpu).x,
             0xcb => (*cpu).waiting = true,
             0xdb => (*cpu).stopped = true,
             0xf4 => {
-                let w: u16 = fetch_word(cpu, game);
+                let w: u16 = fetch_word(cpu, context);
                 if w == 0xc2ae {
                     (*cpu).y = 0;
                 }
-                push_word(cpu, w, game);
+                push_word(cpu, w, context);
             }
             0xfc => {
-                let target = address_absolute_indexed_indirect(cpu, game);
-                push_word(cpu, (*cpu).pc.wrapping_sub(1), game);
+                let target = address_absolute_indexed_indirect(cpu, context);
+                push_word(cpu, (*cpu).pc.wrapping_sub(1), context);
                 (*cpu).pc = target;
             }
-            _ => execute_upstream(cpu, opcode, game),
+            _ => execute_upstream(cpu, opcode, context),
         }
+    }
+}
+
+impl Execution<'_> {
+    /// Requires the live owned CPU and exclusive retained backend interval.
+    pub(crate) unsafe fn step_cpu(&mut self) -> i32 {
+        let cpu = self.cpu();
+        unsafe { run_opcode(cpu, self) }
+    }
+
+    /// # Safety
+    /// The selected CPU must be live and exclusively accessible. Native/device
+    /// consumers must be quiescent for this backend interval.
+    pub(crate) unsafe fn reset_cpu(&mut self) {
+        unsafe {
+            let cpu = self.selected_cpu();
+            reset_cpu(cpu, self);
+        }
+    }
+
+    pub(crate) unsafe fn dump_cpu_history(&mut self) {
+        unsafe { dump_cpu_history(self) }
     }
 }

@@ -40,7 +40,9 @@ pub(crate) fn check_case(id: u32) -> bool {
             0xf78 + enemy as usize + offset_of!(Layout, base.y_pos),
             0xabcd,
         );
-        let mut bytes = game.g_ram.to_vec();
+        let mut bytes = (0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<_>>();
         // Literal byte expectation includes odd cursor and linear ffff extent.
         bytes[0x9000 + cursor as usize..0x9004 + cursor as usize]
             .copy_from_slice(&[0x34, 0x12, 0xcd, 0xab]);
@@ -53,8 +55,10 @@ pub(crate) fn check_case(id: u32) -> bool {
         put(&mut game, w::eproj_init_param_1, source);
         put(&mut game, w::fx_y_pos, if n < 4 { 2 } else { 0xffff });
         let at = a::eproj_x_pos + usize::from(source & !1);
-        let value = u16::from_le_bytes([game.g_ram[at], game.g_ram[at + 1]]);
-        let mut bytes = game.g_ram.to_vec();
+        let value = u16::from_le_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]);
+        let mut bytes = (0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<_>>();
         write(&mut bytes, a::eproj_x_pos + usize::from(target & !1), value);
         write(
             &mut bytes,
@@ -69,7 +73,9 @@ pub(crate) fn check_case(id: u32) -> bool {
         let target = [0u16, 1, 32, 34][(id - 16) as usize];
         slot(&mut game, a::eproj_E, target, 2);
         slot(&mut game, a::eproj_id, 2, 0);
-        let mut bytes = game.g_ram.to_vec();
+        let mut bytes = (0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<_>>();
         write(&mut bytes, a::eproj_id + usize::from(target & !1), 0);
         expected = bytes;
         super::super::with_execution(&mut game, |ctx| {
@@ -80,7 +86,9 @@ pub(crate) fn check_case(id: u32) -> bool {
         put(&mut game, w::vram_write_queue_tail, tail);
         put(&mut game, w::samus_x_pos, 0x1234);
         put(&mut game, w::samus_y_pos, 16);
-        let mut bytes = game.g_ram.to_vec();
+        let mut bytes = (0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<_>>();
         for (position, source, destination) in [
             (tail, addr_kEprojInit_AB07_Tile0 as u16, 28160),
             (
@@ -105,7 +113,10 @@ pub(crate) fn check_case(id: u32) -> bool {
         });
     }
     assert_eq!(
-        game.g_ram.as_slice(),
+        (0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<_>>()
+            .as_slice(),
         expected.as_slice(),
         "qualified enemy-projectile case {id}"
     );

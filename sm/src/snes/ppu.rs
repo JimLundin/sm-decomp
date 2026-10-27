@@ -1,9 +1,8 @@
-use crate::game_state::Game;
 use crate::initial_state::InitialState;
 use ::core::ffi::{c_char, c_void};
 use ::core::mem::{size_of, transmute};
 
-use crate::c_library::{__assert_fail, memcpy, memset};
+use crate::c_library::{memcpy, memset};
 pub use crate::types::{Ppu, PpuPixelPrioBufs, PpuZbufType, Snes, size_t};
 crate::type_aliases! {
     pub C2RustUnnamed_0, C2RustUnnamed_1, C2RustUnnamed_2, C2RustUnnamed_3 = u32;
@@ -134,7 +133,7 @@ fn update_brightness_tables(brightness: u8, normal: &mut [u8; 63], half: &mut [u
     let maximum = normal[31];
     normal[32..].fill(maximum);
 }
-pub unsafe fn ppu_runLine(ppu: *mut Ppu, line: i32, game: &mut Game) {
+pub(crate) unsafe fn ppu_run_line(ppu: *mut Ppu, line: i32, new_ppu: &bool) {
     unsafe {
         if line == 0 {
             set_fields! {[(*ppu)]; mosaicStartLine = 1, rangeOver = false_0 != 0,
@@ -154,7 +153,7 @@ pub unsafe fn ppu_runLine(ppu: *mut Ppu, line: i32, game: &mut Game) {
                 !(*ppu).forcedBlank && ppu_evaluateSprites(ppu, line - 1i32) as i32 != 0;
             // EXTBG composition and enabled mosaic use the per-pixel path.
             let mosaic = (*ppu).mosaicSize > 1 && (*ppu).bgLayer.iter().any(|bg| bg.mosaicEnabled);
-            if game.g_new_ppu && !((*ppu).mode == 7 && (*ppu).m7extBg) && !mosaic {
+            if *new_ppu && !((*ppu).mode == 7 && (*ppu).m7extBg) && !mosaic {
                 PpuDrawWholeLine(ppu, line as u32);
             } else {
                 if (*ppu).mode as i32 == 7 {

@@ -33,8 +33,9 @@ pub(crate) fn native_rom_diagnostic(address: u32, game: &mut Game) {
 
 #[forbid(unsafe_code)]
 fn draw_trail(game: &mut Game, pair: usize, right: bool, frozen: bool) {
-    let read = encoding::read;
-    let saved = read(&game.g_ram, 0x590);
+    let ram = game.ram();
+    let read = |at| encoding::read(&|at| ram.read_byte(at), at);
+    let saved = read(0x590);
     if (saved as i16).wrapping_sub(512) >= 0 {
         return;
     }
@@ -43,7 +44,7 @@ fn draw_trail(game: &mut Game, pair: usize, right: bool, frozen: bool) {
     } else {
         (0xd658, 0xd730, 0xd778, 0xd6e8)
     };
-    if frozen && read(&game.g_ram, timer + 2 * pair) == 0 {
+    if frozen && read(timer + 2 * pair) == 0 {
         return;
     }
     crate::verify_probe::hit(match (frozen, right) {
@@ -52,17 +53,18 @@ fn draw_trail(game: &mut Game, pair: usize, right: bool, frozen: bool) {
         (false, false) => "trails.draw.active_left",
         (false, true) => "trails.draw.active_right",
     });
-    let x = read(&game.g_ram, x_field + 2 * pair).wrapping_sub(read(&game.g_ram, 0x911));
+    let x = read(x_field + 2 * pair).wrapping_sub(read(0x911));
     if x & 0xff00 == 0 {
-        let entry = 0x370 + usize::from(read(&game.g_ram, 0x590));
-        game.g_ram[entry..entry + 2].copy_from_slice(&x.to_ne_bytes());
+        let entry = 0x370 + usize::from(read(0x590));
+        game.ram().copy_in(entry, &x.to_ne_bytes());
         // Preserve rereads after each overlapping native OAM store.
-        let y = read(&game.g_ram, y_field + 2 * pair).wrapping_sub(read(&game.g_ram, 0x915));
+        let y = read(y_field + 2 * pair).wrapping_sub(read(0x915));
         if y & 0xff00 == 0 {
-            game.g_ram[entry + 1..entry + 3].copy_from_slice(&y.to_ne_bytes());
-            let tile = read(&game.g_ram, tile_field + 2 * pair);
-            game.g_ram[entry + 2..entry + 4].copy_from_slice(&tile.to_ne_bytes());
-            game.g_ram[0x590..0x592].copy_from_slice(&saved.wrapping_add(4).to_le_bytes());
+            game.ram().copy_in(entry + 1, &y.to_ne_bytes());
+            let tile = read(tile_field + 2 * pair);
+            game.ram().copy_in(entry + 2, &tile.to_ne_bytes());
+            game.ram()
+                .copy_in(0x590, &saved.wrapping_add(4).to_le_bytes());
         }
     }
 }
@@ -82,7 +84,7 @@ impl<'g> Runtime<'g> {
         player_normal_transfers::record(game, 0);
         Self {
             state: Some(import_session(game)),
-            inputs: encoding::inputs(&game.g_ram),
+            inputs: encoding::inputs(&|at| game.ram().read_byte(at)),
             game,
         }
     }
@@ -95,7 +97,7 @@ impl<'g> Runtime<'g> {
         export_session(state, self.game);
         let result = action(self.game);
         self.state = Some(import_session(self.game));
-        self.inputs = encoding::inputs(&self.game.g_ram);
+        self.inputs = encoding::inputs(&|at| self.game.ram().read_byte(at));
         result
     }
     /// Compose an already-owned operation while retaining the former foreign
@@ -139,7 +141,8 @@ impl<'g> Runtime<'g> {
         }
     }
     pub(crate) fn byte(&self, at: usize) -> u8 {
-        encoding::projected_byte(self.session(), at).unwrap_or_else(|| self.game.g_ram[at])
+        encoding::projected_byte(self.session(), at)
+            .unwrap_or_else(|| self.game.ram().read_byte(at))
     }
     pub(crate) fn word(&self, at: usize) -> u16 {
         u16::from_le_bytes([self.byte(at), self.byte(at + 1)])
@@ -187,15 +190,15 @@ impl<'g> Runtime<'g> {
             at,
             value,
         ) {
-            self.game.g_ram[at] = value;
+            self.game.ram().write_byte(at, value);
         }
-        self.inputs = encoding::inputs(&self.game.g_ram);
+        self.inputs = encoding::inputs(&|at| self.game.ram().read_byte(at));
         // Preserve observation refresh timing while A5A is owned by Session.
         self.inputs.transitions.frame_gamma = self.session().player.transitions.frame_gamma;
     }
     pub(crate) fn write_slice(&mut self, at: usize, bytes: &[u8]) {
         let end = at.checked_add(bytes.len()).expect("aggregate write extent");
-        let _ = &self.game.g_ram[at..end];
+        assert!(at <= end && end <= 0x20000);
         for (lane, &value) in bytes.iter().enumerate() {
             self.set_byte(at + lane, value);
         }
@@ -413,7 +416,7 @@ pub(crate) fn run_mechanisms(
     context: crate::game::room_mechanisms::host::CallerContext,
 ) -> u8 {
     use crate::game::room_mechanisms::host::{CallerContext, Pass, RunResult};
-    let mut pass = match game.g_ram[0x613] {
+    let mut pass = match game.ram().read_byte(0x613) {
         0 => Pass::Instructions,
         1 => Pass::DisplayMessage,
         other => Pass::Invalid(other),
@@ -425,11 +428,11 @@ pub(crate) fn run_mechanisms(
     match context {
         CallerContext::Gameplay | CallerContext::DoorTransition => match result {
             RunResult::Complete => {
-                game.g_ram[0x613] = 0;
+                game.ram().write_byte(0x613, 0);
                 0
             }
             RunResult::Yield(value) => {
-                game.g_ram[0x613] = 1;
+                game.ram().write_byte(0x613, 1);
                 value.get()
             }
         },
@@ -439,7 +442,11 @@ pub(crate) fn run_mechanisms(
 pub(crate) fn import_session(game: &mut Game) -> Session {
     #[cfg(sm_verify_dll)]
     player_normal_transfers::record(game, 1);
-    let mut state = encoding::decode(&game.g_ram, game.world().clone());
+    let mut state = encoding::decode(
+        &|at| game.ram().read_byte(at),
+        0x20000,
+        game.world().clone(),
+    );
     import_native_spawn(&mut state, game);
     state.actor_identity = game.take_actor_identity();
     state
@@ -476,7 +483,7 @@ pub(crate) fn export_session(state: Session, game: &mut Game) {
     #[cfg(sm_verify_dll)]
     player_normal_transfers::record(guard.game, 2);
     let state = guard.state.as_ref().expect("export owns Session");
-    encoding::encode(state, &mut guard.game.g_ram);
+    encoding::encode(state, |at, bytes| guard.game.ram().copy_in(at, bytes));
     export_native_spawn(state, guard.game);
     // Drop moves identity exactly once, after the byte/native publication.
 }
@@ -1279,7 +1286,8 @@ impl Runtime<'_> {
             }
             let bytes = usize::from(record.word(2)) * 2;
             record.base += 4;
-            let _ = &self.game.g_ram[destination..destination + bytes];
+            let end = destination + bytes;
+            assert!(destination <= end && end <= 0x20000);
             for i in 0..bytes {
                 let mut value = record.byte(i);
                 if i & 1 != 0 {

@@ -199,11 +199,15 @@ pub(in crate::game) fn write_projected_byte(s: &mut Session, at: usize, value: u
 
 /// Imports only new common fields after a whole-span preflight. No partial
 /// Session mutation on short input, and no identity/lifetime reconstruction.
-pub(in crate::game) fn import_common(s: &mut Session, bytes: &[u8]) {
-    assert!(bytes.len() >= COMMON_END, "short actor common import");
+pub(in crate::game) fn import_common(
+    s: &mut Session,
+    bytes: &impl Fn(usize) -> u8,
+    byte_len: usize,
+) {
+    assert!(byte_len >= COMMON_END, "short actor common import");
     for (start, end) in COMMON_RANGES {
         for at in start..end {
-            let written = write_projected_byte(s, at, bytes[at]);
+            let written = write_projected_byte(s, at, bytes(at));
             debug_assert!(written, "missing actor common byte {at:x}");
         }
     }
@@ -221,11 +225,13 @@ pub(in crate::game) fn visit_common(s: &Session, mut visit: impl FnMut(usize, u1
 }
 
 /// Preflight is before the first write, including any byte-array tail.
-pub(in crate::game) fn export_common(s: &Session, bytes: &mut [u8]) {
-    assert!(bytes.len() >= COMMON_END, "short actor common export");
-    visit_common(s, |at, value| {
-        bytes[at..at + 2].copy_from_slice(&value.to_le_bytes())
-    });
+pub(in crate::game) fn export_common(
+    s: &Session,
+    byte_len: usize,
+    mut span: impl FnMut(usize, &[u8]),
+) {
+    assert!(byte_len >= COMMON_END, "short actor common export");
+    visit_common(s, |at, value| span(at, &value.to_le_bytes()));
 }
 
 pub(super) fn read_actor<H: ?Sized>(

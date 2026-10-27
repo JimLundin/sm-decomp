@@ -1,6 +1,7 @@
 //! Prepared-world cases through the actual GameOwner and retained hardware.
 //! Caller initializes this owner with SnesInit and verifier audio in a fresh child.
 #![deny(unsafe_op_in_unsafe_fn)]
+use crate::room_background_support::{ram_bytes, ram_span};
 use crate::{
     game::{
         room_entry::{self, ArrivalRequest, EntryPoll, StartSite, world::Identity},
@@ -19,14 +20,14 @@ pub(crate) const CASES: u32 = 100;
 #[cfg(not(sm_verify_dll))]
 pub(crate) const CASES: u32 = 11;
 fn put(g: &mut Game, at: usize, value: u16) {
-    g.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    g.ram().copy_in(at, &value.to_le_bytes());
 }
 fn word(g: &Game, at: usize) -> u16 {
-    u16::from_le_bytes(g.g_ram[at..at + 2].try_into().unwrap())
+    u16::from_le_bytes(ram_span::<2>(&g, at))
 }
 fn record(out: &mut Vec<u8>, phase: u8, g: &Game) {
     out.push(phase);
-    out.extend_from_slice(&g.g_ram);
+    out.extend_from_slice(&ram_bytes(&g));
     out.push(u8::from(g.g_fail));
 }
 /// Uses the real constructor route; exported DLL initializes hardware via owner.with.
@@ -98,7 +99,11 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 before + 1,
                 "room.world.actual-frame-readiness"
             );
-            assert_eq!(g.g_ram[0x611], 2, "room.world.actual-reset-frame-entered");
+            assert_eq!(
+                g.ram().read_byte(0x611),
+                2,
+                "room.world.actual-reset-frame-entered"
+            );
             assert!(Arc::ptr_eq(g.world(), &world), "room.world.frame-binding");
             assert!(!g.g_fail, "room.world.frame-no-diagnostic");
             record(&mut out, 0, g);
@@ -169,7 +174,11 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             crate::game::actors::prepare_room_assets(&mut Runtime::new(g));
             assert!(!g.g_fail, "room.world.source-assets-no-diagnostic");
             assert_eq!(word(g, 0x178c), 0x804c, "room.world.source-draw-hook");
-            assert_eq!(g.g_ram[0x178e], 0xa0, "room.world.source-draw-hook-bank");
+            assert_eq!(
+                g.ram().read_byte(0x178e),
+                0xa0,
+                "room.world.source-draw-hook-bank"
+            );
             // A real one-pixel player movement enters the first authored exit of roomA.
             for (at, value) in [
                 (0xaf6, 8),
@@ -192,7 +201,7 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 put(g, at, value);
             }
             put(g, 0x10002, 0x9000);
-            g.g_ram[0x16402] = 0;
+            g.ram().write_byte(0x16402, 0);
             record(&mut out, 0, g);
             let moved = crate::game::player_collision::operations::displace(
                 &mut Runtime::new(g),
@@ -214,7 +223,7 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             if id >= 4 {
                 // Actual outer dispatcher, NMI and physical IRQ progression. No completion
                 // byte, wait result, music return or transition selector is forced here.
-                g.g_ram[0x611] = 0;
+                g.ram().write_byte(0x611, 0);
                 let frames_before = g.snes_frame_counter;
                 let mut done = false;
                 for frame in 0..768 {
@@ -302,7 +311,8 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             }
             assert!(done, "room.world.initial-completed");
             assert_eq!(
-                g.g_ram[0x613], 0,
+                g.ram().read_byte(0x613),
+                0,
                 "room.world.initial-continuation-completed"
             );
             assert_eq!(word(g, 0x99c), 0xe737, "room.world.initial-final-stage");

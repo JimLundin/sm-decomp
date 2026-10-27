@@ -132,7 +132,7 @@ fn epoch_overflow_preflight_precedes_any_canonical_image_mutation() {
     let result = (|| {
         let token = state.prepare_canonical_transition()?;
         ram.fill(0);
-        state.commit_canonical_transition(token, &ram);
+        state.commit_canonical_transition(token, &|at| ram[at]);
         Ok::<_, ActorIdentityError>(())
     })();
     assert_eq!(result, Err(ActorIdentityError::EpochOverflow));
@@ -192,7 +192,7 @@ fn canonical_transition_uses_final_bytes_and_clears_authored_lineage() {
     let token = state.prepare_canonical_transition().unwrap();
     let mut ram: Box<[u8; 131072]> = vec![0; 131072].into_boxed_slice().try_into().unwrap();
     ram[0xf78 + 31 * 64..0xf7a + 31 * 64].copy_from_slice(&0xdaffu16.to_le_bytes());
-    state.commit_canonical_transition(token, &ram);
+    state.commit_canonical_transition(token, &|at| ram[at]);
     assert_eq!(
         state.resolve(old, &actors),
         Err(ActorIdentityError::StaleEpoch)

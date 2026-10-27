@@ -19,11 +19,12 @@ fn rom_bytes(image: &RomImage, address: u32, bytes: &[u8]) {
     }
 }
 fn one(g: &mut Game, case: usize) {
-    g.g_ram.fill(0);
+    g.ram().fill(0..g.ram().len(), 0);
     g.g_fail = false;
     // Deliberately distinct surrounding HUD words; only the15 minimap cells belong to this update.
     for word in 0..96 {
-        put(&mut g.g_ram, 0xc608 + 2 * word, 0x5000 + word as u16);
+        g.ram()
+            .copy_in(0xc608 + 2 * word, &(0x5000 + word as u16).to_le_bytes());
     }
     for (at, value) in [
         (w::samus_x_pos, 512),
@@ -34,15 +35,21 @@ fn one(g: &mut Game, case: usize) {
         (w::room_y_coordinate_on_map, 0),
         (w::has_area_map, if case == 3 { 0 } else { 1 }),
     ] {
-        put(&mut g.g_ram, at, value);
+        g.ram().copy_in(at, &(value as u16).to_le_bytes());
     }
-    g.g_ram[0x5b5] = if case == 5 { 0 } else { 8 };
+    g.ram().write_byte(0x5b5, if case == 5 { 0 } else { 8 });
     g.loaded_rom = None;
     g.register_native_rom(RomImage::zeroed(0));
     match case {
-        0 => put(&mut g.g_ram, w::debug_disable_minimap, 0x8000),
-        1 => put(&mut g.g_ram, w::room_width_in_blocks, 32),
-        2 => put(&mut g.g_ram, w::room_height_in_blocks, 16),
+        0 => g
+            .ram()
+            .copy_in(w::debug_disable_minimap, &0x8000u16.to_le_bytes()),
+        1 => g
+            .ram()
+            .copy_in(w::room_width_in_blocks, &32u16.to_le_bytes()),
+        2 => g
+            .ram()
+            .copy_in(w::room_height_in_blocks, &16u16.to_le_bytes()),
         _ => {
             let loaded = RomImage::zeroed(0x200000);
             let native = RomImage::zeroed(0x200000);
@@ -74,7 +81,9 @@ fn one(g: &mut Game, case: usize) {
             g.register_native_rom(native);
         }
     }
-    let before = g.g_ram.to_vec();
+    let before = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     let mut expected = before.clone();
     if case >= 3 {
         // Fixed authored coordinate: xscreen2, yscreen1 plus map's +1 yieldsrow2.
@@ -111,14 +120,18 @@ fn one(g: &mut Game, case: usize) {
         let mut runtime = Runtime::new(g);
         player_update::minimap::update(&mut runtime);
         let mut projected = before.clone();
-        session_encoding::encode(runtime.session(), &mut projected);
+        session_encoding::encode(runtime.session(), |at, span| {
+            projected[at..at + span.len()].copy_from_slice(span)
+        });
         assert_eq!(
             projected, expected,
             "owned minimap physical contract case{case}"
         );
     }
     assert_eq!(
-        g.g_ram.as_slice(),
+        &(0..g.ram().len())
+            .map(|at| g.ram().read_byte(at))
+            .collect::<Vec<u8>>()[..],
         expected.as_slice(),
         "minimap full RAM publication case{case}"
     );
@@ -126,7 +139,9 @@ fn one(g: &mut Game, case: usize) {
 }
 pub(crate) fn run(g: &mut Game) -> usize {
     assert!(!g.actor_identity_is_with_session());
-    let ram = g.g_ram.to_vec();
+    let ram = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     let fail = g.g_fail;
     let loaded = g.loaded_rom.clone();
     let native = g.capture_native_rom_binding();
@@ -137,7 +152,7 @@ pub(crate) fn run(g: &mut Game) -> usize {
         codec_bytes(g);
         COUNT
     }));
-    g.g_ram.copy_from_slice(&ram);
+    g.ram().copy_in(0, &ram);
     g.g_fail = fail;
     g.loaded_rom = loaded;
     g.restore_native_rom_binding(native);
@@ -149,22 +164,23 @@ pub(crate) fn run(g: &mut Game) -> usize {
 
 // Follow-on insertion into player_minimap_bytes before returning COUNT.
 fn codec_bytes(g: &mut Game) {
-    g.g_ram.fill(0);
+    g.ram().fill(0..g.ram().len(), 0);
     g.g_fail = false;
     for word in 0..96 {
-        put(&mut g.g_ram, 0xc608 + 2 * word, 0x5678);
+        g.ram().copy_in(0xc608 + 2 * word, &0x5678u16.to_le_bytes());
     }
     for row in 0..3 {
         for column in 0..5 {
-            put(
-                &mut g.g_ram,
+            g.ram().copy_in(
                 0xc608 + 2 * ([26, 58, 90][row] + column),
-                0x1234,
+                &0x1234u16.to_le_bytes(),
             );
         }
     }
-    put(&mut g.g_ram, 0x5f7, 0xb2a1);
-    let before = g.g_ram.to_vec();
+    g.ram().copy_in(0x5f7, &0xb2a1u16.to_le_bytes());
+    let before = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     let mut expected = before.clone();
     {
         let mut runtime = Runtime::new(g);
@@ -248,11 +264,15 @@ fn codec_bytes(g: &mut Game) {
         );
         put(&mut expected, 0x5f7, 0);
         let mut projected = before.clone();
-        session_encoding::encode(runtime.session(), &mut projected);
+        session_encoding::encode(runtime.session(), |at, span| {
+            projected[at..at + span.len()].copy_from_slice(span)
+        });
         assert_eq!(projected, expected, "sparse minimap byte projection");
     }
     assert_eq!(
-        g.g_ram.as_slice(),
+        &(0..g.ram().len())
+            .map(|at| g.ram().read_byte(at))
+            .collect::<Vec<u8>>()[..],
         expected.as_slice(),
         "sparse minimap codec preserves unrelated HUD bytes"
     );

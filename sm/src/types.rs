@@ -317,7 +317,6 @@ crate::typed_struct! {
     }
 
     pub struct Cpu {
-        pub mem: *mut c_void;
         pub memType: u8;
         pub a, x, y, sp, pc, dp: u16;
         pub k, db: u8;
@@ -328,7 +327,6 @@ crate::typed_struct! {
     }
 
     pub struct Dma {
-        pub snes: *mut Snes;
         pub channel: [DmaChannel; 8];
         pub hdmaTimer: u16;
         pub snapshot_padding0: [u8; 2];
@@ -413,7 +411,6 @@ crate::typed_struct! {
     }
 
     pub struct Input {
-        pub snes: *mut Snes;
         pub type_0: u8;
         pub currentState: u16;
     }
@@ -510,13 +507,10 @@ crate::typed_struct! {
         pub cpu: *mut Cpu;
         pub apu: *mut Apu;
         pub ppu, snes_ppu, my_ppu: *mut Ppu;
-        pub dma: *mut Dma;
         pub cart: *mut Cart;
-        pub input1, input2: *mut Input;
         pub debug_cycles, debug_apu_cycles, disableRender: bool;
         pub runningWhichVersion: u8;
         pub ramAdr: u32;
-        pub ram: *mut u8;
         pub padx: [u8; 4];
         pub hPos, vPos: u16;
         pub frames: u32;
@@ -885,7 +879,6 @@ crate::typed_struct! {
     #[derive(Clone)]
     #[repr(C)]
     pub struct Cart {
-        pub snes: *mut Snes;
         pub type_0: u8;
         pub rom: crate::rom::RomImage;
         pub romSize: u32;

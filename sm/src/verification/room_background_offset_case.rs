@@ -1,4 +1,5 @@
 //! ID37 supplements frozen0..36 with actual VRAM back-reference positioning.
+use crate::room_background_support::ram_bytes;
 use crate::{
     game_state::Game, rom::RomImage, room_background_cases::Operation, room_background_support::*,
 };
@@ -18,11 +19,11 @@ pub(crate) fn capture(run: fn(Operation, &mut Game) -> Option<u8>) -> Option<Vec
         literal(&image, 0x808000, &[0xa1, 0xa2]);
         literal(&image, 0x809000, &[0xb1, 0xb2]);
         game.loaded_rom = Some(image.clone());
-        game.g_ram[0x7c3..0x7c6].copy_from_slice(&[0x00, 0x80, 0x80]);
-        game.g_ram[0x7c6..0x7c9].copy_from_slice(&[0x00, 0x90, 0x80]);
+        game.ram().copy_in(0x7c3, &[0x00, 0x80, 0x80]);
+        game.ram().copy_in(0x7c6, &[0x00, 0x90, 0x80]);
         put(&mut game, 0xe16, 0xabcd);
 
-        let mut expected_ram = game.g_ram.to_vec();
+        let mut expected_ram = ram_bytes(&game);
         exp(&mut expected_ram, 0xe16, 0);
         expected_ram[0xc200..0xc202].copy_from_slice(&[0xb1, 0xb2]);
         let mut expected_vram = (&(*(*game.g_snes).ppu).vram).to_vec();
@@ -63,7 +64,7 @@ pub(crate) fn capture(run: fn(Operation, &mut Game) -> Option<u8>) -> Option<Vec
         assert_eq!(returned, None, "actual unit return");
         record(&mut output, 7, &[0]);
 
-        assert_eq!(&game.g_ram[..], &expected_ram[..], "ID37 full RAM");
+        assert_eq!(&ram_bytes(&game), &expected_ram[..], "ID37 full RAM");
         assert_eq!(
             &(&(*(*game.g_snes).ppu).vram)[..],
             &expected_vram[..],

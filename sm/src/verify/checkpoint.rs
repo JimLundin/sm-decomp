@@ -7,7 +7,12 @@
 //! codec itself owns complete machine and actor preflight/adoption; no caller
 //! callback can report an incomplete machine restore as successful.
 use crate::recording::RecordingBytes;
-use crate::{apu_queue::ApuQueue, game_state::Game, rtl::StateRecorder, types::*};
+use crate::{
+    apu_queue::ApuQueue,
+    game_state::{Game, WorkRam},
+    rtl::StateRecorder,
+    types::*,
+};
 use std::path::Path;
 
 const MAGIC: &[u8; 8] = b"SMVERIFY";
@@ -53,14 +58,17 @@ pub fn origin(rom: &[u8], seed: Option<&Path>) -> Result<u64, String> {
 fn compatibility() -> u64 {
     // Gameplay edits can reuse checkpoints. Changes to the state layout,
     // oracle, audio or hardware require regeneration from boot.
-    let mut source = concat!(
+    let source = concat!(
         include_str!("checkpoint.rs"),
         include_str!("seed.rs"),
         include_str!("../types.rs"),
         include_str!("../initial_state.rs"),
+        include_str!("../game_state.rs"),
         include_str!("../game/room_entry/world.rs"),
         include_str!("../game/session.rs"),
         include_str!("../game/session_encoding.rs"),
+        include_str!("../game/actors/codec.rs"),
+        include_str!("../game/session_runtime.rs"),
         include_str!("../game/enemy_layouts.rs"),
         include_str!("../game/actors/identity.rs"),
         include_str!("../game/actors/snapshot.rs"),
@@ -90,13 +98,10 @@ fn compatibility() -> u64 {
         include_str!("../snes/dsp.rs"),
         include_str!("../snes/dma.rs"),
         include_str!("../snes/cart.rs"),
-        include_str!("../snes/input.rs"),
         include_str!("../snes/snes_other.rs"),
+        include_str!("../execution.rs"),
     )
     .replace("\r\n", "\n");
-    // Accessor-only gameplay cleanups do not alter checkpoint compatibility.
-    let game_source = include_str!("../game_state.rs").replace("\r\n", "\n");
-    source.push_str(game_source.split_once("\n}\n").expect("Game declaration").0);
     fingerprint(source.as_bytes())
 }
 
@@ -138,6 +143,24 @@ impl Archive<'_> {
         }
         Ok(())
     }
+    fn work_ram(&mut self, ram: &WorkRam) -> Result<(), String> {
+        for at in 0..ram.len() {
+            match self {
+                Self::Save(output) => output.push(ram.read_byte(at)),
+                Self::Load(input) => {
+                    let (head, tail) = input.split_at_checked(1).ok_or("truncated checkpoint")?;
+                    ram.write_byte(at, head[0]);
+                    *input = tail;
+                }
+                Self::Validate(input, _, _) => {
+                    let (_, tail) = input.split_at_checked(1).ok_or("truncated checkpoint")?;
+                    *input = tail;
+                }
+            }
+        }
+        Ok(())
+    }
+
     fn bytes(&mut self, value: &mut [u8]) -> Result<(), String> {
         match self {
             Self::Save(output) => output.extend_from_slice(value),
@@ -250,11 +273,11 @@ fields!(Channel {
 fields!(Cpu {
     memType, a, x, y, sp, pc, dp, k, db, c, z, v, n, i, d, xf, mf, e, irqWanted,
     nmiWanted, waiting, stopped, cyclesUsed, spBreakpoint, in_emu
-} skip { mem });
+} skip {  });
 
 fields!(Dma {
     channel, hdmaTimer, dmaTimer, dmaBusy
-} skip { snes, pad, snapshot_padding0 });
+} skip { pad, snapshot_padding0 });
 
 fields!(DmaChannel {
     bAdr, aAdr, aBank, size, indBank, tableAdr, repCount, unusedByte, dmaActive,
@@ -282,7 +305,7 @@ fields!(DspRegWriteHistory {
 
 fields!(Input {
     type_0, currentState
-} skip { snes });
+} skip {  });
 
 fields!(Layer {
     mainScreenEnabled, subScreenEnabled, mainScreenWindowed, subScreenWindowed
@@ -329,7 +352,7 @@ fields!(Snes {
     vIrqEnabled, nmiEnabled, hTimer, vTimer, inNmi, inIrq, inVblank, portAutoReadX,
     autoJoyRead, autoJoyTimer, ppuLatch, multiplyA, multiplyResult, divideA,
     divideResult, fastMem, openBus
-} skip { cpu, apu, ppu, snes_ppu, my_ppu, dma, cart, input1, input2, ram, padx, padpad, snapshot_padding0, snapshot_padding1, snapshot_padding2 });
+} skip { cpu, apu, ppu, snes_ppu, my_ppu, cart, padx, padpad, snapshot_padding0, snapshot_padding1, snapshot_padding2 });
 
 fields!(Spc {
     a, x, y, sp, pc, c, z, v, n, i, h, p, b, stopped, cyclesUsed
@@ -412,7 +435,7 @@ unsafe fn machine(game: &mut Game, archive: &mut Archive<'_>) -> Result<(), Stri
     unsafe {
         // Game's allocation/ROM view and callbacks belong to SnesInit. Oracle
         // scratch snapshots are overwritten before use on the next paired frame.
-        game.g_ram.state(archive)?;
+        archive.work_ram(game.ram())?;
         game.decompress_src.state(archive)?;
         game.eproj_spawn_rect.state(archive)?;
         game.eproj_spawn_r22.state(archive)?;
@@ -455,9 +478,14 @@ unsafe fn machine(game: &mut Game, archive: &mut Archive<'_>) -> Result<(), Stri
         let snes = game.g_snes;
         (*snes).state(archive)?;
         (*(*snes).cpu).state(archive)?;
-        (*(*snes).dma).state(archive)?;
-        (*(*snes).input1).state(archive)?;
-        (*(*snes).input2).state(archive)?;
+        let mut dma = game.dma_state();
+        let dma_result = dma.state(archive);
+        if matches!(archive, Archive::Load(_)) {
+            game.set_dma_state(dma);
+        }
+        dma_result?;
+        game.input1_mut().state(archive)?;
+        game.input2_mut().state(archive)?;
         (*(*snes).snes_ppu).state(archive)?;
         (*(*snes).my_ppu).state(archive)?;
         (*(*snes).apu).state(archive)?;
@@ -537,7 +565,7 @@ pub(crate) unsafe fn capture_with_sources(
             game.loaded_rom.as_ref(),
             game.capture_native_rom_binding().as_ref(),
             sources,
-            &game.g_ram,
+            &|at| machine[at],
         )?;
         let mut bytes = Vec::new();
         bytes.extend_from_slice(&(machine.len() as u64).to_le_bytes());
@@ -699,7 +727,7 @@ pub unsafe fn load_with_sources(
             game.loaded_rom.as_ref(),
             game.capture_native_rom_binding().as_ref(),
             sources,
-            ram,
+            &|at| ram[at],
             loaded_after_patch.as_ref(),
         )?;
         let failure = game

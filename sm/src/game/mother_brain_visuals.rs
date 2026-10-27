@@ -55,8 +55,8 @@ pub unsafe fn fade(kind: Fade, frame: u16, game: &mut Game) -> u8 {
                 } else {
                     WriteColorsToPalette(0x168, 0xad, tail, 5, game);
                     // The original accent write targets $017c, outside the palette buffer.
-                    *(ram_ptr!(game, u16; 0x17c)) =
-                        *(RomPtr_AD(tail.wrapping_add(10), game) as *const u16);
+                    let accent = *(RomPtr_AD(tail.wrapping_add(10), game) as *const u16);
+                    game.ram().copy_in(0x17c, &accent.to_ne_bytes());
                 }
             }
         }
@@ -141,11 +141,11 @@ crate::forward_calls! { pub(crate) unsafe fn (game: &mut Game) -> u16;
 }
 
 pub(crate) unsafe fn initialize_rainbow_beam(game: &mut Game) {
-    game.g_ram[0x74] = 32;
-    game.g_ram[0x75] = 71;
-    game.g_ram[0x76] = 0x8f;
+    game.ram().write_byte(0x74, 32);
+    game.ram().write_byte(0x75, 71);
+    game.ram().write_byte(0x76, 0x8f);
     word!(game.fx_layer_blending_config_c = 36);
-    game.g_ram[0x9c00] = 100;
+    game.ram().write_byte(0x9c00, 100);
     word_transfers!(game, ascending, 1; native(0x9c01) <- value(0x9d00), native(0x9c03) <- value(0));
     word! {game; hdma_table_2[0] = 0; hdma_table_2[1] = 0x8020; hdma_table_2[2] = 0; }
     unsafe {
@@ -180,7 +180,9 @@ fn advance_rainbow_palette(game: &mut Game) {
         word!(game.hdma_object_A[0] = 0);
         color = crate::rtl::rom_table_word!(game, 0x88e833, 0);
     }
-    game.g_ram[0x74] = color as u8 & 0x1f | 0x20;
-    game.g_ram[0x75] = (color >> 5) as u8 & 0x1f | 0x40;
-    game.g_ram[0x76] = (color >> 10) as u8 & 0x1f | 0x80;
+    game.ram().write_byte(0x74, color as u8 & 0x1f | 0x20);
+    game.ram()
+        .write_byte(0x75, (color >> 5) as u8 & 0x1f | 0x40);
+    game.ram()
+        .write_byte(0x76, (color >> 10) as u8 & 0x1f | 0x80);
 }

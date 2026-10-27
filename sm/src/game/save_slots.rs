@@ -27,12 +27,14 @@ fn transfer_slot(slot: u16, direction: Direction, game: &mut Game) -> u16 {
     for at in (0xd7c0..0xde1c).step_by(2) {
         let sram = usize::from(cursor & !1);
         let value = match direction {
-            Direction::Save => u16::from_ne_bytes([game.g_ram[at], game.g_ram[at + 1]]),
+            Direction::Save => {
+                u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])
+            }
             Direction::Load => game.g_sram.word(sram),
         };
         match direction {
             Direction::Save => game.g_sram.set_word(sram, value),
-            Direction::Load => game.g_ram[at..at + 2].copy_from_slice(&value.to_ne_bytes()),
+            Direction::Load => game.ram().copy_in(at, &value.to_ne_bytes()),
         }
         checksum = checksum.wrapping_add(value);
         cursor = cursor.wrapping_add(2);
@@ -116,7 +118,8 @@ fn transfer_map(direction: Direction, game: &mut Game) {
                 Direction::Save => (unpacked, packed_at),
                 Direction::Load => (packed_at, unpacked),
             };
-            game.g_ram[destination] = game.g_ram[source];
+            let value = game.ram().read_byte(source);
+            game.ram().write_byte(destination, value);
             record += 1;
             packed += 1;
             remaining -= 1;
@@ -194,7 +197,11 @@ pub(crate) fn load_area_map(game: &mut Game) {
     for (active, saved) in area_map_words(word!(game.area_index)) {
         word_transfers!(game, ascending, 1; native(0x7f7 + active * 2) <- le(explored_map_tiles_saved, saved));
     }
-    word!(game.has_area_map = game.g_ram[0xd908 + usize::from(word!(game.area_index))] as u16);
+    word!(
+        game.has_area_map =
+            game.ram()
+                .read_byte(0xd908 + usize::from(word!(game.area_index))) as u16
+    );
 }
 
 pub(crate) fn save_area_map(game: &mut Game) {
@@ -219,7 +226,8 @@ pub(crate) fn mark_elevator(game: &mut Game) {
     let base = crate::rtl::lorom_offset(0x800000 | u32::from(cursor)) as usize;
     for record in [0, 2] {
         let destination = 0xd8f8 + usize::from(image.read(base + record));
-        let previous = game.g_ram[destination];
-        game.g_ram[destination] = previous | image.read(base + record + 1);
+        let previous = game.ram().read_byte(destination);
+        game.ram()
+            .write_byte(destination, previous | image.read(base + record + 1));
     }
 }

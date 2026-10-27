@@ -26,7 +26,7 @@ fn room(game: &mut Game, kind: u16, bts: u8) {
     put(game, w::room_width_in_blocks, 32);
     for block in 0..1024 {
         put(game, 0x10002 + block * 2, kind << 12);
-        game.g_ram[0x16402 + block] = bts;
+        game.ram().write_byte(0x16402 + block, bts);
     }
 }
 unsafe fn move_one(horizontal: bool, handle: u16, game: &mut Game) -> Option<usize> {
@@ -112,15 +112,18 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         let first = if width == 32 { 264 } else { 8 };
         let kind = if variant == 1 || variant >= 4 { 13 } else { 5 };
         put(game, 0x10002 + first * 2, kind << 12);
-        game.g_ram[0x16402 + first] = match variant {
-            1 => 0xff,
-            2 | 4 => 0,
-            _ => 1,
-        };
+        game.ram().write_byte(
+            0x16402 + first,
+            match variant {
+                1 => 0xff,
+                2 | 4 => 0,
+                _ => 1,
+            },
+        );
         if variant == 3 {
             // Horizontal extension followed by a vertical extension and a solid cell.
             put(game, 0x10002 + (first + 1) * 2, 13 << 12);
-            game.g_ram[0x16402 + first + 1] = 1;
+            game.ram().write_byte(0x16402 + first + 1, 1);
         }
         return unsafe { move_one(horizontal, 0, game) };
     }

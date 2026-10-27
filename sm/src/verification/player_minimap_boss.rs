@@ -71,16 +71,20 @@ fn bounded_rom_failure(length: usize, action: impl FnOnce()) {
 }
 fn one(g: &mut Game, case: usize) {
     assert!(!g.actor_identity_is_with_session());
-    g.g_ram.fill(0);
+    g.ram().fill(0..g.ram().len(), 0);
     g.g_fail = false;
     for index in 0..96 {
-        put(&mut g.g_ram, 0xc608 + 2 * index, 0x5000 + index as u16);
+        g.ram()
+            .copy_in(0xc608 + 2 * index, &(0x5000 + index as u16).to_le_bytes());
     }
-    g.g_ram[0x7f7..0x8f7].fill(0x20);
-    put(&mut g.g_ram, w::debug_disable_minimap, 0x8000);
-    put(&mut g.g_ram, w::room_x_coordinate_on_map, 7);
-    put(&mut g.g_ram, w::room_y_coordinate_on_map, 2);
-    put(&mut g.g_ram, w::boss_id, 7);
+    g.ram().fill(0x7f7..0x8f7, 0x20);
+    g.ram()
+        .copy_in(w::debug_disable_minimap, &0x8000u16.to_le_bytes());
+    g.ram()
+        .copy_in(w::room_x_coordinate_on_map, &7u16.to_le_bytes());
+    g.ram()
+        .copy_in(w::room_y_coordinate_on_map, &2u16.to_le_bytes());
+    g.ram().copy_in(w::boss_id, &7u16.to_le_bytes());
     let descriptors = crate::rom::lorom_offset(0x90a83a) as usize;
     // Deliberately odd coordinate address: only checked Native word reads run.
     let coordinates = crate::rom::lorom_offset(0x90a901) as usize;
@@ -134,7 +138,9 @@ fn one(g: &mut Game, case: usize) {
     }
     g.loaded_rom = None;
     g.register_native_rom(native.clone());
-    let before = g.g_ram.to_vec();
+    let before = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     let mut expected = before.clone();
     put(&mut expected, w::debug_disable_minimap, 1);
     // Independent literal HUD offsets, including all three rows and neighbors.
@@ -159,7 +165,9 @@ fn one(g: &mut Game, case: usize) {
         player_update::minimap::disable_for_boss(&mut runtime);
         assert!(runtime.game.actor_identity_is_with_session());
         let mut projected = before.clone();
-        session_encoding::encode(runtime.session(), &mut projected);
+        session_encoding::encode(runtime.session(), |at, span| {
+            projected[at..at + span.len()].copy_from_slice(span)
+        });
         assert_eq!(
             projected, expected,
             "boss map live physical contract case {case}"
@@ -172,7 +180,9 @@ fn one(g: &mut Game, case: usize) {
         });
     }
     assert_eq!(
-        g.g_ram.as_slice(),
+        &(0..g.ram().len())
+            .map(|at| g.ram().read_byte(at))
+            .collect::<Vec<u8>>()[..],
         expected.as_slice(),
         "boss map full RAM publication case {case}"
     );
@@ -189,7 +199,9 @@ fn one(g: &mut Game, case: usize) {
 }
 pub(crate) fn run(g: &mut Game) -> usize {
     assert!(!g.actor_identity_is_with_session());
-    let ram = g.g_ram.to_vec();
+    let ram = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     let fail = g.g_fail;
     let loaded = g.loaded_rom.clone();
     let native = g.capture_native_rom_binding();
@@ -199,7 +211,7 @@ pub(crate) fn run(g: &mut Game) -> usize {
         }
         COUNT
     }));
-    g.g_ram.copy_from_slice(&ram);
+    g.ram().copy_in(0, &ram);
     g.g_fail = fail;
     g.loaded_rom = loaded;
     g.restore_native_rom_binding(native);

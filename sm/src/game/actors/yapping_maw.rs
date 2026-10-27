@@ -309,7 +309,7 @@ pub(crate) fn shot(game: &mut Game) {
     } else {
         for part in 0..4 {
             let at = 0x1997 + usize::from(slot!(game, Maw[E + 2 * part].var_40));
-            game.g_ram[at..at + 2].copy_from_slice(&0u16.to_ne_bytes());
+            game.ram().copy_in(at, &0u16.to_ne_bytes());
         }
         let handle = slot!(game, Maw[E].var_46);
         sprites::retire(handle, game);

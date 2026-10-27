@@ -60,7 +60,8 @@ pub fn draw(
     clip: Clip,
     game: &mut Game,
 ) {
-    let mut index = u16::from_ne_bytes([game.g_ram[0x590], game.g_ram[0x591]]) as usize;
+    let mut index =
+        u16::from_ne_bytes([game.ram().read_byte(0x590), game.ram().read_byte(0x591)]) as usize;
     let count = map.count();
     let bounded = matches!(clip, Clip::Bounded | Clip::BoundedOutside);
     if count != 0 && (!bounded || index < 0x200) {
@@ -90,43 +91,49 @@ pub fn draw(
                 x = 0x180;
                 y = 0xe0;
             }
-            game.g_ram[0x370 + index] = x as u8;
-            game.g_ram[0x371 + index] = y as u8;
+            game.ram().write_byte(0x370 + index, x as u8);
+            game.ram().write_byte(0x371 + index, y as u8);
             let tile = tile_word(map.tile(record));
-            game.g_ram[0x372 + index..0x374 + index].copy_from_slice(&tile.to_ne_bytes());
+            game.ram().copy_in(0x372 + index, &tile.to_ne_bytes());
             extension(map, record, index, x, game);
             index += 4;
         } else {
-            game.g_ram[0x370 + index] = x as u8;
+            game.ram().write_byte(0x370 + index, x as u8);
             extension(map, record, index, x, game);
             let y = u16::from(position.1 as u8) + u16::from(map.y(record));
             let inside = (y & 0x100 == 0) == (map.y(record) & 0x80 == 0);
-            game.g_ram[0x371 + index] =
+            game.ram().write_byte(
+                0x371 + index,
                 if matches!(clip, Clip::None) || inside == matches!(clip, Clip::Inside) {
                     y as u8
                 } else {
                     0xf0
-                };
+                },
+            );
             let tile = tile_word(map.tile(record));
-            game.g_ram[0x372 + index..0x374 + index].copy_from_slice(&tile.to_ne_bytes());
+            game.ram().copy_in(0x372 + index, &tile.to_ne_bytes());
             index = (index + 4) & 0x1ff;
         }
     }
-    game.g_ram[0x590..0x592].copy_from_slice(&(index as u16).to_ne_bytes());
+    game.ram().copy_in(0x590, &(index as u16).to_ne_bytes());
 }
 fn extension(map: &impl Geometry, record: usize, index: usize, x: u16, game: &mut Game) {
     let offset = 0x570 + 2 * (index >> 5);
-    let old = u16::from_ne_bytes([game.g_ram[offset], game.g_ram[offset + 1]]);
+    let old = u16::from_ne_bytes([
+        game.ram().read_byte(offset),
+        game.ram().read_byte(offset + 1),
+    ]);
     let bits =
         ((x & 0x100) >> 8 | u16::from((map.x(record) as i16) < 0) * 2) << (2 * (index >> 2 & 7));
-    game.g_ram[offset..offset + 2].copy_from_slice(&(old | bits).to_ne_bytes());
+    game.ram().copy_in(offset, &(old | bits).to_ne_bytes());
 }
 
 pub(crate) fn finish_frame(game: &mut Game) {
-    let first_unused_sprite = u16::from_le_bytes([game.g_ram[0x590], game.g_ram[0x591]]) >> 2;
+    let first_unused_sprite =
+        u16::from_le_bytes([game.ram().read_byte(0x590), game.ram().read_byte(0x591)]) >> 2;
     for sprite in first_unused_sprite..128 {
         // Each four-byte OAM entry stores its Y coordinate in byte 1.
-        game.g_ram[0x371 + usize::from(sprite) * 4] = 0xf0;
+        game.ram().write_byte(0x371 + usize::from(sprite) * 4, 0xf0);
     }
     word_transfers!(game, ascending, 1; native(0x590) <- value(0));
 }

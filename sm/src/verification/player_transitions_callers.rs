@@ -8,7 +8,7 @@ use crate::{
 const IMAGE_LENGTH: usize = 0x100000;
 const CAPACITY: usize = 2 * 1024 * 1024;
 fn put(game: &mut Game, at: usize, value: u16) {
-    game.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    game.ram().copy_in(at, &value.to_le_bytes());
 }
 fn offset(address: u32) -> usize {
     crate::rtl::lorom_offset(address) as usize
@@ -41,7 +41,6 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             return Err("pose fixture requires admitted ID and initialized original host".into());
         }
         if !cfg!(target_endian = "little")
-            || game.g_ram.as_ptr() as usize % core::mem::align_of::<u16>() != 0
             || game.actor_identity_is_with_session()
             || !game.supports_legacy_persistence()
         {
@@ -50,7 +49,20 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
         let loaded_before = game.loaded_rom.clone();
         let native_before = game.capture_native_rom_binding();
         let mut before = Box::new(Snapshot::INITIAL);
-        MakeSnapshot(&mut before, &*game.g_snes, &*game.g_cpu, game.g_spc_player);
+        {
+            let snapshot_snes = game.g_snes;
+            let snapshot_cpu = game.g_cpu;
+            let snapshot_player = game.g_spc_player;
+            let (backend, ram, _, _, _) = game.ram_and_snapshots();
+            MakeSnapshot(
+                &mut before,
+                &*snapshot_snes,
+                &*snapshot_cpu,
+                snapshot_player,
+                ram,
+                backend,
+            )
+        };
         let cpu_before = *game.g_cpu;
         let cycles_before = (*game.g_snes).cpuCyclesLeft;
         let memory_ops_before = (*game.g_snes).cpuMemOps;
@@ -59,8 +71,8 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
         let fail_before = game.g_fail;
         let queue_before = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            game.g_ram.fill(0);
-            game.g_ram[0x1ffff] = 1;
+            game.ram().fill(0..game.ram().len(), 0);
+            game.ram().write_byte(0x1ffff, 1);
             game.g_fail = false;
             let loaded = RomImage::zeroed(IMAGE_LENGTH);
             let native = RomImage::zeroed(IMAGE_LENGTH);
@@ -135,7 +147,9 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             if id == 3801 {
                 put(game, ram::hdma_var_1, 0xa55a);
             }
-            let original_ram = game.g_ram.to_vec();
+            let original_ram = (0..game.ram().len())
+                .map(|at| game.ram().read_byte(at))
+                .collect::<Vec<_>>();
             let mut output = b"PTRS1".to_vec();
             let mut identity = id.to_le_bytes().to_vec();
             identity.push(1); // Authored-data corrected-Rust comparison; not original-ROM oracle.
@@ -156,7 +170,10 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                 return Err("actual caller retained Session authority".into());
             }
             if id == 3802 {
-                if game.g_ram.as_slice() != original_ram.as_slice() {
+                if (0..game.ram().len())
+                    .map(|at| game.ram().read_byte(at))
+                    .ne(original_ram.iter().copied())
+                {
                     return Err("disabled intro changed RAM".into());
                 }
             } else {
@@ -176,7 +193,11 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                     || word(game, ram::samus_anim_frame_timer) != 1
                     || word(game, ram::samus_anim_frame) != 0
                     || word(game, ram::input_to_pose_calc) != 0
-                    || game.g_ram[0xc180..0xc1a0] != palette
+                    || {
+                        let mut bytes = [0; 0xc1a0 - (0xc180)];
+                        game.ram().copy_out(0xc180, &mut bytes);
+                        bytes.as_slice() != palette.as_slice()
+                    }
                 {
                     return Err("actual beta failed control/animation/palette completion".into());
                 }
@@ -212,7 +233,18 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
         let _ = observer::finish();
         game.loaded_rom = loaded_before;
         game.restore_native_rom_binding(native_before);
-        RestoreSnapshot(&before, &mut *game.g_snes, &mut *game.g_cpu);
+        {
+            let snapshot_snes = game.g_snes;
+            let snapshot_cpu = game.g_cpu;
+            let (backend, ram, _, _, _) = game.ram_and_snapshots();
+            RestoreSnapshot(
+                &before,
+                &mut *snapshot_snes,
+                &mut *snapshot_cpu,
+                ram,
+                backend,
+            )
+        };
         before.audio.restore(game.g_snes);
         before.player.restore(game.g_spc_player);
         *game.g_cpu = cpu_before;
@@ -233,7 +265,12 @@ pub(crate) fn active() -> bool {
 }
 
 fn word(game: &Game, at: usize) -> u16 {
-    u16::from_le_bytes(game.g_ram[at..at + 2].try_into().unwrap())
+    {
+        let _ = &[(); 0x20000][at..at + 2];
+        let mut bytes = [0; 2];
+        game.ram().copy_out(at, &mut bytes);
+        u16::from_le_bytes(bytes)
+    }
 }
 unsafe fn invoke(id: u32, game: &mut Game) {
     unsafe {

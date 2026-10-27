@@ -1,3 +1,4 @@
+use crate::execution::{Execution, HostContext};
 use crate::snapshot_io::{Block, SnapshotIo, TransferError};
 // Split-word assembly evaluates high then low. The i32 form retains signed
 // casts, including sign extension of the low operand. Repeated receivers and
@@ -5,18 +6,38 @@ use crate::snapshot_io::{Block, SnapshotIo, TransferError};
 // and the helpers' low-before-high writes, including unaligned/overlapping words.
 macro_rules! words {
     ($game:ident.$hi:ident, $lo:ident += $value:expr $(,)?) => {
-        $crate::rtl::AddToHiLo(
-            $crate::ram_map::ram_ptr!($game, u16; $crate::ram_map::words::$hi as isize),
-            $crate::ram_map::ram_ptr!($game, u16; $crate::ram_map::words::$lo as isize),
+        match (
+            $game.ram().share_for_backend(),
+            $crate::ram_map::words::$hi,
+            $crate::ram_map::words::$lo,
             $value,
-        )
+        ) {
+            (ram, hi, lo, value) => {
+                let value: u32 = value;
+                let mut bytes = [0; 2];
+                ram.copy_out(lo, &mut bytes);
+                let low = u32::from(u16::from_ne_bytes(bytes));
+                ram.copy_out(hi, &mut bytes);
+                let high = u32::from(u16::from_ne_bytes(bytes));
+                let sum = (low | (high << 16)).wrapping_add(value);
+                ram.copy_in(lo, &(sum as u16).to_ne_bytes());
+                ram.copy_in(hi, &((sum >> 16) as u16).to_ne_bytes());
+            }
+        }
     };
     ($game:ident.$hi:ident, $lo:ident = $value:expr $(,)?) => {
-        $crate::rtl::SetHiLo(
-            $crate::ram_map::ram_ptr!($game, u16; $crate::ram_map::words::$hi as isize),
-            $crate::ram_map::ram_ptr!($game, u16; $crate::ram_map::words::$lo as isize),
+        match (
+            $game.ram().share_for_backend(),
+            $crate::ram_map::words::$hi,
+            $crate::ram_map::words::$lo,
             $value,
-        )
+        ) {
+            (ram, hi, lo, value) => {
+                let value: u32 = value;
+                ram.copy_in(lo, &(value as u16).to_ne_bytes());
+                ram.copy_in(hi, &((value >> 16) as u16).to_ne_bytes());
+            }
+        }
     };
     ($base:expr, $hi:ident, $lo:ident += $value:expr $(,)?) => {
         $crate::rtl::AddToHiLo(&raw mut ($base).$hi, &raw mut ($base).$lo, $value)
@@ -95,27 +116,23 @@ macro_rules! rom_table_word {
 pub(crate) use rom_table_word;
 
 use crate::c_library::{
-    __assert_fail, fclose, fopen, fprintf, fread, fseek, fwrite, memcpy, printf, rename, sprintf,
-    stderr,
+    fclose, fopen, fprintf, fread, fseek, fwrite, memcpy, printf, rename, sprintf, stderr,
 };
 use crate::cpu_infra::RtlUpdateSnesPatchForBugfix;
 use crate::game_state::Game;
 use crate::host::{Die, RtlApuLock, RtlApuUnlock};
 use crate::initial_state::InitialState;
-use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
 use crate::recording::RecordingBytes;
 pub use crate::recording::StateRecorder;
-use crate::snes::apu::apu_cycle;
 use crate::snes::ppu::ppu_copy;
 pub use crate::snes::registers::*;
-use crate::snes::snes::{snes_catchupApu, snes_read, snes_reset, snes_saveload, snes_write};
 use crate::spc_player::{
     SpcPlayer_CopyVariablesFromRam, SpcPlayer_CopyVariablesToRam, SpcPlayer_GenerateSamples,
     SpcPlayer_Initialize, SpcPlayer_Upload,
 };
 pub use crate::types::Dsp;
-pub use crate::types::{FILE, LongPtr, PairU16, VoidP, size_t};
+pub use crate::types::{Cpu, FILE, LongPtr, PairU16, Snes, VoidP, size_t};
 pub use crate::types::{RunFrameFunc, SyncAllFunc};
 use ::core::ffi::{c_char, c_long, c_void};
 use ::core::mem::size_of;
@@ -201,28 +218,20 @@ pub unsafe fn FinishLoadSnesState(game: &mut Game) {
     unsafe {
         crate::snes::ppu::PpuRestoreRenderRouting(&mut *(*game.g_snes).ppu);
         (*(*game.g_snes).cpu).e = false_0 != 0;
-        let next: u32 = ((*(*game.g_snes)
-            .ram
-            .offset(((*(*game.g_snes).cpu).sp as i32 + 3) as isize)
-            as i32
-            | (*(*game.g_snes)
-                .ram
-                .offset(((*(*game.g_snes).cpu).sp as i32 + 4) as isize) as i32)
-                << 8
-            | (*(*game.g_snes)
-                .ram
-                .offset(((*(*game.g_snes).cpu).sp as i32 + 5) as isize) as i32)
-                << 16)
+        let ram = game.ram();
+        let next: u32 = ((ram.read_byte(((*(*game.g_snes).cpu).sp as i32 + 3) as usize) as i32
+            | (ram.read_byte(((*(*game.g_snes).cpu).sp as i32 + 4) as usize) as i32) << 8
+            | (ram.read_byte(((*(*game.g_snes).cpu).sp as i32 + 5) as usize) as i32) << 16)
             + 1) as u32;
         if next == 0x82897e {
-            *(*game.g_snes)
-                .ram
-                .offset(((*(*game.g_snes).cpu).sp as i32 + 3) as isize) =
-                (0xf71b - 1i32 & 0xff) as u8;
-            *(*game.g_snes)
-                .ram
-                .offset(((*(*game.g_snes).cpu).sp as i32 + 4) as isize) =
-                (0xf71b - 1i32 >> 8) as u8;
+            ram.write_byte(
+                ((*(*game.g_snes).cpu).sp as i32 + 3) as usize,
+                (0xf71b - 1i32 & 0xff) as u8,
+            );
+            ram.write_byte(
+                ((*(*game.g_snes).cpu).sp as i32 + 4) as usize,
+                (0xf71b - 1i32 >> 8) as u8,
+            );
         }
         RtlSynchronizeWholeState(game);
     }
@@ -239,11 +248,11 @@ pub unsafe fn RtlReset(mode: i32, game: &mut Game) {
     unsafe {
         let actor_transition = game.prepare_actor_canonical();
         game.snes_frame_counter = 0;
-        snes_reset(game.g_snes, true_0 != 0, game);
+        game.execution().reset(true_0 != 0);
         if mode & 1 == 0 {
             game.g_sram.fill(0..0x2000, 0);
         }
-        *ram_ptr!(game; 0x611) = 1;
+        game.ram().write_byte(0x611, 1);
         RtlApuLock();
         RtlRestoreMusicAfterLoad_Locked(true_0 != 0, game);
         RtlApuUnlock();
@@ -314,9 +323,12 @@ pub unsafe fn StateRecorder_Load(f: *mut FILE, replay_mode: bool, game: &mut Gam
             replay_pos_last_complete = 0, replay_pos = game.state_recorder.replay_pos_last_complete,
             replay_frame_counter = 0, };
             if game.state_recorder.base_snapshot.size > 8192 as size_t {
-                let mut state = SnapshotIo::Load(game.state_recorder.base_snapshot.as_slice());
-                snes_saveload(game.g_snes, &mut state);
-                let complete = state.remaining() == 0;
+                let complete = {
+                    let (mut execution, recorder) = game.execution_and_recorder();
+                    let mut state = SnapshotIo::Load(recorder.base_snapshot.as_slice());
+                    execution.save_load(&mut state);
+                    state.remaining() == 0
+                };
                 FinishLoadSnesState(game);
                 crate::native_assertion! {
                     '_c2rust_label_0: complete;
@@ -346,7 +358,7 @@ pub unsafe fn StateRecorder_Load(f: *mut FILE, replay_mode: bool, game: &mut Gam
             recording_allocation(arr.resize(hdr[6] as usize));
             ReadFromFile(f, arr.as_mut_ptr() as *mut c_void, arr.size);
             let mut state = SnapshotIo::Load(arr.as_slice());
-            snes_saveload(game.g_snes, &mut state);
+            game.execution().save_load(&mut state);
             let complete = state.remaining() == 0;
             FinishLoadSnesState(game);
             drop(arr);
@@ -415,7 +427,7 @@ pub unsafe fn StateRecorder_Save(f: *mut FILE, saving_with_bug: bool, game: &mut
         }
         let mut hdr: [u32; 16] = [0i32 as u32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         let mut arr = RecordingBytes::default();
-        snes_saveload(game.g_snes, &mut SnapshotIo::Save(&mut arr));
+        game.execution().save_load(&mut SnapshotIo::Save(&mut arr));
         let sr = &game.state_recorder;
         crate::native_assertion! {
             '_c2rust_label: sr.base_snapshot.size == 0 as size_t
@@ -496,10 +508,10 @@ pub unsafe fn StateRecorder_ClearKeyLog(game: &mut Game) {
         } else {
             None
         };
-        snes_saveload(
-            game.g_snes,
-            &mut SnapshotIo::Save(&mut game.state_recorder.base_snapshot),
-        );
+        {
+            let (mut execution, recorder) = game.execution_and_recorder();
+            execution.save_load(&mut SnapshotIo::Save(&mut recorder.base_snapshot));
+        }
         if let Some(snapshots) = live_audio {
             snapshots.0.restore(game.g_snes);
             snapshots.1.restore(game.g_spc_player);
@@ -539,10 +551,12 @@ pub unsafe fn StateRecorder_ReadNextReplayState(game: &mut Game) -> u16 {
                     addr |= game.state_recorder.log.byte(fresh5 as usize) as u32;
                     do_until! { nb == 0 ;
                         crate::update_place! { previous fresh6 = replay_pos => replay_pos + 1; }
-                        game.g_ram[(addr & 0x1ffff) as usize] = game.state_recorder.log.byte(fresh6 as usize);
+                        let byte = game.state_recorder.log.byte(fresh6 as usize);
+                        game.ram().write_byte((addr & 0x1ffff) as usize, byte);
                         if !game.g_rtl_memory_ptr.is_null() {
                             let offset = (addr & 0x1ffff) as usize;
-                            memcpy(game.g_rtl_memory_ptr.add(offset).cast(), (&raw const game.g_ram[offset]).cast(), 1);
+                            let byte = game.ram().read_byte(offset);
+                            memcpy(game.g_rtl_memory_ptr.add(offset).cast(), (&raw const byte).cast(), 1);
                         }
                         addr = addr.wrapping_add(1);
                         nb -= 1;
@@ -628,10 +642,15 @@ pub unsafe fn RtlRunFrame(mut inputs: i32, game: &mut Game) -> bool {
                 }
                 if (word!(game.bug_fix_counter) as i32) < kCurrentBugFixCounter as i32 {
                     word!(game.bug_fix_counter = kCurrentBugFixCounter as i32 as u16);
-                    recording_allocation(
-                        game.state_recorder
-                            .record_patch(0xc2, &[game.g_ram[0xc2], game.g_ram[0xc2 + 1]]),
-                    );
+                    {
+                        let (ram, recorder) = game.ram_and_recorder();
+                        recording_allocation(
+                            recorder.record_patch(
+                                0xc2,
+                                &[ram.read_byte(0xc2), ram.read_byte(0xc2 + 1)],
+                            ),
+                        );
+                    }
                 }
             }
             recording_allocation(game.state_recorder.record(inputs as u16));
@@ -717,24 +736,25 @@ pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, game: &mut Game) {
             RtlApuUnlock();
             RtlSynchronizeWholeState(game);
             fclose(f);
-            if *ram_ptr!(game; 0x611)
-                | *ram_ptr!(game; 0x612)
-                | *ram_ptr!(game; 0x613)
-                | *ram_ptr!(game; 0x614)
-                | *ram_ptr!(game; 0x615)
+            if game.ram().read_byte(0x611)
+                | game.ram().read_byte(0x612)
+                | game.ram().read_byte(0x613)
+                | game.ram().read_byte(0x614)
+                | game.ram().read_byte(0x615)
                 != 0
             {
                 printf(
                     c"Coroutine state: %d, %d, %d, %d, %d\n".as_ptr(),
-                    *ram_ptr!(game; 0x611) as i32,
-                    *ram_ptr!(game; 0x612) as i32,
-                    *ram_ptr!(game; 0x613) as i32,
-                    *ram_ptr!(game; 0x614) as i32,
-                    *ram_ptr!(game; 0x615) as i32,
+                    game.ram().read_byte(0x611) as i32,
+                    game.ram().read_byte(0x612) as i32,
+                    game.ram().read_byte(0x613) as i32,
+                    game.ram().read_byte(0x614) as i32,
+                    game.ram().read_byte(0x615) as i32,
                 );
             }
-            if *ram_ptr!(game; 0x611) as i32 == 4 {
-                *ram_ptr!(game; 0x611) = (10 + word!(game.game_state) as i32) as u8;
+            if game.ram().read_byte(0x611) as i32 == 4 {
+                game.ram()
+                    .write_byte(0x611, (10 + word!(game.game_state) as i32) as u8);
             }
             if word!(game.bug_fix_counter) as i32 == 0 {
                 word!(game.bug_fix_counter = word!(game.bug_fix_counter_BAD));
@@ -786,7 +806,7 @@ fn unreachable_failure(invalid_interrupt: bool, game: &mut Game) -> bool {
             '_c2rust_label;
             b"0\0", b"src/sm_rtl.c\0", 512, b"_Bool Unreachable(void)\0"
         };
-        game.g_ram[0x1ffffi32 as usize] = 1;
+        game.ram().write_byte(0x1ffffi32 as usize, 1);
         false_0 != 0
     }
 }
@@ -794,22 +814,65 @@ pub use crate::rom::lorom_offset;
 
 /// Capture a checked record while preserving the legacy low-window diagnostic.
 pub(crate) unsafe fn rom_record(bank: u8, addr: u16, game: &mut Game) -> crate::rom::RomRecord {
+    let views = (game.g_snes, game.g_cpu);
+    let (backend, mut host) = game.execution_parts();
+    unsafe {
+        rom_record_parts(bank, addr, &mut host, |output| {
+            observe_backend(backend.as_deref(), views, output)
+        })
+    }
+}
+fn observe_backend(
+    backend: Option<&crate::snes::snes::Backend>,
+    views: (*mut Snes, *mut Cpu),
+    output: &mut crate::recording::RecordingBytes,
+) {
+    let backend = backend.expect("observation requires an owned backend");
+    backend.save_observation(views.0, views.1, output);
+}
+unsafe fn rom_record_parts(
+    bank: u8,
+    addr: u16,
+    host: &mut HostContext<'_>,
+    mut _observe: impl FnMut(&mut crate::recording::RecordingBytes),
+) -> crate::rom::RomRecord {
     unsafe {
         let address = (u32::from(bank) << 16) | u32::from(addr);
         if address & 0x8000 == 0 {
             printf(c"RomPtr - Invalid access 0x%x!\n".as_ptr(), address);
-            game.g_fail = true;
+            *host.g_fail = true;
             #[cfg(sm_verify_dll)]
-            crate::sprite_effect_observer::diagnostic(address, game);
+            crate::sprite_effect_observer::diagnostic_parts(address, host.ram, host.loaded_rom);
             #[cfg(sm_verify_dll)]
-            crate::room_reference_observer::diagnostic(address, game);
+            crate::room_reference_observer::diagnostic_parts(
+                address,
+                host.ram,
+                host.loaded_rom,
+                host.g_fail,
+            );
             #[cfg(sm_verify_dll)]
-            crate::room_background_observer::diagnostic(address, game);
+            crate::room_background_observer::diagnostic_parts(
+                address,
+                host.ram,
+                host.loaded_rom,
+                host.g_fail,
+                host.decompress_src,
+                &mut _observe,
+            );
             #[cfg(sm_verify_dll)]
-            crate::actor_population_animation_observer::diagnostic(address, game);
+            crate::actor_population_animation_observer::diagnostic_parts(
+                address,
+                host.ram,
+                host.loaded_rom,
+                host.g_fail,
+                host.eproj_spawn_rect,
+                host.eproj_spawn_r22,
+                host.eproj_spawn_pt,
+                host.eproj_spawn_varE24,
+            );
         }
         crate::rom::RomRecord {
-            image: game
+            image: host
                 .loaded_rom
                 .as_ref()
                 .expect("ROM must be loaded")
@@ -850,14 +913,24 @@ pub(crate) fn report_invalid_rom_address(address: u32, game: &mut Game) {
 }
 
 pub unsafe fn RomPtr(addr: u32, game: &mut Game) -> *const u8 {
+    unsafe { rom_ptr_parts(addr, &mut game.execution_parts().1) }
+}
+pub(crate) unsafe fn rom_ptr_parts(addr: u32, host: &mut HostContext<'_>) -> *const u8 {
     unsafe {
         if addr & 0x8000 == 0 {
             printf(c"RomPtr - Invalid access 0x%x!\n".as_ptr(), addr);
-            game.g_fail = true_0 != 0;
+            *host.g_fail = true_0 != 0;
             #[cfg(sm_verify_dll)]
-            crate::room_contact_start_observer::diagnostic(addr, game);
+            crate::room_contact_start_observer::diagnostic_parts(
+                addr,
+                host.ram,
+                host.loaded_rom,
+                host.g_fail,
+            );
         }
-        game.legacy_native_rom_ptr()
+        host.native_rom
+            .as_ref()
+            .map_or(core::ptr::null(), |image| image.as_mut_ptr().cast_const())
             .offset(crate::rtl::lorom_offset(addr))
     }
 }
@@ -871,20 +944,41 @@ pub(crate) unsafe fn write_register_and_mirror(
 ) {
     unsafe {
         if mirror_first {
-            game.g_ram[mirror] = value;
+            game.ram().write_byte(mirror, value);
             WriteReg(register, value, game);
         } else {
             WriteReg(register, value, game);
-            game.g_ram[mirror] = value;
+            game.ram().write_byte(mirror, value);
         }
     }
 }
 
 pub unsafe fn WriteReg(reg: u16, value: u8, game: &mut Game) {
+    let views = (game.g_snes, game.g_cpu);
+    unsafe { write_reg_parts(reg, value, &mut game.execution(), views) }
+}
+pub(crate) unsafe fn write_reg_execution(reg: u16, value: u8, game: &mut Execution<'_>) {
+    let views = game.backend.views();
+    unsafe { write_reg_parts(reg, value, game, views) }
+}
+unsafe fn write_reg_parts(
+    reg: u16,
+    value: u8,
+    game: &mut Execution<'_>,
+    _views: (*mut Snes, *mut Cpu),
+) {
     unsafe {
-        snes_write(game.g_snes, reg as u32, value, game);
+        game.write(reg as u32, value);
         #[cfg(sm_verify_dll)]
-        crate::room_background_observer::written(reg, value, game);
+        crate::room_background_observer::written_parts(
+            reg,
+            value,
+            game.host.ram,
+            game.host.loaded_rom,
+            game.host.g_fail,
+            game.host.decompress_src,
+            |output| observe_backend(Some(&*game.backend), _views, output),
+        );
     }
 }
 /// Magnitude of a signed SNES word; 0x8000 remains the unsigned value 0x8000.
@@ -949,7 +1043,7 @@ pub fn SnesModulus(a: u16, b: u8) -> u16 {
     }) as u16
 }
 pub unsafe fn ReadReg(reg: u16, game: &mut Game) -> u8 {
-    unsafe { snes_read(game.g_snes, reg as u32, game) }
+    unsafe { game.execution().read(reg as u32) }
 }
 pub unsafe fn ReadRegWord(reg: u16, game: &mut Game) -> u16 {
     unsafe {
@@ -967,17 +1061,42 @@ pub unsafe fn WriteRegWord(reg: u16, value: u16, game: &mut Game) {
 
 pub unsafe fn RtlApuWrite(adr: u32, val: u8, game: &mut Game) {
     unsafe {
+        let (backend, mut host) = game.execution_parts();
+        if apu_write_queued(adr, val, &mut host) {
+            let mut execution = Execution {
+                backend: backend.expect("APU upload requires an owned backend"),
+                host,
+            };
+            apu_write_upload(adr, val, &mut execution);
+        }
+    }
+}
+pub(crate) unsafe fn apu_write(game: &mut Execution<'_>, adr: u32, val: u8) {
+    unsafe {
+        if apu_write_queued(adr, val, &mut game.host) {
+            apu_write_upload(adr, val, game);
+        }
+    }
+}
+// Validate and sample the upload flag before either queue or physical effects.
+unsafe fn apu_write_queued(adr: u32, val: u8, host: &mut HostContext<'_>) -> bool {
+    unsafe {
         crate::native_assertion! {
             '_c2rust_label: adr >= APUI00 as i32 as u32 && adr <= APUI03 as i32 as u32;
             b"adr >= APUI00 && adr <= APUI03\0", b"src/sm_rtl.c\0", 571,
             b"void RtlApuWrite(uint32, uint8)\0"
         };
-        if game.uploading_apu() {
-            snes_catchupApu(game.g_snes, game);
-            (*(*game.g_snes).apu).registers.inPorts[(adr & 0x3) as usize] = val;
-            return;
+        if host.ram.read_byte(0x617) != 0 || host.ram.read_byte(0x618) != 0 {
+            return true;
         }
-        game.apu_queue.write((adr & 3) as usize, val);
+        host.apu_queue.write((adr & 3) as usize, val);
+        false
+    }
+}
+unsafe fn apu_write_upload(adr: u32, val: u8, game: &mut Execution<'_>) {
+    unsafe {
+        game.catch_up_apu();
+        (*game.backend.apu_view()).registers.inPorts[(adr & 3) as usize] = val;
     }
 }
 pub unsafe fn RtlPushApuState(game: &mut Game) {
@@ -1072,7 +1191,7 @@ pub unsafe fn RtlRenderAudio(audio_buffer: &mut [[i16; 2]], game: &mut Game) {
         if !game.g_use_my_apu_code {
             if !game.uploading_apu() {
                 while ((*(*(*game.g_snes).apu).dsp).state.sampleOffset as i32) < 534 {
-                    apu_cycle((*game.g_snes).apu, game);
+                    game.execution().cycle_apu();
                 }
                 (*(*(*game.g_snes).apu).dsp)
                     .state
@@ -1091,28 +1210,36 @@ pub unsafe fn RtlCheat(c: c_char, game: &mut Game) {
     unsafe {
         if c as i32 == 'w' as i32 {
             word!(game.samus_health = word!(game.samus_max_health));
-            recording_allocation(
-                game.state_recorder
-                    .record_patch(0x9c2, &[game.g_ram[0x9c2], game.g_ram[0x9c2 + 1]]),
-            );
+            {
+                let (ram, recorder) = game.ram_and_recorder();
+                recording_allocation(
+                    recorder.record_patch(0x9c2, &[ram.read_byte(0x9c2), ram.read_byte(0x9c2 + 1)]),
+                );
+            }
         } else if c as i32 == 'q' as i32 {
             word!(checked_i32, game.samus_y_pos -= 4i32);
             word!(game.samus_y_speed = -8i32 as u16);
-            recording_allocation(
-                game.state_recorder
-                    .record_patch(0xafa, &[game.g_ram[0xafa], game.g_ram[0xafa + 1]]),
-            );
-            recording_allocation(
-                game.state_recorder
-                    .record_patch(0xb2e, &[game.g_ram[0xb2e], game.g_ram[0xb2e + 1]]),
-            );
+            {
+                let (ram, recorder) = game.ram_and_recorder();
+                recording_allocation(
+                    recorder.record_patch(0xafa, &[ram.read_byte(0xafa), ram.read_byte(0xafa + 1)]),
+                );
+            }
+            {
+                let (ram, recorder) = game.ram_and_recorder();
+                recording_allocation(
+                    recorder.record_patch(0xb2e, &[ram.read_byte(0xb2e), ram.read_byte(0xb2e + 1)]),
+                );
+            }
             word!(game.menu_index = 0);
         } else if c as i32 == 'q' as i32 {
             word!(game.japanese_text_flag = (word!(game.japanese_text_flag) == 0) as i32 as u16);
-            recording_allocation(
-                game.state_recorder
-                    .record_patch(0x9e2, &[game.g_ram[0x9e2], game.g_ram[0x9e2 + 1]]),
-            );
+            {
+                let (ram, recorder) = game.ram_and_recorder();
+                recording_allocation(
+                    recorder.record_patch(0x9e2, &[ram.read_byte(0x9e2), ram.read_byte(0x9e2 + 1)]),
+                );
+            }
         }
     }
 }

@@ -12,18 +12,23 @@ pub fn parameters(id: u32) -> Result<(bool, u16, u16), String> {
     ))
 }
 pub fn put(game: &mut Game, address: usize, value: u16) {
-    game.g_ram[address..address + 2].copy_from_slice(&value.to_le_bytes());
+    let _ = &[(); 0x20000][address..address + 2];
+    game.ram().copy_in(address, &value.to_le_bytes());
 }
 pub fn word(game: &Game, address: usize) -> u16 {
-    u16::from_le_bytes([game.g_ram[address], game.g_ram[address + 1]])
+    u16::from_le_bytes([
+        game.ram().read_byte(address),
+        game.ram().read_byte(address + 1),
+    ])
 }
 pub fn seed(id: u32, game: &mut Game) -> Result<bool, String> {
     let (fade, area, bit) = parameters(id)?;
-    for (i, byte) in game.g_ram.iter_mut().enumerate() {
-        *byte = (i as u8)
+    for i in 0..game.ram().len() {
+        let value = (i as u8)
             .wrapping_mul(17)
             .wrapping_add((i >> 8) as u8)
             .wrapping_add(0x53);
+        game.ram().write_byte(i, value);
     }
     for i in 0..8192 {
         game.g_sram
@@ -51,7 +56,7 @@ pub fn state(output: &mut Vec<u8>, stage: u8, result: u16, cpu: [u8; 16], game: 
     let mut payload = vec![stage];
     payload.extend_from_slice(&result.to_le_bytes());
     payload.extend_from_slice(&cpu);
-    payload.extend_from_slice(&game.g_ram);
+    payload.extend((0..game.ram().len()).map(|at| game.ram().read_byte(at)));
     payload.extend_from_slice(&game.g_sram.bytes(0..8192));
     record(output, 1, &payload);
 }

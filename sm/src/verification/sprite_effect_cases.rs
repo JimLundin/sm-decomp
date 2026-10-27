@@ -1,6 +1,10 @@
 //! Synthetic predecessor sprite-pool fixtures; no cartridge-derived bytes.
 #![forbid(unsafe_code)]
-use crate::{game_state::Game, ram_map::words as w, rom::RomImage};
+use crate::{
+    game_state::{Game, WorkRam},
+    ram_map::words as w,
+    rom::RomImage,
+};
 #[derive(Clone, Copy)]
 pub(crate) enum Operation {
     PopulationClear,
@@ -21,7 +25,11 @@ pub(crate) enum Operation {
 }
 pub(crate) const CASES: u32 = 117;
 pub(crate) fn put(g: &mut Game, at: usize, value: u16) {
-    g.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    put_parts(g.ram(), at, value);
+}
+pub(crate) fn put_parts(ram: &WorkRam, at: usize, value: u16) {
+    let _ = &[(); 0x20000][at..at + 2];
+    ram.copy_in(at, &value.to_le_bytes());
 }
 pub(crate) fn word(image: &RomImage, address: u32, value: u16) {
     let at = crate::rtl::lorom_offset(address) as usize;
@@ -33,7 +41,7 @@ fn slot(g: &mut Game, column: usize, index: usize, value: u16) {
     put(g, column + 2 * index, value);
 }
 fn seed(id: u32, g: &mut Game) -> Operation {
-    g.g_ram.fill(0);
+    g.ram().fill(0..g.ram().len(), 0);
     for index in 0..512 {
         put(g, 0xef78 + index * 2, 0x5000 ^ (index as u16));
     }
@@ -229,7 +237,9 @@ pub(crate) fn capture_case(id: u32, run: fn(Operation, &mut Game) -> u16) -> Opt
         (76..=79).contains(&id) || matches!(id, 111..=113 | 115),
         "sprite.pool.{id}.diagnostic"
     );
-    let mut bytes = game.g_ram.to_vec();
+    let mut bytes = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<_>>();
     bytes.extend_from_slice(&result.unwrap_or(0).to_le_bytes());
     bytes.push(u8::from((8..=11).contains(&id)));
     bytes.push(u8::from(game.g_fail));

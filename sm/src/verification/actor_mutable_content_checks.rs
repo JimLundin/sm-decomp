@@ -68,13 +68,15 @@ pub(crate) fn image() -> RomImage {
 pub(crate) fn seed(g: &mut Game, image: &RomImage) {
     // This is fixture construction, not a reset claim. Register BOTH owners: legacy
     // packed sink reads use native ROM; rom_record and content capture use loaded ROM.
-    g.g_ram.fill(0);
+    g.ram().fill(0..g.ram().len(), 0);
     g.register_native_rom(image.clone());
     g.register_rom(image.clone());
     g.g_fail = false;
-    put(&mut g.g_ram, ram::kraid_unk9000, 2);
-    put(&mut g.g_ram, ram::camera_distance_index, 0x4567);
-    put(&mut g.g_ram, ram::palette_change_num, 9);
+    g.ram().copy_in(ram::kraid_unk9000, &2u16.to_ne_bytes());
+    g.ram()
+        .copy_in(ram::camera_distance_index, &0x4567u16.to_ne_bytes());
+    g.ram()
+        .copy_in(ram::palette_change_num, &9u16.to_ne_bytes());
     g.eproj_spawn_rect.x = 1;
     g.eproj_spawn_rect.y = 2;
     g.eproj_spawn_rect.w = 3;
@@ -142,7 +144,9 @@ pub(crate) fn written_image(image: &RomImage) -> Vec<u8> {
 }
 pub(crate) fn write_checked(g: &mut Game, image: &RomImage) {
     let expected_image = written_image(image);
-    let mut expected = g.g_ram.to_vec();
+    let mut expected = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<_>>();
     put(&mut expected, 0xf78 + 6, 608);
     put(&mut expected, 0xf78 + 0xe, 0);
     for slot in 1..6 {
@@ -182,7 +186,11 @@ pub(crate) fn write_checked(g: &mut Game, image: &RomImage) {
     );
     assert_image(g, image, &expected_image, "writer");
     assert_eq!(
-        g.g_ram.as_slice() == expected.as_slice(),
+        (0..g.ram().len())
+            .map(|at| g.ram().read_byte(at))
+            .collect::<Vec<_>>()
+            .as_slice()
+            == expected.as_slice(),
         true,
         "actor.mutable.writer_exact_ram"
     );
@@ -198,7 +206,11 @@ pub(crate) fn write_checked(g: &mut Game, image: &RomImage) {
     );
     for slot in 0..18 {
         assert_eq!(
-            &g.g_ram[arrays::eproj_id + slot * 2..arrays::eproj_id + slot * 2 + 2],
+            &{
+                let mut bytes = [0; 2];
+                g.ram().copy_out(arrays::eproj_id + slot * 2, &mut bytes);
+                bytes
+            },
             &1u16.to_ne_bytes(),
             "actor.mutable.full_pool_no_initializer"
         );
@@ -227,7 +239,9 @@ pub(crate) fn consume_checked(g: &mut Game, ignored: bool, label: &str) {
         shot.y_radius = 2;
         state.room.collision_detection_index = 0x7777;
     }
-    let mut expected = g.g_ram.to_vec();
+    let mut expected = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<_>>();
     put(&mut expected, ram::enemy_processing_stage, 6); // Actual final extended touch stage.
     if !ignored {
         put(&mut expected, arrays::projectile_dir, 0x10);
@@ -237,7 +251,11 @@ pub(crate) fn consume_checked(g: &mut Game, ignored: bool, label: &str) {
     let before_native = native(g);
     super::contacts::process_contacts(&mut Runtime::new(g));
     assert_eq!(
-        g.g_ram.as_slice() == expected.as_slice(),
+        (0..g.ram().len())
+            .map(|at| g.ram().read_byte(at))
+            .collect::<Vec<_>>()
+            .as_slice()
+            == expected.as_slice(),
         true,
         "actor.mutable.live_shot_consumer {label}"
     );
@@ -257,19 +275,35 @@ pub(crate) fn run_checked() {
     let mut game = Game::new();
     let image = image();
     seed(&mut game, &image);
-    let before_ram = game.g_ram.to_vec();
+    let before_ram = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<_>>();
     let before_payload = game.capture_actor_snapshot();
     let expected_image = written_image(&image);
     consume_checked(&mut game, false, "before_writer_positive_control");
-    game.g_ram.copy_from_slice(&before_ram); // Only restore the positive-control fixture.
+    {
+        let bytes = &before_ram;
+        [(); 131072].copy_from_slice(&vec![(); bytes.len()]);
+        game.ram().copy_in(0, bytes);
+    } // Only restore the positive-control fixture.
     write_checked(&mut game, &image);
     consume_checked(&mut game, true, "after_actual_writer");
     let restore = before_payload
         .preflight(game.actor_identity(), game.world())
         .unwrap();
-    game.g_ram.copy_from_slice(&before_ram); // Explicit RAM replacement, not CPU RestoreSnapshot.
+    {
+        let bytes = &before_ram;
+        [(); 131072].copy_from_slice(&vec![(); bytes.len()]);
+        game.ram().copy_in(0, bytes);
+    } // Explicit RAM replacement, not CPU RestoreSnapshot.
     restore.commit(game.actor_identity_mut());
-    assert_eq!(game.g_ram.as_slice(), before_ram.as_slice());
+    assert_eq!(
+        (0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<_>>()
+            .as_slice(),
+        before_ram.as_slice()
+    );
     assert_eq!(
         game.capture_actor_snapshot(),
         before_payload,
@@ -283,9 +317,9 @@ pub(crate) fn run_checked() {
     );
     consume_checked(&mut game, true, "after_actor_payload_and_ram_replacement");
     let transition = game.prepare_actor_canonical();
-    game.g_ram.fill(0); // Explicit component RAM replacement, NOT RtlReset.
+    game.ram().fill(0..game.ram().len(), 0); // Explicit component RAM replacement, NOT RtlReset.
     game.commit_actor_canonical(transition);
-    assert!(game.g_ram.iter().all(|&byte| byte == 0));
+    assert!((0..game.ram().len()).all(|at| game.ram().read_byte(at) == 0));
     assert_image(&game, &image, &expected_image, "canonical_ram_replacement");
     consume_checked(&mut game, true, "after_canonical_ram_replacement");
     assert_image(&game, &image, &expected_image, "after_final_consumer");

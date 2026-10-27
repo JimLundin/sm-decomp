@@ -33,16 +33,16 @@ impl Drop for CancelGuard {
 }
 fn checkpoint(out: &mut Vec<u8>, g: &Game, tag: u8, returned: Option<u32>) {
     out.push(tag);
-    out.extend_from_slice(&g.g_ram);
+    out.extend((0..g.ram().len()).map(|at| g.ram().read_byte(at)));
     out.push(u8::from(g.g_fail));
     out.push(u8::from(returned.is_some()));
     out.extend_from_slice(&returned.unwrap_or(0).to_le_bytes());
 }
 fn put(g: &mut Game, at: usize, value: u16) {
-    g.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    g.ram().copy_in(at, &value.to_le_bytes());
 }
 fn get(g: &Game, at: usize) -> u16 {
-    u16::from_le_bytes([g.g_ram[at], g.g_ram[at + 1]])
+    u16::from_le_bytes([g.ram().read_byte(at), g.ram().read_byte(at + 1)])
 }
 fn expect(g: &Game, at: usize, value: u16, why: &str) {
     assert_eq!(get(g, at), value, "{why} at {at:04x}");
@@ -55,11 +55,11 @@ fn rom_word(r: &RomImage, address: u32, value: u16) {
 }
 fn block(g: &mut Game, at: usize, kind: u16, bts: u8) {
     put(g, 0x10002 + 2 * at, kind << 12);
-    g.g_ram[0x16402 + at] = bts;
+    g.ram().write_byte(0x16402 + at, bts);
 }
 fn actor(g: &mut Game, key: u16, x: u16, y: u16) {
     let at = 0xf78 + usize::from(key);
-    g.g_ram[at..at + size_of::<EnemyData>()].fill(0);
+    g.ram().fill(at..at + size_of::<EnemyData>(), 0);
     for (field, v) in [
         (offset_of!(EnemyData, x_pos), x),
         (offset_of!(EnemyData, y_pos), y),
@@ -77,7 +77,7 @@ fn seed(g: &mut Game) -> (RomImage, RomImage) {
     let native = RomImage::zeroed(0x200000);
     g.loaded_rom = Some(loaded.clone());
     g.register_native_rom(native.clone());
-    g.g_ram.fill(0);
+    g.ram().fill(0..g.ram().len(), 0);
     g.g_fail = false;
     g.VERIFY_ACTIVE = true;
     for (at, v) in [
@@ -96,7 +96,7 @@ fn seed(g: &mut Game) -> (RomImage, RomImage) {
     ] {
         put(g, at, v);
     }
-    g.g_ram[0xa1e] = 8;
+    g.ram().write_byte(0xa1e, 8);
     for at in (0xdaa..0xdba).step_by(2) {
         put(g, at, 0x7777);
     }
@@ -449,7 +449,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 );
                 expect(g, w::samus_x_subpos, 0x123, "positive clamp fraction");
                 checkpoint(&mut checkpoints, g, 1, None);
-                g.g_ram[0xa1e] = 4;
+                g.ram().write_byte(0xa1e, 4);
                 put(g, w::samus_x_subpos, 0);
                 crate::game::player_collision::verification::move_x(0x200123, g);
                 expect(
@@ -503,7 +503,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 returned = Some(value as u32);
             }
             27 => {
-                g.g_ram[0xa1e] = 4;
+                g.ram().write_byte(0xa1e, 4);
                 put(g, w::extra_samus_x_displacement, 3);
                 crate::game::player_collision::verification::move_x(0x10000, g);
                 expect(
@@ -610,7 +610,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 put(g, w::samus_x_base_subspeed, 0x1234);
                 put(g, w::extra_samus_x_displacement, 2);
                 put(g, w::samus_y_dir, 2);
-                g.g_ram[0xa1f] = if id == 33 { 20 } else { 3 };
+                g.ram().write_byte(0xa1f, if id == 33 { 20 } else { 3 });
                 match id {
                     32 | 33 => crate::game::player_movement::speed::jumping(
                         &mut crate::game::session_runtime::Runtime::new(g),
@@ -650,7 +650,9 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         }
     }
     assert!(!g.g_fail, "movement case{id} native failure");
-    let mut out = g.g_ram.to_vec();
+    let mut out = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     out.push(u8::from(returned.is_some()));
     out.extend_from_slice(&returned.unwrap_or(0).to_le_bytes());
     out.push(u8::from(g.g_fail));

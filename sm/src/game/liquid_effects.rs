@@ -117,7 +117,7 @@ fn advance_motion(game: &mut Game) {
 #[forbid(unsafe_code)]
 fn advance_tide(game: &mut Game) {
     // The control word and product store deliberately straddle named RAM words.
-    let control = u16::from_ne_bytes([game.g_ram[0x197d], game.g_ram[0x197e]]);
+    let control = u16::from_ne_bytes([game.ram().read_byte(0x197d), game.ram().read_byte(0x197e)]);
     let (amplitude, sign_mask, positive_step, negative_step) = if control & 0x8000 != 0 {
         (8u16, 0x1000, 288, 192)
     } else if control & 0x4000 != 0 {
@@ -220,7 +220,7 @@ pub fn water_surface(k: u16, game: &mut Game) {
     word!(game.bg3_ypos = surface_scroll(word!(game.fx_y_pos), word!(game.layer1_y_pos)));
     let v5: i32 = k as i32 >> 1;
     let r20: u16 = (word!(game.layer1_x_pos))
-        .wrapping_add((game.g_ram[0x192d + 2 * v5 as usize] as i8) as u16);
+        .wrapping_add((game.ram().read_byte(0x192d + 2 * v5 as usize) as i8) as u16);
     let remaining = word!(game.hdma_object_B[v5]);
     word!(game.hdma_object_B[v5] = remaining.wrapping_sub(1));
     if remaining == 1 {
@@ -273,7 +273,7 @@ fn fill_wave(k: u16, wave: Wave, game: &mut Game) {
         2 * (word!(game.reg_BG2VOFS) & 0xf)
     };
     let mut sample = if horizontal {
-        game.g_ram[0x1914 + usize::from(k)]
+        game.ram().read_byte(0x1914 + usize::from(k))
     } else {
         word!(game.hdma_object_A[slot]) as u8
     };
@@ -311,7 +311,7 @@ pub unsafe fn lava_background(k: u16, game: &mut Game) {
         let active = word!(game.time_is_frozen_flag) == 0 && word!(game.fx_liquid_options) & 6 != 0;
         let horizontal = active && word!(game.fx_liquid_options) & 2 == 0;
         WriteReg(
-            (game.g_ram[0x18c0 + usize::from(k)] as u16).wrapping_add(BBAD0 as u16),
+            (game.ram().read_byte(0x18c0 + usize::from(k)) as u16).wrapping_add(BBAD0 as u16),
             if horizontal { 0xf } else { 0x10 },
             game,
         );

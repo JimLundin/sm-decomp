@@ -187,7 +187,7 @@ pub(crate) fn set_hdma_enabled(enabled: bool, game: &mut Game) {
 }
 
 pub(crate) fn clear_hdma_channels(game: &mut Game) {
-    game.g_ram[0x85] = 0;
+    game.ram().write_byte(0x85, 0);
     word_transfers!(game, descending, 6; le(hdma_object_channels_bitmask, 5) <- value(0));
 }
 
@@ -246,17 +246,17 @@ pub(crate) unsafe fn initialize_room_effects(game: &mut Game) {
             byte(WMADDH as u16, 1);
         }
     }
-    game.g_ram[0x85] = 0;
+    game.ram().write_byte(0x85, 0);
     set_fixed_color([32, 64, 0x80], game);
-    game.g_ram[0x57] = 0;
-    game.g_ram[0x69] = 19;
-    game.g_ram[0x6f] = 0;
-    game.g_ram[0x72] = 0;
-    game.g_ram[0x5d] = 0;
-    game.g_ram[0x5e] = 4;
-    game.g_ram[0x59] = 73;
-    game.g_ram[0x5a] = 90;
-    game.g_ram[0x5b] = 90;
+    game.ram().write_byte(0x57, 0);
+    game.ram().write_byte(0x69, 19);
+    game.ram().write_byte(0x6f, 0);
+    game.ram().write_byte(0x72, 0);
+    game.ram().write_byte(0x5d, 0);
+    game.ram().write_byte(0x5e, 4);
+    game.ram().write_byte(0x59, 73);
+    game.ram().write_byte(0x5a, 90);
+    game.ram().write_byte(0x5b, 90);
 }
 
 pub(crate) unsafe fn update_hdma(game: &mut Game) {
@@ -274,13 +274,14 @@ pub(crate) unsafe fn update_hdma(game: &mut Game) {
     }
     checked_word!(game.fx_layer_blending_config_c = checked_word!(game.fx_layer_blending_config_a));
     if checked_word!(game.hdma_objects_enable_flag) & 0x8000 != 0 {
-        game.g_ram[0x85] = 0;
+        game.ram().write_byte(0x85, 0);
         let mut slot = 0usize;
         loop {
             checked_word!(game.hdma_object_index = slot as u16);
-            let channels = game.g_ram[0x18b4 + slot];
+            let channels = game.ram().read_byte(0x18b4 + slot);
             if channels != 0 {
-                game.g_ram[0x85] |= channels;
+                game.ram()
+                    .write_byte(0x85, game.ram().read_byte(0x85) | channels);
                 unsafe {
                     run_hdma_program(slot as u8, game);
                 }
@@ -381,7 +382,7 @@ unsafe fn run_hdma_program(slot: u8, game: &mut Game) {
     if timer != 1 {
         return;
     }
-    let base = bank_base(game.g_ram[0x18c1 + usize::from(slot)]);
+    let base = bank_base(game.ram().read_byte(0x18c1 + usize::from(slot)));
     let image = game.capture_native_rom();
     let program = checked_word!(game.hdma_object_instruction_list_pointers[index]);
     let position = base + program as isize;
@@ -422,7 +423,10 @@ unsafe fn execute_hdma_instruction(
         }
         8947056 => {
             checked_word!(game.hdma_object_pre_instructions[index] = script.word(0));
-            game.g_ram[0x18fc + usize::from(slot)] = script.byte(2);
+            {
+                let value = script.byte(2);
+                game.ram().write_byte(0x18fc + usize::from(slot), value);
+            }
             return script.advance(3);
         }
         8947076 => checked_word!(game.hdma_object_pre_instructions[index] = 0x858a),
@@ -448,7 +452,10 @@ unsafe fn execute_hdma_instruction(
             };
         }
         8947222 => {
-            game.g_ram[0x1908 + usize::from(slot)] = script.byte(0);
+            {
+                let value = script.byte(0);
+                game.ram().write_byte(0x1908 + usize::from(slot), value);
+            }
             return script.advance(1);
         }
         8947234 | 8947255 | 8947285 | 8947306 => {
@@ -458,7 +465,7 @@ unsafe fn execute_hdma_instruction(
                 8947285 => crate::rtl::A1B0,
                 _ => crate::rtl::DAS00,
             } as u16;
-            let channel = u16::from(game.g_ram[0x18c0 + 2 * index]);
+            let channel = u16::from(game.ram().read_byte(0x18c0 + 2 * index));
             unsafe {
                 crate::rtl::WriteReg(register + channel, script.byte(0), game);
             }
@@ -469,7 +476,7 @@ unsafe fn execute_hdma_instruction(
             return script.advance(2);
         }
         8947330 => {
-            let base = bank_base(game.g_ram[0x18c1 + usize::from(slot)]);
+            let base = bank_base(game.ram().read_byte(0x18c1 + usize::from(slot)));
             // Sleep refreshes the bank/source after callbacks, retaining linear position.
             let _binding = game.capture_native_rom_binding();
             checked_word!(
@@ -497,21 +504,21 @@ unsafe fn execute_hdma_instruction(
             let offset: u16 = if opened { 0xff10 } else { 0 };
             checked_word!(game.hdma_object_B[index] = offset);
             let [low, high] = offset.to_ne_bytes();
-            game.g_ram[0x9e00] = low;
-            game.g_ram[0x9e01] = high;
+            game.ram().write_byte(0x9e00, low);
+            game.ram().write_byte(0x9e01, high);
             if opened {
                 return Script::jump(script.word(0));
             }
             let [low, high] = 1u16.to_ne_bytes();
-            game.g_ram[0xcd20] = low;
-            game.g_ram[0xcd21] = high;
+            game.ram().write_byte(0xcd20, low);
+            game.ram().write_byte(0xcd21, high);
             return script.advance(2);
         }
         8971453 => Runtime::new(game).initialize_phantoon_wave(slot),
         0x88e917 => Runtime::new(game).initialize_eye_beam(slot),
         8973471 => Runtime::new(game).reset_hdma_wave(slot),
         8973215 => {
-            game.g_ram[0x6f] = 0;
+            game.ram().write_byte(0x6f, 0);
             refresh_title_gradient(game);
         }
         _ => {
@@ -882,9 +889,9 @@ pub(crate) fn advance_fireflea_lighting(game: &mut Game) {
     let shade = (FIREFLEA_DARKNESS[usize::from(word!(game.fireflea_darkness_level) >> 1)]
         .wrapping_add(FIREFLEA_FLASH[usize::from(word!(game.fireflea_flashing_index))])
         >> 8) as u8;
-    game.g_ram[0x75] = shade | 0x80;
-    game.g_ram[0x76] = shade | 0x40;
-    game.g_ram[0x74] = shade | 0x20;
+    game.ram().write_byte(0x75, shade | 0x80);
+    game.ram().write_byte(0x76, shade | 0x40);
+    game.ram().write_byte(0x74, shade | 0x20);
 }
 
 // Shooting-star scratch records stay in RAM. Native scalar loads use from_le
@@ -919,7 +926,7 @@ pub(crate) fn advance_shooting_stars(game: &mut Game) {
             word_transfers!(game, ascending, 1; native(at + 10) <- value(timer));
             if (timer as i16) < 0 {
                 word_transfers!(game, ascending, 1; native(at + 10) <- value(32));
-                word_transfers!(game, ascending, 1; native(at) <- value(u16::from(game.g_ram[at])));
+                word_transfers!(game, ascending, 1; native(at) <- value(u16::from(game.ram().read_byte(at))));
             }
             continue;
         }
@@ -959,13 +966,13 @@ pub(crate) fn advance_shooting_stars(game: &mut Game) {
         let x = u16::from_le(checked_word!(game, at + 2;)) as i16;
         let oam = 0x370 + usize::from(output);
         let mut y = 0i16;
-        if game.g_ram[at + 3] != 0
+        if game.ram().read_byte(at + 3) != 0
             || (i32::from(x) - 4) & 0xff00 != 0
             || {
                 // This overlapping word write precedes even the Y rejection.
                 word_transfers!(game, ascending, 1; native(oam) <- value((x as u16).wrapping_sub(4)));
                 y = u16::from_le(checked_word!(game, at + 6;)) as i16;
-                game.g_ram[at + 7] != 0
+                game.ram().read_byte(at + 7) != 0
             }
             || (i32::from(y) - 4) & 0xff00 != 0
         {
@@ -980,7 +987,7 @@ pub(crate) fn advance_shooting_stars(game: &mut Game) {
             ] {
                 word_transfers!(game, ascending, 1; native(at + offset) <- value(value));
             }
-            word_transfers!(game, ascending, 1; native(at) <- value(u16::from(game.g_ram[at])));
+            word_transfers!(game, ascending, 1; native(at) <- value(u16::from(game.ram().read_byte(at))));
             continue;
         }
         word_transfers!(game, ascending, 1; native(oam + 1) <- value((y as u16).wrapping_sub(4)));
@@ -994,7 +1001,7 @@ pub(crate) fn advance_shooting_stars(game: &mut Game) {
             ));
             word_transfers!(game, ascending, 1; native(at) <- value(identity.wrapping_add(512)));
         }
-        if game.g_ram[at + 1] != 0 {
+        if game.ram().read_byte(at + 1) != 0 {
             word_transfers!(game, ascending, 1; native(oam + 2) <- value(
                 crate::rtl::rom_table_word!(game, 0x8be9a7,
                     ((u16::from_le(checked_word!(game, at;)) & 0xff00) >> 9) as isize)
@@ -1036,7 +1043,7 @@ pub(crate) unsafe fn initialize_tourian_statue(game: &mut Game) {
             spawn_hardcoded(SpawnHardcodedPlmArgs::new(6, 12, 0xb777), game);
             word_transfers!(game, ascending, 1; native(0xcd20) <- value(514));
         }
-        game.g_ram[0x59] = 74;
+        game.ram().write_byte(0x59, 74);
         word!(game.fx_rising_function_bank_88 = 0xc428);
         word!(game.fx_y_pos = word!(game.fx_base_y_pos));
         spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0x11, 0xd856), game);
@@ -1080,8 +1087,10 @@ pub(crate) unsafe fn advance_tourian_statue(
             }
             let low = 0x1914 + usize::from(slot & !1);
             let high = 0x1920 + usize::from(slot & !1);
-            let fraction = u16::from_ne_bytes([game.g_ram[low], game.g_ram[low + 1]]);
-            let whole = u16::from_ne_bytes([game.g_ram[high], game.g_ram[high + 1]]);
+            let fraction =
+                u16::from_ne_bytes([game.ram().read_byte(low), game.ram().read_byte(low + 1)]);
+            let whole =
+                u16::from_ne_bytes([game.ram().read_byte(high), game.ram().read_byte(high + 1)]);
             let position = (u32::from(fraction) | u32::from(whole) << 16).wrapping_sub(0x4000);
             word_transfers!(game, ascending, 1;
                 native(low) <- value(position as u16),
@@ -1116,7 +1125,7 @@ pub(crate) unsafe fn initialize_weather(weather: Weather, game: &mut Game) {
         Weather::Spores => (0x42, 0xda2d, Some(addr_kAnimtiles_Spores)),
         Weather::Fog => (0x43, 0xdb19, None),
     };
-    game.g_ram[0x5b] = 92;
+    game.ram().write_byte(0x5b, 92);
     unsafe {
         spawn_hdma(
             0x88,
@@ -1132,7 +1141,7 @@ pub(crate) unsafe fn initialize_weather(weather: Weather, game: &mut Game) {
 
 pub(crate) fn scroll_weather(slot: u16, weather: Weather, game: &mut Game) {
     use crate::ram_map::{checked_word, words as ram};
-    game.g_ram[0x5b] = 92;
+    game.ram().write_byte(0x5b, 92);
     checked_word!(game.fx_layer_blending_config_c = checked_word!(game.fx_layer_blending_config_b));
     if checked_word!(game.time_is_frozen_flag) != 0 {
         return;
@@ -1771,8 +1780,8 @@ pub(crate) fn advance_intro_rinka(object: u16, misses_samus: bool, game: &mut Ga
 
 // Native split words retain low-before-high reads and writes.
 fn add_native_pair(high: usize, low: usize, velocity: u32, game: &mut Game) {
-    let fraction = u16::from_ne_bytes([game.g_ram[low], game.g_ram[low + 1]]);
-    let whole = u16::from_ne_bytes([game.g_ram[high], game.g_ram[high + 1]]);
+    let fraction = u16::from_ne_bytes([game.ram().read_byte(low), game.ram().read_byte(low + 1)]);
+    let whole = u16::from_ne_bytes([game.ram().read_byte(high), game.ram().read_byte(high + 1)]);
     let position = (u32::from(fraction) | (u32::from(whole) << 16)).wrapping_add(velocity);
     word_transfers!(game, ascending, 1;
         native(low) <- value(position as u16),
@@ -1851,13 +1860,14 @@ pub(crate) fn initialize_ceres_explosion(object: u16, pattern: CeresExplosion, g
 
 pub(crate) fn advance_intro_landing_mosaic(fading: bool, game: &mut Game) {
     if word!(game.cinematic_var12) & 3 == 0 {
-        game.g_ram[0x57] = game.g_ram[0x57].wrapping_sub(16);
-        if !fading && game.g_ram[0x57] & 0xf0 == 0 {
-            game.g_ram[0x55] = 7;
-            game.g_ram[0x5f] = 0x80;
-            game.g_ram[0x58] = 0;
-            game.g_ram[0x5d] = 0;
-            game.g_ram[0x69] = 17;
+        game.ram()
+            .write_byte(0x57, game.ram().read_byte(0x57).wrapping_sub(16));
+        if !fading && game.ram().read_byte(0x57) & 0xf0 == 0 {
+            game.ram().write_byte(0x55, 7);
+            game.ram().write_byte(0x5f, 0x80);
+            game.ram().write_byte(0x58, 0);
+            game.ram().write_byte(0x5d, 0);
+            game.ram().write_byte(0x69, 17);
             word! {game; cinematic_var8 = 128; cinematic_var10 = -104i32 as u16;
             cinematic_var5 = 32; cinematic_var6 = 256; }
             for (definition, parameter) in [
@@ -1875,7 +1885,7 @@ pub(crate) fn advance_intro_landing_mosaic(fading: bool, game: &mut Game) {
     }
     if fading {
         crate::game::display_refresh::fade(true, game);
-        if game.g_ram[0x51] == 15 {
+        if game.ram().read_byte(0x51) == 15 {
             word! { game, 0; screen_fade_delay, screen_fade_counter }
             word!(game.cinematic_function = 0xc7ca);
         }
@@ -1911,7 +1921,7 @@ pub(crate) fn advance_zebes_flight(stage: u8, game: &mut Game) {
     let negative = (word!(@read game, threshold) as i32 - limit) & 0x8000 != 0;
     if negative == (stage == 2) {
         if stage == 3 {
-            game.g_ram[0x69] = 16;
+            game.ram().write_byte(0x69, 16);
         }
         word!(game.cinematic_function = next);
         if stage == 3 {
@@ -2021,9 +2031,12 @@ pub(crate) fn fade_ending_gunship_backdrop(game: &mut Game) {
     let expired = word!(game.cinematic_var4 -= 1, reread) & 0x8000 != 0;
     if word!(game.cinematic_var4) == 0 || expired {
         fade_cinematic_fixed_color(game);
-        if game.g_ram[0x74] == 32 && game.g_ram[0x75] == 64 && game.g_ram[0x76] == 0x80 {
-            game.g_ram[0x6f] = 0;
-            game.g_ram[0x72] = 0;
+        if game.ram().read_byte(0x74) == 32
+            && game.ram().read_byte(0x75) == 64
+            && game.ram().read_byte(0x76) == 0x80
+        {
+            game.ram().write_byte(0x6f, 0);
+            game.ram().write_byte(0x72, 0);
         }
         word!(game.cinematic_var4 = 8);
     }
@@ -2079,7 +2092,7 @@ pub(crate) fn advance_ending_samus_jump(object: u16, phase: u8, game: &mut Game)
         }
     } else if word!(game.cinematicbg_arr8[slot]) as i32 + 80 & 0x8000 != 0 {
         if phase == 0 {
-            game.g_ram[0x52] = 3;
+            game.ram().write_byte(0x52, 3);
         }
         word! {game; cinematicspr_instr_timer[slot] = 1;
         cinematicspr_instr_ptr[slot] = if phase == 0 { 0xed95 } else { 0xee9b }; }
@@ -2127,10 +2140,10 @@ pub(crate) fn advance_postcredits_samus_reveal(stage: u8, game: &mut Game) {
         word!(game.cinematic_var4 = 127);
     } else {
         set_cinematic_blend(16, 0, 0, 0, game);
-        game.g_ram[0x55] = 7;
-        game.g_ram[0x5f] = 0x80;
-        game.g_ram[0x58] = 0;
-        game.g_ram[0x5d] = 0;
+        game.ram().write_byte(0x55, 7);
+        game.ram().write_byte(0x5f, 0x80);
+        game.ram().write_byte(0x58, 0);
+        game.ram().write_byte(0x5d, 0);
         word! {game; cinematic_function = 0xdb9d; cinematic_var14 = 0; }
     }
     let under_three = word!(game.game_time_hours) as i32 - 3 & 0x8000 != 0;
@@ -2289,8 +2302,8 @@ pub(crate) fn execute_cinematic_sprite_instruction(
         9161149 => { palette_effects::spawn(addr_loc_8BE1B4 as u16, game);         },
         9171550 => {
         set_cinematic_blend(3, 16, 2, 34, game);
-        game.g_ram[0x5d] = 100;
-        game.g_ram[0x59] = 84;
+        game.ram().write_byte(0x5d, 100);
+        game.ram().write_byte(0x59, 84);
         word! {game; cinematic_var4 = 0; cinematic_function = ((0x8be58ai32) as u16); }
             },
         9171588 => {
@@ -2303,7 +2316,7 @@ pub(crate) fn execute_cinematic_sprite_instruction(
             },
         9171639 => {
         set_cinematic_blend(17, 2, 2, 17, game);
-        game.g_ram[0x59] = 124;
+        game.ram().write_byte(0x59, 124);
         spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEEBB as u16, 0, 0xf27c, game);
         spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEEF7 as u16, 2, 2, game);
         palette_effects::spawn(addr_kPalfx_E1C8 as u16, game);
@@ -2312,14 +2325,14 @@ pub(crate) fn execute_cinematic_sprite_instruction(
             },
         9171706 => {
         set_cinematic_blend(3, 18, 2, 51, game);
-        game.g_ram[0x58] = 116;
-        game.g_ram[0x59] = 120;
+        game.ram().write_byte(0x58, 116);
+        game.ram().write_byte(0x59, 120);
         palette_effects::spawn(addr_kPalfx_E1CC as u16, game);
         spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEEC1 as u16, 6, 6, game);
             },
         9171755 => {
-        game.g_ram[0x69] = 0;
-        game.g_ram[0x6b] = 0;
+        game.ram().write_byte(0x69, 0);
+        game.ram().write_byte(0x6b, 0);
         word! { game, 0x7fff; palette_buffer[0], palette_buffer[128] }
         word_transfers!(game, descending, 16; le(palette_buffer, 31) <- value(0x7fff));
         word! {game; cinematic_function = ((0x8bdb9ei32) as u16); cinematic_var4 = 120; }
@@ -2459,7 +2472,7 @@ pub(crate) fn prepare_ending_time(game: &mut Game) {
 pub(crate) fn initialize_ending_time_glyph(object: u16, glyph: u8, game: &mut Game) {
     if glyph != 2 {
         let at = 0xdec + 2 * usize::from(glyph - u8::from(glyph > 2));
-        let bytes = [game.g_ram[at], game.g_ram[at + 1]];
+        let bytes = [game.ram().read_byte(at), game.ram().read_byte(at + 1)];
         // Hours are LE; minute digits retain native word order.
         let digit = if glyph < 2 {
             u16::from_le_bytes(bytes)
@@ -2499,12 +2512,12 @@ pub(crate) fn advance_postcredits_zoom(zooming: bool, game: &mut Game) {
     }
     advance_ending_graphics(EndingGraphics::Background, game);
     if word!(game.cinematic_var4 -= 1, reread) == 0 {
-        game.g_ram[0x55] = 1;
+        game.ram().write_byte(0x55, 1);
         set_cinematic_blend(17, 0, 0, 49, game);
         set_fixed_color([63, 95, 159], game);
-        game.g_ram[0x5f] = 0;
-        game.g_ram[0x58] = 78;
-        game.g_ram[0x5d] = 84;
+        game.ram().write_byte(0x5f, 0);
+        game.ram().write_byte(0x58, 78);
+        game.ram().write_byte(0x5d, 84);
         word_transfers!(game, ascending, 16; le(palette_buffer, 192) <- rom(0x8ce7e9, 192));
         word! { game, 0; cinematic_var8, cinematic_var10 }
         word! {game; cinematic_function = 0xe504; cinematic_var4 = 32; }
@@ -2539,7 +2552,7 @@ pub(crate) fn start_title_pan(stage: usize, cursor: u16, game: &mut Game) -> u16
         (0x9e12, 96, -177i16 as u16, -160i16 as u16),
         (0x9e8b, 67, 0, 0),
     ][stage];
-    game.g_ram[0x69] = 17;
+    game.ram().write_byte(0x69, 17);
     word! {game; cinematic_function = next; cinematic_var6 = zoom;
     cinematic_var8 = x; cinematic_var7 = 0; cinematic_var10 = y; cinematic_var9 = 0;
     g_word_7E199B = if stage < 2 { -2i16 as u16 } else { 0 };
@@ -2566,7 +2579,7 @@ pub(crate) fn advance_title_pan(stage: usize, game: &mut Game) {
     let negative = (word!(@read game, whole) as i32 + cutoff) & 0x8000 != 0;
     // The vertical pan ends on the opposite side of its cutoff.
     if negative != (stage == 2) {
-        game.g_ram[0x69] = 16;
+        game.ram().write_byte(0x69, 16);
         word!(game.cinematic_function = 0x9a47);
         let definition = [0xa0f5, 0xa0fb, 0xa101][stage];
         CinematicObjects::Sprites.spawn(definition, 0x9a47, game);
@@ -3017,8 +3030,8 @@ pub(crate) fn advance_credit_roll(game: &mut Game) -> bool {
             0x8bf6fe => {
                 word!(game.cinematic_var25 &= !0x8000);
                 word_transfers!(game, ascending, 252; le(palette_buffer, 4) <- rom(0x8ce7e9, 4));
-                game.g_ram[0x69] = 0; // reg_TM
-                game.g_ram[0x51] = 0x80; // reg_INIDISP
+                game.ram().write_byte(0x69, 0); // reg_TM
+                game.ram().write_byte(0x51, 0x80); // reg_INIDISP
                 word! { game, 0;
                     screen_fade_delay, screen_fade_counter, cinematic_var9, cinematic_var10,
                 }
@@ -3151,8 +3164,6 @@ fn draw_cinematic_background(object: u16, position: u16, game: &mut Game) {
 }
 
 unsafe fn draw_cinematic_item_percentage(game: &mut Game) {
-    use crate::c_library::__assert_fail;
-    use core::ffi::c_char;
     let mut count = 0u16;
     for index in (0..=4).rev() {
         let address = crate::rtl::rom_table_word!(game, 0x8be70d, index);
@@ -3251,7 +3262,7 @@ pub(crate) fn queue_cinematic_tilemap(
     game: &mut Game,
 ) {
     use crate::game::visual_state::CinematicTilemap::*;
-    if !matches!(tiles, Japanese | JapaneseIntro) && game.g_ram[0x55] == 7 {
+    if !matches!(tiles, Japanese | JapaneseIntro) && game.ram().read_byte(0x55) == 7 {
         return;
     }
     let (size, source) = match tiles {
@@ -3311,7 +3322,7 @@ pub(crate) fn advance_ending_graphics(graphics: EndingGraphics, game: &mut Game)
         };
         let destination = 0xd0 + usize::from(tail.wrapping_add(field));
         if field == 4 {
-            game.g_ram[destination] = value as u8;
+            game.ram().write_byte(destination, value as u8);
         } else {
             word_transfers!(game, ascending, 1; native(destination) <- value(value));
         }
@@ -3372,13 +3383,14 @@ pub(crate) fn advance_cinematic_fade(
     let slow = matches!(fade, SlowIn | SlowOut);
     if slow {
         // Only the low delay byte decrements, with the signed-byte wrap retained.
-        game.g_ram[0x723] = (word!(game.screen_fade_delay) as u8).wrapping_sub(1);
-        if (game.g_ram[0x723] as i8) > 0 {
+        game.ram()
+            .write_byte(0x723, (word!(game.screen_fade_delay) as u8).wrapping_sub(1));
+        if (game.ram().read_byte(0x723) as i8) > 0 {
             return false;
         }
     }
     let increasing = matches!(fade, FastIn | SlowIn);
-    let brightness = game.g_ram[0x51];
+    let brightness = game.ram().read_byte(0x51);
     if !increasing && brightness & 15 == 0 {
         return true;
     }
@@ -3395,15 +3407,18 @@ pub(crate) fn advance_cinematic_fade(
         let complete = (next as i8) <= 0;
         (if complete { 0x80 } else { next }, complete)
     };
-    game.g_ram[0x51] = next;
+    game.ram().write_byte(0x51, next);
     if slow {
-        game.g_ram[0x723] = if complete {
-            0
-        } else {
-            word!(game.screen_fade_counter) as u8
-        };
+        game.ram().write_byte(
+            0x723,
+            if complete {
+                0
+            } else {
+                word!(game.screen_fade_counter) as u8
+            },
+        );
         if complete {
-            game.g_ram[0x725] = 0;
+            game.ram().write_byte(0x725, 0);
         }
     }
     complete
@@ -3462,7 +3477,7 @@ pub(crate) fn fade_cinematic_colors(offset: u16, count: u16, increasing: bool, g
 pub(crate) fn compose_cinematic_palette(game: &mut Game) {
     for index in 0..256 {
         // Red uses the physical high byte, independently of native word endianness.
-        let red = u16::from(game.g_ram[0x2401 + 2 * index] & 31);
+        let red = u16::from(game.ram().read_byte(0x2401 + 2 * index) & 31);
         let green = (word!(game.tilemap_stuff[index + 768]) >> 3) & 0x3e0;
         let blue = (word!(game.tilemap_stuff[index + 1024]) << 2) & 0x7c00;
         let color = red | green | blue;
@@ -3507,7 +3522,7 @@ pub(crate) unsafe fn configure_cinematic_display(
         }
         match display {
             Title | Station | Escape => {
-                game.g_ram[0x58] = 0;
+                game.ram().write_byte(0x58, 0);
                 crate::rtl::register_writes! { game;
                     mirror(BG1SC as u16, 0, 0x59, false); mirror(BG2SC as u16, 0, 0x5a, false);
                     mirror(BG3SC as u16, 0, 0x5c, false); mirror(BG4SC as u16, 0, 0x5d, false);
@@ -3519,7 +3534,7 @@ pub(crate) unsafe fn configure_cinematic_display(
                     mirror(BG1SC as u16, 0x50, 0x58, true); mirror(BG2SC as u16, 0x48, 0x59, true);
                     mirror(BG3SC as u16, 0x4c, 0x5a, true);
                 }
-                game.g_ram[0x5c] = 0;
+                game.ram().write_byte(0x5c, 0);
                 crate::rtl::register_writes! { game;
                     mirror(BG4SC as u16, 0, 0x5d, false); byte(BG12NBA as u16, 0);
                     mirror(BG34NBA as u16, 4, 0x5e, true);
@@ -3527,7 +3542,7 @@ pub(crate) unsafe fn configure_cinematic_display(
             }
             Landing => {
                 crate::rtl::write_register_and_mirror(BG1SC as u16, 0x5c, 0x58, true, game);
-                game.g_ram[0x59] = 0;
+                game.ram().write_byte(0x59, 0);
                 crate::rtl::register_writes! { game;
                     mirror(BG2SC as u16, 0, 0x5a, false); mirror(BG3SC as u16, 0, 0x5c, false);
                     byte(BG4SC as u16, 0); mirror(BG12NBA as u16, 6, 0x5d, true);
@@ -3553,7 +3568,7 @@ pub(crate) unsafe fn configure_cinematic_display(
         }
         if tiled {
             for at in [0x60, 0x61, 0x62, 0x6c, 0x6d, 0x6f, 0x72] {
-                game.g_ram[at] = 0;
+                game.ram().write_byte(at, 0);
             }
             if display == Credits {
                 set_fixed_color([32, 64, 0x80], game);
@@ -3574,8 +3589,8 @@ pub(crate) unsafe fn configure_cinematic_display(
             mirror(CGWSEL as u16, 0, 0x6e, false); mirror(CGADSUB as u16, 0, 0x71, false);
         }
         if escape {
-            game.g_ram[0x6f] = 0;
-            game.g_ram[0x72] = 0;
+            game.ram().write_byte(0x6f, 0);
+            game.ram().write_byte(0x72, 0);
         }
         crate::rtl::WriteReg(COLDATA as u16, 0xe0, game);
         if display != Station {
@@ -3584,12 +3599,12 @@ pub(crate) unsafe fn configure_cinematic_display(
     }
     if !title {
         if !escape {
-            game.g_ram[0x6f] = 0;
-            game.g_ram[0x72] = 0;
+            game.ram().write_byte(0x6f, 0);
+            game.ram().write_byte(0x72, 0);
         }
         set_fixed_color([32, 64, 0x80], game);
         if !escape {
-            game.g_ram[0x57] = 0;
+            game.ram().write_byte(0x57, 0);
         }
     }
     if title || intro {
@@ -3652,7 +3667,7 @@ pub(crate) unsafe fn reset_cinematic_transform(x: u16, y: u16, game: &mut Game) 
 
 pub(crate) fn set_fixed_color(channels: [u8; 3], game: &mut Game) {
     for (channel, value) in channels.into_iter().enumerate() {
-        game.g_ram[0x74 + channel] = value;
+        game.ram().write_byte(0x74 + channel, value);
     }
 }
 
@@ -3663,15 +3678,15 @@ pub(crate) fn set_cinematic_blend(
     color_math: u8,
     game: &mut Game,
 ) {
-    game.g_ram[0x69] = main_screen;
-    game.g_ram[0x6b] = sub_screen;
-    game.g_ram[0x6f] = color_window;
-    game.g_ram[0x72] = color_math;
+    game.ram().write_byte(0x69, main_screen);
+    game.ram().write_byte(0x6b, sub_screen);
+    game.ram().write_byte(0x6f, color_window);
+    game.ram().write_byte(0x72, color_math);
 }
 
 pub(crate) fn set_cinematic_backdrop(lit: bool, game: &mut Game) {
-    game.g_ram[0x6f] = 0;
-    game.g_ram[0x72] = if lit { 0x81 } else { 0 };
+    game.ram().write_byte(0x6f, 0);
+    game.ram().write_byte(0x72, if lit { 0x81 } else { 0 });
     let color = if lit { [56, 88, 0x80] } else { [32, 64, 0x80] };
     set_fixed_color(color, game);
 }
@@ -3718,9 +3733,10 @@ pub(crate) fn fade_cinematic_fixed_color(game: &mut Game) {
     for (lane, black) in [0x20u8, 0x40, 0x80].into_iter().enumerate() {
         let at = 0x74 + lane;
         // Keep decrement and clamp as separate stores in channel order.
-        game.g_ram[at] = game.g_ram[at].wrapping_sub(1);
-        if game.g_ram[at].wrapping_sub(black) & 0x80 != 0 {
-            game.g_ram[at] = black;
+        game.ram()
+            .write_byte(at, game.ram().read_byte(at).wrapping_sub(1));
+        if game.ram().read_byte(at).wrapping_sub(black) & 0x80 != 0 {
+            game.ram().write_byte(at, black);
         }
     }
 }

@@ -48,7 +48,7 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current source84bdd: production111924, legacy17353, unsafe2712, verification40385; warnings165.
+Current sourcece8b: production114244, legacy18459, unsafe2637, verification41828; warnings160.
 Core sm82 persists actor/media identities and saved ROM patches; RAM/native frame dependencies remain explicit.
 Historical f158c44fac33eac7 qualification retains39 contributors/652740 source bytes;
 prepared110/initialized329+5,14 captures189475 frames and full22 byte-identical restore at original source.
@@ -93,17 +93,17 @@ ROM logger substitution is held for CRT buffering/output/error/flush equivalence
 Native player/DSP/APU and input Vec/FILE/Cart are owned; GameOwner does not promise Rust thread sharing.
 Keep SDL/native/audio quiescence and CRT order; invalid SIZE_MAX/malloc0 callbacks
 remain outside universal equivalence. Whole Session and independent media remain unfinished.
-First WRAM cut retains the backend aligned allocation and private, nonreplaceable Game binding.
-Close all actual consumers, at least169 files including reserved sm_a7 reference-update; coordinate that cloud cohort first.
-WRAM qualification is blocked >1h by exactly9 reserved cloud sites: sm_a6 raw1969/2241/2445/2838/2854,
-sm_a9 raw3715/4385/4418 and sm_a7 reference-update3596. Await B5/B6 actual task links or author disposition
-from issue2 request6432624176; no partial builds/captures/landing. Separate Execution retirement and storage audit continue.
-Execution source-only87fd removes23 obsolete bodies: -561 engine/-46 unsafe versus its f3aac draft, not landedmain.
-Nine assistance sites now have source-review PASS; B5/B6 author adoption/disposition and whole-cohort qualification remain required.
-Snes.ram route retirement07 remains source-only: full multiline audit found3 reads/2 stores in RTL FinishLoadSnesState.
-Its scoped successor must preserve each fresh selected-CPU SP and ordered byte effects before whole-state synchronization; no partial build.
-Preserve each byte/block failure and device order; bind full Game implementation to codec and make genuine captures.
-Bus APIs stay unsafe until owned links, recursion/native/observer/reset/lifecycle closure; no slice/Index facade.
+WRAM/Execution ce8b qualified: owned backend WRAM binding, private DMA/Input storage,
+Execution links and all actual byte/getter/macro consumers close; g_ram layout remains exact.
+Final fmt/library/DLL pass160 warnings vs165, no new warning identities; native11 archives/29 inputs bound.
+Full86/44 required:136526 selected+38827 setup; all14 original captures189475/0 and full22 encrypted byte-identical restore.
+Genuine initialized329/payload+5 continuation, both independent Kago14350, complete inputs/native/source and611..616 guards retained.
+Net versus84bdd: +2320 production/+1106 legacy/-75 unsafe/+1443 verification; +188216 canonical raw bytes.
+Growth is checked WRAM value operations and expanded consumer bindings, counted as engine; this is not architectural deduplication.
+Compiler fixpoint removes96 unnecessary blocks/94 flattened bodies, no unsafe function signatures; conservative taint remains.
+Checker reuses only unchanged accepted compiler results (+13 support lines); no cross-workload speed claim.
+Session/backend independence, native/device/failure variants and full owned gameplay remain unfinished.
+Next: complete fixed HDMA writer/initializer cohort, separate sm8b and Linux AA source drafts; qualify each on current main.
 
 Coverage is86 manifest rows/44 required scenarios, not universal behavior proof.
 Keep full inputs/guards/assets: intro8780, Morph1200, bomb-jump800, crawler8, Gunship300,
@@ -177,8 +177,13 @@ separate closures; keep imported alias exclusions, source newlines and Windows d
    comparisons/expectations. Retry a flaky step once; a second failure is real.
 
 For assigned sequential phases, collect/release the prior handle and budget, sample RAM/disk and other reservations,
-declare the next budget and notify the integrator/Compute, then launch without waiting for a prose ACK.
+then immediately activate each exact diagnostic-group owner with followup_task; record actual activation and send frozen source pins before inventory/report prose.
+Declare the next budget and notify the integrator/Compute, then launch without waiting for a prose ACK.
 Start with >3GiB free, leave >=2GiB after remaining growth, and keep >=50GiB disk including outputs; new overlaps share one ledger.
+Default source handoff is one lossless canonical patch and complete inventory against actual main; use a64MiB scoped host source budget.
+Keep four bank consumer owners and one primitive owner disjoint. Transfer accepted proofs by exact hashes instead of repeating campaigns.
+Use available Linux capacity for local format/type checks when Windows compiler budgets do not fit; Windows DLL/replay still bind final source/native identities.
+After each qualified cycle, reassess1h landed unsafe/legacy/production changes and source/review/build/replay/landing time, then address the measured bottleneck.
 Partition independent groups/use spare CPU; preserve shared prefixes and all identity
 guards. Run ready original-seed subsets during serial capture dependencies, then complete
 checkpoint rows without repeating accepted work absent a source change/new concern.

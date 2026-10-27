@@ -24,8 +24,8 @@ pub(crate) fn initialize(game: &mut Game) {
     } else {
         0xe86e
     };
-    game.g_ram[0x178c..0x178e].copy_from_slice(&hook.to_ne_bytes());
-    game.g_ram[0x178e..0x1790].copy_from_slice(&0xa8u16.to_ne_bytes());
+    game.ram().copy_in(0x178c, &hook.to_ne_bytes());
+    game.ram().copy_in(0x178e, &0xa8u16.to_ne_bytes());
     publish_palette(E, game);
     word!(game.variables_for_enemy_graphics_drawn_hook[2] = 16);
     slot!(game, Face[E].parameter_2, |old| (old & 1) << 15);
@@ -34,7 +34,7 @@ pub(crate) fn advance(game: &mut Game) {
     if word!(game.collected_items) & 4 == 0 {
         return;
     }
-    game.g_ram[0x178c..0x178e].copy_from_slice(&0xe86eu16.to_ne_bytes());
+    game.ram().copy_in(0x178c, &0xe86eu16.to_ne_bytes());
     let E = word!(game.cur_enemy_index) as i32;
     publish_palette(E, game);
     if slot!(game, Face[E].var_A) != 0 {
@@ -73,12 +73,13 @@ pub(crate) fn palette(game: &mut Game) {
     for _ in 0..4 {
         let color = crate::rtl::rom_table_word!(game, 0xa8e7cc, (source >> 1) as isize);
         let at = 0xc112 + usize::from(destination >> 1) * 2;
-        game.g_ram[at..at + 2].copy_from_slice(&color.to_ne_bytes());
+        game.ram().copy_in(at, &color.to_ne_bytes());
         source = source.wrapping_add(2);
         destination = destination.wrapping_add(2);
     }
     // The legacy phase increment reads physical byte zero, even on a big-endian host.
     word!(
-        game.variables_for_enemy_graphics_drawn_hook[1] = (u16::from(game.g_ram[0x1796]) + 1) & 7
+        game.variables_for_enemy_graphics_drawn_hook[1] =
+            (u16::from(game.ram().read_byte(0x1796)) + 1) & 7
     );
 }

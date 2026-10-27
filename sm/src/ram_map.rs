@@ -186,7 +186,7 @@ macro_rules! word {
             offset => {
                 // Check both bytes without borrowing any part of the RAM array.
                 assert!(offset < 131071, "word address outside RAM");
-                u16::from_le_bytes([$game.g_ram[offset], $game.g_ram[offset + 1]])
+                u16::from_le_bytes([$game.ram().read_byte(offset), $game.ram().read_byte(offset + 1)])
             }
         }
     };
@@ -197,8 +197,8 @@ macro_rules! word {
             (value, offset) => {
                 assert!(offset < 131071, "word address outside RAM");
                 let bytes = u16::to_le_bytes(value);
-                $game.g_ram[offset] = bytes[0];
-                $game.g_ram[offset + 1] = bytes[1];
+                $game.ram().write_byte(offset, bytes[0]);
+                $game.ram().write_byte(offset + 1, bytes[1]);
             }
         }
     };
@@ -223,14 +223,14 @@ macro_rules! checked_word {
     };
     ($game:ident, $offset:expr;) => {{
         let offset: usize = $offset;
-        u16::from_le_bytes([$game.g_ram[offset], $game.g_ram[offset + 1]])
+        u16::from_le_bytes([$game.ram().read_byte(offset), $game.ram().read_byte(offset + 1)])
     }};
     ($game:ident, $offset:expr; = $value:expr) => {
         match ($value, $offset) {
             (value, offset) => {
                 let bytes = u16::to_le_bytes(value);
-                $game.g_ram[offset] = bytes[0];
-                $game.g_ram[offset + 1] = bytes[1];
+                $game.ram().write_byte(offset, bytes[0]);
+                $game.ram().write_byte(offset + 1, bytes[1]);
             }
         }
     };
@@ -945,35 +945,9 @@ ram_vars! {
     0x1FF00, uint16 Scalar => [bug_fix_counter_BAD];
 }
 
-// Declare typed views of RAM without changing the getter's borrow or pointer type.
-// Each list retains successive byte offsets, including the original integer casts.
-macro_rules! ram_pointer_functions {
-    ($($name:ident($index:ident: $index_type:ty) -> $target:ty = [$($offset:expr),+ $(,)?];)*) => {
-        $(
-            #[inline]
-            unsafe fn $name($index: $index_type, game: &mut $crate::game_state::Game) -> *mut $target { unsafe {
-                (&raw mut game.g_ram as *mut ::core::primitive::u8)
-                    $(.offset($offset))+ as *mut $target
-            }}
-        )*
-    };
-}
-pub(crate) use ram_pointer_functions;
-
-// Keep raw RAM address construction at the caller, preserving offset order.
-macro_rules! ram_ptr {
-    ($game:ident; $($offset:expr),+ $(,)?) => {
-        (&raw mut $game.g_ram as *mut ::core::primitive::u8)$(.offset($offset))+
-    };
-    ($game:ident, $target:ty; $($offset:expr),+ $(,)?) => {
-        $crate::ram_map::ram_ptr!($game; $($offset),+) as *mut $target
-    };
-}
-pub(crate) use ram_ptr;
-
 // Checked enemy-record fields at RAM 0x0f78 + signed slot, replacing raw
-// `Get_X(slot) -> *mut` records (`slot!(game, Alias[slot].field)`). Like `word!`, each access indexes `g_ram` bytes
-// at the caller and forms no RAM reference; native byte order matches the old
+// `Get_X(slot) -> *mut` records (`slot!(game, Alias[slot].field)`). Like `word!`, each access copies Cell-backed RAM bytes
+// at the caller and forms no live u8 reference; native byte order matches the old
 // dereference. Writes evaluate the value before the slot and keep its temporaries
 // through the store. Word forms check at compile time that the field is a u16.
 macro_rules! slot {
@@ -991,16 +965,19 @@ macro_rules! slot {
                 let value: ::core::primitive::u8 = value;
                 let at = ::core::primitive::usize::try_from(at as ::core::primitive::isize + ($lane) as ::core::primitive::isize)
                     .expect("enemy field outside RAM");
-                $game.g_ram[at] = value;
+                $game.ram().write_byte(at, value);
             }
         }
     };
     (byte $game:ident, $layout:ident[$slot:expr] $(.$field:ident)+ [$lane:expr]) => {
         match $crate::ram_map::slot!(@at $layout, $slot, $($field).+) {
-            at => $game.g_ram[::core::primitive::usize::try_from(
-                at as ::core::primitive::isize + ($lane) as ::core::primitive::isize,
-            )
-            .expect("enemy field outside RAM")],
+            at => {
+                let at = ::core::primitive::usize::try_from(
+                    at as ::core::primitive::isize + ($lane) as ::core::primitive::isize,
+                )
+                .expect("enemy field outside RAM");
+                $game.ram().read_byte(at)
+            },
         }
     };
     // Split-word pairs, as `rtl::AddToHiLo`/`SetHiLo`: the value first, then low
@@ -1042,10 +1019,10 @@ macro_rules! slot {
         match $crate::ram_map::slot!(@at $layout, $slot, $($field).+) {
             at => {
                 $crate::ram_map::word_field::<$layout>(|record| record $(.$field)+);
-                let $old = ::core::primitive::u16::from_ne_bytes([$game.g_ram[at], $game.g_ram[at + 1]]);
+                let $old = ::core::primitive::u16::from_ne_bytes([$game.ram().read_byte(at), $game.ram().read_byte(at + 1)]);
                 let bytes = ::core::primitive::u16::to_ne_bytes($value);
-                $game.g_ram[at] = bytes[0];
-                $game.g_ram[at + 1] = bytes[1];
+                $game.ram().write_byte(at, bytes[0]);
+                $game.ram().write_byte(at + 1, bytes[1]);
             }
         }
     };
@@ -1054,8 +1031,8 @@ macro_rules! slot {
             (value, at) => {
                 $crate::ram_map::word_field::<$layout>(|record| record $(.$field)+);
                 let bytes = ::core::primitive::u16::to_ne_bytes(value);
-                $game.g_ram[at] = bytes[0];
-                $game.g_ram[at + 1] = bytes[1];
+                $game.ram().write_byte(at, bytes[0]);
+                $game.ram().write_byte(at + 1, bytes[1]);
             }
         }
     };
@@ -1063,7 +1040,7 @@ macro_rules! slot {
         match $crate::ram_map::slot!(@at $layout, $slot, $($field).+) {
             at => {
                 $crate::ram_map::word_field::<$layout>(|record| record $(.$field)+);
-                ::core::primitive::u16::from_ne_bytes([$game.g_ram[at], $game.g_ram[at + 1]])
+                ::core::primitive::u16::from_ne_bytes([$game.ram().read_byte(at), $game.ram().read_byte(at + 1)])
             }
         }
     };

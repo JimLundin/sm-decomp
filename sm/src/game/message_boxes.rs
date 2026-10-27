@@ -19,18 +19,18 @@ static kTileNumbersForButtonLetters: [u16; 8] = [
 ];
 unsafe fn InitializePpuForMessageBoxes(game: &mut Game) {
     unsafe {
-        game.g_ram[0x5f9..0x5fb].fill(0);
+        game.ram().fill(0x5f9..0x5fb, 0);
         crate::rtl::register_writes! { game;
             byte(HDMAEN as u16, 0); byte(CGADD as u16, 0x19);
             byte(CGDATA as u16, 0xb1); byte(CGDATA as u16, 0x0b);
             byte(CGDATA as u16, 0x1f); byte(CGDATA as u16, 0);
         }
-        game.g_ram[0x33ea] = game.g_ram[0x85];
-        game.g_ram[0x33eb] = game.g_ram[0x5b];
-        game.g_ram[0x5b] = 88;
-        game.g_ram[0x6a] = 23;
-        game.g_ram[0x70] = 0;
-        game.g_ram[0x73] = 0;
+        game.ram().write_byte(0x33ea, game.ram().read_byte(0x85));
+        game.ram().write_byte(0x33eb, game.ram().read_byte(0x5b));
+        game.ram().write_byte(0x5b, 88);
+        game.ram().write_byte(0x6a, 23);
+        game.ram().write_byte(0x70, 0);
+        game.ram().write_byte(0x73, 0);
         crate::rtl::register_writes! { game;
             byte(COLDATA as u16, 0x20); byte(COLDATA as u16, 0x40);
             byte(COLDATA as u16, 0x80);
@@ -43,7 +43,7 @@ unsafe fn InitializePpuForMessageBoxes(game: &mut Game) {
         crate::rtl::register_writes! { game;
             byte(BG3VOFS as u16, 0); byte(BG3VOFS as u16, 0);
         }
-        game.g_ram[0x3000..0x3082].fill(0);
+        game.ram().fill(0x3000..0x3082, 0);
         WriteRegWord(VMADDL as u16, addr_unk_605880 as u16, game);
         ReadRegWord(RDVRAML as u16, game);
         crate::rtl::register_writes! { game;
@@ -91,11 +91,12 @@ fn message_tile(start: u16, byte_offset: u16, game: &mut Game) -> u16 {
 
 #[forbid(unsafe_code)]
 fn WriteMessageTilemap(game: &mut Game) -> u16 {
-    game.g_ram[0x5a6..0x5a8].copy_from_slice(&112u16.to_le_bytes());
-    game.g_ram[0x5a4..0x5a6].copy_from_slice(&124u16.to_le_bytes());
-    game.g_ram[0x5a2..0x5a4].fill(0);
-    game.g_ram[0x3000..0x30e0].fill(0);
-    let message = u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]) as isize;
+    game.ram().copy_in(0x5a6, &112u16.to_le_bytes());
+    game.ram().copy_in(0x5a4, &124u16.to_le_bytes());
+    game.ram().fill(0x5a2..0x5a4, 0);
+    game.ram().fill(0x3000..0x30e0, 0);
+    let message =
+        u16::from_le_bytes([game.ram().read_byte(0x1c1f), game.ram().read_byte(0x1c20)]) as isize;
     let configs = game.capture_native_rom();
     let start = configs.table_word(MESSAGE_CONFIG_BASE, 3 * (message - 1) + 2);
     let length = configs
@@ -109,8 +110,8 @@ fn WriteMessageTilemap(game: &mut Game) -> u16 {
         // Map every word, including the mapper's invalid-address diagnostics.
         let tile = message_tile(start, source_offset, game);
         let byte_offset = 2 * (usize::from(word) + 256);
-        game.g_ram[0x3000..0x3800][byte_offset..byte_offset + 2]
-            .copy_from_slice(&tile.to_le_bytes());
+        let _ = &[(); 0x800][byte_offset..byte_offset + 2];
+        game.ram().copy_in(0x3000 + byte_offset, &tile.to_le_bytes());
         word = word.wrapping_add(1);
         source_offset = source_offset.wrapping_add(2);
         remaining -= 1;
@@ -121,8 +122,9 @@ fn WriteMessageBoxTilemapRow(mut word: u16, tiles: &[u16], game: &mut Game) {
     // Preserve the legacy table bounds and any writes before a bounds failure.
     for tile in tiles {
         let byte_offset = 2 * (usize::from(word) + 256);
-        game.g_ram[0x3000..0x3800][byte_offset..byte_offset + 2]
-            .copy_from_slice(&tile.to_le_bytes());
+        let _ = &[(); 0x800][byte_offset..byte_offset + 2];
+        game.ram()
+            .copy_in(0x3000 + byte_offset, &tile.to_le_bytes());
         word = word.wrapping_add(1);
     }
 }
@@ -143,28 +145,33 @@ crate::game::callback_dispatch! {
     };
 }
 fn MsgBoxMakeHdmaTable(game: &mut Game) {
-    let radius = u16::from_le_bytes([game.g_ram[0x5a2], game.g_ram[0x5a3]]);
+    let radius = u16::from_le_bytes([game.ram().read_byte(0x5a2), game.ram().read_byte(0x5a3)]);
     let upper = 0x7b00u16.wrapping_sub(radius) >> 8;
     let lower = radius.wrapping_add(0x7c00) >> 8;
 
     // Each scanline and its edge move together, so their difference stays constant.
-    for word in game.g_ram[0x30bc..0x30f8].chunks_exact_mut(2) {
-        word.copy_from_slice(&99u16.wrapping_sub(upper).to_le_bytes());
+    for at in (0x30bc..0x30f8).step_by(2) {
+        game.ram()
+            .copy_in(at, &99u16.wrapping_sub(upper).to_le_bytes());
     }
-    for word in game.g_ram[0x30f8..0x3134].chunks_exact_mut(2) {
-        word.copy_from_slice(&148u16.wrapping_sub(lower).to_le_bytes());
+    for at in (0x30f8..0x3134).step_by(2) {
+        game.ram()
+            .copy_in(at, &148u16.wrapping_sub(lower).to_le_bytes());
     }
-    game.g_ram[0x3134..0x31e0].fill(0);
+    game.ram().fill(0x3134..0x31e0, 0);
 
     // Preserve the scratch words left after all 30 scanlines.
-    game.g_ram[0x5a4..0x5a6].copy_from_slice(&lower.wrapping_add(30).to_le_bytes());
-    game.g_ram[0x5a6..0x5a8].copy_from_slice(&178u16.to_le_bytes());
-    game.g_ram[0x5a8..0x5aa].copy_from_slice(&upper.wrapping_sub(30).to_le_bytes());
-    game.g_ram[0x5aa..0x5ac].copy_from_slice(&69u16.to_le_bytes());
+    game.ram()
+        .copy_in(0x5a4, &lower.wrapping_add(30).to_le_bytes());
+    game.ram().copy_in(0x5a6, &178u16.to_le_bytes());
+    game.ram()
+        .copy_in(0x5a8, &upper.wrapping_sub(30).to_le_bytes());
+    game.ram().copy_in(0x5aa, &69u16.to_le_bytes());
 }
 unsafe fn SetupMessageBoxBg3YscrollHdma(game: &mut Game) {
     unsafe {
-        game.g_ram[0x3380..0x3387].copy_from_slice(&[0xff, 0x00, 0x30, 0xe1, 0xfe, 0x30, 0x00]);
+        game.ram()
+            .copy_in(0x3380, &[0xff, 0x00, 0x30, 0xe1, 0xfe, 0x30, 0x00]);
         crate::rtl::register_writes! { game;
             byte(DMAP6 as u16, 0x42); byte(BBAD6 as u16, 0x12);
             byte(A1T6L as u16, 0x80); byte(DAS6L as u16, 0x80);
@@ -204,10 +211,15 @@ unsafe fn DrawSpecialButtonAndSetupPpuForLargeMessageBox(a: u16, game: &mut Game
             .iter()
             .position(|&button| a & button as u16 != 0)
             .unwrap_or(7);
-        let message = u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]) as isize - 1;
+        let message =
+            u16::from_le_bytes([game.ram().read_byte(0x1c1f), game.ram().read_byte(0x1c20)])
+                as isize
+                - 1;
         let offset = usize::from(kMsgBoxSpecialButtonTilemapOffs[message as usize]);
-        game.g_ram[0x3200 + offset..0x3202 + offset]
-            .copy_from_slice(&kTileNumbersForButtonLetters[letter].to_le_bytes());
+        game.ram().copy_in(
+            0x3200 + offset,
+            &kTileNumbersForButtonLetters[letter].to_le_bytes(),
+        );
         SetupPpuForActiveMessageBox(416, game);
     }
 }
@@ -216,11 +228,11 @@ crate::game::callback_dispatch! {
     call (game); default { Unreachable(game); };
     @functions [unsafe fn (game: &mut Game)];
     [8750021] DrawShootButtonAndSetupPpuForLargeMessageBox [] {
-        let button = u16::from_le_bytes([game.g_ram[0x9b2], game.g_ram[0x9b3]]);
+        let button = u16::from_le_bytes([game.ram().read_byte(0x9b2), game.ram().read_byte(0x9b3)]);
         DrawSpecialButtonAndSetupPpuForLargeMessageBox(button, game);
     };
     [8750028] DrawRunButtonAndSetupPpuForLargeMessageBox [] {
-        let button = u16::from_le_bytes([game.g_ram[0x9b6], game.g_ram[0x9b7]]);
+        let button = u16::from_le_bytes([game.ram().read_byte(0x9b6), game.ram().read_byte(0x9b7)]);
         DrawSpecialButtonAndSetupPpuForLargeMessageBox(button, game);
     };
     @forward [unsafe fn (game: &mut Game)];
@@ -229,7 +241,9 @@ crate::game::callback_dispatch! {
 }
 unsafe fn InitializeMessageBox(game: &mut Game) {
     unsafe {
-        let index = u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]) as isize - 1;
+        let index = u16::from_le_bytes([game.ram().read_byte(0x1c1f), game.ram().read_byte(0x1c20)])
+            as isize
+            - 1;
         let draw = game
             .capture_native_rom()
             .table_word(MESSAGE_CONFIG_BASE, 3 * index + 1);
@@ -251,7 +265,8 @@ static kSaveConfirmationSelectionTilemap: [u16; 96] = [
 ];
 unsafe fn DrawSaveConfirmationSelection(game: &mut Game) {
     unsafe {
-        let selection = u16::from_le_bytes([game.g_ram[0x5f9], game.g_ram[0x5fa]]);
+        let selection =
+            u16::from_le_bytes([game.ram().read_byte(0x5f9), game.ram().read_byte(0x5fa)]);
         let row = if selection == 2 { 64 } else { 32 };
         WriteMessageBoxTilemapRow(128, &kSaveConfirmationSelectionTilemap[row..row + 32], game);
         crate::rtl::register_writes! { game;
@@ -272,16 +287,16 @@ unsafe fn RestorePpuForMessageBox(game: &mut Game) {
             word(A2A1H as u16, 0); byte(VMAIN as u16, 0x80);
             byte(MDMAEN as u16, 2);
         }
-        game.g_ram[0x85] = game.g_ram[0x33ea];
-        WriteReg(HDMAEN as u16, game.g_ram[0x33ea], game);
-        game.g_ram[0x5b] = game.g_ram[0x33eb];
-        game.g_ram[0x6a] = game.g_ram[0x69];
-        game.g_ram[0x70] = game.g_ram[0x6e];
-        game.g_ram[0x73] = game.g_ram[0x71];
+        game.ram().write_byte(0x85, game.ram().read_byte(0x33ea));
+        WriteReg(HDMAEN as u16, game.ram().read_byte(0x33ea), game);
+        game.ram().write_byte(0x5b, game.ram().read_byte(0x33eb));
+        game.ram().write_byte(0x6a, game.ram().read_byte(0x69));
+        game.ram().write_byte(0x70, game.ram().read_byte(0x6e));
+        game.ram().write_byte(0x73, game.ram().read_byte(0x71));
         crate::rtl::register_writes! { game;
-            byte(CGADD as u16, 0x19); byte(CGDATA as u16, game.g_ram[0xc032]);
-            byte(CGDATA as u16, game.g_ram[0xc033]); byte(CGDATA as u16, game.g_ram[0xc034]);
-            byte(CGDATA as u16, game.g_ram[0xc035]);
+            byte(CGADD as u16, 0x19); byte(CGDATA as u16, game.ram().read_byte(0xc032));
+            byte(CGDATA as u16, game.ram().read_byte(0xc033)); byte(CGDATA as u16, game.ram().read_byte(0xc034));
+            byte(CGDATA as u16, game.ram().read_byte(0xc035));
         }
     }
 }
@@ -365,13 +380,14 @@ pub unsafe fn display(message: u16, game: &mut Game) -> CoroutineRet {
     }
 }
 pub fn poll(a: u16, game: &mut Game) -> i32 {
-    if a == u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]) {
-        game.g_ram[0x1c1f..0x1c21].fill(0);
-        return u16::from_le_bytes([game.g_ram[0x5f9], game.g_ram[0x5fa]]) as i32;
+    if a == u16::from_le_bytes([game.ram().read_byte(0x1c1f), game.ram().read_byte(0x1c20)]) {
+        game.ram().fill(0x1c1f..0x1c21, 0);
+        return u16::from_le_bytes([game.ram().read_byte(0x5f9), game.ram().read_byte(0x5fa)])
+            as i32;
     }
-    game.g_ram[0xdc8..0xdca].copy_from_slice(&a.to_le_bytes());
+    game.ram().copy_in(0xdc8, &a.to_le_bytes());
     -1
 }
 pub fn queue(a: u16, game: &mut Game) {
-    game.g_ram[0xdc8..0xdca].copy_from_slice(&a.to_le_bytes());
+    game.ram().copy_in(0xdc8, &a.to_le_bytes());
 }

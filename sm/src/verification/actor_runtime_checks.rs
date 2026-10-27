@@ -68,13 +68,15 @@ pub(crate) fn run_checked() {
 
 fn occupied_game_export_rejected_before_effects() {
     let mut game = Game::new();
-    game.g_ram.fill(0x71);
+    game.ram().fill(0..game.ram().len(), 0x71);
     game.eproj_spawn_r22 = 0x4567;
     {
         let mut seed = Runtime::new(&mut game);
         birth(&mut seed, 0, 77);
     }
-    let before_ram = game.g_ram.to_vec();
+    let before_ram = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<_>>();
     let before_native = native(&game);
     let before_identity = game.actor_identity().clone();
     let mut state = Session::with_world(game.world().clone());
@@ -87,7 +89,11 @@ fn occupied_game_export_rejected_before_effects() {
         "actor.runtime.occupied_export_named_rejection"
     );
     assert_eq!(
-        game.g_ram.as_slice() == before_ram.as_slice(),
+        (0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<_>>()
+            .as_slice()
+            == before_ram.as_slice(),
         true,
         "actor.runtime.occupied_export_before_ram"
     );
@@ -105,12 +111,14 @@ fn occupied_game_export_rejected_before_effects() {
 
 fn mismatched_runtime_returns_original_identity_without_second_panic() {
     let mut game = Game::new();
-    game.g_ram.fill(0x39);
+    game.ram().fill(0..game.ram().len(), 0x39);
     {
         let mut seed = Runtime::new(&mut game);
         birth(&mut seed, 1, 88);
     }
-    let before_ram = game.g_ram.to_vec();
+    let before_ram = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<_>>();
     let before_native = native(&game);
     let before_identity = game.actor_identity().clone();
     let mut called = false;
@@ -133,7 +141,11 @@ fn mismatched_runtime_returns_original_identity_without_second_panic() {
     );
     assert!(!called, "actor.runtime.mismatch_before_callback");
     assert_eq!(
-        game.g_ram.as_slice() == before_ram.as_slice(),
+        (0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<_>>()
+            .as_slice()
+            == before_ram.as_slice(),
         true,
         "actor.runtime.mismatch_before_ram"
     );

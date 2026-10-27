@@ -2,7 +2,7 @@
 //! Original ROM and captured RAM remain local, outside the repository.
 use super::{Game, MakeSnapshot, RestoreSnapshot, Snapshot};
 use crate::initial_state::InitialState;
-use crate::snes::cpu::{cpu_getFlags, cpu_runOpcode};
+use crate::snes::cpu::cpu_getFlags;
 
 const WINDOWS: &[(u32, u32)] = &[
     (0xa5a13e, 0xa5a19f), // Complete dance routine, including delete branch.
@@ -34,7 +34,7 @@ fn word(bytes: &[u8], at: usize) -> Option<u16> {
     Some(u16::from_le_bytes([bytes[0], bytes[1]]))
 }
 fn put(game: &mut Game, at: usize, value: u16) {
-    game.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    game.ram().copy_in(at, &value.to_le_bytes());
 }
 #[derive(Clone, Copy)]
 enum Action {
@@ -130,7 +130,7 @@ unsafe fn observe(output: &mut Vec<u8>, tag: u8, game: &Game, full_ram: bool) {
         }
         payload.push(cpu.db);
         if full_ram {
-            payload.extend_from_slice(&game.g_ram);
+            payload.extend((0..game.ram().len()).map(|at| game.ram().read_byte(at)));
         }
         record(output, tag, &payload);
     }
@@ -151,7 +151,20 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
         }
         let cursor = choose_cursor(id, original)?;
         let mut before = Box::new(Snapshot::INITIAL);
-        MakeSnapshot(&mut before, &*game.g_snes, &*game.g_cpu, game.g_spc_player);
+        {
+            let snapshot_snes = game.g_snes;
+            let snapshot_cpu = game.g_cpu;
+            let snapshot_player = game.g_spc_player;
+            let (backend, ram, _, _, _) = game.ram_and_snapshots();
+            MakeSnapshot(
+                &mut before,
+                &*snapshot_snes,
+                &*snapshot_cpu,
+                snapshot_player,
+                ram,
+                backend,
+            )
+        };
         let cpu_before = *game.g_cpu;
         let cycles_before = (*game.g_snes).cpuCyclesLeft;
         let memory_before = (*game.g_snes).cpuMemOps;
@@ -159,8 +172,8 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
         let return_before = game.g_calling_asm_from_c_ret;
         let queue_before = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            game.g_ram.fill(0);
-            game.g_ram[0x1ffff] = 1;
+            game.ram().fill(0..game.ram().len(), 0);
+            game.ram().write_byte(0x1ffff, 1);
             put(game, 0x880c, cursor);
             put(game, 0xe32, 0xbeef);
             for (i, handle) in HANDLES.into_iter().enumerate() {
@@ -249,14 +262,25 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                 if !matches_original(game, original, pc, 4) {
                     return Err(format!("executed Draygon code differs {pc:06x}"));
                 }
-                cpu_runOpcode(game.g_cpu, game);
-                if (*(*game.g_snes).dma).dmaBusy {
+                game.execution().step_cpu();
+                if game.dma_busy() {
                     return Err("unexpected DMA in Draygon capture".into());
                 }
             }
             Err("Draygon instruction budget exhausted".into())
         }));
-        RestoreSnapshot(&before, &mut *game.g_snes, &mut *game.g_cpu);
+        {
+            let snapshot_snes = game.g_snes;
+            let snapshot_cpu = game.g_cpu;
+            let (backend, ram, _, _, _) = game.ram_and_snapshots();
+            RestoreSnapshot(
+                &before,
+                &mut *snapshot_snes,
+                &mut *snapshot_cpu,
+                ram,
+                backend,
+            )
+        };
         before.audio.restore(game.g_snes);
         before.player.restore(game.g_spc_player);
         *game.g_cpu = cpu_before;

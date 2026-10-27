@@ -9,7 +9,7 @@ use crate::{
     game_state::Game,
 };
 fn put(g: &mut Game, at: usize, value: u16) {
-    g.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    g.ram().copy_in(at, &value.to_le_bytes());
 }
 
 // Movies cannot create prepared catalogs or equal-byte custom allocation receipts.
@@ -101,11 +101,15 @@ pub unsafe fn checkpoint(
     }
 }
 fn word(g: &Game, at: usize) -> u16 {
-    u16::from_le_bytes(g.g_ram[at..at + 2].try_into().unwrap())
+    u16::from_le_bytes({
+        let mut bytes = [0; 2];
+        g.ram().copy_out(at, &mut bytes);
+        bytes
+    })
 }
 fn record(out: &mut Vec<u8>, phase: u8, g: &Game) {
     out.push(phase);
-    out.extend_from_slice(&g.g_ram);
+    out.extend((0..g.ram().len()).map(|at| g.ram().read_byte(at)));
     out.push(u8::from(g.g_fail));
 }
 struct Observe;
@@ -163,7 +167,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             crate::cpu_infra::DrawFrameToPpu(g);
         }
         assert!(done, "composed.start.completed");
-        assert_eq!(g.g_ram[0x613], 0);
+        assert_eq!(g.ram().read_byte(0x613), 0);
         assert_eq!(word(g, 0x99c), 0xe737);
         assert_eq!(word(g, 0x79b), crate::room_world_fixture::ROOM_A_KEY);
         // StartGameplay prepares assets; the retained GameState6 caller then drains
@@ -208,7 +212,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             put(g, at, value);
         }
         put(g, 0x10002, 0x9000);
-        g.g_ram[0x16402] = 0;
+        g.ram().write_byte(0x16402, 0);
         assert_eq!(
             crate::game::player_collision::operations::displace(
                 &mut Runtime::new(g),
@@ -228,7 +232,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         assert_eq!(word(g, 0x99c), 0xe17d);
         assert_eq!(word(g, 0x998), 9);
         record(&mut out, 2, g);
-        g.g_ram[0x611] = 0;
+        g.ram().write_byte(0x611, 0);
         let frames_before = g.snes_frame_counter;
         let mut done = false;
         for frame in 0..768 {

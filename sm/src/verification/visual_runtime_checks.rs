@@ -6,17 +6,18 @@ use crate::{
 };
 use std::panic::{AssertUnwindSafe, catch_unwind};
 fn read(g: &Game, at: usize) -> u16 {
-    u16::from_le_bytes([g.g_ram[at], g.g_ram[at + 1]])
+    u16::from_le_bytes([g.ram().read_byte(at), g.ram().read_byte(at + 1)])
 }
 fn put(g: &mut Game, at: usize, value: u16) {
-    g.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    let _ = &[(); 0x20000][at..at + 2];
+    g.ram().copy_in(at, &value.to_le_bytes());
 }
 pub(crate) fn run() -> bool {
     catch_unwind(AssertUnwindSafe(check)).is_ok()
 }
 fn check() {
     let mut game = Game::new();
-    game.g_ram.fill(0);
+    game.ram().fill(0..game.ram().len(), 0);
     {
         let mut h = Runtime::new(&mut game);
         h.session_mut().visual.colors[5] = 0x1234;

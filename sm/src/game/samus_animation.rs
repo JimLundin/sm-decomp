@@ -182,12 +182,18 @@ pub(crate) fn begin_death(game: &mut Game) -> CoroutineRet {
         const FRAMES: [u8; 28] = [
             5, 5, 5, 5, 1, 5, 5, 0, 1, 0, 5, 5, 5, 5, 5, 5, 5, 1, 1, 1, 5, 5, 5, 5, 5, 5, 5, 5,
         ];
-        let movement = game.g_ram[0xa1f];
-        if game.g_ram[0xa1f] == 3 {
+        let movement = game.ram().read_byte(0xa1f);
+        if game.ram().read_byte(0xa1f) == 3 {
             crate::game::music::QueueSfx1_Max6(0x32, game);
         }
         let frame = u16::from(FRAMES[usize::from(movement)]);
-        word!(game.samus_pose = if game.g_ram[0xa1e] == 4 { 0xd8 } else { 0xd7 });
+        word!(
+            game.samus_pose = if game.ram().read_byte(0xa1e) == 4 {
+                0xd8
+            } else {
+                0xd7
+            }
+        );
         pt::finish_pose_change(&mut Runtime::new(game));
         word! { game; samus_anim_frame_skip = 0; samus_anim_frame = frame; }
         word!(game.samus_x_pos -= word!(game.layer1_x_pos));
@@ -243,7 +249,7 @@ fn death_palette(frame: Option<u16>, game: &mut Game) {
     let colors = Runtime::new(game)
         .legacy_native_record(0x9b, address)
         .bytes::<32>(0);
-    game.g_ram[0xc180..0xc1a0].copy_from_slice(&colors);
+    game.ram().copy_in(0xc180, &colors);
     // The second source is resolved only after the first complete palette copy.
     let address = match frame {
         Some(frame) => crate::rtl::rom_table_word!(game, 0x9bb80f, (frame >> 1) as isize),
@@ -252,7 +258,7 @@ fn death_palette(frame: Option<u16>, game: &mut Game) {
     let colors = Runtime::new(game)
         .legacy_native_record(0x9b, address)
         .bytes::<32>(0);
-    game.g_ram[0xc1e0..0xc200].copy_from_slice(&colors);
+    game.ram().copy_in(0xc1e0, &colors);
 }
 
 fn queue_death_tiles(frame: u16, game: &mut Game) {
@@ -315,7 +321,7 @@ fn advance_suit_explosion(game: &mut Game) -> bool {
             death_palette(Some(2u16.wrapping_mul(u16::from(frame))), game);
         }
     }
-    let sprite = (if game.g_ram[0xa1e] == 4 {
+    let sprite = (if game.ram().read_byte(0xa1e) == 4 {
         word!(game.g_word_7E0DE4) as i32 + 2085
     } else {
         word!(game.g_word_7E0DE4) as i32 + 2076

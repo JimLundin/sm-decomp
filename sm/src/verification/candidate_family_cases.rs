@@ -61,7 +61,8 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
             let sample = ((offset * 251 + 137) & 0x7fff) as u16;
             bytes(image, table + offset * 2, &sample.to_le_bytes());
         }
-        game.g_ram[0x60b] = [0, 63, 64, 127, 128, 191, 192, 255][variant / 4];
+        game.ram()
+            .write_byte(0x60b, [0, 63, 64, 127, 128, 191, 192, 255][variant / 4]);
         put(
             game,
             w::eproj_init_param_1,

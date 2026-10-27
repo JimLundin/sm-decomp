@@ -12,7 +12,7 @@ fn native_put(bytes: &mut [u8], at: usize, value: u16) {
 fn record(output: &mut Vec<u8>, tag: u8, returned: u16, game: &Game) {
     output.push(tag);
     output.extend_from_slice(&returned.to_le_bytes());
-    output.extend_from_slice(&game.g_ram);
+    output.extend((0..game.ram().len()).map(|at| game.ram().read_byte(at)));
     output.push(u8::from(game.g_fail));
 }
 pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
@@ -21,39 +21,46 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     }
     let result = catch_unwind(AssertUnwindSafe(|| {
         let mut game = Game::new();
-        for (i, b) in game.g_ram.iter_mut().enumerate() {
-            *b = (i.wrapping_mul(37) ^ (i >> 8) ^ 0x5a) as u8;
+        for i in 0..game.ram().len() {
+            let value = (i.wrapping_mul(37) ^ (i >> 8) ^ 0x5a) as u8;
+            game.ram().write_byte(i, value);
         }
         let area = [0u16, 6, 65534, 0][id as usize / 2];
         let dead = id as u16 & 1;
         let boss_at = 0xd828 + usize::from(area);
-        put(&mut game.g_ram, 0x79f, area);
-        native_put(&mut game.g_ram, boss_at, 0xa500 | dead);
-        put(&mut game.g_ram, 0x5e7, 0xa534);
-        put(&mut game.g_ram, 0x998, 8);
-        put(&mut game.g_ram, 0x639, 0);
-        put(&mut game.g_ram, 0x63b, 6);
-        put(&mut game.g_ram, 0xc400, if id >= 6 { 13 } else { 14 });
-        put(&mut game.g_ram, 0xc402, 0xbeef);
-        put(&mut game.g_ram, 0xfa8, 0x1234);
+        game.ram().copy_in(0x79f, &(area).to_le_bytes());
+        game.ram().copy_in(boss_at, &(0xa500 | dead).to_ne_bytes());
+        game.ram().copy_in(0x5e7, &(0xa534u16).to_le_bytes());
+        game.ram().copy_in(0x998, &(8u16).to_le_bytes());
+        game.ram().copy_in(0x639, &(0u16).to_le_bytes());
+        game.ram().copy_in(0x63b, &(6u16).to_le_bytes());
+        game.ram()
+            .copy_in(0xc400, &(if id >= 6 { 13u16 } else { 14u16 }).to_le_bytes());
+        game.ram().copy_in(0xc402, &(0xbeefu16).to_le_bytes());
+        game.ram().copy_in(0xfa8, &(0x1234u16).to_le_bytes());
         for index in 0..16 {
-            put(&mut game.g_ram, 0xc0c0 + 2 * index, (index as u16) * 0x421);
-            put(
-                &mut game.g_ram,
+            game.ram()
+                .copy_in(0xc0c0 + 2 * index, &((index as u16) * 0x421).to_le_bytes());
+            game.ram().copy_in(
                 0xc2c0 + 2 * index,
-                0x7fff - (index as u16) * 0x421,
+                &(0x7fff - (index as u16) * 0x421).to_le_bytes(),
             );
         }
         game.g_fail = false;
         game.VERIFY_ACTIVE = true;
-        let mut expected = game.g_ram.to_vec();
+        let mut expected = (0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<_>>();
         let mut output = b"KRDF1".to_vec();
         output.extend_from_slice(&id.to_le_bytes());
         record(&mut output, 0, 0, &game);
         let result = unsafe { sm_a7::Kraid_CheckIfDead(&mut game) };
         assert_eq!(result, dead, "flags.kraid.read.initial");
         assert_eq!(
-            &game.g_ram[..],
+            (0..game.ram().len())
+                .map(|at| game.ram().read_byte(at))
+                .collect::<Vec<_>>()
+                .as_slice(),
             &expected[..],
             "flags.kraid.read.scratch_free"
         );
@@ -69,7 +76,10 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
             put(&mut expected, 0xc400, 14);
             put(&mut expected, 0xc402, 12);
             assert_eq!(
-                &game.g_ram[..],
+                (0..game.ram().len())
+                    .map(|at| game.ram().read_byte(at))
+                    .collect::<Vec<_>>()
+                    .as_slice(),
                 &expected[..],
                 "flags.kraid.palette_before_completion"
             );
@@ -91,7 +101,10 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
             if dead != 0 { 0xc851 } else { 0xc843 },
         );
         assert_eq!(
-            &game.g_ram[..],
+            (0..game.ram().len())
+                .map(|at| game.ram().read_byte(at))
+                .collect::<Vec<_>>()
+                .as_slice(),
             &expected[..],
             "flags.kraid.completion_music_boss_transition"
         );
@@ -100,7 +113,10 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
         let result = unsafe { sm_a7::Kraid_CheckIfDead(&mut game) };
         assert_eq!(result, 1, "flags.kraid.read.after_completion");
         assert_eq!(
-            &game.g_ram[..],
+            (0..game.ram().len())
+                .map(|at| game.ram().read_byte(at))
+                .collect::<Vec<_>>()
+                .as_slice(),
             &expected[..],
             "flags.kraid.final_whole_ram"
         );

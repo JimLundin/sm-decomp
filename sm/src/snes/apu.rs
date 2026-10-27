@@ -1,5 +1,5 @@
 use crate::c_library::puts;
-use crate::game_state::Game;
+use crate::execution::Execution;
 use crate::snes::dsp::{dsp_cycle, dsp_read, dsp_reset, dsp_saveload, dsp_write};
 use crate::snes::spc::{spc_reset, spc_runOpcode, spc_saveload};
 use crate::tracing::getProcessorStateSpc;
@@ -43,10 +43,13 @@ pub unsafe fn apu_saveload(apu: *mut Apu, io: &mut crate::snapshot_io::SnapshotI
     }
 }
 
-pub unsafe fn apu_cycle(apu: *mut Apu, game: &mut Game) {
+pub(crate) unsafe fn apu_cycle_execution(game: &mut Execution<'_>) {
+    unsafe { apu_cycle_parts(game.backend.apu_view(), game.host.g_debug_apu_cycles) }
+}
+unsafe fn apu_cycle_parts(apu: *mut Apu, debug_cycles: &bool) {
     unsafe {
         if (*apu).registers.cpuCyclesLeft == 0 {
-            if game.g_debug_apu_cycles {
+            if *debug_cycles {
                 let mut line = [0u8; 80];
                 getProcessorStateSpc(apu, &mut line);
                 puts(line.as_ptr().cast());

@@ -1,6 +1,6 @@
 //! Common gameplay names from shared owners; bank-specific names stay local.
 
-pub(crate) use crate::c_library::{__assert_fail, memcpy, printf};
+pub(crate) use crate::c_library::printf;
 pub(crate) use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::buttons::*;
 pub use crate::game::constants::enemy_properties::*;
@@ -10,10 +10,10 @@ pub use crate::game::constants::projectile_types::*;
 pub use crate::game::constants::samus_movement::*;
 pub use crate::game::constants::samus_poses::*;
 pub(crate) use crate::game_state::Game;
-pub(crate) use crate::ram_map::{ram_ptr, word};
+pub(crate) use crate::ram_map::word;
 pub(crate) use crate::rtl::{
     MakePairU16, Mult8x8, ReadRegWord, RtlWriteSram, SnesDivide, Unreachable, WriteReg,
-    WriteRegWord, abs16, mov24, rom_ptr, words,
+    WriteRegWord, abs16, rom_ptr, words,
 };
 pub use crate::snes::registers::*;
 pub use crate::types::{
@@ -25,5 +25,5 @@ pub use crate::types::{
     RoomDefHeader, RoomDefRoomstate, SamusPose, SamusPoseParams, SnesRegs, SpawnHardcodedPlmArgs,
     SpawnHdmaObject_Args, TileTable, TileTables, VoidP, VramWriteEntry, Vulnerability, size_t,
 };
-pub(crate) use ::core::ffi::{c_char, c_long, c_void};
+pub(crate) use ::core::ffi::{c_char, c_long};
 pub(crate) use ::core::ptr::null_mut;

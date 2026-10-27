@@ -11,8 +11,8 @@ const COUNT: usize = 18;
 fn put(bytes: &mut [u8], at: usize, value: u16) {
     bytes[at..at + 2].copy_from_slice(&value.to_le_bytes());
 }
-fn get(bytes: &[u8], at: usize) -> u16 {
-    u16::from_le_bytes([bytes[at], bytes[at + 1]])
+fn get(bytes: &crate::game_state::WorkRam, at: usize) -> u16 {
+    u16::from_le_bytes([bytes.read_byte(at), bytes.read_byte(at + 1)])
 }
 fn key(slot: usize) -> ActorKey {
     // Actor.health is at +14. This source-derived address aliases each existing
@@ -22,13 +22,17 @@ fn key(slot: usize) -> ActorKey {
 fn check_ram(game: &Game, expected: &[u8], phase: &str, angle_base: u16) {
     for slot in 0..COUNT {
         assert_eq!(
-            get(&game.g_ram, ANGLES + 2 * slot),
+            get(game.ram(), ANGLES + 2 * slot),
             angle_base + slot as u16,
             "actor.owner.angle_roundtrip.{phase}.angle slot={slot}"
         );
     }
     assert_eq!(
-        game.g_ram.as_slice() == expected,
+        (0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<_>>()
+            .as_slice()
+            == expected,
         true,
         "actor.owner.angle_roundtrip.{phase}.whole_ram"
     );
@@ -39,11 +43,14 @@ fn check_ram(game: &Game, expected: &[u8], phase: &str, angle_base: u16) {
 pub(crate) fn run_checked() {
     let mut game = Game::new();
     for slot in 0..COUNT {
-        put(&mut game.g_ram, ANGLES + 2 * slot, 0x1000 + slot as u16);
+        game.ram()
+            .copy_in(ANGLES + 2 * slot, &(0x1000 + slot as u16).to_le_bytes());
     }
-    game.g_ram[ANGLES - 1] = 0xa7;
-    game.g_ram[ANGLES + COUNT * 2] = 0xb9;
-    let mut expected = game.g_ram.to_vec();
+    game.ram().write_byte(ANGLES - 1, 0xa7);
+    game.ram().write_byte(ANGLES + COUNT * 2, 0xb9);
+    let mut expected = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<_>>();
     {
         let mut runtime = Runtime::new(&mut game);
         runtime.edit_actor(

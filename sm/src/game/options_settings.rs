@@ -5,10 +5,10 @@ use crate::game_state::Game;
 use crate::ram_map::word;
 
 pub(crate) fn initialize(game: &mut Game, upload: fn(&mut Game)) {
-    game.g_ram[0x5d] = 0;
-    game.g_ram[0x69] = 19;
+    game.ram().write_byte(0x5d, 0);
+    game.ram().write_byte(0x69, 19);
     for mirror in [0x6b, 0x6c, 0x6d, 0x6e, 0x71, 0x6f] {
-        game.g_ram[mirror] = 0;
+        game.ram().write_byte(mirror, 0);
     }
     upload(game);
     word! { game, 0;
@@ -23,7 +23,8 @@ pub(crate) fn initialize(game: &mut Game, upload: fn(&mut Game)) {
     }
     copy_screen(0x1c7fe, false, game);
     // The ROM keeps the final copied tile in A through the object clear.
-    let initial_tile = u16::from_le_bytes([game.g_ram[0x3000], game.g_ram[0x3001]]);
+    let initial_tile =
+        u16::from_le_bytes([game.ram().read_byte(0x3000), game.ram().read_byte(0x3001)]);
     word!(game.menu_option_index = 0);
     crate::game::options_objects::clear(game);
     crate::game::options_objects::spawn(initial_tile, 0xf4b8, game);
@@ -92,7 +93,7 @@ pub(crate) fn finish_start(game: &mut Game) {
 }
 
 fn dissolve(game: &mut Game) {
-    game.g_ram[0x57] = 3;
+    game.ram().write_byte(0x57, 3);
     word! { game, 0; screen_fade_delay, screen_fade_counter }
     word!(game.game_options_screen_index = 5);
 }
@@ -146,8 +147,12 @@ fn setting_address(game: &mut Game) -> usize {
 
 fn toggle_special(game: &mut Game) {
     let address = setting_address(game);
-    let value = u16::from_ne_bytes([game.g_ram[address], game.g_ram[address + 1]]);
-    game.g_ram[address..address + 2].copy_from_slice(&u16::from(value == 0).to_ne_bytes());
+    let value = u16::from_ne_bytes([
+        game.ram().read_byte(address),
+        game.ram().read_byte(address + 1),
+    ]);
+    game.ram()
+        .copy_in(address, &u16::from(value == 0).to_ne_bytes());
     highlight_special(game);
 }
 
@@ -157,7 +162,10 @@ pub(crate) fn highlight_special(game: &mut Game) {
     // Capture the pair before the pointer lookup; only the first row uses a live index.
     let pair = usize::from(word!(game.menu_option_index).wrapping_mul(4) >> 1);
     let address = setting_address(game);
-    let enabled = u16::from_ne_bytes([game.g_ram[address], game.g_ram[address + 1]]) != 0;
+    let enabled = u16::from_ne_bytes([
+        game.ram().read_byte(address),
+        game.ram().read_byte(address + 1),
+    ]) != 0;
     let palette = if enabled { 0 } else { 0x400 };
     let first = usize::from(word!(game.menu_option_index).wrapping_mul(4) >> 1);
     menu_tilemap::recolor_native(0x3000 + usize::from(ON[first]), palette, 6, game);
@@ -254,13 +262,14 @@ pub(crate) fn scroll<const DOWN: bool>(game: &mut Game) {
 
 pub(crate) fn fade_out(game: &mut Game, screen: u16, enable: fn(&mut Game)) {
     crate::game::display_refresh::fade(false, game);
-    if screen == 5 && game.g_ram[0x57] != 0xf3 {
-        game.g_ram[0x57] = game.g_ram[0x57].wrapping_add(16);
+    if screen == 5 && game.ram().read_byte(0x57) != 0xf3 {
+        game.ram()
+            .write_byte(0x57, game.ram().read_byte(0x57).wrapping_add(16));
     }
-    if game.g_ram[0x51] != 0x80 {
-        if screen == 0 && game.g_ram[0x51] == 14 {
-            let subscreen = u16::from(game.g_ram[0x6b]);
-            if game.g_ram[0x6b] & 4 == 0 {
+    if game.ram().read_byte(0x51) != 0x80 {
+        if screen == 0 && game.ram().read_byte(0x51) == 14 {
+            let subscreen = u16::from(game.ram().read_byte(0x6b));
+            if game.ram().read_byte(0x6b) & 4 == 0 {
                 crate::game::options_objects::spawn(subscreen, 0xf4d6, game);
             }
         }
@@ -285,14 +294,15 @@ pub(crate) fn fade_out(game: &mut Game, screen: u16, enable: fn(&mut Game)) {
 
 pub(crate) fn fade_in<const DISSOLVE: bool>(game: &mut Game) {
     crate::game::display_refresh::fade(true, game);
-    if DISSOLVE && game.g_ram[0x57] != 3 {
-        game.g_ram[0x57] = game.g_ram[0x57].wrapping_sub(16);
+    if DISSOLVE && game.ram().read_byte(0x57) != 3 {
+        game.ram()
+            .write_byte(0x57, game.ram().read_byte(0x57).wrapping_sub(16));
     }
-    if game.g_ram[0x51] != 15 {
+    if game.ram().read_byte(0x51) != 15 {
         return;
     }
     if DISSOLVE {
-        game.g_ram[0x57] = 0;
+        game.ram().write_byte(0x57, 0);
     }
     word! { game, 0; screen_fade_delay, screen_fade_counter }
     if !DISSOLVE {
@@ -323,7 +333,8 @@ pub(crate) fn replace_screen(game: &mut Game) {
             let source = 0x1cffe + usize::from(word!(game.japanese_text_flag) != 0) * 0x800;
             copy_screen(source, true, game);
             // The controller initializer receives the final native word copied to tile zero.
-            let tile = u16::from_ne_bytes([game.g_ram[0x3000], game.g_ram[0x3001]]);
+            let tile =
+                u16::from_ne_bytes([game.ram().read_byte(0x3000), game.ram().read_byte(0x3001)]);
             spawn(tile, 0xf4ca, game);
             controller_input::load_binding_choices(game);
             menu_tilemap::controller_bindings(game);
@@ -332,7 +343,7 @@ pub(crate) fn replace_screen(game: &mut Game) {
         copy_screen(0x1c7fe, false, game);
         highlight_language(game);
         // The ROM passes the final language-highlight tile left in A (82:EFD7).
-        let tile = u16::from_le_bytes([game.g_ram[0x33b8], game.g_ram[0x33b9]]);
+        let tile = u16::from_le_bytes([game.ram().read_byte(0x33b8), game.ram().read_byte(0x33b9)]);
         spawn(tile, 0xf4c4, game);
     }
 }

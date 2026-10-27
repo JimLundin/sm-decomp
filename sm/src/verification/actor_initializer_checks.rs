@@ -138,11 +138,11 @@ pub(super) fn dispatch_noop(game: &mut Game) {
         "actor.initializer.first_callback_authored_occurrence"
     );
     assert_eq!(
-        u16::from_ne_bytes(
-            game.g_ram[0xf78 + usize::from(key)..0xf7a + usize::from(key)]
-                .try_into()
-                .unwrap()
-        ),
+        u16::from_ne_bytes({
+            let mut bytes = [0; 2];
+            game.ram().copy_out(0xf78 + usize::from(key), &mut bytes);
+            bytes
+        }),
         0xd000,
         "actor.initializer.definition_already_written"
     );
@@ -255,8 +255,10 @@ fn game() -> Box<Game> {
     }
     game.register_rom(image.clone());
     game.register_native_rom(image.clone());
-    game.g_ram[crate::ram_map::words::cur_enemy_index..crate::ram_map::words::cur_enemy_index + 2]
-        .copy_from_slice(&0x140u16.to_le_bytes());
+    game.ram().copy_in(
+        crate::ram_map::words::cur_enemy_index,
+        &0x140u16.to_le_bytes(),
+    );
     {
         let mut runtime = Runtime::new(&mut game);
         use super::access::ActorCollections;

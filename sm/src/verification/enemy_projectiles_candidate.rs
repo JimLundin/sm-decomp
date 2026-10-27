@@ -71,7 +71,7 @@ pub(crate) const CASES: u32 = ORIGINAL_CASES
 pub(crate) const OUTPUT_BYTES: usize = 131099;
 
 fn put(game: &mut Game, at: usize, value: u16) {
-    game.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    game.ram().copy_in(at, &value.to_le_bytes());
 }
 fn slot(game: &mut Game, base: usize, index: u16, value: u16) {
     put(game, base + usize::from(index & !1), value);
@@ -96,8 +96,9 @@ fn definition(image: &RomImage, at: u16, setup: u16) {
     }
 }
 fn seed(game: &mut Game, image: &RomImage) {
-    for (at, value) in game.g_ram.iter_mut().enumerate() {
-        *value = (at.wrapping_mul(37) ^ (at >> 8)) as u8;
+    for at in 0..game.ram().len() {
+        game.ram()
+            .write_byte(at, (at.wrapping_mul(37) ^ (at >> 8)) as u8);
     }
     game.eproj_spawn_rect = Rect16U {
         x: 0xfff0,
@@ -126,8 +127,8 @@ fn seed(game: &mut Game, image: &RomImage) {
         put(game, at, value);
     }
     for offset in 0..3 {
-        game.g_ram[0x643 + offset] = 0;
-        game.g_ram[0x646 + offset] = 0;
+        game.ram().write_byte(0x643 + offset, 0);
+        game.ram().write_byte(0x646 + offset, 0);
     }
     for (field, value) in [
         (core::mem::offset_of!(EnemyData, x_pos), 0x1234),
@@ -311,7 +312,7 @@ unsafe fn original_execute(id: u32, game: &mut Game, image: &RomImage) -> Option
             }
             if variant == 2 {
                 for channel in 0..3 {
-                    game.g_ram[0x646 + channel] = 15;
+                    game.ram().write_byte(0x646 + channel, 15);
                 }
                 put(
                     game,
@@ -337,8 +338,10 @@ unsafe fn original_execute(id: u32, game: &mut Game, image: &RomImage) -> Option
             slot(game, a::eproj_y_vel, index, velocity.wrapping_neg());
             slot(game, a::eproj_x_pos, index, 0xffff);
             slot(game, a::eproj_y_pos, index, 0);
-            game.g_ram[a::eproj_x_subpos + usize::from(index) + 1] = 0xf0;
-            game.g_ram[a::eproj_y_subpos + usize::from(index) + 1] = 0x80;
+            game.ram()
+                .write_byte(a::eproj_x_subpos + usize::from(index) + 1, 0xf0);
+            game.ram()
+                .write_byte(a::eproj_y_subpos + usize::from(index) + 1, 0x80);
             return Some(match n % 3 {
                 0 => MoveEprojWithVelocity(index, game),
                 1 => MoveEprojWithVelocityX(index, game),
@@ -388,7 +391,9 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
         id == 8,
         "enemy-projectile diagnostic case {id}"
     );
-    let mut output = game.g_ram.to_vec();
+    let mut output = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<_>>();
     for value in [
         game.eproj_spawn_rect.x,
         game.eproj_spawn_rect.y,

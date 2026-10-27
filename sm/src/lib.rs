@@ -176,17 +176,17 @@ macro_rules! native_assertion {
         }
     };
     (@failure $assertion:literal, $file:literal, $line:expr, $function:literal $(,)?) => {
-        __assert_fail(
-            $assertion as *const u8 as *const c_char,
-            $file as *const u8 as *const c_char,
+        $crate::c_library::__assert_fail(
+            $assertion as *const u8 as *const ::core::ffi::c_char,
+            $file as *const u8 as *const ::core::ffi::c_char,
             $line,
-            $function as *const u8 as *const c_char,
+            $function as *const u8 as *const ::core::ffi::c_char,
         )
     };
     (@failure $assertion:literal, $file:literal, $line:expr, pointer $function:expr $(,)?) => {
-        __assert_fail(
-            $assertion as *const u8 as *const c_char,
-            $file as *const u8 as *const c_char,
+        $crate::c_library::__assert_fail(
+            $assertion as *const u8 as *const ::core::ffi::c_char,
+            $file as *const u8 as *const ::core::ffi::c_char,
             $line,
             $function,
         )
@@ -345,17 +345,6 @@ pub mod game {
     }
     pub(crate) use callback_dispatch;
 
-    // Keep both field assignments in their original statement/evaluation order.
-    macro_rules! enemy_instruction {
-        ([$($enemy:tt)*]; instruction = $instruction:expr, timer = $timer:expr) => {
-            $($enemy)*.current_instruction = $instruction;
-            $($enemy)*.instruction_timer = $timer;
-        };
-        ([$($enemy:tt)*]; timer = $timer:expr, instruction = $instruction:expr) => {
-            $($enemy)*.instruction_timer = $timer;
-            $($enemy)*.current_instruction = $instruction;
-        };
-    }
     pub(crate) mod special_geometry;
 
     pub(crate) mod beam_definitions;
@@ -507,7 +496,6 @@ pub mod snes {
     pub mod cpu;
     pub mod dma;
     pub mod dsp;
-    pub mod input;
     pub mod ppu;
     pub mod registers;
     pub mod snes;
@@ -552,6 +540,7 @@ pub mod util;
 /// Runtime globals and callbacks supplied by the frontend.
 pub mod host;
 
+mod execution;
 pub mod game_state;
 pub mod recording;
 pub mod rom;

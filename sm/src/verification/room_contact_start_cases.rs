@@ -1,5 +1,9 @@
 //! Frozen synthetic actual contact/start predecessor calls; no ROM-derived assets.
-use crate::{game_state::Game, rom::RomImage};
+use crate::room_background_support::{ram_bytes, ram_bytes_parts};
+use crate::{
+    game_state::{Game, WorkRam},
+    rom::RomImage,
+};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 pub(crate) const CASES: u32 = 20;
 pub(crate) fn offset(address: u32) -> usize {
@@ -14,14 +18,17 @@ fn rw(r: &RomImage, address: u32, value: u16) {
     bytes(r, address, &value.to_ne_bytes());
 }
 fn put(g: &mut Game, at: usize, value: u16) {
-    g.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    g.ram().copy_in(at, &value.to_le_bytes());
 }
 fn exp(e: &mut [u8], at: usize, value: u16) {
     e[at..at + 2].copy_from_slice(&value.to_le_bytes());
 }
 pub(crate) fn snapshot(out: &mut Vec<u8>, g: &Game) {
-    out.extend_from_slice(&g.g_ram);
-    out.push(u8::from(g.g_fail));
+    snapshot_parts(out, g.ram(), &g.g_fail);
+}
+pub(crate) fn snapshot_parts(out: &mut Vec<u8>, ram: &WorkRam, fail: &bool) {
+    out.extend_from_slice(&ram_bytes_parts(ram));
+    out.push(u8::from(*fail));
 }
 #[derive(Clone, Copy)]
 pub(crate) enum Operation {
@@ -96,8 +103,9 @@ pub(crate) fn capture_case(
             RomImage::zeroed(0x100000)
         };
         let mut g = Game::new();
-        for (i, b) in g.g_ram.iter_mut().enumerate() {
-            *b = (i.wrapping_mul(29) ^ (i >> 7) ^ 0xa3) as u8;
+        for i in 0..g.ram().len() {
+            g.ram()
+                .write_byte(i, (i.wrapping_mul(29) ^ (i >> 7) ^ 0xa3) as u8);
         }
         g.register_native_rom(native.clone());
         g.loaded_rom = Some(loaded.clone());
@@ -146,7 +154,7 @@ pub(crate) fn capture_case(
             } else {
                 0
             };
-            g.g_ram[0x16402] = bts;
+            g.ram().write_byte(0x16402, bts);
             let list_address = if id == 6 {
                 0x8f8000
             } else if id == 5 {
@@ -231,7 +239,7 @@ pub(crate) fn capture_case(
             }
             expected_area = 7;
         }
-        let initial = g.g_ram.to_vec();
+        let initial = ram_bytes(&g);
         let mut expected = initial.clone();
         if id <= 10 {
             exp(&mut expected, 0x1e71, 0);
@@ -354,7 +362,7 @@ pub(crate) fn capture_case(
             }
         }
         assert_eq!(
-            &g.g_ram[..],
+            &ram_bytes(&g),
             &expected[..],
             "room contact/start {id} full expected RAM"
         );

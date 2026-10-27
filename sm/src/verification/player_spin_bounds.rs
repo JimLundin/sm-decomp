@@ -26,17 +26,19 @@ const CASES: [(u16, bool, bool); 16] = [
 ];
 pub(crate) const COUNT: usize = CASES.len() * 2 * 2 * 3;
 fn put(g: &mut Game, at: usize, value: u16) {
-    g.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    g.ram().copy_in(at, &value.to_le_bytes());
 }
 fn word(g: &Game, at: usize) -> u16 {
-    u16::from_le_bytes([g.g_ram[at], g.g_ram[at + 1]])
+    u16::from_le_bytes([g.ram().read_byte(at), g.ram().read_byte(at + 1)])
 }
 
 /// Called from the existing initialized collision capture, with Game authority.
 /// No file output, CPU oracle claim, unsafe entry, or production decision replica.
 pub(crate) fn run(g: &mut Game) -> usize {
     assert!(!g.actor_identity_is_with_session());
-    let saved = g.g_ram.to_vec();
+    let saved = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     let fail = g.g_fail;
     let loaded = g.loaded_rom.clone();
     let native = g.capture_native_rom_binding();
@@ -60,7 +62,7 @@ pub(crate) fn run(g: &mut Game) -> usize {
             for liquid_physics in [0u16, 1] {
                 for low_fraction in [0u8, 0xa5] {
                     for high_whole in [0u8, 0x80, 0xff] {
-                        g.g_ram.fill(0);
+                        g.ram().fill(0..g.ram().len(), 0);
                         g.g_fail = false;
                         for (at, value) in [
                             (w::room_width_in_blocks, 32),
@@ -90,7 +92,7 @@ pub(crate) fn run(g: &mut Game) -> usize {
                         // B2D and B2E are the middle two physical bytes. Vary both
                         // excluded outer bytes independently, including the sign bit.
                         let bytes = [low_fraction, middle as u8, (middle >> 8) as u8, high_whole];
-                        g.g_ram[0xb2c..0xb30].copy_from_slice(&bytes);
+                        g.ram().copy_in(0xb2c, &bytes);
                         assert_eq!(u16::from_le_bytes([bytes[1], bytes[2]]), middle);
                         // No jump is requested. Cancel the original Y displacement
                         // with authored external displacement, so arbitrary outer
@@ -110,7 +112,11 @@ pub(crate) fn run(g: &mut Game) -> usize {
                             "owned spin window: liquid={liquid_physics} middle={middle:04x} low={low_fraction:02x} high={high_whole:02x}"
                         );
                         assert_eq!(
-                            &g.g_ram[0xb2c..0xb30],
+                            &{
+                                let mut bytes = [0; 4];
+                                g.ram().copy_out(0xb2c, &mut bytes);
+                                bytes
+                            },
                             &bytes,
                             "no jump request changes speed bytes"
                         );
@@ -126,7 +132,7 @@ pub(crate) fn run(g: &mut Game) -> usize {
         assert_eq!(checked, COUNT);
         checked
     }));
-    g.g_ram.copy_from_slice(&saved);
+    g.ram().copy_in(0, &saved);
     g.g_fail = fail;
     g.loaded_rom = loaded;
     g.restore_native_rom_binding(native);

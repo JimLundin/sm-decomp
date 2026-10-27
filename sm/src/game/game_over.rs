@@ -25,7 +25,7 @@ pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
 unsafe fn prepare(game: &mut Game) {
     unsafe {
         crate::game::display_refresh::fade(false, game);
-        if game.g_ram[0x51] & 0xf != 0 {
+        if game.ram().read_byte(0x51) & 0xf != 0 {
             return;
         }
         crate::game::display_refresh::set_blank(true, game);
@@ -46,7 +46,7 @@ unsafe fn prepare(game: &mut Game) {
 unsafe fn initialize(game: &mut Game) {
     unsafe {
         for (at, value) in [(0x69, 17), (0x74, 32), (0x75, 64), (0x76, 0x80)] {
-            game.g_ram[at] = value;
+            game.ram().write_byte(at, value);
         }
         QueueMusic_Delayed8(0, game);
         QueueMusic_Delayed8(0xff03, game);
@@ -67,8 +67,8 @@ unsafe fn initialize(game: &mut Game) {
         animate_baby(game, |game| {
             Unreachable(game);
         });
-        let color = u16::from(game.g_ram[0x70]) << 8;
-        game.g_ram[0x6f..0x71].copy_from_slice(&color.to_ne_bytes());
+        let color = u16::from(game.ram().read_byte(0x70)) << 8;
+        game.ram().copy_in(0x6f, &color.to_ne_bytes());
         set_hdma_enabled(false, game);
         clear_hdma(game);
         set_hdma_enabled(true, game);
@@ -99,7 +99,7 @@ unsafe fn fade(fade_in: bool, brightness: u8, game: &mut Game) {
     });
     sprite_output::menu_selection(game);
     crate::game::display_refresh::fade(fade_in, game);
-    if game.g_ram[0x51] & 0xf == brightness {
+    if game.ram().read_byte(0x51) & 0xf == brightness {
         word!(game.menu_index += 1);
     }
 }
@@ -148,7 +148,7 @@ unsafe fn fade_to_title(game: &mut Game) {
         Unreachable(game);
     });
     crate::game::display_refresh::fade(false, game);
-    if game.g_ram[0x51] & 0xf == 0 {
+    if game.ram().read_byte(0x51) & 0xf == 0 {
         game.request_reset();
     }
 }

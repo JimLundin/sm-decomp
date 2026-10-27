@@ -6,7 +6,7 @@ thread_local! {
     static CASE: Cell<Option<u32>> = const { Cell::new(None) };
 }
 fn put(game: &mut Game, at: usize, value: u16) {
-    game.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    game.ram().copy_in(at, &value.to_le_bytes());
 }
 fn record(out: &mut Vec<u8>, tag: u8, bytes: &[u8]) {
     out.push(tag);
@@ -30,7 +30,6 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
         || !game.supports_legacy_persistence()
         || observer::active()
         || CASE.with(|state| state.get().is_some())
-        || (game.g_ram.as_ptr() as usize) % core::mem::align_of::<u16>() != 0
     {
         return Err("animation fixture requires canonical, idle naturally aligned host".into());
     }
@@ -58,11 +57,13 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
     {
         return Err("requires unchanged original loader 4 MiB allocation".into());
     }
-    let ram_before = game.g_ram.to_vec();
+    let ram_before = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     let fail_before = game.g_fail;
     let mut restored = Vec::new();
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        game.g_ram.fill(0);
+        game.ram().fill(0..game.ram().len(), 0);
         game.g_fail = false;
         let family = id / 100;
         let sub = id % 100;
@@ -93,7 +94,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             put(game, at, value);
         }
         // Preserve conspicuous FX slots/buffer across clock-only cases.
-        game.g_ram[0xad4..0xaf4].fill(0x5a);
+        game.ram().fill(0xad4..0xaf4, 0x5a);
         match family {
             1 => {
                 pose = if sub == 1 {
@@ -270,7 +271,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
     for (at, value) in restored.into_iter().rev() {
         image.write(at, value);
     }
-    game.g_ram.copy_from_slice(&ram_before);
+    game.ram().copy_in(0, &ram_before);
     game.g_fail = fail_before;
     result.unwrap_or_else(|_| Err("eligible animation predecessor panicked".into()))
 }

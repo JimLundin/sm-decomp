@@ -6,7 +6,7 @@ use crate::{
     initial_state::InitialState, player_transitions_rust_observer as observer, rom::RomImage,
 };
 fn put(g: &mut Game, at: usize, value: u16) {
-    g.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    g.ram().copy_in(at, &value.to_le_bytes());
 }
 fn record(out: &mut Vec<u8>, tag: u8, data: &[u8]) {
     out.push(tag);
@@ -24,8 +24,8 @@ fn author(r: &RomImage, address: u32, data: &[u8], manifest: &mut Vec<u8>) {
     }
 }
 fn seed(id: u32, g: &mut Game) -> (RomImage, RomImage, Vec<u8>, Vec<u8>, Vec<u8>) {
-    g.g_ram.fill(0);
-    g.g_ram[0x1ffff] = 1;
+    g.ram().fill(0..g.ram().len(), 0);
+    g.ram().write_byte(0x1ffff, 1);
     g.g_fail = false;
     let loaded = RomImage::zeroed(0x100000);
     let native = RomImage::zeroed(0x100000);
@@ -100,7 +100,9 @@ fn seed(id: u32, g: &mut Game) -> (RomImage, RomImage, Vec<u8>, Vec<u8>, Vec<u8>
         put(g, w::samus_y_subspeed, 0xf800);
         put(g, w::samus_y_subaccel, 0x1000);
     }
-    let mut expected = g.g_ram.to_vec();
+    let mut expected = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<_>>();
     fn set(bytes: &mut [u8], at: usize, value: u16) {
         bytes[at..at + 2].copy_from_slice(&value.to_le_bytes());
     }
@@ -148,7 +150,6 @@ pub unsafe fn capture(id: u32, original: &[u8], g: &mut Game) -> Result<Vec<u8>,
             return Err("player update requires admitted ID and initialized host".into());
         }
         if !cfg!(target_endian = "little")
-            || g.g_ram.as_ptr() as usize % core::mem::align_of::<u16>() != 0
             || g.actor_identity_is_with_session()
             || observer::active()
         {
@@ -158,7 +159,20 @@ pub unsafe fn capture(id: u32, original: &[u8], g: &mut Game) -> Result<Vec<u8>,
         let native_before = g.capture_native_rom_binding();
         let fail_before = g.g_fail;
         let mut before = Box::new(Snapshot::INITIAL);
-        MakeSnapshot(&mut before, &*g.g_snes, &*g.g_cpu, g.g_spc_player);
+        {
+            let snapshot_snes = g.g_snes;
+            let snapshot_cpu = g.g_cpu;
+            let snapshot_player = g.g_spc_player;
+            let (backend, ram, _, _, _) = g.ram_and_snapshots();
+            MakeSnapshot(
+                &mut before,
+                &*snapshot_snes,
+                &*snapshot_cpu,
+                snapshot_player,
+                ram,
+                backend,
+            )
+        };
         let cpu_before = *g.g_cpu;
         let cycles_before = (*g.g_snes).cpuCyclesLeft;
         let memory_ops_before = (*g.g_snes).cpuMemOps;
@@ -180,16 +194,19 @@ pub unsafe fn capture(id: u32, original: &[u8], g: &mut Game) -> Result<Vec<u8>,
                 crate::game::session_runtime::player_normal_transfers::begin(id, 1);
             crate::game::session_runtime::player_update_runtime::advance_frame(g);
             normal_transfers.finish();
-            if g.g_ram.as_slice() != expected.as_slice() {
-                let at = g
-                    .g_ram
-                    .iter()
+            if (0..g.ram().len())
+                .map(|at| g.ram().read_byte(at))
+                .ne(expected.iter().copied())
+            {
+                let at = (0..g.ram().len())
+                    .map(|at| g.ram().read_byte(at))
                     .zip(&expected)
-                    .position(|(a, b)| a != b)
+                    .position(|(a, b)| a != *b)
                     .unwrap();
                 return Err(format!(
                     "player update {id} RAM mismatch at {at:05x}: {:02x} != {:02x}",
-                    g.g_ram[at], expected[at]
+                    g.ram().read_byte(at),
+                    expected[at]
                 ));
             }
             assert!(
@@ -214,7 +231,18 @@ pub unsafe fn capture(id: u32, original: &[u8], g: &mut Game) -> Result<Vec<u8>,
         let _ = observer::finish();
         g.loaded_rom = loaded_before;
         g.restore_native_rom_binding(native_before);
-        RestoreSnapshot(&before, &mut *g.g_snes, &mut *g.g_cpu);
+        {
+            let snapshot_snes = g.g_snes;
+            let snapshot_cpu = g.g_cpu;
+            let (backend, ram, _, _, _) = g.ram_and_snapshots();
+            RestoreSnapshot(
+                &before,
+                &mut *snapshot_snes,
+                &mut *snapshot_cpu,
+                ram,
+                backend,
+            )
+        };
         before.audio.restore(g.g_snes);
         before.player.restore(g.g_spc_player);
         *g.g_cpu = cpu_before;

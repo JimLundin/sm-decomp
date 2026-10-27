@@ -1,5 +1,9 @@
 //! Actual device initialization and field-wise observation, synthetic assets only.
-use crate::{game_state::Game, recording::RecordingBytes, rom::RomImage};
+use crate::{
+    game_state::{Game, WorkRam},
+    recording::RecordingBytes,
+    rom::RomImage,
+};
 pub(crate) fn offset(a: u32) -> usize {
     crate::rtl::lorom_offset(a) as usize
 }
@@ -12,7 +16,7 @@ pub(crate) fn rw(r: &RomImage, a: u32, v: u16) {
     bytes(r, a, &v.to_ne_bytes());
 }
 pub(crate) fn put(g: &mut Game, a: usize, v: u16) {
-    g.g_ram[a..a + 2].copy_from_slice(&v.to_le_bytes());
+    g.ram().copy_in(a, &v.to_le_bytes());
 }
 pub(crate) fn exp(e: &mut [u8], a: usize, v: u16) {
     e[a..a + 2].copy_from_slice(&v.to_le_bytes());
@@ -41,9 +45,10 @@ pub(crate) unsafe fn initialized() -> Box<Game> {
         crate::snes::cart::cart_load((*g.g_snes).cart, 1, cart_image, 8192);
         g.register_native_rom((*(*g.g_snes).cart).rom.clone());
         g.g_sram = (*(*g.g_snes).cart).ram.clone();
-        crate::snes::snes::snes_reset(g.g_snes, true, &mut g);
-        for (i, b) in g.g_ram.iter_mut().enumerate() {
-            *b = (i.wrapping_mul(13) ^ (i >> 8) ^ 0x5a) as u8;
+        g.execution().reset(true);
+        for i in 0..g.ram().len() {
+            g.ram()
+                .write_byte(i, (i.wrapping_mul(13) ^ (i >> 8) ^ 0x5a) as u8);
         }
         (&mut (*(*g.g_snes).ppu).vram).fill(0x4567);
         g.VERIFY_ACTIVE = true;
@@ -54,13 +59,23 @@ pub(crate) unsafe fn initialized() -> Box<Game> {
 }
 /// Existing typed serializer omits pointers/routing caches. It does not call
 /// snes_saveload, whose runningWhichVersion write is an observable side effect.
-#[forbid(unsafe_code)]
 pub(crate) fn snapshot(g: &mut Game) -> Vec<u8> {
-    let mut out = g.g_ram.to_vec();
-    out.push(u8::from(g.g_fail));
-    out.extend_from_slice(&g.decompress_src.to_le_bytes());
+    snapshot_parts(g.ram(), &g.g_fail, &g.decompress_src, |machine| {
+        g.save_backend_observation(machine);
+    })
+}
+#[forbid(unsafe_code)]
+pub(crate) fn snapshot_parts(
+    ram: &WorkRam,
+    fail: &bool,
+    decompress_src: &u32,
+    mut observe: impl FnMut(&mut RecordingBytes),
+) -> Vec<u8> {
+    let mut out = ram_bytes_parts(ram);
+    out.push(u8::from(*fail));
+    out.extend_from_slice(&decompress_src.to_le_bytes());
     let mut machine = RecordingBytes::default();
-    g.save_backend_observation(&mut machine);
+    observe(&mut machine);
     out.extend_from_slice(&(machine.size as u32).to_le_bytes());
     out.extend_from_slice(machine.as_slice());
     out
@@ -113,4 +128,21 @@ pub(crate) fn vram_bytes(v: &mut [u16], dst: u16, data: &[u8]) {
     for (i, b) in data.chunks_exact(2).enumerate() {
         v[(usize::from(dst) + i) & 0x7fff] = u16::from_le_bytes([b[0], b[1]]);
     }
+}
+
+pub(crate) fn ram_bytes(game: &Game) -> Vec<u8> {
+    ram_bytes_parts(game.ram())
+}
+pub(crate) fn ram_bytes_parts(ram: &WorkRam) -> Vec<u8> {
+    let mut bytes = vec![0; ram.len()];
+    ram.copy_out(0, &mut bytes);
+    bytes
+}
+pub(crate) fn ram_span<const N: usize>(game: &Game, at: usize) -> [u8; N] {
+    let mut bytes = [0; N];
+    game.ram().copy_out(at, &mut bytes);
+    bytes
+}
+pub(crate) fn ram_word(ram: &crate::game_state::WorkRam, at: usize, value: u16) {
+    ram.copy_in(at, &value.to_le_bytes());
 }

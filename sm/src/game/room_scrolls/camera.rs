@@ -9,7 +9,7 @@ use crate::ram_map::{word, words as W};
 fn camera_scroll_value(column: u16, row: u8, game: &Game) -> u8 {
     let index =
         (u16::from(row) * u16::from(word!(game.room_width_in_scrolls) as u8)).wrapping_add(column);
-    game.g_ram[0xcd20 + usize::from(index)]
+    game.ram().read_byte(0xcd20 + usize::from(index))
 }
 
 pub(super) fn auto_x(game: &mut Game) {
@@ -242,7 +242,7 @@ pub(crate) fn layer2_position(axis: Axis, game: &mut Game) -> u8 {
         Axis::X => (0x91b, W::layer1_x_pos, W::layer2_x_pos),
         Axis::Y => (0x91c, W::layer1_y_pos, W::layer2_y_pos),
     };
-    let scale = game.g_ram[control];
+    let scale = game.ram().read_byte(control);
     if scale == 1 {
         return 1;
     }

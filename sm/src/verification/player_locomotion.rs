@@ -8,10 +8,10 @@ use crate::{
 pub const FIRST: u32 = 4000;
 pub const LAST: u32 = 4082;
 fn put(g: &mut Game, at: usize, v: u16) {
-    g.g_ram[at..at + 2].copy_from_slice(&v.to_le_bytes());
+    g.ram().copy_in(at, &v.to_le_bytes());
 }
 fn get(g: &Game, at: usize) -> u16 {
-    u16::from_le_bytes([g.g_ram[at], g.g_ram[at + 1]])
+    u16::from_le_bytes([g.ram().read_byte(at), g.ram().read_byte(at + 1)])
 }
 fn expect(g: &Game, at: usize, v: u16, why: &str) {
     assert_eq!(get(g, at), v, "{why} at {at:04x}");
@@ -32,8 +32,8 @@ fn author(r: &RomImage, address: u32, data: &[u8], manifest: &mut Vec<u8>) {
     }
 }
 fn seed(id: u32, g: &mut Game) -> (RomImage, RomImage, Vec<u8>, Vec<u8>) {
-    g.g_ram.fill(0);
-    g.g_ram[0x1ffff] = 1;
+    g.ram().fill(0..g.ram().len(), 0);
+    g.ram().write_byte(0x1ffff, 1);
     g.g_fail = false;
     let loaded = RomImage::zeroed(0x200000);
     let native = RomImage::zeroed(0x200000);
@@ -225,7 +225,10 @@ fn check(id: u32, g: &Game, before: &[u8]) {
     let local = id - FIRST;
     if matches!(local, 9 | 13 | 28) {
         assert_eq!(
-            g.g_ram.as_slice(),
+            (0..g.ram().len())
+                .map(|at| g.ram().read_byte(at))
+                .collect::<Vec<_>>()
+                .as_slice(),
             before,
             "unused/frozen normal dispatch is byte-exact no-op"
         );
@@ -234,7 +237,10 @@ fn check(id: u32, g: &Game, before: &[u8]) {
         let mut expected = before.to_vec();
         expected[w::input_to_pose_calc..w::input_to_pose_calc + 2].fill(0);
         assert_eq!(
-            g.g_ram.as_slice(),
+            (0..g.ram().len())
+                .map(|at| g.ram().read_byte(at))
+                .collect::<Vec<_>>()
+                .as_slice(),
             expected.as_slice(),
             "unused normal selector clears only input result"
         );
@@ -438,7 +444,7 @@ fn atmosphere_seed(
             manifest,
         );
     }
-    g.g_ram[0x370..0x390].fill(0xcc);
+    g.ram().fill(0x370..0x390, 0xcc);
     if id <= 4050 {
         return;
     }
@@ -447,7 +453,7 @@ fn atmosphere_seed(
         put(g, w::fx_y_pos, 100);
         put(g, w::lava_acid_y_pos, 135);
         put(g, w::equipped_items, 0);
-        g.g_ram[0x5b5] = u8::from(id == 4051);
+        g.ram().write_byte(0x5b5, u8::from(id == 4051));
         return;
     }
     if id == 4054 {
@@ -584,8 +590,8 @@ unsafe fn atmosphere_invoke(id: u32, g: &mut Game) {
             "frame carry retains captured dispatch",
         ),
         4073 | 4076 => {
-            assert_eq!(g.g_ram[0x370], 132, "Y clipping retains X write");
-            assert_eq!(g.g_ram[0x371], 0xcc);
+            assert_eq!(g.ram().read_byte(0x370), 132, "Y clipping retains X write");
+            assert_eq!(g.ram().read_byte(0x371), 0xcc);
             expect(g, w::oam_next_ptr, 0, "Y clipping leaves cursor");
         }
         4077 => expect(
@@ -603,10 +609,10 @@ unsafe fn atmosphere_invoke(id: u32, g: &mut Game) {
         4079 => expect(g, w::samus_x_pos, 0x6084, "OAM writes publish into Session"),
         4080 => assert_eq!(
             [
-                g.g_ram[0x370],
-                g.g_ram[0x374],
-                g.g_ram[0x378],
-                g.g_ram[0x37c]
+                g.ram().read_byte(0x370),
+                g.ram().read_byte(0x374),
+                g.ram().read_byte(0x378),
+                g.ram().read_byte(0x37c)
             ],
             [36, 26, 16, 6],
             "descending slots preserve render order"
@@ -641,7 +647,6 @@ pub unsafe fn capture(id: u32, original: &[u8], g: &mut Game) -> Result<Vec<u8>,
             return Err("locomotion requires admitted ID and initialized host".into());
         }
         if !cfg!(target_endian = "little")
-            || g.g_ram.as_ptr() as usize % core::mem::align_of::<u16>() != 0
             || g.actor_identity_is_with_session()
             || observer::active()
         {
@@ -651,7 +656,20 @@ pub unsafe fn capture(id: u32, original: &[u8], g: &mut Game) -> Result<Vec<u8>,
         let native_before = g.capture_native_rom_binding();
         let fail_before = g.g_fail;
         let mut before = Box::new(Snapshot::INITIAL);
-        MakeSnapshot(&mut before, &*g.g_snes, &*g.g_cpu, g.g_spc_player);
+        {
+            let snapshot_snes = g.g_snes;
+            let snapshot_cpu = g.g_cpu;
+            let snapshot_player = g.g_spc_player;
+            let (backend, ram, _, _, _) = g.ram_and_snapshots();
+            MakeSnapshot(
+                &mut before,
+                &*snapshot_snes,
+                &*snapshot_cpu,
+                snapshot_player,
+                ram,
+                backend,
+            )
+        };
         let cpu_before = *g.g_cpu;
         let cycles_before = (*g.g_snes).cpuCyclesLeft;
         let memory_ops_before = (*g.g_snes).cpuMemOps;
@@ -660,7 +678,9 @@ pub unsafe fn capture(id: u32, original: &[u8], g: &mut Game) -> Result<Vec<u8>,
         let queue_before = crate::audio_snapshot::ApuQueueSnapshot::capture(g);
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             let (loaded, native, lm, nm) = seed(id, g);
-            let initial = g.g_ram.to_vec();
+            let initial = (0..g.ram().len())
+                .map(|at| g.ram().read_byte(at))
+                .collect::<Vec<_>>();
             let mut out = b"PTRS1".to_vec();
             let mut identity = id.to_le_bytes().to_vec();
             identity.push(1);
@@ -696,7 +716,18 @@ pub unsafe fn capture(id: u32, original: &[u8], g: &mut Game) -> Result<Vec<u8>,
         let _ = observer::finish();
         g.loaded_rom = loaded_before;
         g.restore_native_rom_binding(native_before);
-        RestoreSnapshot(&before, &mut *g.g_snes, &mut *g.g_cpu);
+        {
+            let snapshot_snes = g.g_snes;
+            let snapshot_cpu = g.g_cpu;
+            let (backend, ram, _, _, _) = g.ram_and_snapshots();
+            RestoreSnapshot(
+                &before,
+                &mut *snapshot_snes,
+                &mut *snapshot_cpu,
+                ram,
+                backend,
+            )
+        };
         before.audio.restore(g.g_snes);
         before.player.restore(g.g_spc_player);
         *g.g_cpu = cpu_before;

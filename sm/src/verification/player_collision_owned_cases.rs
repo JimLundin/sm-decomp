@@ -9,16 +9,16 @@ use core::mem::offset_of;
 
 pub(crate) const COUNT: u32 = 3;
 fn put(g: &mut Game, at: usize, value: u16) {
-    g.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    g.ram().copy_in(at, &value.to_le_bytes());
 }
 fn snapshot(out: &mut Vec<u8>, g: &Game) {
-    out.extend_from_slice(&g.g_ram);
+    out.extend((0..g.ram().len()).map(|at| g.ram().read_byte(at)));
     out.push(u8::from(g.g_fail));
 }
 fn seed(g: &mut Game, local: u32) {
     // Authored fixture bytes, as in movement/walked cases. Keep allocated
     // hardware and prepared-world binding; no ROM-derived bytes are retained.
-    g.g_ram.fill(0);
+    g.ram().fill(0..g.ram().len(), 0);
     g.g_fail = false;
     g.VERIFY_ACTIVE = true;
     g.register_rom(RomImage::zeroed(0x200000));

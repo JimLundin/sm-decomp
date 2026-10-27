@@ -2,7 +2,7 @@
 //! No invocation of the legacy Rust alignment-sensitive routines.
 use super::{Game, MakeSnapshot, RestoreSnapshot, Snapshot};
 use crate::initial_state::InitialState;
-use crate::snes::cpu::{cpu_getFlags, cpu_runOpcode};
+use crate::snes::cpu::cpu_getFlags;
 
 pub const CASES: u32 = 11;
 pub const CAPACITY: usize = 2 * 1024 * 1024;
@@ -85,7 +85,7 @@ fn original_matches(game: &Game, original: &[u8], address: u32, length: usize) -
     })
 }
 fn word(game: &Game, at: usize) -> u16 {
-    u16::from_le_bytes([game.g_ram[at], game.g_ram[at + 1]])
+    u16::from_le_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])
 }
 fn overlaps_authored_data(id: u32, pc: u32) -> bool {
     if id < 7 {
@@ -98,7 +98,7 @@ fn overlaps_authored_data(id: u32, pc: u32) -> bool {
         .any(|(start, length)| at < start + length && start < at + 4)
 }
 fn put(game: &mut Game, at: usize, value: u16) {
-    game.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    game.ram().copy_in(at, &value.to_le_bytes());
 }
 fn record(out: &mut Vec<u8>, tag: u8, payload: &[u8]) {
     out.push(tag);
@@ -117,7 +117,7 @@ unsafe fn observation(out: &mut Vec<u8>, tag: u8, game: &Game, full: bool) {
         }
         payload.push(cpu.db);
         if full {
-            payload.extend_from_slice(&game.g_ram);
+            payload.extend((0..game.ram().len()).map(|at| game.ram().read_byte(at)));
             payload.push(u8::from(game.g_fail));
         }
         record(out, tag, &payload);
@@ -248,7 +248,20 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             }
         }
         let mut before = Box::new(Snapshot::INITIAL);
-        MakeSnapshot(&mut before, &*game.g_snes, &*game.g_cpu, game.g_spc_player);
+        {
+            let snapshot_snes = game.g_snes;
+            let snapshot_cpu = game.g_cpu;
+            let snapshot_player = game.g_spc_player;
+            let (backend, ram, _, _, _) = game.ram_and_snapshots();
+            MakeSnapshot(
+                &mut before,
+                &*snapshot_snes,
+                &*snapshot_cpu,
+                snapshot_player,
+                ram,
+                backend,
+            )
+        };
         let cpu_before = *game.g_cpu;
         let cycles_before = (*game.g_snes).cpuCyclesLeft;
         let memory_ops_before = (*game.g_snes).cpuMemOps;
@@ -258,8 +271,8 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
         let queue_before = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
         let mut restored_bytes = Vec::new();
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            game.g_ram.fill(0);
-            game.g_ram[0x1ffff] = 1;
+            game.ram().fill(0..game.ram().len(), 0);
+            game.ram().write_byte(0x1ffff, 1);
             game.g_fail = false;
             let (pose, facing_type, old_pose, old_type, items) = match id {
                 0 => (1, 0x7654, 0, 0, 8),
@@ -289,12 +302,10 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             ] {
                 put(game, at, value);
             }
-            game.g_ram[0xa23] = old_type;
-            for byte in &mut game.g_ram[0xc180..0xc1a0] {
-                *byte = 0x5a;
-            }
+            game.ram().write_byte(0xa23, old_type);
+            game.ram().fill(0xc180..0xc1a0, 0x5a);
             // These seeds make the DP scratch exclusions independently visible.
-            game.g_ram[..3].copy_from_slice(&[0xa5, 0x5a, 0x7e]);
+            game.ram().copy_in(0, &[0xa5, 0x5a, 0x7e]);
             put(game, 0x12, 0x6b7c);
             let mut output = b"PTOR1".to_vec();
             let mut identity = id.to_le_bytes().to_vec();
@@ -403,7 +414,9 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                     }
                     if pc == 0x90848c {
                         let address = if id == 10 { 0xb401 } else { 0xb400 };
-                        if (*game.g_cpu).y != 1 || word(game, 0) != address || game.g_ram[2] != 0x91
+                        if (*game.g_cpu).y != 1
+                            || word(game, 0) != address
+                            || game.ram().read_byte(2) != 0x91
                         {
                             return Err("wrong authored operand location".into());
                         }
@@ -469,7 +482,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                     return Err(format!("executed original instruction differs at {pc:06x}"));
                 }
                 let published = publication(pc).map(|at| (at, word(game, at)));
-                cpu_runOpcode(game.g_cpu, game);
+                game.execution().step_cpu();
                 minimum_sp = minimum_sp.min((*game.g_cpu).sp);
                 if let Some((at, before)) = published {
                     stores.push(pc);
@@ -479,7 +492,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                     bytes.extend_from_slice(&word(game, at).to_le_bytes());
                     record(&mut output, 4, &bytes);
                 }
-                if game.g_fail || (*(*game.g_snes).dma).dmaBusy || (*game.g_cpu).sp > STACK_TOP {
+                if game.g_fail || game.dma_busy() || (*game.g_cpu).sp > STACK_TOP {
                     return Err("unexpected diagnostic/DMA/stack exit".into());
                 }
             }
@@ -488,7 +501,18 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
         for (at, byte) in restored_bytes {
             image.write(at, byte);
         }
-        RestoreSnapshot(&before, &mut *game.g_snes, &mut *game.g_cpu);
+        {
+            let snapshot_snes = game.g_snes;
+            let snapshot_cpu = game.g_cpu;
+            let (backend, ram, _, _, _) = game.ram_and_snapshots();
+            RestoreSnapshot(
+                &before,
+                &mut *snapshot_snes,
+                &mut *snapshot_cpu,
+                ram,
+                backend,
+            )
+        };
         before.audio.restore(game.g_snes);
         before.player.restore(game.g_spc_player);
         *game.g_cpu = cpu_before;

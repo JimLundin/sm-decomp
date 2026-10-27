@@ -41,7 +41,9 @@ pub(super) fn checks(id: u32, g: &Game, before: &[u8], native: &RomImage) {
             .copy_from_slice(&5u16.to_le_bytes());
     }
     assert_eq!(
-        &g.g_ram[..],
+        &(0..g.ram().len())
+            .map(|at| g.ram().read_byte(at))
+            .collect::<Vec<_>>(),
         expected.as_slice(),
         "exact actual table-failure write prefix; no actor/PLM commit"
     );

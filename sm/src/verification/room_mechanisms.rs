@@ -6,6 +6,7 @@ use crate::game::{
     enemy_script::{EnemyScript, bank_base},
     room_mechanisms as mechanisms,
 };
+use crate::room_background_support::{ram_bytes, ram_span};
 use crate::{game_state::Game, rom::RomImage};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 const COMMANDS: [u32; 14] = [
@@ -23,7 +24,7 @@ pub(crate) use callback_edges::{
 mod getter_checks;
 pub(crate) const CASES: u32 = 1038;
 fn put(g: &mut Game, a: usize, v: u16) {
-    g.g_ram[a..a + 2].copy_from_slice(&v.to_le_bytes());
+    g.ram().copy_in(a, &v.to_le_bytes());
 }
 fn rom_word(image: &RomImage, address: u32, value: u16) {
     let a = crate::rtl::lorom_offset(address) as usize;
@@ -192,8 +193,8 @@ unsafe fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
                         rom_word(image, 0x849000, 1);
                         rom_word(image, 0x849002, 0xa000);
                     }
-                    6 => g.g_ram[0x613] = 2,
-                    _ => g.g_ram[0x613] = 255,
+                    6 => g.ram().write_byte(0x613, 2),
+                    _ => g.ram().write_byte(0x613, 255),
                 }
                 (3, u16::from(mechanisms::run(g)))
             }
@@ -388,11 +389,11 @@ fn dispatch_seed(g: &mut Game, image: &RomImage, variant: usize) {
     ] {
         put(g, a, v);
     }
-    g.g_ram[0xd820..0xd827].fill(if on { 0xff } else { 0 });
-    g.g_ram[0xd828..0xd82f].fill(if on { 0xff } else { 0 });
-    g.g_ram[0xd830..0xd831].fill(if on { 0xff } else { 0 });
-    g.g_ram[0xd870..0xd871].fill(if on { 0xff } else { 0 });
-    g.g_ram[0xd8b0..0xd8b1].fill(if on { 0xff } else { 0 });
+    g.ram().fill(0xd820..0xd827, if on { 0xff } else { 0 });
+    g.ram().fill(0xd828..0xd82f, if on { 0xff } else { 0 });
+    g.ram().fill(0xd830..0xd831, if on { 0xff } else { 0 });
+    g.ram().fill(0xd870..0xd871, if on { 0xff } else { 0 });
+    g.ram().fill(0xd8b0..0xd8b1, if on { 0xff } else { 0 });
     // An aligned terminating scroll stream; script operands stay checked.
     rom_word(image, 0x8fa000, 0x0100);
     rom_word(image, 0x8fa002, 0x0080);
@@ -496,7 +497,10 @@ unsafe fn native_effect_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u1
             )
         };
         assert_ne!(
-            u16::from_le_bytes([g.g_ram[0x1997 + 34], g.g_ram[0x1998 + 34]]),
+            u16::from_le_bytes([
+                g.ram().read_byte(0x1997 + 34),
+                g.ram().read_byte(0x1998 + 34)
+            ]),
             0
         );
         return (4, u16::from(value));
@@ -532,7 +536,10 @@ unsafe fn native_effect_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u1
         )
     });
     assert_ne!(
-        u16::from_le_bytes([g.g_ram[0x1997 + 34], g.g_ram[0x1998 + 34]]),
+        u16::from_le_bytes([
+            g.ram().read_byte(0x1997 + 34),
+            g.ram().read_byte(0x1998 + 34)
+        ]),
         0
     );
     returned
@@ -541,7 +548,6 @@ unsafe fn native_effect_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u1
 // Actual message presentation and scheduler suspension with real bus objects.
 // Each call records RAM, serialized PPU/DMA/SNES fields and the ordered APU queue.
 unsafe fn message_case(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> (u8, u16) {
-    use crate::initial_state::InitialState;
     let door = (1009..=1011).contains(&id);
     let variant = if (1020..=1021).contains(&id) {
         id - 1014
@@ -550,176 +556,177 @@ unsafe fn message_case(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<
     } else {
         id - 880
     };
-    let mut snes = Box::new(crate::types::Snes::INITIAL);
-    let mut ppu = Box::new(crate::types::Ppu::INITIAL);
-    let mut dma = Box::new(crate::types::Dma::INITIAL);
-    let mut input = Box::new(crate::types::Input::INITIAL);
-    let mut cart = Box::new(crate::types::Cart {
-        snes: &mut *snes,
-        type_0: 0,
-        rom: Default::default(),
-        romSize: 0,
-        ram: Default::default(),
-        ramSize: 0,
-    });
-    snes.ppu = &mut *ppu;
-    snes.dma = &mut *dma;
-    snes.cart = &mut *cart;
-    snes.input1 = &mut *input;
-    snes.ram = g.g_ram.as_mut_ptr();
-    ppu.snes = &mut *snes;
-    ppu.vramIncrement = 1;
-    dma.snes = &mut *snes;
-    input.snes = &mut *snes;
-    g.g_snes = &mut *snes;
-    // Both configs point to synthetic, nonempty, aligned 64-byte message data.
-    for index in 19..=21 {
-        let at = 0x85869b + index * 6;
-        rom_word(image, at, 8750134u32 as u16);
-        rom_word(image, at + 2, 8749705u32 as u16);
-        rom_word(image, at + 4, 0xa000 + ((index - 19) * 64) as u16);
+    let previous_cpu = g.g_cpu;
+    g.ensure_backend();
+    let snes = g.g_snes;
+    let ppu = unsafe { (*snes).ppu };
+    unsafe {
+        (*ppu).vramIncrement = 1;
     }
-    for i in 0..96 {
-        rom_word(image, 0x85a000 + 2 * i, 0x2800 + i as u16);
-    }
-    for i in 0..40 {
-        slot(g, i, 0);
-    }
-    slot(g, 39, 0x8000);
-    if variant == 6 {
-        // Actual grey-door dud pre: emit sound for a hit, then clear Counter.
-        put(g, 0x1cd7 + 78, 8699420u32 as u16);
-    }
-    rom_word(image, 0x849000, 8686735u32 as u16); // ActivateMapStation.
-    rom_word(image, 0x849002, 8685390u32 as u16); // SetTimer 7; Sleep.
-    rom_word(image, 0x849004, 0xb407);
-    rom_word(image, 0x849006, 0x0086);
-    assert_eq!(
-        crate::ram_map::checked_word!(g.music_queue_read_pos),
-        crate::ram_map::checked_word!(g.music_queue_write_pos)
-    );
-    if door {
-        g.g_ram[0x612] = 2;
-        put(g, crate::ram_map::words::door_direction, (id - 1009) as u16);
-        put(g, crate::ram_map::words::door_transition_function, 0xe4a9);
-    }
-    if variant == 7 {
-        callback_edges::begin_message();
-    }
-    let mut final_return = 0;
-    for call in 0..80u32 {
-        // Alternate released/held A so the real edge detector can dismiss.
-        input.currentState = if call & 1 == 0 {
-            0x0080u16.reverse_bits()
-        } else {
-            0
-        };
-        let returned = if door {
-            let poll = crate::game::room_entry::protocol::dispatch(
-                &mut crate::game::session_runtime::Runtime::new(g),
-                8578217,
-            );
-            poll.returned_byte()
-        } else {
-            unsafe { mechanisms::run(g) }
-        };
-        if variant == 7 {
-            assert_eq!(
-                g.g_ram[0x613],
-                u8::from(returned != 0),
-                "only the scheduler return exports Pass"
-            );
+    g.input1_mut().type_0 = 0;
+    let outcome = catch_unwind(AssertUnwindSafe(|| {
+        // Both configs point to synthetic, nonempty, aligned 64-byte message data.
+        for index in 19..=21 {
+            let at = 0x85869b + index * 6;
+            rom_word(image, at, 8750134u32 as u16);
+            rom_word(image, at + 2, 8749705u32 as u16);
+            rom_word(image, at + 4, 0xa000 + ((index - 19) * 64) as u16);
         }
-        trace.push(returned);
-        trace.extend_from_slice(&g.message_box_das0l_value.to_le_bytes());
-        trace.extend_from_slice(&g.g_ram);
-        let mut hardware = crate::recording::RecordingBytes::default();
-        let mut io = crate::snapshot_io::SnapshotIo::Save(&mut hardware);
-        io.state(&mut *ppu).unwrap();
-        io.state(&mut *dma).unwrap();
-        io.state(&mut *snes).unwrap();
-        trace.extend_from_slice(hardware.as_slice());
-        trace.extend_from_slice(&crate::audio_snapshot::ApuQueueSnapshot::capture(g).to_bytes());
-        if call == 0 {
-            assert_ne!(returned, 0, "message did not suspend");
-            if variant == 6 {
+        for i in 0..96 {
+            rom_word(image, 0x85a000 + 2 * i, 0x2800 + i as u16);
+        }
+        for i in 0..40 {
+            slot(g, i, 0);
+        }
+        slot(g, 39, 0x8000);
+        if variant == 6 {
+            // Actual grey-door dud pre: emit sound for a hit, then clear Counter.
+            put(g, 0x1cd7 + 78, 8699420u32 as u16);
+        }
+        rom_word(image, 0x849000, 8686735u32 as u16); // ActivateMapStation.
+        rom_word(image, 0x849002, 8685390u32 as u16); // SetTimer 7; Sleep.
+        rom_word(image, 0x849004, 0xb407);
+        rom_word(image, 0x849006, 0x0086);
+        assert_eq!(
+            crate::ram_map::checked_word!(g.music_queue_read_pos),
+            crate::ram_map::checked_word!(g.music_queue_write_pos)
+        );
+        if door {
+            g.ram().write_byte(0x612, 2);
+            put(g, crate::ram_map::words::door_direction, (id - 1009) as u16);
+            put(g, crate::ram_map::words::door_transition_function, 0xe4a9);
+        }
+        if variant == 7 {
+            callback_edges::begin_message();
+        }
+        let mut final_return = 0;
+        for call in 0..80u32 {
+            // Alternate released/held A so the real edge detector can dismiss.
+            g.input1_mut().currentState = if call & 1 == 0 {
+                0x0080u16.reverse_bits()
+            } else {
+                0
+            };
+            let returned = if door {
+                let poll = crate::game::room_entry::protocol::dispatch(
+                    &mut crate::game::session_runtime::Runtime::new(g),
+                    8578217,
+                );
+                poll.returned_byte()
+            } else {
+                unsafe { mechanisms::run(g) }
+            };
+            if variant == 7 {
                 assert_eq!(
-                    u16::from_le_bytes([g.g_ram[0x1d77 + 78], g.g_ram[0x1d78 + 78]]),
-                    0
+                    g.ram().read_byte(0x613),
+                    u8::from(returned != 0),
+                    "only the scheduler return exports Pass"
                 );
             }
-        }
-        if returned == 0 {
-            final_return = returned;
-            break;
-        }
-        if call == 0 {
-            match variant {
-                1 => {
-                    put(g, 0x1c23, 0);
-                    put(g, 0x1c37 + 78, 0);
-                }
-                2 => {
-                    put(g, 0x1c27, 0);
-                    put(g, 0x1d27, 0x9002);
-                }
-                3 => {
-                    put(g, 0xdc8, 21);
-                }
-                4 => {
-                    let replaced = RomImage::zeroed(0x200000);
-                    rom_word(&replaced, 0x849002, 8685390u32 as u16);
-                    rom_word(&replaced, 0x849004, 0xb409);
-                    rom_word(&replaced, 0x849006, 0x0086);
-                    g.loaded_rom = Some(replaced);
-                }
-                5 => {
-                    g.g_ram[0x614] = 255;
-                }
-                6 => {
-                    // A repeated pre would clear this high byte; SetTimer writes only low.
-                    put(g, 0x1d77 + 78, 0x5500);
-                    put(g, 0xde1c + 78, 13);
-                }
-                _ => {}
+            trace.push(returned);
+            trace.extend_from_slice(&g.message_box_das0l_value.to_le_bytes());
+            trace.extend_from_slice(&ram_bytes(&g));
+            let mut hardware = crate::recording::RecordingBytes::default();
+            let mut io = crate::snapshot_io::SnapshotIo::Save(&mut hardware);
+            unsafe {
+                io.state(&mut *ppu).unwrap();
+                io.state(&mut g.dma_state()).unwrap();
+                io.state(&mut *snes).unwrap();
             }
+            trace.extend_from_slice(hardware.as_slice());
+            trace
+                .extend_from_slice(&crate::audio_snapshot::ApuQueueSnapshot::capture(g).to_bytes());
+            if call == 0 {
+                assert_ne!(returned, 0, "message did not suspend");
+                if variant == 6 {
+                    assert_eq!(
+                        u16::from_le_bytes([
+                            g.ram().read_byte(0x1d77 + 78),
+                            g.ram().read_byte(0x1d78 + 78)
+                        ]),
+                        0
+                    );
+                }
+            }
+            if returned == 0 {
+                final_return = returned;
+                break;
+            }
+            if call == 0 {
+                match variant {
+                    1 => {
+                        put(g, 0x1c23, 0);
+                        put(g, 0x1c37 + 78, 0);
+                    }
+                    2 => {
+                        put(g, 0x1c27, 0);
+                        put(g, 0x1d27, 0x9002);
+                    }
+                    3 => {
+                        put(g, 0xdc8, 21);
+                    }
+                    4 => {
+                        let replaced = RomImage::zeroed(0x200000);
+                        rom_word(&replaced, 0x849002, 8685390u32 as u16);
+                        rom_word(&replaced, 0x849004, 0xb409);
+                        rom_word(&replaced, 0x849006, 0x0086);
+                        g.loaded_rom = Some(replaced);
+                    }
+                    5 => {
+                        g.ram().write_byte(0x614, 255);
+                    }
+                    6 => {
+                        // A repeated pre would clear this high byte; SetTimer writes only low.
+                        put(g, 0x1d77 + 78, 0x5500);
+                        put(g, 0xde1c + 78, 13);
+                    }
+                    _ => {}
+                }
+            }
+            assert!(call < 79, "message exceeded bounded completion");
         }
-        assert!(call < 79, "message exceeded bounded completion");
+        if variant == 7 {
+            let edges = callback_edges::finish_message();
+            trace.extend_from_slice(b"613E");
+            trace.extend_from_slice(&(edges.len() as u32).to_le_bytes());
+            trace.extend_from_slice(&edges);
+        }
+        if variant == 6 {
+            assert_eq!(
+                &ram_span::<2>(&g, 0x1d77 + 78),
+                &0x5507u16.to_le_bytes(),
+                "resumed pre-action changed counter"
+            );
+            assert_eq!(
+                &ram_span::<2>(&g, 0xde1c + 78),
+                &13u16.to_le_bytes(),
+                "resumed scheduler changed delay"
+            );
+        }
+        if door {
+            assert_eq!(
+                g.ram().read_byte(0x612),
+                0,
+                "door continuation retained after completion"
+            );
+            assert_eq!(
+                crate::ram_map::checked_word!(g.door_transition_function),
+                0xe659
+            );
+            assert_eq!(
+                crate::ram_map::checked_word!(g.samus_x_pos),
+                if id == 1009 { 31 } else { 24 }
+            );
+        }
+        g.g_snes = core::ptr::null_mut();
+        (3, u16::from(final_return))
+    }));
+    g.g_cpu = previous_cpu;
+    let _hardware = unsafe { g.take_backend_for_shutdown() };
+    match outcome {
+        Ok(value) => value,
+        Err(error) => std::panic::resume_unwind(error),
     }
-    if variant == 7 {
-        let edges = callback_edges::finish_message();
-        trace.extend_from_slice(b"613E");
-        trace.extend_from_slice(&(edges.len() as u32).to_le_bytes());
-        trace.extend_from_slice(&edges);
-    }
-    if variant == 6 {
-        assert_eq!(
-            &g.g_ram[0x1d77 + 78..0x1d79 + 78],
-            &0x5507u16.to_le_bytes(),
-            "resumed pre-action changed counter"
-        );
-        assert_eq!(
-            &g.g_ram[0xde1c + 78..0xde1e + 78],
-            &13u16.to_le_bytes(),
-            "resumed scheduler changed delay"
-        );
-    }
-    if door {
-        assert_eq!(
-            g.g_ram[0x612], 0,
-            "door continuation retained after completion"
-        );
-        assert_eq!(
-            crate::ram_map::checked_word!(g.door_transition_function),
-            0xe659
-        );
-        assert_eq!(
-            crate::ram_map::checked_word!(g.samus_x_pos),
-            if id == 1009 { 31 } else { 24 }
-        );
-    }
-    g.g_snes = core::ptr::null_mut();
-    (3, u16::from(final_return))
 }
 
 unsafe fn consumer_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
@@ -742,7 +749,7 @@ unsafe fn consumer_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
             put(g, 0x1c87 + 78, 70);
             if n == 3 {
                 put(g, 0x1dc7 + 78, 0);
-                g.g_ram[0xd8b0] = 1;
+                g.ram().write_byte(0xd8b0, 1);
             }
         }
         unsafe { mechanisms::close_door(g) };
@@ -772,7 +779,8 @@ unsafe fn consumer_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
     } else if n < 22 {
         let v = n - 14;
         put(g, ram::area_index, if v & 2 == 0 { 0 } else { 3 });
-        g.g_ram[0xd828 + 3] = if v & 4 == 0 { 0 } else { 1 };
+        g.ram()
+            .write_byte(0xd828 + 3, if v & 4 == 0 { 0 } else { 1 });
         put(g, 0xb2e, if v == 7 { 1 } else { 0 });
         mechanisms::carry(
             &mut crate::game::session_runtime::Runtime::new(g),
@@ -796,7 +804,7 @@ unsafe fn consumer_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
         put(g, 0x1dc7 + 78, 0);
         put(g, ram::roomdefroomstate_ptr, 0xa100);
         if v == 4 {
-            g.g_ram[0xd870] = 1;
+            g.ram().write_byte(0xd870, 1);
         }
         rom_word(image, 0x84839d, 0xa000);
         rom_word(image, 0x84a002, if v == 5 { 0x923 } else { 0x123 });
@@ -823,7 +831,6 @@ unsafe fn boundary_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
         let target = [
             0x1c22, 0x1c24, 0x1c26, 0x1e66, 0x1e68, 0xde1a, 0xde1c, 0xc6c6, 0xc6c8, 0xc8c6, 0xc8c8,
         ][(n - 84) as usize];
-        assert_eq!((g.g_ram.as_ptr() as usize + target) & 1, 0);
         put(g, 0x1e17, target as u16);
         result(unsafe {
             mechanisms::checks::command(
@@ -867,7 +874,7 @@ unsafe fn nonreturn_case(id: u32, g: &mut Game) -> (u8, u16) {
 
 unsafe fn displacement_alias_case(id: u32, g: &mut Game) -> (u8, u16) {
     let at = [0x1c25, 0x1d75, 0x1e65][(id - 1015) as usize];
-    g.g_ram[at..at + 4].copy_from_slice(&0x12345678i32.to_ne_bytes());
+    g.ram().copy_in(at, &0x12345678i32.to_ne_bytes());
     put(g, crate::ram_map::words::samus_collision_direction, 3);
     put(g, crate::ram_map::words::samus_y_dir, 0);
     put(g, 0xa6e, 0);
@@ -880,7 +887,7 @@ unsafe fn displacement_alias_case(id: u32, g: &mut Game) -> (u8, u16) {
             g,
         )
     };
-    assert_eq!(&g.g_ram[at..at + 4], &0x12003078i32.to_ne_bytes());
+    assert_eq!(&ram_span::<4>(&g, at), &0x12003078i32.to_ne_bytes());
     (4, u16::from(value))
 }
 
@@ -894,10 +901,12 @@ unsafe fn distinct_flag_query_case(id: u32, g: &mut Game, image: &RomImage) -> (
     // Bit21 selects byte2, mask20; the other map has exactly the opposite result.
     put(g, 0x1dc7, 21);
     put(g, 0x5e7, 0xa55a);
-    g.g_ram[selected_base + 2] = if taken { 0x20 } else { 0x40 };
-    g.g_ram[other_base + 2] = if taken { 0x40 } else { 0x20 };
+    g.ram()
+        .write_byte(selected_base + 2, if taken { 0x20 } else { 0x40 });
+    g.ram()
+        .write_byte(other_base + 2, if taken { 0x40 } else { 0x20 });
     rom_word(image, 0x849100, 0x9234);
-    let mut expected_ram = g.g_ram.to_vec();
+    let mut expected_ram = ram_bytes(&g);
     expected_ram[0x5e7..0x5e9].copy_from_slice(&0x20u16.to_le_bytes());
     let returned = result(unsafe {
         mechanisms::checks::command(
@@ -913,7 +922,7 @@ unsafe fn distinct_flag_query_case(id: u32, g: &mut Game, image: &RomImage) -> (
         "persistent query selected wrong flag map"
     );
     assert_eq!(
-        &g.g_ram[..],
+        &ram_bytes(&g),
         &expected_ram[..],
         "persistent query must write only its two-byte scratch mask"
     );
@@ -937,11 +946,6 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
             (image.as_mut_ptr() as usize + crate::rtl::lorom_offset(0x84a000) as usize) & 1,
             0,
             "native ROM stream alignment"
-        );
-        assert_eq!(
-            (g.g_ram.as_ptr() as usize + 0x1800) & 1,
-            0,
-            "native RAM stream alignment"
         );
     }
     let mut displacement = None;
@@ -991,7 +995,7 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
         "unexpected result for baseline case {id}"
     );
     assert!(!g.g_fail, "native diagnostic for baseline case {id}");
-    let mut bytes = g.g_ram.to_vec();
+    let mut bytes = ram_bytes(&g);
     match outcome {
         Ok((kind, value)) => {
             bytes.push(kind);

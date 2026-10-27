@@ -32,7 +32,7 @@ pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
 fn fade_to_options(game: &mut Game) {
     draw_area_labels(game);
     crate::game::display_refresh::fade(false, game);
-    if (game.g_ram[0x51] & 0xf) == 0 {
+    if (game.ram().read_byte(0x51) & 0xf) == 0 {
         word! {game; game_state = kGameState_2_GameOptionsMenu as u16; menu_index = 0; }
     }
 }
@@ -54,7 +54,7 @@ fn fade_palette(game: &mut Game) {
         }
         word!(game.menu_index += 1);
         word!(game.g_word_7E0787 = 0);
-        game.g_ram[0x69] = 2;
+        game.ram().write_byte(0x69, 2);
     }
 }
 fn load_foreground(game: &mut Game) {
@@ -65,7 +65,11 @@ fn load_foreground(game: &mut Game) {
         true,
         game,
     );
-    set_native_word(0x51, ((game.g_ram[0x52] as i32) << 8 | 0xf) as u16, game);
+    set_native_word(
+        0x51,
+        ((game.ram().read_byte(0x52) as i32) << 8 | 0xf) as u16,
+        game,
+    );
     word!(game.menu_index += 1);
 }
 fn begin_background(game: &mut Game) {
@@ -84,24 +88,25 @@ fn load_background(j: u16, game: &mut Game) {
 }
 unsafe fn begin_area_window(game: &mut Game) {
     unsafe {
-        game.g_ram[0x6b] = 4;
+        game.ram().write_byte(0x6b, 4);
         crate::rtl::register_writes! { game;
             mirror(TS as u16, 4, 0x6d, false); byte(TSW as u16, 4);
             mirror(CGWSEL as u16, 2, 0x6f, true); mirror(CGADSUB as u16, 0x25, 0x72, true);
         }
-        game.g_ram[0x74 + 2] = 0x80;
-        game.g_ram[0x74 + 1] = 64;
-        game.g_ram[0x74 + 0] = 32;
+        game.ram().write_byte(0x74 + 2, 0x80);
+        game.ram().write_byte(0x74 + 1, 64);
+        game.ram().write_byte(0x74 + 0, 32);
         menu_window::initialize(game);
         crate::rtl::write_register_and_mirror(HDMAEN as u16, 0xc, 0x85, true, game);
         configure_area_window(game);
         word!(game.hdma_objects_enable_flag = 0);
-        game.g_ram[0x727] = ((word!(game.menu_index)) as u8).wrapping_add(1);
+        game.ram()
+            .write_byte(0x727, ((word!(game.menu_index)) as u8).wrapping_add(1));
     }
 }
 unsafe fn configure_area_window(game: &mut Game) {
     unsafe {
-        game.g_ram[0x69] = 19;
+        game.ram().write_byte(0x69, 19);
         crate::rtl::register_writes! { game;
             mirror(TM as u16, 0x13, 0x6c, false); byte(TMW as u16, 0x13);
             mirror(W12SEL as u16, 0x23, 0x60, true); mirror(W34SEL as u16, 3, 0x61, true);
@@ -112,10 +117,11 @@ unsafe fn configure_area_window(game: &mut Game) {
 fn open_area_window(game: &mut Game) {
     draw_area_labels(game);
     if menu_window::open_from_center(game) {
-        game.g_ram[0x727] = ((word!(game.menu_index)) as u8).wrapping_add(1);
-        game.g_ram[0x69] &= !2;
-        game.g_ram[0x6c] = 0;
-        game.g_ram[0x6d] = 0;
+        game.ram()
+            .write_byte(0x727, ((word!(game.menu_index)) as u8).wrapping_add(1));
+        game.ram().write_byte(0x69, game.ram().read_byte(0x69) & !2);
+        game.ram().write_byte(0x6c, 0);
+        game.ram().write_byte(0x6d, 0);
         word! {game; reg_BG2VOFS = 24; pausemenu_palette_animation_timer = 1; }
         let mut v1: u16 = 0;
         word_transfers!(game, ascending, 800; xray(0) <- rom(0xb6e000, 0));
@@ -309,15 +315,15 @@ unsafe fn begin_room_window(game: &mut Game) {
     unsafe {
         draw_area_labels(game);
         menu_window::initialize(game);
-        game.g_ram[0x69] = 19;
-        game.g_ram[0x6c] = 19;
+        game.ram().write_byte(0x69, 19);
+        game.ram().write_byte(0x6c, 19);
         crate::rtl::register_writes! { game;
             mirror(W12SEL as u16, 0x32, 0x60, true); mirror(W34SEL as u16, 2, 0x61, true);
             mirror(CGADSUB as u16, 5, 0x72, true); mirror(WOBJSEL as u16, 0x22, 0x62, true);
         }
-        game.g_ram[0x5d] = 48;
-        game.g_ram[0x9e09] = 0;
-        game.g_ram[0x9e19] = 0;
+        game.ram().write_byte(0x5d, 48);
+        game.ram().write_byte(0x9e09, 0);
+        game.ram().write_byte(0x9e19, 0);
         menu_tilemap::area_label(game);
         menu_tilemap::upload(512, 0x7e4000, 1, false, game);
         word! {game; expand_sq_timer = WINDOW_TIMERS[word!(game.area_index) as usize]; }
@@ -341,10 +347,10 @@ fn open_room_window(game: &mut Game) {
     menu_window::advance(menu_window::Motion::Expand, game);
     if (word!(game.expand_sq_timer -= 1, reread) & 0x8000) != 0 {
         word!(game.menu_index += 1);
-        game.g_ram[0x69] = 2;
-        game.g_ram[0x6c] = 0;
-        game.g_ram[0x6d] = 0;
-        game.g_ram[0x6b] = 0;
+        game.ram().write_byte(0x69, 2);
+        game.ram().write_byte(0x6c, 0);
+        game.ram().write_byte(0x6d, 0);
+        game.ram().write_byte(0x6b, 0);
     }
     draw_area_labels(game);
 }
@@ -359,9 +365,9 @@ unsafe fn initialize_room(game: &mut Game) {
         set_hdma_enabled(false, game);
         clear_hdma(game);
         let room = menu_tilemap::native_record(0x8f0000 | u32::from(word!(game.room_ptr)), game);
-        game.g_ram[0x79f] = room.byte(1);
-        game.g_ram[0x7a1] = room.byte(2);
-        game.g_ram[0x7a3] = room.byte(3);
+        game.ram().write_byte(0x79f, room.byte(1));
+        game.ram().write_byte(0x7a1, room.byte(2));
+        game.ram().write_byte(0x7a3, room.byte(3));
         reset_animations(game);
         scroll_limits(game);
         center_map(112, game);
@@ -492,7 +498,7 @@ fn fade_room(game: &mut Game) {
     draw_icons(IconMode::FileSelect, game);
     display_elevator_destinations(game);
     crate::game::display_refresh::fade(false, game);
-    if (game.g_ram[0x51] & 0xf) == 0 {
+    if (game.ram().read_byte(0x51) & 0xf) == 0 {
         word!(game.menu_index += 1);
         set_native_word(0xf78 + core::mem::offset_of!(EnemyData, x_pos), 32, game);
     }
@@ -507,7 +513,7 @@ fn start_game(game: &mut Game) {
     }
 }
 fn clear_room(game: &mut Game) {
-    game.g_ram[0x69] = 18;
+    game.ram().write_byte(0x69, 18);
     word_transfers!(game, descending, 1024; native(0x37fe) <- value(15));
     menu_tilemap::upload(2048, 0x7e3000, 0, true, game);
     word!(game.menu_index += 1);
@@ -523,7 +529,7 @@ fn restore_area(game: &mut Game) {
 }
 unsafe fn begin_return_window(game: &mut Game) {
     unsafe {
-        game.g_ram[0x85] = 0;
+        game.ram().write_byte(0x85, 0);
         QueueSfx1_Max6(0x3c, game);
         word! { game;
             expand_sq_timer =
@@ -546,10 +552,10 @@ unsafe fn begin_return_window(game: &mut Game) {
             mirror(HDMAEN as u16, 0xc, 0x85, true); mirror(W12SEL as u16, 0x32, 0x60, true);
             mirror(W34SEL as u16, 2, 0x61, true);
         }
-        game.g_ram[0x5d] = 48;
-        game.g_ram[0x62] = 34;
-        game.g_ram[0x9e09] = 0;
-        game.g_ram[0x9e19] = 0;
+        game.ram().write_byte(0x5d, 48);
+        game.ram().write_byte(0x62, 34);
+        game.ram().write_byte(0x9e09, 0);
+        game.ram().write_byte(0x9e19, 0);
         word! { game, 0; reg_BG1VOFS, reg_BG1HOFS }
     }
 }
@@ -558,9 +564,9 @@ fn close_room_window(game: &mut Game) {
     draw_area_labels(game);
     if (word!(game.expand_sq_timer -= 1, reread) & 0x8000) != 0 {
         word!(game.menu_index -= 15);
-        game.g_ram[0x69] = 17;
-        game.g_ram[0x6c] = 0;
-        game.g_ram[0x6d] = 0;
+        game.ram().write_byte(0x69, 17);
+        game.ram().write_byte(0x6c, 0);
+        game.ram().write_byte(0x6d, 0);
     }
 }
 
@@ -574,11 +580,14 @@ fn station_coordinates(area: u16, game: &mut Game) -> crate::rom::RomRecord {
 }
 
 fn native_word(offset: usize, game: &Game) -> u16 {
-    u16::from_ne_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
+    u16::from_ne_bytes([
+        game.ram().read_byte(offset),
+        game.ram().read_byte(offset + 1),
+    ])
 }
 
 fn set_native_word(offset: usize, value: u16, game: &mut Game) {
-    game.g_ram[offset..offset + 2].copy_from_slice(&value.to_ne_bytes());
+    game.ram().copy_in(offset, &value.to_ne_bytes());
 }
 
 fn area_selection(game: &Game) -> Option<usize> {
@@ -701,7 +710,10 @@ pub(crate) fn draw_icons(mode: IconMode, game: &mut Game) {
 
 fn station_bits(offset: usize, game: &mut Game) -> u16 {
     let address = 0xd8f8 + 2 * usize::from(word!(game.area_index)) + offset;
-    u16::from_ne_bytes([game.g_ram[address], game.g_ram[address + 1]])
+    u16::from_ne_bytes([
+        game.ram().read_byte(address),
+        game.ram().read_byte(address + 1),
+    ])
 }
 
 fn icon_group(sprite: u16, table: u16, mut bits: u16, palette: u16, game: &mut Game) {
@@ -730,7 +742,7 @@ fn icon_group(sprite: u16, table: u16, mut bits: u16, palette: u16, game: &mut G
 fn explored(x: u16, y: u16, game: &mut Game) -> bool {
     let offset =
         usize::from((x & 0xff00) >> 1) + usize::from(x as u8 >> 6) + usize::from((y & 0xfff8) >> 1);
-    game.g_ram[0x7f7 + offset] & (0x80 >> ((x >> 3) & 7)) != 0
+    game.ram().read_byte(0x7f7 + offset) & (0x80 >> ((x >> 3) & 7)) != 0
 }
 
 fn boss_icons(sprite: u16, table: u16, game: &mut Game) {
@@ -771,18 +783,21 @@ pub(crate) fn animate_palette(game: &mut Game) {
     if word!(game.pausemenu_palette_animation_timer) as u8 == 0 {
         return;
     }
-    game.g_ram[0x73b] = (word!(game.pausemenu_palette_animation_timer) as u8).wrapping_sub(1);
+    game.ram().write_byte(
+        0x73b,
+        (word!(game.pausemenu_palette_animation_timer) as u8).wrapping_sub(1),
+    );
     if word!(game.pausemenu_palette_animation_timer) as u8 != 0 {
         return;
     }
     let mut frame = i32::from(word!(game.pausemenu_palette_animation_frame)) + 1;
     loop {
-        game.g_ram[0x74f] = frame as u8;
+        game.ram().write_byte(0x74f, frame as u8);
         let timer = game
             .capture_native_rom()
             .read(crate::rtl::lorom_offset(0x82c10c) as usize + 3 * frame as usize);
         if timer != 0xff {
-            game.g_ram[0x73b] = timer;
+            game.ram().write_byte(0x73b, timer);
             break;
         }
         QueueSfx3_Max6(0x2a, game);
@@ -819,9 +834,12 @@ pub(crate) fn draw_player_marker(game: &mut Game) {
     let sprite = advance_marker(game);
     sprite_output::menu(
         sprite,
-        (8 * (i32::from(word!(game.room_x_coordinate_on_map)) + i32::from(game.g_ram[0xaf7]))
+        (8 * (i32::from(word!(game.room_x_coordinate_on_map))
+            + i32::from(game.ram().read_byte(0xaf7)))
             - i32::from(word!(game.reg_BG1HOFS))) as u16,
-        (8 * (i32::from(word!(game.room_y_coordinate_on_map)) + i32::from(game.g_ram[0xafb]) + 1)
+        (8 * (i32::from(word!(game.room_y_coordinate_on_map))
+            + i32::from(game.ram().read_byte(0xafb))
+            + 1)
             - i32::from(word!(game.reg_BG1VOFS))) as u16,
         3584,
         game,
@@ -829,7 +847,11 @@ pub(crate) fn draw_player_marker(game: &mut Game) {
 }
 
 pub(crate) fn display_elevator_destinations(game: &mut Game) {
-    if game.g_ram[0xd908 + usize::from(word!(game.area_index))] == 0 {
+    if game
+        .ram()
+        .read_byte(0xd908 + usize::from(word!(game.area_index)))
+        == 0
+    {
         return;
     }
     let mut cursor = i32::from(crate::rtl::rom_table_word!(
@@ -884,7 +906,9 @@ pub(crate) fn center_map(vertical_center: u16, game: &mut Game) {
     let aligned = (i32::from(vertical_center) - i32::from(middle)) & 0xfff8;
     word!(game.reg_BG1VOFS = (-aligned) as u16);
     let y = (8
-        * (i32::from(word!(game.room_y_coordinate_on_map)) + i32::from(game.g_ram[0xafb]) + 1)
+        * (i32::from(word!(game.room_y_coordinate_on_map))
+            + i32::from(game.ram().read_byte(0xafb))
+            + 1)
         + aligned) as u16;
     let top = 64i16.wrapping_sub(y as i16);
     if top >= 0 {
@@ -906,7 +930,7 @@ enum MapEdge {
 fn find_map_edge(source: Option<&crate::rom::RomRecord>, edge: MapEdge, game: &mut Game) -> u16 {
     let read = |offset: usize| match source {
         Some(record) => record.byte(offset),
-        None => game.g_ram[0x7f7 + offset],
+        None => game.ram().read_byte(0x7f7 + offset),
     };
     match edge {
         MapEdge::Left | MapEdge::Right => {
@@ -999,7 +1023,11 @@ pub(crate) fn render_map(screen: MapScreen, game: &mut Game) {
         crate::rtl::rom_table_word!(game, 0x829717, area as isize),
         game,
     );
-    if game.g_ram[0xd908 + usize::from(word!(game.area_index))] != 0 {
+    if game
+        .ram()
+        .read_byte(0xd908 + usize::from(word!(game.area_index)))
+        != 0
+    {
         let mut mapped = bitmap.word(0).swap_bytes();
         let mut explored = native_word(0x7f7, game).swap_bytes();
         for index in 0..2048 {
@@ -1023,14 +1051,16 @@ pub(crate) fn render_map(screen: MapScreen, game: &mut Game) {
         for index in 0..2048 {
             let byte = index / 8;
             let explored = 0x7f7 + byte;
-            let previous = game.g_ram[explored];
-            game.g_ram[explored] = game.g_ram[explored].wrapping_mul(2);
+            let previous = game.ram().read_byte(explored);
+            game.ram()
+                .write_byte(explored, game.ram().read_byte(explored).wrapping_mul(2));
             #[cfg(sm_verify_dll)]
             crate::game::session_runtime::player_legacy_edges::map_write(game, byte, index, 0);
             let value = if previous & 0x80 == 0 {
                 empty
             } else {
-                game.g_ram[explored] = game.g_ram[explored].wrapping_add(1);
+                game.ram()
+                    .write_byte(explored, game.ram().read_byte(explored).wrapping_add(1));
                 #[cfg(sm_verify_dll)]
                 crate::game::session_runtime::player_legacy_edges::map_write(game, byte, index, 1);
                 tiles.word(2 * index) & 0xfbff
@@ -1043,8 +1073,8 @@ pub(crate) fn render_map(screen: MapScreen, game: &mut Game) {
 }
 
 fn draw_room_map(game: &mut Game) {
-    game.g_ram[0x5d] = 51;
-    game.g_ram[0x69] = 19;
+    game.ram().write_byte(0x5d, 51);
+    game.ram().write_byte(0x69, 19);
     word!(game.reg_BG1VOFS = -40i16 as u16);
     render_map(MapScreen::FileSelect, game);
     menu_tilemap::upload(4096, 0x7e3000, 0, false, game);
@@ -1083,7 +1113,7 @@ pub(crate) fn animate_pause_sprite(animation: u16, x: u16, y: u16, game: &mut Ga
     let palette = crate::rtl::rom_table_word!(game, 0x82c0fa, 3);
     let delta = u16::from(script.byte(3 * usize::from(native_word(frame, game)) + 2));
     let variant = animation_ram_address(0x82c0d6, index, game);
-    let variant = 2 * u16::from(game.g_ram[variant]);
+    let variant = 2 * u16::from(game.ram().read_byte(variant));
     let sprite = map_record(
         crate::rtl::rom_table_word!(game, 0x82c1e4, index as isize).wrapping_add(variant),
         game,
@@ -1111,7 +1141,7 @@ pub(crate) fn draw_equipment_selector(game: &mut Game) {
         0x82c18e,
         word!(game.pausemenu_equipment_category_item) as u8 as isize
     )
-    .wrapping_add(4 * u16::from(game.g_ram[0x756]));
+    .wrapping_add(4 * u16::from(game.ram().read_byte(0x756)));
     let position = map_record(address, game);
     animate_pause_sprite(3, position.word(0).wrapping_sub(1), position.word(2), game);
 }

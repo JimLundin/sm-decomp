@@ -58,7 +58,7 @@ fn reaction_fixture(id: u32, g: &mut Game, loaded: &RomImage) -> (Vec<u8>, u8) {
     };
     for &(cell, level) in cells {
         put(g, 0x10002 + 2 * cell, level);
-        g.g_ram[0x16402 + cell] = bts;
+        g.ram().write_byte(0x16402 + cell, bts);
     }
     for raw in (if bomb { 72 } else { 78 }..=78).step_by(2) {
         for base in [
@@ -67,7 +67,9 @@ fn reaction_fixture(id: u32, g: &mut Game, loaded: &RomImage) -> (Vec<u8>, u8) {
             put(g, base + raw, 0xaaaa);
         }
     }
-    let mut expected = g.g_ram.to_vec();
+    let mut expected = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     expected[0xdc4..0xdc6].copy_from_slice(&(if bomb { 26u16 } else { 10 }).to_le_bytes());
     if bomb {
         expected[0xc18..0xc1a].copy_from_slice(&0x501u16.to_le_bytes());
@@ -132,7 +134,7 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
     let mut limit = None;
     if (82..=91).contains(&id) {
         // Actual numeric collision callers; no initializer substitutes for a scan.
-        g.g_ram[0xb64..0xcd4].fill(0);
+        g.ram().fill(0xb64..0xcd4, 0);
         for (at, value) in [
             (0x7a5, 8),
             (0x7a7, 8),
@@ -210,7 +212,7 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
                         0x10002 + cell * 2,
                         if id == 85 { 0x8000 } else { 0x1000 },
                     );
-                    g.g_ram[0x16402 + cell] = 4; // Fully occupied square slope.
+                    g.ram().write_byte(0x16402 + cell, 4); // Fully occupied square slope.
                 }
                 if id == 85 {
                     put(&mut g, 0xc18, 0x8001);
@@ -221,7 +223,7 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
                 put(&mut g, 0xc18, 0x8001);
                 for cell in [17, 18] {
                     put(&mut g, 0x10002 + cell * 2, 0x1000);
-                    g.g_ram[0x16402 + cell] = 4;
+                    g.ram().write_byte(0x16402 + cell, 4);
                 }
             }
             87 => {
@@ -238,7 +240,7 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
                 put(&mut g, 0xbb4, 9);
                 put(&mut g, 0xc04, 4);
                 put(&mut g, 0x10002 + 17 * 2, 0x1000);
-                g.g_ram[0x16402 + 17] = 7; // Height8: first cell ends the two-column scan.
+                g.ram().write_byte(0x16402 + 17, 7); // Height8: first cell ends the two-column scan.
             }
             91 => {
                 put(&mut g, 0xb78, 256);
@@ -250,7 +252,7 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
     if (44..=81).contains(&id) {
         // Synthetic animation/trail definitions, deliberately distinct by frame,
         // style, direction and side. These are inputs, never expected algorithms.
-        g.g_ram[0xd658..0xd7c0].fill(0);
+        g.ram().fill(0xd658..0xd7c0, 0);
         put(&mut g, crate::ram_map::words::projectile_index, 0);
         put(&mut g, 0xb64, 200); // Both signed-offset trail halves remain visible.
         rw(0x9393f8, 3);
@@ -591,10 +593,16 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
     }));
     if let Some((expected, _)) = expected {
         assert!(result.is_ok() && !g.g_fail, "reaction.diagnostic.{id}");
-        assert_eq!(&g.g_ram[..], &expected, "reaction.full_ram.{id}");
+        assert_eq!(
+            &(0..g.ram().len())
+                .map(|at| g.ram().read_byte(at))
+                .collect::<Vec<u8>>()[..],
+            &expected,
+            "reaction.full_ram.{id}"
+        );
     }
     // Prefix records failure category; RAM preserves all defined partial writes.
     let mut bytes = vec![u8::from(result.is_err()), u8::from(g.g_fail)];
-    bytes.extend_from_slice(&g.g_ram);
+    bytes.extend((0..g.ram().len()).map(|at| g.ram().read_byte(at)));
     Some(bytes)
 }

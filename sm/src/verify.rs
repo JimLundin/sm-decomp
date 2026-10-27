@@ -204,7 +204,10 @@ impl BombActor {
             let definition = word(core::mem::offset_of!(EnemyData, enemy_ptr));
             // Bank A0 names EEFF as Bomb Torizo; EF3F is its orb.
             if definition != 0xeeff
-                || game.g_ram[base + core::mem::offset_of!(EnemyData, bank)] != 0xaa
+                || game
+                    .ram()
+                    .read_byte(base + core::mem::offset_of!(EnemyData, bank))
+                    != 0xaa
             {
                 continue;
             }
@@ -272,7 +275,7 @@ impl CoverageState {
             state: word(0x998),
             area: word(0x79f),
             room: word(0x79b),
-            bosses: core::array::from_fn(|area| game.g_ram[0xd828 + area]),
+            bosses: core::array::from_fn(|area| game.ram().read_byte(0xd828 + area)),
             items: [word(0x9a4), word(0x9a8)],
             capacity: [0x9c4, 0x9c8, 0x9cc, 0x9d0, 0x9d4].map(word),
             credits_enabled: word(0x19ff),
@@ -290,7 +293,9 @@ impl CoverageState {
             timer_status: word(0x943),
             // EnemyData slot0: identity, bank and ai_var_A (Ceres var_A).
             actor_definition: word(0xf78),
-            actor_bank: game.g_ram[0xf78 + core::mem::offset_of!(sm::types::EnemyData, bank)],
+            actor_bank: game
+                .ram()
+                .read_byte(0xf78 + core::mem::offset_of!(sm::types::EnemyData, bank)),
             actor_phase: word(0xf78 + core::mem::offset_of!(sm::types::EnemyData, ai_var_A)),
             selected_save_slot: word(0x952),
             load_station: word(0x78b),
@@ -298,7 +303,7 @@ impl CoverageState {
             saved_station: word(0xd916),
             saved_area: word(0xd918),
             // ram_map lists five coroutine bytes; 0617 is the APU upload flag.
-            coroutines_idle: game.g_ram[0x611..0x616].iter().all(|&byte| byte == 0),
+            coroutines_idle: (0x611..0x616).all(|address| game.ram().read_byte(address) == 0),
             bomb_actor: if word(0x998) == 8 && word(0x79f) == 0 && word(0x79b) == 0x9804 {
                 BombActor::read(game)
             } else {
@@ -814,7 +819,10 @@ impl ReplayCoverage {
     }
 
     fn word(game: &Game, address: usize) -> u16 {
-        u16::from_le_bytes([game.g_ram[address], game.g_ram[address + 1]])
+        u16::from_le_bytes([
+            game.ram().read_byte(address),
+            game.ram().read_byte(address + 1),
+        ])
     }
 
     fn observe(&mut self, game: &Game, frame: usize, trace: bool) {

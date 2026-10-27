@@ -254,7 +254,7 @@ fn xray_offscreen_positive_stores(
 }
 
 fn fill_xray_onscreen_positive_table(
-    ram: &mut [u8],
+    ram: &crate::game_state::WorkRam,
     table: usize,
     start: u16,
     origin: u16,
@@ -263,9 +263,9 @@ fn fill_xray_onscreen_positive_table(
 ) {
     // Wrap the byte offset before adding the table base, including at row zero.
     let anchor = table + usize::from(start.wrapping_sub(2));
-    ram[anchor..anchor + 2].fill((origin >> 8) as u8);
+    ram.fill(anchor..anchor + 2, (origin >> 8) as u8);
     xray_onscreen_positive_stores(
-        |address, value| ram[address as usize] = value,
+        |address, value| ram.write_byte(address as usize, value),
         table as u32,
         start,
         origin,
@@ -277,10 +277,10 @@ fn fill_xray_onscreen_positive_table(
     loop {
         // The ROM checks the first word even when the initial index is negative.
         let address = table + usize::from(index);
-        if u16::from_le_bytes([ram[address], ram[address + 1]]) == 0x00ff {
+        if u16::from_le_bytes([ram.read_byte(address), ram.read_byte(address + 1)]) == 0x00ff {
             return;
         }
-        ram[address..address + 2].copy_from_slice(&0x00ffu16.to_le_bytes());
+        ram.copy_in(address, &0x00ffu16.to_le_bytes());
         index = index.wrapping_sub(2);
         if index & 0x8000 != 0 {
             return;
@@ -343,7 +343,7 @@ pub fn calculate_xray_window(
         let address = table
             .checked_add_signed(offset as isize)
             .expect("X-ray table offset");
-        game.g_ram[address..address + 2].copy_from_slice(&value.to_ne_bytes());
+        game.ram().copy_in(address, &value.to_ne_bytes());
     };
     if matches!(direction, Horizontal) {
         let anchor = relative_y.wrapping_sub(1).wrapping_mul(2);
@@ -364,7 +364,7 @@ pub fn calculate_xray_window(
         let start = relative_y.wrapping_mul(2);
         if off_screen {
             xray_offscreen_positive_stores(
-                |address, value| game.g_ram[address as usize] = value,
+                |address, value| game.ram().write_byte(address as usize, value),
                 table as u32,
                 start,
                 origin,
@@ -373,7 +373,7 @@ pub fn calculate_xray_window(
             );
         } else {
             fill_xray_onscreen_positive_table(
-                &mut game.g_ram,
+                game.ram(),
                 table,
                 start,
                 origin,

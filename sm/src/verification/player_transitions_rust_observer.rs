@@ -29,7 +29,9 @@ pub(crate) fn begin(bytes: Vec<u8>, game: &Game, excluded: Vec<(usize, usize)>) 
         assert!(s.borrow().is_none(), "nested transition observer");
         *s.borrow_mut() = Some(Trace {
             bytes,
-            seed: game.g_ram.to_vec(),
+            seed: (0..game.ram().len())
+                .map(|at| game.ram().read_byte(at))
+                .collect::<Vec<u8>>(),
             excluded,
         });
     });
@@ -62,7 +64,13 @@ pub(crate) fn observe(event: u16, game: &Game) {
     if !active() {
         return;
     }
-    snapshot(event, &game.g_ram, game.g_fail);
+    snapshot(
+        event,
+        &(0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<u8>>(),
+        game.g_fail,
+    );
 }
 pub(crate) fn projected(name: &str, state: &Session, game: &Game) {
     if !active() {
@@ -112,12 +120,16 @@ pub(crate) fn projected(name: &str, state: &Session, game: &Game) {
         "transitions.phase.2202" => 2202,
         _ => return,
     };
-    let mut ram = game.g_ram.to_vec();
-    session_encoding::encode(state, &mut ram);
+    let mut ram = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<u8>>();
+    session_encoding::encode(state, |at, span| {
+        ram[at..at + span.len()].copy_from_slice(span)
+    });
     snapshot(event, &ram, game.g_fail);
 }
 pub(crate) fn word(game: &Game, at: usize) -> u16 {
-    u16::from_le_bytes([game.g_ram[at], game.g_ram[at + 1]])
+    u16::from_le_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])
 }
 pub(crate) fn before(game: &Game, at: usize) -> u16 {
     if active() { word(game, at) } else { 0 }

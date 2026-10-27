@@ -18,7 +18,7 @@ const FILE_LABELS: [u16; 3] = [
 ];
 
 pub(crate) fn set_palette(value: u16, game: &mut Game) {
-    game.g_ram[MENU_PALETTE..MENU_PALETTE + 2].copy_from_slice(&value.to_ne_bytes());
+    game.ram().copy_in(MENU_PALETTE, &value.to_ne_bytes());
 }
 
 pub(crate) enum FileRowEmphasis {
@@ -105,7 +105,7 @@ pub(crate) unsafe fn prepare_graphics(game: &mut Game) {
         (0x5e, 4),
         (0x69, 19),
     ] {
-        game.g_ram[register] = value;
+        game.ram().write_byte(register, value);
     }
     for (source, destination, bytes) in [
         (0x8e8000, 0, 0x5600),
@@ -130,23 +130,28 @@ pub(crate) fn load_palette(game: &mut Game) {
 pub(crate) fn upload(size: u16, source: u32, screen: usize, bank_word: bool, game: &mut Game) {
     let tail = word!(game.vram_write_queue_tail);
     let entry = 0xd0 + usize::from(tail);
-    game.g_ram[entry..entry + 2].copy_from_slice(&size.to_ne_bytes());
-    game.g_ram[entry + 2..entry + 4].copy_from_slice(&(source as u16).to_ne_bytes());
+    game.ram().copy_in(entry, &size.to_ne_bytes());
+    game.ram()
+        .copy_in(entry + 2, &(source as u16).to_ne_bytes());
     let bank = (source >> 16) as u8;
     if bank_word {
-        game.g_ram[entry + 4..entry + 6].copy_from_slice(&u16::from(bank).to_ne_bytes());
+        game.ram()
+            .copy_in(entry + 4, &u16::from(bank).to_ne_bytes());
     } else {
-        game.g_ram[entry + 4] = bank;
+        game.ram().write_byte(entry + 4, bank);
     }
-    let destination = u16::from(game.g_ram[0x58 + screen] & 0xfc) << 8;
-    game.g_ram[entry + 5..entry + 7].copy_from_slice(&destination.to_ne_bytes());
+    let destination = u16::from(game.ram().read_byte(0x58 + screen) & 0xfc) << 8;
+    game.ram().copy_in(entry + 5, &destination.to_ne_bytes());
     word!(game.vram_write_queue_tail = tail.wrapping_add(7));
 }
 
 fn paint(offset: usize, tile: u16, game: &mut Game) {
-    let palette = u16::from_ne_bytes([game.g_ram[MENU_PALETTE], game.g_ram[MENU_PALETTE + 1]]);
+    let palette = u16::from_ne_bytes([
+        game.ram().read_byte(MENU_PALETTE),
+        game.ram().read_byte(MENU_PALETTE + 1),
+    ]);
     let at = 0x3600 + offset;
-    game.g_ram[at..at + 2].copy_from_slice(&(palette | tile).to_ne_bytes());
+    game.ram().copy_in(at, &(palette | tile).to_ne_bytes());
 }
 
 /// Capture checked native reads after the original low-window diagnostic.
@@ -171,7 +176,7 @@ pub(crate) fn area_label(game: &mut Game) {
     for index in 0..12 {
         let tile = label.word(2 * index) & 0xefff;
         let destination = 0x4154 + 2 * index;
-        game.g_ram[destination..destination + 2].copy_from_slice(&tile.to_ne_bytes());
+        game.ram().copy_in(destination, &tile.to_ne_bytes());
     }
 }
 
@@ -323,7 +328,7 @@ pub(crate) fn update_reserve_arrow(game: &mut Game) {
     let mode = if word!(game.pausemenu_equipment_category_item) as u8 != 0 {
         ReserveArrow::Off
     } else {
-        [ReserveArrow::Animated, ReserveArrow::On][usize::from(game.g_ram[0x756])]
+        [ReserveArrow::Animated, ReserveArrow::On][usize::from(game.ram().read_byte(0x756))]
     };
     reserve_arrow(mode, game);
 }
@@ -335,7 +340,7 @@ pub(crate) fn reserve_arrow(mode: ReserveArrow, game: &mut Game) {
         ReserveArrow::Off => false,
     };
     if matches!(mode, ReserveArrow::Animated) && lit {
-        let index = usize::from(game.g_ram[0x5b5] & 0x1f);
+        let index = usize::from(game.ram().read_byte(0x5b5) & 0x1f);
         word!(game.palette_buffer[102] = RESERVE_ARROW_COLORS[index]);
         word!(game.palette_buffer[107] = RESERVE_ARROW_SHADOWS[index]);
     } else {
@@ -354,14 +359,18 @@ pub(crate) fn reserve_arrow_tiles(lit: bool, game: &mut Game) {
 pub(crate) fn copy_native_tiles(destination: usize, cursor: u16, bytes: usize, game: &mut Game) {
     let source = native_record(0x820000 | u32::from(cursor), game);
     for index in 0..bytes {
-        game.g_ram[destination + index] = source.byte(index);
+        let byte = source.byte(index);
+        game.ram().write_byte(destination + index, byte);
     }
 }
 
 pub(crate) fn recolor_native(destination: usize, palette: u16, words: usize, game: &mut Game) {
     for index in 0..words {
         let address = destination + 2 * index;
-        let tile = u16::from_ne_bytes([game.g_ram[address], game.g_ram[address + 1]]);
+        let tile = u16::from_ne_bytes([
+            game.ram().read_byte(address),
+            game.ram().read_byte(address + 1),
+        ]);
         word_transfers!(game, ascending, 1;
             native(address) <- value((tile & !0x1c00) | palette));
     }
@@ -471,7 +480,10 @@ pub(crate) fn equipment_wireframe(game: &mut Game) {
 pub(crate) fn reserve_label(tile: impl Fn(usize) -> u16, game: &mut Game) {
     for index in 0..4 {
         let address = 0x3800 + 2 * (327 + index);
-        let previous = u16::from_ne_bytes([game.g_ram[address], game.g_ram[address + 1]]);
+        let previous = u16::from_ne_bytes([
+            game.ram().read_byte(address),
+            game.ram().read_byte(address + 1),
+        ]);
         word_transfers!(game, ascending, 1;
             native(address) <- value((previous & 0xfc00) | tile(index)));
     }
@@ -506,7 +518,7 @@ pub(crate) fn queue_pause_labels(game: &mut Game) {
         128,
         |_| 0x3640,
         126,
-        |game| (u16::from(game.g_ram[0x59] & 0xfc) << 8) + 800,
+        |game| (u16::from(game.ram().read_byte(0x59) & 0xfc) << 8) + 800,
         game,
     );
 }
@@ -562,7 +574,9 @@ pub(crate) fn reserve_tanks(game: &mut Game) {
     let mut index = usize::from(full);
     if remainder != 0 {
         let mut frame = 2 * (remainder / 14);
-        if (i32::from(frame) - 7) & 0x8000 != 0 && remainder % 14 != 0 && game.g_ram[0x5b5] & 4 == 0
+        if (i32::from(frame) - 7) & 0x8000 != 0
+            && remainder % 14 != 0
+            && game.ram().read_byte(0x5b5) & 4 == 0
         {
             frame = frame.wrapping_add(2);
         }
@@ -603,9 +617,12 @@ pub(crate) fn pause_labels(mode: u16, game: &mut Game) {
         for row in [first_tile, first_tile + 32] {
             for tile in row..row + width {
                 let address = TILEMAP + 2 * tile;
-                let word = u16::from_le_bytes([game.g_ram[address], game.g_ram[address + 1]]);
+                let word = u16::from_le_bytes([
+                    game.ram().read_byte(address),
+                    game.ram().read_byte(address + 1),
+                ]);
                 let word = (word & !0x1c00) | palette;
-                game.g_ram[address..address + 2].copy_from_slice(&word.to_le_bytes());
+                game.ram().copy_in(address, &word.to_le_bytes());
             }
         }
     }

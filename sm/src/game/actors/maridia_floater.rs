@@ -77,7 +77,7 @@ fn move_vertical(k: u16, game: &mut Game) -> bool {
 }
 fn native_size(index: usize, game: &Game) -> u16 {
     let at = 0xf68 + index * 2;
-    u16::from_ne_bytes([game.g_ram[at], game.g_ram[at + 1]])
+    u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])
 }
 fn begin_descent(k: u16, game: &mut Game) {
     slot!(game, Floater[k as i32]; var_F = 0xc500, var_E = 10);

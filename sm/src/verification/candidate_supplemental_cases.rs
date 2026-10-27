@@ -43,7 +43,7 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
             0x10002 + block * 2,
             if id < 8 { 0x8000 } else { 0 },
         );
-        game.g_ram[0x16402 + block] = 0;
+        game.ram().write_byte(0x16402 + block, 0);
     }
     for (field, value) in [
         (a::eproj_x_pos, 136),
@@ -66,7 +66,7 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     ] {
         slot(&mut game, field, handle, value);
     }
-    game.g_ram[0x5b5] = if id >= 12 { 0 } else { 1 };
+    game.ram().write_byte(0x5b5, if id >= 12 { 0 } else { 1 });
     for index in 0..32 {
         put(&mut game, a::sprite_instr_list_ptrs + index * 2, 0);
     }
@@ -101,7 +101,9 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
         }
     }
     assert!(!game.g_fail, "supplement case {id}");
-    let mut output = game.g_ram.to_vec();
+    let mut output = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<_>>();
     for value in [
         game.eproj_spawn_rect.x,
         game.eproj_spawn_rect.y,

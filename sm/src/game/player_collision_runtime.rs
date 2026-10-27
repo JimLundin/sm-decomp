@@ -96,8 +96,9 @@ impl Effects for Runtime<'_> {
     fn vertical_slope_bts(&mut self, block: u16) -> u16 {
         let address = 0x7f6402 + u32::from(block);
         self.foreign(|game| unsafe {
-            let low = crate::snes::snes::snes_read(game.g_snes, address, game);
-            let high = crate::snes::snes::snes_read(game.g_snes, address + 1, game);
+            let mut execution = game.execution();
+            let low = execution.read(address);
+            let high = execution.read(address + 1);
             u16::from_le_bytes([low, high])
         })
     }
@@ -114,8 +115,8 @@ use crate::game_state::Game;
 pub(crate) fn set_player_radius(game: &mut Game) {
     let pose_offset = usize::from(game.samus_pose()) * 8;
     let radius = u16::from(game.read_rom_byte(0x91b629, pose_offset + 6));
-    game.g_ram[0xb00..0xb02].copy_from_slice(&radius.to_le_bytes());
-    game.g_ram[0xafe..0xb00].copy_from_slice(&5u16.to_le_bytes());
+    game.ram().copy_in(0xb00, &radius.to_le_bytes());
+    game.ram().copy_in(0xafe, &5u16.to_le_bytes());
 }
 pub(crate) fn player_bottom(game: &Game) -> u16 {
     let y = game.samus_y_pos();

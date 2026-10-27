@@ -11,19 +11,23 @@ use core::mem::{offset_of, size_of};
 pub(crate) const FIRST: u32 = 117;
 pub(crate) const END: u32 = 121;
 fn read(game: &Game, address: usize) -> u16 {
-    u16::from_le_bytes([game.g_ram[address], game.g_ram[address + 1]])
+    u16::from_le_bytes([
+        game.ram().read_byte(address),
+        game.ram().read_byte(address + 1),
+    ])
 }
 pub(crate) fn capture_case(id: u32, run: fn(Operation, &mut Game) -> u16) -> Option<Vec<u8>> {
     if !(FIRST..END).contains(&id) {
         return None;
     }
     let mut game = Game::new();
-    game.g_ram.fill(0);
-    game.g_ram[0x1ffff] = 1;
+    game.ram().fill(0..game.ram().len(), 0);
+    let value = 1;
+    game.ram().write_byte(0x1ffff, value);
     let operation = if id < 119 {
         let enemy = 0xe0dausize;
         let base = 0xf78 + enemy;
-        assert!(base + size_of::<Maw>() <= game.g_ram.len());
+        assert!(base + size_of::<Maw>() <= game.ram().len());
         assert_eq!(base + offset_of!(EnemyBase, frozen_timer), 0xf078);
         assert_eq!(base + offset_of!(Maw, var_45), 0x168e4);
         assert_eq!(base + offset_of!(Maw, var_46), 0x168e6);
@@ -35,7 +39,7 @@ pub(crate) fn capture_case(id: u32, run: fn(Operation, &mut Game) -> u16) -> Opt
     } else {
         let enemy = 0xe17ausize;
         let base = 0xf78 + enemy;
-        assert!(base + size_of::<Metroid>() <= game.g_ram.len());
+        assert!(base + size_of::<Metroid>() <= game.ram().len());
         assert_eq!(base + offset_of!(EnemyBase, x_pos), 0xf0f4);
         assert_eq!(base + offset_of!(EnemyBase, y_pos), 0xf0f8);
         assert_eq!(base + offset_of!(Metroid, var_00), 0x1597a);
@@ -104,7 +108,9 @@ pub(crate) fn capture_case(id: u32, run: fn(Operation, &mut Game) -> u16) -> Opt
         }
         _ => unreachable!(),
     }
-    let mut bytes = game.g_ram.to_vec();
+    let mut bytes = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<_>>();
     bytes.extend_from_slice(&result.unwrap().to_le_bytes());
     bytes.extend_from_slice(&[0, 0]);
     Some(bytes)

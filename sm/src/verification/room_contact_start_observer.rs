@@ -1,9 +1,9 @@
 //! Existing low-window RomPtr effect-point observations only.
 #![forbid(unsafe_code)]
 use crate::{
-    game_state::Game,
+    game_state::{Game, WorkRam},
     rom::RomImage,
-    room_contact_start_cases::{offset, snapshot},
+    room_contact_start_cases::{offset, snapshot_parts},
 };
 use std::cell::RefCell;
 struct Capture {
@@ -36,6 +36,15 @@ pub(crate) fn finish() -> Vec<u8> {
     })
 }
 pub(crate) fn diagnostic(address: u32, g: &mut Game) {
+    let (_, host) = g.execution_parts();
+    diagnostic_parts(address, host.ram, host.loaded_rom, host.g_fail);
+}
+pub(crate) fn diagnostic_parts(
+    address: u32,
+    ram: &WorkRam,
+    loaded_rom: &mut Option<RomImage>,
+    fail: &bool,
+) {
     ACTIVE.with(|a| {
         let mut active = a.borrow_mut();
         let Some(c) = active.as_mut() else {
@@ -51,7 +60,7 @@ pub(crate) fn diagnostic(address: u32, g: &mut Game) {
         };
         assert_eq!(address, expected_address);
         let mut before = Vec::new();
-        snapshot(&mut before, g);
+        snapshot_parts(&mut before, ram, fail);
         assert_eq!(
             Some(&before),
             c.expected.as_ref(),
@@ -61,10 +70,10 @@ pub(crate) fn diagnostic(address: u32, g: &mut Game) {
         c.bytes.extend_from_slice(&address.to_le_bytes());
         c.bytes.extend(before);
         if c.id == 10 {
-            g.loaded_rom = Some(RomImage::zeroed(offset(0x838010) + 1));
+            *loaded_rom = Some(RomImage::zeroed(offset(0x838010) + 1));
         }
         let mut after = Vec::new();
-        snapshot(&mut after, g);
+        snapshot_parts(&mut after, ram, fail);
         assert_eq!(
             Some(&after),
             c.expected.as_ref(),

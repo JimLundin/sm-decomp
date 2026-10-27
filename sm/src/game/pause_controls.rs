@@ -12,7 +12,9 @@ use crate::ram_map::{word, words as fields};
 pub(crate) fn hook_address(pausing: bool, game: &Game) -> u32 {
     let offset = if pausing { 0x601 } else { 0x604 };
     // Load24 reads four native bytes, including the following field, before masking.
-    u32::from_ne_bytes(game.g_ram[offset..offset + 4].try_into().unwrap()) & 0xffffff
+    let mut bytes = [0; 4];
+    game.ram().copy_out(offset, &mut bytes);
+    u32::from_ne_bytes(bytes) & 0xffffff
 }
 
 pub(crate) fn initialize(game: &mut Game) {
@@ -36,7 +38,7 @@ pub(crate) fn fade_in(game: &mut Game) -> u8 {
         draw_map(game);
     }
     display_refresh::fade(true, game);
-    if game.g_ram[0x51] == 15 {
+    if game.ram().read_byte(0x51) == 15 {
         word! { game, 0; screen_fade_delay, screen_fade_counter }
         word!(game.game_state += 1);
     }
@@ -66,7 +68,7 @@ pub(crate) fn fade_tab<const EQUIPMENT: bool>(game: &mut Game) {
     }
     word!(game.pause_screen_mode = u16::from(EQUIPMENT));
     display_refresh::fade(true, game);
-    if game.g_ram[0x51] == 15 {
+    if game.ram().read_byte(0x51) == 15 {
         word! { game, 0; screen_fade_delay, screen_fade_counter }
         let mut selected = word!(game.pausemenu_button_label_mode);
         if word!(game.pausemenu_button_label_mode) != 0 {
@@ -90,7 +92,7 @@ pub(crate) fn fade_out_tab(game: &mut Game, equipment: bool, enable: fn(&mut Gam
         word!(game.pause_screen_mode = 0);
     }
     display_refresh::fade(false, game);
-    if game.g_ram[0x51] == 0x80 {
+    if game.ram().read_byte(0x51) == 0x80 {
         enable(game);
         word! { game, 0; screen_fade_delay, screen_fade_counter }
         word!(game.menu_index += 1);
@@ -163,17 +165,21 @@ pub(crate) fn save_graphics(game: &mut Game) {
     for (index, source) in GRAPHICS_MIRRORS.into_iter().enumerate() {
         // The six scroll mirrors are read as LE words, then truncated to a byte.
         let value = if (6..12).contains(&index) {
-            u16::from_le_bytes([game.g_ram[source], game.g_ram[source + 1]]) as u8
+            u16::from_le_bytes([
+                game.ram().read_byte(source),
+                game.ram().read_byte(source + 1),
+            ]) as u8
         } else {
-            game.g_ram[source]
+            game.ram().read_byte(source)
         };
-        game.g_ram[0x765 + index] = value;
+        game.ram().write_byte(0x765 + index, value);
     }
 }
 
 pub(crate) fn restore_graphics(game: &mut Game) {
     for index in [13, 14, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 15, 16] {
-        game.g_ram[GRAPHICS_MIRRORS[index]] = game.g_ram[0x765 + index];
+        let value = game.ram().read_byte(0x765 + index);
+        game.ram().write_byte(GRAPHICS_MIRRORS[index], value);
     }
 }
 

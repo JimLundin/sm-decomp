@@ -15,7 +15,7 @@ fn upload_screen(source: u16, screen: u16, game: &mut Game) {
         native(entry) <- value(2048),
         native(entry + 2) <- value(source),
         native(entry + 4) <- value(126));
-    let target = ((game.g_ram[0x59] as u16 & 0xfc) << 8).wrapping_add(screen * 1024);
+    let target = ((game.ram().read_byte(0x59) as u16 & 0xfc) << 8).wrapping_add(screen * 1024);
     word_transfers!(game, ascending, 1; native(entry + 5) <- value(target));
     word!(game.vram_write_queue_tail = tail.wrapping_add(7));
 }
@@ -23,11 +23,14 @@ fn upload_screen(source: u16, screen: u16, game: &mut Game) {
 // Capture all four source tiles before the reverse-order writes, even when RAM aliases.
 #[forbid(unsafe_code)]
 fn write_block(destination: u16, tile: u16, offsets: [usize; 4], game: &mut Game) {
-    let tiles = game.g_ram[0xa000..0xc000].as_chunks::<8>().0[tile as usize];
+    let index = usize::from(tile);
+    let () = [(); 0x2000 / 8][index];
+    let mut tiles = [0; 8];
+    game.ram().copy_out(0xa000 + 8 * index, &mut tiles);
     for corner in (0..4).rev() {
         let value = u16::from_ne_bytes([tiles[2 * corner], tiles[2 * corner + 1]]);
         let at = 0x4000 + usize::from(destination) + 2 * offsets[corner];
-        game.g_ram[at..at + 2].copy_from_slice(&value.to_ne_bytes());
+        game.ram().copy_in(at, &value.to_ne_bytes());
     }
 }
 
@@ -49,12 +52,16 @@ fn copy_background(game: &mut Game) {
             }
             let source = usize::from(screen_row + column) + 4096;
             let tiles = corners.map(|corner| {
-                u16::from_ne_bytes(game.g_ram[0x4000..0x7000].as_chunks::<2>().0[source + corner])
+                let index = source + corner;
+                let () = [(); 0x3000 / 2][index];
+                let mut bytes = [0; 2];
+                game.ram().copy_out(0x4000 + 2 * index, &mut bytes);
+                u16::from_ne_bytes(bytes)
             });
             let destination = row * 64 + if block < 16 { block * 2 } else { 1024 };
             for corner in (0..4).rev() {
                 let at = 0x4000 + 2 * (destination + corners[corner]);
-                game.g_ram[at..at + 2].copy_from_slice(&tiles[corner].to_ne_bytes());
+                game.ram().copy_in(at, &tiles[corner].to_ne_bytes());
             }
             column += 2;
         }
@@ -63,13 +70,18 @@ fn copy_background(game: &mut Game) {
 }
 
 pub fn freeze_and_backup(k: u16, game: &mut Game) {
-    game.g_ram[0xa78] = 1;
+    game.ram().write_byte(0xa78, 1);
     let index = usize::from(k as u8);
-    game.g_ram[0x1914 + index] = word!(game.reg_BG2HOFS) as u8;
-    game.g_ram[0x1915 + index] = game.g_ram[0xb6];
-    game.g_ram[0x1920 + index] = word!(game.reg_BG2VOFS) as u8;
-    game.g_ram[0x1921 + index] = game.g_ram[0xb8];
-    game.g_ram[0x192c + index] = game.g_ram[0x59];
+    game.ram()
+        .write_byte(0x1914 + index, word!(game.reg_BG2HOFS) as u8);
+    game.ram()
+        .write_byte(0x1915 + index, game.ram().read_byte(0xb6));
+    game.ram()
+        .write_byte(0x1920 + index, word!(game.reg_BG2VOFS) as u8);
+    game.ram()
+        .write_byte(0x1921 + index, game.ram().read_byte(0xb8));
+    game.ram()
+        .write_byte(0x192c + index, game.ram().read_byte(0x59));
 }
 #[forbid(unsafe_code)]
 pub fn capture_bg1_right(game: &mut Game) {
@@ -135,7 +147,7 @@ fn definition_word(index: isize, game: &Game) -> u16 {
 #[forbid(unsafe_code)]
 fn block_bts(block: i32, game: &Game) -> u8 {
     let at = usize::try_from(0x16402isize + block as isize).expect("X-ray BTS outside RAM");
-    game.g_ram[at]
+    game.ram().read_byte(at)
 }
 
 #[forbid(unsafe_code)]
@@ -171,9 +183,12 @@ fn block_definition(k: u16, game: &mut Game) -> Option<RomRecord> {
 fn write_neighbor(destination: u16, tile: u16, offsets: [usize; 4], game: &mut Game) {
     for (corner, offset) in offsets.into_iter().enumerate() {
         let source = 0xa000 + 8 * usize::from(tile) + 2 * corner;
-        let value = u16::from_ne_bytes([game.g_ram[source], game.g_ram[source + 1]]);
+        let value = u16::from_ne_bytes([
+            game.ram().read_byte(source),
+            game.ram().read_byte(source + 1),
+        ]);
         let at = 0x4000 + usize::from(destination) + 2 * offset;
-        game.g_ram[at..at + 2].copy_from_slice(&value.to_ne_bytes());
+        game.ram().copy_in(at, &value.to_ne_bytes());
     }
 }
 
@@ -320,7 +335,7 @@ pub fn capture_bg2_right(game: &mut Game) {
         }
         word!(game.reg_BG2HOFS = (word!(game.reg_BG1HOFS)) & (0xfu16));
         word!(game.reg_BG2VOFS = (word!(game.reg_BG1VOFS)) & (0xfu16));
-        game.g_ram[0x59] = 73;
+        game.ram().write_byte(0x59, 73);
     }
     crate::game::vram_read_queue::enqueue(0x59, 1024, 0x5800, 2048, true, game);
 }
@@ -338,13 +353,13 @@ pub fn upload_right(game: &mut Game) {
     }
     for (at, value) in [(0xa88, 0x9800e4u32), (0xa8b, 0x98c8e4), (0xa8e, 0x999098)] {
         word_transfers!(game, ascending, 1; native(at) <- value(value as u16));
-        game.g_ram[at + 2] = (value >> 16) as u8;
+        game.ram().write_byte(at + 2, (value >> 16) as u8);
     }
     word! { game, 0;
         hdma_var_1, demo_input_pre_instr, demo_input_instr_timer, demo_input_instr_ptr, demo_input,
         demo_input_new,
     }
-    if game.g_ram[0xa1e] == 4 {
+    if game.ram().read_byte(0xa1e) == 4 {
         word!(game.xray_angle = 192);
     } else {
         word!(game.xray_angle = 64);
@@ -360,7 +375,7 @@ pub fn set_backdrop(game: &mut Game) {
 }
 pub fn restore_left(k: u16, game: &mut Game) {
     word_transfers!(game, ascending, 1; native(0xa88) <- value(1));
-    game.g_ram[0xa8a] = 0x98;
+    game.ram().write_byte(0xa8a, 0x98);
     word_transfers!(game, ascending, 1; native(0xa8b) <- value(0));
     word! { game, 0;
         demo_input_prev, demo_input_prev_new, demo_backup_prev_controller_input,
@@ -371,7 +386,11 @@ pub fn restore_left(k: u16, game: &mut Game) {
     let v2: i32 = word!(game.hdma_object_index) as i32 >> 1;
     word!(game.reg_BG2HOFS = word!(game.hdma_object_A[v2]));
     word!(game.reg_BG2VOFS = word!(game.hdma_object_B[v2]));
-    game.g_ram[0x59] = game.g_ram[0x192c + usize::from(word!(game.hdma_object_index))];
+    game.ram().write_byte(
+        0x59,
+        game.ram()
+            .read_byte(0x192c + usize::from(word!(game.hdma_object_index))),
+    );
     if (word!(game.vram_write_queue_tail) as i16).wrapping_sub(240) < 0 {
         upload_screen(0x5000, 0, game);
         word!(game.demo_input_pre_instr += 1);
@@ -392,7 +411,7 @@ pub unsafe fn finish_restore(k: u16, game: &mut Game) {
             xray_angle, demo_input, demo_input_new,
         }
         word_transfers!(game, ascending, 1; native(0xa88) <- value(1));
-        game.g_ram[0xa8a] = 0x98;
+        game.ram().write_byte(0xa8a, 0x98);
         word_transfers!(game, ascending, 1; native(0xa8b) <- value(0));
         word! { game, 0;
             demo_input_prev, demo_input_prev_new, demo_backup_prev_controller_input,
@@ -402,9 +421,9 @@ pub unsafe fn finish_restore(k: u16, game: &mut Game) {
             native(0x18b4 + 2 * usize::from(word!(game.hdma_object_index) >> 1)) <- value(0));
         QueueSfx1_Max6(0xa, game);
         if (word!(game.fx_type) as u8) != 36 {
-            game.g_ram[0x76] = 0x80;
-            game.g_ram[0x75] = 64;
-            game.g_ram[0x74] = 32;
+            game.ram().write_byte(0x76, 0x80);
+            game.ram().write_byte(0x75, 64);
+            game.ram().write_byte(0x74, 32);
         }
         word_transfers!(game, descending, 256; le(hdma_table_1, 255) <- value(0xff));
         if word!(game.samus_auto_cancel_hud_item_index) != 0 {

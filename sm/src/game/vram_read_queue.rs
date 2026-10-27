@@ -7,14 +7,17 @@ use crate::snes::registers::*;
 
 #[forbid(unsafe_code)]
 fn read_word(game: &Game, offset: usize) -> u16 {
-    u16::from_ne_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
+    u16::from_ne_bytes([
+        game.ram().read_byte(offset),
+        game.ram().read_byte(offset + 1),
+    ])
 }
 
 #[forbid(unsafe_code)]
 fn write_word(game: &mut Game, offset: usize, value: u16) {
     let bytes = value.to_ne_bytes();
-    game.g_ram[offset] = bytes[0];
-    game.g_ram[offset + 1] = bytes[1];
+    game.ram().write_byte(offset, bytes[0]);
+    game.ram().write_byte(offset + 1, bytes[1]);
 }
 
 #[forbid(unsafe_code)]
@@ -28,7 +31,8 @@ pub(super) fn enqueue(
 ) {
     let tail = word!(game.vram_read_queue_tail);
     let entry = 0x340 + usize::from(tail);
-    let target = ((u16::from(game.g_ram[register]) & 0xfc) << 8).wrapping_add(vram_offset);
+    let target =
+        ((u16::from(game.ram().read_byte(register)) & 0xfc) << 8).wrapping_add(vram_offset);
     write_word(game, entry, target);
     if !retain_mode {
         write_word(game, entry + 2, 129);
@@ -45,7 +49,7 @@ pub(super) unsafe fn process(game: &mut Game) {
     let tail = word!(game.vram_read_queue_tail) as u8;
     if tail != 0 {
         // Only the low sentinel byte is cleared; the high byte remains live.
-        game.g_ram[0x340 + usize::from(tail)] = 0;
+        game.ram().write_byte(0x340 + usize::from(tail), 0);
         unsafe {
             WriteReg(VMAIN as u16, 0x80, game);
         }
@@ -66,6 +70,6 @@ pub(super) unsafe fn process(game: &mut Game) {
             }
             entry += 9;
         }
-        game.g_ram[0x360] = 0;
+        game.ram().write_byte(0x360, 0);
     }
 }

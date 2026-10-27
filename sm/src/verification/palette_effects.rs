@@ -17,7 +17,8 @@ const COMMANDS: [u32; 19] = [
 ];
 pub(crate) const CASES: u32 = 512;
 fn put(g: &mut Game, address: usize, value: u16) {
-    g.g_ram[address..address + 2].copy_from_slice(&value.to_le_bytes());
+    let _ = &[(); 0x20000][address..address + 2];
+    g.ram().copy_in(address, &value.to_le_bytes());
 }
 fn rw(image: &RomImage, cursor: u16, value: u16) {
     let at = crate::rtl::lorom_offset(0x8d0000 | u32::from(cursor)) as usize;
@@ -30,7 +31,8 @@ fn slot(g: &mut Game, k: u16, column: usize, value: u16) {
 }
 fn seed(g: &mut Game, image: &RomImage) {
     for address in 0x1e79..0x1ef1 {
-        g.g_ram[address] = (address * 37) as u8;
+        let value = (address * 37) as u8;
+        g.ram().write_byte(address, value);
     }
     for k in (0..16).step_by(2) {
         for (column, value) in [
@@ -103,11 +105,12 @@ fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u16, u16) {
                 0 => palette::clear(g),
                 1 => {
                     palette::set_enabled(false, g);
-                    let disabled = u16::from_le_bytes([g.g_ram[0x1e79], g.g_ram[0x1e7a]]);
+                    let disabled =
+                        u16::from_le_bytes([g.ram().read_byte(0x1e79), g.ram().read_byte(0x1e7a)]);
                     palette::set_enabled(true, g);
                     return (
                         disabled,
-                        u16::from_le_bytes([g.g_ram[0x1e79], g.g_ram[0x1e7a]]),
+                        u16::from_le_bytes([g.ram().read_byte(0x1e79), g.ram().read_byte(0x1e7a)]),
                     );
                 }
                 2 => {
@@ -301,7 +304,9 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
         (485..=487).contains(&id),
         "palette diagnostic {id}"
     );
-    let mut bytes = game.g_ram.to_vec();
+    let mut bytes = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<_>>();
     let (k, j) = result.unwrap_or((0, 0));
     bytes.extend_from_slice(&k.to_le_bytes());
     bytes.extend_from_slice(&j.to_le_bytes());

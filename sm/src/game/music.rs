@@ -70,9 +70,9 @@ pub unsafe fn HandleMusicQueue(game: &mut Game) {
                 checked_word!(
                     game.music_data_index = u16::from(checked_word!(game.music_entry) as u8)
                 );
-                game.g_ram[0x64c] = 0xff;
+                game.ram().write_byte(0x64c, 0xff);
                 crate::native_audio::upload_bank(bank_address(game), game);
-                game.g_ram[0x64c] = 0;
+                game.ram().write_byte(0x64c, 0);
                 retire(game);
                 checked_word!(game.sound_handler_downtime = 8);
                 return;
@@ -80,7 +80,7 @@ pub unsafe fn HandleMusicQueue(game: &mut Game) {
             let track = checked_word!(game.music_entry) as u8 & 0x7f;
             checked_word!(game.music_track_index = checked_word!(game.music_entry) & 0x7f);
             RtlApuWrite(APUI00, checked_word!(game.music_entry) as u8 & 0x7f, game);
-            game.g_ram[0x64c] = track;
+            game.ram().write_byte(0x64c, track);
             checked_word!(game.sound_handler_downtime = 8);
             retire(game);
         }
@@ -160,7 +160,7 @@ pub(crate) fn wait_for_music(
     mut effect: impl FnMut(MusicWaitEffect, &mut Game),
 ) -> u8 {
     crate::verify_probe::hit("coroutine.music");
-    let resume = game.g_ram[0x614];
+    let resume = game.ram().read_byte(0x614);
     if resume == 0 {
         effect(MusicWaitEffect::EnableNmi(true), game);
         checked_word!(game.my_counter = 0);
@@ -177,14 +177,14 @@ pub(crate) fn wait_for_music(
             }
             let yielded: u8 = crate::game::display_refresh::wait(true, game);
             if yielded != 0 {
-                game.g_ram[0x614] = 1;
+                game.ram().write_byte(0x614, 1);
                 return yielded;
             }
             checked_word!(game.my_counter += 1);
             waiting = false;
         }
     }
-    game.g_ram[0x614] = 0;
+    game.ram().write_byte(0x614, 0);
     0
 }
 // Byte-backed queue layout from ram_map: three channels, sixteen slots each.
@@ -197,8 +197,12 @@ pub(crate) fn queue_sfx(channel: usize, sound: u8, max_queued: u8, game: &mut Ga
     let buffer = 0x656 + 16 * channel;
 
     // This write also happens when capacity or the sound gates reject the request.
-    game.g_ram[limit_pos] = max_queued;
-    let queued = game.g_ram[write_pos].wrapping_sub(game.g_ram[read_pos]) & 15;
+    game.ram().write_byte(limit_pos, max_queued);
+    let queued = game
+        .ram()
+        .read_byte(write_pos)
+        .wrapping_sub(game.ram().read_byte(read_pos))
+        & 15;
     if queued >= max_queued {
         return u16::from_be_bytes([sound, queued]);
     }
@@ -209,22 +213,22 @@ pub(crate) fn queue_sfx(channel: usize, sound: u8, max_queued: u8, game: &mut Ga
         return u16::from_be_bytes([queued, sound]);
     }
 
-    let write = game.g_ram[write_pos];
+    let write = game.ram().read_byte(write_pos);
     let mut next = write.wrapping_add(1);
     if next >= 16 {
         next = 0;
     }
     // Preserve adjacent-RAM access for an out-of-range current write position.
     let slot = buffer + usize::from(write);
-    if next == game.g_ram[read_pos] {
+    if next == game.ram().read_byte(read_pos) {
         // Lower sound numbers take priority when the ring is full.
-        if sound < game.g_ram[slot] {
-            game.g_ram[slot] = sound;
+        if sound < game.ram().read_byte(slot) {
+            game.ram().write_byte(slot, sound);
         }
     } else {
-        game.g_ram[slot] = sound;
-        game.g_ram[write_pos] = next;
-        game.g_ram[buffer + usize::from(next)] = 0;
+        game.ram().write_byte(slot, sound);
+        game.ram().write_byte(write_pos, next);
+        game.ram().write_byte(buffer + usize::from(next), 0);
     }
     // Callers that forward the original accumulator need both queue depth and sound.
     u16::from_be_bytes([queued, sound])
@@ -252,46 +256,59 @@ crate::forward_calls! { pub fn (sound: u16, game: &mut Game);
     QueueSfx3_Max6 => queue_sfx(2, sound as u8, 6, game);
 }
 pub(crate) fn advance_sound_effects(game: &mut Game, mut write: impl FnMut(u8, u8, &mut Game)) {
-    if (game.g_ram[0x686] as i8).wrapping_sub(1) >= 0 {
-        game.g_ram[0x686] = game.g_ram[0x686].wrapping_sub(1);
+    if (game.ram().read_byte(0x686) as i8).wrapping_sub(1) >= 0 {
+        game.ram()
+            .write_byte(0x686, game.ram().read_byte(0x686).wrapping_sub(1));
         for channel in 0..3 {
             write(channel as u8, 0, game);
-            game.g_ram[0x64d + channel] = 0;
+            game.ram().write_byte(0x64d + channel, 0);
         }
         return;
     }
     for channel in 0..3 {
         // Retain the old callback table's bounds failure before any channel effects.
-        let state = [0, 1, 2, 3, 4][usize::from(game.g_ram[0x649 + channel])];
+        let state = [0, 1, 2, 3, 4][usize::from(game.ram().read_byte(0x649 + channel))];
         match state {
             0 | 3 => {
                 if state == 3 {
-                    let _last_sent = game.g_ram[0x64d + channel];
-                    game.g_ram[0x649 + channel] = 0;
+                    let _last_sent = game.ram().read_byte(0x64d + channel);
+                    game.ram().write_byte(0x649 + channel, 0);
                 }
-                if game.g_ram[0x643 + channel] != game.g_ram[0x646 + channel] {
-                    let slot = (usize::from(game.g_ram[0x643 + channel]) + channel * 16) as u8;
-                    let sound = game.g_ram[0x656 + usize::from(slot)];
+                if game.ram().read_byte(0x643 + channel) != game.ram().read_byte(0x646 + channel) {
+                    let slot =
+                        (usize::from(game.ram().read_byte(0x643 + channel)) + channel * 16) as u8;
+                    let sound = game.ram().read_byte(0x656 + usize::from(slot));
                     write(channel as u8, sound, game);
-                    game.g_ram[0x64d + channel] = sound;
-                    game.g_ram[0x643 + channel] = slot.wrapping_add(1) & 15;
-                    game.g_ram[0x649 + channel] = game.g_ram[0x649 + channel].wrapping_add(1);
+                    game.ram().write_byte(0x64d + channel, sound);
+                    game.ram()
+                        .write_byte(0x643 + channel, slot.wrapping_add(1) & 15);
+                    {
+                        let value = game.ram().read_byte(0x649 + channel).wrapping_add(1);
+                        game.ram().write_byte(0x649 + channel, value);
+                    }
                 }
             }
             1 => {
-                let _last_sent = game.g_ram[0x64d + channel];
-                game.g_ram[0x649 + channel] = game.g_ram[0x649 + channel].wrapping_add(1);
-                game.g_ram[0x650 + channel] = 6;
+                let _last_sent = game.ram().read_byte(0x64d + channel);
+                {
+                    let value = game.ram().read_byte(0x649 + channel).wrapping_add(1);
+                    game.ram().write_byte(0x649 + channel, value);
+                }
+                game.ram().write_byte(0x650 + channel, 6);
             }
             2 | 4 => {
-                let previous = game.g_ram[0x650 + channel];
-                game.g_ram[0x650 + channel] = previous.wrapping_sub(1);
+                let previous = game.ram().read_byte(0x650 + channel);
+                game.ram()
+                    .write_byte(0x650 + channel, previous.wrapping_sub(1));
                 if previous == 1 {
                     if state == 2 {
-                        game.g_ram[0x64d + channel] = 0;
-                        game.g_ram[0x649 + channel] = game.g_ram[0x649 + channel].wrapping_add(1);
+                        game.ram().write_byte(0x64d + channel, 0);
+                        {
+                            let value = game.ram().read_byte(0x649 + channel).wrapping_add(1);
+                            game.ram().write_byte(0x649 + channel, value);
+                        }
                     } else {
-                        game.g_ram[0x649 + channel] = 0;
+                        game.ram().write_byte(0x649 + channel, 0);
                     }
                 }
             }
@@ -302,7 +319,7 @@ pub(crate) fn advance_sound_effects(game: &mut Game, mut write: impl FnMut(u8, u
 
 pub fn ResetSoundQueues(game: &mut Game) {
     for offset in 0x643..0x64c {
-        game.g_ram[offset] = 0;
+        game.ram().write_byte(offset, 0);
     }
 }
 

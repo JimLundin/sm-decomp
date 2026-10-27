@@ -11,8 +11,8 @@ const QUEUE: usize = 0x2d0;
 pub(super) fn write_word(tail: u16, field: usize, value: u16, game: &mut Game) {
     let at = QUEUE + usize::from(tail) + field;
     let bytes = value.to_ne_bytes();
-    game.g_ram[at] = bytes[0];
-    game.g_ram[at + 1] = bytes[1];
+    game.ram().write_byte(at, bytes[0]);
+    game.ram().write_byte(at + 1, bytes[1]);
 }
 
 #[forbid(unsafe_code)]
@@ -32,14 +32,14 @@ pub(super) fn advance_ending_tile_upload(game: &mut Game) {
     write_word(tail, 8, if high_plane { 128 } else { 0 }, game);
     word!(game.mode7_vram_write_queue_tail = tail.wrapping_add(9));
     if word!(game.cinematic_var4 += 1, reread) as i32 - 16 & 0x8000 == 0 {
-        game.g_ram[0x55] = 1;
+        game.ram().write_byte(0x55, 1);
         word! {game; cinematic_var4 = 0; cinematic_function = 0xdb9d; }
     }
 }
 
 #[forbid(unsafe_code)]
 fn read_word(game: &Game, at: usize) -> u16 {
-    u16::from_ne_bytes([game.g_ram[at], game.g_ram[at + 1]])
+    u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])
 }
 
 #[forbid(unsafe_code)]
@@ -62,9 +62,10 @@ pub(super) fn enqueue_rom(bank: u8, cursor: u16, game: &mut Game) {
         };
         // The sentinel precedes the copy. Both cursors advance linearly, without
         // the per-record u16 wrap used by the direct cinematic producers.
-        game.g_ram[destination + length] = 0;
+        game.ram().write_byte(destination + length, 0);
         for index in 0..length {
-            game.g_ram[destination + index] = game.read_rom_byte(address, source + index);
+            let value = game.read_rom_byte(address, source + index);
+            game.ram().write_byte(destination + index, value);
         }
         source += length;
         destination += length;
@@ -78,7 +79,7 @@ pub(super) unsafe fn process(game: &mut Game) {
     }
     let mut entry = QUEUE;
     loop {
-        let tag = game.g_ram[entry];
+        let tag = game.ram().read_byte(entry);
         if tag & 0xc0 == 0 {
             break;
         }
@@ -86,7 +87,7 @@ pub(super) unsafe fn process(game: &mut Game) {
         unsafe {
             WriteReg(DMAP1 as u16, tag & 0x1f, game);
             WriteRegWord(A1T1L as u16, read_word(game, entry + 1), game);
-            WriteReg(A1B1 as u16, game.g_ram[entry + 3], game);
+            WriteReg(A1B1 as u16, game.ram().read_byte(entry + 3), game);
             WriteRegWord(DAS1L as u16, read_word(game, entry + 4), game);
             if tag & 0x80 != 0 {
                 WriteReg(
@@ -95,15 +96,15 @@ pub(super) unsafe fn process(game: &mut Game) {
                     game,
                 );
                 WriteRegWord(VMADDL as u16, read_word(game, entry + 6), game);
-                WriteReg(VMAIN as u16, game.g_ram[entry + 8], game);
+                WriteReg(VMAIN as u16, game.ram().read_byte(entry + 8), game);
             } else {
                 WriteReg(BBAD1 as u16, 0x22, game);
-                WriteReg(CGADD as u16, game.g_ram[entry + 6], game);
+                WriteReg(CGADD as u16, game.ram().read_byte(entry + 6), game);
             }
             WriteReg(MDMAEN as u16, 2, game);
         }
         entry += if tag & 0x80 != 0 { 9 } else { 7 };
     }
-    game.g_ram[QUEUE..QUEUE + 2].fill(0);
+    game.ram().fill(QUEUE..QUEUE + 2, 0);
     word!(game.mode7_vram_write_queue_tail = 0);
 }

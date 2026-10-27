@@ -26,13 +26,17 @@ const WRITABLE_WORDS: [usize; 5] = [
     w::samus_y_dir,
 ];
 fn put(g: &mut Game, at: usize, value: u16) {
-    g.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    g.ram().copy_in(at, &value.to_le_bytes());
 }
 fn word(g: &Game, at: usize) -> u16 {
-    u16::from_le_bytes(g.g_ram[at..at + 2].try_into().unwrap())
+    u16::from_le_bytes({
+        let mut bytes = [0; 2];
+        g.ram().copy_out(at, &mut bytes);
+        bytes
+    })
 }
 fn seed(g: &mut Game) -> (RomImage, RomImage) {
-    g.g_ram.fill(0);
+    g.ram().fill(0..g.ram().len(), 0);
     g.g_fail = false;
     let loaded = RomImage::zeroed(0x200000);
     let native = RomImage::zeroed(0x200000);
@@ -66,9 +70,9 @@ fn seed(g: &mut Game) -> (RomImage, RomImage) {
     ] {
         put(g, at, v);
     }
-    g.g_ram[0xa1e] = 8;
-    g.g_ram[0xa1f] = 0;
-    g.g_ram[0xa23] = 3;
+    g.ram().write_byte(0xa1e, 8);
+    g.ram().write_byte(0xa1f, 0);
+    g.ram().write_byte(0xa23, 3);
     for slot in 0..4 {
         put(
             g,
@@ -107,7 +111,7 @@ fn setup_jump(sub: u32, g: &mut Game) {
     }
 }
 fn seed_request(id: u32, g: &mut Game) {
-    g.g_ram.fill(0);
+    g.ram().fill(0..g.ram().len(), 0);
     g.g_fail = false;
     for (at, value) in [
         (0xa1c, 1),
@@ -145,7 +149,9 @@ fn check_request(id: u32, before: &[u8], g: &Game) {
         expected[0xa32..0xa34].copy_from_slice(&8u16.to_le_bytes());
     }
     assert_eq!(
-        g.g_ram.as_slice(),
+        &(0..g.ram().len())
+            .map(|at| g.ram().read_byte(at))
+            .collect::<Vec<u8>>()[..],
         expected.as_slice(),
         "selected request complete RAM outcome"
     );
@@ -180,7 +186,8 @@ fn check_outcome(id: u32, before: &[u8], g: &Game, loaded: &RomImage, native: &R
         "PT30 Ceres timer"
     );
     assert_eq!(word(g, w::samus_y_dir), 1, "PT30 upward direction");
-    for (at, (&old, &new)) in before.iter().zip(g.g_ram.iter()).enumerate() {
+    for (at, &old) in before.iter().take(g.ram().len()).enumerate() {
+        let new = g.ram().read_byte(at);
         if !WRITABLE_WORDS
             .iter()
             .any(|&start| at == start || at == start + 1)
@@ -214,10 +221,7 @@ pub fn capture(id: u32, original: &[u8], g: &mut Game) -> Result<Vec<u8>, String
     {
         return Err("PT30 requires admitted ID and initialized host".into());
     }
-    if !cfg!(target_endian = "little")
-        || g.g_ram.as_ptr() as usize % 2 != 0
-        || g.actor_identity_is_with_session()
-    {
+    if !cfg!(target_endian = "little") || g.actor_identity_is_with_session() {
         return Err("PT30 natural RAM alignment/ownership prerequisite".into());
     }
     if g.loaded_rom.is_none() || trace::active() || !g.supports_legacy_persistence() {
@@ -225,7 +229,9 @@ pub fn capture(id: u32, original: &[u8], g: &mut Game) -> Result<Vec<u8>, String
     }
     let old_loaded = g.loaded_rom.clone();
     let old_native = g.capture_native_rom_binding();
-    let old_ram = g.g_ram.to_vec();
+    let old_ram = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     let old_fail = g.g_fail;
     let result = catch_unwind(AssertUnwindSafe(|| {
         let request = id < 3000;
@@ -240,7 +246,9 @@ pub fn capture(id: u32, original: &[u8], g: &mut Game) -> Result<Vec<u8>, String
             setup_jump(id - 3000, g);
             images
         };
-        let before = g.g_ram.to_vec();
+        let before = (0..g.ram().len())
+            .map(|at| g.ram().read_byte(at))
+            .collect::<Vec<u8>>();
         let mut out = b"PTRS1".to_vec();
         let mut identity = id.to_le_bytes().to_vec();
         identity.push(u8::from(!request));
@@ -277,7 +285,7 @@ pub fn capture(id: u32, original: &[u8], g: &mut Game) -> Result<Vec<u8>, String
     let _ = trace::finish();
     g.loaded_rom = old_loaded;
     g.restore_native_rom_binding(old_native);
-    g.g_ram.copy_from_slice(&old_ram);
+    g.ram().copy_in(0, &old_ram);
     g.g_fail = old_fail;
     result.unwrap_or_else(|_| Err("PT30 invocation/outcome failed (not a fidelity result)".into()))
 }

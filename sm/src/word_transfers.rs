@@ -61,7 +61,7 @@ pub(crate) fn rom_source(address: u32, game: &mut Game) -> WordEndpoint<'static>
 
 // Capture count, stride and endpoints in order before touching output. Every
 // lane reads then writes one word, so overlaps propagate in traversal order.
-// The loop uses byte places rather than a whole-Game/RAM borrow: callers may
+// The loop copies individual bytes rather than borrowing live u8 storage: callers may
 // still retain legacy enemy pointers outside this fully checked operation.
 macro_rules! word_transfers {
     ($game:ident, $direction:tt, $count:expr;
@@ -82,7 +82,7 @@ macro_rules! word_transfers {
                     let value = match source {
                         WordEndpoint::Ram(base, native) => {
                             let at = address(*base, offset);
-                            let bytes = [$game.g_ram[at], $game.g_ram[at + 1]];
+                            let bytes = [$game.ram().read_byte(at), $game.ram().read_byte(at + 1)];
                             if *native { u16::from_ne_bytes(bytes) } else { u16::from_le_bytes(bytes) }
                         }
                         source => source.read(offset),
@@ -92,8 +92,8 @@ macro_rules! word_transfers {
                     };
                     let at = address(*base, offset);
                     let bytes = if *native { value.to_ne_bytes() } else { value.to_le_bytes() };
-                    $game.g_ram[at] = bytes[0];
-                    $game.g_ram[at + 1] = bytes[1];
+                    $game.ram().write_byte(at, bytes[0]);
+                    $game.ram().write_byte(at + 1, bytes[1]);
                 }
             }
         }

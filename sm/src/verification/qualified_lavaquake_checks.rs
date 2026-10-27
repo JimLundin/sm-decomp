@@ -65,7 +65,9 @@ pub(crate) fn check_case(id: u32) -> bool {
             bytes(&image, at, &loaded.to_le_bytes());
         }
     }
-    let mut expected = game.g_ram.to_vec();
+    let mut expected = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<_>>();
     write(&mut expected, a::eproj_y_vel + offset, after);
     if positions.is_some() {
         write(&mut expected, a::eproj_y_subpos + offset, 3);
@@ -86,7 +88,10 @@ pub(crate) fn check_case(id: u32) -> bool {
         }
     });
     assert_eq!(
-        game.g_ram.as_slice(),
+        (0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<_>>()
+            .as_slice(),
         expected.as_slice(),
         "qualified lavaquake {id}"
     );

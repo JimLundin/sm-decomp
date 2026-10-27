@@ -38,7 +38,7 @@ pub(crate) fn update(game: &mut Game) {
 fn reserves(game: &mut Game) {
     const ACTIONS: [fn(&mut Game); 2] =
         [reserve_tanks::toggle_mode, reserve_tanks::transfer_manual];
-    ACTIONS[usize::from(game.g_ram[0x756])](game);
+    ACTIONS[usize::from(game.ram().read_byte(0x756))](game);
     let previous = word!(game.pausemenu_equipment_category_item);
     if word!(game.joypad1_newkeys) & kButton_Right as u16 != 0 {
         if word!(game.joypad1_newkeys) & kButton_Down as u16 != 0
@@ -134,7 +134,7 @@ fn boots(game: &mut Game) {
 fn shift(amount: i16, game: &mut Game) -> u16 {
     word!(game.pausemenu_equipment_category_item += amount as u16);
     // The original selector reads this physical byte, independently of host endian.
-    2 * u16::from(game.g_ram[0x756])
+    2 * u16::from(game.ram().read_byte(0x756))
 }
 
 fn select_reserves(game: &mut Game) -> u16 {
@@ -227,7 +227,7 @@ fn toggle(bytes: u16, game: &mut Game) {
         return;
     }
     QueueSfx1_Max6(0x38, game);
-    let item = u16::from(game.g_ram[0x756]);
+    let item = u16::from(game.ram().read_byte(0x756));
     let category = word!(game.pausemenu_equipment_category_item) as u8 as isize;
     let target = table_entry(0x82c02c, category, item, game) as usize;
     let address = crate::rtl::rom_table_word!(game, 0x82c03c, category);
@@ -236,10 +236,13 @@ fn toggle(bytes: u16, game: &mut Game) {
     }
     let address = usize::from(address);
     let mask = table_entry(0x82c034, category, item, game);
-    let value = u16::from_ne_bytes([game.g_ram[address], game.g_ram[address + 1]]);
+    let value = u16::from_ne_bytes([
+        game.ram().read_byte(address),
+        game.ram().read_byte(address + 1),
+    ]);
     let enabled = value & mask != 0;
     let value = if enabled { value & !mask } else { value | mask };
-    game.g_ram[address..address + 2].copy_from_slice(&value.to_ne_bytes());
+    game.ram().copy_in(address, &value.to_ne_bytes());
     if enabled {
         menu_tilemap::recolor_native(target, 0xc00, usize::from(bytes >> 1), game);
     } else {

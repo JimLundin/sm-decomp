@@ -152,7 +152,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
             slot(game, a::eproj_id, handle, 0);
         }
         {
-            game.g_ram[0xe20..0xe22].copy_from_slice(&0x4321u16.to_le_bytes());
+            game.ram().copy_in(0xe20, &0x4321u16.to_le_bytes());
             drops::scatter(source, 0, game)
         };
         return None;

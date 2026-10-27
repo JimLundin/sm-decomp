@@ -4,10 +4,10 @@ use core::mem::offset_of;
 
 pub(crate) const COUNT: u32 = 9;
 fn put(g: &mut Game, at: usize, value: u16) {
-    g.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    g.ram().copy_in(at, &value.to_le_bytes());
 }
 fn read(g: &Game, at: usize) -> u16 {
-    u16::from_le_bytes([g.g_ram[at], g.g_ram[at + 1]])
+    u16::from_le_bytes([g.ram().read_byte(at), g.ram().read_byte(at + 1)])
 }
 fn check(g: &Game, at: usize, value: u16, label: &str) {
     assert_eq!(read(g, at), value, "{label}: word {at:04x}");
@@ -44,7 +44,7 @@ fn solid_column(g: &mut Game, column: usize) {
     }
 }
 fn snapshot(out: &mut Vec<u8>, g: &Game) {
-    out.extend_from_slice(&g.g_ram);
+    out.extend((0..g.ram().len()).map(|at| g.ram().read_byte(at)));
     out.push(u8::from(g.g_fail));
 }
 
@@ -64,7 +64,7 @@ pub(crate) unsafe fn run(local: u32, g: &mut Game) -> Vec<u8> {
     transition(&loaded, 9, 0x0345);
     transition(&native, 4, 0x0456);
     transition(&native, 6, 0x0567);
-    g.g_ram.fill(0);
+    g.ram().fill(0..g.ram().len(), 0);
     g.register_rom(loaded);
     g.register_native_rom(native);
     g.g_fail = false;

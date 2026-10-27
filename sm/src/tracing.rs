@@ -1,7 +1,6 @@
-use crate::game_state::Game;
+use crate::execution::Execution;
 use crate::snes::apu::apu_cpuRead;
-use crate::snes::snes::snes_read;
-use crate::types::{Apu, Snes};
+use crate::types::Apu;
 use std::fmt::Write;
 
 #[rustfmt::skip]
@@ -210,12 +209,12 @@ fn instruction_text(line: &mut [u8], template: &str, operands: [u32; 2], short: 
     }
     out.finish();
 }
-pub unsafe fn getProcessorStateCpu(snes: *mut Snes, line: &mut [u8; 80], game: &mut Game) {
+pub(crate) unsafe fn getProcessorStateCpu(execution: &mut Execution<'_>, line: &mut [u8; 80]) {
     unsafe {
         let mut disassembly = [0; 14];
-        getDisassemblyCpu(snes, &mut disassembly, game);
+        getDisassemblyCpu(execution, &mut disassembly);
         // Bus reads can change CPU fields or its owning pointer. Capture afterwards.
-        let cpu = &*(*snes).cpu;
+        let cpu = &*execution.selected_cpu();
         let (bank, pc, a, x, y, sp, dp, db) =
             (cpu.k, cpu.pc, cpu.a, cpu.x, cpu.y, cpu.sp, cpu.dp, cpu.db);
         let flags = flag_letters(
@@ -258,25 +257,27 @@ pub unsafe fn getProcessorStateSpc(apu: *mut Apu, line: &mut [u8; 80]) {
         out.finish();
     }
 }
-unsafe fn getDisassemblyCpu(snes: *mut Snes, line: &mut [u8; 14], game: &mut Game) {
+unsafe fn getDisassemblyCpu(execution: &mut Execution<'_>, line: &mut [u8; 14]) {
     unsafe {
-        let address = u32::from((*(*snes).cpu).pc) | (u32::from((*(*snes).cpu).k) << 16);
-        let opcode = snes_read(snes, address, game);
-        let byte = snes_read(snes, address.wrapping_add(1) & 0xffffff, game);
-        let byte2 = snes_read(snes, address.wrapping_add(2) & 0xffffff, game);
+        let address = u32::from((*execution.selected_cpu()).pc)
+            | (u32::from((*execution.selected_cpu()).k) << 16);
+        let opcode = execution.read(address);
+        let byte = execution.read(address.wrapping_add(1) & 0xffffff);
+        let byte2 = execution.read(address.wrapping_add(2) & 0xffffff);
         let word = u16::from_le_bytes([byte, byte2]);
-        let long = (u32::from(snes_read(snes, address.wrapping_add(3) & 0xffffff, game)) << 16)
-            | u32::from(word);
-        let relative = (*(*snes).cpu)
+        let long =
+            (u32::from(execution.read(address.wrapping_add(3) & 0xffffff)) << 16) | u32::from(word);
+        let relative = (*execution.selected_cpu())
             .pc
             .wrapping_add(2)
             .wrapping_add_signed(i16::from(byte as i8));
-        let relative_long = (*(*snes).cpu)
+        let relative_long = (*execution.selected_cpu())
             .pc
             .wrapping_add(3)
             .wrapping_add_signed(word as i16);
         let kind = opcodeType[usize::from(opcode)];
-        let short = (kind == 4 && (*(*snes).cpu).mf) || (kind == 5 && (*(*snes).cpu).xf);
+        let short = (kind == 4 && (*execution.selected_cpu()).mf)
+            || (kind == 5 && (*execution.selected_cpu()).xf);
         let operands = match kind {
             0 => [0, 0],
             1 => [u32::from(byte), 0],

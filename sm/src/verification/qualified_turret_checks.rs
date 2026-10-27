@@ -31,8 +31,10 @@ pub(crate) fn check_case(id: u32) -> bool {
         slot(&mut game, a::eproj_y_pos, handle, 0xffff);
         put(&mut game, 0x783a, if id < 4 { 1 } else { 0 });
         let at = 0x1997 + usize::from(handle);
-        game.g_ram[at - 1..at + 3].copy_from_slice(&[0x12, 0x34, 0x56, 0x78]);
-        let mut expected = game.g_ram.to_vec();
+        game.ram().copy_in(at - 1, &[0x12, 0x34, 0x56, 0x78]);
+        let mut expected = (0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<_>>();
         if id < 4 {
             expected[at] = 0;
             expected[at + 1] = 0;
@@ -41,7 +43,10 @@ pub(crate) fn check_case(id: u32) -> bool {
             super::super::pre_actions::dispatch(8830943, handle, ctx);
         });
         assert_eq!(
-            game.g_ram.as_slice(),
+            (0..game.ram().len())
+                .map(|at| game.ram().read_byte(at))
+                .collect::<Vec<_>>()
+                .as_slice(),
             expected.as_slice(),
             "turret clear {id}"
         );
@@ -63,8 +68,10 @@ pub(crate) fn check_case(id: u32) -> bool {
             slot(&mut game, field, handle, value);
         }
         let at = 0x1997 + usize::from(selected & !1);
-        game.g_ram[at - 1..at + 3].copy_from_slice(&[0x12, 0x34, 0x56, 0x78]);
-        let mut expected = game.g_ram.to_vec();
+        game.ram().copy_in(at - 1, &[0x12, 0x34, 0x56, 0x78]);
+        let mut expected = (0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<_>>();
         write(&mut expected, a::eproj_properties + offset, 0x9234);
         if id < 12 {
             expected[at] = 0;
@@ -74,7 +81,10 @@ pub(crate) fn check_case(id: u32) -> bool {
             super::super::pre_actions::dispatch(8831200, handle, ctx);
         });
         assert_eq!(
-            game.g_ram.as_slice(),
+            (0..game.ram().len())
+                .map(|at| game.ram().read_byte(at))
+                .collect::<Vec<_>>()
+                .as_slice(),
             expected.as_slice(),
             "turret bullet {id}"
         );

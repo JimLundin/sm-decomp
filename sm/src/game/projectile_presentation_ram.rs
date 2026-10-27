@@ -45,7 +45,7 @@ pub(crate) fn sprite_map(
 #[forbid(unsafe_code)]
 pub fn projectile(slot: u16, position: (u16, u16), game: &mut Game, content: &mut impl Content) {
     let at = 0xcb8 + 2 * usize::from(slot >> 1);
-    let cursor = u16::from_ne_bytes([game.g_ram[at], game.g_ram[at + 1]]);
+    let cursor = u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]);
     sprite_map(0x93, cursor, game, content).draw(position, |tile| tile, Clip::None, game);
 }
 #[forbid(unsafe_code)]
@@ -95,19 +95,19 @@ pub(crate) fn grapple(game: &mut Game, segment: Option<(u16, u16, u16)>) {
     let idx = word!(game.oam_next_ptr);
     let at = 0x370 + usize::from(idx);
     if let Some((x, y, tile)) = segment {
-        game.g_ram[at] = x as u8;
-        game.g_ram[at + 1] = y as u8;
-        game.g_ram[at + 2..at + 4].copy_from_slice(&tile.to_ne_bytes());
+        game.ram().write_byte(at, x as u8);
+        game.ram().write_byte(at + 1, y as u8);
+        game.ram().copy_in(at + 2, &tile.to_ne_bytes());
     } else {
         let x = word!(game.grapple_beam_end_x_pos)
             .wrapping_sub(word!(game.layer1_x_pos))
             .wrapping_sub(4);
-        game.g_ram[at] = x as u8;
+        game.ram().write_byte(at, x as u8);
         let y = word!(game.grapple_beam_end_y_pos)
             .wrapping_sub(word!(game.layer1_y_pos))
             .wrapping_sub(4);
-        game.g_ram[at + 1] = y as u8;
-        game.g_ram[at + 2..at + 4].copy_from_slice(&14880u16.to_ne_bytes());
+        game.ram().write_byte(at + 1, y as u8);
+        game.ram().copy_in(at + 2, &14880u16.to_ne_bytes());
         let extension = word!(game.oam_ext[(idx >> 5)]);
         let bit = (((i32::from(x) & 0x100) >> 8) << (2 * (i32::from(idx) >> 2 & 7))) as u16;
         word!(game.oam_ext[(idx >> 5)] = extension | bit);
@@ -143,17 +143,18 @@ pub(crate) fn file_helmets(animate: bool, game: &mut Game) {
     for slot in 2..5 {
         let timer = 0x198d + 2 * slot;
         if !animate {
-            game.g_ram[timer..timer + 2].fill(0);
+            game.ram().fill(timer..timer + 2, 0);
         }
-        let remaining = u16::from_ne_bytes([game.g_ram[timer], game.g_ram[timer + 1]]);
+        let remaining =
+            u16::from_ne_bytes([game.ram().read_byte(timer), game.ram().read_byte(timer + 1)]);
         if remaining != 0 {
             let remaining = remaining.wrapping_sub(1);
-            game.g_ram[timer..timer + 2].copy_from_slice(&remaining.to_ne_bytes());
+            game.ram().copy_in(timer, &remaining.to_ne_bytes());
             if remaining == 0 {
-                game.g_ram[timer..timer + 2].copy_from_slice(&8u16.to_ne_bytes());
+                game.ram().copy_in(timer, &8u16.to_ne_bytes());
                 let mut frame = word!(game.eproj_id[slot]).wrapping_add(1);
                 if i32::from(word!(game.eproj_id[slot])) - 7 & 0x8000 == 0 {
-                    game.g_ram[timer..timer + 2].fill(0);
+                    game.ram().fill(timer..timer + 2, 0);
                     frame = 7;
                 }
                 word!(game.eproj_id[slot] = frame);
@@ -219,7 +220,7 @@ pub(crate) fn menu_selection(game: &mut Game) {
     const SPRITES: [u16; 4] = [0x37, 0x36, 0x35, 0x34];
     if word!(game.cinematic_var5) != 0 {
         if game_word!(game.cinematic_var5 -= 1, reread) == 0 {
-            word!(game.eproj_id[0] = (u16::from(game.g_ram[0x1997]) + 1) & 3);
+            word!(game.eproj_id[0] = (u16::from(game.ram().read_byte(0x1997)) + 1) & 3);
             word!(game.cinematic_var5 = 8);
         }
     }

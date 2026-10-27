@@ -1,6 +1,6 @@
 //! Checked, ordered byte transfers for the existing save-state format.
 #![forbid(unsafe_code)]
-use crate::recording::RecordingBytes;
+use crate::{game_state::WorkRam, recording::RecordingBytes};
 use std::collections::TryReserveError;
 
 pub enum SnapshotIo<'a> {
@@ -25,6 +25,13 @@ impl SnapshotIo<'_> {
             Self::Load(bytes) => bytes.len(),
             Self::Save(_) => 0,
         }
+    }
+
+    pub(crate) fn work_ram(&mut self, ram: &WorkRam) -> Result<(), TransferError> {
+        self.block(ram.len(), |block| match block {
+            Block::Save(output) => ram.copy_out(0, output),
+            Block::Load(input) => ram.copy_in(0, input),
+        })
     }
 
     pub fn transfer(&mut self, state: &mut [u8]) -> Result<(), TransferError> {
@@ -145,7 +152,7 @@ state_record!(Cpu, 27, {
     a, x, y, sp, pc, dp, k, db, c, z, v, n, i, d, xf, mf, e, irqWanted, nmiWanted, waiting,
     stopped
 } skip {
-    mem, memType, cyclesUsed, spBreakpoint, in_emu
+    memType, cyclesUsed, spBreakpoint, in_emu
 });
 
 state_record!(Spc, 15, {
@@ -157,7 +164,6 @@ state_record!(Spc, 15, {
 state_record!(Dma, 224, {
     channel, hdmaTimer, snapshot_padding0, dmaTimer, dmaBusy, pad
 } skip {
-    snes
 });
 
 state_record!(DspState, 3024, {
@@ -195,8 +201,8 @@ state_record!(Snes, 54, {
     snapshot_padding1, portAutoReadX, autoJoyRead, snapshot_padding2, autoJoyTimer, ppuLatch,
     multiplyA, multiplyResult, divideA, divideResult, fastMem, openBus
 } skip {
-    cpu, apu, ppu, snes_ppu, my_ppu, dma, cart, input1, input2, debug_cycles, debug_apu_cycles,
-    disableRender, runningWhichVersion, ramAdr, ram, padx
+    cpu, apu, ppu, snes_ppu, my_ppu, cart, debug_cycles, debug_apu_cycles,
+    disableRender, runningWhichVersion, ramAdr, padx
 });
 
 state_record!(DmaChannel, 26, {

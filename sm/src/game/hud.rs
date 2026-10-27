@@ -162,15 +162,15 @@ pub(crate) unsafe fn advance(game: &mut Game) {
             highlight(word!(game.hud_item_index), 0x1000, game);
             highlight(word!(game.samus_prev_hud_item_index), 0x1400, game);
             word!(game.samus_prev_hud_item_index = word!(game.hud_item_index));
-            if game.g_ram[0xa1f] != 3
-                && game.g_ram[0xa1f] != 20
+            if game.ram().read_byte(0xa1f) != 3
+                && game.ram().read_byte(0xa1f) != 20
                 && word!(game.grapple_beam_function) == 0xc4f0
                 && word!(game.time_is_frozen_flag) == 0
             {
                 QueueSfx1_Max6(0x39, game);
             }
         }
-        let palette = if game.g_ram[0x5b5] & 0x10 != 0 {
+        let palette = if game.ram().read_byte(0x5b5) & 0x10 != 0 {
             0x1000
         } else {
             0x1400

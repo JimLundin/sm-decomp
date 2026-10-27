@@ -15,7 +15,7 @@ impl Displacement<'_> {
             Self::Absent => panic!("missing contact displacement"),
             Self::Local(value) => **value,
             Self::RamOffset(at) => {
-                i32::from_ne_bytes(core::array::from_fn(|i| game.g_ram[*at + i]))
+                i32::from_ne_bytes(core::array::from_fn(|i| game.ram().read_byte(*at + i)))
             }
         }
     }
@@ -23,7 +23,7 @@ impl Displacement<'_> {
         match self {
             Self::Absent => panic!("missing contact displacement"),
             Self::Local(target) => **target = value,
-            Self::RamOffset(at) => game.g_ram[*at..*at + 4].copy_from_slice(&value.to_ne_bytes()),
+            Self::RamOffset(at) => game.ram().copy_in(*at, &value.to_ne_bytes()),
         }
     }
 }

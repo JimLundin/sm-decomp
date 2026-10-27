@@ -31,7 +31,8 @@ fn upload(g: &mut Game) {
     crate::game::animated_tiles::upload_pending(g)
 }
 fn put(g: &mut Game, at: usize, value: u16) {
-    g.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    let _ = &[(); 0x20000][at..at + 2];
+    g.ram().copy_in(at, &value.to_le_bytes());
 }
 fn slot(g: &mut Game, column: usize, k: u16, value: u16) {
     put(g, column + usize::from(k & !1), value);
@@ -45,7 +46,8 @@ fn rw(image: &RomImage, bank: u8, cursor: u16, offset: usize, value: u16) {
 }
 fn seed(g: &mut Game, image: &RomImage) {
     for at in 0x1ef1..0x1f51 {
-        g.g_ram[at] = (at * 37) as u8;
+        let value = (at * 37) as u8;
+        g.ram().write_byte(at, value);
     }
     for k in (0..12).step_by(2) {
         for (column, value) in [
@@ -101,7 +103,7 @@ fn execute(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
                 0 => clear(g),
                 1 => {
                     enabled(false, g);
-                    trace.extend_from_slice(&g.g_ram);
+                    trace.extend((0..g.ram().len()).map(|at| g.ram().read_byte(at)));
                     enabled(true, g);
                 }
                 2 => {
@@ -314,118 +316,121 @@ fn execute(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
     0
 }
 fn dma_case(n: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 {
-    use crate::initial_state::InitialState;
-    let mut snes = Box::new(crate::types::Snes::INITIAL);
-    let mut ppu = Box::new(crate::types::Ppu::INITIAL);
-    let mut dma = Box::new(crate::types::Dma::INITIAL);
-    let mut cart = Box::new(crate::types::Cart {
-        snes: &mut *snes,
-        type_0: 1,
-        rom: image.clone(),
-        romSize: image.len() as u32,
-        ram: Default::default(),
-        ramSize: 0,
-    });
-    snes.ppu = &mut *ppu;
-    snes.dma = &mut *dma;
-    snes.cart = &mut *cart;
-    snes.ram = g.g_ram.as_mut_ptr();
-    ppu.snes = &mut *snes;
-    dma.snes = &mut *snes;
-    g.g_snes = &mut *snes;
-    ppu.vramIncrement = 32;
-    ppu.vramRemapMode = (n % 4) as u8;
-    ppu.vramIncrementOnHigh = false;
-    for (i, v) in ppu.vram.iter_mut().enumerate() {
-        *v = (i as u16).wrapping_mul(37);
-    }
-    for at in 0..0x100 {
-        image.write(
-            crate::rtl::lorom_offset(0x878000) as usize + at,
-            (at * 11) as u8,
-        );
-    }
-    for k in (0..12).step_by(2) {
-        slot(g, a::animtiles_ids, k, 0x8000 + k);
-        slot(g, a::animtiles_src_ptr, k, 0x8000 + k * 8);
-        slot(
-            g,
-            a::animtiles_sizes,
-            k,
-            [1, 2, 3, 4, 7, 8][usize::from(k / 2)],
-        );
-        slot(g, a::animtiles_vram_ptr, k, 0x123);
-    }
-    if n < 4 {
-        put(
-            g,
-            w::animtiles_enable_flag,
-            [0, 0x80, 0x7fff, 0x8000][n as usize],
-        );
-    }
-    if n == 4 {
-        clear(g);
-    }
-    if n == 5 {
-        for k in (0..12).step_by(2) {
-            slot(g, a::animtiles_src_ptr, k, 0);
+    let previous_cpu = g.g_cpu;
+    g.ensure_backend();
+    let snes = g.g_snes;
+    let (ppu, cart) = unsafe { ((*snes).ppu, (*snes).cart) };
+    unsafe {
+        (*cart).type_0 = 1;
+        (*cart).rom = image.clone();
+        (*cart).romSize = image.len() as u32;
+        let ppu = &mut *ppu;
+        ppu.vramIncrement = 32;
+        ppu.vramRemapMode = (n % 4) as u8;
+        ppu.vramIncrementOnHigh = false;
+        for (i, v) in ppu.vram.iter_mut().enumerate() {
+            *v = (i as u16).wrapping_mul(37);
         }
     }
-    if n == 6 {
-        slot(g, a::animtiles_ids, 10, 0);
-    }
-    if n == 7 {
-        slot(g, a::animtiles_src_ptr, 10, 0);
-    }
-    if (8..16).contains(&n) {
-        clear(g);
-        slot(g, a::animtiles_ids, 10, 0x8000);
-        slot(
-            g,
-            a::animtiles_src_ptr,
-            10,
-            if n < 12 { 0x1ef1 } else { 0xffff },
-        );
-        slot(g, a::animtiles_sizes, 10, if n < 12 { 90 } else { 2 });
-        slot(g, a::animtiles_vram_ptr, 10, 0x7fff);
-    }
-    if n == 15 {
-        // Actual lifecycle producer feeds the actual NMI consumer.
-        for (offset, value) in [(0, 0x9000), (2, 4), (4, 0x123)] {
-            rw(image, 0x87, 0x8000, offset, value);
-        }
-        clear(g);
-        spawn(0x8000, g);
-        advance(g);
-        for i in 0..4 {
+    let outcome = catch_unwind(AssertUnwindSafe(|| {
+        for at in 0..0x100 {
             image.write(
-                crate::rtl::lorom_offset(0x879234) as usize + i,
-                0x80 + i as u8,
+                crate::rtl::lorom_offset(0x878000) as usize + at,
+                (at * 11) as u8,
             );
         }
+        for k in (0..12).step_by(2) {
+            slot(g, a::animtiles_ids, k, 0x8000 + k);
+            slot(g, a::animtiles_src_ptr, k, 0x8000 + k * 8);
+            slot(
+                g,
+                a::animtiles_sizes,
+                k,
+                [1, 2, 3, 4, 7, 8][usize::from(k / 2)],
+            );
+            slot(g, a::animtiles_vram_ptr, k, 0x123);
+        }
+        if n < 4 {
+            put(
+                g,
+                w::animtiles_enable_flag,
+                [0, 0x80, 0x7fff, 0x8000][n as usize],
+            );
+        }
+        if n == 4 {
+            clear(g);
+        }
+        if n == 5 {
+            for k in (0..12).step_by(2) {
+                slot(g, a::animtiles_src_ptr, k, 0);
+            }
+        }
+        if n == 6 {
+            slot(g, a::animtiles_ids, 10, 0);
+        }
+        if n == 7 {
+            slot(g, a::animtiles_src_ptr, 10, 0);
+        }
+        if (8..16).contains(&n) {
+            clear(g);
+            slot(g, a::animtiles_ids, 10, 0x8000);
+            slot(
+                g,
+                a::animtiles_src_ptr,
+                10,
+                if n < 12 { 0x1ef1 } else { 0xffff },
+            );
+            slot(g, a::animtiles_sizes, 10, if n < 12 { 90 } else { 2 });
+            slot(g, a::animtiles_vram_ptr, 10, 0x7fff);
+        }
+        if n == 15 {
+            // Actual lifecycle producer feeds the actual NMI consumer.
+            for (offset, value) in [(0, 0x9000), (2, 4), (4, 0x123)] {
+                rw(image, 0x87, 0x8000, offset, value);
+            }
+            clear(g);
+            spawn(0x8000, g);
+            advance(g);
+            for i in 0..4 {
+                image.write(
+                    crate::rtl::lorom_offset(0x879234) as usize + i,
+                    0x80 + i as u8,
+                );
+            }
+        }
+        if n >= 16 {
+            // Short cart allocation forces a Rust panic during real DMA after
+            // zero, one, or two completed bytes. Size zero must still start DMA.
+            clear(g);
+            slot(g, a::animtiles_ids, 10, 0x8000);
+            let at = crate::rtl::lorom_offset(0x878000) as usize;
+            unsafe {
+                (*cart).rom = RomImage::zeroed(at + (n % 3) as usize);
+            }
+            slot(g, a::animtiles_sizes, 10, if n >= 20 { 0 } else { 8 });
+            slot(g, a::animtiles_src_ptr, 10, 0x8000);
+        }
+        let result = catch_unwind(AssertUnwindSafe(|| upload(g)));
+        let mut hardware = crate::recording::RecordingBytes::default();
+        let mut io = crate::snapshot_io::SnapshotIo::Save(&mut hardware);
+        unsafe {
+            io.state(&mut *ppu).unwrap();
+            io.state(&mut g.dma_state()).unwrap();
+            io.state(&mut *snes).unwrap();
+        }
+        trace.extend_from_slice(hardware.as_slice());
+        g.g_snes = core::ptr::null_mut();
+        if let Err(error) = result {
+            std::panic::resume_unwind(error);
+        }
+        0
+    }));
+    g.g_cpu = previous_cpu;
+    let _hardware = unsafe { g.take_backend_for_shutdown() };
+    match outcome {
+        Ok(value) => value,
+        Err(error) => std::panic::resume_unwind(error),
     }
-    if n >= 16 {
-        // Short cart allocation forces a Rust panic during real DMA after
-        // zero, one, or two completed bytes. Size zero must still start DMA.
-        clear(g);
-        slot(g, a::animtiles_ids, 10, 0x8000);
-        let at = crate::rtl::lorom_offset(0x878000) as usize;
-        cart.rom = RomImage::zeroed(at + (n % 3) as usize);
-        slot(g, a::animtiles_sizes, 10, if n >= 20 { 0 } else { 8 });
-        slot(g, a::animtiles_src_ptr, 10, 0x8000);
-    }
-    let result = catch_unwind(AssertUnwindSafe(|| upload(g)));
-    let mut hardware = crate::recording::RecordingBytes::default();
-    let mut io = crate::snapshot_io::SnapshotIo::Save(&mut hardware);
-    io.state(&mut *ppu).unwrap();
-    io.state(&mut *dma).unwrap();
-    io.state(&mut *snes).unwrap();
-    trace.extend_from_slice(hardware.as_slice());
-    g.g_snes = core::ptr::null_mut();
-    if let Err(error) = result {
-        std::panic::resume_unwind(error);
-    }
-    0
 }
 pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     if id >= CASES {
@@ -439,7 +444,9 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     let mut trace = Vec::new();
     let result = catch_unwind(AssertUnwindSafe(|| execute(id, &mut g, &image, &mut trace)));
     let panicked = result.is_err();
-    let mut bytes = g.g_ram.to_vec();
+    let mut bytes = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<_>>();
     bytes.extend_from_slice(&result.unwrap_or(0).to_le_bytes());
     bytes.push(u8::from(panicked));
     bytes.push(u8::from(g.g_fail));

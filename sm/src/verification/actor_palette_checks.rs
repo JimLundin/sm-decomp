@@ -167,7 +167,7 @@ fn paired_snapshot_restores_receipts_but_canonical_adoption_clears_them() {
     );
     let ram: Box<[u8; 131072]> = vec![0; 131072].into_boxed_slice().try_into().unwrap();
     let transition = identity.prepare_canonical_transition().unwrap();
-    identity.commit_canonical_transition(transition, &ram);
+    identity.commit_canonical_transition(transition, &|at| ram[at]);
     assert_eq!(
         world.actor_media().validate_material_residency(
             MaterialId(50),

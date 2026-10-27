@@ -1,18 +1,20 @@
 //! Focused regression checks for the owned compatibility boundary.
 #![forbid(unsafe_code)]
 use crate::game::session_runtime::Runtime;
+use crate::room_background_support::{ram_bytes, ram_span};
 use crate::{game_state::Game, rom::RomImage};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
 pub(super) fn run(game: &mut Game) -> bool {
-    let original_ram = game.g_ram.to_vec();
+    let original_ram = ram_bytes(&game);
     let original_rom = game.loaded_rom.clone();
     let result = catch_unwind(AssertUnwindSafe(|| {
         // Independent byte ranges include every slot, control, tile and custom lane.
-        for (i, byte) in game.g_ram.iter_mut().enumerate() {
-            *byte = (i.wrapping_mul(37) ^ (i >> 8)) as u8;
+        for i in 0..game.ram().len() {
+            game.ram()
+                .write_byte(i, (i.wrapping_mul(37) ^ (i >> 8)) as u8);
         }
-        let mut expected = game.g_ram.to_vec();
+        let mut expected = ram_bytes(&game);
         {
             let mut execution = Runtime::new(game);
             for range in [0x1c23..0x1e6d, 0xc6c8..0xc8c8, 0xde1c..0xdf5c] {
@@ -39,7 +41,7 @@ pub(super) fn run(game: &mut Game) -> bool {
                 );
             }
         }
-        assert_eq!(&game.g_ram[..], &expected[..]);
+        assert_eq!(&ram_bytes(&game), &expected[..]);
 
         let old_image = RomImage::zeroed(2);
         old_image.write(0, 0x31);
@@ -48,9 +50,9 @@ pub(super) fn run(game: &mut Game) -> bool {
             let mut execution = Runtime::new(game);
             execution.write_slice_le(0x1c37, 0xbeef);
             let returned = execution.foreign(|game| {
-                assert_eq!(&game.g_ram[0x1c37..0x1c39], &[0xef, 0xbe]);
-                game.g_ram[0x1c38] = 0x42;
-                game.g_ram[0xc6c8] = 0x73;
+                assert_eq!(&ram_span::<2>(&game, 0x1c37), &[0xef, 0xbe]);
+                game.ram().write_byte(0x1c38, 0x42);
+                game.ram().write_byte(0xc6c8, 0x73);
                 let replacement = RomImage::zeroed(3);
                 replacement.write(0, 0x92);
                 game.loaded_rom = Some(replacement);
@@ -73,34 +75,34 @@ pub(super) fn run(game: &mut Game) -> bool {
             let mut execution = Runtime::new(game);
             execution.write_slice_le(0x1d27, 0x1234);
             execution.foreign(|game| {
-                assert_eq!(&game.g_ram[0x1d27..0x1d29], &[0x34, 0x12]);
-                game.g_ram[0x1d27..0x1d29].copy_from_slice(&[0xcd, 0xab]);
+                assert_eq!(&ram_span::<2>(&game, 0x1d27), &[0x34, 0x12]);
+                game.ram().copy_in(0x1d27, &[0xcd, 0xab]);
                 panic!("intentional mechanism callback unwind");
             });
         }));
         assert!(panic.is_err());
-        assert_eq!(&game.g_ram[0x1d27..0x1d29], &[0xcd, 0xab]);
+        assert_eq!(&ram_span::<2>(&game, 0x1d27), &[0xcd, 0xab]);
 
         // A second subsystem owns its state only inside the released interval.
-        game.g_ram[0xb64..0xb66].copy_from_slice(&[0x78, 0x56]);
+        game.ram().copy_in(0xb64, &[0x78, 0x56]);
         {
             let mut execution = Runtime::new(game);
             execution.write_slice_le(0x1c37, 0x4321);
             execution.foreign(|game| {
-                assert_eq!(&game.g_ram[0x1c37..0x1c39], &[0x21, 0x43]);
+                assert_eq!(&ram_span::<2>(&game, 0x1c37), &[0x21, 0x43]);
                 crate::game::player_projectiles::clear(0, game);
-                assert_eq!(&game.g_ram[0xb64..0xb66], &[0, 0]);
-                assert_eq!(&game.g_ram[0x1c37..0x1c39], &[0x21, 0x43]);
-                game.g_ram[0x1c37..0x1c39].copy_from_slice(&[0xef, 0xbe]);
+                assert_eq!(&ram_span::<2>(&game, 0xb64), &[0, 0]);
+                assert_eq!(&ram_span::<2>(&game, 0x1c37), &[0x21, 0x43]);
+                game.ram().copy_in(0x1c37, &[0xef, 0xbe]);
             });
             assert_eq!(execution.word(0x1c37), 0xbeef);
             assert_eq!(execution.word(0xb64), 0);
         }
-        assert_eq!(&game.g_ram[0x1c37..0x1c39], &[0xef, 0xbe]);
-        assert_eq!(&game.g_ram[0xb64..0xb66], &[0, 0]);
+        assert_eq!(&ram_span::<2>(&game, 0x1c37), &[0xef, 0xbe]);
+        assert_eq!(&ram_span::<2>(&game, 0xb64), &[0, 0]);
 
-        let last = game.g_ram.len() - 1;
-        game.g_ram[last] = 0x81;
+        let last = game.ram().len() - 1;
+        game.ram().write_byte(last, 0x81);
         let mut execution = Runtime::new(game);
         assert!(
             catch_unwind(AssertUnwindSafe(|| {
@@ -117,7 +119,7 @@ pub(super) fn run(game: &mut Game) -> bool {
         );
         assert_eq!(execution.byte(last), 0x23);
     }));
-    game.g_ram.copy_from_slice(&original_ram);
+    game.ram().copy_in(0, &original_ram);
     game.loaded_rom = original_rom;
     result.is_ok()
 }

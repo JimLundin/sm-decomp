@@ -1,9 +1,9 @@
 //! Synthetic predecessor fixtures. No copied gameplay algorithms or ROM-derived data.
 use crate::ram_map::{word_arrays as a, words as w};
 use crate::{
-    game_state::Game,
+    game_state::{Game, WorkRam},
     rom::RomImage,
-    types::{EnemyData as E, EnemyDef as D, EnemySpawnData as S},
+    types::{EnemyData as E, EnemyDef as D, EnemySpawnData as S, Point16U, Rect16U},
 };
 use core::mem::offset_of;
 use std::panic::{AssertUnwindSafe, catch_unwind};
@@ -12,10 +12,17 @@ pub(crate) fn offset(address: u32) -> usize {
     crate::rtl::lorom_offset(address) as usize
 }
 pub(crate) fn put(g: &mut Game, at: usize, v: u16) {
-    g.g_ram[at..at + 2].copy_from_slice(&v.to_ne_bytes());
+    g.ram().copy_in(at, &v.to_ne_bytes());
 }
 pub(crate) fn get(g: &Game, at: usize) -> u16 {
-    u16::from_ne_bytes(g.g_ram[at..at + 2].try_into().unwrap())
+    get_parts(g.ram(), at)
+}
+pub(crate) fn get_parts(ram: &WorkRam, at: usize) -> u16 {
+    u16::from_ne_bytes({
+        let mut bytes = [0; 2];
+        ram.copy_out(at, &mut bytes);
+        bytes
+    })
 }
 fn ew(g: &mut Game, k: u16, field: usize, v: u16) {
     put(g, 0xf78 + usize::from(k) + field, v);
@@ -50,20 +57,39 @@ fn population(r: &RomImage, address: u32, definition: u16, x: u16) {
     }
 }
 pub(crate) fn snapshot(out: &mut Vec<u8>, g: &Game) {
-    out.extend_from_slice(&g.g_ram);
+    snapshot_parts(
+        out,
+        g.ram(),
+        &g.g_fail,
+        &g.eproj_spawn_rect,
+        &g.eproj_spawn_r22,
+        &g.eproj_spawn_pt,
+        &g.eproj_spawn_varE24,
+    );
+}
+pub(crate) fn snapshot_parts(
+    out: &mut Vec<u8>,
+    ram: &WorkRam,
+    fail: &bool,
+    spawn_rect: &Rect16U,
+    spawn_r22: &u16,
+    spawn_pt: &Point16U,
+    spawn_varE24: &u16,
+) {
+    out.extend((0..ram.len()).map(|at| ram.read_byte(at)));
     for v in [
-        g.eproj_spawn_rect.x,
-        g.eproj_spawn_rect.y,
-        g.eproj_spawn_rect.w,
-        g.eproj_spawn_rect.h,
-        g.eproj_spawn_r22,
-        g.eproj_spawn_pt.x,
-        g.eproj_spawn_pt.y,
-        g.eproj_spawn_varE24,
+        spawn_rect.x,
+        spawn_rect.y,
+        spawn_rect.w,
+        spawn_rect.h,
+        *spawn_r22,
+        spawn_pt.x,
+        spawn_pt.y,
+        *spawn_varE24,
     ] {
         out.extend_from_slice(&v.to_le_bytes());
     }
-    out.push(u8::from(g.g_fail));
+    out.push(u8::from(*fail));
 }
 #[derive(Clone, Copy)]
 pub(crate) enum Operation {
@@ -117,8 +143,8 @@ fn script(r: &RomImage, address: u32, values: &[u16]) {
 }
 fn fixture(id: u32, g: &mut Game, loaded: &RomImage, native: &RomImage) -> Operation {
     // All bytes initialized; sentinel pattern exposes unintended unrelated writes.
-    for (i, b) in g.g_ram.iter_mut().enumerate() {
-        *b = (i.wrapping_mul(37) ^ (i >> 8)) as u8;
+    for i in 0..g.ram().len() {
+        g.ram().write_byte(i, (i.wrapping_mul(37) ^ (i >> 8)) as u8);
     }
     g.g_fail = false;
     // Native allocations remain full, distinct and lifetime-owned. No short raw pointers.
@@ -353,7 +379,9 @@ pub(crate) fn capture_case(
         let mut out = b"APAN1".to_vec();
         out.extend_from_slice(&id.to_le_bytes());
         snapshot(&mut out, &g);
-        let before = g.g_ram.to_vec();
+        let before = (0..g.ram().len())
+            .map(|at| g.ram().read_byte(at))
+            .collect::<Vec<_>>();
         crate::actor_population_animation_observer::begin(id);
         let actual = catch_unwind(AssertUnwindSafe(|| run(op, &mut g)));
         let trace = crate::actor_population_animation_observer::finish();
@@ -411,7 +439,11 @@ pub(crate) fn capture_case(
             ] {
                 let at = 0xfb8 + field;
                 assert_eq!(
-                    &g.g_ram[at..at + 2],
+                    &{
+                        let mut bytes = [0; 2];
+                        g.ram().copy_out(at, &mut bytes);
+                        bytes
+                    },
                     &before[at..at + 2],
                     "preserved respawn field"
                 );
@@ -420,7 +452,11 @@ pub(crate) fn capture_case(
         if matches!(id, 14 | 15) {
             let at = 0x7040 + offset_of!(S, name) + 12;
             assert_eq!(
-                &g.g_ram[at..at + 6],
+                &{
+                    let mut bytes = [0; 6];
+                    g.ram().copy_out(at, &mut bytes);
+                    bytes
+                },
                 &before[at..at + 6],
                 "saved name tail preserved"
             );
@@ -466,8 +502,8 @@ fn fire_geyser_widened() -> Vec<u8> {
     let mut out = b"B6FG1".to_vec();
     for index in [0u16, 0x7c0, 0xffc0, 0xfffe] {
         let mut g = Game::new();
-        g.g_ram.fill(0);
-        g.g_ram[0xe54..0xe56].copy_from_slice(&index.to_le_bytes());
+        g.ram().fill(0..g.ram().len(), 0);
+        g.ram().copy_in(0xe54, &index.to_le_bytes());
         let parent = 0xf78 + usize::from(index);
         let child = parent + 64;
         for (at, value) in [
@@ -480,7 +516,9 @@ fn fire_geyser_widened() -> Vec<u8> {
         ] {
             put(&mut g, at, value);
         }
-        let mut expected = g.g_ram.to_vec();
+        let mut expected = (0..g.ram().len())
+            .map(|at| g.ram().read_byte(at))
+            .collect::<Vec<_>>();
         for (at, value) in [
             (parent + 0x30, 0x9062u16),
             (parent + 0x32, 0xffff),
@@ -493,7 +531,10 @@ fn fire_geyser_widened() -> Vec<u8> {
         }
         fire_geysers::run(&mut g);
         assert_eq!(
-            g.g_ram.as_slice(),
+            (0..g.ram().len())
+                .map(|at| g.ram().read_byte(at))
+                .collect::<Vec<_>>()
+                .as_slice(),
             expected.as_slice(),
             "geyser wait {index:x}"
         );
@@ -515,7 +556,10 @@ fn fire_geyser_widened() -> Vec<u8> {
             let result = fire_geysers::instruction(ea, EnemyScript::Jump(0x1234), &mut g);
             assert!(matches!(result, EnemyScript::Jump(0x1234)));
             assert_eq!(
-                g.g_ram.as_slice(),
+                (0..g.ram().len())
+                    .map(|at| g.ram().read_byte(at))
+                    .collect::<Vec<_>>()
+                    .as_slice(),
                 expected.as_slice(),
                 "geyser shape {index:x}/{step}"
             );
@@ -533,7 +577,10 @@ fn fire_geyser_widened() -> Vec<u8> {
         let result = fire_geysers::instruction(0xa68fd1, EnemyScript::Jump(0x1234), &mut g);
         assert!(matches!(result, EnemyScript::Jump(0x1234)));
         assert_eq!(
-            g.g_ram.as_slice(),
+            (0..g.ram().len())
+                .map(|at| g.ram().read_byte(at))
+                .collect::<Vec<_>>()
+                .as_slice(),
             expected.as_slice(),
             "geyser finish {index:x}"
         );
@@ -550,8 +597,8 @@ fn spikey_initialization_prefix() -> Vec<u8> {
     let table = offset(0xa28187);
     for mode in 0..3 {
         let mut g = Game::new();
-        g.g_ram.fill(0);
-        g.g_ram[0xfb4..0xfb8].copy_from_slice(&[3, 0xa5, 7, 11]);
+        g.ram().fill(0..g.ram().len(), 0);
+        g.ram().copy_in(0xfb4, &[3, 0xa5, 7, 11]);
         for (at, value) in [(0xf7e, 100), (0xfb0, 0x5555), (0xfb2, 0x6666)] {
             put(&mut g, at, value);
         }
@@ -569,7 +616,9 @@ fn spikey_initialization_prefix() -> Vec<u8> {
                 Some(image)
             }
         };
-        let mut expected = g.g_ram.to_vec();
+        let mut expected = (0..g.ram().len())
+            .map(|at| g.ram().read_byte(at))
+            .collect::<Vec<_>>();
         for (at, value) in [(0xf92, 0x8b29u16), (0xfa8, 0x8bb4), (0x7804, 24)] {
             expected[at..at + 2].copy_from_slice(&value.to_ne_bytes());
         }
@@ -607,20 +656,26 @@ fn spikey_initialization_prefix() -> Vec<u8> {
             }
         }
         assert_eq!(
-            g.g_ram.as_slice(),
+            (0..g.ram().len())
+                .map(|at| g.ram().read_byte(at))
+                .collect::<Vec<_>>()
+                .as_slice(),
             expected.as_slice(),
             "spikey init prefix {mode}"
         );
         if mode == 2 {
             put(&mut g, 0xfaa, 1);
-            g.g_ram[0xfb4] = 4;
+            g.ram().write_byte(0xfb4, 4);
             expected[0xfb4] = 4;
             for (at, value) in [(0xfa8, 0x8bdcu16), (0x7804, 32)] {
                 expected[at..at + 2].copy_from_slice(&value.to_ne_bytes());
             }
             spikey_platforms::run(&mut g);
             assert_eq!(
-                g.g_ram.as_slice(),
+                (0..g.ram().len())
+                    .map(|at| g.ram().read_byte(at))
+                    .collect::<Vec<_>>()
+                    .as_slice(),
                 expected.as_slice(),
                 "spikey wait physical parameter"
             );

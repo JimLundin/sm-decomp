@@ -1,6 +1,11 @@
 //! Records real completed byte writes; mutations occur only at source effects.
 #![forbid(unsafe_code)]
-use crate::{game_state::Game, rom::RomImage, room_background_support::*};
+use crate::{
+    game_state::{Game, WorkRam},
+    recording::RecordingBytes,
+    rom::RomImage,
+    room_background_support::*,
+};
 use std::cell::RefCell;
 struct Capture {
     id: u32,
@@ -45,7 +50,15 @@ pub(crate) fn finish() -> Vec<u8> {
         c.bytes
     })
 }
-pub(crate) fn written(address: u16, value: u8, g: &mut Game) {
+pub(crate) fn written_parts(
+    address: u16,
+    value: u8,
+    ram: &WorkRam,
+    loaded_rom: &mut Option<RomImage>,
+    fail: &bool,
+    decompress_src: &u32,
+    mut observe: impl FnMut(&mut RecordingBytes),
+) {
     ACTIVE.with(|s| {
         let mut active = s.borrow_mut();
         let Some(c) = active.as_mut() else {
@@ -64,11 +77,19 @@ pub(crate) fn written(address: u16, value: u8, g: &mut Game) {
         payload.push(value);
         record(&mut c.bytes, 1, &payload);
         if address == 0x420b {
-            record(&mut c.bytes, 2, &snapshot(g));
+            record(
+                &mut c.bytes,
+                2,
+                &snapshot_parts(ram, fail, decompress_src, &mut observe),
+            );
         }
         if c.mutations.contains(&index) {
-            record(&mut c.bytes, 3, &snapshot(g));
-            g.loaded_rom = Some(c.b.clone());
+            record(
+                &mut c.bytes,
+                3,
+                &snapshot_parts(ram, fail, decompress_src, &mut observe),
+            );
+            *loaded_rom = Some(c.b.clone());
             let source = if c.id == 4 && address == 0x4311 {
                 0x6200
             } else {
@@ -78,7 +99,11 @@ pub(crate) fn written(address: u16, value: u8, g: &mut Game) {
             bytes(&c.a, 0x8fa004, &[0x7e]);
             rw(&c.a, 0x8fa005, 0x7777);
             rw(&c.a, 0x8fa007, if source == 0x6200 { 8 } else { 6 });
-            record(&mut c.bytes, 4, &snapshot(g));
+            record(
+                &mut c.bytes,
+                4,
+                &snapshot_parts(ram, fail, decompress_src, &mut observe),
+            );
             record(
                 &mut c.bytes,
                 5,
@@ -90,6 +115,30 @@ pub(crate) fn written(address: u16, value: u8, g: &mut Game) {
     });
 }
 pub(crate) fn diagnostic(address: u32, g: &mut Game) {
+    let (snes, cpu) = (g.g_snes, g.g_cpu);
+    let (backend, host) = g.execution_parts();
+    diagnostic_parts(
+        address,
+        host.ram,
+        host.loaded_rom,
+        host.g_fail,
+        host.decompress_src,
+        |machine| {
+            let backend = backend
+                .as_deref()
+                .expect("observation requires an owned backend");
+            backend.save_observation(snes, cpu, machine);
+        },
+    );
+}
+pub(crate) fn diagnostic_parts(
+    address: u32,
+    ram: &WorkRam,
+    loaded_rom: &mut Option<RomImage>,
+    fail: &bool,
+    decompress_src: &u32,
+    mut observe: impl FnMut(&mut RecordingBytes),
+) {
     ACTIVE.with(|s| {
         let mut active = s.borrow_mut();
         let Some(c) = active.as_mut() else {
@@ -102,11 +151,19 @@ pub(crate) fn diagnostic(address: u32, g: &mut Game) {
         );
         c.diag_at += 1;
         record(&mut c.bytes, 6, &address.to_le_bytes());
-        record(&mut c.bytes, 3, &snapshot(g));
+        record(
+            &mut c.bytes,
+            3,
+            &snapshot_parts(ram, fail, decompress_src, &mut observe),
+        );
         if c.id == 29 && c.diag_at == 1 {
-            g.loaded_rom = Some(c.b.clone());
-            put(g, 0x7bb, 0x80);
+            *loaded_rom = Some(c.b.clone());
+            ram_word(ram, 0x7bb, 0x80);
         }
-        record(&mut c.bytes, 4, &snapshot(g));
+        record(
+            &mut c.bytes,
+            4,
+            &snapshot_parts(ram, fail, decompress_src, &mut observe),
+        );
     });
 }

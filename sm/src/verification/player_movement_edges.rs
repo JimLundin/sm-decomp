@@ -12,13 +12,13 @@ use std::{
     sync::Arc,
 };
 fn put(g: &mut Game, at: usize, value: u16) {
-    g.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    g.ram().copy_in(at, &value.to_le_bytes());
 }
 fn word(g: &Game, at: usize) -> u16 {
-    u16::from_le_bytes([g.g_ram[at], g.g_ram[at + 1]])
+    u16::from_le_bytes([g.ram().read_byte(at), g.ram().read_byte(at + 1)])
 }
 fn seed(g: &mut Game) {
-    g.g_ram.fill(0);
+    g.ram().fill(0..g.ram().len(), 0);
     g.g_fail = false;
     g.loaded_rom = None;
     g.register_native_rom(RomImage::zeroed(0));
@@ -70,7 +70,9 @@ fn lazy_speed(g: &mut Game) {
     content(g, &[0, 1, 8, 0]);
     put(g, 0xb46, 1);
     put(g, 0xb48, 0xffff);
-    let mut expected = g.g_ram.to_vec();
+    let mut expected = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     expected[0xb46..0xb4a].copy_from_slice(&[2, 0, 0, 0]);
     {
         let mut runtime = Runtime::new(g);
@@ -80,7 +82,9 @@ fn lazy_speed(g: &mut Game) {
         );
     }
     assert_eq!(
-        g.g_ram.as_slice(),
+        &(0..g.ram().len())
+            .map(|at| g.ram().read_byte(at))
+            .collect::<Vec<u8>>()[..],
         expected.as_slice(),
         "unused deceleration words are not read"
     );
@@ -93,7 +97,9 @@ fn partial_speed(g: &mut Game) {
     content(g, &[0, 1]);
     put(g, 0xb46, 1);
     put(g, 0xb48, 0xffff);
-    let mut expected = g.g_ram.to_vec();
+    let mut expected = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     expected[0xb46..0xb4a].copy_from_slice(&[2, 0, 0, 0]);
     expected[0xaf6..0xaf8].copy_from_slice(&0x3456u16.to_le_bytes());
     const MESSAGE: &str = "index out of bounds: the len is 548868 but the index is 548868";
@@ -106,7 +112,9 @@ fn partial_speed(g: &mut Game) {
     });
     require_panic(result, MESSAGE);
     assert_eq!(
-        g.g_ram.as_slice(),
+        &(0..g.ram().len())
+            .map(|at| g.ram().read_byte(at))
+            .collect::<Vec<u8>>()[..],
         expected.as_slice(),
         "failed maximum read preserves accelerated prefix"
     );
@@ -117,7 +125,9 @@ fn invalid_normal(g: &mut Game) {
     put(g, 0xa1e, 0x1c08);
     put(g, 0xdc6, 0x4567);
     put(g, 0xaa4, 0x5678);
-    let mut expected = g.g_ram.to_vec();
+    let mut expected = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     expected[0xaf6..0xaf8].copy_from_slice(&0x3456u16.to_le_bytes());
     const MESSAGE: &str = "index out of bounds: the len is 28 but the index is 28";
     let result = caught(MESSAGE, || {
@@ -127,7 +137,9 @@ fn invalid_normal(g: &mut Game) {
     });
     require_panic(result, MESSAGE);
     assert_eq!(
-        g.g_ram.as_slice(),
+        &(0..g.ram().len())
+            .map(|at| g.ram().read_byte(at))
+            .collect::<Vec<u8>>()[..],
         expected.as_slice(),
         "invalid normal selector fails before movement writes"
     );
@@ -139,13 +151,17 @@ fn frozen_invalid_normal(g: &mut Game) {
     put(g, 0xa78, 1);
     put(g, 0xb3e, 0x400);
     put(g, 0xaae, 74);
-    let expected = g.g_ram.to_vec();
+    let expected = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     {
         let mut runtime = Runtime::new(g);
         player_movement::advance_normal(&mut runtime);
     }
     assert_eq!(
-        g.g_ram.as_slice(),
+        &(0..g.ram().len())
+            .map(|at| g.ram().read_byte(at))
+            .collect::<Vec<u8>>()[..],
         expected.as_slice(),
         "frozen bypasses invalid dispatch and echo publication"
     );
@@ -157,7 +173,9 @@ fn invalid_crouch(g: &mut Game) {
     put(g, 0xa1c, 0x41);
     put(g, 0xdc6, 0x4567);
     put(g, 0xaa4, 0x5678);
-    let expected = g.g_ram.to_vec();
+    let expected = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     const MESSAGE: &str = "index out of bounds: the len is 12 but the index is 12";
     let result = caught(MESSAGE, || {
         let mut runtime = Runtime::new(g);
@@ -165,7 +183,9 @@ fn invalid_crouch(g: &mut Game) {
     });
     require_panic(result, MESSAGE);
     assert_eq!(
-        g.g_ram.as_slice(),
+        &(0..g.ram().len())
+            .map(|at| g.ram().read_byte(at))
+            .collect::<Vec<u8>>()[..],
         expected.as_slice(),
         "invalid crouch selector fails before slope/AA4/movement writes"
     );
@@ -188,7 +208,9 @@ fn echo_alias(g: &mut Game) {
     ] {
         put(g, at, value);
     }
-    let before = g.g_ram.to_vec();
+    let before = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     let mut expected = before.clone();
     // Echo word index37: X destination AB0+74=AFA aliases owned player Y.
     // The subsequent Y destination AB8+74=B02 must read that newly written Y.
@@ -208,7 +230,9 @@ fn echo_alias(g: &mut Game) {
             "exceptional echo X updates owned player Y"
         );
         let mut projected = before.clone();
-        crate::game::session_encoding::encode(runtime.session(), &mut projected);
+        crate::game::session_encoding::encode(runtime.session(), |at, span| {
+            projected[at..at + span.len()].copy_from_slice(span)
+        });
         assert_eq!(
             projected, expected,
             "exceptional echo uses live Y after aliased X publication"
@@ -225,7 +249,9 @@ fn echo_alias(g: &mut Game) {
         "exceptional echo index wraps after publication"
     );
     assert_eq!(
-        g.g_ram.as_slice(),
+        &(0..g.ram().len())
+            .map(|at| g.ram().read_byte(at))
+            .collect::<Vec<u8>>()[..],
         expected.as_slice(),
         "exceptional echo full publication"
     );
@@ -233,7 +259,9 @@ fn echo_alias(g: &mut Game) {
 }
 pub(crate) fn run(g: &mut Game) -> usize {
     assert!(!g.actor_identity_is_with_session());
-    let ram = g.g_ram.to_vec();
+    let ram = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     let fail = g.g_fail;
     let loaded = g.loaded_rom.clone();
     let native = g.capture_native_rom_binding();
@@ -246,7 +274,7 @@ pub(crate) fn run(g: &mut Game) -> usize {
         echo_alias(g);
         6
     }));
-    g.g_ram.copy_from_slice(&ram);
+    g.ram().copy_in(0, &ram);
     g.g_fail = fail;
     g.loaded_rom = loaded;
     g.restore_native_rom_binding(native);

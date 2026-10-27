@@ -1,7 +1,7 @@
+use crate::execution::{Execution, HostContext};
 use crate::game::gameplay::{self, Entry};
-use crate::game_state::Game;
-use crate::ram_map::ram_ptr;
-use crate::ram_map::word;
+use crate::game_state::{Game, WorkRam};
+use crate::ram_map::{slot, word};
 use crate::rom_patches::RomPatches;
 use crate::rtl::words;
 pub use crate::snes::registers::*;
@@ -11,14 +11,10 @@ use ::core::mem::{MaybeUninit, size_of};
 use ::core::ptr::null_mut;
 
 use crate::c_library::{
-    __assert_fail, fopen, fprintf, fread, fseek, ftell, memcmp, memcpy, memset, printf, puts,
-    rewind, snprintf, stderr, time,
+    fopen, fprintf, fread, fseek, ftell, memcmp, printf, puts, rewind, snprintf, stderr, time,
 };
-use crate::rtl::{RomPtr, RtlSaveSnapshot, RtlSetupEmuCallbacks, WriteReg};
-use crate::snes::apu::apu_cycle;
-use crate::snes::cpu::{cpu_getFlags, cpu_runOpcode, cpu_setFlags};
-use crate::snes::dma::dma_doDma;
-use crate::snes::snes::snes_handle_pos_stuff;
+use crate::rtl::{RtlSaveSnapshot, RtlSetupEmuCallbacks};
+use crate::snes::cpu::{cpu_getFlags, cpu_setFlags};
 use crate::snes::snes_other::snes_loadRom;
 use crate::tracing::getProcessorStateCpu;
 pub use crate::types::ProjectileInstr;
@@ -72,13 +68,11 @@ pub const NULL: *mut c_void = null_mut::<c_void>();
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 #[inline]
-unsafe fn get_ProjectileInstr(a: u16, game: &mut Game) -> *mut ProjectileInstr {
-    unsafe { RomPtr((0x930000 | a as i32) as u32, game) as *mut ProjectileInstr }
+unsafe fn get_ProjectileInstr(a: u16, game: &mut HookContext<'_, '_>) -> *mut ProjectileInstr {
+    unsafe {
+        crate::rtl::rom_ptr_parts((0x930000 | a as i32) as u32, game.host) as *mut ProjectileInstr
+    }
 }
-crate::ram_map::ram_pointer_functions! {
-    Get_Botwoon(o: i32) -> Enemy_Botwoon = [0xf78, o as isize];
-}
-
 pub unsafe fn Call(addr: u32, game: &mut Game) {
     unsafe {
         assert!(
@@ -93,36 +87,50 @@ pub unsafe fn Call(addr: u32, game: &mut Game) {
     }
 }
 // The native diagnostic is the remaining unsafe boundary; ROM access is checked.
-unsafe fn patch_image(address: u32, game: &mut Game) -> RomPatches {
+unsafe fn patch_image(address: u32, host: &mut HostContext<'_>) -> RomPatches {
     unsafe {
         if address & 0x8000 == 0 {
             printf(c"RomPtr - Invalid access 0x%x!\n".as_ptr(), address);
-            game.g_fail = true;
+            *host.g_fail = true;
         }
         RomPatches::new(
-            game.loaded_rom
+            host.loaded_rom
                 .as_ref()
                 .expect("ROM must be loaded")
                 .clone(),
         )
     }
 }
-pub unsafe fn FixBugHook(addr: u32, game: &mut Game) -> bool {
+// Startup installs host-only ROM patches without acquiring backend execution.
+unsafe fn install_startup_bug_hooks(host: &mut HostContext<'_>) {
     unsafe {
-        match game.hookmode {
+        patch_bugs_parts(
+            1,
+            0,
+            &mut HookContext {
+                backend: None,
+                host,
+            },
+        );
+    }
+}
+
+unsafe fn fix_bug_hook(addr: u32, host: &mut HostContext<'_>) -> bool {
+    unsafe {
+        match *host.hookmode {
             1 => {
-                let image = patch_image(addr, game);
-                crate::update_place! { previous fresh0 = game.hookcnt => game.hookcnt.wrapping_add(1); }
-                game.hook_fixbug_orgbyte[fresh0 as usize] = image.byte(addr);
+                let image = patch_image(addr, host);
+                crate::update_place! { previous fresh0 = *host.hookcnt => (*host.hookcnt).wrapping_add(1); }
+                host.hook_fixbug_orgbyte[fresh0 as usize] = image.byte(addr);
                 image.write(addr, 0, 0);
                 return false_0 != 0;
             }
             2 => {
-                if addr == game.hookadr {
-                    game.hookmode = 3;
+                if addr == *host.hookadr {
+                    *host.hookmode = 3;
                     return true_0 != 0;
                 }
-                game.hookcnt = game.hookcnt.wrapping_add(1);
+                *host.hookcnt = (*host.hookcnt).wrapping_add(1);
                 return false_0 != 0;
             }
             _ => {}
@@ -151,45 +159,77 @@ static kPatchedCarrys: [u32; 155] = [
     0xa48ca1, 0xa48ca4,
 ];
 
-pub unsafe fn PatchBugs(mode: u32, addr: u32, game: &mut Game) -> u32 {
+// Compatibility hooks acquire a backend only when the selected branch uses it.
+struct HookContext<'a, 'host> {
+    backend: Option<&'a mut crate::snes::snes::Backend>,
+    host: &'a mut HostContext<'host>,
+}
+impl HookContext<'_, '_> {
+    fn ram(&self) -> &WorkRam {
+        self.host.ram
+    }
+    fn cpu(&self) -> *mut Cpu {
+        self.backend
+            .as_ref()
+            .expect("CPU hook action requires an owned backend")
+            .views()
+            .1
+    }
+    unsafe fn write_reg(&mut self, reg: u16, value: u8) {
+        unsafe {
+            let mut execution = Execution {
+                backend: self
+                    .backend
+                    .as_deref_mut()
+                    .expect("register hook action requires an owned backend"),
+                host: self.host.reborrow(),
+            };
+            crate::rtl::write_reg_execution(reg, value, &mut execution);
+        }
+    }
+}
+
+unsafe fn patch_bugs_parts(mode: u32, addr: u32, game: &mut HookContext<'_, '_>) -> u32 {
     unsafe {
-        game.hookmode = mode;
-        game.hookadr = addr;
-        game.hookcnt = 0;
-        if FixBugHook(0x86ef35, game) {
-            (*game.g_cpu).x = (*game.g_cpu).y;
-        } else if FixBugHook(0x86ef45, game) {
-            (*game.g_cpu).z = (*game.g_cpu).a as i32 == 0;
-        } else if FixBugHook(0x818ab8, game) {
-            if (*game.g_cpu).y as i32 == 0 {
-                (*game.g_cpu).pc = 0x8b1f;
+        *game.host.hookmode = mode;
+        *game.host.hookadr = addr;
+        *game.host.hookcnt = 0;
+        if fix_bug_hook(0x86ef35, &mut game.host) {
+            (*game.cpu()).x = (*game.cpu()).y;
+        } else if fix_bug_hook(0x86ef45, &mut game.host) {
+            (*game.cpu()).z = (*game.cpu()).a as i32 == 0;
+        } else if fix_bug_hook(0x818ab8, &mut game.host) {
+            if (*game.cpu()).y as i32 == 0 {
+                (*game.cpu()).pc = 0x8b1f;
             }
-        } else if FixBugHook(0xa794ba, game) {
-            (*game.g_cpu).y = (*game.g_cpu).x;
-        } else if FixBugHook(0xa7b968, game) {
-            (*game.g_cpu).x = word!(game.cur_enemy_index);
-        } else if FixBugHook(0xa7b963, game) {
-            (*game.g_cpu).x = word!(game.cur_enemy_index);
-        } else if FixBugHook(0xa496c8, game) {
-            (*game.g_cpu).a = 0;
-        } else if FixBugHook(0x9085aa, game) {
-            (*game.g_cpu).a = word!(game.speed_boost_counter);
-        } else if FixBugHook(0xa29044, game) as i32 != 0 || FixBugHook(0xa2905d, game) as i32 != 0 {
-            (*game.g_cpu).c = (*game.g_cpu).a as i32 == 0;
-        } else if FixBugHook(0xa29051, game) {
-            (*game.g_cpu).a = (*game.g_cpu).a.wrapping_sub(1);
-        } else if FixBugHook(0xa5931c, game) {
-            (*game.g_cpu).x = word!(game.cur_enemy_index);
-        } else if FixBugHook(0x80ada4, game) {
-            (*game.g_cpu).a = word!(game.layer2_y_pos);
-        } else if FixBugHook(0x80add9, game) {
-            (*game.g_cpu).a = word!(game.layer2_y_pos);
-        } else if FixBugHook(0x80ad4d, game) {
-            (*game.g_cpu).a = word!(game.layer2_x_pos);
-        } else if FixBugHook(0x80ad77, game) {
-            (*game.g_cpu).a = word!(game.layer2_x_pos);
-        } else if FixBugHook(0x9381db, game) {
-            let k: i32 = (*game.g_cpu).x as i32;
+        } else if fix_bug_hook(0xa794ba, &mut game.host) {
+            (*game.cpu()).y = (*game.cpu()).x;
+        } else if fix_bug_hook(0xa7b968, &mut game.host) {
+            (*game.cpu()).x = word!(game.cur_enemy_index);
+        } else if fix_bug_hook(0xa7b963, &mut game.host) {
+            (*game.cpu()).x = word!(game.cur_enemy_index);
+        } else if fix_bug_hook(0xa496c8, &mut game.host) {
+            (*game.cpu()).a = 0;
+        } else if fix_bug_hook(0x9085aa, &mut game.host) {
+            (*game.cpu()).a = word!(game.speed_boost_counter);
+        } else if fix_bug_hook(0xa29044, &mut game.host) as i32 != 0
+            || fix_bug_hook(0xa2905d, &mut game.host) as i32 != 0
+        {
+            (*game.cpu()).c = (*game.cpu()).a as i32 == 0;
+        } else if fix_bug_hook(0xa29051, &mut game.host) {
+            (*game.cpu()).a = (*game.cpu()).a.wrapping_sub(1);
+        } else if fix_bug_hook(0xa5931c, &mut game.host) {
+            (*game.cpu()).x = word!(game.cur_enemy_index);
+        } else if fix_bug_hook(0x80ada4, &mut game.host) {
+            (*game.cpu()).a = word!(game.layer2_y_pos);
+        } else if fix_bug_hook(0x80add9, &mut game.host) {
+            (*game.cpu()).a = word!(game.layer2_y_pos);
+        } else if fix_bug_hook(0x80ad4d, &mut game.host) {
+            (*game.cpu()).a = word!(game.layer2_x_pos);
+        } else if fix_bug_hook(0x80ad77, &mut game.host) {
+            (*game.cpu()).a = word!(game.layer2_x_pos);
+        } else if fix_bug_hook(0x9381db, &mut game.host) {
+            let k: i32 = (*game.cpu()).x as i32;
             let ip: i32 = word!(game.projectile_bomb_instruction_ptr[(k >> 1)]) as i32;
             let delta: i32 = if word!(game.projectile_bomb_instruction_timers[(k >> 1)]) as i32 == 1
                 && (*get_ProjectileInstr(ip as u16, game)).timer & 0x8000 == 0
@@ -198,126 +238,149 @@ pub unsafe fn PatchBugs(mode: u32, addr: u32, game: &mut Game) -> u32 {
             } else {
                 -8i32
             };
-            (*game.g_cpu).a = ((*game.g_cpu).a as i32 + (8 + delta)) as u16;
-        } else if FixBugHook(0x86b701, game) {
-            (*game.g_cpu).x = (*game.g_cpu).y;
-        } else if FixBugHook(0x8fc1b0, game) {
-            (*game.g_cpu).x = (*game.g_cpu).a;
-        } else if !FixBugHook(0x80804f, game) {
-            if FixBugHook(0x829325, game) {
-                (*game.g_cpu).db = 0x82;
-            } else if FixBugHook(0x848acd, game) {
-                (*game.g_cpu).a = 0;
-            } else if FixBugHook(0xa7ceb2, game) {
-                (*game.g_cpu).x = word!(game.cur_enemy_index);
-            } else if FixBugHook(0x91cd44, game) {
-                if (*game.g_cpu).x as i32 == 0 {
-                    (*game.g_cpu).pc = 0xcd52;
+            (*game.cpu()).a = ((*game.cpu()).a as i32 + (8 + delta)) as u16;
+        } else if fix_bug_hook(0x86b701, &mut game.host) {
+            (*game.cpu()).x = (*game.cpu()).y;
+        } else if fix_bug_hook(0x8fc1b0, &mut game.host) {
+            (*game.cpu()).x = (*game.cpu()).a;
+        } else if !fix_bug_hook(0x80804f, &mut game.host) {
+            if fix_bug_hook(0x829325, &mut game.host) {
+                (*game.cpu()).db = 0x82;
+            } else if fix_bug_hook(0x848acd, &mut game.host) {
+                (*game.cpu()).a = 0;
+            } else if fix_bug_hook(0xa7ceb2, &mut game.host) {
+                (*game.cpu()).x = word!(game.cur_enemy_index);
+            } else if fix_bug_hook(0x91cd44, &mut game.host) {
+                if (*game.cpu()).x as i32 == 0 {
+                    (*game.cpu()).pc = 0xcd52;
                 }
-            } else if FixBugHook(0x82afd3, game) {
+            } else if fix_bug_hook(0x82afd3, &mut game.host) {
                 if word!(game.pausemenu_equipment_category_item) as u8 as i32 != 1 {
                     return 0x82afd9;
                 }
-            } else if FixBugHook(0x82b0cd, game) {
+            } else if fix_bug_hook(0x82b0cd, &mut game.host) {
                 if word!(game.pausemenu_equipment_category_item) as u8 as i32 != 2 {
                     return 0x82afd9;
                 }
-            } else if FixBugHook(0x82b15b, game) {
+            } else if fix_bug_hook(0x82b15b, &mut game.host) {
                 if word!(game.pausemenu_equipment_category_item) as u8 as i32 != 3 {
                     return 0x82afd9;
                 }
-            } else if FixBugHook(0xa2d38c, game) {
-                (*game.g_cpu).x = word!(game.cur_enemy_index);
-            } else if FixBugHook(0xa4970f, game) {
-                (*game.g_cpu).a = (*game.g_cpu).a & 0xff;
-                (*game.g_cpu).y = (*game.g_cpu).x & 0x7;
-            } else if FixBugHook(0xa496e0, game) {
-                if (*game.g_cpu).x as i32 > 48 {
-                    word!(game.croco_cur_vline_idx = (*game.g_cpu).x);
-                    (*game.g_cpu).mf = 0 != 0;
+            } else if fix_bug_hook(0xa2d38c, &mut game.host) {
+                (*game.cpu()).x = word!(game.cur_enemy_index);
+            } else if fix_bug_hook(0xa4970f, &mut game.host) {
+                (*game.cpu()).a = (*game.cpu()).a & 0xff;
+                (*game.cpu()).y = (*game.cpu()).x & 0x7;
+            } else if fix_bug_hook(0xa496e0, &mut game.host) {
+                if (*game.cpu()).x as i32 > 48 {
+                    word!(game.croco_cur_vline_idx = (*game.cpu()).x);
+                    (*game.cpu()).mf = 0 != 0;
                     return 0xa497ce;
                 }
-            } else if FixBugHook(0x91da89, game) {
+            } else if fix_bug_hook(0x91da89, &mut game.host) {
                 if word!(game.special_samus_palette_frame) as i32 > 6 {
                     word!(game.special_samus_palette_frame = 6);
                 }
-            } else if FixBugHook(0x828d56, game) {
-                WriteReg(VMAIN as i32 as u16, 0x80, game);
-            } else if FixBugHook(0x88afcf, game) {
-                if (*game.g_cpu).a & 0x8000 != 0 {
-                    (*game.g_cpu).a = 0;
+            } else if fix_bug_hook(0x828d56, &mut game.host) {
+                game.write_reg(VMAIN as i32 as u16, 0x80);
+            } else if fix_bug_hook(0x88afcf, &mut game.host) {
+                if (*game.cpu()).a & 0x8000 != 0 {
+                    (*game.cpu()).a = 0;
                 }
-            } else if FixBugHook(0x88aff2, game) {
-                if ((*game.g_cpu).a as i32) < 256 {
-                    (*game.g_cpu).a = 256;
+            } else if fix_bug_hook(0x88aff2, &mut game.host) {
+                if ((*game.cpu()).a as i32) < 256 {
+                    (*game.cpu()).a = 256;
                 }
-            } else if FixBugHook(0x8189bd, game) {
-                if (*game.g_cpu).y as i32 == 0 {
+            } else if fix_bug_hook(0x8189bd, &mut game.host) {
+                if (*game.cpu()).y as i32 == 0 {
                     return 0x818a35;
                 }
-            } else if FixBugHook(0xa29bc1, game) {
-                (*game.g_cpu).a = 1;
-            } else if FixBugHook(0x82e910, game) {
-                *(ram_ptr!(game, u16; 22)) = 0;
-            } else if FixBugHook(0x90a4c8, game) {
-                *(ram_ptr!(game, u16; 18)) = 0;
-            } else if FixBugHook(0xa99f60, game) {
-                *(ram_ptr!(game, u16; 22)) = 1;
-            } else if FixBugHook(0x94a85b, game) {
-                memset(ram_ptr!(game, c_void; 0xd82), 0, 8 as size_t);
-            } else if FixBugHook(0xa0a35c, game) {
+            } else if fix_bug_hook(0xa29bc1, &mut game.host) {
+                (*game.cpu()).a = 1;
+            } else if fix_bug_hook(0x82e910, &mut game.host) {
+                game.ram().copy_in(22, &0u16.to_ne_bytes());
+            } else if fix_bug_hook(0x90a4c8, &mut game.host) {
+                game.ram().copy_in(18, &0u16.to_ne_bytes());
+            } else if fix_bug_hook(0xa99f60, &mut game.host) {
+                game.ram().copy_in(22, &1u16.to_ne_bytes());
+            } else if fix_bug_hook(0x94a85b, &mut game.host) {
+                game.ram().fill(0xd82..0xd8a, 0);
+            } else if fix_bug_hook(0xa0a35c, &mut game.host) {
                 word! { game;
-                    REMOVED_R18 = *ram_ptr!(game; 0xcea, (size_of::<u16>() as usize)
-                            .wrapping_div(size_of::<u8>() as usize)
-                            .wrapping_sub(1_) as isize) as u16;
+                    REMOVED_R18 = game.ram().read_byte(0xceb) as u16;
                     REMOVED_R20 = (word!(game.REMOVED_R18) as i32
                         + (word!(game.REMOVED_R18) as i32 >> 1)
                         >> 1) as u16;
                 }
-            } else if FixBugHook(0xa7b049, game) {
-                (*game.g_cpu).x = 0;
-            } else if FixBugHook(0xa5a018, game) {
+            } else if fix_bug_hook(0xa7b049, &mut game.host) {
+                (*game.cpu()).x = 0;
+            } else if fix_bug_hook(0xa5a018, &mut game.host) {
                 word!(game.REMOVED_varE24 = 0);
-            } else if FixBugHook(0xb39ddb, game) {
-                let E = Get_Botwoon(word!(game.cur_enemy_index) as i32, game);
-                word!(game.REMOVED_R18 = ((*E).base.x_pos as i32 - (*E).var_56 as i32) as u16);
-                word!(game.REMOVED_R20 = ((*E).base.y_pos as i32 - (*E).var_57 as i32) as u16);
-            } else if FixBugHook(0xb39e13, game) {
-                let E_0 = Get_Botwoon(word!(game.cur_enemy_index) as i32, game);
-                (*E_0).var_45 = ((*E_0).var_45 as i32
-                    + (word!(game.REMOVED_R22) as i32 - (*E_0).var_45 as i32) as i8 as i32 * 3 / 4)
-                    as u8 as u16;
-                word!(game.REMOVED_R22 = (*E_0).var_45);
+            } else if fix_bug_hook(0xb39ddb, &mut game.host) {
+                let E = word!(game.cur_enemy_index) as i32;
+                word!(
+                    game.REMOVED_R18 = (slot!(game, Enemy_Botwoon[E].base.x_pos) as i32
+                        - slot!(game, Enemy_Botwoon[E].var_56) as i32)
+                        as u16
+                );
+                word!(
+                    game.REMOVED_R20 = (slot!(game, Enemy_Botwoon[E].base.y_pos) as i32
+                        - slot!(game, Enemy_Botwoon[E].var_57) as i32)
+                        as u16
+                );
+            } else if fix_bug_hook(0xb39e13, &mut game.host) {
+                let E_0 = word!(game.cur_enemy_index) as i32;
+                slot!(
+                    game,
+                    Enemy_Botwoon[E_0].var_45 = (slot!(game, Enemy_Botwoon[E_0].var_45) as i32
+                        + (word!(game.REMOVED_R22) as i32
+                            - slot!(game, Enemy_Botwoon[E_0].var_45) as i32)
+                            as i8 as i32
+                            * 3
+                            / 4) as u8 as u16
+                );
+                word!(game.REMOVED_R22 = slot!(game, Enemy_Botwoon[E_0].var_45));
             }
         }
         0
     }
 }
-pub unsafe fn RunPatchBugHook(addr: u32, game: &mut Game) -> i32 {
+unsafe fn run_patch_bug_hook_parts(addr: u32, game: &mut HookContext<'_, '_>) -> i32 {
     unsafe {
-        let new_pc: u32 = PatchBugs(2, addr, game);
-        if game.hookmode == 3 {
+        let new_pc: u32 = patch_bugs_parts(2, addr, game);
+        if *game.host.hookmode == 3 {
             if new_pc == 0 {
-                return game.hook_fixbug_orgbyte[game.hookcnt as usize] as i32;
+                return game.host.hook_fixbug_orgbyte[*game.host.hookcnt as usize] as i32;
             } else {
-                (*game.g_cpu).k = (new_pc >> 16) as u8;
-                (*game.g_cpu).pc = (new_pc & 0xffffu32).wrapping_add(1) as u16;
-                return patch_image(new_pc, game).byte(new_pc) as i32;
+                (*game.cpu()).k = (new_pc >> 16) as u8;
+                (*game.cpu()).pc = (new_pc & 0xffffu32).wrapping_add(1) as u16;
+                return patch_image(new_pc, &mut game.host).byte(new_pc) as i32;
             }
         }
         -1i32
     }
 }
-pub unsafe fn CpuOpcodeHook(addr: u32, game: &mut Game) -> i32 {
+pub(crate) unsafe fn opcode_hook(game: &mut Execution<'_>, addr: u32) -> i32 {
+    unsafe {
+        opcode_hook_parts(
+            addr,
+            &mut HookContext {
+                backend: Some(&mut *game.backend),
+                host: &mut game.host,
+            },
+        )
+    }
+}
+unsafe fn opcode_hook_parts(addr: u32, game: &mut HookContext<'_, '_>) -> i32 {
     unsafe {
         let mut i: size_t = 0 as size_t;
         while i != (size_of::<[u32; 155]>() as usize).wrapping_div(size_of::<u32>() as usize) {
             if addr == kPatchedCarrys[i as usize] {
-                return game.kPatchedCarrysOrg[i as usize] as i32;
+                return game.host.kPatchedCarrysOrg[i as usize] as i32;
             }
             i = i.wrapping_add(1);
         }
-        let i_0: i32 = RunPatchBugHook(addr, game);
+        let i_0: i32 = run_patch_bug_hook_parts(addr, game);
         if i_0 >= 0 {
             return i_0;
         }
@@ -328,11 +391,14 @@ pub unsafe fn CpuOpcodeHook(addr: u32, game: &mut Game) -> i32 {
         0
     }
 }
-pub unsafe fn HookedFunctionRts(is_long: i32, game: &mut Game) -> bool {
+pub(crate) unsafe fn hooked_return(game: &mut Execution<'_>, is_long: i32) -> bool {
+    unsafe { hooked_return_parts(is_long, &mut game.host) }
+}
+unsafe fn hooked_return_parts(is_long: i32, host: &mut HostContext<'_>) -> bool {
     unsafe {
-        if game.g_calling_asm_from_c {
-            game.g_calling_asm_from_c_ret = is_long;
-            game.g_calling_asm_from_c = false_0 != 0;
+        if *host.g_calling_asm_from_c {
+            *host.g_calling_asm_from_c_ret = is_long;
+            *host.g_calling_asm_from_c = false_0 != 0;
             return false_0 != 0;
         }
         crate::native_assertion! {
@@ -752,7 +818,15 @@ unsafe fn VerifySnapshotsEq(
 }
 // Snapshot storage is separate from the live emulator allocations. Narrow
 // borrows let the compiler retain that distinction across the bulk copies.
-unsafe fn MakeSnapshot(s: &mut Snapshot, snes: &Snes, c: &Cpu, player: *mut SpcPlayer) {
+// RAM must be the selected backend's stable binding at both capture and restore.
+unsafe fn MakeSnapshot(
+    s: &mut Snapshot,
+    snes: &Snes,
+    c: &Cpu,
+    player: *mut SpcPlayer,
+    ram: &WorkRam,
+    backend: &crate::snes::snes::Backend,
+) {
     unsafe {
         s.player.capture(player);
         s.audio.capture(snes);
@@ -760,11 +834,12 @@ unsafe fn MakeSnapshot(s: &mut Snapshot, snes: &Snes, c: &Cpu, player: *mut SpcP
         s.cpu = *c;
         s.snes = *snes;
         // DMA rewind retains its four historical fields, excluding the outer padding.
-        s.dma.channel = (*snes.dma).channel;
-        s.dma.hdmaTimer = (*snes.dma).hdmaTimer;
-        s.dma.dmaTimer = (*snes.dma).dmaTimer;
-        s.dma.dmaBusy = (*snes.dma).dmaBusy;
-        memcpy(s.ram.as_mut_ptr().cast(), snes.ram.cast(), 0x20000);
+        let dma = backend.dma_state();
+        s.dma.channel = dma.channel;
+        s.dma.hdmaTimer = dma.hdmaTimer;
+        s.dma.dmaTimer = dma.dmaTimer;
+        s.dma.dmaBusy = dma.dmaBusy;
+        ram.copy_out(0, &mut s.ram);
         (*snes.cart)
             .ram
             .read_bytes(0, &mut s.sram[..(*snes.cart).ramSize as usize]);
@@ -777,7 +852,13 @@ macro_rules! copy_snapshot_fields {
         $($target.$field = $source.$field;)*
     };
 }
-unsafe fn RestoreSnapshot(s: &Snapshot, snes: &mut Snes, c: &mut Cpu) {
+unsafe fn RestoreSnapshot(
+    s: &Snapshot,
+    snes: &mut Snes,
+    c: &mut Cpu,
+    ram: &WorkRam,
+    backend: &crate::snes::snes::Backend,
+) {
     unsafe {
         s.audio.restore(snes);
         let ppu = &mut *snes.ppu;
@@ -832,10 +913,11 @@ unsafe fn RestoreSnapshot(s: &Snapshot, snes: &mut Snes, c: &mut Cpu) {
             hIrqEnabled, vIrqEnabled, nmiEnabled, hTimer, openBus,
             ppuLatch, autoJoyRead, autoJoyTimer, ramAdr,
         }
-        let dma = &mut *snes.dma;
+        let mut dma = backend.dma_state();
         copy_snapshot_fields! {dma, s.dma; channel, hdmaTimer, dmaTimer, dmaBusy}
+        backend.set_dma_state(dma);
         copy_snapshot_fields! {snes, s.snes; multiplyA, multiplyResult, divideA, divideResult}
-        memcpy(snes.ram.cast(), s.ram.as_ptr().cast(), 0x20000);
+        ram.copy_in(0, &s.ram);
         (*snes.cart).ram.write_bytes(0, &s.sram[..0x2000]);
         (*snes.ppu).vram = s.ppu.vram;
         let ppu = &mut *snes.ppu;
@@ -860,7 +942,7 @@ pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut
             let org_b: u8 = (*game.g_cpu).db;
             let org_dp: u16 = (*game.g_cpu).dp;
             printf(c"RunAsmCode!\n".as_ptr());
-            game.g_ram[0x1ffffi32 as usize] = 1;
+            game.ram().write_byte(0x1ffffi32 as usize, 1);
             let dc: bool = (*game.g_snes).debug_cycles;
             crate::set_fields! {[(*game.g_cpu)]; db = (pc >> 16) as u8, a = a, x = x, y = y,
             spBreakpoint = (*game.g_cpu).sp, k = (pc >> 16) as u8, pc = (pc & 0xffff) as u16,
@@ -870,18 +952,18 @@ pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut
                 let pc_0: u32 = (words!(i32, (*(*game.g_snes).cpu), k, pc)) as u32;
                 if (*game.g_snes).debug_cycles {
                     let mut line = [0u8; 80];
-                    getProcessorStateCpu(game.g_snes, &mut line, game);
+                    getProcessorStateCpu(&mut game.execution(), &mut line);
                     puts(line.as_ptr().cast());
                     line[0] = 0;
                 }
-                cpu_runOpcode(game.g_cpu, game);
-                while (*(*game.g_snes).dma).dmaBusy {
-                    dma_doDma((*game.g_snes).dma, game);
+                game.execution().step_cpu();
+                while game.dma_busy() {
+                    game.execution().do_dma();
                 }
                 if flags & 1 != 0 {
                     let mut i: i32 = 0;
                     while i < 10 {
-                        apu_cycle((*game.g_snes).apu, game);
+                        game.execution().cycle_apu();
                         i += 1;
                     }
                 }
@@ -897,7 +979,7 @@ pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut
         }
     }
 }
-unsafe fn loadRom(name: *const c_char, snes: *mut Snes, game: &mut Game) -> bool {
+unsafe fn loadRom(name: *const c_char, game: &mut Game) -> bool {
     unsafe {
         let file = fopen(name, c"rb".as_ptr());
         if file.is_null() {
@@ -919,25 +1001,25 @@ unsafe fn loadRom(name: *const c_char, snes: *mut Snes, game: &mut Game) -> bool
             crate::host::Die(c"fread failed".as_ptr());
         }
         drop(file);
-        snes_loadRom(snes, data, length as i32, game)
+        snes_loadRom(data, length as i32, game)
     }
 }
 pub unsafe fn PatchBytes(addr: u32, bytes: &[u8], game: &mut Game) {
     unsafe {
         // Resolve the original base for every byte; RomPtr can update g_fail.
         for (i, &byte) in bytes.iter().enumerate() {
-            patch_image(addr, game).write(addr, i, byte);
+            patch_image(addr, &mut game.execution_parts().1).write(addr, i, byte);
         }
     }
 }
 pub unsafe fn FixupCarry(addr: u32, game: &mut Game) {
     unsafe {
-        patch_image(addr, game).write(addr, 0, 0);
+        patch_image(addr, &mut game.execution_parts().1).write(addr, 0, 0);
     }
 }
 
 pub fn RtlUpdateSnesPatchForBugfix(game: &mut Game) {
-    let counter = u16::from_le_bytes([game.g_ram[0xc2], game.g_ram[0xc3]]);
+    let counter = u16::from_le_bytes([game.ram().read_byte(0xc2), game.ram().read_byte(0xc3)]);
     game.currently_installed_bug_fix_counter = counter;
     RomPatches::new(
         game.loaded_rom
@@ -950,7 +1032,7 @@ pub fn RtlUpdateSnesPatchForBugfix(game: &mut Game) {
 pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
     unsafe {
         game.initialize_backend();
-        let loaded: bool = loadRom(filename, game.g_snes, game);
+        let loaded: bool = loadRom(filename, game);
         if !loaded {
             return null_mut::<Snes>();
         }
@@ -963,7 +1045,7 @@ pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
             None,
             game,
         );
-        *ram_ptr!(game; 0x611) = 1;
+        game.ram().write_byte(0x611, 1);
         RomPatches::new(
             game.loaded_rom
                 .as_ref()
@@ -974,8 +1056,8 @@ pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
         RtlUpdateSnesPatchForBugfix(game);
         let mut i: size_t = 0 as size_t;
         while i != (size_of::<[u32; 155]>() as usize).wrapping_div(size_of::<u32>() as usize) {
-            let t_84: u8 =
-                patch_image(kPatchedCarrys[i as usize], game).byte(kPatchedCarrys[i as usize]);
+            let t_84: u8 = patch_image(kPatchedCarrys[i as usize], &mut game.execution_parts().1)
+                .byte(kPatchedCarrys[i as usize]);
             if t_84 != 0 {
                 game.kPatchedCarrysOrg[i as usize] = t_84;
                 FixupCarry(kPatchedCarrys[i as usize], game);
@@ -987,7 +1069,7 @@ pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
             }
             i = i.wrapping_add(1);
         }
-        PatchBugs(1, 0, game);
+        install_startup_bug_hooks(&mut game.execution_parts().1);
         game.g_snes
     }
 }
@@ -1004,10 +1086,10 @@ pub unsafe fn RunCpuUntilPC(pc1: u32, pc2: u32, game: &mut Game) -> u32 {
         loop {
             if (*game.g_snes).debug_cycles {
                 let mut line = [0u8; 80];
-                getProcessorStateCpu(game.g_snes, &mut line, game);
+                getProcessorStateCpu(&mut game.execution(), &mut line);
                 puts(line.as_ptr().cast());
             }
-            cpu_runOpcode(game.g_cpu, game);
+            game.execution().step_cpu();
             let addr: u32 = (words!(i32, (*(*game.g_snes).cpu), k, pc)) as u32;
             if addr == pc1 || addr == pc2 {
                 return addr;
@@ -1046,7 +1128,7 @@ pub unsafe fn DrawFrameToPpu(game: &mut Game) {
             // drawing and HDMA positions have events; the last step wraps the row.
             for position in [0, 512, 1024, 1362] {
                 (*game.g_snes).hPos = position;
-                snes_handle_pos_stuff(game.g_snes, game);
+                game.execution().advance_beam();
             }
             if (*game.g_snes).vIrqEnabled as i32 != 0
                 && (*game.g_snes).vPos as i32 - 1i32 == (*game.g_snes).vTimer as i32
@@ -1123,12 +1205,13 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
             return;
         }
         (*game.g_snes).ppu = (*game.g_snes).snes_ppu;
-        MakeSnapshot(
-            &mut game.g_snapshot_before,
-            &*game.g_snes,
-            &*game.g_cpu,
-            game.g_spc_player,
-        );
+        {
+            let snes = game.g_snes;
+            let cpu = game.g_cpu;
+            let player = game.g_spc_player;
+            let (backend, ram, _, _, before) = game.ram_and_snapshots();
+            MakeSnapshot(before, &*snes, &*cpu, player, ram, backend);
+        }
         game.actor_snapshots.before = Some(game.capture_actor_snapshot());
         let queue_before = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
         let apu_before = queue_before.pending;
@@ -1141,12 +1224,13 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
             (*game.g_snes).runningWhichVersion = 1;
             RunOneFrameOfGame_Emulated(game);
             DrawFrameToPpu(game);
-            MakeSnapshot(
-                &mut game.g_snapshot_theirs,
-                &*game.g_snes,
-                &*game.g_cpu,
-                game.g_spc_player,
-            );
+            {
+                let snes = game.g_snes;
+                let cpu = game.g_cpu;
+                let player = game.g_spc_player;
+                let (backend, ram, _, theirs, _) = game.ram_and_snapshots();
+                MakeSnapshot(theirs, &*snes, &*cpu, player, ram, backend);
+            }
             game.actor_snapshots.theirs = Some(game.capture_actor_snapshot());
             let queue_theirs = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
             let apu_theirs = queue_theirs.pending;
@@ -1162,18 +1246,24 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
                 .expect("paired actor snapshot missing")
                 .preflight(game.actor_identity(), game.world())
                 .expect("actor restore rejected");
-            RestoreSnapshot(&game.g_snapshot_before, &mut *game.g_snes, &mut *game.g_cpu);
+            {
+                let snes = game.g_snes;
+                let cpu = game.g_cpu;
+                let (backend, ram, _, _, before) = game.ram_and_snapshots();
+                RestoreSnapshot(before, &mut *snes, &mut *cpu, ram, backend);
+            }
             actor_restore.commit(game.actor_identity_mut());
             (*game.g_snes).runningWhichVersion = 2;
             gameplay::advance(Entry::Frame, game);
             DrawFrameToPpu(game);
             let queue_mine = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
-            MakeSnapshot(
-                &mut game.g_snapshot_mine,
-                &*game.g_snes,
-                &*game.g_cpu,
-                game.g_spc_player,
-            );
+            {
+                let snes = game.g_snes;
+                let cpu = game.g_cpu;
+                let player = game.g_spc_player;
+                let (backend, ram, mine, _, _) = game.ram_and_snapshots();
+                MakeSnapshot(mine, &*snes, &*cpu, player, ram, backend);
+            }
             game.actor_snapshots.mine = Some(game.capture_actor_snapshot());
             (*game.g_snes).runningWhichVersion = 0xff;
             VerifySnapshotsEq(
@@ -1242,7 +1332,12 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
                     .expect("paired actor snapshot missing")
                     .preflight(game.actor_identity(), game.world())
                     .expect("actor restore rejected");
-                RestoreSnapshot(&game.g_snapshot_before, &mut *game.g_snes, &mut *game.g_cpu);
+                {
+                    let snes = game.g_snes;
+                    let cpu = game.g_cpu;
+                    let (backend, ram, _, _, before) = game.ram_and_snapshots();
+                    RestoreSnapshot(before, &mut *snes, &mut *cpu, ram, backend);
+                }
                 actor_restore.commit(game.actor_identity_mut());
                 if game.g_use_my_apu_code {
                     game.g_snapshot_mine.player.restore(game.g_spc_player);
@@ -1275,7 +1370,12 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
                     .expect("paired actor snapshot missing")
                     .preflight(game.actor_identity(), game.world())
                     .expect("actor restore rejected");
-                RestoreSnapshot(&game.g_snapshot_theirs, &mut *game.g_snes, &mut *game.g_cpu);
+                {
+                    let snes = game.g_snes;
+                    let cpu = game.g_cpu;
+                    let (backend, ram, _, theirs, _) = game.ram_and_snapshots();
+                    RestoreSnapshot(theirs, &mut *snes, &mut *cpu, ram, backend);
+                }
                 actor_restore.commit(game.actor_identity_mut());
                 if game.g_use_my_apu_code {
                     game.g_snapshot_mine.player.restore(game.g_spc_player);
@@ -1299,7 +1399,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
         if word!(game.game_state) as i32 == 0xffff {
             (*(*game.g_snes).cpu).k = 0x80;
             (*(*game.g_snes).cpu).pc = 0x8459;
-            *ram_ptr!(game; 0x611) = 3;
+            game.ram().write_byte(0x611, 3);
         }
         if word!(game.menu_index) & 0xff00 != 0 {
             printf(c"MENU INDEX TOO BIG!\n".as_ptr());
@@ -1317,7 +1417,7 @@ pub unsafe fn RtlRunFrameCompare(input: u16, run_what: i32, game: &mut Game) {
             eprintln!("RtlRunFrameCompare: CPU authority is unavailable for a prepared world");
             return;
         }
-        (*(*game.g_snes).input1).currentState = input;
+        game.input1_mut().currentState = input;
         if game.g_runmode as i32 == RM_THEIRS as i32 {
             RunOneFrameOfGame_Emulated(game);
             DrawFrameToPpu(game);

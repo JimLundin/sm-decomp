@@ -19,10 +19,11 @@ fn rom_bytes(image: &RomImage, address: u32, bytes: &[u8]) {
     }
 }
 fn seed(g: &mut Game, x: u16, map_x: u16, native_length: usize) -> RomImage {
-    g.g_ram.fill(0);
+    g.ram().fill(0..g.ram().len(), 0);
     g.g_fail = false;
     for index in 0..96 {
-        put(&mut g.g_ram, 0xc608 + 2 * index, 0x5000 + index as u16);
+        g.ram()
+            .copy_in(0xc608 + 2 * index, &(0x5000 + index as u16).to_le_bytes());
     }
     for (at, value) in [
         (w::samus_x_pos, x),
@@ -33,9 +34,9 @@ fn seed(g: &mut Game, x: u16, map_x: u16, native_length: usize) -> RomImage {
         (w::room_y_coordinate_on_map, 0),
         (w::has_area_map, 1),
     ] {
-        put(&mut g.g_ram, at, value);
+        g.ram().copy_in(at, &(value as u16).to_le_bytes());
     }
-    g.g_ram[0x5b5] = 8;
+    g.ram().write_byte(0x5b5, 8);
     let loaded = RomImage::zeroed(0x200000);
     let native = RomImage::zeroed(native_length);
     rom_bytes(&loaded, 0x829717, &0x9000u16.to_le_bytes());
@@ -55,7 +56,7 @@ fn check_half_crossing(g: &mut Game, reverse: bool) {
             rom_bytes(&native, 0x829000 + offset, &[0xe0]);
         }
         for (offset, byte) in [(7, 1), (11, 2), (15, 3)] {
-            g.g_ram[0x7f7 + offset] = byte;
+            g.ram().write_byte(0x7f7 + offset, byte);
         }
         (
             [62usize, 63, 1056, 1057, 1058],
@@ -74,7 +75,7 @@ fn check_half_crossing(g: &mut Game, reverse: bool) {
             rom_bytes(&native, 0x829000 + offset, &[0xc0]);
         }
         for (offset, byte) in [(132, 0x40), (136, 0x80), (140, 0xc0)] {
-            g.g_ram[0x7f7 + offset] = byte;
+            g.ram().write_byte(0x7f7 + offset, byte);
         }
         (
             [61usize, 62, 63, 1056, 1057],
@@ -95,7 +96,9 @@ fn check_half_crossing(g: &mut Game, reverse: bool) {
             );
         }
     }
-    let mut expected = g.g_ram.to_vec();
+    let mut expected = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     if reverse {
         expected[0x87f] = 0x80;
     } else {
@@ -115,7 +118,9 @@ fn check_half_crossing(g: &mut Game, reverse: bool) {
         player_update::minimap::update(&mut runtime);
     }
     assert_eq!(
-        g.g_ram.as_slice(),
+        &(0..g.ram().len())
+            .map(|at| g.ram().read_byte(at))
+            .collect::<Vec<u8>>()[..],
         expected.as_slice(),
         "map half crossing and source-row wrap reverse={reverse}"
     );
@@ -131,7 +136,9 @@ fn check_lazy_tiles(g: &mut Game, fail_visited: bool) {
     if !fail_visited {
         native.write(tile_base + 133, 0x40);
     }
-    let mut expected = g.g_ram.to_vec();
+    let mut expected = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     expected[0x7ff] = 0x20;
     for column in 0..5 {
         for row in 0..3 {
@@ -206,7 +213,9 @@ fn check_lazy_tiles(g: &mut Game, fail_visited: bool) {
         std::panic::resume_unwind(panic);
     }
     assert_eq!(
-        g.g_ram.as_slice(),
+        &(0..g.ram().len())
+            .map(|at| g.ram().read_byte(at))
+            .collect::<Vec<u8>>()[..],
         expected.as_slice(),
         "lazy map tiles and mapped HUD failure prefix fail={fail_visited}"
     );
@@ -214,7 +223,9 @@ fn check_lazy_tiles(g: &mut Game, fail_visited: bool) {
 }
 pub(crate) fn run(g: &mut Game) -> usize {
     assert!(!g.actor_identity_is_with_session());
-    let ram = g.g_ram.to_vec();
+    let ram = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     let fail = g.g_fail;
     let loaded = g.loaded_rom.clone();
     let native = g.capture_native_rom_binding();
@@ -225,7 +236,7 @@ pub(crate) fn run(g: &mut Game) -> usize {
         check_lazy_tiles(g, true);
         COUNT
     }));
-    g.g_ram.copy_from_slice(&ram);
+    g.ram().copy_in(0, &ram);
     g.g_fail = fail;
     g.loaded_rom = loaded;
     g.restore_native_rom_binding(native);

@@ -97,7 +97,8 @@ pub(super) fn apply(address: u32, game: &mut Game) -> bool {
         _ => return false,
     };
     for &(cell, color) in cells {
-        game.g_ram[0xcd20 + usize::from(cell)] = color as u8;
+        game.ram()
+            .write_byte(0xcd20 + usize::from(cell), color as u8);
     }
     true
 }
@@ -112,8 +113,9 @@ use crate::rtl::{Unreachable, words};
 use camera::{auto_x, auto_y, trigger_down, trigger_left, trigger_right, trigger_up};
 // Native split motion reads low then high and writes low then high.
 fn add_native_motion(high: usize, low: usize, amount: u32, game: &mut Game) {
-    let low_word = u16::from_ne_bytes([game.g_ram[low], game.g_ram[low + 1]]);
-    let high_word = u16::from_ne_bytes([game.g_ram[high], game.g_ram[high + 1]]);
+    let low_word = u16::from_ne_bytes([game.ram().read_byte(low), game.ram().read_byte(low + 1)]);
+    let high_word =
+        u16::from_ne_bytes([game.ram().read_byte(high), game.ram().read_byte(high + 1)]);
     let position = u32::from(low_word) | (u32::from(high_word) << 16);
     let next = position.wrapping_add(amount);
     word_transfers!(game, ascending, 1;
@@ -197,9 +199,9 @@ fn follow_x(game: &mut Game) {
         return;
     }
     let distances = if (word!(game.knockback_dir) != 0
-        || game.g_ram[0xa1f] == 16
+        || game.ram().read_byte(0xa1f) == 16
         || word!(game.samus_x_accel_mode) == 1) as i32
-        ^ (game.g_ram[0xa1e] != 4) as i32
+        ^ (game.ram().read_byte(0xa1e) != 4) as i32
         != 0
     {
         &kSamus_HandleScroll_X_FaceRight
@@ -250,7 +252,7 @@ fn follow_y(game: &mut Game) {
 }
 
 pub(crate) fn fill_viewport(game: &mut Game, mut flush: impl FnMut(&mut Game)) {
-    let mut v1: i32 = (game.g_ram[0x58] as i32 - game.g_ram[0x59] as i32) << 8;
+    let mut v1: i32 = (game.ram().read_byte(0x58) as i32 - game.ram().read_byte(0x59) as i32) << 8;
     word!(game.size_of_bg2 = (v1 & 0xf800) as u16);
     calculate_blocks(game);
     let mut v2: i32 = 0;
@@ -261,7 +263,7 @@ pub(crate) fn fill_viewport(game: &mut Game, mut flush: impl FnMut(&mut Game)) {
         word!(game.vram_blocks_to_update_x_block = word!(game.bg1_x_block));
         word!(game.vram_blocks_to_update_y_block = word!(game.bg1_y_block));
         queue_scrolling_tiles(0x0, ScrollingDmaLayout::Column, game);
-        if game.g_ram[0x91b] & 1 == 0 {
+        if game.ram().read_byte(0x91b) & 1 == 0 {
             word!(game.blocks_to_update_x_block = word!(game.layer2_x_block));
             word!(game.blocks_to_update_y_block = word!(game.layer2_y_block));
             word!(game.vram_blocks_to_update_x_block = word!(game.bg2_x_block));
@@ -310,7 +312,7 @@ pub(crate) fn update_backgrounds(game: &mut Game) {
         (2, ScrollingDmaLayout::Row),
     ] {
         for (layer, parameter) in [(0, 0), (4, 0x1c)] {
-            if layer != 0 && game.g_ram[0x91b + axis / 2] & 1 != 0 {
+            if layer != 0 && game.ram().read_byte(0x91b + axis / 2) & 1 != 0 {
                 continue;
             }
             let current = fields::layer1_x_block + layer + axis;

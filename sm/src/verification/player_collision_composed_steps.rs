@@ -3,10 +3,14 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 use crate::{game::session_runtime::Runtime, game_state::Game, ram_map::words as ram};
 fn put(g: &mut Game, at: usize, value: u16) {
-    g.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    g.ram().copy_in(at, &value.to_le_bytes());
 }
 fn word(g: &Game, at: usize) -> u16 {
-    u16::from_le_bytes(g.g_ram[at..at + 2].try_into().unwrap())
+    u16::from_le_bytes({
+        let mut bytes = [0; 2];
+        g.ram().copy_out(at, &mut bytes);
+        bytes
+    })
 }
 fn write(image: &crate::rom::RomImage, address: u32, bytes: &[u8]) {
     let at = crate::rom::lorom_offset(address) as usize;
@@ -33,7 +37,7 @@ pub(crate) fn install_surface_content(g: &mut Game) {
 fn cell(g: &mut Game, x: u16, y: u16, level: u16, bts: u8) {
     let index = usize::from(y >> 4) * 96 + usize::from(x >> 4);
     put(g, 0x10002 + index * 2, level);
-    g.g_ram[0x16402 + index] = bts;
+    g.ram().write_byte(0x16402 + index, bts);
 }
 fn position(g: &mut Game, x: u16, y: u16) {
     // Authored geometry/fraction input, not a collision/continuation result.
@@ -49,7 +53,7 @@ fn position(g: &mut Game, x: u16, y: u16) {
 fn trace(out: &mut Vec<u8>, phase: u8, g: &Game) {
     out.push(phase);
     // Preserve every intermediate byte before the next authored input edit.
-    out.extend_from_slice(&g.g_ram);
+    out.extend((0..g.ram().len()).map(|at| g.ram().read_byte(at)));
     out.push(u8::from(g.g_fail));
 }
 pub(crate) unsafe fn run(g: &mut Game, reversed: bool, out: &mut Vec<u8>) {

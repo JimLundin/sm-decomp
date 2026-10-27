@@ -63,6 +63,6 @@ impl Effects for Runtime<'_> {
         self.foreign(|game| super::legacy::respawn_enemy(index, game));
     }
     fn reset_room_enemy_workspace(&mut self) {
-        self.foreign(|game| game.g_ram[0x7000..0x9800].fill(0));
+        self.foreign(|game| game.ram().fill(0x7000..0x9800, 0));
     }
 }

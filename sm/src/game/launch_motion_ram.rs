@@ -6,11 +6,14 @@ use crate::game::launch_motion::{LaunchMotion, MovementDirection};
 use crate::game_state::Game;
 
 fn read(game: &Game, address: usize) -> u16 {
-    u16::from_le_bytes([game.g_ram[address], game.g_ram[address + 1]])
+    u16::from_le_bytes([
+        game.ram().read_byte(address),
+        game.ram().read_byte(address + 1),
+    ])
 }
 
 fn write(game: &mut Game, address: usize, value: u16) {
-    game.g_ram[address..address + 2].copy_from_slice(&value.to_le_bytes());
+    game.ram().copy_in(address, &value.to_le_bytes());
 }
 
 fn history(game: &Game) -> LaunchMotion {

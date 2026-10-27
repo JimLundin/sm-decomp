@@ -277,7 +277,7 @@ impl ActorIdentityState {
     pub(crate) fn commit_canonical_transition(
         &mut self,
         transition: PreparedCanonicalTransition,
-        final_ram: &[u8; 131072],
+        final_ram: &impl Fn(usize) -> u8,
     ) {
         self.replace_timeline(
             transition.next_live_epoch,
@@ -289,7 +289,7 @@ impl ActorIdentityState {
     /// Fixed byte-image adoption may construct its complete paired restore in advance.
     pub(crate) fn prepare_canonical_adoption(
         &self,
-        ram: &[u8; 131072],
+        ram: &impl Fn(usize) -> u8,
     ) -> Result<super::snapshot::PreparedActorRestore, ActorIdentityError> {
         let transition = self.prepare_canonical_transition()?;
         Ok(super::snapshot::PreparedActorRestore::new(
@@ -329,11 +329,11 @@ impl From<super::content::ActorContentError> for ActorIdentityError {
     }
 }
 
-fn canonical_timeline(ram: &[u8; 131072]) -> ActorTimeline {
+fn canonical_timeline(ram: &impl Fn(usize) -> u8) -> ActorTimeline {
     let mut next_birth_order = 0;
     let slots = core::array::from_fn(|slot| {
         let at = 0xf78 + slot * 64;
-        if u16::from_le_bytes([ram[at], ram[at + 1]]) == 0 {
+        if u16::from_le_bytes([ram(at), ram(at + 1)]) == 0 {
             SlotIdentity::default()
         } else {
             let birth_order = next_birth_order;
@@ -413,12 +413,12 @@ impl ActorIdentityState {
 }
 
 impl ActorTimeline {
-    pub(super) fn encode(&self, bytes: &mut Vec<u8>, ram: &[u8; 131072]) {
+    pub(super) fn encode(&self, bytes: &mut Vec<u8>, ram: &impl Fn(usize) -> u8) {
         bytes.extend_from_slice(&self.next_birth_order.to_le_bytes());
         for (index, slot) in self.slots.iter().enumerate() {
             bytes.extend_from_slice(&slot.generation.to_le_bytes());
             let at = 0xf78 + index * 64;
-            let raw_live = ram[at..at + 2] != [0, 0];
+            let raw_live = [ram(at), ram(at + 1)] != [0, 0];
             // Unknown compatibility-live slots are possible through odd/raw aliases.
             bytes.push(if slot.occupant.is_some() {
                 1
@@ -460,7 +460,7 @@ impl ActorTimeline {
     pub(super) fn decode(
         read: &mut super::snapshot::CheckpointReader<'_>,
         world: &crate::game::room_entry::world::WorldBinding,
-        ram: &[u8; 131072],
+        ram: &impl Fn(usize) -> u8,
     ) -> Result<Self, String> {
         let next_birth_order = read.counter()?;
         let mut slots: [SlotIdentity; 32] = core::array::from_fn(|_| SlotIdentity::default());
@@ -468,7 +468,7 @@ impl ActorTimeline {
         for (index, slot) in slots.iter_mut().enumerate() {
             slot.generation = read.counter()?;
             let at = 0xf78 + index * 64;
-            let raw_live = ram[at..at + 2] != [0, 0];
+            let raw_live = [ram(at), ram(at + 1)] != [0, 0];
             match read.byte()? {
                 0 if !raw_live => continue,
                 2 if raw_live => continue,

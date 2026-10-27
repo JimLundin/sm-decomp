@@ -39,7 +39,7 @@ pub(crate) unsafe fn enable(immediate: bool, game: &mut Game) {
         }
         at!(game, 0x84; = at!(game, 0x84;) | 0x30);
         if immediate {
-            WriteReg(NMITIMEN as u16, game.g_ram[0x84], game);
+            WriteReg(NMITIMEN as u16, game.ram().read_byte(0x84), game);
         }
     }
 }
@@ -72,8 +72,8 @@ pub(crate) unsafe fn advance(game: &mut Game) {
             }
             3 => {
                 crate::rtl::register_writes! { game;
-                    byte(CGWSEL as u16, game.g_ram[0x70]); byte(CGADSUB as u16, game.g_ram[0x73]);
-                    byte(BG3SC as u16, game.g_ram[0x5b]); byte(TM as u16, game.g_ram[0x6a]);
+                    byte(CGWSEL as u16, game.ram().read_byte(0x70)); byte(CGADSUB as u16, game.ram().read_byte(0x73));
+                    byte(BG3SC as u16, game.ram().read_byte(0x5b)); byte(TM as u16, game.ram().read_byte(0x6a));
                 }
                 (pending(4, game), 0, 152)
             }
@@ -96,8 +96,8 @@ pub(crate) unsafe fn advance(game: &mut Game) {
             }
             7 => {
                 crate::rtl::register_writes! { game;
-                    byte(BG3SC as u16, game.g_ram[0x5b]); byte(CGWSEL as u16, game.g_ram[0x70]);
-                    byte(CGADSUB as u16, game.g_ram[0x73]);
+                    byte(BG3SC as u16, game.ram().read_byte(0x5b)); byte(CGWSEL as u16, game.ram().read_byte(0x70));
+                    byte(CGADSUB as u16, game.ram().read_byte(0x73));
                 }
                 (pending(12, game), 0, 152)
             }

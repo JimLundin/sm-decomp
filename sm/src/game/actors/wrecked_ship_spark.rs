@@ -31,7 +31,10 @@ pub(crate) fn initialize(game: &mut Game) {
     if gameplay_flag_runtime::boss_byte_at(word!(game.area_index), game) & 1 == 0 {
         // Seventh packed VRAM entry's destination high byte and the next byte.
         slot!(game, Spark[E].base.properties, |old| old
-            | u16::from_ne_bytes([game.g_ram[0x100], game.g_ram[0x101]]));
+            | u16::from_ne_bytes([
+                game.ram().read_byte(0x100),
+                game.ram().read_byte(0x101)
+            ]));
     }
 }
 pub(crate) fn advance(game: &mut Game) {

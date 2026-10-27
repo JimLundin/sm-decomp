@@ -129,7 +129,7 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
         // resume path, including actor staging after the display callbacks are skipped.
         if matches!(entry, Entry::Initialize) {
             crate::verify_probe::hit("coroutine.init");
-            let mut stage = game.g_ram[0x612];
+            let mut stage = game.ram().read_byte(0x612);
             let mut waiting = stage >= 2;
             if stage == 0 {
                 let demo = u32::from(word!(game.game_state)) == kGameState_40_TransitionToDemo;
@@ -162,7 +162,7 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                     room_entry::protocol::resume(&mut Runtime::new(game), EntrySignal::Initial)
                         .returned_byte();
                 if yielded != 0 {
-                    game.g_ram[0x612] = 1;
+                    game.ram().write_byte(0x612, 1);
                     return yielded;
                 }
                 crate::game::hud::initialize(game);
@@ -201,7 +201,7 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                     }
                     let yielded: u8 = crate::game::display_refresh::wait(true, game);
                     if yielded != 0 {
-                        game.g_ram[0x612] = stage;
+                        game.ram().write_byte(0x612, stage);
                         return yielded;
                     }
                     word!(game.loop_counter_transfer_enemies_to_vram -= 1);
@@ -230,12 +230,12 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                     }
                 }
             }
-            game.g_ram[0x612] = 0;
+            game.ram().write_byte(0x612, 0);
             return 0 as CoroutineRet;
         }
         if matches!(entry, Entry::Frame) {
             let returned = 'frame: {
-                let mut st: i32 = game.g_ram[0x611] as i32;
+                let mut st: i32 = game.ram().read_byte(0x611) as i32;
                 let begin_frame: bool = if st >= 1 && st <= 3 {
                     let mut _coret_: u8 = crate::game::boot::resume(game);
                     if _coret_ != 0 {
@@ -253,7 +253,7 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                 };
                 if begin_frame {
                     for offset in (0x612..0x616).rev() {
-                        game.g_ram[offset] = 0;
+                        game.ram().write_byte(offset, 0);
                     }
                     crate::game::controller_input::sample(game);
                     crate::game::visual_runtime::update_hdma(game);
@@ -264,7 +264,7 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                         nmi_copy_samus_bottom_half_src,
                     }
                     st = word!(game.game_state) as i32 + 10;
-                    game.g_ram[0x611] = st as u8;
+                    game.ram().write_byte(0x611, st as u8);
                 }
                 let mut _coret__0: u8 = match GAME_STATE_ENTRIES[usize::from((st - 10i32) as u16)] {
                     Advance(entry) => advance(entry, game),
@@ -309,23 +309,26 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                 });
                 crate::game::sprite_drawing::finish_frame(game);
                 word!(game.joypad1_input_samusfilter = word!(game.joypad1_lastkeys));
-                if game.g_ram[0x612] | game.g_ram[0x613] | game.g_ram[0x614] | game.g_ram[0x615]
+                if game.ram().read_byte(0x612)
+                    | game.ram().read_byte(0x613)
+                    | game.ram().read_byte(0x614)
+                    | game.ram().read_byte(0x615)
                     != 0
                 {
                     printf(
                         c"Coroutine state: %d, %d, %d, %d\n".as_ptr(),
-                        game.g_ram[0x612] as i32,
-                        game.g_ram[0x613] as i32,
-                        game.g_ram[0x614] as i32,
-                        game.g_ram[0x615] as i32,
+                        game.ram().read_byte(0x612) as i32,
+                        game.ram().read_byte(0x613) as i32,
+                        game.ram().read_byte(0x614) as i32,
+                        game.ram().read_byte(0x615) as i32,
                     );
                     crate::host::Warning(c"Coroutine State is broken!".as_ptr());
                 }
-                game.g_ram[0x611] = 0;
+                game.ram().write_byte(0x611, 0);
                 0
             };
             if returned == 0 {
-                game.g_ram[0x5b4] = 1;
+                game.ram().write_byte(0x5b4, 1);
             }
             display_refresh::run(game);
             return returned;
@@ -410,7 +413,7 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
             return 0 as CoroutineRet;
         }
         if matches!(entry, Entry::UnpauseSetup) {
-            let resume = game.g_ram[0x612];
+            let resume = game.ram().read_byte(0x612);
             if resume == 0 {
                 GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x1000).load(game);
                 word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- pause_map(384));
@@ -431,8 +434,12 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                 display_refresh::enable(true, game);
                 crate::game::scanline_irq::enable(false, game);
                 pause_controls::restore_graphics(game);
-                GraphicsAsset::VramWords(0x7edf5c, u16::from(game.g_ram[0x59] & 0xfc) << 8, 0x1000)
-                    .load(game);
+                GraphicsAsset::VramWords(
+                    0x7edf5c,
+                    u16::from(game.ram().read_byte(0x59) & 0xfc) << 8,
+                    0x1000,
+                )
+                .load(game);
                 word! { game, 1; screen_fade_delay, screen_fade_counter }
             }
             if resume <= 1 {
@@ -449,7 +456,7 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                     }
                 };
                 if yielded != 0 {
-                    game.g_ram[0x612] = 1;
+                    game.ram().write_byte(0x612, 1);
                     return yielded;
                 }
                 crate::game::visual_runtime::set_hdma_enabled(true, game);
@@ -457,7 +464,7 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                 crate::game::player_projectiles::restore_sound(game);
                 word!(game.game_state += 1);
             }
-            game.g_ram[0x612] = 0;
+            game.ram().write_byte(0x612, 0);
             return 0 as CoroutineRet;
         }
         if matches!(entry, Entry::UnpauseFadeOut | Entry::GameOverFadeOut) {
@@ -465,7 +472,7 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                 crate::game::pause_controls::draw_unpause(game);
             }
             crate::game::display_refresh::fade(false, game);
-            if game.g_ram[0x51] == 0x80 {
+            if game.ram().read_byte(0x51) == 0x80 {
                 crate::game::display_refresh::enable(true, game);
                 word! { game, 0; screen_fade_delay, screen_fade_counter }
                 word!(game.game_state += 1);
@@ -477,7 +484,7 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
         }
         if matches!(entry, Entry::TimeUpExit) {
             crate::game::display_refresh::fade(false, game);
-            if game.g_ram[0x51] == 0x80 {
+            if game.ram().read_byte(0x51) == 0x80 {
                 crate::game::display_refresh::enable(true, game);
                 crate::game::display_refresh::finish_gameplay(true, game);
                 word! { game, 0;
@@ -501,7 +508,7 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
             crate::game::escape_timer::draw(game);
         }
         if matches!(entry, Entry::ReserveTanks)
-            && game.g_ram[0x612] == 0
+            && game.ram().read_byte(0x612) == 0
             && crate::game::reserve_tanks::refill_auto(game) != 0
         {
             word! {game; time_is_frozen_flag = 0; game_state = kGameState_8_MainGameplay as u16; }
@@ -563,7 +570,7 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
         match entry {
             Entry::FadeIn | Entry::Unpause => {
                 crate::game::display_refresh::fade(true, game);
-                if game.g_ram[0x51] == 15 {
+                if game.ram().read_byte(0x51) == 15 {
                     word! { game, 0; screen_fade_delay, screen_fade_counter }
                     if matches!(entry, Entry::FadeIn) {
                         word!(game.game_state += 1);
@@ -620,7 +627,7 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
             }
             Entry::CeresBlackout | Entry::ZebesEscape => {
                 crate::game::display_refresh::fade(false, game);
-                if game.g_ram[0x51] == 0x80 {
+                if game.ram().read_byte(0x51) == 0x80 {
                     let ceres = matches!(entry, Entry::CeresBlackout);
                     crate::game::display_refresh::enable(true, game);
                     crate::game::display_refresh::finish_gameplay(ceres, game);
@@ -641,7 +648,7 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
             }
             Entry::PauseFadeOut => {
                 crate::game::display_refresh::fade(false, game);
-                if game.g_ram[0x51] & 0xf == 0 {
+                if game.ram().read_byte(0x51) & 0xf == 0 {
                     crate::game::display_refresh::enable(true, game);
                     word! { game, 0; screen_fade_delay, screen_fade_counter }
                     word!(game.game_state += 1);
@@ -650,7 +657,7 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
             Entry::DemoStart => {
                 crate::game::visual_runtime::update_hdma(game);
                 word!(game.game_state += 1);
-                game.g_ram[0x51] = 15;
+                game.ram().write_byte(0x51, 15);
             }
             Entry::Frame
             | Entry::DemoStop

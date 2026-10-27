@@ -1,7 +1,7 @@
 //! Original 65816 sprite lifecycle and real OAM output. Component oracle, not a movie.
 use super::{Game, MakeSnapshot, RestoreSnapshot, Snapshot};
 use crate::initial_state::InitialState;
-use crate::snes::cpu::{cpu_getFlags, cpu_runOpcode};
+use crate::snes::cpu::cpu_getFlags;
 use crate::sprite_pool_case::{self as case, Operation};
 use std::collections::BTreeSet;
 fn offset(address: u32) -> usize {
@@ -190,7 +190,9 @@ unsafe fn run_phase(
             Operation::Draw => (0xbd32, 0xbd96),
         };
         case::prepare(operation, game);
-        let before = game.g_ram.to_vec();
+        let before = (0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<_>>();
         let cpu = &mut *game.g_cpu;
         cpu.a = 0xa55a;
         cpu.x = 0x1357;
@@ -241,7 +243,10 @@ unsafe fn run_phase(
                 {
                     return Err(format!("sprite phase{index} did not restore caller"));
                 }
-                for (address, (&prior, &after)) in before.iter().zip(game.g_ram.iter()).enumerate()
+                for (address, (&prior, after)) in before
+                    .iter()
+                    .zip((0..game.ram().len()).map(|at| game.ram().read_byte(at)))
+                    .enumerate()
                 {
                     if prior != after
                         && !excluded.contains(&address)
@@ -292,8 +297,8 @@ unsafe fn run_phase(
                 emitter_calls += 1;
             }
             cpu_only_writes(pc, (*game.g_cpu).sp, &mut excluded);
-            cpu_runOpcode(game.g_cpu, game);
-            if (*(*game.g_snes).dma).dmaBusy {
+            game.execution().step_cpu();
+            if game.dma_busy() {
                 return Err("unexpected DMA in sprite component oracle".into());
             }
         }
@@ -307,7 +312,20 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             return Err("invalid sprite oracle request".into());
         }
         let mut before = Box::new(Snapshot::INITIAL);
-        MakeSnapshot(&mut before, &*game.g_snes, &*game.g_cpu, game.g_spc_player);
+        {
+            let snapshot_snes = game.g_snes;
+            let snapshot_cpu = game.g_cpu;
+            let snapshot_player = game.g_spc_player;
+            let (backend, ram, _, _, _) = game.ram_and_snapshots();
+            MakeSnapshot(
+                &mut before,
+                &*snapshot_snes,
+                &*snapshot_cpu,
+                snapshot_player,
+                ram,
+                backend,
+            )
+        };
         let cpu_before = *game.g_cpu;
         let cycles_before = (*game.g_snes).cpuCyclesLeft;
         let memory_before = (*game.g_snes).cpuMemOps;
@@ -333,7 +351,18 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             }
             Ok(output)
         }));
-        RestoreSnapshot(&before, &mut *game.g_snes, &mut *game.g_cpu);
+        {
+            let snapshot_snes = game.g_snes;
+            let snapshot_cpu = game.g_cpu;
+            let (backend, ram, _, _, _) = game.ram_and_snapshots();
+            RestoreSnapshot(
+                &before,
+                &mut *snapshot_snes,
+                &mut *snapshot_cpu,
+                ram,
+                backend,
+            )
+        };
         before.audio.restore(game.g_snes);
         before.player.restore(game.g_spc_player);
         *game.g_cpu = cpu_before;

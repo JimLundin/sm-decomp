@@ -1,7 +1,9 @@
 #![forbid(unsafe_code)]
 use crate::{
-    game_state::Game,
-    room_reference_cases::{put, replacement, snapshot},
+    game_state::WorkRam,
+    rom::RomImage,
+    room_background_support::ram_word,
+    room_reference_cases::{replacement, snapshot_parts},
 };
 use std::cell::RefCell;
 struct Capture {
@@ -27,7 +29,12 @@ pub(crate) fn finish() -> Vec<u8> {
         c.bytes
     })
 }
-pub(crate) fn diagnostic(address: u32, g: &mut Game) {
+pub(crate) fn diagnostic_parts(
+    address: u32,
+    ram: &WorkRam,
+    loaded_rom: &mut Option<RomImage>,
+    fail: &bool,
+) {
     ACTIVE.with(|a| {
         let mut active = a.borrow_mut();
         let Some(c) = active.as_mut() else {
@@ -38,13 +45,13 @@ pub(crate) fn diagnostic(address: u32, g: &mut Game) {
         assert_eq!(address, 0x8f0010);
         c.count += 1;
         c.bytes.extend_from_slice(&address.to_le_bytes());
-        snapshot(&mut c.bytes, g);
-        g.loaded_rom = Some(replacement(c.id));
-        put(
-            g,
+        snapshot_parts(&mut c.bytes, ram, fail);
+        *loaded_rom = Some(replacement(c.id));
+        ram_word(
+            ram,
             if c.id == 32 { 0x7bb } else { 0x79b },
             if c.id == 32 { 0xb000 } else { 0xa000 },
         );
-        snapshot(&mut c.bytes, g);
+        snapshot_parts(&mut c.bytes, ram, fail);
     });
 }

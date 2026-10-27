@@ -80,15 +80,20 @@ pub(crate) fn observe(name: &str, state: &Session, game: &Game) {
         _ => return,
     };
     // Project to a copy only; observation cannot trigger a foreign interval.
-    let mut bytes = game.g_ram.to_vec();
-    session_encoding::encode(state, &mut bytes);
+    let mut bytes = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<_>>();
+    session_encoding::encode(state, |at, span| {
+        bytes[at..at + span.len()].copy_from_slice(span)
+    });
     if let Some(carry) = carry {
         bytes.insert(0, carry);
     }
     append(tag, &bytes);
 }
 fn put(game: &mut Game, at: usize, value: u16) {
-    game.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    let _ = &[(); 0x20000][at..at + 2];
+    game.ram().copy_in(at, &value.to_le_bytes());
 }
 /// Frozen29 inputs plus four appended post-charge injections; no ROM bytes.
 fn seed(id: u32, game: &mut Game) -> Result<(), String> {
@@ -122,8 +127,9 @@ fn seed(id: u32, game: &mut Game) -> Result<(), String> {
         29..=32 => (0, 0, 0xc4f0, 0, 0, 0),
         _ => return Err("unknown selector2 case".into()),
     };
-    game.g_ram.fill(0);
-    game.g_ram[0x1ffff] = 1;
+    game.ram().fill(0..game.ram().len(), 0);
+    let value = 1;
+    game.ram().write_byte(0x1ffff, value);
     for (at, value) in [
         (0xacc, 2),
         (0xa4a, flags),

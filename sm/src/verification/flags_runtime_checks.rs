@@ -57,7 +57,9 @@ fn set_native_state(s: &mut Session, v: [u16; 8]) {
 }
 fn projection(h: &Runtime<'_>, expected: &[u8]) {
     let mut actual = expected.to_vec();
-    session_encoding::encode(h.session(), &mut actual);
+    session_encoding::encode(h.session(), |at, bytes| {
+        actual[at..at + bytes.len()].copy_from_slice(bytes)
+    });
     assert_eq!(actual, expected, "flags.guard.whole-union");
     for at in (0xd820..0xd8f0).chain(0x5e7..0x5e9) {
         assert_eq!(
@@ -89,7 +91,7 @@ fn load_from_sram(slot: u16, g: &mut Game) -> u8 {
 #[forbid(unsafe_code)]
 fn load_entry(case: u32) {
     let mut game = Game::new();
-    game.g_ram.fill(0x69);
+    game.ram().fill(0..game.ram().len(), 0x69);
     game.g_sram = crate::save_ram::SaveRam::zeroed(8192);
     let image = crate::rom::RomImage::zeroed(0x200000);
     game.loaded_rom = Some(image.clone());
@@ -111,7 +113,10 @@ fn load_entry(case: u32) {
         set_native_state(h.session_mut(), native);
         h.foreign(|g| {
             assert_eq!(
-                &g.g_ram[0xd820..0xd828],
+                (0xd820..0xd828)
+                    .map(|at| g.ram().read_byte(at))
+                    .collect::<Vec<_>>()
+                    .as_slice(),
                 &[0x17; 8],
                 "flags.guard.load-publish"
             );
@@ -123,17 +128,23 @@ fn load_entry(case: u32) {
                 "flags.guard.load-status"
             );
             assert_eq!(
-                &g.g_ram[0xd820..0xd8f0],
+                (0xd820..0xd8f0)
+                    .map(|at| g.ram().read_byte(at))
+                    .collect::<Vec<_>>()
+                    .as_slice(),
                 flags,
                 "flags.guard.load-copied-flags"
             );
             assert_eq!(
-                &g.g_ram[0x5e7..0x5e9],
+                (0x5e7..0x5e9)
+                    .map(|at| g.ram().read_byte(at))
+                    .collect::<Vec<_>>()
+                    .as_slice(),
                 &[0xcd, 0xab],
                 "flags.guard.load-scratch"
             );
             assert_eq!(
-                session_encoding::read(&g.g_ram, 0x79f),
+                session_encoding::read(&|at| g.ram().read_byte(at), 0x79f),
                 if case == 63 { 2 } else { 0 },
                 "flags.guard.load-area"
             );
@@ -144,7 +155,9 @@ fn load_entry(case: u32) {
                 );
             }
             assert_eq!(native_game(g), native, "flags.guard.load-native-preserved");
-            after = g.g_ram.to_vec();
+            after = (0..g.ram().len())
+                .map(|at| g.ram().read_byte(at))
+                .collect::<Vec<_>>();
         });
         projection(&h, &after);
         assert_eq!(
@@ -155,7 +168,10 @@ fn load_entry(case: u32) {
         assert_eq!(native_state(h.session()), native);
     }
     assert_eq!(
-        game.g_ram.as_slice(),
+        (0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<_>>()
+            .as_slice(),
         after.as_slice(),
         "flags.guard.load-no-stale-drop"
     );
@@ -170,7 +186,7 @@ fn load_entry(case: u32) {
 #[forbid(unsafe_code)]
 fn reset_entry() {
     let mut game = Game::new();
-    game.g_ram.fill(0x69);
+    game.ram().fill(0..game.ram().len(), 0x69);
     let mut after = Vec::new();
     {
         let mut h = Runtime::new(&mut game);
@@ -184,35 +200,58 @@ fn reset_entry() {
         h.session_mut().gameplay_flags.opened_doors.fill(0x55);
         h.session_mut().flag_compatibility.bitmask = 0xabcd;
         h.foreign(|g| {
-            assert_eq!(&g.g_ram[0xd830..0xd870], &[0x73; 64]);
+            assert_eq!(
+                (0xd830..0xd870)
+                    .map(|at| g.ram().read_byte(at))
+                    .collect::<Vec<_>>()
+                    .as_slice(),
+                &[0x73; 64]
+            );
             new_save_file(g);
             assert_eq!(
-                &g.g_ram[0xd820..0xd828],
+                (0xd820..0xd828)
+                    .map(|at| g.ram().read_byte(at))
+                    .collect::<Vec<_>>()
+                    .as_slice(),
                 &[0x91; 8],
                 "flags.guard.reset-events-survive"
             );
             assert_eq!(
-                &g.g_ram[0xd828..0xd830],
+                (0xd828..0xd830)
+                    .map(|at| g.ram().read_byte(at))
+                    .collect::<Vec<_>>()
+                    .as_slice(),
                 &[0x82; 8],
                 "flags.guard.reset-bosses-survive"
             );
             assert_eq!(
-                &g.g_ram[0xd830..0xd8f0],
+                (0xd830..0xd8f0)
+                    .map(|at| g.ram().read_byte(at))
+                    .collect::<Vec<_>>()
+                    .as_slice(),
                 &[0; 192],
                 "flags.guard.reset-collections"
             );
             assert_eq!(
-                &g.g_ram[0x5e7..0x5e9],
+                (0x5e7..0x5e9)
+                    .map(|at| g.ram().read_byte(at))
+                    .collect::<Vec<_>>()
+                    .as_slice(),
                 &[0xcd, 0xab],
                 "flags.guard.reset-scratch-survives"
             );
-            after = g.g_ram.to_vec();
+            after = (0..g.ram().len())
+                .map(|at| g.ram().read_byte(at))
+                .collect::<Vec<_>>();
         });
         projection(&h, &after);
         assert_eq!(h.session().gameplay_flags.opened_doors, [0; 64]);
     }
     assert_eq!(
-        game.g_ram.as_slice(),
+        (0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<_>>()
+            .as_slice(),
         after.as_slice(),
         "flags.guard.reset-no-stale-drop"
     );
@@ -222,10 +261,13 @@ fn reset_entry() {
 #[forbid(unsafe_code)]
 fn check() {
     let mut game = Game::new();
-    for (i, b) in game.g_ram.iter_mut().enumerate() {
-        *b = (i.wrapping_mul(37) ^ (i >> 8)) as u8;
+    for i in 0..game.ram().len() {
+        let value = (i.wrapping_mul(37) ^ (i >> 8)) as u8;
+        game.ram().write_byte(i, value);
     }
-    let mut expected = game.g_ram.to_vec();
+    let mut expected = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<_>>();
     let initial = [
         0x1201, 0x2302, 0x3403, 0x4504, 0x5605, 0x6706, 0x7807, 0x8908,
     ];
@@ -276,7 +318,10 @@ fn check() {
         projection(&h, &expected);
         h.foreign(|g| {
             assert_eq!(
-                g.g_ram.as_slice(),
+                (0..g.ram().len())
+                    .map(|at| g.ram().read_byte(at))
+                    .collect::<Vec<_>>()
+                    .as_slice(),
                 expected.as_slice(),
                 "flags.guard.publish-all"
             );
@@ -292,21 +337,25 @@ fn check() {
             put(&mut expected, 0x5e7, 0x9132);
             put(&mut expected, 0x79f, 3);
             assert_eq!(
-                g.g_ram.as_slice(),
+                (0..g.ram().len())
+                    .map(|at| g.ram().read_byte(at))
+                    .collect::<Vec<_>>()
+                    .as_slice(),
                 expected.as_slice(),
                 "flags.guard.nested-publication"
             );
             assert_eq!(native_game(g), changed);
-            for b in &mut g.g_ram {
-                *b ^= 0x5a;
+            for at in 0..g.ram().len() {
+                let value = g.ram().read_byte(at) ^ 0x5a;
+                g.ram().write_byte(at, value);
             }
             for b in &mut expected {
                 *b ^= 0x5a;
             }
             // Scratch and RNG are separate: both must be refreshed after callback.
-            put(&mut g.g_ram, 0x5e7, 0x5634);
+            g.ram().copy_in(0x5e7, &(0x5634u16).to_le_bytes());
             put(&mut expected, 0x5e7, 0x5634);
-            put(&mut g.g_ram, 0x5e5, 0xab89);
+            g.ram().copy_in(0x5e5, &(0xab89u16).to_le_bytes());
             put(&mut expected, 0x5e5, 0xab89);
         });
         projection(&h, &expected);
@@ -351,9 +400,16 @@ fn check() {
         projection(&h, &expected);
         let error = catch_unwind(AssertUnwindSafe(|| {
             h.foreign(|g| {
-                assert_eq!(g.g_ram.as_slice(), expected.as_slice());
-                for b in &mut g.g_ram {
-                    *b ^= 0xa5;
+                assert_eq!(
+                    (0..g.ram().len())
+                        .map(|at| g.ram().read_byte(at))
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                    expected.as_slice()
+                );
+                for at in 0..g.ram().len() {
+                    let value = g.ram().read_byte(at) ^ 0xa5;
+                    g.ram().write_byte(at, value);
                 }
                 for b in &mut expected {
                     *b ^= 0xa5;
@@ -376,7 +432,10 @@ fn check() {
         );
     }
     assert_eq!(
-        game.g_ram.as_slice(),
+        (0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<_>>()
+            .as_slice(),
         expected.as_slice(),
         "flags.guard.no-stale-drop"
     );
@@ -395,7 +454,10 @@ fn check() {
         );
     }
     assert_eq!(
-        game.g_ram.as_slice(),
+        (0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<_>>()
+            .as_slice(),
         expected.as_slice(),
         "flags.guard.new-entry-drop"
     );

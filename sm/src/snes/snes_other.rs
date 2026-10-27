@@ -1,7 +1,6 @@
 use crate::c_library::{memcpy, memset, printf};
 use crate::game_state::Game;
 use crate::snes::cart::cart_load;
-use crate::snes::snes::snes_reset;
 pub use crate::types::{Snes, size_t};
 use ::core::ffi::{c_char, c_void};
 use ::core::mem::size_of;
@@ -26,12 +25,7 @@ crate::typed_struct! {
 }
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
-pub unsafe fn snes_loadRom(
-    snes: *mut Snes,
-    mut data: *const u8,
-    mut length: i32,
-    game: &mut Game,
-) -> bool {
+pub unsafe fn snes_loadRom(mut data: *const u8, mut length: i32, game: &mut Game) -> bool {
     unsafe {
         if length < 0x8000 {
             printf(
@@ -141,8 +135,9 @@ pub unsafe fn snes_loadRom(
             }
             test *= 2;
         }
+        let mut execution = game.execution();
         cart_load(
-            (*snes).cart,
+            (*execution.backend.views().0).cart,
             headers[used as usize].cartType as i32,
             image,
             (if headers[used as usize].chips as i32 > 0 {
@@ -151,7 +146,7 @@ pub unsafe fn snes_loadRom(
                 0
             }) as i32,
         );
-        snes_reset(snes, true_0 != 0, game);
+        execution.reset(true_0 != 0);
         true_0 != 0
     }
 }

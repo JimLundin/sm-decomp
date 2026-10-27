@@ -315,16 +315,17 @@ pub(super) unsafe fn load(
         return Err("seed register metadata does not match gameplay WRAM".into());
     }
     unsafe {
-        game.g_ram.copy_from_slice(ram.as_slice());
+        game.ram().copy_in(0, ram.as_slice());
         game.g_sram.write_bytes(0, sram.as_slice());
-        let snes = &mut *game.g_snes;
+        let snes = game.g_snes;
         for channel in 0..8 {
             for offset in 0..11 {
                 let value = r.get(&format!("dma_{channel}_{offset}"))?;
                 let value = u8::try_from(value).map_err(|_| "invalid captured DMA byte")?;
-                sm::snes::dma::dma_write(snes.dma, 0x4300 + channel * 16 + offset, value);
+                game.write_dma_register(0x4300 + channel * 16 + offset, value);
             }
         }
+        let snes = &mut *snes;
         for pointer in [snes.snes_ppu, snes.my_ppu] {
             let ppu = &mut *pointer;
             words(&mut ppu.vram, vram.as_slice());
@@ -395,14 +396,17 @@ pub(super) unsafe fn load(
             if pc == 0x80834a || pc == 0x858142 {
                 if let Some(input) = &controller {
                     if pc != 0x80834a
-                        || INPUT_WORDS
-                            .map(|at| u16::from_le_bytes([game.g_ram[at], game.g_ram[at + 1]]))
-                            != input.after
+                        || INPUT_WORDS.map(|at| {
+                            u16::from_le_bytes([
+                                game.ram().read_byte(at),
+                                game.ram().read_byte(at + 1),
+                            ])
+                        }) != input.after
                     {
                         return Err("controller state changed during seed normalization".into());
                     }
                     for (at, value) in INPUT_WORDS.into_iter().zip(input.before) {
-                        game.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+                        game.ram().copy_in(at, &value.to_le_bytes());
                     }
                 }
                 eprintln!("Imported room seed; completed recorded CPU phase at ${pc:06X}");
@@ -412,7 +416,7 @@ pub(super) unsafe fn load(
                 original_wait_entered = true;
                 // The capture importer proves this normalization read equals
                 // the first replay word; preserve all 16 hardware input bits.
-                (*(*game.g_snes).input1).currentState = first_input.reverse_bits();
+                game.input1_mut().currentState = first_input.reverse_bits();
                 Some(OriginalWaitCall::new(
                     (*(*game.g_snes).cart).rom.clone(),
                     original_rom,
@@ -420,7 +424,7 @@ pub(super) unsafe fn load(
             } else {
                 None
             };
-            sm::snes::cpu::cpu_runOpcode(game.g_cpu, game);
+            game.step_reference_opcode();
             drop(original_wait);
         }
     }

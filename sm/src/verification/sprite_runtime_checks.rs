@@ -16,7 +16,9 @@ fn put(bytes: &mut [u8], at: usize, value: u16) {
 }
 fn projection(h: &Runtime<'_>, expected: &[u8]) {
     let mut actual = expected.to_vec();
-    session_encoding::encode(h.session(), &mut actual);
+    session_encoding::encode(h.session(), |at, bytes| {
+        actual[at..at + bytes.len()].copy_from_slice(bytes)
+    });
     assert_eq!(actual, expected, "sprite.guard.whole-union");
     for at in (0xef78..0xf378).chain(0x1844..0x1846) {
         assert_eq!(
@@ -31,10 +33,13 @@ pub(crate) fn run() -> bool {
 }
 fn check() {
     let mut game = Game::new();
-    for (i, byte) in game.g_ram.iter_mut().enumerate() {
-        *byte = (i.wrapping_mul(37) ^ (i >> 8)) as u8;
+    for i in 0..game.ram().len() {
+        let value = (i.wrapping_mul(37) ^ (i >> 8)) as u8;
+        game.ram().write_byte(i, value);
     }
-    let mut expected = game.g_ram.to_vec();
+    let mut expected = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<_>>();
     let actor_x = 0xf78 + core::mem::offset_of!(crate::types::EnemyBase, x_pos);
     let actor_y = 0xf78 + core::mem::offset_of!(crate::types::EnemyBase, y_pos);
     let actor_frozen = 0xf78 + core::mem::offset_of!(crate::types::EnemyBase, frozen_timer);
@@ -94,7 +99,10 @@ fn check() {
         projection(&h, &expected);
         h.foreign(|g| {
             assert_eq!(
-                g.g_ram.as_slice(),
+                (0..g.ram().len())
+                    .map(|at| g.ram().read_byte(at))
+                    .collect::<Vec<_>>()
+                    .as_slice(),
                 expected.as_slice(),
                 "sprite.guard.publish"
             );
@@ -107,14 +115,18 @@ fn check() {
             }
             put(&mut expected, 0xef78, 0xbeef);
             assert_eq!(
-                g.g_ram.as_slice(),
+                (0..g.ram().len())
+                    .map(|at| g.ram().read_byte(at))
+                    .collect::<Vec<_>>()
+                    .as_slice(),
                 expected.as_slice(),
                 "sprite.guard.nested-drop"
             );
             assert_eq!(g.eproj_spawn_pt.x, 0x5678);
             // Foreign writes change every new byte and every pre-existing owner.
-            for byte in &mut g.g_ram {
-                *byte ^= 0x5a;
+            for at in 0..g.ram().len() {
+                let value = g.ram().read_byte(at) ^ 0x5a;
+                g.ram().write_byte(at, value);
             }
             for byte in &mut expected {
                 *byte ^= 0x5a;
@@ -124,20 +136,23 @@ fn check() {
                 (actor_y, 0x3344),
                 (actor_frozen, 0x5566),
             ] {
-                g.g_ram[at..at + 2].copy_from_slice(&value.to_ne_bytes());
+                let _ = &[(); 0x20000][at..at + 2];
+                g.ram().copy_in(at, &value.to_ne_bytes());
                 expected[at..at + 2].copy_from_slice(&value.to_ne_bytes());
             }
-            put(
-                &mut g.g_ram,
+            g.ram().copy_in(
                 crate::ram_map::words::debug_time_frozen_for_enemies,
-                7,
+                &(7u16).to_le_bytes(),
             );
             put(
                 &mut expected,
                 crate::ram_map::words::debug_time_frozen_for_enemies,
                 7,
             );
-            put(&mut g.g_ram, crate::ram_map::words::cur_enemy_index, 0x80);
+            g.ram().copy_in(
+                crate::ram_map::words::cur_enemy_index,
+                &(0x80u16).to_le_bytes(),
+            );
             put(&mut expected, crate::ram_map::words::cur_enemy_index, 0x80);
         });
         projection(&h, &expected);
@@ -167,9 +182,16 @@ fn check() {
         );
         let error = catch_unwind(AssertUnwindSafe(|| {
             h.foreign(|g| {
-                assert_eq!(g.g_ram.as_slice(), expected.as_slice());
-                for byte in &mut g.g_ram {
-                    *byte ^= 0xa5;
+                assert_eq!(
+                    (0..g.ram().len())
+                        .map(|at| g.ram().read_byte(at))
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                    expected.as_slice()
+                );
+                for at in 0..g.ram().len() {
+                    let value = g.ram().read_byte(at) ^ 0xa5;
+                    g.ram().write_byte(at, value);
                 }
                 for byte in &mut expected {
                     *byte ^= 0xa5;
@@ -192,7 +214,10 @@ fn check() {
         );
     }
     assert_eq!(
-        game.g_ram.as_slice(),
+        (0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<_>>()
+            .as_slice(),
         expected.as_slice(),
         "sprite.guard.no-stale-drop"
     );
@@ -203,7 +228,10 @@ fn check() {
     // XOR leaves debug freeze nonzero: real entry must preserve the entire pool.
     crate::game::sprite_effect_runtime::update_sprites(&mut game);
     assert_eq!(
-        game.g_ram.as_slice(),
+        (0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<_>>()
+            .as_slice(),
         expected.as_slice(),
         "sprite.guard.new-frozen-entry"
     );

@@ -113,6 +113,6 @@ pub(crate) fn capture(id: u32) -> Option<Vec<u8>> {
         if id < 8 { flare(&mut g) } else { reset(&mut g) }
     }));
     let mut bytes = vec![u8::from(result.is_err()), u8::from(g.g_fail)];
-    bytes.extend_from_slice(&g.g_ram);
+    bytes.extend((0..g.ram().len()).map(|at| g.ram().read_byte(at)));
     Some(bytes)
 }

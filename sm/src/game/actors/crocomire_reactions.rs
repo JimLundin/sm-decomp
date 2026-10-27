@@ -684,7 +684,7 @@ pub(crate) fn queue_tilemap_upload(size: u16, bg_mask: u8, game: &mut Game) {
         native(entry + 4) <- value(126),
     );
     word_transfers!(game, ascending, 1;
-        native(entry + 5) <- value(u16::from(game.g_ram[0x59] & bg_mask) << 8),
+        native(entry + 5) <- value(u16::from(game.ram().read_byte(0x59) & bg_mask) << 8),
     );
     word!(game.vram_write_queue_tail = tail.wrapping_add(7));
 }
@@ -706,7 +706,7 @@ fn load_melt_tilemap(table: u32, game: &mut Game) {
 }
 
 pub(crate) fn prepare_flesh_tilemap(game: &mut Game) {
-    game.g_ram[0x68c] = 48;
+    game.ram().write_byte(0x68c, 48);
     word!(game.croco_target_0688 = 48);
     let E: i32 = word!(game.cur_enemy_index) as i32;
     slot!(game, Crocomire[E].var_A, |old| old.wrapping_add(1));
@@ -738,7 +738,7 @@ pub(crate) fn prepare_skeleton_tilemap(game: &mut Game) {
     slot!(game, Crocomire[E].var_A, |old| old.wrapping_add(1));
     slot!(game, Crocomire[E].var_A, |old| old.wrapping_add(1));
     slot!(game, Crocomire[E].base.instruction_timer = 1);
-    game.g_ram[0x68c] = 48;
+    game.ram().write_byte(0x68c, 48);
     word!(game.croco_target_0688 = 48);
     slot!(
         game,
@@ -980,7 +980,7 @@ pub(crate) fn prepare_spike_wall(game: &mut Game) {
             word_transfers!(game, ascending, 1; native(entry + 4) <- value(173));
             word_transfers!(game, ascending, 1;
                 native(entry + 5) <- value((crate::rtl::rom_table_word!(game, 0xa499cb, v4 as isize) as i32
-                    + ((game.g_ram[0x52] as i32 & 7) << 13)) as u16),
+                    + ((game.ram().read_byte(0x52) as i32 & 7) << 13)) as u16),
             );
             word!(game.vram_write_queue_tail = (v5).wrapping_add(7));
             word!(game.croco_target_0688 = ((v3) as u16).wrapping_add(2));
@@ -1080,7 +1080,7 @@ pub(crate) fn advance_melt_scroll(game: &mut Game) {
 }
 
 fn erase_melt_columns(game: &mut Game) -> u16 {
-    let mut n: i32 = game.g_ram[0x68c] as i32;
+    let mut n: i32 = game.ram().read_byte(0x68c) as i32;
     loop {
         if word!(game.croco_cur_vline_idx) > 48 {
             return 1;
@@ -1089,7 +1089,7 @@ fn erase_melt_columns(game: &mut Game) -> u16 {
             crate::rtl::lorom_offset(0xa49697) as usize
                 + usize::from(word!(game.croco_cur_vline_idx)),
         ) as i32;
-        if (game.g_ram[0x69c + rr as usize] as i8)
+        if (game.ram().read_byte(0x69c + rr as usize) as i8)
             .wrapping_sub((word!(game.croco_target_0688)) as i8)
             < 0
         {
@@ -1106,17 +1106,18 @@ fn erase_melt_columns(game: &mut Game) -> u16 {
     ) as i32;
     let mask: u8 = !(0x80u8 >> (vline_idx & 7));
     do_until! { n == 0 ;
-        let q: i32 = game.g_ram[0x69c + vline_idx as usize] as i32;
+        let q: i32 = game.ram().read_byte(0x69c + vline_idx as usize) as i32;
         let j: i32 = 2 * (q & 7) + ((q & !(7i32)) << 6) + 4 * (vline_idx & !(7i32));
         // Melting tiles span the $4000 graphics buffer, beyond the menu backup prefix.
         for plane_offset in [0, 1, 16, 17] {
-            game.g_ram[0x4000 + j as usize + plane_offset] &= mask;
+            let at = 0x4000 + j as usize + plane_offset;
+            game.ram().write_byte(at, game.ram().read_byte(at) & mask);
         }
-        if game.g_ram[0x69c + vline_idx as usize] == 48 {
+        if game.ram().read_byte(0x69c + vline_idx as usize) == 48 {
             break;
         }
         let at = 0x69c + vline_idx as usize;
-        game.g_ram[at] = game.g_ram[at].wrapping_add(1);
+        game.ram().write_byte(at, game.ram().read_byte(at).wrapping_add(1));
         n -= 1;
     }
     let mut v7: u16 = 0;
@@ -1200,9 +1201,14 @@ pub(crate) fn complete_skeleton_melt(game: &mut Game) {
 }
 
 pub(crate) fn emit_melt_debris(game: &mut Game) {
-    let v0: u16 = u16::from_ne_bytes([game.g_ram[0x9016], game.g_ram[0x9017]]);
-    if u16::from_ne_bytes([game.g_ram[0x9016], game.g_ram[0x9017]]) as i32 - 22i32 & 0x8000 != 0 {
-        let v1: u16 = u16::from_ne_bytes([game.g_ram[0x9016], game.g_ram[0x9017]]);
+    let v0: u16 = u16::from_ne_bytes([game.ram().read_byte(0x9016), game.ram().read_byte(0x9017)]);
+    if u16::from_ne_bytes([game.ram().read_byte(0x9016), game.ram().read_byte(0x9017)]) as i32
+        - 22i32
+        & 0x8000
+        != 0
+    {
+        let v1: u16 =
+            u16::from_ne_bytes([game.ram().read_byte(0x9016), game.ram().read_byte(0x9017)]);
         checked_word!(game, 0x9016; += 2);
         SpawnEprojWithGfx(
             crate::rtl::rom_table_word!(game, 0xa49156, (v0 >> 1) as isize),

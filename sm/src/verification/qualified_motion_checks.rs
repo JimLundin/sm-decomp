@@ -46,7 +46,9 @@ pub(crate) fn check_case(id: u32) -> bool {
         crate::rtl::lorom_offset(0xa0cbc7) as usize + 144,
         &[2, 0, 1, 0],
     );
-    let mut expected = game.g_ram.to_vec();
+    let mut expected = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<_>>();
     write(&mut expected, a::eproj_y_subpos + offset, 1);
     if id < 2 {
         write(&mut expected, a::eproj_y_pos + offset, 102);
@@ -72,7 +74,10 @@ pub(crate) fn check_case(id: u32) -> bool {
         super::super::shared_pre::CallBotwoonEprojFunc(8842015, handle, ctx);
     });
     assert_eq!(
-        game.g_ram.as_slice(),
+        (0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<_>>()
+            .as_slice(),
         expected.as_slice(),
         "qualified u32 case {id}"
     );

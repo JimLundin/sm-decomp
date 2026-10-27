@@ -718,6 +718,7 @@ pub static FILES: &[(&str, &[u8])] = &[
     ("sm/src/c_library.rs", include_bytes!("c_library.rs")),
     ("sm/src/config.rs", include_bytes!("config.rs")),
     ("sm/src/cpu_infra.rs", include_bytes!("cpu_infra.rs")),
+    ("sm/src/execution.rs", include_bytes!("execution.rs")),
     (
         "sm/src/game/animated_tiles/execution.rs",
         include_bytes!("game/animated_tiles/execution.rs"),
@@ -1451,7 +1452,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     ("sm/src/snes/cpu.rs", include_bytes!("snes/cpu.rs")),
     ("sm/src/snes/dma.rs", include_bytes!("snes/dma.rs")),
     ("sm/src/snes/dsp.rs", include_bytes!("snes/dsp.rs")),
-    ("sm/src/snes/input.rs", include_bytes!("snes/input.rs")),
     ("sm/src/snes/ppu.rs", include_bytes!("snes/ppu.rs")),
     (
         "sm/src/snes/registers.rs",

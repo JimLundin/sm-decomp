@@ -118,12 +118,14 @@ pub(crate) unsafe fn setup_script(address: u32, game: &mut Game) {
                 // LongPtr stores its address in native order, then the bank byte.
                 for (at, hook) in [(0x601, 0xc8f6), (0x604, 0xc8fc)] {
                     word_transfers!(game, ascending, 1; native(at) <- value(hook));
-                    game.g_ram[at + 2] = 0x8f;
+                    game.ram().write_byte(at + 2, 0x8f);
                 }
             }
             9423114 => {
                 let at = 0xd908 + usize::from(word!(game.area_index));
-                let collected = u16::from_ne_bytes([game.g_ram[at], game.g_ram[at + 1]]) | 1;
+                let collected =
+                    u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])
+                        | 1;
                 word_transfers!(game, ascending, 1; native(at) <- value(collected));
                 word!(game.has_area_map = collected);
             }
@@ -152,7 +154,7 @@ pub(crate) unsafe fn setup_script(address: u32, game: &mut Game) {
             }
             9423222 => initialize_room_haze(game),
             9423227 => {
-                game.g_ram[0x5d] = 102;
+                game.ram().write_byte(0x5d, 102);
                 initialize_room_haze(game);
                 word!(game.hdma_data_table_in_ceres = 9);
             }
@@ -217,7 +219,7 @@ pub(crate) unsafe fn door_script(address: u32, game: &mut Game) {
                     little(0x7e1) <- value(34), little(0x7e3) <- value(60));
             }
             9430291 => {
-                game.g_ram[0x56] = 9;
+                game.ram().write_byte(0x56, 9);
                 word!(game.irq_enable_mode7 = 0);
             }
             _ => {
@@ -258,18 +260,19 @@ pub(crate) fn decompress_level(source: u32, game: &mut Game) {
         // malformed extents retain the checked forward loop's write prefix.
         if source < destination + count
             && destination < source + count
-            && source + count <= game.g_ram.len()
-            && destination + count <= game.g_ram.len()
+            && source + count <= 0x20000
+            && destination + count <= 0x20000
         {
             crate::verify_probe::hit(if destination == 0x19602 {
                 "room.level.layer2_overlap"
             } else {
                 "room.level.bts_overlap"
             });
-            game.g_ram.copy_within(source..source + count, destination);
+            game.ram().copy_within(source..source + count, destination);
         } else {
             for index in 0..count {
-                game.g_ram[destination + index] = game.g_ram[source + index];
+                game.ram()
+                    .write_byte(destination + index, game.ram().read_byte(source + index));
             }
         }
     }
@@ -457,10 +460,13 @@ pub(crate) fn advance_ceres_elevator(game: &mut Game) {
         }
         let countdown = word!(@read game, 0x7e3);
         word!(@write game, 0x7e3, countdown.wrapping_sub(1));
-        if (u16::from_ne_bytes([game.g_ram[0x7e3], game.g_ram[0x7e4]]) as i16) < 0 {
-            let v0: i32 = ((6u16)
-                .wrapping_mul(u16::from_ne_bytes([game.g_ram[0x7e1], game.g_ram[0x7e2]])))
-                as i32
+        if (u16::from_ne_bytes([game.ram().read_byte(0x7e3), game.ram().read_byte(0x7e4)]) as i16)
+            < 0
+        {
+            let v0: i32 = ((6u16).wrapping_mul(u16::from_ne_bytes([
+                game.ram().read_byte(0x7e1),
+                game.ram().read_byte(0x7e2),
+            ]))) as i32
                 >> 1;
             let delay = crate::rtl::rom_table_word!(game, 0x89ad5f, v0 as isize);
             word_transfers!(game, ascending, 1; native(0x7e3) <- value(delay));
@@ -468,16 +474,29 @@ pub(crate) fn advance_ceres_elevator(game: &mut Game) {
             word!(game.reg_M7C = -(word!(game.reg_M7B) as i32) as u16);
             word!(game.reg_M7A = crate::rtl::rom_table_word!(game, 0x89ad5f, (v0 + 2) as isize));
             word!(game.reg_M7D = word!(game.reg_M7A));
-            if (u16::from_ne_bytes([game.g_ram[0x7e1], game.g_ram[0x7e2]]) as i16) < 0 {
-                v1 = ((u16::from_ne_bytes([game.g_ram[0x7e1], game.g_ram[0x7e2]])) as i16)
+            if (u16::from_ne_bytes([game.ram().read_byte(0x7e1), game.ram().read_byte(0x7e2)])
+                as i16)
+                < 0
+            {
+                v1 = ((u16::from_ne_bytes([
+                    game.ram().read_byte(0x7e1),
+                    game.ram().read_byte(0x7e2),
+                ])) as i16)
                     .wrapping_sub(1);
-                if u16::from_ne_bytes([game.g_ram[0x7e1], game.g_ram[0x7e2]]) == 0x8001 {
+                if u16::from_ne_bytes([game.ram().read_byte(0x7e1), game.ram().read_byte(0x7e2)])
+                    == 0x8001
+                {
                     v1 = 0;
                 }
             } else {
-                v1 = ((u16::from_ne_bytes([game.g_ram[0x7e1], game.g_ram[0x7e2]])) as i16)
+                v1 = ((u16::from_ne_bytes([
+                    game.ram().read_byte(0x7e1),
+                    game.ram().read_byte(0x7e2),
+                ])) as i16)
                     .wrapping_add(1);
-                if u16::from_ne_bytes([game.g_ram[0x7e1], game.g_ram[0x7e2]]) == 67 {
+                if u16::from_ne_bytes([game.ram().read_byte(0x7e1), game.ram().read_byte(0x7e2)])
+                    == 67
+                {
                     v1 = -32700i16;
                 }
             }

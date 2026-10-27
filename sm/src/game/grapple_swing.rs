@@ -88,7 +88,7 @@ fn spike_contact(solid: bool, game: &mut Game) -> u8 {
     if word!(game.samus_invincibility_timer) == 0 {
         // The original reads a word spanning adjacent BTS bytes, not just one byte.
         let at = 0x16402 + usize::from(word!(game.cur_block_index));
-        let kind = i16::from_ne_bytes([game.g_ram[at], game.g_ram[at + 1]]);
+        let kind = i16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]);
         if kind >= 0 {
             let damage = if solid {
                 SOLID_DAMAGE[kind as usize]
@@ -97,8 +97,12 @@ fn spike_contact(solid: bool, game: &mut Game) -> u8 {
             };
             let amount = ((damage as i16 as i32) << 16) as u32;
             if amount != 0 {
-                let low = u16::from_ne_bytes([game.g_ram[0xa4e], game.g_ram[0xa4f]]) as u32;
-                let high = u16::from_ne_bytes([game.g_ram[0xa50], game.g_ram[0xa51]]) as u32;
+                let low =
+                    u16::from_ne_bytes([game.ram().read_byte(0xa4e), game.ram().read_byte(0xa4f)])
+                        as u32;
+                let high =
+                    u16::from_ne_bytes([game.ram().read_byte(0xa50), game.ram().read_byte(0xa51)])
+                        as u32;
                 let sum = (low | (high << 16)).wrapping_add(amount);
                 word_transfers!(game, ascending, 1;
                     native(0xa4e) <- value(sum as u16),
@@ -144,14 +148,14 @@ fn dispatch_connection(ea: u32, game: &mut Game) {
     begin_connection(pose, transition_graphics, game);
 }
 pub(crate) fn connect_beam(game: &mut Game) {
-    if game.g_ram[0xa1f] as i32 == kMovementType_1A_GrabbedByDraygon as i32 {
+    if game.ram().read_byte(0xa1f) as i32 == kMovementType_1A_GrabbedByDraygon as i32 {
         word!(game.grapple_beam_function = (0x9bc77ei32) as u16);
         word!(game.grapple_beam_length_delta = 0);
     } else {
         let v1: i32 = 2 * word!(game.grapple_beam_direction) as i32;
         let table = if word!(game.samus_y_speed) != 0 || word!(game.samus_y_subspeed) != 0 {
             0x9bc3ee
-        } else if game.g_ram[0xa1f] == 5 {
+        } else if game.ram().read_byte(0xa1f) == 5 {
             0x9bc416
         } else {
             0x9bc3c6
@@ -223,7 +227,7 @@ fn begin_connection(pose: u16, transition_graphics: u16, game: &mut Game) {
 }
 
 pub fn place_rope_origin(game: &mut Game) {
-    let angle = 2 * game.g_ram[0xcfb] as u16;
+    let angle = 2 * game.ram().read_byte(0xcfb) as u16;
     let length = word!(game.grapple_beam_length);
     place_sample(angle, length, game);
     word!(game.x_pos_of_start_of_grapple_beam = word!(game.grapple_beam_grapple_start_x));
@@ -243,7 +247,7 @@ pub fn change_length(game: &mut Game) -> u8 {
         word!(game.grapple_beam_length_delta = 0);
         end = 63;
     }
-    let angle = 2 * game.g_ram[0xcfb] as u16;
+    let angle = 2 * game.ram().read_byte(0xcfb) as u16;
     let mut length = word!(game.grapple_beam_length);
     while length != end {
         let sample_length = length.wrapping_add(if shortening { 7 } else { 57 });
@@ -273,7 +277,7 @@ pub(crate) fn apply_input(game: &mut Game) {
             word!(game.grapple_beam_length = 64);
         }
     }
-    let angle = u16::from(game.g_ram[0xcfb]) << 8;
+    let angle = u16::from(game.ram().read_byte(0xcfb)) << 8;
     if (0x4000..0xc000).contains(&angle) {
         let direction = if word!(game.joypad1_lastkeys) & 0x200 != 0 {
             1i16
@@ -383,7 +387,7 @@ pub fn advance_swing(game: &mut Game) -> u8 {
         distance
     };
     let target = 2 * (word!(game.grapple_beam_end_angle16).wrapping_add(delta) >> 8);
-    let mut angle = 2 * game.g_ram[0xcfb] as u16;
+    let mut angle = 2 * game.ram().read_byte(0xcfb) as u16;
     while angle != target {
         let next = (if backwards {
             angle.wrapping_sub(2)
@@ -433,7 +437,7 @@ pub(crate) fn launch_from_swing(game: &mut Game) {
     } else {
         2u16.wrapping_mul(word!(game.grapple_beam_unkD26))
     };
-    let sample = kSinCosTable8bit_Sext[usize::from(game.g_ram[0xcfb]) + 64];
+    let sample = kSinCosTable8bit_Sext[usize::from(game.ram().read_byte(0xcfb)) + 64];
     let vertical = game.multiply_with_scratch(sample.unsigned_abs(), magnitude);
     word_transfers!(game, ascending, 1;
         native(ram_words::samus_y_subspeed) <- value(vertical as u16),
@@ -442,7 +446,8 @@ pub(crate) fn launch_from_swing(game: &mut Game) {
     word!(game.samus_x_accel_mode = 2);
     let adjustment = 64u16.wrapping_sub((3 * (i32::from(magnitude) >> 9)) as u16);
     let sample = abs16(
-        kSinCosTable8bit_Sext[usize::from(game.g_ram[0xcfb].wrapping_sub(adjustment as u8)) + 64]
+        kSinCosTable8bit_Sext
+            [usize::from(game.ram().read_byte(0xcfb).wrapping_sub(adjustment as u8)) + 64]
             as u16,
     );
     let horizontal = game.multiply_with_scratch(sample, magnitude);
@@ -562,18 +567,19 @@ pub(crate) fn position_swing(game: &mut Game) {
         true
     } else {
         word!(game.slow_grabble_scrolling_flag = 0);
-        (((game.g_ram[0xcfb] as i32) << 8) != 0x8000)
+        (((game.ram().read_byte(0xcfb) as i32) << 8) != 0x8000)
             || ({
                 if word!(game.samus_anim_frame) as i32 - 64i32 & 0x8000 != 0 {
                     word! {game; samus_anim_frame_timer = 8; samus_anim_frame = 64; }
                 }
-                v1 = native_grapple_byte!(game, 0x9bc1c2, usize::from(game.g_ram[0xcfd])) as u16;
+                v1 = native_grapple_byte!(game, 0x9bc1c2, usize::from(game.ram().read_byte(0xcfd)))
+                    as u16;
                 false
             })
     };
     if start_grapple_animation {
         word!(game.samus_anim_frame_timer = 15);
-        v1 = native_grapple_byte!(game, 0x9bc1c2, usize::from(game.g_ram[0xcfd])) as u16;
+        v1 = native_grapple_byte!(game, 0x9bc1c2, usize::from(game.ram().read_byte(0xcfd))) as u16;
         word!(game.samus_anim_frame = v1);
     }
     let v2: u16 = (2u16).wrapping_mul(v1);
@@ -584,7 +590,7 @@ pub(crate) fn position_swing(game: &mut Game) {
         }
         word!(game.samus_anim_frame = (v3).wrapping_add(32));
     }
-    if game.g_ram[0xa1e] == 4 {
+    if game.ram().read_byte(0xa1e) == 4 {
         place_samus_relative_to_grapple_origin!(game, 0x9bc2c2, v2);
     } else {
         place_samus_relative_to_grapple_origin!(game, 0x9bc302, v2);
@@ -623,7 +629,7 @@ pub(crate) fn restore_start_positions(game: &mut Game) {
     let v0: u16 = (2u16).wrapping_mul(word!(game.grapple_beam_direction));
     if word!(game.samus_pose) as i32 == kPose_49_FaceL_Moonwalk as i32
         || word!(game.samus_pose) as i32 == kPose_4A_FaceR_Moonwalk as i32
-        || game.g_ram[0xa1f] != 1
+        || game.ram().read_byte(0xa1f) != 1
     {
         restore_grapple_start_positions!(v0, game, 0x9bc122, 0x9bc14a, 0x9bc136, r22, 0x9bc15e);
     } else {
@@ -635,7 +641,7 @@ static kIsGrappleBannedForMovementType: [u8; 28] = [
     0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1,
 ];
 pub(crate) fn cancel_incompatible_pose(game: &mut Game) {
-    if kIsGrappleBannedForMovementType[game.g_ram[0xa1f] as usize] == 0 {
+    if kIsGrappleBannedForMovementType[game.ram().read_byte(0xa1f) as usize] == 0 {
         if word!(game.grapple_beam_function) as i32 != 0x9bc4f0 & 0xffff
             && word!(game.grapple_beam_function) as i32 + 0x3882 & 0x8000 != 0
         {
@@ -688,7 +694,7 @@ pub(crate) fn start_firing(game: &mut Game) {
     }
     if word!(game.samus_pose) as i32 == kPose_49_FaceL_Moonwalk as i32
         || word!(game.samus_pose) as i32 == kPose_4A_FaceR_Moonwalk as i32
-        || game.g_ram[0xa1f] != 1
+        || game.ram().read_byte(0xa1f) != 1
     {
         initialize_grapple_endpoints!(game, 0x9bc122, v1, 0x9bc136, r22, 0x9bc14a, 0x9bc15e);
     } else {
@@ -728,7 +734,7 @@ pub(crate) fn start_firing(game: &mut Game) {
 
 pub(crate) fn cancel(game: &mut Game) {
     QueueSfx1_Max15(7, game);
-    if game.g_ram[0xa1f] == kMovementType_16_Grappling as u8 {
+    if game.ram().read_byte(0xa1f) == kMovementType_16_Grappling as u8 {
         pt::request_fallback_pose(&mut Runtime::new(game));
     } else {
         player_command(0x1c, game);
@@ -745,7 +751,7 @@ pub(crate) fn release_stationary(game: &mut Game) {
     } else {
         let crouching = (i32::from(word!(game.samus_y_radius)) - 17) & 0x8000 != 0;
         if native_pose_parameter!(game, 3) & 0xf0 != 0 {
-            match (crouching, game.g_ram[0xa1e] == 4) {
+            match (crouching, game.ram().read_byte(0xa1e) == 4) {
                 (true, true) => kPose_28_FaceL_Crouch as u16,
                 (true, false) => kPose_27_FaceR_Crouch as u16,
                 (false, true) => kPose_02_FaceL_Normal as u16,
@@ -770,7 +776,7 @@ pub(crate) fn release_stationary(game: &mut Game) {
 
 pub(crate) fn release_walljump(game: &mut Game) {
     QueueSfx1_Max15(7, game);
-    if game.g_ram[0xa1e] == 8 {
+    if game.ram().read_byte(0xa1e) == 8 {
         word!(game.samus_new_pose_transitional = kPose_84_FaceL_Walljump as u16);
     } else {
         word!(game.samus_new_pose_transitional = kPose_83_FaceR_Walljump as u16);
@@ -859,7 +865,7 @@ pub(crate) fn update_tiles(game: &mut Game) {
         |_| 0x6200,
         game,
     );
-    let index = (game.g_ram[0xcfb] >> 1 & 0xfe) >> 1;
+    let index = (game.ram().read_byte(0xcfb) >> 1 & 0xfe) >> 1;
     queue_native_transfer(
         cursor,
         128,

@@ -68,8 +68,8 @@ pub unsafe fn player_projectiles_hit_samus(game: &mut Game) {
             }
             word!(
                 game.knockback_x_dir = (word!(game.samus_x_pos).wrapping_sub(u16::from_ne_bytes([
-                    game.g_ram[arrays::eproj_x_pos],
-                    game.g_ram[arrays::eproj_x_pos + 1]
+                    game.ram().read_byte(arrays::eproj_x_pos),
+                    game.ram().read_byte(arrays::eproj_x_pos + 1)
                 ])) as i16
                     >= 0) as u16
             );

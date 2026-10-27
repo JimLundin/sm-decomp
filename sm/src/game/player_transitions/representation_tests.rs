@@ -75,7 +75,11 @@ fn typed_decode_visit_and_partial_writes_share_one_live_word() {
         for at in TYPED {
             bytes[at..at + 2].copy_from_slice(&raw.to_le_bytes());
         }
-        let mut session = encoding::decode(&bytes, WorldBinding::canonical_legacy());
+        let mut session = encoding::decode(
+            &|at| bytes[at],
+            bytes.len(),
+            WorldBinding::canonical_legacy(),
+        );
         let mut visits = [0; 13];
         encoding::visit(&session, |at, word| {
             if let Some(index) = TYPED.iter().position(|base| *base == at) {
@@ -92,9 +96,11 @@ fn typed_decode_visit_and_partial_writes_share_one_live_word() {
             assert_eq!(encoding::projected_byte(&session, at + 1), Some(0x37));
             assert_eq!(encoding::projected_byte(&session, at), Some(0xe9));
         }
-        encoding::encode(&session, &mut bytes);
+        encoding::encode(&session, |at, span| {
+            bytes[at..at + span.len()].copy_from_slice(span)
+        });
         for at in TYPED {
-            assert_eq!(encoding::read(&bytes, at), 0x37e9);
+            assert_eq!(encoding::read(&|at| bytes[at], at), 0x37e9);
         }
     }
 }

@@ -25,7 +25,7 @@ fn author(image: &RomImage, address: u32, bytes: &[u8]) {
     }
 }
 fn seed(game: &mut Game, map_x: u16, map_y: u16) {
-    game.g_ram.fill(0);
+    game.ram().fill(0..game.ram().len(), 0);
     game.g_fail = false;
     let loaded = RomImage::zeroed(0x100000);
     let native = RomImage::zeroed(0x100000);
@@ -49,9 +49,9 @@ fn seed(game: &mut Game, map_x: u16, map_y: u16) {
         (w::samus_anim_frame_timer, 2),
         (w::samus_health, 99),
     ] {
-        put(&mut game.g_ram, at, value);
+        game.ram().copy_in(at, &(value as u16).to_le_bytes());
     }
-    game.g_ram[0x5b5] = 8;
+    game.ram().write_byte(0x5b5, 8);
 }
 fn hud(expected: &mut [u8], middle: [u16; 5]) {
     for row in 0..3 {
@@ -78,9 +78,11 @@ fn late_gamma(game: &mut Game) {
         (w::samus_y_subspeed, 0xf800),
         (w::samus_y_subaccel, 0x1000),
     ] {
-        put(&mut game.g_ram, at, value);
+        game.ram().copy_in(at, &(value as u16).to_le_bytes());
     }
-    let mut expected = game.g_ram.to_vec();
+    let mut expected = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     // Authored neighboring bytes are zero except the selected gamma word.
     // Marked byte1B supplies columns28..31. Column32 crosses to the other
     // map half (exploration byte224, zero), so the five bits are10110.
@@ -122,7 +124,9 @@ fn late_gamma(game: &mut Game) {
         );
     }
     assert_eq!(
-        game.g_ram.as_slice(),
+        &(0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<u8>>()[..],
         expected.as_slice(),
         "actual map-to-gamma-to-settlement full physical publication"
     );
@@ -134,7 +138,9 @@ fn owned_position(game: &mut Game) {
     // Column31 marks mask01. That same newly written physical byte is in
     // the middle exploration row, so the map must also render its center tile.
     seed(game, 31, 190);
-    let before = game.g_ram.to_vec();
+    let before = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     let mut expected = before.clone();
     put(&mut expected, w::samus_x_pos, 1);
     hud(&mut expected, [0x2c1f, 0x2c1f, 0x2800, 0x2c1f, 0x2c1f]);
@@ -152,14 +158,18 @@ fn owned_position(game: &mut Game) {
             "later exploration read observes the freshly changed owned alias"
         );
         let mut projected = before;
-        session_encoding::encode(runtime.session(), &mut projected);
+        session_encoding::encode(runtime.session(), |at, span| {
+            projected[at..at + span.len()].copy_from_slice(span)
+        });
         assert_eq!(
             projected, expected,
             "live Session projection contains both alias and resulting HUD tile"
         );
     }
     assert_eq!(
-        game.g_ram.as_slice(),
+        &(0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect::<Vec<u8>>()[..],
         expected.as_slice(),
         "owned position alias survives publication without a RAM shadow"
     );
@@ -168,7 +178,9 @@ fn owned_position(game: &mut Game) {
 
 pub(crate) fn run(game: &mut Game) -> usize {
     assert!(!game.actor_identity_is_with_session());
-    let ram = game.g_ram.to_vec();
+    let ram = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     let fail = game.g_fail;
     let loaded = game.loaded_rom.clone();
     let native = game.capture_native_rom_binding();
@@ -177,7 +189,7 @@ pub(crate) fn run(game: &mut Game) -> usize {
         owned_position(game);
         COUNT
     }));
-    game.g_ram.copy_from_slice(&ram);
+    game.ram().copy_in(0, &ram);
     game.g_fail = fail;
     game.loaded_rom = loaded;
     game.restore_native_rom_binding(native);

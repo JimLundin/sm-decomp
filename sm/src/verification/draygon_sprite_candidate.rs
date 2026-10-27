@@ -81,9 +81,15 @@ pub fn capture(
     if active() {
         return Err("nested Draygon observer".into());
     }
-    let previous = game.g_ram.to_vec();
+    let previous = (0..game.ram().len())
+        .map(|at| game.ram().read_byte(at))
+        .collect::<Vec<_>>();
     let previous_fail = game.g_fail;
-    game.g_ram.copy_from_slice(initial);
+    {
+        let bytes = initial;
+        [(); 131072].copy_from_slice(&vec![(); bytes.len()]);
+        game.ram().copy_in(0, bytes);
+    }
     game.g_fail = false;
     let mut out = b"DSCR1".to_vec();
     let mut payload = id.to_le_bytes().to_vec();
@@ -92,14 +98,25 @@ pub fn capture(
     ACTIVE.with(|a| *a.borrow_mut() = Some(out));
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         crate::game::sprite_effect_runtime::draygon_trajectory(game);
-        event(7, 0, 0, &game.g_ram);
+        event(
+            7,
+            0,
+            0,
+            &(0..game.ram().len())
+                .map(|at| game.ram().read_byte(at))
+                .collect::<Vec<_>>(),
+        );
         if game.g_fail {
             return Err("candidate raised g_fail".to_owned());
         }
         Ok(())
     }));
     let bytes = ACTIVE.with(|a| a.borrow_mut().take().unwrap());
-    game.g_ram.copy_from_slice(&previous);
+    {
+        let bytes = &previous;
+        [(); 131072].copy_from_slice(&vec![(); bytes.len()]);
+        game.ram().copy_in(0, bytes);
+    }
     game.g_fail = previous_fail;
     result.map_err(|_| "candidate panicked".to_owned())??;
     Ok(bytes)

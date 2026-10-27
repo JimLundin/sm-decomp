@@ -9,7 +9,7 @@ fn lorom(a: u32) -> usize {
     crate::rtl::lorom_offset(a) as usize
 }
 fn put(g: &mut Game, a: usize, v: u16) {
-    g.g_ram[a..a + 2].copy_from_slice(&v.to_le_bytes());
+    g.ram().copy_in(a, &v.to_le_bytes());
 }
 fn rom_word(image: &RomImage, address: u32, value: u16) {
     for (offset, byte) in value.to_le_bytes().into_iter().enumerate() {
@@ -126,8 +126,8 @@ fn fixture(id: u32, g: &mut Game, loaded: &RomImage, native: &RomImage) {
         }
         73..=88 => {
             fixture(9, g, loaded, native);
-            g.g_ram[0xb64..0xce2].fill(0);
-            g.g_ram[0xd658..0xd7c0].fill(0);
+            g.ram().fill(0xb64..0xce2, 0);
+            g.ram().fill(0xd658..0xd7c0, 0);
             for (a, v) in [
                 (0x7a5, 16),
                 (0x7a9, 8),
@@ -173,7 +173,7 @@ fn fixture(id: u32, g: &mut Game, loaded: &RomImage, native: &RomImage) {
                 4 => put(g, 0x9d2, 1),
                 5 => put(g, 0x9d2, 2),
                 6 | 7 => {
-                    g.g_ram[0xa1f] = 4;
+                    g.ram().write_byte(0xa1f, 4);
                     put(g, 0x9a2, 0x1000);
                     if mode == 7 {
                         put(g, 0x9d2, 3);
@@ -303,7 +303,9 @@ fn native_entries() {
         let loaded = RomImage::zeroed(0x200000);
         let native = RomImage::zeroed(0x200000);
         fixture(id, &mut g, &loaded, &native);
-        let mut expected = g.g_ram.to_vec();
+        let mut expected = (0..g.ram().len())
+            .map(|at| g.ram().read_byte(at))
+            .collect::<Vec<u8>>();
         for &(a, b) in OLD_DELTAS[id as usize] {
             expected[a] = b;
         }
@@ -422,10 +424,12 @@ fn typed_image(state: &crate::game::session::Session, bytes: &[u8]) {
 fn lane_projection() {
     use super::access::Store;
     let mut g = Game::new();
-    for (a, b) in g.g_ram.iter_mut().enumerate() {
-        *b = (a.wrapping_mul(37) ^ a / 17) as u8;
+    for a in 0..g.ram().len() {
+        g.ram().write_byte(a, (a.wrapping_mul(37) ^ a / 17) as u8);
     }
-    let mut expected = g.g_ram.to_vec();
+    let mut expected = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     let addresses = physical_words();
     let mut owner = Runtime::new(&mut g);
     typed_image(owner.session(), &expected);
@@ -433,7 +437,7 @@ fn lane_projection() {
         for lane in 0..2 {
             assert_eq!(owner.byte(a + lane), expected[a + lane]);
             let value = expected[a + lane] ^ 0xa5;
-            owner.foreign(|g| g.g_ram[a + lane] = value);
+            owner.foreign(|g| g.ram().write_byte(a + lane, value));
             expected[a + lane] = value;
         }
     }
@@ -469,7 +473,12 @@ fn lane_projection() {
     assert_eq!(owner.session().projectiles.controls.charge_palette, 0x3456);
     expected[0xb62..0xb64].copy_from_slice(&0x3456u16.to_le_bytes());
     drop(owner);
-    assert_eq!(g.g_ram.as_slice(), expected);
+    assert_eq!(
+        &(0..g.ram().len())
+            .map(|at| g.ram().read_byte(at))
+            .collect::<Vec<u8>>()[..],
+        expected
+    );
 }
 fn publication() {
     use super::access::Store;
@@ -493,28 +502,56 @@ fn publication() {
     assert_eq!(order.get(), 2);
     assert_eq!(owner.session().projectiles.shots[0].x, 0x2468);
     drop(owner);
-    let end = g.g_ram.len() - 1;
+    let end = g.ram().len() - 1;
     let failed = catch_unwind(AssertUnwindSafe(|| {
         let mut owner = Runtime::new(&mut g);
         owner.session_mut().projectiles.shots[0].x = 0x1234;
         owner.store(end, 0xaabb, Store::PrefixLe);
     }));
     assert!(failed.is_err());
-    assert_eq!(&g.g_ram[0xb64..0xb66], &[0x34, 0x12]);
-    assert_eq!(g.g_ram[end], 0xbb);
+    assert_eq!(
+        &{
+            let mut bytes = [0; 2];
+            g.ram().copy_out(0xb64, &mut bytes);
+            bytes
+        },
+        &[0x34, 0x12]
+    );
+    assert_eq!(g.ram().read_byte(end), 0xbb);
     let failed = catch_unwind(AssertUnwindSafe(|| {
         Runtime::new(&mut g).store(end, 0xccdd, Store::SliceLe);
     }));
     assert!(failed.is_err());
-    assert_eq!(g.g_ram[end], 0xbb);
+    assert_eq!(g.ram().read_byte(end), 0xbb);
     put(&mut g, 0x1c37, 0x4321);
     let mut owner = Runtime::new(&mut g);
     owner.session_mut().projectiles.selected = 19;
     let result = owner.foreign(|g| {
-        assert_eq!(&g.g_ram[0xdde..0xde0], &[19, 0]);
+        assert_eq!(
+            &{
+                let mut bytes = [0; 2];
+                g.ram().copy_out(0xdde, &mut bytes);
+                bytes
+            },
+            &[19, 0]
+        );
         crate::game::room_mechanisms::clear(g);
-        assert_eq!(&g.g_ram[0x1c37..0x1c39], &[0, 0]);
-        assert_eq!(&g.g_ram[0xdde..0xde0], &[19, 0]);
+        assert_eq!(
+            &{
+                let mut bytes = [0; 2];
+                g.ram().copy_out(0x1c37, &mut bytes);
+                bytes
+            },
+            &[0, 0]
+        );
+        assert_eq!(
+            &{
+                let mut bytes = [0; 2];
+                g.ram().copy_out(0xdde, &mut bytes);
+                bytes
+            },
+            &[19, 0]
+        );
         put(g, 0xdde, 31);
         put(g, 0xb64, 47);
         17
@@ -523,7 +560,14 @@ fn publication() {
     assert_eq!(owner.session().projectiles.selected, 31);
     assert_eq!(owner.session().projectiles.shots[0].x, 47);
     drop(owner);
-    assert_eq!(&g.g_ram[0x1c37..0x1c39], &[0, 0]);
+    assert_eq!(
+        &{
+            let mut bytes = [0; 2];
+            g.ram().copy_out(0x1c37, &mut bytes);
+            bytes
+        },
+        &[0, 0]
+    );
     let failed = catch_unwind(AssertUnwindSafe(|| {
         Runtime::new(&mut g).foreign(|g| {
             put(g, 0xdde, 55);
@@ -531,7 +575,14 @@ fn publication() {
         });
     }));
     assert!(failed.is_err());
-    assert_eq!(&g.g_ram[0xdde..0xde0], &[55, 0]);
+    assert_eq!(
+        &{
+            let mut bytes = [0; 2];
+            g.ram().copy_out(0xdde, &mut bytes);
+            bytes
+        },
+        &[55, 0]
+    );
     let failed = catch_unwind(AssertUnwindSafe(|| {
         let mut owner = Runtime::new(&mut g);
         owner.session_mut().projectiles.selected = 73;
@@ -539,8 +590,22 @@ fn publication() {
         panic!("core unwind");
     }));
     assert!(failed.is_err());
-    assert_eq!(&g.g_ram[0xdde..0xde0], &[73, 0]);
-    assert_eq!(&g.g_ram[0x9c6..0x9c8], &[11, 0]);
+    assert_eq!(
+        &{
+            let mut bytes = [0; 2];
+            g.ram().copy_out(0xdde, &mut bytes);
+            bytes
+        },
+        &[73, 0]
+    );
+    assert_eq!(
+        &{
+            let mut bytes = [0; 2];
+            g.ram().copy_out(0x9c6, &mut bytes);
+            bytes
+        },
+        &[11, 0]
+    );
 }
 
 pub(crate) fn run() -> u32 {
@@ -683,24 +748,8 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     g.register_native_rom(native.clone());
     // Real bus dependencies reached by Power Bomb's HDMA allocation.
     let hardware = if id == 100 {
-        use crate::initial_state::InitialState;
-        let mut snes = Box::new(crate::types::Snes::INITIAL);
-        let mut dma = Box::new(crate::types::Dma::INITIAL);
-        let mut cart = Box::new(crate::types::Cart {
-            snes: &mut *snes,
-            type_0: 0,
-            rom: Default::default(),
-            romSize: 0,
-            ram: Default::default(),
-            ramSize: 0,
-        });
-        snes.dma = &mut *dma;
-        snes.cart = &mut *cart;
-        snes.ram = g.g_ram.as_mut_ptr();
-        dma.snes = &mut *snes;
-        cart.snes = &mut *snes;
-        g.g_snes = &mut *snes;
-        Some((snes, dma, cart))
+        g.ensure_backend();
+        Some(())
     } else {
         None
     };
@@ -730,12 +779,13 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
             _ => unreachable!(),
         }
         update(&mut g);
-        if let Some((_, dma, _)) = &hardware {
-            assert_eq!(dma.channel[2].bAdr, 0x28);
-            assert_eq!(dma.channel[3].bAdr, 0x29);
-            assert!(dma.channel[2].indirect && dma.channel[3].indirect);
-            assert_eq!(dma.channel[2].mode, 0);
-            assert_eq!(dma.channel[3].mode, 0);
+        if let Some(()) = &hardware {
+            let channels = g.dma_channels();
+            assert_eq!(channels[2].bAdr, 0x28);
+            assert_eq!(channels[3].bAdr, 0x29);
+            assert!(channels[2].indirect && channels[3].indirect);
+            assert_eq!(channels[2].mode, 0);
+            assert_eq!(channels[3].mode, 0);
         }
     } else if id <= 72 {
         match (id - 9) % 8 {
@@ -759,7 +809,7 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     } else {
         prepare(&mut g);
         // Prove these cases reached their intended producers before retirement.
-        let read = |a: usize| u16::from_le_bytes([g.g_ram[a], g.g_ram[a + 1]]);
+        let read = |a: usize| u16::from_le_bytes([g.ram().read_byte(a), g.ram().read_byte(a + 1)]);
         let (slot, motion, count) = if id <= 88 {
             let mode = ((id - 73) % 8) as usize;
             (
@@ -792,7 +842,11 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
         }
     }
     assert!(!g.g_fail, "native diagnostic {id}");
-    Some(g.g_ram.to_vec())
+    Some(
+        (0..g.ram().len())
+            .map(|at| g.ram().read_byte(at))
+            .collect::<Vec<u8>>(),
+    )
 }
 
 #[path = "player_projectiles_expanded.rs"]

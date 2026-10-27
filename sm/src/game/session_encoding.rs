@@ -556,12 +556,19 @@ macro_rules! scalar_words {
     };
 }
 
-pub(crate) fn read(bytes: &[u8], at: usize) -> u16 {
-    u16::from_le_bytes([bytes[at], bytes[at + 1]])
+pub(crate) fn read(bytes: &impl Fn(usize) -> u8, at: usize) -> u16 {
+    u16::from_le_bytes([bytes(at), bytes(at + 1)])
 }
-pub(crate) fn decode(bytes: &[u8], world: Arc<WorldBinding>) -> Session {
+pub(crate) fn decode(
+    bytes: &impl Fn(usize) -> u8,
+    byte_len: usize,
+    world: Arc<WorldBinding>,
+) -> Session {
     let mut s = Session::with_world(world);
-    s.minimap.explored.copy_from_slice(&bytes[0x7f7..0x8f7]);
+    assert!(0x8f7 <= byte_len, "short minimap import");
+    for (index, value) in s.minimap.explored.iter_mut().enumerate() {
+        *value = bytes(0x7f7 + index);
+    }
     macro_rules! load_key {
         ($at:expr, $field:ident, $get:ident, $set:ident) => {
             s.room.entry.$field = s.world.$set(read(bytes, $at));
@@ -576,16 +583,17 @@ pub(crate) fn decode(bytes: &[u8], world: Arc<WorldBinding>) -> Session {
     transition_words!(s, load_transition);
     macro_rules! load_asset {
         ($at:expr, $field:ident, $slot:expr) => {
+            assert!($at + 3 <= byte_len, "short room asset import");
             s.room.entry.$field = s
                 .world
-                .asset($slot, bytes[$at..$at + 3].try_into().unwrap());
+                .asset($slot, [bytes($at), bytes($at + 1), bytes($at + 2)]);
         };
     }
     room_assets!(load_asset);
-    s.continuations.primary = bytes[0x612];
-    s.continuations.secondary = bytes[0x613];
-    s.room.entry.layer2_x = bytes[0x91b];
-    s.room.entry.layer2_y = bytes[0x91c];
+    s.continuations.primary = bytes(0x612);
+    s.continuations.secondary = bytes(0x613);
+    s.room.entry.layer2_x = bytes(0x91b);
+    s.room.entry.layer2_y = bytes(0x91c);
     for (base, flags) in [
         (0xd820, s.gameplay_flags.events.as_mut_slice()),
         (0xd828, s.gameplay_flags.bosses_by_area.as_mut_slice()),
@@ -594,9 +602,12 @@ pub(crate) fn decode(bytes: &[u8], world: Arc<WorldBinding>) -> Session {
         (0xd8b0, s.gameplay_flags.opened_doors.as_mut_slice()),
     ] {
         let end = base + flags.len();
-        flags.copy_from_slice(&bytes[base..end]);
+        assert!(end <= byte_len, "short gameplay flags import");
+        for (index, value) in flags.iter_mut().enumerate() {
+            *value = bytes(base + index);
+        }
     }
-    s.enemy_projectiles.spawn.angle = bytes[0x60b];
+    s.enemy_projectiles.spawn.angle = bytes(0x60b);
     let mut load = |at: usize, value: &mut u16| *value = read(bytes, at);
     scalar_words!(s,load,(&mut));
     for (index, value) in s.projectiles.launch.displacements.iter_mut().enumerate() {
@@ -605,14 +616,14 @@ pub(crate) fn decode(bytes: &[u8], world: Arc<WorldBinding>) -> Session {
     }
     for (index, cell) in s.room.terrain.cells_mut().iter_mut().enumerate() {
         cell.level = read(bytes, 0x10002 + index * 2);
-        cell.behavior = bytes[0x16402 + index];
+        cell.behavior = bytes(0x16402 + index);
     }
     for (index, tile) in s.room.terrain.tiles_mut().iter_mut().enumerate() {
         for (corner, value) in tile.iter_mut().enumerate() {
             *value = read(bytes, 0xa000 + index * 8 + corner * 2);
         }
     }
-    crate::game::actors::codec::import_common(&mut s, bytes);
+    crate::game::actors::codec::import_common(&mut s, bytes, byte_len);
     s
 }
 pub(crate) fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
@@ -675,13 +686,11 @@ pub(crate) fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
         }
     }
 }
-pub(crate) fn encode(s: &Session, bytes: &mut [u8]) {
-    bytes[0x60b] = s.enemy_projectiles.spawn.angle;
-    visit(s, |at, value| {
-        bytes[at..at + 2].copy_from_slice(&value.to_le_bytes())
-    });
+pub(crate) fn encode(s: &Session, mut span: impl FnMut(usize, &[u8])) {
+    span(0x60b, &[s.enemy_projectiles.spawn.angle]);
+    visit(s, |at, value| span(at, &value.to_le_bytes()));
     for (index, cell) in s.room.terrain.cells().iter().enumerate() {
-        bytes[0x16402 + index] = cell.behavior;
+        span(0x16402 + index, &[cell.behavior]);
     }
 }
 pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {
@@ -904,7 +913,7 @@ pub(crate) fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> boo
     scalar_words!(s,write,(&mut));
     changed
 }
-pub(crate) fn inputs(bytes: &[u8]) -> ExternalInputs {
+pub(crate) fn inputs(bytes: &impl Fn(usize) -> u8) -> ExternalInputs {
     let w = |at| read(bytes, at);
     ExternalInputs {
         transitions: crate::game::player_transitions::state::TransitionObservations {
@@ -917,7 +926,7 @@ pub(crate) fn inputs(bytes: &[u8]) -> ExternalInputs {
             fx_kind: w(0x196e),
         },
         debug_enemy_freeze: w(ram::debug_time_frozen_for_enemies),
-        enemy_zero_health: u16::from_ne_bytes([bytes[0xf8c], bytes[0xf8d]]),
+        enemy_zero_health: u16::from_ne_bytes([bytes(0xf8c), bytes(0xf8d)]),
         blending_config: w(0x1982),
         lava_y: w(0x1962),
         current_enemy: w(ram::cur_enemy_index),
@@ -926,7 +935,7 @@ pub(crate) fn inputs(bytes: &[u8]) -> ExternalInputs {
         fx_y: w(ram::fx_y_pos),
         drop_origin_x: w(ram::special_death_item_drop_x_origin_pos),
         drop_origin_y: w(ram::special_death_item_drop_y_origin_pos),
-        nmi_counter_low: bytes[0x5b5],
+        nmi_counter_low: bytes(0x5b5),
 
         shoot_button: w(ram::button_config_shoot_x),
         jump_button: w(ram::button_config_jump_a),

@@ -19,7 +19,11 @@ impl Host {
             .into_boxed_slice()
             .try_into()
             .unwrap();
-        let session = encoding::decode(&bytes[..], WorldBinding::canonical_legacy());
+        let session = encoding::decode(
+            &|at| bytes[at],
+            bytes.len(),
+            WorldBinding::canonical_legacy(),
+        );
         Self {
             session,
             backing: bytes,

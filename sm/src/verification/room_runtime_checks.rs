@@ -1,5 +1,6 @@
 //! Actual Game/Runtime binding and room projection guards. No replacement owner.
 #![forbid(unsafe_code)]
+use crate::room_background_support::ram_bytes;
 use crate::{
     game::{
         room_entry::{
@@ -77,7 +78,9 @@ fn projection(h: &Runtime<'_>, expected: &[u8], world: &Arc<WorldBinding>) {
         "room.guard.pinned-world"
     );
     let mut bytes = expected.to_vec();
-    session_encoding::encode(h.session(), &mut bytes);
+    session_encoding::encode(h.session(), |at, span| {
+        bytes[at..at + span.len()].copy_from_slice(span)
+    });
     assert_eq!(bytes, expected, "room.guard.whole-union");
     assert_eq!(RANGES.iter().map(|(a, b)| b - a).sum::<usize>(), 84);
     for (begin, end) in RANGES {
@@ -146,8 +149,9 @@ fn constructors() {
 }
 fn round_trip(world: Arc<WorldBinding>) {
     let mut game = Game::with_world(world.clone());
-    for (i, b) in game.g_ram.iter_mut().enumerate() {
-        *b = (i.wrapping_mul(37) ^ (i >> 8)) as u8;
+    for i in 0..game.ram().len() {
+        game.ram()
+            .write_byte(i, (i.wrapping_mul(37) ^ (i >> 8)) as u8);
     }
     let original_native = [
         0x1201, 0x2302, 0x3403, 0x4504, 0x5605, 0x6706, 0x7807, 0x8908,
@@ -156,7 +160,7 @@ fn round_trip(world: Arc<WorldBinding>) {
         0x9121, 0xa232, 0xb343, 0xc454, 0xd565, 0xe676, 0xf787, 0x1898,
     ];
     set_native(&mut game, original_native);
-    let mut expected = game.g_ram.to_vec();
+    let mut expected = ram_bytes(&game);
     {
         let mut h = Runtime::new(&mut game);
         projection(&h, &expected, &world);
@@ -244,7 +248,7 @@ fn round_trip(world: Arc<WorldBinding>) {
         h.foreign(|g| {
             assert!(Arc::ptr_eq(g.world(), &world));
             assert_eq!(
-                g.g_ram.as_slice(),
+                ram_bytes(&g).as_slice(),
                 expected.as_slice(),
                 "room.guard.publish-all"
             );
@@ -259,12 +263,12 @@ fn round_trip(world: Arc<WorldBinding>) {
             expected[0x613] = 1;
             put(&mut expected, 0x79b, fixture::ROOM_B_KEY);
             assert_eq!(
-                g.g_ram.as_slice(),
+                ram_bytes(&g).as_slice(),
                 expected.as_slice(),
                 "room.guard.nested-publication"
             );
-            for b in &mut g.g_ram {
-                *b ^= 0x5a;
+            for at in 0..g.ram().len() {
+                g.ram().write_byte(at, g.ram().read_byte(at) ^ 0x5a);
             }
             for b in &mut expected {
                 *b ^= 0x5a;
@@ -279,9 +283,9 @@ fn round_trip(world: Arc<WorldBinding>) {
         );
         let error = catch_unwind(AssertUnwindSafe(|| {
             h.foreign(|g| {
-                assert_eq!(g.g_ram.as_slice(), expected.as_slice());
-                for b in &mut g.g_ram {
-                    *b ^= 0xa5;
+                assert_eq!(ram_bytes(&g).as_slice(), expected.as_slice());
+                for at in 0..g.ram().len() {
+                    g.ram().write_byte(at, g.ram().read_byte(at) ^ 0xa5);
                 }
                 for b in &mut expected {
                     *b ^= 0xa5;
@@ -304,7 +308,7 @@ fn round_trip(world: Arc<WorldBinding>) {
         );
     }
     assert_eq!(
-        game.g_ram.as_slice(),
+        ram_bytes(&game).as_slice(),
         expected.as_slice(),
         "room.guard.no-stale-drop"
     );
@@ -326,8 +330,8 @@ fn mismatch() {
         "room.guard.fixture-distinct-revisions"
     );
     let mut game = Game::with_world(first);
-    game.g_ram.fill(0x71);
-    let before = game.g_ram.to_vec();
+    game.ram().fill(0..game.ram().len(), 0x71);
+    let before = ram_bytes(&game);
     let native_before = native(&game);
     let mut called = false;
     {
@@ -343,7 +347,7 @@ fn mismatch() {
     }
     assert!(!called, "room.guard.mismatch-before-callback");
     assert_eq!(
-        game.g_ram.as_slice(),
+        ram_bytes(&game).as_slice(),
         before.as_slice(),
         "room.guard.mismatch-before-writes"
     );

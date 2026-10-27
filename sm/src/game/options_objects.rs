@@ -43,7 +43,7 @@ pub(crate) fn spawn(parameter: u16, address: u16, game: &mut Game) -> u8 {
                 _ => 128,
             };
             let at = 0x1aad + 2 * usize::from(slot);
-            game.g_ram[at..at + 2].copy_from_slice(&x.to_ne_bytes());
+            game.ram().copy_in(at, &x.to_ne_bytes());
             word! { game; cinematicbg_arr9[slot] = 16; optionsmenu_arr10[slot] = 3584; }
         }
         _ => {
@@ -104,13 +104,13 @@ fn before_script(slot: u16, game: &mut Game) {
         }
         0xf376 => {
             if word!(game.game_state) != 2
-                || word!(game.game_options_screen_index) == 6 && game.g_ram[0x51] == 0x80
+                || word!(game.game_options_screen_index) == 6 && game.ram().read_byte(0x51) == 0x80
             {
                 end_script(slot, game);
             }
         }
         0xf3a0 => match word!(game.game_options_screen_index) {
-            6 if game.g_ram[0x51] == 0x80 => end_script(slot, game),
+            6 if game.ram().read_byte(0x51) == 0x80 => end_script(slot, game),
             9 => {
                 word!(game.cinematicbg_arr9[slot] -= 2);
             }
@@ -120,7 +120,7 @@ fn before_script(slot: u16, game: &mut Game) {
             _ => {}
         },
         0xf3e2 => {
-            if word!(game.game_options_screen_index) == 6 && game.g_ram[0x51] == 0x80 {
+            if word!(game.game_options_screen_index) == 6 && game.ram().read_byte(0x51) == 0x80 {
                 end_script(slot, game);
             }
         }

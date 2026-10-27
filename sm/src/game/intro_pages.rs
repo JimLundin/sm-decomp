@@ -26,7 +26,7 @@ use super::visual_runtime::{
 use super::visual_state::{CinematicFade, CinematicTilemap};
 use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8};
 use crate::game_state::Game;
-use crate::ram_map::{checked_word, ram_ptr, word};
+use crate::ram_map::{checked_word, word};
 
 fn load_japanese_line(address: u16, game: &mut Game) {
     let record = super::visual_runtime::cinematic_native_record::<0x8b>(address, game);
@@ -39,7 +39,8 @@ fn load_japanese_line(address: u16, game: &mut Game) {
             let target = 0x4000 + ((usize::from(destination) + row_offset) >> 1) * 2;
             let source = 0x1a000 + usize::from(record.word(cursor + word_offset));
             for byte in 0..16 {
-                game.g_ram[target + byte] = game.g_ram[source + byte];
+                let value = game.ram().read_byte(source + byte);
+                game.ram().write_byte(target + byte, value);
             }
         }
         destination = destination.wrapping_add(16);
@@ -193,7 +194,8 @@ pub(super) unsafe fn wait_for_scene(scene: Scene, game: &mut Game) {
         let palette = match scene {
             Scene::MotherBrain | Scene::BabyMetroid => {
                 let mother_brain = matches!(scene, Scene::MotherBrain);
-                *ram_ptr!(game; 0x58) = if mother_brain { 80 } else { 84 };
+                game.ram()
+                    .write_byte(0x58, if mother_brain { 80 } else { 84 });
                 if !mother_brain {
                     word! {game; room_width_in_blocks = 32; room_height_in_blocks = 16; }
                 }
@@ -249,7 +251,7 @@ pub(super) unsafe fn wait_for_scene(scene: Scene, game: &mut Game) {
             }
             Scene::ScientistPage3 | Scene::ScientistPage4 => {
                 let scientist = matches!(scene, Scene::ScientistPage3);
-                *ram_ptr!(game; 0x58) = if scientist { 88 } else { 92 };
+                game.ram().write_byte(0x58, if scientist { 88 } else { 92 });
                 word!(game.cinematic_var8 = if scientist { 32 } else { 0 });
                 word!(game.cinematic_var10 = if scientist { 8 } else { -24i16 as u16 });
                 word!(game.cinematic_var13 = 127);
@@ -285,9 +287,9 @@ pub(super) fn fade_to_scene(palette: Palette, game: &mut Game) {
         palette.crossfade(false, game);
     }
     if (word!(game.cinematic_var4 -= 1, reread) & 0x8000) != 0 {
-        game.g_ram[0x69] = 21;
-        game.g_ram[0x6b] = 0;
-        game.g_ram[0x6f] = 0;
+        game.ram().write_byte(0x69, 21);
+        game.ram().write_byte(0x6b, 0);
+        game.ram().write_byte(0x6f, 0);
         word_transfers!(game, ascending, 640; pause_map(128) <- value(47));
         clear_japanese_tiles(game);
         word!(game.cinematic_function = (0x8ba391i32) as u16);
@@ -342,10 +344,10 @@ pub(super) fn fade_to_page(palette: Palette, game: &mut Game) {
         palette.crossfade(true, game);
     }
     if (word!(game.cinematic_var13 -= 1, reread) & 0x8000) != 0 {
-        game.g_ram[0x69] = 22;
-        game.g_ram[0x6b] = 0;
-        game.g_ram[0x6f] = 0;
-        game.g_ram[0x72] = 0;
+        game.ram().write_byte(0x69, 22);
+        game.ram().write_byte(0x6b, 0);
+        game.ram().write_byte(0x6f, 0);
+        game.ram().write_byte(0x72, 0);
         if matches!(palette, Palette::Scientist) {
             word_transfers!(game, ascending, 7; native(0xc1c0) <- rom(0x8ce3e9, 224));
         }
@@ -432,7 +434,7 @@ pub(super) fn enable_text(j: u16, game: &mut Game) -> u16 {
 
 pub(super) unsafe fn fade_out_to_ceres(restore_samus: bool, game: &mut Game) {
     crate::game::display_refresh::fade(false, game);
-    if game.g_ram[0x51] == 0x80 {
+    if game.ram().read_byte(0x51) == 0x80 {
         unsafe { crate::game::display_refresh::enable(true, game) };
         word! { game, 0;
             screen_fade_delay, screen_fade_counter, reg_BG2HOFS, reg_BG3HOFS, reg_BG2VOFS,
@@ -493,10 +495,16 @@ fn advance_text_glow_object(game: &mut Game) {
     if timer != 1 {
         return;
     }
-    let palette = u16::from_ne_bytes([game.g_ram[0x1a37 + object], game.g_ram[0x1a38 + object]]);
-    let definition = u16::from_ne_bytes([game.g_ram[0x19f7 + object], game.g_ram[0x19f8 + object]]);
-    let mut row = 2 * u16::from(game.g_ram[0x1a17 + (object & !1)])
-        + 64 * u16::from(game.g_ram[0x1a27 + object]);
+    let palette = u16::from_ne_bytes([
+        game.ram().read_byte(0x1a37 + object),
+        game.ram().read_byte(0x1a38 + object),
+    ]);
+    let definition = u16::from_ne_bytes([
+        game.ram().read_byte(0x19f7 + object),
+        game.ram().read_byte(0x19f8 + object),
+    ]);
+    let mut row = 2 * u16::from(game.ram().read_byte(0x1a17 + (object & !1)))
+        + 64 * u16::from(game.ram().read_byte(0x1a27 + object));
     let (width, mut rows) = {
         let definition = super::visual_runtime::cinematic_native_record::<0x8c>(definition, game);
         (i32::from(definition.byte(2)), i32::from(definition.byte(3)))
@@ -506,7 +514,7 @@ fn advance_text_glow_object(game: &mut Game) {
         let mut remaining = width;
         loop {
             let at = 0x3000 + usize::from(column);
-            let tile = u16::from_ne_bytes([game.g_ram[at], game.g_ram[at + 1]]);
+            let tile = u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]);
             word_transfers!(game, ascending, 1; native(at) <- value(palette | (tile & 0xe3ff)));
             column = column.wrapping_add(2);
             remaining -= 1;
@@ -523,7 +531,11 @@ fn advance_text_glow_object(game: &mut Game) {
     // Retirement rereads the live selector after the ordered tile writes.
     let selected = usize::from(word!(game.cinematic_var19));
     let phase_at = 0x1a37 + selected;
-    if u16::from_ne_bytes([game.g_ram[phase_at], game.g_ram[phase_at + 1]]) == 3072 {
+    if u16::from_ne_bytes([
+        game.ram().read_byte(phase_at),
+        game.ram().read_byte(phase_at + 1),
+    ]) == 3072
+    {
         word_transfers!(game, ascending, 1; native(0x19f7 + selected) <- value(0));
     } else {
         checked_word!(game, phase_at; = checked_word!(game, phase_at;).wrapping_add(1024));

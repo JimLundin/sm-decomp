@@ -28,14 +28,19 @@ pub fn phase(index: u16) -> Option<(Operation, u8)> {
     }
 }
 pub fn put(game: &mut Game, address: usize, value: u16) {
-    game.g_ram[address..address + 2].copy_from_slice(&value.to_le_bytes());
+    let _ = &[(); 0x20000][address..address + 2];
+    game.ram().copy_in(address, &value.to_le_bytes());
 }
 pub fn word(game: &Game, address: usize) -> u16 {
-    u16::from_le_bytes([game.g_ram[address], game.g_ram[address + 1]])
+    u16::from_le_bytes([
+        game.ram().read_byte(address),
+        game.ram().read_byte(address + 1),
+    ])
 }
 pub fn seed(game: &mut Game) {
-    game.g_ram.fill(0);
-    game.g_ram[0x1ffff] = 1;
+    game.ram().fill(0..game.ram().len(), 0);
+    let value = 1;
+    game.ram().write_byte(0x1ffff, value);
     for i in 0..512 {
         put(game, 0xef78 + i * 2, 0x5000 ^ i as u16);
     }
@@ -53,7 +58,7 @@ pub fn seed(game: &mut Game) {
 pub fn prepare(operation: Operation, game: &mut Game) {
     if operation == Operation::Draw {
         // Normal per-frame OAM assembly starts empty. No sprite state is reset.
-        game.g_ram[0x370..0x592].fill(0);
+        game.ram().fill(0x370..0x592, 0);
     }
 }
 pub fn record(output: &mut Vec<u8>, tag: u8, payload: &[u8]) {
@@ -76,7 +81,7 @@ pub fn state(
     payload.push(tick);
     payload.extend_from_slice(&result.to_le_bytes());
     payload.extend_from_slice(&cpu);
-    payload.extend_from_slice(&game.g_ram);
+    payload.extend((0..game.ram().len()).map(|at| game.ram().read_byte(at)));
     record(output, tag, &payload);
 }
 pub fn mask(output: &mut Vec<u8>, index: u16, addresses: &std::collections::BTreeSet<usize>) {

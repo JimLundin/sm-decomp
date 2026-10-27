@@ -17,17 +17,17 @@ pub(crate) fn message(id: u16) -> Message<u16> {
     }
 }
 fn read(game: &Game, at: usize) -> u16 {
-    u16::from_le_bytes([game.g_ram[at], game.g_ram[at + 1]])
+    u16::from_le_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])
 }
 fn write(game: &mut Game, at: usize, value: u16) {
-    game.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    game.ram().copy_in(at, &value.to_le_bytes());
 }
 pub(crate) fn import(game: &Game) -> Dialogue<u16> {
     use Continuation::*;
     use Phase::*;
     Dialogue {
         message: message(read(game, ram::message_box_index)),
-        continuation: match game.g_ram[0x614] {
+        continuation: match game.ram().read_byte(0x614) {
             0 => Start,
             2 => Waiting(Opening(Cycle::Message)),
             3 => Waiting(Interacting(Cycle::Message)),
@@ -39,7 +39,7 @@ pub(crate) fn import(game: &Game) -> Dialogue<u16> {
             value => Invalid(value),
         },
         delay_remaining: read(game, ram::my_counter),
-        child: match game.g_ram[0x615] {
+        child: match game.ram().read_byte(0x615) {
             0 => ChildContinuation::Start,
             1 => ChildContinuation::Waiting,
             2 => ChildContinuation::ReadingDelay,
@@ -81,24 +81,30 @@ pub(crate) fn publish(state: Dialogue<u16>, game: &mut Game) {
             Selection::Other(value) => value,
         },
     );
-    game.g_ram[0x615] = match state.child {
-        ChildContinuation::Start => 0,
-        ChildContinuation::Waiting => 1,
-        ChildContinuation::ReadingDelay => 2,
-        ChildContinuation::Dismissing => 3,
-        ChildContinuation::Invalid(value) => value,
-    };
-    game.g_ram[0x614] = match state.continuation {
-        Start => 0,
-        Waiting(Opening(Cycle::Message)) => 2,
-        Waiting(Interacting(Cycle::Message)) => 3,
-        Waiting(Closing(Cycle::Message)) => 4,
-        Waiting(Opening(Cycle::SaveFeedback)) => 5,
-        Waiting(Interacting(Cycle::SaveFeedback)) => 6,
-        Waiting(Closing(Cycle::SaveFeedback)) => 7,
-        Waiting(FeedbackDelay) => 8,
-        Invalid(value) => value,
-    };
+    game.ram().write_byte(
+        0x615,
+        match state.child {
+            ChildContinuation::Start => 0,
+            ChildContinuation::Waiting => 1,
+            ChildContinuation::ReadingDelay => 2,
+            ChildContinuation::Dismissing => 3,
+            ChildContinuation::Invalid(value) => value,
+        },
+    );
+    game.ram().write_byte(
+        0x614,
+        match state.continuation {
+            Start => 0,
+            Waiting(Opening(Cycle::Message)) => 2,
+            Waiting(Interacting(Cycle::Message)) => 3,
+            Waiting(Closing(Cycle::Message)) => 4,
+            Waiting(Opening(Cycle::SaveFeedback)) => 5,
+            Waiting(Interacting(Cycle::SaveFeedback)) => 6,
+            Waiting(Closing(Cycle::SaveFeedback)) => 7,
+            Waiting(FeedbackDelay) => 8,
+            Invalid(value) => value,
+        },
+    );
 }
 pub(crate) fn input(game: &Game) -> Input {
     use crate::game::constants::buttons::*;

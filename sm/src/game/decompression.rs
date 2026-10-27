@@ -34,10 +34,15 @@ impl Output for RamOutput<'_> {
         next_byte(self.game)
     }
     fn read(&mut self, position: i32) -> u8 {
-        self.game.g_ram[self.base.checked_add_signed(position as isize).unwrap()]
+        self.game
+            .ram()
+            .read_byte(self.base.checked_add_signed(position as isize).unwrap())
     }
     fn write(&mut self, position: i32, value: u8, _back_reference: bool) {
-        self.game.g_ram[self.base.checked_add_signed(position as isize).unwrap()] = value;
+        self.game.ram().write_byte(
+            self.base.checked_add_signed(position as isize).unwrap(),
+            value,
+        );
         self.produced = self
             .produced
             .max(usize::try_from(position).expect("RAM output position") + 1);

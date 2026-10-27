@@ -17,7 +17,11 @@ thread_local! {
     static OBS: RefCell<Observation> = RefCell::new(Observation::default());
 }
 fn read(g: &Game, at: usize) -> u16 {
-    u16::from_le_bytes(g.g_ram[at..at + 2].try_into().unwrap())
+    u16::from_le_bytes({
+        let mut bytes = [0; 2];
+        g.ram().copy_out(at, &mut bytes);
+        bytes
+    })
 }
 fn put(bytes: &mut [u8], at: usize, value: u16) {
     bytes[at..at + 2].copy_from_slice(&value.to_le_bytes());
@@ -53,7 +57,7 @@ pub(crate) fn map_write(g: &Game, byte: usize, index: usize, stage: u8) {
             before.rotate_left(1)
         };
         assert_eq!(
-            g.g_ram[0x7f7 + byte],
+            g.ram().read_byte(0x7f7 + byte),
             expected,
             "map intermediate byte {index}, stage {stage}"
         );
@@ -93,7 +97,7 @@ pub(crate) fn map_write(g: &Game, byte: usize, index: usize, stage: u8) {
     });
 }
 fn map(g: &mut Game) {
-    g.g_ram.fill(0);
+    g.ram().fill(0..g.ram().len(), 0);
     g.g_fail = false;
     let loaded = RomImage::zeroed(0x200000);
     let native = RomImage::zeroed(0x200000);
@@ -109,12 +113,15 @@ fn map(g: &mut Game) {
     g.register_rom(loaded);
     g.register_native_rom(native);
     for byte in 0..256 {
-        g.g_ram[0x7f7 + byte] = explored(byte);
+        g.ram().write_byte(0x7f7 + byte, explored(byte));
     }
     for index in 0..2048 {
-        put(&mut g.g_ram, 0x4000 + 2 * index, 0xdead);
+        g.ram()
+            .copy_in(0x4000 + 2 * index, &0xdeadu16.to_le_bytes());
     }
-    let mut expected = g.g_ram.to_vec();
+    let mut expected = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     for index in 0..2048 {
         put(
             &mut expected,
@@ -139,7 +146,9 @@ fn map(g: &mut Game) {
         assert_eq!((o.shifted, o.incremented, o.completed), (2048, 1024, 2048));
     });
     assert_eq!(
-        g.g_ram.as_slice(),
+        &(0..g.ram().len())
+            .map(|at| g.ram().read_byte(at))
+            .collect::<Vec<u8>>()[..],
         expected.as_slice(),
         "all map rotations restore exploration bytes"
     );
@@ -152,7 +161,9 @@ fn map(g: &mut Game) {
         );
     }
     assert_eq!(
-        g.g_ram.as_slice(),
+        &(0..g.ram().len())
+            .map(|at| g.ram().read_byte(at))
+            .collect::<Vec<u8>>()[..],
         expected.as_slice(),
         "Session adopts retained physical map writes"
     );
@@ -160,9 +171,10 @@ fn map(g: &mut Game) {
 }
 pub(crate) fn run(g: &mut Game) -> usize {
     assert!(cfg!(target_endian = "little"));
-    assert_eq!(g.g_ram.as_ptr() as usize % core::mem::align_of::<u16>(), 0);
     assert!(!g.actor_identity_is_with_session());
-    let ram = g.g_ram.to_vec();
+    let ram = (0..g.ram().len())
+        .map(|at| g.ram().read_byte(at))
+        .collect::<Vec<u8>>();
     let fail = g.g_fail;
     let loaded = g.loaded_rom.clone();
     let native = g.capture_native_rom_binding();
@@ -171,7 +183,7 @@ pub(crate) fn run(g: &mut Game) -> usize {
         COUNT
     }));
     OBS.with(|o| *o.borrow_mut() = Observation::default());
-    g.g_ram.copy_from_slice(&ram);
+    g.ram().copy_in(0, &ram);
     g.g_fail = fail;
     g.loaded_rom = loaded;
     g.restore_native_rom_binding(native);

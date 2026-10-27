@@ -17,7 +17,7 @@ pub(crate) fn reset(game: &mut Game) -> u8 {
 
 pub(crate) fn play(game: &mut Game, gameplay: impl FnOnce(&mut Game) -> u8) -> u8 {
     crate::verify_probe::hit("coroutine.demo");
-    let resume = game.g_ram[0x614];
+    let resume = game.ram().read_byte(0x614);
     'done: {
         if resume > 2 {
             break 'done;
@@ -26,7 +26,7 @@ pub(crate) fn play(game: &mut Game, gameplay: impl FnOnce(&mut Game) -> u8) -> u
             if resume != 1 {
                 let yielded: u8 = gameplay(game);
                 if yielded != 0 {
-                    game.g_ram[0x614] = 2;
+                    game.ram().write_byte(0x614, 2);
                     return yielded;
                 }
                 if word!(game.joypad1_newkeys) != 0 {
@@ -42,7 +42,7 @@ pub(crate) fn play(game: &mut Game, gameplay: impl FnOnce(&mut Game) -> u8) -> u
             do_until! { word!(game.my_counter -= 1, reread) == 0;
                 let yielded: u8 = crate::game::display_refresh::wait(true, game);
                 if yielded != 0 {
-                    game.g_ram[0x614] = 1;
+                    game.ram().write_byte(0x614, 1);
                     return yielded;
                 }
                 if word!(game.joypad1_newkeys) != 0 {
@@ -53,10 +53,10 @@ pub(crate) fn play(game: &mut Game, gameplay: impl FnOnce(&mut Game) -> u8) -> u
         }
         word!(game.game_state += 1);
         word!(game.debug_disable_sounds = 0);
-        game.g_ram[0x51] = 0x80;
+        game.ram().write_byte(0x51, 0x80);
         word! { game, 1; screen_fade_delay, screen_fade_counter }
     }
-    game.g_ram[0x614] = 0;
+    game.ram().write_byte(0x614, 0);
     0
 }
 
@@ -98,7 +98,8 @@ pub(crate) fn load(game: &mut Game) {
         samus_prev_x_pos = word!(game.samus_x_pos);
         demo_timer = room.word(14);
     }
-    game.g_ram[0x79f] = native_record(0x8f0000 | u32::from(word!(game.room_ptr)), game).byte(1);
+    let value = native_record(0x8f0000 | u32::from(word!(game.room_ptr)), game).byte(1);
+    game.ram().write_byte(0x79f, value);
     word! { game, 0; reg_BG1HOFS, reg_BG1VOFS }
     word!(game.demo_scene += 1);
     word_transfers!(game, ascending, 4;
@@ -133,9 +134,9 @@ pub(crate) fn finish_setup(game: &mut Game) {
 
 pub(crate) fn run_room_hook(address: u32, game: &mut Game) {
     match address {
-        0x82891a => game.g_ram[0xcd20 + 33] = 0,
+        0x82891a => game.ram().write_byte(0xcd20 + 33, 0),
         0x828924 => {}
-        0x828925 => game.g_ram[0x59..0x5b].copy_from_slice(&74u16.to_ne_bytes()),
+        0x828925 => game.ram().copy_in(0x59, &74u16.to_ne_bytes()),
         0x82892b => slot!(game, EnemyData[0].ai_preinstr = 60),
         0x828932 => gameplay_flag_runtime::set_boss_byte_at(1, 1, game),
         _ => {

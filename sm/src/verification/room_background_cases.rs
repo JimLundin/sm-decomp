@@ -1,4 +1,5 @@
 //! Frozen inputs/expected effects for actual background and installation entries.
+use crate::room_background_support::ram_bytes;
 use crate::{game_state::Game, rom::RomImage, room_background_support::*};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 pub(crate) const CASES: u32 = 37;
@@ -53,7 +54,7 @@ fn transfer(r: &RomImage, at: u16, opcode: u16) {
     bytes(r, p, &[0, 0x60, 0x7e, 0x23, 0x31, 4, 0]);
 }
 fn asset(g: &mut Game, at: usize, address: u32) {
-    g.g_ram[at..at + 3].copy_from_slice(&address.to_le_bytes()[..3]);
+    g.ram().copy_in(at, &address.to_le_bytes()[..3]);
 }
 fn fill_words(e: &mut [u8], start: usize, end: usize, value: u16) {
     for a in (start..end).step_by(2) {
@@ -263,7 +264,7 @@ pub(crate) fn capture_case(
                 put(&mut g, 0x931, 0xcccc);
             }
         }
-        let mut expected = g.g_ram.to_vec();
+        let mut expected = ram_bytes(&g);
         let mut vram = (&(*(*g.g_snes).ppu).vram).to_vec();
         if id < 24 {
             if initial_mode {
@@ -473,7 +474,7 @@ pub(crate) fn capture_case(
                 record(&mut out, 7, &p);
             }
         }
-        assert_eq!(&g.g_ram[..], &expected[..], "background {} full RAM", id);
+        assert_eq!(&ram_bytes(&g), &expected[..], "background {} full RAM", id);
         assert_eq!(
             &(&(*(*g.g_snes).ppu).vram)[..],
             &vram[..],

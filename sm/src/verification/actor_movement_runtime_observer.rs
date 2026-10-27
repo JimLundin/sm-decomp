@@ -31,7 +31,9 @@ impl Runtime<'_> {
         let ram = if self.state.is_some() {
             (0..131072).map(|at| self.byte(at)).collect()
         } else {
-            self.game.g_ram.to_vec()
+            (0..self.game.ram().len())
+                .map(|at| self.game.ram().read_byte(at))
+                .collect::<Vec<_>>()
         };
         crate::actor_movement_observer::record_snapshot(tag, ram, self.game.g_fail);
         if tag == 2 && id == 28 {

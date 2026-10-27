@@ -162,7 +162,7 @@ impl EntryEffects for Runtime<'_> {
                 }
                 LeafEffect::EnableIrq | LeafEffect::WaitVblankEnableIrq => {
                     let immediate = matches!(effect, LeafEffect::WaitVblankEnableIrq);
-                    if !immediate || game.g_ram[0x84] & 0x30 != 0x30 {
+                    if !immediate || game.ram().read_byte(0x84) & 0x30 != 0x30 {
                         game::scanline_irq::enable(immediate, game);
                     }
                 }

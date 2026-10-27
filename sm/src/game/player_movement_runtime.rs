@@ -193,10 +193,10 @@ crate::game::callback_dispatch! {
     };
     @functions [pub fn (game: &mut Game)];
     [9492315] kSamusMoveHandler_CrystalFlashFinish [] {
-        if word!(game.samus_y_pos) != u16::from_ne_bytes([game.g_ram[0xdf0], game.g_ram[0xdf1]]) {
+        if word!(game.samus_y_pos) != u16::from_ne_bytes([game.ram().read_byte(0xdf0), game.ram().read_byte(0xdf1)]) {
             word!(game.samus_y_pos += 1);
         }
-        if game.g_ram[0xa1f] == 0 {
+        if game.ram().read_byte(0xa1f) == 0 {
             word! {game; power_bomb_flag = 0; samus_shine_timer = -1i32 as u16;
                 samus_movement_handler = ((0x90a337i32) as u16); }
             if word!(game.samus_input_handler) as i32 != 0x90e91d & 0xffff {
@@ -206,9 +206,9 @@ crate::game::callback_dispatch! {
         }
     };
     [9496911] SamusMovementType_Xray [] {
-        if game.g_ram[0xa1f] as i32 != kMovementType_0E_TurningAroundOnGround as i32 {
+        if game.ram().read_byte(0xa1f) as i32 != kMovementType_0E_TurningAroundOnGround as i32 {
             word!(game.samus_anim_frame_timer = 15);
-            let frame = player_movement::xray_animation_frame(game.g_ram[0xa1e], || {
+            let frame = player_movement::xray_animation_frame(game.ram().read_byte(0xa1e), || {
                 word!(game.xray_angle)
             });
             word!(game.samus_anim_frame = frame);

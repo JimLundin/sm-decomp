@@ -33,10 +33,16 @@ impl Returned {
     }
 }
 pub(crate) fn put(g: &mut Game, at: usize, value: u16) {
-    g.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    let _ = &[(); 0x20000][at..at + 2];
+    g.ram().copy_in(at, &value.to_le_bytes());
 }
 pub(crate) fn word(g: &Game, at: usize) -> u16 {
-    u16::from_le_bytes(g.g_ram[at..at + 2].try_into().unwrap())
+    {
+        let _ = &[(); 0x20000][at..at + 2];
+        let mut bytes = [0; 2];
+        g.ram().copy_out(at, &mut bytes);
+        u16::from_le_bytes(bytes)
+    }
 }
 pub(crate) fn rom_word(image: &RomImage, address: u32, value: u16) {
     let at = crate::rtl::lorom_offset(address) as usize;
@@ -45,8 +51,9 @@ pub(crate) fn rom_word(image: &RomImage, address: u32, value: u16) {
     }
 }
 fn seed(g: &mut Game, image: &RomImage) {
-    for (i, b) in g.g_ram.iter_mut().enumerate() {
-        *b = (i.wrapping_mul(37) ^ (i >> 8) ^ 0x5a) as u8;
+    for i in 0..g.ram().len() {
+        let value = (i.wrapping_mul(37) ^ (i >> 8) ^ 0x5a) as u8;
+        g.ram().write_byte(i, value);
     }
     g.g_sram = SaveRam::zeroed(8192);
     for i in 0..8192 {
@@ -71,7 +78,7 @@ fn observe(out: &mut Vec<u8>, phase: u8, returned: Returned, g: &Game) {
     out.push(phase);
     out.push(returned.kind);
     out.extend_from_slice(&returned.value.to_le_bytes());
-    out.extend_from_slice(&g.g_ram);
+    out.extend((0..g.ram().len()).map(|at| g.ram().read_byte(at)));
     out.extend_from_slice(&g.g_sram.bytes(0..8192));
     out.push(u8::from(g.g_fail));
 }
@@ -151,7 +158,8 @@ pub(crate) fn capture_case(
         match id {
             0..=5 => {
                 let bit = [0, 7, 63, 64, 511, 65535][id as usize];
-                g.g_ram[0xd820 + usize::from(bit >> 3)] = 0;
+                let value = 0;
+                g.ram().write_byte(0xd820 + usize::from(bit >> 3), value);
                 operations.extend([
                     Operation::EventQuery(bit),
                     Operation::EventSet(bit),
@@ -165,7 +173,8 @@ pub(crate) fn capture_case(
                 let area = [0, 7, 8, 65534, 65535][n / 4];
                 let mask = [0x0102, 0x0080, 0x0100, 0xffff][n % 4];
                 put(&mut g, 0x79f, area);
-                g.g_ram[0xd828 + usize::from(area)] = 0x40;
+                let value = 0x40;
+                g.ram().write_byte(0xd828 + usize::from(area), value);
                 operations.extend([
                     Operation::BossQuery(mask),
                     Operation::BossSet(mask),
@@ -181,7 +190,8 @@ pub(crate) fn capture_case(
                 let bit = [0, 511, 512, 65535][n % 4];
                 put(&mut g, 0x1dc7, bit);
                 let base = if item { 0xd870 } else { 0xd830 };
-                g.g_ram[base + usize::from(bit >> 3)] = 0;
+                let value = 0;
+                g.ram().write_byte(base + usize::from(bit >> 3), value);
                 let query = if item { 8685692 } else { 8685640 };
                 let mark = if item { 8685721 } else { 8685669 };
                 operations.extend([
@@ -194,15 +204,18 @@ pub(crate) fn capture_case(
                 let bit = [0, 511, 512, 32767][(id - 40) as usize];
                 put(&mut g, 0x1dc7, bit);
                 let at = 0xd8b0 + usize::from(bit >> 3);
-                g.g_ram[at] = 0;
-                g.g_ram[at + 1] = 0x5a;
+                let value = 0;
+                g.ram().write_byte(at, value);
+                let value = 0x5a;
+                g.ram().write_byte(at + 1, value);
                 image.write(crate::rtl::lorom_offset(0x849100) as usize, 1);
                 rom_word(&image, 0x849101, 0x9234);
                 operations.push(Operation::Plm(8686225));
             }
             44..=49 => {
                 let bit = [0, 7, 63, 64, 511, 65535][(id - 44) as usize];
-                g.g_ram[0xd820 + usize::from(bit >> 3)] = 0;
+                let value = 0;
+                g.ram().write_byte(0xd820 + usize::from(bit >> 3), value);
                 rom_word(&image, 0x849100, bit);
                 rom_word(&image, 0x879100, bit);
                 operations.extend([Operation::Plm(8685630), Operation::Animated(8880447)]);
@@ -241,7 +254,9 @@ pub(crate) fn capture_case(
             }
             _ => unreachable!(),
         }
-        let initial = g.g_ram.to_vec();
+        let initial = (0..g.ram().len())
+            .map(|at| g.ram().read_byte(at))
+            .collect::<Vec<_>>();
         let initial_sram = g.g_sram.bytes(0..8192);
         let mut out = b"FLGC1".to_vec();
         out.extend_from_slice(&id.to_le_bytes());
@@ -251,52 +266,68 @@ pub(crate) fn capture_case(
             let returned = run(operation, &image, &mut g);
             assert!(!g.g_fail, "flags.{id}.diagnostic");
             if (6..=25).contains(&id) {
-                assert_eq!(g.g_ram[0x5e8], 0xa5, "flags.boss.scratch_high");
+                assert_eq!(g.ram().read_byte(0x5e8), 0xa5, "flags.boss.scratch_high");
             }
             if (50..=70).contains(&id) {
                 assert_eq!(
-                    &g.g_ram[0x5e7..0x5e9],
+                    (0x5e7..0x5e9)
+                        .map(|at| g.ram().read_byte(at))
+                        .collect::<Vec<_>>()
+                        .as_slice(),
                     &initial[0x5e7..0x5e9],
                     "flags.raw_reset_load.scratch"
                 );
             }
             if id == 60 {
                 assert_eq!(
-                    &g.g_ram[0xd820..0xd830],
+                    (0xd820..0xd830)
+                        .map(|at| g.ram().read_byte(at))
+                        .collect::<Vec<_>>()
+                        .as_slice(),
                     &initial[0xd820..0xd830],
                     "flags.new_save.events_bosses_retained"
                 );
             }
             if id == 60 {
                 assert!(
-                    g.g_ram[0xd830..0xd8f0].iter().all(|&b| b == 0),
+                    (0xd830..0xd8f0).all(|at| g.ram().read_byte(at) == 0),
                     "flags.new_save.collections_clear"
                 );
             }
             if id == 61 {
                 assert!(
-                    g.g_ram[0xd820..0xd830].iter().all(|&b| b == 0),
+                    (0xd820..0xd830).all(|at| g.ram().read_byte(at) == 0),
                     "flags.demo.events_bosses_clear"
                 );
                 assert!(
-                    g.g_ram[0xd830..0xd8b0].iter().all(|&b| b == 0xff),
+                    (0xd830..0xd8b0).all(|at| g.ram().read_byte(at) == 0xff),
                     "flags.demo.objects_items_set"
                 );
                 assert!(
-                    g.g_ram[0xd8b0..0xd8f0].iter().all(|&b| b == 0),
+                    (0xd8b0..0xd8f0).all(|at| g.ram().read_byte(at) == 0),
                     "flags.demo.doors_clear"
                 );
             }
             if id == 62 {
                 let mut expected = initial.clone();
                 expected[0xd829] = 1;
-                assert_eq!(&g.g_ram[..], &expected[..], "flags.demo_boss.byte_only");
+                assert_eq!(
+                    (0..g.ram().len())
+                        .map(|at| g.ram().read_byte(at))
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                    &expected[..],
+                    "flags.demo_boss.byte_only"
+                );
             }
             if id == 63 || id == 64 {
                 let start = if id == 63 { 0x10 } else { 0xcc8 };
                 assert_eq!(returned.value, 0, "flags.load.success_status");
                 assert_eq!(
-                    &g.g_ram[0xd820..0xd8f0],
+                    (0xd820..0xd8f0)
+                        .map(|at| g.ram().read_byte(at))
+                        .collect::<Vec<_>>()
+                        .as_slice(),
                     &initial_sram[start + 0x60..start + 0x130],
                     "flags.load.success_flags"
                 );
@@ -324,7 +355,10 @@ pub(crate) fn capture_case(
                 let start = if slot == 0 { 0x10 } else { 0xcc8 };
                 assert_eq!(returned.value, 1, "flags.load.failure_status");
                 assert_eq!(
-                    &g.g_ram[0xd7c0..0xde1c],
+                    (0xd7c0..0xde1c)
+                        .map(|at| g.ram().read_byte(at))
+                        .collect::<Vec<_>>()
+                        .as_slice(),
                     &initial_sram[start..start + 0x65c],
                     "flags.load.failure_keeps_copied_payload"
                 );
@@ -338,12 +372,18 @@ pub(crate) fn capture_case(
                     "flags.load.failure_area_station"
                 );
                 assert_eq!(
-                    &g.g_ram[0x9a2..0xa02],
+                    (0x9a2..0xa02)
+                        .map(|at| g.ram().read_byte(at))
+                        .collect::<Vec<_>>()
+                        .as_slice(),
                     &initial[0x9a2..0xa02],
                     "flags.load.failure_retains_player"
                 );
                 assert_eq!(
-                    &g.g_ram[0xcd52..0xd454],
+                    (0xcd52..0xd454)
+                        .map(|at| g.ram().read_byte(at))
+                        .collect::<Vec<_>>()
+                        .as_slice(),
                     &initial[0xcd52..0xd454],
                     "flags.load.failure_retains_map"
                 );

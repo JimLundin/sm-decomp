@@ -278,11 +278,9 @@ impl Effects for Runtime<'_> {
             },
             Diagnostic::Unreachable=>crate::rtl::Unreachable(game) as u8,
             Diagnostic::UnsupportedSetup=>{
-                use crate::c_library::__assert_fail;use core::ffi::c_char;
                 unsafe{crate::native_assertion! { '_c2rust_label; b"0\0", b"src/sm_84.c\0", 1370, b"uint8 UNUSED_sub_84B3E3(uint16)\0" };}0
             },
             Diagnostic::InvalidRamDraw(address)=>{
-                use crate::c_library::__assert_fail;use core::ffi::c_char;
                 unsafe{crate::native_assertion! { '_c2rust_label: address < 0x2000; b"addr < 0x2000\0", b"src/sm_84.c\0", 265, b"uint8 *RomPtr_84orRAM(uint16_t)\0" };}0
             },
         })

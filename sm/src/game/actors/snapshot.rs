@@ -185,7 +185,7 @@ impl ActorCheckpointPayload {
             crate::game::room_entry::world::ResourceId,
             crate::rom::RomImage,
         )],
-        ram: &[u8; 131072],
+        ram: &impl Fn(usize) -> u8,
     ) -> Result<Vec<u8>, String> {
         let world = &self.actors.binding;
         let named = named_images(sources, world)?;
@@ -252,7 +252,7 @@ impl ActorCheckpointPayload {
             crate::game::room_entry::world::ResourceId,
             crate::rom::RomImage,
         )],
-        ram: &[u8; 131072],
+        ram: &impl Fn(usize) -> u8,
         loaded_after_patch: Option<&crate::rom::RomImage>,
     ) -> Result<PreparedActorRestore, String> {
         let next_epoch = current

@@ -221,12 +221,17 @@ def diagnostics(result):
         elif msg.get('$message_type') == 'diagnostic': yield msg
 
 
-def check():
+def check(report_failure=False, results=None):
     # A block is unused only if every configuration compiling its file says so.
     errs, per = [], []
     for index, dep in enumerate(DEPS):
         unused = []
         r = run_check(index)
+        if results is not None:
+            results.append(r)
+        if report_failure and r.returncode:
+            print(r.stdout, file=sys.stderr, end='')
+            print(r.stderr, file=sys.stderr, end='')
         before = len(errs)
         for msg in diagnostics(r):
             lvl = msg['level']
@@ -256,8 +261,8 @@ def check():
     return errs, sorted(ok)
 
 
-def warnings_count():
-    r = run_check(0)
+def warnings_count(result=None):
+    r = run_check(0) if result is None else result
     if r.returncode: sys.exit('warning-count compilation failed')
     return sum(m['level'] == 'warning' and bool(m.get('spans')) for m in diagnostics(r))
 
@@ -543,11 +548,13 @@ def main():
         CACHED_FRONTEND = tuple(os.path.abspath(p) for p in (args.cached_gl, args.cached_sdl2))
         if not all(os.path.isfile(p) for p in CACHED_FRONTEND): parser.error('cached metadata file missing')
         DEPS = ['target/codemod/0/*.d', 'target/codemod/1/*.d']
-    errs, _ = check()
+    check_results = []
+    errs, _ = check(report_failure=True, results=check_results)
     if errs: sys.exit(f'baseline does not compile: {errs[:3]}')
     files = files_compiled()
     ORIGINALS.update({p: open(p).read() for p in files})
-    base_warn = warnings_count()
+    base_warn = warnings_count(check_results[0])
+    del check_results
     print(f'{len(files)} compiled files; baseline warnings {base_warn}', flush=True)
     keep = set()  # (file, line) of rejected fns
     total_stripped = 0
@@ -573,7 +580,7 @@ def main():
                         assert s2.startswith('unsafe fn', f['kw'])
                         s2 = s2[:f['kw']] + s2[f['kw'] + 7:]
                     write_source(p, s2)
-                t = time.time(); errs, _ = check()
+                t = time.time(); errs, unused = check()
                 if not errs: break
                 rej = set()
                 for fl, ln, names, msg in errs:
@@ -595,8 +602,10 @@ def main():
                 sys.exit('no convergence')
         ok = sum(len(v) for v in stripped.values())
         total_stripped += ok
+        # The accepted trial already checked this source in both configurations.
+        if not n:
+            errs, unused = check()
         # unwrap unused unsafe blocks
-        errs, unused = check()
         assert not errs, errs[:3]
         fixed = 0
         by_file = {}
@@ -612,7 +621,8 @@ def main():
                     lines[ln - 1] = L[:c] + rest.lstrip(' ') if rest.lstrip(' ').startswith('{') else L
                     fixed += lines[ln - 1] != L
             write_source(fl, '\n'.join(lines))
-        errs, _ = check()
+        if by_file:  # Empty means no source writes were attempted.
+            errs, _ = check()
         if errs:  # revert unwraps in files with errors
             bad = {e[0] for e in errs}
             print('  unwrap errors in', bad, flush=True)
@@ -633,8 +643,9 @@ def main():
     flatten(files)
     fix_braces()
     subprocess.run(['cargo', 'fmt'], check=True)
-    errs, _ = check(); assert not errs, errs[:3]
-    print(f'total fns made safe: {total_stripped}; rejected: {len(keep)}; warnings {base_warn} -> {warnings_count()}')
+    check_results = []
+    errs, _ = check(results=check_results); assert not errs, errs[:3]
+    print(f'total fns made safe: {total_stripped}; rejected: {len(keep)}; warnings {base_warn} -> {warnings_count(check_results[0])}')
 
 
 if __name__ == '__main__':

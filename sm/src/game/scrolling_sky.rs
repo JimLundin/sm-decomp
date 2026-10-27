@@ -55,7 +55,7 @@ fn build_vertical_bands(game: &mut Game) -> u16 {
             .wrapping_add(inset)
             .wrapping_sub(word!(game.g_word_7E0598));
         word_transfers!(game, ascending, 1; native(0x9c01 + row as isize) <- value(scroll_word));
-        let height = u16::from(game.g_ram[0x9c00 + usize::from(row)]);
+        let height = u16::from(game.ram().read_byte(0x9c00 + usize::from(row)));
         y = y.wrapping_add(height);
         row = row.wrapping_add(3);
         word!(game.g_word_7E0598 += height);
@@ -74,7 +74,7 @@ pub fn update_vertical_scroll(mut k: u16, game: &mut Game) {
 #[forbid(unsafe_code)]
 pub fn update_horizontal_scroll(k: u16, game: &mut Game) {
     if word!(game.layer1_y_pos) as i32 - 1024i32 & 0x8000 != 0 {
-        if (game.g_ram[0x5b5] & 1) == 0 {
+        if (game.ram().read_byte(0x5b5) & 1) == 0 {
             word!(game.g_word_7E0596 = (word!(game.g_word_7E0596) as i32 + 2 & 0x1e) as u16);
         }
         let mut v1: u16 = word!(game.g_word_7E0596);
@@ -168,15 +168,17 @@ static LAND_SCROLL: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0xf, 
 static OCEAN_SCROLL: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0xf, 0xad89 as VoidP);
 pub unsafe fn initialize_land(game: &mut Game) {
     unsafe {
-        game.g_ram[0x91b] |= 1;
-        game.g_ram[0x91c] |= 1;
+        game.ram()
+            .write_byte(0x91b, game.ram().read_byte(0x91b) | 1);
+        game.ram()
+            .write_byte(0x91c, game.ram().read_byte(0x91c) | 1);
         spawn_hdma(0x88, &LAND_SCROLL, game);
         word! {game; set_to_e0_by_scrolling_sky = 224; UNUSED_word_7E059C = 0; }
     }
 }
 pub unsafe fn initialize_ocean(game: &mut Game) {
     unsafe {
-        game.g_ram[0x59] = 74;
+        game.ram().write_byte(0x59, 74);
         spawn_hdma(0x88, &OCEAN_SCROLL, game);
         word! {game; set_to_e0_by_scrolling_sky = 224; UNUSED_word_7E059C = 0; }
     }
@@ -198,7 +200,7 @@ fn write_sky_word(value: u16, offset: isize, game: &mut Game) {
 
 #[forbid(unsafe_code)]
 pub fn advance_parallax(k: u16, game: &mut Game) {
-    game.g_ram[0x59] = 74;
+    game.ram().write_byte(0x59, 74);
     for v1 in 0u16..23 {
         let entry = native_record(0x88aec1 + 8 * u32::from(v1), game);
         let at = i32::from(entry.word(6)) - 0xf78;
@@ -283,9 +285,9 @@ fn queue_tile_rows(address: u32, game: &mut Game) {
         word_transfers!(game, ascending, 1; native(v1 + 2 * stride + 2) <- value(v5));
         word_transfers!(game, ascending, 1; native(v1 + 3 * stride + 2) <- value(v5.wrapping_add(64)));
         for row in 0..4 {
-            game.g_ram[v1 + row * stride + 4] = 0x8a;
+            game.ram().write_byte(v1 + row * stride + 4, 0x8a);
         }
-        let t: i32 = (game.g_ram[0x59] as i32 & 0xfc) << 8;
+        let t: i32 = (game.ram().read_byte(0x59) as i32 & 0xfc) << 8;
         let v6: u16 = (t + 4 * (word!(game.layer1_y_pos) as i32 - 16i32 & 0x1f8)) as u16;
         word_transfers!(game, ascending, 1; native(v1 + 5) <- value(v6));
         word_transfers!(game, ascending, 1; native(v1 + stride + 5) <- value(v6.wrapping_add(32)));

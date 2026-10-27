@@ -1,10 +1,6 @@
 //! Untouched original CPU SaveToSram. Never calls the unaligned old Rust save body.
 use super::{Game, MakeSnapshot, RestoreSnapshot, Snapshot};
-use crate::{
-    flags_save_case as case,
-    initial_state::InitialState,
-    snes::cpu::{cpu_getFlags, cpu_runOpcode},
-};
+use crate::{flags_save_case as case, initial_state::InitialState, snes::cpu::cpu_getFlags};
 use std::collections::BTreeSet;
 fn offset(address: u32) -> usize {
     crate::rtl::lorom_offset(address) as usize
@@ -79,7 +75,20 @@ pub(crate) unsafe fn with_initialized_state<T>(
         let game_bytes = game_sram.bytes(0..8192);
         let cart_sram = (*(*game.g_snes).cart).ram.clone();
         let mut before = Box::new(Snapshot::INITIAL);
-        MakeSnapshot(&mut before, &*game.g_snes, &*game.g_cpu, game.g_spc_player);
+        {
+            let snapshot_snes = game.g_snes;
+            let snapshot_cpu = game.g_cpu;
+            let snapshot_player = game.g_spc_player;
+            let (backend, ram, _, _, _) = game.ram_and_snapshots();
+            MakeSnapshot(
+                &mut before,
+                &*snapshot_snes,
+                &*snapshot_cpu,
+                snapshot_player,
+                ram,
+                backend,
+            )
+        };
         let cpu_before = *game.g_cpu;
         let cycles_before = (*game.g_snes).cpuCyclesLeft;
         let memory_before = (*game.g_snes).cpuMemOps;
@@ -109,7 +118,18 @@ pub(crate) unsafe fn with_initialized_state<T>(
         }));
         (*(*game.g_snes).cart).ram = cart_sram;
         game.g_sram = game_sram;
-        RestoreSnapshot(&before, &mut *game.g_snes, &mut *game.g_cpu);
+        {
+            let snapshot_snes = game.g_snes;
+            let snapshot_cpu = game.g_cpu;
+            let (backend, ram, _, _, _) = game.ram_and_snapshots();
+            RestoreSnapshot(
+                &before,
+                &mut *snapshot_snes,
+                &mut *snapshot_cpu,
+                ram,
+                backend,
+            )
+        };
         game.g_sram.write_bytes(0, &game_bytes);
         before.audio.restore(game.g_snes);
         before.player.restore(game.g_spc_player);
@@ -209,7 +229,9 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
         with_initialized_state(game, |game| {
             guard(game, original)?;
             let slot = case::seed(id, game)?;
-            let initial = game.g_ram.to_vec();
+            let initial = (0..game.ram().len())
+                .map(|at| game.ram().read_byte(at))
+                .collect::<Vec<_>>();
             let initial_sram = game.g_sram.bytes(0..8192);
             let cpu = &mut *game.g_cpu;
             cpu.a = slot;
@@ -246,7 +268,10 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                 let cpu = &*game.g_cpu;
                 let pc = u32::from(cpu.k) << 16 | u32::from(cpu.pc);
                 if stage < case::STAGES.len() && pc == 0x810000 | u32::from(case::STAGES[stage]) {
-                    for (at, (&before, &after)) in initial.iter().zip(game.g_ram.iter()).enumerate()
+                    for (at, (&before, after)) in initial
+                        .iter()
+                        .zip((0..game.ram().len()).map(|at| game.ram().read_byte(at)))
+                        .enumerate()
                     {
                         if before != after && !abi.contains(&at) && !ram.contains(&at) {
                             return Err(format!(
@@ -264,7 +289,12 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                             ));
                         }
                     }
-                    if game.g_ram[0x5e7..0x5e9] != initial[0x5e7..0x5e9] {
+                    if {
+                        let mut bytes = [0; 0x5e9 - (0x5e7)];
+                        game.ram().copy_out(0x5e7, &mut bytes);
+                        bytes
+                    } != initial[0x5e7..0x5e9]
+                    {
                         return Err("save changed gameplay scratch mask".into());
                     }
                     case::state(&mut output, stage as u8, cpu_header(game), game);
@@ -287,8 +317,8 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                     return Err(format!("executed save code differs {pc:06x}"));
                 }
                 observe_writes(pc, cpu.sp, cpu.x, cpu.y, &mut abi, &mut ram, &mut sram)?;
-                cpu_runOpcode(game.g_cpu, game);
-                if (*(*game.g_snes).dma).dmaBusy {
+                game.execution().step_cpu();
+                if game.dma_busy() {
                     return Err("unexpected DMA in original save capsule".into());
                 }
             }

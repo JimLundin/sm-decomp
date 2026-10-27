@@ -8,7 +8,7 @@ use crate::{
 const IMAGE_LENGTH: usize = 0x100000;
 const CAPACITY: usize = 2 * 1024 * 1024;
 fn put(game: &mut Game, at: usize, value: u16) {
-    game.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+    game.ram().copy_in(at, &value.to_le_bytes());
 }
 fn offset(address: u32) -> usize {
     crate::rtl::lorom_offset(address) as usize
@@ -41,7 +41,6 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             return Err("pose fixture requires admitted ID and initialized original host".into());
         }
         if !cfg!(target_endian = "little")
-            || game.g_ram.as_ptr() as usize % core::mem::align_of::<u16>() != 0
             || game.actor_identity_is_with_session()
             || !game.supports_legacy_persistence()
         {
@@ -50,7 +49,20 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
         let loaded_before = game.loaded_rom.clone();
         let native_before = game.capture_native_rom_binding();
         let mut before = Box::new(Snapshot::INITIAL);
-        MakeSnapshot(&mut before, &*game.g_snes, &*game.g_cpu, game.g_spc_player);
+        {
+            let snapshot_snes = game.g_snes;
+            let snapshot_cpu = game.g_cpu;
+            let snapshot_player = game.g_spc_player;
+            let (backend, ram, _, _, _) = game.ram_and_snapshots();
+            MakeSnapshot(
+                &mut before,
+                &*snapshot_snes,
+                &*snapshot_cpu,
+                snapshot_player,
+                ram,
+                backend,
+            )
+        };
         let cpu_before = *game.g_cpu;
         let cycles_before = (*game.g_snes).cpuCyclesLeft;
         let memory_ops_before = (*game.g_snes).cpuMemOps;
@@ -59,8 +71,8 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
         let fail_before = game.g_fail;
         let queue_before = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-            game.g_ram.fill(0);
-            game.g_ram[0x1ffff] = 1;
+            game.ram().fill(0..game.ram().len(), 0);
+            game.ram().write_byte(0x1ffff, 1);
             game.g_fail = false;
             let loaded = RomImage::zeroed(IMAGE_LENGTH);
             let native = RomImage::zeroed(IMAGE_LENGTH);
@@ -113,12 +125,15 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                 put(game, at, value);
             }
             if id >= 2200 {
-                game.g_ram[0xa1c..0xa28].copy_from_slice(&[
-                    0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc,
-                ]);
+                game.ram().copy_in(
+                    0xa1c,
+                    &[
+                        0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc,
+                    ],
+                );
                 if id == 2201 {
                     // Same pose word, deliberately distinct packed movement/facing.
-                    game.g_ram[0xa20..0xa22].copy_from_slice(&[0x11, 0x22]);
+                    game.ram().copy_in(0xa20, &[0x11, 0x22]);
                 }
             }
             let mut output = b"PTRS1".to_vec();
@@ -169,7 +184,18 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
         let _ = observer::finish();
         game.loaded_rom = loaded_before;
         game.restore_native_rom_binding(native_before);
-        RestoreSnapshot(&before, &mut *game.g_snes, &mut *game.g_cpu);
+        {
+            let snapshot_snes = game.g_snes;
+            let snapshot_cpu = game.g_cpu;
+            let (backend, ram, _, _, _) = game.ram_and_snapshots();
+            RestoreSnapshot(
+                &before,
+                &mut *snapshot_snes,
+                &mut *snapshot_cpu,
+                ram,
+                backend,
+            )
+        };
         before.audio.restore(game.g_snes);
         before.player.restore(game.g_spc_player);
         *game.g_cpu = cpu_before;
