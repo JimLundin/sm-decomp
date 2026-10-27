@@ -6,7 +6,7 @@ use crate::game::save_slots;
 use crate::game::sprite_drawing::Clip;
 use crate::game::visual_runtime::advance_cinematic_coordinate;
 use crate::game::visual_runtime::{
-    advance_ceres_station, advance_credit_roll, advance_intro_baby_pursuit, advance_intro_rinka,
+    advance_ceres_station, advance_credits, advance_intro_baby_pursuit, advance_intro_rinka,
     advance_postcredits_samus_message, advance_shooting_stars, advance_zebes_destruction_zoom,
     advance_zebes_stars, chase_intro_baby_y, draw_cinematic_sprites, draw_intro_sprites,
     drift_cinematic_sprite, initialize_shooting_stars, launch_cinematic_sprite, move_ending_cloud,
@@ -269,25 +269,6 @@ pub fn AddNintentoLogoToOam(game: &mut Game) {
         game,
     );
 }
-// Legacy pre-instruction and failure contracts remain in the bank.
-pub unsafe fn CreditsObject_Process(game: &mut Game) {
-    unsafe {
-        if word!(game.cinematic_var25) & 0x8000 != 0 {
-            if word!(game.cinematic_var21) != 0 {
-                advance_cinematic_background_pre(
-                    0x8b0000 | u32::from(word!(game.cinematic_var24)),
-                    0,
-                    game,
-                );
-                if !advance_credit_roll(game) {
-                    Unreachable(game);
-                }
-            }
-            // Delete and disable still publish this frame's tilemap.
-            queue_cinematic_tilemap(CinematicTilemap::FullText, game);
-        }
-    }
-}
 pub unsafe fn GameState_1_OpeningCinematic_(game: &mut Game) -> CoroutineRet {
     unsafe {
         CallCinematicFunction(
@@ -467,7 +448,7 @@ pub unsafe fn GameState_39_EndingAndCredits_(game: &mut Game) -> CoroutineRet {
         word!(game.cinematic_var12 += 1);
         CinematicSprites.advance(game);
         MaybeHandleCinematicBgObjects(game);
-        CreditsObject_Process(game);
+        advance_credits(game);
         palette_effects::advance(game);
         draw_cinematic_sprites(true, game);
         advance_shooting_stars(game);

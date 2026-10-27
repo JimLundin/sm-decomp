@@ -3039,7 +3039,27 @@ pub(crate) fn advance_credit_roll(game: &mut Game) -> bool {
     true
 }
 
-pub(crate) unsafe fn advance_cinematic_background_pre(command: u32, object: u16, game: &mut Game) {
+// Credits retain native pre-instruction and failure order before their tilemap.
+#[forbid(unsafe_code)]
+pub(crate) fn advance_credits(game: &mut Game) {
+    if word!(game.cinematic_var25) & 0x8000 != 0 {
+        if word!(game.cinematic_var21) != 0 {
+            advance_cinematic_background_pre(
+                0x8b0000 | u32::from(word!(game.cinematic_var24)),
+                0,
+                game,
+            );
+            if !advance_credit_roll(game) {
+                Unreachable(game);
+            }
+        }
+        // Delete and disable still publish this frame's tilemap.
+        queue_cinematic_tilemap(CinematicTilemap::FullText, game);
+    }
+}
+
+#[forbid(unsafe_code)]
+pub(crate) fn advance_cinematic_background_pre(command: u32, object: u16, game: &mut Game) {
     match command {
         0x8b93d9 => {}
         0x8bb4bc => {
@@ -3056,7 +3076,8 @@ pub(crate) unsafe fn advance_cinematic_background_pre(command: u32, object: u16,
     }
 }
 
-unsafe fn draw_cinematic_background(object: u16, position: u16, game: &mut Game) {
+#[forbid(unsafe_code)]
+fn draw_cinematic_background(object: u16, position: u16, game: &mut Game) {
     let definition = word!(game.cinematicbg_arr1[(object >> 1)]);
     let command = cinematic_native_record::<0x8c>(definition, game).word(0);
     match command {
