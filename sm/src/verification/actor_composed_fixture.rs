@@ -45,6 +45,12 @@ fn entry(id: u32, appearance: AppearanceId, x: u16, y: u16) -> PopulationEntry {
     }
 }
 pub(crate) fn binding(reversed: bool) -> Arc<WorldBinding> {
+    bound(reversed, None)
+}
+pub(crate) fn binding_with_tables(reversed: bool, table: u8) -> Arc<WorldBinding> {
+    bound(reversed, Some(table))
+}
+fn bound(reversed: bool, table: Option<u8>) -> Arc<WorldBinding> {
     let (mut world, mut keys) = crate::room_world_fixture::definition(false);
     world
         .resources
@@ -214,8 +220,18 @@ pub(crate) fn binding(reversed: bool) -> Arc<WorldBinding> {
             })
             .collect(),
     };
-    WorldBinding::prepared_with_actors(world, keys, definitions, actor_keys, media)
-        .expect("composed authored fixture")
+    let tables = table.map(|value| {
+        for room in world.rooms.values_mut() {
+            room.cre = 2;
+        }
+        crate::room_world_resources::tables(&world, &keys, value)
+    });
+    let binding = WorldBinding::prepared_with_actors(world, keys, definitions, actor_keys, media)
+        .expect("composed authored fixture");
+    match tables {
+        Some(tables) => WorldBinding::with_tables(binding, tables).unwrap(),
+        None => binding,
+    }
 }
 fn write(image: &crate::rom::RomImage, address: u32, bytes: &[u8]) {
     let base = crate::rom::lorom_offset(address) as usize;

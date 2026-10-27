@@ -14,9 +14,9 @@ This directive supersedes older work-order and pacing advice below; PLAN's
 Fast loop, resource limits and landing rules remain in force. Existing source
 owners and the sole Windows integrator retain their assignments.
 
-Current published main/origin `27de5b24`, canonical source `32c9b193`:
-production 113,790, legacy 17,793, unsafe-containing lines 2,543,
-verification 41,858; 584 inputs / 6,261,518 raw bytes and 571 source bindings. A9 corpse
+Current published main/origin `8483b15c`, canonical source `92da8e11`:
+production 113,959, legacy 17,793, unsafe-containing lines 2,544,
+verification 41,918; 585 inputs / 6,270,829 raw bytes and 572 source bindings. A9 corpse
 animation landed `c872ad44`: -60 production/-60 legacy/-23 unsafe/verification0;
 eight rows passed 11,183 selected + 272 setup / 0 failures. Six native captures,
 seventeen word dereferences and one MemCpy were removed; twenty-one address-label
@@ -27,9 +27,9 @@ twelve native capture forms were removed and four unrelated native calls remain.
 Both landings retain codec 41/3ac09138dc065e54, 160 unchanged warnings and the
 actual source/native/input guards, including full Morph1200. Combined published
 delta: -96 production/-96 legacy/-22 unsafe/verification0. No fresh capture was needed.
-Since WRAM landed, actual main removed 454 production/666 legacy/94 unsafe
-metric lines and added 30 verification lines. Against `6ad82e25`, including WRAM's
-growth, the net remains +1,866 production/+440 legacy/-169 unsafe/+1,473 verification.
+Since WRAM landed, actual main removed 285 production/666 legacy/93 unsafe
+metric lines and added 90 verification lines. Against `6ad82e25`, including WRAM's
+growth, the net remains +2,035 production/+440 legacy/-168 unsafe/+1,533 verification.
 
 Prior WRAM/Execution landing `43117e05` remains +2,320 production/+1,106 legacy/
 -75 unsafe/+1,443 verification against `6ad82e25`, with canonical ce8b and
@@ -50,7 +50,13 @@ Projectile library 19.4061s/DLL 66.4828s and Crocomire library 20.1831s/DLL
 73.6446s passed on their actual distinct source pins. Projectile's final three
 rows waited on three genuine checkpoint gaps; its other eighteen rows ran first.
 Prepare the named checkpoint/input/profile availability alongside source work,
-then run only missing edges. Preserve original Git-blob newlines before source
+then run only missing edges. Botwoon's library21.1746s/DLL67.4339s passed, but
+DLL completion to controls took111.971s, to first rows145.817s; independent
+initialization/discovery launched72.2s after rows with ample RAM. Last restore
+to confirmed push took~132s. Prepare exact existing executable commands and
+owners before the DLL returns; launch ready independent groups in one awaited
+batch under PLAN budgets, collect each original handle, then publish promptly.
+No new scheduler/cache/framework or repeated accepted campaign is justified. Preserve original Git-blob newlines before source
 freeze; the cursor patch's CRLF-to-LF change inflated review without size credit.
 Do not renormalize a qualified pin or repeat its checks for newline cleanup.
 
@@ -71,78 +77,135 @@ full/odd keys and the original velocity-write then actor-key then separate x/y-r
 
 Next work, in order:
 
-1. **Implement the assigned complete Botwoon death protocol on current main.**
-   Linux SOURCE claim [6441824600](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6441824600)
-   and Windows correction [6441868492](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6441868492)
-   bind the existing author/reviewer to `27de5b24`/`32c9b193`; all earlier
-   qualifications are complete and published. The owner takes five native-word
-   signals: pending hit, active death, tail readiness, previous health and body
-   landing. Close shot/contact/power-bomb, arming, spit wait, tail/history, falling
-   body and head-landing consumers, including both reached projectile adapters.
-   Use the existing scoped Game-derived admission proof and actor interfaces;
-   preserve captured shot identity versus fresh post-contact identity, unknown
-   u16s, native/LE publication, full/odd aliases and the actual reset 7000..9800.
-   No clearing on delete/reuse. Keep the original Maw raw slot store unchanged:
-   low byte then high byte with independent bounds/failure; afterwards adopt
-   ONLY newly owned protocol-byte overlaps. Existing terrain aliases retain
-   raw-write/Drop-republication behavior. Put the protocol export prefix before
-   room-key/asset conversion. The provisional +195 production (130..235 range)
-   is ownership growth, with zero raw-operation retirement; count full costs.
-   Freeze the complete caller/encoding/reset/load/failure cohort once, review
-   and compile it in parallel, then perform one justified new-codec qualification
-   using boss-botwoon and PLAN smokes, plus applicable genuine initialization,
-   capture/continuation and restore checks. No per-field codec campaigns.
-2. **Preserve the completed observation-epoch proof; defer its standalone rewrite.**
-   All 45 scalar observations and five Session overlaps are traced. Admission and
+1. **Landed: the complete Botwoon five-word death protocol.**
+   Actual main `8483b15c`/source `92da8e11` closes pending hit, active death,
+   tail readiness, previous health and body landing across combat, arming,
+   spit wait, tail/history, body/head landing and reached projectile adapters.
+   Native words remain 801e/f,8020/1,803c/d,8818/9,883e/f; 8834/5 is spit_armed.
+   Preserve unknown u16s, captured shot versus fresh post-contact identity,
+   full/odd aliases, native/LE publication and the actual reset 7000..9800;
+   delete/reuse does not clear these signals. Protocol export precedes room
+   key/asset conversion. Maw keeps the independently checked low/high raw store
+   and adopts only the ten new protocol-byte overlaps, without input refresh.
+   The 51-line whole-RAM/gamma witness passed, including actor0x7fd6 terrain
+   Drop republication and actor0x10 tail readiness. The detached pure protocol
+   registration and actual player_detached example passed; combat stays in its
+   existing Runtime-dependent owner.
+   Library/DLL/source/native guards passed with160 unchanged main warnings.
+   The complete42/247e codec qualification passed: five original rows3132+272/0,
+   initialized329+resume5, actual runtime guard/eproj27, genuine collapse
+   capture480 (active1/head9a46/delay248/health300/body0/selected0), original
+   continuation465-to945 and fresh boss824+120 tail, phase480-to481/delay249,
+   and exact12-member encrypted restore. There were4684 actual comparisons/0,
+   including one explicitly repeated phase frame, not4684 unique comparisons.
+   Final aggregate8886592a and publication are recorded in
+   [6442637785](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6442637785).
+   Full cost +169 production/+60 verification/legacy0/+1 forbid attribute;
+   raw-operation retirement0. No whole-engine/independent-backend claim.
+2. **Implement prepared room TileTables plus the shared CRE table.**
+   The representation discriminator is complete: use opaque validated immutable
+   encoded streams with the existing decompression::Output/decode algorithm.
+   The existing Linux source author and independent reviewer take the complete
+   cohort on actual8483b15c; the Windows session remains sole integrator.
+   Exact source/review/files/rows/budget assignment:
+   [6442715605](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6442715605).
+   Import from caller-owned immutable &[u8], not a shared mutable RomImage clone.
+   Extract every declared ResourceKind::TileTable and shared CRE stream; retain
+   only owned validated streams in a private immutable WorldBinding catalog.
+   Supply a real versioned canonical pack/schema, stable IDs/order/lengths/limits
+   and a fixed fingerprint covering exact streams and their declared world/profile
+   compatibility. Loading external bytes revalidates commands and rejects missing,
+   duplicate, trailing and incompatible records before constructing the catalog.
+   DefaultHasher at world.rs currently documents process-local revision evidence;
+   it is insufficient for the portable pack identity. Include the prepared
+   catalog identity in world.revision/checkpoint preflight, preserving the
+   existing compatibility-bound constructors and Legacy asset tokens.
+   Extend private RamOutput with transient Legacy or immutable-slice source;
+   only next_byte selects the source. Keep RAM read/write, signed addressing,
+   write-before-produced order, overlapping/live destination references and
+   decode itself unchanged. Validation reuses decode with an Output recording
+   source consumption, reads/writes and bounds; dummy reference values are valid
+   because values do not select commands. Bound work/current-command completion.
+   Synthetic termination after an error must never accept truncation or limits.
+   Permit valid reads outside the already produced prefix.
+   The real initial/door consumers install at a000/a800 in the existing
+   Runtime::foreign interval. Preserve the legacy loaded-source/diagnostic/
+   allocation/cursor route for existing bindings and unrelated destinations.
+   Game.decompress_src remains the last published Legacy cursor; prepared
+   execution leaves this compatibility history unchanged and adds no persistent
+   prepared execution cursor. GameOwner::with_world and the existing room-world
+   harness are the opening consumer; Session::open and external pack/profile
+   selection remain unimplemented.
+   Allowed production: one private table module, decompression.rs,
+   room_entry/{world,compatibility,mod}.rs and only reached content definitions
+   required for this route. Use existing room-world fixture/resources/cases and
+   registry hunks; reconcile Botwoon's source addition rather than copying old
+   complete registries. No Session/Runtime/encoding/checkpoint edits concurrent
+   with an active owner; final freeze uses actual published main.
+   First acceptance: genuine GameOwner initial cases2/3 and door cases4/5,
+   existing binding guards and genuine checkpoint continuation; demonstrate
+   immutable-source behavior, live/unproduced references, canonical pack roundtrip/
+   malformed rejection and changed-catalog preflight rejection before adoption.
+   Add only necessary checks to the existing verifier; constructed helpers stay
+   under100 lines with the unreachable-by-movie reason first. PLAN's affected
+   rows plus four smokes, source/native/codec guards and applicable codec evidence
+   remain authoritative. One complete freeze/qualification; no new framework.
+   Revised planning envelope +180..400 production/+30..100 support/
+   +15..60 verification, physical retirement0. Count full adapters/schema/import/
+   revision/callers and dependencies; these are forecasts, not savings or timing.
+   Later room closure still needs Levels, Tiles/CRE tiles, Palette provenance,
+   Background/raw DMA, Fx records/tilemaps, transition/blank sources and the
+   application pack/profile loader. Options, Kraid and46 cinematic sites retain
+   the149-line decoder/VRAM pool; no global decoder/backend retirement is claimed.
+3. **Preserve the completed observation-epoch proof; defer its standalone rewrite.**
+   All45 scalar observations and five Session overlaps are traced. Admission and
    successful foreign return capture Game; set_byte rebuilds from raw Game and
    overrides gamma; successful owned_call refreshes only four actor values from
    the live projection. Direct owned edits need not refresh observations, as the
    existing collision and detached sprite checks explicitly require. Keep these
-   boundaries in Botwoon; its Maw adoption must not trigger an input refresh.
-   Of 67 old selector sites, 54 already capture locals and 13 are inline/requeries;
+   boundaries; Maw adoption must not trigger an input refresh.
+   Of67 old selector sites,54 already capture locals and13 are inline/requeries;
    Crocomire replaces exactly one with the accepted selected_actor()->ActorKey.
    Its fresh getter does not replace other captures or expose private controls.
-   A complete five-field retirement also reaches 23 species methods/99 call sites
+   A complete five-field retirement also reaches23 species methods/99 call sites
    and both Runtime/detached adapters. Native health decoding, full/odd keys and
-   unwind prefixes remain. Gross removal is roughly 17 lines before replacements;
+   unwind prefixes remain. Gross removal is roughly17 lines before replacements;
    forecast +25..80 production/+20..60 verification, raw-operation retirement0.
-   No standalone source, codec campaign, blanket refresh or getter facade is assigned.
-3. **Prepare complete content and sprite ownership from finished surveys.**
-   ROM decompression already shares one 114-line decoder plus 35-line VRAM
-   protocol; there is no duplicate algorithm or native pointer to retire.
-   A valid stream changed after its first VMDATAL write emits 11,33 instead of
-   predecoded 11,22; short RAM input writes 11 before the next source read fails.
-   Prepared room-asset loading needs actual immutable programs/payloads and all
-   initial/door/background/CRE/level/palette/output consumers. Options, Kraid
-   and 46 cinematic sites still retain the decoder; do not claim global removal.
-   Prefer immediate owned sprite publication then pure committed-Scene extraction.
-   Existing atmospheric 4077/4078/4079 require self-cursor overwrite, X-before-fresh-Y
-   and OAM-to-Samus aliases. Session lacks OAM 370/570/590 projection; a forwarded
-   writer or delayed SpriteDraw list does not close it. Close all publishers,
-   clear/finish/reset, content/media, checkpoint and the NMI 544-byte display
-   commitment plus actual PPU/renderer consumers before ownership credit. Keep
-   sprite 32/34 limits and Map Rando revision/resource contracts. Both first
-   ownership milestones currently forecast growth; no small implementation,
-   elapsed speedup or net removal is established. Their exact caller inventories
-   and counterexamples are source-only preparation, not extra test campaigns.
-   Existing oversight readers now prepare the concrete importer-to-room-consumer
-   and committed-Scene-to-render-consumer cohorts from these transferred proofs.
-   Each has a 64MiB source budget and no edit/build/replay/capture assignment;
-   first acceptance and complete retained costs must be clear before authoring.
-4. **Retain the completed Session transfer constraints.** Gamma's
+   No standalone source/codec campaign, blanket refresh or getter facade is assigned.
+4. **Retain the sprite-to-render consumer closure as future architecture work.**
+   The survey is complete; no preview product/source assignment is selected.
+   Actual presentation copies256x240 PPU pixels through SDL/OpenGL, and gameplay
+   return precedes scanline/HDMA/IRQ/display settlement. An independent256x224
+   sprite contribution needs prepared indexed media, sprite evaluation/rasterization,
+   actual presentation and pixel evidence. It cannot replace normal full-frame
+   presentation or recover composition by overlaying the final PPU pixels.
+   Preserve immediate atmospheric4077/4078/4079 aliases, self-cursor overwrite,
+   X-before-fresh-Y, OAM-to-Samus aliases, NMI544-byte display commitment,
+   later display effects and sprite32/tile34 limits. Session still lacks OAM
+   370/570/590 projection; a forwarded writer/delayed command list does not close it.
+   RtlRunFrame's bool means replay status, not commit success. No implemented
+   Scene/TickOutput/indexed-media renderer or revision-leased submission exists.
+   First all-cost forecast +1050..2600 production, plus support/verification,
+   retires0 PPU lines; complete backgrounds/HUD/effects/frame composition and
+   accepted device lifecycle add further costs. Palette/Actor checkpoints retain
+   ResourceId plus exact RomImage-allocation provenance until explicitly migrated.
+   Keep those costs visible and overlapping room/media/revision estimates counted
+   once. A complete drawing-to-pixels consumer, reset/load/adoption and equivalent
+   coverage must exist before retiring the working presentation/backend path.
+5. **Retain the completed Session transfer constraints.** Gamma's
    eleven named modes plus Unknown are traced. A standalone typed dispatch grows
-   roughly 10-30 production lines and removes no raw operation/backend owner;
+   roughly10..30 production lines and removes no raw operation/backend owner;
    no elapsed speedup is established. owned_call refreshes four actor observations
    but omits frame_gamma, which later settlement reads. A complete gamma cut needs
    full projected input refresh before/after, under the existing preflight/unwind
    guard, with Ceres/timer/unknown effects retained. Defer the isolated campaign.
-   Terrain imports/exports copy 46,592 bytes and allocate two boxes per side, but
+   Terrain imports/exports copy46,592 bytes and allocate two boxes per side, but
    direct storage changes require complete producer/consumer authority closure.
    Actual yapping_maw::advance ends with Runtime::update_maw_visibility then Drop:
-   full enemy 0x7fd6 aliases var_36 at 0x10002. The raw outside=1 write is followed
-   by republication of the imported terrain word, e.g. 0x3456; direct RAM would
-   retain 1 and change behavior. Physical BTS block 0x9bfe reads 0x800000/1 through
-   backend mirroring to WRAM 0/1; direct indexing reaches out-of-bounds 0x20000.
+   full enemy0x7fd6 aliases var_36 at0x10002. The raw outside=1 write is followed
+   by republication of the imported terrain word, e.g.0x3456; direct RAM would
+   retain1 and change behavior. Physical BTS block0x9bfe reads0x800000/1 through
+   backend mirroring to WRAM0/1; direct indexing reaches out-of-bounds0x20000.
    Room installation, PLM mutation, collision/rendering and physical aliases,
    reset/load/oracle and CPU/DMA/HDMA writers must close together before deleting
    the copied storage. Defer standalone caching; prepare one full responsibility
@@ -181,10 +244,10 @@ removal and closed ownership dependencies explicit beside the existing Score.
 Bank deletion, safe wrappers and replay passes remain intermediate achievements;
 owned Session, independent media and Map Rando acceptance remain the destination.
 
-**Size feasibility, actual engine main 27de5b24.** Production 113,790, legacy 17,793,
-unsafe-containing lines 2,543 and verification 41,858 leave 13,790 net production
-lines above 100,000. If only banks changed, replacements could total at most 4,003
-lines (22.5%); at 80% replacement, another ~10,231 lines must disappear elsewhere.
+**Size feasibility, actual engine main 8483b15c.** Production 113,959, legacy 17,793,
+unsafe-containing lines 2,544 and verification 41,918 leave 13,959 net production
+lines above 100,000. If only banks changed, replacements could total at most 3,834
+lines (21.5%); at 80% replacement, another ~10,400 lines must disappear elsewhere.
 Bank moves alone cannot substantiate the size promise. Existing independent
 terrain/duplicate assessments found no justified >100-line owned-domain merge;
 small candidate pools are not enough. Investigate complete responsibilities in

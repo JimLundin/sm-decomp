@@ -2,13 +2,7 @@
 #![forbid(unsafe_code)]
 use crate::game_state::Game;
 
-// Output implementations retain their byte/write protocol. VRAM also needs
-// the back-reference flag to preserve its address-register writes.
-pub(super) trait Output {
-    fn next_byte(&mut self) -> u8;
-    fn read(&mut self, position: i32) -> u8;
-    fn write(&mut self, position: i32, value: u8, back_reference: bool);
-}
+pub(super) use super::room_entry::prepared_tables::{Output, decode};
 
 pub(super) fn next_byte(game: &mut Game) -> u8 {
     let address = game.decompress_src;
@@ -28,10 +22,14 @@ struct RamOutput<'a> {
     game: &'a mut Game,
     base: usize,
     produced: usize,
+    prepared: Option<core::slice::Iter<'a, u8>>,
 }
 impl Output for RamOutput<'_> {
     fn next_byte(&mut self) -> u8 {
-        next_byte(self.game)
+        match self.prepared.as_mut() {
+            Some(stream) => *stream.next().expect("validated prepared table stream"),
+            None => next_byte(self.game),
+        }
     }
     fn read(&mut self, position: i32) -> u8 {
         self.game
@@ -55,60 +53,23 @@ pub(crate) fn decompress_to_ram(source: u32, destination: usize, game: &mut Game
         game,
         base: destination,
         produced: 0,
+        prepared: None,
     };
     decode(0, &mut output);
     output.produced
 }
 
-pub(super) fn decode(start: i32, output: &mut impl Output) {
-    let mut destination = start;
-    loop {
-        let header = output.next_byte();
-        if header == 0xff {
-            return;
-        }
-        let (command, length) = if header & 0xe0 == 0xe0 {
-            (
-                (header << 3) & 0xe0,
-                (i32::from(header & 3) << 8 | i32::from(output.next_byte())) + 1,
-            )
-        } else {
-            (header & 0xe0, i32::from(header & 0x1f) + 1)
-        };
-        // Read each command's operands before its first output byte. Absolute
-        // references are relative to the initial destination, even in VRAM.
-        let (mut source, first, second) = match command {
-            0x20 | 0x60 => (0, output.next_byte(), 0),
-            0x40 => (0, output.next_byte(), output.next_byte()),
-            0x80 | 0xa0 => {
-                let low = i32::from(output.next_byte());
-                (low + i32::from(output.next_byte()) * 256 + start, 0, 0)
-            }
-            0xc0 | 0xe0 => (destination - i32::from(output.next_byte()), 0, 0),
-            _ => (0, 0, 0),
-        };
-        for index in 0..length {
-            let value = match command {
-                0x20 => first,
-                0x40 => {
-                    if index & 1 == 0 {
-                        first
-                    } else {
-                        second
-                    }
-                }
-                0x60 => first.wrapping_add(index as u8),
-                0x80 | 0xa0 | 0xc0 | 0xe0 => {
-                    let value = output.read(source) ^ if command & 0x20 != 0 { 0xff } else { 0 };
-                    source += 1;
-                    value
-                }
-                _ => output.next_byte(),
-            };
-            // Read and write each reference byte separately: overlapping copies
-            // propagate earlier writes instead of copying a frozen source range.
-            output.write(destination, value, command & 0x80 != 0);
-            destination += 1;
-        }
-    }
+pub(crate) fn decompress_prepared_table(
+    stream: &[u8],
+    destination: usize,
+    game: &mut Game,
+) -> usize {
+    let mut output = RamOutput {
+        game,
+        base: destination,
+        produced: 0,
+        prepared: Some(stream.iter()),
+    };
+    decode(0, &mut output);
+    output.produced
 }

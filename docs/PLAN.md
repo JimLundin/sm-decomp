@@ -50,7 +50,7 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current source92da: production113959, legacy17793, unsafe2544, verification41918; warnings160.
+Current source3845: production114504, legacy17793, unsafe2545, verification42128; warnings160.
 Qualified WRAM/Execution: Game/Backend share stable WorkRam; private DMA/Input
 storage and actual byte/getter/macro consumers close with exact RAM layout.
 Initialized329+5, full86 (136526 selected+38827 setup),14 genuine captures189475,
@@ -115,7 +115,17 @@ Explicit extra phase480 to481 retains active1/head9A46/delay248 to249;4684 actua
 Net +169 production/legacy0/+1 unsafe from a forbid attribute/+60 verification; raw-operation retirement0, ownership growth counted in full.
 Maw low/high independent stores retain failure prefixes, adopting only ten protocol bytes; export prefix precedes asset/room conversion. Existing checked runtime/Maw/eproj27 pass.
 Actual detached composition passes at02 with193 unchanged dependencies transferred to03; native/backend storage and whole Session/media independence remain open.
-Next: REVIEW selects the next complete responsibility; media/Session research retains its assigned source boundaries.
+Prepared room TileTables/shared CRE now import immutable encoded streams into a validated, versioned catalog and pack with fixed world/profile identity.
+Actual initial2/3 and door4/5 GameOwner consumers bind before SnesInit; both fixture rooms use cre2. Legacy cursor and live/unproduced RAM references are preserved.
+Source3845 fmt/library/DLL160 unchanged warnings/source573/native/all43rawcodec pass; actual detached example transfers194 unchanged dependencies.
+Nine jobs start within0.573s; six rows11216 selected+272 setup/0, genuine initialized329+resume5, total11822 ordinary comparisons/0.
+Actual prepared GameOwner checkpoint roundtrip/continuation, exact changed-catalog revision rejection before adoption, pack malformed/immutability and both destination checks pass at codec3e92b93347c1e182.
+Fresh prepared checkpoint13002415 bytes and initialized checkpoint retain source/native/full-input guards; no old247e loads/restamps or encrypted distribution/restore claim.
+Net +545 production/legacy0/+1 unsafe from a forbid attribute/+210 verification; raw-operation retirement0. Catalog/schema/validation/identity/adapters exceed the180..400 forecast, counted in full.
+Engine delta: new module526 - old decompression39 + world43 + compatibility14 + registration1 =545; this relocates the shared decoder and adds catalog behavior, with no decoder savings.
+Verification210: room resources159 + composed fixture16 + corrected route14 + cases14 + detached2 + codec1 + registry4. No new verification framework.
+Session::open/application pack selection, remaining Levels/Tiles/Palette/Background/Fx/transition consumers and independent media/backend remain open.
+Next: the external reviewer selects goals and milestone tasks in the issue tracker; preserve assigned source boundaries.
 
 Source-only: Blackout37, exact page2 callback, sky initializers, CrystalFlashStart,
 spike/DBF2/lavaquake and additional signed8.8 kernels; MotherBrain magnitude,

@@ -336,7 +336,19 @@ impl EntryEffects for Runtime<'_> {
         if palette {
             self.session_mut().actor_identity.clear_palette_residency();
         }
-        let source = source.compatibility_address(&self.session().world);
+        let prepared = if matches!(
+            destination,
+            InstallBuffer::TileTablePrimary | InstallBuffer::TileTableAfterCre
+        ) {
+            self.session().world.prepared_table(&source)
+        } else {
+            None
+        };
+        let legacy = if prepared.is_none() {
+            Some(source.compatibility_address(&self.session().world))
+        } else {
+            None
+        };
         let at = match destination {
             InstallBuffer::Tiles => 0x2000,
             InstallBuffer::CreTiles => 0x7000,
@@ -345,8 +357,10 @@ impl EntryEffects for Runtime<'_> {
             InstallBuffer::TileTableAfterCre => 0xa800,
             InstallBuffer::Background(target) => target.compatibility_offset(),
         };
-        let produced =
-            self.foreign(|game| game::decompression::decompress_to_ram(source, at, game));
+        let produced = self.foreign(|game| match prepared {
+            Some(stream) => game::decompression::decompress_prepared_table(&stream, at, game),
+            None => game::decompression::decompress_to_ram(legacy.unwrap(), at, game),
+        });
         if let Some(image) = palette_image {
             // Only complete BG rows emitted by this actual decode establish residency.
             // Actor staging later establishes OBJ rows without erasing these receipts.

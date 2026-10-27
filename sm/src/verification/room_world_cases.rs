@@ -40,6 +40,9 @@ pub(crate) fn owner(id: u32) -> Box<GameOwner> {
     if (12..14).contains(&id) {
         return GameOwner::with_world(crate::game::actors::composed_fixture::binding(id == 13));
     }
+    if (2..=5).contains(&id) {
+        return GameOwner::with_world(room_world_resources::binding_with_tables(id & 1 != 0));
+    }
     GameOwner::with_world(fixture::binding(id & 1 != 0))
 }
 pub(crate) fn capture(id: u32, owner: &GameOwner) -> Option<Vec<u8>> {
@@ -115,6 +118,9 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         assert!(!g.g_fail, "room.world.base-audio-upload-no-diagnostic");
         room_world_resources::install(g);
         assert!(!g.g_fail, "room.world.resources-no-diagnostic");
+        if (2..=5).contains(&id) {
+            room_world_resources::check_tables(g);
+        }
         // Actual player initialization supplies retained draw/movement prerequisites.
         crate::game::session_runtime::initialize_player(g);
         assert!(!g.g_fail, "room.world.player-initialize-no-diagnostic");
@@ -358,6 +364,14 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 (0x2345, 0x3456),
                 "room.world.actual-irq-camera"
             );
+        }
+        if (2..=5).contains(&id) {
+            assert_eq!(
+                (word(g, 0xa000), word(g, 0xa800)),
+                (0, 0),
+                "room.tables.actual-cre2-opening"
+            );
+            assert_eq!(g.world().revision(), world.revision());
         }
         assert!(
             Arc::ptr_eq(g.world(), &world),

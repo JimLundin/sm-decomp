@@ -2,7 +2,7 @@
 //! Construction validates every reference before an owned Game is opened.
 #![forbid(unsafe_code)]
 use super::{
-    content::{AssetRef, DoorList},
+    content::{AssetRef, AssetSource, DoorList},
     effects::AssetSlot,
 };
 use std::{
@@ -199,6 +199,7 @@ pub struct CompatibilityKeys {
 }
 #[derive(Clone, Debug, PartialEq)]
 pub struct WorldBinding {
+    tile_tables: Option<Arc<PreparedTileTables>>,
     actor_catalog: Arc<crate::game::actors::content::ActorCatalog>,
     actor_media: Arc<crate::game::actors::media::ActorMediaCatalog>,
     pub(super) revision: WorldRevision,
@@ -231,11 +232,13 @@ pub enum WorldDefinitionError {
     UnsupportedResource(ResourceId),
     UnsupportedSetup(ResourceId),
     InvalidDefinition,
+    TableCatalogMismatch,
 }
 
 impl WorldBinding {
     pub fn canonical_legacy() -> Arc<Self> {
         Arc::new(Self {
+            tile_tables: None,
             actor_catalog: Arc::new(crate::game::actors::content::ActorCatalog::LegacyBound),
             actor_media: Arc::new(crate::game::actors::media::ActorMediaCatalog::LegacyBound),
             revision: WorldRevision([0; 32]),
@@ -285,6 +288,7 @@ impl WorldBinding {
             bytes.copy_from_slice(&hasher.finish().to_le_bytes());
         }
         Ok(Arc::new(Self {
+            tile_tables: None,
             actor_catalog: Arc::new(crate::game::actors::content::ActorCatalog::LegacyBound),
             actor_media: Arc::new(crate::game::actors::media::ActorMediaCatalog::LegacyBound),
             revision: WorldRevision(revision),
@@ -297,6 +301,43 @@ impl WorldBinding {
             door_lists_by_key,
             resources_by_key,
         }))
+    }
+    /// Attach a validated immutable catalog before opening, preserving existing construction.
+    pub fn prepared_with_tables(
+        world: WorldDefinition,
+        keys: CompatibilityKeys,
+        tables: PreparedTileTables,
+    ) -> Result<Arc<Self>, WorldDefinitionError> {
+        Self::with_tables(Self::prepared(world, keys)?, tables)
+    }
+    pub(crate) fn with_tables(
+        mut binding: Arc<Self>,
+        tables: PreparedTileTables,
+    ) -> Result<Arc<Self>, WorldDefinitionError> {
+        let owned = Arc::get_mut(&mut binding).ok_or(WorldDefinitionError::InvalidDefinition)?;
+        if owned.tile_tables.is_some() {
+            return Err(WorldDefinitionError::TableCatalogMismatch);
+        }
+        if !tables.matches(owned.definition().unwrap(), &owned.keys) {
+            return Err(WorldDefinitionError::TableCatalogMismatch);
+        }
+        let original = owned.revision;
+        for (lane, bytes) in owned.revision.0.chunks_exact_mut(8).enumerate() {
+            let mut hasher = DefaultHasher::new();
+            (
+                "room-entry-tables-v1",
+                lane as u64,
+                original,
+                tables.fingerprint(),
+            )
+                .hash(&mut hasher);
+            bytes.copy_from_slice(&hasher.finish().to_le_bytes());
+        }
+        owned.tile_tables = Some(Arc::new(tables));
+        Ok(binding)
+    }
+    pub(crate) fn prepared_table(&self, source: &AssetSource) -> Option<Arc<[u8]>> {
+        self.tile_tables.as_ref()?.stream(source)
     }
     pub fn is_canonical_legacy(&self) -> bool {
         matches!(self.content, BoundContent::CanonicalLegacy)
@@ -777,3 +818,5 @@ impl WorldBinding {
         self.actor_media.revision()
     }
 }
+
+pub use super::prepared_tables::{PreparedTableError, PreparedTileTables};

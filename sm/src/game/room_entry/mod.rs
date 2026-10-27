@@ -8,6 +8,7 @@ mod content_runtime;
 mod content_state;
 pub(crate) mod effects;
 pub(crate) mod installation;
+pub(super) mod prepared_tables;
 pub(crate) mod protocol;
 pub(crate) mod selection;
 pub(crate) mod state;

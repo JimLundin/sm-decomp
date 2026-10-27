@@ -21,7 +21,7 @@ pub unsafe fn checkpoint(
     unsafe {
         use crate::game::actors::{api::ActorSpawnRequest, population};
         use crate::verification_checkpoint as disk;
-        let mut producer = Game::with_world(fixture::binding(false));
+        let mut producer = Game::with_world(fixture::binding_with_tables(false, 0));
         initialize(&mut producer)?;
         run(12, &mut producer);
         let loaded = producer.loaded_rom.clone().unwrap();
@@ -48,9 +48,23 @@ pub unsafe fn checkpoint(
         let sources = [(resource, custom)];
         let expected = disk::capture_with_sources(&mut producer, &sources)?;
         disk::save_with_sources(path, &mut producer, 0, &[0], 1, &sources)?;
-        let mut consumer = Game::with_world(fixture::binding(false));
+        let mut consumer = Game::with_world(fixture::binding_with_tables(false, 0));
         initialize(&mut consumer)?;
         run(12, &mut consumer);
+        {
+            // Movies cannot create a catalog-only changed binding at checkpoint admission.
+            let mut changed = Game::with_world(fixture::binding_with_tables(false, 1));
+            initialize(&mut changed)?;
+            run(12, &mut changed);
+            crate::rtl::RtlRenderAudio(&mut [[0; 2]; 534], &mut changed);
+            let before = disk::capture_with_sources(&mut changed, &sources)?;
+            assert_eq!(
+                disk::load_with_sources(path, &mut changed, 0, &[0], &sources).unwrap_err(),
+                "actor checkpoint world revision differs",
+                "room.tables.catalog-checkpoint-rejected"
+            );
+            assert_eq!(disk::capture_with_sources(&mut changed, &sources)?, before);
+        }
         let current = consumer.loaded_rom.clone().unwrap();
         let before = disk::capture_with_sources(&mut consumer, &sources)?;
         assert!(

@@ -65,6 +65,7 @@ fn compatibility() -> u64 {
         include_str!("../initial_state.rs"),
         include_str!("../game_state.rs"),
         include_str!("../game/room_entry/world.rs"),
+        include_str!("../game/room_entry/prepared_tables.rs"),
         include_str!("../game/session.rs"),
         include_str!("../game/actors/botwoon_death.rs"),
         include_str!("../game/session_encoding.rs"),

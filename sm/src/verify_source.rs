@@ -2,6 +2,10 @@
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/game/room_entry/prepared_tables.rs",
+        include_bytes!("game/room_entry/prepared_tables.rs"),
+    ),
+    (
         "sm/src/game/actors/phantoon_motion.rs",
         include_bytes!("game/actors/phantoon_motion.rs"),
     ),
