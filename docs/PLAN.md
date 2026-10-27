@@ -48,30 +48,23 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current tipa782: production112131, legacy17366, unsafe2732, verification40421; warnings165.
+Current tipb116: production112130, legacy17365, unsafe2732, verification40421; warnings165.
 Core sm82 persists actor/media identities and saved ROM patches; RAM/native frame dependencies remain explicit.
 Codec f158c44fac33eac7 has39 contributors/652740 normalized source bytes.
 Prepared110/initialized329+5,14 genuine captures189475 frames and full22 byte-identical restore pass.
 Required sm82 AST8.06min:3 options kills; unsafe gameplay omission unavailable.
 Blackout37/native failure variants remain unobserved; hardware entry contracts stay explicit.
-Safe sprite dispatch passes22959 selected+272 setup/0; +20 engine/-127 legacy/-6 unsafe, full176/156=112.82%.
-sm9b retired: 3872 selected+272 setup/0; -37 engine/-235 legacy/-14 unsafe/-1 verification.
-Full224/239=93.72%; unsafe -14 includes9 enforcement attributes,4 bank lines and1 caller block.
-Actual AST3 kills3453 selected/0 setup in10.08min; unchangedtarget750d retains original0cdf attribution.
+sm9b retired: scoped AST3 kills3453 selected/0 setup; original target750d/0cdf attribution retained.
 Own-sm9b941 full86 passes136526 selected+38827 setup/0; all14 originals and bothKago14350 retained.
-Liquid passes9211 selected+272 setup/0: -7 engine/-6 unsafe; eleven RAM pointers/two split stores retired.
-Ceres elevator passes11088 selected+272 setup/0: +1 engine/-1 unsafe; ten RAM pointers retired.
-Sky passes3599 selected+272 setup/0: +3 engine/-4 unsafe; 17 RAM pointers/six native ROM acquisitions retired.
-Intro callbacks pass11161 selected+272 setup/0: -4 engine/-30 legacy/-4 unsafe; existing page handlers reused.
-Mode7 callbacks pass11161 selected+272 setup/0: +4 engine/-33 legacy/-2 unsafe; signature closure, raw operations unchanged.
-Text glow passes10967 selected+272 setup/0: engine/legacy unchanged, unsafe -2; native pointer and two byte reads retired.
+Recent liquid/elevator/Sky cuts passed affected original rows; hardware/native failure variants remain scoped.
+Intro/Mode7/text-glow batch passed full intro8780 and original smoke; signature-only growth counted, native reads checked.
 Mother Brain flicker/earthquake passes22681 selected+272 setup/0: +1 engine/-1 unsafe; five dereferences/two RAM pointers retired.
 Native FX definitions pass11183 selected+272 setup/0: -1 engine/unsafe unchanged; duplicate capture/raw pointer retired.
 Background/credits passes22765 selected+272 setup/0: +2 engine/-19 legacy/-1 unsafe; signature closure, raw operations unchanged.
-Next: logo/page2 raw writes and separate duplicated verification launchers; source work remains disjoint.
+Logo/page2 passes10967 selected+272 setup/0: -1 engine/-1 legacy; eight raw operations retired, unsafe entries retained.
+Next: duplicated verification launchers and remaining B2 raw cones; cloud boss-bank claims remain separate.
 Linux file-menu a04/source57ea landed: five10967 selected+272 setup/0; -41 engine/-18 unsafe, claim/branch retired.
 ROM logger substitution is held for CRT buffering/output/error/flush equivalence.
-A4 post-push full86 passed on0a; its scoped3kills/1unobserved/1unviable gaps remain.
 Native player/DSP/APU and input Vec/FILE/Cart are owned; GameOwner does not promise Rust thread sharing.
 Keep SDL/native/audio quiescence and CRT order; invalid SIZE_MAX/malloc0 callbacks
 remain outside universal equivalence. Whole Session and independent media remain unfinished.

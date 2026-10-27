@@ -149,8 +149,7 @@ pub unsafe fn HandleSamusDuringIntro(game: &mut Game) {
 pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
     unsafe {
         crate::verify_probe::hit("coroutine.logo");
-        let resume_state: *mut u8 = ram_ptr!(game; 0x612);
-        let mut stage = *resume_state;
+        let mut stage = game.coroutine_state_1();
         if stage == 0 {
             crate::rtl::write_register_and_mirror(INIDISP as u16, 0x8f, 0x51, false, game);
             word!(game.oam_next_ptr = 0);
@@ -191,7 +190,7 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
             crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game);
             GraphicsAsset::Decompress(0x9580d8, 0x15000).load(game);
             GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
-            *ram_ptr!(game; 0x51) = 0x80;
+            game.g_ram[0x51] = 0x80;
             word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce1e9, 0));
             crate::game::display_refresh::enable(true, game);
             word! { game, 1; screen_fade_delay, screen_fade_counter }
@@ -201,7 +200,7 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
             if stage != 0 {
                 let yielded: u8 = crate::game::display_refresh::wait(true, game);
                 if yielded != 0 {
-                    *resume_state = stage;
+                    game.set_coroutine_state_1(stage);
                     return yielded;
                 }
                 match stage {
@@ -255,7 +254,7 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
             };
             finish_frame(game);
         }
-        *resume_state = 0;
+        game.set_coroutine_state_1(0);
         0 as CoroutineRet
     }
 }
@@ -555,8 +554,8 @@ crate::game::callback_dispatch! {
             pause_map(1023) <- value(15401),
         );
         word_transfers!(game, ascending, 128; pause_map(768) <- rom(0x8ba72b, 0));
-        *((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).menu.menu_tilemap as *mut u8).offset(286)
-            as *mut u32) = 472456233;
+        let at = 0x3000 + core::mem::offset_of!(Ram3000, menu.menu_tilemap) + 286;
+        game.g_ram[at..at + 4].copy_from_slice(&472456233u32.to_ne_bytes());
         CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCE6D as u16, 0x1c29, game);
         word!(game.cinematic_var4 = 127);
         CinematicBackground.spawn(addr_kCinematicBgObjectDef_8BCF63 as u16, 0x4c00, game);
