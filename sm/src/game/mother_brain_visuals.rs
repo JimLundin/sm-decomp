@@ -7,9 +7,6 @@ use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_a9::WriteColorsToPalette;
 use crate::ram_map::{checked_word, slot};
 const RomPtr_AD: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xad>;
-crate::ram_map::ram_pointer_functions! {
-    Get_MotherBrain(o: i32) -> Enemy_MotherBrain = [0xf78, o as isize];
-}
 pub enum Fade {
     ToBlack,
     FakeDeathToGray,
@@ -69,10 +66,10 @@ pub unsafe fn fade(kind: Fade, frame: u16, game: &mut Game) -> u8 {
 
 pub unsafe fn update_health_palette(game: &mut Game) {
     unsafe {
-        if (*Get_MotherBrain(0, game)).var_1F < 2 {
+        if slot!(game, Enemy_MotherBrain[0].var_1F) < 2 {
             return;
         }
-        let health = (*Get_MotherBrain(0x40, game)).base.health;
+        let health = slot!(game, Enemy_MotherBrain[0x40].base.health);
         let level = if health >= 9000 {
             0
         } else if health >= 5400 {
@@ -110,15 +107,13 @@ pub unsafe fn lights_off(game: &mut Game) {
 }
 
 pub unsafe fn seal_wall(game: &mut Game) {
-    unsafe {
-        game.eproj_spawn_pt = Point16U { x: 248, y: 72 };
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9, game);
-        game.eproj_spawn_pt = Point16U { x: 248, y: 152 };
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9, game);
-        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x4, 0xb673 as VoidP), game);
-        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x9, 0xb673 as VoidP), game);
-        (*Get_MotherBrain(0i32, game)).var_A = (0xa9881di32) as u16;
-    }
+    game.eproj_spawn_pt = Point16U { x: 248, y: 72 };
+    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9, game);
+    game.eproj_spawn_pt = Point16U { x: 248, y: 152 };
+    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9, game);
+    spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x4, 0xb673 as VoidP), game);
+    spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x9, 0xb673 as VoidP), game);
+    slot!(game, Enemy_MotherBrain[0].var_A = (0xa9881di32) as u16);
 }
 #[forbid(unsafe_code)]
 pub fn start_earthquake(a: u16, game: &mut Game) {

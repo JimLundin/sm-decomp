@@ -48,7 +48,7 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current sourced6fa: production111938, legacy17353, unsafe2713, verification40385; warnings165.
+Current source18c78: production111933, legacy17353, unsafe2712, verification40385; warnings165.
 Core sm82 persists actor/media identities and saved ROM patches; RAM/native frame dependencies remain explicit.
 Historical f158c44fac33eac7 qualification retains39 contributors/652740 source bytes;
 prepared110/initialized329+5,14 captures189475 frames and full22 byte-identical restore at original source.
@@ -77,6 +77,10 @@ Exact spike/DBF2/lavaquake kernels remain source-only.
 Windows M: two MotherBrain signed magnitude paths share one private pure helper; -3 physical/-5 substantive engine.
 Source d6fa/library165 unchanged/DLLde438 passes seven local rows10883 selected+272 setup/0;
 exact two variants remain source-only. Raw source grows50 bytes; unsafe/legacy/verification/support unchanged.
+Windows M: MotherBrain visuals replace three native actor pointer accesses with existing slot values; private getter removed.
+Source18c78/library165 unchanged/DLLff98 passes9 local rows19784 selected+272 setup/0; fullMother/intro8780/Morph1200 retained.
+Cost -5 engine (-3 getter, -2 unused compiler wrapper lines), -1 unsafe; legacy/verification/support unchanged, raw -147B.
+Codec39/2854 unchanged; health guard/bands and exact seal-wall store-order variants remain source-scoped.
 Linux M: setup14 shares fresh native-word reads -51 physical/-52 substantive engine; source review pass.
 Keep seven fresh indices/five multi-read blocks; source9964 passed16 rows16977 selected+1713 setup/0 and ordinary CI.
 Linux M: six more signed8.8 projectile blocks reuse unchanged axis helper -43 physical/substantive engine.
@@ -88,6 +92,11 @@ Keep SDL/native/audio quiescence and CRT order; invalid SIZE_MAX/malloc0 callbac
 remain outside universal equivalence. Whole Session and independent media remain unfinished.
 First WRAM cut retains the backend aligned allocation and private, nonreplaceable Game binding.
 Close all actual consumers, at least169 files including reserved sm_a7 reference-update; coordinate that cloud cohort first.
+WRAM qualification is blocked >1h by exactly9 reserved cloud sites: sm_a6 raw1969/2241/2445/2838/2854,
+sm_a9 raw3715/4385/4418 and sm_a7 reference-update3596. Await B5/B6 actual task links or author disposition
+from issue2 request6432624176; no partial builds/captures/landing. Separate Execution retirement and storage audit continue.
+Execution source-only87fd removes23 obsolete bodies: -561 engine/-46 unsafe versus its f3aac draft, not landedmain.
+Nine assistance sites now have source-review PASS; B5/B6 author adoption/disposition and whole-cohort qualification remain required.
 Preserve each byte/block failure and device order; bind full Game implementation to codec and make genuine captures.
 Bus APIs stay unsafe until owned links, recursion/native/observer/reset/lifecycle closure; no slice/Index facade.
 
@@ -162,6 +171,9 @@ separate closures; keep imported alias exclusions, source newlines and Windows d
 4. Every comparison failure gets a checkpoint regression row with its fix; never weaken
    comparisons/expectations. Retry a flaky step once; a second failure is real.
 
+For assigned sequential phases, collect/release the prior handle and budget, sample RAM/disk and other reservations,
+declare the next budget and notify the integrator/Compute, then launch without waiting for a prose ACK.
+Start with >3GiB free, leave >=2GiB after remaining growth, and keep >=50GiB disk including outputs; new overlaps share one ledger.
 Partition independent groups/use spare CPU; preserve shared prefixes and all identity
 guards. Run ready original-seed subsets during serial capture dependencies, then complete
 checkpoint rows without repeating accepted work absent a source change/new concern.
