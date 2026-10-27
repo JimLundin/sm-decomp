@@ -1895,16 +1895,16 @@ crate::game::callback_dispatch! {
     pub unsafe fn CallMotherBrainInstr(ea: u32, k: u16, game: &mut Game) -> u16 => ea;
     call (k, game); default Unreachable(game) as u16;
     @functions [pub unsafe fn (k: u16, game: &mut Game) -> u16];
-    [11115279] MotherBrain_Instr_Goto [*(RomPtr_A9(k, game) as *mut u16)] { };
-    [11115284] MotherBrain_Instr_EnableNeckMovementGoto [*(RomPtr_A9(k, game) as *mut u16)] {
+    [11115279] MotherBrain_Instr_Goto [native_record(0xa90000 | u32::from(k), game).word(0)] { };
+    [11115284] MotherBrain_Instr_EnableNeckMovementGoto [native_record(0xa90000 | u32::from(k), game).word(0)] {
         slot!(game, Enemy_MotherBrain[0x40].var_31 = 1);
     };
     [11115296]
     MotherBrain_Instr_DisableNeckMovement [k] { slot!(game, Enemy_MotherBrain[0x40].var_31 = 0); };
     @functions [pub unsafe fn (k: u16, game: &mut Game) -> u16];
-    @prefix { let v2 = RomPtr_A9(k, game) as *const u16; };
-    [11115304] MotherBrain_Instr_QueueSfx2 [(k).wrapping_add(2)] {  QueueSfx2_Max6(*v2, game); };
-    [11115314] MotherBrain_Instr_QueueSfx3 [(k).wrapping_add(2)] {  QueueSfx3_Max6(*v2, game); };
+    @prefix { let v2 = native_record(0xa90000 | u32::from(k), game); };
+    [11115304] MotherBrain_Instr_QueueSfx2 [(k).wrapping_add(2)] {  QueueSfx2_Max6(v2.word(0), game); };
+    [11115314] MotherBrain_Instr_QueueSfx3 [(k).wrapping_add(2)] {  QueueSfx3_Max6(v2.word(0), game); };
     @functions [pub unsafe fn (k: u16, game: &mut Game) -> u16];
     [11115324] MotherBrain_Instr_SpawnDroolEproj [k] {
         let E: i32 = 0x40;
@@ -1986,8 +1986,8 @@ crate::game::callback_dispatch! {
     [11116213]
     MotherBrain_Instr_SetShitroidAttackCtr0 [k] { slot!(game, Enemy_MotherBrain[0].var_13 = 0); };
     [11116221] MotherBrain_Instr_SpawnBombEproj [(k).wrapping_add(2)] {
-        let v2 = RomPtr_A9(k, game) as *const u16;
-        SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainBomb as u16, *v2, game);
+        let v2 = native_record(0xa90000 | u32::from(k), game);
+        SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainBomb as u16, v2.word(0), game);
     };
     [11116358] MotherBrain_Instr_SpawnLaserEproj [k] {
         let E: i32 = 0x40;
@@ -2022,11 +2022,11 @@ pub unsafe fn MotherBrain_Func_1_DoubleRet(game: &mut Game) -> i32 {
         if pc & 0x8000 == 0 {
             return -1i32;
         }
-        let mut p = RomPtr_A9(pc, game);
+        let mut p = native_record(0xa90000 | u32::from(pc), game);
         if word!(game.time_is_frozen_flag) != 0 {
-            return *(p.offset(2) as *mut u16) as i32;
+            return p.word(2) as i32;
         }
-        let mut v5: u16 = *(p as *mut u16);
+        let mut v5: u16 = p.word(0);
         let mut execute_instruction: bool = (v5 & 0x8000 != 0)
             || ({
                 if ((v5) as i16).wrapping_sub((slot!(game, Enemy_MotherBrain[E].var_20)) as i16)
@@ -2037,7 +2037,7 @@ pub unsafe fn MotherBrain_Func_1_DoubleRet(game: &mut Game) -> i32 {
                         Enemy_MotherBrain[E].var_20 =
                             slot!(game, Enemy_MotherBrain[E].var_20).wrapping_add(1)
                     );
-                    return *(p.offset(2) as *mut u16) as i32;
+                    return p.word(2) as i32;
                 }
                 pc = (pc).wrapping_add(4);
                 false
@@ -2048,8 +2048,8 @@ pub unsafe fn MotherBrain_Func_1_DoubleRet(game: &mut Game) -> i32 {
                     CallMotherBrainInstr(((v5) as u32) | (0xa90000u32), (pc).wrapping_add(2), game);
                 execute_instruction = false;
             } else {
-                p = RomPtr_A9(pc, game);
-                v5 = *(p as *mut u16);
+                p = native_record(0xa90000 | u32::from(pc), game);
+                v5 = p.word(0);
                 if v5 & 0x8000 == 0 {
                     break;
                 } else {
@@ -2059,7 +2059,7 @@ pub unsafe fn MotherBrain_Func_1_DoubleRet(game: &mut Game) -> i32 {
         }
         slot!(game, Enemy_MotherBrain[E].var_20 = 1);
         slot!(game, Enemy_MotherBrain[E].var_21 = pc);
-        *(p.offset(2) as *mut u16) as i32
+        p.word(2) as i32
     }
 }
 pub unsafe fn MotherBrain_DrawNeck(game: &mut Game) {
@@ -2110,30 +2110,28 @@ pub unsafe fn MotherBrain_DrawNeckSegment(x: u16, y: u16, game: &mut Game) {
     }
 }
 pub unsafe fn MotherBrain_AddSpritemapToOam(j: u16, r18: u16, r20: u16, r22: u16, game: &mut Game) {
-    unsafe {
-        let mut p = RomPtr_A9(j, game);
-        let mut n: i32 = *(p as *mut u16) as i32;
-        p = p.offset(2);
-        let mut idx: i32 = word!(game.oam_next_ptr) as i32;
-        do_until! { n == 0 ;
-            let y: i16 =
-                (r20 as i32 + *p.offset(2) as i8 as i32 - word!(game.layer1_y_pos) as i32) as i16;
-            if y >= 0 {
-                let oam: usize = usize::try_from(0x370i32 + idx).expect("OAM entry outside RAM");
-                let x: u16 =
-                    (r18 as i32 + *(p as *mut u16) as i32 - word!(game.layer1_x_pos) as i32) as u16;
-                { let value: u8 = x as u8; let at: usize = oam; game.ram().write_byte(at, value); };
-                { let value: u8 = y as u8; let at: usize = oam + 1; game.ram().write_byte(at, value); };
-                { let value: u16 = (r22) | (*(p.offset(3) as *mut u16)); let at: usize = oam + 2; let bytes = value.to_ne_bytes(); game.ram().write_byte(at, bytes[0]); game.ram().write_byte(at + 1, bytes[1]); };
-                word!(bits_i32, game.oam_ext[(idx >> 5)] |= ((x as i32 & 0x100) >> 8 | (*(p as *mut i16) < 0) as i32 * 2)
-                        << 2 * (idx >> 2 & 7));
-                idx = idx + 4 & 0x1ff;
-            }
-            p = p.offset(5);
-            n -= 1;
+    let source = native_record(0xa90000 | u32::from(j), game);
+    let mut n: i32 = source.word(0) as i32;
+    let mut offset: usize = 2;
+    let mut idx: i32 = word!(game.oam_next_ptr) as i32;
+    do_until! { n == 0 ;
+        let y: i16 =
+            (r20 as i32 + source.byte(offset + 2) as i8 as i32 - word!(game.layer1_y_pos) as i32) as i16;
+        if y >= 0 {
+            let oam: usize = usize::try_from(0x370i32 + idx).expect("OAM entry outside RAM");
+            let x: u16 =
+                (r18 as i32 + source.word(offset) as i32 - word!(game.layer1_x_pos) as i32) as u16;
+            game.ram().write_byte(oam, x as u8);
+            game.ram().write_byte(oam + 1, y as u8);
+            set_native_word(oam + 2, r22 | source.word(offset + 3), game);
+            word!(bits_i32, game.oam_ext[(idx >> 5)] |= ((x as i32 & 0x100) >> 8 | ((source.word(offset) as i16) < 0) as i32 * 2)
+                    << 2 * (idx >> 2 & 7));
+            idx = idx + 4 & 0x1ff;
         }
-        word!(game.oam_next_ptr = idx as u16);
+        offset += 5;
+        n -= 1;
     }
+    word!(game.oam_next_ptr = idx as u16);
 }
 pub unsafe fn MotherBrain_CalculateRainbowBeamHdma(game: &mut Game) {
     unsafe {
@@ -3843,94 +3841,45 @@ pub unsafe fn MotherBrain_Pal_WriteRoomPal(j: u16, game: &mut Game) {
 pub unsafe fn HandleMotherBrainInstructionList(a: u16, game: &mut Game) -> u16 {
     unsafe {
         let st: usize = a as usize;
-        if ({
-            let at: usize = st;
-            u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])
-        } & 0x8000)
-            == 0
-        {
+        if native_word(st, game) & 0x8000 == 0 {
             return 0;
         }
-        let mut v2: u16 = {
-            let at: usize = st;
-            u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])
-        };
-        let mut v3: *const u16 = RomPtr_A9(v2, game) as *mut u16;
-        let mut execute_instruction: bool = (*v3 & 0x8000 != 0)
+        let mut v2: u16 = native_word(st, game);
+        let mut v3 = native_record(0xa90000 | u32::from(v2), game);
+        let mut execute_instruction: bool = (v3.word(0) & 0x8000 != 0)
             || ({
-                if {
-                    let at: usize = st + 2;
-                    u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])
-                } != *v3
-                {
-                    {
-                        let value: u16 = {
-                            let at: usize = st + 2;
-                            u16::from_ne_bytes([
-                                game.ram().read_byte(at),
-                                game.ram().read_byte(at + 1),
-                            ])
-                        }
-                        .wrapping_add(1);
-                        let at: usize = st + 2;
-                        let bytes = value.to_ne_bytes();
-                        game.ram().write_byte(at, bytes[0]);
-                        game.ram().write_byte(at + 1, bytes[1]);
-                    };
-                    return *v3.offset(1);
+                if native_word(st + 2, game) != v3.word(0) {
+                    set_native_word(st + 2, native_word(st + 2, game).wrapping_add(1), game);
+                    return v3.word(2);
                 }
-                v2 = (v2).wrapping_add(4);
+                v2 = v2.wrapping_add(4);
                 false
             });
         loop {
             if execute_instruction {
                 v2 = CallMotherBrainInstr(
-                    ((*v3) as u32) | (0xa90000u32),
-                    (v2).wrapping_add(2),
+                    u32::from(v3.word(0)) | 0xa90000,
+                    v2.wrapping_add(2),
                     game,
                 );
                 execute_instruction = false;
             } else {
-                v3 = RomPtr_A9(v2, game) as *mut u16;
-                if *v3 & 0x8000 == 0 {
+                v3 = native_record(0xa90000 | u32::from(v2), game);
+                if v3.word(0) & 0x8000 == 0 {
                     break;
                 } else {
                     execute_instruction = true;
                 }
             }
         }
-        if *v3 == 0 {
-            {
-                let value: u16 = 0;
-                let at: usize = st;
-                let bytes = value.to_ne_bytes();
-                game.ram().write_byte(at, bytes[0]);
-                game.ram().write_byte(at + 1, bytes[1]);
-            };
-            {
-                let value: u16 = 0;
-                let at: usize = st + 2;
-                let bytes = value.to_ne_bytes();
-                game.ram().write_byte(at, bytes[0]);
-                game.ram().write_byte(at + 1, bytes[1]);
-            };
+        if v3.word(0) == 0 {
+            set_native_word(st, 0, game);
+            set_native_word(st + 2, 0, game);
             0
         } else {
-            {
-                let value: u16 = 1;
-                let at: usize = st + 2;
-                let bytes = value.to_ne_bytes();
-                game.ram().write_byte(at, bytes[0]);
-                game.ram().write_byte(at + 1, bytes[1]);
-            };
-            {
-                let value: u16 = v2;
-                let at: usize = st;
-                let bytes = value.to_ne_bytes();
-                game.ram().write_byte(at, bytes[0]);
-                game.ram().write_byte(at + 1, bytes[1]);
-            };
-            *v3.offset(1)
+            set_native_word(st + 2, 1, game);
+            set_native_word(st, v2, game);
+            v3.word(2)
         }
     }
 }

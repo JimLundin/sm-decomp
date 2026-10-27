@@ -14,28 +14,22 @@ This directive supersedes older work-order and pacing advice below; PLAN's
 Fast loop, resource limits and landing rules remain in force. Existing source
 owners and the sole Windows integrator retain their assignments.
 
-Current main/origin `f3a15b74`: production 113,957, legacy 17,940,
-unsafe-containing lines 2,566, verification 41,836. Canonical source is `9fe4`,
-584 inputs / 6,272,157 raw bytes; source preflight has 571 bindings. The cinematic landing
-`a52992cf` removed 5 production/25 legacy lines, adding one unsafe metric line
-from safety attributes; independent source review [passed](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6438746415).
-AA04 now landed with 9/9 affected rows, 6,180 selected + 1,713 setup frames,
-zero failures and net -73 production/-162 legacy/-4 unsafe/+4 verification.
-Its 41 codec contributors remain unchanged; no fresh capture was required.
-AA05 landed `29934afa`: 5/5 rows, 3,093 selected + 272 setup / 0 failures;
-net -62 production/-62 legacy, unsafe and verification unchanged. HDMA landed
-`579b5cd6`: -49 physical production/-4 legacy/-59 unsafe/verification unchanged;
-12 production lines are formatter reflow. Its 32 fixed initializer declarations
-are safe; generic bus/interpreter/native dependencies remain. Phantoon landed
-`f3a15b74`: -98 production/-266 legacy/-9 unsafe/+4 verification, six old raw
-actor captures removed and all new module/callers/registration counted. Its
-six rows passed 6,234 selected + 272 setup / 0 failures. All three landings
-retain 160 unchanged warnings and their actual source/native/input guards.
-Since WRAM landed, actual main removed287 production/519 legacy/71 unsafe
-metric lines and added8 verification lines. The rolling hour at 10:49 UTC uses
-`a52992cf`: -282 production/-494 legacy/-72 unsafe/+8 verification. The broader
-cut against `6ad82e25` retains WRAM's growth: +2,033 production/+587 legacy/
--146 unsafe/+1,451 verification; the safety/storage cut is not a size reduction.
+Current engine main/origin `4857622f`: production 113,861, legacy 17,844,
+unsafe-containing lines 2,544, verification 41,836. Canonical source is `eba0`,
+584 inputs / 6,266,063 raw bytes; source preflight has 571 bindings. A9 corpse
+animation landed `c872ad44`: -60 production/-60 legacy/-23 unsafe/verification0;
+eight rows passed 11,183 selected + 272 setup / 0 failures. Six native captures,
+seventeen word dereferences and one MemCpy were removed; twenty-one address-label
+joins receive no substantive size credit. Kraid's complete frame cohort landed
+`4857622f`: -36 production/-36 legacy/+1 unsafe metric from a forbid attribute/
+verification0. Its five rows passed 3,348 selected + 272 setup / 0 failures;
+twelve native capture forms were removed and four unrelated native calls remain.
+Both landings retain codec 41/3ac09138dc065e54, 160 unchanged warnings and the
+actual source/native/input guards, including full Morph1200. Combined published
+delta: -96 production/-96 legacy/-22 unsafe/verification0. No fresh capture was needed.
+Since WRAM landed, actual main removed 383 production/615 legacy/93 unsafe
+metric lines and added 8 verification lines. Against `6ad82e25`, including WRAM's
+growth, the net remains +1,937 production/+491 legacy/-168 unsafe/+1,451 verification.
 
 Prior WRAM/Execution landing `43117e05` remains +2,320 production/+1,106 legacy/
 -75 unsafe/+1,443 verification against `6ad82e25`, with canonical ce8b and
@@ -43,74 +37,66 @@ Prior WRAM/Execution landing `43117e05` remains +2,320 production/+1,106 legacy/
 byte-identical encrypted restore verified. Count each actual main delta once.
 These checks do not prove the full engine.
 
-The latest Phantoon cycle used library20.1003s, DLL74.9997s and two-group
-runtime39.721948s (physical first START to last EXIT); commit followed 2m39.4s
-later and remote main is confirmed. Earlier source/review timestamps overlap
-the HDMA campaign and do not establish separate duration benchmarks. HDMA's
-29-row consumer interval was 13m24.014685s; final changed-AA05 five rows took
-22.896716s. Independent receipt audit checked physical START/EXIT/log/row sums,
-96 file hashes, capture edges/payloads and all nine original/restored members;
-no runtime was repeated. Six genuine captures total 183,971 including boot329;
-the other five edges total183,642, and continuation5 is separate. Preserve
-original b2d producer / 0e29 consumers / 17f5 consumers and their codec3ac lineage.
-One earlier mailbox cutoff missed a published review; collect an overlapping
-creation/update window. Current source/runtime blockers are closed.
+Latest actual cycles: A9 library 20.2305s/DLL 66.3167s/replay 50.9132s/
+EXIT-to-push 90.7405s; Kraid library 20.137s/DLL 66.411s/replay 18.0719s/
+EXIT-to-push 88.8000s [6440810470](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6440810470).
+Source readiness and handoff currently dominate idle time. Check explicit macro
+grammar and obsolete imports before freezing the next source; keep independent
+review and permitted compilation overlapping. Previous HDMA receipt/capture/restore
+proofs retain their original b2d producer / 0e29 consumers / 17f5 consumers and
+codec3ac lineage; no accepted runtime is repeated. Collect overlapping mailbox
+creation/update windows so a cutoff does not miss a published review.
 
 Next work, in order:
 
-1. **Qualify the first complete reviewed source now ready.** Windows's existing
-   A9 corpse-animation owner froze source `dde11c18`, then exact successor
-   `b5a83655` added the required empty unit-callback prefix and passed source review.
-   Final successor `f42754c3` removes only the unused A9 MemCpy import; unchanged
-   expression/helper proofs transfer through that exact removal
-   [6440315644](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6440315644).
-   Its complete 39-leaf dispatch/setup/scheduler/tile/queue cohort removes six
-   native captures, seventeen word dereferences and one MemCpy. Measured source
-   delta is -60 production/-60 legacy/-23 unsafe/verification unchanged; exclude
-   twenty-one address-label joins from substantive size credit. Only A9 and two
-   existing display-helper visibilities change. Use its eight named rows with
-   full Morph1200; preserve native allocation, lazy reads, callback/partial-failure
-   order and the original move-dispatch argument reversal. The integrator launches
-   ready checks and lands the qualified pin promptly, without waiting for prose
-   or an unfinished successor. Final actual codec/native/profile/prefix equality
-   permits reuse of genuine captures; no fresh campaign is needed for these leaves.
-2. **Complete Kraid's instruction-frame interpreter and all frame consumers.**
-   Linux's existing A7 author/reviewer has frozen source `578667ff`, bank `22a8b263`,
-   for review/compile overlap [6440331150](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6440331150).
-   Remove the packed KraidInstrList, dynamic/fixed frame captures and timer/type
-   consumers together. Current author delta -36 physical production/-37 substantive,
-   -36 legacy/verification unchanged is provisional until independent review;
-   +1 unsafe metric is a forbid attribute, with twelve capture forms removed.
-   Preserve three word0 queries, callback before fresh B+2, C/B+8 before word2,
-   both initial queue-tail reads, seven-byte publication and late 0x59 query.
-   Mouth/body traversal and fixed linear/full/odd identities remain distinct.
-   Four unrelated native consumers and the bank binding remain. Use boss-kraid
-   plus PLAN's four smokes; final source review and actual composition bind the
-   qualification. Give a reviewed ready A7 packet priority at the next free
-   integrator slot; keep A9's running immutable work intact. No competing writer.
-   CPU-I/O remains unselected: a live foreign Snes.cpu is allowed by the existing
-   unsafe entry contract. Own-CPU equality would alter 4211's failure/publication
-   prefix [6440065848](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6440065848).
-   A future 47-Snes-field cut must retain the two selected-CPU raw effects and
-   revise its full cost/removal claim; no silent contract narrowing or codec run.
-3. **Prepare substantive Session closure ahead of one genuine qualification.**
-   External oversight retains Runtime/checkpoint research. Normal/demo Radius
-   plus outer commands0x14/0x15/0xb can avoid known foreign transfers through
-   existing owned_call, but grow production by an estimated15-25 lines, remove
-   no raw operation and retain Game/Fanfare/inner effects. Independent Radius
-   source review [passed](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6439698767).
-   LOADED91:B629 after pose differs from the NATIVE collision table captured
-   before pose; preserve Fanfare's pre-Runtime Y/X publication. Commands5/0xf/0x18
-   change FrameGamma, so the four-field refresh cannot be generalized. The Word
-   room-asset export counterexample is excluded by actual Normal/Demo producers,
-   not by generic preflight_export [6440220145](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6440220145).
-   Existing two-row logs establish a lower bound of 1,668 completed preparations;
-   93,184 terrain-byte accesses per Radius pair still supplies no elapsed speedup.
-   Oversight is tracing the complete gamma dispatch and terrain writer/consumer
-   cohorts ahead of source assignment. Time a justified complete Session cut
-   alongside its required rows; do not schedule a capture campaign for these tiny
-   shortcuts alone. No persistent state bag, cursor wrapper, new observer/framework
-   or codec-only cache is authorized.
+1. **Land the qualified CI/README support change.** Direct user request: remove
+   the redundant Pages publisher and display committed `docs/treemap.svg` in
+   README. The existing renderer reads staged Rust with `--staged`, excluding
+   the SVG from its source identity. Stage source, render, then stage the image
+   beside the same code commit. Pages workflow 396363766 is already disabled;
+   delete pages.yml without adding an image CI job. Committed behavior, staged
+   replacement/add/delete isolation, XML and diff checks passed. Support files
+   do not alter engine source/native/codec identity; no DLL/replay is needed.
+2. **Qualify existing disjoint complete source cuts as they become ready.**
+   Windows owns enemy-projectile cursor/control deduplication through the existing
+   EnemyScript, including lifecycle/host/detached-verifier consumers and the
+   deleted binding. Preserve three-byte long24; the shared load24 reads four.
+   Windows separately owns both Mother Brain frame interpreters, all 22 outcomes
+   and the OAM leaf/three callers, only in sm_a9.rs. Preserve callback/native-word/
+   publication/failure order and the retained palette writer. Claims and provisional
+   full costs are [6440890980](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6440890980).
+   Linux retains Botwoon/Crocomire readers; no competing writer. First frozen,
+   formatted source enters independent review and the sole integrator's compiler
+   slot immediately; exact composition, codec guards, affected rows/smokes and
+   publication follow. Credit only measured actual landings.
+3. **Use the completed Session research to select a real removal.** Gamma's
+   eleven named modes plus Unknown are traced. A standalone typed dispatch grows
+   roughly 10-30 production lines and removes no raw operation/backend owner;
+   no elapsed speedup is established. owned_call refreshes four actor observations
+   but omits frame_gamma, which later settlement reads. A complete gamma cut needs
+   full projected input refresh before/after, under the existing preflight/unwind
+   guard, with Ceres/timer/unknown effects retained. Defer the isolated campaign.
+   Terrain imports/exports copy 46,592 bytes and allocate two boxes per side, but
+   direct storage changes require complete producer/consumer authority closure.
+   Actual yapping_maw::advance ends with Runtime::update_maw_visibility then Drop:
+   full enemy 0x7fd6 aliases var_36 at 0x10002. The raw outside=1 write is followed
+   by republication of the imported terrain word, e.g. 0x3456; direct RAM would
+   retain 1 and change behavior. Physical BTS block 0x9bfe reads 0x800000/1 through
+   backend mirroring to WRAM 0/1; direct indexing reaches out-of-bounds 0x20000.
+   Room installation, PLM mutation, collision/rendering and physical aliases,
+   reset/load/oracle and CPU/DMA/HDMA writers must close together before deleting
+   the copied storage. Defer standalone caching; prepare one full responsibility
+   whose original fields/adapters/foreign transfers actually disappear.
+
+Radius's accepted source proof and lower bound 1,668 completed preparations remain
+scoped evidence; 93,184 terrain-byte accesses per pair is not an elapsed speedup.
+Normal/Demo producers exclude the Word-room-asset counterexample, but generic
+preflight_export does not validate the whole encoding. No tiny Radius-only codec
+campaign, persistent state bag, new observer/framework or codec-only cache.
+CPU-I/O also remains unselected: own-CPU equality would narrow the admitted
+foreign-Snes.cpu contract and alter 4211's failure/publication prefix
+[6440065848](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6440065848).
+Any future 47-field cut must retain the two selected-CPU raw effects and count them.
 
 Choose further work by the largest complete removable dependency or duplicated
 responsibility with understood callers and rows. State net benefit and removal
@@ -135,10 +121,10 @@ removal and closed ownership dependencies explicit beside the existing Score.
 Bank deletion, safe wrappers and replay passes remain intermediate achievements;
 owned Session, independent media and Map Rando acceptance remain the destination.
 
-**Size feasibility, actual main f3a15b74.** Production 113,957, legacy 17,940,
-unsafe-containing lines 2,566 and verification 41,836 still leave 13,957 net production
+**Size feasibility, actual engine main 4857622f.** Production 113,861, legacy 17,844,
+unsafe-containing lines 2,544 and verification 41,836 leave 13,861 net production
 lines above 100,000. If only banks changed, replacements could total at most 3,983
-lines (22.2%); at 80% replacement, another ~10,369 lines must disappear elsewhere.
+lines (22.3%); at 80% replacement, another ~10,292 lines must disappear elsewhere.
 Bank moves alone cannot substantiate the size promise. Existing independent
 terrain/duplicate assessments found no justified >100-line owned-domain merge;
 small candidate pools are not enough. Investigate complete responsibilities in

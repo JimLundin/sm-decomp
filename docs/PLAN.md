@@ -50,7 +50,7 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current sourceeba0: production113861, legacy17844, unsafe2544, verification41836; warnings160.
+Current source93a: production113810, legacy17793, unsafe2543, verification41836; warnings160.
 Qualified WRAM/Execution: Game/Backend share stable WorkRam; private DMA/Input
 storage and actual byte/getter/macro consumers close with exact RAM layout.
 Initialized329+5, full86 (136526 selected+38827 setup),14 genuine captures189475,
@@ -92,7 +92,12 @@ Kraid frame cohort:12 raw capture forms/13 expanded,20 word-load expressions and
 Actualjoinedeba0 fmt/library/DLL160 unchanged warnings/source571/native/all41rawcodec pass;5rows3348 selected+272 setup/0.
 Net -36 physical production/-36 legacy/+1 unsafe from a forbid attribute/verification0; -37 substantive lines, formatter+4 excluded.
 Ordered native/callback/queue/failure contracts retained; original5560 budget/both120 tails and full Morph1200 preserved.
-Next: REVIEW selects the next complete removable responsibility; external README/progress work retains its owner.
+Mother Brain22 callback outcomes/both frame interpreters/three sprite-map consumers use existing checked native records.
+Ten raw native captures/21 word loads/one byte load removed; unsafe entry/backend/spawn/palette contracts retained.
+Source93a fmt/library/DLL160 unchanged warnings/source571/native/all41rawcodec pass;7rows10883 selected+272 setup/0.
+Net -51 production/-51 legacy/-1 unsafe/verification0; uncovered: DeadTorizo_MainGfxHook D761 at296,187,0.
+README now displays the committed staged-source SVG; treemap support+57 lines/Pages publisher-51, no engine-size credit.
+Next: accepted disjoint projectile-script deduplication on this parent; exact final qualification underway.
 
 Source-only: Blackout37, exact page2 callback, sky initializers, CrystalFlashStart,
 spike/DBF2/lavaquake and additional signed8.8 kernels; MotherBrain magnitude,

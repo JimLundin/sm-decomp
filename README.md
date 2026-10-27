@@ -8,7 +8,7 @@ The code was transpiled once from [snesrev/sm](https://github.com/snesrev/sm)
 with c2rust and is being developed into safe, idiomatic Rust while preserving
 the original game's behavior and quirks.
 
-![Codebase progress: Rust ownership and unsafe counts, with 1-hour unsafe-block trends by area](https://jimlundin.github.io/sm-decomp/treemap.svg)
+![Codebase progress: Rust ownership and unsafe counts, with 1-hour unsafe-block trends by area](docs/treemap.svg)
 
 The goal is a purpose-built Rust engine with owned gameplay state, its own
 renderer and audio, and no SNES emulation dependency in the finished runtime.

@@ -1,11 +1,11 @@
 """Draw a mobile-readable progress picture: production Rust by responsibility,
 split into owned, partly owned and legacy lines, with current totals, 1h change and per-area unsafe-block trends.
 
-Reads committed Git blobs only (no working tree, no network, standard library).
-CI publishes the result to GitHub Pages as treemap.svg; README.md embeds it.
-Usage: python tools/treemap.py OUT.svg [REVISION]
+Reads committed or staged Git blobs (no working tree, no network, standard library).
+README.md displays the committed docs/treemap.svg without a Pages deployment.
+Usage: python tools/treemap.py OUT.svg [REVISION] [--staged]
 """
-import datetime, io, re, subprocess, sys, tarfile
+import argparse, datetime, hashlib, io, re, subprocess, tarfile
 from html import escape
 from pathlib import PurePosixPath
 
@@ -134,17 +134,13 @@ def git(*args):
     return subprocess.check_output(['git', *args])
 
 
-def measure(rev):
-    """Counts at REV; line accounting matches progress.sh, syntax is production-only."""
-    tar = tarfile.open(fileobj=io.BytesIO(git('archive', rev, 'sm/src')))
+def measure_files(files):
+    """Line accounting matches progress.sh; syntax counts are production-only."""
     m = dict(rows={k: dict.fromkeys(COLORS, 0) for k, _ in AREAS},
              unsafe_by_area={k: dict(functions=0, blocks=0) for k, _ in AREAS},
              unsafe=0, production=0, legacy_bank=0)
-    for member in tar:
-        path = member.name
-        if not member.isfile() or not path.endswith('.rs'):
-            continue
-        text = tar.extractfile(member).read().decode('utf-8', 'replace')
+    for path, body in files:
+        text = body.decode('utf-8', 'replace')
         lines = len(text.splitlines())
         m['unsafe'] += sum('unsafe' in line for line in text.splitlines())
         if VERIFY.search(path):
@@ -160,6 +156,49 @@ def measure(rev):
     m['unsafe_functions'] = sum(r['functions'] for r in m['unsafe_by_area'].values())
     m['unsafe_blocks'] = sum(r['blocks'] for r in m['unsafe_by_area'].values())
     return m
+
+
+def measure(rev):
+    """Read only Rust source from the named committed revision."""
+    with tarfile.open(fileobj=io.BytesIO(git('archive', rev, 'sm/src'))) as tar:
+        return measure_files((member.name, tar.extractfile(member).read())
+                             for member in tar
+                             if member.isfile() and member.name.endswith('.rs'))
+
+
+def staged_source():
+    """Read the index without changing it; identity excludes the generated SVG."""
+    entries = []
+    for entry in git('ls-files', '--stage', '-z', '--', 'sm/src').split(b'\0'):
+        if not entry:
+            continue
+        header, path = entry.split(b'\t', 1)
+        mode, oid, stage = header.split()
+        if not path.endswith(b'.rs'):
+            continue
+        if stage != b'0':
+            raise ValueError('unmerged Rust source: ' + path.decode('utf-8'))
+        if mode not in (b'100644', b'100755'):
+            continue
+        entries.append((path.decode('utf-8'), oid))
+    if not entries:
+        raise ValueError('no staged Rust source')
+    entries.sort()
+    objects = subprocess.check_output(['git', 'cat-file', '--batch'],
+                                      input=b''.join(oid + b'\n' for _, oid in entries))
+    files, offset = [], 0
+    identity = hashlib.sha256()
+    for path, oid in entries:
+        end = objects.index(b'\n', offset)
+        found, kind, size = objects[offset:end].split()
+        if found != oid or kind != b'blob':
+            raise ValueError('staged source is not a blob: ' + path)
+        size = int(size)
+        body = objects[end + 1:end + 1 + size]
+        offset = end + size + 2
+        files.append((path, body))
+        identity.update(path.encode('utf-8') + b'\0' + size.to_bytes(8, 'little') + body)
+    return identity.hexdigest(), measure_files(files)
 
 
 def history_samples(commit, when):
@@ -217,13 +256,22 @@ def change(now, then, lower_is_better, fmt=short):
     return (f'{"+" if d > 0 else "-" if d < 0 else "+/-"}{fmt(abs(d))} in 1h', sign)
 
 
-def main(out_path, rev='HEAD'):
+def main(out_path, rev='HEAD', *, staged=False):
     commit = git('rev-parse', rev).decode().strip()
-    when = git('log', '-1', '--format=%cI', commit).decode().strip()
+    when = (datetime.datetime.now(datetime.timezone.utc).isoformat() if staged else
+            git('log', '-1', '--format=%cI', commit).decode().strip())
     samples = history_samples(commit, when)
+    label, current = commit[:7], commit
+    if staged:
+        identity, staged_measurement = staged_source()
+        label, current = 'Source ' + identity[:12], 'staged'
+        samples = [(i, current if i == 8 else revision) for i, revision in samples]
     base = next((r for i, r in samples if i == 0), None)
-    measurements = {r: measure(r) for r in dict.fromkeys(r for _, r in samples)}
-    now, then = measurements[commit], measurements.get(base)
+    measurements = {r: measure(r) for r in dict.fromkeys(r for _, r in samples)
+                    if r != 'staged'}
+    if staged:
+        measurements[current] = staged_measurement
+    now, then = measurements[current], measurements.get(base)
     old = (lambda k: then[k]) if then else (lambda k: None)
     cards = [
         ('Production lines', f'{now["production"]:,}', change(now['production'], old('production'), True)),
@@ -234,9 +282,11 @@ def main(out_path, rev='HEAD'):
     rows = sorted(({**dict(id=k, title=n), 'counts': now['rows'][k], 'lines': sum(now['rows'][k].values())}
                    for k, n in AREAS if sum(now['rows'][k].values())), key=lambda r: -r['lines'])
     stamp = datetime.datetime.fromisoformat(when)
+    snapshot = 'this staged snapshot' if staged else 'this commit'
+    history_source = 'first-parent committed source' + (' and the staged source' if staged else '')
     height = TOP + len(rows) * (ROW_H + GAP) - GAP + PAD
     p = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{height}" viewBox="0 0 {W} {height}" role="img">',
-         f'<title>Super Metroid codebase at {commit[:7]}: {now["production"]:,} production, '
+         f'<title>Super Metroid codebase at {label}: {now["production"]:,} production, '
          f'{now["legacy_bank"]:,} legacy bank lines, {now["unsafe_functions"]:,} unsafe functions '
          f'and {now["unsafe_blocks"]:,} unsafe blocks</title>',
          '<desc>Each row is one responsibility; its number is the production Rust line count. '
@@ -254,7 +304,7 @@ def main(out_path, rev='HEAD'):
          'Per-area unsafe counts sum exactly to the headlines; verification is excluded. '
          'Headline changes compare the source with its state one hour earlier, carried forward from the latest first-parent ancestor. '
          'Each small curve samples explicit unsafe blocks in that area at up to nine evenly spaced times '
-         'over the one hour ending at this commit, using first-parent committed source. Revisions are '
+         f'over the one hour ending at {snapshot}, using {history_source}. Revisions are '
          'measured once and shared by all rows. Curves use a local vertical range; lower means fewer blocks. '
          'Green segments decrease, red segments increase and gray segments stay level. Sparse commits retain plateaus; no rate is extrapolated. Missing early history '
          'is left blank. Samples can miss changes between observations and area reclassification can change '
@@ -267,7 +317,7 @@ def main(out_path, rev='HEAD'):
          '.s{font-size:15px;font-variant-numeric:tabular-nums}.section{font-size:18px;font-weight:650}</style>',
          f'<rect width="{W}" height="{height}" rx="12" fill="#0b121c"/>',
          f'<text x="{PAD}" y="32" class="h">Super Metroid &#183; Codebase</text>',
-         f'<text x="{PAD}" y="55" class="l">{commit[:7]} &#183; {stamp:%Y-%m-%d %H:%M %z}</text>']
+         f'<text x="{PAD}" y="55" class="l">{label} &#183; {stamp:%Y-%m-%d %H:%M %z}</text>']
     for i, (label, value, delta) in enumerate(cards):
         p.append(card(PAD + (i % 2) * 169, 74 + (i // 2) * 104, label, value, delta))
     p.append(f'<text x="{PAD}" y="304" class="section">Production Rust by area</text>'
@@ -305,8 +355,15 @@ def main(out_path, rev='HEAD'):
             p.append(f'<text x="{PAD + 12 + j * 104}" y="{y + 98}" class="s {k}">{c[k]:,}</text>')
         p.append('</g>')
     p.append('</svg>')
-    open(out_path, 'w', encoding='utf-8').write('\n'.join(p) + '\n')
+    with open(out_path, 'w', encoding='utf-8', newline='\n') as output:
+        output.write('\n'.join(p) + '\n')
 
 
 if __name__ == '__main__':
-    main(*sys.argv[1:3])
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('out_path')
+    parser.add_argument('revision', nargs='?', default='HEAD')
+    parser.add_argument('--staged', action='store_true',
+                        help='render staged Rust for inclusion in the same code commit')
+    args = parser.parse_args()
+    main(args.out_path, args.revision, staged=args.staged)
