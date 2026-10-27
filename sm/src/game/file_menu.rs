@@ -15,19 +15,30 @@ use crate::game::save_slots;
 use crate::game::save_slots::load_area_map;
 use crate::game::visual_runtime::{clear_hdma, set_hdma_enabled};
 
+const BEGIN_COPY: Func_V = begin_operation::<true>;
+const BEGIN_CLEAR: Func_V = begin_operation::<false>;
+const CHOOSE_COPY: Func_V = choose_source::<true>;
+const CHOOSE_CLEAR: Func_V = choose_source::<false>;
+const BEGIN_COPY_CONFIRMATION: Func_V = begin_confirmation::<true>;
+const BEGIN_CLEAR_CONFIRMATION: Func_V = begin_confirmation::<false>;
+const CONFIRM_COPY: Func_V = confirm_choice::<true>;
+const CONFIRM_CLEAR: Func_V = confirm_choice::<false>;
+const COPY_COMPLETE: Func_V = complete_operation::<true>;
+const CLEAR_COMPLETE: Func_V = complete_operation::<false>;
+
 static STATES: [Func_V; 34] = callback_table! { nonnull Func_V;
     prepare, load_background,
     initialize, fade_in_main, choose_main,
-    fade_from_main, begin_copy,
-    fade_in, choose_copy, begin_destination,
-    choose_destination, begin_copy_confirmation,
-    confirm_copy, copy_slot,
-    copy_complete, fade_to_main, restore_main,
+    fade_from_main, BEGIN_COPY,
+    fade_in, CHOOSE_COPY, begin_destination,
+    choose_destination, BEGIN_COPY_CONFIRMATION,
+    CONFIRM_COPY, copy_slot,
+    COPY_COMPLETE, fade_to_main, restore_main,
     restore_cursor, resume_main, fade_from_main,
-    begin_clear, fade_in,
-    choose_clear, begin_clear_confirmation,
-    confirm_clear, clear_slot,
-    clear_complete, fade_to_main, restore_main,
+    BEGIN_CLEAR, fade_in,
+    CHOOSE_CLEAR, BEGIN_CLEAR_CONFIRMATION,
+    CONFIRM_CLEAR, clear_slot,
+    CLEAR_COMPLETE, fade_to_main, restore_main,
     restore_cursor, return_main, turn_helmet,
     fade_to_options, fade_to_title,
 };
@@ -81,13 +92,11 @@ fn fade_to_title(game: &mut Game) {
         game.request_reset();
     }
 }
-unsafe fn fade_from_main(game: &mut Game) {
-    unsafe {
-        sprite_output::menu_selection(game);
-        fade_to_main(game);
-    }
+fn fade_from_main(game: &mut Game) {
+    sprite_output::menu_selection(game);
+    fade_to_main(game);
 }
-unsafe fn fade_to_main(game: &mut Game) {
+fn fade_to_main(game: &mut Game) {
     crate::game::display_refresh::fade(false, game);
     game.g_ram[0x57] =
         (game.g_ram[0x57] as i32 & 0xf | 16 * (game.g_ram[0x51] as i32 & 0xf) ^ 0xf0) as u8;
@@ -109,13 +118,19 @@ fn fade_in(game: &mut Game) {
         word!(game.menu_index += 1);
     }
 }
-unsafe fn begin_copy(game: &mut Game) {
-    unsafe {
-        word!(game.menu_index += 1);
+#[forbid(unsafe_code)]
+fn begin_operation<const COPY: bool>(game: &mut Game) {
+    if !COPY {
+        border(0x4a, game);
+    }
+    word!(game.menu_index += 1);
+    if COPY {
         reset_copy(game);
+    } else {
+        reset_clear(game);
     }
 }
-unsafe fn reset_copy(game: &mut Game) {
+fn reset_copy(game: &mut Game) {
     menu_tilemap::clear(game);
     menu_tilemap::set_palette(0, game);
     menu_tilemap::load(0x52, addr_kMenuTilemap_DataCopyMode as u16, game);
@@ -158,48 +173,61 @@ fn next_occupied_slot(game: &mut Game) -> Option<u8> {
         }
     }
 }
-fn choose_copy(game: &mut Game) {
-    border(0x49, game);
+#[forbid(unsafe_code)]
+fn choose_source<const COPY: bool>(game: &mut Game) {
+    border(if COPY { 0x49 } else { 0x4a }, game);
     sprite_output::menu_selection(game);
+    let movement_high = if COPY { 0 } else { game.g_ram[0x90] };
     if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
         QueueSfx1_Max6(0x37, game);
-        if word!(game.eproj_id[15]) == 3 {
-            word!(game.menu_index += 7);
-        } else {
+        if word!(game.eproj_id[15]) != 3 {
             word!(game.eproj_id[16] = word!(game.eproj_id[15]));
             word!(game.menu_index += 1);
+            return;
+        }
+        if COPY {
+            word!(game.menu_index += 7);
+            return;
         }
     } else if (word!(game.joypad1_newkeys) & 0x8000) != 0 {
-        word!(game.menu_index += 7);
-        QueueSfx1_Max6(0x37, game);
-    } else {
-        let selection = next_occupied_slot(game);
-        if let Some(v0) = selection {
-            game.g_ram[0x19b5] = v0;
+        if COPY {
+            word!(game.menu_index += 7);
             QueueSfx1_Max6(0x37, game);
+            return;
+        }
+    } else {
+        if let Some(slot) = next_occupied_slot(game) {
+            game.g_ram[0x19b5] = slot;
+            let sound = if COPY {
+                0x37
+            } else {
+                u16::from_ne_bytes([55, movement_high])
+            };
+            QueueSfx1_Max6(sound, game);
             sprite_output::file_slot_cursor(211, game);
             return;
         }
         sprite_output::file_slot_cursor(211, game);
-    };
-}
-unsafe fn begin_destination(game: &mut Game) {
-    unsafe {
-        border(0x49, game);
-        draw_destination(game);
-        word!(game.menu_index += 1);
-        let mut v0: u16 = 0;
-        while v0 == word!(game.eproj_id[16]) {
-            v0 = v0.wrapping_add(1);
-            if v0 as i32 - 3i32 & 0x8000 == 0 {
-                break;
-            }
-        }
-        word!(game.eproj_id[15] = v0);
-        sprite_output::file_slot_cursor(211, game);
+        return;
     }
+    QueueSfx1_Max6(0x37, game);
+    word!(game.menu_index += 5);
 }
-unsafe fn draw_destination(game: &mut Game) {
+fn begin_destination(game: &mut Game) {
+    border(0x49, game);
+    draw_destination(game);
+    word!(game.menu_index += 1);
+    let mut v0: u16 = 0;
+    while v0 == word!(game.eproj_id[16]) {
+        v0 = v0.wrapping_add(1);
+        if v0 as i32 - 3i32 & 0x8000 == 0 {
+            break;
+        }
+    }
+    word!(game.eproj_id[15] = v0);
+    sprite_output::file_slot_cursor(211, game);
+}
+fn draw_destination(game: &mut Game) {
     menu_tilemap::clear(game);
     menu_tilemap::set_palette(0, game);
     menu_tilemap::load(0x52, addr_kMenuTilemap_DataCopyMode as u16, game);
@@ -213,76 +241,81 @@ unsafe fn draw_destination(game: &mut Game) {
     menu_tilemap::load(0x688, addr_kMenuTilemap_Exit as u16, game);
     menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Destination, game);
 }
-unsafe fn choose_destination(game: &mut Game) {
-    unsafe {
-        let mut v0: u16 = 0;
-        border(0x49, game);
-        sprite_output::menu_selection(game);
-        if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
-            QueueSfx1_Max6(0x37, game);
-            if word!(game.eproj_id[15]) != 3 {
-                word!(game.eproj_id[17] = word!(game.eproj_id[15]));
-                word!(game.menu_index += 1);
-            } else {
-                word!(game.menu_index += 5);
-                return;
-            }
-        } else if (word!(game.joypad1_newkeys) & 0x8000) == 0 {
-            'move_selection: {
-                if (word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0 {
-                    QueueSfx1_Max6(0x37, game);
-                    v0 = word!(game.eproj_id[15]);
-                    do_until! { v0 != word!(game.eproj_id[16]);
-                        v0 = v0.wrapping_sub(1);
-                        if (v0 & 0x8000) != 0 {
-                            break 'move_selection;
-                        }
-                    }
-                } else if (word!(game.joypad1_newkeys) as i32 & kButton_Down as i32) != 0 {
-                    QueueSfx1_Max6(0x37, game);
-                    v0 = word!(game.eproj_id[15]);
-                    do_until! { v0 != word!(game.eproj_id[16]);
-                        v0 = v0.wrapping_add(1);
-                        if v0 == 4 {
-                            break 'move_selection;
-                        }
-                    }
-                } else {
-                    break 'move_selection;
-                }
-                word!(game.eproj_id[15] = v0);
-            }
+#[forbid(unsafe_code)]
+fn choose_destination(game: &mut Game) {
+    border(0x49, game);
+    sprite_output::menu_selection(game);
+    if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
+        QueueSfx1_Max6(0x37, game);
+        if word!(game.eproj_id[15]) != 3 {
+            word!(game.eproj_id[17] = word!(game.eproj_id[15]));
+            word!(game.menu_index += 1);
         } else {
-            word!(game.menu_index -= 2);
-            word!(game.eproj_id[15] = word!(game.eproj_id[16]));
-            QueueSfx1_Max6(0x37, game);
-            reset_copy(game);
+            word!(game.menu_index += 5);
             return;
         }
-        sprite_output::file_slot_cursor(212, game);
+    } else if (word!(game.joypad1_newkeys) & 0x8000) == 0 {
+        'move_selection: {
+            let step = if word!(game.joypad1_newkeys) as i32 & kButton_Up as i32 != 0 {
+                QueueSfx1_Max6(0x37, game);
+                u16::MAX
+            } else if word!(game.joypad1_newkeys) as i32 & kButton_Down as i32 != 0 {
+                QueueSfx1_Max6(0x37, game);
+                1
+            } else {
+                break 'move_selection;
+            };
+            let mut slot = word!(game.eproj_id[15]);
+            do_until! { slot != word!(game.eproj_id[16]);
+                slot = slot.wrapping_add(step);
+                if step == u16::MAX && slot & 0x8000 != 0 || step == 1 && slot == 4 {
+                    break 'move_selection;
+                }
+            }
+            word!(game.eproj_id[15] = slot);
+        }
+    } else {
+        word!(game.menu_index -= 2);
+        word!(game.eproj_id[15] = word!(game.eproj_id[16]));
+        QueueSfx1_Max6(0x37, game);
+        reset_copy(game);
+        return;
     }
+    sprite_output::file_slot_cursor(212, game);
 }
-unsafe fn begin_copy_confirmation(game: &mut Game) {
-    unsafe {
-        border(0x49, game);
-        menu_tilemap::set_palette(0, game);
+#[forbid(unsafe_code)]
+fn begin_confirmation<const COPY: bool>(game: &mut Game) {
+    border(if COPY { 0x49 } else { 0x4a }, game);
+    menu_tilemap::set_palette(0, game);
+    if COPY {
         menu_tilemap::load(0x144, addr_kMenuTilemap_CopySamusToSamus as u16, game);
         set_native_word(
             0x3000 + 2 * 942,
-            (word!(game.eproj_id[16])).wrapping_add(8298),
+            word!(game.eproj_id[16]).wrapping_add(8298),
             game,
         );
         set_native_word(
             0x3000 + 2 * 955,
-            (word!(game.eproj_id[17])).wrapping_add(8298),
+            word!(game.eproj_id[17]).wrapping_add(8298),
             game,
         );
-        draw_confirmation(game);
-        word!(game.menu_index += 1);
-        word! {game; eproj_id[15] = 0; cinematic_var6 = 8; }
+    } else {
+        menu_tilemap::load(0x140, addr_kMenuTilemap_ClearSamusA as u16, game);
+        set_native_word(
+            0x3000 + 2 * 949,
+            word!(game.eproj_id[16]).wrapping_add(8298),
+            game,
+        );
+        word!(game.eproj_id[17] = 3);
+    }
+    draw_confirmation(game);
+    word!(game.menu_index += 1);
+    word!(game.eproj_id[15] = 0);
+    if COPY {
+        word!(game.cinematic_var6 = 8);
     }
 }
-unsafe fn draw_confirmation(game: &mut Game) {
+fn draw_confirmation(game: &mut Game) {
     menu_tilemap::set_palette(0, game);
     menu_tilemap::load(0x514, addr_kMenuTilemap_IsThisOk as u16, game);
     menu_tilemap::set_palette(0, game);
@@ -292,39 +325,58 @@ unsafe fn draw_confirmation(game: &mut Game) {
     menu_tilemap::load(0x65c, addr_kMenuTilemap_No as u16, game);
     menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Confirmation, game);
 }
-unsafe fn confirm_copy(game: &mut Game) {
-    unsafe {
-        border(0x49, game);
-        sprite_output::menu_selection(game);
+#[forbid(unsafe_code)]
+fn confirm_choice<const COPY: bool>(game: &mut Game) {
+    border(if COPY { 0x49 } else { 0x4a }, game);
+    sprite_output::menu_selection(game);
+    if COPY {
         animate_copy_arrow(game);
         sprite_output::file_copy_arrow(game);
-        if word!(game.joypad1_newkeys) as i32 & (kButton_Up as i32 | kButton_Down as i32) != 0 {
-            word!(game.eproj_id[15] ^= (1u16));
-            QueueSfx1_Max6(0x37, game);
+    }
+    if word!(game.joypad1_newkeys) as i32 & (kButton_Up as i32 | kButton_Down as i32) != 0 {
+        word!(game.eproj_id[15] ^= (1u16));
+        QueueSfx1_Max6(0x37, game);
+    } else {
+        let cancelled = if (word!(game.joypad1_newkeys) & 0x8000) != 0 {
+            true
+        } else if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32)
+            == 0
+        {
+            false
         } else {
-            if (word!(game.joypad1_newkeys) & 0x8000) != 0 {
+            QueueSfx1_Max6(0x38, game);
+            if word!(game.eproj_id[15]) == 0 {
+                word!(game.menu_index += 1);
+                return;
+            }
+            if COPY {
+                word!(game.menu_index -= 4);
+                reset_copy(game);
+                return;
+            }
+            true
+        };
+        if cancelled {
+            if COPY {
                 word!(game.menu_index -= 3);
                 word!(game.eproj_id[15] = word!(game.eproj_id[17]));
-                QueueSfx1_Max6(0x37, game);
-                return;
+            } else {
+                word!(game.menu_index -= 2);
+                word!(game.eproj_id[15] = word!(game.eproj_id[16]));
             }
-            if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
-                QueueSfx1_Max6(0x38, game);
-                if word!(game.eproj_id[15]) != 0 {
-                    word!(game.menu_index -= 4);
-                    reset_copy(game);
-                } else {
-                    word!(game.menu_index += 1);
-                }
-                return;
+            QueueSfx1_Max6(0x37, game);
+            if !COPY {
+                reset_clear(game);
             }
+            return;
         }
-        let mut v0: u16 = 184;
-        if word!(game.eproj_id[15]) != 0 {
-            v0 = 208;
-        }
-        word! {game; eproj_id[10] = v0; eproj_id[5] = 94; }
     }
+    let y = if word!(game.eproj_id[15]) != 0 {
+        208
+    } else {
+        184
+    };
+    word! {game; eproj_id[10] = y; eproj_id[5] = 94; }
 }
 fn animate_copy_arrow(game: &mut Game) {
     if word!(game.cinematic_var6) != 0 {
@@ -377,25 +429,29 @@ unsafe fn copy_slot(game: &mut Game) {
         RtlWriteSram(game);
     }
 }
-fn copy_complete(game: &mut Game) {
-    border(0x49, game);
+#[forbid(unsafe_code)]
+fn complete_operation<const COPY: bool>(game: &mut Game) {
+    border(if COPY { 0x49 } else { 0x4a }, game);
     if word!(game.joypad1_newkeys) != 0 {
         QueueSfx1_Max6(0x37, game);
         word!(game.menu_index += 1);
-        word!(game.selected_save_slot = save_slots::last_selected(game));
+        if COPY {
+            word!(game.selected_save_slot = save_slots::last_selected(game));
+        } else {
+            for slot in 0..3 {
+                if save_slots::load(slot, game) == 0 {
+                    word!(game.selected_save_slot = slot);
+                    return;
+                }
+            }
+            word!(game.selected_save_slot = 0);
+        }
     }
 }
 fn resume_main(game: &mut Game) {
     word!(game.menu_index -= 14);
 }
-unsafe fn begin_clear(game: &mut Game) {
-    unsafe {
-        border(0x4a, game);
-        word!(game.menu_index += 1);
-        reset_clear(game);
-    }
-}
-unsafe fn reset_clear(game: &mut Game) {
+fn reset_clear(game: &mut Game) {
     menu_tilemap::clear(game);
     menu_tilemap::set_palette(0, game);
     menu_tilemap::load(0x50, addr_kMenuTilemap_DataClearMode as u16, game);
@@ -405,87 +461,6 @@ unsafe fn reset_clear(game: &mut Game) {
     word!(game.eproj_id[16] = 0);
     select_first_slot(game);
     sprite_output::file_slot_cursor(211, game);
-}
-fn choose_clear(game: &mut Game) {
-    border(0x4a, game);
-    sprite_output::menu_selection(game);
-    let movement_high = game.g_ram[0x90];
-    if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
-        QueueSfx1_Max6(0x37, game);
-        if word!(game.eproj_id[15]) != 3 {
-            word!(game.eproj_id[16] = word!(game.eproj_id[15]));
-            word!(game.menu_index += 1);
-            return;
-        }
-    } else if (word!(game.joypad1_newkeys) & 0x8000) == 0 {
-        let selection = next_occupied_slot(game);
-        if let Some(v1) = selection {
-            game.g_ram[0x19b5] = v1;
-            QueueSfx1_Max6(u16::from_ne_bytes([55, movement_high]), game);
-            sprite_output::file_slot_cursor(211, game);
-            return;
-        }
-        sprite_output::file_slot_cursor(211, game);
-        return;
-    }
-    QueueSfx1_Max6(0x37, game);
-    word!(game.menu_index += 5);
-}
-unsafe fn begin_clear_confirmation(game: &mut Game) {
-    unsafe {
-        border(0x4a, game);
-        menu_tilemap::set_palette(0, game);
-        menu_tilemap::load(0x140, addr_kMenuTilemap_ClearSamusA as u16, game);
-        set_native_word(
-            0x3000 + 2 * 949,
-            (word!(game.eproj_id[16])).wrapping_add(8298),
-            game,
-        );
-        word!(game.eproj_id[17] = 3);
-        draw_confirmation(game);
-        word!(game.menu_index += 1);
-        word!(game.eproj_id[15] = 0);
-    }
-}
-unsafe fn confirm_clear(game: &mut Game) {
-    unsafe {
-        let keep_confirming: bool;
-        border(0x4a, game);
-        sprite_output::menu_selection(game);
-        if word!(game.joypad1_newkeys) as i32 & (kButton_Up as i32 | kButton_Down as i32) != 0 {
-            word!(game.eproj_id[15] ^= (1u16));
-            QueueSfx1_Max6(0x37, game);
-        } else {
-            if (word!(game.joypad1_newkeys) & 0x8000) != 0 {
-                keep_confirming = false;
-            } else if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32)
-                == 0
-            {
-                keep_confirming = true;
-            } else {
-                QueueSfx1_Max6(0x38, game);
-                if word!(game.eproj_id[15]) != 0 {
-                    keep_confirming = false;
-                } else {
-                    word!(game.menu_index += 1);
-                    return;
-                }
-            }
-            if keep_confirming {
-            } else {
-                word!(game.menu_index -= 2);
-                word!(game.eproj_id[15] = word!(game.eproj_id[16]));
-                QueueSfx1_Max6(0x37, game);
-                reset_clear(game);
-                return;
-            }
-        }
-        let mut v0: u16 = 184;
-        if word!(game.eproj_id[15]) != 0 {
-            v0 = 208;
-        }
-        word! {game; eproj_id[10] = v0; eproj_id[5] = 94; }
-    }
 }
 unsafe fn clear_slot(game: &mut Game) {
     unsafe {
@@ -512,20 +487,6 @@ unsafe fn clear_slot(game: &mut Game) {
         menu_tilemap::load(0x500, addr_kMenuTilemap_DataCleared as u16, game);
         menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Confirmation, game);
         RtlWriteSram(game);
-    }
-}
-unsafe fn clear_complete(game: &mut Game) {
-    border(0x4a, game);
-    if word!(game.joypad1_newkeys) != 0 {
-        QueueSfx1_Max6(0x37, game);
-        word!(game.menu_index += 1);
-        for slot in 0..3 {
-            if save_slots::load(slot, game) == 0 {
-                word!(game.selected_save_slot = slot);
-                return;
-            }
-        }
-        word!(game.selected_save_slot = 0);
     }
 }
 fn return_main(game: &mut Game) {
@@ -569,7 +530,6 @@ fn fade_in_main(game: &mut Game) {
 }
 unsafe fn choose_main(game: &mut Game) {
     unsafe {
-        let mut v2: u16 = 0;
         border(0x48, game);
         sprite_output::menu_selection(game);
         sprite_output::file_helmets(true, game);
@@ -595,22 +555,21 @@ unsafe fn choose_main(game: &mut Game) {
                     }
                     true
                 } else {
-                    if word!(game.nonempty_save_slots) != 0 {
-                        v2 = (word!(game.selected_save_slot)).wrapping_add(1);
-                        if word!(game.selected_save_slot) as i32 - 5i32 & 0x8000 == 0 {
-                            v2 = 0;
-                        }
-                    } else {
-                        v2 = (word!(game.selected_save_slot)).wrapping_add(1);
-                        if word!(game.selected_save_slot) as i32 - 2i32 & 0x8000 == 0 {
-                            if word!(game.selected_save_slot) as i32 - 5i32 & 0x8000 != 0 {
-                                v2 = 5;
-                            } else {
-                                v2 = 0;
-                            }
-                        }
+                    let occupied = word!(game.nonempty_save_slots) != 0;
+                    let mut next = word!(game.selected_save_slot).wrapping_add(1);
+                    if i32::from(word!(game.selected_save_slot)) - (if occupied { 5 } else { 2 })
+                        & 0x8000
+                        == 0
+                    {
+                        next = if !occupied
+                            && i32::from(word!(game.selected_save_slot)) - 5 & 0x8000 != 0
+                        {
+                            5
+                        } else {
+                            0
+                        };
                     }
-                    word!(game.selected_save_slot = v2);
+                    word!(game.selected_save_slot = next);
                     false
                 };
             if !(selection_unchanged) {

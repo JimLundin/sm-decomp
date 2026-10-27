@@ -66,7 +66,7 @@ Intro callbacks pass11161 selected+272 setup/0: -4 engine/-30 legacy/-4 unsafe; 
 Mode7 callbacks pass11161 selected+272 setup/0: +4 engine/-33 legacy/-2 unsafe; signature closure, raw operations unchanged.
 Text glow passes10967 selected+272 setup/0: engine/legacy unchanged, unsafe -2; native pointer and two byte reads retired.
 Next: Linux file menu, Mother Brain flicker, native FX definitions and background/credits; source work remains disjoint.
-Linux M: geometry and room camera/door cuts landed; next file-menu copy/clear remains source preparation.
+Linux M: file-menu donor five10967+272/0; final cinematic composition library pass/hosted next; -41 substantive/-18 unsafe metric, branches source-only.
 ROM logger substitution is held for CRT buffering/output/error/flush equivalence.
 A4 post-push full86 passed on0a; its scoped3kills/1unobserved/1unviable gaps remain.
 Native player/DSP/APU and input Vec/FILE/Cart are owned; GameOwner does not promise Rust thread sharing.
