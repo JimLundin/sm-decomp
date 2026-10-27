@@ -5,6 +5,41 @@ use crate::game::room_entry::{effects::AssetSlot, world::WorldBinding};
 use crate::game::{external_inputs::ExternalInputs, session::Session};
 use crate::ram_map::{word_arrays as arrays, words as ram};
 use std::sync::Arc;
+// Head0 owns only these ten bytes; full/odd accesses still project each lane.
+macro_rules! botwoon_death_words {
+    ($s:ident, $f:ident, ($($borrow:tt)*)) => {
+        $f(0x801e, $($borrow)* $s.botwoon_death.pending_hit);
+        $f(0x8020, $($borrow)* $s.botwoon_death.active);
+        $f(0x803c, $($borrow)* $s.botwoon_death.tail_ready);
+        $f(0x8818, $($borrow)* $s.botwoon_death.previous_health);
+        $f(0x883e, $($borrow)* $s.botwoon_death.body_landed);
+    };
+}
+fn botwoon_death_byte(s: &Session, at: usize) -> Option<u8> {
+    let mut result = None;
+    let mut select = |base: usize, word: &u16| {
+        if (base..base + 2).contains(&at) {
+            result = Some(word.to_le_bytes()[at - base]);
+        }
+    };
+    botwoon_death_words!(s, select, (&));
+    result
+}
+/// Adopt only this new cohort after a successful native Maw store. Existing
+/// owned regions retain their former raw-write/Drop-overwrite behavior.
+pub(crate) fn write_botwoon_death_byte(s: &mut Session, at: usize, value: u8) -> bool {
+    let mut written = false;
+    let mut store = |base: usize, word: &mut u16| {
+        if (base..base + 2).contains(&at) {
+            let mut bytes = word.to_le_bytes();
+            bytes[at - base] = value;
+            *word = u16::from_le_bytes(bytes);
+            written = true;
+        }
+    };
+    botwoon_death_words!(s, store, (&mut));
+    written
+}
 // Finite typed words share one lossless projection; no raw-word mirrors.
 macro_rules! transition_words {
     ($s:ident, $f:ident) => {
@@ -624,9 +659,15 @@ pub(crate) fn decode(
         }
     }
     crate::game::actors::codec::import_common(&mut s, bytes, byte_len);
+    assert!(byte_len >= 0x8840, "short Botwoon death import");
+    let mut load = |at, word: &mut u16| *word = read(bytes, at);
+    botwoon_death_words!(s, load, (&mut));
     s
 }
 pub(crate) fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
+    // These signals formerly published immediately, before a fallible export.
+    let mut emit = |at, word: &u16| visit(at, *word);
+    botwoon_death_words!(s, emit, (&));
     for (index, pair) in s.minimap.explored.chunks_exact(2).enumerate() {
         visit(0x7f7 + 2 * index, u16::from_le_bytes([pair[0], pair[1]]));
     }
@@ -694,6 +735,9 @@ pub(crate) fn encode(s: &Session, mut span: impl FnMut(usize, &[u8])) {
     }
 }
 pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {
+    if let Some(value) = botwoon_death_byte(s, at) {
+        return Some(value);
+    }
     if (0x7f7..0x8f7).contains(&at) {
         return Some(s.minimap.explored[at - 0x7f7]);
     }
@@ -783,6 +827,9 @@ pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {
     result
 }
 pub(crate) fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
+    if write_botwoon_death_byte(s, at, value) {
+        return true;
+    }
     if (0x7f7..0x8f7).contains(&at) {
         s.minimap.explored[at - 0x7f7] = value;
         return true;

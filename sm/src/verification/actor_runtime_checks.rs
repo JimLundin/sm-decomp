@@ -64,6 +64,7 @@ pub(crate) fn run_checked() {
     nested_foreign_unwind_keeps_both_committed_occurrences();
     super::media_checks::run_checked();
     super::contact_checks::run_checked();
+    botwoon_maw_publication_preserves_owned_aliases_and_capture_epoch();
 }
 
 fn occupied_game_export_rejected_before_effects() {
@@ -230,4 +231,56 @@ fn nested_foreign_unwind_keeps_both_committed_occurrences() {
         Some(AppearanceId(21)),
         "actor.runtime.nested_unwind_keeps_appearance"
     );
+}
+
+// Movies do not reach Maw's full/odd protocol aliases or its captured-gamma lag.
+fn botwoon_maw_publication_preserves_owned_aliases_and_capture_epoch() {
+    for actor in [0x0f, 0x10, 0x11, 0x7fd6] {
+        let mut game = Game::new();
+        for (at, value) in [
+            (0x801e, 0x8123u16),
+            (0x8020, 0x4567),
+            (0x803c, 0x3456),
+            (0x8818, 0x89ab),
+            (0x883e, 0xcdef),
+        ] {
+            game.ram().copy_in(at, &value.to_ne_bytes());
+        }
+        game.ram().copy_in(0xe54, &(actor as u16).to_le_bytes());
+        game.ram().copy_in(0x911, &0u16.to_le_bytes());
+        let x = 0xf78
+            + usize::try_from(actor).unwrap()
+            + core::mem::offset_of!(crate::types::EnemyData, x_pos);
+        game.ram().copy_in(x, &1024u16.to_le_bytes());
+        game.ram().copy_in(0x10002, &0x3456u16.to_le_bytes());
+        game.ram().copy_in(0xa5a, &0x1357u16.to_le_bytes());
+        let mut expected: Vec<_> = (0..game.ram().len())
+            .map(|at| game.ram().read_byte(at))
+            .collect();
+        expected[0xa5a..0xa5c].copy_from_slice(&0x2468u16.to_le_bytes());
+        if actor != 0x7fd6 {
+            let at = 0x802c + usize::try_from(actor).unwrap();
+            expected[at..at + 2].copy_from_slice(&1u16.to_ne_bytes());
+        }
+        {
+            let mut runtime = Runtime::new(&mut game);
+            assert!(crate::game::actors::api::current_outside_screen(&runtime));
+            assert_eq!(runtime.inputs().transitions.frame_gamma.to_raw(), 0x1357);
+            runtime.session_mut().player.transitions.frame_gamma =
+                crate::game::player_transitions::state::FrameGammaMode::from_raw(0x2468);
+            runtime.update_maw_visibility(actor);
+            assert_eq!(
+                runtime.inputs().transitions.frame_gamma.to_raw(),
+                0x1357,
+                "botwoon.maw.capture_epoch actor={actor:x}"
+            );
+        }
+        assert_eq!(
+            (0..game.ram().len())
+                .map(|at| game.ram().read_byte(at))
+                .collect::<Vec<_>>(),
+            expected,
+            "botwoon.maw.whole_publication actor={actor:x}"
+        );
+    }
 }

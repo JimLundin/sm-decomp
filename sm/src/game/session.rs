@@ -103,6 +103,7 @@ use crate::game::item_pickups::Inventory;
 pub struct Session {
     pub(in crate::game) actor_identity: crate::game::actors::identity::ActorIdentityState,
     pub(in crate::game) actors: crate::game::actors::Actors,
+    pub(in crate::game) botwoon_death: crate::game::actors::botwoon_death::DeathProtocol,
     pub(in crate::game) timing: Timing,
     pub(crate) world: std::sync::Arc<crate::game::room_entry::world::WorldBinding>,
     pub(crate) continuations: crate::game::room_entry::state::SharedContinuations,
@@ -134,6 +135,7 @@ impl Session {
         Self {
             actor_identity: crate::game::actors::identity::ActorIdentityState::empty(),
             actors: Default::default(),
+            botwoon_death: Default::default(),
             timing: Default::default(),
             room: Room::with_world(&world),
             world,

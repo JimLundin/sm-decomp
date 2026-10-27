@@ -1,7 +1,11 @@
 //! Botwoon motion, path programs, attack animation and combat over native fields.
 //! Native-field compatibility retains independent body and callback epochs.
 #![forbid(unsafe_code)]
-use super::{access::ActorKey as Key, api, combat};
+use super::botwoon_death::Host as DeathHost;
+use super::{
+    access::{AccessMode::Native, ActorAccess, ActorKey as Key},
+    api, botwoon_death, combat,
+};
 use crate::game::constants::{bank_86::*, enemy_properties::*};
 use crate::game::enemy_layouts::EnemyLayout104 as Boss;
 use crate::game::enemy_projectiles::{
@@ -49,12 +53,6 @@ fn initialize_living(e: i32, game: &mut Game) {
     let y = slot!(game, Boss[e].base.y_pos);
     slot!(game, Boss[e]; var_51 = y, var_53 = y, var_55 = y, var_57 = y,
         var_4E = ((i32::from(slot!(game, Boss[e].base.palette_index)) >> 4) + 256) as u16);
-}
-pub(crate) fn arm_death(game: &mut Game) {
-    let e = i32::from(word!(game.cur_enemy_index));
-    if slot!(game, Boss[e].var_2F) != 0 && slot!(game, Boss[e].var_3E) != 0 {
-        slot!(game, Boss[e]; var_30 = 1, var_D = 0x9a46, var_22 = 240, var_2F = 0, var_3E = 0);
-    }
 }
 pub(crate) fn health_palette(game: &mut Game) {
     let e = i32::from(word!(game.cur_enemy_index));
@@ -126,22 +124,32 @@ pub(crate) fn resume_chase(e: i32, game: &mut Game) -> bool {
     }
     true
 }
-pub(crate) fn await_spit(e: i32, game: &mut Game) -> bool {
-    if slot!(game, Boss[e].var_21) != 0 {
-        slot!(game, Boss[e].var_2E = 0);
+fn await_spit(e: i32, runtime: &mut Runtime<'_>) -> bool {
+    if runtime.foreign(|game| {
+        if slot!(game, Boss[e].var_21) != 0 {
+            slot!(game, Boss[e].var_2E = 0);
+            true
+        } else {
+            slot!(game, Boss[e]; var_3C = 0, var_D = 0x99a4, var_E = 0xe250, var_F = 0x9dc0);
+            false
+        }
+    }) {
         return true;
     }
-    slot!(game, Boss[e]; var_3C = 0, var_D = 0x99a4, var_E = 0xe250, var_F = 0x9dc0);
-    if slot!(game, Boss[e].var_2F) != 0 || {
-        let choice = game.next_random() & 1;
-        slot!(game, Boss[e]; var_33 = choice, var_34 = choice);
-        slot!(game, Boss[e].var_34) == 0
-    } {
-        slot!(game, Boss[e].var_4B = 0);
-    } else {
-        slot!(game, Boss[e]; var_35 = 0, var_36 = 0xffff);
-    }
-    select_path(word!(game.cur_enemy_index), game);
+    let direct = botwoon_death::pending(runtime, e as u16)
+        || runtime.foreign(|game| {
+            let choice = game.next_random() & 1;
+            slot!(game, Boss[e]; var_33 = choice, var_34 = choice);
+            slot!(game, Boss[e].var_34) == 0
+        });
+    runtime.foreign(|game| {
+        if direct {
+            slot!(game, Boss[e].var_4B = 0);
+        } else {
+            slot!(game, Boss[e]; var_35 = 0, var_36 = 0xffff);
+        }
+        select_path(word!(game.cur_enemy_index), game);
+    });
     false
 }
 pub(crate) fn wait_collapse(game: &mut Game) {
@@ -211,26 +219,33 @@ pub(crate) fn rubble(k: u16, game: &mut Game) {
         QueueMusic_Delayed8(3, game);
     }
 }
-fn mark_hit_death(e: i32, game: &mut Game) {
-    if slot!(game, Boss[e].base.health) == 0 {
-        slot!(game, Boss[e].var_2F = 1);
-        slot!(game, Boss[0].base.properties, |old| old
-            | kEnemyProps_Tangible as u16);
+fn mark_hit(h: &mut Runtime<'_>, actor: Key) {
+    if h.resolve_actor(actor, Native).health == 0 {
+        h.set_native_death_signal(actor.byte_index(), botwoon_death::Signal::PendingHit, 1);
+        h.edit_actor(Key::from_legacy(0), Native, |actor| {
+            actor.properties |= kEnemyProps_Tangible as u16;
+        });
     }
 }
-pub(crate) fn shot(game: &mut Game) {
-    let e = i32::from(word!(game.cur_enemy_index));
-    slot!(game, Boss[e].var_4C = slot!(game, Boss[e].base.health));
-    combat::shot_reaction(&mut Runtime::new(game), api::ShotHandling::ReactionOnly);
-    mark_hit_death(e, game);
+pub(crate) fn shot(h: &mut Runtime<'_>) {
+    let actor = h.selected_actor();
+    let health = h.resolve_actor(actor, Native).health;
+    h.set_native_death_signal(
+        actor.byte_index(),
+        botwoon_death::Signal::PreviousHealth,
+        health,
+    );
+    combat::shot_reaction(h, api::ShotHandling::ReactionOnly);
+    mark_hit(h, actor);
 }
-pub(crate) fn contact(power_bomb: bool, game: &mut Game) {
+pub(crate) fn contact(power_bomb: bool, h: &mut Runtime<'_>) {
     if power_bomb {
-        combat::power_bomb_reaction(&mut Runtime::new(game), api::DeathHandling::LeavePending);
+        combat::power_bomb_reaction(h, api::DeathHandling::LeavePending);
     } else {
-        combat::contact_reaction(&mut Runtime::new(game), api::DeathHandling::LeavePending);
+        combat::contact_reaction(h, api::DeathHandling::LeavePending);
     }
-    mark_hit_death(i32::from(word!(game.cur_enemy_index)), game);
+    let actor = h.selected_actor();
+    mark_hit(h, actor);
 }
 fn select_path(k: u16, game: &mut Game) {
     let e = i32::from(k);
@@ -494,14 +509,14 @@ pub(crate) fn initialize(game: &mut Game) {
         initialize_living(e, game);
     }
 }
-pub(crate) fn update(game: &mut Game) {
-    arm_death(game);
-    let e = i32::from(word!(game.cur_enemy_index));
-    let state = 0xb30000 | u32::from(slot!(game, Boss[e].var_D));
-    let k = word!(game.cur_enemy_index);
+pub(crate) fn update(runtime: &mut Runtime<'_>) {
+    botwoon_death::arm(runtime);
+    let actor = runtime.selected_actor();
+    let state = 0xb30000 | u32::from(runtime.resolve_actor(actor, Native).variables[3]);
+    let k = runtime.selected_actor().byte_index();
     match state {
-        11769976 => wait_entry(game),
-        11770013 | 11770276 => {
+        11769976 => runtime.foreign(wait_entry),
+        11770013 | 11770276 => runtime.foreign(|game| {
             let e = i32::from(word!(game.cur_enemy_index));
             let changed = if state == 11770013 {
                 select_attack(e, game)
@@ -514,35 +529,39 @@ pub(crate) fn update(game: &mut Game) {
                     detect_portal(word!(game.cur_enemy_index), game);
                 }
             }
-        }
+        }),
         11770340 => {
-            let e = i32::from(word!(game.cur_enemy_index));
-            if await_spit(e, game) {
-                actor_b3_pre_instruction(
-                    0xb30000 | u32::from(slot!(game, Boss[e].var_F)),
-                    word!(game.cur_enemy_index),
-                    game,
-                );
+            let e = i32::from(runtime.selected_actor().byte_index());
+            if await_spit(e, runtime) {
+                runtime.foreign(|game| {
+                    actor_b3_pre_instruction(
+                        0xb30000 | u32::from(slot!(game, Boss[e].var_F)),
+                        word!(game.cur_enemy_index),
+                        game,
+                    );
+                });
             }
         }
-        11770438 => wait_collapse(game),
-        11770462 => fall(game),
+        11770438 => runtime.foreign(wait_collapse),
+        11770462 => runtime.foreign(fall),
         11770570 => {
-            let e = i32::from(word!(game.cur_enemy_index));
-            if slot!(game, Boss[e].var_5F) != 0 {
-                slot!(game, Boss[e].var_D = 0x9af9);
-                let k = word!(game.cur_enemy_index);
-                spawn_hardcoded(SpawnHardcodedPlmArgs::new(15, 4, 0xb79b), game);
-                scatter_drop(DropSource::Botwoon, k, game);
-                slot!(game, Boss[i32::from(k)]; var_23 = 0, var_24 = 0, var_25 = 0);
+            let actor = runtime.selected_actor();
+            if botwoon_death::landed(runtime, actor.byte_index()) {
+                runtime.edit_actor(actor, Native, |actor| actor.variables[3] = 0x9af9);
+                let k = runtime.selected_actor().byte_index();
+                runtime.foreign(|game| {
+                    spawn_hardcoded(SpawnHardcodedPlmArgs::new(15, 4, 0xb79b), game);
+                    scatter_drop(DropSource::Botwoon, k, game);
+                    slot!(game, Boss[i32::from(k)]; var_23 = 0, var_24 = 0, var_25 = 0);
+                });
             }
         }
-        11770617 => rubble(k, game),
+        11770617 => runtime.foreign(|game| rubble(k, game)),
         _ => {
-            crate::rtl::Unreachable(game);
+            runtime.foreign(crate::rtl::Unreachable);
         }
     }
-    health_palette(game);
+    runtime.foreign(health_palette);
 }
 fn step_body(e: i32, game: &mut Game) {
     match 0xb30000 | u32::from(slot!(game, Boss[e].var_E)) {

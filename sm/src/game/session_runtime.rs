@@ -178,6 +178,13 @@ impl<'g> Runtime<'g> {
         let outside = u16::from(crate::game::actors::api::current_outside_screen(&*self));
         let game = &mut *self.game;
         crate::ram_map::slot!(game, Maw[actor].var_36 = outside);
+        // Retain raw LOW/HIGH stores and all old owned-region overwrites.
+        // Only the new death owner adopts its overlapping byte lanes.
+        let at = crate::ram_map::slot!(@at Maw, actor, var_36);
+        let bytes = outside.to_ne_bytes();
+        let state = self.state.as_mut().expect("aggregate unavailable");
+        encoding::write_botwoon_death_byte(state, at, bytes[0]);
+        encoding::write_botwoon_death_byte(state, at + 1, bytes[1]);
     }
     pub(crate) fn native_word(&self, at: usize) -> u16 {
         u16::from_ne_bytes([self.byte(at), self.byte(at + 1)])
@@ -221,6 +228,40 @@ impl<'g> Runtime<'g> {
         self.game.capture_native_rom()
     }
 }
+fn botwoon_signal_address(enemy: u16, signal: actors::botwoon_death::Signal) -> usize {
+    use actors::botwoon_death::Signal::*;
+    let base = match signal {
+        PendingHit => 0x801e,
+        Active => 0x8020,
+        TailReady => 0x803c,
+        PreviousHealth => 0x8818,
+        BodyLanded => 0x883e,
+    };
+    base + usize::from(enemy)
+}
+impl actors::botwoon_death::Host for Runtime<'_> {
+    fn native_death_signal(&self, enemy: u16, signal: actors::botwoon_death::Signal) -> u16 {
+        self.native_word(botwoon_signal_address(enemy, signal))
+    }
+    fn set_native_death_signal(
+        &mut self,
+        enemy: u16,
+        signal: actors::botwoon_death::Signal,
+        value: u16,
+    ) {
+        let at = botwoon_signal_address(enemy, signal);
+        let [low, high] = value.to_ne_bytes();
+        self.set_byte(at, low);
+        self.set_byte(at + 1, high);
+    }
+    fn set_collapse_delay(&mut self, enemy: u16, value: u16) {
+        let at = 0x8004 + usize::from(enemy);
+        let [low, high] = value.to_ne_bytes();
+        self.set_byte(at, low);
+        self.set_byte(at + 1, high);
+    }
+}
+
 impl Drop for Runtime<'_> {
     fn drop(&mut self) {
         self.relinquish();
@@ -772,10 +813,10 @@ crate::game::callback_dispatch! {
             actor_pipe_bug_state(address, crate::ram_map::word!(game.cur_enemy_index), game);
         }];
         11769219 => actors::botwoon::initialize;
-        11769448 => actors::botwoon::update;
-        11771903 => [actors::botwoon::contact(false, game)];
-        11771969 => [actors::botwoon::contact(true, game)];
-        11771926 => crate::game::actors::botwoon::shot;
+        11769448 => [actors::botwoon::update(&mut Runtime::new(game))];
+        11771903 => [actors::botwoon::contact(false, &mut Runtime::new(game))];
+        11771969 => [actors::botwoon::contact(true, &mut Runtime::new(game))];
+        11771926 => [actors::botwoon::shot(&mut Runtime::new(game))];
         11789909 => [actor_species_pre_instruction(actors::escape_animals::state_address(game), game)];
         11790027 => [actors::escape_animals::initialize(false, game)];
         11791077 => [actors::escape_animals::initialize(true, game)];
@@ -1213,7 +1254,14 @@ crate::game::callback_dispatch! {
 }
 impl Runtime<'_> {
     pub(crate) fn actor_ai_legacy(&mut self, routine: u32) {
-        self.foreign(|game| unsafe { actor_species_ai(routine, game) });
+        match routine {
+            11769448 => self.owned_call(actors::botwoon::update),
+            11771926 => self.owned_call(actors::botwoon::shot),
+            11771903 | 11771969 => {
+                self.owned_call(|runtime| actors::botwoon::contact(routine == 11771969, runtime))
+            }
+            _ => self.foreign(|game| unsafe { actor_species_ai(routine, game) }),
+        }
     }
     pub(crate) fn actor_instruction_legacy(
         &mut self,

@@ -50,7 +50,7 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current source32c9: production113790, legacy17793, unsafe2543, verification41858; warnings160.
+Current source92da: production113959, legacy17793, unsafe2544, verification41918; warnings160.
 Qualified WRAM/Execution: Game/Backend share stable WorkRam; private DMA/Input
 storage and actual byte/getter/macro consumers close with exact RAM layout.
 Initialized329+5, full86 (136526 selected+38827 setup),14 genuine captures189475,
@@ -107,7 +107,15 @@ Source32c9 fmt/library/DLL160 unchanged warnings/source571/native/all41rawcodec 
 Net +37 production/legacy0/+1 unsafe from new forbid attribute/+4 verification binding; no raw operation retirement or size-saving claim.
 Actor storage/native contracts remain; typed getter preserves private selected-field access, full/odd keys and separate lazy x/y reads.
 Existing b2d/d672 genuine starts reused with original provenance; no capture repeat.
-Next: REVIEW selects the next complete responsibility; Botwoon and media/Session research retain their assigned source boundaries.
+Botwoon pending-hit/active-death/tail-ready/previous-health/body-landed protocol has one owned Session authority.
+Complete combat/tail/history/head/body and projectile callers retain native/LE full/odd aliases, unknown words and original deletion/reset behavior.
+Source92da fmt/library/DLL160 unchanged warnings/source572/native/all42rawcodec pass;5rows3132 selected+272 setup/0.
+Genuine initialized329+resume5 and dying capture480 to945 (465 resumed comparisons) pass; exact12-member encrypted restore is byte-identical under codec247e1e71060271a5.
+Explicit extra phase480 to481 retains active1/head9A46/delay248 to249;4684 actual comparisons/0 includes this one repeated phase comparison, not4684 unique frames.
+Net +169 production/legacy0/+1 unsafe from a forbid attribute/+60 verification; raw-operation retirement0, ownership growth counted in full.
+Maw low/high independent stores retain failure prefixes, adopting only ten protocol bytes; export prefix precedes asset/room conversion. Existing checked runtime/Maw/eproj27 pass.
+Actual detached composition passes at02 with193 unchanged dependencies transferred to03; native/backend storage and whole Session/media independence remain open.
+Next: REVIEW selects the next complete responsibility; media/Session research retains its assigned source boundaries.
 
 Source-only: Blackout37, exact page2 callback, sky initializers, CrystalFlashStart,
 spike/DBF2/lavaquake and additional signed8.8 kernels; MotherBrain magnitude,

@@ -14,8 +14,9 @@ This directive supersedes older work-order and pacing advice below; PLAN's
 Fast loop, resource limits and landing rules remain in force. Existing source
 owners and the sole Windows integrator retain their assignments.
 
-Qualified Crocomire source `32c9b193` on published projectile parent `70edf55f`: production 113,790, legacy 17,793,
-unsafe-containing lines 2,543, verification 41,858. Canonical source has 584 inputs / 6,261,518 raw bytes; source preflight has 571 bindings. A9 corpse
+Current published main/origin `27de5b24`, canonical source `32c9b193`:
+production 113,790, legacy 17,793, unsafe-containing lines 2,543,
+verification 41,858; 584 inputs / 6,261,518 raw bytes and 571 source bindings. A9 corpse
 animation landed `c872ad44`: -60 production/-60 legacy/-23 unsafe/verification0;
 eight rows passed 11,183 selected + 272 setup / 0 failures. Six native captures,
 seventeen word dereferences and one MemCpy were removed; twenty-one address-label
@@ -26,9 +27,9 @@ twelve native capture forms were removed and four unrelated native calls remain.
 Both landings retain codec 41/3ac09138dc065e54, 160 unchanged warnings and the
 actual source/native/input guards, including full Morph1200. Combined published
 delta: -96 production/-96 legacy/-22 unsafe/verification0. No fresh capture was needed.
-Since WRAM landed, actual main removed 383 production/615 legacy/93 unsafe
-metric lines and added 8 verification lines. Against `6ad82e25`, including WRAM's
-growth, the net remains +1,937 production/+491 legacy/-168 unsafe/+1,451 verification.
+Since WRAM landed, actual main removed 454 production/666 legacy/94 unsafe
+metric lines and added 30 verification lines. Against `6ad82e25`, including WRAM's
+growth, the net remains +1,866 production/+440 legacy/-169 unsafe/+1,473 verification.
 
 Prior WRAM/Execution landing `43117e05` remains +2,320 production/+1,106 legacy/
 -75 unsafe/+1,443 verification against `6ad82e25`, with canonical ce8b and
@@ -45,11 +46,24 @@ review and permitted compilation overlapping. Previous HDMA receipt/capture/rest
 proofs retain their original b2d producer / 0e29 consumers / 17f5 consumers and
 codec3ac lineage; no accepted runtime is repeated. Collect overlapping mailbox
 creation/update windows so a cutoff does not miss a published review.
+Projectile library 19.4061s/DLL 66.4828s and Crocomire library 20.1831s/DLL
+73.6446s passed on their actual distinct source pins. Projectile's final three
+rows waited on three genuine checkpoint gaps; its other eighteen rows ran first.
+Prepare the named checkpoint/input/profile availability alongside source work,
+then run only missing edges. Preserve original Git-blob newlines before source
+freeze; the cursor patch's CRLF-to-LF change inflated review without size credit.
+Do not renormalize a qualified pin or repeat its checks for newline cleanup.
 
 Mother Brain and README support landed `b5b05ad9`: -51 production/-51 legacy/-1 unsafe/verification0, seven rows10883+272/0.
 README displays committed staged-source SVG; Pages image publisher is deleted. Projectile deduplication closes21rows32443+1713/0
 and three minimal genuine captures18742/0, total52898 comparisons. Net -57 production/legacy0/-1 unsafe attribute/+18 verification;
 46 substantive lines exclude11 formatter joins. Current Crocomire joint source retains its separate reviewed selector dependency.
+
+Direct CI follow-through: current main's CI, Segments and Progress feed runs all
+succeeded. The Actions registry has no Pages workflow; the obsolete Pages site
+configuration was removed and its API now returns 404. README's committed SVG
+remains the sole progress display. Historical failed/cancelled runs are history,
+not a new failure or a reason to repeat local engine qualification.
 
 Crocomire core and typed consumer: 21 reactions/choose-spit are separated; seven rows6453+272/0 and all source/native/codec guards pass.
 Actual joint cost +37 production/+4 verification/legacy0/+1 forbid attribute, raw operations unchanged. Private selector getter preserves
@@ -57,27 +71,65 @@ full/odd keys and the original velocity-write then actor-key then separate x/y-r
 
 Next work, in order:
 
-1. **Land the qualified CI/README support change.** Direct user request: remove
-   the redundant Pages publisher and display committed `docs/treemap.svg` in
-   README. The existing renderer reads staged Rust with `--staged`, excluding
-   the SVG from its source identity. Stage source, render, then stage the image
-   beside the same code commit. Pages workflow 396363766 is already disabled;
-   delete pages.yml without adding an image CI job. Committed behavior, staged
-   replacement/add/delete isolation, XML and diff checks passed. Support files
-   do not alter engine source/native/codec identity; no DLL/replay is needed.
-2. **Qualify existing disjoint complete source cuts as they become ready.**
-   Windows owns enemy-projectile cursor/control deduplication through the existing
-   EnemyScript, including lifecycle/host/detached-verifier consumers and the
-   deleted binding. Preserve three-byte long24; the shared load24 reads four.
-   Windows separately owns both Mother Brain frame interpreters, all 22 outcomes
-   and the OAM leaf/three callers, only in sm_a9.rs. Preserve callback/native-word/
-   publication/failure order and the retained palette writer. Claims and provisional
-   full costs are [6440890980](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6440890980).
-   Linux retains Botwoon/Crocomire readers; no competing writer. First frozen,
-   formatted source enters independent review and the sole integrator's compiler
-   slot immediately; exact composition, codec guards, affected rows/smokes and
-   publication follow. Credit only measured actual landings.
-3. **Use the completed Session research to select a real removal.** Gamma's
+1. **Implement the assigned complete Botwoon death protocol on current main.**
+   Linux SOURCE claim [6441824600](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6441824600)
+   and Windows correction [6441868492](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6441868492)
+   bind the existing author/reviewer to `27de5b24`/`32c9b193`; all earlier
+   qualifications are complete and published. The owner takes five native-word
+   signals: pending hit, active death, tail readiness, previous health and body
+   landing. Close shot/contact/power-bomb, arming, spit wait, tail/history, falling
+   body and head-landing consumers, including both reached projectile adapters.
+   Use the existing scoped Game-derived admission proof and actor interfaces;
+   preserve captured shot identity versus fresh post-contact identity, unknown
+   u16s, native/LE publication, full/odd aliases and the actual reset 7000..9800.
+   No clearing on delete/reuse. Keep the original Maw raw slot store unchanged:
+   low byte then high byte with independent bounds/failure; afterwards adopt
+   ONLY newly owned protocol-byte overlaps. Existing terrain aliases retain
+   raw-write/Drop-republication behavior. Put the protocol export prefix before
+   room-key/asset conversion. The provisional +195 production (130..235 range)
+   is ownership growth, with zero raw-operation retirement; count full costs.
+   Freeze the complete caller/encoding/reset/load/failure cohort once, review
+   and compile it in parallel, then perform one justified new-codec qualification
+   using boss-botwoon and PLAN smokes, plus applicable genuine initialization,
+   capture/continuation and restore checks. No per-field codec campaigns.
+2. **Preserve the completed observation-epoch proof; defer its standalone rewrite.**
+   All 45 scalar observations and five Session overlaps are traced. Admission and
+   successful foreign return capture Game; set_byte rebuilds from raw Game and
+   overrides gamma; successful owned_call refreshes only four actor values from
+   the live projection. Direct owned edits need not refresh observations, as the
+   existing collision and detached sprite checks explicitly require. Keep these
+   boundaries in Botwoon; its Maw adoption must not trigger an input refresh.
+   Of 67 old selector sites, 54 already capture locals and 13 are inline/requeries;
+   Crocomire replaces exactly one with the accepted selected_actor()->ActorKey.
+   Its fresh getter does not replace other captures or expose private controls.
+   A complete five-field retirement also reaches 23 species methods/99 call sites
+   and both Runtime/detached adapters. Native health decoding, full/odd keys and
+   unwind prefixes remain. Gross removal is roughly 17 lines before replacements;
+   forecast +25..80 production/+20..60 verification, raw-operation retirement0.
+   No standalone source, codec campaign, blanket refresh or getter facade is assigned.
+3. **Prepare complete content and sprite ownership from finished surveys.**
+   ROM decompression already shares one 114-line decoder plus 35-line VRAM
+   protocol; there is no duplicate algorithm or native pointer to retire.
+   A valid stream changed after its first VMDATAL write emits 11,33 instead of
+   predecoded 11,22; short RAM input writes 11 before the next source read fails.
+   Prepared room-asset loading needs actual immutable programs/payloads and all
+   initial/door/background/CRE/level/palette/output consumers. Options, Kraid
+   and 46 cinematic sites still retain the decoder; do not claim global removal.
+   Prefer immediate owned sprite publication then pure committed-Scene extraction.
+   Existing atmospheric 4077/4078/4079 require self-cursor overwrite, X-before-fresh-Y
+   and OAM-to-Samus aliases. Session lacks OAM 370/570/590 projection; a forwarded
+   writer or delayed SpriteDraw list does not close it. Close all publishers,
+   clear/finish/reset, content/media, checkpoint and the NMI 544-byte display
+   commitment plus actual PPU/renderer consumers before ownership credit. Keep
+   sprite 32/34 limits and Map Rando revision/resource contracts. Both first
+   ownership milestones currently forecast growth; no small implementation,
+   elapsed speedup or net removal is established. Their exact caller inventories
+   and counterexamples are source-only preparation, not extra test campaigns.
+   Existing oversight readers now prepare the concrete importer-to-room-consumer
+   and committed-Scene-to-render-consumer cohorts from these transferred proofs.
+   Each has a 64MiB source budget and no edit/build/replay/capture assignment;
+   first acceptance and complete retained costs must be clear before authoring.
+4. **Retain the completed Session transfer constraints.** Gamma's
    eleven named modes plus Unknown are traced. A standalone typed dispatch grows
    roughly 10-30 production lines and removes no raw operation/backend owner;
    no elapsed speedup is established. owned_call refreshes four actor observations
@@ -129,10 +181,10 @@ removal and closed ownership dependencies explicit beside the existing Score.
 Bank deletion, safe wrappers and replay passes remain intermediate achievements;
 owned Session, independent media and Map Rando acceptance remain the destination.
 
-**Size feasibility, actual engine main 4857622f.** Production 113,861, legacy 17,844,
-unsafe-containing lines 2,544 and verification 41,836 leave 13,861 net production
-lines above 100,000. If only banks changed, replacements could total at most 3,983
-lines (22.3%); at 80% replacement, another ~10,292 lines must disappear elsewhere.
+**Size feasibility, actual engine main 27de5b24.** Production 113,790, legacy 17,793,
+unsafe-containing lines 2,543 and verification 41,858 leave 13,790 net production
+lines above 100,000. If only banks changed, replacements could total at most 4,003
+lines (22.5%); at 80% replacement, another ~10,231 lines must disappear elsewhere.
 Bank moves alone cannot substantiate the size promise. Existing independent
 terrain/duplicate assessments found no justified >100-line owned-domain merge;
 small candidate pools are not enough. Investigate complete responsibilities in
@@ -579,7 +631,7 @@ commit, gates those steps behind `workflow_dispatch`, keeping the scripts.
 **06:00 miss (recorded 05:52 CET):** no agent committed 23:48-05:50; the plan was not
 the blocker. Corrective step done: agents restarted ~05:50; sm_94 deleted 06:51 CET.
 
-Progress picture: `tools/treemap.py`, auto-published; no other dashboards.
+Progress picture: `tools/treemap.py`, committed beside source; no other dashboards.
 
 **Progress feed (user request, 2026-10-25).** Every push to main posts the measured
 line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads the

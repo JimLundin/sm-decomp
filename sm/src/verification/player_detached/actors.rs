@@ -3,6 +3,8 @@
 #![forbid(unsafe_code)]
 #[path = "../../game/actors/access.rs"]
 pub(in crate::game) mod access;
+#[path = "../../game/actors/botwoon_death.rs"]
+pub(in crate::game) mod botwoon_death;
 #[path = "../../game/actors/codec.rs"]
 pub(in crate::game) mod codec;
 #[path = "../../game/actors/content.rs"]

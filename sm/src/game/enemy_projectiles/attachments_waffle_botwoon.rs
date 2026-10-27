@@ -301,12 +301,7 @@ pub(super) fn follow_botwoon_history(ctx: &mut impl Host) {
                 enemy!(ctx, slot, drop_flags = 2);
             }
             if part == 0 {
-                ctx.set_botwoon_field(enemy, B::TransitionPending, 0);
-                ctx.set_botwoon_field(enemy, B::TailState, 0);
-                ctx.set_botwoon_field(enemy, B::TransitionCursor, 0xffff);
-                if ctx.botwoon_field(enemy, B::Pattern) == 0 {
-                    ctx.set_botwoon_field(enemy, B::TailState, 1);
-                }
+                crate::game::actors::botwoon_death::confirm_tail(ctx, enemy);
             }
         }
         let slot = (projectile >> 1) as isize;
