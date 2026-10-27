@@ -168,15 +168,15 @@ static LAND_SCROLL: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0xf, 
 static OCEAN_SCROLL: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0xf, 0xad89 as VoidP);
 pub unsafe fn initialize_land(game: &mut Game) {
     unsafe {
-        crate::update_place! { reference fresh47 = *ram_ptr!(game; 0x91b) => (*fresh47) | (1u8); }
-        crate::update_place! { reference fresh48 = *ram_ptr!(game; 0x91c) => (*fresh48) | (1u8); }
+        game.g_ram[0x91b] |= 1;
+        game.g_ram[0x91c] |= 1;
         spawn_hdma(0x88, &LAND_SCROLL, game);
         word! {game; set_to_e0_by_scrolling_sky = 224; UNUSED_word_7E059C = 0; }
     }
 }
 pub unsafe fn initialize_ocean(game: &mut Game) {
     unsafe {
-        *ram_ptr!(game; 0x59) = 74;
+        game.g_ram[0x59] = 74;
         spawn_hdma(0x88, &OCEAN_SCROLL, game);
         word! {game; set_to_e0_by_scrolling_sky = 224; UNUSED_word_7E059C = 0; }
     }
