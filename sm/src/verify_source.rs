@@ -1468,10 +1468,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     ("sm/src/types.rs", include_bytes!("types.rs")),
     ("sm/src/util.rs", include_bytes!("util.rs")),
     (
-        "sm/src/verification/animated_detached/main.rs",
-        include_bytes!("verification/animated_detached/main.rs"),
-    ),
-    (
         "sm/src/verification/animated_entries.rs",
         include_bytes!("verification/animated_entries.rs"),
     ),
@@ -1534,10 +1530,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/verification/native_content_checks.rs",
         include_bytes!("verification/native_content_checks.rs"),
-    ),
-    (
-        "sm/src/verification/palette_detached.rs",
-        include_bytes!("verification/palette_detached.rs"),
     ),
     (
         "sm/src/verification/palette_effects.rs",

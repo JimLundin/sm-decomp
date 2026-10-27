@@ -52,9 +52,8 @@ and prints `visual composition case passed: <case>`. Assertions carry exact
 caught panic `intentional upload failure` from visual_host.rs before success; other
 selected cases must not panic. The full run retains its existing success text.
 
-Legacy entry preservation: palette_independent_checks.rs (A) and
-animation_independent_checks.rs (B) preserve the additional old standalone
-assertions. The old CI/Cargo entry files become thin wrappers around this host via
-run_legacy_palette/run_legacy_animation. Full main and each legacy wrapper run their
-shared assertions once. Optional animation_invalid_result preserves the old
-explicit unknown-dispatch return fixture and defaults to the prior panic behavior.
+palette_independent_checks.rs and animation_independent_checks.rs preserve the
+additional old standalone assertions. The player_detached CI/Cargo entry runs
+these and the shared composition, alias, heat and upload assertions once.
+Optional animation_invalid_result preserves the explicit unknown-dispatch return
+fixture and defaults to the prior panic behavior.

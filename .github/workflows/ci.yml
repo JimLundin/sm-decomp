@@ -64,20 +64,6 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Detached projectile compilation failed' }
           & $playerDetached
           if ($LASTEXITCODE -ne 0) { throw 'Detached projectile checks failed' }
-      - name: Verify composed animation and palette cores without the game backend
-        run: |
-          $animationDetached = Join-Path $env:RUNNER_TEMP 'animated-detached.exe'
-          rustc --edition=2024 -O sm/src/verification/animated_detached/main.rs -o $animationDetached
-          if ($LASTEXITCODE -ne 0) { throw 'Detached animation compilation failed' }
-          & $animationDetached
-          if ($LASTEXITCODE -ne 0) { throw 'Detached animation checks failed' }
-      - name: Verify the palette core without the game backend
-        run: |
-          $detached = Join-Path $env:RUNNER_TEMP 'palette-detached.exe'
-          rustc --edition=2024 -O sm/src/verification/palette_detached.rs -o $detached
-          if ($LASTEXITCODE -ne 0) { throw 'Detached palette compilation failed' }
-          & $detached
-          if ($LASTEXITCODE -ne 0) { throw 'Detached palette checks failed' }
       - name: Reject projectile collision and retirement mutations
         if: github.event_name == 'workflow_dispatch'
         # Mutation execution remains hosted under the local Defender restriction.

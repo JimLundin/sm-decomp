@@ -22,18 +22,6 @@ path = "src/verify_dll.rs"
 crate-type = ["cdylib"]
 test = false
 
-# CI also compiles this entry directly with rustc, without the game library.
-[[example]]
-name = "palette_detached"
-path = "src/verification/palette_detached.rs"
-test = false
-
-# Direct CI compilation proves composition without the game library or backend.
-[[example]]
-name = "animated_detached"
-path = "src/verification/animated_detached/main.rs"
-test = false
-
 # Direct CI compilation checks actual projectile, animation and palette composition.
 [[example]]
 name = "player_detached"

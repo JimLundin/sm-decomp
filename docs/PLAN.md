@@ -58,19 +58,19 @@ sm9b retired: scoped AST3 kills3453 selected/0 setup; original target750d/0cdf a
 Own-sm9b941 full86 passes136526 selected+38827 setup/0; all14 originals and bothKago14350 retained.
 Recent liquid/elevator/Sky cuts passed affected original rows; hardware/native failure variants remain scoped.
 Intro/Mode7/text-glow batch passed full intro8780 and original smoke; signature-only growth counted, native reads checked.
-Mother Brain flicker/earthquake passes22681 selected+272 setup/0: +1 engine/-1 unsafe; five dereferences/two RAM pointers retired.
-Native FX definitions pass11183 selected+272 setup/0: -1 engine/unsafe unchanged; duplicate capture/raw pointer retired.
 Background/credits passes22765 selected+272 setup/0: +2 engine/-19 legacy/-1 unsafe; signature closure, raw operations unchanged.
-Logo/page2 passes10967 selected+272 setup/0: -1 engine/-1 legacy; eight raw operations retired, unsafe entries retained.
-Next: duplicated verification launchers and remaining B2 raw cones; cloud boss-bank claims remain separate.
+Logo/page2 passes10967 selected+272 setup/0; boot has replay/source support, exact page2 callback remains unobserved.
+Launcher cleanup passes local2187 selected+272 setup/0 and Linux10 existing before/after entry runs; -36 verification, engine unchanged.
+Next: display-shadow raw accesses, particle-axis dedup and Sky byte references; cloud boss-bank claims remain separate.
 Linux M: map-menu selection/safe callbacks -25 engine/-16 unsafe metric; raw pointers unchanged, six unsafe entries retained.
 ROM logger substitution is held for CRT buffering/output/error/flush equivalence.
 Native player/DSP/APU and input Vec/FILE/Cart are owned; GameOwner does not promise Rust thread sharing.
 Keep SDL/native/audio quiescence and CRT order; invalid SIZE_MAX/malloc0 callbacks
 remain outside universal equivalence. Whole Session and independent media remain unfinished.
-Generic register safety needs the existing bus owner to own stable WRAM/private links,
-recursive DMA/APU/native callback exclusivity, reset/load and diagnostics.
-Null checks and forwarding wrappers do not close that responsibility.
+First WRAM cut retains the backend aligned allocation and private, nonreplaceable Game binding.
+Close all actual consumers, at least169 files including reserved sm_a7 reference-update; coordinate that cloud cohort first.
+Preserve each byte/block failure and device order; bind full Game implementation to codec and make genuine captures.
+Bus APIs stay unsafe until owned links, recursion/native/observer/reset/lifecycle closure; no slice/Index facade.
 
 Coverage is86 manifest rows/44 required scenarios, not universal behavior proof.
 Keep full inputs/guards/assets: intro8780, Morph1200, bomb-jump800, crawler8, Gunship300,

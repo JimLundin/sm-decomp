@@ -1,4 +1,4 @@
-// Shared crate-root declarations for the three detached verification entrypoints.
+// Crate-root declarations for the detached verification entrypoint.
 mod animation;
 mod animation_independent_checks;
 mod composition_checks;
@@ -188,15 +188,3 @@ impl Composed {
     }
 }
 mod checks;
-pub(crate) fn run_legacy_palette() {
-    checks::composition();
-    visual_checks::run_selected("alias");
-    visual_checks::run_selected("heat");
-    palette_independent_checks::run();
-}
-pub(crate) fn run_legacy_animation() {
-    checks::composition();
-    visual_checks::run_selected("upload_ack");
-    visual_checks::run_selected("upload_failure");
-    animation_independent_checks::run();
-}
