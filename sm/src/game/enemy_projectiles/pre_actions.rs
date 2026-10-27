@@ -779,6 +779,11 @@ pub(super) fn EprojPreInstr_MotherBrainRoomTurrets(k: u16, ctx: &mut impl Host) 
     };
 }
 
+// Keep signed-word interpretation and narrowing before the zero clamp.
+fn decelerated_magnitude(velocity: u16, decrement: u16) -> i16 {
+    (((velocity as i16).unsigned_abs() as i32 - i32::from(decrement)) as i16).max(0)
+}
+
 pub(super) fn EprojPreInstr_MotherBrainBomb(k: u16, ctx: &mut impl Host) {
     if MotherBrainBomb_Bomb_CollDetect_DoubleRet(k, ctx) != 0 {
         return;
@@ -818,11 +823,7 @@ pub(super) fn EprojPreInstr_MotherBrainBomb(k: u16, ctx: &mut impl Host) {
         }
         MoveMotherBrainBomb(k, v5, ctx) & 1 != 0
     } else {
-        let mut v2: i16 =
-            (((enemy!(ctx, (v1) as isize, velocity_x)) as i16).unsigned_abs() as i32 - 2i32) as i16;
-        if v2 < 0 {
-            v2 = 0;
-        }
+        let v2 = decelerated_magnitude(enemy!(ctx, (v1) as isize, velocity_x), 2);
         enemy!(ctx, (if enemy!(ctx, (v1) as isize, velocity_x) & 0x8000 != 0 {
                 -(v2 as i32)
             } else {
@@ -1688,11 +1689,7 @@ pub(super) fn EprojPreInstr_MotherBrainsRainbowBeamExplosion(k: u16, ctx: &mut i
 
 pub(super) fn EprojPreInstr_MotherBrainsExplodedDoorParticles(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
-    let mut v2: i16 =
-        (((enemy!(ctx, (v1) as isize, velocity_x)) as i16).unsigned_abs() as i32 - 16i32) as i16;
-    if v2 < 0 {
-        v2 = 0;
-    }
+    let v2 = decelerated_magnitude(enemy!(ctx, (v1) as isize, velocity_x), 16);
     enemy!(ctx, (if enemy!(ctx, (v1) as isize, velocity_x) & 0x8000 != 0 {
             -(v2 as i32)
         } else {

@@ -48,7 +48,7 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current source6dd3: production111941, legacy17353, unsafe2713, verification40385; warnings165.
+Current sourced6fa: production111938, legacy17353, unsafe2713, verification40385; warnings165.
 Core sm82 persists actor/media identities and saved ROM patches; RAM/native frame dependencies remain explicit.
 Historical f158c44fac33eac7 qualification retains39 contributors/652740 source bytes;
 prepared110/initialized329+5,14 captures189475 frames and full22 byte-identical restore at original source.
@@ -74,6 +74,9 @@ Keep low-address failure, fresh native pointer capture and CrystalFlashStart sou
 Linux M: share four owned projectile axis kernels -23 physical/-24 substantive engine; unsafe/interfaces unchanged.
 Source1bf7 passed six rows2429 selected+272 setup/0 and ordinary CI; tested=landedae0f.
 Exact spike/DBF2/lavaquake kernels remain source-only.
+Windows M: two MotherBrain signed magnitude paths share one private pure helper; -3 physical/-5 substantive engine.
+Source d6fa/library165 unchanged/DLLde438 passes seven local rows10883 selected+272 setup/0;
+exact two variants remain source-only. Raw source grows50 bytes; unsafe/legacy/verification/support unchanged.
 Linux M: setup14 shares fresh native-word reads -51 physical/-52 substantive engine; source review pass.
 Keep seven fresh indices/five multi-read blocks; source9964 passed16 rows16977 selected+1713 setup/0 and ordinary CI.
 Linux M: six more signed8.8 projectile blocks reuse unchanged axis helper -43 physical/substantive engine.
