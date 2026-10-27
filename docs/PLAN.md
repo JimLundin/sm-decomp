@@ -48,7 +48,7 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current source89b1: production114166, legacy18272, unsafe2634, verification41832; warnings160.
+Current source1f8d: production114104, legacy18210, unsafe2634, verification41832; warnings160.
 Qualified WRAM/Execution: Game/Backend share stable WorkRam; private DMA/Input
 storage and actual byte/getter/macro consumers close with exact RAM layout.
 Initialized329+5, full86 (136526 selected+38827 setup),14 genuine captures189475,
@@ -65,7 +65,10 @@ Source-list preflight569 entries adds42 support lines; original loaded guards re
 AA04 shares Shaktool segments and Torizo palettes:9 rows6180 selected+1713 setup/0,
 fmt/library/DLL160 unchanged warnings; Golden five ports/latches and source/native/input guards retained.
 Net -73 production/-162 legacy/-4 unsafe/+4 verification; new palette owner88 lines, bank remains.
-Next: reviewed fixed HDMA writer/initializer cohort; actual affected25/new-codec capture campaign running.
+AA05 DB59 reversal shares ordered segment operations:5 rows3093 selected+272 setup/0,
+fmt/library/DLL160 unchanged warnings; -62 production/-62 legacy, unsafe/verification unchanged.
+Exact incremental route preserves AA04 palette/stride/broadcast proofs and all X resets before Y.
+Next: finish qualified fixed HDMA writer cohort on current main, then coordinated Phantoon figure-eight.
 
 Source-only: Blackout37, exact page2 callback, sky initializers, CrystalFlashStart,
 spike/DBF2/lavaquake and additional signed8.8 kernels; MotherBrain magnitude,

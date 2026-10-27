@@ -415,106 +415,44 @@ pub unsafe fn Shaktool_DB40(k: u16, a: u16, game: &mut Game) {
     }
 }
 pub unsafe fn Shaktool_DB59(k: u16, game: &mut Game) {
-    let mut shakto_var_E: u16 = slot!(game, Enemy_Shaktool[k as i32].var_E);
-    let Shaktool: i32 = shakto_var_E as i32 + 192;
+    let base: u16 = slot!(game, Enemy_Shaktool[k as i32].var_E);
+    let middle = i32::from(base) + 192;
     slot!(
         game,
-        Enemy_Shaktool[Shaktool].var_D =
-            (slot!(game, Enemy_Shaktool[Shaktool].var_D)) ^ (0x8000u16)
+        Enemy_Shaktool[middle].var_D = slot!(game, Enemy_Shaktool[middle].var_D) ^ 0x8000
     );
-    let v3: i32 = shakto_var_E as i32 + 384;
-    let mut shakto_var_B: u16 = slot!(game, Enemy_Shaktool[v3].var_B);
-    let v5: i32 = shakto_var_E as i32 + 64;
-    slot!(
-        game,
-        Enemy_Shaktool[v3].var_B = (slot!(game, Enemy_Shaktool[v5].var_B) ^ 0x8000) & 0xff00
-    );
-    slot!(
-        game,
-        Enemy_Shaktool[v5].var_B = (shakto_var_B ^ 0x8000) & 0xff00
-    );
-    let v6: i32 = shakto_var_E as i32 + 320;
-    let mut v7: u16 = slot!(game, Enemy_Shaktool[v6].var_B);
-    let v8: i32 = shakto_var_E as i32 + 128;
-    slot!(
-        game,
-        Enemy_Shaktool[v6].var_B = (slot!(game, Enemy_Shaktool[v8].var_B) ^ 0x8000) & 0xff00
-    );
-    slot!(game, Enemy_Shaktool[v8].var_B = (v7 ^ 0x8000) & 0xff00);
-    let v9: i32 = shakto_var_E as i32 + 256;
-    let mut v10: u16 = slot!(game, Enemy_Shaktool[v9].var_B);
-    let v11: i32 = shakto_var_E as i32 + 192;
-    slot!(
-        game,
-        Enemy_Shaktool[v9].var_B = (slot!(game, Enemy_Shaktool[v11].var_B) ^ 0x8000) & 0xff00
-    );
-    slot!(game, Enemy_Shaktool[v11].var_B = (v10 ^ 0x8000) & 0xff00);
-    let v12: i32 = shakto_var_E as i32 + 384;
-    let mut x_subpos: u16 = slot!(game, Enemy_Shaktool[v12].base.x_subpos);
-    let v14: i32 = shakto_var_E as i32;
-    slot!(
-        game,
-        Enemy_Shaktool[v12].base.x_subpos = slot!(game, Enemy_Shaktool[v14].base.x_subpos)
-    );
-    slot!(game, Enemy_Shaktool[v14].base.x_subpos = x_subpos);
-    let mut y_subpos: u16 = slot!(game, Enemy_Shaktool[v12].base.y_subpos);
-    slot!(
-        game,
-        Enemy_Shaktool[v12].base.y_subpos = slot!(game, Enemy_Shaktool[v14].base.y_subpos)
-    );
-    slot!(game, Enemy_Shaktool[v14].base.y_subpos = y_subpos);
-    let mut x_pos: u16 = slot!(game, Enemy_Shaktool[v12].base.x_pos);
-    slot!(
-        game,
-        Enemy_Shaktool[v12].base.x_pos = slot!(game, Enemy_Shaktool[v14].base.x_pos)
-    );
-    slot!(game, Enemy_Shaktool[v14].base.x_pos = x_pos);
-    let mut y_pos: u16 = slot!(game, Enemy_Shaktool[v12].base.y_pos);
-    slot!(
-        game,
-        Enemy_Shaktool[v12].base.y_pos = slot!(game, Enemy_Shaktool[v14].base.y_pos)
-    );
-    slot!(game, Enemy_Shaktool[v14].base.y_pos = y_pos);
-    slot!(
-        game,
-        Enemy_Shaktool[shakto_var_E as i32 + 64i32].base.x_subpos = 0x8000
-    );
-    slot!(
-        game,
-        Enemy_Shaktool[shakto_var_E as i32 + 128i32].base.x_subpos = 0x8000
-    );
-    slot!(
-        game,
-        Enemy_Shaktool[shakto_var_E as i32 + 192i32].base.x_subpos = 0x8000
-    );
-    slot!(
-        game,
-        Enemy_Shaktool[shakto_var_E as i32 + 256i32].base.x_subpos = 0x8000
-    );
-    slot!(
-        game,
-        Enemy_Shaktool[shakto_var_E as i32 + 320i32].base.x_subpos = 0x8000
-    );
-    slot!(
-        game,
-        Enemy_Shaktool[shakto_var_E as i32 + 64i32].base.y_subpos = 0x8000
-    );
-    slot!(
-        game,
-        Enemy_Shaktool[shakto_var_E as i32 + 128i32].base.y_subpos = 0x8000
-    );
-    slot!(
-        game,
-        Enemy_Shaktool[shakto_var_E as i32 + 192i32].base.y_subpos = 0x8000
-    );
-    slot!(
-        game,
-        Enemy_Shaktool[shakto_var_E as i32 + 256i32].base.y_subpos = 0x8000
-    );
-    slot!(
-        game,
-        Enemy_Shaktool[shakto_var_E as i32 + 320i32].base.y_subpos = 0x8000
-    );
+    for near_offset in [64, 128, 192] {
+        let far = i32::from(base) + 448 - near_offset;
+        let far_value: u16 = slot!(game, Enemy_Shaktool[far].var_B);
+        let near = i32::from(base) + near_offset;
+        slot!(
+            game,
+            Enemy_Shaktool[far].var_B = (slot!(game, Enemy_Shaktool[near].var_B) ^ 0x8000) & 0xff00
+        );
+        slot!(
+            game,
+            Enemy_Shaktool[near].var_B = (far_value ^ 0x8000) & 0xff00
+        );
+    }
+    let far = i32::from(base) + 384;
+    let near = i32::from(base);
+    macro_rules! swap_endpoints {
+        ($($field:ident),+) => {
+            $(
+                let value: u16 = slot!(game, Enemy_Shaktool[far].base.$field);
+                slot!(game, Enemy_Shaktool[far].base.$field =
+                    slot!(game, Enemy_Shaktool[near].base.$field));
+                slot!(game, Enemy_Shaktool[near].base.$field = value);
+            )+
+        };
+    }
+    swap_endpoints!(x_subpos, y_subpos, x_pos, y_pos);
+    for segment in shaktool_segments(base).skip(1).take(5) {
+        slot!(game, Enemy_Shaktool[segment].base.x_subpos = 0x8000);
+    }
+    for segment in shaktool_segments(base).skip(1).take(5) {
+        slot!(game, Enemy_Shaktool[segment].base.y_subpos = 0x8000);
+    }
 }
 pub unsafe fn Shaktool_DC07(k: u16, game: &mut Game) {
     let E: i32 = k as i32;

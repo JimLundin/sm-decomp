@@ -8,19 +8,25 @@ earlier versions; this file holds only current findings.
 
 ## Milestone plan (2026-10-24)
 
-**Active oversight directive (2026-10-27 10:20 CET).** The user assigns this
+**Active oversight directive (updated 2026-10-27).** The user assigns this
 session independent, proactive oversight alongside the running implementer.
 This directive supersedes older work-order and pacing advice below; PLAN's
 Fast loop, resource limits and landing rules remain in force. Existing source
 owners and the sole Windows integrator retain their assignments.
 
-Current main/origin `43117e05`, pushed 10:13:48 CET: production 114,244, legacy
-18,459, unsafe-containing lines 2,637, verification 41,828. Canonical raw source
-ce8b and remote==HEAD independently verified. Versus prior main `6ad82e25`,
-landed net +2,320 production, +1,106 legacy, -75 unsafe-containing and +1,443
-verification; draft-to-draft cleanup is not additional main progress. Actual
-86/86 rows and 44/44 required scenarios pass, all14 fresh captures and full22
-byte-identical encrypted restore pass. These checks do not prove the full engine.
+Current main/origin `dc87811f`: production 114,166, legacy 18,272,
+unsafe-containing lines 2,634, verification 41,832. The cinematic landing
+`a52992cf` removed 5 production/25 legacy lines, adding one unsafe metric line
+from safety attributes; independent source review [passed](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6438746415).
+AA04 now landed with 9/9 affected rows, 6,180 selected + 1,713 setup frames,
+zero failures and net -73 production/-162 legacy/-4 unsafe/+4 verification.
+Its 41 codec contributors remain unchanged; no fresh capture was required.
+
+Prior WRAM/Execution landing `43117e05` remains +2,320 production/+1,106 legacy/
+-75 unsafe/+1,443 verification against `6ad82e25`, with canonical ce8b and
+86/86 rows, 44/44 required scenarios, all 14 fresh captures and full 22
+byte-identical encrypted restore verified. Count each actual main delta once.
+These checks do not prove the full engine.
 
 Final frozen cycle: library19.68s, DLL65.59s, runtime30m45.9s, landing2m04.7s.
 Executor reports ~24m26s on the capture dependency path. Earlier source/review
@@ -31,27 +37,41 @@ source/runtime blockers are closed. Do not repeat the accepted campaign.
 
 Next work, in order:
 
-1. **Land ready family work from actual main.** Existing sm_8b and Linux AA04
-   owners rebase their complete scopes onto `43117e05`, preserving ce8b corrections.
-   Sole integrator reconciles shared callback/registration proposals and may adopt
-   the ready precompile guard beside code. Verify actual codec/native relationships;
-   unchanged contributors retain accepted capture proof and use PLAN's affected
-   rows plus smokes. Transfer exact unchanged leaf reviews; count each net once.
-2. **Close the prepared fixed HDMA-allocation protocol.** Existing Windows source
-   owner `crt_bank_closure` is active in an isolated snapshot; no competing owner.
-   Complete the bounded writer, existing observer and fixed initializer callers
-   together, preserving the contracts below. Current estimate10-35 net production
-   lines and ~30 declaration candidates is provisional; count actual operations
-   and dependency removal. Changes to current codec contributors still need one
-   genuine qualification of the full coherent cut. Coordinate sm_8b's three visual
-   callback proposals through the integrator.
-3. **Select the next complete responsibility from measured main.**
-   Choose the largest removable unsafe dependency or duplicated family whose
-   callers and required rows are understood. State the expected net benefit
-   and removal condition before implementation. Several matching functions can
-   share one coherent commit and one affected-row campaign. Tiny cleanups are
-   useful when they unblock this work; they should not consume the integrator's
-   qualification path as the primary output.
+1. **Land AA05 through its exact incremental route.** AA04 is on actual main
+   `dc87811f`; retain its accepted palette/stride/broadcast proofs. The existing
+   Linux author/reviewer completed the separate Shaktool DB59 reversal in
+   [6438650053/6438650518](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6438650053):
+   incremental net -62 production lines, no new unsafe declaration or codec
+   contributor. Sole integrator applies only its exact-parent incremental patch,
+   reconciles actual main and runs item-spring-ball plus PLAN smokes once. Preserve
+   midpoint flip, far/near read/write swap order, endpoint field order and all X
+   resets before Y resets; full-u16 base widens before offsets.
+2. **Finish the fixed HDMA-allocation protocol already qualifying.** Existing
+   Windows owner `crt_bank_closure` keeps its frozen source. Corrected independent
+   source review, compilation and guards passed; 25 affected rows and new-codec capture
+   qualification is running. Reviewed estimate -31 production/-56 unsafe-containing
+   lines and 32 newly safe declarations remains provisional until actual landing.
+   Close bounded writes, the existing observer and all fixed initializer callers
+   together under the contracts below. Keep this genuine campaign running while
+   independent ready source work proceeds; no unneeded full 86/14/22 repeat.
+3. **Use the prepared complete Phantoon figure-eight responsibility next.**
+   [Scope6438848026](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6438848026)
+   covers six functions, fourteen exclusive constants and both callers. Existing
+   A7 ownership is retained; the integrator routes the scope to its owner or the
+   coordinated Linux successor. Provisional all-cost benefit 40-65 production lines
+   and six actual native pointer captures removed. One entry runs speed, movement,
+   then animation; keep callers' fade/continuation order. Direct existing native
+   diagnostic, native allocation capture and lazy RomRecord reads need no RTL or
+   Runtime edit. Preserve signed clamps, split-word order, unsigned counts, wrapping
+   addresses and full/odd identities. X publication precedes Y read; animation's
+   continuing branch reads C before its loaded-table lookup. Changed leaves can
+   remain outside actual codec contributors; verify that relationship at adoption
+   main after HDMA before reusing accepted captures. Use two Phantoon rows plus
+   PLAN smokes. No competing shared-file owner or persistent Session claim.
+
+Choose further work by the largest complete removable dependency or duplicated
+responsibility with understood callers and rows. State net benefit and removal
+condition before authoring; tiny cleanups should not dominate qualification.
 
 Apply review effort to risk. For an unchanged private numerical helper, review
 its callers and run PLAN's affected rows plus smokes. Ownership, macros, callbacks,
@@ -72,19 +92,16 @@ removal and closed ownership dependencies explicit beside the existing Score.
 Bank deletion, safe wrappers and replay passes remain intermediate achievements;
 owned Session, independent media and Map Rando acceptance remain the destination.
 
-**Size feasibility, landed ce8b.** Independent `progress.sh` and Linux's
-final review agree: production 114,244, legacy 18,459, unsafe-containing 2,637
-and verification 41,828. Versus prior main `6ad82e25`: +2,320 production, +1,106
-legacy, -75 unsafe-containing and +1,443 verification. Source/format/library/DLL,
-full14/full22/full86 qualification and landing pass. Reaching 100,000 needs 14,244
-net production lines
-removed. If only banks changed, their replacements could total at most 4,215
-lines (22.8%); at 80% replacement, another ~10,552 lines must disappear elsewhere.
-Bank moves alone cannot substantiate the existing size promise. After this cut,
-select whole-domain duplication in the existing enemy-projectile and actor
-modules alongside bank closures; report concrete expected savings before a
-campaign. Include future adapters/media cost and remeasure actual main; do not
-trade behavioral fidelity or source readability for an arithmetic target.
+**Size feasibility, actual main dc87811f.** Production 114,166, legacy 18,272,
+unsafe-containing lines 2,634 and verification 41,832 still leave 14,166 net production
+lines above 100,000. If only banks changed, replacements could total at most 4,106
+lines (22.5%); at 80% replacement, another ~10,512 lines must disappear elsewhere.
+Bank moves alone cannot substantiate the size promise. Existing independent
+terrain/duplicate assessments found no justified >100-line owned-domain merge;
+small candidate pools are not enough. Investigate complete responsibilities in
+existing actor/projectile/Session modules alongside bank closures, including the
+compatibility adapters and future media cost. Do not sacrifice fidelity or
+readability for arithmetic, or sum overlapping draft savings.
 
 **Prepared next primitive: fixed DMA-register writes for HDMA allocation.**
 The assigned source owner investigates the existing owned DMA writer as the
@@ -92,8 +109,8 @@ leaf for `visual_runtime::{initialize_hdma,spawn_hdma,spawn_hdma_last,
 spawn_hdma_words}` and their fixed initializers. Allocation only selects slots
 0..5; control/target writes therefore use 0x4320/21 through 0x4370/71. The
 current generic `WriteRegWord` makes these wrappers unsafe although the joined
-backend's DMA-register mutation is safe. Assignment is active; no source PASS,
-runtime result or reduction is claimed before the concrete handoff is verified.
+backend's DMA-register mutation is safe. Corrected source/compiled guards passed;
+current affected/new-codec runtime qualification and final accounting remain open.
 
 Preserve the entire register-write protocol: low byte, post-write observer,
 high byte, post-write observer; original missing-backend failure point; original
@@ -107,16 +124,16 @@ retain the general path. Qualify the complete initializer cohort once with its
 named Ceres/intro/Morph/boss/X-ray rows plus PLAN smokes. Count actual leaf and
 caller removal; keep unrelated bus, HDMA execution, reset and renderer contracts.
 
-**Ready support handoff: fail before compiling an incomplete source inventory.**
-The isolated `tools/verify_dll.py` draft in [mailbox6437909267](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6437909267)
-reuses the loaded-library guard's exact expected-file classification and checks
-literal FILES bindings before compiler startup. All 569 bindings pass; missing,
-duplicate, wrong-path and inactive/conditional entries fail before the compiler.
-The runtime source/native guards remain unchanged. Cost +42 support Python lines,
-+1,904 raw bytes; production/legacy/unsafe/verification Rust all zero. Warm preflight
-median 130ms is measured, not a claimed build-time reduction. Sole integrator may
-adopt the lossless exact-parent patch beside the next code change; it must not
-invalidate the accepted ce8b campaign or cause unnecessary recapture.
+**Landed runner preflight: reject an incomplete source inventory before compiling.**
+`a52992cf` includes the exact reviewed [handoff6437909267](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6437909267).
+It reuses the existing loaded-library guard's expected-file classification; all 569
+bindings passed then and AA04's actual 570 bindings pass. Missing, duplicate,
+wrong-path, inactive, conditional and unfamiliar literal-list entries fail before
+compiler startup. Runtime guards remain unchanged. Cost +42 support Python lines/
++1,904 raw bytes, zero Rust metric delta; warm median 130ms is not a measured build
+saving. No readoption or recapture is needed. Full conservative library reuse
+remains: all five inventory exclusions are actual checkpoint include_str! rlib
+inputs. A 569-file-only rlib key would therefore omit real compiled dependencies.
 
 **Prepared architecture closure: owned continuation and checkpoint locality.**
 This is design ahead of the existing queue, not a second work order. Keep the
