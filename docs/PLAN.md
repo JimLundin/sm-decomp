@@ -48,7 +48,7 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current source17f: production114055, legacy18206, unsafe2575, verification41832; warnings160.
+Current source9fe: production113957, legacy17940, unsafe2566, verification41836; warnings160.
 Qualified WRAM/Execution: Game/Backend share stable WorkRam; private DMA/Input
 storage and actual byte/getter/macro consumers close with exact RAM layout.
 Initialized329+5, full86 (136526 selected+38827 setup),14 genuine captures189475,
@@ -76,7 +76,12 @@ exact affected9-member encrypted restore and both Kago14350 approaches retain or
 Final AA05 five joint rows bind17f; no accepted capture/29-row repeat or full86/14/22 claim.
 Net -49 physical production/-4 legacy/-59 unsafe/verification0;12 lines are formatter reflow, not size savings.
 Whole Session/backend independence and source-only allocation/observer/mapper/CrystalFlash variants remain unfinished.
-Next: coordinated Phantoon figure-eight six-function cohort, preserving current A7 ownership.
+Phantoon figure-eight: six functions/fourteen constants/two callers share ordered speed/movement/animation;
+six raw native actor captures removed. Source9fe fmt/library/DLL160 unchanged warnings/source571/native pass.
+Phantoon two rows plus four smokes:6234 selected+272 setup/0; full Morph1200 retained.
+Net -98 production/-266 legacy/-9 unsafe/+4 verification; new167-line module and callers fully counted.
+Native allocation/diagnostic/lazy ROM order preserved; full/odd/off-table and failure variants remain source-scoped.
+Next: REVIEW selects the next complete removable responsibility; no competing source owner.
 
 Source-only: Blackout37, exact page2 callback, sky initializers, CrystalFlashStart,
 spike/DBF2/lavaquake and additional signed8.8 kernels; MotherBrain magnitude,

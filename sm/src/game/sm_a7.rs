@@ -63,7 +63,6 @@ crate::game::constants::typed_constants! { Consts_A7;
     addr_kEtecoon_Ilist_E870 = 59504, addr_stru_A7E862 = 59490,
     addr_kEtecoon_Ilist_E854 = 59476, addr_kEtecoon_Ilist_E83C = 59452,
     addr_stru_A7E828 = 59432, addr_kEtecoon_Ilist_E81E = 59422,
-    addr_kPhantoonMoveData = 58322, addr_kKraid_Ilist_CCEB = 52459,
     addr_kKraid_Ilist_CC9D = 52381, addr_kKraid_Ilist_CC91 = 52369,
     addr_kKraid_Ilist_CC81 = 52353, addr_kKraid_Ilist_CC53 = 52307,
     addr_kKraid_Ilist_CC4D = 52301, addr_kKraid_Ilist_CC47 = 52295,
@@ -153,20 +152,6 @@ static g_word_A7A920: u16 = 3;
 static g_word_A7A922: u16 = 4;
 static g_word_A7A926: u16 = 0x8000;
 static g_word_A7A928: u16 = 3;
-static g_word_A7CD73: u16 = 0x600;
-static g_word_A7CD75: u16 = 0;
-static g_word_A7CD77: u16 = 0x1000;
-static g_word_A7CD79: u16 = 0;
-static g_word_A7CD7B: u16 = 2;
-static g_word_A7CD7D: u16 = 7;
-static g_word_A7CD7F: u16 = 0;
-static g_word_A7CD81: u16 = 0x600;
-static g_word_A7CD83: u16 = 0;
-static g_word_A7CD85: u16 = 0x1000;
-static g_word_A7CD87: u16 = 0;
-static g_word_A7CD89: u16 = 0xfffe;
-static g_word_A7CD8B: u16 = 0xfff9;
-static g_word_A7CD8D: u16 = 0;
 static g_word_A7CD9B: u16 = 0x40;
 static g_word_A7CD9D: u16 = 0xc00;
 static g_word_A7CD9F: u16 = 0x100;
@@ -2440,255 +2425,6 @@ pub unsafe fn Phantoon_Func_6(k: u16, a: u16, game: &mut Game) {
         }
     }
 }
-pub unsafe fn Phantoon_Func_7(k: u16, game: &mut Game) {
-    unsafe {
-        let E = (k as i32 + 192) as i32;
-        let mut v3: bool = slot!(game, Enemy_Phantoon[E].var_B) == 1;
-        slot!(
-            game,
-            Enemy_Phantoon[E].var_B = slot!(game, Enemy_Phantoon[E].var_B).wrapping_sub(1)
-        );
-        let v4: bool = (slot!(game, Enemy_Phantoon[E].var_B) & 0x8000) != 0;
-        if v3 || v4 {
-            if (slot!(game, Enemy_Phantoon[E].var_C) & 0x8000) == 0 {
-                v3 = slot!(game, Enemy_Phantoon[E].var_C) == 1;
-                slot!(
-                    game,
-                    Enemy_Phantoon[E].var_C = slot!(game, Enemy_Phantoon[E].var_C).wrapping_sub(1)
-                );
-                let v8: bool = (slot!(game, Enemy_Phantoon[E].var_C) & 0x8000) != 0;
-                if v3 || v8 {
-                    slot!(game, Enemy_Phantoon[E].var_C = -1i32 as u16);
-                    slot!(
-                        game,
-                        Enemy_Phantoon[E].var_B = *(RomPtr_A7(
-                            crate::rtl::rom_table_word!(
-                                game,
-                                0xa7ccfd,
-                                slot!(game, Enemy_Phantoon[E].var_A) as isize
-                            ),
-                            game,
-                        ) as *mut u16)
-                            .offset(1)
-                    );
-                } else {
-                    slot!(
-                        game,
-                        Enemy_Phantoon[E].var_B = *(RomPtr_A7(
-                            (2i32 * slot!(game, Enemy_Phantoon[E].var_C) as i32
-                                + crate::rtl::rom_table_word!(
-                                    game,
-                                    0xa7ccfd,
-                                    slot!(game, Enemy_Phantoon[E].var_A) as isize
-                                ) as i32) as u16,
-                            game,
-                        ) as *mut u16)
-                            .offset(1)
-                    );
-                }
-                slot!(game, Enemy_Phantoon[E].base; instruction_timer = 1, current_instruction = addr_kKraid_Ilist_CCEB as u16);
-            } else {
-                let v5: u16 = (game.next_random()) & (3u16);
-                slot!(game, Enemy_Phantoon[E].var_A = v5);
-                let v6: u16 = crate::rtl::rom_table_word!(game, 0xa7ccfd, v5 as isize);
-                let v7: u16 = *(RomPtr_A7(v6, game) as *mut u16);
-                slot!(game, Enemy_Phantoon[E].var_C = v7);
-                slot!(
-                    game,
-                    Enemy_Phantoon[E].var_B =
-                        *(RomPtr_A7((2i32 * v7 as i32 + v6 as i32) as u16, game) as *mut u16)
-                            .offset(1)
-                );
-            }
-        }
-    }
-}
-pub unsafe fn Phantoon_AdjustSpeedAndMoveInFigure8(game: &mut Game) {
-    unsafe {
-        if slot!(game, Enemy_Phantoon[0x40i32].var_C) != 0 {
-            Phantoon_AdjustSpeedRightSideClockwise(game);
-            Phantoon_MoveInFigure8_RightSideClockwise(addr_kPhantoonMoveData as u16, 533, game);
-        } else {
-            Phantoon_AdjustSpeedLeftSideClockwise(game);
-            Phantoon_MoveInFigure8_LeftSideClockwise(addr_kPhantoonMoveData as u16, 534, game);
-        };
-    }
-}
-pub unsafe fn Phantoon_AdjustSpeedLeftSideClockwise(game: &mut Game) {
-    let E = (0) as i32;
-    let phant_var_D: u16 = slot!(game, Enemy_Phantoon[E].var_D);
-    if phant_var_D != 0 {
-        if (phant_var_D & 1) != 0 {
-            slot!(
-                game,
-                Enemy_Phantoon[E](var_C, var_B) += words!((g_word_A7CD79, g_word_A7CD77))
-            );
-            if ((slot!(game, Enemy_Phantoon[E].var_C)) as i16).wrapping_sub((g_word_A7CD7D) as i16)
-                >= 0
-            {
-                slot!(game, Enemy_Phantoon[E].var_C = g_word_A7CD7D);
-                slot!(game, Enemy_Phantoon[E].var_B = 0);
-                slot!(
-                    game,
-                    Enemy_Phantoon[E].var_D = slot!(game, Enemy_Phantoon[E].var_D).wrapping_add(1)
-                );
-            }
-        } else {
-            slot!(
-                game,
-                Enemy_Phantoon[E](var_C, var_B) +=
-                    -(words!(i32, (g_word_A7CD79, g_word_A7CD77))) as u32
-            );
-            if slot!(game, Enemy_Phantoon[E].var_C) == g_word_A7CD7F
-                || ((slot!(game, Enemy_Phantoon[E].var_C)) as i16)
-                    .wrapping_sub((g_word_A7CD7F) as i16)
-                    < 0
-            {
-                slot!(
-                    game,
-                    Enemy_Phantoon[E].var_C = (g_word_A7CD7F).wrapping_add(1)
-                );
-                slot!(game, Enemy_Phantoon[E]; var_B = 0, var_D = 0);
-            }
-        }
-    } else {
-        slot!(
-            game,
-            Enemy_Phantoon[E](var_C, var_B) += words!((g_word_A7CD75, g_word_A7CD73))
-        );
-        if ((slot!(game, Enemy_Phantoon[E].var_C)) as i16).wrapping_sub((g_word_A7CD7B) as i16) >= 0
-        {
-            slot!(
-                game,
-                Enemy_Phantoon[E].var_C = (g_word_A7CD7B).wrapping_sub(1)
-            );
-            slot!(game, Enemy_Phantoon[E].var_B = 0);
-            slot!(
-                game,
-                Enemy_Phantoon[E].var_D = slot!(game, Enemy_Phantoon[E].var_D).wrapping_add(1)
-            );
-        }
-    };
-}
-pub unsafe fn Phantoon_AdjustSpeedRightSideClockwise(game: &mut Game) {
-    let E = (0) as i32;
-    let phant_var_D: u16 = slot!(game, Enemy_Phantoon[E].var_D);
-    if phant_var_D != 0 {
-        if (phant_var_D & 1) != 0 {
-            slot!(
-                game,
-                Enemy_Phantoon[E](var_C, var_B) +=
-                    -(words!(i32, (g_word_A7CD87, g_word_A7CD85))) as u32
-            );
-            if slot!(game, Enemy_Phantoon[E].var_C) == g_word_A7CD8B
-                || ((slot!(game, Enemy_Phantoon[E].var_C)) as i16)
-                    .wrapping_sub((g_word_A7CD8B) as i16)
-                    < 0
-            {
-                slot!(
-                    game,
-                    Enemy_Phantoon[E].var_C = (g_word_A7CD8B).wrapping_add(1)
-                );
-                slot!(game, Enemy_Phantoon[E].var_B = 0);
-                slot!(
-                    game,
-                    Enemy_Phantoon[E].var_D = slot!(game, Enemy_Phantoon[E].var_D).wrapping_add(1)
-                );
-            }
-        } else {
-            slot!(
-                game,
-                Enemy_Phantoon[E](var_C, var_B) += words!((g_word_A7CD87, g_word_A7CD85))
-            );
-            if ((slot!(game, Enemy_Phantoon[E].var_C)) as i16).wrapping_sub((g_word_A7CD8D) as i16)
-                >= 0
-            {
-                slot!(game, Enemy_Phantoon[E].var_C = g_word_A7CD8D);
-                slot!(game, Enemy_Phantoon[E]; var_B = 0, var_D = 0);
-            }
-        }
-    } else {
-        slot!(
-            game,
-            Enemy_Phantoon[E](var_C, var_B) +=
-                -(words!(i32, (g_word_A7CD83, g_word_A7CD81))) as u32
-        );
-        if slot!(game, Enemy_Phantoon[E].var_C) == g_word_A7CD89
-            || ((slot!(game, Enemy_Phantoon[E].var_C)) as i16).wrapping_sub((g_word_A7CD89) as i16)
-                < 0
-        {
-            slot!(
-                game,
-                Enemy_Phantoon[E].var_C = (g_word_A7CD89).wrapping_add(2)
-            );
-            slot!(game, Enemy_Phantoon[E].var_B = 0);
-            slot!(
-                game,
-                Enemy_Phantoon[E].var_D = slot!(game, Enemy_Phantoon[E].var_D).wrapping_add(1)
-            );
-        }
-    };
-}
-pub unsafe fn Phantoon_MoveInFigure8_LeftSideClockwise(j: u16, r20: u16, game: &mut Game) {
-    unsafe {
-        let E = (0) as i32;
-        let mut n: i32 = slot!(game, Enemy_Phantoon[E].var_C) as i32;
-        while n != 0 {
-            let v2 = RomPtr_A7(
-                (2 * slot!(game, Enemy_Phantoon[E].var_A) as i32 + j as i32) as u16,
-                game,
-            );
-            slot!(
-                game,
-                Enemy_Phantoon[E].base.x_pos =
-                    (slot!(game, Enemy_Phantoon[E].base.x_pos)).wrapping_add((*v2 as i8) as u16)
-            );
-            slot!(
-                game,
-                Enemy_Phantoon[E].base.y_pos = (slot!(game, Enemy_Phantoon[E].base.y_pos))
-                    .wrapping_add((*v2.offset(1) as i8) as u16)
-            );
-            slot!(
-                game,
-                Enemy_Phantoon[E].var_A = slot!(game, Enemy_Phantoon[E].var_A).wrapping_add(1)
-            );
-            if slot!(game, Enemy_Phantoon[E].var_A) as i32 - r20 as i32 & 0x8000 == 0 {
-                slot!(game, Enemy_Phantoon[E].var_A = 0);
-            }
-            n -= 1;
-        }
-    }
-}
-pub unsafe fn Phantoon_MoveInFigure8_RightSideClockwise(j: u16, r20: u16, game: &mut Game) {
-    unsafe {
-        let E = (0) as i32;
-        let mut n: i32 = -(slot!(game, Enemy_Phantoon[E].var_C) as i32) as u16 as i32;
-        while n != 0 {
-            let v4 = RomPtr_A7(
-                (2 * slot!(game, Enemy_Phantoon[E].var_A) as i32 + j as i32) as u16,
-                game,
-            );
-            slot!(
-                game,
-                Enemy_Phantoon[E].base.x_pos =
-                    (slot!(game, Enemy_Phantoon[E].base.x_pos)).wrapping_sub((*v4 as i8) as u16)
-            );
-            slot!(
-                game,
-                Enemy_Phantoon[E].base.y_pos = (slot!(game, Enemy_Phantoon[E].base.y_pos))
-                    .wrapping_sub((*v4.offset(1) as i8) as u16)
-            );
-            slot!(
-                game,
-                Enemy_Phantoon[E].var_A = slot!(game, Enemy_Phantoon[E].var_A).wrapping_sub(1)
-            );
-            if slot!(game, Enemy_Phantoon[E].var_A) & 0x8000 != 0 {
-                slot!(game, Enemy_Phantoon[E].var_A = r20);
-            }
-            n -= 1;
-        }
-    }
-}
 pub unsafe fn Phantoon_MoveInSwoopingPattern(k: u16, game: &mut Game) {
     let mut v4: u16 = 0;
     let E2 = (0x80) as i32;
@@ -3800,8 +3536,7 @@ crate::game::callback_dispatch! {
         };
     };
     [10999271] Phantoon_MovePhantoonInFigure8ThenOpenEye [] {
-        Phantoon_AdjustSpeedAndMoveInFigure8(game);
-        Phantoon_Func_7(k, game);
+        actors::phantoon_motion::advance_figure_eight(k, game);
         let E = (0x40) as i32;
         let v2: bool = slot!(game, Enemy_Phantoon[E].var_A) == 1;
         slot!(game, Enemy_Phantoon[E].var_A = slot!(game, Enemy_Phantoon[E].var_A).wrapping_sub(1));
@@ -3923,8 +3658,7 @@ crate::game::callback_dispatch! {
     };
     [10999850] Phantoon_FadeOutBeforeFirstFireballRain [] {
         Phantoon_FadeOut(0xc, game);
-        Phantoon_AdjustSpeedAndMoveInFigure8(game);
-        Phantoon_Func_7(k, game);
+        actors::phantoon_motion::advance_figure_eight(k, game);
         let E = (0x40) as i32;
         let v2: bool = slot!(game, Enemy_Phantoon[E].var_A) == 1;
         slot!(game, Enemy_Phantoon[E].var_A = slot!(game, Enemy_Phantoon[E].var_A).wrapping_sub(1));

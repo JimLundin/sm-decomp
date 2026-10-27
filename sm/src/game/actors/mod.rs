@@ -46,6 +46,7 @@ pub(in crate::game) mod contacts;
 pub(in crate::game) mod drawing;
 pub(in crate::game) mod media_runtime;
 pub(in crate::game) mod movement;
+pub(in crate::game) mod phantoon_motion;
 pub(in crate::game) mod population;
 pub(in crate::game) mod queries;
 pub(in crate::game) mod scheduling;
