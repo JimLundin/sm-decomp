@@ -248,6 +248,11 @@ pub(crate) fn load_level<const INITIAL: bool>(game: &mut Game) {
 #[forbid(unsafe_code)]
 pub(crate) fn decompress_level(source: u32, game: &mut Game) {
     decompress_to_ram(source, 0x10000, game);
+    copy_level_planes(game);
+}
+
+#[forbid(unsafe_code)]
+pub(crate) fn copy_level_planes(game: &mut Game) {
     let size = usize::from(checked_word!(game.ram7F_start));
     for (source, destination, count) in [
         (0x10002 + size + size / 2, 0x19602, size),
@@ -325,7 +330,7 @@ use crate::game::visual_host::{Content, Source};
 use crate::game::visual_state::{PaletteBuffer, Weather};
 use crate::rom::RomRecord;
 
-fn apply_fx(h: &mut Runtime<'_>, definition: &RomRecord, palette: PaletteBuffer) {
+fn apply_fx(h: &mut Runtime<'_>, definition: &FxRecord, palette: PaletteBuffer) {
     h.session_mut().room.liquid_height = definition.word(2);
     h.session_mut().room.liquid_target = definition.word(4);
     h.session_mut().room.liquid_velocity = definition.word(6);
@@ -344,8 +349,7 @@ fn apply_fx(h: &mut Runtime<'_>, definition: &RomRecord, palette: PaletteBuffer)
         let value = if blend == 0 {
             0
         } else {
-            h.table(Source::Loaded, 0x89aa02)
-                .word(usize::from(blend & !1) + 2 * (color - 25))
+            fx_table(h, 0x89aa02).word(usize::from(blend & !1) + 2 * (color - 25))
         };
         let visuals = &mut h.session_mut().visual;
         match palette {
@@ -355,9 +359,47 @@ fn apply_fx(h: &mut Runtime<'_>, definition: &RomRecord, palette: PaletteBuffer)
     }
 }
 
+enum FxRecord {
+    Legacy(RomRecord),
+    Prepared {
+        assets: std::sync::Arc<super::room_entry::PreparedRoomAssets>,
+        base: usize,
+    },
+}
+impl FxRecord {
+    fn byte(&self, offset: usize) -> u8 {
+        match self {
+            Self::Legacy(record) => record.byte(offset),
+            Self::Prepared { assets, base } => assets.rom_byte(base.checked_add(offset).unwrap()),
+        }
+    }
+    fn word(&self, offset: usize) -> u16 {
+        u16::from_ne_bytes([self.byte(offset), self.byte(offset + 1)])
+    }
+}
 #[forbid(unsafe_code)]
-fn fx_definition(address: u16, game: &mut Game) -> RomRecord {
-    crate::game::menu_tilemap::native_record(0x830000 | u32::from(address), game)
+fn fx_definition(address: u16, game: &mut Game) -> FxRecord {
+    let full = 0x830000 | u32::from(address);
+    if game.world().prepared_room_assets().is_some() {
+        if address & 0x8000 == 0 {
+            crate::game::session_runtime::native_rom_diagnostic(full, game);
+        }
+        FxRecord::Prepared {
+            assets: game.world().prepared_room_assets().unwrap(),
+            base: crate::rom::lorom_offset(full) as usize,
+        }
+    } else {
+        FxRecord::Legacy(crate::game::menu_tilemap::native_record(full, game))
+    }
+}
+fn fx_table(h: &Runtime<'_>, address: u32) -> FxRecord {
+    match h.session().world.prepared_room_assets() {
+        Some(assets) => FxRecord::Prepared {
+            assets,
+            base: crate::rom::lorom_offset(address) as usize,
+        },
+        None => FxRecord::Legacy(h.table(Source::Loaded, address)),
+    }
 }
 
 pub(crate) fn load_fx_entry(index: u16, game: &mut Game) {
@@ -391,9 +433,7 @@ pub(crate) fn load_fx_header(game: &mut Game) {
     let kind = definition.byte(9);
     h.write_word_le(u16::from(kind), ram::fx_type);
     if kind != 0 {
-        let tilemap = h
-            .table(Source::Loaded, 0x83abf0)
-            .word(usize::from(kind & !1));
+        let tilemap = fx_table(&h, 0x83abf0).word(usize::from(kind & !1));
         h.write_word_le(tilemap, ram::fx_tilemap_ptr);
         let initialize: Option<fn(&mut Game)> = match kind >> 1 {
             0 | 7..=15 => None,
@@ -427,9 +467,24 @@ pub(crate) fn load_fx_header(game: &mut Game) {
         if bits == 0 {
             continue;
         }
-        let table = h.table(Source::Loaded, table);
+        let table = fx_table(&h, table);
         let address = table.word(2 * usize::from(h.session().room.area));
-        let objects = h.legacy_native_record(0x83, address);
+        let objects = if h.session().world.prepared_room_assets().is_some() {
+            if address & 0x8000 == 0 {
+                h.foreign(|game| {
+                    crate::game::session_runtime::native_rom_diagnostic(
+                        0x830000 | u32::from(address),
+                        game,
+                    )
+                });
+            }
+            FxRecord::Prepared {
+                assets: h.session().world.prepared_room_assets().unwrap(),
+                base: crate::rom::lorom_offset(0x830000 | u32::from(address)) as usize,
+            }
+        } else {
+            FxRecord::Legacy(h.legacy_native_record(0x83, address))
+        };
         for index in 0..8 {
             if bits & (1 << index) != 0 {
                 let object = objects.word(2 * index);

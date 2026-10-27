@@ -199,16 +199,28 @@ impl ActorCheckpointPayload {
             .actors
             .residency
             .checkpoint_rows()
-            .map(|(row, resource, image)| (row, resource, image_class(&mut images, image)))
+            .map(|(row, resource, source)| {
+                let source = match source {
+                    super::media::PaletteProvenance::Legacy(image) => {
+                        super::media::PaletteCheckpoint::Legacy(image_class(&mut images, image))
+                    }
+                    super::media::PaletteProvenance::Prepared(revision) => {
+                        super::media::PaletteCheckpoint::Prepared(*revision)
+                    }
+                };
+                (row, resource, source)
+            })
             .collect();
         let mut roles = Vec::new();
         for (resource, image) in named {
-            if rows.iter().any(|(_, receipt, _)| *receipt == resource) {
+            if rows.iter().any(|(_, receipt, source)| {
+                *receipt == resource && matches!(source, super::media::PaletteCheckpoint::Legacy(_))
+            }) {
                 roles.push((resource, image_class(&mut images, &image)));
             }
         }
         super::media::ActorPaletteResidency::checkpoint_restore(&rows, &images, world)?;
-        let mut bytes = Vec::from(b"ACTORCP2".as_slice());
+        let mut bytes = Vec::from(b"ACTORCP3".as_slice());
         bytes.extend_from_slice(&world.revision().0);
         for revision in [
             world.actor_gameplay_revision().map(|id| id.0),
@@ -237,7 +249,16 @@ impl ActorCheckpointPayload {
         for (row, resource, image) in rows {
             bytes.push(row as u8);
             bytes.extend_from_slice(&resource.0.to_le_bytes());
-            bytes.push(image as u8);
+            match image {
+                super::media::PaletteCheckpoint::Legacy(image) => {
+                    bytes.push(0);
+                    bytes.push(image as u8);
+                }
+                super::media::PaletteCheckpoint::Prepared(revision) => {
+                    bytes.push(1);
+                    bytes.extend_from_slice(&revision);
+                }
+            }
         }
         Ok(bytes)
     }
@@ -260,7 +281,7 @@ impl ActorCheckpointPayload {
             .map_err(|error| format!("{error:?}"))?;
         let named = named_images(sources, world)?;
         let mut read = CheckpointReader(bytes);
-        if read.bytes(8)? != b"ACTORCP2" || read.bytes(32)? != world.revision().0 {
+        if read.bytes(8)? != b"ACTORCP3" || read.bytes(32)? != world.revision().0 {
             return Err("actor checkpoint world revision differs".into());
         }
         for expected in [
@@ -309,9 +330,18 @@ impl ActorCheckpointPayload {
         for _ in 0..row_count {
             let row = usize::from(read.byte()?);
             let resource = crate::game::room_entry::world::ResourceId(read.id()?);
-            let image = usize::from(read.byte()?);
+            let image = match read.byte()? {
+                0 => {
+                    let image = usize::from(read.byte()?);
+                    if image >= count {
+                        return Err("invalid checkpoint palette image".into());
+                    }
+                    super::media::PaletteCheckpoint::Legacy(image)
+                }
+                1 => super::media::PaletteCheckpoint::Prepared(read.bytes(32)?.try_into().unwrap()),
+                _ => return Err("invalid checkpoint palette source tag".into()),
+            };
             if row >= 16
-                || image >= count
                 || !row_ids.insert(row)
                 || !world.definition().is_some_and(|value| {
                     value.resources.get(&resource)
@@ -327,9 +357,10 @@ impl ActorCheckpointPayload {
         }
         if roles.iter().any(|(resource, class)| {
             usize::from(*class) >= count
-                || !rows
-                    .iter()
-                    .any(|(_, row_resource, _)| row_resource == resource)
+                || !rows.iter().any(|(_, row_resource, source)| {
+                    row_resource == resource
+                        && matches!(source, super::media::PaletteCheckpoint::Legacy(_))
+                })
         }) {
             return Err("invalid checkpoint named allocation role".into());
         }
@@ -337,7 +368,7 @@ impl ActorCheckpointPayload {
             loaded_class as usize != class
                 && native_class as usize != class
                 && !roles.iter().any(|(_, value)| *value as usize == class)
-                && !rows.iter().any(|(_, _, value)| *value == class)
+                && !rows.iter().any(|(_, _, value)| matches!(value, super::media::PaletteCheckpoint::Legacy(index) if *index == class))
         }) {
             return Err("unused checkpoint allocation class".into());
         }

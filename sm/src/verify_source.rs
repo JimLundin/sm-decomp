@@ -2,6 +2,10 @@
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/game/room_entry/prepared_assets.rs",
+        include_bytes!("game/room_entry/prepared_assets.rs"),
+    ),
+    (
         "sm/src/game/room_entry/prepared_tables.rs",
         include_bytes!("game/room_entry/prepared_tables.rs"),
     ),
@@ -1458,6 +1462,7 @@ pub static FILES: &[(&str, &[u8])] = &[
     ("sm/src/ram_map.rs", include_bytes!("ram_map.rs")),
     ("sm/src/recording.rs", include_bytes!("recording.rs")),
     ("sm/src/rom.rs", include_bytes!("rom.rs")),
+    ("sm/src/room_pack.rs", include_bytes!("room_pack.rs")),
     ("sm/src/rom_patches.rs", include_bytes!("rom_patches.rs")),
     ("sm/src/rtl.rs", include_bytes!("rtl.rs")),
     ("sm/src/save_ram.rs", include_bytes!("save_ram.rs")),

@@ -222,3 +222,26 @@ pub(crate) fn binding(swapped: bool) -> Arc<WorldBinding> {
     let (world, keys) = definition(swapped);
     WorldBinding::prepared(world, keys).expect("valid synthetic two-room fixture")
 }
+
+/// Only full application packs add the actual CurrentLoadStation opening sites.
+pub(crate) fn definition_with_application_starts(
+    swapped: bool,
+) -> (WorldDefinition, CompatibilityKeys) {
+    let (mut world, mut keys) = definition(swapped);
+    for (id, original, site) in [
+        (
+            StartId(0x3600_0063),
+            START_A,
+            LegacyStartSite { area: 6, index: 0 },
+        ),
+        (
+            StartId(0x0700_0064),
+            START_B,
+            LegacyStartSite { area: 0, index: 18 },
+        ),
+    ] {
+        world.starts.insert(id, world.starts[&original]);
+        keys.starts.insert(id, site);
+    }
+    (world, keys)
+}

@@ -545,6 +545,7 @@ pub mod game_state;
 pub mod recording;
 pub mod rom;
 pub mod rom_patches;
+pub mod room_pack;
 pub mod save_ram;
 pub mod snapshot_io;
 
@@ -782,6 +783,8 @@ pub fn verify_room_world_owner(id: u32) -> Box<game_state::GameOwner> {
 pub fn verify_room_world_case(id: u32, owner: &game_state::GameOwner) -> Option<Vec<u8>> {
     room_world_cases::capture(id, owner)
 }
+#[cfg(sm_verify_dll)]
+pub use room_world_resources::verify_room_pack_bytes;
 
 #[path = "verification/room_background_cases.rs"]
 pub(crate) mod room_background_cases;

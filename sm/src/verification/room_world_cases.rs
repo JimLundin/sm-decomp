@@ -118,7 +118,23 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         assert!(!g.g_fail, "room.world.base-audio-upload-no-diagnostic");
         room_world_resources::install(g);
         assert!(!g.g_fail, "room.world.resources-no-diagnostic");
-        if (2..=5).contains(&id) {
+        if g.world().prepared_room_assets().is_some() {
+            if id == 2 {
+                room_world_resources::check_assets(g);
+                let selected = g.world().clone();
+                let assets = selected.prepared_room_assets().unwrap();
+                crate::room_background_support::check_prepared_vram(
+                    selected.definition().unwrap(),
+                    selected.compatibility_keys(),
+                    &assets,
+                );
+                crate::room_background_support::check_prepared_dma(
+                    selected.definition().unwrap(),
+                    selected.compatibility_keys(),
+                    &assets,
+                );
+            }
+        } else if (2..=5).contains(&id) {
             room_world_resources::check_tables(g);
         }
         // Actual player initialization supplies retained draw/movement prerequisites.
@@ -131,7 +147,11 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         if id >= 9 {
             let (site, room, exit, x, y) = if id == 9 {
                 (
-                    fixture::START_A_SITE,
+                    if g.world().prepared_room_assets().is_some() {
+                        crate::game::room_entry::world::LegacyStartSite { area: 6, index: 0 }
+                    } else {
+                        fixture::START_A_SITE
+                    },
                     fixture::ROOM_A_KEY,
                     fixture::EXIT_B_KEY,
                     0x1a0,
@@ -139,7 +159,11 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 )
             } else {
                 (
-                    fixture::START_B_SITE,
+                    if g.world().prepared_room_assets().is_some() {
+                        crate::game::room_entry::world::LegacyStartSite { area: 0, index: 18 }
+                    } else {
+                        fixture::START_B_SITE
+                    },
                     fixture::ROOM_B_KEY,
                     fixture::EXIT_A_KEY,
                     0x3c0,
@@ -378,6 +402,10 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             "room.world.route-binding-retained"
         );
         assert!(!g.g_fail, "room.world.route-no-diagnostic");
+        #[cfg(sm_verify_dll)]
+        if id == 2 && g.world().prepared_room_assets().is_some() {
+            crate::verification_checkpoint::check_prepared_palette_checkpoint(g);
+        }
         record(&mut out, 2, g);
         out
     }

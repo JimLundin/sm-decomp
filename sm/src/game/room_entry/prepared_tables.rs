@@ -268,12 +268,12 @@ impl Fingerprint {
         result
     }
 }
-fn fingerprint(bytes: &[u8]) -> [u8; 32] {
+pub(super) fn fingerprint(bytes: &[u8]) -> [u8; 32] {
     let mut hash = Fingerprint::new();
     hash.bytes(bytes);
     hash.finish()
 }
-fn compatibility(world: &WorldDefinition, keys: &CompatibilityKeys) -> [u8; 32] {
+pub(super) fn compatibility(world: &WorldDefinition, keys: &CompatibilityKeys) -> [u8; 32] {
     let mut h = Fingerprint::new();
     h.bytes(b"SMTT-world-reference-lorom-ram-v1");
     macro_rules! n { ($($value:expr),* $(,)?) => {{ $(h.number($value as u64);)* }}; }

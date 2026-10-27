@@ -27,7 +27,7 @@ struct RamOutput<'a> {
 impl Output for RamOutput<'_> {
     fn next_byte(&mut self) -> u8 {
         match self.prepared.as_mut() {
-            Some(stream) => *stream.next().expect("validated prepared table stream"),
+            Some(stream) => *stream.next().expect("validated prepared room stream"),
             None => next_byte(self.game),
         }
     }

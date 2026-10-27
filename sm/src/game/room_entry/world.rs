@@ -200,6 +200,7 @@ pub struct CompatibilityKeys {
 #[derive(Clone, Debug, PartialEq)]
 pub struct WorldBinding {
     tile_tables: Option<Arc<PreparedTileTables>>,
+    room_assets: Option<Arc<PreparedRoomAssets>>,
     actor_catalog: Arc<crate::game::actors::content::ActorCatalog>,
     actor_media: Arc<crate::game::actors::media::ActorMediaCatalog>,
     pub(super) revision: WorldRevision,
@@ -239,6 +240,7 @@ impl WorldBinding {
     pub fn canonical_legacy() -> Arc<Self> {
         Arc::new(Self {
             tile_tables: None,
+            room_assets: None,
             actor_catalog: Arc::new(crate::game::actors::content::ActorCatalog::LegacyBound),
             actor_media: Arc::new(crate::game::actors::media::ActorMediaCatalog::LegacyBound),
             revision: WorldRevision([0; 32]),
@@ -289,6 +291,7 @@ impl WorldBinding {
         }
         Ok(Arc::new(Self {
             tile_tables: None,
+            room_assets: None,
             actor_catalog: Arc::new(crate::game::actors::content::ActorCatalog::LegacyBound),
             actor_media: Arc::new(crate::game::actors::media::ActorMediaCatalog::LegacyBound),
             revision: WorldRevision(revision),
@@ -335,6 +338,56 @@ impl WorldBinding {
         }
         owned.tile_tables = Some(Arc::new(tables));
         Ok(binding)
+    }
+    pub fn prepared_with_room_assets(
+        world: WorldDefinition,
+        keys: CompatibilityKeys,
+        assets: PreparedRoomAssets,
+    ) -> Result<Arc<Self>, PreparedRoomError> {
+        Self::with_room_assets(
+            Self::prepared(world, keys).map_err(PreparedRoomError::World)?,
+            assets,
+        )
+    }
+    /// Complete a compatible Actor/table binding before an owner is opened.
+    pub fn with_room_assets(
+        mut binding: Arc<Self>,
+        assets: PreparedRoomAssets,
+    ) -> Result<Arc<Self>, PreparedRoomError> {
+        let owned = Arc::get_mut(&mut binding).ok_or(PreparedRoomError::World(
+            WorldDefinitionError::InvalidDefinition,
+        ))?;
+        if owned.room_assets.is_some()
+            || !assets.matches(
+                owned.definition().ok_or(PreparedRoomError::Incompatible)?,
+                &owned.keys,
+            )
+        {
+            return Err(PreparedRoomError::Incompatible);
+        }
+        if owned
+            .tile_tables
+            .as_ref()
+            .is_some_and(|tables| tables.fingerprint() != assets.tables().fingerprint())
+        {
+            return Err(PreparedRoomError::Incompatible);
+        }
+        let mut media = (*owned.actor_media).clone();
+        media.bind_room_catalog(assets.fingerprint());
+        owned.actor_media = Arc::new(media);
+        owned.revision = WorldRevision(assets.fingerprint());
+        owned.tile_tables = Some(Arc::new(assets.tables().clone()));
+        owned.room_assets = Some(Arc::new(assets));
+        Ok(binding)
+    }
+    pub fn prepared_room_source_size(&self) -> Option<usize> {
+        self.room_assets.as_ref().map(|assets| assets.source_size())
+    }
+    pub(crate) fn compatibility_keys(&self) -> &CompatibilityKeys {
+        &self.keys
+    }
+    pub(crate) fn prepared_room_assets(&self) -> Option<Arc<PreparedRoomAssets>> {
+        self.room_assets.clone()
     }
     pub(crate) fn prepared_table(&self, source: &AssetSource) -> Option<Arc<[u8]>> {
         self.tile_tables.as_ref()?.stream(source)
@@ -819,4 +872,5 @@ impl WorldBinding {
     }
 }
 
+pub use super::prepared_assets::{PreparedRoomAssets, PreparedRoomError};
 pub use super::prepared_tables::{PreparedTableError, PreparedTileTables};

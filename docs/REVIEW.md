@@ -14,10 +14,37 @@ This directive supersedes older work-order and pacing advice below; PLAN's
 Fast loop, resource limits and landing rules remain in force. Existing source
 owners and the sole Windows integrator retain their assignments.
 
-Current published main/origin `3c908c32`, canonical source `38455802`:
-production 114,504, legacy 17,793, unsafe-containing lines 2,545,
-verification 42,128; 586 inputs / 6,297,471 raw bytes and 573 source bindings;
-codec43 / `3e92b93347c1e182`, 160 unchanged warnings.
+**Continuous lane work (user, 2026-10-27).** Keep a current responsibility and
+one concrete ready follow-up for both Windows and Linux. Name the owner, allowed
+files, required input, result and next recipient before the current task ends.
+Inspect actual handles at handoffs; a correction comment or `send_message` does
+not reactivate a completed worker. Use `followup_task` for terminal handles,
+preserving live jobs, frozen source and accepted evidence. While one lane waits
+for a required input, assign independent preparation or the next complete
+dependency scope under PLAN's budgets; do not repeat accepted checks to fill time.
+
+The missed outer-source reactivation was corrected. Final SOURCE06 is frozen;
+Linux owns its independent composition review and the bounded milestone3
+interface preparation. Reuse the completed Session/sprite/task20 surveys to
+choose concrete next owners, callers and checks; do not repeat those surveys.
+Windows keeps the prepared catalog/DMA composition and native archive, compiles
+immutable corrected source during independent review, then qualifies and
+publishes promptly. The
+[cross-host refill directive](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6446640277)
+holds current assignments; no prose/ACK gate is added to source or compilation.
+
+Current published main/origin `79efbfb6` has complete source/tool identity
+`cdee47b8`, measured by the existing source_hash command. Engine/native inputs
+remain byte-identical to the prepared-table publication `3c908c32`, whose
+historical qualified source is `38455802`: production 114,504, legacy 17,793,
+unsafe-containing lines 2,545, verification 42,128. That table qualification
+retains its original 586 inputs / 6,297,471 raw bytes, 573 source bindings,
+codec43 / `3e92b93347c1e182` and 160 warnings. Its old DLL is not attributed to
+the new tool-bound source; final room-cohort builds bind the complete composition.
+The independent frontend verification sequencing repair is published; its nine
+Python orchestration checks pass. Actual room-cohort frontend linking and runtime
+qualification remain assigned to Windows. Count its ten support lines once in
+the outer-source reconciliation; preserve original engine/native attribution.
 Native [milestone1](https://github.com/JimLundin/sm-decomp/milestone/1) and its
 required tasks3/8/9/10 are achieved and closed. [Milestone2](https://github.com/JimLundin/sm-decomp/milestone/2)
 is active as [deliverable12](https://github.com/JimLundin/sm-decomp/issues/12);
@@ -153,6 +180,33 @@ Next work, in order:
    Final review depends on all three source deliveries; final qualification on
    review; acceptance on publication. Independent authoring/preparation runs now.
 
+   Current handoff: catalogue01 + DMA01 + frozen outer SOURCE06 + checkpoint19
+   compose source68557f2e:588 inputs/6414440 bytes/575 literal bindings,
+   codec45/a239acb01e0789a4. SOURCE03 header/LoROM/normalization/allocation and
+   detached registration, SOURCE04 native textual directory search, SOURCE05
+   public checkpoint-helper caller and SOURCE06 path guards are preserved.
+   Windows composition04 library19.765s, real verifier-host check23.198s,
+   frontend build/link72.236s and formatting pass at this exact source;
+   library warnings remain160. Seven exact native desktop input hashes retain
+   their original archive proof. [Final independent source approval](https://github.com/JimLundin/sm-decomp/issues/16#issuecomment-6448505194)
+   closes every source finding. Final direct DLL71.571s passes at17:15:33UTC
+   on the same source/codec. Runtime/capture and publication remain open;
+   collect the original handle and launch the prepared groups immediately.
+
+   Explicit first Windows desktop pack profile: ASCII ROM filename/path;
+   ASCII cwd only for automatic native directory search of a relative ROM.
+   Absolute ASCII ROM paths do not depend on cwd encoding; --config skips
+   that directory-search guard. Pack filenames, verifier/export and sm.exe
+   verify keep Rust filesystem handling. No-room-pack flow invokes no new
+   checks. SOURCE06 enforces this before GameOwner construction; document the
+   concise CLI limit in README beside code. No universal native Unicode claim.
+
+   Independent final-source forecast versus published79: production+1909,
+   verification+1037, support+67, all-source unsafe-containing+34, legacy/raw
+   retirement0. Resulting Score116413/17793/2579/43165 needs staged publication
+   readback. Verification exceeds the original230..570 forecast and must remain
+   counted in full; the already published support10 is counted once.
+
    Settled flow: `sm.exe --room-pack PATH ROM`. One bounded standard-library SMRP
    wire codec carries full WorldDefinition/CompatibilityKeys, vanilla reference
    profile/options0 and complete required room-use catalogs. Real generic import/
@@ -270,6 +324,37 @@ Next work, in order:
    reset/load/oracle and CPU/DMA/HDMA writers must close together before deleting
    the copied storage. Defer standalone caching; prepare one full responsibility
    whose original fields/adapters/foreign transfers actually disappear.
+
+7. **Source active: one shared owned rasterizer, with same-cohort replacement.**
+   [Task21](https://github.com/JimLundin/sm-decomp/issues/21) is the first reusable
+   responsibility toward task20's complete Morph9E9F Session. Linux V source
+   linux_verifier_readiness owns new rendering core/records/prepared consumer;
+   local C checkpoint_flexible_interface was actually reactivated17:27UTC for
+   the private ppu.rs adapter/removal donor. C alone changes current PPU/shared
+   registration through the sole Windows integrator; Linux ownership_frontier
+   independently reviews. Inspect Linux handles before actual reactivation.
+   Source-author64MiB budgets are separate from current final qualification.
+   All room-pack freezes remain immutable; task21 adds no publication gate.
+
+   Reuse the complete native BG/sprite/span/window/priority/color/Mode7
+   computation behind one safe backend-free line interface. Two actual consumers
+   are required: retained PPU and prepared input. Remove500..550 old mixed
+   algorithm lines in the same qualified cohort; full added/replacement700..1150
+   forecasts net+150..650 production/+100..250 verification/+30..100 support.
+   Count movements/records/adapters once; no size-saving or backend-retirement
+   claim. Preserve exact native/reference differences, admitted aliases and
+   publication/failure order; EXTBG/mosaic fallback/registers/snapshots/reference
+   pixel selection remain disclosed. RAM replay alone cannot qualify pixels.
+   Ready follow-up is complete prepared message composition using the existing
+   dialogue runner, including saved display/request/resume/reset/checkpoint.
+
+   Task20's six-role+8900..21100 forecast would leave125313..137513 production
+   lines including retained SOURCE06, before genuine retirement. It is not a
+   blanket source assignment. Preserve the full Morph1200/eight proof groups;
+   freeze its development-only sealed start conversion, exact normal/dialogue
+   Tick settlement, semantic checkpoint/audio establishment and portable
+   dependency graph before expanding those roles. Complete owned Session,
+   full Scene, media lifetimes, audio and actual backend-absent play stay open.
 
 Radius's accepted source proof and lower bound 1,668 completed preparations remain
 scoped evidence; 93,184 terrain-byte accesses per pair is not an elapsed speedup.

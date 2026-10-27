@@ -1,3 +1,4 @@
+use crate::execution::DmaRomSource;
 use crate::game_state::WorkRam;
 use crate::initial_state::InitialState;
 use crate::rtl::words;
@@ -386,7 +387,7 @@ impl crate::execution::Execution<'_> {
         }
     }
 
-    unsafe fn write_register(&mut self, adr: u16, val: u8) {
+    unsafe fn write_register(&mut self, adr: u16, val: u8, source: Option<&DmaRomSource<'_>>) {
         unsafe {
             let snes = self.snes();
             match adr {
@@ -434,11 +435,11 @@ impl crate::execution::Execution<'_> {
                             aBank,
                             aAdr
                         )) as u32;
-                        let _data: i32 =
-                            self.read(t) as i32 | (self.read(t.wrapping_add(1)) as i32) << 8;
+                        let _data: i32 = self.read_with_dma_source(t, source) as i32
+                            | (self.read_with_dma_source(t.wrapping_add(1), source) as i32) << 8;
                     }
                     self.start_dma(val, false_0 != 0);
-                    while self.step_dma() {}
+                    while self.step_dma_with_source(source) {}
                 }
                 0x420c => self.start_dma(val, true_0 != 0),
                 0x420d => (*snes).fastMem = val & 0x1 != 0,
@@ -448,6 +449,14 @@ impl crate::execution::Execution<'_> {
     }
 
     pub(crate) unsafe fn read(&mut self, address: u32) -> u8 {
+        unsafe { self.read_with_dma_source(address, None) }
+    }
+
+    pub(crate) unsafe fn read_with_dma_source(
+        &mut self,
+        address: u32,
+        source: Option<&DmaRomSource<'_>>,
+    ) -> u8 {
         unsafe {
             let bank = (address >> 16) as u8;
             let offset = address as u16;
@@ -468,11 +477,23 @@ impl crate::execution::Execution<'_> {
                     _ => {}
                 }
             }
-            self.read_cart(bank, offset)
+            match source {
+                Some(source) => self.read_cart_with_dma_source(bank, offset, Some(source)),
+                None => self.read_cart(bank, offset),
+            }
         }
     }
 
     pub(crate) unsafe fn write(&mut self, address: u32, value: u8) {
+        unsafe { self.write_with_dma_source(address, value, None) }
+    }
+
+    pub(crate) unsafe fn write_with_dma_source(
+        &mut self,
+        address: u32,
+        value: u8,
+        source: Option<&DmaRomSource<'_>>,
+    ) {
         unsafe {
             let bank = (address >> 16) as u8;
             let offset = address as u16;
@@ -484,7 +505,7 @@ impl crate::execution::Execution<'_> {
                 match offset {
                     0x0000..=0x1fff => self.ram().write_byte(usize::from(offset), value),
                     0x2100..=0x21ff => self.write_bbus(offset as u8, value),
-                    0x4200..=0x421f => self.write_register(offset, value),
+                    0x4200..=0x421f => self.write_register(offset, value, source),
                     0x4300..=0x437f => self.backend.write_dma_register(offset, value),
                     _ => {}
                 }

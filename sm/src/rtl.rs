@@ -1,4 +1,4 @@
-use crate::execution::{Execution, HostContext};
+use crate::execution::{DmaRomSource, Execution, HostContext};
 use crate::snapshot_io::{Block, SnapshotIo, TransferError};
 // Split-word assembly evaluates high then low. The i32 form retains signed
 // casts, including sign extension of the low operand. Repeated receivers and
@@ -957,6 +957,25 @@ pub unsafe fn WriteReg(reg: u16, value: u8, game: &mut Game) {
     let views = (game.g_snes, game.g_cpu);
     unsafe { write_reg_parts(reg, value, &mut game.execution(), views) }
 }
+/// Borrow prepared ROM bytes through both MDMAEN pre-reads and its complete drain.
+/// # Safety
+/// Requires WriteReg's live, exclusive backend and quiescent native borrowers.
+/// Selected CPU/device links keep their existing retained safety contracts.
+pub(crate) unsafe fn write_dma_start(mask: u8, source: &DmaRomSource<'_>, game: &mut Game) {
+    let views = (game.g_snes, game.g_cpu);
+    unsafe {
+        let mut execution = game.execution();
+        execution.write_with_dma_source(MDMAEN as u32, mask, Some(source));
+        observe_register_write(
+            MDMAEN as u16,
+            mask,
+            &mut execution.host,
+            execution.backend,
+            views,
+        );
+    }
+}
+
 pub(crate) unsafe fn write_reg_execution(reg: u16, value: u8, game: &mut Execution<'_>) {
     let views = game.backend.views();
     unsafe { write_reg_parts(reg, value, game, views) }

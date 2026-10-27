@@ -58,6 +58,7 @@ pub(crate) enum ActorMediaCatalog {
     Prepared {
         definitions: ActorMediaDefinitions,
         revision: MediaRevision,
+        room_catalog: Option<[u8; 32]>,
     },
 }
 
@@ -182,9 +183,17 @@ impl ActorMediaCatalog {
         Ok(Self::Prepared {
             definitions,
             revision,
+            room_catalog: world
+                .prepared_room_assets()
+                .map(|assets| assets.fingerprint()),
         })
     }
 
+    pub(crate) fn bind_room_catalog(&mut self, fingerprint: [u8; 32]) {
+        if let Self::Prepared { room_catalog, .. } = self {
+            *room_catalog = Some(fingerprint);
+        }
+    }
     pub(crate) fn definitions(&self) -> Option<&ActorMediaDefinitions> {
         match self {
             Self::LegacyBound => None,
@@ -400,7 +409,17 @@ pub(crate) struct ActorPaletteResidency {
 #[derive(Clone)]
 struct ResidentPalette {
     resource: crate::game::room_entry::world::ResourceId,
-    image: crate::rom::RomImage,
+    provenance: PaletteProvenance,
+}
+#[derive(Clone)]
+pub(super) enum PaletteProvenance {
+    Legacy(crate::rom::RomImage),
+    Prepared([u8; 32]),
+}
+#[derive(Clone, Copy)]
+pub(super) enum PaletteCheckpoint {
+    Legacy(usize),
+    Prepared([u8; 32]),
 }
 impl PartialEq for ActorPaletteResidency {
     fn eq(&self, other: &Self) -> bool {
@@ -410,7 +429,17 @@ impl PartialEq for ActorPaletteResidency {
             .all(|(left, right)| match (left, right) {
                 (None, None) => true,
                 (Some(left), Some(right)) => {
-                    left.resource == right.resource && left.image.same_allocation(&right.image)
+                    left.resource == right.resource
+                        && match (&left.provenance, &right.provenance) {
+                            (PaletteProvenance::Legacy(left), PaletteProvenance::Legacy(right)) => {
+                                left.same_allocation(right)
+                            }
+                            (
+                                PaletteProvenance::Prepared(left),
+                                PaletteProvenance::Prepared(right),
+                            ) => left == right,
+                            _ => false,
+                        }
                 }
                 _ => false,
             })
@@ -444,8 +473,25 @@ impl ActorPaletteResidency {
         image: crate::rom::RomImage,
     ) {
         if let Some(receipt) = self.rows.get_mut(usize::from(row)) {
-            *receipt = resource.map(|resource| ResidentPalette { resource, image });
+            *receipt = resource.map(|resource| ResidentPalette {
+                resource,
+                provenance: PaletteProvenance::Legacy(image),
+            });
         }
+    }
+}
+impl ActorPaletteResidency {
+    pub(super) fn record_prepared(
+        &mut self,
+        row: u16,
+        resource: crate::game::room_entry::world::ResourceId,
+        revision: [u8; 32],
+    ) {
+        assert!(row < 8, "prepared room palette uses background rows");
+        self.rows[usize::from(row)] = Some(ResidentPalette {
+            resource,
+            provenance: PaletteProvenance::Prepared(revision),
+        });
     }
 }
 impl ActorMediaCatalog {
@@ -474,7 +520,10 @@ impl ActorMediaCatalog {
             .get(usize::from(definition.cgram_row))
             .and_then(Option::as_ref);
         if receipt.is_some_and(|receipt| {
-            receipt.resource == resource && receipt.image.same_allocation(image)
+            receipt.resource == resource && match &receipt.provenance {
+                PaletteProvenance::Legacy(source) => source.same_allocation(image),
+                PaletteProvenance::Prepared(revision) => matches!(self, Self::Prepared { room_catalog: Some(expected), .. } if expected == revision),
+            }
         }) {
             Ok(())
         } else {
@@ -573,24 +622,28 @@ impl ActorPaletteResidency {
         Item = (
             usize,
             crate::game::room_entry::world::ResourceId,
-            &crate::rom::RomImage,
+            &PaletteProvenance,
         ),
     > {
         self.rows.iter().enumerate().filter_map(|(row, value)| {
             value
                 .as_ref()
-                .map(|receipt| (row, receipt.resource, &receipt.image))
+                .map(|receipt| (row, receipt.resource, &receipt.provenance))
         })
     }
 
     pub(super) fn checkpoint_restore(
-        rows: &[(usize, crate::game::room_entry::world::ResourceId, usize)],
+        rows: &[(
+            usize,
+            crate::game::room_entry::world::ResourceId,
+            PaletteCheckpoint,
+        )],
         images: &[crate::rom::RomImage],
         world: &crate::game::room_entry::world::WorldBinding,
     ) -> Result<Self, String> {
         let mut result = Self::default();
-        for &(row, resource, image) in rows {
-            if row >= 16 || result.rows[row].is_some() || image >= images.len() {
+        for &(row, resource, source) in rows {
+            if row >= 16 || result.rows[row].is_some() {
                 return Err("invalid actor checkpoint palette receipt".into());
             }
             if !world.definition().is_some_and(|definition| {
@@ -599,9 +652,27 @@ impl ActorPaletteResidency {
             }) {
                 return Err("actor checkpoint palette resource is unavailable".into());
             }
+            let provenance = match source {
+                PaletteCheckpoint::Legacy(image) => PaletteProvenance::Legacy(
+                    images
+                        .get(image)
+                        .ok_or("invalid checkpoint palette image")?
+                        .clone(),
+                ),
+                PaletteCheckpoint::Prepared(revision) => {
+                    if row >= 8
+                        || !world
+                            .prepared_room_assets()
+                            .is_some_and(|assets| assets.fingerprint() == revision)
+                    {
+                        return Err("prepared checkpoint palette catalog differs".into());
+                    }
+                    PaletteProvenance::Prepared(revision)
+                }
+            };
             result.rows[row] = Some(ResidentPalette {
                 resource,
-                image: images[image].clone(),
+                provenance,
             });
         }
         Ok(result)

@@ -596,40 +596,83 @@ impl GraphicsAsset {
             }
             // The old packed descriptor read its adjacent mode/register bytes natively.
             setup_transfer(u16::from_ne_bytes(mode), source, size, game);
-            WriteReg(MDMAEN as u16, 2, game);
+            let assets = if source == 0x9ab200 {
+                game.world().prepared_room_assets()
+            } else {
+                None
+            };
+            start_room_dma(2, assets.as_deref(), game);
+        }
+    }
+}
+
+pub(crate) unsafe fn start_room_dma(
+    mask: u8,
+    assets: Option<&super::room_entry::PreparedRoomAssets>,
+    game: &mut Game,
+) {
+    unsafe {
+        match assets {
+            Some(assets) => {
+                let (first, bytes) = assets.raw_window();
+                crate::rtl::write_dma_start(
+                    mask,
+                    &crate::execution::DmaRomSource::new(first, bytes),
+                    game,
+                )
+            }
+            None => WriteReg(MDMAEN as u16, mask, game),
         }
     }
 }
 
 pub unsafe fn CopyToVramNow(vram_dst: u16, src: u32, size: u16, game: &mut Game) {
     unsafe {
+        copy_to_vram_with_source(vram_dst, src, size, None, game);
+    }
+}
+pub(crate) unsafe fn copy_to_vram_with_source(
+    vram_dst: u16,
+    src: u32,
+    size: u16,
+    assets: Option<&super::room_entry::PreparedRoomAssets>,
+    game: &mut Game,
+) {
+    unsafe {
         crate::rtl::register_writes! { game;
             byte(INIDISP as u16, 0x80); word(VMADDL as u16, vram_dst);
         }
         setup_transfer(0x1801, src, size, game);
         crate::rtl::register_writes! { game;
-            byte(VMAIN as u16, 0x80); byte(MDMAEN as u16, 2);
-            byte(INIDISP as u16, 0xf);
+            byte(VMAIN as u16, 0x80);
         }
+        start_room_dma(2, assets, game);
+        crate::rtl::register_writes! { game; byte(INIDISP as u16, 0xf); }
     }
 }
 
 // The hardware adapter is constructed only by the unsafe VRAM entry point.
 // The shared decoder and RAM output do not contain unsafe operations.
-struct DecompressionVram<'a>(&'a mut Game);
+struct DecompressionVram<'a> {
+    game: &'a mut Game,
+    prepared: Option<core::slice::Iter<'a, u8>>,
+}
 impl decompression::Output for DecompressionVram<'_> {
     fn next_byte(&mut self) -> u8 {
-        decompression::next_byte(self.0)
+        match self.prepared.as_mut() {
+            Some(stream) => *stream.next().expect("validated prepared VRAM room stream"),
+            None => decompression::next_byte(self.game),
+        }
     }
     fn read(&mut self, position: i32) -> u8 {
-        unsafe { ReadPpuByte(position as u16, self.0) }
+        unsafe { ReadPpuByte(position as u16, self.game) }
     }
     fn write(&mut self, position: i32, value: u8, back_reference: bool) {
         unsafe {
             if back_reference {
-                WriteRegWord(VMADDL as u16, (position >> 1) as u16, self.0);
+                WriteRegWord(VMADDL as u16, (position >> 1) as u16, self.game);
             }
-            WriteReg((VMDATAL as i32 + (position & 1)) as u16, value, self.0);
+            WriteReg((VMDATAL as i32 + (position & 1)) as u16, value, self.game);
         }
     }
 }
@@ -647,7 +690,22 @@ unsafe fn ReadPpuByte(addr: u16, game: &mut Game) -> u8 {
 }
 pub unsafe fn DecompressToVRAM(src: u32, dst_addr: u16, game: &mut Game) {
     game.decompress_src = src;
-    decompression::decode(i32::from(dst_addr), &mut DecompressionVram(game));
+    decompression::decode(
+        i32::from(dst_addr),
+        &mut DecompressionVram {
+            game,
+            prepared: None,
+        },
+    );
+}
+pub(crate) unsafe fn decompress_prepared_vram(stream: &[u8], destination: u16, game: &mut Game) {
+    decompression::decode(
+        i32::from(destination),
+        &mut DecompressionVram {
+            game,
+            prepared: Some(stream.iter()),
+        },
+    );
 }
 
 pub(crate) fn queue_scrolling_tiles(k: u16, layout: ScrollingDmaLayout, game: &mut Game) {

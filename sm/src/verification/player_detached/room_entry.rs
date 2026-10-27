@@ -15,5 +15,7 @@ pub(crate) mod state;
 #[path = "../../game/room_entry/world.rs"]
 pub(crate) mod world;
 pub(crate) use api::{ArrivalRequest, ContactSite, EntryPoll, EntrySignal, EntryWait, StartSite};
+#[path = "../../game/room_entry/prepared_assets.rs"]
+pub(crate) mod prepared_assets;
 #[path = "../../game/room_entry/prepared_tables.rs"]
 pub(crate) mod prepared_tables;

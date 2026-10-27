@@ -3,7 +3,7 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 #![allow(non_snake_case, non_upper_case_globals, dead_code)]
 
-use sm::game_state::Game;
+use sm::game_state::{Game, GameOwner};
 use std::ffi::{CStr, c_char, c_int, c_void};
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -287,6 +287,89 @@ pub unsafe extern "C" fn sm_verify_args(argc: u32, argv: *const *const c_char) -
     }
 }
 
+// Movies cannot export immutable authored worlds and deliberately changed payloads.
+#[cfg(sm_verify_dll)]
+fn export_room_pack(args: &[String]) -> c_int {
+    let result = (|| -> Result<(), String> {
+        use std::io::{Read, Write};
+        if args.len() < 3
+            || args[1] != "--room-pack-export"
+            || args[2].is_empty()
+            || args[2].starts_with('-')
+        {
+            return Err("room pack export takes ROM --room-pack-export OUT".into());
+        }
+        let (mut alternate, mut changed) = (false, false);
+        for option in &args[3..] {
+            match option.as_str() {
+                "--room-pack-alternate" if !alternate => alternate = true,
+                "--room-pack-changed" if !changed => changed = true,
+                _ => return Err(format!("unknown or repeated export option: {option}")),
+            }
+        }
+        let output = std::path::absolute(std::path::Path::new(&args[2]))
+            .map_err(|error| format!("room pack output path: {error}"))?;
+        let file =
+            std::fs::File::open(&args[0]).map_err(|error| format!("{}: {error}", args[0]))?;
+        let mut source = Vec::new();
+        file.take(sm::room_pack::MAX_ROM_SOURCE_BYTES as u64 + 1)
+            .read_to_end(&mut source)
+            .map_err(|error| error.to_string())?;
+        if source.len() > sm::room_pack::MAX_ROM_SOURCE_BYTES {
+            return Err("room pack import source exceeds its byte limit".into());
+        }
+        let normalized =
+            sm::room_pack::normalize_source(&source).map_err(|error| error.to_string())?;
+        let bytes = sm::verify_room_pack_bytes(&normalized, alternate, changed)?;
+        sm::room_pack::load(&bytes).map_err(|error| format!("exported room pack: {error}"))?;
+        std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&output)
+            .map_err(|error| format!("{}: {error}", output.display()))?
+            .write_all(&bytes)
+            .map_err(|error| error.to_string())?;
+        let fingerprint: String = bytes[20..52]
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect();
+        println!(
+            "Room pack exported: {}; bytes={}; content_fingerprint={fingerprint}",
+            output.display(),
+            bytes.len()
+        );
+        Ok(())
+    })();
+    match result {
+        Ok(()) => 0,
+        Err(error) => {
+            eprintln!("verify: {error}");
+            2
+        }
+    }
+}
+
+// Movies cannot select an externally authored world for these focused entry routes.
+#[cfg(sm_verify_dll)]
+fn prepared_room_case(args: &[String], selected: bool) -> Result<Option<u32>, String> {
+    if !args.iter().any(|arg| arg == "--prepared-room-case") {
+        return Ok(None);
+    }
+    if !selected {
+        return Err("--prepared-room-case requires --room-pack".into());
+    }
+    if args.len() != 3 || args[1] != "--prepared-room-case" {
+        return Err("--prepared-room-case takes a ROM and case ID, without replay options".into());
+    }
+    let id = args[2]
+        .parse::<u32>()
+        .map_err(|_| "invalid prepared room case ID")?;
+    if !matches!(id, 2..=5 | 8..=10) {
+        return Err("prepared room case must be initial2/3, door4/5 or reset/current8/9/10".into());
+    }
+    Ok(Some(id))
+}
+
 unsafe fn run(args: &[String]) -> c_int {
     unsafe {
         if STARTED.swap(true, Ordering::SeqCst) {
@@ -297,7 +380,29 @@ unsafe fn run(args: &[String]) -> c_int {
         if args.len() == 1 && args[0] == "--unit-tests" {
             return std::panic::catch_unwind(verify::run_unit_tests).unwrap_or(2);
         }
-        let mut game = Game::new();
+        #[cfg(sm_verify_dll)]
+        if args.iter().any(|arg| arg == "--room-pack-export") {
+            return export_room_pack(args);
+        }
+        let selection = match sm::room_pack::select_for_verifier(args) {
+            Ok(selection) => selection,
+            Err(error) => {
+                eprintln!("verify: {error}");
+                return 2;
+            }
+        };
+        #[cfg(sm_verify_dll)]
+        let room_case = match prepared_room_case(&selection.arguments, selection.world.is_some()) {
+            Ok(case) => case,
+            Err(error) => {
+                eprintln!("verify: {error}");
+                return 2;
+            }
+        };
+        let owner = match selection.world {
+            Some(world) => GameOwner::with_world(world),
+            None => GameOwner::new(),
+        };
         sm::host::install_host_hooks(sm::host::HostHooks {
             die: host_die,
             warning: host_warning,
@@ -305,7 +410,41 @@ unsafe fn run(args: &[String]) -> c_int {
             apu_unlock: host_apu_unlock,
         });
         stderr = __acrt_iob_func(2);
-        verify::run_args(args, &mut game)
+        #[cfg(sm_verify_dll)]
+        if let Some(id) = room_case {
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let filename = std::ffi::CString::new(selection.arguments[0].as_bytes())
+                    .map_err(|_| "invalid ROM path".to_owned())?;
+                owner.with(|game| -> Result<(), String> {
+                    verify::initialize_checkpoint_machine(game, &filename)?;
+                    initialize_verify_audio(game)?;
+                    verify::begin_verifier_drawing(game);
+                    Ok(())
+                })?;
+                sm::verify_room_world_case(id, &owner)
+                    .ok_or_else(|| "selected prepared room assertions failed".to_owned())
+            }));
+            finish_verify_audio();
+            return match result {
+                Ok(Ok(bytes)) => {
+                    let fingerprint = sm::verification_checkpoint::fingerprint(&bytes);
+                    println!(
+                        "Prepared room case {id}: PASS; capture_bytes={}; capture_fingerprint={fingerprint:016x}",
+                        bytes.len()
+                    );
+                    0
+                }
+                Ok(Err(error)) => {
+                    eprintln!("verify: {error}");
+                    2
+                }
+                Err(_) => {
+                    eprintln!("verify: selected prepared room case {id} panicked");
+                    2
+                }
+            };
+        }
+        owner.with(|game| verify::run_args(&selection.arguments, game))
     }
 }
 

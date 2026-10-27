@@ -65,6 +65,7 @@ fn stage_receipt(runtime: &mut Runtime<'_>, image: &RomImage, resource: Resource
 pub(crate) fn run_checked() {
     prepared_sprite_palette_modes_use_actual_oam_emission();
     actual_room_palette_decode_clears_obj_receipts_before_dynamic_reselection();
+    full_room_catalog_preserves_actor_media_and_accepts_prepared_bg_receipt();
 }
 
 fn prepared_sprite_palette_modes_use_actual_oam_emission() {
@@ -232,4 +233,85 @@ fn actual_room_palette_decode_clears_obj_receipts_before_dynamic_reselection() {
         Some(AppearanceId(21)),
         "actor.palette.same_row_reused_for_next_room_material"
     );
+}
+
+// Movies cannot compose Prepared Actor media with a full catalog before owner construction.
+fn full_room_catalog_preserves_actor_media_and_accepts_prepared_bg_receipt() {
+    use crate::game::room_entry::world::*;
+    let original = super::fixture::binding(false, AppearanceId(20), true);
+    let mut world = original.definition().unwrap().clone();
+    let mut keys = original.compatibility_keys().clone();
+    world
+        .resources
+        .insert(ResourceId(5), ResourceKind::TileTable);
+    world.resources.insert(ResourceId(6), ResourceKind::Tiles);
+    keys.resources.insert(
+        ResourceId(5),
+        ResourceKey::Long(LegacyAddress24([0, 0x90, 0xc0])),
+    );
+    keys.resources.insert(
+        ResourceId(6),
+        ResourceKey::Long(LegacyAddress24([0, 0x91, 0xc0])),
+    );
+    world.tilesets.insert(
+        TilesetId(9),
+        TilesetDefinition {
+            tile_table: ResourceId(5),
+            tiles: ResourceId(6),
+            palette: ResourceId(4),
+        },
+    );
+    let binding = WorldBinding::prepared_with_actors(
+        world.clone(),
+        keys.clone(),
+        original.actors().definitions().unwrap().clone(),
+        original.actors().keys().unwrap().clone(),
+        original.actor_media().definitions().unwrap().clone(),
+    )
+    .unwrap();
+    let revisions = (
+        binding.actor_gameplay_revision(),
+        binding.actor_media_revision(),
+    );
+    let mut source = vec![0xff; 0x400000];
+    let at = lorom_offset(0xb49000) as usize;
+    source[at..at + 4].copy_from_slice(&[0xe4, 0x1f, 0x66, 0xff]);
+    let assets = PreparedRoomAssets::import(&source, &world, &keys).unwrap();
+    let revision = assets.fingerprint();
+    let binding = WorldBinding::with_room_assets(binding, assets).unwrap();
+    assert_eq!(
+        (
+            binding.actor_gameplay_revision(),
+            binding.actor_media_revision()
+        ),
+        revisions
+    );
+    let owner = crate::game_state::GameOwner::with_world(binding.clone());
+    owner.with(|game| {
+        let image = RomImage::zeroed(1);
+        let mut h = Runtime::new(game);
+        let check = |h: &Runtime<'_>, image: &RomImage| {
+            binding.actor_media().validate_material_residency(
+                MaterialId(52),
+                h.session().actor_identity.palette_residency(),
+                image,
+            )
+        };
+        let missing = Err(ActorContentError::PaletteNotResident(MaterialId(52)));
+        assert_eq!(check(&h, &image), missing);
+        EntryEffects::decompress(
+            &mut h,
+            AssetSource::Bound(AssetRef::Prepared(ResourceId(4))),
+            InstallBuffer::Palette,
+        );
+        assert_eq!(check(&h, &image), Ok(()));
+        h.session_mut()
+            .actor_identity
+            .record_prepared_palette_residency(0, ResourceId(4), [0; 32]);
+        assert_eq!(check(&h, &image), missing);
+        h.session_mut()
+            .actor_identity
+            .record_prepared_palette_residency(0, ResourceId(4), revision);
+        assert_eq!(check(&h, &RomImage::zeroed(1)), Ok(()));
+    });
 }

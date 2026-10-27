@@ -41,14 +41,19 @@ unsafe fn clear_tilemap_with_dma(
     game: &mut Game,
 ) {
     unsafe {
+        let assets = game.world().prepared_room_assets();
         crate::rtl::register_writes! { game;
             word(VMADDL as u16, destination); word(DMAP1 as u16, 0x1808);
             word(A1T1L as u16, low); word(A1B1 as u16, 0x80);
             word(DAS1L as u16, size); byte(VMAIN as u16, 0);
-            byte(MDMAEN as u16, 2); word(VMADDL as u16, destination);
+        }
+        crate::game::display_refresh::start_room_dma(2, assets.as_deref(), game);
+        crate::rtl::register_writes! { game;
+            word(VMADDL as u16, destination);
             word(DMAP1 as u16, 0x1908); word(A1T1L as u16, high);
             word(A1B1 as u16, 0x80); word(DAS1L as u16, size);
-            byte(VMAIN as u16, 0x80); byte(MDMAEN as u16, 2);
+            byte(VMAIN as u16, 0x80);
         }
+        crate::game::display_refresh::start_room_dma(2, assets.as_deref(), game);
     }
 }

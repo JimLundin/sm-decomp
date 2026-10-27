@@ -8,8 +8,6 @@ The code was transpiled once from [snesrev/sm](https://github.com/snesrev/sm)
 with c2rust and is being developed into safe, idiomatic Rust while preserving
 the original game's behavior and quirks.
 
-![Codebase progress: Rust ownership and unsafe counts, with 1-hour unsafe-block trends by area](docs/treemap.svg)
-
 The goal is a purpose-built Rust engine with owned gameplay state, its own
 renderer and audio, and no SNES emulation dependency in the finished runtime.
 The planned [architecture](docs/target-architecture/README.md) also supports
@@ -22,6 +20,8 @@ work in progress.
 
 See the [setup and build guide](docs/ITERATION.md) for prerequisites, ROM
 requirements, launch commands and controls. You need your own copy of the game.
+
+Load prepared room content with `sm.exe --room-pack PATH ROM`. On Windows, the selected ROM path must be ASCII; a relative ROM path also requires an ASCII working directory unless `--config` is supplied. Room-pack paths support Unicode.
 
 ## Verify
 

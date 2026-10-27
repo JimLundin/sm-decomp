@@ -5,6 +5,26 @@ use crate::rom::RomImage;
 use crate::snes::snes::Backend;
 use crate::types::{Cpu, Point16U, Rect16U};
 
+/// Immutable ROM bytes borrowed for one synchronous MDMAEN write.
+/// The cartridge mapper supplies its actual index; uncovered reads stay live.
+pub(crate) struct DmaRomSource<'a> {
+    first: usize,
+    bytes: &'a [u8],
+}
+
+#[forbid(unsafe_code)]
+impl<'a> DmaRomSource<'a> {
+    pub(crate) fn new(first: usize, bytes: &'a [u8]) -> Self {
+        Self { first, bytes }
+    }
+
+    pub(crate) fn byte(&self, mapped_rom_index: usize) -> Option<u8> {
+        self.bytes
+            .get(mapped_rom_index.checked_sub(self.first)?)
+            .copied()
+    }
+}
+
 pub(crate) struct HostContext<'a> {
     pub(crate) ram: &'a WorkRam,
     pub(crate) loaded_rom: &'a mut Option<RomImage>,

@@ -41,16 +41,27 @@ production/legacy/verification deltas, B ratio/reason and final Score. Use four 
 UTF-8 middle dots, not question marks; measure the values locally with progress.sh:
 `Score: checks 44/44 · legacy N · production N · unsafe N · verification N`.
 
-The sole progress view is tools/treemap.py's mobile portrait image, committed at
-docs/treemap.svg and displayed directly in README; no Pages/image CI publisher.
-Before each code commit, stage its source, run `python tools/treemap.py docs/treemap.svg --staged`,
-then stage the SVG beside the code. Never hand-edit it or add dashboards.
 Keep replay docs essential, upstream references and CSV/TOML provenance/checks;
 shared Python installers/runtime-only restores are support work, counted separately.
 
 ## Current work and limits
 
-Current source3845: production114504, legacy17793, unsafe2545, verification42128; warnings160.
+Current source9787: production116413, legacy17793, unsafe2579, verification43167; warnings160.
+
+Prepared room cohort9787 qualifies Levels/Tiles/Palette/Background/Fx catalogs and
+application room-pack selection before native startup. Selected Windows desktop ROM
+paths and relative-search cwd are ASCII; verifier and pack paths retain Rust Unicode.
+Actual05 fmt, external-host/library/frontend/direct DLL and loaded source/native
+guards pass,160 unchanged warnings. Original04 retains14 rows20875+272/0, initialized
+329+resume5,23 units, actor guard,3 level cases,7 selected pack cases and fresh prepared
+checkpoint roundtrip/reset/continuation plus separate changed-world rejection.
+Background38/38 combines30 original04,5 capacity-corrected04 and3 corrected05 cases;
+full assertions remain. Fixture34..36 now expect the existing clears at0782/0612.
+All34 original jobs are collected. Codec45/a239 and its45 contributor bytes are unchanged
+by the two-line fixture correction; accepted04 proofs retain their original lineage.
+Net+1909 production/+1039 verification/+34 unsafe metric/+67 support/legacy0.
+Catalog/schema/pack validation and compatibility adapters grow code; no raw-operation
+or backend retirement claim. Next: the independently assigned shared renderer cohort.
 Qualified WRAM/Execution: Game/Backend share stable WorkRam; private DMA/Input
 storage and actual byte/getter/macro consumers close with exact RAM layout.
 Initialized329+5, full86 (136526 selected+38827 setup),14 genuine captures189475,
@@ -241,8 +252,9 @@ L1 stays Windows until Linux is measurably faster end-to-end; CI seeds/lag guard
 Edition2024, stable1.99.1 (58cf8f9c3 2026-10-13), x86_64-pc-windows-gnu.
 Nightly2026-10-22 is ASR1121-blocked; do not alter security/spoof hosted variables.
 Standalone tests/denied compiler and build scripts remain restricted; use permitted
-DLL/ctypes. khronos_api blocks ordinary frontend linking; direct DLL builds work.
-Current cached-rlib frontend/Config DLL research is bounded and permitted, not routine validation.
+DLL/ctypes. Ordinary frontend linking passes with the exact dependency-only seed.
+Bundled verifier cfg still reaches denied khronos_api scripts; use the separate normal
+frontend and existing direct DLL with unchanged source/native/cache guards.
 Keep crate-root unsafe-op enforcement; paths in [ITERATION](ITERATION.md#windows-shell-setup).
 
 Use isolated snapshots/fixed interfaces/one integrator. Frozen formatted source may

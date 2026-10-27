@@ -905,11 +905,6 @@ impl ReplayCoverage {
     }
 }
 
-pub fn run(game: &mut Game) -> i32 {
-    let args: Vec<String> = std::env::args().skip(2).collect();
-    run_args(&args, game)
-}
-
 pub fn run_args(args: &[String], game: &mut Game) -> i32 {
     match run_checked(args, game) {
         Ok(failures) => i32::from(failures != 0),
@@ -920,7 +915,7 @@ pub fn run_args(args: &[String], game: &mut Game) -> i32 {
     }
 }
 
-unsafe fn initialize_checkpoint_machine(
+pub(super) unsafe fn initialize_checkpoint_machine(
     game: &mut Game,
     filename: &CString,
 ) -> Result<*mut sm::types::Snes, String> {
@@ -943,7 +938,7 @@ unsafe fn initialize_checkpoint_machine(
     }
 }
 
-unsafe fn begin_verifier_drawing(game: &mut Game) {
+pub(super) unsafe fn begin_verifier_drawing(game: &mut Game) {
     unsafe {
         let snes = game.g_snes;
         sm::snes::ppu::PpuBeginDrawing(
@@ -961,6 +956,65 @@ unsafe fn begin_verifier_drawing(game: &mut Game) {
     }
 }
 
+// Movies cannot select changed immutable catalogs or test rejection before adoption.
+#[cfg(sm_verify_dll)]
+unsafe fn prepared_checkpoint(
+    path: &std::path::Path,
+    reject: bool,
+    game: &mut Game,
+    origin: u64,
+    inputs: &[u16],
+    completed: usize,
+) -> Result<(), String> {
+    unsafe {
+        let before = checkpoint::capture(game)?;
+        if reject {
+            let error = checkpoint::load(path, game, origin, inputs)
+                .err()
+                .ok_or("changed room pack accepted the original checkpoint")?;
+            if error != "actor checkpoint world revision differs" {
+                return Err(format!(
+                    "changed room pack failed the wrong preflight: {error}"
+                ));
+            }
+            if checkpoint::capture(game)? != before {
+                return Err("changed room pack rejection changed the complete capture".into());
+            }
+            eprintln!("Prepared checkpoint changed-world rejection: complete capture unchanged");
+            return Ok(());
+        }
+        let pad = *inputs
+            .get(completed)
+            .ok_or("prepared checkpoint check requires a continuation input frame")?;
+        checkpoint::save(path, game, origin, inputs, completed)?;
+        let mut expected_audio = [[0; 2]; 534];
+        core::ptr::write_bytes(&raw mut super::g_pixels, 0, 1);
+        core::ptr::write_bytes(&raw mut super::g_my_pixels, 0, 1);
+        sm::rtl::RtlRunFrame(i32::from(pad), game);
+        sm::rtl::RtlRenderAudio(&mut expected_audio, game);
+        let continuation = checkpoint::capture(game)?;
+        checkpoint::reset_retaining_prepared_world(game)?;
+        if checkpoint::load(path, game, origin, inputs)? != completed
+            || checkpoint::capture(game)? != before
+        {
+            return Err("prepared checkpoint did not round-trip the complete capture".into());
+        }
+        let mut restored_audio = [[0; 2]; 534];
+        core::ptr::write_bytes(&raw mut super::g_pixels, 0, 1);
+        core::ptr::write_bytes(&raw mut super::g_my_pixels, 0, 1);
+        sm::rtl::RtlRunFrame(i32::from(pad), game);
+        sm::rtl::RtlRenderAudio(&mut restored_audio, game);
+        if restored_audio != expected_audio || checkpoint::capture(game)? != continuation {
+            return Err("prepared checkpoint continuation differs".into());
+        }
+        eprintln!(
+            "Prepared checkpoint saved at input frame {completed}: reset binding, complete roundtrip and one-frame audio/state continuation pass; {}",
+            path.display()
+        );
+        Ok(())
+    }
+}
+
 fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
     if args.len() < 2 {
         return Err("usage: sm verify <rom> <inputs> [--frames N] [--load-sram] [--seed PATH] [--checkpoint-in PATH] [--checkpoint-out PATH] [--require-hit NAME]... [--after-hits N] [--expect TYPE:VALUE|death|credits|credits-complete|save-death-continue]... [--after-expectations N]".into());
@@ -975,6 +1029,8 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
     let mut checkpoint_out = None;
     #[cfg(sm_verify_dll)]
     let mut prepared_checkpoint_check = None;
+    #[cfg(sm_verify_dll)]
+    let mut prepared_checkpoint_reject = None;
     let mut required_probes = Vec::new();
     let mut options = args[2..].iter();
     while let Some(option) = options.next() {
@@ -985,6 +1041,14 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
                     options
                         .next()
                         .ok_or("missing prepared checkpoint check path")?,
+                );
+            }
+            #[cfg(sm_verify_dll)]
+            "--prepared-checkpoint-reject" if prepared_checkpoint_reject.is_none() => {
+                prepared_checkpoint_reject = Some(
+                    options
+                        .next()
+                        .ok_or("missing prepared checkpoint rejection path")?,
                 );
             }
             "--frames" if frame_limit.is_none() => {
@@ -1043,6 +1107,40 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             _ => return Err(format!("unknown or repeated option: {option}")),
         }
     }
+    #[cfg(sm_verify_dll)]
+    let prepared_checkpoint_request = {
+        if prepared_checkpoint_check.is_some() && prepared_checkpoint_reject.is_some() {
+            return Err(
+                "prepared checkpoint check and rejection are separate process openings".into(),
+            );
+        }
+        let request = prepared_checkpoint_check
+            .map(|path| (path, false))
+            .or_else(|| prepared_checkpoint_reject.map(|path| (path, true)));
+        if request.is_some() {
+            if game.supports_legacy_persistence() {
+                return Err("prepared checkpoint check/rejection requires --room-pack".into());
+            }
+            if load_sram
+                || seed_in.is_some()
+                || checkpoint_in.is_some()
+                || checkpoint_out.is_some()
+                || !required_probes.is_empty()
+                || !expected.is_empty()
+                || after_hits.is_some()
+                || after_expectations.is_some()
+            {
+                return Err(
+                    "prepared checkpoint check/rejection only combines with --frames".into(),
+                );
+            }
+            if prepared_checkpoint_check.is_some_and(|path| std::path::Path::new(path).exists()) {
+                return Err("prepared checkpoint output already exists; choose a new path".into());
+            }
+            frame_limit = Some(frame_limit.unwrap_or(1));
+        }
+        request
+    };
     if expected
         .iter()
         .any(|e| e.kind == Expectation::SaveDeathContinue)
@@ -1107,27 +1205,29 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             inputs.len()
         ));
     }
-    let rom = if checkpoint_in.is_some() || checkpoint_out.is_some() || seed_in.is_some() {
+    #[cfg(sm_verify_dll)]
+    let prepared_checkpoint_rom = prepared_checkpoint_request.is_some();
+    #[cfg(not(sm_verify_dll))]
+    let prepared_checkpoint_rom = false;
+    let rom = if checkpoint_in.is_some()
+        || checkpoint_out.is_some()
+        || seed_in.is_some()
+        || prepared_checkpoint_rom
+    {
         std::fs::read(&args[0]).map_err(|e| format!("{}: {e}", args[0]))?
     } else {
         Vec::new()
     };
     let filename = CString::new(args[0].as_bytes()).map_err(|_| "invalid ROM path")?;
     #[cfg(sm_verify_dll)]
-    if let Some(path) = prepared_checkpoint_check {
-        unsafe {
-            sm::verify_prepared_actor_checkpoint(std::path::Path::new(path), |game| {
-                initialize_checkpoint_machine(game, &filename)?;
-                super::initialize_verify_audio(game)?;
-                begin_verifier_drawing(game);
-                Ok(())
-            })?;
-        }
-        return Ok(0);
+    if prepared_checkpoint_check.is_some()
+        && frame_limit.is_some_and(|frames| frames >= inputs.len())
+    {
+        return Err("prepared checkpoint check requires a continuation input frame".into());
     }
     let start = Instant::now();
     unsafe {
-        let snes = initialize_checkpoint_machine(game, &filename)?;
+        let _snes = initialize_checkpoint_machine(game, &filename)?;
         if let Some(saved_sram) = saved_sram {
             sm::rtl::RtlReadSram(game);
             if game.g_sram.bytes(0..8192) != saved_sram {
@@ -1266,6 +1366,17 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             checkpoint::save(std::path::Path::new(path), game, origin, &inputs, end)?;
             eprintln!("Saved verifier checkpoint before input frame {end}: {path}");
         }
+        #[cfg(sm_verify_dll)]
+        if let Some((path, reject)) = prepared_checkpoint_request {
+            prepared_checkpoint(
+                std::path::Path::new(path),
+                reject,
+                game,
+                origin,
+                &inputs,
+                first + completed,
+            )?;
+        }
         Ok(failures)
     }
 }
@@ -1285,7 +1396,10 @@ mod coverage_checks {
         macro_rules! cases {
             ($($test:ident),+ $(,)?) => { [$( (stringify!($test), $test as fn()), )+] };
         }
-        let tests: [(&str, fn()); 20] = cases![
+        let tests: [(&str, fn()); 23] = cases![
+            room_pack_uses_native_header_selection_and_final_block_mirroring,
+            room_pack_rejects_checksum_valid_structural_errors,
+            room_pack_selection_rejects_missing_duplicate_and_option_values,
             expectation_parser_rejects_unknown_or_malformed_values,
             inventory_events_require_a_new_award_inside_the_same_live_room,
             boss_flags_require_a_rising_bit_in_the_corresponding_area,
@@ -1322,6 +1436,157 @@ mod coverage_checks {
             tests.len()
         );
         i32::from(failed != 0)
+    }
+
+    // Movies cannot select tied/negative native headers, unsupported mappers or raw mirrors.
+    #[cfg_attr(test, test)]
+    fn room_pack_uses_native_header_selection_and_final_block_mirroring() {
+        fn header(source: &mut [u8], location: usize, opcode: u8) {
+            source[location + 0x15] = 0x20;
+            source[location + 0x16] = 0;
+            source[location + 0x19] = 0;
+            source[location + 0x1c..location + 0x20].copy_from_slice(&[0xff, 0xff, 0, 0]);
+            source[location + 0x3c..location + 0x3e].copy_from_slice(&[0, 0x80]);
+            source[location + 0x40 - 0x8000] = opcode;
+        }
+        let mut raw = vec![0; 0x10200];
+        // HiROM scores-2 while LoROM scores-16: max=0 still selects candidate0.
+        raw[0xffd5] = 0x20;
+        raw[0xffd6] = 7;
+        raw[0x8000] = 0x78;
+        assert_eq!(
+            sm::room_pack::normalize_source(&raw).unwrap().len(),
+            0x20000
+        );
+        raw.fill(0);
+        header(&mut raw, 0x7fc0, 0x78);
+        header(&mut raw, 0x81c0, 0x78);
+        assert_eq!(
+            sm::room_pack::normalize_source(&raw).unwrap().len(),
+            0x20000
+        );
+        raw.fill(0);
+        header(&mut raw, 0x81c0, 0x78);
+        let normalized = sm::room_pack::normalize_source(&raw).unwrap();
+        assert_eq!(normalized.len(), 0x10000);
+        assert_eq!(normalized, raw[0x200..]);
+        let mut odd = vec![0; 0x1007b];
+        header(&mut odd, 0x81c0, 0x78);
+        assert_eq!(
+            sm::room_pack::normalize_source(&odd).unwrap().len(),
+            0x10000
+        );
+        for location in [0xffc0, 0x101c0] {
+            raw.fill(0);
+            header(&mut raw, 0x7fc0, 0x4c);
+            header(&mut raw, location, 0x78);
+            assert_eq!(
+                sm::room_pack::normalize_source(&raw)
+                    .unwrap_err()
+                    .to_string(),
+                "room pack vanilla profile requires native-selected LoROM cartridge",
+            );
+        }
+        let mut three_mib = vec![0x11; 0x300000];
+        three_mib[0x100000..0x200000].fill(0x22);
+        three_mib[0x200000..].fill(0x33);
+        header(&mut three_mib, 0x7fc0, 0x78);
+        let normalized = sm::room_pack::normalize_source(&three_mib).unwrap();
+        assert_eq!(normalized.len(), 0x400000);
+        assert_eq!(&normalized[..three_mib.len()], three_mib);
+        assert_eq!(&normalized[three_mib.len()..], &three_mib[0x200000..]);
+        assert!(sm::room_pack::normalize_source(&[]).is_err());
+    }
+
+    // Movies cannot supply deliberately malformed, checksum-valid portable packs.
+    #[cfg_attr(test, test)]
+    fn room_pack_rejects_checksum_valid_structural_errors() {
+        fn pack(metadata: &[u8]) -> Vec<u8> {
+            let mut bytes = b"SMRP\x01\x00\x01\x00\x00\x00\x00\x00".to_vec();
+            bytes.extend_from_slice(&(metadata.len() as u32).to_le_bytes());
+            bytes.extend_from_slice(&0u32.to_le_bytes());
+            bytes.extend_from_slice(&[0; 32]);
+            bytes.extend_from_slice(metadata);
+            let checksum = sm::room_pack::content_fingerprint(&bytes[..20], &bytes[52..]);
+            bytes[20..52].copy_from_slice(&checksum);
+            bytes
+        }
+        fn rejected(metadata: &[u8], message: &str) {
+            assert_eq!(
+                sm::room_pack::load(&pack(metadata))
+                    .unwrap_err()
+                    .to_string(),
+                message
+            );
+        }
+        let mut room = 7u32.to_le_bytes().to_vec();
+        room.extend_from_slice(&[0, 0, 0, 0, 1, 1, 0, 0, 2]);
+        room.extend_from_slice(&7u32.to_le_bytes());
+        room.extend_from_slice(&1u32.to_le_bytes());
+        room.push(0);
+        room.extend_from_slice(&7u32.to_le_bytes());
+        for id in [7u32, 6] {
+            let mut metadata = 2u32.to_le_bytes().to_vec();
+            metadata.extend_from_slice(&room);
+            metadata.extend_from_slice(&id.to_le_bytes());
+            rejected(&metadata, "duplicate or noncanonical world/key ID");
+        }
+        let mut unknown = 1u32.to_le_bytes().to_vec();
+        room[21] = 0xff;
+        unknown.extend_from_slice(&room);
+        rejected(&unknown, "unknown room selector tag");
+        rejected(&65_537u32.to_le_bytes(), "world/key count is out of bounds");
+        let mut truncated = 1u32.to_le_bytes().to_vec();
+        truncated.extend_from_slice(&room[..7]);
+        rejected(&truncated, "truncated world/key record");
+        rejected(&[0; 56], "room pack lacks CurrentLoadStation site 6/0");
+        rejected(&[0; 57], "trailing world/key records");
+        for (offset, value, message) in [
+            (4, 2, "unsupported room pack schema"),
+            (6, 2, "unsupported room pack profile/options"),
+            (8, 1, "unsupported room pack profile/options"),
+        ] {
+            let mut bytes = pack(&[0; 56]);
+            bytes[offset] = value;
+            let checksum = sm::room_pack::content_fingerprint(&bytes[..20], &bytes[52..]);
+            bytes[20..52].copy_from_slice(&checksum);
+            assert_eq!(
+                sm::room_pack::load(&bytes).unwrap_err().to_string(),
+                message
+            );
+        }
+    }
+
+    // Movies cannot select duplicate or missing application pack arguments.
+    #[cfg_attr(test, test)]
+    fn room_pack_selection_rejects_missing_duplicate_and_option_values() {
+        for (args, message) in [
+            (vec!["--room-pack"], "--room-pack requires a path"),
+            (vec!["--room-pack", ""], "--room-pack requires a path"),
+            (
+                vec!["--room-pack", "--frames", "2"],
+                "--room-pack requires a path",
+            ),
+            (vec!["--room-pack", "-h"], "--room-pack requires a path"),
+            (
+                vec!["--room-pack=path"],
+                "room pack selection requires --room-pack PATH",
+            ),
+            (
+                vec!["--room-pack", "absent", "--room-pack", "other"],
+                "duplicate --room-pack selection",
+            ),
+        ] {
+            let args: Vec<String> = args.into_iter().map(str::to_owned).collect();
+            assert_eq!(
+                sm::room_pack::select(&args).err().unwrap().to_string(),
+                message
+            );
+        }
+        let args = ["verify", "--debug", "rom", "inputs"].map(str::to_owned);
+        let selection = sm::room_pack::select(&args).unwrap();
+        assert!(selection.world.is_none());
+        assert_eq!(selection.arguments, args);
     }
 
     fn gameplay() -> CoverageState {

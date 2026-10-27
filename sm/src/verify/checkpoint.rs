@@ -19,10 +19,25 @@ const MAGIC: &[u8; 8] = b"SMVERIFY";
 
 // A cache fingerprint, not an authentication mechanism. The full payload is
 // checked before any state is loaded, including lengths and metadata.
-pub(crate) fn fingerprint(bytes: &[u8]) -> u64 {
+pub fn fingerprint(bytes: &[u8]) -> u64 {
     bytes.iter().fold(0xcbf29ce484222325, |hash, byte| {
         (hash ^ u64::from(*byte)).wrapping_mul(0x100000001b3)
     })
+}
+
+/// Reset an initialized, idle machine while retaining its selected world binding.
+///
+/// # Safety
+/// The Game must retain live backend, CPU, cartridge and player allocations,
+/// initialized host hooks, and exclusive access throughout the native reset.
+/// Native and audio users must be stopped while reset mutates their state.
+pub unsafe fn reset_retaining_prepared_world(game: &mut Game) -> Result<(), String> {
+    let world = game.world().clone();
+    unsafe { crate::rtl::RtlReset(2, game) };
+    if !std::sync::Arc::ptr_eq(game.world(), &world) {
+        return Err("prepared reset changed the selected binding".into());
+    }
+    Ok(())
 }
 
 // Bind seed-backed checkpoints to their actual original observation, not its path.
@@ -66,6 +81,8 @@ fn compatibility() -> u64 {
         include_str!("../game_state.rs"),
         include_str!("../game/room_entry/world.rs"),
         include_str!("../game/room_entry/prepared_tables.rs"),
+        include_str!("../game/room_entry/prepared_assets.rs"),
+        include_str!("../room_pack.rs"),
         include_str!("../game/session.rs"),
         include_str!("../game/actors/botwoon_death.rs"),
         include_str!("../game/session_encoding.rs"),
@@ -681,7 +698,28 @@ pub unsafe fn load_with_sources(
         if word(48) != fingerprint(&bytes[56..]) {
             return Err("checkpoint payload is corrupt".into());
         }
-        let payload = &bytes[56..];
+        restore_capture_with_sources(&bytes[56..], game, sources)?;
+        Ok(completed)
+    }
+}
+
+/// Restore an exact locally captured payload through the disk loader's same preflight.
+/// File origin/source/input guards remain in load_with_sources.
+pub(crate) unsafe fn restore_capture_with_sources(
+    payload: &[u8],
+    game: &mut Game,
+    sources: &[(
+        crate::game::room_entry::world::ResourceId,
+        crate::rom::RomImage,
+    )],
+) -> Result<(), String> {
+    unsafe {
+        if game.actor_identity_is_with_session() {
+            return Err("checkpoint requires a Game-owned committed interval".into());
+        }
+        if game.g_snes.is_null() || game.g_spc_player.is_null() {
+            return Err("full checkpoint requires the initialized native verifier backend".into());
+        }
         let size = payload
             .get(..8)
             .ok_or("truncated checkpoint machine length")?;
@@ -764,6 +802,61 @@ pub unsafe fn load_with_sources(
                 }
             }
         }
-        Ok(completed)
+        Ok(())
+    }
+}
+
+// Movies cannot supply a populated Prepared palette receipt with a corrupted catalog tag.
+#[cfg(sm_verify_dll)]
+pub(crate) unsafe fn check_prepared_palette_checkpoint(game: &mut Game) {
+    use crate::game::room_entry::{
+        content::{AssetRef, AssetSource},
+        effects::{EntryEffects, InstallBuffer},
+    };
+    use std::sync::Arc;
+    unsafe {
+        let world = game.world().clone();
+        let assets = world.prepared_room_assets().unwrap();
+        EntryEffects::decompress(
+            &mut crate::game::session_runtime::Runtime::new(game),
+            AssetSource::Bound(AssetRef::Prepared(crate::room_world_fixture::PALETTE)),
+            InstallBuffer::Palette,
+        );
+        crate::rtl::RtlRunFrame(0, game);
+        crate::rtl::RtlRenderAudio(&mut [[0; 2]; 534], game);
+        let first = crate::verification_checkpoint::capture(game).unwrap();
+        assert!(
+            first.ends_with(&assets.fingerprint()),
+            "room.assets.populated-prepared-palette-tag"
+        );
+        let mut bad = first.clone();
+        *bad.last_mut().unwrap() ^= 1;
+        assert_eq!(
+            crate::verification_checkpoint::restore_capture_with_sources(&bad, game, &[])
+                .unwrap_err(),
+            "prepared checkpoint palette catalog differs"
+        );
+        assert_eq!(
+            crate::verification_checkpoint::capture(game).unwrap(),
+            first,
+            "room.assets.palette-preflight-no-adoption"
+        );
+        let mut audio = [[[0; 2]; 534]; 2];
+        crate::rtl::RtlRunFrame(0, game);
+        crate::rtl::RtlRenderAudio(&mut audio[0], game);
+        let continued = crate::verification_checkpoint::capture(game).unwrap();
+        crate::verification_checkpoint::restore_capture_with_sources(&first, game, &[]).unwrap();
+        assert_eq!(
+            crate::verification_checkpoint::capture(game).unwrap(),
+            first
+        );
+        crate::rtl::RtlRunFrame(0, game);
+        crate::rtl::RtlRenderAudio(&mut audio[1], game);
+        assert_eq!(audio[0], audio[1]);
+        assert_eq!(
+            crate::verification_checkpoint::capture(game).unwrap(),
+            continued
+        );
+        assert!(Arc::ptr_eq(game.world(), &world));
     }
 }

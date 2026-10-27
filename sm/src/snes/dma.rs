@@ -1,3 +1,4 @@
+use crate::execution::DmaRomSource;
 use crate::rtl::words;
 use crate::snes::snes::Backend;
 use ::core::ffi::c_char;
@@ -121,6 +122,10 @@ impl crate::execution::Execution<'_> {
     }
 
     pub(crate) unsafe fn do_dma(&mut self) {
+        unsafe { self.do_dma_with_source(None) }
+    }
+
+    unsafe fn do_dma_with_source(&mut self, source: Option<&DmaRomSource<'_>>) {
         unsafe {
             let i = {
                 let mut dma = self.backend.dma_state();
@@ -172,7 +177,7 @@ impl crate::execution::Execution<'_> {
                     channel.fromB,
                 )
             };
-            self.transfer_dma_byte(address, bank, b_address, from_b);
+            self.transfer_dma_byte(address, bank, b_address, from_b, source);
             {
                 let mut dma = self.backend.dma_state();
                 dma.channel[i].offIndex &= 3;
@@ -344,7 +349,7 @@ impl crate::execution::Execution<'_> {
                                         channel.fromB,
                                     )
                                 };
-                                self.transfer_dma_byte(fresh4, bank, b_address, from_b);
+                                self.transfer_dma_byte(fresh4, bank, b_address, from_b, None);
                             } else {
                                 let fresh5 = {
                                     let mut dma = self.backend.dma_state();
@@ -364,7 +369,7 @@ impl crate::execution::Execution<'_> {
                                         channel.fromB,
                                     )
                                 };
-                                self.transfer_dma_byte(fresh5, bank, b_address, from_b);
+                                self.transfer_dma_byte(fresh5, bank, b_address, from_b, None);
                             }
                             j += 1;
                         }
@@ -413,6 +418,7 @@ impl crate::execution::Execution<'_> {
         a_bank: u8,
         b_address: u8,
         from_b: bool,
+        source: Option<&DmaRomSource<'_>>,
     ) {
         unsafe {
             let address = (u32::from(a_bank) << 16) | u32::from(a_address);
@@ -420,13 +426,20 @@ impl crate::execution::Execution<'_> {
                 let value = self.read_bbus(b_address);
                 self.write(address, value);
             } else {
-                let value = self.read(address);
+                let value = self.read_with_dma_source(address, source);
                 self.write_bbus(b_address, value);
             }
         }
     }
 
     pub(crate) unsafe fn step_dma(&mut self) -> bool {
+        unsafe { self.step_dma_with_source(None) }
+    }
+
+    pub(crate) unsafe fn step_dma_with_source(
+        &mut self,
+        source: Option<&DmaRomSource<'_>>,
+    ) -> bool {
         unsafe {
             let busy = {
                 let mut dma = self.backend.dma_state();
@@ -438,7 +451,10 @@ impl crate::execution::Execution<'_> {
                 dma.dmaBusy
             };
             if busy {
-                self.do_dma();
+                match source {
+                    Some(source) => self.do_dma_with_source(Some(source)),
+                    None => self.do_dma(),
+                }
                 true
             } else {
                 false

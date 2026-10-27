@@ -400,8 +400,21 @@ pub unsafe extern "C" fn __assert_fail(
 }
 
 pub fn main() {
+    let mut argv = std::env::args();
+    let executable = argv.next().unwrap_or_else(|| "sm".into());
+    let supplied: Vec<String> = argv.collect();
+    let selection = match sm::room_pack::select(&supplied) {
+        Ok(selection) => selection,
+        Err(error) => {
+            eprintln!("sm: {error}");
+            std::process::exit(2);
+        }
+    };
     let mut config = sm::config::ConfigOwner::new();
-    let owner = GameOwner::new();
+    let owner = match selection.world {
+        Some(world) => GameOwner::with_world(world),
+        None => GameOwner::new(),
+    };
     check_dependency();
 
     #[cfg(windows)]
@@ -414,13 +427,14 @@ pub fn main() {
         apu_lock: host_apu_lock,
         apu_unlock: host_apu_unlock,
     });
-    if std::env::args().nth(1).as_deref() == Some("verify") {
-        let status = owner.with(|game| verify::run(game));
+    if selection.arguments.first().map(String::as_str) == Some("verify") {
+        let status = owner.with(|game| verify::run_args(&selection.arguments[1..], game));
         drop(owner);
         drop(config);
         ::std::process::exit(status);
     }
-    let mut args_strings: Vec<Vec<u8>> = ::std::env::args()
+    let mut args_strings: Vec<Vec<u8>> = ::core::iter::once(executable)
+        .chain(selection.arguments)
         .map(|arg| {
             ::std::ffi::CString::new(arg)
                 .expect("Failed to convert argument into CString.")

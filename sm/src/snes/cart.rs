@@ -1,5 +1,5 @@
 use crate::c_library::printf;
-use crate::execution::Execution;
+use crate::execution::{DmaRomSource, Execution};
 use crate::host::Die;
 use crate::rom::RomImage;
 use crate::rtl::words;
@@ -65,7 +65,12 @@ unsafe fn cart_writeHirom(cart: *mut Cart, mut bank: u8, adr: u16, val: u8) {
 
 // Cartridge mapping is shared; invalid-read diagnostics keep their actual host
 // and device context and the original output/failure order.
-unsafe fn read_lorom_memory(cart: *mut Cart, mut bank: u8, adr: u16) -> Option<u8> {
+unsafe fn read_lorom_memory(
+    cart: *mut Cart,
+    mut bank: u8,
+    adr: u16,
+    source: Option<&DmaRomSource<'_>>,
+) -> Option<u8> {
     unsafe {
         if (matches!(bank, 0x70..=0x7d) || bank >= 0xf0) && adr < 0x8000 && (*cart).ramSize > 0 {
             let index =
@@ -76,13 +81,21 @@ unsafe fn read_lorom_memory(cart: *mut Cart, mut bank: u8, adr: u16) -> Option<u
         if adr >= 0x8000 || bank >= 0x40 {
             let index = ((u32::from(bank) << 15) | u32::from(adr & 0x7fff))
                 & (*cart).romSize.wrapping_sub(1);
+            if let Some(value) = source.and_then(|source| source.byte(index as usize)) {
+                return Some(value);
+            }
             return Some((*cart).rom.read(index as usize));
         }
         None
     }
 }
 
-unsafe fn read_hirom_memory(cart: *mut Cart, bank: u8, adr: u16) -> Option<u8> {
+unsafe fn read_hirom_memory(
+    cart: *mut Cart,
+    bank: u8,
+    adr: u16,
+    source: Option<&DmaRomSource<'_>>,
+) -> Option<u8> {
     unsafe {
         let bank = bank & 0x7f;
         if (bank as i32) < 0x40
@@ -96,10 +109,12 @@ unsafe fn read_hirom_memory(cart: *mut Cart, bank: u8, adr: u16) -> Option<u8> {
             ));
         }
         if adr as i32 >= 0x8000 || bank as i32 >= 0x40 {
-            return Some((*cart).rom.read(
-                (((bank as i32 & 0x3f) << 16 | adr as i32) as u32 & (*cart).romSize.wrapping_sub(1))
-                    as usize,
-            ));
+            let index = (((bank as i32 & 0x3f) << 16 | adr as i32) as u32
+                & (*cart).romSize.wrapping_sub(1)) as usize;
+            if let Some(value) = source.and_then(|source| source.byte(index)) {
+                return Some(value);
+            }
+            return Some((*cart).rom.read(index));
         }
         None
     }
@@ -107,6 +122,15 @@ unsafe fn read_hirom_memory(cart: *mut Cart, bank: u8, adr: u16) -> Option<u8> {
 
 impl Execution<'_> {
     pub(crate) unsafe fn read_cart(&mut self, bank: u8, adr: u16) -> u8 {
+        unsafe { self.read_cart_with_dma_source(bank, adr, None) }
+    }
+
+    pub(crate) unsafe fn read_cart_with_dma_source(
+        &mut self,
+        bank: u8,
+        adr: u16,
+        source: Option<&DmaRomSource<'_>>,
+    ) -> u8 {
         unsafe {
             let cart = self.cart();
             match (*cart).type_0 {
@@ -118,13 +142,13 @@ impl Execution<'_> {
                     };
                 }
                 1 => {
-                    if let Some(value) = read_lorom_memory(cart, bank, adr) {
+                    if let Some(value) = read_lorom_memory(cart, bank, adr, source) {
                         return value;
                     }
                     return self.invalid_lorom_read(bank, adr);
                 }
                 2 => {
-                    if let Some(value) = read_hirom_memory(cart, bank, adr) {
+                    if let Some(value) = read_hirom_memory(cart, bank, adr, source) {
                         return value;
                     }
                     crate::native_assertion! {

@@ -390,6 +390,8 @@ pub(crate) fn capture_case(
             vram[0] = 0xa2a1;
             expected[0xc200..0xc202].copy_from_slice(&[0xb1, 0xb2]);
         } else {
+            expected[0x782] = 0;
+            expected[0x612] = 0;
             for (at, value) in [
                 (0xaf6, 0x1234),
                 (0xb10, 0x1234),

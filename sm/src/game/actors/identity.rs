@@ -384,6 +384,15 @@ impl ActorIdentityState {
     pub(super) fn clear_actor_palette_residency(&mut self) {
         self.palette_residency.clear_actor_rows();
     }
+    pub(in crate::game) fn record_prepared_palette_residency(
+        &mut self,
+        row: u16,
+        resource: crate::game::room_entry::world::ResourceId,
+        revision: [u8; 32],
+    ) {
+        self.palette_residency
+            .record_prepared(row, resource, revision);
+    }
     pub(in crate::game) fn record_palette_residency(
         &mut self,
         row: u16,

@@ -332,7 +332,12 @@ impl EntryEffects for Runtime<'_> {
             AssetSource::Bound(AssetRef::Prepared(resource)) => Some(*resource),
             _ => None,
         };
-        let palette_image = if palette { self.loaded_image() } else { None };
+        let assets = self.session().world.prepared_room_assets();
+        let palette_image = if palette && assets.is_none() {
+            self.loaded_image()
+        } else {
+            None
+        };
         if palette {
             self.session_mut().actor_identity.clear_palette_residency();
         }
@@ -342,8 +347,15 @@ impl EntryEffects for Runtime<'_> {
         ) {
             self.session().world.prepared_table(&source)
         } else {
-            None
+            assets.as_ref().map(|assets| {
+                assets
+                    .stream(&source)
+                    .expect("selected room stream is unavailable")
+            })
         };
+        if assets.is_some() {
+            assert!(prepared.is_some(), "selected room stream is unavailable");
+        }
         let legacy = if prepared.is_none() {
             Some(source.compatibility_address(&self.session().world))
         } else {
@@ -361,6 +373,19 @@ impl EntryEffects for Runtime<'_> {
             Some(stream) => game::decompression::decompress_prepared_table(&stream, at, game),
             None => game::decompression::decompress_to_ram(legacy.unwrap(), at, game),
         });
+        if palette {
+            if let (Some(assets), Some(resource)) = (&assets, palette_resource) {
+                for row in 0..(produced / 32).min(8) {
+                    self.session_mut()
+                        .actor_identity
+                        .record_prepared_palette_residency(
+                            row as u16,
+                            resource,
+                            assets.fingerprint(),
+                        );
+                }
+            }
+        }
         if let Some(image) = palette_image {
             // Only complete BG rows emitted by this actual decode establish residency.
             // Actor staging later establishes OBJ rows without erasing these receipts.
@@ -379,25 +404,62 @@ impl EntryEffects for Runtime<'_> {
         }
     }
     fn decompress_vram(&mut self, source: AssetSource, destination: VramDecodeTarget) {
-        let source = source.compatibility_address(&self.session().world);
+        let assets = self.session().world.prepared_room_assets();
+        let prepared = assets.as_ref().map(|assets| {
+            assets
+                .stream(&source)
+                .expect("selected VRAM room stream is unavailable")
+        });
+        let legacy = if prepared.is_none() {
+            Some(source.compatibility_address(&self.session().world))
+        } else {
+            None
+        };
         let target = match destination {
             VramDecodeTarget::MainTiles => 0,
             VramDecodeTarget::Cre => 0x5000,
         };
         self.foreign(|game| unsafe {
-            game::display_refresh::DecompressToVRAM(source, target, game)
+            match prepared {
+                Some(stream) => {
+                    game::display_refresh::decompress_prepared_vram(&stream, target, game)
+                }
+                None => game::display_refresh::DecompressToVRAM(legacy.unwrap(), target, game),
+            }
         });
     }
     fn copy_vram(&mut self, destination: VramDestination, source: AssetSource, bytes: u16) {
         let destination = destination.compatibility_word();
+        let assets = if matches!(source, AssetSource::Staging(_)) {
+            None
+        } else {
+            self.session().world.prepared_room_assets()
+        };
         let source = source.compatibility_address(&self.session().world);
         self.foreign(|game| unsafe {
-            game::display_refresh::CopyToVramNow(destination, source, bytes, game)
+            game::display_refresh::copy_to_vram_with_source(
+                destination,
+                source,
+                bytes,
+                assets.as_deref(),
+                game,
+            )
         });
     }
     fn decode_level_and_copy_planes(&mut self, source: AssetSource) {
-        let source = source.compatibility_address(&self.session().world);
-        self.foreign(|game| game::room_state::decompress_level(source, game));
+        let assets = self.session().world.prepared_room_assets();
+        if let Some(assets) = assets {
+            let stream = assets
+                .stream(&source)
+                .expect("selected Level stream is unavailable");
+            self.foreign(|game| {
+                game::decompression::decompress_prepared_table(&stream, 0x10000, game);
+                game::room_state::copy_level_planes(game);
+            });
+        } else {
+            let source = source.compatibility_address(&self.session().world);
+            self.foreign(|game| game::room_state::decompress_level(source, game));
+        }
     }
     fn setup(&mut self, action: SetupAction) {
         let (kind, code) = action.compatibility_code(&self.session().world);

@@ -700,6 +700,21 @@ def main():
                         help="compile/link the ordinary release frontend before the verifier-only Cargo build")
     parser.add_argument("--frames", type=int)
     parser.add_argument("--seed", type=Path, help="import an original-emulator room seed")
+    parser.add_argument("--room-pack", type=Path, action="append",
+                        help="select one complete immutable vanilla room pack before opening")
+    prepared = parser.add_mutually_exclusive_group()
+    prepared.add_argument("--room-pack-export", type=Path, action="append", metavar="OUT",
+                          help="export a complete existing authored fixture pack without opening hardware")
+    parser.add_argument("--room-pack-alternate", action="store_true",
+                        help="export the alternate fixture for existing cases3/5")
+    parser.add_argument("--room-pack-changed", action="store_true",
+                        help="export one changed payload with the same world and compatibility keys")
+    prepared.add_argument("--prepared-room-case", type=int, metavar="ID",
+                          help="run existing initial2/3, door4/5 or reset/current8/9/10 on the selected owner")
+    prepared.add_argument("--prepared-checkpoint-check", type=Path, metavar="PATH",
+                          help="save a fresh selected-world checkpoint, roundtrip and compare continuation")
+    prepared.add_argument("--prepared-checkpoint-reject", type=Path, metavar="PATH",
+                          help="reject a checkpoint from a changed selected world without changing capture")
     parser.add_argument("--checkpoint-in", type=Path,
                         help="resume a local verifier checkpoint; --frames counts from that point")
     parser.add_argument("--checkpoint-out", type=Path,
@@ -726,6 +741,43 @@ def main():
     parser.add_argument("--rustc", default=shutil.which("rustc") or str(
         Path.home() / ".cargo" / "bin" / "rustc.exe"))
     args = parser.parse_args()
+    if args.room_pack_export is not None:
+        if len(args.room_pack_export) != 1:
+            parser.error("duplicate --room-pack-export request")
+        args.room_pack_export = args.room_pack_export[0]
+    producer = args.room_pack_export is not None
+    if (args.room_pack_alternate or args.room_pack_changed) and not producer:
+        parser.error("--room-pack-alternate/--room-pack-changed require --room-pack-export")
+    if args.room_pack is not None:
+        if len(args.room_pack) != 1:
+            parser.error("duplicate --room-pack selection")
+        args.room_pack = args.room_pack[0]
+    prepared_checkpoint = (args.prepared_checkpoint_check is not None
+                           or args.prepared_checkpoint_reject is not None)
+    prepared_case = args.prepared_room_case is not None
+    if producer and (args.room_pack is not None or args.inputs is not None or args.unit_tests
+                     or args.build_only or args.corpus is not None or args.segment
+                     or args.frames is not None or args.seed is not None
+                     or args.checkpoint_in is not None or args.checkpoint_out is not None
+                     or args.require_hit or args.expect or args.after_hits is not None
+                     or args.after_expectations is not None):
+        parser.error("--room-pack-export takes a ROM and export variants without replay/build-only modes")
+    if (prepared_checkpoint or prepared_case) and args.room_pack is None:
+        parser.error("prepared room/checkpoint checks require --room-pack")
+    if args.room_pack is not None and (args.unit_tests or args.build_only or args.corpus is not None):
+        parser.error("--room-pack requires a direct selected-world opening")
+    if prepared_case:
+        if args.prepared_room_case not in (2, 3, 4, 5, 8, 9, 10):
+            parser.error("prepared room case must be 2/3, 4/5 or 8/9/10")
+        if (args.inputs is not None or args.frames is not None or args.seed is not None
+                or args.checkpoint_in is not None or args.checkpoint_out is not None
+                or args.require_hit or args.expect or args.after_hits is not None
+                or args.after_expectations is not None):
+            parser.error("--prepared-room-case takes a ROM and case ID without replay inputs/options")
+    if prepared_checkpoint and (args.seed is not None or args.checkpoint_in is not None
+                               or args.checkpoint_out is not None or args.require_hit or args.expect
+                               or args.after_hits is not None or args.after_expectations is not None):
+        parser.error("prepared checkpoint checks only combine with --frames")
     if args.seed is not None and (args.unit_tests or args.build_only or args.corpus is not None):
         parser.error("--seed requires a direct replay")
     if args.unit_tests and (args.build_only or args.frontend_check or args.rom is not None
@@ -735,7 +787,8 @@ def main():
                            or args.after_hits is not None or args.after_expectations is not None):
         parser.error("--unit-tests cannot combine replay, build-only or frontend checks")
     if not (args.build_only or args.unit_tests) and (
-            args.rom is None or (args.inputs is None and args.corpus is None)):
+            args.rom is None or (args.inputs is None and args.corpus is None
+                                 and not prepared_case and not producer)):
         parser.error("rom and inputs are required unless --build-only or --unit-tests is used")
     if args.unit_tests and args.cargo is None:
         args.cargo = False
@@ -770,7 +823,18 @@ def main():
     # Paths are resolved before changing cwd so invocation works from anywhere.
     rom = args.rom.resolve() if args.rom else None
     inputs = args.inputs.resolve() if args.inputs else None
-    replay_args = ["--unit-tests"] if args.unit_tests else [str(rom), str(inputs)]
+    if producer:
+        replay_args = [str(rom), "--room-pack-export", str(args.room_pack_export.resolve())]
+        if args.room_pack_alternate:
+            replay_args.append("--room-pack-alternate")
+        if args.room_pack_changed:
+            replay_args.append("--room-pack-changed")
+    elif prepared_case:
+        replay_args = [str(rom), "--prepared-room-case", str(args.prepared_room_case)]
+    else:
+        replay_args = ["--unit-tests"] if args.unit_tests else [str(rom), str(inputs)]
+    if args.room_pack is not None:
+        replay_args.extend(["--room-pack", str(args.room_pack.resolve())])
     if args.frames is not None:
         replay_args.extend(["--frames", str(args.frames)])
     for probe in args.require_hit:
@@ -782,7 +846,9 @@ def main():
     if args.after_expectations is not None:
         replay_args.extend(["--after-expectations", str(args.after_expectations)])
     for option, path in (("--checkpoint-in", args.checkpoint_in),
-                         ("--checkpoint-out", args.checkpoint_out), ("--seed", args.seed)):
+                         ("--checkpoint-out", args.checkpoint_out), ("--seed", args.seed),
+                         ("--prepared-checkpoint-check", args.prepared_checkpoint_check),
+                         ("--prepared-checkpoint-reject", args.prepared_checkpoint_reject)):
         if path is not None:
             replay_args.extend([option, str(path.resolve())])
     dll = root / "target" / "verify-dll" / HOST_LIBRARY
@@ -798,7 +864,8 @@ def main():
           file=sys.stderr, flush=True)
     if args.build_only:
         return 0
-    if (args.unit_tests or args.seed is not None or args.checkpoint_in is not None or args.checkpoint_out is not None
+    if (args.unit_tests or args.room_pack is not None or producer or prepared_checkpoint or prepared_case
+            or args.seed is not None or args.checkpoint_in is not None or args.checkpoint_out is not None
             or args.require_hit or args.expect):
         if not hasattr(host, "sm_verify_args"):
             raise RuntimeError("cached DLL predates segment options; run without --no-build")
