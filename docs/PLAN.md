@@ -48,7 +48,7 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current source9fe: production113957, legacy17940, unsafe2566, verification41836; warnings160.
+Current sourcef427: production113897, legacy17880, unsafe2543, verification41836; warnings160.
 Qualified WRAM/Execution: Game/Backend share stable WorkRam; private DMA/Input
 storage and actual byte/getter/macro consumers close with exact RAM layout.
 Initialized329+5, full86 (136526 selected+38827 setup),14 genuine captures189475,
@@ -81,7 +81,12 @@ six raw native actor captures removed. Source9fe fmt/library/DLL160 unchanged wa
 Phantoon two rows plus four smokes:6234 selected+272 setup/0; full Morph1200 retained.
 Net -98 production/-266 legacy/-9 unsafe/+4 verification; new167-line module and callers fully counted.
 Native allocation/diagnostic/lazy ROM order preserved; full/odd/off-table and failure variants remain source-scoped.
-Next: REVIEW selects the next complete removable responsibility; no competing source owner.
+CorpseRotting setup/scheduler/39 dispatch leaves share checked native records and tile/packed-VRAM protocol.
+Six native captures/seventeen raw word loads/one MemCpy and36 unused wrappers removed; both finish names retained.
+Sourcef427 fmt/library/DLL160 unchanged warnings/source571/native/all41rawcodec pass;8rows11183 selected+272 setup/0.
+Net -60 physical production/-60 legacy/-23 unsafe/verification0;21 address joins excluded,39 substantive lines removed.
+Whole-word mover preflight, native failure prefixes and packed queue store order retained; unobserved species/failure variants remain source-scoped.
+Next: prepared Kraid frame responsibility on this parent, pending independent review/final local qualification.
 
 Source-only: Blackout37, exact page2 callback, sky initializers, CrystalFlashStart,
 spike/DBF2/lavaquake and additional signed8.8 kernels; MotherBrain magnitude,

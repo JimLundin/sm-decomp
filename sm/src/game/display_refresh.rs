@@ -758,14 +758,14 @@ pub(crate) fn queue_scrolling_tiles(k: u16, layout: ScrollingDmaLayout, game: &m
     );
 }
 
-fn native_word(offset: usize, game: &Game) -> u16 {
+pub(crate) fn native_word(offset: usize, game: &Game) -> u16 {
     u16::from_ne_bytes([
         game.ram().read_byte(offset),
         game.ram().read_byte(offset + 1),
     ])
 }
 
-fn set_native_word(offset: usize, value: u16, game: &mut Game) {
+pub(crate) fn set_native_word(offset: usize, value: u16, game: &mut Game) {
     let bytes = value.to_ne_bytes();
     game.ram().write_byte(offset, bytes[0]);
     game.ram().write_byte(offset + 1, bytes[1]);
