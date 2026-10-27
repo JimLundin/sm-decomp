@@ -700,8 +700,10 @@ line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads t
 The interactive codebase map is retired at the user's request. The one progress view
 is `tools/treemap.py`: production Rust by area, banded owned / partly owned / legacy,
 with four headline numbers (required checks, legacy, unsafe, production lines) and
-their 24-hour change. Pages redraws it on every main push; README embeds it (PROGRESS.md
-was removed at the user's request, f2f6178).
+their 1-hour change. The user retired Pages/image CI on 2026-10-27: README displays
+the committed docs/treemap.svg directly. Generate it from staged Rust with
+tools/treemap.py --staged beside each code commit; its source identity excludes
+the generated SVG. PROGRESS.md was removed at the user's request, f2f6178.
 
 ## Initial review (2026-10-24, a408c8f)
 

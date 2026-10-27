@@ -8,14 +8,15 @@ use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
-use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
+use crate::game::session_runtime::{Runtime, actor_species_pre_instruction, native_rom_diagnostic};
 use crate::ram_map::slot;
+use crate::rom::{RomRecord, lorom_offset};
 use crate::rtl::rom_record;
 use core::mem::offset_of;
 
 pub use crate::game::constants::bank_86::*;
 
-use crate::game::display_refresh::GraphicsAsset;
+use crate::game::display_refresh::{GraphicsAsset, queue_native_transfer};
 use crate::game::enemy_layouts::enemy_layout;
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::music::{QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx2_Max15, QueueSfx3_Max6};
@@ -34,11 +35,6 @@ crate::typed_struct! {
     pub struct SpriteDrawInstr {
         pub field_0: u16;
         pub field_2: VoidP;
-    }
-
-    pub struct KraidInstrList {
-        pub timer: u16;
-        pub tilemap, vuln_mouth_hitbox, invuln_mouth_hitbox: VoidP;
     }
 
     pub struct KraidSinkTable {
@@ -369,18 +365,37 @@ pub unsafe fn Kraid_Lints_Enable(k: u16, a: u16, game: &mut Game) {
     slot!(game, Enemy_Kraid[E].kraid_next = (0xa7b832i32) as u16);
     slot!(game, Enemy_Kraid[E].kraid_var_B = 0);
 }
+#[forbid(unsafe_code)]
+fn kraid_native_record(address: u16, game: &mut Game) -> RomRecord {
+    let address = 0xa70000 | u32::from(address);
+    if address & 0x8000 == 0 {
+        native_rom_diagnostic(address, game);
+    }
+    RomRecord {
+        image: game.capture_native_rom(),
+        base: lorom_offset(address) as usize,
+    }
+}
+
 macro_rules! advance_kraid_thinking_timer {
     ($enemy:ident, $next_state:literal, $game:ident) => {
-        let kraid_thinking: u16 =
-            $crate::ram_map::slot!($game, Enemy_Kraid[$enemy].kraid_thinking);
+        let kraid_thinking: u16 = $crate::ram_map::slot!($game, Enemy_Kraid[$enemy].kraid_thinking);
         if kraid_thinking != 0 {
             let v2: u16 = (kraid_thinking).wrapping_sub(1);
             $crate::ram_map::slot!($game, Enemy_Kraid[$enemy].kraid_thinking = v2);
             if v2 == 0 {
-                $crate::ram_map::slot!($game, Enemy_Kraid[$enemy].kraid_var_A = (($next_state) as u16));
-                $crate::ram_map::slot!($game, Enemy_Kraid[$enemy].kraid_var_B = addr_stru_A796DA as u16);
-                $crate::ram_map::slot!($game, Enemy_Kraid[$enemy].kraid_var_C =
-                    (*($crate::rtl::rom_ptr!($game, KraidInstrList; 0xa796d2))).timer);
+                $crate::ram_map::slot!(
+                    $game,
+                    Enemy_Kraid[$enemy].kraid_var_A = (($next_state) as u16)
+                );
+                $crate::ram_map::slot!(
+                    $game,
+                    Enemy_Kraid[$enemy].kraid_var_B = addr_stru_A796DA as u16
+                );
+                $crate::ram_map::slot!(
+                    $game,
+                    Enemy_Kraid[$enemy].kraid_var_C = kraid_native_record(0x96d2, $game).word(0)
+                );
             }
         }
     };
@@ -442,10 +457,10 @@ pub unsafe fn Kraid_ExecuteInstr(game: &mut Game) -> u16 {
         let E = (0) as i32;
         loop {
             let kraid_var_B: u16 = slot!(game, Enemy_Kraid[E].kraid_var_B);
-            let v2 = RomPtr_A7(kraid_var_B, game) as *const u16;
-            let result: u16 = *v2;
-            if *v2 != 0xffff {
-                if ((*v2) as i16).wrapping_add(1) < 0 {
+            let v2 = kraid_native_record(kraid_var_B, game);
+            let result: u16 = v2.word(0);
+            if v2.word(0) != 0xffff {
+                if (v2.word(0) as i16).wrapping_add(1) < 0 {
                     CallKraidInstr(((result) as u32) | (0xa70000u32), game);
                     slot!(
                         game,
@@ -458,64 +473,18 @@ pub unsafe fn Kraid_ExecuteInstr(game: &mut Game) -> u16 {
                         game,
                         Enemy_Kraid[E].kraid_var_B = (kraid_var_B).wrapping_add(8)
                     );
-                    let v4: u16 = *v2.offset(1);
-                    let mut v5: u16 = word!(game.vram_write_queue_tail);
-                    match (
+                    let v4: u16 = v2.word(2);
+                    let v5: u16 = word!(game.vram_write_queue_tail);
+                    let _size_tail: u16 = word!(game.vram_write_queue_tail);
+                    // The two fixed tail reads have no intervening effects and select the same entry.
+                    queue_native_transfer(
+                        v5,
                         704,
-                        usize::try_from(
-                            ((0xd0 + (word!(game.vram_write_queue_tail) as i32)) as i32) as isize
-                                + offset_of!(VramWriteEntry, size) as isize,
-                        )
-                        .expect("VRAM entry outside RAM"),
-                    ) {
-                        (value, at) => {
-                            let bytes = u16::to_ne_bytes(value);
-                            game.ram().write_byte(at, bytes[0]);
-                            game.ram().write_byte(at + 1, bytes[1]);
-                        }
-                    };
-                    v5 = (v5).wrapping_add(2);
-                    match (
-                        v4,
-                        usize::try_from(
-                            ((0xd0 + (v5 as i32)) as i32) as isize
-                                + offset_of!(VramWriteEntry, size) as isize,
-                        )
-                        .expect("VRAM entry outside RAM"),
-                    ) {
-                        (value, at) => {
-                            let bytes = u16::to_ne_bytes(value);
-                            game.ram().write_byte(at, bytes[0]);
-                            game.ram().write_byte(at + 1, bytes[1]);
-                        }
-                    };
-                    v5 = (v5).wrapping_add(2);
-                    crate::update_place! { previous fresh0 = v5 => v5.wrapping_add(1); }
-                    match (
+                        |_| v4,
                         -89i32 as u8,
-                        usize::try_from(
-                            ((0xd0 + (fresh0 as i32)) as i32) as isize
-                                + offset_of!(VramWriteEntry, size) as isize,
-                        )
-                        .expect("VRAM entry outside RAM"),
-                    ) {
-                        (value, at) => game.ram().write_byte(at, value),
-                    };
-                    match (
-                        ((game.ram().read_byte(0x59) as i32 & 0xfc) << 8) as u16,
-                        usize::try_from(
-                            ((0xd0 + (v5 as i32)) as i32) as isize
-                                + offset_of!(VramWriteEntry, size) as isize,
-                        )
-                        .expect("VRAM entry outside RAM"),
-                    ) {
-                        (value, at) => {
-                            let bytes = u16::to_ne_bytes(value);
-                            game.ram().write_byte(at, bytes[0]);
-                            game.ram().write_byte(at + 1, bytes[1]);
-                        }
-                    };
-                    word!(game.vram_write_queue_tail = (v5).wrapping_add(2));
+                        |game| ((game.ram().read_byte(0x59) as i32 & 0xfc) << 8) as u16,
+                        game,
+                    );
                     return 1;
                 }
             } else {
@@ -531,23 +500,20 @@ pub unsafe fn Kraid_Shot_Mouth(game: &mut Game) {
         if slot!(game, Enemy_Kraid[E].kraid_var_A) as i32 + 0x3ac9 & 0x8000 == 0 {
             return;
         }
-        let v2 = RomPtr_A7(
+        let v2 = kraid_native_record(
             (slot!(game, Enemy_Kraid[E].kraid_var_B)).wrapping_sub(8),
             game,
         );
-        if *(v2.offset(6) as *mut u16) == 0xffff {
+        if v2.word(6) == 0xffff {
             v3 = 0;
         } else {
-            let mut v4: u16 = *(v2.offset(6) as *mut u16);
+            let mut v4: u16 = v2.word(6);
             slot!(game, Enemy_Kraid[E].kraid_var_E = 1);
             v3 = 0;
-            let mut v5: *const u8 = RomPtr_A7(v4, game);
-            let mut r22: u16 =
-                (slot!(game, Enemy_Kraid[E].base.x_pos)).wrapping_add(*(v5 as *mut u16));
-            let mut r20: u16 =
-                (slot!(game, Enemy_Kraid[E].base.y_pos)).wrapping_add(*(v5.offset(2) as *mut u16));
-            let mut r18: u16 =
-                (slot!(game, Enemy_Kraid[E].base.y_pos)).wrapping_add(*(v5.offset(6) as *mut u16));
+            let mut v5 = kraid_native_record(v4, game);
+            let mut r22: u16 = (slot!(game, Enemy_Kraid[E].base.x_pos)).wrapping_add(v5.word(0));
+            let mut r20: u16 = (slot!(game, Enemy_Kraid[E].base.y_pos)).wrapping_add(v5.word(2));
+            let mut r18: u16 = (slot!(game, Enemy_Kraid[E].base.y_pos)).wrapping_add(v5.word(6));
             if word!(game.projectile_counter) != 0 {
                 let mut v6: u16 = (2u16).wrapping_mul(word!(game.projectile_counter));
                 do_until! { (v6 & 0x8000) != 0;
@@ -2049,11 +2015,11 @@ crate::game::callback_dispatch! {
             slot!(game, Enemy_Kraid[E].kraid_var_E = 0);
             slot!(game, Enemy_Kraid[E].kraid_mouth_flags = slot!(game, Enemy_Kraid[E].kraid_mouth_flags) & !(1));
             let mut R48: u16 = 0;
-            let v2 = RomPtr_A7((slot!(game, Enemy_Kraid[E].kraid_var_B)).wrapping_sub(8), game);
-            let v3 = RomPtr_A7(*(v2.offset(4) as *mut u16), game);
-            let r22: u16 = (slot!(game, Enemy_Kraid[E].base.x_pos)).wrapping_add(*(v3 as *mut u16));
-            let r20: u16 = (slot!(game, Enemy_Kraid[E].base.y_pos)).wrapping_add(*(v3.offset(2) as *mut u16));
-            let mut r18: u16 = (slot!(game, Enemy_Kraid[E].base.y_pos)).wrapping_add(*(v3.offset(6) as *mut u16));
+            let v2 = kraid_native_record((slot!(game, Enemy_Kraid[E].kraid_var_B)).wrapping_sub(8), game);
+            let v3 = kraid_native_record(v2.word(4), game);
+            let r22: u16 = (slot!(game, Enemy_Kraid[E].base.x_pos)).wrapping_add(v3.word(0));
+            let r20: u16 = (slot!(game, Enemy_Kraid[E].base.y_pos)).wrapping_add(v3.word(2));
+            let mut r18: u16 = (slot!(game, Enemy_Kraid[E].base.y_pos)).wrapping_add(v3.word(6));
             if word!(game.projectile_counter) != 0 {
                 let mut i: i32 = 2 * word!(game.projectile_counter) as i32;
                 while i >= 0 {
@@ -2153,7 +2119,7 @@ crate::game::callback_dispatch! {
         slot!(game, Enemy_Kraid[E].kraid_var_A = (0xa7aee4i32) as u16);
         slot!(game, Enemy_Kraid[E].kraid_var_A = (0xa7b6d7i32) as u16);
         slot!(game, Enemy_Kraid[E].kraid_var_B = (addr_stru_A7974A as i32 + 8) as u16);
-        slot!(game, Enemy_Kraid[E].kraid_var_C = (*(rom_ptr!(game, KraidInstrList; 0xa7974a))).timer);
+        slot!(game, Enemy_Kraid[E].kraid_var_C = kraid_native_record(0x974a, game).word(0));
         Kraid_Shot_GlowHisEye(game);
     };
     [10991421] Kraid_Shot_UnglowEye [] {
@@ -2190,14 +2156,14 @@ crate::game::callback_dispatch! {
         if r20 == 0 {
             slot!(game, Enemy_Kraid[E].kraid_var_A = (0xa7aee4i32) as u16);
             slot!(game, Enemy_Kraid[E].kraid_var_B = addr_stru_A796DA as u16);
-            slot!(game, Enemy_Kraid[E].kraid_var_C = (*(rom_ptr!(game, KraidInstrList; 0xa796d2))).timer);
+            slot!(game, Enemy_Kraid[E].kraid_var_C = kraid_native_record(0x96d2, game).word(0));
         }
     };
     [10992618] Kraid_Main_AttackWithMouthOpen [] {
         if Kraid_ProcessKraidInstr(game) == 0xffff {
             Kraid_Mainloop_Thinking_Setup(game);
             advance_kraid_mouth_hit_response!(E, game);
-        } else if *(RomPtr_A7((slot!(game, Enemy_Kraid[E].kraid_var_B)).wrapping_sub(8u16), game) as *mut u16).offset(1) as i32
+        } else if kraid_native_record((slot!(game, Enemy_Kraid[E].kraid_var_B)).wrapping_sub(8u16), game).word(2) as i32
             == addr_kKraidTilemaps_3 as i32
             && (slot!(game, Enemy_Kraid[E].kraid_var_C) & 0xf) == 0
         {
@@ -2275,7 +2241,7 @@ crate::game::callback_dispatch! {
             slot!(game, Enemy_Kraid[E0].kraid_var_A = (0xa7b965i32) as u16);
             slot!(game, Enemy_Kraid[E0].kraid_var_F = 180);
             slot!(game, Enemy_Kraid[E0].kraid_next = (0xa7c0a1i32) as u16);
-            let v2: u16 = *(RomPtr_A7(slot!(game, Enemy_Kraid[E0].kraid_var_B), game) as *mut u16).offset(1);
+            let v2: u16 = kraid_native_record(slot!(game, Enemy_Kraid[E0].kraid_var_B), game).word(2);
             let mut v3: u16 = 50;
             if v2 as i32 != addr_kKraidTilemaps_0 as i32 {
                 v3 = 42;
@@ -2287,9 +2253,7 @@ crate::game::callback_dispatch! {
                 }
             }
             slot!(game, Enemy_Kraid[E0].kraid_var_B = (v3).wrapping_sub(26918));
-            slot!(game, Enemy_Kraid[E0].kraid_var_C = *((&raw mut (*(rom_ptr!(game, KraidInstrList; 0xa796d2))).timer
-                as *mut u8)
-                .offset(v3 as i32 as isize) as *mut u16));
+            slot!(game, Enemy_Kraid[E0].kraid_var_C = kraid_native_record(0x96d2, game).word(usize::from(v3)));
             word! {game; earthquake_type = 4; earthquake_timer = 340; }
             let E5 = (0x140) as i32;
             slot!(game, Enemy_Kraid[E5].base; current_instruction = addr_kKraid_Ilist_86E7 as u16, instruction_timer = 1);
@@ -2313,7 +2277,7 @@ crate::game::callback_dispatch! {
             slot!(game, Enemy_Kraid[E1].base; current_instruction = addr_kKraid_Ilist_8AF0 as u16, instruction_timer = 1);
             slot!(game, Enemy_Kraid[E0].kraid_var_A = (0xa7c3f9i32) as u16);
             slot!(game, Enemy_Kraid[E0].kraid_var_B = (addr_stru_A79764 as i32 + 8) as u16);
-            slot!(game, Enemy_Kraid[E0].kraid_var_C = (*(rom_ptr!(game, KraidInstrList; 0xa79764))).timer);
+            slot!(game, Enemy_Kraid[E0].kraid_var_C = kraid_native_record(0x9764, game).word(0));
             let v4: u16 = word!(game.cur_enemy_index);
             let v7: u16 = word!(game.cur_enemy_index);
             let E6 = (0x180) as i32;

@@ -41,14 +41,16 @@ production/legacy/verification deltas, B ratio/reason and final Score. Use four 
 UTF-8 middle dots, not question marks; measure the values locally with progress.sh:
 `Score: checks 44/44 · legacy N · production N · unsafe N · verification N`.
 
-The sole progress view is tools/treemap.py's mobile portrait image, published by
-Pages on each main push and embedded in README. Never edit it or add dashboards.
+The sole progress view is tools/treemap.py's mobile portrait image, committed at
+docs/treemap.svg and displayed directly in README; no Pages/image CI publisher.
+Before each code commit, stage its source, run `python tools/treemap.py docs/treemap.svg --staged`,
+then stage the SVG beside the code. Never hand-edit it or add dashboards.
 Keep replay docs essential, upstream references and CSV/TOML provenance/checks;
 shared Python installers/runtime-only restores are support work, counted separately.
 
 ## Current work and limits
 
-Current sourcef427: production113897, legacy17880, unsafe2543, verification41836; warnings160.
+Current sourceeba0: production113861, legacy17844, unsafe2544, verification41836; warnings160.
 Qualified WRAM/Execution: Game/Backend share stable WorkRam; private DMA/Input
 storage and actual byte/getter/macro consumers close with exact RAM layout.
 Initialized329+5, full86 (136526 selected+38827 setup),14 genuine captures189475,
@@ -86,7 +88,11 @@ Six native captures/seventeen raw word loads/one MemCpy and36 unused wrappers re
 Sourcef427 fmt/library/DLL160 unchanged warnings/source571/native/all41rawcodec pass;8rows11183 selected+272 setup/0.
 Net -60 physical production/-60 legacy/-23 unsafe/verification0;21 address joins excluded,39 substantive lines removed.
 Whole-word mover preflight, native failure prefixes and packed queue store order retained; unobserved species/failure variants remain source-scoped.
-Next: prepared Kraid frame responsibility on this parent, pending independent review/final local qualification.
+Kraid frame cohort:12 raw capture forms/13 expanded,20 word-load expressions and11 offset forms removed; four native calls remain.
+Actualjoinedeba0 fmt/library/DLL160 unchanged warnings/source571/native/all41rawcodec pass;5rows3348 selected+272 setup/0.
+Net -36 physical production/-36 legacy/+1 unsafe from a forbid attribute/verification0; -37 substantive lines, formatter+4 excluded.
+Ordered native/callback/queue/failure contracts retained; original5560 budget/both120 tails and full Morph1200 preserved.
+Next: REVIEW selects the next complete removable responsibility; external README/progress work retains its owner.
 
 Source-only: Blackout37, exact page2 callback, sky initializers, CrystalFlashStart,
 spike/DBF2/lavaquake and additional signed8.8 kernels; MotherBrain magnitude,
