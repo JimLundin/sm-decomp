@@ -6,7 +6,7 @@ section of [PLAN.md](PLAN.md).
 The user directs implementation agents to adjust to it. Git history keeps
 earlier versions; this file holds only current findings.
 
-## Milestone plan (2026-10-24)
+## Milestone plan (2026-10-27)
 
 **Active oversight directive (updated 2026-10-27).** The user assigns this
 session independent, proactive oversight alongside the running implementer.
@@ -14,9 +14,15 @@ This directive supersedes older work-order and pacing advice below; PLAN's
 Fast loop, resource limits and landing rules remain in force. Existing source
 owners and the sole Windows integrator retain their assignments.
 
-Current published main/origin `8483b15c`, canonical source `92da8e11`:
-production 113,959, legacy 17,793, unsafe-containing lines 2,544,
-verification 41,918; 585 inputs / 6,270,829 raw bytes and 572 source bindings. A9 corpse
+Current published main/origin `3c908c32`, canonical source `38455802`:
+production 114,504, legacy 17,793, unsafe-containing lines 2,545,
+verification 42,128; 586 inputs / 6,297,471 raw bytes and 573 source bindings;
+codec43 / `3e92b93347c1e182`, 160 unchanged warnings.
+Native [milestone1](https://github.com/JimLundin/sm-decomp/milestone/1) and its
+required tasks3/8/9/10 are achieved and closed. [Milestone2](https://github.com/JimLundin/sm-decomp/milestone/2)
+is active as [deliverable12](https://github.com/JimLundin/sm-decomp/issues/12);
+preparation11 is closed because its exact source assignment is released.
+A9 corpse
 animation landed `c872ad44`: -60 production/-60 legacy/-23 unsafe/verification0;
 eight rows passed 11,183 selected + 272 setup / 0 failures. Six native captures,
 seventeen word dereferences and one MemCpy were removed; twenty-one address-label
@@ -27,9 +33,9 @@ twelve native capture forms were removed and four unrelated native calls remain.
 Both landings retain codec 41/3ac09138dc065e54, 160 unchanged warnings and the
 actual source/native/input guards, including full Morph1200. Combined published
 delta: -96 production/-96 legacy/-22 unsafe/verification0. No fresh capture was needed.
-Since WRAM landed, actual main removed 285 production/666 legacy/93 unsafe
-metric lines and added 90 verification lines. Against `6ad82e25`, including WRAM's
-growth, the net remains +2,035 production/+440 legacy/-168 unsafe/+1,533 verification.
+Since WRAM landed, actual main added260 production, removed666 legacy/92 unsafe
+metric lines and added300 verification. Against `6ad82e25`, including WRAM's
+growth, the net remains +2,580 production/+440 legacy/-167 unsafe/+1,743 verification.
 
 Prior WRAM/Execution landing `43117e05` remains +2,320 production/+1,106 legacy/
 -75 unsafe/+1,443 verification against `6ad82e25`, with canonical ce8b and
@@ -37,7 +43,18 @@ Prior WRAM/Execution landing `43117e05` remains +2,320 production/+1,106 legacy/
 byte-identical encrypted restore verified. Count each actual main delta once.
 These checks do not prove the full engine.
 
-Latest actual cycles: A9 library 20.2305s/DLL 66.3167s/replay 50.9132s/
+Latest table cycle: library22.56s/DLL67.73s,160 unchanged warnings; all nine
+original jobs passed and were collected. Their STARTs span0.573s; six rows11216
+selected+272 setup and genuine329/resume5 total11822 ordinary comparisons/0.
+Qualification receipt13:52:49UTC to source assignment14:35:12UTC is42m23s;
+confirmed publication receipt13:55:49UTC to assignment is39m23s. Planning/handoff
+still caused excessive idle time. Freeze shared interfaces and activate source
+owners before tracker/doc packets. New DMA/application authors were explicitly
+reactivated14:35UTC; Linux catalog SOURCE/independent REVIEW are actually RUNNING
+at14:44:26UTC [6445007479](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6445007479).
+No document/ACK or milestone1 administrative gate remains.
+
+Previous qualified cycles: A9 library 20.2305s/DLL 66.3167s/replay 50.9132s/
 EXIT-to-push 90.7405s; Kraid library 20.137s/DLL 66.411s/replay 18.0719s/
 EXIT-to-push 88.8000s [6440810470](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6440810470).
 Source readiness and handoff currently dominate idle time. Check explicit macro
@@ -102,62 +119,105 @@ Next work, in order:
    [6442637785](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6442637785).
    Full cost +169 production/+60 verification/legacy0/+1 forbid attribute;
    raw-operation retirement0. No whole-engine/independent-backend claim.
-2. **Implement prepared room TileTables plus the shared CRE table.**
-   The representation discriminator is complete: use opaque validated immutable
-   encoded streams with the existing decompression::Output/decode algorithm.
-   The existing Linux source author and independent reviewer take the complete
-   cohort on actual8483b15c; the Windows session remains sole integrator.
-   Exact source/review/files/rows/budget assignment:
-   [6442715605](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6442715605).
-   Import from caller-owned immutable &[u8], not a shared mutable RomImage clone.
-   Extract every declared ResourceKind::TileTable and shared CRE stream; retain
-   only owned validated streams in a private immutable WorldBinding catalog.
-   Supply a real versioned canonical pack/schema, stable IDs/order/lengths/limits
-   and a fixed fingerprint covering exact streams and their declared world/profile
-   compatibility. Loading external bytes revalidates commands and rejects missing,
-   duplicate, trailing and incompatible records before constructing the catalog.
-   DefaultHasher at world.rs currently documents process-local revision evidence;
-   it is insufficient for the portable pack identity. Include the prepared
-   catalog identity in world.revision/checkpoint preflight, preserving the
-   existing compatibility-bound constructors and Legacy asset tokens.
-   Extend private RamOutput with transient Legacy or immutable-slice source;
-   only next_byte selects the source. Keep RAM read/write, signed addressing,
-   write-before-produced order, overlapping/live destination references and
-   decode itself unchanged. Validation reuses decode with an Output recording
-   source consumption, reads/writes and bounds; dummy reference values are valid
-   because values do not select commands. Bound work/current-command completion.
-   Synthetic termination after an error must never accept truncation or limits.
-   Permit valid reads outside the already produced prefix.
-   The real initial/door consumers install at a000/a800 in the existing
-   Runtime::foreign interval. Preserve the legacy loaded-source/diagnostic/
-   allocation/cursor route for existing bindings and unrelated destinations.
-   Game.decompress_src remains the last published Legacy cursor; prepared
-   execution leaves this compatibility history unchanged and adds no persistent
-   prepared execution cursor. GameOwner::with_world and the existing room-world
-   harness are the opening consumer; Session::open and external pack/profile
-   selection remain unimplemented.
-   Allowed production: one private table module, decompression.rs,
-   room_entry/{world,compatibility,mod}.rs and only reached content definitions
-   required for this route. Use existing room-world fixture/resources/cases and
-   registry hunks; reconcile Botwoon's source addition rather than copying old
-   complete registries. No Session/Runtime/encoding/checkpoint edits concurrent
-   with an active owner; final freeze uses actual published main.
-   First acceptance: genuine GameOwner initial cases2/3 and door cases4/5,
-   existing binding guards and genuine checkpoint continuation; demonstrate
-   immutable-source behavior, live/unproduced references, canonical pack roundtrip/
-   malformed rejection and changed-catalog preflight rejection before adoption.
-   Add only necessary checks to the existing verifier; constructed helpers stay
-   under100 lines with the unreachable-by-movie reason first. PLAN's affected
-   rows plus four smokes, source/native/codec guards and applicable codec evidence
-   remain authoritative. One complete freeze/qualification; no new framework.
-   Revised planning envelope +180..400 production/+30..100 support/
-   +15..60 verification, physical retirement0. Count full adapters/schema/import/
-   revision/callers and dependencies; these are forecasts, not savings or timing.
-   Later room closure still needs Levels, Tiles/CRE tiles, Palette provenance,
-   Background/raw DMA, Fx records/tilemaps, transition/blank sources and the
-   application pack/profile loader. Options, Kraid and46 cinematic sites retain
-   the149-line decoder/VRAM pool; no global decoder/backend retirement is claimed.
-3. **Preserve the completed observation-epoch proof; defer its standalone rewrite.**
+2. **Landed: prepared room TileTables plus the shared CRE table.**
+   Actual published3c908c32/source38455802 imports caller-owned immutable bytes
+   into a validated versioned SMTT catalog and binds before GameOwner/SnesInit.
+   Actual initial2/3 and CRE2 door4/5, immutable/live/unproduced RAM references,
+   pack roundtrip/rejection, runtime guard and genuine prepared checkpoint
+   continuation pass. Changed-catalog consumer runs a committed frame and534 audio
+   samples before exact world-revision rejection; complete capture is unchanged.
+   Nine original jobs total11822 ordinary comparisons/0 at codec43/3e92; no
+   encrypted distribution/restore was assigned. Final independent review
+   [6443405464](https://github.com/JimLundin/sm-decomp/issues/3#issuecomment-6443405464),
+   [qualification6443640155](https://github.com/JimLundin/sm-decomp/issues/5#issuecomment-6443640155),
+   [publication6443737984](https://github.com/JimLundin/sm-decomp/issues/5#issuecomment-6443737984)
+   and independent readback6443723241 retain actual source/native/input pins.
+   Full cost+545 production/+210 verification/+1 forbid attribute/legacy0/
+   raw-operation retirement0 exceeds forecast180..400 production/15..60 verification.
+   New module526 - old decompression39 + world43 + compatibility14 + registration1
+   is545; decoder relocation earns no savings. The149-line decoder/VRAM pool
+   remains for Legacy, Options, Kraid and46 cinematic sites. Prepared execution
+   preserves last Legacy decompress_src; there is no stored prepared cursor.
+   Loader structural malformed fixtures currently retain stale checksums; add a
+   checksum-valid malformed witness during the next loader edit, not a separate
+   completed-table freeze. Full remaining room/application consumers are below.
+
+3. **Execute the complete external prepared room-pack loading cohort.**
+   [Exact source/roles/files/API/rows/budgets assignment6444793969](https://github.com/JimLundin/sm-decomp/issues/11#issuecomment-6444793969)
+   is released against3c908c32/source38455802. Native deliverable12: Linux source
+   linux_verifier_readiness owns catalog/room consumers13; local existing SOURCE
+   checkpoint_common_caller owns disjoint DMA primitive14; checkpoint_flexible_interface
+   owns outer pack/application/literal inventory15. Linux ownership_frontier
+   independently reviews composition16. Windows implementation_overseer/Core/Input
+   owns qualification/publication17 and sole Git integration; external acceptance18.
+   Final review depends on all three source deliveries; final qualification on
+   review; acceptance on publication. Independent authoring/preparation runs now.
+
+   Settled flow: `sm.exe --room-pack PATH ROM`. One bounded standard-library SMRP
+   wire codec carries full WorldDefinition/CompatibilityKeys, vanilla reference
+   profile/options0 and complete required room-use catalogs. Real generic import/
+   writer and shared file selector validate before GameOwner/SnesInit/native
+   SwitchDirectory; resolve path and remove only new arguments there. Missing
+   value/duplicate/missing/malformed/incompatible/unsupported profile fails
+   explicitly with no selected-content fallback. Retain GameOwner::new/with_world,
+   Config ABI/buffers/hooks/device/shutdown/save/replay restrictions. No --start
+   or Session::open facade. CurrentLoadStation sites are area6/index0 and0/index18.
+   Catalogue API: PreparedRoomAssets/PreparedRoomError import/to_bytes/load and
+   WorldBinding::prepared_with_room_assets. Reuse SMTT/single decoder; install
+   Levels, Tiles/shared CRE, room Palette/compressed Background with actual RAM/
+   VRAM live/unproduced/overlap and VMADD/dummy/actual/odd-byte contracts. Decode
+   level then actual LE header then existing layer2/BTS branch/copy/failure order;
+   [6444165581](https://github.com/JimLundin/sm-decomp/issues/11#issuecomment-6444165581)
+   is accepted. No inference from dimensions/produced length or whole-plane
+   preflight. FX includes ordered selectors/all8 indexed slots beyond default/
+   FFFF, blend/type/area data/ordered IDs/0x840 tilemaps; MotherBrain entries2/1,
+   native/LE/odd/wrapped/live-exit/callback order remain.
+
+   Raw Background/FX/transition9ab200 and blanks80a29a/80a2f7/80a2f8 use borrowed
+   execution::DmaRomSource::new(first,bytes), checked mapped-ROM lookup and unsafe
+   rtl::write_dma_start(mask,&source,&mut Game). Source covers MDMAEN pre-reads
+   t then t+1 AND synchronous normal-DMA drain at actual cartridge ROM branch
+   after bus/mapper/SRAM classification/romSize-1 mapping. Preserve captured/
+   foreign Snes/CPU, observer/cart-tail/diagnostic/offIndex/channel/counter/timer/
+   failure order. DMA wraps16-bit address in the same bank; pre-read can carry;
+   size0 means65536. Catalogue supplies complete exact windows; uncovered ROM
+   reads remain a dependency, not invented bytes. CPU/HDMA/B-to-A/WRAM/register/
+   SRAM/Legacy stay live; no stored source/cursor. Prepared Palette receipts tag
+   ResourceId+catalog revision only after successful decode; retain exact Legacy
+   RomImage allocation/Actor staging/row/revoke/failure/adoption behavior.
+
+   Catalogue owns verify/checkpoint.rs new prepared_assets.rs/room_pack.rs
+   contributor includes and tagged Palette codec integration. Outer source
+   explicitly owns actual verify_source.rs literal inventory and lib/verify_dll
+   registration [6445077746](https://github.com/JimLundin/sm-decomp/issues/15#issuecomment-6445077746).
+   Preserve the Windows-owned frozen verify_dll.py frontend-check support repair
+   when composing option/producer forwarding; no full-file overwrite.
+   External file/shared selector/sm_verify_args must reach selected GameOwner
+   initial2/3, CRE2 doors4/5, CurrentLoadStation9/10 and prepared checkpoint.
+   Changed background/level/VRAM/FX/Palette/DMA/runtime/allocation checks use
+   existing runner; only necessary witnesses for unreachable live header/
+   pre-read/all8 indexed FX/Prepared receipt/checksum-valid structural rejection.
+   Genuine initialized/capture/roundtrip/continuation binds final resulting codec,
+   reset retention and committed frame/audio rejected capture. PLAN affected
+   area/door/FX/MotherBrain rows+four smokes/full Morph1200 and all source/native/
+   input/origin guards remain. No old-codec restamp, invented encrypted restore
+   or repeated accepted table campaign. main.rs requires matching desktop archive;
+   Windows59 known input/artifact paths/commands are prepared during source work.
+
+   Full incremental forecast+1700..3800 production/+280..770 support/
+   +230..570 verification, retirement0. DMA100..180 production/20..50 verification
+   is INCLUDED in catalogue900..2100/80..220 once; outer800..1700/150..350 is
+   separate. Measure import/schema/identity/adapters/callers/dependencies and
+   explain growth. Prepared room assets cease live ROM acquisition when this
+   cohort closes; Actor/media/FX/audio/native/PPU/DMA/SDL/backend/non-room decoder
+   costs remain. Milestone3's actual owned Session/open-step-checkpoint/
+   independent pixels/timed cue is future work. Local source64MiB per owner,
+   Linux own ledger; no target/ROM copies/unadmitted builds/replays. Windows final
+   composition uses fresh budgets/one immutable source/DLL/output pin; original
+   ready groups launch together and every original handle is collected. REVIEW
+   travels beside code, no docs-only commit, CI observer or new framework.
+
+4. **Preserve the completed observation-epoch proof; defer its standalone rewrite.**
    All45 scalar observations and five Session overlaps are traced. Admission and
    successful foreign return capture Game; set_byte rebuilds from raw Game and
    overrides gamma; successful owned_call refreshes only four actor values from
@@ -172,7 +232,7 @@ Next work, in order:
    unwind prefixes remain. Gross removal is roughly17 lines before replacements;
    forecast +25..80 production/+20..60 verification, raw-operation retirement0.
    No standalone source/codec campaign, blanket refresh or getter facade is assigned.
-4. **Retain the sprite-to-render consumer closure as future architecture work.**
+5. **Retain the sprite-to-render consumer closure as future architecture work.**
    The survey is complete; no preview product/source assignment is selected.
    Actual presentation copies256x240 PPU pixels through SDL/OpenGL, and gameplay
    return precedes scanline/HDMA/IRQ/display settlement. An independent256x224
@@ -192,7 +252,7 @@ Next work, in order:
    Keep those costs visible and overlapping room/media/revision estimates counted
    once. A complete drawing-to-pixels consumer, reset/load/adoption and equivalent
    coverage must exist before retiring the working presentation/backend path.
-5. **Retain the completed Session transfer constraints.** Gamma's
+6. **Retain the completed Session transfer constraints.** Gamma's
    eleven named modes plus Unknown are traced. A standalone typed dispatch grows
    roughly10..30 production lines and removes no raw operation/backend owner;
    no elapsed speedup is established. owned_call refreshes four actor observations
@@ -244,10 +304,11 @@ removal and closed ownership dependencies explicit beside the existing Score.
 Bank deletion, safe wrappers and replay passes remain intermediate achievements;
 owned Session, independent media and Map Rando acceptance remain the destination.
 
-**Size feasibility, actual engine main 8483b15c.** Production 113,959, legacy 17,793,
-unsafe-containing lines 2,544 and verification 41,918 leave 13,959 net production
-lines above 100,000. If only banks changed, replacements could total at most 3,834
-lines (21.5%); at 80% replacement, another ~10,400 lines must disappear elsewhere.
+**Size feasibility, actual engine main3c908c32.** Production114504, legacy17793,
+unsafe-containing lines2545 and verification42128 leave14504 net production
+lines above100000. If only banks changed, replacements could total at most3289
+lines (18.5%); at80% replacement, another~10945 lines must disappear elsewhere,
+before forecast1700..3800 room-loading growth and future independent media.
 Bank moves alone cannot substantiate the size promise. Existing independent
 terrain/duplicate assessments found no justified >100-line owned-domain merge;
 small candidate pools are not enough. Investigate complete responsibilities in

@@ -163,9 +163,19 @@ def cargo_host(root, rustc, output, source, frontend=False, retry=True):
     command = [cargo, "build", "-p", "sm", "--release", "--example", "sm_verify",
                "--locked", "-j", "1", "--target-dir", str(root / "target"),
                "--message-format=json"]
-    if frontend:
-        command.extend(["--lib", "--bin", "sm"])
     environment = dict(os.environ, RUSTC=rustc, SM_VERIFY_SOURCE_HASH=source)
+    if frontend:
+        # The desktop requires the ordinary library configuration. The verifier
+        # cfg excludes its config/platform modules, so use a separate build.
+        frontend_command = command.copy()
+        selector = frontend_command.index("--example")
+        frontend_command[selector:selector + 2] = ["--lib", "--bin", "sm"]
+        frontend_log = output / "frontend-build.log"
+        print(f"Compiling release frontend; log {frontend_log}",
+              file=sys.stderr, flush=True)
+        with frontend_log.open("w", encoding="utf-8") as log:
+            subprocess.run(frontend_command, cwd=root, env=environment,
+                           stdout=log, stderr=subprocess.STDOUT, check=True)
     # CARGO_ENCODED_RUSTFLAGS has Cargo's highest environment precedence. If it
     # is absent, preserve RUSTFLAGS using Cargo's whitespace-separated format.
     flags = environment.get("CARGO_ENCODED_RUSTFLAGS")
@@ -225,7 +235,7 @@ def cargo_host(root, rustc, output, source, frontend=False, retry=True):
         # changing source contents. The crate root is always a library input.
         # This also works with pre-existing/seeded targets lacking CACHEDIR.TAG.
         (root / "sm/src/lib.rs").touch()
-        return cargo_host(root, rustc, output, source, frontend, retry=False)
+        return cargo_host(root, rustc, output, source, frontend=frontend, retry=False)
     # Preserve --no-build's existing path. An unchanged DLL can still be loaded
     # by another replay; do not overwrite it merely to refresh its timestamp.
     cached = output / HOST_LIBRARY
@@ -687,7 +697,7 @@ def main():
     parser.add_argument("--unit-tests", action="store_true",
                         help="run the existing verifier unit tests through the DLL, without a ROM")
     parser.add_argument("--frontend-check", action="store_true",
-                        help="include release library/frontend checks in the same Cargo build")
+                        help="compile/link the ordinary release frontend before the verifier-only Cargo build")
     parser.add_argument("--frames", type=int)
     parser.add_argument("--seed", type=Path, help="import an original-emulator room seed")
     parser.add_argument("--checkpoint-in", type=Path,
