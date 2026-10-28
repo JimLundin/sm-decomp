@@ -50,6 +50,14 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
+Zero-producer prefixes now retain the original Scene error in both existing
+Samus/marker units. Exact successor DLL and all 66 units pass; all 76 raw codec
+contributors remain identical to qualified SOURCE30. Original 26-row runtime
+attribution is preserved; no replay/capture repeated. Net +6 verification, all
+other code classifications unchanged. Catalog constructor adaptation and the
+actual persistent Session/content/consumer/lifecycle remain open.
+
+
 SOURCE30 atmospheric/Samus producer cohort is independently reviewed and qualified.
 Source d9daaf02 / DLL6768ee76 binds shared atmosphere, body/position/tile upload,
 resident media publication and all66 units. Production library26.194s retains

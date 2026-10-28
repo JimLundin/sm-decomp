@@ -4750,7 +4750,12 @@ fn scene_namespace_birth_failures_preserve_counter_and_slot_prefixes() {
 #[cfg(sm_verify_dll)]
 #[cfg_attr(test, test)]
 fn scene_namespace_samus_id_failure_keeps_completed_oam_and_other_records() {
-    for producer in [25, 24, u64::MAX] {
+    for (producer, error) in [
+        (0, ds::DisplayError::Scene),
+        (25, ds::DisplayError::Identity),
+        (24, ds::DisplayError::Identity),
+        (u64::MAX, ds::DisplayError::Identity),
+    ] {
         let (requirements, start, media) = scene_namespace_failed_id_fixture();
         let before = start.display.as_ref().unwrap().clone();
         let catalog = scene_namespace_samus_catalog(&media);
@@ -4767,7 +4772,7 @@ fn scene_namespace_samus_id_failure_keeps_completed_oam_and_other_records() {
             context,
             sc::ProducerObjectId(producer),
         );
-        assert_eq!(result, Err(ds::DisplayError::Identity));
+        assert_eq!(result, Err(error));
         assert_eq!(state.phase, ds::DisplayPhase::Failed);
         let mut expected = before.objects.bytes;
         expected[..4].copy_from_slice(&[100, 76, 0, 0]);
@@ -4861,6 +4866,7 @@ fn scene_namespace_marker_fixture() -> (
 fn scene_namespace_marker_retains_high_x_and_overlapping_word_prefixes() {
     use sm::game::scene::samus_body::MarkerPublication;
     for (cursor, producer, expected_cursor, error) in [
+        (0, 0, 4, ds::DisplayError::Scene),
         (0, 22, 4, ds::DisplayError::Source),
         (0, 24, 4, ds::DisplayError::Identity),
         (544, 22, 0xb761, ds::DisplayError::Alias { offset: 546 }),
