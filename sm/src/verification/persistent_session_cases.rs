@@ -129,6 +129,7 @@ pub fn persistent_session_native_rebinding_preserves_ready_owner(
             sounds: std::collections::BTreeMap::new(),
         }),
     };
+    let codec_required = required.display.clone();
     let owner = GameOwner::new();
     owner.with(|game| {
         game.register_rom(binding::image());
@@ -218,9 +219,71 @@ pub fn persistent_session_native_rebinding_preserves_ready_owner(
             required,
         ))
         .unwrap();
+    assert_audio_reference_binding(&owner, &codec_required);
     assert_ready_owner_rejects_native_binding(&owner, native);
     assert_clean_runtime_writer_preserves_admission(&owner);
     assert_dirty_runtime_lease_preserves_native_mutation(&owner);
+}
+
+/// No movie covers mismatched detached payloads decoded under another valid Reference.
+fn assert_audio_reference_binding(owner: &GameOwner, required: &ss::DisplayStartRequirements) {
+    use crate::game::scene::component::DisplayStartMetadata;
+    use crate::game_state::persistent_session::AudioRequests;
+
+    let (start, _) = owner.checkpoint_session().unwrap().into_start().unwrap();
+    let requests = start.audio_requests.unwrap();
+    let display = start.display;
+    let a = DisplayStartMetadata {
+        identity: display.identity.unwrap(),
+        reference: display.reference.unwrap(),
+        input_history: display.input_history.unwrap(),
+        continuation: display.continuation.unwrap(),
+        audio: display.audio.unwrap(),
+        samus_content: display.samus_content.unwrap(),
+    };
+    assert_eq!(a.audio.revision, sc::Revision([5; 32]));
+    assert_eq!(
+        a.audio.music,
+        ss::OngoingMusic::Playing(ss::ProgramAnchor {
+            program: sc::AssetId(1),
+            revision: sc::Revision([5; 32]),
+            source_interval: 23,
+            phase: 59,
+            timing_policy: a.audio.timing_policy,
+        })
+    );
+    assert!(requests.catalog.music.is_empty());
+    assert!(requests.catalog.sounds.is_empty());
+    assert_eq!(requests.music.tracks, [0; 8]);
+    assert_eq!(requests.music.delays, [0; 8]);
+    assert!(requests.sounds.iter().all(|sound| sound.queue == [0; 16]));
+
+    let mut b = a.clone();
+    b.reference.fingerprint = [0xa4; 32];
+    b.reference.ticks_numerator = a.reference.ticks_numerator.checked_add(1).unwrap();
+    b.identity.reference = b.reference.fingerprint;
+    let mut required_b = required.clone();
+    required_b.reference = b.reference;
+    assert_ne!(a.reference.fingerprint, b.reference.fingerprint);
+    assert_ne!(a.reference.ticks_numerator, b.reference.ticks_numerator);
+    assert_eq!(a.reference.ticks_denominator, b.reference.ticks_denominator);
+    ss::validate_control_metadata(&a, required).unwrap();
+    ss::validate_control_metadata(&b, &required_b).unwrap();
+    requests.validate(&a, &requests.catalog).unwrap();
+    requests.validate(&b, &requests.catalog).unwrap();
+    assert_eq!(a.audio, b.audio);
+
+    let bytes = requests.encode_checkpoint(&a, &requests.catalog).unwrap();
+    assert_eq!(
+        AudioRequests::decode_checkpoint(&bytes, &a, requests.catalog.clone()).unwrap(),
+        requests
+    );
+    assert_eq!(
+        AudioRequests::decode_checkpoint(&bytes, &b, requests.catalog.clone())
+            .err()
+            .as_deref(),
+        Some("audio checkpoint Reference declaration changed")
+    );
 }
 
 pub(crate) fn assert_ready_owner_rejects_native_binding(
