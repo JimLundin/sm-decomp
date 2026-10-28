@@ -1,12 +1,9 @@
-name: Segments
+name: Corpus replay
 
 # Runs movies/segments.toml rows against the oracle on hosted Windows runners.
 # The ROM comes from repository secrets; ROM-derived files (inputs, checkpoints)
 # stay private; the seed release asset is encrypted with a ROM-derived key.
 on:
-  push:
-    branches: [main, 'ci/**']
-    paths: ['sm/**', 'tools/**', 'movies/segments.toml', '.github/workflows/segments.yml']
   schedule:
     - cron: '0 */3 * * *'
   workflow_dispatch:
@@ -15,91 +12,37 @@ on:
         description: Space-separated row ids (empty = full corpus / review waypoint)
         required: false
         default: ''
-      linux:
-        description: Also run the smoke set on the Linux verifier (L1 spike)
-        type: boolean
-        default: false
 
 permissions:
   contents: read
 
-# On main, let the running corpus finish and keep only the newest queued run;
-# on ci/** branches, a new push replaces the running one.
+# Finish the running corpus; retain the newest queued request.
 concurrency:
-  # Main-push detection must not replace a queued full run.
-  group: segments-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && github.sha || 'verify' }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  group: corpus-replay-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   plan:
     runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-      actions: write
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}
-      linux_matrix: ${{ steps.plan.outputs.linux_matrix }}
-      should_run: ${{ steps.plan.outputs.should_run }}
       movie_file: ${{ steps.plan.outputs.movie_file }}
       movie_sha256: ${{ steps.plan.outputs.movie_sha256 }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - id: plan
         env:
           SELECTED: ${{ github.event.inputs.segments }}
-          CI_BRANCH: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci/') }}
-          MAIN_PUSH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-          BEFORE: ${{ github.event.before }}
-          LINUX: ${{ inputs.linux || startsWith(github.ref, 'refs/heads/ci/l1-') }}
-          GH_TOKEN: ${{ github.token }}
         run: |
           python3 - <<'PY'
-          import json, os, re, subprocess, tomllib
+          import json, os, tomllib
           rows = tomllib.load(open('movies/segments.toml', 'rb'))['segment']
           movie = next(m for m in tomllib.load(open('movies/manifest.toml', 'rb'))['movies'] if m['category'] == 'any%')
           with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
               out.write(f"movie_file={movie['file']}\nmovie_sha256={movie['sha256']}\n")
-          if os.environ.get('MAIN_PUSH') == 'true':
-              before = os.environ['BEFORE']
-              # Main already exists: an unavailable base fails rather than skipping a deletion.
-              deleted = subprocess.check_output(['git', 'diff', '--no-renames', '--diff-filter=D',
-                                                 '--name-only', before, 'HEAD', '--', 'sm/src/game/sm_*.rs'], text=True)
-              if deleted.strip():
-                  # Dispatch shares the schedule/waypoint concurrency group.
-                  subprocess.run(['gh', 'workflow', 'run', 'segments.yml', '--repo', os.environ['GITHUB_REPOSITORY'], '--ref', 'main'], check=True)
-              with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
-                  out.write('should_run=false\nmatrix={"include":[]}\n')
-              with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
-                  out.write('Bank deletion: dispatched full corpus on main.\n' if deleted.strip() else
-                            'Routine main push: full corpus runs every 3h and at waypoints.\n')
-              raise SystemExit(0)
           known = {r['id'] for r in rows}
           wanted = os.environ.get('SELECTED', '').split()
           source = 'dispatch input' if wanted else 'every row'
-          if os.environ.get('CI_BRANCH') == 'true':
-              messages = subprocess.check_output(['git', 'log', '--format=%B%x00', 'origin/main..HEAD'], text=True)
-              named, found = [], False
-              for message in messages.split('\0'):
-                  lines = message.splitlines()
-                  n = 0
-                  while n < len(lines):
-                      line = lines[n]
-                      n += 1
-                      if not line.startswith('Rows:'):
-                          continue
-                      found = True
-                      text = line[5:]
-                      # A wrapped list continues after a trailing comma; results follow a colon.
-                      while text.rstrip().endswith(',') and n < len(lines):
-                          text += ' ' + lines[n]
-                          n += 1
-                      named.extend(t for t in re.split(r'[\s,]+', text.split(':')[0]) if t)
-              if found:
-                  smoke = ['door-loading-lag-nmi', 'tas-ceres-four-doors', 'area-crateria', 'item-morph-ball']
-                  wanted = list(dict.fromkeys(named + smoke))
-                  source = f"Rows: union across origin/main..HEAD ({len(set(named))} named) plus smoke set"
           if wanted:
               unknown = set(wanted) - known
               if unknown:
@@ -153,29 +96,16 @@ jobs:
                                  'segments': ' '.join(r['id'] for r in chunk)})
           if not shards:
               raise SystemExit('no runnable rows selected')
-          linux_groups = {}
-          if os.environ.get('LINUX') == 'true':
-              for row in rows:
-                  if row['id'] in ('area-crateria', 'item-morph-ball'):
-                      if 'pending' in row or not ('seed' in row or 'checkpoint' in row):
-                          raise SystemExit('Linux smoke row requires an encrypted start: ' + row['id'])
-                      linux_groups.setdefault(seed_bundle(row), []).append(row['id'])
-          linux_shards = [{'seed_asset': asset, 'seed_sha256': digest,
-                           'segments': ' '.join(members)}
-                          for (asset, digest), members in linux_groups.items()]
           with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
               out.write(f"Selection: {source}\n\n")
               out.write(f"{sum(len(s['segments'].split()) for s in shards)} rows in {len(shards)} shards\n\n")
               out.write('Skipped:\n\n' + ''.join(f'- {i}: {why}\n' for i, why in skipped))
           with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
-              out.write('should_run=true\n')
               out.write('matrix=' + json.dumps({'include': shards}) + '\n')
-              out.write('linux_matrix=' + json.dumps({'include': linux_shards}) + '\n')
           PY
 
   build:
     needs: plan
-    if: needs.plan.outputs.should_run == 'true'
     runs-on: windows-2022
     timeout-minutes: 60
     env:
@@ -404,194 +334,3 @@ jobs:
           Select-String -Path corpus.log -Pattern '^(PASS|FAIL|Corpus)' | ForEach-Object { $_.Line } | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           if ($code -ne 0) { throw "Rows failed ($code)" }
-
-  # A green ci/** run lands the branch: rebase onto current main, fast-forward
-  # main, delete the branch. A conflict or a lost race retries once after a
-  # fresh fetch, then fails and leaves the branch for its author to rebase.
-  # Only pushes to this repository land (fork runs and dispatches never do).
-  land:
-    needs: [plan, build, segments]
-    if: >-
-      github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci/') &&
-      github.repository == 'JimLundin/sm-decomp' && !github.event.repository.fork
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-      actions: write
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ github.sha }}
-      - name: Rebase onto main and fast-forward it
-        env:
-          BRANCH: ${{ github.ref_name }}
-          TESTED: ${{ github.sha }}
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          land() {
-            git fetch --quiet origin main "$BRANCH" || return 1
-            if [ "$(git rev-parse "origin/$BRANCH")" != "$TESTED" ]; then
-              echo "::error::$BRANCH moved past the tested commit $TESTED; its own run lands it"
-              exit 1
-            fi
-            git checkout --quiet --detach "$TESTED"
-            if ! git rebase --quiet origin/main; then
-              git rebase --abort
-              echo "::warning::rebase of $BRANCH onto main conflicts"
-              return 1
-            fi
-            # GITHUB_TOKEN cannot push workflow edits; those land by hand.
-            if [ -n "$(git diff --name-only origin/main HEAD -- .github/workflows)" ]; then
-              echo "::error::$BRANCH changes .github/workflows; land it by hand"
-              exit 1
-            fi
-            bank_deleted=$(git diff --no-renames --diff-filter=D --name-only origin/main HEAD -- 'sm/src/game/sm_*.rs')
-            git push --quiet origin "HEAD:refs/heads/main" || return 1
-          }
-          if ! land; then
-            echo 'Retrying once after a fresh fetch'
-            land || { echo "::error::could not land $BRANCH; rebase it onto main and push again"; exit 1; }
-          fi
-          landed=$(git rev-parse HEAD)
-          echo "Landed $BRANCH ($TESTED) on main as $landed" >> "$GITHUB_STEP_SUMMARY"
-          git push --quiet --force-with-lease="refs/heads/$BRANCH:$TESTED" origin ":refs/heads/$BRANCH" ||
-            echo "::warning::left $BRANCH in place (it moved)"
-          if [ -n "$bank_deleted" ]; then echo 'BANK_RETIRED=true' >> "$GITHUB_ENV"; fi
-      - name: Run the full corpus after bank retirement
-        if: env.BANK_RETIRED == 'true'
-        # Bot pushes start no workflows; only bank deletion needs an immediate main run.
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh workflow run segments.yml --repo "$GITHUB_REPOSITORY" --ref main
-
-  # L1 spike: the same verifier as a Linux shared object. Dispatch (or ci/l1-*
-  # pushes) only until its results match the Windows shards; ROM-derived files
-  # stay on the runner.
-  linux:
-    needs: plan
-    if: inputs.linux || startsWith(github.ref, 'refs/heads/ci/l1-')
-    runs-on: ubuntu-24.04
-    timeout-minutes: 90
-    strategy:
-      fail-fast: false
-      max-parallel: 1
-      matrix: ${{ fromJson(needs.plan.outputs.linux_matrix) }}
-    name: Linux ${{ matrix.segments }}
-    env:
-      CARGO_INCREMENTAL: '0'
-      SEGMENTS: ${{ matrix.segments }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-      - name: Install Rust, pinned Zig and the SDL2 headers
-        run: |
-          rustup toolchain install stable --profile minimal
-          native="$RUNNER_TEMP/sm-native"
-          mkdir -p "$native/lib"
-          curl -sSfL -o "$native/zig.tar.xz" https://ziglang.org/download/0.15.2/zig-x86_64-linux-0.15.2.tar.xz
-          echo "02aa270f183da276e5b5920b1dac44a63f1a49e55050ebde3aecc9eb82f93239  $native/zig.tar.xz" | sha256sum -c -
-          tar -xf "$native/zig.tar.xz" -C "$native"
-          curl -sSfL -o "$native/sdl.zip" https://github.com/libsdl-org/SDL/releases/download/release-2.32.10/SDL2-devel-2.32.10-mingw.zip
-          echo "f15cff5fca62ec9381a016ef1d42a95c638cd72d2f226ba5781c76fe43dbd1ac  $native/sdl.zip" | sha256sum -c -
-          unzip -q "$native/sdl.zip" -d "$native"
-          echo "SM_NATIVE=$native" >> "$GITHUB_ENV"
-          echo "SM_ZIG=$native/zig-x86_64-linux-0.15.2/zig" >> "$GITHUB_ENV"
-          echo "SM_SDL_INCLUDE=$native/SDL2-2.32.10/x86_64-w64-mingw32/include/SDL2" >> "$GITHUB_ENV"
-          echo "LIBRARY_PATH=$native/lib" >> "$GITHUB_ENV"
-      - name: Build pinned native dependencies
-        run: |
-          python tools/install_native_dependencies.py --zig "$SM_ZIG" --target x86_64-linux-gnu --prefix "$SM_NATIVE" --library-directory "$LIBRARY_PATH" --sdl-include "$SM_SDL_INCLUDE"
-          codec="$SM_NATIVE/stb-image"
-          mkdir -p "$codec"
-          curl -sSfL -o "$codec/stb-sys-0.6.0.crate" https://crates.io/api/v1/crates/stb-sys/0.6.0/download
-          echo "fedcddefe320931b97fea7c9bc9168567eadaf71c87a74a3491d5b46b5c573de  $codec/stb-sys-0.6.0.crate" | sha256sum -c -
-          tar -xf "$codec/stb-sys-0.6.0.crate" -C "$codec" stb-sys-0.6.0/vendor/stb/stb_image.h
-          echo "8e5b0d717dfc8a834c97ef202d20e78d083d009586e1731c985817d0155d568c  $codec/stb-sys-0.6.0/vendor/stb/stb_image.h" | sha256sum -c -
-          "$SM_ZIG" cc -target x86_64-linux-gnu -O2 -std=c11 -fPIC -D_DEFAULT_SOURCE -ftrivial-auto-var-init=zero -I "$codec/stb-sys-0.6.0/vendor/stb" -c sm/native/stb_image.c -o "$codec/stb_image.o"
-          "$SM_ZIG" ar rcs "$LIBRARY_PATH/libsm_stb_image.a" "$codec/stb_image.o"
-      - name: Build the verifier shared object
-        run: python tools/verify_dll.py --build-only --direct
-      - name: Unit tests through the shared object
-        run: python tools/verify_dll.py --unit-tests --no-build
-      - name: Prepare ROM and selected runtime seeds
-        env:
-          SEED_ASSET: ${{ matrix.seed_asset }}
-          SEED_SHA256: ${{ matrix.seed_sha256 }}
-          ROM_00: ${{ secrets.SM_ROM_00 }}
-          ROM_01: ${{ secrets.SM_ROM_01 }}
-          ROM_02: ${{ secrets.SM_ROM_02 }}
-          ROM_03: ${{ secrets.SM_ROM_03 }}
-          ROM_04: ${{ secrets.SM_ROM_04 }}
-          ROM_05: ${{ secrets.SM_ROM_05 }}
-          ROM_06: ${{ secrets.SM_ROM_06 }}
-          ROM_07: ${{ secrets.SM_ROM_07 }}
-          ROM_08: ${{ secrets.SM_ROM_08 }}
-          ROM_09: ${{ secrets.SM_ROM_09 }}
-          ROM_10: ${{ secrets.SM_ROM_10 }}
-          ROM_11: ${{ secrets.SM_ROM_11 }}
-          ROM_12: ${{ secrets.SM_ROM_12 }}
-          ROM_13: ${{ secrets.SM_ROM_13 }}
-          ROM_14: ${{ secrets.SM_ROM_14 }}
-          ROM_15: ${{ secrets.SM_ROM_15 }}
-          ROM_16: ${{ secrets.SM_ROM_16 }}
-          ROM_17: ${{ secrets.SM_ROM_17 }}
-          ROM_18: ${{ secrets.SM_ROM_18 }}
-          ROM_19: ${{ secrets.SM_ROM_19 }}
-          ROM_20: ${{ secrets.SM_ROM_20 }}
-          ROM_21: ${{ secrets.SM_ROM_21 }}
-          ROM_22: ${{ secrets.SM_ROM_22 }}
-          ROM_23: ${{ secrets.SM_ROM_23 }}
-          ROM_24: ${{ secrets.SM_ROM_24 }}
-          ROM_25: ${{ secrets.SM_ROM_25 }}
-          ROM_26: ${{ secrets.SM_ROM_26 }}
-          ROM_27: ${{ secrets.SM_ROM_27 }}
-          ROM_28: ${{ secrets.SM_ROM_28 }}
-          ROM_29: ${{ secrets.SM_ROM_29 }}
-          ROM_30: ${{ secrets.SM_ROM_30 }}
-          ROM_31: ${{ secrets.SM_ROM_31 }}
-          ROM_32: ${{ secrets.SM_ROM_32 }}
-          ROM_33: ${{ secrets.SM_ROM_33 }}
-          ROM_34: ${{ secrets.SM_ROM_34 }}
-          ROM_35: ${{ secrets.SM_ROM_35 }}
-          ROM_36: ${{ secrets.SM_ROM_36 }}
-          ROM_37: ${{ secrets.SM_ROM_37 }}
-          ROM_38: ${{ secrets.SM_ROM_38 }}
-          ROM_39: ${{ secrets.SM_ROM_39 }}
-          ROM_40: ${{ secrets.SM_ROM_40 }}
-          ROM_41: ${{ secrets.SM_ROM_41 }}
-          ROM_42: ${{ secrets.SM_ROM_42 }}
-          ROM_43: ${{ secrets.SM_ROM_43 }}
-          ROM_44: ${{ secrets.SM_ROM_44 }}
-        run: |
-          python -B - <<'PY'
-          import base64, gzip, hashlib, os, pathlib, subprocess, sys, urllib.request
-          encoded = "".join(os.environ[f"ROM_{i:02d}"] for i in range(45))
-          if not encoded:
-              raise SystemExit("ROM secrets are missing")
-          rom = gzip.decompress(base64.b64decode(encoded))
-          if hashlib.sha1(rom).hexdigest() != 'da957f0d63d14cb441d215462904c4fa8519c613':
-              raise SystemExit('wrong ROM')
-          pathlib.Path('rom').mkdir(exist_ok=True)
-          pathlib.Path('rom/sm.smc').write_bytes(rom)
-          bundle = pathlib.Path(os.environ['RUNNER_TEMP']) / 'linux-seeds-v1.tar.gz.enc'
-          url = 'https://github.com/JimLundin/sm-decomp/releases/download/ci-data/' + os.environ['SEED_ASSET']
-          urllib.request.urlretrieve(url, bundle)
-          command = [sys.executable, 'tools/ci_seed_data.py', 'restore', str(bundle),
-                     '--sha256', os.environ['SEED_SHA256'], '--runtime-only']
-          for row in os.environ['SEGMENTS'].split():
-              command += ['--segment', row]
-          subprocess.run(command, check=True)
-          PY
-      - name: Run the smoke rows
-        run: |
-          rows=""
-          for id in $SEGMENTS; do rows="$rows --segment $id"; done
-          set -o pipefail
-          code=0
-          python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --no-build --direct $rows 2>&1 | tee corpus.log || code=$?
-          { echo "### Linux: $SEGMENTS"; echo '```'; grep -E '^(PASS|FAIL|Corpus)' corpus.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
-          exit $code

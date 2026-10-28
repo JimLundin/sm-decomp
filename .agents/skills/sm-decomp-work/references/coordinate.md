@@ -19,8 +19,8 @@ when dependencies and measured resource budgets permit; retain one actual writer
   Resolve reparse/junction paths before sizing, budgeting or deletion; count physical targets once and exclude shared caches from per-worker reclaim.
   Preserve existing live jobs and frozen inputs. Release terminal admissions
   promptly, and increase concurrency only when measurements support useful throughput.
-  If DLL growth blocks admission, dispatch the admissible normal library checkpoint
-  in [Build](build.md) with the same frozen inputs and current remaining-growth ledger.
+  If DLL growth blocks admission, follow the conditional normal library checkpoint
+  rule in [Build](build.md) with the same frozen inputs and remaining-growth ledger.
   On a reserve breach, stop the newest producer per PLAN and retain lightweight
   readers. Record uncertainty when continuous measurements are unavailable.
 - Inspect exact execution and agent handles before recovery. Recover or reassign
@@ -31,10 +31,12 @@ when dependencies and measured resource budgets permit; retain one actual writer
   Issue delivery is not activation; active status needs authoritative session/goal/turn handles.
   Exception: if available tools cannot resume an authoritatively blocked external root, preserve frozen source/live jobs and reassign only its already released scope to a reachable explicitly activated owner.
   With collaboration tools, followup_task activates terminal workers;
-  send_message alone does not. Refill ready work before inventory/report prose.
+  send_message alone does not. Promptly activate released source owners with their next scope.
+  Drain READY code at the next safe source/Git boundary before bookkeeping.
   User-authorized support watches the coordinator's actual handle and resumes
   the same session or one replacement only after verified failure, preserving
-  the integrator, live jobs and frozen sources.
+  the primary's live jobs and frozen sources. Preserve retired writers' release;
+  recovery targets the current primary.
 - Integrate the reviewed, qualified final pin. Fetch/reconcile remote state,
   preserve concurrent edits, run PLAN's local rows and progress command, then
   publish frequent small coherent code-bearing commits promptly with measured

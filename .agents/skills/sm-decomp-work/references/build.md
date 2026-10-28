@@ -8,7 +8,8 @@
    launcher and its Cargo/rustc descendants as one workflow. Use independent
    output directories for concurrent builds and retain the required reserve.
    When DLL growth blocks admission, run an admissible 1.6 GiB normal library
-   checkpoint on the coherent frozen pin with the current remaining-growth ledger.
+   checkpoint only if no successful result transfers to the unchanged pinned inputs;
+   otherwise reuse that proof. Retain the current remaining-growth ledger.
    Bind its result to actual inputs; final DLL and runtime checks remain pending.
 3. Run required format, library/no-new-warning and DLL stages with the existing
    verifier. Qualification uses actual output, source/native guards and final
@@ -20,5 +21,9 @@
    ready work can continue while results are summarized.
 
 Use local execution for ordinary Windows work. Follow current user CI
-authorization and PLAN's host policy. Research outside the normal loop needs an
-explicit purpose and bounded result; compilation alone does not qualify runtime.
+authorization and PLAN's host policy. When reporting CI, select CI
+(.github/workflows/ci.yml) for the pinned commit and verify its run head_sha and
+required job conclusions; other workflows do not establish CI success.
+Continue independent implementation and direct READY handoffs while CI runs.
+Research outside the normal loop needs an explicit purpose and bounded result;
+compilation alone does not qualify runtime.

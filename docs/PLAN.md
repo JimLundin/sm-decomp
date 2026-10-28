@@ -58,6 +58,10 @@ only main is remote, and only Jim's conversation #6 remains open. Direct source
 handoffs proceed while CI runs. Actor numeric checkpoint now covers every live,
 saved, scheduling and compatibility field; normal library/source checks bind its
 exact source. This detached component does not restore a complete Session.
+The actual CI workflow on 9cd56aec passes format, detached checks, native build
+and all 87 DLL units. Progress feed is removed; Corpus replay now runs only on
+schedule/manual request, with bank-deletion dispatch in CI. Branch auto-landing
+and the stopped Linux spike are removed; replay/native checks retain their guards.
 Next: compose gameplay checkpoints and finish the assigned display binary codec,
 then actual DLL/87-unit and genuine new-codec runtime qualification. Preserve all
 original artifacts; reserves remain 2 GiB RAM / 50 GiB disk.
@@ -526,14 +530,12 @@ Cross-recipe reuse requires SHA-bound identical canonical input prefixes; keep s
 ROM/native/full-input/loader guards and save matching manifest starts during setup.
 Use [movies/README](../movies/README.md) for commands; inspect masks/hardware/audio/persistence when touched.
 
-No routine CI observation/reliance on Windows (direct user); hosted automatic backstop
-and cloud mode remain separate. Fix/revert known red changes from your push before landing.
-Cloud no-ROM agents use one ci/<lane>-<topic> branch, push each commit, auto-land on green
-with rebase; conflicts/red are the author's next task. Free runners only; main full corpus
-runs every3h/deletion/waypoint, at most6 shards, not each routine push. Rows are comma/space
-IDs; trailing comma continues, colon text is ignored, unknown IDs fail. A branch must touch
-sm/,tools/,segments.toml or workflow. Workflow edits require manual landing, not GITHUB_TOKEN.
-L1 stays Windows until Linux is measurably faster end-to-end; CI seeds/lag guards remain.
+The primary publishes qualified small commits to main and fixes known CI failures.
+Observe the actual CI workflow and commit; continue independent implementation
+while hosted checks run. Free runners only; Windows full corpus runs every 3h,
+after bank deletion and at review waypoints, at most 6 parallel shards. Routine
+pushes run CI without a separate no-op replay run. Manual row IDs are space-separated;
+unknown IDs fail. Keep seed/lag/source guards; Linux development remains stopped.
 
 ## Toolchain, resources and completion
 Edition2024, stable1.99.1 (58cf8f9c3 2026-10-13), x86_64-pc-windows-gnu.
