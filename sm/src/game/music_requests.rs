@@ -4,6 +4,13 @@
 use crate::game::scene::state::DisplayError;
 use crate::game_state::persistent_session::AudioHost;
 
+// Complete only after a successful numeric prefix. This neither publishes a
+// request nor supplies a meaning for a rejected slot; Legacy skips the closure.
+fn complete(host: &mut impl AudioHost) -> Result<(), DisplayError> {
+    host.audio_mutation(|_, _, _| Ok(()))?;
+    Ok(())
+}
+
 pub(crate) fn enqueue(
     track: u16,
     delay: u16,
@@ -45,11 +52,12 @@ pub(crate) fn has_queued_music(host: &impl AudioHost) -> u8 {
     )
 }
 
-pub(crate) fn reset_delays(host: &mut impl AudioHost) {
+pub(crate) fn reset_delays(host: &mut impl AudioHost) -> Result<(), DisplayError> {
     host.audio_store_word(0x63f, 0);
     for slot in 0..8 {
         host.audio_store_word(0x629 + 2 * slot, 0);
     }
+    complete(host)
 }
 
 pub(crate) fn clear_queue(host: &mut impl AudioHost) -> Result<(), DisplayError> {
@@ -84,7 +92,7 @@ pub(crate) fn advance_music<H: AudioHost>(
     host.audio_store_word(0x63f, previous.wrapping_sub(1));
     if host.audio_word(0x63f) & 0x8000 == 0 {
         if previous != 1 {
-            return Ok(());
+            return complete(host);
         }
         // Capture the authored record for this selected entry, never reinterpret
         // its numeric bank/track selector as an asset or phase.
@@ -111,7 +119,7 @@ pub(crate) fn advance_music<H: AudioHost>(
             }
             retire(host)?;
             host.audio_store_word(0x686, 8);
-            return Ok(());
+            return complete(host);
         }
         let track = host.audio_word(0x63d) as u8 & 0x7f;
         host.audio_store_word(0x7f5, host.audio_word(0x63d) & 0x7f);
@@ -140,7 +148,7 @@ pub(crate) fn advance_music<H: AudioHost>(
             requests.select_music_entry(record)
         })?;
     }
-    Ok(())
+    complete(host)
 }
 
 pub(crate) fn queue_sfx(
@@ -159,12 +167,14 @@ pub(crate) fn queue_sfx(
         .wrapping_sub(host.audio_byte(read_pos))
         & 15;
     if queued >= max_queued {
+        complete(host)?;
         return Ok(u16::from_be_bytes([sound, queued]));
     }
     if host.audio_word(0x5f5) != 0
         || host.audio_word(0x998) >= 40
         || host.audio_word(0x592) & 0x8000 != 0
     {
+        complete(host)?;
         return Ok(u16::from_be_bytes([queued, sound]));
     }
     let write = host.audio_byte(write_pos);
@@ -201,6 +211,7 @@ pub(crate) fn queue_sfx(
             requests.clear_sound(channel, usize::from(next))
         })?;
     }
+    complete(host)?;
     Ok(u16::from_be_bytes([queued, sound]))
 }
 
@@ -271,11 +282,12 @@ pub(crate) fn advance_sound_effects<H: AudioHost>(
             _ => unreachable!(),
         }
     }
-    Ok(())
+    complete(host)
 }
 
-pub(crate) fn reset_sound_queues(host: &mut impl AudioHost) {
+pub(crate) fn reset_sound_queues(host: &mut impl AudioHost) -> Result<(), DisplayError> {
     for offset in 0x643..0x64c {
         host.audio_store_byte(offset, 0);
     }
+    complete(host)
 }

@@ -182,6 +182,7 @@ pub fn persistent_session_native_rebinding_preserves_ready_owner(
         ))
         .unwrap();
     assert_ready_owner_rejects_native_binding(&owner, native);
+    assert_clean_runtime_writer_preserves_admission(&owner);
     assert_dirty_runtime_lease_preserves_native_mutation(&owner);
 }
 
@@ -229,6 +230,34 @@ pub(crate) fn assert_ready_owner_rejects_native_binding(
     assert_eq!(actual_resident.objects, expected_resident.objects);
     assert_eq!(actual_resident.produced, expected_resident.produced);
     assert!(Arc::ptr_eq(&after.1, &before.1));
+}
+
+// No movie reaches this retained Prepared Runtime lease's own-write seam.
+fn assert_clean_runtime_writer_preserves_admission(owner: &GameOwner) {
+    use crate::game::session_runtime::Runtime;
+    owner.with(|game| {
+        let world = game.world().clone();
+        let catalog = game.samus_spritemaps().unwrap().unwrap();
+        let media = game.samus_request_media().unwrap().unwrap();
+        let mut runtime = Runtime::new(game);
+        runtime.update_maw_visibility(0);
+        assert!(Arc::ptr_eq(&runtime.session().world, &world));
+        assert_eq!(runtime.session().inventory.health.current, 0x0000);
+        drop(runtime);
+        assert_eq!(game.samus_authority(), SamusAuthority::Available);
+        assert_eq!(game.samus_execution(), Ok(Some(SamusExecution::Prepared)));
+        assert!(Arc::ptr_eq(game.world(), &world));
+        assert!(Arc::ptr_eq(
+            &catalog,
+            &game.samus_spritemaps().unwrap().unwrap()
+        ));
+        assert!(Arc::ptr_eq(
+            &media,
+            &game.samus_request_media().unwrap().unwrap()
+        ));
+        game.checkpoint_session().unwrap();
+    });
+    owner.checkpoint_session().unwrap();
 }
 
 // No movie holds a Runtime lease while invoking a native compatibility byte helper.

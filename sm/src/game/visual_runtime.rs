@@ -675,6 +675,18 @@ impl visual_host::Effects for Runtime<'_> {
         player_projectiles::host::Host::sound(self, channel, limit, sound);
     }
     fn music_delayed8(&mut self, track: u16) {
+        if self.has_owned_display() {
+            self.owned_call(|runtime| {
+                crate::game::music::requests::enqueue(track, 8, true, runtime)
+                    .expect("audio enqueue");
+                crate::game_state::persistent_session::AudioHost::audio_mutation(
+                    runtime,
+                    |_, _, _| Ok(()),
+                )
+                .expect("audio enqueue");
+            });
+            return;
+        }
         self.foreign(|game| crate::game::music::QueueMusic_Delayed8(track, game));
     }
     fn resume_movement_sound(&mut self) {

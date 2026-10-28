@@ -605,6 +605,118 @@ pub(crate) struct AudioStamp {
     pub source_interval: u64,
 }
 impl CurrentControl {
+    /// Transfer semantic counterparts only from the actual declared donor.
+    /// Numeric writes already completed; any rejection keeps capture suspended.
+    fn normalize_audio_from(
+        &mut self,
+        donor: &Self,
+        range: &std::ops::Range<usize>,
+    ) -> Result<(), DisplayError> {
+        let touches = |base: usize, bytes: usize| range.start < base + bytes && base < range.end;
+        if !range
+            .clone()
+            .any(|at| donor.requests.projected_byte(at).is_some())
+        {
+            return Ok(());
+        }
+        self.requests.pending_mutation = true;
+        donor
+            .requests
+            .validate(&donor.metadata, &donor.requests.catalog)?;
+        if self.metadata.reference != donor.metadata.reference
+            || self.metadata.audio.capture != donor.metadata.audio.capture
+            || self.metadata.audio.revision != donor.metadata.audio.revision
+            || self.metadata.audio.timing_policy != donor.metadata.audio.timing_policy
+            || self.metadata.audio.declarations != donor.metadata.audio.declarations
+            || *self.requests.catalog != *donor.requests.catalog
+        {
+            return Err(DisplayError::Identity);
+        }
+        for slot in 0..8 {
+            if touches(0x619 + 2 * slot, 2) || touches(0x629 + 2 * slot, 2) {
+                if self.requests.music.tracks[slot] != donor.requests.music.tracks[slot] {
+                    return Err(DisplayError::Identity);
+                }
+                self.requests.music.meanings[slot] = donor.requests.music.meanings[slot].clone();
+            }
+        }
+        if touches(0x639, 4) {
+            if self.requests.music.read != donor.requests.music.read
+                || self.requests.music.write != donor.requests.music.write
+            {
+                return Err(DisplayError::Identity);
+            }
+            let mut cursor = self.requests.music.read;
+            while cursor != self.requests.music.write {
+                let slot = usize::from(cursor >> 1);
+                if self.requests.music.tracks[slot] != donor.requests.music.tracks[slot] {
+                    return Err(DisplayError::Identity);
+                }
+                self.requests.music.meanings[slot] = donor.requests.music.meanings[slot].clone();
+                cursor = cursor.wrapping_add(2) & 14;
+            }
+        }
+        if touches(0x63d, 4) {
+            if self.requests.music.entry != donor.requests.music.entry {
+                return Err(DisplayError::Identity);
+            }
+            self.requests.music.entry_meaning = donor.requests.music.entry_meaning.clone();
+        }
+        if touches(0x64c, 1) || touches(0x7f3, 4) {
+            if self.requests.music.current_track != donor.requests.music.current_track
+                || self.requests.music.data_index != donor.requests.music.data_index
+                || self.requests.music.track_index != donor.requests.music.track_index
+            {
+                return Err(DisplayError::Identity);
+            }
+            self.requests.music.current_meaning = donor.requests.music.current_meaning.clone();
+            self.metadata.audio.music = donor.metadata.audio.music;
+        }
+        for channel in 0..3 {
+            for slot in 0..16 {
+                if touches(0x656 + 16 * channel + slot, 1) {
+                    if self.requests.sounds[channel].queue[slot]
+                        != donor.requests.sounds[channel].queue[slot]
+                    {
+                        return Err(DisplayError::Identity);
+                    }
+                    self.requests.sounds[channel].meanings[slot] =
+                        donor.requests.sounds[channel].meanings[slot].clone();
+                }
+            }
+            if touches(0x643 + channel, 1) || touches(0x646 + channel, 1) {
+                if self.requests.sounds[channel].read != donor.requests.sounds[channel].read
+                    || self.requests.sounds[channel].write != donor.requests.sounds[channel].write
+                {
+                    return Err(DisplayError::Identity);
+                }
+                let mut cursor = self.requests.sounds[channel].read;
+                while cursor != self.requests.sounds[channel].write {
+                    let slot = usize::from(cursor);
+                    if self.requests.sounds[channel].queue[slot]
+                        != donor.requests.sounds[channel].queue[slot]
+                    {
+                        return Err(DisplayError::Identity);
+                    }
+                    self.requests.sounds[channel].meanings[slot] =
+                        donor.requests.sounds[channel].meanings[slot].clone();
+                    cursor = cursor.wrapping_add(1) & 15;
+                }
+            }
+            if touches(0x649 + channel, 1)
+                || touches(0x64d + channel, 1)
+                || touches(0x650 + channel, 1)
+            {
+                if self.requests.sounds[channel].current != donor.requests.sounds[channel].current {
+                    return Err(DisplayError::Identity);
+                }
+                self.requests.sounds[channel].current_meaning =
+                    donor.requests.sounds[channel].current_meaning.clone();
+            }
+        }
+        self.requests
+            .complete_mutation(&self.metadata, self.metadata.identity.committed_tick)
+    }
     pub(crate) fn audio_mutation<R>(
         &mut self,
         producing: bool,
@@ -1385,7 +1497,7 @@ impl SessionSnapshotPayload {
                 if !Arc::ptr_eq(&target.0.gameplay.world, &source.0.gameplay.world) {
                     return Err(DisplayError::Identity);
                 }
-                for at in range {
+                for at in range.clone() {
                     if let Some(byte) =
                         crate::game::session_encoding::projected_byte(&source.0.gameplay, at)
                     {
@@ -1425,7 +1537,12 @@ impl SessionSnapshotPayload {
                         _ => {}
                     }
                 }
-                Ok(())
+                match (&mut target.0.gameplay.control, &source.0.gameplay.control) {
+                    (Control::Owned(target), Control::Owned(source)) => {
+                        target.normalize_audio_from(source, &range)
+                    }
+                    _ => Err(DisplayError::Incomplete),
+                }
             }
             _ => Err(DisplayError::Incomplete),
         }

@@ -473,6 +473,9 @@ impl<'g> Runtime<'g> {
                 encoding::write_projected_byte(state, lane, game.ram().read_byte(lane));
             }
         }
+        if self.persistent_epoch.is_some() {
+            self.persistent_epoch = Some(game.compatibility_write_epoch());
+        }
     }
     pub(crate) fn native_word(&self, at: usize) -> u16 {
         u16::from_ne_bytes([self.byte(at), self.byte(at + 1)])
@@ -666,6 +669,29 @@ impl Host for Runtime<'_> {
         content::captured(self.game.capture_native_rom(), address)
     }
     fn sound(&mut self, bank: u8, limit: u8, sound: u16) {
+        if self.has_owned_display() {
+            self.owned_call(|runtime| {
+                if !matches!(
+                    (bank, limit),
+                    (1, 6 | 9 | 15) | (2, 6) | (3, 3 | 6 | 9 | 15)
+                ) {
+                    unreachable!("unknown projectile sound queue");
+                }
+                let channel = usize::from(bank - 1);
+                #[cfg(sm_verify_dll)]
+                crate::game::visual_runtime::samus_observer::sound(channel, sound as u8, limit);
+                crate::game::music::requests::queue_sfx(channel, sound as u8, limit, runtime)
+                    .expect("audio sound enqueue");
+                // Capacity/gate rejection still completes the original limit store.
+                // Validate that numeric prefix without resolving a rejected request.
+                crate::game_state::persistent_session::AudioHost::audio_mutation(
+                    runtime,
+                    |_, _, _| Ok(()),
+                )
+                .expect("audio sound enqueue");
+            });
+            return;
+        }
         self.foreign(|g| {
             if !matches!(
                 (bank, limit),

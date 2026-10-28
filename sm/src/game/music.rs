@@ -52,7 +52,7 @@ pub unsafe fn HandleMusicQueue(game: &mut Game) {
 
 #[forbid(unsafe_code)]
 pub(crate) fn reset_delays(game: &mut Game) {
-    requests::reset_delays(game);
+    requests::reset_delays(game).expect("audio delay reset");
 }
 
 #[forbid(unsafe_code)]
@@ -175,7 +175,7 @@ pub(crate) fn advance_sound_effects(game: &mut Game, mut write: impl FnMut(u8, u
 }
 
 pub fn ResetSoundQueues(game: &mut Game) {
-    requests::reset_sound_queues(game);
+    requests::reset_sound_queues(game).expect("audio sound queue reset");
 }
 
 pub(crate) fn cancel_effects(max_queued: u8, game: &mut Game) {
