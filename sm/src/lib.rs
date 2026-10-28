@@ -442,7 +442,9 @@ pub mod game {
     pub(crate) mod scanline_irq;
     pub(crate) mod session;
     pub(crate) mod session_access;
+    pub(crate) mod session_checkpoint;
     pub(crate) mod session_encoding;
+    pub(crate) mod session_owners;
     pub(crate) mod session_runtime;
     pub mod sm_8b;
     pub(crate) mod sprite_drawing;

@@ -25,14 +25,14 @@ fn overlapping_sound_operand_and_clear() {
     h.byte(0x8d, 0x9008, 7);
     colors::spawn(&mut h, 0x8000);
     assert_eq!(
-        h.world.player.visual.palette_effects.slots[7].definition,
+        h.world.player.presentation.visual().palette_effects.slots[7].definition,
         0x8000
     );
     colors::set_enabled(&mut h.world.player, true);
     colors::advance(&mut h);
     assert_eq!(h.events, [Event::Color(0, 0x1234)]);
     assert_eq!(
-        h.world.player.visual.palette_effects.slots[7].program,
+        h.world.player.presentation.visual().palette_effects.slots[7].program,
         0x9006
     );
     h.events.clear();
@@ -52,7 +52,13 @@ fn overlapping_sound_operand_and_clear() {
         "sound reads a native word while its high byte starts the next duration"
     );
     let mut expected = h.world.clone();
-    for slot in &mut expected.player.visual.palette_effects.slots {
+    for slot in &mut expected
+        .player
+        .presentation
+        .visual_mut()
+        .palette_effects
+        .slots
+    {
         slot.definition = 0;
     }
     colors::clear(&mut h.world.player);
@@ -65,7 +71,13 @@ fn overlapping_sound_operand_and_clear() {
 fn lazy_operands_and_failure_prefixes() {
     let mut h = Composed::new();
     h.image = RomImage::zeroed(0x69000);
-    h.world.player.visual.palette_effects.slots[0].counter = 2;
+    h.world
+        .player
+        .presentation
+        .visual_mut()
+        .palette_effects
+        .slots[0]
+        .counter = 2;
     assert!(
         catch_unwind(AssertUnwindSafe(|| colors::command(
             &mut h, 9291321, 0, 0x9000
@@ -73,14 +85,26 @@ fn lazy_operands_and_failure_prefixes() {
         .is_err()
     );
     let mut expected = World::default();
-    expected.player.visual.palette_effects.slots[0].counter = 1;
+    expected
+        .player
+        .presentation
+        .visual_mut()
+        .palette_effects
+        .slots[0]
+        .counter = 1;
     assert_eq!(
         h.world, expected,
         "missing jump operand retains countdown prefix"
     );
     assert!(h.events.is_empty());
     assert_eq!(colors::command(&mut h, 9291321, 0, 0x9000), (0, 0x9002));
-    expected.player.visual.palette_effects.slots[0].counter = 0;
+    expected
+        .player
+        .presentation
+        .visual_mut()
+        .palette_effects
+        .slots[0]
+        .counter = 0;
     assert_eq!(
         h.world, expected,
         "completed countdown never reads missing operand"
@@ -92,20 +116,46 @@ fn lazy_operands_and_failure_prefixes() {
         )))
         .is_err()
     );
-    expected.player.visual.palette_effects.flags = 0x8000;
+    expected
+        .player
+        .presentation
+        .visual_mut()
+        .palette_effects
+        .flags = 0x8000;
     assert_eq!(h.world, expected);
     assert!(
         h.events.is_empty(),
         "missing music operand delivers no event"
     );
 
-    h.world.player.visual.palette_effects.heat = 1;
+    h.world
+        .player
+        .presentation
+        .visual_mut()
+        .palette_effects
+        .heat = 1;
     h.world.player.player.periodic_damage_fraction = u16::from_le_bytes(0xc000u16.to_ne_bytes());
     h.world.player.player.periodic_damage = u16::from_le_bytes(1u16.to_ne_bytes());
     assert!(catch_unwind(AssertUnwindSafe(|| colors::pre(&mut h, 9298809, 0))).is_err());
-    expected.player.visual.palette_effects.heat = 1;
-    expected.player.visual.palette_effects.previous_heat = 1;
-    expected.player.visual.palette_effects.slots[0].delay = 1;
+    expected
+        .player
+        .presentation
+        .visual_mut()
+        .palette_effects
+        .heat = 1;
+    expected
+        .player
+        .presentation
+        .visual_mut()
+        .palette_effects
+        .previous_heat = 1;
+    expected
+        .player
+        .presentation
+        .visual_mut()
+        .palette_effects
+        .slots[0]
+        .delay = 1;
     expected.player.player.periodic_damage = u16::from_le_bytes(2u16.to_ne_bytes());
     assert_eq!(
         h.world, expected,
@@ -133,7 +183,13 @@ fn recapture_after_sound() {
     h.word(0x8d, 0x9007, 9291157u32 as u16);
     h.word(0x8d, 0x9100, 0x4567);
     let captured = Content::record(&mut h, Source::Loaded, 0x8d, 0x9100);
-    let slot = &mut h.world.player.visual.palette_effects.slots[0];
+    let slot = &mut h
+        .world
+        .player
+        .presentation
+        .visual_mut()
+        .palette_effects
+        .slots[0];
     slot.definition = 1;
     slot.pre_action = 0xc526;
     slot.program = 0x9000;

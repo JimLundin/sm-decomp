@@ -16,6 +16,12 @@ Git and completion. Use the authoritative repository for instructions and the
 assigned checkout for source. sm/src is authoritative; preserve behavior and
 SNES RAM compatibility.
 
+Transfer to one primary root only after explicit release and current event/turn
+checks establish the prior writer is terminal; carry live jobs, pins and reservations.
+The primary owns implementation, coordination, Git, builds and one resource ledger.
+Work on main by default; use branches/private copies as useful isolation.
+Keep one actual writer and PLAN's required checks.
+
 ## Load your assigned role
 
 Load only the assigned guide and the technical contracts it reaches.

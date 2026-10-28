@@ -97,9 +97,9 @@ pub(crate) struct ActorCheckpointPayload {
 }
 
 /// Bounded cursor shared by the actor metadata owners; never reads live RAM.
-pub(super) struct CheckpointReader<'a>(pub(super) &'a [u8]);
+pub(crate) struct CheckpointReader<'a>(pub(crate) &'a [u8]);
 impl<'a> CheckpointReader<'a> {
-    pub(super) fn bytes(&mut self, length: usize) -> Result<&'a [u8], String> {
+    pub(crate) fn bytes(&mut self, length: usize) -> Result<&'a [u8], String> {
         let (head, tail) = self
             .0
             .split_at_checked(length)
@@ -107,19 +107,19 @@ impl<'a> CheckpointReader<'a> {
         self.0 = tail;
         Ok(head)
     }
-    pub(super) fn byte(&mut self) -> Result<u8, String> {
+    pub(crate) fn byte(&mut self) -> Result<u8, String> {
         Ok(self.bytes(1)?[0])
     }
-    pub(super) fn word(&mut self) -> Result<u16, String> {
+    pub(crate) fn word(&mut self) -> Result<u16, String> {
         Ok(u16::from_le_bytes(self.bytes(2)?.try_into().unwrap()))
     }
-    pub(super) fn id(&mut self) -> Result<u32, String> {
+    pub(crate) fn id(&mut self) -> Result<u32, String> {
         Ok(u32::from_le_bytes(self.bytes(4)?.try_into().unwrap()))
     }
-    pub(super) fn counter(&mut self) -> Result<u64, String> {
+    pub(crate) fn counter(&mut self) -> Result<u64, String> {
         Ok(u64::from_le_bytes(self.bytes(8)?.try_into().unwrap()))
     }
-    pub(super) fn optional_id(&mut self) -> Result<Option<u32>, String> {
+    pub(crate) fn optional_id(&mut self) -> Result<Option<u32>, String> {
         match self.byte()? {
             0 => Ok(None),
             1 => Ok(Some(self.id()?)),

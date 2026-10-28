@@ -61,7 +61,7 @@ fn eye_then_palette() {
     animated::spawn(&mut h, 0x8100);
     animated::advance(&mut h);
     assert_eq!(
-        &h.world.player.visual.colors[249..253],
+        &h.world.player.presentation.visual().colors[249..253],
         &[0x6bff, 0x033b, 0x0216, 0x0173],
         "visual.composition.eye_shared_colors"
     );
@@ -71,12 +71,12 @@ fn eye_then_palette() {
         (0xba6a, 0x84, 0x90)
     );
     assert_eq!(
-        h.world.player.visual.palette_effects.slots[7].definition,
+        h.world.player.presentation.visual().palette_effects.slots[7].definition,
         0x8200
     );
     colors::advance(&mut h);
     assert_eq!(
-        &h.world.player.visual.colors[249..253],
+        &h.world.player.presentation.visual().colors[249..253],
         &[0x6bff, 0x4321, 0x0216, 0x0173],
         "visual.composition.animation_palette_after_eye"
     );
@@ -131,7 +131,12 @@ fn heat_sound(h: &mut Composed) {
         "visual.composition.heat_fraction_before_sound"
     );
     h.world.player.inventory.equipment.active = 0x20;
-    h.world.player.visual.palette_effects.heat = 3;
+    h.world
+        .player
+        .presentation
+        .visual_mut()
+        .palette_effects
+        .heat = 3;
 }
 fn heat_callback() {
     let mut h = Composed::new();
@@ -139,8 +144,18 @@ fn heat_callback() {
     h.world.player.player.periodic_damage = 7;
     h.world.player.inventory.health.current = 99;
     h.world.player_inputs.frame = 0;
-    h.world.player.visual.palette_effects.heat = 1;
-    h.world.player.visual.palette_effects.previous_heat = 0;
+    h.world
+        .player
+        .presentation
+        .visual_mut()
+        .palette_effects
+        .heat = 1;
+    h.world
+        .player
+        .presentation
+        .visual_mut()
+        .palette_effects
+        .previous_heat = 0;
     words(
         &h,
         0x8d,
@@ -156,21 +171,43 @@ fn heat_callback() {
     h.on_visual_sound = Some(heat_sound);
     colors::pre(&mut h, 9298809, 0);
     assert_eq!(
-        h.world.player.visual.palette_effects.slots[0].program, 0x9700,
+        h.world.player.presentation.visual().palette_effects.slots[0].program,
+        0x9700,
         "visual.composition.heat_equipment_reread"
     );
-    assert_eq!(h.world.player.visual.palette_effects.previous_heat, 3);
-    h.world.player.visual.palette_effects.slots[0].pre_action = 0xc526;
+    assert_eq!(
+        h.world
+            .player
+            .presentation
+            .visual()
+            .palette_effects
+            .previous_heat,
+        3
+    );
+    h.world
+        .player
+        .presentation
+        .visual_mut()
+        .palette_effects
+        .slots[0]
+        .pre_action = 0xc526;
     colors::process(&mut h, 0);
     assert_eq!(
-        h.world.player.visual.colors[0], 0x4321,
+        h.world.player.presentation.visual().colors[0],
+        0x4321,
         "visual.composition.heat_actual_palette_consumer"
     );
 }
 fn upload_fixture() -> Composed {
     let mut h = Composed::new();
     animated::set_enabled(&mut h.world.player, true);
-    let slot = &mut h.world.player.visual.animated_tiles.slots[5];
+    let slot = &mut h
+        .world
+        .player
+        .presentation
+        .visual_mut()
+        .animated_tiles
+        .slots[5];
     slot.definition = 1;
     slot.source = 0xa000;
     slot.size = 0x40;
@@ -178,7 +215,7 @@ fn upload_fixture() -> Composed {
     h
 }
 fn upload_reuse(world: &mut World) {
-    let tiles = &mut world.player.visual.animated_tiles;
+    let tiles = &mut world.player.presentation.visual_mut().animated_tiles;
     tiles.selected = 0;
     tiles.flags = 0;
     tiles.slots[5].source = 0xb000;
@@ -195,8 +232,8 @@ fn upload_ack() {
     animated::upload_pending(&mut h);
     assert_eq!(
         (
-            h.world.player.visual.animated_tiles.slots[5].source,
-            h.world.player.visual.animated_tiles.slots[0].source
+            h.world.player.presentation.visual().animated_tiles.slots[5].source,
+            h.world.player.presentation.visual().animated_tiles.slots[0].source
         ),
         (0, 0xc000),
         "visual.composition.upload_captured_ack"
@@ -217,7 +254,10 @@ fn upload_ack() {
         ],
         "visual.composition.upload_entry_enable_only"
     );
-    assert_eq!(h.world.player.visual.animated_tiles.slots[4].source, 0);
+    assert_eq!(
+        h.world.player.presentation.visual().animated_tiles.slots[4].source,
+        0
+    );
 }
 fn upload_partial(world: &mut World) {
     world.player.inventory.ammunition[0].current = 3;
@@ -234,7 +274,8 @@ fn upload_failure() {
         .or_else(|| error.downcast_ref::<String>().map(String::as_str));
     assert_eq!(reason, Some("intentional upload failure"));
     assert_eq!(
-        h.world.player.visual.animated_tiles.slots[5].source, 0xa000,
+        h.world.player.presentation.visual().animated_tiles.slots[5].source,
+        0xa000,
         "visual.composition.upload_failure_source"
     );
     assert_eq!(
@@ -256,15 +297,15 @@ fn samus_shared_paths() {
     fill_suit(&h, 0x9800, 0x100);
     samus::load_suit(&mut h, PaletteBuffer::Current);
     samus::load_suit(&mut h, PaletteBuffer::Target);
-    assert_eq!(h.world.player.player.palette.suit_index, 4);
+    assert_eq!(h.world.player.presentation.palette().suit_index, 4);
     assert_eq!(
-        &h.world.player.visual.colors[192..208],
+        &h.world.player.presentation.visual().colors[192..208],
         &(0x100u16..0x110).collect::<Vec<_>>()[..],
         "visual.composition.suit_shared_inventory"
     );
     assert_eq!(
-        &h.world.player.visual.targets[192..208],
-        &h.world.player.visual.colors[192..208]
+        &h.world.player.presentation.visual().targets[192..208],
+        &h.world.player.presentation.visual().colors[192..208]
     );
     // Real player charge decisions call actual Samus output and native suit copy.
     h.world.player.projectiles.controls.charge = 60;
@@ -273,20 +314,21 @@ fn samus_shared_paths() {
     fill_suit(&h, 0x9900, 0x200);
     assert_eq!(samus::charge_feedback(&mut h), 0);
     assert_eq!(
-        h.world.player.visual.colors[192], 0x200,
+        h.world.player.presentation.visual().colors[192],
+        0x200,
         "visual.composition.charge_actual_output"
     );
     assert_eq!(h.world.player.projectiles.controls.charge_palette, 4);
     // Uncharged feedback invokes actual visor on the same player palette timer.
     h.world.player.projectiles.controls.charge = 0;
     h.world.player_inputs.blending_config = 40;
-    h.world.player.player.palette.visor_timer = 1;
+    h.world.player.presentation.palette_mut().visor_timer = 1;
     h.word(0x9b, 0xa3c0, 0x3456);
     samus::charge_feedback(&mut h);
     assert_eq!(
         (
-            h.world.player.visual.colors[196],
-            h.world.player.player.palette.visor_timer
+            h.world.player.presentation.visual().colors[196],
+            h.world.player.presentation.palette().visor_timer
         ),
         (0x3456, 0x0205),
         "visual.composition.charge_to_visor"
@@ -298,7 +340,7 @@ fn samus_carry() {
     let mut h = Composed::new();
     h.world.player.player.grapple = 0xc4f0;
     h.world.player.player.shine_tick = 2;
-    h.world.player.player.palette.hurt_flash = 0x803b;
+    h.world.player.presentation.palette_mut().hurt_flash = 0x803b;
     h.word(0x91, 0xd727, 0x9300);
     fill_suit(&h, 0x9300, 0x0600);
     fill_suit(&h, 0xa380, 0x0700);
@@ -315,21 +357,24 @@ fn samus_carry() {
         })
         .count();
     assert_eq!(
-        (h.world.player.player.palette.hurt_flash, default_copies),
+        (
+            h.world.player.presentation.palette().hurt_flash,
+            default_copies
+        ),
         (0x803d, 0),
         "visual.composition.misc_unsigned_carry"
     );
     let mut h = Composed::new();
     h.world.player.player.grapple = 0xc4f0;
     h.world.player.player.shine_tick = 2;
-    h.world.player.player.palette.hurt_flash = 8;
+    h.world.player.presentation.palette_mut().hurt_flash = 8;
     h.word(0x91, 0xd727, 0x9300);
     fill_suit(&h, 0x9300, 0x0600);
     samus::advance(&mut h);
     assert_eq!(
         (
-            h.world.player.player.palette.hurt_flash,
-            h.world.player.visual.colors[192]
+            h.world.player.presentation.palette().hurt_flash,
+            h.world.player.presentation.visual().colors[192]
         ),
         (10, 0x0600),
         "visual.composition.selector2_double_misc"
@@ -352,10 +397,10 @@ fn samus_carry() {
         let mut h = Composed::new();
         h.world.player.player.grapple = grapple;
         h.world.player.projectiles.controls.charge = charge;
-        h.world.player.player.palette.hurt_flash = 39;
+        h.world.player.presentation.palette_mut().hurt_flash = 39;
         let carry = samus::misc(&mut h);
         assert_eq!(
-            (carry, h.world.player.player.palette.hurt_flash),
+            (carry, h.world.player.presentation.palette().hurt_flash),
             (expected, 40),
             "{label}"
         );
@@ -364,12 +409,17 @@ fn samus_carry() {
 fn charge_fixture() -> Composed {
     let mut h = Composed::new();
     h.world.player.player.grapple = 0xc4f0;
-    h.world.player.player.palette.suit_index = 5;
+    h.world.player.presentation.palette_mut().suit_index = 5;
     h.world.player.player.contact.contact_attack = 3;
     h.world.player.projectiles.controls.charge = 60;
     h.world.player.projectiles.controls.charge_palette = 2;
-    h.world.player.visual.colors.fill(0x7777);
-    h.world.player.visual.targets.fill(0x5555);
+    h.world.player.presentation.visual_mut().colors.fill(0x7777);
+    h.world
+        .player
+        .presentation
+        .visual_mut()
+        .targets
+        .fill(0x5555);
     words(
         &h,
         0x91,
@@ -431,10 +481,10 @@ fn charge_glow() {
         let mut expected = h.world.clone();
         expected.player.projectiles.controls.glow = remaining;
         if color == 1023 {
-            expected.player.visual.colors[193..208].fill(1023);
+            expected.player.presentation.visual_mut().colors[193..208].fill(1023);
         } else if color != 0 {
             for i in 0..16 {
-                expected.player.visual.colors[192 + i] = color + i as u16;
+                expected.player.presentation.visual_mut().colors[192 + i] = color + i as u16;
             }
         }
         assert_eq!(
@@ -469,10 +519,10 @@ fn charge_held() {
         let mut expected = h.world.clone();
         expected.player.projectiles.controls.charge_palette = next;
         if color == 0 {
-            expected.player.player.palette.visor_timer = 1537;
+            expected.player.presentation.palette_mut().visor_timer = 1537;
         } else {
             for i in 0..16 {
-                expected.player.visual.colors[192 + i] = color + i as u16;
+                expected.player.presentation.visual_mut().colors[192 + i] = color + i as u16;
             }
         }
         assert_eq!(samus::charge_feedback(&mut h), 0);
@@ -512,7 +562,7 @@ fn charge_live() {
     let mut expected = h.world.clone();
     expected.player.projectiles.controls.glow = 0xffff;
     for i in 0..16 {
-        expected.player.visual.colors[192 + i] = 0x400 + i as u16;
+        expected.player.presentation.visual_mut().colors[192 + i] = 0x400 + i as u16;
     }
     assert_eq!(samus::charge_feedback(&mut h), 0);
     assert_eq!(h.world, expected, "charge.live.glow_after_copy");
@@ -521,7 +571,7 @@ fn charge_live() {
         if source == Source::Loaded {
             assert_eq!((bank, address), (0x91, 0x9002));
             h.world.player.player.contact.contact_attack = 4;
-            h.world.player.player.palette.suit_index = 0;
+            h.world.player.presentation.palette_mut().suit_index = 0;
             h.world.player.projectiles.controls.charge_palette = 8;
         } else {
             assert_eq!((bank, address), (0x9b, 0x9800));
@@ -531,10 +581,10 @@ fn charge_live() {
     });
     let mut expected = h.world.clone();
     expected.player.player.contact.contact_attack = 4;
-    expected.player.player.palette.suit_index = 0;
+    expected.player.presentation.palette_mut().suit_index = 0;
     expected.player.projectiles.controls.charge_palette = 0;
     for i in 0..16 {
-        expected.player.visual.colors[192 + i] = 0x200 + i as u16;
+        expected.player.presentation.visual_mut().colors[192 + i] = 0x200 + i as u16;
     }
     assert_eq!(samus::charge_feedback(&mut h), 0);
     assert_eq!(h.world, expected, "charge.live.phase_after_copy");
@@ -585,12 +635,12 @@ fn charge_caller() {
     let mut h = charge_fixture();
     h.world.player.projectiles.controls.glow = 1;
     h.world.player.player.shine_tick = 3; // Deliberately invalid if dispatch runs.
-    h.world.player.player.palette.hurt_flash = 8;
+    h.world.player.presentation.palette_mut().hurt_flash = 8;
     let mut expected = h.world.clone();
     expected.player.projectiles.controls.glow = 0;
-    expected.player.player.palette.hurt_flash = 9; // Unconditional final misc.
+    expected.player.presentation.palette_mut().hurt_flash = 9; // Unconditional final misc.
     for i in 0..16 {
-        expected.player.visual.colors[192 + i] = 0x600 + i as u16;
+        expected.player.presentation.visual_mut().colors[192 + i] = 0x600 + i as u16;
     }
     samus::advance(&mut h);
     assert_eq!(h.world, expected, "charge.caller.restore_skips_dispatch");
@@ -599,11 +649,11 @@ fn charge_caller() {
     h.world.player.projectiles.controls.glow = 2;
     h.world.player.player.special_palette_flags = 0x8000;
     h.world.player.player.shine_tick = 3;
-    h.world.player.player.palette.timer = 3;
+    h.world.player.presentation.palette_mut().timer = 3;
     let mut expected = h.world.clone();
-    expected.player.player.palette.timer = 2;
+    expected.player.presentation.palette_mut().timer = 2;
     for i in 0..16 {
-        expected.player.visual.colors[192 + i] = 0x700 + i as u16;
+        expected.player.presentation.visual_mut().colors[192 + i] = 0x700 + i as u16;
     }
     samus::advance(&mut h);
     assert_eq!(
@@ -625,7 +675,7 @@ fn atmosphere_fixture(frame: u16, timer: u16) -> Composed {
     h.word(0x90, 0x9002, 8);
     h.word(0x90, 0x9004, 9);
     h.word(0x90, 0x91fe, 10);
-    let slot = &mut h.world.player.atmospheric.slots[0];
+    let slot = &mut h.world.player.presentation.atmospheric_mut().slots[0];
     slot.frame_and_kind = frame;
     slot.remaining = timer;
     slot.x = 136;
@@ -645,7 +695,7 @@ fn atmosphere_boundaries() {
     ] {
         let mut h = atmosphere_fixture(frame, timer);
         draw_atmospheric(&mut h);
-        let slot = &h.world.player.atmospheric.slots[0];
+        let slot = &h.world.player.presentation.atmospheric().slots[0];
         assert_eq!(
             (slot.frame_and_kind, slot.remaining, h.events.len()),
             (next, remaining, draws),
@@ -661,8 +711,11 @@ fn atmosphere_live() {
     let mut h = atmosphere_fixture(0x100, 1);
     h.on_visual_record = Some(|h, source, bank, at| {
         assert_eq!((source, bank, at), (Source::Native, 0x90, 0x9000));
-        assert_eq!(h.world.player.atmospheric.slots[0].remaining, 0);
-        h.world.player.atmospheric.slots[0].frame_and_kind = 0x700;
+        assert_eq!(
+            h.world.player.presentation.atmospheric().slots[0].remaining,
+            0
+        );
+        h.world.player.presentation.atmospheric_mut().slots[0].frame_and_kind = 0x700;
     });
     draw_atmospheric(&mut h);
     assert_eq!(
@@ -680,20 +733,21 @@ fn atmosphere_live() {
         [Event::SamusSprite(399, 132, 110)],
         "atmosphere.live.dive_position"
     );
-    assert_eq!(h.world.player.atmospheric.slots[0].y, 120);
+    assert_eq!(h.world.player.presentation.atmospheric().slots[0].y, 120);
 }
 fn atmosphere_failure() {
     use super::game::player_transitions::draw_atmospheric;
     for invalid in [1, 0x800] {
         let mut h = atmosphere_fixture(invalid, 2);
-        let slot = &mut h.world.player.atmospheric.slots[3];
+        let slot = &mut h.world.player.presentation.atmospheric_mut().slots[3];
         slot.frame_and_kind = 0x400;
         slot.remaining = 2;
         slot.x = 8;
         slot.y = 10;
         assert!(catch_unwind(AssertUnwindSafe(|| draw_atmospheric(&mut h))).is_err());
         assert_eq!(
-            h.world.player.atmospheric.slots[0].remaining, 1,
+            h.world.player.presentation.atmospheric().slots[0].remaining,
+            1,
             "atmosphere.failure.invalid_timer_prefix"
         );
         assert_eq!(
@@ -708,8 +762,8 @@ fn atmosphere_failure() {
     assert!(catch_unwind(AssertUnwindSafe(|| draw_atmospheric(&mut h))).is_err());
     assert_eq!(
         (
-            h.world.player.atmospheric.slots[0].frame_and_kind,
-            h.world.player.atmospheric.slots[0].remaining
+            h.world.player.presentation.atmospheric().slots[0].frame_and_kind,
+            h.world.player.presentation.atmospheric().slots[0].remaining
         ),
         (0x100, 0),
         "atmosphere.failure.short_timer_prefix"
@@ -721,7 +775,7 @@ fn atmosphere_failure() {
         panic!("intentional atmospheric render failure");
     });
     assert!(catch_unwind(AssertUnwindSafe(|| draw_atmospheric(&mut h))).is_err());
-    let slot = &h.world.player.atmospheric.slots[0];
+    let slot = &h.world.player.presentation.atmospheric().slots[0];
     assert_eq!(
         (slot.remaining, slot.x, slot.y),
         (1, 137, 99),

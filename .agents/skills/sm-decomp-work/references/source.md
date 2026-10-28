@@ -23,13 +23,13 @@
    Derive byte-versus-element offset units from the actual operation. Rust
    assignment evaluates its RHS before the destination place; function arguments
    follow argument order. Preserve that order when introducing helpers.
-4. Implement in the isolated checkout. Keep reachable unsafe backend capabilities
+4. Implement in the assigned checkout. Keep reachable unsafe backend capabilities
    explicit under PLAN's migration policy; completed owned modules forbid unsafe.
    Include adapters, callbacks and callers in the replacement cost. Report net
    production, legacy, unsafe and verification changes, explaining required growth
    and distinguishing substantive removal from formatting or relocation.
    Send the first coherent code pin and actual START/first-code UTC promptly,
-   naming pending checks for authorized source-branch publication by the integrator.
+   naming pending checks for publication under PLAN by the primary writer.
 5. Format and freeze the final source. Deliver the existing patch/handoff and
    source pin, contract findings and named affected rows to the assigned reviewers
    and integrator. Label unobserved behavior accurately. Compilation and replay

@@ -1,9 +1,9 @@
 # Coordinator role
 
-Keep the root available for user requests while an implementation overseer owns
-the pipeline. Assign disjoint complete responsibilities, one file/lane owner and
-one Git integrator. Overlap source, review, compilation and replay when their
-dependencies and measured resource budgets permit.
+One primary root owns implementation, coordination, Git, builds and one resource
+ledger under SKILL.md's verified-release condition. Use bounded source/review
+subagents for disjoint responsibilities and pinned interfaces. Overlap ready work
+when dependencies and measured resource budgets permit; retain one actual writer.
 
 - Give workers the short assignment in SKILL.md and their role. Link existing
   handoffs for exact pins; keep decisions and current host/resource policy in

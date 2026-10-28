@@ -147,13 +147,13 @@ fn reset_palette_composition() {
     player::reset(&mut h);
     assert_eq!(h.events, [Event::PaletteSpawn(0xe1f0)]);
     assert_eq!(
-        h.world.player.visual.palette_effects.slots[7].definition,
+        h.world.player.presentation.visual().palette_effects.slots[7].definition,
         0xe1f0
     );
     assert_eq!(h.world.player.projectiles.shots[0].x_fraction, 0xabcd);
     assert_eq!(h.world.player.projectiles.shots[0].auxiliary, 0x1234);
     colors::advance(&mut h);
-    assert_eq!(h.world.player.visual.colors[0], 0x3456);
+    assert_eq!(h.world.player.presentation.visual().colors[0], 0x3456);
     assert_eq!(
         h.events,
         [Event::PaletteSpawn(0xe1f0), Event::Color(0, 0x3456)]

@@ -84,6 +84,8 @@ fn compatibility() -> u64 {
         include_str!("../game/room_entry/prepared_assets.rs"),
         include_str!("../room_pack.rs"),
         include_str!("../game/session.rs"),
+        include_str!("../game/session_owners.rs"),
+        include_str!("../game/session_checkpoint.rs"),
         include_str!("../game/message_boxes.rs"),
         include_str!("../game/dialogue.rs"),
         include_str!("../game/dialogue_ram.rs"),

@@ -1459,6 +1459,14 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/session_encoding.rs"),
     ),
     (
+        "sm/src/game/session_owners.rs",
+        include_bytes!("game/session_owners.rs"),
+    ),
+    (
+        "sm/src/game/session_checkpoint.rs",
+        include_bytes!("game/session_checkpoint.rs"),
+    ),
+    (
         "sm/src/game/session_runtime.rs",
         include_bytes!("game/session_runtime.rs"),
     ),
@@ -1747,6 +1755,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/verification/player_detached/shared.rs",
         include_bytes!("verification/player_detached/shared.rs"),
+    ),
+    (
+        "sm/src/verification/player_detached/scene.rs",
+        include_bytes!("verification/player_detached/scene.rs"),
     ),
     (
         "sm/src/verification/player_detached/palette.rs",

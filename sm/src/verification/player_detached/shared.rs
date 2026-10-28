@@ -20,6 +20,8 @@ mod visual_host;
 use game::room_mechanisms as room;
 #[path = "../../ram_map.rs"]
 pub(crate) mod ram_map;
+#[path = "../../rendering/mod.rs"]
+pub(crate) mod rendering;
 #[path = "../../rom.rs"]
 pub(crate) mod rom;
 #[path = "../../verify_probe.rs"]

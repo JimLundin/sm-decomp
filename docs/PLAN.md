@@ -30,10 +30,12 @@ above 90%. Necessary safety growth must be counted and explained, not relabeled.
 Never reserve or hold Git index/ref locks; Git's own short locks cover actual writes
 only. Before every Git write, fetch/reconcile current origin/main, recheck HEAD/index
 and preserve others' work. Never delete another process's lock or force-push main.
-Windows has one implementation/Git integrator under the new oversight session.
+Root 01a17ecd takes implementation, coordination, Git, builds and the resource
+ledger only after 01a17c50's explicit RELEASE and verified terminal writer/turn
+state. Preserve current writer/jobs until then; main is the default, isolation optional.
 Linux development is stopped by the user (2026-10-27); preserve its frozen handoffs.
-Windows source owners may push coherent temporary migration branches with pending
-checks clearly named (user/oversight grant, 2026-10-27). Main requires qualification.
+Only the primary writes Git; optional branches can carry coherent source with
+pending checks named. Main requires qualification.
 Run named local rows on a tip reconciled with current origin/main, commit to main
 and immediately `git push origin HEAD:main`. A rejected push means fetch/rebase,
 rerun only affected rows, then push. Keep one Git writer and no force pushes.
@@ -532,7 +534,7 @@ Bundled verifier cfg still reaches denied khronos_api scripts; use the separate 
 frontend and existing direct DLL with unchanged source/native/cache guards.
 Keep crate-root unsafe-op enforcement; paths in [ITERATION](ITERATION.md#windows-shell-setup).
 
-Use isolated snapshots/fixed interfaces/one integrator. Frozen formatted source may
+Use fixed interfaces and one writer; isolate when useful. Frozen formatted source may
 compile during final review; DLL/publication bind the reviewed final pin. Never edit
 checked source/rebuild loaded DLLs. Explicit followup_task wakes completed workers;
 send_message alone does not. Refill ready work without waiting on review prose.

@@ -10,7 +10,9 @@ The user assigns this session proactive oversight of pace, fidelity and the
 accepted owned-engine architecture. This plan supersedes older work-order and
 pacing advice. PLAN remains authoritative for the Fast loop, verification,
 resources, Git, commit/push and completion. Preserve current source owners,
-cloud bank claims and the sole Windows integrator. The user stopped Linux development
+cloud bank claims and one actual Windows writer. Root 01a17ecd takes
+implementation, coordination, Git, builds and one resource ledger only after
+[explicit RELEASE](https://github.com/JimLundin/sm-decomp/issues/20#issuecomment-6468342614) and verified terminal writer/turn state. The user stopped Linux development
 on 2026-10-27; its frozen source and receipts remain preserved. Implementation,
 review and qualification now run on Windows under the new oversight session.
 
