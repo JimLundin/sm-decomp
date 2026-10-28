@@ -580,7 +580,13 @@ impl AudioRequests {
     ) -> Result<Vec<u8>, String> {
         self.validate(metadata, required)
             .map_err(|error| format!("audio checkpoint {error:?}"))?;
-        let mut bytes = Vec::from(b"SMAUDIO\x01".as_slice());
+        if metadata.identity.reference != metadata.reference.fingerprint {
+            return Err("audio checkpoint Reference identity mismatch".into());
+        }
+        let mut bytes = Vec::from(b"SMAUDIO\x02".as_slice());
+        let reference = audio_reference_bytes(&metadata.reference);
+        bytes.extend_from_slice(&(reference.len() as u64).to_le_bytes());
+        bytes.extend_from_slice(&reference);
         bytes.push(u8::from(self.pending_mutation));
         let catalog_bytes = audio_catalog_bytes(&self.catalog);
         bytes.extend_from_slice(&(catalog_bytes.len() as u64).to_le_bytes());
@@ -632,8 +638,15 @@ impl AudioRequests {
         catalog: Arc<AudioRequestCatalog>,
     ) -> Result<Self, String> {
         let mut read = CheckpointReader(bytes);
-        if read.bytes(8)? != b"SMAUDIO\x01" {
+        if read.bytes(8)? != b"SMAUDIO\x02" {
             return Err("unsupported audio checkpoint schema".into());
+        }
+        let reference_size = usize::try_from(read.counter()?)
+            .map_err(|_| "audio checkpoint Reference length overflow")?;
+        if metadata.identity.reference != metadata.reference.fingerprint
+            || read.bytes(reference_size)? != audio_reference_bytes(&metadata.reference)
+        {
+            return Err("audio checkpoint Reference declaration changed".into());
         }
         let pending_mutation = match read.byte()? {
             0 => false,
@@ -713,7 +726,7 @@ use crate::game::scene::start::{
 };
 use crate::game_state::persistent_session::{Control, CurrentControl, SessionStartRequirements};
 
-fn control_reference_bytes(value: &ReferenceProfile) -> Vec<u8> {
+fn audio_reference_bytes(value: &ReferenceProfile) -> Vec<u8> {
     let mut bytes = Vec::new();
     for identity in [
         value.fingerprint,
@@ -798,7 +811,7 @@ impl Control {
         }
         bytes.extend_from_slice(&m.identity.committed_tick.to_le_bytes());
         bytes.extend_from_slice(&m.identity.next_input_record.to_le_bytes());
-        let reference = control_reference_bytes(&m.reference);
+        let reference = audio_reference_bytes(&m.reference);
         bytes.extend_from_slice(&(reference.len() as u64).to_le_bytes());
         bytes.extend_from_slice(&reference);
         bytes.extend_from_slice(&m.samus_content.revision.0);
@@ -908,7 +921,7 @@ impl Control {
         };
         let reference_size =
             usize::try_from(read.counter()?).map_err(|_| "Control reference length overflow")?;
-        if read.bytes(reference_size)? != control_reference_bytes(&required.display.reference) {
+        if read.bytes(reference_size)? != audio_reference_bytes(&required.display.reference) {
             return Err("Control checkpoint Reference declaration changed".into());
         }
         if control_identity(&mut read)? != required.display.samus_content.revision.0 {
