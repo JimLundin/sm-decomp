@@ -2,7 +2,9 @@ use crate::c_library::{free, strtod};
 use crate::types::GlTextureWithSize;
 use std::alloc::{Layout, alloc_zeroed, dealloc, handle_alloc_error};
 use std::ffi::{CStr, CString, c_char, c_void};
+use std::mem::{align_of, size_of};
 use std::ptr::null_mut;
+use std::sync::atomic::{AtomicPtr, Ordering};
 
 pub enum GlslShader {}
 
@@ -320,9 +322,14 @@ unsafe extern "C-unwind" fn sm_shader_assert(condition: bool, site: u32) {
     }
 }
 
-// Use exactly the pointers resolved by the existing loader, in its lookup order.
+// Keep the native 42-pointer layout and the existing loader's lookup order.
+// Native field reads and reloads require the same owning GL thread without
+// concurrent access; atomic slot storage does not make native GL calls thread-safe.
 #[unsafe(no_mangle)]
-static mut sm_shader_gl: [*const c_void; 42] = [missing_gl as *const c_void; 42];
+static sm_shader_gl: [AtomicPtr<c_void>; 42] =
+    [const { AtomicPtr::new(missing_gl as *mut c_void) }; 42];
+const _: () = assert!(size_of::<AtomicPtr<c_void>>() == size_of::<*const c_void>());
+const _: () = assert!(align_of::<AtomicPtr<c_void>>() == align_of::<*const c_void>());
 
 extern "system" fn missing_gl() -> ! {
     panic!("gl function was not loaded");
@@ -379,32 +386,33 @@ const PROCEDURES: [&[&str]; 42] = [
 // Associate each fallback with its unresolved canonical lookup. This also
 // keeps another function's fallback queries from overwriting an accepted slot.
 pub(super) unsafe fn load_with(mut load: impl FnMut(&str) -> *const c_void) {
-    unsafe {
-        check_dependency();
-        let mut pending = None::<(usize, usize)>;
-        gl::load_with(|name| {
-            let address = load(name);
-            if let Some((slot, next)) = pending.take() {
-                if PROCEDURES[slot].get(next) == Some(&name) {
-                    if !address.is_null() {
-                        sm_shader_gl[slot] = address;
-                    } else if next + 1 < PROCEDURES[slot].len() {
-                        pending = Some((slot, next + 1));
-                    }
-                    return address;
+    check_dependency();
+    let mut pending = None::<(usize, usize)>;
+    gl::load_with(|name| {
+        let address = load(name);
+        if let Some((slot, next)) = pending.take() {
+            if PROCEDURES[slot].get(next) == Some(&name) {
+                if !address.is_null() {
+                    sm_shader_gl[slot].store(address.cast_mut(), Ordering::Relaxed);
+                } else if next + 1 < PROCEDURES[slot].len() {
+                    pending = Some((slot, next + 1));
                 }
+                return address;
             }
-            if let Some(slot) = PROCEDURES.iter().position(|names| names[0] == name) {
-                sm_shader_gl[slot] = if address.is_null() {
-                    missing_gl as *const c_void
+        }
+        if let Some(slot) = PROCEDURES.iter().position(|names| names[0] == name) {
+            sm_shader_gl[slot].store(
+                if address.is_null() {
+                    missing_gl as *mut c_void
                 } else {
-                    address
-                };
-                if address.is_null() && PROCEDURES[slot].len() > 1 {
-                    pending = Some((slot, 1));
-                }
+                    address.cast_mut()
+                },
+                Ordering::Relaxed,
+            );
+            if address.is_null() && PROCEDURES[slot].len() > 1 {
+                pending = Some((slot, 1));
             }
-            address
-        });
-    }
+        }
+        address
+    });
 }
