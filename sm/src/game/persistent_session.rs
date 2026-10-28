@@ -1482,6 +1482,16 @@ pub(crate) fn validate_normalized_projection(
     }
 }
 impl SessionSnapshotPayload {
+    pub(crate) fn encode_observation_checkpoint(&self) -> Result<Vec<u8>, String> {
+        let state = self.0.as_ref().ok_or("no supplied Session observations")?;
+        state.0.observations.encode_checkpoint(state.0.metadata())
+    }
+    pub(crate) fn decode_observation_checkpoint(
+        bytes: &[u8],
+        metadata: &DisplayStartMetadata,
+    ) -> Result<ExternalInputs, String> {
+        ExternalInputs::decode_checkpoint(bytes, metadata)
+    }
     pub(crate) fn encode_control_checkpoint(&self) -> Result<Vec<u8>, String> {
         let state = self.0.as_ref().ok_or("no supplied Session Control owner")?;
         state
