@@ -1,46 +1,94 @@
-//! Scanline phases for the HUD, room display and suspended door transitions.
-use crate::game::{room_entry, session_runtime};
+//! Native access for the shared scanline interrupt decisions and effects.
+use crate::game::{room_entry, scene::irq, session_runtime};
 use crate::game_state::Game;
 use crate::ram_map::{checked_word as at, word};
 use crate::rtl::{BG3SC, CGADSUB, CGWSEL, HTIMEL, NMITIMEN, TM, VTIMEL, WriteReg};
+use std::convert::Infallible;
 
-fn pending(fallback: u16, game: &mut Game) -> u16 {
-    let next = word!(game.irqhandler_next_handler);
-    word!(game.irqhandler_next_handler = 0);
-    if next == 0 { fallback } else { next }
-}
-
-fn room_layers(game: &Game) -> u8 {
-    if (word!(game.previous_cre_bitset) | word!(game.cre_bitset)) & 1 != 0 {
-        16
-    } else {
-        17
+struct NativeControls<'a>(&'a mut Game);
+impl irq::Controls for NativeControls<'_> {
+    fn read_control(&mut self, field: irq::Control) -> u16 {
+        let game = &mut *self.0;
+        match field {
+            irq::Control::Current => word!(game.cur_irq_handler),
+            irq::Control::Pending => word!(game.irqhandler_next_handler),
+            irq::Control::Enable => at!(game, 0x84;),
+            irq::Control::PreviousCre => word!(game.previous_cre_bitset),
+            irq::Control::CurrentCre => word!(game.cre_bitset),
+            irq::Control::TransitionFlag => word!(game.door_transition_flag),
+        }
+    }
+    fn write_control(&mut self, field: irq::Store, value: u16) {
+        let game = &mut *self.0;
+        match field {
+            irq::Store::Current => word!(game.cur_irq_handler = value),
+            irq::Store::Pending => word!(game.irqhandler_next_handler = value),
+            irq::Store::Enable => at!(game, 0x84; = value),
+        }
     }
 }
 
-unsafe fn schedule(next: u16, vertical: u16, horizontal: u16, game: &mut Game) {
-    word!(game.cur_irq_handler = next);
-    unsafe {
-        crate::rtl::register_writes! { game;
-            word(VTIMEL as u16, vertical); word(HTIMEL as u16, horizontal);
-        }
+/// Constructed only while the caller holds a live, exclusive native backend.
+struct NativeIrqHost<'a>(NativeControls<'a>);
+impl<'a> NativeIrqHost<'a> {
+    /// The native backend must remain live and exclusive for this host's lifetime.
+    unsafe fn new(game: &'a mut Game) -> Self {
+        Self(NativeControls(game))
+    }
+}
+impl irq::Controls for NativeIrqHost<'_> {
+    fn read_control(&mut self, field: irq::Control) -> u16 {
+        irq::Controls::read_control(&mut self.0, field)
+    }
+    fn write_control(&mut self, field: irq::Store, value: u16) {
+        irq::Controls::write_control(&mut self.0, field, value);
+    }
+}
+impl irq::Host for NativeIrqHost<'_> {
+    type Error = Infallible;
+
+    fn read_mirror(&mut self, field: irq::Mirror) -> u8 {
+        self.0.0.ram().read_byte(match field {
+            irq::Mirror::Background3Map => 0x5b,
+            irq::Mirror::ColorWindow => 0x70,
+            irq::Mirror::ColorArithmetic => 0x73,
+            irq::Mirror::MainLayers => 0x6a,
+            irq::Mirror::InterruptEnable => 0x84,
+        })
+    }
+    fn write_display(&mut self, field: irq::Output, value: u8) -> Result<(), Infallible> {
+        let register = match field {
+            irq::Output::Background3Map => BG3SC,
+            irq::Output::ColorWindow => CGWSEL,
+            irq::Output::ColorArithmetic => CGADSUB,
+            irq::Output::MainLayers => TM,
+            irq::Output::VerticalLow => VTIMEL,
+            irq::Output::VerticalHigh => VTIMEL + 1,
+            irq::Output::HorizontalLow => HTIMEL,
+            irq::Output::HorizontalHigh => HTIMEL + 1,
+            irq::Output::InterruptEnable => NMITIMEN,
+        };
+        // The private host keeps the construction invariant across ordered effects.
+        unsafe { WriteReg(register as u16, value, self.0.0) };
+        Ok(())
+    }
+    fn follow_transition(&mut self) -> Result<(), Infallible> {
+        // One resume poll, with the same live native capability as the caller.
+        unsafe { follow_transition(self.0.0) };
+        Ok(())
     }
 }
 
 pub(crate) fn disable(game: &mut Game) {
-    at!(game, 0x84; = at!(game, 0x84;) & !0x30);
+    irq::disable(&mut NativeControls(game));
 }
 
 /// Requires a live, exclusively accessed SNES backend.
 pub(crate) unsafe fn enable(immediate: bool, game: &mut Game) {
-    unsafe {
-        crate::rtl::register_writes! { game;
-            word(VTIMEL as u16, 0); word(HTIMEL as u16, 152);
-        }
-        at!(game, 0x84; = at!(game, 0x84;) | 0x30);
-        if immediate {
-            WriteReg(NMITIMEN as u16, game.ram().read_byte(0x84), game);
-        }
+    let mut host = unsafe { NativeIrqHost::new(game) };
+    match irq::enable(&mut host, immediate) {
+        Ok(()) => {}
+        Err(never) => match never {},
     }
 }
 
@@ -54,66 +102,9 @@ pub(crate) unsafe fn follow_transition(game: &mut Game) {
 
 /// Requires a live, exclusively accessed SNES backend for the entire interrupt.
 pub(crate) unsafe fn advance(game: &mut Game) {
-    // Odd identities alias the preceding even handler. Pending overrides remain full-width.
-    let handler = word!(game.cur_irq_handler) >> 1;
-    unsafe {
-        let (next, vertical, horizontal) = match handler {
-            0 => (pending(0, game), 0, 0),
-            1 => {
-                disable(game);
-                (0, 0, 0)
-            }
-            2 => {
-                crate::rtl::register_writes! { game;
-                    byte(BG3SC as u16, 0x5a); byte(CGWSEL as u16, 0);
-                    byte(CGADSUB as u16, 0); byte(TM as u16, 4);
-                }
-                (6, 31, 152)
-            }
-            3 => {
-                crate::rtl::register_writes! { game;
-                    byte(CGWSEL as u16, game.ram().read_byte(0x70)); byte(CGADSUB as u16, game.ram().read_byte(0x73));
-                    byte(BG3SC as u16, game.ram().read_byte(0x5b)); byte(TM as u16, game.ram().read_byte(0x6a));
-                }
-                (pending(4, game), 0, 152)
-            }
-            4 => {
-                crate::rtl::register_writes! { game;
-                    byte(BG3SC as u16, 0x5a); byte(TM as u16, 4);
-                    byte(CGWSEL as u16, 0); byte(CGADSUB as u16, 0);
-                }
-                (10, 31, 152)
-            }
-            5 => {
-                WriteReg(TM as u16, room_layers(game), game);
-                (pending(8, game), 0, 152)
-            }
-            6 | 8 | 11 => {
-                crate::rtl::register_writes! { game;
-                    byte(TM as u16, 4); byte(CGWSEL as u16, 0); byte(CGADSUB as u16, 0);
-                }
-                (handler * 2 + 2, 31, 152)
-            }
-            7 => {
-                crate::rtl::register_writes! { game;
-                    byte(BG3SC as u16, game.ram().read_byte(0x5b)); byte(CGWSEL as u16, game.ram().read_byte(0x70));
-                    byte(CGADSUB as u16, game.ram().read_byte(0x73));
-                }
-                (pending(12, game), 0, 152)
-            }
-            9 | 12 => {
-                let layers = room_layers(game);
-                crate::rtl::register_writes! { game;
-                    byte(TM as u16, layers); byte(CGWSEL as u16, 0); byte(CGADSUB as u16, 0);
-                }
-                if word!(game.door_transition_flag) & 0x8000 == 0 {
-                    follow_transition(game);
-                }
-                (handler * 2 + 2, if handler == 9 { 216 } else { 160 }, 152)
-            }
-            10 | 13 => (pending(handler * 2 - 4, game), 0, 152),
-            _ => panic!("invalid scanline IRQ handler: {handler}"),
-        };
-        schedule(next, vertical, horizontal, game);
+    let mut host = unsafe { NativeIrqHost::new(game) };
+    match irq::advance(&mut host) {
+        Ok(()) => {}
+        Err(never) => match never {},
     }
 }

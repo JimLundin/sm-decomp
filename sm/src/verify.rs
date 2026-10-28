@@ -1390,6 +1390,11 @@ pub(super) fn run_unit_tests() -> i32 {
 mod coverage_checks {
     use super::*;
     use sm::game::message_composition::{prepared::*, *};
+    use sm::game::scene::component as sd;
+    use sm::game::scene::hdma_sources as hs;
+    use sm::game::scene::records as sc;
+    use sm::game::scene::start as ss;
+    use sm::game::scene::state as ds;
     use sm::rendering::{self as r, IndexedSource, prepared::*};
     use std::sync::Arc;
 
@@ -1399,7 +1404,7 @@ mod coverage_checks {
         macro_rules! cases {
             ($($test:ident),+ $(,)?) => { [$( (stringify!($test), $test as fn()), )+] };
         }
-        let tests: [(&str, fn()); 26] = cases![
+        let tests: [(&str, fn()); 46] = cases![
             prepared_message_pixels_delay_queue_and_checkpoint,
             prepared_message_rejects_changed_content_and_resets,
             independently_authored_raster_pixels_and_prefixes,
@@ -1426,6 +1431,26 @@ mod coverage_checks {
             state_rollbacks_discard_episode,
             wrong_first_arrival_cannot_be_repaired_by_later_room_entry,
             restoration_and_gameplay_initialization_are_required,
+            scene_pixels_preserve_line_incarnations_and_redraw,
+            scene_rejects_missing_inconsistent_and_unsupported_history,
+            scene_media_rejects_missing_revisions_and_stale_aliases,
+            scene_rejects_reference_quantization,
+            scene_start_rejects_missing_fields_and_invalid_history_prefix,
+            scene_start_rejects_changed_profile_and_audio_prefix,
+            scene_component_preserves_complete_open_checkpoint_and_reopen,
+            scene_component_reset_preserves_complete_owned_buffers_and_alias_views,
+            scene_component_rejects_missing_resident_history_and_media_replacement,
+            scene_component_failed_source_replacement_preserves_complete_owner,
+            scene_component_rejects_missing_final_resident_assets,
+            scene_component_rejects_each_native_resident_latch_alias,
+            scene_component_rejects_missing_hdma_catalog,
+            scene_component_rejects_changed_hdma_payload_under_same_fingerprint,
+            scene_component_rejects_wrong_hdma_kinds_and_required_unbound_sources,
+            scene_component_rejects_invalid_hdma_bank_windows,
+            scene_component_admits_explicitly_disabled_hdma_sources,
+            scene_component_rejects_conflicting_physical_hdma_aliases,
+            scene_component_preserves_coherent_physical_hdma_aliases_on_reopen,
+            scene_component_reset_preserves_coherent_physical_hdma_aliases,
         ];
         let mut failed = 0usize;
         for (name, test) in &tests {
@@ -1442,6 +1467,737 @@ mod coverage_checks {
             tests.len()
         );
         i32::from(failed != 0)
+    }
+
+    // Movies cannot author portable media identities or complete per-line incarnations.
+    // This synthetic display fixture reuses the accepted message font, map and colors;
+    // it supplies no complete G start, Reference capture or native audio evidence.
+    fn scene_fixture() -> (sc::SceneDescription, Arc<sc::SceneMedia>) {
+        let (_, prepared) = prepared_message_fixture(0x3801);
+        let revision = sc::Revision([1; 32]);
+        let reference = |id| sc::AssetRef {
+            id: sc::AssetId(id),
+            revision,
+        };
+        let image_ref = |incarnation| sc::MediaRef {
+            asset: reference(1),
+            incarnation,
+        };
+        let palette_ref = |incarnation| sc::MediaRef {
+            asset: reference(6),
+            incarnation,
+        };
+        let saved = &prepared.saved.media;
+        let colors = core::array::from_fn(|index| saved.palette(index as u8).unwrap());
+        let restored_colors =
+            core::array::from_fn(|index| prepared.restored.media.palette(index as u8).unwrap());
+        let mut words: Vec<u16> = (0..0x8000)
+            .map(|index| saved.word(index).unwrap())
+            .collect();
+        // Explicit authored latch words and the required 26 palette aliases.
+        words.extend([0; 5]);
+        words.extend_from_slice(&colors[..26]);
+        let mut later_words = words.clone();
+        for word in &mut later_words[0x5880..0x5c00] {
+            *word ^= 3;
+        }
+        later_words[0x8005..0x801f].copy_from_slice(&restored_colors[..26]);
+        let cells = |image: &[u16], first: usize| -> Arc<[sc::TileCell]> {
+            image[first..first + 1024]
+                .iter()
+                .map(|word| sc::TileCell {
+                    tile: word & 0x3ff,
+                    palette: (word >> 10 & 7) as u8,
+                    priority: word & 0x2000 != 0,
+                    flip_horizontal: word & 0x4000 != 0,
+                    flip_vertical: word & 0x8000 != 0,
+                })
+                .collect::<Vec<_>>()
+                .into()
+        };
+        let blank_cells = cells(&words, 0x5000);
+        let hud_cells = cells(&words, 0x5880);
+        let later_cells = cells(&later_words, 0x5880);
+        let assets = vec![
+            sc::SceneAsset::Room(reference(1)),
+            sc::SceneAsset::Atlas(sc::TileAtlas {
+                reference: reference(2),
+                encoding: sc::TileEncoding::Planar4,
+                tile_count: 1,
+                data: vec![0; 16].into(),
+            }),
+            sc::SceneAsset::Atlas(sc::TileAtlas {
+                reference: reference(3),
+                encoding: sc::TileEncoding::Planar2,
+                tile_count: 256,
+                data: words[0x4000..0x4800].to_vec().into(),
+            }),
+            sc::SceneAsset::Map(sc::Tilemap {
+                reference: reference(4),
+                atlas: reference(2),
+                palette: reference(6),
+                width: 32,
+                height: 32,
+                cells: blank_cells.clone(),
+            }),
+            sc::SceneAsset::Map(sc::Tilemap {
+                reference: reference(5),
+                atlas: reference(3),
+                palette: reference(6),
+                width: 32,
+                height: 32,
+                cells: hud_cells.clone(),
+            }),
+            sc::SceneAsset::Palette(sc::Palette {
+                reference: reference(6),
+                colors,
+            }),
+            sc::SceneAsset::Visual(sc::Visual {
+                reference: reference(7),
+                frames: vec![sc::VisualFrame {
+                    parts: vec![sc::VisualPart {
+                        atlas: reference(2),
+                        material: reference(6),
+                        tile: 0,
+                        offset: sc::ScreenPosition { x: 0, y: 0 },
+                        size: sc::ObjectSize::Small,
+                    }]
+                    .into(),
+                }]
+                .into(),
+            }),
+            sc::SceneAsset::Font(sc::Font {
+                reference: reference(8),
+                atlas: reference(3),
+            }),
+        ];
+        let resident = assets
+            .iter()
+            .map(sc::SceneAsset::reference)
+            .collect::<Vec<_>>()
+            .into();
+        let atlases: Arc<[sc::AtlasBinding]> = vec![
+            sc::AtlasBinding {
+                atlas: reference(2),
+                first_word: 0,
+                resident_data: words[0..16].to_vec().into(),
+            },
+            sc::AtlasBinding {
+                atlas: reference(3),
+                first_word: 0x4000,
+                resident_data: words[0x4000..0x4800].to_vec().into(),
+            },
+        ]
+        .into();
+        let maps: Arc<[sc::MapBinding]> = vec![
+            sc::MapBinding {
+                map: reference(4),
+                first_word: 0x5000,
+            },
+            sc::MapBinding {
+                map: reference(5),
+                first_word: 0x5880,
+            },
+        ]
+        .into();
+        let images = vec![
+            sc::CompiledImage {
+                reference: image_ref(1),
+                palette: palette_ref(1),
+                words: words.into(),
+                atlases: atlases.clone(),
+                maps: maps.clone(),
+            },
+            sc::CompiledImage {
+                reference: image_ref(2),
+                palette: palette_ref(2),
+                words: later_words.into(),
+                atlases,
+                maps,
+            },
+        ];
+        let palettes = vec![
+            sc::PaletteIncarnation {
+                reference: palette_ref(1),
+                colors,
+            },
+            sc::PaletteIncarnation {
+                reference: palette_ref(2),
+                colors: restored_colors,
+            },
+        ];
+        let media = Arc::new(sc::SceneMedia::new(revision, assets, palettes, images).unwrap());
+        let objects: Arc<[sc::SceneObject]> = (0..128)
+            .map(|order| sc::SceneObject {
+                order,
+                visual: reference(7),
+                frame: 0,
+                part: 0,
+                atlas: reference(2),
+                material: reference(6),
+                tile: 0,
+                position: sc::ScreenPosition { x: -256, y: 0 },
+                size: sc::ObjectSize::Small,
+                palette: 0,
+                priority: 0,
+                flip_horizontal: false,
+                flip_vertical: false,
+            })
+            .collect::<Vec<_>>()
+            .into();
+        let plane = |role, map, atlas, cells, palette| sc::ScenePlane {
+            role,
+            map: reference(map),
+            atlas: reference(atlas),
+            palette,
+            width: 32,
+            height: 32,
+            cells,
+            scroll: sc::ScreenPosition { x: 0, y: -1 },
+        };
+        let lines = (0..224)
+            .map(|line| {
+                let incarnation = if line < 112 { 1 } else { 2 };
+                let palette = palette_ref(incarnation);
+                sc::SceneLine {
+                    media: image_ref(incarnation),
+                    palette,
+                    mode: sc::SceneMode::TilePlanes,
+                    blank: false,
+                    planes: [
+                        plane(sc::PlaneRole::Main, 4, 2, blank_cells.clone(), palette),
+                        plane(sc::PlaneRole::Secondary, 4, 2, blank_cells.clone(), palette),
+                        plane(
+                            sc::PlaneRole::HudFx,
+                            5,
+                            3,
+                            if line < 112 {
+                                hud_cells.clone()
+                            } else {
+                                later_cells.clone()
+                            },
+                            palette,
+                        ),
+                    ],
+                    objects: objects.clone(),
+                    object_selection: sc::ObjectSelection {
+                        atlases: [reference(2); 2],
+                        size_set: 0,
+                        first_order: None,
+                        interlaced: false,
+                        even_frame: false,
+                    },
+                    windows: sc::SceneWindows {
+                        extents: [sc::WindowExtent { first: 0, last: 0 }; 2],
+                        layers: [sc::LayerWindow {
+                            first_enabled: false,
+                            first_inverted: false,
+                            second_enabled: false,
+                            second_inverted: false,
+                            combination: sc::WindowCombination::Union,
+                        }; 6],
+                    },
+                    routing: [
+                        sc::ScreenRouting {
+                            visible: [false, false, true, false, false],
+                            masked: [false; 5],
+                        },
+                        sc::ScreenRouting {
+                            visible: [false; 5],
+                            masked: [false; 5],
+                        },
+                    ],
+                    affine: sc::SceneAffine {
+                        matrix: [0; 4],
+                        center: sc::ScreenPosition { x: 0, y: 0 },
+                        scroll: sc::ScreenPosition { x: 0, y: 0 },
+                        flip_horizontal: false,
+                        flip_vertical: false,
+                        bounded_field: false,
+                        fill_outside: false,
+                    },
+                    pixelation: sc::ScenePixelation {
+                        enabled: [false; 3],
+                        size: 1,
+                        origin: 1,
+                        modulo: [0; 256],
+                    },
+                    color: sc::SceneColor {
+                        clip: sc::WindowCondition::Never,
+                        prevent_math: sc::WindowCondition::Never,
+                        enabled: [false; 6],
+                        use_subscreen: false,
+                        subtract: false,
+                        half: false,
+                        fixed: [0; 3],
+                        brightness: 15,
+                    },
+                    object_aliases: Arc::from([]),
+                }
+            })
+            .collect::<Vec<_>>()
+            .into();
+        (
+            sc::SceneDescription {
+                tick: 7,
+                gameplay: [2; 32],
+                reference: [3; 32],
+                revision,
+                view: sc::SceneView {
+                    room: reference(1),
+                    camera: sc::ScreenPosition { x: 17, y: -3 },
+                },
+                geometry: sc::SceneGeometry {
+                    width: 256,
+                    height: 224,
+                    crop_origin: sc::ScreenPosition { x: 0, y: 0 },
+                    interlaced: false,
+                    even_frame: false,
+                    overscan: false,
+                    color: sc::ColorInterpretation::Bgr15Native,
+                    quantization: sc::SceneQuantization::Native,
+                },
+                resident,
+                lines,
+                status: sc::DisplayStatus {
+                    range_overflow: false,
+                    time_overflow: false,
+                    has_objects: false,
+                    even_frame: false,
+                    interlaced: false,
+                    overscan: false,
+                },
+                initial_object_overflow: sc::ObjectOverflow {
+                    range: false,
+                    time: false,
+                },
+            },
+            media,
+        )
+    }
+
+    // Movies cannot reach authored portable media/incarnation changes or prove redraw independence.
+    #[cfg_attr(test, test)]
+    fn scene_pixels_preserve_line_incarnations_and_redraw() {
+        let (description, media) = scene_fixture();
+        let scene = sc::Scene::new(description.clone(), media.clone()).unwrap();
+        let before = scene.clone();
+        let frame = scene.render().unwrap();
+        assert_eq!((frame.tick, frame.revision), (7, description.revision));
+        assert_eq!(frame.pixels.len(), 224 * 256);
+        for (index, pixel) in frame.pixels.iter().enumerate() {
+            let band = index % 256 / 8 % 2;
+            let expected = if band == 0 {
+                [0, 255, 0, 0]
+            } else if index / 256 < 112 {
+                [0, 0, 255, 0]
+            } else {
+                [255, 0, 0, 0]
+            };
+            assert_eq!(*pixel, expected, "Scene pixel {index}");
+        }
+        let mut later = description;
+        later.tick = 8;
+        let last = later.lines[223].clone();
+        Arc::make_mut(&mut later.lines).fill(last);
+        let replacement = sc::Scene::new(later, media.clone()).unwrap();
+        assert_ne!(replacement.render().unwrap().pixels, frame.pixels);
+        drop(media);
+        assert_eq!(scene.render().unwrap(), frame);
+        assert_eq!(scene, before);
+        assert_eq!(scene.description(), before.description());
+        assert_eq!(scene.lines()[0].media.incarnation, 1);
+        assert_eq!(scene.lines()[223].palette.incarnation, 2);
+        assert_eq!(
+            frame.raster_overflow,
+            r::Overflow {
+                range: false,
+                time: false
+            }
+        );
+    }
+
+    // Movies cannot reach authored portable missing media, inconsistent history or unsupported starts.
+    #[cfg_attr(test, test)]
+    fn scene_rejects_missing_inconsistent_and_unsupported_history() {
+        let (description, media) = scene_fixture();
+        for case in 0..9 {
+            let mut changed = description.clone();
+            let expected = match case {
+                0 => {
+                    changed.lines = changed.lines[..223].to_vec().into();
+                    sc::SceneError::Incomplete
+                }
+                1 => {
+                    changed.resident = changed
+                        .resident
+                        .iter()
+                        .copied()
+                        .filter(|asset| asset.id != sc::AssetId(7))
+                        .collect::<Vec<_>>()
+                        .into();
+                    sc::SceneError::MissingAsset(sc::AssetId(7))
+                }
+                2 => {
+                    Arc::make_mut(&mut changed.lines)[0].media.incarnation = 99;
+                    sc::SceneError::MissingIncarnation(changed.lines[0].media)
+                }
+                3 => {
+                    Arc::make_mut(&mut changed.lines)[0].palette.incarnation = 99;
+                    sc::SceneError::MissingIncarnation(changed.lines[0].palette)
+                }
+                4 => {
+                    Arc::make_mut(&mut changed.lines)[0].palette = changed.lines[223].palette;
+                    sc::SceneError::InconsistentMedia(changed.lines[0].media)
+                }
+                5 => {
+                    Arc::make_mut(&mut changed.lines)[0].planes[0].role = sc::PlaneRole::HudFx;
+                    sc::SceneError::Order
+                }
+                6 => {
+                    let objects = &mut Arc::make_mut(&mut changed.lines)[0].objects;
+                    Arc::make_mut(objects)[0].order = 127;
+                    sc::SceneError::Order
+                }
+                7 => {
+                    Arc::make_mut(&mut changed.lines)[0].mode =
+                        sc::SceneMode::AffinePlane { extended: true };
+                    sc::SceneError::ExtendedBackground
+                }
+                _ => {
+                    Arc::make_mut(&mut changed.lines)[0].pixelation.enabled[0] = true;
+                    sc::SceneError::EnabledMosaic(0)
+                }
+            };
+            assert_eq!(
+                sc::Scene::new(changed, media.clone()).err(),
+                Some(expected),
+                "Scene rejection {case}"
+            );
+        }
+        let mut changed = description.clone();
+        changed.geometry.width = 255;
+        assert_eq!(
+            sc::Scene::new(changed, media.clone()).err(),
+            Some(sc::SceneError::Geometry)
+        );
+        let mut changed = description;
+        changed.gameplay = [0; 32];
+        assert_eq!(
+            sc::Scene::new(changed, media).err(),
+            Some(sc::SceneError::Identity)
+        );
+    }
+
+    // Movies cannot reach authored portable registry/revision/start rejection or stale palette aliases.
+    #[cfg_attr(test, test)]
+    fn scene_media_rejects_missing_revisions_and_stale_aliases() {
+        let (_, media) = scene_fixture();
+        for case in 0..7 {
+            let mut assets = media.assets().cloned().collect::<Vec<_>>();
+            let mut palettes = media.palette_incarnations().cloned().collect::<Vec<_>>();
+            let mut images = media.compiled_images().cloned().collect::<Vec<_>>();
+            let expected = match case {
+                0 => {
+                    assets.retain(|asset| asset.reference().id != sc::AssetId(6));
+                    sc::SceneError::MissingAsset(sc::AssetId(6))
+                }
+                1 => {
+                    palettes[0].reference.asset.revision = sc::Revision([99; 32]);
+                    sc::SceneError::Revision
+                }
+                2 => {
+                    images.push(images[0].clone());
+                    sc::SceneError::DuplicateIncarnation(images[0].reference)
+                }
+                3 => {
+                    palettes.remove(0);
+                    sc::SceneError::MissingIncarnation(images[0].palette)
+                }
+                4 => {
+                    images[0].words = images[0].words[..r::MAX_INDEXED_WORDS - 1].to_vec().into();
+                    sc::SceneError::Incomplete
+                }
+                5 => {
+                    Arc::make_mut(&mut images[1].words)[0x8005] ^= 1;
+                    sc::SceneError::InconsistentMedia(images[1].reference)
+                }
+                _ => {
+                    Arc::make_mut(&mut images[0].words)[0x4008] ^= 1;
+                    sc::SceneError::InconsistentMedia(images[0].reference)
+                }
+            };
+            assert_eq!(
+                sc::SceneMedia::new(media.revision(), assets, palettes, images).err(),
+                Some(expected),
+                "media rejection {case}"
+            );
+        }
+    }
+
+    // Movies cannot reach authored portable Reference quantization/start rejection.
+    // SOURCE01's Scene consumer admits Native and cannot claim Reference image support.
+    #[cfg_attr(test, test)]
+    fn scene_rejects_reference_quantization() {
+        let (mut description, media) = scene_fixture();
+        description.geometry.quantization = sc::SceneQuantization::Reference;
+        assert_eq!(
+            sc::Scene::new(description, media).err(),
+            Some(sc::SceneError::Unsupported)
+        );
+    }
+
+    // Movies cannot author portable start/profile rejection. This synthetic metadata
+    // prefix intentionally omits DisplayDescription and cannot seal a G or display start.
+    // It exercises only the concrete constructor's admission before MissingDisplay.
+    fn scene_start_prefix() -> (
+        ss::DisplayStartRequirements,
+        ss::DisplayStartDescription,
+        Arc<sc::SceneMedia>,
+    ) {
+        let (mut scene, media) = scene_fixture();
+        scene.tick = 0;
+        let reference = ss::ReferenceProfile {
+            fingerprint: scene.reference,
+            release: [11; 32],
+            capture: [12; 32],
+            ticks_numerator: 37,
+            ticks_denominator: 5,
+            arithmetic_policy: [13; 32],
+            input_policy: [14; 32],
+            observation_policy: [15; 32],
+            color_policy: [16; 32],
+            slowdown_policy: [17; 32],
+            glitch_policy: [18; 32],
+            audio_timing_policy: [19; 32],
+            image: ss::SceneImagePolicy {
+                width: scene.geometry.width,
+                height: scene.geometry.height,
+                crop_origin: scene.geometry.crop_origin,
+                color: scene.geometry.color,
+                quantization: scene.geometry.quantization,
+            },
+        };
+        let identity = ss::StartIdentity {
+            schema: ss::DISPLAY_START_SCHEMA,
+            gameplay: scene.gameplay,
+            reference: scene.reference,
+            capture: [4; 32],
+            media: scene.revision,
+            committed_tick: 0,
+            next_input_record: 23,
+        };
+        let input_history = ss::InputHistory {
+            capture: identity.capture,
+            policy: reference.input_policy,
+            ports: [ss::PortHistory {
+                sampled: 3,
+                previous: 1,
+                pressed: 2,
+                repeated: 0,
+                repeat_counter: 17,
+            }; 2],
+            debug_second_port: true,
+            repeat_first: 31,
+            repeat_next: 7,
+            released: 4,
+            timed_held: 3,
+            previous_timed_held: 1,
+            newly_held: 2,
+            held_timer: 13,
+            held_timer_reset: 29,
+            samus_held: 3,
+            samus_pressed: 2,
+            bindings: ss::ActionBindings {
+                shoot: 1,
+                jump: 2,
+                run: 4,
+                cancel: 8,
+                switch: 16,
+                aim_down: 32,
+                aim_up: 64,
+            },
+            bug_fix_counter: 9,
+        };
+        let continuation = ss::ContinuationHistory {
+            capture: identity.capture,
+            observation_policy: reference.observation_policy,
+            phase: ss::CommittedPhase::InitialObservation,
+            next_input_record: identity.next_input_record,
+            outer: 18,
+            primary: 3,
+            secondary: 7,
+            music: 2,
+            message: 4,
+            auxiliary: 1,
+            captured_mode: Some(8),
+        };
+        let audio_revision = sc::Revision([5; 32]);
+        let declarations: Arc<[ss::AudioProgramDeclaration]> = vec![ss::AudioProgramDeclaration {
+            program: sc::AssetId(1),
+            bank: sc::AssetId(2),
+            revision: audio_revision,
+            definition: [6; 32],
+        }]
+        .into();
+        let audio = ss::InitialAudioIntent {
+            capture: identity.capture,
+            revision: audio_revision,
+            timing_policy: reference.audio_timing_policy,
+            declarations: declarations.clone(),
+            music: ss::OngoingMusic::Playing(ss::ProgramAnchor {
+                program: sc::AssetId(1),
+                revision: audio_revision,
+                source_interval: 23,
+                phase: 59,
+                timing_policy: reference.audio_timing_policy,
+            }),
+            ambience: Arc::from([]),
+        };
+        let requirements = ss::DisplayStartRequirements {
+            schema: identity.schema,
+            gameplay: identity.gameplay,
+            hdma_content: Arc::new(hs::HdmaCatalog::new(identity.gameplay, vec![]).unwrap()),
+            capture: identity.capture,
+            reference,
+            media: identity.media,
+            audio_revision,
+            audio_programs: declarations,
+        };
+        let description = ss::DisplayStartDescription {
+            identity: Some(identity),
+            reference: Some(reference),
+            input_history: Some(input_history),
+            continuation: Some(continuation),
+            audio: Some(audio),
+            display: None,
+            resident: None,
+            hdma_content: None,
+            committed_scene: Some(sc::Scene::new(scene, media.clone()).unwrap()),
+        };
+        (requirements, description, media)
+    }
+
+    // Movies cannot reach authored portable missing start fields or malformed history admission.
+    #[cfg_attr(test, test)]
+    fn scene_start_rejects_missing_fields_and_invalid_history_prefix() {
+        let (requirements, description, media) = scene_start_prefix();
+        assert!(matches!(
+            ss::ValidatedDisplayStart::construct(description, media, &requirements),
+            Err(ss::StartError::MissingDisplay)
+        ));
+        for case in 0..12 {
+            let (requirements, mut description, media) = scene_start_prefix();
+            let expected = match case {
+                0 => {
+                    description.identity = None;
+                    ss::StartError::MissingIdentity
+                }
+                1 => {
+                    description.reference = None;
+                    ss::StartError::MissingReference
+                }
+                2 => {
+                    description.input_history = None;
+                    ss::StartError::MissingInputHistory
+                }
+                3 => {
+                    description.continuation = None;
+                    ss::StartError::MissingContinuation
+                }
+                4 => {
+                    description.audio = None;
+                    ss::StartError::MissingAudioAnchor
+                }
+                5 => {
+                    description.identity.as_mut().unwrap().schema += 1;
+                    ss::StartError::Schema
+                }
+                6 => {
+                    description.input_history.as_mut().unwrap().capture = [99; 32];
+                    ss::StartError::InputHistory
+                }
+                7 => {
+                    description.continuation.as_mut().unwrap().next_input_record += 1;
+                    ss::StartError::Continuation
+                }
+                8 => {
+                    description.identity.as_mut().unwrap().committed_tick = 1;
+                    ss::StartError::Continuation
+                }
+                9 => {
+                    description.continuation.as_mut().unwrap().outer = 4;
+                    ss::StartError::Continuation
+                }
+                10 => {
+                    description.continuation.as_mut().unwrap().captured_mode = Some(44);
+                    ss::StartError::Continuation
+                }
+                _ => {
+                    let history = description.continuation.as_mut().unwrap();
+                    history.outer = 0;
+                    history.captured_mode = Some(246);
+                    ss::StartError::Continuation
+                }
+            };
+            let error = ss::ValidatedDisplayStart::construct(description, media, &requirements)
+                .err()
+                .unwrap();
+            assert_eq!(
+                std::mem::discriminant(&error),
+                std::mem::discriminant(&expected),
+                "start prefix rejection {case}: {error:?}"
+            );
+        }
+    }
+
+    // Movies cannot reach authored portable changed-profile or missing audio-anchor rejection.
+    #[cfg_attr(test, test)]
+    fn scene_start_rejects_changed_profile_and_audio_prefix() {
+        for case in 0..12 {
+            let (requirements, mut description, media) = scene_start_prefix();
+            let profile = description.reference.as_mut().unwrap();
+            match case {
+                0 => profile.ticks_numerator += 1,
+                1 => profile.release[0] ^= 1,
+                2 => profile.capture[0] ^= 1,
+                3 => profile.arithmetic_policy[0] ^= 1,
+                4 => profile.input_policy[0] ^= 1,
+                5 => profile.observation_policy[0] ^= 1,
+                6 => profile.color_policy[0] ^= 1,
+                7 => profile.slowdown_policy[0] ^= 1,
+                8 => profile.glitch_policy[0] ^= 1,
+                9 => profile.audio_timing_policy[0] ^= 1,
+                10 => profile.image.width -= 1,
+                _ => profile.image.quantization = sc::SceneQuantization::Reference,
+            }
+            assert_eq!(profile.fingerprint, requirements.reference.fingerprint);
+            assert!(matches!(
+                ss::ValidatedDisplayStart::construct(description, media, &requirements),
+                Err(ss::StartError::Fingerprint)
+            ));
+        }
+        for case in 0..4 {
+            let (requirements, mut description, media) = scene_start_prefix();
+            let audio = description.audio.as_mut().unwrap();
+            match case {
+                0 => audio.capture = [99; 32],
+                1 => audio.timing_policy = [99; 32],
+                2 => {
+                    if let ss::OngoingMusic::Playing(anchor) = &mut audio.music {
+                        anchor.source_interval += 1;
+                    }
+                }
+                _ => audio.declarations = Arc::from([]),
+            }
+            let error = ss::ValidatedDisplayStart::construct(description, media, &requirements)
+                .err()
+                .unwrap();
+            assert!(matches!(
+                (case, error),
+                (0..=2, ss::StartError::MissingAudioAnchor) | (3, ss::StartError::AudioDeclaration)
+            ));
+        }
     }
 
     // Movies cannot supply an independently authored complete saved display.
@@ -2867,5 +3623,1470 @@ mod coverage_checks {
         s.room = 0xa201;
         assert!(!step(&mut c, s, false, false));
         assert!(c.save_episode.is_none());
+    }
+
+    // Movies cannot author portable HDMA definitions or the independently expected registry.
+    fn scene_hdma_catalog(gameplay: [u8; 32], first_count: u8) -> Arc<hs::HdmaCatalog> {
+        let reference = |id| hs::DefinitionRef {
+            id: sc::AssetId(id),
+            gameplay,
+            definition: [21; 32],
+        };
+        Arc::new(
+            hs::HdmaCatalog::new(
+                gameplay,
+                vec![
+                    hs::HdmaDefinition::Program(hs::HdmaProgramDefinition {
+                        reference: reference(100),
+                        schema: hs::HDMA_CONTENT_SCHEMA,
+                        bytes: vec![0, 0].into(),
+                    }),
+                    hs::HdmaDefinition::Table(hs::HdmaTableDefinition {
+                        reference: reference(101),
+                        schema: hs::HDMA_CONTENT_SCHEMA,
+                        bytes: vec![first_count, 0, 0x98, 0].into(),
+                    }),
+                    hs::HdmaDefinition::Indirect(hs::HdmaIndirectDefinition {
+                        reference: reference(102),
+                        schema: hs::HDMA_CONTENT_SCHEMA,
+                        bytes: vec![0x12, 0x34, 0x56, 0x78].into(),
+                    }),
+                ],
+            )
+            .unwrap(),
+        )
+    }
+
+    // Movies cannot author portable display starts. Every synthetic field is supplied
+    // explicitly; this fixture establishes component persistence at schema2 only.
+    fn scene_display_description(
+        media: &sc::SceneMedia,
+        gameplay: [u8; 32],
+        colors: [u16; 256],
+        objects: [u8; 544],
+    ) -> ds::DisplayDescription {
+        let revision = media.revision();
+        let reference = |id| sc::AssetRef {
+            id: sc::AssetId(id),
+            revision,
+        };
+        let program = hs::SourceBinding::Prepared {
+            reference: hs::DefinitionRef {
+                id: sc::AssetId(100),
+                gameplay,
+                definition: [21; 32],
+            },
+            windows: vec![hs::BankWindow {
+                bank: 0x88,
+                address: 0x8000,
+                offset: 0,
+                length: 2,
+            }]
+            .into(),
+        };
+        let table = hs::SourceBinding::Prepared {
+            reference: hs::DefinitionRef {
+                id: sc::AssetId(101),
+                gameplay,
+                definition: [21; 32],
+            },
+            windows: vec![hs::BankWindow {
+                bank: 0x88,
+                address: 0x9000,
+                offset: 0,
+                length: 4,
+            }]
+            .into(),
+        };
+        let indirect = hs::SourceBinding::LiveOwner {
+            owner: hs::LiveOwner::HdmaTable1,
+            windows: vec![hs::BankWindow {
+                bank: 0x7e,
+                address: 0x9800,
+                offset: 0,
+                length: 4,
+            }]
+            .into(),
+        };
+        let variable = hs::LiveOwner::ObjectVariable {
+            object: 0,
+            variable: hs::HdmaVariable::A,
+        };
+        let hdma_live = hs::HdmaLiveDescription::new(
+            vec![hs::HdmaOwnedBuffer {
+                owner: hs::LiveOwner::HdmaTable1,
+                bytes: vec![0x81, 0x12, 0x34, 0x56],
+            }],
+            vec![
+                hs::HdmaLiveRegion {
+                    owner: hs::LiveOwner::HdmaTable1,
+                    source: hs::HdmaRegionSource::Buffer {
+                        storage: hs::LiveOwner::HdmaTable1,
+                        offset: 0,
+                    },
+                    length: 4,
+                },
+                hs::HdmaLiveRegion {
+                    owner: hs::LiveOwner::WindowLeft,
+                    source: hs::HdmaRegionSource::Buffer {
+                        storage: hs::LiveOwner::HdmaTable1,
+                        offset: 1,
+                    },
+                    length: 2,
+                },
+                hs::HdmaLiveRegion {
+                    owner: variable,
+                    source: hs::HdmaRegionSource::ObjectVariable {
+                        object: 0,
+                        variable: hs::HdmaVariable::A,
+                    },
+                    length: 2,
+                },
+            ],
+        )
+        .unwrap();
+        let sc::SceneAsset::Atlas(atlas) = media.asset(reference(2)).unwrap() else {
+            panic!("fixture atlas")
+        };
+        let source = ds::SourceSpan {
+            asset: atlas.reference,
+            bytes: atlas
+                .data
+                .iter()
+                .flat_map(|word| word.to_le_bytes())
+                .collect::<Vec<_>>()
+                .into(),
+            offset: 0,
+        };
+        let destination = ds::TileDestination {
+            word: 0x2000,
+            step: 1,
+            lanes: ds::ByteLanes::Both,
+            remap: 0,
+            increment_on_high: true,
+        };
+        let transfer = ds::TileTransfer {
+            source: ds::TransferSource::Asset(source.clone()),
+            count: 2,
+            destination,
+        };
+        let scrolling = core::array::from_fn(|slot| {
+            let transfers = |wrapped| {
+                core::array::from_fn(|half| ds::TileTransfer {
+                    source: ds::TransferSource::Scroll {
+                        slot,
+                        half,
+                        wrapped,
+                        offset: 0,
+                    },
+                    count: 2,
+                    destination: ds::TileDestination {
+                        word: 0x3000 + slot as u16 * 32 + half as u16 * 2,
+                        ..destination
+                    },
+                })
+            };
+            ds::ScrollTransfer {
+                enabled: 1,
+                layout: if slot < 2 {
+                    ds::ScrollLayout::Column
+                } else {
+                    ds::ScrollLayout::Row
+                },
+                first: transfers(false),
+                wrapped: transfers(true),
+                wrapped_count: 2,
+                first_bytes: core::array::from_fn(|_| vec![0x12, 0x34]),
+                wrapped_bytes: core::array::from_fn(|_| vec![0x56, 0x78]),
+            }
+        });
+        let visual = ds::supplied_visuals(
+            ds::FirefleaDescription {
+                timer: 23,
+                flash_index: 0,
+                compatibility_word: 0,
+                darkness: 0,
+                compatibility_limit: 0,
+                compatibility_shade: 0,
+            },
+            colors,
+            [0x1234; 256],
+            ds::PaletteEffects {
+                slots: [ds::PaletteSlot {
+                    definition: 0,
+                    color_offset: 0,
+                    pre_action: 0,
+                    program: 0,
+                    delay: 0,
+                    counter: 0,
+                }; 8],
+                flags: 0,
+                selected: 0,
+                heat: 5,
+                previous_heat: 7,
+            },
+            ds::AnimatedTiles {
+                slots: [ds::AnimationSlot {
+                    definition: 0,
+                    counter: 0,
+                    program: 0,
+                    delay: 0,
+                    source: 0,
+                    size: 0,
+                    vram: 0,
+                }; 6],
+                flags: 0,
+                selected: 0,
+                last_instruction: 29,
+            },
+        );
+        ds::DisplayDescription {
+            media_revision: revision,
+            phase: ds::DisplayPhase::Committed,
+            objects: ds::ObjectStaging {
+                bytes: objects,
+                cursor: 512,
+                native_order: ds::WordOrder::Little,
+            },
+            hud: ds::HudState {
+                tiles: [0x3801; 96],
+                health: 99,
+                maximum_health: 199,
+                previous_health: 98,
+                ammunition: [1, 2, 3],
+                maximum_ammunition: [11, 12, 13],
+                previous_ammunition: [0, 1, 2],
+                selection: 2,
+                previous_selection: 1,
+                auto_cancel: 0,
+                reserve_mode: 1,
+                reserve_health: 31,
+                palette: 0x1800,
+                media: reference(5),
+            },
+            visual,
+            player_palette: ds::PlayerPalette {
+                hurt_flash: 27,
+                visor_timer: 29,
+                suit_index: 31,
+                xray_progress: 33,
+                timer: 35,
+                suit_beam_speed: 37,
+                suit_red_green: 39,
+                crystal_flash_delay: 41,
+            },
+            atmospheric: ds::AtmosphericEffects {
+                slots: core::array::from_fn(|slot| ds::AtmosphericSlot {
+                    remaining: 51 + slot as u16,
+                    x: 61 + slot as u16,
+                    y: 71 + slot as u16,
+                    frame_and_kind: 0,
+                }),
+            },
+            nmi: ds::NmiState {
+                pending: 1,
+                frame_byte: 11,
+                frame_word: 0x1234,
+                including_lag: 0xabcd,
+                missed: 3,
+                max_missed: 5,
+                acknowledgment: 1,
+            },
+            samus: core::array::from_fn(|_| ds::SamusHalf {
+                enabled: 1,
+                descriptor: reference(8),
+                first: transfer.clone(),
+                second: ds::TileTransfer {
+                    count: 0,
+                    ..transfer.clone()
+                },
+            }),
+            backgrounds: core::array::from_fn(|plane| ds::BackgroundState {
+                tilemap: reference(if plane == 2 { 5 } else { 4 }),
+                atlas: reference(if plane == 2 { 3 } else { 2 }),
+                palette: reference(6),
+                camera: [17, 0xfffd],
+                scroll: [0, 0xffff],
+                screen_layout: 0,
+                character_layout: 0,
+            }),
+            scrolling,
+            uploads: vec![ds::QueuedUpload {
+                cursor: 0,
+                transfer: transfer.clone(),
+            }],
+            upload_tail: 7,
+            mode7_uploads: vec![ds::Mode7Upload {
+                cursor: 0,
+                source: ds::TransferSource::Asset(source.clone()),
+                count: 2,
+                target: ds::Mode7Target::Tiles(destination),
+                transfer_mode: 0,
+            }],
+            mode7_tail: 7,
+            readbacks: vec![ds::Readback {
+                cursor: 0,
+                destination: reference(2),
+                first_word: 0,
+                count: 2,
+            }],
+            readback_tail: 9,
+            actor_queues: core::array::from_fn(|slot| ds::ActorDrawQueue {
+                size: 4,
+                cursor: 2,
+                actors: vec![slot as u16 * 2 + 1, slot as u16 * 2 + 2],
+            }),
+            actor_tiles: ds::ActorTileStaging {
+                pending: 1,
+                size: 2,
+                source: source.clone(),
+                destination: 0x2222,
+                transfer_source: 0x13,
+                transfer_destination: 0x15,
+                tilemap_bytes: vec![0xca, 0xfe],
+            },
+            controls: ds::DisplayControls {
+                brightness: 15,
+                object_layout: 0,
+                mode: 1,
+                fake_mode: 1,
+                mosaic: 0,
+                screens: [0; 4],
+                characters: [0; 2],
+                affine_selection: 0,
+                window_selection: [0; 3],
+                window_positions: [0; 4],
+                window_logic: [0; 2],
+                main_layers: 4,
+                previous_main_layers: 4,
+                sub_layers: 0,
+                main_window: 0,
+                sub_window: 0,
+                color_selection: 0,
+                previous_color_selection: 0,
+                color_math: 0,
+                previous_color_math: 0,
+                fixed_color: [0; 3],
+                geometry: 0,
+                scroll_words: [0; 8],
+                affine_words: [0; 6],
+                nmi_enable: 0,
+                hdma_enable: 0,
+                committed_fake_mode: 1,
+            },
+            hdma: ds::HdmaState {
+                bindings: [ds::HdmaBinding {
+                    enable: 1,
+                    bank_slot: 0,
+                    table: 0x9000,
+                }; 6],
+                objects: core::array::from_fn(|_| ds::HdmaObject {
+                    instruction: program.clone(),
+                    instruction_cursor: 0x8000,
+                    instruction_timer: 0,
+                    pre_instruction: 0,
+                    pre_instruction_bank: 0x88,
+                    timer: 0,
+                    variables: [0x3344, 0x5566, 0, 0, 0, 0],
+                }),
+                channels: core::array::from_fn(|_| ds::HdmaChannel {
+                    source: indirect.clone(),
+                    table: table.clone(),
+                    active: true,
+                    terminated: false,
+                    do_transfer: true,
+                    repeat_count: 0x81,
+                    source_address: 0x9000,
+                    table_cursor: 0x9003,
+                    indirect_cursor: 0x9800,
+                    mode: 0,
+                    from_destination: false,
+                    indirect: true,
+                    fixed: true,
+                    decrement: false,
+                    source_bank: 0x88,
+                    indirect_bank: 0x7e,
+                    destination: 0,
+                    transfer_cursor: 0,
+                    unused_bit: false,
+                    unused_byte: 0,
+                    dma_active: false,
+                }),
+                selected: 0,
+                flags: 0x8000,
+                hdma_timer: 17,
+                dma_timer: 19,
+                dma_busy: false,
+            },
+            hdma_live,
+            interrupt: ds::InterruptState {
+                current: 0,
+                pending: 0,
+                vertical: 0,
+                horizontal: 0,
+                previous_cre: 0,
+                current_cre: 0,
+                transition_flag: 0,
+                transition_continuation: 0,
+            },
+            latches: ds::DisplayLatches {
+                tile_pointer: 0x2345,
+                tile_increment: 2,
+                tile_remap: 0,
+                tile_read_buffer: 0x6789,
+                tile_increment_on_high: true,
+                tile_padding: [0; 2],
+                palette_pointer: 119,
+                palette_second: true,
+                palette_buffer: 0x99,
+                object_written_address: 0x101,
+                object_address: 0x102,
+                object_high_table: true,
+                object_second: true,
+                object_buffer: 0x66,
+                scroll_previous: 0x77,
+                scroll_previous_second: 0x88,
+                affine_previous: 0xaa,
+                latched_horizontal: 137,
+                latched_vertical: 139,
+                horizontal_second: true,
+                vertical_second: false,
+                counter_latched: true,
+                open_bus: 0xbb,
+                ppu_open_bus: [0xcc, 0xdd],
+            },
+            raster: ds::RasterState {
+                range_overflow: false,
+                time_overflow: false,
+                has_objects: false,
+                even_frame: false,
+                interlaced: false,
+                frame_interlaced: false,
+                overscan: false,
+                frame_overscan: false,
+                mosaic_origin: 1,
+                mosaic_phase: 0,
+                visible: true,
+            },
+            animated_sources: core::array::from_fn(|_| source.clone()),
+        }
+    }
+
+    // Movies cannot author portable final resident media that differs from visible line history.
+    fn scene_component_fixture() -> (
+        ss::DisplayStartRequirements,
+        ss::DisplayStartDescription,
+        Arc<sc::SceneMedia>,
+    ) {
+        let (mut requirements, mut start, media) = scene_start_prefix();
+        let mut images = media.compiled_images().cloned().collect::<Vec<_>>();
+        let mut palettes = media.palette_incarnations().cloned().collect::<Vec<_>>();
+        let mut image = images[1].clone();
+        image.reference.asset.id = sc::AssetId(9);
+        image.reference.incarnation = 3;
+        image.palette.asset.id = sc::AssetId(10);
+        image.palette.incarnation = 3;
+        let mut palette = palettes[1].clone();
+        let staged_colors = palette.colors;
+        palette.reference.asset.id = sc::AssetId(10);
+        palette.reference.incarnation = 3;
+        palette.colors[0] = 31 << 10;
+        palette.colors[25] = 31;
+        palette.colors[26] = 0x7fff;
+        let words = Arc::make_mut(&mut image.words);
+        words[0x8000..0x8005].copy_from_slice(&[0x2345, 1, 2, 0, 0x6789]);
+        words[0x8005..0x801f].copy_from_slice(&palette.colors[..26]);
+        let mut objects = [0; 544];
+        objects[512..].fill(0x55);
+        let mut resident_objects = objects;
+        resident_objects[0] = 0x42;
+        let resident = sm::game::scene::ResidentDisplayDescription {
+            image: image.reference,
+            palette: palette.reference,
+            words: image.words.clone(),
+            colors: palette.colors,
+            objects: resident_objects,
+        };
+        images.push(image);
+        palettes.push(palette);
+        let mut assets = media.assets().cloned().collect::<Vec<_>>();
+        let revision = media.revision();
+        let room = sc::AssetRef {
+            id: sc::AssetId(9),
+            revision,
+        };
+        let final_palette = sc::AssetRef {
+            id: sc::AssetId(10),
+            revision,
+        };
+        assets.push(sc::SceneAsset::Room(room));
+        assets.push(sc::SceneAsset::Palette(sc::Palette {
+            reference: final_palette,
+            colors: resident.colors,
+        }));
+        let media =
+            Arc::new(sc::SceneMedia::new(media.revision(), assets, palettes, images).unwrap());
+        let committed = start.committed_scene.take().unwrap();
+        let mut description = committed.description().clone();
+        let mut resident_assets = description.resident.to_vec();
+        resident_assets.extend([room, final_palette]);
+        description.resident = resident_assets.into();
+        start.committed_scene = Some(sc::Scene::new(description, media.clone()).unwrap());
+        let hdma_content = scene_hdma_catalog(requirements.gameplay, 0x81);
+        requirements.hdma_content = hdma_content.clone();
+        start.hdma_content = Some(hdma_content);
+        start.display = Some(scene_display_description(
+            &media,
+            requirements.gameplay,
+            staged_colors,
+            objects,
+        ));
+        start.resident = Some(resident);
+        (requirements, start, media)
+    }
+
+    fn scene_copy_metadata(metadata: &sd::DisplayStartMetadata) -> sd::DisplayStartMetadata {
+        sd::DisplayStartMetadata {
+            identity: metadata.identity,
+            reference: metadata.reference,
+            input_history: metadata.input_history,
+            continuation: metadata.continuation,
+            audio: metadata.audio.clone(),
+        }
+    }
+
+    fn scene_metadata(start: &ss::DisplayStartDescription) -> sd::DisplayStartMetadata {
+        sd::DisplayStartMetadata {
+            identity: start.identity.unwrap(),
+            reference: start.reference.unwrap(),
+            input_history: start.input_history.unwrap(),
+            continuation: start.continuation.unwrap(),
+            audio: start.audio.as_ref().unwrap().clone(),
+        }
+    }
+
+    fn scene_same_metadata(actual: &sd::DisplayStartMetadata, expected: &sd::DisplayStartMetadata) {
+        assert_eq!(actual.identity, expected.identity);
+        assert_eq!(actual.reference, expected.reference);
+        assert_eq!(actual.input_history, expected.input_history);
+        assert_eq!(actual.continuation, expected.continuation);
+        assert_eq!(actual.audio, expected.audio);
+    }
+
+    fn scene_same_resident(
+        actual: &sm::game::scene::ResidentDisplayDescription,
+        expected: &sm::game::scene::ResidentDisplayDescription,
+    ) {
+        assert_eq!(
+            (actual.image, actual.palette),
+            (expected.image, expected.palette)
+        );
+        assert_eq!(actual.words, expected.words);
+        assert_eq!(actual.colors, expected.colors);
+        assert_eq!(actual.objects, expected.objects);
+    }
+
+    // Movies cannot reach authored portable component open/reopen or final resident history.
+    #[cfg_attr(test, test)]
+    fn scene_component_preserves_complete_open_checkpoint_and_reopen() {
+        let (requirements, start, media) = scene_component_fixture();
+        let expected_state = format!("{:?}", start.display.as_ref().unwrap());
+        let expected_resident = start.resident.as_ref().unwrap().clone();
+        let expected_scene = start.committed_scene.as_ref().unwrap().clone();
+        let metadata = scene_metadata(&start);
+        let sealed = ss::ValidatedDisplayStart::construct(start, media, &requirements).unwrap();
+        let opened = sd::DisplayComponent::open(sealed).unwrap();
+        scene_same_metadata(&opened.metadata, &metadata);
+        let checkpoint = opened.display.checkpoint().unwrap();
+        assert_eq!(opened.display.committed_scene(), &expected_scene);
+        assert_eq!(checkpoint.committed_scene(), &expected_scene);
+        scene_same_resident(checkpoint.resident(), &expected_resident);
+        assert_eq!(checkpoint.resident().image.incarnation, 3);
+        assert_eq!(checkpoint.resident().palette.incarnation, 3);
+        assert_eq!(checkpoint.resident().words[0x8000], 0x2345);
+        assert_eq!(checkpoint.resident().colors[26], 0x7fff);
+        assert_eq!(
+            checkpoint.committed_scene().lines()[223].media.incarnation,
+            2
+        );
+        let frame = opened.display.committed_scene().render().unwrap();
+        assert_eq!(
+            [frame.pixels[8], frame.pixels[200 * 256 + 8]],
+            [[0, 0, 255, 0], [255, 0, 0, 0]]
+        );
+        let (description, media) = checkpoint.into_start_description(opened.metadata);
+        drop(opened.display);
+        assert_eq!(
+            format!("{:?}", description.display.as_ref().unwrap()),
+            expected_state
+        );
+        assert_eq!(
+            description.hdma_content.as_deref(),
+            Some(requirements.hdma_content.as_ref())
+        );
+        let display = description.display.as_ref().unwrap();
+        assert_eq!(
+            (
+                display.nmi.pending,
+                display.nmi.acknowledgment,
+                display.nmi.including_lag
+            ),
+            (1, 1, 0xabcd)
+        );
+        assert_eq!(
+            (
+                display.objects.cursor,
+                display.hud.health,
+                display.upload_tail,
+                display.mode7_tail,
+                display.readback_tail
+            ),
+            (512, 99, 7, 7, 9)
+        );
+        let reopened = sd::DisplayComponent::open(
+            ss::ValidatedDisplayStart::construct(description, media, &requirements).unwrap(),
+        )
+        .unwrap();
+        scene_same_metadata(&reopened.metadata, &metadata);
+        assert_eq!(reopened.display.committed_scene().render().unwrap(), frame);
+        let checkpoint = reopened.display.checkpoint().unwrap();
+        scene_same_resident(checkpoint.resident(), &expected_resident);
+        let (description, _) = checkpoint.into_start_description(reopened.metadata);
+        assert_eq!(
+            format!("{:?}", description.display.as_ref().unwrap()),
+            expected_state
+        );
+    }
+
+    // Movies cannot reach authored portable buffer aliases, retained checkpoint bytes or successful reset.
+    #[cfg_attr(test, test)]
+    fn scene_component_reset_preserves_complete_owned_buffers_and_alias_views() {
+        let (requirements, start, media) = scene_component_fixture();
+        let metadata = scene_metadata(&start);
+        let expected_scene = start.committed_scene.as_ref().unwrap().clone();
+        let expected_resident = start.resident.as_ref().unwrap().clone();
+        let opened = sd::DisplayComponent::open(
+            ss::ValidatedDisplayStart::construct(start, media, &requirements).unwrap(),
+        )
+        .unwrap();
+        let checkpoint = opened.display.checkpoint().unwrap();
+        let retained = checkpoint.clone();
+        let (mut reset, media) = checkpoint.into_start_description(opened.metadata);
+        let reset_state = reset.display.as_mut().unwrap();
+        assert_eq!(
+            reset_state
+                .hdma_live
+                .read(&reset_state.hdma, hs::LiveOwner::WindowLeft, 0)
+                .unwrap(),
+            0x12
+        );
+        let variable = hs::LiveOwner::ObjectVariable {
+            object: 0,
+            variable: hs::HdmaVariable::A,
+        };
+        assert_eq!(
+            reset_state
+                .hdma_live
+                .read(&reset_state.hdma, variable, 0)
+                .unwrap(),
+            0x44
+        );
+        reset_state
+            .hdma_live
+            .write(&mut reset_state.hdma, hs::LiveOwner::WindowLeft, 0, 0xee)
+            .unwrap();
+        reset_state
+            .hdma_live
+            .write(&mut reset_state.hdma, variable, 1, 0xaa)
+            .unwrap();
+        assert_eq!(
+            reset_state
+                .hdma_live
+                .read(&reset_state.hdma, hs::LiveOwner::HdmaTable1, 1)
+                .unwrap(),
+            0xee
+        );
+        assert_eq!(reset_state.hdma.objects[0].variables[0], 0xaa44);
+        let (retained_state, _) = retained.into_start_description(scene_copy_metadata(&metadata));
+        let retained_state = retained_state.display.unwrap();
+        assert_eq!(
+            retained_state
+                .hdma_live
+                .read(&retained_state.hdma, hs::LiveOwner::HdmaTable1, 1)
+                .unwrap(),
+            0x12
+        );
+        assert_eq!(retained_state.hdma.objects[0].variables[0], 0x3344);
+        reset.display.as_mut().unwrap().hud.health = 143;
+        reset.display.as_mut().unwrap().nmi.acknowledgment = 5;
+        let expected_reset = format!("{:?}", reset.display.as_ref().unwrap());
+        let mut display = opened.display;
+        let reset_metadata = display
+            .reset(ss::ValidatedDisplayStart::construct(reset, media, &requirements).unwrap())
+            .unwrap();
+        scene_same_metadata(&reset_metadata, &metadata);
+        let checkpoint = display.checkpoint().unwrap();
+        assert_eq!(checkpoint.committed_scene(), &expected_scene);
+        scene_same_resident(checkpoint.resident(), &expected_resident);
+        let (reset, _) = checkpoint.into_start_description(reset_metadata);
+        assert_eq!(
+            format!("{:?}", reset.display.as_ref().unwrap()),
+            expected_reset
+        );
+        assert_eq!(
+            (
+                reset.display.as_ref().unwrap().hud.health,
+                reset.display.as_ref().unwrap().nmi.acknowledgment
+            ),
+            (143, 5)
+        );
+        let state = reset.display.unwrap();
+        assert_eq!(
+            state
+                .hdma_live
+                .read(&state.hdma, hs::LiveOwner::HdmaTable1, 1)
+                .unwrap(),
+            0xee
+        );
+        assert_eq!(
+            state
+                .hdma_live
+                .read(&state.hdma, hs::LiveOwner::WindowLeft, 0)
+                .unwrap(),
+            0xee
+        );
+        assert_eq!(state.hdma.objects[0].variables[0], 0xaa44);
+    }
+
+    // Movies cannot reach authored portable missing resident/history or failed replacement admission.
+    #[cfg_attr(test, test)]
+    fn scene_component_rejects_missing_resident_history_and_media_replacement() {
+        let (requirements, start, media) = scene_component_fixture();
+        let opened = sd::DisplayComponent::open(
+            ss::ValidatedDisplayStart::construct(start, media, &requirements).unwrap(),
+        )
+        .unwrap();
+        let mut display = opened.display;
+        let before = display.checkpoint().unwrap();
+        for case in 0..6 {
+            let (mut description, media) = before
+                .clone()
+                .into_start_description(scene_copy_metadata(&opened.metadata));
+            match case {
+                0 => description.resident = None,
+                1 => description.committed_scene = None,
+                2 => Arc::make_mut(&mut description.resident.as_mut().unwrap().words)[0] ^= 1,
+                3 => description.resident.as_mut().unwrap().palette.incarnation = 99,
+                4 => description.identity.as_mut().unwrap().media = sc::Revision([99; 32]),
+                _ => {
+                    description.identity.as_mut().unwrap().committed_tick = 1;
+                    description.continuation.as_mut().unwrap().phase =
+                        ss::CommittedPhase::SettledInterval;
+                }
+            }
+            let result = ss::ValidatedDisplayStart::construct(description, media, &requirements)
+                .and_then(|start| display.reset(start));
+            let error = result.err().unwrap();
+            assert!(matches!(
+                (case, error),
+                (0, ss::StartError::MissingResidentDisplay)
+                    | (1, ss::StartError::MissingCommittedHistory)
+                    | (2..=3, ss::StartError::Display(ds::DisplayError::Scene))
+                    | (4, ss::StartError::Revision)
+                    | (5, ss::StartError::CommitIdentity)
+            ));
+            let after = display.checkpoint().unwrap();
+            assert_eq!(after.committed_scene(), before.committed_scene());
+            scene_same_resident(after.resident(), before.resident());
+            let (before_state, _) = before
+                .clone()
+                .into_start_description(scene_copy_metadata(&opened.metadata));
+            let (after_state, _) =
+                after.into_start_description(scene_copy_metadata(&opened.metadata));
+            assert_eq!(
+                format!("{:?}", before_state.display),
+                format!("{:?}", after_state.display)
+            );
+        }
+    }
+
+    // Movies cannot reach authored portable private-source/phase rejection or failed replacement preservation.
+    #[cfg_attr(test, test)]
+    fn scene_component_failed_source_replacement_preserves_complete_owner() {
+        let (requirements, start, media) = scene_component_fixture();
+        let opened = sd::DisplayComponent::open(
+            ss::ValidatedDisplayStart::construct(start, media, &requirements).unwrap(),
+        )
+        .unwrap();
+        let mut display = opened.display;
+        let before = display.checkpoint().unwrap();
+        for case in 0..7 {
+            let (mut description, media) = before
+                .clone()
+                .into_start_description(scene_copy_metadata(&opened.metadata));
+            let state = description.display.as_mut().unwrap();
+            let expected = match case {
+                0 => {
+                    state.hud.media.id = sc::AssetId(99);
+                    ds::DisplayError::Identity
+                }
+                1 => {
+                    if let ds::TransferSource::Asset(source) = &mut state.samus[0].first.source {
+                        Arc::make_mut(&mut source.bytes)[0] ^= 1;
+                    }
+                    ds::DisplayError::Source
+                }
+                2 => {
+                    state.scrolling[0].first[0].count = 3;
+                    ds::DisplayError::Source
+                }
+                3 => {
+                    state.actor_tiles.source.offset = 33;
+                    ds::DisplayError::Source
+                }
+                4 => {
+                    state.objects.cursor = 513;
+                    ds::DisplayError::Alias { offset: 513 }
+                }
+                5 => {
+                    state.phase = ds::DisplayPhase::Producing;
+                    ds::DisplayError::Phase
+                }
+                _ => {
+                    state.animated_sources[0].asset.id = sc::AssetId(99);
+                    ds::DisplayError::Identity
+                }
+            };
+            let result = ss::ValidatedDisplayStart::construct(description, media, &requirements)
+                .and_then(|start| display.reset(start));
+            let ss::StartError::Display(error) = result.err().unwrap() else {
+                panic!("expected private display-source rejection")
+            };
+            assert_eq!(error, expected, "private source replacement {case}");
+            let after = display.checkpoint().unwrap();
+            assert_eq!(after.committed_scene(), before.committed_scene());
+            scene_same_resident(after.resident(), before.resident());
+            let (before_state, _) = before
+                .clone()
+                .into_start_description(scene_copy_metadata(&opened.metadata));
+            let (after_state, _) =
+                after.into_start_description(scene_copy_metadata(&opened.metadata));
+            assert_eq!(
+                format!("{:?}", before_state.display),
+                format!("{:?}", after_state.display)
+            );
+        }
+    }
+
+    fn scene_owner_unchanged(
+        display: &sd::DisplayComponent,
+        before: &sd::DisplayCheckpoint,
+        metadata: &sd::DisplayStartMetadata,
+    ) {
+        let after = display.checkpoint().unwrap();
+        assert_eq!(after.committed_scene(), before.committed_scene());
+        scene_same_resident(after.resident(), before.resident());
+        let (before_state, before_media) = before
+            .clone()
+            .into_start_description(scene_copy_metadata(metadata));
+        let (after_state, after_media) =
+            after.into_start_description(scene_copy_metadata(metadata));
+        assert!(Arc::ptr_eq(&before_media, &after_media));
+        assert_eq!(before_state.hdma_content, after_state.hdma_content);
+        assert_eq!(
+            format!("{:?}", before_state.display),
+            format!("{:?}", after_state.display)
+        );
+    }
+
+    // Movies cannot author final resident assets that are absent from otherwise valid visible history.
+    #[cfg_attr(test, test)]
+    fn scene_component_rejects_missing_final_resident_assets() {
+        let (requirements, start, media) = scene_component_fixture();
+        let opened = sd::DisplayComponent::open(
+            ss::ValidatedDisplayStart::construct(start, media, &requirements).unwrap(),
+        )
+        .unwrap();
+        let mut display = opened.display;
+        let before = display.checkpoint().unwrap();
+        for missing in [sc::AssetId(9), sc::AssetId(10)] {
+            let (mut description, media) = before
+                .clone()
+                .into_start_description(scene_copy_metadata(&opened.metadata));
+            let mut scene = description
+                .committed_scene
+                .take()
+                .unwrap()
+                .description()
+                .clone();
+            scene.resident = scene
+                .resident
+                .iter()
+                .copied()
+                .filter(|asset| asset.id != missing)
+                .collect::<Vec<_>>()
+                .into();
+            let scene = sc::Scene::new(scene, media.clone()).unwrap();
+            assert_eq!(
+                scene.render().unwrap(),
+                before.committed_scene().render().unwrap()
+            );
+            assert_eq!(scene.lines()[223].media.incarnation, 2);
+            description.committed_scene = Some(scene);
+            let result = ss::ValidatedDisplayStart::construct(description, media, &requirements)
+                .and_then(|start| display.reset(start));
+            assert!(matches!(
+                result.err().unwrap(),
+                ss::StartError::MissingResidentMedia
+            ));
+            scene_owner_unchanged(&display, &before, &opened.metadata);
+        }
+    }
+
+    // Movies cannot author individually inconsistent latch fields against immutable resident media.
+    #[cfg_attr(test, test)]
+    fn scene_component_rejects_each_native_resident_latch_alias() {
+        let (requirements, start, media) = scene_component_fixture();
+        let opened = sd::DisplayComponent::open(
+            ss::ValidatedDisplayStart::construct(start, media, &requirements).unwrap(),
+        )
+        .unwrap();
+        let mut display = opened.display;
+        let before = display.checkpoint().unwrap();
+        assert_eq!(
+            &before.resident().words[0x8000..0x8005],
+            &[0x2345, 1, 2, 0, 0x6789]
+        );
+        for alias in 0..7 {
+            let (mut description, media) = before
+                .clone()
+                .into_start_description(scene_copy_metadata(&opened.metadata));
+            let latches = &mut description.display.as_mut().unwrap().latches;
+            match alias {
+                0 => latches.tile_pointer ^= 1,
+                1 => latches.tile_increment_on_high = !latches.tile_increment_on_high,
+                2 => latches.tile_increment ^= 1,
+                3 => latches.tile_remap ^= 1,
+                4 => latches.tile_read_buffer ^= 1,
+                5 => latches.tile_padding[0] ^= 1,
+                _ => latches.tile_padding[1] ^= 1,
+            }
+            let resident = description.resident.as_ref().unwrap();
+            assert_eq!(
+                resident.words,
+                media
+                    .compiled_images()
+                    .find(|image| image.reference == resident.image)
+                    .unwrap()
+                    .words
+            );
+            assert_eq!(
+                resident.colors,
+                media
+                    .palette_incarnations()
+                    .find(|palette| palette.reference == resident.palette)
+                    .unwrap()
+                    .colors
+            );
+            let result = ss::ValidatedDisplayStart::construct(description, media, &requirements)
+                .and_then(|start| display.reset(start));
+            assert!(matches!(
+                result.err().unwrap(),
+                ss::StartError::Display(ds::DisplayError::Scene)
+            ));
+            scene_owner_unchanged(&display, &before, &opened.metadata);
+        }
+    }
+
+    // Movies cannot omit a portable gameplay catalog while supplying complete active HDMA state.
+    #[cfg_attr(test, test)]
+    fn scene_component_rejects_missing_hdma_catalog() {
+        let (requirements, start, media) = scene_component_fixture();
+        let opened = sd::DisplayComponent::open(
+            ss::ValidatedDisplayStart::construct(start, media, &requirements).unwrap(),
+        )
+        .unwrap();
+        let mut display = opened.display;
+        let before = display.checkpoint().unwrap();
+        let (mut description, media) = before
+            .clone()
+            .into_start_description(scene_copy_metadata(&opened.metadata));
+        description.hdma_content = None;
+        let result = ss::ValidatedDisplayStart::construct(description, media, &requirements)
+            .and_then(|start| display.reset(start));
+        assert!(matches!(
+            result.err().unwrap(),
+            ss::StartError::MissingHdmaContent
+        ));
+        scene_owner_unchanged(&display, &before, &opened.metadata);
+    }
+
+    // Movies cannot author a changed catalog payload under unchanged gameplay and definition fingerprints.
+    #[cfg_attr(test, test)]
+    fn scene_component_rejects_changed_hdma_payload_under_same_fingerprint() {
+        let (requirements, start, media) = scene_component_fixture();
+        let opened = sd::DisplayComponent::open(
+            ss::ValidatedDisplayStart::construct(start, media, &requirements).unwrap(),
+        )
+        .unwrap();
+        let mut display = opened.display;
+        let before = display.checkpoint().unwrap();
+        let (mut description, media) = before
+            .clone()
+            .into_start_description(scene_copy_metadata(&opened.metadata));
+        let changed = scene_hdma_catalog(requirements.gameplay, 0x80);
+        assert_eq!(changed.gameplay(), requirements.hdma_content.gameplay());
+        let table = hs::DefinitionRef {
+            id: sc::AssetId(101),
+            gameplay: requirements.gameplay,
+            definition: [21; 32],
+        };
+        assert_eq!(
+            changed
+                .definition(table, hs::ContentKind::Table)
+                .unwrap()
+                .reference(),
+            requirements
+                .hdma_content
+                .definition(table, hs::ContentKind::Table)
+                .unwrap()
+                .reference()
+        );
+        description.hdma_content = Some(changed);
+        let result = ss::ValidatedDisplayStart::construct(description, media, &requirements)
+            .and_then(|start| display.reset(start));
+        assert!(matches!(
+            result.err().unwrap(),
+            ss::StartError::Display(ds::DisplayError::Source)
+        ));
+        scene_owner_unchanged(&display, &before, &opened.metadata);
+    }
+
+    // Movies cannot author invalid portable HDMA kinds, dormant provenance or missing live owners.
+    #[cfg_attr(test, test)]
+    fn scene_component_rejects_wrong_hdma_kinds_and_required_unbound_sources() {
+        let (requirements, start, media) = scene_component_fixture();
+        let opened = sd::DisplayComponent::open(
+            ss::ValidatedDisplayStart::construct(start, media, &requirements).unwrap(),
+        )
+        .unwrap();
+        let mut display = opened.display;
+        let before = display.checkpoint().unwrap();
+        for case in 0..7 {
+            let (mut description, media) = before
+                .clone()
+                .into_start_description(scene_copy_metadata(&opened.metadata));
+            let state = description.display.as_mut().unwrap();
+            let expected = match case {
+                0 => {
+                    state.hdma.channels[0].table = state.hdma.objects[0].instruction.clone();
+                    ds::DisplayError::Source
+                }
+                1 => {
+                    state.hdma.objects[0].instruction = state.hdma.channels[0].table.clone();
+                    ds::DisplayError::Source
+                }
+                2 => {
+                    state.hdma.objects[0].instruction = state.hdma.channels[0].source.clone();
+                    ds::DisplayError::Source
+                }
+                3 => {
+                    state.hdma.channels[0].terminated = true;
+                    state.hdma.channels[0].table = hs::SourceBinding::Unbound;
+                    ds::DisplayError::Incomplete
+                }
+                4 => {
+                    state.hdma.objects[0].instruction_timer = 0x8000;
+                    state.hdma.objects[0].instruction = hs::SourceBinding::Unbound;
+                    ds::DisplayError::Incomplete
+                }
+                5 => {
+                    state.hdma_live = hs::HdmaLiveDescription::new(vec![], vec![]).unwrap();
+                    ds::DisplayError::Source
+                }
+                _ => {
+                    state.hdma.channels[0].source = hs::SourceBinding::Unbound;
+                    ds::DisplayError::Incomplete
+                }
+            };
+            let result = ss::ValidatedDisplayStart::construct(description, media, &requirements)
+                .and_then(|start| display.reset(start));
+            let ss::StartError::Display(error) = result.err().unwrap() else {
+                panic!("expected HDMA source admission rejection")
+            };
+            assert_eq!(error, expected, "HDMA source admission {case}");
+            scene_owner_unchanged(&display, &before, &opened.metadata);
+        }
+    }
+
+    // Movies cannot author malformed portable bank windows independently of transfer execution.
+    #[cfg_attr(test, test)]
+    fn scene_component_rejects_invalid_hdma_bank_windows() {
+        let (requirements, start, media) = scene_component_fixture();
+        let opened = sd::DisplayComponent::open(
+            ss::ValidatedDisplayStart::construct(start, media, &requirements).unwrap(),
+        )
+        .unwrap();
+        let mut display = opened.display;
+        let before = display.checkpoint().unwrap();
+        for case in 0..7 {
+            let (mut description, media) = before
+                .clone()
+                .into_start_description(scene_copy_metadata(&opened.metadata));
+            let state = description.display.as_mut().unwrap();
+            let hs::SourceBinding::Prepared { windows, .. } = &mut state.hdma.channels[0].table
+            else {
+                panic!("fixture table binding")
+            };
+            match case {
+                0 => *windows = vec![].into(),
+                1 => Arc::make_mut(windows)[0].length = 5,
+                2 => Arc::make_mut(windows)[0].address = 0xfffe,
+                3 => Arc::make_mut(windows)[0].offset = 2,
+                4 => {
+                    *windows = vec![
+                        hs::BankWindow {
+                            bank: 0x88,
+                            address: 0x9000,
+                            offset: 0,
+                            length: 3,
+                        },
+                        hs::BankWindow {
+                            bank: 0x88,
+                            address: 0x9002,
+                            offset: 2,
+                            length: 2,
+                        },
+                    ]
+                    .into();
+                }
+                5 => Arc::make_mut(windows)[0].length = 0,
+                _ => Arc::make_mut(windows)[0].offset = usize::MAX,
+            }
+            let result = ss::ValidatedDisplayStart::construct(description, media, &requirements)
+                .and_then(|start| display.reset(start));
+            assert!(matches!(
+                result.err().unwrap(),
+                ss::StartError::Display(ds::DisplayError::Source)
+            ));
+            scene_owner_unchanged(&display, &before, &opened.metadata);
+        }
+    }
+
+    // Movies cannot author explicit dormant Unbound sources or inspect their persisted portable descriptions.
+    #[cfg_attr(test, test)]
+    fn scene_component_admits_explicitly_disabled_hdma_sources() {
+        let (requirements, mut start, media) = scene_component_fixture();
+        let state = start.display.as_mut().unwrap();
+        for channel in &mut state.hdma.channels {
+            channel.active = false;
+            channel.dma_active = false;
+            channel.terminated = true;
+            channel.table = hs::SourceBinding::Unbound;
+            channel.source = hs::SourceBinding::Unbound;
+        }
+        for binding in &mut state.hdma.bindings {
+            binding.enable = 0;
+        }
+        for object in &mut state.hdma.objects {
+            object.instruction = hs::SourceBinding::Unbound;
+            object.instruction_timer = 0x8000;
+        }
+        let expected = format!("{:?}", start.display.as_ref().unwrap());
+        let opened = sd::DisplayComponent::open(
+            ss::ValidatedDisplayStart::construct(start, media, &requirements).unwrap(),
+        )
+        .unwrap();
+        let (description, _) = opened
+            .display
+            .checkpoint()
+            .unwrap()
+            .into_start_description(opened.metadata);
+        assert_eq!(
+            format!("{:?}", description.display.as_ref().unwrap()),
+            expected
+        );
+        let state = description.display.unwrap();
+        assert_eq!(state.hdma.flags, 0x8000);
+        assert!(state.hdma.channels.iter().all(|channel| matches!(
+            (&channel.table, &channel.source),
+            (hs::SourceBinding::Unbound, hs::SourceBinding::Unbound)
+        )));
+        assert!(
+            state
+                .hdma
+                .objects
+                .iter()
+                .all(|object| matches!(object.instruction, hs::SourceBinding::Unbound))
+        );
+    }
+
+    fn scene_hdma_live_window(
+        owner: hs::LiveOwner,
+        bank: u8,
+        address: u16,
+        offset: usize,
+        length: usize,
+    ) -> hs::SourceBinding {
+        hs::SourceBinding::LiveOwner {
+            owner,
+            windows: vec![hs::BankWindow {
+                bank,
+                address,
+                offset,
+                length,
+            }]
+            .into(),
+        }
+    }
+
+    fn scene_hdma_bound_byte(
+        state: &mut ds::DisplayDescription,
+        catalog: &hs::HdmaCatalog,
+        channel: usize,
+        bank: u8,
+        address: u16,
+    ) -> u8 {
+        state.hdma.channels[channel]
+            .source
+            .clone()
+            .read(
+                catalog,
+                &mut state.hdma_live,
+                &mut state.hdma,
+                hs::ContentKind::Indirect,
+                bank,
+                address,
+            )
+            .unwrap()
+    }
+
+    // Movies cannot author portable overlapping physical windows with independent expected backing bytes.
+    fn scene_coherent_hdma_alias_fixture() -> (
+        ss::DisplayStartRequirements,
+        ss::DisplayStartDescription,
+        Arc<sc::SceneMedia>,
+    ) {
+        let (requirements, mut start, media) = scene_component_fixture();
+        let state = start.display.as_mut().unwrap();
+        state.hdma.channels[1].source =
+            scene_hdma_live_window(hs::LiveOwner::WindowLeft, 0x7e, 0x9801, 0, 2);
+        state.hdma.channels[1].indirect_cursor = 0x9801;
+        state.hdma.channels[2].source =
+            scene_hdma_live_window(hs::LiveOwner::HdmaTable1, 0x7e, 0x9802, 2, 2);
+        state.hdma.channels[2].indirect_cursor = 0x9802;
+        state.hdma.channels[3].source = scene_hdma_live_window(
+            hs::LiveOwner::ObjectVariable {
+                object: 0,
+                variable: hs::HdmaVariable::A,
+            },
+            0x7e,
+            0x9000,
+            0,
+            2,
+        );
+        state.hdma.channels[3].indirect_cursor = 0x9000;
+        state.hdma.channels[4].source =
+            scene_hdma_live_window(hs::LiveOwner::WindowLeft, 0x7f, 0x9800, 0, 2);
+        state.hdma.channels[4].indirect_bank = 0x7f;
+        (requirements, start, media)
+    }
+
+    // Movies cannot author individually valid portable bindings that conflict at the same physical byte.
+    #[cfg_attr(test, test)]
+    fn scene_component_rejects_conflicting_physical_hdma_aliases() {
+        let (requirements, start, media) = scene_component_fixture();
+        let opened = sd::DisplayComponent::open(
+            ss::ValidatedDisplayStart::construct(start, media, &requirements).unwrap(),
+        )
+        .unwrap();
+        let mut display = opened.display;
+        let before = display.checkpoint().unwrap();
+        for case in 0..5 {
+            let (mut description, media) = before
+                .clone()
+                .into_start_description(scene_copy_metadata(&opened.metadata));
+            let state = description.display.as_mut().unwrap();
+            let binding = match case {
+                0 => scene_hdma_live_window(hs::LiveOwner::WindowLeft, 0x7e, 0x9800, 0, 2),
+                1 => scene_hdma_live_window(
+                    hs::LiveOwner::ObjectVariable {
+                        object: 0,
+                        variable: hs::HdmaVariable::A,
+                    },
+                    0x7e,
+                    0x9800,
+                    0,
+                    2,
+                ),
+                2..=3 => {
+                    let mut binding = if case == 2 {
+                        state.hdma.channels[1].table.clone()
+                    } else {
+                        state.hdma.objects[0].instruction.clone()
+                    };
+                    let hs::SourceBinding::Prepared { windows, .. } = &mut binding else {
+                        panic!("fixture prepared source")
+                    };
+                    let window = &mut Arc::make_mut(windows)[0];
+                    window.bank = 0x7e;
+                    window.address = 0x9800;
+                    binding
+                }
+                _ => scene_hdma_live_window(hs::LiveOwner::HdmaTable1, 0x7e, 0x9800, 1, 3),
+            };
+            let kind = match case {
+                2 => hs::ContentKind::Table,
+                3 => hs::ContentKind::Program,
+                _ => hs::ContentKind::Indirect,
+            };
+            binding
+                .validate(&requirements.hdma_content, &state.hdma_live, kind, true)
+                .unwrap();
+            match case {
+                2 => state.hdma.channels[1].table = binding,
+                3 => state.hdma.objects[0].instruction = binding,
+                _ => state.hdma.channels[1].source = binding,
+            }
+            let result = ss::ValidatedDisplayStart::construct(description, media, &requirements)
+                .and_then(|start| display.reset(start));
+            assert!(matches!(
+                result.err().unwrap(),
+                ss::StartError::Display(ds::DisplayError::Source)
+            ));
+            scene_owner_unchanged(&display, &before, &opened.metadata);
+        }
+    }
+
+    // Movies cannot author legal portable physical alias windows or inspect complete checkpoint/reopen state.
+    #[cfg_attr(test, test)]
+    fn scene_component_preserves_coherent_physical_hdma_aliases_on_reopen() {
+        let (requirements, start, media) = scene_coherent_hdma_alias_fixture();
+        let expected = format!("{:?}", start.display.as_ref().unwrap());
+        let metadata = scene_metadata(&start);
+        let opened = sd::DisplayComponent::open(
+            ss::ValidatedDisplayStart::construct(start, media, &requirements).unwrap(),
+        )
+        .unwrap();
+        scene_same_metadata(&opened.metadata, &metadata);
+        let before = opened.display.checkpoint().unwrap();
+        let (mut description, media) = before.clone().into_start_description(opened.metadata);
+        assert_eq!(
+            format!("{:?}", description.display.as_ref().unwrap()),
+            expected
+        );
+        let state = description.display.as_mut().unwrap();
+        assert_eq!(
+            scene_hdma_bound_byte(state, &requirements.hdma_content, 0, 0x7e, 0x9801),
+            0x12
+        );
+        assert_eq!(
+            scene_hdma_bound_byte(state, &requirements.hdma_content, 1, 0x7e, 0x9801),
+            0x12
+        );
+        assert_eq!(
+            scene_hdma_bound_byte(state, &requirements.hdma_content, 2, 0x7e, 0x9802),
+            0x34
+        );
+        assert_eq!(
+            scene_hdma_bound_byte(state, &requirements.hdma_content, 3, 0x7e, 0x9000),
+            0x44
+        );
+        assert_eq!(
+            scene_hdma_bound_byte(state, &requirements.hdma_content, 4, 0x7f, 0x9800),
+            0x12
+        );
+        drop(opened.display);
+        let reopened = sd::DisplayComponent::open(
+            ss::ValidatedDisplayStart::construct(description, media, &requirements).unwrap(),
+        )
+        .unwrap();
+        scene_same_metadata(&reopened.metadata, &metadata);
+        let after = reopened.display.checkpoint().unwrap();
+        assert_eq!(after.committed_scene(), before.committed_scene());
+        scene_same_resident(after.resident(), before.resident());
+        let (description, _) = after.into_start_description(reopened.metadata);
+        assert_eq!(
+            format!("{:?}", description.display.as_ref().unwrap()),
+            expected
+        );
+    }
+
+    // Movies cannot edit portable physical alias storage before reset or inspect retained checkpoint bytes.
+    #[cfg_attr(test, test)]
+    fn scene_component_reset_preserves_coherent_physical_hdma_aliases() {
+        let (requirements, start, media) = scene_coherent_hdma_alias_fixture();
+        let opened = sd::DisplayComponent::open(
+            ss::ValidatedDisplayStart::construct(start, media, &requirements).unwrap(),
+        )
+        .unwrap();
+        let before = opened.display.checkpoint().unwrap();
+        let (mut replacement, media) = before
+            .clone()
+            .into_start_description(scene_copy_metadata(&opened.metadata));
+        let state = replacement.display.as_mut().unwrap();
+        state
+            .hdma_live
+            .write(&mut state.hdma, hs::LiveOwner::WindowLeft, 0, 0xab)
+            .unwrap();
+        state
+            .hdma_live
+            .write(
+                &mut state.hdma,
+                hs::LiveOwner::ObjectVariable {
+                    object: 0,
+                    variable: hs::HdmaVariable::A,
+                },
+                1,
+                0xcd,
+            )
+            .unwrap();
+        let expected = format!("{:?}", replacement.display.as_ref().unwrap());
+        let mut display = opened.display;
+        let metadata = display
+            .reset(ss::ValidatedDisplayStart::construct(replacement, media, &requirements).unwrap())
+            .unwrap();
+        scene_same_metadata(&metadata, &opened.metadata);
+        let after = display.checkpoint().unwrap();
+        assert_eq!(after.committed_scene(), before.committed_scene());
+        scene_same_resident(after.resident(), before.resident());
+        let (mut replacement, _) = after.into_start_description(metadata);
+        assert_eq!(
+            format!("{:?}", replacement.display.as_ref().unwrap()),
+            expected
+        );
+        let state = replacement.display.as_mut().unwrap();
+        assert_eq!(
+            scene_hdma_bound_byte(state, &requirements.hdma_content, 0, 0x7e, 0x9801),
+            0xab
+        );
+        assert_eq!(
+            scene_hdma_bound_byte(state, &requirements.hdma_content, 1, 0x7e, 0x9801),
+            0xab
+        );
+        assert_eq!(
+            scene_hdma_bound_byte(state, &requirements.hdma_content, 2, 0x7e, 0x9802),
+            0x34
+        );
+        assert_eq!(
+            scene_hdma_bound_byte(state, &requirements.hdma_content, 3, 0x7e, 0x9001),
+            0xcd
+        );
+        assert_eq!(
+            scene_hdma_bound_byte(state, &requirements.hdma_content, 4, 0x7f, 0x9800),
+            0xab
+        );
+        assert_eq!(state.hdma.objects[0].variables[0], 0xcd44);
+        let (mut retained, _) = before.into_start_description(opened.metadata);
+        let state = retained.display.as_mut().unwrap();
+        assert_eq!(
+            scene_hdma_bound_byte(state, &requirements.hdma_content, 1, 0x7e, 0x9801),
+            0x12
+        );
+        assert_eq!(
+            scene_hdma_bound_byte(state, &requirements.hdma_content, 3, 0x7e, 0x9001),
+            0x33
+        );
+        assert_eq!(state.hdma.objects[0].variables[0], 0x3344);
     }
 }

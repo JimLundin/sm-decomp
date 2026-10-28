@@ -199,216 +199,21 @@ impl crate::execution::Execution<'_> {
         }
     }
 
-    // Advance the table pointer before the bus read, as HDMA does for every byte.
-    unsafe fn hdma_table_byte(&mut self, channel: usize) -> u8 {
-        unsafe {
-            let address = {
-                let mut dma = self.backend.dma_state();
-                let address = dma.channel[channel].tableAdr;
-                dma.channel[channel].tableAdr = address.wrapping_add(1);
-                self.backend.set_dma_state(dma);
-                address
-            };
-            let bank = self.backend.dma_state().channel[channel].aBank;
-            self.read((u32::from(bank) << 16) | u32::from(address))
-        }
-    }
-
-    unsafe fn hdma_indirect_address(&mut self, channel: usize) {
-        unsafe {
-            let low = u16::from(self.hdma_table_byte(channel));
-            let captured_low = {
-                let mut dma = self.backend.dma_state();
-                dma.channel[channel].size = low;
-                let captured_low = dma.channel[channel].size;
-                self.backend.set_dma_state(dma);
-                captured_low
-            };
-            let high = u16::from(self.hdma_table_byte(channel));
-            {
-                let mut dma = self.backend.dma_state();
-                dma.channel[channel].size = captured_low | (high << 8);
-                dma.hdmaTimer = dma.hdmaTimer.wrapping_add(16);
-                self.backend.set_dma_state(dma);
-            }
-        }
-    }
-
+    /// Requires the original live, exclusive retained backend for all bus effects.
     pub(crate) unsafe fn initialize_hdma(&mut self) {
-        unsafe {
-            {
-                let mut dma = self.backend.dma_state();
-                dma.hdmaTimer = 0;
-                self.backend.set_dma_state(dma);
-            }
-            let mut hdmaHappened: bool = false_0 != 0;
-            for i in 0i32..8 {
-                let keep_channel_active: bool = if self.backend.dma_state().channel[i as usize]
-                    .hdmaActive
-                {
-                    hdmaHappened = true_0 != 0;
-                    {
-                        let mut dma = self.backend.dma_state();
-                        set_fields! {[dma.channel[i as usize]]; dmaActive = false_0 != 0, offIndex = 0,
-                        tableAdr = dma.channel[i as usize].aAdr, };
-                        self.backend.set_dma_state(dma);
-                    }
-                    let rep_count = self.hdma_table_byte(i as usize);
-                    {
-                        let mut dma = self.backend.dma_state();
-                        dma.channel[i as usize].repCount = rep_count;
-                        self.backend.set_dma_state(dma);
-                    }
-                    if self.backend.dma_state().channel[i as usize].repCount as i32 == 0 {
-                        let mut dma = self.backend.dma_state();
-                        dma.channel[i as usize].terminated = true_0 != 0;
-                        self.backend.set_dma_state(dma);
-                        false
-                    } else {
-                        {
-                            let mut dma = self.backend.dma_state();
-                            dma.hdmaTimer = (dma.hdmaTimer as i32 + 8) as u16;
-                            self.backend.set_dma_state(dma);
-                        }
-                        if self.backend.dma_state().channel[i as usize].indirect {
-                            self.hdma_indirect_address(i as usize);
-                        }
-                        {
-                            let mut dma = self.backend.dma_state();
-                            dma.channel[i as usize].doTransfer = true_0 != 0;
-                            self.backend.set_dma_state(dma);
-                        }
-                        true
-                    }
-                } else {
-                    let mut dma = self.backend.dma_state();
-                    dma.channel[i as usize].doTransfer = false_0 != 0;
-                    self.backend.set_dma_state(dma);
-                    true
-                };
-                if keep_channel_active {
-                    let mut dma = self.backend.dma_state();
-                    dma.channel[i as usize].terminated = false_0 != 0;
-                    self.backend.set_dma_state(dma);
-                }
-            }
-            if hdmaHappened {
-                let mut dma = self.backend.dma_state();
-                dma.hdmaTimer = (dma.hdmaTimer as i32 + 16) as u16;
-                self.backend.set_dma_state(dma);
-            }
+        let mut host = unsafe { NativeHdmaHost::new(self) };
+        match crate::game::scene::hdma::initialize(&mut host) {
+            Ok(()) => {}
+            Err(never) => match never {},
         }
     }
 
+    /// Requires the original live, exclusive retained backend for all bus effects.
     pub(crate) unsafe fn step_hdma(&mut self) {
-        unsafe {
-            {
-                let mut dma = self.backend.dma_state();
-                dma.hdmaTimer = 0;
-                self.backend.set_dma_state(dma);
-            }
-            let mut hdmaHappened: bool = false_0 != 0;
-            let mut i: i32 = 0;
-            while i < 8 {
-                if self.backend.dma_state().channel[i as usize].hdmaActive as i32 != 0
-                    && !self.backend.dma_state().channel[i as usize].terminated
-                {
-                    hdmaHappened = true_0 != 0;
-                    {
-                        let mut dma = self.backend.dma_state();
-                        set_fields! {[dma.channel[i as usize]]; dmaActive = false_0 != 0, offIndex = 0, };
-                        dma.hdmaTimer = (dma.hdmaTimer as i32 + 8) as u16;
-                        self.backend.set_dma_state(dma);
-                    }
-                    if self.backend.dma_state().channel[i as usize].doTransfer {
-                        let mut j: i32 = 0;
-                        while j < transferLength
-                            [self.backend.dma_state().channel[i as usize].mode as usize]
-                        {
-                            {
-                                let mut dma = self.backend.dma_state();
-                                dma.hdmaTimer = (dma.hdmaTimer as i32 + 8) as u16;
-                                self.backend.set_dma_state(dma);
-                            }
-                            if self.backend.dma_state().channel[i as usize].indirect {
-                                let fresh4 = {
-                                    let mut dma = self.backend.dma_state();
-                                    let previous = dma.channel[i as usize].size;
-                                    dma.channel[i as usize].size =
-                                        dma.channel[i as usize].size.wrapping_add(1);
-                                    self.backend.set_dma_state(dma);
-                                    previous
-                                };
-                                let (bank, b_address, from_b) = {
-                                    let channel = self.backend.dma_state().channel[i as usize];
-                                    (
-                                        channel.indBank,
-                                        (channel.bAdr as i32
-                                            + bAdrOffsets[channel.mode as usize][j as usize])
-                                            as u8,
-                                        channel.fromB,
-                                    )
-                                };
-                                self.transfer_dma_byte(fresh4, bank, b_address, from_b, None);
-                            } else {
-                                let fresh5 = {
-                                    let mut dma = self.backend.dma_state();
-                                    let previous = dma.channel[i as usize].tableAdr;
-                                    dma.channel[i as usize].tableAdr =
-                                        dma.channel[i as usize].tableAdr.wrapping_add(1);
-                                    self.backend.set_dma_state(dma);
-                                    previous
-                                };
-                                let (bank, b_address, from_b) = {
-                                    let channel = self.backend.dma_state().channel[i as usize];
-                                    (
-                                        channel.aBank,
-                                        (channel.bAdr as i32
-                                            + bAdrOffsets[channel.mode as usize][j as usize])
-                                            as u8,
-                                        channel.fromB,
-                                    )
-                                };
-                                self.transfer_dma_byte(fresh5, bank, b_address, from_b, None);
-                            }
-                            j += 1;
-                        }
-                    }
-                    {
-                        let mut dma = self.backend.dma_state();
-                        dma.channel[i as usize].repCount =
-                            dma.channel[i as usize].repCount.wrapping_sub(1);
-                        dma.channel[i as usize].doTransfer =
-                            dma.channel[i as usize].repCount & 0x80 != 0;
-                        self.backend.set_dma_state(dma);
-                    }
-                    if self.backend.dma_state().channel[i as usize].repCount & 0x7f == 0 {
-                        let rep_count = self.hdma_table_byte(i as usize);
-                        {
-                            let mut dma = self.backend.dma_state();
-                            dma.channel[i as usize].repCount = rep_count;
-                            self.backend.set_dma_state(dma);
-                        }
-                        if self.backend.dma_state().channel[i as usize].indirect {
-                            self.hdma_indirect_address(i as usize);
-                        }
-                        {
-                            let mut dma = self.backend.dma_state();
-                            if dma.channel[i as usize].repCount as i32 == 0 {
-                                dma.channel[i as usize].terminated = true_0 != 0;
-                            }
-                            dma.channel[i as usize].doTransfer = true_0 != 0;
-                            self.backend.set_dma_state(dma);
-                        }
-                    }
-                }
-                i += 1;
-            }
-            if hdmaHappened {
-                let mut dma = self.backend.dma_state();
-                dma.hdmaTimer = (dma.hdmaTimer as i32 + 16) as u16;
-                self.backend.set_dma_state(dma);
-            }
+        let mut host = unsafe { NativeHdmaHost::new(self) };
+        match crate::game::scene::hdma::step(&mut host) {
+            Ok(()) => {}
+            Err(never) => match never {},
         }
     }
 
@@ -460,5 +265,147 @@ impl crate::execution::Execution<'_> {
                 false
             }
         }
+    }
+}
+
+/// A private capability over the original live, exclusive execution interval.
+struct NativeHdmaHost<'a, 'execution>(&'a mut crate::execution::Execution<'execution>);
+impl<'a, 'execution> NativeHdmaHost<'a, 'execution> {
+    /// The backend must stay live and exclusive, including native bus callbacks.
+    unsafe fn new(execution: &'a mut crate::execution::Execution<'execution>) -> Self {
+        Self(execution)
+    }
+}
+impl crate::game::scene::hdma::HdmaHost for NativeHdmaHost<'_, '_> {
+    type Error = std::convert::Infallible;
+
+    fn flag(&self, channel: usize, field: crate::game::scene::hdma::ChannelFlag) -> bool {
+        use crate::game::scene::hdma::ChannelFlag as F;
+        let state = self.0.backend.dma_state().channel[channel];
+        match field {
+            F::Active => state.hdmaActive,
+            F::Terminated => state.terminated,
+            F::DoTransfer => state.doTransfer,
+            F::Indirect => state.indirect,
+            F::FromDestination => state.fromB,
+            F::DmaActive => state.dmaActive,
+        }
+    }
+    fn byte(&self, channel: usize, field: crate::game::scene::hdma::ChannelByte) -> u8 {
+        use crate::game::scene::hdma::ChannelByte as F;
+        let state = self.0.backend.dma_state().channel[channel];
+        match field {
+            F::Mode => state.mode,
+            F::RepeatCount => state.repCount,
+            F::SourceBank => state.aBank,
+            F::IndirectBank => state.indBank,
+            F::Destination => state.bAdr,
+            F::TransferCursor => state.offIndex,
+        }
+    }
+    fn word(&self, channel: usize, field: crate::game::scene::hdma::ChannelWord) -> u16 {
+        use crate::game::scene::hdma::ChannelWord as F;
+        let state = self.0.backend.dma_state().channel[channel];
+        match field {
+            F::SourceAddress => state.aAdr,
+            F::TableCursor => state.tableAdr,
+            F::IndirectCursor => state.size,
+        }
+    }
+    fn set_flag(
+        &mut self,
+        channel: usize,
+        field: crate::game::scene::hdma::ChannelFlag,
+        value: bool,
+    ) {
+        use crate::game::scene::hdma::ChannelFlag as F;
+        let mut state = self.0.backend.dma_state();
+        match field {
+            F::Active => state.channel[channel].hdmaActive = value,
+            F::Terminated => state.channel[channel].terminated = value,
+            F::DoTransfer => state.channel[channel].doTransfer = value,
+            F::Indirect => state.channel[channel].indirect = value,
+            F::FromDestination => state.channel[channel].fromB = value,
+            F::DmaActive => state.channel[channel].dmaActive = value,
+        }
+        self.0.backend.set_dma_state(state);
+    }
+    fn set_byte(
+        &mut self,
+        channel: usize,
+        field: crate::game::scene::hdma::ChannelByte,
+        value: u8,
+    ) {
+        use crate::game::scene::hdma::ChannelByte as F;
+        let mut state = self.0.backend.dma_state();
+        match field {
+            F::Mode => state.channel[channel].mode = value,
+            F::RepeatCount => state.channel[channel].repCount = value,
+            F::SourceBank => state.channel[channel].aBank = value,
+            F::IndirectBank => state.channel[channel].indBank = value,
+            F::Destination => state.channel[channel].bAdr = value,
+            F::TransferCursor => state.channel[channel].offIndex = value,
+        }
+        self.0.backend.set_dma_state(state);
+    }
+    fn set_word(
+        &mut self,
+        channel: usize,
+        field: crate::game::scene::hdma::ChannelWord,
+        value: u16,
+    ) {
+        use crate::game::scene::hdma::ChannelWord as F;
+        let mut state = self.0.backend.dma_state();
+        match field {
+            F::SourceAddress => state.channel[channel].aAdr = value,
+            F::TableCursor => state.channel[channel].tableAdr = value,
+            F::IndirectCursor => state.channel[channel].size = value,
+        }
+        self.0.backend.set_dma_state(state);
+    }
+    fn timer(&self) -> u16 {
+        self.0.backend.dma_state().hdmaTimer
+    }
+    fn set_timer(&mut self, value: u16) {
+        let mut state = self.0.backend.dma_state();
+        state.hdmaTimer = value;
+        self.0.backend.set_dma_state(state);
+    }
+    fn invalid_mode(&mut self, mode: u8) -> std::convert::Infallible {
+        // Preserve the original native table-index failure at its lookup point.
+        let _ = transferLength[usize::from(mode)];
+        unreachable!("HDMA invalid-mode hook requires an out-of-range mode");
+    }
+    fn read_source(
+        &mut self,
+        _channel: usize,
+        _source: crate::game::scene::hdma::HdmaSource,
+        bank: u8,
+        address: u16,
+    ) -> Result<u8, Self::Error> {
+        // read is exactly read_with_dma_source(address, None); no pinned shortcut.
+        Ok(unsafe { self.0.read((u32::from(bank) << 16) | u32::from(address)) })
+    }
+    fn write_source(
+        &mut self,
+        _channel: usize,
+        _source: crate::game::scene::hdma::HdmaSource,
+        bank: u8,
+        address: u16,
+        value: u8,
+    ) -> Result<(), Self::Error> {
+        // Captured bank/address survive every previous bus effect.
+        unsafe {
+            self.0
+                .write((u32::from(bank) << 16) | u32::from(address), value)
+        };
+        Ok(())
+    }
+    fn read_destination(&mut self, destination: u8) -> Result<u8, Self::Error> {
+        Ok(unsafe { self.0.read_bbus(destination) })
+    }
+    fn write_destination(&mut self, destination: u8, value: u8) -> Result<(), Self::Error> {
+        unsafe { self.0.write_bbus(destination, value) };
+        Ok(())
     }
 }

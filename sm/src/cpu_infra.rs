@@ -1120,23 +1120,48 @@ pub unsafe fn RunOneFrameOfGame_Emulated(game: &mut Game) {
     }
 }
 pub unsafe fn DrawFrameToPpu(game: &mut Game) {
-    unsafe {
-        (*game.g_snes).vPos = 0;
-        (*game.g_snes).hPos = (*game.g_snes).vPos;
-        while !(*(*game.g_snes).cpu).nmiWanted {
-            // No CPU or APU advances between these calls. Only scanline start,
-            // drawing and HDMA positions have events; the last step wraps the row.
-            for position in [0, 512, 1024, 1362] {
-                (*game.g_snes).hPos = position;
-                game.execution().advance_beam();
-            }
-            if (*game.g_snes).vIrqEnabled as i32 != 0
-                && (*game.g_snes).vPos as i32 - 1i32 == (*game.g_snes).vTimer as i32
-            {
-                crate::game::scanline_irq::advance(game);
+    // This local capability is constructed only under this function's existing
+    // exclusive, live-backend contract. No safe caller can construct it.
+    struct NativeSettlement<'a>(&'a mut Game);
+    impl crate::game::scene::settle::SettlementHost for NativeSettlement<'_> {
+        type Error = std::convert::Infallible;
+
+        fn reset_beam(&mut self) {
+            unsafe {
+                (*self.0.g_snes).vPos = 0;
+                (*self.0.g_snes).hPos = (*self.0.g_snes).vPos;
             }
         }
-        (*(*game.g_snes).cpu).nmiWanted = false_0 != 0;
+        fn nmi_wanted(&self) -> bool {
+            unsafe { (*(*self.0.g_snes).cpu).nmiWanted }
+        }
+        fn advance_at(&mut self, position: u16) -> Result<(), Self::Error> {
+            unsafe {
+                (*self.0.g_snes).hPos = position;
+                self.0.execution().advance_beam();
+            }
+            Ok(())
+        }
+        fn vertical_irq_enabled(&self) -> bool {
+            unsafe { (*self.0.g_snes).vIrqEnabled }
+        }
+        fn vertical_position(&self) -> u16 {
+            unsafe { (*self.0.g_snes).vPos }
+        }
+        fn vertical_timer(&self) -> u16 {
+            unsafe { (*self.0.g_snes).vTimer }
+        }
+        fn interrupt(&mut self) -> Result<(), Self::Error> {
+            unsafe { crate::game::scanline_irq::advance(self.0) };
+            Ok(())
+        }
+        fn clear_nmi(&mut self) {
+            unsafe { (*(*self.0.g_snes).cpu).nmiWanted = false_0 != 0 };
+        }
+    }
+    match crate::game::scene::settle::settle(&mut NativeSettlement(game)) {
+        Ok(()) => (),
+        Err(never) => match never {},
     }
 }
 pub unsafe fn SaveBugSnapshot(game: &mut Game) {

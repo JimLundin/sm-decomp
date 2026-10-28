@@ -198,6 +198,33 @@ dependencies, while independent source work proceeds now. Reuse the existing
 runner/checkpoint/pixel method and original artifacts; no new framework or repeated
 completed survey. Native hardware/audio and full backend retirement remain open.
 
+### Qualified Scene/display and native sharing cohort #20
+
+Scene/display #20 component and native sharing cohort is independently reviewed and qualified.
+Final source edbe402d / DLL d02d370b binds typed display/schema, native OAM, HDMA,
+IRQ and atmospheric tile consumers; full owned gameplay/Scene authority remains open.
+Original SOURCE07 ce55ff2f / DLL d02a8acc retains 46 units and all 26 distinct rows:
+21,784 selected + 29,672 setup + 147,273 fresh captures + 334 initialized = 199,063 comparisons/0.
+Full Morph 1,200 and BOTH independent Kago 14,350 setups pass. Genuine initialized
+329+5 and fresh save 55,650 / resumed reserve 91,623 retain original source and inputs.
+Final library 35.137s, direct DLL 97.327s, format/source/native guards pass; warnings 200/0 added.
+Native 100-102 retain SOURCE07; final 103/104 and atmospheric 4051-4082 pass.
+Original 4049/4050 complete the 34 distinct atmospheric cases; no unsupported CPU-oracle pair.
+Original failed 4051 is preserved: its fixture set byte $05B5 instead of sampled word $05B6.
+The one-line counter fix keeps all original sound/stream/alias/failure assertions; physical delta 0.
+Codec 67/40ed4a0f14b5bd09 binds 1,280,285 raw / 1,269,448 normalized bytes, identical throughout.
+Net +4,939 production / +2,591 verification / +31 unsafe-containing / legacy 0 / support +7.
+State/schema/adapters and independent checks grow code; raw/backend retirement 0, no savings claim.
+Next: separately frozen production SOURCE08 delivery-state/owned-HDMA/settlement integration;
+actual G ownership, selected-state adoption, semantic media/history, initial Scene/Reference/audio
+and all eight full-slice proof groups remain required. Preserve all frozen predecessors.
+
+The verifier successors change only three verification files. Independent review confirms
+all production/native inputs, 67 raw codec contributors and the complete 46-unit source
+are identical to SOURCE07. Preserve original unit/replay/capture execution attribution;
+final library/DLL guards and new native/affected atmospheric checks bind edbe402d.
+This component qualification does not close the full owned playable slice.
+
 ### Full owned playable slice #20 remains open
 
 [Four accepted interface decisions](https://github.com/JimLundin/sm-decomp/issues/20#issuecomment-6449486236)

@@ -453,7 +453,7 @@ fn atmosphere_seed(
         put(g, w::fx_y_pos, 100);
         put(g, w::lava_acid_y_pos, 135);
         put(g, w::equipped_items, 0);
-        g.ram().write_byte(0x5b5, u8::from(id == 4051));
+        put(g, w::nmi_frame_counter_word, u16::from(id == 4051));
         return;
     }
     if id == 4054 {

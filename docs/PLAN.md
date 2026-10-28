@@ -50,10 +50,30 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current message source5787: production117936, legacy17793, unsafe2588,
-verification44030. Actual incremental1 no-default library retains200 warnings,
-zero added identities against the identical-profile renderer baseline200.
-The verifier-only reset successor transfers all1013 actual compiler inputs unchanged.
+Current Scene/display source edbe402d: production 122,875; legacy 17,793;
+unsafe-containing 2,619; verification 46,621. Final incremental no-default
+library retains 200 warnings with zero added identities. Actual final DLL
+and source/native guards pass; original 46 units retain SOURCE07 attribution.
+All 67 raw codec contributors are identical across the verifier successors.
+
+Scene/display #20 component and native sharing cohort is independently reviewed and qualified.
+Final source edbe402d / DLL d02d370b binds typed display/schema, native OAM, HDMA,
+IRQ and atmospheric tile consumers; full owned gameplay/Scene authority remains open.
+Original SOURCE07 ce55ff2f / DLL d02a8acc retains 46 units and all 26 distinct rows:
+21,784 selected + 29,672 setup + 147,273 fresh captures + 334 initialized = 199,063 comparisons/0.
+Full Morph 1,200 and BOTH independent Kago 14,350 setups pass. Genuine initialized
+329+5 and fresh save 55,650 / resumed reserve 91,623 retain original source and inputs.
+Final library 35.137s, direct DLL 97.327s, format/source/native guards pass; warnings 200/0 added.
+Native 100-102 retain SOURCE07; final 103/104 and atmospheric 4051-4082 pass.
+Original 4049/4050 complete the 34 distinct atmospheric cases; no unsupported CPU-oracle pair.
+Original failed 4051 is preserved: its fixture set byte $05B5 instead of sampled word $05B6.
+The one-line counter fix keeps all original sound/stream/alias/failure assertions; physical delta 0.
+Codec 67/40ed4a0f14b5bd09 binds 1,280,285 raw / 1,269,448 normalized bytes, identical throughout.
+Net +4,939 production / +2,591 verification / +31 unsafe-containing / legacy 0 / support +7.
+State/schema/adapters and independent checks grow code; raw/backend retirement 0, no savings claim.
+Next: separately frozen production SOURCE08 delivery-state/owned-HDMA/settlement integration;
+actual G ownership, selected-state adoption, semantic media/history, initial Scene/Reference/audio
+and all eight full-slice proof groups remain required. Preserve all frozen predecessors.
 
 Prepared room cohort9787 qualifies Levels/Tiles/Palette/Background/Fx catalogs and
 application room-pack selection before native startup. Selected Windows desktop ROM

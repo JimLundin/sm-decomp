@@ -1,15 +1,9 @@
-//! ROM spritemap decoding and ordered writes into the SNES OAM staging bytes.
+//! ROM spritemap decoding and the native host for shared object staging.
 #![forbid(unsafe_code)]
-use crate::{game_state::Game, rom::RomImage};
+use crate::{game::scene::objects, game_state::Game, rom::RomImage};
+use std::convert::Infallible;
 
-#[derive(Clone, Copy)]
-pub(crate) enum Clip {
-    None,
-    Inside,
-    Outside,
-    Bounded,
-    BoundedOutside,
-}
+pub(crate) use objects::Clip;
 
 pub(crate) struct SpriteMap {
     pub image: RomImage,
@@ -22,7 +16,6 @@ impl SpriteMap {
     fn word(&self, offset: usize) -> u16 {
         u16::from_ne_bytes([self.byte(offset), self.byte(offset + 1)])
     }
-
     pub fn draw(
         self,
         position: (u16, u16),
@@ -53,18 +46,55 @@ impl Geometry for SpriteMap {
         self.word(5 + 5 * record)
     }
 }
-pub fn draw(
-    map: &impl Geometry,
-    position: (u16, u16),
-    tile_word: impl Fn(u16) -> u16,
-    clip: Clip,
-    game: &mut Game,
-) {
-    let mut index =
-        u16::from_ne_bytes([game.ram().read_byte(0x590), game.ram().read_byte(0x591)]) as usize;
-    let count = map.count();
-    let bounded = matches!(clip, Clip::Bounded | Clip::BoundedOutside);
-    if count != 0 && (!bounded || index < 0x200) {
+struct NativeGeometry<'a, G>(&'a G);
+impl<G: Geometry> objects::Geometry for NativeGeometry<'_, G> {
+    type Error = Infallible;
+    fn count(&mut self) -> Result<u16, Infallible> {
+        Ok(self.0.count())
+    }
+    fn x(&mut self, record: usize) -> Result<u16, Infallible> {
+        Ok(self.0.x(record))
+    }
+    fn y(&mut self, record: usize) -> Result<u8, Infallible> {
+        Ok(self.0.y(record))
+    }
+    fn tile(&mut self, record: usize) -> Result<u16, Infallible> {
+        Ok(self.0.tile(record))
+    }
+}
+struct NativeObjects<'a>(&'a mut Game);
+impl objects::Host for NativeObjects<'_> {
+    type Error = Infallible;
+    fn read_native_word(&mut self, offset: usize) -> Result<u16, Infallible> {
+        let at = 0x370 + offset;
+        Ok(u16::from_ne_bytes([
+            self.0.ram().read_byte(at),
+            self.0.ram().read_byte(at + 1),
+        ]))
+    }
+    fn read_little_word(&mut self, offset: usize) -> Result<u16, Infallible> {
+        let at = 0x370 + offset;
+        Ok(u16::from_le_bytes([
+            self.0.ram().read_byte(at),
+            self.0.ram().read_byte(at + 1),
+        ]))
+    }
+    fn write_byte(&mut self, offset: usize, value: u8) -> Result<(), Infallible> {
+        self.0.ram().write_byte(0x370 + offset, value);
+        Ok(())
+    }
+    fn write_native_slice(&mut self, offset: usize, value: u16) -> Result<(), Infallible> {
+        self.0.ram().copy_in(0x370 + offset, &value.to_ne_bytes());
+        Ok(())
+    }
+    fn write_native_bytes(&mut self, offset: usize, value: u16) -> Result<(), Infallible> {
+        let at = 0x370 + offset;
+        let bytes = value.to_ne_bytes();
+        self.0.ram().write_byte(at, bytes[0]);
+        self.0.ram().write_byte(at + 1, bytes[1]);
+        Ok(())
+    }
+    fn started(&mut self, clip: Clip) -> Result<(), Infallible> {
         crate::verify_probe::hit(match clip {
             Clip::None => "sprites.wrap",
             Clip::Inside => "sprites.inside",
@@ -72,72 +102,28 @@ pub fn draw(
             Clip::Bounded => "sprites.bounded",
             Clip::BoundedOutside => "sprites.bounded-outside",
         });
+        Ok(())
     }
-    for record in 0..usize::from(count) {
-        if bounded && index >= 0x200 {
-            break;
-        }
-        let mut x = position.0.wrapping_add(map.x(record));
-        if bounded {
-            let mut y = u16::from(position.1 as u8) + u16::from(map.y(record));
-            let hidden = if map.y(record) & 0x80 == 0 {
-                y >= 0xe0
-            } else if y & 0x100 != 0 {
-                y as u8 >= 0xe0
-            } else {
-                (y as u8) < 0xe0
-            };
-            if hidden != matches!(clip, Clip::BoundedOutside) {
-                x = 0x180;
-                y = 0xe0;
-            }
-            game.ram().write_byte(0x370 + index, x as u8);
-            game.ram().write_byte(0x371 + index, y as u8);
-            let tile = tile_word(map.tile(record));
-            game.ram().copy_in(0x372 + index, &tile.to_ne_bytes());
-            extension(map, record, index, x, game);
-            index += 4;
-        } else {
-            game.ram().write_byte(0x370 + index, x as u8);
-            extension(map, record, index, x, game);
-            let y = u16::from(position.1 as u8) + u16::from(map.y(record));
-            let inside = (y & 0x100 == 0) == (map.y(record) & 0x80 == 0);
-            game.ram().write_byte(
-                0x371 + index,
-                if matches!(clip, Clip::None) || inside == matches!(clip, Clip::Inside) {
-                    y as u8
-                } else {
-                    0xf0
-                },
-            );
-            let tile = tile_word(map.tile(record));
-            game.ram().copy_in(0x372 + index, &tile.to_ne_bytes());
-            index = (index + 4) & 0x1ff;
-        }
-    }
-    game.ram().copy_in(0x590, &(index as u16).to_ne_bytes());
 }
-fn extension(map: &impl Geometry, record: usize, index: usize, x: u16, game: &mut Game) {
-    let offset = 0x570 + 2 * (index >> 5);
-    let old = u16::from_ne_bytes([
-        game.ram().read_byte(offset),
-        game.ram().read_byte(offset + 1),
-    ]);
-    let bits =
-        ((x & 0x100) >> 8 | u16::from((map.x(record) as i16) < 0) * 2) << (2 * (index >> 2 & 7));
-    game.ram().copy_in(offset, &(old | bits).to_ne_bytes());
+pub fn draw(
+    map: &impl Geometry,
+    position: (u16, u16),
+    tile_word: impl Fn(u16) -> u16,
+    clip: Clip,
+    game: &mut Game,
+) {
+    objects::draw(
+        &mut NativeObjects(game),
+        &mut NativeGeometry(map),
+        position,
+        clip,
+        |word| Ok(tile_word(word)),
+    )
+    .unwrap();
 }
-
 pub(crate) fn finish_frame(game: &mut Game) {
-    let first_unused_sprite =
-        u16::from_le_bytes([game.ram().read_byte(0x590), game.ram().read_byte(0x591)]) >> 2;
-    for sprite in first_unused_sprite..128 {
-        // Each four-byte OAM entry stores its Y coordinate in byte 1.
-        game.ram().write_byte(0x371 + usize::from(sprite) * 4, 0xf0);
-    }
-    word_transfers!(game, ascending, 1; native(0x590) <- value(0));
+    objects::finish_frame(&mut NativeObjects(game)).unwrap();
 }
-
 pub(crate) fn clear_high_table(game: &mut Game) {
-    word_transfers!(game, ascending, 16; native(0x570) <- value(0));
+    objects::clear_high_table(&mut NativeObjects(game)).unwrap();
 }

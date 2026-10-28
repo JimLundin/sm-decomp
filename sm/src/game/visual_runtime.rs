@@ -597,54 +597,64 @@ impl visual_host::Aliases for Runtime<'_> {
         self.write_word_le(value, at);
     }
 }
+impl crate::game::scene::atmosphere::Host for Runtime<'_> {
+    type Error = std::convert::Infallible;
+    fn frame_and_kind(&mut self, slot: usize) -> Result<u16, Self::Error> {
+        Ok(self.session().atmospheric.slots[slot].frame_and_kind)
+    }
+    fn cursor(&mut self) -> Result<u16, Self::Error> {
+        Ok(self.word(0x590))
+    }
+    fn x(&mut self, slot: usize) -> Result<u16, Self::Error> {
+        Ok(self.session().atmospheric.slots[slot].x)
+    }
+    fn camera_x(&mut self) -> Result<u16, Self::Error> {
+        Ok(self.word(0x911))
+    }
+    fn y(&mut self, slot: usize) -> Result<u16, Self::Error> {
+        Ok(self.session().atmospheric.slots[slot].y)
+    }
+    fn camera_y(&mut self) -> Result<u16, Self::Error> {
+        Ok(self.word(0x915))
+    }
+    fn write_x(&mut self, entry: usize, value: u8) -> Result<(), Self::Error> {
+        self.set_byte(0x370 + entry, value);
+        Ok(())
+    }
+    fn write_y(&mut self, entry: usize, value: u8) -> Result<(), Self::Error> {
+        self.set_byte(0x371 + entry, value);
+        Ok(())
+    }
+    fn tile_pointer(&mut self, kind: u16) -> Result<u16, Self::Error> {
+        use visual_host::{Content, Record};
+        Ok(self
+            .table(Source::Loaded, 0x908bff)
+            .native_word(2 * usize::from(kind)))
+    }
+    fn read_tile(&mut self, address: u16) -> Result<u16, Self::Error> {
+        use visual_host::Record;
+        Ok(self.legacy_native_record(0x90, address).native_word(0))
+    }
+    fn write_tile(&mut self, entry: usize, value: u16) -> Result<(), Self::Error> {
+        self.write_slice_native(0x372 + entry, value);
+        Ok(())
+    }
+    fn publish_cursor(&mut self, value: u16) -> Result<(), Self::Error> {
+        self.write_word_le(value, 0x590);
+        Ok(())
+    }
+    fn written(&mut self) -> Result<(), Self::Error> {
+        crate::game::session_access::SessionAccess::probe(self, "atmosphere.tile.written");
+        Ok(())
+    }
+}
+
 impl visual_host::Effects for Runtime<'_> {
     fn draw_samus_sprite(&mut self, index: u16, x: u16, y: u16) {
         self.foreign(|game| sprite_output::samus(index, (x, y), game, &mut sprite_output::Native));
     }
     fn draw_atmospheric_tile(&mut self, slot: usize, kind: u16) {
-        use visual_host::{Content, Record};
-        let frame_offset =
-            2 * u16::from(self.session().atmospheric.slots[slot].frame_and_kind as u8);
-        let saved = self.word(0x590);
-        let x = self.session().atmospheric.slots[slot]
-            .x
-            .wrapping_sub(self.word(0x911))
-            .wrapping_sub(4);
-        if x as i16 >= 0
-            && self.session().atmospheric.slots[slot]
-                .x
-                .wrapping_sub(self.word(0x911))
-                .wrapping_sub(260)
-                & 0x8000
-                != 0
-        {
-            let entry = 0x370 + usize::from(self.word(0x590));
-            self.set_byte(entry, x as u8);
-            // X may alias the y coordinate, camera, cursor or another owned field.
-            let y = self.session().atmospheric.slots[slot]
-                .y
-                .wrapping_sub(self.word(0x915))
-                .wrapping_sub(4);
-            if y as i16 >= 0
-                && self.session().atmospheric.slots[slot]
-                    .y
-                    .wrapping_sub(self.word(0x915))
-                    .wrapping_sub(260)
-                    & 0x8000
-                    != 0
-            {
-                self.set_byte(entry + 1, y as u8);
-                let pointer = self
-                    .table(Source::Loaded, 0x908bff)
-                    .native_word(2 * usize::from(kind));
-                let tile = self
-                    .legacy_native_record(0x90, pointer.wrapping_add(frame_offset))
-                    .native_word(0);
-                self.write_slice_native(entry + 2, tile);
-                self.write_word_le(saved.wrapping_add(4), 0x590);
-                crate::game::session_access::SessionAccess::probe(self, "atmosphere.tile.written");
-            }
-        }
+        crate::game::scene::atmosphere::draw_tile(self, slot, kind).unwrap();
     }
 
     fn sound(&mut self, channel: u8, limit: u8, sound: u16) {

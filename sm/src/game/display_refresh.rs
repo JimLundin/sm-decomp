@@ -468,53 +468,119 @@ unsafe fn upload_samus(game: &mut Game) {
 }
 /// Requires a live, exclusively accessed SNES backend for every upload.
 pub(crate) unsafe fn run(game: &mut Game) {
-    unsafe {
-        const BG_MODE: usize = 0x55;
-        const BG_MODE_FAKE: usize = 0x56;
-        const HDMA_ENABLE: usize = 0x85;
-        const WAITING_FOR_NMI: usize = 0x5b4;
-        const FRAME_COUNTER_BYTE: usize = 0x5b5;
-        const FRAMES_MISSED: usize = 0x5ba;
-        const FRAMES_MISSED_MAX: usize = 0x5bb;
-
-        if game.ram().read_byte(WAITING_FOR_NMI) != 0 {
-            upload_palette_and_oam(game);
-            upload_samus(game);
-            animated_tiles::upload_pending(game);
-            upload_registers(game);
-            for slot in 0..6 {
-                if word!(game.hdma_object_channels_bitmask[slot]) != 0 {
-                    // The bank-slot word stores the DMA register offset in its low byte.
-                    let bank_slot = u16::from(game.ram().read_byte(0x18c0 + slot * 2));
-                    let table_pointer = word!(game.hdma_object_table_pointers[slot]);
-                    WriteRegWord(A1T0L as u16 + bank_slot, table_pointer, game);
-                }
-            }
-            if game.ram().read_byte(BG_MODE) == 7 || game.ram().read_byte(BG_MODE_FAKE) == 7 {
-                mode7_transfers::process(game);
-            }
-            flush_tilemaps(game);
-            vram_read_queue::process(game);
-            WriteReg(HDMAEN as u16, game.ram().read_byte(HDMA_ENABLE), game);
-            game.ram().write_byte(WAITING_FOR_NMI, 0);
-            game.ram().write_byte(FRAMES_MISSED, 0);
-            game.ram().write_byte(
-                FRAME_COUNTER_BYTE,
-                game.ram().read_byte(FRAME_COUNTER_BYTE).wrapping_add(1),
-            );
-            word!(game.nmi_frame_counter_word += 1);
-        } else {
-            game.ram().write_byte(
-                FRAMES_MISSED,
-                game.ram().read_byte(FRAMES_MISSED).wrapping_add(1),
-            );
-            if game.ram().read_byte(FRAMES_MISSED) >= game.ram().read_byte(FRAMES_MISSED_MAX) {
-                game.ram()
-                    .write_byte(FRAMES_MISSED_MAX, game.ram().read_byte(FRAMES_MISSED));
-            }
+    // Only this unsafe entry constructs the local exclusive backend capability.
+    // Native operations and alias domains stay in their original helpers; the
+    // ordering implementation is shared with the separately owned display.
+    struct NativeRefresh<'a>(&'a mut Game);
+    impl crate::game::scene::commit::RefreshHost for NativeRefresh<'_> {
+        fn pending_nmi(&self) -> u8 {
+            self.0.ram().read_byte(0x5b4)
         }
-        word!(game.nmi_frame_counter_including_lag += 1);
+        fn palette_and_objects(&mut self) -> Result<(), crate::game::scene::state::DisplayError> {
+            unsafe { upload_palette_and_oam(self.0) };
+            Ok(())
+        }
+        fn samus(&mut self) -> Result<(), crate::game::scene::state::DisplayError> {
+            unsafe { upload_samus(self.0) };
+            Ok(())
+        }
+        fn animations(&mut self) -> Result<(), crate::game::scene::state::DisplayError> {
+            animated_tiles::upload_pending(self.0);
+            Ok(())
+        }
+        fn controls(&mut self) -> Result<(), crate::game::scene::state::DisplayError> {
+            unsafe { upload_registers(self.0) };
+            Ok(())
+        }
+        fn hdma_mask(&self, slot: usize) -> u16 {
+            let game = &*self.0;
+            word!(game.hdma_object_channels_bitmask[slot])
+        }
+        fn hdma_bank_slot(&self, slot: usize) -> u8 {
+            self.0.ram().read_byte(0x18c0 + slot * 2)
+        }
+        fn hdma_table(&self, slot: usize) -> u16 {
+            let game = &*self.0;
+            word!(game.hdma_object_table_pointers[slot])
+        }
+        fn bind_hdma(
+            &mut self,
+            bank_slot: u16,
+            table: u16,
+        ) -> Result<(), crate::game::scene::state::DisplayError> {
+            unsafe { WriteRegWord(A1T0L as u16 + bank_slot, table, self.0) };
+            Ok(())
+        }
+        fn mode(&self) -> u8 {
+            self.0.ram().read_byte(0x55)
+        }
+        fn fake_mode(&self) -> u8 {
+            self.0.ram().read_byte(0x56)
+        }
+        fn mode7(&mut self) -> Result<(), crate::game::scene::state::DisplayError> {
+            unsafe { mode7_transfers::process(self.0) };
+            Ok(())
+        }
+        fn tilemaps(&mut self) -> Result<(), crate::game::scene::state::DisplayError> {
+            unsafe { flush_tilemaps(self.0) };
+            Ok(())
+        }
+        fn readbacks(&mut self) -> Result<(), crate::game::scene::state::DisplayError> {
+            unsafe { vram_read_queue::process(self.0) };
+            Ok(())
+        }
+        fn hdma_enable(&self) -> u8 {
+            self.0.ram().read_byte(0x85)
+        }
+        fn publish_hdma(
+            &mut self,
+            value: u8,
+        ) -> Result<(), crate::game::scene::state::DisplayError> {
+            unsafe { WriteReg(HDMAEN as u16, value, self.0) };
+            Ok(())
+        }
+        fn set_pending_nmi(&mut self, value: u8) {
+            self.0.ram().write_byte(0x5b4, value)
+        }
+        fn missed(&self) -> u8 {
+            self.0.ram().read_byte(0x5ba)
+        }
+        fn set_missed(&mut self, value: u8) {
+            self.0.ram().write_byte(0x5ba, value)
+        }
+        fn max_missed(&self) -> u8 {
+            self.0.ram().read_byte(0x5bb)
+        }
+        fn set_max_missed(&mut self, value: u8) {
+            self.0.ram().write_byte(0x5bb, value)
+        }
+        fn frame_byte(&self) -> u8 {
+            self.0.ram().read_byte(0x5b5)
+        }
+        fn set_frame_byte(&mut self, value: u8) {
+            self.0.ram().write_byte(0x5b5, value)
+        }
+        fn frame_word(&self) -> u16 {
+            let game = &*self.0;
+            word!(game.nmi_frame_counter_word)
+        }
+        fn set_frame_word(&mut self, value: u16) {
+            let game = &mut *self.0;
+            word!(game.nmi_frame_counter_word = value);
+        }
+        fn including_lag(&self) -> u16 {
+            let game = &*self.0;
+            word!(game.nmi_frame_counter_including_lag)
+        }
+        fn set_including_lag(&mut self, value: u16) {
+            let game = &mut *self.0;
+            word!(game.nmi_frame_counter_including_lag = value);
+        }
     }
+    // The native adapter's helpers either complete or preserve their original
+    // panic/failure behavior; it never produces a portable DisplayError.
+    crate::game::scene::commit::refresh(&mut NativeRefresh(game))
+        .expect("native display refresh adapter cannot return an error");
 }
 
 /// Requires a live, exclusively accessed SNES backend for ordered channel-1 setup.

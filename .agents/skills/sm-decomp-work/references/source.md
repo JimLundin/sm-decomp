@@ -5,6 +5,13 @@
 2. Trace the complete responsibility: setup, update, callbacks, failure,
    reset/load, callers and retirement. Prefer existing owned modules and real
    shared behavior. Identify the actual state owner and remaining external writers.
+   For authored display open/reset/checkpoint, preserve independently supplied
+   final resident mutable state and immutable visible line history. Never rebuild
+   final resident state from the last visible line: later HDMA/IRQ/vblank may change it.
+   Validate required authored media/profile/state before adoption; keep one mutable
+   owner and preserve lazy operational reads and failure prefixes.
+   Record producer object IDs and authored visual/frame/part/material IDs at the original successful publication points; retain them through pending delivery/checkpoints/line history.
+   Preserve lazy validation and partial failure prefixes; never infer those identities backwards from tile/OAM bytes or slots.
 3. Preserve native/LE access, full and odd identities, captured versus fresh
    selectors, lazy reads, callback order and effects before failure. A safe entry
    must be safe through its callees for every input its interface permits;

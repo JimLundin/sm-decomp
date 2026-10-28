@@ -16,7 +16,7 @@ use std::{
 };
 
 #[cfg(sm_verify_dll)]
-pub(crate) const CASES: u32 = 100;
+pub(crate) const CASES: u32 = 105;
 #[cfg(not(sm_verify_dll))]
 pub(crate) const CASES: u32 = 11;
 fn put(g: &mut Game, at: usize, value: u16) {
@@ -59,6 +59,311 @@ unsafe fn nmi_and_draw(g: &mut Game) {
 }
 unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
     unsafe {
+        #[cfg(sm_verify_dll)]
+        if id == 103 {
+            // Movies cannot make atmospheric OAM X/Y overwrite the camera used by this draw.
+            use crate::{game::visual_host::Effects, rom::RomImage};
+            crate::rtl::RtlReset(2, g);
+            let loaded = RomImage::zeroed(0x90000);
+            let native = RomImage::zeroed(0x90000);
+            for (image, address, value) in [
+                (&loaded, 0x908c01, 0x9400u16),
+                (&native, 0x908c01, 0x9600),
+                (&loaded, 0x909402, 0xdead),
+                (&native, 0x909402, 0xa55a),
+                (&native, 0x909602, 0xbeef),
+            ] {
+                let at = crate::rtl::lorom_offset(address) as usize;
+                for (lane, byte) in value.to_ne_bytes().into_iter().enumerate() {
+                    image.write(at + lane, byte);
+                }
+            }
+            g.register_rom(loaded);
+            g.register_native_rom(native);
+            for (at, value) in [
+                (0xaec, 0x0101),
+                (0xadc, 136),
+                (0xae4, 200),
+                (0x911, 0),
+                (0x915, 0),
+                (0x590, 0x5a5),
+            ] {
+                put(g, at, value);
+            }
+            g.ram().fill(0x917..0x919, 0xcc);
+            Effects::draw_atmospheric_tile(&mut Runtime::new(g), 0, 1);
+            assert_eq!(ram_span::<4>(g, 0x915), [0x84, 0x40, 0x5a, 0xa5]);
+            assert_eq!(word(g, 0x590), 0x5a9, "atmosphere.saved-full-odd-cursor");
+            assert!(!g.g_fail);
+            let mut out = b"RMWD1".to_vec();
+            out.extend_from_slice(&id.to_le_bytes());
+            record(&mut out, 0, g);
+            return out;
+        }
+        #[cfg(sm_verify_dll)]
+        if id == 104 {
+            // Movies cannot remove atmospheric sources or reach a whole-word WRAM-end failure.
+            use crate::{
+                game::{scene::atmosphere::Host, visual_host::Effects},
+                rom::RomImage,
+            };
+            crate::rtl::RtlReset(2, g);
+            let table_at = crate::rtl::lorom_offset(0x908bff) as usize + 2;
+            let tile_at = crate::rtl::lorom_offset(0x909400) as usize;
+            for phase in 0..6 {
+                g.loaded_rom = None;
+                g.restore_native_rom_binding(None);
+                g.g_fail = false;
+                for (at, value) in [
+                    (0xaec, 0x0100),
+                    (0xadc, if phase == 0 { 3 } else { 136 }),
+                    (0xae4, if phase == 1 { 3 } else { 100 }),
+                    (0x911, 0),
+                    (0x915, 0),
+                    (0x590, 0),
+                ] {
+                    put(g, at, value);
+                }
+                g.ram().fill(0x370..0x374, 0xcc);
+                if phase >= 3 {
+                    let loaded = RomImage::zeroed(table_at + if phase == 3 { 1 } else { 2 });
+                    loaded.write(table_at, 0);
+                    if phase != 3 {
+                        loaded.write(table_at + 1, 0x94);
+                    }
+                    g.register_rom(loaded);
+                }
+                if phase == 5 {
+                    let native = RomImage::zeroed(tile_at + 1);
+                    native.write(tile_at, 0x5a);
+                    g.register_native_rom(native);
+                }
+                let result = catch_unwind(AssertUnwindSafe(|| {
+                    Effects::draw_atmospheric_tile(&mut Runtime::new(g), 0, 1);
+                }));
+                assert_eq!(
+                    result.is_err(),
+                    phase >= 2,
+                    "atmosphere.lazy-source-{phase}"
+                );
+                let expected = match phase {
+                    0 => [0xcc; 4],
+                    1 => [0x84, 0xcc, 0xcc, 0xcc],
+                    _ => [0x84, 0x60, 0xcc, 0xcc],
+                };
+                assert_eq!(
+                    ram_span::<4>(g, 0x370),
+                    expected,
+                    "atmosphere.prefix-{phase}"
+                );
+                assert_eq!(word(g, 0x590), 0, "atmosphere.unpublished-cursor-{phase}");
+                assert!(!g.g_fail);
+            }
+            // The direct native Host accepts usize entries; a u16 draw cursor cannot reach this tail.
+            g.ram().write_byte(0x1ffff, 0xcc);
+            let result = catch_unwind(AssertUnwindSafe(|| {
+                Host::write_tile(&mut Runtime::new(g), 0x1fc8d, 0xa55a).unwrap();
+            }));
+            assert!(result.is_err(), "atmosphere.native-word-preflight");
+            assert_eq!(
+                g.ram().read_byte(0x1ffff),
+                0xcc,
+                "atmosphere.native-low-byte-retained"
+            );
+            assert_eq!(word(g, 0x590), 0);
+            assert!(!g.g_fail);
+            let mut out = b"RMWD1".to_vec();
+            out.extend_from_slice(&id.to_le_bytes());
+            record(&mut out, 0, g);
+            return out;
+        }
+        // Movies cannot author same-bank cursor wrap or dormant flag variants.
+        #[cfg(sm_verify_dll)]
+        if id == 101 {
+            crate::rtl::RtlReset(2, g);
+            let snes = g.g_snes;
+            assert!(!snes.is_null());
+            g.ram().write_byte(0xffff, 0x81);
+            g.ram().copy_in(0, &[0xa1, 0xa2, 0]);
+            g.ram().write_byte(0x10000, 0xb7);
+            (*snes).ramAdr = 0x12340;
+            let mut dma = g.dma_state();
+            for c in &mut dma.channel {
+                c.hdmaActive = false;
+                c.doTransfer = true;
+                c.terminated = true;
+            }
+            let c = &mut dma.channel[6];
+            c.hdmaActive = true;
+            c.dmaActive = true;
+            c.offIndex = 5;
+            c.indirect = false;
+            c.fromB = false;
+            c.mode = 2;
+            c.aBank = 0x7e;
+            c.aAdr = 0xffff;
+            c.bAdr = 0x80;
+            c.size = 0xbeef;
+            dma.hdmaTimer = 0x2345;
+            dma.dmaTimer = 0x8899aabb;
+            dma.dmaBusy = true;
+            g.set_dma_state(dma);
+            g.execution().initialize_hdma();
+            let initialized = g.dma_state();
+            assert_eq!(initialized.hdmaTimer, 24);
+            assert_eq!(
+                (initialized.channel[6].tableAdr, initialized.channel[6].size),
+                (0, 0xbeef)
+            );
+            assert!(!initialized.channel[6].dmaActive && initialized.channel[6].doTransfer);
+            assert_eq!(initialized.channel[6].offIndex, 0);
+            assert!(!initialized.channel[0].doTransfer && !initialized.channel[0].terminated);
+            g.execution().step_hdma();
+            let stepped = g.dma_state();
+            assert_eq!(ram_span::<2>(&g, 0x12340), [0xa1, 0xa2]);
+            assert_eq!((*snes).ramAdr, 0x12342);
+            assert_eq!((stepped.hdmaTimer, stepped.channel[6].tableAdr), (40, 3));
+            assert_eq!(stepped.channel[6].repCount, 0);
+            assert!(stepped.channel[6].terminated && stepped.channel[6].doTransfer);
+            assert_eq!((stepped.dmaTimer, stepped.dmaBusy), (0x8899aabb, true));
+            g.execution().step_hdma();
+            assert_eq!(g.dma_state().hdmaTimer, 0);
+            assert_eq!(g.dma_state().channel[6].tableAdr, 3);
+            assert_eq!((*snes).ramAdr, 0x12342);
+            assert!(!g.g_fail);
+            let mut out = b"RMWD1".to_vec();
+            out.extend_from_slice(&id.to_le_bytes());
+            record(&mut out, 0, g);
+            return out;
+        }
+        // Movies cannot force a byte to rewrite its own mode/direction or invalid mode.
+        #[cfg(sm_verify_dll)]
+        if id == 102 {
+            crate::rtl::RtlReset(2, g);
+            let snes = g.g_snes;
+            assert!(!snes.is_null());
+            (*snes).ramAdr = 0x12340;
+            g.ram().write_byte(0x12340, 3);
+            let mut dma = g.dma_state();
+            for c in &mut dma.channel {
+                c.hdmaActive = false;
+            }
+            let c = &mut dma.channel[6];
+            c.hdmaActive = true;
+            c.terminated = false;
+            c.doTransfer = true;
+            c.dmaActive = true;
+            c.offIndex = 5;
+            c.indirect = false;
+            c.fromB = true;
+            c.mode = 0;
+            c.aBank = 0;
+            c.aAdr = 0x2233;
+            c.tableAdr = 0x4360;
+            c.bAdr = 0x80;
+            c.repCount = 0x81;
+            g.set_dma_state(dma);
+            g.execution().step_hdma();
+            let stepped = g.dma_state();
+            assert_eq!(
+                (stepped.channel[6].mode, stepped.channel[6].fromB),
+                (3, false)
+            );
+            assert_eq!(g.ram().read_byte(0x12341), 0x80);
+            assert_eq!((*snes).ramAdr, 0x12322);
+            assert_eq!(
+                (stepped.hdmaTimer, stepped.channel[6].tableAdr),
+                (56, 0x4365)
+            );
+            assert!(stepped.channel[6].terminated && stepped.channel[6].doTransfer);
+            assert_eq!(stepped.channel[6].repCount, 0);
+            let mut invalid = stepped;
+            let c = &mut invalid.channel[6];
+            c.mode = 8;
+            c.terminated = false;
+            c.doTransfer = true;
+            c.dmaActive = true;
+            c.offIndex = 7;
+            c.tableAdr = 0x4321;
+            c.repCount = 0x12;
+            invalid.hdmaTimer = 0xabcd;
+            g.set_dma_state(invalid);
+            let failure = catch_unwind(AssertUnwindSafe(|| g.execution().step_hdma()))
+                .expect_err("invalid native mode must fail at its original lookup");
+            assert!(
+                failure
+                    .downcast_ref::<String>()
+                    .unwrap()
+                    .contains("index out of bounds")
+            );
+            let failed = g.dma_state();
+            assert_eq!(failed.hdmaTimer, 8);
+            assert_eq!(
+                (failed.channel[6].tableAdr, failed.channel[6].repCount),
+                (0x4321, 0x12)
+            );
+            assert!(!failed.channel[6].dmaActive);
+            assert_eq!(failed.channel[6].offIndex, 0);
+            assert_eq!((*snes).ramAdr, 0x12322);
+            assert!(!g.g_fail);
+            let mut out = b"RMWD1".to_vec();
+            out.extend_from_slice(&id.to_le_bytes());
+            record(&mut out, 0, g);
+            return out;
+        }
+        // Movies cannot supply invalid handlers or arbitrary pending/enable aliases.
+        #[cfg(sm_verify_dll)]
+        if id == 100 {
+            use crate::game::scanline_irq;
+            crate::rtl::RtlReset(2, g);
+            let snes = g.g_snes;
+            assert!(!snes.is_null());
+            let mut out = b"RMWD1".to_vec();
+            out.extend_from_slice(&id.to_le_bytes());
+            put(g, 0x84, 0xa5cf);
+            (*snes).hTimer = 0x145;
+            (*snes).vTimer = 0x1ee;
+            scanline_irq::enable(false, g);
+            assert_eq!(word(g, 0x84), 0xa5ff, "irq.full-enable-word");
+            assert_eq!(((*snes).vTimer, (*snes).hTimer), (0, 152));
+            assert!(!(*snes).hIrqEnabled && !(*snes).vIrqEnabled);
+            scanline_irq::enable(true, g);
+            assert!((*snes).hIrqEnabled && (*snes).vIrqEnabled);
+            assert_eq!(word(g, 0x84), 0xa5ff);
+            scanline_irq::disable(g);
+            assert_eq!(word(g, 0x84), 0xa5cf, "irq.high-hdma-byte-preserved");
+            assert!((*snes).hIrqEnabled && (*snes).vIrqEnabled);
+            put(g, 0xa7, 0xfedc);
+            put(g, 0xab, 1);
+            scanline_irq::advance(g);
+            assert_eq!((word(g, 0xab), word(g, 0xa7)), (0xfedc, 0));
+            assert_eq!(((*snes).vTimer, (*snes).hTimer), (0, 0));
+            put(g, 0x84, 0xa5ff);
+            put(g, 0xa7, 0xcdef);
+            put(g, 0xab, 3);
+            scanline_irq::advance(g);
+            assert_eq!((word(g, 0xab), word(g, 0xa7)), (0, 0xcdef));
+            assert_eq!(word(g, 0x84), 0xa5cf);
+            put(g, 0xab, 0xffff);
+            put(g, 0xa7, 0xbeef);
+            put(g, 0x84, 0xa577);
+            (*snes).hTimer = 0x123;
+            (*snes).vTimer = 0x134;
+            let failure = catch_unwind(AssertUnwindSafe(|| scanline_irq::advance(g)))
+                .expect_err("invalid IRQ must fail before effects");
+            assert_eq!(
+                failure.downcast_ref::<String>().map(String::as_str),
+                Some("invalid scanline IRQ handler: 32767")
+            );
+            assert_eq!(
+                (word(g, 0xab), word(g, 0xa7), word(g, 0x84)),
+                (0xffff, 0xbeef, 0xa577)
+            );
+            assert_eq!(((*snes).hTimer, (*snes).vTimer), (0x123, 0x134));
+            assert!(!g.g_fail);
+            record(&mut out, 0, g);
+            return out;
+        }
         #[cfg(sm_verify_dll)]
         if (97..100).contains(&id) {
             return crate::player_collision_owned_cases::run(id - 97, g);

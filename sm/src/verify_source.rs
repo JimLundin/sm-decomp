@@ -988,6 +988,58 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/message_composition/prepared.rs"),
     ),
     (
+        "sm/src/game/scene/component.rs",
+        include_bytes!("game/scene/component.rs"),
+    ),
+    (
+        "sm/src/game/scene/hdma_sources.rs",
+        include_bytes!("game/scene/hdma_sources.rs"),
+    ),
+    (
+        "sm/src/game/scene/hdma.rs",
+        include_bytes!("game/scene/hdma.rs"),
+    ),
+    (
+        "sm/src/game/scene/irq.rs",
+        include_bytes!("game/scene/irq.rs"),
+    ),
+    (
+        "sm/src/game/scene/atmosphere.rs",
+        include_bytes!("game/scene/atmosphere.rs"),
+    ),
+    (
+        "sm/src/game/scene/objects.rs",
+        include_bytes!("game/scene/objects.rs"),
+    ),
+    (
+        "sm/src/game/scene/commit.rs",
+        include_bytes!("game/scene/commit.rs"),
+    ),
+    (
+        "sm/src/game/scene/mod.rs",
+        include_bytes!("game/scene/mod.rs"),
+    ),
+    (
+        "sm/src/game/scene/prepared.rs",
+        include_bytes!("game/scene/prepared.rs"),
+    ),
+    (
+        "sm/src/game/scene/records.rs",
+        include_bytes!("game/scene/records.rs"),
+    ),
+    (
+        "sm/src/game/scene/settle.rs",
+        include_bytes!("game/scene/settle.rs"),
+    ),
+    (
+        "sm/src/game/scene/start.rs",
+        include_bytes!("game/scene/start.rs"),
+    ),
+    (
+        "sm/src/game/scene/state.rs",
+        include_bytes!("game/scene/state.rs"),
+    ),
+    (
         "sm/src/game/menu_tilemap.rs",
         include_bytes!("game/menu_tilemap.rs"),
     ),
