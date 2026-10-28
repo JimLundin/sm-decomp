@@ -640,3 +640,158 @@ pub fn samus_game_body_foreign_adoption_and_prefix() {
     );
     assert_player_body_neighbors(&game);
 }
+
+// The initialized loader fixture keeps real ROM allocations and authored role metadata.
+fn returning_die_load_roles(
+    mut roles: ContentDescription,
+    loaded: &Arc<[u8]>,
+    native: &Arc<[u8]>,
+) -> ContentDescription {
+    use crate::game::scene::samus_content::AllocationDeclaration;
+    for (&(_, registration), role) in &roles.roles {
+        let bytes = match registration {
+            Loaded => loaded,
+            Native => native,
+        };
+        let old = &roles.allocations[&role.allocation];
+        let replacement = AllocationDeclaration {
+            identity: old.identity,
+            revision: old.revision,
+            extent: bytes.len(),
+            bytes: bytes.clone(),
+        };
+        roles
+            .allocations
+            .insert(role.allocation, Arc::new(replacement));
+    }
+    roles
+}
+
+fn assert_returning_die_load_prefix(game: &Game) {
+    let recorder = &game.state_recorder;
+    assert_eq!(recorder.total_frames, 0x1020_3040);
+    assert_eq!(recorder.log.size, 3);
+    assert_eq!(recorder.log.as_slice(), &[0x31, 0x42, 0xf3]);
+    assert_eq!([recorder.log.byte(3), recorder.log.byte(4)], [0xa4, 0xb5]);
+    assert_eq!(recorder.base_snapshot.size, 0);
+    assert_eq!(
+        [
+            recorder.base_snapshot.byte(0),
+            recorder.base_snapshot.byte(3)
+        ],
+        [0x91, 0xc4]
+    );
+    assert_eq!(recorder.snapshot_flags, 0x6677_8899);
+    assert_eq!(
+        (
+            recorder.last_inputs,
+            recorder.frames_since_last,
+            recorder.replay_pos,
+            recorder.replay_pos_last_complete,
+            recorder.replay_frame_counter,
+            recorder.replay_next_cmd_at,
+        ),
+        (0, 0, 0, 0, 0, 0)
+    );
+    assert!(recorder.replay_mode);
+    assert_eq!(recorder.replay_cmd, 0xad);
+    assert!(!recorder.has_base_audio_queue);
+    assert_eq!(recorder.base_audio_queue, [0x5c; 71]);
+    assert_eq!(game.snes_frame_counter, 0);
+    assert_eq!(game.ram().read_byte(0x611), 1);
+    assert!((0..0x2000).all(|at| game.g_sram.read(at) == 0));
+}
+
+// The host callback invokes the real unsafe StateRecorder_Load, with one returning Die.
+// Movies cannot establish this deliberately incomplete load or observe lost Runtime ownership.
+pub fn samus_game_returning_die_load_witness(game: &mut Game, load: impl FnOnce(&mut Game)) {
+    use crate::game::session_runtime::Runtime;
+    assert!(
+        !game.g_snes.is_null(),
+        "the host must initialize the actual machine"
+    );
+    let loaded = game.loaded_rom.as_ref().expect("initialized loaded ROM");
+    let native = game.capture_native_rom();
+    assert!(loaded.len() > 8 && native.len() > 8);
+    let loaded: Arc<[u8]> = (0..loaded.len()).map(|at| loaded.read(at)).collect();
+    let native: Arc<[u8]> = (0..native.len()).map(|at| native.read(at)).collect();
+    let supplied = description(
+        game,
+        returning_die_load_roles(fixture::supplied(), &loaded, &native),
+        RetainedNative,
+    );
+    let expected = description(
+        game,
+        returning_die_load_roles(fixture::expected(), &loaded, &native),
+        RetainedNative,
+    );
+    let binding = game.prepare_samus_binding(supplied, &expected).unwrap();
+    game.install_samus_binding(binding).unwrap();
+    assert_eq!(game.samus_authority(), Available);
+    assert_eq!(game.samus_execution(), Ok(Some(RetainedNative)));
+    assert_eq!(game.preflight_samus_runtime(), Ok(()));
+
+    let recorder = &mut game.state_recorder;
+    recorder.log.resize(5).unwrap();
+    recorder
+        .log
+        .as_mut_slice()
+        .copy_from_slice(&[0xd1, 0xe2, 0xf3, 0xa4, 0xb5]);
+    recorder.base_snapshot.resize(4).unwrap();
+    recorder
+        .base_snapshot
+        .as_mut_slice()
+        .copy_from_slice(&[0x91, 0xa2, 0xb3, 0xc4]);
+    recorder.total_frames = 0xdead_beef;
+    recorder.last_inputs = 0xabcd;
+    recorder.frames_since_last = 0x1357_2468;
+    recorder.snapshot_flags = 0xface_cafe;
+    recorder.replay_pos = 0x2132;
+    recorder.replay_pos_last_complete = 0x3243;
+    recorder.replay_frame_counter = 0x4354;
+    recorder.replay_next_cmd_at = 0x5465;
+    recorder.replay_cmd = 0xad;
+    recorder.replay_mode = false;
+    recorder.has_base_audio_queue = true;
+    recorder.base_audio_queue = [0x5c; 71];
+    game.snes_frame_counter = 0x6789;
+    game.ram().write_byte(0x611, 0xa6);
+    game.g_sram.fill(0..0x2000, 0x7b);
+
+    let mut runtime = Runtime::new(game);
+    assert!(runtime.has_session_for_verification());
+    assert!(runtime.samus_game().actor_identity_is_with_session());
+    assert_eq!(runtime.samus_game().samus_authority(), Available);
+    let mut load_returned = false;
+    let failure = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        runtime.foreign(|game| {
+            assert_eq!(game.samus_authority(), Revoked);
+            load(game);
+            load_returned = true;
+            assert_returning_die_load_prefix(game);
+            assert_eq!(game.samus_authority(), Revoked);
+            assert!(!game.actor_identity_is_with_session());
+        });
+    }))
+    .expect_err("an incomplete returning-Die load must reject Samus resumption");
+    let message = failure
+        .downcast_ref::<String>()
+        .map(String::as_str)
+        .or_else(|| failure.downcast_ref::<&str>().copied())
+        .unwrap();
+    assert_eq!(message, "Samus resumption rejected: Poisoned");
+    assert!(
+        load_returned,
+        "the loader must complete its original reset continuation"
+    );
+    assert!(!runtime.has_session_for_verification());
+    assert!(!runtime.samus_game().actor_identity_is_with_session());
+    assert_eq!(runtime.samus_game().samus_authority(), Revoked);
+    assert_returning_die_load_prefix(runtime.samus_game());
+    drop(runtime);
+    assert_eq!(game.samus_authority(), Revoked);
+    assert_eq!(game.preflight_samus_runtime(), Err(DisplayError::Poisoned));
+    assert_eq!(game.samus_execution(), Ok(Some(RetainedNative)));
+    assert!(!game.actor_identity_is_with_session());
+    assert_returning_die_load_prefix(game);
+}

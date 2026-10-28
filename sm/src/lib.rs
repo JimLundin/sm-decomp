@@ -555,6 +555,7 @@ pub mod snapshot_io;
 /// Execution requirements for focused verifier scenarios.
 pub mod verify_probe;
 
+#[cfg(sm_verify_dll)]
 #[doc(hidden)]
 pub mod verify_source;
 
@@ -882,5 +883,5 @@ pub use samus_game_binding_cases::{
     samus_game_failed_install_preserves_binding, samus_game_native_capture_retains_allocation,
     samus_game_panicking_callback_keeps_prefix, samus_game_prepared_replacement_is_rejected,
     samus_game_reference_import_keeps_revoked_scope,
-    samus_game_rejected_expectation_preserves_binding,
+    samus_game_rejected_expectation_preserves_binding, samus_game_returning_die_load_witness,
 };

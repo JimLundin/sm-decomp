@@ -152,6 +152,7 @@ pub struct SourceFile {
 }
 
 /// These bytes come from sm's rlib, independently of the host's source stamp.
+#[cfg(sm_verify_dll)]
 #[unsafe(no_mangle)]
 pub extern "C" fn sm_verify_source_file(index: usize) -> SourceFile {
     let (path, data) = sm::verify_source::FILES
@@ -608,3 +609,28 @@ include!("verification/actor_population_animation_dll.rs");
 
 #[cfg(sm_verify_dll)]
 include!("verification/player_transitions_rust_dll.rs");
+
+/// Run the native short-load regression once in a fresh verifier process.
+/// # Safety
+/// Both paths must point to live NUL-terminated strings for the duration of this call.
+#[cfg(sm_verify_dll)]
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn sm_verify_returning_die_short_load(
+    rom: *const c_char,
+    fixture: *const c_char,
+) -> c_int {
+    if rom.is_null() || fixture.is_null() {
+        return -1;
+    }
+    let result = std::panic::catch_unwind(|| unsafe {
+        returning_die_short_load_case(CStr::from_ptr(rom), CStr::from_ptr(fixture))
+    });
+    match result {
+        Ok(Ok(())) => 0,
+        Ok(Err(message)) => {
+            eprintln!("{message}");
+            1
+        }
+        Err(_) => 2,
+    }
+}
