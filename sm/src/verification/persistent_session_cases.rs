@@ -23,6 +23,9 @@ use crate::game_state::{
 use crate::{samus_content_binding_cases as content, samus_game_binding_cases as binding};
 use std::sync::Arc;
 
+#[path = "session_audio_checkpoint_cases.rs"]
+mod session_audio_checkpoint_cases;
+
 fn roles(
     mut roles: ContentDescription,
     gameplay: [u8; 32],
@@ -262,6 +265,7 @@ pub fn persistent_session_native_rebinding_preserves_ready_owner(
         binary_media,
         &binary_contract,
     );
+    session_audio_checkpoint_cases::run(&owner, &binary_contract);
 }
 
 /// Movies cannot forge a complete owned Session envelope or immutable content binding.

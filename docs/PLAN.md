@@ -63,8 +63,12 @@ comparisons/0, including full Morph 1200 and BOTH independent Kago 14350 approac
 Coverage 23/44; full Session/backend independence and engine-size acceptance remain
 open. Net +2095 production/+1603 verification/+2 forbid attributes/legacy 0;
 actual raw-operation retirement 0. Original ci16 receipts/artifacts are preserved.
-Next: separately qualify/publish audio checkpoint regressions, then the private
-OpenGL owned-upload packet through its actual frontend. Reserves 2 GiB/50 GiB.
+Audio-only ci17 source 475b05d3 / DLL 4905f1a7 passes actual 87/87 units,
+including wrapped queues, rejection, binary restore and ApuQueue witnesses.
+All 85 raw codec contributors are unchanged; retain original ci16 runtime proof.
+Net +435 verification/+1 forbid attribute; production/legacy unchanged.
+Next: qualify the independently reviewed private OpenGL owned-upload packet
+through its actual frontend. Reserves 2 GiB/50 GiB.
 
 SOURCE38 connects actor layer-3 player drawing to the complete owned Runtime
 driver and adds the live B04/B06 body-coordinate projection. Native effects

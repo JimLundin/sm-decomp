@@ -2,6 +2,10 @@
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/verification/session_audio_checkpoint_cases.rs",
+        include_bytes!("verification/session_audio_checkpoint_cases.rs"),
+    ),
+    (
         "sm/src/verification/actor_prepared_checkpoint_cases.rs",
         include_bytes!("verification/actor_prepared_checkpoint_cases.rs"),
     ),
