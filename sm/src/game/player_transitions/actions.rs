@@ -271,7 +271,7 @@ fn knockback(h: &mut impl Host) {
     jump::initialize_jump(h, JumpKind::Knockback);
     h.session_mut().player.transitions.bomb_jump = BombJump::from_raw(0);
     h.session_mut().player.contact.contact_attack = 0;
-    h.session_mut().player.palette.hurt_flash = 1;
+    h.session_mut().presentation.palette_mut().hurt_flash = 1;
 }
 fn clamp(h: &mut impl Host) {
     let delta = (h.session().player.x as i16)
@@ -318,7 +318,7 @@ pub(super) fn interruption(h: &mut impl Host, action: InterruptionAction) {
                 h.session_mut().player.movement_handler = MovementMode::Xray;
                 h.session_mut().player.transitions.input_mode = InputMode::Xray;
                 h.session_mut().player.shine_tick = 8;
-                h.session_mut().player.palette.timer = 1;
+                h.session_mut().presentation.palette_mut().timer = 1;
                 h.session_mut().player.palette_frame = 0;
                 h.session_mut().player.shine_timer = 0;
                 h.session_mut().projectiles.controls.charge = 0;

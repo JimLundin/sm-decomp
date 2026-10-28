@@ -2,6 +2,22 @@
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/game/music_requests.rs",
+        include_bytes!("game/music_requests.rs"),
+    ),
+    (
+        "sm/src/verification/persistent_session_cases.rs",
+        include_bytes!("verification/persistent_session_cases.rs"),
+    ),
+    (
+        "sm/src/game/session_native_adoption.rs",
+        include_bytes!("game/session_native_adoption.rs"),
+    ),
+    (
+        "sm/src/game/persistent_session.rs",
+        include_bytes!("game/persistent_session.rs"),
+    ),
+    (
         "sm/src/verification/samus_game_binding_cases.rs",
         include_bytes!("verification/samus_game_binding_cases.rs"),
     ),
@@ -1443,6 +1459,14 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/session_encoding.rs"),
     ),
     (
+        "sm/src/game/session_owners.rs",
+        include_bytes!("game/session_owners.rs"),
+    ),
+    (
+        "sm/src/game/session_checkpoint.rs",
+        include_bytes!("game/session_checkpoint.rs"),
+    ),
+    (
         "sm/src/game/session_runtime.rs",
         include_bytes!("game/session_runtime.rs"),
     ),
@@ -1731,6 +1755,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/verification/player_detached/shared.rs",
         include_bytes!("verification/player_detached/shared.rs"),
+    ),
+    (
+        "sm/src/verification/player_detached/scene.rs",
+        include_bytes!("verification/player_detached/scene.rs"),
     ),
     (
         "sm/src/verification/player_detached/palette.rs",

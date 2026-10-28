@@ -442,7 +442,9 @@ pub mod game {
     pub(crate) mod scanline_irq;
     pub(crate) mod session;
     pub(crate) mod session_access;
+    pub(crate) mod session_checkpoint;
     pub(crate) mod session_encoding;
+    pub(crate) mod session_owners;
     pub(crate) mod session_runtime;
     pub mod sm_8b;
     pub(crate) mod sprite_drawing;
@@ -544,6 +546,10 @@ pub mod host;
 
 mod execution;
 pub mod game_state;
+pub use game_state::persistent_session::{
+    PreparedSessionStart, SessionCheckpoint, SessionStartContract, SessionStartError,
+    SuppliedSessionStart,
+};
 pub mod recording;
 pub mod rendering;
 pub mod rom;
@@ -555,6 +561,7 @@ pub mod snapshot_io;
 /// Execution requirements for focused verifier scenarios.
 pub mod verify_probe;
 
+#[cfg(sm_verify_dll)]
 #[doc(hidden)]
 pub mod verify_source;
 
@@ -876,8 +883,17 @@ pub use samus_content_binding_cases::{
 mod samus_game_binding_cases;
 #[cfg(sm_verify_dll)]
 pub use samus_game_binding_cases::{
-    samus_game_adoption_uses_captured_target, samus_game_failed_install_preserves_binding,
-    samus_game_native_capture_retains_allocation, samus_game_panicking_callback_keeps_prefix,
-    samus_game_prepared_replacement_is_rejected, samus_game_reference_import_keeps_revoked_scope,
-    samus_game_rejected_expectation_preserves_binding,
+    samus_driver_body_projection_preserves_odd_lanes, samus_driver_cannon_failure_preserves_prefix,
+    samus_game_adoption_uses_captured_target, samus_game_body_foreign_adoption_and_prefix,
+    samus_game_body_projection_crossing_writes, samus_game_body_projection_roundtrip,
+    samus_game_failed_install_preserves_binding, samus_game_native_capture_retains_allocation,
+    samus_game_panicking_callback_keeps_prefix, samus_game_prepared_replacement_is_rejected,
+    samus_game_reference_import_keeps_revoked_scope,
+    samus_game_rejected_expectation_preserves_binding, samus_game_returning_die_load_witness,
 };
+
+#[cfg(sm_verify_dll)]
+#[path = "verification/persistent_session_cases.rs"]
+mod persistent_session_cases;
+#[cfg(sm_verify_dll)]
+pub use persistent_session_cases::persistent_session_native_rebinding_preserves_ready_owner;

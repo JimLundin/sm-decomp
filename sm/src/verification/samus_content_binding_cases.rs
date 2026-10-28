@@ -88,6 +88,7 @@ fn description(
                     request: TileRequest {
                         pointer,
                         half: SamusHalf {
+                            pointer,
                             enabled,
                             descriptor: sc::AssetRef {
                                 id: sc::AssetId(descriptor),

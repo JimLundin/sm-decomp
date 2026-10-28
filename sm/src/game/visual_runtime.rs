@@ -654,6 +654,16 @@ impl crate::game::scene::atmosphere::Host for Runtime<'_> {
 
 impl visual_host::Effects for Runtime<'_> {
     fn draw_samus_sprite(&mut self, index: u16, x: u16, y: u16) {
+        if self.has_owned_display() {
+            let producer = self
+                .session()
+                .presentation
+                .publications()
+                .expect("Samus publications")
+                .body;
+            self.draw_owned_samus(producer, index, (x, y));
+            return;
+        }
         // Retain the complete native export/action/import interval, including null maps.
         self.foreign(|game| sprite_output::samus(index, (x, y), game, &mut sprite_output::Native));
     }
@@ -665,6 +675,13 @@ impl visual_host::Effects for Runtime<'_> {
         player_projectiles::host::Host::sound(self, channel, limit, sound);
     }
     fn music_delayed8(&mut self, track: u16) {
+        if self.has_owned_display() {
+            self.owned_call(|runtime| {
+                crate::game::music::requests::enqueue(track, 8, true, runtime)
+                    .expect("audio enqueue");
+            });
+            return;
+        }
         self.foreign(|game| crate::game::music::QueueMusic_Delayed8(track, game));
     }
     fn resume_movement_sound(&mut self) {
@@ -748,20 +765,16 @@ fn cannon_tile(runtime: &mut Runtime<'_>, x: u16, y: u16, body_y: u16, character
     }
 }
 
-pub(crate) fn update_arm_cannon(game: &mut Game) {
-    player_projectiles::cannon::update(&mut Runtime::new(game));
-}
-pub(crate) fn draw_player_with_cannon(game: &mut Game) {
-    let mut runtime = Runtime::new(game);
+fn draw_player_with_cannon(runtime: &mut Runtime<'_>) {
     // Layer order is captured before atmospheric output can alias the mode word.
     let mode = runtime.session().projectiles.controls.cannon_drawing_mode & 0xf;
-    crate::game::player_transitions::draw_atmospheric(&mut runtime);
+    crate::game::player_transitions::draw_atmospheric(runtime);
     if mode != 0 && mode != 2 {
-        player_projectiles::cannon::draw(&mut runtime, cannon_tile, queue_cannon_tiles);
+        player_projectiles::cannon::draw(runtime, cannon_tile, queue_cannon_tiles);
     }
     runtime.foreign(crate::game::samus_animation::Samus_Draw);
     if mode == 2 {
-        player_projectiles::cannon::draw(&mut runtime, cannon_tile, queue_cannon_tiles);
+        player_projectiles::cannon::draw(runtime, cannon_tile, queue_cannon_tiles);
     }
 }
 pub(crate) fn update_beam_tiles_and_palette(game: &mut Game) {
@@ -1522,9 +1535,13 @@ impl Runtime<'_> {
 }
 
 pub(crate) fn draw_player_frame(game: &mut Game) {
+    Runtime::new(game).owned_player_call(draw_player_frame_owned);
+}
+
+pub(crate) fn draw_player_frame_owned(h: &mut Runtime<'_>) {
     use crate::game::{player_transitions::state::DrawMode, samus_animation as body};
-    update_arm_cannon(game);
-    let h = &mut Runtime::new(game);
+    player_projectiles::cannon::update(h);
+    h.refresh_player_observations();
     match h.session().player.transitions.draw_handler {
         DrawMode::Normal | DrawMode::Grapple => {
             let mode = h.session().player.transitions.draw_handler;
@@ -1533,14 +1550,14 @@ pub(crate) fn draw_player_frame(game: &mut Game) {
             }
             let grapple = h.session().player.grapple;
             if mode == DrawMode::Normal || (grapple.wrapping_add(0x37aa) as i16) >= 0 {
-                h.foreign(draw_player_with_cannon);
+                h.owned_player_call(draw_player_with_cannon);
                 h.foreign(body::Samus_DrawEchoes);
             } else {
                 if matches!(grapple, 0xc703 | 0xc759) {
                     h.foreign(crate::game::grapple_swing::restore_start_positions);
                 }
                 h.foreign(player_projectiles::grapple_flare);
-                h.foreign(draw_player_with_cannon);
+                h.owned_player_call(draw_player_with_cannon);
                 h.foreign(crate::game::grapple_swing::update_tiles);
                 if h.session().player.grapple_length != 0 {
                     h.foreign(crate::game::grapple_swing::draw_rope);
@@ -3349,15 +3366,23 @@ pub(crate) fn project_cinematic_point(
     point: crate::types::Point16U,
     game: &mut Game,
 ) -> crate::types::Point16U {
-    let x = point.x.wrapping_sub(word!(game.reg_M7X));
-    let y = word!(game.reg_M7Y).wrapping_sub(point.y);
-    let projected_x = scaled_cinematic_value(x, word!(game.reg_M7A))
-        .wrapping_add(scaled_cinematic_value(word!(game.reg_M7B), y));
-    let projected_y = scaled_cinematic_value(word!(game.reg_M7C), x)
-        .wrapping_add(scaled_cinematic_value(word!(game.reg_M7A), y));
+    project_cinematic_point_reads(point, |at| {
+        crate::game::session_encoding::read(&|at| game.ram().read_byte(at), at)
+    })
+}
+pub(crate) fn project_cinematic_point_reads(
+    point: crate::types::Point16U,
+    mut read: impl FnMut(usize) -> u16,
+) -> crate::types::Point16U {
+    let x = point.x.wrapping_sub(read(0x80));
+    let y = read(0x82).wrapping_sub(point.y);
+    let projected_x =
+        scaled_cinematic_value(x, read(0x78)).wrapping_add(scaled_cinematic_value(read(0x7a), y));
+    let projected_y =
+        scaled_cinematic_value(read(0x7c), x).wrapping_add(scaled_cinematic_value(read(0x78), y));
     crate::types::Point16U {
-        x: projected_x.wrapping_add(word!(game.reg_M7X)),
-        y: word!(game.reg_M7Y).wrapping_sub(projected_y),
+        x: projected_x.wrapping_add(read(0x80)),
+        y: read(0x82).wrapping_sub(projected_y),
     }
 }
 

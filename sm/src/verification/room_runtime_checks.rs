@@ -223,8 +223,8 @@ fn round_trip(world: Arc<WorldBinding>) {
         e.layer2_y = 0xa4;
         expected[0x91b] = 0x93;
         expected[0x91c] = 0xa4;
-        h.session_mut().continuations.primary = 0xfe;
-        h.session_mut().continuations.secondary = 0x81;
+        *h.session_mut().control.primary_mut() = 0xfe;
+        *h.session_mut().control.secondary_mut() = 0x81;
         expected[0x612] = 0xfe;
         expected[0x613] = 0x81;
         projection(&h, &expected, &world);
@@ -255,8 +255,8 @@ fn round_trip(world: Arc<WorldBinding>) {
             assert_eq!(native(g), original_native);
             {
                 let mut nested = Runtime::new(g);
-                nested.session_mut().continuations.primary = 2;
-                nested.session_mut().continuations.secondary = 1;
+                *nested.session_mut().control.primary_mut() = 2;
+                *nested.session_mut().control.secondary_mut() = 1;
                 nested.session_mut().room.entry.room = Identity::Known(fixture::ROOM_B);
             }
             expected[0x612] = 2;

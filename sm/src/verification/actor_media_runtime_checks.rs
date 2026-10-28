@@ -86,8 +86,8 @@ fn prepared_sprite_palette_modes_use_actual_oam_emission() {
         let mut runtime = Runtime::new(&mut game);
         stage_receipt(&mut runtime, &image, ResourceId(3), 0xb48000);
         // Fade-style writes to the actual owned palette buffers do not stage a new source.
-        runtime.session_mut().visual.colors[9 * 16] = 0x1234;
-        runtime.session_mut().visual.targets[9 * 16] = 0x5678;
+        runtime.session_mut().presentation.visual_mut().colors[9 * 16] = 0x1234;
+        runtime.session_mut().presentation.visual_mut().targets[9 * 16] = 0x5678;
         assert_eq!(
             world.actor_media().validate_material_residency(
                 MaterialId(50),

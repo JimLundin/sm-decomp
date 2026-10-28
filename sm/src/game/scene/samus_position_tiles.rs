@@ -128,6 +128,9 @@ pub enum TileTable {
 }
 pub(crate) trait Table {
     type Error;
+    fn validate_source(&self, _: super::records::Revision) -> Result<(), Self::Error> {
+        Ok(())
+    }
     fn native_word(&self, offset: usize) -> Result<u16, Self::Error>;
     fn byte(&self, offset: usize) -> Result<u8, Self::Error>;
 }
@@ -177,6 +180,9 @@ pub struct SourceTable {
 }
 impl Table for SourceTable {
     type Error = DisplayError;
+    fn validate_source(&self, revision: super::records::Revision) -> Result<(), DisplayError> {
+        self.source.validate(revision)
+    }
     fn native_word(&self, offset: usize) -> Result<u16, DisplayError> {
         let low = self.byte(offset)?;
         let high = self.byte(offset.checked_add(1).ok_or(DisplayError::Source)?)?;
@@ -204,7 +210,7 @@ pub struct TileRequest {
 }
 impl TileRequest {
     pub(crate) fn validate(&self, pointer: u16, media: &SceneMedia) -> Result<(), DisplayError> {
-        if self.pointer != pointer || self.half.enabled != 1 {
+        if self.pointer != pointer || self.half.pointer != pointer || self.half.enabled != 1 {
             return Err(DisplayError::Incomplete);
         }
         media
@@ -231,6 +237,7 @@ impl TileRequest {
 /// bindings. Publications perform original ordered writes through that owner;
 /// pointer values are compatibility selectors, never inferred media identities.
 pub(crate) trait Inputs {
+    type Table: Table<Error = DisplayError>;
     fn ceres(&mut self) -> Result<u16, DisplayError>;
     fn player_x(&mut self) -> Result<u16, DisplayError>;
     fn player_y(&mut self) -> Result<u16, DisplayError>;
@@ -245,7 +252,16 @@ pub(crate) trait Inputs {
     fn animation_frame(&mut self) -> Result<u16, DisplayError>;
     fn movement(&mut self) -> Result<u8, DisplayError>;
     fn landing_order(&self) -> WordOrder;
-    fn position_source(&mut self) -> Result<SourceTable, DisplayError>;
+    fn landing_offset(&mut self, offset: usize) -> Result<u16, DisplayError> {
+        Ok(self.landing_order().decode(default_landing_bytes(offset)))
+    }
+    fn crouching_offset(&mut self, offset: usize) -> Result<i8, DisplayError> {
+        Ok(default_crouching_byte(offset))
+    }
+    fn drained_offset(&mut self, offset: usize) -> Result<i8, DisplayError> {
+        Ok(default_drained_byte(offset))
+    }
+    fn position_source(&mut self) -> Result<Self::Table, DisplayError>;
     fn camera_x(&mut self) -> Result<u16, DisplayError>;
     fn camera_y(&mut self) -> Result<u16, DisplayError>;
     fn set_body_x(&mut self, state: &mut DisplayState, value: u16) -> Result<(), DisplayError>;
@@ -253,12 +269,12 @@ pub(crate) trait Inputs {
     fn body_x(&mut self) -> Result<u16, DisplayError>;
     fn body_y(&mut self) -> Result<u16, DisplayError>;
     fn pose(&mut self) -> Result<u16, DisplayError>;
-    fn tile_table(&mut self, which: TileTable) -> Result<SourceTable, DisplayError>;
+    fn tile_table(&mut self, which: TileTable) -> Result<Self::Table, DisplayError>;
     fn tile_definition(
         &mut self,
         state: &mut DisplayState,
         cursor: u16,
-    ) -> Result<SourceTable, DisplayError>;
+    ) -> Result<Self::Table, DisplayError>;
     /// Publish the compatibility pointer low byte/observer/high byte/observer
     /// through the same owner, retaining prefixes before metadata admission.
     fn request_word(
@@ -335,9 +351,18 @@ impl<I: Inputs> PositionHost for Owned<'_, I> {
     fn landing_word(&self, b: [u8; 2]) -> u16 {
         self.inputs.landing_order().decode(b)
     }
+    fn landing_offset(&mut self, offset: usize) -> Result<u16, DisplayError> {
+        self.inputs.landing_offset(offset)
+    }
+    fn crouching_offset(&mut self, offset: usize) -> Result<i8, DisplayError> {
+        self.inputs.crouching_offset(offset)
+    }
+    fn drained_offset(&mut self, offset: usize) -> Result<i8, DisplayError> {
+        self.inputs.drained_offset(offset)
+    }
     fn fallback_byte(&mut self, o: usize) -> Result<u8, DisplayError> {
         let source = self.inputs.position_source()?;
-        source.source.validate(self.media.revision())?;
+        source.validate_source(self.media.revision())?;
         source.byte(o)
     }
     fn camera_x(&mut self) -> Result<u16, DisplayError> {
@@ -361,10 +386,10 @@ impl<I: Inputs> PositionHost for Owned<'_, I> {
 }
 impl<I: Inputs> TileHost for Owned<'_, I> {
     type Error = DisplayError;
-    type Table = SourceTable;
-    fn table(&mut self, w: TileTable) -> Result<SourceTable, DisplayError> {
+    type Table = I::Table;
+    fn table(&mut self, w: TileTable) -> Result<Self::Table, DisplayError> {
         let table = self.inputs.tile_table(w)?;
-        table.source.validate(self.media.revision())?;
+        table.validate_source(self.media.revision())?;
         Ok(table)
     }
     fn pose(&mut self) -> Result<u16, DisplayError> {
@@ -373,9 +398,9 @@ impl<I: Inputs> TileHost for Owned<'_, I> {
     fn frame(&mut self) -> Result<u16, DisplayError> {
         self.inputs.animation_frame()
     }
-    fn definition(&mut self, c: u16) -> Result<SourceTable, DisplayError> {
+    fn definition(&mut self, c: u16) -> Result<Self::Table, DisplayError> {
         let table = self.inputs.tile_definition(self.state, c)?;
-        table.source.validate(self.media.revision())?;
+        table.validate_source(self.media.revision())?;
         Ok(table)
     }
     fn request_word(&mut self, h: Half, p: u16) -> Result<(), DisplayError> {

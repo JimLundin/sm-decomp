@@ -1,9 +1,9 @@
 # Coordinator role
 
-Keep the root available for user requests while an implementation overseer owns
-the pipeline. Assign disjoint complete responsibilities, one file/lane owner and
-one Git integrator. Overlap source, review, compilation and replay when their
-dependencies and measured resource budgets permit.
+One primary root owns implementation, coordination, Git, builds and one resource
+ledger under SKILL.md's verified-release condition. Use bounded source/review
+subagents for disjoint responsibilities and pinned interfaces. Overlap ready work
+when dependencies and measured resource budgets permit; retain one actual writer.
 
 - Give workers the short assignment in SKILL.md and their role. Link existing
   handoffs for exact pins; keep decisions and current host/resource policy in
@@ -19,6 +19,8 @@ dependencies and measured resource budgets permit.
   Resolve reparse/junction paths before sizing, budgeting or deletion; count physical targets once and exclude shared caches from per-worker reclaim.
   Preserve existing live jobs and frozen inputs. Release terminal admissions
   promptly, and increase concurrency only when measurements support useful throughput.
+  If DLL growth blocks admission, dispatch the admissible normal library checkpoint
+  in [Build](build.md) with the same frozen inputs and current remaining-growth ledger.
   On a reserve breach, stop the newest producer per PLAN and retain lightweight
   readers. Record uncertainty when continuous measurements are unavailable.
 - Inspect exact execution and agent handles before recovery. Recover or reassign
@@ -54,11 +56,11 @@ dependencies and measured resource budgets permit.
   retained owners, adapters and dependencies once. Keep full portable owned
   Session, independent rendering/audio/backend, boot-to-credits fidelity, Map Rando
   and PLAN/REVIEW's size goals open until the destination validation is satisfied.
-- Use local session handoffs when available; keep durable source, review,
-  qualification and architecture records in dedicated active task issues.
-  Closed issue #2 retains historical receipts; follow its Markdown directive:
+- Use direct session handoffs; keep durable source, review, qualification and
+  architecture records in the repository and owned artifacts. Task issues are retired;
+  keep only Jim's conversation #6 open for remote feedback. Follow #2's Markdown directive:
   owner, result, next action and blocker, spaced numbers/words and raw transport
-  in details. Route user-facing #6 facts through the root to its sole representative.
+  in details. The primary root reads and answers #6 at work boundaries.
 
 An executor handoff or paused observation is not project completion. Name the
 next owner, exact pin/handle and unfinished work before ending a role; route new

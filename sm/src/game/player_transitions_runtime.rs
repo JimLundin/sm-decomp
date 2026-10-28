@@ -204,8 +204,11 @@ impl Runtime<'_> {
         self.suit_window_word(0, 255);
         self.session_mut().shared_sequence.stage = 0;
         self.session_mut().shared_sequence.value = 0;
-        self.session_mut().player.palette.suit_red_green = 0;
-        self.session_mut().player.palette.crystal_flash_delay = 0;
+        self.session_mut().presentation.palette_mut().suit_red_green = 0;
+        self.session_mut()
+            .presentation
+            .palette_mut()
+            .crystal_flash_delay = 0;
         let offset = usize::from(self.word(ram::hdma_object_index) >> 1) * 2;
         let program = arrays::hdma_object_instruction_list_pointers + offset;
         self.write_slice_le(program, self.word(program).wrapping_add(2));
@@ -332,14 +335,15 @@ pub(crate) fn initialize(game: &mut crate::game_state::Game) {
     rt.session_mut().player.movement_handler = MovementMode::Normal;
     rt.write_slice_le(ram::UNUSED_word_7E0A5E, (-2764i16) as u16);
     rt.write_slice_le(ram::samus_prev_health_for_flash, 50);
-    rt.session_mut().player.palette.visor_timer = 1537;
+    rt.session_mut().presentation.palette_mut().visor_timer = 1537;
     for shot in &mut rt.session_mut().projectiles.shots {
         shot.motion = 0xb169;
     }
-    let p = &mut rt.session_mut().player;
+    let state = rt.session_mut();
+    let p = &mut state.player;
     p.grapple = 0xc4f0;
     p.collision.horizontal_slope_flags = 3;
-    p.palette.hurt_flash = 0;
+    state.presentation.palette_mut().hurt_flash = 0;
     p.special_palette_flags = 0;
     p.camera_distance.fill(crate::game::session::FixedMotion {
         fraction: 0,
@@ -354,17 +358,19 @@ pub(crate) fn initialize(game: &mut crate::game_state::Game) {
     rt.write_slice_le(ram::lava_acid_y_pos, u16::MAX);
     rt.foreign(crate::game::visual_runtime::update_beam_tiles_and_palette);
     rt.write_slice_le(ram::cinematic_function, 0);
-    let p = &mut rt.session_mut().player;
+    let state = rt.session_mut();
+    let p = &mut state.player;
     p.pose = 0;
     p.movement_and_facing = 0;
     p.history = Default::default();
     rt.write_slice_le(ram::enemy_index_to_shake, u16::MAX);
     rt.session_mut().projectiles.controls.selected_weapon = 0;
     rt.session_mut().projectiles.controls.automatic_weapon = 0;
-    let p = &mut rt.session_mut().player;
+    let state = rt.session_mut();
+    let p = &mut state.player;
     p.invincibility = 0;
     p.knockback_timer = 0;
-    p.palette.hurt_flash = 0;
+    state.presentation.palette_mut().hurt_flash = 0;
     rt.write_slice_le(ram::debug_invincibility, 0);
     if rt.word(ram::game_state) == 40 {
         rt.load_demo_data();

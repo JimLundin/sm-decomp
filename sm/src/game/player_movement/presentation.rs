@@ -43,19 +43,19 @@ pub(super) fn footsteps(h: &mut impl Host) {
     // Sand and boost dust differ only in particle kind; their positions/timing agree.
     let s = h.session_mut();
     if s.player.movement_and_facing as u8 == 4 {
-        s.atmospheric.slots[0].x = s.player.x.wrapping_sub(12);
-        s.atmospheric.slots[1].x = s.player.x.wrapping_add(8);
+        s.presentation.atmospheric_mut().slots[0].x = s.player.x.wrapping_sub(12);
+        s.presentation.atmospheric_mut().slots[1].x = s.player.x.wrapping_add(8);
     } else {
-        s.atmospheric.slots[0].x = s.player.x.wrapping_add(12);
-        s.atmospheric.slots[1].x = s.player.x.wrapping_sub(8);
+        s.presentation.atmospheric_mut().slots[0].x = s.player.x.wrapping_add(12);
+        s.presentation.atmospheric_mut().slots[1].x = s.player.x.wrapping_sub(8);
     }
-    s.atmospheric.slots[0].y = s.player.y.wrapping_add(16);
-    s.atmospheric.slots[1].y = s.player.y.wrapping_add(16);
+    s.presentation.atmospheric_mut().slots[0].y = s.player.y.wrapping_add(16);
+    s.presentation.atmospheric_mut().slots[1].y = s.player.y.wrapping_add(16);
     let kind = if sand { 256 } else { 1792 };
-    s.atmospheric.slots[0].frame_and_kind = kind;
-    s.atmospheric.slots[1].frame_and_kind = kind;
-    s.atmospheric.slots[0].remaining = 0x8002;
-    s.atmospheric.slots[1].remaining = 3;
+    s.presentation.atmospheric_mut().slots[0].frame_and_kind = kind;
+    s.presentation.atmospheric_mut().slots[1].frame_and_kind = kind;
+    s.presentation.atmospheric_mut().slots[0].remaining = 0x8002;
+    s.presentation.atmospheric_mut().slots[1].remaining = 3;
 }
 
 pub(crate) fn record_echo(h: &mut impl Host) {

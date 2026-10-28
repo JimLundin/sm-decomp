@@ -67,7 +67,7 @@ impl WordOrder {
 
 pub use super::error::DisplayError;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SourceSpan {
     pub asset: AssetRef,
     pub bytes: Arc<[u8]>,
@@ -134,7 +134,7 @@ impl SourceSpan {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum TransferSource {
     Asset(SourceSpan),
     Hud {
@@ -168,7 +168,7 @@ pub struct TileDestination {
     pub remap: u8,
     pub increment_on_high: bool,
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct TileTransfer {
     pub source: TransferSource,
     pub count: u16,
@@ -193,7 +193,7 @@ impl TileTransfer {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ObjectStaging {
     /// Exactly the 512 object bytes and 32 high-table bytes; not public Scene data.
     pub bytes: [u8; 544],
@@ -297,7 +297,7 @@ impl super::objects::Host for ObjectStaging {
         Ok(())
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct HudState {
     pub tiles: [u16; 96],
     pub health: u16,
@@ -362,7 +362,7 @@ impl HudState {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct NmiState {
     pub pending: u8,
     pub frame_byte: u8,
@@ -386,8 +386,10 @@ impl NmiState {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SamusHalf {
+    /// Original compatibility selector, owned with its flag and semantic request.
+    pub pointer: u16,
     pub enabled: u8,
     pub descriptor: AssetRef,
     pub first: TileTransfer,
@@ -398,7 +400,7 @@ pub enum ScrollLayout {
     Column,
     Row,
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ScrollTransfer {
     pub enabled: u8,
     pub layout: ScrollLayout,
@@ -408,17 +410,17 @@ pub struct ScrollTransfer {
     pub first_bytes: [Vec<u8>; 2],
     pub wrapped_bytes: [Vec<u8>; 2],
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct QueuedUpload {
     pub cursor: u16,
     pub transfer: TileTransfer,
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Mode7Target {
     Tiles(TileDestination),
     Palette { first_color: u8 },
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Mode7Upload {
     pub cursor: u16,
     pub source: TransferSource,
@@ -426,20 +428,20 @@ pub struct Mode7Upload {
     pub target: Mode7Target,
     pub transfer_mode: u8,
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Readback {
     pub cursor: u16,
     pub destination: AssetRef,
     pub first_word: u16,
     pub count: u16,
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ActorDrawQueue {
     pub size: u16,
     pub cursor: u16,
     pub actors: Vec<u16>,
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ActorTileStaging {
     pub pending: u16,
     pub size: u16,
@@ -450,7 +452,7 @@ pub struct ActorTileStaging {
     pub tilemap_bytes: Vec<u8>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct BackgroundState {
     pub tilemap: AssetRef,
     pub atlas: AssetRef,
@@ -460,7 +462,7 @@ pub struct BackgroundState {
     pub screen_layout: u8,
     pub character_layout: u8,
 }
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct DisplayControls {
     pub brightness: u8,
     pub object_layout: u8,
@@ -493,13 +495,13 @@ pub struct DisplayControls {
     pub hdma_enable: u8,
     pub committed_fake_mode: u8,
 }
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct HdmaBinding {
     pub enable: u16,
     pub bank_slot: u16,
     pub table: u16,
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct HdmaObject {
     pub instruction: SourceBinding,
     pub instruction_cursor: u16,
@@ -509,7 +511,7 @@ pub struct HdmaObject {
     pub timer: u16,
     pub variables: [u16; 6],
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct HdmaChannel {
     pub source: SourceBinding,
     pub table: SourceBinding,
@@ -533,7 +535,7 @@ pub struct HdmaChannel {
     pub unused_byte: u8,
     pub dma_active: bool,
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct HdmaState {
     pub bindings: [HdmaBinding; 6],
     pub objects: [HdmaObject; 6],
@@ -544,7 +546,7 @@ pub struct HdmaState {
     pub dma_timer: u32,
     pub dma_busy: bool,
 }
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct InterruptState {
     pub current: u16,
     pub pending: u16,
@@ -607,7 +609,7 @@ pub struct EffectiveDisplayDescription {
     pub main_layers: u8,
     pub forced_blank: bool,
 }
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct DisplayLatches {
     pub tile_pointer: u16,
     pub tile_increment: u16,
@@ -635,7 +637,7 @@ pub struct DisplayLatches {
     pub open_bus: u8,
     pub ppu_open_bus: [u8; 2],
 }
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct RasterState {
     pub range_overflow: bool,
     pub time_overflow: bool,
@@ -658,7 +660,7 @@ pub enum DisplayPhase {
     Failed,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct DisplayDescription {
     pub media_revision: Revision,
     pub phase: DisplayPhase,

@@ -10,11 +10,12 @@ review, build, replay and coordination. Load the assigned role and only the
 technical contracts it reaches. PLAN remains authoritative for the Fast loop,
 verification, Git/resource limits, progress, commit/push and definition of done.
 
-For assignments and handoffs, use local session communication when available;
-keep durable source/review/qualification/architecture records in dedicated active
-task issues ([user policy](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6453578412)).
-The closed [mailbox](https://github.com/JimLundin/sm-decomp/issues/2) retains historical receipts.
-Format GitHub issue bodies, instructions and comments using the still-valid
+Root owns implementation, coordination, Git, builds and the machine resource ledger.
+Work on main and push coherent commits promptly. Assign bounded subagents directly;
+task issues are retired. Keep [Jim's conversation](https://github.com/JimLundin/sm-decomp/issues/6)
+open for remote feedback, read it at work boundaries and respond there.
+Keep durable source/review/qualification records in the repository and owned artifacts.
+Format GitHub comments using the still-valid
 [Markdown communication directive](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6445792069).
 
 Before changing ownership, interfaces or backend architecture, read the

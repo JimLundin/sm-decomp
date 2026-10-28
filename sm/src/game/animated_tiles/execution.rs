@@ -31,7 +31,8 @@ macro_rules! animation {
         let index: u16 = $index;
         match $host
             .session()
-            .visual
+            .presentation
+            .visual()
             .animated_tiles
             .slots
             .get(usize::from(index >> 1))
@@ -45,7 +46,8 @@ macro_rules! animation {
         let value: u16 = $value;
         match $host
             .session_mut()
-            .visual
+            .presentation
+            .visual_mut()
             .animated_tiles
             .slots
             .get_mut(usize::from(index >> 1))
@@ -58,7 +60,8 @@ macro_rules! animation {
 fn counter_byte(host: &mut impl Host, index: u16, value: u8) {
     match host
         .session_mut()
-        .visual
+        .presentation
+        .visual_mut()
         .animated_tiles
         .slots
         .get_mut(usize::from(index >> 1))
@@ -83,8 +86,8 @@ fn decrement_delay(host: &mut impl Host, index: u16) -> u16 {
 }
 fn write_color(host: &mut impl Host, buffer: PaletteBuffer, index: usize, value: u16) {
     let colors = match buffer {
-        PaletteBuffer::Current => &mut host.session_mut().visual.colors,
-        PaletteBuffer::Target => &mut host.session_mut().visual.targets,
+        PaletteBuffer::Current => &mut host.session_mut().presentation.visual_mut().colors,
+        PaletteBuffer::Target => &mut host.session_mut().presentation.visual_mut().targets,
     };
     if let Some(color) = colors.get_mut(index) {
         *color = value;
@@ -93,7 +96,7 @@ fn write_color(host: &mut impl Host, buffer: PaletteBuffer, index: usize, value:
     }
 }
 pub(crate) fn set_enabled(session: &mut Session, enabled: bool) {
-    let flags = &mut session.visual.animated_tiles.flags;
+    let flags = &mut session.presentation.visual_mut().animated_tiles.flags;
     *flags = if enabled {
         *flags | 0x8000
     } else {
@@ -101,14 +104,22 @@ pub(crate) fn set_enabled(session: &mut Session, enabled: bool) {
     };
 }
 pub(crate) fn clear(session: &mut Session) {
-    for slot in session.visual.animated_tiles.slots.iter_mut().rev() {
+    for slot in session
+        .presentation
+        .visual_mut()
+        .animated_tiles
+        .slots
+        .iter_mut()
+        .rev()
+    {
         slot.definition = 0;
     }
 }
 pub(crate) fn spawn(host: &mut impl Host, definition: u16) {
     let Some(slot) = host
         .session()
-        .visual
+        .presentation
+        .visual()
         .animated_tiles
         .slots
         .iter()
@@ -116,24 +127,63 @@ pub(crate) fn spawn(host: &mut impl Host, definition: u16) {
     else {
         return;
     };
-    host.session_mut().visual.animated_tiles.slots[slot].definition = definition;
-    host.session_mut().visual.animated_tiles.slots[slot].counter = 0;
+    host.session_mut()
+        .presentation
+        .visual_mut()
+        .animated_tiles
+        .slots[slot]
+        .definition = definition;
+    host.session_mut()
+        .presentation
+        .visual_mut()
+        .animated_tiles
+        .slots[slot]
+        .counter = 0;
     let data = host.record(Source::Loaded, 0x87, definition);
-    host.session_mut().visual.animated_tiles.slots[slot].program = data.native_word(0);
-    host.session_mut().visual.animated_tiles.slots[slot].source = 0;
-    host.session_mut().visual.animated_tiles.slots[slot].size = data.native_word(2);
-    host.session_mut().visual.animated_tiles.slots[slot].vram = data.native_word(4);
-    host.session_mut().visual.animated_tiles.slots[slot].delay = 1;
+    host.session_mut()
+        .presentation
+        .visual_mut()
+        .animated_tiles
+        .slots[slot]
+        .program = data.native_word(0);
+    host.session_mut()
+        .presentation
+        .visual_mut()
+        .animated_tiles
+        .slots[slot]
+        .source = 0;
+    host.session_mut()
+        .presentation
+        .visual_mut()
+        .animated_tiles
+        .slots[slot]
+        .size = data.native_word(2);
+    host.session_mut()
+        .presentation
+        .visual_mut()
+        .animated_tiles
+        .slots[slot]
+        .vram = data.native_word(4);
+    host.session_mut()
+        .presentation
+        .visual_mut()
+        .animated_tiles
+        .slots[slot]
+        .delay = 1;
     host.probe("animated_tiles.spawn.initialized");
 }
 pub(crate) fn advance(host: &mut impl Host) {
-    if host.session().visual.animated_tiles.flags & 0x8000 != 0 {
+    if host.session().presentation.visual().animated_tiles.flags & 0x8000 != 0 {
         let mut index = 10i32;
         while index >= 0 {
-            host.session_mut().visual.animated_tiles.selected = index as u16;
+            host.session_mut()
+                .presentation
+                .visual_mut()
+                .animated_tiles
+                .selected = index as u16;
             if animation!(host, index as u16, definition) != 0 {
                 process(host);
-                index = i32::from(host.session().visual.animated_tiles.selected);
+                index = i32::from(host.session().presentation.visual().animated_tiles.selected);
             }
             index -= 2;
         }
@@ -143,7 +193,11 @@ fn goto(host: &mut impl Host, cursor: u16) -> u16 {
     host.record(Source::Loaded, 0x87, cursor).native_word(0)
 }
 fn goto_relative(host: &mut impl Host, cursor: u16) -> u16 {
-    host.session_mut().visual.animated_tiles.last_instruction = cursor;
+    host.session_mut()
+        .presentation
+        .visual_mut()
+        .animated_tiles
+        .last_instruction = cursor;
     cursor.wrapping_add(host.record(Source::Loaded, 0x87, cursor).byte(0) as i8 as u16)
 }
 pub(crate) fn command(host: &mut impl Host, address: u32, index: u16, cursor: u16) -> u16 {
@@ -277,7 +331,7 @@ pub(crate) fn command(host: &mut impl Host, address: u32, index: u16, cursor: u1
     }
 }
 pub(crate) fn process(host: &mut impl Host) {
-    let index = host.session().visual.animated_tiles.selected;
+    let index = host.session().presentation.visual().animated_tiles.selected;
     if decrement_delay(host, index) != 1 {
         return;
     }
@@ -288,7 +342,11 @@ pub(crate) fn process(host: &mut impl Host) {
         if instruction & 0x8000 == 0 {
             break instruction;
         }
-        host.session_mut().visual.animated_tiles.last_instruction = instruction;
+        host.session_mut()
+            .presentation
+            .visual_mut()
+            .animated_tiles
+            .last_instruction = instruction;
         cursor = command(
             host,
             0x870000 | u32::from(instruction),
@@ -306,11 +364,11 @@ pub(crate) fn process(host: &mut impl Host) {
     host.probe("animated_tiles.frame.requested");
 }
 pub(crate) fn upload_pending(host: &mut impl Host) {
-    if host.session().visual.animated_tiles.flags & 0x8000 == 0 {
+    if host.session().presentation.visual().animated_tiles.flags & 0x8000 == 0 {
         return;
     }
     for slot in (0..6).rev() {
-        let current = &host.session().visual.animated_tiles.slots[slot];
+        let current = &host.session().presentation.visual().animated_tiles.slots[slot];
         if current.definition == 0 || current.source == 0 {
             continue;
         }
@@ -321,7 +379,12 @@ pub(crate) fn upload_pending(host: &mut impl Host) {
         };
         host.probe("animated_tiles.upload.started");
         host.upload(request);
-        host.session_mut().visual.animated_tiles.slots[slot].source = 0;
+        host.session_mut()
+            .presentation
+            .visual_mut()
+            .animated_tiles
+            .slots[slot]
+            .source = 0;
         host.probe("animated_tiles.upload.acknowledged");
     }
 }

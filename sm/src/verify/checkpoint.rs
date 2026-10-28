@@ -84,6 +84,8 @@ fn compatibility() -> u64 {
         include_str!("../game/room_entry/prepared_assets.rs"),
         include_str!("../room_pack.rs"),
         include_str!("../game/session.rs"),
+        include_str!("../game/session_owners.rs"),
+        include_str!("../game/session_checkpoint.rs"),
         include_str!("../game/message_boxes.rs"),
         include_str!("../game/dialogue.rs"),
         include_str!("../game/dialogue_ram.rs"),
@@ -116,6 +118,9 @@ fn compatibility() -> u64 {
         include_str!("../game/scene/settle.rs"),
         include_str!("../game/actors/botwoon_death.rs"),
         include_str!("../game/session_encoding.rs"),
+        include_str!("../game/persistent_session.rs"),
+        include_str!("../game/music_requests.rs"),
+        include_str!("../game/session_native_adoption.rs"),
         include_str!("../game/actors/codec.rs"),
         include_str!("../game/session_runtime.rs"),
         include_str!("../game/enemy_layouts.rs"),
@@ -578,6 +583,7 @@ pub(crate) unsafe fn capture_with_sources(
     )],
 ) -> Result<Vec<u8>, String> {
     unsafe {
+        crate::cpu_infra::session_native_adoption::require_legacy_binary(game)?;
         let required_mode = if game.supports_legacy_persistence() {
             crate::cpu_infra::RM_BOTH
         } else {
@@ -747,6 +753,7 @@ pub(crate) unsafe fn restore_capture_with_sources(
     )],
 ) -> Result<(), String> {
     unsafe {
+        crate::cpu_infra::session_native_adoption::require_legacy_binary(game)?;
         if game.actor_identity_is_with_session() {
             return Err("checkpoint requires a Game-owned committed interval".into());
         }

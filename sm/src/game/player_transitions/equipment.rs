@@ -65,9 +65,10 @@ fn reconcile_pose(h: &mut impl Host) {
 pub(crate) fn refresh(h: &mut impl Host) {
     reconcile_pose(h);
     if h.session().inventory.equipment.active & 0x2000 != 0 {
-        let p = &mut h.session_mut().player;
+        let s = h.session_mut();
+        let p = &mut s.player;
         if p.contact.momentum != 0 && p.contact.speed_boost == 0 {
-            p.palette.timer = p.contact.speed_boost;
+            s.presentation.palette_mut().timer = p.contact.speed_boost;
             p.palette_frame = 0;
             h.session_mut().player.contact.speed_boost = h
                 .animation_table(AnimationTable::BoosterStageDurations)
@@ -80,7 +81,7 @@ pub(crate) fn refresh(h: &mut impl Host) {
         s.player.contact.momentum = 0;
         s.player.contact.speed_boost = 0;
         s.player.palette_frame = 0;
-        s.player.palette.timer = 0;
+        s.presentation.palette_mut().timer = 0;
         s.projectiles.echoes.x[..2].fill(0);
         s.projectiles.echoes.y[..2].fill(0);
     }

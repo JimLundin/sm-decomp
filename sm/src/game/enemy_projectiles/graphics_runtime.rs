@@ -27,7 +27,13 @@ impl Graphics for Runtime<'_> {
     }
     fn set_palette_buffer(&mut self, index: isize, value: u16) {
         if let Ok(slot) = usize::try_from(index) {
-            if let Some(color) = self.session_mut().visual.colors.get_mut(slot) {
+            if let Some(color) = self
+                .session_mut()
+                .presentation
+                .visual_mut()
+                .colors
+                .get_mut(slot)
+            {
                 *color = value;
                 return;
             }

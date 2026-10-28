@@ -99,7 +99,7 @@ pub(crate) fn update_extra_run(h: &mut impl Host) {
         if h.session().player.contact.momentum == 0 {
             h.session_mut().player.contact.momentum = 1;
             if boosted {
-                h.session_mut().player.palette.timer = 1;
+                h.session_mut().presentation.palette_mut().timer = 1;
                 h.session_mut().player.palette_frame = 0;
                 let table = h.animation_table(AnimationTable::BoosterStageDurations);
                 h.session_mut().player.contact.speed_boost = table.native_word(0);

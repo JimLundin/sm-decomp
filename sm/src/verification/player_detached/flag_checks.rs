@@ -26,12 +26,18 @@ fn plm_visual() {
         h.world.player.flag_compatibility.bitmask, 0xa502,
         "flags.scratch.boss_low_only"
     );
-    h.world.player.visual.palette_effects.slots[0].definition = 0x8123;
+    h.world
+        .player
+        .presentation
+        .visual_mut()
+        .palette_effects
+        .slots[0]
+        .definition = 0x8123;
     colors::pre(&mut h, 9301701, 0);
     assert_eq!(
         (
             h.world.player.gameplay_flags.bosses_by_area[0],
-            h.world.player.visual.palette_effects.slots[0].definition
+            h.world.player.presentation.visual().palette_effects.slots[0].definition
         ),
         (3, 0),
         "flags.animation.palette_boss"
@@ -176,11 +182,17 @@ fn aliases() {
         "flags.alias.boss_word_cross_owner"
     );
     h.world.player.room.area = 7;
-    h.world.player.visual.palette_effects.slots[0].definition = 0x8123;
+    h.world
+        .player
+        .presentation
+        .visual_mut()
+        .palette_effects
+        .slots[0]
+        .definition = 0x8123;
     colors::pre(&mut h, 9301701, 0);
     assert_eq!(
         (
-            h.world.player.visual.palette_effects.slots[0].definition,
+            h.world.player.presentation.visual().palette_effects.slots[0].definition,
             h.world.player.flag_compatibility.bitmask
         ),
         (0, 0x80),

@@ -121,8 +121,8 @@ pub(crate) fn finish_input(s: &mut crate::game::session::Session, inputs: &Exter
     };
     let previous = p.previous_health_for_flash;
     if (s.inventory.health.current as i16).wrapping_sub(previous as i16) < 0 {
-        if p.palette.hurt_flash == 0 {
-            p.palette.hurt_flash = 1;
+        if s.presentation.palette().hurt_flash == 0 {
+            s.presentation.palette_mut().hurt_flash = 1;
         }
         if (inputs.transitions.debug_invincibility.wrapping_sub(7) as i16) >= 0 {
             s.inventory.health.current = previous;

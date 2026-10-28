@@ -3,6 +3,8 @@
 Review the donor or composition at its source pin. The assignment
 determines review scope; PLAN determines required execution checks.
 
+- Start with concrete ownership, caller and receiver faults; route
+  actionable findings while the pinned review continues.
 - Reconstruct against the declared base. Check callers, retirement, unchanged
   dependencies and composition reconciliation. Donor approval transfers only
   through an exact, verified dependency relationship.
@@ -28,6 +30,9 @@ determines review scope; PLAN determines required execution checks.
   and formatting. Confirm that claimed coverage reaches changed behavior;
   otherwise name the unobserved paths.
 
-Return PASS or specific findings with source locations and a concrete failing
-contract or counterexample. State whether you reviewed source, executed checks,
-or both. Route corrections to the author; preserve the reviewed snapshot.
+After completing the assigned review, promptly send PASS or specific findings
+with source locations and a failing contract/counterexample, exact source pin,
+actual START/verdict-ready UTC, scope (source, checks or both) and conditions/gaps.
+Send this minimal verdict before extended prose or receipt serialization;
+documentation ACKs or long reports never gate code publication. Route corrections
+to the author; preserve the reviewed snapshot.

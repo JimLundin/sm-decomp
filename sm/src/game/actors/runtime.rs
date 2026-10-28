@@ -128,7 +128,7 @@ impl ActorEffects for Runtime<'_> {
         self.actor_hook_legacy(routine.0);
     }
     fn draw_player_scene(&mut self) {
-        self.actor_player_scene_legacy();
+        self.produce_player_scene();
     }
     fn draw_actor_visual(&mut self, request: ActorDrawRequest) {
         #[cfg(sm_verify_dll)]

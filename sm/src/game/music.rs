@@ -1,34 +1,20 @@
-//! Ordered music and sound-effect commands; RAM remains the compatibility state.
+//! Native callers and retained hardware effects for the shared request owner.
 use crate::game_state::Game;
 use crate::ram_map::checked_word;
 use crate::rtl::RtlApuWrite;
 use crate::snes::registers::APUI00;
 
+#[path = "music_requests.rs"]
+pub(crate) mod requests;
+
 #[forbid(unsafe_code)]
 pub fn HasQueuedMusic(game: &mut Game) -> u8 {
-    u8::from(
-        (0..8)
-            .rev()
-            .any(|slot| checked_word!(game.music_queue_delay[slot]) != 0),
-    )
+    requests::has_queued_music(game)
 }
 
 #[forbid(unsafe_code)]
 fn enqueue(track: u16, delay: u16, reject_full: bool, game: &mut Game) {
-    if checked_word!(game.game_state) >= 40 {
-        return;
-    }
-    if reject_full
-        && checked_word!(game.music_queue_write_pos).wrapping_add(2) & 14
-            == checked_word!(game.music_queue_read_pos)
-    {
-        return;
-    }
-    let write = checked_word!(game.music_queue_write_pos);
-    let slot = usize::from(write >> 1);
-    checked_word!(game.music_queue_track[slot] = track);
-    checked_word!(game.music_queue_delay[slot] = delay.max(8));
-    checked_word!(game.music_queue_write_pos = write.wrapping_add(2) & 14);
+    requests::enqueue(track, delay, reject_full, game).expect("audio enqueue");
 }
 
 #[forbid(unsafe_code)]
@@ -38,15 +24,6 @@ pub fn QueueMusic_Delayed8(track: u16, game: &mut Game) {
 #[forbid(unsafe_code)]
 pub fn QueueMusic_DelayedY(track: u16, delay: u16, game: &mut Game) {
     enqueue(track, delay, false, game);
-}
-
-#[forbid(unsafe_code)]
-fn retire(game: &mut Game) {
-    let read = checked_word!(game.music_queue_read_pos);
-    let slot = usize::from(read >> 1);
-    checked_word!(game.music_queue_track[slot] = 0);
-    checked_word!(game.music_queue_delay[slot] = 0);
-    checked_word!(game.music_queue_read_pos = read.wrapping_add(2) & 14);
 }
 
 #[forbid(unsafe_code)]
@@ -60,53 +37,27 @@ fn bank_address(game: &Game) -> u32 {
 
 pub unsafe fn HandleMusicQueue(game: &mut Game) {
     unsafe {
-        let previous = checked_word!(game.music_timer);
-        checked_word!(game.music_timer = previous.wrapping_sub(1));
-        if checked_word!(game.music_timer) & 0x8000 == 0 {
-            if previous != 1 {
-                return;
+        requests::advance_music(game, |effect, game| {
+            match effect {
+                requests::MusicEffect::UploadBank => {
+                    crate::native_audio::upload_bank(bank_address(game), game);
+                }
+                requests::MusicEffect::WriteTrack(track) => RtlApuWrite(APUI00, track, game),
             }
-            if checked_word!(game.music_entry) & 0x8000 != 0 {
-                checked_word!(
-                    game.music_data_index = u16::from(checked_word!(game.music_entry) as u8)
-                );
-                game.ram().write_byte(0x64c, 0xff);
-                crate::native_audio::upload_bank(bank_address(game), game);
-                game.ram().write_byte(0x64c, 0);
-                retire(game);
-                checked_word!(game.sound_handler_downtime = 8);
-                return;
-            }
-            let track = checked_word!(game.music_entry) as u8 & 0x7f;
-            checked_word!(game.music_track_index = checked_word!(game.music_entry) & 0x7f);
-            RtlApuWrite(APUI00, checked_word!(game.music_entry) as u8 & 0x7f, game);
-            game.ram().write_byte(0x64c, track);
-            checked_word!(game.sound_handler_downtime = 8);
-            retire(game);
-        }
-        if checked_word!(game.music_queue_read_pos) == checked_word!(game.music_queue_write_pos) {
-            checked_word!(game.music_timer = 0);
-        } else {
-            let slot = usize::from(checked_word!(game.music_queue_read_pos) >> 1);
-            checked_word!(game.music_entry = checked_word!(game.music_queue_track[slot]));
-            checked_word!(game.music_timer = checked_word!(game.music_queue_delay[slot]));
-        }
+            Ok(())
+        })
+        .expect("audio music advance");
     }
 }
 
 #[forbid(unsafe_code)]
 pub(crate) fn reset_delays(game: &mut Game) {
-    checked_word!(game.music_timer = 0);
-    word_transfers!(game, ascending, 8; le(music_queue_delay, 0) <- value(0));
+    requests::reset_delays(game).expect("audio delay reset");
 }
 
 #[forbid(unsafe_code)]
 pub(crate) fn clear_queue(game: &mut Game) {
-    word_transfers!(game, descending, 8;
-        le(music_queue_track, 7) <- value(0), le(music_queue_delay, 7) <- value(0));
-    checked_word!(game.music_queue_read_pos = checked_word!(game.music_queue_write_pos));
-    checked_word!(game.music_timer = 0);
-    checked_word!(game.music_entry = 0);
+    requests::clear_queue(game).expect("audio queue clear");
 }
 
 #[forbid(unsafe_code)]
@@ -191,47 +142,7 @@ pub(crate) fn wait_for_music(
 pub(crate) fn queue_sfx(channel: usize, sound: u8, max_queued: u8, game: &mut Game) -> u16 {
     #[cfg(sm_verify_dll)]
     crate::game::visual_runtime::samus_observer::sound(channel, sound, max_queued);
-    let read_pos = 0x643 + channel;
-    let write_pos = 0x646 + channel;
-    let limit_pos = 0x653 + channel;
-    let buffer = 0x656 + 16 * channel;
-
-    // This write also happens when capacity or the sound gates reject the request.
-    game.ram().write_byte(limit_pos, max_queued);
-    let queued = game
-        .ram()
-        .read_byte(write_pos)
-        .wrapping_sub(game.ram().read_byte(read_pos))
-        & 15;
-    if queued >= max_queued {
-        return u16::from_be_bytes([sound, queued]);
-    }
-    if game.debug_disable_sounds() != 0
-        || game.game_state() >= 40
-        || game.power_bomb_explosion_status() & 0x8000 != 0
-    {
-        return u16::from_be_bytes([queued, sound]);
-    }
-
-    let write = game.ram().read_byte(write_pos);
-    let mut next = write.wrapping_add(1);
-    if next >= 16 {
-        next = 0;
-    }
-    // Preserve adjacent-RAM access for an out-of-range current write position.
-    let slot = buffer + usize::from(write);
-    if next == game.ram().read_byte(read_pos) {
-        // Lower sound numbers take priority when the ring is full.
-        if sound < game.ram().read_byte(slot) {
-            game.ram().write_byte(slot, sound);
-        }
-    } else {
-        game.ram().write_byte(slot, sound);
-        game.ram().write_byte(write_pos, next);
-        game.ram().write_byte(buffer + usize::from(next), 0);
-    }
-    // Callers that forward the original accumulator need both queue depth and sound.
-    u16::from_be_bytes([queued, sound])
+    requests::queue_sfx(channel, sound, max_queued, game).expect("audio sound enqueue")
 }
 
 crate::forward_calls! { pub fn (sound: u16, game: &mut Game);
@@ -256,71 +167,15 @@ crate::forward_calls! { pub fn (sound: u16, game: &mut Game);
     QueueSfx3_Max6 => queue_sfx(2, sound as u8, 6, game);
 }
 pub(crate) fn advance_sound_effects(game: &mut Game, mut write: impl FnMut(u8, u8, &mut Game)) {
-    if (game.ram().read_byte(0x686) as i8).wrapping_sub(1) >= 0 {
-        game.ram()
-            .write_byte(0x686, game.ram().read_byte(0x686).wrapping_sub(1));
-        for channel in 0..3 {
-            write(channel as u8, 0, game);
-            game.ram().write_byte(0x64d + channel, 0);
-        }
-        return;
-    }
-    for channel in 0..3 {
-        // Retain the old callback table's bounds failure before any channel effects.
-        let state = [0, 1, 2, 3, 4][usize::from(game.ram().read_byte(0x649 + channel))];
-        match state {
-            0 | 3 => {
-                if state == 3 {
-                    let _last_sent = game.ram().read_byte(0x64d + channel);
-                    game.ram().write_byte(0x649 + channel, 0);
-                }
-                if game.ram().read_byte(0x643 + channel) != game.ram().read_byte(0x646 + channel) {
-                    let slot =
-                        (usize::from(game.ram().read_byte(0x643 + channel)) + channel * 16) as u8;
-                    let sound = game.ram().read_byte(0x656 + usize::from(slot));
-                    write(channel as u8, sound, game);
-                    game.ram().write_byte(0x64d + channel, sound);
-                    game.ram()
-                        .write_byte(0x643 + channel, slot.wrapping_add(1) & 15);
-                    {
-                        let value = game.ram().read_byte(0x649 + channel).wrapping_add(1);
-                        game.ram().write_byte(0x649 + channel, value);
-                    }
-                }
-            }
-            1 => {
-                let _last_sent = game.ram().read_byte(0x64d + channel);
-                {
-                    let value = game.ram().read_byte(0x649 + channel).wrapping_add(1);
-                    game.ram().write_byte(0x649 + channel, value);
-                }
-                game.ram().write_byte(0x650 + channel, 6);
-            }
-            2 | 4 => {
-                let previous = game.ram().read_byte(0x650 + channel);
-                game.ram()
-                    .write_byte(0x650 + channel, previous.wrapping_sub(1));
-                if previous == 1 {
-                    if state == 2 {
-                        game.ram().write_byte(0x64d + channel, 0);
-                        {
-                            let value = game.ram().read_byte(0x649 + channel).wrapping_add(1);
-                            game.ram().write_byte(0x649 + channel, value);
-                        }
-                    } else {
-                        game.ram().write_byte(0x649 + channel, 0);
-                    }
-                }
-            }
-            _ => unreachable!(),
-        }
-    }
+    requests::advance_sound_effects(game, |channel, value, game| {
+        write(channel, value, game);
+        Ok(())
+    })
+    .expect("audio sound advance");
 }
 
 pub fn ResetSoundQueues(game: &mut Game) {
-    for offset in 0x643..0x64c {
-        game.ram().write_byte(offset, 0);
-    }
+    requests::reset_sound_queues(game).expect("audio sound queue reset");
 }
 
 pub(crate) fn cancel_effects(max_queued: u8, game: &mut Game) {

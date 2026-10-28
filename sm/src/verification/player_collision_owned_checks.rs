@@ -135,7 +135,7 @@ pub(crate) fn same_interval_radius<H: ActorAccess>(h: &mut H, actor: ActorKey) {
 pub(crate) fn same_interval_frame<H: visual_host::Host>(h: &mut H) {
     {
         let s = h.session_mut();
-        s.player.palette.suit_index = 4;
+        s.presentation.palette_mut().suit_index = 4;
         s.player.movement_and_facing = 3 << 8;
         s.inventory.equipment.active |= 8;
     }

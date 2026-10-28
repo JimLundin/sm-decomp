@@ -119,7 +119,7 @@ fn running(h: &mut impl Host) {
 }
 fn spin_jump(h: &mut impl Host) {
     let mut submerged = false;
-    if h.session().player.palette.suit_index & 4 == 0 {
+    if h.session().presentation.palette().suit_index & 4 == 0 {
         let top = transitions::loaded_top(h);
         submerged = transitions::liquid_at_height(h, top) != LiquidAtHeight::None;
     }

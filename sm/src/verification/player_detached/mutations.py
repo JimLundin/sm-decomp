@@ -9,13 +9,19 @@ import tempfile
 from actor_contract_mutations import check_actor_contracts, check_collision_contracts
 
 
-LEADING_EDGE = """        owner
-            .field(slot, axis, Field::Radius)
-            .wrapping_add(owner.field(slot, axis, Field::Position))
+LEADING_EDGE = """        room.square_radius(raw, axis)
+            .wrapping_add(room.square_position(raw, axis))
             .wrapping_sub(1)"""
+UPLOAD_SOURCE_CLEAR = """        host.session_mut()
+            .presentation
+            .visual_mut()
+            .animated_tiles
+            .slots[slot]
+            .source = 0;"""
+UPLOAD_ACK = "        host.upload(request);\n" + UPLOAD_SOURCE_CLEAR
 MUTATIONS = (
-    ("ignore_positive_beam_radius", "projectile_room.rs", LEADING_EDGE, "        position"),
-    ("skip_collision_retirement", "projectile_room.rs", "    (context.retire(owner, slot), 1)", "    (owner, 1)"),
+    ("ignore_positive_beam_radius", "player_projectiles/collision.rs", LEADING_EDGE, "        position"),
+    ("skip_collision_retirement", "player_projectiles/collision.rs", "    super::lifecycle::retire(room.0, raw);", "    let _ = raw;"),
     ("ignore_plant_position", "room_mechanisms/rules/plants.rs", "c.session_mut().player.x = mechanism!(c, slot, work0);", "let _ = mechanism!(c, slot, work0);"),
     ("ignore_new_beam", "player_projectiles/weapons.rs", "let kind = h.session().inventory.beams.active | 0x8000;", "let kind = 0x8000;"),
 )
@@ -59,13 +65,13 @@ VISUAL_MUTATIONS = (
     ("acknowledge_live_upload_selection", "upload_ack",
      "visual.composition.upload_captured_ack",
      (("animated_tiles/execution.rs",
-       "        host.upload(request);\n        host.session_mut().visual.animated_tiles.slots[slot].source = 0;",
-       "        host.upload(request);\n        let selected = usize::from(host.session().visual.animated_tiles.selected >> 1);\n        host.session_mut().visual.animated_tiles.slots[selected].source = 0;"),)),
+       UPLOAD_ACK,
+       "        host.upload(request);\n        let selected = usize::from(host.session().presentation.visual().animated_tiles.selected >> 1);\n        host.session_mut().presentation.visual_mut().animated_tiles.slots[selected].source = 0;"),)),
     ("acknowledge_failed_upload", "upload_failure",
      "visual.composition.upload_failure_source",
      (("animated_tiles/execution.rs",
-       "        host.upload(request);\n        host.session_mut().visual.animated_tiles.slots[slot].source = 0;",
-       "        host.session_mut().visual.animated_tiles.slots[slot].source = 0;\n        host.upload(request);"),)),
+       UPLOAD_ACK,
+       UPLOAD_SOURCE_CLEAR + "\n        host.upload(request);"),)),
     ("discard_shared_palette_color", "eye",
      "visual.composition.animation_palette_after_eye",
      (("palette_effects/execution.rs", "            *color = value;",

@@ -30,10 +30,12 @@ above 90%. Necessary safety growth must be counted and explained, not relabeled.
 Never reserve or hold Git index/ref locks; Git's own short locks cover actual writes
 only. Before every Git write, fetch/reconcile current origin/main, recheck HEAD/index
 and preserve others' work. Never delete another process's lock or force-push main.
-Windows has one implementation/Git integrator under the new oversight session.
+Root 01a17ecd takes implementation, coordination, Git, builds and the resource
+ledger only after 01a17c50's explicit RELEASE and verified terminal writer/turn
+state. Preserve current writer/jobs until then; main is the default, isolation optional.
 Linux development is stopped by the user (2026-10-27); preserve its frozen handoffs.
-Windows source owners may push coherent temporary migration branches with pending
-checks clearly named (user/oversight grant, 2026-10-27). Main requires qualification.
+Only the primary writes Git; optional branches can carry coherent source with
+pending checks named. Main requires qualification.
 Run named local rows on a tip reconciled with current origin/main, commit to main
 and immediately `git push origin HEAD:main`. A rejected push means fetch/rebase,
 rerun only affected rows, then push. Keep one Git writer and no force pushes.
@@ -50,23 +52,14 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-SOURCE37 native Samus content and lifecycle cohort is qualified.
-Source 5d73ade6 / DLL eaab5768 passes fresh library in 27.175 seconds,
-with 200 unchanged warning identities and 0 added. Final direct DLL: 88.295 seconds;
-all 81 units and source/native guards pass; minimum RAM: 2.772 GiB.
-All 26 assigned rows pass (23/44 required), including full Morph 1200 and
-BOTH independent Kago 14350 setups. Runtime: 199063 comparisons / 0 failures,
-in 2058.957 seconds. Genuine initialized 329 + resume 5, save 55650 and reserve
-91623 bind codec bd6b62db27d15b56. Its 78 contributors bind 1301655 raw /
-1292518 normalized bytes. The failed
-SOURCE36 fixture/type check remains preserved; SOURCE37 changes one tuple type.
-Returning-Die short replay-load failure is source-reviewed, not runtime-executed.
-Net versus main 1da27463: production +1417 / legacy 0 / unsafe-containing +15 /
-verification +1272; support reporter 80 separate. No retirement or savings claim.
-SOURCE38 driver is on a separate migration branch; its SOURCE39 witnesses,
-compiler and new-codec execution remain separately attributed and pending.
-Actual persistent Session/Display/start/adoption, binary checkpoint,
-Reference/audio, portability, boot-to-credits and size acceptance remain open.
+SOURCE38 connects actor layer-3 player drawing to the complete owned Runtime
+driver and adds the live B04/B06 body-coordinate projection. Native effects
+remain fenced; signed Maw aliases, distinct actor/intro Prepared rejection,
+unwind prefixes and refreshed observations are preserved. Five-file source
+review and formatting pass; compiler, witnesses and new-codec runtime are pending.
+This is a migration-branch source checkpoint. Persistent Session/Display,
+supplied start, final selected-state adoption, binary checkpoint, Reference/audio,
+portability and full-engine/size acceptance remain open.
 
 
 SOURCE36 connects the explicit Game Samus content binding to native body,
@@ -541,7 +534,7 @@ Bundled verifier cfg still reaches denied khronos_api scripts; use the separate 
 frontend and existing direct DLL with unchanged source/native/cache guards.
 Keep crate-root unsafe-op enforcement; paths in [ITERATION](ITERATION.md#windows-shell-setup).
 
-Use isolated snapshots/fixed interfaces/one integrator. Frozen formatted source may
+Use fixed interfaces and one writer; isolate when useful. Frozen formatted source may
 compile during final review; DLL/publication bind the reviewed final pin. Never edit
 checked source/rebuild loaded DLLs. Explicit followup_task wakes completed workers;
 send_message alone does not. Refill ready work without waiting on review prose.

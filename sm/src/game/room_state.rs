@@ -351,7 +351,7 @@ fn apply_fx(h: &mut Runtime<'_>, definition: &FxRecord, palette: PaletteBuffer) 
         } else {
             fx_table(h, 0x89aa02).word(usize::from(blend & !1) + 2 * (color - 25))
         };
-        let visuals = &mut h.session_mut().visual;
+        let visuals = &mut h.session_mut().presentation.visual_mut();
         match palette {
             PaletteBuffer::Current => visuals.colors[color] = value,
             PaletteBuffer::Target => visuals.targets[color] = value,

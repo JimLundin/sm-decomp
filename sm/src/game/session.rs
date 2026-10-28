@@ -101,21 +101,20 @@ pub struct PowerBomb {
 use crate::game::item_pickups::Inventory;
 #[derive(Clone, Debug, PartialEq)]
 pub struct Session {
-    pub(in crate::game) actor_identity: crate::game::actors::identity::ActorIdentityState,
+    pub(crate) actor_identity: crate::game::actors::identity::ActorIdentityState,
     pub(in crate::game) actors: crate::game::actors::Actors,
     pub(in crate::game) botwoon_death: crate::game::actors::botwoon_death::DeathProtocol,
     pub(in crate::game) timing: Timing,
     pub(crate) world: std::sync::Arc<crate::game::room_entry::world::WorldBinding>,
-    pub(crate) continuations: crate::game::room_entry::state::SharedContinuations,
+    pub(crate) control: crate::game::session_owners::Control,
     pub(crate) gameplay_flags: crate::game::gameplay_flag_state::GameplayFlags,
     pub(crate) flag_compatibility: crate::game::gameplay_flag_state::FlagCompatibility,
     pub sprite_effects: crate::game::sprite_effect_state::SpriteEffects,
     pub sprite_compatibility: crate::game::sprite_effect_state::SpriteCompatibilityTails,
-    pub visual: crate::game::visual_state::Visuals,
+    pub(crate) presentation: crate::game::session_owners::Presentation,
     pub projectiles: Projectiles,
     pub enemy_projectiles: EnemyProjectiles,
     pub player: Player,
-    pub atmospheric: crate::game::player_transitions::state::AtmosphericEffects,
     pub minimap: crate::game::player_update::state::State,
     pub inventory: Inventory,
     pub mechanisms: Mechanisms,
@@ -139,19 +138,15 @@ impl Session {
             timing: Default::default(),
             room: Room::with_world(&world),
             world,
-            continuations: crate::game::room_entry::state::SharedContinuations {
-                primary: 0,
-                secondary: 0,
-            },
+            control: crate::game::session_owners::Control::legacy(),
             gameplay_flags: Default::default(),
             flag_compatibility: Default::default(),
             sprite_effects: Default::default(),
             sprite_compatibility: Default::default(),
-            visual: Default::default(),
+            presentation: crate::game::session_owners::Presentation::legacy(),
             projectiles: Default::default(),
             enemy_projectiles: Default::default(),
             player: Default::default(),
-            atmospheric: Default::default(),
             minimap: Default::default(),
             inventory: Default::default(),
             mechanisms: Default::default(),
@@ -200,10 +195,11 @@ pub struct Player {
     pub(crate) grapple_velocity: Point,
     pub(crate) grapple_animation_delay: [u16; 16],
     pub(crate) grapple_animation_program: [u16; 16],
-    pub palette: crate::game::visual_state::PlayerPalette,
     pub periodic_damage_fraction: u16,
     pub x: u16,
     pub y: u16,
+    /// Last body publication, independent of player and camera coordinates.
+    pub(crate) body_position: Point,
     pub pose: u16,
     pub(crate) previous_health_for_flash: u16,
     pub(crate) top_sprite: u16,
@@ -230,6 +226,11 @@ pub struct Player {
     pub speed_divisor: u16,
     pub knockback_timer: u16,
     pub knockback_x_direction: u16,
+}
+impl Player {
+    pub(crate) fn animation_frame(&self) -> u16 {
+        self.animation_clock.frame
+    }
 }
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct FixedMotion {

@@ -102,7 +102,7 @@ impl Effects for Composed {
         }
     }
     fn draw_atmospheric_tile(&mut self, slot: usize, kind: u16) {
-        let s = &self.world.player.atmospheric.slots[slot];
+        let s = &self.world.player.presentation.atmospheric().slots[slot];
         self.events.push(Event::AtmosphericTile(
             slot,
             kind,

@@ -218,7 +218,7 @@ pub(crate) fn grab_by_draygon(direction: u16, h: &mut impl Host) {
     s.player.transitions.frame_gamma = FrameGammaMode::DraygonGrabbed;
     s.player.movement_handler = MovementMode::Disabled;
     s.shared_sequence = Default::default();
-    s.player.palette.suit_red_green = 0;
+    s.presentation.palette_mut().suit_red_green = 0;
     transitions::record_pose_history(s);
     s.player.transitions.clear_pose_requests();
 }
@@ -291,11 +291,11 @@ pub(crate) fn initialize_crystal_flash(h: &mut impl Host) -> bool {
     p.transitions.crystal_flash_ammo = 0;
     s.shared_sequence.stage = 10;
     s.shared_sequence.value = 0;
-    p.palette.suit_red_green = 0;
+    s.presentation.palette_mut().suit_red_green = 0;
     p.shine_tick = 7;
     p.palette_frame = 0;
     p.shine_timer = 1;
-    p.palette.crystal_flash_delay = 1;
+    s.presentation.palette_mut().crystal_flash_delay = 1;
     p.invincibility = 0;
     p.knockback_timer = 0;
     p.transitions.knockback = 0;
@@ -336,7 +336,7 @@ pub(crate) fn end_shinespark(h: &mut impl Host) -> u8 {
     s.projectiles.echoes.y[0] = s.player.y;
     s.projectiles.echoes.y[1] = s.player.y;
     s.projectiles.echoes.x_speed[2] = 0;
-    s.player.palette.hurt_flash = 0;
+    s.presentation.palette_mut().hurt_flash = 0;
     h.sound(1, 6, 0x35);
     h.sound(3, 6, 0x10);
     1

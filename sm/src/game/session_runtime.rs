@@ -77,21 +77,228 @@ pub(crate) struct Runtime<'g> {
     game: &'g mut Game,
     state: Option<Session>,
     inputs: ExternalInputs,
+    persistent_epoch: Option<u64>,
+    persistent: Option<(
+        crate::game::scene::samus_content::ContentDescription,
+        std::sync::Arc<crate::game_state::persistent_session::SessionStartRequirements>,
+    )>,
 }
 impl<'g> Runtime<'g> {
     pub fn new(game: &'g mut Game) -> Self {
         #[cfg(sm_verify_dll)]
         player_normal_transfers::record(game, 0);
+        if let Some(session) = game
+            .lease_persistent_session()
+            .expect("Session lease rejected")
+        {
+            return Self {
+                state: Some(session.gameplay),
+                inputs: session.observations,
+                persistent: Some((session.roles, session.required)),
+                persistent_epoch: Some(game.compatibility_write_epoch()),
+                game,
+            };
+        }
         Self {
             state: Some(import_session(game)),
             inputs: encoding::inputs(&|at| game.ram().read_byte(at)),
+            persistent: None,
+            persistent_epoch: None,
             game,
         }
+    }
+    fn persistent_is_current(&self) -> bool {
+        self.persistent_epoch.is_none_or(|epoch| {
+            epoch == self.game.compatibility_write_epoch()
+                && self.game.preflight_samus_runtime().is_ok()
+        })
     }
     pub(crate) fn samus_game(&self) -> &Game {
         self.game
     }
+    pub(crate) fn samus_source_diagnostic(&mut self, address: u32) {
+        native_rom_diagnostic(address, self.game);
+    }
+    pub(crate) fn has_owned_display(&self) -> bool {
+        self.session().presentation.is_owned()
+    }
+    pub(crate) fn draw_owned_body(&mut self, mode: crate::game::scene::samus_body::Body) {
+        use crate::game_state::persistent_session::{self, Presentation};
+        assert!(self.persistent_is_current(), "Session lease is dirty");
+        let state = self.state.as_mut().expect("Session lease");
+        let Presentation::Owned {
+            display,
+            marker,
+            samus_publications,
+            ..
+        } = &mut state.presentation
+        else {
+            panic!("owned Display required");
+        };
+        persistent_session::draw_body(
+            display.owner_mut(),
+            self.game,
+            &mut state.player,
+            &self.inputs,
+            samus_publications.clone(),
+            marker,
+            mode,
+        )
+        .expect("owned Samus body");
+    }
+    pub(crate) fn owned_bottom_visible(&mut self) -> bool {
+        use crate::game_state::persistent_session::{self, Presentation};
+        assert!(self.persistent_is_current(), "Session lease is dirty");
+        let state = self.state.as_mut().expect("Session lease");
+        let Presentation::Owned {
+            display,
+            marker,
+            samus_publications,
+            ..
+        } = &mut state.presentation
+        else {
+            panic!("owned Display required");
+        };
+        persistent_session::bottom_visible(
+            display.owner_mut(),
+            self.game,
+            &mut state.player,
+            &self.inputs,
+            samus_publications.clone(),
+            marker,
+        )
+        .expect("owned Samus bottom")
+    }
+    pub(crate) fn draw_owned_echo(&mut self, slot: u16) {
+        use crate::game::scene::samus_content::{Registration, Role};
+        let index = usize::from(slot >> 1);
+        let y = self.word(0xab8 + index * 2);
+        let source = self
+            .game
+            .prepared_samus_role(Role::PositionFallback, Registration::Loaded, 0)
+            .expect("echo role")
+            .expect("supplied loaded echo role");
+        let height = source
+            .byte(usize::from(self.session().player.pose) * 8 + 4)
+            .expect("echo height source");
+        let y = y
+            .wrapping_sub(u16::from(height))
+            .wrapping_sub(self.inputs.camera_y);
+        if (y as i16) >= 0 && y.wrapping_sub(248) & 0x8000 != 0 {
+            let producer = self
+                .session()
+                .presentation
+                .publications()
+                .expect("Samus publications")
+                .echoes
+                .get(index)
+                .copied()
+                .flatten()
+                .expect("supplied live echo producer");
+            let sprite = self.session().player.top_sprite;
+            let x = self
+                .word(0xab0 + index * 2)
+                .wrapping_sub(self.inputs.camera_x);
+            self.draw_owned_samus(producer, sprite, (x, y));
+            if self.session().player.bottom_sprite != 0 {
+                let sprite = self.session().player.bottom_sprite;
+                let x = self
+                    .word(0xab0 + index * 2)
+                    .wrapping_sub(self.inputs.camera_x);
+                self.draw_owned_samus(producer, sprite, (x, y));
+            }
+        }
+    }
+    pub(crate) fn draw_echo_samus_sprite(&mut self, slot: u16, index: u16, x: u16, y: u16) {
+        if self.has_owned_display() {
+            let producer = self
+                .session()
+                .presentation
+                .publications()
+                .expect("Samus publications")
+                .echoes
+                .get(usize::from(slot >> 1))
+                .copied()
+                .flatten()
+                .expect("supplied live echo producer");
+            self.draw_owned_samus(producer, index, (x, y));
+        } else {
+            crate::game::visual_host::Effects::draw_samus_sprite(self, index, x, y);
+        }
+    }
+    pub(crate) fn samus_request_written(
+        &mut self,
+        half: crate::game::scene::samus_body::Half,
+        pointer: u16,
+    ) {
+        let request = self
+            .game
+            .samus_request(half, pointer)
+            .expect("Samus request admission");
+        if !self.has_owned_display() {
+            return;
+        }
+        let request = request.expect("supplied Samus request");
+        let media = self
+            .session()
+            .presentation
+            .owner()
+            .expect("Display owner")
+            .media()
+            .clone();
+        request
+            .validate(pointer, &media)
+            .expect("Samus request content");
+        let slot = match half {
+            crate::game::scene::samus_body::Half::Top => 0,
+            crate::game::scene::samus_body::Half::Bottom => 1,
+        };
+        let owner = self
+            .session_mut()
+            .presentation
+            .owner_mut()
+            .expect("Display owner");
+        assert!(
+            owner.state.phase == crate::game::scene::state::DisplayPhase::Producing,
+            "Samus publication phase"
+        );
+        assert!(
+            owner.state.samus[slot].pointer == pointer && owner.state.samus[slot].enabled == 1,
+            "Samus request write prefix"
+        );
+        owner.state.samus[slot] = request.half;
+    }
+    pub(crate) fn draw_owned_samus(
+        &mut self,
+        producer: crate::game::scene::records::ProducerObjectId,
+        index: u16,
+        position: (u16, u16),
+    ) {
+        use crate::game_state::persistent_session::{self, Presentation};
+        assert!(self.persistent_is_current(), "Session lease is dirty");
+        let state = self.state.as_mut().expect("Session lease");
+        let Presentation::Owned {
+            display,
+            samus_publications,
+            ..
+        } = &mut state.presentation
+        else {
+            panic!("owned Display required");
+        };
+        persistent_session::draw_sprite(
+            display.owner_mut(),
+            self.game,
+            &mut state.player,
+            &self.inputs,
+            samus_publications.clone(),
+            producer,
+            index,
+            position,
+        )
+        .expect("owned Samus publication");
+    }
     pub fn foreign<R>(&mut self, action: impl FnOnce(&mut Game) -> R) -> R {
+        assert!(self.persistent_is_current(), "Session lease is dirty");
         preflight_export(self.session(), self.game);
         let mut mutation = self
             .game
@@ -118,6 +325,7 @@ impl<'g> Runtime<'g> {
     /// Compose an already-owned operation while retaining the former foreign
     /// entry's preflight, unwind publication, and refreshed input observations.
     pub(crate) fn owned_call<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R {
+        assert!(self.persistent_is_current(), "Session lease is dirty");
         preflight_export(self.session(), self.game);
         struct OwnedCall<'a, 'g> {
             runtime: &'a mut Runtime<'g>,
@@ -143,8 +351,55 @@ impl<'g> Runtime<'g> {
         call.completed = true;
         result
     }
+    /// Match the player driver's former Runtime entry and successful return seams.
+    pub(crate) fn owned_player_call<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R {
+        self.owned_call(|runtime| {
+            runtime.refresh_player_observations();
+            let result = action(runtime);
+            runtime.refresh_player_observations();
+            result
+        })
+    }
+    pub(crate) fn refresh_player_observations(&mut self) {
+        assert!(self.persistent_is_current(), "Session lease is dirty");
+        self.inputs = encoding::inputs(&|at| self.byte(at));
+    }
     fn relinquish(&mut self) {
         if let Some(state) = self.state.take() {
+            if let Some((roles, required)) = self.persistent.take() {
+                let matching = std::sync::Arc::ptr_eq(&state.world, self.game.world())
+                    && state.world.revision() == self.game.world().revision();
+                let mut epoch = self
+                    .persistent_epoch
+                    .take()
+                    .expect("persistent lease epoch");
+                let valid = matching
+                    && epoch == self.game.compatibility_write_epoch()
+                    && self.game.preflight_samus_runtime().is_ok();
+                if valid {
+                    // Publish compatibility bytes while keeping the same gameplay
+                    // and private Display owner; no decode or identity transfer.
+                    encoding::encode(&state, |at, bytes| self.game.ram().copy_in(at, bytes));
+                    export_native_spawn(&state, self.game);
+                    epoch = self.game.compatibility_write_epoch();
+                }
+                let completed = valid
+                    && !std::thread::panicking()
+                    && state.presentation.owner().is_ok_and(|owner| {
+                        owner.state.phase != crate::game::scene::state::DisplayPhase::Failed
+                    });
+                self.game.return_persistent_session(
+                    crate::game_state::persistent_session::PersistentSession {
+                        gameplay: state,
+                        observations: self.inputs.clone(),
+                        roles,
+                        required,
+                    },
+                    completed,
+                    epoch,
+                );
+                return;
+            }
             let matching = std::sync::Arc::ptr_eq(&state.world, self.game.world())
                 && state.world.revision() == self.game.world().revision();
             if matching
@@ -161,8 +416,12 @@ impl<'g> Runtime<'g> {
         }
     }
     pub(crate) fn byte(&self, at: usize) -> u8 {
-        encoding::projected_byte(self.session(), at)
-            .unwrap_or_else(|| self.game.ram().read_byte(at))
+        if self.persistent_is_current() {
+            if let Some(byte) = encoding::projected_byte(self.session(), at) {
+                return byte;
+            }
+        }
+        self.game.ram().read_byte(at)
     }
     pub(crate) fn word(&self, at: usize) -> u16 {
         u16::from_le_bytes([self.byte(at), self.byte(at + 1)])
@@ -180,36 +439,53 @@ impl<'g> Runtime<'g> {
         self.state.is_some()
     }
     pub(crate) fn session(&self) -> &Session {
+        assert!(self.persistent_is_current(), "Session lease is dirty");
         self.state
             .as_ref()
             .expect("aggregate unavailable during external effect")
     }
     pub(crate) fn session_mut(&mut self) -> &mut Session {
+        assert!(self.persistent_is_current(), "Session lease is dirty");
         self.state
             .as_mut()
             .expect("aggregate unavailable during external effect")
     }
     pub(crate) fn inputs(&self) -> &ExternalInputs {
+        assert!(self.persistent_is_current(), "Session lease is dirty");
         &self.inputs
     }
     // Legacy aliases observe the raw result before Drop republishes Session.
     pub(crate) fn update_maw_visibility(&mut self, actor: i32) {
+        assert!(self.persistent_is_current(), "Session lease is dirty");
         use crate::game::enemy_layouts::EnemyLayout104 as Maw;
         let outside = u16::from(crate::game::actors::api::current_outside_screen(&*self));
         let game = &mut *self.game;
         crate::ram_map::slot!(game, Maw[actor].var_36 = outside);
         // Retain raw LOW/HIGH stores and all old owned-region overwrites.
-        // Only the new death owner adopts its overlapping byte lanes.
+        // Only newly owned death/body lanes adopt this raw store.
         let at = crate::ram_map::slot!(@at Maw, actor, var_36);
         let bytes = outside.to_ne_bytes();
         let state = self.state.as_mut().expect("aggregate unavailable");
         encoding::write_botwoon_death_byte(state, at, bytes[0]);
         encoding::write_botwoon_death_byte(state, at + 1, bytes[1]);
+        for lane in [at, at + 1] {
+            if (0xb04..0xb08).contains(&lane) {
+                encoding::write_projected_byte(state, lane, game.ram().read_byte(lane));
+            }
+        }
+        if self.persistent_epoch.is_some() {
+            self.persistent_epoch = Some(game.compatibility_write_epoch());
+        }
     }
     pub(crate) fn native_word(&self, at: usize) -> u16 {
         u16::from_ne_bytes([self.byte(at), self.byte(at + 1)])
     }
     pub(crate) fn set_byte(&mut self, at: usize, value: u8) {
+        if !self.persistent_is_current() {
+            self.game.ram().write_byte(at, value);
+            self.inputs = encoding::inputs(&|lane| self.game.ram().read_byte(lane));
+            return;
+        }
         // Ordinary RAM and owned fields are one live projection during an interval.
         // A foreign destination may alias an external observation used next.
         if !encoding::write_projected_byte(
@@ -218,8 +494,31 @@ impl<'g> Runtime<'g> {
             value,
         ) {
             self.game.ram().write_byte(at, value);
+            if self.persistent_epoch.is_some() {
+                self.persistent_epoch = Some(self.game.compatibility_write_epoch());
+            }
         }
-        self.inputs = encoding::inputs(&|at| self.game.ram().read_byte(at));
+        if self.persistent.is_some()
+            && crate::game_state::persistent_session::Presentation::requires_semantic_counterpart(
+                at,
+            )
+        {
+            // Keep completed byte/typed prefixes for Drop publication, then
+            // retain this owner as failed until a complete semantic adoption.
+            self.session_mut()
+                .presentation
+                .owner_mut()
+                .expect("persistent Display")
+                .state
+                .phase = crate::game::scene::state::DisplayPhase::Failed;
+        }
+        self.inputs = encoding::inputs(&|at| {
+            if self.persistent.is_some() {
+                self.byte(at)
+            } else {
+                self.game.ram().read_byte(at)
+            }
+        });
         // Preserve observation refresh timing while A5A is owned by Session.
         self.inputs.transitions.frame_gamma = self.session().player.transitions.frame_gamma;
     }
@@ -282,6 +581,41 @@ impl actors::botwoon_death::Host for Runtime<'_> {
     }
 }
 
+impl crate::game_state::persistent_session::AudioHost for Runtime<'_> {
+    fn audio_byte(&self, at: usize) -> u8 {
+        self.byte(at)
+    }
+    fn audio_store_byte(&mut self, at: usize, byte: u8) {
+        self.set_byte(at, byte);
+    }
+    fn audio_mutation<R>(
+        &mut self,
+        operation: impl FnOnce(
+            &mut crate::game_state::persistent_session::AudioRequests,
+            &mut crate::game::scene::start::InitialAudioIntent,
+            crate::game_state::persistent_session::AudioStamp,
+        ) -> Result<R, crate::game::scene::state::DisplayError>,
+    ) -> Result<Option<R>, crate::game::scene::state::DisplayError> {
+        use crate::game::scene::state::{DisplayError, DisplayPhase};
+        use crate::game_state::persistent_session::Control;
+        if self.persistent.is_none() {
+            return Ok(None);
+        }
+        if !self.persistent_is_current() {
+            return Err(DisplayError::Poisoned);
+        }
+        let state = self.state.as_mut().ok_or(DisplayError::Phase)?;
+        let producing = state.presentation.owner()?.state.phase == DisplayPhase::Producing;
+        let Control::Owned(control) = &mut state.control else {
+            return Err(DisplayError::Phase);
+        };
+        let result = control.audio_mutation(producing, operation);
+        if result.is_err() {
+            state.presentation.owner_mut()?.state.phase = DisplayPhase::Failed;
+        }
+        result.map(Some)
+    }
+}
 impl Drop for Runtime<'_> {
     fn drop(&mut self) {
         self.relinquish();
@@ -335,6 +669,22 @@ impl Host for Runtime<'_> {
         content::captured(self.game.capture_native_rom(), address)
     }
     fn sound(&mut self, bank: u8, limit: u8, sound: u16) {
+        if self.has_owned_display() {
+            self.owned_call(|runtime| {
+                if !matches!(
+                    (bank, limit),
+                    (1, 6 | 9 | 15) | (2, 6) | (3, 3 | 6 | 9 | 15)
+                ) {
+                    unreachable!("unknown projectile sound queue");
+                }
+                let channel = usize::from(bank - 1);
+                #[cfg(sm_verify_dll)]
+                crate::game::visual_runtime::samus_observer::sound(channel, sound as u8, limit);
+                crate::game::music::requests::queue_sfx(channel, sound as u8, limit, runtime)
+                    .expect("audio sound enqueue");
+            });
+            return;
+        }
         self.foreign(|g| {
             if !matches!(
                 (bank, limit),
@@ -489,11 +839,11 @@ pub(crate) fn run_mechanisms(
     match context {
         CallerContext::Gameplay | CallerContext::DoorTransition => match result {
             RunResult::Complete => {
-                game.ram().write_byte(0x613, 0);
+                game.compatibility_write_owned_byte(0x613, 0);
                 0
             }
             RunResult::Yield(value) => {
-                game.ram().write_byte(0x613, 1);
+                game.compatibility_write_owned_byte(0x613, 1);
                 value.get()
             }
         },
@@ -1321,8 +1671,17 @@ impl Runtime<'_> {
     pub(crate) fn actor_hook_legacy(&mut self, routine: u32) {
         self.foreign(|game| unsafe { actor_species_draw_hook(routine, game) });
     }
-    pub(crate) fn actor_player_scene_legacy(&mut self) {
-        self.foreign(crate::game::visual_runtime::draw_player_frame);
+    pub(crate) fn produce_player_scene(&mut self) {
+        self.owned_player_call(|runtime| {
+            use crate::{game::scene::state::DisplayError, game_state::SamusExecution};
+            // The former actor foreign call rejected Prepared at its first import.
+            let ready = match runtime.game.samus_execution() {
+                Ok(Some(SamusExecution::Prepared)) => Err(DisplayError::Phase),
+                result => result.map(|_| ()),
+            };
+            ready.expect("Samus import rejected");
+            crate::game::visual_runtime::draw_player_frame_owned(runtime);
+        });
     }
     pub(crate) fn actor_draw_compatible(
         &mut self,

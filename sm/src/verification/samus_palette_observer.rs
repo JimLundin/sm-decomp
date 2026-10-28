@@ -25,7 +25,7 @@ pub(crate) fn inject(name: &str, state: &mut Session) {
     let timer = if id <= 30 { 2 } else { 1 };
     state.player.special_palette_flags = 0x8000;
     state.projectiles.controls.charge_palette = index;
-    state.player.palette.timer = timer;
+    state.presentation.palette_mut().timer = timer;
     let mut payload = 0x91d712u32.to_le_bytes().to_vec();
     for (address, value) in [(0xa4au32, 0x8000u16), (0xb62, index), (0xad0, timer)] {
         payload.extend_from_slice(&address.to_le_bytes());

@@ -3,9 +3,12 @@
 use super::{Composed, Event, Upload, World, animated};
 
 fn initial_music(host: &mut Composed) {
-    assert_eq!(&host.world.player.visual.colors[..3], &[0, 0, 0]);
     assert_eq!(
-        &host.world.player.visual.targets[..8],
+        &host.world.player.presentation.visual().colors[..3],
+        &[0, 0, 0]
+    );
+    assert_eq!(
+        &host.world.player.presentation.visual().targets[..8],
         &[
             0x3800, 0x7f58, 0x6ed5, 0x5a71, 0x49ee, 0x356a, 0x24e7, 0x1083
         ]
@@ -50,7 +53,12 @@ pub(super) fn composition() {
     ] {
         host.word(0x8d, cursor, value);
     }
-    host.world.player.visual.colors.fill(0x7777);
+    host.world
+        .player
+        .presentation
+        .visual_mut()
+        .colors
+        .fill(0x7777);
     animated::set_enabled(&mut host.world.player, true);
     super::colors::set_enabled(&mut host.world.player, true);
     animated::spawn(&mut host, 0x8000);
@@ -68,21 +76,33 @@ pub(super) fn composition() {
     ]);
     assert_eq!(host.events, expected);
     assert_eq!(
-        &host.world.player.visual.targets[..8],
+        &host.world.player.presentation.visual().targets[..8],
         &[
             0x3800, 0x7f58, 0x6ed5, 0x5a71, 0x49ee, 0x356a, 0x24e7, 0x1083
         ]
     );
     assert_eq!(
-        host.world.player.visual.palette_effects.slots[7].definition,
+        host.world
+            .player
+            .presentation
+            .visual()
+            .palette_effects
+            .slots[7]
+            .definition,
         0x8000
     );
     assert_eq!(
-        host.world.player.visual.palette_effects.slots[7].program,
+        host.world
+            .player
+            .presentation
+            .visual()
+            .palette_effects
+            .slots[7]
+            .program,
         0x9006
     );
     assert_eq!(
-        &host.world.player.visual.colors[..4],
+        &host.world.player.presentation.visual().colors[..4],
         &[0x1234, 0, 0, 0x7777]
     );
     assert_eq!(host.world.player.gameplay_flags.events[1], 2);
@@ -96,7 +116,10 @@ pub(super) fn composition() {
         ) & 2
             != 0
     );
-    assert_eq!(host.world.player.visual.animated_tiles.slots[5].source, 0);
+    assert_eq!(
+        host.world.player.presentation.visual().animated_tiles.slots[5].source,
+        0
+    );
     let snapshot = host.world.clone();
     host.events.clear();
     host.tick();

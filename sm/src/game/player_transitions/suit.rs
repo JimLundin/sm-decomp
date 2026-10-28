@@ -9,7 +9,7 @@ use crate::game::{
 };
 
 pub(crate) fn prepare<H: Host>(h: &mut H, gravity: bool, write_window: fn(&mut H, u16, u16)) {
-    let palette = &mut h.session_mut().player.palette;
+    let palette = &mut h.session_mut().presentation.palette_mut();
     palette.suit_red_green = u16::from_le_bytes([48, if gravity { 73 } else { 80 }]);
     palette.crystal_flash_delay = if gravity { 0x0190 } else { 0x0080 };
     samus_palette::cancel_speed_boost(h);
@@ -23,7 +23,7 @@ pub(crate) fn prepare<H: Host>(h: &mut H, gravity: bool, write_window: fn(&mut H
     s.room.entry.elevator_status = 0;
     s.shared_sequence.stage = 0;
     s.shared_sequence.value = 0;
-    s.player.palette.suit_beam_speed = 256;
+    s.presentation.palette_mut().suit_beam_speed = 256;
     for index in (0..256).rev() {
         write_window(h, index, 255);
     }
@@ -50,7 +50,7 @@ pub(crate) fn center(h: &mut impl Host) {
 }
 
 fn colors(s: &mut Session, white: bool) {
-    let palette = &mut s.player.palette;
+    let palette = &mut s.presentation.palette_mut();
     let [red, green] = palette.suit_red_green.to_le_bytes();
     let [blue, gravity] = palette.crystal_flash_delay.to_le_bytes();
     let targets = if white {
@@ -99,7 +99,7 @@ fn fill_edges<H: Host>(
 }
 
 pub(crate) fn expand<H: Host>(h: &mut H, write_window: fn(&mut H, u16, u16)) {
-    let speed = (h.session().player.palette.suit_beam_speed >> 8) as u8;
+    let speed = (h.session().presentation.palette().suit_beam_speed >> 8) as u8;
     let [left, right] = h.session().shared_sequence.value.to_le_bytes();
     h.session_mut().shared_sequence.value =
         u16::from_le_bytes([left.wrapping_sub(speed), right.wrapping_add(speed)]);
@@ -132,7 +132,7 @@ pub(crate) fn advance<H: Host>(
         1 => expand(h, write_window),
         2 => {
             colors(h.session_mut(), true);
-            let speed = (h.session().player.palette.suit_beam_speed >> 8) as u8;
+            let speed = (h.session().presentation.palette().suit_beam_speed >> 8) as u8;
             let [left, right] = h.session().shared_sequence.value.to_le_bytes();
             let left = left.wrapping_sub(speed);
             h.session_mut().shared_sequence.value = if left == 0 || (left as i8) < 0 {
@@ -153,12 +153,16 @@ pub(crate) fn advance<H: Host>(
                     u16::from_le_bytes([left, right.saturating_add(width)]),
                 );
             }
-            h.session_mut().player.palette.suit_beam_speed =
-                h.session().player.palette.suit_beam_speed.wrapping_add(96);
+            h.session_mut().presentation.palette_mut().suit_beam_speed = h
+                .session()
+                .presentation
+                .palette()
+                .suit_beam_speed
+                .wrapping_add(96);
             if h.session().shared_sequence.value == 0xff00 {
                 h.session_mut().shared_sequence.stage =
                     h.session().shared_sequence.stage.wrapping_add(1);
-                h.session_mut().player.palette.suit_beam_speed >>= 1;
+                h.session_mut().presentation.palette_mut().suit_beam_speed >>= 1;
                 h.session_mut().shared_sequence.value = 0;
             }
         }
@@ -178,15 +182,20 @@ pub(crate) fn advance<H: Host>(
                 .session()
                 .shared_sequence
                 .value
-                .wrapping_add(h.session().player.palette.suit_beam_speed >> 8);
+                .wrapping_add(h.session().presentation.palette().suit_beam_speed >> 8);
             fill_edges(h, 255, true, write_window);
-            let speed = h.session().player.palette.suit_beam_speed.wrapping_sub(32);
-            h.session_mut().player.palette.suit_beam_speed = if (speed as i16).wrapping_sub(256) < 0
-            {
-                256
-            } else {
-                speed
-            };
+            let speed = h
+                .session()
+                .presentation
+                .palette()
+                .suit_beam_speed
+                .wrapping_sub(32);
+            h.session_mut().presentation.palette_mut().suit_beam_speed =
+                if (speed as i16).wrapping_sub(256) < 0 {
+                    256
+                } else {
+                    speed
+                };
             if (h.session().shared_sequence.value as i16).wrapping_sub(128) >= 0 {
                 h.session_mut().shared_sequence.stage =
                     h.session().shared_sequence.stage.wrapping_add(1);

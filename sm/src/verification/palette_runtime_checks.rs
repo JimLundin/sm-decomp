@@ -28,8 +28,14 @@ pub(super) fn run(game: &mut Game) -> bool {
         put(&mut expected, 0xc00a, 0x1234);
         let failed = catch_unwind(AssertUnwindSafe(|| {
             let mut runtime = Runtime::new(game);
-            runtime.session_mut().visual.palette_effects.slots[0].counter = 2;
-            runtime.session_mut().visual.colors[5] = 0x1234;
+            runtime
+                .session_mut()
+                .presentation
+                .visual_mut()
+                .palette_effects
+                .slots[0]
+                .counter = 2;
+            runtime.session_mut().presentation.visual_mut().colors[5] = 0x1234;
             execution::command(&mut runtime, 9291321, 0, 0x9000);
         }));
         assert!(failed.is_err());
@@ -68,7 +74,12 @@ pub(super) fn run(game: &mut Game) -> bool {
             .copy_from_slice(&2u16.to_ne_bytes());
         let failed = catch_unwind(AssertUnwindSafe(|| {
             let mut runtime = Runtime::new(game);
-            runtime.session_mut().visual.palette_effects.heat = 1;
+            runtime
+                .session_mut()
+                .presentation
+                .visual_mut()
+                .palette_effects
+                .heat = 1;
             runtime.session_mut().player.periodic_damage_fraction = 0xc000;
             runtime.session_mut().player.periodic_damage = 1;
             execution::pre(&mut runtime, 9298809, 0);
@@ -100,9 +111,19 @@ pub(super) fn run(game: &mut Game) -> bool {
         put(&mut expected, ram::music_queue_write_pos, 4);
         {
             let mut runtime = Runtime::new(game);
-            runtime.session_mut().visual.palette_effects.flags = 0x8123;
-            runtime.session_mut().visual.palette_effects.selected = 14;
-            runtime.session_mut().visual.colors[5] = 0x4567;
+            runtime
+                .session_mut()
+                .presentation
+                .visual_mut()
+                .palette_effects
+                .flags = 0x8123;
+            runtime
+                .session_mut()
+                .presentation
+                .visual_mut()
+                .palette_effects
+                .selected = 14;
+            runtime.session_mut().presentation.visual_mut().colors[5] = 0x4567;
             let failed = catch_unwind(AssertUnwindSafe(|| {
                 runtime.foreign(|game| {
                     assert_eq!(

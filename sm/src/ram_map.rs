@@ -186,7 +186,7 @@ macro_rules! word {
             offset => {
                 // Check both bytes without borrowing any part of the RAM array.
                 assert!(offset < 131071, "word address outside RAM");
-                u16::from_le_bytes([$game.ram().read_byte(offset), $game.ram().read_byte(offset + 1)])
+                u16::from_le_bytes([$game.compatibility_byte(offset), $game.compatibility_byte(offset + 1)])
             }
         }
     };
@@ -197,8 +197,8 @@ macro_rules! word {
             (value, offset) => {
                 assert!(offset < 131071, "word address outside RAM");
                 let bytes = u16::to_le_bytes(value);
-                $game.ram().write_byte(offset, bytes[0]);
-                $game.ram().write_byte(offset + 1, bytes[1]);
+                $game.compatibility_write_byte(offset, bytes[0]);
+                $game.compatibility_write_byte(offset + 1, bytes[1]);
             }
         }
     };
@@ -223,14 +223,14 @@ macro_rules! checked_word {
     };
     ($game:ident, $offset:expr;) => {{
         let offset: usize = $offset;
-        u16::from_le_bytes([$game.ram().read_byte(offset), $game.ram().read_byte(offset + 1)])
+        u16::from_le_bytes([$game.compatibility_byte(offset), $game.compatibility_byte(offset + 1)])
     }};
     ($game:ident, $offset:expr; = $value:expr) => {
         match ($value, $offset) {
             (value, offset) => {
                 let bytes = u16::to_le_bytes(value);
-                $game.ram().write_byte(offset, bytes[0]);
-                $game.ram().write_byte(offset + 1, bytes[1]);
+                $game.compatibility_write_byte(offset, bytes[0]);
+                $game.compatibility_write_byte(offset + 1, bytes[1]);
             }
         }
     };
