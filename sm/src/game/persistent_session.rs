@@ -1482,6 +1482,24 @@ pub(crate) fn validate_normalized_projection(
     }
 }
 impl SessionSnapshotPayload {
+    /// Detached binary component only; full machine restore remains unsupported.
+    pub(crate) fn encode_audio_checkpoint(&self) -> Result<Vec<u8>, String> {
+        let state = self.0.as_ref().ok_or("no supplied Session audio owner")?;
+        state
+            .0
+            .gameplay
+            .control
+            .requests()
+            .map_err(|error| format!("{error:?}"))?
+            .encode_checkpoint(state.0.metadata(), &state.0.required.audio_catalog)
+    }
+    pub(crate) fn decode_audio_checkpoint(
+        bytes: &[u8],
+        metadata: &DisplayStartMetadata,
+        required: &SessionStartRequirements,
+    ) -> Result<AudioRequests, String> {
+        AudioRequests::decode_checkpoint(bytes, metadata, required.audio_catalog.clone())
+    }
     pub(crate) fn is_owned(&self) -> bool {
         self.0.is_some()
     }

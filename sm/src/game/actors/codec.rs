@@ -376,3 +376,332 @@ pub(super) fn write_spawn_changes<H: ?Sized>(
         }
     }
 }
+
+// The supplied audio component extends this codec's explicit LE field encoding.
+// It shares the existing bounded checkpoint cursor, with no machine/RAM access.
+use super::snapshot::CheckpointReader;
+use crate::game::scene::{
+    component::DisplayStartMetadata,
+    records::{AssetId, AssetRef, Revision},
+};
+use crate::game_state::persistent_session::{
+    AudioRequestCatalog, AudioRequests, MusicContinuation, MusicMeaning, MusicRequests,
+    QueuedMusicMeaning, QueuedSoundMeaning, SoundMeaning, SoundRequests,
+};
+use std::sync::Arc;
+
+fn audio_asset(bytes: &mut Vec<u8>, asset: AssetRef) {
+    bytes.extend_from_slice(&asset.id.0.to_le_bytes());
+    bytes.extend_from_slice(&asset.revision.0);
+}
+fn audio_read_asset(read: &mut CheckpointReader<'_>) -> Result<AssetRef, String> {
+    Ok(AssetRef {
+        id: AssetId(read.id()?),
+        revision: Revision(read.bytes(32)?.try_into().unwrap()),
+    })
+}
+fn audio_continuation(bytes: &mut Vec<u8>, value: &MusicContinuation) {
+    match value {
+        MusicContinuation::Retain => bytes.push(0),
+        MusicContinuation::Silence => bytes.push(1),
+        MusicContinuation::Program { program, phase } => {
+            bytes.push(2);
+            audio_asset(bytes, *program);
+            bytes.extend_from_slice(&phase.to_le_bytes());
+        }
+    }
+}
+fn audio_read_continuation(read: &mut CheckpointReader<'_>) -> Result<MusicContinuation, String> {
+    match read.byte()? {
+        0 => Ok(MusicContinuation::Retain),
+        1 => Ok(MusicContinuation::Silence),
+        2 => Ok(MusicContinuation::Program {
+            program: audio_read_asset(read)?,
+            phase: read.counter()?,
+        }),
+        _ => Err("unknown audio checkpoint continuation".into()),
+    }
+}
+fn audio_music_meaning(bytes: &mut Vec<u8>, value: &MusicMeaning) {
+    match value {
+        MusicMeaning::Silence => bytes.push(0),
+        MusicMeaning::Bank { bank, after } => {
+            bytes.push(1);
+            audio_asset(bytes, *bank);
+            audio_continuation(bytes, after);
+        }
+        MusicMeaning::Program { program, phase } => {
+            bytes.push(2);
+            audio_asset(bytes, *program);
+            bytes.extend_from_slice(&phase.to_le_bytes());
+        }
+    }
+}
+fn audio_music_record(bytes: &mut Vec<u8>, value: &Option<QueuedMusicMeaning>) {
+    let Some(value) = value else {
+        bytes.push(0);
+        return;
+    };
+    bytes.push(1);
+    bytes.extend_from_slice(&value.request.to_le_bytes());
+    bytes.extend_from_slice(&value.source_tick.to_le_bytes());
+    bytes.extend_from_slice(&value.source_interval.to_le_bytes());
+    audio_music_meaning(bytes, &value.meaning);
+}
+fn audio_read_music_record(
+    read: &mut CheckpointReader<'_>,
+) -> Result<Option<QueuedMusicMeaning>, String> {
+    match read.byte()? {
+        0 => return Ok(None),
+        1 => {}
+        _ => return Err("unknown audio checkpoint music option".into()),
+    }
+    let request = read.word()?;
+    let source_tick = read.counter()?;
+    let source_interval = read.counter()?;
+    let meaning = match read.byte()? {
+        0 => MusicMeaning::Silence,
+        1 => MusicMeaning::Bank {
+            bank: audio_read_asset(read)?,
+            after: audio_read_continuation(read)?,
+        },
+        2 => MusicMeaning::Program {
+            program: audio_read_asset(read)?,
+            phase: read.counter()?,
+        },
+        _ => return Err("unknown audio checkpoint music meaning".into()),
+    };
+    Ok(Some(QueuedMusicMeaning {
+        request,
+        source_tick,
+        source_interval,
+        meaning,
+    }))
+}
+fn audio_sound_meaning(bytes: &mut Vec<u8>, value: &SoundMeaning) {
+    match value {
+        SoundMeaning::Stop => bytes.push(0),
+        SoundMeaning::Program { program, phase } => {
+            bytes.push(1);
+            audio_asset(bytes, *program);
+            bytes.extend_from_slice(&phase.to_le_bytes());
+        }
+    }
+}
+fn audio_sound_record(bytes: &mut Vec<u8>, value: &Option<QueuedSoundMeaning>) {
+    let Some(value) = value else {
+        bytes.push(0);
+        return;
+    };
+    bytes.push(1);
+    bytes.push(value.request);
+    bytes.extend_from_slice(&value.source_tick.to_le_bytes());
+    bytes.extend_from_slice(&value.source_interval.to_le_bytes());
+    audio_sound_meaning(bytes, &value.meaning);
+}
+fn audio_read_sound_record(
+    read: &mut CheckpointReader<'_>,
+) -> Result<Option<QueuedSoundMeaning>, String> {
+    match read.byte()? {
+        0 => return Ok(None),
+        1 => {}
+        _ => return Err("unknown audio checkpoint sound option".into()),
+    }
+    let request = read.byte()?;
+    let source_tick = read.counter()?;
+    let source_interval = read.counter()?;
+    let meaning = match read.byte()? {
+        0 => SoundMeaning::Stop,
+        1 => SoundMeaning::Program {
+            program: audio_read_asset(read)?,
+            phase: read.counter()?,
+        },
+        _ => return Err("unknown audio checkpoint sound meaning".into()),
+    };
+    Ok(Some(QueuedSoundMeaning {
+        request,
+        source_tick,
+        source_interval,
+        meaning,
+    }))
+}
+fn audio_words<const N: usize>(read: &mut CheckpointReader<'_>) -> Result<[u16; N], String> {
+    let mut values = Vec::with_capacity(N);
+    for _ in 0..N {
+        values.push(read.word()?);
+    }
+    values
+        .try_into()
+        .map_err(|_| "audio checkpoint word count".into())
+}
+fn audio_music_records<const N: usize>(
+    read: &mut CheckpointReader<'_>,
+) -> Result<[Option<QueuedMusicMeaning>; N], String> {
+    let mut values = Vec::with_capacity(N);
+    for _ in 0..N {
+        values.push(audio_read_music_record(read)?);
+    }
+    values
+        .try_into()
+        .map_err(|_| "audio checkpoint music record count".into())
+}
+fn audio_sound_records<const N: usize>(
+    read: &mut CheckpointReader<'_>,
+) -> Result<[Option<QueuedSoundMeaning>; N], String> {
+    let mut values = Vec::with_capacity(N);
+    for _ in 0..N {
+        values.push(audio_read_sound_record(read)?);
+    }
+    values
+        .try_into()
+        .map_err(|_| "audio checkpoint sound record count".into())
+}
+fn audio_catalog_bytes(catalog: &AudioRequestCatalog) -> Vec<u8> {
+    let mut bytes = Vec::new();
+    bytes.extend_from_slice(&(catalog.music.len() as u64).to_le_bytes());
+    for (selector, meaning) in &catalog.music {
+        bytes.extend_from_slice(&selector.to_le_bytes());
+        audio_music_meaning(&mut bytes, meaning);
+    }
+    bytes.extend_from_slice(&(catalog.sounds.len() as u64).to_le_bytes());
+    for ((channel, selector), meaning) in &catalog.sounds {
+        bytes.extend_from_slice(&(*channel as u64).to_le_bytes());
+        bytes.push(*selector);
+        audio_sound_meaning(&mut bytes, meaning);
+    }
+    bytes
+}
+impl AudioRequests {
+    /// Complete detached request component. Capture rejects any pending publication.
+    pub(crate) fn encode_checkpoint(
+        &self,
+        metadata: &DisplayStartMetadata,
+        required: &AudioRequestCatalog,
+    ) -> Result<Vec<u8>, String> {
+        self.validate(metadata, required)
+            .map_err(|error| format!("audio checkpoint {error:?}"))?;
+        let mut bytes = Vec::from(b"SMAUDIO\x01".as_slice());
+        bytes.push(u8::from(self.pending_mutation));
+        let catalog_bytes = audio_catalog_bytes(&self.catalog);
+        bytes.extend_from_slice(&(catalog_bytes.len() as u64).to_le_bytes());
+        bytes.extend_from_slice(&catalog_bytes);
+        bytes.extend_from_slice(&self.uploading.to_le_bytes());
+        bytes.extend_from_slice(&self.downtime.to_le_bytes());
+        for word in self.music.tracks.iter().chain(&self.music.delays) {
+            bytes.extend_from_slice(&word.to_le_bytes());
+        }
+        for word in [
+            self.music.write,
+            self.music.read,
+            self.music.entry,
+            self.music.timer,
+            self.music.data_index,
+            self.music.track_index,
+        ] {
+            bytes.extend_from_slice(&word.to_le_bytes());
+        }
+        bytes.push(self.music.current_track);
+        for record in &self.music.meanings {
+            audio_music_record(&mut bytes, record);
+        }
+        audio_music_record(&mut bytes, &self.music.entry_meaning);
+        audio_music_record(&mut bytes, &self.music.current_meaning);
+        for sound in &self.sounds {
+            bytes.extend_from_slice(&[
+                sound.read,
+                sound.write,
+                sound.state,
+                sound.current,
+                sound.clear_delay,
+                sound.maximum_queued,
+            ]);
+            bytes.extend_from_slice(&sound.queue);
+            for record in &sound.meanings {
+                audio_sound_record(&mut bytes, record);
+            }
+            audio_sound_record(&mut bytes, &sound.current_meaning);
+        }
+        Ok(bytes)
+    }
+    /// Decode into a new value against independent declarations, before adoption.
+    /// Catalog meanings are compared to explicit encoded records, never inferred
+    /// from queue numbers. Unknown tags, trailing bytes and missing records reject.
+    pub(crate) fn decode_checkpoint(
+        bytes: &[u8],
+        metadata: &DisplayStartMetadata,
+        catalog: Arc<AudioRequestCatalog>,
+    ) -> Result<Self, String> {
+        let mut read = CheckpointReader(bytes);
+        if read.bytes(8)? != b"SMAUDIO\x01" {
+            return Err("unsupported audio checkpoint schema".into());
+        }
+        let pending_mutation = match read.byte()? {
+            0 => false,
+            _ => return Err("incomplete audio checkpoint publication".into()),
+        };
+        let catalog_size = usize::try_from(read.counter()?)
+            .map_err(|_| "audio checkpoint catalog length overflow")?;
+        if read.bytes(catalog_size)? != audio_catalog_bytes(&catalog) {
+            return Err("audio checkpoint catalog declarations changed".into());
+        }
+        let uploading = read.word()?;
+        let downtime = read.word()?;
+        let tracks = audio_words(&mut read)?;
+        let delays = audio_words(&mut read)?;
+        let write = read.word()?;
+        let music_read = read.word()?;
+        let entry = read.word()?;
+        let timer = read.word()?;
+        let data_index = read.word()?;
+        let track_index = read.word()?;
+        let current_track = read.byte()?;
+        let meanings = audio_music_records(&mut read)?;
+        let entry_meaning = audio_read_music_record(&mut read)?;
+        let current_meaning = audio_read_music_record(&mut read)?;
+        let music = MusicRequests {
+            tracks,
+            delays,
+            write,
+            read: music_read,
+            entry,
+            timer,
+            data_index,
+            track_index,
+            current_track,
+            meanings,
+            entry_meaning,
+            current_meaning,
+        };
+        let mut sounds = Vec::with_capacity(3);
+        for _ in 0..3 {
+            sounds.push(SoundRequests {
+                read: read.byte()?,
+                write: read.byte()?,
+                state: read.byte()?,
+                current: read.byte()?,
+                clear_delay: read.byte()?,
+                maximum_queued: read.byte()?,
+                queue: read.bytes(16)?.try_into().unwrap(),
+                meanings: audio_sound_records(&mut read)?,
+                current_meaning: audio_read_sound_record(&mut read)?,
+            });
+        }
+        if !read.0.is_empty() {
+            return Err("trailing audio checkpoint fields".into());
+        }
+        let result = Self {
+            music,
+            sounds: sounds
+                .try_into()
+                .map_err(|_| "audio checkpoint channel count")?,
+            uploading,
+            downtime,
+            catalog,
+            pending_mutation,
+        };
+        result
+            .validate(metadata, &result.catalog)
+            .map_err(|error| format!("audio checkpoint {error:?}"))?;
+        Ok(result)
+    }
+}
