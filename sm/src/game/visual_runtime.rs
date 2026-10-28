@@ -679,11 +679,6 @@ impl visual_host::Effects for Runtime<'_> {
             self.owned_call(|runtime| {
                 crate::game::music::requests::enqueue(track, 8, true, runtime)
                     .expect("audio enqueue");
-                crate::game_state::persistent_session::AudioHost::audio_mutation(
-                    runtime,
-                    |_, _, _| Ok(()),
-                )
-                .expect("audio enqueue");
             });
             return;
         }

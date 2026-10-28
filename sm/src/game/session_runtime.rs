@@ -682,13 +682,6 @@ impl Host for Runtime<'_> {
                 crate::game::visual_runtime::samus_observer::sound(channel, sound as u8, limit);
                 crate::game::music::requests::queue_sfx(channel, sound as u8, limit, runtime)
                     .expect("audio sound enqueue");
-                // Capacity/gate rejection still completes the original limit store.
-                // Validate that numeric prefix without resolving a rejected request.
-                crate::game_state::persistent_session::AudioHost::audio_mutation(
-                    runtime,
-                    |_, _, _| Ok(()),
-                )
-                .expect("audio sound enqueue");
             });
             return;
         }
