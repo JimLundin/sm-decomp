@@ -2,7 +2,7 @@
 #![forbid(unsafe_code)]
 
 use super::{
-    records::{SceneAsset, SceneMedia},
+    records::SceneMedia,
     samus_body::Half,
     state::{DisplayError, DisplayState, SamusHalf, SourceSpan, TransferSource, WordOrder},
 };
@@ -186,49 +186,8 @@ pub struct TileRequest {
     pub pointer: u16,
     pub half: SamusHalf,
 }
-fn validate_asset_source(source: &SourceSpan, media: &SceneMedia) -> Result<(), DisplayError> {
-    source.validate(media.revision())?;
-    let asset = media
-        .asset(source.asset)
-        .map_err(|_| DisplayError::Identity)?;
-    let matches_word = |index: usize, word: u16| {
-        source.bytes.get(2 * index..2 * index + 2) == Some(word.to_le_bytes().as_slice())
-    };
-    let valid = match asset {
-        SceneAsset::Atlas(atlas) => {
-            source.bytes.len() == atlas.data.len() * 2
-                && atlas
-                    .data
-                    .iter()
-                    .enumerate()
-                    .all(|(index, word)| matches_word(index, *word))
-        }
-        SceneAsset::Map(map) => {
-            source.bytes.len() == map.cells.len() * 2
-                && map
-                    .cells
-                    .iter()
-                    .enumerate()
-                    .all(|(index, cell)| matches_word(index, cell.planar_word()))
-        }
-        SceneAsset::Palette(palette) => {
-            source.bytes.len() == palette.colors.len() * 2
-                && palette
-                    .colors
-                    .iter()
-                    .enumerate()
-                    .all(|(index, word)| matches_word(index, *word))
-        }
-        _ => false,
-    };
-    if valid {
-        Ok(())
-    } else {
-        Err(DisplayError::Source)
-    }
-}
 impl TileRequest {
-    fn validate(&self, pointer: u16, media: &SceneMedia) -> Result<(), DisplayError> {
+    pub(crate) fn validate(&self, pointer: u16, media: &SceneMedia) -> Result<(), DisplayError> {
         if self.pointer != pointer || self.half.enabled != 1 {
             return Err(DisplayError::Incomplete);
         }
@@ -243,7 +202,8 @@ impl TileRequest {
             let TransferSource::Asset(source) = &transfer.source else {
                 return Err(DisplayError::Incomplete);
             };
-            validate_asset_source(source, media)?;
+            source.validate(media.revision())?;
+            source.validate_media(media)?;
             if active && source.bytes.len() - source.offset < transfer.byte_count() {
                 return Err(DisplayError::Source);
             }

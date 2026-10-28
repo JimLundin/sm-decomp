@@ -50,6 +50,16 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
+SOURCE34 shares the exact allocation-free full asset-byte validator. State
+retains payload-only admission; tile requests retain their original explicit
+identity/revision/offset prefix and first0/second0 transfer rules. Both methods
+are pub(crate) for the real content cohort. Net -20 production; 70 registered
+units remain raw-identical to SOURCE33. Source review/format/inventory pass;
+DLL/runtime remain pending on the migration branch. Codec 6bf62feb168ff63b has
+76 contributors; no intermediate capture/compile or old-codec transfer. Role
+module R1 and actual Game/G/native consumer/lifecycle remain active dependencies.
+
+
 SOURCE33 adds four independently authored catalog admission/lifecycle checks:
 missing content behind original failures, malformed/valid changed catalogs,
 rejected reset owner preservation and supplied Arc transfer through reset/reopen.
