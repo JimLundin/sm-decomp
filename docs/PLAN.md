@@ -90,8 +90,13 @@ Original 200 library and 209 frontend warning causes remain; all 85 codec leaves
 are unchanged. Net -6 production/-2 unsafe-containing; C header -1, selected C -11.
 The two C allocation/free paths, two Rust free sites and obsolete malloc/memcpy
 helper retire. Controlled path and hardware variants remain unexecuted.
-Next: qualify the reviewed typed music/SFX callback source 17bd7d1d, including
-its extended owned witness and genuine captures for two changed codec leaves.
+Typed music/SFX callback source 17bd7d1d passes review, library (28.039s), DLL
+(98.623s), actual 87/87 units and frontend (177.934s), with original warning causes.
+Its two changed codec leaves have genuine initialized/save/reserve captures and
+continuations: 26 distinct rows / 199,063 comparisons / 0 failures, coverage 23/44.
+Full Morph 1200 and BOTH independent Kago 14350 approaches pass; no restamps.
+Next: reviewed SPC channel/tempo source bc29e239 passes the library checkpoint;
+its DLL/frontend and genuine final-codec campaign follow the released audio jobs.
 The native audio adapter remains; alternate sound banks and menu selection are open.
 Prefer Python for portable automation, with standalone scripts instead of inline
 Python in GitHub Actions. Reserves 2 GiB/50 GiB.

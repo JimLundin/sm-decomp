@@ -2,7 +2,7 @@
 #![forbid(unsafe_code)]
 
 use crate::game::scene::state::DisplayError;
-use crate::game_state::persistent_session::AudioHost;
+use crate::game_state::persistent_session::{AudioHost, QueuedMusicMeaning, QueuedSoundMeaning};
 
 // Complete only after a successful numeric prefix. This neither publishes a
 // request nor supplies a meaning for a rejected slot; Legacy skips the closure.
@@ -110,7 +110,8 @@ pub(crate) fn clear_queue(host: &mut impl AudioHost) -> Result<(), DisplayError>
 }
 
 /// The native wrapper retains bank upload and APU writes; owned callers provide
-/// their actual sound consumer. Callbacks may mutate the host before fresh reads.
+/// their actual sound consumer. The meaning is the captured authored record;
+/// numeric compatibility values and post-callback fresh reads remain separate.
 pub(crate) enum MusicEffect {
     UploadBank,
     WriteTrack(u8),
@@ -118,7 +119,7 @@ pub(crate) enum MusicEffect {
 
 pub(crate) fn advance_music<H: AudioHost>(
     host: &mut H,
-    mut effect: impl FnMut(MusicEffect, &mut H) -> Result<(), DisplayError>,
+    mut effect: impl FnMut(MusicEffect, Option<&QueuedMusicMeaning>, &mut H) -> Result<(), DisplayError>,
 ) -> Result<(), DisplayError> {
     let previous = host.audio_word(0x63f);
     host.audio_store_word(0x63f, previous.wrapping_sub(1));
@@ -142,7 +143,9 @@ pub(crate) fn advance_music<H: AudioHost>(
         if host.audio_word(0x63d) & 0x8000 != 0 {
             host.audio_store_word(0x7f3, u16::from(host.audio_word(0x63d) as u8));
             host.audio_store_byte(0x64c, 0xff);
-            callback(host, |host| effect(MusicEffect::UploadBank, host))?;
+            callback(host, |host| {
+                effect(MusicEffect::UploadBank, record.as_ref(), host)
+            })?;
             host.audio_store_byte(0x64c, 0);
             if let Some(record) = record {
                 host.audio_mutation(|requests, audio, stamp| {
@@ -156,7 +159,7 @@ pub(crate) fn advance_music<H: AudioHost>(
         let track = host.audio_word(0x63d) as u8 & 0x7f;
         host.audio_store_word(0x7f5, host.audio_word(0x63d) & 0x7f);
         let command = MusicEffect::WriteTrack(host.audio_word(0x63d) as u8 & 0x7f);
-        callback(host, |host| effect(command, host))?;
+        callback(host, |host| effect(command, record.as_ref(), host))?;
         host.audio_store_byte(0x64c, track);
         if let Some(record) = record {
             host.audio_mutation(|requests, audio, stamp| {
@@ -247,12 +250,12 @@ pub(crate) fn queue_sfx(
 
 pub(crate) fn advance_sound_effects<H: AudioHost>(
     host: &mut H,
-    mut write: impl FnMut(u8, u8, &mut H) -> Result<(), DisplayError>,
+    mut write: impl FnMut(u8, u8, Option<&QueuedSoundMeaning>, &mut H) -> Result<(), DisplayError>,
 ) -> Result<(), DisplayError> {
     if (host.audio_byte(0x686) as i8).wrapping_sub(1) >= 0 {
         host.audio_store_byte(0x686, host.audio_byte(0x686).wrapping_sub(1));
         for channel in 0..3 {
-            callback(host, |host| write(channel as u8, 0, host))?;
+            callback(host, |host| write(channel as u8, 0, None, host))?;
             host.audio_store_byte(0x64d + channel, 0);
             host.audio_mutation(|requests, _, _| requests.clear_current_sound(channel))?;
         }
@@ -275,7 +278,9 @@ pub(crate) fn advance_sound_effects<H: AudioHost>(
                             .ok_or(DisplayError::Source)?;
                         requests.capture_sound(channel, local_slot, sound)
                     })?;
-                    callback(host, |host| write(channel as u8, sound, host))?;
+                    callback(host, |host| {
+                        write(channel as u8, sound, record.as_ref(), host)
+                    })?;
                     host.audio_store_byte(0x64d + channel, sound);
                     host.audio_store_byte(0x643 + channel, slot.wrapping_add(1) & 15);
                     let value = host.audio_byte(0x649 + channel).wrapping_add(1);

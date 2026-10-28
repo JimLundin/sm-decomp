@@ -9,17 +9,18 @@ Read [PLAN](../../../docs/PLAN.md) first, then [REVIEW](../../../docs/REVIEW.md)
 Milestone plan at each item's start. Direct user instructions win. REVIEW sets
 priorities; PLAN owns required checks, resources, Git and completion.
 
-Use the assigned checkout/source pin, stage scope, root-admitted budget, original
-handles and next recipient. Read [iteration](../../../docs/ITERATION.md) and
+Use the assigned checkout/source pin, stages, original handles and next recipient.
+Read [iteration](../../../docs/ITERATION.md) and
 [native dependencies](../../../docs/NATIVE_DEPENDENCIES.md) for reached commands.
 
 1. Collect completed stages from original handles instead of rebuilding them.
    Preserve frozen checked source and loaded DLLs. Bind compiler/toolchain/profile,
    source/native inputs, output directory and final artifact bytes to the result.
-2. Execute only on authorized hosts with the root's admitted workflow allowance.
-   Use independent output directories for concurrent jobs. Linux remains stopped
-   unless the user explicitly restarts it; keep existing source/native/cache guards
-   and use the supported local Windows path.
+2. Use only root-admitted stages on authorized hosts. Launch prepared conditional
+   successors immediately after prior terminal release, exact guards and fresh fit
+   under [resources](../sm-decomp-resources/SKILL.md), without another root ACK.
+   Notify root at START; preserve ceilings, independent outputs and source/native/
+   cache guards. Use supported Windows; Linux needs explicit user restart.
 3. If DLL growth blocks admission, use PLAN's admissible normal-library allowance
    only when no successful proof transfers to the unchanged pinned inputs.
    Otherwise reuse that result; final DLL/runtime qualification remains pending.
@@ -32,9 +33,9 @@ handles and next recipient. Read [iteration](../../../docs/ITERATION.md) and
    options, native inputs and profile. Unchanged totals can hide new warnings.
    A warning increase, denied launch or missing artifact needs a correction or
    supported execution route; it is not a passing stage.
-6. Send DLL/source/native identity, completed stages, executed units, gaps and
-   original handles directly to replay and the primary. Record actual START/EXIT
-   when known; notify the root at terminal compilation to release admission.
+6. Send minimal DLL/source/native pins, stages/units/gaps and original handles
+   to the assigned replay owner and primary before extended receipts. Record actual
+   START/EXIT; notify root on terminal compilation for release.
 
 When reporting CI, select [CI](../../../.github/workflows/ci.yml) for the exact
 pinned commit and verify run head_sha and required job conclusions. Other workflows

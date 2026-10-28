@@ -4,7 +4,7 @@
 use super::*;
 use crate::audio_snapshot::ApuQueueSnapshot;
 use crate::game_state::persistent_session::{
-    AudioRequestCatalog, AudioRequests, MusicContinuation, MusicMeaning, MusicRequests,
+    AudioHost, AudioRequestCatalog, AudioRequests, MusicContinuation, MusicMeaning, MusicRequests,
     QueuedMusicMeaning, QueuedSoundMeaning, SessionStartContract, SoundMeaning, SoundRequests,
 };
 
@@ -245,6 +245,7 @@ pub(super) fn run(owner: &GameOwner, original_contract: &SessionStartContract) {
         .unwrap();
     assert_eq!(owner.encode_session_checkpoint().unwrap(), bytes);
     assert_current(owner, &expected, &audio, &accepted);
+    assert_deliveries(owner, &bytes, &media, &contract, &accepted);
     owner.with(|game| {
         let epoch = game.compatibility_write_epoch();
         let mut session = game.lease_persistent_session().unwrap().unwrap();
@@ -424,4 +425,357 @@ fn assert_malformed(bytes: &[u8], reject: impl Fn(&[u8], &str)) {
         malformed[current + offset] ^= 1;
         reject(&malformed, "audio checkpoint Identity");
     }
+}
+
+// Enter the existing owned production interval; no synthetic AudioHost or queue.
+fn producing<R>(
+    owner: &GameOwner,
+    prepare: impl FnOnce(&mut AudioRequests),
+    operation: impl FnOnce(&mut crate::game_state::Game) -> R,
+) -> R {
+    owner.with(|game| {
+        let epoch = game.compatibility_write_epoch();
+        let mut session = game.lease_persistent_session().unwrap().unwrap();
+        session.begin_interval(true).unwrap();
+        prepare(session.gameplay.control.requests_mut().unwrap());
+        game.return_persistent_session(session, true, epoch);
+        operation(game)
+    })
+}
+
+fn inspect_audio(
+    game: &mut crate::game_state::Game,
+    inspect: impl FnOnce(&AudioRequests, &ss::InitialAudioIntent),
+) {
+    let epoch = game.compatibility_write_epoch();
+    let session = game.lease_persistent_session().unwrap().unwrap();
+    inspect(
+        session.gameplay.control.requests().unwrap(),
+        &session.metadata().audio,
+    );
+    game.return_persistent_session(session, true, epoch);
+}
+
+/// The actual owned callback consumes authored records; compatibility numbers stay separate.
+fn assert_deliveries(
+    owner: &GameOwner,
+    bytes: &[u8],
+    media: &Arc<sc::SceneMedia>,
+    contract: &SessionStartContract,
+    accepted: &[u8; 71],
+) {
+    use crate::game::music::requests::{self, MusicEffect};
+    let restore = || {
+        owner
+            .restore_session_checkpoint(bytes, media.clone(), contract)
+            .unwrap()
+    };
+    restore();
+    producing(
+        owner,
+        |requests| requests.music.timer = 1,
+        |game| {
+            let expected = QueuedMusicMeaning {
+                request: 7,
+                source_tick: 0,
+                source_interval: 22,
+                meaning: MusicMeaning::Program {
+                    program: program(),
+                    phase: 59,
+                },
+            };
+            let mut delivered = None;
+            requests::advance_music(game, |effect, meaning, game| {
+                assert!(matches!(effect, MusicEffect::WriteTrack(7)));
+                let meaning = meaning.unwrap();
+                assert_eq!(meaning, &expected);
+                assert_eq!(game.audio_word(0x7f5), 7);
+                game.audio_mutation(|requests, _, _| {
+                    let live = requests.music.entry_meaning.as_mut().unwrap();
+                    live.source_tick = 1;
+                    live.source_interval = 23;
+                    Ok(())
+                })
+                .unwrap();
+                game.audio_store_word(0x7f5, 0x33);
+                assert_eq!(meaning.source_tick, 0);
+                assert_eq!(meaning.source_interval, 22);
+                delivered = Some(meaning.clone());
+                Ok(())
+            })
+            .unwrap();
+            assert_eq!(delivered, Some(expected.clone()));
+            assert_eq!(game.audio_word(0x7f5), 0x33);
+            inspect_audio(game, |requests, audio| {
+                assert_eq!(
+                    requests.music.current_meaning,
+                    Some(QueuedMusicMeaning {
+                        source_tick: 1,
+                        source_interval: 23,
+                        ..expected
+                    })
+                );
+                let ss::OngoingMusic::Playing(anchor) = audio.music else {
+                    panic!("accepted program")
+                };
+                assert_eq!(
+                    (
+                        anchor.program,
+                        anchor.revision,
+                        anchor.phase,
+                        anchor.source_interval
+                    ),
+                    (sc::AssetId(1), sc::Revision([5; 32]), 59, 23)
+                );
+            });
+        },
+    );
+    restore();
+    producing(
+        owner,
+        |requests| {
+            requests.music.timer = 1;
+            requests.music.entry = 0xff06;
+            requests.music.entry_meaning = music(
+                0xff06,
+                20,
+                MusicMeaning::Bank {
+                    bank: sc::AssetRef {
+                        id: sc::AssetId(2),
+                        revision: sc::Revision([5; 32]),
+                    },
+                    after: MusicContinuation::Retain,
+                },
+            );
+        },
+        |game| {
+            let prior_music = game
+                .audio_mutation(|_, audio, _| Ok(audio.music))
+                .unwrap()
+                .unwrap();
+            let mut delivered = None;
+            requests::advance_music(game, |effect, meaning, game| {
+                assert!(matches!(effect, MusicEffect::UploadBank));
+                assert_eq!(game.audio_word(0x7f3), 6);
+                assert_eq!(game.audio_byte(0x64c), 0xff);
+                let meaning = meaning.unwrap();
+                assert_eq!(
+                    meaning,
+                    &QueuedMusicMeaning {
+                        request: 0xff06,
+                        source_tick: 0,
+                        source_interval: 20,
+                        meaning: MusicMeaning::Bank {
+                            bank: sc::AssetRef {
+                                id: sc::AssetId(2),
+                                revision: sc::Revision([5; 32])
+                            },
+                            after: MusicContinuation::Retain,
+                        },
+                    }
+                );
+                delivered = Some(meaning.clone());
+                game.audio_store_word(0x7f3, 9);
+                Ok(())
+            })
+            .unwrap();
+            assert_eq!(game.audio_word(0x7f3), 9);
+            assert_eq!(game.audio_byte(0x64c), 0);
+            inspect_audio(game, |requests, audio| {
+                let mut expected = delivered.unwrap();
+                expected.source_tick = 1;
+                expected.source_interval = 23;
+                assert_eq!(requests.music.current_meaning, Some(expected));
+                assert_eq!(audio.music, prior_music);
+            });
+        },
+    );
+    // A rejecting or unwinding typed consumer leaves the original bank-upload prefix.
+    for unwind in [false, true] {
+        restore();
+        producing(
+            owner,
+            |requests| {
+                requests.music.timer = 1;
+                requests.music.entry = 0xff06;
+                requests.music.entry_meaning = music(
+                    0xff06,
+                    20,
+                    MusicMeaning::Bank {
+                        bank: sc::AssetRef {
+                            id: sc::AssetId(2),
+                            revision: sc::Revision([5; 32]),
+                        },
+                        after: MusicContinuation::Retain,
+                    },
+                );
+            },
+            |game| {
+                let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    requests::advance_music(game, |effect, meaning, _| {
+                        assert!(matches!(effect, MusicEffect::UploadBank));
+                        assert_eq!(meaning.unwrap().source_interval, 20);
+                        assert_eq!(meaning.unwrap().source_tick, 0);
+                        if unwind {
+                            panic!("typed music consumer unwind");
+                        }
+                        Err(DisplayError::Source)
+                    })
+                }));
+                if unwind {
+                    assert_eq!(
+                        result.unwrap_err().downcast_ref::<&str>(),
+                        Some(&"typed music consumer unwind")
+                    );
+                } else {
+                    assert_eq!(result.unwrap(), Err(DisplayError::Source));
+                }
+                assert_eq!(game.audio_word(0x63f), 0);
+                assert_eq!(game.audio_word(0x63b), 14);
+                assert_eq!(game.audio_word(0x7f3), 6);
+                assert_eq!(game.audio_byte(0x64c), 0xff);
+                assert_eq!(ApuQueueSnapshot::capture(game).to_bytes(), *accepted);
+            },
+        );
+        assert!(owner.encode_session_checkpoint().is_err());
+    }
+    restore();
+    producing(
+        owner,
+        |requests| requests.downtime = 0,
+        |game| {
+            let expected = QueuedSoundMeaning {
+                request: 5,
+                source_tick: 0,
+                source_interval: 19,
+                meaning: SoundMeaning::Program {
+                    program: program(),
+                    phase: 19,
+                },
+            };
+            let mut delivered = None;
+            requests::advance_sound_effects(game, |channel, value, meaning, game| {
+                assert_eq!((channel, value), (2, 5));
+                let meaning = meaning.unwrap();
+                assert_eq!(meaning, &expected);
+                game.audio_mutation(|requests, _, _| {
+                    let live = requests.sounds[2].meanings[15].as_mut().unwrap();
+                    live.source_tick = 1;
+                    live.source_interval = 23;
+                    Ok(())
+                })
+                .unwrap();
+                game.audio_store_byte(0x64b, 3);
+                assert_eq!((meaning.source_tick, meaning.source_interval), (0, 19));
+                delivered = Some(meaning.clone());
+                Ok(())
+            })
+            .unwrap();
+            assert_eq!(delivered, Some(expected.clone()));
+            inspect_audio(game, |requests, _| {
+                assert_eq!((requests.sounds[2].read, requests.sounds[2].state), (0, 4));
+                assert_eq!(
+                    requests.sounds[2].current_meaning,
+                    Some(QueuedSoundMeaning {
+                        source_tick: 1,
+                        source_interval: 23,
+                        ..expected
+                    })
+                );
+            });
+        },
+    );
+    restore();
+    producing(
+        owner,
+        |requests| requests.downtime = 0,
+        |game| {
+            assert_eq!(
+                requests::advance_sound_effects(game, |channel, value, meaning, _| {
+                    assert_eq!((channel, value), (2, 5));
+                    assert_eq!(
+                        meaning.unwrap(),
+                        &QueuedSoundMeaning {
+                            request: 5,
+                            source_tick: 0,
+                            source_interval: 19,
+                            meaning: SoundMeaning::Program {
+                                program: program(),
+                                phase: 19
+                            },
+                        }
+                    );
+                    Err(DisplayError::Source)
+                }),
+                Err(DisplayError::Source)
+            );
+            assert_eq!(game.audio_byte(0x645), 15);
+            assert_eq!(game.audio_byte(0x64b), 0);
+        },
+    );
+    assert!(owner.encode_session_checkpoint().is_err());
+    restore();
+    producing(
+        owner,
+        |_| {},
+        |game| {
+            let mut delivered = Vec::new();
+            requests::advance_sound_effects(game, |channel, value, meaning, _| {
+                assert_eq!(value, 0);
+                assert_eq!(meaning, None);
+                delivered.push(channel);
+                Ok(())
+            })
+            .unwrap();
+            assert_eq!(delivered, [0, 1, 2]);
+            inspect_audio(game, |requests, _| {
+                assert_eq!(requests.downtime, 8);
+                assert!(
+                    requests
+                        .sounds
+                        .iter()
+                        .all(|sound| sound.current_meaning.is_none())
+                );
+            });
+        },
+    );
+    restore();
+    producing(
+        owner,
+        |requests| {
+            requests.downtime = 0;
+            requests.sounds[2].read = 0;
+            requests.sounds[2].state = 0;
+        },
+        |game| {
+            requests::advance_sound_effects(game, |channel, value, meaning, _| {
+                assert_eq!((channel, value), (2, 0));
+                assert_eq!(
+                    meaning.unwrap(),
+                    &QueuedSoundMeaning {
+                        request: 0,
+                        source_tick: 0,
+                        source_interval: 20,
+                        meaning: SoundMeaning::Stop,
+                    }
+                );
+                Ok(())
+            })
+            .unwrap();
+            inspect_audio(game, |requests, _| {
+                assert_eq!(
+                    requests.sounds[2].current_meaning,
+                    Some(QueuedSoundMeaning {
+                        request: 0,
+                        source_tick: 1,
+                        source_interval: 23,
+                        meaning: SoundMeaning::Stop,
+                    })
+                );
+            });
+        },
+    );
+    restore();
+    assert_eq!(owner.encode_session_checkpoint().unwrap(), bytes);
+    owner.with(|game| assert_eq!(ApuQueueSnapshot::capture(game).to_bytes(), *accepted));
 }

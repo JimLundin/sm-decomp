@@ -37,7 +37,7 @@ fn bank_address(game: &Game) -> u32 {
 
 pub unsafe fn HandleMusicQueue(game: &mut Game) {
     unsafe {
-        requests::advance_music(game, |effect, game| {
+        requests::advance_music(game, |effect, _meaning, game| {
             match effect {
                 requests::MusicEffect::UploadBank => {
                     crate::native_audio::upload_bank(bank_address(game), game);
@@ -166,9 +166,17 @@ crate::forward_calls! { pub fn (sound: u16, game: &mut Game);
     QueueSfx3_Max1 => queue_sfx(2, sound as u8, 1, game);
     QueueSfx3_Max6 => queue_sfx(2, sound as u8, 6, game);
 }
-pub(crate) fn advance_sound_effects(game: &mut Game, mut write: impl FnMut(u8, u8, &mut Game)) {
-    requests::advance_sound_effects(game, |channel, value, game| {
-        write(channel, value, game);
+pub(crate) fn advance_sound_effects(
+    game: &mut Game,
+    mut write: impl FnMut(
+        u8,
+        u8,
+        Option<&crate::game_state::persistent_session::QueuedSoundMeaning>,
+        &mut Game,
+    ),
+) {
+    requests::advance_sound_effects(game, |channel, value, meaning, game| {
+        write(channel, value, meaning, game);
         Ok(())
     })
     .expect("audio sound advance");

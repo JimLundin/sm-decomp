@@ -9,10 +9,11 @@ Read [PLAN](../../../docs/PLAN.md) first, then [REVIEW](../../../docs/REVIEW.md)
 Milestone plan at each item's start. Direct user instructions win. REVIEW sets
 priorities; PLAN owns required checks, resources, Git and completion.
 
-The primary root owns one ledger. A worker uses only its assigned allowance and
-reports terminal handles/results; it cannot independently spend another job's
-reservation. Use current PLAN allowances, including the uncapped direct-DLL
-growth, rather than a smaller historical peak.
+The primary root owns one ledger. Grant ready sequences and conditional successors
+upfront with exact source/native/output pins, per-stage RAM/commitment/disk ceilings,
+terminal checks and fresh-fit conditions. Workers use only granted stage allowances;
+successors require prior terminal release and fresh fit against all reservations.
+Use current PLAN allowances, including the uncapped direct-DLL growth.
 
 1. Sample actual RAM, CPU, paging and disk before admission and during artifact
    jobs. Budget launchers and Cargo/rustc descendants as one owned workflow;

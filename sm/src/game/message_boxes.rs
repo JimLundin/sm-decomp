@@ -250,7 +250,7 @@ unsafe fn RestorePpuForMessageBox(game: &mut Game) {
 unsafe fn advance_audio(game: &mut Game) {
     unsafe {
         HandleMusicQueue(game);
-        advance_sound_effects(game, |channel, value, game| {
+        advance_sound_effects(game, |channel, value, _meaning, game| {
             crate::native_audio::write_sound_port(channel, value, game)
         });
     }
