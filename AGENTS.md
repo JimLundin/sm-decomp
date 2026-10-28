@@ -5,14 +5,29 @@ REVIEW's **Milestone plan** takes priority over PLAN's work order; re-read it at
 each item and take the next unclaimed lane item. The reviewer may change goals
 and process (user grant, 2026-10-25).
 
-Use [sm-decomp-work](.agents/skills/sm-decomp-work/SKILL.md) for implementation,
-review, build, replay and coordination. Load the assigned role and only the
-technical contracts it reaches. PLAN remains authoritative for the Fast loop,
-verification, Git/resource limits, progress, commit/push and definition of done.
+Use the specific self-contained skill for an explicit objective:
 
-Root owns implementation, coordination, Git, builds and the machine resource ledger.
-Work on main and push coherent commits promptly. Assign bounded subagents directly;
-task issues are retired. Keep [Jim's conversation](https://github.com/JimLundin/sm-decomp/issues/6)
+| Objective | Skill |
+| --- | --- |
+| Source implementation | [sm-decomp-source](.agents/skills/sm-decomp-source/SKILL.md) |
+| Source/composition review | [sm-decomp-review](.agents/skills/sm-decomp-review/SKILL.md) |
+| Build qualification | [sm-decomp-build](.agents/skills/sm-decomp-build/SKILL.md) |
+| Replay qualification | [sm-decomp-replay](.agents/skills/sm-decomp-replay/SKILL.md) |
+| Git/publication | [sm-decomp-publish](.agents/skills/sm-decomp-publish/SKILL.md) |
+| Resource admission/cleanup | [sm-decomp-resources](.agents/skills/sm-decomp-resources/SKILL.md) |
+| Core task coordination | [sm-decomp-coordinate](.agents/skills/sm-decomp-coordinate/SKILL.md) |
+| Process improvement | [sm-decomp-improve](.agents/skills/sm-decomp-improve/SKILL.md) |
+
+Load only that objective's reached technical contracts. Existing
+[sm-decomp-work](.agents/skills/sm-decomp-work/SKILL.md) handoffs retain a short dispatcher.
+PLAN owns the Fast loop, verification, Git/resources, progress and completion.
+
+Root coordinates core work, integrates source, owns the sole Git writer and one
+machine resource ledger. Delegate bounded core source implementation, build and
+replay scopes with exact pins/budgets and keep ready owners supplied.
+Work on main, publish frequent small qualified code commits promptly, and continue
+implementation/direct handoffs while CI runs. Task issues are retired.
+Keep [Jim's conversation](https://github.com/JimLundin/sm-decomp/issues/6)
 open for remote feedback, read it at work boundaries and respond there.
 Keep durable source/review/qualification records in the repository and owned artifacts.
 Format GitHub comments using the still-valid

@@ -552,7 +552,8 @@ checked source/rebuild loaded DLLs. Explicit followup_task wakes completed worke
 send_message alone does not. Refill ready work without waiting on review prose.
 Budget compilers/replays/source separately, including accepted launchers before rustc
 and admitted jobs' remaining growth; release admission as soon as compilation ends.
-Start compilers above3GiB free; reserve1.6GiB/library or2.225GiB/direct DLL and leave >=2GiB.
+Start compilers above3GiB free; reserve1.6GiB/library or3.25GiB/uncapped direct DLL.
+Leave >=2GiB after remaining growth and other reservations.
 Below2GiB/resource errors stop newest producer, not every lightweight reader.
 Measure CPU/RAM/paging/disk/useful throughput: two -j1 builds76.06s versus114.12s serial;
 three is unproven. Raise concurrency only when budgets
