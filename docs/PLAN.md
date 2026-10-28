@@ -95,8 +95,15 @@ Typed music/SFX callback source 17bd7d1d passes review, library (28.039s), DLL
 Its two changed codec leaves have genuine initialized/save/reserve captures and
 continuations: 26 distinct rows / 199,063 comparisons / 0 failures, coverage 23/44.
 Full Morph 1200 and BOTH independent Kago 14350 approaches pass; no restamps.
-Next: reviewed SPC channel/tempo source bc29e239 passes the library checkpoint;
-its DLL/frontend and genuine final-codec campaign follow the released audio jobs.
+SPC channel/tempo source bc29e239 / DLL 466e3e51 passes final review, library
+(32.217s), direct DLL (97.913s), actual 87/87 units and frontend (176.582s).
+All 200 library / 209 frontend warning causes remain; net -20 production,
+verification/legacy/unsafe-containing unchanged. Genuine final-codec initialized,
+save/reserve captures and continuations pass: 26 distinct rows / 199,063
+comparisons / 0, including full Morph 1200 and BOTH Kago 14350; coverage 23/44.
+Original successes and reboot-interrupted reserve/pickup recovery retain their
+separate source/input provenance. Native DSP/APU/channel capabilities remain.
+Next: DSP register/cycle source and qualification remain pending.
 The native audio adapter remains; alternate sound banks and menu selection are open.
 Prefer Python for portable automation, with standalone scripts instead of inline
 Python in GitHub Actions. Reserves 2 GiB/50 GiB.

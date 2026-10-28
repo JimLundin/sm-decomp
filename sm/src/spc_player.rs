@@ -4,7 +4,6 @@ use crate::snes::dsp::{Dsp, dsp_cycle, dsp_reset, dsp_write};
 pub use crate::types::{
     Channel, DspRegWriteHistory, NativePlayerState, SfxChan, SfxRegs, SpcPlayer, size_t,
 };
-use ::core::mem::size_of;
 use std::{cell::UnsafeCell, rc::Rc};
 pub const EVOLL: DspReg = 44;
 pub const EVOLR: DspReg = 60;
@@ -298,7 +297,7 @@ unsafe fn Spc_Loop_Part1(p: *mut SpcPlayer) {
 }
 unsafe fn Spc_Loop_Part2(p: *mut SpcPlayer, ticks: u8) {
     unsafe {
-        let mut t: i32 = (*p).state.sfx_timer_accum as i32 + (ticks as i32 * 0x20) as u8 as i32;
+        let mut t = u16::from((*p).state.sfx_timer_accum) + u16::from(ticks.wrapping_mul(0x20));
         (*p).state.sfx_timer_accum = t as u8;
         if t >= 0x100 {
             Sfx1_HandleCmdFromSnes(p);
@@ -308,29 +307,24 @@ unsafe fn Spc_Loop_Part2(p: *mut SpcPlayer, ticks: u8) {
                 (*p).state.echo_stored_time = (*p).state.echo_stored_time.wrapping_add(1);
             }
         }
-        t = (*p).state.main_tempo_accum as i32
-            + (ticks as i32
-                * byte!((*p).state.tempo; (size_of::<u16>() as usize)
-                    .wrapping_div(size_of::<u8>() as usize)
-                    .wrapping_sub(1_) as isize) as i32) as u8 as i32;
+        t = u16::from((*p).state.main_tempo_accum)
+            + u16::from(ticks.wrapping_mul((*p).state.tempo.to_ne_bytes()[1]));
         (*p).state.main_tempo_accum = t as u8;
         if t >= 256 {
             do_until! { (*p).state.fast_forward == 0 ;
                 Music_HandleCmdFromSnes(p);
             }
         } else if (*p).state.port_to_snes[0i32 as usize] != 0 {
-            let mut c = &raw mut (*p).state.channel as *mut Channel;
+            let mut channel = 0;
             (*p).state.cur_chan_bit = 1;
             while (*p).state.cur_chan_bit as i32 != 0 {
-                if byte!((*c).pattern_order_ptr_for_chan; (size_of::<u16>() as usize)
-                    .wrapping_div(size_of::<u8>() as usize)
-                    .wrapping_sub(1_) as isize)
-                    != 0
-                {
+                // Pan/sweep preserves the selector; this traverses all eight owned channels.
+                let c = &mut (*p).state.channel[channel];
+                if c.pattern_order_ptr_for_chan.to_ne_bytes()[1] != 0 {
                     HandlePanAndSweep(p, c);
                 }
                 (*p).state.cur_chan_bit = (((*p).state.cur_chan_bit as i32) << 1) as u8;
-                c = c.offset(1);
+                channel += 1;
             }
         }
     }
@@ -352,9 +346,7 @@ unsafe fn Vector_Reset_Spc(p: *mut SpcPlayer) {
         Dsp_Write(p, MVOLL as i32 as u8, 0x60);
         Dsp_Write(p, MVOLR as i32 as u8, 0x60);
         Dsp_Write(p, DIR as i32 as u8, 0x6d);
-        byte!((*p).state.tempo; (size_of::<u16>() as usize)
-            .wrapping_div(size_of::<u8>() as usize)
-            .wrapping_sub(1_) as isize) = 16;
+        (*p).state.tempo = u16::from_ne_bytes([(*p).state.tempo.to_ne_bytes()[0], 16]);
         (*p).state.timer_cycles = 0;
     }
 }
@@ -554,14 +546,9 @@ pub unsafe fn Sfx_RunChan(p: *mut SpcPlayer, sr: *mut SfxRegs, s: *mut SfxChan) 
         );
     }
 }
-pub unsafe fn Sfx_Init(
-    p: *mut SpcPlayer,
-    sr: *mut SfxRegs,
-    channels: *mut SfxChan,
-    which_sfx: i32,
-) {
+unsafe fn Sfx_Init(p: *mut SpcPlayer, which_sfx: usize) {
     unsafe {
-        let num: i32 = if which_sfx == 0 { 4 } else { 2 };
+        let (sr, channels, _) = sound_effect_channels(p, which_sfx);
         static kSomeAddrs: [[u16; 3]; 3] = [
             [0x3a6, 0x3aa, 0x3af],
             [0x446, 0x448, 0x44b],
@@ -569,11 +556,18 @@ pub unsafe fn Sfx_Init(
         ];
         set_fields! {[(*sr)]; voice_id = 9, voices_remaining = (*p).state.is_chan_on, init_flag = 0xff,
         chan_idx_x2 = 0, chan_idx = (*sr).chan_idx_x2, };
-        let mut i: i32 = 0;
-        while i < num {
-            set_fields! {[(*channels.offset(i as isize))], 0; voice_bitset, voice_index}
-            set_fields! {[(*channels.offset(i as isize))], 0xff; channel_mask, disable}
-            i += 1;
+        {
+            let channels: &mut [SfxChan] = match which_sfx {
+                0 => &mut (*p).state.sfx_chans_1,
+                1 => &mut (*p).state.sfx_chans_2,
+                _ => &mut (*p).state.sfx_chans_3,
+            };
+            for channel in channels {
+                channel.voice_bitset = 0;
+                channel.voice_index = 0;
+                channel.channel_mask = 0xff;
+                channel.disable = 0xff;
+            }
         }
         loop {
             (*sr).voice_id = (*sr).voice_id.wrapping_sub(1);
@@ -587,6 +581,7 @@ pub unsafe fn Sfx_Init(
                     return;
                 }
                 (*sr).voices_to_setup = (*sr).voices_to_setup.wrapping_sub(1);
+                // Imported voice counts can cross groups; preserve the native allocation cursor.
                 let c = channels.offset((*sr).chan_idx as isize);
                 (*c).disable = 0;
                 (*sr).chan_voice_bitset_ptr = (kSomeAddrs[which_sfx as usize][0i32 as usize] as i32
@@ -615,24 +610,9 @@ pub unsafe fn Sfx_Init(
     }
 }
 crate::forward_calls! { pub unsafe fn (p: *mut SpcPlayer);
-    Sfx1_Init => Sfx_Init(
-        p,
-        &raw mut (*p).state.sfx1,
-        &raw mut (*p).state.sfx_chans_1 as *mut SfxChan,
-        0,
-    );
-    Sfx2_Init => Sfx_Init(
-        p,
-        &raw mut (*p).state.sfx2,
-        &raw mut (*p).state.sfx_chans_2 as *mut SfxChan,
-        1,
-    );
-    Sfx3_Init => Sfx_Init(
-        p,
-        &raw mut (*p).state.sfx3,
-        &raw mut (*p).state.sfx_chans_3 as *mut SfxChan,
-        2,
-    );
+    Sfx1_Init => Sfx_Init(p, 0);
+    Sfx2_Init => Sfx_Init(p, 1);
+    Sfx3_Init => Sfx_Init(p, 2);
 }
 /// Own the native player and its separate DSP without moving initialized nodes.
 /// Raw views borrow these allocations; live native references must be exclusive.
@@ -736,17 +716,17 @@ unsafe fn sound_effect_channels(
         match group {
             0 => (
                 &raw mut (*p).state.sfx1,
-                (&raw mut (*p).state.sfx_chans_1).cast(),
+                &raw mut (*p).state.sfx_chans_1[0],
                 4,
             ),
             1 => (
                 &raw mut (*p).state.sfx2,
-                (&raw mut (*p).state.sfx_chans_2).cast(),
+                &raw mut (*p).state.sfx_chans_2[0],
                 2,
             ),
             2 => (
                 &raw mut (*p).state.sfx3,
-                (&raw mut (*p).state.sfx_chans_3).cast(),
+                &raw mut (*p).state.sfx_chans_3[0],
                 2,
             ),
             _ => unreachable!(),
@@ -827,7 +807,7 @@ unsafe fn process_sound_effect(p: *mut SpcPlayer, group: usize) {
         let (regs, channels, count) = sound_effect_channels(p, group);
         if (*regs).init_flag != 0xff {
             crate::verify_probe::hit(["sfx.init.1", "sfx.init.2", "sfx.init.3"][group]);
-            Sfx_Init(p, regs, channels, group as i32);
+            Sfx_Init(p, group);
             for i in 0..count {
                 let channel = channels.add(i);
                 let address = usize::from((*regs).cur_ptr) + i * 2;
