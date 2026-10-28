@@ -24,7 +24,7 @@ use std::sync::Arc;
 type RoleInput = (Role, Registration, u8, usize, WordOrder);
 type TransferInput = (u16, u32, [u8; 2], usize, usize);
 type RequestInput = (
-    (Half, u16, u16, u32),
+    (Half, u16, u8, u32),
     TransferInput,
     TransferInput,
     TileDestination,
