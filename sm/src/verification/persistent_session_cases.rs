@@ -124,6 +124,10 @@ pub fn persistent_session_native_rebinding_preserves_ready_owner(
         marker: marker.clone(),
         actor_queue_projection: projection,
         samus_publications: publications.clone(),
+        audio_catalog: Arc::new(crate::game_state::persistent_session::AudioRequestCatalog {
+            music: std::collections::BTreeMap::new(),
+            sounds: std::collections::BTreeMap::new(),
+        }),
     };
     let owner = GameOwner::new();
     owner.with(|game| {
@@ -176,6 +180,39 @@ pub fn persistent_session_native_rebinding_preserves_ready_owner(
                 marker: Some(marker),
                 actor_queue_projection: Some(projection),
                 samus_publications: Some(publications),
+                audio_requests: Some(crate::game_state::persistent_session::AudioRequests {
+                    music: crate::game_state::persistent_session::MusicRequests {
+                        tracks: [0; 8],
+                        delays: [0; 8],
+                        write: 0,
+                        read: 0,
+                        entry: 0,
+                        timer: 0,
+                        current_track: 0,
+                        data_index: 0,
+                        track_index: 0,
+                        meanings: core::array::from_fn(|_| None),
+                        entry_meaning: None,
+                        current_meaning: None,
+                    },
+                    sounds: core::array::from_fn(|_| {
+                        crate::game_state::persistent_session::SoundRequests {
+                            read: 0,
+                            write: 0,
+                            state: 0,
+                            current: 0,
+                            clear_delay: 0,
+                            maximum_queued: 0,
+                            queue: [0; 16],
+                            meanings: core::array::from_fn(|_| None),
+                            current_meaning: None,
+                        }
+                    }),
+                    uploading: 0,
+                    downtime: 0,
+                    catalog: required.audio_catalog.clone(),
+                    pending_mutation: false,
+                }),
             },
             media,
             required,
