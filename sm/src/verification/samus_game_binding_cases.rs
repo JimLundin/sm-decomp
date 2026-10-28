@@ -358,3 +358,285 @@ pub fn samus_game_adoption_uses_captured_target() {
         Ok(0x2211)
     );
 }
+// Movies cannot independently supply every body-coordinate lane or an overlapping odd word.
+pub fn samus_driver_body_projection_preserves_odd_lanes() {
+    use crate::game::{player_projectiles::access::Store, session_runtime::Runtime};
+    let (mut game, _, _) = installed(Prepared);
+    game.ram().copy_in(0xb04, &[0x7d, 0xf1, 0x68, 0xe2]);
+    game.ram().copy_in(0xaf6, &0xc123u16.to_le_bytes());
+    game.ram().copy_in(0xafa, &0xd456u16.to_le_bytes());
+    game.ram().copy_in(0x911, &0x9110u16.to_le_bytes());
+    game.ram().copy_in(0x915, &0x9220u16.to_le_bytes());
+    let mut runtime = Runtime::new(&mut game);
+    assert_eq!(
+        (
+            runtime.session().player.body_position.x,
+            runtime.session().player.body_position.y
+        ),
+        (0xf17d, 0xe268)
+    );
+    assert_eq!(
+        [
+            runtime.byte(0xb04),
+            runtime.byte(0xb05),
+            runtime.byte(0xb06),
+            runtime.byte(0xb07)
+        ],
+        [0x7d, 0xf1, 0x68, 0xe2]
+    );
+    assert_eq!(runtime.word(0xb05), 0x68f1);
+    runtime.store(0xb05, 0xb4c3, Store::PrefixLe);
+    assert_eq!((runtime.word(0xb04), runtime.word(0xb06)), (0xc37d, 0xe2b4));
+    runtime.set_byte(0xb04, 0x81);
+    runtime.set_byte(0xb07, 0xf2);
+    assert_eq!((runtime.word(0xb04), runtime.word(0xb06)), (0xc381, 0xf2b4));
+    runtime.store(0xb05, 0xa695, Store::SliceNative);
+    assert_eq!(
+        (
+            runtime.session().player.body_position.x,
+            runtime.session().player.body_position.y
+        ),
+        (0x9581, 0xf2a6)
+    );
+    assert_eq!(runtime.word(0xb05), 0xa695);
+    assert_eq!(
+        [
+            runtime.samus_game().ram().read_byte(0xb04),
+            runtime.samus_game().ram().read_byte(0xb05),
+            runtime.samus_game().ram().read_byte(0xb06),
+            runtime.samus_game().ram().read_byte(0xb07)
+        ],
+        [0x7d, 0xf1, 0x68, 0xe2]
+    );
+    runtime.session_mut().player.body_position.x = 0xe709;
+    runtime.session_mut().player.body_position.y = 0xd823;
+    assert_eq!(runtime.word(0xb05), 0x23e7);
+    assert_eq!(
+        (runtime.session().player.x, runtime.session().player.y),
+        (0xc123, 0xd456)
+    );
+    assert_eq!(
+        (runtime.inputs().camera_x, runtime.inputs().camera_y),
+        (0x9110, 0x9220)
+    );
+    drop(runtime);
+    assert_eq!(
+        [
+            game.ram().read_byte(0xb04),
+            game.ram().read_byte(0xb05),
+            game.ram().read_byte(0xb06),
+            game.ram().read_byte(0xb07)
+        ],
+        [0x09, 0xe7, 0x23, 0xd8]
+    );
+    assert_eq!(game.samus_authority(), Available);
+    assert!(!game.actor_identity_is_with_session());
+    let runtime = Runtime::new(&mut game);
+    assert_eq!(
+        (
+            runtime.session().player.body_position.x,
+            runtime.session().player.body_position.y
+        ),
+        (0xe709, 0xd823)
+    );
+    assert_eq!(
+        (
+            runtime.word(0xaf6),
+            runtime.word(0xafa),
+            runtime.word(0x911),
+            runtime.word(0x915)
+        ),
+        (0xc123, 0xd456, 0x9110, 0x9220)
+    );
+}
+
+// Movies cannot inject this short loaded-ROM cannon failure before Disabled, Empty or Unknown.
+pub fn samus_driver_cannon_failure_preserves_prefix() {
+    use crate::game::{player_transitions::state::DrawMode, session_runtime::Runtime};
+    for mode in [
+        DrawMode::Disabled,
+        DrawMode::Empty,
+        DrawMode::Unknown(0xbeef),
+    ] {
+        let (mut game, loaded, _) = installed(RetainedNative);
+        assert_eq!(loaded.len(), 8);
+        game.ram().copy_in(0xdfe, &0xc35eu16.to_le_bytes());
+        game.ram().copy_in(0xe00, &0xd46fu16.to_le_bytes());
+        let mut runtime = Runtime::new(&mut game);
+        runtime.session_mut().player.transitions.draw_handler = mode;
+        runtime.session_mut().player.contact.auto_jump = 0x6b5a;
+        let shots = &mut runtime.session_mut().projectiles;
+        shots.controls.cannon_flags = 0xab01;
+        shots.controls.cannon_frame = 2;
+        shots.controls.cannon_drawing_mode = 0xe1d2;
+        shots.controls.selected_weapon = 0xffff;
+        shots.selected = 0x6a5b;
+        shots.trails[0].left.remaining = 7;
+        shots.trails[0].right.remaining = 9;
+        assert!(runtime.has_session_for_verification());
+        assert!(runtime.samus_game().actor_identity_is_with_session());
+        assert_eq!(runtime.samus_game().samus_authority(), Available);
+        let failure = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            runtime.produce_player_scene();
+        }))
+        .expect_err("the cannon's loaded table must be out of bounds");
+        let message = failure
+            .downcast_ref::<String>()
+            .map(String::as_str)
+            .or_else(|| failure.downcast_ref::<&str>().copied())
+            .unwrap();
+        assert!(message.contains("index out of bounds: the len is 8 but the index is 542687"));
+        assert!(!runtime.has_session_for_verification());
+        assert!(!runtime.samus_game().actor_identity_is_with_session());
+        assert_eq!(runtime.samus_game().samus_authority(), Revoked);
+        let ram = runtime.samus_game().ram();
+        let word = |at| u16::from_le_bytes([ram.read_byte(at), ram.read_byte(at + 1)]);
+        assert_eq!((word(0xaa6), word(0xaa8), word(0xaac)), (1, 3, 0xe1d2));
+        assert_eq!(word(crate::ram_map::words::projectile_index), 0x6a5b);
+        assert_eq!((word(0xd658), word(0xd67c)), (7, 9));
+        assert_eq!(
+            (word(0xaf4), word(0xdfe), word(0xe00)),
+            (0x6b5a, 0xc35e, 0xd46f)
+        );
+        drop(runtime);
+        assert_eq!(game.samus_authority(), Revoked);
+        assert_eq!(game.preflight_samus_runtime(), Err(DisplayError::Poisoned));
+        assert!(!game.actor_identity_is_with_session());
+        assert_eq!(
+            [
+                game.ram().read_byte(0xaa6),
+                game.ram().read_byte(0xaa7),
+                game.ram().read_byte(0xaa8),
+                game.ram().read_byte(0xaa9)
+            ],
+            [1, 0, 3, 0]
+        );
+    }
+}
+
+// Literal body workspace and player coordinates are supplied independently.
+fn supply_player_body(game: &mut Game) {
+    game.ram()
+        .copy_in(0xb03, &[0x9c, 0x11, 0x22, 0x33, 0x44, 0x8d]);
+    game.ram()
+        .copy_in(0xaf6, &[0x5a, 0x6b, 0x7c, 0x8d, 0x9e, 0xaf, 0xb0, 0xc1]);
+}
+fn player_body_bytes(game: &Game) -> [u8; 6] {
+    std::array::from_fn(|lane| game.ram().read_byte(0xb03 + lane))
+}
+fn assert_player_body_neighbors(game: &Game) {
+    assert_eq!(game.ram().read_byte(0xb03), 0x9c);
+    assert_eq!(game.ram().read_byte(0xb08), 0x8d);
+    let player: [u8; 8] = std::array::from_fn(|lane| game.ram().read_byte(0xaf6 + lane));
+    assert_eq!(player, [0x5a, 0x6b, 0x7c, 0x8d, 0x9e, 0xaf, 0xb0, 0xc1]);
+}
+
+// Legacy Game construction supplies fixture RAM, not an authored prepared start.
+pub fn samus_game_body_projection_roundtrip() {
+    let mut game = Game::new();
+    supply_player_body(&mut game);
+    {
+        let runtime = crate::game::session_runtime::Runtime::new(&mut game);
+        assert_eq!(runtime.session().player.body_position.x, 0x2211);
+        assert_eq!(runtime.session().player.body_position.y, 0x4433);
+        assert_eq!(runtime.session().player.x, 0x6b5a);
+        assert_eq!(runtime.session().player.y, 0xaf9e);
+        assert_eq!(runtime.word(0xb04), 0x2211);
+        assert_eq!(runtime.word(0xb06), 0x4433);
+    }
+    assert_eq!(
+        player_body_bytes(&game),
+        [0x9c, 0x11, 0x22, 0x33, 0x44, 0x8d]
+    );
+    assert_player_body_neighbors(&game);
+    let runtime = crate::game::session_runtime::Runtime::new(&mut game);
+    assert_eq!(runtime.session().player.body_position.x, 0x2211);
+    assert_eq!(runtime.session().player.body_position.y, 0x4433);
+    assert_eq!(runtime.word(0xb04), 0x2211);
+    assert_eq!(runtime.word(0xb06), 0x4433);
+}
+
+// An odd native store changes X's high byte and Y's low byte in one live projection.
+pub fn samus_game_body_projection_crossing_writes() {
+    let mut game = Game::new();
+    supply_player_body(&mut game);
+    {
+        let mut runtime = crate::game::session_runtime::Runtime::new(&mut game);
+        runtime.write_word_le(0x6655, 0xb04);
+        assert_eq!(runtime.session().player.body_position.x, 0x6655);
+        assert_eq!(runtime.session().player.body_position.y, 0x4433);
+        runtime.write_slice_native(0xb05, u16::from_ne_bytes([0xa7, 0xb8]));
+        assert_eq!(runtime.session().player.body_position.x, 0xa755);
+        assert_eq!(runtime.word(0xb04), 0xa755);
+        assert_eq!(runtime.session().player.body_position.y, 0x44b8);
+        assert_eq!(runtime.word(0xb06), 0x44b8);
+        assert_eq!(runtime.word(0xb05), 0xb8a7);
+        runtime.write_slice_le(0xb06, 0xddee);
+        assert_eq!(runtime.session().player.body_position.x, 0xa755);
+        assert_eq!(runtime.session().player.body_position.y, 0xddee);
+        assert_eq!(runtime.word(0xb04), 0xa755);
+        assert_eq!(runtime.word(0xb06), 0xddee);
+        assert_eq!(runtime.byte(0xb03), 0x9c);
+        assert_eq!(runtime.byte(0xb08), 0x8d);
+        assert_eq!(runtime.session().player.x, 0x6b5a);
+        assert_eq!(runtime.session().player.y, 0xaf9e);
+    }
+    assert_eq!(
+        player_body_bytes(&game),
+        [0x9c, 0x55, 0xa7, 0xee, 0xdd, 0x8d]
+    );
+    assert_player_body_neighbors(&game);
+}
+
+// The retained-native fixture exports, adopts normal return, and poisons an unwind.
+pub fn samus_game_body_foreign_adoption_and_prefix() {
+    let (mut game, _, _) = installed(RetainedNative);
+    supply_player_body(&mut game);
+    let mut runtime = crate::game::session_runtime::Runtime::new(&mut game);
+    runtime.write_word_le(0x6655, 0xb04);
+    let returned = runtime.foreign(|game| {
+        assert_eq!(game.samus_authority(), Revoked);
+        assert_eq!(
+            player_body_bytes(game),
+            [0x9c, 0x55, 0x66, 0x33, 0x44, 0x8d]
+        );
+        game.ram().copy_in(0xb04, &[0x77, 0x88, 0x99, 0xaa]);
+        0x6au16
+    });
+    assert_eq!(returned, 0x6a);
+    assert!(runtime.has_session_for_verification());
+    assert_eq!(runtime.samus_game().samus_authority(), Available);
+    assert_eq!(runtime.session().player.body_position.x, 0x8877);
+    assert_eq!(runtime.session().player.body_position.y, 0xaa99);
+    assert_eq!(runtime.word(0xb04), 0x8877);
+    assert_eq!(runtime.word(0xb06), 0xaa99);
+    let failure = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        runtime.foreign(|game| -> () {
+            assert_eq!(
+                player_body_bytes(game),
+                [0x9c, 0x77, 0x88, 0x99, 0xaa, 0x8d]
+            );
+            game.ram().write_byte(0xb05, 0xd1);
+            game.ram().write_byte(0xb06, 0xe2);
+            panic!("body foreign prefix");
+        });
+    }))
+    .expect_err("body callback must panic");
+    assert_eq!(failure.downcast_ref::<&str>(), Some(&"body foreign prefix"));
+    assert!(!runtime.has_session_for_verification());
+    assert!(!runtime.samus_game().actor_identity_is_with_session());
+    assert_eq!(runtime.samus_game().samus_authority(), Revoked);
+    assert_eq!(
+        player_body_bytes(runtime.samus_game()),
+        [0x9c, 0x77, 0xd1, 0xe2, 0xaa, 0x8d]
+    );
+    assert_player_body_neighbors(runtime.samus_game());
+    drop(runtime);
+    assert_eq!(game.samus_authority(), Revoked);
+    assert_eq!(game.preflight_samus_runtime(), Err(DisplayError::Poisoned));
+    assert_eq!(
+        player_body_bytes(&game),
+        [0x9c, 0x77, 0xd1, 0xe2, 0xaa, 0x8d]
+    );
+    assert_player_body_neighbors(&game);
+}

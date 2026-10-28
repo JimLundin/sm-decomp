@@ -876,8 +876,11 @@ pub use samus_content_binding_cases::{
 mod samus_game_binding_cases;
 #[cfg(sm_verify_dll)]
 pub use samus_game_binding_cases::{
-    samus_game_adoption_uses_captured_target, samus_game_failed_install_preserves_binding,
-    samus_game_native_capture_retains_allocation, samus_game_panicking_callback_keeps_prefix,
-    samus_game_prepared_replacement_is_rejected, samus_game_reference_import_keeps_revoked_scope,
+    samus_driver_body_projection_preserves_odd_lanes, samus_driver_cannon_failure_preserves_prefix,
+    samus_game_adoption_uses_captured_target, samus_game_body_foreign_adoption_and_prefix,
+    samus_game_body_projection_crossing_writes, samus_game_body_projection_roundtrip,
+    samus_game_failed_install_preserves_binding, samus_game_native_capture_retains_allocation,
+    samus_game_panicking_callback_keeps_prefix, samus_game_prepared_replacement_is_rejected,
+    samus_game_reference_import_keeps_revoked_scope,
     samus_game_rejected_expectation_preserves_binding,
 };
