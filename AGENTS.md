@@ -30,8 +30,9 @@ implementation/direct handoffs while CI runs. Task issues are retired.
 Keep [Jim's conversation](https://github.com/JimLundin/sm-decomp/issues/6)
 open for remote feedback, read it at work boundaries and respond there.
 Keep durable source/review/qualification records in the repository and owned artifacts.
-Format GitHub comments using the still-valid
-[Markdown communication directive](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6445792069).
+GitHub updates lead with the result, identify owner and next action, and use
+short spaced facts; put commands/hashes/inventories in fenced blocks or details.
+Keep the conversation opening current; preserve older evidence before retirement.
 
 Before changing ownership, interfaces or backend architecture, read the
 [accepted destination](docs/target-architecture/README.md) and its Windows policy.

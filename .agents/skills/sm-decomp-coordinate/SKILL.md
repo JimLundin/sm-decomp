@@ -41,8 +41,8 @@ release; recovery targets the current primary.
 - Use direct session handoffs and durable repository/owned-artifact receipts.
   Task issues are retired; only [Jim's conversation #6](https://github.com/JimLundin/sm-decomp/issues/6)
   remains open for remote feedback. The primary reads/answers it at work boundaries.
-  Follow [#2's Markdown directive](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6445792069):
-  owner, result, next action, blocker; spaced numbers/words and raw transport in details.
+  Follow [AGENTS' communication rule](../../../AGENTS.md): concise result,
+  owner, next action and actual blocker; keep raw transport in details.
 
 Full owned Session,
 independent rendering/audio/backend, boot-to-credits fidelity, Map Rando and size

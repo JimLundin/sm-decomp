@@ -24,15 +24,14 @@ M removes unsafe outside banks; B1-B6 retire banks in REVIEW's order. No more
 in-place M bank codemods. Current bank queues are B1 sm_82, B2 sm_8b, B3 sm_a3,
 B4 sm_a8/sm_b3, B5 sm_a9/sm_aa and B6 sm_a6/sm_a7; sm_b3 is already retired.
 Freed workers take sm_a5, sm_9b, then sm_a4. Keep cloud claims intact.
-Non-enemy replacements aim <=80%; every B body gives the full ratio and a reason
-above 90%. Necessary safety growth must be counted and explained, not relabeled.
+Non-enemy replacements aim <=80%; every B qualification record gives the full ratio
+and a reason above 90%. Necessary safety growth must be counted and explained, not relabeled.
 
 Never reserve or hold Git index/ref locks; Git's own short locks cover actual writes
 only. Before every Git write, fetch/reconcile current origin/main, recheck HEAD/index
 and preserve others' work. Never delete another process's lock or force-push main.
-Root 01a17ecd takes implementation, coordination, Git, builds and the resource
-ledger only after 01a17c50's explicit RELEASE and verified terminal writer/turn
-state. Preserve current writer/jobs until then; main is the default, isolation optional.
+Primary transfer requires explicit RELEASE and verified terminal writer/turn
+state; preserve live jobs and reservations. Main is the default, isolation optional.
 Linux development is stopped by the user (2026-10-27); preserve its frozen handoffs.
 Only the primary writes Git; optional branches can carry coherent source with
 pending checks named. Main requires qualification.
@@ -42,101 +41,53 @@ rerun only affected rows, then push. Keep one Git writer and no force pushes.
 Land verified work promptly; holding it over an hour is a stall. No docs-only commits
 without a code commit beside them. Update PLAN only for active direction or blockers.
 
-Subjects start A:, M: or B:sm_XX. Body <=8 lines: change, exact Rows/results, full
-production/legacy/verification deltas, B ratio/reason and final Score. Use four actual
-UTF-8 middle dots, not question marks; measure the values locally with progress.sh:
-`Score: checks 44/44 · legacy N · production N · unsafe N · verification N`.
+Use a descriptive subject, retaining A:, M: or B:sm_XX when useful. Keep the body
+to 2–3 short lines explaining the behavior change and relevant verification.
+Measure with tools/progress.sh and retain exact production/legacy/unsafe/verification/
+support deltas, B replacement ratio/reason, source/native/codec/input pins and actual
+check results in the owned qualification/publication record. Commit messages need
+no Score, hash inventory or warning ledger. Necessary growth remains accountable.
 
 Keep replay docs essential, upstream references and CSV/TOML provenance/checks;
 shared Python installers/runtime-only restores are support work, counted separately.
 
 ## Current work and limits
 
-Primary root owns implementation/Git/build/resources after verified integrator
-release. Only main is remote and Jim's conversation #6 remains open. Delegate
-source, review and qualification through the focused skills; keep work moving
-while CI runs. Qualified ci16 source 54727767 / DLL 6eb76bb5 composes numeric, actor
-and Display state into the gated six-component Session checkpoint envelope.
-Format, normal-library input transfer, native/source guards and 87/87 units pass.
-Fresh initialized/save/reserve checkpoints and 26 distinct rows pass 199,063
-comparisons/0, including full Morph 1200 and BOTH independent Kago 14350 approaches.
-Coverage 23/44; full Session/backend independence and engine-size acceptance remain
-open. Net +2095 production/+1603 verification/+2 forbid attributes/legacy 0;
-actual raw-operation retirement 0. Original ci16 receipts/artifacts are preserved.
-Audio-only ci17 source 475b05d3 / DLL 4905f1a7 passes actual 87/87 units,
-including wrapped queues, rejection, binary restore and ApuQueue witnesses.
-All 85 raw codec contributors are unchanged; retain original ci16 runtime proof.
-Net +435 verification/+1 forbid attribute; production/legacy unchanged.
-OpenGL upload source 61b7a7f3 is independently reviewed and qualified through
-the actual frontend library/binary (182.783s), with regenerated config/shader
-and desktop archives. Owned Vec pixels and presenter storage retire malloc/free,
-two associated pointer casts and three raw global captures. Net +21 production,
-unsafe-containing -1; the existing OpenGL warning is unchanged. All 85 CPU codec
-contributors are unchanged; preserve original unit/replay attribution. GL device
-callbacks remain unexecuted. CI passes on both Session/audio commits.
-Config-input source b9178ea8 passes independent review, regenerated native archives
-and actual frontend library/binary (184.214s). Owned buffers preserve native parser
-views, teardown order and the original non-Send/Sync owner; input malloc and raw
-sentinel add/write retire. Net +7 production; all 209 frontend warning causes and
-85 CPU codec contributors are unchanged. Include-path C ownership remains.
-Standalone workflow Python has been published. GL01 source 415f0350 passes native
-guards and actual frontend library/binary qualification in 188.374s, with all 209
-warning identities unchanged. Its 42 atomic slots retire two Rust global writes;
-native GL reads still require serialized access on the owning context thread.
-Net +8 production/-1 unsafe-containing; original units/runtime attribution stays.
-Owned include paths and obsolete native helper source 7b70c403 pass native,
-library (28.808s), direct DLL (97.617s) and frontend (177.456s) qualification.
-Original 200 library and 209 frontend warning causes remain; all 85 codec leaves
-are unchanged. Net -6 production/-2 unsafe-containing; C header -1, selected C -11.
-The two C allocation/free paths, two Rust free sites and obsolete malloc/memcpy
-helper retire. Controlled path and hardware variants remain unexecuted.
-Typed music/SFX callback source 17bd7d1d passes review, library (28.039s), DLL
-(98.623s), actual 87/87 units and frontend (177.934s), with original warning causes.
-Its two changed codec leaves have genuine initialized/save/reserve captures and
-continuations: 26 distinct rows / 199,063 comparisons / 0 failures, coverage 23/44.
-Full Morph 1200 and BOTH independent Kago 14350 approaches pass; no restamps.
-SPC channel/tempo source bc29e239 / DLL 466e3e51 passes final review, library
-(32.217s), direct DLL (97.913s), actual 87/87 units and frontend (176.582s).
-All 200 library / 209 frontend warning causes remain; net -20 production,
-verification/legacy/unsafe-containing unchanged. Genuine final-codec initialized,
-save/reserve captures and continuations pass: 26 distinct rows / 199,063
-comparisons / 0, including full Morph 1200 and BOTH Kago 14350; coverage 23/44.
-Original successes and reboot-interrupted reserve/pickup recovery retain their
-separate source/input provenance. Native DSP/APU/channel capabilities remain.
-DSP register/reset source 172c9e04 / DLL 39e67fb1 passes independent review,
-format, library (41.798s), direct DLL (135.159s), actual 93/93 units and
-frontend (268.308s); original 200 library / 209 frontend warning causes remain.
-Final codec 1bdd1abca855c3e0 has genuine initialized 329 + resume 5, save
-55650 and reserve 91623 capture/continuation proofs: 26 distinct rows /
-199,063 comparisons / 0, full Morph 1200 and BOTH Kago 14350; coverage 23/44.
-Net +121 production / +523 verification; legacy and unsafe-containing unchanged.
-The six register/reset witnesses and native DSP/APU/audio dependencies retain
-their exact attribution; physical audio and backend independence remain open.
-Next: separately owned DSP97 runtime and APU source work remain pending.
-The native audio adapter remains; alternate sound banks and menu selection are open.
-Prefer Python for portable automation, with standalone scripts instead of inline
-Python in GitHub Actions. Reserves 2 GiB/50 GiB.
+Primary root 01a17ecd owns integration, Git and one resource ledger; retired
+integrator 01a17c50 and Linux remain stopped. Only main is remote and Jim's
+conversation #6 remains open. Delegate bounded source/review/build/replay scopes
+through the focused skills and keep implementation moving during CI.
+
+DSP cycles source 0a7ff802 / DLL c2324cd1 / codec d2fa559aa3c04080 pass
+independent review, all build stages and actual 97/97 unit cases. Genuine
+initialized 329 + resume 5, save 55650 and reserve 91623 captures and
+continuations pass 26 distinct rows / 199,063 comparisons / 0, full Morph
+1200 and BOTH Kago 14350; required coverage 23/44. Owned publication
+receipts retain full hashes, native/compiler/input guards and timings.
+Production 136,691, verification 55,951, unsafe-containing 2,671, legacy
+17,793: net +329 Rust production / +332 verification / +7 unsafe-containing.
+Mine excludes the 548-line native DSP C compiled dependency; its 91-line
+header remains for separate SPC. Maintained native C -50 and installer
+support -3. PPU/SPC/native audio and physical
+device/full-backend independence remain open. Original SPC source and
+capture attribution are preserved. Next: APU100 runtime qualification
+and separately owned native APU lifecycle/SPC source work.
+Alternate sound banks/menu selection and full owned Session remain unfinished.
+Prefer standalone Python automation, including workflows. Reserve 2 GiB RAM /
+50 GiB disk after admitted remaining growth; fresh ledger samples govern overlap.
 
 ### Qualified history
 
-The current milestones and qualified ci16/ci17/frontend results are above.
-Superseded SOURCE15 through 38 progress, failure, cfg/warning and codec-transfer reports
-remain in the [immutable 4c302a50 history](https://github.com/JimLundin/sm-decomp/blob/4c302a50/docs/PLAN.md#L100-L446).
-Preserve each original source/DLL/native/input/loader attribution and the recorded
-alias, read-order and failure contracts when touching those owners; history does
-not assign new work or authorize repeating accepted campaigns.
-
-The qualified SOURCE30 cohort is source d9daaf02 / DLL 6768ee76: 66 units,
-26 assigned rows (23/44 required), 199,063 comparisons/0, full Morph 1200 and
-BOTH Kago 14350 setups. Its 76 unchanged raw codec contributors bind
-f6e7c80dc575e620, 1,257,015 raw / 1,246,178 normalized bytes; original failed
-fixtures and genuine initialized/save/resume attribution remain in the history.
-Room, renderer, dialogue and Scene/delivery evidence is summarized in
-[REVIEW](REVIEW.md#current-publication-and-acceptance).
-
-Earlier [WRAM/Execution, bank, fixed-HDMA, enemy and room-catalog qualifications](https://github.com/JimLundin/sm-decomp/blob/4c302a50/docs/PLAN.md#L370-L446)
-retain their exact scoped rows, counts, mutation outcomes and exclusions.
-Moves, formatter changes and source-only work earn no qualification or savings.
+The [frozen DSP93 and earlier cohort record](https://github.com/JimLundin/sm-decomp/blob/170bc5351c64f0846bbcb7b4714064a7230db153/docs/PLAN.md#current-work-and-limits)
+preserves ci16/ci17, frontend/config/audio/SPC/DSP results, warnings, full deltas,
+unexecuted variants and original artifact provenance. Earlier SOURCE15–38 and
+WRAM/bank/catalog results remain in [4c302a50](https://github.com/JimLundin/sm-decomp/blob/4c302a50/docs/PLAN.md#qualified-history).
+Read the relevant frozen record and original owned receipts before touching that
+owner. Preserve source/DLL/native/input/loader attribution, aliases, read order,
+failure contracts and exclusions. History assigns no work and authorizes no repeat
+of accepted campaigns. [REVIEW](REVIEW.md#current-publication-and-acceptance) keeps
+active room/renderer/dialogue/Scene contracts. Moves, formatting and source-only
+work earn no qualification or savings.
 
 ### Retained qualification constraints
 
@@ -190,7 +141,7 @@ separate closures; keep imported alias exclusions, source newlines and Windows d
   No always-live owned mirror beside writable authoritative RAM, whole-RAM borrow while
   raw aliases remain, forwarding facade or package move presented as completed ownership.
 - Retirements add no unsafe outside banks. Only hardware/IO register functions may retain
-  unsafe in their existing platform owner, named in the body; otherwise check or keep in-bank.
+  unsafe in their existing platform owner, named in qualification; otherwise check or keep in-bank.
   New owned modules forbid unsafe. Retain unsafe entry contracts for unchecked callees.
 - Keep backend/shader/audio/oracle behavior, masks/PatchBugs and snapshots until actual
   consumers and equivalent checks migrate. Dependencies mean the backend is not retired.
@@ -207,7 +158,8 @@ separate closures; keep imported alias exclusions, source newlines and Windows d
   or claim gross retirement as net. Unsafe deny attributes count as lines, not operations.
 - Never commit ROMs, movies/checkpoints/saves or derived game data. Only encrypted
   release assets use the existing ci-data route; verify complete restore/member identities.
-- Small commits, one coherent idea. If stuck over an hour, record findings here and stop.
+- Small commits, one coherent idea. If an item stalls over an hour, record its blocker
+  and findings, then keep useful independent work supplied.
 
 ## Fast loop
 
@@ -215,7 +167,7 @@ separate closures; keep imported alias exclusions, source newlines and Windows d
    one DLL build: python tools/verify_dll.py --build-only. Denied work never passes.
 2. verify_dll.py --corpus movies/segments.toml --segment for every affected named row,
    plus door-loading-lag-nmi,tas-ceres-four-doors,area-crateria,item-morph-ball; zero failures.
-   No reached row: A adds one; B moves unchanged and writes uncovered: <function> in the body.
+   No reached row: A adds one; B moves unchanged and records uncovered: <function> in qualification.
 3. Nothing extra routinely: no mutation/independent controls/frontend metadata, optimized
    rebuilds, clean-source reruns or full replays. Once before deleting a bank, scoped
    cargo-mutants <=30min; full corpus runs on main AFTER deletion, also at review waypoints.
@@ -224,15 +176,19 @@ separate closures; keep imported alias exclusions, source newlines and Windows d
 4. Every comparison failure gets a checkpoint regression row with its fix; never weaken
    comparisons/expectations. Retry a flaky step once; a second failure is real.
 
-For assigned sequential phases, collect/release the prior handle and budget, sample RAM/disk and other reservations,
-then immediately activate each exact diagnostic-group owner with followup_task; record actual activation and send frozen source pins before inventory/report prose.
-Declare the next budget and notify the integrator/Compute, then launch without waiting for a prose ACK.
-Start with >3GiB free, leave >=2GiB after remaining growth, and keep >=50GiB disk including outputs; new overlaps share one ledger.
-Default source handoff is one lossless canonical patch and complete inventory against actual main; use a64MiB scoped host source budget.
-Keep four bank consumer owners and one primitive owner disjoint. Transfer accepted proofs by exact hashes instead of repeating campaigns.
-Use bounded local Windows owners for source/review/checks; do not reactivate the
-stopped Linux host. Windows DLL/replay still bind final source/native identities.
-After each qualified cycle, reassess1h landed unsafe/legacy/production changes and source/review/build/replay/landing time, then address the measured bottleneck.
+For each sequential phase, collect the prior original handle, confirm terminal
+descendants and release its budget. Freshly sample RAM/CPU/paging/disk and all
+remaining reservations; notify root and launch the already prepared admitted
+successor without a prose ACK. Wake completed owners with followup_task;
+send_message alone does not activate them. Send actual START and frozen pins
+before warning inventories/report prose. Prepare executable commands, environment,
+pinned I/O and next source/review/build/replay recipients before upstream READY.
+Keep bounded Windows owners disjoint; Linux stays stopped. The default source
+handoff is one lossless canonical patch and inventory against actual main, under
+the granted 64 MiB source allowance. Keep four bank consumer owners and one
+primitive owner disjoint. Transfer unchanged accepted proofs by exact hashes.
+After each qualified cycle, compare actual last-hour landed deltas and source/
+review/build/capture/replay/publication gaps; correct the measured bottleneck.
 Partition independent groups/use spare CPU; preserve shared prefixes and all identity
 guards. Run ready original-seed subsets during serial capture dependencies, then complete
 checkpoint rows without repeating accepted work absent a source change/new concern.
@@ -258,14 +214,14 @@ Bundled verifier cfg still reaches denied khronos_api scripts; use the separate 
 frontend and existing direct DLL with unchanged source/native/cache guards.
 Keep crate-root unsafe-op enforcement; paths in [ITERATION](ITERATION.md#windows-shell-setup).
 
-Use fixed interfaces and one writer; isolate when useful. Frozen formatted source may
-compile during final review; DLL/publication bind the reviewed final pin. Never edit
-checked source/rebuild loaded DLLs. Explicit followup_task wakes completed workers;
-send_message alone does not. Refill ready work without waiting on review prose.
-Budget compilers/replays/source separately, including accepted launchers before rustc
-and admitted jobs' remaining growth; release admission as soon as compilation ends.
-Start compilers above3GiB free; reserve1.6GiB/library or3.25GiB/uncapped direct DLL.
-Leave >=2GiB after remaining growth and other reservations.
+Use fixed interfaces and one writer; isolate outputs when useful. Frozen formatted
+source may compile during final review; DLL/publication bind the reviewed final pin.
+Never edit checked source or rebuild loaded DLLs. Budget each workflow's launcher/
+descendants, remaining physical growth and private commitment once; confirmed
+terminal evidence releases the allowance. Start compilers above 3 GiB available
+and leave >=2 GiB after all remaining growth. Current sequential ceilings are
+2 GiB library, 3.25 GiB direct DLL and 2.5 GiB frontend; the primary's exact
+workload/profile grant and fresh shared ledger determine admission.
 Below2GiB/resource errors stop newest producer, not every lightweight reader.
 Measure CPU/RAM/paging/disk/useful throughput: two -j1 builds76.06s versus114.12s serial;
 three is unproven. Raise concurrency only when budgets
@@ -286,7 +242,8 @@ non-force deletion preferred. Never delete another worker's artifacts/locks/dire
 NTFS compression needs unchanged hashes. Report policy rejection immediately; never retry
 through another tool or use tiny compression gains to continue below the reserve.
 
-Done: Fast loop passes; run sh tools/progress.sh, explain increases, put measured Score
-last, fetch/reconcile/recheck HEAD/index, commit to main and immediately push each commit.
+Done: Fast loop passes; measure tools/progress.sh and retain explained deltas and
+exact qualification evidence. Fetch/reconcile/recheck HEAD/index, commit the coherent
+change with a concise message and immediately push main.
 Update active PLAN beside code; no hand-maintained progress image or extra readiness gates.
 Pre-transpile .scratch/gates/pointers/scopes are inactive in archive/pre-transpile-2026-10-17.

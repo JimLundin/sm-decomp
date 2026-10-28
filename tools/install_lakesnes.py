@@ -26,9 +26,6 @@ SOURCES = {
             "snes/ppu.c": "1713d72737ce85996da96359fe141f472845a5b374408c30b866a724cb25824a",
             "snes/ppu.h": "bc7a46cafd27876fb196eced73479af796a3699df6469ac13985b7e4066d63d0",
             "snes/snes.h": "47f15f42667bb749263022244575b053f116bc75f4d45b9fd32d46e00466795e",
-            "snes/dsp.c": "a2710134d7b648ce26e720af8ff56347cab537ddc4ce121894b761624db2fb0b",
-            "snes/dsp.h": "9b4b0c6e554e5bf8dfde03be0da90f691270f9bfdeb9c32ca414a54345add6ba",
-            "snes/apu.h": "1e63389e7e308fff401fe0c62b15623ac5aba4ca983669a67d728ab2192f4fc0",
             "LICENSE.txt": "1e88db7a44bec196f647c7b0e281517600797f4db5f8460bb02510c5219b257c"
         }
     },

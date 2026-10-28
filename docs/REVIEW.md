@@ -1,8 +1,9 @@
 # External review
 
 Living independent review, commissioned by the user. This file holds current
-direction; [qualified history](https://github.com/JimLundin/sm-decomp/blob/0fed89119ad22ec698c114c5b31aed37bd6bc53e/docs/REVIEW.md)
-and linked issue receipts retain earlier decisions and evidence.
+direction; [frozen qualification history](https://github.com/JimLundin/sm-decomp/blob/170bc5351c64f0846bbcb7b4714064a7230db153/docs/REVIEW.md)
+retains earlier results and contracts. Retired issue receipts remain in the
+primary's owned archive, located by their original comment IDs in that history.
 
 ## Milestone plan (2026-10-27)
 
@@ -10,64 +11,40 @@ The user assigns this session proactive oversight of pace, fidelity and the
 accepted owned-engine architecture. This plan supersedes older work-order and
 pacing advice. PLAN remains authoritative for the Fast loop, verification,
 resources, Git, commit/push and completion. Preserve current source owners,
-cloud bank claims and one actual Windows writer. Root 01a17ecd takes
-implementation, coordination, Git, builds and one resource ledger only after
-[explicit RELEASE](https://github.com/JimLundin/sm-decomp/issues/20#issuecomment-6468342614) and verified terminal writer/turn state. The user stopped Linux development
-on 2026-10-27; its frozen source and receipts remain preserved. Implementation,
-review and qualification now run on Windows under the new oversight session.
+cloud bank claims and one actual Windows writer. Primary root 01a17ecd owns
+integration, the sole Git writer and resource ledger after the verified RELEASE;
+retired integrator 01a17c50 must stay stopped. Preserve transfer evidence and
+live jobs/frozen inputs. Linux remains stopped by the user (2026-10-27);
+bounded source, review and qualification run on Windows.
 
 ### Current publication and acceptance
 
-Room cohort **0fed8911** is independently accepted; canonical source
-`9787b6195e8a0b9690a8f28bf13b90567e2a2711e71bbbfe8f070a230b6c27b4`.
-All nine required issues and [milestone 2](https://github.com/JimLundin/sm-decomp/milestone/2) are closed.
-The [acceptance receipt](https://github.com/JimLundin/sm-decomp/issues/18#issuecomment-6449872237)
-binds 588 Git/worktree/frozen leaves, 6,414,506 raw bytes and 32 donor leaves.
+DSP93 is published as **170bc535**; [PLAN](PLAN.md#current-work-and-limits)
+holds the active cycle and measured totals. Full Session/backend independence,
+physical device variants and size acceptance remain open. Preserve original
+qualification attribution; no accepted build/replay is repeated for reporting.
 
-| Measure | Published total | Delta against 79efbfb6 |
-| --- | ---: | ---: |
-| Production | 116,413 | +1,909 |
-| Legacy | 17,793 | 0 |
-| Unsafe-containing lines | 2,579 | +34 |
-| Verification | 43,167 | +1,039 |
-| Support | Separate from engine totals | +67 |
+Completed room/renderer/message/Scene/delivery reports are in the
+[frozen history](https://github.com/JimLundin/sm-decomp/blob/170bc5351c64f0846bbcb7b4714064a7230db153/docs/REVIEW.md#current-publication-and-acceptance):
 
-All 38 background cases pass; all 34 original jobs are collected. SOURCE06/composition04
-retains 21,481 ordinary comparisons/0, 23 units, seven selected-pack cases and its
-initialized/prepared/reset/continuation/rejection proofs. Composition05 changes
-only expectations for existing clears at 0782/0612; all assertions remain, and only cases 34 through 36 ran there.
-Final fmt/host/library/frontend/DLL/source/native guards pass with 160 unchanged
-warnings; all 45 raw contributors retain codec a239acb01e0789a4 and original lineage.
-[Original qualification](https://github.com/JimLundin/sm-decomp/issues/17#issuecomment-6449152367),
-[narrow successor approval](https://github.com/JimLundin/sm-decomp/issues/16#issuecomment-6449263844)
-and the [immutable record](https://github.com/JimLundin/sm-decomp/blob/4c302a50/docs/REVIEW.md#L19-L55)
-retain the exact execution relationships. No accepted build/replay was repeated.
+| Cohort | Qualified source / DLL | Retained evidence |
+| --- | --- | --- |
+| Room, 0fed8911 | 9787b619 / composition04–05 | 38 cases; 21,481 comparisons / 0; exact transfer/failure lineage |
+| Shared renderer | c942fe04 / b01c2561 | 24 units; original 17 rows / 26,638 / 0; independent pixel witnesses |
+| Message composition | 5787 / 8d58 | 26 units; 26 rows / 51,456 / 0; prepared display and content identity |
+| Scene/native sharing | edbe402d / d02d370b | 46 units; original 26 rows / 199,063 / 0; atmospheric failure lineage |
+| Delivery/settlement | dfdd6120 / 7fa1a335 | 48 units; original 26 rows / 199,063 / 0; register/routing/counter witnesses |
 
-Catalog/schema/validation/adapters grow code. Verification exceeds forecast and
-is counted in full. Raw-operation and backend retirement are 0; no savings,
-whole-Session or full-engine claim. Windows desktop selected ROM/search paths
-retain the documented ASCII policy; pack/verifier paths retain Rust handling.
-Absolute ASCII ROM paths do not depend on cwd; --config skips relative directory
-search. No-room-pack flow has no new guard.
+Frozen reports retain full hashes, native/cache/compiler/profile/source/codec/input/
+loader pins, donor/caller costs, exact deltas and failed or unexecuted variants.
+Read the relevant report and original owned receipts when touching its owner.
+Catalog/schema/validation/adapters and verification growth all count; moves and
+formatter joins earn no savings. Windows selected ROM/search paths retain ASCII
+policy; pack/verifier paths retain Rust handling. Absolute ASCII ROM paths work
+independently of cwd; --config skips relative-directory search; no-room-pack flow
+adds no guard. Native dependencies stay disclosed until actual consumers retire.
 
-### Qualified shared renderer #21
-
-[Assignment](https://github.com/JimLundin/sm-decomp/issues/21): reviewed final composition06
-source `c942fe048da941424ee0bf653cab4c335b1615598d6e4a9f8c886bfaa1f1124b`,
-DLL `b01c256132f1f2b2ae37501326b20ff8f4a320124a62be1f6519cc87e0e6a282`.
-All ten leaf pins match; final library/direct/source/native guards, 24 units and
-isolated40/42 pass. Original03 df9b/5921 retains 17 rows/26,638 comparisons/0,
-full Morph1200, initialized329+resume5 and prepared checkpoint/reset/rejection.
-All 48 raw codec leaves are unchanged: 2cdd23f3f10e7e57, 951,201 raw /
-940,208 normalized bytes. Original captures and successful jobs were not repeated.
-Final net +657 production/+506 verification/+7 unsafe-containing/legacy0;
-published totals 117,070 / 43,673 / 2,586 / 17,793 respectively. Four formatter
-joins earn no savings; raw/backend retirement and full Session claims remain open.
-Same-profile incremental1 warnings are 200 versus202, zero added. Failed earlier
-cross-profile comparisons, detached Linux evidence, donor/adapter counts and cache
-measurements remain in the [immutable qualification record](https://github.com/JimLundin/sm-decomp/blob/4c302a50/docs/REVIEW.md#L59-L113).
-Preserve original attribution, frozen inputs and the [exact correction](https://github.com/JimLundin/sm-decomp/issues/21#issuecomment-6449997768)
-and [full inventory](https://github.com/JimLundin/sm-decomp/issues/21#issuecomment-6450048171).
+### Shared renderer contracts
 
 Preserve these interfaces and source contracts:
 
@@ -101,24 +78,7 @@ color/scanline/affine, alias/failure and actual EXTBG/mosaic boundary witnesses.
 Broader variants and checked-overflow mutation sensitivity remain scoped/unproven.
 PLAN affected rows/four smokes/full Morph1200 retain their original proofs.
 
-### Qualified message composition #22
-
-Reviewed source5787/DLL8d58 serves native drawing and the actual prepared dialogue
-consumer. Live queues, stale completion, authored IDs and 0782 waits are preserved.
-Actual26 units and26 rows pass: 21,784 selected +29,672 setup/0, including charge700,
-Ceres249+lag23 and BOTH Kago14350 setups. Full Morph1200 ran once; genuine
-initialized329+resume5 and authored55650+91623 captures pass. Codec54/d3e20adab0249af3
-binds 1,024,520 raw /1,013,226 normalized bytes; no restamp or repeated accepted job.
-Independent full-display/glyph/restoration,360 waits, input/effects/checkpoint and
-changed/missing content/reset checks pass. Net +866 production/+357 verification/
-+2 unsafe-containing attributes/legacy0/support0; all adapter/fixture growth counts.
-The26 rows include23/44 required and three required smokes/save diagnostics.
-Original production/reset successor and library-transfer attribution remain in
-[the immutable qualification](https://github.com/JimLundin/sm-decomp/blob/4c302a50/docs/REVIEW.md#L148-L201),
-[assignment](https://github.com/JimLundin/sm-decomp/issues/22) and
-[original V22 delivery](https://github.com/JimLundin/sm-decomp/issues/22#issuecomment-6451197429).
-Native audio/device/ROM, complete Scenario/initial Scene/audio/Reference and full
-Session/Scene/backend independence remain open; component proof is not full coverage.
+### Message composition contracts
 
 Reuse the unchanged 295-line dialogue runner and frozen V03 renderer. One pure
 message-composition implementation serves the native writer and an actual prepared
@@ -135,45 +95,11 @@ competing authorities. display_refresh::wait's0782 request/acknowledgment struct
 is retained; no new clock, loop-to-completion or invented 60Hz policy. Audio/device
 delivery and full Session/Scene extraction remain explicit dependencies.
 
-### Qualified Scene/display and native sharing cohort #20
+### Full owned playable slice remains open
 
-Reviewed final source edbe402d / DLL d02d370b binds typed display/schema, native
-OAM, HDMA, IRQ and atmospheric consumers. Original SOURCE07 ce55ff2f / d02a8acc
-retains 46 units and26 rows: 21,784 selected +29,672 setup +147,273 fresh capture
-+334 initialized =199,063 comparisons/0. Full Morph1200, BOTH Kago14350 setups,
-initialized329+5 and save55650/reserve91623 retain original source/input lineage.
-Final library35.137s/DLL97.327s and fmt/source/native pass; warnings200/0 added.
-Native 100 through 102 retain SOURCE07; final103/104 and atmospheric 4051 through 4082 pass.
-The original failed4051 fixture and all34 distinct atmospheric cases stay in the
-[immutable qualification](https://github.com/JimLundin/sm-decomp/blob/4c302a50/docs/REVIEW.md#L203-L228).
-All67 raw codec contributors are unchanged: 40ed4a0f14b5bd09,
-1,280,285 raw /1,269,448 normalized bytes. Verification-only successors preserve
-original unit/runtime attribution; no capture or successful job was repeated.
-Net +4,939 production/+2,591 verification/+31 unsafe-containing/legacy0/support+7.
-Raw/backend retirement and full owned playable-slice claims remain open.
-
-### Qualified SOURCE08 delivery and settlement component
-
-Reviewed final source dfdd6120 / DLL7fa1a335 shares owned HDMA, delivery and
-settlement. Original SOURCE08 959bd651 / DLL8049aa51 retains48 units and26 rows:
-21,784 selected +29,672 setup +147,273 fresh capture +334 initialized =199,063/0.
-Full Morph1200, BOTH Kago14350 setups, initialized329+5 and save55650/reserve91623
-retain their own source/input provenance. Final library38.541s/DLL91.356s and
-fmt/source/native pass; warnings200/0 added. Native 100 through 104 keep original attribution;
-105/106 add independent register/routing/counter/latch/live-versus-written OAM checks.
-All69 raw contributors remain identical: c7f30cadd1121f08,
-1,314,039 raw /1,303,202 normalized bytes. Genuine new-codec checkpoint lineage and
-unchanged-proof transfers remain in the [immutable record](https://github.com/JimLundin/sm-decomp/blob/4c302a50/docs/REVIEW.md#L232-L249).
-Net +747 production/+319 verification/+2 unsafe-containing attributes/legacy0/support+2.
-No old unit/runtime/capture repeat, savings or raw/backend retirement claim;
-actual G/start/selected-state adoption and all eight full-slice proof groups remain open.
-
-### Full owned playable slice #20 remains open
-
-[Four accepted interface decisions](https://github.com/JimLundin/sm-decomp/issues/20#issuecomment-6449486236)
-refine the full Morph9E9F proposal. Its six-role+8,900..21,100 production estimate
-is not blanket authorization. Preserve all eight full-slice proof groups and the
-original full 1,200 Morph route.
+The four accepted interface decisions below refine the full Morph9E9F proposal.
+The six-role +8,900..21,100 production estimate is not blanket authorization.
+Preserve all eight full-slice proof groups and original full 1,200-frame Morph.
 
 1. Tools construct G's complete sealed validated start; D owns immutable envelope/
    IDs. Session never runs CPU normalization, opens a RAM dump or guesses fields.
@@ -184,7 +110,7 @@ original full 1,200 Morph route.
 4. Actual portable/default/headless edges exclude oldsm/backend/native/reference/
    devices. Reuse actual pure leaves once; package moves alone do not establish it.
 
-[Existing seed/trace facts](https://github.com/JimLundin/sm-decomp/issues/20#issuecomment-6448986920)
+The [retained seed/trace facts](https://github.com/JimLundin/sm-decomp/blob/170bc5351c64f0846bbcb7b4714064a7230db153/docs/REVIEW.md#full-owned-playable-slice-20-remains-open)
 use normalized WRAM06b4d253, not unavailable raw89960823. Room 9E9F / state 9EB1,
 equipment 0 and next input 18109 are observed. The original full 1,200 trace stays
 in 9E9F; award 590 / completion 977 retain source eba0 / DLL a1c0 / codec 3ac provenance.
@@ -200,41 +126,36 @@ foreign-transfer/reset/adoption/failure contracts.
 
 ### Pace, readable handoffs and publication
 
-Keep useful Windows owners assigned to current work and one concrete ready follow-up. Name
-owner, allowed files, required pin, result and next recipient before completion.
-Inspect actual handles; send_message does not wake a terminal worker. Use
-followup_task, preserve live jobs/frozen sources and refill before report prose.
-Do not repeat accepted checks to fill time. Current #21 authors' next source is #22;
-review/compile/runtime owners have its precise next proof scope.
+Keep useful Windows owners supplied with bounded core work and a concrete ready
+follow-up: exact owner/files/source/budget/rows/handles and next recipient. Prepare
+successor commands and pinned inputs before upstream READY; collect/release the
+prior family, sample shared resources and immediately launch pregranted successors.
+Wake completed workers with followup_task; send_message does not activate them.
+Preserve live jobs/frozen sources and send minimal actual results before prose.
+Drain qualified code to main at the next safe boundary; documentation ACKs and
+CI observation never gate publication or independent implementation.
 
-Use Markdown for issue instructions and operational comments: owner, result,
-next action and actual blocker. Use parallel lists/tables, spaces between numbers
-and words, and details for raw transport. Windows communication_representative
-remains the sole user-facing #6 writer; route facts through its root.
+The primary alone reads and answers Jim's #6 at work boundaries. Follow
+[AGENTS](../AGENTS.md): lead with the result, identify owner and next action,
+show concise spaced facts and keep raw transport in details. Task issues are
+retired; retain source/review/qualification records in repository/owned artifacts.
 
-Latest room-cohort final DLL-to-corrected-case START gap was 82.185s; last corrected
-EXIT-to-commit was 5m35s. Mailbox publication confirmation was 6m50s after EXIT,
-not an exact push duration. Launch prepared admitted groups without a prose ACK,
-collect original handles, then commit/push qualified source promptly. Overlap
-source/review/compilation under PLAN budgets; final publication binds the actual
-reviewed source. Report each cycle's source/review/build/capture/replay/landing
-time and net deltas, then correct the measured bottleneck.
-
-Pages publishing was removed earlier. The user also retired the README progress
-image and treemap generation. No Pages/image CI or staged SVG generation is a
-completion step. Keep measured Score in code commits; no docs-only commit or
-routine Windows CI observation. This reviewer update travels with the next code.
-The user removed the retired codebase map (2026-10-28). Preserve other workers' source/caches/locks.
+Measure each cycle's actual source/review/build/capture/replay/publication time,
+queue/handoff gaps and net deltas. Preserve original handles and exact attribution;
+cached refs/mailbox observations do not prove push time. Correct measured stalls;
+do not repeat accepted campaigns for timing or claim unmeasured speedups.
+Pages, progress images, treemaps and the codebase map are retired. Keep commit
+messages concise under PLAN; retain exact metrics/proofs separately. Docs updates
+travel with code. Preserve other workers' source/caches/locks and all fidelity gates.
 
 ### Size and final acceptance
 
-Actual renderer production117,070 is17,070 above100,000. With17,793 legacy lines,
-bank-only replacement could retain at most723 lines (4.1%); at80% replacement,
-about13,512 further lines must disappear elsewhere before future media growth.
-Moves, formatter joins and verification relocation are not savings. Count every
-retained backend, compatibility adapter, new owner and dependency once. Do not
-sacrifice fidelity/readability to meet arithmetic or claim unsafe attributes as
-retired raw operations.
+DSP93 production 136,362 is 36,362 above 100,000. Even replacing all 17,793
+legacy lines with zero leaves 18,569 additional lines to retire. At 80% bank
+replacement, about 32,803 must disappear elsewhere before further media growth.
+Count every retained owner/adapter/dependency once. Moves, formatting and
+production-to-verification relocation are not savings; unsafe attributes are not
+retired raw operations. Preserve fidelity/readability while reducing actual code.
 
 Choose later work by complete removable dependencies or genuinely duplicated
 responsibilities with understood callers and proof. Tiny isolated cleanups must

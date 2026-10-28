@@ -20,10 +20,11 @@ reservations. Only main is remote; private copies/local branches may isolate wor
 2. Before every Git write, fetch/reconcile current origin/main, recheck HEAD/index
    and preserve others' source, caches and locks. Git owns its short write locks:
    never reserve locks, delete another process's lock or force-push main.
-3. Run PLAN's progress command, explain engine/legacy/unsafe/verification/support
-   deltas and count retained owners, adapters and dependencies once. Distinguish
-   substantive removal from moves/formatting; put measured Score last and follow
-   PLAN's subject/body rules.
+3. Run PLAN's progress command and retain explained engine/legacy/unsafe/
+   verification/support deltas and exact source/native/codec/input/check pins in
+   the owned publication record. Count retained owners/adapters/dependencies once;
+   distinguish actual removal from moves/formatting. Use a descriptive subject and
+   2–3 short body lines for changed behavior and relevant verification, per PLAN.
 4. Commit frequent small coherent qualified code changes to main and immediately
    push origin HEAD:main. On rejection, fetch/reconcile and rerun only affected
    checks before pushing. Fix or revert known CI failures from the published code.

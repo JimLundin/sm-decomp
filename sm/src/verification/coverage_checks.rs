@@ -17,7 +17,7 @@ pub(super) fn run() -> i32 {
     macro_rules! cases {
             ($($test:ident),+ $(,)?) => { [$( (stringify!($test), $test as fn()), )+] };
         }
-    let tests: [(&str, fn()); 93] = cases![
+    let tests: [(&str, fn()); 97] = cases![
         prepared_message_pixels_delay_queue_and_checkpoint,
         prepared_message_rejects_changed_content_and_resets,
         independently_authored_raster_pixels_and_prefixes,
@@ -111,6 +111,10 @@ pub(super) fn run() -> i32 {
         dsp_invalid_register_addresses_reject_before_state_or_memory_effects,
         dsp_reset_clears_every_dirty_voice_field_and_preserves_each_padding_byte,
         dsp_reset_restores_native_globals_without_changing_apu_memory_pointer_or_padding,
+        dsp_cycle_brr_gaussian_and_envelope_have_independent_literal_samples,
+        dsp_cycle_noise_signed_mixing_and_full_buffer_keep_ordered_progress,
+        dsp_cycle_echo_fir_signed_clip_and_wrapped_writeback_are_independent,
+        dsp_cycle_dirty_adsr_and_fir_failures_preserve_exact_completed_prefixes,
     ];
     let mut failed = 0usize;
     for (name, test) in &tests {
@@ -6928,4 +6932,332 @@ fn dsp_reset_restores_native_globals_without_changing_apu_memory_pointer_or_padd
     assert_eq!(state.snapshot_padding1, [0xbb]);
     assert_eq!(state.snapshot_padding2, [0xcc, 0xdd]);
     assert!((0..65536).all(|i| ram.read_at(i) == before_ram[i]));
+}
+
+// Movies share the DSP and cannot independently establish BRR, Gaussian or envelope sample values.
+#[cfg_attr(test, test)]
+fn dsp_cycle_brr_gaussian_and_envelope_have_independent_literal_samples() {
+    use sm::snes::dsp::DspState;
+    // Retained BRR equations, Gaussian weights [55, 960, 974, 59] at offset 129.
+    let vectors = [
+        [
+            14336, -16384, 2048, -2048, -12288, 10240, -8192, 6144, -4096, 4096, -14336, 12288,
+            8192, -6144, -10240, 0,
+        ],
+        [
+            15273, -2066, 111, -1944, -14111, -2990, -10996, -4165, -8001, -3405, 15239, -6194,
+            2385, -3909, -13905, -13036,
+        ],
+        [
+            -14651, 0, 15783, -4730, 0, 14674, -12988, 396, 8834, -12205, 0, -9038, -9037, -14898,
+            2600, -13846,
+        ],
+        [
+            -15011, 0, 14244, -9222, 0, -15036, 0, -14408, 2782, -11968, 0, -10756, -11136, 15353,
+            -6373, 8841,
+        ],
+        [
+            0, -4096, 0, -4096, -4096, 0, -4096, 0, -4096, 0, -4096, 0, 0, -4096, -4096, 0,
+        ],
+    ];
+    let samples = [
+        [3839, 3870, 3823, 3854, 3809, 3839],
+        [3866, 3897, 3850, 3881, 3835, 3866],
+        [3011, 3035, 2999, 3023, 2987, 3011],
+        [3001, 3025, 2989, 3013, 2977, 3001],
+        [3429, 3457, 3416, 3443, 3403, 3430],
+    ];
+    for ((header, decoded), pcm) in [0xc0, 0xc4, 0xc8, 0xcc, 0xd0]
+        .into_iter()
+        .zip(vectors)
+        .zip(samples)
+    {
+        let ram = sm::apu_ram::ApuRam::new();
+        let mut state = DspState::new();
+        ram.write(0xfffc, header);
+        for (index, byte) in [0x78, 0x1f, 0xa5, 0xc3, 0xe2, 0x96, 0x4d, 0xb0]
+            .into_iter()
+            .enumerate()
+        {
+            ram.write(0xfffdu16.wrapping_add(index as u16), byte);
+        }
+        state.masterVolumeL = 127;
+        state.masterVolumeR = -128;
+        state.echoDelay = 1;
+        state.echoRemain = 1;
+        let voice = &mut state.channel[0];
+        voice.pitch = 0x0811;
+        voice.pitchCounter = 0xffff;
+        voice.decodeOffset = 0xfffc;
+        voice.decodeBuffer[16..].copy_from_slice(&[-9000, 15000, -7000]);
+        voice.old = 1000;
+        voice.older = -2000;
+        voice.gain = 1950;
+        voice.adsrRates = [1; 4];
+        voice.sustainLevel = 2040;
+        voice.volumeL = 64;
+        voice.volumeR = -64;
+        voice.keyOn = true;
+        voice.keyOff = true;
+        for expected in [(2047, 1), (2039, 2), (2031, 2)] {
+            state.cycle(&ram);
+            let voice = &mut state.channel[0];
+            assert_eq!((voice.gain, voice.adsrState), expected);
+            assert_eq!(voice.rateCounter, 0);
+            voice.pitch = 0;
+        }
+        let voice = &state.channel[0];
+        assert_eq!(&voice.decodeBuffer[..3], &[-9000, 15000, -7000]);
+        assert_eq!(&voice.decodeBuffer[3..], &decoded);
+        assert_eq!(
+            (voice.decodeOffset, voice.pitchCounter, voice.previousFlags),
+            (5, 0x0810, 0)
+        );
+        assert_eq!((voice.old, voice.older), (decoded[15], decoded[14]));
+        assert_eq!(voice.sampleOut, pcm[5]);
+        assert_eq!(&state.sampleBuffer[..6], &pcm);
+        assert_eq!((state.ram[8], state.ram[9]), (126, (pcm[5] >> 7) as u8));
+        assert_eq!((state.sampleOffset, state.evenCycle), (3, true));
+        assert!(voice.keyOn && voice.keyOff);
+    }
+}
+
+// Movies share the DSP and cannot author signed saturation, dirty noise or inspect a full sample tail.
+#[cfg_attr(test, test)]
+fn dsp_cycle_noise_signed_mixing_and_full_buffer_keep_ordered_progress() {
+    use sm::snes::dsp::DspState;
+    let ram = sm::apu_ram::ApuRam::new();
+    let mut state = DspState::new();
+    state.sampleBuffer = [23; 1068];
+    state.sampleOffset = 533;
+    state.noiseSample = -16384;
+    state.noiseRate = 1;
+    state.masterVolumeL = -128;
+    state.masterVolumeR = 127;
+    state.echoDelay = 1;
+    state.echoRemain = 1;
+    for (voice, (left, right)) in state.channel.iter_mut().zip([
+        (-128, 127),
+        (-128, 127),
+        (64, -64),
+        (64, -64),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+        (0, 0),
+    ]) {
+        voice.useNoise = true;
+        voice.useGain = true;
+        voice.directGain = true;
+        voice.gainValue = 2048;
+        voice.volumeL = left;
+        voice.volumeR = right;
+    }
+    state.cycle(&ram);
+    assert_eq!(&state.sampleBuffer[1066..], &[1, 0]);
+    assert_eq!(
+        (
+            state.sampleOffset,
+            state.evenCycle,
+            state.noiseSample,
+            state.noiseCounter
+        ),
+        (534, true, 8192, 0)
+    );
+    assert_eq!(state.channel.map(|voice| voice.sampleOut), [-16384; 8]);
+    assert_eq!((state.ram[8], state.ram[9]), (128, 128));
+    state.cycle(&ram);
+    assert_eq!(&state.sampleBuffer[..1066], &[23; 1066]);
+    assert_eq!(&state.sampleBuffer[1066..], &[1, 0]);
+    assert_eq!(
+        (state.sampleOffset, state.evenCycle, state.noiseSample),
+        (534, false, 4096)
+    );
+    assert_eq!(state.channel.map(|voice| voice.sampleOut), [8192; 8]);
+    assert_eq!(state.firBufferIndex, 2);
+    // Negative modulation narrows to u16 before clamping, even with an uncommittable offset.
+    state.sampleOffset = 0xffff;
+    state.noiseSample = -32768;
+    state.channel[1].pitchModulation = true;
+    state.channel[1].pitch = 0x3000;
+    state.channel[1].pitchCounter = 7;
+    state.cycle(&ram);
+    assert_eq!(state.channel[1].pitchCounter, 0x4006);
+    assert_eq!(state.channel.map(|voice| voice.sampleOut), [-32768; 8]);
+    assert_eq!(
+        (
+            state.sampleOffset,
+            state.evenCycle,
+            state.noiseSample,
+            state.firBufferIndex
+        ),
+        (0xffff, true, 0, 3)
+    );
+    state.noiseSample = 3;
+    state.cycle(&ram);
+    assert_eq!(state.noiseSample, 1);
+    state.cycle(&ram);
+    assert_eq!(state.noiseSample, -16384);
+    assert_eq!(state.sampleOffset, 0xffff);
+    assert_eq!(&state.sampleBuffer[..1066], &[23; 1066]);
+    assert_eq!(&state.sampleBuffer[1066..], &[1, 0]);
+}
+
+// Movies share the DSP and cannot independently establish signed FIR clip, wrapped echo bytes or mute order.
+#[cfg_attr(test, test)]
+fn dsp_cycle_echo_fir_signed_clip_and_wrapped_writeback_are_independent() {
+    use sm::snes::dsp::DspState;
+    // Seven 31750 terms narrow 222250 to 25642 before the final signed tap.
+    for (last, muted, pcm, bytes) in [
+        (-128, false, [9185, 9258], [0xcc, 0x15, 0x32, 0xea]),
+        (127, false, [32511, 32767], [0xfe, 0x42, 0x00, 0xbd]),
+        (127, true, [0, 0], [0xfe, 0x42, 0x00, 0xbd]),
+    ] {
+        let ram = sm::apu_ram::ApuRam::new();
+        let mut state = DspState::new();
+        for (address, byte) in [(0xfffe, 0), (0xffff, 0x40), (0, 0), (1, 0xc0)] {
+            ram.write(address, byte);
+        }
+        state.echoBufferAdr = 0xfffe;
+        state.echoDelay = 3;
+        state.echoRemain = 1;
+        state.firBufferIndex = 7;
+        state.firBufferL = [16000; 8];
+        state.firBufferR = [-16000; 8];
+        state.firValues = [127; 8];
+        state.firValues[7] = last;
+        state.echoVolumeL = 127;
+        state.echoVolumeR = -128;
+        state.feedbackVolume = 63;
+        state.echoWrites = true;
+        state.mute = muted;
+        state.noiseSample = 1024;
+        let voice = &mut state.channel[0];
+        voice.useNoise = true;
+        voice.useGain = true;
+        voice.directGain = true;
+        voice.gainValue = 2048;
+        voice.volumeL = 64;
+        voice.volumeR = -64;
+        voice.echoEnable = true;
+        state.cycle(&ram);
+        assert_eq!(&state.sampleBuffer[..2], &pcm);
+        assert_eq!(
+            [ram.read(0xfffe), ram.read(0xffff), ram.read(0), ram.read(1)],
+            bytes
+        );
+        assert_eq!((state.firBufferL[7], state.firBufferR[7]), (8192, -8192));
+        assert_eq!(&state.firBufferL[..7], &[16000; 7]);
+        assert_eq!(&state.firBufferR[..7], &[-16000; 7]);
+        assert_eq!(
+            (
+                state.firBufferIndex,
+                state.echoBufferIndex,
+                state.echoRemain
+            ),
+            (0, 0, 3)
+        );
+        assert_eq!(state.channel[0].sampleOut, 1024);
+        state.echoWrites = false;
+        state.mute = true;
+        state.cycle(&ram);
+        assert_eq!(&state.sampleBuffer[2..4], &[0, 0]);
+        assert_eq!(
+            [ram.read(0xfffe), ram.read(0xffff), ram.read(0), ram.read(1)],
+            bytes
+        );
+        assert_eq!(
+            (
+                state.firBufferIndex,
+                state.echoBufferIndex,
+                state.echoRemain
+            ),
+            (1, 1, 2)
+        );
+        assert_eq!((state.sampleOffset, state.evenCycle), (2, false));
+    }
+}
+
+// Movies cannot restore invalid ADSR/FIR indices or independently inspect each failure's committed prefix.
+#[cfg_attr(test, test)]
+fn dsp_cycle_dirty_adsr_and_fir_failures_preserve_exact_completed_prefixes() {
+    use sm::snes::dsp::DspState;
+    let ram = sm::apu_ram::ApuRam::new();
+    let mut state = DspState::new();
+    state.ram = [0xa5; 128];
+    state.sampleBuffer = [27; 1068];
+    state.sampleOffset = 0xffff;
+    state.evenCycle = true;
+    state.noiseSample = 1024;
+    state.noiseRate = 1;
+    state.echoWrites = true;
+    state.firBufferL = [17; 8];
+    state.firBufferR = [-17; 8];
+    state.channel[0].useNoise = true;
+    state.channel[0].useGain = true;
+    state.channel[0].directGain = true;
+    state.channel[0].gainValue = 1024;
+    state.channel[1].pitch = 1;
+    state.channel[1].pitchCounter = 5;
+    let voice = &mut state.channel[2];
+    voice.pitch = 1;
+    voice.pitchCounter = 0xffff;
+    voice.decodeOffset = 0xfffc;
+    voice.decodeBuffer[16..].copy_from_slice(&[11, 22, 33]);
+    voice.adsrState = 5;
+    voice.gain = 501;
+    voice.sampleOut = -99;
+    state.channel[3].pitch = 2;
+    state.channel[3].pitchCounter = 19;
+    ram.write(0xfffc, 0xd0);
+    for index in 0..8 {
+        ram.write(0xfffdu16.wrapping_add(index), 0xf1);
+    }
+    let before_ram: [u8; 65536] = core::array::from_fn(|index| ram.read_at(index));
+    assert!(std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| state.cycle(&ram))).is_err());
+    assert_eq!(state.channel[0].sampleOut, 512);
+    assert_eq!((state.ram[8], state.ram[9]), (64, 4));
+    assert_eq!(state.channel[1].pitchCounter, 6);
+    let voice = &state.channel[2];
+    assert_eq!((voice.decodeOffset, voice.pitchCounter), (5, 0));
+    assert_eq!(&voice.decodeBuffer[..3], &[11, 22, 33]);
+    assert_eq!(
+        &voice.decodeBuffer[3..],
+        &[
+            -4096, 0, -4096, 0, -4096, 0, -4096, 0, -4096, 0, -4096, 0, -4096, 0, -4096, 0
+        ]
+    );
+    assert_eq!((voice.old, voice.older), (0, -4096));
+    assert_eq!(
+        (voice.adsrState, voice.gain, voice.sampleOut),
+        (5, 501, -99)
+    );
+    assert_eq!((state.ram[0x28], state.ram[0x29]), (0xa5, 0xa5));
+    assert_eq!((state.ram[0x38], state.ram[0x39]), (0xa5, 0xa5));
+    assert_eq!(state.channel[3].pitchCounter, 19);
+    state.channel[2].adsrState = 4;
+    state.channel[2].gain = 5;
+    state.channel[7].useNoise = true;
+    state.channel[7].useGain = true;
+    state.channel[7].directGain = true;
+    state.channel[7].gainValue = 2048;
+    state.firBufferIndex = 8;
+    assert!(std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| state.cycle(&ram))).is_err());
+    assert_eq!(
+        state.channel.map(|voice| voice.sampleOut),
+        [512, 0, 0, 0, 0, 0, 0, 1024]
+    );
+    assert_eq!(
+        (state.ram[0x78], state.ram[0x79], state.channel[2].gain),
+        (128, 8, 0)
+    );
+    assert_eq!(state.firBufferL, [17; 8]);
+    assert_eq!(state.channel[3].pitchCounter, 21);
+    assert_eq!(state.firBufferR, [-17; 8]);
+    assert_eq!(state.firBufferIndex, 8);
+    assert_eq!((state.echoBufferIndex, state.echoRemain), (0, 0));
+    assert_eq!((state.noiseSample, state.noiseCounter), (1024, 0));
+    assert_eq!((state.sampleOffset, state.evenCycle), (0xffff, true));
+    assert_eq!(state.sampleBuffer, [27; 1068]);
+    assert!((0..65536).all(|index| ram.read_at(index) == before_ram[index]));
 }
