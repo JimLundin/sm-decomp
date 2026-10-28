@@ -58,20 +58,20 @@ integrator 01a17c50 and Linux remain stopped. Only main is remote and Jim's
 conversation #6 remains open. Delegate bounded source/review/build/replay scopes
 through the focused skills and keep implementation moving during CI.
 
-DSP cycles source 0a7ff802 / DLL c2324cd1 / codec d2fa559aa3c04080 pass
-independent review, all build stages and actual 97/97 unit cases. Genuine
-initialized 329 + resume 5, save 55650 and reserve 91623 captures and
-continuations pass 26 distinct rows / 199,063 comparisons / 0, full Morph
-1200 and BOTH Kago 14350; required coverage 23/44. Owned publication
-receipts retain full hashes, native/compiler/input guards and timings.
-Production 136,691, verification 55,951, unsafe-containing 2,671, legacy
-17,793: net +329 Rust production / +332 verification / +7 unsafe-containing.
-Mine excludes the 548-line native DSP C compiled dependency; its 91-line
-header remains for separate SPC. Maintained native C -50 and installer
-support -3. PPU/SPC/native audio and physical
-device/full-backend independence remain open. Original SPC source and
-capture attribution are preserved. Next: APU100 runtime qualification
-and separately owned native APU lifecycle/SPC source work.
+APU timer/bus source 3edbecf8 / DLL b73c388f / codec a187ba226fb053f7 pass
+independent review, all build stages and actual 100/100 units; the original
+97 assertion/name/body bytes remain. Genuine initialized 329 + resume 5,
+save 55650 and reserve 91623 captures/continuations pass 26 distinct rows /
+199,063 comparisons / 0, full Morph 1200 and BOTH Kago 14350; coverage 23/44.
+Production 136,751, verification 56,212, unsafe-containing 2,673, legacy
+17,793: net +60 production / +261 verification / +2 forbid attributes;
+actual unsafe-keyword delta 0. Maintained native C and installer support
+are unchanged; all 11 native archives transfer from DSP97. Its 548-line
+C dependency stays excluded from mine; the 91-line DSP header remains.
+The [DSP97 record](https://github.com/JimLundin/sm-decomp/blob/fd7c4481fe29de7c31fc2bcc3712c2d5bcfd2403/docs/PLAN.md#current-work-and-limits) retains its full original qualification.
+Native SPC/reentry/trace/reset, PPU/audio and physical/full-backend
+independence remain open. Owned receipts retain exact proof and timings.
+Next: separately owned native APU lifecycle and SPC opcode source work.
 Alternate sound banks/menu selection and full owned Session remain unfinished.
 Prefer standalone Python automation, including workflows. Reserve 2 GiB RAM /
 50 GiB disk after admitted remaining growth; fresh ledger samples govern overlap.

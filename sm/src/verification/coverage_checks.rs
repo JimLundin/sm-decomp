@@ -17,7 +17,7 @@ pub(super) fn run() -> i32 {
     macro_rules! cases {
             ($($test:ident),+ $(,)?) => { [$( (stringify!($test), $test as fn()), )+] };
         }
-    let tests: [(&str, fn()); 97] = cases![
+    let tests: [(&str, fn()); 100] = cases![
         prepared_message_pixels_delay_queue_and_checkpoint,
         prepared_message_rejects_changed_content_and_resets,
         independently_authored_raster_pixels_and_prefixes,
@@ -115,6 +115,9 @@ pub(super) fn run() -> i32 {
         dsp_cycle_noise_signed_mixing_and_full_buffer_keep_ordered_progress,
         dsp_cycle_echo_fir_signed_clip_and_wrapped_writeback_are_independent,
         dsp_cycle_dirty_adsr_and_fir_failures_preserve_exact_completed_prefixes,
+        apu_timers_preserve_restored_rollover_read_clear_and_enable_phase,
+        apu_bus_preserves_boot_ports_ram_shadow_and_masked_dsp_history,
+        apu_callback_failures_keep_history_cycle_and_reset_prefixes,
     ];
     let mut failed = 0usize;
     for (name, test) in &tests {
@@ -7260,4 +7263,262 @@ fn dsp_cycle_dirty_adsr_and_fir_failures_preserve_exact_completed_prefixes() {
     assert_eq!((state.sampleOffset, state.evenCycle), (0xffff, true));
     assert_eq!(state.sampleBuffer, [27; 1068]);
     assert!((0..65536).all(|index| ram.read_at(index) == before_ram[index]));
+}
+
+// Movies cannot restore arbitrary timer dividers/counters and inspect zero-target rollover or read-clear bytes.
+#[cfg_attr(test, test)]
+fn apu_timers_preserve_restored_rollover_read_clear_and_enable_phase() {
+    use sm::snes::apu::ApuRegisters;
+    let clocks = |t: sm::types::Timer| (t.cycles, t.divider, t.counter);
+    let ram = sm::apu_ram::ApuRam::new();
+    ram.fill(0xa5);
+    let mut apu = ApuRegisters::new();
+    apu.cycles = 1;
+    apu.cpuCyclesLeft = 1;
+    for (timer, (cycles, divider, target, counter, enabled)) in apu.timer.iter_mut().zip([
+        (0, 255, 0, 255, true),
+        (1, 7, 8, 254, false),
+        (0, 1, 2, 15, true),
+    ]) {
+        timer.cycles = cycles;
+        timer.divider = divider;
+        timer.target = target;
+        timer.counter = counter;
+        timer.enabled = enabled;
+    }
+    apu.cycle(None, || panic!("non-DSP phase"));
+    assert_eq!(
+        apu.timer.map(clocks),
+        [(127, 0, 0), (0, 7, 254), (15, 0, 0)]
+    );
+    assert_eq!((apu.cycles, apu.cpuCyclesLeft), (2, 0));
+    let counters = [0xfd, 0xfe, 0xff].map(|a| apu.read(&ram, a, |_| panic!()));
+    assert_eq!(counters, [0, 254, 0]);
+    assert_eq!(apu.timer.map(|t| t.counter), [0; 3]);
+    assert_eq!([ram.read(0xfd), ram.read(0xfe), ram.read(0xff)], [0xa5; 3]);
+    apu.timer[0].divider = 7;
+    apu.timer[0].counter = 5;
+    apu.timer[1].divider = 9;
+    apu.timer[1].counter = 6;
+    apu.timer[2].divider = 11;
+    apu.timer[2].counter = 7;
+    apu.write(&ram, 0xf1, 0x87, |_, _| panic!());
+    assert_eq!(
+        apu.timer
+            .map(|t| (t.cycles, t.divider, t.counter, t.enabled)),
+        [(127, 7, 5, true), (0, 0, 0, true), (15, 11, 7, true)]
+    );
+    apu.write(&ram, 0xf1, 0x81, |_, _| panic!());
+    assert_eq!(
+        apu.timer.map(|t| (t.divider, t.counter, t.enabled)),
+        [(7, 5, true), (0, 0, false), (11, 7, false)]
+    );
+    apu.write(&ram, 0xf1, 0x87, |_, _| panic!());
+    assert_eq!(apu.timer.map(clocks), [(127, 7, 5), (0, 0, 0), (15, 0, 0)]);
+    assert_eq!(ram.read(0xf1), 0x87);
+    // 255 complete 128-cycle periods leave divider 255; the next event matches target zero.
+    let mut apu = ApuRegisters::new();
+    apu.cycles = 1;
+    apu.timer[0].enabled = true;
+    for _ in 0..32640 {
+        apu.cycle(None, || {});
+    }
+    assert_eq!(clocks(apu.timer[0]), (0, 255, 0));
+    apu.cycle(None, || {});
+    assert_eq!(clocks(apu.timer[0]), (127, 0, 1));
+    assert_eq!(apu.read(&ram, 0xfd, |_| panic!()), 1);
+    assert_eq!(apu.read(&ram, 0xfd, |_| panic!()), 0);
+}
+
+// Movies cannot author full DSP addresses or failed reads and independently inspect boot/port/RAM effects.
+#[cfg_attr(test, test)]
+fn apu_bus_preserves_boot_ports_ram_shadow_and_masked_dsp_history() {
+    use sm::snes::apu::ApuRegisters;
+    use sm::snes::dsp::{DspState, dsp_read, write_register};
+    use std::panic::{AssertUnwindSafe as unwind, catch_unwind as catch};
+    let ram = sm::apu_ram::ApuRam::new();
+    ram.fill(0xa5);
+    let mut apu = ApuRegisters::new();
+    let mut dsp = DspState::new();
+    dsp.ram[0x7f] = 0x69;
+    apu.romReadable = true;
+    apu.inPorts = [11, 22, 33, 44, 55, 66];
+    for (address, expected) in [
+        (0xffbf, 0xa5),
+        (0xffc0, 0xcd),
+        (0xfffe, 0xc0),
+        (0xffff, 0xff),
+    ] {
+        assert_eq!(apu.read(&ram, address, |_| panic!()), expected);
+    }
+    apu.write(&ram, 0xffc0, 0x18, |_, _| panic!());
+    apu.write(&ram, 0xffff, 0x19, |_, _| panic!());
+    assert_eq!(apu.read(&ram, 0xffc0, |_| panic!()), 0xcd);
+    for address in [0xf0, 0xf1, 0xfa, 0xfb, 0xfc] {
+        assert_eq!(apu.read(&ram, address, |_| panic!()), 0);
+    }
+    let ports: [u8; 6] = core::array::from_fn(|i| apu.read(&ram, 0xf4 + i as u16, |_| panic!()));
+    assert_eq!(ports, [11, 22, 33, 44, 55, 66]);
+    apu.write(&ram, 0xf0, 0x71, |_, _| panic!());
+    assert_eq!(
+        (ram.read(0xf0), apu.read(&ram, 0xf0, |_| panic!())),
+        (0x71, 0)
+    );
+    apu.write(&ram, 0xf2, 0xff, |_, _| panic!());
+    assert_eq!(apu.read(&ram, 0xf2, |_| panic!()), 0xff);
+    apu.write(&ram, 0xf3, 0x35, |_, _| {
+        panic!("high DSP writes are ignored")
+    });
+    assert_eq!(
+        apu.read(&ram, 0xf3, |address| {
+            assert_eq!(address, 0x7f);
+            dsp_read(&dsp, address)
+        }),
+        0x69
+    );
+    let history = apu.history;
+    assert_eq!(
+        (history.count, history.addr[0], history.val[0]),
+        (1, 0xff, 0x35)
+    );
+    assert_eq!(ram.read(0xf3), 0x35);
+    apu.write(&ram, 0xf2, 0x7f, |_, _| panic!());
+    apu.write(&ram, 0xf3, 0x4d, |a, v| {
+        write_register(&mut dsp, &ram, a, v)
+    });
+    assert_eq!(
+        (dsp.firValues[7], dsp.ram[0x7f], ram.read(0xf3)),
+        (77, 0x4d, 0x4d)
+    );
+    assert_eq!(apu.history.count, 2);
+    assert_eq!(&apu.history.addr[..2], &[0xff, 0x7f]);
+    assert_eq!(&apu.history.val[..2], &[0x35, 0x4d]);
+    assert!(
+        catch(unwind(
+            || apu.read(&ram, 0xf3, |_| panic!("DSP read failure"))
+        ))
+        .is_err()
+    );
+    assert_eq!((apu.history.count, ram.read(0xf3)), (2, 0x4d));
+    for (a, v) in [(0xfa, 0), (0xfb, 2), (0xfc, 255)] {
+        apu.write(&ram, a, v, |_, _| panic!());
+        assert_eq!(apu.read(&ram, a, |_| panic!()), 0);
+    }
+    assert_eq!(apu.timer.map(|t| t.target), [0, 2, 255]);
+    assert_eq!(
+        [ram.read(0xfa), ram.read(0xfb), ram.read(0xfc)],
+        [0, 2, 255]
+    );
+    for (index, value) in [91, 92, 93, 94, 95, 96].into_iter().enumerate() {
+        apu.write(&ram, 0xf4 + index as u16, value, |_, _| panic!());
+    }
+    assert_eq!(apu.outPorts, [91, 92, 93, 94]);
+    assert_eq!(apu.inPorts, [11, 22, 33, 44, 95, 96]);
+    let shadow: [u8; 6] = core::array::from_fn(|i| ram.read(0xf4 + i as u16));
+    assert_eq!(shadow, [91, 92, 93, 94, 95, 96]);
+    apu.write(&ram, 0xf1, 0x30, |_, _| panic!());
+    assert_eq!(apu.inPorts, [0, 0, 0, 0, 95, 96]);
+    assert_eq!(apu.outPorts, [91, 92, 93, 94]);
+    assert!(!apu.romReadable);
+    assert_eq!(apu.read(&ram, 0xffc0, |_| panic!()), 0x18);
+    assert_eq!(apu.read(&ram, 0xffff, |_| panic!()), 0x19);
+    assert_eq!(ram.read(0xf1), 0x30);
+}
+
+// Movies cannot restore invalid history counts or fail DSP callbacks between history, cadence and RAM commits.
+#[cfg_attr(test, test)]
+fn apu_callback_failures_keep_history_cycle_and_reset_prefixes() {
+    use sm::snes::apu::ApuRegisters;
+    let clocks = |t: sm::types::Timer| (t.cycles, t.divider, t.counter);
+    use sm::snes::dsp::{DspState, write_register};
+    use std::panic::{AssertUnwindSafe as unwind, catch_unwind as catch};
+    let ram = sm::apu_ram::ApuRam::new();
+    ram.fill(0xa5);
+    let mut apu = ApuRegisters::new();
+    let mut dsp = DspState::new();
+    apu.dspAdr = 0x7f;
+    apu.history.addr = [0xa1; 256];
+    apu.history.val = [0xb2; 256];
+    for (count, committed) in [(257, 258), (0xffff_ffff, 0)] {
+        apu.history.count = count;
+        assert!(catch(unwind(|| apu.write(&ram, 0xf3, 0x44, |_, _| panic!()))).is_err());
+        assert_eq!(apu.history.count, committed);
+        assert_eq!(apu.history.addr, [0xa1; 256]);
+        assert_eq!(apu.history.val, [0xb2; 256]);
+        assert_eq!(ram.read(0xf3), 0xa5);
+    }
+    assert!(
+        catch(unwind(|| apu.write(&ram, 0xf3, 0x44, |address, value| {
+            write_register(&mut dsp, &ram, address, value);
+            panic!("DSP write failure");
+        })))
+        .is_err()
+    );
+    let history = apu.history;
+    assert_eq!(
+        (history.count, history.addr[0], history.val[0]),
+        (1, 0x7f, 0x44)
+    );
+    assert_eq!((dsp.firValues[7], ram.read(0xf3)), (68, 0xa5));
+    apu.history.count = 256;
+    apu.write(&ram, 0xf3, 0x55, |a, v| {
+        write_register(&mut dsp, &ram, a, v)
+    });
+    assert_eq!((apu.history.count, apu.history.val[0]), (256, 0x44));
+    assert_eq!((dsp.firValues[7], ram.read(0xf3)), (85, 0x55));
+    apu.cycles = 32;
+    apu.timer[0].divider = 2;
+    apu.timer[0].target = 3;
+    apu.timer[0].counter = 4;
+    apu.timer[0].enabled = true;
+    assert!(
+        catch(unwind(|| apu.cycle(Some(9), || {
+            dsp.cycle(&ram);
+            panic!("DSP cycle failure");
+        })))
+        .is_err()
+    );
+    assert_eq!((apu.cpuCyclesLeft, apu.cycles), (8, 32));
+    assert_eq!(clocks(apu.timer[0]), (0, 2, 4));
+    assert_eq!((dsp.sampleOffset, dsp.evenCycle), (1, true));
+    apu.cycle(None, || dsp.cycle(&ram));
+    assert_eq!((apu.cpuCyclesLeft, apu.cycles), (7, 33));
+    assert_eq!(clocks(apu.timer[0]), (127, 0, 5));
+    apu.cycles = 0xffff_ffff;
+    apu.cycle(Some(0), || panic!("non-DSP phase"));
+    assert_eq!((apu.cpuCyclesLeft, apu.cycles), (255, 0));
+    apu.cycle(None, || dsp.cycle(&ram));
+    assert_eq!(
+        (apu.cpuCyclesLeft, apu.cycles, dsp.sampleOffset),
+        (254, 1, 3)
+    );
+    apu.pad = [0x22; 6];
+    apu.snapshot_padding0 = [0x11; 2];
+    let history = apu.history;
+    apu.inPorts = [3; 6];
+    apu.outPorts = [4; 4];
+    for t in &mut apu.timer {
+        t.target = 9;
+        t.counter = 10;
+        t.enabled = true;
+    }
+    apu.begin_reset();
+    assert_eq!(apu.read(&ram, 0xfffe, |_| panic!()), 0xc0);
+    assert_eq!((apu.cycles, apu.cpuCyclesLeft), (1, 254));
+    assert_eq!((apu.dspAdr, ram.read(0xf3)), (0x7f, 0x55));
+    apu.finish_reset(&ram);
+    assert!(apu.romReadable);
+    assert_eq!((apu.dspAdr, apu.cycles), (0, 0));
+    assert_eq!((apu.cpuCyclesLeft, apu.history.count), (7, 0));
+    assert_eq!(apu.inPorts, [0; 6]);
+    assert_eq!(apu.outPorts, [0; 4]);
+    assert_eq!(
+        apu.timer
+            .map(|t| (t.cycles, t.divider, t.target, t.counter, t.enabled)),
+        [(0, 0, 0, 0, false); 3]
+    );
+    assert_eq!(apu.history.addr, history.addr);
+    assert_eq!(apu.history.val, history.val);
+    assert_eq!((apu.pad, apu.snapshot_padding0), ([0x22; 6], [0x11; 2]));
+    assert!((0..65536).all(|i| ram.read_at(i) == 0));
 }
