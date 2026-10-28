@@ -81,7 +81,8 @@ sentinel add/write retire. Net +7 production; all 209 frontend warning causes an
 85 CPU codec contributors are unchanged. Include-path C ownership remains.
 Next: qualify the reviewed shader-table source successor through its actual
 native/frontend path; extract inline workflow Python into standalone scripts.
-Prefer Python for portable automation. Reserves 2 GiB/50 GiB.
+Prefer Python for portable automation, with standalone scripts instead of inline
+Python in GitHub Actions. Reserves 2 GiB/50 GiB.
 
 SOURCE38 connects actor layer-3 player drawing to the complete owned Runtime
 driver and adds the live B04/B06 body-coordinate projection. Native effects

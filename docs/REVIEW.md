@@ -304,7 +304,7 @@ Pages publishing was removed earlier. The user also retired the README progress
 image and treemap generation. No Pages/image CI or staged SVG generation is a
 completion step. Keep measured Score in code commits; no docs-only commit or
 routine Windows CI observation. This reviewer update travels with the next code.
-Preserve untracked docs/codebase-map and other workers' source/caches/locks.
+The user removed the retired codebase map (2026-10-28). Preserve other workers' source/caches/locks.
 
 ### Size and final acceptance
 

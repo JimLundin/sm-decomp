@@ -168,20 +168,7 @@ jobs:
         run: |
           python tools/verify_dll.py --build-only --cargo
           if ($LASTEXITCODE -ne 0) { throw 'Cargo verifier configuration build failed' }
-          @'
-          from pathlib import Path
-          import runpy
-          root = Path.cwd()
-          verifier = runpy.run_path(str(root / 'tools/verify_dll.py'))
-          host = verifier['load_host'](root / 'target/verify-dll/sm_verify.dll')
-          verifier['check_source'](host, verifier['source_hash'](root))
-          verifier['check_library'](host, root)
-          for name in ('sm_verify_actor_movement_case', 'sm_verify_actor_movement_table_case',
-                       'sm_verify_actor_population_animation_case'):
-              if not hasattr(host, name):
-                  raise SystemExit('Cargo verifier missing required export: ' + name)
-          print('Cargo verifier source and all three actor exports match')
-          '@ | python -B -
+          python -B .github/scripts/check_actor_exports.py
           if ($LASTEXITCODE -ne 0) { throw 'Cargo verifier actor export check failed' }
       - name: Run verifier units through the built DLL
         run: |
@@ -236,17 +223,7 @@ jobs:
           ROM_43: ${{ secrets.SM_ROM_43 }}
           ROM_44: ${{ secrets.SM_ROM_44 }}
         run: |
-          @'
-          import base64, gzip, hashlib, os, pathlib
-          encoded = "".join(os.environ[f"ROM_{i:02d}"] for i in range(45))
-          if not encoded:
-              raise SystemExit("ROM secrets are missing")
-          rom = gzip.decompress(base64.b64decode(encoded))
-          if hashlib.sha1(rom).hexdigest() != 'da957f0d63d14cb441d215462904c4fa8519c613':
-              raise SystemExit('wrong ROM')
-          pathlib.Path('rom').mkdir(exist_ok=True)
-          pathlib.Path('rom/sm.smc').write_bytes(rom)
-          '@ | python -B -
+          python -B .github/scripts/prepare_actor_rom.py
           if ($LASTEXITCODE -ne 0) { throw 'Actor ROM preparation failed' }
       - name: Reject room, native ownership and restoration mutations
         if: github.event_name == 'workflow_dispatch'
