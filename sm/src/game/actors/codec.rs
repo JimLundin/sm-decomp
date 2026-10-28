@@ -1170,3 +1170,243 @@ checkpoint_observations!(
     grapple_x,
     grapple_y,
 );
+
+use crate::game::session::{
+    Controls, Echoes, PowerBomb, Preparation, Projectiles, Shot, Trail, TrailPair,
+};
+
+fn projectile_shot(bytes: &mut Vec<u8>, value: &Shot) {
+    for word in [
+        value.x,
+        value.y,
+        value.x_fraction,
+        value.y_fraction,
+        value.x_radius,
+        value.y_radius,
+        value.x_speed,
+        value.y_speed,
+        value.direction,
+        value.kind,
+        value.damage,
+        value.cursor,
+        value.remaining,
+        value.motion,
+        value.variable,
+        value.trail_time,
+        value.auxiliary,
+        value.sprite,
+    ] {
+        bytes.extend_from_slice(&word.to_le_bytes());
+    }
+}
+fn projectile_read_shot(read: &mut CheckpointReader<'_>) -> Result<Shot, String> {
+    Ok(Shot {
+        x: read.word()?,
+        y: read.word()?,
+        x_fraction: read.word()?,
+        y_fraction: read.word()?,
+        x_radius: read.word()?,
+        y_radius: read.word()?,
+        x_speed: read.word()?,
+        y_speed: read.word()?,
+        direction: read.word()?,
+        kind: read.word()?,
+        damage: read.word()?,
+        cursor: read.word()?,
+        remaining: read.word()?,
+        motion: read.word()?,
+        variable: read.word()?,
+        trail_time: read.word()?,
+        auxiliary: read.word()?,
+        sprite: read.word()?,
+    })
+}
+fn projectile_trail(bytes: &mut Vec<u8>, value: &Trail) {
+    for word in [value.remaining, value.cursor, value.tile, value.x, value.y] {
+        bytes.extend_from_slice(&word.to_le_bytes());
+    }
+}
+fn projectile_read_trail(read: &mut CheckpointReader<'_>) -> Result<Trail, String> {
+    Ok(Trail {
+        remaining: read.word()?,
+        cursor: read.word()?,
+        tile: read.word()?,
+        x: read.word()?,
+        y: read.word()?,
+    })
+}
+impl Projectiles {
+    /// Complete current typed projectile fields. Interpretation of compatibility
+    /// selectors stays with the supplied content owners; no media ID is inferred.
+    pub(crate) fn encode_checkpoint(
+        &self,
+        metadata: &DisplayStartMetadata,
+    ) -> Result<Vec<u8>, String> {
+        if metadata.identity.reference != metadata.reference.fingerprint {
+            return Err("projectile checkpoint Reference identity mismatch".into());
+        }
+        let mut bytes = Vec::from(b"SMSHOTS\x01".as_slice());
+        let binding = observation_binding(metadata);
+        bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
+        bytes.extend_from_slice(&binding);
+        for shot in &self.shots {
+            projectile_shot(&mut bytes, shot);
+        }
+        for pair in &self.trails {
+            projectile_trail(&mut bytes, &pair.left);
+            projectile_trail(&mut bytes, &pair.right);
+        }
+        let value = &self.controls;
+        for word in [
+            value.cooldown,
+            value.spread_charge,
+            value.orbit_step,
+            value.charge,
+            value.previous_charge,
+            value.glow,
+            value.charge_palette,
+            value.resume_sound,
+            value.echo_sound,
+            value.pending_aim,
+            value.protection,
+            value.selected_weapon,
+            value.automatic_weapon,
+            value.weapon_changed,
+            value.cannon_flags,
+            value.cannon_frame,
+            value.cannon_drawing_mode,
+        ] {
+            bytes.extend_from_slice(&word.to_le_bytes());
+        }
+        for word in value.flare_frames.iter().chain(&value.flare_timers) {
+            bytes.extend_from_slice(&word.to_le_bytes());
+        }
+        for word in [
+            self.selected,
+            self.count,
+            self.bomb_count,
+            self.preparation.demo_held,
+            self.preparation.demo_pressed,
+            self.preparation.demo_filtered_held,
+            self.preparation.demo_filtered_pressed,
+            self.preparation.aim_history,
+            self.preparation.previous_movement_and_facing,
+            self.echoes.index,
+        ] {
+            bytes.extend_from_slice(&word.to_le_bytes());
+        }
+        for word in self
+            .echoes
+            .x
+            .iter()
+            .chain(&self.echoes.y)
+            .chain(&self.echoes.x_speed)
+        {
+            bytes.extend_from_slice(&word.to_le_bytes());
+        }
+        for word in [self.power_bomb.flag, self.power_bomb.x, self.power_bomb.y] {
+            bytes.extend_from_slice(&word.to_le_bytes());
+        }
+        for value in self.launch.displacements {
+            bytes.extend_from_slice(&value.to_le_bytes());
+        }
+        Ok(bytes)
+    }
+    pub(crate) fn decode_checkpoint(
+        bytes: &[u8],
+        metadata: &DisplayStartMetadata,
+    ) -> Result<Self, String> {
+        let mut read = CheckpointReader(bytes);
+        if read.bytes(8)? != b"SMSHOTS\x01" {
+            return Err("unsupported projectile checkpoint schema".into());
+        }
+        let binding_size = usize::try_from(read.counter()?)
+            .map_err(|_| "projectile checkpoint binding length overflow")?;
+        if metadata.identity.reference != metadata.reference.fingerprint
+            || read.bytes(binding_size)? != observation_binding(metadata)
+        {
+            return Err("projectile checkpoint source identity or Reference changed".into());
+        }
+        let mut shots = Vec::with_capacity(10);
+        for _ in 0..10 {
+            shots.push(projectile_read_shot(&mut read)?);
+        }
+        let mut trails = Vec::with_capacity(18);
+        for _ in 0..18 {
+            trails.push(TrailPair {
+                left: projectile_read_trail(&mut read)?,
+                right: projectile_read_trail(&mut read)?,
+            });
+        }
+        let controls = Controls {
+            cooldown: read.word()?,
+            spread_charge: read.word()?,
+            orbit_step: read.word()?,
+            charge: read.word()?,
+            previous_charge: read.word()?,
+            glow: read.word()?,
+            charge_palette: read.word()?,
+            resume_sound: read.word()?,
+            echo_sound: read.word()?,
+            pending_aim: read.word()?,
+            protection: read.word()?,
+            selected_weapon: read.word()?,
+            automatic_weapon: read.word()?,
+            weapon_changed: read.word()?,
+            cannon_flags: read.word()?,
+            cannon_frame: read.word()?,
+            cannon_drawing_mode: read.word()?,
+            flare_frames: audio_words(&mut read)?,
+            flare_timers: audio_words(&mut read)?,
+        };
+        let selected = read.word()?;
+        let count = read.word()?;
+        let bomb_count = read.word()?;
+        let preparation = Preparation {
+            demo_held: read.word()?,
+            demo_pressed: read.word()?,
+            demo_filtered_held: read.word()?,
+            demo_filtered_pressed: read.word()?,
+            aim_history: read.word()?,
+            previous_movement_and_facing: read.word()?,
+        };
+        let echoes = Echoes {
+            index: read.word()?,
+            x: audio_words(&mut read)?,
+            y: audio_words(&mut read)?,
+            x_speed: audio_words(&mut read)?,
+        };
+        let power_bomb = PowerBomb {
+            flag: read.word()?,
+            x: read.word()?,
+            y: read.word()?,
+        };
+        let mut displacements = Vec::with_capacity(4);
+        for _ in 0..4 {
+            displacements.push(i32::from_le_bytes(read.bytes(4)?.try_into().unwrap()));
+        }
+        if !read.0.is_empty() {
+            return Err("trailing projectile checkpoint fields".into());
+        }
+        Ok(Self {
+            shots: shots
+                .try_into()
+                .map_err(|_| "projectile checkpoint shot count")?,
+            trails: trails
+                .try_into()
+                .map_err(|_| "projectile checkpoint trail count")?,
+            controls,
+            selected,
+            count,
+            bomb_count,
+            preparation,
+            echoes,
+            power_bomb,
+            launch: crate::game::launch_motion::LaunchMotion {
+                displacements: displacements
+                    .try_into()
+                    .map_err(|_| "projectile checkpoint launch count")?,
+            },
+        })
+    }
+}

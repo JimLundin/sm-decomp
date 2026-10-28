@@ -1482,6 +1482,20 @@ pub(crate) fn validate_normalized_projection(
     }
 }
 impl SessionSnapshotPayload {
+    pub(crate) fn encode_projectile_checkpoint(&self) -> Result<Vec<u8>, String> {
+        let state = self.0.as_ref().ok_or("no supplied Session projectiles")?;
+        state
+            .0
+            .gameplay
+            .projectiles
+            .encode_checkpoint(state.0.metadata())
+    }
+    pub(crate) fn decode_projectile_checkpoint(
+        bytes: &[u8],
+        metadata: &DisplayStartMetadata,
+    ) -> Result<crate::game::session::Projectiles, String> {
+        crate::game::session::Projectiles::decode_checkpoint(bytes, metadata)
+    }
     pub(crate) fn encode_observation_checkpoint(&self) -> Result<Vec<u8>, String> {
         let state = self.0.as_ref().ok_or("no supplied Session observations")?;
         state.0.observations.encode_checkpoint(state.0.metadata())
