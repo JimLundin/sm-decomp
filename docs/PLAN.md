@@ -50,6 +50,16 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
+SOURCE33 adds four independently authored catalog admission/lifecycle checks:
+missing content behind original failures, malformed/valid changed catalogs,
+rejected reset owner preservation and supplied Arc transfer through reset/reopen.
+All prior cases and zero-prefix checks remain; 70 units are registered. Exact
+source review/format/inventory pass; DLL/runtime remain pending on the migration
+branch. No intermediate compiler/capture; complete actual role/consumer cohort
+precedes the next qualification freeze. Net +409 verification versus qualified
+main, production +21 from the retained catalog donor; no ownership/size closure.
+
+
 SOURCE32 seals supplied Samus catalog content against an independently expected
 catalog and carries it through open/reset/checkpoint-to-start metadata. Existing
 constructor/reopen fixtures use explicit nonempty media-valid catalog declarations;
