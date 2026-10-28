@@ -221,6 +221,16 @@ pub fn persistent_session_native_rebinding_preserves_ready_owner(
         .unwrap();
     assert_audio_reference_binding(&owner, &codec_required);
     assert_projectiles_checkpoint(&owner, &codec_required);
+    let (numeric_start, _) = owner.checkpoint_session().unwrap().into_start().unwrap();
+    crate::game::actors::snapshot::assert_numeric_checkpoint(
+        numeric_start
+            .gameplay
+            .as_ref()
+            .unwrap()
+            .control
+            .metadata()
+            .unwrap(),
+    );
     assert_ready_owner_rejects_native_binding(&owner, native);
     assert_clean_runtime_writer_preserves_admission(&owner);
     assert_dirty_runtime_lease_preserves_native_mutation(&owner);

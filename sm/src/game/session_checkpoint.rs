@@ -704,7 +704,7 @@ impl Control {
 use crate::game::external_inputs::ExternalInputs;
 use crate::game::player_transitions::state::{FrameGammaMode, TransitionObservations};
 
-fn observation_binding(metadata: &DisplayStartMetadata) -> Vec<u8> {
+pub(in crate::game) fn observation_binding(metadata: &DisplayStartMetadata) -> Vec<u8> {
     let mut bytes = Vec::new();
     bytes.extend_from_slice(&metadata.identity.schema.to_le_bytes());
     for identity in [

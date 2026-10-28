@@ -1,12 +1,241 @@
 //! Paired timeline/presentation snapshots; live handle epochs never rewind.
 #![forbid(unsafe_code)]
+use super::state::*;
 use super::{
     content::GameplayRevision,
     identity::{ActorIdentityError, ActorIdentityState, ActorTimeline},
     media::MediaRevision,
 };
 use crate::game::room_entry::world::WorldBinding;
+use crate::game::scene::component::DisplayStartMetadata;
+use crate::game::session::{Point, Position};
 use std::sync::Arc;
+
+// Numeric actors are a separate component from the identity timeline and media
+// allocation payload below. Neither component alone is a complete Session.
+trait NumericCheckpoint: Sized {
+    fn write(&self, bytes: &mut Vec<u8>);
+    fn read(read: &mut CheckpointReader<'_>) -> Result<Self, String>;
+}
+impl NumericCheckpoint for u16 {
+    fn write(&self, bytes: &mut Vec<u8>) {
+        bytes.extend_from_slice(&self.to_le_bytes());
+    }
+    fn read(read: &mut CheckpointReader<'_>) -> Result<Self, String> {
+        read.word()
+    }
+}
+impl NumericCheckpoint for u8 {
+    fn write(&self, bytes: &mut Vec<u8>) {
+        bytes.push(*self);
+    }
+    fn read(read: &mut CheckpointReader<'_>) -> Result<Self, String> {
+        read.byte()
+    }
+}
+impl<T: NumericCheckpoint, const N: usize> NumericCheckpoint for [T; N] {
+    fn write(&self, bytes: &mut Vec<u8>) {
+        for value in self {
+            value.write(bytes);
+        }
+    }
+    fn read(read: &mut CheckpointReader<'_>) -> Result<Self, String> {
+        let mut values = Vec::with_capacity(N);
+        for _ in 0..N {
+            values.push(T::read(read)?);
+        }
+        values
+            .try_into()
+            .map_err(|_| "actor numeric checkpoint array count".into())
+    }
+}
+// Each table constructs every field explicitly; adding state fails compilation
+// until its codec is extended. No Rust layout or RAM addresses are serialized.
+macro_rules! numeric_checkpoint {
+    ($kind:ty, $($field:ident),+ $(,)?) => {
+        impl NumericCheckpoint for $kind {
+            fn write(&self, bytes: &mut Vec<u8>) { $(self.$field.write(bytes);)+ }
+            fn read(read: &mut CheckpointReader<'_>) -> Result<Self, String> {
+                Ok(Self { $($field: NumericCheckpoint::read(read)?,)+ })
+            }
+        }
+    };
+}
+numeric_checkpoint!(Position, whole, fraction);
+numeric_checkpoint!(Point, x, y);
+numeric_checkpoint!(
+    Actor,
+    definition,
+    x,
+    y,
+    radius,
+    properties,
+    extra_properties,
+    ai_handlers,
+    health,
+    spritemap,
+    timer,
+    instruction,
+    instruction_delay,
+    palette,
+    tile,
+    layer,
+    flash,
+    frozen,
+    invincibility,
+    shake,
+    frame,
+    bank,
+    hurt_time,
+    variables,
+    pre_instruction,
+    parameters
+);
+numeric_checkpoint!(
+    SpawnRecord,
+    contact_mode,
+    death_cause,
+    scratch_04,
+    tile,
+    palette,
+    scratch_0a,
+    draw_offset,
+    scratch_14,
+    definition,
+    position,
+    instruction,
+    properties,
+    extra_properties,
+    parameters,
+    name
+);
+numeric_checkpoint!(
+    ActorControls,
+    phase_counter,
+    selection_visits,
+    population_scratch,
+    compatibility_new_index,
+    first_free,
+    population_count,
+    selected,
+    compatibility_selected_backup,
+    compatibility_data_pointer,
+    shake_request,
+    projectile_contacts_disabled,
+    process_all
+);
+numeric_checkpoint!(ActorCombat, last_power);
+numeric_checkpoint!(
+    ActorStaging,
+    descriptor_prefix,
+    descriptor_write_position,
+    transfer_source,
+    transfer_destination,
+    gap
+);
+numeric_checkpoint!(
+    ActorGraphics,
+    definitions,
+    tile_offsets,
+    palette_routes,
+    compatibility_write_position,
+    compatibility_next_tile
+);
+numeric_checkpoint!(
+    ActorDrawing,
+    hook_address,
+    hook_work,
+    tilemap_size,
+    tilemap_pending
+);
+numeric_checkpoint!(
+    ActorSchedule,
+    boss_id,
+    compatibility_179e,
+    active_write_position,
+    interactive_write_position,
+    compatibility_active_cursor,
+    compatibility_interactive_cursor,
+    active,
+    interactive,
+    colliding,
+    compatibility_distances
+);
+numeric_checkpoint!(
+    ActorCompatibility,
+    pre_hook,
+    post_hook,
+    debug_enemy_index,
+    log_index
+);
+numeric_checkpoint!(
+    ActorDiagnostics,
+    index,
+    freeze,
+    text,
+    population_entry,
+    population_key,
+    spawn,
+    gap,
+    sprite_contacts_disabled
+);
+numeric_checkpoint!(
+    Actors,
+    slots,
+    saved,
+    controls,
+    combat,
+    staging,
+    graphics,
+    drawing,
+    schedule,
+    compatibility,
+    diagnostics
+);
+impl Actors {
+    pub(in crate::game) fn encode_numeric_checkpoint(
+        &self,
+        metadata: &DisplayStartMetadata,
+    ) -> Result<Vec<u8>, String> {
+        if metadata.identity.reference != metadata.reference.fingerprint {
+            return Err("actor numeric checkpoint Reference identity mismatch".into());
+        }
+        let mut bytes = Vec::from(b"SMACTORS\x01".as_slice());
+        let binding = crate::game::session_checkpoint::observation_binding(metadata);
+        bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
+        bytes.extend_from_slice(&binding);
+        self.write(&mut bytes);
+        Ok(bytes)
+    }
+    pub(in crate::game) fn decode_numeric_checkpoint(
+        bytes: &[u8],
+        metadata: &DisplayStartMetadata,
+    ) -> Result<Self, String> {
+        let mut read = CheckpointReader(bytes);
+        if read.bytes(9)? != b"SMACTORS\x01" {
+            return Err("unsupported actor numeric checkpoint schema".into());
+        }
+        let size = usize::try_from(read.counter()?)
+            .map_err(|_| "actor numeric checkpoint binding length overflow")?;
+        if metadata.identity.reference != metadata.reference.fingerprint
+            || read.bytes(size)? != crate::game::session_checkpoint::observation_binding(metadata)
+        {
+            return Err("actor numeric checkpoint source identity or Reference changed".into());
+        }
+        let actors = Self::read(&mut read)?;
+        if !read.0.is_empty() {
+            return Err("trailing actor numeric checkpoint fields".into());
+        }
+        Ok(actors)
+    }
+}
+
+#[cfg(sm_verify_dll)]
+#[path = "../../verification/actor_numeric_checkpoint_cases.rs"]
+mod numeric_checkpoint_cases;
+#[cfg(sm_verify_dll)]
+pub(crate) use numeric_checkpoint_cases::assert_numeric_checkpoint;
+
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ActorSnapshotPayload {
     timeline: ActorTimeline,

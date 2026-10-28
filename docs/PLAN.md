@@ -52,6 +52,16 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
+Primary root owns implementation/Git/build/resources on main after verified
+integrator release. Main has the accumulated Session migration and corrected CI;
+only main is remote, and only Jim's conversation #6 remains open. Direct source
+handoffs proceed while CI runs. Actor numeric checkpoint now covers every live,
+saved, scheduling and compatibility field; normal library/source checks bind its
+exact source. This detached component does not restore a complete Session.
+Next: compose gameplay checkpoints and finish the assigned display binary codec,
+then actual DLL/87-unit and genuine new-codec runtime qualification. Preserve all
+original artifacts; reserves remain 2 GiB RAM / 50 GiB disk.
+
 SOURCE38 connects actor layer-3 player drawing to the complete owned Runtime
 driver and adds the live B04/B06 body-coordinate projection. Native effects
 remain fenced; signed Maw aliases, distinct actor/intro Prepared rejection,
