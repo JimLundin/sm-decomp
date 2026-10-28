@@ -220,9 +220,83 @@ pub fn persistent_session_native_rebinding_preserves_ready_owner(
         ))
         .unwrap();
     assert_audio_reference_binding(&owner, &codec_required);
+    assert_projectiles_checkpoint(&owner, &codec_required);
     assert_ready_owner_rejects_native_binding(&owner, native);
     assert_clean_runtime_writer_preserves_admission(&owner);
     assert_dirty_runtime_lease_preserves_native_mutation(&owner);
+}
+
+/// No movie covers malformed Projectiles checkpoints or an independently valid binding mismatch.
+fn assert_projectiles_checkpoint(owner: &GameOwner, required: &ss::DisplayStartRequirements) {
+    use crate::game::scene::component::DisplayStartMetadata;
+    use crate::game::{launch_motion::MovementDirection, session::Projectiles};
+
+    let (start, _) = owner.checkpoint_session().unwrap().into_start().unwrap();
+    let display = start.display;
+    let a = DisplayStartMetadata {
+        identity: display.identity.unwrap(),
+        reference: display.reference.unwrap(),
+        input_history: display.input_history.unwrap(),
+        continuation: display.continuation.unwrap(),
+        audio: display.audio.unwrap(),
+        samus_content: display.samus_content.unwrap(),
+    };
+    ss::validate_control_metadata(&a, required).unwrap();
+    let mut expected = Projectiles::default();
+    expected.shots[0].x = 0x1234;
+    expected.shots[0].damage = 0x2345;
+    expected.shots[0].x_fraction = 0x3456;
+    expected.shots[9].x = 0xabcd;
+    expected.shots[9].damage = 0xbcde;
+    expected.shots[9].x_fraction = 0xcdef;
+    expected.trails[0].left.x = 0x4567;
+    expected.trails[0].left.cursor = 0x5678;
+    expected.trails[0].right.y = 0x6789;
+    expected.trails[0].right.remaining = 0x789a;
+    expected.trails[17].left.x = 0x89ab;
+    expected.trails[17].left.cursor = 0x9abc;
+    expected.trails[17].right.y = 0xabce;
+    expected.trails[17].right.remaining = 0xbcdf;
+    expected.controls.cooldown = 0x1357;
+    expected.controls.flare_timers[2] = 0x2468;
+    expected
+        .launch
+        .record_movement(MovementDirection::Left, -0x12345);
+    expected
+        .launch
+        .record_movement(MovementDirection::Down, 0x23456);
+    let bytes = expected.encode_checkpoint(&a).unwrap();
+    let decoded = Projectiles::decode_checkpoint(&bytes, &a).unwrap();
+    assert_eq!(decoded, expected);
+    assert_eq!((decoded.shots[0].x, decoded.shots[9].x), (0x1234, 0xabcd));
+    assert_eq!(
+        (decoded.trails[0].left.x, decoded.trails[17].left.x),
+        (0x4567, 0x89ab)
+    );
+    assert_eq!(decoded.controls.cooldown, 0x1357);
+    assert_eq!(
+        Projectiles::decode_checkpoint(&bytes[..bytes.len() - 1], &a)
+            .err()
+            .as_deref(),
+        Some("truncated actor checkpoint")
+    );
+    let mut extra = bytes.clone();
+    extra.push(0xa6);
+    assert_eq!(
+        Projectiles::decode_checkpoint(&extra, &a).err().as_deref(),
+        Some("trailing projectile checkpoint fields")
+    );
+    let mut b = a.clone();
+    b.reference.fingerprint = [0xb6; 32];
+    b.identity.reference = b.reference.fingerprint;
+    let mut required_b = required.clone();
+    required_b.reference = b.reference;
+    assert_ne!(a.reference.fingerprint, b.reference.fingerprint);
+    ss::validate_control_metadata(&b, &required_b).unwrap();
+    assert_eq!(
+        Projectiles::decode_checkpoint(&bytes, &b).err().as_deref(),
+        Some("projectile checkpoint source identity or Reference changed")
+    );
 }
 
 /// No movie covers mismatched detached payloads decoded under another valid Reference.
