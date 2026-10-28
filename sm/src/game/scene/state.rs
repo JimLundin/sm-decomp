@@ -2,9 +2,10 @@
 #![forbid(unsafe_code)]
 use std::sync::Arc;
 
+pub use super::atmosphere::{AtmosphericEffects, AtmosphericSlot};
 use super::hdma_sources::{HdmaCatalog, HdmaLiveDescription, SourceBinding};
+use super::records::ProducedObject;
 use super::records::{AssetRef, Revision, SceneAsset, SceneMedia};
-pub use crate::game::player_transitions::state::{AtmosphericEffects, AtmosphericSlot};
 pub use crate::game::visual_state::{
     AnimatedTiles, AnimationSlot, PaletteEffects, PaletteSlot, PlayerPalette, Visuals,
 };
@@ -64,22 +65,7 @@ impl WordOrder {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum DisplayError {
-    Identity,
-    Revision,
-    Incomplete,
-    Phase,
-    Poisoned,
-    Queue,
-    Source,
-    /// The retained compatibility owner must perform this aliased operation.
-    Alias {
-        offset: usize,
-    },
-    Geometry,
-    Scene,
-}
+pub use super::error::DisplayError;
 
 #[derive(Clone, Debug)]
 pub struct SourceSpan {
@@ -193,6 +179,8 @@ pub struct ObjectStaging {
     pub bytes: [u8; 544],
     pub cursor: u16,
     pub native_order: WordOrder,
+    /// Actual successful authored publications, separate from byte/order identities.
+    pub produced: Vec<ProducedObject>,
 }
 impl ObjectStaging {
     pub(crate) fn byte(&self, offset: usize) -> Result<u8, DisplayError> {
@@ -207,6 +195,10 @@ impl ObjectStaging {
     }
     pub(crate) fn write_byte(&mut self, offset: usize, value: u8) -> Result<(), DisplayError> {
         if let Some(at) = self.bytes.get_mut(offset) {
+            if offset < 512 {
+                self.produced
+                    .retain(|record| usize::from(record.object.order) != offset / 4);
+            }
             *at = value;
             return Ok(());
         }
@@ -656,6 +648,11 @@ pub struct DisplayDescription {
     pub visual: Visuals,
     pub player_palette: PlayerPalette,
     pub atmospheric: AtmosphericEffects,
+    /// Required immutable content and persistent IDs supplied by the G start.
+    pub atmosphere_catalog: Arc<super::atmosphere::AtmosphereCatalog>,
+    /// Exactly one mutable lifecycle counter for all display producer cohorts.
+    pub producer_ids: super::records::DisplayProducerIds,
+    pub atmospheric_producers: super::atmosphere::AtmosphericProducers,
     pub nmi: NmiState,
     pub samus: [SamusHalf; 2],
     pub backgrounds: [BackgroundState; 3],
@@ -698,6 +695,11 @@ impl DisplayDescription {
             return Err(DisplayError::Alias {
                 offset: usize::from(self.objects.cursor),
             });
+        }
+        self.atmospheric_producers
+            .validate(&self.atmospheric, &self.producer_ids)?;
+        if self.atmosphere_catalog.revision != self.media_revision {
+            return Err(DisplayError::Revision);
         }
         let identity = |asset: AssetRef| {
             if asset.id.0 == 0 {
@@ -835,6 +837,19 @@ impl DisplayDescription {
         }
     }
     pub(crate) fn validate_media(&self, media: &SceneMedia) -> Result<(), DisplayError> {
+        self.atmosphere_catalog.validate(media)?;
+        for (index, record) in self.objects.produced.iter().enumerate() {
+            record.validate(media).map_err(|_| DisplayError::Scene)?;
+            self.producer_ids
+                .validate_id(record.producer)
+                .map_err(|_| DisplayError::Identity)?;
+            if self.objects.produced[..index]
+                .iter()
+                .any(|old| old.object.order == record.object.order)
+            {
+                return Err(DisplayError::Scene);
+            }
+        }
         self.validate()?;
         if media.revision() != self.media_revision {
             return Err(DisplayError::Revision);
@@ -926,6 +941,7 @@ impl DisplayDescription {
         }
         self.phase = DisplayPhase::Producing;
         if fresh_entry {
+            self.objects.produced.clear();
             self.objects.clear_high_table();
             self.objects.cursor = 0;
             self.samus[0].enabled = 0;

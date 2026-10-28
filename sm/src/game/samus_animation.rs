@@ -2,6 +2,8 @@
 #![forbid(unsafe_code)]
 use crate::game::player_transitions as pt;
 use crate::game::projectile_presentation_ram as sprite_output;
+use crate::game::scene::samus_body::{self, Body};
+use crate::game::scene::samus_position_tiles;
 use crate::game::session_runtime::Runtime;
 use crate::game::visual_host::{Content, Effects, Record, Source};
 
@@ -9,151 +11,149 @@ pub use crate::game::prelude::*;
 use crate::game::visual_runtime::project_cinematic_point;
 
 fn bottom_is_visible(game: &mut Game) -> u8 {
-    let pose = game.samus_pose();
-    let frame = game.samus_anim_frame();
-    let visible = match game.samus_movement_type() {
-        0 => {
-            if pose == kPose_00_FaceF_Powersuit as u16 {
-                let next = word!(game.oam_next_ptr);
-                let entry = 0x370 + usize::from(word!(game.oam_next_ptr));
-                word_transfers!(game, ascending, 1; native(entry) <- value(
-                    (word!(game.samus_x_pos) as i32 - 7 - word!(game.layer1_x_pos) as i32) as u16
-                ));
-                word_transfers!(game, ascending, 1; native(entry + 1) <- value(
-                    (word!(game.samus_y_pos) as i32 - 17 - word!(game.layer1_y_pos) as i32) as u16
-                ));
-                word_transfers!(game, ascending, 1; native(entry + 2) <- value(14369));
-                word!(game.oam_next_ptr = next.wrapping_add(4));
-            }
-            true
-        }
-        1 | 2 | 5 | 6 | 11 | 12 | 14 | 16 | 21 | 22 | 23 | 24 | 26 => true,
-        3 => {
-            matches!(
-                SamusPose::from(pose),
-                kPose_81_FaceR_Screwattack
-                    | kPose_82_FaceL_Screwattack
-                    | kPose_1B_FaceR_SpaceJump
-                    | kPose_1C_FaceL_SpaceJump
-            ) || frame == 0
-                || frame.wrapping_sub(11) & 0x8000 == 0
-        }
-        4 | 7 | 8 | 9 | 17 | 18 | 19 => false,
-        10 => {
-            !matches!(
-                SamusPose::from(pose),
-                kPose_D7_FaceR_CrystalFlashEnd | kPose_D8_FaceL_CrystalFlashEnd
-            ) || frame.wrapping_sub(3) & 0x8000 == 0
-        }
-        // The unused handler's OR-composed pose constants are 0x65 and 0x66.
-        13 => !matches!(pose, 0x65 | 0x66) || frame.wrapping_sub(1) & 0x8000 != 0,
-        15 => {
-            if pose.wrapping_sub(kPose_F1_FaceR_CrouchTrans_AimU as u16) & 0x8000 == 0 {
-                true
-            } else if pose.wrapping_sub(219) & 0x8000 == 0 {
-                frame
-                    == if pose.wrapping_sub(221) & 0x8000 != 0 {
-                        0
-                    } else {
-                        2
-                    }
-            } else {
-                matches!(
-                    SamusPose::from(pose),
-                    kPose_35_FaceR_CrouchTrans
-                        | kPose_36_FaceL_CrouchTrans
-                        | kPose_3B_FaceR_StandTrans
-                        | kPose_3C_FaceL_StandTrans
-                )
-            }
-        }
-        20 => !(3..13).contains(&frame),
-        25 => !(2..9).contains(&frame),
-        27 => {
-            if pose.wrapping_sub(kPose_CF_FaceR_Ranintowall_AimUR as u16) & 0x8000 != 0 {
-                !matches!(
-                    SamusPose::from(pose),
-                    kPose_CB_FaceR_Shinespark_Vert | kPose_CC_FaceL_Shinespark_Vert
-                )
-            } else {
-                !matches!(
-                    SamusPose::from(pose),
-                    kPose_E8_FaceR_Drained_CrouchFalling | kPose_E9_FaceL_Drained_CrouchFalling
-                ) || frame.wrapping_sub(2) & 0x8000 == 0
-            }
-        }
-        _ => panic!("invalid Samus movement type"),
-    };
-    if !visible {
-        word!(game.samus_bottom_half_spritemap_index = 0);
-    }
-    u8::from(visible)
+    u8::from(samus_body::bottom_is_visible(&mut NativeBottom(game)).unwrap())
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum Body {
-    Normal,
-    Frozen,
-    Death,
+struct NativeBottom<'a>(&'a mut Game);
+impl samus_body::BottomHost for NativeBottom<'_> {
+    type Error = std::convert::Infallible;
+    fn pose(&mut self) -> Result<u16, Self::Error> {
+        Ok(self.0.samus_pose())
+    }
+    fn animation_frame(&mut self) -> Result<u16, Self::Error> {
+        Ok(self.0.samus_anim_frame())
+    }
+    fn movement(&mut self) -> Result<u8, Self::Error> {
+        Ok(self.0.samus_movement_type() as u8)
+    }
+    fn clear_bottom(&mut self) -> Result<(), Self::Error> {
+        let game = &mut *self.0;
+        word!(game.samus_bottom_half_spritemap_index = 0);
+        Ok(())
+    }
+    fn cursor(&mut self) -> Result<u16, Self::Error> {
+        let game = &mut *self.0;
+        Ok(word!(game.oam_next_ptr))
+    }
+    fn player_x(&mut self) -> Result<u16, Self::Error> {
+        let game = &mut *self.0;
+        Ok(word!(game.samus_x_pos))
+    }
+    fn player_y(&mut self) -> Result<u16, Self::Error> {
+        let game = &mut *self.0;
+        Ok(word!(game.samus_y_pos))
+    }
+    fn camera_x(&mut self) -> Result<u16, Self::Error> {
+        let game = &mut *self.0;
+        Ok(word!(game.layer1_x_pos))
+    }
+    fn camera_y(&mut self) -> Result<u16, Self::Error> {
+        let game = &mut *self.0;
+        Ok(word!(game.layer1_y_pos))
+    }
+    fn marker_word(&mut self, entry: usize, value: u16) -> Result<(), Self::Error> {
+        let game = &mut *self.0;
+        word_transfers!(game, ascending, 1; native(0x370 + entry) <- value(value));
+        Ok(())
+    }
+    fn publish_cursor(&mut self, value: u16) -> Result<(), Self::Error> {
+        let game = &mut *self.0;
+        word!(game.oam_next_ptr = value);
+        Ok(())
+    }
+    fn marker_written(&mut self, _: usize, _: u16, _: u16) -> Result<(), Self::Error> {
+        Ok(())
+    }
+}
+
+struct NativeTable(crate::rom::RomRecord);
+impl samus_body::Table for NativeTable {
+    type Error = std::convert::Infallible;
+    fn little_word(&self, offset: usize) -> Result<u16, Self::Error> {
+        Ok(u16::from_le_bytes(self.0.bytes(offset)))
+    }
+    fn native_word(&self, offset: usize) -> Result<u16, Self::Error> {
+        Ok(self.0.native_word(offset))
+    }
+}
+struct NativeBody<'a, 'g>(&'a mut Runtime<'g>);
+impl samus_body::Host for NativeBody<'_, '_> {
+    type Error = std::convert::Infallible;
+    type Table = NativeTable;
+    fn knockback(&mut self) -> Result<u16, Self::Error> {
+        Ok(self.0.session().player.knockback_timer)
+    }
+    fn invincibility(&mut self) -> Result<u16, Self::Error> {
+        Ok(self.0.session().player.invincibility)
+    }
+    fn shine(&mut self) -> Result<u16, Self::Error> {
+        Ok(self.0.session().player.shine_timer)
+    }
+    fn frame_counter(&mut self) -> Result<u16, Self::Error> {
+        Ok(self.0.inputs().frame)
+    }
+    fn pose(&mut self) -> Result<u16, Self::Error> {
+        Ok(self.0.session().player.pose)
+    }
+    fn animation_frame(&mut self) -> Result<u16, Self::Error> {
+        Ok(self.0.session().player.animation_clock.frame)
+    }
+    fn table(&mut self, half: samus_body::Half) -> Result<NativeTable, Self::Error> {
+        Ok(NativeTable(self.0.table(
+            Source::Loaded,
+            match half {
+                samus_body::Half::Top => 0x929263,
+                samus_body::Half::Bottom => 0x92945d,
+            },
+        )))
+    }
+    fn set_sprite(&mut self, half: samus_body::Half, index: u16) -> Result<(), Self::Error> {
+        match half {
+            samus_body::Half::Top => self.0.session_mut().player.top_sprite = index,
+            samus_body::Half::Bottom => self.0.session_mut().player.bottom_sprite = index,
+        }
+        Ok(())
+    }
+    fn sprite_position(&mut self, doubled: u16) -> Result<(u16, u16), Self::Error> {
+        let position = self.0.foreign(|game| sprite_position(doubled, game));
+        Ok((position.k, position.j))
+    }
+    fn body_x(&mut self) -> Result<u16, Self::Error> {
+        Ok(self.0.word(0xb04))
+    }
+    fn body_y(&mut self) -> Result<u16, Self::Error> {
+        Ok(self.0.word(0xb06))
+    }
+    fn camera_x(&mut self) -> Result<u16, Self::Error> {
+        Ok(self.0.inputs().camera_x)
+    }
+    fn camera_y(&mut self) -> Result<u16, Self::Error> {
+        Ok(self.0.inputs().camera_y)
+    }
+    fn draw_sprite(&mut self, index: u16, x: u16, y: u16) -> Result<(), Self::Error> {
+        self.0.draw_samus_sprite(index, x, y);
+        Ok(())
+    }
+    fn bottom_visible(&mut self) -> Result<bool, Self::Error> {
+        Ok(self.0.foreign(bottom_is_visible) & 1 != 0)
+    }
+    fn queue_tiles(&mut self) -> Result<(), Self::Error> {
+        queue_body_tiles(self.0);
+        Ok(())
+    }
 }
 
 fn draw_body(game: &mut Game, mode: Body) {
-    let h = &mut Runtime::new(game);
-    let p = &h.session().player;
-    if mode != Body::Normal
-        || p.knockback_timer != 0
-        || p.invincibility == 0
-        || p.shine_timer != 0
-        || h.inputs().frame & 1 == 0
-    {
-        let doubled_pose = p.pose.wrapping_mul(2);
-        let top = sprite_index(h, 0x929263, p.pose, mode == Body::Normal);
-        if mode == Body::Normal {
-            h.session_mut().player.top_sprite = top;
-        }
-        let position = h.foreign(|game| sprite_position(doubled_pose, game));
-        let (x, y) = if mode == Body::Death {
-            body_position(h, mode)
-        } else {
-            (position.k, position.j)
-        };
-        h.draw_samus_sprite(top, x, y);
-        if h.foreign(bottom_is_visible) & 1 != 0 {
-            // The wrapped pose is captured before top drawing; frame and position stay live.
-            let bottom = sprite_index(h, 0x92945d, doubled_pose >> 1, mode == Body::Normal);
-            if mode == Body::Normal {
-                h.session_mut().player.bottom_sprite = bottom;
-            }
-            let (x, y) = body_position(h, mode);
-            h.draw_samus_sprite(bottom, x, y);
-        }
-    }
-    queue_body_tiles(h);
+    samus_body::draw(&mut NativeBody(&mut Runtime::new(game)), mode).unwrap();
 }
 
-fn sprite_index(h: &Runtime<'_>, table: u32, pose: u16, little_endian: bool) -> u16 {
-    let frame = h.session().player.animation_clock.frame;
-    let record = h.table(Source::Loaded, table);
-    let offset = usize::from(pose) * 2;
-    let base = if little_endian {
-        u16::from_le_bytes(record.bytes(offset))
-    } else {
-        record.native_word(offset)
+fn sprite_index(h: &mut Runtime<'_>, table: u32, pose: u16, little_endian: bool) -> u16 {
+    let half = match table {
+        0x929263 => samus_body::Half::Top,
+        0x92945d => samus_body::Half::Bottom,
+        _ => unreachable!("Samus body table"),
     };
-    frame.wrapping_add(base)
-}
-
-fn body_position(h: &Runtime<'_>, mode: Body) -> (u16, u16) {
-    // Published coordinates can be changed by drawing before the bottom-half read.
-    let (x, y) = (h.word(0xb04), h.word(0xb06));
-    if mode == Body::Death {
-        (
-            x.wrapping_add(h.inputs().camera_x),
-            y.wrapping_add(h.inputs().camera_y),
-        )
-    } else {
-        (x, y)
-    }
+    samus_body::sprite_index(&mut NativeBody(h), half, pose, little_endian).unwrap()
 }
 
 pub fn Samus_Draw(game: &mut Game) {
@@ -380,7 +380,8 @@ pub fn Samus_DrawShinesparkCrashEchoes(k: u16, game: &mut Game) {
     if h.inputs().frame & 1 == 0 {
         return;
     }
-    let top = sprite_index(h, 0x929263, h.session().player.pose, false);
+    let pose = h.session().player.pose;
+    let top = sprite_index(h, 0x929263, pose, false);
     let height = h
         .table(Source::Native, 0x91b629)
         .byte(usize::from(h.session().player.pose) * 8 + 4);
@@ -396,7 +397,8 @@ pub fn Samus_DrawShinesparkCrashEchoes(k: u16, game: &mut Game) {
         .wrapping_sub(h.inputs().camera_x);
     h.draw_samus_sprite(top, x, y);
     if h.foreign(bottom_is_visible) & 1 != 0 {
-        let bottom = sprite_index(h, 0x92945d, h.session().player.pose, false);
+        let pose = h.session().player.pose;
+        let bottom = sprite_index(h, 0x92945d, pose, false);
         let x = h
             .word(0xab0 + usize::from(k & !1))
             .wrapping_sub(h.inputs().camera_x);
@@ -405,108 +407,137 @@ pub fn Samus_DrawShinesparkCrashEchoes(k: u16, game: &mut Game) {
 }
 
 fn sprite_position(k: u16, game: &mut Game) -> PairU16 {
-    let mut v1: PairU16 = PairU16 { k: 0, j: 0 };
-    if (word!(game.ceres_status) & 0x8000) == 0 {
-        v1 = calculate_sprite_position(k, game);
-    } else {
-        let old_x: u16 = word!(game.samus_x_pos);
-        let old_y: u16 = word!(game.samus_y_pos);
-        let point = project_cinematic_point(Point16U { x: old_x, y: old_y }, game);
-        word! {game; samus_x_pos = point.x; samus_y_pos = point.y; }
-        v1 = calculate_sprite_position(k, game);
-        word! {game; samus_y_pos = old_y; samus_x_pos = old_x; }
-    }
-    MakePairU16(v1.k, v1.j)
+    let (x, y) = samus_position_tiles::sprite_position(&mut NativePosition(game), k).unwrap();
+    MakePairU16(x, y)
 }
-
+struct NativePosition<'a>(&'a mut Game);
+impl samus_position_tiles::PositionHost for NativePosition<'_> {
+    type Error = std::convert::Infallible;
+    fn ceres(&mut self) -> Result<u16, Self::Error> {
+        let game = &mut *self.0;
+        Ok(word!(game.ceres_status))
+    }
+    fn player_x(&mut self) -> Result<u16, Self::Error> {
+        let game = &mut *self.0;
+        Ok(word!(game.samus_x_pos))
+    }
+    fn player_y(&mut self) -> Result<u16, Self::Error> {
+        let game = &mut *self.0;
+        Ok(word!(game.samus_y_pos))
+    }
+    fn set_player_x(&mut self, value: u16) -> Result<(), Self::Error> {
+        let game = &mut *self.0;
+        word!(game.samus_x_pos = value);
+        Ok(())
+    }
+    fn set_player_y(&mut self, value: u16) -> Result<(), Self::Error> {
+        let game = &mut *self.0;
+        word!(game.samus_y_pos = value);
+        Ok(())
+    }
+    fn project(&mut self, x: u16, y: u16) -> Result<(u16, u16), Self::Error> {
+        let point = project_cinematic_point(Point16U { x, y }, self.0);
+        Ok((point.x, point.y))
+    }
+    fn frame(&mut self) -> Result<u16, Self::Error> {
+        Ok(self.0.samus_anim_frame())
+    }
+    fn movement(&mut self) -> Result<u8, Self::Error> {
+        Ok(self.0.samus_movement_type() as u8)
+    }
+    fn landing_word(&self, bytes: [u8; 2]) -> u16 {
+        u16::from_ne_bytes(bytes)
+    }
+    fn fallback_byte(&mut self, offset: usize) -> Result<u8, Self::Error> {
+        let image = self.0.capture_native_rom();
+        Ok(image.read(crate::rtl::lorom_offset(0x91b629) as usize + offset))
+    }
+    fn camera_x(&mut self) -> Result<u16, Self::Error> {
+        let game = &mut *self.0;
+        Ok(word!(game.layer1_x_pos))
+    }
+    fn camera_y(&mut self) -> Result<u16, Self::Error> {
+        let game = &mut *self.0;
+        Ok(word!(game.layer1_y_pos))
+    }
+    fn set_body_x(&mut self, value: u16) -> Result<(), Self::Error> {
+        let game = &mut *self.0;
+        word!(game.samus_spritemap_x_pos = value);
+        Ok(())
+    }
+    fn set_body_y(&mut self, value: u16) -> Result<(), Self::Error> {
+        let game = &mut *self.0;
+        word!(game.samus_spritemap_y_pos = value);
+        Ok(())
+    }
+    fn body_x(&mut self) -> Result<u16, Self::Error> {
+        let game = &mut *self.0;
+        Ok(word!(game.samus_spritemap_x_pos))
+    }
+    fn body_y(&mut self) -> Result<u16, Self::Error> {
+        let game = &mut *self.0;
+        Ok(word!(game.samus_spritemap_y_pos))
+    }
+}
 fn queue_body_tiles(h: &mut Runtime<'_>) {
-    let p = &h.session().player;
-    let cursor = h
-        .table(Source::Loaded, 0x92d94e)
-        .native_word(usize::from(p.pose) * 2)
-        .wrapping_add(p.animation_clock.frame.wrapping_mul(4));
-    let definition = h.legacy_native_record(0x92, cursor);
-    let top = (u16::from(definition.byte(1)) * 7).wrapping_add(
-        h.table(Source::Loaded, 0x92d91e)
-            .native_word(usize::from(definition.byte(0)) * 2),
-    );
-    h.write_word_le(top, 0x71f);
-    h.set_byte(0x71d, 1);
-    if definition.byte(2) != 255 {
-        let bottom = (u16::from(definition.byte(3)) * 7).wrapping_add(
-            h.table(Source::Loaded, 0x92d938)
-                .native_word(usize::from(definition.byte(2)) * 2),
+    samus_position_tiles::queue_body_tiles(&mut NativeTiles(h)).unwrap();
+}
+impl samus_position_tiles::Table for NativeTable {
+    type Error = std::convert::Infallible;
+    fn native_word(&self, offset: usize) -> Result<u16, Self::Error> {
+        Ok(self.0.native_word(offset))
+    }
+    fn byte(&self, offset: usize) -> Result<u8, Self::Error> {
+        Ok(self.0.byte(offset))
+    }
+}
+struct NativeTiles<'a, 'g>(&'a mut Runtime<'g>);
+impl samus_position_tiles::TileHost for NativeTiles<'_, '_> {
+    type Error = std::convert::Infallible;
+    type Table = NativeTable;
+    fn table(
+        &mut self,
+        which: samus_position_tiles::TileTable,
+    ) -> Result<NativeTable, Self::Error> {
+        Ok(NativeTable(self.0.table(
+            Source::Loaded,
+            match which {
+                samus_position_tiles::TileTable::Pose => 0x92d94e,
+                samus_position_tiles::TileTable::Top => 0x92d91e,
+                samus_position_tiles::TileTable::Bottom => 0x92d938,
+            },
+        )))
+    }
+    fn pose(&mut self) -> Result<u16, Self::Error> {
+        Ok(self.0.session().player.pose)
+    }
+    fn frame(&mut self) -> Result<u16, Self::Error> {
+        Ok(self.0.session().player.animation_clock.frame)
+    }
+    fn definition(&mut self, cursor: u16) -> Result<NativeTable, Self::Error> {
+        Ok(NativeTable(self.0.legacy_native_record(0x92, cursor)))
+    }
+    fn request_word(&mut self, half: samus_body::Half, pointer: u16) -> Result<(), Self::Error> {
+        self.0.write_word_le(
+            pointer,
+            match half {
+                samus_body::Half::Top => 0x71f,
+                samus_body::Half::Bottom => 0x721,
+            },
         );
-        h.write_word_le(bottom, 0x721);
-        h.set_byte(0x71e, 1);
+        Ok(())
     }
-}
-
-fn sprite_y_offset(doubled_pose: u16, game: &mut Game) -> i32 {
-    static LANDING: [u8; 16] = [3, 6, 0, 0, 3, 6, 0, 0, 3, 3, 6, 0, 3, 3, 6, 0];
-    static CROUCHING: [i8; 24] = [
-        -8, 0, -8, 0, -4, -2, -4, -2, 0, 0, 0, 0, -4, 0, -4, 0, 5, 4, 5, 4, 0, 0, 0, 0,
-    ];
-    static DRAINED: [i8; 32] = [
-        7, 5, -8, -8, -8, -8, -8, -5, 4, 4, 4, 4, 0, 0, 4, -3, -5, 0, 0, 4, -3, -5, -3, 4, 0, 0, 4,
-        0, 0, 4, 0, 0,
-    ];
-    let pose = doubled_pose >> 1;
-    let frame = game.samus_anim_frame();
-    match game.samus_movement_type() {
-        0 => {
-            if matches!(
-                SamusPose::from(pose),
-                kPose_00_FaceF_Powersuit | kPose_9B_FaceF_VariaGravitySuit
-            ) {
-                if frame.wrapping_sub(2) & 0x8000 == 0 {
-                    return -1;
-                }
-            } else if (0xa4..0xa8).contains(&pose) {
-                // The legacy landing table deliberately reads a word from byte data.
-                let offset = usize::from(frame.wrapping_add(4 * (pose - 0xa4)));
-                return -i32::from(u16::from_ne_bytes([LANDING[offset], LANDING[offset + 1]]));
-            }
-        }
-        15 if (0x35..0x41).contains(&pose) => {
-            return CROUCHING[frame.wrapping_add(2 * (pose - 0x35)) as usize] as i32;
-        }
-        27 => {
-            if matches!(
-                SamusPose::from(pose),
-                kPose_E8_FaceR_Drained_CrouchFalling | kPose_E9_FaceL_Drained_CrouchFalling
-            ) {
-                return DRAINED[frame as usize] as i32;
-            }
-            if matches!(
-                SamusPose::from(pose),
-                kPose_EA_FaceR_Drained_Stand | kPose_EB_FaceL_Drained_Stand
-            ) && (frame as i16).wrapping_sub(5) >= 0
-            {
-                return -3;
-            }
-        }
-        1..=26 => {}
-        _ => panic!("invalid Samus movement type"),
+    fn request_flag(&mut self, half: samus_body::Half) -> Result<(), Self::Error> {
+        self.0.set_byte(
+            match half {
+                samus_body::Half::Top => 0x71d,
+                samus_body::Half::Bottom => 0x71e,
+            },
+            1,
+        );
+        Ok(())
     }
-    let image = game.capture_native_rom();
-    let offset = crate::rtl::lorom_offset(0x91b629) as usize
-        + core::mem::offset_of!(SamusPoseParams, y_offset_to_gfx)
-        + 4 * usize::from(doubled_pose);
-    -i32::from(image.read(offset) as i8)
-}
-
-fn calculate_sprite_position(pose: u16, game: &mut Game) -> PairU16 {
-    let offset = sprite_y_offset(pose, game);
-    word!(
-        game.samus_spritemap_y_pos =
-            (word!(game.samus_y_pos) as i32 + offset - word!(game.layer1_y_pos) as i32) as u16
-    );
-    word!(
-        game.samus_spritemap_x_pos = word!(game.samus_x_pos).wrapping_sub(word!(game.layer1_x_pos))
-    );
-    MakePairU16(
-        word!(game.samus_spritemap_x_pos),
-        word!(game.samus_spritemap_y_pos),
-    )
+    fn request_written(&mut self, _: samus_body::Half, _: u16) -> Result<(), Self::Error> {
+        Ok(())
+    }
 }

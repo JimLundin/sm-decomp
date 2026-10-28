@@ -62,7 +62,7 @@ impl<G: Geometry> objects::Geometry for NativeGeometry<'_, G> {
         Ok(self.0.tile(record))
     }
 }
-struct NativeObjects<'a>(&'a mut Game);
+pub(crate) struct NativeObjects<'a>(pub(crate) &'a mut Game);
 impl objects::Host for NativeObjects<'_> {
     type Error = Infallible;
     fn read_native_word(&mut self, offset: usize) -> Result<u16, Infallible> {

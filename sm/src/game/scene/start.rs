@@ -12,7 +12,7 @@ use super::{
 };
 use std::sync::Arc;
 
-pub const DISPLAY_START_SCHEMA: u16 = 3;
+pub const DISPLAY_START_SCHEMA: u16 = 4;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct StartIdentity {
@@ -163,6 +163,7 @@ pub struct DisplayStartRequirements {
     pub schema: u16,
     pub gameplay: [u8; 32],
     pub hdma_content: Arc<HdmaCatalog>,
+    pub atmosphere_content: Arc<super::atmosphere::AtmosphereCatalog>,
     pub capture: [u8; 32],
     pub reference: ReferenceProfile,
     pub media: Revision,
@@ -410,6 +411,10 @@ impl ValidatedDisplayStart {
         display
             .validate_media(&media)
             .map_err(StartError::Display)?;
+        display
+            .atmosphere_catalog
+            .validate_expected(&requirements.atmosphere_content)
+            .map_err(StartError::Display)?;
         if identity.media != media.revision()
             || identity.media != requirements.media
             || display.revision() != identity.media
@@ -428,6 +433,17 @@ impl ValidatedDisplayStart {
         committed_scene
             .validate(&media)
             .map_err(StartError::Scene)?;
+        if committed_scene.producer_history().len() != committed_scene.lines().len() {
+            return Err(StartError::MissingCommittedHistory);
+        }
+        if committed_scene
+            .producer_history()
+            .iter()
+            .flat_map(|line| line.iter())
+            .any(|record| display.producer_ids.validate_id(record.producer).is_err())
+        {
+            return Err(StartError::Display(DisplayError::Identity));
+        }
         let resident_assets = &committed_scene.description().resident;
         if !resident_assets.contains(&resident.image.asset)
             || !resident_assets.contains(&resident.palette.asset)

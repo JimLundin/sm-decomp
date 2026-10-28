@@ -6,6 +6,10 @@ determines review scope; PLAN determines required execution checks.
 - Reconstruct against the declared base. Check callers, retirement, unchanged
   dependencies and composition reconciliation. Donor approval transfers only
   through an exact, verified dependency relationship.
+- For verification changes, identify the crate and cfg that compile each file.
+  Check cross-crate visibility through actual public exports; include_bytes source
+  bindings do not type-check embedded fixtures, and sm library checks do not
+  establish that sm_verify host assertions compile. Transfer proofs per crate.
 - Follow behavior through helpers and callbacks: allocation provenance,
   native/LE and overlapping access, lazy reads, full/odd indices, live selectors,
   failure prefixes, reset/load and unwind publication.

@@ -50,10 +50,89 @@ pub fn projectile(slot: u16, position: (u16, u16), game: &mut Game, content: &mu
 }
 #[forbid(unsafe_code)]
 pub fn samus(index: u16, position: (u16, u16), game: &mut Game, content: &mut impl Content) {
-    let base = crate::rtl::lorom_offset(0x92808d) as usize;
-    if content.image(game).table_word(base, index as isize) != 0 {
-        let cursor = content.image(game).table_word(base, index as isize);
-        sprite_map(0x92, cursor, game, content).draw(position, |tile| tile, Clip::None, game);
+    crate::game::scene::samus::draw(&mut NativeSamus { game, content }, index, position).unwrap();
+}
+struct NativeSamus<'a, C> {
+    game: &'a mut Game,
+    content: &'a mut C,
+}
+struct NativeSamusMap(SpriteMap);
+impl crate::game::scene::objects::Geometry for NativeSamusMap {
+    type Error = std::convert::Infallible;
+    fn count(&mut self) -> Result<u16, Self::Error> {
+        Ok(crate::game::sprite_drawing::Geometry::count(&self.0))
+    }
+    fn x(&mut self, record: usize) -> Result<u16, Self::Error> {
+        Ok(crate::game::sprite_drawing::Geometry::x(&self.0, record))
+    }
+    fn y(&mut self, record: usize) -> Result<u8, Self::Error> {
+        Ok(crate::game::sprite_drawing::Geometry::y(&self.0, record))
+    }
+    fn tile(&mut self, record: usize) -> Result<u16, Self::Error> {
+        Ok(crate::game::sprite_drawing::Geometry::tile(&self.0, record))
+    }
+}
+impl<C: Content> crate::game::scene::objects::Host for NativeSamus<'_, C> {
+    type Error = std::convert::Infallible;
+    fn read_native_word(&mut self, offset: usize) -> Result<u16, Self::Error> {
+        crate::game::scene::objects::Host::read_native_word(
+            &mut crate::game::sprite_drawing::NativeObjects(self.game),
+            offset,
+        )
+    }
+    fn read_little_word(&mut self, offset: usize) -> Result<u16, Self::Error> {
+        crate::game::scene::objects::Host::read_little_word(
+            &mut crate::game::sprite_drawing::NativeObjects(self.game),
+            offset,
+        )
+    }
+    fn write_byte(&mut self, offset: usize, value: u8) -> Result<(), Self::Error> {
+        crate::game::scene::objects::Host::write_byte(
+            &mut crate::game::sprite_drawing::NativeObjects(self.game),
+            offset,
+            value,
+        )
+    }
+    fn write_native_slice(&mut self, offset: usize, value: u16) -> Result<(), Self::Error> {
+        crate::game::scene::objects::Host::write_native_slice(
+            &mut crate::game::sprite_drawing::NativeObjects(self.game),
+            offset,
+            value,
+        )
+    }
+    fn write_native_bytes(&mut self, offset: usize, value: u16) -> Result<(), Self::Error> {
+        crate::game::scene::objects::Host::write_native_bytes(
+            &mut crate::game::sprite_drawing::NativeObjects(self.game),
+            offset,
+            value,
+        )
+    }
+    fn started(&mut self, clip: Clip) -> Result<(), Self::Error> {
+        crate::game::scene::objects::Host::started(
+            &mut crate::game::sprite_drawing::NativeObjects(self.game),
+            clip,
+        )
+    }
+}
+impl<C: Content> crate::game::scene::samus::Host for NativeSamus<'_, C> {
+    type Map = NativeSamusMap;
+    fn table_word(&mut self, index: u16) -> Result<u16, Self::Error> {
+        let base = crate::rtl::lorom_offset(0x92808d) as usize;
+        Ok(self
+            .content
+            .image(self.game)
+            .table_word(base, index as isize))
+    }
+    fn sprite_map(&mut self, cursor: u16) -> Result<NativeSamusMap, Self::Error> {
+        Ok(NativeSamusMap(sprite_map(
+            0x92,
+            cursor,
+            self.game,
+            self.content,
+        )))
+    }
+    fn published(&mut self, _: usize, _: usize, _: u16, _: u16, _: u16) -> Result<(), Self::Error> {
+        Ok(())
     }
 }
 #[forbid(unsafe_code)]

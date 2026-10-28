@@ -4,8 +4,7 @@ use std::sync::Arc;
 
 use super::hdma_sources::HdmaCatalog;
 use super::records::{
-    AtlasBinding, CompiledImage, MapBinding, MediaRef, PaletteIncarnation, Scene, SceneDescription,
-    SceneMedia,
+    AtlasBinding, MapBinding, MediaRef, ProducedObject, Scene, SceneDescription, SceneMedia,
 };
 use super::state::{
     ByteLanes, DisplayError, DisplayPhase, DisplayState, Mode7Target, TileTransfer, TransferSource,
@@ -92,6 +91,7 @@ pub struct ResidentDisplayDescription {
     pub words: Arc<[u16]>,
     pub colors: [u16; 256],
     pub objects: [u8; 544],
+    pub produced: Arc<[ProducedObject]>,
 }
 
 /// The native alias layout is supplied by the current latch owner, including padding.
@@ -125,6 +125,15 @@ fn validate_resident_assets(
 
 impl ResidentDisplayDescription {
     pub(crate) fn validate(&self, media: &SceneMedia) -> Result<(), DisplayError> {
+        for (index, record) in self.produced.iter().enumerate() {
+            record.validate(media).map_err(|_| DisplayError::Scene)?;
+            if self.produced[..index]
+                .iter()
+                .any(|old| old.object.order == record.object.order)
+            {
+                return Err(DisplayError::Scene);
+            }
+        }
         let image = media.image(self.image).map_err(|_| DisplayError::Scene)?;
         let palette = media
             .palette(self.palette)
@@ -143,6 +152,16 @@ impl ResidentDisplayDescription {
         media: &SceneMedia,
     ) -> Result<(), DisplayError> {
         self.validate(media)?;
+        state
+            .producer_ids
+            .validate()
+            .map_err(|_| DisplayError::Identity)?;
+        for record in self.produced.iter() {
+            state
+                .producer_ids
+                .validate_id(record.producer)
+                .map_err(|_| DisplayError::Identity)?;
+        }
         if state.revision() != media.revision() {
             return Err(DisplayError::Revision);
         }
@@ -164,6 +183,7 @@ pub(crate) struct DisplayImage {
     pub(crate) words: Vec<u16>,
     pub(crate) colors: [u16; 256],
     pub(crate) objects: [u8; 544],
+    pub(crate) produced: Vec<ProducedObject>,
 }
 impl DisplayImage {
     fn snapshot_latch_aliases(&mut self, state: &DisplayState) -> Result<(), DisplayError> {
@@ -174,6 +194,15 @@ impl DisplayImage {
         Ok(())
     }
     fn validate(&self, media: &SceneMedia) -> Result<(), DisplayError> {
+        for (index, record) in self.produced.iter().enumerate() {
+            record.validate(media).map_err(|_| DisplayError::Scene)?;
+            if self.produced[..index]
+                .iter()
+                .any(|old| old.object.order == record.object.order)
+            {
+                return Err(DisplayError::Scene);
+            }
+        }
         let image = media.image(self.image).map_err(|_| DisplayError::Scene)?;
         let palette = media
             .palette(self.palette)
@@ -223,7 +252,7 @@ pub(crate) trait SettlementEffects: RoomEffects + owned_hdma::Destinations {
         image: &mut DisplayImage,
         media: &mut Arc<SceneMedia>,
         row: u16,
-    ) -> Result<(), DisplayError>;
+    ) -> Result<super::records::ObjectContext, DisplayError>;
 }
 
 struct DisplayEffects<'a, E> {
@@ -231,6 +260,7 @@ struct DisplayEffects<'a, E> {
     media: &'a mut Arc<SceneMedia>,
     content: &'a HdmaCatalog,
     effects: &'a mut E,
+    producer_history: &'a mut Vec<Arc<[ProducedObject]>>,
 }
 
 impl<E: RoomEffects> irq::OwnedIrqEffects for DisplayEffects<'_, E> {
@@ -248,7 +278,7 @@ impl<E: SettlementEffects> delivery::Effects for DisplayEffects<'_, E> {
         owned_hdma::step(state, self.image, self.content, self.effects)
     }
     fn raster_row(&mut self, state: &mut DisplayState, row: u16) -> Result<(), DisplayError> {
-        self.effects.raster_row(state, self.image, self.media, row)
+        super::resident_media::raster_row(self, state, row)
     }
 }
 
@@ -267,6 +297,7 @@ pub(crate) struct OwnedDisplay {
     media: Arc<SceneMedia>,
     hdma_content: Arc<HdmaCatalog>,
     read_results: Vec<(super::records::AssetRef, Vec<u8>)>,
+    producer_history: Vec<Arc<[ProducedObject]>>,
 }
 impl OwnedDisplay {
     /// Opening adopts supplied committed data and never draws or advances a producer.
@@ -288,6 +319,9 @@ impl OwnedDisplay {
         committed
             .validate(&media)
             .map_err(|_| DisplayError::Scene)?;
+        committed
+            .validate_producer_ids(&state.producer_ids)
+            .map_err(|_| DisplayError::Identity)?;
         resident.validate_state(&state, &media)?;
         validate_resident_assets(resident.image, resident.palette, committed.description())?;
         let image = DisplayImage {
@@ -296,6 +330,7 @@ impl OwnedDisplay {
             words: resident.words.to_vec(),
             colors: resident.colors,
             objects: resident.objects,
+            produced: resident.produced.to_vec(),
         };
         Ok(Self {
             state,
@@ -304,6 +339,7 @@ impl OwnedDisplay {
             media,
             hdma_content,
             read_results: Vec::new(),
+            producer_history: Vec::new(),
         })
     }
     pub(crate) fn committed(&self) -> &Scene {
@@ -313,38 +349,46 @@ impl OwnedDisplay {
         &self.image
     }
     fn transfer(&mut self, transfer: &TileTransfer) -> Result<(), DisplayError> {
-        if transfer.destination.remap > 3 {
-            return Err(DisplayError::Geometry);
-        }
-        let mut word = transfer.destination.word;
-        self.state.latches.tile_pointer = word;
-        self.state.latches.tile_increment = transfer.destination.step;
-        self.state.latches.tile_remap = transfer.destination.remap;
-        self.state.latches.tile_increment_on_high = transfer.destination.increment_on_high;
-        for index in 0..transfer.byte_count() {
-            // Mutable staging sources are reacquired for every original source byte.
-            let value = self.state.source_byte(&transfer.source, index)?;
-            let high = match transfer.destination.lanes {
-                ByteLanes::Both => index & 1 != 0,
-                ByteLanes::Low => false,
-                ByteLanes::High => true,
-            };
-            let mapped = match transfer.destination.remap {
-                0 => word,
-                1 => word & 0xff00 | (word & 0x00e0) >> 5 | (word & 0x001f) << 3,
-                2 => word & 0xfe00 | (word & 0x01c0) >> 6 | (word & 0x003f) << 3,
-                _ => word & 0xfc00 | (word & 0x0380) >> 7 | (word & 0x007f) << 3,
-            };
-            self.image.tile_byte(mapped, high, value)?;
-            if high == transfer.destination.increment_on_high {
-                word = word.wrapping_add(transfer.destination.step);
-                self.state.latches.tile_pointer = word;
-            }
-        }
-        Ok(())
+        transfer_into(&mut self.state, &mut self.image, transfer)
     }
     pub(crate) fn begin_interval(&mut self, fresh_entry: bool) -> Result<(), DisplayError> {
-        self.state.begin_interval(fresh_entry)
+        self.state.begin_interval(fresh_entry)?;
+        self.producer_history.clear();
+        Ok(())
+    }
+    /// Creation has already committed its original fields to the moved G owner.
+    pub(crate) fn atmospheric_created(&mut self, slot: usize) -> Result<(), DisplayError> {
+        if self.state.phase != DisplayPhase::Producing {
+            return Err(DisplayError::Phase);
+        }
+        let mut owner = delivery::FaultGuard::new(&mut self.state);
+        let state = owner.state();
+        let result = match state.atmospheric.slots.get(slot) {
+            Some(effect) if effect.frame_and_kind == 0 => {
+                state.atmospheric_producers.slots[slot] = None;
+                Ok(())
+            }
+            Some(_) => state
+                .atmospheric_producers
+                .created(slot, &mut state.producer_ids),
+            None => Err(DisplayError::Geometry),
+        };
+        if result.is_ok() {
+            owner.disarm();
+        }
+        result
+    }
+    pub(crate) fn advance_atmosphere(
+        &mut self,
+        inputs: &mut impl super::atmosphere::Inputs,
+    ) -> Result<(), DisplayError> {
+        if self.state.phase == DisplayPhase::Failed {
+            return Err(DisplayError::Poisoned);
+        }
+        if self.state.phase != DisplayPhase::Producing {
+            return Err(DisplayError::Phase);
+        }
+        super::atmosphere::advance_owned(&mut self.state, &self.media, inputs)
     }
     pub(crate) fn refresh(&mut self) -> Result<(), DisplayError> {
         if self.state.phase == DisplayPhase::Failed {
@@ -384,6 +428,7 @@ impl OwnedDisplay {
                 media: &mut self.media,
                 content: &self.hdma_content,
                 effects,
+                producer_history: &mut self.producer_history,
             },
         )
     }
@@ -410,6 +455,7 @@ impl OwnedDisplay {
                 media: &mut self.media,
                 content: &self.hdma_content,
                 effects,
+                producer_history: &mut self.producer_history,
             },
         )
     }
@@ -428,6 +474,7 @@ impl OwnedDisplay {
                 media: &mut self.media,
                 content: &self.hdma_content,
                 effects,
+                producer_history: &mut self.producer_history,
             },
         );
         if result.is_ok() {
@@ -489,6 +536,15 @@ impl OwnedDisplay {
             .and_then(|()| {
                 validate_resident_assets(self.image.image, self.image.palette, &description)
             });
+        if self.image.produced.iter().any(|record| {
+            self.state
+                .producer_ids
+                .validate_id(record.producer)
+                .is_err()
+        }) {
+            self.state.phase = DisplayPhase::Failed;
+            return Err(DisplayError::Identity);
+        }
         if let Err(error) = resident_valid {
             self.state.phase = DisplayPhase::Failed;
             return Err(error);
@@ -497,13 +553,29 @@ impl OwnedDisplay {
             self.state.phase = DisplayPhase::Failed;
             return Err(error);
         }
-        let scene = match Scene::new(description, Arc::clone(&media)) {
+        // A no-raster interval retains actual visible history independently of
+        // new resident deliveries. Neither opening nor commitment fabricates rows.
+        let history = if self.producer_history.is_empty() {
+            Arc::from(self.committed.producer_history().to_vec())
+        } else {
+            Arc::from(self.producer_history.clone())
+        };
+        let scene = match Scene::new(description, Arc::clone(&media))
+            .and_then(|scene| scene.with_producer_history(history))
+        {
             Ok(scene) => scene,
             Err(_) => {
                 self.state.phase = DisplayPhase::Failed;
                 return Err(DisplayError::Scene);
             }
         };
+        if scene
+            .validate_producer_ids(&self.state.producer_ids)
+            .is_err()
+        {
+            self.state.phase = DisplayPhase::Failed;
+            return Err(DisplayError::Identity);
+        }
         self.media = media;
         self.committed = scene;
         self.state.phase = DisplayPhase::Committed;
@@ -545,6 +617,7 @@ impl OwnedDisplay {
             words: Arc::from(self.image.words.clone()),
             colors: self.image.colors,
             objects: self.image.objects,
+            produced: Arc::from(self.image.produced.clone()),
         };
         resident.validate_state(&self.state, &self.media)?;
         validate_resident_assets(
@@ -571,35 +644,22 @@ impl OwnedDisplay {
         atlases: Arc<[AtlasBinding]>,
         maps: Arc<[MapBinding]>,
     ) -> Result<Arc<SceneMedia>, DisplayError> {
-        if image.asset != self.image.image.asset || palette.asset != self.image.palette.asset {
-            return Err(DisplayError::Identity);
-        }
-        if self.image.words.len() < 0x801f {
-            return Err(DisplayError::Incomplete);
-        }
-        self.image.snapshot_latch_aliases(&self.state)?;
-        self.image.words[0x8005..0x801f].copy_from_slice(&self.image.colors[..26]);
-        let mut palettes: Vec<_> = self.media.palette_incarnations().cloned().collect();
-        palettes.push(PaletteIncarnation {
-            reference: palette,
-            colors: self.image.colors,
-        });
-        let mut images: Vec<_> = self.media.compiled_images().cloned().collect();
-        images.push(CompiledImage {
-            reference: image,
-            palette,
-            words: Arc::from(self.image.words.clone()),
-            atlases,
-            maps,
-        });
-        let media = SceneMedia::new(
-            self.media.revision(),
-            self.media.assets().cloned().collect(),
-            palettes,
-            images,
-        )
-        .map(Arc::new)
-        .map_err(|_| DisplayError::Scene)?;
+        let media = super::resident_media::append(
+            super::resident_media::Resident {
+                image: self.image.image,
+                palette: self.image.palette,
+                words: &mut self.image.words,
+                colors: &self.image.colors,
+            },
+            &self.media,
+            super::resident_media::Incarnation {
+                image,
+                palette,
+                atlases,
+                maps,
+            },
+            || latch_alias_words(&self.state),
+        )?;
         self.image.image = image;
         self.image.palette = palette;
         self.media = Arc::clone(&media);
@@ -612,6 +672,7 @@ impl RefreshHost for OwnedDisplay {
         self.state.nmi.pending
     }
     fn palette_and_objects(&mut self) -> Result<(), DisplayError> {
+        self.image.produced.clone_from(&self.state.objects.produced);
         self.image
             .objects
             .copy_from_slice(&self.state.objects.bytes);
@@ -619,18 +680,16 @@ impl RefreshHost for OwnedDisplay {
         Ok(())
     }
     fn samus(&mut self) -> Result<(), DisplayError> {
-        for slot in 0..2 {
-            if self.state.samus[slot].enabled != 0 {
-                let first = self.state.samus[slot].first.clone();
-                self.transfer(&first)?;
-                // A zero second count suppresses only the second transfer.
-                if self.state.samus[slot].second.count != 0 {
-                    let second = self.state.samus[slot].second.clone();
-                    self.transfer(&second)?;
-                }
-            }
+        let mut guard = delivery::FaultGuard::new(&mut self.state);
+        let result = super::samus_tile_upload::upload(&mut OwnedSamusUpload {
+            state: guard.state(),
+            image: &mut self.image,
+            media: &self.media,
+        });
+        if result.is_ok() {
+            guard.disarm();
         }
-        Ok(())
+        result
     }
     fn animations(&mut self) -> Result<(), DisplayError> {
         if self.state.visual.animated_tiles.flags & 0x8000 == 0 {
@@ -849,5 +908,160 @@ impl RefreshHost for OwnedDisplay {
     }
     fn set_including_lag(&mut self, value: u16) {
         self.state.nmi.including_lag = value;
+    }
+}
+
+fn transfer_into(
+    state: &mut DisplayState,
+    image: &mut DisplayImage,
+    transfer: &TileTransfer,
+) -> Result<(), DisplayError> {
+    if transfer.destination.remap > 3 {
+        return Err(DisplayError::Geometry);
+    }
+    let mut word = transfer.destination.word;
+    state.latches.tile_pointer = word;
+    state.latches.tile_increment = transfer.destination.step;
+    state.latches.tile_remap = transfer.destination.remap;
+    state.latches.tile_increment_on_high = transfer.destination.increment_on_high;
+    for index in 0..transfer.byte_count() {
+        // Mutable staging sources are reacquired for every original source byte.
+        let value = state.source_byte(&transfer.source, index)?;
+        let high = match transfer.destination.lanes {
+            ByteLanes::Both => index & 1 != 0,
+            ByteLanes::Low => false,
+            ByteLanes::High => true,
+        };
+        let mapped = match transfer.destination.remap {
+            0 => word,
+            1 => word & 0xff00 | (word & 0x00e0) >> 5 | (word & 0x001f) << 3,
+            2 => word & 0xfe00 | (word & 0x01c0) >> 6 | (word & 0x003f) << 3,
+            _ => word & 0xfc00 | (word & 0x0380) >> 7 | (word & 0x007f) << 3,
+        };
+        image.tile_byte(mapped, high, value)?;
+        if high == transfer.destination.increment_on_high {
+            word = word.wrapping_add(transfer.destination.step);
+            state.latches.tile_pointer = word;
+        }
+    }
+    Ok(())
+}
+
+struct OwnedSamusUpload<'a> {
+    state: &'a mut DisplayState,
+    image: &'a mut DisplayImage,
+    media: &'a SceneMedia,
+}
+impl OwnedSamusUpload<'_> {
+    fn transfer(&self, slot: usize, part: super::samus_tile_upload::Part) -> &TileTransfer {
+        match part {
+            super::samus_tile_upload::Part::First => &self.state.samus[slot].first,
+            super::samus_tile_upload::Part::Second => &self.state.samus[slot].second,
+        }
+    }
+}
+impl super::samus_tile_upload::Host for OwnedSamusUpload<'_> {
+    type Error = DisplayError;
+    type Descriptor = usize;
+    type Source = TransferSource;
+    fn vmain(&mut self) -> Result<(), DisplayError> {
+        self.state.latches.tile_increment = 1;
+        self.state.latches.tile_remap = 0;
+        self.state.latches.tile_increment_on_high = true;
+        Ok(())
+    }
+    fn enabled(&mut self, half: super::samus_body::Half) -> Result<u8, DisplayError> {
+        Ok(self.state.samus[match half {
+            super::samus_body::Half::Top => 0,
+            super::samus_body::Half::Bottom => 1,
+        }]
+        .enabled)
+    }
+    fn descriptor(&mut self, half: super::samus_body::Half) -> Result<usize, DisplayError> {
+        let slot = match half {
+            super::samus_body::Half::Top => 0,
+            super::samus_body::Half::Bottom => 1,
+        };
+        self.media
+            .asset(self.state.samus[slot].descriptor)
+            .map_err(|_| DisplayError::Identity)?;
+        Ok(slot)
+    }
+    fn destination(
+        &mut self,
+        slot: usize,
+        part: super::samus_tile_upload::Part,
+    ) -> Result<(), DisplayError> {
+        if part == super::samus_tile_upload::Part::First
+            && self.transfer(slot, part).destination.remap > 3
+        {
+            return Err(DisplayError::Geometry);
+        }
+        self.state.latches.tile_pointer = self.transfer(slot, part).destination.word;
+        Ok(())
+    }
+    fn configure_dma(&mut self) -> Result<(), DisplayError> {
+        Ok(())
+    }
+    fn source(&mut self, slot: usize) -> Result<TransferSource, DisplayError> {
+        Ok(self.state.samus[slot].first.source.clone())
+    }
+    fn advance_source(
+        &mut self,
+        slot: usize,
+        _: TransferSource,
+        _: u16,
+    ) -> Result<TransferSource, DisplayError> {
+        Ok(self.state.samus[slot].second.source.clone())
+    }
+    fn write_source(&mut self, _: &TransferSource) -> Result<(), DisplayError> {
+        Ok(())
+    }
+    fn bank(&mut self, _: usize) -> Result<(), DisplayError> {
+        Ok(())
+    }
+    fn count(
+        &mut self,
+        slot: usize,
+        part: super::samus_tile_upload::Part,
+    ) -> Result<u16, DisplayError> {
+        Ok(self.transfer(slot, part).count)
+    }
+    fn write_count(&mut self, _: u16) -> Result<(), DisplayError> {
+        Ok(())
+    }
+    fn dma(
+        &mut self,
+        slot: usize,
+        part: super::samus_tile_upload::Part,
+        count: u16,
+        source: TransferSource,
+    ) -> Result<(), DisplayError> {
+        let mut transfer = self.transfer(slot, part).clone();
+        transfer.count = count;
+        transfer.source = source;
+        transfer_into(self.state, self.image, &transfer)
+    }
+}
+
+impl<E: SettlementEffects> super::resident_media::RasterHost for DisplayEffects<'_, E> {
+    fn draw_row(
+        &mut self,
+        state: &mut DisplayState,
+        row: u16,
+    ) -> Result<super::records::ObjectContext, DisplayError> {
+        self.effects.raster_row(state, self.image, self.media, row)
+    }
+    fn media(&self) -> &SceneMedia {
+        self.media.as_ref()
+    }
+    fn produced(&self) -> &[ProducedObject] {
+        &self.image.produced
+    }
+    fn objects(&self) -> &[u8; 544] {
+        &self.image.objects
+    }
+    fn publish_row(&mut self, records: Arc<[ProducedObject]>) {
+        self.producer_history.push(records);
     }
 }

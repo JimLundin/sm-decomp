@@ -46,6 +46,16 @@ pub(crate) mod drop_rules;
 pub(crate) mod enemy_projectiles;
 #[path = "../../game/enemy_script.rs"]
 pub(crate) mod enemy_script;
+#[path = "../../game/scene/atmosphere_protocol.rs"]
+pub(crate) mod atmospheric_protocol;
+#[path = "../../game/scene/error.rs"]
+pub(crate) mod display_error;
+pub(crate) mod scene {
+    pub(crate) use super::atmospheric_protocol as atmosphere;
+    pub(crate) mod state {
+        pub(crate) use super::super::display_error::DisplayError;
+    }
+}
 #[path = "../../game/session_access.rs"]
 pub(crate) mod session_access;
 

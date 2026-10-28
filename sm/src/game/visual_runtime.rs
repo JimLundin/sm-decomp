@@ -600,19 +600,22 @@ impl visual_host::Aliases for Runtime<'_> {
 impl crate::game::scene::atmosphere::Host for Runtime<'_> {
     type Error = std::convert::Infallible;
     fn frame_and_kind(&mut self, slot: usize) -> Result<u16, Self::Error> {
-        Ok(self.session().atmospheric.slots[slot].frame_and_kind)
+        Ok(
+            crate::game::session_access::SessionAccess::atmospheric(self).slots[slot]
+                .frame_and_kind,
+        )
     }
     fn cursor(&mut self) -> Result<u16, Self::Error> {
         Ok(self.word(0x590))
     }
     fn x(&mut self, slot: usize) -> Result<u16, Self::Error> {
-        Ok(self.session().atmospheric.slots[slot].x)
+        Ok(crate::game::session_access::SessionAccess::atmospheric(self).slots[slot].x)
     }
     fn camera_x(&mut self) -> Result<u16, Self::Error> {
         Ok(self.word(0x911))
     }
     fn y(&mut self, slot: usize) -> Result<u16, Self::Error> {
-        Ok(self.session().atmospheric.slots[slot].y)
+        Ok(crate::game::session_access::SessionAccess::atmospheric(self).slots[slot].y)
     }
     fn camera_y(&mut self) -> Result<u16, Self::Error> {
         Ok(self.word(0x915))
@@ -651,6 +654,7 @@ impl crate::game::scene::atmosphere::Host for Runtime<'_> {
 
 impl visual_host::Effects for Runtime<'_> {
     fn draw_samus_sprite(&mut self, index: u16, x: u16, y: u16) {
+        // Retain the complete native export/action/import interval, including null maps.
         self.foreign(|game| sprite_output::samus(index, (x, y), game, &mut sprite_output::Native));
     }
     fn draw_atmospheric_tile(&mut self, slot: usize, kind: u16) {

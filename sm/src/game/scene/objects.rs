@@ -35,7 +35,22 @@ pub(crate) fn draw<H: Host>(
     map: &mut impl Geometry<Error = H::Error>,
     position: (u16, u16),
     clip: Clip,
+    tile_word: impl FnMut(u16) -> Result<u16, H::Error>,
+) -> Result<(), H::Error> {
+    draw_with_publication(host, map, position, clip, tile_word, |_, _, _, _, _, _| {
+        Ok(())
+    })
+}
+
+/// Publish authored identity only after all original bytes of one record succeed.
+/// Native drawing uses the same body with an infallible empty publication.
+pub(crate) fn draw_with_publication<H: Host>(
+    host: &mut H,
+    map: &mut impl Geometry<Error = H::Error>,
+    position: (u16, u16),
+    clip: Clip,
     mut tile_word: impl FnMut(u16) -> Result<u16, H::Error>,
+    mut published: impl FnMut(&mut H, usize, usize, u16, u16, u16) -> Result<(), H::Error>,
 ) -> Result<(), H::Error> {
     let mut index = usize::from(host.read_native_word(544)?);
     let count = map.count()?;
@@ -66,22 +81,22 @@ pub(crate) fn draw<H: Host>(
             let tile = tile_word(map.tile(record)?)?;
             host.write_native_slice(index + 2, tile)?;
             extension(host, map, record, index, x)?;
+            published(host, record, index, x, y, tile)?;
             index += 4;
         } else {
             host.write_byte(index, x as u8)?;
             extension(host, map, record, index, x)?;
             let y = u16::from(position.1 as u8) + u16::from(map.y(record)?);
             let inside = (y & 0x100 == 0) == (map.y(record)? & 0x80 == 0);
-            host.write_byte(
-                index + 1,
-                if matches!(clip, Clip::None) || inside == matches!(clip, Clip::Inside) {
-                    y as u8
-                } else {
-                    0xf0
-                },
-            )?;
+            let output_y = if matches!(clip, Clip::None) || inside == matches!(clip, Clip::Inside) {
+                y as u8
+            } else {
+                0xf0
+            };
+            host.write_byte(index + 1, output_y)?;
             let tile = tile_word(map.tile(record)?)?;
             host.write_native_slice(index + 2, tile)?;
+            published(host, record, index, x, u16::from(output_y), tile)?;
             index = (index + 4) & 0x1ff;
         }
     }

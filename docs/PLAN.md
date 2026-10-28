@@ -50,6 +50,146 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
+SOURCE30 atmospheric/Samus producer cohort is independently reviewed and qualified.
+Source d9daaf02 / DLL6768ee76 binds shared atmosphere, body/position/tile upload,
+resident media publication and all66 units. Production library26.194s retains
+SOURCE23 attribution; complete unchanged-input transfer reaches final SOURCE30.
+Final direct DLL85.259s leaves sampled minimum2.973GiB RAM; no added warnings.
+All26 assigned rows pass (23/44 required), including fullMorph1200 and BOTH
+independentKago14350 setups. Actual runtime199063 comparisons/0,
+fresh initialized329+resume5 and save55650/reserve91623 bind the final codec.
+All76 raw contributors are identical across fixture successors; codec
+f6e7c80dc575e620 binds1257015raw/1246178normalized bytes. Original64/66
+failure receipts and superseding complete Tick0/1/2/producer25 corrections remain.
+Zero-Samus namespace-prefix coverage remains unclaimed; no restamped checkpoint.
+Net versus mainSOURCE08: +2752production/+2986verification/+13unsafe-containing/
+legacy0. All retained adapters/dependencies count; no net-size saving or backend
+retirement claim. Support+228 includes collector220 and role guides8; docs separate.
+Actual G/start/adoption,Reference/audio,portable/full slice remain.
+Next: reconcile the externally claimed Samus catalog with the frozen constructor
+inventory, then the complete persistent Session/player-Scene consumer and lifecycle.
+These completed final receipts supersede earlier pending statements below without
+changing any historical execution or frozen artifact attribution.
+
+
+SOURCE30 corrects both failed SOURCE28 fixtures without production changes.
+Settlement independently checks literal Tick0/1/2 and carries actual settled
+metadata through reset/continuation/reopen; namespace producer25 reaches Identity.
+All prior assertions,64 passing bodies,66 units and76 raw codec leaves remain.
+Independent source review PASS; original64/66 failure receipt is preserved.
+Zero-Samus namespace-prefix coverage remains unclaimed; producer0 fails Scene first.
+Final SOURCE30 DLL and66/66 units PASS;26-row fresh-codec runtime remains pending. Net verification+4; production/legacy/unsafe0.
+Actual G/start/adoption,Reference/audio,full slice and engine-size goals remain open.
+
+
+SOURCE28 corrects eleven new host-only private media lookups through existing
+public iterators, preserving full MediaRef equality and every assertion. Source
+4e7cf0d3 retains all66 units and all76 raw codec leaves f6e7c80dc575e620.
+The original SOURCE27 sm library succeeded; its host failed11 E0624 after77.300s.
+Keep that failure and its byte-bound library. Actual corrected host metadata
+PASS0.914s against the retained unchanged library interface; source review PASS.
+This is not final DLL/runtime proof. Final qualification19 DLL compiled; 64 of66 units pass, with two earlier fixture
+failures under diagnosis. Original results remain preserved.
+A four-line reviewer clause records the actual compiling crate/cfg and visibility.
+Net verification+44 includes24 helper and20 formatter lines; production/legacy/
+unsafe unchanged, support+4. No retirement/savings claim; G/full slice remain open.
+
+
+SOURCE27 adds six independent owned upload/resident units (66 total), preserving
+all prior assertions and the SOURCE25 move-order correction. Its two new source
+faults use literal573 against the actual576-byte atlas; expected prefixes are
+unchanged. Draft SOURCE26 and both original author checkpoints are preserved.
+Final source90e3eb79 retains all76 codec leaves at f6e7c80dc575e620; fmt/source/codec
+checks pass. Independent witness review is active; DLL/runtime remain unrun.
+The prior SOURCE25 DLL was terminated below2GiB RAM reserve after43.698s;
+its admission is released. Prepared retries require3.25GiB growth plus2GiB reserve
+and current external reservations. Actual G/start/adoption/full slice remain open.
+
+
+SOURCE25 fixes the cfg-verifier E0382 found by the actual SOURCE24 direct rlib:
+capture a selected SceneObject's order before moving it into the indexed array.
+The original failed30.164s execution/source/diagnostics are preserved; compiler
+admission is released. New sourcec0a113f8 keeps all60 unit assertions and all76
+codec contributor bytes unchanged at f6e7c80dc575e620. The one settlement helper
+prefix differs explicitly; no cloned record, changed assertion or codec restamp.
+Exact normal-library dependency transfer retains SOURCE23's proof. A new frozen
+DLL/60-unit build is running; runtime/G/raster/start/adoption remain pending.
+
+
+SOURCE24 adds independently authored position/table/Ceres failure literals to
+the actual shared core. All60 units are registered; old55 assertions/native
+prefix remain raw-identical. Every76 codec contributor byte is unchanged from
+SOURCE23, codec f6e7c80dc575e620. Exact normal-library dependency transfer retains
+SOURCE23's26.194s/200warnings/0 added attribution. Final DLL/units is running
+at frozen e9f5804b; native/replay/genuine new-codec captures and actual G/raster/
+start/catalog provenance/selected adoption remain pending.
+
+
+SOURCE23 composes independently reviewed Samus NMI upload and resident media
+publication into existing native/owned consumers. Shared upload preserves
+VMAIN/flags/top/bottom and lazy descriptor/source/count/destination order;
+resident media preserves aliases/colors before validation, success-only IDs,
+post-raster callback sampling and complete ordered immutable row publication.
+Source4883c95f passes fmt/source guards and normal library in26.194s,200
+unchanged warnings/0 added. Codec76/f6e7c80dc575e620 requires genuine captures.
+Original55 unit bodies remain; position/Ceres independent literals are active.
+Final DLL/native/runtime/G/raster/start/media identity/adoption remain pending.
+
+
+SOURCE22 composes the 55-unit common namespace/marker witness and its narrow
+shared-position/tile Inputs successor. All existing unit assertions and native
+prefixes remain; injected failures retain actual owner poisoning/OAM/cursor
+prefixes. Source0ce1aa31 shares all74 raw codec contributors with SOURCE20,
+codec a074b292792a6474. New test additions do not invalidate that codec.
+Normal-library type/warning proof retains SOURCE20's original27.174s/200/0
+attribution; exact cfg-only and include_bytes dependency transfer passes.
+Final DLL/native/runtime and genuine main-to-new-codec captures remain pending.
+Actual G/start/catalog provenance/lifecycle/adoption and full owned slice stay open.
+
+
+SOURCE20 composes reviewed Samus position/tile cores into the native and owned
+body consumers with explicit selected source/request identities and lazy effects.
+Source077424d4 passes fmt/source guards and normal library in27.174s with200
+unchanged warnings/0 added. Marker verifier adaptation and final DLL/native/
+runtime/fresh captures are pending. New leaf is in source inventory and codec.
+Native fallback/aliases/cinematic failure and pointer/flag ordering are retained;
+actual G/start/selected-content provenance/adoption and full owned slice remain.
+
+
+SOURCE19 source-branch checkpoint composes independently reviewed SAMUS-BODY01,
+the corrected 51-unit settlement witness, and a source-guarded verifier/test seam.
+Private coverage_checks moves with identical tokens into verification; its full
+DLL source guard remains. All 73 state codec contributors stay registered;
+only verify.rs bytes change in the seam. Test-only edits no longer change codec,
+while payload edits still do; qualified codec calculator cross-check passes.
+Source b4fc22fa / codec ab464e76d5931817 is formatted/source-guarded only.
+Seam independent review, final library/DLL/units/native/replay and genuine captures
+remain pending. No old checkpoint restamp, size saving or complete-G claim.
+
+
+SOURCE16 repairs the actual player-detached dependency graph on the same migration
+branch. One pure atmospheric slot/protocol leaf and one pure DisplayError leaf
+serve native/owned display and the existing detached entry through exact aliases.
+Definitions and ordered algorithm bodies are unchanged; no duplication or savings.
+Source774172ec passes fmt and focused normal library+player_detached compilation
+in40.183s. Library200 warnings/0 added; example1319 warnings recorded separately
+without a transferred baseline. This is type/dependency evidence, not executed
+detached cases, final DLL/runtime or full backend-independent gameplay proof.
+
+
+SOURCE15 reviewed atmospheric/Samus producers and shared lifecycle namespace are
+published on migration/scene-producers-source15, based on qualified main9d02b6ef.
+Exact source4a669759 passes fmt and normal no-default library with200 unchanged
+warnings; original201-warning predecessor is preserved. Direct DLL/native/replay,
+settlement/persistence witness and genuine new-codec captures remain pending.
+Schema4 seals supplied atmospheric catalog/variants/context/history/common IDs;
+Samus is added to the literal source inventory and checkpoint codec contributors.
+Native/default adapters and actual owned producer entry share the ordered core;
+actual G/lifecycle/effective-context/import/selected-state adoption remains open.
+This source branch is not main qualification or a full owned playable-slice proof.
+Preserve original SOURCE08 proofs without repeating or restamping their source.
+
+
 Current SOURCE08 component source dfdd6120: production 123,622; legacy 17,793;
 unsafe-containing 2,621; verification 46,940. Final library/DLL/source/native
 guards pass with 200 unchanged warnings. Original source 959bd651 retains 48

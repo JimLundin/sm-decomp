@@ -686,13 +686,11 @@ fn atmosphere_failure() {
     use super::game::player_transitions::draw_atmospheric;
     for invalid in [1, 0x800] {
         let mut h = atmosphere_fixture(invalid, 2);
-        h.world.player.atmospheric.slots[3] =
-            super::game::player_transitions::state::AtmosphericSlot {
-                frame_and_kind: 0x400,
-                remaining: 2,
-                x: 8,
-                y: 10,
-            };
+        let slot = &mut h.world.player.atmospheric.slots[3];
+        slot.frame_and_kind = 0x400;
+        slot.remaining = 2;
+        slot.x = 8;
+        slot.y = 10;
         assert!(catch_unwind(AssertUnwindSafe(|| draw_atmospheric(&mut h))).is_err());
         assert_eq!(
             h.world.player.atmospheric.slots[0].remaining, 1,

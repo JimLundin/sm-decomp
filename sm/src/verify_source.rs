@@ -2,6 +2,22 @@
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/game/scene/samus_tile_upload.rs",
+        include_bytes!("game/scene/samus_tile_upload.rs"),
+    ),
+    (
+        "sm/src/game/scene/resident_media.rs",
+        include_bytes!("game/scene/resident_media.rs"),
+    ),
+    (
+        "sm/src/game/scene/samus_position_tiles.rs",
+        include_bytes!("game/scene/samus_position_tiles.rs"),
+    ),
+    (
+        "sm/src/verification/coverage_checks.rs",
+        include_bytes!("verification/coverage_checks.rs"),
+    ),
+    (
         "sm/src/game/scene/delivery.rs",
         include_bytes!("game/scene/delivery.rs"),
     ),
@@ -1012,6 +1028,14 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/scene/irq.rs"),
     ),
     (
+        "sm/src/game/scene/atmosphere_protocol.rs",
+        include_bytes!("game/scene/atmosphere_protocol.rs"),
+    ),
+    (
+        "sm/src/game/scene/error.rs",
+        include_bytes!("game/scene/error.rs"),
+    ),
+    (
         "sm/src/game/scene/atmosphere.rs",
         include_bytes!("game/scene/atmosphere.rs"),
     ),
@@ -1034,6 +1058,14 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/scene/records.rs",
         include_bytes!("game/scene/records.rs"),
+    ),
+    (
+        "sm/src/game/scene/samus_body.rs",
+        include_bytes!("game/scene/samus_body.rs"),
+    ),
+    (
+        "sm/src/game/scene/samus.rs",
+        include_bytes!("game/scene/samus.rs"),
     ),
     (
         "sm/src/game/scene/settle.rs",

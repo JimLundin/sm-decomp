@@ -422,49 +422,107 @@ unsafe fn upload_palette_and_oam(game: &mut Game) {
         crate::verify_probe::hit("palette.dma.uploaded");
     }
 }
-unsafe fn transfer_samus_tile_half(descriptor_addr: u16, vram_addr: u16, game: &mut Game) {
-    unsafe {
-        // Keep the diagnostic and failure flag for low-address ROM mirrors.
-        let _ = crate::rtl::rom_bank_ptr::<0x92>(descriptor_addr, game);
-        let descriptor = 0x928000 | u32::from(descriptor_addr & 0x7fff);
-        // Packed fields: source address at 0, bank at 2, and byte counts at 3 and 5.
-        crate::rtl::register_writes! { game;
-            word(VMADDL as u16, vram_addr); word(DMAP1 as u16, 0x1801);
-            word(A1T1L as u16, game.read_rom_word(descriptor, 0)); byte(A1B1 as u16, game.read_rom_byte(descriptor, 2));
+#[derive(Clone, Copy)]
+struct NativeSamusDescriptor {
+    address: u32,
+    vram: u16,
+}
+struct NativeSamusUpload<'a>(&'a mut Game);
+impl crate::game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
+    type Error = std::convert::Infallible;
+    type Descriptor = NativeSamusDescriptor;
+    type Source = u16;
+    fn vmain(&mut self) -> Result<(), Self::Error> {
+        unsafe { WriteReg(VMAIN as u16, 0x80, self.0) };
+        Ok(())
+    }
+    fn enabled(&mut self, half: crate::game::scene::samus_body::Half) -> Result<u8, Self::Error> {
+        Ok(self.0.ram().read_byte(match half {
+            crate::game::scene::samus_body::Half::Top => 0x71d,
+            crate::game::scene::samus_body::Half::Bottom => 0x71e,
+        }))
+    }
+    fn descriptor(
+        &mut self,
+        half: crate::game::scene::samus_body::Half,
+    ) -> Result<Self::Descriptor, Self::Error> {
+        let (pointer, vram) = match half {
+            crate::game::scene::samus_body::Half::Top => (0x71f, 0x6000),
+            crate::game::scene::samus_body::Half::Bottom => (0x721, 0x6080),
+        };
+        let address = u16::from_le_bytes([
+            self.0.ram().read_byte(pointer),
+            self.0.ram().read_byte(pointer + 1),
+        ]);
+        unsafe {
+            let _ = crate::rtl::rom_bank_ptr::<0x92>(address, self.0);
         }
-        // A zero first count still runs a 65,536-byte DMA.
-        crate::rtl::register_writes! { game;
-            word(DAS1L as u16, game.read_rom_word(descriptor, 3)); byte(MDMAEN as u16, 2);
-        }
-
-        // Prepare the second destination/source even when its count is zero.
-        WriteRegWord(VMADDL as u16, vram_addr.wrapping_add(0x100), game);
-        let second_source = game
-            .read_rom_word(descriptor, 0)
-            .wrapping_add(game.read_rom_word(descriptor, 3));
-        WriteRegWord(A1T1L as u16, second_source, game);
-        if game.read_rom_word(descriptor, 5) != 0 {
-            crate::rtl::register_writes! { game;
-                word(DAS1L as u16, game.read_rom_word(descriptor, 5)); byte(MDMAEN as u16, 2);
-            }
-        }
+        Ok(NativeSamusDescriptor {
+            address: 0x928000 | u32::from(address & 0x7fff),
+            vram,
+        })
+    }
+    fn destination(
+        &mut self,
+        d: Self::Descriptor,
+        p: crate::game::scene::samus_tile_upload::Part,
+    ) -> Result<(), Self::Error> {
+        let address = match p {
+            crate::game::scene::samus_tile_upload::Part::First => d.vram,
+            crate::game::scene::samus_tile_upload::Part::Second => d.vram.wrapping_add(0x100),
+        };
+        unsafe { WriteRegWord(VMADDL as u16, address, self.0) };
+        Ok(())
+    }
+    fn configure_dma(&mut self) -> Result<(), Self::Error> {
+        unsafe { WriteRegWord(DMAP1 as u16, 0x1801, self.0) };
+        Ok(())
+    }
+    fn source(&mut self, d: Self::Descriptor) -> Result<u16, Self::Error> {
+        Ok(self.0.read_rom_word(d.address, 0))
+    }
+    fn advance_source(&mut self, _: Self::Descriptor, s: u16, c: u16) -> Result<u16, Self::Error> {
+        Ok(s.wrapping_add(c))
+    }
+    fn write_source(&mut self, s: &u16) -> Result<(), Self::Error> {
+        unsafe { WriteRegWord(A1T1L as u16, *s, self.0) };
+        Ok(())
+    }
+    fn bank(&mut self, d: Self::Descriptor) -> Result<(), Self::Error> {
+        let bank = self.0.read_rom_byte(d.address, 2);
+        unsafe { WriteReg(A1B1 as u16, bank, self.0) };
+        Ok(())
+    }
+    fn count(
+        &mut self,
+        d: Self::Descriptor,
+        p: crate::game::scene::samus_tile_upload::Part,
+    ) -> Result<u16, Self::Error> {
+        Ok(self.0.read_rom_word(
+            d.address,
+            match p {
+                crate::game::scene::samus_tile_upload::Part::First => 3,
+                crate::game::scene::samus_tile_upload::Part::Second => 5,
+            },
+        ))
+    }
+    fn write_count(&mut self, c: u16) -> Result<(), Self::Error> {
+        unsafe { WriteRegWord(DAS1L as u16, c, self.0) };
+        Ok(())
+    }
+    fn dma(
+        &mut self,
+        _: Self::Descriptor,
+        _: crate::game::scene::samus_tile_upload::Part,
+        _: u16,
+        _: u16,
+    ) -> Result<(), Self::Error> {
+        unsafe { WriteReg(MDMAEN as u16, 2, self.0) };
+        Ok(())
     }
 }
-
 unsafe fn upload_samus(game: &mut Game) {
-    unsafe {
-        WriteReg(VMAIN as u16, 0x80, game);
-        if game.ram().read_byte(0x71d) != 0 {
-            let top_half_src =
-                u16::from_le_bytes([game.ram().read_byte(0x71f), game.ram().read_byte(0x720)]);
-            transfer_samus_tile_half(top_half_src, 0x6000, game);
-        }
-        if game.ram().read_byte(0x71e) != 0 {
-            let bottom_half_src =
-                u16::from_le_bytes([game.ram().read_byte(0x721), game.ram().read_byte(0x722)]);
-            transfer_samus_tile_half(bottom_half_src, 0x6080, game);
-        }
-    }
+    crate::game::scene::samus_tile_upload::upload(&mut NativeSamusUpload(game)).unwrap();
 }
 /// Requires a live, exclusively accessed SNES backend for every upload.
 pub(crate) unsafe fn run(game: &mut Game) {

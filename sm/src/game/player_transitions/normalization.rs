@@ -389,15 +389,16 @@ fn wall_jump(h: &mut impl Host) -> bool {
     if pose::liquid_at_height(h, bottom) != LiquidAtHeight::None {
         return false;
     }
-    let s = h.session_mut();
-    s.atmospheric.slots[3].frame_and_kind = 1536;
-    s.atmospheric.slots[3].remaining = 3;
-    s.atmospheric.slots[3].y = bottom;
-    s.atmospheric.slots[3].x = if s.player.movement_and_facing as u8 != 8 {
-        s.player.x.wrapping_add(6)
+    h.atmospheric_mut().slots[3].frame_and_kind = 1536;
+    h.atmospheric_mut().slots[3].remaining = 3;
+    h.atmospheric_mut().slots[3].y = bottom;
+    h.atmospheric_mut().slots[3].x = if h.session().player.movement_and_facing as u8 != 8 {
+        h.session().player.x.wrapping_add(6)
     } else {
-        s.player.x.wrapping_sub(6)
+        h.session().player.x.wrapping_sub(6)
     };
+    h.atmospheric_created(3)
+        .expect("atmospheric producer allocation");
     false
 }
 fn shinespark(h: &mut impl Host) -> bool {

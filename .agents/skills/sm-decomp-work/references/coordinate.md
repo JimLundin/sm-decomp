@@ -16,6 +16,7 @@ dependencies and measured resource budgets permit.
 - The root owns one machine resource ledger. Sample actual RAM, CPU, paging and
   disk before admission. Count launchers/descendants, admitted jobs' remaining
   growth once, copies, captures and retained outputs; maintain PLAN's reserves.
+  Resolve reparse/junction paths before sizing, budgeting or deletion; count physical targets once and exclude shared caches from per-worker reclaim.
   Preserve existing live jobs and frozen inputs. Release terminal admissions
   promptly, and increase concurrency only when measurements support useful throughput.
   On a reserve breach, stop the newest producer per PLAN and retain lightweight
@@ -23,6 +24,8 @@ dependencies and measured resource budgets permit.
 - Inspect exact execution and agent handles before recovery. Recover or reassign
   only from authoritative terminal/missing handles; observation timeouts and stale
   files/comments do not establish termination. Carry forward pinned results.
+  Before reporting pending work, read the exact current publication/result receipt with timing/dependency evidence; prioritize event watching, keep unrelated audits off the recovery monitor, and label cached ref times as observations, not push times.
+  Discover monotonic successor publication/result paths with bounded shallow directory inventory before reading newest exact receipts; carry event cursor/pins, label unknown task handles, and never assume cached paths are complete.
   Issue delivery is not activation; active status needs authoritative session/goal/turn handles.
   Exception: if available tools cannot resume an authoritatively blocked external root, preserve frozen source/live jobs and reassign only its already released scope to a reachable explicitly activated owner.
   With collaboration tools, followup_task activates terminal workers;

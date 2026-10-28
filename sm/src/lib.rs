@@ -787,6 +787,17 @@ pub fn verify_room_world_case(id: u32, owner: &game_state::GameOwner) -> Option<
     room_world_cases::capture(id, owner)
 }
 #[cfg(sm_verify_dll)]
+pub use room_world_cases::verify_owned_atmosphere_prefix;
+#[cfg(sm_verify_dll)]
+pub use room_world_cases::verify_owned_atmosphere_settlement;
+#[cfg(sm_verify_dll)]
+pub use room_world_cases::{
+    verify_owned_marker_prefix, verify_owned_namespace_birth_prefix,
+    verify_owned_namespace_interleaved, verify_owned_resident_append, verify_owned_samus_id_prefix,
+    verify_owned_samus_upload, verify_resident_append_prefix, verify_samus_ceres_position,
+    verify_samus_position_offset,
+};
+#[cfg(sm_verify_dll)]
 pub use room_world_resources::verify_room_pack_bytes;
 
 #[path = "verification/room_background_cases.rs"]

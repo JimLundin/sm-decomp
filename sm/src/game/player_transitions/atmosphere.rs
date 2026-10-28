@@ -53,19 +53,25 @@ fn splash(h: &mut impl Host, bottom: u16) {
         1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
     ];
     if TWO_SLOTS[usize::from(h.session().player.movement_and_facing >> 8)] != 0 {
-        h.session_mut().atmospheric.slots[0].frame_and_kind = 0x100;
-        h.session_mut().atmospheric.slots[1].frame_and_kind = 0x100;
-        h.session_mut().atmospheric.slots[0].remaining = 3;
-        h.session_mut().atmospheric.slots[1].remaining = 3;
-        h.session_mut().atmospheric.slots[0].x = h.session().player.x.wrapping_add(4);
-        h.session_mut().atmospheric.slots[1].x = h.session().player.x.wrapping_sub(3);
-        h.session_mut().atmospheric.slots[0].y = bottom.wrapping_sub(4);
-        h.session_mut().atmospheric.slots[1].y = bottom.wrapping_sub(4);
+        h.atmospheric_mut().slots[0].frame_and_kind = 0x100;
+        h.atmospheric_mut().slots[1].frame_and_kind = 0x100;
+        h.atmospheric_mut().slots[0].remaining = 3;
+        h.atmospheric_mut().slots[1].remaining = 3;
+        h.atmospheric_mut().slots[0].x = h.session().player.x.wrapping_add(4);
+        h.atmospheric_mut().slots[1].x = h.session().player.x.wrapping_sub(3);
+        h.atmospheric_mut().slots[0].y = bottom.wrapping_sub(4);
+        h.atmospheric_created(0)
+            .expect("atmospheric producer allocation");
+        h.atmospheric_mut().slots[1].y = bottom.wrapping_sub(4);
+        h.atmospheric_created(1)
+            .expect("atmospheric producer allocation");
     } else {
-        h.session_mut().atmospheric.slots[0].frame_and_kind = 0x300;
-        h.session_mut().atmospheric.slots[0].remaining = 2;
-        h.session_mut().atmospheric.slots[0].x = h.session().player.x;
-        h.session_mut().atmospheric.slots[0].y = h.inputs().fx_y;
+        h.atmospheric_mut().slots[0].frame_and_kind = 0x300;
+        h.atmospheric_mut().slots[0].remaining = 2;
+        h.atmospheric_mut().slots[0].x = h.session().player.x;
+        h.atmospheric_mut().slots[0].y = h.inputs().fx_y;
+        h.atmospheric_created(0)
+            .expect("atmospheric producer allocation");
     }
     bubbles(h);
 }
@@ -80,18 +86,20 @@ fn bubbles(h: &mut impl Host) {
     let top = pose::loaded_top(h);
     if top.wrapping_sub(24).wrapping_sub(h.inputs().fx_y) & 0x8000 == 0
         && h.inputs().frame & 0x7f == 0
-        && h.session().atmospheric.slots[2].frame_and_kind == 0
+        && h.atmospheric().slots[2].frame_and_kind == 0
     {
-        h.session_mut().atmospheric.slots[2].frame_and_kind = 0x500;
-        h.session_mut().atmospheric.slots[2].remaining = 3;
-        h.session_mut().atmospheric.slots[2].x = h.session().player.x;
+        h.atmospheric_mut().slots[2].frame_and_kind = 0x500;
+        h.atmospheric_mut().slots[2].remaining = 3;
+        h.atmospheric_mut().slots[2].x = h.session().player.x;
         // This source uses the live collision radius, unlike the top helper.
-        h.session_mut().atmospheric.slots[2].y = h
+        h.atmospheric_mut().slots[2].y = h
             .session()
             .player
             .y
             .wrapping_sub(h.session().player.contact.radius)
             .wrapping_add(6);
+        h.atmospheric_created(2)
+            .expect("atmospheric producer allocation");
         let random = h.random_word();
         h.sound(2, 6, if random & 1 != 0 { 15 } else { 17 });
     }
@@ -154,22 +162,30 @@ fn submerged_lava_acid(h: &mut impl Host) {
     h.session_mut().player.transitions.animation_buffer = 2;
     h.session_mut().player.transitions.liquid_physics = 2;
     if top.wrapping_sub(h.inputs().lava_y) & 0x8000 != 0
-        && h.session().atmospheric.slots[0].frame_and_kind & 0x400 == 0
+        && h.atmospheric().slots[0].frame_and_kind & 0x400 == 0
     {
-        for slot in &mut h.session_mut().atmospheric.slots {
+        for slot in &mut h.atmospheric_mut().slots {
             slot.frame_and_kind = 0x400;
         }
-        h.session_mut().atmospheric.slots[0].remaining = 3;
-        h.session_mut().atmospheric.slots[3].remaining = 3;
-        h.session_mut().atmospheric.slots[1].remaining = 0x8002;
-        h.session_mut().atmospheric.slots[2].remaining = 0x8002;
+        h.atmospheric_mut().slots[0].remaining = 3;
+        h.atmospheric_mut().slots[3].remaining = 3;
+        h.atmospheric_mut().slots[1].remaining = 0x8002;
+        h.atmospheric_mut().slots[2].remaining = 0x8002;
         for i in 0..4 {
-            h.session_mut().atmospheric.slots[i].y = h.inputs().lava_y;
+            h.atmospheric_mut().slots[i].y = h.inputs().lava_y;
         }
-        h.session_mut().atmospheric.slots[0].x = h.session().player.x.wrapping_add(6);
-        h.session_mut().atmospheric.slots[1].x = h.session().player.x;
-        h.session_mut().atmospheric.slots[2].x = h.session().player.x;
-        h.session_mut().atmospheric.slots[3].x = h.session().player.x.wrapping_sub(6);
+        h.atmospheric_mut().slots[0].x = h.session().player.x.wrapping_add(6);
+        h.atmospheric_created(0)
+            .expect("atmospheric producer allocation");
+        h.atmospheric_mut().slots[1].x = h.session().player.x;
+        h.atmospheric_created(1)
+            .expect("atmospheric producer allocation");
+        h.atmospheric_mut().slots[2].x = h.session().player.x;
+        h.atmospheric_created(2)
+            .expect("atmospheric producer allocation");
+        h.atmospheric_mut().slots[3].x = h.session().player.x.wrapping_sub(6);
+        h.atmospheric_created(3)
+            .expect("atmospheric producer allocation");
         if h.inputs().transitions.game_time_frames & 1 == 0 {
             h.sound(2, 6, 0x10);
         }
@@ -177,97 +193,84 @@ fn submerged_lava_acid(h: &mut impl Host) {
     clear_buffer_if_suited(h);
 }
 
-/// Advance the four owned effects in their original descending draw order.
+/// Advance the actual owner through the same ordered core as portable G.
 pub(crate) fn draw_atmospheric(h: &mut impl crate::game::visual_host::Host) {
-    use crate::game::visual_host::{Record, Source};
-    h.probe("atmosphere.advance");
-    for slot in (0..4).rev() {
-        let initial = h.session().atmospheric.slots[slot].frame_and_kind;
-        if initial == 0 {
-            continue;
+    crate::game::scene::atmosphere::advance(&mut NativeAdvance(h)).unwrap();
+}
+struct NativeAdvance<'a, H>(&'a mut H);
+impl<H: crate::game::visual_host::Host> crate::game::scene::atmosphere::AdvanceHost
+    for NativeAdvance<'_, H>
+{
+    type Error = std::convert::Infallible;
+    fn frame_and_kind(&mut self, slot: usize) -> Result<u16, Self::Error> {
+        Ok(self.0.atmospheric().slots[slot].frame_and_kind)
+    }
+    fn set_frame_and_kind(&mut self, slot: usize, value: u16) -> Result<(), Self::Error> {
+        self.0.atmospheric_mut().slots[slot].frame_and_kind = value;
+        if value == 0 {
+            self.0
+                .atmospheric_created(slot)
+                .expect("atmospheric producer allocation");
         }
-        let kind = initial >> 8;
-        let frame_offset = 2 * u16::from(initial as u8);
-        let remaining = h.session().atmospheric.slots[slot]
-            .remaining
-            .wrapping_sub(1);
-        h.session_mut().atmospheric.slots[slot].remaining = remaining;
-        if remaining == 0 || remaining == 0x8000 {
-            h.probe("atmosphere.reload");
-            let pointer = h
-                .table(Source::Loaded, 0x908b93)
-                .native_word(2 * usize::from(kind));
-            let duration = h
-                .legacy_native_record(0x90, pointer.wrapping_add(frame_offset))
-                .native_word(0);
-            h.session_mut().atmospheric.slots[slot].remaining = duration;
-            if remaining == 0 {
-                let next = h.session().atmospheric.slots[slot]
-                    .frame_and_kind
-                    .wrapping_add(1);
-                h.session_mut().atmospheric.slots[slot].frame_and_kind = next;
-                let count = h
-                    .table(Source::Loaded, 0x908bef)
-                    .native_word(2 * usize::from(kind));
-                if i16::from(next as u8).wrapping_sub(count as i16) >= 0 {
-                    h.session_mut().atmospheric.slots[slot].frame_and_kind = 0;
-                    h.probe("atmosphere.retire");
-                    continue;
-                }
-            }
-        } else if remaining & 0x8000 != 0 {
-            continue;
-        }
-        // Preserve the checked dispatch and null slot after the timer's effects.
-        match [0, 1, 1, 3, 4, 5, 6, 6][usize::from(kind)] {
-            0 => panic!("non-null function pointer"),
-            1 => {
-                h.probe("atmosphere.footstep");
-                h.draw_atmospheric_tile(slot, kind);
-            }
-            3 | 5 => {
-                let frame = u16::from(h.session().atmospheric.slots[slot].frame_and_kind as u8);
-                let sprite = if kind == 3 {
-                    h.probe("atmosphere.dive");
-                    h.session_mut().atmospheric.slots[slot].y = h.inputs().fx_y;
-                    frame.wrapping_add(399)
-                } else {
-                    h.probe("atmosphere.bubbles");
-                    frame.wrapping_add(390)
-                };
-                if h.session().atmospheric.slots[slot]
-                    .y
-                    .wrapping_sub(h.inputs().camera_y)
-                    & 0xff00
-                    == 0
-                {
-                    h.draw_samus_sprite(
-                        sprite,
-                        h.session().atmospheric.slots[slot]
-                            .x
-                            .wrapping_sub(h.inputs().camera_x),
-                        h.session().atmospheric.slots[slot]
-                            .y
-                            .wrapping_sub(h.inputs().camera_y),
-                    );
-                }
-            }
-            _ => {
-                if kind == 4 {
-                    h.probe("atmosphere.lava");
-                    let x = h.session().atmospheric.slots[slot].x;
-                    h.session_mut().atmospheric.slots[slot].x = if slot & 2 != 0 {
-                        x.wrapping_sub(1)
-                    } else {
-                        x.wrapping_add(1)
-                    };
-                } else {
-                    h.probe("atmosphere.dust");
-                }
-                h.session_mut().atmospheric.slots[slot].y =
-                    h.session().atmospheric.slots[slot].y.wrapping_sub(1);
-                h.draw_atmospheric_tile(slot, kind);
-            }
-        }
+        Ok(())
+    }
+    fn remaining(&mut self, slot: usize) -> Result<u16, Self::Error> {
+        Ok(self.0.atmospheric().slots[slot].remaining)
+    }
+    fn set_remaining(&mut self, slot: usize, value: u16) -> Result<(), Self::Error> {
+        self.0.atmospheric_mut().slots[slot].remaining = value;
+        Ok(())
+    }
+    fn x(&mut self, slot: usize) -> Result<u16, Self::Error> {
+        Ok(self.0.atmospheric().slots[slot].x)
+    }
+    fn set_x(&mut self, slot: usize, value: u16) -> Result<(), Self::Error> {
+        self.0.atmospheric_mut().slots[slot].x = value;
+        Ok(())
+    }
+    fn y(&mut self, slot: usize) -> Result<u16, Self::Error> {
+        Ok(self.0.atmospheric().slots[slot].y)
+    }
+    fn set_y(&mut self, slot: usize, value: u16) -> Result<(), Self::Error> {
+        self.0.atmospheric_mut().slots[slot].y = value;
+        Ok(())
+    }
+    fn camera_x(&mut self) -> Result<u16, Self::Error> {
+        Ok(self.0.inputs().camera_x)
+    }
+    fn camera_y(&mut self) -> Result<u16, Self::Error> {
+        Ok(self.0.inputs().camera_y)
+    }
+    fn fx_y(&mut self) -> Result<u16, Self::Error> {
+        Ok(self.0.inputs().fx_y)
+    }
+    fn duration_pointer(&mut self, kind: u16) -> Result<u16, Self::Error> {
+        use crate::game::visual_host::Record;
+        Ok(self
+            .0
+            .table(crate::game::visual_host::Source::Loaded, 0x908b93)
+            .native_word(2 * usize::from(kind)))
+    }
+    fn duration(&mut self, address: u16) -> Result<u16, Self::Error> {
+        use crate::game::visual_host::Record;
+        Ok(self.0.legacy_native_record(0x90, address).native_word(0))
+    }
+    fn frame_count(&mut self, kind: u16) -> Result<u16, Self::Error> {
+        use crate::game::visual_host::Record;
+        Ok(self
+            .0
+            .table(crate::game::visual_host::Source::Loaded, 0x908bef)
+            .native_word(2 * usize::from(kind)))
+    }
+    fn draw_tile(&mut self, slot: usize, kind: u16) -> Result<(), Self::Error> {
+        self.0.draw_atmospheric_tile(slot, kind);
+        Ok(())
+    }
+    fn draw_sprite(&mut self, _: usize, sprite: u16, x: u16, y: u16) -> Result<(), Self::Error> {
+        self.0.draw_samus_sprite(sprite, x, y);
+        Ok(())
+    }
+    fn probe(&mut self, name: &'static str) {
+        self.0.probe(name);
     }
 }

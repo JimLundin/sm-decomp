@@ -55,8 +55,12 @@ pub(crate) fn graphics(h: &mut impl Host) {
             particles(h, true)
         }
         _ => {
-            h.session_mut().atmospheric.slots[2].frame_and_kind = 0;
-            h.session_mut().atmospheric.slots[3].frame_and_kind = 0;
+            h.atmospheric_mut().slots[2].frame_and_kind = 0;
+            h.atmospheric_created(2)
+                .expect("atmospheric producer allocation");
+            h.atmospheric_mut().slots[3].frame_and_kind = 0;
+            h.atmospheric_created(3)
+                .expect("atmospheric producer allocation");
         }
     }
 }
@@ -70,12 +74,16 @@ fn particles(h: &mut impl Host, water: bool) {
     } else {
         (0x600, 8, 8, bottom)
     };
-    h.session_mut().atmospheric.slots[2].frame_and_kind = kind;
-    h.session_mut().atmospheric.slots[3].frame_and_kind = kind;
-    h.session_mut().atmospheric.slots[2].remaining = 3;
-    h.session_mut().atmospheric.slots[3].remaining = 3;
-    h.session_mut().atmospheric.slots[2].x = h.session().player.x.wrapping_add(right);
-    h.session_mut().atmospheric.slots[3].x = h.session().player.x.wrapping_sub(left);
-    h.session_mut().atmospheric.slots[2].y = y;
-    h.session_mut().atmospheric.slots[3].y = y;
+    h.atmospheric_mut().slots[2].frame_and_kind = kind;
+    h.atmospheric_mut().slots[3].frame_and_kind = kind;
+    h.atmospheric_mut().slots[2].remaining = 3;
+    h.atmospheric_mut().slots[3].remaining = 3;
+    h.atmospheric_mut().slots[2].x = h.session().player.x.wrapping_add(right);
+    h.atmospheric_mut().slots[3].x = h.session().player.x.wrapping_sub(left);
+    h.atmospheric_mut().slots[2].y = y;
+    h.atmospheric_created(2)
+        .expect("atmospheric producer allocation");
+    h.atmospheric_mut().slots[3].y = y;
+    h.atmospheric_created(3)
+        .expect("atmospheric producer allocation");
 }

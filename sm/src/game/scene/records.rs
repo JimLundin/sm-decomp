@@ -6,6 +6,45 @@ use std::{collections::BTreeMap, sync::Arc};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct AssetId(pub u32);
+/// A live producer's identity, supplied at publication rather than derived from
+/// authored media IDs, object order or rendered bytes.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ProducerObjectId(pub u64);
+/// The one display-wide lifecycle namespace, supplied with the actual state.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct DisplayProducerIds {
+    pub next: ProducerObjectId,
+}
+impl DisplayProducerIds {
+    pub fn validate(&self) -> Result<(), SceneError> {
+        if self.next.0 == 0 {
+            return Err(SceneError::Identity);
+        }
+        Ok(())
+    }
+    pub fn validate_id(&self, id: ProducerObjectId) -> Result<(), SceneError> {
+        self.validate()?;
+        if id.0 == 0 || id.0 >= self.next.0 {
+            return Err(SceneError::Identity);
+        }
+        Ok(())
+    }
+    pub fn allocate(&mut self) -> Result<ProducerObjectId, SceneError> {
+        self.allocate_with(|_| Ok(()))
+    }
+    /// Check the next value before the original store; commit it after success.
+    pub(crate) fn allocate_with(
+        &mut self,
+        store: impl FnOnce(ProducerObjectId) -> Result<(), SceneError>,
+    ) -> Result<ProducerObjectId, SceneError> {
+        let next = self.next.0.checked_add(1).ok_or(SceneError::Identity)?;
+        self.validate()?;
+        let id = self.next;
+        store(id)?;
+        self.next = ProducerObjectId(next);
+        Ok(id)
+    }
+}
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Revision(pub [u8; 32]);
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -138,6 +177,71 @@ pub struct Palette {
 pub enum ObjectSize {
     Small,
     Large,
+}
+/// Authored identity supplied for one effective object geometry variant.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ObjectPartBinding {
+    pub visual: AssetRef,
+    pub frame: u16,
+    pub part: u16,
+}
+impl ObjectPartBinding {
+    pub(crate) fn definition<'a>(
+        &self,
+        media: &'a SceneMedia,
+    ) -> Result<&'a VisualPart, SceneError> {
+        match media.asset(self.visual)? {
+            SceneAsset::Visual(visual) => visual
+                .frames
+                .get(usize::from(self.frame))
+                .and_then(|frame| frame.parts.get(usize::from(self.part)))
+                .ok_or(SceneError::Definition(self.visual.id)),
+            _ => Err(SceneError::AssetKind(self.visual.id)),
+        }
+    }
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ObjectSizeVariants {
+    pub small: ObjectPartBinding,
+    pub large: ObjectPartBinding,
+}
+/// Every supported size set and both size-bit variants are explicitly supplied.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ObjectVariants {
+    pub size_sets: BTreeMap<u8, ObjectSizeVariants>,
+}
+impl ObjectVariants {
+    pub(crate) fn binding(
+        &self,
+        set: u8,
+        size: ObjectSize,
+    ) -> Result<ObjectPartBinding, SceneError> {
+        let variants = self.size_sets.get(&set).ok_or(SceneError::Incomplete)?;
+        Ok(match size {
+            ObjectSize::Small => variants.small,
+            ObjectSize::Large => variants.large,
+        })
+    }
+    pub(crate) fn validate(&self, media: &SceneMedia, tile: u16) -> Result<(), SceneError> {
+        if self.size_sets.is_empty() {
+            return Err(SceneError::Incomplete);
+        }
+        for (&set, variants) in &self.size_sets {
+            if set > 7 {
+                return Err(SceneError::Geometry);
+            }
+            for (binding, size) in [
+                (variants.small, ObjectSize::Small),
+                (variants.large, ObjectSize::Large),
+            ] {
+                let part = binding.definition(media)?;
+                if part.tile != tile || part.size != size {
+                    return Err(SceneError::Definition(binding.visual.id));
+                }
+            }
+        }
+        Ok(())
+    }
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct VisualPart {
@@ -510,6 +614,105 @@ pub struct SceneObject {
     pub flip_horizontal: bool,
     pub flip_vertical: bool,
 }
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ProducedObject {
+    pub producer: ProducerObjectId,
+    pub object: SceneObject,
+    /// Retained through delivery and history for later effective OBSEL changes.
+    pub variants: Arc<ObjectVariants>,
+    pub context: ObjectContext,
+    pub native_word: u16,
+}
+impl ProducedObject {
+    /// Bind declared authored IDs to this line's actual effective geometry.
+    /// Numeric OAM position, tile, size-bit and flags are never reconstructed IDs.
+    pub fn for_line(
+        &self,
+        media: &SceneMedia,
+        context: ObjectContext,
+        objects: &[u8; 544],
+    ) -> Result<Self, SceneError> {
+        if self.object.order >= 128 {
+            return Err(SceneError::Geometry);
+        }
+        let entry = usize::from(self.object.order) * 4;
+        let bits = objects[512 + entry / 16] >> (2 * (entry / 4 & 3));
+        let mut selected = self.clone();
+        selected.context = context;
+        selected.object.position.x = ((self.object.position.x as u16 & !0x01ff)
+            | u16::from(objects[entry])
+            | (u16::from(bits & 1) << 8)) as i16;
+        selected.object.position.y =
+            ((self.object.position.y as u16 & !0x00ff) | u16::from(objects[entry + 1])) as i16;
+        selected.object.size = if bits & 2 != 0 {
+            ObjectSize::Large
+        } else {
+            ObjectSize::Small
+        };
+        selected.native_word = u16::from_le_bytes([objects[entry + 2], objects[entry + 3]]);
+        selected.object.tile = selected.native_word & 255;
+        selected.object.palette = ((selected.native_word >> 9) & 7) as u8;
+        selected.object.priority = ((selected.native_word >> 12) & 3) as u8;
+        selected.object.flip_horizontal = selected.native_word & 0x4000 != 0;
+        selected.object.flip_vertical = selected.native_word & 0x8000 != 0;
+        let binding = self
+            .variants
+            .binding(context.selection.size_set, selected.object.size)?;
+        let part = binding.definition(media)?;
+        selected.object.visual = binding.visual;
+        selected.object.frame = binding.frame;
+        selected.object.part = binding.part;
+        selected.object.atlas = part.atlas;
+        selected.object.material = part.material;
+        selected.validate(media)?;
+        Ok(selected)
+    }
+    pub(crate) fn validate(&self, media: &SceneMedia) -> Result<(), SceneError> {
+        if self.producer.0 == 0 {
+            return Err(SceneError::Identity);
+        }
+        if self.object.order >= 128 || self.object.palette > 7 || self.object.priority > 3 {
+            return Err(SceneError::Geometry);
+        }
+        let visual = match media.asset(self.object.visual)? {
+            SceneAsset::Visual(visual) => visual,
+            _ => return Err(SceneError::AssetKind(self.object.visual.id)),
+        };
+        let part = visual
+            .frames
+            .get(usize::from(self.object.frame))
+            .and_then(|frame| frame.parts.get(usize::from(self.object.part)))
+            .ok_or(SceneError::Definition(self.object.visual.id))?;
+        if part.atlas != self.object.atlas
+            || part.material != self.object.material
+            || part.tile != self.object.tile
+            || part.size != self.object.size
+        {
+            return Err(SceneError::Definition(self.object.visual.id));
+        }
+        let binding = self
+            .variants
+            .binding(self.context.selection.size_set, self.object.size)?;
+        if binding.visual != self.object.visual
+            || binding.frame != self.object.frame
+            || binding.part != self.object.part
+        {
+            return Err(SceneError::Definition(self.object.visual.id));
+        }
+        if self.object.tile != self.native_word & 255
+            || self.object.atlas
+                != self.context.selection.atlases[usize::from(self.native_word >> 8 & 1)]
+            || self.object.palette != ((self.native_word >> 9) & 7) as u8
+            || self.object.priority != ((self.native_word >> 12) & 3) as u8
+            || self.object.flip_horizontal != (self.native_word & 0x4000 != 0)
+            || self.object.flip_vertical != (self.native_word & 0x8000 != 0)
+        {
+            return Err(SceneError::Definition(self.object.visual.id));
+        }
+        validate_object_source(&self.object, self.context, media)?;
+        Ok(())
+    }
+}
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ObjectSelection {
     pub atlases: [AssetRef; 2],
@@ -517,6 +720,53 @@ pub struct ObjectSelection {
     pub first_order: Option<u8>,
     pub interlaced: bool,
     pub even_frame: bool,
+}
+/// Actual supplied atlas/geometry and color source at publication or a visible line.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ObjectContext {
+    pub selection: ObjectSelection,
+    pub palette: MediaRef,
+}
+fn validate_object_source(
+    object: &SceneObject,
+    context: ObjectContext,
+    media: &SceneMedia,
+) -> Result<(), SceneError> {
+    let selection = context.selection;
+    media.palette(context.palette)?;
+    let sizes = [
+        [8u16, 16],
+        [8, 32],
+        [8, 64],
+        [16, 32],
+        [16, 64],
+        [32, 64],
+        [16, 32],
+        [16, 32],
+    ];
+    let sizes = sizes
+        .get(usize::from(selection.size_set))
+        .ok_or(SceneError::Geometry)?;
+    let size = sizes[usize::from(object.size == ObjectSize::Large)];
+    let atlas = media.atlas(object.atlas)?;
+    if atlas.encoding != TileEncoding::Planar4
+        || !selection.atlases.contains(&object.atlas)
+        || object.tile > 255
+        || object.material != context.palette.asset
+        || !matches!(media.asset(object.material)?, SceneAsset::Palette(_))
+    {
+        return Err(SceneError::Definition(object.visual.id));
+    }
+    // Native object rows advance by sixteen tiles; columns wrap within a row.
+    for row in 0..size / 8 {
+        for column in 0..size / 8 {
+            let tile = ((object.tile >> 4) + row) << 4 | ((object.tile + column) & 15);
+            if tile >= atlas.tile_count {
+                return Err(SceneError::Definition(object.visual.id));
+            }
+        }
+    }
+    Ok(())
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct WindowExtent {
@@ -627,15 +877,41 @@ pub struct SceneDescription {
 pub struct Scene {
     description: Arc<SceneDescription>,
     media: Arc<SceneMedia>,
+    producer_history: Arc<[Arc<[ProducedObject]>]>,
 }
 impl Scene {
+    /// Compatibility construction without assigned producer identities.
     pub fn new(description: SceneDescription, media: Arc<SceneMedia>) -> Result<Self, SceneError> {
         let scene = Self {
             description: Arc::new(description),
             media,
+            producer_history: Arc::from([]),
         };
         scene.validate(&scene.media)?;
         Ok(scene)
+    }
+    pub fn with_producer_history(
+        mut self,
+        history: Arc<[Arc<[ProducedObject]>]>,
+    ) -> Result<Self, SceneError> {
+        if history.len() != self.lines().len() {
+            return Err(SceneError::Incomplete);
+        }
+        self.producer_history = history;
+        self.validate_producer_history()?;
+        Ok(self)
+    }
+    pub fn producer_history(&self) -> &[Arc<[ProducedObject]>] {
+        &self.producer_history
+    }
+    pub(crate) fn validate_producer_ids(&self, ids: &DisplayProducerIds) -> Result<(), SceneError> {
+        ids.validate()?;
+        for records in self.producer_history.iter() {
+            for record in records.iter() {
+                ids.validate_id(record.producer)?;
+            }
+        }
+        Ok(())
     }
     pub fn tick(&self) -> u64 {
         self.description.tick
@@ -726,6 +1002,34 @@ impl Scene {
                 return Err(SceneError::Geometry);
             }
             validate_line(line, media)?;
+        }
+        self.validate_producer_history()?;
+        Ok(())
+    }
+    fn validate_producer_history(&self) -> Result<(), SceneError> {
+        // Only compatibility construction has no supplied line history.
+        if self.producer_history.is_empty() {
+            return Ok(());
+        }
+        if self.producer_history.len() != self.lines().len() {
+            return Err(SceneError::Incomplete);
+        }
+        for (line, records) in self.lines().iter().zip(self.producer_history.iter()) {
+            for (index, record) in records.iter().enumerate() {
+                if record.producer.0 == 0 {
+                    return Err(SceneError::Identity);
+                }
+                if line.objects.get(usize::from(record.object.order)) != Some(&record.object)
+                    || record.context.selection != line.object_selection
+                    || record.context.palette != line.palette
+                    || records[..index]
+                        .iter()
+                        .any(|old| old.object.order == record.object.order)
+                {
+                    return Err(SceneError::Order);
+                }
+                record.validate(&self.media)?;
+            }
         }
         Ok(())
     }

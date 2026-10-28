@@ -59,6 +59,7 @@ pub trait Aliases {
     fn set_color_prefix(&mut self, buffer: PaletteBuffer, index: usize, value: u16);
 }
 pub trait Effects {
+    /// Native drawing uses the shared Samus producer; G supplies its owned IDs/content.
     fn draw_samus_sprite(&mut self, index: u16, x: u16, y: u16);
     /// Live frame and ordered OAM writes; kind was captured before timer callbacks.
     fn draw_atmospheric_tile(&mut self, slot: usize, kind: u16);

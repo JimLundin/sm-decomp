@@ -84,19 +84,7 @@ impl PlayerTransitions {
     }
 }
 
-// Session presentation/effects owns these, separate from 32-slot SpriteEffects.
-// One slot's fields are noncontiguous in compatibility encoding.
-#[derive(Clone, Default, Debug, PartialEq)]
-pub struct AtmosphericSlot {
-    pub remaining: u16,
-    pub x: u16,
-    pub y: u16,
-    pub frame_and_kind: u16,
-}
-#[derive(Clone, Default, Debug, PartialEq)]
-pub struct AtmosphericEffects {
-    pub slots: [AtmosphericSlot; 4],
-}
+pub use crate::game::scene::atmosphere::AtmosphericEffects;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum AnimationStep {

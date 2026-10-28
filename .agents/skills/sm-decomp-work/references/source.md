@@ -28,6 +28,7 @@
    source pin, contract findings and named affected rows to the assigned reviewers
    and integrator. Label unobserved behavior accurately. Compilation and replay
    completion belong to their assigned executors unless you also own those roles.
+   Format pruned snapshots directly with rustfmt using the project edition and skip_children=true; retain exact inputs/timing/results without copying verification/assets/caches just for module resolution.
 
 Correct a rejected frozen candidate in a separate successor. Preserve the prior
 artifact and explain the correction; transfer checks only where the source and
