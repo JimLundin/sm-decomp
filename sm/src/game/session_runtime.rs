@@ -77,6 +77,7 @@ pub(crate) struct Runtime<'g> {
     game: &'g mut Game,
     state: Option<Session>,
     inputs: ExternalInputs,
+    persistent_epoch: Option<u64>,
     persistent: Option<(
         crate::game::scene::samus_content::ContentDescription,
         std::sync::Arc<crate::game_state::persistent_session::SessionStartRequirements>,
@@ -94,6 +95,7 @@ impl<'g> Runtime<'g> {
                 state: Some(session.gameplay),
                 inputs: session.observations,
                 persistent: Some((session.roles, session.required)),
+                persistent_epoch: Some(game.compatibility_write_epoch()),
                 game,
             };
         }
@@ -101,8 +103,15 @@ impl<'g> Runtime<'g> {
             state: Some(import_session(game)),
             inputs: encoding::inputs(&|at| game.ram().read_byte(at)),
             persistent: None,
+            persistent_epoch: None,
             game,
         }
+    }
+    fn persistent_is_current(&self) -> bool {
+        self.persistent_epoch.is_none_or(|epoch| {
+            epoch == self.game.compatibility_write_epoch()
+                && self.game.preflight_samus_runtime().is_ok()
+        })
     }
     pub(crate) fn samus_game(&self) -> &Game {
         self.game
@@ -115,6 +124,7 @@ impl<'g> Runtime<'g> {
     }
     pub(crate) fn draw_owned_body(&mut self, mode: crate::game::scene::samus_body::Body) {
         use crate::game_state::persistent_session::{self, Presentation};
+        assert!(self.persistent_is_current(), "Session lease is dirty");
         let state = self.state.as_mut().expect("Session lease");
         let Presentation::Owned {
             display,
@@ -138,6 +148,7 @@ impl<'g> Runtime<'g> {
     }
     pub(crate) fn owned_bottom_visible(&mut self) -> bool {
         use crate::game_state::persistent_session::{self, Presentation};
+        assert!(self.persistent_is_current(), "Session lease is dirty");
         let state = self.state.as_mut().expect("Session lease");
         let Presentation::Owned {
             display,
@@ -264,6 +275,7 @@ impl<'g> Runtime<'g> {
         position: (u16, u16),
     ) {
         use crate::game_state::persistent_session::{self, Presentation};
+        assert!(self.persistent_is_current(), "Session lease is dirty");
         let state = self.state.as_mut().expect("Session lease");
         let Presentation::Owned {
             display,
@@ -286,6 +298,7 @@ impl<'g> Runtime<'g> {
         .expect("owned Samus publication");
     }
     pub fn foreign<R>(&mut self, action: impl FnOnce(&mut Game) -> R) -> R {
+        assert!(self.persistent_is_current(), "Session lease is dirty");
         preflight_export(self.session(), self.game);
         let mut mutation = self
             .game
@@ -312,6 +325,7 @@ impl<'g> Runtime<'g> {
     /// Compose an already-owned operation while retaining the former foreign
     /// entry's preflight, unwind publication, and refreshed input observations.
     pub(crate) fn owned_call<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R {
+        assert!(self.persistent_is_current(), "Session lease is dirty");
         preflight_export(self.session(), self.game);
         struct OwnedCall<'a, 'g> {
             runtime: &'a mut Runtime<'g>,
@@ -347,6 +361,7 @@ impl<'g> Runtime<'g> {
         })
     }
     pub(crate) fn refresh_player_observations(&mut self) {
+        assert!(self.persistent_is_current(), "Session lease is dirty");
         self.inputs = encoding::inputs(&|at| self.byte(at));
     }
     fn relinquish(&mut self) {
@@ -354,12 +369,19 @@ impl<'g> Runtime<'g> {
             if let Some((roles, required)) = self.persistent.take() {
                 let matching = std::sync::Arc::ptr_eq(&state.world, self.game.world())
                     && state.world.revision() == self.game.world().revision();
-                let valid = matching && self.game.preflight_samus_runtime().is_ok();
+                let mut epoch = self
+                    .persistent_epoch
+                    .take()
+                    .expect("persistent lease epoch");
+                let valid = matching
+                    && epoch == self.game.compatibility_write_epoch()
+                    && self.game.preflight_samus_runtime().is_ok();
                 if valid {
                     // Publish compatibility bytes while keeping the same gameplay
                     // and private Display owner; no decode or identity transfer.
                     encoding::encode(&state, |at, bytes| self.game.ram().copy_in(at, bytes));
                     export_native_spawn(&state, self.game);
+                    epoch = self.game.compatibility_write_epoch();
                 }
                 let completed = valid
                     && !std::thread::panicking()
@@ -374,6 +396,7 @@ impl<'g> Runtime<'g> {
                         required,
                     },
                     completed,
+                    epoch,
                 );
                 return;
             }
@@ -393,8 +416,12 @@ impl<'g> Runtime<'g> {
         }
     }
     pub(crate) fn byte(&self, at: usize) -> u8 {
-        encoding::projected_byte(self.session(), at)
-            .unwrap_or_else(|| self.game.ram().read_byte(at))
+        if self.persistent_is_current() {
+            if let Some(byte) = encoding::projected_byte(self.session(), at) {
+                return byte;
+            }
+        }
+        self.game.ram().read_byte(at)
     }
     pub(crate) fn word(&self, at: usize) -> u16 {
         u16::from_le_bytes([self.byte(at), self.byte(at + 1)])
@@ -412,20 +439,24 @@ impl<'g> Runtime<'g> {
         self.state.is_some()
     }
     pub(crate) fn session(&self) -> &Session {
+        assert!(self.persistent_is_current(), "Session lease is dirty");
         self.state
             .as_ref()
             .expect("aggregate unavailable during external effect")
     }
     pub(crate) fn session_mut(&mut self) -> &mut Session {
+        assert!(self.persistent_is_current(), "Session lease is dirty");
         self.state
             .as_mut()
             .expect("aggregate unavailable during external effect")
     }
     pub(crate) fn inputs(&self) -> &ExternalInputs {
+        assert!(self.persistent_is_current(), "Session lease is dirty");
         &self.inputs
     }
     // Legacy aliases observe the raw result before Drop republishes Session.
     pub(crate) fn update_maw_visibility(&mut self, actor: i32) {
+        assert!(self.persistent_is_current(), "Session lease is dirty");
         use crate::game::enemy_layouts::EnemyLayout104 as Maw;
         let outside = u16::from(crate::game::actors::api::current_outside_screen(&*self));
         let game = &mut *self.game;
@@ -447,6 +478,11 @@ impl<'g> Runtime<'g> {
         u16::from_ne_bytes([self.byte(at), self.byte(at + 1)])
     }
     pub(crate) fn set_byte(&mut self, at: usize, value: u8) {
+        if !self.persistent_is_current() {
+            self.game.ram().write_byte(at, value);
+            self.inputs = encoding::inputs(&|lane| self.game.ram().read_byte(lane));
+            return;
+        }
         // Ordinary RAM and owned fields are one live projection during an interval.
         // A foreign destination may alias an external observation used next.
         if !encoding::write_projected_byte(
@@ -455,6 +491,9 @@ impl<'g> Runtime<'g> {
             value,
         ) {
             self.game.ram().write_byte(at, value);
+            if self.persistent_epoch.is_some() {
+                self.persistent_epoch = Some(self.game.compatibility_write_epoch());
+            }
         }
         if self.persistent.is_some()
             && crate::game_state::persistent_session::Presentation::requires_semantic_counterpart(
@@ -539,6 +578,41 @@ impl actors::botwoon_death::Host for Runtime<'_> {
     }
 }
 
+impl crate::game_state::persistent_session::AudioHost for Runtime<'_> {
+    fn audio_byte(&self, at: usize) -> u8 {
+        self.byte(at)
+    }
+    fn audio_store_byte(&mut self, at: usize, byte: u8) {
+        self.set_byte(at, byte);
+    }
+    fn audio_mutation<R>(
+        &mut self,
+        operation: impl FnOnce(
+            &mut crate::game_state::persistent_session::AudioRequests,
+            &mut crate::game::scene::start::InitialAudioIntent,
+            crate::game_state::persistent_session::AudioStamp,
+        ) -> Result<R, crate::game::scene::state::DisplayError>,
+    ) -> Result<Option<R>, crate::game::scene::state::DisplayError> {
+        use crate::game::scene::state::{DisplayError, DisplayPhase};
+        use crate::game_state::persistent_session::Control;
+        if self.persistent.is_none() {
+            return Ok(None);
+        }
+        if !self.persistent_is_current() {
+            return Err(DisplayError::Poisoned);
+        }
+        let state = self.state.as_mut().ok_or(DisplayError::Phase)?;
+        let producing = state.presentation.owner()?.state.phase == DisplayPhase::Producing;
+        let Control::Owned(control) = &mut state.control else {
+            return Err(DisplayError::Phase);
+        };
+        let result = control.audio_mutation(producing, operation);
+        if result.is_err() {
+            state.presentation.owner_mut()?.state.phase = DisplayPhase::Failed;
+        }
+        result.map(Some)
+    }
+}
 impl Drop for Runtime<'_> {
     fn drop(&mut self) {
         self.relinquish();

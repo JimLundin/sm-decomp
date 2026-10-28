@@ -32,6 +32,628 @@ pub(crate) struct SamusPublications {
     pub object_first_order: Option<u8>,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) enum MusicMeaning {
+    Silence,
+    Bank {
+        bank: crate::game::scene::records::AssetRef,
+        after: MusicContinuation,
+    },
+    Program {
+        program: crate::game::scene::records::AssetRef,
+        phase: u64,
+    },
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) enum MusicContinuation {
+    Retain,
+    Silence,
+    Program {
+        program: crate::game::scene::records::AssetRef,
+        phase: u64,
+    },
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) enum SoundMeaning {
+    Stop,
+    Program {
+        program: crate::game::scene::records::AssetRef,
+        phase: u64,
+    },
+}
+/// Declared command interpretation, independent of the live request bytes.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct AudioRequestCatalog {
+    pub music: BTreeMap<u16, MusicMeaning>,
+    pub sounds: BTreeMap<(usize, u8), SoundMeaning>,
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct QueuedMusicMeaning {
+    pub request: u16,
+    pub source_tick: u64,
+    pub source_interval: u64,
+    pub meaning: MusicMeaning,
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct QueuedSoundMeaning {
+    pub request: u8,
+    pub source_tick: u64,
+    pub source_interval: u64,
+    pub meaning: SoundMeaning,
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct MusicRequests {
+    pub tracks: [u16; 8],
+    pub delays: [u16; 8],
+    pub write: u16,
+    pub read: u16,
+    pub entry: u16,
+    pub timer: u16,
+    pub current_track: u8,
+    pub data_index: u16,
+    pub track_index: u16,
+    pub meanings: [Option<QueuedMusicMeaning>; 8],
+    pub entry_meaning: Option<QueuedMusicMeaning>,
+    pub current_meaning: Option<QueuedMusicMeaning>,
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct SoundRequests {
+    pub read: u8,
+    pub write: u8,
+    pub state: u8,
+    pub current: u8,
+    pub clear_delay: u8,
+    pub maximum_queued: u8,
+    pub queue: [u8; 16],
+    pub meanings: [Option<QueuedSoundMeaning>; 16],
+    pub current_meaning: Option<QueuedSoundMeaning>,
+}
+/// The supplied current request/delay owner. Device voices and accepted batches
+/// belong to A/C and are not captured here.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct AudioRequests {
+    pub music: MusicRequests,
+    pub sounds: [SoundRequests; 3],
+    pub uploading: u16,
+    pub downtime: u16,
+    pub catalog: Arc<AudioRequestCatalog>,
+    pub pending_mutation: bool,
+}
+macro_rules! audio_words {
+    ($s:ident,$f:ident,($($borrow:tt)*)) => {
+        $f(0x617,$($borrow)* $s.uploading);
+        for index in 0..8 {
+            $f(0x619+2*index,$($borrow)* $s.music.tracks[index]);
+            $f(0x629+2*index,$($borrow)* $s.music.delays[index]);
+        }
+        $f(0x639,$($borrow)* $s.music.write);
+        $f(0x63b,$($borrow)* $s.music.read);
+        $f(0x63d,$($borrow)* $s.music.entry);
+        $f(0x63f,$($borrow)* $s.music.timer);
+        $f(0x686,$($borrow)* $s.downtime);
+        $f(0x7f3,$($borrow)* $s.music.data_index);
+        $f(0x7f5,$($borrow)* $s.music.track_index);
+    };
+}
+macro_rules! audio_bytes {
+    ($s:ident,$f:ident,($($borrow:tt)*)) => {
+        $f(0x64c,$($borrow)* $s.music.current_track);
+        for index in 0..3 {
+            $f(0x643+index,$($borrow)* $s.sounds[index].read);
+            $f(0x646+index,$($borrow)* $s.sounds[index].write);
+            $f(0x649+index,$($borrow)* $s.sounds[index].state);
+            $f(0x64d+index,$($borrow)* $s.sounds[index].current);
+            $f(0x650+index,$($borrow)* $s.sounds[index].clear_delay);
+            $f(0x653+index,$($borrow)* $s.sounds[index].maximum_queued);
+            for slot in 0..16 {
+                $f(0x656+16*index+slot,$($borrow)* $s.sounds[index].queue[slot]);
+            }
+        }
+    };
+}
+impl AudioRequests {
+    pub(crate) fn projected_byte(&self, at: usize) -> Option<u8> {
+        let mut result = None;
+        let mut select_byte = |base: usize, byte: &u8| {
+            if base == at {
+                result = Some(*byte);
+            }
+        };
+        audio_bytes!(self,select_byte,(&));
+        let mut select_word = |base: usize, word: &u16| {
+            if (base..base + 2).contains(&at) {
+                result = Some(word.to_le_bytes()[at - base]);
+            }
+        };
+        audio_words!(self,select_word,(&));
+        result
+    }
+    pub(crate) fn write_projected_byte(&mut self, at: usize, byte: u8) -> bool {
+        let mut found = false;
+        let mut select_byte = |base: usize, value: &mut u8| {
+            if base == at {
+                *value = byte;
+                found = true;
+            }
+        };
+        audio_bytes!(self,select_byte,(&mut));
+        let mut select_word = |base: usize, word: &mut u16| {
+            if (base..base + 2).contains(&at) {
+                let mut bytes = word.to_le_bytes();
+                bytes[at - base] = byte;
+                *word = u16::from_le_bytes(bytes);
+                found = true;
+            }
+        };
+        audio_words!(self,select_word,(&mut));
+        self.pending_mutation |= found;
+        found
+    }
+    pub(crate) fn encode_projection(&self, mut span: impl FnMut(usize, &[u8])) {
+        let mut emit_byte = |at: usize, byte: &u8| span(at, &[*byte]);
+        audio_bytes!(self,emit_byte,(&));
+        let mut emit_word = |at: usize, word: &u16| span(at, &word.to_le_bytes());
+        audio_words!(self,emit_word,(&));
+    }
+    pub(crate) fn validate(
+        &self,
+        metadata: &DisplayStartMetadata,
+        required: &AudioRequestCatalog,
+    ) -> Result<(), DisplayError> {
+        if self.pending_mutation {
+            return Err(DisplayError::Incomplete);
+        }
+        self.validate_at_tick(metadata, required, metadata.identity.committed_tick)
+    }
+    fn validate_at_tick(
+        &self,
+        metadata: &DisplayStartMetadata,
+        required: &AudioRequestCatalog,
+        tick: u64,
+    ) -> Result<(), DisplayError> {
+        if *self.catalog != *required {
+            return Err(DisplayError::Identity);
+        }
+        let next_input_record = metadata
+            .identity
+            .next_input_record
+            .checked_add(u64::from(tick > metadata.identity.committed_tick))
+            .ok_or(DisplayError::Identity)?;
+        metadata
+            .audio
+            .validate(
+                &metadata.reference,
+                metadata.identity.capture,
+                next_input_record,
+            )
+            .map_err(|_| DisplayError::Identity)?;
+        let declared = |asset: crate::game::scene::records::AssetRef, bank: bool| {
+            metadata.audio.declarations.iter().any(|declaration| {
+                declaration.revision == asset.revision
+                    && if bank {
+                        declaration.bank
+                    } else {
+                        declaration.program
+                    } == asset.id
+            })
+        };
+        for meaning in self.catalog.music.values() {
+            let valid = match meaning {
+                MusicMeaning::Silence => true,
+                MusicMeaning::Bank { bank, after } => {
+                    declared(*bank, true)
+                        && match after {
+                            MusicContinuation::Retain | MusicContinuation::Silence => true,
+                            MusicContinuation::Program { program, .. } => declared(*program, false),
+                        }
+                }
+                MusicMeaning::Program { program, .. } => declared(*program, false),
+            };
+            if !valid {
+                return Err(DisplayError::Identity);
+            }
+        }
+        for ((channel, _), meaning) in &self.catalog.sounds {
+            let valid = match meaning {
+                SoundMeaning::Stop => true,
+                SoundMeaning::Program { program, .. } => declared(*program, false),
+            };
+            if *channel >= 3 || !valid {
+                return Err(DisplayError::Identity);
+            }
+        }
+        let check_music = |number: u16, record: &QueuedMusicMeaning| {
+            record.request == number
+                && record.source_tick <= tick
+                && record.source_interval <= next_input_record
+                && self.catalog.music.get(&record.request) == Some(&record.meaning)
+        };
+        for (index, record) in self.music.meanings.iter().enumerate() {
+            if record
+                .as_ref()
+                .is_some_and(|record| !check_music(self.music.tracks[index], record))
+            {
+                return Err(DisplayError::Identity);
+            }
+            if self.music.delays[index] != 0 && record.is_none() {
+                return Err(DisplayError::Incomplete);
+            }
+        }
+        if self
+            .music
+            .entry_meaning
+            .as_ref()
+            .is_some_and(|record| !check_music(self.music.entry, record))
+            || ((self.music.timer != 0 || self.music.entry != 0)
+                && self.music.entry_meaning.is_none())
+        {
+            return Err(DisplayError::Incomplete);
+        }
+        if let Some(record) = &self.music.current_meaning {
+            if record.source_tick > tick
+                || record.source_interval > next_input_record
+                || self.catalog.music.get(&record.request) != Some(&record.meaning)
+            {
+                return Err(DisplayError::Identity);
+            }
+            let matches_music = |program: crate::game::scene::records::AssetRef| {
+                matches!(metadata.audio.music, crate::game::scene::start::OngoingMusic::Playing(anchor)
+                    if anchor.program == program.id && anchor.revision == program.revision)
+            };
+            let valid = match &record.meaning {
+                MusicMeaning::Silence => {
+                    metadata.audio.music == crate::game::scene::start::OngoingMusic::Silent
+                }
+                MusicMeaning::Program { program, .. } => matches_music(*program),
+                MusicMeaning::Bank { after, .. } => match after {
+                    MusicContinuation::Retain => true,
+                    MusicContinuation::Silence => {
+                        metadata.audio.music == crate::game::scene::start::OngoingMusic::Silent
+                    }
+                    MusicContinuation::Program { program, .. } => matches_music(*program),
+                },
+            };
+            if !valid {
+                return Err(DisplayError::Identity);
+            }
+        } else if self.music.current_track != 0 {
+            return Err(DisplayError::Incomplete);
+        }
+        for (channel, sound) in self.sounds.iter().enumerate() {
+            if sound.state > 4 {
+                return Err(DisplayError::Source);
+            }
+            let check = |number: u8, record: &QueuedSoundMeaning| {
+                record.request == number
+                    && record.source_tick <= tick
+                    && record.source_interval <= next_input_record
+                    && self.catalog.sounds.get(&(channel, record.request)) == Some(&record.meaning)
+            };
+            for (index, record) in sound.meanings.iter().enumerate() {
+                if record
+                    .as_ref()
+                    .is_some_and(|record| !check(sound.queue[index], record))
+                {
+                    return Err(DisplayError::Identity);
+                }
+            }
+            if sound
+                .current_meaning
+                .as_ref()
+                .is_some_and(|record| !check(sound.current, record))
+            {
+                return Err(DisplayError::Identity);
+            }
+            if sound.current != 0 && sound.current_meaning.is_none() {
+                return Err(DisplayError::Incomplete);
+            }
+            if sound.read < 16 && sound.write < 16 {
+                let mut slot = sound.read;
+                while slot != sound.write {
+                    if sound.meanings[usize::from(slot)].is_none() {
+                        return Err(DisplayError::Incomplete);
+                    }
+                    slot = slot.wrapping_add(1) & 15;
+                }
+            } else {
+                return Err(DisplayError::Source);
+            }
+        }
+        if self.music.read >= 16
+            || self.music.write >= 16
+            || self.music.read & 1 != 0
+            || self.music.write & 1 != 0
+        {
+            return Err(DisplayError::Source);
+        }
+        let mut slot = self.music.read;
+        while slot != self.music.write {
+            if self.music.meanings[usize::from(slot >> 1)].is_none() {
+                return Err(DisplayError::Incomplete);
+            }
+            slot = slot.wrapping_add(2) & 14;
+        }
+        Ok(())
+    }
+    pub(crate) fn publish_music(
+        &mut self,
+        slot: usize,
+        request: u16,
+        source_tick: u64,
+        source_interval: u64,
+    ) -> Result<(), DisplayError> {
+        let number = self.music.tracks.get(slot).ok_or(DisplayError::Source)?;
+        if *number != request {
+            return Err(DisplayError::Identity);
+        }
+        let meaning = self
+            .catalog
+            .music
+            .get(&request)
+            .ok_or(DisplayError::Incomplete)?
+            .clone();
+        self.music.meanings[slot] = Some(QueuedMusicMeaning {
+            request,
+            source_tick,
+            source_interval,
+            meaning,
+        });
+        self.pending_mutation = true;
+        Ok(())
+    }
+    pub(crate) fn publish_sound(
+        &mut self,
+        channel: usize,
+        slot: usize,
+        request: u8,
+        source_tick: u64,
+        source_interval: u64,
+    ) -> Result<(), DisplayError> {
+        let sound = self.sounds.get_mut(channel).ok_or(DisplayError::Source)?;
+        if *sound.queue.get(slot).ok_or(DisplayError::Source)? != request {
+            return Err(DisplayError::Identity);
+        }
+        let meaning = self
+            .catalog
+            .sounds
+            .get(&(channel, request))
+            .ok_or(DisplayError::Incomplete)?
+            .clone();
+        sound.meanings[slot] = Some(QueuedSoundMeaning {
+            request,
+            source_tick,
+            source_interval,
+            meaning,
+        });
+        self.pending_mutation = true;
+        Ok(())
+    }
+    pub(crate) fn clear_music(&mut self, slot: usize) -> Result<(), DisplayError> {
+        let number = self.music.tracks.get(slot).ok_or(DisplayError::Source)?;
+        if *number != 0 || self.music.delays[slot] != 0 {
+            return Err(DisplayError::Identity);
+        }
+        self.music.meanings[slot] = None;
+        self.pending_mutation = true;
+        Ok(())
+    }
+    pub(crate) fn clear_sound(&mut self, channel: usize, slot: usize) -> Result<(), DisplayError> {
+        let sound = self.sounds.get_mut(channel).ok_or(DisplayError::Source)?;
+        if *sound.queue.get(slot).ok_or(DisplayError::Source)? != 0 {
+            return Err(DisplayError::Identity);
+        }
+        sound.meanings[slot] = None;
+        self.pending_mutation = true;
+        Ok(())
+    }
+    pub(crate) fn capture_music(
+        &self,
+        slot: usize,
+        request: u16,
+    ) -> Result<QueuedMusicMeaning, DisplayError> {
+        let record = self
+            .music
+            .meanings
+            .get(slot)
+            .ok_or(DisplayError::Source)?
+            .as_ref()
+            .ok_or(DisplayError::Incomplete)?;
+        if record.request != request {
+            return Err(DisplayError::Identity);
+        }
+        Ok(record.clone())
+    }
+    pub(crate) fn capture_sound(
+        &self,
+        channel: usize,
+        slot: usize,
+        request: u8,
+    ) -> Result<QueuedSoundMeaning, DisplayError> {
+        let sound = self.sounds.get(channel).ok_or(DisplayError::Source)?;
+        let record = sound
+            .meanings
+            .get(slot)
+            .ok_or(DisplayError::Source)?
+            .as_ref()
+            .ok_or(DisplayError::Incomplete)?;
+        if record.request != request {
+            return Err(DisplayError::Identity);
+        }
+        Ok(record.clone())
+    }
+    pub(crate) fn select_music_entry(
+        &mut self,
+        record: QueuedMusicMeaning,
+    ) -> Result<(), DisplayError> {
+        if self.music.entry != record.request {
+            return Err(DisplayError::Identity);
+        }
+        self.music.entry_meaning = Some(record);
+        self.pending_mutation = true;
+        Ok(())
+    }
+    pub(crate) fn select_current_sound(
+        &mut self,
+        channel: usize,
+        mut record: QueuedSoundMeaning,
+        stamp: AudioStamp,
+    ) -> Result<(), DisplayError> {
+        let sound = self.sounds.get_mut(channel).ok_or(DisplayError::Source)?;
+        if sound.current != record.request
+            || record.source_tick > stamp.tick
+            || record.source_interval > stamp.source_interval
+        {
+            return Err(DisplayError::Identity);
+        }
+        record.source_tick = stamp.tick;
+        record.source_interval = stamp.source_interval;
+        sound.current_meaning = Some(record);
+        self.pending_mutation = true;
+        Ok(())
+    }
+    pub(crate) fn clear_music_entry(&mut self) -> Result<(), DisplayError> {
+        if self.music.entry != 0 {
+            return Err(DisplayError::Identity);
+        }
+        self.music.entry_meaning = None;
+        self.pending_mutation = true;
+        Ok(())
+    }
+    pub(crate) fn clear_current_sound(&mut self, channel: usize) -> Result<(), DisplayError> {
+        let sound = self.sounds.get_mut(channel).ok_or(DisplayError::Source)?;
+        if sound.current != 0 {
+            return Err(DisplayError::Identity);
+        }
+        sound.current_meaning = None;
+        self.pending_mutation = true;
+        Ok(())
+    }
+    pub(crate) fn complete_mutation(
+        &mut self,
+        metadata: &DisplayStartMetadata,
+        tick: u64,
+    ) -> Result<(), DisplayError> {
+        if tick < metadata.identity.committed_tick
+            || tick
+                > metadata
+                    .identity
+                    .committed_tick
+                    .checked_add(1)
+                    .ok_or(DisplayError::Identity)?
+        {
+            return Err(DisplayError::Identity);
+        }
+        self.validate_at_tick(metadata, &self.catalog, tick)?;
+        self.pending_mutation = false;
+        Ok(())
+    }
+    pub(crate) fn accept_music(
+        &mut self,
+        audio: &mut crate::game::scene::start::InitialAudioIntent,
+        mut record: QueuedMusicMeaning,
+        stamp: AudioStamp,
+    ) -> Result<(), DisplayError> {
+        if self.catalog.music.get(&record.request) != Some(&record.meaning)
+            || record.source_tick > stamp.tick
+            || record.source_interval > stamp.source_interval
+        {
+            return Err(DisplayError::Identity);
+        }
+        let program = |asset: crate::game::scene::records::AssetRef, phase| {
+            crate::game::scene::start::OngoingMusic::Playing(
+                crate::game::scene::start::ProgramAnchor {
+                    program: asset.id,
+                    revision: asset.revision,
+                    source_interval: stamp.source_interval,
+                    phase,
+                    timing_policy: audio.timing_policy,
+                },
+            )
+        };
+        let next = match &record.meaning {
+            MusicMeaning::Silence => crate::game::scene::start::OngoingMusic::Silent,
+            MusicMeaning::Program {
+                program: asset,
+                phase,
+            } => program(*asset, *phase),
+            MusicMeaning::Bank { after, .. } => match after {
+                MusicContinuation::Retain => audio.music,
+                MusicContinuation::Silence => crate::game::scene::start::OngoingMusic::Silent,
+                MusicContinuation::Program {
+                    program: asset,
+                    phase,
+                } => program(*asset, *phase),
+            },
+        };
+        audio.music = next;
+        record.source_tick = stamp.tick;
+        record.source_interval = stamp.source_interval;
+        self.music.current_meaning = Some(record);
+        self.pending_mutation = true;
+        Ok(())
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct CurrentControl {
+    pub metadata: DisplayStartMetadata,
+    pub requests: AudioRequests,
+}
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct AudioStamp {
+    pub tick: u64,
+    pub source_interval: u64,
+}
+impl CurrentControl {
+    pub(crate) fn audio_mutation<R>(
+        &mut self,
+        producing: bool,
+        operation: impl FnOnce(
+            &mut AudioRequests,
+            &mut crate::game::scene::start::InitialAudioIntent,
+            AudioStamp,
+        ) -> Result<R, DisplayError>,
+    ) -> Result<R, DisplayError> {
+        if !producing {
+            return Err(DisplayError::Phase);
+        }
+        let stamp = AudioStamp {
+            tick: self
+                .metadata
+                .identity
+                .committed_tick
+                .checked_add(1)
+                .ok_or(DisplayError::Identity)?,
+            source_interval: self.metadata.identity.next_input_record,
+        };
+        let result = operation(&mut self.requests, &mut self.metadata.audio, stamp)?;
+        self.requests
+            .complete_mutation(&self.metadata, stamp.tick)?;
+        Ok(result)
+    }
+}
+/// One ordered numeric/request contract shared by actual Game and Runtime callers.
+pub(crate) trait AudioHost {
+    fn audio_byte(&self, at: usize) -> u8;
+    fn audio_store_byte(&mut self, at: usize, byte: u8);
+    fn audio_mutation<R>(
+        &mut self,
+        operation: impl FnOnce(
+            &mut AudioRequests,
+            &mut crate::game::scene::start::InitialAudioIntent,
+            AudioStamp,
+        ) -> Result<R, DisplayError>,
+    ) -> Result<Option<R>, DisplayError>;
+    fn audio_word(&self, at: usize) -> u16 {
+        u16::from_le_bytes([self.audio_byte(at), self.audio_byte(at + 1)])
+    }
+    fn audio_store_word(&mut self, at: usize, word: u16) {
+        let bytes = word.to_le_bytes();
+        self.audio_store_byte(at, bytes[0]);
+        self.audio_store_byte(at + 1, bytes[1]);
+    }
+}
+
 pub(crate) struct SessionStartDescription {
     pub gameplay: Option<Session>,
     pub observations: Option<ExternalInputs>,
@@ -40,6 +662,7 @@ pub(crate) struct SessionStartDescription {
     pub marker: Option<MarkerPublication>,
     pub actor_queue_projection: Option<[ActorQueueProjection; 8]>,
     pub samus_publications: Option<Arc<SamusPublications>>,
+    pub audio_requests: Option<AudioRequests>,
 }
 
 #[derive(Clone)]
@@ -49,6 +672,7 @@ pub(crate) struct SessionStartRequirements {
     pub marker: MarkerPublication,
     pub actor_queue_projection: [ActorQueueProjection; 8],
     pub samus_publications: Arc<SamusPublications>,
+    pub audio_catalog: Arc<AudioRequestCatalog>,
 }
 
 #[derive(Debug)]
@@ -59,6 +683,7 @@ pub enum SessionStartError {
     MissingBodyMarker,
     MissingActorQueueProjection,
     MissingSamusPublications,
+    MissingAudioRequests,
     World,
     GameplayDisplay,
     Observations,
@@ -76,6 +701,7 @@ pub struct PreparedSessionStart {
     pub(crate) observations: ExternalInputs,
     pub(crate) display: DisplayComponent,
     pub(crate) metadata: DisplayStartMetadata,
+    pub(crate) audio_requests: AudioRequests,
     pub(crate) binding: PreparedSamusBinding,
     pub(crate) marker: MarkerPublication,
     pub(crate) actor_queue_projection: [ActorQueueProjection; 8],
@@ -97,7 +723,7 @@ pub struct SessionStartContract(SessionStartRequirements);
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) enum Control {
     Legacy(crate::game::room_entry::state::SharedContinuations),
-    Owned(Box<DisplayStartMetadata>),
+    Owned(Box<CurrentControl>),
 }
 macro_rules! control_words {
     ($m:ident,$f:ident,($($borrow:tt)*)) => {
@@ -129,6 +755,18 @@ macro_rules! control_words {
     };
 }
 impl Control {
+    pub(crate) fn requests(&self) -> Result<&AudioRequests, DisplayError> {
+        match self {
+            Self::Owned(value) => Ok(&value.requests),
+            Self::Legacy(_) => Err(DisplayError::Phase),
+        }
+    }
+    pub(crate) fn requests_mut(&mut self) -> Result<&mut AudioRequests, DisplayError> {
+        match self {
+            Self::Owned(value) => Ok(&mut value.requests),
+            Self::Legacy(_) => Err(DisplayError::Phase),
+        }
+    }
     pub(crate) fn legacy() -> Self {
         Self::Legacy(crate::game::room_entry::state::SharedContinuations {
             primary: 0,
@@ -138,36 +776,36 @@ impl Control {
     pub(crate) fn primary(&self) -> &u8 {
         match self {
             Self::Legacy(value) => &value.primary,
-            Self::Owned(value) => &value.continuation.primary,
+            Self::Owned(value) => &value.metadata.continuation.primary,
         }
     }
     pub(crate) fn secondary(&self) -> &u8 {
         match self {
             Self::Legacy(value) => &value.secondary,
-            Self::Owned(value) => &value.continuation.secondary,
+            Self::Owned(value) => &value.metadata.continuation.secondary,
         }
     }
     pub(crate) fn primary_mut(&mut self) -> &mut u8 {
         match self {
             Self::Legacy(value) => &mut value.primary,
-            Self::Owned(value) => &mut value.continuation.primary,
+            Self::Owned(value) => &mut value.metadata.continuation.primary,
         }
     }
     pub(crate) fn secondary_mut(&mut self) -> &mut u8 {
         match self {
             Self::Legacy(value) => &mut value.secondary,
-            Self::Owned(value) => &mut value.continuation.secondary,
+            Self::Owned(value) => &mut value.metadata.continuation.secondary,
         }
     }
     pub(crate) fn metadata(&self) -> Result<&DisplayStartMetadata, DisplayError> {
         match self {
-            Self::Owned(value) => Ok(value),
+            Self::Owned(value) => Ok(&value.metadata),
             Self::Legacy(_) => Err(DisplayError::Phase),
         }
     }
     pub(crate) fn metadata_mut(&mut self) -> Result<&mut DisplayStartMetadata, DisplayError> {
         match self {
-            Self::Owned(value) => Ok(value),
+            Self::Owned(value) => Ok(&mut value.metadata),
             Self::Legacy(_) => Err(DisplayError::Phase),
         }
     }
@@ -178,9 +816,13 @@ impl Control {
         if at == 0x613 {
             return Some(*self.secondary());
         }
-        let Self::Owned(m) = self else {
+        let Self::Owned(control) = self else {
             return None;
         };
+        if let Some(byte) = control.requests.projected_byte(at) {
+            return Some(byte);
+        }
+        let m = &control.metadata;
         match at {
             0x611 => return Some(m.continuation.outer),
             0x614 => return Some(m.continuation.music),
@@ -206,9 +848,13 @@ impl Control {
             *self.secondary_mut() = byte;
             return true;
         }
-        let Self::Owned(m) = self else {
+        let Self::Owned(control) = self else {
             return false;
         };
+        if control.requests.write_projected_byte(at, byte) {
+            return true;
+        }
+        let m = &mut control.metadata;
         match at {
             0x611 => {
                 m.continuation.outer = byte;
@@ -241,7 +887,9 @@ impl Control {
         found
     }
     pub(crate) fn encode_projection(&self, mut span: impl FnMut(usize, &[u8])) {
-        if let Self::Owned(m) = self {
+        if let Self::Owned(control) = self {
+            control.requests.encode_projection(&mut span);
+            let m = &control.metadata;
             for at in [0x611, 0x614, 0x615, 0x616] {
                 span(at, &[self.projected_byte(at).expect("runner projection")]);
             }
@@ -318,6 +966,14 @@ pub(crate) fn prepare(
         || *gameplay.presentation.atmospheric() != display.atmospheric
     {
         return Err(SessionStartError::GameplayDisplay);
+    }
+    if let Presentation::Owned {
+        display: existing, ..
+    } = &gameplay.presentation
+    {
+        if existing.owner().state != *display {
+            return Err(SessionStartError::GameplayDisplay);
+        }
     }
     if observations.transitions.frame_gamma != gameplay.player.transitions.frame_gamma
         || observations.frame != display.nmi.frame_word
@@ -422,11 +1078,32 @@ pub(crate) fn prepare(
     {
         return Err(SessionStartError::GameplayDisplay);
     }
+    if gameplay
+        .control
+        .metadata()
+        .is_ok_and(|existing| *existing != opened.metadata)
+    {
+        return Err(SessionStartError::GameplayDisplay);
+    }
+    let audio_requests = supplied
+        .audio_requests
+        .ok_or(SessionStartError::MissingAudioRequests)?;
+    audio_requests
+        .validate(&opened.metadata, &required.audio_catalog)
+        .map_err(SessionStartError::Binding)?;
+    if gameplay
+        .control
+        .requests()
+        .is_ok_and(|existing| *existing != audio_requests)
+    {
+        return Err(SessionStartError::GameplayDisplay);
+    }
     Ok(PreparedSessionStart {
         gameplay,
         observations,
         display: opened.display,
         metadata: opened.metadata,
+        audio_requests,
         binding,
         marker,
         actor_queue_projection: projection,
@@ -465,6 +1142,7 @@ impl PreparedSessionStart {
             observations,
             display,
             metadata,
+            audio_requests,
             binding,
             marker,
             actor_queue_projection,
@@ -479,7 +1157,10 @@ impl PreparedSessionStart {
             actor_queue_projection,
             samus_publications,
         };
-        gameplay.control = Control::Owned(Box::new(metadata));
+        gameplay.control = Control::Owned(Box::new(CurrentControl {
+            metadata,
+            requests: audio_requests,
+        }));
         (
             PersistentSession {
                 gameplay,
@@ -538,19 +1219,30 @@ impl PersistentSession {
                     .ok_or(DisplayError::Identity)?
             || metadata.continuation.primary != *self.gameplay.control.primary()
             || metadata.continuation.secondary != *self.gameplay.control.secondary()
+            || metadata.continuation.outer != current.continuation.outer
+            || metadata.continuation.music != current.continuation.music
+            || metadata.continuation.message != current.continuation.message
+            || metadata.continuation.auxiliary != current.continuation.auxiliary
             || metadata.continuation.capture != current.identity.capture
             || metadata.continuation.observation_policy != current.reference.observation_policy
             || metadata.continuation.phase
                 != crate::game::scene::start::CommittedPhase::SettledInterval
             || metadata.input.capture != current.identity.capture
             || metadata.input.policy != current.reference.input_policy
+            || metadata.input != current.input_history
             || metadata.audio.capture != current.identity.capture
             || metadata.audio.revision != self.required.display.audio_revision
             || metadata.audio.declarations != self.required.display.audio_programs
             || metadata.audio.timing_policy != current.reference.audio_timing_policy
+            || metadata.audio != current.audio
         {
             return Err(DisplayError::Identity);
         }
+        let requests = self.gameplay.control.requests()?;
+        if requests.pending_mutation {
+            return Err(DisplayError::Incomplete);
+        }
+        requests.validate_at_tick(&current, &self.required.audio_catalog, next_tick)?;
         let owner = self.gameplay.presentation.owner_mut()?;
         owner.refresh()?;
         owner.begin_settlement()?;
@@ -567,6 +1259,10 @@ impl PersistentSession {
     }
     pub(crate) fn checkpoint(&self) -> Result<SessionCheckpoint, DisplayError> {
         self.gameplay.presentation.owner()?.checkpoint_parts()?;
+        self.gameplay
+            .control
+            .requests()?
+            .validate(self.metadata(), &self.required.audio_catalog)?;
         if self.metadata().identity.committed_tick
             != self.gameplay.presentation.owner()?.committed().tick()
             || self.metadata().identity.next_input_record
@@ -595,6 +1291,7 @@ impl SessionCheckpoint {
             required: _,
         } = self.0;
         let metadata = gameplay.control.metadata()?.clone();
+        let audio_requests = gameplay.control.requests()?.clone();
         let (display, marker, projection, publications) = match &gameplay.presentation {
             Presentation::Owned {
                 display,
@@ -619,6 +1316,7 @@ impl SessionCheckpoint {
                 marker: Some(marker),
                 actor_queue_projection: Some(projection),
                 samus_publications: Some(publications),
+                audio_requests: Some(audio_requests),
             },
             media,
         ))
@@ -863,10 +1561,7 @@ impl Presentation {
     pub(crate) fn requires_semantic_counterpart(at: usize) -> bool {
         // Publishing these numeric requests also needs supplied source/audio
         // identities. Their actual semantic publication seams are not closed.
-        (0xd0..0x330).contains(&at)
-            || (0x340..0x360).contains(&at)
-            || (0x617..0x688).contains(&at)
-            || (0x956..0x98e).contains(&at)
+        (0xd0..0x330).contains(&at) || (0x340..0x360).contains(&at) || (0x956..0x98e).contains(&at)
     }
     pub(crate) fn projected_byte(&self, at: usize) -> Option<u8> {
         let Self::Owned { display, .. } = self else {

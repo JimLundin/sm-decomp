@@ -117,6 +117,7 @@ fn compatibility() -> u64 {
         include_str!("../game/actors/botwoon_death.rs"),
         include_str!("../game/session_encoding.rs"),
         include_str!("../game/persistent_session.rs"),
+        include_str!("../game/music_requests.rs"),
         include_str!("../game/session_native_adoption.rs"),
         include_str!("../game/actors/codec.rs"),
         include_str!("../game/session_runtime.rs"),

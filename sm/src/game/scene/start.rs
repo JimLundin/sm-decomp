@@ -290,7 +290,7 @@ impl ReferenceProfile {
 }
 
 impl InitialAudioIntent {
-    fn validate(
+    pub(crate) fn validate(
         &self,
         reference: &ReferenceProfile,
         capture: [u8; 32],

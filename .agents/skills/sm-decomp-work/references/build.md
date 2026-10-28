@@ -7,6 +7,9 @@
    fresh RAM/disk and every other admitted job's remaining growth. Count a
    launcher and its Cargo/rustc descendants as one workflow. Use independent
    output directories for concurrent builds and retain the required reserve.
+   When DLL growth blocks admission, run an admissible 1.6 GiB normal library
+   checkpoint on the coherent frozen pin with the current remaining-growth ledger.
+   Bind its result to actual inputs; final DLL and runtime checks remain pending.
 3. Run required format, library/no-new-warning and DLL stages with the existing
    verifier. Qualification uses actual output, source/native guards and final
    artifact bytes. A warning increase, denied launch or missing artifact requires

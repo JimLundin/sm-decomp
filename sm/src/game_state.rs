@@ -1407,9 +1407,51 @@ impl GameOwner {
     }
 }
 
+impl persistent_session::AudioHost for Game {
+    fn audio_byte(&self, at: usize) -> u8 {
+        self.compatibility_byte(at)
+    }
+    fn audio_store_byte(&mut self, at: usize, byte: u8) {
+        self.compatibility_write_owned_byte(at, byte);
+    }
+    fn audio_mutation<R>(
+        &mut self,
+        operation: impl FnOnce(
+            &mut persistent_session::AudioRequests,
+            &mut crate::game::scene::start::InitialAudioIntent,
+            persistent_session::AudioStamp,
+        ) -> Result<R, DisplayError>,
+    ) -> Result<Option<R>, DisplayError> {
+        use persistent_session::{Control, SessionSlot};
+        if matches!(self.persistent_session, SessionSlot::Legacy) {
+            return Ok(None);
+        }
+        if self.persistent_ram_epoch != self.ram.write_epoch() {
+            self.poison_persistent_session();
+            return Err(DisplayError::Poisoned);
+        }
+        self.preflight_samus_runtime()?;
+        let SessionSlot::Ready(state) = &mut self.persistent_session else {
+            return Err(DisplayError::Phase);
+        };
+        let producing = state.gameplay.presentation.owner()?.state.phase
+            == crate::game::scene::state::DisplayPhase::Producing;
+        let Control::Owned(control) = &mut state.gameplay.control else {
+            return Err(DisplayError::Phase);
+        };
+        let result = control.audio_mutation(producing, operation);
+        if result.is_err() {
+            state.poison();
+        }
+        result.map(Some)
+    }
+}
 impl Game {
     /// Named callers can observe the current projection. Native byte writes
     /// suspend its authority; mutable owned writers update that same owner.
+    pub(crate) fn compatibility_write_epoch(&self) -> u64 {
+        self.ram.write_epoch()
+    }
     pub fn compatibility_byte(&self, at: usize) -> u8 {
         if let persistent_session::SessionSlot::Ready(state) = &self.persistent_session {
             if self.persistent_ram_epoch == self.ram.write_epoch()
@@ -1564,14 +1606,15 @@ impl Game {
         &mut self,
         mut session: persistent_session::PersistentSession,
         completed: bool,
+        admitted_epoch: u64,
     ) {
         use persistent_session::SessionSlot;
         assert!(
             matches!(self.persistent_session, SessionSlot::Leased),
             "Session lease owner"
         );
-        self.persistent_ram_epoch = self.ram.write_epoch();
-        self.persistent_session = if completed {
+        self.persistent_session = if completed && admitted_epoch == self.ram.write_epoch() {
+            self.persistent_ram_epoch = admitted_epoch;
             SessionSlot::Ready(Box::new(session))
         } else {
             self.samus_authority = SamusAuthority::Revoked;
@@ -1595,6 +1638,7 @@ impl Game {
         if self.persistent_ram_epoch != self.ram.write_epoch() {
             return Err(DisplayError::Poisoned);
         }
+        self.preflight_samus_runtime()?;
         match &self.persistent_session {
             persistent_session::SessionSlot::Ready(session) => session.checkpoint(),
             _ => Err(DisplayError::Phase),
@@ -1622,6 +1666,7 @@ impl Game {
         if self.persistent_ram_epoch != self.ram.write_epoch() {
             return Err(DisplayError::Poisoned);
         }
+        self.preflight_samus_runtime()?;
         match &mut self.persistent_session {
             persistent_session::SessionSlot::Legacy => Ok(()),
             persistent_session::SessionSlot::Ready(state) => state.begin_interval(fresh_entry),
@@ -1638,6 +1683,7 @@ impl Game {
         if self.persistent_ram_epoch != self.ram.write_epoch() {
             return Err(DisplayError::Poisoned);
         }
+        self.preflight_samus_runtime()?;
         let persistent_session::SessionSlot::Ready(state) = &mut self.persistent_session else {
             return Err(DisplayError::Phase);
         };

@@ -182,6 +182,7 @@ pub fn persistent_session_native_rebinding_preserves_ready_owner(
         ))
         .unwrap();
     assert_ready_owner_rejects_native_binding(&owner, native);
+    assert_dirty_runtime_lease_preserves_native_mutation(&owner);
 }
 
 pub(crate) fn assert_ready_owner_rejects_native_binding(
@@ -228,4 +229,46 @@ pub(crate) fn assert_ready_owner_rejects_native_binding(
     assert_eq!(actual_resident.objects, expected_resident.objects);
     assert_eq!(actual_resident.produced, expected_resident.produced);
     assert!(Arc::ptr_eq(&after.1, &before.1));
+}
+
+// No movie holds a Runtime lease while invoking a native compatibility byte helper.
+fn assert_dirty_runtime_lease_preserves_native_mutation(owner: &GameOwner) {
+    use crate::game::session_runtime::Runtime;
+    let before = owner.checkpoint_session().unwrap().into_start().unwrap();
+    assert_eq!(
+        before.0.gameplay.as_ref().unwrap().inventory.health.current,
+        0x0000
+    );
+    owner.with(|game| {
+        let world = game.world().clone();
+        let native = game.capture_native_rom_binding().unwrap();
+        assert_eq!(game.samus_execution(), Ok(Some(SamusExecution::Prepared)));
+        assert_eq!(game.samus_authority(), SamusAuthority::Available);
+        assert_eq!(game.ram().read_byte(0x09c2), 0x00);
+        assert_eq!(game.ram().read_byte(0x09c3), 0x00);
+        let runtime = Runtime::new(game);
+        assert_eq!(runtime.byte(0x09c2), 0x00);
+        assert_eq!(runtime.byte(0x09c3), 0x00);
+        runtime.samus_game().compatibility_write_byte(0x09c2, 0x7b);
+        assert_eq!(runtime.samus_game().ram().read_byte(0x09c2), 0x7b);
+        assert_eq!(runtime.samus_game().ram().read_byte(0x09c3), 0x00);
+        let observed_low = runtime.byte(0x09c2);
+        let observed_high = runtime.byte(0x09c3);
+        drop(runtime);
+        assert_eq!(game.ram().read_byte(0x09c2), 0x7b);
+        assert_eq!(game.ram().read_byte(0x09c3), 0x00);
+        assert_eq!(observed_low, 0x7b);
+        assert_eq!(observed_high, 0x00);
+        assert!(Arc::ptr_eq(&world, game.world()));
+        assert!(native.same_allocation(&game.capture_native_rom_binding().unwrap()));
+        assert_eq!(game.samus_authority(), SamusAuthority::Revoked);
+        assert_eq!(game.samus_execution(), Err(DisplayError::Poisoned));
+        assert!(game.checkpoint_session().is_err());
+        assert_eq!(
+            game.lease_persistent_session().err(),
+            Some(DisplayError::Poisoned)
+        );
+        assert_eq!(game.ram().read_byte(0x09c2), 0x7b);
+    });
+    assert!(owner.checkpoint_session().is_err());
 }

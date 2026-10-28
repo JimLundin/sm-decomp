@@ -19,6 +19,8 @@ dependencies and measured resource budgets permit.
   Resolve reparse/junction paths before sizing, budgeting or deletion; count physical targets once and exclude shared caches from per-worker reclaim.
   Preserve existing live jobs and frozen inputs. Release terminal admissions
   promptly, and increase concurrency only when measurements support useful throughput.
+  If DLL growth blocks admission, dispatch the admissible normal library checkpoint
+  in [Build](build.md) with the same frozen inputs and current remaining-growth ledger.
   On a reserve breach, stop the newest producer per PLAN and retain lightweight
   readers. Record uncertainty when continuous measurements are unavailable.
 - Inspect exact execution and agent handles before recovery. Recover or reassign
