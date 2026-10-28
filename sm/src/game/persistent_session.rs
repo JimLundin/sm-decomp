@@ -1482,6 +1482,37 @@ pub(crate) fn validate_normalized_projection(
     }
 }
 impl SessionSnapshotPayload {
+    pub(crate) fn encode_player_checkpoint(&self) -> Result<Vec<u8>, String> {
+        let state = self.0.as_ref().ok_or("no supplied Session player")?;
+        state
+            .0
+            .gameplay
+            .player
+            .encode_checkpoint(state.0.metadata())
+    }
+    pub(crate) fn decode_player_checkpoint(
+        bytes: &[u8],
+        metadata: &DisplayStartMetadata,
+    ) -> Result<crate::game::session::Player, String> {
+        crate::game::session::Player::decode_checkpoint(bytes, metadata)
+    }
+    pub(crate) fn encode_enemy_projectile_checkpoint(&self) -> Result<Vec<u8>, String> {
+        let state = self
+            .0
+            .as_ref()
+            .ok_or("no supplied Session enemy projectiles")?;
+        state
+            .0
+            .gameplay
+            .enemy_projectiles
+            .encode_checkpoint(state.0.metadata())
+    }
+    pub(crate) fn decode_enemy_projectile_checkpoint(
+        bytes: &[u8],
+        metadata: &DisplayStartMetadata,
+    ) -> Result<crate::game::session::EnemyProjectiles, String> {
+        crate::game::session::EnemyProjectiles::decode_checkpoint(bytes, metadata)
+    }
     pub(crate) fn encode_projectile_checkpoint(&self) -> Result<Vec<u8>, String> {
         let state = self.0.as_ref().ok_or("no supplied Session projectiles")?;
         state

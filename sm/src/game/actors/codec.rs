@@ -1410,3 +1410,365 @@ impl Projectiles {
         })
     }
 }
+
+// Explicit typed field tables share the two directions of this existing codec.
+// They do not use native layout, addresses, Default, or an earlier live owner.
+macro_rules! checkpoint_fields {
+    ($write:ident, $read:ident, $($kind:ident)::+, $( $field:ident: $encode:ident / $decode:ident ),+ $(,)?) => {
+        fn $write(bytes: &mut Vec<u8>, value: &$($kind)::+) {
+            $($encode(bytes, &value.$field);)+
+        }
+        fn $read(read: &mut CheckpointReader<'_>) -> Result<$($kind)::+, String> {
+            Ok($($kind)::+ { $($field: $decode(read)?,)+ })
+        }
+    };
+}
+fn checkpoint_word(bytes: &mut Vec<u8>, value: &u16) {
+    bytes.extend_from_slice(&value.to_le_bytes());
+}
+fn checkpoint_read_word(read: &mut CheckpointReader<'_>) -> Result<u16, String> {
+    read.word()
+}
+fn checkpoint_byte(bytes: &mut Vec<u8>, value: &u8) {
+    bytes.push(*value);
+}
+fn checkpoint_read_byte(read: &mut CheckpointReader<'_>) -> Result<u8, String> {
+    read.byte()
+}
+fn checkpoint_words<const N: usize>(bytes: &mut Vec<u8>, values: &[u16; N]) {
+    for value in values {
+        checkpoint_word(bytes, value);
+    }
+}
+fn checkpoint_pair_motion(bytes: &mut Vec<u8>, values: &[crate::game::session::FixedMotion; 2]) {
+    for value in values {
+        checkpoint_motion(bytes, value);
+    }
+}
+fn checkpoint_read_pair_motion(
+    read: &mut CheckpointReader<'_>,
+) -> Result<[crate::game::session::FixedMotion; 2], String> {
+    Ok([checkpoint_read_motion(read)?, checkpoint_read_motion(read)?])
+}
+use crate::game::player_collision::state as collision;
+use crate::game::player_transitions::state as transitions;
+use crate::game::session::{ContactPhysics, FixedMotion, Player, Point, Position};
+checkpoint_fields!(checkpoint_point, checkpoint_read_point, Point,
+    x: checkpoint_word/checkpoint_read_word, y: checkpoint_word/checkpoint_read_word);
+checkpoint_fields!(checkpoint_position, checkpoint_read_position, Position,
+    whole: checkpoint_word/checkpoint_read_word, fraction: checkpoint_word/checkpoint_read_word);
+checkpoint_fields!(checkpoint_motion, checkpoint_read_motion, FixedMotion,
+    fraction: checkpoint_word/checkpoint_read_word, whole: checkpoint_word/checkpoint_read_word);
+checkpoint_fields!(checkpoint_demo, checkpoint_read_demo, crate::game::player_transitions::demo::DemoInput,
+    pre_action: checkpoint_word/checkpoint_read_word, delay: checkpoint_word/checkpoint_read_word,
+    program: checkpoint_word/checkpoint_read_word, held: checkpoint_word/checkpoint_read_word,
+    pressed: checkpoint_word/checkpoint_read_word, enabled: checkpoint_word/checkpoint_read_word,
+    previous_held: checkpoint_word/checkpoint_read_word, previous_pressed: checkpoint_word/checkpoint_read_word);
+checkpoint_fields!(checkpoint_pose_record, checkpoint_read_pose_record, collision::PoseRecord,
+    pose: checkpoint_word/checkpoint_read_word, movement_and_facing: checkpoint_word/checkpoint_read_word);
+checkpoint_fields!(checkpoint_history, checkpoint_read_history, collision::PoseHistory,
+    previous: checkpoint_pose_record/checkpoint_read_pose_record,
+    last_different: checkpoint_pose_record/checkpoint_read_pose_record);
+checkpoint_fields!(checkpoint_previous_position, checkpoint_read_previous_position, collision::PreviousPosition,
+    x: checkpoint_position/checkpoint_read_position, y: checkpoint_position/checkpoint_read_position);
+checkpoint_fields!(checkpoint_animation_clock, checkpoint_read_animation_clock, collision::AnimationClock,
+    remaining: checkpoint_word/checkpoint_read_word, frame: checkpoint_word/checkpoint_read_word);
+checkpoint_fields!(checkpoint_collision, checkpoint_read_collision, collision::CollisionState,
+    grapple_ejection: checkpoint_words/audio_words,
+    flags: checkpoint_word/checkpoint_read_word, slope_adjusted: checkpoint_word/checkpoint_read_word,
+    solid_actor_flags: checkpoint_word/checkpoint_read_word, pose_input: checkpoint_word/checkpoint_read_word,
+    horizontal_slope_flags: checkpoint_word/checkpoint_read_word);
+checkpoint_fields!(checkpoint_clearance, checkpoint_read_clearance, collision::PoseClearance,
+    actor_flags: checkpoint_word/checkpoint_read_word, terrain_flags: checkpoint_word/checkpoint_read_word,
+    terrain_up: checkpoint_word/checkpoint_read_word, radius_difference: checkpoint_word/checkpoint_read_word,
+    terrain_down: checkpoint_word/checkpoint_read_word, actor_up: checkpoint_word/checkpoint_read_word,
+    actor_down: checkpoint_word/checkpoint_read_word);
+checkpoint_fields!(checkpoint_contact, checkpoint_read_contact, ContactPhysics,
+    radius: checkpoint_word/checkpoint_read_word, x_radius: checkpoint_word/checkpoint_read_word,
+    acceleration_mode: checkpoint_word/checkpoint_read_word, total_x: checkpoint_motion/checkpoint_read_motion,
+    deceleration: checkpoint_word/checkpoint_read_word, momentum: checkpoint_word/checkpoint_read_word,
+    speed_boost: checkpoint_word/checkpoint_read_word, extra_run: checkpoint_motion/checkpoint_read_motion,
+    base_run: checkpoint_motion/checkpoint_read_motion, y_direction: checkpoint_word/checkpoint_read_word,
+    y_speed: checkpoint_motion/checkpoint_read_motion, external_x: checkpoint_motion/checkpoint_read_motion,
+    external_y: checkpoint_motion/checkpoint_read_motion, y_acceleration: checkpoint_motion/checkpoint_read_motion,
+    auto_jump: checkpoint_word/checkpoint_read_word, collision_direction: checkpoint_word/checkpoint_read_word,
+    contact_attack: checkpoint_word/checkpoint_read_word, reaction_point: checkpoint_word/checkpoint_read_word,
+    sand_visits: checkpoint_word/checkpoint_read_word, movement_speed_table: checkpoint_word/checkpoint_read_word);
+
+// The enum tag keeps Unknown(known_raw) distinct from the named variant.
+macro_rules! checkpoint_mode {
+    ($write:ident, $read:ident, $($kind:ident)::+) => {
+        fn $write(bytes: &mut Vec<u8>, value: &$($kind)::+) {
+            bytes.push(if matches!(value, $($kind)::+::Unknown(_)) { 1 } else { 0 });
+            bytes.extend_from_slice(&value.to_raw().to_le_bytes());
+        }
+        fn $read(read: &mut CheckpointReader<'_>) -> Result<$($kind)::+, String> {
+            let tag = read.byte()?;
+            let raw = read.word()?;
+            match tag {
+                0 => match $($kind)::+::from_raw(raw) {
+                    $($kind)::+::Unknown(_) => Err("unknown named player checkpoint mode".into()),
+                    value => Ok(value),
+                },
+                1 => Ok($($kind)::+::Unknown(raw)),
+                _ => Err("unknown player checkpoint mode tag".into()),
+            }
+        }
+    };
+}
+checkpoint_mode!(
+    checkpoint_movement_mode,
+    checkpoint_read_movement_mode,
+    transitions::MovementMode
+);
+checkpoint_mode!(
+    checkpoint_draw_mode,
+    checkpoint_read_draw_mode,
+    transitions::DrawMode
+);
+checkpoint_mode!(
+    checkpoint_input_mode,
+    checkpoint_read_input_mode,
+    transitions::InputMode
+);
+checkpoint_mode!(
+    checkpoint_alpha_mode,
+    checkpoint_read_alpha_mode,
+    transitions::FrameAlphaMode
+);
+checkpoint_mode!(
+    checkpoint_beta_mode,
+    checkpoint_read_beta_mode,
+    transitions::FrameBetaMode
+);
+checkpoint_mode!(
+    checkpoint_gamma_mode,
+    checkpoint_read_gamma_mode,
+    transitions::FrameGammaMode
+);
+macro_rules! checkpoint_selector {
+    ($write:ident, $read:ident, $($kind:ident)::+) => {
+        fn $write(bytes: &mut Vec<u8>, value: &$($kind)::+) {
+            bytes.extend_from_slice(&value.to_raw().to_le_bytes());
+        }
+        fn $read(read: &mut CheckpointReader<'_>) -> Result<$($kind)::+, String> {
+            Ok($($kind)::+::from_raw(read.word()?))
+        }
+    };
+}
+checkpoint_selector!(
+    checkpoint_pose_request,
+    checkpoint_read_pose_request,
+    transitions::PoseRequestWord
+);
+checkpoint_selector!(
+    checkpoint_momentum,
+    checkpoint_read_momentum,
+    transitions::MomentumAction
+);
+checkpoint_selector!(
+    checkpoint_interruption,
+    checkpoint_read_interruption,
+    transitions::InterruptionAction
+);
+checkpoint_selector!(
+    checkpoint_hurt,
+    checkpoint_read_hurt,
+    transitions::HurtAction
+);
+checkpoint_selector!(
+    checkpoint_animation_skip,
+    checkpoint_read_animation_skip,
+    transitions::AnimationSkip
+);
+checkpoint_selector!(
+    checkpoint_bomb_jump,
+    checkpoint_read_bomb_jump,
+    transitions::BombJump
+);
+checkpoint_selector!(
+    checkpoint_bounce,
+    checkpoint_read_bounce,
+    transitions::LandingBounce
+);
+checkpoint_fields!(checkpoint_transitions, checkpoint_read_transitions, transitions::PlayerTransitions,
+    ordinary: checkpoint_pose_request/checkpoint_read_pose_request,
+    interrupted: checkpoint_pose_request/checkpoint_read_pose_request,
+    transitional: checkpoint_pose_request/checkpoint_read_pose_request,
+    momentum: checkpoint_momentum/checkpoint_read_momentum,
+    interruption: checkpoint_interruption/checkpoint_read_interruption,
+    hurt: checkpoint_hurt/checkpoint_read_hurt,
+    animation_skip: checkpoint_animation_skip/checkpoint_read_animation_skip,
+    landing_compatibility: checkpoint_word/checkpoint_read_word,
+    frame_alpha: checkpoint_alpha_mode/checkpoint_read_alpha_mode,
+    frame_beta: checkpoint_beta_mode/checkpoint_read_beta_mode,
+    frame_gamma: checkpoint_gamma_mode/checkpoint_read_gamma_mode,
+    draw_handler: checkpoint_draw_mode/checkpoint_read_draw_mode,
+    knockback: checkpoint_word/checkpoint_read_word,
+    bomb_jump: checkpoint_bomb_jump/checkpoint_read_bomb_jump,
+    input_mode: checkpoint_input_mode/checkpoint_read_input_mode,
+    xray_angle: checkpoint_word/checkpoint_read_word,
+    animation_buffer: checkpoint_word/checkpoint_read_word,
+    grapple_walljump_timer: checkpoint_word/checkpoint_read_word,
+    elevator_fade_timer: checkpoint_word/checkpoint_read_word,
+    shinespark_start_stop_timer: checkpoint_word/checkpoint_read_word,
+    crystal_flash_ammo: checkpoint_word/checkpoint_read_word,
+    liquid_physics: checkpoint_word/checkpoint_read_word,
+    landing_motion_compatibility: checkpoint_word/checkpoint_read_word,
+    bounce: checkpoint_bounce/checkpoint_read_bounce,
+    falling: checkpoint_word/checkpoint_read_word,
+    vertical_motion_compatibility: checkpoint_word/checkpoint_read_word,
+    vertical_auxiliary_compatibility: checkpoint_word/checkpoint_read_word);
+checkpoint_fields!(checkpoint_player, checkpoint_read_player, Player,
+    demo: checkpoint_demo/checkpoint_read_demo,
+    transitions: checkpoint_transitions/checkpoint_read_transitions,
+    x_fraction: checkpoint_word/checkpoint_read_word, y_fraction: checkpoint_word/checkpoint_read_word,
+    grapple_endpoint: checkpoint_point/checkpoint_read_point,
+    grapple_flags: checkpoint_word/checkpoint_read_word, grapple_interaction_flags: checkpoint_word/checkpoint_read_word,
+    grapple_extension_compatibility: checkpoint_point/checkpoint_read_point,
+    grapple_direction: checkpoint_word/checkpoint_read_word, grapple_direction_compatibility: checkpoint_word/checkpoint_read_word,
+    grapple_delay: checkpoint_word/checkpoint_read_word, grapple_slow_scrolling: checkpoint_word/checkpoint_read_word,
+    grapple_angle: checkpoint_word/checkpoint_read_word, grapple_length: checkpoint_word/checkpoint_read_word,
+    grapple_origin_offset: checkpoint_point/checkpoint_read_point,
+    grapple_endpoint_fraction: checkpoint_point/checkpoint_read_point,
+    grapple_offset: checkpoint_pair_motion/checkpoint_read_pair_motion,
+    grapple_velocity: checkpoint_point/checkpoint_read_point,
+    grapple_animation_delay: checkpoint_words/audio_words, grapple_animation_program: checkpoint_words/audio_words,
+    periodic_damage_fraction: checkpoint_word/checkpoint_read_word,
+    x: checkpoint_word/checkpoint_read_word, y: checkpoint_word/checkpoint_read_word,
+    body_position: checkpoint_point/checkpoint_read_point,
+    pose: checkpoint_word/checkpoint_read_word, previous_health_for_flash: checkpoint_word/checkpoint_read_word,
+    top_sprite: checkpoint_word/checkpoint_read_word, bottom_sprite: checkpoint_word/checkpoint_read_word,
+    scripted_movement_direction: checkpoint_word/checkpoint_read_word,
+    crouch_transition_work: checkpoint_word/checkpoint_read_word,
+    history: checkpoint_history/checkpoint_read_history,
+    previous_position: checkpoint_previous_position/checkpoint_read_previous_position,
+    camera_distance: checkpoint_pair_motion/checkpoint_read_pair_motion,
+    animation_clock: checkpoint_animation_clock/checkpoint_read_animation_clock,
+    collision: checkpoint_collision/checkpoint_read_collision,
+    clearance: checkpoint_clearance/checkpoint_read_clearance,
+    movement_and_facing: checkpoint_word/checkpoint_read_word, grapple: checkpoint_word/checkpoint_read_word,
+    movement_handler: checkpoint_movement_mode/checkpoint_read_movement_mode,
+    shine_timer: checkpoint_word/checkpoint_read_word, shine_tick: checkpoint_word/checkpoint_read_word,
+    palette_frame: checkpoint_word/checkpoint_read_word, special_palette_flags: checkpoint_word/checkpoint_read_word,
+    contact: checkpoint_contact/checkpoint_read_contact,
+    invincibility: checkpoint_word/checkpoint_read_word, periodic_damage: checkpoint_word/checkpoint_read_word,
+    speed_divisor: checkpoint_word/checkpoint_read_word, knockback_timer: checkpoint_word/checkpoint_read_word,
+    knockback_x_direction: checkpoint_word/checkpoint_read_word);
+impl Player {
+    pub(crate) fn encode_checkpoint(
+        &self,
+        metadata: &DisplayStartMetadata,
+    ) -> Result<Vec<u8>, String> {
+        if metadata.identity.reference != metadata.reference.fingerprint {
+            return Err("player checkpoint Reference identity mismatch".into());
+        }
+        let mut bytes = Vec::from(b"SMPLAYER\x01".as_slice());
+        let binding = observation_binding(metadata);
+        bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
+        bytes.extend_from_slice(&binding);
+        checkpoint_player(&mut bytes, self);
+        Ok(bytes)
+    }
+    pub(crate) fn decode_checkpoint(
+        bytes: &[u8],
+        metadata: &DisplayStartMetadata,
+    ) -> Result<Self, String> {
+        let mut read = CheckpointReader(bytes);
+        if read.bytes(9)? != b"SMPLAYER\x01" {
+            return Err("unsupported player checkpoint schema".into());
+        }
+        let size = usize::try_from(read.counter()?)
+            .map_err(|_| "player checkpoint binding length overflow")?;
+        if metadata.identity.reference != metadata.reference.fingerprint
+            || read.bytes(size)? != observation_binding(metadata)
+        {
+            return Err("player checkpoint source identity or Reference changed".into());
+        }
+        let player = checkpoint_read_player(&mut read)?;
+        if !read.0.is_empty() {
+            return Err("trailing player checkpoint fields".into());
+        }
+        Ok(player)
+    }
+}
+
+use crate::game::session::{
+    DropMetadata, EnemyProjectile, EnemyProjectiles, Rectangle, SpawnContext,
+};
+checkpoint_fields!(checkpoint_rectangle, checkpoint_read_rectangle, Rectangle,
+    origin: checkpoint_point/checkpoint_read_point, extent: checkpoint_point/checkpoint_read_point);
+checkpoint_fields!(checkpoint_drop, checkpoint_read_drop, DropMetadata,
+    flags: checkpoint_word/checkpoint_read_word, enemy_definition: checkpoint_word/checkpoint_read_word,
+    killed_enemy: checkpoint_word/checkpoint_read_word);
+checkpoint_fields!(checkpoint_enemy_projectile, checkpoint_read_enemy_projectile, EnemyProjectile,
+    definition: checkpoint_word/checkpoint_read_word, graphics: checkpoint_word/checkpoint_read_word,
+    counter: checkpoint_word/checkpoint_read_word, pre_action: checkpoint_word/checkpoint_read_word,
+    x: checkpoint_position/checkpoint_read_position, y: checkpoint_position/checkpoint_read_position,
+    velocity: checkpoint_point/checkpoint_read_point,
+    behavior_a: checkpoint_word/checkpoint_read_word, behavior_b: checkpoint_word/checkpoint_read_word,
+    program: checkpoint_word/checkpoint_read_word, spritemap: checkpoint_word/checkpoint_read_word,
+    delay: checkpoint_word/checkpoint_read_word, radius: checkpoint_word/checkpoint_read_word,
+    properties: checkpoint_word/checkpoint_read_word, behavior_c: checkpoint_word/checkpoint_read_word,
+    angle: checkpoint_word/checkpoint_read_word, drop: checkpoint_drop/checkpoint_read_drop);
+checkpoint_fields!(checkpoint_spawn_context, checkpoint_read_spawn_context, SpawnContext,
+    primary: checkpoint_word/checkpoint_read_word, secondary: checkpoint_word/checkpoint_read_word,
+    angle: checkpoint_byte/checkpoint_read_byte,
+    rectangle: checkpoint_rectangle/checkpoint_read_rectangle,
+    variant: checkpoint_word/checkpoint_read_word, point: checkpoint_point/checkpoint_read_point,
+    drop_definition: checkpoint_word/checkpoint_read_word);
+impl EnemyProjectiles {
+    pub(crate) fn encode_checkpoint(
+        &self,
+        metadata: &DisplayStartMetadata,
+    ) -> Result<Vec<u8>, String> {
+        if metadata.identity.reference != metadata.reference.fingerprint {
+            return Err("enemy projectile checkpoint Reference identity mismatch".into());
+        }
+        let mut bytes = Vec::from(b"SMESHOT\x01".as_slice());
+        let binding = observation_binding(metadata);
+        bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
+        bytes.extend_from_slice(&binding);
+        for slot in &self.slots {
+            checkpoint_enemy_projectile(&mut bytes, slot);
+        }
+        checkpoint_word(&mut bytes, &self.flags);
+        checkpoint_word(&mut bytes, &self.selected);
+        checkpoint_spawn_context(&mut bytes, &self.spawn);
+        checkpoint_word(&mut bytes, &self.drop_bias);
+        Ok(bytes)
+    }
+    pub(crate) fn decode_checkpoint(
+        bytes: &[u8],
+        metadata: &DisplayStartMetadata,
+    ) -> Result<Self, String> {
+        let mut read = CheckpointReader(bytes);
+        if read.bytes(8)? != b"SMESHOT\x01" {
+            return Err("unsupported enemy projectile checkpoint schema".into());
+        }
+        let size = usize::try_from(read.counter()?)
+            .map_err(|_| "enemy projectile checkpoint binding length overflow")?;
+        if metadata.identity.reference != metadata.reference.fingerprint
+            || read.bytes(size)? != observation_binding(metadata)
+        {
+            return Err("enemy projectile checkpoint source identity or Reference changed".into());
+        }
+        let mut slots = Vec::with_capacity(18);
+        for _ in 0..18 {
+            slots.push(checkpoint_read_enemy_projectile(&mut read)?);
+        }
+        let result = Self {
+            slots: slots
+                .try_into()
+                .map_err(|_| "enemy projectile checkpoint slot count")?,
+            flags: read.word()?,
+            selected: read.word()?,
+            spawn: checkpoint_read_spawn_context(&mut read)?,
+            drop_bias: read.word()?,
+        };
+        if !read.0.is_empty() {
+            return Err("trailing enemy projectile checkpoint fields".into());
+        }
+        Ok(result)
+    }
+}
