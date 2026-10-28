@@ -67,8 +67,15 @@ Audio-only ci17 source 475b05d3 / DLL 4905f1a7 passes actual 87/87 units,
 including wrapped queues, rejection, binary restore and ApuQueue witnesses.
 All 85 raw codec contributors are unchanged; retain original ci16 runtime proof.
 Net +435 verification/+1 forbid attribute; production/legacy unchanged.
-Next: qualify the independently reviewed private OpenGL owned-upload packet
-through its actual frontend. Reserves 2 GiB/50 GiB.
+OpenGL upload source 61b7a7f3 is independently reviewed and qualified through
+the actual frontend library/binary (182.783s), with regenerated config/shader
+and desktop archives. Owned Vec pixels and presenter storage retire malloc/free,
+two associated pointer casts and three raw global captures. Net +21 production,
+unsafe-containing -1; the existing OpenGL warning is unchanged. All 85 CPU codec
+contributors are unchanged; preserve original unit/replay attribution. GL device
+callbacks remain unexecuted. CI passes on both Session/audio commits.
+Next: qualify the reviewed config-input and shader-table source successors through
+their actual native/frontend paths. Reserves 2 GiB/50 GiB.
 
 SOURCE38 connects actor layer-3 player drawing to the complete owned Runtime
 driver and adds the live B04/B06 body-coordinate projection. Native effects
