@@ -10,7 +10,7 @@ pub unsafe extern "C" fn sm_verify_room_world_case(
 ) -> usize {
     // Match the library's room_world_cases::CASES before consuming STARTED.
     #[cfg(sm_verify_dll)]
-    const CASES: u32 = 105;
+    const CASES: u32 = 107;
     #[cfg(not(sm_verify_dll))]
     const CASES: u32 = 11;
     unsafe {

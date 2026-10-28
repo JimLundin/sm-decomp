@@ -23,6 +23,8 @@ dependencies and measured resource budgets permit.
 - Inspect exact execution and agent handles before recovery. Recover or reassign
   only from authoritative terminal/missing handles; observation timeouts and stale
   files/comments do not establish termination. Carry forward pinned results.
+  Issue delivery is not activation; active status needs authoritative session/goal/turn handles.
+  Exception: if available tools cannot resume an authoritatively blocked external root, preserve frozen source/live jobs and reassign only its already released scope to a reachable explicitly activated owner.
   With collaboration tools, followup_task activates terminal workers;
   send_message alone does not. Refill ready work before inventory/report prose.
   User-authorized support watches the coordinator's actual handle and resumes

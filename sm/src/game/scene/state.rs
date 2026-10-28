@@ -456,6 +456,7 @@ pub struct DisplayControls {
     pub fake_mode: u8,
     pub mosaic: u8,
     pub screens: [u8; 4],
+    pub previous_background3_map: u8,
     pub characters: [u8; 2],
     pub affine_selection: u8,
     pub window_selection: [u8; 3],
@@ -466,8 +467,10 @@ pub struct DisplayControls {
     pub sub_layers: u8,
     pub main_window: u8,
     pub sub_window: u8,
+    pub next_color_selection: u8,
     pub color_selection: u8,
     pub previous_color_selection: u8,
+    pub next_color_math: u8,
     pub color_math: u8,
     pub previous_color_math: u8,
     pub fixed_color: [u8; 3],
@@ -533,6 +536,7 @@ pub struct HdmaState {
 pub struct InterruptState {
     pub current: u16,
     pub pending: u16,
+    /// Effective delivered timers, independent of staged control bytes.
     pub vertical: u16,
     pub horizontal: u16,
     pub previous_cre: u16,
@@ -554,6 +558,43 @@ impl InterruptState {
         }
     }
 }
+/// Required effective delivery history, supplied without opening-time inference.
+/// Refresh requests, staged controls and committed ticks have separate lifetimes.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct DisplayDeliveryDescription {
+    pub horizontal_position: u16,
+    pub vertical_position: u16,
+    pub beam_frames: u32,
+    pub horizontal_irq_enabled: bool,
+    pub vertical_irq_enabled: bool,
+    pub nmi_enabled: bool,
+    pub nmi_wanted: bool,
+    pub irq_wanted: bool,
+    pub in_nmi: bool,
+    pub in_irq: bool,
+    pub in_vblank: bool,
+    pub automatic_input_read: bool,
+    pub automatic_input_timer: u16,
+    pub counter_latch_gate: bool,
+    pub raster_suppressed: bool,
+}
+/// Effective values consumed by IRQ output and vblank, not staged controls.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct EffectiveDisplayDescription {
+    pub background3_map_words: u16,
+    pub background3_map_wider: bool,
+    pub background3_map_higher: bool,
+    pub color_clip: u8,
+    pub color_prevent_math: u8,
+    pub color_add_subscreen: bool,
+    pub direct_color: bool,
+    pub color_math_enabled: [bool; 6],
+    pub color_subtract: bool,
+    pub color_half: bool,
+    /// Full effective routing byte, including the native cached unused bits.
+    pub main_layers: u8,
+    pub forced_blank: bool,
+}
 #[derive(Clone, Copy, Debug)]
 pub struct DisplayLatches {
     pub tile_pointer: u16,
@@ -566,6 +607,7 @@ pub struct DisplayLatches {
     pub palette_second: bool,
     pub palette_buffer: u8,
     pub object_written_address: u16,
+    pub object_written_high_table: bool,
     pub object_address: u16,
     pub object_high_table: bool,
     pub object_second: bool,
@@ -631,6 +673,8 @@ pub struct DisplayDescription {
     /// The current descriptor/scanline/scratch owners are adopted with this state.
     pub hdma_live: HdmaLiveDescription,
     pub interrupt: InterruptState,
+    pub delivery: DisplayDeliveryDescription,
+    pub effective: EffectiveDisplayDescription,
     pub latches: DisplayLatches,
     pub raster: RasterState,
     /// Actual resolved animated sources; no source is cleared before successful upload.
@@ -645,6 +689,9 @@ impl DisplayDescription {
     pub(crate) fn validate(&self) -> Result<(), DisplayError> {
         if self.phase != DisplayPhase::Committed {
             return Err(DisplayError::Phase);
+        }
+        if self.effective.color_clip > 3 || self.effective.color_prevent_math > 3 {
+            return Err(DisplayError::Geometry);
         }
         // This is explicit sealed-start admission. Runtime aliases stay with compatibility.
         if self.objects.cursor > 512 {

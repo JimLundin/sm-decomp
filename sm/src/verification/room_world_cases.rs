@@ -16,7 +16,7 @@ use std::{
 };
 
 #[cfg(sm_verify_dll)]
-pub(crate) const CASES: u32 = 105;
+pub(crate) const CASES: u32 = 107;
 #[cfg(not(sm_verify_dll))]
 pub(crate) const CASES: u32 = 11;
 fn put(g: &mut Game, at: usize, value: u16) {
@@ -59,6 +59,173 @@ unsafe fn nmi_and_draw(g: &mut Game) {
 }
 unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
     unsafe {
+        #[cfg(sm_verify_dll)]
+        if id == 105 {
+            // Movies cannot supply divergent cached/per-layer routing and staged/effective PPU state.
+            crate::rtl::RtlReset(2, g);
+            let snes = g.g_snes;
+            assert!(!snes.is_null());
+            let ppu = (*snes).ppu;
+            assert!(ppu == (*snes).my_ppu || ppu == (*snes).snes_ppu);
+            let other = if ppu == (*snes).my_ppu {
+                (*snes).snes_ppu
+            } else {
+                (*snes).my_ppu
+            };
+            g.ram().copy_in(0x5a, &[0x11, 0x22]);
+            g.ram().copy_in(0x69, &[0x33, 0x44]);
+            g.ram().copy_in(0x6e, &[0x55, 0x66, 0x77, 0x88, 0x99, 0xaa]);
+            g.ram().copy_in(0x84, &[0xbb, 0xcc]);
+            (*ppu).screenEnabled[0] = 0xe5;
+            for (layer, enabled) in (*ppu)
+                .layer
+                .iter_mut()
+                .zip([false, true, false, false, true])
+            {
+                layer.mainScreenEnabled = enabled;
+            }
+            (*other).screenEnabled[0] = 0xc3;
+            (*other).bgLayer[2].tilemapAdr = 0x1800;
+            assert_eq!((*ppu).screenEnabled[0], 0xe5);
+            assert_eq!(
+                (*ppu).layer.map(|layer| layer.mainScreenEnabled),
+                [false, true, false, false, true]
+            );
+            g.execution().write(0x2109, 0xe7);
+            assert_eq!(
+                (
+                    (*ppu).bgLayer[2].tilemapAdr,
+                    (*ppu).bgLayer[2].tilemapWider,
+                    (*ppu).bgLayer[2].tilemapHigher
+                ),
+                (0xe400, true, true)
+            );
+            assert_eq!((*ppu).screenEnabled[0], 0xe5);
+            assert_eq!(
+                (*ppu).layer.map(|layer| layer.mainScreenEnabled),
+                [false, true, false, false, true]
+            );
+            g.execution().write(0x2130, 0xdb);
+            assert_eq!(((*ppu).clipMode, (*ppu).preventMathMode), (3, 1));
+            assert!((*ppu).addSubscreen && (*ppu).directColor);
+            g.execution().write(0x2131, 0xd5);
+            assert_eq!((*ppu).mathEnabled, [true, false, true, false, true, false]);
+            assert_eq!(((*ppu).subtractColor, (*ppu).halfColor), (true, true));
+            g.execution().write(0x212c, 0xb6);
+            assert_eq!((*ppu).screenEnabled[0], 0xb6);
+            assert_eq!(
+                (*ppu).layer.map(|layer| layer.mainScreenEnabled),
+                [false, true, true, false, true]
+            );
+            g.execution().write(0x2100, 0x8b);
+            assert_eq!(((*ppu).forcedBlank, (*ppu).brightness), (true, 11));
+            g.execution().write(0x2109, 0x58);
+            assert_eq!(
+                (
+                    (*ppu).bgLayer[2].tilemapAdr,
+                    (*ppu).bgLayer[2].tilemapWider,
+                    (*ppu).bgLayer[2].tilemapHigher
+                ),
+                (0x5800, false, false)
+            );
+            g.execution().write(0x2130, 0x6c);
+            assert_eq!(((*ppu).clipMode, (*ppu).preventMathMode), (1, 2));
+            assert!(!(*ppu).addSubscreen && !(*ppu).directColor);
+            g.execution().write(0x2131, 0x2a);
+            assert_eq!((*ppu).mathEnabled, [false, true, false, true, false, true]);
+            assert_eq!(((*ppu).subtractColor, (*ppu).halfColor), (false, false));
+            g.execution().write(0x2100, 0x07);
+            assert_eq!(((*ppu).forcedBlank, (*ppu).brightness), (false, 7));
+            assert_eq!(ram_span::<2>(g, 0x5a), [0x11, 0x22]);
+            assert_eq!(ram_span::<2>(g, 0x69), [0x33, 0x44]);
+            assert_eq!(ram_span::<6>(g, 0x6e), [0x55, 0x66, 0x77, 0x88, 0x99, 0xaa]);
+            assert_eq!(ram_span::<2>(g, 0x84), [0xbb, 0xcc]);
+            assert_eq!(
+                ((*other).screenEnabled[0], (*other).bgLayer[2].tilemapAdr),
+                (0xc3, 0x1800)
+            );
+            assert_eq!((*snes).ppu, ppu);
+            assert!(!g.g_fail);
+            let mut out = b"RMWD1".to_vec();
+            out.extend_from_slice(&id.to_le_bytes());
+            record(&mut out, 0, g);
+            return out;
+        }
+        #[cfg(sm_verify_dll)]
+        if id == 106 {
+            // Movies cannot author odd beam positions, high-byte-first counter reads or OAM cursor wrap.
+            crate::rtl::RtlReset(2, g);
+            let snes = g.g_snes;
+            assert!(!snes.is_null());
+            let ppu = (*snes).ppu;
+            assert!(ppu == (*snes).my_ppu || ppu == (*snes).snes_ppu);
+            let other = if ppu == (*snes).my_ppu {
+                (*snes).snes_ppu
+            } else {
+                (*snes).my_ppu
+            };
+            (*snes).hPos = 0x52b;
+            (*snes).vPos = 0x1d3;
+            (*snes).openBus = 0xa6;
+            (*snes).ppuLatch = false;
+            (*ppu).hCount = 0xbeef;
+            (*ppu).vCount = 0xdead;
+            (*ppu).hCountSecond = true;
+            (*ppu).vCountSecond = true;
+            (*ppu).ppu2openBus = 0xa4;
+            (*other).hCount = 0x1234;
+            (*other).vCount = 0x5678;
+            assert_eq!(g.execution().read(0x2137), 0xa6);
+            assert_eq!(((*ppu).hCount, (*ppu).vCount), (0x014a, 0x01d3));
+            assert!((*ppu).countersLatched && (*ppu).hCountSecond && (*ppu).vCountSecond);
+            assert!(!(*snes).ppuLatch);
+            assert_eq!(g.execution().read(0x213c), 0xa5);
+            assert_eq!(g.execution().read(0x213c), 0x4a);
+            assert_eq!(g.execution().read(0x213d), 0x4b);
+            assert_eq!(g.execution().read(0x213d), 0xd3);
+            assert_eq!(g.execution().read(0x213f), 0x43);
+            assert!(!(*ppu).countersLatched && !(*ppu).hCountSecond && !(*ppu).vCountSecond);
+            (*snes).hPos = 0x487;
+            (*snes).vPos = 0x123;
+            g.execution().write(0x4201, 0x80);
+            assert!((*snes).ppuLatch && !(*ppu).countersLatched);
+            assert_eq!(((*ppu).hCount, (*ppu).vCount), (0x014a, 0x01d3));
+            g.execution().write(0x4201, 0);
+            assert!(!(*snes).ppuLatch && (*ppu).countersLatched);
+            assert_eq!(((*ppu).hCount, (*ppu).vCount), (0x0121, 0x0123));
+            (*snes).hPos = 7;
+            (*snes).vPos = 2;
+            g.execution().write(0x4201, 0);
+            assert_eq!(((*ppu).hCount, (*ppu).vCount), (0x0121, 0x0123));
+            g.execution().write(0x2102, 0xff);
+            g.execution().write(0x2103, 1);
+            (*ppu).highOam[0x1e] = 0x5a;
+            (*ppu).highOam[0x1f] = 0xc3;
+            assert_eq!(((*ppu).oamAdr, (*ppu).oamAdrWritten), (0xff, 0xff));
+            assert!((*ppu).oamInHigh && (*ppu).oamInHighWritten && !(*ppu).oamSecondWrite);
+            assert_eq!(g.execution().read(0x2138), 0x5a);
+            assert_eq!(g.execution().read(0x2138), 0xc3);
+            assert_eq!(((*ppu).oamAdr, (*ppu).oamAdrWritten), (0, 0xff));
+            assert!(!(*ppu).oamInHigh && (*ppu).oamInHighWritten && !(*ppu).oamSecondWrite);
+            g.execution().write(0x2100, 0x80);
+            (*snes).hPos = 0;
+            (*snes).vPos = 225;
+            g.execution().advance_beam();
+            assert_eq!(((*ppu).oamAdr, (*ppu).oamAdrWritten), (0, 0xff));
+            assert!(!(*ppu).oamInHigh && (*ppu).oamInHighWritten);
+            g.execution().write(0x2100, 0);
+            (*snes).hPos = 0;
+            g.execution().advance_beam();
+            assert_eq!(((*ppu).oamAdr, (*ppu).oamAdrWritten), (0xff, 0xff));
+            assert!((*ppu).oamInHigh && (*ppu).oamInHighWritten && !(*ppu).oamSecondWrite);
+            assert_eq!(((*other).hCount, (*other).vCount), (0x1234, 0x5678));
+            assert_eq!((*snes).ppu, ppu);
+            assert!(!g.g_fail);
+            let mut out = b"RMWD1".to_vec();
+            out.extend_from_slice(&id.to_le_bytes());
+            record(&mut out, 0, g);
+            return out;
+        }
         #[cfg(sm_verify_dll)]
         if id == 103 {
             // Movies cannot make atmospheric OAM X/Y overwrite the camera used by this draw.

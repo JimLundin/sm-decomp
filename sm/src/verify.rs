@@ -1404,7 +1404,7 @@ mod coverage_checks {
         macro_rules! cases {
             ($($test:ident),+ $(,)?) => { [$( (stringify!($test), $test as fn()), )+] };
         }
-        let tests: [(&str, fn()); 46] = cases![
+        let tests: [(&str, fn()); 48] = cases![
             prepared_message_pixels_delay_queue_and_checkpoint,
             prepared_message_rejects_changed_content_and_resets,
             independently_authored_raster_pixels_and_prefixes,
@@ -1451,6 +1451,8 @@ mod coverage_checks {
             scene_component_rejects_conflicting_physical_hdma_aliases,
             scene_component_preserves_coherent_physical_hdma_aliases_on_reopen,
             scene_component_reset_preserves_coherent_physical_hdma_aliases,
+            scene_component_preserves_schema3_delivery_effective_and_written_selection,
+            scene_component_rejects_schema2_and_invalid_effective_color_selectors,
         ];
         let mut failed = 0usize;
         for (name, test) in &tests {
@@ -3658,7 +3660,7 @@ mod coverage_checks {
     }
 
     // Movies cannot author portable display starts. Every synthetic field is supplied
-    // explicitly; this fixture establishes component persistence at schema2 only.
+    // explicitly; this fixture establishes component persistence at schema3 only.
     fn scene_display_description(
         media: &sc::SceneMedia,
         gameplay: [u8; 32],
@@ -3952,6 +3954,7 @@ mod coverage_checks {
                 fake_mode: 1,
                 mosaic: 0,
                 screens: [0; 4],
+                previous_background3_map: 0x35,
                 characters: [0; 2],
                 affine_selection: 0,
                 window_selection: [0; 3],
@@ -3962,8 +3965,10 @@ mod coverage_checks {
                 sub_layers: 0,
                 main_window: 0,
                 sub_window: 0,
+                next_color_selection: 0xb2,
                 color_selection: 0,
                 previous_color_selection: 0,
+                next_color_math: 0xa5,
                 color_math: 0,
                 previous_color_math: 0,
                 fixed_color: [0; 3],
@@ -4029,6 +4034,38 @@ mod coverage_checks {
                 transition_flag: 0,
                 transition_continuation: 0,
             },
+            // These authored delivered values stay independent of staged and saved controls.
+            delivery: ds::DisplayDeliveryDescription {
+                horizontal_position: 37,
+                vertical_position: 241,
+                beam_frames: 0x1234_5678,
+                horizontal_irq_enabled: true,
+                vertical_irq_enabled: false,
+                nmi_enabled: true,
+                nmi_wanted: false,
+                irq_wanted: true,
+                in_nmi: false,
+                in_irq: true,
+                in_vblank: true,
+                automatic_input_read: true,
+                automatic_input_timer: 0x4567,
+                counter_latch_gate: true,
+                raster_suppressed: false,
+            },
+            effective: ds::EffectiveDisplayDescription {
+                background3_map_words: 0x2c00,
+                background3_map_wider: true,
+                background3_map_higher: false,
+                color_clip: 2,
+                color_prevent_math: 1,
+                color_add_subscreen: true,
+                direct_color: true,
+                color_math_enabled: [true, false, true, false, true, false],
+                color_subtract: true,
+                color_half: false,
+                main_layers: 0xa4,
+                forced_blank: true,
+            },
             latches: ds::DisplayLatches {
                 tile_pointer: 0x2345,
                 tile_increment: 2,
@@ -4040,6 +4077,7 @@ mod coverage_checks {
                 palette_second: true,
                 palette_buffer: 0x99,
                 object_written_address: 0x101,
+                object_written_high_table: false,
                 object_address: 0x102,
                 object_high_table: true,
                 object_second: true,
@@ -4184,6 +4222,110 @@ mod coverage_checks {
         assert_eq!(actual.words, expected.words);
         assert_eq!(actual.colors, expected.colors);
         assert_eq!(actual.objects, expected.objects);
+    }
+
+    // Movies cannot author divergent delivered controls or written OAM selection at portable reopening.
+    #[cfg_attr(test, test)]
+    fn scene_component_preserves_schema3_delivery_effective_and_written_selection() {
+        let (requirements, start, media) = scene_component_fixture();
+        let opened = sd::DisplayComponent::open(
+            ss::ValidatedDisplayStart::construct(start, media, &requirements).unwrap(),
+        )
+        .unwrap();
+        let checkpoint = opened.display.checkpoint().unwrap();
+        let (description, _) = checkpoint.into_start_description(opened.metadata);
+        let state = description.display.as_ref().unwrap();
+        assert_eq!(
+            state.delivery,
+            ds::DisplayDeliveryDescription {
+                horizontal_position: 37,
+                vertical_position: 241,
+                beam_frames: 0x1234_5678,
+                horizontal_irq_enabled: true,
+                vertical_irq_enabled: false,
+                nmi_enabled: true,
+                nmi_wanted: false,
+                irq_wanted: true,
+                in_nmi: false,
+                in_irq: true,
+                in_vblank: true,
+                automatic_input_read: true,
+                automatic_input_timer: 0x4567,
+                counter_latch_gate: true,
+                raster_suppressed: false,
+            }
+        );
+        assert_eq!(
+            state.effective,
+            ds::EffectiveDisplayDescription {
+                background3_map_words: 0x2c00,
+                background3_map_wider: true,
+                background3_map_higher: false,
+                color_clip: 2,
+                color_prevent_math: 1,
+                color_add_subscreen: true,
+                direct_color: true,
+                color_math_enabled: [true, false, true, false, true, false],
+                color_subtract: true,
+                color_half: false,
+                main_layers: 0xa4,
+                forced_blank: true,
+            }
+        );
+        assert_eq!(
+            (
+                state.controls.screens[2],
+                state.controls.previous_background3_map,
+                state.controls.color_selection,
+                state.controls.previous_color_selection,
+                state.controls.next_color_selection,
+                state.controls.color_math,
+                state.controls.previous_color_math,
+                state.controls.next_color_math
+            ),
+            (0, 0x35, 0, 0, 0xb2, 0, 0, 0xa5)
+        );
+        assert_eq!(
+            (
+                state.latches.object_written_address,
+                state.latches.object_written_high_table,
+                state.latches.object_address,
+                state.latches.object_high_table
+            ),
+            (0x101, false, 0x102, true)
+        );
+        assert_eq!(
+            (state.interrupt.vertical, state.interrupt.horizontal),
+            (0, 0)
+        );
+        assert_eq!((state.hdma.hdma_timer, state.hdma.dma_timer), (17, 19));
+    }
+
+    // Movies cannot reach schema3 rejection of old starts or malformed effective color selectors.
+    #[cfg_attr(test, test)]
+    fn scene_component_rejects_schema2_and_invalid_effective_color_selectors() {
+        for case in 0..4 {
+            let (mut requirements, mut start, media) = scene_component_fixture();
+            match case {
+                0 => start.identity.as_mut().unwrap().schema = 2,
+                1 => {
+                    start.identity.as_mut().unwrap().schema = 2;
+                    requirements.schema = 2;
+                }
+                2 => start.display.as_mut().unwrap().effective.color_clip = 4,
+                _ => start.display.as_mut().unwrap().effective.color_prevent_math = 4,
+            }
+            let error = ss::ValidatedDisplayStart::construct(start, media, &requirements)
+                .err()
+                .unwrap();
+            match case {
+                0 | 1 => assert!(matches!(error, ss::StartError::Schema)),
+                _ => assert!(matches!(
+                    error,
+                    ss::StartError::Display(ds::DisplayError::Geometry)
+                )),
+            }
+        }
     }
 
     // Movies cannot reach authored portable component open/reopen or final resident history.

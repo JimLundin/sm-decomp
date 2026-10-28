@@ -20,6 +20,8 @@ pub(crate) trait SettlementHost {
 /// No CPU/APU work occurs between the original four events. In particular,
 /// the row's raster precedes HDMA, and IRQ follows wrap even on the final row.
 /// The host owns row-start/vblank/latch effects at their actual event positions.
+/// A preexisting wanted flag takes zero rows after reset; only that selected
+/// wanted flag is cleared after success, leaving NMI status intact.
 pub(crate) fn settle<H: SettlementHost>(host: &mut H) -> Result<(), H::Error> {
     host.reset_beam();
     while !host.nmi_wanted() {

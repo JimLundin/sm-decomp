@@ -225,6 +225,27 @@ are identical to SOURCE07. Preserve original unit/replay/capture execution attri
 final library/DLL guards and new native/affected atmospheric checks bind edbe402d.
 This component qualification does not close the full owned playable slice.
 
+### Qualified SOURCE08 delivery and settlement component
+
+SOURCE08 delivery/settlement component and its native verifier successor are qualified.
+Final source dfdd6120 / DLL 7fa1a335 shares owned HDMA channels, delivery state and
+frame settlement. Actual G ownership and full initial/selected-state adoption remain open.
+Original SOURCE08 source 959bd651 / DLL 8049aa51 retains 48 units and all 26 rows:
+21,784 selected + 29,672 setup + 147,273 fresh captures + 334 initialized = 199,063 comparisons / 0.
+Full Morph 1,200 and BOTH independent Kago 14,350 setups pass; genuine initialized 329+5,
+fresh save 55,650 and resumed reserve 91,623 retain their actual source/input provenance.
+Final library 38.541s / direct DLL 91.356s, format/source/native guards pass; warnings 200/0 added.
+Native 100-104 retain original SOURCE08; final 105/106 pass independent literal register,
+cached/per-layer routing, counter/latch and live/written OAM checks. No old unit/runtime repeat.
+All 69 raw codec contributors are identical; codec c7f30cadd1121f08 binds 1,314,039 raw /
+1,303,202 normalized bytes. New production retains genuine new-codec checkpoint lineage.
+Net +747 production / +319 verification / +2 unsafe-containing / legacy 0 / support +2.
+Safety/state/schema and checks grow code; the unsafe metric adds two forbid attributes.
+Raw/backend retirement is 0; no savings claim.
+Next: separately frozen SOURCE09 atmospheric semantic producer and guarded verifier adaptation;
+actual G/room/raster/B-bus/adoption, complete media/history/Reference/audio and eight slice groups remain.
+Preserve original SOURCE07/SOURCE08 receipts and all frozen SOURCE09 predecessors.
+
 ### Full owned playable slice #20 remains open
 
 [Four accepted interface decisions](https://github.com/JimLundin/sm-decomp/issues/20#issuecomment-6449486236)

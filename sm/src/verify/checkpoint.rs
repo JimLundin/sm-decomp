@@ -94,6 +94,8 @@ fn compatibility() -> u64 {
         include_str!("../game/scene/hdma_sources.rs"),
         include_str!("../game/scene/hdma.rs"),
         include_str!("../game/scene/irq.rs"),
+        include_str!("../game/scene/delivery.rs"),
+        include_str!("../game/scene/owned_hdma.rs"),
         include_str!("../game/scene/objects.rs"),
         include_str!("../game/scene/atmosphere.rs"),
         include_str!("../game/scene/mod.rs"),

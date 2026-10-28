@@ -10,6 +10,7 @@ use super::records::{
 use super::state::{
     ByteLanes, DisplayError, DisplayPhase, DisplayState, Mode7Target, TileTransfer, TransferSource,
 };
+use super::{delivery, irq, owned_hdma};
 
 pub(crate) trait RefreshHost {
     fn pending_nmi(&self) -> u8;
@@ -200,6 +201,65 @@ impl DisplayImage {
     }
 }
 
+/// Synchronous room work uses the same current display and resident image.
+/// Native bridges must export/adopt at their actual boundary; no second owner
+/// or invented room result is supplied by the display component.
+pub(crate) trait RoomEffects {
+    fn follow_transition(
+        &mut self,
+        state: &mut DisplayState,
+        image: &mut DisplayImage,
+        media: &mut Arc<SceneMedia>,
+    ) -> Result<(), DisplayError>;
+}
+
+/// Actual G raster and byte destinations are required integration inputs.
+/// Raster updates the real status and immutable row history before HDMA; it
+/// may extend current immutable media while earlier line leases remain valid.
+pub(crate) trait SettlementEffects: RoomEffects + owned_hdma::Destinations {
+    fn raster_row(
+        &mut self,
+        state: &mut DisplayState,
+        image: &mut DisplayImage,
+        media: &mut Arc<SceneMedia>,
+        row: u16,
+    ) -> Result<(), DisplayError>;
+}
+
+struct DisplayEffects<'a, E> {
+    image: &'a mut DisplayImage,
+    media: &'a mut Arc<SceneMedia>,
+    content: &'a HdmaCatalog,
+    effects: &'a mut E,
+}
+
+impl<E: RoomEffects> irq::OwnedIrqEffects for DisplayEffects<'_, E> {
+    fn follow_transition(&mut self, state: &mut DisplayState) -> Result<(), DisplayError> {
+        self.effects
+            .follow_transition(state, self.image, self.media)
+    }
+}
+
+impl<E: SettlementEffects> delivery::Effects for DisplayEffects<'_, E> {
+    fn initialize_hdma(&mut self, state: &mut DisplayState) -> Result<(), DisplayError> {
+        owned_hdma::initialize(state, self.image, self.content, self.effects)
+    }
+    fn step_hdma(&mut self, state: &mut DisplayState) -> Result<(), DisplayError> {
+        owned_hdma::step(state, self.image, self.content, self.effects)
+    }
+    fn raster_row(&mut self, state: &mut DisplayState, row: u16) -> Result<(), DisplayError> {
+        self.effects.raster_row(state, self.image, self.media, row)
+    }
+}
+
+#[derive(Clone, Copy)]
+pub(crate) enum DeliveryStatus {
+    Nmi,
+    Irq,
+    Beam,
+    CounterGate,
+}
+
 pub(crate) struct OwnedDisplay {
     pub(crate) state: DisplayState,
     image: DisplayImage,
@@ -309,6 +369,91 @@ impl OwnedDisplay {
             return Err(DisplayError::Phase);
         }
         self.state.phase = DisplayPhase::Settling;
+        Ok(())
+    }
+    /// Executes the actual owned beam/IRQ/channel interval. Required G effects
+    /// retain their real raster, room and destination behavior at each call.
+    pub(crate) fn settle(
+        &mut self,
+        effects: &mut impl SettlementEffects,
+    ) -> Result<(), DisplayError> {
+        delivery::settle_owned(
+            &mut self.state,
+            &mut DisplayEffects {
+                image: &mut self.image,
+                media: &mut self.media,
+                content: &self.hdma_content,
+                effects,
+            },
+        )
+    }
+    pub(crate) fn disable_irq(&mut self) -> Result<(), DisplayError> {
+        if self.state.phase == DisplayPhase::Failed {
+            return Err(DisplayError::Poisoned);
+        }
+        irq::owned_disable(&mut self.state);
+        Ok(())
+    }
+    pub(crate) fn enable_irq(
+        &mut self,
+        immediate: bool,
+        effects: &mut impl RoomEffects,
+    ) -> Result<(), DisplayError> {
+        if self.state.phase == DisplayPhase::Failed {
+            return Err(DisplayError::Poisoned);
+        }
+        irq::owned_enable(
+            &mut self.state,
+            immediate,
+            &mut DisplayEffects {
+                image: &mut self.image,
+                media: &mut self.media,
+                content: &self.hdma_content,
+                effects,
+            },
+        )
+    }
+    pub(crate) fn advance_irq(
+        &mut self,
+        effects: &mut impl RoomEffects,
+    ) -> Result<(), DisplayError> {
+        if self.state.phase == DisplayPhase::Failed {
+            return Err(DisplayError::Poisoned);
+        }
+        let mut interval = delivery::FaultGuard::new(&mut self.state);
+        let result = irq::owned_advance(
+            interval.state(),
+            &mut DisplayEffects {
+                image: &mut self.image,
+                media: &mut self.media,
+                content: &self.hdma_content,
+                effects,
+            },
+        );
+        if result.is_ok() {
+            interval.disarm();
+        }
+        result
+    }
+    pub(crate) fn read_delivery_status(
+        &mut self,
+        status: DeliveryStatus,
+    ) -> Result<u8, DisplayError> {
+        if self.state.phase == DisplayPhase::Failed {
+            return Err(DisplayError::Poisoned);
+        }
+        Ok(match status {
+            DeliveryStatus::Nmi => delivery::nmi_status(&self.state),
+            DeliveryStatus::Irq => delivery::irq_status(&mut self.state),
+            DeliveryStatus::Beam => delivery::beam_status(&self.state),
+            DeliveryStatus::CounterGate => delivery::counter_gate_status(&self.state),
+        })
+    }
+    pub(crate) fn write_counter_gate(&mut self, value: u8) -> Result<(), DisplayError> {
+        if self.state.phase == DisplayPhase::Failed {
+            return Err(DisplayError::Poisoned);
+        }
+        delivery::counter_gate(&mut self.state, value);
         Ok(())
     }
     /// Full line history is supplied by the actual G late-settlement owner.
@@ -513,10 +658,25 @@ impl RefreshHost for OwnedDisplay {
         Ok(())
     }
     fn controls(&mut self) -> Result<(), DisplayError> {
-        // Mirrors have a separate lifetime from staged main/color decisions.
+        // Delivered state and gameplay mirrors have distinct source lifetimes.
+        let enabled = self.state.controls.nmi_enable;
+        delivery::interrupt_enable(&mut self.state, enabled);
+        self.state.effective.forced_blank = self.state.controls.brightness & 0x80 != 0;
+        let background3 = self.state.controls.screens[2];
+        irq::deliver_output(&mut self.state, irq::Output::Background3Map, background3);
+        // Native upload publishes gameplay_TM before delivering current TM.
         self.state.controls.previous_main_layers = self.state.controls.main_layers;
-        self.state.controls.previous_color_selection = self.state.controls.color_selection;
-        self.state.controls.previous_color_math = self.state.controls.color_math;
+        let main = self.state.controls.main_layers;
+        irq::deliver_output(&mut self.state, irq::Output::MainLayers, main);
+        let selection = self.state.controls.color_selection;
+        irq::deliver_output(&mut self.state, irq::Output::ColorWindow, selection);
+        let math = self.state.controls.color_math;
+        irq::deliver_output(&mut self.state, irq::Output::ColorArithmetic, math);
+        self.state.controls.previous_color_selection = self.state.controls.next_color_selection;
+        self.state.controls.previous_color_math = self.state.controls.next_color_math;
+        // These current SETINI flags latch later at overscan/vblank source points.
+        self.state.raster.interlaced = self.state.controls.geometry & 1 != 0;
+        self.state.raster.overscan = self.state.controls.geometry & 4 != 0;
         self.state.controls.committed_fake_mode = self.state.controls.fake_mode;
         Ok(())
     }

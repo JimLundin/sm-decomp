@@ -12,7 +12,7 @@ use super::{
 };
 use std::sync::Arc;
 
-pub const DISPLAY_START_SCHEMA: u16 = 2;
+pub const DISPLAY_START_SCHEMA: u16 = 3;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct StartIdentity {

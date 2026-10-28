@@ -50,11 +50,10 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current Scene/display source edbe402d: production 122,875; legacy 17,793;
-unsafe-containing 2,619; verification 46,621. Final incremental no-default
-library retains 200 warnings with zero added identities. Actual final DLL
-and source/native guards pass; original 46 units retain SOURCE07 attribution.
-All 67 raw codec contributors are identical across the verifier successors.
+Current SOURCE08 component source dfdd6120: production 123,622; legacy 17,793;
+unsafe-containing 2,621; verification 46,940. Final library/DLL/source/native
+guards pass with 200 unchanged warnings. Original source 959bd651 retains 48
+units and 199,063 comparisons/0; final 105/106 and identical 69-codec transfer pass.
 
 Scene/display #20 component and native sharing cohort is independently reviewed and qualified.
 Final source edbe402d / DLL d02d370b binds typed display/schema, native OAM, HDMA,
@@ -74,6 +73,25 @@ State/schema/adapters and independent checks grow code; raw/backend retirement 0
 Next: separately frozen production SOURCE08 delivery-state/owned-HDMA/settlement integration;
 actual G ownership, selected-state adoption, semantic media/history, initial Scene/Reference/audio
 and all eight full-slice proof groups remain required. Preserve all frozen predecessors.
+
+SOURCE08 delivery/settlement component and its native verifier successor are qualified.
+Final source dfdd6120 / DLL 7fa1a335 shares owned HDMA channels, delivery state and
+frame settlement. Actual G ownership and full initial/selected-state adoption remain open.
+Original SOURCE08 source 959bd651 / DLL 8049aa51 retains 48 units and all 26 rows:
+21,784 selected + 29,672 setup + 147,273 fresh captures + 334 initialized = 199,063 comparisons / 0.
+Full Morph 1,200 and BOTH independent Kago 14,350 setups pass; genuine initialized 329+5,
+fresh save 55,650 and resumed reserve 91,623 retain their actual source/input provenance.
+Final library 38.541s / direct DLL 91.356s, format/source/native guards pass; warnings 200/0 added.
+Native 100-104 retain original SOURCE08; final 105/106 pass independent literal register,
+cached/per-layer routing, counter/latch and live/written OAM checks. No old unit/runtime repeat.
+All 69 raw codec contributors are identical; codec c7f30cadd1121f08 binds 1,314,039 raw /
+1,303,202 normalized bytes. New production retains genuine new-codec checkpoint lineage.
+Net +747 production / +319 verification / +2 unsafe-containing / legacy 0 / support +2.
+Safety/state/schema and checks grow code; the unsafe metric adds two forbid attributes.
+Raw/backend retirement is 0; no savings claim.
+Next: separately frozen SOURCE09 atmospheric semantic producer and guarded verifier adaptation;
+actual G/room/raster/B-bus/adoption, complete media/history/Reference/audio and eight slice groups remain.
+Preserve original SOURCE07/SOURCE08 receipts and all frozen SOURCE09 predecessors.
 
 Prepared room cohort9787 qualifies Levels/Tiles/Palette/Background/Fx catalogs and
 application room-pack selection before native startup. Selected Windows desktop ROM

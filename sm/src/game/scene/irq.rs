@@ -1,7 +1,7 @@
 //! Ordered scanline interrupt decisions over the actual owned display authority.
 #![forbid(unsafe_code)]
 
-use super::state::DisplayState;
+use super::state::{DisplayError, DisplayState};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Control {
@@ -87,6 +87,128 @@ pub(crate) trait Host: Controls {
     fn read_mirror(&mut self, field: Mirror) -> u8;
     fn write_display(&mut self, field: Output, value: u8) -> Result<(), Self::Error>;
     fn follow_transition(&mut self) -> Result<(), Self::Error>;
+}
+
+/// The real G room capability polls once synchronously using this same owner.
+/// Its completed display/room effects survive a returned fault or unwinding.
+pub(crate) trait OwnedIrqEffects {
+    fn follow_transition(&mut self, state: &mut DisplayState) -> Result<(), DisplayError>;
+}
+
+struct OwnedControls<'a> {
+    state: &'a mut DisplayState,
+}
+impl Controls for OwnedControls<'_> {
+    fn read_control(&mut self, field: Control) -> u16 {
+        field.read(self.state)
+    }
+    fn write_control(&mut self, field: Store, value: u16) {
+        field.write(self.state, value);
+    }
+}
+
+struct OwnedHost<'a, E> {
+    controls: OwnedControls<'a>,
+    effects: &'a mut E,
+}
+impl<E> Controls for OwnedHost<'_, E> {
+    fn read_control(&mut self, field: Control) -> u16 {
+        self.controls.read_control(field)
+    }
+    fn write_control(&mut self, field: Store, value: u16) {
+        self.controls.write_control(field, value);
+    }
+}
+impl<E: OwnedIrqEffects> Host for OwnedHost<'_, E> {
+    type Error = DisplayError;
+
+    fn read_mirror(&mut self, field: Mirror) -> u8 {
+        let controls = &self.controls.state.controls;
+        match field {
+            Mirror::Background3Map => controls.previous_background3_map,
+            Mirror::ColorWindow => controls.previous_color_selection,
+            Mirror::ColorArithmetic => controls.previous_color_math,
+            Mirror::MainLayers => controls.previous_main_layers,
+            Mirror::InterruptEnable => controls.nmi_enable,
+        }
+    }
+    fn write_display(&mut self, field: Output, value: u8) -> Result<(), DisplayError> {
+        deliver_output(self.controls.state, field, value);
+        Ok(())
+    }
+    fn follow_transition(&mut self) -> Result<(), DisplayError> {
+        self.effects.follow_transition(self.controls.state)
+    }
+}
+
+/// Apply one actual delivered byte. Staged mirrors are never rewritten here.
+/// Timing byte publications retain the native nine-bit masking and order.
+pub(crate) fn deliver_output(state: &mut DisplayState, field: Output, value: u8) {
+    match field {
+        Output::Background3Map => {
+            state.effective.background3_map_wider = value & 1 != 0;
+            state.effective.background3_map_higher = value & 2 != 0;
+            state.effective.background3_map_words = u16::from(value & 0xfc) << 8;
+        }
+        Output::ColorWindow => {
+            state.effective.direct_color = value & 1 != 0;
+            state.effective.color_add_subscreen = value & 2 != 0;
+            state.effective.color_prevent_math = (value >> 4) & 3;
+            state.effective.color_clip = (value >> 6) & 3;
+        }
+        Output::ColorArithmetic => {
+            state.effective.color_subtract = value & 0x80 != 0;
+            state.effective.color_half = value & 0x40 != 0;
+            for (layer, enabled) in state.effective.color_math_enabled.iter_mut().enumerate() {
+                *enabled = value & (1 << layer) != 0;
+            }
+        }
+        Output::MainLayers => state.effective.main_layers = value,
+        Output::VerticalLow => {
+            state.interrupt.vertical = (state.interrupt.vertical & 0x100) | u16::from(value);
+        }
+        Output::VerticalHigh => {
+            state.interrupt.vertical =
+                (state.interrupt.vertical & 0xff) | (u16::from(value & 1) << 8);
+        }
+        Output::HorizontalLow => {
+            state.interrupt.horizontal = (state.interrupt.horizontal & 0x100) | u16::from(value);
+        }
+        Output::HorizontalHigh => {
+            state.interrupt.horizontal =
+                (state.interrupt.horizontal & 0xff) | (u16::from(value & 1) << 8);
+        }
+        Output::InterruptEnable => super::delivery::interrupt_enable(state, value),
+    }
+}
+
+/// Safe disable changes only the existing full staged enable word at84/85.
+pub(crate) fn owned_disable(state: &mut DisplayState) {
+    disable(&mut OwnedControls { state });
+}
+
+pub(crate) fn owned_enable<E: OwnedIrqEffects>(
+    state: &mut DisplayState,
+    immediate: bool,
+    effects: &mut E,
+) -> Result<(), DisplayError> {
+    enable(
+        &mut OwnedHost {
+            controls: OwnedControls { state },
+            effects,
+        },
+        immediate,
+    )
+}
+
+pub(crate) fn owned_advance<E: OwnedIrqEffects>(
+    state: &mut DisplayState,
+    effects: &mut E,
+) -> Result<(), DisplayError> {
+    advance(&mut OwnedHost {
+        controls: OwnedControls { state },
+        effects,
+    })
 }
 
 fn pending(host: &mut impl Controls, fallback: u16) -> u16 {
