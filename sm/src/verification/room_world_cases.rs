@@ -1575,6 +1575,7 @@ type MarkerResult<T> = Result<T, MarkerError>;
 // Movies cannot supply a frozen marker whose first selected tile table fails after publication.
 #[cfg(sm_verify_dll)]
 impl vm_body::Inputs for VerificationMarkerInputs {
+    type BodyTable = vm_body::BodyTable;
     fn knockback(&mut self) -> MarkerResult<u16> {
         Err(MarkerError::Source)
     }
@@ -1627,6 +1628,7 @@ fn verification_marker_position_source(
 // Movies cannot supply authored marker position inputs or fail the first selected tile table lazily.
 #[cfg(sm_verify_dll)]
 impl vm_tiles::Inputs for VerificationMarkerInputs {
+    type Table = vm_tiles::SourceTable;
     fn ceres(&mut self) -> MarkerResult<u16> {
         Ok(0)
     }

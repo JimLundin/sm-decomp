@@ -14,6 +14,10 @@ use crate::c_library::{
     fopen, fprintf, fread, fseek, ftell, memcmp, printf, puts, rewind, snprintf, stderr, time,
 };
 use crate::rtl::{RtlSaveSnapshot, RtlSetupEmuCallbacks};
+
+#[path = "game/session_native_adoption.rs"]
+pub(crate) mod session_native_adoption;
+use crate::game_state::persistent_session::SessionSnapshotPayload;
 use crate::snes::cpu::{cpu_getFlags, cpu_setFlags};
 use crate::snes::snes_other::snes_loadRom;
 use crate::tracing::getProcessorStateCpu;
@@ -167,6 +171,13 @@ struct HookContext<'a, 'host> {
 impl HookContext<'_, '_> {
     fn ram(&self) -> &WorkRam {
         self.host.ram
+    }
+    // Hooks keep the native RAM capability of the enclosing suspended execution.
+    fn compatibility_byte(&self, at: usize) -> u8 {
+        self.host.ram.read_byte(at)
+    }
+    fn compatibility_write_byte(&self, at: usize, byte: u8) {
+        self.host.ram.write_byte(at, byte);
     }
     fn cpu(&self) -> *mut Cpu {
         self.backend
@@ -428,7 +439,12 @@ fn brightness_cache_is_valid(ppu: &Ppu) -> bool {
 }
 // Preserve the existing comparison exceptions in their original copy order.
 // These ranges belong to disjoint snapshot RAM fields, not live RAM.
-fn normalize_snapshot_ram(mine: &mut [u8; 0x20000], theirs: &mut [u8; 0x20000]) {
+fn normalize_snapshot_ram(
+    mine: &mut [u8; 0x20000],
+    theirs: &mut [u8; 0x20000],
+    session_mine: &mut SessionSnapshotPayload,
+    session_theirs: &mut SessionSnapshotPayload,
+) -> Result<(), String> {
     enum Source {
         Mine,
         Theirs,
@@ -471,10 +487,21 @@ fn normalize_snapshot_ram(mine: &mut [u8; 0x20000], theirs: &mut [u8; 0x20000]) 
         (Mine, 0xf37a..0xf380),
     ] {
         match source {
-            Mine => theirs[range.clone()].copy_from_slice(&mine[range]),
-            Theirs => mine[range.clone()].copy_from_slice(&theirs[range]),
+            Mine => {
+                theirs[range.clone()].copy_from_slice(&mine[range.clone()]);
+                session_theirs
+                    .normalize_from(session_mine, range)
+                    .map_err(|error| format!("{error:?}"))?;
+            }
+            Theirs => {
+                mine[range.clone()].copy_from_slice(&theirs[range.clone()]);
+                session_mine
+                    .normalize_from(session_theirs, range)
+                    .map_err(|error| format!("{error:?}"))?;
+            }
         }
     }
+    Ok(())
 }
 unsafe fn compare_snapshot_bytes(
     mine: &[u8],
@@ -536,6 +563,8 @@ unsafe fn VerifySnapshotsEq(
     a: *mut Snapshot,
     prev: *mut Snapshot,
     game: &mut Game,
+    session_mine: &mut SessionSnapshotPayload,
+    session_theirs: &mut SessionSnapshotPayload,
 ) {
     unsafe {
         // Report every mismatch so replay failure sequences can be compared.
@@ -715,7 +744,12 @@ unsafe fn VerifySnapshotsEq(
                 }
             }
         }
-        normalize_snapshot_ram(&mut (*b).ram, &mut (*a).ram);
+        if let Err(error) =
+            normalize_snapshot_ram(&mut (*b).ram, &mut (*a).ram, session_mine, session_theirs)
+        {
+            game.revoke_session_authority();
+            panic!("Session comparison normalization rejected: {error}");
+        }
         compare_snapshot_bytes(
             &(*b).ram,
             &(*a).ram,
@@ -929,7 +963,15 @@ unsafe fn RestoreSnapshot(
         ppu.objPixelBufferXX[..19].copy_from_slice(&s.ppu.objPixelBufferXX[..19]);
     }
 }
-pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut Game) -> i32 {
+pub unsafe fn RunAsmCode(
+    pc: u32,
+    a: u16,
+    x: u16,
+    y: u16,
+    flags: i32,
+    native_game: &mut Game,
+) -> i32 {
+    let game = &mut *native_game;
     unsafe {
         assert!(
             game.supports_legacy_persistence(),
@@ -984,6 +1026,8 @@ pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut
                 mutation
                     .finish_current()
                     .expect("Samus CPU adoption rejected");
+                session_native_adoption::reconcile_current(native_game)
+                    .expect("Session native result adoption rejected");
                 result
             }
             Err(panic) => std::panic::resume_unwind(panic),
@@ -1115,7 +1159,8 @@ pub unsafe fn RunCpuUntilPC(pc1: u32, pc2: u32, game: &mut Game) -> u32 {
         }
     }
 }
-pub unsafe fn RunOneFrameOfGame_Emulated(game: &mut Game) {
+pub unsafe fn RunOneFrameOfGame_Emulated(native_game: &mut Game) {
+    let game = &mut *native_game;
     unsafe {
         if !game.supports_legacy_persistence() {
             eprintln!(
@@ -1144,9 +1189,12 @@ pub unsafe fn RunOneFrameOfGame_Emulated(game: &mut Game) {
         mutation
             .finish_current()
             .expect("Samus CPU adoption rejected");
+        session_native_adoption::reconcile_current(native_game)
+            .expect("Session native result adoption rejected");
     }
 }
-pub unsafe fn DrawFrameToPpu(game: &mut Game) {
+pub unsafe fn DrawFrameToPpu(native_game: &mut Game) {
+    let game = &mut *native_game;
     // This local capability is constructed only under this function's existing
     // exclusive, live-backend contract. No safe caller can construct it.
     struct NativeSettlement<'a>(&'a mut Game);
@@ -1198,6 +1246,8 @@ pub unsafe fn DrawFrameToPpu(game: &mut Game) {
     mutation
         .finish_current()
         .expect("Samus settlement adoption rejected");
+    session_native_adoption::reconcile_current(native_game)
+        .expect("Session native result adoption rejected");
 }
 pub unsafe fn SaveBugSnapshot(game: &mut Game) {
     unsafe {
@@ -1258,7 +1308,8 @@ unsafe fn report_first_verify_failure(game: &mut Game) {
         eprintln!("RAM: {differing_bytes} differing bytes (showing at most 64)");
     }
 }
-pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
+pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
+    let game = &mut *native_game;
     unsafe {
         if !game.supports_legacy_persistence() {
             eprintln!("RunOneFrameOfGame_Both: CPU authority is unavailable for a prepared world");
@@ -1280,6 +1331,9 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
         }
         game.actor_snapshots.before = Some(game.capture_actor_snapshot());
         let samus_before = game.capture_samus_snapshot();
+        let session_before =
+            session_native_adoption::capture(game).expect("Session before capture rejected");
+        let mut selected_session = None;
         let queue_before = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
         let apu_before = queue_before.pending;
         let apu_queue_before = queue_before.size;
@@ -1300,6 +1354,8 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
             }
             game.actor_snapshots.theirs = Some(game.capture_actor_snapshot());
             let samus_theirs = game.capture_samus_snapshot();
+            let mut session_theirs = session_native_adoption::capture(game)
+                .expect("Session oracle result capture rejected");
             let queue_theirs = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
             let apu_theirs = queue_theirs.pending;
             queue_before.restore(game);
@@ -1331,6 +1387,8 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
                     .finish(samus_restore)
                     .expect("Samus before adoption rejected");
             }
+            session_native_adoption::adopt(game, &session_before)
+                .expect("Session before restore rejected");
             (*game.g_snes).runningWhichVersion = 2;
             gameplay::advance(Entry::Frame, game);
             DrawFrameToPpu(game);
@@ -1344,12 +1402,16 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
             }
             game.actor_snapshots.mine = Some(game.capture_actor_snapshot());
             let _samus_mine = game.capture_samus_snapshot();
+            let mut session_mine = session_native_adoption::capture(game)
+                .expect("Session Rust result capture rejected");
             (*game.g_snes).runningWhichVersion = 0xff;
             VerifySnapshotsEq(
                 &raw mut *game.g_snapshot_mine,
                 &raw mut *game.g_snapshot_theirs,
                 &raw mut *game.g_snapshot_before,
                 game,
+                &mut session_mine,
+                &mut session_theirs,
             );
             // Check commands before queue consumption/driver latching. The patched
             // ROM skips uploads; mine supplies the single runtime upload/reset.
@@ -1428,6 +1490,8 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
                         .finish(samus_restore)
                         .expect("Samus recovery adoption rejected");
                 }
+                session_native_adoption::adopt(game, &session_before)
+                    .expect("Session recovery before restore rejected");
                 if game.g_use_my_apu_code {
                     game.g_snapshot_mine.player.restore(game.g_spc_player);
                 } else {
@@ -1445,11 +1509,14 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
                 RunOneFrameOfGame_Emulated(game);
                 DrawFrameToPpu(game);
                 let _samus_recovery = game.capture_samus_snapshot();
+                let session_recovery = session_native_adoption::capture(game)
+                    .expect("Session rerun result capture rejected");
                 if game.g_use_my_apu_code {
                     game.g_snapshot_mine.player.restore(game.g_spc_player);
                 }
                 let queue_rerun = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
                 queue_mine.select_runtime(queue_rerun, game);
+                selected_session = Some(session_recovery);
                 break;
             } else {
                 (*game.g_snes).ppu = (*game.g_snes).snes_ppu;
@@ -1487,9 +1554,11 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
                     }
                     game.g_snapshot_theirs.player.restore(game.g_spc_player);
                 }
+                selected_session = Some(session_theirs);
                 break;
             }
         }
+        let mut selected_session = selected_session.expect("selected Session result missing");
         (*game.g_snes).ppu = if game.g_other_image as i32 != 0 {
             (*game.g_snes).my_ppu
         } else {
@@ -1500,6 +1569,9 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
             (*(*game.g_snes).cpu).k = 0x80;
             (*(*game.g_snes).cpu).pc = 0x8459;
             game.ram().write_byte(0x611, 3);
+            selected_session
+                .final_continuation(0x611, 3)
+                .expect("Session final continuation rejected");
         }
         if word!(game.menu_index) & 0xff00 != 0 {
             printf(c"MENU INDEX TOO BIG!\n".as_ptr());
@@ -1514,9 +1586,12 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
         frame_mutation
             .finish_current()
             .expect("Samus normalized adoption rejected");
+        session_native_adoption::adopt(native_game, &selected_session)
+            .expect("Session normalized selected adoption rejected");
     }
 }
-pub unsafe fn RtlRunFrameCompare(input: u16, run_what: i32, game: &mut Game) {
+pub unsafe fn RtlRunFrameCompare(input: u16, run_what: i32, native_game: &mut Game) {
+    let game = &mut *native_game;
     unsafe {
         if !game.supports_legacy_persistence() && u32::from(game.g_runmode) != RM_MINE {
             eprintln!("RtlRunFrameCompare: CPU authority is unavailable for a prepared world");
@@ -1543,6 +1618,8 @@ pub unsafe fn RtlRunFrameCompare(input: u16, run_what: i32, game: &mut Game) {
         mutation
             .finish_current()
             .expect("Samus frame adoption rejected");
+        session_native_adoption::reconcile_current(native_game)
+            .expect("Session native result adoption rejected");
     }
 }
 

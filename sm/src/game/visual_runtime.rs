@@ -654,6 +654,16 @@ impl crate::game::scene::atmosphere::Host for Runtime<'_> {
 
 impl visual_host::Effects for Runtime<'_> {
     fn draw_samus_sprite(&mut self, index: u16, x: u16, y: u16) {
+        if self.has_owned_display() {
+            let producer = self
+                .session()
+                .presentation
+                .publications()
+                .expect("Samus publications")
+                .body;
+            self.draw_owned_samus(producer, index, (x, y));
+            return;
+        }
         // Retain the complete native export/action/import interval, including null maps.
         self.foreign(|game| sprite_output::samus(index, (x, y), game, &mut sprite_output::Native));
     }
@@ -3349,15 +3359,23 @@ pub(crate) fn project_cinematic_point(
     point: crate::types::Point16U,
     game: &mut Game,
 ) -> crate::types::Point16U {
-    let x = point.x.wrapping_sub(word!(game.reg_M7X));
-    let y = word!(game.reg_M7Y).wrapping_sub(point.y);
-    let projected_x = scaled_cinematic_value(x, word!(game.reg_M7A))
-        .wrapping_add(scaled_cinematic_value(word!(game.reg_M7B), y));
-    let projected_y = scaled_cinematic_value(word!(game.reg_M7C), x)
-        .wrapping_add(scaled_cinematic_value(word!(game.reg_M7A), y));
+    project_cinematic_point_reads(point, |at| {
+        crate::game::session_encoding::read(&|at| game.ram().read_byte(at), at)
+    })
+}
+pub(crate) fn project_cinematic_point_reads(
+    point: crate::types::Point16U,
+    mut read: impl FnMut(usize) -> u16,
+) -> crate::types::Point16U {
+    let x = point.x.wrapping_sub(read(0x80));
+    let y = read(0x82).wrapping_sub(point.y);
+    let projected_x =
+        scaled_cinematic_value(x, read(0x78)).wrapping_add(scaled_cinematic_value(read(0x7a), y));
+    let projected_y =
+        scaled_cinematic_value(read(0x7c), x).wrapping_add(scaled_cinematic_value(read(0x78), y));
     crate::types::Point16U {
-        x: projected_x.wrapping_add(word!(game.reg_M7X)),
-        y: word!(game.reg_M7Y).wrapping_sub(projected_y),
+        x: projected_x.wrapping_add(read(0x80)),
+        y: read(0x82).wrapping_sub(projected_y),
     }
 }
 

@@ -176,7 +176,7 @@ impl ResidentDisplayDescription {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub(crate) struct DisplayImage {
     pub(crate) image: MediaRef,
     pub(crate) palette: MediaRef,
@@ -290,6 +290,7 @@ pub(crate) enum DeliveryStatus {
     CounterGate,
 }
 
+#[derive(Clone, Debug, PartialEq)]
 pub(crate) struct OwnedDisplay {
     pub(crate) state: DisplayState,
     image: DisplayImage,
@@ -344,6 +345,9 @@ impl OwnedDisplay {
     }
     pub(crate) fn committed(&self) -> &Scene {
         &self.committed
+    }
+    pub(crate) fn media(&self) -> &Arc<SceneMedia> {
+        &self.media
     }
     pub(crate) fn image(&self) -> &DisplayImage {
         &self.image

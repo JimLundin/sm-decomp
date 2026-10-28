@@ -98,8 +98,6 @@ pub(super) struct ActorGraphics {
 }
 #[derive(Clone, Debug, PartialEq)]
 pub(super) struct ActorDrawing {
-    pub(super) queued_indices: [u16; 114],
-    pub(super) queue_sizes: [u16; 8],
     pub(super) hook_address: [u8; 4],
     pub(super) hook_work: [u16; 3],
     pub(super) tilemap_size: u16,
@@ -108,8 +106,6 @@ pub(super) struct ActorDrawing {
 impl Default for ActorDrawing {
     fn default() -> Self {
         Self {
-            queued_indices: [0; 114],
-            queue_sizes: [0; 8],
             hook_address: [0; 4],
             hook_work: [0; 3],
             tilemap_size: 0,

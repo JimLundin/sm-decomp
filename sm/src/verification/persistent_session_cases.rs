@@ -1,0 +1,231 @@
+//! Movies cannot replace a prepared Session with independently supplied Native content.
+#![cfg(sm_verify_dll)]
+#![forbid(unsafe_code)]
+
+use crate::game::{
+    external_inputs::ExternalInputs,
+    scene::{
+        records as sc,
+        samus_body::MarkerPublication,
+        samus_content::ContentDescription,
+        start as ss,
+        state::{DisplayError, TransferSource},
+    },
+    session::Session,
+};
+use crate::game_state::{
+    GameOwner, PreparedSamusBinding, SamusAuthority, SamusBindingDescription, SamusExecution,
+    persistent_session::{
+        ActorQueueProjection, SamusPublications, SessionStartDescription, SessionStartRequirements,
+        SuppliedSessionStart,
+    },
+};
+use crate::{samus_content_binding_cases as content, samus_game_binding_cases as binding};
+use std::sync::Arc;
+
+fn roles(
+    mut roles: ContentDescription,
+    gameplay: [u8; 32],
+    media: sc::Revision,
+) -> ContentDescription {
+    roles.gameplay = gameplay;
+    for binding in Arc::make_mut(&mut roles.requests) {
+        binding.request.half.descriptor.revision = media;
+        for transfer in [
+            &mut binding.request.half.first,
+            &mut binding.request.half.second,
+        ] {
+            let TransferSource::Asset(source) = &mut transfer.source else {
+                panic!("fixture asset source")
+            };
+            source.asset.revision = media;
+        }
+    }
+    roles
+}
+
+/// Reuses the host's complete explicit Scene/Reference/input/audio/marker fixture.
+/// Numeric gameplay starts empty; this is a synthetic lifecycle, not a captured game start.
+pub fn persistent_session_native_rebinding_preserves_ready_owner(
+    display_required: ss::DisplayStartRequirements,
+    mut display: ss::DisplayStartDescription,
+    media: Arc<sc::SceneMedia>,
+    marker_variants: Arc<sc::ObjectVariants>,
+) {
+    let reference = |id| sc::AssetRef {
+        id: sc::AssetId(id),
+        revision: media.revision(),
+    };
+    let mut assets = media.assets().cloned().collect::<Vec<_>>();
+    for (id, encoding, count, value) in [
+        (201, sc::TileEncoding::Affine8, 512, 0x21),
+        (202, sc::TileEncoding::Planar4, 1, 0x23),
+    ] {
+        assets.push(sc::SceneAsset::Atlas(sc::TileAtlas {
+            reference: reference(id),
+            encoding,
+            tile_count: count,
+            data: vec![value; count as usize * if id == 201 { 64 } else { 16 }].into(),
+        }));
+    }
+    assets.extend([
+        sc::SceneAsset::Room(reference(203)),
+        sc::SceneAsset::Room(reference(204)),
+    ]);
+    let media = Arc::new(
+        sc::SceneMedia::new(
+            media.revision(),
+            assets,
+            media.palette_incarnations().cloned().collect(),
+            media.compiled_images().cloned().collect(),
+        )
+        .unwrap(),
+    );
+    let scene = display.committed_scene.take().unwrap();
+    display.committed_scene = Some(
+        sc::Scene::new(scene.description().clone(), media.clone())
+            .unwrap()
+            .with_producer_history(Arc::from(scene.producer_history().to_vec()))
+            .unwrap(),
+    );
+    let projection = core::array::from_fn(|layer| ActorQueueProjection {
+        first: layer * 16,
+        words: if layer == 7 { 2 } else { 16 },
+    });
+    let state = display.display.as_mut().unwrap();
+    for (layer, queue) in state.actor_queues.iter_mut().enumerate() {
+        queue
+            .actors
+            .resize(projection[layer].words, 0x400 + layer as u16);
+    }
+    let marker = MarkerPublication {
+        producer: sc::ProducerObjectId(22),
+        variants: marker_variants,
+    };
+    let publications = Arc::new(SamusPublications {
+        body: sc::ProducerObjectId(21),
+        echoes: [None; 4],
+        object_atlases: [(0, [reference(2), reference(15)])].into(),
+        object_first_order: Some(0),
+    });
+    let expected_roles = roles(
+        content::expected(),
+        display_required.gameplay,
+        media.revision(),
+    );
+    let supplied_roles = roles(
+        content::supplied(),
+        display_required.gameplay,
+        media.revision(),
+    );
+    let required = SessionStartRequirements {
+        display: display_required,
+        roles: expected_roles,
+        marker: marker.clone(),
+        actor_queue_projection: projection,
+        samus_publications: publications.clone(),
+    };
+    let owner = GameOwner::new();
+    owner.with(|game| {
+        game.register_rom(binding::image());
+        game.register_native_rom(binding::image());
+    });
+    let mut gameplay = owner.with(|game| Session::with_world(game.world().clone()));
+    *gameplay.presentation.visual_mut() = state.visual.clone();
+    *gameplay.presentation.palette_mut() = state.player_palette.clone();
+    *gameplay.presentation.atmospheric_mut() = state.atmospheric.clone();
+    for (layer, layout) in projection.iter().enumerate() {
+        *gameplay.presentation.actor_size_mut(layer) = state.actor_queues[layer].size;
+        for index in 0..layout.words {
+            *gameplay.presentation.actor_entry_mut(layout.first + index) =
+                state.actor_queues[layer].actors[index];
+        }
+    }
+    let continuation = display.continuation.unwrap();
+    *gameplay.control.primary_mut() = continuation.primary;
+    *gameplay.control.secondary_mut() = continuation.secondary;
+    let mut observations = ExternalInputs::default();
+    observations.frame = state.nmi.frame_word;
+    observations.transitions.frame_gamma = gameplay.player.transitions.frame_gamma;
+    let native = owner.with(|game| {
+        game.prepare_samus_binding(
+            SamusBindingDescription {
+                world: game.world().clone(),
+                roles: supplied_roles.clone(),
+                spritemaps: display.samus_content.as_ref().unwrap().clone(),
+                request_media: media.clone(),
+                execution: SamusExecution::RetainedNative,
+            },
+            &SamusBindingDescription {
+                world: game.world().clone(),
+                roles: required.roles.clone(),
+                spritemaps: required.display.samus_content.clone(),
+                request_media: media.clone(),
+                execution: SamusExecution::RetainedNative,
+            },
+        )
+        .unwrap()
+    });
+    owner
+        .start_supplied_session(SuppliedSessionStart::new(
+            SessionStartDescription {
+                gameplay: Some(gameplay),
+                observations: Some(observations),
+                display,
+                roles: Some(supplied_roles),
+                marker: Some(marker),
+                actor_queue_projection: Some(projection),
+                samus_publications: Some(publications),
+            },
+            media,
+            required,
+        ))
+        .unwrap();
+    assert_ready_owner_rejects_native_binding(&owner, native);
+}
+
+pub(crate) fn assert_ready_owner_rejects_native_binding(
+    owner: &GameOwner,
+    native: PreparedSamusBinding,
+) {
+    let before = owner.checkpoint_session().unwrap().into_start().unwrap();
+    owner.with(|game| {
+        let catalog = game.samus_spritemaps().unwrap().unwrap();
+        let media = game.samus_request_media().unwrap().unwrap();
+        assert_eq!(game.samus_execution(), Ok(Some(SamusExecution::Prepared)));
+        assert_eq!(game.samus_authority(), SamusAuthority::Available);
+        assert_eq!(game.install_samus_binding(native), Err(DisplayError::Phase));
+        assert_eq!(game.samus_execution(), Ok(Some(SamusExecution::Prepared)));
+        assert_eq!(game.samus_authority(), SamusAuthority::Available);
+        assert!(Arc::ptr_eq(
+            &catalog,
+            &game.samus_spritemaps().unwrap().unwrap()
+        ));
+        assert!(Arc::ptr_eq(
+            &media,
+            &game.samus_request_media().unwrap().unwrap()
+        ));
+        assert_eq!(game.begin_samus_mutation().err(), Some(DisplayError::Phase));
+    });
+    let after = owner.checkpoint_session().unwrap().into_start().unwrap();
+    assert_eq!(after.0.gameplay, before.0.gameplay);
+    assert_eq!(after.0.observations, before.0.observations);
+    assert_eq!(after.0.display.identity, before.0.display.identity);
+    assert_eq!(after.0.display.reference, before.0.display.reference);
+    assert_eq!(
+        after.0.display.input_history,
+        before.0.display.input_history
+    );
+    assert_eq!(after.0.display.continuation, before.0.display.continuation);
+    assert_eq!(after.0.display.audio, before.0.display.audio);
+    assert_eq!(after.0.display.display, before.0.display.display);
+    let actual_resident = after.0.display.resident.as_ref().unwrap();
+    let expected_resident = before.0.display.resident.as_ref().unwrap();
+    assert_eq!(actual_resident.image, expected_resident.image);
+    assert_eq!(actual_resident.palette, expected_resident.palette);
+    assert_eq!(actual_resident.words, expected_resident.words);
+    assert_eq!(actual_resident.colors, expected_resident.colors);
+    assert_eq!(actual_resident.objects, expected_resident.objects);
+    assert_eq!(actual_resident.produced, expected_resident.produced);
+    assert!(Arc::ptr_eq(&after.1, &before.1));
+}

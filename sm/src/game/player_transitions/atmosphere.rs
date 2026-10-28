@@ -24,7 +24,7 @@ fn no_fx(h: &mut impl Host) {
         return;
     }
     h.sound(2, 6, 0xe);
-    let suit = h.session().player.palette.suit_index;
+    let suit = h.session().presentation.palette().suit_index;
     if suit & 4 == 0 && matches!(h.session().player.movement_and_facing >> 8, 3 | 20) {
         h.sound(1, 6, 0x30);
     }

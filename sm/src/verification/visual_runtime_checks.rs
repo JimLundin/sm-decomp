@@ -20,9 +20,12 @@ fn check() {
     game.ram().fill(0..game.ram().len(), 0);
     {
         let mut h = Runtime::new(&mut game);
-        h.session_mut().visual.colors[5] = 0x1234;
-        h.session_mut().visual.targets[5] = 0x5678;
-        h.session_mut().player.palette.crystal_flash_delay = 3;
+        h.session_mut().presentation.visual_mut().colors[5] = 0x1234;
+        h.session_mut().presentation.visual_mut().targets[5] = 0x5678;
+        h.session_mut()
+            .presentation
+            .palette_mut()
+            .crystal_flash_delay = 3;
         h.session_mut().inventory.health.current = 99;
         h.session_mut().enemy_projectiles.slots[0].definition = 0xbeef;
         h.session_mut().projectiles.shots[0].x = 0x4321;
@@ -35,7 +38,7 @@ fn check() {
         );
         h.set_palette_color_slice(0x20a, 0xabcd);
         assert_eq!(
-            h.session().visual.targets[5],
+            h.session().presentation.visual().targets[5],
             0xabcd,
             "visual.guard.palette-target-alias"
         );
@@ -54,17 +57,17 @@ fn check() {
             }
         });
         assert_eq!(
-            h.session().visual.colors[5],
+            h.session().presentation.visual().colors[5],
             0x0325,
             "visual.guard.import-current"
         );
         assert_eq!(
-            h.session().visual.targets[5],
+            h.session().presentation.visual().targets[5],
             0xbadc,
             "visual.guard.import-target"
         );
         assert_eq!(
-            h.session().player.palette.crystal_flash_delay,
+            h.session().presentation.palette().crystal_flash_delay,
             0x1112,
             "visual.guard.import-timer"
         );

@@ -17,7 +17,7 @@ pub(super) fn run() -> i32 {
     macro_rules! cases {
             ($($test:ident),+ $(,)?) => { [$( (stringify!($test), $test as fn()), )+] };
         }
-    let tests: [(&str, fn()); 86] = cases![
+    let tests: [(&str, fn()); 87] = cases![
         prepared_message_pixels_delay_queue_and_checkpoint,
         prepared_message_rejects_changed_content_and_resets,
         independently_authored_raster_pixels_and_prefixes,
@@ -65,6 +65,7 @@ pub(super) fn run() -> i32 {
         samus_game_reference_import_keeps_revoked_scope,
         samus_game_panicking_callback_keeps_prefix,
         samus_game_adoption_uses_captured_target,
+        persistent_session_native_rebinding_preserves_ready_owner,
         samus_game_body_projection_roundtrip,
         samus_game_body_projection_crossing_writes,
         samus_game_body_foreign_adoption_and_prefix,
@@ -2709,6 +2710,8 @@ fn scene_display_description(
             acknowledgment: 1,
         },
         samus: core::array::from_fn(|_| ds::SamusHalf {
+            // Supplied fixture selector; this setup does not bind a native request.
+            pointer: 0x8101,
             enabled: 1,
             descriptor: reference(8),
             first: transfer.clone(),
@@ -6184,4 +6187,17 @@ fn samus_game_body_projection_crossing_writes() {
 #[cfg_attr(test, test)]
 fn samus_game_body_foreign_adoption_and_prefix() {
     sm::samus_game_body_foreign_adoption_and_prefix();
+}
+
+// Movies cannot replace a prepared Session with independently supplied Native content.
+#[cfg(sm_verify_dll)]
+#[cfg_attr(test, test)]
+fn persistent_session_native_rebinding_preserves_ready_owner() {
+    let (requirements, start, media, variants) = scene_namespace_marker_fixture();
+    sm::persistent_session_native_rebinding_preserves_ready_owner(
+        requirements,
+        start,
+        media,
+        variants,
+    );
 }

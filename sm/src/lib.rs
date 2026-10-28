@@ -544,6 +544,10 @@ pub mod host;
 
 mod execution;
 pub mod game_state;
+pub use game_state::persistent_session::{
+    PreparedSessionStart, SessionCheckpoint, SessionStartContract, SessionStartError,
+    SuppliedSessionStart,
+};
 pub mod recording;
 pub mod rendering;
 pub mod rom;
@@ -885,3 +889,9 @@ pub use samus_game_binding_cases::{
     samus_game_reference_import_keeps_revoked_scope,
     samus_game_rejected_expectation_preserves_binding, samus_game_returning_die_load_witness,
 };
+
+#[cfg(sm_verify_dll)]
+#[path = "verification/persistent_session_cases.rs"]
+mod persistent_session_cases;
+#[cfg(sm_verify_dll)]
+pub use persistent_session_cases::persistent_session_native_rebinding_preserves_ready_owner;

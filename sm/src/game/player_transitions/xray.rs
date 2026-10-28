@@ -38,11 +38,12 @@ pub(crate) fn request(h: &mut impl Host) -> bool {
 
 /// Each scheduler retains its other flags; their original update order is fixed.
 pub(crate) fn set_world_running(s: &mut Session, running: bool) {
+    let visual = s.presentation.visual_mut();
     for flags in [
         &mut s.enemy_projectiles.flags,
         &mut s.mechanisms.flags,
-        &mut s.visual.animated_tiles.flags,
-        &mut s.visual.palette_effects.flags,
+        &mut visual.animated_tiles.flags,
+        &mut visual.palette_effects.flags,
     ] {
         *flags = if running {
             *flags | 0x8000
@@ -53,23 +54,26 @@ pub(crate) fn set_world_running(s: &mut Session, running: bool) {
 }
 
 pub(crate) fn finish(h: &mut impl Host) {
-    let p = &mut h.session_mut().player;
+    let state = h.session_mut();
+    let p = &mut state.player;
     p.pose = if p.movement_and_facing >> 8 == 5 {
         0x27
     } else {
         1
     } + u16::from(p.movement_and_facing as u8 == 4);
     super::finish_pose_change(h);
-    let p = &mut h.session_mut().player;
+    let state = h.session_mut();
+    let p = &mut state.player;
     p.movement_handler = MovementMode::Normal;
     p.transitions.input_mode = InputMode::Normal;
-    p.palette.xray_progress = u16::MAX;
+    state.presentation.palette_mut().xray_progress = u16::MAX;
     // Capture native content before rereading the pose changed by callbacks.
     let table = h.pose_table();
     let adjustment = u16::from(table.byte(usize::from(h.session().player.pose) * 8 + 6))
         .wrapping_sub(h.session().player.contact.radius);
     if adjustment & 0x8000 == 0 {
-        let p = &mut h.session_mut().player;
+        let state = h.session_mut();
+        let p = &mut state.player;
         p.y = p.y.wrapping_sub(adjustment);
         p.previous_position.y.whole = p.y;
     }
@@ -77,7 +81,8 @@ pub(crate) fn finish(h: &mut impl Host) {
 }
 
 pub(crate) fn turn(h: &mut impl Host, opposite_direction_held: bool) {
-    let p = &mut h.session_mut().player;
+    let state = h.session_mut();
+    let p = &mut state.player;
     let left = p.movement_and_facing as u8 == 4;
     if p.movement_and_facing >> 8 == 14 {
         if p.animation_clock.frame != 2 || p.animation_clock.remaining != 1 {

@@ -124,6 +124,10 @@ pub(crate) enum Entry {
 /// facade over them. The scheduler's continuation access itself is checked.
 /// Entry stays fixed even when callbacks change the live game state.
 pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
+    if matches!(entry, Entry::Frame) {
+        game.begin_session_interval(game.coroutine_state_1() == 0)
+            .expect("Session interval entry");
+    }
     unsafe {
         // Initial room loading retains the same unsafe backend contract on every
         // resume path, including actor staging after the display callbacks are skipped.

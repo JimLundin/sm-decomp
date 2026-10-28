@@ -27,7 +27,13 @@ pub(super) fn run(game: &mut Game) -> bool {
         assert!(
             catch_unwind(AssertUnwindSafe(|| {
                 let mut runtime = Runtime::new(game);
-                runtime.session_mut().visual.animated_tiles.slots[0].counter = 2;
+                runtime
+                    .session_mut()
+                    .presentation
+                    .visual_mut()
+                    .animated_tiles
+                    .slots[0]
+                    .counter = 2;
                 execution::command(&mut runtime, 8880340, 0, 0x9000);
             }))
             .is_err()
@@ -42,9 +48,18 @@ pub(super) fn run(game: &mut Game) -> bool {
         // Id index12 aliases Counter0; the following countdown must read the imported zero.
         {
             let mut runtime = Runtime::new(game);
-            runtime.session_mut().visual.animated_tiles.slots[0].counter = 0xabcd;
+            runtime
+                .session_mut()
+                .presentation
+                .visual_mut()
+                .animated_tiles
+                .slots[0]
+                .counter = 0xabcd;
             execution::command(&mut runtime, 8880306, 12, 0);
-            assert_eq!(runtime.session().visual.animated_tiles.slots[0].counter, 0);
+            assert_eq!(
+                runtime.session().presentation.visual().animated_tiles.slots[0].counter,
+                0
+            );
         }
         assert_eq!(word(&|at| game.ram().read_byte(at), 0x1f01), 0);
         game.ram().fill(0..game.ram().len(), 0);
@@ -61,8 +76,18 @@ pub(super) fn run(game: &mut Game) -> bool {
         put(&mut expected, ram::music_queue_write_pos, 12);
         {
             let mut runtime = Runtime::new(game);
-            runtime.session_mut().visual.animated_tiles.flags = 0x8123;
-            runtime.session_mut().visual.animated_tiles.selected = 10;
+            runtime
+                .session_mut()
+                .presentation
+                .visual_mut()
+                .animated_tiles
+                .flags = 0x8123;
+            runtime
+                .session_mut()
+                .presentation
+                .visual_mut()
+                .animated_tiles
+                .selected = 10;
             assert!(
                 catch_unwind(AssertUnwindSafe(|| {
                     runtime.foreign(|game| {
@@ -93,7 +118,8 @@ pub(super) fn run(game: &mut Game) -> bool {
                 game.ram().len(),
                 std::sync::Arc::clone(game.world()),
             )
-            .visual
+            .presentation
+            .visual()
             .animated_tiles
             .selected,
             0x3456

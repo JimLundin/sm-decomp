@@ -168,7 +168,8 @@ unsafe fn RtlSynchronizeWholeState(game: &mut Game) {
         synchronize_whole_state(game, true);
     }
 }
-unsafe fn synchronize_whole_state(game: &mut Game, complete_load: bool) {
+unsafe fn synchronize_whole_state(native_game: &mut Game, complete_load: bool) {
+    let game = &mut *native_game;
     unsafe {
         if let Some(sync) = game.g_rtl_syncall {
             let mut mutation = game
@@ -179,6 +180,8 @@ unsafe fn synchronize_whole_state(game: &mut Game, complete_load: bool) {
                 mutation
                     .finish_current()
                     .expect("Samus synchronization adoption rejected");
+                crate::cpu_infra::session_native_adoption::reconcile_current(native_game)
+                    .expect("Session native continuation adoption rejected");
             } else {
                 mutation.defer_incomplete();
             }
@@ -234,7 +237,8 @@ pub unsafe fn FinishLoadSnesState(game: &mut Game) {
         finish_load_snes_state(game, true);
     }
 }
-unsafe fn finish_load_snes_state(game: &mut Game, complete_load: bool) {
+unsafe fn finish_load_snes_state(native_game: &mut Game, complete_load: bool) {
+    let game = &mut *native_game;
     unsafe {
         let mut mutation = game
             .begin_samus_mutation()
@@ -262,6 +266,8 @@ unsafe fn finish_load_snes_state(game: &mut Game, complete_load: bool) {
             mutation
                 .finish_current()
                 .expect("Samus loaded-state adoption rejected");
+            crate::cpu_infra::session_native_adoption::reconcile_current(native_game)
+                .expect("Session native continuation adoption rejected");
         } else {
             mutation.defer_incomplete();
         }
@@ -287,7 +293,8 @@ pub unsafe fn RtlReset(mode: i32, game: &mut Game) {
         reset(mode, game, true);
     }
 }
-unsafe fn reset(mode: i32, game: &mut Game, complete_load: bool) {
+unsafe fn reset(mode: i32, native_game: &mut Game, complete_load: bool) {
+    let game = &mut *native_game;
     unsafe {
         let actor_transition = game.prepare_actor_canonical();
         let payload = game.capture_samus_snapshot();
@@ -315,6 +322,8 @@ unsafe fn reset(mode: i32, game: &mut Game, complete_load: bool) {
             mutation
                 .finish_current()
                 .expect("Samus reset adoption rejected");
+            crate::cpu_infra::session_native_adoption::reconcile_current(native_game)
+                .expect("Session native continuation adoption rejected");
         } else {
             mutation.defer_incomplete();
         }
@@ -328,12 +337,17 @@ pub unsafe fn StateRecorder_Load(f: *mut FILE, replay_mode: bool, game: &mut Gam
 unsafe fn state_recorder_load(
     f: *mut FILE,
     replay_mode: bool,
-    game: &mut Game,
+    native_game: &mut Game,
     outer_load: bool,
 ) -> bool {
+    let game = &mut *native_game;
     unsafe {
         if !game.supports_legacy_persistence() {
             eprintln!("StateRecorder_Load: legacy persistence is unavailable for a prepared world");
+            return false;
+        }
+        if let Err(error) = crate::cpu_infra::session_native_adoption::require_legacy_binary(game) {
+            eprintln!("state_recorder_load: {error}");
             return false;
         }
         let mut hdr: [u32; 16] = [0i32 as u32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -496,16 +510,23 @@ unsafe fn state_recorder_load(
             mutation
                 .finish_current()
                 .expect("Samus load adoption rejected");
+            crate::cpu_infra::session_native_adoption::reconcile_current(native_game)
+                .expect("Session native continuation adoption rejected");
         } else if outer_load {
             mutation.defer_incomplete();
         }
         read_complete
     }
 }
-pub unsafe fn StateRecorder_Save(f: *mut FILE, saving_with_bug: bool, game: &mut Game) {
+pub unsafe fn StateRecorder_Save(f: *mut FILE, saving_with_bug: bool, native_game: &mut Game) {
+    let game = &mut *native_game;
     unsafe {
         if !game.supports_legacy_persistence() {
             eprintln!("StateRecorder_Save: legacy persistence is unavailable for a prepared world");
+            return;
+        }
+        if let Err(error) = crate::cpu_infra::session_native_adoption::require_legacy_binary(game) {
+            eprintln!("StateRecorder_Save: {error}");
             return;
         }
         game.preflight_samus_runtime()
@@ -578,10 +599,17 @@ pub unsafe fn StateRecorder_Save(f: *mut FILE, saving_with_bug: bool, game: &mut
         mutation
             .finish_current()
             .expect("Samus save adoption rejected");
+        crate::cpu_infra::session_native_adoption::reconcile_current(native_game)
+            .expect("Session native continuation adoption rejected");
     }
 }
-pub unsafe fn StateRecorder_ClearKeyLog(game: &mut Game) {
+pub unsafe fn StateRecorder_ClearKeyLog(native_game: &mut Game) {
+    let game = &mut *native_game;
     unsafe {
+        if let Err(error) = crate::cpu_infra::session_native_adoption::require_legacy_binary(game) {
+            eprintln!("StateRecorder_ClearKeyLog: {error}");
+            return;
+        }
         game.preflight_samus_runtime()
             .expect("Samus recorder entry rejected");
         let mut mutation = game
@@ -618,6 +646,8 @@ pub unsafe fn StateRecorder_ClearKeyLog(game: &mut Game) {
         mutation
             .finish_current()
             .expect("Samus recorder adoption rejected");
+        crate::cpu_infra::session_native_adoption::reconcile_current(native_game)
+            .expect("Session native result adoption rejected");
     }
 }
 pub unsafe fn StateRecorder_ReadNextReplayState(game: &mut Game) -> u16 {
@@ -653,6 +683,7 @@ pub unsafe fn StateRecorder_ReadNextReplayState(game: &mut Game) -> u16 {
                     do_until! { nb == 0 ;
                         crate::update_place! { previous fresh6 = replay_pos => replay_pos + 1; }
                         let byte = game.state_recorder.log.byte(fresh6 as usize);
+                        game.note_samus_external_mutation();
                         game.ram().write_byte((addr & 0x1ffff) as usize, byte);
                         if !game.g_rtl_memory_ptr.is_null() {
                             let offset = (addr & 0x1ffff) as usize;
@@ -709,7 +740,8 @@ crate::forward_calls! { pub unsafe fn (game: &mut Game);
 pub fn RtlStopReplay(game: &mut Game) {
     game.state_recorder.stop();
 }
-pub unsafe fn RtlRunFrame(mut inputs: i32, game: &mut Game) -> bool {
+pub unsafe fn RtlRunFrame(mut inputs: i32, native_game: &mut Game) -> bool {
+    let game = &mut *native_game;
     unsafe {
         if !game.supports_legacy_persistence()
             && u32::from(game.g_runmode) != crate::cpu_infra::RM_MINE
@@ -771,13 +803,24 @@ pub unsafe fn RtlRunFrame(mut inputs: i32, game: &mut Game) -> bool {
         mutation
             .finish_current()
             .expect("Samus frame adoption rejected");
+        crate::cpu_infra::session_native_adoption::reconcile_current(native_game)
+            .expect("Session native result adoption rejected");
         is_replay
     }
 }
-pub unsafe fn RtlSaveSnapshot(filename: *const c_char, saving_with_bug: bool, game: &mut Game) {
+pub unsafe fn RtlSaveSnapshot(
+    filename: *const c_char,
+    saving_with_bug: bool,
+    native_game: &mut Game,
+) {
+    let game = &mut *native_game;
     unsafe {
         if !game.supports_legacy_persistence() {
             eprintln!("RtlSaveSnapshot: legacy persistence is unavailable for a prepared world");
+            return;
+        }
+        if let Err(error) = crate::cpu_infra::session_native_adoption::require_legacy_binary(game) {
+            eprintln!("RtlSaveSnapshot: {error}");
             return;
         }
         game.preflight_samus_runtime()
@@ -795,16 +838,23 @@ pub unsafe fn RtlSaveSnapshot(filename: *const c_char, saving_with_bug: bool, ga
         mutation
             .finish_current()
             .expect("Samus save adoption rejected");
+        crate::cpu_infra::session_native_adoption::reconcile_current(native_game)
+            .expect("Session native result adoption rejected");
     }
 }
 static kBugSaves: crate::types::ImmutableCStringPointers<7> = crate::types::immutable_c_strings! {
     b"Before Kraid\0", b"Before Golden Torizo\0", b"After Crocomire\0", b"Baby Metroid\0",
     b"Tourian Statue\0", b"Before Ridley\0", b"Enter Mother Brain\0",
 };
-pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, game: &mut Game) {
+pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, native_game: &mut Game) {
+    let game = &mut *native_game;
     unsafe {
         if !game.supports_legacy_persistence() {
             eprintln!("RtlSaveLoad: legacy persistence is unavailable for a prepared world");
+            return;
+        }
+        if let Err(error) = crate::cpu_infra::session_native_adoption::require_legacy_binary(game) {
+            eprintln!("RtlSaveLoad: {error}");
             return;
         }
         let mut name: [c_char; 128] = [0; 128];
@@ -888,6 +938,8 @@ pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, game: &mut Game) {
                 mutation
                     .finish_current()
                     .expect("Samus loaded continuation adoption rejected");
+                crate::cpu_infra::session_native_adoption::reconcile_current(native_game)
+                    .expect("Session native continuation adoption rejected");
             }
         } else {
             RtlSaveSnapshot(&raw mut name as *mut c_char, false_0 != 0, game);

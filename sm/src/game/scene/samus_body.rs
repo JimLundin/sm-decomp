@@ -221,11 +221,12 @@ impl MarkerPublication {
 /// Every observation/effect belongs to its actual G owner; position/queue code
 /// is supplied explicitly and is not rebuilt from display or inferred content.
 pub(crate) trait Inputs: super::samus::Inputs + super::samus_position_tiles::Inputs {
+    type BodyTable: Table<Error = DisplayError>;
     fn knockback(&mut self) -> Result<u16, DisplayError>;
     fn invincibility(&mut self) -> Result<u16, DisplayError>;
     fn shine(&mut self) -> Result<u16, DisplayError>;
     fn frame_counter(&mut self) -> Result<u16, DisplayError>;
-    fn table(&mut self, half: Half) -> Result<BodyTable, DisplayError>;
+    fn table(&mut self, half: Half) -> Result<Self::BodyTable, DisplayError>;
     fn set_sprite(&mut self, half: Half, index: u16) -> Result<(), DisplayError>;
 }
 pub(crate) fn draw_owned(
@@ -258,6 +259,32 @@ pub(crate) fn draw_owned(
     }
     result
 }
+pub(crate) fn bottom_owned(
+    state: &mut DisplayState,
+    media: &SceneMedia,
+    producer: ProducerObjectId,
+    marker: &MarkerPublication,
+    inputs: &mut impl Inputs,
+) -> Result<bool, DisplayError> {
+    if state.phase == DisplayPhase::Failed {
+        return Err(DisplayError::Poisoned);
+    }
+    if state.phase != DisplayPhase::Producing {
+        return Err(DisplayError::Phase);
+    }
+    let mut guard = super::delivery::FaultGuard::new(state);
+    let result = bottom_is_visible(&mut Owned {
+        state: guard.state(),
+        media,
+        producer,
+        marker,
+        inputs,
+    });
+    if result.is_ok() {
+        guard.disarm();
+    }
+    result
+}
 struct Owned<'a, I> {
     state: &'a mut DisplayState,
     media: &'a SceneMedia,
@@ -267,7 +294,7 @@ struct Owned<'a, I> {
 }
 impl<I: Inputs> Host for Owned<'_, I> {
     type Error = DisplayError;
-    type Table = BodyTable;
+    type Table = I::BodyTable;
     fn knockback(&mut self) -> Result<u16, DisplayError> {
         self.inputs.knockback()
     }
@@ -286,7 +313,7 @@ impl<I: Inputs> Host for Owned<'_, I> {
     fn animation_frame(&mut self) -> Result<u16, DisplayError> {
         self.inputs.animation_frame()
     }
-    fn table(&mut self, half: Half) -> Result<BodyTable, DisplayError> {
+    fn table(&mut self, half: Half) -> Result<Self::Table, DisplayError> {
         self.inputs.table(half)
     }
     fn set_sprite(&mut self, half: Half, index: u16) -> Result<(), DisplayError> {

@@ -187,6 +187,27 @@ macro_rules! flag_projection {
         }
     };
 }
+macro_rules! presentation_ref {
+    ($s:ident, visual, (&)) => {
+        $s.presentation.visual()
+    };
+    ($s:ident, visual, (&mut)) => {
+        $s.presentation.visual_mut()
+    };
+    ($s:ident, palette, (&)) => {
+        $s.presentation.palette()
+    };
+    ($s:ident, palette, (&mut)) => {
+        $s.presentation.palette_mut()
+    };
+    ($s:ident, atmospheric, (&)) => {
+        $s.presentation.atmospheric()
+    };
+    ($s:ident, atmospheric, (&mut)) => {
+        $s.presentation.atmospheric_mut()
+    };
+}
+
 macro_rules! scalar_words {
     ($s:ident,$f:ident,($($borrow:tt)*))=>{
         $f(0x0da2,$($borrow)* $s.player.camera_distance[0].whole);
@@ -282,47 +303,47 @@ macro_rules! scalar_words {
         $f(0xa88,$($borrow)* $s.player.demo.enabled);
         $f(0xa8c,$($borrow)* $s.player.demo.previous_held);
         $f(0xa8e,$($borrow)* $s.player.demo.previous_pressed);
-        $f(0xa48,$($borrow)* $s.player.palette.hurt_flash);
-        $f(0xa72,$($borrow)* $s.player.palette.visor_timer);
-        $f(0xa74,$($borrow)* $s.player.palette.suit_index);
+        $f(0xa48,$($borrow)* presentation_ref!($s, palette, ($($borrow)*)).hurt_flash);
+        $f(0xa72,$($borrow)* presentation_ref!($s, palette, ($($borrow)*)).visor_timer);
+        $f(0xa74,$($borrow)* presentation_ref!($s, palette, ($($borrow)*)).suit_index);
         $f(0xa76,$($borrow)* $s.inventory.hyper_beam);
-        $f(0xa80,$($borrow)* $s.player.palette.xray_progress);
-        $f(0xad0,$($borrow)* $s.player.palette.timer);
-        $f(0xddc,$($borrow)* $s.player.palette.suit_beam_speed);
-        $f(0xdf0,$($borrow)* $s.player.palette.suit_red_green);
-        $f(0xdf2,$($borrow)* $s.player.palette.crystal_flash_delay);
+        $f(0xa80,$($borrow)* presentation_ref!($s, palette, ($($borrow)*)).xray_progress);
+        $f(0xad0,$($borrow)* presentation_ref!($s, palette, ($($borrow)*)).timer);
+        $f(0xddc,$($borrow)* presentation_ref!($s, palette, ($($borrow)*)).suit_beam_speed);
+        $f(0xdf0,$($borrow)* presentation_ref!($s, palette, ($($borrow)*)).suit_red_green);
+        $f(0xdf2,$($borrow)* presentation_ref!($s, palette, ($($borrow)*)).crystal_flash_delay);
         $f(0xa4e,$($borrow)* $s.player.periodic_damage_fraction);
         $f(0x1e6f,$($borrow)* $s.mechanisms.statue_animation);
         for index in 0..256 {
-            $f(0xc000+index*2,$($borrow)* $s.visual.colors[index]);
+            $f(0xc000+index*2,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).colors[index]);
         }
         for index in 0..256 {
-            $f(0xc200+index*2,$($borrow)* $s.visual.targets[index]);
+            $f(0xc200+index*2,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).targets[index]);
         }
         for index in 0..8 {
-            $f(0x1e7d+index*2,$($borrow)* $s.visual.palette_effects.slots[index].definition);
-            $f(0x1e8d+index*2,$($borrow)* $s.visual.palette_effects.slots[index].color_offset);
-            $f(0x1ead+index*2,$($borrow)* $s.visual.palette_effects.slots[index].pre_action);
-            $f(0x1ebd+index*2,$($borrow)* $s.visual.palette_effects.slots[index].program);
-            $f(0x1ecd+index*2,$($borrow)* $s.visual.palette_effects.slots[index].delay);
-            $f(0x1edd+index*2,$($borrow)* $s.visual.palette_effects.slots[index].counter);
+            $f(0x1e7d+index*2,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).palette_effects.slots[index].definition);
+            $f(0x1e8d+index*2,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).palette_effects.slots[index].color_offset);
+            $f(0x1ead+index*2,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).palette_effects.slots[index].pre_action);
+            $f(0x1ebd+index*2,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).palette_effects.slots[index].program);
+            $f(0x1ecd+index*2,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).palette_effects.slots[index].delay);
+            $f(0x1edd+index*2,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).palette_effects.slots[index].counter);
         }
         for index in 0..6 {
-            $f(0x1ef5+index*2,$($borrow)* $s.visual.animated_tiles.slots[index].definition);
-            $f(0x1f01+index*2,$($borrow)* $s.visual.animated_tiles.slots[index].counter);
-            $f(0x1f0d+index*2,$($borrow)* $s.visual.animated_tiles.slots[index].program);
-            $f(0x1f19+index*2,$($borrow)* $s.visual.animated_tiles.slots[index].delay);
-            $f(0x1f25+index*2,$($borrow)* $s.visual.animated_tiles.slots[index].source);
-            $f(0x1f31+index*2,$($borrow)* $s.visual.animated_tiles.slots[index].size);
-            $f(0x1f3d+index*2,$($borrow)* $s.visual.animated_tiles.slots[index].vram);
+            $f(0x1ef5+index*2,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).animated_tiles.slots[index].definition);
+            $f(0x1f01+index*2,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).animated_tiles.slots[index].counter);
+            $f(0x1f0d+index*2,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).animated_tiles.slots[index].program);
+            $f(0x1f19+index*2,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).animated_tiles.slots[index].delay);
+            $f(0x1f25+index*2,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).animated_tiles.slots[index].source);
+            $f(0x1f31+index*2,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).animated_tiles.slots[index].size);
+            $f(0x1f3d+index*2,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).animated_tiles.slots[index].vram);
         }
-        $f(0x1e79,$($borrow)* $s.visual.palette_effects.flags);
-        $f(0x1e7b,$($borrow)* $s.visual.palette_effects.selected);
-        $f(0x1eed,$($borrow)* $s.visual.palette_effects.heat);
-        $f(0x1eef,$($borrow)* $s.visual.palette_effects.previous_heat);
-        $f(0x1ef1,$($borrow)* $s.visual.animated_tiles.flags);
-        $f(0x1ef3,$($borrow)* $s.visual.animated_tiles.selected);
-        $f(0x1f49,$($borrow)* $s.visual.animated_tiles.last_instruction);
+        $f(0x1e79,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).palette_effects.flags);
+        $f(0x1e7b,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).palette_effects.selected);
+        $f(0x1eed,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).palette_effects.heat);
+        $f(0x1eef,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).palette_effects.previous_heat);
+        $f(0x1ef1,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).animated_tiles.flags);
+        $f(0x1ef3,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).animated_tiles.selected);
+        $f(0x1f49,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).animated_tiles.last_instruction);
         $f(0x0a18,$($borrow)* $s.player.transitions.landing_compatibility);
         $f(0x0a52,$($borrow)* $s.player.transitions.knockback);
         $f(0x0a82,$($borrow)* $s.player.transitions.xray_angle);
@@ -337,10 +358,10 @@ macro_rules! scalar_words {
         $f(0x0b2a,$($borrow)* $s.player.transitions.vertical_motion_compatibility);
         $f(0x0b38,$($borrow)* $s.player.transitions.vertical_auxiliary_compatibility);
         for index in 0..4 {
-            $f(0x0ad4+index*2,$($borrow)* $s.atmospheric.slots[index].remaining);
-            $f(0x0adc+index*2,$($borrow)* $s.atmospheric.slots[index].x);
-            $f(0x0ae4+index*2,$($borrow)* $s.atmospheric.slots[index].y);
-            $f(0x0aec+index*2,$($borrow)* $s.atmospheric.slots[index].frame_and_kind);
+            $f(0x0ad4+index*2,$($borrow)* presentation_ref!($s, atmospheric, ($($borrow)*)).slots[index].remaining);
+            $f(0x0adc+index*2,$($borrow)* presentation_ref!($s, atmospheric, ($($borrow)*)).slots[index].x);
+            $f(0x0ae4+index*2,$($borrow)* presentation_ref!($s, atmospheric, ($($borrow)*)).slots[index].y);
+            $f(0x0aec+index*2,$($borrow)* presentation_ref!($s, atmospheric, ($($borrow)*)).slots[index].frame_and_kind);
         }
         $f(ram::projectile_counter,$($borrow)* $s.projectiles.count);
         $f(ram::bomb_counter,$($borrow)* $s.projectiles.bomb_count);
@@ -627,8 +648,8 @@ pub(crate) fn decode(
         };
     }
     room_assets!(load_asset);
-    s.continuations.primary = bytes(0x612);
-    s.continuations.secondary = bytes(0x613);
+    *s.control.primary_mut() = bytes(0x612);
+    *s.control.secondary_mut() = bytes(0x613);
     s.room.entry.layer2_x = bytes(0x91b);
     s.room.entry.layer2_y = bytes(0x91c);
     for (base, flags) in [
@@ -697,7 +718,7 @@ pub(crate) fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
     }
     visit(
         0x612,
-        u16::from_le_bytes([s.continuations.primary, s.continuations.secondary]),
+        u16::from_le_bytes([*s.control.primary(), *s.control.secondary()]),
     );
     visit(
         0x91b,
@@ -735,8 +756,16 @@ pub(crate) fn encode(s: &Session, mut span: impl FnMut(usize, &[u8])) {
     for (index, cell) in s.room.terrain.cells().iter().enumerate() {
         span(0x16402 + index, &[cell.behavior]);
     }
+    s.presentation.encode_projection(&mut span);
+    s.control.encode_projection(span);
 }
 pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {
+    if let Some(value) = s.control.projected_byte(at) {
+        return Some(value);
+    }
+    if let Some(value) = s.presentation.projected_byte(at) {
+        return Some(value);
+    }
     if let Some(value) = botwoon_death_byte(s, at) {
         return Some(value);
     }
@@ -771,8 +800,8 @@ pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {
     }
     room_assets!(asset_byte);
     match at {
-        0x612 => return Some(s.continuations.primary),
-        0x613 => return Some(s.continuations.secondary),
+        0x612 => return Some(*s.control.primary()),
+        0x613 => return Some(*s.control.secondary()),
         0x91b => return Some(s.room.entry.layer2_x),
         0x91c => return Some(s.room.entry.layer2_y),
         _ => {}
@@ -789,9 +818,9 @@ pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {
     if (0xc000..0xc400).contains(&at) {
         let offset = at - 0xc000;
         let colors = if offset < 512 {
-            &s.visual.colors
+            &s.presentation.visual().colors
         } else {
-            &s.visual.targets
+            &s.presentation.visual().targets
         };
         return Some(colors[(offset % 512) / 2].to_le_bytes()[offset % 2]);
     }
@@ -829,6 +858,12 @@ pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {
     result
 }
 pub(crate) fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
+    if s.control.write_projected_byte(at, value) {
+        return true;
+    }
+    if s.presentation.write_projected_byte(at, value) {
+        return true;
+    }
     if write_botwoon_death_byte(s, at, value) {
         return true;
     }
@@ -873,8 +908,8 @@ pub(crate) fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> boo
     }
     room_assets!(write_asset);
     let byte = match at {
-        0x612 => Some(&mut s.continuations.primary),
-        0x613 => Some(&mut s.continuations.secondary),
+        0x612 => Some(s.control.primary_mut()),
+        0x613 => Some(s.control.secondary_mut()),
         0x91b => Some(&mut s.room.entry.layer2_x),
         0x91c => Some(&mut s.room.entry.layer2_y),
         _ => None,
@@ -899,9 +934,9 @@ pub(crate) fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> boo
     if (0xc000..0xc400).contains(&at) {
         let offset = at - 0xc000;
         let colors = if offset < 512 {
-            &mut s.visual.colors
+            &mut s.presentation.visual_mut().colors
         } else {
-            &mut s.visual.targets
+            &mut s.presentation.visual_mut().targets
         };
         let color = &mut colors[(offset % 512) / 2];
         let mut bytes = color.to_le_bytes();

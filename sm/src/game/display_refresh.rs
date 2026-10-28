@@ -16,9 +16,9 @@ use crate::rtl::{
 
 /// Set the forced-blank mirror bit for the next display refresh.
 pub(crate) fn set_blank(blank: bool, game: &mut Game) {
-    game.ram().write_byte(
+    game.compatibility_write_owned_byte(
         0x51,
-        game.ram().read_byte(0x51) & 0x7f | if blank { 0x80 } else { 0 },
+        game.compatibility_byte(0x51) & 0x7f | if blank { 0x80 } else { 0 },
     );
 }
 
@@ -41,10 +41,9 @@ pub(crate) unsafe fn pause_graphics(paused: bool, game: &mut Game) {
                 mirror(TM as u16, 0x17, 0x69, false); mirror(MOSAIC as u16, 0, 0x57, false);
             }
             for offset in 0x74..0x77 {
-                game.ram()
-                    .write_byte(offset, game.ram().read_byte(offset) & 0xe0);
+                game.compatibility_write_owned_byte(offset, game.compatibility_byte(offset) & 0xe0);
             }
-            game.ram().write_byte(0x71, 0);
+            game.compatibility_write_owned_byte(0x71, 0);
         }
     }
 }
@@ -115,7 +114,7 @@ pub(crate) unsafe fn capture_pause_background(game: &mut Game) {
     unsafe {
         crate::rtl::register_writes! { game;
             word(VMADDL as u16,
-            (u16::from(game.ram().read_byte(0x59) & 0xfc) << 8) | 1,); byte(VMAIN as u16, 0x80);
+            (u16::from(game.compatibility_byte(0x59) & 0xfc) << 8) | 1,); byte(VMAIN as u16, 0x80);
             byte(DMAP1 as u16, 0x81); byte(BBAD1 as u16, 0x39);
             word(A1T1L as u16, 0xdf5c); byte(A1B1 as u16, 0x7e);
             word(DAS1L as u16, 0x1000); byte(DAS10 as u16, 0);
@@ -182,14 +181,14 @@ pub(crate) fn reset_gameplay_layers(clear_current_irq: bool, game: &mut Game) {
         word!(game.cur_irq_handler = 0);
     }
     reset_layer_mirrors(game);
-    game.ram().write_byte(0x55, 9);
+    game.compatibility_write_owned_byte(0x55, 9);
 }
 
 pub(crate) fn reset_layer_mirrors(game: &mut Game) {
-    game.ram().write_byte(0x6e, 0);
-    game.ram().write_byte(0x71, 0);
-    game.ram().write_byte(0x69, 16);
-    game.ram().fill(0x6b..0x6e, 0);
+    game.compatibility_write_owned_byte(0x6e, 0);
+    game.compatibility_write_owned_byte(0x71, 0);
+    game.compatibility_write_owned_byte(0x69, 16);
+    game.compatibility_fill(0x6b..0x6e, 0);
 }
 
 pub(crate) fn fade(fade_in: bool, game: &mut Game) {
@@ -205,7 +204,7 @@ pub(crate) fn fade(fade_in: bool, game: &mut Game) {
     if !due {
         return;
     }
-    let brightness = game.ram().read_byte(0x51) & 0xf;
+    let brightness = game.compatibility_byte(0x51) & 0xf;
     let next = if fade_in {
         if brightness == 15 {
             return;
@@ -218,34 +217,34 @@ pub(crate) fn fade(fade_in: bool, game: &mut Game) {
             value => value - 1,
         }
     };
-    game.ram().write_byte(0x51, next);
+    game.compatibility_write_owned_byte(0x51, next);
 }
 
 pub(crate) fn wait(update: bool, game: &mut Game) -> u8 {
-    if game.ram().read_byte(0x782) != 0 {
-        game.ram().write_byte(0x782, 0);
+    if game.compatibility_byte(0x782) != 0 {
+        game.compatibility_write_owned_byte(0x782, 0);
         return 0;
     }
     if update {
-        game.ram().write_byte(0x5b4, 1);
+        game.compatibility_write_owned_byte(0x5b4, 1);
     }
-    game.ram().write_byte(0x782, 1);
+    game.compatibility_write_owned_byte(0x782, 1);
     1
 }
 
 /// Requires a live, exclusively accessed SNES backend.
 pub(crate) unsafe fn enable(enabled: bool, game: &mut Game) {
     let mask = if enabled { 0x80 } else { 0 };
-    let value = game.ram().read_byte(0x84) & 0x7f | mask;
+    let value = game.compatibility_byte(0x84) & 0x7f | mask;
     unsafe {
         WriteReg(
             NMITIMEN as u16,
-            game.ram().read_byte(0x84) & 0x7f | mask,
+            game.compatibility_byte(0x84) & 0x7f | mask,
             game,
         )
     };
     // The hardware write may change RAM; publish the value captured before it.
-    game.ram().write_byte(0x84, value);
+    game.compatibility_write_owned_byte(0x84, value);
 }
 
 /// Requires a live, exclusively accessed SNES backend throughout the queue drain.
@@ -265,7 +264,7 @@ pub(crate) unsafe fn flush_tilemaps(game: &mut Game) {
                 }
                 crate::rtl::register_writes! { game;
                     word(DAS1L as u16, size); word(A1T1L as u16, at!(game, entry + 2;));
-                    byte(A1B1 as u16, game.ram().read_byte(entry + 4));
+                    byte(A1B1 as u16, game.compatibility_byte(entry + 4));
                 }
                 let increment = if at!(game, entry + 5;) & 0x8000 != 0 {
                     0x81
@@ -323,11 +322,11 @@ unsafe fn transfer_scrolling_tilemap(
 ) {
     unsafe {
         let enable = parameters + 12;
-        if game.ram().read_byte(enable) == 0 {
+        if game.compatibility_byte(enable) == 0 {
             return;
         }
         // Only the low enable byte is consumed, before reading transfer parameters.
-        game.ram().write_byte(enable, 0);
+        game.compatibility_write_owned_byte(enable, 0);
         // Sizes, destinations and wrapped sources are three pairs of RAM words.
         let destination = at!(game, parameters + 4;);
         crate::rtl::register_writes! { game;
@@ -364,43 +363,43 @@ unsafe fn upload_latches(register: u16, source: usize, count: u16, game: &mut Ga
         for index in 0..count {
             let address = register + index;
             let offset = source + usize::from(index) * 2;
-            WriteReg(address, game.ram().read_byte(offset), game);
-            WriteReg(address, game.ram().read_byte(offset + 1), game);
+            WriteReg(address, game.compatibility_byte(offset), game);
+            WriteReg(address, game.compatibility_byte(offset + 1), game);
         }
     }
 }
 unsafe fn upload_registers(game: &mut Game) {
     unsafe {
         crate::rtl::register_writes! { game;
-            byte(NMITIMEN as u16, game.ram().read_byte(0x84)); byte(INIDISP as u16, game.ram().read_byte(0x51));
-            byte(OBSEL as u16, game.ram().read_byte(0x52)); byte(BGMODE as u16, game.ram().read_byte(0x55));
-            byte(MOSAIC as u16, game.ram().read_byte(0x57)); byte(BG1SC as u16, game.ram().read_byte(0x58));
-            byte(BG2SC as u16, game.ram().read_byte(0x59)); byte(BG3SC as u16, game.ram().read_byte(0x5a));
-            byte(BG4SC as u16, game.ram().read_byte(0x5c)); byte(BG12NBA as u16, game.ram().read_byte(0x5d));
-            byte(BG34NBA as u16, game.ram().read_byte(0x5e)); byte(M7SEL as u16, game.ram().read_byte(0x5f));
-            byte(W12SEL as u16, game.ram().read_byte(0x60)); byte(W34SEL as u16, game.ram().read_byte(0x61));
-            byte(WOBJSEL as u16, game.ram().read_byte(0x62)); byte(WH0 as u16, game.ram().read_byte(0x63));
-            byte(WH1 as u16, game.ram().read_byte(0x64)); byte(WH2 as u16, game.ram().read_byte(0x65));
-            byte(WH3 as u16, game.ram().read_byte(0x66)); byte(WBGLOG as u16, game.ram().read_byte(0x67));
-            byte(WOBJLOG as u16, game.ram().read_byte(0x68));
+            byte(NMITIMEN as u16, game.compatibility_byte(0x84)); byte(INIDISP as u16, game.compatibility_byte(0x51));
+            byte(OBSEL as u16, game.compatibility_byte(0x52)); byte(BGMODE as u16, game.compatibility_byte(0x55));
+            byte(MOSAIC as u16, game.compatibility_byte(0x57)); byte(BG1SC as u16, game.compatibility_byte(0x58));
+            byte(BG2SC as u16, game.compatibility_byte(0x59)); byte(BG3SC as u16, game.compatibility_byte(0x5a));
+            byte(BG4SC as u16, game.compatibility_byte(0x5c)); byte(BG12NBA as u16, game.compatibility_byte(0x5d));
+            byte(BG34NBA as u16, game.compatibility_byte(0x5e)); byte(M7SEL as u16, game.compatibility_byte(0x5f));
+            byte(W12SEL as u16, game.compatibility_byte(0x60)); byte(W34SEL as u16, game.compatibility_byte(0x61));
+            byte(WOBJSEL as u16, game.compatibility_byte(0x62)); byte(WH0 as u16, game.compatibility_byte(0x63));
+            byte(WH1 as u16, game.compatibility_byte(0x64)); byte(WH2 as u16, game.compatibility_byte(0x65));
+            byte(WH3 as u16, game.compatibility_byte(0x66)); byte(WBGLOG as u16, game.compatibility_byte(0x67));
+            byte(WOBJLOG as u16, game.compatibility_byte(0x68));
         }
-        game.ram().write_byte(0x6a, game.ram().read_byte(0x69));
+        game.compatibility_write_owned_byte(0x6a, game.compatibility_byte(0x69));
         crate::rtl::register_writes! { game;
-            byte(TM as u16, game.ram().read_byte(0x69)); byte(TMW as u16, game.ram().read_byte(0x6c));
-            byte(TS as u16, game.ram().read_byte(0x6b)); byte(TSW as u16, game.ram().read_byte(0x6d));
-            byte(CGWSEL as u16, game.ram().read_byte(0x6f)); byte(CGADSUB as u16, game.ram().read_byte(0x72));
+            byte(TM as u16, game.compatibility_byte(0x69)); byte(TMW as u16, game.compatibility_byte(0x6c));
+            byte(TS as u16, game.compatibility_byte(0x6b)); byte(TSW as u16, game.compatibility_byte(0x6d));
+            byte(CGWSEL as u16, game.compatibility_byte(0x6f)); byte(CGADSUB as u16, game.compatibility_byte(0x72));
         }
-        game.ram().write_byte(0x70, game.ram().read_byte(0x6e));
-        game.ram().write_byte(0x73, game.ram().read_byte(0x71));
+        game.compatibility_write_owned_byte(0x70, game.compatibility_byte(0x6e));
+        game.compatibility_write_owned_byte(0x73, game.compatibility_byte(0x71));
         crate::rtl::register_writes! { game;
-            byte(COLDATA as u16, game.ram().read_byte(0x74)); byte(COLDATA as u16, game.ram().read_byte(0x75));
-            byte(COLDATA as u16, game.ram().read_byte(0x76)); byte(SETINI as u16, game.ram().read_byte(0x77));
+            byte(COLDATA as u16, game.compatibility_byte(0x74)); byte(COLDATA as u16, game.compatibility_byte(0x75));
+            byte(COLDATA as u16, game.compatibility_byte(0x76)); byte(SETINI as u16, game.compatibility_byte(0x77));
         }
 
         // Scroll and Mode 7 words latch low then high through the same register.
         upload_latches(BG1HOFS as u16, 0xb1, 8, game);
-        game.ram().write_byte(0x7ec, game.ram().read_byte(0x56));
-        if game.ram().read_byte(0x55) & 7 == 7 || game.ram().read_byte(0x56) & 7 == 7 {
+        game.compatibility_write_owned_byte(0x7ec, game.compatibility_byte(0x56));
+        if game.compatibility_byte(0x55) & 7 == 7 || game.compatibility_byte(0x56) & 7 == 7 {
             upload_latches(M7A as u16, 0x78, 6, game);
         }
     }
@@ -453,7 +452,7 @@ impl crate::game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
         Ok(())
     }
     fn enabled(&mut self, half: crate::game::scene::samus_body::Half) -> Result<u8, Self::Error> {
-        Ok(self.0.ram().read_byte(match half {
+        Ok(self.0.compatibility_byte(match half {
             crate::game::scene::samus_body::Half::Top => 0x71d,
             crate::game::scene::samus_body::Half::Bottom => 0x71e,
         }))
@@ -467,8 +466,8 @@ impl crate::game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
             crate::game::scene::samus_body::Half::Bottom => (0x721, 0x6080),
         };
         let address = u16::from_le_bytes([
-            self.0.ram().read_byte(pointer),
-            self.0.ram().read_byte(pointer + 1),
+            self.0.compatibility_byte(pointer),
+            self.0.compatibility_byte(pointer + 1),
         ]);
         unsafe {
             let _ = crate::rtl::rom_bank_ptr::<0x92>(address, self.0);
@@ -563,7 +562,7 @@ pub(crate) unsafe fn run(game: &mut Game) {
     struct NativeRefresh<'a>(&'a mut Game);
     impl crate::game::scene::commit::RefreshHost for NativeRefresh<'_> {
         fn pending_nmi(&self) -> u8 {
-            self.0.ram().read_byte(0x5b4)
+            self.0.compatibility_byte(0x5b4)
         }
         fn palette_and_objects(&mut self) -> Result<(), crate::game::scene::state::DisplayError> {
             unsafe { upload_palette_and_oam(self.0) };
@@ -586,7 +585,7 @@ pub(crate) unsafe fn run(game: &mut Game) {
             word!(game.hdma_object_channels_bitmask[slot])
         }
         fn hdma_bank_slot(&self, slot: usize) -> u8 {
-            self.0.ram().read_byte(0x18c0 + slot * 2)
+            self.0.compatibility_byte(0x18c0 + slot * 2)
         }
         fn hdma_table(&self, slot: usize) -> u16 {
             let game = &*self.0;
@@ -601,10 +600,10 @@ pub(crate) unsafe fn run(game: &mut Game) {
             Ok(())
         }
         fn mode(&self) -> u8 {
-            self.0.ram().read_byte(0x55)
+            self.0.compatibility_byte(0x55)
         }
         fn fake_mode(&self) -> u8 {
-            self.0.ram().read_byte(0x56)
+            self.0.compatibility_byte(0x56)
         }
         fn mode7(&mut self) -> Result<(), crate::game::scene::state::DisplayError> {
             unsafe { mode7_transfers::process(self.0) };
@@ -619,7 +618,7 @@ pub(crate) unsafe fn run(game: &mut Game) {
             Ok(())
         }
         fn hdma_enable(&self) -> u8 {
-            self.0.ram().read_byte(0x85)
+            self.0.compatibility_byte(0x85)
         }
         fn publish_hdma(
             &mut self,
@@ -629,25 +628,25 @@ pub(crate) unsafe fn run(game: &mut Game) {
             Ok(())
         }
         fn set_pending_nmi(&mut self, value: u8) {
-            self.0.ram().write_byte(0x5b4, value)
+            self.0.compatibility_write_owned_byte(0x5b4, value)
         }
         fn missed(&self) -> u8 {
-            self.0.ram().read_byte(0x5ba)
+            self.0.compatibility_byte(0x5ba)
         }
         fn set_missed(&mut self, value: u8) {
-            self.0.ram().write_byte(0x5ba, value)
+            self.0.compatibility_write_owned_byte(0x5ba, value)
         }
         fn max_missed(&self) -> u8 {
-            self.0.ram().read_byte(0x5bb)
+            self.0.compatibility_byte(0x5bb)
         }
         fn set_max_missed(&mut self, value: u8) {
-            self.0.ram().write_byte(0x5bb, value)
+            self.0.compatibility_write_owned_byte(0x5bb, value)
         }
         fn frame_byte(&self) -> u8 {
-            self.0.ram().read_byte(0x5b5)
+            self.0.compatibility_byte(0x5b5)
         }
         fn set_frame_byte(&mut self, value: u8) {
-            self.0.ram().write_byte(0x5b5, value)
+            self.0.compatibility_write_owned_byte(0x5b5, value)
         }
         fn frame_word(&self) -> u16 {
             let game = &*self.0;
@@ -973,15 +972,15 @@ pub(crate) fn queue_scrolling_tiles(k: u16, layout: ScrollingDmaLayout, game: &m
 
 pub(crate) fn native_word(offset: usize, game: &Game) -> u16 {
     u16::from_ne_bytes([
-        game.ram().read_byte(offset),
-        game.ram().read_byte(offset + 1),
+        game.compatibility_byte(offset),
+        game.compatibility_byte(offset + 1),
     ])
 }
 
 pub(crate) fn set_native_word(offset: usize, value: u16, game: &mut Game) {
     let bytes = value.to_ne_bytes();
-    game.ram().write_byte(offset, bytes[0]);
-    game.ram().write_byte(offset + 1, bytes[1]);
+    game.compatibility_write_owned_byte(offset, bytes[0]);
+    game.compatibility_write_owned_byte(offset + 1, bytes[1]);
 }
 
 /// Publish a native queue record, evaluating each source after preceding stores.
@@ -999,7 +998,7 @@ pub(crate) fn queue_native_transfer(
     let source = source(game);
     set_native_word(0xd0 + usize::from(cursor), source, game);
     cursor = cursor.wrapping_add(2);
-    game.ram().write_byte(0xd0 + usize::from(cursor), bank);
+    game.compatibility_write_owned_byte(0xd0 + usize::from(cursor), bank);
     cursor = cursor.wrapping_add(1);
     let destination = destination(game);
     set_native_word(0xd0 + usize::from(cursor), destination, game);

@@ -39,7 +39,7 @@ pub(crate) fn load_destination(h: &mut impl EntryHost) {
 }
 fn initial(h: &mut impl EntryHost) -> EntryPoll {
     crate::verify_probe::hit("coroutine.start");
-    let resume = h.session().continuations.secondary;
+    let resume = *h.session().control.secondary();
     if resume == 0 {
         h.device_word(DeviceWord::DmaEnable, 0);
         h.session_mut().room.entry.scrolling_hook = 0;
@@ -54,7 +54,7 @@ fn initial(h: &mut impl EntryHost) -> EntryPoll {
     }
     if resume <= 1 {
         if let Some(poll) = waiting(EntryWait::Music, h.wait(EntryWait::Music)) {
-            h.session_mut().continuations.secondary = 1;
+            *h.session_mut().control.secondary_mut() = 1;
             return poll;
         }
         animated_tiles::execution::clear(h.session_mut());
@@ -70,7 +70,7 @@ fn initial(h: &mut impl EntryHost) -> EntryPoll {
     }
     if resume <= 2 {
         if let Some(poll) = waiting(EntryWait::Music, h.wait(EntryWait::Music)) {
-            h.session_mut().continuations.secondary = 2;
+            *h.session_mut().control.secondary_mut() = 2;
             return poll;
         }
         h.call(L::UpdateMusicTrack);
@@ -92,13 +92,13 @@ fn initial(h: &mut impl EntryHost) -> EntryPoll {
     }
     if resume <= 3 {
         if let Some(poll) = waiting(EntryWait::Music, h.wait(EntryWait::Music)) {
-            h.session_mut().continuations.secondary = 3;
+            *h.session_mut().control.secondary_mut() = 3;
             return poll;
         }
         h.spawn_initial_hardcoded_object();
         h.session_mut().room.entry.transition_selector = 0xe737;
     }
-    h.session_mut().continuations.secondary = 0;
+    *h.session_mut().control.secondary_mut() = 0;
     EntryPoll::Complete
 }
 fn state10(h: &mut impl EntryHost) -> EntryPoll {
@@ -109,19 +109,22 @@ fn state10(h: &mut impl EntryHost) -> EntryPoll {
     actors(h);
     installation::load_destination_cre(h);
     for index in (0..128).rev() {
-        h.session_mut().visual.targets[index] = 0;
-        h.session_mut().visual.targets[index + 128] = 0;
+        h.session_mut().presentation.visual_mut().targets[index] = 0;
+        h.session_mut().presentation.visual_mut().targets[index + 128] = 0;
     }
     for index in [9, 10, 13, 14, 17, 18, 19, 29] {
-        h.session_mut().visual.targets[index] = h.session().visual.colors[index];
+        h.session_mut().presentation.visual_mut().targets[index] =
+            h.session().presentation.visual().colors[index];
     }
     if (h.session().room.entry.previous_cre | h.session().room.entry.cre) & 1 == 0 {
         for index in [20, 21, 22, 23, 28] {
-            h.session_mut().visual.targets[index] = h.session().visual.colors[index];
+            h.session_mut().presentation.visual_mut().targets[index] =
+                h.session().presentation.visual().colors[index];
         }
         if h.read_external(E::TimerStatus) != 0 {
             for index in [209, 210, 212, 221] {
-                h.session_mut().visual.targets[index] = h.session().visual.colors[index];
+                h.session_mut().presentation.visual_mut().targets[index] =
+                    h.session().presentation.visual().colors[index];
             }
             h.call(L::DrawTimer);
         }
@@ -145,7 +148,7 @@ fn wait48(h: &mut impl EntryHost) -> EntryPoll {
     }
 }
 fn place_and_load(h: &mut impl EntryHost) -> EntryPoll {
-    if h.session().continuations.primary != 3 {
+    if *h.session().control.primary() != 3 {
         let camera = h.read_camera(F::Layer1X);
         h.session_mut().player.x = camera.wrapping_add(h.session().player.x & 0xff);
         h.write_external(E::PreviousPlayerX, h.session().player.x);
@@ -164,10 +167,10 @@ fn place_and_load(h: &mut impl EntryHost) -> EntryPoll {
     // Loading crosses one lag NMI before the first scrolling IRQ.
     // No-update NMI counters and tile staging writes are independent.
     if let Some(poll) = waiting(EntryWait::NoUpdate, h.wait(EntryWait::NoUpdate)) {
-        h.session_mut().continuations.primary = 3;
+        *h.session_mut().control.primary_mut() = 3;
         return poll;
     }
-    h.session_mut().continuations.primary = 0;
+    *h.session_mut().control.primary_mut() = 0;
     if h.session().room.entry.cre & 2 != 0
         && !h
             .session()
@@ -228,7 +231,7 @@ fn place_and_load(h: &mut impl EntryHost) -> EntryPoll {
 }
 fn more(h: &mut impl EntryHost) -> EntryPoll {
     crate::verify_probe::hit("coroutine.door");
-    let resume = h.session().continuations.primary;
+    let resume = *h.session().control.primary();
     if resume == 0 {
         h.call(L::LoadEnemyGraphics);
         h.call(L::LoadRoomMusic);
@@ -252,7 +255,7 @@ fn more(h: &mut impl EntryHost) -> EntryPoll {
         loop {
             if wait {
                 if let Some(poll) = waiting(EntryWait::Nmi, h.wait(EntryWait::Nmi)) {
-                    h.session_mut().continuations.primary = 1;
+                    *h.session_mut().control.primary_mut() = 1;
                     return poll;
                 }
             }
@@ -261,14 +264,14 @@ fn more(h: &mut impl EntryHost) -> EntryPoll {
             }
             wait = true;
         }
-        h.session_mut().visual.colors[196] = 15328;
+        h.session_mut().presentation.visual_mut().colors[196] = 15328;
         h.call(L::SpawnBg3ScrollHdma);
         let enabled = h.read_external(E::HdmaEnabled) | 0x8000;
         h.write_external(E::HdmaEnabled, enabled);
     }
     if resume <= 2 {
         if let Some(poll) = waiting(EntryWait::Mechanisms, h.wait(EntryWait::Mechanisms)) {
-            h.session_mut().continuations.primary = 2;
+            *h.session_mut().control.primary_mut() = 2;
             return poll;
         }
         if h.session().room.entry.direction & 2 == 0 {
@@ -280,7 +283,7 @@ fn more(h: &mut impl EntryHost) -> EntryPoll {
         }
         h.session_mut().room.entry.transition_selector = 0xe659;
     }
-    h.session_mut().continuations.primary = 0;
+    *h.session_mut().control.primary_mut() = 0;
     EntryPoll::Returned(0)
 }
 fn finish_transition(h: &mut impl EntryHost) {

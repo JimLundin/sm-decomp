@@ -6,12 +6,12 @@ pub trait SessionAccess {
     fn session_mut(&mut self) -> &mut Session;
     /// The active host routes the four slots to its single current owner.
     fn atmospheric(&self) -> &crate::game::player_transitions::state::AtmosphericEffects {
-        &self.session().atmospheric
+        self.session().presentation.atmospheric()
     }
     fn atmospheric_mut(
         &mut self,
     ) -> &mut crate::game::player_transitions::state::AtmosphericEffects {
-        &mut self.session_mut().atmospheric
+        self.session_mut().presentation.atmospheric_mut()
     }
     /// Native compatibility has no semantic allocator; owned G overrides this
     /// after the producer's completed stores and preserves failures in its owner.

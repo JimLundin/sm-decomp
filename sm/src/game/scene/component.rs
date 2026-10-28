@@ -17,6 +17,7 @@ use super::{
 
 /// One-way starting data transfer to the corresponding G owners. The display
 /// component does not keep another writable input, continuation or audio copy.
+#[derive(Clone, Debug, PartialEq)]
 pub struct DisplayStartMetadata {
     pub identity: StartIdentity,
     pub reference: ReferenceProfile,
@@ -33,6 +34,7 @@ pub struct OpenedDisplay {
 
 /// The mutable owner is encapsulated. Public construction descriptions may be
 /// edited before validation; callers never receive a mutable live display borrow.
+#[derive(Clone, Debug, PartialEq)]
 pub struct DisplayComponent {
     owner: OwnedDisplay,
 }
@@ -104,6 +106,9 @@ impl DisplayComponent {
     }
 
     /// Actual producer/settlement integration stays inside G, never the renderer.
+    pub(crate) fn owner(&self) -> &OwnedDisplay {
+        &self.owner
+    }
     pub(crate) fn owner_mut(&mut self) -> &mut OwnedDisplay {
         &mut self.owner
     }

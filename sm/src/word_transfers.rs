@@ -82,7 +82,7 @@ macro_rules! word_transfers {
                     let value = match source {
                         WordEndpoint::Ram(base, native) => {
                             let at = address(*base, offset);
-                            let bytes = [$game.ram().read_byte(at), $game.ram().read_byte(at + 1)];
+                            let bytes = [$game.compatibility_byte(at), $game.compatibility_byte(at + 1)];
                             if *native { u16::from_ne_bytes(bytes) } else { u16::from_le_bytes(bytes) }
                         }
                         source => source.read(offset),
@@ -92,8 +92,8 @@ macro_rules! word_transfers {
                     };
                     let at = address(*base, offset);
                     let bytes = if *native { value.to_ne_bytes() } else { value.to_le_bytes() };
-                    $game.ram().write_byte(at, bytes[0]);
-                    $game.ram().write_byte(at + 1, bytes[1]);
+                    $game.compatibility_write_byte(at, bytes[0]);
+                    $game.compatibility_write_byte(at + 1, bytes[1]);
                 }
             }
         }

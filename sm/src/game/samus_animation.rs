@@ -73,7 +73,7 @@ enum BoundTable {
     Prepared(RoleLease<PreparedBytes>),
 }
 pub(super) struct NativeTable {
-    record: crate::rom::RomRecord,
+    record: Option<crate::rom::RomRecord>,
     bound: Option<BoundTable>,
 }
 impl NativeTable {
@@ -102,28 +102,54 @@ impl NativeTable {
                 ),
             }
         });
-        Self { record, bound }
+        Self {
+            record: Some(record),
+            bound,
+        }
+    }
+    fn prepared(game: &Game, role: Role, source: Registration, displacement: usize) -> Self {
+        let bound = game
+            .prepared_samus_role(role, source, displacement)
+            .expect("Samus prepared role")
+            .expect("supplied Samus role");
+        Self {
+            record: None,
+            bound: Some(BoundTable::Prepared(bound)),
+        }
     }
     pub(super) fn byte(&self, offset: usize) -> u8 {
         match &self.bound {
-            None => self.record.byte(offset),
+            None => self
+                .record
+                .as_ref()
+                .expect("native Samus record")
+                .byte(offset),
             Some(BoundTable::Native(table)) => table.byte(offset).unwrap(),
             Some(BoundTable::Prepared(table)) => table.byte(offset).unwrap(),
         }
     }
     pub(super) fn word(&self, offset: usize, little: bool) -> u16 {
-        if little && self.bound.is_some() {
-            let start = self
-                .record
+        if little && self.bound.is_some() && self.record.is_some() {
+            let record = self.record.as_ref().expect("native Samus record");
+            let start = record
                 .base
                 .checked_add(offset)
                 .expect("ROM copy offset overflow");
             let end = start.checked_add(2).expect("ROM copy extent overflow");
-            assert!(end <= self.record.image.len(), "ROM copy source extent");
+            assert!(end <= record.image.len(), "ROM copy source extent");
         }
         match &self.bound {
-            None if little => u16::from_le_bytes(self.record.bytes(offset)),
-            None => self.record.native_word(offset),
+            None if little => u16::from_le_bytes(
+                self.record
+                    .as_ref()
+                    .expect("native Samus record")
+                    .bytes(offset),
+            ),
+            None => self
+                .record
+                .as_ref()
+                .expect("native Samus record")
+                .native_word(offset),
             Some(BoundTable::Native(table)) => if little {
                 table.little_word(offset)
             } else {
@@ -175,6 +201,14 @@ impl samus_body::Host for NativeBody<'_, '_> {
             samus_body::Half::Top => (Role::BodyTop, 0x929263),
             samus_body::Half::Bottom => (Role::BodyBottom, 0x92945d),
         };
+        if self.0.has_owned_display() {
+            return Ok(NativeTable::prepared(
+                self.0.samus_game(),
+                role,
+                Registration::Loaded,
+                0,
+            ));
+        }
         let record = self.0.table(Source::Loaded, address);
         Ok(NativeTable::capture(
             self.0.samus_game(),
@@ -220,7 +254,12 @@ impl samus_body::Host for NativeBody<'_, '_> {
 }
 
 fn draw_body(game: &mut Game, mode: Body) {
-    samus_body::draw(&mut NativeBody(&mut Runtime::new(game)), mode).unwrap();
+    let mut runtime = Runtime::new(game);
+    if runtime.has_owned_display() {
+        runtime.draw_owned_body(mode);
+    } else {
+        samus_body::draw(&mut NativeBody(&mut runtime), mode).unwrap();
+    }
 }
 
 fn sprite_index(h: &mut Runtime<'_>, table: u32, pose: u16, little_endian: bool) -> u16 {
@@ -438,13 +477,17 @@ pub fn Samus_DrawEchoes(game: &mut Game) {
                 continue;
             }
         }
-        h.foreign(|game| {
-            crate::game::projectile_presentation_ram::echo(
-                (index * 2) as u16,
-                game,
-                &mut crate::game::projectile_presentation_ram::Native,
-            )
-        });
+        if h.has_owned_display() {
+            h.draw_owned_echo((index * 2) as u16);
+        } else {
+            h.foreign(|game| {
+                crate::game::projectile_presentation_ram::echo(
+                    (index * 2) as u16,
+                    game,
+                    &mut crate::game::projectile_presentation_ram::Native,
+                )
+            });
+        }
     }
     if converging && h.session().projectiles.echoes.x[..2] == [0, 0] {
         h.session_mut().projectiles.echoes.index = 0;
@@ -458,13 +501,22 @@ pub fn Samus_DrawShinesparkCrashEchoes(k: u16, game: &mut Game) {
     }
     let pose = h.session().player.pose;
     let top = sprite_index(h, 0x929263, pose, false);
-    let record = h.table(Source::Native, 0x91b629);
-    let table = NativeTable::capture(
-        h.samus_game(),
-        Role::PositionFallback,
-        Registration::Native,
-        record,
-    );
+    let table = if h.has_owned_display() {
+        NativeTable::prepared(
+            h.samus_game(),
+            Role::PositionFallback,
+            Registration::Native,
+            0,
+        )
+    } else {
+        let record = h.table(Source::Native, 0x91b629);
+        NativeTable::capture(
+            h.samus_game(),
+            Role::PositionFallback,
+            Registration::Native,
+            record,
+        )
+    };
     let height = table.byte(usize::from(h.session().player.pose) * 8 + 4);
     let y = h
         .word(0xab8 + usize::from(k & !1))
@@ -476,14 +528,18 @@ pub fn Samus_DrawShinesparkCrashEchoes(k: u16, game: &mut Game) {
     let x = h
         .word(0xab0 + usize::from(k & !1))
         .wrapping_sub(h.inputs().camera_x);
-    h.draw_samus_sprite(top, x, y);
-    if h.foreign(bottom_is_visible) & 1 != 0 {
+    h.draw_echo_samus_sprite(k, top, x, y);
+    if if h.has_owned_display() {
+        h.owned_bottom_visible()
+    } else {
+        h.foreign(bottom_is_visible) & 1 != 0
+    } {
         let pose = h.session().player.pose;
         let bottom = sprite_index(h, 0x92945d, pose, false);
         let x = h
             .word(0xab0 + usize::from(k & !1))
             .wrapping_sub(h.inputs().camera_x);
-        h.draw_samus_sprite(bottom, x, y);
+        h.draw_echo_samus_sprite(k, bottom, x, y);
     }
 }
 
@@ -608,6 +664,9 @@ fn queue_body_tiles(h: &mut Runtime<'_>) {
 }
 impl samus_position_tiles::Table for NativeTable {
     type Error = std::convert::Infallible;
+    fn validate_source(&self, _: crate::game::scene::records::Revision) -> Result<(), Self::Error> {
+        Ok(())
+    }
     fn native_word(&self, offset: usize) -> Result<u16, Self::Error> {
         Ok(self.word(offset, false))
     }
@@ -628,6 +687,14 @@ impl samus_position_tiles::TileHost for NativeTiles<'_, '_> {
             samus_position_tiles::TileTable::Top => (Role::TileTop, 0x92d91e),
             samus_position_tiles::TileTable::Bottom => (Role::TileBottom, 0x92d938),
         };
+        if self.0.has_owned_display() {
+            return Ok(NativeTable::prepared(
+                self.0.samus_game(),
+                role,
+                Registration::Loaded,
+                0,
+            ));
+        }
         let record = self.0.table(Source::Loaded, address);
         Ok(NativeTable::capture(
             self.0.samus_game(),
@@ -643,6 +710,26 @@ impl samus_position_tiles::TileHost for NativeTiles<'_, '_> {
         Ok(self.0.session().player.animation_clock.frame)
     }
     fn definition(&mut self, cursor: u16) -> Result<NativeTable, Self::Error> {
+        if self.0.has_owned_display() {
+            if cursor & 0x8000 == 0 {
+                self.0.samus_source_diagnostic(0x920000 | u32::from(cursor));
+            }
+            let mapped = crate::rtl::lorom_offset(0x920000 | u32::from(cursor)) as usize;
+            let base = self
+                .0
+                .samus_game()
+                .samus_role_base(Role::TileDefinition, Registration::Native)
+                .unwrap()
+                .unwrap();
+            return Ok(NativeTable::prepared(
+                self.0.samus_game(),
+                Role::TileDefinition,
+                Registration::Native,
+                mapped
+                    .checked_sub(base)
+                    .expect("Samus definition mapped base"),
+            ));
+        }
         let record = self.0.legacy_native_record(0x92, cursor);
         Ok(NativeTable::capture(
             self.0.samus_game(),
@@ -672,7 +759,7 @@ impl samus_position_tiles::TileHost for NativeTiles<'_, '_> {
         Ok(())
     }
     fn request_written(&mut self, half: samus_body::Half, pointer: u16) -> Result<(), Self::Error> {
-        let _ = self.0.samus_game().samus_request(half, pointer).unwrap();
+        self.0.samus_request_written(half, pointer);
         Ok(())
     }
 }

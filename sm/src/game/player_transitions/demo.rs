@@ -28,7 +28,7 @@ pub(crate) fn start(s: &mut Session) {
         enabled: 0x8000,
         ..DemoInput::default()
     };
-    s.player.palette.xray_progress = 0;
+    s.presentation.palette_mut().xray_progress = 0;
     s.player.transitions.xray_angle = 0;
     s.player.transitions.input_mode = InputMode::Demo;
 }
@@ -53,7 +53,7 @@ pub(crate) fn load(h: &mut impl Host, angle: u16, program: u16) {
     h.session_mut().player.demo.pre_action = loaded_word(h, program, 2);
     h.session_mut().player.demo.program = loaded_word(h, program, 4);
     h.session_mut().player.demo.delay = 1;
-    h.session_mut().player.palette.xray_progress = 0;
+    h.session_mut().presentation.palette_mut().xray_progress = 0;
 }
 
 pub(crate) fn load_data(h: &mut impl Host, set: u16, scene: u16) {
@@ -158,8 +158,13 @@ fn instruction(h: &mut impl Host, opcode: u16, cursor: u16) -> u16 {
         0x843f => h.session_mut().player.demo.pre_action = 0x8447,
         0x8448 => return Content::legacy_native_record(h, 0x91, cursor).native_word(0),
         0x844f => {
-            let timer = h.session().player.palette.xray_progress.wrapping_sub(1);
-            h.session_mut().player.palette.xray_progress = timer;
+            let timer = h
+                .session()
+                .presentation
+                .palette()
+                .xray_progress
+                .wrapping_sub(1);
+            h.session_mut().presentation.palette_mut().xray_progress = timer;
             return if timer != 0 {
                 Content::legacy_native_record(h, 0x91, cursor).native_word(0)
             } else {
@@ -167,7 +172,7 @@ fn instruction(h: &mut impl Host, opcode: u16, cursor: u16) -> u16 {
             };
         }
         0x8459 => {
-            h.session_mut().player.palette.xray_progress =
+            h.session_mut().presentation.palette_mut().xray_progress =
                 Content::legacy_native_record(h, 0x91, cursor).native_word(0);
             return cursor.wrapping_add(2);
         }

@@ -25,7 +25,7 @@ fn suit_source(session: &Session) -> u16 {
     }
 }
 pub(crate) fn update_suit_index(session: &mut Session) {
-    session.player.palette.suit_index = match suit_source(session) {
+    session.presentation.palette_mut().suit_index = match suit_source(session) {
         0x9800 => 4,
         0x9520 => 2,
         _ => 0,
@@ -39,8 +39,8 @@ fn copy_colors<const N: usize>(
 ) {
     let bytes = h.record(Source::Native, 0x9b, source).bytes::<N>(0);
     let colors = match buffer {
-        PaletteBuffer::Current => &mut h.session_mut().visual.colors,
-        PaletteBuffer::Target => &mut h.session_mut().visual.targets,
+        PaletteBuffer::Current => &mut h.session_mut().presentation.visual_mut().colors,
+        PaletteBuffer::Target => &mut h.session_mut().presentation.visual_mut().targets,
     };
     for (i, pair) in bytes.chunks_exact(2).enumerate() {
         #[cfg(sm_verify_dll)]
@@ -88,7 +88,7 @@ pub(crate) fn load_suit(h: &mut impl Host, buffer: PaletteBuffer) {
 }
 fn suit_table(h: &impl Host, address: u32) -> u16 {
     let record = h.table(Source::Loaded, address);
-    record.native_word(usize::from(h.session().player.palette.suit_index >> 1) * 2)
+    record.native_word(usize::from(h.session().presentation.palette().suit_index >> 1) * 2)
 }
 fn frame_palette(h: &mut impl Host, table: u32) {
     let base = suit_table(h, table);
@@ -150,25 +150,30 @@ pub(crate) fn visor(h: &mut impl Host) -> u8 {
         return 0;
     }
     if matches!(h.inputs().blending_config, 40 | 42) {
-        let timer = h.session().player.palette.visor_timer.wrapping_sub(1);
-        h.session_mut().player.palette.visor_timer = timer;
+        let timer = h
+            .session()
+            .presentation
+            .palette()
+            .visor_timer
+            .wrapping_sub(1);
+        h.session_mut().presentation.palette_mut().visor_timer = timer;
         if timer as u8 != 0 {
             return 0;
         }
-        h.session_mut().player.palette.visor_timer = timer | 5;
+        h.session_mut().presentation.palette_mut().visor_timer = timer | 5;
         let record = h.table(Source::Loaded, 0x9ba3c0);
         let value = record.native_word(usize::from((timer >> 8) >> 1) * 2);
-        h.session_mut().visual.colors[196] = value;
+        h.session_mut().presentation.visual_mut().colors[196] = value;
         let frame = (timer >> 8) + 2;
         let high = if frame.wrapping_sub(12) & 0x8000 != 0 {
             frame.swap_bytes()
         } else {
             0x600
         };
-        h.session_mut().player.palette.visor_timer =
-            high | (h.session().player.palette.visor_timer & 0xff);
+        h.session_mut().presentation.palette_mut().visor_timer =
+            high | (h.session().presentation.palette().visor_timer & 0xff);
     } else {
-        h.session_mut().player.palette.visor_timer = 1537;
+        h.session_mut().presentation.palette_mut().visor_timer = 1537;
     }
     0
 }
@@ -178,11 +183,11 @@ pub(crate) fn misc(h: &mut impl Host) -> PaletteCarry {
     #[cfg(sm_verify_dll)]
     crate::game::visual_runtime::samus_observer::event("misc", 0);
     if h.session().player.special_palette_flags == 0 {
-        let hurt = h.session().player.palette.hurt_flash;
-        if h.session().player.palette.hurt_flash == 0 {
+        let hurt = h.session().presentation.palette().hurt_flash;
+        if h.session().presentation.palette().hurt_flash == 0 {
             return PaletteCarry::Clear;
         }
-        let restore = if h.session().player.palette.hurt_flash == 2
+        let restore = if h.session().presentation.palette().hurt_flash == 2
             && h.inputs().cinematic == 0
             && (h.session().player.transitions.frame_beta != FrameBetaMode::Drained
                 || h.session().player.pose != 0x54)
@@ -204,8 +209,13 @@ pub(crate) fn misc(h: &mut impl Host) -> PaletteCarry {
                 load_suit(h, PaletteBuffer::Current);
             }
         }
-        let value = h.session().player.palette.hurt_flash.wrapping_add(1);
-        h.session_mut().player.palette.hurt_flash = value;
+        let value = h
+            .session()
+            .presentation
+            .palette()
+            .hurt_flash
+            .wrapping_add(1);
+        h.session_mut().presentation.palette_mut().hurt_flash = value;
         if value == 40 {
             let grapple = h.session().player.grapple;
             if grapple == 0xc4f0 {
@@ -227,7 +237,7 @@ pub(crate) fn misc(h: &mut impl Host) -> PaletteCarry {
             return carry(grapple >= 0xc856);
         }
         if value.wrapping_sub(60) & 0x8000 == 0 {
-            h.session_mut().player.palette.hurt_flash = 0;
+            h.session_mut().presentation.palette_mut().hurt_flash = 0;
         }
         return carry(value >= 60);
     }
@@ -237,12 +247,13 @@ pub(crate) fn misc(h: &mut impl Host) -> PaletteCarry {
         let source =
             record.native_word(usize::from(h.session().projectiles.controls.charge_palette) * 2);
         copy_suit(h, PaletteBuffer::Current, source);
-        h.session_mut().player.palette.timer = h.session().player.palette.timer.wrapping_sub(1);
-        let timer = h.session().player.palette.timer;
+        h.session_mut().presentation.palette_mut().timer =
+            h.session().presentation.palette().timer.wrapping_sub(1);
+        let timer = h.session().presentation.palette().timer;
         if timer != 0 && timer & 0x8000 == 0 {
             return carry(shift_carry);
         }
-        h.session_mut().player.palette.timer = h.session().player.palette_frame;
+        h.session_mut().presentation.palette_mut().timer = h.session().player.palette_frame;
         let next = h
             .session()
             .projectiles
@@ -269,7 +280,7 @@ pub(crate) fn misc(h: &mut impl Host) -> PaletteCarry {
     PaletteCarry::Clear
 }
 pub(crate) fn screw_speed(h: &mut impl Host) -> PaletteCarry {
-    if h.session().player.palette.suit_index & 4 == 0 {
+    if h.session().presentation.palette().suit_index & 4 == 0 {
         let y = h.session().player.y;
         let pose = h.session().player.pose;
         let record = h.table(Source::Loaded, 0x91b629);
@@ -323,10 +334,11 @@ pub(crate) fn screw_speed(h: &mut impl Host) -> PaletteCarry {
         if h.session().player.contact.speed_boost & 0xff00 != 1024 {
             return PaletteCarry::Set;
         }
-        h.session_mut().player.palette.timer = h.session().player.palette.timer.wrapping_sub(1);
-        let negative = h.session().player.palette.timer & 0x8000 != 0;
-        if h.session().player.palette.timer == 0 || negative {
-            h.session_mut().player.palette.timer = 4;
+        h.session_mut().presentation.palette_mut().timer =
+            h.session().presentation.palette().timer.wrapping_sub(1);
+        let negative = h.session().presentation.palette().timer & 0x8000 != 0;
+        if h.session().presentation.palette().timer == 0 || negative {
+            h.session_mut().presentation.palette_mut().timer = 4;
             let base = suit_table(h, 0x91daa9);
             if h.session().player.palette_frame > 6 {
                 h.session_mut().player.palette_frame = 6;
@@ -388,7 +400,7 @@ pub(crate) fn crystal_flash(h: &mut impl Host) -> PaletteCarry {
         write_beam_palette(h, beam);
         h.session_mut().player.shine_tick = 0;
         h.session_mut().player.palette_frame = 0;
-        h.session_mut().player.palette.timer = 0;
+        h.session_mut().presentation.palette_mut().timer = 0;
         h.session_mut().player.shine_timer = 0;
         PaletteCarry::Clear
     } else {
@@ -405,27 +417,34 @@ pub(crate) fn crystal_flash(h: &mut impl Host) -> PaletteCarry {
                 frame.wrapping_add(2)
             };
         }
-        h.session_mut().player.palette.crystal_flash_delay = h
+        h.session_mut()
+            .presentation
+            .palette_mut()
+            .crystal_flash_delay = h
             .session()
-            .player
-            .palette
+            .presentation
+            .palette()
             .crystal_flash_delay
             .wrapping_sub(1);
-        let negative = h.session().player.palette.crystal_flash_delay & 0x8000 != 0;
-        if h.session().player.palette.crystal_flash_delay == 0 || negative {
+        let negative = h.session().presentation.palette().crystal_flash_delay & 0x8000 != 0;
+        if h.session().presentation.palette().crystal_flash_delay == 0 || negative {
             let record = h.table(Source::Native, 0x91dc00);
-            let delay = record.native_word(2 + usize::from(h.session().player.palette.timer));
-            h.session_mut().player.palette.crystal_flash_delay =
-                u16::from_le_bytes(delay.to_ne_bytes());
+            let delay =
+                record.native_word(2 + usize::from(h.session().presentation.palette().timer));
+            h.session_mut()
+                .presentation
+                .palette_mut()
+                .crystal_flash_delay = u16::from_le_bytes(delay.to_ne_bytes());
             let record = h.table(Source::Native, 0x91dc00);
-            let source = record.native_word(usize::from(h.session().player.palette.timer));
+            let source = record.native_word(usize::from(h.session().presentation.palette().timer));
             copy_crystal_first10(h, source);
-            let frame = h.session().player.palette.timer;
-            h.session_mut().player.palette.timer = if frame.wrapping_sub(36) & 0x8000 == 0 {
-                0
-            } else {
-                frame.wrapping_add(4)
-            };
+            let frame = h.session().presentation.palette().timer;
+            h.session_mut().presentation.palette_mut().timer =
+                if frame.wrapping_sub(36) & 0x8000 == 0 {
+                    0
+                } else {
+                    frame.wrapping_add(4)
+                };
         }
         PaletteCarry::Set
     }
@@ -433,22 +452,23 @@ pub(crate) fn crystal_flash(h: &mut impl Host) -> PaletteCarry {
 fn xray_color(h: &mut impl Host) {
     let record = h.table(Source::Loaded, 0x9ba3c0);
     let value = record.native_word(usize::from(h.session().player.palette_frame >> 1) * 2);
-    h.session_mut().visual.colors[196] = value;
+    h.session_mut().presentation.visual_mut().colors[196] = value;
 }
 pub(crate) fn xray(h: &mut impl Host) -> PaletteCarry {
-    if h.session().player.palette.xray_progress & 0x8000 != 0 {
+    if h.session().presentation.palette().xray_progress & 0x8000 != 0 {
         h.session_mut().player.shine_tick = 0;
         h.session_mut().player.palette_frame = 0;
-        h.session_mut().player.palette.timer = 0;
-        h.session_mut().player.palette.xray_progress = 0;
+        h.session_mut().presentation.palette_mut().timer = 0;
+        h.session_mut().presentation.palette_mut().xray_progress = 0;
         return PaletteCarry::Clear;
     }
-    if h.session().player.palette.xray_progress == 0 {
+    if h.session().presentation.palette().xray_progress == 0 {
         if h.session().player.demo.pre_action.wrapping_sub(2) & 0x8000 != 0 {
-            h.session_mut().player.palette.timer = h.session().player.palette.timer.wrapping_sub(1);
-            let negative = h.session().player.palette.timer & 0x8000 != 0;
-            if h.session().player.palette.timer == 0 || negative {
-                h.session_mut().player.palette.timer = 5;
+            h.session_mut().presentation.palette_mut().timer =
+                h.session().presentation.palette().timer.wrapping_sub(1);
+            let negative = h.session().presentation.palette().timer & 0x8000 != 0;
+            if h.session().presentation.palette().timer == 0 || negative {
+                h.session_mut().presentation.palette_mut().timer = 5;
                 xray_color(h);
                 if h.session().player.palette_frame.wrapping_sub(4) & 0x8000 != 0 {
                     h.session_mut().player.palette_frame =
@@ -458,15 +478,16 @@ pub(crate) fn xray(h: &mut impl Host) -> PaletteCarry {
             return PaletteCarry::Set;
         }
         h.session_mut().player.palette_frame = 6;
-        h.session_mut().player.palette.timer = 1;
-        h.session_mut().player.palette.xray_progress = 1;
+        h.session_mut().presentation.palette_mut().timer = 1;
+        h.session_mut().presentation.palette_mut().xray_progress = 1;
     }
-    h.session_mut().player.palette.timer = h.session().player.palette.timer.wrapping_sub(1);
-    let negative = h.session().player.palette.timer & 0x8000 != 0;
-    if h.session().player.palette.timer != 0 && !negative {
+    h.session_mut().presentation.palette_mut().timer =
+        h.session().presentation.palette().timer.wrapping_sub(1);
+    let negative = h.session().presentation.palette().timer & 0x8000 != 0;
+    if h.session().presentation.palette().timer != 0 && !negative {
         return PaletteCarry::Set;
     }
-    h.session_mut().player.palette.timer = 5;
+    h.session_mut().presentation.palette_mut().timer = 5;
     xray_color(h);
     let frame = h.session().player.palette_frame;
     h.session_mut().player.palette_frame = if frame.wrapping_sub(10) & 0x8000 == 0 {
@@ -487,7 +508,7 @@ pub(crate) fn cancel_speed_boost(h: &mut impl Host) {
         h.session_mut().player.contact.momentum = 0;
         h.session_mut().player.contact.speed_boost = 0;
         h.session_mut().player.palette_frame = 0;
-        h.session_mut().player.palette.timer = 0;
+        h.session_mut().presentation.palette_mut().timer = 0;
         load_suit(h, PaletteBuffer::Current);
     }
     if h.session().projectiles.echoes.index & 0x8000 == 0 {
@@ -510,7 +531,7 @@ pub(crate) fn write_beam_palette(h: &mut impl Host, table_index: u16) {
         let color = h
             .record(Source::Native, 0x90, source.wrapping_add(offset))
             .native_word(0);
-        h.session_mut().visual.colors[224 + usize::from(offset >> 1)] =
+        h.session_mut().presentation.visual_mut().colors[224 + usize::from(offset >> 1)] =
             u16::from_le_bytes(color.to_ne_bytes());
     }
 }
@@ -542,7 +563,7 @@ pub(crate) fn charge_feedback(h: &mut impl Host) -> u8 {
             return 1;
         }
         for index in (193..208).rev() {
-            h.session_mut().visual.colors[index] = 1023;
+            h.session_mut().presentation.visual_mut().colors[index] = 1023;
         }
         return 0;
     }
@@ -553,7 +574,7 @@ pub(crate) fn charge_feedback(h: &mut impl Host) -> u8 {
         h.probe("samus.palette.charge.held");
         // Capture the output selectors before either content lookup can reenter.
         let contact_attack = h.session().player.contact.contact_attack == 4;
-        let suit = h.session().player.palette.suit_index;
+        let suit = h.session().presentation.palette().suit_index;
         let phase = h.session().projectiles.controls.charge_palette;
         let source = {
             let record = h.table(

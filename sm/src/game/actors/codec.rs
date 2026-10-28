@@ -8,6 +8,29 @@ use crate::game::session::Session;
 
 // Both borrow modes use exactly the same lane map. Byte-only bank/hurt-time
 // lanes are intentionally absent; no Rust struct layout is serialized.
+macro_rules! presentation_visual {
+    ($s:ident, (&)) => {
+        $s.presentation.visual()
+    };
+    ($s:ident, (&mut)) => {
+        $s.presentation.visual_mut()
+    };
+}
+macro_rules! presentation_queue {
+    ($s:ident, entry, $index:expr, (&)) => {
+        $s.presentation.actor_entry($index)
+    };
+    ($s:ident, entry, $index:expr, (&mut)) => {
+        $s.presentation.actor_entry_mut($index)
+    };
+    ($s:ident, size, $index:expr, (&)) => {
+        $s.presentation.actor_size($index)
+    };
+    ($s:ident, size, $index:expr, (&mut)) => {
+        $s.presentation.actor_size_mut($index)
+    };
+}
+
 macro_rules! actor_word {
     ($actor:expr, $offset:expr, ($($borrow:tt)*)) => {
         match $offset {
@@ -113,12 +136,12 @@ macro_rules! common_word {
             0x0e7a => Some($($borrow)* $s.actors.staging.descriptor_write_position),
             0x0e7c => Some($($borrow)* $s.actors.staging.transfer_source),
             0x0e7e => Some($($borrow)* $s.actors.staging.transfer_destination),
-            0x1778 => Some($($borrow)* $s.visual.fireflea.timer),
-            0x177a => Some($($borrow)* $s.visual.fireflea.flash_index),
-            0x177c => Some($($borrow)* $s.visual.fireflea.compatibility_word),
-            0x177e => Some($($borrow)* $s.visual.fireflea.darkness),
-            0x1780 => Some($($borrow)* $s.visual.fireflea.compatibility_limit),
-            0x1782 => Some($($borrow)* $s.visual.fireflea.compatibility_shade),
+            0x1778 => Some($($borrow)* presentation_visual!($s, ($($borrow)*)).fireflea.timer),
+            0x177a => Some($($borrow)* presentation_visual!($s, ($($borrow)*)).fireflea.flash_index),
+            0x177c => Some($($borrow)* presentation_visual!($s, ($($borrow)*)).fireflea.compatibility_word),
+            0x177e => Some($($borrow)* presentation_visual!($s, ($($borrow)*)).fireflea.darkness),
+            0x1780 => Some($($borrow)* presentation_visual!($s, ($($borrow)*)).fireflea.compatibility_limit),
+            0x1782 => Some($($borrow)* presentation_visual!($s, ($($borrow)*)).fireflea.compatibility_shade),
             0x179a => Some($($borrow)* $s.actors.drawing.tilemap_size),
             0x179c => Some($($borrow)* $s.actors.schedule.boss_id),
             0x17a4 => Some($($borrow)* $s.actors.schedule.active_write_position),
@@ -140,8 +163,8 @@ macro_rules! common_word {
             0x18ae => Some($($borrow)* $s.actors.controls.projectile_contacts_disabled),
             0xef74 => Some($($borrow)* $s.actors.graphics.compatibility_write_position),
             0xef76 => Some($($borrow)* $s.actors.graphics.compatibility_next_tile),
-            at @ 0x0e84..=0x0f66 => Some($($borrow)* $s.actors.drawing.queued_indices[(at - 0x0e84) / 2]),
-            at @ 0x0f68..=0x0f76 => Some($($borrow)* $s.actors.drawing.queue_sizes[(at - 0x0f68) / 2]),
+            at @ 0x0e84..=0x0f66 => Some(presentation_queue!($s, entry, (at - 0x0e84) / 2, ($($borrow)*))),
+            at @ 0x0f68..=0x0f76 => Some(presentation_queue!($s, size, (at - 0x0f68) / 2, ($($borrow)*))),
             at @ 0x1794..=0x1798 => Some($($borrow)* $s.actors.drawing.hook_work[(at - 0x1794) / 2]),
             at @ 0x179e..=0x17a2 => Some($($borrow)* $s.actors.schedule.compatibility_179e[(at - 0x179e) / 2]),
             at @ 0x17ac..=0x17ea => Some($($borrow)* $s.actors.schedule.active[(at - 0x17ac) / 2]),

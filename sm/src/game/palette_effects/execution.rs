@@ -33,7 +33,8 @@ macro_rules! field {
         let handle = $handle;
         match $host
             .session()
-            .visual
+            .presentation
+            .visual()
             .palette_effects
             .slots
             .get(usize::from(handle >> 1))
@@ -49,7 +50,8 @@ macro_rules! put {
         let value = $value;
         match $host
             .session_mut()
-            .visual
+            .presentation
+            .visual_mut()
             .palette_effects
             .slots
             .get_mut(usize::from(handle >> 1))
@@ -78,7 +80,7 @@ macro_rules! decrement {
     }};
 }
 pub(crate) fn set_enabled(session: &mut Session, enabled: bool) {
-    let flags = &mut session.visual.palette_effects.flags;
+    let flags = &mut session.presentation.visual_mut().palette_effects.flags;
     *flags = if enabled {
         *flags | 0x8000
     } else {
@@ -86,14 +88,22 @@ pub(crate) fn set_enabled(session: &mut Session, enabled: bool) {
     };
 }
 pub(crate) fn clear(session: &mut Session) {
-    for slot in session.visual.palette_effects.slots.iter_mut().rev() {
+    for slot in session
+        .presentation
+        .visual_mut()
+        .palette_effects
+        .slots
+        .iter_mut()
+        .rev()
+    {
         slot.definition = 0;
     }
 }
 fn counter_byte(host: &mut impl Host, index: u16, value: u8) {
     match host
         .session_mut()
-        .visual
+        .presentation
+        .visual_mut()
         .palette_effects
         .slots
         .get_mut(usize::from(index >> 1))
@@ -110,10 +120,17 @@ fn flag_word(host: &mut impl Host, index: u16) -> u16 {
     // This pre-action intentionally tests flags, the selector, or a neighboring ID.
     // Odd and wider accesses are compatibility exceptions, not bounded slot reads.
     let value = match index {
-        0 => host.session().visual.palette_effects.flags,
-        2 => host.session().visual.palette_effects.selected,
+        0 => host.session().presentation.visual().palette_effects.flags,
+        2 => {
+            host.session()
+                .presentation
+                .visual()
+                .palette_effects
+                .selected
+        }
         4..=18 if index & 1 == 0 => {
-            host.session().visual.palette_effects.slots[usize::from((index - 4) / 2)].definition
+            host.session().presentation.visual().palette_effects.slots[usize::from((index - 4) / 2)]
+                .definition
         }
         _ => return host.palette_flag_native(index),
     };
@@ -121,7 +138,13 @@ fn flag_word(host: &mut impl Host, index: u16) -> u16 {
 }
 fn color(host: &mut impl Host, displacement: u16, value: u16) {
     let index = displacement >> 1;
-    match host.session_mut().visual.colors.get_mut(usize::from(index)) {
+    match host
+        .session_mut()
+        .presentation
+        .visual_mut()
+        .colors
+        .get_mut(usize::from(index))
+    {
         Some(color) => {
             *color = value;
             host.color_written(index, value);
@@ -133,7 +156,8 @@ fn color(host: &mut impl Host, displacement: u16, value: u16) {
 pub(crate) fn spawn(host: &mut impl Host, definition: u16) {
     let Some(slot) = host
         .session()
-        .visual
+        .presentation
+        .visual()
         .palette_effects
         .slots
         .iter()
@@ -154,13 +178,23 @@ pub(crate) fn spawn(host: &mut impl Host, definition: u16) {
     setup(host, 0x8d0000 | u32::from(data.native_word(0)), slot);
 }
 pub(crate) fn advance(host: &mut impl Host) {
-    if host.session().visual.palette_effects.flags & 0x8000 != 0 {
+    if host.session().presentation.visual().palette_effects.flags & 0x8000 != 0 {
         let mut slot = 14i32;
         while slot >= 0 {
-            host.session_mut().visual.palette_effects.selected = slot as u16;
+            host.session_mut()
+                .presentation
+                .visual_mut()
+                .palette_effects
+                .selected = slot as u16;
             if field!(host, definition, slot as u16) != 0 {
                 process(host, slot as u16);
-                slot = i32::from(host.session().visual.palette_effects.selected);
+                slot = i32::from(
+                    host.session()
+                        .presentation
+                        .visual()
+                        .palette_effects
+                        .selected,
+                );
             }
             slot -= 2;
         }
@@ -169,7 +203,12 @@ pub(crate) fn advance(host: &mut impl Host) {
 pub(crate) fn process(host: &mut impl Host, k: u16) {
     let before = 0x8d0000 | u32::from(field!(host, pre_action, k));
     pre(host, before, k);
-    let mut slot = host.session().visual.palette_effects.selected;
+    let mut slot = host
+        .session()
+        .presentation
+        .visual()
+        .palette_effects
+        .selected;
     if decrement!(host, delay, slot) != 1 {
         return;
     }
@@ -241,12 +280,26 @@ pub(crate) fn pre(host: &mut impl Host, ea: u32, k: u16) {
                     host.sound(3, 6, 0x2d);
                 }
             }
-            if host.session().visual.palette_effects.heat
-                != host.session().visual.palette_effects.previous_heat
+            if host.session().presentation.visual().palette_effects.heat
+                != host
+                    .session()
+                    .presentation
+                    .visual()
+                    .palette_effects
+                    .previous_heat
             {
-                host.session_mut().visual.palette_effects.previous_heat =
-                    host.session().visual.palette_effects.heat;
-                let offset = host.session().visual.palette_effects.heat.wrapping_mul(2);
+                host.session_mut()
+                    .presentation
+                    .visual_mut()
+                    .palette_effects
+                    .previous_heat = host.session().presentation.visual().palette_effects.heat;
+                let offset = host
+                    .session()
+                    .presentation
+                    .visual()
+                    .palette_effects
+                    .heat
+                    .wrapping_mul(2);
                 put!(host, delay, k, 1);
                 let table = if host.session().inventory.equipment.active & 0x20 != 0 {
                     0xe3e0
@@ -290,7 +343,12 @@ pub(crate) fn command(host: &mut impl Host, ea: u32, k: u16, j: u16) -> (u16, u1
     host.probe("palette.command");
     match ea {
         9291157 => {
-            let selected = host.session().visual.palette_effects.selected;
+            let selected = host
+                .session()
+                .presentation
+                .visual()
+                .palette_effects
+                .selected;
             put_native!(host, program, selected, j.wrapping_add(4));
             host.probe("palette.continuation.save");
             (0, 0)
@@ -358,7 +416,11 @@ pub(crate) fn command(host: &mut impl Host, ea: u32, k: u16, j: u16) -> (u16, u1
         }
         9302470 => {
             let data = host.record(Source::Loaded, 0x8d, j);
-            host.session_mut().visual.palette_effects.heat = u16::from(data.byte(0));
+            host.session_mut()
+                .presentation
+                .visual_mut()
+                .palette_effects
+                .heat = u16::from(data.byte(0));
             (k, j.wrapping_add(1))
         }
         _ => {

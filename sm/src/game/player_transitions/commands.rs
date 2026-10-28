@@ -220,7 +220,7 @@ pub(crate) fn command<H: Host + player_projectiles::host::Host>(
             let enabled = a & 31 == 0x16;
             h.session_mut().player.special_palette_flags = if enabled { 0x8000 } else { 0 };
             h.session_mut().player.palette_frame = u16::from(enabled);
-            h.session_mut().player.palette.timer = u16::from(enabled);
+            h.session_mut().presentation.palette_mut().timer = u16::from(enabled);
             h.session_mut().projectiles.controls.charge_palette = 0;
             if !enabled {
                 samus_palette::load_suit(h, PaletteBuffer::Current);

@@ -21,7 +21,7 @@ use crate::game_state::{
 use crate::{rom::RomImage, samus_content_binding_cases as fixture};
 use std::sync::Arc;
 
-fn image() -> RomImage {
+pub(crate) fn image() -> RomImage {
     let image = RomImage::zeroed(8);
     for (at, byte) in [0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x7a, 0x8b]
         .into_iter()
