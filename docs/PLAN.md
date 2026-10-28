@@ -50,6 +50,16 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
+SOURCE38 connects actor layer-3 player drawing to the complete owned Runtime
+driver and adds the live B04/B06 body-coordinate projection. Native effects
+remain fenced; signed Maw aliases, distinct actor/intro Prepared rejection,
+unwind prefixes and refreshed observations are preserved. Five-file source
+review and formatting pass; compiler, witnesses and new-codec runtime are pending.
+This is a migration-branch source checkpoint. Persistent Session/Display,
+supplied start, final selected-state adoption, binary checkpoint, Reference/audio,
+portability and full-engine/size acceptance remain open.
+
+
 SOURCE36 connects the explicit Game Samus content binding to native body,
 position, tile and upload consumers. Scoped Runtime/CPU/reset/load adoption
 retains selected registrations through actual late normalized settlement.

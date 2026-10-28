@@ -748,20 +748,16 @@ fn cannon_tile(runtime: &mut Runtime<'_>, x: u16, y: u16, body_y: u16, character
     }
 }
 
-pub(crate) fn update_arm_cannon(game: &mut Game) {
-    player_projectiles::cannon::update(&mut Runtime::new(game));
-}
-pub(crate) fn draw_player_with_cannon(game: &mut Game) {
-    let mut runtime = Runtime::new(game);
+fn draw_player_with_cannon(runtime: &mut Runtime<'_>) {
     // Layer order is captured before atmospheric output can alias the mode word.
     let mode = runtime.session().projectiles.controls.cannon_drawing_mode & 0xf;
-    crate::game::player_transitions::draw_atmospheric(&mut runtime);
+    crate::game::player_transitions::draw_atmospheric(runtime);
     if mode != 0 && mode != 2 {
-        player_projectiles::cannon::draw(&mut runtime, cannon_tile, queue_cannon_tiles);
+        player_projectiles::cannon::draw(runtime, cannon_tile, queue_cannon_tiles);
     }
     runtime.foreign(crate::game::samus_animation::Samus_Draw);
     if mode == 2 {
-        player_projectiles::cannon::draw(&mut runtime, cannon_tile, queue_cannon_tiles);
+        player_projectiles::cannon::draw(runtime, cannon_tile, queue_cannon_tiles);
     }
 }
 pub(crate) fn update_beam_tiles_and_palette(game: &mut Game) {
@@ -1522,9 +1518,13 @@ impl Runtime<'_> {
 }
 
 pub(crate) fn draw_player_frame(game: &mut Game) {
+    Runtime::new(game).owned_player_call(draw_player_frame_owned);
+}
+
+pub(crate) fn draw_player_frame_owned(h: &mut Runtime<'_>) {
     use crate::game::{player_transitions::state::DrawMode, samus_animation as body};
-    update_arm_cannon(game);
-    let h = &mut Runtime::new(game);
+    player_projectiles::cannon::update(h);
+    h.refresh_player_observations();
     match h.session().player.transitions.draw_handler {
         DrawMode::Normal | DrawMode::Grapple => {
             let mode = h.session().player.transitions.draw_handler;
@@ -1533,14 +1533,14 @@ pub(crate) fn draw_player_frame(game: &mut Game) {
             }
             let grapple = h.session().player.grapple;
             if mode == DrawMode::Normal || (grapple.wrapping_add(0x37aa) as i16) >= 0 {
-                h.foreign(draw_player_with_cannon);
+                h.owned_player_call(draw_player_with_cannon);
                 h.foreign(body::Samus_DrawEchoes);
             } else {
                 if matches!(grapple, 0xc703 | 0xc759) {
                     h.foreign(crate::game::grapple_swing::restore_start_positions);
                 }
                 h.foreign(player_projectiles::grapple_flare);
-                h.foreign(draw_player_with_cannon);
+                h.owned_player_call(draw_player_with_cannon);
                 h.foreign(crate::game::grapple_swing::update_tiles);
                 if h.session().player.grapple_length != 0 {
                     h.foreign(crate::game::grapple_swing::draw_rope);

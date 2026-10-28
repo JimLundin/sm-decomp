@@ -143,6 +143,18 @@ impl<'g> Runtime<'g> {
         call.completed = true;
         result
     }
+    /// Match the player driver's former Runtime entry and successful return seams.
+    pub(crate) fn owned_player_call<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R {
+        self.owned_call(|runtime| {
+            runtime.refresh_player_observations();
+            let result = action(runtime);
+            runtime.refresh_player_observations();
+            result
+        })
+    }
+    pub(crate) fn refresh_player_observations(&mut self) {
+        self.inputs = encoding::inputs(&|at| self.byte(at));
+    }
     fn relinquish(&mut self) {
         if let Some(state) = self.state.take() {
             let matching = std::sync::Arc::ptr_eq(&state.world, self.game.world())
@@ -199,12 +211,17 @@ impl<'g> Runtime<'g> {
         let game = &mut *self.game;
         crate::ram_map::slot!(game, Maw[actor].var_36 = outside);
         // Retain raw LOW/HIGH stores and all old owned-region overwrites.
-        // Only the new death owner adopts its overlapping byte lanes.
+        // Only newly owned death/body lanes adopt this raw store.
         let at = crate::ram_map::slot!(@at Maw, actor, var_36);
         let bytes = outside.to_ne_bytes();
         let state = self.state.as_mut().expect("aggregate unavailable");
         encoding::write_botwoon_death_byte(state, at, bytes[0]);
         encoding::write_botwoon_death_byte(state, at + 1, bytes[1]);
+        for lane in [at, at + 1] {
+            if (0xb04..0xb08).contains(&lane) {
+                encoding::write_projected_byte(state, lane, game.ram().read_byte(lane));
+            }
+        }
     }
     pub(crate) fn native_word(&self, at: usize) -> u16 {
         u16::from_ne_bytes([self.byte(at), self.byte(at + 1)])
@@ -1321,8 +1338,17 @@ impl Runtime<'_> {
     pub(crate) fn actor_hook_legacy(&mut self, routine: u32) {
         self.foreign(|game| unsafe { actor_species_draw_hook(routine, game) });
     }
-    pub(crate) fn actor_player_scene_legacy(&mut self) {
-        self.foreign(crate::game::visual_runtime::draw_player_frame);
+    pub(crate) fn produce_player_scene(&mut self) {
+        self.owned_player_call(|runtime| {
+            use crate::{game::scene::state::DisplayError, game_state::SamusExecution};
+            // The former actor foreign call rejected Prepared at its first import.
+            let ready = match runtime.game.samus_execution() {
+                Ok(Some(SamusExecution::Prepared)) => Err(DisplayError::Phase),
+                result => result.map(|_| ()),
+            };
+            ready.expect("Samus import rejected");
+            crate::game::visual_runtime::draw_player_frame_owned(runtime);
+        });
     }
     pub(crate) fn actor_draw_compatible(
         &mut self,

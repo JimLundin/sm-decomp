@@ -271,6 +271,8 @@ macro_rules! scalar_words {
         }
         $f(0xac8,$($borrow)* $s.player.top_sprite);
         $f(0xaca,$($borrow)* $s.player.bottom_sprite);
+        $f(0xb04,$($borrow)* $s.player.body_position.x);
+        $f(0xb06,$($borrow)* $s.player.body_position.y);
         $f(0xa62,$($borrow)* $s.player.scripted_movement_direction);
         $f(0xa7a,$($borrow)* $s.player.demo.pre_action);
         $f(0xa7c,$($borrow)* $s.player.demo.delay);

@@ -204,6 +204,8 @@ pub struct Player {
     pub periodic_damage_fraction: u16,
     pub x: u16,
     pub y: u16,
+    /// Last body publication, independent of player and camera coordinates.
+    pub(crate) body_position: Point,
     pub pose: u16,
     pub(crate) previous_health_for_flash: u16,
     pub(crate) top_sprite: u16,
