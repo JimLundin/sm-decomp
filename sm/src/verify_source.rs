@@ -2,6 +2,14 @@
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/game/checkpoint_binding.rs",
+        include_bytes!("game/checkpoint_binding.rs"),
+    ),
+    (
+        "sm/src/verification/actor_numeric_checkpoint_cases.rs",
+        include_bytes!("verification/actor_numeric_checkpoint_cases.rs"),
+    ),
+    (
         "sm/src/game/music_requests.rs",
         include_bytes!("game/music_requests.rs"),
     ),

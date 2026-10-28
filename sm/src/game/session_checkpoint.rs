@@ -1,6 +1,7 @@
 //! Detached Session checkpoint components; registered by the production Session.
 #![forbid(unsafe_code)]
 use crate::game::actors::snapshot::CheckpointReader;
+use crate::game::checkpoint_binding::{audio_reference_bytes, observation_binding};
 use crate::game::scene::{
     component::DisplayStartMetadata,
     records::{AssetId, AssetRef, Revision},
@@ -362,43 +363,10 @@ impl AudioRequests {
 
 use crate::game::scene::start::{
     ActionBindings, AudioProgramDeclaration, CommittedPhase, ContinuationHistory,
-    InitialAudioIntent, InputHistory, OngoingMusic, PortHistory, ProgramAnchor, ReferenceProfile,
-    StartIdentity,
+    InitialAudioIntent, InputHistory, OngoingMusic, PortHistory, ProgramAnchor, StartIdentity,
 };
 use crate::game::session_owners::{Control, CurrentControl, SessionStartRequirements};
 
-fn audio_reference_bytes(value: &ReferenceProfile) -> Vec<u8> {
-    let mut bytes = Vec::new();
-    for identity in [
-        value.fingerprint,
-        value.release,
-        value.capture,
-        value.arithmetic_policy,
-        value.input_policy,
-        value.observation_policy,
-        value.color_policy,
-        value.slowdown_policy,
-        value.glitch_policy,
-        value.audio_timing_policy,
-    ] {
-        bytes.extend_from_slice(&identity);
-    }
-    bytes.extend_from_slice(&value.ticks_numerator.to_le_bytes());
-    bytes.extend_from_slice(&value.ticks_denominator.to_le_bytes());
-    for word in [value.image.width, value.image.height] {
-        bytes.extend_from_slice(&word.to_le_bytes());
-    }
-    bytes.extend_from_slice(&value.image.crop_origin.x.to_le_bytes());
-    bytes.extend_from_slice(&value.image.crop_origin.y.to_le_bytes());
-    bytes.push(match value.image.color {
-        crate::game::scene::records::ColorInterpretation::Bgr15Native => 0,
-    });
-    bytes.push(match value.image.quantization {
-        crate::game::scene::records::SceneQuantization::Native => 0,
-        crate::game::scene::records::SceneQuantization::Reference => 1,
-    });
-    bytes
-}
 fn control_identity(read: &mut CheckpointReader<'_>) -> Result<[u8; 32], String> {
     Ok(read.bytes(32)?.try_into().unwrap())
 }
@@ -704,22 +672,6 @@ impl Control {
 use crate::game::external_inputs::ExternalInputs;
 use crate::game::player_transitions::state::{FrameGammaMode, TransitionObservations};
 
-pub(in crate::game) fn observation_binding(metadata: &DisplayStartMetadata) -> Vec<u8> {
-    let mut bytes = Vec::new();
-    bytes.extend_from_slice(&metadata.identity.schema.to_le_bytes());
-    for identity in [
-        metadata.identity.gameplay,
-        metadata.identity.reference,
-        metadata.identity.capture,
-        metadata.identity.media.0,
-    ] {
-        bytes.extend_from_slice(&identity);
-    }
-    bytes.extend_from_slice(&metadata.identity.committed_tick.to_le_bytes());
-    bytes.extend_from_slice(&metadata.identity.next_input_record.to_le_bytes());
-    bytes.extend_from_slice(&audio_reference_bytes(&metadata.reference));
-    bytes
-}
 // One explicit field list serves both borrow directions; no Rust layout or RAM
 // addresses enter this detached component. Full-u16 observations stay lossless.
 macro_rules! checkpoint_observations {

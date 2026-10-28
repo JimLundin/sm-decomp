@@ -9,6 +9,8 @@
    and receiver types, including unconditional verification, host and native hooks.
    Carry accessor/borrow fixes with the change or release disjoint fixes to their
    owners; preserve one state owner and every existing crate/cfg reach.
+   Before sharing a helper, inventory its normal, verifier and detached module
+   reaches; reuse the existing player_detached entry for affected compilation.
    For authored display open/reset/checkpoint, preserve independently supplied
    final resident mutable state and immutable visible line history. Never rebuild
    final resident state from the last visible line: later HDMA/IRQ/vblank may change it.
@@ -35,6 +37,8 @@
    and integrator. Label unobserved behavior accurately. Compilation and replay
    completion belong to their assigned executors unless you also own those roles.
    Format pruned snapshots directly with rustfmt using the project edition and skip_children=true; retain exact inputs/timing/results without copying verification/assets/caches just for module resolution.
+   Register each added Rust file in literal sm/src/verify_source.rs when required;
+   include payload leaves in the existing state codec contributors before freeze.
    Retain executed nontrivial preservation guard code and its hash with the source
    receipt's input/output pins, invocation and result. Reuse verified helpers;
    handle Rust array type semicolons and proven rustfmt comma changes while

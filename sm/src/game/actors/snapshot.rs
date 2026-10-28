@@ -201,7 +201,7 @@ impl Actors {
             return Err("actor numeric checkpoint Reference identity mismatch".into());
         }
         let mut bytes = Vec::from(b"SMACTORS\x01".as_slice());
-        let binding = crate::game::session_checkpoint::observation_binding(metadata);
+        let binding = crate::game::checkpoint_binding::observation_binding(metadata);
         bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
         bytes.extend_from_slice(&binding);
         self.write(&mut bytes);
@@ -218,7 +218,7 @@ impl Actors {
         let size = usize::try_from(read.counter()?)
             .map_err(|_| "actor numeric checkpoint binding length overflow")?;
         if metadata.identity.reference != metadata.reference.fingerprint
-            || read.bytes(size)? != crate::game::session_checkpoint::observation_binding(metadata)
+            || read.bytes(size)? != crate::game::checkpoint_binding::observation_binding(metadata)
         {
             return Err("actor numeric checkpoint source identity or Reference changed".into());
         }

@@ -111,3 +111,6 @@ pub(crate) mod player_update;
 
 #[path = "../../game/samus_periodic_damage.rs"]
 pub(crate) mod samus_periodic_damage;
+
+#[path = "../../game/checkpoint_binding.rs"]
+pub(crate) mod checkpoint_binding;

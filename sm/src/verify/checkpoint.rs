@@ -86,6 +86,7 @@ fn compatibility() -> u64 {
         include_str!("../game/session.rs"),
         include_str!("../game/session_owners.rs"),
         include_str!("../game/session_checkpoint.rs"),
+        include_str!("../game/checkpoint_binding.rs"),
         include_str!("../game/message_boxes.rs"),
         include_str!("../game/dialogue.rs"),
         include_str!("../game/dialogue_ram.rs"),
