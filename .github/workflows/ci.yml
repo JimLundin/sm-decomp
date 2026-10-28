@@ -168,6 +168,10 @@ jobs:
           print('Cargo verifier source and all three actor exports match')
           '@ | python -B -
           if ($LASTEXITCODE -ne 0) { throw 'Cargo verifier actor export check failed' }
+      - name: Run verifier units through the built DLL
+        run: |
+          python tools/verify_dll.py --unit-tests --no-build --cargo
+          if ($LASTEXITCODE -ne 0) { throw 'Verifier DLL unit tests failed' }
       - name: Prepare ROM for requested initialized actor checks
         if: github.event_name == 'workflow_dispatch' && inputs.full_actor_checks
         env:
