@@ -7,6 +7,7 @@
 
 pub mod atmosphere;
 pub(crate) mod atmosphere_protocol;
+pub(crate) mod checkpoint_codec;
 pub(crate) mod commit;
 pub mod component;
 pub(crate) mod delivery;

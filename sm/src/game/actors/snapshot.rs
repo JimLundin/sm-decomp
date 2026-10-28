@@ -11,6 +11,84 @@ use crate::game::scene::component::DisplayStartMetadata;
 use crate::game::session::{Point, Position};
 use std::sync::Arc;
 
+impl ActorIdentityState {
+    /// Owned Session payload: explicit numeric occupancy, immutable bindings and
+    /// palette allocation roles. No RAM image or external handle epoch is encoded.
+    pub(in crate::game) fn encode_owned_checkpoint(
+        &self,
+        actors: &Actors,
+        world: &Arc<WorldBinding>,
+        metadata: &DisplayStartMetadata,
+        loaded: Option<&crate::rom::RomImage>,
+        native: Option<&crate::rom::RomImage>,
+        sources: &[(
+            crate::game::room_entry::world::ResourceId,
+            crate::rom::RomImage,
+        )],
+    ) -> Result<Vec<u8>, String> {
+        let payload = ActorCheckpointPayload::capture(self, world)?;
+        if metadata.identity.reference != metadata.reference.fingerprint {
+            return Err("actor owned checkpoint Reference identity mismatch".into());
+        }
+        let binding = crate::game::checkpoint_binding::observation_binding(metadata);
+        let body = payload.encode_occupancy(loaded, native, sources, &|index| {
+            actors.slots[index].definition != 0
+        })?;
+        let mut bytes = Vec::from(b"ACTOROWN1".as_slice());
+        bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
+        bytes.extend_from_slice(&binding);
+        bytes.extend_from_slice(&body);
+        Ok(bytes)
+    }
+
+    /// Validate completely against decoded numeric Actors and supplied sources,
+    /// then return a detached replacement with this owner's checked fresh epoch.
+    /// Failure never mutates the current owner or supplied allocation contents.
+    pub(in crate::game) fn decode_owned_checkpoint(
+        bytes: &[u8],
+        current: &Self,
+        actors: &Actors,
+        world: &Arc<WorldBinding>,
+        metadata: &DisplayStartMetadata,
+        loaded: Option<&crate::rom::RomImage>,
+        native: Option<&crate::rom::RomImage>,
+        sources: &[(
+            crate::game::room_entry::world::ResourceId,
+            crate::rom::RomImage,
+        )],
+    ) -> Result<Self, String> {
+        current
+            .checked_next_epoch()
+            .map_err(|error| format!("{error:?}"))?;
+        let mut read = CheckpointReader(bytes);
+        if read.bytes(9)? != b"ACTOROWN1" {
+            return Err("unsupported actor owned checkpoint schema".into());
+        }
+        let size = usize::try_from(read.counter()?)
+            .map_err(|_| "actor owned checkpoint binding length overflow")?;
+        if metadata.identity.reference != metadata.reference.fingerprint
+            || read.bytes(size)? != crate::game::checkpoint_binding::observation_binding(metadata)
+        {
+            return Err("actor owned checkpoint source identity or Reference changed".into());
+        }
+        let prepared = ActorCheckpointPayload::prepare_occupancy(
+            read.0,
+            current,
+            world,
+            loaded,
+            native,
+            sources,
+            &|index| actors.slots[index].definition != 0,
+            None,
+        )?;
+        Ok(Self::from_checkpoint(
+            prepared.next_live_epoch,
+            prepared.timeline,
+            prepared.residency,
+        ))
+    }
+}
+
 // Numeric actors are a separate component from the identity timeline and media
 // allocation payload below. Neither component alone is a complete Session.
 trait NumericCheckpoint: Sized {
@@ -416,11 +494,27 @@ impl ActorCheckpointPayload {
         )],
         ram: &impl Fn(usize) -> u8,
     ) -> Result<Vec<u8>, String> {
+        self.encode_occupancy(loaded, native, sources, &|index| {
+            let at = 0xf78 + index * 64;
+            [ram(at), ram(at + 1)] != [0, 0]
+        })
+    }
+
+    fn encode_occupancy(
+        &self,
+        loaded: Option<&crate::rom::RomImage>,
+        native: Option<&crate::rom::RomImage>,
+        sources: &[(
+            crate::game::room_entry::world::ResourceId,
+            crate::rom::RomImage,
+        )],
+        live: &impl Fn(usize) -> bool,
+    ) -> Result<Vec<u8>, String> {
         let world = &self.actors.binding;
         let named = named_images(sources, world)?;
         let mut timeline = Vec::new();
-        self.actors.timeline.encode(&mut timeline, ram);
-        ActorTimeline::decode(&mut CheckpointReader(&timeline), world, ram)?;
+        self.actors.timeline.encode_occupancy(&mut timeline, live);
+        ActorTimeline::decode_occupancy(&mut CheckpointReader(&timeline), world, live)?;
         let mut images = Vec::new();
         let loaded = loaded.map(|image| image_class(&mut images, image));
         let native = native.map(|image| image_class(&mut images, image));
@@ -505,6 +599,34 @@ impl ActorCheckpointPayload {
         ram: &impl Fn(usize) -> u8,
         loaded_after_patch: Option<&crate::rom::RomImage>,
     ) -> Result<PreparedActorRestore, String> {
+        Self::prepare_occupancy(
+            bytes,
+            current,
+            world,
+            loaded,
+            native,
+            sources,
+            &|index| {
+                let at = 0xf78 + index * 64;
+                [ram(at), ram(at + 1)] != [0, 0]
+            },
+            loaded_after_patch,
+        )
+    }
+
+    fn prepare_occupancy(
+        bytes: &[u8],
+        current: &ActorIdentityState,
+        world: &Arc<WorldBinding>,
+        loaded: Option<&crate::rom::RomImage>,
+        native: Option<&crate::rom::RomImage>,
+        sources: &[(
+            crate::game::room_entry::world::ResourceId,
+            crate::rom::RomImage,
+        )],
+        live: &impl Fn(usize) -> bool,
+        loaded_after_patch: Option<&crate::rom::RomImage>,
+    ) -> Result<PreparedActorRestore, String> {
         let next_epoch = current
             .checked_next_epoch()
             .map_err(|error| format!("{error:?}"))?;
@@ -549,7 +671,7 @@ impl ActorCheckpointPayload {
                 .map_err(|_| "checkpoint allocation length overflow")?;
             data.push(read.bytes(length)?);
         }
-        let timeline = ActorTimeline::decode(&mut read, world, ram)?;
+        let timeline = ActorTimeline::decode_occupancy(&mut read, world, live)?;
         let row_count = usize::from(read.byte()?);
         if row_count > 16 {
             return Err("too many checkpoint palette rows".into());

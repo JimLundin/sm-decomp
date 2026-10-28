@@ -52,19 +52,19 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Primary root owns implementation/Git/build/resources on main after verified
-integrator release. Main has the accumulated Session migration and corrected CI;
-only main is remote, and only Jim's conversation #6 remains open. Direct source
-handoffs proceed while CI runs. Actor numeric checkpoint now covers every live,
-saved, scheduling and compatibility field; normal library/source checks bind its
-exact source. This detached component does not restore a complete Session.
-The actual CI workflow on 9cd56aec passes format, detached checks, native build
-and all 87 DLL units. Progress feed is removed; Corpus replay now runs only on
-schedule/manual request, with bank-deletion dispatch in CI. Branch auto-landing
-and the stopped Linux spike are removed; replay/native checks retain their guards.
-Next: compose gameplay checkpoints and finish the assigned display binary codec,
-then actual DLL/87-unit and genuine new-codec runtime qualification. Preserve all
-original artifacts; reserves remain 2 GiB RAM / 50 GiB disk.
+Primary root owns implementation/Git/build/resources after verified integrator
+release. Only main is remote and Jim's conversation #6 remains open. Delegate
+source, review and qualification through the focused skills; keep work moving
+while CI runs. Qualified ci16 source 54727767 / DLL 6eb76bb5 composes numeric, actor
+and Display state into the gated six-component Session checkpoint envelope.
+Format, normal-library input transfer, native/source guards and 87/87 units pass.
+Fresh initialized/save/reserve checkpoints and 26 distinct rows pass 199,063
+comparisons/0, including full Morph 1200 and BOTH independent Kago 14350 approaches.
+Coverage 23/44; full Session/backend independence and engine-size acceptance remain
+open. Net +2095 production/+1603 verification/+2 forbid attributes/legacy 0;
+actual raw-operation retirement 0. Original ci16 receipts/artifacts are preserved.
+Next: separately qualify/publish audio checkpoint regressions, then the private
+OpenGL owned-upload packet through its actual frontend. Reserves 2 GiB/50 GiB.
 
 SOURCE38 connects actor layer-3 player drawing to the complete owned Runtime
 driver and adds the live B04/B06 body-coordinate projection. Native effects

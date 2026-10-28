@@ -115,6 +115,43 @@ impl DisplayComponent {
 }
 
 impl DisplayCheckpoint {
+    /// Encode committed display state with independently supplied G metadata and
+    /// immutable requirements. Validation never executes a producer or delivery.
+    pub fn encode_checkpoint(
+        &self,
+        metadata: &DisplayStartMetadata,
+        required: &super::start::DisplayStartRequirements,
+    ) -> Result<Vec<u8>, String> {
+        let (description, media) = self.clone().into_start_description(metadata.clone());
+        ValidatedDisplayStart::construct(description, media, required)
+            .map_err(|error| format!("display checkpoint start validation: {error:?}"))?;
+        super::checkpoint_codec::encode(
+            &self.description,
+            &self.resident,
+            &self.committed,
+            &self.media,
+            metadata,
+            required,
+        )
+    }
+
+    /// Decode into a detached validated checkpoint. The supplied final resident
+    /// image stays separate from every immutable visible Scene line.
+    pub fn decode_checkpoint(
+        bytes: &[u8],
+        media: Arc<SceneMedia>,
+        metadata: &DisplayStartMetadata,
+        required: &super::start::DisplayStartRequirements,
+    ) -> Result<Self, String> {
+        let start = super::checkpoint_codec::decode(bytes, media, metadata, required)?;
+        let opened = DisplayComponent::open(start)
+            .map_err(|error| format!("display checkpoint opening: {error:?}"))?;
+        opened
+            .display
+            .checkpoint()
+            .map_err(|error| format!("display checkpoint capture: {error:?}"))
+    }
+
     pub fn committed_scene(&self) -> &Scene {
         &self.committed
     }

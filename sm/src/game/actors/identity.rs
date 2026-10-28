@@ -423,11 +423,17 @@ impl ActorIdentityState {
 
 impl ActorTimeline {
     pub(super) fn encode(&self, bytes: &mut Vec<u8>, ram: &impl Fn(usize) -> u8) {
+        self.encode_occupancy(bytes, &|index| {
+            let at = 0xf78 + index * 64;
+            [ram(at), ram(at + 1)] != [0, 0]
+        });
+    }
+
+    pub(super) fn encode_occupancy(&self, bytes: &mut Vec<u8>, live: &impl Fn(usize) -> bool) {
         bytes.extend_from_slice(&self.next_birth_order.to_le_bytes());
         for (index, slot) in self.slots.iter().enumerate() {
             bytes.extend_from_slice(&slot.generation.to_le_bytes());
-            let at = 0xf78 + index * 64;
-            let raw_live = [ram(at), ram(at + 1)] != [0, 0];
+            let raw_live = live(index);
             // Unknown compatibility-live slots are possible through odd/raw aliases.
             bytes.push(if slot.occupant.is_some() {
                 1
@@ -471,13 +477,23 @@ impl ActorTimeline {
         world: &crate::game::room_entry::world::WorldBinding,
         ram: &impl Fn(usize) -> u8,
     ) -> Result<Self, String> {
+        Self::decode_occupancy(read, world, &|index| {
+            let at = 0xf78 + index * 64;
+            [ram(at), ram(at + 1)] != [0, 0]
+        })
+    }
+
+    pub(super) fn decode_occupancy(
+        read: &mut super::snapshot::CheckpointReader<'_>,
+        world: &crate::game::room_entry::world::WorldBinding,
+        live: &impl Fn(usize) -> bool,
+    ) -> Result<Self, String> {
         let next_birth_order = read.counter()?;
         let mut slots: [SlotIdentity; 32] = core::array::from_fn(|_| SlotIdentity::default());
         let mut births = std::collections::BTreeSet::new();
         for (index, slot) in slots.iter_mut().enumerate() {
             slot.generation = read.counter()?;
-            let at = 0xf78 + index * 64;
-            let raw_live = [ram(at), ram(at + 1)] != [0, 0];
+            let raw_live = live(index);
             match read.byte()? {
                 0 if !raw_live => continue,
                 2 if raw_live => continue,
@@ -581,3 +597,25 @@ impl ActorTimeline {
         })
     }
 }
+
+impl ActorIdentityState {
+    /// A preflighted detached replacement; the supplied fresh epoch is never encoded.
+    pub(super) fn from_checkpoint(
+        live_epoch: u64,
+        timeline: ActorTimeline,
+        palette_residency: super::media::ActorPaletteResidency,
+    ) -> Self {
+        Self {
+            live_epoch,
+            poisoned: false,
+            timeline,
+            palette_residency,
+        }
+    }
+}
+
+#[cfg(sm_verify_dll)]
+#[path = "../../verification/actor_owned_checkpoint_cases.rs"]
+mod owned_checkpoint_cases;
+#[cfg(sm_verify_dll)]
+pub(crate) use owned_checkpoint_cases::{assert_installed_epoch, assert_owned_checkpoint};

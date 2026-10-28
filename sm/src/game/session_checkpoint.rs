@@ -17,6 +17,7 @@ use std::sync::Arc;
 /// installed as a competing gameplay owner or filled from a live Session.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct AuxiliaryGameplayCheckpoint {
+    pub(in crate::game) botwoon_death: crate::game::actors::botwoon_death::DeathProtocol,
     pub(in crate::game) timing: crate::game::session::Timing,
     pub(crate) gameplay_flags: crate::game::gameplay_flag_state::GameplayFlags,
     pub(crate) flag_compatibility: crate::game::gameplay_flag_state::FlagCompatibility,
@@ -1489,6 +1490,10 @@ checkpoint_fields!(checkpoint_sequence, checkpoint_read_sequence, collision::Seq
     stage: checkpoint_word/checkpoint_read_word, value: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_multiply, checkpoint_read_multiply, collision::MultiplyScratch,
     left: checkpoint_word/checkpoint_read_word, right: checkpoint_word/checkpoint_read_word);
+checkpoint_fields!(checkpoint_botwoon_death, checkpoint_read_botwoon_death, crate::game::actors::botwoon_death::DeathProtocol,
+    pending_hit: checkpoint_word/checkpoint_read_word, active: checkpoint_word/checkpoint_read_word,
+    tail_ready: checkpoint_word/checkpoint_read_word, previous_health: checkpoint_word/checkpoint_read_word,
+    body_landed: checkpoint_word/checkpoint_read_word);
 
 // One complete subset table encodes from the actual Session's borrowed fields,
 // then constructs detached fields solely from the bounded binary reader.
@@ -1499,7 +1504,7 @@ macro_rules! checkpoint_auxiliary {
                 if metadata.identity.reference != metadata.reference.fingerprint {
                     return Err("auxiliary gameplay checkpoint Reference identity mismatch".into());
                 }
-                let mut bytes = Vec::from(b"SMAUXGS\x01".as_slice());
+                let mut bytes = Vec::from(b"SMAUXGS\x02".as_slice());
                 let binding = observation_binding(metadata);
                 bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
                 bytes.extend_from_slice(&binding);
@@ -1508,7 +1513,7 @@ macro_rules! checkpoint_auxiliary {
             }
             pub(crate) fn decode_auxiliary_checkpoint(bytes: &[u8], metadata: &DisplayStartMetadata) -> Result<AuxiliaryGameplayCheckpoint, String> {
                 let mut read = CheckpointReader(bytes);
-                if read.bytes(8)? != b"SMAUXGS\x01" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
+                if read.bytes(8)? != b"SMAUXGS\x02" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
                 let size = usize::try_from(read.counter()?).map_err(|_| "auxiliary gameplay checkpoint binding length overflow")?;
                 if metadata.identity.reference != metadata.reference.fingerprint || read.bytes(size)? != observation_binding(metadata) {
                     return Err("auxiliary gameplay checkpoint source identity or Reference changed".into());
@@ -1521,6 +1526,7 @@ macro_rules! checkpoint_auxiliary {
     };
 }
 checkpoint_auxiliary!(
+    botwoon_death: checkpoint_botwoon_death/checkpoint_read_botwoon_death,
     timing: checkpoint_timing/checkpoint_read_timing,
     gameplay_flags: checkpoint_flags/checkpoint_read_flags,
     flag_compatibility: checkpoint_flag_compatibility/checkpoint_read_flag_compatibility,
@@ -2001,3 +2007,178 @@ impl Room {
         Ok(value)
     }
 }
+
+/// Complete numeric gameplay, decoded without live RAM or a default Session.
+/// Actor identity/media, Control, observations and Display remain separate owners
+/// that the complete Session codec must reconstruct before validated installation.
+pub(crate) struct NumericGameplayCheckpoint {
+    actors: crate::game::actors::Actors,
+    player: Player,
+    projectiles: Projectiles,
+    enemy_projectiles: crate::game::session::EnemyProjectiles,
+    auxiliary: AuxiliaryGameplayCheckpoint,
+    room: Room,
+    world: Arc<world::WorldBinding>,
+}
+fn gameplay_component<'a>(read: &mut CheckpointReader<'a>) -> Result<&'a [u8], String> {
+    let size = usize::try_from(read.counter()?)
+        .map_err(|_| "gameplay checkpoint component length overflow")?;
+    read.bytes(size)
+}
+impl Session {
+    pub(crate) fn encode_gameplay_checkpoint(
+        &self,
+        metadata: &DisplayStartMetadata,
+    ) -> Result<Vec<u8>, String> {
+        // Fixed schema order; each reached codec binds the same independently
+        // supplied source/Reference/Tick, and Room additionally seals World.
+        let components = [
+            self.actors.encode_numeric_checkpoint(metadata)?,
+            self.player.encode_checkpoint(metadata)?,
+            self.projectiles.encode_checkpoint(metadata)?,
+            self.enemy_projectiles.encode_checkpoint(metadata)?,
+            self.encode_auxiliary_checkpoint(metadata)?,
+            self.room.encode_checkpoint(metadata, &self.world)?,
+        ];
+        let mut bytes = Vec::from(b"SMGAMEPLAY\x01".as_slice());
+        for component in components {
+            checkpoint_count(&mut bytes, component.len());
+            bytes.extend_from_slice(&component);
+        }
+        Ok(bytes)
+    }
+    pub(crate) fn decode_gameplay_checkpoint(
+        bytes: &[u8],
+        metadata: &DisplayStartMetadata,
+        world: Arc<world::WorldBinding>,
+    ) -> Result<NumericGameplayCheckpoint, String> {
+        let mut read = CheckpointReader(bytes);
+        if read.bytes(11)? != b"SMGAMEPLAY\x01" {
+            return Err("unsupported gameplay checkpoint schema".into());
+        }
+        let actors = crate::game::actors::Actors::decode_numeric_checkpoint(
+            gameplay_component(&mut read)?,
+            metadata,
+        )?;
+        let player = Player::decode_checkpoint(gameplay_component(&mut read)?, metadata)?;
+        let projectiles = Projectiles::decode_checkpoint(gameplay_component(&mut read)?, metadata)?;
+        let enemy_projectiles = crate::game::session::EnemyProjectiles::decode_checkpoint(
+            gameplay_component(&mut read)?,
+            metadata,
+        )?;
+        let auxiliary =
+            Self::decode_auxiliary_checkpoint(gameplay_component(&mut read)?, metadata)?;
+        let room = Room::decode_checkpoint(gameplay_component(&mut read)?, metadata, &world)?;
+        if !read.0.is_empty() {
+            return Err("trailing gameplay checkpoint components".into());
+        }
+        Ok(NumericGameplayCheckpoint {
+            actors,
+            player,
+            projectiles,
+            enemy_projectiles,
+            auxiliary,
+            room,
+            world,
+        })
+    }
+}
+impl Session {
+    pub(crate) fn encode_actor_identity_checkpoint(
+        &self,
+        metadata: &DisplayStartMetadata,
+        loaded: Option<&crate::rom::RomImage>,
+        native: Option<&crate::rom::RomImage>,
+        sources: &[(world::ResourceId, crate::rom::RomImage)],
+    ) -> Result<Vec<u8>, String> {
+        self.actor_identity.encode_owned_checkpoint(
+            &self.actors,
+            &self.world,
+            metadata,
+            loaded,
+            native,
+            sources,
+        )
+    }
+}
+impl NumericGameplayCheckpoint {
+    pub(crate) fn decode_actor_identity(
+        &self,
+        bytes: &[u8],
+        current: &crate::game::actors::identity::ActorIdentityState,
+        metadata: &DisplayStartMetadata,
+        loaded: Option<&crate::rom::RomImage>,
+        native: Option<&crate::rom::RomImage>,
+        sources: &[(world::ResourceId, crate::rom::RomImage)],
+    ) -> Result<crate::game::actors::identity::ActorIdentityState, String> {
+        crate::game::actors::identity::ActorIdentityState::decode_owned_checkpoint(
+            bytes,
+            current,
+            &self.actors,
+            &self.world,
+            metadata,
+            loaded,
+            native,
+            sources,
+        )
+    }
+    /// Constructs a detached replacement from decoded numeric fields and the
+    /// other explicitly reconstructed owners. This does not install or adopt it.
+    pub(crate) fn into_session(
+        self,
+        actor_identity: crate::game::actors::identity::ActorIdentityState,
+        control: crate::game::session_owners::Control,
+        presentation: crate::game::session_owners::Presentation,
+    ) -> Session {
+        let AuxiliaryGameplayCheckpoint {
+            botwoon_death,
+            timing,
+            gameplay_flags,
+            flag_compatibility,
+            sprite_effects,
+            sprite_compatibility,
+            minimap,
+            inventory,
+            mechanisms,
+            feedback,
+            messages,
+            spawn_scratch,
+            compatibility_enemy_scratch,
+            shared_sequence,
+            multiply_scratch,
+        } = self.auxiliary;
+        // Exhaustive construction also makes future Session/auxiliary fields a
+        // compiler error until their checkpoint participation is explicit.
+        Session {
+            actor_identity,
+            actors: self.actors,
+            botwoon_death,
+            timing,
+            world: self.world,
+            control,
+            gameplay_flags,
+            flag_compatibility,
+            sprite_effects,
+            sprite_compatibility,
+            presentation,
+            projectiles: self.projectiles,
+            enemy_projectiles: self.enemy_projectiles,
+            player: self.player,
+            minimap,
+            inventory,
+            mechanisms,
+            room: self.room,
+            feedback,
+            messages,
+            spawn_scratch,
+            compatibility_enemy_scratch,
+            shared_sequence,
+            multiply_scratch,
+        }
+    }
+}
+#[cfg(sm_verify_dll)]
+#[path = "../verification/gameplay_checkpoint_cases.rs"]
+mod gameplay_checkpoint_cases;
+#[cfg(sm_verify_dll)]
+pub(crate) use gameplay_checkpoint_cases::assert_gameplay_checkpoint;

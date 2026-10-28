@@ -455,6 +455,151 @@ impl PersistentSession {
 }
 
 impl SessionCheckpoint {
+    /// Full owned state with immutable declarations sealed against the supplied
+    /// contract. Allocation roles come from the actual caller, never defaults.
+    pub(crate) fn encode_binary(
+        &self,
+        loaded: Option<&crate::rom::RomImage>,
+        native: Option<&crate::rom::RomImage>,
+        sources: &[(
+            crate::game::room_entry::world::ResourceId,
+            crate::rom::RomImage,
+        )],
+    ) -> Result<Vec<u8>, String> {
+        self.0
+            .checkpoint()
+            .map_err(|error| format!("Session checkpoint {error:?}"))?;
+        let state = &self.0;
+        let Presentation::Owned {
+            display,
+            marker,
+            actor_queue_projection,
+            samus_publications,
+        } = &state.gameplay.presentation
+        else {
+            return Err("no owned Session display checkpoint".into());
+        };
+        let declarations = crate::game::scene::checkpoint_codec::session_declarations(
+            &state.roles,
+            marker,
+            actor_queue_projection,
+            samus_publications,
+        );
+        if declarations != session_required_declarations(&state.required) {
+            return Err("Session checkpoint immutable bindings differ".into());
+        }
+        let components = [
+            declarations,
+            state.gameplay.control.encode_checkpoint(&state.required)?,
+            state
+                .gameplay
+                .encode_gameplay_checkpoint(state.metadata())?,
+            state.gameplay.encode_actor_identity_checkpoint(
+                state.metadata(),
+                loaded,
+                native,
+                sources,
+            )?,
+            state.observations.encode_checkpoint(state.metadata())?,
+            display
+                .checkpoint()
+                .map_err(|error| format!("Session display {error:?}"))?
+                .encode_checkpoint(state.metadata(), &state.required.display)?,
+        ];
+        let mut bytes = Vec::from(b"SMSESSION\x01".as_slice());
+        for component in components {
+            bytes.extend_from_slice(&(component.len() as u64).to_le_bytes());
+            bytes.extend_from_slice(&component);
+        }
+        Ok(bytes)
+    }
+
+    /// Reconstruct a detached supplied start. Epoch preflight reads the current
+    /// identity only; numeric, input, audio and display state come from bytes.
+    /// Validate/install without an intervening actor adoption.
+    pub(crate) fn decode_binary(
+        bytes: &[u8],
+        current: &crate::game::actors::identity::ActorIdentityState,
+        world: Arc<crate::game::room_entry::world::WorldBinding>,
+        media: Arc<SceneMedia>,
+        required: SessionStartRequirements,
+        loaded: Option<&crate::rom::RomImage>,
+        native: Option<&crate::rom::RomImage>,
+        sources: &[(
+            crate::game::room_entry::world::ResourceId,
+            crate::rom::RomImage,
+        )],
+    ) -> Result<SuppliedSessionStart, String> {
+        let mut read = crate::game::actors::snapshot::CheckpointReader(bytes);
+        if read.bytes(10)? != b"SMSESSION\x01" {
+            return Err("unsupported Session checkpoint schema".into());
+        }
+        if session_binary_component(&mut read)? != session_required_declarations(&required) {
+            return Err("Session checkpoint immutable bindings changed".into());
+        }
+        let control = Control::decode_checkpoint(session_binary_component(&mut read)?, &required)?;
+        let metadata = control
+            .metadata()
+            .map_err(|error| format!("Session control {error:?}"))?
+            .clone();
+        let numeric = Session::decode_gameplay_checkpoint(
+            session_binary_component(&mut read)?,
+            &metadata,
+            world.clone(),
+        )?;
+        let identity = numeric.decode_actor_identity(
+            session_binary_component(&mut read)?,
+            current,
+            &metadata,
+            loaded,
+            native,
+            sources,
+        )?;
+        let observations =
+            ExternalInputs::decode_checkpoint(session_binary_component(&mut read)?, &metadata)?;
+        let display = crate::game::scene::component::DisplayCheckpoint::decode_checkpoint(
+            session_binary_component(&mut read)?,
+            media,
+            &metadata,
+            &required.display,
+        )?;
+        if !read.0.is_empty() {
+            return Err("trailing Session checkpoint components".into());
+        }
+        let (opening_start, _) = display.clone().into_start_description(metadata.clone());
+        let (display_start, media) = display.into_start_description(metadata);
+        let opened = DisplayComponent::open(
+            ValidatedDisplayStart::construct(opening_start, media.clone(), &required.display)
+                .map_err(|error| format!("Session display start {error:?}"))?,
+        )
+        .map_err(|error| format!("Session display opening {error:?}"))?;
+        let presentation = Presentation::Owned {
+            display: Box::new(opened.display),
+            marker: required.marker.clone(),
+            actor_queue_projection: required.actor_queue_projection,
+            samus_publications: required.samus_publications.clone(),
+        };
+        let audio_requests = control
+            .requests()
+            .map_err(|error| format!("Session requests {error:?}"))?
+            .clone();
+        let gameplay = numeric.into_session(identity, control, presentation);
+        Ok(SuppliedSessionStart::new(
+            SessionStartDescription {
+                gameplay: Some(gameplay),
+                observations: Some(observations),
+                display: display_start,
+                roles: Some(required.roles.clone()),
+                marker: Some(required.marker.clone()),
+                actor_queue_projection: Some(required.actor_queue_projection),
+                samus_publications: Some(required.samus_publications.clone()),
+                audio_requests: Some(audio_requests),
+            },
+            media,
+            required,
+        ))
+    }
+
     pub(crate) fn into_start(
         self,
     ) -> Result<(SessionStartDescription, Arc<SceneMedia>), DisplayError> {
@@ -495,6 +640,22 @@ impl SessionCheckpoint {
             media,
         ))
     }
+}
+
+fn session_required_declarations(required: &SessionStartRequirements) -> Vec<u8> {
+    crate::game::scene::checkpoint_codec::session_declarations(
+        &required.roles,
+        &required.marker,
+        &required.actor_queue_projection,
+        &required.samus_publications,
+    )
+}
+fn session_binary_component<'a>(
+    read: &mut crate::game::actors::snapshot::CheckpointReader<'a>,
+) -> Result<&'a [u8], String> {
+    let length = usize::try_from(read.counter()?)
+        .map_err(|_| "Session checkpoint component length overflow")?;
+    read.bytes(length)
 }
 
 /// One complete semantic branch observation, never an alternative live owner.
@@ -543,6 +704,20 @@ pub(crate) fn validate_normalized_projection(
     }
 }
 impl SessionSnapshotPayload {
+    pub(crate) fn encode_gameplay_checkpoint(&self) -> Result<Vec<u8>, String> {
+        let state = self.0.as_ref().ok_or("no supplied Session gameplay")?;
+        state
+            .0
+            .gameplay
+            .encode_gameplay_checkpoint(state.0.metadata())
+    }
+    pub(crate) fn decode_gameplay_checkpoint(
+        bytes: &[u8],
+        metadata: &DisplayStartMetadata,
+        world: Arc<crate::game::room_entry::world::WorldBinding>,
+    ) -> Result<crate::game::session_checkpoint::NumericGameplayCheckpoint, String> {
+        Session::decode_gameplay_checkpoint(bytes, metadata, world)
+    }
     pub(crate) fn encode_room_checkpoint(&self) -> Result<Vec<u8>, String> {
         let state = self.0.as_ref().ok_or("no supplied Session room")?;
         state

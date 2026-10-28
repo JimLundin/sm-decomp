@@ -4,6 +4,8 @@
 pub(crate) mod atmosphere;
 #[path = "../../game/scene/atmosphere_protocol.rs"]
 pub(crate) mod atmosphere_protocol;
+#[path = "../../game/scene/checkpoint_codec.rs"]
+pub(crate) mod checkpoint_codec;
 #[path = "../../game/scene/commit.rs"]
 pub(crate) mod commit;
 #[path = "../../game/scene/component.rs"]

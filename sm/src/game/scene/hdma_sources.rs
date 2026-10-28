@@ -90,6 +90,9 @@ pub struct HdmaCatalog {
     definitions: BTreeMap<AssetId, HdmaDefinition>,
 }
 impl HdmaCatalog {
+    pub(crate) fn checkpoint_definitions(&self) -> &BTreeMap<AssetId, HdmaDefinition> {
+        &self.definitions
+    }
     pub fn new(gameplay: [u8; 32], definitions: Vec<HdmaDefinition>) -> Result<Self, DisplayError> {
         if gameplay == [0; 32] {
             return Err(DisplayError::Identity);
@@ -295,6 +298,14 @@ struct CanonicalWindow {
 }
 
 impl HdmaLiveDescription {
+    pub(crate) fn checkpoint_parts(
+        &self,
+    ) -> (
+        &BTreeMap<LiveOwner, Vec<u8>>,
+        &BTreeMap<LiveOwner, HdmaLiveRegion>,
+    ) {
+        (&self.buffers, &self.regions)
+    }
     pub fn new(
         buffers: Vec<HdmaOwnedBuffer>,
         regions: Vec<HdmaLiveRegion>,

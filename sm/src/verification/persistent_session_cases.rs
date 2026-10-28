@@ -130,7 +130,10 @@ pub fn persistent_session_native_rebinding_preserves_ready_owner(
         }),
     };
     let codec_required = required.display.clone();
-    let owner = GameOwner::new();
+    let binary_contract =
+        crate::game_state::persistent_session::SessionStartContract::new(required.clone());
+    let binary_media = media.clone();
+    let owner = GameOwner::with_world(crate::room_world_fixture::binding(false));
     owner.with(|game| {
         game.register_rom(binding::image());
         game.register_native_rom(binding::image());
@@ -231,9 +234,149 @@ pub fn persistent_session_native_rebinding_preserves_ready_owner(
             .metadata()
             .unwrap(),
     );
+    owner.with(|game| {
+        let native = game.capture_native_rom_binding().unwrap();
+        crate::game::actors::identity::assert_owned_checkpoint(
+            numeric_start.gameplay.as_ref().unwrap(),
+            game.loaded_rom.as_ref().unwrap(),
+            &native,
+        );
+    });
+    crate::game::session_checkpoint::assert_gameplay_checkpoint(
+        numeric_start
+            .gameplay
+            .as_ref()
+            .unwrap()
+            .control
+            .metadata()
+            .unwrap(),
+    );
+    let binary_checkpoint =
+        assert_full_session_binary(&owner, binary_media.clone(), &binary_contract);
     assert_ready_owner_rejects_native_binding(&owner, native);
     assert_clean_runtime_writer_preserves_admission(&owner);
     assert_dirty_runtime_lease_preserves_native_mutation(&owner);
+    assert_binary_restore_after_failed_interval(
+        &owner,
+        &binary_checkpoint,
+        binary_media,
+        &binary_contract,
+    );
+}
+
+/// Movies cannot forge a complete owned Session envelope or immutable content binding.
+fn assert_full_session_binary(
+    owner: &GameOwner,
+    media: Arc<sc::SceneMedia>,
+    contract: &crate::game_state::persistent_session::SessionStartContract,
+) -> Vec<u8> {
+    let bytes = owner.encode_session_checkpoint().unwrap();
+    assert_eq!(&bytes[..10], b"SMSESSION\x01");
+    let identity = owner.with(|game| game.actor_identity().clone());
+    let ram = owner.with(|game| {
+        (0..game.ram().len())
+            .map(|at| game.compatibility_byte(at))
+            .collect::<Vec<_>>()
+    });
+    let mut schema = bytes.clone();
+    schema[9] = 2;
+    let mut count = bytes.clone();
+    count[10..18].copy_from_slice(&u64::MAX.to_le_bytes());
+    let mut binding = bytes.clone();
+    binding[18] ^= 0x80;
+    let mut trailing = bytes.clone();
+    trailing.push(0xa7);
+    for rejected in [
+        schema,
+        count,
+        binding,
+        trailing,
+        bytes[..bytes.len() - 1].to_vec(),
+    ] {
+        assert!(
+            owner
+                .restore_session_checkpoint(&rejected, media.clone(), contract)
+                .is_err()
+        );
+        assert_eq!(owner.encode_session_checkpoint().unwrap(), bytes);
+        owner.with(|game| {
+            assert_eq!(*game.actor_identity(), identity);
+            assert!(
+                ram.iter()
+                    .enumerate()
+                    .all(|(at, byte)| game.compatibility_byte(at) == *byte)
+            );
+        });
+    }
+    // Same revision and extent, independently changed actual allocation content.
+    let mut changed = contract.requirements().clone();
+    let allocation = Arc::make_mut(changed.roles.allocations.values_mut().next().unwrap());
+    Arc::make_mut(&mut allocation.bytes)[0] ^= 0x40;
+    let changed = crate::game_state::persistent_session::SessionStartContract::new(changed);
+    assert!(
+        owner
+            .restore_session_checkpoint(&bytes, media.clone(), &changed)
+            .is_err()
+    );
+    assert_eq!(owner.encode_session_checkpoint().unwrap(), bytes);
+    owner
+        .restore_session_checkpoint(&bytes, media, contract)
+        .unwrap();
+    assert_eq!(owner.encode_session_checkpoint().unwrap(), bytes);
+    owner.with(|game| {
+        crate::game::actors::identity::assert_installed_epoch(&identity, game.actor_identity())
+    });
+    assert_leased_owner_rejects_binary_restore(owner, &bytes, contract);
+    bytes
+}
+
+/// Movies cannot invoke the public restore gate while the gameplay lease is held.
+fn assert_leased_owner_rejects_binary_restore(
+    owner: &GameOwner,
+    bytes: &[u8],
+    contract: &crate::game_state::persistent_session::SessionStartContract,
+) {
+    let (_, media) = owner.checkpoint_session().unwrap().into_start().unwrap();
+    let (leased, epoch) = owner.with(|game| {
+        let epoch = game.compatibility_write_epoch();
+        (game.lease_persistent_session().unwrap().unwrap(), epoch)
+    });
+    assert_eq!(
+        owner
+            .restore_session_checkpoint(bytes, media, contract)
+            .err()
+            .as_deref(),
+        Some("Session restore ownership unavailable"),
+    );
+    owner.with(|game| game.return_persistent_session(leased, true, epoch));
+    assert_eq!(owner.encode_session_checkpoint().unwrap(), bytes);
+}
+
+/// Movies cannot inject a malformed save while a failed Runtime owner is retained.
+fn assert_binary_restore_after_failed_interval(
+    owner: &GameOwner,
+    bytes: &[u8],
+    media: Arc<sc::SceneMedia>,
+    contract: &crate::game_state::persistent_session::SessionStartContract,
+) {
+    assert!(owner.checkpoint_session().is_err());
+    assert_eq!(owner.with(|game| game.ram().read_byte(0x09c2)), 0x7b);
+    let mut malformed = bytes.to_vec();
+    malformed[9] = 2;
+    assert_eq!(
+        owner
+            .restore_session_checkpoint(&malformed, media.clone(), contract)
+            .err()
+            .as_deref(),
+        Some("unsupported Session checkpoint schema"),
+    );
+    assert!(owner.checkpoint_session().is_err());
+    assert_eq!(owner.with(|game| game.ram().read_byte(0x09c2)), 0x7b);
+    owner
+        .restore_session_checkpoint(bytes, media, contract)
+        .unwrap();
+    assert_eq!(owner.encode_session_checkpoint().unwrap(), bytes);
+    assert_eq!(owner.with(|game| game.ram().read_byte(0x09c2)), 0x00);
 }
 
 /// No movie covers malformed Projectiles checkpoints or an independently valid binding mismatch.

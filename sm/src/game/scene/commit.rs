@@ -297,7 +297,6 @@ pub(crate) struct OwnedDisplay {
     committed: Scene,
     media: Arc<SceneMedia>,
     hdma_content: Arc<HdmaCatalog>,
-    read_results: Vec<(super::records::AssetRef, Vec<u8>)>,
     producer_history: Vec<Arc<[ProducedObject]>>,
 }
 impl OwnedDisplay {
@@ -339,7 +338,6 @@ impl OwnedDisplay {
             committed,
             media,
             hdma_content,
-            read_results: Vec::new(),
             producer_history: Vec::new(),
         })
     }
@@ -638,7 +636,7 @@ impl OwnedDisplay {
         ))
     }
     pub(crate) fn take_read_results(&mut self) -> Vec<(super::records::AssetRef, Vec<u8>)> {
-        std::mem::take(&mut self.read_results)
+        std::mem::take(&mut self.state.read_results)
     }
     /// Publish new immutable media identities. Earlier Scene lines keep their leases.
     pub(crate) fn append_incarnation(
@@ -865,7 +863,7 @@ impl RefreshHost for OwnedDisplay {
                     .ok_or(DisplayError::Alias { offset: word })?;
                 bytes.push(value.to_le_bytes()[index & 1]);
             }
-            self.read_results.push((readback.destination, bytes));
+            self.state.read_results.push((readback.destination, bytes));
         }
         self.state.readback_tail &= 0xff00;
         self.state.readbacks.clear();

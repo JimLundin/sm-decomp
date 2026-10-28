@@ -685,6 +685,8 @@ pub struct DisplayDescription {
     pub mode7_tail: u16,
     pub readbacks: Vec<Readback>,
     pub readback_tail: u16,
+    /// Ordered completed readbacks awaiting G consumption; capture never drains them.
+    pub read_results: Vec<(AssetRef, Vec<u8>)>,
     pub actor_queues: [ActorDrawQueue; 8],
     pub actor_tiles: ActorTileStaging,
     pub controls: DisplayControls,
@@ -774,6 +776,12 @@ impl DisplayDescription {
         }
         for readback in &self.readbacks {
             identity(readback.destination)?;
+        }
+        for (destination, bytes) in &self.read_results {
+            identity(*destination)?;
+            if bytes.is_empty() || bytes.len() > 65_536 {
+                return Err(DisplayError::Queue);
+            }
         }
         for queue in &self.actor_queues {
             if queue.size & 1 != 0 || usize::from(queue.size / 2) > queue.actors.len() {
@@ -928,6 +936,9 @@ impl DisplayDescription {
         }
         for read in &self.readbacks {
             identity(read.destination)?;
+        }
+        for (destination, _) in &self.read_results {
+            identity(*destination)?;
         }
         self.actor_tiles.source.validate_media(media)?;
         for source in &self.animated_sources {

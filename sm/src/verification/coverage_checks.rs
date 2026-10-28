@@ -2750,6 +2750,8 @@ fn scene_display_description(
             count: 2,
         }],
         readback_tail: 9,
+        // This original supplied start had no completed undrained readbacks.
+        read_results: vec![],
         actor_queues: core::array::from_fn(|slot| ds::ActorDrawQueue {
             size: 4,
             cursor: 2,
@@ -6189,10 +6191,213 @@ fn samus_game_body_foreign_adoption_and_prefix() {
     sm::samus_game_body_foreign_adoption_and_prefix();
 }
 
+// Movies cannot supply undrained readback payloads or malformed detached Display checkpoints.
+#[cfg(sm_verify_dll)]
+fn scene_read_results_codec_and_reopen() {
+    let (requirements, mut start, media, _) = scene_namespace_marker_fixture();
+    assert!(start.display.as_ref().unwrap().read_results.is_empty());
+    let expected = vec![
+        (
+            sc::AssetRef {
+                id: sc::AssetId(2),
+                revision: media.revision(),
+            },
+            vec![0x13, 0xa7, 0x00, 0xff],
+        ),
+        (
+            sc::AssetRef {
+                id: sc::AssetId(12),
+                revision: media.revision(),
+            },
+            vec![0x29, 0x80, 0x41],
+        ),
+    ];
+    start.display.as_mut().unwrap().read_results = expected.clone();
+    let opened = sd::DisplayComponent::open(
+        ss::ValidatedDisplayStart::construct(start, media.clone(), &requirements).unwrap(),
+    )
+    .unwrap();
+    let metadata = opened.metadata;
+    let mut display = opened.display;
+    let before = display.checkpoint().unwrap();
+    let (captured, _) = before
+        .clone()
+        .into_start_description(scene_copy_metadata(&metadata));
+    assert_eq!(captured.display.as_ref().unwrap().read_results, expected);
+    scene_owner_unchanged(&display, &before, &metadata);
+    let bytes = before.encode_checkpoint(&metadata, &requirements).unwrap();
+    assert_eq!(&bytes[..8], b"SMDISPL\x02");
+    let decoded =
+        sd::DisplayCheckpoint::decode_checkpoint(&bytes, media.clone(), &metadata, &requirements)
+            .unwrap();
+    let (reopen, reopen_media) = decoded
+        .clone()
+        .into_start_description(scene_copy_metadata(&metadata));
+    assert_eq!(reopen.display.as_ref().unwrap().read_results, expected);
+    let reopened = sd::DisplayComponent::open(
+        ss::ValidatedDisplayStart::construct(reopen, reopen_media, &requirements).unwrap(),
+    )
+    .unwrap();
+    scene_owner_unchanged(&reopened.display, &before, &metadata);
+    let (replacement, replacement_media) = decoded
+        .clone()
+        .into_start_description(scene_copy_metadata(&metadata));
+    let returned = display
+        .reset(
+            ss::ValidatedDisplayStart::construct(replacement, replacement_media, &requirements)
+                .unwrap(),
+        )
+        .unwrap();
+    scene_same_metadata(&returned, &metadata);
+    scene_owner_unchanged(&display, &before, &metadata);
+    let (mut bad, bad_media) = decoded
+        .clone()
+        .into_start_description(scene_copy_metadata(&metadata));
+    bad.display.as_mut().unwrap().read_results[0].1 = vec![0x88, 0x99];
+    bad.display.as_mut().unwrap().read_results[1].0.id = sc::AssetId(0);
+    let rejected = ss::ValidatedDisplayStart::construct(bad, bad_media, &requirements)
+        .and_then(|start| display.reset(start));
+    assert!(matches!(
+        rejected,
+        Err(ss::StartError::Display(ds::DisplayError::Identity))
+    ));
+    scene_owner_unchanged(&display, &before, &metadata);
+    let (retained, _) = display
+        .checkpoint()
+        .unwrap()
+        .into_start_description(scene_copy_metadata(&metadata));
+    assert_eq!(retained.display.as_ref().unwrap().read_results, expected);
+    assert_eq!(
+        sd::DisplayCheckpoint::decode_checkpoint(
+            &bytes[..bytes.len() - 1],
+            media.clone(),
+            &metadata,
+            &requirements
+        )
+        .err()
+        .as_deref(),
+        Some("truncated actor checkpoint")
+    );
+    let mut extra = bytes.clone();
+    extra.push(0xe8);
+    assert_eq!(
+        sd::DisplayCheckpoint::decode_checkpoint(&extra, media.clone(), &metadata, &requirements)
+            .err()
+            .as_deref(),
+        Some("trailing display checkpoint fields")
+    );
+    let mut old_schema = bytes.clone();
+    old_schema[7] = 1;
+    assert_eq!(
+        sd::DisplayCheckpoint::decode_checkpoint(
+            &old_schema,
+            media.clone(),
+            &metadata,
+            &requirements
+        )
+        .err()
+        .as_deref(),
+        Some("unsupported display checkpoint schema")
+    );
+    scene_read_results_changed_bindings(&before, &bytes, &metadata, &requirements);
+    sd::DisplayCheckpoint::assert_decoder_rejections(
+        &bytes,
+        media.clone(),
+        &metadata,
+        &requirements,
+    );
+    scene_owner_unchanged(&display, &before, &metadata);
+}
+
+// Movies cannot independently validate a changed Reference or catalog before payload rejection.
+#[cfg(sm_verify_dll)]
+fn scene_read_results_changed_bindings(
+    before: &sd::DisplayCheckpoint,
+    bytes: &[u8],
+    metadata: &sd::DisplayStartMetadata,
+    requirements: &ss::DisplayStartRequirements,
+) {
+    let (mut reference_start, media) = before
+        .clone()
+        .into_start_description(scene_copy_metadata(metadata));
+    let mut required_b = requirements.clone();
+    required_b.reference.fingerprint = [0xb8; 32];
+    reference_start.reference = Some(required_b.reference);
+    reference_start.identity.as_mut().unwrap().reference = [0xb8; 32];
+    let old = reference_start.committed_scene.take().unwrap();
+    let mut description = old.description().clone();
+    description.reference = [0xb8; 32];
+    reference_start.committed_scene = Some(
+        sc::Scene::new(description, media.clone())
+            .unwrap()
+            .with_producer_history(Arc::from(old.producer_history().to_vec()))
+            .unwrap(),
+    );
+    let valid_b = sd::DisplayComponent::open(
+        ss::ValidatedDisplayStart::construct(reference_start, media.clone(), &required_b).unwrap(),
+    )
+    .unwrap();
+    assert_ne!(valid_b.metadata.reference, metadata.reference);
+    assert_eq!(
+        sd::DisplayCheckpoint::decode_checkpoint(
+            bytes,
+            media.clone(),
+            &valid_b.metadata,
+            &required_b
+        )
+        .err()
+        .as_deref(),
+        Some("display checkpoint metadata or immutable content changed")
+    );
+    let mut assets = media.assets().cloned().collect::<Vec<_>>();
+    assets.push(sc::SceneAsset::Room(sc::AssetRef {
+        id: sc::AssetId(0x4208),
+        revision: media.revision(),
+    }));
+    let changed_media = Arc::new(
+        sc::SceneMedia::new(
+            media.revision(),
+            assets,
+            media.palette_incarnations().cloned().collect(),
+            media.compiled_images().cloned().collect(),
+        )
+        .unwrap(),
+    );
+    let (mut content_start, _) = before
+        .clone()
+        .into_start_description(scene_copy_metadata(metadata));
+    let old = content_start.committed_scene.take().unwrap();
+    content_start.committed_scene = Some(
+        sc::Scene::new(old.description().clone(), changed_media.clone())
+            .unwrap()
+            .with_producer_history(Arc::from(old.producer_history().to_vec()))
+            .unwrap(),
+    );
+    let valid_c = sd::DisplayComponent::open(
+        ss::ValidatedDisplayStart::construct(content_start, changed_media.clone(), requirements)
+            .unwrap(),
+    )
+    .unwrap();
+    scene_same_metadata(&valid_c.metadata, metadata);
+    assert_ne!(changed_media.as_ref(), media.as_ref());
+    assert_eq!(
+        sd::DisplayCheckpoint::decode_checkpoint(
+            bytes,
+            changed_media,
+            &valid_c.metadata,
+            requirements
+        )
+        .err()
+        .as_deref(),
+        Some("display checkpoint metadata or immutable content changed")
+    );
+}
+
 // Movies cannot replace a prepared Session with independently supplied Native content.
 #[cfg(sm_verify_dll)]
 #[cfg_attr(test, test)]
 fn persistent_session_native_rebinding_preserves_ready_owner() {
+    scene_read_results_codec_and_reopen();
     let (requirements, start, media, variants) = scene_namespace_marker_fixture();
     sm::persistent_session_native_rebinding_preserves_ready_owner(
         requirements,

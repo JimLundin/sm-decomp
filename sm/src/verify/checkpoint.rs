@@ -94,6 +94,7 @@ fn compatibility() -> u64 {
         include_str!("../game/message_composition/native.rs"),
         include_str!("../game/message_composition/prepared.rs"),
         include_str!("../game/scene/component.rs"),
+        include_str!("../game/scene/checkpoint_codec.rs"),
         include_str!("../game/scene/hdma_sources.rs"),
         include_str!("../game/scene/hdma.rs"),
         include_str!("../game/scene/irq.rs"),

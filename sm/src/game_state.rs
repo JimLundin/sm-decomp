@@ -1384,6 +1384,78 @@ impl GameOwner {
     ) -> Result<persistent_session::SessionCheckpoint, DisplayError> {
         self.with(|game| game.checkpoint_session())
     }
+    pub fn encode_session_checkpoint(&self) -> Result<Vec<u8>, String> {
+        self.encode_session_checkpoint_with_sources(&[])
+    }
+    pub(crate) fn encode_session_checkpoint_with_sources(
+        &self,
+        sources: &[(
+            crate::game::room_entry::world::ResourceId,
+            crate::rom::RomImage,
+        )],
+    ) -> Result<Vec<u8>, String> {
+        self.with(|game| {
+            game.checkpoint_session()
+                .map_err(|error| format!("Session capture {error:?}"))?
+                .encode_binary(
+                    game.loaded_rom.as_ref(),
+                    game.capture_native_rom_binding().as_ref(),
+                    sources,
+                )
+        })
+    }
+    /// Decode and install under the same gate, keeping epoch preflight and
+    /// complete replacement validation ahead of the first live-state mutation.
+    pub fn restore_session_checkpoint(
+        &self,
+        bytes: &[u8],
+        media: Arc<SceneMedia>,
+        contract: &persistent_session::SessionStartContract,
+    ) -> Result<(), String> {
+        self.restore_session_checkpoint_with_sources(bytes, media, contract, &[])
+    }
+    pub(crate) fn restore_session_checkpoint_with_sources(
+        &self,
+        bytes: &[u8],
+        media: Arc<SceneMedia>,
+        contract: &persistent_session::SessionStartContract,
+        sources: &[(
+            crate::game::room_entry::world::ResourceId,
+            crate::rom::RomImage,
+        )],
+    ) -> Result<(), String> {
+        self.with(|game| {
+            let current_identity = match &game.persistent_session {
+                persistent_session::SessionSlot::Ready(state)
+                | persistent_session::SessionSlot::Failed(Some(state)) => {
+                    &state.gameplay.actor_identity
+                }
+                persistent_session::SessionSlot::Legacy => game
+                    .actor_identity
+                    .as_ref()
+                    .ok_or("Session restore actor identity unavailable")?,
+                persistent_session::SessionSlot::Leased
+                | persistent_session::SessionSlot::Failed(None) => {
+                    return Err("Session restore ownership unavailable".into());
+                }
+            };
+            let supplied = persistent_session::SessionCheckpoint::decode_binary(
+                bytes,
+                current_identity,
+                game.world().clone(),
+                media,
+                contract.requirements().clone(),
+                game.loaded_rom.as_ref(),
+                game.capture_native_rom_binding().as_ref(),
+                sources,
+            )?;
+            let (description, media, required) = supplied.into_parts();
+            let prepared = persistent_session::prepare(game, description, media, &required)
+                .map_err(|error| format!("Session restore validation {error:?}"))?;
+            game.install_session_start(prepared)
+                .map_err(|error| format!("Session restore installation {error:?}"))
+        })
+    }
     pub fn reopen_supplied_session(
         &self,
         checkpoint: persistent_session::SessionCheckpoint,
