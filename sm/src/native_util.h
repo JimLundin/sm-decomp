@@ -10,7 +10,6 @@ const char *sm_util_StringStartsWithNoCase(const char *value, const char *prefix
 uint8_t *sm_util_ReadWholeFile(const char *name, size_t *length);
 char *sm_util_NextLineStripComments(char **cursor);
 char *sm_util_NextPossiblyQuotedString(char **cursor);
-char *sm_util_ReplaceFilenameWithNewPath(const char *base, const char *name);
 char *sm_util_SplitKeyValue(char *value);
 const char *sm_util_SkipPrefix(const char *value, const char *prefix);
 void sm_util_StrSet(char **target, const char *value);

@@ -16,6 +16,9 @@ policy. For RAM, aliases, reset/load, oracle or persistence, read
 resolve unclear behavior with the oracle, ram_map.rs and
 [bank logs](https://patrickjohnston.org/bank/).
 
+For rendering, audio, asset-loading or backend/provider boundary changes, load
+[backend seams](../sm-decomp-backends/SKILL.md).
+
 Use the assigned item, owner, authoritative repository, checkout/base/source pin,
 allowed files, affected rows, resource allowance and next recipient. A pruned
 checkout still needs the authoritative repository path.

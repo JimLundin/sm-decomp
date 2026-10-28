@@ -18,6 +18,22 @@ pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 pub const SEEK_END: i32 = 2;
 
+// Preserve the native lexical policy: directory bytes plus the full new name.
+// Absolute names, dots and slash styles are copied without normalization.
+#[cfg(all(not(sm_verify_dll), feature = "frontend"))]
+pub(crate) fn include_path(base: &core::ffi::CStr, name: &core::ffi::CStr) -> std::ffi::CString {
+    let base = base.to_bytes();
+    let name = name.to_bytes_with_nul();
+    let prefix = base
+        .iter()
+        .rposition(|&byte| byte == b'/' || byte == b'\\')
+        .map_or(0, |index| index + 1);
+    let mut path = Vec::with_capacity(prefix + name.len());
+    path.extend_from_slice(&base[..prefix]);
+    path.extend_from_slice(name);
+    std::ffi::CString::from_vec_with_nul(path).expect("include path contains a nul byte")
+}
+
 // ROM and configuration readers close the actual CRT stream on return or unwind.
 pub(crate) struct InputFile(pub(crate) *mut FILE);
 impl Drop for InputFile {
@@ -42,8 +58,6 @@ unsafe extern "C-unwind" {
     pub fn NextLineStripComments(cursor: *mut *mut c_char) -> *mut c_char;
     #[link_name = "sm_util_NextPossiblyQuotedString"]
     pub fn NextPossiblyQuotedString(cursor: *mut *mut c_char) -> *mut c_char;
-    #[link_name = "sm_util_ReplaceFilenameWithNewPath"]
-    pub fn ReplaceFilenameWithNewPath(base: *const c_char, name: *const c_char) -> *mut c_char;
     #[link_name = "sm_util_SplitKeyValue"]
     pub fn SplitKeyValue(value: *mut c_char) -> *mut c_char;
     #[link_name = "sm_util_SkipPrefix"]

@@ -27,14 +27,14 @@ SYMBOLS = {
     "ParseBool": "sm_config_parse_bool", "ReadWholeFile": "sm_util_ReadWholeFile",
     "NextLineStripComments": "sm_util_NextLineStripComments", "NextDelim": "sm_util_NextDelim",
     "NextPossiblyQuotedString": "sm_util_NextPossiblyQuotedString",
-    "ReplaceFilenameWithNewPath": "sm_util_ReplaceFilenameWithNewPath", "SkipPrefix": "sm_util_SkipPrefix",
+    "SkipPrefix": "sm_util_SkipPrefix",
     "SplitKeyValue": "sm_util_SplitKeyValue", "StringEqualsNoCase": "sm_util_StringEqualsNoCase",
     "StringStartsWithNoCase": "sm_util_StringStartsWithNoCase", "Die": "sm_util_die", "atoi": "sm_config_atoi",
 }
 
 
 UTILITY_NAMES = """NextDelim StringEqualsNoCase StringStartsWithNoCase ReadWholeFile
-    NextLineStripComments NextPossiblyQuotedString ReplaceFilenameWithNewPath
+    NextLineStripComments NextPossiblyQuotedString
     SplitKeyValue SkipPrefix StrSet""".split()
 
 

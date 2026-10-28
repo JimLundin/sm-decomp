@@ -1,4 +1,4 @@
-use crate::c_library::{free, strtod};
+use crate::c_library::strtod;
 use crate::types::GlTextureWithSize;
 use std::alloc::{Layout, alloc_zeroed, dealloc, handle_alloc_error};
 use std::ffi::{CStr, CString, c_char, c_void};
@@ -207,24 +207,12 @@ unsafe extern "C-unwind" fn sm_shader_set_string(target: *mut *mut c_char, value
     }
 }
 
-struct FileBuffer(*mut c_void);
-impl Drop for FileBuffer {
-    fn drop(&mut self) {
-        unsafe {
-            free(self.0);
-        }
-    }
-}
-
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_shader_relative_path(
     base: *const c_char,
     name: *const c_char,
 ) -> *mut c_char {
-    unsafe {
-        let allocated = FileBuffer(crate::util::ReplaceFilenameWithNewPath(base, name).cast());
-        sm_shader_clone_string(allocated.0.cast())
-    }
+    unsafe { crate::util::include_path(CStr::from_ptr(base), CStr::from_ptr(name)).into_raw() }
 }
 
 #[unsafe(no_mangle)]

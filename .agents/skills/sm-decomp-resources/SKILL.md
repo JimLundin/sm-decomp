@@ -18,6 +18,10 @@ growth, rather than a smaller historical peak.
    jobs. Budget launchers and Cargo/rustc descendants as one owned workflow;
    count every admitted workflow's remaining growth once, plus copies, captures,
    caches and retained output. Leave PLAN's RAM/disk reserves after all budgets.
+   Track physical remaining growth and family private commitment separately.
+   Choose caps for the actual workload from comparable original command,
+   toolchain, profile, cache and source evidence instead of reusing a native
+   helper's thresholds. Label host RAM drawdown separately from compiler RSS.
 2. Preserve live jobs, frozen sources and loaded DLLs. Isolate concurrent outputs.
    Release reservations promptly only after authoritative terminal evidence.
    A quiet parent, monitor error or observation timeout does not prove its child
@@ -26,6 +30,9 @@ growth, rather than a smaller historical peak.
    retain lightweight readers. Preserve actual handles and confirm termination
    before releasing its allowance; cleanup/monitor failures do not imply success.
    Admit useful overlap only when measured growth and the shared ledger fit.
+   Record every stop's exact cause, measured value/limit, UTC time and reserve
+   state. A cap-stopped curve leaves the uncapped peak unproved. Compare corrected
+   throughput only after the qualifier's actual result.
 4. If DLL admission is blocked, keep core source/review work supplied. An admissible
    normal-library checkpoint is useful only if its unchanged inputs lack an
    accepted result; otherwise transfer the existing proof.

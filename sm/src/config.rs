@@ -4,6 +4,7 @@ pub use crate::types::{SDL_Keycode, size_t};
 use ::core::ffi::{c_char, c_void};
 use ::core::ptr::null_mut;
 pub use sdl2_sys::SDL_GetKeyFromName;
+use std::ffi::CStr;
 crate::type_aliases! {
     pub C2RustUnnamed, C2RustUnnamed_2, C2RustUnnamed_4 = u32;
 }
@@ -160,12 +161,6 @@ pub struct ConfigOwner {
     inputs: Vec<Vec<u8>>,
     _thread: std::marker::PhantomData<std::rc::Rc<()>>,
 }
-struct IncludePath(core::ptr::NonNull<c_void>);
-impl Drop for IncludePath {
-    fn drop(&mut self) {
-        unsafe { crate::c_library::free(self.0.as_ptr()) }
-    }
-}
 impl ConfigOwner {
     pub fn new() -> Self {
         Self {
@@ -232,7 +227,7 @@ unsafe extern "C-unwind" fn sm_config_read_file(
     }
 }
 
-// The temporary include path keeps its original allocation and normal free point.
+// The temporary owned include path drops after recursion and diagnostics.
 // Rust owns this recursive scope, including callbacks unwinding through native C.
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_config_include(
@@ -242,15 +237,12 @@ unsafe extern "C-unwind" fn sm_config_include(
     depth: i32,
 ) {
     unsafe {
-        let path = crate::util::ReplaceFilenameWithNewPath(filename, name);
-        let path = IncludePath(
-            core::ptr::NonNull::new(path.cast()).expect("config include path allocation failed"),
-        );
-        if depth > 10 || !sm_config_parse_one_file(owner, path.0.as_ptr().cast(), depth + 1) {
+        let path = crate::util::include_path(CStr::from_ptr(filename), CStr::from_ptr(name));
+        if depth > 10 || !sm_config_parse_one_file(owner, path.as_ptr(), depth + 1) {
             crate::c_library::fprintf(
                 crate::c_library::stderr,
                 c"Warning: Unable to read %s\n".as_ptr(),
-                path.0.as_ptr(),
+                path.as_ptr(),
             );
         }
     }

@@ -84,9 +84,15 @@ guards and actual frontend library/binary qualification in 188.374s, with all 20
 warning identities unchanged. Its 42 atomic slots retire two Rust global writes;
 native GL reads still require serialized access on the owning context thread.
 Net +8 production/-1 unsafe-containing; original units/runtime attribution stays.
-INCLUDE-PATH01 source review passes;
-utility/headless/frontend qualification remains pending. Complete those actual
-paths before making their qualification claims.
+Owned include paths and obsolete native helper source 7b70c403 pass native,
+library (28.808s), direct DLL (97.617s) and frontend (177.456s) qualification.
+Original 200 library and 209 frontend warning causes remain; all 85 codec leaves
+are unchanged. Net -6 production/-2 unsafe-containing; C header -1, selected C -11.
+The two C allocation/free paths, two Rust free sites and obsolete malloc/memcpy
+helper retire. Controlled path and hardware variants remain unexecuted.
+Next: qualify the reviewed typed music/SFX callback source 17bd7d1d, including
+its extended owned witness and genuine captures for two changed codec leaves.
+The native audio adapter remains; alternate sound banks and menu selection are open.
 Prefer Python for portable automation, with standalone scripts instead of inline
 Python in GitHub Actions. Reserves 2 GiB/50 GiB.
 
