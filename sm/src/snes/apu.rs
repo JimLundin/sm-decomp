@@ -83,7 +83,7 @@ pub unsafe extern "C-unwind" fn apu_cpuRead(apu: *mut Apu, adr: u16) -> u8 {
         match adr {
             0xf0 | 0xf1 | 0xfa..=0xfc => return 0,
             0xf2 => return (*apu).registers.dspAdr,
-            0xf3 => return dsp_read((*apu).dsp, (*apu).registers.dspAdr & 0x7f),
+            0xf3 => return dsp_read(&(*(*apu).dsp).state, (*apu).registers.dspAdr & 0x7f),
             0xf4..=0xf9 => return (*apu).registers.inPorts[usize::from(adr - 0xf4)],
             0xfd..=0xff => {
                 let timer = &mut (*apu).registers.timer[usize::from(adr - 0xfd)];

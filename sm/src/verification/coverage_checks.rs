@@ -17,7 +17,7 @@ pub(super) fn run() -> i32 {
     macro_rules! cases {
             ($($test:ident),+ $(,)?) => { [$( (stringify!($test), $test as fn()), )+] };
         }
-    let tests: [(&str, fn()); 87] = cases![
+    let tests: [(&str, fn()); 93] = cases![
         prepared_message_pixels_delay_queue_and_checkpoint,
         prepared_message_rejects_changed_content_and_resets,
         independently_authored_raster_pixels_and_prefixes,
@@ -105,6 +105,12 @@ pub(super) fn run() -> i32 {
         scene_resident_identity_and_full_extent_reject_before_aliases,
         scene_resident_media_failure_keeps_alias_prefix_and_prior_ids,
         scene_resident_append_adopts_supplied_ids_and_keeps_old_lease,
+        dsp_voice_seven_registers_keep_native_signed_pitch_envelope_rules,
+        dsp_global_registers_keep_native_flags_fir_and_shadow_rules,
+        dsp_key_registers_apply_immediately_with_wrapped_apu_directory,
+        dsp_invalid_register_addresses_reject_before_state_or_memory_effects,
+        dsp_reset_clears_every_dirty_voice_field_and_preserves_each_padding_byte,
+        dsp_reset_restores_native_globals_without_changing_apu_memory_pointer_or_padding,
     ];
     let mut failed = 0usize;
     for (name, test) in &tests {
@@ -6405,4 +6411,521 @@ fn persistent_session_native_rebinding_preserves_ready_owner() {
         media,
         variants,
     );
+}
+
+// Movies cannot independently inspect native voice fields after authored register writes.
+#[cfg_attr(test, test)]
+fn dsp_voice_seven_registers_keep_native_signed_pitch_envelope_rules() {
+    use sm::snes::dsp::{DspState, dsp_read, write_register};
+    let ram = sm::apu_ram::ApuRam::new();
+    let mut state = DspState::new();
+    state.channel[7].pitch = 0xc155;
+    state.channel[7].gainValue = 99;
+    write_register(&mut state, &ram, 0x70, 0x80);
+    write_register(&mut state, &ram, 0x71, 0xff);
+    assert_eq!(
+        (state.channel[7].volumeL, state.channel[7].volumeR),
+        (-128, -1)
+    );
+    assert_eq!(
+        (dsp_read(&state, 0x70), dsp_read(&state, 0x71)),
+        (0x80, 0xff)
+    );
+    write_register(&mut state, &ram, 0x72, 0xab);
+    assert_eq!(state.channel[7].pitch, 0x01ab);
+    write_register(&mut state, &ram, 0x73, 0xff);
+    assert_eq!(state.channel[7].pitch, 0x3fab);
+    write_register(&mut state, &ram, 0x72, 0x19);
+    assert_eq!(state.channel[7].pitch, 0x3f19);
+    write_register(&mut state, &ram, 0x73, 0x80);
+    assert_eq!(state.channel[7].pitch, 0x0019);
+    assert_eq!(dsp_read(&state, 0x73), 0x80);
+    write_register(&mut state, &ram, 0x74, 0xff);
+    assert_eq!(state.channel[7].srcn, 0xff);
+    write_register(&mut state, &ram, 0x75, 0xf5);
+    assert_eq!(state.channel[7].adsrRates, [192, 2, 0, 0]);
+    assert!(!state.channel[7].useGain);
+    write_register(&mut state, &ram, 0x75, 0xff);
+    assert_eq!(state.channel[7].adsrRates, [1, 2, 0, 0]);
+    write_register(&mut state, &ram, 0x75, 0x05);
+    assert_eq!(state.channel[7].adsrRates, [192, 64, 0, 0]);
+    assert!(state.channel[7].useGain);
+    write_register(&mut state, &ram, 0x76, 0xff);
+    assert_eq!(
+        (state.channel[7].adsrRates[2], state.channel[7].sustainLevel),
+        (1, 2048)
+    );
+    write_register(&mut state, &ram, 0x76, 0x00);
+    assert_eq!(
+        (state.channel[7].adsrRates[2], state.channel[7].sustainLevel),
+        (0, 256)
+    );
+    write_register(&mut state, &ram, 0x77, 0xe3);
+    assert_eq!(
+        (state.channel[7].adsrRates[3], state.channel[7].gainMode),
+        (1280, 3)
+    );
+    assert!(!state.channel[7].directGain);
+    assert_eq!(state.channel[7].gainValue, 99);
+    write_register(&mut state, &ram, 0x77, 0xed);
+    assert_eq!(
+        (state.channel[7].adsrRates[3], state.channel[7].gainMode),
+        (128, 3)
+    );
+    write_register(&mut state, &ram, 0x77, 0x7f);
+    assert!(state.channel[7].directGain);
+    assert_eq!(state.channel[7].gainValue, 2032);
+    assert_eq!(
+        (state.channel[7].adsrRates[3], state.channel[7].gainMode),
+        (128, 3)
+    );
+    for (value, rate, mode) in [(0x80, 0, 0), (0xa1, 2048, 1), (0xc2, 1536, 2)] {
+        write_register(&mut state, &ram, 0x77, value);
+        assert_eq!(
+            (state.channel[7].adsrRates[3], state.channel[7].gainMode),
+            (rate, mode)
+        );
+        assert!(!state.channel[7].directGain);
+        assert_eq!(state.channel[7].gainValue, 2032);
+    }
+    assert_eq!((state.channel[0].pitch, state.channel[0].volumeL), (0, 0));
+}
+
+// Movies cannot independently inspect native global/FIR fields or author ignored shadows.
+#[cfg_attr(test, test)]
+fn dsp_global_registers_keep_native_flags_fir_and_shadow_rules() {
+    use sm::snes::dsp::{DspState, dsp_read, write_register};
+    let ram = sm::apu_ram::ApuRam::new();
+    let mut state = DspState::new();
+    for (address, value) in [
+        (0x0c, 0x80),
+        (0x1c, 0x7f),
+        (0x2c, 0xff),
+        (0x3c, 0x81),
+        (0x0d, 0xf0),
+    ] {
+        write_register(&mut state, &ram, address, value);
+        assert_eq!(dsp_read(&state, address), value);
+    }
+    assert_eq!((state.masterVolumeL, state.masterVolumeR), (-128, 127));
+    assert_eq!(
+        (state.echoVolumeL, state.echoVolumeR, state.feedbackVolume),
+        (-1, -127, -16)
+    );
+    write_register(&mut state, &ram, 0x6c, 0xff);
+    assert_eq!(
+        (state.reset, state.mute, state.echoWrites, state.noiseRate),
+        (true, true, false, 1)
+    );
+    write_register(&mut state, &ram, 0x6c, 0x00);
+    assert_eq!(
+        (state.reset, state.mute, state.echoWrites, state.noiseRate),
+        (false, false, true, 0)
+    );
+    write_register(&mut state, &ram, 0x6c, 0x2d);
+    assert_eq!(
+        (state.reset, state.mute, state.echoWrites, state.noiseRate),
+        (false, false, false, 128)
+    );
+    write_register(&mut state, &ram, 0x2d, 0x81);
+    assert_eq!(
+        state.channel.map(|c| c.pitchModulation),
+        [true, false, false, false, false, false, false, true]
+    );
+    write_register(&mut state, &ram, 0x3d, 0x42);
+    assert_eq!(
+        state.channel.map(|c| c.useNoise),
+        [false, true, false, false, false, false, true, false]
+    );
+    write_register(&mut state, &ram, 0x4d, 0xa5);
+    assert_eq!(
+        state.channel.map(|c| c.echoEnable),
+        [true, false, true, false, false, true, false, true]
+    );
+    write_register(&mut state, &ram, 0x5d, 0xff);
+    write_register(&mut state, &ram, 0x6d, 0xaa);
+    assert_eq!((state.dirPage, state.echoBufferAdr), (0xff00, 0xaa00));
+    state.echoRemain = 19;
+    state.echoBufferIndex = 23;
+    write_register(&mut state, &ram, 0x7d, 0xf0);
+    assert_eq!(state.echoDelay, 1);
+    write_register(&mut state, &ram, 0x7d, 0xfb);
+    assert_eq!(state.echoDelay, 5632);
+    assert_eq!((state.echoRemain, state.echoBufferIndex), (19, 23));
+    for (address, value) in [
+        (0x0f, 0x80),
+        (0x1f, 0xff),
+        (0x2f, 0),
+        (0x3f, 0x7f),
+        (0x4f, 0xfe),
+        (0x5f, 0x81),
+        (0x6f, 1),
+        (0x7f, 0x55),
+    ] {
+        write_register(&mut state, &ram, address, value);
+        assert_eq!(dsp_read(&state, address), value);
+    }
+    assert_eq!(state.firValues, [-128, -1, 0, 127, -2, -127, 1, 85]);
+    state.ram[0x7c] = 0xff;
+    write_register(&mut state, &ram, 0x7c, 0x57);
+    assert_eq!(dsp_read(&state, 0x7c), 0);
+    state.channel[7].gain = 37;
+    state.channel[7].sampleOut = -91;
+    for address in [
+        0x08, 0x09, 0x0a, 0x0b, 0x0e, 0x1d, 0x78, 0x79, 0x7a, 0x7b, 0x7e,
+    ] {
+        write_register(&mut state, &ram, address, 0x39);
+        assert_eq!(dsp_read(&state, address), 0x39);
+    }
+    assert_eq!(
+        (state.channel[7].gain, state.channel[7].sampleOut),
+        (37, -91)
+    );
+    assert_eq!(
+        (state.dirPage, state.echoBufferAdr, state.echoDelay),
+        (0xff00, 0xaa00, 5632)
+    );
+    assert_eq!(state.firValues, [-128, -1, 0, 127, -2, -127, 1, 85]);
+}
+
+// Movies cannot author wrapped APU directories and independently inspect immediate key effects.
+#[cfg_attr(test, test)]
+fn dsp_key_registers_apply_immediately_with_wrapped_apu_directory() {
+    use sm::snes::dsp::{DspState, dsp_read, write_register};
+    let ram = sm::apu_ram::ApuRam::new();
+    let mut state = DspState::new();
+    for (address, value) in [(0x02fc, 0x34), (0x02fd, 0x12), (0, 0xcd), (1, 0xab)] {
+        ram.write(address, value);
+    }
+    let before_ram: [u8; 65536] = core::array::from_fn(|i| ram.read_at(i));
+    write_register(&mut state, &ram, 0x5d, 0xff);
+    write_register(&mut state, &ram, 0x04, 0x40);
+    write_register(&mut state, &ram, 0x74, 0xff);
+    write_register(&mut state, &ram, 0x75, 0x05);
+    for ch in &mut state.channel {
+        ch.keyOn = true;
+        ch.keyOff = true;
+        ch.previousFlags = 7;
+        ch.decodeOffset = 0x3456;
+        ch.decodeBuffer = [11; 19];
+        ch.gain = 513;
+        ch.adsrState = 2;
+        ch.rateCounter = 99;
+        ch.pitchCounter = 77;
+        ch.old = -9;
+        ch.older = 8;
+    }
+    write_register(&mut state, &ram, 0x4c, 0x81);
+    assert_eq!(dsp_read(&state, 0x4c), 0x81);
+    assert_eq!(state.channel.map(|c| c.keyOn), [false; 8]);
+    assert_eq!(
+        (state.channel[0].decodeOffset, state.channel[7].decodeOffset),
+        (0xabcd, 0x1234)
+    );
+    assert_eq!(
+        (state.channel[0].adsrState, state.channel[7].adsrState),
+        (0, 3)
+    );
+    for index in [0, 7] {
+        let ch = &state.channel[index];
+        assert_eq!((ch.previousFlags, ch.gain), (0, 0));
+        assert_eq!(ch.decodeBuffer, [0; 19]);
+        assert_eq!(
+            (ch.rateCounter, ch.pitchCounter, ch.old, ch.older),
+            (99, 77, -9, 8)
+        );
+        assert!(ch.keyOff);
+    }
+    assert_eq!(
+        (
+            state.channel[1].previousFlags,
+            state.channel[1].gain,
+            state.channel[1].adsrState
+        ),
+        (7, 513, 2)
+    );
+    assert_eq!(state.channel[1].decodeBuffer, [11; 19]);
+    write_register(&mut state, &ram, 0x5c, 0x80);
+    assert_eq!(dsp_read(&state, 0x5c), 0x80);
+    assert_eq!(
+        state.channel.map(|c| c.keyOff),
+        [false, false, false, false, false, false, false, true]
+    );
+    assert_eq!(
+        (
+            state.channel[0].adsrState,
+            state.channel[1].adsrState,
+            state.channel[7].adsrState
+        ),
+        (0, 2, 4)
+    );
+    write_register(&mut state, &ram, 0x5c, 0);
+    assert_eq!(state.channel.map(|c| c.keyOff), [false; 8]);
+    assert_eq!(state.channel[7].adsrState, 4);
+    write_register(&mut state, &ram, 0x5c, 0x80);
+    write_register(&mut state, &ram, 0x4c, 0x80);
+    assert_eq!(
+        (dsp_read(&state, 0x4c), state.channel[7].adsrState),
+        (0x80, 3)
+    );
+    assert!(state.channel[7].keyOff);
+    assert!(!state.channel[7].keyOn);
+    state.channel[7].gain = 37;
+    state.channel[7].decodeBuffer[0] = 91;
+    write_register(&mut state, &ram, 0x4c, 0);
+    assert_eq!(
+        (
+            dsp_read(&state, 0x4c),
+            state.channel[7].gain,
+            state.channel[7].decodeBuffer[0]
+        ),
+        (0, 37, 91)
+    );
+    assert!((0..65536).all(|i| ram.read_at(i) == before_ram[i]));
+}
+
+// Movies cannot send invalid full-u8 DSP addresses or inspect rejection before field/memory effects.
+#[cfg_attr(test, test)]
+fn dsp_invalid_register_addresses_reject_before_state_or_memory_effects() {
+    use sm::snes::dsp::{DspState, dsp_read, write_register};
+    let ram = sm::apu_ram::ApuRam::new();
+    let mut state = DspState::new();
+    state.ram = core::array::from_fn(|i| i as u8 ^ 0xa5);
+    state.channel[7].decodeBuffer = [13; 19];
+    state.channel[7].pitch = 0x3fed;
+    state.channel[7].gain = 509;
+    state.channel[7].gainMode = 3;
+    state.channel[7].keyOn = true;
+    state.channel[7].keyOff = true;
+    state.channel[7].adsrState = 4;
+    state.firValues = [-17; 8];
+    state.sampleBuffer = [23; 1068];
+    ram.fill(0x67);
+    let before = state;
+    let before_ram: [u8; 65536] = core::array::from_fn(|i| ram.read_at(i));
+    let voice = |c: &sm::types::DspChannel| {
+        (
+            (c.pitch, c.pitchCounter, c.pitchModulation),
+            (c.decodeBuffer, c.srcn, c.decodeOffset),
+            (c.previousFlags, c.old, c.older, c.useNoise),
+            (c.adsrRates, c.rateCounter, c.adsrState),
+            (c.sustainLevel, c.useGain, c.gainMode, c.directGain),
+            (c.gainValue, c.gain, c.keyOn, c.keyOff),
+            (c.sampleOut, c.volumeL, c.volumeR, c.echoEnable),
+        )
+    };
+    let globals = |s: &DspState| {
+        (
+            (s.dirPage, s.evenCycle, s.mute, s.reset),
+            (s.masterVolumeL, s.masterVolumeR, s.noiseSample),
+            (s.noiseRate, s.noiseCounter, s.echoWrites),
+            (s.echoVolumeL, s.echoVolumeR, s.feedbackVolume),
+            (s.echoBufferAdr, s.echoDelay, s.echoRemain),
+            (s.echoBufferIndex, s.firBufferIndex, s.firValues),
+            (s.firBufferL, s.firBufferR, s.sampleBuffer, s.sampleOffset),
+        )
+    };
+    for address in [128, 255] {
+        assert!(std::panic::catch_unwind(|| dsp_read(&state, address)).is_err());
+        assert_eq!(state.ram, before.ram);
+        assert_eq!(
+            state.channel.map(|c| voice(&c)),
+            before.channel.map(|c| voice(&c))
+        );
+        assert_eq!(globals(&state), globals(&before));
+        assert!((0..65536).all(|i| ram.read_at(i) == before_ram[i]));
+        assert!(
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                write_register(&mut state, &ram, address, 0xff);
+            }))
+            .is_err()
+        );
+        assert_eq!(state.ram, before.ram);
+        assert_eq!(
+            state.channel.map(|c| voice(&c)),
+            before.channel.map(|c| voice(&c))
+        );
+        assert_eq!(globals(&state), globals(&before));
+        assert!((0..65536).all(|i| ram.read_at(i) == before_ram[i]));
+    }
+}
+
+// Movies cannot dirty every native DSP voice field or independently inspect preserved padding.
+#[cfg_attr(test, test)]
+fn dsp_reset_clears_every_dirty_voice_field_and_preserves_each_padding_byte() {
+    use sm::snes::dsp::DspState;
+    let mut state = DspState::new();
+    for (index, voice) in state.channel.iter_mut().enumerate() {
+        voice.pitch = 0xffff;
+        voice.pitchCounter = 0xffff;
+        voice.pitchModulation = true;
+        voice.decodeBuffer = [-0x1234; 19];
+        voice.srcn = 0xff;
+        voice.decodeOffset = 0xffff;
+        voice.previousFlags = 0xe5;
+        voice.old = -123;
+        voice.older = 123;
+        voice.useNoise = true;
+        voice.adsrRates = [123; 4];
+        voice.rateCounter = 0xffff;
+        voice.adsrState = 0xff;
+        voice.sustainLevel = 0xffff;
+        voice.useGain = true;
+        voice.gainMode = 0xff;
+        voice.directGain = true;
+        voice.gainValue = 0xffff;
+        voice.gain = 0xffff;
+        voice.keyOn = true;
+        voice.keyOff = true;
+        voice.sampleOut = -255;
+        voice.volumeL = -128;
+        voice.volumeR = 127;
+        voice.echoEnable = true;
+        voice.snapshot_padding0 = [0x10 + index as u8];
+        voice.snapshot_padding1 = [0x20 + index as u8];
+        voice.snapshot_padding2 = [0x30 + index as u8];
+        voice.snapshot_padding3 = [0x40 + index as u8];
+        voice.snapshot_padding4 = [0x50 + index as u8];
+        voice.snapshot_padding5 = [0x60 + index as u8];
+        voice.snapshot_padding6 = [0x70 + index as u8];
+    }
+    let padding = |voice: sm::types::DspChannel| {
+        [
+            voice.snapshot_padding0,
+            voice.snapshot_padding1,
+            voice.snapshot_padding2,
+            voice.snapshot_padding3,
+            voice.snapshot_padding4,
+            voice.snapshot_padding5,
+            voice.snapshot_padding6,
+        ]
+    };
+    let before_padding = state.channel.map(padding);
+    state.reset();
+    for voice in &state.channel {
+        assert_eq!(
+            (
+                voice.pitch,
+                voice.pitchCounter,
+                voice.srcn,
+                voice.decodeOffset
+            ),
+            (0, 0, 0, 0)
+        );
+        assert_eq!((voice.previousFlags, voice.old, voice.older), (0, 0, 0));
+        assert_eq!(voice.decodeBuffer, [0; 19]);
+        assert_eq!(voice.adsrRates, [0; 4]);
+        assert_eq!(
+            (
+                voice.rateCounter,
+                voice.adsrState,
+                voice.sustainLevel,
+                voice.gainMode
+            ),
+            (0, 0, 0, 0)
+        );
+        assert_eq!(
+            (
+                voice.gainValue,
+                voice.gain,
+                voice.sampleOut,
+                voice.volumeL,
+                voice.volumeR
+            ),
+            (0, 0, 0, 0, 0)
+        );
+        assert_eq!(
+            [
+                voice.pitchModulation,
+                voice.useNoise,
+                voice.useGain,
+                voice.directGain
+            ],
+            [false; 4]
+        );
+        assert_eq!([voice.keyOn, voice.keyOff, voice.echoEnable], [false; 3]);
+    }
+    assert_eq!(state.channel.map(padding), before_padding);
+}
+
+// Movies cannot dirty all DSP globals, pointer and pads and inspect reset without native execution.
+#[cfg_attr(test, test)]
+fn dsp_reset_restores_native_globals_without_changing_apu_memory_pointer_or_padding() {
+    use sm::snes::dsp::{DspState, dsp_read};
+    let ram = sm::apu_ram::ApuRam::new();
+    ram.fill(0x67);
+    let pointer = ram.as_mut_ptr();
+    assert!(!pointer.is_null());
+    let mut state = DspState::new();
+    state.apu_ram = pointer;
+    state.ram = [0xa5; 128];
+    state.dirPage = 0xffff;
+    state.evenCycle = true;
+    state.mute = false;
+    state.reset = false;
+    state.masterVolumeL = -128;
+    state.masterVolumeR = 127;
+    state.noiseSample = 1234;
+    state.noiseRate = 0xffff;
+    state.noiseCounter = 0xffff;
+    state.echoWrites = true;
+    state.echoVolumeL = -128;
+    state.echoVolumeR = 127;
+    state.feedbackVolume = -1;
+    state.echoBufferAdr = 0xffff;
+    state.echoDelay = 0xffff;
+    state.echoRemain = 0xffff;
+    state.echoBufferIndex = 0xffff;
+    state.firBufferIndex = 0xff;
+    state.firValues = [-1; 8];
+    state.firBufferL = [-123; 8];
+    state.firBufferR = [123; 8];
+    state.sampleBuffer = [-1; 1068];
+    state.sampleOffset = 0xffff;
+    state.snapshot_padding0 = [0xaa];
+    state.snapshot_padding1 = [0xbb];
+    state.snapshot_padding2 = [0xcc, 0xdd];
+    let before_ram: [u8; 65536] = core::array::from_fn(|i| ram.read_at(i));
+    state.reset();
+    let mut expected_shadow = [0; 128];
+    expected_shadow[0x7c] = 0xff;
+    assert_eq!(state.ram, expected_shadow);
+    assert_eq!(dsp_read(&state, 0x7c), 0xff);
+    assert_eq!(
+        (state.dirPage, state.evenCycle, state.mute, state.reset),
+        (0, false, true, true)
+    );
+    assert_eq!(
+        (state.masterVolumeL, state.masterVolumeR, state.noiseSample),
+        (0, 0, -0x4000)
+    );
+    assert_eq!(
+        (state.noiseRate, state.noiseCounter, state.echoWrites),
+        (0, 0, false)
+    );
+    assert_eq!(
+        (state.echoVolumeL, state.echoVolumeR, state.feedbackVolume),
+        (0, 0, 0)
+    );
+    assert_eq!(
+        (state.echoBufferAdr, state.echoDelay, state.echoRemain),
+        (0, 1, 1)
+    );
+    assert_eq!(
+        (
+            state.echoBufferIndex,
+            state.firBufferIndex,
+            state.sampleOffset
+        ),
+        (0, 0, 0)
+    );
+    assert_eq!(state.firValues, [0; 8]);
+    assert_eq!(state.firBufferL, [0; 8]);
+    assert_eq!(state.firBufferR, [0; 8]);
+    assert_eq!(state.sampleBuffer, [0; 1068]);
+    assert_eq!(state.apu_ram, pointer);
+    assert_eq!(state.snapshot_padding0, [0xaa]);
+    assert_eq!(state.snapshot_padding1, [0xbb]);
+    assert_eq!(state.snapshot_padding2, [0xcc, 0xdd]);
+    assert!((0..65536).all(|i| ram.read_at(i) == before_ram[i]));
 }

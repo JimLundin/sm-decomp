@@ -5,10 +5,6 @@ use core::mem::size_of;
 // The shared DSP state is also used by the native music sequencer and snapshots.
 #[link(name = "lakesnes_backend", kind = "static", modifiers = "-bundle")]
 unsafe extern "C" {
-    #[link_name = "dsp_reset"]
-    fn backend_reset(dsp: *mut DspState);
-    #[link_name = "dsp_write"]
-    fn backend_write(dsp: *mut DspState, address: u8, value: u8);
     fn sm_backend_dsp_cycle(dsp: *mut DspState) -> i32;
 }
 
@@ -25,7 +21,7 @@ impl Dsp {
         Self {
             state: DspState {
                 apu_ram: ram.as_mut_ptr(),
-                ..DspState::INITIAL
+                ..DspState::new()
             },
             apu_memory: ram,
         }
@@ -33,7 +29,7 @@ impl Dsp {
 }
 pub unsafe fn dsp_reset(dsp: *mut Dsp) {
     unsafe {
-        backend_reset(&raw mut (*dsp).state);
+        (*dsp).state.reset();
     }
 }
 pub unsafe fn dsp_saveload(dsp: *mut Dsp, io: &mut crate::snapshot_io::SnapshotIo<'_>) {
@@ -73,17 +69,107 @@ pub unsafe fn dsp_cycle(dsp: *mut Dsp) {
     }
 }
 
-pub unsafe fn dsp_read(dsp: *mut Dsp, adr: u8) -> u8 {
-    unsafe { (*dsp).state.ram[adr as usize] }
+#[forbid(unsafe_code)]
+pub fn dsp_read(state: &DspState, address: u8) -> u8 {
+    state.ram[usize::from(address)]
 }
 
+/// The native APU/player must hold exclusive access to this stable DSP allocation.
 pub unsafe fn dsp_write(dsp: *mut Dsp, adr: u8, val: u8) {
     unsafe {
-        // Keep the existing bounds failure before crossing the native boundary.
-        let _ = (*dsp).state.ram[adr as usize];
-        backend_write(&raw mut (*dsp).state, adr, val);
-        apply_keys(&mut (*dsp).state, &(*dsp).apu_memory, adr);
+        write_register(&mut (*dsp).state, &(*dsp).apu_memory, adr, val);
     }
+}
+
+#[forbid(unsafe_code)]
+pub fn write_register(
+    state: &mut DspState,
+    ram: &crate::apu_ram::ApuRam,
+    address: u8,
+    mut value: u8,
+) {
+    const RATES: [u16; 32] = [
+        0, 2048, 1536, 1280, 1024, 768, 640, 512, 384, 320, 256, 192, 160, 128, 96, 80, 64, 48, 40,
+        32, 24, 20, 16, 12, 10, 8, 6, 5, 4, 3, 2, 1,
+    ];
+    // Full-u8 callers retain the original bounds failure before any state mutation.
+    let _ = state.ram[usize::from(address)];
+    let channel = usize::from(address >> 4);
+    match address {
+        address if address & 0x0f <= 7 => {
+            let voice = &mut state.channel[channel];
+            match address & 0x0f {
+                0 => voice.volumeL = value as i8,
+                1 => voice.volumeR = value as i8,
+                2 => voice.pitch = (voice.pitch & 0x3f00) | u16::from(value),
+                3 => voice.pitch = ((voice.pitch & 0x00ff) | (u16::from(value) << 8)) & 0x3fff,
+                4 => voice.srcn = value,
+                5 => {
+                    voice.adsrRates[0] = RATES[usize::from((value & 0x0f) * 2 + 1)];
+                    voice.adsrRates[1] = RATES[usize::from(((value & 0x70) >> 4) * 2 + 16)];
+                    voice.useGain = value & 0x80 == 0;
+                }
+                6 => {
+                    voice.adsrRates[2] = RATES[usize::from(value & 0x1f)];
+                    voice.sustainLevel = (u16::from((value & 0xe0) >> 5) + 1) * 0x100;
+                }
+                7 => {
+                    voice.directGain = value & 0x80 == 0;
+                    if value & 0x80 != 0 {
+                        voice.gainMode = (value & 0x60) >> 5;
+                        voice.adsrRates[3] = RATES[usize::from(value & 0x1f)];
+                    } else {
+                        voice.gainValue = u16::from(value & 0x7f) * 16;
+                    }
+                }
+                _ => unreachable!(),
+            }
+        }
+        0x0c => state.masterVolumeL = value as i8,
+        0x1c => state.masterVolumeR = value as i8,
+        0x2c => state.echoVolumeL = value as i8,
+        0x3c => state.echoVolumeR = value as i8,
+        0x4c => {
+            for (index, voice) in state.channel.iter_mut().enumerate() {
+                voice.keyOn = value & (1 << index) != 0;
+            }
+        }
+        0x5c => {
+            for (index, voice) in state.channel.iter_mut().enumerate() {
+                voice.keyOff = value & (1 << index) != 0;
+            }
+        }
+        0x6c => {
+            state.reset = value & 0x80 != 0;
+            state.mute = value & 0x40 != 0;
+            state.echoWrites = value & 0x20 == 0;
+            state.noiseRate = RATES[usize::from(value & 0x1f)];
+        }
+        0x7c => value = 0, // Every write clears the ENDx register.
+        0x0d => state.feedbackVolume = value as i8,
+        0x2d => {
+            for (index, voice) in state.channel.iter_mut().enumerate() {
+                voice.pitchModulation = value & (1 << index) != 0;
+            }
+        }
+        0x3d => {
+            for (index, voice) in state.channel.iter_mut().enumerate() {
+                voice.useNoise = value & (1 << index) != 0;
+            }
+        }
+        0x4d => {
+            for (index, voice) in state.channel.iter_mut().enumerate() {
+                voice.echoEnable = value & (1 << index) != 0;
+            }
+        }
+        0x5d => state.dirPage = u16::from(value) << 8,
+        0x6d => state.echoBufferAdr = u16::from(value) << 8,
+        0x7d => state.echoDelay = (u16::from(value & 0x0f) * 512).max(1),
+        address if address & 0x0f == 0x0f => state.firValues[channel] = value as i8,
+        _ => {}
+    }
+    state.ram[usize::from(address)] = value;
+    apply_keys(state, ram, address);
 }
 
 #[forbid(unsafe_code)]
@@ -111,6 +197,41 @@ fn apply_keys(state: &mut DspState, ram: &crate::apu_ram::ApuRam, adr: u8) {
 }
 #[forbid(unsafe_code)]
 impl DspState {
+    pub fn new() -> Self {
+        Self::INITIAL
+    }
+
+    pub fn reset(&mut self) {
+        self.ram.fill(0);
+        self.ram[0x7c] = 0xff;
+        for voice in &mut self.channel {
+            *voice = crate::types::DspChannel {
+                snapshot_padding0: voice.snapshot_padding0,
+                snapshot_padding1: voice.snapshot_padding1,
+                snapshot_padding2: voice.snapshot_padding2,
+                snapshot_padding3: voice.snapshot_padding3,
+                snapshot_padding4: voice.snapshot_padding4,
+                snapshot_padding5: voice.snapshot_padding5,
+                snapshot_padding6: voice.snapshot_padding6,
+                ..crate::types::DspChannel::INITIAL
+            };
+        }
+        *self = Self {
+            apu_ram: self.apu_ram,
+            ram: self.ram,
+            channel: self.channel,
+            snapshot_padding0: self.snapshot_padding0,
+            snapshot_padding1: self.snapshot_padding1,
+            snapshot_padding2: self.snapshot_padding2,
+            mute: true,
+            reset: true,
+            noiseSample: -0x4000,
+            echoDelay: 1,
+            echoRemain: 1,
+            ..Self::new()
+        };
+    }
+
     pub fn write_samples(&mut self, output: &mut [[i16; 2]]) {
         let adder = 534.0 / output.len() as f64;
         let mut location = 0.0;

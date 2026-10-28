@@ -103,7 +103,16 @@ save/reserve captures and continuations pass: 26 distinct rows / 199,063
 comparisons / 0, including full Morph 1200 and BOTH Kago 14350; coverage 23/44.
 Original successes and reboot-interrupted reserve/pickup recovery retain their
 separate source/input provenance. Native DSP/APU/channel capabilities remain.
-Next: DSP register/cycle source and qualification remain pending.
+DSP register/reset source 172c9e04 / DLL 39e67fb1 passes independent review,
+format, library (41.798s), direct DLL (135.159s), actual 93/93 units and
+frontend (268.308s); original 200 library / 209 frontend warning causes remain.
+Final codec 1bdd1abca855c3e0 has genuine initialized 329 + resume 5, save
+55650 and reserve 91623 capture/continuation proofs: 26 distinct rows /
+199,063 comparisons / 0, full Morph 1200 and BOTH Kago 14350; coverage 23/44.
+Net +121 production / +523 verification; legacy and unsafe-containing unchanged.
+The six register/reset witnesses and native DSP/APU/audio dependencies retain
+their exact attribution; physical audio and backend independence remain open.
+Next: separately owned DSP97 runtime and APU source work remain pending.
 The native audio adapter remains; alternate sound banks and menu selection are open.
 Prefer Python for portable automation, with standalone scripts instead of inline
 Python in GitHub Actions. Reserves 2 GiB/50 GiB.
