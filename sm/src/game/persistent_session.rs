@@ -1482,6 +1482,20 @@ pub(crate) fn validate_normalized_projection(
     }
 }
 impl SessionSnapshotPayload {
+    pub(crate) fn encode_control_checkpoint(&self) -> Result<Vec<u8>, String> {
+        let state = self.0.as_ref().ok_or("no supplied Session Control owner")?;
+        state
+            .0
+            .gameplay
+            .control
+            .encode_checkpoint(&state.0.required)
+    }
+    pub(crate) fn decode_control_checkpoint(
+        bytes: &[u8],
+        required: &SessionStartRequirements,
+    ) -> Result<Control, String> {
+        Control::decode_checkpoint(bytes, required)
+    }
     /// Detached binary component only; full machine restore remains unsupported.
     pub(crate) fn encode_audio_checkpoint(&self) -> Result<Vec<u8>, String> {
         let state = self.0.as_ref().ok_or("no supplied Session audio owner")?;

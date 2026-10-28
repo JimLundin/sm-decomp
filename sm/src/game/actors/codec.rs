@@ -705,3 +705,344 @@ impl AudioRequests {
         Ok(result)
     }
 }
+
+use crate::game::scene::start::{
+    ActionBindings, AudioProgramDeclaration, CommittedPhase, ContinuationHistory,
+    InitialAudioIntent, InputHistory, OngoingMusic, PortHistory, ProgramAnchor, ReferenceProfile,
+    StartIdentity,
+};
+use crate::game_state::persistent_session::{Control, CurrentControl, SessionStartRequirements};
+
+fn control_reference_bytes(value: &ReferenceProfile) -> Vec<u8> {
+    let mut bytes = Vec::new();
+    for identity in [
+        value.fingerprint,
+        value.release,
+        value.capture,
+        value.arithmetic_policy,
+        value.input_policy,
+        value.observation_policy,
+        value.color_policy,
+        value.slowdown_policy,
+        value.glitch_policy,
+        value.audio_timing_policy,
+    ] {
+        bytes.extend_from_slice(&identity);
+    }
+    bytes.extend_from_slice(&value.ticks_numerator.to_le_bytes());
+    bytes.extend_from_slice(&value.ticks_denominator.to_le_bytes());
+    for word in [value.image.width, value.image.height] {
+        bytes.extend_from_slice(&word.to_le_bytes());
+    }
+    bytes.extend_from_slice(&value.image.crop_origin.x.to_le_bytes());
+    bytes.extend_from_slice(&value.image.crop_origin.y.to_le_bytes());
+    bytes.push(match value.image.color {
+        crate::game::scene::records::ColorInterpretation::Bgr15Native => 0,
+    });
+    bytes.push(match value.image.quantization {
+        crate::game::scene::records::SceneQuantization::Native => 0,
+        crate::game::scene::records::SceneQuantization::Reference => 1,
+    });
+    bytes
+}
+fn control_identity(read: &mut CheckpointReader<'_>) -> Result<[u8; 32], String> {
+    Ok(read.bytes(32)?.try_into().unwrap())
+}
+fn control_bool(read: &mut CheckpointReader<'_>) -> Result<bool, String> {
+    match read.byte()? {
+        0 => Ok(false),
+        1 => Ok(true),
+        _ => Err("unknown Control checkpoint boolean".into()),
+    }
+}
+fn control_anchor(bytes: &mut Vec<u8>, value: &ProgramAnchor) {
+    bytes.extend_from_slice(&value.program.0.to_le_bytes());
+    bytes.extend_from_slice(&value.revision.0);
+    bytes.extend_from_slice(&value.source_interval.to_le_bytes());
+    bytes.extend_from_slice(&value.phase.to_le_bytes());
+    bytes.extend_from_slice(&value.timing_policy);
+}
+fn control_read_anchor(read: &mut CheckpointReader<'_>) -> Result<ProgramAnchor, String> {
+    Ok(ProgramAnchor {
+        program: AssetId(read.id()?),
+        revision: Revision(control_identity(read)?),
+        source_interval: read.counter()?,
+        phase: read.counter()?,
+        timing_policy: control_identity(read)?,
+    })
+}
+impl Control {
+    /// Lossless current Control component; immutable inputs are explicitly supplied.
+    pub(crate) fn encode_checkpoint(
+        &self,
+        required: &SessionStartRequirements,
+    ) -> Result<Vec<u8>, String> {
+        let Self::Owned(current) = self else {
+            return Err("no supplied Control checkpoint owner".into());
+        };
+        let m = &current.metadata;
+        crate::game::scene::start::validate_control_metadata(m, &required.display)
+            .map_err(|error| format!("Control checkpoint {error:?}"))?;
+        let audio_requests = current
+            .requests
+            .encode_checkpoint(m, &required.audio_catalog)?;
+        let mut bytes = Vec::from(b"SMCONTROL\x01".as_slice());
+        bytes.extend_from_slice(&m.identity.schema.to_le_bytes());
+        for identity in [
+            m.identity.gameplay,
+            m.identity.reference,
+            m.identity.capture,
+            m.identity.media.0,
+        ] {
+            bytes.extend_from_slice(&identity);
+        }
+        bytes.extend_from_slice(&m.identity.committed_tick.to_le_bytes());
+        bytes.extend_from_slice(&m.identity.next_input_record.to_le_bytes());
+        let reference = control_reference_bytes(&m.reference);
+        bytes.extend_from_slice(&(reference.len() as u64).to_le_bytes());
+        bytes.extend_from_slice(&reference);
+        bytes.extend_from_slice(&m.samus_content.revision.0);
+        let input = m.input_history;
+        bytes.extend_from_slice(&input.capture);
+        bytes.extend_from_slice(&input.policy);
+        for port in input.ports {
+            for word in [
+                port.sampled,
+                port.previous,
+                port.pressed,
+                port.repeated,
+                port.repeat_counter,
+            ] {
+                bytes.extend_from_slice(&word.to_le_bytes());
+            }
+        }
+        bytes.push(u8::from(input.debug_second_port));
+        for word in [
+            input.repeat_first,
+            input.repeat_next,
+            input.released,
+            input.timed_held,
+            input.previous_timed_held,
+            input.newly_held,
+            input.held_timer,
+            input.held_timer_reset,
+            input.samus_held,
+            input.samus_pressed,
+            input.bindings.shoot,
+            input.bindings.jump,
+            input.bindings.run,
+            input.bindings.cancel,
+            input.bindings.switch,
+            input.bindings.aim_down,
+            input.bindings.aim_up,
+            input.bug_fix_counter,
+        ] {
+            bytes.extend_from_slice(&word.to_le_bytes());
+        }
+        let continuation = m.continuation;
+        bytes.extend_from_slice(&continuation.capture);
+        bytes.extend_from_slice(&continuation.observation_policy);
+        bytes.push(match continuation.phase {
+            CommittedPhase::InitialObservation => 0,
+            CommittedPhase::SettledInterval => 1,
+        });
+        bytes.extend_from_slice(&continuation.next_input_record.to_le_bytes());
+        bytes.extend_from_slice(&[
+            continuation.outer,
+            continuation.primary,
+            continuation.secondary,
+            continuation.music,
+            continuation.message,
+            continuation.auxiliary,
+        ]);
+        match continuation.captured_mode {
+            None => bytes.push(0),
+            Some(mode) => {
+                bytes.push(1);
+                bytes.extend_from_slice(&mode.to_le_bytes());
+            }
+        }
+        bytes.extend_from_slice(&m.audio.capture);
+        bytes.extend_from_slice(&m.audio.revision.0);
+        bytes.extend_from_slice(&m.audio.timing_policy);
+        bytes.extend_from_slice(&(m.audio.declarations.len() as u64).to_le_bytes());
+        for value in m.audio.declarations.iter() {
+            bytes.extend_from_slice(&value.program.0.to_le_bytes());
+            bytes.extend_from_slice(&value.bank.0.to_le_bytes());
+            bytes.extend_from_slice(&value.revision.0);
+            bytes.extend_from_slice(&value.definition);
+        }
+        match m.audio.music {
+            OngoingMusic::Silent => bytes.push(0),
+            OngoingMusic::Playing(anchor) => {
+                bytes.push(1);
+                control_anchor(&mut bytes, &anchor);
+            }
+        }
+        bytes.extend_from_slice(&(m.audio.ambience.len() as u64).to_le_bytes());
+        for anchor in m.audio.ambience.iter() {
+            control_anchor(&mut bytes, anchor);
+        }
+        bytes.extend_from_slice(&(audio_requests.len() as u64).to_le_bytes());
+        bytes.extend_from_slice(&audio_requests);
+        Ok(bytes)
+    }
+    /// Reconstruct only serialized mutable state. Resolution uses the declared
+    /// Reference/catalog; no before/mine/default/live-RAM values are imported.
+    pub(crate) fn decode_checkpoint(
+        bytes: &[u8],
+        required: &SessionStartRequirements,
+    ) -> Result<Self, String> {
+        let mut read = CheckpointReader(bytes);
+        if read.bytes(10)? != b"SMCONTROL\x01" {
+            return Err("unsupported Control checkpoint schema".into());
+        }
+        let identity = StartIdentity {
+            schema: read.word()?,
+            gameplay: control_identity(&mut read)?,
+            reference: control_identity(&mut read)?,
+            capture: control_identity(&mut read)?,
+            media: Revision(control_identity(&mut read)?),
+            committed_tick: read.counter()?,
+            next_input_record: read.counter()?,
+        };
+        let reference_size =
+            usize::try_from(read.counter()?).map_err(|_| "Control reference length overflow")?;
+        if read.bytes(reference_size)? != control_reference_bytes(&required.display.reference) {
+            return Err("Control checkpoint Reference declaration changed".into());
+        }
+        if control_identity(&mut read)? != required.display.samus_content.revision.0 {
+            return Err("Control checkpoint Samus catalog revision changed".into());
+        }
+        let capture = control_identity(&mut read)?;
+        let policy = control_identity(&mut read)?;
+        let mut ports = Vec::with_capacity(2);
+        for _ in 0..2 {
+            ports.push(PortHistory {
+                sampled: read.word()?,
+                previous: read.word()?,
+                pressed: read.word()?,
+                repeated: read.word()?,
+                repeat_counter: read.word()?,
+            });
+        }
+        let input_history = InputHistory {
+            capture,
+            policy,
+            ports: ports.try_into().map_err(|_| "Control port count")?,
+            debug_second_port: control_bool(&mut read)?,
+            repeat_first: read.word()?,
+            repeat_next: read.word()?,
+            released: read.word()?,
+            timed_held: read.word()?,
+            previous_timed_held: read.word()?,
+            newly_held: read.word()?,
+            held_timer: read.word()?,
+            held_timer_reset: read.word()?,
+            samus_held: read.word()?,
+            samus_pressed: read.word()?,
+            bindings: ActionBindings {
+                shoot: read.word()?,
+                jump: read.word()?,
+                run: read.word()?,
+                cancel: read.word()?,
+                switch: read.word()?,
+                aim_down: read.word()?,
+                aim_up: read.word()?,
+            },
+            bug_fix_counter: read.word()?,
+        };
+        let capture = control_identity(&mut read)?;
+        let observation_policy = control_identity(&mut read)?;
+        let phase = match read.byte()? {
+            0 => CommittedPhase::InitialObservation,
+            1 => CommittedPhase::SettledInterval,
+            _ => return Err("unknown Control continuation phase".into()),
+        };
+        let next_input_record = read.counter()?;
+        let outer = read.byte()?;
+        let primary = read.byte()?;
+        let secondary = read.byte()?;
+        let music = read.byte()?;
+        let message = read.byte()?;
+        let auxiliary = read.byte()?;
+        let captured_mode = match read.byte()? {
+            0 => None,
+            1 => Some(read.word()?),
+            _ => return Err("unknown Control captured mode option".into()),
+        };
+        let continuation = ContinuationHistory {
+            capture,
+            observation_policy,
+            phase,
+            next_input_record,
+            outer,
+            primary,
+            secondary,
+            music,
+            message,
+            auxiliary,
+            captured_mode,
+        };
+        let capture = control_identity(&mut read)?;
+        let revision = Revision(control_identity(&mut read)?);
+        let timing_policy = control_identity(&mut read)?;
+        let count = usize::try_from(read.counter()?)
+            .map_err(|_| "Control audio declaration length overflow")?;
+        if count != required.display.audio_programs.len() {
+            return Err("Control audio declaration count changed".into());
+        }
+        let mut declarations = Vec::with_capacity(count);
+        for _ in 0..count {
+            declarations.push(AudioProgramDeclaration {
+                program: AssetId(read.id()?),
+                bank: AssetId(read.id()?),
+                revision: Revision(control_identity(&mut read)?),
+                definition: control_identity(&mut read)?,
+            });
+        }
+        let music = match read.byte()? {
+            0 => OngoingMusic::Silent,
+            1 => OngoingMusic::Playing(control_read_anchor(&mut read)?),
+            _ => return Err("unknown Control music anchor".into()),
+        };
+        let count =
+            usize::try_from(read.counter()?).map_err(|_| "Control ambience length overflow")?;
+        if count > read.0.len() / 84 {
+            return Err("truncated Control ambience".into());
+        }
+        let mut ambience = Vec::with_capacity(count);
+        for _ in 0..count {
+            ambience.push(control_read_anchor(&mut read)?);
+        }
+        let audio = InitialAudioIntent {
+            capture,
+            revision,
+            timing_policy,
+            declarations: declarations.into(),
+            music,
+            ambience: ambience.into(),
+        };
+        let metadata = DisplayStartMetadata {
+            identity,
+            reference: required.display.reference,
+            input_history,
+            continuation,
+            audio,
+            samus_content: required.display.samus_content.clone(),
+        };
+        crate::game::scene::start::validate_control_metadata(&metadata, &required.display)
+            .map_err(|error| format!("Control checkpoint {error:?}"))?;
+        let requests_size =
+            usize::try_from(read.counter()?).map_err(|_| "Control requests length overflow")?;
+        let requests = AudioRequests::decode_checkpoint(
+            read.bytes(requests_size)?,
+            &metadata,
+            required.audio_catalog.clone(),
+        )?;
+        if !read.0.is_empty() {
+            return Err("trailing Control checkpoint fields".into());
+        }
+        Ok(Self::Owned(Box::new(CurrentControl { metadata, requests })))
+    }
+}

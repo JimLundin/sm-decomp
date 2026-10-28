@@ -516,3 +516,64 @@ impl ValidatedDisplayStart {
         }
     }
 }
+
+/// Shared validation for the detached owned Control codec. It does not require
+/// resident Display construction and never mutates a machine or actor owner.
+pub(crate) fn validate_control_metadata(
+    metadata: &super::component::DisplayStartMetadata,
+    required: &DisplayStartRequirements,
+) -> Result<(), StartError> {
+    let identity = metadata.identity;
+    if identity.schema != DISPLAY_START_SCHEMA || identity.schema != required.schema {
+        return Err(StartError::Schema);
+    }
+    if !identified(&identity.gameplay)
+        || !identified(&identity.reference)
+        || !identified(&identity.capture)
+        || identity.gameplay != required.gameplay
+        || identity.capture != required.capture
+        || identity.media != required.media
+    {
+        return Err(StartError::Fingerprint);
+    }
+    metadata.reference.validate()?;
+    if metadata.reference != required.reference
+        || metadata.reference.fingerprint != identity.reference
+    {
+        return Err(StartError::Fingerprint);
+    }
+    if metadata.input_history.capture != identity.capture
+        || metadata.input_history.policy != metadata.reference.input_policy
+    {
+        return Err(StartError::InputHistory);
+    }
+    let continuation = metadata.continuation;
+    if continuation.capture != identity.capture
+        || continuation.observation_policy != metadata.reference.observation_policy
+        || continuation.next_input_record != identity.next_input_record
+        || (continuation.phase == CommittedPhase::InitialObservation
+            && identity.committed_tick != 0)
+        || !valid_continuation(&continuation)
+    {
+        return Err(StartError::Continuation);
+    }
+    if metadata.audio.revision != required.audio_revision
+        || metadata.audio.declarations.len() != required.audio_programs.len()
+        || metadata
+            .audio
+            .declarations
+            .iter()
+            .any(|value| !required.audio_programs.contains(value))
+    {
+        return Err(StartError::AudioDeclaration);
+    }
+    metadata.audio.validate(
+        &metadata.reference,
+        identity.capture,
+        identity.next_input_record,
+    )?;
+    metadata
+        .samus_content
+        .validate_expected(&required.samus_content)
+        .map_err(StartError::Display)
+}
