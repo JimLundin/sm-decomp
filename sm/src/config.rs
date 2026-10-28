@@ -154,20 +154,24 @@ pub(crate) fn check_dependency() {
     });
 }
 
-// Native views borrow these actual mutable CRT allocations across includes/reloads.
+// Native views borrow these stable mutable input allocations across includes/reloads.
 // Keyboard/gamepad numeric maps have separate native lifetimes.
 pub struct ConfigOwner {
-    inputs: Vec<ConfigBuffer>,
+    inputs: Vec<Vec<u8>>,
+    _thread: std::marker::PhantomData<std::rc::Rc<()>>,
 }
-struct ConfigBuffer(core::ptr::NonNull<c_void>);
-impl Drop for ConfigBuffer {
+struct IncludePath(core::ptr::NonNull<c_void>);
+impl Drop for IncludePath {
     fn drop(&mut self) {
         unsafe { crate::c_library::free(self.0.as_ptr()) }
     }
 }
 impl ConfigOwner {
     pub fn new() -> Self {
-        Self { inputs: Vec::new() }
+        Self {
+            inputs: Vec::new(),
+            _thread: std::marker::PhantomData,
+        }
     }
 }
 impl Drop for ConfigOwner {
@@ -193,15 +197,15 @@ pub unsafe fn ParseConfigFile(filename: *const c_char, owner: &mut ConfigOwner) 
     }
 }
 
-// Retain native read/seek/narrowing and mutable malloc storage without adopting it
-// into a Rust allocator. A successful input remains owned even if parsing unwinds.
+// Retain native read/seek/narrowing and mutable sentinel storage in one Rust owner.
+// A successful input remains owned even if parsing unwinds.
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_config_read_file(
     owner: *mut c_void,
     name: *const c_char,
 ) -> *mut c_char {
     unsafe {
-        use crate::c_library::{fopen, fread, fseek, ftell, malloc, rewind};
+        use crate::c_library::{fopen, fread, fseek, ftell, rewind};
         let file = fopen(name, c"rb".as_ptr());
         if file.is_null() {
             return null_mut();
@@ -210,13 +214,16 @@ unsafe extern "C-unwind" fn sm_config_read_file(
         fseek(file.0, 0, crate::util::SEEK_END);
         let length = ftell(file.0) as size_t;
         rewind(file.0);
-        let data = malloc(length.checked_add(1).expect("config input size overflow"));
-        if data.is_null() {
+        let extent = length.checked_add(1).expect("config input size overflow");
+        let mut buffer = Vec::new();
+        if buffer.try_reserve_exact(extent).is_err() {
             crate::host::Die(c"malloc failed".as_ptr());
+            panic!("config allocation failed");
         }
-        let buffer = ConfigBuffer(core::ptr::NonNull::new(data).expect("config allocation failed"));
-        data.cast::<u8>().add(length).write(0);
-        if fread(data, 1, length, file.0) as u32 as size_t != length {
+        buffer.resize(extent, 0);
+        buffer[length] = 0;
+        let data = buffer.as_mut_ptr();
+        if fread(data.cast(), 1, length, file.0) as u32 as size_t != length {
             crate::host::Die(c"fread failed".as_ptr());
         }
         drop(file);
@@ -236,7 +243,7 @@ unsafe extern "C-unwind" fn sm_config_include(
 ) {
     unsafe {
         let path = crate::util::ReplaceFilenameWithNewPath(filename, name);
-        let path = ConfigBuffer(
+        let path = IncludePath(
             core::ptr::NonNull::new(path.cast()).expect("config include path allocation failed"),
         );
         if depth > 10 || !sm_config_parse_one_file(owner, path.0.as_ptr().cast(), depth + 1) {

@@ -74,8 +74,14 @@ two associated pointer casts and three raw global captures. Net +21 production,
 unsafe-containing -1; the existing OpenGL warning is unchanged. All 85 CPU codec
 contributors are unchanged; preserve original unit/replay attribution. GL device
 callbacks remain unexecuted. CI passes on both Session/audio commits.
-Next: qualify the reviewed config-input and shader-table source successors through
-their actual native/frontend paths. Reserves 2 GiB/50 GiB.
+Config-input source b9178ea8 passes independent review, regenerated native archives
+and actual frontend library/binary (184.214s). Owned buffers preserve native parser
+views, teardown order and the original non-Send/Sync owner; input malloc and raw
+sentinel add/write retire. Net +7 production; all 209 frontend warning causes and
+85 CPU codec contributors are unchanged. Include-path C ownership remains.
+Next: qualify the reviewed shader-table source successor through its actual
+native/frontend path; extract inline workflow Python into standalone scripts.
+Prefer Python for portable automation. Reserves 2 GiB/50 GiB.
 
 SOURCE38 connects actor layer-3 player drawing to the complete owned Runtime
 driver and adds the live B04/B06 body-coordinate projection. Native effects
