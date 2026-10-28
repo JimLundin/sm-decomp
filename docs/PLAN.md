@@ -50,6 +50,17 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
+SOURCE32 seals supplied Samus catalog content against an independently expected
+catalog and carries it through open/reset/checkpoint-to-start metadata. Existing
+constructor/reopen fixtures use explicit nonempty media-valid catalog declarations;
+all original assertions and zero-prefix cases remain. Format/source inventory
+pass; final DLL/runtime qualification is pending on this migration branch. The
+new codec requires genuine captures after the complete content/consumer cohort
+is frozen. No compile/capture is run for this intermediate checkpoint. Actual
+persistent G, native role content, full checkpoint and backend independence remain
+open; catalog admission alone does not establish their ownership.
+
+
 Zero-producer prefixes now retain the original Scene error in both existing
 Samus/marker units. Exact successor DLL and all 66 units pass; all 76 raw codec
 contributors remain identical to qualified SOURCE30. Original 26-row runtime

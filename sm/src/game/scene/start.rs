@@ -8,11 +8,12 @@ use super::{
         AssetId, ColorInterpretation, Revision, Scene, SceneError, SceneMedia, SceneQuantization,
         ScreenPosition,
     },
+    samus::SamusCatalog,
     state::{DisplayDescription, DisplayError, DisplayState},
 };
 use std::sync::Arc;
 
-pub const DISPLAY_START_SCHEMA: u16 = 4;
+pub const DISPLAY_START_SCHEMA: u16 = 5;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct StartIdentity {
@@ -164,6 +165,7 @@ pub struct DisplayStartRequirements {
     pub gameplay: [u8; 32],
     pub hdma_content: Arc<HdmaCatalog>,
     pub atmosphere_content: Arc<super::atmosphere::AtmosphereCatalog>,
+    pub samus_content: Arc<SamusCatalog>,
     pub capture: [u8; 32],
     pub reference: ReferenceProfile,
     pub media: Revision,
@@ -182,6 +184,7 @@ pub struct DisplayStartDescription {
     pub display: Option<DisplayDescription>,
     pub resident: Option<ResidentDisplayDescription>,
     pub hdma_content: Option<Arc<HdmaCatalog>>,
+    pub samus_content: Option<Arc<SamusCatalog>>,
     pub committed_scene: Option<Scene>,
 }
 
@@ -203,6 +206,7 @@ pub enum StartError {
     MissingResidentDisplay,
     MissingResidentMedia,
     MissingHdmaContent,
+    MissingSamusContent,
     Display(DisplayError),
     MissingCommittedHistory,
     Scene(SceneError),
@@ -222,6 +226,7 @@ pub struct ValidatedDisplayStart {
     display: DisplayState,
     resident: ResidentDisplayDescription,
     hdma_content: Arc<HdmaCatalog>,
+    samus_content: Arc<SamusCatalog>,
     committed_scene: Scene,
     media: Arc<SceneMedia>,
 }
@@ -236,6 +241,7 @@ pub(crate) struct DisplayStartParts {
     pub display: DisplayState,
     pub resident: ResidentDisplayDescription,
     pub hdma_content: Arc<HdmaCatalog>,
+    pub samus_content: Arc<SamusCatalog>,
     pub committed_scene: Scene,
     pub media: Arc<SceneMedia>,
 }
@@ -466,6 +472,15 @@ impl ValidatedDisplayStart {
         {
             return Err(StartError::ReferenceImage);
         }
+        let samus_content = description
+            .samus_content
+            .ok_or(StartError::MissingSamusContent)?;
+        samus_content
+            .validate(&media)
+            .map_err(StartError::Display)?;
+        samus_content
+            .validate_expected(&requirements.samus_content)
+            .map_err(StartError::Display)?;
         Ok(Self {
             identity,
             reference,
@@ -475,6 +490,7 @@ impl ValidatedDisplayStart {
             display,
             resident,
             hdma_content,
+            samus_content,
             committed_scene,
             media,
         })
@@ -494,6 +510,7 @@ impl ValidatedDisplayStart {
             display: self.display,
             resident: self.resident,
             hdma_content: self.hdma_content,
+            samus_content: self.samus_content,
             committed_scene: self.committed_scene,
             media: self.media,
         }

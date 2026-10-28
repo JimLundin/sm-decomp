@@ -580,6 +580,132 @@ fn scene_rejects_reference_quantization() {
     );
 }
 
+// Movies cannot author a separate complete Large visual for sealed Samus content.
+fn scene_start_samus_media(media: Arc<sc::SceneMedia>) -> Arc<sc::SceneMedia> {
+    let reference = |id| sc::AssetRef {
+        id: sc::AssetId(id),
+        revision: media.revision(),
+    };
+    let mut assets = media.assets().cloned().collect::<Vec<_>>();
+    assets.push(sc::SceneAsset::Atlas(sc::TileAtlas {
+        reference: reference(15),
+        encoding: sc::TileEncoding::Planar4,
+        tile_count: 18,
+        data: vec![0x00ff; 18 * 16].into(),
+    }));
+    assets.push(sc::SceneAsset::Visual(sc::Visual {
+        reference: reference(16),
+        frames: Arc::from([sc::VisualFrame {
+            parts: Arc::from([sc::VisualPart {
+                atlas: reference(15),
+                material: reference(6),
+                tile: 0,
+                offset: sc::ScreenPosition { x: -3, y: -8 },
+                size: sc::ObjectSize::Large,
+            }]),
+        }]),
+    }));
+    Arc::new(
+        sc::SceneMedia::new(
+            media.revision(),
+            assets,
+            media.palette_incarnations().cloned().collect(),
+            media.compiled_images().cloned().collect(),
+        )
+        .unwrap(),
+    )
+}
+
+// Movies cannot supply authored full-width Samus pointers and portable part identities.
+fn scene_start_samus_catalog(revision: sc::Revision) -> Arc<sm::game::scene::samus::SamusCatalog> {
+    use sm::game::scene::samus::{SamusCatalog, SamusMap, SamusPart};
+    Arc::new(SamusCatalog {
+        revision,
+        pointers: Arc::from([0x8101]),
+        maps: [(
+            0x8101,
+            SamusMap {
+                count: 1,
+                parts: Arc::from([SamusPart {
+                    x: 0xfffd,
+                    y: 0xf8,
+                    native_word: 0x3400,
+                    variants: Arc::new(sc::ObjectVariants {
+                        size_sets: [(
+                            0,
+                            sc::ObjectSizeVariants {
+                                small: sc::ObjectPartBinding {
+                                    visual: sc::AssetRef {
+                                        id: sc::AssetId(7),
+                                        revision,
+                                    },
+                                    frame: 0,
+                                    part: 0,
+                                },
+                                large: sc::ObjectPartBinding {
+                                    visual: sc::AssetRef {
+                                        id: sc::AssetId(16),
+                                        revision,
+                                    },
+                                    frame: 0,
+                                    part: 0,
+                                },
+                            },
+                        )]
+                        .into(),
+                    }),
+                }]),
+            },
+        )]
+        .into(),
+    })
+}
+
+// Movies cannot supply the independently authored expected sealed Samus catalog.
+fn scene_expected_start_samus_catalog() -> Arc<sm::game::scene::samus::SamusCatalog> {
+    use sm::game::scene::samus::{SamusCatalog, SamusMap, SamusPart};
+    Arc::new(SamusCatalog {
+        revision: sc::Revision([1; 32]),
+        pointers: Arc::from([0x8101]),
+        maps: [(
+            0x8101,
+            SamusMap {
+                count: 1,
+                parts: Arc::from([SamusPart {
+                    x: 0xfffd,
+                    y: 0xf8,
+                    native_word: 0x3400,
+                    variants: Arc::new(sc::ObjectVariants {
+                        size_sets: [(
+                            0,
+                            sc::ObjectSizeVariants {
+                                small: sc::ObjectPartBinding {
+                                    visual: sc::AssetRef {
+                                        id: sc::AssetId(7),
+                                        revision: sc::Revision([1; 32]),
+                                    },
+                                    frame: 0,
+                                    part: 0,
+                                },
+                                large: sc::ObjectPartBinding {
+                                    visual: sc::AssetRef {
+                                        id: sc::AssetId(16),
+                                        revision: sc::Revision([1; 32]),
+                                    },
+                                    frame: 0,
+                                    part: 0,
+                                },
+                            },
+                        )]
+                        .into(),
+                    }),
+                }]),
+            },
+        )]
+        .into(),
+    })
+}
+
 // Movies cannot author portable start/profile rejection. This synthetic metadata
 // prefix intentionally omits DisplayDescription and cannot seal a G or display start.
 // It exercises only the concrete constructor's admission before MissingDisplay.
@@ -589,6 +715,7 @@ fn scene_start_prefix() -> (
     Arc<sc::SceneMedia>,
 ) {
     let (mut scene, media) = scene_fixture();
+    let media = scene_start_samus_media(media);
     scene.tick = 0;
     let reference = ss::ReferenceProfile {
         fingerprint: scene.reference,
@@ -692,6 +819,7 @@ fn scene_start_prefix() -> (
         gameplay: identity.gameplay,
         hdma_content: Arc::new(hs::HdmaCatalog::new(identity.gameplay, vec![]).unwrap()),
         atmosphere_content: scene_atmosphere_catalog(identity.media),
+        samus_content: scene_expected_start_samus_catalog(),
         capture: identity.capture,
         reference,
         media: identity.media,
@@ -709,6 +837,7 @@ fn scene_start_prefix() -> (
         display: None,
         resident: None,
         hdma_content: None,
+        samus_content: Some(scene_start_samus_catalog(media.revision())),
         committed_scene: Some(
             sc::Scene::new(scene, media.clone())
                 .unwrap()
@@ -2851,6 +2980,7 @@ fn scene_copy_metadata(metadata: &sd::DisplayStartMetadata) -> sd::DisplayStartM
         input_history: metadata.input_history,
         continuation: metadata.continuation,
         audio: metadata.audio.clone(),
+        samus_content: metadata.samus_content.clone(),
     }
 }
 
@@ -2861,6 +2991,7 @@ fn scene_metadata(start: &ss::DisplayStartDescription) -> sd::DisplayStartMetada
         input_history: start.input_history.unwrap(),
         continuation: start.continuation.unwrap(),
         audio: start.audio.as_ref().unwrap().clone(),
+        samus_content: start.samus_content.as_ref().unwrap().clone(),
     }
 }
 
@@ -2870,6 +3001,7 @@ fn scene_same_metadata(actual: &sd::DisplayStartMetadata, expected: &sd::Display
     assert_eq!(actual.input_history, expected.input_history);
     assert_eq!(actual.continuation, expected.continuation);
     assert_eq!(actual.audio, expected.audio);
+    assert_eq!(actual.samus_content, expected.samus_content);
 }
 
 fn scene_same_resident(

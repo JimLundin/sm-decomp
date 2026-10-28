@@ -7,6 +7,7 @@ use super::{
     commit::{OwnedDisplay, ResidentDisplayDescription},
     hdma_sources::HdmaCatalog,
     records::{Scene, SceneMedia},
+    samus::SamusCatalog,
     start::{
         ContinuationHistory, DisplayStartDescription, InitialAudioIntent, InputHistory,
         ReferenceProfile, StartError, StartIdentity, ValidatedDisplayStart,
@@ -22,6 +23,7 @@ pub struct DisplayStartMetadata {
     pub input_history: InputHistory,
     pub continuation: ContinuationHistory,
     pub audio: InitialAudioIntent,
+    pub samus_content: Arc<SamusCatalog>,
 }
 
 pub struct OpenedDisplay {
@@ -67,6 +69,7 @@ impl DisplayComponent {
                 input_history: parts.input_history,
                 continuation: parts.continuation,
                 audio: parts.audio,
+                samus_content: parts.samus_content,
             },
         })
     }
@@ -131,6 +134,7 @@ impl DisplayCheckpoint {
                 display: Some(self.description),
                 resident: Some(self.resident),
                 hdma_content: Some(self.hdma_content),
+                samus_content: Some(metadata.samus_content),
                 committed_scene: Some(self.committed),
             },
             self.media,
