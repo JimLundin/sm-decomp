@@ -936,6 +936,12 @@ pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut
             "RunAsmCode: CPU authority is unavailable for a prepared world"
         );
         let actor_transition = game.prepare_actor_canonical();
+        game.preflight_samus_runtime()
+            .expect("Samus CPU entry rejected");
+        let mut mutation = game
+            .begin_samus_mutation()
+            .expect("Samus mutation rejected");
+        let game = mutation.game();
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             let org_sp: u16 = (*game.g_cpu).sp;
             let org_pc: u16 = (*game.g_cpu).pc;
@@ -974,7 +980,12 @@ pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut
         }));
         game.commit_actor_canonical(actor_transition);
         match result {
-            Ok(result) => result,
+            Ok(result) => {
+                mutation
+                    .finish_current()
+                    .expect("Samus CPU adoption rejected");
+                result
+            }
             Err(panic) => std::panic::resume_unwind(panic),
         }
     }
@@ -1006,6 +1017,9 @@ unsafe fn loadRom(name: *const c_char, game: &mut Game) -> bool {
 }
 pub unsafe fn PatchBytes(addr: u32, bytes: &[u8], game: &mut Game) {
     unsafe {
+        if !bytes.is_empty() {
+            game.note_samus_external_mutation();
+        }
         // Resolve the original base for every byte; RomPtr can update g_fail.
         for (i, &byte) in bytes.iter().enumerate() {
             patch_image(addr, &mut game.execution_parts().1).write(addr, i, byte);
@@ -1014,11 +1028,13 @@ pub unsafe fn PatchBytes(addr: u32, bytes: &[u8], game: &mut Game) {
 }
 pub unsafe fn FixupCarry(addr: u32, game: &mut Game) {
     unsafe {
+        game.note_samus_external_mutation();
         patch_image(addr, &mut game.execution_parts().1).write(addr, 0, 0);
     }
 }
 
 pub fn RtlUpdateSnesPatchForBugfix(game: &mut Game) {
+    game.note_samus_external_mutation();
     let counter = u16::from_le_bytes([game.ram().read_byte(0xc2), game.ram().read_byte(0xc3)]);
     game.currently_installed_bug_fix_counter = counter;
     RomPatches::new(
@@ -1031,6 +1047,7 @@ pub fn RtlUpdateSnesPatchForBugfix(game: &mut Game) {
 }
 pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
     unsafe {
+        game.note_samus_external_mutation();
         game.initialize_backend();
         let loaded: bool = loadRom(filename, game);
         if !loaded {
@@ -1083,6 +1100,7 @@ pub unsafe fn DebugGameOverMenu() {
 }
 pub unsafe fn RunCpuUntilPC(pc1: u32, pc2: u32, game: &mut Game) -> u32 {
     unsafe {
+        game.note_samus_external_mutation();
         loop {
             if (*game.g_snes).debug_cycles {
                 let mut line = [0u8; 80];
@@ -1106,6 +1124,12 @@ pub unsafe fn RunOneFrameOfGame_Emulated(game: &mut Game) {
             return;
         }
         let actor_transition = game.prepare_actor_canonical();
+        game.preflight_samus_runtime()
+            .expect("Samus CPU entry rejected");
+        let mut mutation = game
+            .begin_samus_mutation()
+            .expect("Samus mutation rejected");
+        let game = mutation.game();
         let bug_fix_bak: u16 = word!(game.bug_fix_counter);
         let cpu = (*game.g_snes).cpu;
         if (*cpu).k == 0x80 && (*cpu).pc == 0x8459 {
@@ -1117,6 +1141,9 @@ pub unsafe fn RunOneFrameOfGame_Emulated(game: &mut Game) {
         RunCpuUntilPC(0x80834a, 0x858142, game);
         word!(game.bug_fix_counter = bug_fix_bak);
         game.commit_actor_canonical(actor_transition);
+        mutation
+            .finish_current()
+            .expect("Samus CPU adoption rejected");
     }
 }
 pub unsafe fn DrawFrameToPpu(game: &mut Game) {
@@ -1159,10 +1186,18 @@ pub unsafe fn DrawFrameToPpu(game: &mut Game) {
             unsafe { (*(*self.0.g_snes).cpu).nmiWanted = false_0 != 0 };
         }
     }
-    match crate::game::scene::settle::settle(&mut NativeSettlement(game)) {
+    game.preflight_samus_runtime()
+        .expect("Samus settlement entry rejected");
+    let mut mutation = game
+        .begin_samus_mutation()
+        .expect("Samus mutation rejected");
+    match crate::game::scene::settle::settle(&mut NativeSettlement(mutation.game())) {
         Ok(()) => (),
         Err(never) => match never {},
     }
+    mutation
+        .finish_current()
+        .expect("Samus settlement adoption rejected");
 }
 pub unsafe fn SaveBugSnapshot(game: &mut Game) {
     unsafe {
@@ -1229,6 +1264,12 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
             eprintln!("RunOneFrameOfGame_Both: CPU authority is unavailable for a prepared world");
             return;
         }
+        game.preflight_samus_runtime()
+            .expect("Samus paired entry rejected");
+        let mut frame_mutation = game
+            .begin_samus_mutation()
+            .expect("Samus mutation rejected");
+        let game = frame_mutation.game();
         (*game.g_snes).ppu = (*game.g_snes).snes_ppu;
         {
             let snes = game.g_snes;
@@ -1238,6 +1279,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
             MakeSnapshot(before, &*snes, &*cpu, player, ram, backend);
         }
         game.actor_snapshots.before = Some(game.capture_actor_snapshot());
+        let samus_before = game.capture_samus_snapshot();
         let queue_before = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
         let apu_before = queue_before.pending;
         let apu_queue_before = queue_before.size;
@@ -1257,6 +1299,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
                 MakeSnapshot(theirs, &*snes, &*cpu, player, ram, backend);
             }
             game.actor_snapshots.theirs = Some(game.capture_actor_snapshot());
+            let samus_theirs = game.capture_samus_snapshot();
             let queue_theirs = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
             let apu_theirs = queue_theirs.pending;
             queue_before.restore(game);
@@ -1271,13 +1314,23 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
                 .expect("paired actor snapshot missing")
                 .preflight(game.actor_identity(), game.world())
                 .expect("actor restore rejected");
+            let samus_restore = game
+                .prepare_samus_adoption(&samus_before)
+                .expect("Samus before restore rejected");
             {
+                let mut restore = game
+                    .begin_samus_mutation()
+                    .expect("Samus mutation rejected");
+                let game = restore.game();
                 let snes = game.g_snes;
                 let cpu = game.g_cpu;
                 let (backend, ram, _, _, before) = game.ram_and_snapshots();
                 RestoreSnapshot(before, &mut *snes, &mut *cpu, ram, backend);
+                actor_restore.commit(game.actor_identity_mut());
+                restore
+                    .finish(samus_restore)
+                    .expect("Samus before adoption rejected");
             }
-            actor_restore.commit(game.actor_identity_mut());
             (*game.g_snes).runningWhichVersion = 2;
             gameplay::advance(Entry::Frame, game);
             DrawFrameToPpu(game);
@@ -1290,6 +1343,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
                 MakeSnapshot(mine, &*snes, &*cpu, player, ram, backend);
             }
             game.actor_snapshots.mine = Some(game.capture_actor_snapshot());
+            let _samus_mine = game.capture_samus_snapshot();
             (*game.g_snes).runningWhichVersion = 0xff;
             VerifySnapshotsEq(
                 &raw mut *game.g_snapshot_mine,
@@ -1357,13 +1411,23 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
                     .expect("paired actor snapshot missing")
                     .preflight(game.actor_identity(), game.world())
                     .expect("actor restore rejected");
+                let samus_restore = game
+                    .prepare_samus_adoption(&samus_before)
+                    .expect("Samus recovery restore rejected");
                 {
+                    let mut restore = game
+                        .begin_samus_mutation()
+                        .expect("Samus mutation rejected");
+                    let game = restore.game();
                     let snes = game.g_snes;
                     let cpu = game.g_cpu;
                     let (backend, ram, _, _, before) = game.ram_and_snapshots();
                     RestoreSnapshot(before, &mut *snes, &mut *cpu, ram, backend);
+                    actor_restore.commit(game.actor_identity_mut());
+                    restore
+                        .finish(samus_restore)
+                        .expect("Samus recovery adoption rejected");
                 }
-                actor_restore.commit(game.actor_identity_mut());
                 if game.g_use_my_apu_code {
                     game.g_snapshot_mine.player.restore(game.g_spc_player);
                 } else {
@@ -1380,6 +1444,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
                 game.g_snapshot_before.player.restore(game.g_spc_player);
                 RunOneFrameOfGame_Emulated(game);
                 DrawFrameToPpu(game);
+                let _samus_recovery = game.capture_samus_snapshot();
                 if game.g_use_my_apu_code {
                     game.g_snapshot_mine.player.restore(game.g_spc_player);
                 }
@@ -1395,13 +1460,23 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
                     .expect("paired actor snapshot missing")
                     .preflight(game.actor_identity(), game.world())
                     .expect("actor restore rejected");
+                let samus_restore = game
+                    .prepare_samus_adoption(&samus_theirs)
+                    .expect("Samus selected restore rejected");
                 {
+                    let mut restore = game
+                        .begin_samus_mutation()
+                        .expect("Samus mutation rejected");
+                    let game = restore.game();
                     let snes = game.g_snes;
                     let cpu = game.g_cpu;
                     let (backend, ram, _, theirs, _) = game.ram_and_snapshots();
                     RestoreSnapshot(theirs, &mut *snes, &mut *cpu, ram, backend);
+                    actor_restore.commit(game.actor_identity_mut());
+                    restore
+                        .finish(samus_restore)
+                        .expect("Samus selected adoption rejected");
                 }
-                actor_restore.commit(game.actor_identity_mut());
                 if game.g_use_my_apu_code {
                     game.g_snapshot_mine.player.restore(game.g_spc_player);
                 } else {
@@ -1434,6 +1509,11 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
         if game.g_got_mismatch_count != 0 {
             game.g_got_mismatch_count -= 1;
         }
+        // Publish only after comparison normalization, actual branch restoration,
+        // owner-specific audio selection and the final continuation/menu writes.
+        frame_mutation
+            .finish_current()
+            .expect("Samus normalized adoption rejected");
     }
 }
 pub unsafe fn RtlRunFrameCompare(input: u16, run_what: i32, game: &mut Game) {
@@ -1442,6 +1522,12 @@ pub unsafe fn RtlRunFrameCompare(input: u16, run_what: i32, game: &mut Game) {
             eprintln!("RtlRunFrameCompare: CPU authority is unavailable for a prepared world");
             return;
         }
+        game.preflight_samus_runtime()
+            .expect("Samus frame entry rejected");
+        let mut mutation = game
+            .begin_samus_mutation()
+            .expect("Samus mutation rejected");
+        let game = mutation.game();
         game.input1_mut().currentState = input;
         if game.g_runmode as i32 == RM_THEIRS as i32 {
             RunOneFrameOfGame_Emulated(game);
@@ -1454,6 +1540,9 @@ pub unsafe fn RtlRunFrameCompare(input: u16, run_what: i32, game: &mut Game) {
         } else {
             RunOneFrameOfGame_Both(game);
         };
+        mutation
+            .finish_current()
+            .expect("Samus frame adoption rejected");
     }
 }
 

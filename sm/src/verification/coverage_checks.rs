@@ -17,7 +17,7 @@ pub(super) fn run() -> i32 {
     macro_rules! cases {
             ($($test:ident),+ $(,)?) => { [$( (stringify!($test), $test as fn()), )+] };
         }
-    let tests: [(&str, fn()); 70] = cases![
+    let tests: [(&str, fn()); 81] = cases![
         prepared_message_pixels_delay_queue_and_checkpoint,
         prepared_message_rejects_changed_content_and_resets,
         independently_authored_raster_pixels_and_prefixes,
@@ -54,6 +54,17 @@ pub(super) fn run() -> i32 {
         scene_start_rejects_invalid_samus_catalog_before_reset,
         scene_start_rejects_changed_samus_catalog_and_requirements,
         scene_component_transfers_supplied_samus_metadata_on_reset_and_reopen,
+        samus_content_rejects_allocation_and_role_changes,
+        samus_content_rejects_authored_request_changes,
+        samus_content_rejects_invalid_payload_and_transfer_extents,
+        samus_content_prepared_lease_retains_sealed_allocation,
+        samus_game_rejected_expectation_preserves_binding,
+        samus_game_native_capture_retains_allocation,
+        samus_game_prepared_replacement_is_rejected,
+        samus_game_failed_install_preserves_binding,
+        samus_game_reference_import_keeps_revoked_scope,
+        samus_game_panicking_callback_keeps_prefix,
+        samus_game_adoption_uses_captured_target,
         scene_component_preserves_complete_open_checkpoint_and_reopen,
         scene_component_reset_preserves_complete_owned_buffers_and_alias_views,
         scene_component_rejects_missing_resident_history_and_media_replacement,
@@ -6056,4 +6067,81 @@ fn scene_resident_append_adopts_supplied_ids_and_keeps_old_lease() {
             .colors,
         old_colors
     );
+}
+
+// Movies cannot author the independent role-content admission and backing cases.
+#[cfg(sm_verify_dll)]
+#[cfg_attr(test, test)]
+fn samus_content_rejects_allocation_and_role_changes() {
+    sm::samus_content_rejects_allocation_and_role_changes();
+}
+
+// Movies cannot author the independent role-content admission and backing cases.
+#[cfg(sm_verify_dll)]
+#[cfg_attr(test, test)]
+fn samus_content_rejects_authored_request_changes() {
+    sm::samus_content_rejects_authored_request_changes();
+}
+
+// Movies cannot author the independent role-content admission and backing cases.
+#[cfg(sm_verify_dll)]
+#[cfg_attr(test, test)]
+fn samus_content_rejects_invalid_payload_and_transfer_extents() {
+    sm::samus_content_rejects_invalid_payload_and_transfer_extents();
+}
+
+// Movies cannot author the independent role-content admission and backing cases.
+#[cfg(sm_verify_dll)]
+#[cfg_attr(test, test)]
+fn samus_content_prepared_lease_retains_sealed_allocation() {
+    sm::samus_content_prepared_lease_retains_sealed_allocation();
+}
+
+// Movies cannot author independent Game admission and captured-allocation failures.
+#[cfg(sm_verify_dll)]
+#[cfg_attr(test, test)]
+fn samus_game_rejected_expectation_preserves_binding() {
+    sm::samus_game_rejected_expectation_preserves_binding();
+}
+
+// Movies cannot author independent Game admission and captured-allocation failures.
+#[cfg(sm_verify_dll)]
+#[cfg_attr(test, test)]
+fn samus_game_native_capture_retains_allocation() {
+    sm::samus_game_native_capture_retains_allocation();
+}
+
+// Movies cannot author independent Game admission and captured-allocation failures.
+#[cfg(sm_verify_dll)]
+#[cfg_attr(test, test)]
+fn samus_game_prepared_replacement_is_rejected() {
+    sm::samus_game_prepared_replacement_is_rejected();
+}
+
+// Movies cannot author independent Game admission and captured-allocation failures.
+#[cfg(sm_verify_dll)]
+#[cfg_attr(test, test)]
+fn samus_game_failed_install_preserves_binding() {
+    sm::samus_game_failed_install_preserves_binding();
+}
+
+// Movies cannot author independent owner mutation, unwind and selected-adoption cases.
+#[cfg(sm_verify_dll)]
+#[cfg_attr(test, test)]
+fn samus_game_reference_import_keeps_revoked_scope() {
+    sm::samus_game_reference_import_keeps_revoked_scope();
+}
+
+// Movies cannot author independent owner mutation, unwind and selected-adoption cases.
+#[cfg(sm_verify_dll)]
+#[cfg_attr(test, test)]
+fn samus_game_panicking_callback_keeps_prefix() {
+    sm::samus_game_panicking_callback_keeps_prefix();
+}
+
+// Movies cannot author independent owner mutation, unwind and selected-adoption cases.
+#[cfg(sm_verify_dll)]
+#[cfg_attr(test, test)]
+fn samus_game_adoption_uses_captured_target() {
+    sm::samus_game_adoption_uses_captured_target();
 }

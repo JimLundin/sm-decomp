@@ -859,3 +859,25 @@ pub(crate) mod player_transitions_rust_observer;
 #[cfg(sm_verify_dll)]
 #[path = "verification/player_transitions_animation.rs"]
 pub mod player_transitions_animation;
+
+#[cfg(sm_verify_dll)]
+#[path = "verification/samus_content_binding_cases.rs"]
+mod samus_content_binding_cases;
+#[cfg(sm_verify_dll)]
+pub use samus_content_binding_cases::{
+    samus_content_prepared_lease_retains_sealed_allocation,
+    samus_content_rejects_allocation_and_role_changes,
+    samus_content_rejects_authored_request_changes,
+    samus_content_rejects_invalid_payload_and_transfer_extents,
+};
+
+#[cfg(sm_verify_dll)]
+#[path = "verification/samus_game_binding_cases.rs"]
+mod samus_game_binding_cases;
+#[cfg(sm_verify_dll)]
+pub use samus_game_binding_cases::{
+    samus_game_adoption_uses_captured_target, samus_game_failed_install_preserves_binding,
+    samus_game_native_capture_retains_allocation, samus_game_panicking_callback_keeps_prefix,
+    samus_game_prepared_replacement_is_rejected, samus_game_reference_import_keeps_revoked_scope,
+    samus_game_rejected_expectation_preserves_binding,
+};

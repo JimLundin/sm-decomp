@@ -50,6 +50,17 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
+SOURCE36 connects the explicit Game Samus content binding to native body,
+position, tile and upload consumers. Scoped Runtime/CPU/reset/load adoption
+retains selected registrations through actual late normalized settlement.
+Empty patches stay no-ops; returning short replay loads preserve their original
+continuation and leave authority revoked. Seven actual Game witnesses join the
+four role witnesses: 81 units are registered, not executed. Source branch only;
+normal library/warnings/DLL/units and genuine new-codec captures/replay are pending.
+Actual prepared start, persistent Session/Display/SamusHalf, binary checkpoint,
+Reference/audio, portable driver and size acceptance remain unfinished.
+
+
 SOURCE34 shares the exact allocation-free full asset-byte validator. State
 retains payload-only admission; tile requests retain their original explicit
 identity/revision/offset prefix and first0/second0 transfer rules. Both methods

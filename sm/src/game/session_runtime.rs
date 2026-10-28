@@ -88,15 +88,30 @@ impl<'g> Runtime<'g> {
             game,
         }
     }
+    pub(crate) fn samus_game(&self) -> &Game {
+        self.game
+    }
     pub fn foreign<R>(&mut self, action: impl FnOnce(&mut Game) -> R) -> R {
         preflight_export(self.session(), self.game);
+        let mut mutation = self
+            .game
+            .begin_samus_mutation()
+            .expect("Samus mutation rejected");
         let state = self
             .state
             .take()
             .expect("projectile state unavailable during external effect");
-        export_session(state, self.game);
-        let result = action(self.game);
-        self.state = Some(import_session(self.game));
+        // Export was authorized before revocation; do not repeat ready preflight
+        // while the external interval is deliberately unavailable.
+        export_session_preflighted(state, mutation.game());
+        let result = action(mutation.game());
+        let payload = mutation.game().capture_samus_snapshot();
+        let prepared = mutation
+            .game()
+            .prepare_samus_adoption(&payload)
+            .expect("Samus resumption rejected");
+        self.state = Some(import_session_preflighted(mutation.game()));
+        mutation.finish(prepared).expect("Samus adoption rejected");
         self.inputs = encoding::inputs(&|at| self.game.ram().read_byte(at));
         result
     }
@@ -112,6 +127,7 @@ impl<'g> Runtime<'g> {
             fn drop(&mut self) {
                 if !self.completed {
                     self.runtime.relinquish();
+                    self.runtime.game.revoke_samus_authority();
                 }
             }
         }
@@ -131,12 +147,16 @@ impl<'g> Runtime<'g> {
         if let Some(state) = self.state.take() {
             let matching = std::sync::Arc::ptr_eq(&state.world, self.game.world())
                 && state.world.revision() == self.game.world().revision();
-            if matching && self.game.actor_identity_is_with_session() {
-                export_session(state, self.game);
+            if matching
+                && self.game.actor_identity_is_with_session()
+                && self.game.preflight_samus_runtime().is_ok()
+            {
+                export_session_preflighted(state, self.game);
             } else if self.game.actor_identity_is_with_session() {
                 // A rejected foreign call retains this Runtime's identity owner;
                 // discard invalid byte/native publication rather than panic again.
                 self.game.return_actor_identity(state.actor_identity);
+                self.game.revoke_samus_authority();
             }
         }
     }
@@ -481,6 +501,11 @@ pub(crate) fn run_mechanisms(
 }
 
 pub(crate) fn import_session(game: &mut Game) -> Session {
+    game.preflight_samus_runtime()
+        .expect("Samus import rejected");
+    import_session_preflighted(game)
+}
+fn import_session_preflighted(game: &mut Game) -> Session {
     #[cfg(sm_verify_dll)]
     player_normal_transfers::record(game, 1);
     let mut state = encoding::decode(
@@ -502,6 +527,8 @@ fn preflight_export(state: &Session, game: &Game) {
         game.actor_identity_is_with_session(),
         "Game already owns actor identity"
     );
+    game.preflight_samus_runtime()
+        .expect("Samus export rejected");
 }
 /// Holds identity until it is returned, including an unwind after partial encoding.
 struct ExportIdentity<'g> {
@@ -511,16 +538,30 @@ struct ExportIdentity<'g> {
 impl Drop for ExportIdentity<'_> {
     fn drop(&mut self) {
         if let Some(state) = self.state.take() {
-            self.game.return_actor_identity(state.actor_identity);
+            if self.game.actor_identity_is_with_session() {
+                self.game.return_actor_identity(state.actor_identity);
+            }
         }
     }
 }
 pub(crate) fn export_session(state: Session, game: &mut Game) {
-    preflight_export(&state, game);
     let guard = ExportIdentity {
         state: Some(state),
         game,
     };
+    preflight_export(
+        guard.state.as_ref().expect("export owns Session"),
+        guard.game,
+    );
+    encode_session(guard);
+}
+fn export_session_preflighted(state: Session, game: &mut Game) {
+    encode_session(ExportIdentity {
+        state: Some(state),
+        game,
+    });
+}
+fn encode_session(guard: ExportIdentity<'_>) {
     #[cfg(sm_verify_dll)]
     player_normal_transfers::record(guard.game, 2);
     let state = guard.state.as_ref().expect("export owns Session");

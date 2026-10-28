@@ -165,8 +165,23 @@ pub unsafe fn RtlSetupEmuCallbacks(
 }
 unsafe fn RtlSynchronizeWholeState(game: &mut Game) {
     unsafe {
-        if game.g_rtl_syncall.is_some() {
-            game.g_rtl_syncall.expect("non-null function pointer")(game);
+        synchronize_whole_state(game, true);
+    }
+}
+unsafe fn synchronize_whole_state(game: &mut Game, complete_load: bool) {
+    unsafe {
+        if let Some(sync) = game.g_rtl_syncall {
+            let mut mutation = game
+                .begin_samus_mutation()
+                .expect("Samus mutation rejected");
+            sync(mutation.game());
+            if complete_load {
+                mutation
+                    .finish_current()
+                    .expect("Samus synchronization adoption rejected");
+            } else {
+                mutation.defer_incomplete();
+            }
         }
     }
 }
@@ -216,6 +231,15 @@ pub(crate) unsafe fn snapshot_region(io: &mut SnapshotIo<'_>, data: *mut u8, siz
 
 pub unsafe fn FinishLoadSnesState(game: &mut Game) {
     unsafe {
+        finish_load_snes_state(game, true);
+    }
+}
+unsafe fn finish_load_snes_state(game: &mut Game, complete_load: bool) {
+    unsafe {
+        let mut mutation = game
+            .begin_samus_mutation()
+            .expect("Samus mutation rejected");
+        let game = mutation.game();
         crate::snes::ppu::PpuRestoreRenderRouting(&mut *(*game.g_snes).ppu);
         (*(*game.g_snes).cpu).e = false_0 != 0;
         let ram = game.ram();
@@ -233,20 +257,46 @@ pub unsafe fn FinishLoadSnesState(game: &mut Game) {
                 (0xf71b - 1i32 >> 8) as u8,
             );
         }
-        RtlSynchronizeWholeState(game);
+        synchronize_whole_state(game, complete_load);
+        if complete_load {
+            mutation
+                .finish_current()
+                .expect("Samus loaded-state adoption rejected");
+        } else {
+            mutation.defer_incomplete();
+        }
     }
 }
 
 pub unsafe fn ReadFromFile(f: *mut FILE, data: *mut c_void, n: size_t) {
     unsafe {
-        if fread(data, 1 as size_t, n, f) as size_t != n {
+        let _ = read_file_block(f, data, n);
+    }
+}
+unsafe fn read_file_block(f: *mut FILE, data: *mut c_void, n: size_t) -> bool {
+    unsafe {
+        let complete = fread(data, 1 as size_t, n, f) as size_t == n;
+        if !complete {
             Die(c"fread failed\n".as_ptr());
         }
+        complete
     }
 }
 pub unsafe fn RtlReset(mode: i32, game: &mut Game) {
     unsafe {
+        reset(mode, game, true);
+    }
+}
+unsafe fn reset(mode: i32, game: &mut Game, complete_load: bool) {
+    unsafe {
         let actor_transition = game.prepare_actor_canonical();
+        let payload = game.capture_samus_snapshot();
+        game.prepare_samus_adoption(&payload)
+            .expect("Samus reset preflight rejected");
+        let mut mutation = game
+            .begin_samus_mutation()
+            .expect("Samus mutation rejected");
+        let game = mutation.game();
         game.snes_frame_counter = 0;
         game.execution().reset(true_0 != 0);
         if mode & 1 == 0 {
@@ -256,23 +306,41 @@ pub unsafe fn RtlReset(mode: i32, game: &mut Game) {
         RtlApuLock();
         RtlRestoreMusicAfterLoad_Locked(true_0 != 0, game);
         RtlApuUnlock();
-        RtlSynchronizeWholeState(game);
+        synchronize_whole_state(game, complete_load);
         game.commit_actor_canonical(actor_transition);
         if mode & 2 == 0 {
             game.state_recorder = StateRecorder::default();
+        }
+        if complete_load {
+            mutation
+                .finish_current()
+                .expect("Samus reset adoption rejected");
+        } else {
+            mutation.defer_incomplete();
         }
     }
 }
 pub unsafe fn StateRecorder_Load(f: *mut FILE, replay_mode: bool, game: &mut Game) {
     unsafe {
+        let _ = state_recorder_load(f, replay_mode, game, false);
+    }
+}
+unsafe fn state_recorder_load(
+    f: *mut FILE,
+    replay_mode: bool,
+    game: &mut Game,
+    outer_load: bool,
+) -> bool {
+    unsafe {
         if !game.supports_legacy_persistence() {
             eprintln!("StateRecorder_Load: legacy persistence is unavailable for a prepared world");
-            return;
+            return false;
         }
         let mut hdr: [u32; 16] = [0i32 as u32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         let is_old: bool = false_0 != 0;
+        let mut read_complete = true;
         let mut is_reset: bool = false_0 != 0;
-        ReadFromFile(
+        read_complete &= read_file_block(
             f,
             &raw mut hdr as *mut u32 as *mut c_void,
             (8 as size_t).wrapping_mul(size_of::<u32>() as size_t),
@@ -286,7 +354,7 @@ pub unsafe fn StateRecorder_Load(f: *mut FILE, replay_mode: bool, game: &mut Gam
                 0
             };
         } else if hdr[0i32 as usize] == 2 {
-            ReadFromFile(
+            read_complete &= read_file_block(
                 f,
                 (&raw mut hdr as *mut u32).offset(8) as *mut c_void,
                 (8 as size_t).wrapping_mul(size_of::<u32>() as size_t),
@@ -299,9 +367,16 @@ pub unsafe fn StateRecorder_Load(f: *mut FILE, replay_mode: bool, game: &mut Gam
             };
         }
         let mut actor_transition = Some(game.prepare_actor_canonical());
+        let payload = game.capture_samus_snapshot();
+        game.prepare_samus_adoption(&payload)
+            .expect("Samus load preflight rejected");
+        let mut mutation = game
+            .begin_samus_mutation()
+            .expect("Samus mutation rejected");
+        let game = mutation.game();
         game.state_recorder.total_frames = hdr[1i32 as usize];
         recording_allocation(game.state_recorder.log.resize(hdr[2] as usize));
-        ReadFromFile(
+        read_complete &= read_file_block(
             f,
             game.state_recorder.log.as_mut_ptr() as *mut c_void,
             game.state_recorder.log.size,
@@ -309,7 +384,7 @@ pub unsafe fn StateRecorder_Load(f: *mut FILE, replay_mode: bool, game: &mut Gam
         game.state_recorder.last_inputs = hdr[3i32 as usize] as u16;
         game.state_recorder.frames_since_last = hdr[4i32 as usize];
         recording_allocation(game.state_recorder.base_snapshot.resize(hdr[5] as usize));
-        ReadFromFile(
+        read_complete &= read_file_block(
             f,
             game.state_recorder.base_snapshot.as_mut_ptr() as *mut c_void,
             game.state_recorder.base_snapshot.size,
@@ -329,7 +404,7 @@ pub unsafe fn StateRecorder_Load(f: *mut FILE, replay_mode: bool, game: &mut Gam
                     execution.save_load(&mut state);
                     state.remaining() == 0
                 };
-                FinishLoadSnesState(game);
+                finish_load_snes_state(game, read_complete);
                 crate::native_assertion! {
                     '_c2rust_label_0: complete;
                     b"state.p == state.pend\0", b"src/sm_rtl.c\0", 219,
@@ -337,7 +412,7 @@ pub unsafe fn StateRecorder_Load(f: *mut FILE, replay_mode: bool, game: &mut Gam
                 };
             } else {
                 drop(actor_transition.take());
-                RtlReset(2, game);
+                reset(2, game, read_complete);
                 if game.state_recorder.base_snapshot.size == 8192 as size_t {
                     game.g_sram
                         .write_bytes(0, &game.state_recorder.base_snapshot.as_slice()[..8192]);
@@ -356,11 +431,11 @@ pub unsafe fn StateRecorder_Load(f: *mut FILE, replay_mode: bool, game: &mut Gam
             };
             let mut arr = RecordingBytes::default();
             recording_allocation(arr.resize(hdr[6] as usize));
-            ReadFromFile(f, arr.as_mut_ptr() as *mut c_void, arr.size);
+            read_complete &= read_file_block(f, arr.as_mut_ptr() as *mut c_void, arr.size);
             let mut state = SnapshotIo::Load(arr.as_slice());
             game.execution().save_load(&mut state);
             let complete = state.remaining() == 0;
-            FinishLoadSnesState(game);
+            finish_load_snes_state(game, read_complete);
             drop(arr);
             crate::native_assertion! {
                 '_c2rust_label_2: complete;
@@ -378,7 +453,7 @@ pub unsafe fn StateRecorder_Load(f: *mut FILE, replay_mode: bool, game: &mut Gam
         if !replay_mode && hdr[10] == u32::from_le_bytes(*b"APQ1") {
             assert_eq!(hdr[11], 71, "invalid saved APU queue length");
             let mut bytes = [0; 71];
-            ReadFromFile(f, bytes.as_mut_ptr().cast(), bytes.len());
+            read_complete &= read_file_block(f, bytes.as_mut_ptr().cast(), bytes.len());
             if !game.g_use_my_apu_code {
                 crate::audio_snapshot::ApuQueueSnapshot::from_bytes(&bytes).restore(game);
             }
@@ -399,7 +474,7 @@ pub unsafe fn StateRecorder_Load(f: *mut FILE, replay_mode: bool, game: &mut Gam
                     .unwrap();
                 assert_eq!(fseek(f, skip, 1), 0);
             }
-            ReadFromFile(
+            read_complete &= read_file_block(
                 f,
                 game.state_recorder.base_audio_queue.as_mut_ptr().cast(),
                 71,
@@ -417,6 +492,14 @@ pub unsafe fn StateRecorder_Load(f: *mut FILE, replay_mode: bool, game: &mut Gam
         if let Some(transition) = actor_transition {
             game.commit_actor_canonical(transition);
         }
+        if read_complete {
+            mutation
+                .finish_current()
+                .expect("Samus load adoption rejected");
+        } else if outer_load {
+            mutation.defer_incomplete();
+        }
+        read_complete
     }
 }
 pub unsafe fn StateRecorder_Save(f: *mut FILE, saving_with_bug: bool, game: &mut Game) {
@@ -425,6 +508,12 @@ pub unsafe fn StateRecorder_Save(f: *mut FILE, saving_with_bug: bool, game: &mut
             eprintln!("StateRecorder_Save: legacy persistence is unavailable for a prepared world");
             return;
         }
+        game.preflight_samus_runtime()
+            .expect("Samus save entry rejected");
+        let mut mutation = game
+            .begin_samus_mutation()
+            .expect("Samus mutation rejected");
+        let game = mutation.game();
         let mut hdr: [u32; 16] = [0i32 as u32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         let mut arr = RecordingBytes::default();
         game.execution().save_load(&mut SnapshotIo::Save(&mut arr));
@@ -486,10 +575,19 @@ pub unsafe fn StateRecorder_Save(f: *mut FILE, saving_with_bug: bool, game: &mut
             fwrite(sr.base_audio_queue.as_ptr().cast(), 1, 71, f);
         }
         drop(arr);
+        mutation
+            .finish_current()
+            .expect("Samus save adoption rejected");
     }
 }
 pub unsafe fn StateRecorder_ClearKeyLog(game: &mut Game) {
     unsafe {
+        game.preflight_samus_runtime()
+            .expect("Samus recorder entry rejected");
+        let mut mutation = game
+            .begin_samus_mutation()
+            .expect("Samus mutation rejected");
+        let game = mutation.game();
         printf(c"Clearing key log!\n".as_ptr());
         game.state_recorder.base_snapshot.size = 0 as size_t;
         game.state_recorder.has_base_audio_queue = true;
@@ -517,6 +615,9 @@ pub unsafe fn StateRecorder_ClearKeyLog(game: &mut Game) {
             snapshots.1.restore(game.g_spc_player);
         }
         recording_allocation(game.state_recorder.rebase());
+        mutation
+            .finish_current()
+            .expect("Samus recorder adoption rejected");
     }
 }
 pub unsafe fn StateRecorder_ReadNextReplayState(game: &mut Game) -> u16 {
@@ -616,6 +717,12 @@ pub unsafe fn RtlRunFrame(mut inputs: i32, game: &mut Game) -> bool {
             eprintln!("RtlRunFrame: CPU authority is unavailable for a prepared world");
             return false;
         }
+        game.preflight_samus_runtime()
+            .expect("Samus frame entry rejected");
+        let mut mutation = game
+            .begin_samus_mutation()
+            .expect("Samus mutation rejected");
+        let game = mutation.game();
         // TAS verification preserves every recorded button, including opposites.
         if !game.VERIFY_ACTIVE {
             if inputs & 0x30 == 0x30 {
@@ -661,6 +768,9 @@ pub unsafe fn RtlRunFrame(mut inputs: i32, game: &mut Game) -> bool {
         game.g_rtl_runframe.expect("non-null function pointer")(inputs as u16, 0, game);
         game.snes_frame_counter += 1;
         RtlPushApuState(game);
+        mutation
+            .finish_current()
+            .expect("Samus frame adoption rejected");
         is_replay
     }
 }
@@ -670,12 +780,21 @@ pub unsafe fn RtlSaveSnapshot(filename: *const c_char, saving_with_bug: bool, ga
             eprintln!("RtlSaveSnapshot: legacy persistence is unavailable for a prepared world");
             return;
         }
+        game.preflight_samus_runtime()
+            .expect("Samus save entry rejected");
+        let mut mutation = game
+            .begin_samus_mutation()
+            .expect("Samus mutation rejected");
+        let game = mutation.game();
         let f = fopen(filename, c"wb".as_ptr()) as *mut FILE;
         RtlApuLock();
         RtlSaveMusicStateToRam_Locked(game, true);
         StateRecorder_Save(f, saving_with_bug, game);
         RtlApuUnlock();
         fclose(f);
+        mutation
+            .finish_current()
+            .expect("Samus save adoption rejected");
     }
 }
 static kBugSaves: crate::types::ImmutableCStringPointers<7> = crate::types::immutable_c_strings! {
@@ -730,11 +849,17 @@ pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, game: &mut Game) {
                 printf(c"Failed fopen: %s\n".as_ptr(), &raw mut name as *mut c_char);
                 return;
             }
+            game.preflight_samus_runtime()
+                .expect("Samus load entry rejected");
+            let mut mutation = game
+                .begin_samus_mutation()
+                .expect("Samus mutation rejected");
+            let game = mutation.game();
             RtlApuLock();
-            StateRecorder_Load(f, cmd == kSaveLoad_Replay as i32, game);
+            let complete_load = state_recorder_load(f, cmd == kSaveLoad_Replay as i32, game, true);
             ppu_copy((*game.g_snes).my_ppu, (*game.g_snes).ppu);
             RtlApuUnlock();
-            RtlSynchronizeWholeState(game);
+            synchronize_whole_state(game, complete_load);
             fclose(f);
             if game.ram().read_byte(0x611)
                 | game.ram().read_byte(0x612)
@@ -758,6 +883,11 @@ pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, game: &mut Game) {
             }
             if word!(game.bug_fix_counter) as i32 == 0 {
                 word!(game.bug_fix_counter = word!(game.bug_fix_counter_BAD));
+            }
+            if complete_load {
+                mutation
+                    .finish_current()
+                    .expect("Samus loaded continuation adoption rejected");
             }
         } else {
             RtlSaveSnapshot(&raw mut name as *mut c_char, false_0 != 0, game);
@@ -1291,6 +1421,12 @@ pub unsafe fn RtlReadSram(game: &mut Game) {
         }
         let f = fopen(c"saves/sm.srm".as_ptr(), c"rb".as_ptr()) as *mut FILE;
         if !f.is_null() {
+            game.preflight_samus_runtime()
+                .expect("Samus SRAM entry rejected");
+            let mut mutation = game
+                .begin_samus_mutation()
+                .expect("Samus mutation rejected");
+            let game = mutation.game();
             let mut bytes = game.g_sram.bytes(0..8192);
             let count = fread(bytes.as_mut_ptr().cast(), 1, 8192, f);
             game.g_sram.write_bytes(0, &bytes);
@@ -1298,11 +1434,16 @@ pub unsafe fn RtlReadSram(game: &mut Game) {
                 fprintf(stderr, c"Error reading saves/sm.srm\n".as_ptr());
             }
             fclose(f);
-            RtlSynchronizeWholeState(game);
+            synchronize_whole_state(game, count == 8192);
             recording_allocation(game.state_recorder.base_snapshot.resize(8192));
             game.state_recorder.has_base_audio_queue = false;
             game.g_sram
                 .read_bytes(0, game.state_recorder.base_snapshot.as_mut_slice());
+            if count == 8192 {
+                mutation
+                    .finish_current()
+                    .expect("Samus SRAM adoption rejected");
+            }
         }
     }
 }
