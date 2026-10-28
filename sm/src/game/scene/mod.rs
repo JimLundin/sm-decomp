@@ -28,3 +28,6 @@ pub mod start;
 pub mod state;
 
 pub use commit::ResidentDisplayDescription;
+
+pub(crate) mod samus_content;
+pub(crate) mod samus_native_content;

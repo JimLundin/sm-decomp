@@ -17,7 +17,7 @@ pub(super) fn run() -> i32 {
     macro_rules! cases {
             ($($test:ident),+ $(,)?) => { [$( (stringify!($test), $test as fn()), )+] };
         }
-    let tests: [(&str, fn()); 66] = cases![
+    let tests: [(&str, fn()); 81] = cases![
         prepared_message_pixels_delay_queue_and_checkpoint,
         prepared_message_rejects_changed_content_and_resets,
         independently_authored_raster_pixels_and_prefixes,
@@ -50,6 +50,21 @@ pub(super) fn run() -> i32 {
         scene_rejects_reference_quantization,
         scene_start_rejects_missing_fields_and_invalid_history_prefix,
         scene_start_rejects_changed_profile_and_audio_prefix,
+        scene_start_rejects_missing_samus_content_after_existing_prefixes,
+        scene_start_rejects_invalid_samus_catalog_before_reset,
+        scene_start_rejects_changed_samus_catalog_and_requirements,
+        scene_component_transfers_supplied_samus_metadata_on_reset_and_reopen,
+        samus_content_rejects_allocation_and_role_changes,
+        samus_content_rejects_authored_request_changes,
+        samus_content_rejects_invalid_payload_and_transfer_extents,
+        samus_content_prepared_lease_retains_sealed_allocation,
+        samus_game_rejected_expectation_preserves_binding,
+        samus_game_native_capture_retains_allocation,
+        samus_game_prepared_replacement_is_rejected,
+        samus_game_failed_install_preserves_binding,
+        samus_game_reference_import_keeps_revoked_scope,
+        samus_game_panicking_callback_keeps_prefix,
+        samus_game_adoption_uses_captured_target,
         scene_component_preserves_complete_open_checkpoint_and_reopen,
         scene_component_reset_preserves_complete_owned_buffers_and_alias_views,
         scene_component_rejects_missing_resident_history_and_media_replacement,
@@ -580,6 +595,141 @@ fn scene_rejects_reference_quantization() {
     );
 }
 
+// Movies cannot author a separate complete Large visual for sealed Samus content.
+fn scene_start_samus_media(media: Arc<sc::SceneMedia>) -> Arc<sc::SceneMedia> {
+    let reference = |id| sc::AssetRef {
+        id: sc::AssetId(id),
+        revision: media.revision(),
+    };
+    let mut assets = media.assets().cloned().collect::<Vec<_>>();
+    assets.push(sc::SceneAsset::Atlas(sc::TileAtlas {
+        reference: reference(15),
+        encoding: sc::TileEncoding::Planar4,
+        tile_count: 18,
+        data: vec![0x00ff; 18 * 16].into(),
+    }));
+    assets.push(sc::SceneAsset::Visual(sc::Visual {
+        reference: reference(16),
+        frames: Arc::from([sc::VisualFrame {
+            parts: Arc::from([
+                sc::VisualPart {
+                    atlas: reference(15),
+                    material: reference(6),
+                    tile: 0,
+                    offset: sc::ScreenPosition { x: -3, y: -8 },
+                    size: sc::ObjectSize::Large,
+                },
+                sc::VisualPart {
+                    atlas: reference(15),
+                    material: reference(6),
+                    tile: 0,
+                    offset: sc::ScreenPosition { x: -2, y: -7 },
+                    size: sc::ObjectSize::Large,
+                },
+            ]),
+        }]),
+    }));
+    Arc::new(
+        sc::SceneMedia::new(
+            media.revision(),
+            assets,
+            media.palette_incarnations().cloned().collect(),
+            media.compiled_images().cloned().collect(),
+        )
+        .unwrap(),
+    )
+}
+
+// Movies cannot supply authored full-width Samus pointers and portable part identities.
+fn scene_start_samus_catalog(revision: sc::Revision) -> Arc<sm::game::scene::samus::SamusCatalog> {
+    use sm::game::scene::samus::{SamusCatalog, SamusMap, SamusPart};
+    Arc::new(SamusCatalog {
+        revision,
+        pointers: Arc::from([0x8101]),
+        maps: [(
+            0x8101,
+            SamusMap {
+                count: 1,
+                parts: Arc::from([SamusPart {
+                    x: 0xfffd,
+                    y: 0xf8,
+                    native_word: 0x3400,
+                    variants: Arc::new(sc::ObjectVariants {
+                        size_sets: [(
+                            0,
+                            sc::ObjectSizeVariants {
+                                small: sc::ObjectPartBinding {
+                                    visual: sc::AssetRef {
+                                        id: sc::AssetId(7),
+                                        revision,
+                                    },
+                                    frame: 0,
+                                    part: 0,
+                                },
+                                large: sc::ObjectPartBinding {
+                                    visual: sc::AssetRef {
+                                        id: sc::AssetId(16),
+                                        revision,
+                                    },
+                                    frame: 0,
+                                    part: 0,
+                                },
+                            },
+                        )]
+                        .into(),
+                    }),
+                }]),
+            },
+        )]
+        .into(),
+    })
+}
+
+// Movies cannot supply the independently authored expected sealed Samus catalog.
+fn scene_expected_start_samus_catalog() -> Arc<sm::game::scene::samus::SamusCatalog> {
+    use sm::game::scene::samus::{SamusCatalog, SamusMap, SamusPart};
+    Arc::new(SamusCatalog {
+        revision: sc::Revision([1; 32]),
+        pointers: Arc::from([0x8101]),
+        maps: [(
+            0x8101,
+            SamusMap {
+                count: 1,
+                parts: Arc::from([SamusPart {
+                    x: 0xfffd,
+                    y: 0xf8,
+                    native_word: 0x3400,
+                    variants: Arc::new(sc::ObjectVariants {
+                        size_sets: [(
+                            0,
+                            sc::ObjectSizeVariants {
+                                small: sc::ObjectPartBinding {
+                                    visual: sc::AssetRef {
+                                        id: sc::AssetId(7),
+                                        revision: sc::Revision([1; 32]),
+                                    },
+                                    frame: 0,
+                                    part: 0,
+                                },
+                                large: sc::ObjectPartBinding {
+                                    visual: sc::AssetRef {
+                                        id: sc::AssetId(16),
+                                        revision: sc::Revision([1; 32]),
+                                    },
+                                    frame: 0,
+                                    part: 0,
+                                },
+                            },
+                        )]
+                        .into(),
+                    }),
+                }]),
+            },
+        )]
+        .into(),
+    })
+}
+
 // Movies cannot author portable start/profile rejection. This synthetic metadata
 // prefix intentionally omits DisplayDescription and cannot seal a G or display start.
 // It exercises only the concrete constructor's admission before MissingDisplay.
@@ -589,6 +739,7 @@ fn scene_start_prefix() -> (
     Arc<sc::SceneMedia>,
 ) {
     let (mut scene, media) = scene_fixture();
+    let media = scene_start_samus_media(media);
     scene.tick = 0;
     let reference = ss::ReferenceProfile {
         fingerprint: scene.reference,
@@ -692,6 +843,7 @@ fn scene_start_prefix() -> (
         gameplay: identity.gameplay,
         hdma_content: Arc::new(hs::HdmaCatalog::new(identity.gameplay, vec![]).unwrap()),
         atmosphere_content: scene_atmosphere_catalog(identity.media),
+        samus_content: scene_expected_start_samus_catalog(),
         capture: identity.capture,
         reference,
         media: identity.media,
@@ -709,6 +861,7 @@ fn scene_start_prefix() -> (
         display: None,
         resident: None,
         hdma_content: None,
+        samus_content: Some(scene_start_samus_catalog(media.revision())),
         committed_scene: Some(
             sc::Scene::new(scene, media.clone())
                 .unwrap()
@@ -2851,6 +3004,7 @@ fn scene_copy_metadata(metadata: &sd::DisplayStartMetadata) -> sd::DisplayStartM
         input_history: metadata.input_history,
         continuation: metadata.continuation,
         audio: metadata.audio.clone(),
+        samus_content: metadata.samus_content.clone(),
     }
 }
 
@@ -2861,6 +3015,7 @@ fn scene_metadata(start: &ss::DisplayStartDescription) -> sd::DisplayStartMetada
         input_history: start.input_history.unwrap(),
         continuation: start.continuation.unwrap(),
         audio: start.audio.as_ref().unwrap().clone(),
+        samus_content: start.samus_content.as_ref().unwrap().clone(),
     }
 }
 
@@ -2870,6 +3025,271 @@ fn scene_same_metadata(actual: &sd::DisplayStartMetadata, expected: &sd::Display
     assert_eq!(actual.input_history, expected.input_history);
     assert_eq!(actual.continuation, expected.continuation);
     assert_eq!(actual.audio, expected.audio);
+    assert_eq!(actual.samus_content, expected.samus_content);
+}
+
+// Movies cannot omit a sealed Samus catalog behind earlier authored admission failures.
+#[cfg_attr(test, test)]
+fn scene_start_rejects_missing_samus_content_after_existing_prefixes() {
+    for case in 0..7 {
+        let (mut requirements, mut start, media) = scene_component_fixture();
+        start.samus_content = None;
+        match case {
+            0 => start.display = None,
+            1 => start.resident = None,
+            2 => start.committed_scene = None,
+            3 => start.identity.as_mut().unwrap().schema = 4,
+            4 => {
+                start.identity.as_mut().unwrap().committed_tick = 1;
+                start.continuation.as_mut().unwrap().phase = ss::CommittedPhase::SettledInterval;
+            }
+            5 => {
+                requirements.reference.image.width = 255;
+                start.reference.as_mut().unwrap().image.width = 255;
+            }
+            _ => {}
+        }
+        let error = ss::ValidatedDisplayStart::construct(start, media, &requirements)
+            .err()
+            .unwrap();
+        assert!(matches!(
+            (case, error),
+            (0, ss::StartError::MissingDisplay)
+                | (1, ss::StartError::MissingResidentDisplay)
+                | (2, ss::StartError::MissingCommittedHistory)
+                | (3, ss::StartError::Schema)
+                | (4, ss::StartError::CommitIdentity)
+                | (5, ss::StartError::ReferenceImage)
+                | (6, ss::StartError::MissingSamusContent)
+        ));
+    }
+}
+
+// Movies cannot author malformed portable Samus catalogs or observe rejected reset ownership.
+#[cfg_attr(test, test)]
+fn scene_start_rejects_invalid_samus_catalog_before_reset() {
+    let (requirements, start, media) = scene_component_fixture();
+    let opened = sd::DisplayComponent::open(
+        ss::ValidatedDisplayStart::construct(start, media, &requirements).unwrap(),
+    )
+    .unwrap();
+    let mut display = opened.display;
+    let before = display.checkpoint().unwrap();
+    for case in 0..9 {
+        let (mut start, media) = before
+            .clone()
+            .into_start_description(scene_copy_metadata(&opened.metadata));
+        let catalog = Arc::make_mut(start.samus_content.as_mut().unwrap());
+        let map = catalog.maps.get_mut(&0x8101).unwrap();
+        let part = &mut Arc::make_mut(&mut map.parts)[0];
+        match case {
+            0 => catalog.revision = sc::Revision([99; 32]),
+            1 => catalog.pointers = Arc::from([0x8103]),
+            2 => map.count = 2,
+            3 => Arc::make_mut(&mut part.variants).size_sets.clear(),
+            4 => {
+                Arc::make_mut(&mut part.variants)
+                    .size_sets
+                    .get_mut(&0)
+                    .unwrap()
+                    .large
+                    .visual
+                    .id = sc::AssetId(8)
+            }
+            5 => {
+                Arc::make_mut(&mut part.variants)
+                    .size_sets
+                    .get_mut(&0)
+                    .unwrap()
+                    .large
+                    .frame = 1
+            }
+            6 => {
+                Arc::make_mut(&mut part.variants)
+                    .size_sets
+                    .get_mut(&0)
+                    .unwrap()
+                    .large
+                    .part = 2
+            }
+            7 => part.native_word = 0x3401,
+            _ => {
+                let variants = Arc::make_mut(&mut part.variants);
+                let binding = variants.size_sets.remove(&0).unwrap();
+                variants.size_sets.insert(8, binding);
+            }
+        }
+        let error = ss::ValidatedDisplayStart::construct(start, media, &requirements)
+            .and_then(|start| display.reset(start))
+            .err()
+            .unwrap();
+        assert!(matches!(
+            (case, error),
+            (0, ss::StartError::Display(ds::DisplayError::Revision))
+                | (1..=2, ss::StartError::Display(ds::DisplayError::Incomplete))
+                | (3..=8, ss::StartError::Display(ds::DisplayError::Scene))
+        ));
+        scene_owner_unchanged(&display, &before, &opened.metadata);
+        assert_eq!(
+            opened.metadata.samus_content,
+            scene_expected_start_samus_catalog()
+        );
+    }
+}
+
+// Movies cannot supply different media-valid Samus catalogs under unchanged start identities.
+#[cfg_attr(test, test)]
+fn scene_start_rejects_changed_samus_catalog_and_requirements() {
+    let (requirements, start, media) = scene_component_fixture();
+    let opened = sd::DisplayComponent::open(
+        ss::ValidatedDisplayStart::construct(start, media, &requirements).unwrap(),
+    )
+    .unwrap();
+    let mut display = opened.display;
+    let before = display.checkpoint().unwrap();
+    for case in 0..8 {
+        let mut required = requirements.clone();
+        let (mut start, media) = before
+            .clone()
+            .into_start_description(scene_copy_metadata(&opened.metadata));
+        let catalog = Arc::make_mut(start.samus_content.as_mut().unwrap());
+        let map = catalog.maps.get_mut(&0x8101).unwrap();
+        match case {
+            0 => catalog.pointers = Arc::from([0x8101, 0x8101]),
+            1 => map.count = 0,
+            2 => Arc::make_mut(&mut map.parts)[0].x = 0xfffc,
+            3 => Arc::make_mut(&mut map.parts)[0].y = 0xf7,
+            4 => Arc::make_mut(&mut map.parts)[0].native_word = 0x3600,
+            5 => {
+                let part = map.parts[0].clone();
+                map.parts = Arc::from([part.clone(), part]);
+            }
+            6 => {
+                Arc::make_mut(&mut Arc::make_mut(&mut map.parts)[0].variants)
+                    .size_sets
+                    .get_mut(&0)
+                    .unwrap()
+                    .large
+                    .part = 1
+            }
+            _ => {
+                let map = Arc::make_mut(&mut required.samus_content)
+                    .maps
+                    .get_mut(&0x8101)
+                    .unwrap();
+                Arc::make_mut(&mut map.parts)[0].x = 0xfffc;
+            }
+        }
+        assert_eq!(
+            start.samus_content.as_ref().unwrap().validate(&media),
+            Ok(())
+        );
+        assert_eq!(required.samus_content.validate(&media), Ok(()));
+        let error = ss::ValidatedDisplayStart::construct(start, media, &required)
+            .and_then(|start| display.reset(start))
+            .err()
+            .unwrap();
+        assert!(matches!(
+            error,
+            ss::StartError::Display(ds::DisplayError::Incomplete)
+        ));
+        scene_owner_unchanged(&display, &before, &opened.metadata);
+        assert_eq!(
+            opened.metadata.samus_content,
+            scene_expected_start_samus_catalog()
+        );
+    }
+}
+
+// Movies cannot replace G-supplied Samus metadata while reopening an older display checkpoint.
+#[cfg_attr(test, test)]
+fn scene_component_transfers_supplied_samus_metadata_on_reset_and_reopen() {
+    let (mut requirements, start, media) = scene_component_fixture();
+    let old_requirements = requirements.clone();
+    let opened = sd::DisplayComponent::open(
+        ss::ValidatedDisplayStart::construct(start, media.clone(), &requirements).unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        opened.metadata.samus_content,
+        scene_expected_start_samus_catalog()
+    );
+    let mut display = opened.display;
+    let before = display.checkpoint().unwrap();
+    let expected = Arc::make_mut(&mut requirements.samus_content);
+    expected.pointers = Arc::from([0x8235]);
+    let mut map = expected.maps.remove(&0x8101).unwrap();
+    let part = &mut Arc::make_mut(&mut map.parts)[0];
+    (part.x, part.y, part.native_word) = (0x1234, 9, 0x7600);
+    Arc::make_mut(&mut part.variants)
+        .size_sets
+        .get_mut(&0)
+        .unwrap()
+        .large
+        .part = 1;
+    expected.maps.insert(0x8235, map);
+    let mut metadata = scene_copy_metadata(&opened.metadata);
+    metadata.samus_content = scene_start_samus_catalog(media.revision());
+    let supplied = Arc::make_mut(&mut metadata.samus_content);
+    supplied.pointers = Arc::from([0x8235]);
+    let mut map = supplied.maps.remove(&0x8101).unwrap();
+    let part = &mut Arc::make_mut(&mut map.parts)[0];
+    (part.x, part.y, part.native_word) = (0x1234, 9, 0x7600);
+    Arc::make_mut(&mut part.variants)
+        .size_sets
+        .get_mut(&0)
+        .unwrap()
+        .large
+        .part = 1;
+    supplied.maps.insert(0x8235, map);
+    let expected_metadata = sd::DisplayStartMetadata {
+        samus_content: requirements.samus_content.clone(),
+        ..scene_copy_metadata(&opened.metadata)
+    };
+    let supplied = metadata.samus_content.clone();
+    assert!(!Arc::ptr_eq(&supplied, &requirements.samus_content));
+    let (wrong, media) = before
+        .clone()
+        .into_start_description(scene_copy_metadata(&metadata));
+    assert!(matches!(
+        ss::ValidatedDisplayStart::construct(wrong, media, &old_requirements),
+        Err(ss::StartError::Display(ds::DisplayError::Incomplete))
+    ));
+    scene_owner_unchanged(&display, &before, &opened.metadata);
+    let (start, media) = before.clone().into_start_description(metadata);
+    assert_eq!(
+        start.samus_content.as_deref(),
+        Some(requirements.samus_content.as_ref())
+    );
+    assert!(Arc::ptr_eq(
+        start.samus_content.as_ref().unwrap(),
+        &supplied
+    ));
+    let metadata = display
+        .reset(ss::ValidatedDisplayStart::construct(start, media, &requirements).unwrap())
+        .unwrap();
+    scene_same_metadata(&metadata, &expected_metadata);
+    assert!(Arc::ptr_eq(&metadata.samus_content, &supplied));
+    scene_owner_unchanged(&display, &before, &metadata);
+    let (start, media) = display
+        .checkpoint()
+        .unwrap()
+        .into_start_description(metadata);
+    assert!(Arc::ptr_eq(
+        start.samus_content.as_ref().unwrap(),
+        &supplied
+    ));
+    let reopened = sd::DisplayComponent::open(
+        ss::ValidatedDisplayStart::construct(start, media, &requirements).unwrap(),
+    )
+    .unwrap();
+    scene_same_metadata(&reopened.metadata, &expected_metadata);
+    assert!(Arc::ptr_eq(&reopened.metadata.samus_content, &supplied));
+    scene_owner_unchanged(&reopened.display, &before, &reopened.metadata);
+    assert_eq!(
+        opened.metadata.samus_content,
+        scene_expected_start_samus_catalog()
+    );
 }
 
 fn scene_same_resident(
@@ -5647,4 +6067,81 @@ fn scene_resident_append_adopts_supplied_ids_and_keeps_old_lease() {
             .colors,
         old_colors
     );
+}
+
+// Movies cannot author the independent role-content admission and backing cases.
+#[cfg(sm_verify_dll)]
+#[cfg_attr(test, test)]
+fn samus_content_rejects_allocation_and_role_changes() {
+    sm::samus_content_rejects_allocation_and_role_changes();
+}
+
+// Movies cannot author the independent role-content admission and backing cases.
+#[cfg(sm_verify_dll)]
+#[cfg_attr(test, test)]
+fn samus_content_rejects_authored_request_changes() {
+    sm::samus_content_rejects_authored_request_changes();
+}
+
+// Movies cannot author the independent role-content admission and backing cases.
+#[cfg(sm_verify_dll)]
+#[cfg_attr(test, test)]
+fn samus_content_rejects_invalid_payload_and_transfer_extents() {
+    sm::samus_content_rejects_invalid_payload_and_transfer_extents();
+}
+
+// Movies cannot author the independent role-content admission and backing cases.
+#[cfg(sm_verify_dll)]
+#[cfg_attr(test, test)]
+fn samus_content_prepared_lease_retains_sealed_allocation() {
+    sm::samus_content_prepared_lease_retains_sealed_allocation();
+}
+
+// Movies cannot author independent Game admission and captured-allocation failures.
+#[cfg(sm_verify_dll)]
+#[cfg_attr(test, test)]
+fn samus_game_rejected_expectation_preserves_binding() {
+    sm::samus_game_rejected_expectation_preserves_binding();
+}
+
+// Movies cannot author independent Game admission and captured-allocation failures.
+#[cfg(sm_verify_dll)]
+#[cfg_attr(test, test)]
+fn samus_game_native_capture_retains_allocation() {
+    sm::samus_game_native_capture_retains_allocation();
+}
+
+// Movies cannot author independent Game admission and captured-allocation failures.
+#[cfg(sm_verify_dll)]
+#[cfg_attr(test, test)]
+fn samus_game_prepared_replacement_is_rejected() {
+    sm::samus_game_prepared_replacement_is_rejected();
+}
+
+// Movies cannot author independent Game admission and captured-allocation failures.
+#[cfg(sm_verify_dll)]
+#[cfg_attr(test, test)]
+fn samus_game_failed_install_preserves_binding() {
+    sm::samus_game_failed_install_preserves_binding();
+}
+
+// Movies cannot author independent owner mutation, unwind and selected-adoption cases.
+#[cfg(sm_verify_dll)]
+#[cfg_attr(test, test)]
+fn samus_game_reference_import_keeps_revoked_scope() {
+    sm::samus_game_reference_import_keeps_revoked_scope();
+}
+
+// Movies cannot author independent owner mutation, unwind and selected-adoption cases.
+#[cfg(sm_verify_dll)]
+#[cfg_attr(test, test)]
+fn samus_game_panicking_callback_keeps_prefix() {
+    sm::samus_game_panicking_callback_keeps_prefix();
+}
+
+// Movies cannot author independent owner mutation, unwind and selected-adoption cases.
+#[cfg(sm_verify_dll)]
+#[cfg_attr(test, test)]
+fn samus_game_adoption_uses_captured_target() {
+    sm::samus_game_adoption_uses_captured_target();
 }

@@ -2,6 +2,22 @@
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/verification/samus_game_binding_cases.rs",
+        include_bytes!("verification/samus_game_binding_cases.rs"),
+    ),
+    (
+        "sm/src/game/scene/samus_content.rs",
+        include_bytes!("game/scene/samus_content.rs"),
+    ),
+    (
+        "sm/src/game/scene/samus_native_content.rs",
+        include_bytes!("game/scene/samus_native_content.rs"),
+    ),
+    (
+        "sm/src/verification/samus_content_binding_cases.rs",
+        include_bytes!("verification/samus_content_binding_cases.rs"),
+    ),
+    (
         "sm/src/game/scene/samus_tile_upload.rs",
         include_bytes!("game/scene/samus_tile_upload.rs"),
     ),

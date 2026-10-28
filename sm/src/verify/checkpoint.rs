@@ -104,6 +104,8 @@ fn compatibility() -> u64 {
         include_str!("../game/scene/samus_body.rs"),
         include_str!("../game/scene/samus_position_tiles.rs"),
         include_str!("../game/scene/samus_tile_upload.rs"),
+        include_str!("../game/scene/samus_content.rs"),
+        include_str!("../game/scene/samus_native_content.rs"),
         include_str!("../game/scene/resident_media.rs"),
         include_str!("../game/scene/mod.rs"),
         include_str!("../game/scene/records.rs"),

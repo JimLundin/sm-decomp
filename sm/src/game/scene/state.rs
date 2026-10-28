@@ -92,25 +92,45 @@ impl SourceSpan {
             .and_then(|at| self.bytes.get(at).copied())
             .ok_or(DisplayError::Source)
     }
-    fn validate_media(&self, media: &SceneMedia) -> Result<(), DisplayError> {
+    pub(crate) fn validate_media(&self, media: &SceneMedia) -> Result<(), DisplayError> {
         let asset = media
             .asset(self.asset)
             .map_err(|_| DisplayError::Identity)?;
-        let words: Vec<u16> = match asset {
-            SceneAsset::Atlas(atlas) => atlas.data.to_vec(),
-            SceneAsset::Map(map) => map.cells.iter().map(|cell| cell.planar_word()).collect(),
-            SceneAsset::Palette(palette) => palette.colors.to_vec(),
-            _ => return Err(DisplayError::Source),
+        let matches_word = |index: usize, word: u16| {
+            self.bytes.get(2 * index..2 * index + 2) == Some(word.to_le_bytes().as_slice())
         };
-        if self.bytes.len() != words.len() * 2 {
-            return Err(DisplayError::Source);
-        }
-        for (index, word) in words.into_iter().enumerate() {
-            if self.bytes[2 * index..2 * index + 2] != word.to_le_bytes() {
-                return Err(DisplayError::Source);
+        let valid = match asset {
+            SceneAsset::Atlas(atlas) => {
+                self.bytes.len() == atlas.data.len() * 2
+                    && atlas
+                        .data
+                        .iter()
+                        .enumerate()
+                        .all(|(index, word)| matches_word(index, *word))
             }
+            SceneAsset::Map(map) => {
+                self.bytes.len() == map.cells.len() * 2
+                    && map
+                        .cells
+                        .iter()
+                        .enumerate()
+                        .all(|(index, cell)| matches_word(index, cell.planar_word()))
+            }
+            SceneAsset::Palette(palette) => {
+                self.bytes.len() == palette.colors.len() * 2
+                    && palette
+                        .colors
+                        .iter()
+                        .enumerate()
+                        .all(|(index, word)| matches_word(index, *word))
+            }
+            _ => false,
+        };
+        if valid {
+            Ok(())
+        } else {
+            Err(DisplayError::Source)
         }
-        Ok(())
     }
 }
 

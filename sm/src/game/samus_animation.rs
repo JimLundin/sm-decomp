@@ -3,6 +3,8 @@
 use crate::game::player_transitions as pt;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::scene::samus_body::{self, Body};
+use crate::game::scene::samus_content::{PreparedBytes, Registration, Role, RoleLease};
+use crate::game::scene::samus_native_content::CapturedRom;
 use crate::game::scene::samus_position_tiles;
 use crate::game::session_runtime::Runtime;
 use crate::game::visual_host::{Content, Effects, Record, Source};
@@ -66,14 +68,84 @@ impl samus_body::BottomHost for NativeBottom<'_> {
     }
 }
 
-struct NativeTable(crate::rom::RomRecord);
+enum BoundTable {
+    Native(RoleLease<CapturedRom>),
+    Prepared(RoleLease<PreparedBytes>),
+}
+pub(super) struct NativeTable {
+    record: crate::rom::RomRecord,
+    bound: Option<BoundTable>,
+}
+impl NativeTable {
+    pub(super) fn capture(
+        game: &Game,
+        role: Role,
+        source: Registration,
+        record: crate::rom::RomRecord,
+    ) -> Self {
+        let bound = game.samus_execution().unwrap().map(|execution| {
+            let base = game.samus_role_base(role, source).unwrap().unwrap();
+            let displacement = record
+                .base
+                .checked_sub(base)
+                .expect("Samus role mapped base");
+            match execution {
+                crate::game_state::SamusExecution::Prepared => BoundTable::Prepared(
+                    game.prepared_samus_role(role, source, displacement)
+                        .unwrap()
+                        .unwrap(),
+                ),
+                crate::game_state::SamusExecution::RetainedNative => BoundTable::Native(
+                    game.capture_samus_role(role, source, displacement, &record.image)
+                        .unwrap()
+                        .unwrap(),
+                ),
+            }
+        });
+        Self { record, bound }
+    }
+    pub(super) fn byte(&self, offset: usize) -> u8 {
+        match &self.bound {
+            None => self.record.byte(offset),
+            Some(BoundTable::Native(table)) => table.byte(offset).unwrap(),
+            Some(BoundTable::Prepared(table)) => table.byte(offset).unwrap(),
+        }
+    }
+    pub(super) fn word(&self, offset: usize, little: bool) -> u16 {
+        if little && self.bound.is_some() {
+            let start = self
+                .record
+                .base
+                .checked_add(offset)
+                .expect("ROM copy offset overflow");
+            let end = start.checked_add(2).expect("ROM copy extent overflow");
+            assert!(end <= self.record.image.len(), "ROM copy source extent");
+        }
+        match &self.bound {
+            None if little => u16::from_le_bytes(self.record.bytes(offset)),
+            None => self.record.native_word(offset),
+            Some(BoundTable::Native(table)) => if little {
+                table.little_word(offset)
+            } else {
+                table.native_word(offset)
+            }
+            .unwrap(),
+            Some(BoundTable::Prepared(table)) => if little {
+                table.little_word(offset)
+            } else {
+                table.native_word(offset)
+            }
+            .unwrap(),
+        }
+    }
+}
 impl samus_body::Table for NativeTable {
     type Error = std::convert::Infallible;
     fn little_word(&self, offset: usize) -> Result<u16, Self::Error> {
-        Ok(u16::from_le_bytes(self.0.bytes(offset)))
+        Ok(self.word(offset, true))
     }
     fn native_word(&self, offset: usize) -> Result<u16, Self::Error> {
-        Ok(self.0.native_word(offset))
+        Ok(self.word(offset, false))
     }
 }
 struct NativeBody<'a, 'g>(&'a mut Runtime<'g>);
@@ -99,13 +171,17 @@ impl samus_body::Host for NativeBody<'_, '_> {
         Ok(self.0.session().player.animation_clock.frame)
     }
     fn table(&mut self, half: samus_body::Half) -> Result<NativeTable, Self::Error> {
-        Ok(NativeTable(self.0.table(
-            Source::Loaded,
-            match half {
-                samus_body::Half::Top => 0x929263,
-                samus_body::Half::Bottom => 0x92945d,
-            },
-        )))
+        let (role, address) = match half {
+            samus_body::Half::Top => (Role::BodyTop, 0x929263),
+            samus_body::Half::Bottom => (Role::BodyBottom, 0x92945d),
+        };
+        let record = self.0.table(Source::Loaded, address);
+        Ok(NativeTable::capture(
+            self.0.samus_game(),
+            role,
+            Registration::Loaded,
+            record,
+        ))
     }
     fn set_sprite(&mut self, half: samus_body::Half, index: u16) -> Result<(), Self::Error> {
         match half {
@@ -382,9 +458,14 @@ pub fn Samus_DrawShinesparkCrashEchoes(k: u16, game: &mut Game) {
     }
     let pose = h.session().player.pose;
     let top = sprite_index(h, 0x929263, pose, false);
-    let height = h
-        .table(Source::Native, 0x91b629)
-        .byte(usize::from(h.session().player.pose) * 8 + 4);
+    let record = h.table(Source::Native, 0x91b629);
+    let table = NativeTable::capture(
+        h.samus_game(),
+        Role::PositionFallback,
+        Registration::Native,
+        record,
+    );
+    let height = table.byte(usize::from(h.session().player.pose) * 8 + 4);
     let y = h
         .word(0xab8 + usize::from(k & !1))
         .wrapping_sub(u16::from(height))
@@ -448,9 +529,52 @@ impl samus_position_tiles::PositionHost for NativePosition<'_> {
     fn landing_word(&self, bytes: [u8; 2]) -> u16 {
         u16::from_ne_bytes(bytes)
     }
+    fn landing_offset(&mut self, offset: usize) -> Result<u16, Self::Error> {
+        Ok(
+            match self
+                .0
+                .prepared_samus_role(Role::Landing, Registration::Native, 0)
+                .unwrap()
+            {
+                Some(table) => table.native_word(offset).unwrap(),
+                None => self.landing_word(samus_position_tiles::default_landing_bytes(offset)),
+            },
+        )
+    }
+    fn crouching_offset(&mut self, offset: usize) -> Result<i8, Self::Error> {
+        Ok(
+            match self
+                .0
+                .prepared_samus_role(Role::Crouching, Registration::Native, 0)
+                .unwrap()
+            {
+                Some(table) => table.byte(offset).unwrap() as i8,
+                None => samus_position_tiles::default_crouching_byte(offset),
+            },
+        )
+    }
+    fn drained_offset(&mut self, offset: usize) -> Result<i8, Self::Error> {
+        Ok(
+            match self
+                .0
+                .prepared_samus_role(Role::Drained, Registration::Native, 0)
+                .unwrap()
+            {
+                Some(table) => table.byte(offset).unwrap() as i8,
+                None => samus_position_tiles::default_drained_byte(offset),
+            },
+        )
+    }
     fn fallback_byte(&mut self, offset: usize) -> Result<u8, Self::Error> {
         let image = self.0.capture_native_rom();
-        Ok(image.read(crate::rtl::lorom_offset(0x91b629) as usize + offset))
+        let record = crate::rom::RomRecord {
+            image,
+            base: crate::rtl::lorom_offset(0x91b629) as usize,
+        };
+        Ok(
+            NativeTable::capture(self.0, Role::PositionFallback, Registration::Native, record)
+                .byte(offset),
+        )
     }
     fn camera_x(&mut self) -> Result<u16, Self::Error> {
         let game = &mut *self.0;
@@ -485,10 +609,10 @@ fn queue_body_tiles(h: &mut Runtime<'_>) {
 impl samus_position_tiles::Table for NativeTable {
     type Error = std::convert::Infallible;
     fn native_word(&self, offset: usize) -> Result<u16, Self::Error> {
-        Ok(self.0.native_word(offset))
+        Ok(self.word(offset, false))
     }
     fn byte(&self, offset: usize) -> Result<u8, Self::Error> {
-        Ok(self.0.byte(offset))
+        Ok(self.byte(offset))
     }
 }
 struct NativeTiles<'a, 'g>(&'a mut Runtime<'g>);
@@ -499,14 +623,18 @@ impl samus_position_tiles::TileHost for NativeTiles<'_, '_> {
         &mut self,
         which: samus_position_tiles::TileTable,
     ) -> Result<NativeTable, Self::Error> {
-        Ok(NativeTable(self.0.table(
-            Source::Loaded,
-            match which {
-                samus_position_tiles::TileTable::Pose => 0x92d94e,
-                samus_position_tiles::TileTable::Top => 0x92d91e,
-                samus_position_tiles::TileTable::Bottom => 0x92d938,
-            },
-        )))
+        let (role, address) = match which {
+            samus_position_tiles::TileTable::Pose => (Role::TilePose, 0x92d94e),
+            samus_position_tiles::TileTable::Top => (Role::TileTop, 0x92d91e),
+            samus_position_tiles::TileTable::Bottom => (Role::TileBottom, 0x92d938),
+        };
+        let record = self.0.table(Source::Loaded, address);
+        Ok(NativeTable::capture(
+            self.0.samus_game(),
+            role,
+            Registration::Loaded,
+            record,
+        ))
     }
     fn pose(&mut self) -> Result<u16, Self::Error> {
         Ok(self.0.session().player.pose)
@@ -515,7 +643,13 @@ impl samus_position_tiles::TileHost for NativeTiles<'_, '_> {
         Ok(self.0.session().player.animation_clock.frame)
     }
     fn definition(&mut self, cursor: u16) -> Result<NativeTable, Self::Error> {
-        Ok(NativeTable(self.0.legacy_native_record(0x92, cursor)))
+        let record = self.0.legacy_native_record(0x92, cursor);
+        Ok(NativeTable::capture(
+            self.0.samus_game(),
+            Role::TileDefinition,
+            Registration::Native,
+            record,
+        ))
     }
     fn request_word(&mut self, half: samus_body::Half, pointer: u16) -> Result<(), Self::Error> {
         self.0.write_word_le(
@@ -537,7 +671,8 @@ impl samus_position_tiles::TileHost for NativeTiles<'_, '_> {
         );
         Ok(())
     }
-    fn request_written(&mut self, _: samus_body::Half, _: u16) -> Result<(), Self::Error> {
+    fn request_written(&mut self, half: samus_body::Half, pointer: u16) -> Result<(), Self::Error> {
+        let _ = self.0.samus_game().samus_request(half, pointer).unwrap();
         Ok(())
     }
 }

@@ -314,125 +314,128 @@ pub(super) unsafe fn load(
     {
         return Err("seed register metadata does not match gameplay WRAM".into());
     }
-    unsafe {
-        game.ram().copy_in(0, ram.as_slice());
-        game.g_sram.write_bytes(0, sram.as_slice());
-        let snes = game.g_snes;
-        for channel in 0..8 {
-            for offset in 0..11 {
-                let value = r.get(&format!("dma_{channel}_{offset}"))?;
-                let value = u8::try_from(value).map_err(|_| "invalid captured DMA byte")?;
-                game.write_dma_register(0x4300 + channel * 16 + offset, value);
-            }
-        }
-        let snes = &mut *snes;
-        for pointer in [snes.snes_ppu, snes.my_ppu] {
-            let ppu = &mut *pointer;
-            words(&mut ppu.vram, vram.as_slice());
-            words(&mut ppu.cgram, cgram.as_slice());
-            words(&mut ppu.oam, &oam[..512]);
-            ppu.highOam.copy_from_slice(&oam[512..]);
-            ppu_registers(ppu, &r)?;
-        }
-        (*snes.apu).ram.copy_from(&apuram);
-        (*game.g_spc_player).ram.copy_from(&apuram);
-        sm::spc_player::SpcPlayer_CopyVariablesFromRam(game.g_spc_player);
-        let cpu = &mut *snes.cpu;
-        cpu.a = r.get("a")? as u16;
-        cpu.x = r.get("x")? as u16;
-        cpu.y = r.get("y")? as u16;
-        cpu.sp = r.get("s")? as u16;
-        cpu.dp = r.get("d")? as u16;
-        cpu.db = r.get("db")? as u8;
-        cpu.pc = r.get("pc")? as u16;
-        cpu.k = r.get("pb")? as u8;
-        if let Some(pc) = boundary_pc {
-            // The read-only exec hook runs during opcode fetch, after bsnes
-            // increments PC but before PLB changes the saved DB/P stack.
-            // Restart at the observed hook address, not the half-fetched PC.
-            cpu.pc = pc as u16;
-            cpu.k = (pc >> 16) as u8;
-        }
-        cpu.e = r.get("e")? != 0;
-        let p = r.get("p")? as u8;
-        cpu.c = p & 1 != 0;
-        cpu.z = p & 2 != 0;
-        cpu.i = p & 4 != 0;
-        cpu.d = p & 8 != 0;
-        cpu.xf = p & 16 != 0;
-        cpu.mf = p & 32 != 0;
-        cpu.v = p & 64 != 0;
-        cpu.n = p & 128 != 0;
-        cpu.irqWanted = r.get("irq")? != 0;
-        cpu.waiting = r.get("wai")? != 0;
-        cpu.nmiWanted = false;
-        snes.hPos = r.get("hcounter")? as u16;
-        snes.vPos = r.get("vcounter")? as u16;
-        let nmitimen = r.get("io_4200")?;
-        snes.autoJoyRead = nmitimen & 1 != 0;
-        snes.hIrqEnabled = nmitimen & 0x10 != 0;
-        snes.vIrqEnabled = nmitimen & 0x20 != 0;
-        snes.nmiEnabled = nmitimen & 0x80 != 0;
-        snes.fastMem = r.get("io_420D")? & 1 != 0;
-        snes.ppuLatch = r.get("io_4201")? & 0x80 != 0;
-        snes.hTimer = (r.get("io_4207")? | (r.get("io_4208")? & 1) << 8) as u16;
-        snes.vTimer = (r.get("io_4209")? | (r.get("io_420A")? & 1) << 8) as u16;
-        snes.openBus = r.get("mdr")? as u8;
-        // Resume the observed in-flight NMI to the existing verifier boundary.
-        // This imports a room observation, not an exact emulator checkpoint:
-        // SPC/DSP execution phase and PPU write latches are not fully represented.
-        // Route expectations must qualify each seed with normal comparisons on.
-        let mut original_wait_entered = false;
-        for _ in 0..100_000 {
-            let pc = u32::from((*game.g_cpu).k) << 16 | u32::from((*game.g_cpu).pc);
-            if original_wait_entered && pc == 0x808343 {
-                // Match RunOneFrameOfGame_Emulated's existing wait/NMI boundary.
-                (*game.g_cpu).nmiWanted = true;
-                original_wait_entered = false;
-            }
-            if pc == 0x808348 {
-                sm::rtl::FinishLoadSnesState(game);
-            }
-            if pc == 0x80834a || pc == 0x858142 {
-                if let Some(input) = &controller {
-                    if pc != 0x80834a
-                        || INPUT_WORDS.map(|at| {
-                            u16::from_le_bytes([
-                                game.ram().read_byte(at),
-                                game.ram().read_byte(at + 1),
-                            ])
-                        }) != input.after
-                    {
-                        return Err("controller state changed during seed normalization".into());
-                    }
-                    for (at, value) in INPUT_WORDS.into_iter().zip(input.before) {
-                        game.ram().copy_in(at, &value.to_le_bytes());
-                    }
+    // Hold typed authority revoked through every temporary ROM guard drop.
+    game.with_reference_import(|game| {
+        unsafe {
+            game.ram().copy_in(0, ram.as_slice());
+            game.g_sram.write_bytes(0, sram.as_slice());
+            let snes = game.g_snes;
+            for channel in 0..8 {
+                for offset in 0..11 {
+                    let value = r.get(&format!("dma_{channel}_{offset}"))?;
+                    let value = u8::try_from(value).map_err(|_| "invalid captured DMA byte")?;
+                    game.write_dma_register(0x4300 + channel * 16 + offset, value);
                 }
-                eprintln!("Imported room seed; completed recorded CPU phase at ${pc:06X}");
-                return Ok(());
             }
-            let original_wait = if pc == 0x82897a {
-                original_wait_entered = true;
-                // The capture importer proves this normalization read equals
-                // the first replay word; preserve all 16 hardware input bits.
-                game.input1_mut().currentState = first_input.reverse_bits();
-                Some(OriginalWaitCall::new(
-                    (*(*game.g_snes).cart).rom.clone(),
-                    original_rom,
-                )?)
-            } else {
-                None
-            };
-            game.step_reference_opcode();
-            drop(original_wait);
+            let snes = &mut *snes;
+            for pointer in [snes.snes_ppu, snes.my_ppu] {
+                let ppu = &mut *pointer;
+                words(&mut ppu.vram, vram.as_slice());
+                words(&mut ppu.cgram, cgram.as_slice());
+                words(&mut ppu.oam, &oam[..512]);
+                ppu.highOam.copy_from_slice(&oam[512..]);
+                ppu_registers(ppu, &r)?;
+            }
+            (*snes.apu).ram.copy_from(&apuram);
+            (*game.g_spc_player).ram.copy_from(&apuram);
+            sm::spc_player::SpcPlayer_CopyVariablesFromRam(game.g_spc_player);
+            let cpu = &mut *snes.cpu;
+            cpu.a = r.get("a")? as u16;
+            cpu.x = r.get("x")? as u16;
+            cpu.y = r.get("y")? as u16;
+            cpu.sp = r.get("s")? as u16;
+            cpu.dp = r.get("d")? as u16;
+            cpu.db = r.get("db")? as u8;
+            cpu.pc = r.get("pc")? as u16;
+            cpu.k = r.get("pb")? as u8;
+            if let Some(pc) = boundary_pc {
+                // The read-only exec hook runs during opcode fetch, after bsnes
+                // increments PC but before PLB changes the saved DB/P stack.
+                // Restart at the observed hook address, not the half-fetched PC.
+                cpu.pc = pc as u16;
+                cpu.k = (pc >> 16) as u8;
+            }
+            cpu.e = r.get("e")? != 0;
+            let p = r.get("p")? as u8;
+            cpu.c = p & 1 != 0;
+            cpu.z = p & 2 != 0;
+            cpu.i = p & 4 != 0;
+            cpu.d = p & 8 != 0;
+            cpu.xf = p & 16 != 0;
+            cpu.mf = p & 32 != 0;
+            cpu.v = p & 64 != 0;
+            cpu.n = p & 128 != 0;
+            cpu.irqWanted = r.get("irq")? != 0;
+            cpu.waiting = r.get("wai")? != 0;
+            cpu.nmiWanted = false;
+            snes.hPos = r.get("hcounter")? as u16;
+            snes.vPos = r.get("vcounter")? as u16;
+            let nmitimen = r.get("io_4200")?;
+            snes.autoJoyRead = nmitimen & 1 != 0;
+            snes.hIrqEnabled = nmitimen & 0x10 != 0;
+            snes.vIrqEnabled = nmitimen & 0x20 != 0;
+            snes.nmiEnabled = nmitimen & 0x80 != 0;
+            snes.fastMem = r.get("io_420D")? & 1 != 0;
+            snes.ppuLatch = r.get("io_4201")? & 0x80 != 0;
+            snes.hTimer = (r.get("io_4207")? | (r.get("io_4208")? & 1) << 8) as u16;
+            snes.vTimer = (r.get("io_4209")? | (r.get("io_420A")? & 1) << 8) as u16;
+            snes.openBus = r.get("mdr")? as u8;
+            // Resume the observed in-flight NMI to the existing verifier boundary.
+            // This imports a room observation, not an exact emulator checkpoint:
+            // SPC/DSP execution phase and PPU write latches are not fully represented.
+            // Route expectations must qualify each seed with normal comparisons on.
+            let mut original_wait_entered = false;
+            for _ in 0..100_000 {
+                let pc = u32::from((*game.g_cpu).k) << 16 | u32::from((*game.g_cpu).pc);
+                if original_wait_entered && pc == 0x808343 {
+                    // Match RunOneFrameOfGame_Emulated's existing wait/NMI boundary.
+                    (*game.g_cpu).nmiWanted = true;
+                    original_wait_entered = false;
+                }
+                if pc == 0x808348 {
+                    sm::rtl::FinishLoadSnesState(game);
+                }
+                if pc == 0x80834a || pc == 0x858142 {
+                    if let Some(input) = &controller {
+                        if pc != 0x80834a
+                            || INPUT_WORDS.map(|at| {
+                                u16::from_le_bytes([
+                                    game.ram().read_byte(at),
+                                    game.ram().read_byte(at + 1),
+                                ])
+                            }) != input.after
+                        {
+                            return Err("controller state changed during seed normalization".into());
+                        }
+                        for (at, value) in INPUT_WORDS.into_iter().zip(input.before) {
+                            game.ram().copy_in(at, &value.to_le_bytes());
+                        }
+                    }
+                    eprintln!("Imported room seed; completed recorded CPU phase at ${pc:06X}");
+                    return Ok(());
+                }
+                let original_wait = if pc == 0x82897a {
+                    original_wait_entered = true;
+                    // The capture importer proves this normalization read equals
+                    // the first replay word; preserve all 16 hardware input bits.
+                    game.input1_mut().currentState = first_input.reverse_bits();
+                    Some(OriginalWaitCall::new(
+                        (*(*game.g_snes).cart).rom.clone(),
+                        original_rom,
+                    )?)
+                } else {
+                    None
+                };
+                game.step_reference_opcode();
+                drop(original_wait);
+            }
         }
-    }
-    unsafe {
-        let cpu = &*game.g_cpu;
-        Err(format!(
-            "seed CPU did not reach the verifier frame boundary: PC=${:02X}{:04X} SP=${:04X} wait={} NMI={}",
-            cpu.k, cpu.pc, cpu.sp, cpu.waiting, cpu.nmiWanted
-        ))
-    }
+        unsafe {
+            let cpu = &*game.g_cpu;
+            Err(format!(
+                "seed CPU did not reach the verifier frame boundary: PC=${:02X}{:04X} SP=${:04X} wait={} NMI={}",
+                cpu.k, cpu.pc, cpu.sp, cpu.waiting, cpu.nmiWanted
+            ))
+        }
+    })
 }

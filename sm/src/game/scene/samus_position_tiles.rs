@@ -2,7 +2,7 @@
 #![forbid(unsafe_code)]
 
 use super::{
-    records::{SceneAsset, SceneMedia},
+    records::SceneMedia,
     samus_body::Half,
     state::{DisplayError, DisplayState, SamusHalf, SourceSpan, TransferSource, WordOrder},
 };
@@ -18,6 +18,15 @@ pub(crate) trait PositionHost {
     fn frame(&mut self) -> Result<u16, Self::Error>;
     fn movement(&mut self) -> Result<u8, Self::Error>;
     fn landing_word(&self, bytes: [u8; 2]) -> u16;
+    fn landing_offset(&mut self, offset: usize) -> Result<u16, Self::Error> {
+        Ok(self.landing_word(default_landing_bytes(offset)))
+    }
+    fn crouching_offset(&mut self, offset: usize) -> Result<i8, Self::Error> {
+        Ok(default_crouching_byte(offset))
+    }
+    fn drained_offset(&mut self, offset: usize) -> Result<i8, Self::Error> {
+        Ok(default_drained_byte(offset))
+    }
     fn fallback_byte(&mut self, offset: usize) -> Result<u8, Self::Error>;
     fn camera_x(&mut self) -> Result<u16, Self::Error>;
     fn camera_y(&mut self) -> Result<u16, Self::Error>;
@@ -26,18 +35,27 @@ pub(crate) trait PositionHost {
     fn body_x(&mut self) -> Result<u16, Self::Error>;
     fn body_y(&mut self) -> Result<u16, Self::Error>;
 }
-pub(crate) fn sprite_y_offset<H: PositionHost>(
-    host: &mut H,
-    doubled: u16,
-) -> Result<i32, H::Error> {
+pub(crate) fn default_landing_bytes(offset: usize) -> [u8; 2] {
     static LANDING: [u8; 16] = [3, 6, 0, 0, 3, 6, 0, 0, 3, 3, 6, 0, 3, 3, 6, 0];
+    [LANDING[offset], LANDING[offset + 1]]
+}
+pub(crate) fn default_crouching_byte(offset: usize) -> i8 {
     static CROUCHING: [i8; 24] = [
         -8, 0, -8, 0, -4, -2, -4, -2, 0, 0, 0, 0, -4, 0, -4, 0, 5, 4, 5, 4, 0, 0, 0, 0,
     ];
+    CROUCHING[offset]
+}
+pub(crate) fn default_drained_byte(offset: usize) -> i8 {
     static DRAINED: [i8; 32] = [
         7, 5, -8, -8, -8, -8, -8, -5, 4, 4, 4, 4, 0, 0, 4, -3, -5, 0, 0, 4, -3, -5, -3, 4, 0, 0, 4,
         0, 0, 4, 0, 0,
     ];
+    DRAINED[offset]
+}
+pub(crate) fn sprite_y_offset<H: PositionHost>(
+    host: &mut H,
+    doubled: u16,
+) -> Result<i32, H::Error> {
     let pose = doubled >> 1;
     let frame = host.frame()?;
     match host.movement()? {
@@ -48,19 +66,17 @@ pub(crate) fn sprite_y_offset<H: PositionHost>(
                 }
             } else if (0xa4..0xa8).contains(&pose) {
                 let offset = usize::from(frame.wrapping_add(4 * (pose - 0xa4)));
-                return Ok(-i32::from(
-                    host.landing_word([LANDING[offset], LANDING[offset + 1]]),
-                ));
+                return Ok(-i32::from(host.landing_offset(offset)?));
             }
         }
         15 if (0x35..0x41).contains(&pose) => {
-            return Ok(i32::from(
-                CROUCHING[usize::from(frame.wrapping_add(2 * (pose - 0x35)))],
-            ));
+            return Ok(i32::from(host.crouching_offset(usize::from(
+                frame.wrapping_add(2 * (pose - 0x35)),
+            ))?));
         }
         27 => {
             if matches!(pose, 0xe8 | 0xe9) {
-                return Ok(i32::from(DRAINED[usize::from(frame)]));
+                return Ok(i32::from(host.drained_offset(usize::from(frame))?));
             }
             if matches!(pose, 0xea | 0xeb) && (frame as i16).wrapping_sub(5) >= 0 {
                 return Ok(-3);
@@ -186,49 +202,8 @@ pub struct TileRequest {
     pub pointer: u16,
     pub half: SamusHalf,
 }
-fn validate_asset_source(source: &SourceSpan, media: &SceneMedia) -> Result<(), DisplayError> {
-    source.validate(media.revision())?;
-    let asset = media
-        .asset(source.asset)
-        .map_err(|_| DisplayError::Identity)?;
-    let matches_word = |index: usize, word: u16| {
-        source.bytes.get(2 * index..2 * index + 2) == Some(word.to_le_bytes().as_slice())
-    };
-    let valid = match asset {
-        SceneAsset::Atlas(atlas) => {
-            source.bytes.len() == atlas.data.len() * 2
-                && atlas
-                    .data
-                    .iter()
-                    .enumerate()
-                    .all(|(index, word)| matches_word(index, *word))
-        }
-        SceneAsset::Map(map) => {
-            source.bytes.len() == map.cells.len() * 2
-                && map
-                    .cells
-                    .iter()
-                    .enumerate()
-                    .all(|(index, cell)| matches_word(index, cell.planar_word()))
-        }
-        SceneAsset::Palette(palette) => {
-            source.bytes.len() == palette.colors.len() * 2
-                && palette
-                    .colors
-                    .iter()
-                    .enumerate()
-                    .all(|(index, word)| matches_word(index, *word))
-        }
-        _ => false,
-    };
-    if valid {
-        Ok(())
-    } else {
-        Err(DisplayError::Source)
-    }
-}
 impl TileRequest {
-    fn validate(&self, pointer: u16, media: &SceneMedia) -> Result<(), DisplayError> {
+    pub(crate) fn validate(&self, pointer: u16, media: &SceneMedia) -> Result<(), DisplayError> {
         if self.pointer != pointer || self.half.enabled != 1 {
             return Err(DisplayError::Incomplete);
         }
@@ -243,7 +218,8 @@ impl TileRequest {
             let TransferSource::Asset(source) = &transfer.source else {
                 return Err(DisplayError::Incomplete);
             };
-            validate_asset_source(source, media)?;
+            source.validate(media.revision())?;
+            source.validate_media(media)?;
             if active && source.bytes.len() - source.offset < transfer.byte_count() {
                 return Err(DisplayError::Source);
             }

@@ -428,6 +428,22 @@ struct NativeSamusDescriptor {
     vram: u16,
 }
 struct NativeSamusUpload<'a>(&'a mut Game);
+impl NativeSamusUpload<'_> {
+    fn table(
+        &self,
+        address: u32,
+        offset: usize,
+        width: usize,
+    ) -> crate::game::samus_animation::NativeTable {
+        let (image, base) = self.0.preflight_loaded_rom(address, offset, width);
+        crate::game::samus_animation::NativeTable::capture(
+            self.0,
+            crate::game::scene::samus_content::Role::UploadDescriptor,
+            crate::game::scene::samus_content::Registration::Loaded,
+            crate::rom::RomRecord { image, base },
+        )
+    }
+}
 impl crate::game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
     type Error = std::convert::Infallible;
     type Descriptor = NativeSamusDescriptor;
@@ -457,6 +473,18 @@ impl crate::game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
         unsafe {
             let _ = crate::rtl::rom_bank_ptr::<0x92>(address, self.0);
         }
+        if self.0.samus_execution().unwrap().is_some() {
+            let image = self.0.capture_native_rom();
+            let _ = crate::game::samus_animation::NativeTable::capture(
+                self.0,
+                crate::game::scene::samus_content::Role::UploadDescriptor,
+                crate::game::scene::samus_content::Registration::Native,
+                crate::rom::RomRecord {
+                    image,
+                    base: crate::rtl::lorom_offset(0x920000 | u32::from(address)) as usize,
+                },
+            );
+        }
         Ok(NativeSamusDescriptor {
             address: 0x928000 | u32::from(address & 0x7fff),
             vram,
@@ -479,7 +507,7 @@ impl crate::game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
         Ok(())
     }
     fn source(&mut self, d: Self::Descriptor) -> Result<u16, Self::Error> {
-        Ok(self.0.read_rom_word(d.address, 0))
+        Ok(self.table(d.address, 0, 2).word(0, true))
     }
     fn advance_source(&mut self, _: Self::Descriptor, s: u16, c: u16) -> Result<u16, Self::Error> {
         Ok(s.wrapping_add(c))
@@ -489,7 +517,7 @@ impl crate::game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
         Ok(())
     }
     fn bank(&mut self, d: Self::Descriptor) -> Result<(), Self::Error> {
-        let bank = self.0.read_rom_byte(d.address, 2);
+        let bank = self.table(d.address, 2, 1).byte(0);
         unsafe { WriteReg(A1B1 as u16, bank, self.0) };
         Ok(())
     }
@@ -498,13 +526,16 @@ impl crate::game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
         d: Self::Descriptor,
         p: crate::game::scene::samus_tile_upload::Part,
     ) -> Result<u16, Self::Error> {
-        Ok(self.0.read_rom_word(
-            d.address,
-            match p {
-                crate::game::scene::samus_tile_upload::Part::First => 3,
-                crate::game::scene::samus_tile_upload::Part::Second => 5,
-            },
-        ))
+        Ok(self
+            .table(
+                d.address,
+                match p {
+                    crate::game::scene::samus_tile_upload::Part::First => 3,
+                    crate::game::scene::samus_tile_upload::Part::Second => 5,
+                },
+                2,
+            )
+            .word(0, true))
     }
     fn write_count(&mut self, c: u16) -> Result<(), Self::Error> {
         unsafe { WriteRegWord(DAS1L as u16, c, self.0) };

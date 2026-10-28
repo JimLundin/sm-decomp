@@ -50,6 +50,67 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
+SOURCE37 native Samus content and lifecycle cohort is qualified.
+Source 5d73ade6 / DLL eaab5768 passes fresh library in 27.175 seconds,
+with 200 unchanged warning identities and 0 added. Final direct DLL: 88.295 seconds;
+all 81 units and source/native guards pass; minimum RAM: 2.772 GiB.
+All 26 assigned rows pass (23/44 required), including full Morph 1200 and
+BOTH independent Kago 14350 setups. Runtime: 199063 comparisons / 0 failures,
+in 2058.957 seconds. Genuine initialized 329 + resume 5, save 55650 and reserve
+91623 bind codec bd6b62db27d15b56. Its 78 contributors bind 1301655 raw /
+1292518 normalized bytes. The failed
+SOURCE36 fixture/type check remains preserved; SOURCE37 changes one tuple type.
+Returning-Die short replay-load failure is source-reviewed, not runtime-executed.
+Net versus main 1da27463: production +1417 / legacy 0 / unsafe-containing +15 /
+verification +1272; support reporter 80 separate. No retirement or savings claim.
+SOURCE38 driver is on a separate migration branch; its SOURCE39 witnesses,
+compiler and new-codec execution remain separately attributed and pending.
+Actual persistent Session/Display/start/adoption, binary checkpoint,
+Reference/audio, portability, boot-to-credits and size acceptance remain open.
+
+
+SOURCE36 connects the explicit Game Samus content binding to native body,
+position, tile and upload consumers. Scoped Runtime/CPU/reset/load adoption
+retains selected registrations through actual late normalized settlement.
+Empty patches stay no-ops; returning short replay loads preserve their original
+continuation and leave authority revoked. Seven actual Game witnesses join the
+four role witnesses: 81 units are registered, not executed. Source branch only;
+normal library/warnings/DLL/units and genuine new-codec captures/replay are pending.
+Actual prepared start, persistent Session/Display/SamusHalf, binary checkpoint,
+Reference/audio, portable driver and size acceptance remain unfinished.
+
+
+SOURCE34 shares the exact allocation-free full asset-byte validator. State
+retains payload-only admission; tile requests retain their original explicit
+identity/revision/offset prefix and first0/second0 transfer rules. Both methods
+are pub(crate) for the real content cohort. Net -20 production; 70 registered
+units remain raw-identical to SOURCE33. Source review/format/inventory pass;
+DLL/runtime remain pending on the migration branch. Codec 6bf62feb168ff63b has
+76 contributors; no intermediate capture/compile or old-codec transfer. Role
+module R1 and actual Game/G/native consumer/lifecycle remain active dependencies.
+
+
+SOURCE33 adds four independently authored catalog admission/lifecycle checks:
+missing content behind original failures, malformed/valid changed catalogs,
+rejected reset owner preservation and supplied Arc transfer through reset/reopen.
+All prior cases and zero-prefix checks remain; 70 units are registered. Exact
+source review/format/inventory pass; DLL/runtime remain pending on the migration
+branch. No intermediate compiler/capture; complete actual role/consumer cohort
+precedes the next qualification freeze. Net +409 verification versus qualified
+main, production +21 from the retained catalog donor; no ownership/size closure.
+
+
+SOURCE32 seals supplied Samus catalog content against an independently expected
+catalog and carries it through open/reset/checkpoint-to-start metadata. Existing
+constructor/reopen fixtures use explicit nonempty media-valid catalog declarations;
+all original assertions and zero-prefix cases remain. Format/source inventory
+pass; final DLL/runtime qualification is pending on this migration branch. The
+new codec requires genuine captures after the complete content/consumer cohort
+is frozen. No compile/capture is run for this intermediate checkpoint. Actual
+persistent G, native role content, full checkpoint and backend independence remain
+open; catalog admission alone does not establish their ownership.
+
+
 Zero-producer prefixes now retain the original Scene error in both existing
 Samus/marker units. Exact successor DLL and all 66 units pass; all 76 raw codec
 contributors remain identical to qualified SOURCE30. Original 26-row runtime
