@@ -11,6 +11,38 @@ fn complete(host: &mut impl AudioHost) -> Result<(), DisplayError> {
     Ok(())
 }
 
+// The callback receives the actual host; completed stores survive its failure.
+// Normal callbacks never enter the semantic hook through this guard.
+struct CallbackFailure<'a, H: AudioHost> {
+    host: &'a mut H,
+    completed: bool,
+}
+impl<H: AudioHost> Drop for CallbackFailure<'_, H> {
+    fn drop(&mut self) {
+        if !self.completed {
+            // Owned hosts retain the pending prefix and poison on this error.
+            // Legacy skips the closure. Ignore the signalling result so the
+            // original callback error or unwind payload remains unchanged.
+            let _ = self.host.audio_mutation(|requests, _, _| {
+                requests.pending_mutation = true;
+                Err::<(), _>(DisplayError::Poisoned)
+            });
+        }
+    }
+}
+fn callback<H: AudioHost>(
+    host: &mut H,
+    operation: impl FnOnce(&mut H) -> Result<(), DisplayError>,
+) -> Result<(), DisplayError> {
+    let mut guard = CallbackFailure {
+        host,
+        completed: false,
+    };
+    let result = operation(guard.host);
+    guard.completed = result.is_ok();
+    result
+}
+
 pub(crate) fn enqueue(
     track: u16,
     delay: u16,
@@ -110,7 +142,7 @@ pub(crate) fn advance_music<H: AudioHost>(
         if host.audio_word(0x63d) & 0x8000 != 0 {
             host.audio_store_word(0x7f3, u16::from(host.audio_word(0x63d) as u8));
             host.audio_store_byte(0x64c, 0xff);
-            effect(MusicEffect::UploadBank, host)?;
+            callback(host, |host| effect(MusicEffect::UploadBank, host))?;
             host.audio_store_byte(0x64c, 0);
             if let Some(record) = record {
                 host.audio_mutation(|requests, audio, stamp| {
@@ -123,10 +155,8 @@ pub(crate) fn advance_music<H: AudioHost>(
         }
         let track = host.audio_word(0x63d) as u8 & 0x7f;
         host.audio_store_word(0x7f5, host.audio_word(0x63d) & 0x7f);
-        effect(
-            MusicEffect::WriteTrack(host.audio_word(0x63d) as u8 & 0x7f),
-            host,
-        )?;
+        let command = MusicEffect::WriteTrack(host.audio_word(0x63d) as u8 & 0x7f);
+        callback(host, |host| effect(command, host))?;
         host.audio_store_byte(0x64c, track);
         if let Some(record) = record {
             host.audio_mutation(|requests, audio, stamp| {
@@ -222,7 +252,7 @@ pub(crate) fn advance_sound_effects<H: AudioHost>(
     if (host.audio_byte(0x686) as i8).wrapping_sub(1) >= 0 {
         host.audio_store_byte(0x686, host.audio_byte(0x686).wrapping_sub(1));
         for channel in 0..3 {
-            write(channel as u8, 0, host)?;
+            callback(host, |host| write(channel as u8, 0, host))?;
             host.audio_store_byte(0x64d + channel, 0);
             host.audio_mutation(|requests, _, _| requests.clear_current_sound(channel))?;
         }
@@ -245,7 +275,7 @@ pub(crate) fn advance_sound_effects<H: AudioHost>(
                             .ok_or(DisplayError::Source)?;
                         requests.capture_sound(channel, local_slot, sound)
                     })?;
-                    write(channel as u8, sound, host)?;
+                    callback(host, |host| write(channel as u8, sound, host))?;
                     host.audio_store_byte(0x64d + channel, sound);
                     host.audio_store_byte(0x643 + channel, slot.wrapping_add(1) & 15);
                     let value = host.audio_byte(0x649 + channel).wrapping_add(1);

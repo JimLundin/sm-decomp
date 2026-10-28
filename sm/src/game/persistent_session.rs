@@ -738,6 +738,7 @@ impl CurrentControl {
                 .ok_or(DisplayError::Identity)?,
             source_interval: self.metadata.identity.next_input_record,
         };
+        self.requests.pending_mutation = true;
         let result = operation(&mut self.requests, &mut self.metadata.audio, stamp)?;
         self.requests
             .complete_mutation(&self.metadata, stamp.tick)?;
