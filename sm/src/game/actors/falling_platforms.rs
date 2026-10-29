@@ -3,17 +3,12 @@
 use super::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use super::{api, combat};
 use crate::game::enemy_script::EnemyScript;
+use crate::game::enemy_speeds::SpeedTable;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 
 fn extra(key: Key) -> usize {
     0x7800 + usize::from(key.byte_index())
-}
-fn table(runtime: &Runtime<'_>, address: u32, index: isize) -> u16 {
-    runtime
-        .loaded_image()
-        .expect("ROM must be loaded")
-        .table_word(crate::rom::lorom_offset(address) as usize, index)
 }
 fn animate(runtime: &mut Runtime<'_>, falling: bool, right: bool) {
     let key = combat::current(runtime);
@@ -47,7 +42,7 @@ pub(crate) fn initialize(special: bool, game: &mut Game) {
     runtime.edit_actor(key, Native, |actor| actor.instruction = instruction);
     let index = 4 * isize::from(runtime.resolve_actor(key, Native).parameters[1].to_ne_bytes()[0]);
     for (offset, variable) in [2, 1, 4, 3].into_iter().enumerate() {
-        let value = table(&runtime, 0xa28187, index + offset as isize);
+        let value = runtime.enemy_speed(SpeedTable::Linear, index + offset as isize);
         runtime.edit_actor(key, Native, |actor| actor.variables[variable] = value);
     }
     for offset in [0, 6, 8] {
@@ -113,8 +108,8 @@ fn vertical(runtime: &mut Runtime<'_>, riding: bool) {
         }
         let current = combat::current(runtime);
         let index = 4 * step as isize + if riding { 0 } else { 2 };
-        let high = table(runtime, 0xa2838f, index + 1);
-        let low = table(runtime, 0xa2838f, index);
+        let high = runtime.enemy_speed(SpeedTable::Quadratic, index + 1);
+        let low = runtime.enemy_speed(SpeedTable::Quadratic, index);
         let amount = ((u32::from(high) << 16) | u32::from(low)) as i32;
         stopped = api::move_vertical(runtime, current, amount) == api::MovementResult::Blocked;
     }

@@ -3,6 +3,7 @@
 use crate::game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::game::actors::api::{self, Axis};
 use crate::game::enemy_projectiles::host::Effects;
+use crate::game::enemy_speeds::SpeedTable;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::words as W;
@@ -18,8 +19,8 @@ fn table(runtime: &Runtime<'_>, address: u32, index: usize) -> u16 {
         .table_word(crate::rom::lorom_offset(address) as usize, index as isize)
 }
 fn motion(runtime: &Runtime<'_>, index: usize) -> u32 {
-    let high = table(runtime, 0xa2838f, index + 1);
-    let low = table(runtime, 0xa2838f, index);
+    let high = runtime.enemy_speed(SpeedTable::Quadratic, (index + 1) as isize);
+    let low = runtime.enemy_speed(SpeedTable::Quadratic, index as isize);
     (u32::from(high) << 16) | u32::from(low)
 }
 pub(crate) fn update(initialize: bool, game: &mut Game) {

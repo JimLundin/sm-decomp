@@ -3,10 +3,10 @@
 use super::{access::ActorKey as Key, api};
 use crate::game::enemy_layouts::EnemyLayout40 as Fish;
 use crate::game::enemy_script::EnemyScript;
+use crate::game::enemy_speeds::enemy_speed;
 use crate::game::session_runtime::{Runtime, actor_sine};
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
-use crate::rtl::rom_table_word;
 
 fn wave_sample(key: i32, game: &mut Game) -> u16 {
     actor_sine(
@@ -24,13 +24,13 @@ pub(crate) fn initialize(game: &mut Game) {
         slot!(game, Fish[key].var_A = 0x91ab);
     }
     let index = 4 * isize::from(slot!(byte game, Fish[key].parameter_1[0]));
-    let value = rom_table_word!(game, 0xa28187, index);
+    let value = enemy_speed!(game, Linear, index);
     slot!(game, Fish[key].var_C = value);
-    let value = rom_table_word!(game, 0xa28187, index + 1);
+    let value = enemy_speed!(game, Linear, index + 1);
     slot!(game, Fish[key].var_B = value);
-    let value = rom_table_word!(game, 0xa28187, index + 2);
+    let value = enemy_speed!(game, Linear, index + 2);
     slot!(game, Fish[key].var_E = value);
-    let value = rom_table_word!(game, 0xa28187, index + 3);
+    let value = enemy_speed!(game, Linear, index + 3);
     slot!(game, Fish[key].var_D = value);
     let value = u16::from(slot!(byte game, Fish[key].parameter_2[0]));
     slot!(game, Fish[key].var_00 = value);

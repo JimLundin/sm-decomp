@@ -4,10 +4,10 @@
 use super::access::ActorKey as Key;
 use super::api;
 use crate::game::enemy_layouts::EnemyLayout72 as Bug;
+use crate::game::enemy_speeds::enemy_speed;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
-use crate::rtl::rom_table_word;
 
 pub(crate) fn initialize(game: &mut Game) {
     let e = i32::from(word!(game.cur_enemy_index));
@@ -35,8 +35,8 @@ pub(crate) fn reset_offscreen(game: &mut Game) {
     }
 }
 fn speed(index: isize, game: &Game) -> u32 {
-    let high = rom_table_word!(game, 0xa28187, index);
-    let low = rom_table_word!(game, 0xa28187, index + 1);
+    let high = enemy_speed!(game, Linear, index);
+    let low = enemy_speed!(game, Linear, index + 1);
     (u32::from(high) << 16) | u32::from(low)
 }
 fn facing_animation(actor: u16, game: &mut Game) -> u16 {

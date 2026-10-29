@@ -6,6 +6,7 @@ use super::{api, combat};
 use crate::game::enemy_layouts::EnemyLayout40 as Lava;
 use crate::game::enemy_projectiles::SpawnEprojWithGfx;
 use crate::game::enemy_script::EnemyScript;
+use crate::game::enemy_speeds::enemy_speed;
 use crate::game::music::QueueSfx2_Max6;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
@@ -73,8 +74,8 @@ pub(crate) fn initialize(game: &mut Game) {
     initialize[index as usize](game);
     let E = word!(game.cur_enemy_index) as i32;
     let speed = 4 * slot!(byte game, Lava[E].parameter_2[1]) as isize;
-    slot!(game, Lava[E]; var_08 = rom_table_word!(game, 0xa28187, speed), var_07 = rom_table_word!(game, 0xa28187, speed + 1),
-        var_0A = rom_table_word!(game, 0xa28187, speed + 2), var_09 = rom_table_word!(game, 0xa28187, speed + 3));
+    slot!(game, Lava[E]; var_08 = enemy_speed!(game, Linear, speed), var_07 = enemy_speed!(game, Linear, speed + 1),
+        var_0A = enemy_speed!(game, Linear, speed + 2), var_09 = enemy_speed!(game, Linear, speed + 3));
     let k = word!(game.cur_enemy_index) as i32;
     game.ram().copy_in(0x178c, &0xb0b2u16.to_ne_bytes());
     game.ram().copy_in(0x178e, &0xa8u16.to_ne_bytes());

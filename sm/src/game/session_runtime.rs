@@ -4,6 +4,7 @@ use crate::game::actors::{
     bang, elevator, falling_platforms, maridia_snail, metroid, mochtroid, refill_candy, reflec,
     roach, sidehopper, wall_crawlers,
 };
+use crate::game::enemy_speeds::SpeedTable;
 use crate::game::player_projectiles::{
     access::{ShotLane, Store},
     content,
@@ -558,6 +559,14 @@ impl<'g> Runtime<'g> {
     }
     pub(crate) fn native_image(&self) -> RomImage {
         self.game.capture_native_rom()
+    }
+    pub(crate) fn enemy_speed(&self, table: SpeedTable, index: isize) -> u16 {
+        crate::game::enemy_speeds::word(
+            &self.game.enemy_speeds,
+            &self.game.loaded_rom,
+            table,
+            index,
+        )
     }
 }
 fn botwoon_signal_address(enemy: u16, signal: actors::botwoon_death::Signal) -> usize {

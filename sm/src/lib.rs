@@ -375,6 +375,7 @@ pub mod game {
     pub mod message_composition;
     pub(crate) mod mode7_transfers;
     pub(crate) mod moving_platforms;
+    pub(crate) mod enemy_speeds;
     pub(crate) mod prelude;
     pub(crate) use sm_game::projectile_weapon_definitions;
     pub mod scene;
