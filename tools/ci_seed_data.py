@@ -245,8 +245,8 @@ def restore(args):
             pass
         if process.wait() != 0:
             raise RuntimeError("seed decryption failed")
-        if (inputs | checkpoints | needed_indexes) - restored:
-            raise ValueError("seed archive lacks selected corpus data")
+        if missing := (inputs | checkpoints | needed_indexes) - restored:
+            raise ValueError("seed archive lacks selected corpus data: " + ", ".join(sorted(missing)))
         if runtime_only:
             for expected in runtime_seed_files(args.root, seed_indexes):
                 if expected - restored:

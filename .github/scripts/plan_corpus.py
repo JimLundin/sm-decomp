@@ -17,6 +17,8 @@ def seed_bundle(row):
         return ('CONNECT-e5c5a415-9.tar.gz.enc', 'fefac98ed43a3f3529349fa7d40dd469c353bd68dc1e697bba7f2f967ca06501')
     if row['id'] == 'xray-activate-release':
         return ('seeds-v1-xray-activation-9c5ad92da3d5d2dc.tar.gz.enc', '9c5ad92da3d5d2dc13cfae2e2a0906ca915b2329767f121183190d2ab96c25bc')
+    if row['id'] in ('pickup-reserve', 'save-death-reload', 'save-memory', 'music-fir-selector10'):
+        return ('checkpoints-147-93986acd14dc9d66.tar.gz.enc', '93986acd14dc9d66201db2699589e8d01eb31191d72efbe6bbf556e862871574')
     if 'checkpoint' in row:
         return ('f158-full22.tar.gz.enc', '0aef0db34feb04b386db4926baf3268958981338293356a3915c292998dc1027')
     # Match exact seed identities, not capture prefixes: pickups and the
