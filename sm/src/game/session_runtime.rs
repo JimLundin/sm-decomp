@@ -560,6 +560,11 @@ impl<'g> Runtime<'g> {
     pub(crate) fn native_image(&self) -> RomImage {
         self.game.capture_native_rom()
     }
+    /// A word of the 32-bit speed table read the way native_image readers did.
+    pub(crate) fn native_speed32(&self, offset: usize) -> u32 {
+        let native = self.game.capture_native_rom();
+        crate::game::enemy_speeds::word32(&self.game.enemy_speeds32, &native, offset)
+    }
     pub(crate) fn enemy_speed(&self, table: SpeedTable, index: isize) -> u16 {
         crate::game::enemy_speeds::word(
             &self.game.enemy_speeds,
