@@ -1232,7 +1232,7 @@ crate::game::callback_dispatch! {
     [11199887] Shaktool_Instr_12 [jp.offset(1)] {
         let e: i32 = k as i32;
         let arg: u16 = jp.word(0);
-        ({ let (x, y) = ((slot!(game, Enemy_Shaktool[e].base.x_pos)).wrapping_add(arg), (slot!(game, Enemy_Shaktool[e].base.y_pos)).wrapping_add(28)); actor_api::select_block_at(&mut Runtime::new(game), crate::game::session::Point { x, y }) });
+        ({ let (x, y) = ((slot!(game, Enemy_Shaktool[e].base.x_pos)).wrapping_add(arg), (slot!(game, Enemy_Shaktool[e].base.y_pos)).wrapping_add(28)); actor_api::select_block_at(&mut Runtime::new(game), sm_game::geometry::Point { x, y }) });
         if ({
             let index = word!(game.room_width_in_blocks) as i32 + word!(game.cur_block_index) as i32;
             let at = 0x10002usize + 2 * index as usize;

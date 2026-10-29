@@ -3,13 +3,13 @@
 #![forbid(unsafe_code)]
 use crate::game::enemy_projectiles::{SpawnEprojWithRoomGfx, host::Effects};
 use crate::game::item_pickups::Resource;
-use crate::game::session::Position;
 use crate::game::session_runtime::{Runtime, player_command, player_face_forward};
 use crate::game::{
     gameplay_flag_runtime, item_pickups_runtime, message_boxes, palette_effects, save_slots,
 };
 use crate::game_state::Game;
 use crate::ram_map::words as ram;
+use sm_game::geometry::Position;
 
 const X: usize = 2;
 const Y: usize = 6;

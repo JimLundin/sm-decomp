@@ -12,13 +12,13 @@ use crate::game::room_mechanisms::{
     creation,
     host::{Contact, SpawnSource},
 };
-use crate::game::session::Vector32;
 use crate::game::session_runtime::{Runtime, actor_cosine, actor_direction_vector, actor_sine};
 use crate::game::sprite_effect_runtime::create_sprite;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word, word_arrays};
 use crate::rtl::{abs16, words};
 use crate::types::Point16U;
+use sm_game::geometry::Vector32;
 
 pub(crate) fn descend(game: &mut Game) {
     enemy_projectiles::update_spore_stem(game);

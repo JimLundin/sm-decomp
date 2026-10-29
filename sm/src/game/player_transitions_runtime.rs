@@ -344,7 +344,7 @@ pub(crate) fn initialize(game: &mut crate::game_state::Game) {
     p.collision.horizontal_slope_flags = 3;
     state.presentation.palette_mut().hurt_flash = 0;
     p.special_palette_flags = 0;
-    p.camera_distance.fill(crate::game::session::FixedMotion {
+    p.camera_distance.fill(sm_game::geometry::FixedMotion {
         fraction: 0,
         whole: 1,
     });

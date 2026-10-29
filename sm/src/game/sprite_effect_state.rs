@@ -1,6 +1,6 @@
 //! Sprite-effect declarations only. Active effects and compatibility tails are distinct.
 #![forbid(unsafe_code)]
-use crate::game::session::{Point, Position};
+use sm_game::geometry::{Point, Position};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct SpriteEffect {

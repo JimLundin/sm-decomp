@@ -16,8 +16,8 @@ use crate::game::room_mechanisms::{
 use crate::game::{
     projectile_geometry::square_slope_occupied,
     room_mechanisms::host::{ByteOrder, Host as MechanismHost, ImportedAliases},
-    session::{Point, Position, Vector32},
 };
+use sm_game::geometry::{Point, Position, Vector32};
 fn current(h: &impl ActorAccess) -> ActorKey {
     ActorKey::from_legacy(h.session().actors.controls.selected)
 }

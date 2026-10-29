@@ -1,6 +1,6 @@
 //! Additional state for player collision; Session remains the only owner.
 #![forbid(unsafe_code)]
-use crate::game::session::Position;
+use sm_game::geometry::Position;
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub(in crate::game) struct CollisionState {

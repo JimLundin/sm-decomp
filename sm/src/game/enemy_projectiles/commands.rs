@@ -6,11 +6,11 @@ use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Ke
 use crate::game::constants::{bank_86::*, bank_a0::*};
 use crate::game::enemy_script::EnemyScript;
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
-use crate::game::session::Point;
 use crate::game::{
     sprite_effect_state::{LegacySpriteDefinition, SpriteSpawn},
     sprite_objects,
 };
+use sm_game::geometry::Point;
 
 fn reset_position(h: &mut impl Host, slot: isize) {
     enemy!(h, slot, x = enemy!(h, slot, behavior_a));

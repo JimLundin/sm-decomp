@@ -7,7 +7,7 @@ use super::{
     content::ActorContent,
     effects::ActorHost,
 };
-use crate::game::session::Point;
+use sm_game::geometry::Point;
 
 fn current(h: &impl ActorAccess) -> ActorKey {
     ActorKey::from_legacy(h.session().actors.controls.selected)

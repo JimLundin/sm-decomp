@@ -12,9 +12,9 @@ use crate::game::player_projectiles::access::Store;
 use crate::game::{
     enemy_projectiles::{host::Host as EprojHost, presentation as eproj_presentation},
     player_projectiles::{host::Host as ShotHost, presentation as shot_presentation},
-    session::Point,
     sprite_objects,
 };
+use sm_game::geometry::Point;
 
 fn appearance(h: &impl ActorAccess, key: ActorKey) -> Option<AppearanceId> {
     let index = key.byte_index();
