@@ -5,8 +5,8 @@ use super::{
     access::ActorKey,
     content::{ActorTemplateId, PopulationEntryId, PopulationId, SpeciesId},
     media::AppearanceId,
-    state::Actors,
 };
+use sm_game::actors::state::Actors;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct InstanceHandle {

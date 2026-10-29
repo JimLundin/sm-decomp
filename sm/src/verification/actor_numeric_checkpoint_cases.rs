@@ -1,5 +1,5 @@
 //! Independently authored numeric actors exercise fields absent from movie inputs.
-use super::{Actors, DisplayStartMetadata};
+use super::{Actors, ActorsCheckpoint, DisplayStartMetadata};
 
 pub(crate) fn assert_numeric_checkpoint(metadata: &DisplayStartMetadata) {
     let mut expected = Actors::default();

@@ -103,7 +103,7 @@ pub use sm_game::geometry::{FixedMotion, Point, Position, Rectangle, Vector32};
 #[derive(Clone, Debug, PartialEq)]
 pub struct Session {
     pub(crate) actor_identity: crate::game::actors::identity::ActorIdentityState,
-    pub(in crate::game) actors: crate::game::actors::state::Actors,
+    pub(in crate::game) actors: sm_game::actors::state::Actors,
     pub(in crate::game) botwoon_death: sm_game::actors::botwoon_death::DeathProtocol,
     pub(in crate::game) timing: Timing,
     pub(crate) world: std::sync::Arc<crate::game::room_entry::world::WorldBinding>,

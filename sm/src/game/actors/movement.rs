@@ -300,7 +300,7 @@ fn react<H: ActorHost + MechanismHost>(
         }
     }
 }
-fn coordinate(actor: &mut super::state::Actor, vertical: bool) -> &mut Position {
+fn coordinate(actor: &mut sm_game::actors::state::Actor, vertical: bool) -> &mut Position {
     if vertical { &mut actor.y } else { &mut actor.x }
 }
 fn move_axis<H: ActorHost + MechanismHost>(
