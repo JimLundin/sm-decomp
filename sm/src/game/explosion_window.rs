@@ -105,7 +105,7 @@ pub(crate) unsafe fn finish_power_bomb(v0: u16, game: &mut Game) {
         CallSomeSamusCode(0x1e, game);
     }
 }
-pub(crate) fn set_power_bomb_blending(k: u16, game: &mut Game) {
+pub(crate) fn set_power_bomb_blending(_k: u16, game: &mut Game) {
     {
         word!(game.fx_layer_blending_config_c |= (0x8000u16));
     }
@@ -385,7 +385,7 @@ pub(crate) fn finish_crystal_flash(k: u16, game: &mut Game) {
     }
 }
 #[forbid(unsafe_code)]
-pub(crate) fn set_crystal_flash_blending(k: u16, game: &mut Game) {
+pub(crate) fn set_crystal_flash_blending(_k: u16, game: &mut Game) {
     game.ram().write_byte(0x60, 0);
     game.ram().write_byte(0x61, 8);
     game.ram().write_byte(0x62, 0x80);

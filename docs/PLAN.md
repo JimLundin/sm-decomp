@@ -47,34 +47,27 @@ Measure with tools/progress.sh and retain exact production/legacy/unsafe/verific
 support deltas, B replacement ratio/reason, source/native/codec/input pins and actual
 check results in the owned qualification/publication record. Commit messages need
 no Score, hash inventory or warning ledger. Necessary growth remains accountable.
+After every commit/push, update the canonical first report comment in Jim's #6
+with graphical project state and the latest reply: measured progress, work/owner
+status and actual CI/qualification status. Use charts/diagrams with labels, not
+report prose; distinguish pending from passing and keep raw proof in owned records.
+Preserve answered comments before their user-authorized removal; keep the report.
 
 Keep replay docs essential, upstream references and CSV/TOML provenance/checks;
 shared Python installers/runtime-only restores are support work, counted separately.
 
 ## Current work and limits
 
-Primary root 01a17ecd owns integration, Git and one resource ledger; retired
-integrator 01a17c50 and Linux remain stopped. Only main is remote and Jim's
-conversation #6 remains open. Delegate bounded source/review/build/replay scopes
-through the focused skills and keep implementation moving during CI.
-
-APU timer/bus source 3edbecf8 / DLL b73c388f / codec a187ba226fb053f7 pass
-independent review, all build stages and actual 100/100 units; the original
-97 assertion/name/body bytes remain. Genuine initialized 329 + resume 5,
-save 55650 and reserve 91623 captures/continuations pass 26 distinct rows /
-199,063 comparisons / 0, full Morph 1200 and BOTH Kago 14350; coverage 23/44.
-Production 136,751, verification 56,212, unsafe-containing 2,673, legacy
-17,793: net +60 production / +261 verification / +2 forbid attributes;
-actual unsafe-keyword delta 0. Maintained native C and installer support
-are unchanged; all 11 native archives transfer from DSP97. Its 548-line
-C dependency stays excluded from mine; the 91-line DSP header remains.
-The [DSP97 record](https://github.com/JimLundin/sm-decomp/blob/fd7c4481fe29de7c31fc2bcc3712c2d5bcfd2403/docs/PLAN.md#current-work-and-limits) retains its full original qualification.
-Native SPC/reentry/trace/reset, PPU/audio and physical/full-backend
-independence remain open. Owned receipts retain exact proof and timings.
-Next: separately owned native APU lifecycle and SPC opcode source work.
-Alternate sound banks/menu selection and full owned Session remain unfinished.
-Prefer standalone Python automation, including workflows. Reserve 2 GiB RAM /
-50 GiB disk after admitted remaining growth; fresh ledger samples govern overlap.
+Primary root owns integration, Git and one resource ledger; Linux stays stopped.
+SPC/owned PCM source 120322cc / codec 3e73f6db5edd45d2 is qualified.
+The final strict profile requires zero compiler warnings and actual 121 unit cases.
+Fresh initialized/save/reserve captures and continuations pass 26 rows / 199,063 comparisons / 0, full Morph1200 and BOTH Kago14350; required23/44.
+Measured production 137802, verification 57796, unsafe-containing 2706, legacy 17822; full deltas/proofs stay in owned receipts.
+The 29 added bank unsafe declarations are counted separately from operations.
+Mine excludes the former SPC C/header dependency; native/vendor originals remain.
+Owned PCM and typed SPC do not establish full backend/device independence.
+The primary updates the graphical canonical report after every push.
+The [APU100 frozen record](https://github.com/JimLundin/sm-decomp/blob/9a5723fa4a2af2134f25bfb84aefcc9492fc88e9/docs/PLAN.md#current-work-and-limits) retains prior DSP97/APU qualification, timings and native exclusions.
 
 ### Qualified history
 
@@ -163,8 +156,12 @@ separate closures; keep imported alias exclusions, source newlines and Windows d
 
 ## Fast loop
 
-1. cargo fmt --check; cargo check --no-default-features --lib with no added warnings;
-   one DLL build: python tools/verify_dll.py --build-only. Denied work never passes.
+1. cargo fmt --check; cargo check --no-default-features --lib with warnings denied;
+   one DLL build: python tools/verify_dll.py --build-only. Cargo enforces
+   warnings='deny' in sm/Cargo.toml for every sm target while preserving dependency
+   flags. Direct rustc uses explicit -D warnings, including detached/mutation builds.
+   Fix diagnostics; blanket suppression and historical warning-bearing builds do
+   not qualify this strict profile. Denied work never passes.
 2. verify_dll.py --corpus movies/segments.toml --segment for every affected named row,
    plus door-loading-lag-nmi,tas-ceres-four-doors,area-crateria,item-morph-ball; zero failures.
    No reached row: A adds one; B moves unchanged and records uncovered: <function> in qualification.
@@ -245,5 +242,6 @@ through another tool or use tiny compression gains to continue below the reserve
 Done: Fast loop passes; measure tools/progress.sh and retain explained deltas and
 exact qualification evidence. Fetch/reconcile/recheck HEAD/index, commit the coherent
 change with a concise message and immediately push main.
-Update active PLAN beside code; no hand-maintained progress image or extra readiness gates.
+Update active PLAN beside code and the canonical graphical #6 report after each
+push; no README progress image or extra readiness gates. Work continues during CI.
 Pre-transpile .scratch/gates/pointers/scopes are inactive in archive/pre-transpile-2026-10-17.

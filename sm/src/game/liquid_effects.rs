@@ -161,7 +161,7 @@ fn table_height(position: u16, camera: u16, water: bool) -> u16 {
 
 static kLavaSoundEffects: [u8; 8] = [0x12, 0x13, 0x14, 0x12, 0x13, 0x14, 0x12, 0x13];
 #[forbid(unsafe_code)]
-pub fn lava_surface(k: u16, game: &mut Game) {
+pub fn lava_surface(_k: u16, game: &mut Game) {
     word!(game.fx_layer_blending_config_c = word!(game.fx_layer_blending_config_b));
     if word!(game.time_is_frozen_flag) == 0 {
         advance_motion(game);

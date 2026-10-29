@@ -343,7 +343,7 @@ pub unsafe fn FakeKraid_Func_1(k: u16, j: u16, game: &mut Game) {
         }
     };
 }
-pub unsafe fn FakeKraid_InstrHelper_45(k: u16, j: u16, a: u16, game: &mut Game) {
+pub unsafe fn FakeKraid_InstrHelper_45(_k: u16, j: u16, a: u16, game: &mut Game) {
     let ka: u16 = word!(game.cur_enemy_index);
     let E: i32 = word!(game.cur_enemy_index) as i32;
     slot!(game, Enemy_FakeKraid[E].var_02 = a);
@@ -2673,7 +2673,7 @@ pub unsafe fn RidleysExplosion_Func_2(game: &mut Game) {
         });
     }
 }
-pub fn locret_A6CB20(game: &mut Game) {}
+pub fn locret_A6CB20(_game: &mut Game) {}
 static off_A6CB21: [Func_V; 9] = callback_table! { nonnull Func_V;
     locret_A6CB20, Ridley_CBC0, Ridley_Func_71, Ridley_Func_72, Ridley_CBC7, Ridley_CBCE,
     Ridley_Func_73, Ridley_Func_74, Ridley_CBD5,
@@ -3876,7 +3876,7 @@ pub unsafe fn Ridley_Func_129(game: &mut Game) {
         }
     }
 }
-pub unsafe fn Ridley_E90C(k: u16, jp: EnemyScript, a: u16, game: &mut Game) -> EnemyScript {
+pub unsafe fn Ridley_E90C(_k: u16, jp: EnemyScript, a: u16, game: &mut Game) -> EnemyScript {
     word!(game.cinematic_var9 = a);
     let E: i32 = 0;
     SpawnEprojWithRoomGfx(0x9642, slot!(game, Enemy_Ridley[E].var_10), game);
@@ -4535,7 +4535,7 @@ crate::game::callback_dispatch! {
 crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10918694] FakeKraid_Instr_2 [jp] {
         let E: i32 = word!(game.cur_enemy_index) as i32;
         if slot!(game, Enemy_FakeKraid[E].var_E) != 0 {
@@ -4557,6 +4557,7 @@ crate::game::callback_dispatch! {
             slot!(game, Enemy_FakeKraid[E].var_C = 4);
         }
     };
+    @functions [pub unsafe fn (_k: u16, _jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10918772] FakeKraid_Instr_1 [] {
         let E: i32 = word!(game.cur_enemy_index) as i32;
         if slot!(game, Enemy_FakeKraid[E].var_E) != 0 {
@@ -4580,15 +4581,17 @@ crate::game::callback_dispatch! {
             EnemyScript::jump(addr_kFakeKraid_Ilist_9A2A as u16)
         }
     };
+    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10918834] FakeKraid_Instr_3 [jp] {
         if u16::from(actor_api::current_outside_screen(&Runtime::new(game))) == 0 {
             QueueSfx2_Max6(0x16, game);
         }
     };
+    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10918852] FakeKraid_Instr_4 [jp] { FakeKraid_InstrHelper_45(k, 0, 0xfffc, game); };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10918914] FakeKraid_Instr_5 [jp] { FakeKraid_InstrHelper_45(k, 8, 4, game); };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10937534] Ridley_Instr_5 [jp] {
         slot!(game, Enemy_Ridley[0].var_0F = 89);
         QueueSfx2_Max6(0x59, game);
@@ -4660,7 +4663,7 @@ crate::game::callback_dispatch! {
         slot!(game, Enemy_Ridley[E].var_19 = Math_MultBySin(0x500, r18));
         slot!(game, Enemy_Ridley[E].var_1A = Math_MultByCos(0x500, r18));
     };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     @prefix { let E: i32 = 0; };
     [10938729]
     Ridley_Instr_15 [jp] {  slot!(game, Enemy_Ridley[E].var_A = (0xa6a6afi32) as u16); slot!(game, Enemy_Ridley[E].var_C = -352i32 as u16); };

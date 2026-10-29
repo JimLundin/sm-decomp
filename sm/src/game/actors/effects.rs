@@ -7,7 +7,7 @@ use super::{
 };
 use crate::game::enemy_script::EnemyScript;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum ActorAssertion {
+pub(in crate::game) enum ActorAssertion {
     AnimationInstructionHighBit,
     DrawingQueueAddress,
 }

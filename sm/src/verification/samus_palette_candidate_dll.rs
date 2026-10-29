@@ -21,7 +21,7 @@ pub unsafe extern "C" fn sm_verify_samus_palette_candidate(
                 .to_str()
                 .map_err(|error| error.to_string())?;
             let original = std::fs::read(path).map_err(|error| error.to_string())?;
-            let header = match original.len() % 0x8000 {
+            let _header = match original.len() % 0x8000 {
                 0 => 0,
                 0x200 => 0x200,
                 _ => return Err("unsupported original ROM file length".to_owned()),

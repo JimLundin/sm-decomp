@@ -27,7 +27,7 @@ pub(super) enum ActorVisualSelection {
     },
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(super) enum UnresolvedActorVisual {
+pub(in crate::game) enum UnresolvedActorVisual {
     UnknownPose,
     UndeclaredPart { pose: PoseId, part: usize },
     IncompatibleVisualForm,
@@ -76,7 +76,7 @@ pub(crate) struct ActorSceneRecord {
     pub order: u64,
     pub palette: ActorPaletteMode,
 }
-pub(super) struct ActorDrawRequest {
+pub(in crate::game) struct ActorDrawRequest {
     pub(super) visual: ActorVisualSelection,
     pub(super) position: Point,
     pub(super) palette: u16,
@@ -84,7 +84,7 @@ pub(super) struct ActorDrawRequest {
     pub(super) palette_mode: ActorPaletteMode,
     pub(super) mode: ActorDrawMode,
 }
-pub(super) enum ActorTilemapSource {
+pub(in crate::game) enum ActorTilemapSource {
     Compatibility {
         bank: u8,
         address: u16,
@@ -97,10 +97,10 @@ pub(super) enum ActorTilemapSource {
         address: u16,
     },
 }
-pub(super) struct ActorTileChunkSource {
+pub(in crate::game) struct ActorTileChunkSource {
     pub(super) record: ActorLiveRecord,
 }
-pub(super) struct ActorTileDestination(pub(super) u16);
+pub(in crate::game) struct ActorTileDestination(pub(super) u16);
 
 pub(super) fn select_visual(
     world: &crate::game::room_entry::world::WorldBinding,

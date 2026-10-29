@@ -19,10 +19,9 @@ bounded source, review and qualification run on Windows.
 
 ### Current publication and acceptance
 
-DSP93 is published as **170bc535**; [PLAN](PLAN.md#current-work-and-limits)
-holds the active cycle and measured totals. Full Session/backend independence,
-physical device variants and size acceptance remain open. Preserve original
-qualification attribution; no accepted build/replay is repeated for reporting.
+SPC/owned PCM source **120322cc** is qualified; PLAN holds current totals.
+Release requires the exact strict zero-warning library/DLL/frontend build, actual121 units and genuine final-codec captures/rows. Historical warning-accepting qualifications remain preserved.
+Full Session/backend/device and size acceptance remain open.
 
 Completed room/renderer/message/Scene/delivery reports are in the
 [frozen history](https://github.com/JimLundin/sm-decomp/blob/170bc5351c64f0846bbcb7b4714064a7230db153/docs/REVIEW.md#current-publication-and-acceptance):
@@ -135,10 +134,11 @@ Preserve live jobs/frozen sources and send minimal actual results before prose.
 Drain qualified code to main at the next safe boundary; documentation ACKs and
 CI observation never gate publication or independent implementation.
 
-The primary alone reads and answers Jim's #6 at work boundaries. Follow
-[AGENTS](../AGENTS.md): lead with the result, identify owner and next action,
-show concise spaced facts and keep raw transport in details. Task issues are
-retired; retain source/review/qualification records in repository/owned artifacts.
+The primary keeps the canonical first report in Jim's #6 current after every
+commit: graphical measured project state and the latest reply under PLAN. Mark
+pending checks honestly; keep exact proof in repository/owned records. Preserve
+answered user comments before authorized retirement and retain the report. Task
+issues remain retired; concise direct handoffs keep work supplied during CI.
 
 Measure each cycle's actual source/review/build/capture/replay/publication time,
 queue/handoff gaps and net deltas. Preserve original handles and exact attribution;
@@ -146,7 +146,9 @@ cached refs/mailbox observations do not prove push time. Correct measured stalls
 do not repeat accepted campaigns for timing or claim unmeasured speedups.
 Pages, progress images, treemaps and the codebase map are retired. Keep commit
 messages concise under PLAN; retain exact metrics/proofs separately. Docs updates
-travel with code. Preserve other workers' source/caches/locks and all fidelity gates.
+travel with code. Current qualification requires compiler warnings as errors on
+every real Rust path; historical warning-bearing results are not strict-lint proof.
+Preserve other workers' source/caches/locks and all fidelity gates.
 
 ### Size and final acceptance
 

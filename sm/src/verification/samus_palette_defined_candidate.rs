@@ -4,7 +4,6 @@ use super::samus_defined_cases::{self, Operation};
 use crate::{
     game::{
         samus_palette as core,
-        session_access::SessionAccess,
         session_runtime::Runtime,
         visual_state::{PaletteBuffer, PaletteCarry},
     },

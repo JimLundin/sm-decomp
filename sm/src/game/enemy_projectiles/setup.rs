@@ -913,7 +913,7 @@ pub(super) fn EprojInit_CeresElevatorPlatform(j: u16, ctx: &mut impl Host) {
     sub_86A301(j, ctx);
 }
 
-pub(super) fn EprojPreInstr_PrePhantomRoom(j: u16, ctx: &mut impl Host) {
+pub(super) fn EprojPreInstr_PrePhantomRoom(_j: u16, ctx: &mut impl Host) {
     {
         let value = 0;
         ctx.set_bg2_y_scroll(value);

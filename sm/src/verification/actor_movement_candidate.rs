@@ -2,7 +2,7 @@
 #![forbid(unsafe_code)]
 use super::{
     access::{AccessMode, ActorAccess, ActorKey},
-    api::{MovementResult, SlopePolicy, SolidContact, VerticalProbeEdge},
+    api::{MovementResult, SlopePolicy, VerticalProbeEdge},
     contacts,
     effects::ActorHost,
     movement, queries,

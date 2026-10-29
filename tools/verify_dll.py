@@ -269,8 +269,13 @@ def build(root, rustc, use_cargo=None, frontend=False):
         return dll
     incremental = os.environ.get("CARGO_INCREMENTAL") != "0"
     # Retain 16 codegen units; incremental compilation otherwise defaults to 256.
+    flags = os.environ.get("CARGO_ENCODED_RUSTFLAGS")
+    if flags is None:
+        flags = os.environ.get("RUSTFLAGS", "").split()
+    else:
+        flags = flags.split("\x1f") if flags else []
     common = [rustc, "--edition=2024", "-C", "opt-level=3",
-              "-C", "codegen-units=16", "-A", "warnings"]
+              "-C", "codegen-units=16", *flags, "-D", "warnings"]
     common += [arg for path in os.environ.get("LIBRARY_PATH", "").split(os.pathsep)
                if path for arg in ("-L", f"native={path}")]
     sysroot = Path(subprocess.check_output(

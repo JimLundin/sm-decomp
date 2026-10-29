@@ -17,7 +17,7 @@ pub(super) fn run() -> i32 {
     macro_rules! cases {
             ($($test:ident),+ $(,)?) => { [$( (stringify!($test), $test as fn()), )+] };
         }
-    let tests: [(&str, fn()); 100] = cases![
+    let tests: [(&str, fn()); 121] = cases![
         prepared_message_pixels_delay_queue_and_checkpoint,
         prepared_message_rejects_changed_content_and_resets,
         independently_authored_raster_pixels_and_prefixes,
@@ -118,6 +118,27 @@ pub(super) fn run() -> i32 {
         apu_timers_preserve_restored_rollover_read_clear_and_enable_phase,
         apu_bus_preserves_boot_ports_ram_shadow_and_masked_dsp_history,
         apu_callback_failures_keep_history_cycle_and_reset_prefixes,
+        spc_native_cold_matrix_00_through_3f,
+        spc_native_cold_matrix_40_through_7f,
+        spc_native_cold_matrix_80_through_bf,
+        spc_native_cold_matrix_c0_through_ff,
+        spc_reset_stop_and_fetch_failure_keep_native_prefixes,
+        spc_alu_literals_cover_signed_carry_overflow_and_memory_order,
+        spc_shift_literals_preserve_memory_then_flags_and_accumulator_results,
+        spc_word_literals_cover_native_half_carry_and_page_wrapped_words,
+        spc_division_bcd_and_multiply_have_literal_native_results,
+        spc_branch_and_direct_bits_keep_native_predicates_cycles_and_read_order,
+        spc_absolute_bits_have_literal_carry_and_write_results,
+        spc_calls_and_stack_keep_literal_vector_order_and_wrap,
+        spc_indirect_moves_and_indexed_jumps_keep_literal_bus_addresses,
+        spc_bus_failures_preserve_exact_native_register_and_memory_prefixes,
+        spc_brk_and_reti_keep_literal_flags_and_pull_order,
+        spc_indexed_pointer_and_jump_reads_wrap_before_bus_access,
+        spc_stack_index_and_dbnz_bus_failures_preserve_native_prefixes,
+        sample_delivery_lifecycle_preserves_missing_pcm_zero_length_and_prepare_failures,
+        sample_delivery_byte_cursor_and_skipped_refills_keep_literal_pcm_and_cadence,
+        sample_delivery_s16lsb_volumes_and_odd_cursor_have_literal_ordered_bytes,
+        sample_delivery_writer_and_refill_failures_keep_completed_chunk_prefixes,
     ];
     let mut failed = 0usize;
     for (name, test) in &tests {
@@ -7521,4 +7542,1568 @@ fn apu_callback_failures_keep_history_cycle_and_reset_prefixes() {
     assert_eq!(apu.history.val, history.val);
     assert_eq!((apu.pad, apu.snapshot_padding0), ([0x22; 6], [0x11; 2]));
     assert!((0..65536).all(|i| ram.read_at(i) == 0));
+}
+
+// Movies do not enumerate cold native-SPC opcodes 00..3f with independent cycle/PC/PSW observations.
+#[cfg_attr(test, test)]
+fn spc_native_cold_matrix_00_through_3f() {
+    use sm::snes::spc::{BusOperation::*, Spc};
+    let rows = [
+        (2, 0x0201, 0x00),
+        (8, 0x0000, 0x00),
+        (4, 0x0202, 0x00),
+        (5, 0x0203, 0x00),
+        (3, 0x0202, 0x02),
+        (4, 0x0203, 0x02),
+        (3, 0x0201, 0x02),
+        (6, 0x0202, 0x02),
+        (2, 0x0202, 0x02),
+        (6, 0x0203, 0x02),
+        (5, 0x0203, 0x00),
+        (4, 0x0202, 0x02),
+        (5, 0x0203, 0x02),
+        (4, 0x0201, 0x00),
+        (6, 0x0203, 0x02),
+        (8, 0x0000, 0x10),
+        (4, 0x0202, 0x00),
+        (8, 0x0000, 0x00),
+        (4, 0x0202, 0x00),
+        (7, 0x0203, 0x00),
+        (4, 0x0202, 0x02),
+        (5, 0x0203, 0x02),
+        (5, 0x0203, 0x02),
+        (6, 0x0202, 0x02),
+        (5, 0x0203, 0x02),
+        (5, 0x0201, 0x02),
+        (6, 0x0202, 0x80),
+        (5, 0x0202, 0x02),
+        (2, 0x0201, 0x02),
+        (2, 0x0201, 0x80),
+        (4, 0x0203, 0x03),
+        (6, 0x0000, 0x00),
+        (2, 0x0201, 0x00),
+        (8, 0x0000, 0x00),
+        (4, 0x0202, 0x00),
+        (5, 0x0203, 0x00),
+        (3, 0x0202, 0x02),
+        (4, 0x0203, 0x02),
+        (3, 0x0201, 0x02),
+        (6, 0x0202, 0x02),
+        (2, 0x0202, 0x02),
+        (6, 0x0203, 0x02),
+        (5, 0x0203, 0x01),
+        (4, 0x0202, 0x02),
+        (5, 0x0203, 0x02),
+        (4, 0x0201, 0x00),
+        (5, 0x0203, 0x00),
+        (4, 0x0202, 0x00),
+        (2, 0x0202, 0x00),
+        (8, 0x0000, 0x00),
+        (4, 0x0202, 0x00),
+        (7, 0x0203, 0x00),
+        (4, 0x0202, 0x02),
+        (5, 0x0203, 0x02),
+        (5, 0x0203, 0x02),
+        (6, 0x0202, 0x02),
+        (5, 0x0203, 0x02),
+        (5, 0x0201, 0x02),
+        (6, 0x0202, 0x00),
+        (5, 0x0202, 0x02),
+        (2, 0x0201, 0x02),
+        (2, 0x0201, 0x00),
+        (3, 0x0202, 0x03),
+        (8, 0x0000, 0x00),
+    ];
+    for (index, (expected_cycles, expected_pc, psw)) in rows.into_iter().enumerate() {
+        let mut cpu = Spc::new();
+        cpu.pc = 0x0200;
+        cpu.sp = 0xff;
+        let ram = sm::apu_ram::ApuRam::new();
+        ram.write(0x0200, index as u8 + 0x00);
+        let cycles = cpu.run_opcode(|operation| match operation {
+            Read(a) => ram.read(a),
+            Write(a, v) => {
+                ram.write(a, v);
+                0
+            }
+        });
+        assert_eq!(
+            (cycles, cpu.cyclesUsed, cpu.pc),
+            (expected_cycles, expected_cycles, expected_pc)
+        );
+        assert_eq!(
+            [cpu.n, cpu.v, cpu.p, cpu.b, cpu.h, cpu.i, cpu.z, cpu.c],
+            [0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1].map(|bit| psw & bit != 0)
+        );
+    }
+}
+
+// Movies do not enumerate cold native-SPC opcodes 40..7f with independent cycle/PC/PSW observations.
+#[cfg_attr(test, test)]
+fn spc_native_cold_matrix_40_through_7f() {
+    use sm::snes::spc::{BusOperation::*, Spc};
+    let rows = [
+        (2, 0x0201, 0x20),
+        (8, 0x0000, 0x00),
+        (4, 0x0202, 0x00),
+        (5, 0x0203, 0x00),
+        (3, 0x0202, 0x02),
+        (4, 0x0203, 0x02),
+        (3, 0x0201, 0x02),
+        (6, 0x0202, 0x02),
+        (2, 0x0202, 0x02),
+        (6, 0x0203, 0x02),
+        (4, 0x0203, 0x00),
+        (4, 0x0202, 0x02),
+        (5, 0x0203, 0x02),
+        (4, 0x0201, 0x00),
+        (6, 0x0203, 0x02),
+        (6, 0xff00, 0x00),
+        (4, 0x0202, 0x00),
+        (8, 0x0000, 0x00),
+        (4, 0x0202, 0x00),
+        (7, 0x0203, 0x00),
+        (4, 0x0202, 0x02),
+        (5, 0x0203, 0x02),
+        (5, 0x0203, 0x02),
+        (6, 0x0202, 0x02),
+        (5, 0x0203, 0x02),
+        (5, 0x0201, 0x02),
+        (4, 0x0202, 0x03),
+        (5, 0x0202, 0x02),
+        (2, 0x0201, 0x02),
+        (2, 0x0201, 0x02),
+        (4, 0x0203, 0x03),
+        (3, 0x0000, 0x00),
+        (2, 0x0201, 0x00),
+        (8, 0x0000, 0x00),
+        (4, 0x0202, 0x00),
+        (5, 0x0203, 0x00),
+        (3, 0x0202, 0x03),
+        (4, 0x0203, 0x03),
+        (3, 0x0201, 0x03),
+        (6, 0x0202, 0x03),
+        (2, 0x0202, 0x03),
+        (6, 0x0203, 0x03),
+        (4, 0x0203, 0x00),
+        (4, 0x0202, 0x02),
+        (5, 0x0203, 0x02),
+        (4, 0x0201, 0x00),
+        (7, 0x0203, 0x00),
+        (5, 0x0000, 0x00),
+        (2, 0x0202, 0x00),
+        (8, 0x0000, 0x00),
+        (4, 0x0202, 0x00),
+        (7, 0x0203, 0x00),
+        (4, 0x0202, 0x03),
+        (5, 0x0203, 0x03),
+        (5, 0x0203, 0x03),
+        (6, 0x0202, 0x03),
+        (5, 0x0203, 0x03),
+        (5, 0x0201, 0x03),
+        (5, 0x0202, 0x02),
+        (5, 0x0202, 0x02),
+        (2, 0x0201, 0x02),
+        (2, 0x0201, 0x02),
+        (3, 0x0202, 0x03),
+        (6, 0x0000, 0x00),
+    ];
+    for (index, (expected_cycles, expected_pc, psw)) in rows.into_iter().enumerate() {
+        let mut cpu = Spc::new();
+        cpu.pc = 0x0200;
+        cpu.sp = 0xff;
+        let ram = sm::apu_ram::ApuRam::new();
+        ram.write(0x0200, index as u8 + 0x40);
+        let cycles = cpu.run_opcode(|operation| match operation {
+            Read(a) => ram.read(a),
+            Write(a, v) => {
+                ram.write(a, v);
+                0
+            }
+        });
+        assert_eq!(
+            (cycles, cpu.cyclesUsed, cpu.pc),
+            (expected_cycles, expected_cycles, expected_pc)
+        );
+        assert_eq!(
+            [cpu.n, cpu.v, cpu.p, cpu.b, cpu.h, cpu.i, cpu.z, cpu.c],
+            [0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1].map(|bit| psw & bit != 0)
+        );
+    }
+}
+
+// Movies do not enumerate cold native-SPC opcodes 80..bf with independent cycle/PC/PSW observations.
+#[cfg_attr(test, test)]
+fn spc_native_cold_matrix_80_through_bf() {
+    use sm::snes::spc::{BusOperation::*, Spc};
+    let rows = [
+        (2, 0x0201, 0x01),
+        (8, 0x0000, 0x00),
+        (4, 0x0202, 0x00),
+        (5, 0x0203, 0x00),
+        (3, 0x0202, 0x02),
+        (4, 0x0203, 0x02),
+        (3, 0x0201, 0x02),
+        (6, 0x0202, 0x02),
+        (2, 0x0202, 0x02),
+        (6, 0x0203, 0x02),
+        (5, 0x0203, 0x00),
+        (4, 0x0202, 0x80),
+        (5, 0x0203, 0x80),
+        (2, 0x0202, 0x02),
+        (4, 0x0201, 0x00),
+        (5, 0x0203, 0x00),
+        (4, 0x0202, 0x00),
+        (8, 0x0000, 0x00),
+        (4, 0x0202, 0x00),
+        (7, 0x0203, 0x00),
+        (4, 0x0202, 0x02),
+        (5, 0x0203, 0x02),
+        (5, 0x0203, 0x02),
+        (6, 0x0202, 0x02),
+        (5, 0x0203, 0x02),
+        (5, 0x0201, 0x02),
+        (5, 0x0202, 0x0b),
+        (5, 0x0202, 0x80),
+        (2, 0x0201, 0x80),
+        (2, 0x0201, 0x80),
+        (12, 0x0201, 0xc8),
+        (5, 0x0201, 0x02),
+        (2, 0x0201, 0x04),
+        (8, 0x0000, 0x00),
+        (4, 0x0202, 0x00),
+        (5, 0x0203, 0x00),
+        (3, 0x0202, 0x80),
+        (4, 0x0203, 0x80),
+        (3, 0x0201, 0x80),
+        (6, 0x0202, 0x80),
+        (2, 0x0202, 0x80),
+        (6, 0x0203, 0x80),
+        (4, 0x0203, 0x00),
+        (4, 0x0202, 0x00),
+        (5, 0x0203, 0x00),
+        (2, 0x0202, 0x03),
+        (4, 0x0201, 0x00),
+        (4, 0x0201, 0x00),
+        (2, 0x0202, 0x00),
+        (8, 0x0000, 0x00),
+        (4, 0x0202, 0x00),
+        (7, 0x0203, 0x00),
+        (4, 0x0202, 0x80),
+        (5, 0x0203, 0x80),
+        (5, 0x0203, 0x80),
+        (6, 0x0202, 0x80),
+        (5, 0x0203, 0x80),
+        (5, 0x0201, 0x80),
+        (5, 0x0202, 0x02),
+        (5, 0x0202, 0x00),
+        (2, 0x0201, 0x00),
+        (2, 0x0201, 0x00),
+        (3, 0x0201, 0x80),
+        (4, 0x0201, 0x02),
+    ];
+    for (index, (expected_cycles, expected_pc, psw)) in rows.into_iter().enumerate() {
+        let mut cpu = Spc::new();
+        cpu.pc = 0x0200;
+        cpu.sp = 0xff;
+        let ram = sm::apu_ram::ApuRam::new();
+        ram.write(0x0200, index as u8 + 0x80);
+        let cycles = cpu.run_opcode(|operation| match operation {
+            Read(a) => ram.read(a),
+            Write(a, v) => {
+                ram.write(a, v);
+                0
+            }
+        });
+        assert_eq!(
+            (cycles, cpu.cyclesUsed, cpu.pc),
+            (expected_cycles, expected_cycles, expected_pc)
+        );
+        assert_eq!(
+            [cpu.n, cpu.v, cpu.p, cpu.b, cpu.h, cpu.i, cpu.z, cpu.c],
+            [0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1].map(|bit| psw & bit != 0)
+        );
+    }
+}
+
+// Movies do not enumerate cold native-SPC opcodes c0..ff with independent cycle/PC/PSW observations.
+#[cfg_attr(test, test)]
+fn spc_native_cold_matrix_c0_through_ff() {
+    use sm::snes::spc::{BusOperation::*, Spc};
+    let rows = [
+        (2, 0x0201, 0x00),
+        (8, 0x0000, 0x00),
+        (4, 0x0202, 0x00),
+        (5, 0x0203, 0x00),
+        (4, 0x0202, 0x00),
+        (5, 0x0203, 0x00),
+        (4, 0x0201, 0x00),
+        (7, 0x0202, 0x00),
+        (2, 0x0202, 0x03),
+        (5, 0x0203, 0x00),
+        (6, 0x0203, 0x00),
+        (4, 0x0202, 0x00),
+        (5, 0x0203, 0x00),
+        (2, 0x0202, 0x02),
+        (4, 0x0201, 0x00),
+        (9, 0x0201, 0x02),
+        (4, 0x0202, 0x00),
+        (8, 0x0000, 0x00),
+        (4, 0x0202, 0x00),
+        (7, 0x0203, 0x00),
+        (5, 0x0202, 0x00),
+        (6, 0x0203, 0x00),
+        (6, 0x0203, 0x00),
+        (7, 0x0202, 0x00),
+        (4, 0x0202, 0x00),
+        (5, 0x0202, 0x00),
+        (5, 0x0202, 0x00),
+        (5, 0x0202, 0x00),
+        (2, 0x0201, 0x80),
+        (2, 0x0201, 0x02),
+        (6, 0x0203, 0x00),
+        (3, 0x0201, 0x02),
+        (2, 0x0201, 0x00),
+        (8, 0x0000, 0x00),
+        (4, 0x0202, 0x00),
+        (5, 0x0203, 0x00),
+        (3, 0x0202, 0x02),
+        (4, 0x0203, 0x02),
+        (3, 0x0201, 0x02),
+        (6, 0x0202, 0x02),
+        (2, 0x0202, 0x02),
+        (4, 0x0203, 0x02),
+        (5, 0x0203, 0x00),
+        (3, 0x0202, 0x02),
+        (4, 0x0203, 0x02),
+        (3, 0x0201, 0x01),
+        (4, 0x0201, 0x00),
+        (3, 0x0201, 0x00),
+        (2, 0x0202, 0x00),
+        (8, 0x0000, 0x00),
+        (4, 0x0202, 0x00),
+        (7, 0x0203, 0x00),
+        (4, 0x0202, 0x02),
+        (5, 0x0203, 0x02),
+        (5, 0x0203, 0x02),
+        (6, 0x0202, 0x02),
+        (3, 0x0202, 0x02),
+        (4, 0x0202, 0x02),
+        (5, 0x0203, 0x00),
+        (4, 0x0202, 0x02),
+        (2, 0x0201, 0x00),
+        (2, 0x0201, 0x02),
+        (6, 0x0202, 0x00),
+        (3, 0x0201, 0x00),
+    ];
+    for (index, (expected_cycles, expected_pc, psw)) in rows.into_iter().enumerate() {
+        let mut cpu = Spc::new();
+        cpu.pc = 0x0200;
+        cpu.sp = 0xff;
+        let ram = sm::apu_ram::ApuRam::new();
+        ram.write(0x0200, index as u8 + 0xc0);
+        let cycles = cpu.run_opcode(|operation| match operation {
+            Read(a) => ram.read(a),
+            Write(a, v) => {
+                ram.write(a, v);
+                0
+            }
+        });
+        assert_eq!(
+            (cycles, cpu.cyclesUsed, cpu.pc),
+            (expected_cycles, expected_cycles, expected_pc)
+        );
+        assert_eq!(
+            [cpu.n, cpu.v, cpu.p, cpu.b, cpu.h, cpu.i, cpu.z, cpu.c],
+            [0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1].map(|bit| psw & bit != 0)
+        );
+    }
+}
+
+// Movies cannot fail native SPC reset/vector/fetch reads or inspect stopped-return versus stored cycles.
+#[cfg_attr(test, test)]
+fn spc_reset_stop_and_fetch_failure_keep_native_prefixes() {
+    use sm::snes::spc::{BusOperation::*, Spc};
+    use std::panic::{AssertUnwindSafe as unwind, catch_unwind as catch};
+    let flags = |s: &Spc| [s.c, s.z, s.v, s.n, s.i, s.h, s.p, s.b, s.stopped];
+    let mut cpu = Spc::new();
+    cpu.a = 55;
+    cpu.x = 66;
+    cpu.y = 77;
+    cpu.sp = 88;
+    cpu.pc = 0xbeef;
+    cpu.c = true;
+    cpu.z = true;
+    cpu.v = true;
+    cpu.n = true;
+    cpu.i = true;
+    cpu.h = true;
+    cpu.p = true;
+    cpu.b = true;
+    cpu.stopped = true;
+    cpu.cyclesUsed = 99;
+    let mut reads = Vec::new();
+    assert!(
+        catch(unwind(|| cpu.reset(|op| {
+            reads.push(op);
+            match op {
+                Read(0xfffe) => 0x34,
+                _ => panic!("high vector"),
+            }
+        })))
+        .is_err()
+    );
+    assert_eq!(reads, [Read(0xfffe), Read(0xffff)]);
+    assert_eq!((cpu.a, cpu.x, cpu.y, cpu.sp, cpu.pc), (0, 0, 0, 0, 0xbeef));
+    assert_eq!(flags(&cpu), [true; 9]);
+    assert_eq!(cpu.cyclesUsed, 99);
+    let ram = sm::apu_ram::ApuRam::new();
+    let mut apu = sm::snes::apu::ApuRegisters::new();
+    apu.begin_reset();
+    reads.clear();
+    cpu.reset(|op| {
+        reads.push(op);
+        match op {
+            Read(a) => apu.read(&ram, a, |_| panic!()),
+            Write(_, _) => panic!(),
+        }
+    });
+    assert_eq!(reads, [Read(0xfffe), Read(0xffff)]);
+    assert_eq!((cpu.pc, cpu.cyclesUsed), (0xffc0, 0));
+    assert_eq!(flags(&cpu), [false; 9]);
+    for opcode in [0xef, 0xff] {
+        let mut cpu = Spc::new();
+        cpu.pc = 0x0200;
+        ram.write(0x0200, opcode);
+        assert_eq!(
+            cpu.run_opcode(|op| match op {
+                Read(a) => ram.read(a),
+                _ => panic!(),
+            }),
+            3
+        );
+        assert!(cpu.stopped);
+        assert_eq!(cpu.pc, 0x0201);
+        assert_eq!(
+            cpu.run_opcode(|_| panic!("stopped performs no bus read")),
+            1
+        );
+        assert_eq!((cpu.pc, cpu.cyclesUsed), (0x0201, 0));
+    }
+    cpu.stopped = false;
+    cpu.pc = 0xffff;
+    cpu.cyclesUsed = 99;
+    assert!(catch(unwind(|| cpu.run_opcode(|_| panic!("opcode fetch")))).is_err());
+    assert_eq!((cpu.pc, cpu.cyclesUsed), (0, 0));
+}
+
+// Movies do not supply independent native ADC/SBC/logic flags or ordered two-memory operand observations.
+#[cfg_attr(test, test)]
+fn spc_alu_literals_cover_signed_carry_overflow_and_memory_order() {
+    use sm::snes::spc::{BusOperation::*, Spc};
+    let rows = [
+        (0x08, 0x80, 0x7f, false, 0xff, 0xc8),
+        (0x28, 0x80, 0x7f, false, 0, 0x4a),
+        (0x48, 0x80, 0x7f, false, 0xff, 0xc8),
+        (0x68, 0x80, 0x7f, false, 0x80, 0x49),
+        (0x88, 0x80, 0x7f, false, 0xff, 0x80),
+        (0xa8, 0x80, 0x7f, false, 0, 0x43),
+        (0x88, 0x7f, 1, false, 0x80, 0xc8),
+        (0x88, 0xff, 0, true, 0, 0x0b),
+        (0xa8, 0, 1, true, 0xff, 0x80),
+        (0xa8, 0x80, 1, true, 0x7f, 0x41),
+        (0x68, 0x7f, 0x7f, false, 0x7f, 0x4b),
+    ];
+    for (opcode, a, value, carry, expected, psw) in rows {
+        let mut cpu = Spc::new();
+        cpu.pc = 0x0200;
+        cpu.a = a;
+        cpu.c = carry;
+        cpu.v = true;
+        cpu.h = true;
+        let ram = sm::apu_ram::ApuRam::new();
+        ram.write(0x0200, opcode);
+        ram.write(0x0201, value);
+        let mut trace = Vec::new();
+        assert_eq!(
+            cpu.run_opcode(|op| {
+                trace.push(op);
+                match op {
+                    Read(a) => ram.read(a),
+                    _ => panic!(),
+                }
+            }),
+            2
+        );
+        assert_eq!((cpu.a, cpu.pc), (expected, 0x0202));
+        assert_eq!(trace, [Read(0x0200), Read(0x0201)]);
+        assert_eq!(
+            [cpu.n, cpu.v, cpu.p, cpu.b, cpu.h, cpu.i, cpu.z, cpu.c],
+            [0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1].map(|b| psw & b != 0)
+        );
+    }
+    let mut cpu = Spc::new();
+    cpu.pc = 0x0200;
+    let ram = sm::apu_ram::ApuRam::new();
+    for (a, v) in [
+        (0x0200, 0x89),
+        (0x0201, 0x10),
+        (0x0202, 0x20),
+        (0x10, 0xff),
+        (0x20, 1),
+    ] {
+        ram.write(a, v);
+    }
+    let mut trace = Vec::new();
+    assert_eq!(
+        cpu.run_opcode(|op| {
+            trace.push(op);
+            match op {
+                Read(a) => ram.read(a),
+                Write(a, v) => {
+                    ram.write(a, v);
+                    0
+                }
+            }
+        }),
+        6
+    );
+    assert_eq!(
+        trace,
+        [
+            Read(0x0200),
+            Read(0x0201),
+            Read(0x0202),
+            Read(0x10),
+            Read(0x20),
+            Write(0x20, 0)
+        ]
+    );
+    assert_eq!(
+        (ram.read(0x20), cpu.c, cpu.h, cpu.z, cpu.v),
+        (0, true, true, true, false)
+    );
+}
+
+// Movies cannot independently establish nonzero native shift/rotate/decrement flags and write bus order.
+#[cfg_attr(test, test)]
+fn spc_shift_literals_preserve_memory_then_flags_and_accumulator_results() {
+    use sm::snes::spc::{BusOperation::*, Spc};
+    for (memory_op, accumulator_op, value, carry, expected, psw) in [
+        (0x0b, 0x1c, 0x80, false, 0, 3),
+        (0x2b, 0x3c, 0x80, true, 1, 1),
+        (0x4b, 0x5c, 1, false, 0, 3),
+        (0x6b, 0x7c, 1, true, 0x80, 0x81),
+        (0x8b, 0x9c, 0, true, 0xff, 0x81),
+        (0xab, 0xbc, 0xff, true, 0, 3),
+    ] {
+        let ram = sm::apu_ram::ApuRam::new();
+        ram.write(0x0200, memory_op);
+        ram.write(0x0201, 0x10);
+        ram.write(0x10, value);
+        let mut cpu = Spc::new();
+        cpu.pc = 0x0200;
+        cpu.a = 55;
+        cpu.c = carry;
+        let mut trace = Vec::new();
+        assert_eq!(
+            cpu.run_opcode(|op| {
+                trace.push(op);
+                match op {
+                    Read(a) => ram.read(a),
+                    Write(a, v) => {
+                        ram.write(a, v);
+                        0
+                    }
+                }
+            }),
+            4
+        );
+        assert_eq!(
+            trace,
+            [
+                Read(0x0200),
+                Read(0x0201),
+                Read(0x10),
+                Write(0x10, expected)
+            ]
+        );
+        assert_eq!((ram.read(0x10), cpu.a, cpu.pc), (expected, 55, 0x0202));
+        assert_eq!([cpu.n, cpu.z, cpu.c], [0x80, 2, 1].map(|b| psw & b != 0));
+        let mut cpu = Spc::new();
+        cpu.pc = 0x0200;
+        cpu.a = value;
+        cpu.c = carry;
+        ram.write(0x0200, accumulator_op);
+        assert_eq!(
+            cpu.run_opcode(|op| match op {
+                Read(0x0200) => accumulator_op,
+                _ => panic!(),
+            }),
+            2
+        );
+        assert_eq!((cpu.a, cpu.pc), (expected, 0x0201));
+        assert_eq!([cpu.n, cpu.z, cpu.c], [0x80, 2, 1].map(|b| psw & b != 0));
+    }
+}
+
+// Movies do not establish native word half-carry quirks or wrapped low/high writes independently.
+#[cfg_attr(test, test)]
+fn spc_word_literals_cover_native_half_carry_and_page_wrapped_words() {
+    use sm::snes::spc::{BusOperation::*, Spc};
+    for (opcode, ya, word, expected_ya, expected_word, psw, cycles) in [
+        (0x3a, 0x1234, 0xffff, 0x1234, 0, 0x4b, 6),
+        (0x1a, 0x1234, 0, 0x1234, 0xffff, 0xc9, 6),
+        (0x5a, 0x1000, 0x1000, 0x1000, 0x1000, 0x4b, 4),
+        (0x7a, 0x0fff, 0, 0x0fff, 0, 0x08, 5),
+        (0x7a, 0x7fff, 1, 0x8000, 1, 0xc8, 5),
+        (0x9a, 0, 0, 0, 0, 0x0b, 5),
+        (0x9a, 0, 1, 0xffff, 1, 0x80, 5),
+    ] {
+        let mut cpu = Spc::new();
+        cpu.pc = 0x0200;
+        cpu.p = true;
+        cpu.a = ya as u8;
+        cpu.y = (ya >> 8) as u8;
+        cpu.c = true;
+        cpu.v = true;
+        cpu.h = true;
+        let ram = sm::apu_ram::ApuRam::new();
+        ram.write(0x0200, opcode);
+        ram.write(0x0201, 0xff);
+        ram.write(0x01ff, word as u8);
+        ram.write(0x0100, (word >> 8) as u8);
+        let mut trace = Vec::new();
+        assert_eq!(
+            cpu.run_opcode(|op| {
+                trace.push(op);
+                match op {
+                    Read(a) => ram.read(a),
+                    Write(a, v) => {
+                        ram.write(a, v);
+                        0
+                    }
+                }
+            }),
+            cycles
+        );
+        assert_eq!(
+            &trace[..4],
+            &[Read(0x0200), Read(0x0201), Read(0x01ff), Read(0x0100)]
+        );
+        assert_eq!(
+            (cpu.a, cpu.y),
+            (expected_ya as u8, (expected_ya >> 8) as u8)
+        );
+        assert_eq!(
+            (ram.read(0x01ff), ram.read(0x0100)),
+            (expected_word as u8, (expected_word >> 8) as u8)
+        );
+        assert_eq!(
+            [cpu.n, cpu.v, cpu.h, cpu.z, cpu.c],
+            [0x80, 0x40, 8, 2, 1].map(|b| psw & b != 0)
+        );
+        if opcode == 0x1a || opcode == 0x3a {
+            assert_eq!(
+                &trace[4..],
+                &[
+                    Write(0x01ff, expected_word as u8),
+                    Write(0x0100, (expected_word >> 8) as u8)
+                ]
+            );
+        } else {
+            assert_eq!(trace.len(), 4);
+        }
+    }
+}
+
+// Movies do not supply independent native division-by-zero, overflow quotient, BCD or multiply flag observations.
+#[cfg_attr(test, test)]
+fn spc_division_bcd_and_multiply_have_literal_native_results() {
+    use sm::snes::spc::{BusOperation::*, Spc};
+    for (opcode, a, x, y, carry, half, expected_a, expected_y, psw, cycles) in [
+        (0x9e, 0x34, 0, 0x12, true, false, 0xff, 0x34, 0xc9, 12),
+        (0x9e, 0x34, 3, 0x12, true, false, 0x11, 1, 0x41, 12),
+        (0x9e, 0, 17, 1, true, false, 15, 1, 9, 12),
+        (0x9e, 20, 10, 0, true, false, 2, 0, 1, 12),
+        (0xcf, 0xff, 0, 0xff, true, false, 1, 0xfe, 0x81, 9),
+        (0xcf, 0, 0, 0xff, true, false, 0, 0, 3, 9),
+        (0xdf, 0x9a, 0, 0, false, false, 0, 0, 3, 3),
+        (0xdf, 0x15, 0, 0, false, true, 0x1b, 0, 8, 3),
+        (0xbe, 0, 0, 0, false, false, 0x9a, 0, 0x80, 3),
+        (0xbe, 0xa0, 0, 0, true, true, 0x40, 0, 8, 3),
+        (0xbe, 0, 0, 0, true, true, 0, 0, 0x0b, 3),
+        (0x9f, 0x8f, 0, 0, true, false, 0xf8, 0, 0x81, 5),
+    ] {
+        let mut cpu = Spc::new();
+        cpu.pc = 0x0200;
+        cpu.a = a;
+        cpu.x = x;
+        cpu.y = y;
+        cpu.c = carry;
+        cpu.h = half;
+        assert_eq!(
+            cpu.run_opcode(|op| match op {
+                Read(0x0200) => opcode,
+                _ => panic!(),
+            }),
+            cycles
+        );
+        assert_eq!(
+            (cpu.a, cpu.y, cpu.x, cpu.pc),
+            (expected_a, expected_y, x, 0x0201)
+        );
+        assert_eq!(
+            [cpu.n, cpu.v, cpu.h, cpu.z, cpu.c],
+            [0x80, 0x40, 8, 2, 1].map(|b| psw & b != 0)
+        );
+    }
+}
+
+// Movies cannot enumerate independent wrapped branch predicates and every nonzero direct-page bit selector.
+#[cfg_attr(test, test)]
+fn spc_branch_and_direct_bits_keep_native_predicates_cycles_and_read_order() {
+    use sm::snes::spc::{BusOperation::*, Spc};
+    for (opcode, when_false, when_true) in [
+        (0x10, true, false),
+        (0x30, false, true),
+        (0x50, true, false),
+        (0x70, false, true),
+        (0x90, true, false),
+        (0xb0, false, true),
+        (0xd0, true, false),
+        (0xf0, false, true),
+    ] {
+        for (flag, taken) in [(false, when_false), (true, when_true)] {
+            let mut cpu = Spc::new();
+            cpu.pc = 0xffff;
+            cpu.n = flag;
+            cpu.v = flag;
+            cpu.c = flag;
+            cpu.z = flag;
+            let mut trace = Vec::new();
+            let cycles = cpu.run_opcode(|op| {
+                trace.push(op);
+                match op {
+                    Read(0xffff) => opcode,
+                    Read(0) => 0xfc,
+                    _ => panic!(),
+                }
+            });
+            assert_eq!((cycles, cpu.pc), if taken { (4, 0xfffd) } else { (2, 1) });
+            assert_eq!(trace, [Read(0xffff), Read(0)]);
+            assert_eq!([cpu.n, cpu.v, cpu.c, cpu.z], [flag; 4]);
+        }
+    }
+    for (set, clear, bbs, bbr, mask) in [
+        (0x02, 0x12, 0x03, 0x13, 1),
+        (0x22, 0x32, 0x23, 0x33, 2),
+        (0x42, 0x52, 0x43, 0x53, 4),
+        (0x62, 0x72, 0x63, 0x73, 8),
+        (0x82, 0x92, 0x83, 0x93, 16),
+        (0xa2, 0xb2, 0xa3, 0xb3, 32),
+        (0xc2, 0xd2, 0xc3, 0xd3, 64),
+        (0xe2, 0xf2, 0xe3, 0xf3, 128),
+    ] {
+        let ram = sm::apu_ram::ApuRam::new();
+        ram.write(0x0201, 0xfe);
+        ram.write(0x0202, 0xfd);
+        ram.write(0x01fe, mask);
+        for (opcode, expected, cycles, pc) in [
+            (clear, 0, 4, 0x0202),
+            (set, mask, 4, 0x0202),
+            (bbs, mask, 7, 0x0200),
+            (bbr, mask, 5, 0x0203),
+        ] {
+            let mut cpu = Spc::new();
+            cpu.pc = 0x0200;
+            cpu.p = true;
+            cpu.c = true;
+            ram.write(0x0200, opcode);
+            let mut trace = Vec::new();
+            assert_eq!(
+                cpu.run_opcode(|op| {
+                    trace.push(op);
+                    match op {
+                        Read(a) => ram.read(a),
+                        Write(a, v) => {
+                            ram.write(a, v);
+                            0
+                        }
+                    }
+                }),
+                cycles
+            );
+            assert_eq!((cpu.pc, ram.read(0x01fe), cpu.c), (pc, expected, true));
+            if opcode == bbs || opcode == bbr {
+                assert_eq!(
+                    trace,
+                    [Read(0x0200), Read(0x0201), Read(0x01fe), Read(0x0202)]
+                );
+            }
+        }
+    }
+}
+
+// Movies cannot independently observe all encoded absolute-bit carry rules and memory write effects.
+#[cfg_attr(test, test)]
+fn spc_absolute_bits_have_literal_carry_and_write_results() {
+    use sm::snes::spc::{BusOperation::*, Spc};
+    for (opcode, carry, expected_c, expected_value, cycles) in [
+        (0x0a, false, true, 8, 5),
+        (0x2a, false, false, 8, 5),
+        (0x4a, true, true, 8, 4),
+        (0x6a, true, false, 8, 4),
+        (0x8a, true, false, 8, 5),
+        (0xaa, false, true, 8, 4),
+        (0xca, false, false, 0, 6),
+        (0xea, true, true, 0, 5),
+    ] {
+        let mut cpu = Spc::new();
+        cpu.pc = 0x0200;
+        cpu.c = carry;
+        let ram = sm::apu_ram::ApuRam::new();
+        for (a, v) in [(0x0200, opcode), (0x0201, 7), (0x0202, 0x60), (7, 8)] {
+            ram.write(a, v);
+        }
+        let mut trace = Vec::new();
+        assert_eq!(
+            cpu.run_opcode(|op| {
+                trace.push(op);
+                match op {
+                    Read(a) => ram.read(a),
+                    Write(a, v) => {
+                        ram.write(a, v);
+                        0
+                    }
+                }
+            }),
+            cycles
+        );
+        assert_eq!(
+            (cpu.c, ram.read(7), cpu.pc),
+            (expected_c, expected_value, 0x0203)
+        );
+        assert_eq!(
+            &trace[..4],
+            &[Read(0x0200), Read(0x0201), Read(0x0202), Read(7)]
+        );
+        if opcode == 0xca || opcode == 0xea {
+            assert_eq!(&trace[4..], &[Write(7, 0)]);
+        } else {
+            assert_eq!(trace.len(), 4);
+        }
+    }
+}
+
+// Movies cannot inspect independent TCALL/vector/stack traces or wrapped native CALL/BRK/RETI state.
+#[cfg_attr(test, test)]
+fn spc_calls_and_stack_keep_literal_vector_order_and_wrap() {
+    use sm::snes::spc::{BusOperation::*, Spc};
+    let run = |cpu: &mut Spc, ram: &sm::apu_ram::ApuRam| {
+        let mut trace = Vec::new();
+        let cycles = cpu.run_opcode(|op| {
+            trace.push(op);
+            match op {
+                Read(a) => ram.read(a),
+                Write(a, v) => {
+                    ram.write(a, v);
+                    0
+                }
+            }
+        });
+        (cycles, trace)
+    };
+    for (opcode, vector) in [
+        (0x01, 0xffde),
+        (0x11, 0xffdc),
+        (0x21, 0xffda),
+        (0x31, 0xffd8),
+        (0x41, 0xffd6),
+        (0x51, 0xffd4),
+        (0x61, 0xffd2),
+        (0x71, 0xffd0),
+        (0x81, 0xffce),
+        (0x91, 0xffcc),
+        (0xa1, 0xffca),
+        (0xb1, 0xffc8),
+        (0xc1, 0xffc6),
+        (0xd1, 0xffc4),
+        (0xe1, 0xffc2),
+        (0xf1, 0xffc0),
+    ] {
+        let mut cpu = Spc::new();
+        cpu.pc = 0x1234;
+        cpu.sp = 0;
+        let ram = sm::apu_ram::ApuRam::new();
+        ram.write(0x1234, opcode);
+        ram.write(vector, 0x78);
+        ram.write(vector + 1, 0x56);
+        let (cycles, trace) = run(&mut cpu, &ram);
+        assert_eq!((cycles, cpu.pc, cpu.sp), (8, 0x5678, 0xfe));
+        assert_eq!(
+            trace,
+            [
+                Read(0x1234),
+                Write(0x0100, 0x12),
+                Write(0x01ff, 0x35),
+                Read(vector),
+                Read(vector + 1)
+            ]
+        );
+    }
+    let ram = sm::apu_ram::ApuRam::new();
+    let mut cpu = Spc::new();
+    cpu.pc = 0xfffe;
+    cpu.sp = 0xff;
+    for (a, v) in [(0xfffe, 0x3f), (0xffff, 0x56), (0, 0x34)] {
+        ram.write(a, v);
+    }
+    let (cycles, trace) = run(&mut cpu, &ram);
+    assert_eq!((cycles, cpu.pc, cpu.sp), (8, 0x3456, 0xfd));
+    assert_eq!(
+        trace,
+        [
+            Read(0xfffe),
+            Read(0xffff),
+            Read(0),
+            Write(0x01ff, 0),
+            Write(0x01fe, 1)
+        ]
+    );
+}
+
+// Movies cannot inspect independent BRK flag pushes or RETI flag/PC pull order.
+#[cfg_attr(test, test)]
+fn spc_brk_and_reti_keep_literal_flags_and_pull_order() {
+    use sm::snes::spc::{BusOperation::*, Spc};
+    let run = |cpu: &mut Spc, ram: &sm::apu_ram::ApuRam| {
+        let mut trace = Vec::new();
+        let cycles = cpu.run_opcode(|op| {
+            trace.push(op);
+            match op {
+                Read(a) => ram.read(a),
+                Write(a, v) => {
+                    ram.write(a, v);
+                    0
+                }
+            }
+        });
+        (cycles, trace)
+    };
+    let ram = sm::apu_ram::ApuRam::new();
+    let mut cpu = Spc::new();
+    cpu.pc = 0x0200;
+    cpu.c = true;
+    cpu.n = true;
+    cpu.v = true;
+    cpu.h = true;
+    cpu.i = true;
+    for (a, v) in [(0x0200, 0x0f), (0xffde, 0x66), (0xffdf, 0x77)] {
+        ram.write(a, v);
+    }
+    let (cycles, trace) = run(&mut cpu, &ram);
+    assert_eq!(
+        (cycles, cpu.pc, cpu.sp, cpu.i, cpu.b),
+        (8, 0x7766, 0xfd, false, true)
+    );
+    assert_eq!(
+        trace,
+        [
+            Read(0x0200),
+            Write(0x0100, 2),
+            Write(0x01ff, 1),
+            Write(0x01fe, 0xcd),
+            Read(0xffde),
+            Read(0xffdf)
+        ]
+    );
+    let mut cpu = Spc::new();
+    cpu.pc = 0x0200;
+    cpu.sp = 0xff;
+    for (a, v) in [
+        (0x0200, 0x7f),
+        (0x0100, 0x3d),
+        (0x0101, 0x78),
+        (0x0102, 0x56),
+    ] {
+        ram.write(a, v);
+    }
+    let (cycles, trace) = run(&mut cpu, &ram);
+    assert_eq!((cycles, cpu.pc, cpu.sp), (6, 0x5678, 2));
+    assert_eq!(
+        [cpu.n, cpu.v, cpu.p, cpu.b, cpu.h, cpu.i, cpu.z, cpu.c],
+        [false, false, true, true, true, true, false, true]
+    );
+    assert_eq!(
+        trace,
+        [Read(0x0200), Read(0x0100), Read(0x0101), Read(0x0102)]
+    );
+}
+
+// Movies cannot independently inspect wrapped indirect addressing and store dummy-read bus order.
+#[cfg_attr(test, test)]
+fn spc_indirect_moves_and_indexed_jumps_keep_literal_bus_addresses() {
+    use sm::snes::spc::{BusOperation::*, Spc};
+    for (opcode, x, y, operand, high, target, cycles) in [
+        (0xf4, 3, 0, 0xfe, 0, 0x0101, 4),
+        (0xf5, 3, 0, 0xfe, 0xff, 1, 5),
+        (0xf6, 0, 3, 0xfe, 0xff, 1, 5),
+        (0xf7, 0, 3, 0xff, 0, 1, 6),
+        (0xd7, 0, 3, 0xff, 0, 1, 7),
+    ] {
+        let mut cpu = Spc::new();
+        cpu.pc = 0x0200;
+        cpu.a = 55;
+        cpu.x = x;
+        cpu.y = y;
+        cpu.p = true;
+        let ram = sm::apu_ram::ApuRam::new();
+        for (a, v) in [
+            (0x0200, opcode),
+            (0x0201, operand),
+            (0x0202, high),
+            (0x01ff, 0xfe),
+            (0x0100, 0xff),
+            (target, 0x80),
+        ] {
+            ram.write(a, v);
+        }
+        let mut trace = Vec::new();
+        assert_eq!(
+            cpu.run_opcode(|op| {
+                trace.push(op);
+                match op {
+                    Read(a) => ram.read(a),
+                    Write(a, v) => {
+                        ram.write(a, v);
+                        0
+                    }
+                }
+            }),
+            cycles
+        );
+        if opcode == 0xd7 {
+            assert_eq!((cpu.a, ram.read(target)), (55, 55));
+            assert_eq!(
+                &trace[2..],
+                &[Read(0x01ff), Read(0x0100), Read(1), Write(1, 55)]
+            );
+        } else {
+            assert_eq!((cpu.a, cpu.n, cpu.z), (0x80, true, false));
+            assert_eq!(trace.last(), Some(&Read(target)));
+        }
+        assert_eq!((cpu.x, cpu.y), (x, y));
+    }
+}
+
+// Movies cannot independently inspect pointer-page wrapping and indexed-jump word reads.
+#[cfg_attr(test, test)]
+fn spc_indexed_pointer_and_jump_reads_wrap_before_bus_access() {
+    use sm::snes::spc::{BusOperation::*, Spc};
+    let mut cpu = Spc::new();
+    cpu.pc = 0xffff;
+    cpu.x = 1;
+    cpu.p = true;
+    let ram = sm::apu_ram::ApuRam::new();
+    for (a, v) in [
+        (0xffff, 0xe7),
+        (0, 0xff),
+        (0x0100, 0xfe),
+        (0x0101, 0xff),
+        (0xfffe, 0x80),
+    ] {
+        ram.write(a, v);
+    }
+    let mut trace = Vec::new();
+    assert_eq!(
+        cpu.run_opcode(|op| {
+            trace.push(op);
+            match op {
+                Read(a) => ram.read(a),
+                _ => panic!(),
+            }
+        }),
+        6
+    );
+    assert_eq!((cpu.a, cpu.x, cpu.pc), (0x80, 1, 1));
+    assert_eq!(
+        trace,
+        [
+            Read(0xffff),
+            Read(0),
+            Read(0x0100),
+            Read(0x0101),
+            Read(0xfffe)
+        ]
+    );
+    let mut cpu = Spc::new();
+    cpu.pc = 0x0200;
+    cpu.x = 2;
+    for (a, v) in [
+        (0x0200, 0x1f),
+        (0x0201, 0xfe),
+        (0x0202, 0xff),
+        (0, 0x78),
+        (1, 0x56),
+    ] {
+        ram.write(a, v);
+    }
+    trace.clear();
+    assert_eq!(
+        cpu.run_opcode(|op| {
+            trace.push(op);
+            match op {
+                Read(a) => ram.read(a),
+                _ => panic!(),
+            }
+        }),
+        6
+    );
+    assert_eq!(cpu.pc, 0x5678);
+    assert_eq!(
+        trace,
+        [Read(0x0200), Read(0x0201), Read(0x0202), Read(0), Read(1)]
+    );
+}
+
+// Movies do not inject failed word high reads or writes to observe native flags and low-byte commit prefixes.
+#[cfg_attr(test, test)]
+fn spc_bus_failures_preserve_exact_native_register_and_memory_prefixes() {
+    use sm::snes::spc::{BusOperation::*, Spc};
+    use std::panic::{AssertUnwindSafe as unwind, catch_unwind as catch};
+    for (opcode, fail, registers, psw, memory, last) in [
+        (
+            0xba,
+            3,
+            (0x0202, 0xff, 66, 0xff, 5),
+            0x21,
+            (0xff, 0xff),
+            Read(0x0100),
+        ),
+        (
+            0xda,
+            4,
+            (0x0202, 0xff, 66, 0xff, 5),
+            0x21,
+            (55, 0xff),
+            Write(0x0100, 66),
+        ),
+        (
+            0x3a,
+            5,
+            (0x0202, 0xff, 66, 0xff, 6),
+            0x23,
+            (0, 0xff),
+            Write(0x0100, 0),
+        ),
+    ] {
+        let mut cpu = Spc::new();
+        cpu.pc = 0x0200;
+        cpu.a = 55;
+        cpu.x = 0xff;
+        cpu.y = 66;
+        cpu.sp = if opcode == 0x2d { 0 } else { 0xff };
+        cpu.p = true;
+        cpu.c = true;
+        if opcode == 0xfe {
+            cpu.y = 0;
+        }
+        let ram = sm::apu_ram::ApuRam::new();
+        for (a, v) in [
+            (0x0200, opcode),
+            (0x0201, 0xff),
+            (0x01ff, 0xff),
+            (0x0100, 0xff),
+        ] {
+            ram.write(a, v);
+        }
+        let mut trace = Vec::new();
+        assert!(
+            catch(unwind(|| cpu.run_opcode(|op| {
+                trace.push(op);
+                if trace.len() == fail + 1 {
+                    panic!("bus failure");
+                }
+                match op {
+                    Read(a) => ram.read(a),
+                    Write(a, v) => {
+                        ram.write(a, v);
+                        0
+                    }
+                }
+            })))
+            .is_err()
+        );
+        assert_eq!(trace.len(), fail + 1);
+        assert_eq!(trace.last(), Some(&last));
+        assert_eq!(cpu.a, 55);
+        assert_eq!((cpu.pc, cpu.x, cpu.y, cpu.sp, cpu.cyclesUsed), registers);
+        assert_eq!(
+            [cpu.n, cpu.v, cpu.p, cpu.b, cpu.h, cpu.i, cpu.z, cpu.c],
+            [0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1].map(|b| psw & b != 0)
+        );
+        assert_eq!((ram.read(0x01ff), ram.read(0x0100)), memory);
+    }
+}
+
+// Movies do not inject failing stack, postincrement, or DBNZ bus callbacks to observe native committed prefixes.
+#[cfg_attr(test, test)]
+fn spc_stack_index_and_dbnz_bus_failures_preserve_native_prefixes() {
+    use sm::snes::spc::{BusOperation::*, Spc};
+    use std::panic::{AssertUnwindSafe as unwind, catch_unwind as catch};
+    for (opcode, fail, registers, psw, memory, last) in [
+        (
+            0x2d,
+            1,
+            (0x0201, 0xff, 66, 0, 4),
+            0x21,
+            (0xff, 0xff),
+            Write(0x0100, 55),
+        ),
+        (
+            0xae,
+            1,
+            (0x0201, 0xff, 66, 0, 4),
+            0x21,
+            (0xff, 0xff),
+            Read(0x0100),
+        ),
+        (
+            0xaf,
+            1,
+            (0x0201, 0, 66, 0xff, 4),
+            0x21,
+            (0xff, 0xff),
+            Write(0x01ff, 55),
+        ),
+        (
+            0xfe,
+            1,
+            (0x0202, 0xff, 0xff, 0xff, 4),
+            0x21,
+            (0xff, 0xff),
+            Read(0x0201),
+        ),
+    ] {
+        let mut cpu = Spc::new();
+        cpu.pc = 0x0200;
+        cpu.a = 55;
+        cpu.x = 0xff;
+        cpu.y = 66;
+        cpu.sp = if opcode == 0x2d { 0 } else { 0xff };
+        cpu.p = true;
+        cpu.c = true;
+        if opcode == 0xfe {
+            cpu.y = 0;
+        }
+        let ram = sm::apu_ram::ApuRam::new();
+        for (a, v) in [
+            (0x0200, opcode),
+            (0x0201, 0xff),
+            (0x01ff, 0xff),
+            (0x0100, 0xff),
+        ] {
+            ram.write(a, v);
+        }
+        let mut trace = Vec::new();
+        assert!(
+            catch(unwind(|| cpu.run_opcode(|op| {
+                trace.push(op);
+                if trace.len() == fail + 1 {
+                    panic!("bus failure");
+                }
+                match op {
+                    Read(a) => ram.read(a),
+                    Write(a, v) => {
+                        ram.write(a, v);
+                        0
+                    }
+                }
+            })))
+            .is_err()
+        );
+        assert_eq!(trace.len(), fail + 1);
+        assert_eq!(trace.last(), Some(&last));
+        assert_eq!(cpu.a, 55);
+        assert_eq!((cpu.pc, cpu.x, cpu.y, cpu.sp, cpu.cyclesUsed), registers);
+        assert_eq!(
+            [cpu.n, cpu.v, cpu.p, cpu.b, cpu.h, cpu.i, cpu.z, cpu.c],
+            [0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1].map(|b| psw & b != 0)
+        );
+        assert_eq!((ram.read(0x01ff), ram.read(0x0100)), memory);
+    }
+}
+
+// Movies cannot observe missing device PCM, zero-length callbacks, or failed preparation without inventing output bytes.
+#[cfg_attr(test, test)]
+fn sample_delivery_lifecycle_preserves_missing_pcm_zero_length_and_prepare_failures() {
+    use sm::SampleDelivery;
+    use std::panic::{AssertUnwindSafe as unwind, catch_unwind as catch};
+    let mut delivery = SampleDelivery::new();
+    assert!(delivery.deliver_to(0, 255, |_| panic!(), |_, _| panic!()));
+    assert!(
+        catch(unwind(|| delivery.deliver_to(
+            1,
+            128,
+            |_| panic!(),
+            |_, _| panic!()
+        )))
+        .is_err()
+    );
+    delivery.prepare(1);
+    assert!(!delivery.deliver_to(
+        1,
+        128,
+        |_| false,
+        |_, _| panic!("missing PCM writes nothing")
+    ));
+    let mut writes = Vec::new();
+    assert!(!delivery.deliver_to(
+        3,
+        0,
+        |_| panic!("same missing block"),
+        |index, value| {
+            assert!(index < 3);
+            writes.push((index, value));
+        }
+    ));
+    assert_eq!(writes, [(0, 0), (1, 0), (2, 0)]);
+    writes.clear();
+    assert!(delivery.deliver_to(
+        1,
+        128,
+        |block| {
+            assert_eq!(block.len(), 1);
+            block[0] = [
+                i16::from_ne_bytes([0x11, 0x22]),
+                i16::from_ne_bytes([0x33, 0x44]),
+            ];
+            true
+        },
+        |index, value| writes.push((index, value))
+    ));
+    assert_eq!(writes, [(0, 0x11)]);
+    for frames in [0, usize::MAX / 4 + 1] {
+        assert!(catch(unwind(|| delivery.prepare(frames))).is_err());
+    }
+    let mut tail = [0; 3];
+    assert!(delivery.deliver(&mut tail, 128, |_| panic!(
+        "failed prepare keeps cursor and PCM"
+    )));
+    assert_eq!(tail, [0x22, 0x33, 0x44]);
+    delivery.release();
+    assert!(delivery.deliver_to(0, 1, |_| panic!(), |_, _| panic!()));
+    assert!(
+        catch(unwind(|| delivery.deliver_to(
+            1,
+            0,
+            |_| panic!(),
+            |_, _| panic!()
+        )))
+        .is_err()
+    );
+    delivery.prepare(1);
+    assert!(!delivery.deliver_to(
+        1,
+        128,
+        |_| false,
+        |_, _| panic!("release discards prior PCM")
+    ));
+}
+
+// Movies cannot independently supply native byte patterns or observe exact refill cadence across odd callback lengths.
+#[cfg_attr(test, test)]
+fn sample_delivery_byte_cursor_and_skipped_refills_keep_literal_pcm_and_cadence() {
+    use sm::SampleDelivery;
+    let mut delivery = SampleDelivery::new();
+    delivery.prepare(2);
+    let refills = std::cell::Cell::new(0);
+    let mut refill = |block: &mut [[i16; 2]]| {
+        assert_eq!(block.len(), 2);
+        let call = refills.get() + 1;
+        refills.set(call);
+        let first = match call {
+            1 => 0x11,
+            2 | 4 => return false,
+            3 => 0x91,
+            5 => 0xa1,
+            _ => panic!("extra refill"),
+        };
+        for (index, pair) in block.iter_mut().enumerate() {
+            let byte = first + index as u8 * 4;
+            *pair = [
+                i16::from_ne_bytes([byte, byte + 1]),
+                i16::from_ne_bytes([byte + 2, byte + 3]),
+            ];
+        }
+        true
+    };
+    let rows: [(usize, &[u8], usize); 4] = [
+        (3, &[0x11, 0x12, 0x13], 1),
+        (7, &[0x14, 0x15, 0x16, 0x17, 0x18, 0x11, 0x12], 2),
+        (6, &[0x13, 0x14, 0x15, 0x16, 0x17, 0x18], 2),
+        (
+            17,
+            &[
+                0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97, 0x98, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96,
+                0x97, 0x98, 0xa1,
+            ],
+            5,
+        ),
+    ];
+    for (length, expected, calls) in rows {
+        let mut writes = Vec::new();
+        assert!(
+            delivery.deliver_to(length, 128, &mut refill, |index, value| {
+                assert!(index < length);
+                writes.push((index, value));
+            })
+        );
+        assert_eq!(
+            writes,
+            expected.iter().copied().enumerate().collect::<Vec<_>>()
+        );
+        assert_eq!(refills.get(), calls);
+    }
+}
+
+// Movies cannot author independent signed PCM/volume boundaries or inspect SDL zero-fill before scaled odd-byte writes.
+#[cfg_attr(test, test)]
+fn sample_delivery_s16lsb_volumes_and_odd_cursor_have_literal_ordered_bytes() {
+    use sm::SampleDelivery;
+    let rows: [(u8, usize, &[u8]); 7] = [
+        (0, 8, &[]),
+        (1, 8, &[0xff, 0, 0, 0xff, 0, 0, 0, 0]),
+        (64, 8, &[0xff, 0x3f, 0, 0xc0, 1, 0, 0xff, 0xff]),
+        (127, 8, &[0xff, 0x7e, 0, 0x81, 2, 0, 0xfe, 0xff]),
+        (128, 0, &[0xff, 0x7f, 0, 0x80, 3, 0, 0xfd, 0xff]),
+        (129, 8, &[0xfe, 0x80, 0, 0x7f, 3, 0, 0xfd, 0xff]),
+        (255, 8, &[0xfe, 0xfe, 0, 1, 5, 0, 0xfb, 0xff]),
+    ];
+    for (volume, zeroes, expected) in rows {
+        let mut delivery = SampleDelivery::new();
+        delivery.prepare(2);
+        let mut writes = Vec::new();
+        assert!(delivery.deliver_to(
+            8,
+            volume,
+            |block| {
+                block.copy_from_slice(&[
+                    [
+                        i16::from_ne_bytes([0xff, 0x7f]),
+                        i16::from_ne_bytes([0, 0x80]),
+                    ],
+                    [i16::from_ne_bytes([3, 0]), i16::from_ne_bytes([0xfd, 0xff])],
+                ]);
+                true
+            },
+            |index, value| {
+                assert!(index < 8);
+                writes.push((index, value));
+            }
+        ));
+        let expected_writes: Vec<_> = (0..zeroes)
+            .map(|index| (index, 0))
+            .chain(expected.iter().copied().enumerate())
+            .collect();
+        assert_eq!(writes, expected_writes);
+    }
+    let mut delivery = SampleDelivery::new();
+    delivery.prepare(1);
+    let mut first = [0];
+    assert!(delivery.deliver(&mut first, 128, |block| {
+        block[0] = [i16::from_ne_bytes([1, 2]), i16::from_ne_bytes([3, 4])];
+        true
+    }));
+    assert_eq!(first, [1]);
+    let mut writes = Vec::new();
+    assert!(delivery.deliver_to(
+        3,
+        64,
+        |_| panic!("odd cursor stays in block"),
+        |index, value| {
+            assert!(index < 3);
+            writes.push((index, value));
+        }
+    ));
+    assert_eq!(writes, [(0, 0), (1, 0), (2, 0), (0, 0x81), (1, 1)]);
+}
+
+// Movies cannot fail byte writers or refills midway to establish native retained-PCM and committed-chunk prefixes.
+#[cfg_attr(test, test)]
+fn sample_delivery_writer_and_refill_failures_keep_completed_chunk_prefixes() {
+    use sm::SampleDelivery;
+    use std::panic::{AssertUnwindSafe as unwind, catch_unwind as catch};
+    let rows: [(u8, usize, &[(usize, u8)]); 2] = [
+        (128, 3, &[(0, 1), (1, 2), (2, 3)]),
+        (64, 6, &[(0, 0), (1, 0), (2, 0), (3, 0), (0, 0), (1, 1)]),
+    ];
+    for (volume, failure, expected) in rows {
+        let mut delivery = SampleDelivery::new();
+        delivery.prepare(1);
+        let mut writes = Vec::new();
+        assert!(
+            catch(unwind(|| delivery.deliver_to(
+                4,
+                volume,
+                |block| {
+                    block[0] = [i16::from_ne_bytes([1, 2]), i16::from_ne_bytes([3, 4])];
+                    true
+                },
+                |index, value| {
+                    assert!(index < 4);
+                    writes.push((index, value));
+                    if writes.len() == failure {
+                        panic!("writer failed");
+                    }
+                }
+            )))
+            .is_err()
+        );
+        assert_eq!(writes, expected);
+        let mut repeated = [0; 4];
+        assert!(delivery.deliver(&mut repeated, 128, |_| panic!(
+            "current chunk cursor did not commit"
+        )));
+        assert_eq!(repeated, [1, 2, 3, 4]);
+    }
+    let mut delivery = SampleDelivery::new();
+    delivery.prepare(1);
+    let mut calls = 0;
+    let mut writes = Vec::new();
+    assert!(
+        catch(unwind(|| delivery.deliver_to(
+            6,
+            128,
+            |block| {
+                calls += 1;
+                if calls == 1 {
+                    block[0] = [
+                        i16::from_ne_bytes([0x11, 0x22]),
+                        i16::from_ne_bytes([0x33, 0x44]),
+                    ];
+                    return true;
+                }
+                block[0][0] = i16::from_ne_bytes([0x55, 0x66]);
+                panic!("second refill failed after changing one sample");
+            },
+            |index, value| {
+                assert!(index < 6);
+                writes.push((index, value));
+            }
+        )))
+        .is_err()
+    );
+    assert_eq!(calls, 2);
+    assert_eq!(writes, [(0, 0x11), (1, 0x22), (2, 0x33), (3, 0x44)]);
+    let mut retained = [0; 4];
+    assert!(delivery.deliver(&mut retained, 128, |block| {
+        calls += 1;
+        assert_eq!(block[0][0].to_ne_bytes(), [0x55, 0x66]);
+        assert_eq!(block[0][1].to_ne_bytes(), [0x33, 0x44]);
+        false
+    }));
+    assert_eq!(calls, 3);
+    assert_eq!(retained, [0x55, 0x66, 0x33, 0x44]);
 }

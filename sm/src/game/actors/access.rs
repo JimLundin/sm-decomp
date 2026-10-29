@@ -5,7 +5,7 @@ use crate::game::session_access::SessionAccess;
 use core::ops::Deref;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(in crate::game) struct ActorKey(u16);
+pub(crate) struct ActorKey(u16);
 impl ActorKey {
     pub(in crate::game) const fn from_legacy(byte_index: u16) -> Self {
         Self(byte_index)
@@ -15,12 +15,12 @@ impl ActorKey {
     }
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(in crate::game) enum AccessMode {
+pub(crate) enum AccessMode {
     LittleEndian,
     Native,
 }
 
-pub(in crate::game) struct ActorRead<'a> {
+pub(crate) struct ActorRead<'a> {
     repr: ReadRepr<'a>,
 }
 enum ReadRepr<'a> {
@@ -37,7 +37,7 @@ impl Deref for ActorRead<'_> {
     }
 }
 /// Both read variants borrow Self. No projected-value detach constructor exists.
-pub(in crate::game) trait ActorAccess: SessionAccess {
+pub(crate) trait ActorAccess: SessionAccess {
     fn selected_actor(&self) -> ActorKey {
         ActorKey::from_legacy(self.session().actors.controls.selected)
     }
@@ -130,7 +130,7 @@ pub(super) fn edit_actor_with<H: SessionAccess + ?Sized, R>(
     edit(&mut guard.edited)
 }
 
-pub(super) struct SpawnRead<'a> {
+pub(in crate::game) struct SpawnRead<'a> {
     repr: SpawnRepr<'a>,
 }
 enum SpawnRepr<'a> {
@@ -149,7 +149,7 @@ impl Deref for SpawnRead<'_> {
 
 /// Saved records are mutable gameplay state, sharing the same byte codec with
 /// graphics staging. End the read before any observer or other state mutation.
-pub(super) trait SpawnAccess: SessionAccess {
+pub(in crate::game) trait SpawnAccess: SessionAccess {
     fn resolve_spawn<'a>(&'a self, key: ActorKey, mode: AccessMode) -> SpawnRead<'a>;
     fn edit_spawn<R>(
         &mut self,
@@ -199,12 +199,12 @@ pub(super) fn edit_spawn_with<H: SessionAccess + ?Sized, R>(
 
 // Reuse the existing store policy: LE prefix writes and preflighted LE/native
 // slice writes differ when the final byte is out of bounds.
-pub(super) use crate::game::player_projectiles::access::Store as CollectionStore;
+pub(in crate::game) use crate::game::player_projectiles::access::Store as CollectionStore;
 
 /// Only source-audited collection bases. Offsets remain widened and may leave
 /// the nominal collection; no generic absolute-memory variant is exposed.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum CollectionWindow {
+pub(in crate::game) enum CollectionWindow {
     Active,
     Interactive,
     CollisionDirections,
@@ -239,7 +239,7 @@ impl CollectionWindow {
 
 /// This private compatibility seam handles source-defined spill/packed aliases.
 /// Normal gameplay uses owned fields; it does not expose arbitrary RAM access.
-pub(super) trait ActorCollections {
+pub(in crate::game) trait ActorCollections {
     fn collection_word(
         &self,
         window: CollectionWindow,

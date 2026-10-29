@@ -3,7 +3,7 @@
 use crate::game::session::{Point, Position};
 
 #[derive(Debug, Default, PartialEq)]
-pub(in crate::game) struct Actor {
+pub(crate) struct Actor {
     pub(in crate::game) definition: u16,
     pub(in crate::game) x: Position,
     pub(in crate::game) y: Position,
@@ -31,7 +31,7 @@ pub(in crate::game) struct Actor {
     pub(in crate::game) parameters: [u16; 2],
 }
 #[derive(Debug, Default, PartialEq)]
-pub(super) struct SpawnRecord {
+pub(in crate::game) struct SpawnRecord {
     pub(super) contact_mode: u16,
     pub(super) death_cause: u16,
     pub(super) scratch_04: u16,

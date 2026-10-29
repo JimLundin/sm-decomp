@@ -1,8 +1,7 @@
 //! Actual compatibility-guard checks; no replacement guard or fake RAM owner.
 #![forbid(unsafe_code)]
 use crate::game::{
-    music::QueueMusic_Delayed8, palette_effects::execution, session_access::SessionAccess,
-    session_runtime::Runtime,
+    music::QueueMusic_Delayed8, palette_effects::execution, session_runtime::Runtime,
 };
 use crate::{game_state::Game, ram_map::words as ram, rom::RomImage};
 use std::panic::{AssertUnwindSafe, catch_unwind};

@@ -476,7 +476,7 @@ unsafe fn clear_slot(game: &mut Game) {
             crate::rtl::rom_table_word!(game, 0x81812b, word!(game.eproj_id[16]) as isize) as i32;
         game.g_sram
             .fill(sram_addr as usize..sram_addr as usize + 1628, 0);
-        let v1: u16 = (2u16).wrapping_mul(word!(game.eproj_id[16]));
+        let _v1: u16 = (2u16).wrapping_mul(word!(game.eproj_id[16]));
         let v2: i32 = word!(game.eproj_id[16]) as i32;
         game.g_sram.set_word((2 * v2) as usize, 0);
         game.g_sram.set_word((2 * v2 + 8) as usize, 0);

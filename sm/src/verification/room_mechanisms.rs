@@ -17,6 +17,7 @@ const COMMANDS: [u32; 14] = [
 mod callback_edges;
 #[path = "room_mechanism_drawing_extended.rs"]
 mod drawing_extended;
+#[cfg(sm_verify_dll)]
 pub(crate) use callback_edges::{
     display as observe_message_display, native_read as observe_native_draw_read,
 };

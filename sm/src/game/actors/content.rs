@@ -155,11 +155,11 @@ pub enum ActorContentError {
     UnsupportedForm,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) struct ActorRoutine(pub(super) u32);
+pub(in crate::game) struct ActorRoutine(pub(super) u32);
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) struct ActorDefinitionKey(pub(super) u16);
+pub(in crate::game) struct ActorDefinitionKey(pub(super) u16);
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub(super) enum PopulationCursor {
+pub(in crate::game) enum PopulationCursor {
     Legacy {
         bank: u8,
         address: u16,
@@ -185,12 +185,12 @@ pub(super) enum PopulationPosition {
     },
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) struct PosePartPosition {
+pub(in crate::game) struct PosePartPosition {
     pub pose: PoseId,
     pub part: usize,
 }
 #[derive(Clone)]
-pub(super) struct ActorPopulationCapture {
+pub(in crate::game) struct ActorPopulationCapture {
     pub(super) world: std::sync::Arc<crate::game::room_entry::world::WorldBinding>,
     pub(super) position: Option<PopulationPosition>,
     pub(super) record: ActorLiveRecord,
@@ -199,16 +199,16 @@ pub(super) struct ActorPopulationCapture {
 /// Authored identity and exact live allocation are captured together. Scalar
 /// overrides never detach the record needed for later source-ordered live reads.
 #[derive(Clone)]
-pub(super) struct ActorRecordCapture<P> {
+pub(in crate::game) struct ActorRecordCapture<P> {
     pub(super) world: std::sync::Arc<crate::game::room_entry::world::WorldBinding>,
     pub(super) position: Option<P>,
     pub(super) record: ActorLiveRecord,
 }
-pub(super) type ActorDefinitionCapture = ActorRecordCapture<SpeciesId>;
-pub(super) type ActorPoseCapture = ActorRecordCapture<PoseId>;
-pub(super) type ActorPartCapture = ActorRecordCapture<PosePartPosition>;
-pub(super) type ActorCollisionCapture = ActorRecordCapture<CollisionPosition>;
-pub(super) type ActorResourceCapture = Capture<VisualResourceId>;
+pub(in crate::game) type ActorDefinitionCapture = ActorRecordCapture<SpeciesId>;
+pub(in crate::game) type ActorPoseCapture = ActorRecordCapture<PoseId>;
+pub(in crate::game) type ActorPartCapture = ActorRecordCapture<PosePartPosition>;
+pub(in crate::game) type ActorCollisionCapture = ActorRecordCapture<CollisionPosition>;
+pub(in crate::game) type ActorResourceCapture = Capture<VisualResourceId>;
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub(super) struct ActorShape {
     pub radius: Point,
@@ -260,7 +260,7 @@ pub(in crate::game) trait ActorContent {
 }
 /// A captured live allocation, not frozen definition values or snapshot-owned overlay.
 #[derive(Clone)]
-pub(super) struct ActorLiveRecord {
+pub(in crate::game) struct ActorLiveRecord {
     pub(super) image: RomImage,
     pub(super) base: usize,
 }
@@ -273,14 +273,14 @@ pub enum ActorProgramDefinition {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) struct CollisionPosition {
+pub(in crate::game) struct CollisionPosition {
     pub layout: CollisionLayoutId,
     pub part: usize,
     pub hitbox: usize,
 }
 /// Finite live reads; each call is evaluated at its original source observation point.
 /// Contact vulnerability is a native word, projectile vulnerability is a byte.
-pub(super) trait ActorCaptureReads {
+pub(in crate::game) trait ActorCaptureReads {
     fn population_definition(&mut self, source: &ActorPopulationCapture) -> u16;
     fn population_word(&mut self, source: &ActorPopulationCapture, field: PopulationWord) -> u16;
     fn definition_word(&mut self, source: &ActorDefinitionCapture, field: DefinitionWord) -> u16;
@@ -316,7 +316,7 @@ pub(super) trait ActorCaptureReads {
     ) -> u8;
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum ActorNameWord {
+pub(in crate::game) enum ActorNameWord {
     At0,
     At2,
     At4,
@@ -326,7 +326,7 @@ pub(super) enum ActorNameWord {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum PopulationWord {
+pub(in crate::game) enum PopulationWord {
     X,
     Y,
     Program,
@@ -336,7 +336,7 @@ pub(super) enum PopulationWord {
     Parameter2,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum DefinitionWord {
+pub(in crate::game) enum DefinitionWord {
     Width,
     Height,
     Health,
@@ -348,13 +348,13 @@ pub(super) enum DefinitionWord {
     BossFight,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum DefinitionByte {
+pub(in crate::game) enum DefinitionByte {
     Bank,
     HurtTime,
     Layer,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum DefinitionRoutine {
+pub(in crate::game) enum DefinitionRoutine {
     Initialize,
     Main,
     Grapple,
@@ -832,24 +832,24 @@ fn hash_entry(entry: &PopulationEntry, hash: &mut impl std::hash::Hasher) {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum ActorCountWidth {
+pub(in crate::game) enum ActorCountWidth {
     Byte,
     NativeWord,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum ActorPartTraversal {
+pub(in crate::game) enum ActorPartTraversal {
     CapturedLinear,
     WrappingReacquire { bank: u8, address: u16 },
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum ActorPartWord {
+pub(in crate::game) enum ActorPartWord {
     X,
     Y,
     Map,
     Hitboxes,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum ActorCollisionWord {
+pub(in crate::game) enum ActorCollisionWord {
     Left,
     Right,
     Top,
@@ -860,7 +860,7 @@ pub(super) enum ActorCollisionWord {
 
 /// Projectile contact captures the offset before effects and samples bank later.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(super) enum ActorCallbackTarget {
+pub(in crate::game) enum ActorCallbackTarget {
     CompatibleOffset(u16),
     Prepared(ActorRoutine),
 }

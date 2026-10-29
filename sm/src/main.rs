@@ -26,16 +26,18 @@ unsafe extern "C-unwind" {
     fn sm_desktop_run(
         argc: i32,
         argv: *mut *mut c_char,
-        owner: *const GameOwner,
+        owner: *const c_void,
         config: *mut c_void,
+        audio: *mut c_void,
     ) -> i32;
-    fn sm_desktop_close();
-    fn sm_desktop_HandleInput(game: *mut Game, key: i32, modifiers: i32, pressed: bool);
-    fn sm_desktop_HandleGamepadInput(game: *mut Game, button: i32, pressed: bool);
-    fn sm_desktop_HandleGamepadAxisInput(game: *mut Game, id: i32, axis: i32, value: i32);
-    fn sm_desktop_HandleCommand(game: *mut Game, command: u32, pressed: bool);
-    fn sm_desktop_DrawPpuFrameWithPerf(game: *mut Game);
-    fn sm_desktop_AudioCallback(game: *mut Game, stream: *mut u8, length: i32);
+    fn sm_desktop_close(audio: *mut c_void);
+    fn sm_desktop_begin_audio() -> i32;
+    fn sm_desktop_end_audio();
+    fn sm_desktop_HandleInput(game: *mut c_void, key: i32, modifiers: i32, pressed: bool);
+    fn sm_desktop_HandleGamepadInput(game: *mut c_void, button: i32, pressed: bool);
+    fn sm_desktop_HandleGamepadAxisInput(game: *mut c_void, id: i32, axis: i32, value: i32);
+    fn sm_desktop_HandleCommand(game: *mut c_void, command: u32, pressed: bool);
+    fn sm_desktop_DrawPpuFrameWithPerf(game: *mut c_void);
     #[link_name = "sm_desktop_audio_mutex"]
     static mut g_audio_mutex: *mut SDL_mutex;
     fn sm_desktop_matches_source(index: u32, bytes: *const u8, length: usize) -> bool;
@@ -110,7 +112,7 @@ sm::forward_calls! { unsafe fn ();
 pub unsafe fn RtlDrawPpuFrame(
     pixel_buffer: *mut u8,
     pitch: size_t,
-    render_flags: u32,
+    _render_flags: u32,
     game: &mut Game,
 ) {
     unsafe {
@@ -242,25 +244,32 @@ unsafe extern "C-unwind" fn sm_host_key(
     pressed: bool,
 ) {
     unsafe {
-        (*owner).with(|game| sm_desktop_HandleInput(game, key, modifiers, pressed));
+        (*owner).with(|game| {
+            sm_desktop_HandleInput((game as *mut Game).cast(), key, modifiers, pressed)
+        });
     }
 }
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_button(owner: *const GameOwner, button: i32, pressed: bool) {
     unsafe {
-        (*owner).with(|game| sm_desktop_HandleGamepadInput(game, button, pressed));
+        (*owner).with(|game| {
+            sm_desktop_HandleGamepadInput((game as *mut Game).cast(), button, pressed)
+        });
     }
 }
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_axis(owner: *const GameOwner, id: i32, axis: i32, value: i32) {
     unsafe {
-        (*owner).with(|game| sm_desktop_HandleGamepadAxisInput(game, id, axis, value));
+        (*owner).with(|game| {
+            sm_desktop_HandleGamepadAxisInput((game as *mut Game).cast(), id, axis, value)
+        });
     }
 }
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_command(owner: *const GameOwner, command: u32, pressed: bool) {
     unsafe {
-        (*owner).with(|game| sm_desktop_HandleCommand(game, command, pressed));
+        (*owner)
+            .with(|game| sm_desktop_HandleCommand((game as *mut Game).cast(), command, pressed));
     }
 }
 #[unsafe(no_mangle)]
@@ -276,7 +285,7 @@ unsafe extern "C-unwind" fn sm_host_present(
         (*owner).with(|game| {
             (*game.g_snes).disableRender = *disable_render;
             if !*disable_render {
-                sm_desktop_DrawPpuFrameWithPerf(game);
+                sm_desktop_DrawPpuFrameWithPerf((game as *mut Game).cast());
             }
             *disable_render = (*game.g_snes).disableRender;
             game.g_got_mismatch_count != 0
@@ -347,36 +356,49 @@ unsafe extern "C-unwind" fn sm_host_bad_command() {
         );
     }
 }
+// One stable callback context, borrowed until SDL pause/close joins its thread.
+// GameOwner remains non-sharing; SDL supplies the serialized callback boundary.
+struct DesktopAudio<'a> {
+    owner: &'a GameOwner,
+    samples: std::cell::UnsafeCell<sm::SampleDelivery>,
+}
+
 #[unsafe(no_mangle)]
-unsafe extern "C-unwind" fn sm_host_render_audio(
-    game: *mut Game,
-    buffer: *mut i16,
-    frames: i32,
-    channels: i32,
-) {
+unsafe extern "C-unwind" fn sm_host_prepare_audio(audio: *mut c_void, frames: i32) {
     unsafe {
-        if channels != 2 {
-            __assert_fail(
-                c"channels == 2".as_ptr(),
-                c"src/sm_rtl.c".as_ptr(),
-                679,
-                c"void RtlRenderAudio(int16 *, int, int)".as_ptr(),
-            );
-        }
-        // The host owns a separate stereo buffer. Empty requests need no pointer.
-        let output = if frames > 0 {
-            core::slice::from_raw_parts_mut(buffer.cast::<[i16; 2]>(), frames as usize)
-        } else {
-            &mut []
-        };
-        RtlRenderAudio(output, &mut *game);
+        let audio = &*audio.cast::<DesktopAudio<'_>>();
+        (*audio.samples.get())
+            .prepare(usize::try_from(frames).expect("audio frames must be positive"));
     }
 }
+
+#[unsafe(no_mangle)]
+unsafe extern "C-unwind" fn sm_host_release_audio(audio: *mut c_void) {
+    unsafe {
+        let audio = &*audio.cast::<DesktopAudio<'_>>();
+        (*audio.samples.get()).release();
+    }
+}
+
 #[unsafe(no_mangle)]
 unsafe extern "C" fn sm_host_audio_callback(userdata: *mut c_void, stream: *mut u8, length: i32) {
     unsafe {
-        (*(userdata as *const GameOwner))
-            .with(|game| sm_desktop_AudioCallback(game, stream, length));
+        let audio = &*userdata.cast::<DesktopAudio<'_>>();
+        audio.owner.with(|game| {
+            // Preserve Game gate -> recursive SDL audio mutex -> producer locks.
+            // Native begin/end receive no Game pointer and cannot reborrow it.
+            let volume = sm_desktop_begin_audio();
+            let length = if length > 0 { length as usize } else { 0 };
+            // SDL supplies length writable bytes, which may be uninitialized.
+            // The core bounds every index; no destination reference/read is made.
+            (*audio.samples.get()).deliver_to(
+                length,
+                volume as u8,
+                |block| RtlRenderAudio(block, game),
+                |index, value| stream.add(index).write(value),
+            );
+            sm_desktop_end_audio();
+        });
     }
 }
 
@@ -458,19 +480,24 @@ pub fn main() {
         .chain(::core::iter::once(null_mut()))
         .collect();
     // Drop order also applies when a host callback unwinds through the C loop.
-    struct Desktop;
-    impl Drop for Desktop {
+    let audio = DesktopAudio {
+        owner: &owner,
+        samples: std::cell::UnsafeCell::new(sm::SampleDelivery::new()),
+    };
+    struct Desktop<'a>(&'a DesktopAudio<'a>);
+    impl Drop for Desktop<'_> {
         fn drop(&mut self) {
-            unsafe { sm_desktop_close() }
+            unsafe { sm_desktop_close((self.0 as *const DesktopAudio<'_>).cast_mut().cast()) }
         }
     }
-    let desktop = Desktop;
+    let desktop = Desktop(&audio);
     let status = unsafe {
         sm_desktop_run(
             (args_ptrs.len() - 1) as i32,
             args_ptrs.as_mut_ptr(),
-            &*owner,
+            (&*owner as *const GameOwner).cast(),
             (&mut config as *mut sm::config::ConfigOwner).cast(),
+            (&audio as *const DesktopAudio<'_>).cast_mut().cast(),
         )
     };
     drop(desktop);

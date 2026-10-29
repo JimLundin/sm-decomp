@@ -5,7 +5,7 @@ use crate::game::contact_rules::axis;
 use crate::game::session_runtime::Runtime;
 use crate::game::session_runtime::damage_player;
 use crate::game_state::Game;
-use crate::ram_map::{checked_word as word, word_arrays as arrays};
+use crate::ram_map::checked_word as word;
 
 fn mark(index: u16, game: &mut Game) {
     word!(game.projectile_dir[index] = word!(game.projectile_dir[index]) | 0x10);
@@ -66,14 +66,6 @@ pub unsafe fn player_projectiles_hit_samus(game: &mut Game) {
                     c"void SamusProjectileInteractionHandler(void)".as_ptr(),
                 );
             }
-            word!(
-                game.knockback_x_dir = (word!(game.samus_x_pos).wrapping_sub(u16::from_ne_bytes([
-                    game.ram().read_byte(arrays::eproj_x_pos),
-                    game.ram().read_byte(arrays::eproj_x_pos + 1)
-                ])) as i16
-                    >= 0) as u16
-            );
-            return;
         }
         if word!(game.projectile_variables[index]) == 8 {
             let x = word!(game.samus_x_pos);

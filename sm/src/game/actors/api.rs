@@ -110,6 +110,7 @@ pub(in crate::game) use super::movement::probe_vertical;
 pub(in crate::game) use super::movement::probe_vertical_offset;
 pub(in crate::game) use super::movement::select_block_at;
 pub(in crate::game) use super::movement::snap_to_slopes;
+#[cfg(sm_verify_dll)]
 pub(in crate::game) use super::population::respawn;
 pub(in crate::game) use super::queries::angle_between;
 pub(in crate::game) use super::queries::angle_from_delta;
@@ -123,6 +124,9 @@ pub(in crate::game) use super::queries::overlaps_player_with_padding;
 pub(in crate::game) use super::queries::player_delta;
 pub(in crate::game) use super::queries::player_within;
 pub(in crate::game) use super::queries::touches_player_from_above;
+#[cfg(sm_verify_dll)]
 pub(in crate::game) use super::scheduling::advance_selected;
+#[cfg(sm_verify_dll)]
 pub(in crate::game) use super::staging::prepare_room_assets;
+#[cfg(sm_verify_dll)]
 pub(in crate::game) use super::staging::transfer_actor_tiles_and_initialize;

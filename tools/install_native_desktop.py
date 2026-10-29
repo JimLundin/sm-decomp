@@ -22,7 +22,7 @@ NATIVE_INPUTS = ("sm/src/main.rs", "sm/src/native_desktop.c", "sm/src/native_des
 
 
 def desktop_source(source):
-    names = """ChangeWindowScale HitTestCallback DrawPpuFrameWithPerf AudioCallback
+    names = """ChangeWindowScale HitTestCallback DrawPpuFrameWithPerf
         SdlRenderer_Init SdlRenderer_Destroy SdlRenderer_BeginDraw SdlRenderer_EndDraw
         main RenderDigit RenderNumber HandleCommand HandleCommand_Locked HandleInput
         OpenOneGamepad RemapSdlButton HandleGamepadInput HandleVolumeAdjustment
@@ -44,6 +44,13 @@ def desktop_source(source):
     globals_ = globals_.replace('"The Legend of Zelda: A Link to the Past"', '"SuperMet"')
     globals_ += "\n" + source[source.index("static SDL_mutex *g_audio_mutex;"):source.index("static void SDLCALL AudioCallback(")]
     globals_ = globals_.replace("static SDL_mutex *g_audio_mutex;", "SDL_mutex *sm_desktop_audio_mutex;")
+    for declaration in (
+        "static uint8 *g_audiobuffer, *g_audiobuffer_cur, *g_audiobuffer_end;\n",
+        "static int g_frames_per_block;\n", "static uint8 g_audio_channels;\n",
+    ):
+        if globals_.count(declaration) != 1:
+            raise ValueError(f"Missing pinned audio declaration: {declaration}")
+        globals_ = globals_.replace(declaration, "")
     globals_ += "\nstatic SDL_AudioDeviceID g_audio_device;\n"
     globals_ += "\n" + source[source.index("static SDL_Renderer *g_renderer;"):source.index("static bool SdlRenderer_Init(")]
     table = source[source.index("static const struct RendererFuncs kSdlRendererFuncs"):source.index("void OpenGLRenderer_Create(")]
@@ -60,12 +67,6 @@ def desktop_source(source):
   if (mismatches != 0)
     RenderNumber(pixel_buffer + pitch * render_scale, pitch, mismatches, render_scale == 4);
   sm_host_end_draw(&g_renderer_funcs);""")
-    replace("AudioCallback", "g_audiobuffer_end - g_audiobuffer_cur == 0", "(long)(g_audiobuffer_end - g_audiobuffer_cur) == 0")
-    replace("AudioCallback", "IntMin(len, g_audiobuffer_end - g_audiobuffer_cur)", "IntMin(len, (int)(long)(g_audiobuffer_end - g_audiobuffer_cur))")
-    replace("AudioCallback", "ZeldaRenderAudio(", "sm_host_render_audio(game, ")
-    replace("AudioCallback", "  ZeldaDiscardUnusedAudioFrames();\n", "")
-    # The owner gate surrounds the entire SDL callback; its internal SDL lock stays here.
-    routines["AudioCallback"] = routines["AudioCallback"].replace("void *userdata, ", "")
     replace("HandleCommand", "  SDL_LockMutex(g_audio_mutex);\n  HandleCommand_Locked(j, pressed);\n  SDL_UnlockMutex(g_audio_mutex);", "  HandleCommand_Locked(j, pressed);")
     r = "HandleCommand_Locked"
     routines[r] = routines[r].replace("SaveLoadSlot(", "sm_host_save_load(game, ")
@@ -94,7 +95,7 @@ def desktop_source(source):
     replace("RenderNumber", "char buf[32], *s;", "char buf[32] = {0}, *s;")
     # Retain the published event/window loop, replacing only game-owned phases.
     r = "main"
-    replace(r, "int main(int argc, char** argv)", "int main(int argc, char** argv, const void *owner, void *config)")
+    replace(r, "int main(int argc, char** argv)", "int main(int argc, char** argv, const void *owner, void *config, void *audio)")
     start = routines[r].index("  ParseConfigFile(config_file);")
     end = routines[r].index("  if (g_config.fullscreen == 1)", start)
     routines[r] = routines[r][:start] + """  if (argc >= 1 && strcmp(argv[0], "--debug") == 0) {
@@ -121,7 +122,7 @@ def desktop_source(source):
   SDL_Window* window = SDL_CreateWindow(""")
     replace(r, "  bool custom_size  =", "  desktop_initialized = true;\n  bool custom_size  =")
     replace(r, "!g_renderer_funcs.Initialize(window)", "!sm_host_initialize_renderer(owner, &g_renderer_funcs, window)")
-    replace(r, "SDL_AudioSpec want = { 0 }, have;", "SDL_AudioSpec want = {0}, have = {0};\n  want.userdata = have.userdata = (void *)owner;")
+    replace(r, "SDL_AudioSpec want = { 0 }, have;", "SDL_AudioSpec want = {0}, have = {0};\n  want.userdata = have.userdata = audio;")
     replace(r, "  SDL_AudioDeviceID device = 0;\n", "")
     routines[r] = re.sub(r"\bdevice\b", "g_audio_device", routines[r])
     replace(r, "Failed to open audio g_audio_device:", "Failed to open audio device:")
@@ -130,7 +131,10 @@ def desktop_source(source):
     replace(r, "want.channels = g_config.audio_channels;", "want.channels = 2;")
     replace(r, "want.samples = g_config.audio_samples;", "want.samples = 2048;")
     replace(r, "want.callback = &AudioCallback;", "want.callback = &sm_host_audio_callback;")
-    replace(r, "g_audio_channels = have.channels;", "g_audio_channels = 2;")
+    replace(r, """    g_audio_channels = have.channels;
+    g_frames_per_block = (534 * have.freq) / 32000;
+    g_audiobuffer = malloc(g_frames_per_block * have.channels * sizeof(int16));""",
+            "    sm_host_prepare_audio(audio, (534 * have.freq) / 32000);")
     start = routines[r].index("  if (argc >= 1 && !g_run_without_emu)")
     end = routines[r].index("  for (int i = 0; i < SDL_NumJoysticks(); i++)", start)
     routines[r] = routines[r][:start] + """  sm_host_prepare_pixels(owner);
@@ -171,8 +175,8 @@ def desktop_source(source):
     replace(r, "if (!g_config.disable_frame_delay)", "if (!disable_render && !g_config.disable_frame_delay)")
     cleanup_start = routines[r].index("  // clean sdl\n")
     cleanup_end = routines[r].index("  //SaveConfigFile();", cleanup_start)
-    routines[r] = routines[r][:cleanup_start] + "  sm_desktop_close();\n" + routines[r][cleanup_end:]
-    context = {"DrawPpuFrameWithPerf", "AudioCallback", "HandleCommand", "HandleCommand_Locked",
+    routines[r] = routines[r][:cleanup_start] + "  sm_desktop_close(audio);\n" + routines[r][cleanup_end:]
+    context = {"DrawPpuFrameWithPerf", "HandleCommand", "HandleCommand_Locked",
                "HandleInput", "HandleGamepadInput", "HandleGamepadAxisInput"}
     for name, text in routines.items():
         signature, body = text.split(" {", 1)

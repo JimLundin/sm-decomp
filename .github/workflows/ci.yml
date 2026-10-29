@@ -75,7 +75,7 @@ jobs:
       - name: Verify composed projectile, animation and palette cores without the game backend
         run: |
           $playerDetached = Join-Path $env:RUNNER_TEMP 'player-detached.exe'
-          rustc --edition=2024 -O sm/src/verification/player_detached/main.rs -o $playerDetached
+          rustc --edition=2024 -D warnings -O sm/src/verification/player_detached/main.rs -o $playerDetached
           if ($LASTEXITCODE -ne 0) { throw 'Detached projectile compilation failed' }
           & $playerDetached
           if ($LASTEXITCODE -ne 0) { throw 'Detached projectile checks failed' }
@@ -159,7 +159,7 @@ jobs:
           Copy-Item -LiteralPath THIRD_PARTY_NOTICES.md -Destination "$env:LIBRARY_PATH/THIRD_PARTY_NOTICES.md"
       - name: Build
         run: |
-          foreach ($archive in @('sm_desktop', 'lakesnes_cpu', 'lakesnes_backend', 'lakesnes_spc', 'sm_config', 'sm_stb_image', 'sm_music')) {
+          foreach ($archive in @('sm_desktop', 'lakesnes_cpu', 'lakesnes_backend', 'sm_config', 'sm_stb_image', 'sm_music')) {
             if (!(Test-Path -LiteralPath "$env:LIBRARY_PATH/lib$archive.a")) { throw "Missing native archive: $archive" }
           }
           cargo build --release --locked --lib --bin sm --example sm_verify

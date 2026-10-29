@@ -321,6 +321,13 @@ ASSERTION = re.compile(
 
 
 def run(command, timeout):
+    if command[0] == "rustc":
+        flags = os.environ.get("CARGO_ENCODED_RUSTFLAGS")
+        if flags is None:
+            flags = os.environ.get("RUSTFLAGS", "").split()
+        else:
+            flags = flags.split("\x1f") if flags else []
+        command = [*command, *flags, "-D", "warnings"]
     return subprocess.run(
         command, capture_output=True, text=True, encoding="utf-8", errors="replace",
         timeout=timeout, check=False,

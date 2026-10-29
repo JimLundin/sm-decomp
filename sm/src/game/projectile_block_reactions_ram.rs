@@ -4,7 +4,6 @@ use crate::game::{
     player_projectiles::{access::room_bts, host::Host},
     projectile_block_reactions::Definitions,
     room_mechanisms::host::{Content, ContentAddress},
-    session_access::SessionAccess,
     session_runtime::Runtime,
 };
 use crate::rom::RomRecord;

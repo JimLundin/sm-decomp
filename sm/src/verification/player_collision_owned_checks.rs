@@ -8,7 +8,6 @@ use crate::game::{
         effects::Host,
         operations::{self, Direction, DisplacementRequest, Obstruction},
     },
-    session_access::SessionAccess,
     visual_host,
     visual_state::PaletteCarry,
 };

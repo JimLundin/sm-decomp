@@ -315,7 +315,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
 }
 
 unsafe fn invoke(id: u32, game: &mut Game) -> bool {
-    unsafe {
+    {
         if matches!(id, 3904 | 3905) {
             return direct_settlement(game);
         }

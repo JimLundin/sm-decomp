@@ -191,7 +191,7 @@ fn write_sky_word(value: u16, offset: isize, game: &mut Game) {
 }
 
 #[forbid(unsafe_code)]
-pub fn advance_parallax(k: u16, game: &mut Game) {
+pub fn advance_parallax(_k: u16, game: &mut Game) {
     game.ram().write_byte(0x59, 74);
     for v1 in 0u16..23 {
         let entry = native_record(0x88aec1 + 8 * u32::from(v1), game);

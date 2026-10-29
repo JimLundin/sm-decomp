@@ -102,7 +102,7 @@ pub(super) fn load_graphics<H: ActorHost + Host>(
     }
 }
 
-pub(crate) fn prepare_room_assets<H: ActorHost + Host>(h: &mut H) {
+pub(in crate::game) fn prepare_room_assets<H: ActorHost + Host>(h: &mut H) {
     h.session_mut()
         .actor_identity
         .clear_actor_palette_residency();

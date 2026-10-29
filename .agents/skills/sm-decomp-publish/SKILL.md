@@ -31,7 +31,9 @@ reservations. Only main is remote; private copies/local branches may isolate wor
    When observing CI, bind the actual CI workflow/result to its exact commit.
 5. Send publication commit/pins, check attribution, actual push time when observed,
    gaps and next owner promptly. Cached ref observation is not push time. Continue
-   independent source/build/replay work while CI executes.
+   independent source/build/replay work while CI executes. After every push,
+   update the canonical first #6 report with graphical measured project state and
+   the latest reply under PLAN; label pending checks and retain exact owned proof.
 
 Documentation/planning ACKs and unrelated prose never gate qualified publication.
 Update active PLAN alongside code; Pages, README progress images and treemaps are

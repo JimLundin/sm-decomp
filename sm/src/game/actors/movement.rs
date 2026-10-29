@@ -8,12 +8,14 @@ use super::{
     api::{MoveScan, MovementResult, SlopePolicy, VerticalProbeEdge},
     effects::ActorHost,
 };
+#[cfg(not(sm_verify_dll))]
+use crate::game::room_mechanisms::{
+    creation,
+    host::{Contact, SpawnSource},
+};
 use crate::game::{
     projectile_geometry::square_slope_occupied,
-    room_mechanisms::{
-        creation,
-        host::{ByteOrder, Contact, Host as MechanismHost, ImportedAliases, SpawnSource},
-    },
+    room_mechanisms::host::{ByteOrder, Host as MechanismHost, ImportedAliases},
     session::{Point, Position, Vector32},
 };
 fn current(h: &impl ActorAccess) -> ActorKey {

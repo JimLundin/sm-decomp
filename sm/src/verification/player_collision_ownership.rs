@@ -3,8 +3,8 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 use crate::{
     game::{
-        player_projectiles::access::Store, player_transitions as pt, session_access::SessionAccess,
-        session_runtime::Runtime, sm_a9,
+        player_projectiles::access::Store, player_transitions as pt, session_runtime::Runtime,
+        sm_a9,
     },
     game_state::Game,
     rom::{RomImage, lorom_offset},

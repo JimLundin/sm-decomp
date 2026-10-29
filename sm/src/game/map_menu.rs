@@ -123,11 +123,11 @@ fn open_area_window(game: &mut Game) {
         game.ram().write_byte(0x6c, 0);
         game.ram().write_byte(0x6d, 0);
         word! {game; reg_BG2VOFS = 24; pausemenu_palette_animation_timer = 1; }
-        let mut v1: u16 = 0;
+        let mut _v1: u16 = 0;
         word_transfers!(game, ascending, 800; xray(0) <- rom(0xb6e000, 0));
-        v1 = 800;
+        _v1 = 800;
         word_transfers!(game, ascending, 224; xray(800) <- value(10241));
-        v1 = 1024;
+        _v1 = 1024;
         menu_tilemap::area_label(game);
         word_transfers!(game, descending, 160; xray(959) <- rom(0x81b14b, 160));
         menu_tilemap::upload(2048, 0x7e4000, 1, false, game);

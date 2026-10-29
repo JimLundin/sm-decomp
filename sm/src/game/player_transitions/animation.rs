@@ -45,12 +45,12 @@ fn table_word(h: &mut impl Host, table: AnimationTable, offset: usize) -> u16 {
     let record = Content::animation_table(h, table);
     u16::from_le_bytes(record.bytes::<2>(offset))
 }
-fn transition(h: &mut impl Host, pose: u8, command: u8) {
+fn transition(h: &mut impl Host, pose: u8, _command: u8) {
     #[cfg(sm_verify_dll)]
     let before_pose = h.session().player.transitions.transitional.to_raw();
     h.session_mut().player.transitions.transitional = PoseRequestWord::from_raw(u16::from(pose));
     #[cfg(sm_verify_dll)]
-    match command {
+    match _command {
         8 | 13 => h.probe("transitions.phase.229"),
         9 => h.probe("transitions.phase.232"),
         10 => h.probe("transitions.phase.234"),
@@ -66,7 +66,7 @@ fn transition(h: &mut impl Host, pose: u8, command: u8) {
     let before_hurt = h.session().player.transitions.hurt.to_raw();
     h.session_mut().player.transitions.hurt = HurtAction::from_raw(3);
     #[cfg(sm_verify_dll)]
-    match command {
+    match _command {
         8 | 13 => h.probe("transitions.phase.230"),
         9 => h.probe("transitions.phase.233"),
         10 => h.probe("transitions.phase.235"),

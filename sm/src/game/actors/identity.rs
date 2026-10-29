@@ -300,7 +300,7 @@ impl ActorIdentityState {
     }
 
     /// Validate the handle and selected room materials before publishing the choice.
-    pub(crate) fn set_appearance(
+    pub(in crate::game) fn set_appearance(
         &mut self,
         handle: InstanceHandle,
         appearance: AppearanceId,

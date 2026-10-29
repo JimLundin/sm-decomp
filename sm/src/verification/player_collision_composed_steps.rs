@@ -57,7 +57,7 @@ fn trace(out: &mut Vec<u8>, phase: u8, g: &Game) {
     out.push(u8::from(g.g_fail));
 }
 pub(crate) unsafe fn run(g: &mut Game, reversed: bool, out: &mut Vec<u8>) {
-    unsafe {
+    {
         // Existing authored births and scheduling already ran. Make one actual
         // source actor solid; retain its definition, handle, position and media.
         let actor_index =

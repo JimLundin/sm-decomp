@@ -1,7 +1,7 @@
 //! Cross-owner visual publication, projected aliases, and callback unwind.
 #![forbid(unsafe_code)]
 use crate::{
-    game::{session_access::SessionAccess, session_runtime::Runtime, visual_host::Aliases},
+    game::{session_runtime::Runtime, visual_host::Aliases},
     game_state::Game,
 };
 use std::panic::{AssertUnwindSafe, catch_unwind};

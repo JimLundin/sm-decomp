@@ -399,7 +399,6 @@ unsafe fn opcode_hook_parts(addr: u32, game: &mut HookContext<'_, '_>) -> i32 {
             '_c2rust_label;
             b"0\0", b"src/sm_cpu_infra.c\0", 455, b"int CpuOpcodeHook(uint32)\0"
         };
-        0
     }
 }
 pub(crate) unsafe fn hooked_return(game: &mut Execution<'_>, is_long: i32) -> bool {
@@ -416,7 +415,6 @@ unsafe fn hooked_return_parts(is_long: i32, host: &mut HostContext<'_>) -> bool 
             '_c2rust_label;
             b"0\0", b"src/sm_cpu_infra.c\0", 465, b"_Bool HookedFunctionRts(int)\0"
         };
-        false_0 != 0
     }
 }
 fn brightness_cache_is_valid(ppu: &Ppu) -> bool {
@@ -997,7 +995,7 @@ pub unsafe fn RunAsmCode(
             mf = flags & 1 != 0, xf = (flags & 2) >> 1 != 0, };
             game.g_calling_asm_from_c = true_0 != 0;
             while game.g_calling_asm_from_c {
-                let pc_0: u32 = (words!(i32, (*(*game.g_snes).cpu), k, pc)) as u32;
+                let _pc_0: u32 = (words!(i32, (*(*game.g_snes).cpu), k, pc)) as u32;
                 if (*game.g_snes).debug_cycles {
                     let mut line = [0u8; 80];
                     getProcessorStateCpu(&mut game.execution(), &mut line);
@@ -1590,7 +1588,7 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
             .expect("Session normalized selected adoption rejected");
     }
 }
-pub unsafe fn RtlRunFrameCompare(input: u16, run_what: i32, native_game: &mut Game) {
+pub unsafe fn RtlRunFrameCompare(input: u16, _run_what: i32, native_game: &mut Game) {
     let game = &mut *native_game;
     unsafe {
         if !game.supports_legacy_persistence() && u32::from(game.g_runmode) != RM_MINE {

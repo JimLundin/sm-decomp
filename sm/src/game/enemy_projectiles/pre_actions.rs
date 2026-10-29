@@ -862,7 +862,7 @@ pub(super) fn EprojPreInstr_MotherBrainTubeFalling(k: u16, ctx: &mut impl Host) 
 pub(super) fn EprojPreInstr_MotherBrainGlassShatteringShard(k: u16, ctx: &mut impl Host) {
     let v1 = (k >> 1) as i32;
     integrate_shard(v1 as isize, SlotField::X, SlotField::XFraction, ctx);
-    let v6: u16 = enemy!(ctx, (v1) as isize, y_fraction);
+    let _v6: u16 = enemy!(ctx, (v1) as isize, y_fraction);
     if (enemy!(ctx, (v1) as isize, y) & 0xff00) != 0 {
         enemy!(ctx, 0 => (v1) as isize, definition);
     } else {
@@ -878,7 +878,7 @@ pub(super) fn EprojPreInstr_KagosBugs(k: u16, ctx: &mut impl Host) {
     EprojPreInstr_KagosBugs_Func2(k, ctx);
     let v1: i32 = k as i32 >> 1;
     if enemy!(ctx, (v1) as isize, behavior_c) != 0 {
-        let fresh71 = enemy_add!(ctx, (v1 as usize) as isize, behavior_c, u16::MAX);
+        let _fresh71 = enemy_add!(ctx, (v1 as usize) as isize, behavior_c, u16::MAX);
     } else {
         start_instruction((v1 as usize) as isize, addr_word_86D052 as u16, ctx);
         enemy!(ctx, (0x86d0ebi32) as u16 => (v1) as isize, pre_action);
@@ -1887,8 +1887,8 @@ pub(super) fn EprojPreInstr_E605(k: u16, ctx: &mut impl Host) {
         .wrapping_add(((enemy!(ctx, (v1) as isize, velocity_y)) as i16).unsigned_abs());
     if v2 >= 0x1000 {
         enemy!(ctx, 1 => (v1) as isize, delay);
-        let fresh60 = enemy_add!(ctx, (v1 as usize) as isize, program, 1);
-        let fresh61 = enemy_add!(ctx, (v1 as usize) as isize, program, 1);
+        let _fresh60 = enemy_add!(ctx, (v1 as usize) as isize, program, 1);
+        let _fresh61 = enemy_add!(ctx, (v1 as usize) as isize, program, 1);
         v2 = 0;
     }
     enemy!(ctx, v2 => (v1) as isize, counter);

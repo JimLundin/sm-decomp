@@ -1927,12 +1927,14 @@ crate::game::callback_dispatch! {
     };
     [11115383]
     MotherBrain_Instr_SetMainShakeTimer50 [k] { slot!(game, Enemy_MotherBrain[0x40].var_00 = 50); };
+    @functions [pub unsafe fn (_k: u16, game: &mut Game) -> u16];
     [11115621] MotherBrain_Instr_GotoEitherOr [result] {
         let result: u16 = addr_stru_A99C5F as u16;
         if (word!(game.random_number) & 0xfff) >= 0xfe0 {
             return addr_stru_A99C47 as u16;
         }
     };
+    @functions [pub unsafe fn (k: u16, game: &mut Game) -> u16];
     [11115693] MotherBrain_Instr_MaybeGoto [k] {
         if word!(game.random_number) < 0xf000 {
             return addr_stru_A99C9F as u16;
@@ -2138,7 +2140,7 @@ pub unsafe fn MotherBrain_CalculateRainbowBeamHdma(game: &mut Game) {
         calculate_rainbow_window(game);
     }
 }
-pub fn MotherBrain_Instr_Goto2(k: u16) -> u16 {
+pub fn MotherBrain_Instr_Goto2(_k: u16) -> u16 {
     addr_stru_A99CD1 as u16
 }
 pub unsafe fn MotherBrain_Instr_AimRings(x: u16, y: u16, game: &mut Game) {
@@ -2458,7 +2460,7 @@ pub unsafe fn MotherBomb_FiringDeathBeam_1(game: &mut Game) {
         }
     }
 }
-pub fn MotherBomb_FiringDeathBeam_2(game: &mut Game) {}
+pub fn MotherBomb_FiringDeathBeam_2(_game: &mut Game) {}
 pub unsafe fn MotherBomb_FiringDeathBeam_3(game: &mut Game) {
     unsafe {
         MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9C87 as u16, game);
@@ -3806,7 +3808,7 @@ pub unsafe fn ShitroidInCutscene_UpdateSpeedAndAngle(
         );
     }
 }
-crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: EnemyScript) -> EnemyScript;
+crate::instruction_callbacks! { pub unsafe fn (_k: u16, _jp: EnemyScript) -> EnemyScript;
     Shitroid_Instr_1 [EnemyScript::jump(addr_kShitroid_Ilist_CFA2 as u16)] { };
     Shitroid_Instr_2 [EnemyScript::jump(addr_kShitroid_Ilist_CFB8 as u16)] { };
 }
@@ -4783,6 +4785,7 @@ crate::game::callback_dispatch! {
         slot!(game, Enemy_Shitroid[0i32].var_A = (0xa9f21bi32) as u16);
         Shitroid_Func_16(k, game);
     };
+    @functions [pub unsafe fn (_k: u16, game: &mut Game)];
     [11137728] Shitroid_Func_19 [] {
         Shitroid_Func_GraduallyAccelerateTowards0x400(
             word!(game.cur_enemy_index),
@@ -4802,6 +4805,7 @@ crate::game::callback_dispatch! {
             Shitroid_Func_20(game);
         }
     };
+    @functions [pub unsafe fn (k: u16, game: &mut Game)];
     [11137888] Shitroid_Func_22 [] {
         QueueSfx2_Max6(0x52, game);
         slot!(game, Enemy_Shitroid[k as i32].var_A = (0xa9f36di32) as u16);
@@ -5295,7 +5299,7 @@ pub unsafe fn Shitroid_HandleCrySoundEffect(k: u16, a: u16, game: &mut Game) -> 
     }
     a
 }
-crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: EnemyScript) -> EnemyScript;
+crate::instruction_callbacks! { pub unsafe fn (_k: u16, _jp: EnemyScript) -> EnemyScript;
     Shitroid_Instr_3 [EnemyScript::jump(addr_kShitroid_Ilist_F90E as u16)] { };
     Shitroid_Instr_4 [EnemyScript::jump(addr_kShitroid_Ilist_F924 as u16)] { };
     Shitroid_Instr_6 [EnemyScript::jump(addr_kShitroid_Ilist_F93A as u16)] { };
@@ -5692,6 +5696,7 @@ crate::game::callback_dispatch! {
         slot!(game, Enemy_DeadMonsters[E].var_A = v2);
         jp
     };
+    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11139476] Shitroid_Instr_5 [] {
         if (word!(game.random_number) & 0x8000) == 0 {
             return EnemyScript::jump(jp.word(0));
@@ -5699,7 +5704,7 @@ crate::game::callback_dispatch! {
         QueueSfx2_Max6(0x52, game);
         jp.offset(1)
     };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11115208] MotherBrain_Instr_SpawnEprojToOffset [jp.offset(3)] {
         let E: i32 = 0;
         game.eproj_spawn_pt = Point16U {

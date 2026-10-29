@@ -373,7 +373,7 @@ pub fn set_backdrop(game: &mut Game) {
         word!(game.palette_buffer[0] = 3171);
     }
 }
-pub fn restore_left(k: u16, game: &mut Game) {
+pub fn restore_left(_k: u16, game: &mut Game) {
     word_transfers!(game, ascending, 1; native(0xa88) <- value(1));
     game.ram().write_byte(0xa8a, 0x98);
     word_transfers!(game, ascending, 1; native(0xa8b) <- value(0));
@@ -396,14 +396,14 @@ pub fn restore_left(k: u16, game: &mut Game) {
         word!(game.demo_input_pre_instr += 1);
     }
 }
-pub fn restore_right(k: u16, game: &mut Game) {
+pub fn restore_right(_k: u16, game: &mut Game) {
     Runtime::new(game).apply_xray_blending(BlendPhase::Restore);
     if (word!(game.vram_write_queue_tail) as i16).wrapping_sub(240) < 0 {
         upload_screen(0x5800, 1, game);
         word!(game.demo_input_pre_instr += 1);
     }
 }
-pub unsafe fn finish_restore(k: u16, game: &mut Game) {
+pub unsafe fn finish_restore(_k: u16, game: &mut Game) {
     Runtime::new(game).apply_xray_blending(BlendPhase::Restore);
     if word!(game.time_is_frozen_flag) != 0 {
         word! { game, 0;

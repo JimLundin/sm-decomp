@@ -5,7 +5,6 @@ use crate::game::room_entry::{
     content::{LoadMode, SelectorCursor, SelectorKind},
     installation, selection,
 };
-use crate::game::session_access::SessionAccess;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::{checked_word, word, words as ram};

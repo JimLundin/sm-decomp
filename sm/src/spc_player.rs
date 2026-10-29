@@ -1,4 +1,3 @@
-use crate::c_library::printf;
 use crate::initial_state::InitialState;
 use crate::snes::dsp::{Dsp, dsp_cycle, dsp_reset, dsp_write};
 pub use crate::types::{
@@ -153,7 +152,6 @@ pub unsafe extern "C-unwind" fn Not_Implemented() {
             '_c2rust_label;
             b"0\0", b"src/spc_player.c\0", 383, b"void Not_Implemented(void)\0"
         };
-        printf(c"Not Implemented\n".as_ptr());
     }
 }
 #[unsafe(export_name = "sm_music_WritePitchInner")]

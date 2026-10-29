@@ -111,7 +111,9 @@ pub(crate) unsafe fn run(local: u32, g: &mut Game) -> Vec<u8> {
     let mut out = b"PCWALK1".to_vec();
     out.extend_from_slice(&local.to_le_bytes());
     snapshot(&mut out, g);
-    unsafe { crate::game::player_collision::verification::walked_obstacle(g) };
+    {
+        crate::game::player_collision::verification::walked_obstacle(g)
+    };
     let early = matches!(local, 0 | 4 | 5);
     let blocked_actor = matches!(local, 1 | 6);
     let blocked_terrain = matches!(local, 2 | 8);

@@ -964,16 +964,15 @@ pub unsafe fn mov24(a: *mut LongPtr, d: u32) {
 pub unsafe fn Load24(src: *const LongPtr) -> u32 {
     unsafe { *(src as *mut u32) & 0xffffff }
 }
-pub fn invalid_interrupt(game: &mut Game) {
-    unreachable_failure(true, game);
-    loop {}
+pub fn invalid_interrupt(_game: &mut Game) {
+    unreachable_failure(true)
 }
-pub fn Unreachable(game: &mut Game) -> bool {
-    unreachable_failure(false, game)
+pub fn Unreachable(_game: &mut Game) -> bool {
+    unreachable_failure(false)
 }
 // Only these fixed static diagnostics cross the native assertion boundary.
 // No caller-provided pointers or backend allocations are accessed.
-fn unreachable_failure(invalid_interrupt: bool, game: &mut Game) -> bool {
+fn unreachable_failure(invalid_interrupt: bool) -> ! {
     unsafe {
         for message in [
             invalid_interrupt.then_some(c"InvalidInterrupt_Crash\n"),
@@ -987,9 +986,7 @@ fn unreachable_failure(invalid_interrupt: bool, game: &mut Game) -> bool {
         crate::native_assertion! {
             '_c2rust_label;
             b"0\0", b"src/sm_rtl.c\0", 512, b"_Bool Unreachable(void)\0"
-        };
-        game.ram().write_byte(0x1ffffi32 as usize, 1);
-        false_0 != 0
+        }
     }
 }
 pub use crate::rom::lorom_offset;
@@ -1406,10 +1403,11 @@ unsafe fn RtlSaveMusicStateToRam_Locked(game: &mut Game, include_queued_commands
         }
     }
 }
-pub unsafe fn RtlRenderAudio(audio_buffer: &mut [[i16; 2]], game: &mut Game) {
+pub unsafe fn RtlRenderAudio(audio_buffer: &mut [[i16; 2]], game: &mut Game) -> bool {
     unsafe {
         RtlApuLock();
         RtlPopApuState_Locked(game);
+        let mut produced = false;
         if !game.g_use_my_apu_code {
             if !game.uploading_apu() {
                 while ((*(*(*game.g_snes).apu).dsp).state.sampleOffset as i32) < 534 {
@@ -1418,14 +1416,17 @@ pub unsafe fn RtlRenderAudio(audio_buffer: &mut [[i16; 2]], game: &mut Game) {
                 (*(*(*game.g_snes).apu).dsp)
                     .state
                     .write_samples(audio_buffer);
+                produced = true;
             }
         } else {
             SpcPlayer_GenerateSamples(game.g_spc_player);
             (*(*game.g_spc_player).state.dsp)
                 .state
                 .write_samples(audio_buffer);
+            produced = true;
         }
         RtlApuUnlock();
+        produced
     }
 }
 pub unsafe fn RtlCheat(c: c_char, game: &mut Game) {

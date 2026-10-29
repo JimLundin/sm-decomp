@@ -655,7 +655,7 @@ pub unsafe fn Kraid_HealthBasedPaletteHandling(game: &mut Game) {
         v0 = (v0).wrapping_add(2);
     }
 }
-pub fn Kraid_Instr_1(k: u16, jp: EnemyScript) -> EnemyScript {
+pub fn Kraid_Instr_1(_k: u16, jp: EnemyScript) -> EnemyScript {
     jp
 }
 pub unsafe fn KraidLintCommon_Main(k: u16, game: &mut Game) {
@@ -1388,7 +1388,7 @@ pub unsafe fn Kraid_UpdateBG2TilemapBottomHalf(game: &mut Game) {
     };
     word!(game.vram_write_queue_tail = (v0).wrapping_add(7));
 }
-pub unsafe fn Kraid_RaiseKraidThroughFloor(k: u16, game: &mut Game) {
+pub unsafe fn Kraid_RaiseKraidThroughFloor(_k: u16, game: &mut Game) {
     unsafe {
         Kraid_RestrictSamusXtoFirstScreen_2(game);
         slot!(game, Enemy_Kraid[0i32].kraid_var_A = (0xa7c89ai32) as u16);
@@ -3428,6 +3428,7 @@ crate::game::callback_dispatch! {
         CallEnemyInstrExtFunc(((jp.word(0)) as u32) | (0xa70000u32), k, game);
         jp.offset(1)
     };
+    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10979983] Kraid_Instr_9 [] {
         let E = (0) as i32;
         if ((slot!(game, Enemy_Kraid[E].base.health)) as i16).wrapping_sub(({ let at = slot!(@at Enemy_Kraid, E, kraid_healths_8ths) + (3i32 as usize) * 2; u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]) }) as i16)
@@ -3440,7 +3441,7 @@ crate::game::callback_dispatch! {
         }
         jp
     };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10991158] Kraid_Instr_DecYpos [jp] {
         let E = (0) as i32;
         slot!(game, Enemy_Kraid[E].base.y_pos = slot!(game, Enemy_Kraid[E].base.y_pos).wrapping_sub(1));
@@ -3586,12 +3587,14 @@ crate::game::callback_dispatch! {
         slot!(game, Enemy_Phantoon[k as i32].var_F = (0xa7d72di32) as u16);
         slot!(game, Enemy_Phantoon[E1].var_F = 0);
     };
+    @functions [pub unsafe fn (_k: u16, game: &mut Game)];
     [10999597] Phantoon_FadeInBeforeFigure8 [] {
         Phantoon_FadeIn(0xc, game);
         if slot!(game, Enemy_Phantoon[0x40i32].var_F) != 0 {
             slot!(game, Enemy_Phantoon[0i32].var_F = (0xa7d5e7i32) as u16);
         }
     };
+    @functions [pub unsafe fn (k: u16, game: &mut Game)];
     [10999615] Phantoon_BecomeSolidAfterRainingFireballs [] {
         let E1 = (0x40) as i32;
         slot!(game, Enemy_Phantoon[E1].var_F = 0);

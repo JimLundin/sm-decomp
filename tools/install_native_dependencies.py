@@ -18,7 +18,7 @@ def main():
     tools = Path(__file__).resolve().parent
     common = ["--zig", args.zig, "--target", args.target,
               "--library-directory", args.library_directory]
-    for component in ("cpu", "backend", "spc"):
+    for component in ("cpu", "backend"):
         subprocess.run([sys.executable, str(tools / "install_lakesnes.py"), component,
                         *common, "--prefix", str(args.prefix / f"lakesnes-{component}")], check=True)
     components = ("config", "desktop", "music") if args.target == "x86_64-windows-gnu" else ("config", "music")

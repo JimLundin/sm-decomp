@@ -1,10 +1,7 @@
 //! Animated tiles compose on the shared Session at each legacy entry.
 pub(crate) mod execution;
 pub(crate) mod native;
-use crate::{
-    game::{session_access::SessionAccess, session_runtime::Runtime},
-    game_state::Game,
-};
+use crate::{game::session_runtime::Runtime, game_state::Game};
 pub(crate) fn set_enabled(enabled: bool, game: &mut Game) {
     execution::set_enabled(Runtime::new(game).session_mut(), enabled);
 }

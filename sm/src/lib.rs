@@ -624,6 +624,7 @@ pub fn verify_room_level_copy(case: u32) {
 }
 
 pub(crate) mod native_audio;
+pub use native_audio::SampleDelivery;
 mod native_player_ram;
 
 macro_rules! type_aliases {

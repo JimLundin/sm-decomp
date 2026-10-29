@@ -53,7 +53,9 @@ pub(in crate::game) mod queries;
 pub(in crate::game) mod scheduling;
 pub(in crate::game) mod staging;
 
-pub(crate) use staging::prepare_room_assets;
+pub(crate) fn prepare_room_assets(h: &mut crate::game::session_runtime::Runtime<'_>) {
+    staging::prepare_room_assets(h);
+}
 
 #[cfg(sm_verify_dll)]
 #[path = "../../verification/actor_runtime_checks.rs"]

@@ -37,5 +37,6 @@ default = ["frontend"]
 frontend = ["dep:sdl2-sys", "dep:gl"]
 
 [lints.rust]
+warnings = { level = "deny", priority = -1 }
 # tools/verify_dll.py selects the headless host with this rustc configuration.
 unexpected_cfgs = { level = "warn", check-cfg = ["cfg(sm_verify_dll)"] }

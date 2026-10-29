@@ -80,7 +80,7 @@ pub fn PpuRestoreRenderRouting(ppu: &mut Ppu) {
         ppu.windowsel |= flags << (index * 4);
     }
 }
-pub unsafe fn PpuBeginDrawing(ppu: *mut Ppu, pixels: *mut u8, pitch: size_t, render_flags: u32) {
+pub unsafe fn PpuBeginDrawing(ppu: *mut Ppu, pixels: *mut u8, pitch: size_t, _render_flags: u32) {
     unsafe {
         (*ppu).renderPitch = pitch as u32;
         (*ppu).renderBuffer = pixels;
@@ -447,7 +447,7 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: u8, val: u8) {
         sm_backend_ppu_write(ppu, adr, val);
     }
 }
-pub fn PpuGetCurrentRenderScale(ppu: *mut Ppu, render_flags: u32) -> i32 {
+pub fn PpuGetCurrentRenderScale(_ppu: *mut Ppu, _render_flags: u32) -> i32 {
     1
 }
 

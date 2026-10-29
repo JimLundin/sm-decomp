@@ -73,7 +73,7 @@ unsafe extern "C-unwind" fn OpenGLRenderer_Init(window: *mut SDL_Window) -> bool
         let mut state = presenter.borrow_mut();
         unsafe {
             state.window = window;
-            let context: SDL_GLContext = SDL_GL_CreateContext(window);
+            let _context: SDL_GLContext = SDL_GL_CreateContext(window);
             SDL_GL_SetSwapInterval(1);
             crate::platform::glsl_shader::load_with(|name| {
                 sdl2_sys::SDL_GL_GetProcAddress(

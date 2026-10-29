@@ -1,8 +1,7 @@
 //! Actual animated runtime guard and alias checks.
 #![forbid(unsafe_code)]
 use crate::game::{
-    animated_tiles::execution, music::QueueMusic_Delayed8, session_access::SessionAccess,
-    session_runtime::Runtime,
+    animated_tiles::execution, music::QueueMusic_Delayed8, session_runtime::Runtime,
 };
 use crate::{game_state::Game, ram_map::words as ram, rom::RomImage};
 use std::panic::{AssertUnwindSafe, catch_unwind};

@@ -24,15 +24,15 @@ Read [iteration](../../../docs/ITERATION.md) and
 3. If DLL growth blocks admission, use PLAN's admissible normal-library allowance
    only when no successful proof transfers to the unchanged pinned inputs.
    Otherwise reuse that result; final DLL/runtime qualification remains pending.
-4. Run PLAN's required format, library/no-new-warning and DLL stages through the
+4. Run PLAN's required format, warnings-as-errors library and DLL stages through the
    existing verifier. Select affected verifier/host compile checks from actual
    mod/#[path] declarations and public exports; library proof transfers only to
    code compiled by its checked crate/cfg. Existing player_detached supplies its
    affected detached reach. Metadata does not execute declared unit bodies.
-5. Compare warning identities against the original result with the same compiler,
-   options, native inputs and profile. Unchanged totals can hide new warnings.
-   A warning increase, denied launch or missing artifact needs a correction or
-   supported execution route; it is not a passing stage.
+5. Enforce sm/Cargo.toml warnings='deny' on every sm Cargo target; preserve
+   dependency flags. Direct/detached rustc needs explicit -D warnings. Fix actual
+   diagnostics; blanket allowances and historical warning-bearing builds do not
+   pass. Bind reuse to the strict package/options; denied/missing artifacts fail.
 6. Send minimal DLL/source/native pins, stages/units/gaps and original handles
    to the assigned replay owner and primary before extended receipts. Record actual
    START/EXIT; notify root on terminal compilation for release.

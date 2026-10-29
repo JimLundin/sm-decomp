@@ -119,7 +119,7 @@ fn seed(g: &mut Game) -> (RomImage, RomImage) {
 }
 unsafe fn motion(direction: u32, amount: i32, g: &mut Game) {
     put(g, w::samus_collision_direction, direction as u16);
-    unsafe {
+    {
         match direction {
             0 => crate::game::player_collision::verification::move_left(-amount, g),
             1 => crate::game::player_collision::verification::move_right(amount, g),

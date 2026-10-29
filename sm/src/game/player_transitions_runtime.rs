@@ -10,7 +10,6 @@ use crate::{
             },
             effects::{BounceFault, Effects, GrappleTransition, Host},
         },
-        session_access::SessionAccess,
         session_runtime::Runtime,
         visual_host::{self, Source},
     },

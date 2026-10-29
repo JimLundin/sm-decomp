@@ -23,7 +23,7 @@ bool sm_desktop_matches_source(uint32_t index, const uint8_t *bytes, size_t leng
 }
 
 // Called on normal return and Rust unwind, before the Game owner is released.
-void sm_desktop_close(void) {
+void sm_desktop_close(void *audio) {
   if (!desktop_initialized)
     return;
   desktop_initialized = false;
@@ -34,8 +34,7 @@ void sm_desktop_close(void) {
   }
   SDL_DestroyMutex(sm_desktop_audio_mutex);
   sm_desktop_audio_mutex = NULL;
-  free(g_audiobuffer);
-  g_audiobuffer = NULL;
+  sm_host_release_audio(audio);
   if (g_window) {
     // Audio has joined. Do not reacquire a Game gate poisoned by the unwind.
     g_renderer_funcs.Destroy();
@@ -43,4 +42,13 @@ void sm_desktop_close(void) {
     g_window = NULL;
   }
   SDL_Quit();
+}
+
+// Existing recursive SDL lock; no Game borrow enters this native device edge.
+int sm_desktop_begin_audio(void) {
+  if (SDL_LockMutex(sm_desktop_audio_mutex)) sm_host_die("Mutex lock failed!");
+  return g_sdl_audio_mixer_volume;
+}
+void sm_desktop_end_audio(void) {
+  SDL_UnlockMutex(sm_desktop_audio_mutex);
 }
