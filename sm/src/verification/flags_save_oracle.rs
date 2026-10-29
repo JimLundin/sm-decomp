@@ -1,5 +1,6 @@
 //! Untouched original CPU SaveToSram. Never calls the unaligned old Rust save body.
 use super::{Game, MakeSnapshotWithPlayerOwner, RestoreSnapshot, Snapshot};
+use crate::native_rom::NativeRomPointer;
 use crate::{flags_save_case as case, initial_state::InitialState, snes::cpu::cpu_getFlags};
 use std::collections::BTreeSet;
 fn offset(address: u32) -> usize {

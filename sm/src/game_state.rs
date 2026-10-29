@@ -1137,9 +1137,9 @@ impl Game {
     /// unsafe read operations. Missing-source behavior remains a null pointer.
     #[forbid(unsafe_code)]
     pub(crate) fn legacy_native_rom_ptr(&self) -> *const u8 {
-        self.native_rom
-            .as_ref()
-            .map_or(core::ptr::null(), |image| image.as_mut_ptr().cast_const())
+        self.native_rom.as_ref().map_or(core::ptr::null(), |image| {
+            crate::native_rom::NativeRomPointer::as_mut_ptr(image).cast_const()
+        })
     }
 
     /// Preserve an optional binding for comparisons, including startup.

@@ -1,6 +1,7 @@
 //! Original 65816 sprite lifecycle and real OAM output. Component oracle, not a movie.
 use super::{Game, MakeSnapshotWithPlayerOwner, RestoreSnapshot, Snapshot};
 use crate::initial_state::InitialState;
+use crate::native_rom::NativeRomPointer;
 use crate::snes::cpu::cpu_getFlags;
 use crate::sprite_pool_case::{self as case, Operation};
 use std::collections::BTreeSet;
