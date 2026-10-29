@@ -34,7 +34,6 @@ pub(in crate::game) mod sidehopper;
 pub(crate) mod snapshot;
 pub(in crate::game) mod state;
 pub(in crate::game) mod wall_crawlers;
-pub(in crate::game) use state::Actors;
 
 pub(in crate::game) mod codec;
 mod runtime;

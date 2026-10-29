@@ -17,13 +17,13 @@ use std::sync::Arc;
 /// installed as a competing gameplay owner or filled from a live Session.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct AuxiliaryGameplayCheckpoint {
-    pub(in crate::game) botwoon_death: crate::game::actors::botwoon_death::DeathProtocol,
+    pub(in crate::game) botwoon_death: sm_game::actors::botwoon_death::DeathProtocol,
     pub(in crate::game) timing: crate::game::session::Timing,
     pub(crate) gameplay_flags: crate::game::gameplay_flag_state::GameplayFlags,
     pub(crate) flag_compatibility: crate::game::gameplay_flag_state::FlagCompatibility,
     pub(crate) sprite_effects: crate::game::sprite_effect_state::SpriteEffects,
     pub(crate) sprite_compatibility: crate::game::sprite_effect_state::SpriteCompatibilityTails,
-    pub(crate) minimap: crate::game::player_update::state::State,
+    pub(crate) minimap: sm_game::player_update::state::State,
     pub(crate) inventory: crate::game::item_pickups::Inventory,
     pub(crate) mechanisms: crate::game::session::Mechanisms,
     pub(crate) feedback: crate::game::session::Feedback,
@@ -1411,7 +1411,7 @@ fn checkpoint_minimap_tiles(bytes: &mut Vec<u8>, values: &[[u16; 5]; 3]) {
 fn checkpoint_read_minimap_tiles(read: &mut CheckpointReader<'_>) -> Result<[[u16; 5]; 3], String> {
     Ok([audio_words(read)?, audio_words(read)?, audio_words(read)?])
 }
-checkpoint_fields!(checkpoint_minimap, checkpoint_read_minimap, crate::game::player_update::state::State,
+checkpoint_fields!(checkpoint_minimap, checkpoint_read_minimap, sm_game::player_update::state::State,
     explored: checkpoint_bytes/checkpoint_read_bytes, tiles: checkpoint_minimap_tiles/checkpoint_read_minimap_tiles,
     disabled: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_mechanism, checkpoint_read_mechanism, Mechanism,
@@ -1490,7 +1490,7 @@ checkpoint_fields!(checkpoint_sequence, checkpoint_read_sequence, collision::Seq
     stage: checkpoint_word/checkpoint_read_word, value: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_multiply, checkpoint_read_multiply, collision::MultiplyScratch,
     left: checkpoint_word/checkpoint_read_word, right: checkpoint_word/checkpoint_read_word);
-checkpoint_fields!(checkpoint_botwoon_death, checkpoint_read_botwoon_death, crate::game::actors::botwoon_death::DeathProtocol,
+checkpoint_fields!(checkpoint_botwoon_death, checkpoint_read_botwoon_death, sm_game::actors::botwoon_death::DeathProtocol,
     pending_hit: checkpoint_word/checkpoint_read_word, active: checkpoint_word/checkpoint_read_word,
     tail_ready: checkpoint_word/checkpoint_read_word, previous_health: checkpoint_word/checkpoint_read_word,
     body_landed: checkpoint_word/checkpoint_read_word);
@@ -2012,7 +2012,7 @@ impl Room {
 /// Actor identity/media, Control, observations and Display remain separate owners
 /// that the complete Session codec must reconstruct before validated installation.
 pub(crate) struct NumericGameplayCheckpoint {
-    actors: crate::game::actors::Actors,
+    actors: crate::game::actors::state::Actors,
     player: Player,
     projectiles: Projectiles,
     enemy_projectiles: crate::game::session::EnemyProjectiles,
@@ -2056,7 +2056,7 @@ impl Session {
         if read.bytes(11)? != b"SMGAMEPLAY\x01" {
             return Err("unsupported gameplay checkpoint schema".into());
         }
-        let actors = crate::game::actors::Actors::decode_numeric_checkpoint(
+        let actors = crate::game::actors::state::Actors::decode_numeric_checkpoint(
             gameplay_component(&mut read)?,
             metadata,
         )?;
