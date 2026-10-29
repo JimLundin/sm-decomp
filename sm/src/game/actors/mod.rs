@@ -48,6 +48,7 @@ pub(in crate::game) mod drawing;
 pub(in crate::game) mod kraid_lint;
 pub(in crate::game) mod media_runtime;
 pub(in crate::game) mod movement;
+pub(in crate::game) mod phantoon_actions;
 pub(in crate::game) mod phantoon_motion;
 pub(in crate::game) mod population;
 pub(in crate::game) mod queries;

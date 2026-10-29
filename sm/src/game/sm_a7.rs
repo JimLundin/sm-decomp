@@ -213,7 +213,7 @@ crate::game::callback_dispatch! {
         };
     };
     @external {
-        10997598 => [Phantoon_Func_4(k, game)];
+        10997598 => [actors::phantoon_actions::spawn_fireball(k, game)];
     }
 }
 pub unsafe fn Kraid_Touch_ArmFoot(game: &mut Game) {
@@ -2237,82 +2237,6 @@ crate::game::callback_dispatch! {
         10991665 => [()];
     }
 }
-pub unsafe fn Phantoon_Func_2(k: u16, game: &mut Game) {
-    unsafe {
-        if k == 0 && (word!(game.joypad1_newkeys) & 0x4000) != 0 {
-            *((&raw mut (*(rom_ptr!(game, ExtendedSpriteMap; 0xa7902d))).ypos as *mut u8).offset(1)
-                as *mut u16) = (*((&raw mut (*(rom_ptr!(game, ExtendedSpriteMap; 0xa7902d))).ypos
-                as *mut u8)
-                .offset(1) as *mut u16)
-                == 0) as u16;
-        }
-    }
-}
-pub unsafe fn Phantoon_Func_3(amt: i32, game: &mut Game) -> u8 {
-    let E = (0xc0) as i32;
-    let r18: u16 = amt as u16;
-    let r20: u16 = (amt >> 16) as u16;
-    if slot!(game, Enemy_Phantoon[E].var_E) != 0 {
-        let phant_var_D: u16 = slot!(game, Enemy_Phantoon[E].var_D);
-        let v4: bool = phant_var_D < r18;
-        slot!(
-            game,
-            Enemy_Phantoon[E].var_D = (phant_var_D).wrapping_sub(r18)
-        );
-        if v4 {
-            slot!(game, Enemy_Phantoon[E].var_D = 0);
-            return 1;
-        }
-    } else {
-        let r22: u16 = ((r20 as i32 & 0xff00) >> 8) as u16;
-        let mut v1: u16 = (r18).wrapping_add(slot!(game, Enemy_Phantoon[E].var_D));
-        slot!(game, Enemy_Phantoon[E].var_D = v1);
-        v1 = ((v1 as i32 & 0xff00) >> 8) as u16;
-        if v1 as i32 - r22 as i32 & 0x8000 == 0 {
-            slot!(game, Enemy_Phantoon[E].var_D = r20);
-        }
-    }
-    0
-}
-pub unsafe fn Phantoon_Func_4(k: u16, game: &mut Game) {
-    {
-        SpawnEprojWithGfx(0, k, addr_kEproj_DestroyableFireballs as u16, game);
-        QueueSfx3_Max6(0x1d, game);
-    }
-}
-pub unsafe fn Phantoon_Func_5(k: u16, game: &mut Game) {
-    {
-        for i in (0i32..=7).rev() {
-            SpawnEprojWithGfx(
-                (i | 0x600) as u16,
-                k,
-                addr_kEproj_DestroyableFireballs as u16,
-                game,
-            );
-        }
-        QueueSfx3_Max6(0x28, game);
-    }
-}
-pub unsafe fn Phantoon_Func_6(k: u16, a: u16, game: &mut Game) {
-    unsafe {
-        let mut v2: i16 = byte!(@pointer rom_ptr!(game; 0xa7cfc2); a as isize) as i16;
-        let mut r20: i32 = 16;
-        for _ in 0..=7 {
-            let mut v3: i16 = v2;
-            crate::update_place! { previous fresh25 = v2 => v2 + 1; }
-            SpawnEprojWithGfx(
-                (r20 | fresh25 as i32 | 0x400) as u16,
-                k,
-                addr_kEproj_DestroyableFireballs as u16,
-                game,
-            );
-            if (v3).wrapping_sub(8) >= 0 {
-                v2 = 0;
-            }
-            r20 += 16;
-        }
-    }
-}
 pub unsafe fn Phantoon_MoveInSwoopingPattern(k: u16, game: &mut Game) {
     let mut v4: u16 = 0;
     let E2 = (0x80) as i32;
@@ -3152,7 +3076,7 @@ slot!(game, EnemyData[fresh4].properties = (slot!(game, EnemyData[fresh4].proper
         slot!(game, EnemyData[v7 + (3) * 64].ai_var_C = -1i32 as u16);
     };
     [10997414] Phantoon_Main [] {
-        Phantoon_Func_2(word!(game.cur_enemy_index), game);
+        actors::phantoon_actions::debug_toggle_sprite_map(word!(game.cur_enemy_index), game);
         let EK = (word!(game.cur_enemy_index) as i32) as i32;
         actor_species_pre_instruction(((slot!(game, Enemy_Phantoon[EK].var_F)) as u32) | (0xa70000u32), game);
         if word!(game.cur_enemy_index) == 0 {
@@ -3409,7 +3333,7 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
     [10999114] Phantoon_WavyFadeIn [] {
         Phantoon_FadeIn(0xc, game);
-        if Phantoon_Func_3((words!((g_word_A7CD9D, g_word_A7CD9B))) as i32, game) != 0 {
+        if actors::phantoon_actions::approach_speed((words!((g_word_A7CD9D, g_word_A7CD9B))) as i32, game) != 0 {
             let E = (k as i32) as i32;
             slot!(game, Enemy_Phantoon[E].var_F = (0xa7d596i32) as u16);
             slot!(game, Enemy_Phantoon[0xc0i32].parameter_1 = 1);
@@ -3434,7 +3358,7 @@ crate::game::callback_dispatch! {
             slot!(game, Enemy_Phantoon[k as i32].var_F = (0xa7d4a8i32) as u16);
             slot!(game, Enemy_Phantoon[E].base; instruction_timer = 1, current_instruction = addr_kKraid_Ilist_CC53 as u16);
             slot!(game, Enemy_Phantoon[0i32].parameter_2 = 0);
-            Phantoon_Func_5(k, game);
+            actors::phantoon_actions::spawn_fireball_circle(k, game);
         }
     };
     [10999309] Phantoon_EyeFollowsSamusUntilTimerRunsOut [] {
@@ -3558,9 +3482,9 @@ crate::game::callback_dispatch! {
             slot!(game, Enemy_Phantoon[0x80i32].var_A = 0);
             slot!(game, Enemy_Phantoon[k as i32].var_F = (0xa7d73fi32) as u16);
             if slot!(game, Enemy_Phantoon[0i32].base.x_pos) as i32 - 128i32 & 0x8000 != 0 {
-                Phantoon_Func_6(k, 0, game);
+                actors::phantoon_actions::spawn_fireball_pattern(k, 0, game);
             } else {
-                Phantoon_Func_6(k, 2, game);
+                actors::phantoon_actions::spawn_fireball_pattern(k, 2, game);
             }
         }
     };
@@ -3680,7 +3604,7 @@ crate::game::callback_dispatch! {
         QueueSfx2_Max6(0x7e, game);
     };
     [11000454] Phantoon_DyingFadeOut [] {
-        Phantoon_Func_3((words!((g_word_A7CDA1, g_word_A7CD9F))) as i32, game);
+        actors::phantoon_actions::approach_speed((words!((g_word_A7CDA1, g_word_A7CD9F))) as i32, game);
         let E = (0x40) as i32;
         if slot!(game, Enemy_Phantoon[E].var_C) == 0xffff {
             Phantoon_FadeOut(0xc, game);
@@ -4276,7 +4200,7 @@ crate::game::callback_dispatch! {
         slot!(game, Enemy_Phantoon[E0].base.y_pos = crate::rtl::rom_table_word!(game, 0xa7cdad, (v4 + 2) as isize));
         slot!(game, Enemy_Phantoon[0x40i32].var_C = 0);
         slot!(game, Enemy_Phantoon[EK].var_F = (0xa7d73fi32) as u16);
-        Phantoon_Func_6(k, a, game);
+        actors::phantoon_actions::spawn_fireball_pattern(k, a, game);
     };
     [10999924] Phantoon_MoveEnragedPhantoonToTopCenter {
         slot!(game, Enemy_Phantoon[EK].var_F = (0xa7d891i32) as u16);
