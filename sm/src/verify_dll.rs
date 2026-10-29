@@ -115,16 +115,6 @@ pub unsafe extern "C" fn sm_verify_backend_source_hash() -> *const c_char {
 }
 
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn sm_verify_music_source_hash() -> *const c_char {
-    unsafe {
-        unsafe extern "C" {
-            fn sm_music_source_hash() -> *const c_char;
-        }
-        sm_music_source_hash()
-    }
-}
-
-#[unsafe(no_mangle)]
 pub extern "C" fn sm_verify_util_source_matches() -> bool {
     sm::util::native_source_matches()
 }

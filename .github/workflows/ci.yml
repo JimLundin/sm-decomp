@@ -159,7 +159,7 @@ jobs:
           Copy-Item -LiteralPath THIRD_PARTY_NOTICES.md -Destination "$env:LIBRARY_PATH/THIRD_PARTY_NOTICES.md"
       - name: Build
         run: |
-          foreach ($archive in @('sm_desktop', 'lakesnes_cpu', 'lakesnes_backend', 'sm_config', 'sm_stb_image', 'sm_music')) {
+          foreach ($archive in @('sm_desktop', 'lakesnes_cpu', 'lakesnes_backend', 'sm_config', 'sm_stb_image')) {
             if (!(Test-Path -LiteralPath "$env:LIBRARY_PATH/lib$archive.a")) { throw "Missing native archive: $archive" }
           }
           cargo build --release --locked --lib --bin sm --example sm_verify

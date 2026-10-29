@@ -21,12 +21,11 @@ def main():
     for component in ("cpu", "backend"):
         subprocess.run([sys.executable, str(tools / "install_lakesnes.py"), component,
                         *common, "--prefix", str(args.prefix / f"lakesnes-{component}")], check=True)
-    components = ("config", "desktop", "music") if args.target == "x86_64-windows-gnu" else ("config", "music")
+    components = ("config", "desktop") if args.target == "x86_64-windows-gnu" else ("config",)
     for component in components:
         command = [sys.executable, str(tools / f"install_native_{component}.py"),
                    *common, "--prefix", str(args.prefix / component)]
-        if component != "music":
-            command += ["--sdl-include", args.sdl_include]
+        command += ["--sdl-include", args.sdl_include]
         subprocess.run(command, check=True)
 
 

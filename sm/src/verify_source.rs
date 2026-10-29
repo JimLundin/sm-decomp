@@ -1609,8 +1609,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         "sm/src/native_desktop.h",
         include_bytes!("native_desktop.h"),
     ),
-    ("sm/src/native_music.c", include_bytes!("native_music.c")),
-    ("sm/src/native_music.h", include_bytes!("native_music.h")),
     (
         "sm/src/native_player_ram.rs",
         include_bytes!("native_player_ram.rs"),

@@ -59,15 +59,15 @@ shared Python installers/runtime-only restores are support work, counted separat
 ## Current work and limits
 
 Primary root owns integration, Git and one resource ledger; Linux stays stopped.
-SPC/owned PCM source 120322cc / codec 3e73f6db5edd45d2 is qualified.
-The final strict profile requires zero compiler warnings and actual 121 unit cases.
-Fresh initialized/save/reserve captures and continuations pass 26 rows / 199,063 comparisons / 0, full Morph1200 and BOTH Kago14350; required23/44.
-Measured production 137802, verification 57796, unsafe-containing 2706, legacy 17822; full deltas/proofs stay in owned receipts.
-The 29 added bank unsafe declarations are counted separately from operations.
-Mine excludes the former SPC C/header dependency; native/vendor originals remain.
-Owned PCM and typed SPC do not establish full backend/device independence.
+Music/SFX/FIR source c85c8cbf / codec 9579e65288bb3663 is qualified by exact strict-build and proof-transfer records.
+New strict DLL4487281a and actual136 units pass; normal library/frontend/native proofs retain their original compiled identities.
+Original76709 replay ran source2de7f4ec / DLL2efd629a:13 groups /27 rows /199,063 comparisons /0, full Morph1200 and BOTH Kago14350; required23/44.
+The genuine input110076 checkpoint regression passes selector0-to10 and ordered native FIR coefficients; the durable row binds actual checkpoint bytes.
+Measured production138833, verification59026, unsafe-containing2698, legacy17822; cumulative source/native/support deltas stay in owned receipts.
+Music, SFX and group growth and native music bridge retirement are counted; original native/vendor artifacts remain preserved.
+Raw SFX alias variants remain source-only; full Session/backend/device and size acceptance remain open.
 The primary updates the graphical canonical report after every push.
-The [APU100 frozen record](https://github.com/JimLundin/sm-decomp/blob/9a5723fa4a2af2134f25bfb84aefcc9492fc88e9/docs/PLAN.md#current-work-and-limits) retains prior DSP97/APU qualification, timings and native exclusions.
+The [prior CI/Audio record](https://github.com/JimLundin/sm-decomp/blob/ef9485ecb8129c8ab62c5d292f7c35f07997b7ae/docs/PLAN.md#current-work-and-limits) preserves earlier qualification attribution.
 
 ### Qualified history
 

@@ -27,6 +27,11 @@ Use current PLAN allowances, including the uncapped direct-DLL growth.
    Release reservations promptly only after authoritative terminal evidence.
    A quiet parent, monitor error or observation timeout does not prove its child
    stopped; retain uncertainty and inspect owned descendants.
+   At terminal release, check all admission, core-delegation and legacy aliases
+   against the hashed original-executor receipt with update_ledger.py --terminal-proof.
+   Clear current allowances in the patch; the guard rejects stale alias reservations
+   before writing and carries the exact receipt/UTC. Release each family once;
+   keep different successor executor IDs and retained output/history intact.
 3. On a reserve breach, stop the newest producer through its owned executor and
    retain lightweight readers. Preserve actual handles and confirm termination
    before releasing its allowance; cleanup/monitor failures do not imply success.

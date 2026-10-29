@@ -19,9 +19,10 @@ bounded source, review and qualification run on Windows.
 
 ### Current publication and acceptance
 
-SPC/owned PCM source **120322cc** is qualified; PLAN holds current totals.
-Release requires the exact strict zero-warning library/DLL/frontend build, actual121 units and genuine final-codec captures/rows. Historical warning-accepting qualifications remain preserved.
-Full Session/backend/device and size acceptance remain open.
+Corrected music/SFX/FIR source **c85c8cbf** is qualified: new strict DLL4487281a/actual136 and exact normal/frontend/native proof transfer.
+Original source2de7f4ec/DLL2efd629a replay retains its execution attribution:13 groups/27 rows/199,063 comparisons/0, full Morph1200 and BOTH independent Kago14350.
+The genuine input110076 FIR regression and selector0-to10 coefficient transition pass; the durable row binds the actual corrected-codec checkpoint.
+Coverage is27 observed rows/23 of44 required. Raw SFX alias variants, full Session/backend/device and size acceptance remain open.
 
 Completed room/renderer/message/Scene/delivery reports are in the
 [frozen history](https://github.com/JimLundin/sm-decomp/blob/170bc5351c64f0846bbcb7b4714064a7230db153/docs/REVIEW.md#current-publication-and-acceptance):

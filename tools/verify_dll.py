@@ -6,7 +6,6 @@ import hashlib
 import json
 import os
 import re
-import runpy
 from pathlib import Path
 import shutil
 import subprocess
@@ -24,7 +23,6 @@ def source_hash(root):
     paths = set((root / "sm").rglob("*.rs"))
     paths.update((root / "sm" / "src").rglob("*.c"))
     paths.update((root / "sm" / "src").rglob("*.h"))
-    paths.add(root / "tools/install_native_music.py")
     paths.add(root / "tools/install_native_config.py")
     paths.add(root / "tools/install_native_desktop.py")
     paths.update(root / name for name in (
@@ -140,12 +138,6 @@ def check_library(host, root):
     if host.sm_verify_backend_source_hash() != hashlib.sha256(bridge.read_bytes()).hexdigest().encode():
         raise RuntimeError("stale native backend; rerun tools/install_lakesnes.py backend with --zig and --target, then rebuild")
 
-    native_hash = runpy.run_path(str(root / "tools/install_native_music.py"))["native_hash"]
-    if not hasattr(host, "sm_verify_music_source_hash"):
-        raise RuntimeError("cached DLL has no music source stamp; rebuild")
-    host.sm_verify_music_source_hash.restype = ctypes.c_char_p
-    if host.sm_verify_music_source_hash() != native_hash(root).encode():
-        raise RuntimeError("stale native music; rerun tools/install_native_music.py and rebuild")
 
     if not hasattr(host, "sm_verify_util_source_matches"):
         raise RuntimeError("cached DLL has no utility source stamp; rebuild")

@@ -1021,3 +1021,14 @@ start_frame = 0
 frames = 1151
 expect = ["item:grapple", "room:AC2B"]
 require_hit = ["coroutine.plm.message.completed"]
+
+# Native FIR selector10 regression: input110076 commits tick110077.
+[[segment]]
+id = "music-fir-selector10"
+checkpoint = "music-fir-before-input110076.smvchk"
+checkpoint_sha256 = "fef2948eab79202716f0f8fd15d630f35fc5cf605159084c0bb0cb0a3335694f"
+inputs = "corpus-norfair-reserve.inputs"
+input_sha256 = "968f37d5218ea77d18ba81e5022ceca78b0c53be6b22f3602895e08904901c2d"
+start_frame = 110076
+frames = 1
+expect = ["state:8"]

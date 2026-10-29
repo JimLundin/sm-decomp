@@ -4,7 +4,6 @@ docs/PLAN.md text eol=lf
 sm/**/*.rs -text
 sm/src/**/*.c -text
 sm/src/**/*.h -text
-tools/install_native_music.py -text
 tools/install_native_config.py -text
 tools/install_native_desktop.py -text
 tools/verify_dll.py -text

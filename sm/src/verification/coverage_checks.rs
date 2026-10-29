@@ -17,7 +17,7 @@ pub(super) fn run() -> i32 {
     macro_rules! cases {
             ($($test:ident),+ $(,)?) => { [$( (stringify!($test), $test as fn()), )+] };
         }
-    let tests: [(&str, fn()); 121] = cases![
+    let tests: [(&str, fn()); 136] = cases![
         prepared_message_pixels_delay_queue_and_checkpoint,
         prepared_message_rejects_changed_content_and_resets,
         independently_authored_raster_pixels_and_prefixes,
@@ -139,6 +139,21 @@ pub(super) fn run() -> i32 {
         sample_delivery_byte_cursor_and_skipped_refills_keep_literal_pcm_and_cadence,
         sample_delivery_s16lsb_volumes_and_odd_cursor_have_literal_ordered_bytes,
         sample_delivery_writer_and_refill_failures_keep_completed_chunk_prefixes,
+        music_echo_literals_preserve_register_order_full_edl_and_failure_prefixes,
+        music_command_hold_reset_preserves_native_low_bytes_and_sfx_keyoff_mask,
+        music_wrapped_instrument_stream_keeps_lazy_ram_reads_and_failed_write_prefixes,
+        music_signed_pan_pitch_literals_preserve_sfx_suppression_and_checked_channel_failure,
+        music_shifted_song_origin_and_latent_invalid_origins_keep_literal_read_prefixes,
+        music_shifted_stream_keeps_instrument_and_keyoff_reads_on_the_canonical_owner,
+        music_shifted_pan_table_and_u16_cursor_failures_keep_distinct_allocation_offsets,
+        sfx_reset_and_release_phases_preserve_literal_masks_and_delayed_completion,
+        sfx_byte_and_opcode_reads_keep_lazy_cells_and_literal_bounds_failure_prefixes,
+        sfx_finish_note_keeps_literal_adsr_order_and_keyon_failure_prefixes,
+        sfx_parser_and_slide_phases_keep_literal_cursor_noise_and_pitch_carries,
+        sfx_groups_initialize_crosses_nominal_groups_with_literal_flat_channel_results,
+        sfx_groups_first_outside_flat_allocation_keeps_exact_initialization_failure_prefixes,
+        sfx_groups_command_replace_config_and_pointer_phases_keep_literal_failure_order,
+        music_fir_live_ram_wrap_and_writer_failures_keep_literal_coefficients_and_prefixes,
     ];
     let mut failed = 0usize;
     for (name, test) in &tests {
@@ -9106,4 +9121,1200 @@ fn sample_delivery_writer_and_refill_failures_keep_completed_chunk_prefixes() {
     }));
     assert_eq!(calls, 3);
     assert_eq!(retained, [0x55, 0x66, 0x33, 0x44]);
+}
+
+// Movies cannot enumerate failing echo writes or independently establish full-u8 EDL and wrapped stored-time prefixes.
+#[cfg_attr(test, test)]
+fn music_echo_literals_preserve_register_order_full_edl_and_failure_prefixes() {
+    use sm::{apu_ram::ApuRam, spc_player::MusicSequencer, types::NativePlayerState};
+    use std::panic::{AssertUnwindSafe as unwind, catch_unwind as catch};
+    let expected = [
+        (77, 0),
+        (13, 0),
+        (60, 0),
+        (44, 0),
+        (108, 0x63),
+        (125, 5),
+        (109, 0xed),
+    ];
+    for failure in 0..=7 {
+        let mut state = NativePlayerState::default();
+        state.last_written_edl = 3;
+        state.echo_stored_time = 0xfe;
+        state.reg_FLG = 0x43;
+        let ram = ApuRam::new();
+        let mut writes = Vec::new();
+        let result = catch(unwind(|| {
+            MusicSequencer::new(&mut state, &ram, |reg, value| {
+                writes.push((reg, value));
+                if writes.len() == failure + 1 {
+                    panic!("echo writer failed");
+                }
+            })
+            .setup_echo(5)
+        }));
+        assert_eq!(result.is_err(), failure < 7);
+        assert_eq!(writes, expected[..(failure + 1).min(7)]);
+        assert_eq!(
+            (
+                state.echo_parameter_EDL,
+                state.echo_stored_time,
+                state.reg_FLG
+            ),
+            (5, 0xfa, 0x43)
+        );
+        assert_eq!(state.last_written_edl, if failure < 5 { 3 } else { 5 });
+    }
+    let mut state = NativePlayerState::default();
+    state.last_written_edl = 5;
+    state.echo_stored_time = 0xfa;
+    state.reg_FLG = 0x43;
+    let ram = ApuRam::new();
+    let mut writes = Vec::new();
+    MusicSequencer::new(&mut state, &ram, |reg, value| writes.push((reg, value))).setup_echo(5);
+    assert_eq!(writes, [(109, 0xed)]);
+    assert_eq!(
+        (
+            state.echo_parameter_EDL,
+            state.echo_stored_time,
+            state.last_written_edl
+        ),
+        (5, 0xfa, 5)
+    );
+    writes.clear();
+    MusicSequencer::new(&mut state, &ram, |reg, value| writes.push((reg, value))).setup_echo(255);
+    assert_eq!(
+        writes,
+        [
+            (77, 0),
+            (13, 0),
+            (60, 0),
+            (44, 0),
+            (108, 0x63),
+            (125, 255),
+            (109, 0x1d)
+        ]
+    );
+    assert_eq!(
+        (
+            state.echo_parameter_EDL,
+            state.echo_stored_time,
+            state.last_written_edl
+        ),
+        (255, 0xf4, 255)
+    );
+}
+
+// Movies cannot dirty every reset channel field or establish preserved native low bytes and held-command/SFX-mask behavior.
+#[cfg_attr(test, test)]
+fn music_command_hold_reset_preserves_native_low_bytes_and_sfx_keyoff_mask() {
+    use sm::{apu_ram::ApuRam, spc_player::MusicSequencer, types::NativePlayerState};
+    let mut state = NativePlayerState::default();
+    state.input_ports = [1, 0x22, 0x33, 0x44];
+    state.is_chan_on = 0xa5;
+    state.key_OFF = 1;
+    state.master_volume = 0x1277;
+    state.tempo = 0x6688;
+    state.master_volume_fade_ticks = 3;
+    state.echo_volume_fade_ticks = 4;
+    state.tempo_fade_num_ticks = 5;
+    state.global_transposition = 6;
+    state.block_count = 7;
+    state.percussion_base_id = 8;
+    for (index, c) in state.channel.iter_mut().enumerate() {
+        c.index = index as u8;
+        c.channel_volume = 0x2342;
+        c.pan_flag_with_phase_invert = 0x99;
+        c.pan_value = 0x5678;
+        c.instrument_id = 0xaa;
+        c.fine_tune = 0xbb;
+        c.channel_transposition = 0xcc;
+        c.pitch_envelope_num_ticks = 7;
+        c.cutk = 9;
+        c.vib_depth = 11;
+        c.tremolo_depth = 13;
+        c.pitch = 0x1234;
+        c.pattern_order_ptr_for_chan = 0x8234;
+        c.note_ticks_left = 8;
+    }
+    let ram = ApuRam::new();
+    let song = 0x3456u16.to_ne_bytes();
+    ram.write(0x5820, song[0]);
+    ram.write(0x5821, song[1]);
+    MusicSequencer::new(&mut state, &ram, |_, _| {
+        panic!("new-song command writes no DSP register")
+    })
+    .tick();
+    assert_eq!(state.music_ptr_toplevel, 0x3456);
+    assert_eq!(state.counter_sf0c, 2);
+    assert_eq!(state.port_to_snes[0], 1);
+    assert_eq!(state.key_OFF, 0x5b);
+    assert_eq!(state.input_ports, [255, 0x22, 0x33, 0x44]);
+    state.input_ports[0] = 0xf1;
+    MusicSequencer::new(&mut state, &ram, |_, _| {
+        panic!("hold reset writes no DSP register")
+    })
+    .tick();
+    assert_eq!(state.counter_sf0c, 1);
+    assert_eq!(state.cur_chan_bit, 0);
+    assert_eq!(state.master_volume, 0xc077);
+    assert_eq!(state.tempo, 0x2088);
+    assert_eq!(
+        [
+            state.master_volume_fade_ticks,
+            state.echo_volume_fade_ticks,
+            state.tempo_fade_num_ticks,
+            state.global_transposition,
+            state.block_count,
+            state.percussion_base_id
+        ],
+        [0; 6]
+    );
+    for (index, c) in state.channel.iter().enumerate() {
+        assert_eq!(
+            (c.channel_volume, c.pan_flag_with_phase_invert, c.pan_value),
+            (0xff42, 10, 0x0a00)
+        );
+        assert_eq!(
+            [
+                c.instrument_id,
+                c.fine_tune,
+                c.channel_transposition,
+                c.pitch_envelope_num_ticks,
+                c.cutk,
+                c.vib_depth,
+                c.tremolo_depth
+            ],
+            [0; 7]
+        );
+        assert_eq!(c.index, index as u8);
+        assert_eq!(c.pitch, 0x1234);
+        assert_eq!(c.pattern_order_ptr_for_chan, 0x8234);
+        assert_eq!(c.note_ticks_left, 8);
+    }
+    state.input_ports[0] = 0xf0;
+    state.key_OFF = 0;
+    MusicSequencer::new(&mut state, &ram, |_, _| {
+        panic!("stop mask writes no DSP register")
+    })
+    .tick();
+    assert_eq!(state.input_ports[0], 255);
+    assert_eq!(state.key_OFF, 0x5a);
+    assert_eq!(state.counter_sf0c, 1);
+    assert_eq!(state.music_ptr_toplevel, 0x3456);
+}
+
+// Movies cannot wrap an instrument stream while a DSP writer mutates later RAM bytes or fails before pitch-base adoption.
+#[cfg_attr(test, test)]
+fn music_wrapped_instrument_stream_keeps_lazy_ram_reads_and_failed_write_prefixes() {
+    use sm::{apu_ram::ApuRam, spc_player::MusicSequencer, types::NativePlayerState};
+    use std::panic::{AssertUnwindSafe as unwind, catch_unwind as catch};
+    let expected = [(0xf4, 0), (0xf5, 0x99), (0xf6, 0x88), (0xf7, 0x33)];
+    for failure in 0..=4 {
+        let mut state = NativePlayerState::default();
+        state.input_ports[0] = 255;
+        state.port_to_snes[0] = 1;
+        state.reg_FLG = 0x60;
+        state.reg_NON = 0x80;
+        state.channel[0].index = 255;
+        state.channel[0].pattern_order_ptr_for_chan = 0xfffe;
+        state.channel[0].note_ticks_left = 1;
+        state.channel[0].note_length = 4;
+        state.channel[0].note_gate_off_fixedpt = 0x80;
+        state.channel[0].note_keyoff_ticks_left = 7;
+        state.channel[0].instrument_pitch_base = 0x1234;
+        let ram = ApuRam::new();
+        for (address, value) in [
+            (0xfffe, 0xe0),
+            (0xffff, 2),
+            (0, 0xc9),
+            (0x6c0c, 0x95),
+            (0x6c0d, 0x11),
+            (0x6c0e, 0x22),
+            (0x6c0f, 0x33),
+            (0x6c10, 0x44),
+            (0x6c11, 0x55),
+        ] {
+            ram.write(address, value);
+        }
+        let mut writes = Vec::new();
+        let result = catch(unwind(|| {
+            MusicSequencer::new(&mut state, &ram, |reg, value| {
+                writes.push((reg, value));
+                match writes.len() {
+                    1 => ram.write(0x6c0d, 0x99),
+                    2 => ram.write(0x6c0e, 0x88),
+                    3 => {
+                        ram.write(0x6c10, 0xab);
+                        ram.write(0x6c11, 0xcd);
+                    }
+                    _ => {}
+                }
+                if writes.len() == failure + 1 {
+                    panic!("instrument writer failed");
+                }
+            })
+            .tick()
+        }));
+        assert_eq!(result.is_err(), failure < 4);
+        assert_eq!(writes, expected[..(failure + 1).min(4)]);
+        assert_eq!(
+            (state.reg_FLG, state.reg_NON, state.channel[0].instrument_id),
+            (0x35, 0x81, 2)
+        );
+        let c = &state.channel[0];
+        assert_eq!(
+            (
+                c.pattern_order_ptr_for_chan,
+                c.note_ticks_left,
+                c.note_keyoff_ticks_left,
+                state.cur_chan_bit
+            ),
+            if failure < 4 {
+                (0, 0, 7, 1)
+            } else {
+                (1, 4, 2, 0)
+            }
+        );
+        assert_eq!(
+            c.instrument_pitch_base,
+            if failure < 4 { 0x1234 } else { 0xabcd }
+        );
+    }
+}
+
+// Movies cannot independently establish signed pan/sweep table aliases, inverted stereo bytes or invalid-channel failure prefixes.
+#[cfg_attr(test, test)]
+fn music_signed_pan_pitch_literals_preserve_sfx_suppression_and_checked_channel_failure() {
+    use sm::{apu_ram::ApuRam, spc_player::MusicSequencer, types::NativePlayerState};
+    use std::panic::{AssertUnwindSafe as unwind, catch_unwind as catch};
+    for disabled in [0, 1] {
+        let mut state = NativePlayerState::default();
+        state.cur_chan_bit = 1;
+        state.is_chan_on = disabled;
+        state.main_tempo_accum = 128;
+        let c = &mut state.channel[0];
+        c.index = 255;
+        c.pan_value = 0xffff;
+        c.pan_num_ticks = 1;
+        c.pan_add_per_tick = 0xff00;
+        c.final_volume = 255;
+        c.pan_flag_with_phase_invert = 0xc0;
+        c.pitch = 0x3400;
+        c.pitch_slide_length = 1;
+        c.pitch_add_per_tick = 0xff00;
+        c.instrument_pitch_base = 0x0100;
+        let ram = ApuRam::new();
+        ram.write(0x1f1c, 0x40);
+        ram.write(0x1f1d, 0x20);
+        let mut writes = Vec::new();
+        MusicSequencer::new(&mut state, &ram, |reg, value| writes.push((reg, value)))
+            .pan_and_sweep(0);
+        assert_eq!(
+            writes.as_slice(),
+            if disabled == 0 {
+                &[(0xf0, 0xd1), (0xf1, 0x82), (0xf2, 0x20), (0xf3, 5)][..]
+            } else {
+                &[]
+            }
+        );
+        assert_eq!(state.did_affect_volumepitch_flag, 0x80);
+        let c = &state.channel[0];
+        assert_eq!(
+            (
+                c.pan_value,
+                c.pan_num_ticks,
+                c.pitch,
+                c.pitch_slide_length,
+                c.final_volume
+            ),
+            (0xffff, 1, 0x3400, 1, 255)
+        );
+    }
+    let mut state = NativePlayerState::default();
+    state.did_affect_volumepitch_flag = 0x55;
+    let ram = ApuRam::new();
+    assert!(
+        catch(unwind(|| MusicSequencer::new(
+            &mut state,
+            &ram,
+            |_, _| panic!("invalid channel writes nothing")
+        )
+        .pan_and_sweep(usize::MAX)))
+        .is_err()
+    );
+    assert_eq!(state.did_affect_volumepitch_flag, 0);
+}
+
+// Movies cannot author a shifted native RAM view or independently establish lazy missing/overflowing/out-of-bounds origins.
+#[cfg_attr(test, test)]
+fn music_shifted_song_origin_and_latent_invalid_origins_keep_literal_read_prefixes() {
+    use sm::{apu_ram::ApuRam, spc_player::MusicSequencer, types::NativePlayerState};
+    use std::panic::{AssertUnwindSafe as unwind, catch_unwind as catch};
+    let ram = ApuRam::new();
+    for (address, value) in [
+        (0x5820, 0x34),
+        (0x5821, 0x12),
+        (0x5920, 0x78),
+        (0x5921, 0x56),
+    ] {
+        ram.write(address, value);
+    }
+    let mut state = NativePlayerState::default();
+    state.input_ports[0] = 1;
+    MusicSequencer::with_origin(&mut state, &ram, Some(256), |_, _| panic!()).tick();
+    assert_eq!(
+        (
+            state.music_ptr_toplevel,
+            state.counter_sf0c,
+            state.port_to_snes[0]
+        ),
+        (0x5678, 2, 1)
+    );
+    for origin in [None, Some(usize::MAX), Some(65536)] {
+        let mut state = NativePlayerState::default();
+        let mut writes = Vec::new();
+        MusicSequencer::with_origin(&mut state, &ram, origin, |reg, value| {
+            writes.push((reg, value))
+        })
+        .setup_echo(0);
+        assert_eq!(writes, [(109, 0x15)]);
+        writes.clear();
+        state.input_ports[0] = 0xf0;
+        state.is_chan_on = 0xa5;
+        MusicSequencer::with_origin(&mut state, &ram, origin, |_, _| panic!()).tick();
+        assert_eq!((state.input_ports[0], state.key_OFF), (255, 0x5a));
+        state.channel[0].pan_value = 0x0a00;
+        state.channel[0].pan_num_ticks = 1;
+        state.channel[0].final_volume = 255;
+        MusicSequencer::with_origin(&mut state, &ram, origin, |reg, value| {
+            writes.push((reg, value))
+        })
+        .pan_and_sweep(0);
+        assert_eq!(writes, [(0, 0x50), (1, 0x50)]);
+        writes.clear();
+        state.input_ports[0] = 1;
+        state.counter_sf0c = 0x77;
+        state.music_ptr_toplevel = 0xabcd;
+        state.key_OFF = 0x81;
+        assert!(
+            catch(unwind(|| MusicSequencer::with_origin(
+                &mut state,
+                &ram,
+                origin,
+                |reg, value| {
+                    writes.push((reg, value));
+                    panic!("failing origin writes nothing");
+                }
+            )
+            .tick()))
+            .is_err()
+        );
+        assert!(writes.is_empty());
+        assert_eq!(state.input_ports[0], 255);
+        assert_eq!(state.port_to_snes[0], 1);
+        assert_eq!(state.music_ptr_toplevel, 0xabcd);
+        assert_eq!(state.counter_sf0c, 0x77);
+        assert_eq!(state.key_OFF, 0x81);
+    }
+}
+
+// Movies cannot separate shifted former-C stream reads from canonical Rust instrument/KOF reads with contradictory valid bytes.
+#[cfg_attr(test, test)]
+fn music_shifted_stream_keeps_instrument_and_keyoff_reads_on_the_canonical_owner() {
+    use sm::{apu_ram::ApuRam, spc_player::MusicSequencer, types::NativePlayerState};
+    let mut state = NativePlayerState::default();
+    state.input_ports[0] = 255;
+    state.port_to_snes[0] = 1;
+    state.channel[0].pattern_order_ptr_for_chan = 0x2200;
+    state.channel[0].note_ticks_left = 1;
+    state.channel[0].note_length = 4;
+    state.channel[0].note_gate_off_fixedpt = 0x80;
+    let ram = ApuRam::new();
+    for (address, value) in [
+        (0x2200, 0xe0),
+        (0x2201, 3),
+        (0x2202, 0xc9),
+        (0x2300, 0xe0),
+        (0x2301, 2),
+        (0x2302, 0xc9),
+        (0x6c0c, 0x11),
+        (0x6c0d, 0x22),
+        (0x6c0e, 0x33),
+        (0x6c0f, 0x44),
+        (0x6c10, 1),
+        (0x6c11, 0),
+        (0x6d0c, 0x55),
+        (0x6d0d, 0x66),
+        (0x6d0e, 0x77),
+        (0x6d0f, 0x88),
+        (0x6d10, 2),
+        (0x6d11, 0),
+    ] {
+        ram.write(address, value);
+    }
+    let mut writes = Vec::new();
+    MusicSequencer::with_origin(&mut state, &ram, Some(256), |reg, value| {
+        writes.push((reg, value))
+    })
+    .tick();
+    assert_eq!(writes, [(4, 0x11), (5, 0x22), (6, 0x33), (7, 0x44)]);
+    let c = &state.channel[0];
+    assert_eq!(
+        (
+            c.instrument_id,
+            c.instrument_pitch_base,
+            c.pattern_order_ptr_for_chan,
+            c.note_ticks_left,
+            c.note_keyoff_ticks_left
+        ),
+        (2, 0x0100, 0x2203, 4, 2)
+    );
+    for (canonical, shifted, expected) in [(0xc8, 0xc9, false), (0xc9, 0xc8, true)] {
+        ram.write(0x2203, canonical);
+        ram.write(0x2303, shifted);
+        state.channel[0].note_ticks_left = 3;
+        state.channel[0].note_keyoff_ticks_left = 1;
+        writes.clear();
+        MusicSequencer::with_origin(&mut state, &ram, Some(256), |reg, value| {
+            writes.push((reg, value))
+        })
+        .tick();
+        assert_eq!(
+            writes.as_slice(),
+            if expected { &[(92, 1)][..] } else { &[] }
+        );
+        assert_eq!(
+            (
+                state.channel[0].note_ticks_left,
+                state.channel[0].note_keyoff_ticks_left,
+                state.channel[0].pattern_order_ptr_for_chan
+            ),
+            (2, 0, 0x2203)
+        );
+    }
+}
+
+// Movies cannot supply contradictory shifted pan bytes or distinguish u16 cursor wrap from invalid allocation-offset arithmetic.
+#[cfg_attr(test, test)]
+fn music_shifted_pan_table_and_u16_cursor_failures_keep_distinct_allocation_offsets() {
+    use sm::{apu_ram::ApuRam, spc_player::MusicSequencer, types::NativePlayerState};
+    use std::panic::{AssertUnwindSafe as unwind, catch_unwind as catch};
+    let mut state = NativePlayerState::default();
+    state.cur_chan_bit = 1;
+    state.main_tempo_accum = 128;
+    let c = &mut state.channel[0];
+    c.pan_value = 0xffff;
+    c.pan_num_ticks = 1;
+    c.pan_add_per_tick = 0xff00;
+    c.final_volume = 255;
+    c.pan_flag_with_phase_invert = 0xc0;
+    let ram = ApuRam::new();
+    for (address, value) in [
+        (0x1f1c, 0x40),
+        (0x1f1d, 0x20),
+        (0x201c, 0x20),
+        (0x201d, 0x60),
+    ] {
+        ram.write(address, value);
+    }
+    let mut writes = Vec::new();
+    MusicSequencer::with_origin(&mut state, &ram, Some(256), |reg, value| {
+        writes.push((reg, value))
+    })
+    .pan_and_sweep(0);
+    assert_eq!(writes, [(0, 0xc2), (1, 0x82)]);
+    assert_eq!(
+        (
+            state.channel[0].pan_value,
+            state.channel[0].pan_num_ticks,
+            state.channel[0].final_volume
+        ),
+        (0xffff, 1, 255)
+    );
+    for (origin, cursor, after) in [
+        (Some(1), 0xffff, 0),
+        (None, 0xffff, 0),
+        (Some(usize::MAX), 0x0200, 0x0201),
+    ] {
+        let mut state = NativePlayerState::default();
+        state.input_ports[0] = 255;
+        state.port_to_snes[0] = 1;
+        state.did_affect_volumepitch_flag = 0x55;
+        state.channel[0].pattern_order_ptr_for_chan = cursor;
+        state.channel[0].note_ticks_left = 1;
+        state.channel[0].instrument_pitch_base = 0x1234;
+        writes.clear();
+        assert!(
+            catch(unwind(|| MusicSequencer::with_origin(
+                &mut state,
+                &ram,
+                origin,
+                |reg, value| {
+                    writes.push((reg, value));
+                    panic!("failing cursor writes nothing");
+                }
+            )
+            .tick()))
+            .is_err()
+        );
+        assert!(writes.is_empty());
+        assert_eq!(
+            (
+                state.channel[0].pattern_order_ptr_for_chan,
+                state.channel[0].note_ticks_left,
+                state.channel[0].instrument_pitch_base
+            ),
+            (after, 0, 0x1234)
+        );
+        assert_eq!(
+            (
+                state.input_ports[0],
+                state.cur_chan_bit,
+                state.did_affect_volumepitch_flag
+            ),
+            (255, 1, 0x55)
+        );
+    }
+}
+
+// Movies cannot independently establish split SFX reset masks or no-read timer/release prefixes with supplied sentinel fields.
+#[cfg_attr(test, test)]
+fn sfx_reset_and_release_phases_preserve_literal_masks_and_delayed_completion() {
+    use sm::{
+        apu_ram::ApuRam,
+        spc_player::{SfxAction as A, SfxChannelSequencer as S},
+        types::NativePlayerState,
+    };
+    let mut state = NativePlayerState::default();
+    let s = &mut state.sfx_chans_1[0];
+    let sr = &mut state.sfx1;
+    s.channel_mask = 0xfe;
+    s.voice_bitset = 1;
+    s.voice_index = 255;
+    s.disable = 0x23;
+    s.update_adsr = 7;
+    s.volume = 0x77;
+    s.phase_invert = 0xc0;
+    s.ptr = 0x0200;
+    sr.enabled_voices = 0xa5;
+    sr.cur_sound = 0x35;
+    sr.priority = 0x42;
+    sr.init_flag = 8;
+    let (mut on, mut current, mut off) = (0x5a, 0x40, 0x80);
+    assert_eq!(S::reset(s, sr, &mut on, &mut current, &mut off), 127);
+    assert_eq!(
+        (
+            s.disable,
+            s.update_adsr,
+            s.volume,
+            s.phase_invert,
+            s.voice_index
+        ),
+        (255, 0, 0x77, 0xc0, 255)
+    );
+    assert_eq!(
+        (sr.enabled_voices, on, current, off),
+        (0xa4, 0x5a, 0x41, 0x81)
+    );
+    S::finish_reset(sr);
+    assert_eq!((sr.cur_sound, sr.priority, sr.init_flag), (0x35, 0x42, 8));
+    sr.enabled_voices = 0;
+    S::finish_reset(sr);
+    assert_eq!((sr.cur_sound, sr.priority, sr.init_flag), (0, 0, 0));
+    s.disable = 0;
+    s.instr_timer = 1;
+    s.enable_pitch_slide = 255;
+    s.subnote_delta = 0x77;
+    s.target_note = 0x88;
+    let mut noise = 0xa5;
+    let ram = ApuRam::new();
+    ram.write(0x0200, 255);
+    assert!(matches!(
+        S::begin(&ram, s, &mut off, &mut current, &mut noise),
+        A::Stop
+    ));
+    assert_eq!(
+        (s.instr_timer, s.release_timer, s.release_flag, s.ptr_idx),
+        (1, 1, 255, 0)
+    );
+    assert_eq!(
+        (s.enable_pitch_slide, s.subnote_delta, s.target_note),
+        (0, 0, 0)
+    );
+    assert_eq!((off, current, noise), (0x81, 0x41, 0xa5));
+    assert!(matches!(
+        S::begin(&ram, s, &mut off, &mut current, &mut noise),
+        A::Instrument(255)
+    ));
+    assert_eq!(
+        (s.instr_timer, s.release_timer, s.release_flag, s.ptr_idx),
+        (0, 0, 0, 1)
+    );
+    assert_eq!((off, current, noise), (0x81, 0x40, 0xa4));
+    s.ptr = 0xffff;
+    s.disable = 255;
+    assert!(matches!(
+        S::begin(&ram, s, &mut off, &mut current, &mut noise),
+        A::Stop
+    ));
+    assert_eq!((s.instr_timer, s.ptr_idx), (0, 1));
+    s.disable = 0;
+    assert!(matches!(
+        S::begin(&ram, s, &mut off, &mut current, &mut noise),
+        A::Slide
+    ));
+    assert_eq!((s.instr_timer, s.ptr_idx), (255, 1));
+    assert_eq!((off, current, noise), (0x81, 0x40, 0xa4));
+}
+
+// Movies cannot author canonical SFX allocation-end failures or independently establish ADSR/slide-argument prefixes and repeat-branch cursors.
+#[cfg_attr(test, test)]
+fn sfx_byte_and_opcode_reads_keep_lazy_cells_and_literal_bounds_failure_prefixes() {
+    use sm::{
+        apu_ram::ApuRam,
+        spc_player::{SfxAction as A, SfxChannelSequencer as S},
+        types::NativePlayerState,
+    };
+    use std::panic::{AssertUnwindSafe as unwind, catch_unwind as catch};
+    let mut state = NativePlayerState::default();
+    let s = &mut state.sfx_chans_1[0];
+    let ram = ApuRam::new();
+    s.ptr = 0xff00;
+    s.ptr_idx = 255;
+    ram.write(0xffff, 0x34);
+    assert_eq!(S::read_byte(&ram, s), 0x34);
+    assert_eq!(s.ptr_idx, 0);
+    ram.write(0xff00, 0x77);
+    assert_eq!(S::read_byte(&ram, s), 0x77);
+    assert_eq!(s.ptr_idx, 1);
+    s.ptr = 0xffff;
+    s.subnote = 0x55;
+    assert!(catch(unwind(|| S::read_byte(&ram, s))).is_err());
+    assert_eq!((s.ptr, s.ptr_idx, s.subnote), (0xffff, 2, 0x55));
+    for (opcode, adsr, slide_legato, delta) in [
+        (0xf9, 0x34, 0x66, 0x11),
+        (0xf5, 0xabcd, 0xf5, 0x34),
+        (0xf8, 0xabcd, 0, 0x34),
+    ] {
+        s.ptr = 0xfffe;
+        s.ptr_idx = 0;
+        s.disable = 0;
+        s.instr_timer = 1;
+        s.legato = 1;
+        s.adsr_settings = 0xabcd;
+        s.update_adsr = 7;
+        s.enable_pitch_slide_legato = 0x66;
+        s.enable_pitch_slide = 0x66;
+        s.subnote_delta = 0x11;
+        s.target_note = 0x88;
+        ram.write(0xfffe, opcode);
+        let (mut off, mut current, mut noise) = (0x81, 0x42, 0x24);
+        assert!(
+            catch(unwind(|| S::begin(
+                &ram,
+                s,
+                &mut off,
+                &mut current,
+                &mut noise
+            )))
+            .is_err()
+        );
+        assert_eq!(
+            (s.instr_timer, s.ptr_idx, s.adsr_settings, s.update_adsr),
+            (0, 3, adsr, 7)
+        );
+        assert_eq!(
+            (
+                s.enable_pitch_slide_legato,
+                s.subnote_delta,
+                s.target_note,
+                s.enable_pitch_slide
+            ),
+            (slide_legato, delta, 0x88, 0x66)
+        );
+        assert_eq!((off, current, noise), (0x81, 0x42, 0x24));
+    }
+    ram.write(0x0202, 0xfd);
+    ram.write(0x0203, 7);
+    ram.write(0x0204, 8);
+    for (opcode, count, result, after, remaining) in [
+        (0xfe, 9, 7, 4, 0),
+        (0xfb, 9, 8, 5, 9),
+        (0xfd, 1, 7, 2, 0),
+        (0xfd, 0, 8, 5, 255),
+    ] {
+        ram.write(0x0200, opcode);
+        ram.write(0x0201, if opcode == 0xfe { 1 } else { 7 });
+        s.ptr = 0x0200;
+        s.ptr_idx = 0;
+        s.instr_timer = 1;
+        s.repeat_pt = 4;
+        s.repeat_ctr = count;
+        let (mut off, mut current, mut noise) = (0x81, 0x42, 0x24);
+        assert!(
+            matches!(S::begin(&ram, s, &mut off, &mut current, &mut noise), A::Instrument(value) if value == result)
+        );
+        assert_eq!(
+            (s.ptr_idx, s.repeat_ctr, s.repeat_pt),
+            (after, remaining, if opcode == 0xfe { 2 } else { 4 })
+        );
+        assert_eq!((off, current, noise), (0x81, 0x42, 0x24));
+    }
+}
+
+// Movies cannot force each immediate ADSR writer to fail or independently separate held-note preservation from key-on after both writes.
+#[cfg_attr(test, test)]
+fn sfx_finish_note_keeps_literal_adsr_order_and_keyon_failure_prefixes() {
+    use sm::{spc_player::SfxChannelSequencer as S, types::NativePlayerState};
+    use std::panic::{AssertUnwindSafe as unwind, catch_unwind as catch};
+    for failure in 0..=2 {
+        let mut state = NativePlayerState::default();
+        let s = &mut state.sfx_chans_1[0];
+        s.note = 0x34;
+        s.subnote = 0xab;
+        S::set_note(s, 0xf6);
+        assert_eq!((s.note, s.subnote), (0x34, 0xab));
+        S::set_note(s, 0x55);
+        assert_eq!((s.note, s.subnote), (0x55, 0));
+        s.update_adsr = 1;
+        s.adsr_settings = 0x3412;
+        s.voice_index_mult8 = 0xf8;
+        s.voice_bitset = 4;
+        s.legato = 0;
+        let mut key_on = 0x40;
+        let mut writes = Vec::new();
+        let result = catch(unwind(|| {
+            S::finish_note(s, &mut key_on, |reg, value| {
+                writes.push((reg, value));
+                if writes.len() == failure {
+                    panic!("ordered ADSR failure");
+                }
+            })
+        }));
+        assert_eq!(result.is_err(), failure != 0);
+        assert_eq!(
+            writes,
+            [(0xfd, 0x12), (0xfe, 0x34)][..if failure == 0 { 2 } else { failure }]
+        );
+        assert_eq!(key_on, if failure == 0 { 0x44 } else { 0x40 });
+        assert_eq!((s.update_adsr, s.adsr_settings), (1, 0x3412));
+        s.update_adsr = 0;
+        s.legato = 255;
+        S::finish_note(s, &mut key_on, |_, _| {
+            panic!("suppressed ADSR writes nothing")
+        });
+        assert_eq!(key_on, if failure == 0 { 0x44 } else { 0x40 });
+    }
+}
+
+// Movies cannot independently establish skipped ADSR bytes, noise/slide opcodes or signed pitch carries and full-u8 note wrap.
+#[cfg_attr(test, test)]
+fn sfx_parser_and_slide_phases_keep_literal_cursor_noise_and_pitch_carries() {
+    use sm::{
+        apu_ram::ApuRam,
+        spc_player::{SfxAction as A, SfxChannelSequencer as S},
+        types::NativePlayerState,
+    };
+    for opcode in [0xf5, 0xf8] {
+        let mut state = NativePlayerState::default();
+        let s = &mut state.sfx_chans_1[0];
+        s.ptr = 0x0200;
+        s.disable = 0;
+        s.instr_timer = 1;
+        s.legato = 1;
+        s.voice_bitset = 4;
+        let ram = ApuRam::new();
+        for (address, value) in [
+            (0x0200, 0xf9),
+            (0x0201, 0x12),
+            (0x0202, 0x34),
+            (0x0203, 255),
+            (0x0204, 255),
+            (0x0205, 0xfc),
+            (0x0206, opcode),
+            (0x0207, 0x20),
+            (0x0208, 0x21),
+            (0x0209, 2),
+        ] {
+            ram.write(address, value);
+        }
+        let (mut off, mut current, mut noise) = (0x81, 0x42, 0x80);
+        assert!(matches!(
+            S::begin(&ram, s, &mut off, &mut current, &mut noise),
+            A::Instrument(2)
+        ));
+        assert_eq!(
+            (s.ptr_idx, s.adsr_settings, s.update_adsr, noise),
+            (10, 0x3412, 255, 0x84)
+        );
+        assert_eq!(
+            (
+                s.subnote_delta,
+                s.target_note,
+                s.enable_pitch_slide,
+                s.enable_pitch_slide_legato
+            ),
+            (0x20, 0x21, 255, if opcode == 0xf5 { 0xf5 } else { 0 })
+        );
+        assert_eq!((off, current), (0x81, 0x42));
+    }
+    for (note, subnote, target, delta, after_note, after_subnote, enabled) in [
+        (0x20, 0xf0, 0x21, 0x20, 0x21, 0x10, 0),
+        (0x22, 0x10, 0x21, 0x20, 0x21, 0xf0, 0),
+        (0x22, 0x20, 0x21, 0x10, 0x22, 0x10, 255),
+        (0, 0, 0, 1, 255, 255, 255),
+    ] {
+        let mut state = NativePlayerState::default();
+        let s = &mut state.sfx_chans_1[0];
+        s.note = note;
+        s.subnote = subnote;
+        s.target_note = target;
+        s.subnote_delta = delta;
+        s.enable_pitch_slide = 255;
+        s.enable_pitch_slide_legato = 0xf5;
+        assert!(S::slide(s));
+        assert_eq!(
+            (s.note, s.subnote, s.enable_pitch_slide, s.legato),
+            (after_note, after_subnote, enabled, enabled)
+        );
+        s.enable_pitch_slide = 7;
+        s.legato = 0x33;
+        assert!(!S::slide(s));
+        assert_eq!(
+            (s.note, s.subnote, s.enable_pitch_slide, s.legato),
+            (after_note, after_subnote, 7, 0x33)
+        );
+    }
+}
+
+// Movies cannot independently establish imported group1 counts crossing into group2 or literal volume/mask/cursor state at the flat allocation end.
+#[cfg_attr(test, test)]
+fn sfx_groups_initialize_crosses_nominal_groups_with_literal_flat_channel_results() {
+    use sm::{spc_player::SfxGroupSequencer as S, types::NativePlayerState};
+    for (group, count, voice, mask, bitptr, maskptr, indexptr) in [
+        (1, 4, 4, 0xf0, 0x449, 0x44b, 0x44e),
+        (2, 2, 6, 0xc0, 0x47f, 0x481, 0x484),
+    ] {
+        let mut state = NativePlayerState::default();
+        for (index, channel) in state.channel.iter_mut().enumerate() {
+            channel.final_volume = 0xa0 + index as u8;
+            channel.pan_flag_with_phase_invert = 0xc0;
+        }
+        for selected in 0..3 {
+            for c in S::fields(&mut state, selected).1 {
+                c.volume = 0x55;
+                c.phase_invert = 0xcc;
+                c.legato = 0x77;
+            }
+        }
+        state.cur_chan_bit = 255;
+        state.reg_EON = 255;
+        S::fields(&mut state, group).0.voices_to_setup = count;
+        S::initialize(&mut state, group);
+        assert_eq!(
+            (state.is_chan_on, state.cur_chan_bit, state.reg_EON),
+            (mask, 255 ^ mask, 255 ^ mask)
+        );
+        let r = S::fields(&mut state, group).0;
+        assert_eq!(
+            (
+                r.voice_id,
+                r.voices_remaining,
+                r.voices_to_setup,
+                r.chan_idx,
+                r.chan_idx_x2,
+                r.enabled_voices,
+                r.init_flag
+            ),
+            (voice, 0, 0, count, count * 2, mask, 255)
+        );
+        assert_eq!(
+            (
+                r.chan_voice_bitset_ptr,
+                r.chan_voice_mask_ptr,
+                r.chan_voice_index_ptr
+            ),
+            (bitptr, maskptr, indexptr)
+        );
+        let mut rows = Vec::new();
+        for selected in group..3 {
+            rows.extend(S::fields(&mut state, selected).1.iter().map(|c| {
+                (
+                    c.voice_bitset,
+                    c.voice_index,
+                    c.volume,
+                    c.channel_mask,
+                    c.disable,
+                    c.phase_invert,
+                    c.legato,
+                )
+            }));
+        }
+        assert_eq!(
+            rows,
+            [
+                (0x80, 14, 0xa7, 0x7f, 0, 0xcc, 0x77),
+                (0x40, 12, 0xa6, 0xbf, 0, 0xcc, 0x77),
+                (0x20, 10, 0xa5, 0xdf, 0, 0xcc, 0x77),
+                (0x10, 8, 0xa4, 0xef, 0, 0xcc, 0x77)
+            ][..usize::from(count)]
+        );
+        assert_eq!(state.sfx_chans_1[0].volume, 0x55);
+    }
+}
+
+// Movies cannot request the first SFX channel beyond flat8 or distinguish its failed disable store from earlier freevoice/count/cursor effects.
+#[cfg_attr(test, test)]
+fn sfx_groups_first_outside_flat_allocation_keeps_exact_initialization_failure_prefixes() {
+    use sm::{spc_player::SfxGroupSequencer as S, types::NativePlayerState};
+    use std::panic::{AssertUnwindSafe as unwind, catch_unwind as catch};
+    for (group, requested, assigned, voice, voice_index, mask, bitptr, maskptr, indexptr) in [
+        (1, 5, 4, 4, 8, 0xf0, 0x449, 0x44b, 0x44e),
+        (2, 3, 2, 6, 12, 0xc0, 0x47f, 0x481, 0x484),
+    ] {
+        let mut state = NativePlayerState::default();
+        state.cur_chan_bit = 255;
+        state.reg_EON = 255;
+        state.last_written_edl = 0x77;
+        state.input_ports = [0x11, 0x22, 0x33, 0x44];
+        S::fields(&mut state, group).0.voices_to_setup = requested;
+        assert!(catch(unwind(|| S::initialize(&mut state, group))).is_err());
+        assert_eq!(
+            (state.is_chan_on, state.cur_chan_bit, state.reg_EON),
+            (mask, 255 ^ mask, 255 ^ mask)
+        );
+        let r = S::fields(&mut state, group).0;
+        assert_eq!(
+            (
+                r.voice_id,
+                r.voices_remaining,
+                r.voices_to_setup,
+                r.chan_idx,
+                r.chan_idx_x2,
+                r.voice_index,
+                r.enabled_voices,
+                r.init_flag
+            ),
+            (voice, 0, 0, assigned, assigned * 2, voice_index, mask, 255)
+        );
+        assert_eq!(
+            (
+                r.chan_voice_bitset_ptr,
+                r.chan_voice_mask_ptr,
+                r.chan_voice_index_ptr
+            ),
+            (bitptr, maskptr, indexptr)
+        );
+        assert_eq!(
+            (
+                state.sfx_chans_3[1].disable,
+                state.sfx_chans_3[1].voice_bitset
+            ),
+            (0, if group == 1 { 0x10 } else { 0x40 })
+        );
+        assert_eq!(
+            (state.last_written_edl, state.input_ports),
+            (0x77, [0x11, 0x22, 0x33, 0x44])
+        );
+        assert!(state.ram.is_null());
+    }
+}
+
+// Movies cannot force configuration/pointer-table bounds failures or independently establish priority actions and replacement prefixes before raw reset/step effects.
+#[cfg_attr(test, test)]
+fn sfx_groups_command_replace_config_and_pointer_phases_keep_literal_failure_order() {
+    use sm::{
+        apu_ram::ApuRam,
+        spc_player::{SfxGroupAction as A, SfxGroupSequencer as S},
+        types::NativePlayerState,
+    };
+    use std::panic::{AssertUnwindSafe as unwind, catch_unwind as catch};
+    for (group, sound, some, active, expected) in [
+        (0, 3, 0, 0, 0),
+        (1, 0x71, 0, 7, 0x171),
+        (2, 2, 2, 7, 1),
+        (2, 1, 2, 7, 0x101),
+    ] {
+        let mut state = NativePlayerState::default();
+        state.input_ports = [0x11, 0x22, 0x33, 0x44];
+        state.input_ports[group + 1] = sound;
+        let r = S::fields(&mut state, group).0;
+        r.priority = 1;
+        r.some_value = some;
+        r.cur_sound = active;
+        let action = match S::take_command(&mut state, group) {
+            A::Idle => 0,
+            A::Process => 1,
+            A::Start(value) => 0x100 + u16::from(value),
+        };
+        assert_eq!(action, expected);
+        assert_eq!(
+            state.input_ports,
+            match group {
+                0 => [0x11, 255, 0x33, 0x44],
+                1 => [0x11, 0x22, 255, 0x44],
+                _ => [0x11, 0x22, 0x33, 255],
+            }
+        );
+    }
+    let mut state = NativePlayerState::default();
+    state.sfx3.priority = 0x55;
+    state.sfx3.enabled_voices = 0xa5;
+    assert!(!S::begin_replace(&mut state.sfx3));
+    assert_eq!(state.sfx3.enabled_voices, 0xa5);
+    state.sfx3.cur_sound = 7;
+    assert!(S::begin_replace(&mut state.sfx3));
+    assert_eq!(state.sfx3.enabled_voices, 0);
+    assert!(S::needs_initialize(&state.sfx3));
+    assert!(!S::configure(&mut state, 2, 2));
+    assert_eq!(
+        (
+            state.sfx3.cur_ptr,
+            state.sfx3.cur_sound_index,
+            state.sfx3.cur_sound,
+            state.sfx3.voices_to_setup,
+            state.sfx3.some_value,
+            state.sfx3.priority
+        ),
+        (0x4ef5, 2, 2, 1, 2, 0x55)
+    );
+    state.sfx3.init_flag = 255;
+    assert!(!S::needs_initialize(&state.sfx3));
+    state.sfx_chans_3[0].legato = 0x77;
+    assert!(catch(unwind(|| S::configure(&mut state, 2, 0))).is_err());
+    assert_eq!(
+        (
+            state.sfx3.cur_sound_index,
+            state.sfx3.cur_ptr,
+            state.sfx3.cur_sound,
+            state.sfx_chans_3[0].legato
+        ),
+        (254, 0x4ef5, 2, 0)
+    );
+    let ram = ApuRam::new();
+    ram.write(0xfffe, 0x34);
+    ram.write(0xffff, 0x12);
+    for (address, pointer, mult8, cursor, timer) in [
+        (0xfffe, 0x1234, 0xf8, 0, 1),
+        (0xffff, 0xabcd, 0x11, 0x22, 0x33),
+    ] {
+        state.sfx2.cur_ptr = address;
+        let c = &mut state.sfx_chans_2[0];
+        c.ptr = 0xabcd;
+        c.voice_index = 255;
+        c.voice_index_mult8 = 0x11;
+        c.ptr_idx = 0x22;
+        c.instr_timer = 0x33;
+        state.sfx_chans_2[1].ptr = 0xbbbb;
+        state.sfx_chans_2[1].ptr_idx = 0x55;
+        assert!(catch(unwind(|| S::install_pointers(&mut state, &ram, 1))).is_err());
+        let c = &state.sfx_chans_2[0];
+        assert_eq!(
+            (c.ptr, c.voice_index_mult8, c.ptr_idx, c.instr_timer),
+            (pointer, mult8, cursor, timer)
+        );
+        assert_eq!(
+            (state.sfx_chans_2[1].ptr, state.sfx_chans_2[1].ptr_idx),
+            (0xbbbb, 0x55)
+        );
+    }
+}
+
+// Movies reach FIR10 but cannot author wrapped FIR42, mutate later live coefficients between DSP writes or force each immediate writer to fail.
+#[cfg_attr(test, test)]
+fn music_fir_live_ram_wrap_and_writer_failures_keep_literal_coefficients_and_prefixes() {
+    use sm::{apu_ram::ApuRam, spc_player::MusicSequencer as S, types::NativePlayerState};
+    use std::panic::{AssertUnwindSafe as unwind, catch_unwind as catch};
+    for (origin, selector) in [(0, 10), (256, 42)] {
+        for failure in -1..=8 {
+            let mut state = NativePlayerState::default();
+            state.input_ports[0] = 255;
+            state.port_to_snes[0] = 1;
+            state.byte_4B1 = 0xa7;
+            state.reg_EFB = 0x88;
+            state.channel[0].pattern_order_ptr_for_chan = 0x2200;
+            state.channel[0].note_ticks_left = 1;
+            state.channel[0].note_length = 4;
+            state.channel[0].note_gate_off_fixedpt = 0x80;
+            state.channel[0].note_keyoff_ticks_left = 0x77;
+            let ram = ApuRam::new();
+            for (index, value) in [0x65, 0x72, 0x20, 0x53, 0x31, 0x2e, 0x32, 0x30]
+                .into_iter()
+                .enumerate()
+            {
+                ram.write(0x1e82 + index as u16, value);
+                ram.write(0x1f82 + index as u16, 0x99);
+            }
+            for (index, value) in [0xf7, 0, 0x66, selector, 0xc9].into_iter().enumerate() {
+                ram.write((0x2200 + origin + index) as u16, value);
+            }
+            let mut writes = Vec::new();
+            let result = catch(unwind(|| {
+                S::with_origin(&mut state, &ram, Some(origin), |reg, value| {
+                    writes.push((reg, value));
+                    if reg == 15 {
+                        ram.write(0x1e83, 0xa5);
+                        ram.write(0x1e89, 0x5a);
+                    }
+                    if (failure < 0 && reg == 109)
+                        || (failure > 0 && writes.len() == failure as usize + 1)
+                    {
+                        panic!("ordered FIR failure");
+                    }
+                })
+                .tick()
+            }));
+            assert_eq!(result.is_err(), failure != 0);
+            assert_eq!(
+                writes,
+                [
+                    (109, 0x15),
+                    (15, 0x65),
+                    (31, 0xa5),
+                    (47, 0x20),
+                    (63, 0x53),
+                    (79, 0x31),
+                    (95, 0x2e),
+                    (111, 0x32),
+                    (127, 0x5a)
+                ][..match failure {
+                    -1 => 1,
+                    0 => 9,
+                    _ => failure as usize + 1,
+                }]
+            );
+            assert_eq!(
+                (state.byte_4B1, state.reg_EFB),
+                if failure < 0 {
+                    (0xa7, 0x88)
+                } else {
+                    (selector, 0x66)
+                }
+            );
+            assert_eq!(
+                (ram.read(0x1e83), ram.read(0x1e89)),
+                if failure < 0 {
+                    (0x72, 0x30)
+                } else {
+                    (0xa5, 0x5a)
+                }
+            );
+            let c = &state.channel[0];
+            assert_eq!(
+                (
+                    c.pattern_order_ptr_for_chan,
+                    c.note_ticks_left,
+                    c.note_keyoff_ticks_left
+                ),
+                if failure < 0 {
+                    (0x2202, 0, 0x77)
+                } else if failure == 0 {
+                    (0x2205, 4, 2)
+                } else {
+                    (0x2204, 0, 0x77)
+                }
+            );
+        }
+    }
 }
