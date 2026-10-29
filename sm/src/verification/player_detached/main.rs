@@ -7,8 +7,6 @@
 #![allow(non_upper_case_globals)]
 #![allow(unused_assignments)]
 #![allow(unused_mut)]
-#[macro_use]
-extern crate sm_game;
 include!("shared.rs");
 
 fn main() {

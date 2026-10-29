@@ -1,30 +1,20 @@
 //! Complete room mechanisms on the shared gameplay Session.
-use sm_game::room_mechanisms::access;
-mod commands;
+use sm_game::room_mechanisms::commands;
 use sm_game::room_mechanisms::content;
 mod content_runtime;
 pub(crate) use sm_game::room_mechanisms::creation;
 use sm_game::room_mechanisms::graphics;
 mod graphics_runtime;
 pub(crate) use sm_game::room_mechanisms::host;
-mod pre;
+use sm_game::room_mechanisms::pre;
 use sm_game::room_mechanisms::presentation;
 mod runtime;
-pub(crate) mod scheduler;
+pub(crate) use sm_game::room_mechanisms::scheduler;
 use sm_game::room_mechanisms::setup;
 mod rules {
-    pub(super) use sm_game::room_mechanisms::rules::animal_rescue;
-    pub(super) use sm_game::room_mechanisms::rules::booster_escape;
     pub(super) use sm_game::room_mechanisms::rules::crumbling_wall;
-    pub(super) use sm_game::room_mechanisms::rules::eye_door;
     pub(super) use sm_game::room_mechanisms::rules::hands;
-    pub(super) use sm_game::room_mechanisms::rules::metroid_quota;
     pub(super) use sm_game::room_mechanisms::rules::mother_brain_glass;
-    pub(super) use sm_game::room_mechanisms::rules::noob_tube;
-    pub(super) use sm_game::room_mechanisms::rules::plants;
-    pub(super) use sm_game::room_mechanisms::rules::shaktool;
-    pub(super) use sm_game::room_mechanisms::rules::sound_delay;
-    pub(super) use sm_game::room_mechanisms::rules::terrain_setup;
     pub(super) use sm_game::room_mechanisms::rules::torizo_statue;
     pub(super) use sm_game::room_mechanisms::rules::treadmill;
 }

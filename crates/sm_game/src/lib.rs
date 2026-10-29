@@ -143,11 +143,14 @@ pub mod player_projectiles {
 }
 pub mod room_mechanisms {
     pub mod access;
+    pub mod commands;
     pub mod content;
     pub mod creation;
     pub mod graphics;
     pub mod host;
+    pub mod pre;
     pub mod presentation;
+    pub mod scheduler;
     pub mod rules {
         pub mod animal_rescue;
         pub mod booster_escape;

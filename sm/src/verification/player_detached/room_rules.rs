@@ -1,14 +1,2 @@
-pub(crate) use sm_game::room_mechanisms::rules::animal_rescue;
-pub(crate) use sm_game::room_mechanisms::rules::booster_escape;
-pub(crate) use sm_game::room_mechanisms::rules::crumbling_wall;
-pub(crate) use sm_game::room_mechanisms::rules::eye_door;
-pub(crate) use sm_game::room_mechanisms::rules::hands;
-pub(crate) use sm_game::room_mechanisms::rules::metroid_quota;
-pub(crate) use sm_game::room_mechanisms::rules::mother_brain_glass;
-pub(crate) use sm_game::room_mechanisms::rules::noob_tube;
 pub(crate) use sm_game::room_mechanisms::rules::plants;
-pub(crate) use sm_game::room_mechanisms::rules::shaktool;
-pub(crate) use sm_game::room_mechanisms::rules::sound_delay;
-pub(crate) use sm_game::room_mechanisms::rules::terrain_setup;
-pub(crate) use sm_game::room_mechanisms::rules::torizo_statue;
 pub(crate) use sm_game::room_mechanisms::rules::treadmill;

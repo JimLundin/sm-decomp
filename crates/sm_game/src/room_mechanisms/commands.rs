@@ -10,8 +10,8 @@ use super::{
     },
     presentation, rules,
 };
-use crate::game::item_pickups::PickupKind;
-use crate::game::progress_flags as flags;
+use crate::item_pickups::PickupKind;
+use crate::progress_flags as flags;
 fn collect<H: Host>(
     h: &mut H,
     p: Script<H::Record>,
@@ -29,12 +29,7 @@ fn collect<H: Host>(
     Some(p.advance(if effects.message.is_none() { 3 } else { 2 }))
 }
 /// Execute one command against the shared session and its captured content.
-pub(super) fn run<H: Host>(
-    h: &mut H,
-    ea: u32,
-    p: Script<H::Record>,
-    k: u16,
-) -> Option<Script<H::Record>> {
+pub fn run<H: Host>(h: &mut H, ea: u32, p: Script<H::Record>, k: u16) -> Option<Script<H::Record>> {
     let slot = usize::from(k >> 1);
     match ea {
         8685236 => {
@@ -349,7 +344,7 @@ pub(super) fn run<H: Host>(
                 return p.jump_word(0);
             }
             h.enemy_projectile(
-                crate::game::constants::bank_86::addr_kEproj_SaveStationElectricity as u16,
+                crate::constants::bank_86::addr_kEproj_SaveStationElectricity as u16,
                 0,
             );
             let selected = usize::from(h.session().mechanisms.selected >> 1);
@@ -394,7 +389,7 @@ pub(super) fn run<H: Host>(
         }
         8705914 => {
             h.enemy_projectile(
-                crate::game::constants::bank_86::addr_kEproj_EyeDoorProjectile as u16,
+                crate::constants::bank_86::addr_kEproj_EyeDoorProjectile as u16,
                 p.word(0),
             );
             h.sound(SoundChannel::Two, 6, 0x4c);
@@ -402,14 +397,14 @@ pub(super) fn run<H: Host>(
         }
         8705936 => {
             h.enemy_projectile(
-                crate::game::constants::bank_86::addr_kEproj_EyeDoorSweat as u16,
+                crate::constants::bank_86::addr_kEproj_EyeDoorSweat as u16,
                 p.word(0),
             );
             Some(p.advance(2))
         }
         8705974 => {
             h.enemy_projectile(
-                crate::game::constants::bank_86::addr_kEproj_EyeDoorSmoke as u16,
+                crate::constants::bank_86::addr_kEproj_EyeDoorSmoke as u16,
                 0xb,
             );
             Some(p)

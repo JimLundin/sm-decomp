@@ -20,7 +20,7 @@ fn capture<H: Host>(h: &mut H) -> Script<H::Record> {
     Script::new(record, 0x8000).seek(position)
 }
 
-pub(crate) fn advance<H: Host>(h: &mut H, pass: &mut Pass) -> RunResult {
+pub fn advance<H: Host>(h: &mut H, pass: &mut Pass) -> RunResult {
     h.probe("coroutine.plm");
     match pass {
         Pass::Invalid(_) => {

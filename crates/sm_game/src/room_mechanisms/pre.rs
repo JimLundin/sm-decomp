@@ -4,7 +4,7 @@ use super::access::*;
 use super::creation;
 use super::host::*;
 use super::rules;
-use crate::game::progress_flags as flags;
+use crate::progress_flags as flags;
 
 fn link(c: &mut impl Host, slot: usize) {
     mechanism!(c, slot, counter = 0);
@@ -31,7 +31,7 @@ fn wake(c: &mut impl Host, slot: usize, pre: u16) {
     mechanism!(c, slot, instruction_delay = 1);
     mechanism!(c, slot, pre_action = pre);
 }
-pub(super) fn run(c: &mut impl Host, ea: u32, k: u16) {
+pub fn run(c: &mut impl Host, ea: u32, k: u16) {
     let slot = usize::from(k >> 1);
     match ea {
         8698151 | 8698184 => {
