@@ -386,6 +386,7 @@ pub mod game {
     pub(crate) use sm_game::projectile_weapon_definitions;
     pub mod scene;
     pub(crate) mod scrolling_sky;
+    pub(crate) mod shaktool_tables;
     pub(crate) mod shitroid_tables;
     pub(crate) mod statue_tables;
     pub(crate) mod torizo_corpse_tables;

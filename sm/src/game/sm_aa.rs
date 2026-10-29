@@ -11,6 +11,7 @@ use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
+use crate::game::shaktool_tables;
 use crate::game::statue_tables;
 use crate::game::torizo_tables;
 use crate::ram_map::slot;
@@ -477,8 +478,7 @@ pub unsafe fn Shaktool_DC2A(k: u16, game: &mut Game) {
     slot!(
         game,
         Enemy_Shaktool[E].base(x_pos, x_subpos) =
-            (((crate::rtl::rom_table_word!(game, 0xaae0bd, v3 as isize) as i16 as i32) << 8i32)
-                as u32)
+            (((shaktool_tables::sine(game, v3 as isize) as i16 as i32) << 8i32) as u32)
                 .wrapping_add(words!((
                     word!(game.enemy_drawing_queue[(v5 + 91)]),
                     word!(game.enemy_drawing_queue[(v5 + 92)])
@@ -487,8 +487,7 @@ pub unsafe fn Shaktool_DC2A(k: u16, game: &mut Game) {
     slot!(
         game,
         Enemy_Shaktool[E].base(y_pos, y_subpos) =
-            (((crate::rtl::rom_table_word!(game, 0xaae03d, v3 as isize) as i16 as i32) << 8i32)
-                as u32)
+            (((shaktool_tables::negative_cosine(game, v3 as isize) as i16 as i32) << 8i32) as u32)
                 .wrapping_add(words!((
                     word!(game.enemy_drawing_queue[(v5 + 93)]),
                     word!(game.enemy_drawing_queue[(v5 + 94)])
@@ -591,12 +590,9 @@ crate::game::callback_dispatch! {
         slot!(game, Enemy_Shaktool[E].var_D = 0);
         let shakto_parameter_2: u16 = slot!(game, Enemy_Shaktool[E].parameter_2);
         let v3: i32 = shakto_parameter_2 as i32 >> 1;
-        slot!(game, Enemy_Shaktool[E].base.properties = (slot!(game, Enemy_Shaktool[E].base.properties)) | (crate::rtl::rom_table_word!(game, 0xaade95, v3 as isize)));
-        slot!(game, Enemy_Shaktool[E].var_E = (word!(game.cur_enemy_index)).wrapping_sub(crate::rtl::rom_table_word!(
-            game,
-            0xaadea3,
-            v3 as isize
-        )));
+        let piece = shaktool_tables::piece(game, v3 as isize);
+        slot!(game, Enemy_Shaktool[E].base.properties = (slot!(game, Enemy_Shaktool[E].base.properties)) | (piece.properties));
+        slot!(game, Enemy_Shaktool[E].var_E = (word!(game.cur_enemy_index)).wrapping_sub(piece.ram_offset));
         slot!(game, Enemy_Shaktool[E].var_F = crate::rom::RomRecord {
             image: game.capture_native_rom(),
             base: crate::rtl::lorom_offset(0xaadedb) as usize,
@@ -607,10 +603,10 @@ crate::game::callback_dispatch! {
                 g_word_AADEE9[at / 2].to_ne_bytes()[at % 2],
                 g_word_AADEE9[(at + 1) / 2].to_ne_bytes()[(at + 1) % 2],
             ])
-        }.wrapping_sub(crate::rtl::rom_table_word!(game, 0xaadef7, v3 as isize)));
-        slot!(game, Enemy_Shaktool[E].var_B = crate::rtl::rom_table_word!(game, 0xaadeb1, v3 as isize));
-        slot!(game, Enemy_Shaktool[E].base.current_instruction = crate::rtl::rom_table_word!(game, 0xaadeb1, (v3 + 7) as isize));
-        slot!(game, Enemy_Shaktool[E].base.layer = crate::rtl::rom_table_word!(game, 0xaadecd, v3 as isize));
+        }.wrapping_sub(piece.zero));
+        slot!(game, Enemy_Shaktool[E].var_B = piece.neighbour_angle);
+        slot!(game, Enemy_Shaktool[E].base.current_instruction = piece.instruction_list);
+        slot!(game, Enemy_Shaktool[E].base.layer = piece.layer);
         if shakto_parameter_2 != 0 {
             Shaktool_DC2A(word!(game.cur_enemy_index), game);
         }
@@ -1218,7 +1214,7 @@ crate::game::callback_dispatch! {
     [11196858] Shaktool_Instr_1 [] {
         let shakt_var_E: u16 = slot!(game, Enemy_Shaktool[k as i32].var_E);
         for (index, segment) in shaktool_segments(shakt_var_E).enumerate() {
-            let pre_instruction = crate::rtl::rom_table_word!(game, 0xaadedb, index as isize);
+            let pre_instruction = shaktool_tables::piece(game, index as isize).function;
             slot!(game, Enemy_Shaktool[segment].var_F = pre_instruction);
         }
         jp
@@ -1344,11 +1340,7 @@ crate::game::callback_dispatch! {
         }
         let v3: u16 = (v2.to_ne_bytes()[1] as i32 + 8 & 0xe0) as u16;
         slot!(byte game, Enemy_Shaktool[E].var_D[0] = v3 as u8);
-        slot!(game, Enemy_Shaktool[E].base.current_instruction = crate::rtl::rom_table_word!(
-            game,
-            0xaadd15,
-            ((v3 >> 4) >> 1) as isize
-        ));
+        slot!(game, Enemy_Shaktool[E].base.current_instruction = shaktool_tables::head_direction(game, ((v3 >> 4) >> 1) as isize).instruction_list);
         slot!(game, Enemy_Shaktool[E].base.instruction_timer = 1);
     };
     @functions [pub unsafe fn (mut k: u16, game: &mut Game)];
@@ -1397,7 +1389,7 @@ crate::game::callback_dispatch! {
                 Shaktool_DC07(k, game);
                 let EK: i32 = k as i32;
                 slot!(game, Enemy_Shaktool[EK].var_F = (0xaadcaai32) as u16);
-                slot!(game, Enemy_Shaktool[EK].base.current_instruction = crate::rtl::rom_table_word!(game, 0xaadf13, (i >> 1) as isize));
+                slot!(game, Enemy_Shaktool[EK].base.current_instruction = shaktool_tables::piece(game, (i >> 1) as isize).head_bob);
                 slot!(game, Enemy_Shaktool[EK].base.instruction_timer = 1);
                 k = (k).wrapping_sub(64);
             }

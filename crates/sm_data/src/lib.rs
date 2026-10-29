@@ -27,6 +27,7 @@ pub mod ridley_explosion;
 pub mod sand_heap;
 pub mod save_slots;
 pub mod scene;
+pub mod shaktool;
 pub mod shitroid;
 pub mod shooting_stars;
 pub mod statues;
