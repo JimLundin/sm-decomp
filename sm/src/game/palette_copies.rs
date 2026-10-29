@@ -1,10 +1,9 @@
 //! Palette copies from cartridge words, read through the native ROM image.
 #![forbid(unsafe_code)]
 #![allow(non_snake_case)]
-use crate::game::session_runtime::native_rom_diagnostic;
+use crate::game::session_runtime::native_record;
 use crate::game_state::Game;
 use crate::ram_map::word;
-use crate::rom::lorom_offset;
 
 /// Copy native-order words from `bank:source`, reading each before its store.
 /// A cursor below $8000 reports the invalid-window diagnostic and still reads;
@@ -19,16 +18,8 @@ fn copy(
 ) {
     let mut n = i32::from(count);
     loop {
-        let address = (u32::from(bank) << 16) | u32::from(source);
-        if address & 0x8000 == 0 {
-            native_rom_diagnostic(address, game);
-        }
-        let (at, image) = (lorom_offset(address) as usize, game.capture_native_rom());
-        store(
-            game,
-            k >> 1,
-            u16::from_ne_bytes([image.read(at), image.read(at + 1)]),
-        );
+        let value = native_record(bank, source, game).word(0);
+        store(game, k >> 1, value);
         (k, source, n) = (k.wrapping_add(2), source.wrapping_add(2), n - 1);
         if n == 0 {
             break;

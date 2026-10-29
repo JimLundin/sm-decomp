@@ -1,10 +1,7 @@
 //! Figure-eight motion and animation timing over the authoritative actor bytes.
 #![forbid(unsafe_code)]
 use crate::{
-    game::{enemy_layouts::EnemyLayout8 as Phantoon, session_runtime::native_rom_diagnostic},
-    game_state::Game,
-    ram_map::slot,
-    rom::{RomRecord, lorom_offset},
+    game::enemy_layouts::EnemyLayout8 as Phantoon, game_state::Game, ram_map::slot, rom::RomRecord,
     rtl::rom_table_word,
 };
 
@@ -13,14 +10,7 @@ const ANIMATION_TABLE: u32 = 0xa7ccfd;
 const ANIMATION_INSTRUCTION: u16 = 0xcceb;
 
 fn native_record(address: u16, game: &mut Game) -> RomRecord {
-    let address = 0xa70000 | u32::from(address);
-    if address & 0x8000 == 0 {
-        native_rom_diagnostic(address, game);
-    }
-    RomRecord {
-        image: game.capture_native_rom(),
-        base: lorom_offset(address) as usize,
-    }
+    crate::game::session_runtime::native_record(0xa7, address, game)
 }
 
 fn adjust_speed(right: bool, game: &mut Game) {

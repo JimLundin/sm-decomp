@@ -282,6 +282,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/actors/kago.rs"),
     ),
     (
+        "sm/src/game/escape_typewriter.rs",
+        include_bytes!("game/escape_typewriter.rs"),
+    ),
+    (
         "sm/src/game/palette_copies.rs",
         include_bytes!("game/palette_copies.rs"),
     ),

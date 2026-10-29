@@ -22,13 +22,12 @@ pub use crate::game::constants::bank_a9::*;
 use crate::game::enemy_projectiles::{
     Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
 };
+use crate::game::escape_typewriter::HandleTypewriterText_Ext;
 use crate::game::gameplay_flag_runtime::{
     CheckEventHappened, ClearEventHappened, SetBossBitForCurArea, SetEventHappened,
 };
 use crate::game::mode7_transfers::enqueue_rom;
-use crate::game::music::{
-    QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max3, QueueSfx3_Max6,
-};
+use crate::game::music::{QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::palette_copies::{WriteColorsToPalette, WriteColorsToTargetPalette};
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::rom_vram_entries::{
@@ -2378,105 +2377,6 @@ pub unsafe fn Ridley_Func_61(game: &mut Game) {
             palette_buffer[97] = crate::rtl::rom_table_word!(game, 0xa6c1df, v2 as isize);
             palette_buffer[98] = crate::rtl::rom_table_word!(game, 0xa6c1df, (v2 + 1) as isize);
             palette_buffer[99] = crate::rtl::rom_table_word!(game, 0xa6c1df, (v2 + 2) as isize);
-        }
-    }
-}
-pub unsafe fn SetupZebesEscapeTypewriter(game: &mut Game) {
-    word!(game.palette_buffer[157] = word!(game.palette_buffer[125]));
-    word!(game.palette_buffer[158] = word!(game.palette_buffer[126]));
-    let E: i32 = 0;
-    slot!(game, Enemy_MotherBrain[E].var_3B = addr_loc_A9C49C as u16);
-    slot!(game, Enemy_MotherBrain[E]; var_3C = 0, var_3D = 0, var_3E = 0, var_3F = 0);
-    word! { game, 0; reg_BG2HOFS, reg_BG2VOFS }
-}
-pub unsafe fn HandleTypewriterText_Ext(a: u16, game: &mut Game) -> u8 {
-    unsafe {
-        let r18: u16 = a;
-        let mut v4: i16 = 0;
-        let E: i32 = 0;
-        let mbn_var_3D: u16 = slot!(game, Enemy_MotherBrain[E].var_3D);
-        if mbn_var_3D != 0 {
-            slot!(
-                game,
-                Enemy_MotherBrain[E].var_3D = (mbn_var_3D).wrapping_sub(1)
-            );
-            0
-        } else {
-            slot!(
-                game,
-                Enemy_MotherBrain[E].var_3D = slot!(game, Enemy_MotherBrain[E].var_3E)
-            );
-            let mut i: i32 = slot!(game, Enemy_MotherBrain[E].var_3B) as i32;
-            loop {
-                loop {
-                    v4 = *(RomPtr_A6(i as u16, game) as *mut u16) as i16;
-                    if v4 == 0 {
-                        return 1;
-                    }
-                    if v4 != 1 {
-                        break;
-                    }
-                    let v5: u16 = (i + 2) as u16;
-                    let v6: u16 = *(RomPtr_A6(v5, game) as *mut u16);
-                    slot!(game, Enemy_MotherBrain[E].var_3E = v6);
-                    i = v5 as i32 + 2;
-                }
-                if v4 != 13 {
-                    break;
-                }
-                let mut v7: i32 = i + 2;
-                let v8: u16 = *(RomPtr_A6(v7 as u16, game) as *mut u16);
-                slot!(game, Enemy_MotherBrain[E].var_3C = v8);
-                i = v7 + 2;
-            }
-            v4 = v4 as u8 as i16;
-            if (v4 as u8) == 32 {
-                slot!(
-                    game,
-                    Enemy_MotherBrain[E].var_3C =
-                        slot!(game, Enemy_MotherBrain[E].var_3C).wrapping_add(1)
-                );
-                slot!(game, Enemy_MotherBrain[E].var_3B = (i + 1) as u16);
-                0
-            } else {
-                if (v4 as u8) == 33 {
-                    v4 = 91;
-                }
-                slot!(game, Enemy_MotherBrain[E].var_3B = (i + 1) as u16);
-                let v11: u16 = word!(game.vram_write_queue_tail);
-                let mut v12: i32 = (0xd0 + (word!(game.vram_write_queue_tail) as i32)) - 0xf78;
-                slot!(game, VramWriteEntry[v12].size = 2);
-                match (32256 as VoidP, slot!(@at VramWriteEntry, v12, src.addr) + 1) {
-                    (value, at) => {
-                        let bytes = u16::to_ne_bytes(value);
-                        game.ram().write_byte(at, bytes[0]);
-                        game.ram().write_byte(at + 1, bytes[1]);
-                    }
-                };
-                slot!(
-                    game,
-                    Enemy_MotherBrain[E].var_3A = (r18 as i32 + v4 as i32 - 65i32) as u16
-                );
-                slot!(game, VramWriteEntry[v12].src.addr = 0x8034 as VoidP);
-                let mbn_var_3C: u16 = slot!(game, Enemy_MotherBrain[E].var_3C);
-                slot!(game, VramWriteEntry[v12].vram_dst = mbn_var_3C);
-                slot!(
-                    game,
-                    Enemy_MotherBrain[E].var_3C = (mbn_var_3C).wrapping_add(1)
-                );
-                word!(game.vram_write_queue_tail = (v11).wrapping_add(7));
-                let v14: u16 = (slot!(game, Enemy_MotherBrain[E].var_3F)).wrapping_add(1);
-                slot!(game, Enemy_MotherBrain[E].var_3F = v14);
-                if v14 as i32 - 2i32 & 0x8000 == 0 {
-                    slot!(game, Enemy_MotherBrain[E].var_3F = 0);
-                    if word!(game.area_index) == 6 {
-                        QueueSfx2_Max3(0x45, game);
-                    } else {
-                        QueueSfx3_Max3(0xd, game);
-                    }
-                }
-                0
-            }
         }
     }
 }
