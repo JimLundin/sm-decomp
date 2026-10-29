@@ -46,6 +46,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_data/src/grapple_aim.rs"),
     ),
     (
+        "crates/sm_data/src/escape_etecoons.rs",
+        include_bytes!("../../crates/sm_data/src/escape_etecoons.rs"),
+    ),
+    (
         "crates/sm_data/src/grapple_origins.rs",
         include_bytes!("../../crates/sm_data/src/grapple_origins.rs"),
     ),

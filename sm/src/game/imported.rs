@@ -1,5 +1,6 @@
 //! `sm_data` records imported from a cartridge image.
 #![forbid(unsafe_code)]
+use crate::game_state::Game;
 use crate::rom::{RomImage, lorom_offset};
 use sm_data::table::{Rows, grid, words};
 
@@ -36,6 +37,31 @@ impl<T> Imported<T> {
             .filter(|imported| imported.image.same_allocation(rom))
             .map(|imported| &imported.record)
     }
+
+    /// `get`'s value from the record while the loaded image is its allocation;
+    /// otherwise, or when `get` finds nothing, `load` runs the original reads.
+    pub(crate) fn read<R>(
+        imported: &Option<Self>,
+        game: &Game,
+        get: impl FnOnce(&T) -> Option<R>,
+        load: impl FnOnce(&RomImage) -> R,
+    ) -> R {
+        let rom = game.loaded_rom.as_ref().expect("ROM must be loaded");
+        Self::from(imported, rom)
+            .and_then(get)
+            .unwrap_or_else(|| load(rom))
+    }
+}
+
+/// The original indexed load: the word at signed word `index` from `address`.
+pub(crate) fn load(rom: &RomImage, address: u32, index: isize) -> u16 {
+    rom.table_word(lorom_offset(address) as usize, index)
+}
+
+/// A word index as a row of `words`-word rows, if it starts one.
+pub(crate) fn row_of(index: isize, words: usize) -> Option<usize> {
+    let index = usize::try_from(index).ok()?;
+    (index % words == 0).then_some(index / words)
 }
 
 /// A word list at LoROM `ADDRESS`, read by word index.

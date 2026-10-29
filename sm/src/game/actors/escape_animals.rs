@@ -5,10 +5,35 @@ use crate::game::constants::enemy_properties::*;
 use crate::game::enemy_layouts::EnemyLayout8 as Animal;
 use crate::game::enemy_script::EnemyScript;
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
+use crate::game::imported::{Imported, load};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
-use crate::rtl::rom_table_word;
+use crate::rom::RomImage;
+use sm_data::escape_etecoons::{ADDRESS, BYTES, EscapeEtecoon, EscapeEtecoons};
+
+pub(crate) type ImportedTables = Option<Imported<EscapeEtecoons>>;
+
+pub(crate) fn import(image: &RomImage) -> ImportedTables {
+    Imported::import(image, ADDRESS, BYTES, EscapeEtecoons::import)
+}
+
+/// Etecoon `index`'s initial state; other images and indices run the five
+/// original indexed loads.
+fn etecoon(game: &Game, index: isize) -> EscapeEtecoon {
+    Imported::read(
+        &game.escape_etecoons,
+        game,
+        |table| table.etecoon(usize::try_from(index).ok()?),
+        |rom| EscapeEtecoon {
+            x_position: load(rom, 0xb3e718, index),
+            y_position: load(rom, 0xb3e71e, index),
+            function: load(rom, 0xb3e724, index),
+            instruction_list: load(rom, 0xb3e72a, index),
+            x_velocity: load(rom, 0xb3e730, index),
+        },
+    )
+}
 
 pub(crate) fn initialize(dachora: bool, game: &mut Game) {
     let e = i32::from(word!(game.cur_enemy_index));
@@ -28,16 +53,15 @@ pub(crate) fn initialize(dachora: bool, game: &mut Game) {
     } else {
         slot!(game, Animal[e].base; instruction_timer = 1, timer = 0, palette_index = 0);
         let index = (slot!(game, Animal[e].parameter_1) >> 1) as isize;
-        let value = rom_table_word!(game, 0xb3e718, index);
-        slot!(game, Animal[e].base.x_pos = value);
-        let value = rom_table_word!(game, 0xb3e71e, index);
-        slot!(game, Animal[e].base.y_pos = value);
-        let value = rom_table_word!(game, 0xb3e724, index);
-        slot!(game, Animal[e].var_F = value);
-        let value = rom_table_word!(game, 0xb3e72a, index);
-        slot!(game, Animal[e].base.current_instruction = value);
-        let value = rom_table_word!(game, 0xb3e730, index);
-        slot!(game, Animal[e].var_A = value);
+        let etecoon = etecoon(game, index);
+        slot!(game, Animal[e].base.x_pos = etecoon.x_position);
+        slot!(game, Animal[e].base.y_pos = etecoon.y_position);
+        slot!(game, Animal[e].var_F = etecoon.function);
+        slot!(
+            game,
+            Animal[e].base.current_instruction = etecoon.instruction_list
+        );
+        slot!(game, Animal[e].var_A = etecoon.x_velocity);
     }
 }
 pub(crate) fn state_address(game: &Game) -> u32 {

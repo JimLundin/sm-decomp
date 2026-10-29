@@ -10,7 +10,7 @@ pub(in crate::game) mod content;
 pub(in crate::game) mod diving_enemies;
 pub(in crate::game) mod effects;
 pub(in crate::game) mod elevator;
-pub(in crate::game) mod escape_animals;
+pub(crate) mod escape_animals;
 pub(in crate::game) mod falling_platforms;
 pub(in crate::game) mod fireflea;
 pub(crate) mod identity;
