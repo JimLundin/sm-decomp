@@ -103,8 +103,8 @@ pub use sm_game::geometry::{FixedMotion, Point, Position, Rectangle, Vector32};
 #[derive(Clone, Debug, PartialEq)]
 pub struct Session {
     pub(crate) actor_identity: crate::game::actors::identity::ActorIdentityState,
-    pub(in crate::game) actors: crate::game::actors::Actors,
-    pub(in crate::game) botwoon_death: crate::game::actors::botwoon_death::DeathProtocol,
+    pub(in crate::game) actors: crate::game::actors::state::Actors,
+    pub(in crate::game) botwoon_death: sm_game::actors::botwoon_death::DeathProtocol,
     pub(in crate::game) timing: Timing,
     pub(crate) world: std::sync::Arc<crate::game::room_entry::world::WorldBinding>,
     pub(crate) control: crate::game::session_owners::Control,
@@ -116,7 +116,7 @@ pub struct Session {
     pub projectiles: Projectiles,
     pub enemy_projectiles: EnemyProjectiles,
     pub player: Player,
-    pub minimap: crate::game::player_update::state::State,
+    pub minimap: sm_game::player_update::state::State,
     pub inventory: Inventory,
     pub mechanisms: Mechanisms,
     pub room: Room,
@@ -176,7 +176,7 @@ pub struct Projectiles {
 // Implementation retains existing LaunchMotion rather than a second algorithm.
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct Player {
-    pub(crate) demo: crate::game::player_transitions::demo::DemoInput,
+    pub(crate) demo: sm_game::player_transitions::demo::DemoInput,
     pub transitions: crate::game::player_transitions::state::PlayerTransitions,
     pub x_fraction: u16,
     pub y_fraction: u16,
@@ -354,7 +354,8 @@ pub struct Room {
 }
 impl Room {
     fn with_world(world: &crate::game::room_entry::world::WorldBinding) -> Self {
-        use crate::game::room_entry::{effects::AssetSlot, state::RoomEntry};
+        use crate::game::room_entry::state::RoomEntry;
+        use sm_game::room_entry::AssetSlot;
         Self {
             entry: RoomEntry {
                 exit: world.exit_identity(0),

@@ -9,19 +9,7 @@ use crate::game::{
     visual_host::{Content, Record, Source},
 };
 
-/// Mode-dependent words also projected through the retained X-ray/suit HDMA path.
-/// The timer and angle reuse their existing palette/transition owners.
-#[derive(Clone, Default, Debug, PartialEq)]
-pub struct DemoInput {
-    pub(crate) pre_action: u16,
-    pub(crate) delay: u16,
-    pub(crate) program: u16,
-    pub(crate) held: u16,
-    pub(crate) pressed: u16,
-    pub(crate) enabled: u16,
-    pub(crate) previous_held: u16,
-    pub(crate) previous_pressed: u16,
-}
+pub use sm_game::player_transitions::demo::DemoInput;
 
 pub(crate) fn start(s: &mut Session) {
     s.player.demo = DemoInput {

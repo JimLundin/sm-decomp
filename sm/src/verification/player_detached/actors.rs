@@ -18,7 +18,7 @@ pub(in crate::game) mod scene;
 #[path = "../../game/actors/snapshot.rs"]
 pub(in crate::game) mod snapshot;
 #[path = "../../game/actors/state.rs"]
-mod state;
+pub(in crate::game) mod state;
 pub(in crate::game) use state::Actors;
 #[path = "actors_host.rs"]
 mod host;
@@ -37,5 +37,5 @@ mod fixture;
 #[path = "../actor_palette_checks.rs"]
 mod palette_checks;
 
-use sm_game::actors::overlap;
 pub(in crate::game) use overlap::axis_overlaps;
+use sm_game::actors::overlap;
