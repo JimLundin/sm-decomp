@@ -137,12 +137,13 @@ pub unsafe fn Dsp_Write(p: *mut SpcPlayer, reg: u8, value: u8) {
 }
 pub unsafe fn WritePitchInner(p: *mut SpcPlayer, c: *mut Channel, pitch: u16) {
     unsafe {
-        let value = sequencer::pitch_value((*c).instrument_pitch_base, pitch);
-        if (*p).state.cur_chan_bit & (*p).state.is_chan_on == 0 {
-            let reg = (*c).index.wrapping_mul(16);
-            Dsp_Write(p, reg.wrapping_add(2), value as u8);
-            Dsp_Write(p, reg.wrapping_add(3), (value >> 8) as u8);
-        }
+        sequencer::pitch(
+            (*c).instrument_pitch_base,
+            pitch,
+            || (*p).state.cur_chan_bit & (*p).state.is_chan_on != 0,
+            || (*c).index,
+            &mut |reg, value| Dsp_Write(p, reg, value),
+        );
     }
 }
 pub unsafe fn Channel_SetInstrument_NoSetId(p: *mut SpcPlayer, c: *mut Channel, instrument: u8) {
@@ -314,15 +315,11 @@ unsafe fn Vector_Reset_Spc(p: *mut SpcPlayer) {
 }
 // Only fixed, disjoint SFX group fields reach these private adapters.
 // Off-table Channel effects run after every sequencing-state borrow ends.
-unsafe fn Sfx_Chan_Reset(p: *mut SpcPlayer, sr: *mut SfxRegs, s: *mut SfxChan) {
+// Only imported off-table resets reach this original native field adapter.
+unsafe fn Sfx_Chan_Reset(p: *mut SpcPlayer, group: usize, index: usize, channel: usize) {
     unsafe {
-        let channel = sequencer::Sfx::reset(
-            &mut *s,
-            &mut *sr,
-            &mut (*p).state.is_chan_on,
-            &mut (*p).state.cur_chan_bit,
-            &mut (*p).state.key_OFF,
-        );
+        let (sr, channels, _) = sound_effect_channels(p, group);
+        let s = channels.add(index);
         let c = (&raw mut (*p).state.channel as *mut Channel).offset(channel as isize);
         Channel_SetInstrument_NoSetId(p, c, (*c).instrument_id);
         (*c).final_volume = (*s).volume;
@@ -375,47 +372,71 @@ static kSfx3Conf: [u8; 47] = [
 unsafe fn SfxChan_GetByte(p: *mut SpcPlayer, s: *mut SfxChan) -> u8 {
     unsafe { sequencer::Sfx::read_byte(&(*p).ram, &mut *s) }
 }
-unsafe fn Sfx_RunChan(p: *mut SpcPlayer, sr: *mut SfxRegs, s: *mut SfxChan) {
+unsafe fn Sfx_RunChan(p: *mut SpcPlayer, group: usize, index: usize) {
     unsafe {
-        let action = sequencer::Sfx::begin(
-            &(*p).ram,
-            &mut *s,
-            &mut (*p).state.key_OFF,
-            &mut (*p).state.cur_chan_bit,
-            &mut (*p).state.reg_NON,
-        );
-        match action {
-            sequencer::SfxAction::Stop => return,
-            sequencer::SfxAction::Slide => {}
-            sequencer::SfxAction::Instrument(a) => {
-                if a == 0xff {
-                    Sfx_Chan_Reset(p, sr, s);
-                    return;
-                }
-                // This cursor is captured before the instrument writer. Its
-                // off-table fields may overlap the selected SFX channel.
-                let c = (&raw mut (*p).state.channel as *mut Channel)
-                    .offset(((*s).voice_index >> 1) as isize);
-                Channel_SetInstrument_NoSetId(p, c, a);
-                (*c).final_volume = SfxChan_GetByte(p, s);
-                (*c).pan_flag_with_phase_invert = 0;
-                WriteVolumeToDsp(p, c, ((SfxChan_GetByte(p, s) as i32) << 8) as u16);
-                let note = SfxChan_GetByte(p, s);
-                sequencer::Sfx::set_note(&mut *s, note);
-                WritePitchInner(p, c, (((*s).note as i32) << 8 | (*s).subnote as i32) as u16);
-                (*s).instr_timer = SfxChan_GetByte(p, s);
-                sequencer::Sfx::finish_note(&*s, &mut (*p).state.key_ON, |reg, value| {
-                    Dsp_Write(p, reg, value)
-                });
+        let effect = {
+            let (state, ram) = (&mut (*p).state, &(*p).ram);
+            sequencer::Sfx::step_control(
+                state,
+                ram,
+                group,
+                index,
+                |state| state.ram.addr().checked_sub(ram.as_mut_ptr().addr()),
+                &mut |state: &NativePlayerState| {
+                    let (hist, dsp) = (state.reg_write_history, state.dsp);
+                    move |reg, value| write_register(hist, dsp, reg, value)
+                },
+            )
+        };
+        match effect {
+            None => {}
+            Some(sequencer::SfxNativeEffect::Reset(channel)) => {
+                Sfx_Chan_Reset(p, group, index, channel);
             }
-        }
-        if sequencer::Sfx::slide(&mut *s) {
-            WritePitchInner(
-                p,
-                (&raw mut (*p).state.channel as *mut Channel)
-                    .offset(((*s).voice_index >> 1) as isize),
-                (((*s).note as i32) << 8 | (*s).subnote as i32) as u16,
-            );
+            Some(sequencer::SfxNativeEffect::Pitch(channel, pitch)) => {
+                WritePitchInner(
+                    p,
+                    (&raw mut (*p).state.channel as *mut Channel).offset(channel as isize),
+                    pitch,
+                );
+            }
+            Some(sequencer::SfxNativeEffect::Note(channel, a)) => {
+                // This block ends every native cursor before owned state resumes.
+                {
+                    let (_, channels, _) = sound_effect_channels(p, group);
+                    let s = channels.add(index);
+                    let c = (&raw mut (*p).state.channel as *mut Channel).offset(channel as isize);
+                    Channel_SetInstrument_NoSetId(p, c, a);
+                    (*c).final_volume = SfxChan_GetByte(p, s);
+                    (*c).pan_flag_with_phase_invert = 0;
+                    WriteVolumeToDsp(p, c, ((SfxChan_GetByte(p, s) as i32) << 8) as u16);
+                    let note = SfxChan_GetByte(p, s);
+                    sequencer::Sfx::set_note(&mut *s, note);
+                    WritePitchInner(p, c, (((*s).note as i32) << 8 | (*s).subnote as i32) as u16);
+                    (*s).instr_timer = SfxChan_GetByte(p, s);
+                    sequencer::Sfx::finish_note(&*s, &mut (*p).state.key_ON, |reg, value| {
+                        Dsp_Write(p, reg, value)
+                    });
+                }
+                let pitch = {
+                    sequencer::Sfx::finish_slide(
+                        &mut (*p).state,
+                        group,
+                        index,
+                        &mut |state: &NativePlayerState| {
+                            let (hist, dsp) = (state.reg_write_history, state.dsp);
+                            move |reg, value| write_register(hist, dsp, reg, value)
+                        },
+                    )
+                };
+                if let Some((channel, pitch)) = pitch {
+                    WritePitchInner(
+                        p,
+                        (&raw mut (*p).state.channel as *mut Channel).offset(channel as isize),
+                        pitch,
+                    );
+                }
+            }
         }
     }
 }
@@ -542,7 +563,7 @@ unsafe fn sound_effect_channels(
 unsafe fn handle_sound_effect_command(p: *mut SpcPlayer, group: usize) {
     unsafe {
         crate::verify_probe::hit(["sfx.command.1", "sfx.command.2", "sfx.command.3"][group]);
-        let (regs, channels, count) = sound_effect_channels(p, group);
+        let count = sequencer::SfxGroups::fields(&mut (*p).state, group).1.len();
         let sound = match sequencer::SfxGroups::take_command(&mut (*p).state, group) {
             sequencer::SfxGroupAction::Idle => return,
             sequencer::SfxGroupAction::Process => {
@@ -552,9 +573,26 @@ unsafe fn handle_sound_effect_command(p: *mut SpcPlayer, group: usize) {
             sequencer::SfxGroupAction::Start(sound) => sound,
         };
         crate::verify_probe::hit(["sfx.start.1", "sfx.start.2", "sfx.start.3"][group]);
-        if sequencer::SfxGroups::begin_replace(&mut *regs) {
+        if sequencer::SfxGroups::begin_replace(
+            sequencer::SfxGroups::fields(&mut (*p).state, group).0,
+        ) {
             for i in 0..count {
-                Sfx_Chan_Reset(p, regs, channels.add(i));
+                let channel = {
+                    let (state, ram) = (&mut (*p).state, &(*p).ram);
+                    sequencer::Sfx::reset_control(
+                        state,
+                        ram,
+                        group,
+                        i,
+                        &mut |state: &NativePlayerState| {
+                            let (hist, dsp) = (state.reg_write_history, state.dsp);
+                            move |reg, value| write_register(hist, dsp, reg, value)
+                        },
+                    )
+                };
+                if let Some(channel) = channel {
+                    Sfx_Chan_Reset(p, group, i, channel);
+                }
             }
         }
         if sequencer::SfxGroups::configure(&mut (*p).state, group, sound) {
@@ -566,14 +604,16 @@ unsafe fn handle_sound_effect_command(p: *mut SpcPlayer, group: usize) {
 unsafe fn process_sound_effect(p: *mut SpcPlayer, group: usize) {
     unsafe {
         crate::verify_probe::hit(["sfx.process.1", "sfx.process.2", "sfx.process.3"][group]);
-        let (regs, channels, count) = sound_effect_channels(p, group);
-        if sequencer::SfxGroups::needs_initialize(&*regs) {
+        let count = sequencer::SfxGroups::fields(&mut (*p).state, group).1.len();
+        if sequencer::SfxGroups::needs_initialize(
+            sequencer::SfxGroups::fields(&mut (*p).state, group).0,
+        ) {
             crate::verify_probe::hit(["sfx.init.1", "sfx.init.2", "sfx.init.3"][group]);
             Sfx_Init(p, group);
             sequencer::SfxGroups::install_pointers(&mut (*p).state, &(*p).ram, group);
         }
         for i in 0..count {
-            Sfx_RunChan(p, regs, channels.add(i));
+            Sfx_RunChan(p, group, i);
         }
     }
 }
@@ -796,8 +836,192 @@ mod sequencer {
         Slide,
         Instrument(u8),
     }
+    // Owned command execution returns only captured imported effects. Native
+    // field aliases are applied after the state borrow ends, then slide resumes.
+    pub(super) enum SfxNativeEffect {
+        Reset(usize),
+        Note(usize, u8),
+        Pitch(usize, u16),
+    }
+
     pub struct Sfx;
     impl Sfx {
+        pub(super) fn reset_control<W: FnMut(u8, u8)>(
+            state: &mut NativePlayerState,
+            ram: &ApuRam,
+            group: usize,
+            index: usize,
+            make_write: &mut impl FnMut(&NativePlayerState) -> W,
+        ) -> Option<usize> {
+            let channel = Self::reset_slot(state, group, index);
+            if channel >= 8 {
+                return Some(channel);
+            }
+            let mut write = make_write(state);
+            Self::restore_voice(state, ram, group, index, channel, &mut write);
+            None
+        }
+        pub(super) fn finish_slide<W: FnMut(u8, u8)>(
+            state: &mut NativePlayerState,
+            group: usize,
+            index: usize,
+            make_write: &mut impl FnMut(&NativePlayerState) -> W,
+        ) -> Option<(usize, u16)> {
+            if !Self::slide(Self::slot(state, group, index)) {
+                return None;
+            }
+            let s = Self::slot(state, group, index);
+            let channel = usize::from(s.voice_index >> 1);
+            let pitch = u16::from(s.note) << 8 | u16::from(s.subnote);
+            if channel >= 8 {
+                return Some((channel, pitch));
+            }
+            let mut write = make_write(state);
+            pitch_slot(state, channel, pitch, &mut write);
+            None
+        }
+        pub(super) fn step_control<W: FnMut(u8, u8)>(
+            state: &mut NativePlayerState,
+            ram: &ApuRam,
+            group: usize,
+            index: usize,
+            mut origin: impl FnMut(&NativePlayerState) -> Option<usize>,
+            make_write: &mut impl FnMut(&NativePlayerState) -> W,
+        ) -> Option<SfxNativeEffect> {
+            match Self::begin_slot(state, ram, group, index) {
+                SfxAction::Stop => return None,
+                SfxAction::Slide => {}
+                SfxAction::Instrument(a) => {
+                    if a == 0xff {
+                        return Self::reset_control(state, ram, group, index, make_write)
+                            .map(SfxNativeEffect::Reset);
+                    }
+                    let channel = usize::from(Self::slot(state, group, index).voice_index >> 1);
+                    if channel >= 8 {
+                        return Some(SfxNativeEffect::Note(channel, a));
+                    }
+                    let mut write = make_write(state);
+                    Self::program_note(
+                        state,
+                        ram,
+                        group,
+                        index,
+                        channel,
+                        a,
+                        &mut origin,
+                        &mut write,
+                    );
+                }
+            }
+            Self::finish_slide(state, group, index, make_write)
+                .map(|(channel, pitch)| SfxNativeEffect::Pitch(channel, pitch))
+        }
+
+        pub(super) fn slot(
+            state: &mut NativePlayerState,
+            group: usize,
+            index: usize,
+        ) -> &mut SfxChan {
+            &mut SfxGroups::fields(state, group).1[index]
+        }
+        pub(super) fn reset_slot(
+            state: &mut NativePlayerState,
+            group: usize,
+            index: usize,
+        ) -> usize {
+            let (sr, s) = match group {
+                0 => (&mut state.sfx1, &mut state.sfx_chans_1[index]),
+                1 => (&mut state.sfx2, &mut state.sfx_chans_2[index]),
+                2 => (&mut state.sfx3, &mut state.sfx_chans_3[index]),
+                _ => unreachable!(),
+            };
+            usize::from(Self::reset(
+                s,
+                sr,
+                &mut state.is_chan_on,
+                &mut state.cur_chan_bit,
+                &mut state.key_OFF,
+            ))
+        }
+        pub(super) fn begin_slot(
+            state: &mut NativePlayerState,
+            ram: &ApuRam,
+            group: usize,
+            index: usize,
+        ) -> SfxAction {
+            let s = match group {
+                0 => &mut state.sfx_chans_1[index],
+                1 => &mut state.sfx_chans_2[index],
+                2 => &mut state.sfx_chans_3[index],
+                _ => unreachable!(),
+            };
+            Self::begin(
+                ram,
+                s,
+                &mut state.key_OFF,
+                &mut state.cur_chan_bit,
+                &mut state.reg_NON,
+            )
+        }
+        pub(super) fn restore_voice(
+            state: &mut NativePlayerState,
+            ram: &ApuRam,
+            group: usize,
+            index: usize,
+            channel: usize,
+            write: &mut impl FnMut(u8, u8),
+        ) {
+            let instrument = state.channel[channel].instrument_id;
+            instrument_slot(state, ram, channel, instrument, write);
+            state.channel[channel].final_volume = Self::slot(state, group, index).volume;
+            state.channel[channel].pan_flag_with_phase_invert =
+                Self::slot(state, group, index).phase_invert;
+            Self::finish_reset(SfxGroups::regs(state, group));
+        }
+        pub(super) fn program_note(
+            state: &mut NativePlayerState,
+            ram: &ApuRam,
+            group: usize,
+            index: usize,
+            channel: usize,
+            instrument_id: u8,
+            mut origin: impl FnMut(&NativePlayerState) -> Option<usize>,
+            write: &mut impl FnMut(u8, u8),
+        ) {
+            instrument_slot(state, ram, channel, instrument_id, write);
+            state.channel[channel].final_volume =
+                Self::read_byte(ram, Self::slot(state, group, index));
+            state.channel[channel].pan_flag_with_phase_invert = 0;
+            let pan = u16::from(Self::read_byte(ram, Self::slot(state, group, index))) << 8;
+            volume(
+                |address| read_at(ram, origin(state), address),
+                state.is_chan_on & state.cur_chan_bit != 0,
+                pan,
+                || {
+                    (
+                        state.channel[channel].index,
+                        state.channel[channel].final_volume,
+                        state.channel[channel].pan_flag_with_phase_invert,
+                    )
+                },
+                write,
+            );
+            let note = Self::read_byte(ram, Self::slot(state, group, index));
+            Self::set_note(Self::slot(state, group, index), note);
+            let s = Self::slot(state, group, index);
+            let pitch = u16::from(s.note) << 8 | u16::from(s.subnote);
+            pitch_slot(state, channel, pitch, write);
+            Self::slot(state, group, index).instr_timer =
+                Self::read_byte(ram, Self::slot(state, group, index));
+            let s = match group {
+                0 => &state.sfx_chans_1[index],
+                1 => &state.sfx_chans_2[index],
+                2 => &state.sfx_chans_3[index],
+                _ => unreachable!(),
+            };
+            Self::finish_note(s, &mut state.key_ON, write);
+        }
+
         pub fn reset(
             s: &mut SfxChan,
             sr: &mut SfxRegs,
@@ -1017,6 +1241,58 @@ mod sequencer {
         );
     }
 
+    // A slot identity selects owned storage; Channel.index is queried lazily
+    // and independently to select DSP registers. No native cursor enters here.
+    pub(super) fn pitch_slot(
+        state: &NativePlayerState,
+        channel: usize,
+        value: u16,
+        write: &mut impl FnMut(u8, u8),
+    ) {
+        pitch(
+            state.channel[channel].instrument_pitch_base,
+            value,
+            || state.cur_chan_bit & state.is_chan_on != 0,
+            || state.channel[channel].index,
+            write,
+        );
+    }
+    pub(super) fn pitch(
+        base: u16,
+        value: u16,
+        disabled: impl FnOnce() -> bool,
+        index: impl FnOnce() -> u8,
+        write: &mut impl FnMut(u8, u8),
+    ) {
+        let value = pitch_value(base, value);
+        if !disabled() {
+            let reg = index().wrapping_mul(16);
+            write(reg.wrapping_add(2), value as u8);
+            write(reg.wrapping_add(3), (value >> 8) as u8);
+        }
+    }
+    pub(super) fn instrument_slot(
+        state: &mut NativePlayerState,
+        ram: &ApuRam,
+        channel: usize,
+        value: u8,
+        write: &mut impl FnMut(u8, u8),
+    ) {
+        if let Some(base) = instrument(
+            ram,
+            value,
+            state.percussion_base_id,
+            state.is_chan_on & state.cur_chan_bit != 0,
+            &mut state.reg_FLG,
+            &mut state.reg_NON,
+            state.cur_chan_bit,
+            || state.channel[channel].index,
+            write,
+        ) {
+            state.channel[channel].instrument_pitch_base = base;
+        }
+    }
+
     pub(super) fn pitch_value(base: u16, pitch: u16) -> u16 {
         const FREQUENCY: [u16; 13] = [
             2143, 2270, 2405, 2548, 2700, 2860, 3030, 3211, 3402, 3604, 3818, 4045, 4286,
@@ -1185,29 +1461,11 @@ mod sequencer {
                 pitch = (i32::from(pitch) + ((i32::from(pitch >> 8) - 0x13) * 2) as u8 as i32 - 256)
                     as u16;
             }
-            let value = pitch_value(self.state.channel[channel].instrument_pitch_base, pitch);
-            if self.state.cur_chan_bit & self.state.is_chan_on == 0 {
-                let reg = self.state.channel[channel].index.wrapping_mul(16);
-                (self.write)(reg.wrapping_add(2), value as u8);
-                (self.write)(reg.wrapping_add(3), (value >> 8) as u8);
-            }
+            pitch_slot(self.state, channel, pitch, &mut self.write);
         }
         fn set_instrument(&mut self, channel: usize, value: u8) {
             self.state.channel[channel].instrument_id = value;
-            let state = &mut self.state;
-            if let Some(base) = instrument(
-                self.ram,
-                value,
-                state.percussion_base_id,
-                state.is_chan_on & state.cur_chan_bit != 0,
-                &mut state.reg_FLG,
-                &mut state.reg_NON,
-                state.cur_chan_bit,
-                || state.channel[channel].index,
-                &mut self.write,
-            ) {
-                state.channel[channel].instrument_pitch_base = base;
-            }
+            instrument_slot(self.state, self.ram, channel, value, &mut self.write);
         }
         fn reset_channels(&mut self) {
             self.state.cur_chan_bit = 0x80;

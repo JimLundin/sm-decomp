@@ -1390,3 +1390,294 @@ pub(super) fn run_unit_tests() -> i32 {
 #[cfg(any(test, sm_verify_dll))]
 #[path = "verification/coverage_checks.rs"]
 mod coverage_checks;
+
+// Movies cannot independently separate the captured native SFX slot from its DSP selector and instrument ID.
+#[cfg(any(test, sm_verify_dll))]
+#[cfg_attr(test, test)]
+fn sfx_native_note_keeps_captured_slot_and_literal_programming() {
+    use sm::{spc_player::Sfx1_Process, types::DspRegWriteHistory};
+    let mut game = Game::new();
+    let mut history = Box::new(DspRegWriteHistory {
+        count: 0,
+        addr: [0; 256],
+        val: [0; 256],
+    });
+    // The existing owner keeps player, DSP and RAM live and disjoint; no device or callback reentry.
+    unsafe {
+        game.create_native_player();
+        let p = game.g_spc_player;
+        let ram = (*p).ram.clone();
+        (*p).state.reg_write_history = &raw mut *history;
+        let state = &mut (*p).state;
+        state.sfx1.init_flag = 255;
+        state.is_chan_on = 4;
+        state.cur_chan_bit = 255;
+        state.reg_NON = 255;
+        state.key_ON = 0x80;
+        state.key_OFF = 0x20;
+        for s in &mut state.sfx_chans_1 {
+            s.disable = 255;
+        }
+        let s = &mut state.sfx_chans_1[0];
+        s.disable = 0;
+        s.ptr = 0x0200;
+        s.instr_timer = 1;
+        s.release_flag = 255;
+        s.release_timer = 1;
+        s.voice_index = 4;
+        s.voice_bitset = 4;
+        s.channel_mask = 0xfb;
+        state.channel[2].index = 1;
+        state.channel[2].instrument_id = 9;
+        state.channel[2].instrument_pitch_base = 0x2222;
+        state.channel[1].instrument_pitch_base = 0x3333;
+        state.channel[1].final_volume = 0x44;
+        for (i, v) in [3, 0x81, 0x23, 0x45, 1, 0].into_iter().enumerate() {
+            ram.write(0x6c0c + i as u16, v);
+        }
+        for (i, v) in [2, 128, 10, 24, 7].into_iter().enumerate() {
+            ram.write(0x0200 + i as u16, v);
+        }
+        Sfx1_Process(p);
+        assert_eq!(history.count, 8);
+        assert_eq!(
+            &history.addr[..8],
+            &[0x14, 0x15, 0x16, 0x17, 0x10, 0x11, 0x12, 0x13]
+        );
+        assert_eq!(&history.val[..8], &[3, 0x81, 0x23, 0x45, 40, 40, 11, 1]);
+        let state = &(*p).state;
+        let c = &state.channel[2];
+        assert_eq!(
+            (c.index, c.instrument_id, c.instrument_pitch_base),
+            (1, 9, 256)
+        );
+        assert_eq!((c.final_volume, c.pan_flag_with_phase_invert), (128, 0));
+        assert_eq!(
+            (
+                state.channel[1].instrument_pitch_base,
+                state.channel[1].final_volume
+            ),
+            (0x3333, 0x44)
+        );
+        let s = &state.sfx_chans_1[0];
+        assert_eq!(
+            (s.ptr_idx, s.note, s.subnote, s.instr_timer, s.release_flag),
+            (5, 24, 0, 7, 0)
+        );
+        assert_eq!(
+            (
+                state.key_ON,
+                state.key_OFF,
+                state.cur_chan_bit,
+                state.reg_NON,
+                state.is_chan_on
+            ),
+            (0x84, 0x20, 0xfb, 0xfb, 4)
+        );
+        let dsp = &(*state.dsp).state;
+        let voice = &dsp.channel[1];
+        assert_eq!(
+            (voice.srcn, voice.volumeL, voice.volumeR, voice.pitch),
+            (3, 40, 40, 267)
+        );
+        assert_eq!(&dsp.ram[0x14..0x18], &[3, 0x81, 0x23, 0x45]);
+    }
+}
+
+// Movies cannot restore DSP selector255 and inspect the history-first checked reset failure before restoration finishes.
+#[cfg(any(test, sm_verify_dll))]
+#[cfg_attr(test, test)]
+fn sfx_native_reset_rejection_keeps_history_and_reset_prefix() {
+    use sm::{spc_player::Sfx1_Process, types::DspRegWriteHistory};
+    use std::panic::{AssertUnwindSafe, catch_unwind};
+    let mut game = Game::new();
+    let mut history = Box::new(DspRegWriteHistory {
+        count: 0,
+        addr: [0; 256],
+        val: [0; 256],
+    });
+    unsafe {
+        game.create_native_player();
+        let p = game.g_spc_player;
+        let ram = (*p).ram.clone();
+        (*p).state.reg_write_history = &raw mut *history;
+        let state = &mut (*p).state;
+        state.sfx1.init_flag = 255;
+        state.sfx1.cur_sound = 9;
+        state.sfx1.priority = 7;
+        state.sfx1.enabled_voices = 4;
+        state.is_chan_on = 4;
+        state.cur_chan_bit = 0;
+        state.key_OFF = 0x20;
+        state.key_ON = 0x80;
+        for s in &mut state.sfx_chans_1 {
+            s.disable = 255;
+        }
+        let s = &mut state.sfx_chans_1[0];
+        s.disable = 0;
+        s.ptr = 0x0200;
+        s.instr_timer = 1;
+        s.legato = 1;
+        s.update_adsr = 255;
+        s.voice_index = 4;
+        s.voice_bitset = 4;
+        s.channel_mask = 0xfb;
+        s.volume = 0x66;
+        s.phase_invert = 0x80;
+        let c = &mut state.channel[2];
+        c.index = 255;
+        c.instrument_id = 2;
+        c.instrument_pitch_base = 0x2222;
+        c.final_volume = 0x33;
+        c.pan_flag_with_phase_invert = 0x40;
+        ram.write(0x0200, 255);
+        ram.write(0x6c0c, 3);
+        let dsp_before = (*state.dsp).state;
+        let fault = catch_unwind(AssertUnwindSafe(|| Sfx1_Process(p)))
+            .expect_err("native reset rejects DSP selector255");
+        let text = fault.downcast_ref::<String>().expect("bounds failure text");
+        assert!(text.contains("len is 128") && text.contains("index is 244"));
+        assert_eq!(
+            (history.count, history.addr[0], history.val[0]),
+            (1, 0xf4, 3)
+        );
+        let state = &(*p).state;
+        let s = &state.sfx_chans_1[0];
+        assert_eq!(
+            (s.disable, s.update_adsr, s.ptr_idx, s.instr_timer),
+            (255, 0, 1, 0)
+        );
+        assert_eq!(
+            (
+                state.is_chan_on,
+                state.cur_chan_bit,
+                state.key_OFF,
+                state.key_ON
+            ),
+            (0, 4, 0x24, 0x80)
+        );
+        assert_eq!(
+            (
+                state.sfx1.enabled_voices,
+                state.sfx1.cur_sound,
+                state.sfx1.priority,
+                state.sfx1.init_flag
+            ),
+            (0, 9, 7, 255)
+        );
+        let c = &state.channel[2];
+        assert_eq!(
+            (
+                c.instrument_id,
+                c.instrument_pitch_base,
+                c.final_volume,
+                c.pan_flag_with_phase_invert
+            ),
+            (2, 0x2222, 0x33, 0x40)
+        );
+        let dsp = &(*state.dsp).state;
+        assert_eq!(dsp.ram, dsp_before.ram);
+        assert_eq!(
+            (dsp.channel[7].srcn, dsp.channel[7].pitch),
+            (dsp_before.channel[7].srcn, dsp_before.channel[7].pitch)
+        );
+    }
+}
+
+// Movies cannot choose a live tail-byte RAM origin and contrast lazy pan bounds failure with the table-only native path.
+#[cfg(any(test, sm_verify_dll))]
+#[cfg_attr(test, test)]
+fn sfx_native_pan_origin_failure_keeps_programmed_instrument_prefix() {
+    use sm::{spc_player::Sfx1_Process, types::DspRegWriteHistory};
+    use std::panic::{AssertUnwindSafe, catch_unwind};
+    for pan in [21, 10] {
+        let mut game = Game::new();
+        let mut history = Box::new(DspRegWriteHistory {
+            count: 0,
+            addr: [0; 256],
+            val: [0; 256],
+        });
+        unsafe {
+            game.create_native_player();
+            let p = game.g_spc_player;
+            let ram = (*p).ram.clone();
+            (*p).state.reg_write_history = &raw mut *history;
+            let state = &mut (*p).state;
+            // This is a live in-allocation pointer used only as address metadata, never dereferenced here.
+            state.ram = ram.as_mut_ptr().wrapping_add(0xffff);
+            state.sfx1.init_flag = 255;
+            state.key_ON = 0x80;
+            for s in &mut state.sfx_chans_1 {
+                s.disable = 255;
+            }
+            let s = &mut state.sfx_chans_1[0];
+            s.disable = 0;
+            s.ptr = 0x0200;
+            s.instr_timer = 1;
+            s.legato = 1;
+            s.voice_index = 4;
+            s.voice_bitset = 4;
+            s.note = 0x31;
+            s.subnote = 0x22;
+            let c = &mut state.channel[2];
+            c.index = 1;
+            c.instrument_id = 9;
+            c.instrument_pitch_base = 0x2222;
+            c.pan_flag_with_phase_invert = 0x80;
+            for (i, v) in [3, 0x81, 0x23, 0x45, 1, 0].into_iter().enumerate() {
+                ram.write(0x6c0c + i as u16, v);
+            }
+            for (i, v) in [2, 128, pan, 24, 7].into_iter().enumerate() {
+                ram.write(0x0200 + i as u16, v);
+            }
+            let result = catch_unwind(AssertUnwindSafe(|| Sfx1_Process(p)));
+            assert_eq!(result.is_err(), pan == 21);
+            if pan == 21 {
+                let fault = result.expect_err("native pan reaches the checked tail-origin read");
+                let text = fault.downcast_ref::<String>().expect("bounds failure text");
+                assert!(text.contains("len is 65536") && text.contains("index is 73265"));
+            }
+            let count = history.count as usize;
+            let writes: Vec<_> = history.addr[..count]
+                .iter()
+                .copied()
+                .zip(history.val.iter().copied())
+                .collect();
+            let expected = [
+                (0x14, 3),
+                (0x15, 0x81),
+                (0x16, 0x23),
+                (0x17, 0x45),
+                (0x10, 40),
+                (0x11, 40),
+                (0x12, 11),
+                (0x13, 1),
+            ];
+            assert_eq!(writes, expected[..if pan == 21 { 4 } else { 8 }]);
+            let state = &(*p).state;
+            let c = &state.channel[2];
+            assert_eq!(
+                (
+                    c.instrument_id,
+                    c.instrument_pitch_base,
+                    c.final_volume,
+                    c.pan_flag_with_phase_invert
+                ),
+                (9, 256, 128, 0)
+            );
+            let s = &state.sfx_chans_1[0];
+            assert_eq!(
+                (s.ptr_idx, s.note, s.subnote, s.instr_timer, state.key_ON),
+                if pan == 21 {
+                    (3, 0x31, 0x22, 0, 0x80)
+                } else {
+                    (5, 24, 0, 7, 0x80)
+                }
+            );
+            assert_eq!(
+                &(&(*state.dsp).state.ram)[0x14..0x18],
+                &[3, 0x81, 0x23, 0x45]
+            );
+        }
+    }
+}

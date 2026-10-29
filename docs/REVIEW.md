@@ -19,10 +19,10 @@ bounded source, review and qualification run on Windows.
 
 ### Current publication and acceptance
 
-Bank-upload source **510d82a2** has new strict library/DLL/frontend and actual139 units passing; exact native9 transfer preserves original compiler attribution.
-Exact source510d82a2/DLLba3a4936 replay passes 13 groups/27 rows/199,063 comparisons/0, full Morph1200 and BOTH independent Kago14350; required23 of44.
-Genuine final-codec initialized/capture/continuation and the input110076 FIR coefficient regression pass; the durable row binds actual fresh checkpoint bytes.
-Typed physical upload controls execute callbacks; physical-device fidelity, raw SFX aliases, full Session/backend/device and size acceptance remain open. Initial deliberate spin and token+4 zero replacement variant remain scoped.
+Voice/SFX source **98db8963** preserves typed slot identity and ordered native programming/failure prefixes; exact source review passes.
+New strict DLL/frontend and actual142 units pass; exact normal-library/native9 transfers retain original execution attribution.
+Exact source98db8963/DLL4abe51f9 replay passes13 groups/27 rows/199,063 comparisons/0, full Morph1200 and BOTH Kago14350; required23 of44. Fresh initialized/start/continuation and FIR selector0-to10 coefficient regression pass; durable rows bind actual captured bytes.
+Imported odd/>=8 aliases, arbitrary callback/rebinding, varying origin and slide/group variants remain scoped. Physical-device fidelity, full Session/backend/device and size acceptance remain open; original failed compiler and prior139 runtime/capture attribution remain preserved.
 
 Completed room/renderer/message/Scene/delivery reports are in the
 [frozen history](https://github.com/JimLundin/sm-decomp/blob/170bc5351c64f0846bbcb7b4714064a7230db153/docs/REVIEW.md#current-publication-and-acceptance):

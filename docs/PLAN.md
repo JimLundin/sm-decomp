@@ -59,14 +59,14 @@ shared Python installers/runtime-only restores are support work, counted separat
 ## Current work and limits
 
 Primary root owns integration, Git and one resource ledger; Linux stays stopped.
-Bank-upload source 510d82a2 / codec 3ff524f7c0b0301d has new strict library/DLL/frontend builds and actual139 units passing with warnings denied.
-Native installation and physical upload preserve ordered callback and failure prefixes; typed physical controls execute callbacks, with physical-device fidelity still open.
-Exact source510d82a2 / DLLba3a4936 replay passes 13 groups / 27 rows / 199,063 comparisons / 0, full Morph1200 and BOTH Kago14350; required23/44.
-Fresh initialized machine, new-codec checkpoints and continuation pass; the input110076 FIR regression binds its actual captured checkpoint and ordered native coefficients.
-Measured production138899, verification59300, unsafe-containing2692, legacy17822; source/native/support deltas and exact proof stay in owned receipts.
-Raw SFX aliases, the initial deliberate spin and token+4 zero replacement variant remain scoped; full Session/backend/device and size acceptance remain open.
+Voice/SFX source 98db8963 / codec 8e4db160890ae3f1 preserves captured slot identities, lazy native reads and ordered programming/failure prefixes.
+New strict DLL/frontend and actual142 units pass with warnings denied; normal-library/native9 proof transfers retain original compiler/source attribution.
+Exact source98db8963/DLL4abe51f9 replay passes13 groups/27 rows/199,063 comparisons/0, full Morph1200 and BOTH independent Kago14350; required23/44.
+Genuine final-codec initialized/start/continuation and input110076 FIR selector0-to10 coefficients pass; durable rows bind actual fresh checkpoint bytes.
+Measured production139157, verification59594, unsafe-containing2695, legacy17822; all source/native/support costs and exact proof stay in owned receipts.
+Imported odd/>=8 aliases, arbitrary callback/rebinding, varying origin and unexecuted slide/group variants remain scoped; native/physical devices, full Session/backend and size acceptance remain open.
 The primary updates the graphical canonical report after every push.
-The [qualified FIR136 record](https://github.com/JimLundin/sm-decomp/blob/3814d765954b268c1c272ebfd1f465adf1822901/docs/PLAN.md#current-work-and-limits) preserves original source/DLL/native/input/checkpoint attribution.
+The [qualified bank139 record](https://github.com/JimLundin/sm-decomp/blob/d7c1bc4f2df0f361df2d93c2993e602c378870b3/docs/PLAN.md#current-work-and-limits) preserves prior source/DLL/native/input/checkpoint attribution.
 
 ### Qualified history
 

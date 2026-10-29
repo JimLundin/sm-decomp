@@ -19,6 +19,9 @@ Use current PLAN allowances, including the uncapped direct-DLL growth.
    jobs. Budget launchers and Cargo/rustc descendants as one owned workflow;
    count every admitted workflow's remaining growth once, plus copies, captures,
    caches and retained output. Leave PLAN's RAM/disk reserves after all budgets.
+   Keep current light grants in `current_light_allowances_mib`.
+   Root's `update_ledger.py` validates nonnegative integer MiB entries and derives
+   `light_remaining_ceiling_bytes` after merging; submit changes to grant entries.
    Track physical remaining growth and family private commitment separately.
    Choose caps for the actual workload from comparable original command,
    toolchain, profile, cache and source evidence instead of reusing a native
