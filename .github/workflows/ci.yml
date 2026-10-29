@@ -116,7 +116,9 @@ jobs:
     # Native desktop/utilities currently require the Windows GNU ABI.
     # Build every real dependency and the frontend; public CI needs no ROM.
     runs-on: windows-2022
-    timeout-minutes: 60
+    # Dispatched runs add the room, actor and transition DLL mutation suites,
+    # which build one verifier per fault.
+    timeout-minutes: ${{ github.event_name == 'workflow_dispatch' && 180 || 60 }}
     env:
       RUSTUP_TOOLCHAIN: stable-x86_64-pc-windows-gnu
       CARGO_BUILD_JOBS: 1
