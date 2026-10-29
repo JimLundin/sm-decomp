@@ -1872,3 +1872,68 @@ fn owned_player_initialization_and_transfers_preserve_native_boundaries() {
         }
     }
 }
+
+// Movies cannot retain raw player selections and borrowed foreign links across owner replacement and destruction.
+#[cfg(any(test, sm_verify_dll))]
+#[cfg_attr(test, test)]
+fn owned_player_creation_replacement_and_drop_keep_borrowed_allocations() {
+    use sm::spc_player::DspRegWriteHistory;
+    let mut game = Game::new();
+    let mut foreign = Game::new();
+    assert!(game.g_spc_player.is_null());
+    game.create_native_player();
+    foreign.create_native_player();
+    let mut history = DspRegWriteHistory {
+        count: 0,
+        addr: [0; 256],
+        val: [0; 256],
+    };
+    unsafe {
+        let old = game.g_spc_player;
+        let old_dsp = (*old).state.dsp;
+        let old_ram = (*old).ram.clone();
+        assert_eq!((*old).state.ram, old_ram.as_mut_ptr());
+        assert_eq!((*old_dsp).state.apu_ram, old_ram.as_mut_ptr());
+        assert!((*old).state.reg_write_history.is_null());
+        assert_eq!(((*old).state.tempo, (*old).state.timer_cycles), (0, 0));
+        old_ram.write(0x1234, 0x5a);
+        game.g_spc_player = foreign.g_spc_player;
+        game.create_native_player();
+        let player = game.g_spc_player;
+        assert_ne!(player, old);
+        assert_ne!((*player).state.dsp, old_dsp);
+        assert_ne!((*player).state.ram, old_ram.as_mut_ptr());
+        assert_eq!(old_ram.read(0x1234), 0x5a);
+        assert_eq!((*player).ram.read(0x1234), 0);
+        assert_eq!(
+            ((*player).state.tempo, (*player).state.timer_cycles),
+            (0, 0)
+        );
+        let retained_ram = (*player).ram.clone();
+        retained_ram.write(0x4321, 0xa7);
+        let foreign_player = foreign.g_spc_player;
+        let foreign_dsp = (*foreign_player).state.dsp;
+        let foreign_ram = (*foreign_player).ram.clone();
+        foreign_ram.write(0x3456, 0xc3);
+        (*foreign_dsp).state.ram[0x0c] = 0x47;
+        (*player).state.dsp = foreign_dsp;
+        (*player).state.ram = foreign_ram.as_mut_ptr();
+        (*player).state.reg_write_history = &raw mut history;
+        let mut moved = vec![game];
+        let game = moved.pop().unwrap();
+        assert_eq!(game.g_spc_player, player);
+        assert_eq!((*player).state.ram, foreign_ram.as_mut_ptr());
+        drop(game);
+        assert_eq!(retained_ram.read(0x4321), 0xa7);
+        assert_eq!(foreign_ram.read(0x3456), 0xc3);
+        assert_eq!((*foreign_player).state.dsp, foreign_dsp);
+        assert_eq!((*foreign_dsp).state.ram[0x0c], 0x47);
+        assert_eq!(history.count, 0);
+        assert_eq!(history.addr, [0; 256]);
+        assert_eq!(history.val, [0; 256]);
+        drop(foreign);
+        assert_eq!(foreign_ram.read(0x3456), 0xc3);
+        assert_eq!(old_ram.read(0x1234), 0x5a);
+        assert_eq!(retained_ram.read(0x4321), 0xa7);
+    }
+}

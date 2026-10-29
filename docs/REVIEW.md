@@ -19,13 +19,13 @@ bounded source, review and qualification run on Windows.
 
 ### Current publication and acceptance
 
-Lifecycle source aaed9a2b / codec 94b628540a842459 supplies the reviewed canonical initialization and RAM-transfer methods, retaining queued-before-export and restore-before-import/init/reset order.
-Exact source review and new strict library/DLL/frontend/native desktop/actual144 units pass. Normal/DLL retain original native9; frontend uses its genuinely compiled lifecycle desktop archive.
-Independent controls pass with 143/1 expected sentinel outcomes each: private init-core entry after caller fallback rejection, plus save/load method entries. Canonical completed-effect 144PASS remains separate. Save/load controls stop before checked Rc borrow/RAM effects; queued-save(true) and later history/rebound/origin mutant modes remain unexecuted.
-Base sourceaaed9a2b/DLL4514d4d7 replay passes13 groups/27 rows/199,063 comparisons/0, full Morph1200 and BOTH independent Kago14350; base required23/44. Genuine initialized/resume/save/FIR/reserve and four durable checkpoint rows pass.
-Seven additional FROZEN rows pass under original 63181 with 12,245 comparisons/0; the genuine94b6 input13600 capture from original 26945 adds 13,600 comparisons. Both validation-only setup failures are preserved; base82334 totals remain separate. Complete source/native/input/loader/terminal proof stays in owned receipts.
-Selected native/history/rebound/origin paths retain valid aligned disjoint allocations, stopped exclusive lifecycle and non-reentry; three tail scalars stay disjoint from native callbacks. Imported odd/>=8 aliases, arbitrary callback/rebinding, varying origin and unexecuted slide/group variants remain scoped.
-Public unsafe Game/native/device/seed/snapshot interfaces, broad alias/callback coverage, physical fidelity/full Session/backend/size acceptance remain open; original143/144/145 source/native/compiler/runtime/control attribution is preserved.
+Allocation source 3a8caf7e / codec27eb34c8ce97e89e has reviewed safe creation/shared checked player-DSP borrowing and ordinary field Drop. Separate player/DSP/RAM Rc allocations and player-before-DSP-before-last-RAM destruction remain; queued export and restore-before-import/init/reset order is preserved.
+Exact source/cfg review, new strict library/DLL/frontend and all145 units pass. Original native9 and the separate frontend-only desktop archive transfer through unchanged inputs; no new native compilation is claimed.
+Actual originals66380/40900 pass base13 groups/27 rows/199,063 and supplemental7 rows/25,845 comparisons, with no failures. Their disjoint union is34 rows/224,908/0 and required28/44; full Morph1200, full intro8780 and BOTH independent Kago14350 pass.
+Genuine27eb initialized329/resume5/save55650/FIR110076-to110077/reserve147273 and door13600/continuation pass. Four main durable rows bind fresh base captures; the supplemental door retains its own source/native/input/loader and terminal provenance.
+Raw native views still require valid live disjoint/exclusive allocations, serialized native/audio access and quiescence before replacement/destruction. The new fixture observes retained RAM/foreign sentinels and a moved handle; destructor timing/OOM remain source/standard-library scoped.
+Imported odd/>=8 aliases, arbitrary callback/rebinding, varying origin and unexecuted slide/group variants remain scoped. Physical-device/backend/full Session/boot-to-credits and size acceptance remain open. Prior144 controls retain their original entry-only source attribution.
+The [qualified144 record](https://github.com/JimLundin/sm-decomp/blob/25ddf9caf0b648cc08dd41fc1562a36a6f24dbda/docs/PLAN.md#current-work-and-limits) preserves earlier code/control/compiler/runtime attribution; the primary updates the sole #6 issue-body report after every push.
 
 Completed room/renderer/message/Scene/delivery reports are in the
 [frozen history](https://github.com/JimLundin/sm-decomp/blob/170bc5351c64f0846bbcb7b4714064a7230db153/docs/REVIEW.md#current-publication-and-acceptance):

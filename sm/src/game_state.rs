@@ -507,11 +507,12 @@ impl Game {
         self.backend = Some(backend);
     }
 
-    /// Replace the player and DSP; existing raw views become invalid.
-    /// # Safety
-    /// All native/audio users must stop before replacement and before Game drops.
-    /// History links stay borrowed, and live references must remain exclusive.
-    pub unsafe fn create_native_player(&mut self) {
+    /// Allocate the complete replacement before publishing its borrowed view.
+    /// Existing raw views become invalid. Code dereferencing native/audio views
+    /// must keep their owner live and stop before replacement or Game destruction.
+    /// Foreign DSP/history links stay borrowed; creation never dereferences them.
+    #[forbid(unsafe_code)]
+    pub fn create_native_player(&mut self) {
         let player = crate::spc_player::NativePlayer::new();
         self.g_spc_player = player.view();
         self._native_player = Some(player);

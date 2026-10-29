@@ -466,29 +466,41 @@ impl NativePlayer {
         }
     }
 
-    // These allocations have one owner; native views never clone their Rc.
-    pub(crate) fn apply_ports(&mut self, writes: [u8; 4]) {
+    // Native views borrow stable allocations and never clone their Rc owners.
+    fn player_mut(&mut self) -> &mut SpcPlayer {
+        Rc::get_mut(&mut self.player)
+            .expect("player owner must not be shared")
+            .get_mut()
+    }
+
+    fn allocations_mut(&mut self) -> (&mut SpcPlayer, &mut Dsp) {
         let player = Rc::get_mut(&mut self.player)
             .expect("player owner must not be shared")
             .get_mut();
+        let dsp = Rc::get_mut(&mut self._dsp)
+            .expect("DSP owner must not be shared")
+            .get_mut();
+        (player, dsp)
+    }
+
+    pub(crate) fn apply_ports(&mut self, writes: [u8; 4]) {
+        let player = self.player_mut();
         crate::apu_queue::ApuQueue::apply_ports(writes, &mut player.state.input_ports);
     }
 
     pub(crate) fn save_state(&mut self, queued: Option<&crate::apu_queue::ApuQueue>) {
-        let player = Rc::get_mut(&mut self.player)
-            .expect("player owner must not be shared")
-            .get_mut();
+        let player = self.player_mut();
         if let Some(queued) = queued {
             queued.apply_queued(&mut player.state.input_ports);
         }
         crate::native_player_ram::save(&player.state, &player.ram);
     }
     pub(crate) fn load_state(&mut self) {
-        let player = Rc::get_mut(&mut self.player)
-            .expect("player owner must not be shared")
-            .get_mut();
+        let player = self.player_mut();
         crate::native_player_ram::load(&mut player.state, &player.ram);
     }
+    /// Borrow the stable allocation. Unsafe native consumers must retain its
+    /// owner, serialize access and stop before replacement or destruction.
     pub(crate) fn view(&self) -> *mut SpcPlayer {
         self.player.get()
     }
@@ -497,12 +509,7 @@ impl NativePlayer {
 impl NativePlayer {
     /// Classify native output links before resetting or changing any state.
     pub(crate) fn try_initialize(&mut self) -> bool {
-        let player = Rc::get_mut(&mut self.player)
-            .expect("player owner must not be shared")
-            .get_mut();
-        let dsp = Rc::get_mut(&mut self._dsp)
-            .expect("DSP owner must not be shared")
-            .get_mut();
+        let (player, dsp) = self.allocations_mut();
         if !player.state.reg_write_history.is_null()
             || !core::ptr::eq(player.state.dsp, dsp)
             || player.state.ram != player.ram.as_mut_ptr()
@@ -515,37 +522,23 @@ impl NativePlayer {
     /// Return false before effects when selected native links/history/aliases
     /// require the caller's native interval; default playback borrows this owner.
     pub(crate) fn try_render_samples(&mut self, samples: &mut [[i16; 2]]) -> bool {
-        let native = {
-            let player = Rc::get_mut(&mut self.player)
-                .expect("player owner must not be shared")
-                .get_mut();
-            let dsp = Rc::get_mut(&mut self._dsp)
-                .expect("DSP owner must not be shared")
-                .get_mut();
-            // Classify only retained native links, assertion entries and aliases;
-            // no RAM/table reads, changes or output borrows happen here.
-            !player.state.reg_write_history.is_null()
-                || !core::ptr::eq(player.state.dsp, dsp)
-                || player.state.ram != player.ram.as_mut_ptr()
-                || player.state.timer_cycles > 64
-                || dsp.state.sampleOffset > 534
-                || player
-                    .state
-                    .sfx_chans_1
-                    .iter()
-                    .chain(&player.state.sfx_chans_2)
-                    .chain(&player.state.sfx_chans_3)
-                    .any(|channel| channel.voice_index >> 1 >= 8)
-        };
-        if native {
+        let (player, dsp) = self.allocations_mut();
+        // Classify retained links and assertion entries before reads or effects.
+        if !player.state.reg_write_history.is_null()
+            || !core::ptr::eq(player.state.dsp, dsp)
+            || player.state.ram != player.ram.as_mut_ptr()
+            || player.state.timer_cycles > 64
+            || dsp.state.sampleOffset > 534
+            || player
+                .state
+                .sfx_chans_1
+                .iter()
+                .chain(&player.state.sfx_chans_2)
+                .chain(&player.state.sfx_chans_3)
+                .any(|channel| channel.voice_index >> 1 >= 8)
+        {
             return false;
         }
-        let player = Rc::get_mut(&mut self.player)
-            .expect("player owner must not be shared")
-            .get_mut();
-        let dsp = Rc::get_mut(&mut self._dsp)
-            .expect("DSP owner must not be shared")
-            .get_mut();
         sequencer::PlayerOwner::new(&mut player.state, &player.ram, dsp).render(samples);
         true
     }
