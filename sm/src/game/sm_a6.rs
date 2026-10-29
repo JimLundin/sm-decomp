@@ -1117,7 +1117,10 @@ crate::game::callback_dispatch! {
             slot!(game, Enemy_CeresRidley[E].var_F = slot!(game, Enemy_CeresRidley[E].var_F).wrapping_add(1));
             if slot!(game, Enemy_CeresRidley[E].var_F) != 0 {
                 slot!(game, Enemy_CeresRidley[E].var_F = 0);
-                let mut v2: i16 = byte!(@pointer rom_ptr!(game; 0xa6e269); cry_var_E as isize) as i16;
+                let mut v2: i16 = game
+                    .capture_native_rom()
+                    .read(crate::rtl::lorom_offset(0xa6e269) as usize + usize::from(cry_var_E))
+                    as i16;
                 if v2 == 255 {
                     slot!(game, Enemy_CeresRidley[E].var_E = 0);
                     slot!(game, Enemy_CeresRidley[E].var_A = (0xa6a3dfi32) as u16);
@@ -4090,7 +4093,8 @@ crate::game::callback_dispatch! {
                 12 => {
                     slot!(game, Enemy_Ridley[E].base.x_pos = word!(game.tilemap_stuff[82]));
                     slot!(game, Enemy_Ridley[E].base.y_pos = word!(game.tilemap_stuff[83]));
-                    slot!(game, Enemy_Ridley[E].base.current_instruction = *(rom_ptr!(game, u16; 0xa6c7ba)).offset(
+                    slot!(game, Enemy_Ridley[E].base.current_instruction = game.capture_native_rom().table_word(
+                        crate::rtl::lorom_offset(0xa6c7ba) as usize,
                         ((game.ram().read_byte(0x2000 + 2 * 71) as i32
                             + game.ram().read_byte(0x2000 + 2 * 81) as i32
                             + 8
