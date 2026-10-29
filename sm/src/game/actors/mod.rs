@@ -108,7 +108,7 @@ use sm_game::actors::overlap;
 pub(in crate::game) mod blue_face_block;
 pub(in crate::game) mod brinstar_pipe_bug;
 pub(in crate::game) mod crocomire_attack;
-pub(in crate::game) mod crocomire_reactions;
+pub(crate) mod crocomire_reactions;
 pub(in crate::game) mod draygon_death;
 pub(in crate::game) mod draygon_eye;
 pub(in crate::game) mod draygon_flight;

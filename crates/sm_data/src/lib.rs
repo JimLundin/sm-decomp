@@ -13,6 +13,7 @@ pub mod ceres_doors;
 pub mod ceres_elevator;
 pub mod ceres_ridley;
 pub mod corpses;
+pub mod crocomire;
 pub mod demo_rooms;
 pub mod enemy_speeds;
 pub mod equipment_screen;

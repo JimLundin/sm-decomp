@@ -18,6 +18,7 @@ use crate::game::enemy_projectiles::{
 use crate::game::enemy_script::EnemyScript;
 use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime;
+use crate::game::imported::{Imported, word as table_word};
 use crate::game::music::{QueueMusic_Delayed8, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::player_update::minimap;
 use crate::game::room_mechanisms::spawn_hardcoded;
@@ -26,6 +27,63 @@ use crate::game::sprite_effect_runtime::create_sprite;
 use crate::game::visual_runtime::align_crocomire_background;
 use crate::game_state::Game;
 use crate::ram_map::{checked_word, slot, word, words as ram};
+use sm_data::crocomire::{
+    BRIDGE_DEBRIS, BRIDGE_DEBRIS_ADDRESS, BridgeDebris, FLESH_TILEMAP_ADDRESS, MELT_TILEMAP_BYTES,
+    MELT_TILES, MeltTilemap, SCROLL_SPRITEMAP_ADDRESS, SCROLL_SPRITEMAPS, SKELETON_TILEMAP_ADDRESS,
+    SPIKE_WALL_COLUMNS, SPIKE_WALL_DESTINATION_ADDRESS, SPIKE_WALL_TILE_ADDRESS, ScrollSpritemaps,
+    SpikeWallDestinations, SpikeWallTiles, import_words,
+};
+
+#[derive(Default)]
+pub(crate) struct ImportedTables {
+    scroll_spritemaps: Option<Imported<ScrollSpritemaps>>,
+    bridge_debris: Option<Imported<BridgeDebris>>,
+    spike_wall_tiles: Option<Imported<SpikeWallTiles>>,
+    spike_wall_destinations: Option<Imported<SpikeWallDestinations>>,
+    flesh_tilemap: Option<Imported<MeltTilemap>>,
+    skeleton_tilemap: Option<Imported<MeltTilemap>>,
+}
+
+pub(crate) fn import(image: &crate::rom::RomImage) -> ImportedTables {
+    ImportedTables {
+        scroll_spritemaps: Imported::import(
+            image,
+            SCROLL_SPRITEMAP_ADDRESS,
+            2 * SCROLL_SPRITEMAPS,
+            import_words,
+        ),
+        bridge_debris: Imported::import(
+            image,
+            BRIDGE_DEBRIS_ADDRESS,
+            2 * BRIDGE_DEBRIS,
+            import_words,
+        ),
+        spike_wall_tiles: Imported::import(
+            image,
+            SPIKE_WALL_TILE_ADDRESS,
+            2 * (SPIKE_WALL_COLUMNS + 1),
+            import_words,
+        ),
+        spike_wall_destinations: Imported::import(
+            image,
+            SPIKE_WALL_DESTINATION_ADDRESS,
+            2 * SPIKE_WALL_COLUMNS,
+            import_words,
+        ),
+        flesh_tilemap: Imported::import(
+            image,
+            FLESH_TILEMAP_ADDRESS,
+            MELT_TILEMAP_BYTES,
+            MeltTilemap::import,
+        ),
+        skeleton_tilemap: Imported::import(
+            image,
+            SKELETON_TILEMAP_ADDRESS,
+            MELT_TILEMAP_BYTES,
+            MeltTilemap::import,
+        ),
+    }
+}
 use crate::types::{Point16U, SpawnHardcodedPlmArgs, VoidP};
 
 pub(crate) fn dispatch(k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript {
@@ -131,7 +189,13 @@ pub(crate) fn update_background(k: u16, game: &mut Game) {
     let mut index = 32u16;
     let spritemap = loop {
         let candidate = slot!(game, Crocomire[0].base.spritemap_pointer);
-        if candidate == crate::rtl::rom_table_word!(game, 0xa48b79, (index >> 1) as isize) {
+        let spritemap = table_word(
+            &game.crocomire.scroll_spritemaps,
+            game,
+            SCROLL_SPRITEMAP_ADDRESS,
+            (index >> 1) as isize,
+        );
+        if candidate == spritemap {
             break candidate;
         }
         index = index.wrapping_sub(2);
@@ -399,6 +463,21 @@ pub(crate) fn queue_tilemap_upload(size: u16, bg_mask: u8, game: &mut Game) {
 }
 
 fn load_melt_tilemap(table: u32, game: &mut Game) {
+    // The tilemap serves its 256 tiles while the loaded image is the imported
+    // allocation; otherwise the original loads scan for the $FFFF end.
+    let rom = game.loaded_rom.as_ref().expect("ROM must be loaded");
+    let imported = match table {
+        FLESH_TILEMAP_ADDRESS => &game.crocomire.flesh_tilemap,
+        SKELETON_TILEMAP_ADDRESS => &game.crocomire.skeleton_tilemap,
+        _ => &None,
+    };
+    if let Some(tiles) = Imported::from(imported, rom).map(|tilemap| *tilemap.tiles()) {
+        for (index, tile) in tiles.into_iter().enumerate() {
+            word!(game.tilemap_stuff[(index + 32)] = tile);
+        }
+        queue_tilemap_upload((2 * MELT_TILES + 1024) as u16, 0xfc, game);
+        return;
+    }
     let mut i: i32 = 0;
     loop {
         let index: i32 = i >> 1;
@@ -438,7 +517,7 @@ pub(crate) fn prepare_flesh_tilemap(game: &mut Game) {
         le(tilemap_stuff, 0) <- value(824),
         le(tilemap_stuff, 1) <- value(824),
     );
-    load_melt_tilemap(0xa49c79, game);
+    load_melt_tilemap(FLESH_TILEMAP_ADDRESS, game);
 }
 
 pub(crate) fn prepare_skeleton_tilemap(game: &mut Game) {
@@ -454,7 +533,7 @@ pub(crate) fn prepare_skeleton_tilemap(game: &mut Game) {
         Crocomire[E].base.current_instruction = addr_kCrocomire_Ilist_BF7E as u16
     );
     word_transfers!(game, ascending, 1024; le(tilemap_stuff, 0) <- value(824));
-    load_melt_tilemap(0xa49e7b, game);
+    load_melt_tilemap(SKELETON_TILEMAP_ADDRESS, game);
 }
 
 macro_rules! native_graphics_word {
@@ -679,16 +758,32 @@ pub(crate) fn prepare_spike_wall(game: &mut Game) {
         slot!(game, Crocomire[E].var_D = (crocom_var_D).wrapping_sub(1));
         let mut v3: i16 = word!(game.croco_target_0688) as i16;
         let v4: i32 = word!(game.croco_target_0688) as i32 >> 1;
-        if crate::rtl::rom_table_word!(game, 0xa499cb, v4 as isize) != 0xffff {
+        let tile = table_word(
+            &game.crocomire.spike_wall_tiles,
+            game,
+            SPIKE_WALL_TILE_ADDRESS,
+            v4 as isize,
+        );
+        if tile != 0xffff {
             let v5: u16 = word!(game.vram_write_queue_tail);
             let entry = 0xd0 + usize::from(word!(game.vram_write_queue_tail));
             word_transfers!(game, ascending, 1; native(entry) <- value(512));
             word_transfers!(game, ascending, 1;
-                native(entry + 2) <- value(crate::rtl::rom_table_word!(game, 0xa499d9, v4 as isize)),
+                native(entry + 2) <- value(table_word(
+                    &game.crocomire.spike_wall_destinations,
+                    game,
+                    SPIKE_WALL_DESTINATION_ADDRESS,
+                    v4 as isize,
+                )),
             );
             word_transfers!(game, ascending, 1; native(entry + 4) <- value(173));
             word_transfers!(game, ascending, 1;
-                native(entry + 5) <- value((crate::rtl::rom_table_word!(game, 0xa499cb, v4 as isize) as i32
+                native(entry + 5) <- value((table_word(
+                    &game.crocomire.spike_wall_tiles,
+                    game,
+                    SPIKE_WALL_TILE_ADDRESS,
+                    v4 as isize,
+                ) as i32
                     + ((game.ram().read_byte(0x52) as i32 & 7) << 13)) as u16),
             );
             word!(game.vram_write_queue_tail = (v5).wrapping_add(7));
@@ -920,7 +1015,12 @@ pub(crate) fn emit_melt_debris(game: &mut Game) {
             u16::from_ne_bytes([game.ram().read_byte(0x9016), game.ram().read_byte(0x9017)]);
         checked_word!(game, 0x9016; += 2);
         SpawnEprojWithGfx(
-            crate::rtl::rom_table_word!(game, 0xa49156, (v0 >> 1) as isize),
+            table_word(
+                &game.crocomire.bridge_debris,
+                game,
+                BRIDGE_DEBRIS_ADDRESS,
+                (v0 >> 1) as isize,
+            ),
             v1,
             addr_stru_868F9D as u16,
             game,
