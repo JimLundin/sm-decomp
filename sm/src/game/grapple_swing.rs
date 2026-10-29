@@ -3,6 +3,7 @@
 use crate::game::actors::{self, api as actor_api};
 use crate::game::combat_rules::GrappleOutcome;
 use crate::game::display_refresh::queue_native_transfer;
+use crate::game::grapple_aim::{self, ConnectionSet};
 use crate::game::grapple_origins::{self, OriginSet};
 use crate::game::music::{QueueSfx1_Max1, QueueSfx1_Max6, QueueSfx1_Max15};
 use crate::game::player_collision::operations as player_collision;
@@ -154,18 +155,16 @@ pub(crate) fn connect_beam(game: &mut Game) {
         word!(game.grapple_beam_length_delta = 0);
     } else {
         let v1: i32 = 2 * word!(game.grapple_beam_direction) as i32;
-        let table = if word!(game.samus_y_speed) != 0 || word!(game.samus_y_subspeed) != 0 {
-            0x9bc3ee
+        let set = if word!(game.samus_y_speed) != 0 || word!(game.samus_y_subspeed) != 0 {
+            ConnectionSet::Airborne
         } else if game.ram().read_byte(0xa1f) == 5 {
-            0x9bc416
+            ConnectionSet::Crouching
         } else {
-            0x9bc3c6
+            ConnectionSet::Standard
         };
-        word!(game.grapple_beam_function = crate::rtl::rom_table_word!(game, table, v1 as isize));
-        dispatch_connection(
-            u32::from(crate::rtl::rom_table_word!(game, table, (v1 + 1) as isize)) | 0x9b0000,
-            game,
-        );
+        let connection = grapple_aim::connection(game, set, v1 as isize);
+        word!(game.grapple_beam_function = connection.beam_function);
+        dispatch_connection(u32::from(connection.handler) | 0x9b0000, game);
     };
 }
 // Each field reacquires the registered native image at its original read point.
@@ -662,12 +661,11 @@ pub(crate) fn start_firing(game: &mut Game) {
     }
     word!(game.grapple_beam_direction = v0 as u16);
     let v1: i32 = v0;
+    let extension = grapple_aim::extension(game, v1 as isize);
     word! { game;
-        grapple_beam_extension_x_velocity =
-            crate::rtl::rom_table_word!(game, 0x9bc0db, v1 as isize);
-        grapple_beam_extension_y_velocity =
-            crate::rtl::rom_table_word!(game, 0x9bc0ef, v1 as isize);
-        grapple_beam_end_angle16 = crate::rtl::rom_table_word!(game, 0x9bc104, v1 as isize);
+        grapple_beam_extension_x_velocity = extension.x_velocity;
+        grapple_beam_extension_y_velocity = extension.y_velocity;
+        grapple_beam_end_angle16 = extension.angle;
         grapple_beam_end_angles_mirror = word!(game.grapple_beam_end_angle16);
         grapple_varCF6 = 10;
     }

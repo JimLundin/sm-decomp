@@ -232,6 +232,8 @@ pub struct Game {
     pub(crate) shooting_stars: Option<crate::game::shooting_stars::ImportedShootingStars>,
     /// Imported from `loaded_rom` by `register_rom`; see game::grapple_origins.
     pub(crate) grapple_origins: Option<crate::game::grapple_origins::ImportedOrigins>,
+    /// Imported from `loaded_rom` by `register_rom`; see game::grapple_aim.
+    pub(crate) grapple_aim: crate::game::grapple_aim::ImportedAim,
     /// Imported from `loaded_rom` by `register_rom`; see game::kraid_tables.
     pub(crate) kraid_tables: crate::game::kraid_tables::ImportedKraid,
     /// Imported from `loaded_rom` by `register_rom`; see game::phantoon_tables.
@@ -1206,6 +1208,7 @@ impl Game {
         self.demo_sets = crate::game::demo_rooms::import_sets(&image);
         self.shooting_stars = crate::game::shooting_stars::import(&image);
         self.grapple_origins = crate::game::grapple_origins::import(&image);
+        self.grapple_aim = crate::game::grapple_aim::import(&image);
         self.kraid_tables = crate::game::kraid_tables::import(&image);
         self.flame_rain = crate::game::phantoon_tables::import(&image);
         self.botwoon_speeds = crate::game::actors::botwoon::import_speeds(&image);
@@ -1455,6 +1458,7 @@ impl Game {
             demo_sets: None,
             demo_scenes: None,
             grapple_origins: None,
+            grapple_aim: Default::default(),
             botwoon_speeds: None,
             botwoon_holes: None,
             intro_palette: None,

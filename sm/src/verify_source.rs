@@ -34,6 +34,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_data/src/enemy_speeds.rs"),
     ),
     (
+        "crates/sm_data/src/grapple_aim.rs",
+        include_bytes!("../../crates/sm_data/src/grapple_aim.rs"),
+    ),
+    (
         "crates/sm_data/src/grapple_origins.rs",
         include_bytes!("../../crates/sm_data/src/grapple_origins.rs"),
     ),
@@ -1174,6 +1178,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/gameplay.rs",
         include_bytes!("game/gameplay.rs"),
+    ),
+    (
+        "sm/src/game/grapple_aim.rs",
+        include_bytes!("game/grapple_aim.rs"),
     ),
     (
         "sm/src/game/grapple_origins.rs",
