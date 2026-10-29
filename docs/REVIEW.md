@@ -15,9 +15,12 @@ Primary root 01a17ecd stays the sole Git writer; Linux stays stopped.
 ### Direction (Jim, 2026-10-29)
 
 We are building the Super Metroid engine: a purpose-built, compact Rust engine
-that plays the original game faithfully. It is as modular as Map Rando and
-content replacement need, and no more: swappable room/door graphs, textures,
-tilesets, palettes, sprites and sounds through `sm_data`, not a general engine.
+that plays the original game faithfully, with modularity wherever it makes
+sense: room/door graphs, textures, tilesets, palettes, sprites, sounds and
+gameplay options replaceable through `sm_data` and explicit profiles. Map Rando
+is the first use case and the acceptance bar: success means enough modularity
+to support it. Further modularity is welcome where it keeps the engine clear;
+it is still a Super Metroid engine, not a general-purpose one.
 Judge every change by whether it moves the code toward that engine and makes
 the code base smaller and clearer.
 
