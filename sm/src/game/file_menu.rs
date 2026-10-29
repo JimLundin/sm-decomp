@@ -8,12 +8,12 @@ use crate::game::constants::bank_81::{
     addr_kMenuTilemap_Yes,
 };
 use crate::game::menu_tilemap::{self, main_menu as restore_main};
-use crate::game::music::{QueueSfx1_Max6, QueueSfx3_Max6};
 use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::save_slots;
 use crate::game::save_slots::load_area_map;
 use crate::game::visual_runtime::{clear_hdma, set_hdma_enabled};
+use sm_game::effects::{DisplayRefresh as _, SoundEffects as _};
 
 const BEGIN_COPY: Func_V = begin_operation::<true>;
 const BEGIN_CLEAR: Func_V = begin_operation::<false>;
@@ -58,12 +58,12 @@ fn border(sprite: u16, game: &mut Game) {
 }
 unsafe fn prepare(game: &mut Game) {
     unsafe {
-        crate::game::display_refresh::fade(false, game);
+        game.fade(false);
         if (game.ram().read_byte(0x51) & 0xf) != 0 {
             return;
         }
-        crate::game::display_refresh::set_blank(true, game);
-        QueueSfx3_Max6(1, game);
+        game.set_blank(true);
+        game.queue_sound(2, (1) as u8, 6);
         set_hdma_enabled(false, game);
         clear_hdma(game);
         word!(game.menu_index += 1);
@@ -78,7 +78,7 @@ fn fade_to_options(game: &mut Game) {
     sprite_output::menu_selection(game);
     border(0x48, game);
     sprite_output::file_helmets(false, game);
-    crate::game::display_refresh::fade(false, game);
+    game.fade(false);
     if (game.ram().read_byte(0x51) & 0xf) == 0 {
         word! {game; game_state = kGameState_2_GameOptionsMenu as u16; menu_index = 0; }
         word_transfers!(game, ascending, 24; native(0x198d) <- value(0));
@@ -87,7 +87,7 @@ fn fade_to_options(game: &mut Game) {
 fn fade_to_title(game: &mut Game) {
     border(0x48, game);
     sprite_output::file_helmets(false, game);
-    crate::game::display_refresh::fade(false, game);
+    game.fade(false);
     if (game.ram().read_byte(0x51) & 0xf) == 0 {
         game.request_reset();
     }
@@ -97,14 +97,14 @@ fn fade_from_main(game: &mut Game) {
     fade_to_main(game);
 }
 fn fade_to_main(game: &mut Game) {
-    crate::game::display_refresh::fade(false, game);
+    game.fade(false);
     game.ram().write_byte(
         0x57,
         (game.ram().read_byte(0x57) as i32 & 0xf
             | 16 * (game.ram().read_byte(0x51) as i32 & 0xf) ^ 0xf0) as u8,
     );
     if (game.ram().read_byte(0x51) & 0xf) == 0 {
-        crate::game::display_refresh::set_blank(true, game);
+        game.set_blank(true);
         word!(game.menu_index += 1);
     }
 }
@@ -114,7 +114,7 @@ fn restore_cursor(game: &mut Game) {
 }
 fn fade_in(game: &mut Game) {
     sprite_output::menu_selection(game);
-    crate::game::display_refresh::fade(true, game);
+    game.fade(true);
     game.ram().write_byte(
         0x57,
         (game.ram().read_byte(0x57) as i32 & 0xf
@@ -185,7 +185,7 @@ fn choose_source<const COPY: bool>(game: &mut Game) {
     sprite_output::menu_selection(game);
     let movement_high = if COPY { 0 } else { game.ram().read_byte(0x90) };
     if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
-        QueueSfx1_Max6(0x37, game);
+        game.queue_sound(0, (0x37) as u8, 6);
         if word!(game.eproj_id[15]) != 3 {
             word!(game.eproj_id[16] = word!(game.eproj_id[15]));
             word!(game.menu_index += 1);
@@ -198,7 +198,7 @@ fn choose_source<const COPY: bool>(game: &mut Game) {
     } else if (word!(game.joypad1_newkeys) & 0x8000) != 0 {
         if COPY {
             word!(game.menu_index += 7);
-            QueueSfx1_Max6(0x37, game);
+            game.queue_sound(0, (0x37) as u8, 6);
             return;
         }
     } else {
@@ -209,14 +209,14 @@ fn choose_source<const COPY: bool>(game: &mut Game) {
             } else {
                 u16::from_ne_bytes([55, movement_high])
             };
-            QueueSfx1_Max6(sound, game);
+            game.queue_sound(0, (sound) as u8, 6);
             sprite_output::file_slot_cursor(211, game);
             return;
         }
         sprite_output::file_slot_cursor(211, game);
         return;
     }
-    QueueSfx1_Max6(0x37, game);
+    game.queue_sound(0, (0x37) as u8, 6);
     word!(game.menu_index += 5);
 }
 fn begin_destination(game: &mut Game) {
@@ -252,7 +252,7 @@ fn choose_destination(game: &mut Game) {
     border(0x49, game);
     sprite_output::menu_selection(game);
     if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
-        QueueSfx1_Max6(0x37, game);
+        game.queue_sound(0, (0x37) as u8, 6);
         if word!(game.eproj_id[15]) != 3 {
             word!(game.eproj_id[17] = word!(game.eproj_id[15]));
             word!(game.menu_index += 1);
@@ -263,10 +263,10 @@ fn choose_destination(game: &mut Game) {
     } else if (word!(game.joypad1_newkeys) & 0x8000) == 0 {
         'move_selection: {
             let step = if word!(game.joypad1_newkeys) as i32 & kButton_Up as i32 != 0 {
-                QueueSfx1_Max6(0x37, game);
+                game.queue_sound(0, (0x37) as u8, 6);
                 u16::MAX
             } else if word!(game.joypad1_newkeys) as i32 & kButton_Down as i32 != 0 {
-                QueueSfx1_Max6(0x37, game);
+                game.queue_sound(0, (0x37) as u8, 6);
                 1
             } else {
                 break 'move_selection;
@@ -283,7 +283,7 @@ fn choose_destination(game: &mut Game) {
     } else {
         word!(game.menu_index -= 2);
         word!(game.eproj_id[15] = word!(game.eproj_id[16]));
-        QueueSfx1_Max6(0x37, game);
+        game.queue_sound(0, (0x37) as u8, 6);
         reset_copy(game);
         return;
     }
@@ -341,7 +341,7 @@ fn confirm_choice<const COPY: bool>(game: &mut Game) {
     }
     if word!(game.joypad1_newkeys) as i32 & (kButton_Up as i32 | kButton_Down as i32) != 0 {
         word!(game.eproj_id[15] ^= (1u16));
-        QueueSfx1_Max6(0x37, game);
+        game.queue_sound(0, (0x37) as u8, 6);
     } else {
         let cancelled = if (word!(game.joypad1_newkeys) & 0x8000) != 0 {
             true
@@ -350,7 +350,7 @@ fn confirm_choice<const COPY: bool>(game: &mut Game) {
         {
             false
         } else {
-            QueueSfx1_Max6(0x38, game);
+            game.queue_sound(0, (0x38) as u8, 6);
             if word!(game.eproj_id[15]) == 0 {
                 word!(game.menu_index += 1);
                 return;
@@ -370,7 +370,7 @@ fn confirm_choice<const COPY: bool>(game: &mut Game) {
                 word!(game.menu_index -= 2);
                 word!(game.eproj_id[15] = word!(game.eproj_id[16]));
             }
-            QueueSfx1_Max6(0x37, game);
+            game.queue_sound(0, (0x37) as u8, 6);
             if !COPY {
                 reset_clear(game);
             }
@@ -437,7 +437,7 @@ unsafe fn copy_slot(game: &mut Game) {
 fn complete_operation<const COPY: bool>(game: &mut Game) {
     border(if COPY { 0x49 } else { 0x4a }, game);
     if word!(game.joypad1_newkeys) != 0 {
-        QueueSfx1_Max6(0x37, game);
+        game.queue_sound(0, (0x37) as u8, 6);
         word!(game.menu_index += 1);
         if COPY {
             word!(game.selected_save_slot = save_slots::last_selected(game));
@@ -527,7 +527,7 @@ fn fade_in_main(game: &mut Game) {
     sprite_output::file_menu_cursor(game);
     sprite_output::menu_selection(game);
     border(0x48, game);
-    crate::game::display_refresh::fade(true, game);
+    game.fade(true);
     if (game.ram().read_byte(0x51) & 0xf) == 15 {
         word!(game.menu_index += 1);
     }
@@ -553,9 +553,9 @@ unsafe fn choose_main(game: &mut Game) {
                     false
                 } else if (word!(game.joypad1_newkeys) as i32 & kButton_Down as i32) == 0 {
                     if (word!(game.joypad1_newkeys) as i32 & kButton_B as i32) != 0 {
-                        QueueSfx1_Max6(0x37, game);
+                        game.queue_sound(0, (0x37) as u8, 6);
                         word!(game.menu_index = 33);
-                        QueueSfx1_Max6(0x37, game);
+                        game.queue_sound(0, (0x37) as u8, 6);
                     }
                     true
                 } else {
@@ -577,12 +577,12 @@ unsafe fn choose_main(game: &mut Game) {
                     false
                 };
             if !(selection_unchanged) {
-                QueueSfx1_Max6(0x37, game);
+                game.queue_sound(0, (0x37) as u8, 6);
             }
         } else {
             let mut v0: i16 = word!(game.selected_save_slot) as i16;
             if word!(game.selected_save_slot) as i32 - 3i32 & 0x8000 != 0 {
-                QueueSfx1_Max6(0x2a, game);
+                game.queue_sound(0, (0x2a) as u8, 6);
                 word!(game.menu_index += 27);
                 set_native_word(
                     0x198d
@@ -602,12 +602,12 @@ unsafe fn choose_main(game: &mut Game) {
                 }
             } else {
                 if word!(game.selected_save_slot) == 3 {
-                    QueueSfx1_Max6(0x37, game);
+                    game.queue_sound(0, (0x37) as u8, 6);
                     word!(game.menu_index += 1);
                     set_native_word(0x57, native_word(0x57, game) & 0xff0c | 3, game);
                 } else {
                     if word!(game.selected_save_slot) == 4 {
-                        QueueSfx1_Max6(0x37, game);
+                        game.queue_sound(0, (0x37) as u8, 6);
                         word!(game.menu_index += 15);
                         v0 = (i32::from(native_word(0x57, game)) & 0xff0c | 3) as i16;
                         set_native_word(0x57, v0 as u16, game);

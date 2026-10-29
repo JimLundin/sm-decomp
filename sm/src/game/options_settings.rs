@@ -1,8 +1,9 @@
 //! Options selection, screen transitions and their tilemap projection.
 #![forbid(unsafe_code)]
-use crate::game::{constants::buttons::*, controller_input, menu_tilemap, music::QueueSfx1_Max6};
+use crate::game::{constants::buttons::*, controller_input, menu_tilemap};
 use crate::game_state::Game;
 use crate::ram_map::word;
+use sm_game::effects::{DisplayRefresh as _, SoundEffects as _};
 
 pub(crate) fn initialize(game: &mut Game, upload: fn(&mut Game)) {
     game.ram().write_byte(0x5d, 0);
@@ -36,12 +37,12 @@ pub(crate) fn initialize(game: &mut Game, upload: fn(&mut Game)) {
 
 fn navigate(last: u16, game: &mut Game) {
     if word!(game.joypad1_newkeys) & kButton_Up as u16 != 0 {
-        QueueSfx1_Max6(0x37, game);
+        game.queue_sound(0, (0x37) as u8, 6);
         if word!(game.menu_option_index -= 1, reread) & 0x8000 != 0 {
             word!(game.menu_option_index = last);
         }
     } else if word!(game.joypad1_newkeys) & kButton_Down as u16 != 0 {
-        QueueSfx1_Max6(0x37, game);
+        game.queue_sound(0, (0x37) as u8, 6);
         if word!(game.menu_option_index += 1, reread) == last + 1 {
             word!(game.menu_option_index = 0);
         }
@@ -53,7 +54,7 @@ pub(crate) fn main_menu(game: &mut Game) {
     if word!(game.joypad1_newkeys) & kButton_B as u16 != 0 {
         word!(game.game_options_screen_index = 11);
     } else if word!(game.joypad1_newkeys) & (kButton_A | kButton_Start) as u16 != 0 {
-        QueueSfx1_Max6(0x38, game);
+        game.queue_sound(0, (0x38) as u8, 6);
         const ACTIONS: [fn(&mut Game); 5] =
             [start, toggle_language, toggle_language, dissolve, dissolve];
         ACTIONS[usize::from(word!(game.menu_option_index))](game);
@@ -124,13 +125,13 @@ pub(crate) fn highlight_language(game: &mut Game) {
 pub(crate) fn special(game: &mut Game) {
     navigate(2, game);
     if word!(game.joypad1_newkeys) & kButton_B as u16 != 0 {
-        QueueSfx1_Max6(0x38, game);
+        game.queue_sound(0, (0x38) as u8, 6);
         back(game);
     } else if word!(game.joypad1_newkeys)
         & (kButton_Start | kButton_Left | kButton_Right | kButton_A) as u16
         != 0
     {
-        QueueSfx1_Max6(0x38, game);
+        game.queue_sound(0, (0x38) as u8, 6);
         const ACTIONS: [fn(&mut Game); 3] = [toggle_special, toggle_special, back];
         ACTIONS[usize::from(word!(game.menu_option_index))](game);
     }
@@ -181,7 +182,7 @@ pub(crate) fn highlight_special(game: &mut Game) {
 
 pub(crate) fn controller(game: &mut Game) {
     if word!(game.joypad1_newkeys) & kButton_Up as u16 != 0 {
-        QueueSfx1_Max6(0x37, game);
+        game.queue_sound(0, (0x37) as u8, 6);
         let selected = word!(game.menu_option_index -= 1, reread);
         if word!(game.menu_option_index) & 0x8000 != 0 {
             word! { game; menu_option_index = 8; game_options_screen_index = 9; }
@@ -191,7 +192,7 @@ pub(crate) fn controller(game: &mut Game) {
         return;
     }
     if word!(game.joypad1_newkeys) & kButton_Down as u16 != 0 {
-        QueueSfx1_Max6(0x37, game);
+        game.queue_sound(0, (0x37) as u8, 6);
         let selected = word!(game.menu_option_index).wrapping_add(1);
         word!(game.menu_option_index = selected);
         if selected == 7 {
@@ -202,7 +203,7 @@ pub(crate) fn controller(game: &mut Game) {
             word! { game; menu_option_index = 0; game_options_screen_index = 10; }
         }
     } else if word!(game.joypad1_newkeys) != 0 {
-        QueueSfx1_Max6(0x38, game);
+        game.queue_sound(0, (0x38) as u8, 6);
         use controller_input::remap_binding as remap;
         const ACTIONS: [fn(&mut Game); 9] = [
             remap,
@@ -261,7 +262,7 @@ pub(crate) fn scroll<const DOWN: bool>(game: &mut Game) {
 }
 
 pub(crate) fn fade_out(game: &mut Game, screen: u16, enable: fn(&mut Game)) {
-    crate::game::display_refresh::fade(false, game);
+    game.fade(false);
     if screen == 5 && game.ram().read_byte(0x57) != 0xf3 {
         game.ram()
             .write_byte(0x57, game.ram().read_byte(0x57).wrapping_add(16));
@@ -293,7 +294,7 @@ pub(crate) fn fade_out(game: &mut Game, screen: u16, enable: fn(&mut Game)) {
 }
 
 pub(crate) fn fade_in<const DISSOLVE: bool>(game: &mut Game) {
-    crate::game::display_refresh::fade(true, game);
+    game.fade(true);
     if DISSOLVE && game.ram().read_byte(0x57) != 3 {
         game.ram()
             .write_byte(0x57, game.ram().read_byte(0x57).wrapping_sub(16));

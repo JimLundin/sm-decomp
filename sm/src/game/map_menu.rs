@@ -1,7 +1,6 @@
 //! Area and room selection, with the original menu-state and RAM compatibility.
 use crate::game::constants::{bank_81::*, bank_82::*};
 use crate::game::imported::{Imported, grid_word, word as table_word};
-use crate::game::music::{QueueSfx1_Max6, QueueSfx3_Max6};
 use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::room_entry::{self, ArrivalRequest, StartSite};
@@ -17,6 +16,7 @@ use sm_data::pause_menu::{
 };
 use sm_data::table::Rows;
 use sm_game::display::control::{Layers, MainScreen, MainWindowMask, SubScreen, SubWindowMask};
+use sm_game::effects::{DisplayRefresh as _, SoundEffects as _};
 
 #[derive(Default)]
 pub(crate) struct ImportedTables {
@@ -84,7 +84,7 @@ pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
 }
 fn fade_to_options(game: &mut Game) {
     draw_area_labels(game);
-    crate::game::display_refresh::fade(false, game);
+    game.fade(false);
     if (game.ram().read_byte(0x51) & 0xf) == 0 {
         word! {game; game_state = kGameState_2_GameOptionsMenu as u16; menu_index = 0; }
     }
@@ -213,11 +213,11 @@ fn choose_area(game: &mut Game) {
                     };
                     if area_available(selection, game) != 0 {
                         if previous {
-                            QueueSfx1_Max6(0x37, game);
+                            game.queue_sound(0, (0x37) as u8, 6);
                         }
                         switch_area(selection, game);
                         if !previous {
-                            QueueSfx1_Max6(0x37, game);
+                            game.queue_sound(0, (0x37) as u8, 6);
                         }
                         break 'handle_action;
                     }
@@ -230,7 +230,7 @@ fn choose_area(game: &mut Game) {
             break 'handle_action;
         }
         if keys as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
-            QueueSfx1_Max6(0x38, game);
+            game.queue_sound(0, (0x38) as u8, 6);
             select_area(game);
             return;
         }
@@ -403,7 +403,7 @@ unsafe fn begin_room_window(game: &mut Game) {
         menu_window::project(game);
         crate::rtl::write_register_and_mirror(HDMAEN as u16, 0xc, 0x85, true, game);
         word!(game.menu_index += 1);
-        QueueSfx1_Max6(0x3b, game);
+        game.queue_sound(0, (0x3b) as u8, 6);
     }
 }
 fn open_room_window(game: &mut Game) {
@@ -454,7 +454,7 @@ fn choose_room(game: &mut Game) {
         if word!(game.enable_debug) != 0
             && (word!(game.joypad2_new_keys) as i32 & kButton_Select as i32) != 0
         {
-            QueueSfx1_Max6(0x38, game);
+            game.queue_sound(0, (0x38) as u8, 6);
             let mut r24: u16 = native_word(0xd8f8 + 2 * usize::from(word!(game.area_index)), game);
             let mut v1: i16 = word!(game.load_station_index) as i16;
             do_until! { v1 < 0 ;
@@ -543,12 +543,12 @@ fn choose_room(game: &mut Game) {
                 return;
             };
             word!(game.file_select_map_area_index = selection as u16);
-            QueueSfx1_Max6(0x3c, game);
+            game.queue_sound(0, (0x3c) as u8, 6);
         } else if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32)
             != 0
         {
             word!(game.menu_index += 1);
-            QueueSfx1_Max6(0x38, game);
+            game.queue_sound(0, (0x38) as u8, 6);
         }
     }
 }
@@ -560,7 +560,7 @@ fn show_room(game: &mut Game) {
 fn fade_room(game: &mut Game) {
     draw_icons(IconMode::FileSelect, game);
     display_elevator_destinations(game);
-    crate::game::display_refresh::fade(false, game);
+    game.fade(false);
     if (game.ram().read_byte(0x51) & 0xf) == 0 {
         word!(game.menu_index += 1);
         set_native_word(0xf78 + core::mem::offset_of!(EnemyData, x_pos), 32, game);
@@ -570,7 +570,7 @@ fn start_game(game: &mut Game) {
     let timer = 0xf78 + core::mem::offset_of!(EnemyData, x_pos);
     set_native_word(timer, native_word(timer, game).wrapping_sub(1), game);
     if native_word(timer, game) == 0 {
-        crate::game::display_refresh::set_blank(true, game);
+        game.set_blank(true);
         word!(game.game_state += 1);
         word!(game.menu_index = 0);
     }
@@ -593,7 +593,7 @@ fn restore_area(game: &mut Game) {
 unsafe fn begin_return_window(game: &mut Game) {
     unsafe {
         game.ram().write_byte(0x85, 0);
-        QueueSfx1_Max6(0x3c, game);
+        game.queue_sound(0, (0x3c) as u8, 6);
         word! { game;
             expand_sq_timer =
                 (WINDOW_TIMERS[word!(game.area_index) as usize]).wrapping_sub(12);
@@ -685,7 +685,7 @@ pub(crate) fn scroll(game: &mut Game) {
     };
     word!(game.map_scrolling_speed_index += 1);
     if word!(game.map_scrolling_speed_index += 1, reread) & 0xf == 0 {
-        QueueSfx1_Max6(0x36, game);
+        game.queue_sound(0, (0x36) as u8, 6);
         word! { game, 0; map_scrolling_direction, map_scrolling_speed_index }
         if word!(game.map_scrolling_gear_switch_timer) != 0 {
             word!(game.map_scrolling_gear_switch_timer -= 1);
@@ -863,7 +863,7 @@ pub(crate) fn animate_palette(game: &mut Game) {
             game.ram().write_byte(0x73b, timer);
             break;
         }
-        QueueSfx3_Max6(0x2a, game);
+        game.queue_sound(2, (0x2a) as u8, 6);
         frame = 0;
     }
     let frame_word = u16::from_ne_bytes([0, word!(game.pausemenu_palette_animation_frame) as u8]);

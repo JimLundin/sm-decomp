@@ -15,6 +15,7 @@ use sm_data::area_select_palettes::{
     ADDRESS as AREA_PALETTES, AreaSelectPalettes, BYTES as AREA_PALETTE_BYTES, INACTIVE_OFFSET,
     RUN_OFFSETS,
 };
+use sm_game::effects::DisplayRefresh as _;
 
 pub(crate) type ImportedAreaPalettes = Imported<AreaSelectPalettes>;
 
@@ -105,7 +106,7 @@ pub(crate) unsafe fn main_menu(game: &mut Game) {
     word! { game, 100; eproj_id[7], eproj_id[8], eproj_id[9] }
     word! {game; eproj_id[12] = 47; eproj_id[13] = 87; eproj_id[14] = 127; }
     word! { game, 1; screen_fade_delay, screen_fade_counter }
-    crate::game::display_refresh::set_blank(false, game);
+    game.set_blank(false);
     word!(game.menu_index += 1);
     word! { game, 0; eproj_id[15], eproj_id[16], eproj_id[17] }
 }

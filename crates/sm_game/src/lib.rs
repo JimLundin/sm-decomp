@@ -14,6 +14,7 @@ pub mod combat_rules;
 pub mod contact_rules;
 pub mod dialogue;
 pub mod drop_rules;
+pub mod effects;
 pub mod enemy_population;
 pub mod external_inputs;
 pub mod gameplay_flag_state;

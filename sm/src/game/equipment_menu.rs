@@ -3,9 +3,7 @@
 use crate::game::imported::{Imported, load, word as table_word};
 use crate::game::{
     constants::buttons::{kButton_A, kButton_Down, kButton_Left, kButton_Right, kButton_Up},
-    menu_tilemap,
-    music::QueueSfx1_Max6,
-    reserve_tanks,
+    menu_tilemap, reserve_tanks,
 };
 use crate::game_state::Game;
 use crate::ram_map::word;
@@ -14,6 +12,7 @@ use sm_data::equipment_screen::{
     BeamBitmasks, BeamTilemapOffsets, BootBitmasks, CATEGORY_ADDRESS, CATEGORY_BYTES, Categories,
     Category, ITEM_BITMASK_ADDRESS, ITEMS, ItemBitmasks, import_words,
 };
+use sm_game::effects::SoundEffects as _;
 
 #[derive(Default)]
 pub(crate) struct ImportedTables {
@@ -94,7 +93,7 @@ fn reserves(game: &mut Game) {
         }
     } else if word!(game.joypad1_newkeys) & kButton_Up as u16 != 0 {
         if word!(game.pausemenu_equipment_category_item) & 0xff00 != 0 {
-            QueueSfx1_Max6(0x37, game);
+            game.queue_sound(0, (0x37) as u8, 6);
             word!(game.pausemenu_equipment_category_item -= 256);
         }
     } else if word!(game.joypad1_newkeys) & kButton_Down as u16 != 0 {
@@ -107,7 +106,7 @@ fn reserves(game: &mut Game) {
         {
             scan(1, 0, false, Some(previous), game);
         } else {
-            QueueSfx1_Max6(0x37, game);
+            game.queue_sound(0, (0x37) as u8, 6);
         }
     }
 }
@@ -187,7 +186,7 @@ fn select_reserves(game: &mut Game) -> u16 {
     let maximum = word!(game.samus_max_reserve_health);
     if word!(game.samus_max_reserve_health) != 0 {
         word!(game.pausemenu_equipment_category_item = 0);
-        QueueSfx1_Max6(0x37, game);
+        game.queue_sound(0, (0x37) as u8, 6);
         1
     } else {
         maximum
@@ -242,9 +241,9 @@ fn scan(
     // Downward beam selection stores before sound; all other paths store after it.
     if category == 1 && !upward {
         word!(game.pausemenu_equipment_category_item = selection);
-        QueueSfx1_Max6(0x37, game);
+        game.queue_sound(0, (0x37) as u8, 6);
     } else {
-        QueueSfx1_Max6(0x37, game);
+        game.queue_sound(0, (0x37) as u8, 6);
         word!(game.pausemenu_equipment_category_item = selection);
     }
     if category == 2 && !upward {
@@ -283,7 +282,7 @@ fn toggle(bytes: u16, game: &mut Game) {
     if word!(game.joypad1_newkeys) & kButton_A as u16 == 0 {
         return;
     }
-    QueueSfx1_Max6(0x38, game);
+    game.queue_sound(0, (0x38) as u8, 6);
     let item = u16::from(game.ram().read_byte(0x756));
     let category = word!(game.pausemenu_equipment_category_item) as u8 as isize;
     let tables = self::category(game, category);

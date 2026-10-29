@@ -2636,3 +2636,18 @@ impl sm_game::ram::CompatibilityRam for Game {
         Game::compatibility_write_byte(self, at, value)
     }
 }
+
+impl sm_game::effects::SoundEffects for Game {
+    fn queue_sound(&mut self, channel: usize, sound: u8, max_queued: u8) {
+        crate::game::music::queue_sfx(channel, sound, max_queued, self);
+    }
+}
+
+impl sm_game::effects::DisplayRefresh for Game {
+    fn fade(&mut self, fade_in: bool) {
+        crate::game::display_refresh::fade(fade_in, self);
+    }
+    fn set_blank(&mut self, blank: bool) {
+        crate::game::display_refresh::set_blank(blank, self);
+    }
+}
