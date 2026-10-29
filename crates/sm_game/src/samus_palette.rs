@@ -1,7 +1,7 @@
 //! Samus palette phases share the actual visual, player and inventory owner.
 #![forbid(unsafe_code)]
-use crate::game::player_transitions::state::FrameBetaMode;
-use crate::game::{
+use crate::player_transitions::state::FrameBetaMode;
+use crate::{
     liquid_surface::{self, LiquidAtHeight},
     session::Session,
     visual_host::{Host, Record, Source},
@@ -24,7 +24,7 @@ fn suit_source(session: &Session) -> u16 {
         0x9400
     }
 }
-pub(crate) fn update_suit_index(session: &mut Session) {
+pub fn update_suit_index(session: &mut Session) {
     session.presentation.palette_mut().suit_index = match suit_source(session) {
         0x9800 => 4,
         0x9520 => 2,
@@ -38,49 +38,54 @@ fn copy_colors<const N: usize>(
     source: u16,
 ) {
     let bytes = h.record(Source::Native, 0x9b, source).bytes::<N>(0);
-    let colors = match buffer {
-        PaletteBuffer::Current => &mut h.session_mut().presentation.visual_mut().colors,
-        PaletteBuffer::Target => &mut h.session_mut().presentation.visual_mut().targets,
-    };
+    fn colors(h: &mut impl Host, buffer: PaletteBuffer) -> &mut [u16] {
+        match buffer {
+            PaletteBuffer::Current => &mut h.session_mut().presentation.visual_mut().colors,
+            PaletteBuffer::Target => &mut h.session_mut().presentation.visual_mut().targets,
+        }
+    }
     for (i, pair) in bytes.chunks_exact(2).enumerate() {
         #[cfg(sm_verify_dll)]
-        let observed_before = if crate::player_transitions_rust_observer::active() {
-            colors[first + i]
+        let observed_before = if h.palette_publications_observed() {
+            colors(h, buffer)[first + i]
         } else {
             0
         };
-        colors[first + i] = u16::from_le_bytes([pair[0], pair[1]]);
+        colors(h, buffer)[first + i] = u16::from_le_bytes([pair[0], pair[1]]);
         #[cfg(sm_verify_dll)]
-        crate::player_transitions_rust_observer::publication(
-            11,
-            if buffer == PaletteBuffer::Current {
-                0xc000
-            } else {
-                0xc200
-            } + 2 * (first + i),
-            observed_before,
-            colors[first + i],
-        );
+        {
+            let after = colors(h, buffer)[first + i];
+            h.palette_publication(
+                11,
+                if buffer == PaletteBuffer::Current {
+                    0xc000
+                } else {
+                    0xc200
+                } + 2 * (first + i),
+                observed_before,
+                after,
+            );
+        }
     }
 }
-pub(crate) fn copy_suit(h: &mut impl Host, buffer: PaletteBuffer, source: u16) {
+pub fn copy_suit(h: &mut impl Host, buffer: PaletteBuffer, source: u16) {
     #[cfg(sm_verify_dll)]
     if buffer == PaletteBuffer::Current {
-        crate::game::visual_runtime::samus_observer::event("copy", source);
+        h.samus_palette_event("copy", source);
         h.probe("transitions.suit.copy");
     }
     copy_colors::<32>(h, buffer, 192, source);
 }
-pub(crate) fn copy_crystal_first10(h: &mut impl Host, source: u16) {
+pub fn copy_crystal_first10(h: &mut impl Host, source: u16) {
     copy_colors::<20>(h, PaletteBuffer::Current, 224, source);
 }
-pub(crate) fn copy_crystal_last6(h: &mut impl Host, source: u16) {
+pub fn copy_crystal_last6(h: &mut impl Host, source: u16) {
     copy_colors::<12>(h, PaletteBuffer::Current, 234, source);
 }
-pub(crate) fn load_suit(h: &mut impl Host, buffer: PaletteBuffer) {
+pub fn load_suit(h: &mut impl Host, buffer: PaletteBuffer) {
     #[cfg(sm_verify_dll)]
     if buffer == PaletteBuffer::Current {
-        crate::game::visual_runtime::samus_observer::event("load", 0);
+        h.samus_palette_event("load", 0);
         h.probe("transitions.suit.load");
     }
     let source = suit_source(h.session());
@@ -96,17 +101,14 @@ fn frame_palette(h: &mut impl Host, table: u32) {
     let source = h.record(Source::Native, 0x91, address).native_word(0);
     copy_suit(h, PaletteBuffer::Current, source);
 }
-pub(crate) fn advance(h: &mut impl Host) {
+pub fn advance(h: &mut impl Host) {
     h.probe("samus.palette.entry");
     if h.session().player.special_palette_flags & 0x8000 == 0 {
         let restore = if charge_feedback(h) & 1 != 0 {
             true
         } else {
             #[cfg(sm_verify_dll)]
-            crate::game::visual_runtime::samus_observer::inject(
-                "samus.palette.dispatch",
-                h.session_mut(),
-            );
+            h.samus_palette_inject("samus.palette.dispatch");
             h.probe("samus.palette.dispatch");
             let phase = match h.session().player.shine_tick {
                 0 => screw_speed(h),
@@ -145,7 +147,7 @@ pub(crate) fn advance(h: &mut impl Host) {
     misc(h);
     h.probe("samus.palette.return");
 }
-pub(crate) fn visor(h: &mut impl Host) -> u8 {
+pub fn visor(h: &mut impl Host) -> u8 {
     if h.session().player.shine_tick == 8 {
         return 0;
     }
@@ -179,9 +181,9 @@ pub(crate) fn visor(h: &mut impl Host) -> u8 {
 }
 /// Carry is the original phase result observed at91D715, independently checked
 /// against the oracle. The unconditional final misc call discards this result.
-pub(crate) fn misc(h: &mut impl Host) -> PaletteCarry {
+pub fn misc(h: &mut impl Host) -> PaletteCarry {
     #[cfg(sm_verify_dll)]
-    crate::game::visual_runtime::samus_observer::event("misc", 0);
+    h.samus_palette_event("misc", 0);
     if h.session().player.special_palette_flags == 0 {
         let hurt = h.session().presentation.palette().hurt_flash;
         if h.session().presentation.palette().hurt_flash == 0 {
@@ -279,7 +281,7 @@ pub(crate) fn misc(h: &mut impl Host) -> PaletteCarry {
     // Positive flags return clear at the phase observation.
     PaletteCarry::Clear
 }
-pub(crate) fn screw_speed(h: &mut impl Host) -> PaletteCarry {
+pub fn screw_speed(h: &mut impl Host) -> PaletteCarry {
     if h.session().presentation.palette().suit_index & 4 == 0 {
         let y = h.session().player.y;
         let pose = h.session().player.pose;
@@ -353,7 +355,7 @@ pub(crate) fn screw_speed(h: &mut impl Host) -> PaletteCarry {
     }
     PaletteCarry::Set
 }
-pub(crate) fn shine(h: &mut impl Host) -> PaletteCarry {
+pub fn shine(h: &mut impl Host) -> PaletteCarry {
     let mut timer = h.session().player.shine_timer;
     if h.session().player.shine_timer == 170 {
         let saved = h.session().player.shine_timer;
@@ -376,7 +378,7 @@ pub(crate) fn shine(h: &mut impl Host) -> PaletteCarry {
         PaletteCarry::Set
     }
 }
-pub(crate) fn shinespark(h: &mut impl Host) -> PaletteCarry {
+pub fn shinespark(h: &mut impl Host) -> PaletteCarry {
     h.session_mut().player.shine_timer = h.session().player.shine_timer.wrapping_sub(1);
     let negative = h.session().player.shine_timer & 0x8000 != 0;
     if h.session().player.shine_timer == 0 || negative {
@@ -394,7 +396,7 @@ pub(crate) fn shinespark(h: &mut impl Host) -> PaletteCarry {
         PaletteCarry::Set
     }
 }
-pub(crate) fn crystal_flash(h: &mut impl Host) -> PaletteCarry {
+pub fn crystal_flash(h: &mut impl Host) -> PaletteCarry {
     if h.session().player.shine_timer & 0x8000 != 0 {
         let beam = h.session().inventory.beams.active & 0xfff;
         write_beam_palette(h, beam);
@@ -454,7 +456,7 @@ fn xray_color(h: &mut impl Host) {
     let value = record.native_word(usize::from(h.session().player.palette_frame >> 1) * 2);
     h.session_mut().presentation.visual_mut().colors[196] = value;
 }
-pub(crate) fn xray(h: &mut impl Host) -> PaletteCarry {
+pub fn xray(h: &mut impl Host) -> PaletteCarry {
     if h.session().presentation.palette().xray_progress & 0x8000 != 0 {
         h.session_mut().player.shine_tick = 0;
         h.session_mut().player.palette_frame = 0;
@@ -497,9 +499,9 @@ pub(crate) fn xray(h: &mut impl Host) -> PaletteCarry {
     };
     PaletteCarry::Set
 }
-pub(crate) fn cancel_speed_boost(h: &mut impl Host) {
+pub fn cancel_speed_boost(h: &mut impl Host) {
     #[cfg(sm_verify_dll)]
-    crate::player_collision_movement_cases::observe_owned_cancel([
+    h.observe_speed_boost_cancel([
         h.session().player.contact.base_run.whole,
         h.session().player.contact.extra_run.whole,
         h.session().player.contact.acceleration_mode,
@@ -524,7 +526,7 @@ pub(crate) fn cancel_speed_boost(h: &mut impl Host) {
 }
 /// One loop serves byte-offset Y callers and masked beam-bitfield A/Load callers.
 /// Each color reacquires native90 after wrapping the logical bank address.
-pub(crate) fn write_beam_palette(h: &mut impl Host, table_index: u16) {
+pub fn write_beam_palette(h: &mut impl Host, table_index: u16) {
     let record = h.table(Source::Loaded, 0x90c3c9);
     let source = record.native_word(usize::from(table_index) * 2);
     for offset in (0u16..32).step_by(2) {
@@ -536,7 +538,7 @@ pub(crate) fn write_beam_palette(h: &mut impl Host, table_index: u16) {
     }
 }
 /// Charge and glow colors share this owner with the later Samus palette phases.
-pub(crate) fn charge_feedback(h: &mut impl Host) -> u8 {
+pub fn charge_feedback(h: &mut impl Host) -> u8 {
     if h.session().projectiles.controls.glow != 0 {
         h.probe("samus.palette.charge.glow");
         if h.session().inventory.hyper_beam != 0 {

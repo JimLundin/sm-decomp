@@ -723,6 +723,26 @@ impl crate::game::scene::atmosphere::Host for Runtime<'_> {
 }
 
 impl visual_host::Effects for Runtime<'_> {
+    #[cfg(sm_verify_dll)]
+    fn samus_palette_event(&mut self, kind: &'static str, argument: u16) {
+        samus_observer::event(kind, argument);
+    }
+    #[cfg(sm_verify_dll)]
+    fn samus_palette_inject(&mut self, name: &'static str) {
+        samus_observer::inject(name, self.session_mut());
+    }
+    #[cfg(sm_verify_dll)]
+    fn palette_publications_observed(&self) -> bool {
+        crate::player_transitions_rust_observer::active()
+    }
+    #[cfg(sm_verify_dll)]
+    fn palette_publication(&mut self, kind: u16, at: usize, before: u16, after: u16) {
+        crate::player_transitions_rust_observer::publication(kind, at, before, after);
+    }
+    #[cfg(sm_verify_dll)]
+    fn observe_speed_boost_cancel(&mut self, values: [u16; 3]) {
+        crate::player_collision_movement_cases::observe_owned_cancel(values);
+    }
     fn draw_samus_sprite(&mut self, index: u16, x: u16, y: u16) {
         if self.has_owned_display() {
             let producer = self

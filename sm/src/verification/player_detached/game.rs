@@ -36,8 +36,7 @@ pub(crate) use sm_game::visual_state;
 
 pub(crate) use sm_game::visual_host;
 
-#[path = "../../game/samus_palette.rs"]
-pub(crate) mod samus_palette;
+pub(crate) use sm_game::samus_palette;
 
 pub(crate) use sm_game::liquid_surface;
 

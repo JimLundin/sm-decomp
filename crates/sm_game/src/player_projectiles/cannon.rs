@@ -1,11 +1,11 @@
 //! Arm-cannon opening, animation and pose-selected graphics.
 #![forbid(unsafe_code)]
-use crate::game::{
+use crate::{
     session::Controls,
     visual_host::{Host, Record, Source},
 };
 
-pub(crate) enum Tiles {
+pub enum Tiles {
     Beam(u16),
     Cannon(u16),
 }
@@ -39,7 +39,7 @@ fn advance(controls: &mut Controls) {
     controls.cannon_flags &= 0xff;
 }
 
-pub(crate) fn update(h: &mut impl Host) {
+pub fn update(h: &mut impl Host) {
     let controls = &mut h.session_mut().projectiles.controls;
     if controls.cannon_flags >> 8 != 0 {
         advance(controls);
@@ -58,17 +58,13 @@ pub(crate) fn update(h: &mut impl Host) {
     h.session_mut().projectiles.controls.cannon_drawing_mode = u16::from(mode);
 }
 
-pub(crate) fn update_beam<H: Host>(h: &mut H, queue: fn(&mut H, Tiles)) {
+pub fn update_beam<H: Host>(h: &mut H, queue: fn(&mut H, Tiles)) {
     let beams = h.session().inventory.beams.active & 0xfff;
     queue(h, Tiles::Beam(beams));
-    crate::game::samus_palette::write_beam_palette(h, beams);
+    crate::samus_palette::write_beam_palette(h, beams);
 }
 
-pub(crate) fn draw<H: Host>(
-    h: &mut H,
-    tile: fn(&mut H, u16, u16, u16, u16),
-    queue: fn(&mut H, Tiles),
-) {
+pub fn draw<H: Host>(h: &mut H, tile: fn(&mut H, u16, u16, u16, u16), queue: fn(&mut H, Tiles)) {
     const CHARACTERS: [u16; 10] = [
         0x281f, 0x281f, 0x281f, 0x681f, 0xa81f, 0xe81f, 0x281f, 0x681f, 0x681f, 0x681f,
     ];

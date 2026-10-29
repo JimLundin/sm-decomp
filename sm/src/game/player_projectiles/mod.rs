@@ -1,8 +1,8 @@
 //! Player-projectile lifecycle, producers, trails and charge feedback.
+use crate::game::session_encoding as encoding;
 pub(crate) use sm_game::player_projectiles::access;
 use sm_game::player_projectiles::animation;
-pub(crate) mod cannon;
-use crate::game::session_encoding as encoding;
+pub(crate) use sm_game::player_projectiles::cannon;
 pub(crate) use sm_game::player_projectiles::content;
 pub(crate) use sm_game::player_projectiles::feedback;
 pub(crate) use sm_game::player_projectiles::host;

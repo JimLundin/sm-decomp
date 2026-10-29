@@ -125,6 +125,7 @@ pub mod player_projectiles {
     pub mod bomb_creation;
     pub mod bomb_terrain;
     pub mod bombs;
+    pub mod cannon;
     pub mod collision;
     pub mod content;
     pub mod feedback;
@@ -177,6 +178,7 @@ pub mod room_mechanisms {
     }
     pub mod setup;
 }
+pub mod samus_palette;
 pub mod samus_periodic_damage;
 pub mod scene;
 pub mod session;

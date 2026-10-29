@@ -1645,8 +1645,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/player_projectiles/bombs.rs"),
     ),
     (
-        "sm/src/game/player_projectiles/cannon.rs",
-        include_bytes!("game/player_projectiles/cannon.rs"),
+        "crates/sm_game/src/player_projectiles/cannon.rs",
+        include_bytes!("../../crates/sm_game/src/player_projectiles/cannon.rs"),
     ),
     (
         "crates/sm_game/src/player_projectiles/collision.rs",
@@ -1914,8 +1914,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/save_slots.rs"),
     ),
     (
-        "sm/src/game/samus_palette.rs",
-        include_bytes!("game/samus_palette.rs"),
+        "crates/sm_game/src/samus_palette.rs",
+        include_bytes!("../../crates/sm_game/src/samus_palette.rs"),
     ),
     (
         "crates/sm_game/src/samus_periodic_damage.rs",

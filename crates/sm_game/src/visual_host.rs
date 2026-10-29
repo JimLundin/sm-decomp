@@ -73,6 +73,22 @@ pub trait Effects {
     fn invalid_animation_instruction(&mut self) -> u16;
     /// Existing observer, after in-range write and before probe; production is inert.
     fn color_written(&mut self, index: u16, value: u16);
+    /// Verifier observer of a Samus palette phase; production has none.
+    #[cfg(sm_verify_dll)]
+    fn samus_palette_event(&mut self, _kind: &'static str, _argument: u16) {}
+    /// Verifier injection point before the Samus palette dispatch.
+    #[cfg(sm_verify_dll)]
+    fn samus_palette_inject(&mut self, _name: &'static str) {}
+    /// Verifier transition trace: whether palette publications are recorded.
+    #[cfg(sm_verify_dll)]
+    fn palette_publications_observed(&self) -> bool {
+        false
+    }
+    #[cfg(sm_verify_dll)]
+    fn palette_publication(&mut self, _kind: u16, _at: usize, _before: u16, _after: u16) {}
+    /// Verifier movement case: speed-boost cancellation inputs.
+    #[cfg(sm_verify_dll)]
+    fn observe_speed_boost_cancel(&mut self, _values: [u16; 3]) {}
 }
 /// Actual-core composition, not RAM transport. Implementations must use this same owner.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

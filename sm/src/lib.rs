@@ -544,7 +544,7 @@ pub mod game {
     pub(crate) mod room_scrolls;
     pub mod room_state;
     pub mod samus_animation;
-    pub(crate) mod samus_palette;
+    pub(crate) use sm_game::samus_palette;
     pub(crate) use sm_game::samus_periodic_damage;
     pub(crate) mod sand_heap;
     pub mod save_slots;
