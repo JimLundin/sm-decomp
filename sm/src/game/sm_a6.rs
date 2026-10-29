@@ -283,8 +283,8 @@ pub unsafe fn Boulder_Func_7(j: u16, game: &mut Game) {
     slot!(
         game,
         Enemy_Boulder[E].base(x_pos, x_subpos) += words!((
-            crate::rtl::rom_table_word!(game, 0xa2838f, (v3 + 1) as isize),
-            crate::rtl::rom_table_word!(game, 0xa2838f, v3 as isize)
+            crate::game::enemy_speeds::enemy_speed!(game, Quadratic, (v3 + 1) as isize),
+            crate::game::enemy_speeds::enemy_speed!(game, Quadratic, v3 as isize)
         ))
     );
 }
@@ -294,8 +294,8 @@ pub unsafe fn Boulder_Func_9(j: u16, game: &mut Game) {
     slot!(
         game,
         Enemy_Boulder[E].base(y_pos, y_subpos) += words!((
-            crate::rtl::rom_table_word!(game, 0xa2838f, (v3 + 1) as isize),
-            crate::rtl::rom_table_word!(game, 0xa2838f, v3 as isize)
+            crate::game::enemy_speeds::enemy_speed!(game, Quadratic, (v3 + 1) as isize),
+            crate::game::enemy_speeds::enemy_speed!(game, Quadratic, v3 as isize)
         ))
     );
 }
@@ -3960,8 +3960,8 @@ crate::game::callback_dispatch! {
             v4 = (v4).wrapping_add(4);
         }
         let v5: i32 = v4 as i32 >> 1;
-        slot!(game, Enemy_NuclearWaffle[E].var_25 = crate::rtl::rom_table_word!(game, 0xa28187, v5 as isize));
-        slot!(game, Enemy_NuclearWaffle[E].var_24 = crate::rtl::rom_table_word!(game, 0xa28187, (v5 + 1) as isize));
+        slot!(game, Enemy_NuclearWaffle[E].var_25 = crate::game::enemy_speeds::enemy_speed!(game, Linear, v5 as isize));
+        slot!(game, Enemy_NuclearWaffle[E].var_24 = crate::game::enemy_speeds::enemy_speed!(game, Linear, (v5 + 1) as isize));
         slot!(game, Enemy_NuclearWaffle[E].var_26 = slot!(game, Enemy_NuclearWaffle[E].base.x_pos));
         slot!(game, Enemy_NuclearWaffle[E].var_27 = slot!(game, Enemy_NuclearWaffle[E].base.y_pos));
         let v6: u16 = (slot!(game, Enemy_NuclearWaffle[E].var_26)).wrapping_add(actor_cosine(slot!(game, Enemy_NuclearWaffle[E].var_23), slot!(game, Enemy_NuclearWaffle[E].var_D), game));
