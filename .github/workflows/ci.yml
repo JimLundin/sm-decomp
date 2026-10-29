@@ -35,15 +35,17 @@ jobs:
           sh tools/progress.sh
           python3 tools/cycle_report.py
       - name: Keep target packages independent of the emulator crate
-        # sm_game may depend only on other target packages, never on sm.
+        # sm_game and sm_runtime may depend only on sm_data, never on sm.
         run: |
-          deps=$(cargo tree -p sm_game -e normal --prefix none --format '{p}' | tail -n +2 | grep -v '^sm_data ' || true)
-          if [ -n "$deps" ]; then echo "sm_game has forbidden dependencies:"; echo "$deps"; exit 1; fi
+          for package in sm_game sm_runtime; do
+            deps=$(cargo tree -p $package -e normal --prefix none --format '{p}' | tail -n +2 | grep -v '^sm_data ' || true)
+            if [ -n "$deps" ]; then echo "$package has forbidden dependencies:"; echo "$deps"; exit 1; fi
+          done
           # sm_data holds content records only and depends on nothing.
           deps=$(cargo tree -p sm_data -e normal --prefix none --format '{p}' | tail -n +2 || true)
           if [ -n "$deps" ]; then echo "sm_data has forbidden dependencies:"; echo "$deps"; exit 1; fi
       - name: Test target packages
-        run: cargo test --locked -p sm_data -p sm_game
+        run: cargo test --locked -p sm_data -p sm_game -p sm_runtime
       - name: Run the full corpus after bank retirement
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
@@ -92,9 +94,12 @@ jobs:
           rustc --edition=2024 -D warnings -O --crate-name sm_data --crate-type rlib crates/sm_data/src/lib.rs -o $smData
           if ($LASTEXITCODE -ne 0) { throw 'sm_data compilation failed' }
           $smGame = Join-Path $env:RUNNER_TEMP 'libsm_game.rlib'
-          rustc --edition=2024 -D warnings -O --crate-name sm_game --crate-type rlib crates/sm_game/src/lib.rs -o $smGame
+          rustc --edition=2024 -D warnings -O --crate-name sm_game --crate-type rlib crates/sm_game/src/lib.rs --extern "sm_data=$smData" -L "dependency=$env:RUNNER_TEMP" -o $smGame
           if ($LASTEXITCODE -ne 0) { throw 'sm_game compilation failed' }
-          rustc --edition=2024 -D warnings -O sm/src/verification/player_detached/main.rs --extern "sm_data=$smData" --extern "sm_game=$smGame" -o $playerDetached
+          $smRuntime = Join-Path $env:RUNNER_TEMP 'libsm_runtime.rlib'
+          rustc --edition=2024 -D warnings -O --crate-name sm_runtime --crate-type rlib crates/sm_runtime/src/lib.rs --extern "sm_data=$smData" -L "dependency=$env:RUNNER_TEMP" -o $smRuntime
+          if ($LASTEXITCODE -ne 0) { throw 'sm_runtime compilation failed' }
+          rustc --edition=2024 -D warnings -O sm/src/verification/player_detached/main.rs --extern "sm_data=$smData" --extern "sm_game=$smGame" --extern "sm_runtime=$smRuntime" -L "dependency=$env:RUNNER_TEMP" -o $playerDetached
           if ($LASTEXITCODE -ne 0) { throw 'Detached projectile compilation failed' }
           & $playerDetached
           if ($LASTEXITCODE -ne 0) { throw 'Detached projectile checks failed' }

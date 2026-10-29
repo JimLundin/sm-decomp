@@ -30,6 +30,7 @@ test = false
 
 [dependencies]
 sm_data = { path = "../crates/sm_data" }
+sm_runtime = { path = "../crates/sm_runtime" }
 sm_game = { path = "../crates/sm_game" }
 gl = { version = "0.14.0", optional = true }
 sdl2-sys = { version = "0.38.0", optional = true }

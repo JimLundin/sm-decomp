@@ -1176,20 +1176,12 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/scene/hdma_sources.rs"),
     ),
     (
-        "sm/src/game/scene/hdma.rs",
-        include_bytes!("game/scene/hdma.rs"),
-    ),
-    (
         "sm/src/game/scene/irq.rs",
         include_bytes!("game/scene/irq.rs"),
     ),
     (
         "sm/src/game/scene/atmosphere_protocol.rs",
         include_bytes!("game/scene/atmosphere_protocol.rs"),
-    ),
-    (
-        "sm/src/game/scene/error.rs",
-        include_bytes!("game/scene/error.rs"),
     ),
     (
         "sm/src/game/scene/atmosphere.rs",
@@ -1206,14 +1198,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/scene/mod.rs",
         include_bytes!("game/scene/mod.rs"),
-    ),
-    (
-        "sm/src/game/scene/prepared.rs",
-        include_bytes!("game/scene/prepared.rs"),
-    ),
-    (
-        "sm/src/game/scene/records.rs",
-        include_bytes!("game/scene/records.rs"),
     ),
     (
         "sm/src/game/scene/samus_body.rs",
@@ -1679,6 +1663,62 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/visual_state.rs"),
     ),
     (
+        "crates/sm_data/src/message.rs",
+        include_bytes!("../../crates/sm_data/src/message.rs"),
+    ),
+    (
+        "crates/sm_data/src/raster.rs",
+        include_bytes!("../../crates/sm_data/src/raster.rs"),
+    ),
+    (
+        "crates/sm_data/src/scene.rs",
+        include_bytes!("../../crates/sm_data/src/scene.rs"),
+    ),
+    (
+        "crates/sm_game/src/display/error.rs",
+        include_bytes!("../../crates/sm_game/src/display/error.rs"),
+    ),
+    (
+        "crates/sm_game/src/display/hdma.rs",
+        include_bytes!("../../crates/sm_game/src/display/hdma.rs"),
+    ),
+    (
+        "crates/sm_game/src/message_composition/mod.rs",
+        include_bytes!("../../crates/sm_game/src/message_composition/mod.rs"),
+    ),
+    (
+        "crates/sm_game/src/message_composition/prepared.rs",
+        include_bytes!("../../crates/sm_game/src/message_composition/prepared.rs"),
+    ),
+    (
+        "crates/sm_runtime/Cargo.toml",
+        include_bytes!("../../crates/sm_runtime/Cargo.toml"),
+    ),
+    (
+        "crates/sm_runtime/src/lib.rs",
+        include_bytes!("../../crates/sm_runtime/src/lib.rs"),
+    ),
+    (
+        "crates/sm_runtime/src/message.rs",
+        include_bytes!("../../crates/sm_runtime/src/message.rs"),
+    ),
+    (
+        "crates/sm_runtime/src/rendering/mod.rs",
+        include_bytes!("../../crates/sm_runtime/src/rendering/mod.rs"),
+    ),
+    (
+        "crates/sm_runtime/src/rendering/prepared.rs",
+        include_bytes!("../../crates/sm_runtime/src/rendering/prepared.rs"),
+    ),
+    (
+        "crates/sm_runtime/src/rendering/records.rs",
+        include_bytes!("../../crates/sm_runtime/src/rendering/records.rs"),
+    ),
+    (
+        "crates/sm_runtime/src/scene.rs",
+        include_bytes!("../../crates/sm_runtime/src/scene.rs"),
+    ),
+    (
         "sm/src/game/vram_read_queue.rs",
         include_bytes!("game/vram_read_queue.rs"),
     ),
@@ -1731,18 +1771,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     ),
     ("sm/src/ram_map.rs", include_bytes!("ram_map.rs")),
     ("sm/src/recording.rs", include_bytes!("recording.rs")),
-    (
-        "sm/src/rendering/mod.rs",
-        include_bytes!("rendering/mod.rs"),
-    ),
-    (
-        "sm/src/rendering/prepared.rs",
-        include_bytes!("rendering/prepared.rs"),
-    ),
-    (
-        "sm/src/rendering/records.rs",
-        include_bytes!("rendering/records.rs"),
-    ),
     ("sm/src/native_rom.rs", include_bytes!("native_rom.rs")),
     ("sm/src/rom.rs", include_bytes!("rom.rs")),
     ("sm/src/room_pack.rs", include_bytes!("room_pack.rs")),

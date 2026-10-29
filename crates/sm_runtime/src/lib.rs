@@ -1,0 +1,7 @@
+//! Prepared media and shared rendering for the Super Metroid engine.
+#![forbid(unsafe_code)]
+
+pub mod rendering;
+pub mod scene;
+
+pub mod message;

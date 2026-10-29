@@ -1,8 +1,8 @@
 //! Read-only consumer of complete committed semantic Scene history.
 #![forbid(unsafe_code)]
 
-use super::records::*;
 use crate::rendering as r;
+use sm_data::scene::*;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SceneFrame {
@@ -20,92 +20,89 @@ pub struct SceneRenderFailure {
     pub partial_objects: Option<Box<r::SpriteLine>>,
 }
 
-impl Scene {
-    /// Queries only immutable committed records. No gameplay/HDMA/IRQ operation,
-    /// native object, frame stepping or authoritative status publication occurs.
-    pub fn render(&self) -> Result<SceneFrame, SceneRenderFailure> {
-        let mut pixels = Vec::with_capacity(r::WIDTH * self.lines().len());
-        let initial = self.description().initial_object_overflow;
-        let mut overflow = r::Overflow {
-            range: initial.range,
-            time: initial.time,
+/// Queries only immutable committed records. No gameplay/HDMA/IRQ operation,
+/// native object, frame stepping or authoritative status publication occurs.
+pub fn render(scene: &Scene) -> Result<SceneFrame, SceneRenderFailure> {
+    let mut pixels = Vec::with_capacity(r::WIDTH * scene.lines().len());
+    let initial = scene.description().initial_object_overflow;
+    let mut overflow = r::Overflow {
+        range: initial.range,
+        time: initial.time,
+    };
+    for (line_index, line) in scene.lines().iter().enumerate() {
+        let failure = |error, completed_pixels, partial_line, partial_objects| SceneRenderFailure {
+            error,
+            completed_pixels,
+            partial_line,
+            partial_objects,
         };
-        for (line_index, line) in self.lines().iter().enumerate() {
-            let failure =
-                |error, completed_pixels, partial_line, partial_objects| SceneRenderFailure {
-                    error,
-                    completed_pixels,
-                    partial_line,
-                    partial_objects,
-                };
-            let image = match self.media().image(line.media) {
-                Ok(value) => value,
-                Err(error) => return Err(failure(error, pixels, None, None)),
-            };
-            let palette = match self.media().palette(line.palette) {
-                Ok(value) => value,
-                Err(error) => return Err(failure(error, pixels, None, None)),
-            };
-            let source = SceneIndexedSource { image, palette };
-            let sprites = match encode_objects(line, image) {
-                Ok(value) => value,
-                Err(error) => return Err(failure(error, pixels, None, None)),
-            };
-            let mut object_line = r::SpriteLine::cleared(overflow);
-            if !line.blank {
-                match r::evaluate_sprites(
-                    &source,
-                    &sprites.borrowed(),
-                    line_index as i32,
-                    &mut object_line.pixels,
-                    overflow,
-                ) {
-                    Ok((has_tiles, flags)) => {
-                        object_line.has_tiles = has_tiles;
-                        object_line.overflow = flags;
-                    }
-                    Err(error) => {
-                        return Err(failure(
-                            error.into(),
-                            pixels,
-                            None,
-                            Some(Box::new(object_line)),
-                        ));
-                    }
+        let image = match scene.media().image(line.media) {
+            Ok(value) => value,
+            Err(error) => return Err(failure(error, pixels, None, None)),
+        };
+        let palette = match scene.media().palette(line.palette) {
+            Ok(value) => value,
+            Err(error) => return Err(failure(error, pixels, None, None)),
+        };
+        let source = SceneIndexedSource { image, palette };
+        let sprites = match encode_objects(line, image) {
+            Ok(value) => value,
+            Err(error) => return Err(failure(error, pixels, None, None)),
+        };
+        let mut object_line = r::SpriteLine::cleared(overflow);
+        if !line.blank {
+            match r::evaluate_sprites(
+                &source,
+                &sprites.borrowed(),
+                line_index as i32,
+                &mut object_line.pixels,
+                overflow,
+            ) {
+                Ok((has_tiles, flags)) => {
+                    object_line.has_tiles = has_tiles;
+                    object_line.overflow = flags;
                 }
-            }
-            let brightness = r::BrightnessTables::for_level(line.color.brightness);
-            let config = match line_config(line, image, &brightness, object_line.has_tiles) {
-                Ok(value) => value,
                 Err(error) => {
-                    return Err(failure(error, pixels, None, Some(Box::new(object_line))));
+                    return Err(failure(
+                        error.into(),
+                        pixels,
+                        None,
+                        Some(Box::new(object_line)),
+                    ));
                 }
-            };
-            let objects = SceneObjectPixels {
-                line: &object_line,
-                aliases: &line.object_aliases,
-            };
-            let mut row = Box::new([[0; 4]; r::WIDTH]);
-            if let Err(error) =
-                r::render_line(&source, &config, &objects, line_index as i32 + 1, &mut row)
-            {
-                return Err(failure(
-                    error.into(),
-                    pixels,
-                    Some(row),
-                    Some(Box::new(object_line)),
-                ));
             }
-            pixels.extend_from_slice(row.as_ref());
-            overflow = object_line.overflow;
         }
-        Ok(SceneFrame {
-            tick: self.tick(),
-            revision: self.revision(),
-            pixels,
-            raster_overflow: overflow,
-        })
+        let brightness = r::BrightnessTables::for_level(line.color.brightness);
+        let config = match line_config(line, image, &brightness, object_line.has_tiles) {
+            Ok(value) => value,
+            Err(error) => {
+                return Err(failure(error, pixels, None, Some(Box::new(object_line))));
+            }
+        };
+        let objects = SceneObjectPixels {
+            line: &object_line,
+            aliases: &line.object_aliases,
+        };
+        let mut row = Box::new([[0; 4]; r::WIDTH]);
+        if let Err(error) =
+            r::render_line(&source, &config, &objects, line_index as i32 + 1, &mut row)
+        {
+            return Err(failure(
+                error.into(),
+                pixels,
+                Some(row),
+                Some(Box::new(object_line)),
+            ));
+        }
+        pixels.extend_from_slice(row.as_ref());
+        overflow = object_line.overflow;
     }
+    Ok(SceneFrame {
+        tick: scene.tick(),
+        revision: scene.revision(),
+        pixels,
+        raster_overflow: overflow,
+    })
 }
 
 struct SceneIndexedSource<'a> {

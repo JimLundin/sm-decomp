@@ -8,7 +8,7 @@ use sm::game::scene::hdma_sources as hs;
 use sm::game::scene::records as sc;
 use sm::game::scene::start as ss;
 use sm::game::scene::state as ds;
-use sm::rendering::{self as r, IndexedSource, prepared::*};
+use sm::rendering::{self as r, prepared::*};
 use std::sync::Arc;
 
 #[cfg(sm_verify_dll)]
@@ -499,7 +499,7 @@ fn scene_pixels_preserve_line_incarnations_and_redraw() {
     let (description, media) = scene_fixture();
     let scene = sc::Scene::new(description.clone(), media.clone()).unwrap();
     let before = scene.clone();
-    let frame = scene.render().unwrap();
+    let frame = sc::prepared::render(&scene).unwrap();
     assert_eq!((frame.tick, frame.revision), (7, description.revision));
     assert_eq!(frame.pixels.len(), 224 * 256);
     for (index, pixel) in frame.pixels.iter().enumerate() {
@@ -518,9 +518,12 @@ fn scene_pixels_preserve_line_incarnations_and_redraw() {
     let last = later.lines[223].clone();
     Arc::make_mut(&mut later.lines).fill(last);
     let replacement = sc::Scene::new(later, media.clone()).unwrap();
-    assert_ne!(replacement.render().unwrap().pixels, frame.pixels);
+    assert_ne!(
+        sc::prepared::render(&replacement).unwrap().pixels,
+        frame.pixels
+    );
     drop(media);
-    assert_eq!(scene.render().unwrap(), frame);
+    assert_eq!(sc::prepared::render(&scene).unwrap(), frame);
     assert_eq!(scene, before);
     assert_eq!(scene.description(), before.description());
     assert_eq!(scene.lines()[0].media.incarnation, 1);
@@ -1228,10 +1231,12 @@ fn prepared_message_waits(
     owner: &mut PreparedOwner,
     sample: InputSample,
     intervals: std::ops::RangeInclusive<u64>,
-) -> StepOutput {
+) -> StepOutput<MessageFrame> {
     intervals
         .map(|interval| {
-            let step = owner.resume(interval, sample).unwrap();
+            let step = owner
+                .resume(interval, sample, sm_runtime::message::render)
+                .unwrap();
             assert_eq!(step.outcome, Outcome::Suspended);
             assert_eq!(step.effects, [Effect::AdvanceAudio]);
             step
@@ -1244,29 +1249,54 @@ fn prepared_message_waits(
 #[cfg_attr(test, test)]
 fn prepared_message_pixels_delay_queue_and_checkpoint() {
     let (definitions, start) = prepared_message_fixture(0x3801);
-    let (mut owner, frame) = PreparedOwner::open(definitions.clone(), start.clone()).unwrap();
+    let (mut owner, frame) = PreparedOwner::open(
+        definitions.clone(),
+        start.clone(),
+        sm_runtime::message::render,
+    )
+    .unwrap();
     prepared_message_pixels(&frame, [[0, 255, 0, 0], [0, 0, 255, 0]], 0..224);
     let sample = InputSample {
         new_keys: 1,
         held_keys: 0,
         bug_fix_counter: 1,
     };
-    assert_eq!(owner.resume(1, sample).err(), Some(Fault::NoRequest));
+    assert_eq!(
+        owner.resume(1, sample, sm_runtime::message::render).err(),
+        Some(Fault::NoRequest)
+    );
     owner.queue(MessageId(1)).unwrap();
-    let mut step = owner.resume(1, sample).unwrap();
+    let mut step = owner
+        .resume(1, sample, sm_runtime::message::render)
+        .unwrap();
     assert_eq!(step.outcome, Outcome::Suspended);
     assert_eq!(step.effects, [Effect::CancelSounds]);
     prepared_message_pixels(&step.frame, [[0; 4]; 2], 0..224);
     let checkpoint = owner.checkpoint().unwrap();
-    (owner, _) = PreparedOwner::reopen(definitions.clone(), start.clone(), checkpoint).unwrap();
+    (owner, _) = PreparedOwner::reopen(
+        definitions.clone(),
+        start.clone(),
+        checkpoint,
+        sm_runtime::message::render,
+    )
+    .unwrap();
     step = prepared_message_waits(&mut owner, sample, 2..=14);
     prepared_message_pixels(&step.frame, [[0, 0, 255, 0], [16, 239, 140, 0]], 119..127);
-    assert_eq!(owner.resume(14, sample).err(), Some(Fault::Interval));
+    assert_eq!(
+        owner.resume(14, sample, sm_runtime::message::render).err(),
+        Some(Fault::Interval)
+    );
     assert_eq!(owner.poll(MessageId(2)).unwrap(), None);
     owner.queue(MessageId(999)).unwrap();
     step = prepared_message_waits(&mut owner, sample, 15..=214);
     let checkpoint = owner.checkpoint().unwrap();
-    let reopened = PreparedOwner::reopen(definitions.clone(), start.clone(), checkpoint).unwrap();
+    let reopened = PreparedOwner::reopen(
+        definitions.clone(),
+        start.clone(),
+        checkpoint,
+        sm_runtime::message::render,
+    )
+    .unwrap();
     assert_eq!(reopened.1.pixels, step.frame.pixels);
     owner = reopened.0;
     prepared_message_waits(&mut owner, sample, 215..=374);
@@ -1275,31 +1305,44 @@ fn prepared_message_pixels_delay_queue_and_checkpoint() {
         ..sample
     };
     for (interval, input) in [(375, sample), (376, dismiss)] {
-        step = owner.resume(interval, input).unwrap();
+        step = owner
+            .resume(interval, input, sm_runtime::message::render)
+            .unwrap();
         assert_eq!(step.outcome, Outcome::Suspended);
         assert!(step.effects.is_empty());
     }
     prepared_message_waits(&mut owner, sample, 377..=388);
-    step = owner.resume(389, sample).unwrap();
+    step = owner
+        .resume(389, sample, sm_runtime::message::render)
+        .unwrap();
     assert_eq!(step.outcome, Outcome::Complete);
     assert_eq!(
         step.effects,
         [Effect::AdvanceAudio, Effect::ResumeMovementSound]
     );
     prepared_message_pixels(&step.frame, [[255, 0, 0, 0], [0, 255, 0, 0]], 0..224);
-    assert_eq!(owner.resume(390, sample).err(), Some(Fault::NoRequest));
+    assert_eq!(
+        owner.resume(390, sample, sm_runtime::message::render).err(),
+        Some(Fault::NoRequest)
+    );
     owner.queue(MessageId(2)).unwrap();
-    step = owner.resume(390, sample).unwrap();
+    step = owner
+        .resume(390, sample, sm_runtime::message::render)
+        .unwrap();
     assert_eq!(step.outcome, Outcome::Suspended);
     assert_eq!(step.effects, [Effect::CancelSounds]);
     assert_eq!(owner.poll(MessageId(1)).unwrap(), Some(0));
     owner.queue(MessageId(999)).unwrap();
     prepared_message_waits(&mut owner, sample, 391..=413);
-    step = owner.resume(414, dismiss).unwrap();
+    step = owner
+        .resume(414, dismiss, sm_runtime::message::render)
+        .unwrap();
     assert_eq!(step.outcome, Outcome::Suspended);
     assert!(step.effects.is_empty());
     prepared_message_waits(&mut owner, sample, 415..=426);
-    step = owner.resume(427, sample).unwrap();
+    step = owner
+        .resume(427, sample, sm_runtime::message::render)
+        .unwrap();
     assert_eq!(step.outcome, Outcome::Complete);
     assert_eq!(
         step.effects,
@@ -1311,10 +1354,13 @@ fn prepared_message_pixels_delay_queue_and_checkpoint() {
     );
     prepared_message_pixels(&step.frame, [[255, 0, 0, 0], [0, 255, 0, 0]], 0..224);
     assert_eq!(owner.poll(MessageId(2)).unwrap(), Some(0));
-    assert_eq!(owner.resume(428, sample).err(), Some(Fault::NoRequest));
+    assert_eq!(
+        owner.resume(428, sample, sm_runtime::message::render).err(),
+        Some(Fault::NoRequest)
+    );
     owner.queue(MessageId(999)).unwrap();
     assert_eq!(
-        owner.resume(428, sample).err(),
+        owner.resume(428, sample, sm_runtime::message::render).err(),
         Some(Fault::MissingMessage(MessageId(999)))
     );
 }
@@ -1323,14 +1369,21 @@ fn prepared_message_pixels_delay_queue_and_checkpoint() {
 #[cfg_attr(test, test)]
 fn prepared_message_rejects_changed_content_and_resets() {
     let (definitions, start) = prepared_message_fixture(0x3801);
-    let (mut owner, _) = PreparedOwner::open(definitions.clone(), start.clone()).unwrap();
+    let (mut owner, _) = PreparedOwner::open(
+        definitions.clone(),
+        start.clone(),
+        sm_runtime::message::render,
+    )
+    .unwrap();
     let sample = InputSample {
         new_keys: 0,
         held_keys: 0,
         bug_fix_counter: 0,
     };
     owner.queue(MessageId(1)).unwrap();
-    owner.resume(1, sample).unwrap();
+    owner
+        .resume(1, sample, sm_runtime::message::render)
+        .unwrap();
     let checkpoint = owner.checkpoint().unwrap();
     for index in 0..3 {
         let mut missing = start.clone();
@@ -1341,11 +1394,13 @@ fn prepared_message_rejects_changed_content_and_resets() {
         }
         .media_id = AssetId(0);
         assert_eq!(
-            owner.reset(missing.clone()).err(),
+            owner
+                .reset(missing.clone(), sm_runtime::message::render)
+                .err(),
             Some(Fault::MissingDisplay)
         );
         assert_eq!(
-            PreparedOwner::open(definitions.clone(), missing).err(),
+            PreparedOwner::open(definitions.clone(), missing, sm_runtime::message::render).err(),
             Some(Fault::MissingDisplay)
         );
         let mut changed = start.clone();
@@ -1356,13 +1411,25 @@ fn prepared_message_rejects_changed_content_and_resets() {
         }
         .media_id = AssetId(99);
         assert_eq!(
-            PreparedOwner::reopen(definitions.clone(), changed, checkpoint.clone()).err(),
+            PreparedOwner::reopen(
+                definitions.clone(),
+                changed,
+                checkpoint.clone(),
+                sm_runtime::message::render
+            )
+            .err(),
             Some(Fault::ChangedContent)
         );
     }
     let (changed, _) = prepared_message_fixture(0x3802);
     assert_eq!(
-        PreparedOwner::reopen(changed, start.clone(), checkpoint.clone()).err(),
+        PreparedOwner::reopen(
+            changed,
+            start.clone(),
+            checkpoint.clone(),
+            sm_runtime::message::render
+        )
+        .err(),
         Some(Fault::ChangedContent)
     );
     for (word_delta, palette_delta) in [(1, 0), (0, 1)] {
@@ -1375,22 +1442,40 @@ fn prepared_message_rejects_changed_content_and_resets() {
         palette[26] ^= palette_delta;
         changed.saved.media = Arc::new(IndexedImage::new(words, palette).unwrap());
         assert_eq!(
-            PreparedOwner::reopen(definitions.clone(), changed, checkpoint.clone()).err(),
+            PreparedOwner::reopen(
+                definitions.clone(),
+                changed,
+                checkpoint.clone(),
+                sm_runtime::message::render
+            )
+            .err(),
             Some(Fault::ChangedContent)
         );
     }
     let mut changed = start.clone();
     changed.initial_wait_pending = true;
     assert_eq!(
-        PreparedOwner::reopen(definitions.clone(), changed, checkpoint).err(),
+        PreparedOwner::reopen(
+            definitions.clone(),
+            changed,
+            checkpoint,
+            sm_runtime::message::render
+        )
+        .err(),
         Some(Fault::ChangedContent)
     );
-    let (mut reset, frame) = owner.reset(start).unwrap();
+    let (mut reset, frame) = owner.reset(start, sm_runtime::message::render).unwrap();
     prepared_message_pixels(&frame, [[0, 255, 0, 0], [0, 0, 255, 0]], 0..224);
-    assert_eq!(reset.resume(1, sample).err(), Some(Fault::NoRequest));
+    assert_eq!(
+        reset.resume(1, sample, sm_runtime::message::render).err(),
+        Some(Fault::NoRequest)
+    );
     reset.queue(MessageId(1)).unwrap();
     assert_eq!(
-        reset.resume(1, sample).unwrap().effects,
+        reset
+            .resume(1, sample, sm_runtime::message::render)
+            .unwrap()
+            .effects,
         [Effect::CancelSounds]
     );
 }
@@ -3506,7 +3591,7 @@ fn scene_component_preserves_complete_open_checkpoint_and_reopen() {
         checkpoint.committed_scene().lines()[223].media.incarnation,
         2
     );
-    let frame = opened.display.committed_scene().render().unwrap();
+    let frame = sc::prepared::render(opened.display.committed_scene()).unwrap();
     assert_eq!(
         [frame.pixels[8], frame.pixels[200 * 256 + 8]],
         [[0, 0, 255, 0], [255, 0, 0, 0]]
@@ -3545,7 +3630,10 @@ fn scene_component_preserves_complete_open_checkpoint_and_reopen() {
     )
     .unwrap();
     scene_same_metadata(&reopened.metadata, &metadata);
-    assert_eq!(reopened.display.committed_scene().render().unwrap(), frame);
+    assert_eq!(
+        sc::prepared::render(reopened.display.committed_scene()).unwrap(),
+        frame
+    );
     let checkpoint = reopened.display.checkpoint().unwrap();
     scene_same_resident(checkpoint.resident(), &expected_resident);
     let (description, _) = checkpoint.into_start_description(reopened.metadata);
@@ -3827,8 +3915,8 @@ fn scene_component_rejects_missing_final_resident_assets() {
             ))
             .unwrap();
         assert_eq!(
-            scene.render().unwrap(),
-            before.committed_scene().render().unwrap()
+            sc::prepared::render(&scene).unwrap(),
+            sc::prepared::render(before.committed_scene()).unwrap()
         );
         assert_eq!(scene.lines()[223].media.incarnation, 2);
         description.committed_scene = Some(scene);
@@ -4911,7 +4999,7 @@ fn scene_atmospheric_settlement_delivers_and_checkpoints_visible_history() {
             assert!(line.object_selection.even_frame);
         }
         let pixels = rows.iter().flat_map(|row| row.pixels).collect::<Vec<_>>();
-        assert_eq!(scene.render().unwrap().pixels, pixels);
+        assert_eq!(sc::prepared::render(&scene).unwrap().pixels, pixels);
         scene_same_resident(display.checkpoint().unwrap().resident(), &resident);
         assert_eq!(original.producer_history().len(), 224);
         assert!(

@@ -1,10 +1,10 @@
 //! Immutable committed game-facing image descriptions and resident authored media.
 #![forbid(unsafe_code)]
 
-use crate::rendering as r;
+use crate::raster as r;
 use std::{collections::BTreeMap, sync::Arc};
 
-pub use sm_data::{AssetId, AssetRef, Revision};
+pub use crate::{AssetId, AssetRef, Revision};
 /// A live producer's identity, supplied at publication rather than derived from
 /// authored media IDs, object order or rendered bytes.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -32,7 +32,7 @@ impl DisplayProducerIds {
         self.allocate_with(|_| Ok(()))
     }
     /// Check the next value before the original store; commit it after success.
-    pub(crate) fn allocate_with(
+    pub fn allocate_with(
         &mut self,
         store: impl FnOnce(ProducerObjectId) -> Result<(), SceneError>,
     ) -> Result<ProducerObjectId, SceneError> {
@@ -144,7 +144,7 @@ pub struct TileCell {
     pub flip_vertical: bool,
 }
 impl TileCell {
-    pub(crate) fn planar_word(self) -> u16 {
+    pub fn planar_word(self) -> u16 {
         self.tile
             | (u16::from(self.palette) << 10)
             | (u16::from(self.priority) << 13)
@@ -179,10 +179,7 @@ pub struct ObjectPartBinding {
     pub part: u16,
 }
 impl ObjectPartBinding {
-    pub(crate) fn definition<'a>(
-        &self,
-        media: &'a SceneMedia,
-    ) -> Result<&'a VisualPart, SceneError> {
+    pub fn definition<'a>(&self, media: &'a SceneMedia) -> Result<&'a VisualPart, SceneError> {
         match media.asset(self.visual)? {
             SceneAsset::Visual(visual) => visual
                 .frames
@@ -204,18 +201,14 @@ pub struct ObjectVariants {
     pub size_sets: BTreeMap<u8, ObjectSizeVariants>,
 }
 impl ObjectVariants {
-    pub(crate) fn binding(
-        &self,
-        set: u8,
-        size: ObjectSize,
-    ) -> Result<ObjectPartBinding, SceneError> {
+    pub fn binding(&self, set: u8, size: ObjectSize) -> Result<ObjectPartBinding, SceneError> {
         let variants = self.size_sets.get(&set).ok_or(SceneError::Incomplete)?;
         Ok(match size {
             ObjectSize::Small => variants.small,
             ObjectSize::Large => variants.large,
         })
     }
-    pub(crate) fn validate(&self, media: &SceneMedia, tile: u16) -> Result<(), SceneError> {
+    pub fn validate(&self, media: &SceneMedia, tile: u16) -> Result<(), SceneError> {
         if self.size_sets.is_empty() {
             return Err(SceneError::Incomplete);
         }
@@ -382,19 +375,19 @@ impl SceneMedia {
         }
         Ok(())
     }
-    pub(crate) fn atlas(&self, reference: AssetRef) -> Result<&TileAtlas, SceneError> {
+    pub fn atlas(&self, reference: AssetRef) -> Result<&TileAtlas, SceneError> {
         match self.asset(reference)? {
             SceneAsset::Atlas(v) => Ok(v),
             _ => Err(SceneError::AssetKind(reference.id)),
         }
     }
-    pub(crate) fn map(&self, reference: AssetRef) -> Result<&Tilemap, SceneError> {
+    pub fn map(&self, reference: AssetRef) -> Result<&Tilemap, SceneError> {
         match self.asset(reference)? {
             SceneAsset::Map(v) => Ok(v),
             _ => Err(SceneError::AssetKind(reference.id)),
         }
     }
-    pub(crate) fn palette(&self, reference: MediaRef) -> Result<&PaletteIncarnation, SceneError> {
+    pub fn palette(&self, reference: MediaRef) -> Result<&PaletteIncarnation, SceneError> {
         if !matches!(self.asset(reference.asset)?, SceneAsset::Palette(_)) {
             return Err(SceneError::AssetKind(reference.asset.id));
         }
@@ -402,7 +395,7 @@ impl SceneMedia {
             .get(&reference)
             .ok_or(SceneError::MissingIncarnation(reference))
     }
-    pub(crate) fn image(&self, reference: MediaRef) -> Result<&CompiledImage, SceneError> {
+    pub fn image(&self, reference: MediaRef) -> Result<&CompiledImage, SceneError> {
         self.asset(reference.asset)?;
         self.images
             .get(&reference)
@@ -660,7 +653,7 @@ impl ProducedObject {
         selected.validate(media)?;
         Ok(selected)
     }
-    pub(crate) fn validate(&self, media: &SceneMedia) -> Result<(), SceneError> {
+    pub fn validate(&self, media: &SceneMedia) -> Result<(), SceneError> {
         if self.producer.0 == 0 {
             return Err(SceneError::Identity);
         }
@@ -897,7 +890,7 @@ impl Scene {
     pub fn producer_history(&self) -> &[Arc<[ProducedObject]>] {
         &self.producer_history
     }
-    pub(crate) fn validate_producer_ids(&self, ids: &DisplayProducerIds) -> Result<(), SceneError> {
+    pub fn validate_producer_ids(&self, ids: &DisplayProducerIds) -> Result<(), SceneError> {
         ids.validate()?;
         for records in self.producer_history.iter() {
             for record in records.iter() {

@@ -6,6 +6,9 @@
 #![forbid(unsafe_code)]
 
 pub mod enemy_speeds;
+pub mod message;
+pub mod raster;
+pub mod scene;
 pub mod world;
 
 // Immutable media identities and ordered semantic audio records.

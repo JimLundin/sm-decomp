@@ -557,7 +557,7 @@ pub use game_state::persistent_session::{
 };
 pub(crate) mod native_rom;
 pub mod recording;
-pub mod rendering;
+pub use sm_runtime::rendering;
 pub mod rom;
 pub mod rom_patches;
 pub mod room_pack;
