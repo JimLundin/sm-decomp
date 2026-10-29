@@ -1,6 +1,6 @@
 //! Captured cartridge records and named projectile table selection.
 #![forbid(unsafe_code)]
-use super::Host;
+use super::host::Host;
 use crate::rom::{RomImage, RomRecord};
 pub fn offset(address: u32) -> usize {
     (((address >> 16) << 15 | address & 0x7fff) & 0x3fffff) as usize
