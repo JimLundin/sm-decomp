@@ -3062,7 +3062,7 @@ crate::game::callback_dispatch! {
             w: 4,
             h: 4,
         };
-        if Shitroid_Func_2(k, rect, game) == 0 || {
+        if actors::shitroid::separated_from_rect(k, rect, game) == 0 || {
             E = k as i32;
             let mut v3: bool = ((slot!(game, Enemy_ShitroidInCutscene[E].var_F)) as i16).wrapping_sub(1) < 0;
             slot!(game, Enemy_ShitroidInCutscene[E].var_F = slot!(game, Enemy_ShitroidInCutscene[E].var_F).wrapping_sub(1));
@@ -3081,7 +3081,7 @@ crate::game::callback_dispatch! {
             h: 8,
         };
         Shitroid_Func_GraduallyAccelerateTowards0x400(k, 0, rect.x, rect.y, game);
-        if Shitroid_Func_2(k, rect, game) == 0 {
+        if actors::shitroid::separated_from_rect(k, rect, game) == 0 {
             slot!(game, Enemy_ShitroidInCutscene[k as i32].var_A = (0xa9c879i32) as u16);
         }
     };
@@ -3137,7 +3137,7 @@ crate::game::callback_dispatch! {
             h: 4,
         };
         Shitroid_Func_GraduallyAccelerateTowards0x400(k, 0, rect.x, rect.y, game);
-        if Shitroid_Func_2(k, rect, game) == 0 {
+        if actors::shitroid::separated_from_rect(k, rect, game) == 0 {
             player_mother_brain(4, game);
             let E: i32 = k as i32;
             slot!(game, Enemy_ShitroidInCutscene[E].var_A = (0xa9c9c3i32) as u16);
@@ -3184,7 +3184,7 @@ crate::game::callback_dispatch! {
             h: 4,
         };
         Shitroid_GraduallyAccelerateTowards0x10(k, 0, rect.x, rect.y, game);
-        if Shitroid_Func_2(k, rect, game) == 0 {
+        if actors::shitroid::separated_from_rect(k, rect, game) == 0 {
             slot!(game, Enemy_ShitroidInCutscene[k as i32].var_A = (0xa9cb56i32) as u16);
         }
     };
@@ -3196,7 +3196,7 @@ crate::game::callback_dispatch! {
             h: 4,
         };
         Shitroid_GraduallyAccelerateTowards0x10(k, 0, rect.x, rect.y, game);
-        if Shitroid_Func_2(k, rect, game) == 0 {
+        if actors::shitroid::separated_from_rect(k, rect, game) == 0 {
             slot!(game, Enemy_ShitroidInCutscene[k as i32].var_A = (0xa9cb7bi32) as u16);
         }
     };
@@ -3208,7 +3208,7 @@ crate::game::callback_dispatch! {
             h: 4,
         };
         Shitroid_GraduallyAccelerateTowards0x10(k, 0, rect.x, rect.y, game);
-        if Shitroid_Func_2(k, rect, game) == 0 {
+        if actors::shitroid::separated_from_rect(k, rect, game) == 0 {
             let E: i32 = k as i32;
             slot!(game, Enemy_ShitroidInCutscene[E].base.health = 79);
             slot!(game, Enemy_ShitroidInCutscene[0x40i32].var_0B = 0);
@@ -3224,7 +3224,7 @@ crate::game::callback_dispatch! {
             h: 4,
         };
         Shitroid_Func_GraduallyAccelerateTowards0x400(k, 0xa, rect.x, rect.y, game);
-        if Shitroid_Func_2(k, rect, game) == 0 {
+        if actors::shitroid::separated_from_rect(k, rect, game) == 0 {
             slot!(game, Enemy_ShitroidInCutscene[k as i32].var_A = (0xa9cbd8i32) as u16);
         }
     };
@@ -3356,7 +3356,7 @@ crate::game::callback_dispatch! {
             rect.y,
             game,
         );
-        if Shitroid_Func_2(k, rect, game) == 0 {
+        if actors::shitroid::separated_from_rect(k, rect, game) == 0 {
             let mut v4: i16 = *(RomPtr_A9(sice_var_0E, game) as *mut u16).offset(4) as i16;
             if v4 < 0 {
                 slot!(game, Enemy_ShitroidInCutscene[E].var_A = v4 as u16);
@@ -4330,41 +4330,6 @@ fn transfer_corpse_tiles(
     }
 }
 
-pub unsafe fn Shitroid_Func_1(k: u16, j: u16, game: &mut Game) -> u8 {
-    let E: i32 = j as i32;
-    let G: i32 = k as i32;
-    let mut r18: u16 = (slot!(game, Enemy_Shitroid[G].base.x_width) as i32
-        + slot!(game, Enemy_Shitroid[E].base.x_width) as i32
-        + 1) as u16;
-    let v4: u16 = abs16(
-        (slot!(game, Enemy_Shitroid[E].base.x_pos))
-            .wrapping_sub(slot!(game, Enemy_Shitroid[G].base.x_pos)),
-    );
-    let v5: bool = v4 >= r18;
-    if v4 < r18 {
-        r18 = (slot!(game, Enemy_Shitroid[G].base.y_height) as i32
-            + slot!(game, Enemy_Shitroid[E].base.y_height) as i32
-            + 1) as u16;
-        return (abs16(
-            (slot!(game, Enemy_Shitroid[E].base.y_pos))
-                .wrapping_sub(slot!(game, Enemy_Shitroid[G].base.y_pos)),
-        ) >= r18) as u8;
-    }
-    v5 as u8
-}
-pub unsafe fn Shitroid_Func_2(k: u16, rect: Rect16U, game: &mut Game) -> u8 {
-    let E: i32 = k as i32;
-    let mut R26: u16 =
-        (slot!(game, Enemy_Shitroid[E].base.x_width) as i32 + rect.w as i32 + 1) as u16;
-    let v2: u16 = abs16((rect.x).wrapping_sub(slot!(game, Enemy_Shitroid[E].base.x_pos)));
-    let v3: bool = v2 >= R26;
-    if v2 < R26 {
-        R26 = (slot!(game, Enemy_Shitroid[E].base.y_height) as i32 + rect.h as i32 + 1) as u16;
-        return (abs16((rect.y).wrapping_sub(slot!(game, Enemy_Shitroid[E].base.y_pos))) >= R26)
-            as u8;
-    }
-    v3 as u8
-}
 crate::game::callback_dispatch! {
     pub unsafe fn CallShitroidFunc(ea: u32, k: u16, game: &mut Game) => ea;
     call (k, game); default { Unreachable(game); };
@@ -4377,7 +4342,7 @@ crate::game::callback_dispatch! {
             h: 1,
         };
         Shitroid_Func_GraduallyAccelerateTowards0x400(k, 0xf, rect.x, rect.y, game);
-        if Shitroid_Func_2(k, rect, game) == 0 {
+        if actors::shitroid::separated_from_rect(k, rect, game) == 0 {
             slot!(game, Enemy_Shitroid[k as i32].var_A = (0xa9f06di32) as u16);
         }
     };
@@ -4390,7 +4355,7 @@ crate::game::callback_dispatch! {
             (slot!(game, Enemy_Shitroid[E].base.y_pos)).wrapping_sub(32),
             game,
         );
-        if Shitroid_Func_1(k, (k).wrapping_add(64), game) & 1 == 0 {
+        if actors::shitroid::separated_from_enemy(k, (k).wrapping_add(64), game) & 1 == 0 {
             slot!(game, Enemy_Shitroid[k as i32].var_A = (0xa9f094i32) as u16);
         }
     };
@@ -4598,33 +4563,9 @@ crate::game::callback_dispatch! {
         Shitroid_Func_19(k, game);
     };
     @external {
-        11136998 => [Shitroid_Func_4(game)];
+        11136998 => [actors::shitroid::pin_camera_at_512(game)];
         11137787 => [Shitroid_Func_20(game)]; 11137828 => [Shitroid_Func_21(game)];
         11137901 => [Shitroid_Func_23(game)];
-    }
-}
-pub unsafe fn Shitroid_Func_4(game: &mut Game) {
-    if word!(game.layer1_x_pos) as i32 - 513i32 & 0x8000 != 0 {
-        word!(game.layer1_x_pos = 512);
-        {
-            let value: u16 = game.ram().read_byte(0xcd20 + 0) as u16;
-            let at: usize = 0xcd20;
-            let bytes = value.to_ne_bytes();
-            game.ram().write_byte(at, bytes[0]);
-            game.ram().write_byte(at + 1, bytes[1]);
-        };
-        {
-            let value: u16 = game.ram().read_byte(0xcd20 + 2) as u16;
-            let at: usize = 0xcd20 + (2) as usize;
-            let bytes = value.to_ne_bytes();
-            game.ram().write_byte(at, bytes[0]);
-            game.ram().write_byte(at + 1, bytes[1]);
-        };
-        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb767 as VoidP), game);
-        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x1f, 0x3, 0xb767 as VoidP), game);
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, Enemy_Shitroid[E].var_A = (0xa9f02bi32) as u16);
-        slot!(game, Enemy_Shitroid[E].var_04 = 1);
     }
 }
 pub unsafe fn Shitroid_Func_20(game: &mut Game) {
@@ -4685,7 +4626,7 @@ pub unsafe fn Shitroid_Func_23(game: &mut Game) {
             rect.y,
             game,
         );
-        if Shitroid_Func_2(word!(game.cur_enemy_index), rect, game) == 0 {
+        if actors::shitroid::separated_from_rect(word!(game.cur_enemy_index), rect, game) == 0 {
             let E: i32 = word!(game.cur_enemy_index) as i32;
             slot! { game, Enemy_Shitroid[E]; var_B = 0, var_C = 0 }
             slot!(
@@ -4792,14 +4733,14 @@ pub unsafe fn Shitroid_GraduallyAccelerateHoriz(
     r26: u16,
     game: &mut Game,
 ) {
-    unsafe {
+    {
         let E: i32 = k as i32;
         let distance = (slot!(game, Enemy_Shitroid[E].base.x_pos) as i16).wrapping_sub(r18 as i16);
         if distance != 0 {
             // Capture velocity before the screen check, as in both original branches.
             let velocity = slot!(game, Enemy_Shitroid[E].var_B);
             let reversing = (velocity as i16 >= 0) == (distance > 0);
-            let force = if reversing && Shitroid_CheckIfOnScreen(k, game) & 1 != 0 {
+            let force = if reversing && actors::shitroid::is_off_screen(k, game) & 1 != 0 {
                 r26.wrapping_add(8)
             } else {
                 8
@@ -4817,24 +4758,6 @@ pub unsafe fn Shitroid_GraduallyAccelerateHoriz(
         }
     }
 }
-pub unsafe fn Shitroid_CheckIfOnScreen(k: u16, game: &mut Game) -> u8 {
-    let E: i32 = k as i32;
-    let mut y_pos: i16 = slot!(game, Enemy_Shitroid[E].base.y_pos) as i16;
-    let result: u8 = 1;
-    if y_pos >= 0 {
-        let mut v3: i16 = (y_pos as i32 + 96 - word!(game.layer1_y_pos) as i32) as i16;
-        if v3 >= 0 && v3 as i32 - 416i32 & 0x8000 != 0 {
-            let mut x_pos: i16 = slot!(game, Enemy_Shitroid[E].base.x_pos) as i16;
-            if x_pos >= 0 {
-                let mut v5: i16 = (x_pos as i32 + 16 - word!(game.layer1_x_pos) as i32) as i16;
-                if v5 >= 0 && v5 as i32 - 288i32 & 0x8000 != 0 {
-                    return 0;
-                }
-            }
-        }
-    }
-    result
-}
 pub unsafe fn Shitroid_AccelerateTowardsPoint(
     k: u16,
     a: u16,
@@ -4842,83 +4765,16 @@ pub unsafe fn Shitroid_AccelerateTowardsPoint(
     r20: u16,
     game: &mut Game,
 ) -> u8 {
-    unsafe {
+    {
         let mut R28: u16 = 0;
-        R28 = (R28).wrapping_add(Shitroid_AccelerateTowardsX(k, r18, a, game));
-        R28 = (R28).wrapping_add(Shitroid_AccelerateTowardsY(k, r20, a, game));
+        R28 = (R28).wrapping_add(actors::shitroid::accelerate_towards_x(k, r18, a, game));
+        R28 = (R28).wrapping_add(actors::shitroid::accelerate_towards_y(k, r20, a, game));
         R28 = R28 >> 1;
         ((R28) as u8) & (1u8)
     }
 }
-pub unsafe fn Shitroid_AccelerateTowardsY(k: u16, r20: u16, r22: u16, game: &mut Game) -> u16 {
-    let E: i32 = k as i32;
-    let mut result: u16 = 0;
-    let v2: i16 = ((slot!(game, Enemy_Shitroid[E].base.y_pos)) as i16).wrapping_sub((r20) as i16);
-    if v2 == 0 {
-        result = result.wrapping_add(1);
-    } else if v2 >= 0 {
-        let mut v7: u16 = (slot!(game, Enemy_Shitroid[E].var_C)).wrapping_sub(r22);
-        if v7 as i32 + 1280 & 0x8000 != 0 {
-            v7 = -1280i32 as u16;
-        }
-        slot!(game, Enemy_Shitroid[E].var_C = v7);
-        if ((slot!(game, Enemy_Shitroid[E].base.y_pos) as i32 + (v7 >> 8) as i8 as i32 - r20 as i32)
-            as i16)
-            <= 0
-        {
-            slot!(game, Enemy_Shitroid[E].var_C = 0);
-            result = result.wrapping_add(1);
-        }
-    } else {
-        let mut v3: u16 = (r22).wrapping_add(slot!(game, Enemy_Shitroid[E].var_C));
-        if v3 as i32 - 1280i32 & 0x8000 == 0 {
-            v3 = 1280;
-        }
-        slot!(game, Enemy_Shitroid[E].var_C = v3);
-        if ((slot!(game, Enemy_Shitroid[E].base.y_pos) as i32 + (v3 >> 8) as i8 as i32 - r20 as i32)
-            as i16)
-            >= 0
-        {
-            slot!(game, Enemy_Shitroid[E].var_C = 0);
-            result = result.wrapping_add(1);
-        }
-    }
-    result
-}
-pub unsafe fn Shitroid_AccelerateTowardsX(k: u16, r18: u16, r22: u16, game: &mut Game) -> u16 {
-    let E: i32 = k as i32;
-    let mut result: u16 = 0;
-    if ((slot!(game, Enemy_Shitroid[E].base.x_pos)) as i16).wrapping_sub((r18) as i16) >= 0 {
-        let mut v6: u16 = (slot!(game, Enemy_Shitroid[E].var_B)).wrapping_sub(r22);
-        if v6 as i32 + 1280 & 0x8000 != 0 {
-            v6 = -1280i32 as u16;
-        }
-        slot!(game, Enemy_Shitroid[E].var_B = v6);
-        if ((slot!(game, Enemy_Shitroid[E].base.x_pos) as i32 + (v6 >> 8) as i8 as i32 - r18 as i32)
-            as i16)
-            <= 0
-        {
-            slot!(game, Enemy_Shitroid[E].var_B = 0);
-            result = result.wrapping_add(1);
-        }
-    } else {
-        let mut v2: u16 = (r22).wrapping_add(slot!(game, Enemy_Shitroid[E].var_B));
-        if v2 as i32 - 1280i32 & 0x8000 == 0 {
-            v2 = 1280;
-        }
-        slot!(game, Enemy_Shitroid[E].var_B = v2);
-        if ((slot!(game, Enemy_Shitroid[E].base.x_pos) as i32 + (v2 >> 8) as i8 as i32 - r18 as i32)
-            as i16)
-            >= 0
-        {
-            slot!(game, Enemy_Shitroid[E].var_B = 0);
-            result = result.wrapping_add(1);
-        }
-    }
-    result
-}
 pub unsafe fn Shitroid_HandleCutscenePalette_Common(r22: u16, r18: u16, game: &mut Game) {
-    unsafe {
+    {
         let E: i32 = word!(game.cur_enemy_index) as i32;
         let mut shitro_var_D_high: i8 = slot!(byte game, Enemy_Shitroid[E].var_D[1]) as i8;
         if shitro_var_D_high != 0 {
@@ -4928,29 +4784,10 @@ pub unsafe fn Shitroid_HandleCutscenePalette_Common(r22: u16, r18: u16, game: &m
             let v3: u8 = (slot!(byte game, Enemy_Shitroid[E].var_D[0]) as i32 + 1 & 7) as u8;
             slot!(byte game, Enemy_Shitroid[E].var_D[0] = v3);
             let v4: u16 =
-                Shitroid_HandleCrySoundEffect(word!(game.cur_enemy_index), v3 as u16, game);
+                actors::shitroid::cry_sound_effect(word!(game.cur_enemy_index), v3 as u16, game);
             copy_rom_colors_to_palette(r18, 0xa9, (r22 as i32 + 8 * v4 as i32) as u16, 4, game);
         };
     }
-}
-pub unsafe fn Shitroid_HandleCrySoundEffect(k: u16, a: u16, game: &mut Game) -> u16 {
-    if a == 5 {
-        let E: i32 = k as i32;
-        if slot!(game, Enemy_Shitroid[E].var_04) != 0 {
-            let v3: u16 = (slot!(game, Enemy_Shitroid[E].var_05)).wrapping_add(1);
-            slot!(game, Enemy_Shitroid[E].var_05 = v3);
-            if v3 >= 4 {
-                slot!(game, Enemy_Shitroid[E].var_05 = 0);
-                let mut v4: u16 = 114;
-                if slot!(game, Enemy_Shitroid[E].var_E) < 0xa {
-                    v4 = 120;
-                }
-                QueueSfx2_Max6(v4, game);
-            }
-        }
-        return 5;
-    }
-    a
 }
 crate::instruction_callbacks! { pub unsafe fn (_k: u16, _jp: EnemyScript) -> EnemyScript;
     Shitroid_Instr_3 [EnemyScript::jump(addr_kShitroid_Ilist_F90E as u16)] { };
