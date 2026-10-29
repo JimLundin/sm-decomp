@@ -41,9 +41,29 @@ impl gameplay_flag_host::FlagAliases for Runtime<'_> {
         self.write_slice_native(address(Column::Bosses, area as isize), value);
     }
 }
+impl sm_game::progress::FlagHost for Runtime<'_> {
+    fn flags(&self) -> &sm_game::gameplay_flag_state::GameplayFlags {
+        &self.session().gameplay_flags
+    }
+    fn flags_mut(&mut self) -> &mut sm_game::gameplay_flag_state::GameplayFlags {
+        &mut self.session_mut().gameplay_flags
+    }
+    fn compatibility(&self) -> &sm_game::gameplay_flag_state::FlagCompatibility {
+        &self.session().flag_compatibility
+    }
+    fn compatibility_mut(&mut self) -> &mut sm_game::gameplay_flag_state::FlagCompatibility {
+        &mut self.session_mut().flag_compatibility
+    }
+    fn area(&self) -> u16 {
+        self.session().room.area
+    }
+}
 impl gameplay_flag_host::Host for Runtime<'_> {}
 pub(crate) fn PrepareBitAccess(bit: u16, game: &mut Game) -> u16 {
-    flags::prepare_flag_mask(Runtime::new(game).session_mut(), bit)
+    flags::prepare_flag_mask(
+        &mut Runtime::new(game).session_mut().flag_compatibility,
+        bit,
+    )
 }
 pub(crate) fn SetBossBitForCurArea(mask: u16, game: &mut Game) {
     flags::mark_boss_defeated(&mut Runtime::new(game), mask);

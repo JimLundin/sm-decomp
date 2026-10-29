@@ -1,7 +1,7 @@
 //! Finite external flag edges; all owned bytes use the actual aggregate codec.
 use super::{
     Composed,
-    game::{gameplay_flag_host::*, session_encoding},
+    game::{gameplay_flag_host::*, session_access::SessionAccess, session_encoding},
 };
 #[derive(Clone, Debug, Default, PartialEq)]
 pub(super) struct ExternalBytes {
@@ -77,6 +77,23 @@ impl FlagAliases for Composed {
             address(LegacyFlagColumn::Bosses, area as isize),
             value.to_ne_bytes(),
         );
+    }
+}
+impl sm_game::progress::FlagHost for Composed {
+    fn flags(&self) -> &sm_game::gameplay_flag_state::GameplayFlags {
+        &self.session().gameplay_flags
+    }
+    fn flags_mut(&mut self) -> &mut sm_game::gameplay_flag_state::GameplayFlags {
+        &mut self.session_mut().gameplay_flags
+    }
+    fn compatibility(&self) -> &sm_game::gameplay_flag_state::FlagCompatibility {
+        &self.session().flag_compatibility
+    }
+    fn compatibility_mut(&mut self) -> &mut sm_game::gameplay_flag_state::FlagCompatibility {
+        &mut self.session_mut().flag_compatibility
+    }
+    fn area(&self) -> u16 {
+        self.session().room.area
     }
 }
 impl Host for Composed {}
