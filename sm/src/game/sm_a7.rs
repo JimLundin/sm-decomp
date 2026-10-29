@@ -217,7 +217,7 @@ crate::game::callback_dispatch! {
         10997598 => [actors::phantoon_actions::spawn_fireball(k, game)];
     }
 }
-pub unsafe fn Kraid_Touch_ArmFoot(game: &mut Game) {
+pub fn Kraid_Touch_ArmFoot(game: &mut Game) {
     {
         actors::combat::contact_reaction(
             &mut Runtime::new(game),
@@ -231,19 +231,19 @@ pub fn Kraid_Func_1(game: &mut Game) {
     }
 }
 pub unsafe fn Kraid_Arm_Shot(j: u16, game: &mut Game) {
-    unsafe {
+    {
         Kraid_SpawnExplosionEproj(j, game);
         word!(game.projectile_dir[(j >> 1)] |= (0x10u16));
     }
 }
-pub unsafe fn Kraid_CheckIfDead(game: &mut Game) -> u16 {
+pub fn Kraid_CheckIfDead(game: &mut Game) -> u16 {
     {
         ((gameplay_flag_runtime::boss_word_at(word!(game.area_index), BossWordOrder::Native, game)
             & 1)
             != 0) as u16
     }
 }
-pub unsafe fn Kraid_SetEnemyPropsToDead(game: &mut Game) {
+pub fn Kraid_SetEnemyPropsToDead(game: &mut Game) {
     let E = (word!(game.cur_enemy_index) as i32) as i32;
     slot!(
         game,
@@ -251,7 +251,7 @@ pub unsafe fn Kraid_SetEnemyPropsToDead(game: &mut Game) {
             slot!(game, Enemy_Kraid[E].base.properties) & 0x50ff | 0x700
     );
 }
-pub unsafe fn Kraid_SetupGfxWithTilePrioClear(r18: u16, game: &mut Game) {
+pub fn Kraid_SetupGfxWithTilePrioClear(r18: u16, game: &mut Game) {
     decompress_to_ram(0xb9fa38, 0x4000, game);
     decompress_to_ram(0xb9fe3e, 0x2000, game);
     let E = (0) as i32;
@@ -279,7 +279,7 @@ pub unsafe fn Kraid_SetupGfxWithTilePrioClear(r18: u16, game: &mut Game) {
         );
     }
 }
-pub unsafe fn Kraid_DrawRoomBg(game: &mut Game) {
+pub fn Kraid_DrawRoomBg(game: &mut Game) {
     word_transfers!(game, ascending, 16; le(target_palettes, 96) <- rom(0xa786c7, 0));
     word!(game.palette_change_num = 0);
     let v2: u16 = word!(game.vram_write_queue_tail);
@@ -338,7 +338,7 @@ pub unsafe fn Kraid_Mainloop_Thinking_Setup(game: &mut Game) {
         Kraid_SetLintYAndRandomThinkTimer(game);
     }
 }
-pub unsafe fn Kraid_Lints_Enable(k: u16, a: u16, game: &mut Game) {
+pub fn Kraid_Lints_Enable(k: u16, a: u16, game: &mut Game) {
     let E = (k as i32) as i32;
     slot!(game, Enemy_Kraid[E].kraid_var_F = a);
     slot!(game, Enemy_Kraid[E].kraid_var_A = (0xa7b923i32) as u16);
@@ -474,7 +474,7 @@ pub unsafe fn Kraid_ExecuteInstr(game: &mut Game) -> u16 {
     }
 }
 pub unsafe fn Kraid_Shot_Mouth(game: &mut Game) {
-    unsafe {
+    {
         let mut v3: i16 = 0;
         let E = (0) as i32;
         if slot!(game, Enemy_Kraid[E].kraid_var_A) as i32 + 0x3ac9 & 0x8000 == 0 {
@@ -576,7 +576,7 @@ pub unsafe fn Kraid_Shot_Mouth(game: &mut Game) {
         }
     }
 }
-pub unsafe fn Kraid_SpawnExplosionEproj(k: u16, game: &mut Game) {
+pub fn Kraid_SpawnExplosionEproj(k: u16, game: &mut Game) {
     {
         let v1: i32 = k as i32 >> 1;
         game.eproj_spawn_pt = Point16U {
@@ -592,7 +592,7 @@ pub unsafe fn Kraid_SpawnExplosionEproj(k: u16, game: &mut Game) {
         QueueSfx1_Max6(0x3d, game);
     }
 }
-pub unsafe fn Kraid_HurtFlash_Handling(game: &mut Game) {
+pub fn Kraid_HurtFlash_Handling(game: &mut Game) {
     let mut v0: u16 = 0;
     if (slot!(game, Enemy_Kraid[0i32].kraid_hurt_frame) & 1) == 0 {
         v0 = 32;
@@ -604,7 +604,7 @@ pub unsafe fn Kraid_HurtFlash_Handling(game: &mut Game) {
         v0 = (v0).wrapping_add(2);
     }
 }
-pub unsafe fn Kraid_HealthBasedPaletteHandling(game: &mut Game) {
+pub fn Kraid_HealthBasedPaletteHandling(game: &mut Game) {
     let mut v0: u16 = 0;
     let E = (0) as i32;
     if (slot!(game, Enemy_Kraid[E].kraid_hurt_frame) & 1) == 0 {
@@ -648,7 +648,7 @@ pub unsafe fn KraidLintCommon_Main(k: u16, game: &mut Game) {
         );
     }
 }
-pub unsafe fn KraidLint_ProduceLint(k: u16, game: &mut Game) {
+pub fn KraidLint_ProduceLint(k: u16, game: &mut Game) {
     let v1 = (k as i32) as i32;
     slot!(
         game,
@@ -667,7 +667,7 @@ pub unsafe fn KraidLint_ProduceLint(k: u16, game: &mut Game) {
         slot!(game, EnemyData[v1].ai_preinstr = 30);
     }
 }
-pub unsafe fn KraidLint_ChargeLint(k: u16, game: &mut Game) {
+pub fn KraidLint_ChargeLint(k: u16, game: &mut Game) {
     let E = (k as i32) as i32;
     let mut v1: i16 = 0;
     if (slot!(game, EnemyData[E].ai_preinstr) & 1) != 0 {
@@ -690,7 +690,7 @@ pub unsafe fn KraidLint_ChargeLint(k: u16, game: &mut Game) {
         QueueSfx3_Max6(0x1f, game);
     }
 }
-pub unsafe fn KraidLint_FireLint(k: u16, game: &mut Game) {
+pub fn KraidLint_FireLint(k: u16, game: &mut Game) {
     let E = (k as i32) as i32;
     slot!(
         game,
@@ -732,7 +732,7 @@ pub unsafe fn KraidLint_FireLint(k: u16, game: &mut Game) {
         }
     }
 }
-pub unsafe fn KraidFingernail_WaitForLintXpos(k: u16, game: &mut Game) {
+pub fn KraidFingernail_WaitForLintXpos(k: u16, game: &mut Game) {
     let E2 = (0x80) as i32;
     if slot!(game, Enemy_Kraid[E2].base.x_pos) as i32 - 256i32 & 0x8000 == 0 {
         let E = (k as i32) as i32;
@@ -747,7 +747,7 @@ pub unsafe fn KraidFingernail_WaitForLintXpos(k: u16, game: &mut Game) {
         );
     }
 }
-pub unsafe fn KraidEnemy_HandleFunctionTimer(k: u16, game: &mut Game) {
+pub fn KraidEnemy_HandleFunctionTimer(k: u16, game: &mut Game) {
     let E = (k as i32) as i32;
     if slot!(game, Enemy_Kraid[E].kraid_var_F) != 0 && {
         let fresh6 = slot!(game, Enemy_Kraid[E].kraid_var_F);
@@ -764,7 +764,7 @@ pub unsafe fn KraidEnemy_HandleFunctionTimer(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn Kraid_AlignEnemyToKraid(k: u16, game: &mut Game) {
-    unsafe {
+    {
         let x_pos: u16 = slot!(game, Enemy_Kraid[0i32].base.x_pos);
         let E = (k as i32) as i32;
         slot!(
@@ -787,21 +787,21 @@ pub unsafe fn KraidEnemy_ProcessInstrEnemyTimer(k: u16, game: &mut Game) {
         KraidEnemy_HandleFunctionTimer(k, game);
     }
 }
-pub unsafe fn Kraid_SetWalkingBackwards(j: u16, a: u16, game: &mut Game) {
+pub fn Kraid_SetWalkingBackwards(j: u16, a: u16, game: &mut Game) {
     slot!(game, Enemy_Kraid[0i32].kraid_target_x = a);
     let E = (0x140) as i32;
     slot!(game, Enemy_Kraid[E].kraid_next = j);
     slot!(game, Enemy_Kraid[E].kraid_var_A = (0xa7bb45i32) as u16);
     slot!(game, Enemy_Kraid[E].base; instruction_timer = 1, current_instruction = addr_kKraid_Ilist_8887 as u16);
 }
-pub unsafe fn Kraid_SetWalkingForwards(j: u16, a: u16, game: &mut Game) {
+pub fn Kraid_SetWalkingForwards(j: u16, a: u16, game: &mut Game) {
     slot!(game, Enemy_Kraid[0i32].kraid_target_x = a);
     let E = (0x140) as i32;
     slot!(game, Enemy_Kraid[E].kraid_next = j);
     slot!(game, Enemy_Kraid[E].kraid_var_A = (0xa7bbaei32) as u16);
     slot!(game, Enemy_Kraid[E].base; instruction_timer = 1, current_instruction = addr_kKraid_Ilist_86F3 as u16);
 }
-pub unsafe fn KraidsFingernail_Fire(k: u16, game: &mut Game) {
+pub fn KraidsFingernail_Fire(k: u16, game: &mut Game) {
     let v1 = (k as i32) as i32;
     if {
         let (actor, amount) = (
@@ -993,7 +993,7 @@ pub unsafe fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
 pub fn PauseHook_Kraid(game: &mut Game) {
     crate::game::vram_read_queue::enqueue(0x5d, 15872, 0x5000, 1024, false, game);
 }
-pub unsafe fn Kraid_PlaySoundEveryHalfSecond(game: &mut Game) {
+pub fn Kraid_PlaySoundEveryHalfSecond(game: &mut Game) {
     {
         if word!(game.kraid_unk9000 -= 1, reread) == 0 {
             QueueSfx3_Max6(0x1e, game);
@@ -1072,12 +1072,12 @@ crate::game::callback_dispatch! {
     }
 }
 pub unsafe fn Kraid_RestrictSamusXtoFirstScreen(k: u16, game: &mut Game) {
-    unsafe {
+    {
         Kraid_RestrictSamusXtoFirstScreen_2(game);
         KraidEnemy_HandleFunctionTimer(k, game);
     }
 }
-pub unsafe fn Kraid_UpdateBg2TilemapTopHalf(game: &mut Game) {
+pub fn Kraid_UpdateBg2TilemapTopHalf(game: &mut Game) {
     let v0: u16 = word!(game.vram_write_queue_tail);
     let mut v1 = (0xd0 + (word!(game.vram_write_queue_tail) as i32)) as i32;
     match (
@@ -1122,7 +1122,7 @@ pub unsafe fn Kraid_UpdateBg2TilemapTopHalf(game: &mut Game) {
     };
     word!(game.vram_write_queue_tail = (v0).wrapping_add(7));
 }
-pub unsafe fn Kraid_UpdateBG2TilemapBottomHalf(game: &mut Game) {
+pub fn Kraid_UpdateBG2TilemapBottomHalf(game: &mut Game) {
     let v0: u16 = word!(game.vram_write_queue_tail);
     let mut v1 = (0xd0 + (word!(game.vram_write_queue_tail) as i32)) as i32;
     match (
@@ -1168,7 +1168,7 @@ pub unsafe fn Kraid_UpdateBG2TilemapBottomHalf(game: &mut Game) {
     word!(game.vram_write_queue_tail = (v0).wrapping_add(7));
 }
 pub unsafe fn Kraid_RaiseKraidThroughFloor(_k: u16, game: &mut Game) {
-    unsafe {
+    {
         Kraid_RestrictSamusXtoFirstScreen_2(game);
         slot!(game, Enemy_Kraid[0i32].kraid_var_A = (0xa7c89ai32) as u16);
         Kraid_UpdateBg2TilemapTopHalf(game);
@@ -1191,7 +1191,7 @@ macro_rules! spawn_kraid_quake_projectiles_until_timer {
     };
 }
 
-pub unsafe fn Kraid_SpawnRandomQuakeProjs(game: &mut Game) {
+pub fn Kraid_SpawnRandomQuakeProjs(game: &mut Game) {
     let mut v0: u16 = (word!(game.random_number)) & (0x3fu16);
     if (word!(game.random_number) & 2) == 0 {
         v0 = !(v0 as i32) as u16;
@@ -2084,7 +2084,7 @@ crate::game::callback_dispatch! {
         10991665 => [()];
     }
 }
-pub unsafe fn Phantoon_MoveInSwoopingPattern(k: u16, game: &mut Game) {
+pub fn Phantoon_MoveInSwoopingPattern(k: u16, game: &mut Game) {
     let mut v4: u16 = 0;
     let E2 = (0x80) as i32;
     let mut phant_var_E: i16 = slot!(game, Enemy_Phantoon[E2].var_E) as i16;
@@ -2158,7 +2158,7 @@ pub unsafe fn Phantoon_MoveInSwoopingPattern(k: u16, game: &mut Game) {
         slot!(game, Enemy_Phantoon[E0].base.y_pos = 216);
     }
 }
-pub unsafe fn Phantoon_BeginSwoopingPattern(k: u16, game: &mut Game) {
+pub fn Phantoon_BeginSwoopingPattern(k: u16, game: &mut Game) {
     let E2 = (0x80) as i32;
     slot!(game, Enemy_Phantoon[E2]; var_C = 1024, var_D = 1024);
     slot!(game, Enemy_Phantoon[E2].var_E = 0);
@@ -2166,7 +2166,7 @@ pub unsafe fn Phantoon_BeginSwoopingPattern(k: u16, game: &mut Game) {
     slot!(game, Enemy_Phantoon[E].var_F = (0xa7d678i32) as u16);
     slot!(game, Enemy_Phantoon[E].var_E = 360);
 }
-pub unsafe fn Phantoon_ChangeEyeSpriteBasedOnSamusDist(game: &mut Game) {
+pub fn Phantoon_ChangeEyeSpriteBasedOnSamusDist(game: &mut Game) {
     let v0: u16 = (2u16).wrapping_mul({
         match actor_api::direction_to_player(&mut Runtime::new(game)) {
             actor_api::PlayerDirection::Up => 0u16,
@@ -2183,7 +2183,7 @@ pub unsafe fn Phantoon_ChangeEyeSpriteBasedOnSamusDist(game: &mut Game) {
     slot!(game, Enemy_Phantoon[E].base; instruction_timer = 1, current_instruction = crate::rtl::rom_table_word!(game, 0xa7d40d, (v0 >> 1) as isize));
 }
 pub unsafe fn Phantoon_StartDeathSequence(k: u16, game: &mut Game) {
-    unsafe {
+    {
         let E = (k as i32) as i32;
         if slot!(game, Enemy_Phantoon[E].var_F) as i32 == 0xa7d678 & 0xffff
             || slot!(game, Enemy_Phantoon[E].var_F) as i32 == 0xa7d6b9 & 0xffff
@@ -2353,7 +2353,7 @@ pub unsafe fn Phantoon_Func_10_CalculateNthTransitionColorFromXtoY(
     j: u16,
     game: &mut Game,
 ) -> u16 {
-    unsafe {
+    {
         (Phantoon_CalculateNthTransitionColorComponentFromXtoY(
             a,
             (k) & (0x1fu16),
@@ -2376,7 +2376,7 @@ pub unsafe fn Phantoon_Func_10_CalculateNthTransitionColorFromXtoY(
                 << 10)) as u16
     }
 }
-pub unsafe fn Phantoon_CalculateNthTransitionColorComponentFromXtoY(
+pub fn Phantoon_CalculateNthTransitionColorComponentFromXtoY(
     a: u16,
     k: u16,
     j: u16,
@@ -2404,7 +2404,7 @@ pub unsafe fn Phantoon_CalculateNthTransitionColorComponentFromXtoY(
     }) as u16;
     ((r18).wrapping_add(u16::swap_bytes(k))) >> 8
 }
-pub unsafe fn Etecoon_Func_1(k: u16, game: &mut Game) {
+pub fn Etecoon_Func_1(k: u16, game: &mut Game) {
     if word!(game.earthquake_timer) != 0 {
         let E = (k as i32) as i32;
         slot!(
@@ -2419,7 +2419,7 @@ pub unsafe fn Etecoon_Func_1(k: u16, game: &mut Game) {
         );
     }
 }
-pub unsafe fn Etecoon_Func_2(k: u16, game: &mut Game) -> u8 {
+pub fn Etecoon_Func_2(k: u16, game: &mut Game) -> u8 {
     let E = (k as i32) as i32;
     {
         let (actor, amount) = (
@@ -2437,7 +2437,7 @@ pub unsafe fn Etecoon_Func_2(k: u16, game: &mut Game) -> u8 {
         ) == actor_api::MovementResult::Blocked) as u8
     }
 }
-pub unsafe fn Etecoon_Func_3(k: u16, game: &mut Game) -> u8 {
+pub fn Etecoon_Func_3(k: u16, game: &mut Game) -> u8 {
     let E = (k as i32) as i32;
     let amt: i32 = (words!((
         slot!(game, Enemy_Etecoon[E].var_A),
@@ -2458,7 +2458,7 @@ pub unsafe fn Etecoon_Func_3(k: u16, game: &mut Game) -> u8 {
 static funcs_A2A79: [Func_Y_V; 3] = callback_table! { nonnull Func_Y_V;
     Etecoon_Func_13, Etecoon_Func_14, Etecoon_Func_15,
 };
-pub unsafe fn Etecoon_Func_13(j: u16, game: &mut Game) {
+pub fn Etecoon_Func_13(j: u16, game: &mut Game) {
     let E = (j as i32) as i32;
     slot!(game, Enemy_Etecoon[E].var_F = (0xa7ec97i32) as u16);
     slot!(
@@ -2468,7 +2468,7 @@ pub unsafe fn Etecoon_Func_13(j: u16, game: &mut Game) {
     slot!(game, Enemy_Etecoon[E].var_C = g_word_A7E90C);
     slot!(game, Enemy_Etecoon[E].var_D = g_word_A7E90E);
 }
-pub unsafe fn Etecoon_Func_14(j: u16, game: &mut Game) {
+pub fn Etecoon_Func_14(j: u16, game: &mut Game) {
     let E = (j as i32) as i32;
     slot!(game, Enemy_Etecoon[E].var_F = (0xa7ecbbi32) as u16);
     slot!(
@@ -2478,7 +2478,7 @@ pub unsafe fn Etecoon_Func_14(j: u16, game: &mut Game) {
     slot!(game, Enemy_Etecoon[E].var_C = g_word_A7E908);
     slot!(game, Enemy_Etecoon[E].var_D = g_word_A7E90A);
 }
-pub unsafe fn Etecoon_Func_15(j: u16, game: &mut Game) {
+pub fn Etecoon_Func_15(j: u16, game: &mut Game) {
     let E = (j as i32) as i32;
     slot!(game, Enemy_Etecoon[E].var_F = (0xa7ed75i32) as u16);
     slot!(
@@ -2489,7 +2489,7 @@ pub unsafe fn Etecoon_Func_15(j: u16, game: &mut Game) {
     slot!(game, Enemy_Etecoon[E].var_C = g_word_A7E908);
     slot!(game, Enemy_Etecoon[E].var_D = g_word_A7E90A);
 }
-pub unsafe fn Dachora_Func_6(k: u16, game: &mut Game) -> i32 {
+pub fn Dachora_Func_6(k: u16, game: &mut Game) -> i32 {
     let E = (k as i32) as i32;
     if ((slot!(game, Enemy_Dachora[E].var_A)) as i16).wrapping_sub((g_word_A7F4D5) as i16) >= 0 {
         if slot!(game, Enemy_Dachora[E].var_E) == 1 {
@@ -2544,7 +2544,7 @@ pub unsafe fn Dachora_Func_6(k: u16, game: &mut Game) -> i32 {
         slot!(game, Enemy_Dachora[E].var_B)
     ))) as i32
 }
-pub unsafe fn Dachora_Func_9(k: u16, game: &mut Game) {
+pub fn Dachora_Func_9(k: u16, game: &mut Game) {
     let EK = (k as i32) as i32;
     let E1 = (k as i32 + 64) as i32;
     let dachor_var_A: u16 = slot!(game, Enemy_Dachora[E1].var_A);
@@ -2609,7 +2609,7 @@ pub unsafe fn Dachora_Func_9(k: u16, game: &mut Game) {
         }
     };
 }
-pub unsafe fn Dachora_Func_10(k: u16, game: &mut Game) {
+pub fn Dachora_Func_10(k: u16, game: &mut Game) {
     let E = (k as i32) as i32;
     Dachora_Func_1(
         crate::rtl::rom_table_word!(
