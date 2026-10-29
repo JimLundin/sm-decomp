@@ -7,6 +7,7 @@ use crate::ram_map::word as game_word;
 use crate::rom::{RomImage, lorom_offset};
 use crate::rtl::rom_table_word;
 use sm_data::save_slots::{ADDRESS, BYTES, SaveSlots};
+use sm_game::save_file::{self, SaveHost};
 
 pub(crate) type ImportedSlots = Imported<SaveSlots>;
 
@@ -25,41 +26,36 @@ pub(crate) fn sram_offset(game: &Game, slot: isize) -> u16 {
         .unwrap_or_else(|| rom.table_word(lorom_offset(ADDRESS) as usize, slot))
 }
 
-/// Accept the stored menu selection only when its range and inverse-bit check agree.
-pub(crate) fn last_selected(game: &Game) -> u16 {
-    let slot = game.g_sram.word(0x1fec);
-    if slot < 3 && slot & game.g_sram.word(0x1fee) == 0 {
-        slot
-    } else {
-        0
+/// The save format's view of work RAM, SRAM and the slot offsets.
+struct SaveFile<'a>(&'a mut Game);
+
+impl SaveHost for SaveFile<'_> {
+    fn ram_word(&self, at: usize) -> u16 {
+        u16::from_ne_bytes([self.0.ram().read_byte(at), self.0.ram().read_byte(at + 1)])
     }
+    fn set_ram_word(&mut self, at: usize, value: u16) {
+        self.0.ram().copy_in(at, &value.to_ne_bytes());
+    }
+    fn sram_word(&self, at: usize) -> u16 {
+        self.0.g_sram.word(at)
+    }
+    fn set_sram_word(&mut self, at: usize, value: u16) {
+        self.0.g_sram.set_word(at, value);
+    }
+    fn slot_offset(&self, slot: isize) -> u16 {
+        sram_offset(self.0, slot)
+    }
+}
+
+/// Accept the stored menu selection only when its range and inverse-bit check agree.
+pub(crate) fn last_selected(game: &mut Game) -> u16 {
+    save_file::last_selected(&SaveFile(game))
 }
 
 #[derive(Clone, Copy)]
 enum Direction {
     Save,
     Load,
-}
-
-fn transfer_slot(slot: u16, direction: Direction, game: &mut Game) -> u16 {
-    let mut cursor = sram_offset(game, (slot & 3) as isize);
-    let mut checksum = 0u16;
-    for at in (0xd7c0..0xde1c).step_by(2) {
-        let sram = usize::from(cursor & !1);
-        let value = match direction {
-            Direction::Save => {
-                u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])
-            }
-            Direction::Load => game.g_sram.word(sram),
-        };
-        match direction {
-            Direction::Save => game.g_sram.set_word(sram, value),
-            Direction::Load => game.ram().copy_in(at, &value.to_ne_bytes()),
-        }
-        checksum = checksum.wrapping_add(value);
-        cursor = cursor.wrapping_add(2);
-    }
-    checksum
 }
 
 pub(crate) fn save(slot: u16, game: &mut Game) {
@@ -80,37 +76,25 @@ pub(crate) fn save(slot: u16, game: &mut Game) {
     word!(game.sram_area_index = word!(game.area_index));
     #[cfg(sm_verify_dll)]
     crate::flags_save_observer::observe(4, game);
-    let checksum = transfer_slot(slot, Direction::Save, game);
+    let checksum = save_file::save(&mut SaveFile(game), slot);
     #[cfg(sm_verify_dll)]
     crate::flags_save_observer::observe(5, game);
-    let header = 2 * usize::from(slot & 3);
-    game.g_sram.set_word(header, checksum);
-    game.g_sram.set_word(header + 0x1ff0, checksum);
-    game.g_sram.set_word(header + 8, !checksum);
-    game.g_sram.set_word(header + 0x1ff8, !checksum);
+    save_file::write_checksum(&mut SaveFile(game), slot, checksum);
     #[cfg(sm_verify_dll)]
     crate::flags_save_observer::observe(6, game);
     unsafe { crate::rtl::RtlWriteSram(game) };
 }
 
 pub(crate) fn load(slot: u16, game: &mut Game) -> u8 {
-    let checksum = transfer_slot(slot, Direction::Load, game);
-    let header = 2 * usize::from(slot & 3);
-    if checksum == game.g_sram.word(header) && !checksum == game.g_sram.word(header + 8)
-        || checksum == game.g_sram.word(header + 0x1ff0)
-            && !checksum == game.g_sram.word(header + 0x1ff8)
-    {
+    let checksum = save_file::load(&mut SaveFile(game), slot);
+    if save_file::checksum_matches(&SaveFile(game), slot, checksum) {
         word_transfers!(game, descending, 48; native(0xa00) <- le(player_data_saved, 47));
         transfer_map(Direction::Load, game);
         word!(game.load_station_index = word!(game.sram_save_station_index));
         word!(game.area_index = word!(game.sram_area_index));
         0
     } else {
-        let mut cursor = sram_offset(game, (slot & 3) as isize);
-        for _ in (0xd7c0..0xde1c).step_by(2) {
-            game.g_sram.set_word(usize::from(cursor & !1), 0);
-            cursor = cursor.wrapping_add(2);
-        }
+        save_file::clear(&mut SaveFile(game), slot);
         word!(game.load_station_index = 0);
         word!(game.area_index = 0);
         1

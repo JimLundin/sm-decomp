@@ -31,6 +31,7 @@ pub mod projectile_room;
 pub mod projectile_weapon_definitions;
 pub mod ram;
 pub mod room_entry;
+pub mod save_file;
 pub mod special_geometry;
 pub mod sprite_effect_state;
 pub mod visual_state;
