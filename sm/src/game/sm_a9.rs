@@ -2275,7 +2275,7 @@ pub unsafe fn MotherBrain_SamusCollDetect(game: &mut Game) {
     }
 }
 pub unsafe fn MotherBrain_SamusCollDetectPart(k: u16, r18: u16, r20: u16, game: &mut Game) -> u8 {
-    use actors::mother_brain_contact::{Contact, samus_contact};
+    use actors::part_hitboxes::{Contact, samus_contact};
     match samus_contact(k, r18, r20, game) {
         Contact::None => 0,
         Contact::Pushed => 1,
@@ -3847,54 +3847,6 @@ pub unsafe fn DeadTorizo_WaitForSamusColl(k: u16, game: &mut Game) {
         slot!(game, Enemy_DeadTorizo[0i32].var_A = (0xa9d3c8i32) as u16);
     }
 }
-pub unsafe fn DeadTorizo_Func_0(game: &mut Game) -> u8 {
-    unsafe {
-        let mut v3: u16 = 0;
-        let mut v4: u16 = 0;
-        let E: i32 = 0;
-        let r18: u16 = slot!(game, Enemy_DeadTorizo[E].base.x_pos);
-        let r20: u16 = slot!(game, Enemy_DeadTorizo[E].base.y_pos);
-        let mut p = RomPtr_A9(addr_kDeadTorizo_Hitbox_D77C as u16, game);
-        let mut R22: i32 = *(p as *mut u16) as i32;
-        let mut R24: u16 = 0;
-        p = p.offset(2);
-        while R22 != 0 {
-            if ((word!(game.samus_y_pos)) as i16).wrapping_sub((r20) as i16) >= 0 {
-                R24 = (word!(game.samus_y_pos)).wrapping_sub(r20);
-                v3 = *(p.offset(6) as *mut u16);
-            } else {
-                R24 = (r20).wrapping_sub(word!(game.samus_y_pos));
-                v3 = *(p.offset(2) as *mut u16);
-            }
-            if ((word!(game.samus_y_radius) as i32 + abs16(v3) as i32 - R24 as i32) as i16) >= 0 {
-                if ((word!(game.samus_x_pos)) as i16).wrapping_sub((r18) as i16) >= 0 {
-                    R24 = (word!(game.samus_x_pos)).wrapping_sub(r18);
-                    v4 = *(p.offset(4) as *mut u16);
-                } else {
-                    R24 = (r18).wrapping_sub(word!(game.samus_x_pos));
-                    v4 = *(p as *mut u16);
-                }
-                let mut v5: i16 =
-                    (word!(game.samus_x_radius) as i32 + abs16(v4) as i32 - R24 as i32) as i16;
-                if v5 >= 0 {
-                    if v5 as i32 - 4i32 & 0x8000 != 0 {
-                        v5 = 4;
-                    }
-                    word!(game.extra_samus_x_displacement = v5 as u16);
-                    word!(game.extra_samus_y_displacement = 4);
-                    word! { game, 0;
-                        extra_samus_x_subdisplacement, extra_samus_y_subdisplacement,
-                    }
-                    return 1;
-                }
-            }
-            p = p.offset(8);
-            R22 -= 1;
-        }
-        0
-    }
-}
-
 macro_rules! queue_dead_torizo_tile_transfers {
     ($game:ident, $transfer_table:literal, $entry:ident, $tail:ident) => {
         let mut v8: u16 = 0;
@@ -5352,7 +5304,7 @@ crate::game::callback_dispatch! {
     [11129704] DeadTorizo_Main [] {
         let E: i32 = 0;
         if (slot!(game, Enemy_DeadTorizo[E].base.properties) as i32 & kEnemyProps_Tangible as i32) == 0
-            && DeadTorizo_Func_0(game) & 1 != 0
+            && actors::part_hitboxes::dead_torizo_contact(game)
         {
             slot!(game, Enemy_DeadTorizo[E].base.properties = (slot!(game, Enemy_DeadTorizo[E].base.properties)) | ((kEnemyProps_Tangible) as u16));
             slot!(game, Enemy_DeadTorizo[E].var_A = (0xa9d3e6i32) as u16);
