@@ -31,6 +31,19 @@ pub(crate) fn native_rom_diagnostic(address: u32, game: &mut Game) {
     crate::room_contact_start_observer::diagnostic(address, game);
 }
 
+/// The native image at `bank:cursor`, as one original RomPtr fetch: a cursor
+/// below $8000 reports the invalid-window diagnostic and still reads its offset.
+pub(crate) fn native_record(bank: u8, cursor: u16, game: &mut Game) -> RomRecord {
+    let address = (u32::from(bank) << 16) | u32::from(cursor);
+    if address & 0x8000 == 0 {
+        native_rom_diagnostic(address, game);
+    }
+    RomRecord {
+        image: game.capture_native_rom(),
+        base: crate::rom::lorom_offset(address) as usize,
+    }
+}
+
 #[forbid(unsafe_code)]
 fn draw_trail(game: &mut Game, pair: usize, right: bool, frozen: bool) {
     let ram = game.ram();

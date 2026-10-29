@@ -2,27 +2,14 @@
 #![forbid(unsafe_code)]
 #![allow(non_snake_case)]
 use crate::game::constants::bank_a6::{addr_byte_A6C15D, addr_stru_A6C3B8};
-use crate::game::session_runtime::native_rom_diagnostic;
+use crate::game::session_runtime::native_record as read;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
-use crate::rom::{RomRecord, lorom_offset};
+use crate::rom::RomRecord;
 use crate::types::{Enemy_MotherBrain, EnemyData};
 
 const QUEUE: usize = 0xd0;
 const ENTRY: u16 = 7;
-
-/// The entry at `bank:cursor`; a cursor below $8000 reports the invalid-window
-/// diagnostic once, as each original pointer fetch did, and still reads.
-fn read(bank: u8, cursor: u16, game: &mut Game) -> RomRecord {
-    let address = (u32::from(bank) << 16) | u32::from(cursor);
-    if address & 0x8000 == 0 {
-        native_rom_diagnostic(address, game);
-    }
-    RomRecord {
-        image: game.capture_native_rom(),
-        base: lorom_offset(address) as usize,
-    }
-}
 
 /// Copy the seven bytes to queue byte `tail` in the original store order:
 /// size, the bank word at 3, the source address, then the destination.
