@@ -415,6 +415,7 @@ pub mod game {
     pub(crate) mod player_movement;
     pub(crate) mod player_transitions;
     pub(crate) mod player_update;
+    pub(crate) mod rom_vram_entries;
 
     pub(crate) mod boot;
     pub(crate) mod checkpoint_binding;

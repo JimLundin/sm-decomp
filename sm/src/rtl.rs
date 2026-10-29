@@ -1091,10 +1091,6 @@ pub(crate) unsafe fn rom_bank_ptr<const BANK: u8>(addr: u16, game: &mut Game) ->
 
 /// Resolve an explicit bank and word address, retaining RomPtr diagnostics.
 #[inline]
-pub(crate) unsafe fn rom_ptr_with_bank(bank: u8, addr: u16, game: &mut Game) -> *const u8 {
-    unsafe { RomPtr((u32::from(bank) << 16) | u32::from(addr), game) }
-}
-
 #[forbid(unsafe_code)]
 pub(crate) fn report_invalid_rom_address(address: u32, game: &mut Game) {
     use std::io::Write;

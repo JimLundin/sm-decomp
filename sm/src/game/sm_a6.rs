@@ -31,6 +31,9 @@ use crate::game::music::{
 };
 use crate::game::palette_copies::{WriteColorsToPalette, WriteColorsToTargetPalette};
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
+use crate::game::rom_vram_entries::{
+    ProcessEscapeTimerTileTransfers, Ridley_Func_59, Ridley_Func_62,
+};
 use crate::game::session_runtime::damage_player;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_a9::{ComputeCosMult, ComputeSinMult, MoveEnemyWithVelocity, Shitroid_Func_2};
@@ -2282,7 +2285,7 @@ pub unsafe fn Ridley_C08E(game: &mut Game) {
     }
 }
 pub unsafe fn Ridley_C09F(game: &mut Game) {
-    unsafe {
+    {
         if ProcessEscapeTimerTileTransfers(game) & 1 != 0 {
             let E: i32 = 0;
             slot!(
@@ -2360,33 +2363,6 @@ pub unsafe fn Ridley_Func_58(game: &mut Game) {
         SetBossBitForCurArea(1, game);
     }
 }
-pub unsafe fn Ridley_Func_59(game: &mut Game) {
-    unsafe {
-        let v0: u16 = word!(game.vram_write_queue_tail);
-        let v1 = RomPtr_A6(addr_byte_A6C15D as u16, game);
-        let mut v2: i32 = (0xd0 + (word!(game.vram_write_queue_tail) as i32)) - 0xf78;
-        slot!(game, VramWriteEntry[v2].size = *(v1 as *mut u16));
-        match (
-            *(v1.offset(3) as *mut u16),
-            slot!(@at VramWriteEntry, v2, src.addr) + 1,
-        ) {
-            (value, at) => {
-                let bytes = u16::to_ne_bytes(value);
-                game.ram().write_byte(at, bytes[0]);
-                game.ram().write_byte(at + 1, bytes[1]);
-            }
-        };
-        slot!(
-            game,
-            VramWriteEntry[v2].src.addr = *(v1.offset(2) as *mut u16)
-        );
-        slot!(
-            game,
-            VramWriteEntry[v2].vram_dst = *(v1.offset(5) as *mut u16)
-        );
-        word!(game.vram_write_queue_tail = (v0).wrapping_add(7));
-    }
-}
 pub unsafe fn Ridley_Func_61(game: &mut Game) {
     if word!(game.door_transition_flag_enemies) | word!(game.palette_change_num) == 0
         && (word!(game.nmi_frame_counter_word) & 3) == 0
@@ -2412,43 +2388,6 @@ pub unsafe fn SetupZebesEscapeTypewriter(game: &mut Game) {
     slot!(game, Enemy_MotherBrain[E].var_3B = addr_loc_A9C49C as u16);
     slot!(game, Enemy_MotherBrain[E]; var_3C = 0, var_3D = 0, var_3E = 0, var_3F = 0);
     word! { game, 0; reg_BG2HOFS, reg_BG2VOFS }
-}
-pub unsafe fn ProcessEscapeTimerTileTransfers(game: &mut Game) -> u8 {
-    unsafe {
-        let v0: i32 = 0;
-        let ai_var_E: u16 = slot!(game, EnemyData[v0].ai_var_E);
-        let v2: u16 = word!(game.vram_write_queue_tail);
-        let v3 = RomPtr_A6(ai_var_E, game);
-        let result: u8 = 1;
-        if *(v3 as *mut u16) != 0 {
-            let mut v4: i32 = (0xd0 + (word!(game.vram_write_queue_tail) as i32)) - 0xf78;
-            slot!(game, VramWriteEntry[v4].size = *(v3 as *mut u16));
-            match (
-                *(v3.offset(3) as *mut u16),
-                slot!(@at VramWriteEntry, v4, src.addr) + 1,
-            ) {
-                (value, at) => {
-                    let bytes = u16::to_ne_bytes(value);
-                    game.ram().write_byte(at, bytes[0]);
-                    game.ram().write_byte(at + 1, bytes[1]);
-                }
-            };
-            slot!(
-                game,
-                VramWriteEntry[v4].src.addr = *(v3.offset(2) as *mut u16)
-            );
-            slot!(
-                game,
-                VramWriteEntry[v4].vram_dst = *(v3.offset(5) as *mut u16)
-            );
-            word!(game.vram_write_queue_tail = (v2).wrapping_add(7));
-            slot!(game, EnemyData[v0].ai_var_E = (ai_var_E).wrapping_add(7));
-            if *(RomPtr_A6(slot!(game, EnemyData[v0].ai_var_E), game) as *mut u16) != 0 {
-                return 0;
-            }
-        }
-        result
-    }
 }
 pub unsafe fn HandleTypewriterText_Ext(a: u16, game: &mut Game) -> u8 {
     unsafe {
@@ -2539,41 +2478,6 @@ pub unsafe fn HandleTypewriterText_Ext(a: u16, game: &mut Game) -> u8 {
                 0
             }
         }
-    }
-}
-pub unsafe fn Ridley_Func_62(game: &mut Game) {
-    unsafe {
-        let mut v0: u16 = addr_stru_A6C3B8 as u16;
-        let mut i: i32 = word!(game.vram_write_queue_tail) as i32;
-        loop {
-            let v2 = RomPtr_A6(v0, game);
-            if *(v2 as *mut u16) == 0 {
-                break;
-            }
-            let mut v3: i32 = (0xd0 + (i)) - 0xf78;
-            slot!(game, VramWriteEntry[v3].size = *(v2 as *mut u16));
-            match (
-                *(v2.offset(3) as *mut u16),
-                slot!(@at VramWriteEntry, v3, src.addr) + 1,
-            ) {
-                (value, at) => {
-                    let bytes = u16::to_ne_bytes(value);
-                    game.ram().write_byte(at, bytes[0]);
-                    game.ram().write_byte(at + 1, bytes[1]);
-                }
-            };
-            slot!(
-                game,
-                VramWriteEntry[v3].src.addr = *(v2.offset(2) as *mut u16)
-            );
-            slot!(
-                game,
-                VramWriteEntry[v3].vram_dst = *(v2.offset(5) as *mut u16)
-            );
-            v0 = (v0).wrapping_add(7);
-            i += 7;
-        }
-        word!(game.vram_write_queue_tail = i as u16);
     }
 }
 pub unsafe fn Ridley_Func_68(game: &mut Game) -> u8 {
