@@ -21,6 +21,12 @@ tilesets, palettes, sprites and sounds through `sm_data`, not a general engine.
 Judge every change by whether it moves the code toward that engine and makes
 the code base smaller and clearer.
 
+The external review runs at 08:34 and 16:34 Stockholm time and posts to #6.
+Visible progress on main is expected between any two reviews; a review with no
+new commits, or none serving the current phase, is treated as a stall and
+investigated. If you are blocked, say so in #6 with the cause before the next
+review rather than waiting.
+
 **Progress means behaviour crossing into a target package** (`sm_data`,
 `sm_game`, `sm_runtime`, `sm_app`, `sm_tools`) that the compiler keeps separate
 from the emulator. Code that exists only to keep the original runtime and oracle
