@@ -4,23 +4,8 @@
 use super::access::{AccessMode::Native, ActorAccess};
 use crate::game::enemy_projectiles::host::{BotwoonField as B, Host as EprojHost};
 
-#[derive(Clone, Default, Debug, PartialEq)]
-pub(in crate::game) struct DeathProtocol {
-    pub(in crate::game) pending_hit: u16,
-    pub(in crate::game) active: u16,
-    pub(in crate::game) tail_ready: u16,
-    pub(in crate::game) previous_health: u16,
-    pub(in crate::game) body_landed: u16,
-}
+pub(in crate::game) use sm_game::actors::botwoon_death::{DeathProtocol, Signal};
 
-#[derive(Clone, Copy)]
-pub(in crate::game) enum Signal {
-    PendingHit,
-    Active,
-    TailReady,
-    PreviousHealth,
-    BodyLanded,
-}
 /// Native actor accesses retain their full selector and ordered byte stores.
 /// Projectile capabilities retain their separate little-endian publication.
 pub(in crate::game) trait Host: ActorAccess {
