@@ -2,7 +2,7 @@
 //! No Game, RAM facade or copied collision algorithm is used by generic checks.
 #![forbid(unsafe_code)]
 use crate::game::{
-    actors::access::{ActorAccess, ActorKey},
+    actors::access::ActorKey,
     launch_motion::MovementDirection,
     player_collision::{
         effects::Host,
@@ -113,7 +113,10 @@ pub(crate) fn unchecked_launch<H: Host>(h: &mut H) {
 // Caller supplies one prepared actual actor at (120,100), radius (2,2).
 // Narrow/wide/narrow checks all use the same owner and never refresh inputs.
 #[cfg(sm_verify_dll)]
-pub(crate) fn same_interval_radius<H: ActorAccess>(h: &mut H, actor: ActorKey) {
+pub(crate) fn same_interval_radius<H: crate::game::actors::access::ActorAccess>(
+    h: &mut H,
+    actor: ActorKey,
+) {
     {
         let p = &mut h.session_mut().player;
         p.x = 100;
