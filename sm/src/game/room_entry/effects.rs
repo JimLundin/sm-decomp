@@ -1,7 +1,7 @@
 //! Closed room-entry effects supplied by the compatibility runtime.
 #![forbid(unsafe_code)]
 use super::{
-    EntryWait,
+    api::EntryWait,
     content::{
         AssetSource, BackgroundDestination, EntryContent, ObjectCursor, SetupAction,
         VramDestination,
@@ -182,13 +182,7 @@ pub enum VramDecodeTarget {
     MainTiles,
     Cre,
 }
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum AssetSlot {
-    Level,
-    TileTable,
-    Tiles,
-    Palette,
-}
+pub use sm_game::room_entry::AssetSlot;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum AssetRead {
     ThreeLittleEndian,
