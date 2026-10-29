@@ -11,6 +11,7 @@ use crate::game::enemy_layouts::EnemyLayout104 as Boss;
 use crate::game::enemy_projectiles::{
     DropSource, SpawnEprojWithGfx, SpawnEprojWithRoomGfx, scatter_drop,
 };
+use crate::game::enemy_speeds::enemy_speed;
 use crate::game::gameplay_flag_runtime::{SetBossBitForCurArea, boss_byte_at};
 use crate::game::music::{QueueMusic_Delayed8, QueueSfx2_Max6};
 use crate::game::room_mechanisms::{open_passage, spawn_hardcoded};
@@ -163,8 +164,8 @@ pub(crate) fn wait_collapse(game: &mut Game) {
 pub(crate) fn fall(game: &mut Game) {
     let e = i32::from(word!(game.cur_enemy_index));
     let index = (8 * i32::from(slot!(byte game, Boss[e].var_28[1])) >> 1) as isize;
-    let high = rom_table_word!(game, 0xa2838f, index + 1);
-    let low = rom_table_word!(game, 0xa2838f, index);
+    let high = enemy_speed!(game, Quadratic, index + 1);
+    let low = enemy_speed!(game, Quadratic, index);
     slot!(
         game,
         Boss[e].base(y_pos, y_subpos) += (u32::from(high) << 16) | u32::from(low)

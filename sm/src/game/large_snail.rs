@@ -3,6 +3,7 @@
 use crate::game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::game::actors::{animation, api, combat};
 use crate::game::enemy_projectiles::host::Effects;
+use crate::game::enemy_speeds::SpeedTable;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::words as fields;
@@ -25,10 +26,7 @@ fn player_left(runtime: &Runtime<'_>) -> bool {
     api::player_delta(runtime, Key::from_legacy(selected(runtime)), api::Axis::X) & 0x8000 != 0
 }
 fn speed_word(runtime: &Runtime<'_>, index: isize) -> u16 {
-    runtime
-        .loaded_image()
-        .expect("ROM must be loaded")
-        .table_word(crate::rom::lorom_offset(0xa28187) as usize, index)
+    runtime.enemy_speed(SpeedTable::Linear, index)
 }
 pub(crate) fn initialize(game: &mut Game) {
     let mut runtime = Runtime::new(game);

@@ -4,6 +4,7 @@ use super::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use super::{api, combat};
 use crate::game::enemy_projectiles::host::Effects;
 use crate::game::enemy_script::EnemyScript;
+use crate::game::enemy_speeds::SpeedTable;
 use crate::game::player_projectiles::content::table;
 use crate::game::player_projectiles::host::Host;
 use crate::game::session_access::SessionAccess;
@@ -70,8 +71,8 @@ fn jump(runtime: &mut Runtime<'_>, falling: bool, ceiling: bool) {
     let index = 4 * runtime.resolve_actor(key, Native).variables[2] as isize
         + if falling == ceiling { 2 } else { 0 };
     let current = combat::current(runtime);
-    let high = table(runtime, 0xa2838f, index + 1);
-    let low = table(runtime, 0xa2838f, index);
+    let high = runtime.enemy_speed(SpeedTable::Quadratic, index + 1);
+    let low = runtime.enemy_speed(SpeedTable::Quadratic, index);
     let amount = ((u32::from(high) << 16) | u32::from(low)) as i32;
     if api::move_vertical(runtime, current, amount) == api::MovementResult::Blocked {
         if falling {

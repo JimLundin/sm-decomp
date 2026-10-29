@@ -2,6 +2,14 @@
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "crates/sm_data/src/lib.rs",
+        include_bytes!("../../crates/sm_data/src/lib.rs"),
+    ),
+    (
+        "crates/sm_data/src/enemy_speeds.rs",
+        include_bytes!("../../crates/sm_data/src/enemy_speeds.rs"),
+    ),
+    (
         "crates/sm_game/src/lib.rs",
         include_bytes!("../../crates/sm_game/src/lib.rs"),
     ),
@@ -1186,6 +1194,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/mother_brain_visuals.rs",
         include_bytes!("game/mother_brain_visuals.rs"),
+    ),
+    (
+        "sm/src/game/enemy_speeds.rs",
+        include_bytes!("game/enemy_speeds.rs"),
     ),
     (
         "sm/src/game/moving_platforms.rs",
