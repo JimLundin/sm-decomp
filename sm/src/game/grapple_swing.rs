@@ -690,7 +690,7 @@ pub(crate) fn start_firing(game: &mut Game) {
     }
     word! {game; grapple_beam_unkD3A = 2; grapple_beam_unkD3C = 0;
     grapple_point_anim_timer = 5;
-    grapple_point_anim_ptr = crate::rtl::rom_table_word!(game, 0x9bc342, 0); }
+    grapple_point_anim_ptr = grapple_aim::point_animation(game).first; }
     word! { game, 0;
         grapple_beam_grapple_start_x, grapple_beam_unkD38, grapple_beam_unkD36,
         slow_grabble_scrolling_flag,
@@ -828,10 +828,10 @@ pub(crate) fn update_tiles(game: &mut Game) {
         word!(game.grapple_point_anim_timer = 5);
         word!(game.grapple_point_anim_ptr += 512);
         if ((word!(game.grapple_point_anim_ptr)) as i16)
-            .wrapping_sub((crate::rtl::rom_table_word!(game, 0x9bc344, 0)) as i16)
+            .wrapping_sub(grapple_aim::point_animation(game).end as i16)
             >= 0
         {
-            word!(game.grapple_point_anim_ptr = crate::rtl::rom_table_word!(game, 0x9bc342, 0));
+            word!(game.grapple_point_anim_ptr = grapple_aim::point_animation(game).first);
         }
     }
     let cursor = queue_native_transfer(

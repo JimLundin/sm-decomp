@@ -46,6 +46,29 @@ impl Extensions {
     }
 }
 
+/// $9B:C342: the grapple point animation's first frame and the end of its
+/// frames, as bank $9A tile addresses; each frame is 512 bytes on.
+pub const POINT_ANIMATION_ADDRESS: u32 = 0x9b_c342;
+pub const POINT_ANIMATION_BYTES: usize = 4;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct PointAnimation {
+    pub first: u16,
+    pub end: u16,
+}
+
+impl PointAnimation {
+    pub fn import(bytes: &[u8]) -> Result<Self, LengthError> {
+        match bytes {
+            [a, b, c, d] => Ok(Self {
+                first: u16::from_le_bytes([*a, *b]),
+                end: u16::from_le_bytes([*c, *d]),
+            }),
+            _ => Err(LengthError(bytes.len())),
+        }
+    }
+}
+
 /// $9B:C3C6: what a connected beam runs next, in three ten-direction sets.
 pub const CONNECTION_ADDRESS: u32 = 0x9b_c3c6;
 pub const CONNECTION_BYTES: usize = 3 * DIRECTIONS * 4;

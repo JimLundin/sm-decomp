@@ -128,6 +128,13 @@ fn records_import_from_the_original_rom() {
             phantoon::FLAME_RAIN_BYTES
         ))
     );
+    check!(
+        "grapple_point_animation",
+        grapple_aim::PointAnimation::import(&at(
+            grapple_aim::POINT_ANIMATION_ADDRESS,
+            grapple_aim::POINT_ANIMATION_BYTES
+        ))
+    );
     assert!(
         failures.is_empty(),
         "rejected the original ROM: {failures:?}"
