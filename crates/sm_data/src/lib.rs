@@ -15,6 +15,7 @@ pub mod ceres_ridley;
 pub mod corpses;
 pub mod demo_rooms;
 pub mod enemy_speeds;
+pub mod equipment_screen;
 pub mod escape_etecoons;
 pub mod grapple_aim;
 pub mod grapple_origins;

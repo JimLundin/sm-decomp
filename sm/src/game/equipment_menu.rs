@@ -1,5 +1,6 @@
 //! Equipment selection, item toggling and mutually exclusive beam controls.
 #![forbid(unsafe_code)]
+use crate::game::imported::{Imported, load, word as table_word};
 use crate::game::{
     constants::buttons::{kButton_A, kButton_Down, kButton_Left, kButton_Right, kButton_Up},
     menu_tilemap,
@@ -8,6 +9,51 @@ use crate::game::{
 };
 use crate::game_state::Game;
 use crate::ram_map::word;
+use sm_data::equipment_screen::{
+    BEAM_BITMASK_ADDRESS, BEAM_TILEMAP_OFFSET_ADDRESS, BEAMS, BOOT_BITMASK_ADDRESS, BOOTS,
+    BeamBitmasks, BeamTilemapOffsets, BootBitmasks, CATEGORY_ADDRESS, CATEGORY_BYTES, Categories,
+    Category, ITEM_BITMASK_ADDRESS, ITEMS, ItemBitmasks, import_words,
+};
+
+#[derive(Default)]
+pub(crate) struct ImportedTables {
+    categories: Option<Imported<Categories>>,
+    beam_bitmasks: Option<Imported<BeamBitmasks>>,
+    item_bitmasks: Option<Imported<ItemBitmasks>>,
+    boot_bitmasks: Option<Imported<BootBitmasks>>,
+    beam_tilemap_offsets: Option<Imported<BeamTilemapOffsets>>,
+}
+
+pub(crate) fn import(image: &crate::rom::RomImage) -> ImportedTables {
+    ImportedTables {
+        categories: Imported::import(image, CATEGORY_ADDRESS, CATEGORY_BYTES, Categories::import),
+        beam_bitmasks: Imported::import(image, BEAM_BITMASK_ADDRESS, 2 * BEAMS, import_words),
+        item_bitmasks: Imported::import(image, ITEM_BITMASK_ADDRESS, 2 * ITEMS, import_words),
+        boot_bitmasks: Imported::import(image, BOOT_BITMASK_ADDRESS, 2 * BOOTS, import_words),
+        beam_tilemap_offsets: Imported::import(
+            image,
+            BEAM_TILEMAP_OFFSET_ADDRESS,
+            2 * BEAMS,
+            import_words,
+        ),
+    }
+}
+
+/// Category `index`'s tables; other images and indices run the four original
+/// indexed loads.
+fn category(game: &Game, index: isize) -> Category {
+    Imported::read(
+        &game.equipment_screen.categories,
+        game,
+        |table| table.category(usize::try_from(index).ok()?),
+        |rom| Category {
+            tilemap_offsets: load(rom, CATEGORY_ADDRESS, index),
+            bitmasks: load(rom, 0x82c034, index),
+            equipped_address: load(rom, 0x82c03c, index),
+            tilemaps: load(rom, 0x82c044, index),
+        },
+    )
+}
 
 pub(crate) fn update(game: &mut Game) {
     let category = word!(game.pausemenu_equipment_category_item) as u8;
@@ -156,15 +202,21 @@ fn scan(
     fallback: Option<u16>,
     game: &mut Game,
 ) -> u16 {
-    let (table, limit) = match category {
-        1 => (0x82c04c, 10),
-        2 => (0x82c056, 10),
-        3 => (0x82c062, 6),
+    let limit = match category {
+        1 => 10,
+        2 => 10,
+        3 => 6,
         _ => unreachable!(),
     };
     let mut found = category != 1 || word!(game.hyper_beam_flag) == 0;
     while found {
-        let mask = crate::rtl::rom_table_word!(game, table, (offset >> 1) as isize);
+        let index = (offset >> 1) as isize;
+        let tables = &game.equipment_screen;
+        let mask = match category {
+            1 => table_word(&tables.beam_bitmasks, game, BEAM_BITMASK_ADDRESS, index),
+            2 => table_word(&tables.item_bitmasks, game, ITEM_BITMASK_ADDRESS, index),
+            _ => table_word(&tables.boot_bitmasks, game, BOOT_BITMASK_ADDRESS, index),
+        };
         let collected = if category == 1 {
             word!(game.collected_beams)
         } else {
@@ -214,7 +266,12 @@ fn exclude_other_beam(previous: u16, game: &mut Game) {
     if word!(game.equipped_beams) & remove != 0 {
         word!(game.equipped_beams &= !remove);
         menu_tilemap::recolor_native(
-            crate::rtl::rom_table_word!(game, 0x82c06c, tile) as usize,
+            table_word(
+                &game.equipment_screen.beam_tilemap_offsets,
+                game,
+                BEAM_TILEMAP_OFFSET_ADDRESS,
+                tile,
+            ) as usize,
             3072,
             5,
             game,
@@ -229,13 +286,14 @@ fn toggle(bytes: u16, game: &mut Game) {
     QueueSfx1_Max6(0x38, game);
     let item = u16::from(game.ram().read_byte(0x756));
     let category = word!(game.pausemenu_equipment_category_item) as u8 as isize;
-    let target = table_entry(0x82c02c, category, item, game) as usize;
-    let address = crate::rtl::rom_table_word!(game, 0x82c03c, category);
+    let tables = self::category(game, category);
+    let target = list_entry(tables.tilemap_offsets, item, game) as usize;
+    let address = tables.equipped_address;
     if address >= 0x2000 {
         crate::game::session_runtime::legacy_assertion(true);
     }
     let address = usize::from(address);
-    let mask = table_entry(0x82c034, category, item, game);
+    let mask = list_entry(tables.bitmasks, item, game);
     let value = u16::from_ne_bytes([
         game.ram().read_byte(address),
         game.ram().read_byte(address + 1),
@@ -246,12 +304,13 @@ fn toggle(bytes: u16, game: &mut Game) {
     if enabled {
         menu_tilemap::recolor_native(target, 0xc00, usize::from(bytes >> 1), game);
     } else {
-        let source = table_entry(0x82c044, category, item, game);
+        let source = list_entry(tables.tilemaps, item, game);
         menu_tilemap::copy_native_tiles(target, source, usize::from(bytes), game);
     }
 }
 
-fn table_entry(table: u32, category: isize, item: u16, game: &mut Game) -> u16 {
-    let address = crate::rtl::rom_table_word!(game, table, category).wrapping_add(2 * item);
+/// Entry `item` of a category's bank $82 list, as one original native fetch.
+fn list_entry(list: u16, item: u16, game: &mut Game) -> u16 {
+    let address = list.wrapping_add(2 * item);
     menu_tilemap::native_record(0x820000 | u32::from(address), game).word(0)
 }
