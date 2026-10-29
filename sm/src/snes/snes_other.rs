@@ -1,5 +1,6 @@
 use crate::c_library::{memcpy, memset, printf};
 use crate::game_state::Game;
+use crate::native_rom::NativeRomPointer;
 use crate::snes::cart::cart_load;
 pub use crate::types::{Snes, size_t};
 use ::core::ffi::{c_char, c_void};

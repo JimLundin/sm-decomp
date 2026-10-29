@@ -6,6 +6,7 @@ use crate::game::{
     enemy_script::{EnemyScript, bank_base},
     room_mechanisms as mechanisms,
 };
+use crate::native_rom::NativeRomPointer;
 use crate::room_background_support::{ram_bytes, ram_span};
 use crate::{game_state::Game, rom::RomImage};
 use std::panic::{AssertUnwindSafe, catch_unwind};
