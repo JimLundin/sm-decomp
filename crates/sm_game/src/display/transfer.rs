@@ -154,3 +154,20 @@ pub fn drain_tilemaps(host: &mut (impl TransferHost + ?Sized)) {
         entry += 7;
     }
 }
+
+/// How a scrolling tilemap buffer's two halves lie in VRAM.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ScrollingLayout {
+    Column,
+    Row,
+}
+
+impl ScrollingLayout {
+    /// The second half's VRAM address for a first half at `address`.
+    pub fn second_half_destination(self, address: u16) -> u16 {
+        match self {
+            Self::Column => address.wrapping_add(1),
+            Self::Row => address | 0x20,
+        }
+    }
+}
