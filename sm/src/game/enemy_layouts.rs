@@ -22,8 +22,6 @@ macro_rules! enemy_layout {
     };
 }
 
-pub(crate) use enemy_layout;
-
 use crate::types::EnemyBase;
 
 enemy_layout! {
@@ -170,5 +168,27 @@ enemy_layout! {
             var_38, var_39, var_3A, var_3B, var_3C, var_3D,
             var_3E, var_3F,
         ],
+    }
+}
+
+// Kraid and his parts; field names follow the bank-log RAM map.
+enemy_layout! {
+    KraidLayout {
+        base: EnemyBase,
+        words: [
+            kraid_var_A, kraid_var_B, kraid_var_C, kraid_var_D, kraid_var_E, kraid_var_F,
+            kraid_parameter_1, kraid_parameter_2,
+        ],
+        pad1: [u8; 26696],
+        words: [
+            kraid_next, field_2, field_4, kraid_thinking, kraid_min_y_pos_eject,
+            kraid_mouth_flags,
+        ],
+        kraid_healths_8ths: [u16; 8],
+        words: [field_1C, kraid_target_x],
+        kraid_healths_4ths: [u16; 4],
+        words: [field_28, kraid_hurt_frame, kraid_hurt_frame_timer],
+        field_2E: [u16; 9],
+        words: [],
     }
 }
