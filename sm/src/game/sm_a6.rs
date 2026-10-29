@@ -203,7 +203,7 @@ crate::game::callback_dispatch! {
     };
     [10913931] Boulder_Func_4 [] {
         let v1: i32 = 8 * slot!(byte game, Enemy_Boulder[E].var_C[1]) as i32 >> 1;
-        if ({ let (actor, amount) = (word!(game.cur_enemy_index), *(rom_ptr!(game, u32; 0xa0cbc7)).offset((v1 >> 1) as isize) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0
+        if ({ let (actor, amount) = (word!(game.cur_enemy_index), crate::game::enemy_speeds::word32(&game.enemy_speeds32, &game.capture_native_rom(), 4 * (v1 >> 1) as usize) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0
         {
             QueueSfx2_Max6(0x42, game);
             if slot!(game, Enemy_Boulder[E].var_E) == 2 {
@@ -241,14 +241,14 @@ crate::game::callback_dispatch! {
     [10914114] Boulder_Func_5 [] {
         let mut v2: u16 = (8u16).wrapping_mul((slot!(byte game, Enemy_Boulder[E].var_B[1])) as u16);
         let v3: i32 = v2 as i32 >> 1;
-        ({ let (actor, amount) = (word!(game.cur_enemy_index), (*(rom_ptr!(game, u32; 0xa0cbc7)).offset((v3 >> 1i32) as isize))
+        ({ let (actor, amount) = (word!(game.cur_enemy_index), crate::game::enemy_speeds::word32(&game.enemy_speeds32, &game.capture_native_rom(), 4 * (v3 >> 1) as usize)
                 .wrapping_add(((slot!(game, Enemy_Boulder[E].var_01) as i32) << 16) as u32) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
         slot!(game, Enemy_Boulder[E].base.y_pos = (slot!(game, Enemy_Boulder[E].base.y_pos)).wrapping_sub(slot!(game, Enemy_Boulder[E].var_01)));
         if slot!(game, Enemy_Boulder[E].var_E) != 0 {
             v2 = (v2).wrapping_add(4);
         }
         let v4: i32 = v2 as i32 >> 1;
-        if ({ let (actor, amount) = (word!(game.cur_enemy_index), *(rom_ptr!(game, u32; 0xa0cbc7)).offset((v4 >> 1) as isize) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0
+        if ({ let (actor, amount) = (word!(game.cur_enemy_index), crate::game::enemy_speeds::word32(&game.enemy_speeds32, &game.capture_native_rom(), 4 * (v4 >> 1) as usize) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0
         {
             slot!(game, Enemy_Boulder[E].base.properties = (slot!(game, Enemy_Boulder[E].base.properties)) | (0x300u16));
             slot!(game, Enemy_Boulder[E].var_A = (0xa689fci32) as u16);
