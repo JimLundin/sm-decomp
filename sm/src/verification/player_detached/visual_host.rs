@@ -1,11 +1,10 @@
 //! Shared visual host: actual core composition and explicitly prepared external edges.
 #![allow(unused_variables)]
 use super::game::{
-    session_access::SessionAccess,
     visual_host::*,
     visual_state::{PaletteBuffer, Upload},
 };
-use super::{Composed, Event, RomRecord, animated, colors};
+use super::{Composed, Event, RomRecord, colors};
 impl Record for RomRecord {
     fn byte(&self, offset: usize) -> u8 {
         RomRecord::byte(self, offset)

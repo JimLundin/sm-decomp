@@ -42,7 +42,9 @@ pub(crate) mod samus_tile_upload;
 pub(crate) mod settle;
 #[path = "../../game/scene/start.rs"]
 pub(crate) mod start;
+#[allow(
+    unused_imports,
+    reason = "Detached Scene carrier retains the state facade without external slot reexport consumers."
+)]
 #[path = "../../game/scene/state.rs"]
 pub(crate) mod state;
-
-pub(crate) use commit::ResidentDisplayDescription;

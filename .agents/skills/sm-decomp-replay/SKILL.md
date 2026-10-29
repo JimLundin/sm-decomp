@@ -31,6 +31,11 @@ Use the root-admitted reader/capture allowance. For persistence changes read
 5. Deliver row/frame totals, failures, exact result/artifact identities and
    remaining coverage to the primary root. Release reader admission at termination.
 
+Give already admitted failed-DLL/checkpoint narrowing an independent launch
+scope when its inputs are pinned. Within that grant, start after predecessor
+terminal release, exact guards and a fresh resource fit while fix/witness work
+proceeds. A remaining wait names its missing input or admission.
+
 A frame mismatch needs a regression row with its fix. Preserve comparisons and
 expectations. Constructed checks follow REVIEW's no-movie exception. Mutation
 runs occur at PLAN's bank-retirement point, with required full-corpus follow-up.

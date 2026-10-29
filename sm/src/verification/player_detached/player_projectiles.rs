@@ -1,4 +1,8 @@
 #[macro_use]
+#[allow(
+    unused_imports,
+    reason = "Detached projectile subset omits shot and shot_lane facade consumers."
+)]
 #[path = "../../game/player_projectiles/access.rs"]
 pub(crate) mod access;
 #[path = "../../game/player_projectiles/animation.rs"]

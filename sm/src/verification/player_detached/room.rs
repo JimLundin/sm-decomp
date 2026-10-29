@@ -23,7 +23,6 @@ pub(crate) mod scheduler;
 #[path = "../../game/room_mechanisms/setup.rs"]
 pub(crate) mod setup;
 pub(crate) fn command(h: &mut impl host::Host, id: u32, cursor: u16, handle: u16) {
-    use host::Content;
     let record = h.loaded_record(host::ContentAddress {
         bank: 0x84,
         offset: 0x8000,

@@ -18,6 +18,11 @@ mod sprite_host;
 mod visual_checks;
 mod visual_host;
 use game::room_mechanisms as room;
+#[allow(
+    unused_imports,
+    unused_macros,
+    reason = "Only RAM layout constants participate; raw compatibility macros have no consumers in this owned carrier."
+)]
 #[path = "../../ram_map.rs"]
 pub(crate) mod ram_map;
 #[path = "../../rendering/mod.rs"]

@@ -48,8 +48,6 @@ pub(crate) mod enemy_projectiles;
 pub(crate) mod enemy_script;
 #[path = "scene.rs"]
 pub(crate) mod scene;
-pub(crate) use scene::atmosphere_protocol as atmospheric_protocol;
-pub(crate) use scene::error as display_error;
 #[path = "../../game/session_access.rs"]
 pub(crate) mod session_access;
 #[path = "../../game/session_owners.rs"]
@@ -91,6 +89,10 @@ pub(crate) mod gameplay_flag_host;
 #[path = "../../game/progress_flags.rs"]
 pub(crate) mod progress_flags;
 
+#[allow(
+    unused_imports,
+    reason = "Detached collision subset omits operations facade reexport consumers."
+)]
 #[path = "../../game/player_collision/mod.rs"]
 pub(crate) mod player_collision;
 #[path = "player_collision_host.rs"]
@@ -98,11 +100,19 @@ pub(crate) mod player_collision_host;
 #[cfg(test)]
 #[path = "../player_collision_owned_checks.rs"]
 pub(crate) mod player_collision_owned_checks;
+#[allow(
+    unused_imports,
+    reason = "Detached transition subset omits runtime facade reexport consumers."
+)]
 #[path = "../../game/player_transitions/mod.rs"]
 pub(crate) mod player_transitions;
 #[path = "player_transitions_host.rs"]
 pub(crate) mod player_transitions_host;
 
+#[allow(
+    unused_imports,
+    reason = "Detached movement subset omits runtime facade reexport consumers."
+)]
 #[path = "../../game/player_movement/mod.rs"]
 pub(crate) mod player_movement;
 
