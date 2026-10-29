@@ -18,6 +18,7 @@ pub mod grapple_origins;
 pub mod intro_palette;
 pub mod kraid;
 pub mod message;
+pub mod mother_brain;
 pub mod phantoon;
 pub mod raster;
 pub mod ridley;

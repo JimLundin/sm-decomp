@@ -379,6 +379,7 @@ pub mod game {
     pub mod message_boxes;
     pub mod message_composition;
     pub(crate) mod mode7_transfers;
+    pub(crate) mod mother_brain_tables;
     pub(crate) mod moving_platforms;
     pub(crate) mod prelude;
     pub(crate) use sm_game::projectile_weapon_definitions;

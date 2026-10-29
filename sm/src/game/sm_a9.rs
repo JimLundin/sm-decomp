@@ -7,6 +7,7 @@ use crate::game::actors::mother_brain_effects::{
 use crate::game::display_refresh::{native_word, set_native_word};
 use crate::game::enemy_script::EnemyScript;
 use crate::game::menu_tilemap::native_record;
+use crate::game::mother_brain_tables;
 use crate::game::music::QueueMusic_Delayed8;
 use crate::game::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
 use crate::game::player_update::minimap;
@@ -1011,9 +1012,10 @@ crate::game::callback_dispatch! {
             }
             slot!(game, Enemy_MotherBrain[E].var_39 = v2 as u16);
             let v3: i32 = ((4u16).wrapping_mul((v2) as u16)) as i32 >> 1;
+            let explosion = mother_brain_tables::fake_death_explosion(game, (v3 >> 1) as isize);
             game.eproj_spawn_pt = Point16U {
-                x: crate::rtl::rom_table_word!(game, 0xa98929, v3 as isize),
-                y: crate::rtl::rom_table_word!(game, 0xa98929, (v3 + 1) as isize),
+                x: explosion.x,
+                y: explosion.y,
             };
             let v4: u16 = (if word!(game.random_number) < 0x4000 {
                 12
@@ -1206,7 +1208,8 @@ crate::game::callback_dispatch! {
                     }
                 }
             }
-            let v6: u16 = crate::rtl::rom_table_word!(game, 0xa9b6d4, (v4 >> 1) as isize);
+            let v6: u16 =
+                mother_brain_tables::brain_attack(game, (v4 >> 1) as isize).instruction_list;
             if v6 as i32 == addr_kMotherBrain_Ilist_9ECC as i32 {
                 if slot!(game, Enemy_MotherBrain[E1].var_05) as i32 - 1i32 & 0x8000 != 0 {
                     slot!(game, Enemy_MotherBrain[E].var_A = (0xa9b781i32) as u16);
@@ -1413,11 +1416,11 @@ crate::game::callback_dispatch! {
             if mbn_var_D_high != 0 {
                 slot!(byte game, Enemy_MotherBrain[E].var_D[1] = ((mbn_var_D_high) as u8).wrapping_sub(1));
             } else {
-                let r18: u16 = crate::rtl::rom_table_word!(
+                let r18: u16 = mother_brain_tables::brain_palette_set(
                     game,
-                    0xa9d260,
                     (slot!(byte game, Enemy_MotherBrain[E].var_E[1]) >> 1) as isize,
-                );
+                )
+                .colors;
                 slot!(byte game, Enemy_MotherBrain[E].var_D[1] = slot!(game, Enemy_MotherBrain[E].var_E) as u8);
                 let mut mbn_var_D: i8 = slot!(game, Enemy_MotherBrain[E].var_D) as i8;
                 if mbn_var_D != 0 || slot!(game, Enemy_MotherBrain[0x40i32].var_A) as i32 == 0xa987a2 & 0xffff
@@ -2534,7 +2537,10 @@ pub unsafe fn MotherBrain_WriteDefaultPalette(game: &mut Game) {
 }
 pub unsafe fn MotherBrain_WritePhase2DeathPalette(game: &mut Game) {
     {
-        MotherBrain_WritePalette(crate::rtl::rom_table_word!(game, 0xade434, 6), game);
+        MotherBrain_WritePalette(
+            mother_brain_tables::rainbow_beam_palette(game, 6).colors,
+            game,
+        );
     }
 }
 pub unsafe fn MotherBrain_SpawnShitroidInCutscene(game: &mut Game) {
@@ -2961,7 +2967,7 @@ pub unsafe fn MotherBrain_MakeWalkForwards(j: u16, a: u16, game: &mut Game) -> u
             }
             if slot!(game, Enemy_MotherBrain[E].base.x_pos) as i32 - 128i32 & 0x8000 != 0 {
                 MotherBrain_SetBodyInstrs(
-                    crate::rtl::rom_table_word!(game, 0xa9c61e, (j >> 1) as isize),
+                    mother_brain_tables::walk_forwards(game, (j >> 1) as isize).instruction_list,
                     game,
                 );
                 return 0;
@@ -2979,7 +2985,7 @@ pub unsafe fn MotherBrain_MakeWalkBackwards(a: u16, j: u16, game: &mut Game) -> 
             }
             if slot!(game, Enemy_MotherBrain[E].base.x_pos) as i32 - 48i32 & 0x8000 == 0 {
                 MotherBrain_SetBodyInstrs(
-                    crate::rtl::rom_table_word!(game, 0xa9c664, (j >> 1) as isize),
+                    mother_brain_tables::walk_backwards(game, (j >> 1) as isize).instruction_list,
                     game,
                 );
                 return 0;
@@ -5034,7 +5040,7 @@ crate::game::callback_dispatch! {
         slot!(game, Enemy_MotherBrainsTubesFalling[E].base.y_height = g_word_A98B67[v1 as usize]);
         slot!(game, Enemy_MotherBrainsTubesFalling[E].var_B = g_word_A98B71[v1 as usize]);
         slot! { game, Enemy_MotherBrainsTubesFalling[E]; var_D = 0, var_E = 0, var_C = 0 }
-        slot!(game, Enemy_MotherBrainsTubesFalling[E].var_A = crate::rtl::rom_table_word!(game, 0xa98b7b, v1 as isize));
+        slot!(game, Enemy_MotherBrainsTubesFalling[E].var_A = mother_brain_tables::falling_tube(game, v1 as isize).function);
     };
     [11121923] MotherBrainsBody_Shot [] {
         actors::combat::create_dud(&mut Runtime::new(game));

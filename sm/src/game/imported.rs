@@ -78,3 +78,24 @@ impl<const ADDRESS: u32, const WORDS: usize, const ROWS: usize> ImportedGrid<ADD
             .unwrap_or_else(|| rom.table_word(lorom_offset(ADDRESS) as usize, index))
     }
 }
+
+/// The loaded cartridge image.
+pub(crate) fn rom(game: &crate::game_state::Game) -> &RomImage {
+    game.loaded_rom.as_ref().expect("ROM must be loaded")
+}
+
+/// The original indexed load: the word at word `index` from LoROM `address`.
+pub(crate) fn load(rom: &RomImage, address: u32, index: isize) -> u16 {
+    rom.table_word(lorom_offset(address) as usize, index)
+}
+
+/// Row `index` of an imported table while `rom` is its allocation; `None` for
+/// other images and for indices outside the table, which keep the original load.
+pub(crate) fn row<T: Copy, const ROWS: usize>(
+    table: &Option<Imported<sm_data::table::Rows<T, ROWS>>>,
+    rom: &RomImage,
+    index: isize,
+) -> Option<T> {
+    let index = usize::try_from(index).ok()?;
+    Imported::from(table, rom)?.row(index)
+}
