@@ -67,6 +67,8 @@ qualification remains separate; matching layouts never permit header restamps.
 Strict library/DLL/all147 registered checks/frontend/format pass; fresh initialized
 captures and14 checkpoint rows pass; four fresh-only rejection checks run0 frames.
 Both encrypted packs and complete selected restores are verified.
+CI selects the two layout150 assets by verified digests for all14 checkpoint rows;
+shard names retain distinct f158/checkpoints identities.
 The first two green scheduled full-corpus runs remain pending; Phase 0 stays open.
 Read [current acceptance](REVIEW.md#current-publication-and-acceptance) before
 changing a retained owner. Preserve original source/DLL/native/input/loader pins,
