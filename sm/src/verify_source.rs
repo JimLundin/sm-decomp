@@ -14,6 +14,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_data/src/area_select_palettes.rs"),
     ),
     (
+        "crates/sm_data/src/beam_gradients.rs",
+        include_bytes!("../../crates/sm_data/src/beam_gradients.rs"),
+    ),
+    (
         "crates/sm_data/src/botwoon_holes.rs",
         include_bytes!("../../crates/sm_data/src/botwoon_holes.rs"),
     ),

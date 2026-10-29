@@ -1,6 +1,25 @@
+use crate::game::imported::{Imported, load};
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::types::{Enemy_MotherBrain, Ram8000_Default};
+use sm_data::beam_gradients::{ADDRESS, BYTES, BeamGradients};
+
+pub(crate) type ImportedTables = Option<Imported<BeamGradients>>;
+
+pub(crate) fn import(image: &crate::rom::RomImage) -> ImportedTables {
+    Imported::import(image, ADDRESS, BYTES, sm_data::beam_gradients::import)
+}
+
+/// The edge gradient for `angle`; other images and angles past 80h run the
+/// original indexed load.
+fn gradient(game: &Game, angle: isize) -> u16 {
+    Imported::read(
+        &game.beam_gradients,
+        game,
+        |table| table.row(usize::try_from(angle).ok()?),
+        |rom| load(rom, ADDRESS, angle),
+    )
+}
 
 /// Advance the two 8.8 fixed-point edges and pack one SNES window word.
 fn advance_window_edges(edges: &mut [u32; 2], steps: [u32; 2], saturated: bool) -> u16 {
@@ -514,15 +533,13 @@ fn write_rainbow_fixed_header(tail: u16, game: &mut Game) {
 #[forbid(unsafe_code)]
 fn rasterize_rainbow_right_edges(mut r22: u16, mut r24: u16, game: &mut Game) {
     word! { game, 255; hdma_table_2[0], hdma_table_2[1] }
-    let r18 = crate::rtl::rom_table_word!(
+    let r18 = gradient(
         game,
-        0x91c9d4,
-        slot!(byte game, Enemy_MotherBrain[0].var_3A[0]) as isize
+        slot!(byte game, Enemy_MotherBrain[0].var_3A[0]) as isize,
     );
-    let r20 = crate::rtl::rom_table_word!(
+    let r20 = gradient(
         game,
-        0x91c9d4,
-        slot!(byte game, Enemy_MotherBrain[0].var_3B[0]) as isize
+        slot!(byte game, Enemy_MotherBrain[0].var_3B[0]) as isize,
     );
     let mut mbn_var_3F = slot!(game, Enemy_MotherBrain[0].var_3F);
     let mut dst = 0x9d00 + 2 * (mbn_var_3F as isize - 32 + 1);
@@ -621,7 +638,7 @@ fn rasterize_rainbow_vertical(direction: RainbowDirection, left: u16, right: u16
     let add_right = matches!(direction, UpRight | Up | DownRight | Down);
     let zero_sentinel = matches!(direction, DownLeft);
     word! { game, 255; hdma_table_2[0], hdma_table_2[1] }
-    let left_step = crate::rtl::rom_table_word!(game, 0x91c9d4, {
+    let left_angle = {
         let angle = if down {
             slot!(byte game, Enemy_MotherBrain[0].var_3A[0])
         } else {
@@ -632,8 +649,9 @@ fn rasterize_rainbow_vertical(direction: RainbowDirection, left: u16, right: u16
         } else {
             (-(i32::from(angle))) as u8
         }) as isize
-    });
-    let right_step = crate::rtl::rom_table_word!(game, 0x91c9d4, {
+    };
+    let left_step = gradient(game, left_angle);
+    let right_angle = {
         let angle = if down {
             slot!(byte game, Enemy_MotherBrain[0].var_3B[0])
         } else {
@@ -644,7 +662,8 @@ fn rasterize_rainbow_vertical(direction: RainbowDirection, left: u16, right: u16
         } else {
             (-(i32::from(angle))) as u8
         }) as isize
-    });
+    };
+    let right_step = gradient(game, right_angle);
     let mut row = slot!(game, Enemy_MotherBrain[0].var_3D);
     let mut dst = if down {
         let mut remaining = row.wrapping_sub(32);

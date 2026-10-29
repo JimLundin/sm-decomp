@@ -250,6 +250,8 @@ pub struct Game {
     pub(crate) shitroid_tables: crate::game::shitroid_tables::ImportedShitroid,
     /// Imported from `loaded_rom` by `register_rom`; see game::mother_brain_tables.
     pub(crate) mother_brain_tables: crate::game::mother_brain_tables::ImportedMotherBrain,
+    /// Imported from `loaded_rom` by `register_rom`; see game::beam_windows.
+    pub(crate) beam_gradients: crate::game::beam_windows::ImportedTables,
     /// Imported from `loaded_rom` by `register_rom`; see game::actors::escape_animals.
     pub(crate) escape_etecoons: crate::game::actors::escape_animals::ImportedTables,
     /// Imported from `loaded_rom` by `register_rom`; see game::phantoon_tables.
@@ -1255,6 +1257,7 @@ impl Game {
         self.torizo_corpse_tables = crate::game::torizo_corpse_tables::import(&image);
         self.shitroid_tables = crate::game::shitroid_tables::import(&image);
         self.mother_brain_tables = crate::game::mother_brain_tables::import(&image);
+        self.beam_gradients = crate::game::beam_windows::import(&image);
         self.escape_etecoons = crate::game::actors::escape_animals::import(&image);
         self.flame_rain = crate::game::phantoon_tables::import(&image);
         self.phantoon_timers = crate::game::phantoon_tables::import_timers(&image);
@@ -1524,6 +1527,7 @@ impl Game {
             torizo_corpse_tables: Default::default(),
             shitroid_tables: Default::default(),
             mother_brain_tables: Default::default(),
+            beam_gradients: Default::default(),
             escape_etecoons: Default::default(),
             flame_rain: None,
             phantoon_timers: None,
