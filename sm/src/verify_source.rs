@@ -757,8 +757,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/player_collision/mod.rs"),
     ),
     (
-        "sm/src/game/player_collision/state.rs",
-        include_bytes!("game/player_collision/state.rs"),
+        "crates/sm_game/src/player_collision/state.rs",
+        include_bytes!("../../crates/sm_game/src/player_collision/state.rs"),
     ),
     (
         "sm/src/game/player_collision/effects.rs",
@@ -1346,8 +1346,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/projectile_contact.rs"),
     ),
     (
-        "sm/src/game/projectile_geometry.rs",
-        include_bytes!("game/projectile_geometry.rs"),
+        "crates/sm_game/src/projectile_geometry.rs",
+        include_bytes!("../../crates/sm_game/src/projectile_geometry.rs"),
     ),
     (
         "crates/sm_game/src/projectile_initialization.rs",
@@ -1611,8 +1611,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/sprite_drawing.rs"),
     ),
     (
-        "sm/src/game/sprite_effect_state.rs",
-        include_bytes!("game/sprite_effect_state.rs"),
+        "crates/sm_game/src/sprite_effect_state.rs",
+        include_bytes!("../../crates/sm_game/src/sprite_effect_state.rs"),
     ),
     (
         "sm/src/game/sprite_effect_host.rs",
