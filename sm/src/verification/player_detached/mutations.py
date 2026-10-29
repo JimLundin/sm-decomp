@@ -324,14 +324,14 @@ ASSERTION = re.compile(
 SM_GAME = []
 
 
-def run(command, timeout):
+def run(command, timeout, allow=()):
     if command[0] == "rustc":
         flags = os.environ.get("CARGO_ENCODED_RUSTFLAGS")
         if flags is None:
             flags = os.environ.get("RUSTFLAGS", "").split()
         else:
             flags = flags.split("\x1f") if flags else []
-        command = [*command, *SM_GAME, *flags, "-D", "warnings"]
+        command = [*command, *SM_GAME, *flags, "-D", "warnings", *allow]
     return subprocess.run(
         command, capture_output=True, text=True, encoding="utf-8", errors="replace",
         timeout=timeout, check=False,
@@ -351,7 +351,10 @@ def check(source, work, name, mutation=None, expected_assertion=None):
         target.write_text(original.replace(before, after, 1), encoding="utf-8")
     main = copied / "verification" / "player_detached" / "main.rs"
     binary = work / name / ("check.exe" if os.name == "nt" else "check")
-    compiled = run(["rustc", "--edition=2024", "-O", str(main), "-o", str(binary)], 180)
+    # A mutant that deletes the last use of an item leaves it unused; the
+    # baseline stays strict and mutants are judged only by execution.
+    allow = () if mutation is None else ("-A", "unused")
+    compiled = run(["rustc", "--edition=2024", "-O", str(main), "-o", str(binary)], 180, allow)
     if compiled.returncode != 0:
         raise RuntimeError(f"{name}: COMPILE ERROR; not a killed mutant\n{compiled.stderr}")
     print(f"{name}: compile PASS", flush=True)
@@ -402,7 +405,10 @@ def check_visual(source, work, mutation, baseline_binary, family="visual"):
         target.write_text(original.replace(before, after, 1), encoding="utf-8")
     binary = work / name / ("check.exe" if os.name == "nt" else "check")
     main = copied / "verification" / "player_detached" / "main.rs"
-    compiled = run(["rustc", "--edition=2024", "-O", str(main), "-o", str(binary)], 180)
+    # A mutant that deletes the last use of an item leaves it unused; the
+    # baseline stays strict and mutants are judged only by execution.
+    allow = () if mutation is None else ("-A", "unused")
+    compiled = run(["rustc", "--edition=2024", "-O", str(main), "-o", str(binary)], 180, allow)
     if compiled.returncode != 0:
         raise RuntimeError(f"{name}: COMPILE ERROR; not a killed mutant\n{compiled.stderr}")
     print(f"{name}: compile PASS", flush=True)
