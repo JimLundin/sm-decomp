@@ -1206,8 +1206,7 @@ impl Game {
         {
             self.revoke_samus_authority();
         }
-        self.enemy_speeds32 = crate::game::enemy_speeds::import32(&image);
-        self.demo_scenes = crate::game::demo_rooms::import_scenes(&image);
+        self.import_native_records(&image);
         self.native_rom = Some(image);
     }
 
@@ -1245,6 +1244,62 @@ impl Game {
     }
 
     /// Share the cartridge image without copying or borrowing its allocation.
+    /// Import the `sm_data` records read from the native image.
+    fn import_native_records(&mut self, image: &crate::rom::RomImage) {
+        self.enemy_speeds32 = crate::game::enemy_speeds::import32(image);
+        self.demo_scenes = crate::game::demo_rooms::import_scenes(image);
+    }
+
+    /// Import the `sm_data` records read from the loaded image.
+    fn import_loaded_records(&mut self, image: &crate::rom::RomImage) {
+        self.enemy_speeds = crate::game::enemy_speeds::import(image);
+        self.sand_heap = crate::game::sand_heap::import(image);
+        self.save_slots = crate::game::save_slots::import(image);
+        self.ceres_rotation = crate::game::ceres_elevator::import(image);
+        self.demo_sets = crate::game::demo_rooms::import_sets(image);
+        self.shooting_stars = crate::game::shooting_stars::import(image);
+        self.grapple_origins = crate::game::grapple_origins::import(image);
+        self.grapple_aim = crate::game::grapple_aim::import(image);
+        self.kraid_tables = crate::game::kraid_tables::import(image);
+        self.shaktool_tables = crate::game::shaktool_tables::import(image);
+        self.statue_tables = crate::game::statue_tables::import(image);
+        self.torizo_tables = crate::game::torizo_tables::import(image);
+        self.corpse_tables = crate::game::corpse_tables::import(image);
+        self.torizo_corpse_tables = crate::game::torizo_corpse_tables::import(image);
+        self.shitroid_tables = crate::game::shitroid_tables::import(image);
+        self.mother_brain_tables = crate::game::mother_brain_tables::import(image);
+        self.visual_tables = crate::game::visual_runtime::import(image);
+        self.pause_menu = crate::game::map_menu::import(image);
+        self.crocomire = crate::game::actors::crocomire_reactions::import(image);
+        self.magdollite = crate::game::actors::norfair_lava_man::import(image);
+        self.equipment_screen = crate::game::equipment_menu::import(image);
+        self.mother_brain_visuals = crate::game::mother_brain_visuals::import(image);
+        self.beam_gradients = crate::game::beam_windows::import(image);
+        self.escape_etecoons = crate::game::actors::escape_animals::import(image);
+        self.flame_rain = crate::game::phantoon_tables::import(image);
+        self.phantoon_timers = crate::game::phantoon_tables::import_timers(image);
+        self.botwoon_speeds = crate::game::actors::botwoon::import_speeds(image);
+        self.botwoon_holes = crate::game::actors::botwoon::import_holes(image);
+        self.intro_palette = crate::game::intro_pages::import_intro_palette(image);
+        self.area_select_palettes = crate::game::menu_tilemap::import_area_palettes(image);
+        self.ceres_ridley_tables = crate::game::ceres_ridley_tables::import(image);
+        self.ridley_tables = crate::game::ridley_data::import(image);
+        self.ridley_explosion_tables = crate::game::ridley_explosion_data::import(image);
+        self.ceres_door_tables = crate::game::ceres_door_data::import(image);
+        self.zebetite_tables = crate::game::zebetite_data::import(image);
+    }
+
+    /// Import every record again after the images were patched in place;
+    /// until then the patched images serve their original reads.
+    pub(crate) fn refresh_rom_records(&mut self) {
+        if let Some(image) = self.native_rom.clone() {
+            self.import_native_records(&image);
+        }
+        if let Some(image) = self.loaded_rom.clone() {
+            self.import_loaded_records(&image);
+        }
+    }
+
     pub(crate) fn register_rom(&mut self, image: crate::rom::RomImage) {
         if !self
             .loaded_rom
@@ -1253,41 +1308,7 @@ impl Game {
         {
             self.revoke_samus_authority();
         }
-        self.enemy_speeds = crate::game::enemy_speeds::import(&image);
-        self.sand_heap = crate::game::sand_heap::import(&image);
-        self.save_slots = crate::game::save_slots::import(&image);
-        self.ceres_rotation = crate::game::ceres_elevator::import(&image);
-        self.demo_sets = crate::game::demo_rooms::import_sets(&image);
-        self.shooting_stars = crate::game::shooting_stars::import(&image);
-        self.grapple_origins = crate::game::grapple_origins::import(&image);
-        self.grapple_aim = crate::game::grapple_aim::import(&image);
-        self.kraid_tables = crate::game::kraid_tables::import(&image);
-        self.shaktool_tables = crate::game::shaktool_tables::import(&image);
-        self.statue_tables = crate::game::statue_tables::import(&image);
-        self.torizo_tables = crate::game::torizo_tables::import(&image);
-        self.corpse_tables = crate::game::corpse_tables::import(&image);
-        self.torizo_corpse_tables = crate::game::torizo_corpse_tables::import(&image);
-        self.shitroid_tables = crate::game::shitroid_tables::import(&image);
-        self.mother_brain_tables = crate::game::mother_brain_tables::import(&image);
-        self.visual_tables = crate::game::visual_runtime::import(&image);
-        self.pause_menu = crate::game::map_menu::import(&image);
-        self.crocomire = crate::game::actors::crocomire_reactions::import(&image);
-        self.magdollite = crate::game::actors::norfair_lava_man::import(&image);
-        self.equipment_screen = crate::game::equipment_menu::import(&image);
-        self.mother_brain_visuals = crate::game::mother_brain_visuals::import(&image);
-        self.beam_gradients = crate::game::beam_windows::import(&image);
-        self.escape_etecoons = crate::game::actors::escape_animals::import(&image);
-        self.flame_rain = crate::game::phantoon_tables::import(&image);
-        self.phantoon_timers = crate::game::phantoon_tables::import_timers(&image);
-        self.botwoon_speeds = crate::game::actors::botwoon::import_speeds(&image);
-        self.botwoon_holes = crate::game::actors::botwoon::import_holes(&image);
-        self.intro_palette = crate::game::intro_pages::import_intro_palette(&image);
-        self.area_select_palettes = crate::game::menu_tilemap::import_area_palettes(&image);
-        self.ceres_ridley_tables = crate::game::ceres_ridley_tables::import(&image);
-        self.ridley_tables = crate::game::ridley_data::import(&image);
-        self.ridley_explosion_tables = crate::game::ridley_explosion_data::import(&image);
-        self.ceres_door_tables = crate::game::ceres_door_data::import(&image);
-        self.zebetite_tables = crate::game::zebetite_data::import(&image);
+        self.import_loaded_records(&image);
         self.loaded_rom = Some(image);
     }
 

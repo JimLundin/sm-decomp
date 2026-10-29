@@ -1086,6 +1086,7 @@ pub fn RtlUpdateSnesPatchForBugfix(game: &mut Game) {
             .clone(),
     )
     .update_bugfix(counter);
+    game.refresh_rom_records();
 }
 pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
     unsafe {
@@ -1129,6 +1130,7 @@ pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
             i = i.wrapping_add(1);
         }
         install_startup_bug_hooks(&mut game.execution_parts().1);
+        game.refresh_rom_records();
         game.g_snes
     }
 }

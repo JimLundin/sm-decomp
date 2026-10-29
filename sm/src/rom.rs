@@ -4,19 +4,29 @@ use std::cell::Cell;
 use std::rc::Rc;
 
 #[derive(Clone, Default)]
-pub struct RomImage(Rc<[Cell<u8>]>);
+pub struct RomImage(Rc<Shared>);
+
+#[derive(Default)]
+struct Shared {
+    cells: Box<[Cell<u8>]>,
+    /// Counts writes so imported records can tell they are stale.
+    writes: Cell<u64>,
+}
 
 impl RomImage {
     pub fn zeroed(length: usize) -> Self {
-        Self((0..length).map(|_| Cell::new(0)).collect())
+        Self(Rc::new(Shared {
+            cells: (0..length).map(|_| Cell::new(0)).collect(),
+            writes: Cell::new(0),
+        }))
     }
 
     pub fn len(&self) -> usize {
-        self.0.len()
+        self.0.cells.len()
     }
 
     pub fn read(&self, offset: usize) -> u8 {
-        self.0[offset].get()
+        self.0.cells[offset].get()
     }
 
     // Table offsets are signed words in the allocation, not wrapping bank addresses.
@@ -30,12 +40,18 @@ impl RomImage {
     }
 
     pub fn write(&self, offset: usize, value: u8) {
-        self.0[offset].set(value);
+        self.0.cells[offset].set(value);
+        self.0.writes.set(self.0.writes.get().wrapping_add(1));
     }
 
     /// The shared bytes; `native_rom::NativeRomPointer` derives the legacy pointer.
     pub(crate) fn cells(&self) -> &[Cell<u8>] {
-        &self.0
+        &self.0.cells
+    }
+
+    /// How many bytes have been written since the image was created.
+    pub(crate) fn writes(&self) -> u64 {
+        self.0.writes.get()
     }
 }
 
