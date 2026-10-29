@@ -10,6 +10,7 @@ pub mod ceres_elevator;
 pub mod demo_rooms;
 pub mod enemy_speeds;
 pub mod grapple_origins;
+pub mod intro_palette;
 pub mod kraid;
 pub mod message;
 pub mod phantoon;

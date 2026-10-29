@@ -1,5 +1,6 @@
 //! Intro narrative pages, scene entry, crossfades and Japanese text continuations.
 //! Numeric callbacks select these operations; Game retains the cinematic state.
+use crate::game::imported::Imported;
 use crate::game::player_transitions as pt;
 use crate::game::session_runtime::Runtime;
 use crate::game::visual_runtime::CinematicObjects::{
@@ -27,6 +28,9 @@ use super::visual_state::{CinematicFade, CinematicTilemap};
 use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8};
 use crate::game_state::Game;
 use crate::ram_map::{checked_word, word};
+use sm_data::intro_palette::{
+    ADDRESS as INTRO_PALETTE, BYTES as INTRO_PALETTE_BYTES, IntroPalette,
+};
 
 fn load_japanese_line(address: u16, game: &mut Game) {
     let record = super::visual_runtime::cinematic_native_record::<0x8b>(address, game);
@@ -358,6 +362,32 @@ pub(super) fn fade_to_page(palette: Palette, game: &mut Game) {
     }
 }
 
+pub(crate) type ImportedIntroPalette = Imported<IntroPalette>;
+
+pub(crate) fn import_intro_palette(image: &crate::rom::RomImage) -> Option<ImportedIntroPalette> {
+    Imported::import(
+        image,
+        INTRO_PALETTE,
+        INTRO_PALETTE_BYTES,
+        IntroPalette::import,
+    )
+}
+
+/// Intro colour `index` in the loaded image. The record serves it while that
+/// image is the imported allocation; otherwise, and past the 256 colours, the
+/// original indexed load runs with its failures.
+fn intro_color(game: &Game, index: usize) -> u16 {
+    let rom = game.loaded_rom.as_ref().expect("ROM must be loaded");
+    Imported::from(&game.intro_palette, rom)
+        .and_then(|palette| palette.color(index))
+        .unwrap_or_else(|| {
+            rom.table_word(
+                crate::rom::lorom_offset(INTRO_PALETTE) as usize,
+                index as isize,
+            )
+        })
+}
+
 pub(super) fn draw_japanese_text(
     lines: &[u16],
     restore_palette: bool,
@@ -366,9 +396,9 @@ pub(super) fn draw_japanese_text(
 ) -> u16 {
     set_cinematic_tilemap_updates(false, game);
     if restore_palette {
-        word!(game.palette_buffer[17] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 17));
-        word!(game.palette_buffer[18] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 18));
-        word!(game.palette_buffer[19] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 19));
+        for color in 17..20 {
+            word!(game.palette_buffer[color] = intro_color(game, color));
+        }
     }
     clear_japanese_tiles(game);
     for &line in lines {
