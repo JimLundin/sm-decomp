@@ -4,6 +4,7 @@ use crate::game::actors::api as actor_api;
 use crate::game::actors::mother_brain_effects::{
     MotherBrain_GenerateExplosions, MotherBrain_HandleRainbowBeamPalette, MotherBrain_WritePalette,
 };
+use crate::game::corpse_tables;
 use crate::game::display_refresh::{native_word, set_native_word};
 use crate::game::enemy_script::EnemyScript;
 use crate::game::menu_tilemap::native_record;
@@ -3908,8 +3909,7 @@ pub fn DeadSidehopper_Init_1(game: &mut Game) {
 
 macro_rules! initialize_rotting_enemy_corpse {
     (
-        $enemy:ident, $state_address:literal, $game:ident, $instruction_table:literal,
-        $corpse_table:literal $(,)?
+        $enemy:ident, $state_address:literal, $game:ident, $corpse:expr $(,)?
     ) => {
         slot!($game, EnemyData[$enemy].palette_index = 3584);
         slot!(
@@ -3919,12 +3919,12 @@ macro_rules! initialize_rotting_enemy_corpse {
         let v2: i32 = slot!($game, EnemyData[$enemy].parameter_1) as i32 >> 1;
         Enemy_SetInstrList(
             word!($game.cur_enemy_index),
-            crate::rtl::rom_table_word!($game, $instruction_table, v2 as isize),
+            corpse_tables::variant($game, $corpse, v2 as isize).instruction_list,
             $game,
         );
         InitializeEnemyCorpseRotting(
             word!($game.cur_enemy_index),
-            crate::rtl::rom_table_word!($game, $corpse_table, v2 as isize),
+            corpse_tables::variant($game, $corpse, v2 as isize).rotting,
             $game,
         );
     };
@@ -3963,8 +3963,9 @@ crate::game::callback_dispatch! {
                 slot!(game, Enemy_DeadMonsters[E].var_A = (0xa9d8f1i32) as u16);
                 Enemy_SetInstrList(k, addr_kDeadMonsters_Ilist_ECE3 as u16, game);
                 let v3: i32 = slot!(game, Enemy_DeadMonsters[E].var_06) as i32;
-                slot!(game, Enemy_DeadMonsters[E].var_0B = crate::rtl::rom_table_word!(game, 0xa9d951, v3 as isize));
-                slot!(game, Enemy_DeadMonsters[E].var_0A = crate::rtl::rom_table_word!(game, 0xa9d959, v3 as isize));
+                let hop = corpse_tables::hop(game, v3 as isize);
+                slot!(game, Enemy_DeadMonsters[E].var_0B = hop.y_velocity);
+                slot!(game, Enemy_DeadMonsters[E].var_0A = hop.x_velocity);
             }
         }
     };
@@ -5157,15 +5158,15 @@ crate::game::callback_dispatch! {
     };
     [11130953] DeadZoomer_Init [] {
         let v1: i32 = word!(game.cur_enemy_index) as i32;
-        initialize_rotting_enemy_corpse!(v1, 0xa9da69i32, game, 0xa9d86a, 0xa9d870);
+        initialize_rotting_enemy_corpse!(v1, 0xa9da69i32, game, corpse_tables::Corpse::Zoomer);
     };
     [11130998] DeadRipper_Init [] {
         let v1: i32 = word!(game.cur_enemy_index) as i32;
-        initialize_rotting_enemy_corpse!(v1, 0xa9da73i32, game, 0xa9d897, 0xa9d89b);
+        initialize_rotting_enemy_corpse!(v1, 0xa9da73i32, game, corpse_tables::Corpse::Ripper);
     };
     [11131039] DeadSkree_Init [] {
         let v1: i32 = word!(game.cur_enemy_index) as i32;
-        initialize_rotting_enemy_corpse!(v1, 0xa9da6ei32, game, 0xa9d8c0, 0xa9d8c6);
+        initialize_rotting_enemy_corpse!(v1, 0xa9da6ei32, game, corpse_tables::Corpse::Skree);
     };
     [11131084] DeadSidehopper_Powerbomb [] {
         if slot!(game, Enemy_DeadSidehopper[word!(game.cur_enemy_index) as i32].var_08) >= 8 {

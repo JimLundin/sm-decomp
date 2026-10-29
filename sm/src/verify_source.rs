@@ -54,6 +54,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_data/src/kraid.rs"),
     ),
     (
+        "crates/sm_data/src/corpses.rs",
+        include_bytes!("../../crates/sm_data/src/corpses.rs"),
+    ),
+    (
         "crates/sm_data/src/torizo_corpse.rs",
         include_bytes!("../../crates/sm_data/src/torizo_corpse.rs"),
     ),
@@ -1247,6 +1251,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/kraid_tables.rs",
         include_bytes!("game/kraid_tables.rs"),
+    ),
+    (
+        "sm/src/game/corpse_tables.rs",
+        include_bytes!("game/corpse_tables.rs"),
     ),
     (
         "sm/src/game/torizo_corpse_tables.rs",

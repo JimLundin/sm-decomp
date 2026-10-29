@@ -351,6 +351,7 @@ pub mod game {
 
     pub(crate) mod beam_windows;
     pub mod constants;
+    pub(crate) mod corpse_tables;
     pub(crate) mod decompression;
     pub(crate) mod demo_rooms;
     pub(crate) use sm_game::dialogue;
