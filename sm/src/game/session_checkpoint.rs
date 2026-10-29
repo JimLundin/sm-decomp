@@ -30,8 +30,8 @@ pub(crate) struct AuxiliaryGameplayCheckpoint {
     pub(crate) messages: crate::game::session::MessageRequests,
     pub(crate) spawn_scratch: crate::game::session::SpawnScratch,
     pub(crate) compatibility_enemy_scratch: u16,
-    pub(in crate::game) shared_sequence: crate::game::player_collision::state::SequenceWorkspace,
-    pub(in crate::game) multiply_scratch: crate::game::player_collision::state::MultiplyScratch,
+    pub(in crate::game) shared_sequence: sm_game::player_collision::state::SequenceWorkspace,
+    pub(in crate::game) multiply_scratch: sm_game::player_collision::state::MultiplyScratch,
 }
 fn audio_asset(bytes: &mut Vec<u8>, asset: AssetRef) {
     bytes.extend_from_slice(&asset.id.0.to_le_bytes());
@@ -1044,9 +1044,9 @@ fn checkpoint_read_pair_motion(
 ) -> Result<[crate::game::session::FixedMotion; 2], String> {
     Ok([checkpoint_read_motion(read)?, checkpoint_read_motion(read)?])
 }
-use crate::game::player_collision::state as collision;
 use crate::game::player_transitions::state as transitions;
 use crate::game::session::{ContactPhysics, FixedMotion, Player, Point, Position};
+use sm_game::player_collision::state as collision;
 checkpoint_fields!(checkpoint_point, checkpoint_read_point, Point,
     x: checkpoint_word/checkpoint_read_word, y: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_position, checkpoint_read_position, Position,

@@ -386,7 +386,7 @@ pub mod game {
     #[path = "../verification/room_mechanisms.rs"]
     pub(crate) mod room_mechanism_checks;
 
-    pub(crate) mod projectile_geometry;
+    pub(crate) use sm_game::projectile_geometry;
     pub(crate) use sm_game::projectile_initialization;
 
     pub(crate) use sm_game::projectile_block_reactions;
@@ -452,7 +452,7 @@ pub mod game {
     pub(crate) mod sprite_effect_controllers;
     pub(crate) mod sprite_effect_host;
     pub(crate) mod sprite_effect_runtime;
-    pub(crate) mod sprite_effect_state;
+    pub(crate) use sm_game::sprite_effect_state;
     pub(crate) mod visual_host;
     pub(crate) mod visual_runtime;
     pub(crate) use sm_game::visual_state;
