@@ -362,6 +362,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/ridley_data.rs"),
     ),
     (
+        "sm/src/game/ridley_explosion_data.rs",
+        include_bytes!("game/ridley_explosion_data.rs"),
+    ),
+    (
         "sm/src/game/actors/morph_ball_eye.rs",
         include_bytes!("game/actors/morph_ball_eye.rs"),
     ),
@@ -1782,6 +1786,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_data/src/ridley.rs",
         include_bytes!("../../crates/sm_data/src/ridley.rs"),
+    ),
+    (
+        "crates/sm_data/src/ridley_explosion.rs",
+        include_bytes!("../../crates/sm_data/src/ridley_explosion.rs"),
     ),
     (
         "crates/sm_data/src/scene.rs",

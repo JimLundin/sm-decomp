@@ -12,10 +12,14 @@ use crate::game::player_update::minimap;
 pub use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::ridley_data;
+use crate::game::ridley_explosion_data;
 use crate::game::session_runtime::Runtime;
 use crate::game::session_runtime::{actor_cosine, actor_sine};
 use crate::game::sprite_drawing::Clip;
 use crate::ram_map::slot;
+use sm_data::ridley_explosion::{
+    HAND_ADDRESS, LEGS_ADDRESS, MOUTH_ADDRESS, TORSO_ADDRESS, WINGS_ADDRESS,
+};
 
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a6::*;
@@ -2355,7 +2359,7 @@ pub unsafe fn Ridley_Func_68(game: &mut Game) -> u8 {
 
 macro_rules! place_ridley_explosion_x {
     (
-        $ridley:ident, $game:ident, $orientation_index:ident, $x_offset_table:literal,
+        $ridley:ident, $game:ident, $orientation_index:ident, $part:expr,
         $explosion:ident $(,)?
     ) => {
         let mut v10: u16 = 0;
@@ -2365,7 +2369,7 @@ macro_rules! place_ridley_explosion_x {
         }
         let $orientation_index: i32 = v10 as i32 >> 1;
         let v14: u16 = (slot!($game, Enemy_Ridley[$ridley].base.x_pos)).wrapping_add(
-            crate::rtl::rom_table_word!($game, $x_offset_table, $orientation_index as isize),
+            ridley_explosion_data::placement($game, $part, $orientation_index as isize).x_offset,
         );
         slot!($game, EnemyData[$explosion].x_pos = v14);
     };
@@ -4040,7 +4044,7 @@ crate::game::callback_dispatch! {
         slot!(game, Enemy_Ridley[E].base; timer = 0, vram_tiles_index = 0);
         slot!(game, Enemy_Ridley[E].base.palette_index = 3584);
         let ridley_parameter_1: u16 = slot!(game, Enemy_Ridley[E].parameter_1);
-        slot!(game, Enemy_Ridley[E].var_F = crate::rtl::rom_table_word!(game, 0xa6c6ce, (ridley_parameter_1 >> 1) as isize));
+        slot!(game, Enemy_Ridley[E].var_F = ridley_explosion_data::lifetime(game, (ridley_parameter_1 >> 1) as isize));
         let Random: u16 = game.next_random();
         slot!(game, Enemy_Ridley[E].var_B = (if Random & 0x8000 != 0 {
             -(Random as i32 & 0x130i32)
@@ -4088,29 +4092,29 @@ crate::game::callback_dispatch! {
                     ));
                 }
                 14 => {
-                    place_ridley_explosion_x!(E0, game, v13, 0xa6c804, E);
+                    place_ridley_explosion_x!(E0, game, v13, WINGS_ADDRESS, E);
                     slot!(game, Enemy_Ridley[E].base.y_pos = slot!(game, Enemy_Ridley[E0].base.y_pos));
-                    slot!(game, Enemy_Ridley[E].base.current_instruction = crate::rtl::rom_table_word!(game, 0xa6c808, v13 as isize));
+                    slot!(game, Enemy_Ridley[E].base.current_instruction = ridley_explosion_data::placement(game, WINGS_ADDRESS, v13 as isize).instruction_list);
                 }
                 16 => {
-                    place_ridley_explosion_x!(E0_0, game, v19, 0xa6c836, E);
+                    place_ridley_explosion_x!(E0_0, game, v19, LEGS_ADDRESS, E);
                     slot!(game, Enemy_Ridley[E].base.y_pos = (slot!(game, Enemy_Ridley[E0_0].base.y_pos)).wrapping_add(22));
-                    slot!(game, Enemy_Ridley[E].base.current_instruction = crate::rtl::rom_table_word!(game, 0xa6c83a, v19 as isize));
+                    slot!(game, Enemy_Ridley[E].base.current_instruction = ridley_explosion_data::placement(game, LEGS_ADDRESS, v19 as isize).instruction_list);
                 }
                 18 => {
-                    place_ridley_explosion_x!(E0_1, game, v25, 0xa6c868, E);
+                    place_ridley_explosion_x!(E0_1, game, v25, MOUTH_ADDRESS, E);
                     slot!(game, Enemy_Ridley[E].base.y_pos = (slot!(game, Enemy_Ridley[E0_1].base.y_pos)).wrapping_sub(24));
-                    slot!(game, Enemy_Ridley[E].base.current_instruction = crate::rtl::rom_table_word!(game, 0xa6c86c, v25 as isize));
+                    slot!(game, Enemy_Ridley[E].base.current_instruction = ridley_explosion_data::placement(game, MOUTH_ADDRESS, v25 as isize).instruction_list);
                 }
                 20 => {
-                    place_ridley_explosion_x!(E0_2, game, v31, 0xa6c89a, E);
+                    place_ridley_explosion_x!(E0_2, game, v31, TORSO_ADDRESS, E);
                     slot!(game, Enemy_Ridley[E].base.y_pos = slot!(game, Enemy_Ridley[E0_2].base.y_pos));
-                    slot!(game, Enemy_Ridley[E].base.current_instruction = crate::rtl::rom_table_word!(game, 0xa6c89e, v31 as isize));
+                    slot!(game, Enemy_Ridley[E].base.current_instruction = ridley_explosion_data::placement(game, TORSO_ADDRESS, v31 as isize).instruction_list);
                 }
                 22 => {
-                    place_ridley_explosion_x!(E0_3, game, v37, 0xa6c8cc, E);
+                    place_ridley_explosion_x!(E0_3, game, v37, HAND_ADDRESS, E);
                     slot!(game, Enemy_Ridley[E].base.y_pos = (slot!(game, Enemy_Ridley[E0_3].base.y_pos)).wrapping_add(7));
-                    slot!(game, Enemy_Ridley[E].base.current_instruction = crate::rtl::rom_table_word!(game, 0xa6c8d0, v37 as isize));
+                    slot!(game, Enemy_Ridley[E].base.current_instruction = ridley_explosion_data::placement(game, HAND_ADDRESS, v37 as isize).instruction_list);
                 }
                 _ => {
                     Unreachable(game);
