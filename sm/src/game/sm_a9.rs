@@ -15,6 +15,7 @@ pub use crate::game::prelude::*;
 use crate::game::rom_vram_entries::queue_mother_brain_sprite_tiles;
 use crate::game::session_runtime::Runtime;
 use crate::game::shitroid_tables;
+use crate::game::torizo_corpse_tables;
 use crate::rom::RomRecord;
 
 use crate::game::beam_windows::calculate_rainbow_window;
@@ -3786,9 +3787,9 @@ pub unsafe fn DeadTorizo_WaitForSamusColl(k: u16, game: &mut Game) {
     }
 }
 macro_rules! queue_dead_torizo_tile_transfers {
-    ($game:ident, $transfer_table:literal, $entry:ident, $tail:ident) => {
+    ($game:ident, $frame:expr, $entry:ident, $tail:ident) => {
         let mut v8: u16 = 0;
-        let mut v9: u16 = crate::rtl::rom_table_word!($game, $transfer_table, 0);
+        let mut v9: u16 = torizo_corpse_tables::transfer_size($game, $frame, 0);
         loop {
             $entry = usize::try_from(0xd0i32 + $tail as i32).expect("VRAM entry outside RAM");
             {
@@ -3798,26 +3799,23 @@ macro_rules! queue_dead_torizo_tile_transfers {
                 $game.ram().write_byte(at, bytes[0]);
                 $game.ram().write_byte(at + 1, bytes[1]);
             };
-            let v11: i32 = v8 as i32 >> 1;
+            let transfer = torizo_corpse_tables::transfer($game, $frame, (v8 >> 3) as isize);
             {
-                let value: u16 =
-                    crate::rtl::rom_table_word!($game, $transfer_table, (v11 + 1) as isize);
+                let value: u16 = transfer.source_bank;
                 let at: usize = $entry + 3;
                 let bytes = value.to_ne_bytes();
                 $game.ram().write_byte(at, bytes[0]);
                 $game.ram().write_byte(at + 1, bytes[1]);
             };
             {
-                let value: u16 =
-                    crate::rtl::rom_table_word!($game, $transfer_table, (v11 + 2) as isize);
+                let value: u16 = transfer.source_address;
                 let at: usize = $entry + 2;
                 let bytes = value.to_ne_bytes();
                 $game.ram().write_byte(at, bytes[0]);
                 $game.ram().write_byte(at + 1, bytes[1]);
             };
             {
-                let value: u16 =
-                    crate::rtl::rom_table_word!($game, $transfer_table, (v11 + 3) as isize);
+                let value: u16 = transfer.vram_address;
                 let at: usize = $entry + 5;
                 let bytes = value.to_ne_bytes();
                 $game.ram().write_byte(at, bytes[0]);
@@ -3825,7 +3823,7 @@ macro_rules! queue_dead_torizo_tile_transfers {
             };
             $tail = ($tail).wrapping_add(7);
             v8 = (v8).wrapping_add(8);
-            v9 = crate::rtl::rom_table_word!($game, $transfer_table, (v8 >> 1) as isize);
+            v9 = torizo_corpse_tables::transfer_size($game, $frame, (v8 >> 3) as isize);
             if (v9 == 0) {
                 break;
             }
@@ -3841,16 +3839,17 @@ pub unsafe fn DeadTorizo_Func_1(game: &mut Game) {
     slot!(game, Enemy_DeadTorizo[E].var_00 = v1);
     let mut v3: u16 = word!(game.vram_write_queue_tail);
     if v1 & 1 != 0 {
-        queue_dead_torizo_tile_transfers!(game, 0xa9d583, v10, v3);
+        queue_dead_torizo_tile_transfers!(game, torizo_corpse_tables::Frame::Odd, v10, v3);
     } else {
-        queue_dead_torizo_tile_transfers!(game, 0xa9d549, v5, v3);
+        queue_dead_torizo_tile_transfers!(game, torizo_corpse_tables::Frame::Even, v5, v3);
     }
     slot!(game, Enemy_DeadEnemy[0i32].var_22 = 0);
     word!(game.vram_write_queue_tail = v3);
 }
 pub unsafe fn DeadTorizo_CopyLineOfSandHeapTileData(a: u16, game: &mut Game) {
-    let v1: u16 = crate::rtl::rom_table_word!(game, 0xa9d67c, a as isize);
-    let v2: i32 = crate::rtl::rom_table_word!(game, 0xa9d69c, a as isize) as i32 >> 1;
+    let line = torizo_corpse_tables::sand_heap_line(game, a as isize);
+    let v1: u16 = line.destination;
+    let v2: i32 = line.source as i32 >> 1;
     // 18 words, eight words apart in the heap and 16 bytes apart in the buffer.
     for step in 0..18 {
         let value = crate::game::sand_heap::word(game, (v2 + 8 * step) as usize);
