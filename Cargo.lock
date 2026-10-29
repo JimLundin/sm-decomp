@@ -67,6 +67,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "sm_data"
+version = "0.1.0"
+
+[[package]]
 name = "sm_game"
 version = "0.1.0"
 
