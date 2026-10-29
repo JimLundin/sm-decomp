@@ -46,6 +46,7 @@ pub(in crate::game) mod drawing;
 pub(in crate::game) mod kraid_lint;
 pub(in crate::game) mod kraid_sinking;
 pub(in crate::game) mod media_runtime;
+pub(in crate::game) mod mother_brain_effects;
 pub(in crate::game) mod movement;
 pub(in crate::game) mod part_hitboxes;
 pub(in crate::game) mod phantoon_actions;
