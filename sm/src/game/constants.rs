@@ -1,5 +1,45 @@
 //! Shared gameplay values and bank-local addresses.
 //! Bank modules re-export their original definition sets for existing callers.
+/// Value types for the constant groups below; each is `u32`.
+pub type Buttons = u32;
+pub type EnemyProps = u32;
+pub type GameState = u32;
+pub type LoadingGameState = u32;
+pub type ProjectileType = u32;
+pub type SamusMovementType = u32;
+pub type SamusPose = u32;
+pub type Consts_60 = u32;
+pub type Consts_81 = u32;
+pub type Consts_82 = u32;
+pub type Consts_83 = u32;
+pub type Consts_84 = u32;
+pub type Consts_86 = u32;
+pub type Consts_87 = u32;
+pub type Consts_88 = u32;
+pub type Consts_89 = u32;
+pub type Consts_8B = u32;
+pub type Consts_8C = u32;
+pub type Consts_8D = u32;
+pub type Consts_8F = u32;
+pub type Consts_90 = u32;
+pub type Consts_91 = u32;
+pub type Consts_94 = u32;
+pub type Consts_9B = u32;
+pub type Consts_A0 = u32;
+pub type Consts_A2 = u32;
+pub type Consts_A3 = u32;
+pub type Consts_A4 = u32;
+pub type Consts_A5 = u32;
+pub type Consts_A6 = u32;
+pub type Consts_A7 = u32;
+pub type Consts_A8 = u32;
+pub type Consts_A9 = u32;
+pub type Consts_AA = u32;
+pub type Consts_AD = u32;
+pub type Consts_B2 = u32;
+pub type Consts_B3 = u32;
+pub type Consts_B4 = u32;
+pub type Consts_B7 = u32;
 
 // Declare bank-local numeric names without changing their public type or value.
 macro_rules! typed_constants {
@@ -10,7 +50,7 @@ macro_rules! typed_constants {
 pub(crate) use typed_constants;
 
 pub mod bank_60 {
-    use crate::types::Consts_60;
+    use super::Consts_60;
 
     crate::game::constants::typed_constants! { Consts_60;
         addr_unk_604800 = 0x4800, addr_unk_604C00 = 0x4c00,
@@ -23,7 +63,7 @@ pub mod bank_60 {
 }
 
 pub mod bank_81 {
-    use crate::types::Consts_81;
+    use super::Consts_81;
     crate::game::constants::typed_constants! { Consts_81;
         addr_kAreaSelectBackgroundTilemaps = 48922, addr_kAreaSelectForegroundTilemap = 46874,
         addr_kMenuTilemap_DataCleared = 46810, addr_kMenuTilemap_ClearSamusA = 46746,
@@ -46,7 +86,7 @@ pub mod bank_81 {
 }
 
 pub mod bank_82 {
-    use crate::types::Consts_82;
+    use super::Consts_82;
 
     crate::game::constants::typed_constants! { Consts_82;
         addr_kPauseMenuMapData = 0x9717, addr_stru_82B9A0 = 0xb9a0,
@@ -64,7 +104,7 @@ pub mod bank_82 {
 }
 
 pub mod bank_84 {
-    use crate::types::Consts_84;
+    use super::Consts_84;
 
     crate::game::constants::typed_constants! { Consts_84;
         addr_PlmPreInstr_Empty4 = 0x8aa6, addr_locret_848AE0 = 0x8ae0,
@@ -77,7 +117,7 @@ pub mod bank_84 {
 }
 
 pub mod bank_86 {
-    use crate::types::Consts_86;
+    use super::Consts_86;
 
     crate::game::constants::typed_constants! { Consts_86;
         addr_stru_868BC2 = 0x8bc2, addr_stru_868BD0 = 0x8bd0,
@@ -171,7 +211,7 @@ pub mod bank_86 {
 }
 
 pub mod bank_87 {
-    use crate::types::Consts_87;
+    use super::Consts_87;
 
     crate::game::constants::typed_constants! { Consts_87;
         addr_kAnimtiles_WreckedShipTradmillRight = 0x8275, addr_kAnimtiles_WreckedShipTradmillLeft = 0x827b,
@@ -183,7 +223,7 @@ pub mod bank_87 {
 }
 
 pub mod bank_8d {
-    use crate::types::Consts_8D;
+    use super::Consts_8D;
 
     crate::game::constants::typed_constants! { Consts_8D;
         addr_locret_8DC5E3 = 0xc5e3, addr_off_8DE192 = 0xe192,
@@ -211,7 +251,7 @@ pub mod bank_8d {
 }
 
 pub mod bank_8f {
-    use crate::types::Consts_8F;
+    use super::Consts_8F;
 
     crate::game::constants::typed_constants! { Consts_8F;
         addr_kRoom_96ba = 0x96ba, addr_kRoom_9804 = 0x9804,
@@ -223,7 +263,7 @@ pub mod bank_8f {
 }
 
 pub mod bank_90 {
-    use crate::types::Consts_90;
+    use super::Consts_90;
 
     crate::game::constants::typed_constants! { Consts_90;
         addr_loc_908029 = 0x8029, addr_stru_909F25 = 0x9f25,
@@ -235,7 +275,7 @@ pub mod bank_90 {
 }
 
 pub mod bank_91 {
-    use crate::types::Consts_91;
+    use super::Consts_91;
 
     crate::game::constants::typed_constants! { Consts_91;
         addr_off_91864B = 0x864b, addr_kDemoInstrs_LeaveDemo = 0x8776,
@@ -245,7 +285,7 @@ pub mod bank_91 {
 }
 
 pub mod bank_a0 {
-    use crate::types::Consts_A0;
+    use super::Consts_A0;
 
     crate::game::constants::typed_constants! { Consts_A0;
         addr_kSpritemap_Nothing_A0 = 0x804d, addr_kExtendedSpritemap_Nothing_A0 = 0x804f,
@@ -263,7 +303,7 @@ pub mod bank_a0 {
 }
 
 pub mod bank_a4 {
-    use crate::types::Consts_A4;
+    use super::Consts_A4;
 
     crate::game::constants::typed_constants! { Consts_A4;
         addr_kSpritemap_Nothing_A4 = 0x804d, addr_kExtendedSpritemap_Nothing_A4 = 0x804f,
@@ -289,7 +329,7 @@ pub mod bank_a4 {
 }
 
 pub mod bank_a6 {
-    use crate::types::Consts_A6;
+    use super::Consts_A6;
 
     crate::game::constants::typed_constants! { Consts_A6;
         addr_kBoulder_Ilist_86A7 = 0x86a7, addr_kBoulder_Ilist_86CB = 0x86cb,
@@ -331,7 +371,7 @@ pub mod bank_a6 {
 }
 
 pub mod bank_a9 {
-    use crate::types::Consts_A9;
+    use super::Consts_A9;
 
     crate::game::constants::typed_constants! { Consts_A9;
         addr_locret_A98AE4 = 0x8ae4, addr_stru_A98AE5 = 0x8ae5,
@@ -381,7 +421,7 @@ pub mod bank_a9 {
 }
 
 pub mod bank_b4 {
-    use crate::types::Consts_B4;
+    use super::Consts_B4;
 
     crate::game::constants::typed_constants! { Consts_B4;
         addr_kSpriteObject_Ilist_C3BA = 0xc3ba, addr_kSpriteObject_Ilist_C4B6 = 0xc4b6,
@@ -390,7 +430,7 @@ pub mod bank_b4 {
 }
 
 pub mod buttons {
-    use crate::types::Buttons;
+    use super::Buttons;
 
     crate::game::constants::typed_constants! { Buttons;
         kButton_R = 0x0010, kButton_L = 0x0020,
@@ -403,7 +443,7 @@ pub mod buttons {
 }
 
 pub mod enemy_properties {
-    use crate::types::EnemyProps;
+    use super::EnemyProps;
 
     crate::game::constants::typed_constants! { EnemyProps;
         kEnemyProps_Invisible = 0x0100, kEnemyProps_Deleted = 0x0200,
@@ -414,7 +454,7 @@ pub mod enemy_properties {
 }
 
 pub mod game_states {
-    use crate::types::GameState;
+    use super::GameState;
 
     crate::game::constants::typed_constants! { GameState;
         kGameState_0_Reset = 0, kGameState_1_OpeningCinematic = 1,
@@ -444,7 +484,7 @@ pub mod game_states {
 }
 
 pub mod loading_game_states {
-    use crate::types::LoadingGameState;
+    use super::LoadingGameState;
 
     crate::game::constants::typed_constants! { LoadingGameState;
         kLoadingGameState_0_Intro = 0, kLoadingGameState_5_Main = 5,
@@ -453,7 +493,7 @@ pub mod loading_game_states {
 }
 
 pub mod projectile_types {
-    use crate::types::ProjectileType;
+    use super::ProjectileType;
 
     crate::game::constants::typed_constants! { ProjectileType;
         kProjectileType_Missile = 0x0100, kProjectileType_SuperMissile = 0x0200,
@@ -464,7 +504,7 @@ pub mod projectile_types {
 }
 
 pub mod samus_movement {
-    use crate::types::SamusMovementType;
+    use super::SamusMovementType;
 
     crate::game::constants::typed_constants! { SamusMovementType;
         kMovementType_00_Standing = 0x0000, kMovementType_01_Running = 0x0001,
@@ -485,7 +525,7 @@ pub mod samus_movement {
 }
 
 pub mod samus_poses {
-    use crate::types::SamusPose;
+    use super::SamusPose;
 
     crate::game::constants::typed_constants! { SamusPose;
         kPose_00_FaceF_Powersuit = 0x0000, kPose_01_FaceR_Normal = 0x0001,

@@ -622,15 +622,19 @@ crate::typed_struct! {
     }
 }
 
+pub use crate::game::constants::{
+    Buttons, Consts_8B, Consts_8C, Consts_8D, Consts_8F, Consts_9B, Consts_60, Consts_81,
+    Consts_82, Consts_83, Consts_84, Consts_86, Consts_87, Consts_88, Consts_89, Consts_90,
+    Consts_91, Consts_94, Consts_A0, Consts_A2, Consts_A3, Consts_A4, Consts_A5, Consts_A6,
+    Consts_A7, Consts_A8, Consts_A9, Consts_AA, Consts_AD, Consts_B2, Consts_B3, Consts_B4,
+    Consts_B7, EnemyProps, GameState, LoadingGameState, ProjectileType, SamusMovementType,
+    SamusPose,
+};
+
 crate::type_aliases! {
-    pub Buttons, Consts_60, Consts_81, Consts_82, Consts_83, Consts_84, Consts_86,
-        Consts_87, Consts_88, Consts_89, Consts_8B, Consts_8C, Consts_8D, Consts_8F, Consts_90,
-        Consts_91, Consts_94, Consts_9B, Consts_A0, Consts_A2, Consts_A3, Consts_A4, Consts_A5,
-        Consts_A6, Consts_A7, Consts_A8, Consts_A9, Consts_AA, Consts_AD, Consts_B2, Consts_B3,
-        Consts_B4, Consts_B7, DspReg, EnemyAiBits, EnemyProps, GLSLScaleType, GLbitfield, GLenum,
-        GLuint, GameState, LiquidPhysicsType, LoadingGameState, ProjectileType, RunMode, SDL_GLattr,
-        SDL_HitTestResult, SDL_Keymod, SDL_Scancode, SDL_bool, SamusMovementType, SamusPose,
-        SnesRegs, Uint32, __mode_t, ogl_LoadStatus, stbi__uint32, KeyAction, OutputMethod,
+    pub DspReg, EnemyAiBits, GLSLScaleType, GLbitfield, GLenum,
+        GLuint, LiquidPhysicsType, RunMode, SDL_GLattr,
+        SDL_HitTestResult, SDL_Keymod, SDL_Scancode, SDL_bool, SnesRegs, Uint32, __mode_t, ogl_LoadStatus, stbi__uint32, KeyAction, OutputMethod,
         SaveLoadOperation = u32;
 }
 

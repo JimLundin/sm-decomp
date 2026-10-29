@@ -53,9 +53,6 @@ pub(crate) fn finish_movement_and_palette(host: &mut impl effects::Host) {
     crate::game::samus_palette::advance(host);
 }
 
-#[cfg(test)]
-mod representation_tests;
-
 #[cfg(sm_verify_dll)]
 pub(crate) fn verify_hit_and_bomb(host: &mut impl effects::Host) {
     requests::hit_and_bomb(host);

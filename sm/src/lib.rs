@@ -473,6 +473,8 @@ pub mod game {
     pub(crate) mod sprite_effect_controllers;
     pub(crate) mod sprite_effect_host;
     pub(crate) mod sprite_effect_runtime;
+    #[cfg(test)]
+    mod transition_representation_tests;
     pub(crate) use sm_game::sprite_effect_state;
     pub(crate) mod visual_host;
     pub(crate) mod visual_runtime;
