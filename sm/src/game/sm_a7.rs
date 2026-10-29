@@ -17,7 +17,7 @@ use core::mem::offset_of;
 pub use crate::game::constants::bank_86::*;
 
 use crate::game::display_refresh::{GraphicsAsset, queue_native_transfer};
-use crate::game::enemy_layouts::enemy_layout;
+use crate::game::enemy_layouts::KraidLayout as Enemy_Kraid;
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::music::{QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx2_Max15, QueueSfx3_Max6};
 use crate::game::palette_effects::fading::background6;
@@ -80,27 +80,6 @@ crate::game::constants::typed_constants! { Consts_A7;
 
 crate::type_aliases! {
     pub Enemy_Phantoon, Enemy_Etecoon, Enemy_Dachora = crate::game::enemy_layouts::EnemyLayout8;
-}
-
-enemy_layout! {
-    Enemy_Kraid {
-        base: EnemyBase,
-        words: [
-            kraid_var_A, kraid_var_B, kraid_var_C, kraid_var_D, kraid_var_E, kraid_var_F,
-            kraid_parameter_1, kraid_parameter_2,
-        ],
-        pad1: [u8; 26696],
-        words: [
-            kraid_next, field_2, field_4, kraid_thinking, kraid_min_y_pos_eject,
-            kraid_mouth_flags,
-        ],
-        kraid_healths_8ths: [u16; 8],
-        words: [field_1C, kraid_target_x],
-        kraid_healths_4ths: [u16; 4],
-        words: [field_28, kraid_hurt_frame, kraid_hurt_frame_timer],
-        field_2E: [u16; 9],
-        words: [],
-    }
 }
 
 crate::game::constants::typed_constants! { i32;
@@ -660,7 +639,7 @@ pub fn Kraid_Instr_1(_k: u16, jp: EnemyScript) -> EnemyScript {
 }
 pub unsafe fn KraidLintCommon_Main(k: u16, game: &mut Game) {
     unsafe {
-        Kraid_EnemyTouch_Lint(k, game);
+        actors::kraid_lint::Kraid_EnemyTouch_Lint(k, game);
         let v1 = (k as i32) as i32;
         CallKraidFunc(
             ((slot!(game, EnemyData[v1].ai_var_A)) as u32) | (0xa70000u32),
@@ -805,61 +784,6 @@ pub unsafe fn KraidEnemy_ProcessInstrEnemyTimer(k: u16, game: &mut Game) {
     unsafe {
         Kraid_ProcessKraidInstr(game);
         KraidEnemy_HandleFunctionTimer(k, game);
-    }
-}
-pub unsafe fn Kraid_EnemyTouch_Lint(k: u16, game: &mut Game) {
-    unsafe {
-        let E = (k as i32) as i32;
-        if (slot!(game, Enemy_Kraid[E].base.properties) as i32 & kEnemyProps_Tangible as i32) == 0
-            && word!(game.samus_invincibility_timer) == 0
-        {
-            let r18: u16 = ((*(rom_ptr!(game, Hitbox; 0xa792b7))).left as i32
-                + slot!(game, Enemy_Kraid[E].base.x_pos) as i32
-                - 2i32) as u16;
-            if word!(game.samus_x_radius) as i32 + word!(game.samus_x_pos) as i32 - r18 as i32
-                & 0x8000
-                == 0
-                && word!(game.samus_x_pos) as i32 - word!(game.samus_x_radius) as i32 - r18 as i32
-                    & 0x8000
-                    != 0
-            {
-                let r22: u16 = ((*(rom_ptr!(game, Hitbox; 0xa792b7))).top as i32
-                    + slot!(game, Enemy_Kraid[E].base.y_pos) as i32
-                    + 2) as u16;
-                if word!(game.samus_y_radius) as i32 + word!(game.samus_y_pos) as i32 - r22 as i32
-                    & 0x8000
-                    == 0
-                {
-                    let r24: u16 = ((*(rom_ptr!(game, Hitbox; 0xa792b7))).bottom as i32
-                        + slot!(game, Enemy_Kraid[E].base.y_pos) as i32
-                        - 2i32) as u16;
-                    if word!(game.samus_y_pos) as i32
-                        - word!(game.samus_y_radius) as i32
-                        - r24 as i32
-                        & 0x8000
-                        != 0
-                    {
-                        let mut v2: u16 = (word!(game.extra_samus_x_displacement) as i32
-                            + !(word!(game.samus_x_radius) as i32 + 16))
-                            as u16;
-                        if v2 as i32 - 16i32 & 0x8000 == 0 {
-                            v2 = 16;
-                        }
-                        word!(game.extra_samus_x_displacement = v2);
-                        actors::combat::contact_reaction(
-                            &mut Runtime::new(game),
-                            actors::api::DeathHandling::Finalize,
-                        );
-                        slot!(
-                            game,
-                            Enemy_Kraid[E].base.properties =
-                                (slot!(game, Enemy_Kraid[E].base.properties))
-                                    | ((kEnemyProps_Tangible) as u16)
-                        );
-                    }
-                }
-            }
-        }
     }
 }
 pub unsafe fn Kraid_SetWalkingBackwards(j: u16, a: u16, game: &mut Game) {
