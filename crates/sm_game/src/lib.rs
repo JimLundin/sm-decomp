@@ -16,6 +16,7 @@ pub mod gameplay_flag_state;
 pub mod geometry;
 pub mod item_pickups;
 pub mod liquid_surface;
+pub mod progress;
 pub mod projectile_block_reactions;
 pub mod projectile_geometry;
 pub mod projectile_initialization;
