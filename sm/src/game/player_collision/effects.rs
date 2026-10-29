@@ -2,7 +2,7 @@
 //! State is the existing Session owner, not a second body/terrain or field port.
 #![forbid(unsafe_code)]
 
-use crate::game::{actors::access::ActorAccess, room_entry::EntryPoll, visual_host::Record};
+use crate::game::{actors::access::ActorAccess, room_entry::api::EntryPoll, visual_host::Record};
 
 /// A compatible mechanism header, not an address into mutable RAM.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
