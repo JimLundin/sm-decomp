@@ -255,29 +255,9 @@ pub(crate) unsafe fn flush_tilemaps(game: &mut Game) {
             // The sentinel uses the byte tail, which need not lie on an entry boundary.
             game.write_vram_queue_word(tail, 0, 0);
             WriteRegWord(DMAP1 as u16, 0x1801, game);
-            // Entries are seven packed bytes; the consumer advances without bank wrap.
-            let mut entry = 0xd0;
-            loop {
-                let size = at!(game, entry;);
-                if size == 0 {
-                    break;
-                }
-                crate::rtl::register_writes! { game;
-                    word(DAS1L as u16, size); word(A1T1L as u16, at!(game, entry + 2;));
-                    byte(A1B1 as u16, game.compatibility_byte(entry + 4));
-                }
-                let increment = if at!(game, entry + 5;) & 0x8000 != 0 {
-                    0x81
-                } else {
-                    0x80
-                };
-                // This word write also clears VMADDL before the full destination write.
-                crate::rtl::register_writes! { game;
-                    word(VMAIN as u16, increment); word(VMADDL as u16, at!(game, entry + 5;));
-                    byte(MDMAEN as u16, 2);
-                }
-                entry += 7;
-            }
+            sm_game::display::transfer::drain_tilemaps(
+                &mut crate::game::display_transfers::CompatibilityQueue::new(game),
+            );
         }
         game.set_vram_write_queue_tail(0);
         for (increment, layout, buffers) in [

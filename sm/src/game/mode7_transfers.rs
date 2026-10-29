@@ -2,10 +2,8 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 use crate::game_state::Game;
 use crate::ram_map::checked_word as word;
-use crate::rtl::{WriteReg, WriteRegWord};
-use crate::snes::registers::*;
 
-const QUEUE: usize = 0x2d0;
+const QUEUE: usize = sm_game::display::transfer::MODE7_QUEUE;
 
 #[forbid(unsafe_code)]
 pub(super) fn write_word(tail: u16, field: usize, value: u16, game: &mut Game) {
@@ -77,34 +75,9 @@ pub(super) unsafe fn process(game: &mut Game) {
     if word!(game.mode7_vram_write_queue_tail) == 0 {
         return;
     }
-    let mut entry = QUEUE;
-    loop {
-        let tag = game.ram().read_byte(entry);
-        if tag & 0xc0 == 0 {
-            break;
-        }
-        // Keep the tag snapshot, but reread every field at its register call.
-        unsafe {
-            WriteReg(DMAP1 as u16, tag & 0x1f, game);
-            WriteRegWord(A1T1L as u16, read_word(game, entry + 1), game);
-            WriteReg(A1B1 as u16, game.ram().read_byte(entry + 3), game);
-            WriteRegWord(DAS1L as u16, read_word(game, entry + 4), game);
-            if tag & 0x80 != 0 {
-                WriteReg(
-                    BBAD1 as u16,
-                    if tag & 0x40 != 0 { 0x19 } else { 0x18 },
-                    game,
-                );
-                WriteRegWord(VMADDL as u16, read_word(game, entry + 6), game);
-                WriteReg(VMAIN as u16, game.ram().read_byte(entry + 8), game);
-            } else {
-                WriteReg(BBAD1 as u16, 0x22, game);
-                WriteReg(CGADD as u16, game.ram().read_byte(entry + 6), game);
-            }
-            WriteReg(MDMAEN as u16, 2, game);
-        }
-        entry += if tag & 0x80 != 0 { 9 } else { 7 };
-    }
+    sm_game::display::transfer::drain_mode7(&mut unsafe {
+        crate::game::display_transfers::RawQueue::new(game)
+    });
     game.ram().fill(QUEUE..QUEUE + 2, 0);
     word!(game.mode7_vram_write_queue_tail = 0);
 }
