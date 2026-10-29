@@ -17,6 +17,7 @@ use crate::game::ridley_explosion_data;
 use crate::game::session_runtime::Runtime;
 use crate::game::session_runtime::{actor_cosine, actor_sine};
 use crate::game::sprite_drawing::Clip;
+use crate::game::zebetite_data;
 use crate::ram_map::slot;
 use sm_data::ridley_explosion::{
     HAND_ADDRESS, LEGS_ADDRESS, MOUTH_ADDRESS, TORSO_ADDRESS, WINGS_ADDRESS,
@@ -3904,9 +3905,10 @@ pub unsafe fn Zebetites_Func_5(game: &mut Game) {
         }
     }
     let v3: i32 = v0 as i32 >> 1;
-    let mut v4: u16 = crate::rtl::rom_table_word!(game, 0xa6fd4a, v3 as isize);
+    let lists = zebetite_data::health_lists(game, v3 as isize);
+    let mut v4: u16 = lists.big;
     if (slot!(game, Enemy_Zebetites[E].var_F) & 0x8000) != 0 {
-        v4 = crate::rtl::rom_table_word!(game, 0xa6fd54, v3 as isize);
+        v4 = lists.small_pair;
     }
     slot!(game, Enemy_Zebetites[E].base; current_instruction = v4, instruction_timer = 1);
     slot!(game, Enemy_Zebetites[E].base.timer = 0);
@@ -4243,14 +4245,15 @@ crate::game::callback_dispatch! {
         slot!(game, Enemy_Zebetites[E].var_D = r18);
         if v2 as i32 - 4i32 & 0x8000 != 0 {
             let v3: i32 = v2 as i32;
-            slot!(game, Enemy_Zebetites[E].var_F = crate::rtl::rom_table_word!(game, 0xa6fc03, v3 as isize));
-            slot!(game, Enemy_Zebetites[E].base.y_height = crate::rtl::rom_table_word!(game, 0xa6fc0b, v3 as isize));
-            slot!(game, Enemy_Zebetites[E].base.current_instruction = crate::rtl::rom_table_word!(game, 0xa6fc13, v3 as isize));
-            slot!(game, Enemy_Zebetites[E].base.x_pos = crate::rtl::rom_table_word!(game, 0xa6fc1b, v3 as isize));
+            let placement = zebetite_data::placement(game, v3 as isize);
+            slot!(game, Enemy_Zebetites[E].var_F = placement.multi_part);
+            slot!(game, Enemy_Zebetites[E].base.y_height = placement.height);
+            slot!(game, Enemy_Zebetites[E].base.current_instruction = placement.instruction_list);
+            slot!(game, Enemy_Zebetites[E].base.x_pos = placement.x_position);
             let mut v4: u16 = if slot!(game, Enemy_Zebetites[E].parameter_1) != 0 {
-                crate::rtl::rom_table_word!(game, 0xa6fc2b, v3 as isize)
+                placement.y_position_alternate
             } else {
-                crate::rtl::rom_table_word!(game, 0xa6fc23, v3 as isize)
+                placement.y_position
             };
             slot!(game, Enemy_Zebetites[E].base.y_pos = v4);
         } else {

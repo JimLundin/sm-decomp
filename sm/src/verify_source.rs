@@ -82,6 +82,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_data/src/world.rs"),
     ),
     (
+        "crates/sm_data/src/zebetites.rs",
+        include_bytes!("../../crates/sm_data/src/zebetites.rs"),
+    ),
+    (
         "crates/sm_game/src/player_transitions/state.rs",
         include_bytes!("../../crates/sm_game/src/player_transitions/state.rs"),
     ),
@@ -1855,6 +1859,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/xray_background.rs",
         include_bytes!("game/xray_background.rs"),
+    ),
+    (
+        "sm/src/game/zebetite_data.rs",
+        include_bytes!("game/zebetite_data.rs"),
     ),
     ("sm/src/game_state.rs", include_bytes!("game_state.rs")),
     ("sm/src/host.rs", include_bytes!("host.rs")),

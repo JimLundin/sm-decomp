@@ -28,6 +28,7 @@ pub mod scene;
 pub mod shooting_stars;
 pub mod table;
 pub mod world;
+pub mod zebetites;
 
 // Immutable media identities and ordered semantic audio records.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
