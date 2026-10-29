@@ -585,7 +585,7 @@ fn reserve_palette(game: &mut Game) -> u16 {
         }
         word!(game.pausemenu_reserve_tank_animation_timer = timer);
     }
-    crate::rtl::rom_table_word!(game, 0x82c0fa, 3)
+    crate::game::map_menu::animation_palette(game, 3)
 }
 
 fn reserve_sprite(sprite: u16, index: usize, palette: u16, game: &mut Game) {

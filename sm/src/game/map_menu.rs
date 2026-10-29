@@ -1,5 +1,6 @@
 //! Area and room selection, with the original menu-state and RAM compatibility.
 use crate::game::constants::{bank_81::*, bank_82::*};
+use crate::game::imported::{Imported, grid_word, word as table_word};
 use crate::game::music::{QueueSfx1_Max6, QueueSfx3_Max6};
 use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
@@ -8,6 +9,57 @@ use crate::game::save_slots::load_area_map;
 use crate::game::session_runtime::Runtime;
 use crate::game::visual_runtime::{clear_hdma, set_hdma_enabled};
 use crate::game::{menu_tilemap, menu_window};
+use sm_data::pause_menu::{
+    ANIMATION_PALETTE_ADDRESS, ANIMATION_SPRITEMAP_ADDRESS, ANIMATIONS, AREA_MAP_ADDRESS,
+    AREA_MAPS, LABEL_SPRITEMAP_ADDRESS, LABEL_SPRITEMAPS, MAP_ICON_ADDRESS, MAP_ICON_AREAS,
+    PALETTE_ANIMATION_ADDRESS, PALETTE_ANIMATION_BYTES, PaletteAnimation, SELECTOR_CATEGORIES,
+    SELECTOR_POSITION_ADDRESS, import_palette_animation, import_words,
+};
+use sm_data::table::Rows;
+
+#[derive(Default)]
+pub(crate) struct ImportedTables {
+    label_spritemaps: Option<Imported<Rows<u16, LABEL_SPRITEMAPS>>>,
+    map_icons: Option<Imported<Rows<u16, MAP_ICON_AREAS>>>,
+    area_maps: Option<Imported<Rows<u16, AREA_MAPS>>>,
+    animation_palettes: Option<Imported<Rows<u16, ANIMATIONS>>>,
+    animation_spritemaps: Option<Imported<Rows<u16, ANIMATIONS>>>,
+    selector_positions: Option<Imported<Rows<u16, SELECTOR_CATEGORIES>>>,
+    palette_animation: Option<Imported<PaletteAnimation>>,
+}
+
+pub(crate) fn import(image: &crate::rom::RomImage) -> ImportedTables {
+    fn words<const N: usize>(
+        image: &crate::rom::RomImage,
+        address: u32,
+    ) -> Option<Imported<Rows<u16, N>>> {
+        Imported::import(image, address, 2 * N, import_words)
+    }
+    ImportedTables {
+        label_spritemaps: words(image, LABEL_SPRITEMAP_ADDRESS),
+        map_icons: words(image, MAP_ICON_ADDRESS),
+        area_maps: words(image, AREA_MAP_ADDRESS),
+        animation_palettes: words(image, ANIMATION_PALETTE_ADDRESS),
+        animation_spritemaps: words(image, ANIMATION_SPRITEMAP_ADDRESS),
+        selector_positions: words(image, SELECTOR_POSITION_ADDRESS),
+        palette_animation: Imported::import(
+            image,
+            PALETTE_ANIMATION_ADDRESS,
+            PALETTE_ANIMATION_BYTES,
+            import_palette_animation,
+        ),
+    }
+}
+
+/// The palette bits for pause menu sprite animation `index`.
+pub(crate) fn animation_palette(game: &Game, index: isize) -> u16 {
+    table_word(
+        &game.pause_menu.animation_palettes,
+        game,
+        ANIMATION_PALETTE_ADDRESS,
+        index,
+    )
+}
 const AREAS: [u16; 6] = [0, 3, 5, 1, 4, 2];
 
 static STATES: [Func_V; 23] = callback_table! { nonnull Func_V;
@@ -267,7 +319,12 @@ static LABEL_POSITIONS: [u16; 12] = [
 fn draw_area_labels(game: &mut Game) {
     let mut r3: u16 = 0;
     sprite_output::menu(
-        crate::rtl::rom_table_word!(game, 0x82c749, 0),
+        table_word(
+            &game.pause_menu.label_spritemaps,
+            game,
+            LABEL_SPRITEMAP_ADDRESS,
+            0,
+        ),
         0x80,
         0x10,
         r3,
@@ -298,7 +355,12 @@ fn draw_area_labels(game: &mut Game) {
             }
             let j: i32 = 4 * AREAS[i as usize] as i32 >> 1;
             sprite_output::menu(
-                (crate::rtl::rom_table_word!(game, 0x82c749, 0) as i32
+                (table_word(
+                    &game.pause_menu.label_spritemaps,
+                    game,
+                    LABEL_SPRITEMAP_ADDRESS,
+                    0,
+                ) as i32
                     + AREAS[i as usize] as i32
                     + 1) as u16,
                 LABEL_POSITIONS[j as usize],
@@ -806,7 +868,12 @@ pub(crate) fn animate_palette(game: &mut Game) {
     let frame_word = u16::from_ne_bytes([0, word!(game.pausemenu_palette_animation_frame) as u8]);
     let mut source = (frame_word >> 3) + 30;
     for index in (176..192).rev() {
-        let color = crate::rtl::rom_table_word!(game, 0x82a987, (source >> 1) as isize);
+        let color = grid_word(
+            &game.pause_menu.palette_animation,
+            game,
+            PALETTE_ANIMATION_ADDRESS,
+            (source >> 1) as isize,
+        );
         word_transfers!(game, ascending, 1; native(0xc000 + 2 * index) <- value(color));
         source = source.wrapping_sub(2);
     }
@@ -854,10 +921,11 @@ pub(crate) fn display_elevator_destinations(game: &mut Game) {
     {
         return;
     }
-    let mut cursor = i32::from(crate::rtl::rom_table_word!(
+    let mut cursor = i32::from(table_word(
+        &game.pause_menu.map_icons,
         game,
-        0x82c74d,
-        word!(game.area_index) as isize
+        MAP_ICON_ADDRESS,
+        word!(game.area_index) as isize,
     ));
     loop {
         let record = map_record(cursor as u16, game);
@@ -1020,7 +1088,12 @@ pub(crate) fn render_map(screen: MapScreen, game: &mut Game) {
         MapScreen::FileSelect => (0x3000, 15),
     };
     let bitmap = map_record(
-        crate::rtl::rom_table_word!(game, 0x829717, area as isize),
+        table_word(
+            &game.pause_menu.area_maps,
+            game,
+            AREA_MAP_ADDRESS,
+            area as isize,
+        ),
         game,
     );
     if game
@@ -1110,12 +1183,18 @@ pub(crate) fn animate_pause_sprite(animation: u16, x: u16, y: u16, game: &mut Ga
         }
         set_native_word(timer, duration, game);
     }
-    let palette = crate::rtl::rom_table_word!(game, 0x82c0fa, 3);
+    let palette = animation_palette(game, 3);
     let delta = u16::from(script.byte(3 * usize::from(native_word(frame, game)) + 2));
     let variant = animation_ram_address(0x82c0d6, index, game);
     let variant = 2 * u16::from(game.ram().read_byte(variant));
     let sprite = map_record(
-        crate::rtl::rom_table_word!(game, 0x82c1e4, index as isize).wrapping_add(variant),
+        table_word(
+            &game.pause_menu.animation_spritemaps,
+            game,
+            ANIMATION_SPRITEMAP_ADDRESS,
+            index as isize,
+        )
+        .wrapping_add(variant),
         game,
     )
     .word(0);
@@ -1136,10 +1215,11 @@ pub(crate) fn draw_equipment_selector(game: &mut Game) {
     {
         return;
     }
-    let address = crate::rtl::rom_table_word!(
+    let address = table_word(
+        &game.pause_menu.selector_positions,
         game,
-        0x82c18e,
-        word!(game.pausemenu_equipment_category_item) as u8 as isize
+        SELECTOR_POSITION_ADDRESS,
+        word!(game.pausemenu_equipment_category_item) as u8 as isize,
     )
     .wrapping_add(4 * u16::from(game.ram().read_byte(0x756)));
     let position = map_record(address, game);

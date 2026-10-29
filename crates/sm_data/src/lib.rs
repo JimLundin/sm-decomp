@@ -25,6 +25,7 @@ pub mod kraid;
 pub mod magdollite;
 pub mod message;
 pub mod mother_brain;
+pub mod pause_menu;
 pub mod phantoon;
 pub mod raster;
 pub mod ridley;

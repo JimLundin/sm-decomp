@@ -75,6 +75,26 @@ pub(crate) fn word<const N: usize>(
     )
 }
 
+/// Word `index` of a table of `W`-word rows read as one word list: row
+/// `index / W`, column `index % W`. Other images and indices past the table
+/// run the original indexed load at `address`.
+pub(crate) fn grid_word<const W: usize, const N: usize>(
+    table: &Option<Imported<sm_data::table::Rows<[u16; W], N>>>,
+    game: &Game,
+    address: u32,
+    index: isize,
+) -> u16 {
+    Imported::read(
+        table,
+        game,
+        |rows| {
+            let index = usize::try_from(index).ok()?;
+            Some(rows.row(index / W)?[index % W])
+        },
+        |rom| load(rom, address, index),
+    )
+}
+
 /// A word index as a row of `words`-word rows, if it starts one.
 pub(crate) fn row_of(index: isize, words: usize) -> Option<usize> {
     let index = usize::try_from(index).ok()?;
