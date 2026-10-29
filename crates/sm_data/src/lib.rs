@@ -5,6 +5,7 @@
 //! RAM or backend type crosses this boundary.
 #![forbid(unsafe_code)]
 
+pub mod ceres_elevator;
 pub mod enemy_speeds;
 pub mod sand_heap;
 pub mod shooting_stars;

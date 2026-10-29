@@ -519,11 +519,11 @@ pub(crate) fn advance_ceres_elevator(game: &mut Game) {
                 game.ram().read_byte(0x7e2),
             ]))) as i32
                 >> 1;
-            let delay = crate::rtl::rom_table_word!(game, 0x89ad5f, v0 as isize);
-            word_transfers!(game, ascending, 1; native(0x7e3) <- value(delay));
-            word!(game.reg_M7B = crate::rtl::rom_table_word!(game, 0x89ad5f, (v0 + 1) as isize));
+            let step = crate::game::ceres_elevator::step(game, v0 as isize);
+            word_transfers!(game, ascending, 1; native(0x7e3) <- value(step.frames));
+            word!(game.reg_M7B = step.mode7_b);
             word!(game.reg_M7C = -(word!(game.reg_M7B) as i32) as u16);
-            word!(game.reg_M7A = crate::rtl::rom_table_word!(game, 0x89ad5f, (v0 + 2) as isize));
+            word!(game.reg_M7A = step.mode7_a);
             word!(game.reg_M7D = word!(game.reg_M7A));
             if (u16::from_ne_bytes([game.ram().read_byte(0x7e1), game.ram().read_byte(0x7e2)])
                 as i16)
