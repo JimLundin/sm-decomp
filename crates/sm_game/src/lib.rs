@@ -17,11 +17,13 @@ pub mod geometry;
 pub mod item_pickups;
 pub mod liquid_surface;
 pub mod projectile_block_reactions;
+pub mod projectile_geometry;
 pub mod projectile_initialization;
 pub mod projectile_room;
 pub mod projectile_weapon_definitions;
 pub mod room_entry;
 pub mod special_geometry;
+pub mod sprite_effect_state;
 pub mod visual_state;
 
 pub mod actors {
@@ -30,6 +32,9 @@ pub mod actors {
 }
 pub mod enemy_projectiles {
     pub mod tables;
+}
+pub mod player_collision {
+    pub mod state;
 }
 pub mod player_transitions {
     pub mod demo;
