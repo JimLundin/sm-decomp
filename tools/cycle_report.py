@@ -96,8 +96,9 @@ def graph(files):
     for rel, src in files.items():
         me = list(modpath(rel))
         paths = [p for m in re.finditer(r"\buse\s+([^;]+);", src) for p in use_paths(m.group(1))]
+        # Only maximal paths: a prefix of a::b::{..} or a::* belongs to a use tree expanded above.
         paths += [[m.group(1)] + m.group(2).split("::")[1:]
-                  for m in re.finditer(r"\b(crate|super|self)((?:::\w+)+)", src)]
+                  for m in re.finditer(r"\b(crate|super|self)((?:::\w+)+)(?!\w|::)", src)]
         for p in paths:
             if not p or p[0] not in ("crate", "super", "self"):
                 continue

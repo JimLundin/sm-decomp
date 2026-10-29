@@ -1,10 +1,8 @@
 //! Immutable authored topology and validated compatibility bindings.
 //! Construction validates every reference before an owned Game is opened.
 #![forbid(unsafe_code)]
-use super::{
-    content::{AssetRef, AssetSource, DoorList},
-    effects::AssetSlot,
-};
+use super::content::{AssetRef, AssetSource, DoorList};
+use sm_game::room_entry::AssetSlot;
 use std::{
     collections::BTreeMap,
     hash::{DefaultHasher, Hash, Hasher},
