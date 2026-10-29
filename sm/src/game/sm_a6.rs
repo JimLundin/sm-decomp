@@ -2,6 +2,7 @@ use crate::game::actors;
 use crate::game::actors::access::ActorKey as Key;
 use crate::game::actors::api as actor_api;
 use crate::game::ceres_doors;
+use crate::game::ceres_ridley_tables;
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_script::EnemyScript;
 use crate::game::fire_geysers;
@@ -432,7 +433,7 @@ pub unsafe fn Ridley_A2F2(game: &mut Game) {
 }
 pub unsafe fn CeresRidley_Func_8(a: u16, game: &mut Game) -> u8 {
     {
-        let v1: u16 = crate::rtl::rom_table_word!(game, 0xa6a4eb, a as isize);
+        let v1: u16 = ceres_ridley_tables::background_fade(game, a as isize);
         if v1 == 0 {
             return 1;
         }
@@ -505,7 +506,7 @@ pub unsafe fn CeresRidley_Func_33(game: &mut Game) {
         slot!(game, Enemy_CeresRidley[E].var_36 = v1);
         enqueue_rom(
             0xa6,
-            crate::rtl::rom_table_word!(game, 0xa6acda, v1 as isize),
+            ceres_ridley_tables::baby_metroid_frame(game, v1 as isize),
             game,
         );
     }
@@ -517,7 +518,7 @@ pub unsafe fn CeresRidley_Func_34(game: &mut Game) {
         slot!(game, Enemy_CeresRidley[E].var_37 = v1);
         enqueue_rom(
             0xa6,
-            crate::rtl::rom_table_word!(game, 0xa6ad45, v1 as isize),
+            ceres_ridley_tables::wing_frame(game, v1 as isize),
             game,
         );
     }
@@ -1129,11 +1130,9 @@ crate::game::callback_dispatch! {
                     slot!(game, Enemy_CeresRidley[E].var_E = (cry_var_E).wrapping_add(1));
                     let v3: i32 = ((6u16).wrapping_mul((v2) as u16)) as i32 >> 1;
                     word! { game;
-                        palette_buffer[252] = crate::rtl::rom_table_word!(game, 0xa6e2aa, v3 as isize);
-                        palette_buffer[253] =
-                            crate::rtl::rom_table_word!(game, 0xa6e2aa, (v3 + 1) as isize);
-                        palette_buffer[254] =
-                            crate::rtl::rom_table_word!(game, 0xa6e2aa, (v3 + 2) as isize);
+                        palette_buffer[252] = ceres_ridley_tables::eye_fade(game, v3 as isize);
+                        palette_buffer[253] = ceres_ridley_tables::eye_fade(game, (v3 + 1) as isize);
+                        palette_buffer[254] = ceres_ridley_tables::eye_fade(game, (v3 + 2) as isize);
                     }
                 }
             }
@@ -1149,7 +1148,7 @@ crate::game::callback_dispatch! {
             let mut v2: i16 = 11;
             do_until! { v5 == 1 ;
     let mut v5: i16 = v2;
-    let v3: u16 = crate::rtl::rom_table_word!(game, 0xa6e30a, (cry_var_E >> 1) as isize);
+    let v3: u16 = ceres_ridley_tables::body_fade(game, (cry_var_E >> 1) as isize);
     word! {game; palette_buffer[(r18 >> 1)] = v3; palette_buffer[(r20 >> 1)] = v3; }
     cry_var_E = (cry_var_E).wrapping_add(2);
     r18 = (r18).wrapping_add(2);
@@ -1226,9 +1225,8 @@ crate::game::callback_dispatch! {
             slot!(game, Enemy_CeresRidley[E].var_00 = v1);
             v1 >= 0x7c
         } {
-            slot!(game, Enemy_CeresRidley[E].var_A = crate::rtl::rom_table_word!(
+            slot!(game, Enemy_CeresRidley[E].var_A = ceres_ridley_tables::attack(
                 game,
-                0xa6a743,
                 (word!(game.random_number) as i32 & 0xf) as isize
             ));
             slot!(game, Enemy_CeresRidley[E].var_00 = 0);
@@ -1315,7 +1313,7 @@ crate::game::callback_dispatch! {
             word! {game; earthquake_type = 35; earthquake_timer = 64; }
         }
         let v2: i32 = cry_var_33 as i32 >> 1;
-        if crate::rtl::rom_table_word!(game, 0xa6ae4d, v2 as isize) == 0xffff {
+        if ceres_ridley_tables::getaway_zoom(game, v2 as isize) == 0xffff {
             slot!(game, Enemy_CeresRidley[E].var_32 = slot!(game, Enemy_CeresRidley[E].var_32).wrapping_add(1));
             game.ram().write_byte(0x56, 9);
             game.ram().write_byte(0x5f, 0);
@@ -1325,13 +1323,13 @@ crate::game::callback_dispatch! {
             slot!(game, Enemy_CeresRidley[E].var_A = (0xa6c04ei32) as u16);
             slot!(game, Enemy_CeresRidley[E].var_F = 0);
         } else {
-            slot!(game, Enemy_CeresRidley[E].var_30 = crate::rtl::rom_table_word!(game, 0xa6ae4d, v2 as isize));
-            let v3: u16 =
-                (crate::rtl::rom_table_word!(game, 0xa6af2f, v2 as isize)).wrapping_add(slot!(game, Enemy_CeresRidley[E].var_35));
+            slot!(game, Enemy_CeresRidley[E].var_30 = ceres_ridley_tables::getaway_zoom(game, v2 as isize));
+            let velocity = ceres_ridley_tables::getaway_velocity(game, v2 as isize);
+            let v3: u16 = velocity.y.wrapping_add(slot!(game, Enemy_CeresRidley[E].var_35));
             slot!(game, Enemy_CeresRidley[E].var_35 = v3);
             word!(game.reg_BG1VOFS = v3);
             let v4: u16 =
-                (slot!(game, Enemy_CeresRidley[E].var_34)).wrapping_sub(crate::rtl::rom_table_word!(game, 0xa6b00f, v2 as isize));
+                (slot!(game, Enemy_CeresRidley[E].var_34)).wrapping_sub(velocity.x);
             slot!(game, Enemy_CeresRidley[E].var_34 = v4);
             word!(game.reg_BG1HOFS = v4);
             CeresRidley_Func_35(slot!(game, Enemy_CeresRidley[E].var_30), game);

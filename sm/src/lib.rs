@@ -470,6 +470,7 @@ pub mod game {
 
     pub(crate) mod ceres_doors;
     pub(crate) mod ceres_elevator;
+    pub(crate) mod ceres_ridley_tables;
     pub use sm_game::combat_rules;
     pub use sm_game::contact_rules;
     pub use sm_game::drop_rules;
