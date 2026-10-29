@@ -353,7 +353,7 @@ pub mod game {
     pub mod constants;
     pub(crate) mod decompression;
     pub(crate) mod demo_rooms;
-    pub(crate) mod dialogue;
+    pub(crate) use sm_game::dialogue;
     pub(crate) mod dialogue_ram;
     pub(crate) mod enemy_layouts;
     pub(crate) mod enemy_speeds;
@@ -400,7 +400,7 @@ pub mod game {
     pub mod enemy_projectiles;
     pub(crate) mod equipment_menu;
     pub(crate) mod escape_typewriter;
-    pub(crate) mod external_inputs;
+    pub(crate) use sm_game::external_inputs;
     pub(crate) mod gameplay_flag_host;
     pub(crate) mod gameplay_flag_runtime;
     pub(crate) use sm_game::gameplay_flag_state;

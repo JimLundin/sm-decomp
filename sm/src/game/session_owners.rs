@@ -27,35 +27,7 @@ pub(crate) struct SamusPublications {
     pub object_first_order: Option<u8>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) enum MusicMeaning {
-    Silence,
-    Bank {
-        bank: crate::game::scene::records::AssetRef,
-        after: MusicContinuation,
-    },
-    Program {
-        program: crate::game::scene::records::AssetRef,
-        phase: u64,
-    },
-}
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) enum MusicContinuation {
-    Retain,
-    Silence,
-    Program {
-        program: crate::game::scene::records::AssetRef,
-        phase: u64,
-    },
-}
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) enum SoundMeaning {
-    Stop,
-    Program {
-        program: crate::game::scene::records::AssetRef,
-        phase: u64,
-    },
-}
+pub(crate) use sm_data::{MusicContinuation, MusicMeaning, SoundMeaning};
 /// Declared command interpretation, independent of the live request bytes.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct AudioRequestCatalog {

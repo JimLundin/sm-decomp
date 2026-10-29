@@ -1,8 +1,6 @@
 //! Native callers and retained hardware effects for the shared request owner.
 use crate::game_state::Game;
 use crate::ram_map::checked_word;
-use crate::rtl::RtlApuWrite;
-use crate::snes::registers::APUI00;
 
 #[path = "music_requests.rs"]
 pub(crate) mod requests;
@@ -26,23 +24,22 @@ pub fn QueueMusic_DelayedY(track: u16, delay: u16, game: &mut Game) {
     enqueue(track, delay, false, game);
 }
 
-#[forbid(unsafe_code)]
-fn bank_address(game: &Game) -> u32 {
-    let offset = usize::from(checked_word!(game.music_entry) as u8);
-    // Load24 used a native dword, including the adjacent fourth byte.
-    u32::from_ne_bytes(core::array::from_fn(|i| {
-        game.read_rom_byte(0x8fe7e1, offset + i)
-    })) & 0xffffff
-}
-
 pub unsafe fn HandleMusicQueue(game: &mut Game) {
     unsafe {
-        requests::advance_music(game, |effect, _meaning, game| {
+        requests::advance_music(game, |effect, meaning, game| {
             match effect {
                 requests::MusicEffect::UploadBank => {
-                    crate::native_audio::upload_bank(bank_address(game), game);
+                    let selector =
+                        sm_data::OriginalMusicBank(checked_word!(game.music_entry) as u8);
+                    crate::native_audio::emit(
+                        crate::native_audio::music_bank_cue(selector, meaning),
+                        game,
+                    );
                 }
-                requests::MusicEffect::WriteTrack(track) => RtlApuWrite(APUI00, track, game),
+                requests::MusicEffect::WriteTrack(track) => crate::native_audio::emit(
+                    crate::native_audio::music_cue(sm_data::OriginalMusicTrack(track), meaning),
+                    game,
+                ),
             }
             Ok(())
         })

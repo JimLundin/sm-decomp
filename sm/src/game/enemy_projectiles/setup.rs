@@ -236,7 +236,7 @@ pub(super) fn EprojInit_PhantoonDestroyableFireballs(j: u16, ctx: &mut impl Host
                 enemy!(ctx, 2 => (v3) as isize, velocity_x);
             }
             {
-                enemy!(ctx, byte_8698B4[v4 as usize] as u16 => (v3) as isize, behavior_a);
+                enemy!(ctx, BYTE_8698_B4[v4 as usize] as u16 => (v3) as isize, behavior_a);
                 enemy!(ctx, ctx.resolve_actor(Key::from_legacy(0), Le).x.whole => (v3) as isize, x);
                 enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32 + 32) as u16 => (v3) as isize, y);
                 enemy!(ctx, (0x869a45 & 0xffff) as u16 => (v3) as isize, pre_action);
@@ -250,7 +250,7 @@ pub(super) fn EprojInit_PhantoonDestroyableFireballs(j: u16, ctx: &mut impl Host
             enemy!(ctx, 0 => (v5) as isize, velocity_y);
 
             enemy!(ctx, ((ctx.session().enemy_projectiles.spawn.primary as i32 & 0xf0) >> 1) as u16 => (v5) as isize, velocity_x);
-            enemy!(ctx, byte_8698F7[(ctx.session().enemy_projectiles.spawn.primary as i32 & 0xf) as usize] as u16 => (v5) as isize, x);
+            enemy!(ctx, BYTE_8698_F7[(ctx.session().enemy_projectiles.spawn.primary as i32 & 0xf) as usize] as u16 => (v5) as isize, x);
             enemy!(ctx, 40 => (v5) as isize, y);
             enemy!(ctx, (0x869a94 & 0xffff) as u16 => (v5) as isize, pre_action);
         }
@@ -262,7 +262,7 @@ pub(super) fn EprojInit_PhantoonDestroyableFireballs(j: u16, ctx: &mut impl Host
             enemy!(ctx, 0 => (v7) as isize, velocity_y);
 
             enemy!(ctx, 128 => (v7) as isize, velocity_x);
-            enemy!(ctx, byte_869979[ctx.session().enemy_projectiles.spawn.primary as u8 as usize] as u16 => (v7) as isize, behavior_a);
+            enemy!(ctx, BYTE_869979[ctx.session().enemy_projectiles.spawn.primary as u8 as usize] as u16 => (v7) as isize, behavior_a);
             enemy!(ctx, ctx.resolve_actor(Key::from_legacy(0), Le).x.whole => (v7) as isize, x);
             enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32 + 16) as u16 => (v7) as isize, y);
             enemy!(ctx, (0x869ada & 0xffff) as u16 => (v7) as isize, pre_action);
@@ -399,7 +399,7 @@ pub(super) fn EprojInit_BombTorizoExplosiveSwipe(j: u16, ctx: &mut impl Host) {
     let variant = (ctx.session().enemy_projectiles.spawn.primary >> 1) as usize;
     let slot = (j >> 1) as isize;
     let x = ctx.resolve_actor(Key::from_legacy(enemy), Le).x.whole;
-    let x_offset = kEprojInit_BombTorizoExplosiveSwipe_Tab0[variant] as u16;
+    let x_offset = K_EPROJ_INIT_BOMB_TORIZO_EXPLOSIVE_SWIPE_TAB0[variant] as u16;
     let x = if mirrored {
         x.wrapping_sub(x_offset)
     } else {
@@ -407,7 +407,7 @@ pub(super) fn EprojInit_BombTorizoExplosiveSwipe(j: u16, ctx: &mut impl Host) {
     };
     enemy!(ctx, x => slot, x);
     let y = ctx.resolve_actor(Key::from_legacy(enemy), Le).y.whole;
-    let y_offset = kEprojInit_BombTorizoExplosiveSwipe_Tab1[variant] as u16;
+    let y_offset = K_EPROJ_INIT_BOMB_TORIZO_EXPLOSIVE_SWIPE_TAB1[variant] as u16;
     enemy!(ctx, y.wrapping_add(y_offset) => slot, y);
 }
 
@@ -421,18 +421,18 @@ pub(super) fn EprojInit_BombTorizoStatueBreaking(j: u16, ctx: &mut impl Host) {
         enemy!(ctx, value => (v3) as isize, program);
     };
     {
-        let value = (kEprojInit_BombTorizoStatueBreaking_Xpos[v2 as usize] as i32
+        let value = (K_EPROJ_INIT_BOMB_TORIZO_STATUE_BREAKING_XPOS[v2 as usize] as i32
             + 16 * ctx.session().mechanisms.block_x as i32) as u16;
         enemy!(ctx, value => (v3) as isize, x);
     };
     let v4: i32 = (v1 as i32 & 0xf) >> 1;
     {
-        let value = (kEprojInit_BombTorizoStatueBreaking_Ypos[v4 as usize] as i32
+        let value = (K_EPROJ_INIT_BOMB_TORIZO_STATUE_BREAKING_YPOS[v4 as usize] as i32
             + 16 * ctx.session().mechanisms.block_y as i32) as u16;
         enemy!(ctx, value => (v3) as isize, y);
     };
-    enemy!(ctx, kEprojInit_BombTorizoStatueBreaking_Yvel[v4 as usize] as u16 => (v3) as isize, velocity_y);
-    enemy!(ctx, kEprojInit_BombTorizoStatueBreaking_F[v4 as usize] as u16 => (v3) as isize, behavior_b);
+    enemy!(ctx, K_EPROJ_INIT_BOMB_TORIZO_STATUE_BREAKING_YVEL[v4 as usize] as u16 => (v3) as isize, velocity_y);
+    enemy!(ctx, K_EPROJ_INIT_BOMB_TORIZO_STATUE_BREAKING_F[v4 as usize] as u16 => (v3) as isize, behavior_b);
     {
         let index = (v3 as usize) as isize;
         let old = enemy!(ctx, index, properties);
@@ -600,12 +600,12 @@ pub(super) fn EprojInit_EyeDoorProjectile(j: u16, ctx: &mut impl Host) {
     let v3: i32 = ctx.session().enemy_projectiles.spawn.primary as i32 >> 1;
 
     {
-        let value = (word_86B65B[v3 as usize] as i32
+        let value = (WORD_86_B65_B[v3 as usize] as i32
             + 8 * (2 * ctx.session().mechanisms.block_x as i32 + 1)) as u16;
         enemy!(ctx, value => (v2) as isize, x);
     };
     {
-        let value = (word_86B65B[(v3 + 1) as usize] as i32
+        let value = (WORD_86_B65_B[(v3 + 1) as usize] as i32
             + 16 * ctx.session().mechanisms.block_y as i32) as u16;
         enemy!(ctx, value => (v2) as isize, y);
     };
@@ -617,20 +617,20 @@ pub(super) fn EprojInit_EyeDoorSweat(j: u16, ctx: &mut impl Host) {
     enemy!(ctx, (8 * (2 * (ctx.session().mechanisms.block_x as i32 - 1i32) + 1)) as u16 => (v1) as isize, x);
     enemy!(ctx, (16 * (ctx.session().mechanisms.block_y as i32 + 1)) as u16 => (v1) as isize, y);
     let v2: i32 = ctx.session().enemy_projectiles.spawn.primary as i32 >> 1;
-    enemy!(ctx, word_86B6B1[v2 as usize] as u16 => (v1) as isize, velocity_x);
-    enemy!(ctx, word_86B6B1[(v2 + 1) as usize] as u16 => (v1) as isize, velocity_y);
+    enemy!(ctx, WORD_86_B6_B1[v2 as usize] as u16 => (v1) as isize, velocity_x);
+    enemy!(ctx, WORD_86_B6_B1[(v2 + 1) as usize] as u16 => (v1) as isize, velocity_y);
 }
 
 pub(super) fn EprojInit_TourianStatueEyeGlow(j: u16, ctx: &mut impl Host) {
     let v1: u16 = ctx.session().enemy_projectiles.spawn.primary;
     let v2: i32 = ctx.session().enemy_projectiles.spawn.primary as i32 >> 1;
     let v3: i32 = j as i32 >> 1;
-    enemy!(ctx, kEprojInit_TourianStatueEyeGlow_X[v2 as usize] => (v3) as isize, x);
-    enemy!(ctx, kEprojInit_TourianStatueEyeGlow_Y[v2 as usize] => (v3) as isize, y);
+    enemy!(ctx, K_EPROJ_INIT_TOURIAN_STATUE_EYE_GLOW_X[v2 as usize] => (v3) as isize, x);
+    enemy!(ctx, K_EPROJ_INIT_TOURIAN_STATUE_EYE_GLOW_Y[v2 as usize] => (v3) as isize, y);
     let mut v4: u16 = (4 * v1 as i32) as u16;
     for i in (498i32..506).step_by(2) {
         {
-            let value = kEprojInit_TourianStatueEyeGlow_Colors[(v4 >> 1) as usize];
+            let value = K_EPROJ_INIT_TOURIAN_STATUE_EYE_GLOW_COLORS[(v4 >> 1) as usize];
             ctx.set_palette_buffer((i >> 1) as isize, value);
         };
         v4 = (v4 as i32 + 2) as u16;
@@ -652,8 +652,8 @@ pub(super) fn EprojInit_TourianStatueUnlockingParticle(j: u16, ctx: &mut impl Ho
 pub(super) fn EprojInit_TourianStatueSoul(j: u16, ctx: &mut impl Host) {
     let v1: i32 = ctx.session().enemy_projectiles.spawn.primary as i32 >> 1;
     let v2: i32 = j as i32 >> 1;
-    enemy!(ctx, kEprojInit_TourianStatueEyeGlow_X[v1 as usize] => (v2) as isize, x);
-    enemy!(ctx, kEprojInit_TourianStatueEyeGlow_Y[v1 as usize] => (v2) as isize, y);
+    enemy!(ctx, K_EPROJ_INIT_TOURIAN_STATUE_EYE_GLOW_X[v1 as usize] => (v2) as isize, x);
+    enemy!(ctx, K_EPROJ_INIT_TOURIAN_STATUE_EYE_GLOW_Y[v1 as usize] => (v2) as isize, y);
     enemy!(ctx, -1024i32 as u16 => (v2) as isize, velocity_y);
 }
 
@@ -735,12 +735,12 @@ pub(super) fn EprojInit_MotherBrainGlassShatteringShard(j: u16, ctx: &mut impl H
     let v4: i32 = ctx.session().enemy_projectiles.spawn.primary as i32 >> 1;
 
     {
-        let value = (kEprojInit_MotherBrainGlassShatteringShard_X[v4 as usize] as i32
+        let value = (K_EPROJ_INIT_MOTHER_BRAIN_GLASS_SHATTERING_SHARD_X[v4 as usize] as i32
             + 16 * ctx.session().mechanisms.block_x as i32) as u16;
         enemy!(ctx, value => (v2) as isize, x);
     };
     {
-        let value = (kEprojInit_MotherBrainGlassShatteringShard_Y[v4 as usize] as i32
+        let value = (K_EPROJ_INIT_MOTHER_BRAIN_GLASS_SHATTERING_SHARD_Y[v4 as usize] as i32
             + 16 * ctx.session().mechanisms.block_y as i32) as u16;
         enemy!(ctx, value => (v2) as isize, y);
     };
@@ -781,14 +781,14 @@ pub(super) fn EprojInit_N00bTubeShards(j: u16, ctx: &mut impl Host) {
     let v2: i32 = j as i32 >> 1;
 
     {
-        let value = (kEprojInit_N00bTubeShards_X[v1 as usize] as i32
+        let value = (K_EPROJ_INIT_N00B_TUBE_SHARDS_X[v1 as usize] as i32
             + 16 * ctx.session().mechanisms.block_x as i32
             + 96) as u16;
         enemy!(ctx, value => (v2) as isize, behavior_b);
     };
     enemy!(ctx, 0 => (v2) as isize, behavior_a);
     {
-        let value = (kEprojInit_N00bTubeShards_Y[v1 as usize] as i32
+        let value = (K_EPROJ_INIT_N00B_TUBE_SHARDS_Y[v1 as usize] as i32
             + 16 * ctx.session().mechanisms.block_y as i32
             + 48) as u16;
         enemy!(ctx, value => (v2) as isize, y);
@@ -797,8 +797,8 @@ pub(super) fn EprojInit_N00bTubeShards(j: u16, ctx: &mut impl Host) {
         let value = native_setup_word(0xd760, v1 as isize, ctx);
         enemy!(ctx, value => (v2) as isize, program);
     };
-    enemy!(ctx, kEprojInit_N00bTubeShards_Xvel[v1 as usize] as u16 => (v2) as isize, velocity_x);
-    enemy!(ctx, kEprojInit_N00bTubeShards_Yvel[v1 as usize] as u16 => (v2) as isize, velocity_y);
+    enemy!(ctx, K_EPROJ_INIT_N00B_TUBE_SHARDS_XVEL[v1 as usize] as u16 => (v2) as isize, velocity_x);
+    enemy!(ctx, K_EPROJ_INIT_N00B_TUBE_SHARDS_YVEL[v1 as usize] as u16 => (v2) as isize, velocity_y);
 }
 
 pub(super) fn EprojInit_N00bTubeReleasedAirBubbles(j: u16, ctx: &mut impl Host) {
@@ -807,13 +807,13 @@ pub(super) fn EprojInit_N00bTubeReleasedAirBubbles(j: u16, ctx: &mut impl Host) 
     let v2: i32 = j as i32 >> 1;
 
     {
-        let value = (kEprojInit_N00bTubeReleasedAirBubbles_X[v1 as usize] as i32
+        let value = (K_EPROJ_INIT_N00B_TUBE_RELEASED_AIR_BUBBLES_X[v1 as usize] as i32
             + 16 * ctx.session().mechanisms.block_x as i32) as u16;
         enemy!(ctx, value => (v2) as isize, behavior_b);
     };
     enemy!(ctx, 0 => (v2) as isize, behavior_a);
     {
-        let value = (kEprojInit_N00bTubeReleasedAirBubbles_Y[v1 as usize] as i32
+        let value = (K_EPROJ_INIT_N00B_TUBE_RELEASED_AIR_BUBBLES_Y[v1 as usize] as i32
             + 16 * ctx.session().mechanisms.block_y as i32) as u16;
         enemy!(ctx, value => (v2) as isize, y);
     };
@@ -1092,8 +1092,8 @@ pub(super) fn EprojInit_9634(j: u16, ctx: &mut impl Host) {
     enemy!(ctx, 2560 => (v1) as isize, graphics);
 
     let v2: i32 = ctx.resolve_actor(Key::from_legacy(0), Le).parameters[0] as i32;
-    enemy!(ctx, kEprojInit_9634_Xvel[v2 as usize] as u16 => (v1) as isize, velocity_x);
-    enemy!(ctx, kEprojInit_9634_Yvel[v2 as usize] as u16 => (v1) as isize, velocity_y);
+    enemy!(ctx, K_EPROJ_INIT_9634_XVEL[v2 as usize] as u16 => (v1) as isize, velocity_x);
+    enemy!(ctx, K_EPROJ_INIT_9634_YVEL[v2 as usize] as u16 => (v1) as isize, velocity_y);
 }
 
 pub(super) fn EprojInit_PhantoonStartingFireballs(j: u16, ctx: &mut impl Host) {
@@ -1104,7 +1104,7 @@ pub(super) fn EprojInit_PhantoonStartingFireballs(j: u16, ctx: &mut impl Host) {
     enemy!(ctx, 0 => (v1) as isize, velocity_x);
     enemy!(ctx, 0 => (v1) as isize, velocity_y);
 
-    let v2: u16 = byte_869979[ctx.session().enemy_projectiles.spawn.primary as usize] as u16;
+    let v2: u16 = BYTE_869979[ctx.session().enemy_projectiles.spawn.primary as usize] as u16;
     enemy!(ctx, v2 => (v1) as isize, behavior_a);
     let pt: Point = sine_offset::<false>(v2, 0x30);
 
@@ -1137,7 +1137,7 @@ pub(super) fn EprojInit_A379(j: u16, ctx: &mut impl Host) {
     let v2: u16 = ctx.session().enemy_projectiles.spawn.primary;
     let v3: i32 = ctx.session().enemy_projectiles.spawn.primary as i32 >> 1;
 
-    enemy!(ctx, (word_86A2D6[v3 as usize] as i32 + ctx.session().player.x as i32) as u16 => (v1) as isize, x);
+    enemy!(ctx, (WORD_86_A2_D6[v3 as usize] as i32 + ctx.session().player.x as i32) as u16 => (v1) as isize, x);
     enemy!(ctx, (ctx.session().player.y as i32 + 80) as u16 => (v1) as isize, y);
     {
         let value = native_setup_word(0xa2e2, v3 as isize, ctx);
@@ -1257,7 +1257,7 @@ pub(super) fn EprojInit_BDA2(j: u16, ctx: &mut impl Host) {
         let index = (v1) as isize;
         let old = enemy!(ctx, (index) as isize, x);
         let value = ((old as i32)
-            + (kEprojInit_ShaktoolAttackMiddleBackCircle_X[v5 as usize] as i32))
+            + (K_EPROJ_INIT_SHAKTOOL_ATTACK_MIDDLE_BACK_CIRCLE_X[v5 as usize] as i32))
             as u16;
         enemy!(ctx, (index) as isize, x = value);
     };
@@ -1265,7 +1265,7 @@ pub(super) fn EprojInit_BDA2(j: u16, ctx: &mut impl Host) {
         let index = (v1) as isize;
         let old = enemy!(ctx, (index) as isize, y);
         let value = ((old as i32)
-            + (kEprojInit_ShaktoolAttackMiddleBackCircle_Y[v5 as usize] as i32))
+            + (K_EPROJ_INIT_SHAKTOOL_ATTACK_MIDDLE_BACK_CIRCLE_Y[v5 as usize] as i32))
             as u16;
         enemy!(ctx, (index) as isize, y = value);
     };
@@ -1287,8 +1287,8 @@ pub(super) fn EprojInit_MotherBrainRoomTurrets(j: u16, ctx: &mut impl Host) {
         enemy!(ctx, value => (v1) as isize, program);
     };
     let v4: i32 = v2 as i32 >> 1;
-    enemy!(ctx, kEprojInit_MotherBrainRoomTurrets_X[v4 as usize] as u16 => (v1) as isize, x);
-    enemy!(ctx, EprojInit_MotherBrainRoomTurrets_Y[v4 as usize] as u16 => (v1) as isize, y);
+    enemy!(ctx, K_EPROJ_INIT_MOTHER_BRAIN_ROOM_TURRETS_X[v4 as usize] as u16 => (v1) as isize, x);
+    enemy!(ctx, EPROJ_INIT_MOTHER_BRAIN_ROOM_TURRETS_Y[v4 as usize] as u16 => (v1) as isize, y);
     {
         let value = native_setup_word(0xbec9, v4 as isize, ctx);
         enemy!(ctx, value => (v1) as isize, x_fraction);
@@ -1311,11 +1311,11 @@ pub(super) fn EprojInit_MotherBrainRoomTurretBullets(j: u16, ctx: &mut impl Host
     enemy!(ctx, v2 => (v1) as isize, behavior_a);
     let v3: i32 = v2 as i32 >> 1;
     let pt: Point = Point {
-        x: kEproj_MotherBrainRoomTurretBullets_X[v3 as usize] as u16,
-        y: kEproj_MotherBrainRoomTurretBullets_Y[v3 as usize] as u16,
+        x: K_EPROJ_MOTHER_BRAIN_ROOM_TURRET_BULLETS_X[v3 as usize] as u16,
+        y: K_EPROJ_MOTHER_BRAIN_ROOM_TURRET_BULLETS_Y[v3 as usize] as u16,
     };
-    enemy!(ctx, kEproj_MotherBrainRoomTurretBullets_Xvel[v3 as usize] as u16 => (v1) as isize, velocity_x);
-    enemy!(ctx, kEproj_MotherBrainRoomTurretBullets_Yvel[v3 as usize] as u16 => (v1) as isize, velocity_y);
+    enemy!(ctx, K_EPROJ_MOTHER_BRAIN_ROOM_TURRET_BULLETS_XVEL[v3 as usize] as u16 => (v1) as isize, velocity_x);
+    enemy!(ctx, K_EPROJ_MOTHER_BRAIN_ROOM_TURRET_BULLETS_YVEL[v3 as usize] as u16 => (v1) as isize, velocity_y);
     let v4: i32 = ctx.session().enemy_projectiles.spawn.primary as i32 >> 1;
     enemy!(ctx, (pt.x as i32 + enemy!(ctx, (v4) as isize, x) as i32) as u16 => (v1) as isize, x);
     enemy!(ctx, (pt.y as i32 + enemy!(ctx, (v4) as isize, y) as i32) as u16 => (v1) as isize, y);
@@ -1474,7 +1474,7 @@ pub(super) fn EprojInit_SporeSpawnStalk(j: u16, ctx: &mut impl Host) {
 
     {
         let value = (ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32
-            + word_86DCB9[ctx.session().enemy_projectiles.spawn.primary as usize] as i32)
+            + WORD_86_DCB9[ctx.session().enemy_projectiles.spawn.primary as usize] as i32)
             as u16;
         enemy!(ctx, value => (v1) as isize, y);
     };
@@ -1484,7 +1484,7 @@ pub(super) fn EprojInit_SporeSpawnStalk(j: u16, ctx: &mut impl Host) {
 pub(super) fn EprojInit_SporeSpawners(j: u16, ctx: &mut impl Host) {
     let v1: i32 = j as i32 >> 1;
 
-    enemy!(ctx, kEprojInit_SporeSpawners_X[ctx.session().enemy_projectiles.spawn.primary as usize] as u16 => (v1) as isize, x);
+    enemy!(ctx, K_EPROJ_INIT_SPORE_SPAWNERS_X[ctx.session().enemy_projectiles.spawn.primary as usize] as u16 => (v1) as isize, x);
     enemy!(ctx, 520 => (v1) as isize, y);
 }
 
@@ -1605,7 +1605,7 @@ pub(super) fn EprojInit_GoldenTorizoSuperMissile(j: u16, ctx: &mut impl Host) {
     } else {
         0
     };
-    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v3 as u16), Le).x.whole as i32 + word_86B205[v4 as usize] as i32) as u16 => (v2) as isize, x);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v3 as u16), Le).x.whole as i32 + WORD_86_B205[v4 as usize] as i32) as u16 => (v2) as isize, x);
     enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v3 as u16), Le).y.whole as i32 - 52i32) as u16 => (v2) as isize, y);
     {
         let value = native_setup_word(0xb209, v4 as isize, ctx);
@@ -1784,13 +1784,13 @@ pub(super) fn EprojInit_BombTorizoLowHealthExplode(j: u16, ctx: &mut impl Host) 
         ctx.session_mut().enemy_projectiles.spawn.primary = old.wrapping_add(2);
     };
     let v3: i32 = ctx.session().enemy_projectiles.spawn.primary as i32 >> 1;
-    let v4: u16 = (kEprojInit_BombTorizoLowHealthExplode_X[v3 as usize] as i32
+    let v4: u16 = (K_EPROJ_INIT_BOMB_TORIZO_LOW_HEALTH_EXPLODE_X[v3 as usize] as i32
         + enemy!(ctx, (v2) as isize, x) as i32) as u16;
 
     enemy!(ctx, v4 => (v2) as isize, x);
     enemy!(ctx, v4 => (v2) as isize, behavior_a);
 
-    let v5: u16 = (kEprojInit_BombTorizoLowHealthExplode_Y[v3 as usize] as i32
+    let v5: u16 = (K_EPROJ_INIT_BOMB_TORIZO_LOW_HEALTH_EXPLODE_Y[v3 as usize] as i32
         + enemy!(ctx, (v2) as isize, y) as i32) as u16;
 
     enemy!(ctx, v5 => (v2) as isize, y);

@@ -27,7 +27,7 @@ fn history(game: &Game) -> LaunchMotion {
 
 pub(crate) fn record_movement(game: &mut Game, direction: MovementDirection, displacement: i32) {
     let mut motion = history(game);
-    motion.record_movement(direction, displacement);
+    crate::game::launch_motion::record_movement(&mut motion, direction, displacement);
     let index = direction as usize;
     let value = motion.displacements[index] as u32;
     write(game, 0xdac + 4 * index, value as u16);

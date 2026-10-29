@@ -678,8 +678,7 @@ use crate::game::player_transitions::state::{FrameGammaMode, TransitionObservati
 // addresses enter this detached component. Full-u16 observations stay lossless.
 macro_rules! checkpoint_observations {
     ($($field:ident),+ $(,)?) => {
-        impl ExternalInputs {
-            pub(crate) fn encode_checkpoint(&self, metadata: &DisplayStartMetadata) -> Result<Vec<u8>, String> {
+            pub(crate) fn encode_observations_checkpoint(inputs: &ExternalInputs, metadata: &DisplayStartMetadata) -> Result<Vec<u8>, String> {
                 if metadata.identity.reference != metadata.reference.fingerprint {
                     return Err("input checkpoint Reference identity mismatch".into());
                 }
@@ -687,18 +686,18 @@ macro_rules! checkpoint_observations {
                 let binding = observation_binding(metadata);
                 bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
                 bytes.extend_from_slice(&binding);
-                match self.transitions.frame_gamma {
+                match inputs.transitions.frame_gamma {
                     FrameGammaMode::Unknown(word) => { bytes.push(1); bytes.extend_from_slice(&word.to_le_bytes()); }
                     mode => { bytes.push(0); bytes.extend_from_slice(&mode.to_raw().to_le_bytes()); }
                 }
-                for word in [self.transitions.debug_invincibility, self.transitions.moonwalk_enabled,
-                    self.transitions.turn_request, self.transitions.game_state, self.transitions.game_time_frames,
-                    self.transitions.fx_kind] { bytes.extend_from_slice(&word.to_le_bytes()); }
-                bytes.push(self.nmi_counter_low);
-                $(bytes.extend_from_slice(&self.$field.to_le_bytes());)+
+                for word in [inputs.transitions.debug_invincibility, inputs.transitions.moonwalk_enabled,
+                    inputs.transitions.turn_request, inputs.transitions.game_state, inputs.transitions.game_time_frames,
+                    inputs.transitions.fx_kind] { bytes.extend_from_slice(&word.to_le_bytes()); }
+                bytes.push(inputs.nmi_counter_low);
+                $(bytes.extend_from_slice(&inputs.$field.to_le_bytes());)+
                 Ok(bytes)
             }
-            pub(crate) fn decode_checkpoint(bytes: &[u8], metadata: &DisplayStartMetadata) -> Result<Self, String> {
+            pub(crate) fn decode_observations_checkpoint(bytes: &[u8], metadata: &DisplayStartMetadata) -> Result<ExternalInputs, String> {
                 let mut read = CheckpointReader(bytes);
                 if read.bytes(8)? != b"SMINPUT\x01" { return Err("unsupported input checkpoint schema".into()); }
                 let binding_size = usize::try_from(read.counter()?).map_err(|_| "input checkpoint binding length overflow")?;
@@ -719,11 +718,10 @@ macro_rules! checkpoint_observations {
                 let transitions = TransitionObservations { frame_gamma, debug_invincibility: read.word()?,
                     moonwalk_enabled: read.word()?, turn_request: read.word()?, game_state: read.word()?,
                     game_time_frames: read.word()?, fx_kind: read.word()? };
-                let result = Self { transitions, nmi_counter_low: read.byte()?, $($field: read.word()?,)+ };
+                let result = ExternalInputs { transitions, nmi_counter_low: read.byte()?, $($field: read.word()?,)+ };
                 if !read.0.is_empty() { return Err("trailing input checkpoint fields".into()); }
                 Ok(result)
             }
-        }
     };
 }
 checkpoint_observations!(

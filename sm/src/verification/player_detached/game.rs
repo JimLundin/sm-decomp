@@ -13,8 +13,7 @@ pub(crate) use sm_game::projectile_room;
 pub(crate) use sm_game::projectile_weapon_definitions;
 pub(crate) use sm_game::special_geometry;
 
-#[path = "../../game/external_inputs.rs"]
-pub(crate) mod external_inputs;
+pub(crate) use sm_game::external_inputs;
 pub(crate) use sm_game::item_pickups;
 #[path = "../../game/session.rs"]
 pub(crate) mod session;
