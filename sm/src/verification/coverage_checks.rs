@@ -5,6 +5,7 @@ use super::*;
 use sm::game::message_composition::{prepared::*, *};
 use sm::game::scene::component as sd;
 use sm::game::scene::hdma_sources as hs;
+use sm::game::scene::prepared as sp;
 use sm::game::scene::records as sc;
 use sm::game::scene::start as ss;
 use sm::game::scene::state as ds;
@@ -499,7 +500,7 @@ fn scene_pixels_preserve_line_incarnations_and_redraw() {
     let (description, media) = scene_fixture();
     let scene = sc::Scene::new(description.clone(), media.clone()).unwrap();
     let before = scene.clone();
-    let frame = sc::prepared::render(&scene).unwrap();
+    let frame = sp::render(&scene).unwrap();
     assert_eq!((frame.tick, frame.revision), (7, description.revision));
     assert_eq!(frame.pixels.len(), 224 * 256);
     for (index, pixel) in frame.pixels.iter().enumerate() {
@@ -518,12 +519,9 @@ fn scene_pixels_preserve_line_incarnations_and_redraw() {
     let last = later.lines[223].clone();
     Arc::make_mut(&mut later.lines).fill(last);
     let replacement = sc::Scene::new(later, media.clone()).unwrap();
-    assert_ne!(
-        sc::prepared::render(&replacement).unwrap().pixels,
-        frame.pixels
-    );
+    assert_ne!(sp::render(&replacement).unwrap().pixels, frame.pixels);
     drop(media);
-    assert_eq!(sc::prepared::render(&scene).unwrap(), frame);
+    assert_eq!(sp::render(&scene).unwrap(), frame);
     assert_eq!(scene, before);
     assert_eq!(scene.description(), before.description());
     assert_eq!(scene.lines()[0].media.incarnation, 1);
@@ -3591,7 +3589,7 @@ fn scene_component_preserves_complete_open_checkpoint_and_reopen() {
         checkpoint.committed_scene().lines()[223].media.incarnation,
         2
     );
-    let frame = sc::prepared::render(opened.display.committed_scene()).unwrap();
+    let frame = sp::render(opened.display.committed_scene()).unwrap();
     assert_eq!(
         [frame.pixels[8], frame.pixels[200 * 256 + 8]],
         [[0, 0, 255, 0], [255, 0, 0, 0]]
@@ -3631,7 +3629,7 @@ fn scene_component_preserves_complete_open_checkpoint_and_reopen() {
     .unwrap();
     scene_same_metadata(&reopened.metadata, &metadata);
     assert_eq!(
-        sc::prepared::render(reopened.display.committed_scene()).unwrap(),
+        sp::render(reopened.display.committed_scene()).unwrap(),
         frame
     );
     let checkpoint = reopened.display.checkpoint().unwrap();
@@ -3915,8 +3913,8 @@ fn scene_component_rejects_missing_final_resident_assets() {
             ))
             .unwrap();
         assert_eq!(
-            sc::prepared::render(&scene).unwrap(),
-            sc::prepared::render(before.committed_scene()).unwrap()
+            sp::render(&scene).unwrap(),
+            sp::render(before.committed_scene()).unwrap()
         );
         assert_eq!(scene.lines()[223].media.incarnation, 2);
         description.committed_scene = Some(scene);
@@ -4999,7 +4997,7 @@ fn scene_atmospheric_settlement_delivers_and_checkpoints_visible_history() {
             assert!(line.object_selection.even_frame);
         }
         let pixels = rows.iter().flat_map(|row| row.pixels).collect::<Vec<_>>();
-        assert_eq!(sc::prepared::render(&scene).unwrap().pixels, pixels);
+        assert_eq!(sp::render(&scene).unwrap().pixels, pixels);
         scene_same_resident(display.checkpoint().unwrap().resident(), &resident);
         assert_eq!(original.producer_history().len(), 224);
         assert!(

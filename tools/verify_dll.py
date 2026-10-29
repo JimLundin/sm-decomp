@@ -362,7 +362,7 @@ def build(root, rustc, use_cargo=None, frontend=False):
                   "--cfg", "sm_verify_dll",
                   *link,
                   "sm/src/verify_dll.rs",
-                  "--extern", f"sm={library}", "-L", f"dependency={output}",
+                  "--extern", f"sm={library}", *runtime_flags, "-L", f"dependency={output}",
                   "-o", str(dll)],
         cwd=root, env=dict(os.environ, SM_VERIFY_SOURCE_HASH=source), check=True,
     )
