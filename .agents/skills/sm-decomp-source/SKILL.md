@@ -78,6 +78,7 @@ Correct a rejected frozen candidate in a separate successor. Preserve the prior
 artifact and explain the correction; transfer checks only where the source and
 relevant dependencies remain unchanged.
 
-Send READY/source identity before report prose. Name terminal/live handles, actual
+Send READY/source identity with send_message to assigned core handoff owners and
+root before report prose. Name terminal/live handles, actual
 START/first-code/EXIT when known, gaps and the next recipient. Route added scope
 to the coordinator; source role completion does not imply runtime acceptance.

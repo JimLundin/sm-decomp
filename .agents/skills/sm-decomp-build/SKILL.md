@@ -19,6 +19,9 @@ Read [iteration](../../../docs/ITERATION.md) and
 2. Use only root-admitted stages on authorized hosts. Launch prepared conditional
    successors immediately after prior terminal release, exact guards and fresh fit
    under [resources](../sm-decomp-resources/SKILL.md), without another root ACK.
+   At terminal observation, run the existing collector then the prepared
+   successor launcher sequentially in one functions.exec call; retain both
+   helpers' terminal, pin, qualification and fresh resource checks.
    Notify root at START; preserve ceilings, independent outputs and source/native/
    cache guards. Use supported Windows; Linux needs explicit user restart.
 3. If DLL growth blocks admission, use PLAN's admissible normal-library allowance

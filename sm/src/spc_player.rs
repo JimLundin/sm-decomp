@@ -295,22 +295,16 @@ unsafe fn Spc_Loop_Part2(p: *mut SpcPlayer, ticks: u8) {
 unsafe fn Vector_Reset_Spc(p: *mut SpcPlayer) {
     unsafe {
         dsp_reset((*p).state.dsp);
-        (*p).ram.fill_range(0x500..0x1500, 0);
-        (*p).ram.fill_range(0x20..0x2f, 0);
-        (*p).ram.fill_range(0xd0..0xef, 0);
-        (*p).ram.fill_range(0x391..0x400, 0);
-        (*p).ram.fill_range(0x440..0x4bf, 0);
-        SpcPlayer_CopyVariablesFromRam(p);
-        for i in 0i32..8 {
-            (*p).state.channel[i as usize].index = i as u8;
-        }
+        sequencer::prepare_initialization(&mut (*p).state, &(*p).ram);
         SetupEchoParameter_EDL(p, 1);
-        (*p).state.reg_FLG = (*p).state.reg_FLG | 0x20;
-        Dsp_Write(p, MVOLL as i32 as u8, 0x60);
-        Dsp_Write(p, MVOLR as i32 as u8, 0x60);
-        Dsp_Write(p, DIR as i32 as u8, 0x6d);
-        (*p).state.tempo = u16::from_ne_bytes([(*p).state.tempo.to_ne_bytes()[0], 16]);
-        (*p).state.timer_cycles = 0;
+        // These three scalar borrows are disjoint from the live output links.
+        // Each write retains the original fresh history/DSP selection.
+        sequencer::finish_initialization(
+            &mut (*p).state.reg_FLG,
+            &mut (*p).state.tempo,
+            &mut (*p).state.timer_cycles,
+            |register, value| Dsp_Write(p, register, value),
+        );
     }
 }
 // Only fixed, disjoint SFX group fields reach these private adapters.
@@ -480,12 +474,44 @@ impl NativePlayer {
         crate::apu_queue::ApuQueue::apply_ports(writes, &mut player.state.input_ports);
     }
 
+    pub(crate) fn save_state(&mut self, queued: Option<&crate::apu_queue::ApuQueue>) {
+        let player = Rc::get_mut(&mut self.player)
+            .expect("player owner must not be shared")
+            .get_mut();
+        if let Some(queued) = queued {
+            queued.apply_queued(&mut player.state.input_ports);
+        }
+        crate::native_player_ram::save(&player.state, &player.ram);
+    }
+    pub(crate) fn load_state(&mut self) {
+        let player = Rc::get_mut(&mut self.player)
+            .expect("player owner must not be shared")
+            .get_mut();
+        crate::native_player_ram::load(&mut player.state, &player.ram);
+    }
     pub(crate) fn view(&self) -> *mut SpcPlayer {
         self.player.get()
     }
 }
 #[forbid(unsafe_code)]
 impl NativePlayer {
+    /// Classify native output links before resetting or changing any state.
+    pub(crate) fn try_initialize(&mut self) -> bool {
+        let player = Rc::get_mut(&mut self.player)
+            .expect("player owner must not be shared")
+            .get_mut();
+        let dsp = Rc::get_mut(&mut self._dsp)
+            .expect("DSP owner must not be shared")
+            .get_mut();
+        if !player.state.reg_write_history.is_null()
+            || !core::ptr::eq(player.state.dsp, dsp)
+            || player.state.ram != player.ram.as_mut_ptr()
+        {
+            return false;
+        }
+        sequencer::PlayerOwner::new(&mut player.state, &player.ram, dsp).initialize();
+        true
+    }
     /// Return false before effects when selected native links/history/aliases
     /// require the caller's native interval; default playback borrows this owner.
     pub(crate) fn try_render_samples(&mut self, samples: &mut [[i16; 2]]) -> bool {
@@ -717,6 +743,22 @@ mod sequencer {
                 value,
             );
         }
+        pub(super) fn initialize(mut self) {
+            self.dsp.get_mut().state.reset();
+            prepare_initialization(self.state, self.ram);
+            let dsp = &self.dsp;
+            Music::new(self.state, self.ram, |register, value| {
+                Self::write(dsp, register, value)
+            })
+            .setup_echo(1);
+            finish_initialization(
+                &mut self.state.reg_FLG,
+                &mut self.state.tempo,
+                &mut self.state.timer_cycles,
+                |register, value| Self::write(dsp, register, value),
+            );
+            self.commit_registers();
+        }
         pub(super) fn render(mut self, samples: &mut [[i16; 2]]) {
             // A full534-frame entry still executes one scheduling body.
             loop {
@@ -869,6 +911,30 @@ mod sequencer {
                 );
             }
         }
+    }
+
+    /// RAM transfer has no callbacks; load already restores every channel index.
+    pub(super) fn prepare_initialization(state: &mut NativePlayerState, ram: &ApuRam) {
+        ram.fill_range(0x500..0x1500, 0);
+        ram.fill_range(0x20..0x2f, 0);
+        ram.fill_range(0xd0..0xef, 0);
+        ram.fill_range(0x391..0x400, 0);
+        ram.fill_range(0x440..0x4bf, 0);
+        crate::native_player_ram::load(state, ram);
+    }
+    /// Keep the tempo read and timer store after all immediate output writes.
+    pub(super) fn finish_initialization(
+        flags: &mut u8,
+        tempo: &mut u16,
+        timer: &mut u8,
+        mut write: impl FnMut(u8, u8),
+    ) {
+        *flags |= 0x20;
+        write(super::MVOLL as u8, 0x60);
+        write(super::MVOLR as u8, 0x60);
+        write(super::DIR as u8, 0x6d);
+        *tempo = u16::from_ne_bytes([tempo.to_ne_bytes()[0], 16]);
+        *timer = 0;
     }
 
     /// Group phases finish before any raw reset/step effect can alias state.

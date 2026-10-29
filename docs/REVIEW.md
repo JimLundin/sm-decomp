@@ -19,10 +19,13 @@ bounded source, review and qualification run on Windows.
 
 ### Current publication and acceptance
 
-Player owner source **fa9238f2** / codec96e70004f4ba6a20 has exact source review, new strict DLL/frontend and actual143 passing; normal14351 transfers only unchanged492 compiled inputs.
-The canonical six-mode state/PCM/queue/failure witness passes. A private conditional panic sentinel produces its sole failure and observes first mode0 safe-default reach; later mutant history/rebound modes remain unexecuted.
-Exact sourcefa9238f2/DLL57c75132 replay passes13 groups/27 rows/199,063 comparisons/0, full Morph1200 and BOTH independent Kago14350; required23 of44. Genuine initialized/start/continuation and FIR selector0-to10 coefficients pass; four durable rows bind fresh captured bytes.
-Imported odd/>=8 aliases, arbitrary callback/rebinding, varying origin and unexecuted slide/group variants remain scoped. Native/history/rebound compatibility, physical-device fidelity, full Session/backend/device and size acceptance remain open. Prior failed attempts and original source/native/input/compiler/runtime/capture attribution remain preserved.
+Lifecycle source aaed9a2b / codec 94b628540a842459 supplies the reviewed canonical initialization and RAM-transfer methods, retaining queued-before-export and restore-before-import/init/reset order.
+Exact source review and new strict library/DLL/frontend/native desktop/actual144 units pass. Normal/DLL retain original native9; frontend uses its genuinely compiled lifecycle desktop archive.
+Independent controls pass with 143/1 expected sentinel outcomes each: private init-core entry after caller fallback rejection, plus save/load method entries. Canonical completed-effect 144PASS remains separate. Save/load controls stop before checked Rc borrow/RAM effects; queued-save(true) and later history/rebound/origin mutant modes remain unexecuted.
+Base sourceaaed9a2b/DLL4514d4d7 replay passes13 groups/27 rows/199,063 comparisons/0, full Morph1200 and BOTH independent Kago14350; base required23/44. Genuine initialized/resume/save/FIR/reserve and four durable checkpoint rows pass.
+Seven additional FROZEN rows pass under original 63181 with 12,245 comparisons/0; the genuine94b6 input13600 capture from original 26945 adds 13,600 comparisons. Both validation-only setup failures are preserved; base82334 totals remain separate. Complete source/native/input/loader/terminal proof stays in owned receipts.
+Selected native/history/rebound/origin paths retain valid aligned disjoint allocations, stopped exclusive lifecycle and non-reentry; three tail scalars stay disjoint from native callbacks. Imported odd/>=8 aliases, arbitrary callback/rebinding, varying origin and unexecuted slide/group variants remain scoped.
+Public unsafe Game/native/device/seed/snapshot interfaces, broad alias/callback coverage, physical fidelity/full Session/backend/size acceptance remain open; original143/144/145 source/native/compiler/runtime/control attribution is preserved.
 
 Completed room/renderer/message/Scene/delivery reports are in the
 [frozen history](https://github.com/JimLundin/sm-decomp/blob/170bc5351c64f0846bbcb7b4714064a7230db153/docs/REVIEW.md#current-publication-and-acceptance):

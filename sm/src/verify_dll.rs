@@ -183,7 +183,7 @@ unsafe fn initialize_verify_audio(game: &mut Game) -> Result<(), String> {
         if game.g_spc_player.is_null() {
             return Err("unable to initialize sound driver".into());
         }
-        sm::spc_player::SpcPlayer_Initialize(game.g_spc_player);
+        game.initialize_native_player();
         Ok(())
     }
 }

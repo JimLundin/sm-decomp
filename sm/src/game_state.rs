@@ -517,6 +517,63 @@ impl Game {
         self._native_player = Some(player);
     }
 
+    /// Initialize the current player at the original caller's lifecycle phase.
+    /// # Safety
+    /// Native/audio users must be exclusive, stopped for reset and non-reentrant;
+    /// imported DSP/history allocations retain their original disjoint lifetimes.
+    pub unsafe fn initialize_native_player(&mut self) {
+        unsafe {
+            if let Some(player) = self
+                ._native_player
+                .as_mut()
+                .filter(|player| player.view() == self.g_spc_player)
+            {
+                if player.try_initialize() {
+                    return;
+                }
+            }
+            crate::spc_player::SpcPlayer_Initialize(self.g_spc_player);
+        }
+    }
+
+    /// Export current fields and optional queued ports into this player's RAM.
+    /// # Safety
+    /// Hold the existing APU lock with exclusive non-reentrant native views.
+    pub unsafe fn save_native_audio_variables(&mut self, include_queued_commands: bool) {
+        unsafe {
+            if let Some(player) = self
+                ._native_player
+                .as_mut()
+                .filter(|player| player.view() == self.g_spc_player)
+            {
+                player.save_state(include_queued_commands.then_some(&self.apu_queue));
+            } else {
+                if include_queued_commands {
+                    self.apu_queue
+                        .apply_queued(&mut (*self.g_spc_player).state.input_ports);
+                }
+                crate::spc_player::SpcPlayer_CopyVariablesToRam(self.g_spc_player);
+            }
+        }
+    }
+
+    /// Import the actual current RAM image before resuming sequencing.
+    /// # Safety
+    /// Hold the existing APU lock with exclusive non-reentrant native views.
+    pub unsafe fn load_native_audio_variables(&mut self) {
+        unsafe {
+            if let Some(player) = self
+                ._native_player
+                .as_mut()
+                .filter(|player| player.view() == self.g_spc_player)
+            {
+                player.load_state();
+            } else {
+                crate::spc_player::SpcPlayer_CopyVariablesFromRam(self.g_spc_player);
+            }
+        }
+    }
+
     /// Call under the existing APU lock with exclusive native/audio users.
     pub(crate) unsafe fn apply_native_audio_ports(&mut self, writes: [u8; 4]) {
         unsafe {

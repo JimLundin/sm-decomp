@@ -29,8 +29,9 @@ release; recovery targets the current primary.
   timing/dependencies. Label unknown handles and keep audits off recovery monitors.
 - Prepare successor executable commands/helpers, environment and pinned I/O paths
   before upstream EXIT. READY names those prepared inputs and unavailable
-  dependencies. Assign next source/review/build recipients before READY; activate
-  terminal owners with followup_task and send minimal results before receipts.
+  dependencies. Assign next source/review/build recipients before READY. The
+  primary alone activates terminal core handoff owners with followup_task for
+  new explicit objectives; send minimal results before receipts.
   Drain ready code at the next safe source/Git boundary before bookkeeping;
   transfer accepted proofs only for unchanged relevant inputs.
 - Recover/reassign only after authoritative terminal/missing handles. If tools

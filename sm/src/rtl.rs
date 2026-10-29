@@ -127,10 +127,7 @@ use crate::recording::RecordingBytes;
 pub use crate::recording::StateRecorder;
 use crate::snes::ppu::ppu_copy;
 pub use crate::snes::registers::*;
-use crate::spc_player::{
-    SpcPlayer_CopyVariablesFromRam, SpcPlayer_CopyVariablesToRam, SpcPlayer_Initialize,
-    SpcPlayer_Upload,
-};
+use crate::spc_player::SpcPlayer_Upload;
 pub use crate::types::Dsp;
 pub use crate::types::{Cpu, FILE, LongPtr, PairU16, Snes, VoidP, size_t};
 pub use crate::types::{RunFrameFunc, SyncAllFunc};
@@ -1382,10 +1379,10 @@ unsafe fn RtlRestoreMusicAfterLoad_Locked(is_reset: bool, game: &mut Game) {
                 .ram
                 .copy_from_ram(&(*(*game.g_snes).apu).ram);
             (*(*game.g_spc_player).state.dsp).copy_state_from(&*(*(*game.g_snes).apu).dsp);
-            SpcPlayer_CopyVariablesFromRam(game.g_spc_player);
+            game.load_native_audio_variables();
         }
         if is_reset {
-            SpcPlayer_Initialize(game.g_spc_player);
+            game.initialize_native_player();
         }
         game.apu_queue.reset();
     }
@@ -1393,11 +1390,7 @@ unsafe fn RtlRestoreMusicAfterLoad_Locked(is_reset: bool, game: &mut Game) {
 unsafe fn RtlSaveMusicStateToRam_Locked(game: &mut Game, include_queued_commands: bool) {
     unsafe {
         if game.g_use_my_apu_code {
-            if include_queued_commands {
-                game.apu_queue
-                    .apply_queued(&mut (*game.g_spc_player).state.input_ports);
-            }
-            SpcPlayer_CopyVariablesToRam(game.g_spc_player);
+            game.save_native_audio_variables(include_queued_commands);
             (*(*(*game.g_snes).apu).dsp).copy_state_from(&*(*game.g_spc_player).state.dsp);
             (*(*game.g_snes).apu)
                 .ram

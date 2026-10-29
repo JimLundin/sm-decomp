@@ -1780,3 +1780,95 @@ fn owned_player_render_matches_native_schedule_and_failure_prefixes() {
         }
     }
 }
+
+// Movies cannot inject live history/rebound DSP links and arbitrary RAM during player initialization and queued state transfers.
+#[cfg(any(test, sm_verify_dll))]
+#[cfg_attr(test, test)]
+fn owned_player_initialization_and_transfers_preserve_native_boundaries() {
+    use sm::spc_player::*;
+    for mode in 0..4 {
+        let mut history = [DspRegWriteHistory {
+            count: 0,
+            addr: [0; 256],
+            val: [0; 256],
+        }; 2];
+        let mut games: [_; 4] = std::array::from_fn(|_| Game::new());
+        unsafe {
+            for game in &mut games {
+                game.create_native_player();
+            }
+            let players = games.each_ref().map(|game| game.g_spc_player);
+            let owned_dsp = players.map(|player| (*player).state.dsp);
+            for (i, &p) in players[..2].iter().enumerate() {
+                (*p).ram.fill(0x5a);
+                if mode == 1 {
+                    (*p).state.reg_write_history = &raw mut history[i];
+                }
+                if mode == 2 {
+                    (*p).state.dsp = owned_dsp[i + 2];
+                }
+                if mode == 3 {
+                    (*p).state.ram = (*p).ram.as_mut_ptr().wrapping_add(1);
+                }
+            }
+            games[0].initialize_native_player();
+            SpcPlayer_Initialize(players[1]);
+            let links =
+                players.map(|p| ((*p).state.dsp, (*p).state.reg_write_history, (*p).state.ram));
+            games[0].save_native_audio_variables(false);
+            SpcPlayer_CopyVariablesToRam(players[1]);
+            let mut ram = [[0; 65536]; 2];
+            for (i, &p) in players[..2].iter().enumerate() {
+                (*p).ram.copy_to(&mut ram[i]);
+            }
+            assert_eq!(ram[0], ram[1]);
+            let r = &ram[0];
+            assert_eq!((r[0x500], r[0x14ff], r[0x1500]), (0, 0, 0x5a));
+            let [a, b] = [0, 1].map(|i| &(*(*players[i]).state.dsp).state);
+            assert_eq!(a.ram, b.ram);
+            assert_eq!((a.ram[0x0c], a.ram[0x1c], a.ram[0x5d]), (0x60, 0x60, 0x6d));
+            let s = &(*players[0]).state;
+            assert_eq!((s.tempo, s.timer_cycles), (0x105a, 0));
+            for &p in &players[..2] {
+                (*p).ram.write(0, 0xa7);
+                (*p).ram.write(0x52, 0x34);
+                (*p).ram.write(0x53, 0x12);
+            }
+            games[0].load_native_audio_variables();
+            SpcPlayer_CopyVariablesFromRam(players[1]);
+            for (i, &p) in players[..2].iter().enumerate() {
+                let s = &(*p).state;
+                assert_eq!((s.dsp, s.reg_write_history, s.ram), links[i]);
+                assert_eq!((s.input_ports[0], s.tempo), (0xa7, 0x1234));
+                for (j, channel) in s.channel.iter().enumerate() {
+                    assert_eq!(channel.index, j as u8);
+                }
+            }
+            for game in &mut games[..2] {
+                game.apu_queue.pending = [0xf0, 255, 255, 255];
+                game.apu_queue.push(false);
+            }
+            games[0].save_native_audio_variables(true);
+            games[1]
+                .apu_queue
+                .apply_queued(&mut (*players[1]).state.input_ports);
+            SpcPlayer_CopyVariablesToRam(players[1]);
+            for (i, &p) in players[..2].iter().enumerate() {
+                (*p).ram.copy_to(&mut ram[i]);
+            }
+            assert_eq!(ram[0], ram[1]);
+            assert_eq!(ram[0][0], 0xf0);
+            assert_eq!(games[0].apu_queue.to_bytes(), games[1].apu_queue.to_bytes());
+            if mode == 1 {
+                assert!(history[0].count > 0);
+                assert_eq!(history[0].count, history[1].count);
+                assert_eq!(history[0].addr, history[1].addr);
+                assert_eq!(history[0].val, history[1].val);
+            }
+            for (&p, dsp) in players.iter().zip(owned_dsp) {
+                (*p).state.reg_write_history = core::ptr::null_mut();
+                (*p).state.dsp = dsp;
+            }
+        }
+    }
+}

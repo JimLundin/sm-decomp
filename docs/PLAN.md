@@ -59,15 +59,15 @@ shared Python installers/runtime-only restores are support work, counted separat
 ## Current work and limits
 
 Primary root owns integration, Git and one resource ledger; Linux stays stopped.
-Player owner source fa9238f2 / codec 96e70004f4ba6a20 supplies the safe canonical no-history update interval; native/history/rebound compatibility remains explicit.
-Exact source review, strict DLL/frontend and actual143 units pass; unchanged492 normal compiled inputs retain original14351 execution.
-A private conditional panic sentinel makes only the new owned-player witness fail, observing its first mode0 safe-default branch; later mutant history/rebound modes remain unexecuted. The canonical six-mode witness passes.
-Exact sourcefa9238f2/DLL57c75132 replay passes13 groups/27 rows/199,063 comparisons/0, full Morph1200 and BOTH Kago14350; required23/44.
-Genuine final-codec initialized/start/continuation and input110076 FIR selector0-to10 coefficients pass; four durable rows bind actual fresh checkpoint bytes.
-Measured production139428, verification59698, unsafe-containing2701, legacy17822; production+271/verification+104/unsafe-containing+6 includes a policy marker and claims no global savings.
-Imported odd/>=8 aliases, arbitrary callback/rebinding, varying origin and unexecuted slide/group variants remain scoped; native/history/rebound compatibility, physical-device/full Session/backend/size acceptance remain open.
-The primary updates the graphical #6 issue-body report after every push.
-The [qualified142 record](https://github.com/JimLundin/sm-decomp/blob/5db07b86b3157eedefd46f58ba772074a9209a86/docs/PLAN.md#current-work-and-limits) preserves prior build/runtime/checkpoint attribution.
+Lifecycle source aaed9a2b / codec 94b628540a842459 supplies the reviewed canonical initialization and RAM-transfer methods, retaining queued-before-export and restore-before-import/init/reset order.
+Exact source review and new strict library/DLL/frontend/native desktop/actual144 units pass. Normal/DLL retain original native9; frontend uses its genuinely compiled lifecycle desktop archive.
+Independent controls pass with 143/1 expected sentinel outcomes each: private init-core entry after caller fallback rejection, plus save/load method entries. Canonical completed-effect 144PASS remains separate. Save/load controls stop before checked Rc borrow/RAM effects; queued-save(true) and later history/rebound/origin mutant modes remain unexecuted.
+Base sourceaaed9a2b/DLL4514d4d7 replay passes13 groups/27 rows/199,063 comparisons/0, full Morph1200 and BOTH independent Kago14350; base required23/44. Genuine initialized/resume/save/FIR/reserve and four durable checkpoint rows pass.
+Seven additional FROZEN rows pass under original 63181 with 12,245 comparisons/0; the genuine94b6 input13600 capture from original 26945 adds 13,600 comparisons. Both validation-only setup failures are preserved; base82334 totals remain separate. Complete source/native/input/loader/terminal proof stays in owned receipts.
+Measured production139543, verification59791, unsafe-containing2708, legacy17822; production+115/verification+93/unsafe-containing+7 and skills+5 are counted separately, with no global savings claim.
+Selected native/history/rebound/origin paths retain valid aligned disjoint allocations, stopped exclusive lifecycle and non-reentry; three tail scalars stay disjoint from native callbacks. Imported odd/>=8 aliases, arbitrary callback/rebinding, varying origin and unexecuted slide/group variants remain scoped.
+Public unsafe Game/native/device/seed/snapshot interfaces, broad alias/callback coverage, physical fidelity/full Session/backend/size acceptance remain open; original143/144/145 source/native/compiler/runtime/control attribution is preserved.
+The primary updates the sole #6 issue-body report after every push. The [qualified143 record](https://github.com/JimLundin/sm-decomp/blob/a732d247b3524f649b85dc0e5fb5a2c16d170fbb/docs/PLAN.md#current-work-and-limits) preserves previous attribution.
 
 ### Qualified history
 
