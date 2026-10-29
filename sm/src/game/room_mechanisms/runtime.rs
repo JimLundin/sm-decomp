@@ -246,7 +246,10 @@ impl Effects for Runtime<'_> {
     fn mark_save_station(&mut self, station: u16) {
         self.write_slice_le(ram::load_station_index, station);
         let station = self.word(ram::load_station_index);
-        crate::game::progress_flags::prepare_flag_mask(self.session_mut(), station);
+        crate::game::progress_flags::prepare_flag_mask(
+            &mut self.session_mut().flag_compatibility,
+            station,
+        );
         let address = 0xd8f8 + usize::from(self.session().room.area) * 2;
         let value = self.byte(address) | self.session().flag_compatibility.bitmask as u8;
         self.set_byte(address, value);
