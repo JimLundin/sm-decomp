@@ -14,6 +14,7 @@ use crate::game::player_update::minimap;
 pub use crate::game::prelude::*;
 use crate::game::rom_vram_entries::queue_mother_brain_sprite_tiles;
 use crate::game::session_runtime::Runtime;
+use crate::game::shitroid_tables;
 use crate::rom::RomRecord;
 
 use crate::game::beam_windows::calculate_rainbow_window;
@@ -3415,13 +3416,13 @@ crate::game::callback_dispatch! {
                     }
                 }
                 let v5: u16 = v3;
-                let v4: u16 = crate::rtl::rom_table_word!(game, 0xade7e2, (v3 >> 1) as isize);
+                let v4: u16 = shitroid_tables::shell_palette(game, (v3 >> 1) as isize).colors;
                 copy_rom_colors_to_palette(0x1e2, 0xad, v4, 4, game);
                 copy_rom_colors_to_palette(0x1f4, 0xad, (v4).wrapping_add(8), 5, game);
                 copy_rom_colors_to_palette(
                     0x1ea,
                     0xad,
-                    crate::rtl::rom_table_word!(game, 0xade882, (v5 >> 1) as isize),
+                    shitroid_tables::innards_palette(game, (v5 >> 1) as isize).colors,
                     5,
                     game,
                 );
@@ -3582,7 +3583,7 @@ pub unsafe fn ShitroidInCutscene_FadeShitroidToBlack(k: u16, game: &mut Game) ->
         copy_rom_colors_to_palette(
             0x1e2,
             0xad,
-            crate::rtl::rom_table_word!(game, 0xade8e2, v4 as isize),
+            shitroid_tables::fade_palette(game, v4 as isize).colors,
             0xe,
             game,
         );

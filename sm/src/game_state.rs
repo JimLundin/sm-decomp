@@ -236,6 +236,8 @@ pub struct Game {
     pub(crate) grapple_aim: crate::game::grapple_aim::ImportedAim,
     /// Imported from `loaded_rom` by `register_rom`; see game::kraid_tables.
     pub(crate) kraid_tables: crate::game::kraid_tables::ImportedKraid,
+    /// Imported from `loaded_rom` by `register_rom`; see game::shitroid_tables.
+    pub(crate) shitroid_tables: crate::game::shitroid_tables::ImportedShitroid,
     /// Imported from `loaded_rom` by `register_rom`; see game::mother_brain_tables.
     pub(crate) mother_brain_tables: crate::game::mother_brain_tables::ImportedMotherBrain,
     /// Imported from `loaded_rom` by `register_rom`; see game::phantoon_tables.
@@ -1234,6 +1236,7 @@ impl Game {
         self.grapple_origins = crate::game::grapple_origins::import(&image);
         self.grapple_aim = crate::game::grapple_aim::import(&image);
         self.kraid_tables = crate::game::kraid_tables::import(&image);
+        self.shitroid_tables = crate::game::shitroid_tables::import(&image);
         self.mother_brain_tables = crate::game::mother_brain_tables::import(&image);
         self.flame_rain = crate::game::phantoon_tables::import(&image);
         self.phantoon_timers = crate::game::phantoon_tables::import_timers(&image);
@@ -1496,6 +1499,7 @@ impl Game {
             area_select_palettes: None,
             shooting_stars: None,
             kraid_tables: Default::default(),
+            shitroid_tables: Default::default(),
             mother_brain_tables: Default::default(),
             flame_rain: None,
             phantoon_timers: None,

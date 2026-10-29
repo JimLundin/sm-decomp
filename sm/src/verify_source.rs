@@ -54,6 +54,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_data/src/kraid.rs"),
     ),
     (
+        "crates/sm_data/src/shitroid.rs",
+        include_bytes!("../../crates/sm_data/src/shitroid.rs"),
+    ),
+    (
         "crates/sm_data/src/mother_brain.rs",
         include_bytes!("../../crates/sm_data/src/mother_brain.rs"),
     ),
@@ -1239,6 +1243,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/kraid_tables.rs",
         include_bytes!("game/kraid_tables.rs"),
+    ),
+    (
+        "sm/src/game/shitroid_tables.rs",
+        include_bytes!("game/shitroid_tables.rs"),
     ),
     (
         "sm/src/game/mother_brain_tables.rs",

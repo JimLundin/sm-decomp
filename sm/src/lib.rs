@@ -385,6 +385,7 @@ pub mod game {
     pub(crate) use sm_game::projectile_weapon_definitions;
     pub mod scene;
     pub(crate) mod scrolling_sky;
+    pub(crate) mod shitroid_tables;
     pub(crate) mod vram_read_queue;
     pub(crate) mod xray_background;
     pub(crate) mod zebetite_data;
