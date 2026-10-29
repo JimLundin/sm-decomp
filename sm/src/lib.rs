@@ -364,6 +364,7 @@ pub mod game {
     pub(crate) mod gameplay;
     pub(crate) mod grapple_rope;
     pub(crate) mod grapple_swing;
+    pub(crate) mod imported;
     pub(crate) mod intro_pages;
     pub(crate) mod launch_motion;
     pub(crate) mod launch_motion_ram;
@@ -443,6 +444,7 @@ pub mod game {
     pub mod samus_animation;
     pub(crate) mod samus_palette;
     pub(crate) mod samus_periodic_damage;
+    pub(crate) mod sand_heap;
     pub mod save_slots;
     pub(crate) mod scanline_irq;
     pub(crate) mod session;

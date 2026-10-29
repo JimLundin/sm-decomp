@@ -3844,132 +3844,14 @@ pub unsafe fn DeadTorizo_Func_1(game: &mut Game) {
 pub unsafe fn DeadTorizo_CopyLineOfSandHeapTileData(a: u16, game: &mut Game) {
     let v1: u16 = crate::rtl::rom_table_word!(game, 0xa9d67c, a as isize);
     let v2: i32 = crate::rtl::rom_table_word!(game, 0xa9d69c, a as isize) as i32 >> 1;
-    {
-        let value: u16 = crate::rtl::rom_table_word!(game, 0xb7a800, v2 as isize);
-        let at: usize = 0x9500 + (v1 as i32 as isize) as usize;
+    // 18 words, eight words apart in the heap and 16 bytes apart in the buffer.
+    for step in 0..18 {
+        let value = crate::game::sand_heap::word(game, (v2 + 8 * step) as usize);
+        let at = 0x9500 + 0x10 * step as usize + usize::from(v1);
         let bytes = value.to_ne_bytes();
         game.ram().write_byte(at, bytes[0]);
         game.ram().write_byte(at + 1, bytes[1]);
-    };
-    {
-        let value: u16 = crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 8) as isize);
-        let at: usize = 0x9510 + (v1 as i32 as isize) as usize;
-        let bytes = value.to_ne_bytes();
-        game.ram().write_byte(at, bytes[0]);
-        game.ram().write_byte(at + 1, bytes[1]);
-    };
-    {
-        let value: u16 = crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 16) as isize);
-        let at: usize = 0x9520 + (v1 as i32 as isize) as usize;
-        let bytes = value.to_ne_bytes();
-        game.ram().write_byte(at, bytes[0]);
-        game.ram().write_byte(at + 1, bytes[1]);
-    };
-    {
-        let value: u16 = crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 24) as isize);
-        let at: usize = 0x9530 + (v1 as i32 as isize) as usize;
-        let bytes = value.to_ne_bytes();
-        game.ram().write_byte(at, bytes[0]);
-        game.ram().write_byte(at + 1, bytes[1]);
-    };
-    {
-        let value: u16 = crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 32) as isize);
-        let at: usize = 0x9540 + (v1 as i32 as isize) as usize;
-        let bytes = value.to_ne_bytes();
-        game.ram().write_byte(at, bytes[0]);
-        game.ram().write_byte(at + 1, bytes[1]);
-    };
-    {
-        let value: u16 = crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 40) as isize);
-        let at: usize = 0x9550 + (v1 as i32 as isize) as usize;
-        let bytes = value.to_ne_bytes();
-        game.ram().write_byte(at, bytes[0]);
-        game.ram().write_byte(at + 1, bytes[1]);
-    };
-    {
-        let value: u16 = crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 48) as isize);
-        let at: usize = 0x9560 + (v1 as i32 as isize) as usize;
-        let bytes = value.to_ne_bytes();
-        game.ram().write_byte(at, bytes[0]);
-        game.ram().write_byte(at + 1, bytes[1]);
-    };
-    {
-        let value: u16 = crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 56) as isize);
-        let at: usize = 0x9570 + (v1 as i32 as isize) as usize;
-        let bytes = value.to_ne_bytes();
-        game.ram().write_byte(at, bytes[0]);
-        game.ram().write_byte(at + 1, bytes[1]);
-    };
-    {
-        let value: u16 = crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 64) as isize);
-        let at: usize = 0x9580 + (v1 as i32 as isize) as usize;
-        let bytes = value.to_ne_bytes();
-        game.ram().write_byte(at, bytes[0]);
-        game.ram().write_byte(at + 1, bytes[1]);
-    };
-    {
-        let value: u16 = crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 72) as isize);
-        let at: usize = 0x9590 + (v1 as i32 as isize) as usize;
-        let bytes = value.to_ne_bytes();
-        game.ram().write_byte(at, bytes[0]);
-        game.ram().write_byte(at + 1, bytes[1]);
-    };
-    {
-        let value: u16 = crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 80) as isize);
-        let at: usize = 0x95a0 + (v1 as i32 as isize) as usize;
-        let bytes = value.to_ne_bytes();
-        game.ram().write_byte(at, bytes[0]);
-        game.ram().write_byte(at + 1, bytes[1]);
-    };
-    {
-        let value: u16 = crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 88) as isize);
-        let at: usize = 0x95b0 + (v1 as i32 as isize) as usize;
-        let bytes = value.to_ne_bytes();
-        game.ram().write_byte(at, bytes[0]);
-        game.ram().write_byte(at + 1, bytes[1]);
-    };
-    {
-        let value: u16 = crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 96) as isize);
-        let at: usize = 0x95c0 + (v1 as i32 as isize) as usize;
-        let bytes = value.to_ne_bytes();
-        game.ram().write_byte(at, bytes[0]);
-        game.ram().write_byte(at + 1, bytes[1]);
-    };
-    {
-        let value: u16 = crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 104) as isize);
-        let at: usize = 0x95d0 + (v1 as i32 as isize) as usize;
-        let bytes = value.to_ne_bytes();
-        game.ram().write_byte(at, bytes[0]);
-        game.ram().write_byte(at + 1, bytes[1]);
-    };
-    {
-        let value: u16 = crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 112) as isize);
-        let at: usize = 0x95e0 + (v1 as i32 as isize) as usize;
-        let bytes = value.to_ne_bytes();
-        game.ram().write_byte(at, bytes[0]);
-        game.ram().write_byte(at + 1, bytes[1]);
-    };
-    {
-        let value: u16 = crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 120) as isize);
-        let at: usize = 0x95f0 + (v1 as i32 as isize) as usize;
-        let bytes = value.to_ne_bytes();
-        game.ram().write_byte(at, bytes[0]);
-        game.ram().write_byte(at + 1, bytes[1]);
-    };
-    {
-        let value: u16 = crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 128) as isize);
-        let at: usize = 0x9600 + (v1 as i32 as isize) as usize;
-        let bytes = value.to_ne_bytes();
-        game.ram().write_byte(at, bytes[0]);
-        game.ram().write_byte(at + 1, bytes[1]);
-    };
-    {
-        let value: u16 = crate::rtl::rom_table_word!(game, 0xb7a800, (v2 + 136) as isize);
-        let at: usize = 0x9610 + (v1 as i32 as isize) as usize;
-        let bytes = value.to_ne_bytes();
-        game.ram().write_byte(at, bytes[0]);
-        game.ram().write_byte(at + 1, bytes[1]);
-    };
+    }
 }
 pub fn DeadSidehopper_Init_0(game: &mut Game) {
     let E: i32 = word!(game.cur_enemy_index) as i32;

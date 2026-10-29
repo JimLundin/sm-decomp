@@ -218,6 +218,8 @@ pub struct Game {
     pub(crate) enemy_speeds: Option<crate::game::enemy_speeds::ImportedSpeeds>,
     /// Imported from `native_rom` by `register_native_rom`; see game::enemy_speeds.
     pub(crate) enemy_speeds32: Option<crate::game::enemy_speeds::ImportedSpeeds32>,
+    /// Imported from `loaded_rom` by `register_rom`; see game::sand_heap.
+    pub(crate) sand_heap: Option<crate::game::sand_heap::ImportedSandHeap>,
     samus_binding: Option<Arc<SamusBinding>>,
     samus_authority: SamusAuthority,
     samus_mutation_depth: usize,
@@ -1126,7 +1128,7 @@ impl Game {
         {
             self.revoke_samus_authority();
         }
-        self.enemy_speeds32 = crate::game::enemy_speeds::ImportedSpeeds32::import(&image);
+        self.enemy_speeds32 = crate::game::enemy_speeds::import32(&image);
         self.native_rom = Some(image);
     }
 
@@ -1172,7 +1174,8 @@ impl Game {
         {
             self.revoke_samus_authority();
         }
-        self.enemy_speeds = crate::game::enemy_speeds::ImportedSpeeds::import(&image);
+        self.enemy_speeds = crate::game::enemy_speeds::import(&image);
+        self.sand_heap = crate::game::sand_heap::import(&image);
         self.loaded_rom = Some(image);
     }
 
@@ -1410,6 +1413,7 @@ impl Game {
             native_rom: None,
             enemy_speeds: None,
             enemy_speeds32: None,
+            sand_heap: None,
             samus_binding: None,
             samus_authority: SamusAuthority::LegacyUnrouted,
             samus_mutation_depth: 0,

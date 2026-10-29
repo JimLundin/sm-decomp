@@ -6,4 +6,5 @@
 #![forbid(unsafe_code)]
 
 pub mod enemy_speeds;
+pub mod sand_heap;
 pub mod world;

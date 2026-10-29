@@ -10,6 +10,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_data/src/enemy_speeds.rs"),
     ),
     (
+        "crates/sm_data/src/sand_heap.rs",
+        include_bytes!("../../crates/sm_data/src/sand_heap.rs"),
+    ),
+    (
         "crates/sm_data/src/world.rs",
         include_bytes!("../../crates/sm_data/src/world.rs"),
     ),
@@ -1100,6 +1104,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/grapple_rope.rs"),
     ),
     (
+        "sm/src/game/imported.rs",
+        include_bytes!("game/imported.rs"),
+    ),
+    (
         "sm/src/game/intro_pages.rs",
         include_bytes!("game/intro_pages.rs"),
     ),
@@ -1556,6 +1564,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/samus_periodic_damage.rs",
         include_bytes!("game/samus_periodic_damage.rs"),
+    ),
+    (
+        "sm/src/game/sand_heap.rs",
+        include_bytes!("game/sand_heap.rs"),
     ),
     (
         "sm/src/game/scrolling_sky.rs",
