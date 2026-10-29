@@ -2275,58 +2275,14 @@ pub unsafe fn MotherBrain_SamusCollDetect(game: &mut Game) {
     }
 }
 pub unsafe fn MotherBrain_SamusCollDetectPart(k: u16, r18: u16, r20: u16, game: &mut Game) -> u8 {
-    unsafe {
-        let mut p = RomPtr_A9(k, game);
-        let mut n: i32 = *(p as *mut u16) as i32;
-        p = p.offset(2);
-        while n != 0 {
-            let mut v4: u16 = 0;
-            let mut R24: u16 = 0;
-            let mut v3: u16 = if ((word!(game.samus_y_pos)) as i16).wrapping_sub((r20) as i16) >= 0
-            {
-                R24 = (word!(game.samus_y_pos)).wrapping_sub(r20);
-                *(p.offset(6) as *mut u16)
-            } else {
-                R24 = (r20).wrapping_sub(word!(game.samus_y_pos));
-                *(p.offset(2) as *mut u16)
-            };
-            if ((word!(game.samus_y_radius) as i32 + abs16(v3) as i32 - R24 as i32) as i16) >= 0 {
-                if ((word!(game.samus_x_pos)) as i16).wrapping_sub((r18) as i16) >= 0 {
-                    R24 = (word!(game.samus_x_pos)).wrapping_sub(r18);
-                    v4 = *(p.offset(4) as *mut u16);
-                } else {
-                    R24 = (r18).wrapping_sub(word!(game.samus_x_pos));
-                    v4 = *(p as *mut u16);
-                }
-                let mut v5: i16 =
-                    (word!(game.samus_x_radius) as i32 + abs16(v4) as i32 - R24 as i32) as i16;
-                if v5 >= 0 {
-                    if v5 as i32 - 4i32 & 0x8000 != 0 {
-                        v5 = 4;
-                    }
-                    word!(game.extra_samus_x_displacement = v5 as u16);
-                    word!(game.extra_samus_y_displacement = 4);
-                    word! { game, 0;
-                        extra_samus_x_subdisplacement, extra_samus_y_subdisplacement,
-                    }
-                    word! {game; samus_invincibility_timer = 96; samus_knockback_timer = 5;
-                    knockback_x_dir = 1; }
-                    if word!(game.samus_y_pos) as i32 - 192i32 & 0x8000 != 0 {
-                        word!(game.samus_y_dir = 2);
-                    }
-                    if ((slot!(game, Enemy_MotherBrain[0i32].base.x_pos) as i32 + 24
-                        - word!(game.samus_x_pos) as i32) as i16)
-                        < 0
-                    {
-                        MotherBrain_HurtSamus(game);
-                    }
-                    return 1;
-                }
-            }
-            p = p.offset(8);
-            n -= 1;
+    use actors::mother_brain_contact::{Contact, samus_contact};
+    match samus_contact(k, r18, r20, game) {
+        Contact::None => 0,
+        Contact::Pushed => 1,
+        Contact::Hurt => {
+            unsafe { MotherBrain_HurtSamus(game) };
+            1
         }
-        0
     }
 }
 pub unsafe fn MotherBrain_Phase23_ShotReaction(game: &mut Game) {
