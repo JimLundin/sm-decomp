@@ -1,2 +1,1 @@
-#[path = "../../game/palette_effects/execution.rs"]
-pub(crate) mod execution;
+pub(crate) use sm_game::palette_effects::execution;

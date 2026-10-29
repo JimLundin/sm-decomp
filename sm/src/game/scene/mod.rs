@@ -1,34 +1,3 @@
-//! Owned display commitment and immutable, fully settled Scene inputs.
-//!
-//! Construction supplies complete typed starting fields. Committed Scenes retain
-//! their media lease and line history; presentation observes them without running
-//! gameplay, refresh, transfer or interrupt work.
-#![forbid(unsafe_code)]
-
-pub mod atmosphere;
-pub(crate) mod atmosphere_protocol;
-pub(crate) mod checkpoint_codec;
-pub(crate) mod commit;
-pub mod component;
-pub(crate) mod delivery;
-pub(crate) use sm_game::display::error;
-pub(crate) use sm_game::display::hdma;
-pub mod hdma_sources;
-pub(crate) mod irq;
-pub(crate) mod objects;
-pub(crate) mod owned_hdma;
-pub use sm_data::scene as records;
+//! The Scene modules live in `sm_game::scene`; compat adds the prepared renderer.
+pub use sm_game::scene::*;
 pub use sm_runtime::scene as prepared;
-pub mod resident_media;
-pub mod samus;
-pub mod samus_body;
-pub mod samus_position_tiles;
-pub mod samus_tile_upload;
-pub(crate) mod settle;
-pub mod start;
-pub mod state;
-
-pub use commit::ResidentDisplayDescription;
-
-pub(crate) mod samus_content;
-pub(crate) mod samus_native_content;

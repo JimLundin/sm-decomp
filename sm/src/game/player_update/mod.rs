@@ -1,9 +1,13 @@
 //! Ordered player beta work over the same owned Session.
 #![forbid(unsafe_code)]
 
-pub(crate) mod content;
-pub(crate) mod effects;
-pub(crate) mod minimap;
+#[allow(
+    unused_imports,
+    reason = "The detached harness has no player-update runtime."
+)]
+pub(crate) use sm_game::player_update::content;
+pub(crate) use sm_game::player_update::effects;
+pub(crate) use sm_game::player_update::minimap;
 
 use crate::game::{player_movement, player_transitions as transitions, samus_periodic_damage};
 use effects::Host;

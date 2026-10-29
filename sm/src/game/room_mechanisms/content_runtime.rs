@@ -2,28 +2,12 @@
 #![forbid(unsafe_code)]
 use super::host::{
     Content, ContentAddress, ContentTable, Diagnostic, DrawCursor, DrawProgramId, Effects,
-    InstructionRecord,
 };
 use crate::{
     game::session_runtime::{Runtime, invalid_window},
     rom::RomRecord,
 };
 
-impl InstructionRecord for RomRecord {
-    fn byte(&self, offset: isize) -> u8 {
-        self.image.read(
-            self.base
-                .checked_add_signed(offset)
-                .expect("mechanism record offset overflow"),
-        )
-    }
-    fn word(&self, offset: isize) -> u16 {
-        u16::from_ne_bytes([
-            InstructionRecord::byte(self, offset),
-            InstructionRecord::byte(self, offset + 1),
-        ])
-    }
-}
 pub enum TerrainProgram {
     Loaded(RomRecord),
     // Identity only: every read resolves the current aggregate/foreign projection.

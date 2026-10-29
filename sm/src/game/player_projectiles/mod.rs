@@ -1,20 +1,19 @@
 //! Player-projectile lifecycle, producers, trails and charge feedback.
-#[macro_use]
-pub(crate) mod access;
+pub(crate) use sm_game::player_projectiles::access;
 mod animation;
 mod bomb_creation;
 mod bomb_terrain;
 mod bombs;
 pub(crate) mod cannon;
 mod collision;
-pub(crate) mod content;
 use crate::game::session_encoding as encoding;
+pub(crate) use sm_game::player_projectiles::content;
 pub(crate) mod feedback;
-pub(crate) mod host;
+pub(crate) use sm_game::player_projectiles::host;
 pub(in crate::game) mod lifecycle;
 mod missiles;
 pub(crate) mod motion;
-mod placement;
+use sm_game::player_projectiles::placement;
 mod preparation;
 pub(in crate::game) mod presentation;
 

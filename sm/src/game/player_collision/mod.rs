@@ -1,7 +1,7 @@
 //! Owned player collision, displacement and pose clearance.
 #![forbid(unsafe_code)]
 mod control;
-pub(in crate::game) mod effects;
+pub(in crate::game) use sm_game::player_collision::effects;
 mod geometry;
 pub(crate) mod grapple;
 mod inside;

@@ -1,40 +1,32 @@
 //! Complete room mechanisms on the shared gameplay Session.
-mod access;
+use sm_game::room_mechanisms::access;
 mod commands;
-mod content;
+use sm_game::room_mechanisms::content;
 mod content_runtime;
-pub(crate) mod creation;
-mod graphics;
+pub(crate) use sm_game::room_mechanisms::creation;
+use sm_game::room_mechanisms::graphics;
 mod graphics_runtime;
-pub(crate) mod host;
+pub(crate) use sm_game::room_mechanisms::host;
 mod pre;
-mod presentation;
+use sm_game::room_mechanisms::presentation;
 mod runtime;
 pub(crate) mod scheduler;
-mod setup;
+use sm_game::room_mechanisms::setup;
 mod rules {
-    pub(super) mod animal_rescue;
-    pub(super) mod booster_escape;
-    pub(super) mod cannon_setup;
-    pub(super) mod contact_physics;
-    pub(super) mod crumbling_wall;
-    pub(super) mod doors;
-    pub(super) mod eye_door;
-    pub(super) mod gates;
-    pub(super) mod hands;
-    pub(super) mod item_setup;
-    pub(super) mod metroid_quota;
-    pub(super) mod mother_brain_glass;
-    pub(super) mod noob_tube;
-    pub(super) mod plants;
-    pub(super) mod scroll_setup;
-    pub(super) mod shaktool;
-    pub(super) mod sound_delay;
-    pub(super) mod stations;
-    pub(super) mod terrain_setup;
-    pub(super) mod torizo_statue;
-    pub(super) mod tourian_wall;
-    pub(super) mod treadmill;
+    pub(super) use sm_game::room_mechanisms::rules::animal_rescue;
+    pub(super) use sm_game::room_mechanisms::rules::booster_escape;
+    pub(super) use sm_game::room_mechanisms::rules::crumbling_wall;
+    pub(super) use sm_game::room_mechanisms::rules::eye_door;
+    pub(super) use sm_game::room_mechanisms::rules::hands;
+    pub(super) use sm_game::room_mechanisms::rules::metroid_quota;
+    pub(super) use sm_game::room_mechanisms::rules::mother_brain_glass;
+    pub(super) use sm_game::room_mechanisms::rules::noob_tube;
+    pub(super) use sm_game::room_mechanisms::rules::plants;
+    pub(super) use sm_game::room_mechanisms::rules::shaktool;
+    pub(super) use sm_game::room_mechanisms::rules::sound_delay;
+    pub(super) use sm_game::room_mechanisms::rules::terrain_setup;
+    pub(super) use sm_game::room_mechanisms::rules::torizo_statue;
+    pub(super) use sm_game::room_mechanisms::rules::treadmill;
 }
 use crate::game::{
     mechanism_displacement::Displacement,

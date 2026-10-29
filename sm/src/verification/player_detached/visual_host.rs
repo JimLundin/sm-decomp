@@ -5,25 +5,6 @@ use super::game::{
     visual_state::{PaletteBuffer, Upload},
 };
 use super::{Composed, Event, RomRecord, colors};
-impl Record for RomRecord {
-    fn byte(&self, offset: usize) -> u8 {
-        RomRecord::byte(self, offset)
-    }
-    fn native_word(&self, offset: usize) -> u16 {
-        RomRecord::word(self, offset)
-    }
-    fn bytes<const N: usize>(&self, offset: usize) -> [u8; N] {
-        let start = self
-            .base
-            .checked_add(offset)
-            .expect("prepared visual record overflow");
-        let end = start
-            .checked_add(N)
-            .expect("prepared visual record extent overflow");
-        assert!(end <= self.image.len(), "prepared visual record extent");
-        core::array::from_fn(|i| self.image.read(start + i))
-    }
-}
 impl Content for Composed {
     type Record = RomRecord;
     fn record(&mut self, source: Source, bank: u8, address: u16) -> RomRecord {

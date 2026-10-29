@@ -37,7 +37,7 @@ sdl2-sys = { version = "0.38.0", optional = true }
 
 [features]
 default = ["frontend"]
-frontend = ["dep:sdl2-sys", "dep:gl"]
+frontend = ["dep:sdl2-sys", "dep:gl", "sm_game/frontend"]
 
 [lints.rust]
 warnings = { level = "deny", priority = -1 }

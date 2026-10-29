@@ -15,8 +15,7 @@ pub(crate) use sm_game::special_geometry;
 
 pub(crate) use sm_game::external_inputs;
 pub(crate) use sm_game::item_pickups;
-#[path = "../../game/session.rs"]
-pub(crate) mod session;
+pub(crate) use sm_game::session;
 
 #[path = "room_entry.rs"]
 pub(crate) mod room_entry;
@@ -32,19 +31,14 @@ pub(crate) use sm_game::contact_rules;
 pub(crate) use sm_game::drop_rules;
 #[path = "enemy_projectiles.rs"]
 pub(crate) mod enemy_projectiles;
-#[path = "../../game/enemy_script.rs"]
-pub(crate) mod enemy_script;
+pub(crate) use sm_game::enemy_script;
 #[path = "scene.rs"]
 pub(crate) mod scene;
-#[path = "../../game/session_access.rs"]
-pub(crate) mod session_access;
-#[path = "../../game/session_owners.rs"]
-pub(crate) mod session_owners;
+pub(crate) use sm_game::session_access;
 
 pub(crate) use sm_game::visual_state;
 
-#[path = "../../game/visual_host.rs"]
-pub(crate) mod visual_host;
+pub(crate) use sm_game::visual_host;
 
 #[path = "../../game/samus_palette.rs"]
 pub(crate) mod samus_palette;
@@ -56,19 +50,14 @@ pub(crate) mod session_encoding;
 
 pub(crate) use sm_game::sprite_effect_state;
 
-#[path = "../../game/sprite_effect_host.rs"]
-pub(crate) mod sprite_effect_host;
+pub(crate) use sm_game::sprite_effect_host;
 
-#[path = "../../game/sprite_objects.rs"]
-pub(crate) mod sprite_objects;
+pub(crate) use sm_game::sprite_objects;
 
-#[path = "../../game/sprite_effect_controllers.rs"]
-pub(crate) mod sprite_effect_controllers;
+pub(crate) use sm_game::sprite_effect_controllers;
 
-pub(crate) use sm_game::gameplay_flag_state;
 
-#[path = "../../game/gameplay_flag_host.rs"]
-pub(crate) mod gameplay_flag_host;
+pub(crate) use sm_game::gameplay_flag_host;
 
 #[path = "../../game/progress_flags.rs"]
 pub(crate) mod progress_flags;
@@ -103,8 +92,5 @@ pub(crate) mod player_movement;
 #[path = "../../game/player_update/mod.rs"]
 pub(crate) mod player_update;
 
-#[path = "../../game/samus_periodic_damage.rs"]
-pub(crate) mod samus_periodic_damage;
+pub(crate) use sm_game::samus_periodic_damage;
 
-#[path = "../../game/checkpoint_binding.rs"]
-pub(crate) mod checkpoint_binding;

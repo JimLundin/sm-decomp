@@ -590,23 +590,6 @@ unsafe fn execute_hdma_instruction(
     script
 }
 
-impl visual_host::Record for RomRecord {
-    fn byte(&self, displacement: usize) -> u8 {
-        RomRecord::byte(self, displacement)
-    }
-    fn native_word(&self, displacement: usize) -> u16 {
-        RomRecord::word(self, displacement)
-    }
-    fn bytes<const N: usize>(&self, displacement: usize) -> [u8; N] {
-        let start = self
-            .base
-            .checked_add(displacement)
-            .expect("ROM copy offset overflow");
-        let end = start.checked_add(N).expect("ROM copy extent overflow");
-        assert!(end <= self.image.len(), "ROM copy source extent");
-        core::array::from_fn(|index| self.image.read(start + index))
-    }
-}
 impl visual_host::Content for Runtime<'_> {
     type Record = RomRecord;
     fn record(&mut self, source: Source, bank: u8, address: u16) -> RomRecord {

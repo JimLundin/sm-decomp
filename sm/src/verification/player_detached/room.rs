@@ -1,27 +1,19 @@
 //! Includes the actual candidate room command and plant modules.
-#[path = "../../game/room_mechanisms/access.rs"]
-pub(crate) mod access;
+pub(crate) use sm_game::room_mechanisms::access;
 #[path = "../../game/room_mechanisms/commands.rs"]
 pub(crate) mod commands;
-#[path = "../../game/room_mechanisms/content.rs"]
-pub(crate) mod content;
-#[path = "../../game/room_mechanisms/creation.rs"]
-pub(crate) mod creation;
-#[path = "../../game/room_mechanisms/graphics.rs"]
-pub(crate) mod graphics;
-#[path = "../../game/room_mechanisms/host.rs"]
-pub(crate) mod host;
+pub(crate) use sm_game::room_mechanisms::content;
+pub(crate) use sm_game::room_mechanisms::creation;
+pub(crate) use sm_game::room_mechanisms::graphics;
+pub(crate) use sm_game::room_mechanisms::host;
 #[path = "../../game/room_mechanisms/pre.rs"]
 pub(crate) mod pre;
-#[path = "../../game/room_mechanisms/presentation.rs"]
-pub(crate) mod presentation;
+pub(crate) use sm_game::room_mechanisms::presentation;
 #[path = "room_rules.rs"]
 pub(crate) mod rules;
 pub(crate) use rules::treadmill::{Direction, carry};
 #[path = "../../game/room_mechanisms/scheduler.rs"]
 pub(crate) mod scheduler;
-#[path = "../../game/room_mechanisms/setup.rs"]
-pub(crate) mod setup;
 pub(crate) fn command(h: &mut impl host::Host, id: u32, cursor: u16, handle: u16) {
     let record = h.loaded_record(host::ContentAddress {
         bank: 0x84,

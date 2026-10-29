@@ -11,6 +11,12 @@ description = "Super Metroid gameplay: owned, deterministic rules with no emulat
 [dependencies]
 sm_data = { path = "../sm_data" }
 
+[features]
+# Mirrors sm's frontend feature: checkpoint layout descriptions for the save UI.
+frontend = []
+
 [lints.rust]
 warnings = { level = "deny", priority = -1 }
 unsafe_code = "forbid"
+# Verifier builds of sm pass the same configuration to this package.
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(sm_verify_dll)"] }

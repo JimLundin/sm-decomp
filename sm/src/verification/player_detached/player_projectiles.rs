@@ -1,10 +1,8 @@
-#[macro_use]
 #[allow(
     unused_imports,
     reason = "Detached projectile subset omits shot and shot_lane facade consumers."
 )]
-#[path = "../../game/player_projectiles/access.rs"]
-pub(crate) mod access;
+pub(crate) use sm_game::player_projectiles::access;
 #[path = "../../game/player_projectiles/animation.rs"]
 pub(crate) mod animation;
 #[path = "../../game/player_projectiles/bomb_creation.rs"]
@@ -15,20 +13,17 @@ pub(crate) mod bomb_terrain;
 pub(crate) mod bombs;
 #[path = "../../game/player_projectiles/collision.rs"]
 pub(crate) mod collision;
-#[path = "../../game/player_projectiles/content.rs"]
-pub(crate) mod content;
+pub(crate) use sm_game::player_projectiles::content;
 #[path = "../../game/player_projectiles/feedback.rs"]
 pub(crate) mod feedback;
-#[path = "../../game/player_projectiles/host.rs"]
-pub(crate) mod host;
+pub(crate) use sm_game::player_projectiles::host;
 #[path = "../../game/player_projectiles/lifecycle.rs"]
 pub(crate) mod lifecycle;
 #[path = "../../game/player_projectiles/missiles.rs"]
 pub(crate) mod missiles;
 #[path = "../../game/player_projectiles/motion.rs"]
 pub(crate) mod motion;
-#[path = "../../game/player_projectiles/placement.rs"]
-pub(crate) mod placement;
+pub(crate) use sm_game::player_projectiles::placement;
 #[path = "../../game/player_projectiles/preparation.rs"]
 pub(crate) mod preparation;
 pub(crate) use preparation::deselect as deselect_owned;

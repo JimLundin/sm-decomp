@@ -1,30 +1,19 @@
 //! Actual candidate enemy algorithms; wrappers expose existing core entries.
-#[path = "../../game/enemy_projectiles/access.rs"]
-pub(crate) mod access;
-#[path = "../../game/enemy_projectiles/attachments_spore_maw.rs"]
-pub(crate) mod attachments_spore_maw;
-#[path = "../../game/enemy_projectiles/attachments_waffle_botwoon.rs"]
-pub(crate) mod attachments_waffle_botwoon;
-#[path = "../../game/enemy_projectiles/collision.rs"]
-pub(crate) mod collision;
+pub(crate) use sm_game::enemy_projectiles::access;
+pub(crate) use sm_game::enemy_projectiles::collision;
 #[path = "../../game/enemy_projectiles/commands.rs"]
 pub(crate) mod commands;
-#[path = "../../game/enemy_projectiles/contact.rs"]
-pub(crate) mod contact;
-#[path = "../../game/enemy_projectiles/content.rs"]
-pub(crate) mod content;
+pub(crate) use sm_game::enemy_projectiles::contact;
+pub(crate) use sm_game::enemy_projectiles::content;
 #[path = "../../game/enemy_projectiles/drops.rs"]
 pub(crate) mod drops;
-#[path = "../../game/enemy_projectiles/host.rs"]
-pub(crate) mod host;
+pub(crate) use sm_game::enemy_projectiles::host;
 #[path = "../../game/enemy_projectiles/lifecycle.rs"]
 pub(crate) mod lifecycle;
 #[path = "../../game/enemy_projectiles/pre_actions.rs"]
 pub(crate) mod pre_actions;
 #[path = "../../game/enemy_projectiles/pre_helpers.rs"]
 pub(crate) mod pre_helpers;
-#[path = "../../game/enemy_projectiles/presentation.rs"]
-pub(crate) mod presentation;
 #[path = "../../game/enemy_projectiles/setup.rs"]
 pub(crate) mod setup;
 #[path = "../../game/enemy_projectiles/setup_helpers.rs"]
@@ -54,8 +43,7 @@ pub(crate) fn spawn_drop(h: &mut impl Host, definition: u16, enemy: u16, paramet
     drops::spawn(definition, enemy, h);
 }
 
-#[path = "../../game/enemy_projectiles/coordinates.rs"]
-pub(crate) mod coordinates;
+pub(crate) use sm_game::enemy_projectiles::coordinates;
 
 // Match the production parent's pure imports required by maintained sibling cores.
 use crate::game::constants::{bank_86::*, bank_a0::*};

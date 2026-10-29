@@ -1,6 +1,7 @@
 //! Owned player transition state and lossless compatibility selectors.
 //! No secondary Session and no permanent mutable RAM mirror.
 #![forbid(unsafe_code)]
+pub use crate::scene::atmosphere::AtmosphericEffects;
 
 // Codec construction preserves all 16 bits. Classification is an ephemeral view:
 // raw & 0x8000 == 0 => Pending(PoseId(raw)), otherwise Inactive(raw).

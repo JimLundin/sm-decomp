@@ -1,5 +1,5 @@
 //! Animated tiles compose on the shared Session at each legacy entry.
-pub(crate) mod execution;
+pub(crate) use sm_game::animated_tiles::execution;
 pub(crate) mod native;
 use crate::{game::session_runtime::Runtime, game_state::Game};
 pub(crate) fn set_enabled(enabled: bool, game: &mut Game) {

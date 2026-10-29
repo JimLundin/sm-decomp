@@ -182,6 +182,18 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/player_transitions/demo.rs"),
     ),
     (
+        "crates/sm_game/src/actors/identity.rs",
+        include_bytes!("../../crates/sm_game/src/actors/identity.rs"),
+    ),
+    (
+        "crates/sm_game/src/session_checkpoint.rs",
+        include_bytes!("../../crates/sm_game/src/session_checkpoint.rs"),
+    ),
+    (
+        "sm/src/game/scene/mod.rs",
+        include_bytes!("game/scene/mod.rs"),
+    ),
+    (
         "crates/sm_game/src/probe.rs",
         include_bytes!("../../crates/sm_game/src/probe.rs"),
     ),
@@ -202,28 +214,28 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("verification/session_audio_checkpoint_cases.rs"),
     ),
     (
-        "sm/src/verification/actor_prepared_checkpoint_cases.rs",
-        include_bytes!("verification/actor_prepared_checkpoint_cases.rs"),
+        "crates/sm_game/src/actors/actor_prepared_checkpoint_cases.rs",
+        include_bytes!("../../crates/sm_game/src/actors/actor_prepared_checkpoint_cases.rs"),
     ),
     (
-        "sm/src/verification/display_checkpoint_rejections.rs",
-        include_bytes!("verification/display_checkpoint_rejections.rs"),
+        "crates/sm_game/src/scene/display_checkpoint_rejections.rs",
+        include_bytes!("../../crates/sm_game/src/scene/display_checkpoint_rejections.rs"),
     ),
     (
-        "sm/src/verification/actor_owned_checkpoint_cases.rs",
-        include_bytes!("verification/actor_owned_checkpoint_cases.rs"),
+        "crates/sm_game/src/actors/actor_owned_checkpoint_cases.rs",
+        include_bytes!("../../crates/sm_game/src/actors/actor_owned_checkpoint_cases.rs"),
     ),
     (
-        "sm/src/game/checkpoint_binding.rs",
-        include_bytes!("game/checkpoint_binding.rs"),
+        "crates/sm_game/src/checkpoint_binding.rs",
+        include_bytes!("../../crates/sm_game/src/checkpoint_binding.rs"),
     ),
     (
-        "sm/src/game/scene/checkpoint_codec.rs",
-        include_bytes!("game/scene/checkpoint_codec.rs"),
+        "crates/sm_game/src/scene/checkpoint_codec.rs",
+        include_bytes!("../../crates/sm_game/src/scene/checkpoint_codec.rs"),
     ),
     (
-        "sm/src/verification/actor_numeric_checkpoint_cases.rs",
-        include_bytes!("verification/actor_numeric_checkpoint_cases.rs"),
+        "crates/sm_game/src/actors/numeric_checkpoint_cases.rs",
+        include_bytes!("../../crates/sm_game/src/actors/numeric_checkpoint_cases.rs"),
     ),
     (
         "sm/src/verification/gameplay_checkpoint_cases.rs",
@@ -250,48 +262,48 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("verification/samus_game_binding_cases.rs"),
     ),
     (
-        "sm/src/game/scene/samus_content.rs",
-        include_bytes!("game/scene/samus_content.rs"),
+        "crates/sm_game/src/scene/samus_content.rs",
+        include_bytes!("../../crates/sm_game/src/scene/samus_content.rs"),
     ),
     (
-        "sm/src/game/scene/samus_native_content.rs",
-        include_bytes!("game/scene/samus_native_content.rs"),
+        "crates/sm_game/src/scene/samus_native_content.rs",
+        include_bytes!("../../crates/sm_game/src/scene/samus_native_content.rs"),
     ),
     (
         "sm/src/verification/samus_content_binding_cases.rs",
         include_bytes!("verification/samus_content_binding_cases.rs"),
     ),
     (
-        "sm/src/game/scene/samus_tile_upload.rs",
-        include_bytes!("game/scene/samus_tile_upload.rs"),
+        "crates/sm_game/src/scene/samus_tile_upload.rs",
+        include_bytes!("../../crates/sm_game/src/scene/samus_tile_upload.rs"),
     ),
     (
-        "sm/src/game/scene/resident_media.rs",
-        include_bytes!("game/scene/resident_media.rs"),
+        "crates/sm_game/src/scene/resident_media.rs",
+        include_bytes!("../../crates/sm_game/src/scene/resident_media.rs"),
     ),
     (
-        "sm/src/game/scene/samus_position_tiles.rs",
-        include_bytes!("game/scene/samus_position_tiles.rs"),
+        "crates/sm_game/src/scene/samus_position_tiles.rs",
+        include_bytes!("../../crates/sm_game/src/scene/samus_position_tiles.rs"),
     ),
     (
         "sm/src/verification/coverage_checks.rs",
         include_bytes!("verification/coverage_checks.rs"),
     ),
     (
-        "sm/src/game/scene/delivery.rs",
-        include_bytes!("game/scene/delivery.rs"),
+        "crates/sm_game/src/scene/delivery.rs",
+        include_bytes!("../../crates/sm_game/src/scene/delivery.rs"),
     ),
     (
-        "sm/src/game/scene/owned_hdma.rs",
-        include_bytes!("game/scene/owned_hdma.rs"),
+        "crates/sm_game/src/scene/owned_hdma.rs",
+        include_bytes!("../../crates/sm_game/src/scene/owned_hdma.rs"),
     ),
     (
-        "sm/src/game/room_entry/prepared_assets.rs",
-        include_bytes!("game/room_entry/prepared_assets.rs"),
+        "crates/sm_game/src/room_entry/prepared_assets.rs",
+        include_bytes!("../../crates/sm_game/src/room_entry/prepared_assets.rs"),
     ),
     (
-        "sm/src/game/room_entry/prepared_tables.rs",
-        include_bytes!("game/room_entry/prepared_tables.rs"),
+        "crates/sm_game/src/room_entry/prepared_tables.rs",
+        include_bytes!("../../crates/sm_game/src/room_entry/prepared_tables.rs"),
     ),
     (
         "sm/src/game/actors/dachora.rs",
@@ -356,10 +368,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/actors/reflec.rs",
         include_bytes!("game/actors/reflec.rs"),
-    ),
-    (
-        "sm/src/game/actors/botwoon_death.rs",
-        include_bytes!("game/actors/botwoon_death.rs"),
     ),
     (
         "sm/src/game/actors/botwoon.rs",
@@ -745,8 +753,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("verification/player_transitions_composed.rs"),
     ),
     (
-        "sm/src/game/player_transitions/requests.rs",
-        include_bytes!("game/player_transitions/requests.rs"),
+        "crates/sm_game/src/player_transitions/requests.rs",
+        include_bytes!("../../crates/sm_game/src/player_transitions/requests.rs"),
     ),
     (
         "sm/src/game/player_transitions/actions.rs",
@@ -793,16 +801,16 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/transition_representation_tests.rs"),
     ),
     (
-        "sm/src/game/player_transitions/content.rs",
-        include_bytes!("game/player_transitions/content.rs"),
+        "crates/sm_game/src/player_transitions/content.rs",
+        include_bytes!("../../crates/sm_game/src/player_transitions/content.rs"),
     ),
     (
         "sm/src/game/player_transitions/demo.rs",
         include_bytes!("game/player_transitions/demo.rs"),
     ),
     (
-        "sm/src/game/player_transitions/effects.rs",
-        include_bytes!("game/player_transitions/effects.rs"),
+        "crates/sm_game/src/player_transitions/effects.rs",
+        include_bytes!("../../crates/sm_game/src/player_transitions/effects.rs"),
     ),
     (
         "sm/src/game/player_transitions_runtime.rs",
@@ -913,12 +921,12 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/player_collision/pose.rs"),
     ),
     (
-        "sm/src/game/player_movement/content.rs",
-        include_bytes!("game/player_movement/content.rs"),
+        "crates/sm_game/src/player_movement/content.rs",
+        include_bytes!("../../crates/sm_game/src/player_movement/content.rs"),
     ),
     (
-        "sm/src/game/player_movement/effects.rs",
-        include_bytes!("game/player_movement/effects.rs"),
+        "crates/sm_game/src/player_movement/effects.rs",
+        include_bytes!("../../crates/sm_game/src/player_movement/effects.rs"),
     ),
     (
         "sm/src/game/player_update/mod.rs",
@@ -929,16 +937,16 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/player_update/state.rs"),
     ),
     (
-        "sm/src/game/player_update/content.rs",
-        include_bytes!("game/player_update/content.rs"),
+        "crates/sm_game/src/player_update/content.rs",
+        include_bytes!("../../crates/sm_game/src/player_update/content.rs"),
     ),
     (
-        "sm/src/game/player_update/effects.rs",
-        include_bytes!("game/player_update/effects.rs"),
+        "crates/sm_game/src/player_update/effects.rs",
+        include_bytes!("../../crates/sm_game/src/player_update/effects.rs"),
     ),
     (
-        "sm/src/game/player_update/minimap.rs",
-        include_bytes!("game/player_update/minimap.rs"),
+        "crates/sm_game/src/player_update/minimap.rs",
+        include_bytes!("../../crates/sm_game/src/player_update/minimap.rs"),
     ),
     (
         "sm/src/game/player_update_runtime.rs",
@@ -985,8 +993,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/player_collision/state.rs"),
     ),
     (
-        "sm/src/game/player_collision/effects.rs",
-        include_bytes!("game/player_collision/effects.rs"),
+        "crates/sm_game/src/player_collision/effects.rs",
+        include_bytes!("../../crates/sm_game/src/player_collision/effects.rs"),
     ),
     (
         "sm/src/game/player_collision/operations.rs",
@@ -1009,36 +1017,36 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("verification/actor_population_animation_dll.rs"),
     ),
     (
-        "sm/src/game/actors/access.rs",
-        include_bytes!("game/actors/access.rs"),
+        "crates/sm_game/src/actors/access.rs",
+        include_bytes!("../../crates/sm_game/src/actors/access.rs"),
     ),
     (
         "sm/src/game/actors/api.rs",
         include_bytes!("game/actors/api.rs"),
     ),
     (
-        "sm/src/game/actors/codec.rs",
-        include_bytes!("game/actors/codec.rs"),
+        "crates/sm_game/src/actors/codec.rs",
+        include_bytes!("../../crates/sm_game/src/actors/codec.rs"),
     ),
     (
-        "sm/src/game/actors/content.rs",
-        include_bytes!("game/actors/content.rs"),
+        "crates/sm_game/src/actors/content.rs",
+        include_bytes!("../../crates/sm_game/src/actors/content.rs"),
     ),
     (
         "sm/src/game/actors/content_runtime.rs",
         include_bytes!("game/actors/content_runtime.rs"),
     ),
     (
-        "sm/src/game/actors/effects.rs",
-        include_bytes!("game/actors/effects.rs"),
+        "crates/sm_game/src/actors/effects.rs",
+        include_bytes!("../../crates/sm_game/src/actors/effects.rs"),
     ),
     (
         "sm/src/game/actors/identity.rs",
         include_bytes!("game/actors/identity.rs"),
     ),
     (
-        "sm/src/game/actors/media.rs",
-        include_bytes!("game/actors/media.rs"),
+        "crates/sm_game/src/actors/media.rs",
+        include_bytes!("../../crates/sm_game/src/actors/media.rs"),
     ),
     (
         "sm/src/game/actors/media_runtime.rs",
@@ -1053,12 +1061,12 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/actors/runtime.rs"),
     ),
     (
-        "sm/src/game/actors/scene.rs",
-        include_bytes!("game/actors/scene.rs"),
+        "crates/sm_game/src/actors/scene.rs",
+        include_bytes!("../../crates/sm_game/src/actors/scene.rs"),
     ),
     (
-        "sm/src/game/actors/snapshot.rs",
-        include_bytes!("game/actors/snapshot.rs"),
+        "crates/sm_game/src/actors/snapshot.rs",
+        include_bytes!("../../crates/sm_game/src/actors/snapshot.rs"),
     ),
     (
         "crates/sm_game/src/actors/state.rs",
@@ -1113,8 +1121,8 @@ pub static FILES: &[(&str, &[u8])] = &[
     ("sm/src/cpu_infra.rs", include_bytes!("cpu_infra.rs")),
     ("sm/src/execution.rs", include_bytes!("execution.rs")),
     (
-        "sm/src/game/animated_tiles/execution.rs",
-        include_bytes!("game/animated_tiles/execution.rs"),
+        "crates/sm_game/src/animated_tiles/execution.rs",
+        include_bytes!("../../crates/sm_game/src/animated_tiles/execution.rs"),
     ),
     (
         "sm/src/game/animated_tiles/mod.rs",
@@ -1173,48 +1181,48 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/enemy_population.rs"),
     ),
     (
-        "sm/src/game/enemy_projectiles/access.rs",
-        include_bytes!("game/enemy_projectiles/access.rs"),
+        "crates/sm_game/src/enemy_projectiles/access.rs",
+        include_bytes!("../../crates/sm_game/src/enemy_projectiles/access.rs"),
     ),
     (
         "sm/src/game/enemy_projectiles/actor_runtime.rs",
         include_bytes!("game/enemy_projectiles/actor_runtime.rs"),
     ),
     (
-        "sm/src/game/enemy_projectiles/attachments_spore_maw.rs",
-        include_bytes!("game/enemy_projectiles/attachments_spore_maw.rs"),
+        "crates/sm_game/src/enemy_projectiles/attachments_spore_maw.rs",
+        include_bytes!("../../crates/sm_game/src/enemy_projectiles/attachments_spore_maw.rs"),
     ),
     (
         "sm/src/game/enemy_projectiles/attachments_spore_maw_facade.rs",
         include_bytes!("game/enemy_projectiles/attachments_spore_maw_facade.rs"),
     ),
     (
-        "sm/src/game/enemy_projectiles/attachments_waffle_botwoon.rs",
-        include_bytes!("game/enemy_projectiles/attachments_waffle_botwoon.rs"),
+        "crates/sm_game/src/enemy_projectiles/attachments_waffle_botwoon.rs",
+        include_bytes!("../../crates/sm_game/src/enemy_projectiles/attachments_waffle_botwoon.rs"),
     ),
     (
         "sm/src/game/enemy_projectiles/attachments_waffle_botwoon_facade.rs",
         include_bytes!("game/enemy_projectiles/attachments_waffle_botwoon_facade.rs"),
     ),
     (
-        "sm/src/game/enemy_projectiles/collision.rs",
-        include_bytes!("game/enemy_projectiles/collision.rs"),
+        "crates/sm_game/src/enemy_projectiles/collision.rs",
+        include_bytes!("../../crates/sm_game/src/enemy_projectiles/collision.rs"),
     ),
     (
         "sm/src/game/enemy_projectiles/commands.rs",
         include_bytes!("game/enemy_projectiles/commands.rs"),
     ),
     (
-        "sm/src/game/enemy_projectiles/contact.rs",
-        include_bytes!("game/enemy_projectiles/contact.rs"),
+        "crates/sm_game/src/enemy_projectiles/contact.rs",
+        include_bytes!("../../crates/sm_game/src/enemy_projectiles/contact.rs"),
     ),
     (
-        "sm/src/game/enemy_projectiles/content.rs",
-        include_bytes!("game/enemy_projectiles/content.rs"),
+        "crates/sm_game/src/enemy_projectiles/content.rs",
+        include_bytes!("../../crates/sm_game/src/enemy_projectiles/content.rs"),
     ),
     (
-        "sm/src/game/enemy_projectiles/coordinates.rs",
-        include_bytes!("game/enemy_projectiles/coordinates.rs"),
+        "crates/sm_game/src/enemy_projectiles/coordinates.rs",
+        include_bytes!("../../crates/sm_game/src/enemy_projectiles/coordinates.rs"),
     ),
     (
         "sm/src/game/enemy_projectiles/drops.rs",
@@ -1229,8 +1237,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/enemy_projectiles/graphics_runtime.rs"),
     ),
     (
-        "sm/src/game/enemy_projectiles/host.rs",
-        include_bytes!("game/enemy_projectiles/host.rs"),
+        "crates/sm_game/src/enemy_projectiles/host.rs",
+        include_bytes!("../../crates/sm_game/src/enemy_projectiles/host.rs"),
     ),
     (
         "sm/src/game/enemy_projectiles/legacy.rs",
@@ -1253,8 +1261,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/enemy_projectiles/pre_helpers.rs"),
     ),
     (
-        "sm/src/game/enemy_projectiles/presentation.rs",
-        include_bytes!("game/enemy_projectiles/presentation.rs"),
+        "crates/sm_game/src/enemy_projectiles/presentation.rs",
+        include_bytes!("../../crates/sm_game/src/enemy_projectiles/presentation.rs"),
     ),
     (
         "sm/src/game/enemy_projectiles/runtime.rs",
@@ -1281,8 +1289,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/enemy_projectiles/tables.rs"),
     ),
     (
-        "sm/src/game/enemy_script.rs",
-        include_bytes!("game/enemy_script.rs"),
+        "crates/sm_game/src/enemy_script.rs",
+        include_bytes!("../../crates/sm_game/src/enemy_script.rs"),
     ),
     (
         "sm/src/game/explosion_window.rs",
@@ -1401,56 +1409,56 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/message_composition/prepared.rs"),
     ),
     (
-        "sm/src/game/scene/component.rs",
-        include_bytes!("game/scene/component.rs"),
+        "crates/sm_game/src/scene/component.rs",
+        include_bytes!("../../crates/sm_game/src/scene/component.rs"),
     ),
     (
-        "sm/src/game/scene/hdma_sources.rs",
-        include_bytes!("game/scene/hdma_sources.rs"),
+        "crates/sm_game/src/scene/hdma_sources.rs",
+        include_bytes!("../../crates/sm_game/src/scene/hdma_sources.rs"),
     ),
     (
-        "sm/src/game/scene/irq.rs",
-        include_bytes!("game/scene/irq.rs"),
+        "crates/sm_game/src/scene/irq.rs",
+        include_bytes!("../../crates/sm_game/src/scene/irq.rs"),
     ),
     (
-        "sm/src/game/scene/atmosphere_protocol.rs",
-        include_bytes!("game/scene/atmosphere_protocol.rs"),
+        "crates/sm_game/src/scene/atmosphere_protocol.rs",
+        include_bytes!("../../crates/sm_game/src/scene/atmosphere_protocol.rs"),
     ),
     (
-        "sm/src/game/scene/atmosphere.rs",
-        include_bytes!("game/scene/atmosphere.rs"),
+        "crates/sm_game/src/scene/atmosphere.rs",
+        include_bytes!("../../crates/sm_game/src/scene/atmosphere.rs"),
     ),
     (
-        "sm/src/game/scene/objects.rs",
-        include_bytes!("game/scene/objects.rs"),
+        "crates/sm_game/src/scene/objects.rs",
+        include_bytes!("../../crates/sm_game/src/scene/objects.rs"),
     ),
     (
-        "sm/src/game/scene/commit.rs",
-        include_bytes!("game/scene/commit.rs"),
+        "crates/sm_game/src/scene/commit.rs",
+        include_bytes!("../../crates/sm_game/src/scene/commit.rs"),
     ),
     (
-        "sm/src/game/scene/mod.rs",
-        include_bytes!("game/scene/mod.rs"),
+        "crates/sm_game/src/scene/mod.rs",
+        include_bytes!("../../crates/sm_game/src/scene/mod.rs"),
     ),
     (
-        "sm/src/game/scene/samus_body.rs",
-        include_bytes!("game/scene/samus_body.rs"),
+        "crates/sm_game/src/scene/samus_body.rs",
+        include_bytes!("../../crates/sm_game/src/scene/samus_body.rs"),
     ),
     (
-        "sm/src/game/scene/samus.rs",
-        include_bytes!("game/scene/samus.rs"),
+        "crates/sm_game/src/scene/samus.rs",
+        include_bytes!("../../crates/sm_game/src/scene/samus.rs"),
     ),
     (
-        "sm/src/game/scene/settle.rs",
-        include_bytes!("game/scene/settle.rs"),
+        "crates/sm_game/src/scene/settle.rs",
+        include_bytes!("../../crates/sm_game/src/scene/settle.rs"),
     ),
     (
-        "sm/src/game/scene/start.rs",
-        include_bytes!("game/scene/start.rs"),
+        "crates/sm_game/src/scene/start.rs",
+        include_bytes!("../../crates/sm_game/src/scene/start.rs"),
     ),
     (
-        "sm/src/game/scene/state.rs",
-        include_bytes!("game/scene/state.rs"),
+        "crates/sm_game/src/scene/state.rs",
+        include_bytes!("../../crates/sm_game/src/scene/state.rs"),
     ),
     (
         "sm/src/game/menu_tilemap.rs",
@@ -1486,16 +1494,16 @@ pub static FILES: &[(&str, &[u8])] = &[
     ),
     ("sm/src/game/music.rs", include_bytes!("game/music.rs")),
     (
-        "sm/src/game/palette_effects/execution.rs",
-        include_bytes!("game/palette_effects/execution.rs"),
+        "crates/sm_game/src/palette_effects/execution.rs",
+        include_bytes!("../../crates/sm_game/src/palette_effects/execution.rs"),
     ),
     (
         "sm/src/game/palette_effects/mod.rs",
         include_bytes!("game/palette_effects/mod.rs"),
     ),
     (
-        "sm/src/game/player_projectiles/access.rs",
-        include_bytes!("game/player_projectiles/access.rs"),
+        "crates/sm_game/src/player_projectiles/access.rs",
+        include_bytes!("../../crates/sm_game/src/player_projectiles/access.rs"),
     ),
     (
         "sm/src/game/player_projectiles/animation.rs",
@@ -1522,16 +1530,16 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/player_projectiles/collision.rs"),
     ),
     (
-        "sm/src/game/player_projectiles/content.rs",
-        include_bytes!("game/player_projectiles/content.rs"),
+        "crates/sm_game/src/player_projectiles/content.rs",
+        include_bytes!("../../crates/sm_game/src/player_projectiles/content.rs"),
     ),
     (
         "sm/src/game/player_projectiles/feedback.rs",
         include_bytes!("game/player_projectiles/feedback.rs"),
     ),
     (
-        "sm/src/game/player_projectiles/host.rs",
-        include_bytes!("game/player_projectiles/host.rs"),
+        "crates/sm_game/src/player_projectiles/host.rs",
+        include_bytes!("../../crates/sm_game/src/player_projectiles/host.rs"),
     ),
     (
         "sm/src/game/player_projectiles/lifecycle.rs",
@@ -1550,8 +1558,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/player_projectiles/motion.rs"),
     ),
     (
-        "sm/src/game/player_projectiles/placement.rs",
-        include_bytes!("game/player_projectiles/placement.rs"),
+        "crates/sm_game/src/player_projectiles/placement.rs",
+        include_bytes!("../../crates/sm_game/src/player_projectiles/placement.rs"),
     ),
     (
         "sm/src/game/player_projectiles/preparation.rs",
@@ -1570,8 +1578,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/player_projectiles/weapons.rs"),
     ),
     (
-        "sm/src/game/gameplay_flag_host.rs",
-        include_bytes!("game/gameplay_flag_host.rs"),
+        "crates/sm_game/src/gameplay_flag_host.rs",
+        include_bytes!("../../crates/sm_game/src/gameplay_flag_host.rs"),
     ),
     (
         "sm/src/game/gameplay_flag_runtime.rs",
@@ -1623,36 +1631,36 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/room_backgrounds.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/access.rs",
-        include_bytes!("game/room_mechanisms/access.rs"),
+        "crates/sm_game/src/room_mechanisms/access.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/access.rs"),
     ),
     (
         "sm/src/game/room_mechanisms/commands.rs",
         include_bytes!("game/room_mechanisms/commands.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/content.rs",
-        include_bytes!("game/room_mechanisms/content.rs"),
+        "crates/sm_game/src/room_mechanisms/content.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/content.rs"),
     ),
     (
         "sm/src/game/room_mechanisms/content_runtime.rs",
         include_bytes!("game/room_mechanisms/content_runtime.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/creation.rs",
-        include_bytes!("game/room_mechanisms/creation.rs"),
+        "crates/sm_game/src/room_mechanisms/creation.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/creation.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/graphics.rs",
-        include_bytes!("game/room_mechanisms/graphics.rs"),
+        "crates/sm_game/src/room_mechanisms/graphics.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/graphics.rs"),
     ),
     (
         "sm/src/game/room_mechanisms/graphics_runtime.rs",
         include_bytes!("game/room_mechanisms/graphics_runtime.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/host.rs",
-        include_bytes!("game/room_mechanisms/host.rs"),
+        "crates/sm_game/src/room_mechanisms/host.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/host.rs"),
     ),
     (
         "sm/src/game/room_mechanisms/mod.rs",
@@ -1663,96 +1671,96 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/room_mechanisms/pre.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/presentation.rs",
-        include_bytes!("game/room_mechanisms/presentation.rs"),
+        "crates/sm_game/src/room_mechanisms/presentation.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/presentation.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/rules/animal_rescue.rs",
-        include_bytes!("game/room_mechanisms/rules/animal_rescue.rs"),
+        "crates/sm_game/src/room_mechanisms/rules/animal_rescue.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/rules/animal_rescue.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/rules/booster_escape.rs",
-        include_bytes!("game/room_mechanisms/rules/booster_escape.rs"),
+        "crates/sm_game/src/room_mechanisms/rules/booster_escape.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/rules/booster_escape.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/rules/cannon_setup.rs",
-        include_bytes!("game/room_mechanisms/rules/cannon_setup.rs"),
+        "crates/sm_game/src/room_mechanisms/rules/cannon_setup.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/rules/cannon_setup.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/rules/contact_physics.rs",
-        include_bytes!("game/room_mechanisms/rules/contact_physics.rs"),
+        "crates/sm_game/src/room_mechanisms/rules/contact_physics.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/rules/contact_physics.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/rules/crumbling_wall.rs",
-        include_bytes!("game/room_mechanisms/rules/crumbling_wall.rs"),
+        "crates/sm_game/src/room_mechanisms/rules/crumbling_wall.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/rules/crumbling_wall.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/rules/doors.rs",
-        include_bytes!("game/room_mechanisms/rules/doors.rs"),
+        "crates/sm_game/src/room_mechanisms/rules/doors.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/rules/doors.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/rules/eye_door.rs",
-        include_bytes!("game/room_mechanisms/rules/eye_door.rs"),
+        "crates/sm_game/src/room_mechanisms/rules/eye_door.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/rules/eye_door.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/rules/gates.rs",
-        include_bytes!("game/room_mechanisms/rules/gates.rs"),
+        "crates/sm_game/src/room_mechanisms/rules/gates.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/rules/gates.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/rules/hands.rs",
-        include_bytes!("game/room_mechanisms/rules/hands.rs"),
+        "crates/sm_game/src/room_mechanisms/rules/hands.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/rules/hands.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/rules/item_setup.rs",
-        include_bytes!("game/room_mechanisms/rules/item_setup.rs"),
+        "crates/sm_game/src/room_mechanisms/rules/item_setup.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/rules/item_setup.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/rules/metroid_quota.rs",
-        include_bytes!("game/room_mechanisms/rules/metroid_quota.rs"),
+        "crates/sm_game/src/room_mechanisms/rules/metroid_quota.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/rules/metroid_quota.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/rules/mother_brain_glass.rs",
-        include_bytes!("game/room_mechanisms/rules/mother_brain_glass.rs"),
+        "crates/sm_game/src/room_mechanisms/rules/mother_brain_glass.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/rules/mother_brain_glass.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/rules/noob_tube.rs",
-        include_bytes!("game/room_mechanisms/rules/noob_tube.rs"),
+        "crates/sm_game/src/room_mechanisms/rules/noob_tube.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/rules/noob_tube.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/rules/plants.rs",
-        include_bytes!("game/room_mechanisms/rules/plants.rs"),
+        "crates/sm_game/src/room_mechanisms/rules/plants.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/rules/plants.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/rules/scroll_setup.rs",
-        include_bytes!("game/room_mechanisms/rules/scroll_setup.rs"),
+        "crates/sm_game/src/room_mechanisms/rules/scroll_setup.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/rules/scroll_setup.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/rules/shaktool.rs",
-        include_bytes!("game/room_mechanisms/rules/shaktool.rs"),
+        "crates/sm_game/src/room_mechanisms/rules/shaktool.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/rules/shaktool.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/rules/sound_delay.rs",
-        include_bytes!("game/room_mechanisms/rules/sound_delay.rs"),
+        "crates/sm_game/src/room_mechanisms/rules/sound_delay.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/rules/sound_delay.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/rules/stations.rs",
-        include_bytes!("game/room_mechanisms/rules/stations.rs"),
+        "crates/sm_game/src/room_mechanisms/rules/stations.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/rules/stations.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/rules/terrain_setup.rs",
-        include_bytes!("game/room_mechanisms/rules/terrain_setup.rs"),
+        "crates/sm_game/src/room_mechanisms/rules/terrain_setup.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/rules/terrain_setup.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/rules/torizo_statue.rs",
-        include_bytes!("game/room_mechanisms/rules/torizo_statue.rs"),
+        "crates/sm_game/src/room_mechanisms/rules/torizo_statue.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/rules/torizo_statue.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/rules/tourian_wall.rs",
-        include_bytes!("game/room_mechanisms/rules/tourian_wall.rs"),
+        "crates/sm_game/src/room_mechanisms/rules/tourian_wall.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/rules/tourian_wall.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/rules/treadmill.rs",
-        include_bytes!("game/room_mechanisms/rules/treadmill.rs"),
+        "crates/sm_game/src/room_mechanisms/rules/treadmill.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/rules/treadmill.rs"),
     ),
     (
         "sm/src/game/room_mechanisms/runtime.rs",
@@ -1763,8 +1771,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/room_mechanisms/scheduler.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/setup.rs",
-        include_bytes!("game/room_mechanisms/setup.rs"),
+        "crates/sm_game/src/room_mechanisms/setup.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/setup.rs"),
     ),
     (
         "sm/src/game/room_scrolls.rs",
@@ -1787,8 +1795,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/samus_palette.rs"),
     ),
     (
-        "sm/src/game/samus_periodic_damage.rs",
-        include_bytes!("game/samus_periodic_damage.rs"),
+        "crates/sm_game/src/samus_periodic_damage.rs",
+        include_bytes!("../../crates/sm_game/src/samus_periodic_damage.rs"),
     ),
     (
         "sm/src/game/sand_heap.rs",
@@ -1798,18 +1806,21 @@ pub static FILES: &[(&str, &[u8])] = &[
         "sm/src/game/scrolling_sky.rs",
         include_bytes!("game/scrolling_sky.rs"),
     ),
-    ("sm/src/game/session.rs", include_bytes!("game/session.rs")),
     (
-        "sm/src/game/session_access.rs",
-        include_bytes!("game/session_access.rs"),
+        "crates/sm_game/src/session.rs",
+        include_bytes!("../../crates/sm_game/src/session.rs"),
+    ),
+    (
+        "crates/sm_game/src/session_access.rs",
+        include_bytes!("../../crates/sm_game/src/session_access.rs"),
     ),
     (
         "sm/src/game/session_encoding.rs",
         include_bytes!("game/session_encoding.rs"),
     ),
     (
-        "sm/src/game/session_owners.rs",
-        include_bytes!("game/session_owners.rs"),
+        "crates/sm_game/src/session_owners.rs",
+        include_bytes!("../../crates/sm_game/src/session_owners.rs"),
     ),
     (
         "sm/src/game/session_checkpoint.rs",
@@ -1876,24 +1887,24 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/sprite_effect_state.rs"),
     ),
     (
-        "sm/src/game/sprite_effect_host.rs",
-        include_bytes!("game/sprite_effect_host.rs"),
+        "crates/sm_game/src/sprite_effect_host.rs",
+        include_bytes!("../../crates/sm_game/src/sprite_effect_host.rs"),
     ),
     (
-        "sm/src/game/sprite_effect_controllers.rs",
-        include_bytes!("game/sprite_effect_controllers.rs"),
+        "crates/sm_game/src/sprite_effect_controllers.rs",
+        include_bytes!("../../crates/sm_game/src/sprite_effect_controllers.rs"),
     ),
     (
         "sm/src/game/sprite_effect_runtime.rs",
         include_bytes!("game/sprite_effect_runtime.rs"),
     ),
     (
-        "sm/src/game/sprite_objects.rs",
-        include_bytes!("game/sprite_objects.rs"),
+        "crates/sm_game/src/sprite_objects.rs",
+        include_bytes!("../../crates/sm_game/src/sprite_objects.rs"),
     ),
     (
-        "sm/src/game/visual_host.rs",
-        include_bytes!("game/visual_host.rs"),
+        "crates/sm_game/src/visual_host.rs",
+        include_bytes!("../../crates/sm_game/src/visual_host.rs"),
     ),
     (
         "sm/src/game/visual_runtime.rs",
@@ -2534,40 +2545,40 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("verification/room_world_fixture.rs"),
     ),
     (
-        "sm/src/game/room_entry/api.rs",
-        include_bytes!("game/room_entry/api.rs"),
+        "crates/sm_game/src/room_entry/api.rs",
+        include_bytes!("../../crates/sm_game/src/room_entry/api.rs"),
     ),
     (
-        "sm/src/game/room_entry/background.rs",
-        include_bytes!("game/room_entry/background.rs"),
+        "crates/sm_game/src/room_entry/background.rs",
+        include_bytes!("../../crates/sm_game/src/room_entry/background.rs"),
     ),
     (
         "sm/src/game/room_entry/compatibility.rs",
         include_bytes!("game/room_entry/compatibility.rs"),
     ),
     (
-        "sm/src/game/room_entry/content.rs",
-        include_bytes!("game/room_entry/content.rs"),
+        "crates/sm_game/src/room_entry/content.rs",
+        include_bytes!("../../crates/sm_game/src/room_entry/content.rs"),
     ),
     (
-        "sm/src/game/room_entry/content_background.rs",
-        include_bytes!("game/room_entry/content_background.rs"),
+        "crates/sm_game/src/room_entry/content_background.rs",
+        include_bytes!("../../crates/sm_game/src/room_entry/content_background.rs"),
     ),
     (
         "sm/src/game/room_entry/content_runtime.rs",
         include_bytes!("game/room_entry/content_runtime.rs"),
     ),
     (
-        "sm/src/game/room_entry/content_state.rs",
-        include_bytes!("game/room_entry/content_state.rs"),
+        "crates/sm_game/src/room_entry/content_state.rs",
+        include_bytes!("../../crates/sm_game/src/room_entry/content_state.rs"),
     ),
     (
-        "sm/src/game/room_entry/effects.rs",
-        include_bytes!("game/room_entry/effects.rs"),
+        "crates/sm_game/src/room_entry/effects.rs",
+        include_bytes!("../../crates/sm_game/src/room_entry/effects.rs"),
     ),
     (
-        "sm/src/game/room_entry/installation.rs",
-        include_bytes!("game/room_entry/installation.rs"),
+        "crates/sm_game/src/room_entry/installation.rs",
+        include_bytes!("../../crates/sm_game/src/room_entry/installation.rs"),
     ),
     (
         "sm/src/game/room_entry/mod.rs",
@@ -2578,16 +2589,16 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/room_entry/protocol.rs"),
     ),
     (
-        "sm/src/game/room_entry/selection.rs",
-        include_bytes!("game/room_entry/selection.rs"),
+        "crates/sm_game/src/room_entry/selection.rs",
+        include_bytes!("../../crates/sm_game/src/room_entry/selection.rs"),
     ),
     (
-        "sm/src/game/room_entry/state.rs",
-        include_bytes!("game/room_entry/state.rs"),
+        "crates/sm_game/src/room_entry/state.rs",
+        include_bytes!("../../crates/sm_game/src/room_entry/state.rs"),
     ),
     (
-        "sm/src/game/room_entry/world.rs",
-        include_bytes!("game/room_entry/world.rs"),
+        "crates/sm_game/src/room_entry/world.rs",
+        include_bytes!("../../crates/sm_game/src/room_entry/world.rs"),
     ),
     (
         "sm/src/verification/player_detached/room_entry.rs",
@@ -2630,8 +2641,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("verification/player_detached/actors_host.rs"),
     ),
     (
-        "sm/src/verification/actor_identity_checks.rs",
-        include_bytes!("verification/actor_identity_checks.rs"),
+        "crates/sm_game/src/actors/actor_identity_checks.rs",
+        include_bytes!("../../crates/sm_game/src/actors/actor_identity_checks.rs"),
     ),
     (
         "sm/src/verification/actor_codec_checks.rs",
@@ -2646,8 +2657,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("verification/actor_runtime_checks.rs"),
     ),
     (
-        "sm/src/verification/actor_fixture.rs",
-        include_bytes!("verification/actor_fixture.rs"),
+        "crates/sm_game/src/actors/fixture.rs",
+        include_bytes!("../../crates/sm_game/src/actors/fixture.rs"),
     ),
     (
         "sm/src/verification/actor_palette_checks.rs",

@@ -334,7 +334,7 @@ def build(root, rustc, use_cargo=None, frontend=False):
     data_flags = ["--extern", f"sm_data={data}"]
     subprocess.run(
         common + (["-C", f"incremental={output / 'incremental-sm-game'}"] if incremental else [])
-        + ["--crate-name", "sm_game", "--crate-type", "rlib",
+        + ["--crate-name", "sm_game", "--crate-type", "rlib", "--cfg", "sm_verify_dll",
                   "crates/sm_game/src/lib.rs", *data_flags, "-L", f"dependency={output}", "-o", str(game)],
         cwd=root, check=True,
     )

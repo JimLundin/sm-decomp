@@ -209,6 +209,9 @@ macro_rules! set_fields {
 pub(crate) use set_fields;
 
 /// Gameplay, one module per original ROM bank (`sm_80` = bank $80, ...).
+// Access macros of the moved projectile, enemy-projectile and room mechanism modules.
+#[macro_use]
+extern crate sm_game;
 #[macro_use]
 mod word_transfers;
 
@@ -412,9 +415,8 @@ pub mod game {
     pub(crate) mod equipment_menu;
     pub(crate) mod escape_typewriter;
     pub(crate) use sm_game::external_inputs;
-    pub(crate) mod gameplay_flag_host;
+    pub(crate) use sm_game::gameplay_flag_host;
     pub(crate) mod gameplay_flag_runtime;
-    pub(crate) use sm_game::gameplay_flag_state;
     pub use sm_game::item_pickups;
     pub(crate) mod item_pickups_runtime;
     pub(crate) use sm_game::liquid_surface;
@@ -435,7 +437,6 @@ pub mod game {
     pub(crate) mod rom_vram_entries;
 
     pub(crate) mod boot;
-    pub(crate) mod checkpoint_binding;
     pub(crate) mod controller_input;
     pub(crate) mod display_refresh;
     pub(crate) mod display_transfers;
@@ -458,26 +459,26 @@ pub mod game {
     pub mod room_state;
     pub mod samus_animation;
     pub(crate) mod samus_palette;
-    pub(crate) mod samus_periodic_damage;
+    pub(crate) use sm_game::samus_periodic_damage;
     pub(crate) mod sand_heap;
     pub mod save_slots;
     pub(crate) mod scanline_irq;
-    pub(crate) mod session;
-    pub(crate) mod session_access;
+    pub(crate) use sm_game::session;
+    pub(crate) use sm_game::session_access;
     pub(crate) mod session_checkpoint;
     pub(crate) mod session_encoding;
-    pub(crate) mod session_owners;
+    pub(crate) use sm_game::session_owners;
     pub(crate) mod session_runtime;
     pub(crate) mod shooting_stars;
     pub mod sm_8b;
     pub(crate) mod sprite_drawing;
-    pub(crate) mod sprite_effect_controllers;
-    pub(crate) mod sprite_effect_host;
+    pub(crate) use sm_game::sprite_effect_controllers;
+    pub(crate) use sm_game::sprite_effect_host;
     pub(crate) mod sprite_effect_runtime;
     #[cfg(test)]
     mod transition_representation_tests;
     pub(crate) use sm_game::sprite_effect_state;
-    pub(crate) mod visual_host;
+    pub(crate) use sm_game::visual_host;
     pub(crate) mod visual_runtime;
     pub(crate) use sm_game::visual_state;
 
@@ -489,7 +490,7 @@ pub mod game {
     pub use sm_game::contact_rules;
     pub use sm_game::drop_rules;
     pub use sm_game::enemy_population;
-    pub mod enemy_script;
+    pub use sm_game::enemy_script;
     pub(crate) mod erratic_fireball;
     pub(crate) mod fire_geysers;
     pub(crate) mod flies;
@@ -516,7 +517,7 @@ pub mod game {
     pub mod sm_aa;
     pub(crate) mod space_pirates;
     pub(crate) mod spikey_platforms;
-    pub mod sprite_objects;
+    pub use sm_game::sprite_objects;
     pub mod waver;
 }
 

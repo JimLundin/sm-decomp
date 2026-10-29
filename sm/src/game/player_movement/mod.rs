@@ -1,7 +1,7 @@
 //! Normal locomotion and shinespark crash transitions share the owned player state.
 #![forbid(unsafe_code)]
-pub(crate) mod content;
-pub(crate) mod effects;
+pub(crate) use sm_game::player_movement::content;
+pub(crate) use sm_game::player_movement::effects;
 pub(crate) mod forced;
 mod presentation;
 mod selectors;

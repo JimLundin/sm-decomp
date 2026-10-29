@@ -1,2 +1,1 @@
-#[path = "../../game/animated_tiles/execution.rs"]
-pub(crate) mod execution;
+pub(crate) use sm_game::animated_tiles::execution;

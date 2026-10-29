@@ -1,24 +1,10 @@
 //! Actual actor data, codec and access helpers in the detached composition.
 //! Runtime/backend adapters are deliberately not registered in this target.
 #![forbid(unsafe_code)]
-#[path = "../../game/actors/access.rs"]
-pub(in crate::game) mod access;
-#[path = "../../game/actors/botwoon_death.rs"]
-pub(in crate::game) mod botwoon_death;
-#[path = "../../game/actors/codec.rs"]
-pub(in crate::game) mod codec;
-#[path = "../../game/actors/content.rs"]
-pub(in crate::game) mod content;
+pub(in crate::game) use sm_game::actors::access;
+pub(in crate::game) use sm_game::actors::codec;
 #[path = "actors_host.rs"]
 mod host;
-#[path = "../../game/actors/identity.rs"]
-pub(in crate::game) mod identity;
-#[path = "../../game/actors/media.rs"]
-pub(in crate::game) mod media;
-#[path = "../../game/actors/scene.rs"]
-pub(in crate::game) mod scene;
-#[path = "../../game/actors/snapshot.rs"]
-pub(in crate::game) mod snapshot;
 
 #[cfg(test)]
 #[path = "../actor_catalog_checks.rs"]
@@ -28,8 +14,7 @@ mod catalog_checks;
 mod codec_checks;
 
 #[cfg(test)]
-#[path = "../actor_fixture.rs"]
-mod fixture;
+use sm_game::actors::{content, fixture, identity, media, scene, snapshot};
 #[cfg(test)]
 #[path = "../actor_palette_checks.rs"]
 mod palette_checks;
