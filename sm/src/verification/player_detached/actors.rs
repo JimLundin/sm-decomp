@@ -19,7 +19,6 @@ pub(in crate::game) mod scene;
 pub(in crate::game) mod snapshot;
 #[path = "../../game/actors/state.rs"]
 pub(in crate::game) mod state;
-pub(in crate::game) use state::Actors;
 #[path = "actors_host.rs"]
 mod host;
 
