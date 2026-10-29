@@ -10,6 +10,7 @@ pub(crate) use progress as progress_flags;
 pub(crate) use sm_data::cartridge as rom;
 
 pub mod beam_definitions;
+pub mod cartridge;
 pub mod combat_rules;
 pub mod contact_rules;
 pub mod dialogue;
@@ -19,6 +20,7 @@ pub mod enemy_population;
 pub mod external_inputs;
 pub mod gameplay_flag_state;
 pub mod geometry;
+pub mod imported;
 pub mod item_pickups;
 pub mod launch_motion;
 pub mod liquid_surface;

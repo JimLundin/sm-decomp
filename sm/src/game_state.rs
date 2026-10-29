@@ -2651,3 +2651,15 @@ impl sm_game::effects::DisplayRefresh for Game {
         crate::game::display_refresh::set_blank(blank, self);
     }
 }
+
+impl sm_game::cartridge::LoadedImage for Game {
+    fn loaded_image(&self) -> &crate::rom::RomImage {
+        self.loaded_rom.as_ref().expect("ROM must be loaded")
+    }
+}
+
+impl sm_game::cartridge::NativeImage for Game {
+    fn native_image(&self) -> crate::rom::RomImage {
+        self.capture_native_rom()
+    }
+}
