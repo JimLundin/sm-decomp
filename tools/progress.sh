@@ -1,10 +1,12 @@
 #!/usr/bin/env sh
-# Counts of transpiler residue left in sm/src. Every number should go down
+# Counts of transpiler residue left in sm/src and the target-package crates. Every number should go down
 # over time; none should go up in a commit that does not explain why.
 # Run from the repository root: sh tools/progress.sh
 set -eu
 src=sm/src
-count() { grep -rE "$1" "$src" --include='*.rs' | wc -l | tr -d ' '; }
+# Target packages count as production too: moving code there is not a deletion.
+roots="$src"; [ -d crates ] && roots="$src crates"
+count() { grep -rE "$1" $roots --include='*.rs' | wc -l | tr -d ' '; }
 legacy=$(find "$src/game" -maxdepth 1 -type f -name 'sm_*.rs' -exec cat {} + | wc -l | tr -d ' ')
 
 # Markdown is stdout only.
@@ -35,7 +37,7 @@ case "${1-}" in
     fi
     # awk counts physical lines, including an unterminated final line. Passing
     # filenames via find -exec preserves spaces and avoids shell word splitting.
-    metrics=$(find "$src" -type f -name '*.rs' -exec awk '
+    metrics=$(find $roots -type f -name '*.rs' -exec awk '
       {
         if (FILENAME ~ /\/(verification|verify)\// || FILENAME ~ /\/verify[^/]*[.]rs$/)
           verification++
@@ -72,4 +74,4 @@ printf '%-34s %8s\n' '#[no_mangle]'                 "$(count 'no_mangle')"
 printf '%-34s %8s\n' 'unsafe fns'                    "$(count 'unsafe (extern "C" )?fn ')"
 printf '%-34s %8s\n' 'i32/c_int cast lines'         "$(count 'as (i32|::core::ffi::c_int)([^[:alnum:]_]|$)')"
 printf '%-34s %8s\n' 'legacy bank Rust lines'       "$legacy"
-printf '%-34s %8s\n' 'lines of Rust'                 "$(find "$src" -name '*.rs' -exec cat {} + | wc -l | tr -d ' ')"
+printf '%-34s %8s\n' 'lines of Rust'                 "$(find $roots -name '*.rs' -exec cat {} + | wc -l | tr -d ' ')"

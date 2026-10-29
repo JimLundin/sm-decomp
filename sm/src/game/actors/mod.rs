@@ -97,8 +97,8 @@ pub(crate) mod collision_composed_actor;
 #[path = "../../verification/actor_composed_checks.rs"]
 pub(crate) mod composed_checks;
 
-mod overlap;
 pub(in crate::game) use overlap::axis_overlaps;
+use sm_game::actors::overlap;
 pub(in crate::game) mod blue_face_block;
 pub(in crate::game) mod brinstar_pipe_bug;
 pub(in crate::game) mod crocomire_attack;

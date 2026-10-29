@@ -4,6 +4,9 @@ pub use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::save_slots;
 use crate::game::sprite_drawing::Clip;
+use crate::game::visual_runtime::CinematicObjects::{
+    Background as CinematicBackground, Mode7 as CinematicMode7, Sprites as CinematicSprites,
+};
 use crate::game::visual_runtime::advance_cinematic_coordinate;
 use crate::game::visual_runtime::{
     advance_ceres_station, advance_credits, advance_intro_baby_pursuit, advance_intro_rinka,
@@ -20,9 +23,6 @@ use crate::game::visual_runtime::{
     prepare_cinematic_palette_fade, queue_cinematic_tilemap, reset_cinematic_transform,
     set_cinematic_backdrop, set_cinematic_blend, set_cinematic_tilemap_updates, set_fixed_color,
     set_hdma_enabled, spawn_cinematic_burst, spawn_cinematic_sprite_at, update_cinematic_transform,
-};
-use crate::game::visual_state::CinematicObjects::{
-    Background as CinematicBackground, Mode7 as CinematicMode7, Sprites as CinematicSprites,
 };
 use crate::game::visual_state::{CinematicDisplay, CinematicFade, CinematicTilemap};
 

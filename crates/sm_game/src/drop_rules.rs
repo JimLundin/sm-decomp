@@ -16,13 +16,13 @@ pub enum DropSource {
     Draygon,
 }
 
-pub(crate) enum Spread {
+pub enum Spread {
     Nearby(u16),
     Area(u16, u16, u16),
 }
 
 impl DropSource {
-    pub(crate) fn pattern(self) -> (u16, Spread) {
+    pub fn pattern(self) -> (u16, Spread) {
         match self {
             Self::MiniKraid => (0xe0ff, Spread::Nearby(4)),
             Self::LowerNorfairPirate => (0xf593, Spread::Nearby(5)),
@@ -40,16 +40,16 @@ impl DropSource {
     }
 }
 
-pub(crate) const PICKUPS: [u16; 6] = [1, 2, 4, 6, 5, 3];
+pub const PICKUPS: [u16; 6] = [1, 2, 4, 6, 5, 3];
 
-pub(crate) struct Weights {
+pub struct Weights {
     total: u8,
     budget: u8,
     mask: u8,
 }
 
 impl Weights {
-    pub(crate) fn new(bias: bool, needed: [bool; 4], mut read: impl FnMut(usize) -> u8) -> Self {
+    pub fn new(bias: bool, needed: [bool; 4], mut read: impl FnMut(usize) -> u8) -> Self {
         let mut weights = Self {
             total: 0,
             budget: 255,
@@ -78,10 +78,10 @@ impl Weights {
         }
         weights
     }
-    pub(crate) fn enabled(&self, index: usize) -> bool {
+    pub fn enabled(&self, index: usize) -> bool {
         (index >= 4 || self.total != 0) && self.mask & (1 << index) != 0
     }
-    pub(crate) fn contribution(&self, index: usize, value: u8) -> u16 {
+    pub fn contribution(&self, index: usize, value: u8) -> u16 {
         if index < 4 {
             u16::from(self.budget) * u16::from(value) / u16::from(self.total)
         } else {
@@ -90,10 +90,10 @@ impl Weights {
     }
 }
 
-pub(crate) use crate::game::item_pickups::Resource;
+pub use crate::item_pickups::Resource;
 
 // Drop codes 0 and 6 have no collectible reward. E stores twice the code.
-pub(crate) const REWARDS: [Option<(Resource, u16, u8)>; 7] = [
+pub const REWARDS: [Option<(Resource, u16, u8)>; 7] = [
     None,
     Some((Resource::Health, 5, 1)),
     Some((Resource::Health, 20, 2)),

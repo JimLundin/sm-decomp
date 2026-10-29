@@ -63,7 +63,12 @@ version = "0.1.0"
 dependencies = [
  "gl",
  "sdl2-sys",
+ "sm_game",
 ]
+
+[[package]]
+name = "sm_game"
+version = "0.1.0"
 
 [[package]]
 name = "version-compare"

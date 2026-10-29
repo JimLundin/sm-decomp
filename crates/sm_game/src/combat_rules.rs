@@ -1,13 +1,13 @@
 //! Decisions between combat observation points; no RAM or runtime dependencies.
 #![forbid(unsafe_code)]
 
-pub(crate) enum ShotResponse {
+pub enum ShotResponse {
     Dud,
     Freeze,
     Damage(u16),
 }
 
-pub(crate) struct Shot {
+pub struct Shot {
     pub kind: u16,
     pub damage: u16,
 }
@@ -47,7 +47,7 @@ impl Shot {
     }
 }
 
-pub(crate) fn contact_attack(mode: u16) -> (u16, u16) {
+pub fn contact_attack(mode: u16) -> (u16, u16) {
     let offset = mode.wrapping_add(15);
     match mode {
         1 => (offset, 500),
@@ -57,7 +57,7 @@ pub(crate) fn contact_attack(mode: u16) -> (u16, u16) {
     }
 }
 
-pub(crate) fn contact_health(health: u16, damage: u16) -> u16 {
+pub fn contact_health(health: u16, damage: u16) -> u16 {
     let remaining = health.wrapping_sub(damage);
     if remaining & 0x8000 != 0 {
         0
@@ -66,7 +66,7 @@ pub(crate) fn contact_health(health: u16, damage: u16) -> u16 {
     }
 }
 
-pub(crate) fn power_bomb_damage(vulnerability: u8) -> u16 {
+pub fn power_bomb_damage(vulnerability: u8) -> u16 {
     if vulnerability == 255 {
         0
     } else {
@@ -74,20 +74,20 @@ pub(crate) fn power_bomb_damage(vulnerability: u8) -> u16 {
     }
 }
 
-pub(crate) fn hurt_duration(configured: u8, extra: u16) -> u16 {
+pub fn hurt_duration(configured: u8, extra: u16) -> u16 {
     u16::from(if configured == 0 { 4 } else { configured }) + extra
 }
 
-pub(crate) fn freeze_duration(area: u16) -> u16 {
+pub fn freeze_duration(area: u16) -> u16 {
     if area == 2 { 300 } else { 400 }
 }
 
-pub(crate) enum HealthResponse {
+pub enum HealthResponse {
     Freeze,
     Health(u16),
 }
 
-pub(crate) fn shot_health(
+pub fn shot_health(
     health: u16,
     damage: u16,
     projectile: u16,
@@ -102,7 +102,7 @@ pub(crate) fn shot_health(
     }
 }
 
-pub(crate) fn suit_damage(damage: u16, equipment: u16) -> u16 {
+pub fn suit_damage(damage: u16, equipment: u16) -> u16 {
     if equipment & 0x20 != 0 {
         damage >> 2
     } else if equipment & 1 != 0 {

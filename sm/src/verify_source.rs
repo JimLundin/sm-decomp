@@ -2,6 +2,10 @@
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "crates/sm_game/src/lib.rs",
+        include_bytes!("../../crates/sm_game/src/lib.rs"),
+    ),
+    (
         "sm/src/verification/session_audio_checkpoint_cases.rs",
         include_bytes!("verification/session_audio_checkpoint_cases.rs"),
     ),
@@ -645,8 +649,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/player_update/mod.rs"),
     ),
     (
-        "sm/src/game/player_update/state.rs",
-        include_bytes!("game/player_update/state.rs"),
+        "crates/sm_game/src/player_update/state.rs",
+        include_bytes!("../../crates/sm_game/src/player_update/state.rs"),
     ),
     (
         "sm/src/game/player_update/content.rs",
@@ -693,8 +697,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/player_collision_runtime.rs"),
     ),
     (
-        "sm/src/game/actors/overlap.rs",
-        include_bytes!("game/actors/overlap.rs"),
+        "crates/sm_game/src/actors/overlap.rs",
+        include_bytes!("../../crates/sm_game/src/actors/overlap.rs"),
     ),
     (
         "sm/src/game/player_collision/mod.rs",
@@ -844,8 +848,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/animated_tiles/native.rs"),
     ),
     (
-        "sm/src/game/beam_definitions.rs",
-        include_bytes!("game/beam_definitions.rs"),
+        "crates/sm_game/src/beam_definitions.rs",
+        include_bytes!("../../crates/sm_game/src/beam_definitions.rs"),
     ),
     (
         "sm/src/game/beam_windows.rs",
@@ -856,16 +860,16 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/callback_tables.rs"),
     ),
     (
-        "sm/src/game/combat_rules.rs",
-        include_bytes!("game/combat_rules.rs"),
+        "crates/sm_game/src/combat_rules.rs",
+        include_bytes!("../../crates/sm_game/src/combat_rules.rs"),
     ),
     (
         "sm/src/game/constants.rs",
         include_bytes!("game/constants.rs"),
     ),
     (
-        "sm/src/game/contact_rules.rs",
-        include_bytes!("game/contact_rules.rs"),
+        "crates/sm_game/src/contact_rules.rs",
+        include_bytes!("../../crates/sm_game/src/contact_rules.rs"),
     ),
     (
         "sm/src/game/decompression.rs",
@@ -880,16 +884,16 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/dialogue_ram.rs"),
     ),
     (
-        "sm/src/game/drop_rules.rs",
-        include_bytes!("game/drop_rules.rs"),
+        "crates/sm_game/src/drop_rules.rs",
+        include_bytes!("../../crates/sm_game/src/drop_rules.rs"),
     ),
     (
         "sm/src/game/enemy_layouts.rs",
         include_bytes!("game/enemy_layouts.rs"),
     ),
     (
-        "sm/src/game/enemy_population.rs",
-        include_bytes!("game/enemy_population.rs"),
+        "crates/sm_game/src/enemy_population.rs",
+        include_bytes!("../../crates/sm_game/src/enemy_population.rs"),
     ),
     (
         "sm/src/game/enemy_projectiles/access.rs",
@@ -996,8 +1000,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/enemy_projectiles/shared_pre.rs"),
     ),
     (
-        "sm/src/game/enemy_projectiles/tables.rs",
-        include_bytes!("game/enemy_projectiles/tables.rs"),
+        "crates/sm_game/src/enemy_projectiles/tables.rs",
+        include_bytes!("../../crates/sm_game/src/enemy_projectiles/tables.rs"),
     ),
     (
         "sm/src/game/enemy_script.rs",
@@ -1028,8 +1032,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/intro_pages.rs"),
     ),
     (
-        "sm/src/game/item_pickups.rs",
-        include_bytes!("game/item_pickups.rs"),
+        "crates/sm_game/src/item_pickups.rs",
+        include_bytes!("../../crates/sm_game/src/item_pickups.rs"),
     ),
     (
         "sm/src/game/item_pickups_runtime.rs",
@@ -1052,8 +1056,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/liquid_effects.rs"),
     ),
     (
-        "sm/src/game/liquid_surface.rs",
-        include_bytes!("game/liquid_surface.rs"),
+        "crates/sm_game/src/liquid_surface.rs",
+        include_bytes!("../../crates/sm_game/src/liquid_surface.rs"),
     ),
     (
         "sm/src/game/mechanism_displacement.rs",
@@ -1265,8 +1269,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/gameplay_flag_runtime.rs"),
     ),
     (
-        "sm/src/game/gameplay_flag_state.rs",
-        include_bytes!("game/gameplay_flag_state.rs"),
+        "crates/sm_game/src/gameplay_flag_state.rs",
+        include_bytes!("../../crates/sm_game/src/gameplay_flag_state.rs"),
     ),
     ("sm/src/game/prelude.rs", include_bytes!("game/prelude.rs")),
     (
@@ -1274,8 +1278,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/progress_flags.rs"),
     ),
     (
-        "sm/src/game/projectile_block_reactions.rs",
-        include_bytes!("game/projectile_block_reactions.rs"),
+        "crates/sm_game/src/projectile_block_reactions.rs",
+        include_bytes!("../../crates/sm_game/src/projectile_block_reactions.rs"),
     ),
     (
         "sm/src/game/projectile_block_reactions_ram.rs",
@@ -1290,20 +1294,20 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/projectile_geometry.rs"),
     ),
     (
-        "sm/src/game/projectile_initialization.rs",
-        include_bytes!("game/projectile_initialization.rs"),
+        "crates/sm_game/src/projectile_initialization.rs",
+        include_bytes!("../../crates/sm_game/src/projectile_initialization.rs"),
     ),
     (
         "sm/src/game/projectile_presentation_ram.rs",
         include_bytes!("game/projectile_presentation_ram.rs"),
     ),
     (
-        "sm/src/game/projectile_room.rs",
-        include_bytes!("game/projectile_room.rs"),
+        "crates/sm_game/src/projectile_room.rs",
+        include_bytes!("../../crates/sm_game/src/projectile_room.rs"),
     ),
     (
-        "sm/src/game/projectile_weapon_definitions.rs",
-        include_bytes!("game/projectile_weapon_definitions.rs"),
+        "crates/sm_game/src/projectile_weapon_definitions.rs",
+        include_bytes!("../../crates/sm_game/src/projectile_weapon_definitions.rs"),
     ),
     (
         "sm/src/game/room_backgrounds.rs",
@@ -1543,8 +1547,8 @@ pub static FILES: &[(&str, &[u8])] = &[
     ("sm/src/game/sm_a9.rs", include_bytes!("game/sm_a9.rs")),
     ("sm/src/game/sm_aa.rs", include_bytes!("game/sm_aa.rs")),
     (
-        "sm/src/game/special_geometry.rs",
-        include_bytes!("game/special_geometry.rs"),
+        "crates/sm_game/src/special_geometry.rs",
+        include_bytes!("../../crates/sm_game/src/special_geometry.rs"),
     ),
     (
         "sm/src/game/sprite_drawing.rs",
@@ -1579,8 +1583,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/visual_runtime.rs"),
     ),
     (
-        "sm/src/game/visual_state.rs",
-        include_bytes!("game/visual_state.rs"),
+        "crates/sm_game/src/visual_state.rs",
+        include_bytes!("../../crates/sm_game/src/visual_state.rs"),
     ),
     (
         "sm/src/game/vram_read_queue.rs",

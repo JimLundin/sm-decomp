@@ -2,7 +2,7 @@
 //! Numeric callbacks select these operations; Game retains the cinematic state.
 use crate::game::player_transitions as pt;
 use crate::game::session_runtime::Runtime;
-use crate::game::visual_state::CinematicObjects::{
+use crate::game::visual_runtime::CinematicObjects::{
     Background as CinematicBackground, Mode7 as CinematicMode7, Sprites as CinematicSprites,
 };
 

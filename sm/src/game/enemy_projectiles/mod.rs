@@ -30,7 +30,6 @@ mod setup;
 mod setup_helpers;
 mod shared;
 mod shared_pre;
-mod tables;
 use crate::game::constants::{bank_86::*, bank_a0::*};
 use crate::game_state::Game;
 pub(crate) use attachments_spore_maw_facade::*;
@@ -45,6 +44,7 @@ pub use presentation::Priority as EprojPriority;
 use setup::*;
 use shared::*;
 use shared_pre::*;
+use sm_game::enemy_projectiles::tables;
 use tables::*;
 
 const fnEprojPreInstr_nullsub_83: u32 = 8815867;
