@@ -10,7 +10,15 @@ primary's owned archive, located by their original comment IDs in that history.
 Approved by Jim on 2026-10-29; it supersedes the 2026-10-27 plan and its pacing
 advice. PLAN remains authoritative for the Fast loop, Git, resources and commit
 rules; the accepted architecture, ADRs and ENGINE_STATE_MIGRATION are unchanged.
-Primary root 01a17ecd stays the sole Git writer; Linux stays stopped.
+Primary (Jim, 2026-10-29 evening): the collaborator session is the sole Git
+writer for main; root releases main and hands in-flight work over as patches.
+Linux stays stopped.
+
+**Landing rule (Jim, 2026-10-29).** A change lands when the local compiler gate
+(fmt; `rustc --emit=metadata` of `sm` with and without `sm_verify_dll`;
+`player_detached`; source inventory), PR CI and a full corpus on its exact head
+are green. The PR description carries the evidence; no separate qualification
+records, timing tables or resource-ledger prose are required.
 
 ### Direction (Jim, 2026-10-29)
 
@@ -53,8 +61,9 @@ M seams and cycle cuts, B bank retirement.
    Checkpoint's serialised layout (`State` field names and types) instead of
    source text; keep the round-trip/extra-bytes/input-prefix rejections. Refresh
    the `f158` seed asset; split the checkpoint shard to at most ~60 minutes. Run
-   `tools/cycle_report.py` in CI. *Exit:* two consecutive green scheduled full-
-   corpus runs.
+   `tools/cycle_report.py` in CI. *Exit:* two consecutive green full-corpus runs
+   on main, scheduled or dispatched (Jim, 2026-10-29: the schedule fired only
+   every 4â€“9 h, so dispatched runs count).
 1. **Package graph and seams (M).** Add `sm_data`, `sm_game` and `sm_runtime`
    to the workspace; `sm` becomes compat plus oracle tools. Put the CONTRACTS
    types in place: `TickOutput`, a coarse `Scene`, a `Cue` record in `sm_data`.
