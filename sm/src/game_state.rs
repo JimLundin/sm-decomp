@@ -220,6 +220,8 @@ pub struct Game {
     pub(crate) enemy_speeds32: Option<crate::game::enemy_speeds::ImportedSpeeds32>,
     /// Imported from `loaded_rom` by `register_rom`; see game::sand_heap.
     pub(crate) sand_heap: Option<crate::game::sand_heap::ImportedSandHeap>,
+    /// Imported from `loaded_rom` by `register_rom`; see game::save_slots.
+    pub(crate) save_slots: Option<crate::game::save_slots::ImportedSlots>,
     /// Imported from `loaded_rom` by `register_rom`; see game::ceres_elevator.
     pub(crate) ceres_rotation: Option<crate::game::ceres_elevator::ImportedRotation>,
     /// Imported from `loaded_rom` by `register_rom`; see game::demo_rooms.
@@ -1185,6 +1187,7 @@ impl Game {
         }
         self.enemy_speeds = crate::game::enemy_speeds::import(&image);
         self.sand_heap = crate::game::sand_heap::import(&image);
+        self.save_slots = crate::game::save_slots::import(&image);
         self.ceres_rotation = crate::game::ceres_elevator::import(&image);
         self.demo_sets = crate::game::demo_rooms::import_sets(&image);
         self.shooting_stars = crate::game::shooting_stars::import(&image);
@@ -1426,6 +1429,7 @@ impl Game {
             enemy_speeds: None,
             enemy_speeds32: None,
             sand_heap: None,
+            save_slots: None,
             ceres_rotation: None,
             demo_sets: None,
             demo_scenes: None,

@@ -401,10 +401,8 @@ unsafe fn copy_slot(game: &mut Game) {
         sprite_output::menu_selection(game);
         animate_copy_arrow(game);
         sprite_output::file_copy_arrow(game);
-        let src_addr: u16 =
-            crate::rtl::rom_table_word!(game, 0x81812b, word!(game.eproj_id[16]) as isize);
-        let dst_addr: u16 =
-            crate::rtl::rom_table_word!(game, 0x81812b, word!(game.eproj_id[17]) as isize);
+        let src_addr: u16 = save_slots::sram_offset(game, word!(game.eproj_id[16]) as isize);
+        let dst_addr: u16 = save_slots::sram_offset(game, word!(game.eproj_id[17]) as isize);
         game.g_sram.copy_within(
             src_addr as usize..src_addr as usize + 1628,
             dst_addr as usize,
@@ -473,7 +471,7 @@ unsafe fn clear_slot(game: &mut Game) {
         static kBitShl_Not: [u16; 3] = [0xfffe, 0xfffd, 0xfffb];
         border(0x4a, game);
         let sram_addr: i32 =
-            crate::rtl::rom_table_word!(game, 0x81812b, word!(game.eproj_id[16]) as isize) as i32;
+            save_slots::sram_offset(game, word!(game.eproj_id[16]) as isize) as i32;
         game.g_sram
             .fill(sram_addr as usize..sram_addr as usize + 1628, 0);
         let _v1: u16 = (2u16).wrapping_mul(word!(game.eproj_id[16]));

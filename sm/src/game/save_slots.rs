@@ -1,9 +1,29 @@
 //! Save-slot serialization over the original SRAM format and ordered RAM projections.
 use crate::game::constants::buttons::*;
+use crate::game::imported::Imported;
 use crate::game_state::Game;
 use crate::ram_map::checked_word as word;
 use crate::ram_map::word as game_word;
+use crate::rom::{RomImage, lorom_offset};
 use crate::rtl::rom_table_word;
+use sm_data::save_slots::{ADDRESS, BYTES, SaveSlots};
+
+pub(crate) type ImportedSlots = Imported<SaveSlots>;
+
+pub(crate) fn import(image: &RomImage) -> Option<ImportedSlots> {
+    Imported::import(image, ADDRESS, BYTES, SaveSlots::import)
+}
+
+/// Save file `slot`'s SRAM offset in the loaded image. The record serves the
+/// three slots of the imported allocation; anything else keeps the original
+/// indexed load with its failures.
+pub(crate) fn sram_offset(game: &Game, slot: isize) -> u16 {
+    let rom = game.loaded_rom.as_ref().expect("ROM must be loaded");
+    usize::try_from(slot)
+        .ok()
+        .and_then(|slot| Imported::from(&game.save_slots, rom)?.offset(slot))
+        .unwrap_or_else(|| rom.table_word(lorom_offset(ADDRESS) as usize, slot))
+}
 
 /// Accept the stored menu selection only when its range and inverse-bit check agree.
 pub(crate) fn last_selected(game: &Game) -> u16 {
@@ -22,7 +42,7 @@ enum Direction {
 }
 
 fn transfer_slot(slot: u16, direction: Direction, game: &mut Game) -> u16 {
-    let mut cursor = rom_table_word!(game, 0x81812b, (slot & 3) as isize);
+    let mut cursor = sram_offset(game, (slot & 3) as isize);
     let mut checksum = 0u16;
     for at in (0xd7c0..0xde1c).step_by(2) {
         let sram = usize::from(cursor & !1);
@@ -86,7 +106,7 @@ pub(crate) fn load(slot: u16, game: &mut Game) -> u8 {
         word!(game.area_index = word!(game.sram_area_index));
         0
     } else {
-        let mut cursor = rom_table_word!(game, 0x81812b, (slot & 3) as isize);
+        let mut cursor = sram_offset(game, (slot & 3) as isize);
         for _ in (0xd7c0..0xde1c).step_by(2) {
             game.g_sram.set_word(usize::from(cursor & !1), 0);
             cursor = cursor.wrapping_add(2);

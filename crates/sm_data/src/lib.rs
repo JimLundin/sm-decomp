@@ -9,5 +9,6 @@ pub mod ceres_elevator;
 pub mod demo_rooms;
 pub mod enemy_speeds;
 pub mod sand_heap;
+pub mod save_slots;
 pub mod shooting_stars;
 pub mod world;
