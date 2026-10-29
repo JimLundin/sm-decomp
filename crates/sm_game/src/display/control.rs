@@ -1,6 +1,7 @@
 //! Display state the game sets directly: brightness, the fixed colour and the
 //! Mode 7 transform. Compat writes each value to its register at the call
 //! site's original point, so values reach the registers in the game's order.
+use crate::display::registers::{BGMODE, COLDATA, INIDISP, M7SEL, SETINI, TM, TMW, TS, TSW};
 
 /// Forced blank and master brightness (INIDISP).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -225,6 +226,52 @@ impl Mode7Transform {
     pub const fn words(self) -> [u16; 6] {
         [self.a, self.b, self.c, self.d, self.center_x, self.center_y]
     }
+}
+
+/// A typed display value and the register it sets, for `register_writes!`'s
+/// `show` and `show_mirror` kinds.
+pub trait DisplayRegister {
+    fn register(&self) -> u16;
+    fn value(&self) -> u8;
+}
+
+macro_rules! display_register {
+    ($($ty:ty => $register:ident),+ $(,)?) => {$(
+        impl DisplayRegister for $ty {
+            fn register(&self) -> u16 {
+                $register as u16
+            }
+            fn value(&self) -> u8 {
+                self.byte()
+            }
+        }
+    )+};
+}
+display_register! {
+    Brightness => INIDISP,
+    FixedColor => COLDATA,
+    BgMode => BGMODE,
+    ScreenSettings => SETINI,
+    Mode7Settings => M7SEL,
+}
+
+macro_rules! layer_register {
+    ($($ty:ident => $register:ident),+ $(,)?) => {$(
+        impl DisplayRegister for $ty {
+            fn register(&self) -> u16 {
+                $register as u16
+            }
+            fn value(&self) -> u8 {
+                self.0.byte()
+            }
+        }
+    )+};
+}
+layer_register! {
+    MainScreen => TM,
+    SubScreen => TS,
+    MainWindowMask => TMW,
+    SubWindowMask => TSW,
 }
 
 #[cfg(test)]

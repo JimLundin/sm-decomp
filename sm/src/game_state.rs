@@ -2663,3 +2663,38 @@ impl sm_game::cartridge::NativeImage for Game {
         self.capture_native_rom()
     }
 }
+
+impl sm_game::display::sequence::Registers for Game {
+    fn write_register(&mut self, register: u16, value: u8) {
+        assert!(!self.g_snes.is_null(), "SNES backend must be installed");
+        // SAFETY: the backend is installed, and `&mut self` excludes other access.
+        unsafe { crate::rtl::WriteReg(register, value, self) }
+    }
+    fn write_register_word(&mut self, register: u16, value: u16) {
+        assert!(!self.g_snes.is_null(), "SNES backend must be installed");
+        // SAFETY: as for `write_register`.
+        unsafe { crate::rtl::WriteRegWord(register, value, self) }
+    }
+}
+
+impl sm_game::ram::RawRam for WorkRam {
+    fn read_byte(&self, at: usize) -> u8 {
+        WorkRam::read_byte(self, at)
+    }
+    fn write_byte(&self, at: usize, value: u8) {
+        WorkRam::write_byte(self, at, value)
+    }
+    fn copy_in(&self, at: usize, input: &[u8]) {
+        WorkRam::copy_in(self, at, input)
+    }
+    fn fill(&self, range: core::ops::Range<usize>, value: u8) {
+        WorkRam::fill(self, range, value)
+    }
+}
+
+impl sm_game::ram::WorkRamAccess for Game {
+    type Ram = WorkRam;
+    fn ram(&self) -> &WorkRam {
+        Game::ram(self)
+    }
+}

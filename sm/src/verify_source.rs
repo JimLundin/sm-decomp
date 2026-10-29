@@ -1975,6 +1975,14 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/display/hdma.rs"),
     ),
     (
+        "crates/sm_game/src/display/registers.rs",
+        include_bytes!("../../crates/sm_game/src/display/registers.rs"),
+    ),
+    (
+        "crates/sm_game/src/display/sequence.rs",
+        include_bytes!("../../crates/sm_game/src/display/sequence.rs"),
+    ),
+    (
         "crates/sm_game/src/display/transfer.rs",
         include_bytes!("../../crates/sm_game/src/display/transfer.rs"),
     ),

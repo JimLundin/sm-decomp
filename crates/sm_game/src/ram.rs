@@ -9,6 +9,20 @@
 
 /// Byte access to work RAM as the compatibility runtime projects it: owned
 /// Session state where it is current, otherwise the RAM bytes themselves.
+/// The raw work RAM bytes, without the compatibility projection.
+pub trait RawRam {
+    fn read_byte(&self, at: usize) -> u8;
+    fn write_byte(&self, at: usize, value: u8);
+    fn copy_in(&self, at: usize, input: &[u8]);
+    fn fill(&self, range: core::ops::Range<usize>, value: u8);
+}
+
+/// The raw work RAM a host owns.
+pub trait WorkRamAccess {
+    type Ram: RawRam + ?Sized;
+    fn ram(&self) -> &Self::Ram;
+}
+
 pub trait CompatibilityRam {
     fn compatibility_byte(&self, at: usize) -> u8;
     fn compatibility_write_byte(&mut self, at: usize, value: u8);

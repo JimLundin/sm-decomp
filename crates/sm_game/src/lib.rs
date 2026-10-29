@@ -45,6 +45,8 @@ pub mod display {
     pub mod control;
     pub mod error;
     pub mod hdma;
+    pub mod registers;
+    pub mod sequence;
     pub mod transfer;
 }
 
