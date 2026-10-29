@@ -99,6 +99,7 @@ pub struct PowerBomb {
 }
 
 use crate::game::item_pickups::Inventory;
+pub use sm_game::geometry::{FixedMotion, Point, Position, Rectangle, Vector32};
 #[derive(Clone, Debug, PartialEq)]
 pub struct Session {
     pub(crate) actor_identity: crate::game::actors::identity::ActorIdentityState,
@@ -230,21 +231,6 @@ pub struct Player {
 impl Player {
     pub(crate) fn animation_frame(&self) -> u16 {
         self.animation_clock.frame
-    }
-}
-#[derive(Clone, Default, Debug, PartialEq)]
-pub struct FixedMotion {
-    pub fraction: u16,
-    pub whole: u16,
-}
-impl FixedMotion {
-    // Overlapping middle words are computed views, never separately stored.
-    pub fn middle(&self) -> u16 {
-        (self.fraction >> 8) | (self.whole << 8)
-    }
-    pub fn set_middle(&mut self, value: u16) {
-        self.fraction = (self.fraction & 0xff) | (value << 8);
-        self.whole = (self.whole & 0xff00) | (value >> 8);
     }
 }
 #[derive(Clone, Default, Debug, PartialEq)]
@@ -482,36 +468,6 @@ pub struct SpawnScratch {
 }
 
 #[derive(Clone, Copy, Default, Debug, PartialEq)]
-pub struct Position {
-    pub whole: u16,
-    pub fraction: u16,
-}
-impl Position {
-    /// Add a signed 8.8 velocity to this 16.16 position, wrapping at 16 bits.
-    pub(in crate::game) fn advance_8_8(&mut self, velocity: i16) {
-        self.advance(i32::from(velocity) << 8);
-    }
-    pub(in crate::game) fn advance(&mut self, velocity: i32) {
-        let position = (u32::from(self.whole) << 16) | u32::from(self.fraction);
-        let next = position.wrapping_add(velocity as u32);
-        self.fraction = next as u16;
-        self.whole = (next >> 16) as u16;
-    }
-}
-
-#[derive(Clone, Copy, Default, Debug, PartialEq)]
-pub struct Point {
-    pub x: u16,
-    pub y: u16,
-}
-
-#[derive(Clone, Copy, Default, Debug, PartialEq)]
-pub struct Rectangle {
-    pub origin: Point,
-    pub extent: Point,
-}
-
-#[derive(Clone, Copy, Default, Debug, PartialEq)]
 pub struct DropMetadata {
     pub flags: u16,
     pub enemy_definition: u16,
@@ -559,12 +515,6 @@ pub struct EnemyProjectiles {
     pub selected: u16,
     pub spawn: SpawnContext,
     pub drop_bias: u16,
-}
-
-#[derive(Clone, Copy, Default, Debug, PartialEq)]
-pub struct Vector32 {
-    pub x: u32,
-    pub y: u32,
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]

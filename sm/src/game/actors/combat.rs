@@ -17,10 +17,10 @@ use crate::game::{
         lifecycle, set_shot_direction, shot_word,
     },
     room_mechanisms::host::Effects as MechanismEffects,
-    session::Point,
     sprite_effect_state::{LegacySpriteDefinition, SpriteSpawn},
     sprite_objects,
 };
+use sm_game::geometry::Point;
 
 pub(super) fn current(h: &impl ActorAccess) -> ActorKey {
     ActorKey::from_legacy(h.session().actors.controls.selected)

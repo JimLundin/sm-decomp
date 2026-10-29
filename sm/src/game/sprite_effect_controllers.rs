@@ -1,7 +1,6 @@
 //! Attached sprite effects and Draygon motion on the single gameplay Session.
 #![forbid(unsafe_code)]
 use crate::game::{
-    session::Point,
     sprite_effect_host::{Host, SpriteMember},
     sprite_effect_state::{
         LegacySpriteDefinition, LegacySpriteHandle, LegacySpriteProgram, LegacySpriteWordIndex,
@@ -10,6 +9,7 @@ use crate::game::{
     sprite_objects,
     visual_host::{Record, Source},
 };
+use sm_game::geometry::Point;
 
 // Gameplay slots are ordinary fields. Only compatibility selectors leave the
 // active pool; the aggregate projection owns tails and cross-owner aliases.

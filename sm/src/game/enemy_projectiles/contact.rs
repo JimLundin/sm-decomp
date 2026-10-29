@@ -3,11 +3,11 @@
 use super::access::{enemy, enemy_byte, set_shot_direction, shot_word};
 use super::host::{DefinitionField, Host, LoadedRecord, ShotMember};
 use crate::game::contact_rules::{axis, is_shot};
-use crate::game::session::Point;
 use crate::game::{
     sprite_effect_state::{LegacySpriteDefinition, SpriteSpawn},
     sprite_objects,
 };
+use sm_game::geometry::Point;
 
 pub(super) fn enemy_projectiles_hit_samus(h: &mut impl Host) {
     h.session_mut().room.enemy_processing_stage = 11;

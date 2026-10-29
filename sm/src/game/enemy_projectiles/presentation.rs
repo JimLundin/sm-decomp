@@ -2,7 +2,7 @@
 #![forbid(unsafe_code)]
 use super::access::enemy;
 use super::host::Host;
-use crate::game::session::Point;
+use sm_game::geometry::Point;
 
 pub enum Priority {
     Low,

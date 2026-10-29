@@ -3,7 +3,7 @@
 use super::access::{enemy, read_member, read_member_byte, write_member, write_member_byte};
 use super::host::{EnemyMember as F, Host, NativeRecord};
 pub(super) use crate::game::projectile_geometry::sine_offset;
-use crate::game::session::{Point as Point16U, Vector32 as Point32};
+use sm_game::geometry::{Point as Point16U, Vector32 as Point32};
 
 fn move_axis(handle: u16, fraction: F, whole: F, velocity: F, ctx: &mut impl Host) -> u16 {
     let index = (handle >> 1) as isize;
@@ -46,7 +46,7 @@ pub(super) fn SetAreaDependentEprojPropertiesEx(table: u16, j: u16, ctx: &mut im
 pub(super) fn SetEprojSpawnPoint(k: u16, ctx: &mut impl Host) {
     let x = enemy!(ctx, (k >> 1) as isize, x);
     let y = enemy!(ctx, (k >> 1) as isize, y);
-    ctx.session_mut().enemy_projectiles.spawn.point = crate::game::session::Point { x, y };
+    ctx.session_mut().enemy_projectiles.spawn.point = sm_game::geometry::Point { x, y };
 }
 pub(super) fn sub_86A301(j: u16, ctx: &mut impl Host) {
     let index = (j >> 1) as isize;

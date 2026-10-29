@@ -7,9 +7,9 @@ use crate::game::actors::{
     access::{AccessMode::Native, ActorAccess, ActorKey as Key},
 };
 use crate::game::enemy_projectiles::{Math_MultByCos, Math_MultBySin, SpawnEprojWithRoomGfx};
-use crate::game::session::Position;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+use sm_game::geometry::Position;
 
 const INVISIBLE: u16 = 0x100;
 const TANGIBLE: u16 = 0x400;

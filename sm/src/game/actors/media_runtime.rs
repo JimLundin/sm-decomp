@@ -10,9 +10,9 @@ use super::{
 };
 use crate::game::{
     room_entry::world::{LegacyAddress24, ResourceKey, ResourceKind, WorldBinding},
-    session::Point,
     session_runtime::Runtime,
 };
+use sm_game::geometry::Point;
 
 pub(super) fn draw(
     runtime: &mut Runtime<'_>,
