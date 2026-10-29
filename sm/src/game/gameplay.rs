@@ -315,6 +315,7 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                             sm_data::OriginalSoundEffect(value),
                             meaning,
                         ),
+                        sm_data::CuePhase::GameplaySound,
                         game,
                     )
                 });

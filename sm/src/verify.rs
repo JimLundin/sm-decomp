@@ -1027,6 +1027,7 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
     let mut checkpoint_in = None;
     let mut seed_in = None;
     let mut checkpoint_out = None;
+    let mut audio_trace_path = None;
     #[cfg(sm_verify_dll)]
     let mut prepared_checkpoint_check = None;
     #[cfg(sm_verify_dll)]
@@ -1050,6 +1051,9 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
                         .next()
                         .ok_or("missing prepared checkpoint rejection path")?,
                 );
+            }
+            "--audio-trace" if audio_trace_path.is_none() => {
+                audio_trace_path = Some(options.next().ok_or("missing audio trace path")?);
             }
             "--frames" if frame_limit.is_none() => {
                 frame_limit = Some(
@@ -1170,6 +1174,14 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
     if checkpoint_out.is_some_and(|path| std::path::Path::new(path).exists()) {
         return Err("checkpoint output already exists; choose a new path".into());
     }
+    if audio_trace_path.is_some()
+        && (!game.supports_legacy_persistence()
+            || std::env::var_os("SM_VERIFY_PHYSICAL_AUDIO").is_none())
+    {
+        return Err(
+            "ordered Cue/original port trace requires the paired physical-audio oracle".into(),
+        );
+    }
     let saved_sram = if load_sram {
         let sram = std::fs::read("saves/sm.srm").map_err(|e| format!("saves/sm.srm: {e}"))?;
         if sram.len() != 8192 {
@@ -1213,6 +1225,7 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
         || checkpoint_out.is_some()
         || seed_in.is_some()
         || prepared_checkpoint_rom
+        || audio_trace_path.is_some()
     {
         std::fs::read(&args[0]).map_err(|e| format!("{}: {e}", args[0]))?
     } else {
@@ -1265,6 +1278,71 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
         }
         // Initialization and checkpoint loading are setup, not segment hits.
         sm::verify_probe::configure(&required_probes)?;
+        let audio_trace = if let Some(path) = audio_trace_path {
+            use std::io::Write;
+            let source =
+                option_env!("SM_VERIFY_SOURCE_HASH").ok_or("audio trace source is unbound")?;
+            let native = std::env::var("SM_AUDIO_TRACE_NATIVE_SHA256")
+                .map_err(|_| "audio trace native is unbound")?;
+            unsafe extern "C" {
+                fn sm_backend_source_hash() -> *const std::ffi::c_char;
+            }
+            let actual_native = std::ffi::CStr::from_ptr(sm_backend_source_hash())
+                .to_str()
+                .map_err(|_| "invalid native audio trace source")?;
+            if actual_native != native {
+                return Err("audio trace native source differs".into());
+            }
+            let rom_sha = std::env::var("SM_AUDIO_TRACE_ROM_SHA256")
+                .map_err(|_| "audio trace ROM is unbound")?;
+            let input_sha = std::env::var("SM_AUDIO_TRACE_INPUT_SHA256")
+                .map_err(|_| "audio trace inputs are unbound")?;
+            let dll_sha = std::env::var("SM_AUDIO_TRACE_DLL_SHA256")
+                .map_err(|_| "audio trace DLL is unbound")?;
+            for hash in [
+                source,
+                native.as_str(),
+                rom_sha.as_str(),
+                input_sha.as_str(),
+                dll_sha.as_str(),
+            ] {
+                if hash.len() != 64 || !hash.bytes().all(|b| b.is_ascii_hexdigit()) {
+                    return Err("audio trace provenance hash is invalid".into());
+                }
+            }
+            let mut writer = std::io::BufWriter::new(
+                std::fs::OpenOptions::new()
+                    .write(true)
+                    .create_new(true)
+                    .open(path)
+                    .map_err(|e| format!("{path}: {e}"))?,
+            );
+            writeln!(writer,
+                "{{\"audio_trace\":1,\"source\":\"{source}\",\"native\":\"{native}\",\"rom\":\"{rom_sha}\",\"inputs\":\"{input_sha}\",\"dll\":\"{dll_sha}\",\"first\":{first},\"ceiling_end\":{end}}}"
+            ).map_err(|e| e.to_string())?;
+            let state = std::rc::Rc::new(std::cell::RefCell::new(AudioTrace {
+                writer,
+                input: None,
+                last_input: None,
+                ordinal: 0,
+                branches: 0,
+                branch: 0,
+                oracle: Vec::new(),
+                compared: 0,
+                cue: None,
+                frames: 0,
+                cues: 0,
+                ports: 0,
+            }));
+            let consume = state.clone();
+            game.audio_output = sm::audio_output::AudioOutputSink::new(move |output| {
+                consume.borrow_mut().output(output)
+            });
+            game.audio_output.new_epoch();
+            Some(AudioTraceFile(state))
+        } else {
+            None
+        };
         let mut discarded_audio = [[0; 2]; 534];
         let mut coverage = ReplayCoverage::new(game, expected);
         // Optional console diagnostics share the normal CLI and DLL replay path.
@@ -1285,6 +1363,11 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             sm::rtl::RtlRunFrame(i32::from(pad), game);
             // Advance the music driver once per frame without playing audio.
             sm::rtl::RtlRenderAudio(&mut discarded_audio, game);
+            if audio_trace.is_some() {
+                if let Some(error) = game.audio_output.failure() {
+                    return Err(format!("input frame {index}: {error}"));
+                }
+            }
             coverage.observe(game, index, trace);
             completed = offset + 1;
             if completed % 10_000 == 0 {
@@ -1357,6 +1440,21 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
         if std::env::var_os("SM_VERIFY_REQUIRE_CREDITS").is_some() && coverage.credits_frames() == 0
         {
             return Err("replay never entered the ending/credits state (39)".into());
+        }
+        if let Some(trace) = audio_trace {
+            use std::io::Write;
+            let mut trace = trace.0.borrow_mut();
+            if trace.frames != completed || trace.input.is_some() || trace.cue.is_some() {
+                return Err("audio trace has missing/unclosed input outputs".into());
+            }
+            let frames = trace.frames;
+            let cues = trace.cues;
+            let ports = trace.ports;
+            writeln!(trace.writer,
+                "{{\"audio_trace_complete\":true,\"first\":{first},\"end\":{},\"frames\":{frames},\"cues\":{cues},\"ports\":{ports}}}", first + completed
+            ).map_err(|e| e.to_string())?;
+            trace.writer.flush().map_err(|e| e.to_string())?;
+            game.audio_output = Default::default();
         }
         if let Some(path) = checkpoint_out {
             let end = first + completed;
@@ -2025,6 +2123,220 @@ fn owned_player_snapshots_restore_selected_allocations_and_failure_prefixes() {
                 (*p).state.reg_write_history = core::ptr::null_mut();
                 (*p).state.dsp = dsp;
             }
+        }
+    }
+}
+
+// Consume actual owned sink outputs. Only one input's oracle operations are
+// retained: mine operations compare and retire them as the immediate adapter runs.
+struct AudioTrace {
+    writer: std::io::BufWriter<std::fs::File>,
+    input: Option<(u64, u64)>,
+    last_input: Option<(u64, u64)>,
+    ordinal: u64,
+    branches: u8,
+    branch: u8,
+    oracle: Vec<(
+        sm::audio_output::PortTarget,
+        u8,
+        u8,
+        sm::audio_output::DeliveryId,
+        sm::audio_output::ExecutionPosition,
+    )>,
+    compared: usize,
+    cue: Option<(
+        sm::audio_output::DeliveryId,
+        sm::audio_output::EmittedCue,
+        usize,
+    )>,
+    frames: usize,
+    cues: usize,
+    ports: usize,
+}
+
+impl AudioTrace {
+    fn output(&mut self, output: sm::audio_output::AudioOutput) -> Result<(), String> {
+        use sm::audio_output::AudioOutput;
+        use std::io::Write;
+        // Record the real first mismatch/incomplete prefix as well as successes.
+        writeln!(self.writer, "AudioOutput {output:?}").map_err(|e| e.to_string())?;
+        match output {
+            AudioOutput::InputBegin { epoch, tick } => {
+                if self
+                    .last_input
+                    .is_some_and(|(previous_epoch, previous_tick)| {
+                        epoch < previous_epoch || (epoch == previous_epoch && tick <= previous_tick)
+                    })
+                {
+                    return Err("audio trace duplicated/regressed input identity".into());
+                }
+                if self.input.replace((epoch, tick)).is_some() || self.cue.is_some() {
+                    return Err("audio trace duplicate/incomplete input begin".into());
+                }
+                self.ordinal = 0;
+                self.branches = 0;
+                self.branch = 0;
+                self.oracle.clear();
+                self.compared = 0;
+            }
+            AudioOutput::ExecutionBegin { position } => {
+                let expected = if self.branches == 0 { 1 } else { 2 };
+                if self.input.is_none()
+                    || self.cue.is_some()
+                    || position.branch != expected
+                    || self.branches == 3
+                    || position.pc.is_none()
+                {
+                    return Err(format!(
+                        "audio trace missing/duplicate execution: {position:?}"
+                    ));
+                }
+                self.branch = position.branch;
+                self.branches |= position.branch;
+            }
+            AudioOutput::CueBegin { id, emission } => {
+                self.identity(id)?;
+                if self.branch != 2 || self.cue.is_some() {
+                    return Err(format!("audio trace duplicate/unpaired Cue {id:?}"));
+                }
+                let emission = emission.ok_or("audio trace untyped compatibility Cue")?;
+                use sm::audio_output::{CueAction, CuePhase};
+                let phase_matches = matches!(
+                    (&emission.cue.action, emission.phase),
+                    (CueAction::InitializeAudio, CuePhase::Initialization)
+                        | (CueAction::MusicBank(_), CuePhase::MusicBank)
+                        | (CueAction::Music(_), CuePhase::MusicTrack)
+                        | (
+                            CueAction::Sound { .. },
+                            CuePhase::GameplaySound | CuePhase::DialogueSound
+                        )
+                );
+                if !phase_matches {
+                    return Err(format!("audio trace Cue phase differs: {emission:?}"));
+                }
+                self.cue = Some((id, emission, 0));
+                self.cues += 1;
+            }
+            AudioOutput::Port {
+                id,
+                cue,
+                position,
+                target,
+                port,
+                value,
+            } => {
+                self.identity(id)?;
+                if position.branch != self.branch || position.pc.is_none() || port > 3 {
+                    return Err(format!("audio trace unbound port provenance {position:?}"));
+                }
+                self.ports += 1;
+                if self.branch == 1 {
+                    if cue.is_some() || self.oracle.len() == 262_144 {
+                        return Err("audio trace oracle Cue/capacity violation".into());
+                    }
+                    self.oracle.push((target, port, value, id, position));
+                } else if self.branch == 2 {
+                    if self
+                        .oracle
+                        .get(self.compared)
+                        .map(|original| (original.0, original.1, original.2))
+                        != Some((target, port, value))
+                    {
+                        return Err(format!(
+                            "audio trace first port mismatch at {id:?}, {position:?}, Cue {cue:?}: oracle {:?}, mine {:?}",
+                            self.oracle.get(self.compared),
+                            (target, port, value)
+                        ));
+                    }
+                    self.compared += 1;
+                    match (&mut self.cue, cue) {
+                        (Some((active, emission, count)), Some(owner)) if *active == owner => {
+                            use sm::audio_output::{CueAction, MusicCue, SoundCue};
+                            let expected = match &emission.cue.action {
+                                CueAction::Music(MusicCue::Original(selector)) => {
+                                    Some((0, selector.0))
+                                }
+                                CueAction::Sound {
+                                    channel,
+                                    sound: SoundCue::Original(selector),
+                                } => Some((1 + channel.index(), selector.0)),
+                                _ => None,
+                            };
+                            if expected.is_some_and(|expected| expected != (port, value)) {
+                                return Err(format!(
+                                    "audio trace Cue mapping differs: {emission:?}"
+                                ));
+                            }
+                            *count += 1;
+                        }
+                        (None, None) => {
+                            // Existing compat bootstrap zero writes are real transport
+                            // requests outside the five semantic Cue invocation sites.
+                        }
+                        _ => return Err("audio trace unpaired Cue/port request".into()),
+                    }
+                } else {
+                    return Err("audio trace port outside a visited execution".into());
+                }
+            }
+            AudioOutput::CueComplete { id } => {
+                let (owner, emission, count) =
+                    self.cue.take().ok_or("audio trace missing Cue begin")?;
+                if owner != id || count == 0 {
+                    return Err(format!("audio trace incomplete Cue {id:?}: {emission:?}"));
+                }
+                if matches!(
+                    emission.cue.action,
+                    sm::audio_output::CueAction::Music(_)
+                        | sm::audio_output::CueAction::Sound { .. }
+                ) && count != 1
+                {
+                    return Err(format!(
+                        "audio trace Cue write multiplicity differs: {id:?}"
+                    ));
+                }
+            }
+            AudioOutput::InputComplete { epoch, tick } => {
+                if self.input.take() != Some((epoch, tick))
+                    || self.branches != 3
+                    || self.cue.is_some()
+                    || self.compared != self.oracle.len()
+                {
+                    return Err(format!(
+                        "audio trace missing/incomplete input: {epoch}/{tick}"
+                    ));
+                }
+                self.last_input = Some((epoch, tick));
+                self.frames += 1;
+                self.oracle.clear();
+                self.writer.flush().map_err(|e| e.to_string())?;
+            }
+        }
+        Ok(())
+    }
+
+    fn identity(&mut self, id: sm::audio_output::DeliveryId) -> Result<(), String> {
+        if self.input != Some((id.epoch, id.input_tick)) || id.ordinal != self.ordinal {
+            return Err(format!(
+                "audio trace duplicate/gapped delivery identity {id:?}"
+            ));
+        }
+        self.ordinal = self
+            .ordinal
+            .checked_add(1)
+            .ok_or("audio trace ordinal overflow")?;
+        Ok(())
+    }
+}
+
+// Flush the observed failure/unwind prefix even while Game still owns the sink's
+// receiver. This is file lifetime management, not a gameplay panic wrapper.
+struct AudioTraceFile(std::rc::Rc<std::cell::RefCell<AudioTrace>>);
+impl Drop for AudioTraceFile {
+    fn drop(&mut self) {
+        use std::io::Write;
+        if let Ok(mut trace) = self.0.try_borrow_mut() {
+            let _ = trace.writer.flush();
         }
     }
 }

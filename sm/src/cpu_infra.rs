@@ -1341,6 +1341,8 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
             game.g_snapshot_theirs.apu_upload_count = 0;
             game.g_snapshot_theirs.apu_startup_upload = false;
             (*game.g_snes).runningWhichVersion = 1;
+            let position = game.audio_execution_position();
+            game.audio_output.enter_execution(position);
             RunOneFrameOfGame_Emulated(game);
             DrawFrameToPpu(game);
             {
@@ -1388,6 +1390,8 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
             session_native_adoption::adopt(game, &session_before)
                 .expect("Session before restore rejected");
             (*game.g_snes).runningWhichVersion = 2;
+            let position = game.audio_execution_position();
+            game.audio_output.enter_execution(position);
             gameplay::advance(Entry::Frame, game);
             DrawFrameToPpu(game);
             let queue_mine = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
@@ -1607,10 +1611,14 @@ pub unsafe fn RtlRunFrameCompare(input: u16, _run_what: i32, native_game: &mut G
         let game = mutation.game();
         game.input1_mut().currentState = input;
         if game.g_runmode as i32 == RM_THEIRS as i32 {
+            let position = game.audio_execution_position();
+            game.audio_output.enter_execution(position);
             RunOneFrameOfGame_Emulated(game);
             DrawFrameToPpu(game);
         } else if game.g_runmode as i32 == RM_MINE as i32 {
             (*game.g_snes).runningWhichVersion = 0xff;
+            let position = game.audio_execution_position();
+            game.audio_output.enter_execution(position);
             gameplay::advance(Entry::Frame, game);
             DrawFrameToPpu(game);
             (*game.g_snes).runningWhichVersion = 0;

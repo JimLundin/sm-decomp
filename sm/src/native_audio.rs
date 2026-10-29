@@ -109,15 +109,15 @@ pub(crate) fn sound_cue(
 }
 
 #[forbid(unsafe_code)]
-fn resolve_cue(cue: CompatibilityCue<'_>) -> OriginalEffect {
+fn resolve_cue(emitted: Option<&sm_data::Cue>, cue: &CompatibilityCue<'_>) -> OriginalEffect {
     use sm_data::{CueAction, MusicBankCue, MusicCue, MusicMeaning, SoundCue};
-    match (cue.cue.map(|cue| cue.action), &cue.meaning) {
+    match (emitted.map(|cue| &cue.action), &cue.meaning) {
         (Some(CueAction::InitializeAudio), _) => OriginalEffect::Initialize,
         (Some(CueAction::MusicBank(MusicBankCue::Original(selector))), _) => {
-            OriginalEffect::Bank(selector)
+            OriginalEffect::Bank(*selector)
         }
         (Some(CueAction::Music(MusicCue::Original(selector))), _) => {
-            OriginalEffect::Track(selector)
+            OriginalEffect::Track(*selector)
         }
         (
             Some(CueAction::Sound {
@@ -125,20 +125,20 @@ fn resolve_cue(cue: CompatibilityCue<'_>) -> OriginalEffect {
                 sound: SoundCue::Original(selector),
             }),
             _,
-        ) => OriginalEffect::Sound(channel.index(), selector),
+        ) => OriginalEffect::Sound(channel.index(), *selector),
         (
             Some(CueAction::MusicBank(MusicBankCue::Authored { bank, after })),
             Meaning::Music(record),
         ) if record.meaning
             == (MusicMeaning::Bank {
-                bank,
+                bank: *bank,
                 after: after.clone(),
             }) =>
         {
             OriginalEffect::Bank(sm_data::OriginalMusicBank(record.request as u8))
         }
         (Some(CueAction::Music(MusicCue::Authored(meaning))), Meaning::Music(record))
-            if record.meaning == meaning =>
+            if record.meaning == *meaning =>
         {
             OriginalEffect::Track(sm_data::OriginalMusicTrack(record.request as u8 & 0x7f))
         }
@@ -148,7 +148,7 @@ fn resolve_cue(cue: CompatibilityCue<'_>) -> OriginalEffect {
                 sound: SoundCue::Authored(meaning),
             }),
             Meaning::Sound(record),
-        ) if record.meaning == meaning => OriginalEffect::Sound(
+        ) if record.meaning == *meaning => OriginalEffect::Sound(
             channel.index(),
             sm_data::OriginalSoundEffect(record.request),
         ),
@@ -167,9 +167,16 @@ fn bank_address(selector: sm_data::OriginalMusicBank, game: &Game) -> u32 {
 
 /// Retains the original live/exclusive APU/SPC and native source-bus contracts.
 /// Cue resolution runs at the original callback phase; no delivery is deferred.
-pub(crate) unsafe fn emit(cue: CompatibilityCue<'_>, game: &mut Game) {
+pub(crate) unsafe fn emit(
+    mut cue: CompatibilityCue<'_>,
+    phase: sm_data::CuePhase,
+    game: &mut Game,
+) {
     unsafe {
-        match resolve_cue(cue) {
+        let request = game
+            .audio_output
+            .accept_cue(cue.cue.take().map(|cue| sm_data::EmittedCue { cue, phase }));
+        match resolve_cue(request.emission.as_ref().map(|value| &value.cue), &cue) {
             OriginalEffect::Initialize => upload_bank(0xcf8000, game),
             OriginalEffect::Bank(selector) => upload_bank(bank_address(selector, game), game),
             OriginalEffect::Track(selector) => {
@@ -181,6 +188,7 @@ pub(crate) unsafe fn emit(cue: CompatibilityCue<'_>, game: &mut Game) {
                 game,
             ),
         }
+        game.audio_output.complete_cue(request);
     }
 }
 

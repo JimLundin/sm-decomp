@@ -37,7 +37,11 @@ pub(crate) unsafe fn resume(game: &mut Game) -> u8 {
             }
         }
         if matches!(resume, 1..=3) {
-            crate::native_audio::emit(crate::native_audio::initialize_cue(), game);
+            crate::native_audio::emit(
+                crate::native_audio::initialize_cue(),
+                sm_data::CuePhase::Initialization,
+                game,
+            );
             WriteReg(INIDISP as u16, 0x8f, game);
             clear_work_ram(0x10000, game);
             crate::rtl::write_register_and_mirror(NMITIMEN as u16, 0, 0x84, false, game);

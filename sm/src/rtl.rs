@@ -288,6 +288,7 @@ unsafe fn read_file_block(f: *mut FILE, data: *mut c_void, n: size_t) -> bool {
 pub unsafe fn RtlReset(mode: i32, game: &mut Game) {
     unsafe {
         reset(mode, game, true);
+        game.audio_output.new_epoch();
     }
 }
 unsafe fn reset(mode: i32, native_game: &mut Game, complete_load: bool) {
@@ -514,6 +515,7 @@ unsafe fn state_recorder_load(
                 .expect("Samus load adoption rejected");
             crate::cpu_infra::session_native_adoption::reconcile_current(native_game)
                 .expect("Session native continuation adoption rejected");
+            native_game.audio_output.new_epoch();
         } else if outer_load {
             mutation.defer_incomplete();
         }
@@ -812,6 +814,12 @@ pub unsafe fn RtlRunFrame(mut inputs: i32, native_game: &mut Game) -> bool {
         if word!(game.bug_fix_counter) as i32 != game.currently_installed_bug_fix_counter as i32 {
             RtlUpdateSnesPatchForBugfix(game);
         }
+        let admitted_input = if is_replay {
+            game.state_recorder.replay_frame_counter
+        } else {
+            game.state_recorder.total_frames
+        };
+        game.audio_output.begin_input(u64::from(admitted_input));
         game.g_rtl_runframe.expect("non-null function pointer")(inputs as u16, 0, game);
         game.snes_frame_counter += 1;
         RtlPushApuState(game);
@@ -820,6 +828,7 @@ pub unsafe fn RtlRunFrame(mut inputs: i32, native_game: &mut Game) -> bool {
             .expect("Samus frame adoption rejected");
         crate::cpu_infra::session_native_adoption::reconcile_current(native_game)
             .expect("Session native result adoption rejected");
+        native_game.audio_output.complete_input();
         is_replay
     }
 }
@@ -1294,7 +1303,7 @@ pub unsafe fn WriteRegWord(reg: u16, value: u16, game: &mut Game) {
 pub unsafe fn RtlApuWrite(adr: u32, val: u8, game: &mut Game) {
     unsafe {
         let (backend, mut host) = game.execution_parts();
-        if apu_write_queued(adr, val, &mut host) {
+        if apu_write_queued(adr, val, &mut host, backend.as_deref()) {
             let mut execution = Execution {
                 backend: backend.expect("APU upload requires an owned backend"),
                 host,
@@ -1305,13 +1314,42 @@ pub unsafe fn RtlApuWrite(adr: u32, val: u8, game: &mut Game) {
 }
 pub(crate) unsafe fn apu_write(game: &mut Execution<'_>, adr: u32, val: u8) {
     unsafe {
-        if apu_write_queued(adr, val, &mut game.host) {
+        if apu_write_queued(adr, val, &mut game.host, Some(&*game.backend)) {
             apu_write_upload(adr, val, game);
         }
     }
 }
+pub(crate) unsafe fn audio_execution_position(
+    backend: Option<&crate::snes::snes::Backend>,
+    native_frame: i32,
+) -> crate::audio_output::ExecutionPosition {
+    unsafe {
+        let (branch, pc) = backend.map_or((0, None), |backend| {
+            let (snes, cpu) = backend.views();
+            // Only dereference the owned CPU when it is the actual selected link.
+            // Foreign/unavailable selection is a provenance gap, not a guessed PC.
+            // SAFETY: both views are the Backend's own live allocations. During an
+            // APU bus write the interpreter holds the CPU only as `*mut Cpu` (no
+            // reference spans the bus callback), so these single-threaded field
+            // reads alias nothing; mid-instruction, `pc` is the post-fetch value.
+            let pc =
+                ((*snes).cpu == cpu).then(|| (u32::from((*cpu).k) << 16) | u32::from((*cpu).pc));
+            ((*snes).runningWhichVersion, pc)
+        });
+        crate::audio_output::ExecutionPosition {
+            branch,
+            pc,
+            native_frame,
+        }
+    }
+}
 // Validate and sample the upload flag before either queue or physical effects.
-unsafe fn apu_write_queued(adr: u32, val: u8, host: &mut HostContext<'_>) -> bool {
+unsafe fn apu_write_queued(
+    adr: u32,
+    val: u8,
+    host: &mut HostContext<'_>,
+    backend: Option<&crate::snes::snes::Backend>,
+) -> bool {
     unsafe {
         crate::native_assertion! {
             '_c2rust_label: adr >= APUI00 as i32 as u32 && adr <= APUI03 as i32 as u32;
@@ -1321,14 +1359,32 @@ unsafe fn apu_write_queued(adr: u32, val: u8, host: &mut HostContext<'_>) -> boo
         if host.ram.read_byte(0x617) != 0 || host.ram.read_byte(0x618) != 0 {
             return true;
         }
-        host.apu_queue.write((adr & 3) as usize, val);
+        let position = audio_execution_position(backend, *host.snes_frame_counter);
+        let request = host.audio_output.accept_port(
+            position,
+            crate::audio_output::PortTarget::Queue,
+            (adr & 3) as u8,
+            val,
+        );
+        host.apu_queue
+            .write(usize::from(request.port), request.value);
+        host.audio_output.complete_port(request);
         false
     }
 }
 unsafe fn apu_write_upload(adr: u32, val: u8, game: &mut Execution<'_>) {
     unsafe {
         game.catch_up_apu();
-        (*game.backend.apu_view()).registers.inPorts[(adr & 3) as usize] = val;
+        let position =
+            audio_execution_position(Some(&*game.backend), *game.host.snes_frame_counter);
+        let request = game.host.audio_output.accept_port(
+            position,
+            crate::audio_output::PortTarget::Physical,
+            (adr & 3) as u8,
+            val,
+        );
+        (*game.backend.apu_view()).registers.inPorts[usize::from(request.port)] = request.value;
+        game.host.audio_output.complete_port(request);
     }
 }
 pub unsafe fn RtlPushApuState(game: &mut Game) {

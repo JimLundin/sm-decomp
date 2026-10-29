@@ -986,6 +986,7 @@ pub static FILES: &[(&str, &[u8])] = &[
     ),
     ("sm/src/apu_queue.rs", include_bytes!("apu_queue.rs")),
     ("sm/src/apu_ram.rs", include_bytes!("apu_ram.rs")),
+    ("sm/src/audio_output.rs", include_bytes!("audio_output.rs")),
     (
         "sm/src/audio_snapshot.rs",
         include_bytes!("audio_snapshot.rs"),

@@ -184,3 +184,19 @@ impl Cue {
         }
     }
 }
+
+/// The actual callback phase; delivery timing is supplied by the accepting sink.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CuePhase {
+    Initialization,
+    MusicBank,
+    MusicTrack,
+    GameplaySound,
+    DialogueSound,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct EmittedCue {
+    pub cue: Cue,
+    pub phase: CuePhase,
+}

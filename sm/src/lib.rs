@@ -636,6 +636,7 @@ pub fn verify_room_level_copy(case: u32) {
     game::room_state::check_level_copy(case)
 }
 
+pub mod audio_output;
 pub(crate) mod native_audio;
 pub use native_audio::SampleDelivery;
 mod native_player_ram;

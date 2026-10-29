@@ -854,6 +854,7 @@ pub(crate) unsafe fn restore_capture_with_sources(
                 }
             }
         }
+        game.audio_output.new_epoch();
         Ok(())
     }
 }

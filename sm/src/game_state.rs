@@ -266,6 +266,7 @@ pub struct Game {
     pub g_rtl_syncall: Option<SyncAllFunc>,
     pub state_recorder: StateRecorder,
     pub apu_queue: crate::apu_queue::ApuQueue,
+    pub audio_output: crate::audio_output::AudioOutputSink,
     pub g_runmode: u8,
     pub g_snes: *mut Snes,
     pub g_cpu: *mut Cpu,
@@ -345,6 +346,7 @@ impl Game {
             pc_hist_ctr,
             snes_frame_counter,
             apu_queue,
+            audio_output,
             g_debug_apu_cycles,
             g_new_ppu,
             decompress_src,
@@ -372,6 +374,7 @@ impl Game {
                 pc_hist_ctr,
                 snes_frame_counter,
                 apu_queue,
+                audio_output,
                 g_debug_apu_cycles,
                 g_new_ppu,
                 decompress_src,
@@ -382,6 +385,13 @@ impl Game {
             },
             state_recorder,
         )
+    }
+
+    pub(crate) fn audio_execution_position(&self) -> crate::audio_output::ExecutionPosition {
+        // The optional Backend owns both views for this synchronous observation.
+        unsafe {
+            crate::rtl::audio_execution_position(self.backend.as_ref(), self.snes_frame_counter)
+        }
     }
 
     pub(crate) fn execution_parts(
@@ -1490,6 +1500,7 @@ impl Game {
             g_rtl_syncall: None,
             state_recorder: StateRecorder::default(),
             apu_queue: Default::default(),
+            audio_output: Default::default(),
             g_runmode: run_mode as u8,
             g_snes: core::ptr::null_mut(),
             g_cpu: core::ptr::null_mut(),

@@ -667,6 +667,16 @@ def run_corpus(root, args):
             regenerated = True
         return checkpoint
 
+    def with_audio_trace(replay, name):
+        # Each row child is a direct --audio-trace replay: it binds its own ROM/input/
+        # native/DLL hashes and runs check_audio_trace on its file before passing.
+        if args.audio_trace_directory is None:
+            return replay
+        directory = args.audio_trace_directory.resolve()
+        directory.mkdir(parents=True, exist_ok=True)
+        output = directory / f"{name}-{uuid.uuid4().hex}.audio-trace"
+        return replay + ["--audio-trace", str(output)]
+
     # Earlier windows can supply checked prefixes to later branches of the same inputs.
     passed = set()
     for segment in sorted(runnable, key=lambda item: (item["start_frame"], str(item["inputs"]))):
@@ -692,7 +702,7 @@ def run_corpus(root, args):
                 replay += ["--seed", str(segment["_seed_path"])]
             if "seed" in segment and not start:
                 print(f"SEGMENT {name}: seed {segment['seed']}, budget {segment['frames']} frames", flush=True)
-                code, _ = corpus_child(replay, root)
+                code, _ = corpus_child(with_audio_trace(replay, name), root)
                 if not input_matches(segment):
                     raise RuntimeError("inputs changed during seeded corpus segment")
                 if code:
@@ -708,7 +718,7 @@ def run_corpus(root, args):
                 output = directory / f"segment-{uuid.uuid4().hex}.smvchk"
                 print(f"SEGMENT {name}: start {start}, budget {segment['frames']} frames", flush=True)
                 code, rejected = corpus_child(
-                    replay + ["--checkpoint-out", str(output)]
+                    with_audio_trace(replay, name) + ["--checkpoint-out", str(output)]
                     + (["--checkpoint-in", str(checkpoint)] if checkpoint else []), root)
                 if code == 0 or not checkpoint or not rejected or attempt:
                     break
@@ -733,6 +743,50 @@ def run_corpus(root, args):
           f"{len(passed.intersection(required))}/{len(required)} required passed", flush=True)
     return 1 if failures else 0
 
+
+
+def audio_file_hash(path):
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def check_audio_trace(path, identity):
+    counts = {"InputBegin": 0, "InputComplete": 0, "CueBegin": 0,
+              "CueComplete": 0, "Port": 0, "ExecutionBegin": 0}
+    footer = None
+    with Path(path).open("r", encoding="utf-8") as stream:
+        first = stream.readline()
+        if not first:
+            raise RuntimeError("missing audio trace header")
+        header = json.loads(first)
+        if header.get("audio_trace") != 1 or any(header.get(k) != v for k, v in identity.items()):
+            raise RuntimeError("audio trace source/native/ROM/input provenance differs")
+        for line in stream:
+            if line.startswith("{"):
+                if footer is not None:
+                    raise RuntimeError("duplicate audio trace completion")
+                footer = json.loads(line)
+                continue
+            if footer is not None or not line.startswith("AudioOutput "):
+                raise RuntimeError("gapped/unrecognized audio output stream")
+            kind = line[len("AudioOutput "):].split(" ", 1)[0]
+            if kind not in counts:
+                raise RuntimeError("unknown actual audio output kind")
+            counts[kind] += 1
+    if not footer or footer.get("audio_trace_complete") is not True:
+        raise RuntimeError("missing/incomplete audio trace output")
+    frames = footer.get("frames")
+    if (not isinstance(frames, int) or frames <= 0 or footer.get("first") != header.get("first")
+            or footer.get("end") != header["first"] + frames
+            or footer["end"] > header["ceiling_end"]
+            or counts["InputBegin"] != frames or counts["InputComplete"] != frames
+            or counts["ExecutionBegin"] != 2 * frames
+            or counts["CueBegin"] != counts["CueComplete"]
+            or counts["CueBegin"] != footer.get("cues") or counts["Port"] != footer.get("ports")):
+        raise RuntimeError("audio trace visited-frame/request counts differ")
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -786,11 +840,23 @@ def main():
                             help="use standalone rustc without SDL2; separate from Cargo artifacts")
     parser.add_argument("--rustc", default=shutil.which("rustc") or str(
         Path.home() / ".cargo" / "bin" / "rustc.exe"))
+    parser.add_argument("--audio-trace", type=Path,
+                        help="stream ordered actual Cue/physical-oracle port outputs to a new file")
+    parser.add_argument("--audio-trace-directory", type=Path,
+                        help="retain one ordered physical-audio trace per selected corpus row")
     args = parser.parse_args()
     if args.room_pack_export is not None:
         if len(args.room_pack_export) != 1:
             parser.error("duplicate --room-pack-export request")
         args.room_pack_export = args.room_pack_export[0]
+    if args.audio_trace is not None and (args.corpus is not None or args.inputs is None
+                                       or args.unit_tests or args.build_only
+                                       or args.room_pack is not None):
+        parser.error("--audio-trace requires a direct paired-oracle replay")
+    if args.audio_trace_directory is not None and args.corpus is None:
+        parser.error("--audio-trace-directory requires --corpus")
+    if args.audio_trace is not None or args.audio_trace_directory is not None:
+        os.environ["SM_VERIFY_PHYSICAL_AUDIO"] = "1"
     producer = args.room_pack_export is not None
     if (args.room_pack_alternate or args.room_pack_changed) and not producer:
         parser.error("--room-pack-alternate/--room-pack-changed require --room-pack-export")
@@ -881,6 +947,8 @@ def main():
         replay_args = ["--unit-tests"] if args.unit_tests else [str(rom), str(inputs)]
     if args.room_pack is not None:
         replay_args.extend(["--room-pack", str(args.room_pack.resolve())])
+    if args.audio_trace is not None:
+        replay_args.extend(["--audio-trace", str(args.audio_trace.resolve())])
     if args.frames is not None:
         replay_args.extend(["--frames", str(args.frames)])
     for probe in args.require_hit:
@@ -910,7 +978,17 @@ def main():
           file=sys.stderr, flush=True)
     if args.build_only:
         return 0
-    if (args.unit_tests or args.room_pack is not None or producer or prepared_checkpoint or prepared_case
+    if args.audio_trace is not None:
+        os.environ["SM_AUDIO_TRACE_NATIVE_SHA256"] = host.sm_verify_backend_source_hash().decode("ascii")
+        os.environ["SM_AUDIO_TRACE_ROM_SHA256"] = audio_file_hash(rom)
+        os.environ["SM_AUDIO_TRACE_INPUT_SHA256"] = audio_file_hash(inputs)
+        audio_identity = {"source": source, "native": os.environ["SM_AUDIO_TRACE_NATIVE_SHA256"],
+                          "rom": os.environ["SM_AUDIO_TRACE_ROM_SHA256"],
+                          "inputs": os.environ["SM_AUDIO_TRACE_INPUT_SHA256"]}
+        audio_dll_hash = audio_file_hash(dll)
+        os.environ["SM_AUDIO_TRACE_DLL_SHA256"] = audio_dll_hash
+        audio_identity["dll"] = audio_dll_hash
+    if (args.audio_trace is not None or args.unit_tests or args.room_pack is not None or producer or prepared_checkpoint or prepared_case
             or args.seed is not None or args.checkpoint_in is not None or args.checkpoint_out is not None
             or args.require_hit or args.expect):
         if not hasattr(host, "sm_verify_args"):
@@ -927,6 +1005,13 @@ def main():
                                 args.frames or 0)
     if source_hash(root) != source:
         raise RuntimeError("source changed during replay; result applies only to the printed source")
+    if args.audio_trace is not None:
+        if audio_file_hash(rom) != audio_identity["rom"] or audio_file_hash(inputs) != audio_identity["inputs"]:
+            raise RuntimeError("audio trace ROM/input file changed during replay")
+        if audio_file_hash(dll) != audio_dll_hash:
+            raise RuntimeError("audio trace DLL changed during replay")
+        if result == 0:
+            check_audio_trace(args.audio_trace, audio_identity)
     print(f"Verifier total: {time.perf_counter() - started:.2f}s", file=sys.stderr)
     return result
 

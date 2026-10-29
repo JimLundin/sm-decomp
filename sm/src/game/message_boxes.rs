@@ -257,6 +257,7 @@ unsafe fn advance_audio(game: &mut Game) {
                     sm_data::OriginalSoundEffect(value),
                     meaning,
                 ),
+                sm_data::CuePhase::DialogueSound,
                 game,
             )
         });

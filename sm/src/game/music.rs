@@ -33,11 +33,13 @@ pub unsafe fn HandleMusicQueue(game: &mut Game) {
                         sm_data::OriginalMusicBank(checked_word!(game.music_entry) as u8);
                     crate::native_audio::emit(
                         crate::native_audio::music_bank_cue(selector, meaning),
+                        sm_data::CuePhase::MusicBank,
                         game,
                     );
                 }
                 requests::MusicEffect::WriteTrack(track) => crate::native_audio::emit(
                     crate::native_audio::music_cue(sm_data::OriginalMusicTrack(track), meaning),
+                    sm_data::CuePhase::MusicTrack,
                     game,
                 ),
             }
