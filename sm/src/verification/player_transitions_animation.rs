@@ -1,5 +1,6 @@
 //! Authored corrected-predecessor animation fixtures; no independent CPU claim.
 //! Source-only lane. Root supplies the shared export and initialized host.
+use crate::native_rom::NativeRomPointer;
 use crate::{game_state::Game, player_transitions_rust_observer as observer};
 use std::cell::Cell;
 thread_local! {

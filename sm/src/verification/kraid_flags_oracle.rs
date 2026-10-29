@@ -1,5 +1,6 @@
 //! Original CPU Kraid read and complete palette/music/native-store caller.
 use super::Game;
+use crate::native_rom::NativeRomPointer;
 use crate::{kraid_flags_case as case, snes::cpu::cpu_getFlags};
 use std::collections::BTreeSet;
 fn offset(address: u32) -> usize {
