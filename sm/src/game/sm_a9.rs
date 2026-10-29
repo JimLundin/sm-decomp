@@ -8,10 +8,10 @@ use crate::game::display_refresh::{native_word, set_native_word};
 use crate::game::enemy_script::EnemyScript;
 use crate::game::menu_tilemap::native_record;
 use crate::game::music::QueueMusic_Delayed8;
-use crate::game::palette_copies::{WriteColorsToPalette, WriteColorsToTargetPalette};
+use crate::game::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
 use crate::game::player_update::minimap;
 pub use crate::game::prelude::*;
-use crate::game::rom_vram_entries::ProcessSpriteTilesTransfers;
+use crate::game::rom_vram_entries::queue_mother_brain_sprite_tiles;
 use crate::game::session_runtime::Runtime;
 use crate::rom::RomRecord;
 
@@ -41,7 +41,7 @@ use crate::game::room_state::load_fx_entry as LoadFxEntry;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::session_runtime::player_mother_brain;
 
-use crate::game::escape_typewriter::{HandleTypewriterText_Ext, SetupZebesEscapeTypewriter};
+use crate::game::escape_typewriter::{start_zebes_escape_typewriter, type_escape_text};
 use crate::game::sm_a6::{HomingReversal, Ridley_Func_98, homing_velocity};
 
 use crate::ram_map::slot;
@@ -470,14 +470,14 @@ crate::game::callback_dispatch! {
     [11111697] MotherBrainBody_FakeDeath_Ascent_6_SetupPhase2Gfx [] {
         { let value: u16 = 257; let at: usize = 0x91b; let bytes = value.to_ne_bytes(); game.ram().write_byte(at, bytes[0]); game.ram().write_byte(at + 1, bytes[1]); };
         { let at: usize = 0x59; let bytes: [u8; 2] = ((u16::from_le_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])) & (0xfffcu16)).to_le_bytes(); game.ram().write_byte(at, bytes[0]); game.ram().write_byte(at + 1, bytes[1]); }
-        WriteColorsToPalette(
+        copy_rom_colors_to_palette(
             0x142,
             0xa9,
             (addr_kMotherBrainPalette_1 as i32 + 2) as u16,
             0xf,
             game,
         );
-        WriteColorsToPalette(
+        copy_rom_colors_to_palette(
             0x162,
             0xa9,
             (addr_kMotherBrainPalette_0 as i32 + 2) as u16,
@@ -501,7 +501,7 @@ crate::game::callback_dispatch! {
         MotherBrainBody_FakeDeath_Ascent_8_Pause(game);
     };
     [11111860] MotherBrainBody_FakeDeath_Ascent_10_LoadLegTiles [] {
-        if ProcessSpriteTilesTransfers(0xa9, addr_stru_A98F8F as u16, game) != 0 {
+        if queue_mother_brain_sprite_tiles(0xa9, addr_stru_A98F8F as u16, game) != 0 {
             slot!(game, Enemy_MotherBrainBody[0i32].var_A = (0xa98dc3i32) as u16);
             MotherBrainBody_FakeDeath_Ascent_11_ContinuePause(game);
         }
@@ -561,7 +561,7 @@ crate::game::callback_dispatch! {
         MotherBrain_Phase3_Death_8(game);
     };
     [11120990] MotherBrain_Phase3_Death_9 [] {
-        if ProcessSpriteTilesTransfers(0xa9, addr_stru_A99003 as u16, game) != 0 {
+        if queue_mother_brain_sprite_tiles(0xa9, addr_stru_A99003 as u16, game) != 0 {
             let E: i32 = 0;
             slot!(game, Enemy_MotherBrain[E].var_A = (0xa9b173i32) as u16);
             slot!(game, Enemy_MotherBrain[E].var_F = 32);
@@ -584,14 +584,14 @@ crate::game::callback_dispatch! {
         };
     };
     [11121240] MotherBrain_Phase3_Death_15_LoadEscapeTimerTiles [] {
-        if ProcessSpriteTilesTransfers(0xa6, addr_stru_A6C4CB as u16, game) != 0 {
+        if queue_mother_brain_sprite_tiles(0xa6, addr_stru_A6C4CB as u16, game) != 0 {
             slot!(game, Enemy_MotherBrain[0i32].var_A = (0xa9b26di32) as u16);
             MotherBrain_Phase3_Death_16_StartEscape(game);
         }
     };
     [11121261] MotherBrain_Phase3_Death_16_StartEscape [] {
-        if ProcessSpriteTilesTransfers(0xa9, addr_stru_A9902F as u16, game) != 0 {
-            WriteColorsToPalette(
+        if queue_mother_brain_sprite_tiles(0xa9, addr_stru_A9902F as u16, game) != 0 {
+            copy_rom_colors_to_palette(
                 0x122,
                 0xa9,
                 (addr_kMotherBrainPalette_5 as i32 + 2) as u16,
@@ -605,7 +605,7 @@ crate::game::callback_dispatch! {
             palette_effects::spawn(addr_kPalfx_FFD1 as u16, game);
             palette_effects::spawn(addr_kPalfx_FFD5 as u16, game);
             slot!(game, Enemy_MotherBrain[0x40i32].var_02 = 0);
-            SetupZebesEscapeTypewriter(game);
+            start_zebes_escape_typewriter(game);
             let E: i32 = 0;
             slot!(game, Enemy_MotherBrain[E].var_F = 32);
             let mut v1: u16 = (0xa9b2d1i32) as u16;
@@ -616,7 +616,7 @@ crate::game::callback_dispatch! {
         }
     };
     [11121379] MotherBrain_Phase3_Death_18_TypesZebesText [] {
-        if HandleTypewriterText_Ext(0x2610, game) & 1 != 0 {
+        if type_escape_text(0x2610, game) & 1 != 0 {
             let E: i32 = 0;
             slot!(game, Enemy_MotherBrain[E].var_A = (0xa9b2f9i32) as u16);
             slot!(game, Enemy_MotherBrain[E].var_F = 32);
@@ -854,7 +854,7 @@ crate::game::callback_dispatch! {
         }
     };
     [11124178] MotherBrain_Phase2Cut_4 [] {
-        if ProcessSpriteTilesTransfers(0xa9, addr_stru_A98FE5 as u16, game) != 0 {
+        if queue_mother_brain_sprite_tiles(0xa9, addr_stru_A98FE5 as u16, game) != 0 {
             MotherBrain_RetractHead(game);
             MotherBrain_SpawnShitroidInCutscene(game);
             let E: i32 = 0;
@@ -1428,7 +1428,7 @@ crate::game::callback_dispatch! {
                     if slot!(game, Enemy_MotherBrain[E].var_0D) != 512 {
                         v5 = 482;
                     }
-                    WriteColorsToPalette(v5, 0xa9, (r18 as i32 + 8 * v4 as i32) as u16, 3, game);
+                    copy_rom_colors_to_palette(v5, 0xa9, (r18 as i32 + 8 * v4 as i32) as u16, 3, game);
                 }
             }
         }
@@ -2509,21 +2509,21 @@ pub unsafe fn MotherBrain_BodyRainbowBeamPalAnimIndex0(game: &mut Game) {
 }
 pub unsafe fn MotherBrain_WriteDefaultPalette(game: &mut Game) {
     {
-        WriteColorsToPalette(
+        copy_rom_colors_to_palette(
             0x82,
             0xa9,
             (addr_kMotherBrainsBrain_Palette as i32 + 2) as u16,
             0xf,
             game,
         );
-        WriteColorsToPalette(
+        copy_rom_colors_to_palette(
             0x122,
             0xa9,
             (addr_kMotherBrainsBrain_Palette as i32 + 2) as u16,
             0xf,
             game,
         );
-        WriteColorsToPalette(
+        copy_rom_colors_to_palette(
             0x162,
             0xa9,
             (addr_kMotherBrainPalette_0 as i32 + 2) as u16,
@@ -3286,7 +3286,7 @@ crate::game::callback_dispatch! {
         let E: i32 = k as i32;
         slot!(game, Enemy_ShitroidInCutscene[E].var_F = slot!(game, Enemy_ShitroidInCutscene[E].var_F).wrapping_sub(1));
         let v2: bool = (slot!(game, Enemy_ShitroidInCutscene[E].var_F) & 0x8000) != 0;
-        if v2 && ProcessSpriteTilesTransfers(0xa9, addr_stru_A98FC7 as u16, game) != 0 {
+        if v2 && queue_mother_brain_sprite_tiles(0xa9, addr_stru_A98FC7 as u16, game) != 0 {
             slot!(game, Enemy_ShitroidInCutscene[E].var_A = (0xa9ccdei32) as u16);
             slot!(game, Enemy_ShitroidInCutscene[E].var_F = 176);
             ShitroidInCutscene_LetSamusRainbowMore(k, game);
@@ -3410,9 +3410,9 @@ crate::game::callback_dispatch! {
                 }
                 let v5: u16 = v3;
                 let v4: u16 = crate::rtl::rom_table_word!(game, 0xade7e2, (v3 >> 1) as isize);
-                WriteColorsToPalette(0x1e2, 0xad, v4, 4, game);
-                WriteColorsToPalette(0x1f4, 0xad, (v4).wrapping_add(8), 5, game);
-                WriteColorsToPalette(
+                copy_rom_colors_to_palette(0x1e2, 0xad, v4, 4, game);
+                copy_rom_colors_to_palette(0x1f4, 0xad, (v4).wrapping_add(8), 5, game);
+                copy_rom_colors_to_palette(
                     0x1ea,
                     0xad,
                     crate::rtl::rom_table_word!(game, 0xade882, (v5 >> 1) as isize),
@@ -3573,7 +3573,7 @@ pub unsafe fn ShitroidInCutscene_FadeShitroidToBlack(k: u16, game: &mut Game) ->
             return 1;
         }
         slot!(game, Enemy_ShitroidInCutscene[E].var_0D = v4);
-        WriteColorsToPalette(
+        copy_rom_colors_to_palette(
             0x1e2,
             0xad,
             crate::rtl::rom_table_word!(game, 0xade8e2, v4 as isize),
@@ -3669,9 +3669,9 @@ pub unsafe fn MotherBrain_Pal_HandleRoomPal(game: &mut Game) {
 }
 pub unsafe fn MotherBrain_Pal_WriteRoomPal(j: u16, game: &mut Game) {
     {
-        WriteColorsToPalette(0x68, 0xa9, j, 12, game);
-        WriteColorsToPalette(0xa6, 0xa9, (j).wrapping_add(24), 12, game);
-        WriteColorsToPalette(0xe6, 0xa9, (j).wrapping_add(24), 12, game);
+        copy_rom_colors_to_palette(0x68, 0xa9, j, 12, game);
+        copy_rom_colors_to_palette(0xa6, 0xa9, (j).wrapping_add(24), 12, game);
+        copy_rom_colors_to_palette(0xe6, 0xa9, (j).wrapping_add(24), 12, game);
     }
 }
 pub unsafe fn HandleMotherBrainInstructionList(a: u16, game: &mut Game) -> u16 {
@@ -4086,7 +4086,7 @@ crate::game::callback_dispatch! {
         slot!(game, Enemy_DeadMonsters[E].var_07 = v2);
         if v2 >= 8 {
             slot!(game, Enemy_DeadMonsters[E].var_07 = 0);
-            WriteColorsToPalette(
+            copy_rom_colors_to_palette(
                 0x122,
                 0xa9,
                 (32 * (slot!(game, Enemy_DeadMonsters[E].var_08) as i32 - 1i32) - 0x1434i32) as u16,
@@ -5040,7 +5040,7 @@ pub unsafe fn Shitroid_HandleCutscenePalette_Common(r22: u16, r18: u16, game: &m
             slot!(byte game, Enemy_Shitroid[E].var_D[0] = v3);
             let v4: u16 =
                 Shitroid_HandleCrySoundEffect(word!(game.cur_enemy_index), v3 as u16, game);
-            WriteColorsToPalette(r18, 0xa9, (r22 as i32 + 8 * v4 as i32) as u16, 4, game);
+            copy_rom_colors_to_palette(r18, 0xa9, (r22 as i32 + 8 * v4 as i32) as u16, 4, game);
         };
     }
 }
@@ -5083,14 +5083,14 @@ crate::game::callback_dispatch! {
                 | kEnemyProps_Tangible as i32
                 | kEnemyProps_Invisible as i32)) as u16);
         slot!(game, Enemy_MotherBrain[E].base.palette_index = 0);
-        WriteColorsToTargetPalette(
+        copy_rom_colors_to_target_palette(
             0xa9,
             0x162,
             (addr_kMotherBrainPalette_4 as i32 + 2) as u16,
             0xf,
             game,
         );
-        WriteColorsToTargetPalette(
+        copy_rom_colors_to_target_palette(
             0xa9,
             0x1e2,
             (addr_kMotherBrainPalette_3 as i32 + 2) as u16,
@@ -5183,7 +5183,7 @@ crate::game::callback_dispatch! {
         slot!(game, Enemy_ShitroidInCutscene[E].var_A = (0xa9c7cci32) as u16);
         slot!(game, Enemy_ShitroidInCutscene[E].var_F = 248);
         slot!(game, Enemy_ShitroidInCutscene[E].var_0F = (0xa9f683i32) as u16);
-        WriteColorsToPalette(
+        copy_rom_colors_to_palette(
             0x1e2,
             0xa9,
             (addr_kMotherBrainPalette_2 as i32 + 2) as u16,
@@ -5360,15 +5360,15 @@ crate::game::callback_dispatch! {
         slot! { game, Enemy_Shitroid[E]; var_B = 0, var_C = 0 }
         slot!(game, Enemy_Shitroid[E].var_E = 10);
         slot!(game, Enemy_Shitroid[E].parameter_2 = 0);
-        WriteColorsToTargetPalette(0xa9, 0x120, addr_word_A9F8C6 as u16, 0x10, game);
-        WriteColorsToTargetPalette(
+        copy_rom_colors_to_target_palette(0xa9, 0x120, addr_word_A9F8C6 as u16, 0x10, game);
+        copy_rom_colors_to_target_palette(
             0xa9,
             0x140,
             addr_kShitroidInCutscene_Palette as u16,
             0x10,
             game,
         );
-        WriteColorsToTargetPalette(
+        copy_rom_colors_to_target_palette(
             0xa9,
             0x1e0,
             addr_kDeadSidehopper_Palette_0 as u16,

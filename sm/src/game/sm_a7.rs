@@ -634,7 +634,7 @@ pub fn Kraid_Instr_1(_k: u16, jp: EnemyScript) -> EnemyScript {
 }
 pub unsafe fn KraidLintCommon_Main(k: u16, game: &mut Game) {
     unsafe {
-        actors::kraid_lint::Kraid_EnemyTouch_Lint(k, game);
+        actors::kraid_lint::lint_touch_samus(k, game);
         let v1 = (k as i32) as i32;
         CallKraidFunc(
             ((slot!(game, EnemyData[v1].ai_var_A)) as u32) | (0xa70000u32),

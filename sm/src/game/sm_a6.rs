@@ -19,20 +19,20 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a6::*;
 pub use crate::game::constants::bank_a9::*;
 
-use crate::game::actors::ridley_tables::{Ridley_Func_29, Ridley_Func_93};
+use crate::game::actors::ridley_tables::{copy_words_to_ram_fan, pick_random_speed_row};
 use crate::game::enemy_projectiles::{
     Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
 };
-use crate::game::escape_typewriter::HandleTypewriterText_Ext;
+use crate::game::escape_typewriter::type_escape_text;
 use crate::game::gameplay_flag_runtime::{
     CheckEventHappened, ClearEventHappened, SetBossBitForCurArea, SetEventHappened,
 };
 use crate::game::mode7_transfers::enqueue_rom;
 use crate::game::music::{QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max6};
-use crate::game::palette_copies::{WriteColorsToPalette, WriteColorsToTargetPalette};
+use crate::game::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::rom_vram_entries::{
-    ProcessEscapeTimerTileTransfers, Ridley_Func_59, Ridley_Func_62,
+    queue_escape_tile_table, queue_escape_timer_tiles, queue_getaway_tiles,
 };
 use crate::game::session_runtime::damage_player;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
@@ -436,7 +436,7 @@ pub unsafe fn CeresRidley_Func_8(a: u16, game: &mut Game) -> u8 {
         if v1 == 0 {
             return 1;
         }
-        WriteColorsToPalette(0xe2, 0xa6, v1, 0xe, game);
+        copy_rom_colors_to_palette(0xe2, 0xa6, v1, 0xe, game);
         0
     }
 }
@@ -524,7 +524,7 @@ pub unsafe fn CeresRidley_Func_34(game: &mut Game) {
 }
 pub unsafe fn CeresRidley_Func_35(mut a: u16, game: &mut Game) {
     unsafe {
-        WriteColorsToPalette(
+        copy_rom_colors_to_palette(
             0xa2,
             0xa6,
             (32 * byte!(a; 1) as i32 - 0x4ef9i32) as u16,
@@ -912,8 +912,8 @@ crate::game::callback_dispatch! {
                 QueueSfx2_Max6(0x76, game);
                 word! {game; earthquake_type = 13; earthquake_timer = 4; }
                 Ridley_Func_28(game);
-                Ridley_Func_29(game);
-                Ridley_Func_93(0x2026, addr_word_A6D37C as u16, game);
+                pick_random_speed_row(game);
+                copy_words_to_ram_fan(0x2026, addr_word_A6D37C as u16, game);
                 word! { game, 3072;
                     tilemap_stuff[20], tilemap_stuff[30], tilemap_stuff[40], tilemap_stuff[50],
                     tilemap_stuff[60], tilemap_stuff[70], tilemap_stuff[80],
@@ -1059,7 +1059,7 @@ crate::game::callback_dispatch! {
                 slot!(game, Enemy_CeresRidley[E].base.layer = 5);
                 slot!(game, Enemy_CeresRidley[E]; var_01 = 0, var_02 = 1, var_20 = 64, var_21 = 416,
                     var_22 = 64, var_23 = 224, var_10 = 2, var_1C = 120, );
-                WriteColorsToTargetPalette(0xa6, 0x140, addr_word_A6E1CF as u16, 0x20, game);
+                copy_rom_colors_to_target_palette(0xa6, 0x140, addr_word_A6E1CF as u16, 0x20, game);
                 word_transfers!(game, ascending, 15;
                     le(target_palettes, 113) <- value(0),
                     le(target_palettes, 241) <- value(0),
@@ -1080,7 +1080,7 @@ crate::game::callback_dispatch! {
                 slot!(game, Enemy_CeresRidley[E].var_21 = 176);
                 slot!(game, Enemy_CeresRidley[E].var_22 = 40);
                 slot!(game, Enemy_CeresRidley[E].var_23 = 224);
-                WriteColorsToTargetPalette(0xa6, 0x140, addr_word_A6E16F as u16, 0x20, game);
+                copy_rom_colors_to_target_palette(0xa6, 0x140, addr_word_A6E16F as u16, 0x20, game);
                 word_transfers!(game, ascending, 15; le(target_palettes, 241) <- value(0));
                 slot!(game, Enemy_CeresRidley[E].var_03 = addr_kBabyMetroid_Ilist_BF31 as u16);
                 slot!(game, Enemy_CeresRidley[E].var_04 = 1);
@@ -1526,7 +1526,7 @@ crate::game::callback_dispatch! {
         slot!(game, Enemy_Ridley[E].var_F = slot!(game, Enemy_Ridley[E].var_F).wrapping_sub(1));
         if (slot!(game, Enemy_Ridley[E].var_F) & 0x8000) != 0 {
             Ridley_Func_71(game);
-            Ridley_Func_29(game);
+            pick_random_speed_row(game);
             slot!(game, Enemy_Ridley[E].var_A = (0xa6b70ei32) as u16);
             slot!(game, Enemy_Ridley[E].var_F = ((word!(game.random_number) as i32 & 0x3f) + 128) as u16);
         }
@@ -1822,7 +1822,7 @@ crate::game::callback_dispatch! {
         if fresh15 == 1 {
             slot!(game, Enemy_Ridley[E].var_F = slot!(game, Enemy_Ridley[E].var_F).wrapping_add(1));
             slot!(game, Enemy_Ridley[E].var_F = slot!(game, Enemy_Ridley[E].var_F).wrapping_add(1));
-            Ridley_Func_62(game);
+            queue_escape_tile_table(game);
         }
         Ridley_C104(game);
     };
@@ -2092,9 +2092,9 @@ crate::game::callback_dispatch! {
         slot!(game, Enemy_CeresRidley[E]; var_B = 0, var_C = 0);
         word!(game.tilemap_stuff[0] = 0);
         slot!(game, Enemy_CeresRidley[E].var_A = (0xa6aa11i32) as u16);
-        WriteColorsToPalette(0xa2, 0xa6, addr_word_A6A9E3 as u16, 0xf, game);
-        WriteColorsToPalette(0x42, 0xa6, addr_word_A6AA01 as u16, 8, game);
-        WriteColorsToPalette(0x1e2, 0xa6, addr_word_A6AA01 as u16, 8, game);
+        copy_rom_colors_to_palette(0xa2, 0xa6, addr_word_A6A9E3 as u16, 0xf, game);
+        copy_rom_colors_to_palette(0x42, 0xa6, addr_word_A6AA01 as u16, 8, game);
+        copy_rom_colors_to_palette(0x1e2, 0xa6, addr_word_A6AA01 as u16, 8, game);
     };
     @countdown [pub unsafe fn (game: &mut Game)];
     before {
@@ -2240,7 +2240,7 @@ pub unsafe fn Ridley_Func_55(game: &mut Game) {
 }
 pub unsafe fn Ridley_C08E(game: &mut Game) {
     unsafe {
-        if ProcessEscapeTimerTileTransfers(game) & 1 != 0 {
+        if queue_escape_timer_tiles(game) & 1 != 0 {
             let E: i32 = 0;
             slot!(game, Enemy_Ridley[E].var_E = -15106i32 as u16);
             slot!(
@@ -2257,7 +2257,7 @@ pub unsafe fn Ridley_C08E(game: &mut Game) {
 }
 pub unsafe fn Ridley_C09F(game: &mut Game) {
     {
-        if ProcessEscapeTimerTileTransfers(game) & 1 != 0 {
+        if queue_escape_timer_tiles(game) & 1 != 0 {
             let E: i32 = 0;
             slot!(
                 game,
@@ -2267,7 +2267,7 @@ pub unsafe fn Ridley_C09F(game: &mut Game) {
                 game,
                 Enemy_Ridley[E].var_F = slot!(game, Enemy_Ridley[E].var_F).wrapping_add(1)
             );
-            Ridley_Func_59(game);
+            queue_getaway_tiles(game);
             slot!(game, Enemy_Ridley[E].var_E = 128);
             QueueMusic_Delayed8(7, game);
         }
@@ -2310,7 +2310,7 @@ pub unsafe fn Ridley_Func_56(game: &mut Game) {
 pub unsafe fn Ridley_C104(game: &mut Game) {
     unsafe {
         Ridley_Func_61(game);
-        if HandleTypewriterText_Ext(0x3582, game) & 1 != 0 {
+        if type_escape_text(0x3582, game) & 1 != 0 {
             let E: i32 = 0;
             slot!(
                 game,
@@ -2920,11 +2920,11 @@ pub unsafe fn Ridley_Func_92(game: &mut Game) {
             tilemap_stuff[17], tilemap_stuff[27], tilemap_stuff[37], tilemap_stuff[47],
             tilemap_stuff[57], tilemap_stuff[67], tilemap_stuff[77],
         }
-        Ridley_Func_93(0x2024, addr_word_A6D36E as u16, game);
-        Ridley_Func_93(0x2026, addr_word_A6D37C as u16, game);
-        Ridley_Func_93(0x202a, addr_word_A6D38A as u16, game);
-        Ridley_Func_93(0x202c, addr_word_A6D398 as u16, game);
-        Ridley_Func_93(0x202e, addr_word_A6D3A6 as u16, game);
+        copy_words_to_ram_fan(0x2024, addr_word_A6D36E as u16, game);
+        copy_words_to_ram_fan(0x2026, addr_word_A6D37C as u16, game);
+        copy_words_to_ram_fan(0x202a, addr_word_A6D38A as u16, game);
+        copy_words_to_ram_fan(0x202c, addr_word_A6D398 as u16, game);
+        copy_words_to_ram_fan(0x202e, addr_word_A6D3A6 as u16, game);
         word! { game, 0;
             tilemap_stuff[16], tilemap_stuff[26], tilemap_stuff[36], tilemap_stuff[46],
             tilemap_stuff[56], tilemap_stuff[66], tilemap_stuff[76],
@@ -2943,7 +2943,7 @@ pub fn Ridley_Func_D3DC(a: u16, game: &mut Game) {
 }
 pub unsafe fn Ridley_Func_96(game: &mut Game) {
     {
-        Ridley_Func_93(0x2026, addr_word_A6D37C as u16, game);
+        copy_words_to_ram_fan(0x2026, addr_word_A6D37C as u16, game);
         let mut v1: u16 = 0;
         for _ in 0i16..7i16 {
             let v2: i32 = v1 as i32 >> 1;
@@ -3002,7 +3002,7 @@ pub unsafe fn Ridley_Func_100(game: &mut Game) {
 pub unsafe fn Ridley_D495(r18: u16, game: &mut Game) {
     {
         if word!(game.palette_change_num) == 0 {
-            WriteColorsToPalette(0x1e2, 0xa6, (28 * r18 as i32 - 7062i32) as u16, 0xe, game);
+            copy_rom_colors_to_palette(0x1e2, 0xa6, (28 * r18 as i32 - 7062i32) as u16, 0xe, game);
         }
     }
 }
@@ -3407,7 +3407,7 @@ crate::game::callback_dispatch! {
     };
     [10928097] BabyMetroid_Instr_3 [(k).wrapping_add(2)] {
         let v1: u16 = *(RomPtr_A6(k, game) as *mut u16);
-        WriteColorsToPalette(0x162, 0xa6, v1, 0xf, game);
+        copy_rom_colors_to_palette(0x162, 0xa6, v1, 0xf, game);
     };
     [10928114] BabyMetroid_Instr_1 [] {
         if slot!(game, Enemy_Ridley[0].var_46) != 0 {
@@ -3694,7 +3694,7 @@ crate::game::callback_dispatch! {
     [10942544] CeresDoor_Func_7 [] {
         CeresDoor_Func_8(game);
         if word!(game.palette_change_num) == 0 {
-            WriteColorsToPalette(
+            copy_rom_colors_to_palette(
                 0x52,
                 0xa6,
                 (2 * (word!(game.nmi_frame_counter_word) as i32 & 0x38) - 0x78fi32) as u16,
@@ -3922,7 +3922,7 @@ pub unsafe fn Zebetites_Func_4(game: &mut Game) {
             let E: i32 = 0;
             let v1: u16 = (slot!(game, Enemy_Zebetites[E].var_C) as i32 + 1 & 7) as u16;
             slot!(game, Enemy_Zebetites[E].var_C = v1);
-            WriteColorsToPalette(0x158, 0xa6, (4 * v1 as i32 - 0x279i32) as u16, 2, game);
+            copy_rom_colors_to_palette(0x158, 0xa6, (4 * v1 as i32 - 0x279i32) as u16, 2, game);
         }
     }
 }
@@ -4205,7 +4205,7 @@ crate::game::callback_dispatch! {
             (addr_word_A6F50C as i32 + 2) as u16
         } else {
             if slot!(game, Enemy_CeresDoor[E].parameter_1) == 3 {
-                WriteColorsToTargetPalette(
+                copy_rom_colors_to_target_palette(
                     0xa6,
                     0x142,
                     (addr_kCeresDoor_Palette as i32 + 2) as u16,
@@ -4217,7 +4217,7 @@ crate::game::callback_dispatch! {
             (addr_kCeresDoor_Palette as i32 + 2) as u16
         };
         slot!(game, Enemy_CeresDoor[word!(game.cur_enemy_index) as i32].base.palette_index = 3584);
-        WriteColorsToTargetPalette(0xa6, 0x1e2, v3, 0xf, game);
+        copy_rom_colors_to_target_palette(0xa6, 0x1e2, v3, 0xf, game);
     };
     [10942309] CeresDoor_Main [] {
         let E: i32 = word!(game.cur_enemy_index) as i32;
