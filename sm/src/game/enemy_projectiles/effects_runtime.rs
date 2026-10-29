@@ -24,11 +24,7 @@ impl Effects for Runtime<'_> {
     fn queue_music(&mut self, track: u16) -> () {
         self.foreign(|game| crate::game::music::QueueMusic_Delayed8(track, game))
     }
-    fn convert_angle_to_xy(
-        &mut self,
-        angle: u16,
-        amplitude: u16,
-    ) -> crate::game::session::Vector32 {
+    fn convert_angle_to_xy(&mut self, angle: u16, amplitude: u16) -> sm_game::geometry::Vector32 {
         self.foreign(|game| {
             crate::game::session_runtime::actor_direction_vector(angle, amplitude, game)
         })

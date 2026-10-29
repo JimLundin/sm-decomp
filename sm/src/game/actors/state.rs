@@ -1,6 +1,6 @@
 //! Common actor state; one codec defines its byte-compatible projection.
 #![forbid(unsafe_code)]
-use crate::game::session::{Point, Position};
+use sm_game::geometry::{Point, Position};
 
 #[derive(Debug, Default, PartialEq)]
 pub(crate) struct Actor {

@@ -4,11 +4,11 @@ use super::access::enemy;
 use super::host::*;
 use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
 use crate::game::{
-    session::Point,
     sprite_effect_controllers,
     sprite_effect_state::{LegacySpriteDefinition, LegacySpriteHandle, SpriteSpawn},
     sprite_objects,
 };
+use sm_game::geometry::Point;
 
 use BotwoonField as B;
 use WaffleField as W;

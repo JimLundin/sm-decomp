@@ -4,7 +4,6 @@ use crate::game::enemy_projectiles::SpawnEprojWithGfx;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::sprite_drawing::Clip;
 use crate::game::{
-    session::Point,
     session_runtime::Runtime,
     sprite_effect_controllers as controllers,
     sprite_effect_host::{self, SpriteMember},
@@ -17,6 +16,7 @@ use crate::game::{
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::types::Point16U;
+use sm_game::geometry::Point;
 
 fn address(member: SpriteMember, index: LegacySpriteWordIndex) -> usize {
     let base = match member {

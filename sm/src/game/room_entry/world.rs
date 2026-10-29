@@ -836,7 +836,7 @@ pub use crate::game::actors::media::{
     AppearanceId, FrameDefinition, FrameId, MaterialId, MediaRevision, VisualPieceDefinition,
     VisualResourceId,
 };
-pub use crate::game::session::Point;
+pub use sm_game::geometry::Point;
 impl WorldBinding {
     /// Validates all authored references before a Game can be opened. Later template
     /// parts remain compatible live records; this constructor authors part zero only.
