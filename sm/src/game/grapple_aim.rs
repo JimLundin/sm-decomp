@@ -6,7 +6,8 @@ use crate::rom::{RomImage, lorom_offset};
 pub(crate) use sm_data::grapple_aim::ConnectionSet;
 use sm_data::grapple_aim::{
     CONNECTION_ADDRESS, CONNECTION_BYTES, Connection, Connections, EXTENSION_ADDRESS,
-    EXTENSION_BYTES, Extension, Extensions,
+    EXTENSION_BYTES, Extension, Extensions, POINT_ANIMATION_ADDRESS, POINT_ANIMATION_BYTES,
+    PointAnimation,
 };
 
 /// Imported from the loaded image by `register_rom`.
@@ -14,6 +15,7 @@ use sm_data::grapple_aim::{
 pub(crate) struct ImportedAim {
     extensions: Option<Imported<Extensions>>,
     connections: Option<Imported<Connections>>,
+    point_animation: Option<Imported<PointAnimation>>,
 }
 
 pub(crate) fn import(image: &RomImage) -> ImportedAim {
@@ -29,6 +31,12 @@ pub(crate) fn import(image: &RomImage) -> ImportedAim {
             CONNECTION_ADDRESS,
             CONNECTION_BYTES,
             Connections::import,
+        ),
+        point_animation: Imported::import(
+            image,
+            POINT_ANIMATION_ADDRESS,
+            POINT_ANIMATION_BYTES,
+            PointAnimation::import,
         ),
     }
 }
@@ -75,6 +83,21 @@ pub(crate) fn connection(game: &Game, set: ConnectionSet, word: isize) -> Connec
             Connection {
                 beam_function: rom.table_word(base, word),
                 handler: rom.table_word(base, word + 1),
+            }
+        })
+}
+
+/// The grapple point animation's frame bounds. Other images keep the
+/// original indexed loads.
+pub(crate) fn point_animation(game: &Game) -> PointAnimation {
+    let rom = loaded(game);
+    Imported::from(&game.grapple_aim.point_animation, rom)
+        .copied()
+        .unwrap_or_else(|| {
+            let base = lorom_offset(POINT_ANIMATION_ADDRESS) as usize;
+            PointAnimation {
+                first: rom.table_word(base, 0),
+                end: rom.table_word(base, 1),
             }
         })
 }
