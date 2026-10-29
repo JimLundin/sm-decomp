@@ -5,17 +5,75 @@ direction; [frozen qualification history](https://github.com/JimLundin/sm-decomp
 retains earlier results and contracts. Retired issue receipts remain in the
 primary's owned archive, located by their original comment IDs in that history.
 
-## Milestone plan (2026-10-27)
+## Milestone plan (2026-10-29)
 
-The user assigns this session proactive oversight of pace, fidelity and the
-accepted owned-engine architecture. This plan supersedes older work-order and
-pacing advice. PLAN remains authoritative for the Fast loop, verification,
-resources, Git, commit/push and completion. Preserve current source owners,
-cloud bank claims and one actual Windows writer. Primary root 01a17ecd owns
-integration, the sole Git writer and resource ledger after the verified RELEASE;
-retired integrator 01a17c50 must stay stopped. Preserve transfer evidence and
-live jobs/frozen inputs. Linux remains stopped by the user (2026-10-27);
-bounded source, review and qualification run on Windows.
+Approved by Jim on 2026-10-29; it supersedes the 2026-10-27 plan and its pacing
+advice. PLAN remains authoritative for the Fast loop, Git, resources and commit
+rules; the accepted architecture, ADRs and ENGINE_STATE_MIGRATION are unchanged.
+Primary root 01a17ecd stays the sole Git writer; Linux stays stopped.
+
+### Direction (Jim, 2026-10-29)
+
+We are building the Super Metroid engine: a purpose-built, compact Rust engine
+that plays the original game faithfully. It is as modular as Map Rando and
+content replacement need, and no more: swappable room/door graphs, textures,
+tilesets, palettes, sprites and sounds through `sm_data`, not a general engine.
+Judge every change by whether it moves the code toward that engine and makes
+the code base smaller and clearer.
+
+**Progress means behaviour crossing into a target package** (`sm_data`,
+`sm_game`, `sm_runtime`, `sm_app`, `sm_tools`) that the compiler keeps separate
+from the emulator. Code that exists only to keep the original runtime and oracle
+working is **compat**: it shrinks and gets no new features. Owners built inside
+the RAM-compatible runtime stay inside the backend cycle and are not the goal.
+
+Measured at `2c2928e` with `python3 tools/cycle_report.py`: the 376 `game/`
+files (118,152 lines) are, apart from 44 files (10,850 lines), tied into one
+dependency cycle with `game_state`, `ram_map`, `rtl`, `cpu_infra` and `snes/`. The couplings holding the cycle together are the `Game` handle (145 files),
+`ram_map` addresses (102 files), `rom_table_word` ROM reads (369 sites) and PPU
+register writes (95 sites). Bank retirement stopped after 2026-10-27 12:47, and
+the checkpoint source fingerprint (85 files, 46,745 lines) invalidated every
+checkpoint on 9 of the first 11 commits of 2026-10-29.
+
+### Phases
+
+Each phase closes on evidence, not a date. Lanes: A tooling/verification,
+M seams and cycle cuts, B bank retirement.
+
+0. **Verification loop (A, now; nothing else lands first).** Fingerprint the
+   Checkpoint's serialised layout (`State` field names and types) instead of
+   source text; keep the round-trip/extra-bytes/input-prefix rejections. Refresh
+   the `f158` seed asset; split the checkpoint shard to at most ~60 minutes. Run
+   `tools/cycle_report.py` in CI. *Exit:* two consecutive green scheduled full-
+   corpus runs.
+1. **Package graph and seams (M).** Add `sm_data`, `sm_game` and `sm_runtime`
+   to the workspace; `sm` becomes compat plus oracle tools. Put the CONTRACTS
+   types in place: `TickOutput`, a coarse `Scene`, a `Cue` record in `sm_data`.
+   Route `game/`'s 4 audio backend calls (`write_sound_port`, `upload_bank`)
+   through Cues; a compat adapter maps each Cue back to `ApuQueue` port bytes so
+   oracle input is unchanged. Move the 44 cycle-free files into `sm_game`; CI
+   fails if `sm_data` or `sm_game` depends on compat. *Exit:* both build headless
+   without compat, the corpus is green, and the Cue trace reproduces the port
+   trace on every corpus row.
+2. **Cut the backend cycle (M and B, rolling).** Cheapest coupling first:
+   (a) ROM reads become `sm_data` tables built by an `sm_tools` importer, checked
+   byte-equal to the ROM at load and keyed by stable room/door IDs, which is what
+   Map Rando's room graph needs; (b) PPU register writes pass through one
+   display-state type feeding `sm_game::extraction` and the Scene; (c) RAM state
+   moves to typed domain modules in CONTRACTS order (progress, rooms, player,
+   actors) under the existing interval rules; (d) B resumes sm_8b, sm_a3,
+   sm_a5..sm_a9 and sm_aa, retiring straight into `sm_game` domain modules.
+   *Exit per domain:* it compiles in `sm_game` and its corpus rows pass.
+3. **Gate 1 vertical slice.** Morph room 9E9F: `Session::open` from prepared
+   content, the full Morph1200 inputs, `sm_runtime` renderer and sequencer, a
+   minimal `sm_app`, headless replay in `sm_tools`, compared to the oracle
+   through semantic projections. *Exit:* VALIDATION Gate 1 evidence.
+4. **Gates 2–5**, then Map Rando import through the same `sm_data` IDs.
+
+SPC700 CPU and APU bus emulation are frozen compat (unsafe permitted, outside
+the unsafe goal). The N-SPC sequencer (`spc_player.rs`) and S-DSP are the seed
+of `sm_runtime` audio; continue them only once separated from emulator types,
+with verification growth no larger than the production change it covers.
 
 ### Current publication and acceptance
 
@@ -137,8 +195,8 @@ Preserve live jobs/frozen sources and send minimal actual results before prose.
 Drain qualified code to main at the next safe boundary; documentation ACKs and
 CI observation never gate publication or independent implementation.
 
-The primary keeps the sole report in Jim's #6 issue body current after every
-commit under PLAN. Mark pending checks honestly; keep exact proof in owned records.
+The primary keeps the sole report in Jim's #6 issue body current once a day
+(see the metrics below) and reads #6 at every work boundary. Mark pending checks honestly; keep exact proof in owned records.
 Archive answered feedback and duplicate report comments before authorized retirement
 after verified body publication. Task issues remain retired; direct handoffs continue during CI.
 
@@ -152,17 +210,25 @@ travel with code. Current qualification requires compiler warnings as errors on
 every real Rust path; historical warning-bearing results are not strict-lint proof.
 Preserve other workers' source/caches/locks and all fidelity gates.
 
-### Size and final acceptance
+### Size, metrics and final acceptance
 
-DSP93 production 136,362 is 36,362 above 100,000. Even replacing all 17,793
-legacy lines with zero leaves 18,569 additional lines to retire. At 80% bank
-replacement, about 32,803 must disappear elsewhere before further media growth.
-Count every retained owner/adapter/dependency once. Moves, formatting and
-production-to-verification relocation are not savings; unsafe attributes are not
-retired raw operations. Preserve fidelity/readability while reducing actual code.
+The engine should end compact: the 100,000-line goal applies to the target
+packages (`sm_data`, `sm_game`, `sm_runtime`, `sm_app`) at completion. Compat
+and verification are reported separately and do not count against it. Moving
+code into a package is neutral, not growth; moves, formatting and relocation to
+verification are still not savings, and every adapter counts once.
 
-Choose later work by complete removable dependencies or genuinely duplicated
-responsibilities with understood callers and proof. Tiny isolated cleanups must
-not dominate qualification. Full owned Session, independent renderer/audio/backend,
-boot-to-credits fidelity, Map Rando and the size goals remain open. The accepted
-architecture/validation contracts determine their completion.
+The #6 report carries these measures daily, not per commit:
+
+| Measure | 2c2928e | Direction |
+| --- | --- | --- |
+| Lines in target packages | 0 | up |
+| Lines outside the backend cycle (`tools/cycle_report.py`) | 10,850 | up |
+| Legacy bank lines | 17,822 | 0 |
+| Compat lines | about 12,900 Rust plus LakeSnes C | down |
+| Unsafe fns/blocks/impls in `game/` (excluding compat) | 955 | 0 |
+| Scheduled full corpus | failing | green |
+| Validation gates passed | 0 of 6 | Gate 1 at phase 3 |
+
+Full owned Session, independent renderer/audio, boot-to-credits fidelity and Map
+Rando remain open; the accepted architecture and VALIDATION gates define them.
