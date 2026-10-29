@@ -320,6 +320,10 @@ ASSERTION = re.compile(
 )
 
 
+# Built once from the unmutated crate; mutations only target files under sm/src.
+SM_GAME = []
+
+
 def run(command, timeout):
     if command[0] == "rustc":
         flags = os.environ.get("CARGO_ENCODED_RUSTFLAGS")
@@ -327,7 +331,7 @@ def run(command, timeout):
             flags = os.environ.get("RUSTFLAGS", "").split()
         else:
             flags = flags.split("\x1f") if flags else []
-        command = [*command, *flags, "-D", "warnings"]
+        command = [*command, *SM_GAME, *flags, "-D", "warnings"]
     return subprocess.run(
         command, capture_output=True, text=True, encoding="utf-8", errors="replace",
         timeout=timeout, check=False,
@@ -415,10 +419,17 @@ def main():
         raise RuntimeError("mutation builds and execution are restricted to GitHub CI")
     # Installed at sm/src/verification/player_detached/mutations.py.
     source = Path(__file__).resolve().parents[2]
-    if not (source / "game" / "projectile_room.rs").is_file():
+    if not (source / "game" / "launch_motion.rs").is_file():
         raise RuntimeError("install this runner alongside the repo detached harness")
     with tempfile.TemporaryDirectory(prefix="player-detached-mutations-") as directory:
         work = Path(directory)
+        library = work / "libsm_game.rlib"
+        built = run(["rustc", "--edition=2024", "-O", "--crate-name", "sm_game",
+                     "--crate-type", "rlib", str(source.parent.parent / "crates" / "sm_game" / "src" / "lib.rs"),
+                     "-o", str(library)], 180)
+        if built.returncode != 0:
+            raise RuntimeError(f"sm_game library build failed\n{built.stderr}")
+        SM_GAME.extend(["--extern", f"sm_game={library}"])
         baseline_binary = check(source, work, "baseline")
         for name, relative, before, after in MUTATIONS:
             check(source, work, name, (relative, before, after))

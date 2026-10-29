@@ -34,6 +34,11 @@ jobs:
         run: |
           sh tools/progress.sh
           python3 tools/cycle_report.py
+      - name: Keep target packages independent of the emulator crate
+        # sm_game may depend only on other target packages, never on sm.
+        run: |
+          deps=$(cargo tree -p sm_game -e normal --prefix none --format '{p}' | tail -n +2 | grep -v '^sm_data ' || true)
+          if [ -n "$deps" ]; then echo "sm_game has forbidden dependencies:"; echo "$deps"; exit 1; fi
       - name: Run the full corpus after bank retirement
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
@@ -78,7 +83,10 @@ jobs:
       - name: Verify composed projectile, animation and palette cores without the game backend
         run: |
           $playerDetached = Join-Path $env:RUNNER_TEMP 'player-detached.exe'
-          rustc --edition=2024 -D warnings -O sm/src/verification/player_detached/main.rs -o $playerDetached
+          $smGame = Join-Path $env:RUNNER_TEMP 'libsm_game.rlib'
+          rustc --edition=2024 -D warnings -O --crate-name sm_game --crate-type rlib crates/sm_game/src/lib.rs -o $smGame
+          if ($LASTEXITCODE -ne 0) { throw 'sm_game compilation failed' }
+          rustc --edition=2024 -D warnings -O sm/src/verification/player_detached/main.rs --extern "sm_game=$smGame" -o $playerDetached
           if ($LASTEXITCODE -ne 0) { throw 'Detached projectile compilation failed' }
           & $playerDetached
           if ($LASTEXITCODE -ne 0) { throw 'Detached projectile checks failed' }

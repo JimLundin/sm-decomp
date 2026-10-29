@@ -1,7 +1,7 @@
 //! Population creation and multipart search state, independent of RAM and effects.
 #![forbid(unsafe_code)]
 
-pub(crate) struct PopulationEntry {
+pub struct PopulationEntry {
     pub definition: u16,
     pub x: u16,
     pub y: u16,
@@ -11,7 +11,7 @@ pub(crate) struct PopulationEntry {
     pub parameters: [u16; 2],
 }
 
-pub(crate) struct EnemyShape {
+pub struct EnemyShape {
     pub width: u16,
     pub height: u16,
     pub health: u16,
@@ -21,7 +21,7 @@ pub(crate) struct EnemyShape {
 }
 
 #[derive(Clone, Copy)]
-pub(crate) enum Creation {
+pub enum Creation {
     Room,
     Dynamic,
 }
@@ -54,7 +54,7 @@ impl Creation {
     }
 }
 
-pub(crate) enum SearchResult {
+pub enum SearchResult {
     Continue,
     Found(u16),
     Full,
@@ -62,7 +62,7 @@ pub(crate) enum SearchResult {
 
 /// This is the original search state, including its accumulated empty probes
 /// across failed candidate windows. It is deliberately not a contiguous allocator.
-pub(crate) struct SpawnSearch {
+pub struct SpawnSearch {
     pub probe: u16,
     candidate: u16,
     remaining: u16,
@@ -98,7 +98,7 @@ impl SpawnSearch {
     }
 }
 
-pub(crate) struct SpawnSequence {
+pub struct SpawnSequence {
     pub slot: u16,
     pub population: u16,
     remaining: u16,

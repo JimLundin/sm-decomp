@@ -345,9 +345,9 @@ pub mod game {
     }
     pub(crate) use callback_dispatch;
 
-    pub(crate) mod special_geometry;
+    pub(crate) use sm_game::special_geometry;
 
-    pub(crate) mod beam_definitions;
+    pub(crate) use sm_game::beam_definitions;
 
     pub(crate) mod beam_windows;
     pub mod constants;
@@ -376,7 +376,7 @@ pub mod game {
     pub(crate) mod mode7_transfers;
     pub(crate) mod moving_platforms;
     pub(crate) mod prelude;
-    pub(crate) mod projectile_weapon_definitions;
+    pub(crate) use sm_game::projectile_weapon_definitions;
     pub mod scene;
     pub(crate) mod scrolling_sky;
     pub(crate) mod vram_read_queue;
@@ -387,12 +387,12 @@ pub mod game {
     pub(crate) mod room_mechanism_checks;
 
     pub(crate) mod projectile_geometry;
-    pub(crate) mod projectile_initialization;
+    pub(crate) use sm_game::projectile_initialization;
 
-    pub(crate) mod projectile_block_reactions;
+    pub(crate) use sm_game::projectile_block_reactions;
     pub(crate) mod projectile_block_reactions_ram;
     pub(crate) mod projectile_presentation_ram;
-    pub(crate) mod projectile_room;
+    pub(crate) use sm_game::projectile_room;
 
     pub mod animated_tiles;
     pub mod enemy_projectiles;
@@ -401,10 +401,10 @@ pub mod game {
     pub(crate) mod external_inputs;
     pub(crate) mod gameplay_flag_host;
     pub(crate) mod gameplay_flag_runtime;
-    pub(crate) mod gameplay_flag_state;
-    pub mod item_pickups;
+    pub(crate) use sm_game::gameplay_flag_state;
+    pub use sm_game::item_pickups;
     pub(crate) mod item_pickups_runtime;
-    pub(crate) mod liquid_surface;
+    pub(crate) use sm_game::liquid_surface;
     pub(crate) mod mechanism_displacement;
     pub mod music;
     pub(crate) mod palette_copies;
@@ -458,13 +458,13 @@ pub mod game {
     pub(crate) mod sprite_effect_state;
     pub(crate) mod visual_host;
     pub(crate) mod visual_runtime;
-    pub(crate) mod visual_state;
+    pub(crate) use sm_game::visual_state;
 
     pub(crate) mod ceres_doors;
-    pub mod combat_rules;
-    pub mod contact_rules;
-    pub mod drop_rules;
-    pub mod enemy_population;
+    pub use sm_game::combat_rules;
+    pub use sm_game::contact_rules;
+    pub use sm_game::drop_rules;
+    pub use sm_game::enemy_population;
     pub mod enemy_script;
     pub(crate) mod erratic_fireball;
     pub(crate) mod fire_geysers;

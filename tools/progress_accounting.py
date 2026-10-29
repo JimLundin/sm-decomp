@@ -78,7 +78,7 @@ def main():
     needed = {r["file"] for r in mapping["sections"]}
     needed.update(p["file"] for r in mapping["sections"] for p in r["replacement"])
     kept, totals = {}, dict(production=0, verification=0, legacy=0, unsafe_containing=0)
-    rows = subprocess.check_output(["git", "ls-tree", "-r", "-z", pin, "sm/src"], cwd=repo).split(b"\0")
+    rows = subprocess.check_output(["git", "ls-tree", "-r", "-z", pin, "sm/src", "crates"], cwd=repo).split(b"\0")
     with subprocess.Popen(["git", "cat-file", "--batch"], cwd=repo, stdin=subprocess.PIPE, stdout=subprocess.PIPE) as batch:
         for row in filter(None, rows):
             meta, name = row.split(b"\t", 1)

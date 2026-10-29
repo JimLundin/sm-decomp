@@ -33,8 +33,7 @@ pub(crate) mod setup_helpers;
 pub(crate) mod shared;
 #[path = "../../game/enemy_projectiles/shared_pre.rs"]
 pub(crate) mod shared_pre;
-#[path = "../../game/enemy_projectiles/tables.rs"]
-pub(crate) mod tables;
+pub(crate) use sm_game::enemy_projectiles::tables;
 use crate::game::enemy_script::EnemyScript;
 use host::Host;
 pub(crate) fn spawn_room(h: &mut impl Host, definition: u16, parameter: u16) -> u16 {
