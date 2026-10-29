@@ -406,6 +406,7 @@ pub mod game {
     pub(crate) mod liquid_surface;
     pub(crate) mod mechanism_displacement;
     pub mod music;
+    pub(crate) mod palette_copies;
     pub(crate) mod palette_effects;
     pub(crate) mod player_collision;
     #[cfg(any(test, sm_verify_dll))]

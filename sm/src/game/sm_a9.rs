@@ -5,6 +5,7 @@ use crate::game::display_refresh::{native_word, set_native_word};
 use crate::game::enemy_script::EnemyScript;
 use crate::game::menu_tilemap::native_record;
 use crate::game::music::QueueMusic_Delayed8;
+use crate::game::palette_copies::{WriteColorsToPalette, WriteColorsToTargetPalette};
 use crate::game::player_update::minimap;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::Runtime;
@@ -2595,7 +2596,7 @@ pub unsafe fn MotherBrain_BodyRainbowBeamPalAnimIndex0(game: &mut Game) {
     slot!(game, Enemy_MotherBrain[0x40i32].var_01 = 0);
 }
 pub unsafe fn MotherBrain_WriteDefaultPalette(game: &mut Game) {
-    unsafe {
+    {
         WriteColorsToPalette(
             0x82,
             0xa9,
@@ -2645,7 +2646,7 @@ pub unsafe fn MotherBrain_HandleRainbowBeamPalette(game: &mut Game) {
     }
 }
 pub unsafe fn MotherBrain_WritePalette(j: u16, game: &mut Game) {
-    unsafe {
+    {
         WriteColorsToPalette(0x82, 0xad, j, 15, game);
         WriteColorsToPalette(0x122, 0xad, j, 15, game);
         WriteColorsToPalette(0x162, 0xad, (j).wrapping_add(30), 15, game);
@@ -3722,7 +3723,7 @@ pub unsafe fn SamusRainbowPaletteFunc_GraduallySlowDown(game: &mut Game) {
     }
 }
 pub unsafe fn ShitroidInCutscene_FadeShitroidToBlack(k: u16, game: &mut Game) -> u8 {
-    unsafe {
+    {
         let E: i32 = k as i32;
         if slot!(game, Enemy_ShitroidInCutscene[E].base.y_pos) as i32 - 128i32 & 0x8000 != 0 {
             return 0;
@@ -3834,7 +3835,7 @@ pub unsafe fn MotherBrain_Pal_HandleRoomPal(game: &mut Game) {
     }
 }
 pub unsafe fn MotherBrain_Pal_WriteRoomPal(j: u16, game: &mut Game) {
-    unsafe {
+    {
         WriteColorsToPalette(0x68, 0xa9, j, 12, game);
         WriteColorsToPalette(0xa6, 0xa9, (j).wrapping_add(24), 12, game);
         WriteColorsToPalette(0xe6, 0xa9, (j).wrapping_add(24), 12, game);
@@ -3890,28 +3891,6 @@ pub unsafe fn MotherBrain_SetupBrainNormalPal(game: &mut Game) {
 }
 pub unsafe fn MotherBrain_SetupBrainPalForLaser(game: &mut Game) {
     slot!(game, Enemy_MotherBrain[0i32].var_E = 514);
-}
-pub unsafe fn WriteColorsToPalette(mut k: u16, db: u8, mut j: u16, a: u16, game: &mut Game) {
-    unsafe {
-        let mut n: i32 = a as i32;
-        do_until! { n == 0 ;
-            word!(game.palette_buffer[(k >> 1)] = *(RomPtrWithBank(db, j, game) as *mut u16));
-            k = (k).wrapping_add(2);
-            j = (j).wrapping_add(2);
-            n -= 1;
-        }
-    }
-}
-pub unsafe fn WriteColorsToTargetPalette(db: u8, mut k: u16, mut j: u16, a: u16, game: &mut Game) {
-    unsafe {
-        let mut n: i32 = a as i32;
-        do_until! { n == 0 ;
-            word!(game.target_palettes[(k >> 1)] = *(RomPtrWithBank(db, j, game) as *mut u16));
-            k = (k).wrapping_add(2);
-            j = (j).wrapping_add(2);
-            n -= 1;
-        }
-    }
 }
 crate::game::callback_dispatch! {
     pub unsafe fn CallDeadTorizoFuncA(ea: u32, game: &mut Game) => ea;

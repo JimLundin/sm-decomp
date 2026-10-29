@@ -29,13 +29,11 @@ use crate::game::mode7_transfers::enqueue_rom;
 use crate::game::music::{
     QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max3, QueueSfx3_Max6,
 };
+use crate::game::palette_copies::{WriteColorsToPalette, WriteColorsToTargetPalette};
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::session_runtime::damage_player;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
-use crate::game::sm_a9::{
-    ComputeCosMult, ComputeSinMult, MoveEnemyWithVelocity, Shitroid_Func_2, WriteColorsToPalette,
-    WriteColorsToTargetPalette,
-};
+use crate::game::sm_a9::{ComputeCosMult, ComputeSinMult, MoveEnemyWithVelocity, Shitroid_Func_2};
 use crate::game::sprite_effect_runtime::create_sprite;
 
 const VANISH: u16 = ceres_doors::TANGIBLE | ceres_doors::INVISIBLE;
@@ -430,7 +428,7 @@ pub unsafe fn Ridley_A2F2(game: &mut Game) {
     }
 }
 pub unsafe fn CeresRidley_Func_8(a: u16, game: &mut Game) -> u8 {
-    unsafe {
+    {
         let v1: u16 = crate::rtl::rom_table_word!(game, 0xa6a4eb, a as isize);
         if v1 == 0 {
             return 1;
@@ -3244,7 +3242,7 @@ pub unsafe fn Ridley_Func_100(game: &mut Game) {
     }
 }
 pub unsafe fn Ridley_D495(r18: u16, game: &mut Game) {
-    unsafe {
+    {
         if word!(game.palette_change_num) == 0 {
             WriteColorsToPalette(0x1e2, 0xa6, (28 * r18 as i32 - 7062i32) as u16, 0xe, game);
         }
@@ -4156,7 +4154,7 @@ pub unsafe fn Zebetites_Func_5(game: &mut Game) {
     slot!(game, Enemy_Zebetites[E].base.timer = 0);
 }
 pub unsafe fn Zebetites_Func_4(game: &mut Game) {
-    unsafe {
+    {
         if word!(game.palette_change_num) == 0
             && slot!(
                 game,
