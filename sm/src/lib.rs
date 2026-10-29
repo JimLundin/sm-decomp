@@ -356,6 +356,7 @@ pub mod game {
     pub(crate) mod dialogue;
     pub(crate) mod dialogue_ram;
     pub(crate) mod enemy_layouts;
+    pub(crate) mod enemy_speeds;
 
     pub(crate) mod explosion_window;
     pub(crate) mod file_menu;
@@ -375,7 +376,6 @@ pub mod game {
     pub mod message_composition;
     pub(crate) mod mode7_transfers;
     pub(crate) mod moving_platforms;
-    pub(crate) mod enemy_speeds;
     pub(crate) mod prelude;
     pub(crate) use sm_game::projectile_weapon_definitions;
     pub mod scene;
