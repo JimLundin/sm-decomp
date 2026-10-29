@@ -632,3 +632,7 @@ fn assert_dirty_runtime_lease_preserves_native_mutation(owner: &GameOwner) {
     });
     assert!(owner.checkpoint_session().is_err());
 }
+
+pub use session_audio_checkpoint_cases::{
+    bank_upload_physical_prefixes, bank_upload_physical_timeout_boundaries,
+};

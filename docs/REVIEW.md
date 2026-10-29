@@ -19,10 +19,10 @@ bounded source, review and qualification run on Windows.
 
 ### Current publication and acceptance
 
-Corrected music/SFX/FIR source **c85c8cbf** is qualified: new strict DLL4487281a/actual136 and exact normal/frontend/native proof transfer.
-Original source2de7f4ec/DLL2efd629a replay retains its execution attribution:13 groups/27 rows/199,063 comparisons/0, full Morph1200 and BOTH independent Kago14350.
-The genuine input110076 FIR regression and selector0-to10 coefficient transition pass; the durable row binds the actual corrected-codec checkpoint.
-Coverage is27 observed rows/23 of44 required. Raw SFX alias variants, full Session/backend/device and size acceptance remain open.
+Bank-upload source **510d82a2** has new strict library/DLL/frontend and actual139 units passing; exact native9 transfer preserves original compiler attribution.
+Exact source510d82a2/DLLba3a4936 replay passes 13 groups/27 rows/199,063 comparisons/0, full Morph1200 and BOTH independent Kago14350; required23 of44.
+Genuine final-codec initialized/capture/continuation and the input110076 FIR coefficient regression pass; the durable row binds actual fresh checkpoint bytes.
+Typed physical upload controls execute callbacks; physical-device fidelity, raw SFX aliases, full Session/backend/device and size acceptance remain open. Initial deliberate spin and token+4 zero replacement variant remain scoped.
 
 Completed room/renderer/message/Scene/delivery reports are in the
 [frozen history](https://github.com/JimLundin/sm-decomp/blob/170bc5351c64f0846bbcb7b4714064a7230db153/docs/REVIEW.md#current-publication-and-acceptance):

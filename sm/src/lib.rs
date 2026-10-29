@@ -898,4 +898,7 @@ pub use samus_game_binding_cases::{
 #[path = "verification/persistent_session_cases.rs"]
 mod persistent_session_cases;
 #[cfg(sm_verify_dll)]
-pub use persistent_session_cases::persistent_session_native_rebinding_preserves_ready_owner;
+pub use persistent_session_cases::{
+    bank_upload_physical_prefixes, bank_upload_physical_timeout_boundaries,
+    persistent_session_native_rebinding_preserves_ready_owner,
+};

@@ -12,12 +12,15 @@ use sm::rendering::{self as r, IndexedSource, prepared::*};
 use std::sync::Arc;
 
 #[cfg(sm_verify_dll)]
+use sm::{bank_upload_physical_prefixes, bank_upload_physical_timeout_boundaries};
+
+#[cfg(sm_verify_dll)]
 pub(super) fn run() -> i32 {
     // Keep names and function pointers paired without duplicating assertions.
     macro_rules! cases {
             ($($test:ident),+ $(,)?) => { [$( (stringify!($test), $test as fn()), )+] };
         }
-    let tests: [(&str, fn()); 136] = cases![
+    let tests: [(&str, fn()); 139] = cases![
         prepared_message_pixels_delay_queue_and_checkpoint,
         prepared_message_rejects_changed_content_and_resets,
         independently_authored_raster_pixels_and_prefixes,
@@ -154,6 +157,9 @@ pub(super) fn run() -> i32 {
         sfx_groups_first_outside_flat_allocation_keeps_exact_initialization_failure_prefixes,
         sfx_groups_command_replace_config_and_pointer_phases_keep_literal_failure_order,
         music_fir_live_ram_wrap_and_writer_failures_keep_literal_coefficients_and_prefixes,
+        bank_upload_native_installation_prefixes,
+        bank_upload_physical_prefixes,
+        bank_upload_physical_timeout_boundaries,
     ];
     let mut failed = 0usize;
     for (name, test) in &tests {
@@ -10316,5 +10322,98 @@ fn music_fir_live_ram_wrap_and_writer_failures_keep_literal_coefficients_and_pre
                 }
             );
         }
+    }
+}
+
+// Movies cannot inject native install failures or independently inspect its success-only canonical-RAM postamble.
+#[cfg_attr(test, test)]
+fn bank_upload_native_installation_prefixes() {
+    use sm::{
+        apu_ram::ApuRam, audio_upload::install_bank, rom::RomImage, types::NativePlayerState,
+    };
+    use std::panic::{AssertUnwindSafe, catch_unwind};
+    for (length, failure) in [
+        (2, None),
+        (5, None),
+        (8, None),
+        (8, Some(0)),
+        (8, Some(1)),
+        (8, Some(2)),
+    ] {
+        let mut image_bytes = Vec::from(2u16.to_ne_bytes());
+        image_bytes.extend(0xffffu16.to_ne_bytes());
+        image_bytes.extend([0x11, 0x22, 0, 0]);
+        image_bytes[..2].fill(0);
+        let image = RomImage::zeroed(length);
+        for (offset, &value) in image_bytes[..length].iter().enumerate() {
+            image.write(offset, value);
+        }
+        let ram = ApuRam::new();
+        ram.write(0, 0x77);
+        ram.write(0xffff, 0x88);
+        ram.write(0x581e, 0x34);
+        ram.write(0x581f, 0x12);
+        let mut state = NativePlayerState::default();
+        state.port_to_snes = [9, 8, 7, 6];
+        state.input_ports = [1, 2, 3, 4];
+        state.music_ptr_toplevel = 0xabcd;
+        state.counter_sf0c = 7;
+        state.is_chan_on = 0xa5;
+        state.key_OFF = 1;
+        let mut writes = Vec::new();
+        let result = catch_unwind(AssertUnwindSafe(|| {
+            install_bank(&mut state, &ram, image.clone(), 0, |reg, value| {
+                writes.push((reg, value));
+                if Some(writes.len() - 1) == failure {
+                    panic!("native register writer failed");
+                }
+                if reg == 92 {
+                    if length > 4 {
+                        let count = 2u16.to_ne_bytes();
+                        image.write(0, count[0]);
+                        image.write(1, count[1]);
+                        image.write(4, 0x99);
+                    }
+                    ram.write(0x581f, 0x56);
+                }
+            })
+        }));
+        let success = failure.is_none() && length != 5;
+        assert_eq!(result.is_ok(), success);
+        assert_eq!(
+            writes,
+            [(44, 0), (60, 0), (92, 255)][..failure.map_or(3, |n| n + 1)]
+        );
+        assert_eq!(
+            ram.read(0xffff),
+            if failure.is_none() && length > 2 {
+                0x99
+            } else {
+                0x88
+            }
+        );
+        assert_eq!(
+            ram.read(0),
+            if success && length == 8 { 0x22 } else { 0x77 }
+        );
+        assert_eq!(
+            state.port_to_snes,
+            if success { [0, 8, 7, 6] } else { [9, 8, 7, 6] }
+        );
+        assert_eq!(
+            state.input_ports,
+            if success { [255; 4] } else { [1, 2, 3, 4] }
+        );
+        assert_eq!(
+            state.music_ptr_toplevel,
+            if success {
+                u16::from_ne_bytes([0x34, 0x56])
+            } else {
+                0xabcd
+            }
+        );
+        assert_eq!(state.counter_sf0c, if success { 2 } else { 7 });
+        assert_eq!(state.key_OFF, if success { 0x5b } else { 1 });
+        assert_eq!(state.is_chan_on, 0xa5);
     }
 }

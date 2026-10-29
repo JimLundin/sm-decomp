@@ -779,3 +779,174 @@ fn assert_deliveries(
     assert_eq!(owner.encode_session_checkpoint().unwrap(), bytes);
     owner.with(|game| assert_eq!(ApuQueueSnapshot::capture(game).to_bytes(), *accepted));
 }
+
+// Movies cannot independently drive physical audio0 acknowledgments, wrap/drop or callback failure prefixes.
+pub fn bank_upload_physical_prefixes() {
+    use crate::audio_upload::{PhysicalAccess::*, physical, prepare_physical};
+    use std::panic::{AssertUnwindSafe, catch_unwind};
+    // (operation, argument, reply); source addresses and transfer bytes are literal.
+    let script = [
+        (3, 255, 0),
+        (1, 0, 0),
+        (2, 0, 0xbb),
+        (1, 0, 0xaa),
+        (2, 0, 0xbb),
+        (0, 0x1280ffff, 2),
+        (0, 0x810000, 0),
+        (0, 0x918000, 0xfe),
+        (0, 0x918001, 0xff),
+        (5, 0xfe, 0),
+        (6, 0xff, 0),
+        (4, 1, 0),
+        (3, 0xcc, 0),
+        (1, 0, 0xcc),
+        (0, 0x918002, 7),
+        (3, 0, 0),
+        (4, 7, 0),
+        (1, 0, 9),
+        (1, 0, 0),
+        (0, 0x918003, 8),
+        (3, 1, 0),
+        (4, 8, 0),
+        (1, 0, 0),
+        (1, 0, 1),
+        (0, 0x918004, 0),
+        (0, 0x918005, 0),
+        (0, 0x918006, 0xef),
+        (0, 0x918007, 0xbe),
+        (5, 0xef, 0),
+        (6, 0xbe, 0),
+        (4, 0, 0),
+        (3, 5, 0),
+        (1, 0, 0),
+        (1, 0, 5),
+        (7, 0x918008, 0),
+        (8, 0x918008, 0),
+        (9, 0x918008, 0),
+    ];
+    let epochs = [3, 5, 6, 7, 8, 8, 8, 10];
+    for (failure, epoch) in [0, 2, 5, 6, 14, 16, 35, 37].into_iter().zip(epochs) {
+        let game = crate::game_state::Game::new();
+        let ram = game.ram().share_for_backend();
+        prepare_physical(0x1280ffff, &ram);
+        assert_eq!(
+            (ram.read_byte(0), ram.read_byte(1), ram.read_byte(2)),
+            (255, 255, 0x80)
+        );
+        assert_eq!(game.compatibility_write_epoch(), 3);
+        let mut observed = 0;
+        let result = catch_unwind(AssertUnwindSafe(|| {
+            physical(0x1280ffff, &ram, |operation| {
+                let event = match operation {
+                    ReadSource(at) => (0, at),
+                    ReadPort0 => (1, 0),
+                    ReadPort1 => (2, 0),
+                    WritePort0(v) => (3, u32::from(v)),
+                    WritePort1(v) => (4, u32::from(v)),
+                    WritePort2(v) => (5, u32::from(v)),
+                    WritePort3(v) => (6, u32::from(v)),
+                    CompletePort1(at) => (7, at),
+                    CompletePort2(at) => (8, at),
+                    CompletePort3(at) => (9, at),
+                };
+                let (kind, argument, reply) = script[observed];
+                assert_eq!(event, (kind, argument));
+                if observed == failure {
+                    panic!("physical access failed");
+                }
+                if observed == 3 {
+                    assert_eq!((ram.read_byte(0x641), ram.read_byte(0x642)), (255, 0x2f));
+                    assert_eq!(game.compatibility_write_epoch(), 6);
+                }
+                if observed == 5 {
+                    ram.write_byte(2, 0x90);
+                }
+                if observed == 7 {
+                    assert_eq!(ram.read_byte(2), 0x91);
+                    assert_eq!(game.compatibility_write_epoch(), 8);
+                }
+                observed += 1;
+                reply
+            })
+        }));
+        assert_eq!(result.is_err(), failure < 37);
+        assert_eq!(observed, failure);
+        assert_eq!(
+            (ram.read_byte(0x617), ram.read_byte(0x618)),
+            if failure < 37 { (255, 255) } else { (0, 0) }
+        );
+        assert_eq!(game.compatibility_write_epoch(), epoch);
+    }
+}
+
+// Movies cannot hold physical audio0 header acknowledgments or stop at the initial non-return boundary.
+pub fn bank_upload_physical_timeout_boundaries() {
+    use crate::audio_upload::{PhysicalAccess::*, physical, prepare_physical};
+    use std::panic::{AssertUnwindSafe, catch_unwind};
+    let game = crate::game_state::Game::new();
+    let ram = game.ram();
+    prepare_physical(0x438000, ram);
+    let (mut token, mut reads, mut completions) = (None, 0, Vec::new());
+    physical(0x438000, ram, |operation| match operation {
+        WritePort0(v) => {
+            token = Some(v);
+            0
+        }
+        ReadPort0 if token == Some(255) => 0xaa,
+        ReadPort1 => 0xbb,
+        ReadPort0 => {
+            reads += 1;
+            0
+        }
+        ReadSource(0x438000) => 1,
+        ReadSource(0x438001 | 0x438002 | 0x438003) => 0,
+        WritePort2(0) | WritePort3(0) | WritePort1(1) => 0,
+        CompletePort1(at) => {
+            completions.push((1, at));
+            0
+        }
+        CompletePort2(at) => {
+            completions.push((2, at));
+            0
+        }
+        CompletePort3(at) => {
+            completions.push((3, at));
+            0
+        }
+        _ => panic!("unexpected timeout transaction"),
+    });
+    assert_eq!(reads, 4095);
+    assert_eq!(completions, [(1, 0x438004), (2, 0x438004), (3, 0x438004)]);
+    assert_eq!((ram.read_byte(0x617), ram.read_byte(0x618)), (0, 0));
+    // Fail before the final initial reply can enter the deliberate non-returning spin.
+    let game = crate::game_state::Game::new();
+    let ram = game.ram();
+    prepare_physical(0x128000, ram);
+    let mut polls = (0, 0);
+    assert!(
+        catch_unwind(AssertUnwindSafe(|| physical(
+            0x128000,
+            ram,
+            |operation| match operation {
+                WritePort0(255) => 0,
+                ReadPort0 => {
+                    polls.0 += 1;
+                    0
+                }
+                ReadPort1 => {
+                    polls.1 += 1;
+                    if polls.1 == 0x3000 {
+                        panic!("stop before spin");
+                    }
+                    0
+                }
+                _ => panic!("unexpected initial transaction"),
+            }
+        )))
+        .is_err()
+    );
+    assert_eq!(polls, (0x3000, 0x3000));
+    assert_eq!((ram.read_byte(0x641), ram.read_byte(0x642)), (1, 0));
+    assert_eq!(game.compatibility_write_epoch(), 0x3004);
+    assert_eq!((ram.read_byte(0x617), ram.read_byte(0x618)), (255, 255));
+}

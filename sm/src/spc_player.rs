@@ -504,21 +504,11 @@ pub unsafe fn SpcPlayer_GenerateSamples(p: *mut SpcPlayer) {
 }
 pub unsafe fn SpcPlayer_Upload(p: *mut SpcPlayer, image: crate::rom::RomImage, source: usize) {
     unsafe {
-        Dsp_Write(p, EVOLL as i32 as u8, 0);
-        Dsp_Write(p, EVOLR as i32 as u8, 0);
-        Dsp_Write(p, KOF as i32 as u8, 0xff);
-        crate::audio_upload::transfer(image, source, |target, value| {
-            (*p).ram.write(target, value);
+        let ram = (*p).ram.clone();
+        let (hist, dsp) = ((*p).state.reg_write_history, (*p).state.dsp);
+        crate::audio_upload::install_bank(&mut (*p).state, &ram, image, source, |reg, value| {
+            write_register(hist, dsp, reg, value)
         });
-        (*p).state.port_to_snes[0i32 as usize] = 0;
-        (*p).state.input_ports[3i32 as usize] = 255;
-        (*p).state.input_ports[2i32 as usize] = (*p).state.input_ports[3i32 as usize];
-        (*p).state.input_ports[1i32 as usize] = (*p).state.input_ports[2i32 as usize];
-        (*p).state.input_ports[0i32 as usize] = (*p).state.input_ports[1i32 as usize];
-        (*p).state.music_ptr_toplevel =
-            u16::from_ne_bytes([(*p).ram.read_at(0x581e), (*p).ram.read_at(0x581f)]);
-        (*p).state.counter_sf0c = 2;
-        (*p).state.key_OFF = (*p).state.key_OFF | !((*p).state.is_chan_on);
     }
 }
 
