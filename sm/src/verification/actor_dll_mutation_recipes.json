@@ -2,7 +2,7 @@
   {
     "fault": "F1",
     "name": "actor_multipart_initializes_extra_part",
-    "path": "sm/src/game/enemy_population.rs",
+    "path": "crates/sm_game/src/enemy_population.rs",
     "before": "remaining: SpawnSearch::remaining_parts(parts),",
     "after": "remaining: SpawnSearch::remaining_parts(parts).wrapping_add(1),",
     "case": 7,
@@ -14,7 +14,7 @@
     "selected": "population:7",
     "edits": [
       {
-        "path": "sm/src/game/enemy_population.rs",
+        "path": "crates/sm_game/src/enemy_population.rs",
         "before": "remaining: SpawnSearch::remaining_parts(parts),",
         "after": "remaining: SpawnSearch::remaining_parts(parts).wrapping_add(1),"
       }
@@ -118,8 +118,8 @@
     "mutations": [
       {
         "path": "sm/src/game/session_runtime.rs",
-        "before": "        export_session(state, self.game);\n        let result = action(self.game);",
-        "after": "        export_session(state, self.game);\n        let stale_identity = self.game.actor_identity().clone();\n        let result = match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| action(self.game))) {\n            Ok(result) => result,\n            Err(error) => {\n                let _ = self.game.take_actor_identity();\n                self.game.return_actor_identity(stale_identity);\n                std::panic::resume_unwind(error);\n            }\n        };"
+        "before": "        export_session_preflighted(state, mutation.game());\n        let result = action(mutation.game());",
+        "after": "        export_session_preflighted(state, mutation.game());\n        let stale_identity = mutation.game().actor_identity().clone();\n        let result = match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| action(mutation.game()))) {\n            Ok(result) => result,\n            Err(error) => {\n                let _ = mutation.game().take_actor_identity();\n                mutation.game().return_actor_identity(stale_identity);\n                std::panic::resume_unwind(error);\n            }\n        };"
       }
     ],
     "required_assertion": "actor.initializer.after_unwind_nested_occurrence",
@@ -136,8 +136,8 @@
     "edits": [
       {
         "path": "sm/src/game/session_runtime.rs",
-        "before": "        export_session(state, self.game);\n        let result = action(self.game);",
-        "after": "        export_session(state, self.game);\n        let stale_identity = self.game.actor_identity().clone();\n        let result = match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| action(self.game))) {\n            Ok(result) => result,\n            Err(error) => {\n                let _ = self.game.take_actor_identity();\n                self.game.return_actor_identity(stale_identity);\n                std::panic::resume_unwind(error);\n            }\n        };"
+        "before": "        export_session_preflighted(state, mutation.game());\n        let result = action(mutation.game());",
+        "after": "        export_session_preflighted(state, mutation.game());\n        let stale_identity = mutation.game().actor_identity().clone();\n        let result = match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| action(mutation.game()))) {\n            Ok(result) => result,\n            Err(error) => {\n                let _ = mutation.game().take_actor_identity();\n                mutation.game().return_actor_identity(stale_identity);\n                std::panic::resume_unwind(error);\n            }\n        };"
       }
     ],
     "assertion_source": "actor_initializer_checks.rs",
@@ -151,28 +151,33 @@
     "required_assertion": "actor.owner.angle_roundtrip.foreign_entry.angle slot=0",
     "edits": [
       {
-        "path": "sm/src/game/actors/state.rs",
-        "before": "pub(in crate::game) struct Actors {\n",
-        "after": "pub(in crate::game) struct Actors {\n    pub(in crate::game) f5_duplicate_angle: u16,\n",
+        "path": "crates/sm_game/src/actors/state.rs",
+        "before": "pub struct Actors {\n",
+        "after": "pub struct Actors {\n    pub f5_duplicate_angle: u16,\n",
         "expected_matches": 1
       },
       {
-        "path": "sm/src/game/actors/state.rs",
+        "path": "crates/sm_game/src/actors/state.rs",
         "before": "impl Clone for Actors {\n    fn clone(&self) -> Self {\n        Self {\n",
         "after": "impl Clone for Actors {\n    fn clone(&self) -> Self {\n        Self {\n            f5_duplicate_angle: self.f5_duplicate_angle,\n",
         "expected_matches": 1
       },
       {
         "path": "sm/src/game/actors/codec.rs",
-        "before": "pub(in crate::game) fn import_common(s: &mut Session, bytes: &[u8]) {\n    assert!(bytes.len() >= COMMON_END, \"short actor common import\");\n",
-        "after": "pub(in crate::game) fn import_common(s: &mut Session, bytes: &[u8]) {\n    assert!(bytes.len() >= COMMON_END, \"short actor common import\");\n    s.actors.f5_duplicate_angle = u16::from_le_bytes([bytes[0x97dc], bytes[0x97dd]]);\n",
+        "before": "pub(in crate::game) fn import_common(\n    s: &mut Session,\n    bytes: &impl Fn(usize) -> u8,\n    byte_len: usize,\n) {\n    assert!(byte_len >= COMMON_END, \"short actor common import\");\n",
+        "after": "pub(in crate::game) fn import_common(\n    s: &mut Session,\n    bytes: &impl Fn(usize) -> u8,\n    byte_len: usize,\n) {\n    assert!(byte_len >= COMMON_END, \"short actor common import\");\n    s.actors.f5_duplicate_angle = u16::from_le_bytes([bytes(0x97dc), bytes(0x97dd)]);\n",
         "expected_matches": 1
       },
       {
         "path": "sm/src/game/session_encoding.rs",
-        "before": "pub(crate) fn encode(s: &Session, bytes: &mut [u8]) {\n    bytes[0x60b] = s.enemy_projectiles.spawn.angle;\n    visit(s, |at, value| {\n        bytes[at..at + 2].copy_from_slice(&value.to_le_bytes())\n    });\n    for (index, cell) in s.room.terrain.cells().iter().enumerate() {\n        bytes[0x16402 + index] = cell.behavior;\n    }\n}",
-        "after": "pub(crate) fn encode(s: &Session, bytes: &mut [u8]) {\n    bytes[0x60b] = s.enemy_projectiles.spawn.angle;\n    visit(s, |at, value| {\n        bytes[at..at + 2].copy_from_slice(&value.to_le_bytes())\n    });\n    for (index, cell) in s.room.terrain.cells().iter().enumerate() {\n        bytes[0x16402 + index] = cell.behavior;\n    }\n    bytes[0x97dc..0x97de].copy_from_slice(&s.actors.f5_duplicate_angle.to_le_bytes());\n}",
+        "before": "    for (index, cell) in s.room.terrain.cells().iter().enumerate() {\n        span(0x16402 + index, &[cell.behavior]);\n    }\n    s.presentation.encode_projection(&mut span);\n",
+        "after": "    for (index, cell) in s.room.terrain.cells().iter().enumerate() {\n        span(0x16402 + index, &[cell.behavior]);\n    }\n    span(0x97dc, &s.actors.f5_duplicate_angle.to_le_bytes());\n    s.presentation.encode_projection(&mut span);\n",
         "expected_matches": 1
+      },
+      {
+        "path": "sm/src/game/actors/snapshot.rs",
+        "before": "    Actors,\n    slots,\n    saved,\n",
+        "after": "    Actors,\n    f5_duplicate_angle,\n    slots,\n    saved,\n"
       }
     ],
     "assertion_source": "actor_owner_checks.rs",

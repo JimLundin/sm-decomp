@@ -199,13 +199,13 @@
     "edits": [
       {
         "path": "sm/src/game/session_runtime.rs",
-        "before": "        preflight_export(self.session(), self.game);\n        let state = self",
-        "after": "        preflight_export(self.session(), self.game);\n        let collision_stale_sequence = self.session().shared_sequence.clone();\n        let state = self"
+        "before": "        preflight_export(self.session(), self.game);\n        let mut mutation = self",
+        "after": "        preflight_export(self.session(), self.game);\n        let collision_stale_sequence = self.session().shared_sequence.clone();\n        let mut mutation = self"
       },
       {
         "path": "sm/src/game/session_runtime.rs",
-        "before": "        self.state = Some(import_session(self.game));",
-        "after": "        self.state = Some(import_session(self.game));\n        self.session_mut().shared_sequence = collision_stale_sequence;"
+        "before": "        mutation.finish(prepared).expect(\"Samus adoption rejected\");",
+        "after": "        mutation.finish(prepared).expect(\"Samus adoption rejected\");\n        self.session_mut().shared_sequence = collision_stale_sequence;"
       }
     ],
     "expected_values": [

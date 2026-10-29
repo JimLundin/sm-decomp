@@ -6,14 +6,14 @@
     "qualification": "exact_completed_trace",
     "edits": [
       {
-        "path": "sm/src/game/sm_90.rs",
-        "before": "            pt::finish_movement_and_palette(&mut runtime);\n            let frozen = runtime.inputs().frozen;\n            crate::game::samus_periodic_damage::apply(runtime.session_mut(), frozen)",
-        "after": "            let frozen = runtime.inputs().frozen;\n            let result = crate::game::samus_periodic_damage::apply(runtime.session_mut(), frozen);\n            pt::finish_movement_and_palette(&mut runtime);\n            result"
+        "path": "sm/src/game/player_update/mod.rs",
+        "before": "        transitions::finish_movement_and_palette(h);\n        if mode == FrameBetaMode::Gameplay {\n            // Gamma and settlement effects refresh this observation on return.\n            let frozen = h.inputs().frozen;\n            return samus_periodic_damage::apply(h.session_mut(), frozen);\n        }\n",
+        "after": "        if mode == FrameBetaMode::Gameplay {\n            // Gamma and settlement effects refresh this observation on return.\n            let frozen = h.inputs().frozen;\n            let result = samus_periodic_damage::apply(h.session_mut(), frozen);\n            transitions::finish_movement_and_palette(h);\n            return result;\n        }\n        transitions::finish_movement_and_palette(h);\n"
       },
       {
         "path": "sm/src/verification/player_settlement.rs",
-        "before": "            if game.g_ram.as_slice() != expected.as_slice() {\n                let at = game\n                    .g_ram\n                    .iter()\n                    .zip(&expected)\n                    .position(|(a, b)| a != b)\n                    .unwrap();\n                return Err(format!(\n                    \"settlement {id} RAM mismatch at {at:05x}: {:02x} != {:02x}\",\n                    game.g_ram[at], expected[at]\n                ));\n            }\n",
-        "after": "            let completed_matches = game.g_ram.as_slice() == expected.as_slice();\n"
+        "before": "            if (0..game.ram().len())\n                .map(|at| game.ram().read_byte(at))\n                .ne(expected.iter().copied())\n            {\n                let at = (0..game.ram().len())\n                    .map(|at| game.ram().read_byte(at))\n                    .zip(&expected)\n                    .position(|(a, b)| a != *b)\n                    .unwrap();\n                return Err(format!(\n                    \"settlement {id} RAM mismatch at {at:05x}: {:02x} != {:02x}\",\n                    game.ram().read_byte(at),\n                    expected[at]\n                ));\n            }\n",
+        "after": "            let completed_matches = (0..game.ram().len())\n                .map(|at| game.ram().read_byte(at))\n                .eq(expected.iter().copied());\n"
       },
       {
         "path": "sm/src/verification/player_settlement.rs",
@@ -36,8 +36,8 @@
       },
       {
         "path": "sm/src/verification/player_settlement.rs",
-        "before": "            if game.g_ram.as_slice() != expected.as_slice() {\n                let at = game\n                    .g_ram\n                    .iter()\n                    .zip(&expected)\n                    .position(|(a, b)| a != b)\n                    .unwrap();\n                return Err(format!(\n                    \"settlement {id} RAM mismatch at {at:05x}: {:02x} != {:02x}\",\n                    game.g_ram[at], expected[at]\n                ));\n            }\n",
-        "after": "            let completed_matches = game.g_ram.as_slice() == expected.as_slice();\n"
+        "before": "            if (0..game.ram().len())\n                .map(|at| game.ram().read_byte(at))\n                .ne(expected.iter().copied())\n            {\n                let at = (0..game.ram().len())\n                    .map(|at| game.ram().read_byte(at))\n                    .zip(&expected)\n                    .position(|(a, b)| a != *b)\n                    .unwrap();\n                return Err(format!(\n                    \"settlement {id} RAM mismatch at {at:05x}: {:02x} != {:02x}\",\n                    game.ram().read_byte(at),\n                    expected[at]\n                ));\n            }\n",
+        "after": "            let completed_matches = (0..game.ram().len())\n                .map(|at| game.ram().read_byte(at))\n                .eq(expected.iter().copied());\n"
       },
       {
         "path": "sm/src/verification/player_settlement.rs",

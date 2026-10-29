@@ -12,8 +12,8 @@
       },
       {
         "path": "sm/src/verification/player_transitions_composed.rs",
-        "before": "            if game.g_ram.as_slice() != expected.as_slice() {\n                let at = game\n                    .g_ram\n                    .iter()\n                    .zip(&expected)\n                    .position(|(a, b)| a != b)\n                    .unwrap();\n                return Err(format!(\n                    \"composed {id} full RAM differs at {at:05x}: actual {:02x}, expected {:02x}\",\n                    game.g_ram[at], expected[at]\n                ));\n            }\n",
-        "after": "            let completed_matches = game.g_ram.as_slice() == expected.as_slice();\n"
+        "before": "            if (0..game.ram().len())\n                .map(|at| game.ram().read_byte(at))\n                .ne(expected.iter().copied())\n            {\n                let at = (0..game.ram().len())\n                    .map(|at| game.ram().read_byte(at))\n                    .zip(&expected)\n                    .position(|(a, b)| a != *b)\n                    .unwrap();\n                return Err(format!(\n                    \"composed {id} full RAM differs at {at:05x}: actual {:02x}, expected {:02x}\",\n                    game.ram().read_byte(at),\n                    expected[at]\n                ));\n            }\n",
+        "after": "            let completed_matches = (0..game.ram().len())\n                .map(|at| game.ram().read_byte(at))\n                .eq(expected.iter().copied());\n"
       },
       {
         "path": "sm/src/verification/player_transitions_composed.rs",
@@ -36,8 +36,8 @@
       },
       {
         "path": "sm/src/verification/player_transitions_composed.rs",
-        "before": "            if game.g_ram.as_slice() != expected.as_slice() {\n                let at = game\n                    .g_ram\n                    .iter()\n                    .zip(&expected)\n                    .position(|(a, b)| a != b)\n                    .unwrap();\n                return Err(format!(\n                    \"composed {id} full RAM differs at {at:05x}: actual {:02x}, expected {:02x}\",\n                    game.g_ram[at], expected[at]\n                ));\n            }\n",
-        "after": "            let completed_matches = game.g_ram.as_slice() == expected.as_slice();\n"
+        "before": "            if (0..game.ram().len())\n                .map(|at| game.ram().read_byte(at))\n                .ne(expected.iter().copied())\n            {\n                let at = (0..game.ram().len())\n                    .map(|at| game.ram().read_byte(at))\n                    .zip(&expected)\n                    .position(|(a, b)| a != *b)\n                    .unwrap();\n                return Err(format!(\n                    \"composed {id} full RAM differs at {at:05x}: actual {:02x}, expected {:02x}\",\n                    game.ram().read_byte(at),\n                    expected[at]\n                ));\n            }\n",
+        "after": "            let completed_matches = (0..game.ram().len())\n                .map(|at| game.ram().read_byte(at))\n                .eq(expected.iter().copied());\n"
       },
       {
         "path": "sm/src/verification/player_transitions_composed.rs",
@@ -60,8 +60,8 @@
       },
       {
         "path": "sm/src/verification/player_transitions_composed.rs",
-        "before": "            if game.g_ram.as_slice() != expected.as_slice() {\n                let at = game\n                    .g_ram\n                    .iter()\n                    .zip(&expected)\n                    .position(|(a, b)| a != b)\n                    .unwrap();\n                return Err(format!(\n                    \"composed {id} full RAM differs at {at:05x}: actual {:02x}, expected {:02x}\",\n                    game.g_ram[at], expected[at]\n                ));\n            }\n",
-        "after": "            let completed_matches = game.g_ram.as_slice() == expected.as_slice();\n"
+        "before": "            if (0..game.ram().len())\n                .map(|at| game.ram().read_byte(at))\n                .ne(expected.iter().copied())\n            {\n                let at = (0..game.ram().len())\n                    .map(|at| game.ram().read_byte(at))\n                    .zip(&expected)\n                    .position(|(a, b)| a != *b)\n                    .unwrap();\n                return Err(format!(\n                    \"composed {id} full RAM differs at {at:05x}: actual {:02x}, expected {:02x}\",\n                    game.ram().read_byte(at),\n                    expected[at]\n                ));\n            }\n",
+        "after": "            let completed_matches = (0..game.ram().len())\n                .map(|at| game.ram().read_byte(at))\n                .eq(expected.iter().copied());\n"
       },
       {
         "path": "sm/src/verification/player_transitions_composed.rs",
