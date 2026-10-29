@@ -52,6 +52,7 @@ pub(in crate::game) mod phantoon_actions;
 pub(in crate::game) mod phantoon_motion;
 pub(in crate::game) mod population;
 pub(in crate::game) mod queries;
+pub(in crate::game) mod ridley_tables;
 pub(in crate::game) mod scheduling;
 pub(in crate::game) mod staging;
 

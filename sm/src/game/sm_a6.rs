@@ -19,6 +19,7 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a6::*;
 pub use crate::game::constants::bank_a9::*;
 
+use crate::game::actors::ridley_tables::{Ridley_Func_29, Ridley_Func_93};
 use crate::game::enemy_projectiles::{
     Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
 };
@@ -694,35 +695,6 @@ pub unsafe fn Ridley_Func_26(k: u16, j: u16, game: &mut Game) -> u8 {
     };
     Ridley_Func_124(rect, game)
 }
-pub unsafe fn Ridley_Func_29(game: &mut Game) {
-    unsafe {
-        let v0: i32 = word!(game.random_number) as i32 & 3;
-        let r18: u16 = crate::rtl::rom_table_word!(game, 0xa6b965, v0 as isize);
-        let r20: u16 = crate::rtl::rom_table_word!(game, 0xa6b96d, v0 as isize);
-        let E: i32 = 0;
-        let v2: u16 = (2 * (slot!(game, Enemy_Ridley[E].var_12) as i32 + 2)) as u16;
-        let v3: i32 = v2 as i32 >> 1;
-        word!(game.tilemap_stuff[7] = crate::rtl::rom_table_word!(game, 0xa6b94d, v3 as isize));
-        word!(game.tilemap_stuff[6] = crate::rtl::rom_table_word!(game, 0xa6b959, v3 as isize));
-        slot!(
-            game,
-            Enemy_Ridley[E].var_C =
-                *((RomPtr_A6 as unsafe fn(u16, &mut Game) -> *const u8)(r20, game)
-                    .offset(v2 as isize) as *mut u16)
-        );
-        let v4 = RomPtr_A6(r18, game);
-        let t: u16 = *(v4.offset(v2 as isize) as *mut u16);
-        slot!(
-            game,
-            Enemy_Ridley[E].var_B = (if slot!(game, Enemy_Ridley[E].var_B) & 0x8000 != 0 {
-                -(t as i32)
-            } else {
-                t as i32
-            }) as u16
-        );
-    }
-}
-
 macro_rules! reduce_ridley_axis_speed {
     ($game:ident, $velocity:ident, $reduced_velocity:ident, $enemy:ident, $velocity_field:ident) => {
         if $velocity != 0 {
@@ -2940,7 +2912,7 @@ pub unsafe fn Ridley_Func_90(out: *mut Point16U, game: &mut Game) -> u8 {
     }
 }
 pub unsafe fn Ridley_Func_92(game: &mut Game) {
-    unsafe {
+    {
         word! {game; tilemap_stuff[10] = 1; tilemap_stuff[11] = 16368; tilemap_stuff[12] = 16448;
         tilemap_stuff[13] = -1i32 as u16; tilemap_stuff[14] = -1i32 as u16;
         tilemap_stuff[9] = 240; tilemap_stuff[15] = 16; }
@@ -2959,24 +2931,6 @@ pub unsafe fn Ridley_Func_92(game: &mut Game) {
         }
     }
 }
-pub unsafe fn Ridley_Func_93(j: u16, k: u16, game: &mut Game) {
-    unsafe {
-        let mut dst: usize = j as i32 as usize;
-        let mut src = RomPtr_A6(k, game) as *const u16;
-        for _ in 0..7 {
-            match *src {
-                value => {
-                    let bytes = value.to_ne_bytes();
-                    game.ram().write_byte(dst, bytes[0]);
-                    game.ram().write_byte(dst + 1, bytes[1]);
-                }
-            }
-
-            dst += 20;
-            src = src.offset(1);
-        }
-    }
-}
 crate::forward_calls! { pub fn (game: &mut Game);
     Ridley_Func_95 => Ridley_Func_D3DC(0x8000, game);
 }
@@ -2988,7 +2942,7 @@ pub fn Ridley_Func_D3DC(a: u16, game: &mut Game) {
     }
 }
 pub unsafe fn Ridley_Func_96(game: &mut Game) {
-    unsafe {
+    {
         Ridley_Func_93(0x2026, addr_word_A6D37C as u16, game);
         let mut v1: u16 = 0;
         for _ in 0i16..7i16 {
