@@ -1,0 +1,14 @@
+[package]
+name = "sm_data"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "Super Metroid content: validated definitions imported from prepared data or the original ROM"
+
+# Content records only: no dependencies on sm, sm_game, the backend or devices.
+[dependencies]
+
+[lints.rust]
+warnings = { level = "deny", priority = -1 }
+unsafe_code = "forbid"
