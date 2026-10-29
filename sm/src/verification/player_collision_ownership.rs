@@ -431,12 +431,13 @@ unsafe fn snapshot(g: &mut Game, out: &mut Vec<u8>) {
             let snapshot_snes = snes;
             let snapshot_cpu = g.g_cpu;
             let snapshot_player = g.g_spc_player;
-            let (backend, ram, _, _, before) = g.ram_and_snapshots();
-            super::MakeSnapshot(
+            let (backend, ram, _, _, before, owner) = g.ram_and_owned_snapshots();
+            super::MakeSnapshotWithPlayerOwner(
                 before,
                 &*snapshot_snes,
                 &*snapshot_cpu,
                 snapshot_player,
+                owner,
                 ram,
                 backend,
             )
@@ -449,7 +450,7 @@ unsafe fn snapshot(g: &mut Game, out: &mut Vec<u8>) {
     }
     record(out, 1, 0, g);
     queue.restore(g);
-    unsafe { g.g_snapshot_before.player.restore(g.g_spc_player) };
+    unsafe { g.restore_native_player_snapshot(crate::game_state::PlayerSnapshotSource::Before) };
     let restore = g
         .actor_snapshots
         .before
@@ -461,7 +462,7 @@ unsafe fn snapshot(g: &mut Game, out: &mut Vec<u8>) {
         {
             let snapshot_snes = snes;
             let snapshot_cpu = g.g_cpu;
-            let (backend, ram, _, _, before) = g.ram_and_snapshots();
+            let (backend, ram, _, _, before, _) = g.ram_and_owned_snapshots();
             super::RestoreSnapshot(
                 before,
                 &mut *snapshot_snes,

@@ -578,7 +578,7 @@ expect = ["room:AC83"]
 [[segment]]
 id = "pickup-reserve"
 checkpoint = "reserve-147273.smvchk"
-checkpoint_sha256 = "e7819c1e6bcd659bcc78f4a3b2eeda1b2bc8eddb82d0a01c8c23636278922690"
+checkpoint_sha256 = "2a9ad8180ed92e938b4993d19d0ce1e0d33a83b56ffb779ca33aad62a40ccdad"
 inputs = "corpus-norfair-reserve.inputs"
 input_sha256 = "968f37d5218ea77d18ba81e5022ceca78b0c53be6b22f3602895e08904901c2d"
 start_frame = 147273
@@ -625,7 +625,7 @@ after_expectations = 120
 [[segment]]
 id = "save-death-reload"
 checkpoint = "save-before-kago.smvchk"
-checkpoint_sha256 = "143ea36d2bd154210bfba7c1b4b7f0d2e43ae92324b8a615b9f924c0b8c6c8c1"
+checkpoint_sha256 = "367f76eb25bb2691a9e025b5f59ab1bb36f1d46e2895811a93fed6f4cb5f02b1"
 inputs = "corpus-save-death-continue.inputs"
 input_sha256 = "af79d24c791c1414cd4b1b83f040da0787a2a69bd0d2c4d6b73fc667b7d74467"
 start_frame = 70000
@@ -639,7 +639,7 @@ after_expectations = 120
 [[segment]]
 id = "save-memory"
 checkpoint = "save-before-kago.smvchk"
-checkpoint_sha256 = "143ea36d2bd154210bfba7c1b4b7f0d2e43ae92324b8a615b9f924c0b8c6c8c1"
+checkpoint_sha256 = "367f76eb25bb2691a9e025b5f59ab1bb36f1d46e2895811a93fed6f4cb5f02b1"
 inputs = "corpus-speed-booster.inputs"
 input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
 start_frame = 70000
@@ -1026,7 +1026,7 @@ require_hit = ["coroutine.plm.message.completed"]
 [[segment]]
 id = "music-fir-selector10"
 checkpoint = "music-fir-before-input110076.smvchk"
-checkpoint_sha256 = "736b11de58a76ccfe9e9a5922f6da304b62c57d5c5274c247a97738965049bb5"
+checkpoint_sha256 = "b6c319c2b356f9e18f9494be37ef6a77f17f0cbf840b190697484e071e70768a"
 inputs = "corpus-norfair-reserve.inputs"
 input_sha256 = "968f37d5218ea77d18ba81e5022ceca78b0c53be6b22f3602895e08904901c2d"
 start_frame = 110076

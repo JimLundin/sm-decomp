@@ -1,5 +1,5 @@
 //! Untouched original CPU SaveToSram. Never calls the unaligned old Rust save body.
-use super::{Game, MakeSnapshot, RestoreSnapshot, Snapshot};
+use super::{Game, MakeSnapshotWithPlayerOwner, RestoreSnapshot, Snapshot};
 use crate::{flags_save_case as case, initial_state::InitialState, snes::cpu::cpu_getFlags};
 use std::collections::BTreeSet;
 fn offset(address: u32) -> usize {
@@ -79,12 +79,13 @@ pub(crate) unsafe fn with_initialized_state<T>(
             let snapshot_snes = game.g_snes;
             let snapshot_cpu = game.g_cpu;
             let snapshot_player = game.g_spc_player;
-            let (backend, ram, _, _, _) = game.ram_and_snapshots();
-            MakeSnapshot(
+            let (backend, ram, _, _, _, owner) = game.ram_and_owned_snapshots();
+            MakeSnapshotWithPlayerOwner(
                 &mut before,
                 &*snapshot_snes,
                 &*snapshot_cpu,
                 snapshot_player,
+                owner,
                 ram,
                 backend,
             )
@@ -121,7 +122,7 @@ pub(crate) unsafe fn with_initialized_state<T>(
         {
             let snapshot_snes = game.g_snes;
             let snapshot_cpu = game.g_cpu;
-            let (backend, ram, _, _, _) = game.ram_and_snapshots();
+            let (backend, ram, _, _, _, _) = game.ram_and_owned_snapshots();
             RestoreSnapshot(
                 &before,
                 &mut *snapshot_snes,
@@ -132,7 +133,9 @@ pub(crate) unsafe fn with_initialized_state<T>(
         };
         game.g_sram.write_bytes(0, &game_bytes);
         before.audio.restore(game.g_snes);
-        before.player.restore(game.g_spc_player);
+        game.restore_native_player_snapshot(crate::game_state::PlayerSnapshotSource::Local(
+            &before.player,
+        ));
         *game.g_cpu = cpu_before;
         (*game.g_snes).cpuCyclesLeft = cycles_before;
         (*game.g_snes).cpuMemOps = memory_before;

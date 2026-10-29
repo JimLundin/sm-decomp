@@ -5,7 +5,6 @@ use crate::ram_map::{slot, word};
 use crate::rom_patches::RomPatches;
 use crate::rtl::words;
 pub use crate::snes::registers::*;
-use crate::types::SpcPlayer;
 use ::core::ffi::{c_char, c_void};
 use ::core::mem::{MaybeUninit, size_of};
 use ::core::ptr::null_mut;
@@ -851,18 +850,6 @@ unsafe fn VerifySnapshotsEq(
 // Snapshot storage is separate from the live emulator allocations. Narrow
 // borrows let the compiler retain that distinction across the bulk copies.
 // RAM must be the selected backend's stable binding at both capture and restore.
-unsafe fn MakeSnapshot(
-    s: &mut Snapshot,
-    snes: &Snes,
-    c: &Cpu,
-    player: *mut SpcPlayer,
-    ram: &WorkRam,
-    backend: &crate::snes::snes::Backend,
-) {
-    unsafe {
-        MakeSnapshotWithPlayerOwner(s, snes, c, player, None, ram, backend);
-    }
-}
 unsafe fn MakeSnapshotWithPlayerOwner(
     s: &mut Snapshot,
     snes: &Snes,
@@ -1391,7 +1378,7 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
                 let game = restore.game();
                 let snes = game.g_snes;
                 let cpu = game.g_cpu;
-                let (backend, ram, _, _, before) = game.ram_and_snapshots();
+                let (backend, ram, _, _, before, _) = game.ram_and_owned_snapshots();
                 RestoreSnapshot(before, &mut *snes, &mut *cpu, ram, backend);
                 actor_restore.commit(game.actor_identity_mut());
                 restore
@@ -1494,7 +1481,7 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
                     let game = restore.game();
                     let snes = game.g_snes;
                     let cpu = game.g_cpu;
-                    let (backend, ram, _, _, before) = game.ram_and_snapshots();
+                    let (backend, ram, _, _, before, _) = game.ram_and_owned_snapshots();
                     RestoreSnapshot(before, &mut *snes, &mut *cpu, ram, backend);
                     actor_restore.commit(game.actor_identity_mut());
                     restore
@@ -1552,7 +1539,7 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
                     let game = restore.game();
                     let snes = game.g_snes;
                     let cpu = game.g_cpu;
-                    let (backend, ram, _, theirs, _) = game.ram_and_snapshots();
+                    let (backend, ram, _, theirs, _, _) = game.ram_and_owned_snapshots();
                     RestoreSnapshot(theirs, &mut *snes, &mut *cpu, ram, backend);
                     actor_restore.commit(game.actor_identity_mut());
                     restore

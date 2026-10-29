@@ -1,6 +1,6 @@
 //! Original-65816 alignment references; authored animation data is labelled.
 //! No invocation of the legacy Rust alignment-sensitive routines.
-use super::{Game, MakeSnapshot, RestoreSnapshot, Snapshot};
+use super::{Game, MakeSnapshotWithPlayerOwner, RestoreSnapshot, Snapshot};
 use crate::initial_state::InitialState;
 use crate::snes::cpu::cpu_getFlags;
 
@@ -252,12 +252,13 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             let snapshot_snes = game.g_snes;
             let snapshot_cpu = game.g_cpu;
             let snapshot_player = game.g_spc_player;
-            let (backend, ram, _, _, _) = game.ram_and_snapshots();
-            MakeSnapshot(
+            let (backend, ram, _, _, _, owner) = game.ram_and_owned_snapshots();
+            MakeSnapshotWithPlayerOwner(
                 &mut before,
                 &*snapshot_snes,
                 &*snapshot_cpu,
                 snapshot_player,
+                owner,
                 ram,
                 backend,
             )
@@ -504,7 +505,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
         {
             let snapshot_snes = game.g_snes;
             let snapshot_cpu = game.g_cpu;
-            let (backend, ram, _, _, _) = game.ram_and_snapshots();
+            let (backend, ram, _, _, _, _) = game.ram_and_owned_snapshots();
             RestoreSnapshot(
                 &before,
                 &mut *snapshot_snes,
@@ -514,7 +515,9 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             )
         };
         before.audio.restore(game.g_snes);
-        before.player.restore(game.g_spc_player);
+        game.restore_native_player_snapshot(crate::game_state::PlayerSnapshotSource::Local(
+            &before.player,
+        ));
         *game.g_cpu = cpu_before;
         (*game.g_snes).cpuCyclesLeft = cycles_before;
         (*game.g_snes).cpuMemOps = memory_ops_before;

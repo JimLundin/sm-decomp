@@ -31,12 +31,13 @@ pub(crate) unsafe fn run(game: &mut Game) -> Vec<u8> {
             let snapshot_snes = snes;
             let snapshot_cpu = game.g_cpu;
             let snapshot_player = game.g_spc_player;
-            let (backend, ram, _, _, before) = game.ram_and_snapshots();
-            super::MakeSnapshot(
+            let (backend, ram, _, _, before, owner) = game.ram_and_owned_snapshots();
+            super::MakeSnapshotWithPlayerOwner(
                 before,
                 &*snapshot_snes,
                 &*snapshot_cpu,
                 snapshot_player,
+                owner,
                 ram,
                 backend,
             )
@@ -49,7 +50,7 @@ pub(crate) unsafe fn run(game: &mut Game) -> Vec<u8> {
 
         // Match actual before-sidecar restoration order, including queue/player.
         queue.restore(game);
-        game.g_snapshot_before.player.restore(game.g_spc_player);
+        game.restore_native_player_snapshot(crate::game_state::PlayerSnapshotSource::Before);
         let restore = game
             .actor_snapshots
             .before
@@ -60,7 +61,7 @@ pub(crate) unsafe fn run(game: &mut Game) -> Vec<u8> {
         {
             let snapshot_snes = snes;
             let snapshot_cpu = game.g_cpu;
-            let (backend, ram, _, _, before) = game.ram_and_snapshots();
+            let (backend, ram, _, _, before, _) = game.ram_and_owned_snapshots();
             super::RestoreSnapshot(
                 before,
                 &mut *snapshot_snes,

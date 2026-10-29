@@ -1,6 +1,6 @@
 //! Actual normal-locomotion dispatch; initialized existing transition carrier.
 //! Authored content only; full RAM and existing effect observations are compared.
-use super::{Game, MakeSnapshot, RestoreSnapshot, Snapshot};
+use super::{Game, MakeSnapshotWithPlayerOwner, RestoreSnapshot, Snapshot};
 use crate::ram_map::{word_arrays as a, words as w};
 use crate::{
     initial_state::InitialState, player_transitions_rust_observer as observer, rom::RomImage,
@@ -660,12 +660,13 @@ pub unsafe fn capture(id: u32, original: &[u8], g: &mut Game) -> Result<Vec<u8>,
             let snapshot_snes = g.g_snes;
             let snapshot_cpu = g.g_cpu;
             let snapshot_player = g.g_spc_player;
-            let (backend, ram, _, _, _) = g.ram_and_snapshots();
-            MakeSnapshot(
+            let (backend, ram, _, _, _, owner) = g.ram_and_owned_snapshots();
+            MakeSnapshotWithPlayerOwner(
                 &mut before,
                 &*snapshot_snes,
                 &*snapshot_cpu,
                 snapshot_player,
+                owner,
                 ram,
                 backend,
             )
@@ -719,7 +720,7 @@ pub unsafe fn capture(id: u32, original: &[u8], g: &mut Game) -> Result<Vec<u8>,
         {
             let snapshot_snes = g.g_snes;
             let snapshot_cpu = g.g_cpu;
-            let (backend, ram, _, _, _) = g.ram_and_snapshots();
+            let (backend, ram, _, _, _, _) = g.ram_and_owned_snapshots();
             RestoreSnapshot(
                 &before,
                 &mut *snapshot_snes,
@@ -729,7 +730,9 @@ pub unsafe fn capture(id: u32, original: &[u8], g: &mut Game) -> Result<Vec<u8>,
             )
         };
         before.audio.restore(g.g_snes);
-        before.player.restore(g.g_spc_player);
+        g.restore_native_player_snapshot(crate::game_state::PlayerSnapshotSource::Local(
+            &before.player,
+        ));
         *g.g_cpu = cpu_before;
         (*g.g_snes).cpuCyclesLeft = cycles_before;
         (*g.g_snes).cpuMemOps = memory_ops_before;

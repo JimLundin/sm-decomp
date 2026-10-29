@@ -411,19 +411,6 @@ impl Game {
         (&self.ram, &mut self.state_recorder)
     }
 
-    pub(crate) fn ram_and_snapshots(
-        &mut self,
-    ) -> (
-        &crate::snes::snes::Backend,
-        &WorkRam,
-        &mut Snapshot,
-        &mut Snapshot,
-        &mut Snapshot,
-    ) {
-        let (backend, ram, mine, theirs, before, _) = self.ram_and_owned_snapshots();
-        (backend, ram, mine, theirs, before)
-    }
-
     pub(crate) fn ram_and_owned_snapshots(
         &mut self,
     ) -> (
