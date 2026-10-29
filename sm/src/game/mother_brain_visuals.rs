@@ -2,7 +2,7 @@
 use crate::game::constants::bank_86::*;
 use crate::game::enemy_projectiles::SpawnEprojWithRoomGfx;
 use crate::game::music::QueueSfx2_Max6;
-use crate::game::palette_copies::WriteColorsToPalette;
+use crate::game::palette_copies::copy_rom_colors_to_palette;
 use crate::game::prelude::*;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::ram_map::{checked_word, slot};
@@ -39,21 +39,21 @@ pub unsafe fn fade(kind: Fade, frame: u16, game: &mut Game) -> u8 {
         }
         match kind {
             Fade::FakeDeathToGray | Fade::FakeDeathFromGray => {
-                WriteColorsToPalette(0x122, 0xad, source, colors, game);
+                copy_rom_colors_to_palette(0x122, 0xad, source, colors, game);
             }
-            Fade::RealDeathToGray => WriteColorsToPalette(0x1e2, 0xad, source, colors, game),
+            Fade::RealDeathToGray => copy_rom_colors_to_palette(0x1e2, 0xad, source, colors, game),
             Fade::LightsOn => {
-                WriteColorsToPalette(0x62, 0xad, source, colors, game);
-                WriteColorsToPalette(0xa2, 0xad, source.wrapping_add(28), colors, game);
+                copy_rom_colors_to_palette(0x62, 0xad, source, colors, game);
+                copy_rom_colors_to_palette(0xa2, 0xad, source.wrapping_add(28), colors, game);
             }
             _ => {
-                WriteColorsToPalette(0x82, 0xad, source, colors, game);
-                WriteColorsToPalette(0x122, 0xad, source, colors, game);
+                copy_rom_colors_to_palette(0x82, 0xad, source, colors, game);
+                copy_rom_colors_to_palette(0x122, 0xad, source, colors, game);
                 let tail = source.wrapping_add(colors * 2);
                 if matches!(kind, Fade::ToBlack) {
-                    WriteColorsToPalette(0x162, 0xad, tail, colors, game);
+                    copy_rom_colors_to_palette(0x162, 0xad, tail, colors, game);
                 } else {
-                    WriteColorsToPalette(0x168, 0xad, tail, 5, game);
+                    copy_rom_colors_to_palette(0x168, 0xad, tail, 5, game);
                     // The original accent write targets $017c, outside the palette buffer.
                     let accent = *(RomPtr_AD(tail.wrapping_add(10), game) as *const u16);
                     game.ram().copy_in(0x17c, &accent.to_ne_bytes());
@@ -80,7 +80,7 @@ pub unsafe fn update_health_palette(game: &mut Game) {
             3
         };
         for destination in [0x82, 0x122] {
-            WriteColorsToPalette(
+            copy_rom_colors_to_palette(
                 destination,
                 0xad,
                 crate::rtl::rom_table_word!(game, 0xade6a2, level),
@@ -88,7 +88,7 @@ pub unsafe fn update_health_palette(game: &mut Game) {
                 game,
             );
         }
-        WriteColorsToPalette(
+        copy_rom_colors_to_palette(
             0x162,
             0xad,
             crate::rtl::rom_table_word!(game, 0xade742, level),
@@ -101,7 +101,7 @@ pub unsafe fn update_health_palette(game: &mut Game) {
 pub unsafe fn lights_off(game: &mut Game) {
     {
         for destination in [0x62, 0xa2] {
-            WriteColorsToPalette(destination, 0xad, 61999, 14, game);
+            copy_rom_colors_to_palette(destination, 0xad, 61999, 14, game);
         }
     }
 }

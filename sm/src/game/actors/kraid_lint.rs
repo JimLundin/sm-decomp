@@ -1,6 +1,5 @@
 //! Kraid's belly-lint contact with Samus against the hitbox at $A7:92B7.
 #![forbid(unsafe_code)]
-#![allow(non_snake_case)]
 use crate::game::actors::{self, api::DeathHandling};
 use crate::game::constants::enemy_properties::kEnemyProps_Tangible;
 use crate::game::enemy_layouts::KraidLayout as Kraid;
@@ -20,7 +19,8 @@ fn hitbox(field: usize, game: &mut Game) -> i32 {
 
 /// Push Samus out of the lint's box, clamp her extra displacement and make the
 /// lint tangible; sign tests are on the low 16 bits as in the original.
-pub(crate) fn Kraid_EnemyTouch_Lint(k: u16, game: &mut Game) {
+/// Was Kraid_EnemyTouch_Lint.
+pub(crate) fn lint_touch_samus(k: u16, game: &mut Game) {
     let e = i32::from(k);
     if slot!(game, Kraid[e].base.properties) as i32 & kEnemyProps_Tangible as i32 != 0
         || word!(game.samus_invincibility_timer) != 0

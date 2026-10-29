@@ -1,6 +1,5 @@
 //! Palette copies from cartridge words, read through the native ROM image.
 #![forbid(unsafe_code)]
-#![allow(non_snake_case)]
 use crate::game::session_runtime::native_record;
 use crate::game_state::Game;
 use crate::ram_map::word;
@@ -26,12 +25,20 @@ fn copy(
         }
     }
 }
-pub(crate) fn WriteColorsToPalette(k: u16, bank: u8, source: u16, count: u16, game: &mut Game) {
+/// Was WriteColorsToPalette.
+pub(crate) fn copy_rom_colors_to_palette(
+    k: u16,
+    bank: u8,
+    source: u16,
+    count: u16,
+    game: &mut Game,
+) {
     copy(k, bank, source, count, game, |game, i, value| {
         word!(game.palette_buffer[i] = value)
     });
 }
-pub(crate) fn WriteColorsToTargetPalette(
+/// Was WriteColorsToTargetPalette.
+pub(crate) fn copy_rom_colors_to_target_palette(
     bank: u8,
     k: u16,
     source: u16,

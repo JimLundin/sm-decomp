@@ -1,6 +1,5 @@
 //! VRAM write-queue entries copied from cartridge tables through the native image.
 #![forbid(unsafe_code)]
-#![allow(non_snake_case)]
 use crate::game::constants::bank_a6::{addr_byte_A6C15D, addr_stru_A6C3B8};
 use crate::game::session_runtime::native_record as read;
 use crate::game_state::Game;
@@ -28,13 +27,15 @@ fn push(entry: &RomRecord, game: &mut Game) {
 }
 
 /// Ceres Ridley's single getaway tile entry.
-pub(crate) fn Ridley_Func_59(game: &mut Game) {
+/// Was Ridley_Func_59.
+pub(crate) fn queue_getaway_tiles(game: &mut Game) {
     let entry = read(0xa6, addr_byte_A6C15D as u16, game);
     push(&entry, game);
 }
 
 /// Every entry of the table at $A6:C3B8 up to its zero size, then one tail store.
-pub(crate) fn Ridley_Func_62(game: &mut Game) {
+/// Was Ridley_Func_62.
+pub(crate) fn queue_escape_tile_table(game: &mut Game) {
     let (mut cursor, mut tail) = (
         addr_stru_A6C3B8 as u16,
         usize::from(word!(game.vram_write_queue_tail)),
@@ -52,7 +53,8 @@ pub(crate) fn Ridley_Func_62(game: &mut Game) {
 }
 
 /// One escape-timer entry per call; 1 once the table at enemy 0's cursor is exhausted.
-pub(crate) fn ProcessEscapeTimerTileTransfers(game: &mut Game) -> u8 {
+/// Was ProcessEscapeTimerTileTransfers.
+pub(crate) fn queue_escape_timer_tiles(game: &mut Game) -> u8 {
     let cursor = slot!(game, EnemyData[0].ai_var_E);
     let entry = read(0xa6, cursor, game);
     if entry.word(0) != 0 {
@@ -67,7 +69,8 @@ pub(crate) fn ProcessEscapeTimerTileTransfers(game: &mut Game) -> u8 {
 
 /// One Mother Brain sprite-tile entry per call from `bank`, starting at `start`;
 /// 1 and a cleared cursor once the table is exhausted.
-pub(crate) fn ProcessSpriteTilesTransfers(bank: u8, start: u16, game: &mut Game) -> u8 {
+/// Was ProcessSpriteTilesTransfers.
+pub(crate) fn queue_mother_brain_sprite_tiles(bank: u8, start: u16, game: &mut Game) -> u8 {
     let mut cursor = slot!(game, Enemy_MotherBrain[0].var_22);
     if cursor == 0 {
         cursor = start;

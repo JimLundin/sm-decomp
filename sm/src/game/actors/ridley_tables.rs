@@ -1,6 +1,5 @@
 //! Ridley's table reads from bank $A6: tail-speed picks and RAM word fans.
 #![forbid(unsafe_code)]
-#![allow(non_snake_case)]
 use crate::game::enemy_layouts::EnemyLayout104 as Ridley;
 use crate::game::session_runtime::native_record;
 use crate::game_state::Game;
@@ -10,7 +9,8 @@ use crate::rtl::rom_table_word;
 /// Pick a random speed row: two row pointers by `random & 3`, the scroll pair
 /// by Ridley's step, then var_C from the first row and a signed var_B from the
 /// second, each through its own native fetch.
-pub(crate) fn Ridley_Func_29(game: &mut Game) {
+/// Was Ridley_Func_29.
+pub(crate) fn pick_random_speed_row(game: &mut Game) {
     let pick = (word!(game.random_number) & 3) as isize;
     let r18 = rom_table_word!(game, 0xa6b965, pick);
     let r20 = rom_table_word!(game, 0xa6b96d, pick);
@@ -34,7 +34,8 @@ pub(crate) fn Ridley_Func_29(game: &mut Game) {
 }
 
 /// Copy seven native words from bank $A6 at `source` to RAM, 20 bytes apart.
-pub(crate) fn Ridley_Func_93(destination: u16, source: u16, game: &mut Game) {
+/// Was Ridley_Func_93.
+pub(crate) fn copy_words_to_ram_fan(destination: u16, source: u16, game: &mut Game) {
     let words = native_record(0xa6, source, game);
     for i in 0..7 {
         let bytes = words.word(2 * i).to_ne_bytes();

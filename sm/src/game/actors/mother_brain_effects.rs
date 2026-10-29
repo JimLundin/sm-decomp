@@ -4,7 +4,7 @@
 use crate::game::constants::bank_86::addr_kEproj_MotherBrainDeathExplosion;
 use crate::game::enemy_projectiles::SpawnEprojWithRoomGfx;
 use crate::game::music::QueueSfx3_Max3;
-use crate::game::palette_copies::WriteColorsToPalette;
+use crate::game::palette_copies::copy_rom_colors_to_palette;
 use crate::game::session_runtime::native_record;
 use crate::game_state::Game;
 use crate::ram_map::slot;
@@ -16,9 +16,9 @@ use crate::types::{Enemy_MotherBrain, Point16U};
 const RAINBOW: u32 = 0xade434;
 
 pub(crate) fn MotherBrain_WritePalette(j: u16, game: &mut Game) {
-    WriteColorsToPalette(0x82, 0xad, j, 15, game);
-    WriteColorsToPalette(0x122, 0xad, j, 15, game);
-    WriteColorsToPalette(0x162, 0xad, j.wrapping_add(30), 15, game);
+    copy_rom_colors_to_palette(0x82, 0xad, j, 15, game);
+    copy_rom_colors_to_palette(0x122, 0xad, j, 15, game);
+    copy_rom_colors_to_palette(0x162, 0xad, j.wrapping_add(30), 15, game);
 }
 
 /// Every other frame, follow the chain from the beam's cursor to its next
