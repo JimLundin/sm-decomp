@@ -19,6 +19,7 @@ pub mod kraid;
 pub mod message;
 pub mod phantoon;
 pub mod raster;
+pub mod ridley;
 pub mod sand_heap;
 pub mod save_slots;
 pub mod scene;

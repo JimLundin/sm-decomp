@@ -250,6 +250,8 @@ pub struct Game {
     pub(crate) area_select_palettes: Option<crate::game::menu_tilemap::ImportedAreaPalettes>,
     /// Imported from `loaded_rom` by `register_rom`; see game::ceres_ridley_tables.
     pub(crate) ceres_ridley_tables: crate::game::ceres_ridley_tables::ImportedCeresRidley,
+    /// Imported from `loaded_rom` by `register_rom`; see game::ridley_data.
+    pub(crate) ridley_tables: crate::game::ridley_data::ImportedRidley,
     samus_binding: Option<Arc<SamusBinding>>,
     samus_authority: SamusAuthority,
     samus_mutation_depth: usize,
@@ -1231,6 +1233,7 @@ impl Game {
         self.intro_palette = crate::game::intro_pages::import_intro_palette(&image);
         self.area_select_palettes = crate::game::menu_tilemap::import_area_palettes(&image);
         self.ceres_ridley_tables = crate::game::ceres_ridley_tables::import(&image);
+        self.ridley_tables = crate::game::ridley_data::import(&image);
         self.loaded_rom = Some(image);
     }
 
@@ -1484,6 +1487,7 @@ impl Game {
             flame_rain: None,
             phantoon_timers: None,
             ceres_ridley_tables: Default::default(),
+            ridley_tables: Default::default(),
             samus_binding: None,
             samus_authority: SamusAuthority::LegacyUnrouted,
             samus_mutation_depth: 0,
