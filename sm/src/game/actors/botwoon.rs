@@ -13,6 +13,7 @@ use crate::game::enemy_projectiles::{
 };
 use crate::game::enemy_speeds::enemy_speed;
 use crate::game::gameplay_flag_runtime::{SetBossBitForCurArea, boss_byte_at};
+use crate::game::imported::Imported;
 use crate::game::music::{QueueMusic_Delayed8, QueueSfx2_Max6};
 use crate::game::room_mechanisms::{open_passage, spawn_hardcoded};
 use crate::game::session_runtime::{
@@ -21,9 +22,10 @@ use crate::game::session_runtime::{
 use crate::game::sprite_effect_runtime::create_sprite;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
-use crate::rom::{RomRecord, lorom_offset};
+use crate::rom::{RomImage, RomRecord, lorom_offset};
 use crate::rtl::rom_table_word;
 use crate::types::{Point16U, SpawnHardcodedPlmArgs};
+use sm_data::botwoon_holes::{ADDRESS as HOLES, BYTES as HOLE_BYTES, BotwoonHoles, Hole};
 
 fn initialize_living(e: i32, game: &mut Game) {
     slot!(game, Boss[e].var_A = 24);
@@ -276,6 +278,28 @@ fn select_path(k: u16, game: &mut Game) {
             + 4 * i32::from(slot!(game, Boss[e].var_37))) as u16
     );
 }
+pub(crate) type ImportedHoles = Imported<BotwoonHoles>;
+
+pub(crate) fn import_holes(image: &RomImage) -> Option<ImportedHoles> {
+    Imported::import(image, HOLES, HOLE_BYTES, BotwoonHoles::import)
+}
+
+/// The hole whose four words start at word `index` of $B3:949B. The record
+/// serves a hole while the loaded image is the imported allocation; any other
+/// image or index runs the original indexed loads.
+fn hole(game: &Game, index: isize) -> Hole {
+    let rom = game.loaded_rom.as_ref().expect("ROM must be loaded");
+    Imported::from(&game.botwoon_holes, rom)
+        .filter(|_| index % 4 == 0)
+        .and_then(|holes| holes.hole(usize::try_from(index / 4).ok()?))
+        .unwrap_or_else(|| Hole {
+            left: rom_table_word!(game, 0xb3949b, index),
+            right: rom_table_word!(game, 0xb3949b, index + 1),
+            top: rom_table_word!(game, 0xb3949b, index + 2),
+            bottom: rom_table_word!(game, 0xb3949b, index + 3),
+        })
+}
+
 fn clamp_delta(value: u16) -> u16 {
     if (i32::from(value) - 256) & 0x8000 == 0 {
         255
@@ -287,14 +311,12 @@ fn clamp_delta(value: u16) -> u16 {
 }
 pub(crate) fn seek_hole(game: &mut Game) {
     let e = i32::from(word!(game.cur_enemy_index));
-    let index = (slot!(game, Boss[e].var_37) >> 1) as isize;
+    let target = hole(game, (slot!(game, Boss[e].var_37) >> 1) as isize);
     let x = clamp_delta(
-        (i32::from(rom_table_word!(game, 0xb3949b, index)) + 4
-            - i32::from(slot!(game, Boss[e].base.x_pos))) as u16,
+        (i32::from(target.left) + 4 - i32::from(slot!(game, Boss[e].base.x_pos))) as u16,
     );
     let y = clamp_delta(
-        (i32::from(rom_table_word!(game, 0xb3949b, index + 2)) + 4
-            - i32::from(slot!(game, Boss[e].base.y_pos))) as u16,
+        (i32::from(target.top) + 4 - i32::from(slot!(game, Boss[e].base.y_pos))) as u16,
     );
     let angle = api::angle_from_delta(x, y);
     let e = i32::from(word!(game.cur_enemy_index));
@@ -469,16 +491,15 @@ pub(crate) fn detect_portal(k: u16, game: &mut Game) {
         return;
     }
     for index in [12, 8, 4, 0] {
+        let hole = hole(game, index);
+        let bounds = [hole.left, hole.right, hole.top, hole.bottom];
         if (0..4).all(|offset| {
             let coordinate = if offset < 2 {
                 slot!(game, Boss[e].base.x_pos)
             } else {
                 slot!(game, Boss[e].base.y_pos)
             };
-            ((coordinate as i16)
-                .wrapping_sub(rom_table_word!(game, 0xb3949b, index + offset) as i16)
-                >= 0)
-                == (offset % 2 == 0)
+            ((coordinate as i16).wrapping_sub(bounds[offset] as i16) >= 0) == (offset % 2 == 0)
         }) {
             slot!(game, Boss[e].var_35 = 1);
             slot!(game, Boss[e].var_33, |old| old ^ 1);

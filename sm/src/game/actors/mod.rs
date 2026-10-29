@@ -4,7 +4,7 @@ pub(in crate::game) mod access;
 pub(in crate::game) mod api;
 pub(in crate::game) mod bang;
 pub(in crate::game) mod beetom;
-pub(in crate::game) mod botwoon;
+pub(crate) mod botwoon;
 pub(in crate::game) mod botwoon_death;
 pub(in crate::game) mod content;
 pub(in crate::game) mod diving_enemies;

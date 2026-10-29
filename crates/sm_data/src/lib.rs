@@ -6,6 +6,7 @@
 #![forbid(unsafe_code)]
 
 pub mod area_select_palettes;
+pub mod botwoon_holes;
 pub mod ceres_elevator;
 pub mod demo_rooms;
 pub mod enemy_speeds;
