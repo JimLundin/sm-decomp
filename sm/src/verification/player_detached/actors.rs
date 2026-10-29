@@ -37,6 +37,5 @@ mod fixture;
 #[path = "../actor_palette_checks.rs"]
 mod palette_checks;
 
-#[path = "../../game/actors/overlap.rs"]
-mod overlap;
+use sm_game::actors::overlap;
 pub(in crate::game) use overlap::axis_overlaps;

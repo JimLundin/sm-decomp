@@ -1,0 +1,15 @@
+[package]
+name = "sm_game"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "Super Metroid gameplay: owned, deterministic rules with no emulator, RAM or device access"
+
+# No dependencies on the sm crate, its backend, native code or devices.
+# CI checks that this package's dependency tree stays empty except sm_data.
+[dependencies]
+
+[lints.rust]
+warnings = { level = "deny", priority = -1 }
+unsafe_code = "forbid"

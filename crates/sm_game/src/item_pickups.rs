@@ -2,7 +2,7 @@
 #![forbid(unsafe_code)]
 
 #[derive(Clone, Copy)]
-pub(crate) enum PickupKind {
+pub enum PickupKind {
     Beam,
     Equipment,
     Grapple,
@@ -15,19 +15,19 @@ pub(crate) enum PickupKind {
 }
 
 #[derive(Clone, Default, Debug, PartialEq)]
-pub(crate) struct Loadout {
+pub struct Loadout {
     pub owned: u16,
     pub active: u16,
 }
 
 #[derive(Clone, Default, Debug, PartialEq)]
-pub(crate) struct Supply {
+pub struct Supply {
     pub current: u16,
     pub maximum: u16,
 }
 
 #[derive(Clone, Default, Debug, PartialEq)]
-pub(crate) struct Inventory {
+pub struct Inventory {
     pub equipment: Loadout,
     pub beams: Loadout,
     pub hyper_beam: u16,
@@ -40,7 +40,7 @@ pub(crate) struct Inventory {
     pub ammunition: [Supply; 3],
 }
 
-pub(crate) enum VisualUpdate {
+pub enum VisualUpdate {
     None,
     Beams,
     Grapple,
@@ -50,14 +50,14 @@ pub(crate) enum VisualUpdate {
     PowerBombs,
 }
 
-pub(crate) struct PickupEffects {
+pub struct PickupEffects {
     pub visual: VisualUpdate,
     /// None means read the script's message byte after visual and music effects.
     pub message: Option<u16>,
 }
 
 impl Inventory {
-    pub(crate) fn collect(&mut self, kind: PickupKind, amount: u16) -> PickupEffects {
+    pub fn collect(&mut self, kind: PickupKind, amount: u16) -> PickupEffects {
         use PickupKind::*;
         match kind {
             Beam => {
@@ -116,7 +116,7 @@ pub enum Resource {
 
 impl Inventory {
     /// Restore into the sole inventory, preserving signed SNES comparisons.
-    pub(crate) fn restore(&mut self, resource: Resource, amount: u16) {
+    pub fn restore(&mut self, resource: Resource, amount: u16) {
         match resource {
             Resource::Health => {
                 let health = self.health.current.wrapping_add(amount);

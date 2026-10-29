@@ -21,6 +21,8 @@ HOST_TRIPLE = "x86_64-pc-windows-gnu" if WINDOWS else "x86_64-unknown-linux-gnu"
 def source_hash(root):
     """Bind cached replays to source contents, including added/deleted modules."""
     paths = set((root / "sm").rglob("*.rs"))
+    paths.update((root / "crates").rglob("*.rs"))
+    paths.update((root / "crates").glob("*/Cargo.toml"))
     paths.update((root / "sm" / "src").rglob("*.c"))
     paths.update((root / "sm" / "src").rglob("*.h"))
     paths.add(root / "tools/install_native_config.py")
@@ -65,6 +67,9 @@ def library_source_paths(root):
     paths = {path.relative_to(root).as_posix()
              for path in (root / "sm" / "src").rglob("*")
              if path.suffix in (".rs", ".c", ".h")}
+    # Target-package crates are compiled into the same verifier library.
+    paths.update(path.relative_to(root).as_posix()
+                 for path in (root / "crates").glob("*/src/**/*.rs"))
     paths.difference_update(("sm/src/main.rs", "sm/src/verify.rs",
                              "sm/src/verify_dll.rs", "sm/src/verify/checkpoint.rs",
                              "sm/src/verify/seed.rs"))
@@ -305,10 +310,17 @@ def build(root, rustc, use_cargo=None, frontend=False):
         except (OSError, ValueError):
             pass
     stamp.unlink(missing_ok=True)
+    game = output / "libsm_game.rlib"
+    subprocess.run(
+        common + (["-C", f"incremental={output / 'incremental-sm-game'}"] if incremental else [])
+        + ["--crate-name", "sm_game", "--crate-type", "rlib",
+                  "crates/sm_game/src/lib.rs", "-o", str(game)],
+        cwd=root, check=True,
+    )
     subprocess.run(
         common + (["-C", f"incremental={output / 'incremental-sm'}"] if incremental else [])
         + ["--crate-name", "sm", "--crate-type", "rlib", "--cfg", "sm_verify_dll",
-                  "sm/src/lib.rs", "-o", str(library)],
+                  "sm/src/lib.rs", "--extern", f"sm_game={game}", "-o", str(library)],
         cwd=root, check=True,
     )
     subprocess.run(
@@ -317,7 +329,8 @@ def build(root, rustc, use_cargo=None, frontend=False):
                   "--cfg", "sm_verify_dll",
                   *link,
                   "sm/src/verify_dll.rs",
-                  "--extern", f"sm={library}", "-o", str(dll)],
+                  "--extern", f"sm={library}", "-L", f"dependency={output}",
+                  "-o", str(dll)],
         cwd=root, env=dict(os.environ, SM_VERIFY_SOURCE_HASH=source), check=True,
     )
     if source_hash(root) != source:

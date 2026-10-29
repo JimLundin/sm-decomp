@@ -1,13 +1,13 @@
 //! Shared geometry and projectile eligibility for contact scans.
 #![forbid(unsafe_code)]
 #[derive(Clone, Copy)]
-pub(crate) enum HitboxEdge {
+pub enum HitboxEdge {
     Left,
     Right,
     Top,
     Bottom,
 }
-pub(crate) struct Bounds {
+pub struct Bounds {
     left: u16,
     right: u16,
     top: u16,
@@ -43,16 +43,16 @@ impl Bounds {
         }
     }
 }
-pub(crate) fn axis(a: u16, b: u16, radius: u16, enemy_radius: u16) -> bool {
+pub fn axis(a: u16, b: u16, radius: u16, enemy_radius: u16) -> bool {
     let distance = (a.wrapping_sub(b) as i16).wrapping_abs() as u16;
     i32::from(distance) - i32::from(radius) < i32::from(enemy_radius)
 }
 
-pub(crate) fn is_shot(kind: u16) -> bool {
+pub fn is_shot(kind: u16) -> bool {
     kind != 0 && kind & 0xf00 != 0x300 && kind & 0xf00 != 0x500 && kind & 0xf00 < 0x700
 }
 
-pub(crate) fn collision_span(position: u16, radius: u16) -> u16 {
+pub fn collision_span(position: u16, radius: u16) -> u16 {
     radius
         .wrapping_add(position)
         .wrapping_sub(1)

@@ -15,7 +15,7 @@ import actor_dll_mutations
 import player_transitions_dll_mutations
 
 
-INVENTORY = "sm/src/game/item_pickups.rs"
+INVENTORY = "crates/sm_game/src/item_pickups.rs"
 SESSION_RUNTIME = "sm/src/game/session_runtime.rs"
 SCHEDULER = "sm/src/game/room_mechanisms/scheduler.rs"
 COMMANDS = "sm/src/game/room_mechanisms/commands.rs"
