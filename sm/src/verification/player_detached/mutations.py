@@ -207,30 +207,30 @@ FLAGS_MUTATIONS = (
     ('flags_event_write_discarded', 'plm_visual',
      'flags.plm.animation_event_alias',
      (
-         ('progress_flags.rs',
-          '    mark(host, Column::Events, event);',
-          '    prepare_flag_mask(host.session_mut(), event);'),
+         ('crates/sm_game/src/progress.rs',
+          '    mark(host, FlagColumn::Events, event);',
+          '    prepare_flag_mask(host.compatibility_mut(), event);'),
      )),
     ('flags_event_keeps_stale_high_mask', 'plm_visual',
      'flags.scratch.full_mask',
      (
-         ('progress_flags.rs',
-          '    session.flag_compatibility.bitmask = 1u16 << (bit & 7);',
-          '    session.flag_compatibility.bitmask = (session.flag_compatibility.bitmask & 0xff00) | (1u16 << (bit & 7));'),
+         ('crates/sm_game/src/progress.rs',
+          '    compatibility.bitmask = 1u16 << (bit & 7);',
+          '    compatibility.bitmask = (compatibility.bitmask & 0xff00) | (1u16 << (bit & 7));'),
      )),
     ('flags_boss_clears_high_mask', 'plm_visual',
      'flags.scratch.boss_low_only',
      (
-         ('progress_flags.rs',
-          '        (session.flag_compatibility.bitmask & 0xff00) | u16::from(low);',
-          '        u16::from(low);'),
+         ('crates/sm_game/src/progress.rs',
+          '    compatibility.bitmask = (compatibility.bitmask & 0xff00) | u16::from(low);',
+          '    compatibility.bitmask = u16::from(low);'),
      )),
     ('flags_room_object_mark_uses_item_map', 'collections',
      'flags.plm.collection_identity',
      (
-         ('progress_flags.rs',
-          '    mark(host, Column::RoomObjects, object);',
-          '    mark(host, Column::Items, object);'),
+         ('crates/sm_game/src/progress.rs',
+          '    mark(host, FlagColumn::RoomObjects, object);',
+          '    mark(host, FlagColumn::Items, object);'),
      )),
     ('flags_rng_caches_prior_scratch', 'rng_scratch',
      'flags.eproj.rng_live_scratch',
@@ -245,35 +245,35 @@ FLAGS_MUTATIONS = (
     ('flags_query_uses_prior_mask', 'eye_door',
      'flags.eproj.eye_door_current_mask',
      (
-         ('progress_flags.rs',
-          '    let index = prepare_flag_mask(host.session_mut(), bit);\n    read(host, column, index) & host.session().flag_compatibility.bitmask as u8 != 0',
-          '    let mutation_mask = host.session().flag_compatibility.bitmask;\n    let index = prepare_flag_mask(host.session_mut(), bit);\n    read(host, column, index) & mutation_mask as u8 != 0'),
+         ('crates/sm_game/src/progress.rs',
+          '    let index = prepare_flag_mask(host.compatibility_mut(), bit);\n    read(host, column, index) & host.compatibility().bitmask as u8 != 0',
+          '    let mutation_mask = host.compatibility().bitmask;\n    let index = prepare_flag_mask(host.compatibility_mut(), bit);\n    read(host, column, index) & mutation_mask as u8 != 0'),
      )),
     ('flags_door_adjacent_drops_external_byte', 'door511',
      'flags.plm.door511_adjacent',
      (
-         ('progress_flags.rs',
+         ('crates/sm_game/src/progress.rs',
           '        None => host.door_adjacent_word_le(index as isize),',
           '        None => u16::from(bytes[usize::from(index)]),'),
      )),
     ('flags_door_adjacent_reads_before_mark', 'door511',
      'flags.plm.door511_adjacent',
      (
-         ('progress_flags.rs',
-          'pub(crate) fn open_door_and_read_adjacent_flags(host: &mut impl Host, door: u16) -> u16 {\n    let index = mark(host, Column::Doors, door);\n    let bytes = &host.session().gameplay_flags.opened_doors;\n    match bytes.get(usize::from(index)..usize::from(index) + 2) {\n        Some(pair) => u16::from_le_bytes([pair[0], pair[1]]),\n        None => host.door_adjacent_word_le(index as isize),\n    }\n}',
-          'pub(crate) fn open_door_and_read_adjacent_flags(host: &mut impl Host, door: u16) -> u16 {\n    let index = prepare_flag_mask(host.session_mut(), door);\n    let bytes = &host.session().gameplay_flags.opened_doors;\n    let before = match bytes.get(usize::from(index)..usize::from(index) + 2) {\n        Some(pair) => u16::from_le_bytes([pair[0], pair[1]]),\n        None => host.door_adjacent_word_le(index as isize),\n    };\n    mark(host, Column::Doors, door);\n    before\n}'),
+         ('crates/sm_game/src/progress.rs',
+          'pub fn open_door_and_read_adjacent_flags(host: &mut (impl FlagHost + ?Sized), door: u16) -> u16 {\n    let index = mark(host, FlagColumn::Doors, door);\n    let bytes = &host.flags().opened_doors;\n    match bytes.get(usize::from(index)..usize::from(index) + 2) {\n        Some(pair) => u16::from_le_bytes([pair[0], pair[1]]),\n        None => host.door_adjacent_word_le(index as isize),\n    }\n}',
+          'pub fn open_door_and_read_adjacent_flags(host: &mut (impl FlagHost + ?Sized), door: u16) -> u16 {\n    let index = prepare_flag_mask(host.compatibility_mut(), door);\n    let bytes = &host.flags().opened_doors;\n    let before = match bytes.get(usize::from(index)..usize::from(index) + 2) {\n        Some(pair) => u16::from_le_bytes([pair[0], pair[1]]),\n        None => host.door_adjacent_word_le(index as isize),\n    };\n    mark(host, FlagColumn::Doors, door);\n    before\n}'),
      )),
     ('flags_clamp_bit_index_to_events', 'aliases',
      'flags.alias.event_wide_index',
      (
-         ('progress_flags.rs',
+         ('crates/sm_game/src/progress.rs',
           '    bit >> 3\n}',
           '    (bit >> 3) & 7\n}'),
      )),
     ('flags_boss_boundary_drops_high_byte', 'aliases',
      'flags.alias.boss_word_cross_owner',
      (
-         ('progress_flags.rs',
+         ('crates/sm_game/src/progress.rs',
           '        None => host.boss_word(area, order),',
           '        None => host.boss_word(area, order) & 0xff,'),
      )),
@@ -324,18 +324,54 @@ ASSERTION = re.compile(
 SM_GAME = []
 
 
-def run(command, timeout, allow=()):
+def run(command, timeout, allow=(), externs=None):
     if command[0] == "rustc":
         flags = os.environ.get("CARGO_ENCODED_RUSTFLAGS")
         if flags is None:
             flags = os.environ.get("RUSTFLAGS", "").split()
         else:
             flags = flags.split("\x1f") if flags else []
-        command = [*command, *SM_GAME, *flags, "-D", "warnings", *allow]
+        command = [*command, *(SM_GAME if externs is None else externs), *flags, "-D", "warnings", *allow]
     return subprocess.run(
         command, capture_output=True, text=True, encoding="utf-8", errors="replace",
         timeout=timeout, check=False,
     )
+
+
+def apply_edit(name, copied, crates, relative, before, after):
+    # crates/... paths edit the copied target packages; others edit sm/src/game.
+    if relative.startswith("crates/"):
+        target = crates / relative.removeprefix("crates/")
+    else:
+        target = copied / "game" / relative
+    original = target.read_bytes().decode("utf-8")
+    if "\r\n" in original:
+        before, after = before.replace("\n", "\r\n"), after.replace("\n", "\r\n")
+    if original.count(before) != 1:
+        raise RuntimeError(f"{name}: mutation anchor must occur exactly once: {relative}")
+    target.write_bytes(original.replace(before, after, 1).encode("utf-8"))
+
+
+def mutant_crates(source, work, name, edits):
+    """A copy of the target packages when an edit reaches them, else None."""
+    if not any(relative.startswith("crates/") for relative, _, _ in edits):
+        return None
+    crates = work / name / "crates"
+    shutil.copytree(source.parent.parent / "crates", crates)
+    return crates
+
+
+def build_packages(crates, work, name):
+    externs = []
+    for crate in ("sm_data", "sm_game"):
+        library = work / name / f"lib{crate}.rlib"
+        built = run(["rustc", "--edition=2024", "-O", "--crate-name", crate, "--crate-type", "rlib",
+                     str(crates / crate / "src" / "lib.rs"), "-o", str(library)], 180,
+                    ("-A", "unused"), externs)
+        if built.returncode != 0:
+            raise RuntimeError(f"{name}: COMPILE ERROR in {crate}; not a killed mutant\n{built.stderr}")
+        externs += ["--extern", f"{crate}={library}"]
+    return externs
 
 
 def check(source, work, name, mutation=None, expected_assertion=None):
@@ -397,18 +433,16 @@ def check_visual(source, work, mutation, baseline_binary, family="visual"):
     print(f"{name}: selected baseline PASS", flush=True)
     copied = work / name / "src"
     shutil.copytree(source, copied)
+    crates = mutant_crates(source, work, name, edits)
     for relative, before, after in edits:
-        target = copied / "game" / relative
-        original = target.read_text(encoding="utf-8")
-        if original.count(before) != 1:
-            raise RuntimeError(f"{name}: mutation anchor must occur exactly once: {relative}")
-        target.write_text(original.replace(before, after, 1), encoding="utf-8")
+        apply_edit(name, copied, crates, relative, before, after)
+    externs = None if crates is None else build_packages(crates, work, name)
     binary = work / name / ("check.exe" if os.name == "nt" else "check")
     main = copied / "verification" / "player_detached" / "main.rs"
     # A mutant that deletes the last use of an item leaves it unused; the
     # baseline stays strict and mutants are judged only by execution.
     allow = () if mutation is None else ("-A", "unused")
-    compiled = run(["rustc", "--edition=2024", "-O", str(main), "-o", str(binary)], 180, allow)
+    compiled = run(["rustc", "--edition=2024", "-O", str(main), "-o", str(binary)], 180, allow, externs)
     if compiled.returncode != 0:
         raise RuntimeError(f"{name}: COMPILE ERROR; not a killed mutant\n{compiled.stderr}")
     print(f"{name}: compile PASS", flush=True)
