@@ -114,7 +114,7 @@ pub unsafe fn update_health_palette(game: &mut Game) {
                 destination,
                 0xad,
                 word(
-                    &game.mother_brain_tables.body_palettes,
+                    &game.mother_brain_visuals.body_palettes,
                     game,
                     BODY_PALETTES_ADDRESS,
                     level,
@@ -127,7 +127,7 @@ pub unsafe fn update_health_palette(game: &mut Game) {
             0x162,
             0xad,
             word(
-                &game.mother_brain_tables.back_leg_palettes,
+                &game.mother_brain_visuals.back_leg_palettes,
                 game,
                 BACK_LEG_PALETTES_ADDRESS,
                 level,
@@ -211,7 +211,7 @@ pub(crate) unsafe fn advance_rainbow_beam(game: &mut Game) {
 fn advance_rainbow_palette(game: &mut Game) {
     let index = (word!(game.hdma_object_A[0]) >> 1) as isize;
     let mut color = word(
-        &game.mother_brain_tables.rainbow,
+        &game.mother_brain_visuals.rainbow,
         game,
         RAINBOW_ADDRESS,
         index,
@@ -223,7 +223,7 @@ fn advance_rainbow_palette(game: &mut Game) {
         word!(game.hdma_object_A[0] += 1);
     } else {
         word!(game.hdma_object_A[0] = 0);
-        color = word(&game.mother_brain_tables.rainbow, game, RAINBOW_ADDRESS, 0);
+        color = word(&game.mother_brain_visuals.rainbow, game, RAINBOW_ADDRESS, 0);
     }
     game.ram().write_byte(0x74, color as u8 & 0x1f | 0x20);
     game.ram()

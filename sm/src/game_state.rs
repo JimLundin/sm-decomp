@@ -261,7 +261,7 @@ pub struct Game {
     /// Imported from `loaded_rom` by `register_rom`; see game::equipment_menu.
     pub(crate) equipment_screen: crate::game::equipment_menu::ImportedTables,
     /// Imported from `loaded_rom` by `register_rom`; see game::mother_brain_visuals.
-    pub(crate) mother_brain_tables: crate::game::mother_brain_visuals::ImportedTables,
+    pub(crate) mother_brain_visuals: crate::game::mother_brain_visuals::ImportedTables,
     /// Imported from `loaded_rom` by `register_rom`; see game::beam_windows.
     pub(crate) beam_gradients: crate::game::beam_windows::ImportedTables,
     /// Imported from `loaded_rom` by `register_rom`; see game::actors::escape_animals.
@@ -1274,7 +1274,7 @@ impl Game {
         self.crocomire = crate::game::actors::crocomire_reactions::import(&image);
         self.magdollite = crate::game::actors::norfair_lava_man::import(&image);
         self.equipment_screen = crate::game::equipment_menu::import(&image);
-        self.mother_brain_tables = crate::game::mother_brain_visuals::import(&image);
+        self.mother_brain_visuals = crate::game::mother_brain_visuals::import(&image);
         self.beam_gradients = crate::game::beam_windows::import(&image);
         self.escape_etecoons = crate::game::actors::escape_animals::import(&image);
         self.flame_rain = crate::game::phantoon_tables::import(&image);
@@ -1550,6 +1550,7 @@ impl Game {
             magdollite: Default::default(),
             equipment_screen: Default::default(),
             mother_brain_tables: Default::default(),
+            mother_brain_visuals: Default::default(),
             beam_gradients: Default::default(),
             escape_etecoons: Default::default(),
             flame_rain: None,
