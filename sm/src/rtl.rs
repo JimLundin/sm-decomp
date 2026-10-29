@@ -624,7 +624,7 @@ pub unsafe fn StateRecorder_ClearKeyLog(native_game: &mut Game) {
                 crate::audio_snapshot::PlayerSnapshot::INITIAL,
             ));
             snapshots.0.capture(game.g_snes);
-            snapshots.1.capture(game.g_spc_player);
+            game.capture_native_player_snapshot(&mut snapshots.1);
             // Replay restores the queue separately, so do not deliver it early.
             RtlSaveMusicStateToRam_Locked(game, false);
             Some(snapshots)
@@ -637,7 +637,9 @@ pub unsafe fn StateRecorder_ClearKeyLog(native_game: &mut Game) {
         }
         if let Some(snapshots) = live_audio {
             snapshots.0.restore(game.g_snes);
-            snapshots.1.restore(game.g_spc_player);
+            game.restore_native_player_snapshot(crate::game_state::PlayerSnapshotSource::Local(
+                &snapshots.1,
+            ));
         }
         recording_allocation(game.state_recorder.rebase());
         mutation

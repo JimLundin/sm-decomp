@@ -1,6 +1,6 @@
 use crate::execution::{Execution, HostContext};
 use crate::game::gameplay::{self, Entry};
-use crate::game_state::{Game, WorkRam};
+use crate::game_state::{Game, PlayerSnapshotSource, WorkRam};
 use crate::ram_map::{slot, word};
 use crate::rom_patches::RomPatches;
 use crate::rtl::words;
@@ -860,7 +860,20 @@ unsafe fn MakeSnapshot(
     backend: &crate::snes::snes::Backend,
 ) {
     unsafe {
-        s.player.capture(player);
+        MakeSnapshotWithPlayerOwner(s, snes, c, player, None, ram, backend);
+    }
+}
+unsafe fn MakeSnapshotWithPlayerOwner(
+    s: &mut Snapshot,
+    snes: &Snes,
+    c: &Cpu,
+    player: *mut crate::types::SpcPlayer,
+    owner: Option<&mut crate::spc_player::NativePlayer>,
+    ram: &WorkRam,
+    backend: &crate::snes::snes::Backend,
+) {
+    unsafe {
+        s.player.capture_with_owner(owner, player);
         s.audio.capture(snes);
         s.ppu = *snes.ppu;
         s.cpu = *c;
@@ -1324,8 +1337,8 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
             let snes = game.g_snes;
             let cpu = game.g_cpu;
             let player = game.g_spc_player;
-            let (backend, ram, _, _, before) = game.ram_and_snapshots();
-            MakeSnapshot(before, &*snes, &*cpu, player, ram, backend);
+            let (backend, ram, _, _, before, owner) = game.ram_and_owned_snapshots();
+            MakeSnapshotWithPlayerOwner(before, &*snes, &*cpu, player, owner, ram, backend);
         }
         game.actor_snapshots.before = Some(game.capture_actor_snapshot());
         let samus_before = game.capture_samus_snapshot();
@@ -1337,7 +1350,7 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
         let apu_queue_before = queue_before.size;
         loop {
             queue_before.restore(game);
-            game.g_snapshot_before.player.restore(game.g_spc_player);
+            game.restore_native_player_snapshot(PlayerSnapshotSource::Before);
             game.g_snapshot_theirs.apu_upload_count = 0;
             game.g_snapshot_theirs.apu_startup_upload = false;
             (*game.g_snes).runningWhichVersion = 1;
@@ -1347,8 +1360,8 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
                 let snes = game.g_snes;
                 let cpu = game.g_cpu;
                 let player = game.g_spc_player;
-                let (backend, ram, _, theirs, _) = game.ram_and_snapshots();
-                MakeSnapshot(theirs, &*snes, &*cpu, player, ram, backend);
+                let (backend, ram, _, theirs, _, owner) = game.ram_and_owned_snapshots();
+                MakeSnapshotWithPlayerOwner(theirs, &*snes, &*cpu, player, owner, ram, backend);
             }
             game.actor_snapshots.theirs = Some(game.capture_actor_snapshot());
             let samus_theirs = game.capture_samus_snapshot();
@@ -1357,7 +1370,7 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
             let queue_theirs = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
             let apu_theirs = queue_theirs.pending;
             queue_before.restore(game);
-            game.g_snapshot_before.player.restore(game.g_spc_player);
+            game.restore_native_player_snapshot(PlayerSnapshotSource::Before);
             game.g_snapshot_mine.apu_upload_count = 0;
             game.g_snapshot_mine.apu_startup_upload = false;
             (*game.g_snes).ppu = (*game.g_snes).my_ppu;
@@ -1395,8 +1408,8 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
                 let snes = game.g_snes;
                 let cpu = game.g_cpu;
                 let player = game.g_spc_player;
-                let (backend, ram, mine, _, _) = game.ram_and_snapshots();
-                MakeSnapshot(mine, &*snes, &*cpu, player, ram, backend);
+                let (backend, ram, mine, _, _, owner) = game.ram_and_owned_snapshots();
+                MakeSnapshotWithPlayerOwner(mine, &*snes, &*cpu, player, owner, ram, backend);
             }
             game.actor_snapshots.mine = Some(game.capture_actor_snapshot());
             let _samus_mine = game.capture_samus_snapshot();
@@ -1491,26 +1504,30 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
                 session_native_adoption::adopt(game, &session_before)
                     .expect("Session recovery before restore rejected");
                 if game.g_use_my_apu_code {
-                    game.g_snapshot_mine.player.restore(game.g_spc_player);
+                    game.restore_native_player_snapshot(PlayerSnapshotSource::Mine);
                 } else {
-                    game.g_snapshot_theirs.player.restore(game.g_spc_player);
+                    game.restore_native_player_snapshot(PlayerSnapshotSource::Theirs);
                 }
                 if game.g_debug_flag {
                     continue;
                 }
                 SaveBugSnapshot(game);
-                game.g_snapshot_mine.player.capture(game.g_spc_player);
+                {
+                    let player = game.g_spc_player;
+                    let (_, _, mine, _, _, owner) = game.ram_and_owned_snapshots();
+                    mine.player.capture_with_owner(owner, player);
+                }
                 // Saving music copies the custom player's state into the physical APU.
                 game.g_snapshot_before.audio.restore(game.g_snes);
                 queue_before.restore(game);
-                game.g_snapshot_before.player.restore(game.g_spc_player);
+                game.restore_native_player_snapshot(PlayerSnapshotSource::Before);
                 RunOneFrameOfGame_Emulated(game);
                 DrawFrameToPpu(game);
                 let _samus_recovery = game.capture_samus_snapshot();
                 let session_recovery = session_native_adoption::capture(game)
                     .expect("Session rerun result capture rejected");
                 if game.g_use_my_apu_code {
-                    game.g_snapshot_mine.player.restore(game.g_spc_player);
+                    game.restore_native_player_snapshot(PlayerSnapshotSource::Mine);
                 }
                 let queue_rerun = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
                 queue_mine.select_runtime(queue_rerun, game);
@@ -1543,14 +1560,14 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
                         .expect("Samus selected adoption rejected");
                 }
                 if game.g_use_my_apu_code {
-                    game.g_snapshot_mine.player.restore(game.g_spc_player);
+                    game.restore_native_player_snapshot(PlayerSnapshotSource::Mine);
                 } else {
                     if !failed {
                         // Continue the independently verified Rust audio branch.
                         game.g_snapshot_mine.audio.restore(game.g_snes);
                         queue_mine.restore(game);
                     }
-                    game.g_snapshot_theirs.player.restore(game.g_spc_player);
+                    game.restore_native_player_snapshot(PlayerSnapshotSource::Theirs);
                 }
                 selected_session = Some(session_theirs);
                 break;

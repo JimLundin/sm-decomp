@@ -39,46 +39,123 @@ crate::typed_struct! {
     }
 }
 
+#[forbid(unsafe_code)]
 impl PlayerSnapshot {
-    /// The player, DSP and any attached history must be live and exclusive.
-    pub(crate) unsafe fn capture(&mut self, player: *mut SpcPlayer) {
-        unsafe {
-            self.valid = !player.is_null();
-            if !self.valid {
-                return;
-            }
-            self.player = (*player).state;
-            (*player).ram.copy_to(&mut self.ram);
-            self.dsp = (*(*player).state.dsp).state;
-            self.has_history = !(*player).state.reg_write_history.is_null();
-            if self.has_history {
-                self.history = *(*player).state.reg_write_history;
-            }
-            self.player.dsp = core::ptr::null_mut();
-            self.player.ram = core::ptr::null_mut();
-            self.player.reg_write_history = core::ptr::null_mut();
-            self.dsp.apu_ram = core::ptr::null_mut();
-        }
+    pub(crate) fn begin_capture(&mut self, valid: bool) -> bool {
+        self.valid = valid;
+        valid
+    }
+    pub(crate) fn valid(&self) -> bool {
+        self.valid
     }
 
-    /// Destination allocations must be live with the same history topology.
-    pub(crate) unsafe fn restore(&self, player: *mut SpcPlayer) {
+    pub(crate) fn capture_parts(
+        &mut self,
+        player: NativePlayerState,
+        ram: &crate::apu_ram::ApuRam,
+        dsp: impl FnOnce() -> DspState,
+        has_history: impl FnOnce() -> bool,
+        history: impl FnOnce() -> DspRegWriteHistory,
+    ) {
+        self.player = player;
+        ram.copy_to(&mut self.ram);
+        self.dsp = dsp();
+        self.has_history = has_history();
+        if self.has_history {
+            self.history = history();
+        }
+        self.player.dsp = core::ptr::null_mut();
+        self.player.ram = core::ptr::null_mut();
+        self.player.reg_write_history = core::ptr::null_mut();
+        self.dsp.apu_ram = core::ptr::null_mut();
+    }
+
+    // Capture destination identities before the first restore effect. Returned
+    // links are inert values; only the retained native adapter follows them.
+    pub(crate) fn restore_player(
+        &self,
+        player: &mut NativePlayerState,
+        ram: &crate::apu_ram::ApuRam,
+    ) -> (*mut crate::types::Dsp, *mut DspRegWriteHistory) {
+        let dsp = player.dsp;
+        let history = player.reg_write_history;
+        assert_eq!(self.has_history, !history.is_null());
+        *player = self.player;
+        ram.copy_from(&self.ram);
+        player.ram = ram.as_mut_ptr();
+        player.dsp = dsp;
+        player.reg_write_history = history;
+        (dsp, history)
+    }
+    pub(crate) fn restore_dsp(&self, dsp: &mut crate::types::Dsp) {
+        dsp.restore_state(&self.dsp);
+    }
+    fn restore_history(&self, history: &mut DspRegWriteHistory) {
+        *history = self.history;
+    }
+}
+
+impl PlayerSnapshot {
+    /// Native allocations and this snapshot must be disjoint, live, exclusive,
+    /// stopped and non-reentrant. DSP/history selections remain fresh and late.
+    pub(crate) unsafe fn capture(&mut self, player: *mut SpcPlayer) {
         unsafe {
-            if !self.valid {
+            if !self.begin_capture(!player.is_null()) {
                 return;
             }
-            let dsp = (*player).state.dsp;
-            let history = (*player).state.reg_write_history;
-            assert_eq!(self.has_history, !history.is_null());
-            (*player).state = self.player;
-            (*player).ram.copy_from(&self.ram);
-            (*player).state.ram = (*player).ram.as_mut_ptr();
-            (*player).state.dsp = dsp;
-            (*player).state.reg_write_history = history;
-            (*dsp).restore_state(&self.dsp);
-            if self.has_history {
-                *history = self.history;
+            self.capture_parts(
+                (*player).state,
+                &(*player).ram,
+                || (*(*player).state.dsp).state,
+                || !(*player).state.reg_write_history.is_null(),
+                || *(*player).state.reg_write_history,
+            );
+        }
+    }
+    /// Keep the same disjoint lifetimes and history topology until the tail.
+    pub(crate) unsafe fn restore(&self, player: *mut SpcPlayer) {
+        unsafe {
+            if !self.valid() {
+                return;
             }
+            let (dsp, history) = self.restore_player(&mut (*player).state, &(*player).ram);
+            self.restore_dsp(&mut *dsp);
+            if self.has_history {
+                self.restore_history(&mut *history);
+            }
+        }
+    }
+    /// Select the actual owner; external/rebound/history intervals use the same
+    /// phased native adapter and its retained lifetime/exclusivity contracts.
+    pub(crate) unsafe fn capture_with_owner(
+        &mut self,
+        owner: Option<&mut crate::spc_player::NativePlayer>,
+        player: *mut SpcPlayer,
+    ) {
+        unsafe {
+            if let Some(owner) = owner.filter(|owner| owner.view() == player) {
+                if owner.try_capture_snapshot(self) {
+                    return;
+                }
+            }
+            self.capture(player);
+        }
+    }
+    pub(crate) unsafe fn restore_with_owner(
+        &self,
+        owner: Option<&mut crate::spc_player::NativePlayer>,
+        player: *mut SpcPlayer,
+    ) {
+        unsafe {
+            if !self.valid() {
+                return;
+            }
+            if let Some(owner) = owner.filter(|owner| owner.view() == player) {
+                if owner.try_restore_snapshot(self) {
+                    return;
+                }
+            }
+            self.restore(player);
         }
     }
 }

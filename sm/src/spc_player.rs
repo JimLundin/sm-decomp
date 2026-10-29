@@ -499,6 +499,43 @@ impl NativePlayer {
         let player = self.player_mut();
         crate::native_player_ram::load(&mut player.state, &player.ram);
     }
+    pub(crate) fn try_capture_snapshot(
+        &mut self,
+        snapshot: &mut crate::audio_snapshot::PlayerSnapshot,
+    ) -> bool {
+        let (player, dsp) = self.allocations_mut();
+        if !player.state.reg_write_history.is_null() || !core::ptr::eq(player.state.dsp, dsp) {
+            return false;
+        }
+        snapshot.begin_capture(true);
+        snapshot.capture_parts(
+            player.state,
+            &player.ram,
+            || dsp.state,
+            || false,
+            || DspRegWriteHistory {
+                count: 0,
+                addr: [0; 256],
+                val: [0; 256],
+            },
+        );
+        true
+    }
+    pub(crate) fn try_restore_snapshot(
+        &mut self,
+        snapshot: &crate::audio_snapshot::PlayerSnapshot,
+    ) -> bool {
+        if !snapshot.valid() {
+            return true;
+        }
+        let (player, dsp) = self.allocations_mut();
+        if !player.state.reg_write_history.is_null() || !core::ptr::eq(player.state.dsp, dsp) {
+            return false;
+        }
+        snapshot.restore_player(&mut player.state, &player.ram);
+        snapshot.restore_dsp(dsp);
+        true
+    }
     /// Borrow the stable allocation. Unsafe native consumers must retain its
     /// owner, serialize access and stop before replacement or destruction.
     pub(crate) fn view(&self) -> *mut SpcPlayer {

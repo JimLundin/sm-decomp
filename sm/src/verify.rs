@@ -1937,3 +1937,94 @@ fn owned_player_creation_replacement_and_drop_keep_borrowed_allocations() {
         assert_eq!(retained_ram.read(0x4321), 0xa7);
     }
 }
+
+// Movies cannot attach snapshot history/rebound DSP links or request invalid restores and mismatched history topology.
+#[cfg(any(test, sm_verify_dll))]
+#[cfg_attr(test, test)]
+fn owned_player_snapshots_restore_selected_allocations_and_failure_prefixes() {
+    use sm::{game_state::PlayerSnapshotSource as Source, spc_player::*};
+    for mode in 0..3 {
+        let mut history = [DspRegWriteHistory {
+            count: 2,
+            addr: [17; 256],
+            val: [23; 256],
+        }; 2];
+        let mut games: [_; 4] = std::array::from_fn(|_| Game::new());
+        for game in &mut games {
+            game.create_native_player();
+        }
+        let players = games.each_ref().map(|game| game.g_spc_player);
+        let mut snapshots = [games[0].g_snapshot_before.player; 2];
+        unsafe {
+            let dsps = players.map(|p| (*p).state.dsp);
+            games[1].g_spc_player = players[2];
+            for (i, p) in [players[0], players[2]].into_iter().enumerate() {
+                (*p).ram.fill(0x5a);
+                (*p).state.tempo = 0x4567;
+                (*p).state.ram = (*p).ram.as_mut_ptr().wrapping_add(1);
+                if mode == 1 {
+                    (*p).state.reg_write_history = &raw mut history[i];
+                }
+                if mode == 2 {
+                    (*p).state.dsp = [dsps[1], dsps[3]][i];
+                }
+                (*(*p).state.dsp).state.ram[0x0c] = 0x47;
+            }
+            games[0].capture_native_player_snapshot(&mut snapshots[0]);
+            games[1].capture_native_player_snapshot(&mut snapshots[1]);
+            for p in [players[0], players[2]] {
+                (*p).ram.fill(0xc3);
+                (*p).state.tempo = 0xeeee;
+                (*(*p).state.dsp).state.ram[0x0c] = 0x99;
+            }
+            if mode == 1 {
+                (*players[0]).state.reg_write_history = core::ptr::null_mut();
+                assert!(
+                    std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                        games[0].restore_native_player_snapshot(Source::Local(&snapshots[0]));
+                    }))
+                    .is_err()
+                );
+                assert_eq!(
+                    ((*players[0]).state.tempo, (*players[0]).ram.read(0)),
+                    (0xeeee, 0xc3)
+                );
+                assert_eq!((*dsps[0]).state.ram[0x0c], 0x99);
+                (*players[0]).state.reg_write_history = &raw mut history[0];
+                for h in &mut history {
+                    h.count = 9;
+                    h.val.fill(0xa7);
+                }
+            }
+            games[0].restore_native_player_snapshot(Source::Local(&snapshots[0]));
+            games[1].restore_native_player_snapshot(Source::Local(&snapshots[1]));
+            for (i, p) in [players[0], players[2]].into_iter().enumerate() {
+                assert_eq!(((*p).state.tempo, (*p).ram.read(0)), (0x4567, 0x5a));
+                assert_eq!((*p).state.ram, (*p).ram.as_mut_ptr());
+                assert_eq!(
+                    (*p).state.dsp,
+                    if mode == 2 {
+                        [dsps[1], dsps[3]][i]
+                    } else {
+                        [dsps[0], dsps[2]][i]
+                    }
+                );
+                assert_eq!((*(*p).state.dsp).state.ram[0x0c], 0x47);
+                if mode == 1 {
+                    assert_eq!(history[i].count, 2);
+                    assert_eq!(history[i].val, [23; 256]);
+                }
+            }
+            games[0].g_spc_player = core::ptr::null_mut();
+            games[0].capture_native_player_snapshot(&mut snapshots[0]);
+            games[0].g_spc_player = core::ptr::NonNull::<SpcPlayer>::dangling().as_ptr();
+            games[0].restore_native_player_snapshot(Source::Local(&snapshots[0]));
+            games[0].g_spc_player = players[0];
+            assert_eq!((*players[0]).state.tempo, 0x4567);
+            for (p, dsp) in players.into_iter().zip(dsps) {
+                (*p).state.reg_write_history = core::ptr::null_mut();
+                (*p).state.dsp = dsp;
+            }
+        }
+    }
+}

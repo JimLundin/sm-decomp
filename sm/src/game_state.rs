@@ -194,6 +194,14 @@ impl WorkRam {
     }
 }
 
+/// Select one existing oracle snapshot or a separately borrowed local snapshot.
+pub enum PlayerSnapshotSource<'a> {
+    Before,
+    Mine,
+    Theirs,
+    Local(&'a crate::audio_snapshot::PlayerSnapshot),
+}
+
 /// State for one game and its differential oracle. The backend retains the same
 /// stable RAM allocation independently of this Game's address.
 pub struct Game {
@@ -412,6 +420,20 @@ impl Game {
         &mut Snapshot,
         &mut Snapshot,
     ) {
+        let (backend, ram, mine, theirs, before, _) = self.ram_and_owned_snapshots();
+        (backend, ram, mine, theirs, before)
+    }
+
+    pub(crate) fn ram_and_owned_snapshots(
+        &mut self,
+    ) -> (
+        &crate::snes::snes::Backend,
+        &WorkRam,
+        &mut Snapshot,
+        &mut Snapshot,
+        &mut Snapshot,
+        Option<&mut crate::spc_player::NativePlayer>,
+    ) {
         (
             self.backend
                 .as_ref()
@@ -420,6 +442,7 @@ impl Game {
             &mut self.g_snapshot_mine,
             &mut self.g_snapshot_theirs,
             &mut self.g_snapshot_before,
+            self._native_player.as_mut(),
         )
     }
 
@@ -572,6 +595,33 @@ impl Game {
             } else {
                 crate::spc_player::SpcPlayer_CopyVariablesFromRam(self.g_spc_player);
             }
+        }
+    }
+
+    /// Capture the actual selected player into separate snapshot storage.
+    /// # Safety
+    /// Snapshot and native allocations must be disjoint, stopped and exclusive;
+    /// retained foreign DSP/history views stay live and non-reentrant.
+    pub unsafe fn capture_native_player_snapshot(
+        &mut self,
+        snapshot: &mut crate::audio_snapshot::PlayerSnapshot,
+    ) {
+        unsafe {
+            snapshot.capture_with_owner(self._native_player.as_mut(), self.g_spc_player);
+        }
+    }
+    /// Restore the selected completed image; allocation links stay destination-owned.
+    /// # Safety
+    /// Keep the same native/snapshot disjointness, history topology and quiescence.
+    pub unsafe fn restore_native_player_snapshot(&mut self, source: PlayerSnapshotSource<'_>) {
+        unsafe {
+            let snapshot = match source {
+                PlayerSnapshotSource::Before => &self.g_snapshot_before.player,
+                PlayerSnapshotSource::Mine => &self.g_snapshot_mine.player,
+                PlayerSnapshotSource::Theirs => &self.g_snapshot_theirs.player,
+                PlayerSnapshotSource::Local(snapshot) => snapshot,
+            };
+            snapshot.restore_with_owner(self._native_player.as_mut(), self.g_spc_player);
         }
     }
 
