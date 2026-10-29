@@ -254,6 +254,8 @@ pub struct Game {
     pub(crate) ridley_tables: crate::game::ridley_data::ImportedRidley,
     /// Imported from `loaded_rom` by `register_rom`; see game::ridley_explosion_data.
     pub(crate) ridley_explosion_tables: crate::game::ridley_explosion_data::ImportedRidleyExplosion,
+    /// Imported from `loaded_rom` by `register_rom`; see game::ceres_door_data.
+    pub(crate) ceres_door_tables: crate::game::ceres_door_data::ImportedCeresDoors,
     samus_binding: Option<Arc<SamusBinding>>,
     samus_authority: SamusAuthority,
     samus_mutation_depth: usize,
@@ -1237,6 +1239,7 @@ impl Game {
         self.ceres_ridley_tables = crate::game::ceres_ridley_tables::import(&image);
         self.ridley_tables = crate::game::ridley_data::import(&image);
         self.ridley_explosion_tables = crate::game::ridley_explosion_data::import(&image);
+        self.ceres_door_tables = crate::game::ceres_door_data::import(&image);
         self.loaded_rom = Some(image);
     }
 
@@ -1492,6 +1495,7 @@ impl Game {
             ceres_ridley_tables: Default::default(),
             ridley_tables: Default::default(),
             ridley_explosion_tables: Default::default(),
+            ceres_door_tables: Default::default(),
             samus_binding: None,
             samus_authority: SamusAuthority::LegacyUnrouted,
             samus_mutation_depth: 0,

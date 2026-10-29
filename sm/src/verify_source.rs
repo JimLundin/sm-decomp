@@ -22,6 +22,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_data/src/botwoon_speeds.rs"),
     ),
     (
+        "crates/sm_data/src/ceres_doors.rs",
+        include_bytes!("../../crates/sm_data/src/ceres_doors.rs"),
+    ),
+    (
         "crates/sm_data/src/ceres_elevator.rs",
         include_bytes!("../../crates/sm_data/src/ceres_elevator.rs"),
     ),
@@ -468,6 +472,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/space_pirates.rs",
         include_bytes!("game/space_pirates.rs"),
+    ),
+    (
+        "sm/src/game/ceres_door_data.rs",
+        include_bytes!("game/ceres_door_data.rs"),
     ),
     (
         "sm/src/game/ceres_doors.rs",

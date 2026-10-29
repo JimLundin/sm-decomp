@@ -1,6 +1,7 @@
 use crate::game::actors;
 use crate::game::actors::access::ActorKey as Key;
 use crate::game::actors::api as actor_api;
+use crate::game::ceres_door_data;
 use crate::game::ceres_doors;
 use crate::game::ceres_ridley_tables;
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
@@ -3727,6 +3728,14 @@ macro_rules! set_explosion_spawn_offset {
                 )),
             };
     };
+    ($game:ident, $enemy:ident, $offset:path, $offset_index:ident) => {
+        $game.eproj_spawn_pt = Point16U {
+            x: ((slot!($game, EnemyData[$enemy].x_pos))
+                .wrapping_add($offset($game, $offset_index as isize))),
+            y: ((slot!($game, EnemyData[$enemy].y_pos))
+                .wrapping_add($offset($game, ($offset_index + 1) as isize))),
+        };
+    };
 }
 pub(crate) use set_explosion_spawn_offset;
 
@@ -3763,7 +3772,7 @@ pub unsafe fn CeresDoor_Func_6(k: u16, game: &mut Game) {
                 slot!(game, Enemy_CeresDoor[E0].var_F = 3);
             }
             let v5: i32 = ((4u16).wrapping_mul(slot!(game, Enemy_CeresDoor[E0].var_F))) as i32 >> 1;
-            set_explosion_spawn_offset!(game, E, 0xa6f840, v5);
+            set_explosion_spawn_offset!(game, E, ceres_door_data::explosion_offset, v5);
             let mut v6: u16 = 3;
             if game.next_random() < 0x4000 {
                 v6 = 12;
@@ -3777,10 +3786,9 @@ pub unsafe fn CeresDoor_Func_8(game: &mut Game) {
     {
         enqueue_rom(
             0xa6,
-            crate::rtl::rom_table_word!(
+            ceres_door_data::platform_frame(
                 game,
-                0xa6f900,
-                ((word!(game.nmi_frame_counter_word) as i32 & 2) >> 1) as isize
+                ((word!(game.nmi_frame_counter_word) as i32 & 2) >> 1) as isize,
             ),
             game,
         );
@@ -4171,8 +4179,9 @@ crate::game::callback_dispatch! {
         timer = 0, palette_index = 2560, );
         slot!(game, Enemy_CeresSteam[E].var_D = ((game.next_random() as i32 & 0x1f) + 1) as u16);
         let v1: i32 = slot!(game, Enemy_CeresSteam[E].parameter_1) as i32;
-        slot!(game, Enemy_CeresSteam[E].base.current_instruction = crate::rtl::rom_table_word!(game, 0xa6eff5, v1 as isize));
-        slot!(game, Enemy_CeresSteam[E].var_A = crate::rtl::rom_table_word!(game, 0xa6f001, v1 as isize));
+        let kind = ceres_door_data::steam(game, v1 as isize);
+        slot!(game, Enemy_CeresSteam[E].base.current_instruction = kind.instruction_list);
+        slot!(game, Enemy_CeresSteam[E].var_A = kind.function);
     };
     [10940429] CeresSteam_Main [] {
         let E: i32 = word!(game.cur_enemy_index) as i32;
@@ -4190,8 +4199,8 @@ crate::game::callback_dispatch! {
         slot!(game, Enemy_CeresDoor[E].base; timer = 0, vram_tiles_index = 0);
         slot!(game, Enemy_CeresDoor[E].base.palette_index = 1024);
         let v2: i32 = slot!(game, Enemy_CeresDoor[E].parameter_1) as i32;
-        slot!(game, Enemy_CeresDoor[E].var_A = crate::rtl::rom_table_word!(game, 0xa6f72b, v2 as isize));
-        slot!(game, Enemy_CeresDoor[E].base.current_instruction = crate::rtl::rom_table_word!(game, 0xa6f52c, v2 as isize));
+        slot!(game, Enemy_CeresDoor[E].var_A = ceres_door_data::door_function(game, v2 as isize));
+        slot!(game, Enemy_CeresDoor[E].base.current_instruction = ceres_door_data::door_instructions(game, v2 as isize));
         slot!(game, Enemy_CeresDoor[E].var_B = 0);
         CeresDoor_Func_1(word!(game.cur_enemy_index), game);
         let mut v3: u16 = if word!(game.ceres_status) != 0 {

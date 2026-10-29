@@ -470,6 +470,7 @@ pub mod game {
     pub(crate) mod visual_runtime;
     pub(crate) use sm_game::visual_state;
 
+    pub(crate) mod ceres_door_data;
     pub(crate) mod ceres_doors;
     pub(crate) mod ceres_elevator;
     pub(crate) mod ceres_ridley_tables;
