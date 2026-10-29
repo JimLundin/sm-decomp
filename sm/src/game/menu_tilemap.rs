@@ -5,10 +5,27 @@ use crate::game::constants::bank_81::{
     addr_kMenuTilemap_SamusData, addr_kMenuTilemap_TIME,
 };
 use crate::game::display_refresh::queue_native_transfer;
+use crate::game::imported::Imported;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::save_slots;
 use crate::game_state::Game;
 use crate::ram_map::{checked_word as at, word, words as fields};
+use crate::rom::RomImage;
+use sm_data::area_select_palettes::{
+    ADDRESS as AREA_PALETTES, AreaSelectPalettes, BYTES as AREA_PALETTE_BYTES, INACTIVE_OFFSET,
+    RUN_OFFSETS,
+};
+
+pub(crate) type ImportedAreaPalettes = Imported<AreaSelectPalettes>;
+
+pub(crate) fn import_area_palettes(image: &RomImage) -> Option<ImportedAreaPalettes> {
+    Imported::import(
+        image,
+        AREA_PALETTES,
+        AREA_PALETTE_BYTES,
+        AreaSelectPalettes::import,
+    )
+}
 
 const MENU_PALETTE: usize = 0xf78 + core::mem::offset_of!(crate::types::EnemyData, palette_index);
 const FILE_LABELS: [u16; 3] = [
@@ -250,24 +267,41 @@ pub(crate) fn time(empty: u16, offset: u16, game: &mut Game) {
 
 #[forbid(unsafe_code)]
 pub(crate) fn area_palette(area: u16, active: bool, game: &mut Game) {
-    const OFFSETS: [u16; 6] = [0, 0xa, 0x10, 0x16, 0x24, 0x2a];
-    let mut entry = OFFSETS[usize::from(area)] + if active { 0 } else { 0x30 };
+    let mut entry =
+        RUN_OFFSETS[usize::from(area)] as u16 + if active { 0 } else { INACTIVE_OFFSET as u16 };
+    // The table serves the area's run while the loaded image is the imported
+    // allocation; otherwise the original indexed loads walk it.
+    let rom = game.loaded_rom.as_ref().expect("ROM must be loaded");
+    let copies = Imported::from(&game.area_select_palettes, rom)
+        .and_then(|table| table.copies(usize::from(area), active))
+        .map(<[_]>::to_vec);
+    if let Some(copies) = copies {
+        for copy in copies {
+            copy_area_colors(copy.source, copy.destination, game);
+        }
+        return;
+    }
     loop {
         let index = (entry >> 1) as isize;
         if crate::rtl::rom_table_word!(game, 0x81a4e6, index) == 0xffff {
             break;
         }
-        let mut destination = crate::rtl::rom_table_word!(game, 0x81a4e6, index + 1);
-        let mut source = crate::rtl::rom_table_word!(game, 0x81a4e6, index);
-        for _ in 0..5 {
-            word!(
-                game.palette_buffer[destination >> 1] =
-                    crate::rtl::rom_table_word!(game, 0x81a40e, (source >> 1) as isize)
-            );
-            destination = destination.wrapping_add(2);
-            source = source.wrapping_add(2);
-        }
+        let destination = crate::rtl::rom_table_word!(game, 0x81a4e6, index + 1);
+        let source = crate::rtl::rom_table_word!(game, 0x81a4e6, index);
+        copy_area_colors(source, destination, game);
         entry = entry.wrapping_add(4);
+    }
+}
+
+/// Five colours from the foreground palette data at $81:A40E into the buffer.
+fn copy_area_colors(mut source: u16, mut destination: u16, game: &mut Game) {
+    for _ in 0..5 {
+        word!(
+            game.palette_buffer[destination >> 1] =
+                crate::rtl::rom_table_word!(game, 0x81a40e, (source >> 1) as isize)
+        );
+        destination = destination.wrapping_add(2);
+        source = source.wrapping_add(2);
     }
 }
 

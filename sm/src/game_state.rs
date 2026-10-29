@@ -236,6 +236,8 @@ pub struct Game {
     pub(crate) kraid_tables: crate::game::kraid_tables::ImportedKraid,
     /// Imported from `loaded_rom` by `register_rom`; see game::phantoon_tables.
     pub(crate) flame_rain: Option<crate::game::phantoon_tables::ImportedFlameRain>,
+    /// Imported from `loaded_rom` by `register_rom`; see game::menu_tilemap.
+    pub(crate) area_select_palettes: Option<crate::game::menu_tilemap::ImportedAreaPalettes>,
     samus_binding: Option<Arc<SamusBinding>>,
     samus_authority: SamusAuthority,
     samus_mutation_depth: usize,
@@ -1200,6 +1202,7 @@ impl Game {
         self.grapple_origins = crate::game::grapple_origins::import(&image);
         self.kraid_tables = crate::game::kraid_tables::import(&image);
         self.flame_rain = crate::game::phantoon_tables::import(&image);
+        self.area_select_palettes = crate::game::menu_tilemap::import_area_palettes(&image);
         self.loaded_rom = Some(image);
     }
 
@@ -1443,6 +1446,7 @@ impl Game {
             demo_sets: None,
             demo_scenes: None,
             grapple_origins: None,
+            area_select_palettes: None,
             shooting_stars: None,
             kraid_tables: Default::default(),
             flame_rain: None,
