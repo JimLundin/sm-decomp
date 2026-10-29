@@ -1,6 +1,8 @@
-//! Mother Brain's part hitboxes against Samus: a count word at bank $A9 followed
-//! by eight-byte boxes of left, top, right and bottom extents.
+//! Boss part hitboxes against Samus: a count word at bank $A9 followed by
+//! eight-byte boxes of left, top, right and bottom extents.
 #![forbid(unsafe_code)]
+use crate::game::constants::bank_a9::addr_kDeadTorizo_Hitbox_D77C;
+use crate::game::enemy_layouts::EnemyLayout40 as DeadTorizo;
 use crate::game::enemy_layouts::EnemyLayout72 as MotherBrain;
 use crate::game::session_runtime::native_record;
 use crate::game_state::Game;
@@ -14,9 +16,9 @@ pub(crate) enum Contact {
     Hurt,
 }
 
-/// Each extent is chosen by Samus's side of the part centre (`x`, `y`); the
-/// first overlapping box pushes Samus out with the original knockback words.
-pub(crate) fn samus_contact(boxes: u16, x: u16, y: u16, game: &mut Game) -> Contact {
+/// Each extent is chosen by Samus's side of the centre (`x`, `y`); the first
+/// overlapping box sets the push words, clamped to at least 4, and stops.
+fn push_out(boxes: u16, x: u16, y: u16, game: &mut Game) -> bool {
     let table = native_record(0xa9, boxes, game);
     let abs = |value: u16| i32::from((value as i16).unsigned_abs());
     for part in 0..usize::from(table.word(0)) {
@@ -48,16 +50,33 @@ pub(crate) fn samus_contact(boxes: u16, x: u16, y: u16, game: &mut Game) -> Cont
         word!(game.extra_samus_x_displacement = overlap as u16);
         word!(game.extra_samus_y_displacement = 4);
         word! { game, 0; extra_samus_x_subdisplacement, extra_samus_y_subdisplacement }
-        word! { game; samus_invincibility_timer = 96; samus_knockback_timer = 5; knockback_x_dir = 1; }
-        if (i32::from(word!(game.samus_y_pos)) - 192) & 0x8000 != 0 {
-            word!(game.samus_y_dir = 2);
-        }
-        let body = i32::from(slot!(game, MotherBrain[0].base.x_pos)) + 24;
-        return if ((body - i32::from(word!(game.samus_x_pos))) as i16) < 0 {
-            Contact::Hurt
-        } else {
-            Contact::Pushed
-        };
+        return true;
     }
-    Contact::None
+    false
+}
+
+/// Mother Brain's parts also knock Samus back; right of the body she is hurt.
+pub(crate) fn samus_contact(boxes: u16, x: u16, y: u16, game: &mut Game) -> Contact {
+    if !push_out(boxes, x, y, game) {
+        return Contact::None;
+    }
+    word! { game; samus_invincibility_timer = 96; samus_knockback_timer = 5; knockback_x_dir = 1; }
+    if (i32::from(word!(game.samus_y_pos)) - 192) & 0x8000 != 0 {
+        word!(game.samus_y_dir = 2);
+    }
+    let body = i32::from(slot!(game, MotherBrain[0].base.x_pos)) + 24;
+    if ((body - i32::from(word!(game.samus_x_pos))) as i16) < 0 {
+        Contact::Hurt
+    } else {
+        Contact::Pushed
+    }
+}
+
+/// The dead Torizo's fixed box list pushes Samus out without knockback.
+pub(crate) fn dead_torizo_contact(game: &mut Game) -> bool {
+    let (x, y) = (
+        slot!(game, DeadTorizo[0].base.x_pos),
+        slot!(game, DeadTorizo[0].base.y_pos),
+    );
+    push_out(addr_kDeadTorizo_Hitbox_D77C as u16, x, y, game)
 }
