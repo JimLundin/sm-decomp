@@ -5,6 +5,7 @@ use crate::game_state::Game;
 use crate::ram_map::checked_word as at;
 use crate::rtl::{ReadRegWord, WriteReg, WriteRegWord};
 use crate::snes::registers::*;
+use sm_game::display::control::{Brightness, FixedColor, Mode7Transform};
 use sm_game::display::transfer::{
     Mode7Target, Mode7Upload, ScrollingLayout, TilemapUpload, TransferHost, VramReadback,
 };
@@ -316,5 +317,38 @@ pub(crate) unsafe fn fill_vram_low_bytes(fill: u8, word_reset: bool, game: &mut 
         for _ in 0i16..0x4000i16 {
             WriteReg(VMDATAL as u16, fill, game);
         }
+    }
+}
+
+/// Requires a live, exclusively accessed SNES backend.
+pub(crate) unsafe fn set_brightness(brightness: Brightness, game: &mut Game) {
+    unsafe { WriteReg(INIDISP as u16, brightness.byte(), game) }
+}
+
+/// Requires a live, exclusively accessed SNES backend. One COLDATA write per
+/// colour, in order.
+pub(crate) unsafe fn set_fixed_color(colors: &[FixedColor], game: &mut Game) {
+    for color in colors {
+        unsafe { WriteReg(COLDATA as u16, color.byte(), game) }
+    }
+}
+
+/// Requires a live, exclusively accessed SNES backend. Each register write is
+/// followed by its RAM mirror word before the next register, as the original
+/// did.
+pub(crate) unsafe fn set_mode7_transform(transform: Mode7Transform, game: &mut Game) {
+    use crate::ram_map::words;
+    let registers = [M7A, M7B, M7C, M7D, M7X, M7Y];
+    let mirrors = [
+        words::reg_M7A,
+        words::reg_M7B,
+        words::reg_M7C,
+        words::reg_M7D,
+        words::reg_M7X,
+        words::reg_M7Y,
+    ];
+    for ((register, mirror), value) in registers.into_iter().zip(mirrors).zip(transform.words()) {
+        unsafe { WriteRegWord(register as u16, value, game) };
+        crate::ram_map::checked_word!(game, mirror; = value);
     }
 }

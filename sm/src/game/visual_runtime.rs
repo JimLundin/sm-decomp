@@ -3643,8 +3643,8 @@ pub(crate) unsafe fn configure_cinematic_display(
 ) {
     use crate::game::visual_state::CinematicDisplay::*;
     use crate::rtl::{
-        BG1SC, BG2SC, BG3SC, BG4SC, BG12NBA, BG34NBA, BGMODE, CGADSUB, CGWSEL, COLDATA, INIDISP,
-        M7SEL, OBSEL, SETINI, TM, TMW, TS, VMAIN,
+        BG1SC, BG2SC, BG3SC, BG4SC, BG12NBA, BG34NBA, BGMODE, CGADSUB, CGWSEL, INIDISP, M7SEL,
+        OBSEL, SETINI, TM, TMW, TS, VMAIN,
     };
     let title = display == Title;
     let intro = display == Intro;
@@ -3742,7 +3742,10 @@ pub(crate) unsafe fn configure_cinematic_display(
             game.ram().write_byte(0x6f, 0);
             game.ram().write_byte(0x72, 0);
         }
-        crate::rtl::WriteReg(COLDATA as u16, 0xe0, game);
+        crate::game::display_transfers::set_fixed_color(
+            &[sm_game::display::control::FixedColor::all(0)],
+            game,
+        );
         if display != Station {
             crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game);
         }
@@ -3798,21 +3801,8 @@ pub(crate) unsafe fn configure_cinematic_display(
 }
 
 pub(crate) unsafe fn reset_cinematic_transform(x: u16, y: u16, game: &mut Game) {
-    use crate::rtl::{M7A, M7B, M7C, M7D, M7X, M7Y, WriteRegWord};
-    unsafe {
-        WriteRegWord(M7A as u16, 256, game);
-        word!(game.reg_M7A = 256);
-        WriteRegWord(M7B as u16, 0, game);
-        word!(game.reg_M7B = 0);
-        WriteRegWord(M7C as u16, 0, game);
-        word!(game.reg_M7C = 0);
-        WriteRegWord(M7D as u16, 256, game);
-        word!(game.reg_M7D = 256);
-        WriteRegWord(M7X as u16, x, game);
-        word!(game.reg_M7X = x);
-        WriteRegWord(M7Y as u16, y, game);
-        word!(game.reg_M7Y = y);
-    }
+    let transform = sm_game::display::control::Mode7Transform::identity(x, y);
+    unsafe { crate::game::display_transfers::set_mode7_transform(transform, game) }
 }
 
 pub(crate) fn set_fixed_color(channels: [u8; 3], game: &mut Game) {

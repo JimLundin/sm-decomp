@@ -25,10 +25,15 @@ unsafe fn InitializePpuForMessageBoxes(game: &mut Game) {
         game.ram().write_byte(0x6a, 23);
         game.ram().write_byte(0x70, 0);
         game.ram().write_byte(0x73, 0);
-        crate::rtl::register_writes! { game;
-            byte(COLDATA as u16, 0x20); byte(COLDATA as u16, 0x40);
-            byte(COLDATA as u16, 0x80);
-        }
+        use sm_game::display::control::FixedColor;
+        crate::game::display_transfers::set_fixed_color(
+            &[
+                FixedColor::red(0),
+                FixedColor::green(0),
+                FixedColor::blue(0),
+            ],
+            game,
+        );
         ReadReg(BG3HOFS as u16, game);
         crate::rtl::register_writes! { game;
             byte(BG3HOFS as u16, 0); byte(BG3HOFS as u16, 0);

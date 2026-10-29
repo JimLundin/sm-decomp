@@ -583,7 +583,10 @@ pub(crate) unsafe fn copy_to_vram_with_source(
             byte(VMAIN as u16, 0x80);
         }
         start_room_dma(2, assets, game);
-        crate::rtl::register_writes! { game; byte(INIDISP as u16, 0xf); }
+        crate::game::display_transfers::set_brightness(
+            sm_game::display::control::Brightness::FULL,
+            game,
+        );
     }
 }
 

@@ -30,6 +30,7 @@ pub mod sprite_effect_state;
 pub mod visual_state;
 
 pub mod display {
+    pub mod control;
     pub mod error;
     pub mod hdma;
     pub mod transfer;

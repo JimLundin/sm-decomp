@@ -1920,6 +1920,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/display/error.rs"),
     ),
     (
+        "crates/sm_game/src/display/control.rs",
+        include_bytes!("../../crates/sm_game/src/display/control.rs"),
+    ),
+    (
         "crates/sm_game/src/display/hdma.rs",
         include_bytes!("../../crates/sm_game/src/display/hdma.rs"),
     ),

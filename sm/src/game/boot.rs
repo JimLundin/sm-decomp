@@ -5,11 +5,11 @@ use crate::game_state::Game;
 use crate::ram_map::word;
 use crate::rtl::{
     APUI00, APUI01, APUI02, APUI03, BG1HOFS, BG1SC, BG1VOFS, BG2HOFS, BG2SC, BG2VOFS, BG3HOFS,
-    BG3SC, BG3VOFS, BG4HOFS, BG4SC, BG4VOFS, BG12NBA, BG34NBA, BGMODE, CGADSUB, CGWSEL, COLDATA,
-    INIDISP, M7A, M7B, M7C, M7D, M7SEL, M7X, M7Y, MEMSEL, MOSAIC, NMITIMEN, RtlApuWrite, SETINI,
-    TM, TMW, TS, TSW, VMAIN, W12SEL, W34SEL, WBGLOG, WH0, WH1, WH2, WH3, WOBJLOG, WOBJSEL,
-    WriteReg,
+    BG3SC, BG3VOFS, BG4HOFS, BG4SC, BG4VOFS, BG12NBA, BG34NBA, BGMODE, CGADSUB, CGWSEL, M7A, M7B,
+    M7C, M7D, M7SEL, M7X, M7Y, MEMSEL, MOSAIC, NMITIMEN, RtlApuWrite, SETINI, TM, TMW, TS, TSW,
+    VMAIN, W12SEL, W34SEL, WBGLOG, WH0, WH1, WH2, WH3, WOBJLOG, WOBJSEL,
 };
+use sm_game::display::control::{Brightness, FixedColor};
 
 fn clear_work_ram(bytes: usize, game: &mut Game) {
     let bug_fix_counter = word!(game.bug_fix_counter);
@@ -42,7 +42,7 @@ pub(crate) unsafe fn resume(game: &mut Game) -> u8 {
                 sm_data::CuePhase::Initialization,
                 game,
             );
-            WriteReg(INIDISP as u16, 0x8f, game);
+            crate::game::display_transfers::set_brightness(Brightness::BLANK_FULL, game);
             clear_work_ram(0x10000, game);
             crate::rtl::write_register_and_mirror(NMITIMEN as u16, 0, 0x84, false, game);
             game.ram().write_byte(0x51, 0x8f);
@@ -113,15 +113,18 @@ unsafe fn initialize_registers(game: &mut Game) {
             mirror(CGWSEL as u16, 2, 0x6e, false); byte(CGADSUB as u16, 0xa1);
         }
         game.ram().write_byte(0x71, 0xa1);
-        crate::rtl::register_writes! { game;
-            byte(COLDATA as u16, 0xe0); byte(COLDATA as u16, 0xe0);
-            byte(COLDATA as u16, 0x80);
-        }
-        game.ram().write_byte(0x74, 0x80);
-        WriteReg(COLDATA as u16, 0x40, game);
-        game.ram().write_byte(0x75, 64);
-        WriteReg(COLDATA as u16, 0x20, game);
-        game.ram().write_byte(0x76, 32);
+        let blue = FixedColor::blue(0);
+        crate::game::display_transfers::set_fixed_color(
+            &[FixedColor::all(0), FixedColor::all(0), blue],
+            game,
+        );
+        game.ram().write_byte(0x74, blue.byte());
+        let green = FixedColor::green(0);
+        crate::game::display_transfers::set_fixed_color(&[green], game);
+        game.ram().write_byte(0x75, green.byte());
+        let red = FixedColor::red(0);
+        crate::game::display_transfers::set_fixed_color(&[red], game);
+        game.ram().write_byte(0x76, red.byte());
         crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game);
     }
 }
