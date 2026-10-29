@@ -7,4 +7,5 @@
 
 pub mod enemy_speeds;
 pub mod sand_heap;
+pub mod shooting_stars;
 pub mod world;

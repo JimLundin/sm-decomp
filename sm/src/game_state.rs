@@ -220,6 +220,8 @@ pub struct Game {
     pub(crate) enemy_speeds32: Option<crate::game::enemy_speeds::ImportedSpeeds32>,
     /// Imported from `loaded_rom` by `register_rom`; see game::sand_heap.
     pub(crate) sand_heap: Option<crate::game::sand_heap::ImportedSandHeap>,
+    /// Imported from `loaded_rom` by `register_rom`; see game::shooting_stars.
+    pub(crate) shooting_stars: Option<crate::game::shooting_stars::ImportedShootingStars>,
     samus_binding: Option<Arc<SamusBinding>>,
     samus_authority: SamusAuthority,
     samus_mutation_depth: usize,
@@ -1176,6 +1178,7 @@ impl Game {
         }
         self.enemy_speeds = crate::game::enemy_speeds::import(&image);
         self.sand_heap = crate::game::sand_heap::import(&image);
+        self.shooting_stars = crate::game::shooting_stars::import(&image);
         self.loaded_rom = Some(image);
     }
 
@@ -1414,6 +1417,7 @@ impl Game {
             enemy_speeds: None,
             enemy_speeds32: None,
             sand_heap: None,
+            shooting_stars: None,
             samus_binding: None,
             samus_authority: SamusAuthority::LegacyUnrouted,
             samus_mutation_depth: 0,

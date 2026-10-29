@@ -904,7 +904,7 @@ pub(crate) fn initialize_shooting_stars(game: &mut Game) {
             native(at + 12) <- value(0),
             native(at + 14) <- value(0),
         );
-        let delay = crate::rtl::rom_table_word!(game, 0x8be9cf, (4 * index + 3) as isize);
+        let delay = crate::game::shooting_stars::star(game, index).start_delay;
         word_transfers!(game, ascending, 1; native(at + 10) <- value(if delay == 0 { 32 } else { delay }));
         if delay != 0 {
             checked_word!(game, at; = checked_word!(game, at;) | 0x8000);
@@ -930,24 +930,21 @@ pub(crate) fn advance_shooting_stars(game: &mut Game) {
             }
             continue;
         }
-        let table = 4 * isize::from(identity as u8);
+        let star = crate::game::shooting_stars::star(game, usize::from(identity as u8));
         let fast = ((i32::from(identity & 0xff00) - 1024) & 0x8000) == 0;
-        checked_word!(game, at + 12; += {
-            let acceleration = crate::rtl::rom_table_word!(game, 0x8be9cf, table);
-            if fast {
-                acceleration.wrapping_add(crate::rtl::rom_table_word!(game, 0x8be9cf, table))
-            } else {
-                acceleration
-            }
+        checked_word!(game, at + 12; += if fast {
+            star.x_acceleration.wrapping_add(star.x_acceleration)
+        } else {
+            star.x_acceleration
         });
         let y_speed = if fast {
-            crate::rtl::rom_table_word!(game, 0x8be9cf, table + 1)
+            star.y_acceleration
                 .wrapping_add(u16::from_le(checked_word!(game, at + 14;)))
         } else {
             u16::from_le(checked_word!(game, at + 14;))
         };
         word_transfers!(game, ascending, 1; native(at + 14) <- value(
-            crate::rtl::rom_table_word!(game, 0x8be9cf, table + 1).wrapping_add(y_speed)
+            star.y_acceleration.wrapping_add(y_speed)
         ));
         for (position, fraction, velocity) in [(2, 4, 12), (6, 8, 14)] {
             let speed = u16::from_le(checked_word!(game, at + velocity;));
@@ -995,10 +992,9 @@ pub(crate) fn advance_shooting_stars(game: &mut Game) {
         word_transfers!(game, ascending, 1; native(at + 10) <- value(timer));
         if timer as i16 <= 0 {
             let identity = u16::from_le(checked_word!(game, at;));
-            word_transfers!(game, ascending, 1; native(at + 10) <- value(
-                crate::rtl::rom_table_word!(game, 0x8be9cf,
-                    4 * isize::from(u16::from_le(checked_word!(game, at;)) as u8) + 2)
-            ));
+            let star = usize::from(u16::from_le(checked_word!(game, at;)) as u8);
+            let frame_delay = crate::game::shooting_stars::star(game, star).frame_delay;
+            word_transfers!(game, ascending, 1; native(at + 10) <- value(frame_delay));
             word_transfers!(game, ascending, 1; native(at) <- value(identity.wrapping_add(512)));
         }
         if game.ram().read_byte(at + 1) != 0 {

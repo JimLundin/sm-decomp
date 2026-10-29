@@ -14,6 +14,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_data/src/sand_heap.rs"),
     ),
     (
+        "crates/sm_data/src/shooting_stars.rs",
+        include_bytes!("../../crates/sm_data/src/shooting_stars.rs"),
+    ),
+    (
         "crates/sm_data/src/world.rs",
         include_bytes!("../../crates/sm_data/src/world.rs"),
     ),
@@ -1593,6 +1597,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/session_runtime.rs",
         include_bytes!("game/session_runtime.rs"),
+    ),
+    (
+        "sm/src/game/shooting_stars.rs",
+        include_bytes!("game/shooting_stars.rs"),
     ),
     (
         "sm/src/game/file_menu.rs",

@@ -453,6 +453,7 @@ pub mod game {
     pub(crate) mod session_encoding;
     pub(crate) mod session_owners;
     pub(crate) mod session_runtime;
+    pub(crate) mod shooting_stars;
     pub mod sm_8b;
     pub(crate) mod sprite_drawing;
     pub(crate) mod sprite_effect_controllers;
