@@ -23,7 +23,10 @@ reservations. Only main is remote; private copies/local branches may isolate wor
 3. Run PLAN's progress command and retain explained engine/legacy/unsafe/
    verification/support deltas and exact source/native/codec/input/check pins in
    the owned publication record. Count retained owners/adapters/dependencies once;
-   distinguish actual removal from moves/formatting. Use a descriptive subject and
+   distinguish actual removal from moves/formatting. Publish physical, mapped
+   superseded retained and adjusted counts together under PLAN; deletion removes its
+   discount. Separate mapped unsafe operations/signatures from unsafe-containing lines.
+   Use a descriptive subject and
    2–3 short body lines for changed behavior and relevant verification, per PLAN.
 4. Commit frequent small coherent qualified code changes to main and immediately
    push origin HEAD:main. On rejection, fetch/reconcile and rerun only affected

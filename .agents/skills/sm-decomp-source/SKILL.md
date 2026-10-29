@@ -59,7 +59,9 @@ Keep the assigned source scope disjoint. The primary root is the sole Git writer
    explicit under PLAN's migration policy; completed owned modules forbid unsafe.
    Include adapters, callbacks and callers in the replacement cost. Report net
    production, legacy, unsafe and verification changes, explaining required growth
-   and distinguishing substantive removal from formatting or relocation.
+   and distinguishing substantive removal from formatting or relocation. Supply PLAN's
+   exact replacement/caller/proof/retention/deletion map for any superseded retained
+   discount; keep unsafe operation sites/signatures separate from text/attribute counts.
    Send the first coherent code pin and actual START/first-code UTC promptly,
    naming pending checks for publication under PLAN by the primary writer.
 5. Format and freeze the final source. Deliver the existing patch/handoff and

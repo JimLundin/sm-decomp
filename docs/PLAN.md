@@ -148,6 +148,13 @@ separate closures; keep imported alias exclusions, source newlines and Windows d
 - Moves, formatting/packing/comment deletion and production-to-verification relocation
   are not savings. Count overlaps once, check tokens/text, never sum independent drafts
   or claim gross retirement as net. Unsafe deny attributes count as lines, not operations.
+- Report physical production and adjusted implementation separately. Adjusted is
+  physical minus specifically mapped superseded retained sections. The owned accounting
+  record names source pin, file/function/span, replacement/actual caller/proof, current
+  retention reason and deletion condition. Count overlaps once; deleting a section
+  removes its discount simultaneously. This adjustment claims no physical deletion or
+  net savings. Unsafe operation sites/signatures need source maps; text/attribute counts
+  stay separate. Use tools/progress.sh --accounting --ref PIN --superseded RECORD.
 - Never commit ROMs, movies/checkpoints/saves or derived game data. Only encrypted
   release assets use the existing ci-data route; verify complete restore/member identities.
 - Small commits, one coherent idea. If an item stalls over an hour, record its blocker

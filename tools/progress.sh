@@ -7,11 +7,14 @@ src=sm/src
 count() { grep -rE "$1" "$src" --include='*.rs' | wc -l | tr -d ' '; }
 legacy=$(find "$src/game" -maxdepth 1 -type f -name 'sm_*.rs' -exec cat {} + | wc -l | tr -d ' ')
 
-# Markdown is stdout only; the published treemap is generated separately.
+# Markdown is stdout only.
 # Supply current local measurements explicitly, never cached/CI values:
 # sh tools/progress.sh --markdown [WARNINGS [PASSED/TOTAL]]
 case "${1-}" in
   '') ;;
+  --accounting)
+    shift
+    exec "${PYTHON:-python3}" tools/progress_accounting.py "$@" ;;
   --markdown)
     [ "$#" -le 3 ] || { echo 'Expected --markdown [WARNINGS [PASSED/TOTAL]]' >&2; exit 2; }
     warning_count=${2:-not measured}
@@ -58,7 +61,7 @@ case "${1-}" in
       }
     '
     exit ;;
-  *) echo 'Usage: progress.sh [--markdown [WARNINGS [PASSED/TOTAL]]]' >&2; exit 2 ;;
+  *) echo 'Usage: progress.sh [--markdown [WARNINGS [PASSED/TOTAL]]] | --accounting [--ref PIN] [--superseded JSON]' >&2; exit 2 ;;
 esac
 
 printf '%-34s %8s\n' metric count
