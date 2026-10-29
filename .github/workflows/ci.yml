@@ -1,7 +1,9 @@
 name: CI
 
 on:
+  # Branches get CI through their pull request; pushes run it for main only.
   push:
+    branches: [main]
     paths-ignore:
       - docs/PLAN.md
   pull_request:
