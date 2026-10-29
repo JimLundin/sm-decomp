@@ -33,6 +33,7 @@ pub(in crate::game) mod scene;
 pub(crate) mod shaktool;
 pub(in crate::game) mod sidehopper;
 pub(crate) mod snapshot;
+pub(crate) mod torizo;
 pub(in crate::game) mod wall_crawlers;
 
 pub(in crate::game) mod codec;
