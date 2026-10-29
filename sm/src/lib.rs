@@ -212,7 +212,6 @@ pub(crate) use set_fields;
 // Access macros of the moved projectile, enemy-projectile and room mechanism modules.
 #[macro_use]
 extern crate sm_game;
-#[macro_use]
 mod word_transfers;
 
 #[cfg(sm_verify_dll)]

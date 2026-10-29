@@ -788,3 +788,173 @@ ram_vars! {
     0x19602, uint16 Array => [custom_background];
     0x1FF00, uint16 Scalar => [bug_fix_counter_BAD];
 }
+
+// Named SNES word reads, assignments and updates share one caller-side interface.
+// `word!(game.field)` reads; `word!(game.field = value)` writes. Arrays use
+// `field[index]`. Updates use `(game.field, method(argument), reread)` or an
+// expression `(game.field, |old| value)`; `reread` is optional. Ordered stores
+// of one literal use `(game, value; field, other[index])`; different values use
+// `(game; field = value; other[index] = next;)`.
+//
+// Checked byte places stay at the caller: borrowing the whole Game/RAM here
+// could invalidate retained raw enemy pointers. No reference escapes an access.
+// Odd addresses and signed array offsets outside a named table remain valid.
+// Reads evaluate the index once; assignments evaluate RHS before the
+// destination, retaining RHS temporaries through the store. Updates capture
+// the destination and read its old value before evaluating the RHS. `reread`
+// loads that destination after RHS temporaries are dropped. No value or index
+// is hoisted across ordered stores; update expressions create no closure.
+#[macro_export]
+macro_rules! ram_word {
+    // Compound arithmetic wraps at 16 bits; bits/shifts keep ordinary u16 operations.
+    // Delegate destination capture, old load, RHS evaluation and store to the update arm.
+    ($game:ident.$field:ident$([$index:expr])? &= $value:expr $(, $result:ident)? $(,)?) => {
+        $crate::ram_word!($game.$field$([$index])?, |old| old & $value $(, $result)?)
+    };
+    ($game:ident.$field:ident$([$index:expr])? += $value:expr $(, $result:ident)? $(,)?) => {
+        $crate::ram_word!($game.$field$([$index])?, |old| old.wrapping_add($value) $(, $result)?)
+    };
+    ($game:ident.$field:ident$([$index:expr])? -= $value:expr $(, $result:ident)? $(,)?) => {
+        $crate::ram_word!($game.$field$([$index])?, |old| old.wrapping_sub($value) $(, $result)?)
+    };
+    ($game:ident.$field:ident$([$index:expr])? >>= $value:expr $(, $result:ident)? $(,)?) => {
+        $crate::ram_word!($game.$field$([$index])?, |old| old >> $value $(, $result)?)
+    };
+    ($game:ident.$field:ident$([$index:expr])? ^= $value:expr $(, $result:ident)? $(,)?) => {
+        $crate::ram_word!($game.$field$([$index])?, |old| old ^ $value $(, $result)?)
+    };
+    ($game:ident.$field:ident$([$index:expr])? |= $value:expr $(, $result:ident)? $(,)?) => {
+        $crate::ram_word!($game.$field$([$index])?, |old| old | $value $(, $result)?)
+    };
+    // Explicit promoted operations retain their original RHS type and final u16 cast.
+    // Checked operations use ordinary Rust overflow/shift rules before truncation.
+    (bits_i32, $game:ident.$field:ident$([$index:expr])? |= $value:expr $(, $result:ident)? $(,)?) => {
+        $crate::ram_word!($game.$field$([$index])?, |old| ((old as i32) | $value) as u16 $(, $result)?)
+    };
+    (checked_i32, $game:ident.$field:ident$([$index:expr])? *= $value:expr $(, $result:ident)? $(,)?) => {
+        $crate::ram_word!($game.$field$([$index])?, |old| ((old as i32) * $value) as u16 $(, $result)?)
+    };
+    (checked_i32, $game:ident.$field:ident$([$index:expr])? += $value:expr $(, $result:ident)? $(,)?) => {
+        $crate::ram_word!($game.$field$([$index])?, |old| ((old as i32) + $value) as u16 $(, $result)?)
+    };
+    (checked_i32, $game:ident.$field:ident$([$index:expr])? -= $value:expr $(, $result:ident)? $(,)?) => {
+        $crate::ram_word!($game.$field$([$index])?, |old| ((old as i32) - $value) as u16 $(, $result)?)
+    };
+    (checked_i32, $game:ident.$field:ident$([$index:expr])? <<= $value:expr $(, $result:ident)? $(,)?) => {
+        $crate::ram_word!($game.$field$([$index])?, |old| ((old as i32) << $value) as u16 $(, $result)?)
+    };
+    (wrapping_u32, $game:ident.$field:ident$([$index:expr])? += $value:expr $(, $result:ident)? $(,)?) => {
+        $crate::ram_word!($game.$field$([$index])?, |old| (old as u32).wrapping_add($value) as u16 $(, $result)?)
+    };
+
+    ($game:ident.$field:ident[$index:expr]) => {
+        $crate::ram_word!(@read $game,
+            $crate::ram_word!(@offset $field[$index]))
+    };
+    ($game:ident.$field:ident) => {
+        $crate::ram_word!(@read $game, $crate::ram::words::$field)
+    };
+    ($game:ident.$field:ident[$index:expr] = $value:expr $(,)?) => {
+        $crate::ram_word!(@write $game,
+            $crate::ram_word!(@offset $field[$index]), $value)
+    };
+    ($game:ident.$field:ident = $value:expr $(,)?) => {
+        $crate::ram_word!(@write $game, $crate::ram::words::$field, $value)
+    };
+    ($game:ident; $($field:ident$([$index:expr])? = $value:expr;)+) => {
+        $($crate::ram_word!($game.$field$([$index])? = $value);)+
+    };
+    ($game:ident, $value:literal; $($field:ident$([$index:expr])?),+ $(,)?) => {
+        $($crate::ram_word!($game.$field$([$index])? = $value);)+
+    };
+    ($game:ident.$field:ident$([$index:expr])?, $method:ident($argument:expr $(,)?) $(, $result:ident)? $(,)?) => {
+        $crate::ram_word!($game.$field$([$index])?, |word| word.$method($argument) $(, $result)?)
+    };
+    ($game:ident.$field:ident$([$index:expr])?, |$old:ident| { $value:expr } $(, $result:ident)? $(,)?) => {
+        $crate::ram_word!($game.$field$([$index])?, |$old| $value $(, $result)?)
+    };
+    ($game:ident.$field:ident[$index:expr], |$old:ident| $value:expr $(, $result:ident)? $(,)?) => {{
+        let destination = $crate::ram_word!(@offset $field[$index]);
+        let $old = $crate::ram_word!(@read $game, destination);
+        $crate::ram_word!(@write $game, destination, $value);
+        $crate::ram_word!(@result $game, destination $(, $result)?)
+    }};
+    ($game:ident.$field:ident, |$old:ident| $value:expr $(, $result:ident)? $(,)?) => {{
+        let destination = $crate::ram::words::$field;
+        let $old = $crate::ram_word!(@read $game, destination);
+        $crate::ram_word!(@write $game, destination, $value);
+        $crate::ram_word!(@result $game, destination $(, $result)?)
+    }};
+    (@offset $field:ident[$index:expr]) => {
+        $crate::ram::word_arrays::$field
+            .checked_add_signed(($index as isize).checked_mul(2).expect("word index overflow"))
+            .expect("word address outside RAM")
+    };
+    (@read $game:ident, $offset:expr) => {
+        match $offset {
+            offset => {
+                // Check both bytes without borrowing any part of the RAM array.
+                assert!(offset < 131071, "word address outside RAM");
+                u16::from_le_bytes([$game.compatibility_byte(offset), $game.compatibility_byte(offset + 1)])
+            }
+        }
+    };
+    (@write $game:ident, $offset:expr, $value:expr) => {
+        // Match keeps RHS/index temporaries alive through both stores, unlike
+        // a let-value statement. The caller's semicolon drops them before reread.
+        match ($value, $offset) {
+            (value, offset) => {
+                assert!(offset < 131071, "word address outside RAM");
+                let bytes = u16::to_le_bytes(value);
+                $game.compatibility_write_byte(offset, bytes[0]);
+                $game.compatibility_write_byte(offset + 1, bytes[1]);
+            }
+        }
+    };
+    (@result $game:ident, $destination:ident) => { () };
+    (@result $game:ident, $destination:ident, reread) => {
+        $crate::ram_word!(@read $game, $destination)
+    };
+}
+
+// Checked word access for migrated callers that retain offsets, not pointers.
+// Byte places avoid borrowing the whole RAM array. Assignments evaluate the
+// value before the address; updates capture the address and old value first.
+// This smaller interface retains its existing low-byte-first failure prefix.
+#[macro_export]
+macro_rules! ram_checked_word {
+    ($game:ident.$field:ident[$index:expr] $($tail:tt)*) => {
+        $crate::ram_checked_word!($game,
+            $crate::ram::word_arrays::$field.checked_add_signed(($index as isize).checked_mul(2).unwrap()).unwrap(); $($tail)*)
+    };
+    ($game:ident.$field:ident $($tail:tt)*) => {
+        $crate::ram_checked_word!($game, $crate::ram::words::$field; $($tail)*)
+    };
+    ($game:ident, $offset:expr;) => {{
+        let offset: usize = $offset;
+        u16::from_le_bytes([$game.compatibility_byte(offset), $game.compatibility_byte(offset + 1)])
+    }};
+    ($game:ident, $offset:expr; = $value:expr) => {
+        match ($value, $offset) {
+            (value, offset) => {
+                let bytes = u16::to_le_bytes(value);
+                $game.compatibility_write_byte(offset, bytes[0]);
+                $game.compatibility_write_byte(offset + 1, bytes[1]);
+            }
+        }
+    };
+    ($game:ident, $offset:expr; += $value:expr) => {{
+        let offset: usize = $offset;
+        let old = $crate::ram_checked_word!($game, offset;);
+        $crate::ram_checked_word!($game, offset; = old.wrapping_add($value));
+    }};
+    ($game:ident, $offset:expr; ^= $value:expr) => {{
+        let offset: usize = $offset;
+        let old = $crate::ram_checked_word!($game, offset;);
+        $crate::ram_checked_word!($game, offset; = old ^ $value);
+    }};
+}
+
+/// Named word access through any `CompatibilityRam`; the receiver must have
+/// `compatibility_byte`/`compatibility_write_byte` methods in scope.
+pub use crate::{ram_checked_word as checked_word, ram_word as word};

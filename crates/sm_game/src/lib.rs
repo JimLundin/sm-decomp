@@ -35,6 +35,7 @@ pub mod save_file;
 pub mod special_geometry;
 pub mod sprite_effect_state;
 pub mod visual_state;
+pub mod word_transfers;
 
 pub mod display {
     pub mod control;
