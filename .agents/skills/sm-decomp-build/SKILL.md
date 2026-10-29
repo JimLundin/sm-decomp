@@ -42,6 +42,8 @@ Read [iteration](../../../docs/ITERATION.md) and
    dependency flags. Direct/detached rustc needs explicit -D warnings. Fix actual
    diagnostics; blanket allowances and historical warning-bearing builds do not
    pass. Bind reuse to the strict package/options; denied/missing artifacts fail.
+   With --check-cfg enabled, declare cfg(test) as expected without --cfg test
+   or warning suppression; existing test guards remain disabled.
 6. Send minimal DLL/source/native pins, stages/units/gaps and original handles
    to the assigned replay owner and primary before extended receipts. Record actual
    START/EXIT; notify root on terminal compilation for release.

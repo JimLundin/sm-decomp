@@ -26,6 +26,10 @@ checkout still needs the authoritative repository path.
 
 Keep the assigned source scope disjoint. The primary root is the sole Git writer.
 
+For Windows scripts, use C:/Users/Jim.Lundin/AppData/Local/sm-decomp-tools/python-3.13.7/python.exe
+or the assignment's verified installed executable through light cmd.exe; budget
+the shell, Python and children together within the whole-family grant.
+
 1. Confirm the item is unclaimed with the coordinator and use the assigned base
    and file scope. Read applicable contracts.
 2. For checkpoint work, describe ordered serialized State fields/types and every

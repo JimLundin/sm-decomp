@@ -70,6 +70,8 @@ Both encrypted packs and complete selected restores are verified.
 CI selects the two layout150 assets by verified digests for all14 checkpoint rows;
 shard names retain distinct f158/checkpoints identities.
 The first two green scheduled full-corpus runs remain pending; Phase 0 stays open.
+Push CI selects main; full-corpus cron runs at minute17 every3h to avoid the
+hourly scheduling peak. This is a reliability experiment; missed-slot cause is unproved.
 Read [current acceptance](REVIEW.md#current-publication-and-acceptance) before
 changing a retained owner. Preserve original source/DLL/native/input/loader pins,
 unexecuted cases and exclusions in the original owned qualification receipts.
