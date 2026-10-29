@@ -8,6 +8,7 @@ use crate::game::music::QueueMusic_Delayed8;
 use crate::game::palette_copies::{WriteColorsToPalette, WriteColorsToTargetPalette};
 use crate::game::player_update::minimap;
 pub use crate::game::prelude::*;
+use crate::game::rom_vram_entries::ProcessSpriteTilesTransfers;
 use crate::game::session_runtime::Runtime;
 use crate::rom::RomRecord;
 
@@ -81,7 +82,6 @@ crate::game::constants::typed_constants! { i32;
     fnMotherBrainsBody_FirstPhase_DoubleRet = 0xa987e1,
 }
 const RomPtr_A9: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa9>;
-use crate::rtl::rom_ptr_with_bank as RomPtrWithBank;
 crate::game::constants::typed_constants! { u32;
     fnMotherBrainBody_FakeDeath_Descent_0_Pause = 11110429,
 }
@@ -3065,58 +3065,6 @@ pub unsafe fn Enemy_IncreaseYpos(k: u16, mut a: u16, game: &mut Game) {
             EnemyData[v2].y_pos = (slot!(game, EnemyData[v2].y_pos) as i32
                 + ((a >> 8) as i8 as i32 + (carry >> 8))) as u16
         );
-    }
-}
-pub unsafe fn ProcessSpriteTilesTransfers(db: u8, k: u16, game: &mut Game) -> u8 {
-    unsafe {
-        let E: i32 = 0;
-        let mut src: u16 = slot!(game, Enemy_MotherBrain[E].var_22);
-        if src == 0 {
-            src = k;
-        }
-        let v4: u16 = word!(game.vram_write_queue_tail);
-        let v5 = RomPtrWithBank(db, src, game);
-        let mut v6: u16 = *(v5 as *mut u16);
-        if v6 != 0 {
-            let v7: usize = usize::try_from(0xd0i32 + word!(game.vram_write_queue_tail) as i32)
-                .expect("VRAM entry outside RAM");
-            {
-                let value: u16 = v6;
-                let at: usize = v7;
-                let bytes = value.to_ne_bytes();
-                game.ram().write_byte(at, bytes[0]);
-                game.ram().write_byte(at + 1, bytes[1]);
-            };
-            {
-                let value: u16 = *(v5.offset(3) as *mut u16);
-                let at: usize = v7 + 3;
-                let bytes = value.to_ne_bytes();
-                game.ram().write_byte(at, bytes[0]);
-                game.ram().write_byte(at + 1, bytes[1]);
-            };
-            {
-                let value: u16 = *(v5.offset(2) as *mut u16);
-                let at: usize = v7 + 2;
-                let bytes = value.to_ne_bytes();
-                game.ram().write_byte(at, bytes[0]);
-                game.ram().write_byte(at + 1, bytes[1]);
-            };
-            {
-                let value: u16 = *(v5.offset(5) as *mut u16);
-                let at: usize = v7 + 5;
-                let bytes = value.to_ne_bytes();
-                game.ram().write_byte(at, bytes[0]);
-                game.ram().write_byte(at + 1, bytes[1]);
-            };
-            word!(game.vram_write_queue_tail = (v4).wrapping_add(7));
-            slot!(game, Enemy_MotherBrain[E].var_22 = (src).wrapping_add(7));
-            v6 = *(RomPtrWithBank(db, slot!(game, Enemy_MotherBrain[E].var_22), game) as *mut u16);
-            if v6 != 0 {
-                return 0;
-            }
-        }
-        slot!(game, Enemy_MotherBrain[E].var_22 = v6);
-        1
     }
 }
 pub unsafe fn MotherBrain_MakeWalkForwards(j: u16, a: u16, game: &mut Game) -> u8 {
