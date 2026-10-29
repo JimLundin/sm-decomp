@@ -1,6 +1,5 @@
 //! The Ceres and Zebes escape typewriter text, read word by word from bank $A6.
 #![forbid(unsafe_code)]
-#![allow(non_snake_case)]
 use crate::game::constants::bank_a9::addr_loc_A9C49C;
 use crate::game::music::{QueueSfx2_Max3, QueueSfx3_Max3};
 use crate::game::session_runtime::native_record;
@@ -23,7 +22,8 @@ fn store_word(at: usize, value: u16, game: &mut Game) {
     game.ram().write_byte(at + 1, bytes[1]);
 }
 
-pub(crate) fn SetupZebesEscapeTypewriter(game: &mut Game) {
+/// Was SetupZebesEscapeTypewriter.
+pub(crate) fn start_zebes_escape_typewriter(game: &mut Game) {
     word!(game.palette_buffer[157] = word!(game.palette_buffer[125]));
     word!(game.palette_buffer[158] = word!(game.palette_buffer[126]));
     slot!(game, Enemy_MotherBrain[0].var_3B = addr_loc_A9C49C as u16);
@@ -33,7 +33,8 @@ pub(crate) fn SetupZebesEscapeTypewriter(game: &mut Game) {
 
 /// Type one character per elapsed delay; 1 once the text's end word is read.
 /// Control words compare in full; characters use their low byte.
-pub(crate) fn HandleTypewriterText_Ext(tiles: u16, game: &mut Game) -> u8 {
+/// Was HandleTypewriterText_Ext.
+pub(crate) fn type_escape_text(tiles: u16, game: &mut Game) -> u8 {
     let delay = slot!(game, Enemy_MotherBrain[0].var_3D);
     if delay != 0 {
         slot!(game, Enemy_MotherBrain[0].var_3D = delay.wrapping_sub(1));
