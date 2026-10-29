@@ -1053,7 +1053,7 @@ checkpoint_fields!(checkpoint_position, checkpoint_read_position, Position,
     whole: checkpoint_word/checkpoint_read_word, fraction: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_motion, checkpoint_read_motion, FixedMotion,
     fraction: checkpoint_word/checkpoint_read_word, whole: checkpoint_word/checkpoint_read_word);
-checkpoint_fields!(checkpoint_demo, checkpoint_read_demo, crate::game::player_transitions::demo::DemoInput,
+checkpoint_fields!(checkpoint_demo, checkpoint_read_demo, sm_game::player_transitions::demo::DemoInput,
     pre_action: checkpoint_word/checkpoint_read_word, delay: checkpoint_word/checkpoint_read_word,
     program: checkpoint_word/checkpoint_read_word, held: checkpoint_word/checkpoint_read_word,
     pressed: checkpoint_word/checkpoint_read_word, enabled: checkpoint_word/checkpoint_read_word,
