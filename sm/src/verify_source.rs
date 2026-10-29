@@ -286,6 +286,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/palette_copies.rs"),
     ),
     (
+        "sm/src/game/rom_vram_entries.rs",
+        include_bytes!("game/rom_vram_entries.rs"),
+    ),
+    (
         "sm/src/game/palette_effects/fading.rs",
         include_bytes!("game/palette_effects/fading.rs"),
     ),
