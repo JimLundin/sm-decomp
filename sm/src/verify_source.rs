@@ -1629,76 +1629,76 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/player_projectiles/access.rs"),
     ),
     (
-        "sm/src/game/player_projectiles/animation.rs",
-        include_bytes!("game/player_projectiles/animation.rs"),
+        "crates/sm_game/src/player_projectiles/animation.rs",
+        include_bytes!("../../crates/sm_game/src/player_projectiles/animation.rs"),
     ),
     (
-        "sm/src/game/player_projectiles/bomb_creation.rs",
-        include_bytes!("game/player_projectiles/bomb_creation.rs"),
+        "crates/sm_game/src/player_projectiles/bomb_creation.rs",
+        include_bytes!("../../crates/sm_game/src/player_projectiles/bomb_creation.rs"),
     ),
     (
-        "sm/src/game/player_projectiles/bomb_terrain.rs",
-        include_bytes!("game/player_projectiles/bomb_terrain.rs"),
+        "crates/sm_game/src/player_projectiles/bomb_terrain.rs",
+        include_bytes!("../../crates/sm_game/src/player_projectiles/bomb_terrain.rs"),
     ),
     (
-        "sm/src/game/player_projectiles/bombs.rs",
-        include_bytes!("game/player_projectiles/bombs.rs"),
+        "crates/sm_game/src/player_projectiles/bombs.rs",
+        include_bytes!("../../crates/sm_game/src/player_projectiles/bombs.rs"),
     ),
     (
         "sm/src/game/player_projectiles/cannon.rs",
         include_bytes!("game/player_projectiles/cannon.rs"),
     ),
     (
-        "sm/src/game/player_projectiles/collision.rs",
-        include_bytes!("game/player_projectiles/collision.rs"),
+        "crates/sm_game/src/player_projectiles/collision.rs",
+        include_bytes!("../../crates/sm_game/src/player_projectiles/collision.rs"),
     ),
     (
         "crates/sm_game/src/player_projectiles/content.rs",
         include_bytes!("../../crates/sm_game/src/player_projectiles/content.rs"),
     ),
     (
-        "sm/src/game/player_projectiles/feedback.rs",
-        include_bytes!("game/player_projectiles/feedback.rs"),
+        "crates/sm_game/src/player_projectiles/feedback.rs",
+        include_bytes!("../../crates/sm_game/src/player_projectiles/feedback.rs"),
     ),
     (
         "crates/sm_game/src/player_projectiles/host.rs",
         include_bytes!("../../crates/sm_game/src/player_projectiles/host.rs"),
     ),
     (
-        "sm/src/game/player_projectiles/lifecycle.rs",
-        include_bytes!("game/player_projectiles/lifecycle.rs"),
+        "crates/sm_game/src/player_projectiles/lifecycle.rs",
+        include_bytes!("../../crates/sm_game/src/player_projectiles/lifecycle.rs"),
     ),
     (
-        "sm/src/game/player_projectiles/missiles.rs",
-        include_bytes!("game/player_projectiles/missiles.rs"),
+        "crates/sm_game/src/player_projectiles/missiles.rs",
+        include_bytes!("../../crates/sm_game/src/player_projectiles/missiles.rs"),
     ),
     (
         "sm/src/game/player_projectiles/mod.rs",
         include_bytes!("game/player_projectiles/mod.rs"),
     ),
     (
-        "sm/src/game/player_projectiles/motion.rs",
-        include_bytes!("game/player_projectiles/motion.rs"),
+        "crates/sm_game/src/player_projectiles/motion.rs",
+        include_bytes!("../../crates/sm_game/src/player_projectiles/motion.rs"),
     ),
     (
         "crates/sm_game/src/player_projectiles/placement.rs",
         include_bytes!("../../crates/sm_game/src/player_projectiles/placement.rs"),
     ),
     (
-        "sm/src/game/player_projectiles/preparation.rs",
-        include_bytes!("game/player_projectiles/preparation.rs"),
+        "crates/sm_game/src/player_projectiles/preparation.rs",
+        include_bytes!("../../crates/sm_game/src/player_projectiles/preparation.rs"),
     ),
     (
-        "sm/src/game/player_projectiles/presentation.rs",
-        include_bytes!("game/player_projectiles/presentation.rs"),
+        "crates/sm_game/src/player_projectiles/presentation.rs",
+        include_bytes!("../../crates/sm_game/src/player_projectiles/presentation.rs"),
     ),
     (
-        "sm/src/game/player_projectiles/specials.rs",
-        include_bytes!("game/player_projectiles/specials.rs"),
+        "crates/sm_game/src/player_projectiles/specials.rs",
+        include_bytes!("../../crates/sm_game/src/player_projectiles/specials.rs"),
     ),
     (
-        "sm/src/game/player_projectiles/weapons.rs",
-        include_bytes!("game/player_projectiles/weapons.rs"),
+        "crates/sm_game/src/player_projectiles/weapons.rs",
+        include_bytes!("../../crates/sm_game/src/player_projectiles/weapons.rs"),
     ),
     (
         "crates/sm_game/src/gameplay_flag_host.rs",

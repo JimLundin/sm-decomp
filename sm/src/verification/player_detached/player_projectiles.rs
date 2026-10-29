@@ -3,37 +3,16 @@
     reason = "Detached projectile subset omits shot and shot_lane facade consumers."
 )]
 pub(crate) use sm_game::player_projectiles::access;
-#[path = "../../game/player_projectiles/animation.rs"]
-pub(crate) mod animation;
-#[path = "../../game/player_projectiles/bomb_creation.rs"]
-pub(crate) mod bomb_creation;
-#[path = "../../game/player_projectiles/bomb_terrain.rs"]
-pub(crate) mod bomb_terrain;
-#[path = "../../game/player_projectiles/bombs.rs"]
-pub(crate) mod bombs;
-#[path = "../../game/player_projectiles/collision.rs"]
-pub(crate) mod collision;
+pub(crate) use sm_game::player_projectiles::animation;
 pub(crate) use sm_game::player_projectiles::content;
-#[path = "../../game/player_projectiles/feedback.rs"]
-pub(crate) mod feedback;
 pub(crate) use sm_game::player_projectiles::host;
-#[path = "../../game/player_projectiles/lifecycle.rs"]
-pub(crate) mod lifecycle;
-#[path = "../../game/player_projectiles/missiles.rs"]
-pub(crate) mod missiles;
-#[path = "../../game/player_projectiles/motion.rs"]
-pub(crate) mod motion;
-pub(crate) use sm_game::player_projectiles::placement;
-#[path = "../../game/player_projectiles/preparation.rs"]
-pub(crate) mod preparation;
+pub(crate) use sm_game::player_projectiles::missiles;
+pub(crate) use sm_game::player_projectiles::motion;
+pub(crate) use sm_game::player_projectiles::preparation;
 pub(crate) use preparation::deselect as deselect_owned;
-#[path = "../../game/player_projectiles/presentation.rs"]
-pub(crate) mod presentation;
-#[path = "../../game/player_projectiles/specials.rs"]
-pub(crate) mod specials;
+pub(crate) use sm_game::player_projectiles::presentation;
 use crate::game::session as state;
-#[path = "../../game/player_projectiles/weapons.rs"]
-pub(crate) mod weapons;
+pub(crate) use sm_game::player_projectiles::weapons;
 use host::Host;
 pub(crate) fn fire(h: &mut impl Host) {
     weapons::update_input(h);

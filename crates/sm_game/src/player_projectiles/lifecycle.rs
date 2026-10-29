@@ -1,6 +1,7 @@
 //! Ordered impacts and retirement over the live projectile session.
 #![forbid(unsafe_code)]
 use super::{Host, content, motion};
+use crate::shot;
 const DIRECTIONS: [(i8, i8); 10] = [
     (0, -1),
     (1, -1),
@@ -13,7 +14,7 @@ const DIRECTIONS: [(i8, i8); 10] = [
     (-1, -1),
     (0, -1),
 ];
-pub(super) fn impact(h: &mut impl Host, raw: u16) {
+pub fn impact(h: &mut impl Host, raw: u16) {
     let ballistic = shot!(h, raw, kind) & 0xf00 != 0;
     if ballistic && h.inputs().cinematic == 0 {
         h.sound(2, 6, 7);
@@ -49,7 +50,7 @@ pub(super) fn impact(h: &mut impl Host, raw: u16) {
     shot!(h, raw, remaining = 1);
     shot!(h, raw, damage = 8);
 }
-pub(super) fn retire(h: &mut impl Host, raw: u16) {
+pub fn retire(h: &mut impl Host, raw: u16) {
     match shot!(h, raw, kind) & 0xf00 {
         0 => {
             let (dx, dy) = DIRECTIONS[usize::from(shot!(h, raw, direction) & 15)];

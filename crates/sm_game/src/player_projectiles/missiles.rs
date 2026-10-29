@@ -1,7 +1,8 @@
 //! Missile creation and live weapon selection over ordinary state.
 #![forbid(unsafe_code)]
 use super::host::Host;
-use crate::game::{
+use crate::shot;
+use crate::{
     projectile_initialization::Initialization, projectile_weapon_definitions as definitions,
 };
 fn ammo(h: &impl Host) -> bool {
@@ -11,7 +12,7 @@ fn ammo(h: &impl Host) -> bool {
         h.session().inventory.ammunition[0].current != 0
     }
 }
-pub(super) fn fire(h: &mut impl Host) {
+pub fn fire(h: &mut impl Host) {
     if h.inputs().shoot_button & h.inputs().pressed == 0
         && h.inputs().shoot_button & h.inputs().filtered_pressed == 0
     {

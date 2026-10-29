@@ -1,7 +1,8 @@
 //! Ordinary, power and spread bomb production with live initialization boundaries.
 #![forbid(unsafe_code)]
 use super::host::{Host, PaletteEffect};
-use crate::game::{
+use crate::shot;
+use crate::{
     projectile_initialization::Initialization, projectile_weapon_definitions as definitions,
 };
 fn cancel_charge(h: &mut impl Host) {
@@ -50,7 +51,7 @@ fn prepare(h: &mut impl Host) -> bool {
     }
     false
 }
-pub(super) fn fire(h: &mut impl Host) {
+pub fn fire(h: &mut impl Host) {
     if h.inputs().shoot_button & h.inputs().held == 0 {
         return cancel_charge(h);
     }
@@ -109,7 +110,7 @@ pub(super) fn fire(h: &mut impl Host) {
         }
     }
 }
-pub(super) fn spread(h: &mut impl Host) {
+pub fn spread(h: &mut impl Host) {
     if shot!(h, 10, motion) == 0xd8f7 {
         return;
     }

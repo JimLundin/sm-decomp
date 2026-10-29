@@ -121,9 +121,25 @@ pub mod player_movement {
 }
 pub mod player_projectiles {
     pub mod access;
+    pub mod animation;
+    pub mod bomb_creation;
+    pub mod bomb_terrain;
+    pub mod bombs;
+    pub mod collision;
     pub mod content;
+    pub mod feedback;
     pub mod host;
+    pub mod lifecycle;
+    pub mod missiles;
+    pub mod motion;
     pub mod placement;
+    pub mod preparation;
+    pub mod presentation;
+    pub mod specials;
+    pub mod weapons;
+    // Paths the projectile modules use from their parent.
+    use crate::session as state;
+    use host::Host;
 }
 pub mod room_mechanisms {
     pub mod access;

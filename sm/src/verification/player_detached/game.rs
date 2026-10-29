@@ -1,6 +1,5 @@
 #[path = "actors.rs"]
 pub(crate) mod actors;
-pub(crate) use sm_game::beam_definitions;
 #[path = "../../game/launch_motion.rs"]
 pub(crate) mod launch_motion;
 #[path = "player_projectiles.rs"]
@@ -8,10 +7,7 @@ pub(crate) mod player_projectiles;
 pub(crate) use crate::palette as palette_effects;
 pub(crate) use sm_game::projectile_block_reactions;
 pub(crate) use sm_game::projectile_geometry;
-pub(crate) use sm_game::projectile_initialization;
 pub(crate) use sm_game::projectile_room;
-pub(crate) use sm_game::projectile_weapon_definitions;
-pub(crate) use sm_game::special_geometry;
 
 pub(crate) use sm_game::external_inputs;
 pub(crate) use sm_game::item_pickups;

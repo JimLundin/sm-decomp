@@ -1,7 +1,8 @@
 //! Complete special-beam creation, orbit and retirement over ordinary state.
 #![forbid(unsafe_code)]
 use super::host::Host;
-use crate::game::projectile_initialization::Initialization;
+use crate::projectile_initialization::Initialization;
+use crate::{shot, shot_native};
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Kind {
     Wave,
@@ -51,7 +52,7 @@ macro_rules! pursue {
         shot!($h, raw, $position = (next >> 16) as u16; SliceNative);
     }};
 }
-pub(super) fn fire(h: &mut impl Host) -> u8 {
+pub fn fire(h: &mut impl Host) -> u8 {
     if h.session().projectiles.controls.selected_weapon != 3 {
         return 0;
     }
@@ -86,7 +87,7 @@ pub(super) fn fire(h: &mut impl Host) -> u8 {
     }
     result
 }
-pub(super) fn create(h: &mut impl Host, attack: Attack) -> u8 {
+pub fn create(h: &mut impl Host, attack: Attack) -> u8 {
     if (attack == Attack::Ice
         && ((shot!(h, 0, motion) == instruction(Kind::IceReleased))
             || (shot!(h, 0, motion) == instruction(Kind::Ice))))
@@ -166,7 +167,7 @@ pub(super) fn create(h: &mut impl Host, attack: Attack) -> u8 {
     }
     h.session_mut().projectiles.count = 4;
     let index = usize::from(shot!(h, 0, kind) & 0x3f);
-    let cooldown = u16::from(crate::game::beam_definitions::MANUAL_COOLDOWN[index]);
+    let cooldown = u16::from(crate::beam_definitions::MANUAL_COOLDOWN[index]);
     h.session_mut().projectiles.controls.cooldown = cooldown;
     let step = match attack {
         Attack::Wave => 4,
@@ -192,7 +193,7 @@ pub(super) fn create(h: &mut impl Host, attack: Attack) -> u8 {
     );
     1
 }
-pub(super) fn update(h: &mut impl Host, mut selected: u16, kind: Kind) {
+pub fn update(h: &mut impl Host, mut selected: u16, kind: Kind) {
     let slot = selected & !1;
     if shot!(h, slot, direction) & 0xf0 != 0 {
         if matches!(kind, Kind::Wave | Kind::Ice) {
@@ -248,7 +249,7 @@ pub(super) fn update(h: &mut impl Host, mut selected: u16, kind: Kind) {
     }
     resume(h, selected, kind, slot, previous_x)
 }
-pub(super) fn resume(h: &mut impl Host, selected: u16, kind: Kind, original: u16, previous_x: u16) {
+pub fn resume(h: &mut impl Host, selected: u16, kind: Kind, original: u16, previous_x: u16) {
     if kind == Kind::Wave {
         let target = h.session().player.x;
         pursue!(h, original, x, x_fraction, x_speed, target);
@@ -304,7 +305,7 @@ pub(super) fn resume(h: &mut impl Host, selected: u16, kind: Kind, original: u16
     }
     hold(h);
 }
-pub(super) fn plasma_radius(h: &mut impl Host, selected: u16, contracting: bool) {
+pub fn plasma_radius(h: &mut impl Host, selected: u16, contracting: bool) {
     let radius = shot!(h, selected, x_speed) as u8;
     let radius = if contracting {
         radius.wrapping_sub(4)
@@ -320,7 +321,7 @@ pub(super) fn plasma_radius(h: &mut impl Host, selected: u16, contracting: bool)
         shot!(h, selected, y_speed = if contracting { 2 } else { 1 }; SliceLe);
     }
 }
-pub(super) fn depart_plasma(h: &mut impl Host, selected: u16) {
+pub fn depart_plasma(h: &mut impl Host, selected: u16) {
     if outside(shot!(h, selected, x), h.inputs().camera_x, 32, 288)
         || outside(shot!(h, selected, y), h.inputs().camera_y, 0xfff0, 256)
     {
@@ -330,7 +331,7 @@ pub(super) fn depart_plasma(h: &mut impl Host, selected: u16) {
         shot!(h, selected, x_speed = radius; SliceLe);
     }
 }
-pub(super) fn advance_spazer(h: &mut impl Host, selected: u16, y: u16) {
+pub fn advance_spazer(h: &mut impl Host, selected: u16, y: u16) {
     let index = usize::from(selected >> 1);
     let phase = usize::from(shot!(h, selected, auxiliary) >> 1);
     if phase >= 3 {
@@ -388,7 +389,7 @@ pub(super) fn advance_spazer(h: &mut impl Host, selected: u16, y: u16) {
         }
     }
 }
-pub(super) fn finish_spazer(h: &mut impl Host, selected: u16) {
+pub fn finish_spazer(h: &mut impl Host, selected: u16) {
     let index = usize::from(selected >> 1);
     // The compound assignment reads X before demanding the table entry.
     let x = shot!(h, selected, x);
@@ -408,11 +409,11 @@ pub(super) fn finish_spazer(h: &mut impl Host, selected: u16) {
     }
 }
 
-pub(super) fn hold(h: &mut impl Host) {
+pub fn hold(h: &mut impl Host) {
     h.session_mut().projectiles.controls.cooldown = 2;
     h.session_mut().projectiles.controls.charge = 0;
 }
-pub(super) fn orbit_step(h: &mut impl Host, slot: u16) {
+pub fn orbit_step(h: &mut impl Host, slot: u16) {
     let angle = (h.session().projectiles.controls.orbit_step as u8)
         .wrapping_add(shot!(h, slot, variable) as u8);
     shot!(h, slot, variable = u16::from(angle); SliceLe);

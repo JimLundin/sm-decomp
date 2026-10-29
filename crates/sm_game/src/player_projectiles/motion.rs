@@ -1,8 +1,9 @@
 //! Flight, release, reflection and numeric motion dispatch on ordinary session state.
 #![forbid(unsafe_code)]
 use super::{Host, animation, presentation};
-use crate::game::projectile_initialization::Initialization;
-use crate::game::projectile_room::Axis;
+use crate::projectile_initialization::Initialization;
+use crate::projectile_room::Axis;
+use crate::{shot, shot_native};
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Flight {
     NonWave,
@@ -13,7 +14,7 @@ pub enum Flight {
 const AXES: [u8; 10] = [2, 3, 1, 3, 2, 2, 3, 1, 3, 2];
 const X_ACCELERATION: [i16; 10] = [0, 16, 16, 16, 0, 0, -16, -16, -16, 0];
 const Y_ACCELERATION: [i16; 10] = [-16, -16, 0, 16, 16, 16, 16, 0, -16, -16];
-pub(super) fn clear(h: &mut impl Host, raw: u16) {
+pub fn clear(h: &mut impl Host, raw: u16) {
     shot!(h, raw, x = 0);
     shot!(h, raw, y = 0);
     shot!(h, raw, x_fraction = 0);
@@ -47,7 +48,7 @@ fn clear_extensions(h: &mut impl Host) {
         }
     }
 }
-pub(super) fn update(h: &mut impl Host, mut raw: u16, kind: Flight, interval: u16) {
+pub fn update(h: &mut impl Host, mut raw: u16, kind: Flight, interval: u16) {
     h.probe("player_projectiles.flight");
     if shot!(h, raw, direction) & 0xf0 != 0 {
         clear(h, raw);
@@ -67,7 +68,7 @@ pub(super) fn update(h: &mut impl Host, mut raw: u16, kind: Flight, interval: u1
     }
     advance(h, raw, kind);
 }
-pub(super) fn advance(h: &mut impl Host, raw: u16, kind: Flight) {
+pub fn advance(h: &mut impl Host, raw: u16, kind: Flight) {
     let direction = usize::from(shot!(h, raw, direction) & 15);
     if kind != Flight::SuperMissile {
         let old = shot!(h, raw, x_speed);
@@ -92,7 +93,7 @@ pub(super) fn advance(h: &mut impl Host, raw: u16, kind: Flight) {
         clear_extensions(h);
     }
 }
-pub(super) fn collide(h: &mut impl Host, axes: u8, kind: Flight) {
+pub fn collide(h: &mut impl Host, axes: u8, kind: Flight) {
     // Both axes retain the selected slot across horizontal callbacks.
     let raw = h.session().projectiles.selected;
     let collision = if kind == Flight::SuperMissile {
@@ -120,7 +121,7 @@ pub(super) fn collide(h: &mut impl Host, axes: u8, kind: Flight) {
         extension_collision(h, Axis::Y);
     }
 }
-pub(super) fn update_extension(h: &mut impl Host, raw: u16) {
+pub fn update_extension(h: &mut impl Host, raw: u16) {
     if shot!(h, raw, direction) & 0xf0 != 0 {
         clear(h, raw);
         clear_extensions(h);
@@ -144,8 +145,8 @@ fn cull(h: &mut impl Host) -> bool {
     clear(h, raw);
     true
 }
-pub(super) fn initialize_speed(h: &mut impl Host, raw: u16, speed: u16) {
-    use crate::game::launch_motion::Aim;
+pub fn initialize_speed(h: &mut impl Host, raw: u16, speed: u16) {
+    use crate::launch_motion::Aim;
     shot!(h,raw,x_fraction = 0; SliceLe);
     shot!(h,raw,y_fraction = 0; SliceLe);
     let Some(aim) = Aim::from_direction(shot!(h, raw, direction)) else {
@@ -166,8 +167,8 @@ pub(super) fn initialize_speed(h: &mut impl Host, raw: u16, speed: u16) {
     );
     shot!(h,raw,x_speed = velocity.x as u16; SliceLe);
 }
-pub(super) fn initialize_beam_speed(h: &mut impl Host, raw: u16) {
-    use crate::game::launch_motion::{BEAM_SPEEDS, beam_selection};
+pub fn initialize_beam_speed(h: &mut impl Host, raw: u16) {
+    use crate::launch_motion::{BEAM_SPEEDS, beam_selection};
     let (index, invalid) = beam_selection(shot!(h, raw, kind), shot!(h, raw, direction));
     if invalid {
         h.unknown();
@@ -250,7 +251,7 @@ fn contact_extension(h: &mut impl Host, parent: u16, child: u16, axis: Axis) {
         }
     }
 }
-pub(super) fn link_extension(h: &mut impl Host, raw: u16) {
+pub fn link_extension(h: &mut impl Host, raw: u16) {
     let parent = h.session().projectiles.selected;
     let value = shot_native!(h, parent, variable);
     shot!(h,parent,variable = (value&0xff00).wrapping_add(raw); SliceNative);
@@ -275,9 +276,9 @@ fn spawn_extension(h: &mut impl Host) {
     link_extension(h, child);
     h.session_mut().projectiles.count = h.session().projectiles.count.wrapping_add(1);
 }
-pub(super) fn point(angle: u16, radius: u16) -> (u16, u16) {
-    let table = &crate::game::projectile_geometry::SINE_COSINE;
-    crate::game::special_geometry::point(angle, radius, table.len(), |index| {
+pub fn point(angle: u16, radius: u16) -> (u16, u16) {
+    let table = &crate::projectile_geometry::SINE_COSINE;
+    crate::special_geometry::point(angle, radius, table.len(), |index| {
         table.get(index).map(|&v| u16::from_le(v as u16))
     })
     .unwrap_or_else(|error| {
@@ -327,7 +328,7 @@ fn suit_pickup_shot(h: &mut impl Host, raw: u16) {
         if shot!(h, raw, variable) == 1 {
             if raw == 6 {
                 h.session_mut().player.movement_handler =
-                    crate::game::player_transitions::state::MovementMode::ShinesparkProjectileResponse;
+                    crate::player_transitions::state::MovementMode::ShinesparkProjectileResponse;
             }
             clear(h, raw);
         } else {
@@ -349,7 +350,7 @@ fn suit_pickup_shot(h: &mut impl Host, raw: u16) {
         }
     }
 }
-pub(in crate::game) fn reflect(h: &mut impl Host, raw: u16) {
+pub fn reflect(h: &mut impl Host, raw: u16) {
     let kind = shot!(h, raw, kind);
     if kind & 0x100 != 0 {
         animation::initialize(h, raw, Initialization::Projectile);
@@ -371,7 +372,7 @@ pub(in crate::game) fn reflect(h: &mut impl Host, raw: u16) {
         );
     }
 }
-pub(super) fn advance_all(h: &mut impl Host) {
+pub fn advance_all(h: &mut impl Host) {
     h.session_mut().projectiles.selected = 18;
     let mut cursor = 18i32;
     while cursor >= 0 {
@@ -386,7 +387,7 @@ pub(super) fn advance_all(h: &mut impl Host) {
         h.session_mut().projectiles.selected = cursor as u16;
     }
 }
-pub(super) fn run(h: &mut impl Host, code: u16, raw: u16) {
+pub fn run(h: &mut impl Host, code: u16, raw: u16) {
     use super::{bombs::Kind as Bomb, specials::Kind as Special};
     match code {
         0xd4d2 => speed_echo(h, raw),
@@ -429,7 +430,7 @@ pub(super) fn run(h: &mut impl Host, code: u16, raw: u16) {
         }
     }
 }
-pub(crate) fn reset(h: &mut impl Host) {
+pub fn reset(h: &mut impl Host) {
     for shot in &mut h.session_mut().projectiles.shots {
         shot.trail_time = 0;
         shot.x = 0;

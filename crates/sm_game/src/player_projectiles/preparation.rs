@@ -47,7 +47,7 @@ fn invalid(table: Table, index: usize) -> ! {
     }
     unreachable!()
 }
-pub(super) fn prepare(h: &mut impl Host, entry: PrepareEntry) {
+pub fn prepare(h: &mut impl Host, entry: PrepareEntry) {
     match entry {
         PrepareEntry::Inactive => return,
         PrepareEntry::ProjectilesOnly => super::motion::advance_all(h),
@@ -80,7 +80,7 @@ pub(super) fn prepare(h: &mut impl Host, entry: PrepareEntry) {
     h.session_mut().projectiles.launch.finish_projectile_phase();
     h.probe("player_projectiles.history.finished");
     h.session_mut().player.transitions.animation_skip =
-        crate::game::player_transitions::state::AnimationSkip::from_raw(0);
+        crate::player_transitions::state::AnimationSkip::from_raw(0);
     h.session_mut().projectiles.controls.pending_aim = 0;
     h.session_mut().projectiles.preparation.aim_history = h
         .session()
@@ -121,7 +121,7 @@ fn select(h: &mut impl Host, choice: Choice) -> bool {
     }
     true
 }
-pub(crate) fn deselect(h: &mut impl Host) {
+pub fn deselect(h: &mut impl Host) {
     select(h, Choice::Beam);
 }
 fn switch(h: &mut impl Host) {

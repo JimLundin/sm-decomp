@@ -1,8 +1,9 @@
 //! Bomb cross/perimeter scans and spread contact with live host observations.
 #![forbid(unsafe_code)]
 use super::{Host, collision::Room};
-use crate::game::projectile_block_reactions::{self as reactions};
-use crate::game::projectile_room::{Axis, Scan};
+use crate::projectile_block_reactions::{self as reactions};
+use crate::projectile_room::{Axis, Scan};
+use crate::{shot, shot_native};
 fn locate(h: &mut impl Host, x: u16, y: u16) {
     h.session_mut().room.collision_cursor = 0;
     let cell = if x < 4096 && y < 4096 {
@@ -151,7 +152,7 @@ fn perimeter(h: &mut impl Host, raw: u16) {
 }
 const BEAM_CLASS: [u8; 12] = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1];
 const SHOT_CLASS: [i8; 9] = [0, 0, 0, 3, -1, 2, -1, -1, -1];
-pub(super) fn explode(h: &mut impl Host, raw: u16) {
+pub fn explode(h: &mut impl Host, raw: u16) {
     let kind = shot_native!(h, raw, kind);
     let class = if kind & 0xf00 != 0 {
         let index = usize::from((shot_native!(h, raw, kind) >> 8) & 15);
@@ -191,7 +192,7 @@ pub(super) fn explode(h: &mut impl Host, raw: u16) {
         perimeter(h, raw);
     }
 }
-pub(super) fn spread(h: &mut impl Host, raw: u16) -> u8 {
+pub fn spread(h: &mut impl Host, raw: u16) -> u8 {
     let x = shot_native!(h, raw, x);
     let y = shot_native!(h, raw, y);
     locate(h, x, y);

@@ -1,28 +1,21 @@
 //! Player-projectile lifecycle, producers, trails and charge feedback.
 pub(crate) use sm_game::player_projectiles::access;
-mod animation;
-mod bomb_creation;
-mod bomb_terrain;
-mod bombs;
+use sm_game::player_projectiles::animation;
 pub(crate) mod cannon;
-mod collision;
 use crate::game::session_encoding as encoding;
 pub(crate) use sm_game::player_projectiles::content;
-pub(crate) mod feedback;
+pub(crate) use sm_game::player_projectiles::feedback;
 pub(crate) use sm_game::player_projectiles::host;
-pub(in crate::game) mod lifecycle;
-mod missiles;
-pub(crate) mod motion;
-use sm_game::player_projectiles::placement;
-mod preparation;
-pub(in crate::game) mod presentation;
+pub(in crate::game) use sm_game::player_projectiles::lifecycle;
+pub(crate) use sm_game::player_projectiles::motion;
+use sm_game::player_projectiles::preparation;
+pub(in crate::game) use sm_game::player_projectiles::presentation;
 
-mod specials;
 use crate::game::session as state;
-mod weapons;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use host::Host;
+use sm_game::player_projectiles::weapons;
 #[path = "../../verification/player_projectiles.rs"]
 pub(crate) mod checks;
 

@@ -440,10 +440,6 @@ pub mod game {
     }
     pub(crate) use callback_dispatch;
 
-    pub(crate) use sm_game::special_geometry;
-
-    pub(crate) use sm_game::beam_definitions;
-
     pub(crate) mod beam_windows;
     pub mod constants;
     pub(crate) mod corpse_tables;
@@ -478,7 +474,6 @@ pub mod game {
     pub(crate) mod mother_brain_tables;
     pub(crate) mod moving_platforms;
     pub(crate) mod prelude;
-    pub(crate) use sm_game::projectile_weapon_definitions;
     pub mod scene;
     pub(crate) mod scrolling_sky;
     pub(crate) mod shaktool_tables;

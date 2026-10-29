@@ -1,14 +1,15 @@
 //! Bomb fuses, spread motion and contact over ordinary session fields.
 #![forbid(unsafe_code)]
 use super::{Host, bomb_terrain, content, motion};
+use crate::{shot, shot_native};
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Kind {
     Bomb,
     PowerBomb,
     Spread,
 }
-pub(super) const SPREAD_FRACTIONS: [u16; 5] = [0, 0, 0x8000, 0, 0];
-pub(super) fn advance_fuse(h: &mut impl Host, power: bool) {
+pub const SPREAD_FRACTIONS: [u16; 5] = [0, 0, 0x8000, 0, 0];
+pub fn advance_fuse(h: &mut impl Host, power: bool) {
     let selected = h.session().projectiles.selected;
     let raw = h.session().projectiles.selected;
     let remaining = shot_native!(h, raw, variable);
@@ -64,7 +65,7 @@ fn add_x(h: &mut impl Host, raw: u16, amount: u32) {
     shot!(h,raw,x_fraction = sum as u16; SliceNative);
     shot!(h,raw,x = (sum>>16) as u16; SliceNative);
 }
-pub(super) fn bomb_update(h: &mut impl Host, raw: u16, kind: Kind) {
+pub fn bomb_update(h: &mut impl Host, raw: u16, kind: Kind) {
     if shot_native!(h, raw, direction) & 0xf0 != 0 {
         motion::clear(h, raw);
         return;

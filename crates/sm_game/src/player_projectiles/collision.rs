@@ -1,13 +1,14 @@
 //! Projectile terrain traversal on the existing session owner and reaction context.
 #![forbid(unsafe_code)]
 use super::{Host, motion::Flight};
-use crate::game::projectile_block_reactions::{
+use crate::projectile_block_reactions::{
     self as reactions, Definitions, Material, Progress, SlopeInputs,
 };
-use crate::game::projectile_room::{Axis, Scan};
-use crate::rom::RomRecord;
+use crate::projectile_room::{Axis, Scan};
+use crate::{shot, shot_native};
+use sm_data::cartridge::RomRecord;
 // This is a borrow of the actual host, never a second owned state snapshot.
-pub(super) struct Room<'a, H: Host>(pub(super) &'a mut H);
+pub struct Room<'a, H: Host>(pub &'a mut H);
 impl<H: Host> SlopeInputs for Room<'_, H> {
     fn block(&self) -> u16 {
         self.0.session().room.collision_cursor
@@ -57,10 +58,10 @@ impl<H: Host> SlopeInputs for Room<'_, H> {
         });
     }
     fn quadrant(&self, index: usize) -> bool {
-        crate::game::projectile_geometry::SLOPE_QUADRANTS[index] != 0
+        crate::projectile_geometry::SLOPE_QUADRANTS[index] != 0
     }
     fn height(&self, index: usize) -> u8 {
-        crate::game::projectile_geometry::SLOPE_HEIGHTS[index]
+        crate::projectile_geometry::SLOPE_HEIGHTS[index]
     }
 }
 impl<H: Host> Room<'_, H> {
@@ -93,7 +94,7 @@ impl<H: Host> Room<'_, H> {
         }
     }
 }
-pub(super) fn scan(h: &mut impl Host, raw: u16, flight: Flight, axis: Axis) -> u8 {
+pub fn scan(h: &mut impl Host, raw: u16, flight: Flight, axis: Axis) -> u8 {
     let missile = matches!(flight, Flight::Missile | Flight::SuperMissile);
     let wave = flight == Flight::Wave;
     let amount = i32::from(match axis {

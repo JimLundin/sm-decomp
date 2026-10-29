@@ -2,20 +2,21 @@
 #![forbid(unsafe_code)]
 use super::host::{Host, PaletteEffect};
 use super::motion::Flight;
-use crate::game::{
+use crate::{
     beam_definitions as definitions, projectile_initialization::Initialization,
     projectile_room::Axis,
 };
+use crate::{shot, shot_native};
 #[derive(Clone, Copy, PartialEq)]
 enum Mode {
     Ordinary,
     Charged,
     Hyper,
 }
-pub(super) fn clear_animation(h: &mut impl Host) {
+pub fn clear_animation(h: &mut impl Host) {
     h.session_mut().projectiles.controls.clear_flare_animation();
 }
-pub(super) fn update_input(h: &mut impl Host) {
+pub fn update_input(h: &mut impl Host) {
     h.session_mut().projectiles.controls.previous_charge = h.session().projectiles.controls.charge;
     if h.session().inventory.hyper_beam != 0 || h.session().inventory.beams.active & 0x1000 == 0 {
         if h.inputs().shoot_button & h.inputs().held != 0 {
@@ -161,7 +162,7 @@ fn fire(h: &mut impl Host, charged: bool) {
         h.sound(1, 15, 2);
     }
 }
-pub(super) fn initial_collision(h: &mut impl Host, caller: u16, wave: bool) {
+pub fn initial_collision(h: &mut impl Host, caller: u16, wave: bool) {
     let direction = shot!(h, caller, direction) & 15;
     if direction >= 10 {
         panic!("index out of bounds: the len is 10 but the index is {direction}");

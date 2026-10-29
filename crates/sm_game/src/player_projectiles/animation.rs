@@ -1,7 +1,8 @@
 //! Projectile launch records, animation and trail markers on the owned Session.
 #![forbid(unsafe_code)]
 use super::{Host, content};
-use crate::game::projectile_initialization::Initialization;
+use crate::projectile_initialization::Initialization;
+use crate::shot;
 
 pub fn table(kind: Initialization, flags: u16) -> (u32, isize) {
     match kind {
