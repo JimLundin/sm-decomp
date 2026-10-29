@@ -13,7 +13,7 @@ import actor_dll_mutations as actor
 
 
 HERE = Path(__file__).resolve().parent
-RECIPES = json.loads((HERE / "player_transitions_dll_mutation_recipes.json").read_text(encoding="utf-8-sig"))
+RECIPES = runpy.run_path(str(HERE / "player_transitions_dll_mutation_recipes.py"))["RECIPES"]
 EXPECTED = {
     "transitions_second_metadata_word_byte_order": ("PT1", "transition:5", 4),
     "transitions_opcode12_mask_word_byte_order": ("PT2", "transition:7", 7),
@@ -183,7 +183,7 @@ def run_checks(root, work, paths, run, copy_tracked, rom):
     required = {"tools/player_transitions_compare.py", "sm/src/verification/room_mutations.py",
                 "sm/src/verification/actor_dll_mutations.py",
                 "sm/src/verification/player_transitions_dll_mutations.py",
-                "sm/src/verification/player_transitions_dll_mutation_recipes.json",
+                "sm/src/verification/player_transitions_dll_mutation_recipes.py",
                 "sm/src/verification/player_transitions_rust.rs",
                 "sm/src/verification/player_transitions_rust_dll.rs",
                 "sm/src/verification/player_transitions_rust_observer.rs",
@@ -301,14 +301,14 @@ def qualify_composed(compare, complete, baseline, actual, case, fault):
 def run_owned_checks(root, work, paths, run, copy_tracked, rom):
     """Three additional hosted faults; old PT1/PT2 classifications are unchanged."""
     hosted_only()
-    recipe_path = root / "sm/src/verification/player_transitions_composed_mutation_recipes.json"
-    recipes = json.loads(recipe_path.read_text(encoding="utf-8-sig"))
+    recipe_path = root / "sm/src/verification/player_transitions_composed_mutation_recipes.py"
+    recipes = runpy.run_path(str(recipe_path))["RECIPES"]
     expected = {"COMPOSE_ORDER": 3700, "COMPOSE_STALE_REQUEST": 3702, "COMPOSE_HISTORY": 3700}
     require(len(recipes) == 3 and {r["fault"] for r in recipes} == set(expected),
             "exactly three composed faults are required")
     needed = {"sm/src/verification/player_transitions_composed.rs",
               "sm/src/verification/player_transitions_adoption_completion.py",
-              "sm/src/verification/player_transitions_composed_mutation_recipes.json"}
+              "sm/src/verification/player_transitions_composed_mutation_recipes.py"}
     needed.update(edit["path"] for recipe in recipes for edit in recipe["edits"])
     require(needed.issubset(paths), "composed sources/parser/recipes must be tracked")
     compare, complete = comparator(root), adoption_comparator(root)
@@ -401,15 +401,15 @@ def qualify_settlement(compare, complete, baseline, actual, fault):
 
 def run_settlement_checks(root, work, paths, run, copy_tracked, rom):
     hosted_only()
-    recipe_path = root / "sm/src/verification/player_settlement_mutation_recipes.json"
-    recipes = json.loads(recipe_path.read_text(encoding="utf-8-sig"))
-    faults = {"SETTLEMENT_EARLY_CONSUME": "sm/src/game/sm_90.rs",
+    recipe_path = root / "sm/src/verification/player_settlement_mutation_recipes.py"
+    recipes = runpy.run_path(str(recipe_path))["RECIPES"]
+    faults = {"SETTLEMENT_EARLY_CONSUME": "sm/src/game/player_update/mod.rs",
               "SETTLEMENT_LOST_FRACTION": "sm/src/game/samus_periodic_damage.rs"}
     require(len(recipes) == 2 and {r["fault"] for r in recipes} == set(faults),
             "exactly two distinct settlement faults required")
     required = {"sm/src/verification/player_settlement.rs",
                 "sm/src/verification/player_settlement_completion.py",
-                "sm/src/verification/player_settlement_mutation_recipes.json"}
+                "sm/src/verification/player_settlement_mutation_recipes.py"}
     required.update(edit["path"] for recipe in recipes for edit in recipe["edits"])
     require(required.issubset(paths), "settlement sources/parser/recipes must be tracked")
     compare, complete = comparator(root), settlement_comparator(root)

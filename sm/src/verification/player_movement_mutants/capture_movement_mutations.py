@@ -12,7 +12,7 @@ def modules(root):
     return verify_dll,room_entry_mutations,player_transitions_compare
 
 def recipes():
-    items=json.loads((HERE/'recipes.json').read_text())['recipes']
+    items=runpy.run_path(str(HERE/'recipes.py'))['RECIPES']
     result={m['fault']:m for m in items}
     assert len(items)==len(result)==12
     return result
@@ -56,7 +56,7 @@ def baseline_check(root,out,case,obs,stderr,entry,comparator):
     if case<4000:
         assert len(data)==131086 and data[131077]==0 and data[131078:]==bytes(8),'collision framing'
         if case==36:
-            frozen=json.loads((root/'sm/src/verification/player_collision_dll_baselines.json').read_text())['collision:36']
+            frozen=runpy.run_path(str(root/'sm/src/verification/player_collision_dll_baselines.py'))['BASELINES']['collision:36']
             assert obs['bytes']==frozen['bytes'] and obs['sha256']==frozen['sha256']
     else:
         check=runpy.run_path(str(HERE.parent/'capture_locomotion.py'))['check']
@@ -70,7 +70,7 @@ def main():
     if args.mode=='child':child(args);return
     args.out.mkdir(exist_ok=False);verifier,entry,comparator=modules(args.root);all_recipes=recipes()
     source=verifier.source_hash(args.root);binary=sha(args.root/'target/verify-dll/sm_verify.dll')
-    report=dict(status='RUNNING',mode=args.mode,root=str(args.root),source=source,dll_sha256=binary,rom_sha256=sha(args.rom),recipes_sha256=sha(HERE/'recipes.json'),driver_sha256=sha(Path(__file__)),checker_sha256=sha(HERE.parent/'capture_locomotion.py'),captures=[])
+    report=dict(status='RUNNING',mode=args.mode,root=str(args.root),source=source,dll_sha256=binary,rom_sha256=sha(args.rom),recipes_sha256=sha(HERE/'recipes.py'),driver_sha256=sha(Path(__file__)),checker_sha256=sha(HERE.parent/'capture_locomotion.py'),captures=[])
     write(args.out/'results.json',report)
     try:
         if args.mode=='baseline':
@@ -107,7 +107,7 @@ def main():
             assert entry.stderr_matches(stderr,((recipe['assertion_source'],message),),footer),'unrelated panic/footer is not a kill'
             report.update(fault=args.fault,recipe=recipe,baseline=str(args.baseline.resolve()),baseline_recheck=repeated);report['captures'].append(obs)
         assert verifier.source_hash(args.root)==source and sha(args.root/'target/verify-dll/sm_verify.dll')==binary
-        assert sha(args.rom)==report['rom_sha256'] and sha(HERE/'recipes.json')==report['recipes_sha256'] and sha(Path(__file__))==report['driver_sha256'] and sha(HERE.parent/'capture_locomotion.py')==report['checker_sha256']
+        assert sha(args.rom)==report['rom_sha256'] and sha(HERE/'recipes.py')==report['recipes_sha256'] and sha(Path(__file__))==report['driver_sha256'] and sha(HERE.parent/'capture_locomotion.py')==report['checker_sha256']
         report['status']='PASS'
     except BaseException as error:
         report.update(status='FAILED',error=repr(error));write(args.out/'results.json',report);raise

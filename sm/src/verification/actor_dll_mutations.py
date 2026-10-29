@@ -10,9 +10,9 @@ import sys
 
 import room_entry_mutations as entry
 
-RECIPES = json.loads(Path(__file__).with_name('actor_dll_mutation_recipes.json').read_text(encoding='utf-8-sig'))
-COLLISION_RECIPES = json.loads(Path(__file__).with_name('player_collision_dll_mutation_recipes.json').read_text(encoding='utf-8-sig'))
-COLLISION_BASELINES = json.loads(Path(__file__).with_name('player_collision_dll_baselines.json').read_text(encoding='utf-8-sig'))
+RECIPES = runpy.run_path(str(Path(__file__).with_name('actor_dll_mutation_recipes.py')))['RECIPES']
+COLLISION_RECIPES = runpy.run_path(str(Path(__file__).with_name('player_collision_dll_mutation_recipes.py')))['RECIPES']
+COLLISION_BASELINES = runpy.run_path(str(Path(__file__).with_name('player_collision_dll_baselines.py')))['BASELINES']
 if len(COLLISION_RECIPES) != 12 or len({m['name'] for m in COLLISION_RECIPES}) != 12:
     raise RuntimeError('all twelve PC1-PC10 fault variants must remain present')
 ROOM_PANICS = entry.GUARD_PANICS[:3]
@@ -153,9 +153,9 @@ def run_checks(root, work, paths, run, copy_tracked, rom=None, kraid_only=False,
         raise RuntimeError('no actor mutation recipes selected')
     if (kraid_only or collision_only) and (rom is None or not Path(rom).is_file()):
         raise RuntimeError('Kraid mutation suite requires --actor-rom PATH; no cases skipped or credited')
-    required = {'sm/src/verification/actor_dll_mutations.py', 'sm/src/verification/actor_dll_mutation_recipes.json'}
-    required.update({'sm/src/verification/player_collision_dll_mutation_recipes.json',
-                     'sm/src/verification/player_collision_dll_baselines.json'})
+    required = {'sm/src/verification/actor_dll_mutations.py', 'sm/src/verification/actor_dll_mutation_recipes.py'}
+    required.update({'sm/src/verification/player_collision_dll_mutation_recipes.py',
+                     'sm/src/verification/player_collision_dll_baselines.py'})
     required.update(e['path'] for m in selected_mutations for e in m['edits'])
     if not required.issubset(paths):
         raise RuntimeError('actor mutation sources must be tracked')
