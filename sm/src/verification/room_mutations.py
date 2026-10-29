@@ -33,7 +33,7 @@ RUNTIME_DISPLAY_EDGE = """    fn display_message(&mut self, request: u16) -> u8 
 """
 RUNTIME_EARLY_PASS = """    fn display_message(&mut self, request: u16) -> u8 {
         self.foreign(|game| unsafe {
-            game.g_ram[0x613] = 1;
+            game.ram().write_byte(0x613, 1);
             #[cfg(sm_verify_dll)]
             {
                 crate::game::room_mechanism_checks::observe_message_display(request, game)
@@ -85,8 +85,13 @@ MUTATIONS = (
     (
         "omit_native_return_import", 1440, "native return import: native word 0",
         ((SESSION_RUNTIME,
-          "        self.state = Some(import_session(self.game));",
-          "        self.state = Some(encoding::decode(&self.game.g_ram, std::sync::Arc::clone(self.game.world())));"),),
+          "        self.state = Some(import_session_preflighted(mutation.game()));",
+          """        self.state = Some({
+            let game = mutation.game();
+            let mut state = encoding::decode(&|at| game.ram().read_byte(at), 0x20000, game.world().clone());
+            state.actor_identity = game.take_actor_identity();
+            state
+        });"""),),
     ),
     (
         "retain_native_owner_on_callback_panic", 1441,
@@ -104,11 +109,11 @@ MUTATIONS = (
     (
         "omit_native_core_panic_publication", 1442, "native core panic publication: native word 0",
         ((SESSION_RUNTIME,
-          """            if matching && self.game.actor_identity_is_with_session() {
-                export_session(state, self.game);""",
-          """            if matching && self.game.actor_identity_is_with_session() {
-                encoding::encode(&state, &mut self.game.g_ram);
-                self.game.return_actor_identity(state.actor_identity);"""),),
+          """                export_session_preflighted(state, self.game);
+            } else if""",
+          """                encoding::encode(&state, |at, bytes| self.game.ram().copy_in(at, bytes));
+                self.game.return_actor_identity(state.actor_identity);
+            } else if"""),),
     ),
     (
         "skip_health_equality_reserve", 1383, "health restore boundary 1",

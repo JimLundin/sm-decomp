@@ -41,10 +41,14 @@ GUARD_PANICS = (
 # shared preflight so the real mismatched foreign entry remains discriminating.
 EXPORT = """fn preflight_export(state: &Session, game: &Game) {
     assert!("""
-EARLY_EXPORT = """fn preflight_export(state: &Session, game: &mut Game) {
-    encoding::encode(state, &mut game.g_ram);
+EARLY_EXPORT = """fn preflight_export(state: &Session, game: &Game) {
+    encoding::encode(state, |at, bytes| game.ram().copy_in(at, bytes));
     assert!("""
 
+# Runtime::foreign's entry preflight; owned_call repeats the same call.
+FOREIGN_PREFLIGHT = """    pub fn foreign<R>(&mut self, action: impl FnOnce(&mut Game) -> R) -> R {
+        assert!(self.persistent_is_current(), "Session lease is dirty");
+        preflight_export(self.session(), self.game);"""
 
 # Name, selected actual export/case, equality label, exact-once production edits.
 MUTATIONS = (
@@ -79,8 +83,10 @@ MUTATIONS = (
         "room.guard.mismatch-before-writes",
         ((RUNTIME, EXPORT, EARLY_EXPORT),
          (RUNTIME,
-          "preflight_export(self.session(), self.game);",
-          'preflight_export(self.state.as_ref().expect("aggregate unavailable during external effect"), self.game);')),
+          FOREIGN_PREFLIGHT,
+          FOREIGN_PREFLIGHT.replace(
+              "preflight_export(self.session(), self.game);",
+              'preflight_export(self.state.as_ref().expect("aggregate unavailable during external effect"), self.game);'))),
     ),
     (
         "room_cre_vram_word_as_byte_offset", "background:37",
