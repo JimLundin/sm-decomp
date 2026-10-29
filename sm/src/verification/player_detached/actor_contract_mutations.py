@@ -45,7 +45,9 @@ def _build(source, work, name, run, edits=()):
         target.write_text(original.replace(before, after, 1), encoding="utf-8")
     main = copied / "verification" / "player_detached" / "main.rs"
     binary = work / name / ("actor-contracts.exe" if os.name == "nt" else "actor-contracts")
-    built = run(["rustc", "--edition=2024", "-O", "--test", str(main), "-o", str(binary)], 180)
+    # Mutants may leave a variable or import unused; the baseline stays strict.
+    allow = ("-A", "unused") if edits else ()
+    built = run(["rustc", "--edition=2024", "-O", "--test", str(main), "-o", str(binary)], 180, allow)
     if built.returncode != 0:
         raise RuntimeError(f"{name}: COMPILE ERROR; not a killed mutation\n{built.stderr}")
     return binary
