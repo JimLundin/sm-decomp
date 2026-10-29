@@ -2,9 +2,9 @@
 use crate::game::constants::bank_86::*;
 use crate::game::enemy_projectiles::SpawnEprojWithRoomGfx;
 use crate::game::music::QueueSfx2_Max6;
+use crate::game::palette_copies::WriteColorsToPalette;
 use crate::game::prelude::*;
 use crate::game::room_mechanisms::spawn_hardcoded;
-use crate::game::sm_a9::WriteColorsToPalette;
 use crate::ram_map::{checked_word, slot};
 const RomPtr_AD: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xad>;
 pub enum Fade {
@@ -65,7 +65,7 @@ pub unsafe fn fade(kind: Fade, frame: u16, game: &mut Game) -> u8 {
 }
 
 pub unsafe fn update_health_palette(game: &mut Game) {
-    unsafe {
+    {
         if slot!(game, Enemy_MotherBrain[0].var_1F) < 2 {
             return;
         }
@@ -99,7 +99,7 @@ pub unsafe fn update_health_palette(game: &mut Game) {
 }
 
 pub unsafe fn lights_off(game: &mut Game) {
-    unsafe {
+    {
         for destination in [0x62, 0xa2] {
             WriteColorsToPalette(destination, 0xad, 61999, 14, game);
         }
