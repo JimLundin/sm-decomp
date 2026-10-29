@@ -113,7 +113,7 @@ pub(crate) use instruction_callbacks;
 #[macro_export]
 macro_rules! forward_calls {
     ($visibility:vis unsafe fn $parameters:tt -> $result:ty; $($name:ident => $call:expr;)+) => {
-        $($visibility unsafe fn $name $parameters -> $result { unsafe { $call }})+
+        $($visibility unsafe fn $name $parameters -> $result { #[allow(unused_unsafe)] unsafe { $call }})+
     };
     ($visibility:vis unsafe fn $parameters:tt; $($name:ident => $call:expr;)+) => {
         $($visibility unsafe fn $name $parameters { #[allow(unused_unsafe)] unsafe { $call; }})+

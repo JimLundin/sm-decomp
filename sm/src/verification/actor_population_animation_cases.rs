@@ -103,7 +103,7 @@ pub(crate) enum Operation {
     CallerAnimation,
 }
 pub(crate) fn run(op: Operation, g: &mut Game) -> Option<u16> {
-    unsafe {
+    {
         match op {
             Operation::Install => crate::game::actors::reference_population_animation::transfer(g),
             Operation::PrepareInstall => {
