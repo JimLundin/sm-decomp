@@ -1,5 +1,6 @@
 //! Six selected existing PT27/PT30 seeds; root builds and executes.
 #![deny(unsafe_op_in_unsafe_fn)]
+use crate::native_rom::NativeRomPointer;
 use crate::{
     game_state::Game,
     player_transitions_rust_observer as trace,

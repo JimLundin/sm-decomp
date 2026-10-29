@@ -552,6 +552,7 @@ pub use game_state::persistent_session::{
     PreparedSessionStart, SessionCheckpoint, SessionStartContract, SessionStartError,
     SuppliedSessionStart,
 };
+pub(crate) mod native_rom;
 pub mod recording;
 pub mod rendering;
 pub mod rom;

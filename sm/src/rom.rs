@@ -33,10 +33,9 @@ impl RomImage {
         self.0[offset].set(value);
     }
 
-    // Legacy cartridge and patch consumers borrow this allocation. Cell keeps
-    // its bytes mutable while shared owners exist; access is serialized by Game.
-    pub fn as_mut_ptr(&self) -> *mut u8 {
-        self.0.as_ptr().cast::<u8>().cast_mut()
+    /// The shared bytes; `native_rom::NativeRomPointer` derives the legacy pointer.
+    pub(crate) fn cells(&self) -> &[Cell<u8>] {
+        &self.0
     }
 }
 

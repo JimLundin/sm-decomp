@@ -1679,6 +1679,7 @@ pub static FILES: &[(&str, &[u8])] = &[
         "sm/src/rendering/records.rs",
         include_bytes!("rendering/records.rs"),
     ),
+    ("sm/src/native_rom.rs", include_bytes!("native_rom.rs")),
     ("sm/src/rom.rs", include_bytes!("rom.rs")),
     ("sm/src/room_pack.rs", include_bytes!("room_pack.rs")),
     ("sm/src/rom_patches.rs", include_bytes!("rom_patches.rs")),
