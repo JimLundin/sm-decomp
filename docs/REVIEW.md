@@ -86,12 +86,17 @@ with verification growth no larger than the production change it covers.
 
 ### Current publication and acceptance
 
-API source da718649 / codec c97578fc2a1bd899 removes the obsolete six-argument snapshot wrapper and five-tuple accessor after all14 verifier consumers and3 production restore tuples use the existing owned capture/selected restore paths. Captured machine/player identities precede the disjoint borrow; argument, failure, physical audio, queue, SRAM and reset/adoption phases remain preserved.
-Exact1579-check review, strict library/DLL/frontend/format and all146 existing units pass. The unchanged146 safe snapshot phases/native adapters retain their source proof; original native9 and separate frontend-only desktop transfer through unchanged inputs, with no new native compilation.
-Actual originals65643/95726 pass base13 groups/27 rows/199,063 and supplemental7 rows/25,845 comparisons, with no failures. Their disjoint union is34 rows/224,908/0 and required28/44, including full Morph1200, full intro8780 and BOTH independent Kago14350. Genuinec975 initialized329/resume5/save55650/FIR110076-to110077/reserve147273 and door13600 continuations pass; four durable rows bind fresh base captures.
-Native/snapshot allocations remain disjoint, live, exclusive, stopped/serialized and non-reentrant. Rc/UnsafeCell/native interfaces, invalid/topology prefixes, late native fallback, foreign/history/rebinding aliases and physical audio/backend dependencies remain scoped. Comparison snapshots stay distinct from resumable checkpoints; payload/schema layout is unchanged.
-Imported odd/>=8 aliases, arbitrary callback/rebinding, physical device/backend/full Session/boot-to-credits and size acceptance remain open. Earlier controls and146 monitor-only EXIT1 retain their exact original attribution; no prior execution or checkpoint is restamped.
-The [qualified146 record](https://github.com/JimLundin/sm-decomp/blob/0ec67ed08e303adc0078c84ee54cb961df3563ba/docs/PLAN.md#current-work-and-limits) preserves prior source/compiler/native/runtime attribution; the primary updates the sole #6 issue-body report after every push.
+Phase 0 schema15003 source622a573e / layout7110b4dec014d09b uses complete ordered
+serialized State fields/types and opaque/manual wire protocols rather than source text.
+Exact source review transfers1252 checks through the49-check three-cast correction;
+strict library/DLL/all147 registered checks/frontend/format pass. Genuine initialized
+captures and14 checkpoint rows pass; four fresh-only rejection checks run0 frames.
+Both encrypted packs and complete selected restores are verified.
+Source/native/ROM/input/loader proof stays separate from persisted compatibility;
+old c975 captures must reject and are never restamped. Two consecutive green scheduled
+full-corpus runs remain pending, so Phase 0 is open.
+The [147 record](https://github.com/JimLundin/sm-decomp/blob/2c2928e725dc30cf6e1df32bfd5070c805bda3ef/docs/PLAN.md#current-work-and-limits) retains prior audio/source/native/runtime limits;
+original15002 compile EXIT101 and bounded DLL disk-cap stop keep their attribution.
 
 Completed room/renderer/message/Scene/delivery reports are in the
 [frozen history](https://github.com/JimLundin/sm-decomp/blob/170bc5351c64f0846bbcb7b4714064a7230db153/docs/REVIEW.md#current-publication-and-acceptance):

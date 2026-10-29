@@ -408,7 +408,7 @@ unsafe fn state_recorder_load(
             crate::set_fields! {[game.state_recorder]; frames_since_last = 0, last_inputs = 0,
             replay_pos_last_complete = 0, replay_pos = game.state_recorder.replay_pos_last_complete,
             replay_frame_counter = 0, };
-            if game.state_recorder.base_snapshot.size > 8192 as size_t {
+            if game.state_recorder.base_snapshot.size > crate::recording::BASE_SRAM_SIZE as size_t {
                 let complete = {
                     let (mut execution, recorder) = game.execution_and_recorder();
                     let mut state = SnapshotIo::Load(recorder.base_snapshot.as_slice());
@@ -424,9 +424,14 @@ unsafe fn state_recorder_load(
             } else {
                 drop(actor_transition.take());
                 reset(2, game, read_complete);
-                if game.state_recorder.base_snapshot.size == 8192 as size_t {
-                    game.g_sram
-                        .write_bytes(0, &game.state_recorder.base_snapshot.as_slice()[..8192]);
+                if game.state_recorder.base_snapshot.size
+                    == crate::recording::BASE_SRAM_SIZE as size_t
+                {
+                    game.g_sram.write_bytes(
+                        0,
+                        &game.state_recorder.base_snapshot.as_slice()
+                            [..crate::recording::BASE_SRAM_SIZE],
+                    );
                 }
                 is_reset = true_0 != 0;
             }
@@ -491,7 +496,7 @@ unsafe fn state_recorder_load(
                 71,
             );
             game.state_recorder.has_base_audio_queue =
-                game.state_recorder.base_snapshot.size > 8192;
+                game.state_recorder.base_snapshot.size > crate::recording::BASE_SRAM_SIZE;
             if replay_mode && !is_reset {
                 crate::audio_snapshot::ApuQueueSnapshot::from_bytes(
                     &game.state_recorder.base_audio_queue,
@@ -539,7 +544,7 @@ pub unsafe fn StateRecorder_Save(f: *mut FILE, saving_with_bug: bool, native_gam
         crate::native_assertion! {
             '_c2rust_label: sr.base_snapshot.size == 0 as size_t
                 || sr.base_snapshot.size == arr.size
-                || sr.base_snapshot.size == 8192 as size_t;
+                || sr.base_snapshot.size == crate::recording::BASE_SRAM_SIZE as size_t;
             b"sr->base_snapshot.size == 0 || sr->base_snapshot.size == arr.size || sr->base_snapshot.size == 8192\0",
             b"src/sm_rtl.c\0", 260, b"void StateRecorder_Save(StateRecorder *, FILE *, _Bool)\0"
         };
@@ -650,6 +655,7 @@ pub unsafe fn StateRecorder_ClearKeyLog(native_game: &mut Game) {
     }
 }
 pub unsafe fn StateRecorder_ReadNextReplayState(game: &mut Game) -> u16 {
+    use crate::recording::log_format;
     unsafe {
         crate::native_assertion! {
             '_c2rust_label: game.state_recorder.replay_mode;
@@ -660,32 +666,38 @@ pub unsafe fn StateRecorder_ReadNextReplayState(game: &mut Game) -> u16 {
             let mut replay_pos: i32 = game.state_recorder.replay_pos as i32;
             if replay_pos as u32 != game.state_recorder.replay_pos_last_complete {
                 game.state_recorder.frames_since_last = 0;
-                if (game.state_recorder.replay_cmd as i32) < 0xc0 {
+                if (game.state_recorder.replay_cmd as i32) < log_format::INPUT_LIMIT {
                     game.state_recorder.last_inputs = (game.state_recorder.last_inputs as i32
-                        ^ (1i32) << (game.state_recorder.replay_cmd as i32 >> 4))
+                        ^ (1i32)
+                            << (game.state_recorder.replay_cmd as i32 >> log_format::INPUT_SHIFT))
                         as u16;
-                } else if (game.state_recorder.replay_cmd as i32) < 0xd0 {
-                    let mut nb: i32 = 1 + (game.state_recorder.replay_cmd as i32 >> 2 & 3);
-                    if nb == 4 {
-                        do_until! { t as i32 != 255 ;
+                } else if (game.state_recorder.replay_cmd as i32) < log_format::PATCH_LIMIT {
+                    let mut nb: i32 = log_format::PATCH_LENGTH_BASE
+                        + (game.state_recorder.replay_cmd as i32 >> log_format::PATCH_LENGTH_SHIFT
+                            & log_format::PATCH_LENGTH_MASK);
+                    if nb == log_format::PATCH_LENGTH_ESCAPE {
+                        do_until! { t as i32 != log_format::EXTENSION as i32 ;
                             crate::update_place! { previous fresh3 = replay_pos => replay_pos + 1; }
                             let mut t: u8 = game.state_recorder.log.byte(fresh3 as usize);
                             nb += t as i32;
                         }
                     }
                     let mut addr: u32 =
-                        ((game.state_recorder.replay_cmd as i32 >> 1 & 1) << 16) as u32;
+                        ((game.state_recorder.replay_cmd as i32 >> log_format::ADDRESS_BANK_SHIFT
+                            & log_format::ADDRESS_BANK_MASK)
+                            << log_format::ADDRESS_BANK_BIT) as u32;
                     crate::update_place! { previous fresh4 = replay_pos => replay_pos + 1; }
-                    addr |= ((game.state_recorder.log.byte(fresh4 as usize) as i32) << 8) as u32;
+                    addr |= ((game.state_recorder.log.byte(fresh4 as usize) as i32)
+                        << log_format::ADDRESS_HIGH_SHIFT) as u32;
                     crate::update_place! { previous fresh5 = replay_pos => replay_pos + 1; }
                     addr |= game.state_recorder.log.byte(fresh5 as usize) as u32;
                     do_until! { nb == 0 ;
                         crate::update_place! { previous fresh6 = replay_pos => replay_pos + 1; }
                         let byte = game.state_recorder.log.byte(fresh6 as usize);
                         game.note_samus_external_mutation();
-                        game.ram().write_byte((addr & 0x1ffff) as usize, byte);
+                        game.ram().write_byte((addr & log_format::RAM_MASK) as usize, byte);
                         if !game.g_rtl_memory_ptr.is_null() {
-                            let offset = (addr & 0x1ffff) as usize;
+                            let offset = (addr & log_format::RAM_MASK) as usize;
                             let byte = game.ram().read_byte(offset);
                             memcpy(game.g_rtl_memory_ptr.add(offset).cast(), (&raw const byte).cast(), 1);
                         }
@@ -708,10 +720,14 @@ pub unsafe fn StateRecorder_ReadNextReplayState(game: &mut Game) -> u16 {
             } else {
                 crate::update_place! { previous fresh7 = replay_pos => replay_pos + 1; }
                 let cmd: u8 = game.state_recorder.log.byte(fresh7 as usize);
-                let mask: i32 = if (cmd as i32) < 0xc0 { 0xf } else { 0x1 };
+                let mask: i32 = if (cmd as i32) < log_format::INPUT_LIMIT {
+                    log_format::INPUT_DELAY_MASK
+                } else {
+                    log_format::PATCH_DELAY_MASK
+                };
                 let mut frames: i32 = cmd as i32 & mask;
                 if frames == mask {
-                    do_until! { t_0 as i32 != 255 ;
+                    do_until! { t_0 as i32 != log_format::EXTENSION as i32 ;
                         crate::update_place! { previous fresh8 = replay_pos => replay_pos + 1; }
                         let mut t_0: u8 = game.state_recorder.log.byte(fresh8 as usize);
                         frames += t_0 as i32;
@@ -1474,19 +1490,28 @@ pub unsafe fn RtlReadSram(game: &mut Game) {
                 .begin_samus_mutation()
                 .expect("Samus mutation rejected");
             let game = mutation.game();
-            let mut bytes = game.g_sram.bytes(0..8192);
-            let count = fread(bytes.as_mut_ptr().cast(), 1, 8192, f);
+            let mut bytes = game.g_sram.bytes(0..crate::recording::BASE_SRAM_SIZE);
+            let count = fread(
+                bytes.as_mut_ptr().cast(),
+                1,
+                crate::recording::BASE_SRAM_SIZE,
+                f,
+            );
             game.g_sram.write_bytes(0, &bytes);
-            if count != 8192 {
+            if count != crate::recording::BASE_SRAM_SIZE as u32 {
                 fprintf(stderr, c"Error reading saves/sm.srm\n".as_ptr());
             }
             fclose(f);
-            synchronize_whole_state(game, count == 8192);
-            recording_allocation(game.state_recorder.base_snapshot.resize(8192));
+            synchronize_whole_state(game, count == crate::recording::BASE_SRAM_SIZE as u32);
+            recording_allocation(
+                game.state_recorder
+                    .base_snapshot
+                    .resize(crate::recording::BASE_SRAM_SIZE),
+            );
             game.state_recorder.has_base_audio_queue = false;
             game.g_sram
                 .read_bytes(0, game.state_recorder.base_snapshot.as_mut_slice());
-            if count == 8192 {
+            if count == crate::recording::BASE_SRAM_SIZE as u32 {
                 mutation
                     .finish_current()
                     .expect("Samus SRAM adoption rejected");
@@ -1506,8 +1531,13 @@ pub unsafe fn RtlWriteSram(game: &mut Game) {
         rename(c"saves/sm.srm".as_ptr(), c"saves/sm.srm.bak".as_ptr());
         let f = fopen(c"saves/sm.srm".as_ptr(), c"wb".as_ptr()) as *mut FILE;
         if !f.is_null() {
-            let bytes = game.g_sram.bytes(0..8192);
-            fwrite(bytes.as_ptr().cast(), 1, 8192, f);
+            let bytes = game.g_sram.bytes(0..crate::recording::BASE_SRAM_SIZE);
+            fwrite(
+                bytes.as_ptr().cast(),
+                1,
+                crate::recording::BASE_SRAM_SIZE,
+                f,
+            );
             fclose(f);
         } else {
             fprintf(stderr, c"Unable to write saves/sm.srm\n".as_ptr());

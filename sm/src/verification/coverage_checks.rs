@@ -20,7 +20,8 @@ pub(super) fn run() -> i32 {
     macro_rules! cases {
             ($($test:ident),+ $(,)?) => { [$( (stringify!($test), $test as fn()), )+] };
         }
-    let tests: [(&str, fn()); 146] = cases![
+    let tests: [(&str, fn()); 147] = cases![
+        checkpoint_serialized_schema_matches_actual_compiled_codecs,
         prepared_message_pixels_delay_queue_and_checkpoint,
         prepared_message_rejects_changed_content_and_resets,
         independently_authored_raster_pixels_and_prefixes,
@@ -10423,4 +10424,46 @@ fn bank_upload_native_installation_prefixes() {
         assert_eq!(state.key_OFF, if success { 0x5b } else { 1 });
         assert_eq!(state.is_chan_on, 0xa5);
     }
+}
+
+// Movies cannot change compiled field names, types, counts or codec declarations.
+#[cfg_attr(test, test)]
+fn checkpoint_serialized_schema_matches_actual_compiled_codecs() {
+    let layout = checkpoint::serialized_layout();
+    assert_eq!(
+        checkpoint::fingerprint(layout.as_bytes()),
+        0x7110b4dec014d09b
+    );
+    for required in [
+        "work_ram:array[131072]{u8-le;}",
+        "RecordingBytes{length:u64-le;bytes:length*u8;}",
+        "base-snapshot{length0:reset;length-sram:array[8192]{u8-le;}",
+        "bool-u8-0-or-1;",
+        "bool-u8-nonzero;",
+        "snapshot_padding0:",
+        "u16-ne-le;",
+        "cart-ram{external-count:cart.ramSize:u32;bytes:count*u8;no-count-prefix;}",
+        "INPUT_BITS:i32=12;",
+        "EXTENSION:u32=255;",
+        "address-high-u8,address-low-u8",
+        "sram:array[8192]{u8-le;}",
+    ] {
+        assert!(
+            layout.contains(required),
+            "missing serialized schema: {required}"
+        );
+    }
+    let queue = layout.split("ApuQueue/legacy71{").nth(1).unwrap();
+    assert!(queue.find("size@68..69:").unwrap() < queue.find("position@69..70:").unwrap());
+    assert!(
+        queue.find("position@69..70:").unwrap() < queue.find("time_since_empty@70..71:").unwrap()
+    );
+    let snapshot = layout.split("SnapshotIo{").nth(1).unwrap();
+    assert!(snapshot.find("cpu:Cpu{").unwrap() < snapshot.find("apu:apu-snapshot{").unwrap());
+    assert!(snapshot.find("dsp:DspState{").unwrap() < snapshot.find("spc:Spc{").unwrap());
+    assert!(snapshot.find("cart:cart-ram{").unwrap() < snapshot.find("snes:Snes{").unwrap());
+    assert!(
+        snapshot.find("work_ram:array[131072]").unwrap()
+            < snapshot.find("ramAdr:u32-ne-le;").unwrap()
+    );
 }

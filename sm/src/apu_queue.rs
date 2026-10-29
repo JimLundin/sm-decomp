@@ -10,32 +10,75 @@ pub struct ApuQueue {
     pub time_since_empty: u8,
 }
 
+// The same ranges and field types drive the legacy bytes and their layout metadata.
+trait QueueBytes: Sized {
+    #[cfg(any(feature = "frontend", sm_verify_dll))]
+    fn layout(layout: &mut String);
+    fn write(&self, bytes: &mut [u8]);
+    fn read(bytes: &[u8]) -> Self;
+}
+impl QueueBytes for u8 {
+    #[cfg(any(feature = "frontend", sm_verify_dll))]
+    fn layout(layout: &mut String) {
+        layout.push_str("u8;");
+    }
+    fn write(&self, bytes: &mut [u8]) {
+        bytes[0] = *self;
+    }
+    fn read(bytes: &[u8]) -> Self {
+        bytes[0]
+    }
+}
+impl<T: QueueBytes, const N: usize> QueueBytes for [T; N] {
+    #[cfg(any(feature = "frontend", sm_verify_dll))]
+    fn layout(layout: &mut String) {
+        layout.push_str(&format!("array[{N}]{{"));
+        T::layout(layout);
+        layout.push('}');
+    }
+    fn write(&self, bytes: &mut [u8]) {
+        let width = bytes.len() / N;
+        for (value, part) in self.iter().zip(bytes.chunks_exact_mut(width)) {
+            value.write(part);
+        }
+    }
+    fn read(bytes: &[u8]) -> Self {
+        core::array::from_fn(|at| {
+            T::read(&bytes[at * (bytes.len() / N)..(at + 1) * (bytes.len() / N)])
+        })
+    }
+}
+macro_rules! queue_codec {
+    ($size_start:literal; $($field:ident : $ty:ty = $start:literal .. $end:literal),* $(,)?) => {
+        impl ApuQueue {
+            #[cfg(any(feature = "frontend", sm_verify_dll))]
+            pub(crate) fn serialized_layout(layout: &mut String) {
+                layout.push_str("ApuQueue/legacy71{");
+                $(layout.push_str(concat!(stringify!($field), "@", stringify!($start), "..", stringify!($end), ":"));
+                    <$ty as QueueBytes>::layout(layout);)*
+                layout.push('}');
+            }
+            pub fn to_bytes(self) -> [u8; 71] {
+                let mut bytes = [0; 71];
+                $(let value: &$ty = &self.$field; value.write(&mut bytes[$start..$end]);)*
+                bytes
+            }
+            pub fn from_bytes(bytes: &[u8; 71]) -> Self {
+                assert!(bytes[$size_start] <= 16, "invalid saved APU queue size");
+                Self { $($field: <$ty as QueueBytes>::read(&bytes[$start..$end]),)* }
+            }
+        }
+    };
+}
+queue_codec! { 68;
+    pending: [u8; 4] = 0..4,
+    entries: [[u8; 4]; 16] = 4..68,
+    size: u8 = 68..69,
+    position: u8 = 69..70,
+    time_since_empty: u8 = 70..71,
+}
+
 impl ApuQueue {
-    pub fn to_bytes(self) -> [u8; 71] {
-        let mut bytes = [0; 71];
-        bytes[..4].copy_from_slice(&self.pending);
-        for (entry, ports) in self.entries.iter().zip(bytes[4..68].chunks_exact_mut(4)) {
-            ports.copy_from_slice(entry);
-        }
-        bytes[68..].copy_from_slice(&[self.size, self.position, self.time_since_empty]);
-        bytes
-    }
-
-    pub fn from_bytes(bytes: &[u8; 71]) -> Self {
-        assert!(bytes[68] <= 16, "invalid saved APU queue size");
-        let mut entries = [[0; 4]; 16];
-        for (entry, ports) in entries.iter_mut().zip(bytes[4..68].chunks_exact(4)) {
-            entry.copy_from_slice(ports);
-        }
-        Self {
-            pending: bytes[..4].try_into().unwrap(),
-            entries,
-            size: bytes[68],
-            position: bytes[69],
-            time_since_empty: bytes[70],
-        }
-    }
-
     pub fn first_difference(&self, other: &Self) -> Option<&'static str> {
         let Self {
             pending,

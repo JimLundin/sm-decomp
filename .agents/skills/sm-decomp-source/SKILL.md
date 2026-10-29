@@ -6,8 +6,9 @@ description: Implement an assigned sm-decomp source responsibility in a pinned c
 # Implement source
 
 Read [PLAN](../../../docs/PLAN.md) first, then [REVIEW](../../../docs/REVIEW.md)'s
-Milestone plan at each item's start. Direct user instructions win. REVIEW sets
-priorities; PLAN owns required checks, resources, Git and completion.
+Milestone plan at each item's start. Phase 0 verification-loop work lands first;
+its exit is two consecutive green scheduled full-corpus runs. REVIEW sets the
+active phase; PLAN owns checks, resources, Git and completion. User instructions win.
 
 Before ownership, interface or backend changes, read the
 [destination](../../../docs/target-architecture/README.md), including its Windows
@@ -27,7 +28,11 @@ Keep the assigned source scope disjoint. The primary root is the sole Git writer
 
 1. Confirm the item is unclaimed with the coordinator and use the assigned base
    and file scope. Read applicable contracts.
-2. Trace the complete responsibility: setup, update, callbacks, failure,
+2. For checkpoint work, describe ordered serialized State fields/types and every
+   opaque/manual wire encoding, including tags, lengths and allocation tails.
+   Keep layout compatibility separate from actual source/native/ROM/input proof;
+   a matching layout neither transfers behavior proof nor permits header restamps.
+   Trace the complete responsibility: setup, update, callbacks, failure,
    reset/load, callers and retirement. Prefer existing owned modules and real
    shared behavior. Identify the actual state owner and remaining external writers.
    When moving fields or changing shared helpers, inventory actual compiled users
@@ -69,8 +74,9 @@ Keep the assigned source scope disjoint. The primary root is the sole Git writer
    and primary root. Label unobserved behavior accurately. Compilation and replay
    completion belong to their assigned executors unless you also own those roles.
    Format pruned snapshots directly with rustfmt using the project edition and skip_children=true; retain exact inputs/timing/results without copying verification/assets/caches just for module resolution.
-   Register each added Rust file in literal sm/src/verify_source.rs when required;
-   include payload leaves in the existing state codec contributors before freeze.
+   Register added Rust files in literal sm/src/verify_source.rs for source proof.
+   Persisted field or opaque payload changes must reach the complete layout schema
+   before freeze; source-file inventories remain separate qualification inputs.
    Retain executed nontrivial preservation guard code and its hash with the source
    receipt's input/output pins, invocation and result. Reuse verified helpers;
    handle Rust array type semicolons and proven rustfmt comma changes while

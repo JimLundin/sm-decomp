@@ -11,6 +11,146 @@ use crate::game::scene::component::DisplayStartMetadata;
 use crate::game::session::{Point, Position};
 use std::sync::Arc;
 
+// The declaration is both the writer and its layout. Layout expansion never
+// evaluates a value expression or needs an initialized actor/world allocation.
+macro_rules! checkpoint_layout {
+    ($layout:ident, $write:ident($bytes:ident $(, $arg:ident: $arg_ty:ty)*) { $($fields:tt)* }) => {
+        #[cfg(any(feature = "frontend", sm_verify_dll))]
+        fn $layout() -> String {
+            let mut layout = String::new();
+            checkpoint_layout!(@layout layout; $($fields)*);
+            layout
+        }
+        fn $write($bytes: &mut Vec<u8>, $($arg: $arg_ty),*) {
+            checkpoint_layout!(@write $bytes; $($fields)*);
+        }
+    };
+    (@$mode:ident $out:ident;) => {};
+    (@write $out:ident; bind $pattern:pat_param = $value:expr; $($rest:tt)*) => {
+        let $pattern = $value;
+        checkpoint_layout!(@write $out; $($rest)*);
+    };
+    (@layout $out:ident; bind $pattern:pat_param = $value:expr; $($rest:tt)*) => {
+        checkpoint_layout!(@layout $out; $($rest)*);
+    };
+    (@write $out:ident; field $name:ident: $ty:ty = $value:expr; $($rest:tt)*) => {
+        let value: $ty = $value;
+        $out.extend_from_slice(&value.to_le_bytes());
+        checkpoint_layout!(@write $out; $($rest)*);
+    };
+    (@layout $out:ident; field $name:ident: $ty:ty = $value:expr; $($rest:tt)*) => {
+        $out.push_str(concat!(stringify!($name), ":", stringify!($ty), "le;"));
+        checkpoint_layout!(@layout $out; $($rest)*);
+    };
+    (@write $out:ident; fixed $name:ident: $ty:ty = $value:expr; $($rest:tt)*) => {
+        let value: $ty = $value;
+        $out.extend_from_slice(&value);
+        checkpoint_layout!(@write $out; $($rest)*);
+    };
+    (@layout $out:ident; fixed $name:ident: $ty:ty = $value:expr; $($rest:tt)*) => {
+        $out.push_str(concat!(stringify!($name), ":", stringify!($ty), ";"));
+        checkpoint_layout!(@layout $out; $($rest)*);
+    };
+    (@write $out:ident; magic $name:ident = $value:literal; $($rest:tt)*) => {
+        $out.extend_from_slice($value);
+        checkpoint_layout!(@write $out; $($rest)*);
+    };
+    (@layout $out:ident; magic $name:ident = $value:literal; $($rest:tt)*) => {
+        $out.push_str(concat!(stringify!($name), ":", stringify!($value), ";"));
+        checkpoint_layout!(@layout $out; $($rest)*);
+    };
+    (@write $out:ident; boolean $name:ident = $value:expr; $($rest:tt)*) => {
+        let value: bool = $value;
+        $out.push(u8::from(value));
+        checkpoint_layout!(@write $out; $($rest)*);
+    };
+    (@layout $out:ident; boolean $name:ident = $value:expr; $($rest:tt)*) => {
+        $out.push_str(concat!(stringify!($name), ":bool-u8(0,1);"));
+        checkpoint_layout!(@layout $out; $($rest)*);
+    };
+    (@write $out:ident; option $name:ident: [u8; $size:literal] = $value:expr; $($rest:tt)*) => {
+        let value: Option<[u8; $size]> = $value;
+        $out.push(u8::from(value.is_some()));
+        if let Some(value) = value { $out.extend_from_slice(&value); }
+        checkpoint_layout!(@write $out; $($rest)*);
+    };
+    (@write $out:ident; option $name:ident: u32 = $value:expr; $($rest:tt)*) => {
+        let value: Option<u32> = $value;
+        $crate::game::actors::snapshot::optional_id($out, value);
+        checkpoint_layout!(@write $out; $($rest)*);
+    };
+    (@layout $out:ident; option $name:ident: u32 = $value:expr; $($rest:tt)*) => {
+        $out.push_str(concat!(stringify!($name), ":option-u8(0:none,1:u32le);"));
+        checkpoint_layout!(@layout $out; $($rest)*);
+    };
+    (@layout $out:ident; option $name:ident: $ty:ty = $value:expr; $($rest:tt)*) => {
+        $out.push_str(concat!(stringify!($name), ":option-u8(0:none,1:", stringify!($ty), ");"));
+        checkpoint_layout!(@layout $out; $($rest)*);
+    };
+    (@write $out:ident; class $name:ident = $value:expr; $($rest:tt)*) => {
+        let value: Option<usize> = $value;
+        $out.push(value.map_or(u8::MAX, |index| index as u8));
+        checkpoint_layout!(@write $out; $($rest)*);
+    };
+    (@layout $out:ident; class $name:ident = $value:expr; $($rest:tt)*) => {
+        $out.push_str(concat!(stringify!($name), ":class-u8(255:none);"));
+        checkpoint_layout!(@layout $out; $($rest)*);
+    };
+    (@write $out:ident; array $name:ident: $ty:ty = ($value:expr) => ($pattern:pat_param) { $($body:tt)* } $($rest:tt)*) => {
+        let values: &$ty = &$value;
+        for $pattern in values.iter().enumerate() { checkpoint_layout!(@write $out; $($body)*); }
+        checkpoint_layout!(@write $out; $($rest)*);
+    };
+    (@layout $out:ident; array $name:ident: $ty:ty = ($value:expr) => ($pattern:pat_param) { $($body:tt)* } $($rest:tt)*) => {
+        $out.push_str(concat!(stringify!($name), ":", stringify!($ty), "{"));
+        checkpoint_layout!(@layout $out; $($body)*);
+        $out.push_str("};");
+        checkpoint_layout!(@layout $out; $($rest)*);
+    };
+    (@write $out:ident; repeat $name:ident by $count:ident = ($value:expr) => ($pattern:pat_param) { $($body:tt)* } $($rest:tt)*) => {
+        for $pattern in $value { checkpoint_layout!(@write $out; $($body)*); }
+        checkpoint_layout!(@write $out; $($rest)*);
+    };
+    (@layout $out:ident; repeat $name:ident by $count:ident = ($value:expr) => ($pattern:pat_param) { $($body:tt)* } $($rest:tt)*) => {
+        $out.push_str(concat!(stringify!($name), ":repeat(", stringify!($count), "){"));
+        checkpoint_layout!(@layout $out; $($body)*);
+        $out.push_str("};");
+        checkpoint_layout!(@layout $out; $($rest)*);
+    };
+    (@write $out:ident; variants $name:ident = ($value:expr) { $($tag:literal $variant:ident ($pattern:pat_param) => { $($body:tt)* })* } $($rest:tt)*) => {
+        match $value { $($pattern => { $out.push($tag); checkpoint_layout!(@write $out; $($body)*); })* }
+        checkpoint_layout!(@write $out; $($rest)*);
+    };
+    (@layout $out:ident; variants $name:ident = ($value:expr) { $($tag:literal $variant:ident ($pattern:pat_param) => { $($body:tt)* })* } $($rest:tt)*) => {
+        $out.push_str(concat!(stringify!($name), ":tag-u8{"));
+        $($out.push_str(concat!(stringify!($tag), ":", stringify!($variant), "{"));
+          checkpoint_layout!(@layout $out; $($body)*); $out.push_str("};");)*
+        $out.push_str("};");
+        checkpoint_layout!(@layout $out; $($rest)*);
+    };
+    (@write $out:ident; blob $name:ident = $value:expr; $($rest:tt)*) => {
+        let image: &crate::rom::RomImage = $value;
+        $out.extend_from_slice(&(image.len() as u64).to_le_bytes());
+        $out.extend((0..image.len()).map(|at| image.read(at)));
+        checkpoint_layout!(@write $out; $($rest)*);
+    };
+    (@layout $out:ident; blob $name:ident = $value:expr; $($rest:tt)*) => {
+        $out.push_str(concat!(stringify!($name), ":{length:u64le;bytes:[u8;length]};"));
+        checkpoint_layout!(@layout $out; $($rest)*);
+    };
+    (@write $out:ident; nested $name:ident: $ty:ty = $value:expr; $($rest:tt)*) => {
+        $out.extend_from_slice($value);
+        checkpoint_layout!(@write $out; $($rest)*);
+    };
+    (@layout $out:ident; nested $name:ident: $ty:ty = $value:expr; $($rest:tt)*) => {
+        $out.push_str(concat!(stringify!($name), ":{"));
+        $out.push_str(&<$ty>::serialized_layout());
+        $out.push_str("};");
+        checkpoint_layout!(@layout $out; $($rest)*);
+    };
+}
+pub(super) use checkpoint_layout;
+
 impl ActorIdentityState {
     /// Owned Session payload: explicit numeric occupancy, immutable bindings and
     /// palette allocation roles. No RAM image or external handle epoch is encoded.
@@ -471,7 +611,53 @@ fn named_images(
     }
     Ok(result)
 }
+checkpoint_layout!(actor_checkpoint_layout, write_actor_checkpoint(
+    bytes,
+    world: &WorldBinding,
+    loaded: Option<usize>,
+    native: Option<usize>,
+    roles: Vec<(crate::game::room_entry::world::ResourceId, usize)>,
+    images: &[crate::rom::RomImage],
+    timeline: &[u8],
+    rows: Vec<(usize, crate::game::room_entry::world::ResourceId, super::media::PaletteCheckpoint)>
+) {
+    magic schema = b"ACTORCP3";
+    fixed world_revision: [u8; 32] = world.revision().0;
+    bind revisions = [world.actor_gameplay_revision().map(|id| id.0), world.actor_media_revision().map(|id| id.0)];
+    option gameplay_revision: [u8; 32] = revisions[0];
+    option media_revision: [u8; 32] = revisions[1];
+    field image_count: u8 = images.len() as u8;
+    class loaded_allocation = loaded;
+    class native_allocation = native;
+    field role_count: u8 = roles.len() as u8;
+    repeat roles by role_count = (roles) => ((resource, image)) {
+        field resource: u32 = resource.0;
+        field image: u8 = image as u8;
+    }
+    repeat images by image_count = (images) => (image) {
+        blob allocation = image;
+    }
+    nested timeline: ActorTimeline = timeline;
+    field row_count: u8 = rows.len() as u8;
+    repeat palette_rows by row_count = (rows) => ((row, resource, image)) {
+        field row: u8 = row as u8;
+        field resource: u32 = resource.0;
+        variants source = (image) {
+            0 Legacy (super::media::PaletteCheckpoint::Legacy(image)) => {
+                field image: u8 = image as u8;
+            }
+            1 Prepared (super::media::PaletteCheckpoint::Prepared(revision)) => {
+                fixed revision: [u8; 32] = revision;
+            }
+        }
+    }
+});
+
 impl ActorCheckpointPayload {
+    #[cfg(any(feature = "frontend", sm_verify_dll))]
+    pub(crate) fn serialized_layout() -> String {
+        actor_checkpoint_layout()
+    }
     pub(crate) fn capture(
         state: &ActorIdentityState,
         world: &Arc<WorldBinding>,
@@ -543,46 +729,10 @@ impl ActorCheckpointPayload {
             }
         }
         super::media::ActorPaletteResidency::checkpoint_restore(&rows, &images, world)?;
-        let mut bytes = Vec::from(b"ACTORCP3".as_slice());
-        bytes.extend_from_slice(&world.revision().0);
-        for revision in [
-            world.actor_gameplay_revision().map(|id| id.0),
-            world.actor_media_revision().map(|id| id.0),
-        ] {
-            bytes.push(u8::from(revision.is_some()));
-            if let Some(revision) = revision {
-                bytes.extend_from_slice(&revision);
-            }
-        }
-        bytes.push(images.len() as u8);
-        for role in [loaded, native] {
-            bytes.push(role.map_or(u8::MAX, |index| index as u8));
-        }
-        bytes.push(roles.len() as u8);
-        for (resource, image) in roles {
-            bytes.extend_from_slice(&resource.0.to_le_bytes());
-            bytes.push(image as u8);
-        }
-        for image in &images {
-            bytes.extend_from_slice(&(image.len() as u64).to_le_bytes());
-            bytes.extend((0..image.len()).map(|at| image.read(at)));
-        }
-        bytes.extend_from_slice(&timeline);
-        bytes.push(rows.len() as u8);
-        for (row, resource, image) in rows {
-            bytes.push(row as u8);
-            bytes.extend_from_slice(&resource.0.to_le_bytes());
-            match image {
-                super::media::PaletteCheckpoint::Legacy(image) => {
-                    bytes.push(0);
-                    bytes.push(image as u8);
-                }
-                super::media::PaletteCheckpoint::Prepared(revision) => {
-                    bytes.push(1);
-                    bytes.extend_from_slice(&revision);
-                }
-            }
-        }
+        let mut bytes = Vec::new();
+        write_actor_checkpoint(
+            &mut bytes, world, loaded, native, roles, &images, &timeline, rows,
+        );
         Ok(bytes)
     }
 

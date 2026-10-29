@@ -6,8 +6,9 @@ description: Publish qualified sm-decomp code to main as the sole primary Git wr
 # Publish qualified code
 
 Read [PLAN](../../../docs/PLAN.md) first, then [REVIEW](../../../docs/REVIEW.md)'s
-Milestone plan at each item's start. Direct user instructions win. REVIEW sets
-priorities; PLAN owns required checks, resources, Git and completion.
+Milestone plan at each item's start. Phase 0 verification-loop work lands first;
+its exit is two consecutive green scheduled full-corpus runs. REVIEW sets the
+active phase; PLAN owns checks, resources, Git and completion. User instructions win.
 
 Only the primary root writes Git. Writer transfer needs explicit release and
 current terminal writer/turn evidence; preserve live jobs, frozen inputs and
@@ -23,7 +24,9 @@ reservations. Only main is remote; private copies/local branches may isolate wor
 3. Run PLAN's progress command and retain explained engine/legacy/unsafe/
    verification/support deltas and exact source/native/codec/input/check pins in
    the owned publication record. Count retained owners/adapters/dependencies once;
-   distinguish actual removal from moves/formatting. Publish physical, mapped
+   distinguish actual removal from moves/formatting. Architectural progress is
+   behavior crossing into compiler-separated target packages; report cycle and
+   package measures from REVIEW alongside these totals. Publish physical, mapped
    superseded retained and adjusted counts together under PLAN; deletion removes its
    discount. Separate mapped unsafe operations/signatures from unsafe-containing lines.
    Use a descriptive subject and
@@ -34,8 +37,8 @@ reservations. Only main is remote; private copies/local branches may isolate wor
    When observing CI, bind the actual CI workflow/result to its exact commit.
 5. Send publication commit/pins, check attribution, actual push time when observed,
    gaps and next owner promptly. Cached ref observation is not push time. Continue
-   independent source/build/replay work while CI executes. After every push,
-   update the sole report in #6's issue body under PLAN; label pending checks
+   independent bounded source/build/replay owners while CI executes. Read #6 at
+   work boundaries and update its sole issue-body report daily under REVIEW; label pending checks
    and retain exact owned proof.
 
 Documentation/planning ACKs and unrelated prose never gate qualified publication.

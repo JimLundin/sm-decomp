@@ -6,8 +6,9 @@ description: Review an assigned sm-decomp donor or composition pin for ownership
 # Review a pinned composition
 
 Read [PLAN](../../../docs/PLAN.md) first, then [REVIEW](../../../docs/REVIEW.md)'s
-Milestone plan at each item's start. Direct user instructions win. REVIEW sets
-priorities; PLAN owns required checks, resources, Git and completion.
+Milestone plan at each item's start. Phase 0 verification-loop work lands first;
+its exit is two consecutive green scheduled full-corpus runs. REVIEW sets the
+active phase; PLAN owns checks, resources, Git and completion. User instructions win.
 
 Before ownership, interface or backend changes, read the
 [destination](../../../docs/target-architecture/README.md), including its Windows
@@ -51,8 +52,15 @@ determines review scope; PLAN determines required execution checks.
 - Check expression evaluation as well as statement order: Rust assignments
   evaluate the RHS before the destination place; helper arguments evaluate in
   argument order. Trace script/ROM reads and fresh selector reads through both.
+- For checkpoint changes, check complete serialized State and opaque/manual
+  wire layouts, including component tails; a partial schema cannot establish
+  compatibility. Keep round-trip, extra-byte and input-prefix rejection contracts
+  and source/native/ROM/input proof separate from the compatibility identifier.
 - Check caller-inclusive accounting and distinguish substantive removal, moves
-  and formatting. Confirm that claimed coverage reaches changed behavior;
+  and formatting. Architectural progress requires behavior in a target package
+  compiled independently of compat; moves alone are neutral. Check physical,
+  mapped-retained and adjusted counts together under PLAN. Confirm that coverage
+  reaches changed behavior;
   otherwise name the unobserved paths.
 
 After completing the assigned review, promptly send PASS or specific findings

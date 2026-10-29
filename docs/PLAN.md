@@ -1,16 +1,17 @@
 # Plan
 
 Goal: a compact Super Metroid engine playing boot to credits with owned, safe Rust
-and clear modules. Remove unsafe/raw-memory operations from gameplay, retained
-native interfaces and verification; hiding them in wrappers is incomplete.
-Target below 100,000 production lines; 90,000 is a stretch, not promised deletions.
-REVIEW owns the detailed size and waypoint targets.
+and clear modules. Remove unsafe/raw-memory operations from engine behavior;
+REVIEW scopes frozen compat and verification separately. The completion target
+below 100,000 lines applies to sm_data, sm_game, sm_runtime and sm_app. Report gross
+physical totals, compat and verification separately; REVIEW owns phase/size measures.
 
 The [accepted destination](target-architecture/README.md) is one deterministic owned
 Session, our renderer/audio and small platform libraries, independent of SNES emulation.
 Map Rando needs custom sprites/palettes, configurable rooms/doors and opt-in re-spin/QoL.
 Keep content, topology and options separate from platform and ROM/RAM compatibility;
-vanilla is the first fidelity profile. Windows migration may retain the backend/oracle.
+vanilla is the first fidelity profile. Map Rando is the first use case and acceptance
+bar; further clear modularity is welcome. Windows migration may retain backend/oracle.
 
 ## Authority, lanes and Git
 Read [REVIEW.md](REVIEW.md) next and its Milestone plan at each item's start; it
@@ -19,11 +20,10 @@ Follow external reviewers' instructions, including cloud REVIEW directives: reco
 one line of disagreement under the item, then do it. Direct user instructions win.
 Git history holds no current rules; pre-2026-10-17 workflows are archived.
 
-Lanes: A finishes seed/recipe speed work, then takes the next unclaimed bank;
-M removes unsafe outside banks; B1-B6 retire banks in REVIEW's order. No more
-in-place M bank codemods. Current bank queues are B1 sm_82, B2 sm_8b, B3 sm_a3,
-B4 sm_a8/sm_b3, B5 sm_a9/sm_aa and B6 sm_a6/sm_a7; sm_b3 is already retired.
-Freed workers take sm_a5, sm_9b, then sm_a4. Keep cloud claims intact.
+REVIEW sets active lanes and phase exits; Phase 0 verification-loop work lands
+first. Preserve active cloud claims and choose unclaimed phase work. Bank
+retirement resumes into target domain packages in REVIEW order; keep M bank
+codemods stopped.
 Non-enemy replacements aim <=80%; every B qualification record gives the full ratio
 and a reason above 90%. Necessary safety growth must be counted and explained, not relabeled.
 
@@ -47,8 +47,8 @@ Measure with tools/progress.sh and retain exact production/legacy/unsafe/verific
 support deltas, B replacement ratio/reason, source/native/codec/input pins and actual
 check results in the owned qualification/publication record. Commit messages need
 no Score, hash inventory or warning ledger. Necessary growth remains accountable.
-After every commit/push, update the sole report in Jim's #6 issue body with
-measured progress, owner/work status and actual CI/qualification results.
+Read/respond to Jim's #6 conversation at work boundaries. Update its sole issue-body
+report daily under REVIEW with measured progress and actual CI/qualification results.
 Use compact tables/progress bars and at most one tiny dependency diagram.
 Keep exact proof in owned records. Archive answered feedback and duplicate
 report comments before authorized retirement after verified body publication.
@@ -56,63 +56,28 @@ report comments before authorized retirement after verified body publication.
 Keep replay docs essential, upstream references and CSV/TOML provenance/checks;
 shared Python installers/runtime-only restores are support work, counted separately.
 
-## Current work and limits
+## Current phase and retained evidence
 
-Primary root owns integration, Git and one resource ledger; Linux stays stopped.
-API source da718649 / codec c97578fc2a1bd899 removes the obsolete six-argument snapshot wrapper and five-tuple accessor after all14 verifier consumers and3 production restore tuples use the existing owned capture/selected restore paths. Captured machine/player identities precede the disjoint borrow; argument, failure, physical audio, queue, SRAM and reset/adoption phases remain preserved.
-Exact1579-check review, strict library/DLL/frontend/format and all146 existing units pass. The unchanged146 safe snapshot phases/native adapters retain their source proof; original native9 and separate frontend-only desktop transfer through unchanged inputs, with no new native compilation.
-Actual originals65643/95726 pass base13 groups/27 rows/199,063 and supplemental7 rows/25,845 comparisons, with no failures. Their disjoint union is34 rows/224,908/0 and required28/44, including full Morph1200, full intro8780 and BOTH independent Kago14350. Genuinec975 initialized329/resume5/save55650/FIR110076-to110077/reserve147273 and door13600 continuations pass; four durable rows bind fresh base captures.
-Physical production-26/verification+38 and unsafe-containing-2 are counted; root measures published totals. Existing65 mapped retained compatibility lines stay separate from physical and adjusted implementation, with no new discount. Caller formatting growth remains counted.
-Native/snapshot allocations remain disjoint, live, exclusive, stopped/serialized and non-reentrant. Rc/UnsafeCell/native interfaces, invalid/topology prefixes, late native fallback, foreign/history/rebinding aliases and physical audio/backend dependencies remain scoped. Comparison snapshots stay distinct from resumable checkpoints; payload/schema layout is unchanged.
-Imported odd/>=8 aliases, arbitrary callback/rebinding, physical device/backend/full Session/boot-to-credits and size acceptance remain open. Earlier controls and146 monitor-only EXIT1 retain their exact original attribution; no prior execution or checkpoint is restamped.
-The [qualified146 record](https://github.com/JimLundin/sm-decomp/blob/0ec67ed08e303adc0078c84ee54cb961df3563ba/docs/PLAN.md#current-work-and-limits) preserves prior source/compiler/native/runtime attribution; the primary updates the sole #6 issue-body report after every push.
+[REVIEW's Milestone plan](REVIEW.md#milestone-plan-2026-10-29) sets the active phase;
+Phase 0 exits on two consecutive green scheduled full-corpus runs.
 
-### Qualified history
-
-The [frozen DSP93 and earlier cohort record](https://github.com/JimLundin/sm-decomp/blob/170bc5351c64f0846bbcb7b4714064a7230db153/docs/PLAN.md#current-work-and-limits)
-preserves ci16/ci17, frontend/config/audio/SPC/DSP results, warnings, full deltas,
-unexecuted variants and original artifact provenance. Earlier SOURCE15–38 and
-WRAM/bank/catalog results remain in [4c302a50](https://github.com/JimLundin/sm-decomp/blob/4c302a50/docs/PLAN.md#qualified-history).
-Read the relevant frozen record and original owned receipts before touching that
-owner. Preserve source/DLL/native/input/loader attribution, aliases, read order,
-failure contracts and exclusions. History assigns no work and authorizes no repeat
-of accepted campaigns. [REVIEW](REVIEW.md#current-publication-and-acceptance) keeps
-active room/renderer/dialogue/Scene contracts. Moves, formatting and source-only
-work earn no qualification or savings.
-
-### Retained qualification constraints
-
-Source-only: Blackout37, exact page2 callback, sky initializers, CrystalFlashStart,
-spike/DBF2/lavaquake and additional signed8.8 kernels; MotherBrain magnitude,
-health/bands and seal-wall store-order variants. Preserve setup14's seven fresh indices
-and five multi-read blocks, low-address failure and fresh native pointer capture.
-Keep CRT logger buffering/output/error/flush hold.
-Native player/DSP/APU and input Vec/FILE/Cart owners retain SDL/native/audio quiescence,
-CRT order and GameOwner's non-sharing contract; SIZE_MAX/malloc0 cases remain excluded.
-sm82 AST:3 options kills/8.06min, unsafe gameplay omission unavailable. sm9b AST:3 kills,
-original750d/0cdf attribution and own941 post-deletion full86 retained.
-Fixpoint96 unnecessary blocks/94 flattened bodies strips no unsafe function signatures;
-conservative taint and reuse of only unchanged accepted compiler results remain required.
-Checker+13 support lines; old timing is not a cross-workload speedup.
-
-Coverage is86 manifest rows/44 required scenarios, not universal behavior proof.
-Keep full inputs/guards/assets: intro8780, Morph1200, bomb-jump800, crawler8, Gunship300,
-X-ray2131 with original pickup, and BOTH independent Kago14350 setup windows.
-No Morph120-frame early stop. Authored starts are not original TAS seeds. Golden Torizo
-keeps all5 input ports and observed VRAM read-buffer/CGRAM-low/Mode7 latch values.
-Only historical Core37 C43 entry0 is observed; seven native angles, launch/clamp leaves,
-release/mosaic/postcredits134/138/143/145 and other native/failure variants remain scoped.
-Goofball macro sensitivity remains open; held scrolling needs scroll_tiles.row.bg2,
-absent in Ceres. Never auto-rename macro-shared parameters or invent emulator defaults.
-
-sm_b3 passed scoped mutation before deletion (11.40min:3 AST kills,2 unobserved
-pipe-flight survivors,1 separate dispatch kill;945-frame windows) and post-push full86
-(136,526 selected+38,555 setup/0 failures). Do not claim surviving paths were reached.
-Reflec's native printf remains in sm_a3 pending a contract-preserving output owner.
-Keep existing room mutation drivers until alias/failed-upload/custom-content consumers
-and equivalent coverage migrate; bank campaigns alone do not replace those checks.
-M1a's [audit](M1A-REVIEW.md) retains19 historical contracts and the verifier bridge's
-separate closures; keep imported alias exclusions, source newlines and Windows dep-info guards.
+Schema15003 source622a573e / persisted layout7110b4dec014d09b fingerprints ordered
+State fields/types and complete opaque/manual encodings. Source/native/ROM/input
+qualification remains separate; matching layouts never permit header restamps.
+Strict library/DLL/all147 registered checks/frontend/format pass; fresh initialized
+captures and14 checkpoint rows pass; four fresh-only rejection checks run0 frames.
+Both encrypted packs and complete selected restores are verified.
+The first two green scheduled full-corpus runs remain pending; Phase 0 stays open.
+Read [current acceptance](REVIEW.md#current-publication-and-acceptance) before
+changing a retained owner. Preserve original source/DLL/native/input/loader pins,
+unexecuted cases and exclusions in the original owned qualification receipts.
+The [147 record](https://github.com/JimLundin/sm-decomp/blob/2c2928e725dc30cf6e1df32bfd5070c805bda3ef/docs/PLAN.md#current-work-and-limits),
+[146 record](https://github.com/JimLundin/sm-decomp/blob/0ec67ed08e303adc0078c84ee54cb961df3563ba/docs/PLAN.md#current-work-and-limits),
+[DSP93/earlier cohorts](https://github.com/JimLundin/sm-decomp/blob/170bc5351c64f0846bbcb7b4714064a7230db153/docs/PLAN.md#current-work-and-limits),
+[SOURCE15–38](https://github.com/JimLundin/sm-decomp/blob/4c302a50/docs/PLAN.md#qualified-history)
+and [M1a audit](M1A-REVIEW.md) preserve historical proofs and scoped contracts.
+Reach the applicable frozen record when touching its owner; history assigns no
+work and authorizes no repeated accepted campaign.
 
 ## Implementation contracts
 
@@ -131,9 +96,15 @@ separate closures; keep imported alias exclusions, source newlines and Windows d
 - Completed cores forbid unsafe and need no Game/RAM/raw pointer/backend modules.
   No always-live owned mirror beside writable authoritative RAM, whole-RAM borrow while
   raw aliases remain, forwarding facade or package move presented as completed ownership.
-- Retirements add no unsafe outside banks. Only hardware/IO register functions may retain
-  unsafe in their existing platform owner, named in qualification; otherwise check or keep in-bank.
-  New owned modules forbid unsafe. Retain unsafe entry contracts for unchecked callees.
+- New owned/target modules forbid unsafe; retained compat/platform interfaces keep
+  explicit unsafe entry contracts until their actual consumers migrate. Keep frozen
+  SPC700/APU emulation inside REVIEW's compat scope; retirement adds no unsafe
+  outside the existing assigned bank/platform owner.
+- Checkpoint compatibility describes ordered serialized State fields/types and all
+  opaque/manual payload encodings, including tags, lengths and allocation tails.
+  Whole-source contributor directions retain source qualification, not format identity.
+  Keep actual source/native/ROM/input/loader proof separate; a partial schema or
+  matching identifier does not transfer behavior proof or permit header restamps.
 - Keep backend/shader/audio/oracle behavior, masks/PatchBugs and snapshots until actual
   consumers and equivalent checks migrate. Dependencies mean the backend is not retired.
   The611..616 normalization means continuation also needs source proof, not byte comparison alone.
@@ -141,6 +112,8 @@ separate closures; keep imported alias exclusions, source newlines and Windows d
   fixture modules/process frameworks/evidence stores/registries. Improve the verifier itself.
   REVIEW permits a constructed check only for behavior no movie reaches: under100 lines,
   with the reason in its first line. Otherwise add named missing behavior/order/failure rows.
+- Architectural progress is behavior in a target package compiled independently of
+  compat. Report REVIEW's package/cycle measures; package moves alone are neutral.
 - Count all helpers/tables/adapters/registration/callers/native runtime code. Separate
   verification, support/installers, dependencies and combined totals; document mixed-file
   exclusions reproducibly. Inline verification stays production; compare like classifications.
@@ -185,17 +158,18 @@ successor without a prose ACK. Wake completed owners with followup_task;
 send_message alone does not activate them. Send actual START and frozen pins
 before warning inventories/report prose. Prepare executable commands, environment,
 pinned I/O and next source/review/build/replay recipients before upstream READY.
-Keep bounded Windows owners disjoint; Linux stays stopped. The default source
-handoff is one lossless canonical patch and inventory against actual main, under
-the granted 64 MiB source allowance. Keep four bank consumer owners and one
-primitive owner disjoint. Transfer unchanged accepted proofs by exact hashes.
+Keep bounded Windows core source/review/build/replay owners supplied with disjoint
+files/interfaces and exact root grants; Linux stays stopped. The default source
+handoff is one lossless canonical patch/inventory against actual main under the
+granted 64 MiB allowance. Transfer unchanged accepted proofs by exact hashes.
 After each qualified cycle, compare actual last-hour landed deltas and source/
 review/build/capture/replay/publication gaps; correct the measured bottleneck.
 Partition independent groups/use spare CPU; preserve shared prefixes and all identity
 guards. Run ready original-seed subsets during serial capture dependencies, then complete
 checkpoint rows without repeating accepted work absent a source change/new concern.
-Codec changes require genuine initialized machine/payload/continuation checks and fresh
-captures, never restamps or wrong-codec loads. Normalized source length is not payload size.
+Changed layout identifiers or wire formats require genuine initialized machine/payload/
+continuation checks and fresh captures; preserve round-trip, extra-byte and input-prefix
+rejections. Use genuine bytes without header restamps; source length is not payload size.
 Cross-recipe reuse requires SHA-bound identical canonical input prefixes; keep source,
 ROM/native/full-input/loader guards and save matching manifest starts during setup.
 Use [movies/README](../movies/README.md) for commands; inspect masks/hardware/audio/persistence when touched.
@@ -203,7 +177,8 @@ Use [movies/README](../movies/README.md) for commands; inspect masks/hardware/au
 The primary publishes qualified small commits to main and fixes known CI failures.
 Observe the actual CI workflow and commit; continue independent implementation
 while hosted checks run. Free runners only; Windows full corpus runs every 3h,
-after bank deletion and at review waypoints, at most 6 parallel shards. Routine
+after bank deletion and at review waypoints, at most 6 parallel shards. Checkpoint
+rows have 60-minute replay/65-minute job limits; timeout is failure, not coverage. Routine
 pushes run CI without a separate no-op replay run. Manual row IDs are space-separated;
 unknown IDs fail. Keep seed/lag/source guards; Linux development remains stopped.
 
@@ -225,8 +200,7 @@ and leave >=2 GiB after all remaining growth. Current sequential ceilings are
 2 GiB library, 3.25 GiB direct DLL and 2.5 GiB frontend; the primary's exact
 workload/profile grant and fresh shared ledger determine admission.
 Below2GiB/resource errors stop newest producer, not every lightweight reader.
-Measure CPU/RAM/paging/disk/useful throughput: two -j1 builds76.06s versus114.12s serial;
-three is unproven. Raise concurrency only when budgets
+Measure CPU/RAM/paging/disk/useful throughput. Raise concurrency only when budgets
 fit and the next useful batch improves measured throughput; -j1 permits parallel codegen.
 Streaming TAS imports reserve200MiB (measured90.5MiB), old whole-log imports3GiB.
 
@@ -247,6 +221,6 @@ through another tool or use tiny compression gains to continue below the reserve
 Done: Fast loop passes; measure tools/progress.sh and retain explained deltas and
 exact qualification evidence. Fetch/reconcile/recheck HEAD/index, commit the coherent
 change with a concise message and immediately push main.
-Update active PLAN beside code and the sole #6 issue-body report after each
-push; no README progress image or extra readiness gates. Work continues during CI.
+Update active PLAN beside code and the sole #6 report daily under REVIEW; no README
+progress image or extra readiness gates. Bounded delegated core work continues during CI.
 Pre-transpile .scratch/gates/pointers/scopes are inactive in archive/pre-transpile-2026-10-17.

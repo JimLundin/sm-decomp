@@ -6,8 +6,9 @@ description: Compile and qualify a pinned sm-decomp library or verifier DLL usin
 # Qualify a build
 
 Read [PLAN](../../../docs/PLAN.md) first, then [REVIEW](../../../docs/REVIEW.md)'s
-Milestone plan at each item's start. Direct user instructions win. REVIEW sets
-priorities; PLAN owns required checks, resources, Git and completion.
+Milestone plan at each item's start. Phase 0 verification-loop work lands first;
+its exit is two consecutive green scheduled full-corpus runs. REVIEW sets the
+active phase; PLAN owns checks, resources, Git and completion. User instructions win.
 
 Use the assigned checkout/source pin, stages, original handles and next recipient.
 Read [iteration](../../../docs/ITERATION.md) and
@@ -16,6 +17,8 @@ Read [iteration](../../../docs/ITERATION.md) and
 1. Collect completed stages from original handles instead of rebuilding them.
    Preserve frozen checked source and loaded DLLs. Bind compiler/toolchain/profile,
    source/native inputs, output directory and final artifact bytes to the result.
+   Record persisted layout identity separately; matching it does not transfer
+   compilation proof from changed source or native inputs.
 2. Use only root-admitted stages on authorized hosts. Launch prepared conditional
    successors immediately after prior terminal release, exact guards and fresh fit
    under [resources](../sm-decomp-resources/SKILL.md), without another root ACK.
@@ -33,7 +36,8 @@ Read [iteration](../../../docs/ITERATION.md) and
    code compiled by its checked crate/cfg. Existing player_detached supplies its
    affected detached reach. Metadata does not execute declared unit bodies.
    Keep normal compiled-input transfer separate from host visibility proof;
-   unchanged normal inputs do not qualify a verifier import.
+   unchanged normal inputs do not qualify a verifier import. For target-package
+   migration, compile the actual headless package entry without compat dependencies.
 5. Enforce sm/Cargo.toml warnings='deny' on every sm Cargo target; preserve
    dependency flags. Direct/detached rustc needs explicit -D warnings. Fix actual
    diagnostics; blanket allowances and historical warning-bearing builds do not

@@ -6,8 +6,9 @@ description: Qualify an assigned released sm-decomp DLL with affected replay row
 # Qualify replay
 
 Read [PLAN](../../../docs/PLAN.md) first, then [REVIEW](../../../docs/REVIEW.md)'s
-Milestone plan at each item's start. Direct user instructions win. REVIEW sets
-priorities; PLAN owns required checks, resources, Git and completion.
+Milestone plan at each item's start. Phase 0 verification-loop work lands first;
+its exit is two consecutive green scheduled full-corpus runs. REVIEW sets the
+active phase; PLAN owns checks, resources, Git and completion. User instructions win.
 
 Use the assigned item, owner, authoritative repository, checkout/base/source pin,
 allowed files, affected rows, resource allowance and next recipient. A pruned
@@ -40,8 +41,10 @@ A frame mismatch needs a regression row with its fix. Preserve comparisons and
 expectations. Constructed checks follow REVIEW's no-movie exception. Mutation
 runs occur at PLAN's bank-retirement point, with required full-corpus follow-up.
 
-A new codec requires genuine required starts/captures and continuation; retain
-the source/native/ROM/full-input/loader guards and never restamp an older capture.
+A changed layout identifier or wire format needs genuine initialized and required
+starts/captures plus continuation. Preserve round-trip, extra-byte and input-prefix
+rejections and actual source/native/ROM/full-input/loader proof. Matching persisted
+layouts do not transfer behavior proof; use genuine bytes and never restamp a header.
 Transfer accepted rows only for unchanged relevant pinned inputs. Record actual
 START/EXIT when known, terminal/live handles and next recipient; replay completion
 does not close unverified engine or ownership goals.

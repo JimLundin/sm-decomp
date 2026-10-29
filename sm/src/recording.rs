@@ -2,6 +2,41 @@
 #![forbid(unsafe_code)]
 use std::collections::TryReserveError;
 pub type BufferResult = Result<(), TryReserveError>;
+pub(crate) const BASE_SRAM_SIZE: usize = 8192;
+
+// Shared wire constants are used by both the recorder and retained replay decoder.
+macro_rules! log_format {
+    ($($name:ident : $ty:ty = $value:expr),* $(,)?) => {
+        pub(crate) mod log_format {
+            $(pub(crate) const $name: $ty = $value;)*
+            #[cfg(any(feature = "frontend", sm_verify_dll))]
+            pub(crate) fn serialized_layout(layout: &mut String) {
+                layout.push_str("recorder-log{repeat{command:u8;delay:command-low-bits-plus-extension;variant{input:bit-toggle;patch:length-prefix-plus-extension,address-high-u8,address-low-u8,bytes:length*u8;}}extension:sum-u8-until-less-than-escape;");
+                $(layout.push_str(concat!(stringify!($name), ":", stringify!($ty), "="));
+                    layout.push_str(&$name.to_string()); layout.push(';');)*
+                layout.push('}');
+            }
+        }
+    };
+}
+log_format! {
+    INPUT_BITS: i32 = 12,
+    INPUT_LIMIT: i32 = 0xc0,
+    PATCH_LIMIT: i32 = 0xd0,
+    INPUT_SHIFT: i32 = 4,
+    INPUT_DELAY_MASK: i32 = 15,
+    PATCH_DELAY_MASK: i32 = 1,
+    EXTENSION: u32 = 255,
+    PATCH_LENGTH_SHIFT: i32 = 2,
+    PATCH_LENGTH_MASK: i32 = 3,
+    PATCH_LENGTH_BASE: i32 = 1,
+    PATCH_LENGTH_ESCAPE: i32 = 4,
+    ADDRESS_BANK_SHIFT: i32 = 1,
+    ADDRESS_BANK_MASK: i32 = 1,
+    ADDRESS_BANK_BIT: i32 = 16,
+    ADDRESS_HIGH_SHIFT: i32 = 8,
+    RAM_MASK: u32 = 0x1ffff,
+}
 
 /// Logical truncation retains initialized bytes for later reuse, as the recorder did.
 #[derive(Default)]
@@ -49,9 +84,9 @@ impl RecordingBytes {
         Ok(())
     }
     fn variable_length(&mut self, mut value: u32) -> BufferResult {
-        while value >= 255 {
-            self.push(255)?;
-            value = value.wrapping_sub(255);
+        while value >= log_format::EXTENSION {
+            self.push(log_format::EXTENSION as u8)?;
+            value = value.wrapping_sub(log_format::EXTENSION);
         }
         self.push(value as u8)
     }
@@ -97,7 +132,11 @@ impl StateRecorder {
     fn command(&mut self, command: u8) -> BufferResult {
         let frames = self.frames_since_last as i32;
         self.frames_since_last = 0;
-        let mask = if command < 0xc0 { 15 } else { 1 };
+        let mask = if i32::from(command) < log_format::INPUT_LIMIT {
+            log_format::INPUT_DELAY_MASK
+        } else {
+            log_format::PATCH_DELAY_MASK
+        };
         self.log
             .push((i32::from(command) | frames.min(mask)) as u8)?;
         if frames >= mask {
@@ -109,9 +148,9 @@ impl StateRecorder {
         let changed = inputs ^ self.last_inputs;
         if changed != 0 {
             self.last_inputs = inputs;
-            for bit in 0..12 {
+            for bit in 0..log_format::INPUT_BITS {
                 if changed >> bit & 1 != 0 {
-                    self.command((bit << 4) as u8)?;
+                    self.command((bit << log_format::INPUT_SHIFT) as u8)?;
                 }
             }
         }
@@ -120,14 +159,24 @@ impl StateRecorder {
         Ok(())
     }
     pub fn record_patch(&mut self, address: u32, bytes: &[u8]) -> BufferResult {
-        assert!(address < 0x20000);
+        assert!(address <= log_format::RAM_MASK);
         let length = i32::try_from(bytes.len()).expect("recorded patch length overflow");
-        let prefix = (length - 1).min(3);
-        self.command((0xc0 | (if address & 0x10000 != 0 { 2 } else { 0 }) | prefix << 2) as u8)?;
-        if prefix == 3 {
-            self.log.variable_length((length - 4) as u32)?;
+        let prefix = (length - log_format::PATCH_LENGTH_BASE).min(log_format::PATCH_LENGTH_MASK);
+        self.command(
+            (log_format::INPUT_LIMIT
+                | (if address & (1 << log_format::ADDRESS_BANK_BIT) != 0 {
+                    log_format::ADDRESS_BANK_MASK << log_format::ADDRESS_BANK_SHIFT
+                } else {
+                    0
+                })
+                | prefix << log_format::PATCH_LENGTH_SHIFT) as u8,
+        )?;
+        if prefix == log_format::PATCH_LENGTH_MASK {
+            self.log
+                .variable_length((length - log_format::PATCH_LENGTH_ESCAPE) as u32)?;
         }
-        self.log.push((address >> 8) as u8)?;
+        self.log
+            .push((address >> log_format::ADDRESS_HIGH_SHIFT) as u8)?;
         self.log.push(address as u8)?;
         for &byte in bytes {
             self.log.push(byte)?;
@@ -139,9 +188,9 @@ impl StateRecorder {
         let old_delay = self.frames_since_last;
         self.frames_since_last = 0;
         if self.last_inputs != 0 {
-            for bit in 0..12 {
+            for bit in 0..log_format::INPUT_BITS {
                 if self.last_inputs >> bit & 1 != 0 {
-                    self.command((bit << 4) as u8)?;
+                    self.command((bit << log_format::INPUT_SHIFT) as u8)?;
                 }
             }
         }

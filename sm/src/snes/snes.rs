@@ -195,36 +195,87 @@ impl crate::execution::Execution<'_> {
     }
 }
 
+// This declaration preserves the selected devices, ordered transfer and failure phases.
+macro_rules! execution_snapshot {
+    ($context:ident, $io:ident, $snes:ident;
+        $($name:ident : $ty:ty = $value:expr => $kind:ident),* $(,)?) => {
+        #[cfg(any(feature = "frontend", sm_verify_dll))]
+        pub(crate) fn snapshot_layout(layout: &mut String) {
+            layout.push_str("SnapshotIo{");
+            $(execution_snapshot!(@layout layout, $name, $ty, $kind);)*
+            layout.push('}');
+        }
+        impl crate::execution::Execution<'_> {
+            pub(crate) unsafe fn save_load(&mut self, $io: &mut crate::snapshot_io::SnapshotIo<'_>) {
+                let $context = self;
+                unsafe {
+                    let $snes = $context.snes();
+                    $(execution_snapshot!(@write $context, $io, $ty, $value, $kind);)*
+                    (*$snes).runningWhichVersion = 0;
+                }
+            }
+        }
+    };
+    (@layout $layout:ident, $name:ident, $ty:ty, apu) => {
+        $layout.push_str(concat!(stringify!($name), ":")); crate::snes::apu::snapshot_layout($layout);
+    };
+    (@layout $layout:ident, $name:ident, $ty:ty, cart) => {
+        $layout.push_str(concat!(stringify!($name), ":")); crate::snes::cart::snapshot_layout($layout);
+    };
+    (@layout $layout:ident, $name:ident, $ty:ty, ram) => {
+        crate::snapshot_io::state_layout::<[u8; crate::game_state::WorkRam::LEN]>($layout, stringify!($name));
+    };
+    (@layout $layout:ident, $name:ident, $ty:ty, $kind:ident) => {
+        crate::snapshot_io::state_layout::<$ty>($layout, stringify!($name));
+    };
+    (@write $context:ident, $io:ident, $ty:ty, $value:expr, cpu) => {
+        let value: *mut $ty = $value; cpu_saveload(value, $io);
+    };
+    (@write $context:ident, $io:ident, $ty:ty, $value:expr, apu) => {
+        let value: *mut $ty = $value; apu_saveload(value, $io);
+    };
+    (@write $context:ident, $io:ident, $ty:ty, $value:expr, ppu) => {
+        let value: *mut $ty = $value; ppu_saveload(value, $io);
+    };
+    (@write $context:ident, $io:ident, $ty:ty, $value:expr, cart) => {
+        let value: *mut $ty = $value; cart_saveload(value, $io);
+    };
+    (@write $context:ident, $io:ident, $ty:ty, $value:expr, dma) => {
+        let result = {
+            let mut dma: $ty = $value;
+            let result = $io.state(&mut dma);
+            if result.is_ok() && matches!($io, crate::snapshot_io::SnapshotIo::Load(_)) {
+                $context.backend.set_dma_state(dma);
+            }
+            result
+        };
+        crate::rtl::snapshot_result(result);
+    };
+    (@write $context:ident, $io:ident, $ty:ty, $value:expr, state) => {
+        let value: &mut $ty = &mut $value; crate::rtl::snapshot_result($io.state(value));
+    };
+    (@write $context:ident, $io:ident, $ty:ty, $value:expr, ram) => {
+        let ram: &$ty = $value;
+        let result = $io.block(<$ty>::LEN, |block| match block {
+            Block::Save(bytes) => ram.copy_out(0, bytes),
+            Block::Load(bytes) => ram.copy_in(0, bytes),
+        });
+        crate::rtl::snapshot_result(result);
+    };
+}
+execution_snapshot! { context, io, snes;
+    cpu: Cpu = context.selected_cpu() => cpu,
+    apu: Apu = context.backend.apu_view() => apu,
+    dma: crate::types::Dma = context.backend.dma_state() => dma,
+    ppu: Ppu = context.selected_ppu() => ppu,
+    cart: Cart = context.cart() => cart,
+    snes: Snes = *snes => state,
+    work_ram: crate::game_state::WorkRam = context.ram() => ram,
+    ramAdr: u32 = (*snes).ramAdr => state,
+}
+
 // Owned operations recurse through this context and the same retained allocations.
 impl crate::execution::Execution<'_> {
-    pub(crate) unsafe fn save_load(&mut self, io: &mut crate::snapshot_io::SnapshotIo<'_>) {
-        unsafe {
-            let snes = self.snes();
-            cpu_saveload(self.selected_cpu(), io);
-            apu_saveload(self.backend.apu_view(), io);
-            let result = {
-                let mut dma = self.backend.dma_state();
-                let result = io.state(&mut dma);
-                if result.is_ok() && matches!(io, crate::snapshot_io::SnapshotIo::Load(_)) {
-                    self.backend.set_dma_state(dma);
-                }
-                result
-            };
-            crate::rtl::snapshot_result(result);
-            ppu_saveload(self.selected_ppu(), io);
-            cart_saveload(self.cart(), io);
-            crate::rtl::snapshot_result(io.state(&mut *snes));
-            let ram = self.ram();
-            let result = io.block(0x20000, |block| match block {
-                Block::Save(bytes) => ram.copy_out(0, bytes),
-                Block::Load(bytes) => ram.copy_in(0, bytes),
-            });
-            crate::rtl::snapshot_result(result);
-            crate::rtl::snapshot_result(io.state(&mut (*snes).ramAdr));
-            (*snes).runningWhichVersion = 0;
-        }
-    }
-
     /// # Safety
     /// The current SNES-selected CPU must be this Backend's live, exclusive CPU.
     /// All retained device links must target this Backend; native and device

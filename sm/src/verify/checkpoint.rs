@@ -16,6 +16,7 @@ use crate::{
 use std::path::Path;
 
 const MAGIC: &[u8; 8] = b"SMVERIFY";
+const APU_RAM_BYTES: usize = 65536;
 
 // A cache fingerprint, not an authentication mechanism. The full payload is
 // checked before any state is loaded, including lengths and metadata.
@@ -70,98 +71,23 @@ pub fn origin(rom: &[u8], seed: Option<&Path>) -> Result<u64, String> {
     Ok(fingerprint(&identity))
 }
 
+/// Ordered serialized field/type/count metadata, independent of execution bodies.
+#[forbid(unsafe_code)]
+pub fn serialized_layout() -> String {
+    let mut layout = String::from("SMVERIFY/serialized-state-v1;payload{machine-length:");
+    <u64>::layout(&mut layout);
+    machine_layout(&mut layout);
+    layout.push_str("actors:");
+    layout.push_str(&crate::game::actors::snapshot::ActorCheckpointPayload::serialized_layout());
+    layout.push('}');
+    layout
+}
+
 fn compatibility() -> u64 {
-    // Gameplay edits can reuse checkpoints. Changes to the state layout,
-    // oracle, audio or hardware require regeneration from boot.
-    let source = concat!(
-        include_str!("checkpoint.rs"),
-        include_str!("seed.rs"),
-        include_str!("../types.rs"),
-        include_str!("../initial_state.rs"),
-        include_str!("../game_state.rs"),
-        include_str!("../game/room_entry/world.rs"),
-        include_str!("../game/room_entry/prepared_tables.rs"),
-        include_str!("../game/room_entry/prepared_assets.rs"),
-        include_str!("../room_pack.rs"),
-        include_str!("../game/session.rs"),
-        include_str!("../game/session_owners.rs"),
-        include_str!("../game/session_checkpoint.rs"),
-        include_str!("../game/checkpoint_binding.rs"),
-        include_str!("../game/message_boxes.rs"),
-        include_str!("../game/dialogue.rs"),
-        include_str!("../game/dialogue_ram.rs"),
-        include_str!("../game/message_composition/mod.rs"),
-        include_str!("../game/message_composition/native.rs"),
-        include_str!("../game/message_composition/prepared.rs"),
-        include_str!("../game/scene/component.rs"),
-        include_str!("../game/scene/checkpoint_codec.rs"),
-        include_str!("../game/scene/hdma_sources.rs"),
-        include_str!("../game/scene/hdma.rs"),
-        include_str!("../game/scene/irq.rs"),
-        include_str!("../game/scene/delivery.rs"),
-        include_str!("../game/scene/owned_hdma.rs"),
-        include_str!("../game/scene/objects.rs"),
-        include_str!("../game/scene/atmosphere.rs"),
-        include_str!("../game/scene/error.rs"),
-        include_str!("../game/scene/atmosphere_protocol.rs"),
-        include_str!("../game/scene/samus.rs"),
-        include_str!("../game/scene/samus_body.rs"),
-        include_str!("../game/scene/samus_position_tiles.rs"),
-        include_str!("../game/scene/samus_tile_upload.rs"),
-        include_str!("../game/scene/samus_content.rs"),
-        include_str!("../game/scene/samus_native_content.rs"),
-        include_str!("../game/scene/resident_media.rs"),
-        include_str!("../game/scene/mod.rs"),
-        include_str!("../game/scene/records.rs"),
-        include_str!("../game/scene/state.rs"),
-        include_str!("../game/scene/start.rs"),
-        include_str!("../game/scene/commit.rs"),
-        include_str!("../game/scene/prepared.rs"),
-        include_str!("../game/scene/settle.rs"),
-        include_str!("../game/actors/botwoon_death.rs"),
-        include_str!("../game/session_encoding.rs"),
-        include_str!("../game/persistent_session.rs"),
-        include_str!("../game/music_requests.rs"),
-        include_str!("../game/session_native_adoption.rs"),
-        include_str!("../game/actors/codec.rs"),
-        include_str!("../game/session_runtime.rs"),
-        include_str!("../game/enemy_layouts.rs"),
-        include_str!("../game/actors/identity.rs"),
-        include_str!("../game/actors/snapshot.rs"),
-        include_str!("../game/actors/media.rs"),
-        include_str!("../verify.rs"),
-        include_str!("../verify_dll.rs"),
-        include_str!("../main.rs"),
-        include_str!("../native_audio.rs"),
-        include_str!("../rom_patches.rs"),
-        include_str!("../cpu_infra.rs"),
-        include_str!("../rtl.rs"),
-        include_str!("../recording.rs"),
-        include_str!("../save_ram.rs"),
-        include_str!("../snapshot_io.rs"),
-        include_str!("../apu_ram.rs"),
-        include_str!("../apu_queue.rs"),
-        include_str!("../audio_upload.rs"),
-        include_str!("../audio_snapshot.rs"),
-        include_str!("../spc_player.rs"),
-        include_str!("../native_player_ram.rs"),
-        include_str!("../snes/snes.rs"),
-        include_str!("../snes/cpu.rs"),
-        include_str!("../snes/ppu.rs"),
-        include_str!("../rendering/mod.rs"),
-        include_str!("../rendering/prepared.rs"),
-        include_str!("../rendering/records.rs"),
-        include_str!("../snes/registers.rs"),
-        include_str!("../snes/apu.rs"),
-        include_str!("../snes/spc.rs"),
-        include_str!("../snes/dsp.rs"),
-        include_str!("../snes/dma.rs"),
-        include_str!("../snes/cart.rs"),
-        include_str!("../snes/snes_other.rs"),
-        include_str!("../execution.rs"),
-    )
-    .replace("\r\n", "\n");
-    fingerprint(source.as_bytes())
+    // Layout identity and ROM/origin/input/audio/full-payload/loaded-source/native guards
+    // serve separate contracts. Keep the historical runtime-changed error for callers.
+    static LAYOUT: std::sync::OnceLock<u64> = std::sync::OnceLock::new();
+    *LAYOUT.get_or_init(|| fingerprint(serialized_layout().as_bytes()))
 }
 
 enum Archive<'a> {
@@ -236,12 +162,24 @@ impl Archive<'_> {
 }
 
 trait State {
+    fn layout(layout: &mut String);
     fn state(&mut self, archive: &mut Archive<'_>) -> Result<(), String>;
+}
+
+// The projection is never invoked; its signature infers the actual declared field type.
+#[forbid(unsafe_code)]
+fn field_layout<S, T: State>(layout: &mut String, name: &str, _field: fn(&S) -> &T) {
+    layout.push_str(name);
+    layout.push(':');
+    T::layout(layout);
 }
 
 macro_rules! scalar {
     ($($ty:ty),* $(,)?) => {$ (
         impl State for $ty {
+            fn layout(layout: &mut String) {
+                layout.push_str(concat!(stringify!($ty), "-le;"));
+            }
             fn state(&mut self, archive: &mut Archive<'_>) -> Result<(), String> {
                 let mut bytes = self.to_le_bytes();
                 archive.bytes(&mut bytes)?;
@@ -256,6 +194,9 @@ macro_rules! scalar {
 scalar!(u8, i8, u16, i16, u32, i32, u64, f64);
 
 impl State for bool {
+    fn layout(layout: &mut String) {
+        layout.push_str("bool-u8-0-or-1;");
+    }
     fn state(&mut self, archive: &mut Archive<'_>) -> Result<(), String> {
         let mut byte = [u8::from(*self)];
         archive.bytes(&mut byte)?;
@@ -270,6 +211,11 @@ impl State for bool {
 }
 
 impl<T: State, const N: usize> State for [T; N] {
+    fn layout(layout: &mut String) {
+        layout.push_str(&format!("array[{N}]{{"));
+        T::layout(layout);
+        layout.push('}');
+    }
     fn state(&mut self, archive: &mut Archive<'_>) -> Result<(), String> {
         for value in self {
             value.state(archive)?;
@@ -283,12 +229,36 @@ impl<T: State, const N: usize> State for [T; N] {
 macro_rules! fields {
     ($ty:ident { $($field:ident),* $(,)? } skip { $($skip:ident),* $(,)? }) => {
         impl State for $ty {
+            fn layout(layout: &mut String) {
+                layout.push_str(concat!(stringify!($ty), "{"));
+                $(fields!(@layout $ty, layout, $field);)*
+                layout.push('}');
+            }
             fn state(&mut self, archive: &mut Archive<'_>) -> Result<(), String> {
                 let Self { $($field,)* $($skip: _,)* } = self;
                 $(archive.check_field(stringify!($field))?; $field.state(archive)?;)*
                 Ok(())
             }
         }
+    };
+    (@layout StateRecorder, $layout:ident, log) => {
+        field_layout::<Self, _>($layout, "log", |state| &state.log);
+        crate::recording::log_format::serialized_layout($layout);
+    };
+    (@layout StateRecorder, $layout:ident, base_snapshot) => {
+        field_layout::<Self, _>($layout, "base_snapshot", |state| &state.base_snapshot);
+        $layout.push_str("base-snapshot{length0:reset;length-sram:");
+        <[u8; crate::recording::BASE_SRAM_SIZE]>::layout($layout);
+        $layout.push_str("length-greater-than-sram:");
+        crate::snes::snes::snapshot_layout($layout);
+        $layout.push('}');
+    };
+    (@layout StateRecorder, $layout:ident, base_audio_queue) => {
+        field_layout::<Self, _>($layout, "base_audio_queue", |state| &state.base_audio_queue);
+        ApuQueue::serialized_layout($layout);
+    };
+    (@layout $ty:ident, $layout:ident, $field:ident) => {
+        field_layout::<Self, _>($layout, stringify!($field), |state| &state.$field);
     };
 }
 
@@ -297,8 +267,11 @@ fields!(ApuRegisters {
     romReadable, dspAdr, cycles, inPorts, outPorts, timer, cpuCyclesLeft, history
 } skip { pad, snapshot_padding0 });
 impl State for crate::apu_ram::ApuRam {
+    fn layout(layout: &mut String) {
+        <[u8; APU_RAM_BYTES]>::layout(layout);
+    }
     fn state(&mut self, archive: &mut Archive<'_>) -> Result<(), String> {
-        for offset in 0..65536 {
+        for offset in 0..APU_RAM_BYTES {
             let mut byte = self.read(offset as u16);
             byte.state(archive)?;
             if matches!(archive, Archive::Load(_)) {
@@ -459,6 +432,9 @@ fields!(StateRecorder {
 } skip {});
 
 impl State for RecordingBytes {
+    fn layout(layout: &mut String) {
+        layout.push_str("RecordingBytes{length:u64-le;bytes:length*u8;}");
+    }
     fn state(&mut self, archive: &mut Archive<'_>) -> Result<(), String> {
         let mut length = (self.size as u64).to_le_bytes();
         archive.bytes(&mut length)?;
@@ -490,75 +466,109 @@ impl State for RecordingBytes {
     }
 }
 
-unsafe fn machine(game: &mut Game, archive: &mut Archive<'_>) -> Result<(), String> {
-    unsafe {
-        // Game's allocation/ROM view and callbacks belong to SnesInit. Oracle
-        // scratch snapshots are overwritten before use on the next paired frame.
-        archive.work_ram(game.ram())?;
-        game.decompress_src.state(archive)?;
-        game.eproj_spawn_rect.state(archive)?;
-        game.eproj_spawn_r22.state(archive)?;
-        game.eproj_spawn_pt.state(archive)?;
-        game.eproj_spawn_varE24.state(archive)?;
-        game.message_box_das0l_value.state(archive)?;
-        game.k_out.state(archive)?;
-        game.apu_queue.state(archive)?;
-        archive.check_field("g_runmode")?;
-        game.g_runmode.state(archive)?;
-        archive.check_field("g_calling_asm_from_c")?;
-        game.g_calling_asm_from_c.state(archive)?;
-        game.g_calling_asm_from_c_ret.state(archive)?;
-        archive.check_field("g_fail")?;
-        game.g_fail.state(archive)?;
-        archive.check_field("g_use_my_apu_code")?;
-        game.g_use_my_apu_code.state(archive)?;
-        game.hookmode.state(archive)?;
-        game.hookcnt.state(archive)?;
-        game.hookadr.state(archive)?;
-        game.hook_orgbyte.state(archive)?;
-        game.hook_fixbug_orgbyte.state(archive)?;
-        game.kPatchedCarrysOrg.state(archive)?;
-        archive.check_field("VERIFY_ACTIVE")?;
-        game.VERIFY_ACTIVE.state(archive)?;
-        archive.check_field("VERIFY_FAILURES")?;
-        game.VERIFY_FAILURES.state(archive)?;
-        game.g_got_mismatch_count.state(archive)?;
-        archive.check_field("g_other_image")?;
-        game.g_other_image.state(archive)?;
-        game.g_debug_flag.state(archive)?;
-        game.g_new_ppu.state(archive)?;
-        archive.check_field("snes_frame_counter")?;
-        game.snes_frame_counter.state(archive)?;
-        game.pc_hist.state(archive)?;
-        game.pc_hist_ctr.state(archive)?;
-        game.pc_bp.state(archive)?;
-        game.g_debug_apu_cycles.state(archive)?;
-        game.state_recorder.state(archive)?;
-        let snes = game.g_snes;
-        (*snes).state(archive)?;
-        (*(*snes).cpu).state(archive)?;
-        let mut dma = game.dma_state();
-        let dma_result = dma.state(archive);
-        if matches!(archive, Archive::Load(_)) {
-            game.set_dma_state(dma);
+trait ByteArray: State {
+    const LEN: usize;
+}
+impl<const N: usize> ByteArray for [u8; N] {
+    const LEN: usize = N;
+}
+
+// One ordered declaration drives the machine bytes and their static field schema.
+// Typed receivers make each schema's type the compiler-checked archive receiver.
+macro_rules! machine_state {
+    ($game:ident, $archive:ident, $snes:ident;
+        game { $($field:ident : $check:ident),* $(,)? }
+        devices { $($name:ident : $ty:ty = $value:expr => $kind:ident),* $(,)? }
+    ) => {
+        fn machine_layout(layout: &mut String) {
+            layout.push_str("machine{work_ram:");
+            <[u8; WorkRam::LEN]>::layout(layout);
+            $(field_layout::<Game, _>(layout, stringify!($field), |game| &game.$field);)*
+            $(layout.push_str(concat!(stringify!($name), ":")); <$ty>::layout(layout);)*
+            layout.push('}');
         }
+        unsafe fn machine($game: &mut Game, $archive: &mut Archive<'_>) -> Result<(), String> {
+            unsafe {
+                $archive.work_ram($game.ram())?;
+                $(machine_state!(@check $archive, $field, $check); $game.$field.state($archive)?;)*
+                let $snes = $game.g_snes;
+                $(machine_state!(@device $game, $archive, $ty, $value, $kind);)*
+                Ok(())
+            }
+        }
+    };
+    (@check $archive:ident, $field:ident, check) => { $archive.check_field(stringify!($field))?; };
+    (@check $archive:ident, $field:ident, raw) => {};
+    (@device $game:ident, $archive:ident, $ty:ty, $value:expr, state) => {
+        let value: &mut $ty = &mut $value;
+        value.state($archive)?;
+    };
+    (@device $game:ident, $archive:ident, $ty:ty, $value:expr, borrowed) => {
+        let value: &mut $ty = $value;
+        value.state($archive)?;
+    };
+    (@device $game:ident, $archive:ident, $ty:ty, $value:expr, dma) => {
+        let mut dma: $ty = $value;
+        let dma_result = dma.state($archive);
+        if matches!($archive, Archive::Load(_)) { $game.set_dma_state(dma); }
         dma_result?;
-        game.input1_mut().state(archive)?;
-        game.input2_mut().state(archive)?;
-        (*(*snes).snes_ppu).state(archive)?;
-        (*(*snes).my_ppu).state(archive)?;
-        (*(*snes).apu).state(archive)?;
-        (*(*(*snes).apu).spc).state(archive)?;
-        (*(*(*snes).apu).dsp).state.state(archive)?;
-        (*game.g_spc_player).state.state(archive)?;
-        (*game.g_spc_player).ram.state(archive)?;
-        (*(*game.g_spc_player).state.dsp).state.state(archive)?;
-        let mut save_bytes = game.g_sram.bytes(0..8192);
-        archive.bytes(&mut save_bytes)?;
-        if !matches!(archive, Archive::Validate(..)) {
-            game.g_sram.write_bytes(0, &save_bytes);
-        }
-        Ok(())
+    };
+    (@device $game:ident, $archive:ident, $ty:ty, $value:expr, sram) => {
+        let mut save_bytes: $ty = $value.bytes(0..<$ty as ByteArray>::LEN).try_into().unwrap();
+        $archive.bytes(&mut save_bytes)?;
+        if !matches!($archive, Archive::Validate(..)) { $game.g_sram.write_bytes(0, &save_bytes); }
+    };
+}
+
+machine_state! { game, archive, snes;
+    game {
+        decompress_src: raw,
+        eproj_spawn_rect: raw,
+        eproj_spawn_r22: raw,
+        eproj_spawn_pt: raw,
+        eproj_spawn_varE24: raw,
+        message_box_das0l_value: raw,
+        k_out: raw,
+        apu_queue: raw,
+        g_runmode: check,
+        g_calling_asm_from_c: check,
+        g_calling_asm_from_c_ret: raw,
+        g_fail: check,
+        g_use_my_apu_code: check,
+        hookmode: raw,
+        hookcnt: raw,
+        hookadr: raw,
+        hook_orgbyte: raw,
+        hook_fixbug_orgbyte: raw,
+        kPatchedCarrysOrg: raw,
+        VERIFY_ACTIVE: check,
+        VERIFY_FAILURES: check,
+        g_got_mismatch_count: raw,
+        g_other_image: check,
+        g_debug_flag: raw,
+        g_new_ppu: raw,
+        snes_frame_counter: check,
+        pc_hist: raw,
+        pc_hist_ctr: raw,
+        pc_bp: raw,
+        g_debug_apu_cycles: raw,
+        state_recorder: raw
+    }
+    devices {
+        snes: Snes = *snes => state,
+        cpu: Cpu = *(*snes).cpu => state,
+        dma: Dma = game.dma_state() => dma,
+        input1: Input = game.input1_mut() => borrowed,
+        input2: Input = game.input2_mut() => borrowed,
+        snes_ppu: Ppu = *(*snes).snes_ppu => state,
+        my_ppu: Ppu = *(*snes).my_ppu => state,
+        apu: Apu = *(*snes).apu => state,
+        spc: Spc = *(*(*snes).apu).spc => state,
+        apu_dsp: DspState = (*(*(*snes).apu).dsp).state => state,
+        player: NativePlayerState = (*game.g_spc_player).state => state,
+        player_ram: crate::apu_ram::ApuRam = (*game.g_spc_player).ram => state,
+        player_dsp: DspState = (*(*game.g_spc_player).state.dsp).state => state,
+        sram: [u8; crate::recording::BASE_SRAM_SIZE] = game.g_sram => sram
     }
 }
 
@@ -607,7 +617,7 @@ pub(crate) unsafe fn capture_with_sources(
             || (!game.supports_legacy_persistence() && game.snes_frame_counter <= 0)
             || game.state_recorder.replay_mode
             || !(*game.g_spc_player).state.reg_write_history.is_null()
-            || (*(*game.g_snes).cart).ramSize != 8192
+            || (*(*game.g_snes).cart).ramSize != crate::recording::BASE_SRAM_SIZE as u32
         {
             return Err("checkpoint requires a successful, idle committed verifier frame".into());
         }

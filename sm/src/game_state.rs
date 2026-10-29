@@ -96,7 +96,7 @@ impl Drop for SamusMutation<'_> {
 // writes. Both owners copy byte values; no live u8 reference or raw base escapes.
 #[repr(C, align(16))]
 struct RamBytes {
-    bytes: [Cell<u8>; 0x20000],
+    bytes: [Cell<u8>; WorkRam::LEN],
 }
 const _: () = {
     assert!(std::mem::size_of::<Cell<u8>>() == 1);
@@ -111,10 +111,11 @@ const _: () = {
 pub struct WorkRam(Rc<RamBytes>, Rc<Cell<u64>>);
 #[forbid(unsafe_code)]
 impl WorkRam {
+    pub(crate) const LEN: usize = 0x20000;
     fn new() -> Self {
         Self(
             Rc::new(RamBytes {
-                bytes: [const { Cell::new(0) }; 0x20000],
+                bytes: [const { Cell::new(0) }; Self::LEN],
             }),
             Rc::new(Cell::new(0)),
         )

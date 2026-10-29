@@ -91,7 +91,21 @@ impl Fields<'_> {
 
 pub(crate) trait State {
     const SIZE: usize;
+    #[cfg(any(feature = "frontend", sm_verify_dll))]
+    fn layout(layout: &mut String);
     fn transfer(&mut self, fields: &mut Fields<'_>);
+}
+
+// Static projections infer declared field types without constructing hardware values.
+#[cfg(any(feature = "frontend", sm_verify_dll))]
+pub(crate) fn state_layout<T: State>(layout: &mut String, name: &str) {
+    layout.push_str(name);
+    layout.push(':');
+    T::layout(layout);
+}
+#[cfg(any(feature = "frontend", sm_verify_dll))]
+fn field_layout<S, T: State>(layout: &mut String, name: &str, _field: fn(&S) -> &T) {
+    state_layout::<T>(layout, name);
 }
 
 impl SnapshotIo<'_> {
@@ -108,6 +122,11 @@ macro_rules! scalar_state {
     ($($ty:ty),* $(,)?) => {$(
         impl State for $ty {
             const SIZE: usize = core::mem::size_of::<Self>();
+            #[cfg(any(feature = "frontend", sm_verify_dll))]
+            fn layout(layout: &mut String) {
+                layout.push_str(concat!(stringify!($ty), "-ne-"));
+                layout.push_str(if cfg!(target_endian = "little") { "le;" } else { "be;" });
+            }
             fn transfer(&mut self, fields: &mut Fields<'_>) {
                 let mut bytes = self.to_ne_bytes();
                 fields.bytes(&mut bytes);
@@ -120,6 +139,10 @@ scalar_state!(u8, i8, u16, i16, u32, i32, f64);
 
 impl State for bool {
     const SIZE: usize = 1;
+    #[cfg(any(feature = "frontend", sm_verify_dll))]
+    fn layout(layout: &mut String) {
+        layout.push_str("bool-u8-nonzero;");
+    }
     fn transfer(&mut self, fields: &mut Fields<'_>) {
         let mut byte = u8::from(*self);
         byte.transfer(fields);
@@ -129,6 +152,12 @@ impl State for bool {
 
 impl<T: State, const N: usize> State for [T; N] {
     const SIZE: usize = T::SIZE * N;
+    #[cfg(any(feature = "frontend", sm_verify_dll))]
+    fn layout(layout: &mut String) {
+        layout.push_str(&format!("array[{N}]{{"));
+        T::layout(layout);
+        layout.push('}');
+    }
     fn transfer(&mut self, fields: &mut Fields<'_>) {
         for value in self {
             value.transfer(fields);
@@ -140,6 +169,12 @@ macro_rules! state_record {
     ($ty:ty, $size:literal, { $($field:ident),* } skip { $($skip:ident),* }) => {
         impl State for $ty {
             const SIZE: usize = $size;
+            #[cfg(any(feature = "frontend", sm_verify_dll))]
+            fn layout(layout: &mut String) {
+                layout.push_str(concat!(stringify!($ty), "{"));
+                $(field_layout::<Self, _>(layout, stringify!($field), |state| &state.$field);)*
+                layout.push('}');
+            }
             fn transfer(&mut self, fields: &mut Fields<'_>) {
                 let Self { $($field,)* $($skip: _,)* } = self;
                 $($field.transfer(fields);)*
@@ -243,8 +278,12 @@ state_record!(WindowLayer, 5, {
 
 impl State for crate::apu_ram::ApuRam {
     const SIZE: usize = 65536;
+    #[cfg(any(feature = "frontend", sm_verify_dll))]
+    fn layout(layout: &mut String) {
+        <[u8; Self::SIZE]>::layout(layout);
+    }
     fn transfer(&mut self, fields: &mut Fields<'_>) {
-        for offset in 0..65536 {
+        for offset in 0..Self::SIZE {
             let mut byte = self.read(offset as u16);
             byte.transfer(fields);
             self.write(offset as u16, byte);

@@ -27,12 +27,37 @@ pub unsafe fn apu_reset(apu: *mut Apu) {
         (*apu).registers.finish_reset(&(*apu).ram);
     }
 }
-pub unsafe fn apu_saveload(apu: *mut Apu, io: &mut crate::snapshot_io::SnapshotIo<'_>) {
-    unsafe {
-        crate::rtl::snapshot_result(io.state(&mut *apu));
-        dsp_saveload((*apu).dsp, io);
-        spc_saveload((*apu).spc, io);
-    }
+// Ordered wire components drive both the retained calls and their static schema.
+macro_rules! apu_snapshot {
+    ($apu:ident, $io:ident; $($name:ident : $ty:ty = $value:expr => $kind:ident),* $(,)?) => {
+        #[cfg(any(feature = "frontend", sm_verify_dll))]
+        pub(crate) fn snapshot_layout(layout: &mut String) {
+            layout.push_str("apu-snapshot{");
+            $(apu_snapshot!(@type $ty, $kind);
+                crate::snapshot_io::state_layout::<$ty>(layout, stringify!($name));)*
+            layout.push('}');
+        }
+        pub unsafe fn apu_saveload($apu: *mut Apu, $io: &mut crate::snapshot_io::SnapshotIo<'_>) {
+            unsafe { $(apu_snapshot!(@write $io, $ty, $value, $kind);)* }
+        }
+    };
+    (@type $ty:ty, state) => {};
+    (@type $ty:ty, spc) => {};
+    (@type $ty:ty, dsp) => { let _: fn(&crate::types::Dsp) -> &$ty = |dsp| &dsp.state; };
+    (@write $io:ident, $ty:ty, $value:expr, state) => {
+        let value: &mut $ty = &mut $value;
+        crate::rtl::snapshot_result($io.state(value));
+    };
+    (@write $io:ident, $ty:ty, $value:expr, dsp) => { dsp_saveload($value, $io); };
+    (@write $io:ident, $ty:ty, $value:expr, spc) => {
+        let value: *mut $ty = $value;
+        spc_saveload(value, $io);
+    };
+}
+apu_snapshot! { apu, io;
+    apu: Apu = *apu => state,
+    dsp: crate::types::DspState = (*apu).dsp => dsp,
+    spc: crate::types::Spc = (*apu).spc => spc,
 }
 
 pub(crate) unsafe fn apu_cycle_execution(game: &mut Execution<'_>) {

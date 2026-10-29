@@ -8,14 +8,34 @@ use ::core::ffi::c_void;
 use ::core::ptr::null_mut;
 pub const NULL: *mut c_void = null_mut::<c_void>();
 pub unsafe fn cart_reset(_cart: *mut Cart) {}
-pub unsafe fn cart_saveload(cart: *mut Cart, io: &mut crate::snapshot_io::SnapshotIo<'_>) {
-    unsafe {
-        let ram = &(*cart).ram;
-        let mut bytes = ram.bytes(0..(*cart).ramSize as usize);
-        crate::rtl::snapshot_result(io.transfer(&mut bytes));
-        ram.write_bytes(0, &bytes);
-    }
+// The variable cartridge extent remains an external count, with no wire prefix.
+macro_rules! cart_snapshot {
+    ($cart:ident, $io:ident; $size:ident : $ty:ty) => {
+        #[cfg(any(feature = "frontend", sm_verify_dll))]
+        pub(crate) fn snapshot_layout(layout: &mut String) {
+            let _: fn(&Cart) -> &$ty = |cart| &cart.$size;
+            layout.push_str(concat!(
+                "cart-ram{external-count:cart.",
+                stringify!($size),
+                ":",
+                stringify!($ty),
+                ";bytes:count*u8;no-count-prefix;}"
+            ));
+        }
+        pub unsafe fn cart_saveload(
+            $cart: *mut Cart,
+            $io: &mut crate::snapshot_io::SnapshotIo<'_>,
+        ) {
+            unsafe {
+                let ram = &(*$cart).ram;
+                let mut bytes = ram.bytes(0..(*$cart).$size as usize);
+                crate::rtl::snapshot_result($io.transfer(&mut bytes));
+                ram.write_bytes(0, &bytes);
+            }
+        }
+    };
 }
+cart_snapshot! { cart, io; ramSize: u32 }
 // Adopt the actual prepared allocation; cartridge and native views share its lifetime.
 pub unsafe fn cart_load(cart: *mut Cart, type_0: i32, rom: RomImage, ramSize: i32) {
     unsafe {

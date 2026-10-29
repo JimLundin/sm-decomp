@@ -1,5 +1,6 @@
 //! Sole actor identity, lifecycle and room presentation provenance.
 #![forbid(unsafe_code)]
+use super::snapshot::checkpoint_layout;
 use super::{
     access::ActorKey,
     content::{ActorTemplateId, PopulationEntryId, PopulationId, SpeciesId},
@@ -421,7 +422,43 @@ impl ActorIdentityState {
     }
 }
 
+checkpoint_layout!(actor_timeline_layout, write_actor_timeline(bytes, timeline: &ActorTimeline, live: &impl Fn(usize) -> bool) {
+    bind ActorTimeline { next_birth_order, slots } = timeline;
+    field next_birth_order: u64 = *next_birth_order;
+    array slots: [SlotIdentity; 32] = (*slots) => ((index, slot)) {
+        bind SlotIdentity { generation, occupant } = slot;
+        field generation: u64 = *generation;
+        variants occupant = ((live(index), occupant)) {
+            0 Empty ((false, None)) => {}
+            2 Untracked ((true, None)) => {}
+            1 Retained ((_, Some(occupant))) => {
+                bind ActorOccupant { birth_order, provenance, appearance } = occupant;
+                bind ActorProvenance { authored_species, origin } = provenance;
+                field birth_order: u64 = *birth_order;
+                option authored_species: u32 = authored_species.map(|id| id.0);
+                variants origin = (origin) {
+                    0 CanonicalImport (ActorBirthOrigin::CanonicalImport) => {}
+                    1 Population (ActorBirthOrigin::Population { population, entry, respawn }) => {
+                        field population: u32 = population.0;
+                        field entry: u32 = entry.0;
+                        boolean respawn = *respawn;
+                    }
+                    2 Dynamic (ActorBirthOrigin::Dynamic { template, part }) => {
+                        field template: u32 = template.0;
+                        field part: u16 = *part;
+                    }
+                }
+                option appearance: u32 = appearance.map(|id| id.0);
+            }
+        }
+    }
+});
+
 impl ActorTimeline {
+    #[cfg(any(feature = "frontend", sm_verify_dll))]
+    pub(super) fn serialized_layout() -> String {
+        actor_timeline_layout()
+    }
     pub(super) fn encode(&self, bytes: &mut Vec<u8>, ram: &impl Fn(usize) -> u8) {
         self.encode_occupancy(bytes, &|index| {
             let at = 0xf78 + index * 64;
@@ -430,46 +467,7 @@ impl ActorTimeline {
     }
 
     pub(super) fn encode_occupancy(&self, bytes: &mut Vec<u8>, live: &impl Fn(usize) -> bool) {
-        bytes.extend_from_slice(&self.next_birth_order.to_le_bytes());
-        for (index, slot) in self.slots.iter().enumerate() {
-            bytes.extend_from_slice(&slot.generation.to_le_bytes());
-            let raw_live = live(index);
-            // Unknown compatibility-live slots are possible through odd/raw aliases.
-            bytes.push(if slot.occupant.is_some() {
-                1
-            } else if raw_live {
-                2
-            } else {
-                0
-            });
-            let Some(occupant) = &slot.occupant else {
-                continue;
-            };
-            bytes.extend_from_slice(&occupant.birth_order.to_le_bytes());
-            super::snapshot::optional_id(
-                bytes,
-                occupant.provenance.authored_species.map(|id| id.0),
-            );
-            match occupant.provenance.origin {
-                ActorBirthOrigin::CanonicalImport => bytes.push(0),
-                ActorBirthOrigin::Population {
-                    population,
-                    entry,
-                    respawn,
-                } => {
-                    bytes.push(1);
-                    bytes.extend_from_slice(&population.0.to_le_bytes());
-                    bytes.extend_from_slice(&entry.0.to_le_bytes());
-                    bytes.push(u8::from(respawn));
-                }
-                ActorBirthOrigin::Dynamic { template, part } => {
-                    bytes.push(2);
-                    bytes.extend_from_slice(&template.0.to_le_bytes());
-                    bytes.extend_from_slice(&part.to_le_bytes());
-                }
-            }
-            super::snapshot::optional_id(bytes, occupant.appearance.map(|id| id.0));
-        }
+        write_actor_timeline(bytes, self, live);
     }
 
     pub(super) fn decode(
