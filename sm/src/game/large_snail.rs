@@ -227,11 +227,7 @@ pub(crate) fn bounce(up: bool, raw: u16, game: &mut Game) {
         });
         return;
     }
-    let image = runtime.native_image();
-    let offset = crate::rom::lorom_offset(0xa0cbc7) as usize
-        + 8 * usize::from(phase >> 8)
-        + if up { 4 } else { 0 };
-    let speed = i32::from_ne_bytes(core::array::from_fn(|i| image.read(offset + i)));
+    let speed = runtime.native_speed32(8 * usize::from(phase >> 8) + if up { 4 } else { 0 }) as i32;
     let blocked = api::move_vertical(&mut runtime, key, speed) == api::MovementResult::Blocked;
     if !up && blocked {
         runtime.edit_actor(key, Native, |actor| {

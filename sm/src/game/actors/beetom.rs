@@ -128,11 +128,8 @@ fn walk(runtime: &mut Runtime<'_>, left: bool) {
 }
 fn step_jump(runtime: &mut Runtime<'_>, key: Key, falling: bool, step: u16, captured: bool) {
     let phase = runtime.resolve_actor(key, Native).variables[1];
-    let image = runtime.native_image();
-    let start = crate::rom::lorom_offset(0xa0cbc7) as usize
-        + 8 * usize::from(phase)
-        + if falling { 0 } else { 4 };
-    let amount = u32::from_ne_bytes(core::array::from_fn(|i| image.read(start + i))) as i32;
+    let amount =
+        runtime.native_speed32(8 * usize::from(phase) + if falling { 0 } else { 4 }) as i32;
     if api::move_vertical(runtime, key, amount) == api::MovementResult::Blocked {
         set_state(runtime, key, if falling { 0xb814 } else { 0xb97a });
         return;
