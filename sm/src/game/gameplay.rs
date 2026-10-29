@@ -308,12 +308,16 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                 if _coret__0 != 0 {
                     break 'frame _coret__0;
                 }
-                crate::game::music::advance_sound_effects(
-                    game,
-                    |channel, value, _meaning, game| {
-                        crate::native_audio::write_sound_port(channel, value, game)
-                    },
-                );
+                crate::game::music::advance_sound_effects(game, |channel, value, meaning, game| {
+                    crate::native_audio::emit(
+                        crate::native_audio::sound_cue(
+                            channel,
+                            sm_data::OriginalSoundEffect(value),
+                            meaning,
+                        ),
+                        game,
+                    )
+                });
                 crate::game::sprite_drawing::finish_frame(game);
                 word!(game.joypad1_input_samusfilter = word!(game.joypad1_lastkeys));
                 if game.ram().read_byte(0x612)

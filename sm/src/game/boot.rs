@@ -2,7 +2,6 @@
 use crate::game::sprite_drawing::{clear_high_table, finish_frame};
 use crate::game::{save_slots, sm_8b::InitializeIoDisplayLogo_Async};
 use crate::game_state::Game;
-use crate::native_audio::upload_bank as APU_UploadBank;
 use crate::ram_map::word;
 use crate::rtl::{
     APUI00, APUI01, APUI02, APUI03, BG1HOFS, BG1SC, BG1VOFS, BG2HOFS, BG2SC, BG2VOFS, BG3HOFS,
@@ -38,7 +37,7 @@ pub(crate) unsafe fn resume(game: &mut Game) -> u8 {
             }
         }
         if matches!(resume, 1..=3) {
-            APU_UploadBank(0xcf8000, game);
+            crate::native_audio::emit(crate::native_audio::initialize_cue(), game);
             WriteReg(INIDISP as u16, 0x8f, game);
             clear_work_ram(0x10000, game);
             crate::rtl::write_register_and_mirror(NMITIMEN as u16, 0, 0x84, false, game);

@@ -89,18 +89,8 @@ COLLISION_CONTRACT_MUTATIONS = (('collision_launch_recorded_twice',
   'game::player_collision_host::checks::unchecked_launch',
   'collision.owned.unchecked_launch_exact_once',
   (('player_collision/motion.rs',
-    '    h.session_mut()\n'
-    '        .projectiles\n'
-    '        .launch\n'
-    '        .record_movement(direction, amount);',
-    '    h.session_mut()\n'
-    '        .projectiles\n'
-    '        .launch\n'
-    '        .record_movement(direction, amount);\n'
-    '    h.session_mut()\n'
-    '        .projectiles\n'
-    '        .launch\n'
-    '        .record_movement(direction, amount);'),)),
+    '    crate::game::launch_motion::record_movement(\n        &mut h.session_mut().projectiles.launch,\n        direction,\n        amount,\n    );',
+    '    crate::game::launch_motion::record_movement(\n        &mut h.session_mut().projectiles.launch,\n        direction,\n        amount,\n    );\n    crate::game::launch_motion::record_movement(\n        &mut h.session_mut().projectiles.launch,\n        direction,\n        amount,\n    );'),)),
  ('collision_shinespark_discards_shared_sequence',
   'game::player_collision_host::checks::shared_sequence_real_motion',
   'collision.owned.sequence_shared_after_move',

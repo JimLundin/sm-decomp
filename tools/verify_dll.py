@@ -70,6 +70,8 @@ def library_source_paths(root):
     # Target-package crates are compiled into the same verifier library.
     paths.update(path.relative_to(root).as_posix()
                  for path in (root / "crates").glob("*/src/**/*.rs"))
+    paths.update(path.relative_to(root).as_posix()
+                 for path in (root / "crates").glob("*/Cargo.toml"))
     paths.difference_update(("sm/src/main.rs", "sm/src/verify.rs",
                              "sm/src/verify_dll.rs", "sm/src/verify/checkpoint.rs",
                              "sm/src/verify/seed.rs"))
@@ -232,6 +234,10 @@ def cargo_host(root, rustc, output, source, frontend=False, retry=True):
         # changing source contents. The crate root is always a library input.
         # This also works with pre-existing/seeded targets lacking CACHEDIR.TAG.
         (root / "sm/src/lib.rs").touch()
+        for package in ("sm_data", "sm_game"):
+            target_root = root / "crates" / package / "src/lib.rs"
+            if target_root.is_file():
+                target_root.touch()
         return cargo_host(root, rustc, output, source, frontend=frontend, retry=False)
     # Preserve --no-build's existing path. An unchanged DLL can still be loaded
     # by another replay; do not overwrite it merely to refresh its timestamp.
@@ -247,6 +253,9 @@ def build(root, rustc, use_cargo=None, frontend=False):
     output = root / "target" / "verify-dll"
     output.mkdir(parents=True, exist_ok=True)
     library = output / "libsm.rlib"
+    game = output / "libsm_game.rlib"
+    data_root = root / "crates/sm_data/src/lib.rs"
+    data = output / "libsm_data.rlib" if data_root.is_file() else None
     dll = output / HOST_LIBRARY
     sdk = [Path(path) for path in os.environ.get("LIBRARY_PATH", "").split(os.pathsep)
            if path]
@@ -295,11 +304,14 @@ def build(root, rustc, use_cargo=None, frontend=False):
         ]).encode()).hexdigest()
 
     identity = build_identity()
-    if stamp.exists() and dll.exists() and library.exists():
+    if (stamp.exists() and dll.exists() and library.exists() and game.exists()
+            and (data is None or data.exists())):
         try:
             saved = json.loads(stamp.read_text())
             if saved == {"inputs": identity, "dll": hashlib.sha256(dll.read_bytes()).hexdigest(),
-                         "library": hashlib.sha256(library.read_bytes()).hexdigest()}:
+                         "library": hashlib.sha256(library.read_bytes()).hexdigest(),
+                         "game": hashlib.sha256(game.read_bytes()).hexdigest(),
+                         "data": hashlib.sha256(data.read_bytes()).hexdigest() if data else None}:
                 checked = subprocess.run(
                     [sys.executable, str(root / "tools/verify_dll.py"), "--check-library", str(dll)],
                     cwd=root, capture_output=True, text=True,
@@ -310,14 +322,11 @@ def build(root, rustc, use_cargo=None, frontend=False):
         except (OSError, ValueError):
             pass
     stamp.unlink(missing_ok=True)
-    data = output / "libsm_data.rlib"
     subprocess.run(
         common + (["-C", f"incremental={output / 'incremental-sm-data'}"] if incremental else [])
-        + ["--crate-name", "sm_data", "--crate-type", "rlib",
-                  "crates/sm_data/src/lib.rs", "-o", str(data)],
+        + ["--crate-name", "sm_data", "--crate-type", "rlib", str(data_root), "-o", str(data)],
         cwd=root, check=True,
     )
-    game = output / "libsm_game.rlib"
     subprocess.run(
         common + (["-C", f"incremental={output / 'incremental-sm-game'}"] if incremental else [])
         + ["--crate-name", "sm_game", "--crate-type", "rlib",
@@ -347,7 +356,9 @@ def build(root, rustc, use_cargo=None, frontend=False):
         raise RuntimeError("native inputs changed during build; rebuild before replay")
     stamp.write_text(json.dumps({"inputs": identity,
                                 "dll": hashlib.sha256(dll.read_bytes()).hexdigest(),
-                                "library": hashlib.sha256(library.read_bytes()).hexdigest()}))
+                                "library": hashlib.sha256(library.read_bytes()).hexdigest(),
+                                "game": hashlib.sha256(game.read_bytes()).hexdigest(),
+                                "data": hashlib.sha256(data.read_bytes()).hexdigest() if data else None}))
     return dll
 
 

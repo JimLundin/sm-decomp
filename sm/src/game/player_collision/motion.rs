@@ -37,10 +37,11 @@ fn record<H: Host>(h: &mut H, direction: Direction, amount: i32) {
         Direction::Up => MovementDirection::Up,
         Direction::Down => MovementDirection::Down,
     };
-    h.session_mut()
-        .projectiles
-        .launch
-        .record_movement(direction, amount);
+    crate::game::launch_motion::record_movement(
+        &mut h.session_mut().projectiles.launch,
+        direction,
+        amount,
+    );
 }
 fn commit_and_record<H: Host>(h: &mut H, direction: Direction, signed_amount: i32) {
     commit_position(

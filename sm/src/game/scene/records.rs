@@ -4,8 +4,7 @@
 use crate::rendering as r;
 use std::{collections::BTreeMap, sync::Arc};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct AssetId(pub u32);
+pub use sm_data::{AssetId, AssetRef, Revision};
 /// A live producer's identity, supplied at publication rather than derived from
 /// authored media IDs, object order or rendered bytes.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -45,13 +44,7 @@ impl DisplayProducerIds {
         Ok(id)
     }
 }
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Revision(pub [u8; 32]);
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct AssetRef {
-    pub id: AssetId,
-    pub revision: Revision,
-}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct MediaRef {
     pub asset: AssetRef,

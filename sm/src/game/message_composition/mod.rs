@@ -1,8 +1,7 @@
 //! Owned message composition; native acquisition and display settlement stay outside.
 #![forbid(unsafe_code)]
 
-mod native;
-pub use native::*;
+pub use sm_game::message_composition::*;
 pub mod prepared;
 
 use std::{collections::BTreeMap, sync::Arc};

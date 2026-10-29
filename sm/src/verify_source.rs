@@ -2,6 +2,10 @@
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "crates/sm_data/Cargo.toml",
+        include_bytes!("../../crates/sm_data/Cargo.toml"),
+    ),
+    (
         "crates/sm_data/src/lib.rs",
         include_bytes!("../../crates/sm_data/src/lib.rs"),
     ),
@@ -12,6 +16,18 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_data/src/world.rs",
         include_bytes!("../../crates/sm_data/src/world.rs"),
+    ),
+    (
+        "crates/sm_game/src/player_transitions/state.rs",
+        include_bytes!("../../crates/sm_game/src/player_transitions/state.rs"),
+    ),
+    (
+        "crates/sm_game/Cargo.toml",
+        include_bytes!("../../crates/sm_game/Cargo.toml"),
+    ),
+    (
+        "crates/sm_game/src/launch_motion.rs",
+        include_bytes!("../../crates/sm_game/src/launch_motion.rs"),
     ),
     (
         "crates/sm_game/src/lib.rs",
@@ -948,8 +964,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/decompression.rs"),
     ),
     (
-        "sm/src/game/dialogue.rs",
-        include_bytes!("game/dialogue.rs"),
+        "crates/sm_game/src/dialogue.rs",
+        include_bytes!("../../crates/sm_game/src/dialogue.rs"),
     ),
     (
         "sm/src/game/dialogue_ram.rs",
@@ -1084,8 +1100,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/explosion_window.rs"),
     ),
     (
-        "sm/src/game/external_inputs.rs",
-        include_bytes!("game/external_inputs.rs"),
+        "crates/sm_game/src/external_inputs.rs",
+        include_bytes!("../../crates/sm_game/src/external_inputs.rs"),
     ),
     (
         "sm/src/game/gameplay.rs",
@@ -1144,8 +1160,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/message_composition/mod.rs"),
     ),
     (
-        "sm/src/game/message_composition/native.rs",
-        include_bytes!("game/message_composition/native.rs"),
+        "crates/sm_game/src/message_composition/native.rs",
+        include_bytes!("../../crates/sm_game/src/message_composition/native.rs"),
     ),
     (
         "sm/src/game/message_composition/prepared.rs",

@@ -416,12 +416,16 @@ fn assert_projectiles_checkpoint(owner: &GameOwner, required: &ss::DisplayStartR
     expected.trails[17].right.remaining = 0xbcdf;
     expected.controls.cooldown = 0x1357;
     expected.controls.flare_timers[2] = 0x2468;
-    expected
-        .launch
-        .record_movement(MovementDirection::Left, -0x12345);
-    expected
-        .launch
-        .record_movement(MovementDirection::Down, 0x23456);
+    crate::game::launch_motion::record_movement(
+        &mut expected.launch,
+        MovementDirection::Left,
+        -0x12345,
+    );
+    crate::game::launch_motion::record_movement(
+        &mut expected.launch,
+        MovementDirection::Down,
+        0x23456,
+    );
     let bytes = expected.encode_checkpoint(&a).unwrap();
     let decoded = Projectiles::decode_checkpoint(&bytes, &a).unwrap();
     assert_eq!(decoded, expected);

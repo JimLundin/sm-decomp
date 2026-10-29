@@ -792,8 +792,8 @@ pub(super) fn EprojPreInstr_MotherBrainBomb(k: u16, ctx: &mut impl Host) {
 
     let advance_bomb_phase: bool = if enemy!(ctx, (v1) as isize, behavior_b) != 0 {
         let v4: i32 = k as i32 >> 1;
-        let v5: u16 =
-            kMotherBrainsBomb_Yaccel[(enemy!(ctx, (v4) as isize, behavior_b) >> 1) as usize] as u16;
+        let v5: u16 = K_MOTHER_BRAINS_BOMB_YACCEL
+            [(enemy!(ctx, (v4) as isize, behavior_b) >> 1) as usize] as u16;
         if v5 == 0 {
             {
                 enemy!(ctx, 0 => (v4) as isize, velocity_x);
@@ -895,8 +895,8 @@ pub(super) fn EprojPreInstr_D0EC(k: u16, ctx: &mut impl Host) {
         true
     } else {
         let v2: u16 = enemy!(ctx, (k >> 1) as isize, velocity_y);
-        let v3: bool = ((word_86D082) as i16).wrapping_add((v2) as i16) < 0;
-        enemy!(ctx, (word_86D082).wrapping_add(v2) => (k >> 1) as isize, velocity_y);
+        let v3: bool = ((WORD_86_D082) as i16).wrapping_add((v2) as i16) < 0;
+        enemy!(ctx, (WORD_86_D082).wrapping_add(v2) => (k >> 1) as isize, velocity_y);
         if !v3 {
             false
         } else {
@@ -1079,7 +1079,7 @@ pub(super) fn EprojPreInstr_D128(v0: u16, ctx: &mut impl Host) {
         enemy!(ctx, (0x86d0ebi32) as u16 => (v1) as isize, pre_action);
         start_instruction((v1 as usize) as isize, addr_word_86D03C as u16, ctx);
     } else {
-        enemy_add!(ctx, (v0 >> 1) as isize, velocity_y, (word_86D082) as u16);
+        enemy_add!(ctx, (v0 >> 1) as isize, velocity_y, (WORD_86_D082) as u16);
     };
 }
 
@@ -1137,10 +1137,10 @@ pub(super) fn Eproj_PreInit_0x8aaf(k: u16, ctx: &mut impl Host) {
 pub(super) fn EprojPreInstr_CrocomireSpikeWallPieces(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let mut v2: u16 = enemy!(ctx, (v1) as isize, behavior_a);
-    if v2 != CrocomireSpikeWallPieces_Tab1[v1 as usize] {
-        v2 = (v2 as i32 + CrocomireSpikeWallPieces_Tab2[v1 as usize] as i32) as u16;
-        if v2 >= CrocomireSpikeWallPieces_Tab1[v1 as usize] {
-            v2 = CrocomireSpikeWallPieces_Tab1[v1 as usize];
+    if v2 != CROCOMIRE_SPIKE_WALL_PIECES_TAB1[v1 as usize] {
+        v2 = (v2 as i32 + CROCOMIRE_SPIKE_WALL_PIECES_TAB2[v1 as usize] as i32) as u16;
+        if v2 >= CROCOMIRE_SPIKE_WALL_PIECES_TAB1[v1 as usize] {
+            v2 = CROCOMIRE_SPIKE_WALL_PIECES_TAB1[v1 as usize];
         }
     }
     enemy!(ctx, v2 => (v1) as isize, behavior_a);
@@ -1153,8 +1153,8 @@ pub(super) fn EprojPreInstr_CrocomireSpikeWallPieces(k: u16, ctx: &mut impl Host
         enemy_byte!(ctx, index, velocity_x = value);
     }
     let mut v5: u8 = (v4 as i32 + enemy_byte!(ctx, k as isize + 1, velocity_x) as i32) as u8;
-    if ((v5 as i32 - CrocomireSpikeWallPieces_Tab3[k as usize] as i32) as i8) >= 0 {
-        v5 = CrocomireSpikeWallPieces_Tab3[k as usize] as u8;
+    if ((v5 as i32 - CROCOMIRE_SPIKE_WALL_PIECES_TAB3[k as usize] as i32) as i8) >= 0 {
+        v5 = CROCOMIRE_SPIKE_WALL_PIECES_TAB3[k as usize] as u8;
     }
     enemy_byte!(ctx, k as isize + 1, velocity_x = v5);
     let mut v6: i8 = enemy_byte!(ctx, k as isize, velocity_x) as i8;
@@ -1275,7 +1275,7 @@ pub(super) fn EprojPreInstr_PhantoonStartingFireballs3(k: u16, ctx: &mut impl Ho
         let v2: u16 = (enemy!(ctx, (v1) as isize, behavior_a) as i32 + 1) as u16;
         enemy!(ctx, v2 => (v1) as isize, behavior_a);
         if v2 as i32 - 3i32 & 0x8000 != 0 {
-            enemy!(ctx, word_869A3E[v2 as usize] => (v1) as isize, velocity_y);
+            enemy!(ctx, WORD_869_A3_E[v2 as usize] => (v1) as isize, velocity_y);
             return;
         }
         true
@@ -1669,8 +1669,8 @@ pub(super) fn EprojPreInstr_C84D(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let v2: i32 = (4 * enemy!(ctx, (v1) as isize, behavior_a) as i32) as u16 as i32 >> 1;
     {
-        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(64), Le).x.whole as i32 + kEprojInit_MotherBrainsDrool[v2 as usize] as i32) as u16 => (v1) as isize, x);
-        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(64), Le).y.whole as i32 + kEprojInit_MotherBrainsDrool[(v2 + 1) as usize] as i32)
+        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(64), Le).x.whole as i32 + K_EPROJ_INIT_MOTHER_BRAINS_DROOL[v2 as usize] as i32) as u16 => (v1) as isize, x);
+        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(64), Le).y.whole as i32 + K_EPROJ_INIT_MOTHER_BRAINS_DROOL[(v2 + 1) as usize] as i32)
                 as u16 => (v1) as isize, y);
     }
     {
@@ -1803,7 +1803,7 @@ pub(super) fn EprojPreInstr_MaridiaFloatersSpikes(k: u16, ctx: &mut impl Host) {
         let index = (v1) as isize;
         let old = enemy!(ctx, (index) as isize, velocity_x);
         let value = ((old as i32)
-            + (word_86D21A[enemy!(ctx, (v1) as isize, behavior_a) as usize] as i32))
+            + (WORD_86_D21_A[enemy!(ctx, (v1) as isize, behavior_a) as usize] as i32))
             as u16;
         enemy!(ctx, (index) as isize, velocity_x = value);
     };
@@ -1812,7 +1812,7 @@ pub(super) fn EprojPreInstr_MaridiaFloatersSpikes(k: u16, ctx: &mut impl Host) {
             let index = (v1) as isize;
             let old = enemy!(ctx, (index) as isize, velocity_y);
             let value = ((old as i32)
-                + (word_86D22A[enemy!(ctx, (v1) as isize, behavior_a) as usize] as i32))
+                + (WORD_86_D22_A[enemy!(ctx, (v1) as isize, behavior_a) as usize] as i32))
                 as u16;
             enemy!(ctx, (index) as isize, velocity_y = value);
         };

@@ -2,7 +2,7 @@
   {
     "fault": "F1",
     "name": "actor_multipart_initializes_extra_part",
-    "path": "sm/src/game/enemy_population.rs",
+    "path": "crates/sm_game/src/enemy_population.rs",
     "before": "remaining: SpawnSearch::remaining_parts(parts),",
     "after": "remaining: SpawnSearch::remaining_parts(parts).wrapping_add(1),",
     "case": 7,
@@ -14,7 +14,7 @@
     "selected": "population:7",
     "edits": [
       {
-        "path": "sm/src/game/enemy_population.rs",
+        "path": "crates/sm_game/src/enemy_population.rs",
         "before": "remaining: SpawnSearch::remaining_parts(parts),",
         "after": "remaining: SpawnSearch::remaining_parts(parts).wrapping_add(1),"
       }

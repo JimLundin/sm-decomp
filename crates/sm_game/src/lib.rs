@@ -4,18 +4,21 @@
 //! they compile without the `sm` crate, its RAM layout, ROM access or backend;
 //! `sm` re-exports them at their old paths while callers migrate.
 #![forbid(unsafe_code)]
-// Original table names (kEproj..., word_86DCB9) keep their bank-log provenance.
-#![allow(non_upper_case_globals, non_snake_case)]
 
 pub mod beam_definitions;
 pub mod combat_rules;
 pub mod contact_rules;
+pub mod dialogue;
 pub mod drop_rules;
 pub mod enemy_population;
+pub mod external_inputs;
 pub mod gameplay_flag_state;
 pub mod geometry;
 pub mod item_pickups;
+pub mod launch_motion;
 pub mod liquid_surface;
+#[path = "message_composition/native.rs"]
+pub mod message_composition;
 pub mod progress;
 pub mod projectile_block_reactions;
 pub mod projectile_geometry;
@@ -40,6 +43,7 @@ pub mod player_collision {
 }
 pub mod player_transitions {
     pub mod demo;
+    pub mod state;
 }
 pub mod player_update {
     pub mod state;

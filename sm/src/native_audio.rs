@@ -11,14 +11,176 @@ pub(crate) unsafe fn upload_bank(addr: u32, game: &mut Game) {
         crate::rtl::RtlApuUpload(addr, game);
     }
 }
-/// Requires the live APU backend; callers retain their frame/interrupt ownership.
-pub(crate) unsafe fn write_sound_port(channel: u8, value: u8, game: &mut Game) {
+// A transient bound value; it owns no live queue or competing audio state.
+#[derive(Clone, Copy)]
+enum OriginalEffect {
+    Initialize,
+    Bank(sm_data::OriginalMusicBank),
+    Track(sm_data::OriginalMusicTrack),
+    Sound(u8, sm_data::OriginalSoundEffect),
+}
+enum Meaning<'a> {
+    None,
+    Music(&'a crate::game_state::persistent_session::QueuedMusicMeaning),
+    Sound(&'a crate::game_state::persistent_session::QueuedSoundMeaning),
+}
+pub(crate) struct CompatibilityCue<'a> {
+    cue: Option<sm_data::Cue>,
+    original: OriginalEffect,
+    meaning: Meaning<'a>,
+}
+#[forbid(unsafe_code)]
+pub(crate) fn initialize_cue() -> CompatibilityCue<'static> {
+    CompatibilityCue {
+        cue: Some(sm_data::Cue {
+            source: None,
+            action: sm_data::CueAction::InitializeAudio,
+        }),
+        original: OriginalEffect::Initialize,
+        meaning: Meaning::None,
+    }
+}
+#[forbid(unsafe_code)]
+pub(crate) fn music_bank_cue(
+    selector: sm_data::OriginalMusicBank,
+    meaning: Option<&crate::game_state::persistent_session::QueuedMusicMeaning>,
+) -> CompatibilityCue<'_> {
+    let meaning =
+        meaning.filter(|record| record.request & 0x8000 != 0 && record.request as u8 == selector.0);
+    let source = meaning.map(|record| sm_data::CueSource {
+        source_tick: record.source_tick,
+        source_interval: record.source_interval,
+    });
+    CompatibilityCue {
+        cue: Some(sm_data::Cue::music_bank(
+            selector,
+            source,
+            meaning.map(|record| &record.meaning),
+        )),
+        original: OriginalEffect::Bank(selector),
+        meaning: meaning.map_or(Meaning::None, Meaning::Music),
+    }
+}
+#[forbid(unsafe_code)]
+pub(crate) fn music_cue(
+    selector: sm_data::OriginalMusicTrack,
+    meaning: Option<&crate::game_state::persistent_session::QueuedMusicMeaning>,
+) -> CompatibilityCue<'_> {
+    let meaning = meaning
+        .filter(|record| record.request & 0x8000 == 0 && record.request as u8 & 0x7f == selector.0);
+    let source = meaning.map(|record| sm_data::CueSource {
+        source_tick: record.source_tick,
+        source_interval: record.source_interval,
+    });
+    CompatibilityCue {
+        cue: Some(sm_data::Cue::music(
+            selector,
+            source,
+            meaning.map(|record| &record.meaning),
+        )),
+        original: OriginalEffect::Track(selector),
+        meaning: meaning.map_or(Meaning::None, Meaning::Music),
+    }
+}
+#[forbid(unsafe_code)]
+pub(crate) fn sound_cue(
+    channel: u8,
+    selector: sm_data::OriginalSoundEffect,
+    meaning: Option<&crate::game_state::persistent_session::QueuedSoundMeaning>,
+) -> CompatibilityCue<'_> {
+    let meaning = meaning.filter(|record| record.request == selector.0);
+    let source = meaning.map(|record| sm_data::CueSource {
+        source_tick: record.source_tick,
+        source_interval: record.source_interval,
+    });
+    let cue = sm_data::SoundChannel::from_index(channel).map(|channel| {
+        sm_data::Cue::sound(
+            channel,
+            selector,
+            source,
+            meaning.map(|record| &record.meaning),
+        )
+    });
+    CompatibilityCue {
+        cue,
+        original: OriginalEffect::Sound(channel, selector),
+        meaning: meaning.map_or(Meaning::None, Meaning::Sound),
+    }
+}
+
+#[forbid(unsafe_code)]
+fn resolve_cue(cue: CompatibilityCue<'_>) -> OriginalEffect {
+    use sm_data::{CueAction, MusicBankCue, MusicCue, MusicMeaning, SoundCue};
+    match (cue.cue.map(|cue| cue.action), &cue.meaning) {
+        (Some(CueAction::InitializeAudio), _) => OriginalEffect::Initialize,
+        (Some(CueAction::MusicBank(MusicBankCue::Original(selector))), _) => {
+            OriginalEffect::Bank(selector)
+        }
+        (Some(CueAction::Music(MusicCue::Original(selector))), _) => {
+            OriginalEffect::Track(selector)
+        }
+        (
+            Some(CueAction::Sound {
+                channel,
+                sound: SoundCue::Original(selector),
+            }),
+            _,
+        ) => OriginalEffect::Sound(channel.index(), selector),
+        (
+            Some(CueAction::MusicBank(MusicBankCue::Authored { bank, after })),
+            Meaning::Music(record),
+        ) if record.meaning
+            == (MusicMeaning::Bank {
+                bank,
+                after: after.clone(),
+            }) =>
+        {
+            OriginalEffect::Bank(sm_data::OriginalMusicBank(record.request as u8))
+        }
+        (Some(CueAction::Music(MusicCue::Authored(meaning))), Meaning::Music(record))
+            if record.meaning == meaning =>
+        {
+            OriginalEffect::Track(sm_data::OriginalMusicTrack(record.request as u8 & 0x7f))
+        }
+        (
+            Some(CueAction::Sound {
+                channel,
+                sound: SoundCue::Authored(meaning),
+            }),
+            Meaning::Sound(record),
+        ) if record.meaning == meaning => OriginalEffect::Sound(
+            channel.index(),
+            sm_data::OriginalSoundEffect(record.request),
+        ),
+        // Foreign channels or uncorrelated supplied meanings retain the actual original effect.
+        _ => cue.original,
+    }
+}
+#[forbid(unsafe_code)]
+fn bank_address(selector: sm_data::OriginalMusicBank, game: &Game) -> u32 {
+    let offset = usize::from(selector.0);
+    // The original Load24 also reads the adjacent fourth byte before masking.
+    u32::from_ne_bytes(core::array::from_fn(|i| {
+        game.read_rom_byte(0x8fe7e1, offset + i)
+    })) & 0xffffff
+}
+
+/// Retains the original live/exclusive APU/SPC and native source-bus contracts.
+/// Cue resolution runs at the original callback phase; no delivery is deferred.
+pub(crate) unsafe fn emit(cue: CompatibilityCue<'_>, game: &mut Game) {
     unsafe {
-        crate::rtl::RtlApuWrite(
-            crate::snes::registers::APUI01 + u32::from(channel),
-            value,
-            game,
-        );
+        match resolve_cue(cue) {
+            OriginalEffect::Initialize => upload_bank(0xcf8000, game),
+            OriginalEffect::Bank(selector) => upload_bank(bank_address(selector, game), game),
+            OriginalEffect::Track(selector) => {
+                crate::rtl::RtlApuWrite(crate::snes::registers::APUI00, selector.0, game)
+            }
+            OriginalEffect::Sound(channel, selector) => crate::rtl::RtlApuWrite(
+                crate::snes::registers::APUI01 + u32::from(channel),
+                selector.0,
+                game,
+            ),
+        }
     }
 }
 
