@@ -2,6 +2,7 @@
 //! No invocation of the legacy Rust alignment-sensitive routines.
 use super::{Game, MakeSnapshotWithPlayerOwner, RestoreSnapshot, Snapshot};
 use crate::initial_state::InitialState;
+use crate::native_rom::NativeRomPointer;
 use crate::snes::cpu::cpu_getFlags;
 
 pub const CASES: u32 = 11;

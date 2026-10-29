@@ -4,6 +4,7 @@
 use super::host::{Content as _, NativeRecord as _};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+use crate::native_rom::NativeRomPointer;
 use crate::rom::RomImage;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 pub(crate) const CASES: u32 = 28;

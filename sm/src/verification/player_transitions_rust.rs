@@ -1,5 +1,6 @@
 //! Eleven eligible corrected legacy Rust calls, compared with frozen CPU output.
 use super::{Game, MakeSnapshotWithPlayerOwner, RestoreSnapshot, Snapshot};
+use crate::native_rom::NativeRomPointer;
 use crate::{initial_state::InitialState, player_transitions_rust_observer as observer};
 pub const CAPACITY: usize = 2 * 1024 * 1024;
 const STACK_TOP: u16 = 0x1fff;
