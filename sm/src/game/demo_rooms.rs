@@ -1,9 +1,52 @@
 //! Attract-mode playback, room selection, placement and delayed setup.
 #![forbid(unsafe_code)]
+use crate::game::imported::Imported;
 use crate::game::{gameplay_flag_runtime, menu_tilemap::native_record};
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
+use crate::rom::{RomImage, lorom_offset};
 use crate::types::EnemyData;
+use sm_data::demo_rooms::{
+    DemoEntry, DemoScene, DemoScenes, DemoSets, SCENES_ADDRESS, SCENES_BYTES, SETS_ADDRESS,
+    SETS_BYTES,
+};
+
+pub(crate) type ImportedSets = Imported<DemoSets>;
+pub(crate) type ImportedScenes = Imported<DemoScenes>;
+
+pub(crate) fn import_sets(image: &RomImage) -> Option<ImportedSets> {
+    Imported::import(image, SETS_ADDRESS, SETS_BYTES, DemoSets::import)
+}
+
+pub(crate) fn import_scenes(image: &RomImage) -> Option<ImportedScenes> {
+    Imported::import(image, SCENES_ADDRESS, SCENES_BYTES, DemoScenes::import)
+}
+
+/// The set's first scene address in the loaded image. The table serves it
+/// while that image is the imported allocation; otherwise, and past the four
+/// sets, the original indexed load runs with its failures.
+fn set_start(game: &Game, set: u16) -> u16 {
+    let rom = game.loaded_rom.as_ref().expect("ROM must be loaded");
+    Imported::from(&game.demo_sets, rom)
+        .and_then(|sets| sets.start(usize::from(set)))
+        .unwrap_or_else(|| rom.table_word(lorom_offset(SETS_ADDRESS) as usize, set as isize))
+}
+
+/// The scene or end marker at a bank $82 address in the native image, while it
+/// is the imported allocation. Every imported entry lies above $8000, so its
+/// original fetch has no invalid-window diagnostic; callers keep that fetch
+/// for any other address, image or a missing image.
+fn entry(game: &Game, address: u16) -> Option<DemoEntry> {
+    let native = game.capture_native_rom_binding()?;
+    Imported::from(&game.demo_scenes, &native).and_then(|scenes| scenes.entry(address))
+}
+
+fn scene(game: &Game, address: u16) -> Option<DemoScene> {
+    match entry(game, address)? {
+        DemoEntry::Scene(scene) => Some(scene),
+        DemoEntry::End => None,
+    }
+}
 
 pub(crate) fn reset(game: &mut Game) -> u8 {
     word! { game, 0; UNUSED_word_7E0DF8, UNUSED_word_7E0DFA, UNUSED_word_7E0DFC }
@@ -61,9 +104,13 @@ pub(crate) fn play(game: &mut Game, gameplay: impl FnOnce(&mut Game) -> u8) -> u
 }
 
 pub(crate) fn advance_set(game: &mut Game) {
-    let base = crate::rtl::rom_table_word!(game, 0x82876c, word!(game.demo_set) as isize);
+    let base = set_start(game, word!(game.demo_set));
     let address = base.wrapping_add(word!(game.demo_scene).wrapping_mul(18));
-    if native_record(0x820000 | u32::from(address), game).word(0) == 0xffff {
+    let ended = match entry(game, address) {
+        Some(entry) => entry == DemoEntry::End,
+        None => native_record(0x820000 | u32::from(address), game).word(0) == 0xffff,
+    };
+    if ended {
         word!(game.substate = 0);
         let next = word!(game.demo_set).wrapping_add(1);
         word! { game;
@@ -79,24 +126,34 @@ pub(crate) fn load(game: &mut Game) {
     word!(game.door_def_ptr = 0);
     // Loading reads the scene before the set table; the resumed hook does the reverse.
     let offset = 18 * i32::from(word!(game.demo_scene));
-    let base = crate::rtl::rom_table_word!(game, 0x82876c, word!(game.demo_set) as isize);
-    let room = native_record(
-        0x820000 | u32::from((offset + i32::from(base)) as u16),
-        game,
-    );
+    let base = set_start(game, word!(game.demo_set));
+    let address = (offset + i32::from(base)) as u16;
+    let room = scene(game, address).unwrap_or_else(|| {
+        let record = native_record(0x820000 | u32::from(address), game);
+        DemoScene {
+            room: record.word(0),
+            door: record.word(2),
+            door_slot: record.word(4),
+            layer1_x: record.word(6),
+            layer1_y: record.word(8),
+            samus_y_offset: record.word(10),
+            samus_x_offset: record.word(12),
+            timer: record.word(14),
+            hook: record.word(16),
+        }
+    });
     word! { game;
-        room_ptr = room.word(0);
-        door_def_ptr = room.word(2);
-        layer1_x_pos = room.word(6);
+        room_ptr = room.room;
+        door_def_ptr = room.door;
+        layer1_x_pos = room.layer1_x;
         bg1_x_offset = word!(game.layer1_x_pos);
-        layer1_y_pos = room.word(8);
+        layer1_y_pos = room.layer1_y;
         bg1_y_offset = word!(game.layer1_y_pos);
-        // The legacy descriptor's X offset positions Samus vertically, and Y horizontally.
-        samus_y_pos = word!(game.layer1_y_pos).wrapping_add(room.word(10));
+        samus_y_pos = word!(game.layer1_y_pos).wrapping_add(room.samus_y_offset);
         samus_prev_y_pos = word!(game.samus_y_pos);
-        samus_x_pos = room.word(12).wrapping_add(word!(game.layer1_x_pos)).wrapping_add(128);
+        samus_x_pos = room.samus_x_offset.wrapping_add(word!(game.layer1_x_pos)).wrapping_add(128);
         samus_prev_x_pos = word!(game.samus_x_pos);
-        demo_timer = room.word(14);
+        demo_timer = room.timer;
     }
     let value = native_record(0x8f0000 | u32::from(word!(game.room_ptr)), game).byte(1);
     game.ram().write_byte(0x79f, value);
@@ -126,9 +183,12 @@ pub(crate) fn load(game: &mut Game) {
 }
 
 pub(crate) fn finish_setup(game: &mut Game) {
-    let base = crate::rtl::rom_table_word!(game, 0x82876c, word!(game.demo_set) as isize);
+    let base = set_start(game, word!(game.demo_set));
     let address = (i32::from(base) + 18 * (i32::from(word!(game.demo_scene)) - 1)) as u16;
-    let hook = native_record(0x820000 | u32::from(address), game).word(16);
+    let hook = scene(game, address).map_or_else(
+        || native_record(0x820000 | u32::from(address), game).word(16),
+        |scene| scene.hook,
+    );
     run_room_hook(0x820000 | u32::from(hook), game);
 }
 

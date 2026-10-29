@@ -222,6 +222,10 @@ pub struct Game {
     pub(crate) sand_heap: Option<crate::game::sand_heap::ImportedSandHeap>,
     /// Imported from `loaded_rom` by `register_rom`; see game::ceres_elevator.
     pub(crate) ceres_rotation: Option<crate::game::ceres_elevator::ImportedRotation>,
+    /// Imported from `loaded_rom` by `register_rom`; see game::demo_rooms.
+    pub(crate) demo_sets: Option<crate::game::demo_rooms::ImportedSets>,
+    /// Imported from `native_rom` by `register_native_rom`; see game::demo_rooms.
+    pub(crate) demo_scenes: Option<crate::game::demo_rooms::ImportedScenes>,
     /// Imported from `loaded_rom` by `register_rom`; see game::shooting_stars.
     pub(crate) shooting_stars: Option<crate::game::shooting_stars::ImportedShootingStars>,
     samus_binding: Option<Arc<SamusBinding>>,
@@ -1133,6 +1137,7 @@ impl Game {
             self.revoke_samus_authority();
         }
         self.enemy_speeds32 = crate::game::enemy_speeds::import32(&image);
+        self.demo_scenes = crate::game::demo_rooms::import_scenes(&image);
         self.native_rom = Some(image);
     }
 
@@ -1181,6 +1186,7 @@ impl Game {
         self.enemy_speeds = crate::game::enemy_speeds::import(&image);
         self.sand_heap = crate::game::sand_heap::import(&image);
         self.ceres_rotation = crate::game::ceres_elevator::import(&image);
+        self.demo_sets = crate::game::demo_rooms::import_sets(&image);
         self.shooting_stars = crate::game::shooting_stars::import(&image);
         self.loaded_rom = Some(image);
     }
@@ -1421,6 +1427,8 @@ impl Game {
             enemy_speeds32: None,
             sand_heap: None,
             ceres_rotation: None,
+            demo_sets: None,
+            demo_scenes: None,
             shooting_stars: None,
             samus_binding: None,
             samus_authority: SamusAuthority::LegacyUnrouted,
