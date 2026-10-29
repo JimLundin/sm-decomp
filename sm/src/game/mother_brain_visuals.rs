@@ -1,11 +1,41 @@
 //! Mother Brain encounter palettes, wall sealing, earthquakes and body flicker.
 use crate::game::constants::bank_86::*;
 use crate::game::enemy_projectiles::SpawnEprojWithRoomGfx;
+use crate::game::imported::{Imported, word};
 use crate::game::music::QueueSfx2_Max6;
 use crate::game::palette_copies::copy_rom_colors_to_palette;
 use crate::game::prelude::*;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::ram_map::{checked_word, slot};
+use sm_data::mother_brain::{
+    BACK_LEG_PALETTES_ADDRESS, BODY_PALETTES_ADDRESS, HealthPalettes, PALETTES_BYTES,
+    RAINBOW_ADDRESS, RAINBOW_BYTES, RainbowColors, import_health_palettes, import_rainbow,
+};
+
+#[derive(Default)]
+pub(crate) struct ImportedTables {
+    body_palettes: Option<Imported<HealthPalettes>>,
+    back_leg_palettes: Option<Imported<HealthPalettes>>,
+    rainbow: Option<Imported<RainbowColors>>,
+}
+
+pub(crate) fn import(image: &crate::rom::RomImage) -> ImportedTables {
+    ImportedTables {
+        body_palettes: Imported::import(
+            image,
+            BODY_PALETTES_ADDRESS,
+            PALETTES_BYTES,
+            import_health_palettes,
+        ),
+        back_leg_palettes: Imported::import(
+            image,
+            BACK_LEG_PALETTES_ADDRESS,
+            PALETTES_BYTES,
+            import_health_palettes,
+        ),
+        rainbow: Imported::import(image, RAINBOW_ADDRESS, RAINBOW_BYTES, import_rainbow),
+    }
+}
 const RomPtr_AD: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xad>;
 pub enum Fade {
     ToBlack,
@@ -83,7 +113,12 @@ pub unsafe fn update_health_palette(game: &mut Game) {
             copy_rom_colors_to_palette(
                 destination,
                 0xad,
-                crate::rtl::rom_table_word!(game, 0xade6a2, level),
+                word(
+                    &game.mother_brain_tables.body_palettes,
+                    game,
+                    BODY_PALETTES_ADDRESS,
+                    level,
+                ),
                 15,
                 game,
             );
@@ -91,7 +126,12 @@ pub unsafe fn update_health_palette(game: &mut Game) {
         copy_rom_colors_to_palette(
             0x162,
             0xad,
-            crate::rtl::rom_table_word!(game, 0xade742, level),
+            word(
+                &game.mother_brain_tables.back_leg_palettes,
+                game,
+                BACK_LEG_PALETTES_ADDRESS,
+                level,
+            ),
             15,
             game,
         );
@@ -169,8 +209,13 @@ pub(crate) unsafe fn advance_rainbow_beam(game: &mut Game) {
 }
 
 fn advance_rainbow_palette(game: &mut Game) {
-    let mut color =
-        crate::rtl::rom_table_word!(game, 0x88e833, (word!(game.hdma_object_A[0]) >> 1) as isize);
+    let index = (word!(game.hdma_object_A[0]) >> 1) as isize;
+    let mut color = word(
+        &game.mother_brain_tables.rainbow,
+        game,
+        RAINBOW_ADDRESS,
+        index,
+    );
     if color & 0x8000 == 0 {
         word!(game.hdma_object_A[0] += 1);
         word!(game.hdma_object_A[0] += 1);
@@ -178,7 +223,7 @@ fn advance_rainbow_palette(game: &mut Game) {
         word!(game.hdma_object_A[0] += 1);
     } else {
         word!(game.hdma_object_A[0] = 0);
-        color = crate::rtl::rom_table_word!(game, 0x88e833, 0);
+        color = word(&game.mother_brain_tables.rainbow, game, RAINBOW_ADDRESS, 0);
     }
     game.ram().write_byte(0x74, color as u8 & 0x1f | 0x20);
     game.ram()

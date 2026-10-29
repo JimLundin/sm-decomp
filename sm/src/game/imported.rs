@@ -58,6 +58,23 @@ pub(crate) fn load(rom: &RomImage, address: u32, index: isize) -> u16 {
     rom.table_word(lorom_offset(address) as usize, index)
 }
 
+/// Word `index` of a one-word-per-row table while the loaded image is its
+/// allocation; other images and indices past the table run the original
+/// indexed load at `address`.
+pub(crate) fn word<const N: usize>(
+    table: &Option<Imported<sm_data::table::Rows<u16, N>>>,
+    game: &Game,
+    address: u32,
+    index: isize,
+) -> u16 {
+    Imported::read(
+        table,
+        game,
+        |rows| rows.row(usize::try_from(index).ok()?),
+        |rom| load(rom, address, index),
+    )
+}
+
 /// A word index as a row of `words`-word rows, if it starts one.
 pub(crate) fn row_of(index: isize, words: usize) -> Option<usize> {
     let index = usize::try_from(index).ok()?;

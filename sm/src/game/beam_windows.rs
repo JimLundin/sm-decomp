@@ -1,4 +1,4 @@
-use crate::game::imported::{Imported, load};
+use crate::game::imported::{Imported, word};
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::types::{Enemy_MotherBrain, Ram8000_Default};
@@ -13,12 +13,7 @@ pub(crate) fn import(image: &crate::rom::RomImage) -> ImportedTables {
 /// The edge gradient for `angle`; other images and angles past 80h run the
 /// original indexed load.
 fn gradient(game: &Game, angle: isize) -> u16 {
-    Imported::read(
-        &game.beam_gradients,
-        game,
-        |table| table.row(usize::try_from(angle).ok()?),
-        |rom| load(rom, ADDRESS, angle),
-    )
+    word(&game.beam_gradients, game, ADDRESS, angle)
 }
 
 /// Advance the two 8.8 fixed-point edges and pack one SNES window word.

@@ -1,6 +1,8 @@
 //! Mother Brain's tables in banks $A9 and $AD: the fake death's explosions,
 //! the brain's attack instruction lists and palette sets, the body's walking
-//! instruction lists, the falling tubes' functions and the rainbow beam palettes.
+//! instruction lists, the falling tubes' functions and the rainbow beam palettes,
+//! plus the health-based body and back-leg palettes and the rainbow beam's colour
+//! cycle in bank $88.
 pub use crate::table::LengthError;
 use crate::table::Rows;
 
@@ -107,4 +109,30 @@ pub type RainbowBeamPalettes = Rows<RainbowBeamPalette, RAINBOW_BEAM_PALETTE_ROW
 
 pub fn import_rainbow_beam_palettes(bytes: &[u8]) -> Result<RainbowBeamPalettes, LengthError> {
     Rows::import(bytes, |[colors]| RainbowBeamPalette { colors })
+}
+
+/// $AD:E6A2: brain/body palette pointers by health level.
+pub const BODY_PALETTES_ADDRESS: u32 = 0xad_e6a2;
+/// $AD:E742: back leg palette pointers by health level.
+pub const BACK_LEG_PALETTES_ADDRESS: u32 = 0xad_e742;
+pub const HEALTH_LEVELS: usize = 5;
+pub const PALETTES_BYTES: usize = 2 * HEALTH_LEVELS;
+
+/// Bank $AD addresses of fifteen-colour palettes, one per health level.
+pub type HealthPalettes = Rows<u16, HEALTH_LEVELS>;
+
+pub fn import_health_palettes(bytes: &[u8]) -> Result<HealthPalettes, LengthError> {
+    Rows::import(bytes, |[palette]| palette)
+}
+
+/// $88:E833: 75 BGR555 colours, then a run of $FFFF words; the cycle restarts
+/// at the first word with bit 15 set.
+pub const RAINBOW_ADDRESS: u32 = 0x88_e833;
+pub const RAINBOW_WORDS: usize = 83;
+pub const RAINBOW_BYTES: usize = 2 * RAINBOW_WORDS;
+
+pub type RainbowColors = Rows<u16, RAINBOW_WORDS>;
+
+pub fn import_rainbow(bytes: &[u8]) -> Result<RainbowColors, LengthError> {
+    Rows::import(bytes, |[color]| color)
 }
