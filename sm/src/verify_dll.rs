@@ -367,8 +367,17 @@ unsafe fn run(args: &[String]) -> c_int {
             eprintln!("verify: use a separate Python process for each replay");
             return 2;
         }
+        let install_hooks = || {
+            sm::host::install_host_hooks(sm::host::HostHooks {
+                die: host_die,
+                warning: host_warning,
+                apu_lock: host_apu_lock,
+                apu_unlock: host_apu_unlock,
+            });
+        };
         #[cfg(sm_verify_dll)]
         if args.len() == 1 && args[0] == "--unit-tests" {
+            install_hooks();
             return std::panic::catch_unwind(verify::run_unit_tests).unwrap_or(2);
         }
         #[cfg(sm_verify_dll)]
@@ -394,12 +403,7 @@ unsafe fn run(args: &[String]) -> c_int {
             Some(world) => GameOwner::with_world(world),
             None => GameOwner::new(),
         };
-        sm::host::install_host_hooks(sm::host::HostHooks {
-            die: host_die,
-            warning: host_warning,
-            apu_lock: host_apu_lock,
-            apu_unlock: host_apu_unlock,
-        });
+        install_hooks();
         stderr = __acrt_iob_func(2);
         #[cfg(sm_verify_dll)]
         if let Some(id) = room_case {

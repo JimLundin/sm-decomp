@@ -41,9 +41,9 @@ release; recovery targets the current primary.
 - Use direct session handoffs and durable repository/owned-artifact receipts.
   Task issues are retired; only [Jim's conversation #6](https://github.com/JimLundin/sm-decomp/issues/6)
   remains open for remote feedback. The primary reads/answers it at work boundaries.
-  Keep the canonical first #6 report graphical and current after every commit
-  under PLAN. Direct handoffs stay concise: owner/result/next action/blocker;
-  raw source and qualification proof remains in owned records.
+  Keep the sole report in #6's issue body current after every commit under PLAN.
+  Direct handoffs stay concise: owner/result/next action/blocker; raw source and
+  qualification proof remains in owned records.
 
 Full owned Session,
 independent rendering/audio/backend, boot-to-credits fidelity, Map Rando and size

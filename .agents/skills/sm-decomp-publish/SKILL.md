@@ -32,8 +32,8 @@ reservations. Only main is remote; private copies/local branches may isolate wor
 5. Send publication commit/pins, check attribution, actual push time when observed,
    gaps and next owner promptly. Cached ref observation is not push time. Continue
    independent source/build/replay work while CI executes. After every push,
-   update the canonical first #6 report with graphical measured project state and
-   the latest reply under PLAN; label pending checks and retain exact owned proof.
+   update the sole report in #6's issue body under PLAN; label pending checks
+   and retain exact owned proof.
 
 Documentation/planning ACKs and unrelated prose never gate qualified publication.
 Update active PLAN alongside code; Pages, README progress images and treemaps are

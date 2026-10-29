@@ -1681,3 +1681,102 @@ fn sfx_native_pan_origin_failure_keeps_programmed_instrument_prefix() {
         }
     }
 }
+
+// Movies do not call device rendering or inject its full-buffer, history/rebound and cycle-failure entries.
+#[cfg(any(test, sm_verify_dll))]
+#[cfg_attr(test, test)]
+fn owned_player_render_matches_native_schedule_and_failure_prefixes() {
+    use sm::spc_player::*;
+    use std::panic::{AssertUnwindSafe, catch_unwind};
+    for mode in 0..6 {
+        let (offset, timer) = match mode {
+            0 | 3 => (0, 0),
+            1 => (531, 63),
+            _ => (534, 64),
+        };
+        let mut history = [DspRegWriteHistory {
+            count: 0,
+            addr: [0; 256],
+            val: [0; 256],
+        }; 2];
+        let mut games: [_; 4] = std::array::from_fn(|_| Game::new());
+        unsafe {
+            for game in &mut games {
+                game.create_native_player();
+                SpcPlayer_Initialize(game.g_spc_player);
+            }
+            let players = games.each_ref().map(|game| game.g_spc_player);
+            let owned_dsp = players.map(|player| (*player).state.dsp);
+            for (index, game) in games[..2].iter_mut().enumerate() {
+                let s = &mut (*players[index]).state;
+                s.timer_cycles = timer;
+                s.sfx_timer_accum = 224;
+                s.main_tempo_accum = 240;
+                (s.sfx1.cur_sound, s.sfx1.voices_to_setup) = (1, 1);
+                let dsp = &mut *s.dsp;
+                dsp.state.sampleOffset = offset;
+                for pair in dsp.state.sampleBuffer.chunks_exact_mut(2) {
+                    pair.copy_from_slice(&[17, -23]);
+                }
+                if mode == 3 {
+                    dsp.state.channel[0].adsrState = 255;
+                    dsp.state.channel[0].pitch = 1;
+                    dsp.state.reset = false;
+                }
+                if mode == 4 {
+                    s.reg_write_history = &raw mut history[index];
+                }
+                if mode == 5 {
+                    let rebound = &mut *owned_dsp[index + 2];
+                    let ram = rebound.state.apu_ram;
+                    rebound.state = dsp.state;
+                    rebound.state.apu_ram = ram;
+                    s.dsp = rebound;
+                }
+                game.apu_queue.pending = [0xf0, 255, 255, 255];
+                game.apu_queue.push(false);
+            }
+            let mut pcm = [[[i16::MIN; 2]; 534]; 2];
+            let got = catch_unwind(AssertUnwindSafe(|| {
+                sm::rtl::RtlRenderAudio(&mut pcm[0], &mut games[0])
+            }));
+            let writes = games[1].apu_queue.pop().unwrap();
+            sm::apu_queue::ApuQueue::apply_ports(writes, &mut (*players[1]).state.input_ports);
+            let want = catch_unwind(AssertUnwindSafe(|| {
+                SpcPlayer_GenerateSamples(players[1]);
+                (*(*players[1]).state.dsp).state.write_samples(&mut pcm[1]);
+            }));
+            assert_eq!((got.is_err(), want.is_err()), (mode == 3, mode == 3));
+            assert_eq!(pcm[0], pcm[1]);
+            assert_eq!(games[0].apu_queue.to_bytes(), games[1].apu_queue.to_bytes());
+            let mut ram = [[0u8; 65536]; 2];
+            for (index, &p) in players[..2].iter().enumerate() {
+                SpcPlayer_CopyVariablesToRam(p);
+                (*p).ram.copy_to(&mut ram[index]);
+            }
+            assert_eq!(ram[0], ram[1]);
+            let [a, b] = [0, 1].map(|i| &(*(*players[i]).state.dsp).state);
+            assert_eq!(a.ram, b.ram);
+            assert_eq!(a.sampleOffset, b.sampleOffset);
+            assert_eq!(a.evenCycle, b.evenCycle);
+            if mode == 3 {
+                assert_eq!((*players[0]).state.timer_cycles, 64);
+                assert_eq!((a.sampleOffset, a.channel[0].pitchCounter), (0, 1));
+            }
+            if offset == 534 {
+                assert_eq!(pcm[0], [[17, -23]; 534]);
+                assert_eq!((*players[0]).state.timer_cycles, 0);
+            }
+            if mode == 4 {
+                assert!(history[0].count > 0);
+                assert_eq!(history[0].count, history[1].count);
+                assert_eq!(history[0].addr, history[1].addr);
+                assert_eq!(history[0].val, history[1].val);
+            }
+            for (&p, dsp) in players.iter().zip(owned_dsp) {
+                (*p).state.reg_write_history = core::ptr::null_mut();
+                (*p).state.dsp = dsp;
+            }
+        }
+    }
+}

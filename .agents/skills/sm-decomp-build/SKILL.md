@@ -29,6 +29,8 @@ Read [iteration](../../../docs/ITERATION.md) and
    mod/#[path] declarations and public exports; library proof transfers only to
    code compiled by its checked crate/cfg. Existing player_detached supplies its
    affected detached reach. Metadata does not execute declared unit bodies.
+   Keep normal compiled-input transfer separate from host visibility proof;
+   unchanged normal inputs do not qualify a verifier import.
 5. Enforce sm/Cargo.toml warnings='deny' on every sm Cargo target; preserve
    dependency flags. Direct/detached rustc needs explicit -D warnings. Fix actual
    diagnostics; blanket allowances and historical warning-bearing builds do not

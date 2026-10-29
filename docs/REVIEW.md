@@ -19,10 +19,10 @@ bounded source, review and qualification run on Windows.
 
 ### Current publication and acceptance
 
-Voice/SFX source **98db8963** preserves typed slot identity and ordered native programming/failure prefixes; exact source review passes.
-New strict DLL/frontend and actual142 units pass; exact normal-library/native9 transfers retain original execution attribution.
-Exact source98db8963/DLL4abe51f9 replay passes13 groups/27 rows/199,063 comparisons/0, full Morph1200 and BOTH Kago14350; required23 of44. Fresh initialized/start/continuation and FIR selector0-to10 coefficient regression pass; durable rows bind actual captured bytes.
-Imported odd/>=8 aliases, arbitrary callback/rebinding, varying origin and slide/group variants remain scoped. Physical-device fidelity, full Session/backend/device and size acceptance remain open; original failed compiler and prior139 runtime/capture attribution remain preserved.
+Player owner source **fa9238f2** / codec96e70004f4ba6a20 has exact source review, new strict DLL/frontend and actual143 passing; normal14351 transfers only unchanged492 compiled inputs.
+The canonical six-mode state/PCM/queue/failure witness passes. A private conditional panic sentinel produces its sole failure and observes first mode0 safe-default reach; later mutant history/rebound modes remain unexecuted.
+Exact sourcefa9238f2/DLL57c75132 replay passes13 groups/27 rows/199,063 comparisons/0, full Morph1200 and BOTH independent Kago14350; required23 of44. Genuine initialized/start/continuation and FIR selector0-to10 coefficients pass; four durable rows bind fresh captured bytes.
+Imported odd/>=8 aliases, arbitrary callback/rebinding, varying origin and unexecuted slide/group variants remain scoped. Native/history/rebound compatibility, physical-device fidelity, full Session/backend/device and size acceptance remain open. Prior failed attempts and original source/native/input/compiler/runtime/capture attribution remain preserved.
 
 Completed room/renderer/message/Scene/delivery reports are in the
 [frozen history](https://github.com/JimLundin/sm-decomp/blob/170bc5351c64f0846bbcb7b4714064a7230db153/docs/REVIEW.md#current-publication-and-acceptance):
@@ -135,11 +135,10 @@ Preserve live jobs/frozen sources and send minimal actual results before prose.
 Drain qualified code to main at the next safe boundary; documentation ACKs and
 CI observation never gate publication or independent implementation.
 
-The primary keeps the canonical first report in Jim's #6 current after every
-commit: graphical measured project state and the latest reply under PLAN. Mark
-pending checks honestly; keep exact proof in repository/owned records. Preserve
-answered user comments before authorized retirement and retain the report. Task
-issues remain retired; concise direct handoffs keep work supplied during CI.
+The primary keeps the sole report in Jim's #6 issue body current after every
+commit under PLAN. Mark pending checks honestly; keep exact proof in owned records.
+Archive answered feedback and duplicate report comments before authorized retirement
+after verified body publication. Task issues remain retired; direct handoffs continue during CI.
 
 Measure each cycle's actual source/review/build/capture/replay/publication time,
 queue/handoff gaps and net deltas. Preserve original handles and exact attribution;

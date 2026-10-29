@@ -517,6 +517,45 @@ impl Game {
         self._native_player = Some(player);
     }
 
+    /// Call under the existing APU lock with exclusive native/audio users.
+    pub(crate) unsafe fn apply_native_audio_ports(&mut self, writes: [u8; 4]) {
+        unsafe {
+            if let Some(player) = self
+                ._native_player
+                .as_mut()
+                .filter(|player| player.view() == self.g_spc_player)
+            {
+                player.apply_ports(writes);
+            } else {
+                crate::apu_queue::ApuQueue::apply_ports(
+                    writes,
+                    &mut (*self.g_spc_player).state.input_ports,
+                );
+            }
+        }
+    }
+
+    /// The APU lock, stopped replacement/Drop and disjoint non-reentrant native
+    /// views/history remain required; selected external players retain the bridge.
+    pub(crate) unsafe fn render_native_audio(&mut self, samples: &mut [[i16; 2]]) {
+        unsafe {
+            if let Some(player) = self
+                ._native_player
+                .as_mut()
+                .filter(|player| player.view() == self.g_spc_player)
+            {
+                if player.try_render_samples(samples) {
+                    return;
+                }
+            }
+            // The owned borrow ended before selected/history/imported playback.
+            crate::spc_player::SpcPlayer_GenerateSamples(self.g_spc_player);
+            (*(*self.g_spc_player).state.dsp)
+                .state
+                .write_samples(samples);
+        }
+    }
+
     pub(crate) fn save_backend_observation(&self, output: &mut crate::recording::RecordingBytes) {
         self.backend
             .as_ref()

@@ -36,6 +36,8 @@ Keep the assigned source scope disjoint. The primary root is the sole Git writer
    owners; preserve one state owner and every existing crate/cfg reach.
    Before sharing a helper, inventory its normal, verifier and detached module
    reaches; reuse the existing player_detached entry for affected compilation.
+   Before freezing host/verifier callers, resolve each import through actual mod
+   declarations and public exports; use existing public bridges for private modules.
    Resolve module paths and privacy from mod/#[path]: game/persistent_session.rs
    belongs to crate::game_state::persistent_session. Reuse Game::compatibility_write_epoch
    for same-crate epoch observations, preserving RAM privacy.

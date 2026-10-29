@@ -47,11 +47,11 @@ Measure with tools/progress.sh and retain exact production/legacy/unsafe/verific
 support deltas, B replacement ratio/reason, source/native/codec/input pins and actual
 check results in the owned qualification/publication record. Commit messages need
 no Score, hash inventory or warning ledger. Necessary growth remains accountable.
-After every commit/push, update the canonical first report comment in Jim's #6
-with graphical project state and the latest reply: measured progress, work/owner
-status and actual CI/qualification status. Use charts/diagrams with labels, not
-report prose; distinguish pending from passing and keep raw proof in owned records.
-Preserve answered comments before their user-authorized removal; keep the report.
+After every commit/push, update the sole report in Jim's #6 issue body with
+measured progress, owner/work status and actual CI/qualification results.
+Use compact tables/progress bars and at most one tiny dependency diagram.
+Keep exact proof in owned records. Archive answered feedback and duplicate
+report comments before authorized retirement after verified body publication.
 
 Keep replay docs essential, upstream references and CSV/TOML provenance/checks;
 shared Python installers/runtime-only restores are support work, counted separately.
@@ -59,14 +59,15 @@ shared Python installers/runtime-only restores are support work, counted separat
 ## Current work and limits
 
 Primary root owns integration, Git and one resource ledger; Linux stays stopped.
-Voice/SFX source 98db8963 / codec 8e4db160890ae3f1 preserves captured slot identities, lazy native reads and ordered programming/failure prefixes.
-New strict DLL/frontend and actual142 units pass with warnings denied; normal-library/native9 proof transfers retain original compiler/source attribution.
-Exact source98db8963/DLL4abe51f9 replay passes13 groups/27 rows/199,063 comparisons/0, full Morph1200 and BOTH independent Kago14350; required23/44.
-Genuine final-codec initialized/start/continuation and input110076 FIR selector0-to10 coefficients pass; durable rows bind actual fresh checkpoint bytes.
-Measured production139157, verification59594, unsafe-containing2695, legacy17822; all source/native/support costs and exact proof stay in owned receipts.
-Imported odd/>=8 aliases, arbitrary callback/rebinding, varying origin and unexecuted slide/group variants remain scoped; native/physical devices, full Session/backend and size acceptance remain open.
-The primary updates the graphical canonical report after every push.
-The [qualified bank139 record](https://github.com/JimLundin/sm-decomp/blob/d7c1bc4f2df0f361df2d93c2993e602c378870b3/docs/PLAN.md#current-work-and-limits) preserves prior source/DLL/native/input/checkpoint attribution.
+Player owner source fa9238f2 / codec 96e70004f4ba6a20 supplies the safe canonical no-history update interval; native/history/rebound compatibility remains explicit.
+Exact source review, strict DLL/frontend and actual143 units pass; unchanged492 normal compiled inputs retain original14351 execution.
+A private conditional panic sentinel makes only the new owned-player witness fail, observing its first mode0 safe-default branch; later mutant history/rebound modes remain unexecuted. The canonical six-mode witness passes.
+Exact sourcefa9238f2/DLL57c75132 replay passes13 groups/27 rows/199,063 comparisons/0, full Morph1200 and BOTH Kago14350; required23/44.
+Genuine final-codec initialized/start/continuation and input110076 FIR selector0-to10 coefficients pass; four durable rows bind actual fresh checkpoint bytes.
+Measured production139428, verification59698, unsafe-containing2701, legacy17822; production+271/verification+104/unsafe-containing+6 includes a policy marker and claims no global savings.
+Imported odd/>=8 aliases, arbitrary callback/rebinding, varying origin and unexecuted slide/group variants remain scoped; native/history/rebound compatibility, physical-device/full Session/backend/size acceptance remain open.
+The primary updates the graphical #6 issue-body report after every push.
+The [qualified142 record](https://github.com/JimLundin/sm-decomp/blob/5db07b86b3157eedefd46f58ba772074a9209a86/docs/PLAN.md#current-work-and-limits) preserves prior build/runtime/checkpoint attribution.
 
 ### Qualified history
 
@@ -241,6 +242,6 @@ through another tool or use tiny compression gains to continue below the reserve
 Done: Fast loop passes; measure tools/progress.sh and retain explained deltas and
 exact qualification evidence. Fetch/reconcile/recheck HEAD/index, commit the coherent
 change with a concise message and immediately push main.
-Update active PLAN beside code and the canonical graphical #6 report after each
+Update active PLAN beside code and the sole #6 issue-body report after each
 push; no README progress image or extra readiness gates. Work continues during CI.
 Pre-transpile .scratch/gates/pointers/scopes are inactive in archive/pre-transpile-2026-10-17.

@@ -128,8 +128,8 @@ pub use crate::recording::StateRecorder;
 use crate::snes::ppu::ppu_copy;
 pub use crate::snes::registers::*;
 use crate::spc_player::{
-    SpcPlayer_CopyVariablesFromRam, SpcPlayer_CopyVariablesToRam, SpcPlayer_GenerateSamples,
-    SpcPlayer_Initialize, SpcPlayer_Upload,
+    SpcPlayer_CopyVariablesFromRam, SpcPlayer_CopyVariablesToRam, SpcPlayer_Initialize,
+    SpcPlayer_Upload,
 };
 pub use crate::types::Dsp;
 pub use crate::types::{Cpu, FILE, LongPtr, PairU16, Snes, VoidP, size_t};
@@ -1331,12 +1331,14 @@ unsafe fn RtlPopApuState_Locked(game: &mut Game) {
             return;
         }
         if let Some(writes) = game.apu_queue.pop() {
-            let ports: &mut [u8] = if game.g_use_my_apu_code {
-                &mut (*game.g_spc_player).state.input_ports
+            if game.g_use_my_apu_code {
+                game.apply_native_audio_ports(writes);
             } else {
-                &mut (*(*game.g_snes).apu).registers.inPorts
-            };
-            crate::apu_queue::ApuQueue::apply_ports(writes, ports);
+                crate::apu_queue::ApuQueue::apply_ports(
+                    writes,
+                    &mut (*(*game.g_snes).apu).registers.inPorts,
+                );
+            }
         }
     }
 }
@@ -1419,10 +1421,7 @@ pub unsafe fn RtlRenderAudio(audio_buffer: &mut [[i16; 2]], game: &mut Game) -> 
                 produced = true;
             }
         } else {
-            SpcPlayer_GenerateSamples(game.g_spc_player);
-            (*(*game.g_spc_player).state.dsp)
-                .state
-                .write_samples(audio_buffer);
+            game.render_native_audio(audio_buffer);
             produced = true;
         }
         RtlApuUnlock();

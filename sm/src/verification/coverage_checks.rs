@@ -20,7 +20,7 @@ pub(super) fn run() -> i32 {
     macro_rules! cases {
             ($($test:ident),+ $(,)?) => { [$( (stringify!($test), $test as fn()), )+] };
         }
-    let tests: [(&str, fn()); 142] = cases![
+    let tests: [(&str, fn()); 143] = cases![
         prepared_message_pixels_delay_queue_and_checkpoint,
         prepared_message_rejects_changed_content_and_resets,
         independently_authored_raster_pixels_and_prefixes,
@@ -163,6 +163,7 @@ pub(super) fn run() -> i32 {
         sfx_native_note_keeps_captured_slot_and_literal_programming,
         sfx_native_reset_rejection_keeps_history_and_reset_prefix,
         sfx_native_pan_origin_failure_keeps_programmed_instrument_prefix,
+        owned_player_render_matches_native_schedule_and_failure_prefixes,
     ];
     let mut failed = 0usize;
     for (name, test) in &tests {

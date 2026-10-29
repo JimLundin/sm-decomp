@@ -472,10 +472,59 @@ impl NativePlayer {
         }
     }
 
+    // These allocations have one owner; native views never clone their Rc.
+    pub(crate) fn apply_ports(&mut self, writes: [u8; 4]) {
+        let player = Rc::get_mut(&mut self.player)
+            .expect("player owner must not be shared")
+            .get_mut();
+        crate::apu_queue::ApuQueue::apply_ports(writes, &mut player.state.input_ports);
+    }
+
     pub(crate) fn view(&self) -> *mut SpcPlayer {
         self.player.get()
     }
 }
+#[forbid(unsafe_code)]
+impl NativePlayer {
+    /// Return false before effects when selected native links/history/aliases
+    /// require the caller's native interval; default playback borrows this owner.
+    pub(crate) fn try_render_samples(&mut self, samples: &mut [[i16; 2]]) -> bool {
+        let native = {
+            let player = Rc::get_mut(&mut self.player)
+                .expect("player owner must not be shared")
+                .get_mut();
+            let dsp = Rc::get_mut(&mut self._dsp)
+                .expect("DSP owner must not be shared")
+                .get_mut();
+            // Classify only retained native links, assertion entries and aliases;
+            // no RAM/table reads, changes or output borrows happen here.
+            !player.state.reg_write_history.is_null()
+                || !core::ptr::eq(player.state.dsp, dsp)
+                || player.state.ram != player.ram.as_mut_ptr()
+                || player.state.timer_cycles > 64
+                || dsp.state.sampleOffset > 534
+                || player
+                    .state
+                    .sfx_chans_1
+                    .iter()
+                    .chain(&player.state.sfx_chans_2)
+                    .chain(&player.state.sfx_chans_3)
+                    .any(|channel| channel.voice_index >> 1 >= 8)
+        };
+        if native {
+            return false;
+        }
+        let player = Rc::get_mut(&mut self.player)
+            .expect("player owner must not be shared")
+            .get_mut();
+        let dsp = Rc::get_mut(&mut self._dsp)
+            .expect("DSP owner must not be shared")
+            .get_mut();
+        sequencer::PlayerOwner::new(&mut player.state, &player.ram, dsp).render(samples);
+        true
+    }
+}
+
 pub unsafe fn SpcPlayer_Initialize(p: *mut SpcPlayer) {
     unsafe {
         Vector_Reset_Spc(p);
@@ -631,12 +680,196 @@ crate::forward_calls! { pub unsafe fn (p: *mut SpcPlayer);
 // register write immediately; it does not access native pointers or a device.
 #[forbid(unsafe_code)]
 mod sequencer {
-    use super::{Channel, NativePlayerState, SfxChan, SfxRegs};
+    use super::{Channel, Dsp, NativePlayerState, SfxChan, SfxRegs};
     use super::{
         kSfx1Conf, kSfx1InstrListPtrs, kSfx2Conf, kSfx2InstrListPtrs, kSfx3Conf, kSfx3InstrListPtrs,
     };
     use crate::apu_ram::ApuRam;
     use crate::initial_state::InitialState;
+    use std::cell::RefCell;
+
+    /// The sole default playback interval borrows the existing player/RAM/DSP.
+    /// Native history, links and off-table voices are selected before creation.
+    pub(super) struct PlayerOwner<'a> {
+        state: &'a mut NativePlayerState,
+        ram: &'a ApuRam,
+        dsp: RefCell<&'a mut Dsp>,
+    }
+    impl<'a> PlayerOwner<'a> {
+        pub(super) fn new(
+            state: &'a mut NativePlayerState,
+            ram: &'a ApuRam,
+            dsp: &'a mut Dsp,
+        ) -> Self {
+            Self {
+                state,
+                ram,
+                dsp: RefCell::new(dsp),
+            }
+        }
+        fn write(output: &RefCell<&mut Dsp>, register: u8, value: u8) {
+            let mut output = output.borrow_mut();
+            let output = &mut **output;
+            crate::snes::dsp::write_register(
+                &mut output.state,
+                &output.apu_memory,
+                register,
+                value,
+            );
+        }
+        pub(super) fn render(mut self, samples: &mut [[i16; 2]]) {
+            // A full534-frame entry still executes one scheduling body.
+            loop {
+                if self.state.timer_cycles >= 64 {
+                    self.advance(self.state.timer_cycles >> 6);
+                    self.commit_registers();
+                    self.state.timer_cycles &= 63;
+                }
+                let count = (534 - self.dsp.get_mut().state.sampleOffset)
+                    .min(u16::from(64 - self.state.timer_cycles));
+                self.state.timer_cycles += count as u8;
+                for _ in 0..count {
+                    self.dsp.get_mut().cycle();
+                }
+                if self.dsp.get_mut().state.sampleOffset == 534 {
+                    break;
+                }
+            }
+            self.dsp.get_mut().state.write_samples(samples);
+        }
+        fn commit_registers(&mut self) {
+            Self::write(&self.dsp, super::KOF as u8, self.state.key_OFF);
+            Self::write(&self.dsp, super::PMON as u8, 0);
+            Self::write(&self.dsp, super::NON as u8, self.state.reg_NON);
+            Self::write(&self.dsp, super::KOF as u8, 0);
+            Self::write(&self.dsp, super::KON as u8, self.state.key_ON);
+            if self.state.echo_stored_time & 0x80 == 0 {
+                Self::write(&self.dsp, super::FLG as u8, self.state.reg_FLG);
+                if self.state.echo_stored_time == self.state.echo_parameter_EDL {
+                    Self::write(&self.dsp, super::EON as u8, self.state.reg_EON);
+                    Self::write(&self.dsp, super::EFB as u8, self.state.reg_EFB);
+                    Self::write(
+                        &self.dsp,
+                        super::EVOLR as u8,
+                        (self.state.echo_volume_right >> 8) as u8,
+                    );
+                    Self::write(
+                        &self.dsp,
+                        super::EVOLL as u8,
+                        (self.state.echo_volume_left >> 8) as u8,
+                    );
+                }
+            }
+            self.state.key_ON = 0;
+            self.state.key_OFF = self.state.key_ON;
+        }
+        fn advance(&mut self, ticks: u8) {
+            let mut total =
+                u16::from(self.state.sfx_timer_accum) + u16::from(ticks.wrapping_mul(0x20));
+            self.state.sfx_timer_accum = total as u8;
+            if total >= 0x100 {
+                for group in 0..3 {
+                    self.command(group);
+                }
+                if self.state.echo_stored_time != self.state.echo_parameter_EDL {
+                    self.state.echo_stored_time = self.state.echo_stored_time.wrapping_add(1);
+                }
+            }
+            total = u16::from(self.state.main_tempo_accum)
+                + u16::from(ticks.wrapping_mul(self.state.tempo.to_ne_bytes()[1]));
+            self.state.main_tempo_accum = total as u8;
+            if total >= 256 {
+                loop {
+                    let dsp = &self.dsp;
+                    Music::new(self.state, self.ram, |register, value| {
+                        Self::write(dsp, register, value)
+                    })
+                    .tick();
+                    if self.state.fast_forward == 0 {
+                        break;
+                    }
+                }
+            } else if self.state.port_to_snes[0] != 0 {
+                let mut channel = 0;
+                self.state.cur_chan_bit = 1;
+                while self.state.cur_chan_bit != 0 {
+                    if self.state.channel[channel]
+                        .pattern_order_ptr_for_chan
+                        .to_ne_bytes()[1]
+                        != 0
+                    {
+                        let dsp = &self.dsp;
+                        Music::new(self.state, self.ram, |register, value| {
+                            Self::write(dsp, register, value)
+                        })
+                        .pan_and_sweep(channel);
+                    }
+                    self.state.cur_chan_bit = self.state.cur_chan_bit.wrapping_shl(1);
+                    channel += 1;
+                }
+            }
+        }
+        fn command(&mut self, group: usize) {
+            crate::verify_probe::hit(["sfx.command.1", "sfx.command.2", "sfx.command.3"][group]);
+            let count = SfxGroups::fields(self.state, group).1.len();
+            let sound = match SfxGroups::take_command(self.state, group) {
+                SfxGroupAction::Idle => return,
+                SfxGroupAction::Process => {
+                    self.process(group);
+                    return;
+                }
+                SfxGroupAction::Start(sound) => sound,
+            };
+            crate::verify_probe::hit(["sfx.start.1", "sfx.start.2", "sfx.start.3"][group]);
+            if SfxGroups::begin_replace(SfxGroups::fields(self.state, group).0) {
+                for index in 0..count {
+                    let dsp = &self.dsp;
+                    let effect = Sfx::reset_control(
+                        self.state,
+                        self.ram,
+                        group,
+                        index,
+                        &mut |_: &NativePlayerState| {
+                            move |register, value| Self::write(dsp, register, value)
+                        },
+                    );
+                    assert!(
+                        effect.is_none(),
+                        "native SFX alias requires native playback"
+                    );
+                }
+            }
+            if SfxGroups::configure(self.state, group, sound) {
+                self.process(group);
+            }
+        }
+        fn process(&mut self, group: usize) {
+            crate::verify_probe::hit(["sfx.process.1", "sfx.process.2", "sfx.process.3"][group]);
+            let count = SfxGroups::fields(self.state, group).1.len();
+            if SfxGroups::needs_initialize(SfxGroups::fields(self.state, group).0) {
+                crate::verify_probe::hit(["sfx.init.1", "sfx.init.2", "sfx.init.3"][group]);
+                SfxGroups::initialize(self.state, group);
+                SfxGroups::install_pointers(self.state, self.ram, group);
+            }
+            for index in 0..count {
+                let dsp = &self.dsp;
+                let effect = Sfx::step_control(
+                    self.state,
+                    self.ram,
+                    group,
+                    index,
+                    |_| Some(0),
+                    &mut |_: &NativePlayerState| {
+                        move |register, value| Self::write(dsp, register, value)
+                    },
+                );
+                assert!(
+                    effect.is_none(),
+                    "native SFX alias requires native playback"
+                );
+            }
+        }
+    }
 
     /// Group phases finish before any raw reset/step effect can alias state.
     pub enum SfxGroupAction {
