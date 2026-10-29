@@ -7,8 +7,7 @@ pub(crate) mod launch_motion;
 pub(crate) mod player_projectiles;
 pub(crate) use crate::palette as palette_effects;
 pub(crate) use sm_game::projectile_block_reactions;
-#[path = "../../game/projectile_geometry.rs"]
-pub(crate) mod projectile_geometry;
+pub(crate) use sm_game::projectile_geometry;
 pub(crate) use sm_game::projectile_initialization;
 pub(crate) use sm_game::projectile_room;
 pub(crate) use sm_game::projectile_weapon_definitions;
@@ -56,8 +55,7 @@ pub(crate) use sm_game::liquid_surface;
 #[path = "../../game/session_encoding.rs"]
 pub(crate) mod session_encoding;
 
-#[path = "../../game/sprite_effect_state.rs"]
-pub(crate) mod sprite_effect_state;
+pub(crate) use sm_game::sprite_effect_state;
 
 #[path = "../../game/sprite_effect_host.rs"]
 pub(crate) mod sprite_effect_host;

@@ -9,7 +9,6 @@ mod jump;
 mod motion;
 pub(crate) mod operations;
 mod pose;
-pub(in crate::game) mod state;
 
 #[cfg(sm_verify_dll)]
 #[path = "../../verification/player_collision_entry_adapters.rs"]

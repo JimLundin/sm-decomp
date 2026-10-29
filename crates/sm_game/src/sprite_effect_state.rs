@@ -1,6 +1,6 @@
 //! Sprite-effect declarations only. Active effects and compatibility tails are distinct.
 #![forbid(unsafe_code)]
-use sm_game::geometry::{Point, Position};
+use crate::geometry::{Point, Position};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct SpriteEffect {
@@ -32,7 +32,7 @@ pub struct SpriteCompatibilityTails {
 /// Active index 0..31, created by the implementation inside this module.
 /// No generation counter: stale/reused-slot behavior is retained.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct SpriteSlot(pub(crate) u8);
+pub struct SpriteSlot(pub u8);
 /// Compatibility caller's unmodified even/odd byte handle, including FFFF.
 /// Conversion shifts once; broad indices must not be clamped to active slots.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
