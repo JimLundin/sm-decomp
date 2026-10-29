@@ -7,6 +7,8 @@ use crate::game::music::QueueSfx3_Max6;
 use crate::game::session_runtime::native_record;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
+use crate::rtl::rom_table_word;
+use crate::types::PairU16;
 
 /// The high byte of the ypos word in the ExtendedSpriteMap at $A7:902D.
 const SPRITE_MAP: u16 = 0x902d;
@@ -70,5 +72,29 @@ pub(crate) fn spawn_fireball_pattern(k: u16, pattern: u16, game: &mut Game) {
         if current.wrapping_sub(8) >= 0 {
             slot = 0;
         }
+    }
+}
+
+/// The colour entry for the current part's health: one step per 312 HP up to
+/// seven, offset by the step table at $A7:DC4A from `base`; returns (base, word).
+#[allow(non_snake_case)]
+pub(crate) fn Phantoon_SetColorBasedOnHp_FindEntry(base: u16, game: &mut Game) -> PairU16 {
+    let (step, mut bound, mut index) = (312u16, 312u16, 0u16);
+    while (bound as i16).wrapping_sub(slot!(
+        game,
+        Phantoon[i32::from(word!(game.cur_enemy_index))].base.health
+    ) as i16)
+        < 0
+    {
+        bound = bound.wrapping_add(step);
+        index = index.wrapping_add(1);
+        if (i32::from(index) - 7) & 0x8000 == 0 {
+            break;
+        }
+    }
+    let entry = base.wrapping_add(rom_table_word!(game, 0xa7dc4a, index as isize));
+    PairU16 {
+        k: base,
+        j: native_record(0xa7, entry, game).word(0),
     }
 }

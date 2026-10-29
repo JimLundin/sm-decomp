@@ -154,6 +154,14 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/room_entry/prepared_tables.rs"),
     ),
     (
+        "sm/src/game/actors/dachora.rs",
+        include_bytes!("game/actors/dachora.rs"),
+    ),
+    (
+        "sm/src/game/actors/kraid_fingernails.rs",
+        include_bytes!("game/actors/kraid_fingernails.rs"),
+    ),
+    (
         "sm/src/game/actors/kraid_lint.rs",
         include_bytes!("game/actors/kraid_lint.rs"),
     ),

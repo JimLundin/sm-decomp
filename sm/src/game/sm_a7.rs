@@ -1,6 +1,9 @@
 use crate::game::actors;
 use crate::game::actors::access::ActorKey as Key;
 use crate::game::actors::api as actor_api;
+use crate::game::actors::dachora::Dachora_Func_1;
+use crate::game::actors::kraid_fingernails::KraidFingernailInit;
+use crate::game::actors::phantoon_actions::Phantoon_SetColorBasedOnHp_FindEntry;
 use crate::game::decompression::decompress_to_ram;
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_script::EnemyScript;
@@ -794,28 +797,6 @@ pub unsafe fn Kraid_SetWalkingForwards(j: u16, a: u16, game: &mut Game) {
     slot!(game, Enemy_Kraid[E].kraid_next = j);
     slot!(game, Enemy_Kraid[E].kraid_var_A = (0xa7bbaei32) as u16);
     slot!(game, Enemy_Kraid[E].base; instruction_timer = 1, current_instruction = addr_kKraid_Ilist_86F3 as u16);
-}
-pub unsafe fn KraidFingernailInit(k: u16, game: &mut Game) {
-    unsafe {
-        let palette_index: u16 = slot!(game, Enemy_Kraid[0i32].base.palette_index);
-        let E = (k as i32) as i32;
-        slot!(game, Enemy_Kraid[E].base.palette_index = palette_index);
-        slot!(game, Enemy_Kraid[E].kraid_var_B = 40);
-        slot!(
-            game,
-            Enemy_Kraid[E].base.properties =
-                (slot!(game, Enemy_Kraid[E].base.properties)) | ((kEnemyProps_Invisible) as u16)
-        );
-        slot!(game, Enemy_Kraid[E].base; instruction_timer = 0x7fff, current_instruction = addr_kKraid_Ilist_8B0A as u16);
-        slot!(
-            game,
-            Enemy_Kraid[E].base.spritemap_pointer =
-                (*(rom_ptr!(game, SpriteDrawInstr; 0xa78b0a))).field_2
-        );
-        slot!(game, Enemy_Kraid[E].kraid_next = (0xa7bd60i32) as u16);
-        slot!(game, Enemy_Kraid[E].kraid_var_A = (0xa7b92di32) as u16);
-        slot!(game, Enemy_Kraid[E].kraid_var_F = 64);
-    }
 }
 pub unsafe fn KraidsFingernail_Fire(k: u16, game: &mut Game) {
     let v1 = (k as i32) as i32;
@@ -2343,34 +2324,6 @@ pub unsafe fn Phantoon_SetColorBasedOnHp(game: &mut Game) -> u8 {
         }
     }
 }
-pub unsafe fn Phantoon_SetColorBasedOnHp_FindEntry(k: u16, game: &mut Game) -> PairU16 {
-    unsafe {
-        let r24: u16 = k;
-        let r18: u16 = 312;
-        let mut r20: u16 = 312;
-        let mut r22: u16 = 0;
-        while ((r20) as i16).wrapping_sub(
-            (slot!(
-                game,
-                Enemy_Phantoon[word!(game.cur_enemy_index) as i32]
-                    .base
-                    .health
-            )) as i16,
-        ) < 0
-        {
-            r20 = (r20).wrapping_add(r18);
-            r22 = r22.wrapping_add(1);
-            if r22 as i32 - 7i32 & 0x8000 == 0 {
-                break;
-            }
-        }
-        let v1 = RomPtr_A7(
-            (r24).wrapping_add(crate::rtl::rom_table_word!(game, 0xa7dc4a, r22 as isize)),
-            game,
-        ) as *const u16;
-        MakePairU16(r24, *v1)
-    }
-}
 pub unsafe fn Phantoon_Func_9(game: &mut Game) -> u8 {
     unsafe {
         let E = (0x40) as i32;
@@ -2541,81 +2494,60 @@ pub unsafe fn Etecoon_Func_15(j: u16, game: &mut Game) {
     slot!(game, Enemy_Etecoon[E].var_C = g_word_A7E908);
     slot!(game, Enemy_Etecoon[E].var_D = g_word_A7E90A);
 }
-pub unsafe fn Dachora_Func_1(j: u16, k: u16, game: &mut Game) {
-    unsafe {
-        let E = (k as i32) as i32;
-        let v3: u16 = u16::swap_bytes(slot!(game, Enemy_Dachora[E].base.palette_index));
-        {
-            let destination =
-                usize::try_from(
-                    crate::rtl::rom_table_word!(game, 0xa7f55f, (v3 >> 1) as isize) as i32 as isize,
-                )
-                .expect("palette destination outside RAM");
-            let source = RomPtr_A7(j, game);
-            let mut bytes = [0u8; 32];
-            core::ptr::copy_nonoverlapping(source, bytes.as_mut_ptr(), bytes.len());
-            game.ram().copy_in(destination, &bytes);
-        };
-    }
-}
 pub unsafe fn Dachora_Func_6(k: u16, game: &mut Game) -> i32 {
-    unsafe {
-        let E = (k as i32) as i32;
-        if ((slot!(game, Enemy_Dachora[E].var_A)) as i16).wrapping_sub((g_word_A7F4D5) as i16) >= 0
-        {
-            if slot!(game, Enemy_Dachora[E].var_E) == 1 {
-                QueueSfx2_Max6(0x39, game);
-            }
-            let v2: u16 = (slot!(game, Enemy_Dachora[E].var_E)).wrapping_sub(1);
-            slot!(game, Enemy_Dachora[E].var_E = v2);
-            if v2 as u8 == 0 {
-                Dachora_Func_1(
-                    crate::rtl::rom_table_word!(
-                        game,
-                        0xa7f787,
-                        slot!(byte game, Enemy_Dachora[E].var_E[1]) as isize
-                    ),
-                    k,
+    let E = (k as i32) as i32;
+    if ((slot!(game, Enemy_Dachora[E].var_A)) as i16).wrapping_sub((g_word_A7F4D5) as i16) >= 0 {
+        if slot!(game, Enemy_Dachora[E].var_E) == 1 {
+            QueueSfx2_Max6(0x39, game);
+        }
+        let v2: u16 = (slot!(game, Enemy_Dachora[E].var_E)).wrapping_sub(1);
+        slot!(game, Enemy_Dachora[E].var_E = v2);
+        if v2 as u8 == 0 {
+            Dachora_Func_1(
+                crate::rtl::rom_table_word!(
                     game,
-                );
-                let v3: u16 = (slot!(game, Enemy_Dachora[E].var_E)).wrapping_add(272);
-                slot!(game, Enemy_Dachora[E].var_E = v3);
-                if v3 as i32 - 1040i32 & 0x8000 == 0 {
-                    slot!(game, Enemy_Dachora[E].var_E = 784);
-                }
+                    0xa7f787,
+                    slot!(byte game, Enemy_Dachora[E].var_E[1]) as isize
+                ),
+                k,
+                game,
+            );
+            let v3: u16 = (slot!(game, Enemy_Dachora[E].var_E)).wrapping_add(272);
+            slot!(game, Enemy_Dachora[E].var_E = v3);
+            if v3 as i32 - 1040i32 & 0x8000 == 0 {
+                slot!(game, Enemy_Dachora[E].var_E = 784);
             }
         }
-        {
-            let (actor, amount) = (k, (1i16 as i32) << 16);
-            (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount)
-                == actor_api::MovementResult::Blocked) as u8
-        };
-        if ((slot!(game, Enemy_Dachora[E].var_A)) as i16).wrapping_sub((g_word_A7F4D5) as i16) >= 0
-            && ((slot!(game, Enemy_Dachora[E].var_B)) as i16).wrapping_sub((g_word_A7F4D7) as i16)
-                >= 0
-        {
-            slot!(game, Enemy_Dachora[E].var_A = g_word_A7F4D5);
-            slot!(game, Enemy_Dachora[E].var_B = g_word_A7F4D7);
-            return (words!((g_word_A7F4D5, g_word_A7F4D7))) as i32;
-        }
+    }
+    {
+        let (actor, amount) = (k, (1i16 as i32) << 16);
+        (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount)
+            == actor_api::MovementResult::Blocked) as u8
+    };
+    if ((slot!(game, Enemy_Dachora[E].var_A)) as i16).wrapping_sub((g_word_A7F4D5) as i16) >= 0
+        && ((slot!(game, Enemy_Dachora[E].var_B)) as i16).wrapping_sub((g_word_A7F4D7) as i16) >= 0
+    {
+        slot!(game, Enemy_Dachora[E].var_A = g_word_A7F4D5);
+        slot!(game, Enemy_Dachora[E].var_B = g_word_A7F4D7);
+        return (words!((g_word_A7F4D5, g_word_A7F4D7))) as i32;
+    }
+    slot!(
+        game,
+        Enemy_Dachora[E](var_A, var_B) += words!((g_word_A7F4D9, g_word_A7F4DB))
+    );
+    if (slot!(game, Enemy_Dachora[E].var_A) == 4 || slot!(game, Enemy_Dachora[E].var_A) == 8)
+        && slot!(game, Enemy_Dachora[E].var_B) == 0
+    {
         slot!(
             game,
-            Enemy_Dachora[E](var_A, var_B) += words!((g_word_A7F4D9, g_word_A7F4DB))
+            Enemy_Dachora[E].base.current_instruction =
+                (slot!(game, Enemy_Dachora[E].base.current_instruction)).wrapping_add(28)
         );
-        if (slot!(game, Enemy_Dachora[E].var_A) == 4 || slot!(game, Enemy_Dachora[E].var_A) == 8)
-            && slot!(game, Enemy_Dachora[E].var_B) == 0
-        {
-            slot!(
-                game,
-                Enemy_Dachora[E].base.current_instruction =
-                    (slot!(game, Enemy_Dachora[E].base.current_instruction)).wrapping_add(28)
-            );
-        }
-        (words!((
-            slot!(game, Enemy_Dachora[E].var_A),
-            slot!(game, Enemy_Dachora[E].var_B)
-        ))) as i32
     }
+    (words!((
+        slot!(game, Enemy_Dachora[E].var_A),
+        slot!(game, Enemy_Dachora[E].var_B)
+    ))) as i32
 }
 pub unsafe fn Dachora_Func_9(k: u16, game: &mut Game) {
     let EK = (k as i32) as i32;
@@ -2683,22 +2615,20 @@ pub unsafe fn Dachora_Func_9(k: u16, game: &mut Game) {
     };
 }
 pub unsafe fn Dachora_Func_10(k: u16, game: &mut Game) {
-    unsafe {
-        let E = (k as i32) as i32;
-        Dachora_Func_1(
-            crate::rtl::rom_table_word!(
-                game,
-                0xa7f92d,
-                slot!(byte game, Enemy_Dachora[E].var_E[1]) as isize
-            ),
-            k,
+    let E = (k as i32) as i32;
+    Dachora_Func_1(
+        crate::rtl::rom_table_word!(
             game,
-        );
-        let v2: u16 = (slot!(game, Enemy_Dachora[E].var_E)).wrapping_add(256);
-        slot!(game, Enemy_Dachora[E].var_E = v2);
-        if v2 as i32 - 1024i32 & 0x8000 == 0 {
-            slot!(game, Enemy_Dachora[E].var_E = 0);
-        }
+            0xa7f92d,
+            slot!(byte game, Enemy_Dachora[E].var_E[1]) as isize
+        ),
+        k,
+        game,
+    );
+    let v2: u16 = (slot!(game, Enemy_Dachora[E].var_E)).wrapping_add(256);
+    slot!(game, Enemy_Dachora[E].var_E = v2);
+    if v2 as i32 - 1024i32 & 0x8000 == 0 {
+        slot!(game, Enemy_Dachora[E].var_E = 0);
     }
 }
 
