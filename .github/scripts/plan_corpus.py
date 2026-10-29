@@ -18,9 +18,9 @@ def seed_bundle(row):
     if row['id'] == 'xray-activate-release':
         return ('seeds-v1-xray-activation-9c5ad92da3d5d2dc.tar.gz.enc', '9c5ad92da3d5d2dc13cfae2e2a0906ca915b2329767f121183190d2ab96c25bc')
     if row['id'] in ('pickup-reserve', 'save-death-reload', 'save-memory', 'music-fir-selector10'):
-        return ('checkpoints-147-93986acd14dc9d66.tar.gz.enc', '93986acd14dc9d66201db2699589e8d01eb31191d72efbe6bbf556e862871574')
+        return ('layout150-checkpoints-147-93986acd14dc9d66.tar.gz.enc', '8c8f84e903917a06d996624358a1783e80920e9fa2084c438eaa950843d68517')
     if 'checkpoint' in row:
-        return ('f158-full22.tar.gz.enc', '0aef0db34feb04b386db4926baf3268958981338293356a3915c292998dc1027')
+        return ('layout150-f158-full22.tar.gz.enc', '723ccef6ac6df45f31d5179ba5d9569184de0fb5c678266365d3eaf62d3c10b9')
     # Match exact seed identities, not capture prefixes: pickups and the
     # general bundle contain different subsets of 100-input-phase.
     seed = row.get('seed')
