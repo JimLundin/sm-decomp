@@ -139,7 +139,17 @@ def main():
     for name, (pattern, unit) in COUPLINGS.items():
         hits = Counter({r: len(pattern.findall(files[r])) for r in game})
         coupling[name] = sum(1 for n in hits.values() if n) if unit == "files" else sum(hits.values())
+    package_lines = {}
+    for crate in sorted(os.listdir("crates")) if os.path.isdir("crates") else []:
+        total = 0
+        for root, _, names in os.walk(os.path.join("crates", crate, "src")):
+            for name in names:
+                if name.endswith(".rs"):
+                    with open(os.path.join(root, name), encoding="utf-8", errors="replace") as f:
+                        total += len(f.read().splitlines())
+        package_lines[crate] = total
     report = {
+        "target_package_lines": package_lines,
         "game_files": len(game),
         "game_lines": sum(lines[r] for r in game),
         "outside_cycle_files": len(free),
@@ -152,6 +162,8 @@ def main():
     if "--json" in sys.argv:
         print(json.dumps(report, indent=1))
         return
+    for crate, total in package_lines.items():
+        print(f"{crate}: {total} lines")
     print(f"game/: {report['game_files']} files, {report['game_lines']} lines")
     print(f"outside backend cycle: {report['outside_cycle_files']} files, {report['outside_cycle_lines']} lines")
     print(f"legacy bank lines: {report['legacy_bank_lines']}")

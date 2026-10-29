@@ -20,8 +20,8 @@ use crate::{
         session_runtime::Runtime,
         visual_host::{self, AnimationMember, PaletteMember, Source, StatueProjectile},
         visual_state::{
-            CeresExplosion, CinematicFade, CinematicObjects, CinematicTilemap, EndingGraphics,
-            EyeBeamPhase, HazePhase, HdmaWave, PaletteBuffer, TourianStatuePhase, Upload, Weather,
+            CeresExplosion, CinematicFade, CinematicTilemap, EndingGraphics, EyeBeamPhase,
+            HazePhase, HdmaWave, PaletteBuffer, TourianStatuePhase, Upload, Weather,
         },
     },
     game_state::Game,
@@ -1585,6 +1585,15 @@ pub(crate) fn draw_player_frame_owned(h: &mut Runtime<'_>) {
     h.owned_call(crate::game::session_runtime::finish_player_frame);
 }
 
+/// Cinematic object tables addressed through the RAM-compatible layouts below;
+/// stays with them until those layouts have a typed owner.
+#[derive(Clone, Copy)]
+pub enum CinematicObjects {
+    Sprites,
+    Mode7,
+    Background,
+}
+
 struct CinematicObjectLayout {
     slots: u16,
     current: usize,
@@ -1638,7 +1647,8 @@ impl CinematicObjects {
     }
 
     pub(crate) unsafe fn advance(self, game: &mut Game) {
-        use crate::game::visual_state::{CinematicObjects::Background, CinematicTilemap};
+        use crate::game::visual_state::CinematicTilemap;
+        use CinematicObjects::Background;
         if matches!(self, Background) && word!(game.cinematic_enable_objs) & 0x8000 == 0 {
             return;
         }
