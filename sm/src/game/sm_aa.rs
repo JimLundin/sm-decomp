@@ -11,6 +11,7 @@ use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
+use crate::game::torizo_tables;
 use crate::ram_map::slot;
 
 use crate::game::gameplay_flag_runtime::{CheckBossBitForCurArea, SetBossBitForCurArea};
@@ -685,7 +686,7 @@ crate::game::callback_dispatch! {
             slot!(game, Enemy_Torizo[E].base.timer = 0);
             slot!(game, Enemy_Torizo[E].base.palette_index = 0);
             slot!(game, Enemy_Torizo[E].var_F = addr_locret_AAC95E as u16);
-            slot!(game, Enemy_Torizo[E].base.current_instruction = crate::rtl::rom_table_word!(game, 0xaac967, v2 as isize));
+            slot!(game, Enemy_Torizo[E].base.current_instruction = torizo_tables::torizo(game, v2 as isize).instruction_list);
             slot!(game, Enemy_Torizo[E].base.spritemap_pointer = addr_kTorizo_ExtSprmap_87D0 as u16);
             slot!(game, Enemy_Torizo[E].base.x_pos = g_word_AAC95F[v2 as usize] as u16);
             slot!(game, Enemy_Torizo[E].base.y_pos = g_word_AAC963[v2 as usize] as u16);
