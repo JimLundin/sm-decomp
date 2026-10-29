@@ -4,7 +4,7 @@
 use super::access::{AccessMode::Native, ActorAccess};
 use crate::game::enemy_projectiles::host::{BotwoonField as B, Host as EprojHost};
 
-pub(in crate::game) use sm_game::actors::botwoon_death::{DeathProtocol, Signal};
+pub(in crate::game) use sm_game::actors::botwoon_death::Signal;
 
 /// Native actor accesses retain their full selector and ordered byte stores.
 /// Projectile capabilities retain their separate little-endian publication.
