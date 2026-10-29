@@ -1,10 +1,8 @@
 //! Single actor/common projection and changed-field codec.
 #![forbid(unsafe_code)]
-use super::{
-    access::{AccessMode, ActorKey},
-    state::{Actor, SpawnRecord},
-};
+use super::access::{AccessMode, ActorKey};
 use crate::game::session::Session;
+use sm_game::actors::state::{Actor, SpawnRecord};
 
 // Both borrow modes use exactly the same lane map. Byte-only bank/hurt-time
 // lanes are intentionally absent; no Rust struct layout is serialized.

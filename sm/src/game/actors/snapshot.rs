@@ -1,6 +1,5 @@
 //! Paired timeline/presentation snapshots; live handle epochs never rewind.
 #![forbid(unsafe_code)]
-use super::state::*;
 use super::{
     content::GameplayRevision,
     identity::{ActorIdentityError, ActorIdentityState, ActorTimeline},
@@ -9,6 +8,7 @@ use super::{
 use crate::game::room_entry::world::WorldBinding;
 use crate::game::scene::component::DisplayStartMetadata;
 use crate::game::session::{Point, Position};
+use sm_game::actors::state::*;
 use std::sync::Arc;
 
 // The declaration is both the writer and its layout. Layout expansion never
@@ -410,8 +410,17 @@ numeric_checkpoint!(
     compatibility,
     diagnostics
 );
-impl Actors {
-    pub(in crate::game) fn encode_numeric_checkpoint(
+/// The actor table's numeric checkpoint, bound to its display start metadata.
+pub(in crate::game) trait ActorsCheckpoint: Sized {
+    fn encode_numeric_checkpoint(&self, metadata: &DisplayStartMetadata)
+    -> Result<Vec<u8>, String>;
+    fn decode_numeric_checkpoint(
+        bytes: &[u8],
+        metadata: &DisplayStartMetadata,
+    ) -> Result<Self, String>;
+}
+impl ActorsCheckpoint for Actors {
+    fn encode_numeric_checkpoint(
         &self,
         metadata: &DisplayStartMetadata,
     ) -> Result<Vec<u8>, String> {
@@ -425,7 +434,7 @@ impl Actors {
         self.write(&mut bytes);
         Ok(bytes)
     }
-    pub(in crate::game) fn decode_numeric_checkpoint(
+    fn decode_numeric_checkpoint(
         bytes: &[u8],
         metadata: &DisplayStartMetadata,
     ) -> Result<Self, String> {

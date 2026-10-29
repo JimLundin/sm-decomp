@@ -1,6 +1,7 @@
 //! Per-room palette residency and dynamic selection contracts on actual owner APIs.
-use super::{content::*, identity::*, media::*, snapshot::ActorSnapshotPayload, state::Actors};
+use super::{content::*, identity::*, media::*, snapshot::ActorSnapshotPayload};
 use crate::{game::room_entry::world::ResourceId, rom::RomImage};
+use sm_game::actors::state::Actors;
 
 fn born(identity: &mut ActorIdentityState, actors: &mut Actors) -> InstanceHandle {
     let pending = identity

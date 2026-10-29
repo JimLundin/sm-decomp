@@ -9,6 +9,8 @@ pub(in crate::game) mod botwoon_death;
 pub(in crate::game) mod codec;
 #[path = "../../game/actors/content.rs"]
 pub(in crate::game) mod content;
+#[path = "actors_host.rs"]
+mod host;
 #[path = "../../game/actors/identity.rs"]
 pub(in crate::game) mod identity;
 #[path = "../../game/actors/media.rs"]
@@ -17,10 +19,6 @@ pub(in crate::game) mod media;
 pub(in crate::game) mod scene;
 #[path = "../../game/actors/snapshot.rs"]
 pub(in crate::game) mod snapshot;
-#[path = "../../game/actors/state.rs"]
-pub(in crate::game) mod state;
-#[path = "actors_host.rs"]
-mod host;
 
 #[cfg(test)]
 #[path = "../actor_catalog_checks.rs"]

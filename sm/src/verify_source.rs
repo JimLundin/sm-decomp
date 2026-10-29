@@ -809,8 +809,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/actors/snapshot.rs"),
     ),
     (
-        "sm/src/game/actors/state.rs",
-        include_bytes!("game/actors/state.rs"),
+        "crates/sm_game/src/actors/state.rs",
+        include_bytes!("../../crates/sm_game/src/actors/state.rs"),
     ),
     (
         "sm/src/game/actors/population.rs",

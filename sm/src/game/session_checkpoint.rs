@@ -1,5 +1,6 @@
 //! Detached Session checkpoint components; registered by the production Session.
 #![forbid(unsafe_code)]
+use crate::game::actors::snapshot::ActorsCheckpoint;
 use crate::game::actors::snapshot::CheckpointReader;
 use crate::game::checkpoint_binding::{audio_reference_bytes, observation_binding};
 use crate::game::scene::{
@@ -2012,7 +2013,7 @@ impl Room {
 /// Actor identity/media, Control, observations and Display remain separate owners
 /// that the complete Session codec must reconstruct before validated installation.
 pub(crate) struct NumericGameplayCheckpoint {
-    actors: crate::game::actors::state::Actors,
+    actors: sm_game::actors::state::Actors,
     player: Player,
     projectiles: Projectiles,
     enemy_projectiles: crate::game::session::EnemyProjectiles,
@@ -2056,7 +2057,7 @@ impl Session {
         if read.bytes(11)? != b"SMGAMEPLAY\x01" {
             return Err("unsupported gameplay checkpoint schema".into());
         }
-        let actors = crate::game::actors::state::Actors::decode_numeric_checkpoint(
+        let actors = sm_game::actors::state::Actors::decode_numeric_checkpoint(
             gameplay_component(&mut read)?,
             metadata,
         )?;
