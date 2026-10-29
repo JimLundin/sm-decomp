@@ -3,67 +3,27 @@ use super::*;
 
 pub const HEIGHT: usize = 224;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct IndexedImage {
-    words: Vec<u16>,
-    palette: [u16; 256],
-}
-
-impl IndexedImage {
-    /// The supplied tail is explicit content, including any required aliases.
-    /// Missing reads fail at the query; validation never fabricates zero words.
-    pub fn new(words: Vec<u16>, palette: [u16; 256]) -> Result<Self, RasterFault> {
-        if words.len() > MAX_INDEXED_WORDS {
-            return Err(RasterFault::MediaLimit);
-        }
-        Ok(Self { words, palette })
-    }
-}
+pub use sm_data::raster::{IndexedImage, PreparedMosaic, PreparedSprites};
 
 impl IndexedSource for IndexedImage {
     fn word(&self, index: usize) -> Result<u16, RasterFault> {
-        self.words
-            .get(index)
-            .copied()
-            .ok_or(RasterFault::Word(index))
+        IndexedImage::word(self, index)
     }
     fn palette(&self, index: u8) -> Result<u16, RasterFault> {
-        Ok(self.palette[usize::from(index)])
+        IndexedImage::palette(self, index)
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct PreparedSprites {
-    pub words: [u16; 256],
-    pub extension: [u8; 32],
-    pub tile_words: [u16; 2],
-    pub size: u8,
-    pub rotation: Option<u8>,
-    pub interlace: bool,
-    pub even_frame: bool,
-}
-
-impl PreparedSprites {
-    fn borrowed(&self) -> SpriteInput<'_> {
-        SpriteInput {
-            words: &self.words,
-            extension: &self.extension,
-            tile_words: self.tile_words,
-            size: self.size,
-            rotation: self.rotation,
-            interlace: self.interlace,
-            even_frame: self.even_frame,
-        }
+fn sprite_input(sprites: &PreparedSprites) -> SpriteInput<'_> {
+    SpriteInput {
+        words: &sprites.words,
+        extension: &sprites.extension,
+        tile_words: sprites.tile_words,
+        size: sprites.size,
+        rotation: sprites.rotation,
+        interlace: sprites.interlace,
+        even_frame: sprites.even_frame,
     }
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct PreparedMosaic {
-    pub native_enabled: u8,
-    pub background0_enabled: bool,
-    pub size: u8,
-    pub start_line: u8,
-    pub modulo: [u8; 256],
 }
 
 /// One settled line's immutable input; an upstream Scene supplies each line's
@@ -101,7 +61,7 @@ impl PreparedInput<'_> {
         if !self.forced_blank {
             let (has_tiles, overflow) = evaluate_sprites(
                 self.media,
-                &self.sprites.borrowed(),
+                &sprite_input(self.sprites),
                 i32::from(line) - 1,
                 &mut sprites.pixels,
                 sprites.overflow,

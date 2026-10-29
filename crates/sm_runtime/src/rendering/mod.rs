@@ -298,7 +298,7 @@ fn affine_x(config: &LineConfig<'_>, x: i32, sub: bool) -> Result<i32, RasterFau
 
 /// C can use this pure gate before acquiring a signed-x native sprite alias.
 pub fn sprite_enabled(config: &LineConfig<'_>, x: i32, sub: bool) -> bool {
-    config.has_sprites && config.routing.enabled(&config.windows, 4, x, sub)
+    config.has_sprites && routing_enabled(&config.routing, &config.windows, 4, x, sub)
 }
 
 pub fn native_pixel(
@@ -319,7 +319,7 @@ pub fn native_pixel(
     if config.mode == 1 {
         packed = sprite;
         for layer in 0..3 {
-            if config.routing.enabled(&config.windows, layer, x, sub) {
+            if routing_enabled(&config.routing, &config.windows, layer, x, sub) {
                 let bg = config.backgrounds[layer];
                 let pixel = background_pixel(
                     source,
@@ -335,7 +335,7 @@ pub fn native_pixel(
             }
         }
     } else {
-        if config.routing.enabled(&config.windows, 0, x, sub) {
+        if routing_enabled(&config.routing, &config.windows, 0, x, sub) {
             let mx = affine_x(config, x, sub)?;
             let rx = if config.affine.horizontal_flip {
                 255 - mx
@@ -469,7 +469,7 @@ pub fn render_pixel(
         return Ok([0; 4]);
     }
     let main = native_pixel(source, config, sprites, x, y, false, starts)?;
-    let window = config.windows.contains(5, x, Quantization::Native);
+    let window = window_contains(&config.windows, 5, x, Quantization::Native);
     let second = if needs_subscreen(&config.color, main, window, false)? {
         native_pixel(source, config, sprites, x, y, true, starts)?
     } else {

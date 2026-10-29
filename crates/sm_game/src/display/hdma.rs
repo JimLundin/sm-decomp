@@ -14,13 +14,13 @@ const DESTINATION_OFFSETS: [[u8; 4]; 8] = [
 const TRANSFER_LENGTHS: [usize; 8] = [1, 2, 2, 4, 4, 4, 2, 4];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum HdmaSource {
+pub enum HdmaSource {
     Table,
     Indirect,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum ChannelFlag {
+pub enum ChannelFlag {
     Active,
     Terminated,
     DoTransfer,
@@ -30,7 +30,7 @@ pub(crate) enum ChannelFlag {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum ChannelByte {
+pub enum ChannelByte {
     Mode,
     RepeatCount,
     SourceBank,
@@ -40,7 +40,7 @@ pub(crate) enum ChannelByte {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum ChannelWord {
+pub enum ChannelWord {
     SourceAddress,
     TableCursor,
     IndirectCursor,
@@ -56,7 +56,7 @@ pub(crate) enum ChannelWord {
 /// bank/address and provenance. Missing bindings must fail, never supply zeros.
 /// Earlier publications and bus effects survive errors or unwinding. Native
 /// compatibility implementations retain their actual unsafe entry requirements.
-pub(crate) trait HdmaHost {
+pub trait HdmaHost {
     type Error;
 
     fn flag(&self, channel: usize, field: ChannelFlag) -> bool;
@@ -92,7 +92,7 @@ pub(crate) trait HdmaHost {
 
 /// Run once at the original row-start initialization point. Inactive channels
 /// remain present; no gameplay object records are needed by this execution core.
-pub(crate) fn initialize<H: HdmaHost>(host: &mut H) -> Result<(), H::Error> {
+pub fn initialize<H: HdmaHost>(host: &mut H) -> Result<(), H::Error> {
     host.set_timer(0);
     let mut happened = false;
     for channel in 0..8 {
@@ -131,7 +131,7 @@ pub(crate) fn initialize<H: HdmaHost>(host: &mut H) -> Result<(), H::Error> {
 
 /// Run at the original HDMA beam point. Failure retains every prior cursor,
 /// timer, flag and committed byte effect; there is no whole-pass rollback.
-pub(crate) fn step<H: HdmaHost>(host: &mut H) -> Result<(), H::Error> {
+pub fn step<H: HdmaHost>(host: &mut H) -> Result<(), H::Error> {
     host.set_timer(0);
     let mut happened = false;
     for channel in 0..8 {

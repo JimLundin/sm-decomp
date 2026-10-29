@@ -362,8 +362,8 @@ def mutant_crates(source, work, name, edits):
 
 
 def build_packages(crates, work, name):
-    externs = []
-    for crate in ("sm_data", "sm_game"):
+    externs = ["-L", f"dependency={work / name}"]
+    for crate in ("sm_data", "sm_game", "sm_runtime"):
         library = work / name / f"lib{crate}.rlib"
         built = run(["rustc", "--edition=2024", "-O", "--crate-name", crate, "--crate-type", "rlib",
                      str(crates / crate / "src" / "lib.rs"), "-o", str(library)], 180,
@@ -463,7 +463,9 @@ def main():
         raise RuntimeError("install this runner alongside the repo detached harness")
     with tempfile.TemporaryDirectory(prefix="player-detached-mutations-") as directory:
         work = Path(directory)
-        for crate in ("sm_data", "sm_game"):
+        # This same runner compiles every detached baseline and selected mutant.
+        SM_GAME.extend(["-L", f"dependency={work}"])
+        for crate in ("sm_data", "sm_game", "sm_runtime"):
             library = work / f"lib{crate}.rlib"
             built = run(["rustc", "--edition=2024", "-O", "--crate-name", crate,
                          "--crate-type", "rlib", str(source.parent.parent / "crates" / crate / "src" / "lib.rs"),

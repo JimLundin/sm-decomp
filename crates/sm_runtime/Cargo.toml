@@ -1,0 +1,13 @@
+[package]
+name = "sm_runtime"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "Prepared media and shared rendering for the Super Metroid engine"
+
+[dependencies]
+sm_data = { path = "../sm_data" }
+
+[lints.rust]
+warnings = { level = "deny", priority = -1 }

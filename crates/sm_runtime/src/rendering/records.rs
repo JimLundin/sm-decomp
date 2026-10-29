@@ -1,23 +1,11 @@
 //! Bounded immutable inputs and caller-owned results for the shared raster core.
 pub const WIDTH: usize = 256;
 pub const BACKDROP: u16 = 0x0500;
-pub const MAX_INDEXED_WORDS: usize = 32768 + 31;
+pub use sm_data::raster::{
+    Affine, Background, ColorMath, MAX_INDEXED_WORDS, Overflow, RasterFault, Routing, Window,
+    Windows,
+};
 pub type Bgra = [u8; 4];
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum RasterFault {
-    Word(usize),
-    SpritePixel(i32),
-    SpriteSize(u8),
-    BrightnessIndex(usize),
-    MosaicIndex(i32),
-    MosaicSize,
-    Line(u16),
-    Mode(u8),
-    MediaLimit,
-    Layer(i32),
-    EnabledMosaic(usize),
-}
 
 /// Indexes are word positions, not byte offsets. A caller supplies native aliases
 /// explicitly: wrapping the base does not wrap a later column or plane read.
@@ -32,95 +20,54 @@ pub trait SpritePixels {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Background {
-    pub horizontal_scroll: u16,
-    pub vertical_scroll: u16,
-    pub map_words: u16,
-    pub tile_words: u16,
-    pub wider: bool,
-    pub higher: bool,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Window {
-    pub first_enabled: bool,
-    pub first_inverted: bool,
-    pub second_enabled: bool,
-    pub second_inverted: bool,
-    pub logic: u8,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Windows {
-    pub first: [u8; 2],
-    pub second: [u8; 2],
-    pub native_flags: u32,
-    pub layers: [Window; 6],
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Quantization {
     Native,
     Reference,
 }
 
-impl Windows {
-    pub fn contains(&self, layer: usize, x: i32, policy: Quantization) -> bool {
-        let window = self.layers[layer];
-        let flags = match policy {
-            Quantization::Native => self.native_flags >> (layer * 4),
-            Quantization::Reference => {
-                u32::from(window.first_inverted)
-                    | u32::from(window.first_enabled) << 1
-                    | u32::from(window.second_inverted) << 2
-                    | u32::from(window.second_enabled) << 3
-            }
-        };
-        let first =
-            (x >= i32::from(self.first[0]) && x <= i32::from(self.first[1])) ^ (flags & 1 != 0);
-        let second =
-            (x >= i32::from(self.second[0]) && x <= i32::from(self.second[1])) ^ (flags & 4 != 0);
-        match flags & 10 {
-            2 => first,
-            8 => second,
-            10 => match policy {
-                Quantization::Native => first || second,
-                Quantization::Reference => match window.logic {
-                    0 => first || second,
-                    1 => first && second,
-                    2 => first != second,
-                    3 => first == second,
-                    _ => false,
-                },
-            },
-            _ => false,
+pub fn window_contains(windows: &Windows, layer: usize, x: i32, policy: Quantization) -> bool {
+    let window = windows.layers[layer];
+    let flags = match policy {
+        Quantization::Native => windows.native_flags >> (layer * 4),
+        Quantization::Reference => {
+            u32::from(window.first_inverted)
+                | u32::from(window.first_enabled) << 1
+                | u32::from(window.second_inverted) << 2
+                | u32::from(window.second_enabled) << 3
         }
+    };
+    let first =
+        (x >= i32::from(windows.first[0]) && x <= i32::from(windows.first[1])) ^ (flags & 1 != 0);
+    let second =
+        (x >= i32::from(windows.second[0]) && x <= i32::from(windows.second[1])) ^ (flags & 4 != 0);
+    match flags & 10 {
+        2 => first,
+        8 => second,
+        10 => match policy {
+            Quantization::Native => first || second,
+            Quantization::Reference => match window.logic {
+                0 => first || second,
+                1 => first && second,
+                2 => first != second,
+                3 => first == second,
+                _ => false,
+            },
+        },
+        _ => false,
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Routing {
-    pub enabled: [u8; 2],
-    pub windowed: [u8; 2],
-}
-
-impl Routing {
-    pub(super) fn enabled(&self, windows: &Windows, layer: usize, x: i32, sub: bool) -> bool {
-        self.enabled[usize::from(sub)] & (1 << layer) != 0
-            && (layer != 2 || (0..256).contains(&x))
-            && (self.windowed[usize::from(sub)] & (1 << layer) == 0
-                || !windows.contains(layer, x, Quantization::Native))
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Affine {
-    /// a,b,c,d, center-x,center-y, horizontal-scroll,vertical-scroll.
-    pub matrix: [i16; 8],
-    pub horizontal_flip: bool,
-    pub vertical_flip: bool,
-    pub large_field: bool,
-    pub character_fill: bool,
+pub(super) fn routing_enabled(
+    routing: &Routing,
+    windows: &Windows,
+    layer: usize,
+    x: i32,
+    sub: bool,
+) -> bool {
+    routing.enabled[usize::from(sub)] & (1 << layer) != 0
+        && (layer != 2 || (0..256).contains(&x))
+        && (routing.windowed[usize::from(sub)] & (1 << layer) == 0
+            || !window_contains(windows, layer, x, Quantization::Native))
 }
 
 #[derive(Clone, Copy)]
@@ -131,18 +78,6 @@ pub struct Mosaic<'a> {
     pub start_line: u8,
     pub modulo: &'a [u8; 256],
     pub left: i32,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct ColorMath {
-    pub clip: u8,
-    pub prevent: u8,
-    pub enabled: [bool; 6],
-    pub add_subscreen: bool,
-    pub subtract: bool,
-    pub half: bool,
-    pub fixed: [u8; 3],
-    pub brightness: u8,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -217,12 +152,6 @@ pub struct SpriteInput<'a> {
     pub rotation: Option<u8>,
     pub interlace: bool,
     pub even_frame: bool,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Overflow {
-    pub range: bool,
-    pub time: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

@@ -9,6 +9,7 @@ description = "Super Metroid gameplay: owned, deterministic rules with no emulat
 # No dependencies on the sm crate, its backend, native code or devices.
 # CI checks that this package's dependency tree stays empty except sm_data.
 [dependencies]
+sm_data = { path = "../sm_data" }
 
 [lints.rust]
 warnings = { level = "deny", priority = -1 }

@@ -12,10 +12,8 @@ pub(crate) mod commit;
 pub(crate) mod component;
 #[path = "../../game/scene/delivery.rs"]
 pub(crate) mod delivery;
-#[path = "../../game/scene/error.rs"]
-pub(crate) mod error;
-#[path = "../../game/scene/hdma.rs"]
-pub(crate) mod hdma;
+pub(crate) use sm_game::display::error;
+pub(crate) use sm_game::display::hdma;
 #[path = "../../game/scene/hdma_sources.rs"]
 pub(crate) mod hdma_sources;
 #[path = "../../game/scene/irq.rs"]
@@ -24,8 +22,7 @@ pub(crate) mod irq;
 pub(crate) mod objects;
 #[path = "../../game/scene/owned_hdma.rs"]
 pub(crate) mod owned_hdma;
-#[path = "../../game/scene/records.rs"]
-pub(crate) mod records;
+pub(crate) use sm_data::scene as records;
 #[path = "../../game/scene/resident_media.rs"]
 pub(crate) mod resident_media;
 #[path = "../../game/scene/samus.rs"]

@@ -463,7 +463,10 @@ unsafe fn ppu_render_pixel<const NATIVE: bool>(ppu: *mut Ppu, x: i32, y: i32, st
             };
             let (window, mut math) = {
                 let config = ppu_line_config(ppu);
-                (config.windows.contains(5, x, policy), config.color)
+                (
+                    raster::window_contains(&config.windows, 5, x, policy),
+                    config.color,
+                )
             };
             let mut second = raster::LayerPixel {
                 layer: 5,

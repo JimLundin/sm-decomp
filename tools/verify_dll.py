@@ -234,7 +234,7 @@ def cargo_host(root, rustc, output, source, frontend=False, retry=True):
         # changing source contents. The crate root is always a library input.
         # This also works with pre-existing/seeded targets lacking CACHEDIR.TAG.
         (root / "sm/src/lib.rs").touch()
-        for package in ("sm_data", "sm_game"):
+        for package in ("sm_data", "sm_game", "sm_runtime"):
             target_root = root / "crates" / package / "src/lib.rs"
             if target_root.is_file():
                 target_root.touch()
@@ -256,6 +256,8 @@ def build(root, rustc, use_cargo=None, frontend=False):
     game = output / "libsm_game.rlib"
     data_root = root / "crates/sm_data/src/lib.rs"
     data = output / "libsm_data.rlib" if data_root.is_file() else None
+    runtime_root = root / "crates/sm_runtime/src/lib.rs"
+    runtime = output / "libsm_runtime.rlib" if runtime_root.is_file() else None
     dll = output / HOST_LIBRARY
     sdk = [Path(path) for path in os.environ.get("LIBRARY_PATH", "").split(os.pathsep)
            if path]
@@ -305,13 +307,15 @@ def build(root, rustc, use_cargo=None, frontend=False):
 
     identity = build_identity()
     if (stamp.exists() and dll.exists() and library.exists() and game.exists()
-            and (data is None or data.exists())):
+            and (data is None or data.exists())
+            and (runtime is None or runtime.exists())):
         try:
             saved = json.loads(stamp.read_text())
             if saved == {"inputs": identity, "dll": hashlib.sha256(dll.read_bytes()).hexdigest(),
                          "library": hashlib.sha256(library.read_bytes()).hexdigest(),
                          "game": hashlib.sha256(game.read_bytes()).hexdigest(),
-                         "data": hashlib.sha256(data.read_bytes()).hexdigest() if data else None}:
+                         "data": hashlib.sha256(data.read_bytes()).hexdigest() if data else None,
+                         "runtime": hashlib.sha256(runtime.read_bytes()).hexdigest() if runtime else None}:
                 checked = subprocess.run(
                     [sys.executable, str(root / "tools/verify_dll.py"), "--check-library", str(dll)],
                     cwd=root, capture_output=True, text=True,
@@ -327,17 +331,29 @@ def build(root, rustc, use_cargo=None, frontend=False):
         + ["--crate-name", "sm_data", "--crate-type", "rlib", str(data_root), "-o", str(data)],
         cwd=root, check=True,
     )
+    data_flags = ["--extern", f"sm_data={data}"]
     subprocess.run(
         common + (["-C", f"incremental={output / 'incremental-sm-game'}"] if incremental else [])
         + ["--crate-name", "sm_game", "--crate-type", "rlib",
-                  "crates/sm_game/src/lib.rs", "-o", str(game)],
+                  "crates/sm_game/src/lib.rs", *data_flags, "-L", f"dependency={output}", "-o", str(game)],
         cwd=root, check=True,
     )
+    runtime_flags = []
+    if runtime is not None:
+        if data is None:
+            raise RuntimeError("sm_runtime requires the sm_data library")
+        subprocess.run(
+            common + (["-C", f"incremental={output / 'incremental-sm-runtime'}"] if incremental else [])
+            + ["--crate-name", "sm_runtime", "--crate-type", "rlib", str(runtime_root),
+               *data_flags, "-L", f"dependency={output}", "-o", str(runtime)],
+            cwd=root, check=True,
+        )
+        runtime_flags = ["--extern", f"sm_runtime={runtime}"]
     subprocess.run(
         common + (["-C", f"incremental={output / 'incremental-sm'}"] if incremental else [])
         + ["--crate-name", "sm", "--crate-type", "rlib", "--cfg", "sm_verify_dll",
-                  "sm/src/lib.rs", "--extern", f"sm_data={data}",
-                  "--extern", f"sm_game={game}", "-o", str(library)],
+                  "sm/src/lib.rs", "--extern", f"sm_game={game}", *data_flags, *runtime_flags,
+                  "-L", f"dependency={output}", "-o", str(library)],
         cwd=root, check=True,
     )
     subprocess.run(
@@ -358,7 +374,8 @@ def build(root, rustc, use_cargo=None, frontend=False):
                                 "dll": hashlib.sha256(dll.read_bytes()).hexdigest(),
                                 "library": hashlib.sha256(library.read_bytes()).hexdigest(),
                                 "game": hashlib.sha256(game.read_bytes()).hexdigest(),
-                                "data": hashlib.sha256(data.read_bytes()).hexdigest() if data else None}))
+                                "data": hashlib.sha256(data.read_bytes()).hexdigest() if data else None,
+                                "runtime": hashlib.sha256(runtime.read_bytes()).hexdigest() if runtime else None}))
     return dll
 
 

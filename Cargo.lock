@@ -65,6 +65,7 @@ dependencies = [
  "sdl2-sys",
  "sm_data",
  "sm_game",
+ "sm_runtime",
 ]
 
 [[package]]
@@ -74,6 +75,16 @@ version = "0.1.0"
 [[package]]
 name = "sm_game"
 version = "0.1.0"
+dependencies = [
+ "sm_data",
+]
+
+[[package]]
+name = "sm_runtime"
+version = "0.1.0"
+dependencies = [
+ "sm_data",
+]
 
 [[package]]
 name = "version-compare"

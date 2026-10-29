@@ -17,7 +17,6 @@ pub mod geometry;
 pub mod item_pickups;
 pub mod launch_motion;
 pub mod liquid_surface;
-#[path = "message_composition/native.rs"]
 pub mod message_composition;
 pub mod progress;
 pub mod projectile_block_reactions;
@@ -29,6 +28,11 @@ pub mod room_entry;
 pub mod special_geometry;
 pub mod sprite_effect_state;
 pub mod visual_state;
+
+pub mod display {
+    pub mod error;
+    pub mod hdma;
+}
 
 pub mod actors {
     pub mod botwoon_death;
