@@ -125,8 +125,8 @@ pub struct Session {
     pub spawn_scratch: SpawnScratch,
     // Shared last-written actor/projectile compatibility word ($0E20).
     pub(crate) compatibility_enemy_scratch: u16,
-    pub(in crate::game) shared_sequence: crate::game::player_collision::state::SequenceWorkspace,
-    pub(in crate::game) multiply_scratch: crate::game::player_collision::state::MultiplyScratch,
+    pub(in crate::game) shared_sequence: sm_game::player_collision::state::SequenceWorkspace,
+    pub(in crate::game) multiply_scratch: sm_game::player_collision::state::MultiplyScratch,
 }
 impl Session {
     pub(crate) fn with_world(
@@ -208,12 +208,12 @@ pub struct Player {
     pub(crate) scripted_movement_direction: u16,
     /// Preserved crouch-transition workspace (compatibility word AA4).
     pub(crate) crouch_transition_work: u16,
-    pub(in crate::game) history: crate::game::player_collision::state::PoseHistory,
-    pub(in crate::game) previous_position: crate::game::player_collision::state::PreviousPosition,
+    pub(in crate::game) history: sm_game::player_collision::state::PoseHistory,
+    pub(in crate::game) previous_position: sm_game::player_collision::state::PreviousPosition,
     pub(crate) camera_distance: [FixedMotion; 2],
-    pub(in crate::game) animation_clock: crate::game::player_collision::state::AnimationClock,
-    pub(in crate::game) collision: crate::game::player_collision::state::CollisionState,
-    pub(in crate::game) clearance: crate::game::player_collision::state::PoseClearance,
+    pub(in crate::game) animation_clock: sm_game::player_collision::state::AnimationClock,
+    pub(in crate::game) collision: sm_game::player_collision::state::CollisionState,
+    pub(in crate::game) clearance: sm_game::player_collision::state::PoseClearance,
     pub movement_and_facing: u16,
     pub grapple: u16,
     pub movement_handler: crate::game::player_transitions::state::MovementMode,
