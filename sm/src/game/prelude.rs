@@ -13,7 +13,7 @@ pub(crate) use crate::game_state::Game;
 pub(crate) use crate::ram_map::word;
 pub(crate) use crate::rtl::{
     MakePairU16, Mult8x8, ReadRegWord, RtlWriteSram, SnesDivide, Unreachable, WriteReg,
-    WriteRegWord, abs16, rom_ptr, words,
+    WriteRegWord, abs16, words,
 };
 pub use crate::snes::registers::*;
 pub use crate::types::{
@@ -26,4 +26,3 @@ pub use crate::types::{
     SpawnHdmaObject_Args, TileTable, TileTables, VoidP, VramWriteEntry, Vulnerability, size_t,
 };
 pub(crate) use ::core::ffi::{c_char, c_long};
-pub(crate) use ::core::ptr::null_mut;

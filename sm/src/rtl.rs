@@ -96,21 +96,6 @@ macro_rules! register_writes {
 }
 pub(crate) use register_writes;
 
-/// Construct a fixed LoROM pointer at the caller, before any later offsets.
-macro_rules! rom_ptr {
-    ($game:ident; $address:literal) => {
-        $game
-            .legacy_native_rom_ptr()
-            .offset($crate::rtl::lorom_offset($address))
-    };
-    ($game:ident, $target:ty; $address:literal) => {
-        $game
-            .legacy_native_rom_ptr()
-            .offset($crate::rtl::lorom_offset($address)) as *mut $target
-    };
-}
-pub(crate) use rom_ptr;
-
 /// Capture the shared image before evaluating a table's signed word index.
 /// Borrow only the ROM field: index expressions can mutate Game or retain RAM pointers.
 macro_rules! rom_table_word {

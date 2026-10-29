@@ -118,7 +118,6 @@ crate::game::constants::typed_constants! { i32;
     fnDachora_Func_7 = 0xa7f78f, fnDachora_Func_8 = 0xa7f806,
     fnDachora_Func_11 = 0xa7f935, fnDachora_Func_12 = 0xa7f98c,
 }
-const RomPtr_A7: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa7>;
 static g_word_A7A916: u16 = 0x120;
 static g_word_A7A918: u16 = 0xa0;
 static g_word_A7A91A: u16 = 0x40;
@@ -230,7 +229,7 @@ pub fn Kraid_Func_1(game: &mut Game) {
         word! {game; extra_samus_x_displacement = 4; extra_samus_y_displacement = -8i32 as u16; }
     }
 }
-pub unsafe fn Kraid_Arm_Shot(j: u16, game: &mut Game) {
+pub fn Kraid_Arm_Shot(j: u16, game: &mut Game) {
     {
         Kraid_SpawnExplosionEproj(j, game);
         word!(game.projectile_dir[(j >> 1)] |= (0x10u16));
@@ -473,7 +472,7 @@ pub unsafe fn Kraid_ExecuteInstr(game: &mut Game) -> u16 {
         }
     }
 }
-pub unsafe fn Kraid_Shot_Mouth(game: &mut Game) {
+pub fn Kraid_Shot_Mouth(game: &mut Game) {
     {
         let mut v3: i16 = 0;
         let E = (0) as i32;
@@ -763,7 +762,7 @@ pub fn KraidEnemy_HandleFunctionTimer(k: u16, game: &mut Game) {
         );
     }
 }
-pub unsafe fn Kraid_AlignEnemyToKraid(k: u16, game: &mut Game) {
+pub fn Kraid_AlignEnemyToKraid(k: u16, game: &mut Game) {
     {
         let x_pos: u16 = slot!(game, Enemy_Kraid[0i32].base.x_pos);
         let E = (k as i32) as i32;
@@ -1071,7 +1070,7 @@ crate::game::callback_dispatch! {
         10995366 => [()];
     }
 }
-pub unsafe fn Kraid_RestrictSamusXtoFirstScreen(k: u16, game: &mut Game) {
+pub fn Kraid_RestrictSamusXtoFirstScreen(k: u16, game: &mut Game) {
     {
         Kraid_RestrictSamusXtoFirstScreen_2(game);
         KraidEnemy_HandleFunctionTimer(k, game);
@@ -1167,7 +1166,7 @@ pub fn Kraid_UpdateBG2TilemapBottomHalf(game: &mut Game) {
     };
     word!(game.vram_write_queue_tail = (v0).wrapping_add(7));
 }
-pub unsafe fn Kraid_RaiseKraidThroughFloor(_k: u16, game: &mut Game) {
+pub fn Kraid_RaiseKraidThroughFloor(_k: u16, game: &mut Game) {
     {
         Kraid_RestrictSamusXtoFirstScreen_2(game);
         slot!(game, Enemy_Kraid[0i32].kraid_var_A = (0xa7c89ai32) as u16);
@@ -1384,16 +1383,17 @@ crate::game::callback_dispatch! {
             if v4 as i32 - 16i32 & 0x8000 == 0 {
                 v4 = 16;
             }
-            let v5 = RomPtr_A7(
+            let v5 = crate::game::session_runtime::native_record(
+                0xa7,
                 (kraid_tables::foot_target(game, (v2 >> 2) as usize).movement)
                     .wrapping_add((v4) as u16),
                 game,
-            ) as *const u16;
-            let v6: u16 = *v5.offset(1);
-            if ((*v5) as i16).wrapping_sub((slot!(game, Enemy_Kraid[E0].base.x_pos)) as i16) >= 0 {
-                Kraid_SetWalkingBackwards(v6, *v5, game);
+            );
+            let v6: u16 = v5.word(2);
+            if (v5.word(0) as i16).wrapping_sub((slot!(game, Enemy_Kraid[E0].base.x_pos)) as i16) >= 0 {
+                Kraid_SetWalkingBackwards(v6, v5.word(0), game);
             } else {
-                Kraid_SetWalkingForwards(v6, *v5, game);
+                Kraid_SetWalkingForwards(v6, v5.word(0), game);
             }
         }
     };
@@ -1418,9 +1418,9 @@ crate::game::callback_dispatch! {
                 ((word!(game.random_number) as i32 & 6) >> 1) as isize
             )
         };
-        let v3 = RomPtr_A7(v2, game);
+        let v3 = crate::game::session_runtime::native_record(0xa7, v2, game);
         let E = (word!(game.cur_enemy_index) as i32) as i32;
-        slot!(game, Enemy_Kraid[E]; kraid_var_B = *(v3 as *mut u16), kraid_var_C = *(v3.offset(2) as *mut u16), kraid_var_D = *(v3.offset(4) as *mut u16), kraid_var_E = *(v3.offset(6) as *mut u16), kraid_parameter_1 = 1);
+        slot!(game, Enemy_Kraid[E]; kraid_var_B = v3.word(0), kraid_var_C = v3.word(2), kraid_var_D = v3.word(4), kraid_var_E = v3.word(6), kraid_parameter_1 = 1);
         slot!(game, Enemy_Kraid[E].base.properties = (slot!(game, Enemy_Kraid[E].base.properties) as i32
             & !(kEnemyProps_Tangible as i32 | kEnemyProps_Invisible as i32))
             as u16);
@@ -2182,7 +2182,7 @@ pub fn Phantoon_ChangeEyeSpriteBasedOnSamusDist(game: &mut Game) {
     let E = (0x40) as i32;
     slot!(game, Enemy_Phantoon[E].base; instruction_timer = 1, current_instruction = crate::rtl::rom_table_word!(game, 0xa7d40d, (v0 >> 1) as isize));
 }
-pub unsafe fn Phantoon_StartDeathSequence(k: u16, game: &mut Game) {
+pub fn Phantoon_StartDeathSequence(k: u16, game: &mut Game) {
     {
         let E = (k as i32) as i32;
         if slot!(game, Enemy_Phantoon[E].var_F) as i32 == 0xa7d678 & 0xffff
@@ -2213,8 +2213,8 @@ pub unsafe fn Phantoon_StartDeathSequence(k: u16, game: &mut Game) {
         slot!(game, Enemy_Phantoon[0xc0i32].parameter_2 = 1);
     }
 }
-pub unsafe fn Phantoon_FadeOut(a: u16, game: &mut Game) {
-    unsafe {
+pub fn Phantoon_FadeOut(a: u16, game: &mut Game) {
+    {
         if (word!(game.nmi_frame_counter_word) & 1) == 0 {
             let E = (0x40) as i32;
             if slot!(game, Enemy_Phantoon[E].var_F) == 0 {
@@ -2226,8 +2226,8 @@ pub unsafe fn Phantoon_FadeOut(a: u16, game: &mut Game) {
         }
     }
 }
-pub unsafe fn Phantoon_FadeIn(a: u16, game: &mut Game) {
-    unsafe {
+pub fn Phantoon_FadeIn(a: u16, game: &mut Game) {
+    {
         if (word!(game.nmi_frame_counter_word) & 1) == 0 {
             let E = (0x40) as i32;
             if slot!(game, Enemy_Phantoon[E].var_F) == 0 {
@@ -2239,8 +2239,8 @@ pub unsafe fn Phantoon_FadeIn(a: u16, game: &mut Game) {
         }
     }
 }
-pub unsafe fn Phantoon_Func_8(game: &mut Game) -> u8 {
-    unsafe {
+pub fn Phantoon_Func_8(game: &mut Game) -> u8 {
+    {
         let E = (0x40) as i32;
         if (slot!(game, Enemy_Phantoon[E].var_D)).wrapping_add(1)
             >= slot!(game, Enemy_Phantoon[E].var_E)
@@ -2275,8 +2275,8 @@ pub unsafe fn Phantoon_Func_8(game: &mut Game) -> u8 {
         }
     }
 }
-pub unsafe fn Phantoon_SetColorBasedOnHp(game: &mut Game) -> u8 {
-    unsafe {
+pub fn Phantoon_SetColorBasedOnHp(game: &mut Game) -> u8 {
+    {
         let mut Entry: PairU16 = PairU16 { k: 0, j: 0 };
         let E = (0x40) as i32;
         if (slot!(game, Enemy_Phantoon[E].var_D)).wrapping_add(1)
@@ -2319,8 +2319,8 @@ pub unsafe fn Phantoon_SetColorBasedOnHp(game: &mut Game) -> u8 {
         }
     }
 }
-pub unsafe fn Phantoon_Func_9(game: &mut Game) -> u8 {
-    unsafe {
+pub fn Phantoon_Func_9(game: &mut Game) -> u8 {
+    {
         let E = (0x40) as i32;
         if (slot!(game, Enemy_Phantoon[E].var_D)).wrapping_add(1)
             >= slot!(game, Enemy_Phantoon[E].var_E)
@@ -2347,7 +2347,7 @@ pub unsafe fn Phantoon_Func_9(game: &mut Game) -> u8 {
         }
     }
 }
-pub unsafe fn Phantoon_Func_10_CalculateNthTransitionColorFromXtoY(
+pub fn Phantoon_Func_10_CalculateNthTransitionColorFromXtoY(
     a: u16,
     k: u16,
     j: u16,
@@ -4011,20 +4011,25 @@ crate::game::callback_dispatch! {
         let E2 = (0x80) as i32;
         let v5: u16 = (4u16).wrapping_mul(slot!(game, Enemy_Phantoon[E2].var_F));
         let E0 = (0) as i32;
-        game.eproj_spawn_pt = Point16U {
-            x: (((byte!(@pointer rom_ptr!(game; 0xa7da1d); v5 as isize) as i8) as u16)
-                .wrapping_add(slot!(game, Enemy_Phantoon[E0].base.x_pos))),
-            y: (((byte!(@pointer rom_ptr!(game; 0xa7da1d); (v5 as i32 + 1i32) as isize) as i8) as u16)
-                .wrapping_add(slot!(game, Enemy_Phantoon[E0].base.y_pos))),
+        // Four bytes per explosion at $A7:DA1D: X and Y offsets, dust cloud kind, delay.
+        let explosion = |game: &mut Game, at: u16| {
+            game.capture_native_rom()
+                .read(crate::rtl::lorom_offset(0xa7da1d) as usize + usize::from(v5) + usize::from(at))
         };
-        let v11: u16 = byte!(@pointer rom_ptr!(game; 0xa7da1d); (v5 as i32 + 2) as isize) as u16;
+        game.eproj_spawn_pt = Point16U {
+            x: ((explosion(game, 0) as i8) as u16)
+                .wrapping_add(slot!(game, Enemy_Phantoon[E0].base.x_pos)),
+            y: ((explosion(game, 1) as i8) as u16)
+                .wrapping_add(slot!(game, Enemy_Phantoon[E0].base.y_pos)),
+        };
+        let v11: u16 = explosion(game, 2) as u16;
         SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, v11, game);
         if v11 == 29 {
             QueueSfx2_Max6(0x24, game);
         } else {
             QueueSfx2_Max6(0x2b, game);
         }
-        slot!(game, Enemy_Phantoon[EK].var_E = byte!(@pointer rom_ptr!(game; 0xa7da1d); (v5 as i32 + 3) as isize) as u16);
+        slot!(game, Enemy_Phantoon[EK].var_E = explosion(game, 3) as u16);
         let v9: u16 = (slot!(game, Enemy_Phantoon[E2].var_F)).wrapping_add(1);
         slot!(game, Enemy_Phantoon[E2].var_F = v9);
         if v9 as i32 - 13i32 & 0x8000 == 0 {
