@@ -146,6 +146,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/actors/kraid_sinking.rs"),
     ),
     (
+        "sm/src/game/actors/mother_brain_effects.rs",
+        include_bytes!("game/actors/mother_brain_effects.rs"),
+    ),
+    (
         "sm/src/game/actors/part_hitboxes.rs",
         include_bytes!("game/actors/part_hitboxes.rs"),
     ),

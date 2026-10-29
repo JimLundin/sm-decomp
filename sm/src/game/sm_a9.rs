@@ -1,6 +1,9 @@
 use crate::game::actors;
 use crate::game::actors::access::ActorKey as Key;
 use crate::game::actors::api as actor_api;
+use crate::game::actors::mother_brain_effects::{
+    MotherBrain_GenerateExplosions, MotherBrain_HandleRainbowBeamPalette, MotherBrain_WritePalette,
+};
 use crate::game::display_refresh::{native_word, set_native_word};
 use crate::game::enemy_script::EnemyScript;
 use crate::game::menu_tilemap::native_record;
@@ -2166,51 +2169,6 @@ crate::forward_calls! { pub unsafe fn (game: &mut Game);
     MotherBrain_GenerateMixedExplosions =>
         MotherBrain_GenerateExplosions(8, addr_word_A9B109 as u16, 4, game);
 }
-pub unsafe fn MotherBrain_GenerateExplosions(a: u16, r22: u16, r24: u16, game: &mut Game) {
-    unsafe {
-        let E: i32 = 0x40;
-        slot!(
-            game,
-            Enemy_MotherBrain[E].var_E = slot!(game, Enemy_MotherBrain[E].var_E).wrapping_sub(1)
-        );
-        let mut v2: bool = (slot!(game, Enemy_MotherBrain[E].var_E) & 0x8000) != 0;
-        if v2 {
-            slot!(game, Enemy_MotherBrain[E].var_E = a);
-            slot!(
-                game,
-                Enemy_MotherBrain[E].var_F =
-                    slot!(game, Enemy_MotherBrain[E].var_F).wrapping_sub(1)
-            );
-            v2 = (slot!(game, Enemy_MotherBrain[E].var_F) & 0x8000) != 0;
-            if v2 {
-                slot!(game, Enemy_MotherBrain[E].var_F = 6);
-            }
-            let mut v3: u16 = (16u16).wrapping_mul(slot!(game, Enemy_MotherBrain[E].var_F));
-            let mut v4: u16 = r24;
-            do_until! { v9 == 1 ;
-                let mut v9: u16 = v4;
-                let v5: i32 = v3 as i32 >> 1;
-                game.eproj_spawn_pt = Point16U {
-                    x: crate::rtl::rom_table_word!(game, 0xa9b099, v5 as isize),
-                    y: crate::rtl::rom_table_word!(game, 0xa9b099, (v5 + 1) as isize),
-                };
-                let v6 = RomPtr_A9(r22, game) as *const u16;
-                let mut v7: u16 = *v6;
-                let Random: u16 = game.next_random();
-                if Random >= 0x4000 {
-                    v7 = *v6.offset(1);
-                    if Random >= 0xe000 {
-                        v7 = *v6.offset(2);
-                    }
-                }
-                SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainDeathExplosion as u16, v7, game);
-                v3 = (v3).wrapping_add(4);
-                v4 = (v9).wrapping_sub(1);
-            }
-            QueueSfx3_Max3(0x13, game);
-        }
-    }
-}
 pub unsafe fn MotherBrain_ExplodeEscapeDoor(game: &mut Game) {
     {
         for v0 in 0u16..8 {
@@ -2575,35 +2533,8 @@ pub unsafe fn MotherBrain_WriteDefaultPalette(game: &mut Game) {
     }
 }
 pub unsafe fn MotherBrain_WritePhase2DeathPalette(game: &mut Game) {
-    unsafe {
-        MotherBrain_WritePalette(crate::rtl::rom_table_word!(game, 0xade434, 6), game);
-    }
-}
-pub unsafe fn MotherBrain_HandleRainbowBeamPalette(game: &mut Game) {
-    unsafe {
-        if (slot!(game, Enemy_MotherBrain[0i32].base.frame_counter) & 2) != 0 {
-            let mut mbn_var_01: u16 = slot!(game, Enemy_MotherBrain[0x40i32].var_01);
-            let mut v1: u16 = 0;
-            do_until! { mbn_var_01 != 0 ;
-                v1 = mbn_var_01;
-                mbn_var_01 = crate::rtl::rom_table_word!(game, 0xade434, (mbn_var_01 >> 1) as isize);
-            }
-            let v2: u16 = (v1).wrapping_add(2);
-            slot!(game, Enemy_MotherBrain[0x40i32].var_01 = v2);
-            MotherBrain_WritePalette(
-                *((rom_ptr!(game, u16; 0xade434) as *mut u8)
-                    .offset(v2 as i32 as isize)
-                    .offset(-(2i32 as isize)) as *mut u16),
-                game,
-            );
-        }
-    }
-}
-pub unsafe fn MotherBrain_WritePalette(j: u16, game: &mut Game) {
     {
-        WriteColorsToPalette(0x82, 0xad, j, 15, game);
-        WriteColorsToPalette(0x122, 0xad, j, 15, game);
-        WriteColorsToPalette(0x162, 0xad, (j).wrapping_add(30), 15, game);
+        MotherBrain_WritePalette(crate::rtl::rom_table_word!(game, 0xade434, 6), game);
     }
 }
 pub unsafe fn MotherBrain_SpawnShitroidInCutscene(game: &mut Game) {
