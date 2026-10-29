@@ -4,10 +4,10 @@
 use super::access::ActorKey as Key;
 use super::api;
 use crate::game::enemy_layouts::EnemyLayout72 as Bug;
+use crate::game::enemy_speeds::enemy_speed;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
-use crate::rtl::rom_table_word;
 
 pub(crate) fn initialize(game: &mut Game) {
     let e = i32::from(word!(game.cur_enemy_index));
@@ -18,8 +18,8 @@ pub(crate) fn initialize(game: &mut Game) {
         slot!(game, Bug[e].base.current_instruction = 0x8f24);
     }
     let index = (8 * i32::from(slot!(game, Bug[e].parameter_2)) >> 1) as isize;
-    slot!(game, Bug[e]; var_01 = rom_table_word!(game, 0xa28187, index), var_00 = rom_table_word!(game, 0xa28187, index + 1),
-        var_03 = rom_table_word!(game, 0xa28187, index + 2), var_02 = rom_table_word!(game, 0xa28187, index + 3), var_A = 0x8fb5, var_06 = 0);
+    slot!(game, Bug[e]; var_01 = enemy_speed!(game, Linear, index), var_00 = enemy_speed!(game, Linear, index + 1),
+        var_03 = enemy_speed!(game, Linear, index + 2), var_02 = enemy_speed!(game, Linear, index + 3), var_A = 0x8fb5, var_06 = 0);
 }
 pub(crate) fn state_address(game: &Game) -> u32 {
     let e = i32::from(word!(game.cur_enemy_index));
@@ -54,8 +54,8 @@ fn vertical(counting_down: bool, k: u16, game: &mut Game) {
     }
     let index = (8 * i32::from(slot!(game, Bug[e].var_E)) >> 1) as isize;
     let offset = if counting_down { 0 } else { 2 };
-    let high = rom_table_word!(game, 0xa2838f, index + offset + 1);
-    let low = rom_table_word!(game, 0xa2838f, index + offset);
+    let high = enemy_speed!(game, Quadratic, index + offset + 1);
+    let low = enemy_speed!(game, Quadratic, index + offset);
     slot!(
         game,
         Bug[e].base(y_pos, y_subpos) += (u32::from(high) << 16) | u32::from(low)

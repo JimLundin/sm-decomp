@@ -5,6 +5,7 @@ use super::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use super::{api, combat};
 use crate::game::enemy_projectiles::host::Effects;
 use crate::game::enemy_script::EnemyScript;
+use crate::game::enemy_speeds::SpeedTable;
 use crate::game::session_runtime::{Runtime, actor_cosine_full, actor_sine_full};
 use crate::game_state::Game;
 use crate::ram_map::{word_arrays as A, words as W};
@@ -84,11 +85,7 @@ pub(crate) fn initialize(game: &mut Game) {
         let index =
             u16::from(runtime.resolve_actor(key, Native).parameters[1].to_ne_bytes()[0]) * 8;
         for (word, field) in [(0, 8), (1, 6), (2, 12), (3, 10)] {
-            let image = runtime.loaded_image().expect("ROM must be loaded");
-            let value = image.table_word(
-                crate::rom::lorom_offset(0xa28187) as usize,
-                (index >> 1) as isize + word,
-            );
+            let value = runtime.enemy_speed(SpeedTable::Linear, (index >> 1) as isize + word);
             runtime.write_slice_native(extra(key) + field, value);
         }
         // The source's reload parameter belongs to the speed-derived actor index.
