@@ -4,7 +4,6 @@
 pub(crate) mod content;
 pub(crate) mod effects;
 pub(crate) mod minimap;
-pub(crate) use sm_game::player_update::state;
 
 use crate::game::{player_movement, player_transitions as transitions, samus_periodic_damage};
 use effects::Host;
