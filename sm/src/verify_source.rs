@@ -38,6 +38,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_data/src/ceres_ridley.rs"),
     ),
     (
+        "crates/sm_data/src/credits.rs",
+        include_bytes!("../../crates/sm_data/src/credits.rs"),
+    ),
+    (
         "crates/sm_data/src/crocomire.rs",
         include_bytes!("../../crates/sm_data/src/crocomire.rs"),
     ),
@@ -64,6 +68,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_data/src/grapple_origins.rs",
         include_bytes!("../../crates/sm_data/src/grapple_origins.rs"),
+    ),
+    (
+        "crates/sm_data/src/hdma_objects.rs",
+        include_bytes!("../../crates/sm_data/src/hdma_objects.rs"),
     ),
     (
         "crates/sm_data/src/kraid.rs",
@@ -128,6 +136,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_data/src/table.rs",
         include_bytes!("../../crates/sm_data/src/table.rs"),
+    ),
+    (
+        "crates/sm_data/src/title_screen.rs",
+        include_bytes!("../../crates/sm_data/src/title_screen.rs"),
     ),
     (
         "crates/sm_data/src/world.rs",

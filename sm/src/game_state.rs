@@ -250,6 +250,8 @@ pub struct Game {
     pub(crate) shitroid_tables: crate::game::shitroid_tables::ImportedShitroid,
     /// Imported from `loaded_rom` by `register_rom`; see game::mother_brain_tables.
     pub(crate) mother_brain_tables: crate::game::mother_brain_tables::ImportedMotherBrain,
+    /// Imported from `loaded_rom` by `register_rom`; see game::visual_runtime.
+    pub(crate) visual_tables: crate::game::visual_runtime::ImportedTables,
     /// Imported from `loaded_rom` by `register_rom`; see game::map_menu.
     pub(crate) pause_menu: crate::game::map_menu::ImportedTables,
     /// Imported from `loaded_rom` by `register_rom`; see game::actors::crocomire_reactions.
@@ -1267,6 +1269,7 @@ impl Game {
         self.torizo_corpse_tables = crate::game::torizo_corpse_tables::import(&image);
         self.shitroid_tables = crate::game::shitroid_tables::import(&image);
         self.mother_brain_tables = crate::game::mother_brain_tables::import(&image);
+        self.visual_tables = crate::game::visual_runtime::import(&image);
         self.pause_menu = crate::game::map_menu::import(&image);
         self.crocomire = crate::game::actors::crocomire_reactions::import(&image);
         self.magdollite = crate::game::actors::norfair_lava_man::import(&image);
@@ -1541,6 +1544,7 @@ impl Game {
             corpse_tables: Default::default(),
             torizo_corpse_tables: Default::default(),
             shitroid_tables: Default::default(),
+            visual_tables: Default::default(),
             pause_menu: Default::default(),
             crocomire: Default::default(),
             magdollite: Default::default(),

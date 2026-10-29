@@ -1,5 +1,6 @@
 //! Visual adapters on the one aggregate Session, with explicit legacy effects.
 use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
+use crate::game::imported::{Imported, grid_word, load, word as table_word};
 use crate::game::player_transitions::xray::BeamPhase;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::xray_background::{self, finish_restore, restore_left, restore_right};
@@ -9,6 +10,90 @@ use crate::game::{
 };
 use crate::ram_map::{checked_word, word, words as ram_words};
 use crate::rtl::{Unreachable, words};
+use sm_data::credits::{
+    BEAM_BIT_ADDRESS, BEAM_DESTINATION_ADDRESS, BEAM_FRAMES, BEAM_SOURCE_ADDRESS, BEAMS, BeamBits,
+    BeamTransfers, CAPACITIES, CAPACITY_ADDRESS, CAPACITY_DIVISOR_ADDRESS, Capacities,
+    DIGIT_TILE_ADDRESS, DIGITS, DigitTiles, ICON_PALETTE_ADDRESS, ICON_PALETTE_BYTES,
+    ICON_TRANSFER_ADDRESS, ICON_TRANSFER_BYTES, ITEM_BIT_ADDRESS, ITEMS, IconPaletteSteps,
+    IconTransfers, ItemBits,
+};
+use sm_data::hdma_objects::{BG3_X_VELOCITIES, BG3_X_VELOCITY_ADDRESS, Bg3XVelocities};
+use sm_data::shooting_stars::{
+    TILE_ADDRESS as STAR_TILE_ADDRESS, TILE_STEPS as STAR_TILE_STEPS, Tiles as StarTiles,
+};
+use sm_data::title_screen::{GRADIENT_ADDRESS, GRADIENTS, Gradients};
+
+/// The cinematic and HDMA tables this module reads, imported from the loaded image.
+#[derive(Default)]
+pub(crate) struct ImportedTables {
+    bg3_x_velocities: Option<Imported<Bg3XVelocities>>,
+    title_gradients: Option<Imported<Gradients>>,
+    star_tiles: Option<Imported<StarTiles>>,
+    icon_palettes: Option<Imported<IconPaletteSteps>>,
+    capacities: Option<Imported<Capacities>>,
+    capacity_divisors: Option<Imported<Capacities>>,
+    item_bits: Option<Imported<ItemBits>>,
+    beam_bits: Option<Imported<BeamBits>>,
+    digit_tiles: Option<Imported<DigitTiles>>,
+    icon_transfers: Option<Imported<IconTransfers>>,
+    beam_sources: Option<Imported<BeamTransfers>>,
+    beam_destinations: Option<Imported<BeamTransfers>>,
+}
+
+pub(crate) fn import(image: &crate::rom::RomImage) -> ImportedTables {
+    use sm_data::credits::{
+        import_digit_tiles, import_icon_palettes, import_icon_transfers, import_words,
+    };
+    ImportedTables {
+        bg3_x_velocities: Imported::import(
+            image,
+            BG3_X_VELOCITY_ADDRESS,
+            2 * BG3_X_VELOCITIES,
+            sm_data::hdma_objects::import_bg3_x_velocities,
+        ),
+        title_gradients: Imported::import(
+            image,
+            GRADIENT_ADDRESS,
+            2 * GRADIENTS,
+            sm_data::title_screen::import_gradients,
+        ),
+        star_tiles: Imported::import(
+            image,
+            STAR_TILE_ADDRESS,
+            2 * STAR_TILE_STEPS,
+            sm_data::shooting_stars::import_tiles,
+        ),
+        icon_palettes: Imported::import(
+            image,
+            ICON_PALETTE_ADDRESS,
+            ICON_PALETTE_BYTES,
+            import_icon_palettes,
+        ),
+        capacities: Imported::import(image, CAPACITY_ADDRESS, 2 * CAPACITIES, import_words),
+        capacity_divisors: Imported::import(
+            image,
+            CAPACITY_DIVISOR_ADDRESS,
+            2 * CAPACITIES,
+            import_words,
+        ),
+        item_bits: Imported::import(image, ITEM_BIT_ADDRESS, 2 * ITEMS, import_words),
+        beam_bits: Imported::import(image, BEAM_BIT_ADDRESS, 2 * BEAMS, import_words),
+        digit_tiles: Imported::import(image, DIGIT_TILE_ADDRESS, 4 * DIGITS, import_digit_tiles),
+        icon_transfers: Imported::import(
+            image,
+            ICON_TRANSFER_ADDRESS,
+            ICON_TRANSFER_BYTES,
+            import_icon_transfers,
+        ),
+        beam_sources: Imported::import(image, BEAM_SOURCE_ADDRESS, 2 * BEAM_FRAMES, import_words),
+        beam_destinations: Imported::import(
+            image,
+            BEAM_DESTINATION_ADDRESS,
+            2 * BEAM_FRAMES,
+            import_words,
+        ),
+    }
+}
 use crate::{
     game::{
         animated_tiles,
@@ -465,9 +550,10 @@ unsafe fn execute_hdma_instruction(
         8968470 | 8968521 => checked_word!(game.hdma_data_table_in_ceres = 9),
         8968577 => {
             checked_word!(
-                game.hdma_object_D[index] = crate::rtl::rom_table_word!(
+                game.hdma_object_D[index] = table_word(
+                    &game.visual_tables.bg3_x_velocities,
                     game,
-                    0x88d992,
+                    BG3_X_VELOCITY_ADDRESS,
                     ((checked_word!(game.random_number) >> 1 & 6) >> 1) as isize
                 )
             );
@@ -821,10 +907,11 @@ pub(crate) fn title_metroid_palette(palette: [u16; 16], cursor: u16, game: &mut 
 }
 
 fn refresh_title_gradient(game: &mut Game) {
-    let mut cursor = crate::rtl::rom_table_word!(
+    let mut cursor = table_word(
+        &game.visual_tables.title_gradients,
         game,
-        0x8cbc5d,
-        ((word!(game.cinematic_var6) & 0xf0) >> 4) as isize
+        GRADIENT_ADDRESS,
+        ((word!(game.cinematic_var6) & 0xf0) >> 4) as isize,
     );
     for slot in 0usize.. {
         let value = cinematic_native_record::<0x8c>(cursor, game).word(0);
@@ -999,7 +1086,7 @@ pub(crate) fn advance_shooting_stars(game: &mut Game) {
         }
         if game.ram().read_byte(at + 1) != 0 {
             word_transfers!(game, ascending, 1; native(oam + 2) <- value(
-                crate::rtl::rom_table_word!(game, 0x8be9a7,
+                table_word(&game.visual_tables.star_tiles, game, STAR_TILE_ADDRESS,
                     ((u16::from_le(checked_word!(game, at;)) & 0xff00) >> 9) as isize)
             ));
             output = output.wrapping_add(4);
@@ -2540,8 +2627,16 @@ pub(crate) fn advance_postcredits_zoom(zooming: bool, game: &mut Game) {
 
 pub(crate) fn advance_ending_logo_palette(game: &mut Game) -> bool {
     let pair = (word!(game.cinematic_var4).wrapping_mul(4) >> 1) as isize;
-    let second = crate::rtl::rom_table_word!(game, 0x8be5e7, pair + 1);
-    let first = crate::rtl::rom_table_word!(game, 0x8be5e7, pair);
+    let step = Imported::read(
+        &game.visual_tables.icon_palettes,
+        game,
+        |steps| steps.row(crate::game::imported::row_of(pair, 2)?),
+        |rom| sm_data::credits::IconPalettes {
+            first: load(rom, ICON_PALETTE_ADDRESS, pair),
+            second: load(rom, ICON_PALETTE_ADDRESS, pair + 1),
+        },
+    );
+    let (first, second) = (step.first, step.second);
     for (mut source, offset) in [(first, 16usize), (second, 240)] {
         for index in (0..16).rev() {
             let color = cinematic_native_record::<0x8c>(source, game).word(0);
@@ -3175,7 +3270,12 @@ fn draw_cinematic_background(object: u16, position: u16, game: &mut Game) {
 unsafe fn draw_cinematic_item_percentage(game: &mut Game) {
     let mut count = 0u16;
     for index in (0..=4).rev() {
-        let address = crate::rtl::rom_table_word!(game, 0x8be70d, index);
+        let address = table_word(
+            &game.visual_tables.capacities,
+            game,
+            CAPACITY_ADDRESS,
+            index,
+        );
         unsafe {
             crate::native_assertion! {
                 '_c2rust_label: address < 0x2000;
@@ -3184,16 +3284,27 @@ unsafe fn draw_cinematic_item_percentage(game: &mut Game) {
         }
         count = count.wrapping_add(crate::rtl::SnesDivide(
             u16::from_le(checked_word!(game, usize::from(address);)),
-            crate::rtl::rom_table_word!(game, 0x8be717, index) as u8,
+            table_word(
+                &game.visual_tables.capacity_divisors,
+                game,
+                CAPACITY_DIVISOR_ADDRESS,
+                index,
+            ) as u8,
         ));
     }
     for index in (0..=10).rev() {
-        if crate::rtl::rom_table_word!(game, 0x8be721, index) & word!(game.collected_items) != 0 {
+        if table_word(&game.visual_tables.item_bits, game, ITEM_BIT_ADDRESS, index)
+            & word!(game.collected_items)
+            != 0
+        {
             count = count.wrapping_add(1);
         }
     }
     for index in (0..=4).rev() {
-        if crate::rtl::rom_table_word!(game, 0x8be737, index) & word!(game.collected_beams) != 0 {
+        if table_word(&game.visual_tables.beam_bits, game, BEAM_BIT_ADDRESS, index)
+            & word!(game.collected_beams)
+            != 0
+        {
             count = count.wrapping_add(1);
         }
     }
@@ -3206,7 +3317,7 @@ unsafe fn draw_cinematic_item_percentage(game: &mut Game) {
             let index = (digit.wrapping_mul(4) >> 1) as isize;
             for row in 0..2 {
                 word_transfers!(game, ascending, 1; pause_map(column + row * 32) <- value(
-                    crate::rtl::rom_table_word!(game, 0x8be741, index + row)
+                    grid_word(&game.visual_tables.digit_tiles, game, DIGIT_TILE_ADDRESS, index + row)
                 ));
             }
         }
@@ -3314,20 +3425,42 @@ pub(crate) fn advance_ending_graphics(graphics: EndingGraphics, game: &mut Game)
     // Each ROM word stays between the preceding queue stores; bank indices wrap separately.
     for field in [0u16, 2, 4, 5] {
         let value = match (graphics, field) {
-            (Background, _) => crate::rtl::rom_table_word!(
-                game,
-                0x8be45a,
-                match field {
+            (Background, _) => {
+                let word = match field {
                     0 => index,
                     2 => index + 1,
                     4 => i32::from(frame.wrapping_mul(4)) + 2,
                     _ => index + 3,
-                } as isize
-            ),
+                } as isize;
+                Imported::read(
+                    &game.visual_tables.icon_transfers,
+                    game,
+                    |transfers| {
+                        let transfer = transfers.row(usize::from(frame))?;
+                        Some(match field {
+                            0 => transfer.size,
+                            2 => transfer.source,
+                            4 => transfer.bank,
+                            _ => transfer.destination,
+                        })
+                    },
+                    |rom| load(rom, ICON_TRANSFER_ADDRESS, word),
+                )
+            }
             (Samus, 0) => 2048,
-            (Samus, 2) => crate::rtl::rom_table_word!(game, 0x8bf6b8, index as isize),
+            (Samus, 2) => table_word(
+                &game.visual_tables.beam_sources,
+                game,
+                BEAM_SOURCE_ADDRESS,
+                index as isize,
+            ),
             (Samus, 4) => 127,
-            (Samus, _) => crate::rtl::rom_table_word!(game, 0x8bf6d8, index as isize),
+            (Samus, _) => table_word(
+                &game.visual_tables.beam_destinations,
+                game,
+                BEAM_DESTINATION_ADDRESS,
+                index as isize,
+            ),
         };
         let destination = 0xd0 + usize::from(tail.wrapping_add(field));
         if field == 4 {

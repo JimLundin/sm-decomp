@@ -47,3 +47,13 @@ impl ShootingStars {
         self.stars.get(index).copied()
     }
 }
+
+/// $8B:E9A7: a star's OAM tile and attributes for each animation step, by
+/// bits 9-15 of its identity.
+pub const TILE_ADDRESS: u32 = 0x8b_e9a7;
+pub const TILE_STEPS: usize = 20;
+pub type Tiles = crate::table::Rows<u16, TILE_STEPS>;
+
+pub fn import_tiles(bytes: &[u8]) -> Result<Tiles, crate::table::LengthError> {
+    crate::table::Rows::import(bytes, |[tile]| tile)
+}
