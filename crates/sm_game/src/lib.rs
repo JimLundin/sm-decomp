@@ -32,6 +32,7 @@ pub mod visual_state;
 pub mod display {
     pub mod error;
     pub mod hdma;
+    pub mod transfer;
 }
 
 pub mod actors {

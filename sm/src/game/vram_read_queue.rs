@@ -2,7 +2,7 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 use crate::game_state::Game;
 use crate::ram_map::checked_word as word;
-use crate::rtl::{ReadRegWord, WriteReg, WriteRegWord};
+use crate::rtl::WriteReg;
 use crate::snes::registers::*;
 
 #[forbid(unsafe_code)]
@@ -53,23 +53,10 @@ pub(super) unsafe fn process(game: &mut Game) {
         unsafe {
             WriteReg(VMAIN as u16, 0x80, game);
         }
-        let mut entry = 0x340;
-        while read_word(game, entry) != 0 {
-            // Reread each field at its original register call. DMA can overwrite
-            // later records, and the overlapping A1T1H write includes the bank.
-            unsafe {
-                WriteRegWord(VMADDL as u16, read_word(game, entry), game);
-                ReadRegWord(RDVRAML as u16, game);
-                WriteRegWord(DMAP1 as u16, read_word(game, entry + 2), game);
-                WriteRegWord(A1T1L as u16, read_word(game, entry + 4), game);
-                WriteRegWord(A1T1H as u16, read_word(game, entry + 5), game);
-                WriteRegWord(DAS1L as u16, read_word(game, entry + 7), game);
-                WriteRegWord(DAS10 as u16, 0, game);
-                WriteRegWord(A2A1H as u16, 0, game);
-                WriteReg(MDMAEN as u16, 2, game);
-            }
-            entry += 9;
-        }
+        // DMA can overwrite later records, so each is decoded after the last ran.
+        sm_game::display::transfer::drain_readbacks(&mut unsafe {
+            crate::game::display_transfers::RawQueue::new(game)
+        });
         game.ram().write_byte(0x360, 0);
     }
 }

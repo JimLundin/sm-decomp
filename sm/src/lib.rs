@@ -438,6 +438,7 @@ pub mod game {
     pub(crate) mod checkpoint_binding;
     pub(crate) mod controller_input;
     pub(crate) mod display_refresh;
+    pub(crate) mod display_transfers;
     pub(crate) mod escape_timer;
     pub(crate) mod goofball;
     pub(crate) mod gunship;

@@ -587,6 +587,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/display_refresh.rs"),
     ),
     (
+        "sm/src/game/display_transfers.rs",
+        include_bytes!("game/display_transfers.rs"),
+    ),
+    (
         "sm/src/game/escape_timer.rs",
         include_bytes!("game/escape_timer.rs"),
     ),
@@ -1918,6 +1922,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/display/hdma.rs",
         include_bytes!("../../crates/sm_game/src/display/hdma.rs"),
+    ),
+    (
+        "crates/sm_game/src/display/transfer.rs",
+        include_bytes!("../../crates/sm_game/src/display/transfer.rs"),
     ),
     (
         "crates/sm_game/src/message_composition/mod.rs",
