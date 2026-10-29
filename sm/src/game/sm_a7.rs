@@ -3989,9 +3989,10 @@ crate::game::callback_dispatch! {
         let a: u16 = (game.next_random()) & (7u16);
         let v4: i32 = 8 * a as i32 >> 1;
         let E0 = (0) as i32;
-        slot!(game, Enemy_Phantoon[E0].var_A = crate::rtl::rom_table_word!(game, 0xa7cdad, v4 as isize));
-        slot!(game, Enemy_Phantoon[E0].base.x_pos = crate::rtl::rom_table_word!(game, 0xa7cdad, (v4 + 1) as isize));
-        slot!(game, Enemy_Phantoon[E0].base.y_pos = crate::rtl::rom_table_word!(game, 0xa7cdad, (v4 + 2) as isize));
+        let position = crate::game::phantoon_tables::flame_rain(game, (v4 >> 2) as usize);
+        slot!(game, Enemy_Phantoon[E0].var_A = position.figure_eight_index);
+        slot!(game, Enemy_Phantoon[E0].base.x_pos = position.x_position);
+        slot!(game, Enemy_Phantoon[E0].base.y_pos = position.y_position);
         slot!(game, Enemy_Phantoon[0x40i32].var_C = 0);
         slot!(game, Enemy_Phantoon[EK].var_F = (0xa7d73fi32) as u16);
         actors::phantoon_actions::spawn_fireball_pattern(k, a, game);

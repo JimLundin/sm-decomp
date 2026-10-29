@@ -26,6 +26,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_data/src/kraid.rs"),
     ),
     (
+        "crates/sm_data/src/phantoon.rs",
+        include_bytes!("../../crates/sm_data/src/phantoon.rs"),
+    ),
+    (
         "crates/sm_data/src/sand_heap.rs",
         include_bytes!("../../crates/sm_data/src/sand_heap.rs"),
     ),
@@ -320,6 +324,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/pause_controls.rs",
         include_bytes!("game/pause_controls.rs"),
+    ),
+    (
+        "sm/src/game/phantoon_tables.rs",
+        include_bytes!("game/phantoon_tables.rs"),
     ),
     (
         "sm/src/game/actors/morph_ball_eye.rs",

@@ -412,6 +412,7 @@ pub mod game {
     pub mod music;
     pub(crate) mod palette_copies;
     pub(crate) mod palette_effects;
+    pub(crate) mod phantoon_tables;
     pub(crate) mod player_collision;
     #[cfg(any(test, sm_verify_dll))]
     #[path = "../verification/player_collision_owned_checks.rs"]

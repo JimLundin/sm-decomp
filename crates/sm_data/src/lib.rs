@@ -10,6 +10,7 @@ pub mod demo_rooms;
 pub mod enemy_speeds;
 pub mod kraid;
 pub mod message;
+pub mod phantoon;
 pub mod raster;
 pub mod sand_heap;
 pub mod save_slots;

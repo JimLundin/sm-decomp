@@ -1,0 +1,42 @@
+//! Phantoon's flame-rain positions through the imported `sm_data` table.
+#![forbid(unsafe_code)]
+use crate::game::imported::Imported;
+use crate::game_state::Game;
+use crate::rom::{RomImage, lorom_offset};
+pub(crate) use sm_data::phantoon::FlameRainPosition;
+use sm_data::phantoon::{
+    FLAME_RAIN_ADDRESS, FLAME_RAIN_BYTES, FlameRainPositions, import_flame_rain,
+};
+
+pub(crate) type ImportedFlameRain = Imported<FlameRainPositions>;
+
+pub(crate) fn import(image: &RomImage) -> Option<ImportedFlameRain> {
+    Imported::import(
+        image,
+        FLAME_RAIN_ADDRESS,
+        FLAME_RAIN_BYTES,
+        import_flame_rain,
+    )
+}
+
+/// Position `row` at $A7:CDAD in the loaded image. The table serves it while
+/// that image is the imported allocation; otherwise, and past the eight rows,
+/// the original three indexed loads run with their failures.
+pub(crate) fn flame_rain(game: &Game, row: usize) -> FlameRainPosition {
+    let rom = game.loaded_rom.as_ref().expect("ROM must be loaded");
+    Imported::from(&game.flame_rain, rom)
+        .and_then(|table| table.row(row))
+        .unwrap_or_else(|| {
+            let load = |at: usize| {
+                rom.table_word(
+                    lorom_offset(FLAME_RAIN_ADDRESS) as usize,
+                    (4 * row + at) as isize,
+                )
+            };
+            FlameRainPosition {
+                figure_eight_index: load(0),
+                x_position: load(1),
+                y_position: load(2),
+            }
+        })
+}

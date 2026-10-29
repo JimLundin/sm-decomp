@@ -232,6 +232,8 @@ pub struct Game {
     pub(crate) shooting_stars: Option<crate::game::shooting_stars::ImportedShootingStars>,
     /// Imported from `loaded_rom` by `register_rom`; see game::kraid_tables.
     pub(crate) kraid_tables: crate::game::kraid_tables::ImportedKraid,
+    /// Imported from `loaded_rom` by `register_rom`; see game::phantoon_tables.
+    pub(crate) flame_rain: Option<crate::game::phantoon_tables::ImportedFlameRain>,
     samus_binding: Option<Arc<SamusBinding>>,
     samus_authority: SamusAuthority,
     samus_mutation_depth: usize,
@@ -1194,6 +1196,7 @@ impl Game {
         self.demo_sets = crate::game::demo_rooms::import_sets(&image);
         self.shooting_stars = crate::game::shooting_stars::import(&image);
         self.kraid_tables = crate::game::kraid_tables::import(&image);
+        self.flame_rain = crate::game::phantoon_tables::import(&image);
         self.loaded_rom = Some(image);
     }
 
@@ -1438,6 +1441,7 @@ impl Game {
             demo_scenes: None,
             shooting_stars: None,
             kraid_tables: Default::default(),
+            flame_rain: None,
             samus_binding: None,
             samus_authority: SamusAuthority::LegacyUnrouted,
             samus_mutation_depth: 0,
