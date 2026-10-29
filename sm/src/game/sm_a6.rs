@@ -28,6 +28,7 @@ pub use crate::game::constants::bank_a6::*;
 pub use crate::game::constants::bank_a9::*;
 
 use crate::game::actors::ridley_tables::{copy_words_to_ram_fan, pick_random_speed_row};
+use crate::game::actors::shitroid::separated_from_rect;
 use crate::game::enemy_projectiles::{
     Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
 };
@@ -44,7 +45,7 @@ use crate::game::rom_vram_entries::{
 };
 use crate::game::session_runtime::damage_player;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
-use crate::game::sm_a9::{ComputeCosMult, ComputeSinMult, MoveEnemyWithVelocity, Shitroid_Func_2};
+use crate::game::sm_a9::{ComputeCosMult, ComputeSinMult, MoveEnemyWithVelocity};
 use crate::game::sprite_effect_runtime::create_sprite;
 
 const VANISH: u16 = ceres_doors::TANGIBLE | ceres_doors::INVISIBLE;
@@ -457,7 +458,7 @@ pub unsafe fn CeresRidley_Func_12(game: &mut Game) -> u8 {
             h: 8,
         };
         Ridley_Func_106(0, 0, rect.x, rect.y, game);
-        Shitroid_Func_2(0, rect, game)
+        separated_from_rect(0, rect, game)
     }
 }
 pub unsafe fn CeresRidley_Func_25(game: &mut Game) {
@@ -821,7 +822,7 @@ crate::game::callback_dispatch! {
             h: 8,
         };
         Ridley_Func_104_0(0, 14, rect.x, rect.y, game);
-        if Shitroid_Func_2(0, rect, game) == 0 {
+        if separated_from_rect(0, rect, game) == 0 {
             let E: i32 = 0;
             slot!(game, Enemy_Ridley[E].var_01 = 1);
             slot!(game, Enemy_Ridley[E].var_A = (0xa6b321i32) as u16);
@@ -860,7 +861,7 @@ crate::game::callback_dispatch! {
                     h: 8,
                 };
                 Ridley_Func_104_0(0, Ridley_Func_7(game), rect.x, rect.y, game);
-                Shitroid_Func_2(0, rect, game) == 0
+                separated_from_rect(0, rect, game) == 0
             });
         if change_ridley_state {
             slot!(game, Enemy_Ridley[E].var_A = (0xa6b321i32) as u16);
@@ -1273,7 +1274,7 @@ crate::game::callback_dispatch! {
             w: 2,
             h: 2,
         };
-        if Shitroid_Func_2(0, rect, game) == 0 || {
+        if separated_from_rect(0, rect, game) == 0 || {
             let mut v2: bool = ((slot!(game, Enemy_CeresRidley[E].var_F)) as i16).wrapping_sub(1) < 0;
             slot!(game, Enemy_CeresRidley[E].var_F = slot!(game, Enemy_CeresRidley[E].var_F).wrapping_sub(1));
             v2 as i32 != 0
@@ -1443,7 +1444,7 @@ crate::game::callback_dispatch! {
             h: 8,
         };
         Ridley_Func_104_0(0, 1, rect.x, rect.y, game);
-        if Shitroid_Func_2(0, rect, game) == 0 {
+        if separated_from_rect(0, rect, game) == 0 {
             slot!(game, Enemy_Ridley[E].var_A = (0xa6b493i32) as u16);
             slot!(game, Enemy_Ridley[E].var_00 = 32);
             slot!(game, Enemy_Ridley[E].var_0A = 0);
@@ -2355,7 +2356,7 @@ pub unsafe fn Ridley_Func_68(game: &mut Game) -> u8 {
             h: 4,
         };
         Ridley_Func_104(0, 0, 0x10, rect.x, rect.y, game);
-        Shitroid_Func_2(0, rect, game)
+        separated_from_rect(0, rect, game)
     }
 }
 

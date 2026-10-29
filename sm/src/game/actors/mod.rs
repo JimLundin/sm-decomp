@@ -31,6 +31,7 @@ pub(in crate::game) mod reflec;
 pub(in crate::game) mod roach;
 pub(in crate::game) mod scene;
 pub(crate) mod shaktool;
+pub(crate) mod shitroid;
 pub(in crate::game) mod sidehopper;
 pub(crate) mod snapshot;
 pub(crate) mod torizo;
