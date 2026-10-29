@@ -21,6 +21,7 @@ pub mod grapple_aim;
 pub mod grapple_origins;
 pub mod intro_palette;
 pub mod kraid;
+pub mod magdollite;
 pub mod message;
 pub mod mother_brain;
 pub mod phantoon;

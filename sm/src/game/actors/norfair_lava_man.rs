@@ -7,11 +7,59 @@ use crate::game::enemy_layouts::EnemyLayout40 as Lava;
 use crate::game::enemy_projectiles::SpawnEprojWithGfx;
 use crate::game::enemy_script::EnemyScript;
 use crate::game::enemy_speeds::enemy_speed;
+use crate::game::imported::{Imported, load};
 use crate::game::music::QueueSfx2_Max6;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
-use crate::rtl::rom_table_word;
+use sm_data::magdollite::{
+    ARM_BYTES, ARM_GROWTH_ADDRESS, ARM_INSTRUCTION_ADDRESS, ARM_Y_OFFSET_ADDRESS, ArmSteps,
+    PALETTE_ADDRESS, PALETTE_BYTES, Palettes, import_palettes,
+};
+
+#[derive(Default)]
+pub(crate) struct ImportedTables {
+    palettes: Option<Imported<Palettes>>,
+    arm_steps: Option<Imported<ArmSteps>>,
+}
+
+pub(crate) fn import(image: &crate::rom::RomImage) -> ImportedTables {
+    ImportedTables {
+        palettes: Imported::import(image, PALETTE_ADDRESS, PALETTE_BYTES, import_palettes),
+        arm_steps: Imported::import(image, ARM_GROWTH_ADDRESS, ARM_BYTES, ArmSteps::import),
+    }
+}
+
+/// Colours 9-12 of the glow palette whose colour 0 is word `source`.
+fn glow_colors(game: &Game, source: isize) -> [u16; 4] {
+    Imported::read(
+        &game.magdollite.palettes,
+        game,
+        |table| {
+            let palette = table.row(crate::game::imported::row_of(source, 16)?)?;
+            Some(core::array::from_fn(|i| palette[9 + i]))
+        },
+        |rom| core::array::from_fn(|i| load(rom, PALETTE_ADDRESS, source + 9 + i as isize)),
+    )
+}
+
+/// Arm step `index`'s field; other images and indices run the original load
+/// at `address`.
+fn arm(game: &Game, address: u32, index: isize) -> u16 {
+    Imported::read(
+        &game.magdollite.arm_steps,
+        game,
+        |table| {
+            let step = table.step(usize::try_from(index).ok()?)?;
+            Some(match address {
+                ARM_GROWTH_ADDRESS => step.growth,
+                ARM_INSTRUCTION_ADDRESS => step.instruction_list,
+                _ => step.y_offset,
+            })
+        },
+        |rom| load(rom, address, index),
+    )
+}
 
 fn native_word(at: usize, game: &Game) -> u16 {
     u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])
@@ -95,8 +143,7 @@ pub(crate) fn palette(game: &mut Game) {
     word!(game.variables_for_enemy_graphics_drawn_hook[2] = 8);
     word!(game.variables_for_enemy_graphics_drawn_hook[1] += 1);
     let source = 16 * (word!(game.variables_for_enemy_graphics_drawn_hook[1]) & 3) as isize;
-    let colors: [u16; 4] =
-        core::array::from_fn(|i| rom_table_word!(game, 0xa8ac1c, source + 9 + i as isize));
+    let colors: [u16; 4] = glow_colors(game, source);
     let target = word!(game.variables_for_enemy_graphics_drawn_hook[0]) as usize >> 1;
     for (i, color) in colors.into_iter().enumerate() {
         word!(game.palette_buffer[target + 9 + i] = color);
@@ -177,22 +224,21 @@ pub(crate) fn finish_descent(k: u16, game: &mut Game) {
     let below_player = -(slot!(game, Lava[E].var_E) as i32) - 108 & 0x8000 == 0 || {
         source = (phase >> 1) as isize;
         ((slot!(game, Lava[E].base.y_pos) as i32
-            - rom_table_word!(game, 0xa8af79, source) as i32
+            - arm(game, ARM_Y_OFFSET_ADDRESS, source) as i32
             - word!(game.samus_y_pos) as i32) as i16)
             < 0
     };
     let advance = if below_player {
         slot!(game, Lava[E]; var_F = 0xb291, var_0C = 1);
         if ((-(slot!(game, Lava[E].var_E) as i32)
-            - rom_table_word!(game, 0xa8af55, (phase >> 1) as isize) as i32) as i16)
+            - arm(game, ARM_GROWTH_ADDRESS, (phase >> 1) as isize) as i32) as i16)
             < 0
         {
             return;
         }
         true
     } else {
-        (-(slot!(game, Lava[E].var_E) as i32) - rom_table_word!(game, 0xa8af55, source) as i32)
-            as i16
+        (-(slot!(game, Lava[E].var_E) as i32) - arm(game, ARM_GROWTH_ADDRESS, source) as i32) as i16
             >= 0
     };
     if advance {
@@ -201,8 +247,11 @@ pub(crate) fn finish_descent(k: u16, game: &mut Game) {
         slot!(game, Lava[E].base.y_pos, |old| old.wrapping_add(8));
         slot!(
             game,
-            Lava[E].var_D =
-                rom_table_word!(game, 0xa8af67, (slot!(game, Lava[E].var_B) >> 1) as isize)
+            Lava[E].var_D = arm(
+                game,
+                ARM_INSTRUCTION_ADDRESS,
+                (slot!(game, Lava[E].var_B) >> 1) as isize
+            )
         );
         animate(game);
     }
@@ -235,10 +284,10 @@ pub(crate) fn ascend(game: &mut Game) {
         game.ram().copy_in(at, &0u16.to_ne_bytes());
         slot!(game, Lava[E].var_F = 0xb1dd);
     } else if ((-(height as i32)
-        - rom_table_word!(
+        - arm(
             game,
-            0xa8af55,
-            (slot!(game, Lava[E].var_B).wrapping_sub(2) >> 1) as isize
+            ARM_GROWTH_ADDRESS,
+            (slot!(game, Lava[E].var_B).wrapping_sub(2) >> 1) as isize,
         ) as i32) as i16)
         < 0
     {
@@ -246,8 +295,11 @@ pub(crate) fn ascend(game: &mut Game) {
         slot!(game, Lava[E].base.y_pos, |old| old.wrapping_sub(8));
         slot!(
             game,
-            Lava[E].var_D =
-                rom_table_word!(game, 0xa8af67, (slot!(game, Lava[E].var_B) >> 1) as isize)
+            Lava[E].var_D = arm(
+                game,
+                ARM_INSTRUCTION_ADDRESS,
+                (slot!(game, Lava[E].var_B) >> 1) as isize
+            )
         );
         animate(game);
     }
@@ -340,7 +392,7 @@ pub(crate) fn advance(state: u16, game: &mut Game) {
             } else {
                 let at = 0xe84 + 2 * ((word!(game.cur_enemy_index) as usize >> 1) + 93);
                 let y = native_word(at, game);
-                let offset = rom_table_word!(game, 0xa8af79, {
+                let offset = arm(game, ARM_Y_OFFSET_ADDRESS, {
                     let at = 0xf68 + 2 * ((word!(game.cur_enemy_index) as usize >> 1) + 1);
                     (native_word(at, game) >> 1) as isize
                 });
@@ -360,10 +412,10 @@ pub(crate) fn advance(state: u16, game: &mut Game) {
                 );
             } else {
                 let y = word!(game.enemy_drawing_queue[index + 93]);
-                let offset = rom_table_word!(
+                let offset = arm(
                     game,
-                    0xa8af79,
-                    (word!(game.enemy_drawing_queue_sizes[index + 1]) >> 1) as isize
+                    ARM_Y_OFFSET_ADDRESS,
+                    (word!(game.enemy_drawing_queue_sizes[index + 1]) >> 1) as isize,
                 );
                 slot!(
                     game,

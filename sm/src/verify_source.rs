@@ -90,6 +90,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_data/src/shitroid.rs"),
     ),
     (
+        "crates/sm_data/src/magdollite.rs",
+        include_bytes!("../../crates/sm_data/src/magdollite.rs"),
+    ),
+    (
         "crates/sm_data/src/mother_brain.rs",
         include_bytes!("../../crates/sm_data/src/mother_brain.rs"),
     ),

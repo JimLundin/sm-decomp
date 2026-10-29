@@ -250,6 +250,8 @@ pub struct Game {
     pub(crate) shitroid_tables: crate::game::shitroid_tables::ImportedShitroid,
     /// Imported from `loaded_rom` by `register_rom`; see game::mother_brain_tables.
     pub(crate) mother_brain_tables: crate::game::mother_brain_tables::ImportedMotherBrain,
+    /// Imported from `loaded_rom` by `register_rom`; see game::actors::norfair_lava_man.
+    pub(crate) magdollite: crate::game::actors::norfair_lava_man::ImportedTables,
     /// Imported from `loaded_rom` by `register_rom`; see game::equipment_menu.
     pub(crate) equipment_screen: crate::game::equipment_menu::ImportedTables,
     /// Imported from `loaded_rom` by `register_rom`; see game::mother_brain_visuals.
@@ -1261,6 +1263,7 @@ impl Game {
         self.torizo_corpse_tables = crate::game::torizo_corpse_tables::import(&image);
         self.shitroid_tables = crate::game::shitroid_tables::import(&image);
         self.mother_brain_tables = crate::game::mother_brain_tables::import(&image);
+        self.magdollite = crate::game::actors::norfair_lava_man::import(&image);
         self.equipment_screen = crate::game::equipment_menu::import(&image);
         self.mother_brain_tables = crate::game::mother_brain_visuals::import(&image);
         self.beam_gradients = crate::game::beam_windows::import(&image);
@@ -1532,6 +1535,7 @@ impl Game {
             corpse_tables: Default::default(),
             torizo_corpse_tables: Default::default(),
             shitroid_tables: Default::default(),
+            magdollite: Default::default(),
             equipment_screen: Default::default(),
             mother_brain_tables: Default::default(),
             beam_gradients: Default::default(),
