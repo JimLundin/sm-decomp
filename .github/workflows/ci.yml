@@ -30,7 +30,9 @@ jobs:
       - name: Format
         run: cargo fmt --check
       - name: Progress
-        run: sh tools/progress.sh
+        run: |
+          sh tools/progress.sh
+          python3 tools/cycle_report.py
       - name: Run the full corpus after bank retirement
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:

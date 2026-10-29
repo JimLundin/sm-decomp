@@ -50,7 +50,9 @@ for r in rows:
 shards = []
 for (kind, identity), members in sorted(groups.items()):
     members.sort(key=lambda r: r.get('start_frame', 0))
-    width = len(members) if kind in ('seed', 'checkpoint') else 9
+    # A rejected configured checkpoint regenerates its own complete boot prefix.
+    # Bound that cold work per row; seed and route groups retain shared setup.
+    width = 1 if kind == 'checkpoint' else (len(members) if kind == 'seed' else 9)
     for i in range(0, len(members), width):
         chunk = members[i:i + width]
         inputs = chunk[0]['inputs']

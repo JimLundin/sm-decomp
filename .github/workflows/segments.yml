@@ -120,7 +120,7 @@ jobs:
   segments:
     needs: [plan, build]
     runs-on: windows-2022
-    timeout-minutes: 120
+    timeout-minutes: ${{ matrix.kind == 'checkpoint' && 65 || 120 }}
     strategy:
       fail-fast: false
       max-parallel: 6
@@ -206,6 +206,7 @@ jobs:
           python -B .github/scripts/prepare_corpus_inputs.py
           if ($LASTEXITCODE -ne 0) { throw 'Input preparation failed' }
       - name: Run rows
+        timeout-minutes: ${{ matrix.kind == 'checkpoint' && 60 || 120 }}
         env:
           SEGMENTS: ${{ matrix.segments }}
         run: |
