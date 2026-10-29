@@ -213,6 +213,8 @@ pub struct Game {
     ram: WorkRam,
     pub(crate) loaded_rom: Option<crate::rom::RomImage>,
     native_rom: Option<crate::rom::RomImage>,
+    /// Imported from `loaded_rom` by `register_rom`; see game::enemy_speeds.
+    pub(crate) enemy_speeds: Option<crate::game::enemy_speeds::ImportedSpeeds>,
     samus_binding: Option<Arc<SamusBinding>>,
     samus_authority: SamusAuthority,
     samus_mutation_depth: usize,
@@ -1166,6 +1168,7 @@ impl Game {
         {
             self.revoke_samus_authority();
         }
+        self.enemy_speeds = crate::game::enemy_speeds::ImportedSpeeds::import(&image);
         self.loaded_rom = Some(image);
     }
 
@@ -1401,6 +1404,7 @@ impl Game {
             ram: WorkRam::new(),
             loaded_rom: None,
             native_rom: None,
+            enemy_speeds: None,
             samus_binding: None,
             samus_authority: SamusAuthority::LegacyUnrouted,
             samus_mutation_depth: 0,

@@ -5,6 +5,7 @@ use super::access::ActorKey as Key;
 use super::api::{self, Axis};
 use crate::game::enemy_layouts::EnemyLayout40 as Orb;
 use crate::game::enemy_projectiles::host::Effects;
+use crate::game::enemy_speeds::enemy_speed;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
@@ -15,10 +16,10 @@ pub(crate) fn initialize(game: &mut Game) {
     slot!(game, Orb[E].base; instruction_timer = 1, timer = 0,
         current_instruction = crate::rtl::rom_table_word!(game, 0xa8e380, slot!(game, Orb[E].parameter_1) as isize));
     let rate = 4 * slot!(game, Orb[E].parameter_2) as isize;
-    slot!(game, Orb[E]; var_01 = crate::rtl::rom_table_word!(game, 0xa28187, rate),
-        var_00 = crate::rtl::rom_table_word!(game, 0xa28187, rate + 1),
-        var_03 = crate::rtl::rom_table_word!(game, 0xa28187, rate + 2),
-        var_02 = crate::rtl::rom_table_word!(game, 0xa28187, rate + 3));
+    slot!(game, Orb[E]; var_01 = enemy_speed!(game, Linear, rate),
+        var_00 = enemy_speed!(game, Linear, rate + 1),
+        var_03 = enemy_speed!(game, Linear, rate + 2),
+        var_02 = enemy_speed!(game, Linear, rate + 3));
 }
 fn drift(horizontal: bool, state: u16, game: &mut Game) {
     let E = word!(game.cur_enemy_index) as i32;

@@ -3,6 +3,7 @@
 use crate::game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::game::actors::{api::ShotHandling, combat};
 use crate::game::enemy_projectiles::host::Effects;
+use crate::game::enemy_speeds::SpeedTable;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 
@@ -53,7 +54,7 @@ fn cache_velocity(runtime: &mut Runtime<'_>, key: Key, physical_byte: usize) {
         usize::from(runtime.resolve_actor(key, Native).parameters[1].to_ne_bytes()[physical_byte])
             * 4;
     for (entry, variable) in [1, 0, 3, 2].into_iter().enumerate() {
-        let value = table(runtime, 0xa28187, speed + entry);
+        let value = runtime.enemy_speed(SpeedTable::Linear, (speed + entry) as isize);
         runtime.edit_actor(key, Native, |actor| actor.variables[variable] = value);
     }
 }

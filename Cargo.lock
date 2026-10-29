@@ -63,6 +63,7 @@ version = "0.1.0"
 dependencies = [
  "gl",
  "sdl2-sys",
+ "sm_data",
  "sm_game",
 ]
 

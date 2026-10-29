@@ -5,6 +5,7 @@ use super::{api, combat, scheduling};
 use crate::game::enemy_layouts::EnemyLayout104 as Maw;
 use crate::game::enemy_projectiles::{self, SpawnEprojWithGfx};
 use crate::game::enemy_script::EnemyScript;
+use crate::game::enemy_speeds::enemy_speed;
 use crate::game::music::QueueSfx2_Max6;
 use crate::game::session::Point;
 use crate::game::session_runtime::{Runtime, correct_previous_position, player_command};
@@ -213,8 +214,8 @@ fn stretch(write_operand: &mut impl FnMut(u8, &mut Game), game: &mut Game) {
     slot!(
         game,
         Maw[velocity_owner](var_B, var_C) += words!((
-            rom_table_word!(game, 0xa2838f, speed + 1),
-            rom_table_word!(game, 0xa2838f, speed)
+            enemy_speed!(game, Quadratic, speed + 1),
+            enemy_speed!(game, Quadratic, speed)
         ))
     );
     slot!(game, Maw[velocity_owner].var_D, |old| old.wrapping_add(8));
