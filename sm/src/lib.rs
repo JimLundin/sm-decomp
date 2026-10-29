@@ -366,6 +366,7 @@ pub mod game {
     pub(crate) mod grapple_swing;
     pub(crate) mod imported;
     pub(crate) mod intro_pages;
+    pub(crate) mod kraid_tables;
     pub(crate) mod launch_motion;
     pub(crate) mod launch_motion_ram;
     pub(crate) mod layer_blending;

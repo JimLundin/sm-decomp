@@ -22,6 +22,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_data/src/enemy_speeds.rs"),
     ),
     (
+        "crates/sm_data/src/kraid.rs",
+        include_bytes!("../../crates/sm_data/src/kraid.rs"),
+    ),
+    (
         "crates/sm_data/src/sand_heap.rs",
         include_bytes!("../../crates/sm_data/src/sand_heap.rs"),
     ),
@@ -32,6 +36,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_data/src/shooting_stars.rs",
         include_bytes!("../../crates/sm_data/src/shooting_stars.rs"),
+    ),
+    (
+        "crates/sm_data/src/table.rs",
+        include_bytes!("../../crates/sm_data/src/table.rs"),
     ),
     (
         "crates/sm_data/src/world.rs",
@@ -1154,6 +1162,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/intro_pages.rs",
         include_bytes!("game/intro_pages.rs"),
+    ),
+    (
+        "sm/src/game/kraid_tables.rs",
+        include_bytes!("game/kraid_tables.rs"),
     ),
     (
         "crates/sm_game/src/item_pickups.rs",

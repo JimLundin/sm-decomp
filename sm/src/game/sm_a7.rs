@@ -9,6 +9,7 @@ use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_script::EnemyScript;
 use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime;
+use crate::game::kraid_tables;
 use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::{Runtime, actor_species_pre_instruction, native_rom_diagnostic};
@@ -596,7 +597,7 @@ pub unsafe fn Kraid_HurtFlash_Handling(game: &mut Game) {
     }
     let mut v1: u16 = 0;
     do_until! { ((v1) as i16).wrapping_sub(32) >= 0 ;
-        match (crate::rtl::rom_table_word!(game, 0xa7b513, (v0 >> 1) as isize), usize::try_from((0xc000) + (((v1 as i32 >> 1) + 240) as isize) * 2).expect("native word outside RAM")) { (value, at) => { let bytes = u16::to_ne_bytes(value); game.ram().write_byte(at, bytes[0]); game.ram().write_byte(at + 1, bytes[1]); } };
+        match (kraid_tables::sprite_color(game, (v0 >> 1) as usize), usize::try_from((0xc000) + (((v1 as i32 >> 1) + 240) as isize) * 2).expect("native word outside RAM")) { (value, at) => { let bytes = u16::to_ne_bytes(value); game.ram().write_byte(at, bytes[0]); game.ram().write_byte(at + 1, bytes[1]); } };
         v1 = (v1).wrapping_add(2);
         v0 = (v0).wrapping_add(2);
     }
@@ -626,8 +627,8 @@ pub unsafe fn Kraid_HealthBasedPaletteHandling(game: &mut Game) {
         let v5: i32 = v0 as i32 >> 1;
         let v6: i32 = v4 as i32 >> 1;
         word! { game;
-            palette_buffer[(v6 + 112)] = crate::rtl::rom_table_word!(game, 0xa7b3d3, v5 as isize);
-            palette_buffer[(v6 + 240)] = crate::rtl::rom_table_word!(game, 0xa7b513, v5 as isize);
+            palette_buffer[(v6 + 112)] = kraid_tables::bg_color(game, v5 as usize);
+            palette_buffer[(v6 + 240)] = kraid_tables::sprite_color(game, v5 as usize);
         }
         v0 = (v0).wrapping_add(2);
     }
@@ -831,7 +832,7 @@ pub unsafe fn KraidsFingernail_Fire(k: u16, game: &mut Game) {
         loop {
             v3 = (0) as i32;
             v4 = (k as i32) as i32;
-            if ((crate::rtl::rom_table_word!(game, 0xa7bf1d, ((i >> 1) + 1) as isize) as i32
+            if ((kraid_tables::fingernail_boundary(game, (i >> 2) as usize).top as i32
                 + slot!(game, EnemyData[v3].y_pos) as i32
                 - slot!(game, EnemyData[v4].y_pos) as i32) as i16)
                 < 0
@@ -840,7 +841,7 @@ pub unsafe fn KraidsFingernail_Fire(k: u16, game: &mut Game) {
             }
             i += 4;
         }
-        let r18: u16 = (crate::rtl::rom_table_word!(game, 0xa7bf1d, (i >> 1) as isize))
+        let r18: u16 = (kraid_tables::fingernail_boundary(game, (i >> 2) as usize).left)
             .wrapping_add(slot!(game, EnemyData[v3].x_pos));
         if slot!(game, EnemyData[v4].x_width) as i32 + slot!(game, EnemyData[v4].x_pos) as i32
             - r18 as i32
@@ -1366,7 +1367,7 @@ crate::game::callback_dispatch! {
             loop {
                 E0 = (0) as i32;
                 if slot!(game, Enemy_Kraid[E0].base.x_pos)
-                    == crate::rtl::rom_table_word!(game, 0xa7ba7d, (v2 >> 1) as isize)
+                    == kraid_tables::foot_target(game, (v2 >> 2) as usize).x_position
                 {
                     break;
                 }
@@ -1382,7 +1383,7 @@ crate::game::callback_dispatch! {
                 v4 = 16;
             }
             let v5 = RomPtr_A7(
-                (crate::rtl::rom_table_word!(game, 0xa7ba7d, ((v2 as i32 >> 1) + 1) as isize))
+                (kraid_tables::foot_target(game, (v2 >> 2) as usize).movement)
                     .wrapping_add((v4) as u16),
                 game,
             ) as *const u16;
@@ -1751,19 +1752,17 @@ crate::game::callback_dispatch! {
             let mut v1: i16 = ((word!(game.samus_y_pos)) as i16).wrapping_sub((slot!(game, Enemy_Kraid[E].base.y_pos)) as i16);
             let mut i: i32 = 0;
             loop {
-                let v3: i32 = i >> 1;
-                if (v1).wrapping_sub((crate::rtl::rom_table_word!(game, 0xa7b161, v3 as isize)) as i16)
-                    >= 0
-                    || (v1).wrapping_sub(
-                        (crate::rtl::rom_table_word!(game, 0xa7b161, (v3 + 2) as isize)) as i16,
-                    ) >= 0
+                let band = (i >> 2) as usize;
+                if (v1).wrapping_sub(kraid_tables::body_hitbox(game, band).bottom as i16) >= 0
+                    || (v1).wrapping_sub(kraid_tables::body_hitbox(game, band + 1).bottom as i16)
+                        >= 0
                 {
                     break;
                 }
                 i += 4;
             }
             if ((slot!(game, Enemy_Kraid[E].base.x_pos) as i32
-                + crate::rtl::rom_table_word!(game, 0xa7b161, ((i >> 1) + 1) as isize) as i32
+                + kraid_tables::body_hitbox(game, (i >> 2) as usize).left as i32
                 - r18 as i32) as i16)
                 < 0
             {
@@ -1826,13 +1825,11 @@ crate::game::callback_dispatch! {
                             .wrapping_sub((slot!(game, Enemy_Kraid[E].base.y_pos)) as i16);
                         let mut j: u16 = 0;
                         loop {
-                            let v13: i32 = j as i32 >> 1;
-                            if (v11).wrapping_sub(
-                                (crate::rtl::rom_table_word!(game, 0xa7b161, v13 as isize)) as i16,
-                            ) >= 0
+                            let band = (j >> 2) as usize;
+                            if (v11).wrapping_sub(kraid_tables::body_hitbox(game, band).bottom as i16)
+                                >= 0
                                 || (v11).wrapping_sub(
-                                    (crate::rtl::rom_table_word!(game, 0xa7b161, (v13 + 2) as isize))
-                                        as i16,
+                                    kraid_tables::body_hitbox(game, band + 1).bottom as i16,
                                 ) >= 0
                             {
                                 break;
@@ -1840,11 +1837,7 @@ crate::game::callback_dispatch! {
                             j = (j).wrapping_add(4);
                         }
                         ((slot!(game, Enemy_Kraid[E].base.x_pos) as i32
-                            + crate::rtl::rom_table_word!(
-                                game,
-                                0xa7b161,
-                                ((j as i32 >> 1) + 1) as isize
-                            ) as i32
+                            + kraid_tables::body_hitbox(game, (j >> 2) as usize).left as i32
                             - r18 as i32) as i16)
                             < 0
                     };
@@ -1917,12 +1910,12 @@ crate::game::callback_dispatch! {
     let v4: i32 = v3 as i32 >> 1;
     let mut r18: u16 = (word!(game.palette_buffer[v4])) & (0x1fu16);
     let v5: i32 = v2 as i32 >> 1;
-    if crate::rtl::rom_table_word!(game, 0xa7b3d3, (v5 + 1) as isize) & 0x1f != r18 {
+    if kraid_tables::bg_color(game, (v5 + 1) as usize) & 0x1f != r18 {
         r20 = r20.wrapping_add(1);
         word!(game.palette_buffer[v4] -= 1);
     }
     r18 = (word!(game.palette_buffer[v4])) & (0x3e0u16);
-    if crate::rtl::rom_table_word!(game, 0xa7b3d3, (v5 + 1) as isize) & 0x3e0 != r18 {
+    if kraid_tables::bg_color(game, (v5 + 1) as usize) & 0x3e0 != r18 {
         r20 = r20.wrapping_add(1);
         word!(game.palette_buffer[v4] -= 32);
     }
