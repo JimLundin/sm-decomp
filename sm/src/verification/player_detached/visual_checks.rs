@@ -615,7 +615,7 @@ fn charge_failure() {
             .or_else(|| error.downcast_ref::<String>().map(String::as_str));
         assert_eq!(
             reason,
-            Some("prepared visual record extent"),
+            Some("ROM copy source extent"),
             "charge.failure.reason"
         );
         assert_eq!(h.world, before, "charge.failure.owner_prefix.{hyper}");
