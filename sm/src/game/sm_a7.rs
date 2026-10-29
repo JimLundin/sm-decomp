@@ -11,6 +11,7 @@ use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime;
 use crate::game::kraid_tables;
 use crate::game::music::QueueMusic_Delayed8;
+use crate::game::phantoon_tables::Timer;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::{Runtime, actor_species_pre_instruction, native_rom_diagnostic};
 use crate::ram_map::slot;
@@ -170,7 +171,8 @@ crate::game::callback_dispatch! {
         let E = (0) as i32;
         slot!(game, Enemy_Phantoon[E].base; instruction_timer = 1, current_instruction = addr_kKraid_Ilist_CC4D as u16);
         slot!(game, Enemy_Phantoon[E].base.properties = (slot!(game, Enemy_Phantoon[E].base.properties) as i32 & !(kEnemyProps_Tangible as i32)) as u16);
-        slot!(game, Enemy_Phantoon[E].var_E = crate::rtl::rom_table_word!(game, 0xa7cd41, (game.next_random() as i32 & 7) as isize));
+        let roll = (game.next_random() as i32 & 7) as usize;
+        slot!(game, Enemy_Phantoon[E].var_E = crate::game::phantoon_tables::timer(game, Timer::FigureEightVulnerable, roll));
         slot!(game, Enemy_Phantoon[E].var_F = (0xa7d60di32) as u16);
         let E1 = (0x40) as i32;
         slot!(game, Enemy_Phantoon[E1].base; instruction_timer = 1, current_instruction = addr_kKraid_Ilist_CC9D as u16);
@@ -178,8 +180,8 @@ crate::game::callback_dispatch! {
     [10997878] Phantoon_PickPatternForRound2 [] {
         let E = (0) as i32;
         slot!(game, Enemy_Phantoon[E].var_E = 60);
-        let v1: u16 =
-            crate::rtl::rom_table_word!(game, 0xa7cd53, (game.next_random() as i32 & 7) as isize);
+        let roll = (game.next_random() as i32 & 7) as usize;
+        let v1: u16 = crate::game::phantoon_tables::timer(game, Timer::EyeClosed, roll);
         let E1 = (0x40) as i32;
         slot!(game, Enemy_Phantoon[E1].var_A = v1);
         if (word!(game.nmi_frame_counter_word) & 1) != 0 {
@@ -3262,7 +3264,8 @@ crate::game::callback_dispatch! {
         if slot!(game, Enemy_Phantoon[0x40i32].var_F) != 0 {
             let E = (k as i32) as i32;
             slot!(game, Enemy_Phantoon[E].var_F = (0xa7d7f7i32) as u16);
-            slot!(game, Enemy_Phantoon[E].var_E = crate::rtl::rom_table_word!(game, 0xa7cd63, (game.next_random() as i32 & 7) as isize));
+            let roll = (game.next_random() as i32 & 7) as usize;
+            slot!(game, Enemy_Phantoon[E].var_E = crate::game::phantoon_tables::timer(game, Timer::FlameRainHiding, roll));
         }
     };
     [10999850] Phantoon_FadeOutBeforeFirstFireballRain [] {

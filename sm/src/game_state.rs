@@ -238,6 +238,8 @@ pub struct Game {
     pub(crate) kraid_tables: crate::game::kraid_tables::ImportedKraid,
     /// Imported from `loaded_rom` by `register_rom`; see game::phantoon_tables.
     pub(crate) flame_rain: Option<crate::game::phantoon_tables::ImportedFlameRain>,
+    /// Imported from `loaded_rom` by `register_rom`; see game::phantoon_tables.
+    pub(crate) phantoon_timers: Option<crate::game::phantoon_tables::ImportedTimers>,
     /// Imported from `loaded_rom` by `register_rom`; see game::actors::botwoon.
     pub(crate) botwoon_speeds: Option<crate::game::actors::botwoon::ImportedSpeeds>,
     /// Imported from `loaded_rom` by `register_rom`; see game::actors::botwoon.
@@ -1221,6 +1223,7 @@ impl Game {
         self.grapple_aim = crate::game::grapple_aim::import(&image);
         self.kraid_tables = crate::game::kraid_tables::import(&image);
         self.flame_rain = crate::game::phantoon_tables::import(&image);
+        self.phantoon_timers = crate::game::phantoon_tables::import_timers(&image);
         self.botwoon_speeds = crate::game::actors::botwoon::import_speeds(&image);
         self.botwoon_holes = crate::game::actors::botwoon::import_holes(&image);
         self.intro_palette = crate::game::intro_pages::import_intro_palette(&image);
@@ -1476,6 +1479,7 @@ impl Game {
             shooting_stars: None,
             kraid_tables: Default::default(),
             flame_rain: None,
+            phantoon_timers: None,
             samus_binding: None,
             samus_authority: SamusAuthority::LegacyUnrouted,
             samus_mutation_depth: 0,

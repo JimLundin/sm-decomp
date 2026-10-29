@@ -1,12 +1,31 @@
-//! Phantoon's flame-rain positions through the imported `sm_data` table.
+//! Phantoon's random timers and flame-rain positions through the imported `sm_data` tables.
 #![forbid(unsafe_code)]
 use crate::game::imported::Imported;
 use crate::game_state::Game;
 use crate::rom::{RomImage, lorom_offset};
-pub(crate) use sm_data::phantoon::FlameRainPosition;
 use sm_data::phantoon::{
-    FLAME_RAIN_ADDRESS, FLAME_RAIN_BYTES, FlameRainPositions, import_flame_rain,
+    FLAME_RAIN_ADDRESS, FLAME_RAIN_BYTES, FlameRainPositions, TIMERS_ADDRESS, TIMERS_BYTES, Timers,
+    import_flame_rain,
 };
+pub(crate) use sm_data::phantoon::{FlameRainPosition, Timer};
+
+pub(crate) type ImportedTimers = Imported<Timers>;
+
+pub(crate) fn import_timers(image: &RomImage) -> Option<ImportedTimers> {
+    Imported::import(image, TIMERS_ADDRESS, TIMERS_BYTES, Timers::import)
+}
+
+/// Entry `index` of `timer` in the loaded image. The table serves the eight
+/// entries of the imported allocation; otherwise the original indexed load runs.
+pub(crate) fn timer(game: &Game, timer: Timer, index: usize) -> u16 {
+    let rom = game.loaded_rom.as_ref().expect("ROM must be loaded");
+    Imported::from(&game.phantoon_timers, rom)
+        .and_then(|timers| timers.frames(timer, index))
+        .unwrap_or_else(|| {
+            let base = lorom_offset(TIMERS_ADDRESS) as usize + timer.offset();
+            rom.table_word(base, index as isize)
+        })
+}
 
 pub(crate) type ImportedFlameRain = Imported<FlameRainPositions>;
 
