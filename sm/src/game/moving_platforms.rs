@@ -6,6 +6,7 @@ use crate::game::actors;
 use crate::game::actors::access::ActorKey as Key;
 use crate::game::actors::api as actor_api;
 use crate::game::enemy_layouts::{EnemyLayout72, EnemyLayout72Late};
+use crate::game::enemy_speeds::enemy_speed;
 use crate::game::music::QueueSfx3_Max6;
 use crate::game::session_runtime::Runtime;
 
@@ -146,26 +147,10 @@ pub(crate) fn initialize(kind: Kind, game: &mut Game) {
         var_00 = field!(game, e, base.current_instruction) as u8 as u16
     );
     let i = 4 * field!(game, e, var_00) as isize;
-    field!(
-        game,
-        e,
-        var_D = crate::rtl::rom_table_word!(game, 0xa28187, i)
-    );
-    field!(
-        game,
-        e,
-        var_C = crate::rtl::rom_table_word!(game, 0xa28187, i + 1)
-    );
-    field!(
-        game,
-        e,
-        var_F = crate::rtl::rom_table_word!(game, 0xa28187, i + 2)
-    );
-    field!(
-        game,
-        e,
-        var_E = crate::rtl::rom_table_word!(game, 0xa28187, i + 3)
-    );
+    field!(game, e, var_D = enemy_speed!(game, Linear, i));
+    field!(game, e, var_C = enemy_speed!(game, Linear, i + 1));
+    field!(game, e, var_F = enemy_speed!(game, Linear, i + 2));
+    field!(game, e, var_E = enemy_speed!(game, Linear, i + 3));
     field!(
         game,
         e,

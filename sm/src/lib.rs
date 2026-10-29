@@ -356,6 +356,7 @@ pub mod game {
     pub(crate) mod dialogue;
     pub(crate) mod dialogue_ram;
     pub(crate) mod enemy_layouts;
+    pub(crate) mod enemy_speeds;
 
     pub(crate) mod explosion_window;
     pub(crate) mod file_menu;

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["sm", "crates/sm_game"]
+members = ["sm", "crates/sm_data", "crates/sm_game"]
 
 [profile.release]
 debug = "line-tables-only"

@@ -310,6 +310,13 @@ def build(root, rustc, use_cargo=None, frontend=False):
         except (OSError, ValueError):
             pass
     stamp.unlink(missing_ok=True)
+    data = output / "libsm_data.rlib"
+    subprocess.run(
+        common + (["-C", f"incremental={output / 'incremental-sm-data'}"] if incremental else [])
+        + ["--crate-name", "sm_data", "--crate-type", "rlib",
+                  "crates/sm_data/src/lib.rs", "-o", str(data)],
+        cwd=root, check=True,
+    )
     game = output / "libsm_game.rlib"
     subprocess.run(
         common + (["-C", f"incremental={output / 'incremental-sm-game'}"] if incremental else [])
@@ -320,7 +327,8 @@ def build(root, rustc, use_cargo=None, frontend=False):
     subprocess.run(
         common + (["-C", f"incremental={output / 'incremental-sm'}"] if incremental else [])
         + ["--crate-name", "sm", "--crate-type", "rlib", "--cfg", "sm_verify_dll",
-                  "sm/src/lib.rs", "--extern", f"sm_game={game}", "-o", str(library)],
+                  "sm/src/lib.rs", "--extern", f"sm_data={data}",
+                  "--extern", f"sm_game={game}", "-o", str(library)],
         cwd=root, check=True,
     )
     subprocess.run(

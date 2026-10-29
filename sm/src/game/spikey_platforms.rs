@@ -3,6 +3,7 @@
 #![forbid(unsafe_code)]
 use crate::game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::game::enemy_projectiles::host::Effects;
+use crate::game::enemy_speeds::SpeedTable;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::words as fields;
@@ -20,8 +21,7 @@ const REST_TIMER: usize = 0x7806;
 
 /// One word of the 16.16 fall speed rows at 0xA28187.
 fn speed_word(runtime: &Runtime<'_>, index: u16) -> u16 {
-    let rom = runtime.loaded_image().expect("ROM must be loaded");
-    rom.table_word(crate::rom::lorom_offset(0xa28187) as usize, index as isize)
+    runtime.enemy_speed(SpeedTable::Linear, index as isize)
 }
 
 pub(crate) fn initialize(game: &mut Game) {

@@ -63,8 +63,13 @@ version = "0.1.0"
 dependencies = [
  "gl",
  "sdl2-sys",
+ "sm_data",
  "sm_game",
 ]
+
+[[package]]
+name = "sm_data"
+version = "0.1.0"
 
 [[package]]
 name = "sm_game"
