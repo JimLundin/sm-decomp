@@ -26,6 +26,9 @@ use crate::rom::{RomImage, RomRecord, lorom_offset};
 use crate::rtl::rom_table_word;
 use crate::types::{Point16U, SpawnHardcodedPlmArgs};
 use sm_data::botwoon_holes::{ADDRESS as HOLES, BYTES as HOLE_BYTES, BotwoonHoles, Hole};
+use sm_data::botwoon_speeds::{
+    ADDRESS as SPEEDS, BYTES as SPEED_BYTES, BotwoonSpeed, BotwoonSpeeds,
+};
 
 fn initialize_living(e: i32, game: &mut Game) {
     slot!(game, Boss[e].var_A = 24);
@@ -44,8 +47,9 @@ fn initialize_living(e: i32, game: &mut Game) {
         }
     }
     slot!(game, Boss[e].base.current_instruction = 0x9389);
+    let initial = speed_level(game, 0);
     slot!(game, Boss[e]; var_3B = 0x9389, var_D = 0x9878, var_E = 0x9bb7, var_F = 0x9dc0, var_20 = 256,
-        var_38 = rom_table_word!(game, 0xb394bb, 0), var_C = rom_table_word!(game, 0xb394bb, 1),
+        var_38 = initial.speed, var_C = initial.body_travel_time,
         var_33 = 1, var_34 = 1, var_59 = 1, var_36 = 0xffff, var_37 = 0);
     slot!(game, Boss[e].base.properties, |old| old
         | kEnemyProps_Tangible as u16);
@@ -263,7 +267,8 @@ fn select_path(k: u16, game: &mut Game) {
             };
             slot!(game, Boss[e].var_3F = speed);
             let index = (4u16.wrapping_mul(slot!(game, Boss[e].var_3F)) >> 1) as isize;
-            slot!(game, Boss[e]; var_38 = rom_table_word!(game, 0xb394bb, index), var_C = rom_table_word!(game, 0xb394bb, index + 1));
+            let level = speed_level(game, index);
+            slot!(game, Boss[e]; var_38 = level.speed, var_C = level.body_travel_time);
         }
     }
     let bias = if slot!(game, Boss[e].var_33) != 0 {
@@ -278,6 +283,26 @@ fn select_path(k: u16, game: &mut Game) {
             + 4 * i32::from(slot!(game, Boss[e].var_37))) as u16
     );
 }
+pub(crate) type ImportedSpeeds = Imported<BotwoonSpeeds>;
+
+pub(crate) fn import_speeds(image: &RomImage) -> Option<ImportedSpeeds> {
+    Imported::import(image, SPEEDS, SPEED_BYTES, BotwoonSpeeds::import)
+}
+
+/// The speed level whose two words start at word `index` of $B3:94BB. The
+/// record serves it while the loaded image is the imported allocation; any
+/// other image or index runs the original indexed loads.
+fn speed_level(game: &Game, index: isize) -> BotwoonSpeed {
+    let rom = game.loaded_rom.as_ref().expect("ROM must be loaded");
+    Imported::from(&game.botwoon_speeds, rom)
+        .filter(|_| index % 2 == 0)
+        .and_then(|speeds| speeds.level(usize::try_from(index / 2).ok()?))
+        .unwrap_or_else(|| BotwoonSpeed {
+            speed: rom_table_word!(game, 0xb394bb, index),
+            body_travel_time: rom_table_word!(game, 0xb394bb, index + 1),
+        })
+}
+
 pub(crate) type ImportedHoles = Imported<BotwoonHoles>;
 
 pub(crate) fn import_holes(image: &RomImage) -> Option<ImportedHoles> {

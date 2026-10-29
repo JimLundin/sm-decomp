@@ -237,6 +237,8 @@ pub struct Game {
     /// Imported from `loaded_rom` by `register_rom`; see game::phantoon_tables.
     pub(crate) flame_rain: Option<crate::game::phantoon_tables::ImportedFlameRain>,
     /// Imported from `loaded_rom` by `register_rom`; see game::actors::botwoon.
+    pub(crate) botwoon_speeds: Option<crate::game::actors::botwoon::ImportedSpeeds>,
+    /// Imported from `loaded_rom` by `register_rom`; see game::actors::botwoon.
     pub(crate) botwoon_holes: Option<crate::game::actors::botwoon::ImportedHoles>,
     /// Imported from `loaded_rom` by `register_rom`; see game::intro_pages.
     pub(crate) intro_palette: Option<crate::game::intro_pages::ImportedIntroPalette>,
@@ -1206,6 +1208,7 @@ impl Game {
         self.grapple_origins = crate::game::grapple_origins::import(&image);
         self.kraid_tables = crate::game::kraid_tables::import(&image);
         self.flame_rain = crate::game::phantoon_tables::import(&image);
+        self.botwoon_speeds = crate::game::actors::botwoon::import_speeds(&image);
         self.botwoon_holes = crate::game::actors::botwoon::import_holes(&image);
         self.intro_palette = crate::game::intro_pages::import_intro_palette(&image);
         self.area_select_palettes = crate::game::menu_tilemap::import_area_palettes(&image);
@@ -1452,6 +1455,7 @@ impl Game {
             demo_sets: None,
             demo_scenes: None,
             grapple_origins: None,
+            botwoon_speeds: None,
             botwoon_holes: None,
             intro_palette: None,
             area_select_palettes: None,

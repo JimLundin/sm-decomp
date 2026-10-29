@@ -7,6 +7,7 @@
 
 pub mod area_select_palettes;
 pub mod botwoon_holes;
+pub mod botwoon_speeds;
 pub mod ceres_elevator;
 pub mod demo_rooms;
 pub mod enemy_speeds;

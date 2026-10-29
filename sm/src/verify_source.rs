@@ -18,6 +18,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_data/src/botwoon_holes.rs"),
     ),
     (
+        "crates/sm_data/src/botwoon_speeds.rs",
+        include_bytes!("../../crates/sm_data/src/botwoon_speeds.rs"),
+    ),
+    (
         "crates/sm_data/src/ceres_elevator.rs",
         include_bytes!("../../crates/sm_data/src/ceres_elevator.rs"),
     ),
