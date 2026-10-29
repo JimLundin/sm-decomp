@@ -7,11 +7,11 @@ use super::shared::SpawnEprojWithRoomGfx;
 use super::*;
 use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
-use crate::game::session::Point;
 use crate::game::{
     sprite_effect_state::{LegacySpriteDefinition, SpriteSpawn},
     sprite_objects,
 };
+use sm_game::geometry::Point;
 
 pub(super) fn dispatch(ea: u32, k: u16, ctx: &mut impl Host) {
     match ea {

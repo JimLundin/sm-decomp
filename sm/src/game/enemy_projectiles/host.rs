@@ -1,8 +1,8 @@
 //! Enemy gameplay interfaces over the shared Session and explicit external effects.
 #![forbid(unsafe_code)]
-use crate::game::session::Vector32;
 use crate::game::session_access::SessionAccess;
 use crate::rom::RomImage;
+use sm_game::geometry::Vector32;
 
 #[derive(Clone, Copy)]
 pub enum DefinitionField {

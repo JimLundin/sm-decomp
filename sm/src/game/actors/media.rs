@@ -1,7 +1,7 @@
 //! Stable actor media definitions; no gameplay timing or collision ownership.
 #![forbid(unsafe_code)]
 use super::content::{PartRoleId, PoseId};
-use crate::game::session::Point;
+use sm_game::geometry::Point;
 use std::collections::BTreeMap;
 macro_rules! ids { ($($name:ident),+ $(,)?) => { $(
     #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]

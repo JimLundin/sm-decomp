@@ -15,7 +15,7 @@ use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Ke
 use crate::game::constants::bank_86::*;
 use crate::game::constants::bank_a0::*;
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
-use crate::game::session::{Point, Vector32};
+use sm_game::geometry::{Point, Vector32};
 
 fn native_setup_word(address: u16, index: isize, ctx: &mut impl Host) -> u16 {
     let record = ctx.loaded_record(0x86, address);

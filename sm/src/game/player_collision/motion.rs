@@ -8,7 +8,8 @@ use super::{
         Obstruction, VerticalDirection,
     },
 };
-use crate::game::{launch_motion::MovementDirection, session::FixedMotion};
+use crate::game::launch_motion::MovementDirection;
+use sm_game::geometry::FixedMotion;
 
 fn fixed(value: &FixedMotion) -> u32 {
     u32::from(value.whole) << 16 | u32::from(value.fraction)
