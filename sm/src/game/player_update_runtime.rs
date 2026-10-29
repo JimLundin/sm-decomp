@@ -56,13 +56,25 @@ fn exploration_address(offset: isize) -> usize {
         .checked_add_signed(offset)
         .expect("exploration offset overflow")
 }
-impl Effects for Runtime<'_> {
+impl sm_game::progress::exploration::ExplorationHost for Runtime<'_> {
+    fn minimap(&self) -> &sm_game::player_update::state::State {
+        &self.session().minimap
+    }
+    fn minimap_mut(&mut self) -> &mut sm_game::player_update::state::State {
+        &mut self.session_mut().minimap
+    }
     fn imported_exploration_byte(&self, offset: isize) -> u8 {
         self.byte(exploration_address(offset))
     }
     fn set_imported_exploration_byte(&mut self, offset: isize, value: u8) {
         self.set_byte(exploration_address(offset), value);
     }
+    fn map_origin(&self) -> (u16, u16) {
+        let entry = &self.session().room.entry;
+        (entry.map_x, entry.map_y)
+    }
+}
+impl Effects for Runtime<'_> {
     fn area_map_available(&self) -> bool {
         self.word(0x789) != 0
     }

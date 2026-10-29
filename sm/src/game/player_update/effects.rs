@@ -3,11 +3,7 @@
 use super::content::Content;
 use crate::game::player_movement::effects::Host as MovementHost;
 
-pub(crate) trait Effects {
-    /// Exceptional positions relative to the exploration window. A preceding
-    /// map-row write may use a negative displacement; never wrap or clamp it.
-    fn imported_exploration_byte(&self, offset: isize) -> u8;
-    fn set_imported_exploration_byte(&mut self, offset: isize, value: u8);
+pub(crate) trait Effects: sm_game::progress::exploration::ExplorationHost {
     /// Read at the original observation point, including preceding live aliases.
     fn area_map_available(&self) -> bool;
     fn minimap_blink(&self) -> u8;

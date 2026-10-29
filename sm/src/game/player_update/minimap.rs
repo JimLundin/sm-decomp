@@ -3,50 +3,7 @@
 use super::effects::Host;
 use crate::game::visual_host::Record;
 
-struct MapWindow {
-    half: u16,
-    column: u16,
-    y: u16,
-    bit: usize,
-    byte_index: u16,
-}
-fn explored_byte(h: &impl Host, offset: isize) -> u8 {
-    if (0..256).contains(&offset) {
-        h.session().minimap.explored[offset as usize]
-    } else {
-        h.imported_exploration_byte(offset)
-    }
-}
-fn mark_byte(h: &mut impl Host, offset: isize, mask: u8) {
-    let value = explored_byte(h, offset) | mask;
-    if (0..256).contains(&offset) {
-        h.session_mut().minimap.explored[offset as usize] = value;
-    } else {
-        h.set_imported_exploration_byte(offset, value);
-    }
-}
-fn mark_explored(h: &mut impl Host, x: u16, y: u16) -> MapWindow {
-    let x = h.session().room.entry.map_x.wrapping_add(x >> 8);
-    let y = h
-        .session()
-        .room
-        .entry
-        .map_y
-        .wrapping_add(y >> 8)
-        .wrapping_add(1);
-    let half = x & 0x20;
-    let column = x & 0x1f;
-    let bit = usize::from(x & 7);
-    let byte_index = (column >> 3).wrapping_add(4u16.wrapping_mul(half.wrapping_add(y)));
-    mark_byte(h, byte_index as isize, 0x80 >> bit);
-    MapWindow {
-        half,
-        column,
-        y,
-        bit,
-        byte_index,
-    }
-}
+use sm_game::progress::exploration::{MapWindow, explored_byte, mark_byte, mark_explored};
 pub(crate) fn disable_for_boss(h: &mut impl Host) {
     h.session_mut().minimap.disabled = 1;
     for column in 0..5 {

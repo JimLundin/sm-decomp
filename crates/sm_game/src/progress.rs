@@ -3,6 +3,8 @@
 //! protocol. Indices past an owned collection reach the host's legacy aliases.
 use crate::gameplay_flag_state::{FlagCompatibility, GameplayFlags};
 
+pub mod exploration;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FlagColumn {
     Events,
