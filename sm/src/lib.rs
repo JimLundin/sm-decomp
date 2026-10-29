@@ -397,6 +397,7 @@ pub mod game {
     pub mod animated_tiles;
     pub mod enemy_projectiles;
     pub(crate) mod equipment_menu;
+    pub(crate) mod escape_typewriter;
     pub(crate) mod external_inputs;
     pub(crate) mod gameplay_flag_host;
     pub(crate) mod gameplay_flag_runtime;

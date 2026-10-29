@@ -38,10 +38,8 @@ use crate::game::room_state::load_fx_entry as LoadFxEntry;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::session_runtime::player_mother_brain;
 
-use crate::game::sm_a6::{
-    HandleTypewriterText_Ext, HomingReversal, Ridley_Func_98, SetupZebesEscapeTypewriter,
-    homing_velocity,
-};
+use crate::game::escape_typewriter::{HandleTypewriterText_Ext, SetupZebesEscapeTypewriter};
+use crate::game::sm_a6::{HomingReversal, Ridley_Func_98, homing_velocity};
 
 use crate::ram_map::slot;
 
