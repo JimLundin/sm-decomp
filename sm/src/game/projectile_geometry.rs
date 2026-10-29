@@ -91,7 +91,7 @@ pub(crate) const SLOPE_FACTORS: [u16; 32] = [
 pub(crate) fn sine_offset<const NATIVE_BACKING: bool>(
     angle: u16,
     amplitude: u16,
-) -> crate::game::session::Point {
+) -> sm_game::geometry::Point {
     let scale = |angle: u16| {
         // Both old callers supplied even byte offsets with wrapping word multiplication.
         let sample = SINE_COSINE[64 + usize::from(angle & 0x7fff)];
@@ -113,5 +113,5 @@ pub(crate) fn sine_offset<const NATIVE_BACKING: bool>(
     } else {
         scale(u16::from(angle.wrapping_add(128))).wrapping_neg()
     };
-    crate::game::session::Point { x, y }
+    sm_game::geometry::Point { x, y }
 }

@@ -4,10 +4,10 @@ use super::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use super::{api, combat};
 use crate::game::enemy_script::EnemyScript;
 use crate::game::player_projectiles::content::{self, table};
-use crate::game::session::Point;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::word_arrays;
+use sm_game::geometry::Point;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Kind {

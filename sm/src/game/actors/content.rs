@@ -5,12 +5,10 @@ use super::{
     media::{AppearanceId, FrameId, VisualResourceId},
 };
 use crate::{
-    game::{
-        room_entry::{content::Capture, world::ResourceId},
-        session::Point,
-    },
+    game::room_entry::{content::Capture, world::ResourceId},
     rom::RomImage,
 };
+use sm_game::geometry::Point;
 use std::collections::BTreeMap;
 
 macro_rules! ids { ($($name:ident),+ $(,)?) => { $(

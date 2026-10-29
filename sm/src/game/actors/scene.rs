@@ -4,7 +4,7 @@ use super::{
     content::{ActorLiveRecord, PoseId},
     media::{AppearanceId, FrameId, MaterialId, VisualResourceId},
 };
-use crate::game::session::Point;
+use sm_game::geometry::Point;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum ActorDrawMode {
     Base,

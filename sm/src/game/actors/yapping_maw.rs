@@ -7,12 +7,12 @@ use crate::game::enemy_projectiles::{self, SpawnEprojWithGfx};
 use crate::game::enemy_script::EnemyScript;
 use crate::game::enemy_speeds::enemy_speed;
 use crate::game::music::QueueSfx2_Max6;
-use crate::game::session::Point;
 use crate::game::session_runtime::{Runtime, correct_previous_position, player_command};
 use crate::game::sprite_effect_runtime as sprites;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::rtl::{abs16, rom_table_word, words};
+use sm_game::geometry::Point;
 
 pub(crate) fn initialize(game: &mut Game) {
     let E = word!(game.cur_enemy_index) as i32;
