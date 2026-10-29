@@ -36,11 +36,6 @@ crate::typed_struct! {
         pub field_0: u16;
         pub field_2: VoidP;
     }
-
-    pub struct KraidSinkTable {
-        pub field_0, field_2: u16;
-        pub field_4: VoidP;
-    }
 }
 
 pub use crate::types::Consts_A7;
@@ -967,9 +962,9 @@ pub unsafe fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
                         0x400,
                     )
                     .load(game);
-                    if ((slot!(game, Enemy_Kraid[0i32].base.y_pos)) as i16).wrapping_sub(
-                        ((*(rom_ptr!(game, KraidSinkTable; 0xa7c5e7))).field_0) as i16,
-                    ) >= 0
+                    if ((slot!(game, Enemy_Kraid[0i32].base.y_pos)) as i16)
+                        .wrapping_sub(actors::kraid_sinking::row(0, game).word(0) as i16)
+                        >= 0
                     {
                         word! {game; my_counter = 0; my_counter2 = word!(game.vram_write_queue_tail); }
                         true
@@ -982,70 +977,20 @@ pub unsafe fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
             };
             loop {
                 if queue_transfer {
-                    if !((*(rom_ptr!(game, KraidSinkTable; 0xa7c5e7))
-                        .offset(word!(game.my_counter) as isize))
-                    .field_0
-                        != 0xffff
-                        && ((slot!(game, Enemy_Kraid[0i32].base.y_pos)) as i16).wrapping_sub(
-                            ((*(rom_ptr!(game, KraidSinkTable; 0xa7c5e7))
-                                .offset(word!(game.my_counter) as isize))
-                            .field_0) as i16,
-                        ) >= 0)
+                    let entry =
+                        actors::kraid_sinking::row(usize::from(word!(game.my_counter)), game);
+                    if !(entry.word(0) != 0xffff
+                        && ((slot!(game, Enemy_Kraid[0i32].base.y_pos)) as i16)
+                            .wrapping_sub(entry.word(0) as i16)
+                            >= 0)
                     {
                         break 's_100;
                     }
-                    let mut v2: i32 = (0xd0 + (word!(game.my_counter2) as i32)) as i32;
-                    match (
-                        64,
-                        usize::try_from((v2) as isize + offset_of!(VramWriteEntry, size) as isize)
-                            .expect("VRAM entry outside RAM"),
-                    ) {
-                        (value, at) => {
-                            let bytes = u16::to_ne_bytes(value);
-                            game.ram().write_byte(at, bytes[0]);
-                            game.ram().write_byte(at + 1, bytes[1]);
-                        }
-                    };
-                    match (
-                        0x2fc0 as VoidP,
-                        usize::try_from(
-                            (v2) as isize + offset_of!(VramWriteEntry, src.addr) as isize,
-                        )
-                        .expect("VRAM entry outside RAM"),
-                    ) {
-                        (value, at) => {
-                            let bytes = u16::to_ne_bytes(value);
-                            game.ram().write_byte(at, bytes[0]);
-                            game.ram().write_byte(at + 1, bytes[1]);
-                        }
-                    };
-                    match (
-                        0x7e,
-                        usize::try_from(
-                            (v2) as isize + offset_of!(VramWriteEntry, src.bank) as isize,
-                        )
-                        .expect("VRAM entry outside RAM"),
-                    ) {
-                        (value, at) => game.ram().write_byte(at, value),
-                    };
-                    match (
-                        ((*(rom_ptr!(game, KraidSinkTable; 0xa7c5e7))
-                            .offset(word!(game.my_counter) as isize))
-                        .field_2 as i32
-                            + ((game.ram().read_byte(0x59) as i32 & 0xfc) << 8))
-                            as u16,
-                        usize::try_from(
-                            (v2) as isize + offset_of!(VramWriteEntry, vram_dst) as isize,
-                        )
-                        .expect("VRAM entry outside RAM"),
-                    ) {
-                        (value, at) => {
-                            let bytes = u16::to_ne_bytes(value);
-                            game.ram().write_byte(at, bytes[0]);
-                            game.ram().write_byte(at + 1, bytes[1]);
-                        }
-                    };
-                    word!(game.vram_write_queue_tail = (word!(game.my_counter2)).wrapping_add(7));
+                    actors::kraid_sinking::queue_tiles(
+                        word!(game.my_counter2),
+                        entry.word(2),
+                        game,
+                    );
                 }
                 let mut _coret_: u8 = crate::game::display_refresh::wait(true, game);
                 if _coret_ != 0 {
@@ -1073,82 +1018,8 @@ pub unsafe fn Kraid_PlaySoundEveryHalfSecond(game: &mut Game) {
     }
 }
 pub unsafe fn Kraid_HandleSinking(game: &mut Game) {
-    unsafe {
-        let mut i: i32 = 0;
-        loop {
-            let mut v1: i16 =
-                (*(rom_ptr!(game, KraidSinkTable; 0xa7c5e7)).offset(i as isize)).field_0 as i16;
-            if v1 < 0 {
-                break;
-            }
-            if v1 as i32 == slot!(game, Enemy_Kraid[0i32].base.y_pos) as i32 {
-                if ((*(rom_ptr!(game, KraidSinkTable; 0xa7c5e7)).offset(i as isize)).field_2
-                    & 0x8000)
-                    == 0
-                {
-                    let v2: u16 = word!(game.vram_write_queue_tail);
-                    let mut v3 = (0xd0 + (word!(game.vram_write_queue_tail) as i32)) as i32;
-                    match (
-                        64,
-                        usize::try_from((v3) as isize + offset_of!(VramWriteEntry, size) as isize)
-                            .expect("VRAM entry outside RAM"),
-                    ) {
-                        (value, at) => {
-                            let bytes = u16::to_ne_bytes(value);
-                            game.ram().write_byte(at, bytes[0]);
-                            game.ram().write_byte(at + 1, bytes[1]);
-                        }
-                    };
-                    match (
-                        12224 as VoidP,
-                        usize::try_from(
-                            (v3) as isize + offset_of!(VramWriteEntry, src.addr) as isize,
-                        )
-                        .expect("VRAM entry outside RAM"),
-                    ) {
-                        (value, at) => {
-                            let bytes = u16::to_ne_bytes(value);
-                            game.ram().write_byte(at, bytes[0]);
-                            game.ram().write_byte(at + 1, bytes[1]);
-                        }
-                    };
-                    match (
-                        126,
-                        usize::try_from(
-                            (v3) as isize + offset_of!(VramWriteEntry, src.bank) as isize,
-                        )
-                        .expect("VRAM entry outside RAM"),
-                    ) {
-                        (value, at) => game.ram().write_byte(at, value),
-                    };
-                    match (
-                        ((*(rom_ptr!(game, KraidSinkTable; 0xa7c5e7)).offset(i as isize)).field_2
-                            as i32
-                            + ((game.ram().read_byte(0x59) as i32 & 0xfc) << 8))
-                            as u16,
-                        usize::try_from(
-                            (v3) as isize + offset_of!(VramWriteEntry, vram_dst) as isize,
-                        )
-                        .expect("VRAM entry outside RAM"),
-                    ) {
-                        (value, at) => {
-                            let bytes = u16::to_ne_bytes(value);
-                            game.ram().write_byte(at, bytes[0]);
-                            game.ram().write_byte(at + 1, bytes[1]);
-                        }
-                    };
-                    word!(game.vram_write_queue_tail = (v2).wrapping_add(7));
-                }
-                CallKraidSinkTableFunc(
-                    (((*(rom_ptr!(game, KraidSinkTable; 0xa7c5e7)).offset(i as isize)).field_4)
-                        as u32)
-                        | (0xa70000u32),
-                    game,
-                );
-                return;
-            }
-            i += 1;
-        }
+    if let Some(callback) = actors::kraid_sinking::sink_row(game) {
+        unsafe { CallKraidSinkTableFunc(callback, game) };
     }
 }
 crate::game::callback_dispatch! {
