@@ -29,6 +29,7 @@ pub mod visual_state;
 pub mod actors {
     pub mod botwoon_death;
     pub mod overlap;
+    pub mod state;
 }
 pub mod enemy_projectiles {
     pub mod tables;

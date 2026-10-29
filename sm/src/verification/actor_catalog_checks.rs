@@ -1,6 +1,7 @@
 //! Actual constructor/scene contracts; these are not renderer or contact-route tests.
-use super::{content::*, identity::*, media::*, scene::*, state::Actors};
+use super::{content::*, identity::*, media::*, scene::*};
 use crate::game::{room_entry::world::*, session::Point};
+use sm_game::actors::state::Actors;
 use std::{collections::BTreeMap, sync::Arc};
 
 fn fixture(swap_frames: bool, default_appearance: AppearanceId) -> Arc<WorldBinding> {

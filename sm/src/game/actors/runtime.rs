@@ -1,10 +1,8 @@
 //! Actor compatibility implementations on the single aggregate Runtime.
 #![forbid(unsafe_code)]
-use super::{
-    access::*,
-    state::{Actor, SpawnRecord},
-};
+use super::access::*;
 use crate::game::session_runtime::Runtime;
+use sm_game::actors::state::{Actor, SpawnRecord};
 impl ActorAccess for Runtime<'_> {
     #[cfg(sm_verify_dll)]
     fn actor_movement_observe(&mut self, tag: u8) {

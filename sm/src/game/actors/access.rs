@@ -1,8 +1,8 @@
 //! Borrowed actor reads and exclusive edits across the single compatibility codec.
 #![forbid(unsafe_code)]
-use super::state::{Actor, SpawnRecord};
 use crate::game::session_access::SessionAccess;
 use core::ops::Deref;
+use sm_game::actors::state::{Actor, SpawnRecord};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) struct ActorKey(u16);

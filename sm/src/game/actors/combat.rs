@@ -8,7 +8,6 @@ use super::{
         DefinitionRoutine, DefinitionWord,
     },
     effects::ActorHost,
-    state::Actor,
 };
 use crate::game::{
     combat_rules::{self as rules, GrappleOutcome, HealthResponse, LatchMode, Shot, ShotResponse},
@@ -20,6 +19,7 @@ use crate::game::{
     sprite_effect_state::{LegacySpriteDefinition, SpriteSpawn},
     sprite_objects,
 };
+use sm_game::actors::state::Actor;
 use sm_game::geometry::Point;
 
 pub(super) fn current(h: &impl ActorAccess) -> ActorKey {
