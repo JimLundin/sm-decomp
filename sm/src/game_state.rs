@@ -230,6 +230,8 @@ pub struct Game {
     pub(crate) demo_scenes: Option<crate::game::demo_rooms::ImportedScenes>,
     /// Imported from `loaded_rom` by `register_rom`; see game::shooting_stars.
     pub(crate) shooting_stars: Option<crate::game::shooting_stars::ImportedShootingStars>,
+    /// Imported from `loaded_rom` by `register_rom`; see game::grapple_origins.
+    pub(crate) grapple_origins: Option<crate::game::grapple_origins::ImportedOrigins>,
     /// Imported from `loaded_rom` by `register_rom`; see game::kraid_tables.
     pub(crate) kraid_tables: crate::game::kraid_tables::ImportedKraid,
     /// Imported from `loaded_rom` by `register_rom`; see game::phantoon_tables.
@@ -1195,6 +1197,7 @@ impl Game {
         self.ceres_rotation = crate::game::ceres_elevator::import(&image);
         self.demo_sets = crate::game::demo_rooms::import_sets(&image);
         self.shooting_stars = crate::game::shooting_stars::import(&image);
+        self.grapple_origins = crate::game::grapple_origins::import(&image);
         self.kraid_tables = crate::game::kraid_tables::import(&image);
         self.flame_rain = crate::game::phantoon_tables::import(&image);
         self.loaded_rom = Some(image);
@@ -1439,6 +1442,7 @@ impl Game {
             ceres_rotation: None,
             demo_sets: None,
             demo_scenes: None,
+            grapple_origins: None,
             shooting_stars: None,
             kraid_tables: Default::default(),
             flame_rain: None,

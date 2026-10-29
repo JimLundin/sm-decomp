@@ -362,6 +362,7 @@ pub mod game {
     pub(crate) mod file_menu;
     pub(crate) mod game_over;
     pub(crate) mod gameplay;
+    pub(crate) mod grapple_origins;
     pub(crate) mod grapple_rope;
     pub(crate) mod grapple_swing;
     pub(crate) mod imported;
