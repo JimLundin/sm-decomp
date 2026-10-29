@@ -5,12 +5,12 @@ use super::{
     combat,
 };
 use crate::game::enemy_layouts::EnemyLayout40 as Flea;
+use crate::game::enemy_speeds::enemy_speed;
 use crate::game::session_runtime::Runtime;
 use crate::game::session_runtime::{actor_cosine, actor_sine};
 use crate::game::visual_runtime::darken_fireflea_room;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
-use crate::rtl::rom_table_word;
 
 fn phase<const INITIAL: bool>(key: i32, game: &Game) -> u16 {
     if INITIAL {
@@ -40,9 +40,9 @@ fn speed(key: i32, game: &mut Game) {
     }
     slot!(game, Flea[key].var_02 = index);
     let index = (index >> 1) as isize;
-    let high = rom_table_word!(game, 0xa28187, index);
+    let high = enemy_speed!(game, Linear, index);
     slot!(game, Flea[key].var_B = high);
-    let low = rom_table_word!(game, 0xa28187, index + 1);
+    let low = enemy_speed!(game, Linear, index + 1);
     slot!(game, Flea[key].var_A = low);
 }
 fn radius(key: i32, game: &mut Game) {
@@ -86,8 +86,8 @@ pub(crate) fn advance(game: &mut Game) {
         slot!(game, Flea[key].var_D, |old| old.wrapping_add(step));
     } else {
         let index = (slot!(game, Flea[key].var_02) >> 1) as isize;
-        let step = (u32::from(rom_table_word!(game, 0xa28187, index)) << 16)
-            | u32::from(rom_table_word!(game, 0xa28187, index + 1));
+        let step = (u32::from(enemy_speed!(game, Linear, index)) << 16)
+            | u32::from(enemy_speed!(game, Linear, index + 1));
         slot!(game, Flea[key].base(y_pos, y_subpos) += step);
         if (slot!(game, Flea[key].base.y_pos) as i16)
             .wrapping_sub(slot!(game, Flea[key].var_00) as i16)

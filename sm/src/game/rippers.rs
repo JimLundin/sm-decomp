@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 use crate::game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::game::actors::{api, combat};
+use crate::game::enemy_speeds::SpeedTable;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 
@@ -25,10 +26,7 @@ fn set_velocity(h: &mut Runtime<'_>, key: Key, speed: u16, forward: bool) {
     let index = (speed >> 1) as isize + if forward { 0 } else { 2 };
     // Publish the whole word before reading the fraction, including failure.
     for (offset, variable) in [(0, 3), (1, 2)] {
-        let value = h
-            .loaded_image()
-            .expect("ROM must be loaded")
-            .table_word(crate::rom::lorom_offset(0xa28187) as usize, index + offset);
+        let value = h.enemy_speed(SpeedTable::Linear, index + offset);
         h.edit_actor(key, Native, |actor| actor.variables[variable] = value);
     }
 }
