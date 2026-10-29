@@ -378,6 +378,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/actors/refill_candy.rs"),
     ),
     (
+        "sm/src/game/actors/shaktool.rs",
+        include_bytes!("game/actors/shaktool.rs"),
+    ),
+    (
         "sm/src/game/actors/sidehopper.rs",
         include_bytes!("game/actors/sidehopper.rs"),
     ),

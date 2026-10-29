@@ -30,6 +30,7 @@ pub(in crate::game) mod refill_candy;
 pub(in crate::game) mod reflec;
 pub(in crate::game) mod roach;
 pub(in crate::game) mod scene;
+pub(crate) mod shaktool;
 pub(in crate::game) mod sidehopper;
 pub(crate) mod snapshot;
 pub(in crate::game) mod wall_crawlers;

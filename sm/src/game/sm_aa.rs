@@ -23,7 +23,6 @@ use crate::game::room_mechanisms::{spawn_collision, spawn_hardcoded};
 
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::palette_effects::{self, torizo};
-use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::visual_runtime::initialize_bomb_torizo_haze;
 
@@ -380,130 +379,7 @@ pub unsafe fn Torizo_D6F7(k: u16, j: u16, game: &mut Game) {
         };
     }
 }
-pub unsafe fn Shaktool_D956(k: u16, jp: EnemyScript, a: u16, game: &mut Game) -> EnemyScript {
-    let E: i32 = k as i32;
-    let v3: i32 = a as u8 as i32;
-    slot!(
-        game,
-        Enemy_Shaktool[E].base(x_pos, x_subpos) +=
-            ((kSinCosTable8bit_Sext[(v3 + 64) as usize] as i32) << 8) as u32
-    );
-    slot!(
-        game,
-        Enemy_Shaktool[E].base(y_pos, y_subpos) +=
-            ((kSinCosTable8bit_Sext[v3 as usize] as i32) << 8) as u32
-    );
-    jp
-}
 pub use self::Torizo_Instr_7 as Shaktool_Instr_6;
-fn shaktool_segments(base: u16) -> impl Iterator<Item = i32> {
-    [0, 64, 128, 192, 256, 320, 384]
-        .into_iter()
-        .map(move |offset| i32::from(base) + offset)
-}
-pub unsafe fn Shaktool_DB0E(k: u16, a: u16, game: &mut Game) {
-    let shakt_var_E: u16 = slot!(game, Enemy_Shaktool[k as i32].var_E);
-    for segment in shaktool_segments(shakt_var_E) {
-        slot!(game, Enemy_Shaktool[segment].parameter_1 = a);
-    }
-}
-pub unsafe fn Shaktool_DB27(k: u16, a: u16, game: &mut Game) {
-    let shakto_var_E: u16 = slot!(game, Enemy_Shaktool[k as i32].var_E);
-    for segment in shaktool_segments(shakto_var_E) {
-        slot!(game, Enemy_Shaktool[segment].var_A = a);
-    }
-}
-pub unsafe fn Shaktool_DB40(k: u16, a: u16, game: &mut Game) {
-    let shakto_var_E: u16 = slot!(game, Enemy_Shaktool[k as i32].var_E);
-    for segment in shaktool_segments(shakto_var_E) {
-        slot!(game, Enemy_Shaktool[segment].var_B = a);
-    }
-}
-pub unsafe fn Shaktool_DB59(k: u16, game: &mut Game) {
-    let base: u16 = slot!(game, Enemy_Shaktool[k as i32].var_E);
-    let middle = i32::from(base) + 192;
-    slot!(
-        game,
-        Enemy_Shaktool[middle].var_D = slot!(game, Enemy_Shaktool[middle].var_D) ^ 0x8000
-    );
-    for near_offset in [64, 128, 192] {
-        let far = i32::from(base) + 448 - near_offset;
-        let far_value: u16 = slot!(game, Enemy_Shaktool[far].var_B);
-        let near = i32::from(base) + near_offset;
-        slot!(
-            game,
-            Enemy_Shaktool[far].var_B = (slot!(game, Enemy_Shaktool[near].var_B) ^ 0x8000) & 0xff00
-        );
-        slot!(
-            game,
-            Enemy_Shaktool[near].var_B = (far_value ^ 0x8000) & 0xff00
-        );
-    }
-    let far = i32::from(base) + 384;
-    let near = i32::from(base);
-    macro_rules! swap_endpoints {
-        ($($field:ident),+) => {
-            $(
-                let value: u16 = slot!(game, Enemy_Shaktool[far].base.$field);
-                slot!(game, Enemy_Shaktool[far].base.$field =
-                    slot!(game, Enemy_Shaktool[near].base.$field));
-                slot!(game, Enemy_Shaktool[near].base.$field = value);
-            )+
-        };
-    }
-    swap_endpoints!(x_subpos, y_subpos, x_pos, y_pos);
-    for segment in shaktool_segments(base).skip(1).take(5) {
-        slot!(game, Enemy_Shaktool[segment].base.x_subpos = 0x8000);
-    }
-    for segment in shaktool_segments(base).skip(1).take(5) {
-        slot!(game, Enemy_Shaktool[segment].base.y_subpos = 0x8000);
-    }
-}
-pub unsafe fn Shaktool_DC07(k: u16, game: &mut Game) {
-    let E: i32 = k as i32;
-    let v2: u16 = if (slot!(game, Enemy_Shaktool[E].parameter_1) & 0x8000) != 0 {
-        (slot!(game, Enemy_Shaktool[E].var_B)).wrapping_sub(slot!(game, Enemy_Shaktool[E].var_A))
-    } else {
-        (slot!(game, Enemy_Shaktool[E].var_A)).wrapping_sub(slot!(game, Enemy_Shaktool[E].var_B))
-    };
-    slot!(
-        game,
-        Enemy_Shaktool[E].var_C = (4u16).wrapping_mul((v2.to_ne_bytes()[1]) as u16)
-    );
-}
-pub unsafe fn Shaktool_DC2A(k: u16, game: &mut Game) {
-    let E: i32 = k as i32;
-    let v3: i32 = slot!(byte game, Enemy_Shaktool[E].var_B[1]) as i32;
-    let v5: i32 = k as i32 >> 1;
-    slot!(
-        game,
-        Enemy_Shaktool[E].base(x_pos, x_subpos) =
-            (((shaktool_tables::sine(game, v3 as isize) as i16 as i32) << 8i32) as u32)
-                .wrapping_add(words!((
-                    word!(game.enemy_drawing_queue[(v5 + 91)]),
-                    word!(game.enemy_drawing_queue[(v5 + 92)])
-                )),)
-    );
-    slot!(
-        game,
-        Enemy_Shaktool[E].base(y_pos, y_subpos) =
-            (((shaktool_tables::negative_cosine(game, v3 as isize) as i16 as i32) << 8i32) as u32)
-                .wrapping_add(words!((
-                    word!(game.enemy_drawing_queue[(v5 + 93)]),
-                    word!(game.enemy_drawing_queue[(v5 + 94)])
-                )),)
-    );
-}
-pub unsafe fn Shaktool_DC6F(k: u16, game: &mut Game) {
-    unsafe {
-        let E: i32 = k as i32;
-        Shaktool_DB40(k, slot!(game, Enemy_Shaktool[E].var_A), game);
-        let shakto_var_E: u16 = slot!(game, Enemy_Shaktool[E].var_E);
-        for (index, segment) in shaktool_segments(shakto_var_E).enumerate() {
-            slot!(game, Enemy_Shaktool[segment].var_C = g_word_AADEE9[index]);
-        }
-    }
-}
 pub unsafe fn sub_AAE784(game: &mut Game) {
     {
         word_transfers!(game, descending, 16;
@@ -608,7 +484,7 @@ crate::game::callback_dispatch! {
         slot!(game, Enemy_Shaktool[E].base.current_instruction = piece.instruction_list);
         slot!(game, Enemy_Shaktool[E].base.layer = piece.layer);
         if shakto_parameter_2 != 0 {
-            Shaktool_DC2A(word!(game.cur_enemy_index), game);
+            actors::shaktool::position_relative_to_previous(word!(game.cur_enemy_index), game);
         }
     };
     [11198255] Shaktool_Touch [] {
@@ -619,7 +495,7 @@ crate::game::callback_dispatch! {
         let E: i32 = word!(game.cur_enemy_index) as i32;
         if slot!(game, Enemy_Shaktool[E].base.health) == 0 {
             let shakto_var_E: u16 = slot!(game, Enemy_Shaktool[E].var_E);
-            for segment in shaktool_segments(shakto_var_E) {
+            for segment in actors::shaktool::segments(shakto_var_E) {
                 slot!(game, Enemy_Shaktool[segment].base.properties = 512);
             }
         }
@@ -1182,15 +1058,15 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     @prefix { let E: i32 = k as i32; };
-    [11196721] Shaktool_Instr_2 [Shaktool_D956(k, jp, (slot!(game, Enemy_Shaktool[EX].var_D)) ^ (0x80u16), game)] {
+    [11196721] Shaktool_Instr_2 [actors::shaktool::move_piece_one_pixel(k, jp, (slot!(game, Enemy_Shaktool[EX].var_D)) ^ (0x80u16), game)] {
 
         let EX: i32 = slot!(game, Enemy_Shaktool[E].var_E) as i32 + 192;
     };
-    [11196735] Shaktool_Instr_3 [Shaktool_D956(k, jp, slot!(game, Enemy_Shaktool[EX].var_D), game)] {
+    [11196735] Shaktool_Instr_3 [actors::shaktool::move_piece_one_pixel(k, jp, slot!(game, Enemy_Shaktool[EX].var_D), game)] {
 
         let EX: i32 = slot!(game, Enemy_Shaktool[E].var_E) as i32 + 192;
     };
-    [11196746] Shaktool_Instr_4 [Shaktool_D956(
+    [11196746] Shaktool_Instr_4 [actors::shaktool::move_piece_one_pixel(
             k,
             jp,
             u16::from_ne_bytes([
@@ -1200,7 +1076,7 @@ crate::game::callback_dispatch! {
             game,
         )] {
     };
-    [11196755] Shaktool_Instr_5 [Shaktool_D956(
+    [11196755] Shaktool_Instr_5 [actors::shaktool::move_piece_one_pixel(
             k,
             jp,
             u16::from_ne_bytes([
@@ -1213,7 +1089,7 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11196858] Shaktool_Instr_1 [] {
         let shakt_var_E: u16 = slot!(game, Enemy_Shaktool[k as i32].var_E);
-        for (index, segment) in shaktool_segments(shakt_var_E).enumerate() {
+        for (index, segment) in actors::shaktool::segments(shakt_var_E).enumerate() {
             let pre_instruction = shaktool_tables::piece(game, index as isize).function;
             slot!(game, Enemy_Shaktool[segment].var_F = pre_instruction);
         }
@@ -1309,7 +1185,7 @@ crate::game::callback_dispatch! {
         }
     };
     [11197612] Shaktool_DCAC [] {
-        Shaktool_DC2A(k, game);
+        actors::shaktool::position_relative_to_previous(k, game);
         let E: i32 = k as i32;
         let mut shakto_var_C: u16 = if (slot!(game, Enemy_Shaktool[E].parameter_1) & 0x4000) != 0 {
             slot!(game, Enemy_Shaktool[E].var_A = (slot!(game, Enemy_Shaktool[E].var_A)).wrapping_add(256));
@@ -1360,17 +1236,17 @@ crate::game::callback_dispatch! {
             }
         {
             if (slot!(game, Enemy_Shaktool[E].parameter_1) & 0x2000) != 0 {
-                Shaktool_DB0E(k, (slot!(game, Enemy_Shaktool[E].parameter_1) ^ 0x8000) & 0x8fff, game);
+                actors::shaktool::set_movement_options(k, (slot!(game, Enemy_Shaktool[E].parameter_1) ^ 0x8000) & 0x8fff, game);
             } else {
                 slot!(game, Enemy_Shaktool[E].base.x_pos = x_pos);
                 slot!(game, Enemy_Shaktool[E].base.y_pos = y_pos);
-                Shaktool_DB59(k, game);
-                Shaktool_DB0E(
+                actors::shaktool::flip(k, game);
+                actors::shaktool::set_movement_options(
                     word!(game.cur_enemy_index),
                     (slot!(game, Enemy_Shaktool[E].parameter_1)) | (0x2000u16),
                     game,
                 );
-                Shaktool_DB0E(
+                actors::shaktool::set_movement_options(
                     word!(game.cur_enemy_index),
                     (slot!(game, Enemy_Shaktool[E].parameter_1)) & (0xbfffu16),
                     game,
@@ -1384,9 +1260,9 @@ crate::game::callback_dispatch! {
             } else {
                 ((v7) as u16).wrapping_add(0x4000)
             };
-            Shaktool_DB27(k, v8, game);
+            actors::shaktool::set_facing_angles(k, v8, game);
             for i in (0i32..=12).rev().step_by(2) {
-                Shaktool_DC07(k, game);
+                actors::shaktool::set_collision_angle_delta(k, game);
                 let EK: i32 = k as i32;
                 slot!(game, Enemy_Shaktool[EK].var_F = (0xaadcaai32) as u16);
                 slot!(game, Enemy_Shaktool[EK].base.current_instruction = shaktool_tables::piece(game, (i >> 1) as isize).head_bob);
@@ -1400,15 +1276,15 @@ crate::game::callback_dispatch! {
                 slot!(game, Enemy_Shaktool[E].var_A = (slot!(game, Enemy_Shaktool[E].var_A)).wrapping_add(256));
             } else {
                 if ((slot!(game, Enemy_Shaktool[E].var_A) ^ slot!(game, Enemy_Shaktool[E].var_B)) & 0xff00) == 0 {
-                    Shaktool_DC6F(k, game);
+                    actors::shaktool::set_curling_angles(k, game);
                     slot!(game, Enemy_Shaktool[E].var_D = 30720);
-                    Shaktool_DB0E(k, (slot!(game, Enemy_Shaktool[E].parameter_1)) & (0xdfffu16), game);
+                    actors::shaktool::set_movement_options(k, (slot!(game, Enemy_Shaktool[E].parameter_1)) & (0xdfffu16), game);
                     slot!(game, Enemy_Shaktool[E].var_D = ((slot!(byte game, Enemy_Shaktool[E].var_D[1]) as i32) << 8) as u16);
                 }
                 let v2: u16 = (slot!(game, Enemy_Shaktool[E].var_D)).wrapping_add(slot!(game, Enemy_Shaktool[E].var_C));
                 slot!(game, Enemy_Shaktool[E].var_D = v2);
                 if v2 >= 0xf000 {
-                    Shaktool_DB0E(k, (slot!(game, Enemy_Shaktool[E].parameter_1)) | (0x4000u16), game);
+                    actors::shaktool::set_movement_options(k, (slot!(game, Enemy_Shaktool[E].parameter_1)) | (0x4000u16), game);
                 }
             }
         };
