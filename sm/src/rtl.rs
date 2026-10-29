@@ -83,6 +83,16 @@ macro_rules! register_writes {
     (@write $game:ident; mirror($address:expr, $value:expr, $offset:expr, $before:expr $(, $($tail:tt)*)?)) => {
         $crate::rtl::write_register_and_mirror($address, $value, $offset, $before, $game $(, $($tail)*)?)
     };
+    (@write $game:ident; show($display:expr $(,)?)) => {{
+        use $crate::game::display_transfers::DisplayRegister as _;
+        let display = $display;
+        $crate::rtl::WriteReg(display.register(), display.value(), $game)
+    }};
+    (@write $game:ident; show_mirror($display:expr, $offset:expr, $before:expr $(,)?)) => {{
+        use $crate::game::display_transfers::DisplayRegister as _;
+        let display = $display;
+        $crate::rtl::write_register_and_mirror(display.register(), display.value(), $offset, $before, $game)
+    }};
 }
 pub(crate) use register_writes;
 

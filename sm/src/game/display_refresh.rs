@@ -13,6 +13,10 @@ use crate::rtl::{
     VMADDH, VMADDL, VMAIN, VMDATAL, W12SEL, W34SEL, WBGLOG, WH0, WH1, WH2, WH3, WMADDH, WMADDL,
     WMADDM, WOBJLOG, WOBJSEL, WriteReg, WriteRegWord,
 };
+use sm_game::display::control::{
+    BgMode, Brightness, FixedColor, Layers, MainScreen, MainWindowMask, ScreenSettings, SubScreen,
+    SubWindowMask,
+};
 pub(crate) use sm_game::display::transfer::ScrollingLayout as ScrollingDmaLayout;
 
 /// Set the forced-blank mirror bit for the next display refresh.
@@ -32,14 +36,14 @@ pub(crate) unsafe fn pause_graphics(paused: bool, game: &mut Game) {
     };
     unsafe {
         crate::rtl::register_writes! { game;
-            mirror(OBSEL as u16, objects, 0x52, false); mirror(BGMODE as u16, 9, 0x55, false);
+            mirror(OBSEL as u16, objects, 0x52, false); show_mirror(BgMode::MODE1_BG3_PRIORITY, 0x55, false);
             mirror(BG12NBA as u16, 0, 0x5d, true); mirror(BG34NBA as u16, 4, 0x5e, true);
             mirror(BG1SC as u16, bg1, 0x58, true); mirror(BG2SC as u16, bg2, 0x59, true);
             mirror(BG3SC as u16, bg3, 0x5a, true); mirror(BG4SC as u16, 0, 0x5c, true);
         }
         if paused {
             crate::rtl::register_writes! { game;
-                mirror(TM as u16, 0x17, 0x69, false); mirror(MOSAIC as u16, 0, 0x57, false);
+                show_mirror(MainScreen(Layers::of(true, true, true, false, true)), 0x69, false); mirror(MOSAIC as u16, 0, 0x57, false);
             }
             for offset in 0x74..0x77 {
                 game.compatibility_write_owned_byte(offset, game.compatibility_byte(offset) & 0xe0);
@@ -82,7 +86,7 @@ pub(crate) unsafe fn initialize_gameplay(game: &mut Game) {
     unsafe {
         initialize_io_and_oam(Some(0x80), game);
         crate::rtl::register_writes! { game;
-            mirror(BGMODE as u16, 9, 0x55, false); mirror(MOSAIC as u16, 0, 0x57, false);
+            show_mirror(BgMode::MODE1_BG3_PRIORITY, 0x55, false); mirror(MOSAIC as u16, 0, 0x57, false);
             mirror(BG12NBA as u16, 0, 0x5d, true); mirror(BG34NBA as u16, 4, 0x5e, true);
             mirror(BG1SC as u16, 0x51, 0x58, true); mirror(BG2SC as u16, 0x49, 0x59, true);
             mirror(BG3SC as u16, 0x5a, 0x5a, true); mirror(BG4SC as u16, 0, 0x5c, true);
@@ -91,11 +95,11 @@ pub(crate) unsafe fn initialize_gameplay(game: &mut Game) {
             mirror(WOBJSEL as u16, 0, 0x62, false); mirror(WH0 as u16, 0, 0x63, false);
             mirror(WH1 as u16, 0, 0x64, false); mirror(WH2 as u16, 0, 0x65, false);
             mirror(WH3 as u16, 0, 0x66, false); mirror(WBGLOG as u16, 0, 0x67, false);
-            mirror(WOBJLOG as u16, 0, 0x68, false); mirror(TM as u16, 0x17, 0x69, false);
-            mirror(TMW as u16, 0, 0x6c, false); mirror(TS as u16, 0, 0x6b, false);
-            mirror(TSW as u16, 0, 0x6d, false); mirror(CGWSEL as u16, 0, 0x6e, false);
-            mirror(CGADSUB as u16, 0, 0x71, false); byte(COLDATA as u16, 0xe0);
-            mirror(SETINI as u16, 0, 0x77, false);
+            mirror(WOBJLOG as u16, 0, 0x68, false); show_mirror(MainScreen(Layers::of(true, true, true, false, true)), 0x69, false);
+            show_mirror(MainWindowMask(Layers::NONE), 0x6c, false); show_mirror(SubScreen(Layers::NONE), 0x6b, false);
+            show_mirror(SubWindowMask(Layers::NONE), 0x6d, false); mirror(CGWSEL as u16, 0, 0x6e, false);
+            mirror(CGADSUB as u16, 0, 0x71, false); show(FixedColor::all(0));
+            show_mirror(ScreenSettings::STANDARD, 0x77, false);
         }
         word!(game.oam_next_ptr = 0);
         word_transfers!(game, ascending, 1023; native(0x3000) <- value(0));
@@ -576,7 +580,7 @@ pub(crate) unsafe fn copy_to_vram_with_source(
 ) {
     unsafe {
         crate::rtl::register_writes! { game;
-            byte(INIDISP as u16, 0x80); word(VMADDL as u16, vram_dst);
+            show(Brightness::BLANK_DARK); word(VMADDL as u16, vram_dst);
         }
         setup_transfer(0x1801, src, size, game);
         crate::rtl::register_writes! { game;

@@ -16,6 +16,7 @@ use sm_data::pause_menu::{
     SELECTOR_POSITION_ADDRESS, import_palette_animation, import_words,
 };
 use sm_data::table::Rows;
+use sm_game::display::control::{Layers, MainScreen, MainWindowMask, SubScreen, SubWindowMask};
 
 #[derive(Default)]
 pub(crate) struct ImportedTables {
@@ -142,7 +143,7 @@ unsafe fn begin_area_window(game: &mut Game) {
     unsafe {
         game.ram().write_byte(0x6b, 4);
         crate::rtl::register_writes! { game;
-            mirror(TS as u16, 4, 0x6d, false); byte(TSW as u16, 4);
+            show_mirror(SubScreen(Layers::of(false, false, true, false, false)), 0x6d, false); show(SubWindowMask(Layers::of(false, false, true, false, false)));
             mirror(CGWSEL as u16, 2, 0x6f, true); mirror(CGADSUB as u16, 0x25, 0x72, true);
         }
         game.ram().write_byte(0x74 + 2, 0x80);
@@ -160,7 +161,7 @@ unsafe fn configure_area_window(game: &mut Game) {
     unsafe {
         game.ram().write_byte(0x69, 19);
         crate::rtl::register_writes! { game;
-            mirror(TM as u16, 0x13, 0x6c, false); byte(TMW as u16, 0x13);
+            show_mirror(MainScreen(Layers::of(true, true, false, false, true)), 0x6c, false); show(MainWindowMask(Layers::of(true, true, false, false, true)));
             mirror(W12SEL as u16, 0x23, 0x60, true); mirror(W34SEL as u16, 3, 0x61, true);
             mirror(WOBJSEL as u16, 0x23, 0x62, true);
         }

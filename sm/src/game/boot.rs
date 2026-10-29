@@ -5,11 +5,14 @@ use crate::game_state::Game;
 use crate::ram_map::word;
 use crate::rtl::{
     APUI00, APUI01, APUI02, APUI03, BG1HOFS, BG1SC, BG1VOFS, BG2HOFS, BG2SC, BG2VOFS, BG3HOFS,
-    BG3SC, BG3VOFS, BG4HOFS, BG4SC, BG4VOFS, BG12NBA, BG34NBA, BGMODE, CGADSUB, CGWSEL, M7A, M7B,
-    M7C, M7D, M7SEL, M7X, M7Y, MEMSEL, MOSAIC, NMITIMEN, RtlApuWrite, SETINI, TM, TMW, TS, TSW,
-    VMAIN, W12SEL, W34SEL, WBGLOG, WH0, WH1, WH2, WH3, WOBJLOG, WOBJSEL,
+    BG3SC, BG3VOFS, BG4HOFS, BG4SC, BG4VOFS, BG12NBA, BG34NBA, CGADSUB, CGWSEL, M7A, M7B, M7C, M7D,
+    M7X, M7Y, MEMSEL, MOSAIC, NMITIMEN, RtlApuWrite, SETINI, VMAIN, W12SEL, W34SEL, WBGLOG, WH0,
+    WH1, WH2, WH3, WOBJLOG, WOBJSEL,
 };
-use sm_game::display::control::{Brightness, FixedColor};
+use sm_game::display::control::{
+    BgMode, Brightness, FixedColor, Layers, MainScreen, MainWindowMask, Mode7Settings, SubScreen,
+    SubWindowMask,
+};
 
 fn clear_work_ram(bytes: usize, game: &mut Game) {
     let bug_fix_counter = word!(game.bug_fix_counter);
@@ -84,7 +87,7 @@ unsafe fn initialize_registers(game: &mut Game) {
     unsafe {
         crate::game::display_refresh::initialize_io_and_oam(Some(0x8f), game);
         crate::rtl::register_writes! { game;
-            mirror(BGMODE as u16, 9, 0x55, false); mirror(MOSAIC as u16, 0, 0x57, false);
+            show_mirror(BgMode::MODE1_BG3_PRIORITY, 0x55, false); mirror(MOSAIC as u16, 0, 0x57, false);
             mirror(BG1SC as u16, 0x40, 0x58, false); mirror(BG2SC as u16, 0x44, 0x59, false);
             mirror(BG3SC as u16, 0x48, 0x5a, false); mirror(BG4SC as u16, 0, 0x5c, false);
             mirror(BG12NBA as u16, 0, 0x5d, false); mirror(BG34NBA as u16, 5, 0x5e, false);
@@ -96,7 +99,7 @@ unsafe fn initialize_registers(game: &mut Game) {
             byte(BG3VOFS as u16, 0); byte(BG3VOFS as u16, 0);
             byte(BG4HOFS as u16, 0); byte(BG4HOFS as u16, 0);
             byte(BG4VOFS as u16, 0); byte(BG4VOFS as u16, 0);
-            byte(VMAIN as u16, 0); mirror(M7SEL as u16, 0, 0x5f, false);
+            byte(VMAIN as u16, 0); show_mirror(Mode7Settings::WRAP, 0x5f, false);
             byte(M7A as u16, 0); byte(M7B as u16, 0);
             byte(M7C as u16, 0); byte(M7D as u16, 0);
             byte(M7X as u16, 0); byte(M7Y as u16, 0);
@@ -108,8 +111,8 @@ unsafe fn initialize_registers(game: &mut Game) {
         crate::rtl::register_writes! { game;
             mirror(WH2 as u16, 0, 0x65, false); mirror(WH3 as u16, 0, 0x66, false);
             mirror(WBGLOG as u16, 0, 0x67, false); mirror(WOBJLOG as u16, 0, 0x68, false);
-            mirror(TM as u16, 0x11, 0x69, false); mirror(TMW as u16, 0x11, 0x6c, false);
-            mirror(TS as u16, 2, 0x6b, false); mirror(TSW as u16, 2, 0x6d, false);
+            show_mirror(MainScreen(Layers::of(true, false, false, false, true)), 0x69, false); show_mirror(MainWindowMask(Layers::of(true, false, false, false, true)), 0x6c, false);
+            show_mirror(SubScreen(Layers::of(false, true, false, false, false)), 0x6b, false); show_mirror(SubWindowMask(Layers::of(false, true, false, false, false)), 0x6d, false);
             mirror(CGWSEL as u16, 2, 0x6e, false); byte(CGADSUB as u16, 0xa1);
         }
         game.ram().write_byte(0x71, 0xa1);

@@ -5,7 +5,10 @@ use crate::game_state::Game;
 use crate::ram_map::checked_word as at;
 use crate::rtl::{ReadRegWord, WriteReg, WriteRegWord};
 use crate::snes::registers::*;
-use sm_game::display::control::{Brightness, FixedColor, Mode7Transform};
+use sm_game::display::control::{
+    BgMode, Brightness, FixedColor, MainScreen, MainWindowMask, Mode7Settings, Mode7Transform,
+    ScreenSettings, SubScreen, SubWindowMask,
+};
 use sm_game::display::transfer::{
     Mode7Target, Mode7Upload, ScrollingLayout, TilemapUpload, TransferHost, VramReadback,
 };
@@ -351,4 +354,50 @@ pub(crate) unsafe fn set_mode7_transform(transform: Mode7Transform, game: &mut G
         unsafe { WriteRegWord(register as u16, value, game) };
         crate::ram_map::checked_word!(game, mirror; = value);
     }
+}
+
+/// A typed display value and the register it sets, for `register_writes!`'s
+/// `show` and `show_mirror` kinds.
+pub(crate) trait DisplayRegister {
+    fn register(&self) -> u16;
+    fn value(&self) -> u8;
+}
+
+macro_rules! display_register {
+    ($($ty:ty => $register:ident),+ $(,)?) => {$(
+        impl DisplayRegister for $ty {
+            fn register(&self) -> u16 {
+                $register as u16
+            }
+            fn value(&self) -> u8 {
+                self.byte()
+            }
+        }
+    )+};
+}
+display_register! {
+    Brightness => INIDISP,
+    FixedColor => COLDATA,
+    BgMode => BGMODE,
+    ScreenSettings => SETINI,
+    Mode7Settings => M7SEL,
+}
+
+macro_rules! layer_register {
+    ($($ty:ident => $register:ident),+ $(,)?) => {$(
+        impl DisplayRegister for $ty {
+            fn register(&self) -> u16 {
+                $register as u16
+            }
+            fn value(&self) -> u8 {
+                self.0.byte()
+            }
+        }
+    )+};
+}
+layer_register! {
+    MainScreen => TM,
+    SubScreen => TS,
+    MainWindowMask => TMW,
+    SubWindowMask => TSW,
 }

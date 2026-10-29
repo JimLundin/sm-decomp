@@ -22,6 +22,7 @@ use sm_data::shooting_stars::{
     TILE_ADDRESS as STAR_TILE_ADDRESS, TILE_STEPS as STAR_TILE_STEPS, Tiles as StarTiles,
 };
 use sm_data::title_screen::{GRADIENT_ADDRESS, GRADIENTS, Gradients};
+use sm_game::display::control::{Brightness, Layers, MainWindowMask, SubScreen};
 
 /// The cinematic and HDMA tables this module reads, imported from the loaded image.
 #[derive(Default)]
@@ -3626,8 +3627,8 @@ pub(crate) unsafe fn configure_cinematic_display(
 ) {
     use crate::game::visual_state::CinematicDisplay::*;
     use crate::rtl::{
-        BG1SC, BG2SC, BG3SC, BG4SC, BG12NBA, BG34NBA, BGMODE, CGADSUB, CGWSEL, INIDISP, M7SEL,
-        OBSEL, SETINI, TM, TMW, TS, VMAIN,
+        BG1SC, BG2SC, BG3SC, BG4SC, BG12NBA, BG34NBA, BGMODE, CGADSUB, CGWSEL, M7SEL, OBSEL,
+        SETINI, TM, VMAIN,
     };
     let title = display == Title;
     let intro = display == Intro;
@@ -3650,7 +3651,7 @@ pub(crate) unsafe fn configure_cinematic_display(
     };
     unsafe {
         crate::rtl::register_writes! { game;
-            mirror(INIDISP as u16, 0x80, 0x51, false); mirror(OBSEL as u16, sprites, 0x52, false);
+            show_mirror(Brightness::BLANK_DARK, 0x51, false); mirror(OBSEL as u16, sprites, 0x52, false);
             mirror(BGMODE as u16, mode, 0x55, false); mirror(M7SEL as u16, selection, 0x5f, false);
         }
         match display {
@@ -3697,7 +3698,7 @@ pub(crate) unsafe fn configure_cinematic_display(
             _ => 0x11,
         };
         crate::rtl::register_writes! { game;
-            mirror(TM as u16, layers, 0x69, false); mirror(TS as u16, 0, 0x6b, false);
+            mirror(TM as u16, layers, 0x69, false); show_mirror(SubScreen(Layers::NONE), 0x6b, false);
         }
         if tiled {
             for at in [0x60, 0x61, 0x62, 0x6c, 0x6d, 0x6f, 0x72] {
@@ -3718,7 +3719,7 @@ pub(crate) unsafe fn configure_cinematic_display(
             return;
         }
         crate::rtl::register_writes! { game;
-            mirror(TMW as u16, 0, 0x6c, false); byte(VMAIN as u16, 0);
+            show_mirror(MainWindowMask(Layers::NONE), 0x6c, false); byte(VMAIN as u16, 0);
             mirror(CGWSEL as u16, 0, 0x6e, false); mirror(CGADSUB as u16, 0, 0x71, false);
         }
         if escape {
