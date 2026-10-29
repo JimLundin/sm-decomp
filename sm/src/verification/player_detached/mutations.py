@@ -423,13 +423,14 @@ def main():
         raise RuntimeError("install this runner alongside the repo detached harness")
     with tempfile.TemporaryDirectory(prefix="player-detached-mutations-") as directory:
         work = Path(directory)
-        library = work / "libsm_game.rlib"
-        built = run(["rustc", "--edition=2024", "-O", "--crate-name", "sm_game",
-                     "--crate-type", "rlib", str(source.parent.parent / "crates" / "sm_game" / "src" / "lib.rs"),
-                     "-o", str(library)], 180)
-        if built.returncode != 0:
-            raise RuntimeError(f"sm_game library build failed\n{built.stderr}")
-        SM_GAME.extend(["--extern", f"sm_game={library}"])
+        for crate in ("sm_data", "sm_game"):
+            library = work / f"lib{crate}.rlib"
+            built = run(["rustc", "--edition=2024", "-O", "--crate-name", crate,
+                         "--crate-type", "rlib", str(source.parent.parent / "crates" / crate / "src" / "lib.rs"),
+                         "-o", str(library)], 180)
+            if built.returncode != 0:
+                raise RuntimeError(f"{crate} library build failed\n{built.stderr}")
+            SM_GAME.extend(["--extern", f"{crate}={library}"])
         baseline_binary = check(source, work, "baseline")
         for name, relative, before, after in MUTATIONS:
             check(source, work, name, (relative, before, after))

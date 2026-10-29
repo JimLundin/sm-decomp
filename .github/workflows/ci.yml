@@ -88,10 +88,13 @@ jobs:
       - name: Verify composed projectile, animation and palette cores without the game backend
         run: |
           $playerDetached = Join-Path $env:RUNNER_TEMP 'player-detached.exe'
+          $smData = Join-Path $env:RUNNER_TEMP 'libsm_data.rlib'
+          rustc --edition=2024 -D warnings -O --crate-name sm_data --crate-type rlib crates/sm_data/src/lib.rs -o $smData
+          if ($LASTEXITCODE -ne 0) { throw 'sm_data compilation failed' }
           $smGame = Join-Path $env:RUNNER_TEMP 'libsm_game.rlib'
           rustc --edition=2024 -D warnings -O --crate-name sm_game --crate-type rlib crates/sm_game/src/lib.rs -o $smGame
           if ($LASTEXITCODE -ne 0) { throw 'sm_game compilation failed' }
-          rustc --edition=2024 -D warnings -O sm/src/verification/player_detached/main.rs --extern "sm_game=$smGame" -o $playerDetached
+          rustc --edition=2024 -D warnings -O sm/src/verification/player_detached/main.rs --extern "sm_data=$smData" --extern "sm_game=$smGame" -o $playerDetached
           if ($LASTEXITCODE -ne 0) { throw 'Detached projectile compilation failed' }
           & $playerDetached
           if ($LASTEXITCODE -ne 0) { throw 'Detached projectile checks failed' }
