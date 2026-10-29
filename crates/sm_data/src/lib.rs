@@ -29,6 +29,7 @@ pub mod save_slots;
 pub mod scene;
 pub mod shitroid;
 pub mod shooting_stars;
+pub mod statues;
 pub mod table;
 pub mod torizo;
 pub mod torizo_corpse;

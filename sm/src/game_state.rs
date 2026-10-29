@@ -236,6 +236,8 @@ pub struct Game {
     pub(crate) grapple_aim: crate::game::grapple_aim::ImportedAim,
     /// Imported from `loaded_rom` by `register_rom`; see game::kraid_tables.
     pub(crate) kraid_tables: crate::game::kraid_tables::ImportedKraid,
+    /// Imported from `loaded_rom` by `register_rom`; see game::statue_tables.
+    pub(crate) statue_tables: crate::game::statue_tables::ImportedStatues,
     /// Imported from `loaded_rom` by `register_rom`; see game::torizo_tables.
     pub(crate) torizo_tables: crate::game::torizo_tables::ImportedTorizos,
     /// Imported from `loaded_rom` by `register_rom`; see game::corpse_tables.
@@ -1242,6 +1244,7 @@ impl Game {
         self.grapple_origins = crate::game::grapple_origins::import(&image);
         self.grapple_aim = crate::game::grapple_aim::import(&image);
         self.kraid_tables = crate::game::kraid_tables::import(&image);
+        self.statue_tables = crate::game::statue_tables::import(&image);
         self.torizo_tables = crate::game::torizo_tables::import(&image);
         self.corpse_tables = crate::game::corpse_tables::import(&image);
         self.torizo_corpse_tables = crate::game::torizo_corpse_tables::import(&image);
@@ -1508,6 +1511,7 @@ impl Game {
             area_select_palettes: None,
             shooting_stars: None,
             kraid_tables: Default::default(),
+            statue_tables: Default::default(),
             torizo_tables: Default::default(),
             corpse_tables: Default::default(),
             torizo_corpse_tables: Default::default(),

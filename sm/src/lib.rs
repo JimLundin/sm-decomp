@@ -387,6 +387,7 @@ pub mod game {
     pub mod scene;
     pub(crate) mod scrolling_sky;
     pub(crate) mod shitroid_tables;
+    pub(crate) mod statue_tables;
     pub(crate) mod torizo_corpse_tables;
     pub(crate) mod torizo_tables;
     pub(crate) mod vram_read_queue;

@@ -11,6 +11,7 @@ use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
+use crate::game::statue_tables;
 use crate::game::torizo_tables;
 use crate::ram_map::slot;
 
@@ -562,8 +563,11 @@ crate::game::callback_dispatch! {
         slot!(game, EnemyData[v0].palette_index = 0);
         slot!(game, EnemyData[v0].instruction_timer = 1);
         slot!(game, EnemyData[v0].timer = 0);
-        let v1: u16 =
-            crate::rtl::rom_table_word!(game, 0xaad810, (slot!(game, EnemyData[v0].parameter_1) >> 1) as isize);
+        let v1: u16 = statue_tables::tourian_statue(
+            game,
+            (slot!(game, EnemyData[v0].parameter_1) >> 1) as isize,
+        )
+        .instruction_list;
         slot!(game, EnemyData[v0].current_instruction = v1);
         if slot!(game, EnemyData[v0].parameter_1) == 0 {
             SpawnEprojWithRoomGfx(addr_kEproj_TourianStatueBaseDecoration as u16, 0, game);
@@ -641,7 +645,7 @@ crate::game::callback_dispatch! {
         slot!(game, EnemyData[v0].palette_index = 0);
         slot!(game, EnemyData[0i32].layer = 0);
         let parameter_2: u16 = slot!(game, EnemyData[v0].parameter_2);
-        slot!(game, EnemyData[v0].current_instruction = crate::rtl::rom_table_word!(game, 0xaae7a2, (parameter_2 >> 1) as isize));
+        slot!(game, EnemyData[v0].current_instruction = statue_tables::chozo_statue(game, (parameter_2 >> 1) as isize).instruction_list);
         if parameter_2 != 0 {
             sub_AAE784(game);
         } else {
@@ -1252,20 +1256,20 @@ crate::game::callback_dispatch! {
     [11199960] Shaktool_Instr_7 [jp.offset(1)] {
         let E: i32 = k as i32;
         slot!(game, Enemy_Shaktool[E].var_C = jp.word(0));
-        ({ let (actor, amount) = (k, (crate::rtl::rom_table_word!(game, 0xaae630, (slot!(game, Enemy_Shaktool[E].var_C) >> 1) as isize) as i16 as i32)
+        ({ let (actor, amount) = (k, (statue_tables::movement(game, (slot!(game, Enemy_Shaktool[E].var_C) >> 1) as isize).x_velocity as i16 as i32)
                 << 8); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 });
-        ({ let (actor, amount) = (k, (abs16(crate::rtl::rom_table_word!(
+        ({ let (actor, amount) = (k, (abs16(statue_tables::movement(
                 game,
-                0xaae630,
                 (slot!(game, Enemy_Shaktool[E].var_C) >> 1) as isize
-            )) as i16 as i32)
+            ).x_velocity) as i16 as i32)
                 << 8); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
         ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
         let v6: i32 = slot!(game, Enemy_Shaktool[E].var_C) as i32 >> 1;
+        let movement = statue_tables::movement(game, v6 as isize);
         word! { game;
-            samus_x_pos = (crate::rtl::rom_table_word!(game, 0xaae670, v6 as isize))
+            samus_x_pos = (movement.samus_x_offset)
                 .wrapping_add(slot!(game, Enemy_Shaktool[E].base.x_pos));
-            samus_y_pos = (crate::rtl::rom_table_word!(game, 0xaae6b0, v6 as isize))
+            samus_y_pos = (movement.samus_y_offset)
                 .wrapping_add(slot!(game, Enemy_Shaktool[E].base.y_pos));
         }
     };
