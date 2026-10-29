@@ -39,6 +39,10 @@ pub enum ImportError {
         table: SpeedTable,
         entry: usize,
     },
+    /// A 32-bit entry's second word is not the negation of its first.
+    Negation32 {
+        entry: usize,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -95,6 +99,84 @@ impl EnemySpeeds {
         let at = table.start().checked_add_signed(offset)?;
         let pair = self.bytes.get(at..at.checked_add(2)?)?;
         Some(u16::from_le_bytes([pair[0], pair[1]]))
+    }
+}
+
+/// The quadratic speeds again as whole values at $A0:CBC7: 95 eight-byte
+/// entries of (speed, -speed), each a little-endian 32-bit word.
+pub const ADDRESS32: u32 = 0xa0_cbc7;
+pub const BYTES32: usize = 95 * ENTRY;
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Speeds32 {
+    bytes: Box<[u8; BYTES32]>,
+}
+
+impl Speeds32 {
+    /// Rejects a wrong length and any entry whose second word does not negate the first.
+    pub fn import(bytes: &[u8]) -> Result<Self, ImportError> {
+        let bytes: Box<[u8; BYTES32]> = Box::new(
+            bytes
+                .try_into()
+                .map_err(|_| ImportError::Length(bytes.len()))?,
+        );
+        for (entry, pair) in bytes.chunks_exact(ENTRY).enumerate() {
+            let word = |at: usize| {
+                u32::from_le_bytes([pair[at], pair[at + 1], pair[at + 2], pair[at + 3]])
+            };
+            if word(0).wrapping_add(word(4)) != 0 {
+                return Err(ImportError::Negation32 { entry });
+            }
+        }
+        Ok(Self { bytes })
+    }
+
+    /// The little-endian word at a byte offset from $A0:CBC7, or `None` past the table.
+    pub fn word32_at(&self, offset: usize) -> Option<u32> {
+        let quad = self.bytes.get(offset..offset.checked_add(4)?)?;
+        Some(u32::from_le_bytes([quad[0], quad[1], quad[2], quad[3]]))
+    }
+}
+
+#[cfg(test)]
+mod tests32 {
+    use super::*;
+
+    // Synthetic table only: the repository never holds ROM-derived bytes.
+    fn table() -> Vec<u8> {
+        (0..95u32)
+            .flat_map(|i| {
+                let speed = i * i * 0x109;
+                [speed.to_le_bytes(), speed.wrapping_neg().to_le_bytes()].concat()
+            })
+            .collect()
+    }
+
+    #[test]
+    fn reads_both_halves_and_rejects_outside() {
+        let speeds = Speeds32::import(&table()).unwrap();
+        assert_eq!(speeds.word32_at(8), Some(0x109));
+        assert_eq!(speeds.word32_at(12), Some(0x109u32.wrapping_neg()));
+        assert_eq!(
+            speeds.word32_at(BYTES32 - 4),
+            Some((94 * 94 * 0x109u32).wrapping_neg())
+        );
+        assert_eq!(speeds.word32_at(BYTES32 - 3), None);
+        assert_eq!(speeds.word32_at(usize::MAX), None);
+    }
+
+    #[test]
+    fn rejects_other_content() {
+        assert_eq!(
+            Speeds32::import(&table()[1..]),
+            Err(ImportError::Length(BYTES32 - 1))
+        );
+        let mut bad = table();
+        bad[8 * 3 + 4] ^= 1;
+        assert_eq!(
+            Speeds32::import(&bad),
+            Err(ImportError::Negation32 { entry: 3 })
+        );
     }
 }
 

@@ -210,8 +210,7 @@ fn flight(runtime: &mut Runtime<'_>) {
         offset = offset.wrapping_add(4);
     }
     let (live, _) = selected(runtime);
-    let amount =
-        u32::from_ne_bytes(rom_bytes(runtime, 0xa0cbc7, usize::from(offset >> 2) * 4)) as i32;
+    let amount = runtime.native_speed32(usize::from(offset >> 2) * 4) as i32;
     if api::move_vertical(runtime, live, amount) == MovementResult::Blocked {
         if runtime.native_word(at + 6) != 0 {
             runtime.edit_actor(key, Native, |actor| actor.variables[3] = 0x9b65);
