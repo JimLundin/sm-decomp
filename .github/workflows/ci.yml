@@ -38,6 +38,11 @@ jobs:
         run: |
           deps=$(cargo tree -p sm_game -e normal --prefix none --format '{p}' | tail -n +2 | grep -v '^sm_data ' || true)
           if [ -n "$deps" ]; then echo "sm_game has forbidden dependencies:"; echo "$deps"; exit 1; fi
+          # sm_data holds content records only and depends on nothing.
+          deps=$(cargo tree -p sm_data -e normal --prefix none --format '{p}' | tail -n +2 || true)
+          if [ -n "$deps" ]; then echo "sm_data has forbidden dependencies:"; echo "$deps"; exit 1; fi
+      - name: Test target packages
+        run: cargo test --locked -p sm_data -p sm_game
       - name: Run the full corpus after bank retirement
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
