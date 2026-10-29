@@ -78,6 +78,11 @@ pub fn redirect(
 pub trait Table {
     fn word(&self, index: usize) -> u16;
 }
+impl Table for sm_data::cartridge::RomRecord {
+    fn word(&self, index: usize) -> u16 {
+        self.image.table_word(self.base, index as isize)
+    }
+}
 /// Resolve and spawn mechanism definitions without requiring projectile geometry.
 pub trait Definitions {
     type Table: Table;

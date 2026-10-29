@@ -221,11 +221,6 @@ pub(super) fn scan(h: &mut impl Host, raw: u16, flight: Flight, axis: Axis) -> u
     room.0.probe("player_projectiles.terrain.retired");
     1
 }
-impl reactions::Table for RomRecord {
-    fn word(&self, index: usize) -> u16 {
-        self.image.table_word(self.base, index as isize)
-    }
-}
 impl<H: Host> Definitions for Room<'_, H> {
     type Table = RomRecord;
     fn resolve(&mut self, address: u32) -> RomRecord {

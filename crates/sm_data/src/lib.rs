@@ -9,6 +9,7 @@ pub mod area_select_palettes;
 pub mod beam_gradients;
 pub mod botwoon_holes;
 pub mod botwoon_speeds;
+pub mod cartridge;
 pub mod ceres_doors;
 pub mod ceres_elevator;
 pub mod ceres_ridley;
