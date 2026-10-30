@@ -10,7 +10,9 @@
 // The detached harness replaces the compat Game; the DLL verifier's adapters
 // (session_runtime, game_state) only exist in the sm library.
 #[cfg(sm_verify_dll)]
-compile_error!("player_detached is built without --cfg sm_verify_dll; that cfg selects the DLL verifier");
+compile_error!(
+    "player_detached is built without --cfg sm_verify_dll; that cfg selects the DLL verifier"
+);
 include!("shared.rs");
 
 fn main() {
