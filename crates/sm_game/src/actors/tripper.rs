@@ -48,12 +48,7 @@ pub mod instruction_list {
 }
 
 /// Bank $A3 instructions: set moving left or right X movement.
-pub mod instruction {
-    pub const SET_MOVING_LEFT: u32 = 0xa3_9c6b;
-    pub const SET_MOVING_RIGHT: u32 = 0xa3_9c76;
-    pub const SET_MOVING_LEFT_2: u32 = 0xa3_9c81;
-    pub const SET_MOVING_RIGHT_2: u32 = 0xa3_9c8c;
-}
+pub mod instruction {}
 
 /// The frozen tripper's spritemaps, facing left and right.
 const FROZEN_LEFT: u16 = 0xa009;

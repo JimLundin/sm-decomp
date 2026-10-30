@@ -44,22 +44,6 @@ unsafe fn image(pixels: *mut u8, width: i32, height: i32, channels: i32) -> Opti
     }
 }
 
-pub fn decode_texture_png(input: &[u8]) -> Option<TextureImage> {
-    let length = i32::try_from(input.len()).ok()?;
-    let (mut width, mut height, mut channels) = (0, 0, 0);
-    unsafe {
-        let pixels = stbi_load_from_memory(
-            input.as_ptr(),
-            length,
-            &mut width,
-            &mut height,
-            &mut channels,
-            0,
-        );
-        image(pixels, width, height, channels)
-    }
-}
-
 pub(super) unsafe fn load(filename: *const std::ffi::c_char) -> Option<TextureImage> {
     unsafe {
         let (mut width, mut height, mut channels) = (0, 0, 0);

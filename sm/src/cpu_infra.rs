@@ -1048,17 +1048,6 @@ unsafe fn loadRom(name: *const c_char, game: &mut Game) -> bool {
         snes_loadRom(bytes.as_ptr(), length as i32, game)
     }
 }
-pub unsafe fn PatchBytes(addr: u32, bytes: &[u8], game: &mut Game) {
-    unsafe {
-        if !bytes.is_empty() {
-            game.note_samus_external_mutation();
-        }
-        // Resolve the original base for every byte; RomPtr can update g_fail.
-        for (i, &byte) in bytes.iter().enumerate() {
-            patch_image(addr, &mut game.execution_parts().1).write(addr, i, byte);
-        }
-    }
-}
 pub unsafe fn FixupCarry(addr: u32, game: &mut Game) {
     unsafe {
         game.note_samus_external_mutation();

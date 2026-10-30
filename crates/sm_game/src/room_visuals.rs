@@ -215,10 +215,6 @@ pub fn initialize_morph_eye_beam<H: crate::menus::host::Host + ?Sized>(game: &mu
     spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x41, 0x26, 0xe8ec), game);
 }
 
-pub fn initialize_intro_crossfade<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x31, 0xec03), game);
-}
-
 pub fn initialize_phantoon_motion<H: crate::menus::host::Host + ?Sized>(
     direction: u16,
     speed: u16,

@@ -968,9 +968,6 @@ pub fn extend_beam<H: Host + ?Sized>(game: &mut H) -> u8 {
 pub fn start_rope_animation<H: Host + ?Sized>(game: &mut H) {
     game.with_lease(crate::grapple_rope::start);
 }
-pub fn draw_rope<H: Host + ?Sized>(game: &mut H) {
-    game.with_lease(crate::grapple_rope::draw);
-}
 
 fn connected_to_block<H: Host + ?Sized>(game: &mut H) -> bool {
     word! { game, 0;

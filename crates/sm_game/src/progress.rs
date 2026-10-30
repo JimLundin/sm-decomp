@@ -118,9 +118,6 @@ pub fn mark_boss_defeated(host: &mut (impl FlagHost + ?Sized), mask: u16) {
 pub fn door_opened(host: &mut (impl FlagHost + ?Sized), door: u16) -> bool {
     present(host, FlagColumn::Doors, door)
 }
-pub fn open_door(host: &mut (impl FlagHost + ?Sized), door: u16) {
-    mark(host, FlagColumn::Doors, door);
-}
 pub fn item_collected(host: &mut (impl FlagHost + ?Sized), item: u16) -> bool {
     present(host, FlagColumn::Items, item)
 }

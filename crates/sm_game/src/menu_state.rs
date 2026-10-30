@@ -48,10 +48,6 @@ macro_rules! menu_state {
         }
 
         impl MenuState {
-            /// Each word's field, in RAM order, for the encoding boundary.
-            pub fn words_mut(&mut self) -> [&mut u16; WORDS] {
-                [$(&mut self.$field),+]
-            }
             pub fn words(&self) -> [u16; WORDS] {
                 [$(self.$field),+]
             }

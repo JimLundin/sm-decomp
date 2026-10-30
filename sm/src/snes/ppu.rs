@@ -9,15 +9,7 @@ crate::type_aliases! {
     pub C2RustUnnamed_0, C2RustUnnamed_1, C2RustUnnamed_2, C2RustUnnamed_3 = u32;
 }
 pub const kPpuExtraLeftRight: C2RustUnnamed_0 = 0;
-pub const kPpuXPixels: C2RustUnnamed_0 = 256;
 
-pub const kWindow2Inversed: C2RustUnnamed_3 = 4;
-pub const kWindow2Enabled: C2RustUnnamed_3 = 8;
-pub const kWindow1Inversed: C2RustUnnamed_3 = 1;
-pub const kWindow1Enabled: C2RustUnnamed_3 = 2;
-
-pub const kPaletteShift: C2RustUnnamed_1 = 8;
-pub const kPaletteShift_0: C2RustUnnamed_2 = 6;
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 pub const __ASSERT_FUNCTION: [c_char; 43] = unsafe {

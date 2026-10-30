@@ -282,19 +282,6 @@ impl ActorIdentityState {
         );
     }
 
-    /// Fixed byte-image adoption may construct its complete paired restore in advance.
-    pub fn prepare_canonical_adoption(
-        &self,
-        ram: &impl Fn(usize) -> u8,
-    ) -> Result<super::snapshot::PreparedActorRestore, ActorIdentityError> {
-        let transition = self.prepare_canonical_transition()?;
-        Ok(super::snapshot::PreparedActorRestore::new(
-            transition.next_live_epoch,
-            canonical_timeline(ram),
-            super::media::ActorPaletteResidency::default(),
-        ))
-    }
-
     /// Validate the handle and selected room materials before publishing the choice.
     pub fn set_appearance(
         &mut self,

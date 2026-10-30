@@ -94,11 +94,6 @@ pub struct CollisionBox {
     pub touch: ActorCallbackId,
     pub shot: ActorCallbackId,
 }
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum EffectiveSpecies {
-    Known(SpeciesId),
-    UnresolvedCompatibility,
-}
 /// Compatibility keys are constructor input, separate from authored identity.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct ActorCompatibilityKeys {
@@ -209,14 +204,6 @@ pub type ActorPoseCapture = ActorRecordCapture<PoseId>;
 pub type ActorPartCapture = ActorRecordCapture<PosePartPosition>;
 pub type ActorCollisionCapture = ActorRecordCapture<CollisionPosition>;
 pub type ActorResourceCapture = Capture<VisualResourceId>;
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct ActorShape {
-    pub radius: Point,
-    pub health: u16,
-    pub layer: u8,
-    pub bank: u8,
-    pub hurt_time: u8,
-}
 /// Acquisitions only. Token field reads retain captured allocation and source order.
 pub trait ActorContent {
     fn actor_script_image(&self) -> RomImage;

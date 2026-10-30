@@ -183,20 +183,8 @@ fn draw_body(game: &mut Game, mode: Body) {
     samus_drawing::draw_body(&mut Runtime::new(game), mode);
 }
 
-pub fn Samus_Draw(game: &mut Game) {
-    draw_body(game, Body::Normal);
-}
-pub fn Samus_DrawDuringDeathAnim(game: &mut Game) {
-    draw_body(game, Body::Death);
-}
 pub fn Samus_DrawWhenNotAnimatingOrDying(game: &mut Game) {
     draw_body(game, Body::Frozen);
-}
-pub fn Samus_DrawEchoes(game: &mut Game) {
-    samus_drawing::draw_echoes(&mut Runtime::new(game));
-}
-pub fn Samus_DrawShinesparkCrashEchoes(k: u16, game: &mut Game) {
-    samus_drawing::draw_shinespark_crash_echoes(k, &mut Runtime::new(game));
 }
 
 impl samus_drawing::RoleTable for NativeTable {

@@ -27,11 +27,7 @@ pub mod function {
 }
 
 /// Bank $A3 instructions setting the X speed table index to 4, 8 and Ch.
-pub mod instruction {
-    pub const X_SPEED_INDEX_4: u32 = 0xa3_b429;
-    pub const X_SPEED_INDEX_8: u32 = 0xa3_b434;
-    pub const X_SPEED_INDEX_C: u32 = 0xa3_b43f;
-}
+pub mod instruction {}
 
 /// $A3:B3C1: facing left, shooting; $A3:B40D: the instruction list for each
 /// instruction list index; $A3:B415: the X speeds, by X speed table index.

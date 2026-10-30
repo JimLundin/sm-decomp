@@ -5,16 +5,8 @@ use super::{
     effects::{BounceFault, Host},
     state::*,
 };
-use crate::{session::Session, visual_host::Record};
+use crate::visual_host::Record;
 
-pub fn request_pose(session: &mut Session, channel: RequestChannel, word: PoseRequestWord) {
-    let t = &mut session.player.transitions;
-    match channel {
-        RequestChannel::Ordinary => t.ordinary = word,
-        RequestChannel::Interrupted => t.interrupted = word,
-        RequestChannel::Transitional => t.transitional = word,
-    }
-}
 fn interrupted(h: &mut impl Host, pose: u16) {
     h.session_mut().player.transitions.interrupted = PoseRequestWord::from_raw(pose);
 }

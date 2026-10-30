@@ -183,9 +183,3 @@ pub(crate) fn advance_sound_effects(
 pub fn ResetSoundQueues(game: &mut Game) {
     requests::reset_sound_queues(game).expect("audio sound queue reset");
 }
-
-pub(crate) fn cancel_effects(max_queued: u8, game: &mut Game) {
-    for (channel, sound) in [2, 0x71, 1].into_iter().enumerate() {
-        queue_sfx(channel, sound, max_queued, game);
-    }
-}

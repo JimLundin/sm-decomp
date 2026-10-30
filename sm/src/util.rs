@@ -11,7 +11,6 @@ crate::typed_struct! {
         pub overflow_arg_area, reg_save_area: *mut c_void;
     }
 }
-pub type va_list = __gnuc_va_list;
 pub type __gnuc_va_list = __builtin_va_list;
 pub const NULL: *mut c_void = core::ptr::null_mut::<c_void>();
 pub const true_0: i32 = 1;
@@ -82,24 +81,6 @@ pub fn read_up_to(source: &mut impl std::io::Read, buffer: &mut [u8]) -> usize {
 
 #[link(name = "sm_config", kind = "static", modifiers = "-bundle")]
 unsafe extern "C-unwind" {
-    #[link_name = "sm_util_NextDelim"]
-    pub fn NextDelim(cursor: *mut *mut c_char, separator: i32) -> *mut c_char;
-    #[link_name = "sm_util_StringEqualsNoCase"]
-    pub fn StringEqualsNoCase(value: *const c_char, expected: *const c_char) -> bool;
-    #[link_name = "sm_util_StringStartsWithNoCase"]
-    pub fn StringStartsWithNoCase(value: *const c_char, prefix: *const c_char) -> *const c_char;
-    #[link_name = "sm_util_ReadWholeFile"]
-    pub fn ReadWholeFile(name: *const c_char, length: *mut size_t) -> *mut u8;
-    #[link_name = "sm_util_NextLineStripComments"]
-    pub fn NextLineStripComments(cursor: *mut *mut c_char) -> *mut c_char;
-    #[link_name = "sm_util_NextPossiblyQuotedString"]
-    pub fn NextPossiblyQuotedString(cursor: *mut *mut c_char) -> *mut c_char;
-    #[link_name = "sm_util_SplitKeyValue"]
-    pub fn SplitKeyValue(value: *mut c_char) -> *mut c_char;
-    #[link_name = "sm_util_SkipPrefix"]
-    pub fn SkipPrefix(value: *const c_char, prefix: *const c_char) -> *const c_char;
-    #[link_name = "sm_util_StrSet"]
-    pub fn StrSet(target: *mut *mut c_char, value: *const c_char);
     fn sm_util_matches_source(index: u32, bytes: *const u8, length: usize) -> bool;
 }
 

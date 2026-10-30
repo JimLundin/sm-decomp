@@ -68,9 +68,6 @@ pub fn SpawnEprojWithRoomGfx(definition: u16, parameter: u16, game: &mut Game) -
 pub fn EprojRunAll(game: &mut Game) {
     with_execution(game, |ctx| lifecycle::advance(ctx));
 }
-pub fn DrawEprojsWithPriority(priority: EprojPriority, game: &mut Game) {
-    with_execution(game, |ctx| presentation::draw(priority, ctx));
-}
 pub fn Math_MultBySin(amplitude: u16, angle: u16) -> u16 {
     shared_pre::Math_MultBySin(amplitude, angle)
 }

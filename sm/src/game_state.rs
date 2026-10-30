@@ -1347,16 +1347,6 @@ impl Game {
         [low, high, pointer.bank]
     }
 
-    /// room_compr_level_data_ptr ($7E:07BD in ram_map).
-    pub fn set_room_compr_level_data_ptr(&mut self, value: LongPtr) {
-        self.compatibility_copy_in(0x7bd, &Self::long_pointer_bytes(value));
-    }
-
-    /// tileset_tile_table_pointer ($7E:07C0 in ram_map).
-    pub fn set_tileset_tile_table_pointer(&mut self, value: LongPtr) {
-        self.compatibility_copy_in(0x7c0, &Self::long_pointer_bytes(value));
-    }
-
     /// Compressed tileset graphics address ($7E:07C3 in ram_map).
     pub fn tileset_tiles_pointer(&self) -> u32 {
         u32::from_le_bytes([
@@ -1365,10 +1355,6 @@ impl Game {
             self.compatibility_byte(0x7c5),
             0,
         ])
-    }
-
-    pub fn set_tileset_tiles_pointer(&mut self, value: LongPtr) {
-        self.compatibility_copy_in(0x7c3, &Self::long_pointer_bytes(value));
     }
 
     /// Compressed tileset palette address ($7E:07C6 in ram_map).
@@ -1381,44 +1367,9 @@ impl Game {
         ])
     }
 
-    pub fn set_tileset_compr_palette_ptr(&mut self, value: LongPtr) {
-        self.compatibility_copy_in(0x7c6, &Self::long_pointer_bytes(value));
-    }
-
-    /// layer2_scroll_x/y ($7E:091B/091C in ram_map).
-    pub fn set_layer2_scroll_x_and_y(&mut self, x: u8, y: u8) {
-        self.compatibility_copy_in(0x91b, &[x, y]);
-    }
-
-    /// samus_pose_x_dir / samus_movement_type ($7E:0A1E/0A1F).
-    /// Preserve the original paired-byte word store.
-    pub fn set_samus_pose_direction_and_movement_type(&mut self, direction: u8, movement_type: u8) {
-        self.compatibility_copy_in(0xa1e, &[direction, movement_type]);
-    }
-
     /// samus_movement_type ($7E:0A1F in ram_map).
     pub fn samus_movement_type(&self) -> u8 {
         self.compatibility_byte(0xa1f)
-    }
-
-    /// samus_prev_pose_x_dir / samus_prev_movement_type2 ($7E:0A22/0A23).
-    /// Preserve the original paired-byte word store.
-    pub fn set_samus_prev_pose_direction_and_movement_type(
-        &mut self,
-        direction: u8,
-        movement_type: u8,
-    ) {
-        self.compatibility_copy_in(0xa22, &[direction, movement_type]);
-    }
-
-    /// samus_last_different_pose_x_dir / samus_last_different_pose_movement_type ($7E:0A26/0A27).
-    /// Preserve the original paired-byte word store.
-    pub fn set_samus_last_different_pose_direction_and_movement_type(
-        &mut self,
-        direction: u8,
-        movement_type: u8,
-    ) {
-        self.compatibility_copy_in(0xa26, &[direction, movement_type]);
     }
 
     /// samus_last_different_pose_movement_type ($7E:0A27 in ram_map).
@@ -1429,27 +1380,6 @@ impl Game {
     /// samus_pose_x_dir ($7E:0A1E in ram_map); this is a byte, not a word.
     pub fn samus_pose_x_dir(&self) -> u8 {
         self.compatibility_byte(0xa1e)
-    }
-
-    /// Read a word of interactive_enemy_indexes ($7E:17EC in ram_map).
-    /// Sentinel traversal uses backing RAM, including words beyond the list.
-    pub fn interactive_enemy_index(&self, index: usize) -> u16 {
-        let offset = 0x17ec + index * 2;
-        u16::from_le_bytes([
-            self.compatibility_byte(offset),
-            self.compatibility_byte(offset + 1),
-        ])
-    }
-
-    /// enemy_index_colliding_dirs ($7E:182C in ram_map).
-    pub fn set_enemy_index_colliding_dir(&mut self, direction: u16, index: u16) {
-        let offset = 0x182c + usize::from(direction & 3) * 2;
-        self.compatibility_copy_in(offset, &index.to_le_bytes());
-    }
-
-    /// BTS behavior byte for the live collision block ($7F:6402 in ram_map).
-    pub fn current_block_bts(&self) -> u8 {
-        self.compatibility_byte(0x16402 + usize::from(self.cur_block_index()))
     }
 
     /// Live level-data word selected by the collision block index.
@@ -1471,17 +1401,6 @@ impl Game {
                 return result;
             }
         }
-    }
-
-    /// projectile_bomb_pre_instructions ($7E:0C68); slots 5..10 are bomb_functions.
-    pub fn set_projectile_bomb_pre_instruction(&mut self, slot: usize, value: u16) {
-        assert!(slot < 10);
-        let offset = 0xc68 + slot * 2;
-        self.compatibility_copy_in(offset, &value.to_le_bytes());
-    }
-
-    pub fn write_vram_queue_byte(&mut self, cursor: u16, field: usize, value: u8) {
-        self.compatibility_write_owned_byte(0xd0 + usize::from(cursor) + field, value);
     }
 
     /// Write a word in the backing VRAM queue, including overlapping fields.
@@ -1605,15 +1524,6 @@ impl GameOwner {
             game: std::cell::UnsafeCell::new(Game::with_world(world)),
         })
     }
-    pub(crate) fn prepare_session_start(
-        &self,
-        supplied: persistent_session::SessionStartDescription,
-        media: Arc<SceneMedia>,
-        required: &persistent_session::SessionStartRequirements,
-    ) -> Result<persistent_session::PreparedSessionStart, persistent_session::SessionStartError>
-    {
-        self.with(|game| persistent_session::prepare(game, supplied, media, required))
-    }
     /// Complete supplied startup/reset. Every replacement is validated before
     /// publishing any new Session, Display, input, audio or content owner.
     pub(crate) fn start_session(
@@ -1633,16 +1543,6 @@ impl GameOwner {
     ) -> Result<(), persistent_session::SessionStartError> {
         let (start, media, required) = supplied.into_parts();
         self.start_session(start, media, &required)
-    }
-    /// Transport a complete unpublished start to the actual app startup callback.
-    pub fn supply_session_start(&self, supplied: persistent_session::SuppliedSessionStart) {
-        self.with(|game| game.pending_supplied_start = Some(supplied));
-    }
-    pub fn start_prepared_session(
-        &self,
-        prepared: persistent_session::PreparedSessionStart,
-    ) -> Result<(), persistent_session::SessionStartError> {
-        self.with(|game| game.install_session_start(prepared))
     }
     pub fn checkpoint_session(
         &self,
@@ -1849,37 +1749,6 @@ impl Game {
             self.compatibility_write_owned_byte(at + offset, byte);
         }
     }
-    pub fn compatibility_copy_out(&self, at: usize, bytes: &mut [u8]) {
-        let end = at.checked_add(bytes.len()).expect("RAM range overflow");
-        let _ = &self.ram.0.bytes[at..end];
-        for (offset, byte) in bytes.iter_mut().enumerate() {
-            *byte = self.compatibility_byte(at + offset);
-        }
-    }
-    pub fn compatibility_copy_within(&mut self, source: Range<usize>, destination: usize) {
-        let count = self.ram.0.bytes[source.clone()].len();
-        assert!(
-            destination <= self.ram.len() - count,
-            "dest is out of bounds"
-        );
-        if destination > source.start {
-            for offset in (0..count).rev() {
-                let byte = self.compatibility_byte(source.start + offset);
-                self.compatibility_write_owned_byte(destination + offset, byte);
-            }
-        } else {
-            for offset in 0..count {
-                let byte = self.compatibility_byte(source.start + offset);
-                self.compatibility_write_owned_byte(destination + offset, byte);
-            }
-        }
-    }
-    pub fn compatibility_fill(&mut self, range: Range<usize>, byte: u8) {
-        let _ = &self.ram.0.bytes[range.clone()];
-        for at in range {
-            self.compatibility_write_owned_byte(at, byte);
-        }
-    }
     pub fn start_pending_supplied_session(
         &mut self,
     ) -> Option<Result<(), persistent_session::SessionStartError>> {
@@ -2029,31 +1898,6 @@ impl Game {
             persistent_session::SessionSlot::Ready(state) => state.begin_interval(fresh_entry),
             _ => Err(DisplayError::Phase),
         }
-    }
-    pub(crate) fn finish_session_interval(
-        &mut self,
-        metadata: persistent_session::IntervalMetadata,
-        description: crate::game::scene::records::SceneDescription,
-        media: Arc<SceneMedia>,
-        effects: &mut impl sm_game::scene::commit::SettlementEffects,
-    ) -> Result<(), DisplayError> {
-        if self.persistent_ram_epoch != self.ram.write_epoch() {
-            return Err(DisplayError::Poisoned);
-        }
-        self.preflight_samus_runtime()?;
-        let persistent_session::SessionSlot::Ready(state) = &mut self.persistent_session else {
-            return Err(DisplayError::Phase);
-        };
-        if let Err(error) = state.finish_interval(metadata, description, media, effects) {
-            state.poison();
-            self.samus_authority = SamusAuthority::Revoked;
-            return Err(error);
-        }
-        crate::game::session_encoding::encode(&state.gameplay, |at, bytes| {
-            self.ram.copy_in(at, bytes)
-        });
-        self.persistent_ram_epoch = self.ram.write_epoch();
-        Ok(())
     }
     pub(crate) fn prepare_session_adoption(
         &self,

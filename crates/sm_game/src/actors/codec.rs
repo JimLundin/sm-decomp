@@ -251,12 +251,6 @@ pub fn visit_common(s: &Session, mut visit: impl FnMut(usize, u16)) {
     }
 }
 
-/// Preflight is before the first write, including any byte-array tail.
-pub fn export_common(s: &Session, byte_len: usize, mut span: impl FnMut(usize, &[u8])) {
-    assert!(byte_len >= COMMON_END, "short actor common export");
-    visit_common(s, |at, value| span(at, &value.to_le_bytes()));
-}
-
 pub fn read_actor<H: ?Sized>(
     host: &H,
     key: ActorKey,

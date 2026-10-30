@@ -237,10 +237,6 @@ impl crate::execution::Execution<'_> {
         }
     }
 
-    pub(crate) unsafe fn step_dma(&mut self) -> bool {
-        unsafe { self.step_dma_with_source(None) }
-    }
-
     pub(crate) unsafe fn step_dma_with_source(
         &mut self,
         source: Option<&DmaRomSource<'_>>,

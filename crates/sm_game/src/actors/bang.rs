@@ -49,10 +49,7 @@ pub mod function {
 }
 
 /// Bank $A3 instructions bang's scripts call.
-pub mod instruction {
-    pub const QUEUE_ACQUIRED_SUIT_SOUND: u32 = 0xa3_ba78;
-    pub const SET_FINISHED_GROWING: u32 = 0xa3_baa8;
-}
+pub mod instruction {}
 
 const BANK: u32 = 0xa3;
 /// $A3:B722: the instruction list for each instruction list index; $A3:B75E:

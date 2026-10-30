@@ -66,7 +66,6 @@ pub mod flag {
 
 /// Fight function indices, stored in `fight_function` ($A4:86B3 table).
 pub mod fight {
-    pub const LOCK_UP: u16 = 0;
     pub const STEP_FORWARD: u16 = 2;
     pub const ASLEEP: u16 = 4;
     pub const STEPPING_FORWARD: u16 = 6;
@@ -74,11 +73,8 @@ pub mod fight {
     pub const NEAR_SPIKE_WALL_CHARGE: u16 = 0xa;
     pub const STEPPING_BACK: u16 = 0xc;
     pub const BACK_OFF_FROM_SPIKE_WALL: u16 = 0xe;
-    pub const ROAR_AND_STEP_FORWARDS: u16 = 0x10;
     pub const WAIT_FOR_FIRST_DAMAGE: u16 = 0x12;
     pub const WAIT_FOR_SECOND_DAMAGE: u16 = 0x14;
-    pub const POWER_BOMBED_CHARGE: u16 = 0x18;
-    pub const CHARGE_UNLESS_DAMAGED: u16 = 0x1a;
     pub const UNUSED_SET_INITIAL_INSTRUCTION_LIST: u16 = 0x1c;
     pub const UNUSED_CHOOSE_FORWARD_ATTACK: u16 = 0x1e;
     pub const UNUSED_DO_NOTHING_AND_STEP_FORWARD: u16 = 0x20;

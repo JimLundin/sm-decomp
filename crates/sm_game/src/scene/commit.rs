@@ -440,71 +440,6 @@ impl OwnedDisplay {
             },
         )
     }
-    pub fn disable_irq(&mut self) -> Result<(), DisplayError> {
-        if self.state.phase == DisplayPhase::Failed {
-            return Err(DisplayError::Poisoned);
-        }
-        irq::owned_disable(&mut self.state);
-        Ok(())
-    }
-    pub fn enable_irq(
-        &mut self,
-        immediate: bool,
-        effects: &mut impl RoomEffects,
-    ) -> Result<(), DisplayError> {
-        if self.state.phase == DisplayPhase::Failed {
-            return Err(DisplayError::Poisoned);
-        }
-        irq::owned_enable(
-            &mut self.state,
-            immediate,
-            &mut DisplayEffects {
-                image: &mut self.image,
-                media: &mut self.media,
-                content: &self.hdma_content,
-                effects,
-                producer_history: &mut self.producer_history,
-            },
-        )
-    }
-    pub fn advance_irq(&mut self, effects: &mut impl RoomEffects) -> Result<(), DisplayError> {
-        if self.state.phase == DisplayPhase::Failed {
-            return Err(DisplayError::Poisoned);
-        }
-        let mut interval = delivery::FaultGuard::new(&mut self.state);
-        let result = irq::owned_advance(
-            interval.state(),
-            &mut DisplayEffects {
-                image: &mut self.image,
-                media: &mut self.media,
-                content: &self.hdma_content,
-                effects,
-                producer_history: &mut self.producer_history,
-            },
-        );
-        if result.is_ok() {
-            interval.disarm();
-        }
-        result
-    }
-    pub fn read_delivery_status(&mut self, status: DeliveryStatus) -> Result<u8, DisplayError> {
-        if self.state.phase == DisplayPhase::Failed {
-            return Err(DisplayError::Poisoned);
-        }
-        Ok(match status {
-            DeliveryStatus::Nmi => delivery::nmi_status(&self.state),
-            DeliveryStatus::Irq => delivery::irq_status(&mut self.state),
-            DeliveryStatus::Beam => delivery::beam_status(&self.state),
-            DeliveryStatus::CounterGate => delivery::counter_gate_status(&self.state),
-        })
-    }
-    pub fn write_counter_gate(&mut self, value: u8) -> Result<(), DisplayError> {
-        if self.state.phase == DisplayPhase::Failed {
-            return Err(DisplayError::Poisoned);
-        }
-        delivery::counter_gate(&mut self.state, value);
-        Ok(())
-    }
     /// Full line history is supplied by the actual G late-settlement owner.
     /// Calling this does not execute HDMA, IRQ, room callbacks or a renderer.
     pub fn commit_scene(
@@ -623,9 +558,6 @@ impl OwnedDisplay {
             Arc::clone(&self.media),
             Arc::clone(&self.hdma_content),
         ))
-    }
-    pub fn take_read_results(&mut self) -> Vec<(super::records::AssetRef, Vec<u8>)> {
-        std::mem::take(&mut self.state.read_results)
     }
     /// Publish new immutable media identities. Earlier Scene lines keep their leases.
     pub fn append_incarnation(

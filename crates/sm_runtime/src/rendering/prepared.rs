@@ -95,22 +95,6 @@ impl PreparedInput<'_> {
     }
 }
 
-/// Consume exactly224 independently settled line records; no simulation or
-/// display-refresh operation occurs here. The output has fixed256x224 dimensions.
-pub fn render_frame(
-    lines: &[PreparedInput<'_>; HEIGHT],
-    initial_overflow: Overflow,
-) -> Result<PreparedFrame, RasterFault> {
-    let mut pixels = Vec::with_capacity(WIDTH * HEIGHT);
-    let mut overflow = initial_overflow;
-    for (index, input) in lines.iter().enumerate() {
-        let line = input.render((index + 1) as u16, overflow)?;
-        overflow = line.sprites.overflow;
-        pixels.extend_from_slice(&line.pixels);
-    }
-    Ok(PreparedFrame { pixels, overflow })
-}
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PreparedFrame {
     pixels: Vec<Bgra>,

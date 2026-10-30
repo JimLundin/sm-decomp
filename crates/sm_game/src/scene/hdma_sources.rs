@@ -161,33 +161,6 @@ pub struct BankWindow {
     pub length: usize,
 }
 impl BankWindow {
-    pub fn split_wrapping(
-        bank: u8,
-        address: u16,
-        offset: usize,
-        length: usize,
-    ) -> Result<Vec<Self>, DisplayError> {
-        if length == 0 || length > 65_536 {
-            return Err(DisplayError::Source);
-        }
-        offset.checked_add(length).ok_or(DisplayError::Source)?;
-        let first = length.min(65_536 - usize::from(address));
-        let mut windows = vec![Self {
-            bank,
-            address,
-            offset,
-            length: first,
-        }];
-        if first < length {
-            windows.push(Self {
-                bank,
-                address: 0,
-                offset: offset + first,
-                length: length - first,
-            });
-        }
-        Ok(windows)
-    }
     fn validate(&self, source_length: usize) -> Result<(), DisplayError> {
         if self.length == 0
             || self.length > 65_536 - usize::from(self.address)

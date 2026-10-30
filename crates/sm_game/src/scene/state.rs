@@ -555,11 +555,6 @@ pub struct InterruptState {
     pub transition_continuation: u16,
 }
 impl InterruptState {
-    pub fn consume_pending(&mut self, fallback: u16) -> u16 {
-        let next = self.pending;
-        self.pending = 0;
-        if next == 0 { fallback } else { next }
-    }
     pub fn room_layers(&self) -> u8 {
         if (self.previous_cre | self.current_cre) & 1 != 0 {
             16

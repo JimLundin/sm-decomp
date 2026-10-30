@@ -1,7 +1,7 @@
 //! Shared byte-compatible gameplay, hardware and music types.
 
 use crate::game_state::Game;
-use ::core::ffi::{c_char, c_double, c_float, c_long, c_schar, c_short, c_uchar, c_ushort, c_void};
+use ::core::ffi::{c_char, c_double, c_long, c_uchar, c_ushort, c_void};
 pub use sm_game::actors::layouts::EnemyBase;
 
 crate::type_aliases! {
@@ -626,17 +626,9 @@ crate::type_aliases! {
         SaveLoadOperation = u32;
 }
 
-pub type CalculateAngleFromXYFunc = unsafe fn(u16, &mut Game) -> u8;
-
 crate::type_aliases! {
     pub CoroutineRet, Uint8 = u8;
 }
-
-pub type CrocomireFunc = unsafe fn(
-    u16,
-    sm_game::enemy_script::EnemyScript,
-    &mut Game,
-) -> sm_game::enemy_script::EnemyScript;
 
 crate::type_aliases! {
     pub FuncXY_V, Func_CalcHdma, Func_SpazerSba_V = unsafe fn(u16, u16, &mut Game) -> ();
@@ -650,35 +642,15 @@ crate::type_aliases! {
     pub Func_V, HandlerFunc, SyncAllFunc = unsafe fn(&mut Game) -> ();
 }
 
-pub type Func_V_Coroutine = unsafe fn(&mut Game) -> CoroutineRet;
-
 pub type Func_Y_V = unsafe fn(u16, &mut Game) -> ();
 
 pub type Func_Y_Y = unsafe fn(u16, &mut Game) -> u16;
-
-pub type GLDEBUGPROC = Option<
-    unsafe extern "C" fn(
-        GLenum,
-        GLenum,
-        GLuint,
-        GLenum,
-        GLsizei,
-        *const GLchar,
-        *const c_void,
-    ) -> (),
->;
 
 crate::type_aliases! {
     pub GLboolean, GLubyte, stbi_uc = c_uchar;
 }
 
-pub type GLbyte = c_schar;
-
 pub type GLchar = c_char;
-
-pub type GLdouble = c_double;
-
-pub type GLfloat = c_float;
 
 crate::type_aliases! {
     pub GLint, GLsizei, SDL_JoystickPowerLevel, Sint32, GamepadButton = i32;
@@ -692,21 +664,11 @@ crate::type_aliases! {
     pub GLintptr, GLsizeiptr = ptrdiff_t;
 }
 
-pub type GLshort = c_short;
-
 crate::type_aliases! {
     pub GLushort, stbi_us = c_ushort;
 }
 
-pub type PFN_LOADFUNCPOINTERS = Option<unsafe fn() -> i32>;
-
 pub type RunFrameFunc = unsafe fn(u16, i32, &mut Game) -> ();
-
-pub type SDL_AudioCallback = Option<unsafe extern "C" fn(*mut c_void, *mut Uint8, i32) -> ()>;
-
-pub type SDL_AudioDeviceID = Uint32;
-
-pub type SDL_AudioFormat = Uint16;
 
 crate::type_aliases! {
     pub SDL_FingerID, SDL_GestureID, SDL_TouchID = Sint64;
@@ -719,10 +681,6 @@ crate::type_aliases! {
 }
 
 pub type Sint16 = i16;
-
-pub type Uint64 = u64;
-
-pub type _IO_lock_t = ();
 
 crate::type_aliases! {
     pub __off64_t, __off_t, __time_t = c_long;
@@ -756,38 +714,7 @@ pub(crate) enum TileDrawOrder {
     Columns,
 }
 
-impl TileTables {
-    /// Draw a block's four tiles with its horizontal and vertical flips.
-    ///
-    /// Destinations follow `order`. Read each source immediately before its
-    /// store: a destination may overlap a source needed by a later tile.
-    ///
-    /// # Safety
-    /// `table` must point to a readable tile table and each destination must
-    /// be writable for two bytes. Pointers may overlap and be unaligned.
-    #[inline]
-    pub(crate) unsafe fn draw_block(
-        table: *const Self,
-        block: u16,
-        destinations: [*mut u16; 4],
-        order: TileDrawOrder,
-    ) {
-        unsafe {
-            let corners = match order {
-                TileDrawOrder::Rows => [0, 1, 2, 3],
-                TileDrawOrder::Columns => [0, 2, 1, 3],
-            };
-            let flip = ((block >> 10) & 3) as usize;
-            let tile_flip = (block & 0x0c00) << 4;
-            let first = (block & 0x03ff) as usize * 4;
-            for (destination, corner) in destinations.into_iter().zip(corners) {
-                let source = table.cast::<u16>().add(first + (corner ^ flip));
-                let tile = u16::from_le(source.read_unaligned()) ^ tile_flip;
-                destination.write_unaligned(tile.to_le());
-            }
-        }
-    }
-}
+impl TileTables {}
 
 #[repr(C)]
 pub struct _IO_FILE {
@@ -802,21 +729,6 @@ pub use sdl2_sys::SDL_Window;
 #[cfg(any(not(feature = "frontend"), sm_verify_dll))]
 #[repr(C)]
 pub struct SDL_Window {
-    _private: [u8; 0],
-}
-
-#[repr(C)]
-pub struct _IO_codecvt {
-    _private: [u8; 0],
-}
-
-#[repr(C)]
-pub struct _IO_marker {
-    _private: [u8; 0],
-}
-
-#[repr(C)]
-pub struct _IO_wide_data {
     _private: [u8; 0],
 }
 

@@ -1,5 +1,5 @@
 use crate::execution::{DmaRomSource, Execution, HostContext};
-use crate::snapshot_io::{Block, SnapshotIo, TransferError};
+use crate::snapshot_io::{SnapshotIo, TransferError};
 // Split-word assembly evaluates high then low. The i32 form retains signed
 // casts, including sign extension of the low operand. Repeated receivers and
 // operands are evaluated separately. Set/add keep pointer-before-value order
@@ -207,20 +207,6 @@ pub(crate) unsafe fn snapshot_result(result: Result<(), TransferError>) {
 
 // Hardware regions include padding and retained raw aliases. Keep raw copies
 // until field-based serializers replace them; never borrow all RAM mutably.
-pub(crate) unsafe fn snapshot_region(io: &mut SnapshotIo<'_>, data: *mut u8, size: usize) {
-    unsafe {
-        let result = io.block(size, |block| {
-            if size != 0 {
-                let (destination, source) = match block {
-                    Block::Save(bytes) => (bytes.as_mut_ptr(), data as *const u8),
-                    Block::Load(bytes) => (data, bytes.as_ptr()),
-                };
-                memcpy(destination.cast(), source.cast(), size);
-            }
-        });
-        snapshot_result(result);
-    }
-}
 
 pub unsafe fn FinishLoadSnesState(game: &mut Game) {
     unsafe {
@@ -967,20 +953,9 @@ pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, native_game: &mut Game) {
         };
     }
 }
-pub unsafe fn MemCpy(dst: *mut c_void, src: *const c_void, size: i32) {
-    unsafe {
-        memcpy(dst, src, size as size_t);
-    }
-}
 pub fn MakePairU16(k: u16, j: u16) -> PairU16 {
     let r: PairU16 = PairU16 { k, j };
     r
-}
-pub unsafe fn mov24(a: *mut LongPtr, d: u32) {
-    unsafe {
-        (*a).addr = (d & 0xffff) as VoidP;
-        (*a).bank = (d >> 16) as u8;
-    }
 }
 pub unsafe fn Load24(src: *const LongPtr) -> u32 {
     unsafe { *(src as *mut u32) & 0xffffff }
@@ -1265,20 +1240,6 @@ pub(crate) unsafe fn SetHiLo(hi: *mut u16, lo: *mut u16, value: u32) {
 
 pub fn Mult8x8(a: u8, b: u8) -> u16 {
     (a as i32 * b as i32) as u16
-}
-pub fn SnesDivide(a: u16, b: u8) -> u16 {
-    (if b as i32 == 0 {
-        0xffff
-    } else {
-        a as i32 / b as i32
-    }) as u16
-}
-pub fn SnesModulus(a: u16, b: u8) -> u16 {
-    (if b as i32 == 0 {
-        a as i32
-    } else {
-        a as i32 % b as i32
-    }) as u16
 }
 pub unsafe fn ReadReg(reg: u16, game: &mut Game) -> u8 {
     unsafe { game.execution().read(reg as u32) }

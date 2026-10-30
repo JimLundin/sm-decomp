@@ -68,14 +68,6 @@ pub struct TilemapVisual {
     pub offset: Point,
     pub material: MaterialId,
 }
-#[derive(Clone, Debug, PartialEq)]
-pub struct ActorSceneRecord {
-    pub visual: ResolvedActorVisual,
-    pub position: Point,
-    pub layer: u16,
-    pub order: u64,
-    pub palette: ActorPaletteMode,
-}
 pub struct ActorDrawRequest {
     pub visual: ActorVisualSelection,
     pub position: Point,

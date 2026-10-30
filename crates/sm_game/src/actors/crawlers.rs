@@ -65,9 +65,6 @@ pub mod function {
     pub const NONE: u16 = 0xe6c1;
     pub const CRAWLING_VERTICALLY: u16 = 0xe6c8;
     pub const FALLING: u16 = 0xe785;
-    pub const CRAWLING_HORIZONTALLY: u16 = 0xe7f2;
-    pub const ORANGE_GEEMER_CRAWLING_VERTICALLY: u16 = 0xe091;
-    pub const ORANGE_GEEMER_CRAWLING_HORIZONTALLY: u16 = 0xe168;
     /// The orange Geemer's initial function.
     pub const ORANGE_GEEMER_INITIAL: u16 = 0xe08a;
 }

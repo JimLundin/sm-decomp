@@ -7,7 +7,6 @@ use std::sync::Arc;
 
 use crate::external_inputs::ExternalInputs;
 use crate::session::Session;
-use crate::session_checkpoint::AuxiliaryGameplayCheckpoint;
 use crate::session_owners::*;
 use {
     crate::scene::records::SceneMedia,
@@ -424,127 +423,6 @@ impl SessionSnapshotPayload {
         world: Arc<crate::room_entry::world::WorldBinding>,
     ) -> Result<crate::session_checkpoint::NumericGameplayCheckpoint, String> {
         Session::decode_gameplay_checkpoint(bytes, metadata, world)
-    }
-    pub fn encode_room_checkpoint(&self) -> Result<Vec<u8>, String> {
-        let state = self.0.as_ref().ok_or("no supplied Session room")?;
-        state
-            .0
-            .gameplay
-            .room
-            .encode_checkpoint(state.0.metadata(), &state.0.gameplay.world)
-    }
-    pub fn decode_room_checkpoint(
-        bytes: &[u8],
-        metadata: &DisplayStartMetadata,
-        expected: &crate::room_entry::world::WorldBinding,
-    ) -> Result<crate::session::Room, String> {
-        crate::session::Room::decode_checkpoint(bytes, metadata, expected)
-    }
-    pub fn encode_auxiliary_gameplay_checkpoint(&self) -> Result<Vec<u8>, String> {
-        let state = self
-            .0
-            .as_ref()
-            .ok_or("no supplied Session auxiliary gameplay")?;
-        state
-            .0
-            .gameplay
-            .encode_auxiliary_checkpoint(state.0.metadata())
-    }
-    pub fn decode_auxiliary_gameplay_checkpoint(
-        bytes: &[u8],
-        metadata: &DisplayStartMetadata,
-    ) -> Result<AuxiliaryGameplayCheckpoint, String> {
-        crate::session::Session::decode_auxiliary_checkpoint(bytes, metadata)
-    }
-    pub fn encode_player_checkpoint(&self) -> Result<Vec<u8>, String> {
-        let state = self.0.as_ref().ok_or("no supplied Session player")?;
-        state
-            .0
-            .gameplay
-            .player
-            .encode_checkpoint(state.0.metadata())
-    }
-    pub fn decode_player_checkpoint(
-        bytes: &[u8],
-        metadata: &DisplayStartMetadata,
-    ) -> Result<crate::session::Player, String> {
-        crate::session::Player::decode_checkpoint(bytes, metadata)
-    }
-    pub fn encode_enemy_projectile_checkpoint(&self) -> Result<Vec<u8>, String> {
-        let state = self
-            .0
-            .as_ref()
-            .ok_or("no supplied Session enemy projectiles")?;
-        state
-            .0
-            .gameplay
-            .enemy_projectiles
-            .encode_checkpoint(state.0.metadata())
-    }
-    pub fn decode_enemy_projectile_checkpoint(
-        bytes: &[u8],
-        metadata: &DisplayStartMetadata,
-    ) -> Result<crate::session::EnemyProjectiles, String> {
-        crate::session::EnemyProjectiles::decode_checkpoint(bytes, metadata)
-    }
-    pub fn encode_projectile_checkpoint(&self) -> Result<Vec<u8>, String> {
-        let state = self.0.as_ref().ok_or("no supplied Session projectiles")?;
-        state
-            .0
-            .gameplay
-            .projectiles
-            .encode_checkpoint(state.0.metadata())
-    }
-    pub fn decode_projectile_checkpoint(
-        bytes: &[u8],
-        metadata: &DisplayStartMetadata,
-    ) -> Result<crate::session::Projectiles, String> {
-        crate::session::Projectiles::decode_checkpoint(bytes, metadata)
-    }
-    pub fn encode_observation_checkpoint(&self) -> Result<Vec<u8>, String> {
-        let state = self.0.as_ref().ok_or("no supplied Session observations")?;
-        crate::session_checkpoint::encode_observations_checkpoint(
-            &state.0.observations,
-            state.0.metadata(),
-        )
-    }
-    pub fn decode_observation_checkpoint(
-        bytes: &[u8],
-        metadata: &DisplayStartMetadata,
-    ) -> Result<ExternalInputs, String> {
-        crate::session_checkpoint::decode_observations_checkpoint(bytes, metadata)
-    }
-    pub fn encode_control_checkpoint(&self) -> Result<Vec<u8>, String> {
-        let state = self.0.as_ref().ok_or("no supplied Session Control owner")?;
-        state
-            .0
-            .gameplay
-            .control
-            .encode_checkpoint(&state.0.required)
-    }
-    pub fn decode_control_checkpoint(
-        bytes: &[u8],
-        required: &SessionStartRequirements,
-    ) -> Result<Control, String> {
-        Control::decode_checkpoint(bytes, required)
-    }
-    /// Detached binary component only; full machine restore remains unsupported.
-    pub fn encode_audio_checkpoint(&self) -> Result<Vec<u8>, String> {
-        let state = self.0.as_ref().ok_or("no supplied Session audio owner")?;
-        state
-            .0
-            .gameplay
-            .control
-            .requests()
-            .map_err(|error| format!("{error:?}"))?
-            .encode_checkpoint(state.0.metadata(), &state.0.required.audio_catalog)
-    }
-    pub fn decode_audio_checkpoint(
-        bytes: &[u8],
-        metadata: &DisplayStartMetadata,
-        required: &SessionStartRequirements,
-    ) -> Result<AudioRequests, String> {
-        AudioRequests::decode_checkpoint(bytes, metadata, required.audio_catalog.clone())
     }
     pub fn is_owned(&self) -> bool {
         self.0.is_some()

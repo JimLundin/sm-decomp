@@ -26,11 +26,6 @@ pub enum MovementResult {
     Blocked,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum SolidContact {
-    Clear { amount: i32 },
-    Blocked { amount: i32 },
-}
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PlayerDirection {
     Up,
     UpRight,
