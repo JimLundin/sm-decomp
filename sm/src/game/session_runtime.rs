@@ -1213,10 +1213,7 @@ crate::game::callback_dispatch! {
             };
             actor_species_pre_instruction(0xa20000 | u32::from(phase), game);
         }];
-        10665625 => [crate::game::lava_jumper::initialize(game)];
         10661995 => [crate::game::flies::initialize(game)];
-        10666562 => [crate::game::norfair_rio::initialize(false, game)];
-        10667763 => [crate::game::norfair_rio::initialize(true, game)];
         10649615 => [actors::combat::select_frozen_ai(&mut Runtime::new(game))];
         10649610 => [actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Grapple)];
         10649665 => [actors::scheduling::update_frozen_enemy(&mut Runtime::new(game))];
@@ -1229,15 +1226,6 @@ crate::game::callback_dispatch! {
         10652077 => crate::game::mini_crocomire::initialize;
         10651420 => crate::game::goofball::initialize;
         10651548 => crate::game::goofball::advance;
-        10662175 | 10665682 | 10666615 | 10667812 => [{
-            game.next_random();
-            let phase = {
-                let runtime = Runtime::new(game);
-                let key = Key::from_legacy(runtime.word(0xe54));
-                runtime.resolve_actor(key, AccessMode::Native).pre_instruction
-            };
-            actor_species_pre_instruction(0xa20000 | u32::from(phase), game);
-        }];
         0xa30000..=0xa3ffff => [{ crate::rtl::Unreachable(game); }];
         10783748 => crate::game::visual_runtime::advance_crocomire;
 
@@ -1259,27 +1247,10 @@ crate::game::address_dispatch! {
     {
 
 
-        10665692 => [crate::game::lava_jumper::follow_parent(k, game)];
-        10665754 => [crate::game::lava_jumper::launch(k, game)];
-        10665790 => [crate::game::lava_jumper::advance(k, crate::game::lava_jumper::Flight::Rising, game)];
-        10665852 => [crate::game::lava_jumper::advance(k, crate::game::lava_jumper::Flight::Turning, game)];
-        10665916 => [crate::game::lava_jumper::advance(k, crate::game::lava_jumper::Flight::Falling, game)];
         10662222 => [crate::game::flies::circle(k, false, game)];
         10662268 => [crate::game::flies::circle(k, true, game)];
         10662314 => [crate::game::flies::dive(k, false, game)];
         10662354 => [crate::game::flies::dive(k, true, game)];
-        10666625 => [crate::game::norfair_rio::follow_parent(k, false, game)];
-        10666727 => [crate::game::norfair_rio::wait_to_dive(k, false, game)];
-        10666815 => [crate::game::norfair_rio::finish_animation(k, false, false, game)];
-        10667014 => [crate::game::norfair_rio::finish_animation(k, false, true, game)];
-        10667822 => [crate::game::norfair_rio::follow_parent(k, true, game)];
-        10667889 => [crate::game::norfair_rio::wait_to_dive(k, true, game)];
-        10667963 => [crate::game::norfair_rio::finish_animation(k, true, false, game)];
-        10668168 => [crate::game::norfair_rio::finish_animation(k, true, true, game)];
-        10666849 => [crate::game::norfair_rio::dive(k, false, true, game)];
-        10666929 => [crate::game::norfair_rio::dive(k, false, false, game)];
-        10667990 => [crate::game::norfair_rio::dive(k, true, true, game)];
-        10668077 => [crate::game::norfair_rio::dive(k, true, false, game)];
         10675796 | 10675885 | 10675953 | 10676020 | 10676041
             => [crate::game::lava_seahorse_pair::phase(k, ea as u16, game)];
         10652227 => [crate::game::mini_crocomire::patrol(false, game)];
@@ -1323,15 +1294,8 @@ crate::game::callback_dispatch! {
         11128778 => [sm_game::actors::baby_metroid_cutscene::go_to_draining_mother_brain(k, j)];
         11139360 => [sm_game::actors::baby_metroid_encounter::go_to_normal(k, j)]; 11139382 => [sm_game::actors::baby_metroid_encounter::go_to_latched_on(k, j)];
         11139472 => [sm_game::actors::baby_metroid_encounter::go_to_remorse(k, j)];
-        10665614 => [{
-            crate::game::lava_jumper::instruction_finished(game);
-            j
-        }];
         10668907 => [{ crate::game::music::queue_sfx2_max6(0xe, game); j }];
         10675707 => [crate::game::lava_seahorse_pair::fire_ready(j, game)];
-        10666441 | 10666452 | 10666463 | 10666474 | 10666485 | 10666496 | 10666507
-        | 10666518 | 10666529 | 10666540 | 10666551 | 10667730 | 10667741 | 10667752
-            => [crate::game::norfair_rio::instruction(ea, j, game)];
         10654929 => [{ crate::game::music::queue_sfx2_max6(0x3a, game); j }];
         10657578 => [{ crate::game::music::queue_sfx2_max6(0x34, game); j }];
         10657959 => [crate::game::enemy_projectiles::spawn_scripted(0xdafe, j, game)];

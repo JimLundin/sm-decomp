@@ -151,6 +151,7 @@ pub mod actors {
     pub mod fune;
     pub mod gamet;
     pub mod geega;
+    pub mod geruta;
     pub mod host;
     pub mod identity;
     pub mod kago;
@@ -203,6 +204,7 @@ pub mod actors {
     pub mod space_pirates;
     pub mod species;
     pub mod spore_spawn;
+    pub mod squeept;
     pub mod staging;
     pub mod state;
     pub mod statues;
