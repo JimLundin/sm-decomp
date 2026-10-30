@@ -3,7 +3,8 @@
 Each mutant perturbs one owner's or view's mapping between RAM and Session
 fields: it shifts a field's address by 2, swaps two fields, or drops one byte
 of a word. It must make each named sm_game test fail: unit tests, and the
-integration tests in crates/sm_game/tests (state_layout.rs, collision_wrap.rs). A surviving mutant, a
+integration tests in crates/sm_game/tests (state_layout.rs, collision_wrap.rs,
+grapple_swing.rs). A surviving mutant, a
 compile error or a failure in any other test is not a kill.
 
     python session_mutations.py                  run every mutant (GitHub CI only)
@@ -41,6 +42,8 @@ LITTLE_ENDIAN = "projection_words_are_little_endian_byte_pairs"
 INPUTS = "inputs_read_every_observation_from_its_address"
 COLLISION_WRAP = "collision_wrap.rs:out_of_room_level_words_wrap_like_the_long_indexed_read"
 GEOMETRY = "crates/sm_game/src/player_collision/geometry.rs"
+SWING = "crates/sm_game/src/grapple_swing.rs"
+SWING_TESTS = "grapple_swing.rs:"
 # The shared scalar-word closures carry every table owner below.
 SCALAR_OWNERS = (LANES, CAMERA, FLOW, MENU, ROOM_ENTRY, INVENTORY, LIQUID, EPROJ, HDMA)
 
@@ -184,6 +187,30 @@ MUTATIONS = (
           "    [0, 1].map(|lane| 0x10002 + byte_offset + lane)", COLLISION_WRAP),
     shift("level_offset_skips_the_16_bit_wrap", GEOMETRY,
           "    usize::from(block.wrapping_mul(2))", "    usize::from(block) * 2", COLLISION_WRAP),
+    # The grapple swing's rules (crates/sm_game/tests/grapple_swing.rs).
+    shift("swing_velocity_uncapped", SWING,
+          "    if velocity.unsigned_abs() >= 0x480 {", "    if velocity.unsigned_abs() > 0x7fff {",
+          SWING_TESTS + "angular_velocity_is_capped_at_480h_both_ways"),
+    shift("swing_cap_counts_extra_velocity", SWING,
+          "    let velocity = swing.angular_velocity as i16;",
+          "    let velocity = swing.angular_velocity.wrapping_add(swing.extra_angular_velocity) as i16;",
+          SWING_TESTS + "extra_velocity_is_outside_the_cap"),
+    shift("swing_decelerates_always", SWING,
+          "    if (swing.angular_velocity ^ angle) & 0x8000 != 0 {", "    if true {",
+          SWING_TESTS + "rising_deceleration_applies_only_against_the_angle"),
+    shift("swing_liquid_not_halved", SWING,
+          "(24 >> (shift + u32::from(liquid)))", "(24 >> shift)",
+          SWING_TESTS + "liquid_halves_the_angle_acceleration_only"),
+    shift("swing_quadrants_swapped", SWING,
+          "matches!(angle & 0xc000, 0 | 0xc000)", "matches!(angle & 0xc000, 0x4000 | 0x8000)",
+          SWING_TESTS + "gravity_accelerates_by_quadrant"),
+    shift("swing_settles_on_the_low_byte", SWING,
+          "if abs16(swing.angular_velocity).to_ne_bytes()[1] == 0 {",
+          "if abs16(swing.angular_velocity).to_ne_bytes()[0] == 0 {",
+          SWING_TESTS + "straight_down_has_no_acceleration_and_settles_a_slow_swing"),
+    shift("grapple_length_stops_past_3fh", SWING,
+          "    } else if !shortening && end >= 63 {", "    } else if !shortening && end > 63 {",
+          SWING_TESTS + "length_changes_stop_at_8_and_3fh"),
 )
 
 
