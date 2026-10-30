@@ -165,10 +165,10 @@ impl MenuRuntime for Game {
         }
     }
     fn cinematic_sprite_pre_instruction(&mut self, pre: u32, object: u16) {
-        crate::game::sm_8b::CallCinematicSprPreInstr(pre, object, self)
+        sm_game::cinematic_dispatch::run_sprite_pre_instruction(pre, object, self)
     }
     fn cinematic_sprite_instruction(&mut self, command: u32, object: u16, operand: u16) -> u16 {
-        crate::game::sm_8b::CallCinematicSprInstr(command, object, operand, self)
+        sm_game::cinematic_states::run_sprite_instruction(command, object, operand, self)
     }
     fn enqueue_mode7_rom(&mut self, bank: u8, cursor: u16) {
         crate::game::mode7_transfers::enqueue_rom(bank, cursor, self)
@@ -361,7 +361,7 @@ const _: () = assert!(
 
 // The intro's local copies of these bank $8B definitions must match.
 const _: () = {
-    use crate::game::sm_8b as bank;
+    use crate::game::constants::bank_8b as bank;
     use sm_game::intro_pages as intro;
     assert!(
         intro::addr_kCinematicBgObjectDef_8BCF3F == bank::addr_kCinematicBgObjectDef_8BCF3F as u32
@@ -401,7 +401,7 @@ const _: () = {
 
 // The cinematic engine's named bank $8B definitions must match.
 const _: () = {
-    use crate::game::sm_8b as bank;
+    use crate::game::constants::bank_8b as bank;
     use sm_game::ending_screens::samus as s;
     use sm_game::ending_sequence::object as e;
     use sm_game::intro_sequence::{self as i, mode7 as m};
@@ -457,3 +457,164 @@ const _: () = assert!(
     core::mem::offset_of!(sm_game::beam_windows::BeamScratch, row)
         == core::mem::offset_of!(crate::types::Ram8000_Default, var_3F)
 );
+
+impl sm_game::cinematic_host::Host for Game {
+    fn clear_palette_effects(&mut self) {
+        crate::game::palette_effects::clear(self);
+    }
+
+    fn set_palette_effects_enabled(&mut self, enabled: bool) {
+        crate::game::palette_effects::set_enabled(enabled, self);
+    }
+
+    fn queue_music_delayed(&mut self, track: u16, delay: u16) {
+        crate::game::music::QueueMusic_DelayedY(track, delay, self);
+    }
+
+    fn spawn_power_bomb(&mut self) {
+        crate::game::explosion_window::spawn_power_bomb(self);
+    }
+
+    fn initialize_player(&mut self) {
+        crate::game::session_runtime::initialize_player(self);
+    }
+
+    fn use_cinematic_bindings(&mut self) {
+        crate::game::controller_input::use_cinematic_bindings(self);
+    }
+
+    fn disable_scanline_irq(&mut self) {
+        crate::game::scanline_irq::disable(self);
+    }
+
+    fn advance_ending_tile_upload(&mut self) {
+        crate::game::mode7_transfers::advance_ending_tile_upload(self);
+    }
+
+    fn advance_palette_effects(&mut self) {
+        crate::game::palette_effects::advance(self);
+    }
+
+    fn advance_intro_player(&mut self) {
+        crate::game::player_projectiles::prepare(self);
+        crate::game::session_runtime::player_update_runtime::advance_frame(self);
+    }
+
+    fn native_assertion(
+        &mut self,
+        expression: &'static [u8],
+        line: u32,
+        function: &'static [u8],
+    ) -> ! {
+        crate::c_library::assertion_failed(expression, b"src/sm_8b.c\0", line, function)
+    }
+}
+
+// The named bank $8B functions, objects and lists are the decompilation's.
+const _: () = {
+    use crate::game::constants::bank_8b::*;
+    use sm_game::intro_sequence as i;
+    use sm_game::title_sequence as t;
+    const fn at(word: u16) -> u32 {
+        0x8b_0000 | word as u32
+    }
+    assert!(at(t::function::NOTHING) == 0x8b9a47);
+    assert!(at(t::function::SETUP) == 0x8b9b68);
+    assert!(at(t::function::ZOOMING_OUT) == 9150091 && at(t::function::TO_FILE_SELECT) == 9150290);
+    assert!(at(t::function::TO_DEMOS) == 9150382 && at(t::function::WAITING) == 9150248);
+    assert!(at(t::function::TITLE_SCREEN) == 9150249 && at(t::NO_PRE_INSTRUCTION) == 9147353);
+    assert!(t::object::SCROLLING_1994 == addr_kCinematicSpriteObjectDef_8BA0EF as u16);
+    assert!(t::object::TITLE_LOGO == addr_kCinematicSpriteObjectDef_8BA107 as u16);
+    assert!(t::object::COPYRIGHT == addr_kCinematicSpriteObjectDef_8BA119 as u16);
+    assert!(t::object::DEMO_LOGO == addr_kCinematicSpriteObjectDef_8BA125 as u16);
+    assert!(t::object::BABY_METROID == addr_kMode7ObjBabyMetroidInTitle as u16);
+    assert!(
+        at(i::function::WAIT_FOR_MUSIC_AND_FADE_IN) == 0x8ba5a7
+            && at(i::function::PAGE_6_DRAWN) == 0x8ba38f
+    );
+    assert!(
+        at(i::function::GALAXY_IS_AT_PEACE) == 9152019
+            && at(i::function::WAIT_240_FRAMES) == 9152057
+    );
+    assert!(
+        at(i::function::WAIT_FOR_FADE_OUT) == 9152099
+            && at(i::function::SPAWN_TEXT_PAGE_1) == 9152555
+    );
+    assert!(
+        at(i::function::CERES_WAIT_FOR_MUSIC) == 9158116
+            && at(i::function::CERES_FLYING_INTO_CAMERA) == 9158137
+    );
+    assert!(
+        at(i::function::CERES_FLYING_INTO_CERES) == 9158618
+            && at(i::function::BOOM_WAIT_FOR_MUSIC) == 9159396
+    );
+    assert!(
+        at(i::function::BOOM_SMALL_EXPLOSIONS) == 9159409
+            && at(i::function::BOOM_EXPLOSIONS) == 9159493
+    );
+    assert!(
+        at(i::function::BOOM_GUNSHIP_FLYING_AWAY) == 9160138
+            && at(i::function::BOOM_WAIT_C0H_FRAMES) == 9160208
+    );
+    assert!(at(i::function::BOOM_FADE_OUT) == 9160231 && at(i::function::ZEBES_INITIAL) == 9160345);
+    assert!(
+        at(i::function::ZEBES_FADING_IN) == 9160604
+            && at(i::function::ZEBES_SLIDE_SCENE_AWAY) == 9161438
+    );
+    assert!(
+        at(i::pre_instruction::BABY_HATCHED) == 9157235
+            && at(i::pre_instruction::BABY_IDLING) == 9157389
+    );
+    assert!(
+        at(i::pre_instruction::BABY_DANCING) == 9157412
+            && at(i::pre_instruction::NOTHING) == 9147353
+    );
+    assert!(i::object::TEXT_CARET == addr_kCinematicSpriteObjectDef_8BCE6D as u16);
+    assert!(i::object::CERES_GUNSHIP == addr_kCinematicSpriteObjectDef_8BCE7F as u16);
+    assert!(i::object::CERES_UNDER_ATTACK == addr_kCinematicSpriteObjectDef_8BCE85 as u16);
+    assert!(i::object::CERES_SMALL_ASTEROIDS == addr_kCinematicSpriteObjectDef_8BCE8B as u16);
+    assert!(i::object::CERES_VORTEX == addr_kCinematicSpriteObjectDef_8BCE91 as u16);
+    assert!(i::object::CERES_EXPLOSION_2 == addr_kCinematicSpriteObjectDef_8BCEC1 as u16);
+    assert!(i::object::SLIME_DROPS == addr_kCinematicSpriteObjectDef_8BCEF1 as u16);
+    assert!(i::object::CERES_STARS == addr_kCinematicSpriteObjectDef_8BCF0F as u16);
+    assert!(i::object::CERES_EXPLOSION_GUNSHIP == addr_kCinematicSpriteObjectDef_8BCF2D as u16);
+    assert!(i::object::CERES_EXPLOSION_SPAWNER == addr_kCinematicSpriteObjectDef_8BCF33 as u16);
+    assert!(i::object::CERES_LARGE_ASTEROIDS == addr_kCinematicSpriteObjectDef_8BCF39 as u16);
+    assert!(i::object::SAMUS_BLINKING == addr_kCinematicBgObjectDef_8BCF63 as u16);
+    assert!(i::object::CERES_BG == addr_kCinematicBgObjectDef_8BCF69 as u16);
+    assert!(i::mode7::FLYING_INTO_CERES == addr_kCinematicFunction_Intro_Func56_M7 as u16);
+    assert!(i::mode7::BOOM == addr_kCinematicFunction_Intro_Func76_M7_0 as u16);
+    assert!(i::mode7::BOOM_GUNSHIP == addr_kCinematicFunction_Intro_Func76_M7_1 as u16);
+    assert!(i::mode7::BOOM_WITH_SAMUS == addr_kCinematicFunction_Intro_Func76_M7_2 as u16);
+    assert!(
+        i::NEXT_PAGE_ARROW
+            == 0x3000 + core::mem::offset_of!(crate::types::Ram3000, menu.menu_tilemap) + 286
+    );
+};
+
+const _: () = {
+    use crate::game::constants::bank_8b::*;
+    use sm_game::ending_sequence::{function as f, object as o};
+    const fn at(word: u16) -> u32 {
+        0x8b_0000 | word as u32
+    }
+    assert!(at(f::WAIT_FOR_MUSIC) == 9164503 && at(f::SCENE_0_FADING_IN) == 9164530);
+    assert!(at(f::SCENE_1_FADING_IN) == 9164792 && at(f::SCENE_2_FADING_IN) == 9165314);
+    assert!(at(f::SCENE_2) == 9165338 && at(f::LOAD_GUNSHIP_BG) == 9165523);
+    assert!(at(f::CREDITS) == 9165725 && at(f::GUNSHIP_SETUP) == 9165764);
+    assert!(at(f::GUNSHIP_SPINNING_FAST) == 9165989 && at(f::GUNSHIP_FREEZE_FRAME) == 9166435);
+    assert!(at(f::CREDITS_SETUP) == 9166464 && at(f::FADE_IN_SHOOTING_STARS) == 9167120);
+    assert!(at(f::FADE_IN_SAMUS) == 9167192 && at(f::WAVY_SAMUS) == 9167248);
+    assert!(at(f::DEER_FORCE) == 9167314 && at(f::IDLE_SAMUS_2_CROSS_FADE) == 9167636);
+    assert!(at(f::IDLE_SAMUS_2) == 9167682 && at(f::FINISHED) == 9168826);
+    assert!(o::EXPLODING_ZEBES == addr_kCinematicSpriteObjectDef_8BEE9D as u16);
+    assert!(o::PURPLE_GLOW == addr_kCinematicSpriteObjectDef_8BEEA3 as u16);
+    assert!(o::STARS == addr_kCinematicSpriteObjectDef_8BEEA9 as u16);
+    assert!(o::LAVA == addr_kCinematicSpriteObjectDef_8BEEAF as u16);
+    assert!(o::GUNSHIP_TEXT == addr_kCinematicSpriteObjectDef_8BEEC7 as u16);
+    assert!(o::ITEM_PERCENTAGE == addr_kCinematicBgObjectDef_8BF748 as u16);
+    assert!(
+        o::ICON == addr_kCinematicBgObjectDef_8BF74E as u16
+            && o::CREDITS == addr_stru_8BF6F8 as u16
+    );
+};

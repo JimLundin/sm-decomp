@@ -46,14 +46,11 @@ impl sm_game::gameplay_frame::Host for Game {
         self.next_random();
     }
     fn advance_native_state(&mut self, state: NativeState) -> u8 {
-        use crate::game::sm_8b::{
-            GameState_1_OpeningCinematic_, GameState_37_CeresGoesBoomWithSamus_,
-            GameState_39_EndingAndCredits_,
-        };
+        use sm_game::cinematic_states::{ending_and_credits, intro, title_sequence};
         match state {
-            NativeState::OpeningCinematic => GameState_1_OpeningCinematic_(self),
-            NativeState::CeresGoesBoom => GameState_37_CeresGoesBoomWithSamus_(self),
-            NativeState::EndingAndCredits => GameState_39_EndingAndCredits_(self),
+            NativeState::OpeningCinematic => title_sequence(self),
+            NativeState::CeresGoesBoom => intro(self),
+            NativeState::EndingAndCredits => ending_and_credits(self),
         }
     }
     fn resume_room_entry(&mut self, signal: EntrySignal) -> u8 {
@@ -81,7 +78,7 @@ impl sm_game::gameplay_frame::Host for Game {
     }
 
     fn load_title_sequence_graphics(&mut self) {
-        crate::game::sm_8b::LoadTitleSequenceGraphics(self);
+        sm_game::title_sequence::load_graphics(self);
     }
     fn disable_scanline_irq(&mut self) {
         crate::game::scanline_irq::disable(self);

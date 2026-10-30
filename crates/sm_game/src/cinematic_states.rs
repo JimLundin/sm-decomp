@@ -82,7 +82,7 @@ const SLIME_Y_FAST: [i16; 138] = [
 
 fn run_function<H: Host + ?Sized>(game: &mut H) {
     let address = (BANK << 16) | u32::from(word!(game.cinematic_function));
-    game.run_cinematic_function(address);
+    crate::cinematic_dispatch::run_function(address, game);
 }
 
 /// The intro and ending's frame counters.

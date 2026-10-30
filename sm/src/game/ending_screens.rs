@@ -1,5 +1,4 @@
 //! Moved to `sm_game::ending_screens`.
-pub(crate) use sm_game::ending_screens::*;
 
 // The ending's named cinematic functions are the ids bank $8B dispatches on.
 const _: () = {

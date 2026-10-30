@@ -1,6 +1,6 @@
 //! Boot/reset sequencing over the authoritative compatibility state.
+use crate::game::save_slots;
 use crate::game::sprite_drawing::{clear_high_table, finish_frame};
-use crate::game::{save_slots, sm_8b::InitializeIoDisplayLogo_Async};
 use crate::game_state::Game;
 use crate::ram_map::word;
 use crate::rtl::{
@@ -33,7 +33,7 @@ pub(crate) unsafe fn resume(game: &mut Game) -> u8 {
             clear_work_ram(0x2000, game);
         }
         if matches!(resume, 1 | 2) {
-            let yielded: u8 = InitializeIoDisplayLogo_Async(game);
+            let yielded: u8 = sm_game::cinematic_states::nintendo_logo(game);
             if yielded != 0 {
                 game.ram().write_byte(0x611, 2);
                 return yielded;

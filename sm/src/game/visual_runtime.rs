@@ -1,18 +1,7 @@
 //! Visual adapters on the one aggregate Session, with explicit legacy effects.
-pub(crate) use crate::game::cinematic_objects::advance_intro_mother_brain;
-pub(crate) use crate::game::ending_screens::{
-    advance_ending_gunship_spin, advance_ending_samus_jump, advance_ending_sprite_pair,
-    advance_postcredits_samus_message, advance_postcredits_samus_reveal, advance_postcredits_zoom,
-    move_ending_cloud, update_ending_critters, wait_ending_cloud,
-};
 pub(crate) use crate::game::hdma_objects::{
     clear_hdma, clear_hdma_channels, initialize_room_effects, set_hdma_enabled, spawn_bg3_scroll,
     spawn_hdma, spawn_hdma_words, update_hdma,
-};
-pub(crate) use crate::game::intro_objects::{
-    advance_ceres_station, advance_intro_baby_pursuit, advance_intro_landing_mosaic,
-    advance_intro_rinka, advance_zebes_destruction_zoom, advance_zebes_flight, advance_zebes_stars,
-    launch_cinematic_sprite, wait_cinematic_scene,
 };
 pub(crate) use crate::game::room_visuals::{
     advance_crocomire, align_crocomire_background, darken_fireflea_room,
@@ -21,8 +10,6 @@ pub(crate) use crate::game::room_visuals::{
     initialize_phantoon_motion, initialize_room_haze, initialize_tourian_statue,
     initialize_weather, shake_room_with_sound,
 };
-pub(crate) use crate::game::title_screen::{advance_title_pan, advance_title_wait};
-pub(crate) use sm_game::cinematic::drift_cinematic_sprite;
 
 pub(crate) use crate::game::hosts::{draw_player_frame, update_beam_tiles_and_palette};
 pub(crate) use crate::game::visual_checks::{

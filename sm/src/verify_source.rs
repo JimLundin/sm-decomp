@@ -2090,7 +2090,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         "sm/src/game/demo_rooms.rs",
         include_bytes!("game/demo_rooms.rs"),
     ),
-    ("sm/src/game/sm_8b.rs", include_bytes!("game/sm_8b.rs")),
     (
         "sm/src/game/actors/spore_spawn.rs",
         include_bytes!("game/actors/spore_spawn.rs"),
@@ -2158,20 +2157,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/visual_host.rs"),
     ),
     (
-        "sm/src/game/title_screen.rs",
-        include_bytes!("game/title_screen.rs"),
-    ),
-    (
         "sm/src/game/ending_screens.rs",
         include_bytes!("game/ending_screens.rs"),
-    ),
-    (
-        "sm/src/game/intro_objects.rs",
-        include_bytes!("game/intro_objects.rs"),
-    ),
-    (
-        "sm/src/game/cinematic_objects.rs",
-        include_bytes!("game/cinematic_objects.rs"),
     ),
     (
         "sm/src/game/room_visuals.rs",
@@ -3118,6 +3105,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/cinematic_states.rs",
         include_bytes!("../../crates/sm_game/src/cinematic_states.rs"),
+    ),
+    (
+        "crates/sm_game/src/cinematic_dispatch.rs",
+        include_bytes!("../../crates/sm_game/src/cinematic_dispatch.rs"),
     ),
     (
         "crates/sm_game/src/cinematic_host.rs",

@@ -14,7 +14,7 @@ pub(super) fn write_word(tail: u16, field: usize, value: u16, game: &mut Game) {
 }
 
 #[forbid(unsafe_code)]
-pub(super) fn advance_ending_tile_upload(game: &mut Game) {
+pub(crate) fn advance_ending_tile_upload(game: &mut Game) {
     use crate::ram_map::word;
     let page = word!(game.cinematic_var4);
     let tail = word!(game.mode7_vram_write_queue_tail);

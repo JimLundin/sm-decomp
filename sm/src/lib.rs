@@ -353,7 +353,6 @@ pub mod game {
     pub(crate) use callback_dispatch;
 
     pub(crate) mod beam_windows;
-    pub(crate) mod cinematic_objects;
     pub mod constants;
     pub(crate) mod decompression;
     pub(crate) mod demo_rooms;
@@ -366,7 +365,6 @@ pub mod game {
     pub(crate) mod grapple_swing;
     pub(crate) mod hdma_objects;
     pub(crate) mod imported;
-    pub(crate) mod intro_objects;
     pub(crate) mod intro_pages;
     pub(crate) mod launch_motion;
     pub(crate) mod launch_motion_ram;
@@ -382,7 +380,6 @@ pub mod game {
     pub(crate) mod room_visuals;
     pub mod scene;
     pub(crate) mod scrolling_sky;
-    pub(crate) mod title_screen;
     pub(crate) use sm_game::shaktool_tables;
     pub(crate) mod visual_checks;
     pub(crate) mod vram_read_queue;
@@ -442,7 +439,6 @@ pub mod game {
     pub(crate) mod session_checkpoint;
     pub(crate) mod session_encoding;
     pub(crate) mod session_runtime;
-    pub mod sm_8b;
     pub(crate) mod sprite_drawing;
     pub(crate) use sm_game::sprite_effect_host;
     pub(crate) mod sprite_effect_runtime;

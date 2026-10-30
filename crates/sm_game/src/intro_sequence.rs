@@ -343,7 +343,7 @@ pub fn ceres_flying_into_camera<H: Host + ?Sized>(game: &mut H) {
         game.ram().write_byte(0x72, 49);
         set_fixed_color([63, 95, 0x9f], game);
         clear_cinematic_sprites(game);
-        game.enqueue_mode7_transfers(mode7::FLYING_INTO_CERES);
+        game.enqueue_mode7_rom(0x8b, mode7::FLYING_INTO_CERES);
         word!(game.cinematic_var8 = -32i32 as u16);
         word!(game.cinematic_var10 = -128i32 as u16);
         word!(game.cinematic_var5 = 32);
@@ -489,11 +489,11 @@ pub fn boom_explosions<H: Host + ?Sized>(game: &mut H) {
         word!(game.cinematic_var6 = 768);
         sprites(game, object::CERES_EXPLOSION_GUNSHIP, 0);
         if word!(game.game_state) == BOOM_WITH_SAMUS {
-            game.enqueue_mode7_transfers(mode7::BOOM_WITH_SAMUS);
+            game.enqueue_mode7_rom(0x8b, mode7::BOOM_WITH_SAMUS);
         } else {
-            game.enqueue_mode7_transfers(mode7::BOOM);
+            game.enqueue_mode7_rom(0x8b, mode7::BOOM);
         }
-        game.enqueue_mode7_transfers(mode7::BOOM_GUNSHIP);
+        game.enqueue_mode7_rom(0x8b, mode7::BOOM_GUNSHIP);
         word!(game.cinematic_function = function::BOOM_GUNSHIP_FLYING_AWAY);
     }
 }

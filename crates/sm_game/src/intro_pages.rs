@@ -22,7 +22,7 @@ use sm_data::intro_palette::{
     ADDRESS as INTRO_PALETTE, BYTES as INTRO_PALETTE_BYTES, IntroPalette,
 };
 
-// Bank $8B cinematic object definitions (sm checks them against sm_8b).
+// Bank $8B cinematic object definitions (sm checks them against the decompilation's bank $8B constants).
 pub const addr_kCinematicBgObjectDef_8BCF3F: u32 = 0xcf3f;
 pub const addr_kCinematicBgObjectDef_8BCF5D: u32 = 0xcf5d;
 pub const addr_kCinematicSpriteObjectDef_8BCE5B: u32 = 0xce5b;

@@ -203,6 +203,7 @@ pub mod animated_tiles {
 }
 pub mod checkpoint_binding;
 pub mod cinematic;
+pub mod cinematic_dispatch;
 pub mod cinematic_display;
 pub mod cinematic_host;
 pub mod cinematic_objects;
