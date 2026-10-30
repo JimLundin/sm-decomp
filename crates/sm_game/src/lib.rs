@@ -29,6 +29,7 @@ pub mod hud;
 pub mod imported;
 pub mod item_pickups;
 pub mod launch_motion;
+pub mod layer_blending;
 pub mod liquid_effects;
 pub mod liquid_surface;
 pub mod menus;

@@ -353,9 +353,7 @@ pub(crate) unsafe fn update_hdma(game: &mut Game) {
                 break;
             }
         }
-        unsafe {
-            crate::game::layer_blending::update(game);
-        }
+        crate::game::layer_blending::update(game);
     }
 }
 
