@@ -1,100 +1,24 @@
-//! Phantoon's fireball spawns, speed approach and debug sprite-map toggle.
+//! Phantoon's actions run in `sm_game::actors::phantoon_actions`; the fireball
+//! spawn comes from here.
 #![forbid(unsafe_code)]
 use crate::game::constants::bank_86::addr_kEproj_DestroyableFireballs;
-use crate::game::enemy_layouts::EnemyLayout8 as Phantoon;
 use crate::game::enemy_projectiles::SpawnEprojWithGfx;
-use crate::game::music::QueueSfx3_Max6;
-use crate::game::session_runtime::native_record;
 use crate::game_state::Game;
-use crate::ram_map::{slot, word};
-use crate::rtl::rom_table_word;
 use crate::types::PairU16;
+use sm_game::actors::phantoon_actions;
+pub(crate) use sm_game::actors::phantoon_actions::{
+    Host, approach_speed, debug_toggle_sprite_map, spawn_fireball, spawn_fireball_circle,
+    spawn_fireball_pattern,
+};
 
-/// The high byte of the ypos word in the ExtendedSpriteMap at $A7:902D.
-const SPRITE_MAP: u16 = 0x902d;
-const YPOS_HIGH: usize = 3;
-/// Starting fireball slots per pattern, read as bytes from $A7:CFC2.
-const PATTERN_STARTS: u16 = 0xcfc2;
-
-fn fireball(parameter: u16, k: u16, game: &mut Game) {
-    SpawnEprojWithGfx(parameter, k, addr_kEproj_DestroyableFireballs as u16, game);
-}
-
-/// Debug: controller 1's newly pressed 0x4000 flips the cartridge word in place.
-pub(crate) fn debug_toggle_sprite_map(k: u16, game: &mut Game) {
-    if k == 0 && word!(game.joypad1_newkeys) & 0x4000 != 0 {
-        let map = native_record(0xa7, SPRITE_MAP, game);
-        map.set_word(YPOS_HIGH, u16::from(map.word(YPOS_HIGH) == 0));
-    }
-}
-
-/// Move part 0xC0's speed toward the target in `amount`'s high word, or down
-/// by its low word while decelerating; 1 once deceleration reaches zero.
-pub(crate) fn approach_speed(amount: i32, game: &mut Game) -> u8 {
-    let (step, target) = (amount as u16, (amount >> 16) as u16);
-    let speed = slot!(game, Phantoon[0xc0].var_D);
-    if slot!(game, Phantoon[0xc0].var_E) != 0 {
-        slot!(game, Phantoon[0xc0].var_D = speed.wrapping_sub(step));
-        if speed < step {
-            slot!(game, Phantoon[0xc0].var_D = 0);
-            return 1;
-        }
-    } else {
-        let next = step.wrapping_add(speed);
-        slot!(game, Phantoon[0xc0].var_D = next);
-        if (i32::from(next >> 8) - i32::from(target >> 8)) & 0x8000 == 0 {
-            slot!(game, Phantoon[0xc0].var_D = target);
-        }
-    }
-    0
-}
-
-pub(crate) fn spawn_fireball(k: u16, game: &mut Game) {
-    fireball(0, k, game);
-    QueueSfx3_Max6(0x1d, game);
-}
-
-pub(crate) fn spawn_fireball_circle(k: u16, game: &mut Game) {
-    for i in (0..=7u16).rev() {
-        fireball(i | 0x600, k, game);
-    }
-    QueueSfx3_Max6(0x28, game);
-}
-
-/// Eight fireballs whose slot numbers count up from the pattern's start byte,
-/// restarting at zero after a slot of 8 or more.
-pub(crate) fn spawn_fireball_pattern(k: u16, pattern: u16, game: &mut Game) {
-    let mut slot = i16::from(native_record(0xa7, PATTERN_STARTS, game).byte(usize::from(pattern)));
-    for row in 1..=8 {
-        let current = slot;
-        slot += 1;
-        fireball((16 * row | current as i32 | 0x400) as u16, k, game);
-        if current.wrapping_sub(8) >= 0 {
-            slot = 0;
-        }
-    }
-}
-
-/// The colour entry for the current part's health: one step per 312 HP up to
-/// seven, offset by the step table at $A7:DC4A from `base`; returns (base, word).
 #[allow(non_snake_case)]
 pub(crate) fn Phantoon_SetColorBasedOnHp_FindEntry(base: u16, game: &mut Game) -> PairU16 {
-    let (step, mut bound, mut index) = (312u16, 312u16, 0u16);
-    while (bound as i16).wrapping_sub(slot!(
-        game,
-        Phantoon[i32::from(word!(game.cur_enemy_index))].base.health
-    ) as i16)
-        < 0
-    {
-        bound = bound.wrapping_add(step);
-        index = index.wrapping_add(1);
-        if (i32::from(index) - 7) & 0x8000 == 0 {
-            break;
-        }
-    }
-    let entry = base.wrapping_add(rom_table_word!(game, 0xa7dc4a, index as isize));
-    PairU16 {
-        k: base,
-        j: native_record(0xa7, entry, game).word(0),
+    let (k, j) = phantoon_actions::Phantoon_SetColorBasedOnHp_FindEntry(base, game);
+    PairU16 { k, j }
+}
+
+impl Host for Game {
+    fn spawn_fireball_projectile(&mut self, parameter: u16, k: u16) {
+        SpawnEprojWithGfx(parameter, k, addr_kEproj_DestroyableFireballs as u16, self);
     }
 }
