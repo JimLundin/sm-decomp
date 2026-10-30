@@ -111,6 +111,7 @@ pub mod actors {
     pub mod media;
     pub mod mini_kraid;
     pub mod mother_brain_effects;
+    pub mod mother_brain_neck;
     pub mod mother_brain_tubes;
     pub mod movement;
     pub mod overlap;

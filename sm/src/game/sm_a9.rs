@@ -1053,27 +1053,6 @@ crate::game::callback_dispatch! {
             slot!(game, Enemy_MotherBrain[E].var_F = 0);
         }
     };
-    MotherBrain_HandleNeck [] {
-        slot!(game, Enemy_MotherBrain[E].var_0A = (slot!(game, Enemy_MotherBrain[E].base.x_pos)).wrapping_sub(80));
-        slot!(game, Enemy_MotherBrain[E].var_0B = (slot!(game, Enemy_MotherBrain[E].base.y_pos)).wrapping_add(46));
-        let E1: i32 = 0x40;
-        if slot!(game, Enemy_MotherBrain[E1].var_31) != 0 {
-            MotherBrain_HandleNeckLower(game);
-            MotherBrain_HandleNeckUpper(game);
-        }
-        let mut r18: u16 = slot!(byte game, Enemy_MotherBrain[E1].var_20[1]) as u16;
-        slot!(game, Enemy_MotherBrain[E1].var_22 = (slot!(game, Enemy_MotherBrain[E].var_0A) as i32 + ComputeSinMult(slot!(game, Enemy_MotherBrain[E1].var_24), r18, game) as i32 + 112) as u16);
-        slot!(game, Enemy_MotherBrain[E1].var_23 = (slot!(game, Enemy_MotherBrain[E].var_0B) as i32 + ComputeCosMult(slot!(game, Enemy_MotherBrain[E1].var_24), r18, game) as i32 - 96i32) as u16);
-        slot!(game, Enemy_MotherBrain[E1].var_25 = (slot!(game, Enemy_MotherBrain[E].var_0A) as i32 + ComputeSinMult(slot!(game, Enemy_MotherBrain[E1].var_27), r18, game) as i32 + 112) as u16);
-        slot!(game, Enemy_MotherBrain[E1].var_26 = (slot!(game, Enemy_MotherBrain[E].var_0B) as i32 + ComputeCosMult(slot!(game, Enemy_MotherBrain[E1].var_27), r18, game) as i32 - 96i32) as u16);
-        slot!(game, Enemy_MotherBrain[E1].var_28 = (slot!(game, Enemy_MotherBrain[E].var_0A) as i32 + ComputeSinMult(slot!(game, Enemy_MotherBrain[E1].var_2A), r18, game) as i32 + 112) as u16);
-        slot!(game, Enemy_MotherBrain[E1].var_29 = (slot!(game, Enemy_MotherBrain[E].var_0B) as i32 + ComputeCosMult(slot!(game, Enemy_MotherBrain[E1].var_2A), r18, game) as i32 - 96i32) as u16);
-        r18 = slot!(byte game, Enemy_MotherBrain[E1].var_21[1]) as u16;
-        slot!(game, Enemy_MotherBrain[E1].var_2B = (slot!(game, Enemy_MotherBrain[E1].var_28)).wrapping_add(ComputeSinMult(slot!(game, Enemy_MotherBrain[E1].var_2D), r18, game)));
-        slot!(game, Enemy_MotherBrain[E1].var_2C = (slot!(game, Enemy_MotherBrain[E1].var_29)).wrapping_add(ComputeCosMult(slot!(game, Enemy_MotherBrain[E1].var_2D), r18, game)));
-        slot!(game, Enemy_MotherBrain[E1].var_2E = (slot!(game, Enemy_MotherBrain[E1].var_28)).wrapping_add(ComputeSinMult(slot!(game, Enemy_MotherBrain[E1].var_30), r18, game)));
-        slot!(game, Enemy_MotherBrain[E1].var_2F = (slot!(game, Enemy_MotherBrain[E1].var_29)).wrapping_add(ComputeCosMult(slot!(game, Enemy_MotherBrain[E1].var_30), r18, game)));
-    };
     [11120353] MotherBrain_Phase3_Death_0 [] {
         slot!(game, Enemy_MotherBrain[E].base.properties = (slot!(game, Enemy_MotherBrain[E].base.properties)) | ((kEnemyProps_Tangible) as u16));
         let E1: i32 = 0x40;
@@ -1802,26 +1781,6 @@ pub fn MotherBrainsBody_FirstPhase_DoubleRet(game: &mut Game) {
 pub fn MotherBrainsTubesFalling_Main(k: u16, game: &mut Game) {
     sm_game::actors::mother_brain_tubes::main_ai(game, k);
 }
-pub fn MotherBrain_HandleNeckLower(game: &mut Game) {
-    {
-        let mbn_var_32: u16 = slot!(game, Enemy_MotherBrain[0x40i32].var_32);
-        if mbn_var_32 != 0 {
-            match mbn_var_32 as i32 {
-                2 => MotherBrain_HandleNeckLower_2_BobDown(game),
-                4 => MotherBrain_HandleNeckLower_4_BobUp(game),
-                6 => MotherBrain_HandleNeckLower_6_Lower(game),
-                8 => MotherBrain_HandleNeckLower_8_Raise(game),
-                _ => {
-                    Unreachable(game);
-                    loop {}
-                }
-            }
-        } else {
-            MotherBrain_HandleNeckLower_0();
-        };
-    }
-}
-pub fn MotherBrain_HandleNeckLower_0() {}
 crate::game::callback_dispatch! {
     pub fn CallMotherBrainInstr(ea: u32, k: u16, game: &mut Game) -> u16 => ea;
     call (k, game); default Unreachable(game) as u16;
@@ -2575,99 +2534,6 @@ crate::game::callback_dispatch! {
         );
         QueueSfx2_Max3(0x29, game);
     };
-    MotherBrain_SetupNeckForFakeAscent [] {
-        slot!(game, Enemy_MotherBrain[E].var_24 = 2);
-        slot! { game, Enemy_MotherBrain[E]; var_27 = 10, var_2D = 10 }
-        slot! { game, Enemy_MotherBrain[E]; var_2A = 20, var_30 = 20 }
-        slot!(game, Enemy_MotherBrain[E].var_20 = 18432);
-        slot!(game, Enemy_MotherBrain[E].var_21 = 20480);
-        slot!(game, Enemy_MotherBrain[E].var_34 = 256);
-    };
-    MotherBrain_HandleNeckLower_2_BobDown [] {
-        let mut v1: i16 = ((slot!(game, Enemy_MotherBrain[E].var_20)) as i16).wrapping_sub((slot!(game, Enemy_MotherBrain[E].var_34)) as i16);
-        if (v1 as u16) < 0x2800 {
-            slot!(game, Enemy_MotherBrain[E].var_32 = 4);
-            v1 = 10240;
-        }
-        slot!(game, Enemy_MotherBrain[E].var_20 = v1 as u16);
-    };
-    MotherBrain_HandleNeckLower_4_BobUp [] {
-        if slot!(game, Enemy_MotherBrain[E].base.y_pos) as i32 - 60i32 & 0x8000 != 0 {
-            slot!(game, Enemy_MotherBrain[E].var_32 = 2);
-        } else {
-            let mut v1: i16 = ((slot!(game, Enemy_MotherBrain[E].var_34)) as i16).wrapping_add((slot!(game, Enemy_MotherBrain[E].var_20)) as i16);
-            if (v1 as u16) >= 0x9000 {
-                slot!(game, Enemy_MotherBrain[E].var_32 = 2);
-                v1 = -28672i16;
-            }
-            slot!(game, Enemy_MotherBrain[E].var_20 = v1 as u16);
-        };
-    };
-    MotherBrain_HandleNeckLower_6_Lower [] {
-        let mut v1: i16 = ((slot!(game, Enemy_MotherBrain[E].var_20)) as i16).wrapping_sub((slot!(game, Enemy_MotherBrain[E].var_34)) as i16);
-        if (v1 as u16) < 0x3000 {
-            slot!(game, Enemy_MotherBrain[E].var_32 = 0);
-            v1 = 12288;
-        }
-        slot!(game, Enemy_MotherBrain[E].var_20 = v1 as u16);
-    };
-    MotherBrain_HandleNeckLower_8_Raise [] {
-        let mut v1: i16 = ((slot!(game, Enemy_MotherBrain[E].var_34)) as i16).wrapping_add((slot!(game, Enemy_MotherBrain[E].var_20)) as i16);
-        if (v1 as u16) >= 0x9000 {
-            slot!(game, Enemy_MotherBrain[E].var_32 = 0);
-            v1 = -28672i16;
-        }
-        slot!(game, Enemy_MotherBrain[E].var_20 = v1 as u16);
-    };
-    MotherBrain_HandleNeckUpper [] {
-        let mbn_var_33: u16 = slot!(game, Enemy_MotherBrain[E].var_33);
-        if mbn_var_33 != 0 {
-            match mbn_var_33 as i32 {
-                2 => {
-                    if ((slot!(game, Enemy_MotherBrain[E].base.y_pos) as i32 + 4 - word!(game.samus_y_pos) as i32) as i16) < 0 {
-                        let mut v2: i16 = ((slot!(game, Enemy_MotherBrain[E].var_21)) as i16).wrapping_sub((slot!(game, Enemy_MotherBrain[E].var_34)) as i16);
-                        if (v2 as u16) < 0x2000 {
-                            slot!(game, Enemy_MotherBrain[E].var_33 = 4);
-                            v2 = 0x2000;
-                        }
-                        slot!(game, Enemy_MotherBrain[E].var_21 = v2 as u16);
-                    } else {
-                        slot! { game, Enemy_MotherBrain[E]; var_32 = 4, var_33 = 4 }
-                    }
-                }
-                4 => {
-                    let r18: u16 = (slot!(game, Enemy_MotherBrain[E].var_20)).wrapping_add(2048);
-                    let mut v4: u16 = (slot!(game, Enemy_MotherBrain[E].var_34)).wrapping_add(slot!(game, Enemy_MotherBrain[E].var_21));
-                    if v4 >= r18 {
-                        slot!(game, Enemy_MotherBrain[E].var_33 = 2);
-                        v4 = r18;
-                    }
-                    slot!(game, Enemy_MotherBrain[E].var_21 = v4);
-                }
-                6 => {
-                    let mut v6: i16 = ((slot!(game, Enemy_MotherBrain[E].var_21)) as i16).wrapping_sub((slot!(game, Enemy_MotherBrain[E].var_34)) as i16);
-                    if (v6 as u16) < 0x2000 {
-                        slot!(game, Enemy_MotherBrain[E].var_33 = 0);
-                        v6 = 0x2000;
-                    }
-                    slot!(game, Enemy_MotherBrain[E].var_21 = v6 as u16);
-                }
-                8 => {
-                    let r18_0: u16 = (slot!(game, Enemy_MotherBrain[E].var_20)).wrapping_add(2048);
-                    let mut v8: u16 = (slot!(game, Enemy_MotherBrain[E].var_34)).wrapping_add(slot!(game, Enemy_MotherBrain[E].var_21));
-                    if v8 >= r18_0 {
-                        slot!(game, Enemy_MotherBrain[E].var_33 = 0);
-                        v8 = r18_0;
-                    }
-                    slot!(game, Enemy_MotherBrain[E].var_21 = v8);
-                }
-                _ => {
-                    Unreachable(game);
-                    loop {}
-                }
-            }
-        }
-    };
     MotherBrain_DrawBrain [] {
         if slot!(game, Enemy_MotherBrain[E].var_14) != 0 && slot!(game, Enemy_MotherBrain[E].var_15) == 0 && (word!(game.random_number) & 0x8000) == 0 {
             SpawnEprojWithRoomGfx(
@@ -2727,12 +2593,6 @@ crate::game::callback_dispatch! {
             QueueSfx2_Max3(0x24, game);
         }
     };
-    MotherBrain_RetractHead [] {
-        slot!(game, Enemy_MotherBrain[E].var_34 = 80);
-        slot!(game, Enemy_MotherBrain[E].var_31 = 1);
-        slot!(game, Enemy_MotherBrain[E].var_32 = 8);
-        slot!(game, Enemy_MotherBrain[E].var_33 = 6);
-    };
     MotherBrain_AimBeam [] {
         slot!(game, Enemy_MotherBrain[0i32].var_31 = -(actor_api::angle_from_delta((word!(game.samus_x_pos) as i32 - slot!(game, Enemy_MotherBrain[E].base.x_pos) as i32 - 16i32) as u16, (word!(game.samus_y_pos) as i32 - slot!(game, Enemy_MotherBrain[E].base.y_pos) as i32 - 4i32) as u16) as i32
             + 0x80i32) as u8 as u16);
@@ -2764,47 +2624,6 @@ crate::game::callback_dispatch! {
             MotherBrain_SetToTryToInchForward(0x40, game);
         }
     };
-    [11125552] MotherBrain_Phase3_Neck_Normal [] {
-        slot! { game, Enemy_MotherBrain[E]; var_32 = 1, var_34 = 128, var_32 = 2, var_33 = 4, var_18 = addr_locret_A9C353 as u16 };
-    };
-    [11125588] MotherBrain_Phase3_Neck_SetupRecoilRecovery [] {
-        slot!(game, Enemy_MotherBrain[E].var_31 = 1);
-        slot!(game, Enemy_MotherBrain[E].var_34 = 1280);
-        slot! { game, Enemy_MotherBrain[E]; var_32 = 6, var_33 = 6 }
-        slot!(game, Enemy_MotherBrain[E].var_18 = (0xa9c37bi32) as u16);
-        slot!(game, Enemy_MotherBrain[E].var_19 = 16);
-        MotherBrain_Phase3_Neck_RecoilRecovery(game);
-    };
-    [11125627] MotherBrain_Phase3_Neck_RecoilRecovery [] {
-        let mut v1: i16 = ((slot!(game, Enemy_MotherBrain[E].var_19)) as i16).wrapping_sub(1);
-        if v1 < 0 {
-            MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9DBB as u16, game);
-            slot!(game, Enemy_MotherBrain[E].var_18 = (0xa9c330i32) as u16);
-        } else {
-            slot!(game, Enemy_MotherBrain[E].var_19 = v1 as u16);
-        };
-    };
-    [11125653] MotherBrain_Phase3_Neck_SetupHyperBeamRecoil [] {
-        slot!(game, Enemy_MotherBrain[E].var_31 = 1);
-        slot!(game, Enemy_MotherBrain[0i32].var_06 = 1);
-        MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9BE7 as u16, game);
-        slot!(game, Enemy_MotherBrain[E].var_00 = 50);
-        slot!(game, Enemy_MotherBrain[E].var_34 = 2304);
-        slot! { game, Enemy_MotherBrain[E]; var_32 = 8, var_33 = 8 }
-        slot!(game, Enemy_MotherBrain[E].var_18 = (0xa9c3cdi32) as u16);
-        slot!(game, Enemy_MotherBrain[E].var_19 = 11);
-        MotherBrain_Phase3_Neck_HyperBeamRecoil(game);
-    };
-    [11125709] MotherBrain_Phase3_Neck_HyperBeamRecoil [] {
-        let mut v2: i16 = ((slot!(game, Enemy_MotherBrain[E].var_19)) as i16).wrapping_sub(1);
-        if v2 < 0 {
-            slot!(game, Enemy_MotherBrain[E].var_34 = 128);
-            slot!(game, Enemy_MotherBrain[0i32].var_06 = 0);
-            slot!(game, Enemy_MotherBrain[E].var_18 = (0xa9c354i32) as u16);
-        } else {
-            slot!(game, Enemy_MotherBrain[E].var_19 = v2 as u16);
-        };
-    };
     MotherBrain_HandlePalette [] {
         if slot!(game, Enemy_MotherBrain[E].var_10) != 0 {
             MotherBrain_HandleBrainPal(game);
@@ -2813,17 +2632,17 @@ crate::game::callback_dispatch! {
             unsafe { mother_brain_visuals::update_health_palette(game) };
         }
     };
-    @external {
-        11125587 => [()];
-    }
 }
+/// The neck runs in `sm_game::actors::mother_brain_neck`.
+pub fn MotherBrain_HandleNeck(game: &mut Game) {
+    sm_game::actors::mother_brain_neck::handle_neck(game);
+}
+pub fn MotherBrain_RetractHead(game: &mut Game) {
+    sm_game::actors::mother_brain_neck::retract_head(game);
+}
+/// The phase-3 neck functions run in `sm_game::actors::mother_brain_neck`.
 pub fn MotherBrain_Phase3_NeckHandler(game: &mut Game) {
-    {
-        CallMotherBrainNeckFunc(
-            ((slot!(game, Enemy_MotherBrain[0x40i32].var_18)) as u32) | (0xa90000u32),
-            game,
-        );
-    }
+    sm_game::actors::mother_brain_neck::run_phase3(game);
 }
 pub fn MoveEnemyWithVelocity(game: &mut Game) {
     {

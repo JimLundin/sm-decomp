@@ -235,6 +235,31 @@ impl sm_game::actors::mother_brain_tubes::Host for Game {
     }
 
     fn setup_neck_for_fake_ascent(&mut self) {
-        crate::game::sm_a9::MotherBrain_SetupNeckForFakeAscent(self);
+        sm_game::actors::mother_brain_neck::setup_for_fake_ascent(self);
+    }
+}
+
+// The phase-3 neck functions are the ones `CallMotherBrainNeckFunc` dispatched on.
+const _: () = {
+    use crate::game::sm_a9::*;
+    use sm_game::actors::mother_brain_neck::{animation as a, function as f};
+    const fn at(word: u16) -> u32 {
+        0xa9_0000 | word as u32
+    }
+    assert!(at(f::NORMAL) == 11125552 && at(f::IDLE) == 11125587);
+    assert!(f::IDLE == addr_locret_A9C353 as u16);
+    assert!(at(f::SETUP_RECOIL_RECOVERY) == 11125588 && at(f::RECOIL_RECOVERY) == 11125627);
+    assert!(at(f::SETUP_HYPER_BEAM_RECOIL) == 11125653 && at(f::HYPER_BEAM_RECOIL) == 11125709);
+    assert!(a::RECOVER == addr_kMotherBrain_Ilist_9DBB as u16);
+    assert!(a::HYPER_BEAM_HIT == addr_kMotherBrain_Ilist_9BE7 as u16);
+};
+
+impl sm_game::actors::mother_brain_neck::Host for Game {
+    fn sine_times(&mut self, length: u16, angle: u16) -> u16 {
+        crate::game::sm_a9::ComputeSinMult(length, angle, self)
+    }
+
+    fn cosine_times(&mut self, length: u16, angle: u16) -> u16 {
+        crate::game::sm_a9::ComputeCosMult(length, angle, self)
     }
 }
