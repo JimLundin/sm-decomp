@@ -34,6 +34,49 @@ macro_rules! flow_words {
         $f(ram::num_demo_sets,$($borrow)* $c.num_demo_sets);
     };
 }
+// The menu state (`crate::menu_state`), in RAM order from $0727.
+macro_rules! menu_words {
+    (($c:expr), $f:ident, ($($borrow:tt)*)) => {
+        $f(ram::menu_index,$($borrow)* $c.menu_index);
+        $f(ram::pausemenu_start_lr_pressed_highlight_timer,$($borrow)* $c.pausemenu_start_lr_pressed_highlight_timer);
+        $f(ram::pausemenu_lr_animation_timer,$($borrow)* $c.pausemenu_lr_animation_timer);
+        $f(ram::pausemenu_item_selector_animation_timer,$($borrow)* $c.pausemenu_item_selector_animation_timer);
+        $f(ram::pausemenu_reserve_tank_animation_timer,$($borrow)* $c.pausemenu_reserve_tank_animation_timer);
+        $f(ram::UNUSED_word_7E0731,$($borrow)* $c.UNUSED_word_7E0731);
+        $f(ram::pausemenu_uparrow_animation_timer,$($borrow)* $c.pausemenu_uparrow_animation_timer);
+        $f(ram::pausemenu_downarrow_animation_timer,$($borrow)* $c.pausemenu_downarrow_animation_timer);
+        $f(ram::pausemenu_rightarrow_animation_timer,$($borrow)* $c.pausemenu_rightarrow_animation_timer);
+        $f(ram::pausemenu_leftarrow_animation_timer,$($borrow)* $c.pausemenu_leftarrow_animation_timer);
+        $f(ram::pausemenu_palette_animation_timer,$($borrow)* $c.pausemenu_palette_animation_timer);
+        $f(ram::UNUSED_word_7E073D,$($borrow)* $c.UNUSED_word_7E073D);
+        $f(ram::pausemenu_lr_animation_frame,$($borrow)* $c.pausemenu_lr_animation_frame);
+        $f(ram::pausemenu_item_selector_animation_frame,$($borrow)* $c.pausemenu_item_selector_animation_frame);
+        $f(ram::pausemenu_reserve_tank_animation_frame,$($borrow)* $c.pausemenu_reserve_tank_animation_frame);
+        $f(ram::UNUSED_word_7E0745,$($borrow)* $c.UNUSED_word_7E0745);
+        $f(ram::pausemenu_uparrow_animation_frame,$($borrow)* $c.pausemenu_uparrow_animation_frame);
+        $f(ram::pausemenu_downarrow_animation_frame,$($borrow)* $c.pausemenu_downarrow_animation_frame);
+        $f(ram::pausemenu_rightarrow_animation_frame,$($borrow)* $c.pausemenu_rightarrow_animation_frame);
+        $f(ram::pausemenu_leftarrow_animation_frame,$($borrow)* $c.pausemenu_leftarrow_animation_frame);
+        $f(ram::pausemenu_palette_animation_frame,$($borrow)* $c.pausemenu_palette_animation_frame);
+        $f(ram::pausemenu_shoulder_button_highlight,$($borrow)* $c.pausemenu_shoulder_button_highlight);
+        $f(ram::pausemenu_button_label_mode,$($borrow)* $c.pausemenu_button_label_mode);
+        $f(ram::pausemenu_equipment_category_item,$($borrow)* $c.pausemenu_equipment_category_item);
+        $f(ram::pausemenu_reserve_tank_delay_ctr,$($borrow)* $c.pausemenu_reserve_tank_delay_ctr);
+        $f(ram::UNUSED_word_7E0759,$($borrow)* $c.UNUSED_word_7E0759);
+        $f(ram::UNUSED_word_7E075B,$($borrow)* $c.UNUSED_word_7E075B);
+        $f(ram::UNUSED_word_7E075D,$($borrow)* $c.UNUSED_word_7E075D);
+        $f(ram::UNUSED_word_7E075F,$($borrow)* $c.UNUSED_word_7E075F);
+        $f(ram::UNUSED_word_7E0761,$($borrow)* $c.UNUSED_word_7E0761);
+        $f(ram::pause_screen_mode,$($borrow)* $c.pause_screen_mode);
+    };
+}
+/// The menu state as `bytes` encode it.
+pub fn menu(bytes: &impl Fn(usize) -> u8) -> crate::menu_state::MenuState {
+    let mut menu = crate::menu_state::MenuState::default();
+    let load = |at: usize, value: &mut u16| *value = read(bytes, at);
+    menu_words!((menu), load, (&mut));
+    menu
+}
 /// RAM address of the first flow word, `cinematic_function`.
 pub const FLOW: usize = ram::cinematic_function;
 /// The camera as `bytes` encode it.
@@ -620,6 +663,7 @@ macro_rules! scalar_words {
         for index in 0..4 { $f(0x7e1+index*2,$($borrow)* $s.room.main_variables[index]); }
         camera_words!(($s.room.camera), $f, ($($borrow)*));
         flow_words!(($s.flow), $f, ($($borrow)*));
+        menu_words!(($s.menu), $f, ($($borrow)*));
         $f(0x5f5,$($borrow)* $s.feedback.sound_disabled);
         $f(0x5f7,$($borrow)* $s.minimap.disabled);
         for row in 0..3 {
