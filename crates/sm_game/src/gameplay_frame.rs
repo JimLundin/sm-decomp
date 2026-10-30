@@ -644,7 +644,7 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
     if resume == ResumePoint::Start {
         actors::scheduling::select(&mut game.runtime());
         palette_effects::advance(&mut game.runtime());
-        crate::player_projectiles::feedback::grapple_flare(&mut game.runtime());
+        prepare_player_projectiles(game);
         if word!(game.debug_disable_sprite_interact) == 0 {
             game.player_projectiles_hit_samus();
         }
@@ -693,6 +693,25 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
     }
     game.set_resume_point(ResumePoint::Start as u8);
     0
+}
+
+/// Prepare Samus's projectiles through the frame handler's entry: normal,
+/// demo, projectiles only or inactive.
+fn prepare_player_projectiles<H: Host>(game: &mut H) {
+    use crate::session::PrepareEntry;
+    let at = crate::ram::words::frame_handler_alfa;
+    let handler = u16::from_le_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]);
+    let entry = match 0x900000 | u32::from(handler) {
+        0x90e695 => PrepareEntry::Normal,
+        0x90e6c9 => PrepareEntry::Demo,
+        0x90e713 => PrepareEntry::ProjectilesOnly,
+        0x90e8cd => PrepareEntry::Inactive,
+        _ => {
+            crate::player_projectiles::host::Host::unknown(&mut game.runtime());
+            return;
+        }
+    };
+    crate::player_projectiles::preparation::prepare(&mut game.runtime(), entry);
 }
 
 /// Upload the options screen tiles.
