@@ -14,7 +14,6 @@ use crate::game::ridley_explosion_data;
 use crate::game::session_runtime::Runtime;
 use crate::game::session_runtime::{actor_cosine, actor_sine};
 use crate::game::sprite_drawing::Clip;
-use crate::game::zebetite_data;
 use crate::ram_map::slot;
 use sm_data::ridley_explosion::{
     HAND_ADDRESS, LEGS_ADDRESS, MOUTH_ADDRESS, TORSO_ADDRESS, WINGS_ADDRESS,
@@ -35,9 +34,7 @@ use crate::game::enemy_projectiles::{
     Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
 };
 use crate::game::escape_typewriter::type_escape_text;
-use crate::game::gameplay_flag_runtime::{
-    CheckEventHappened, ClearEventHappened, SetBossBitForCurArea, SetEventHappened,
-};
+use crate::game::gameplay_flag_runtime::SetBossBitForCurArea;
 use crate::game::mode7_transfers::enqueue_rom;
 use crate::game::music::{QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
@@ -3551,140 +3548,6 @@ pub fn CeresDoor_Func_8(game: &mut Game) {
     }
 }
 crate::game::callback_dispatch! {
-    pub fn CallZebetitesFunc(ea: u32, k: u16, game: &mut Game) => ea;
-    call (k, game); default { Unreachable(game); };
-    @functions [pub fn (k: u16, game: &mut Game)];
-    [10943553] Zebetites_Func_1 [] {
-        let E: i32 = k as i32;
-        if (slot!(game, Enemy_Zebetites[E].var_F) & 0x8000) != 0 {
-            let new_k: u16 = Zebetites_Func_9(game);
-            slot!(game, Enemy_Zebetites[new_k as i32].parameter_2 = k);
-            slot!(game, Enemy_Zebetites[k as i32].parameter_2 = new_k);
-        }
-        slot!(game, Enemy_Zebetites[k as i32].var_A = (0xa6fc5bi32) as u16);
-        Zebetites_Func_2(k, game);
-    };
-    [10943579] Zebetites_Func_2 [] {
-        if word!(game.door_transition_flag_elevator_zebetites) == 0 {
-            slot!(game, Enemy_Zebetites[k as i32].var_A = (0xa6fc67i32) as u16);
-            Zebetites_Func_3(game);
-        }
-    };
-    @external {
-        10943591 => [Zebetites_Func_3(game)];
-    }
-}
-pub fn Zebetites_Func_3(game: &mut Game) {
-    {
-        Zebetites_Func_4(game);
-        Zebetites_Func_5(game);
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        let health: u16 = slot!(game, Enemy_Zebetites[E].base.health);
-        if health != 0 {
-            let mut v3: i16 = ((health) as i16).wrapping_add(1);
-            if v3 as i32 - 1000i32 & 0x8000 == 0 {
-                v3 = 1000;
-            }
-            slot!(game, Enemy_Zebetites[E].base.health = v3 as u16);
-        } else if slot!(game, Enemy_Zebetites[E].parameter_1) != 0 || {
-            Zebetites_Func_6(game);
-            slot!(game, Enemy_Zebetites[E].var_D) as i32 - 4i32 & 0x8000 == 0
-        } {
-            ({
-                let (_ignored_key, animation) = (word!(game.cur_enemy_index), 0);
-                actors::combat::die(
-                    &mut Runtime::new(game),
-                    actors::api::DeathKind::Normal { animation },
-                )
-            });
-        } else {
-            ({
-                let (_ignored_key, animation) = (word!(game.cur_enemy_index), 0);
-                actors::combat::die(
-                    &mut Runtime::new(game),
-                    actors::api::DeathKind::Normal { animation },
-                )
-            });
-            Zebetites_Func_8(game);
-        };
-    }
-}
-pub fn Zebetites_Func_6(game: &mut Game) {
-    {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        let mut v1: i16 = ((slot!(game, Enemy_Zebetites[E].var_D)) as i16).wrapping_add(1);
-        slot!(game, Enemy_Zebetites[E].var_D = v1 as u16);
-        let r18: u16 = v1 as u16;
-        Zebetites_Func_7(3, (r18 as i32 >> 0 & 1) as u8, game);
-        Zebetites_Func_7(4, (r18 as i32 >> 1 & 1) as u8, game);
-        Zebetites_Func_7(5, (r18 as i32 >> 2 & 1) as u8, game);
-    }
-}
-pub fn Zebetites_Func_7(j: u16, a: u8, game: &mut Game) {
-    if a != 0 {
-        SetEventHappened(j, game);
-    } else {
-        ClearEventHappened(j, game);
-    };
-}
-pub fn Zebetites_Func_8(game: &mut Game) {
-    {
-        ({
-            let (bank, population) = (0xa6, addr_stru_A6FCE1 as u16);
-            actors::population::spawn_legacy(&mut Runtime::new(game), bank, population)
-        });
-    }
-}
-pub fn Zebetites_Func_9(game: &mut Game) -> u16 {
-    {
-        {
-            let (bank, population) = (0xa6, addr_stru_A6FCF9 as u16);
-            actors::population::spawn_legacy(&mut Runtime::new(game), bank, population)
-        }
-    }
-}
-pub fn Zebetites_Func_5(game: &mut Game) {
-    let mut v0: u16 = 0;
-    let E: i32 = word!(game.cur_enemy_index) as i32;
-    let health: u16 = slot!(game, Enemy_Zebetites[E].base.health);
-    if health as i32 - 800i32 & 0x8000 != 0 {
-        v0 = 2;
-        if health as i32 - 600i32 & 0x8000 != 0 {
-            v0 = 4;
-            if health as i32 - 400i32 & 0x8000 != 0 {
-                v0 = 6;
-                if health as i32 - 200i32 & 0x8000 != 0 {
-                    v0 = 8;
-                }
-            }
-        }
-    }
-    let v3: i32 = v0 as i32 >> 1;
-    let lists = zebetite_data::health_lists(game, v3 as isize);
-    let mut v4: u16 = lists.big;
-    if (slot!(game, Enemy_Zebetites[E].var_F) & 0x8000) != 0 {
-        v4 = lists.small_pair;
-    }
-    slot!(game, Enemy_Zebetites[E].base; current_instruction = v4, instruction_timer = 1);
-    slot!(game, Enemy_Zebetites[E].base.timer = 0);
-}
-pub fn Zebetites_Func_4(game: &mut Game) {
-    {
-        if word!(game.palette_change_num) == 0
-            && slot!(
-                game,
-                Enemy_Zebetites[word!(game.cur_enemy_index) as i32].parameter_1
-            ) == 0
-        {
-            let E: i32 = 0;
-            let v1: u16 = (slot!(game, Enemy_Zebetites[E].var_C) as i32 + 1 & 7) as u16;
-            slot!(game, Enemy_Zebetites[E].var_C = v1);
-            copy_rom_colors_to_palette(0x158, 0xa6, (4 * v1 as i32 - 0x279i32) as u16, 2, game);
-        }
-    }
-}
-
-crate::game::callback_dispatch! {
     pub(crate) fn DispatchEnemyAi(ea: u32, game: &mut Game) => ea;
     call (game); default { crate::rtl::Unreachable(game); };
     @functions [pub fn (game: &mut Game)];
@@ -3939,61 +3802,10 @@ crate::game::callback_dispatch! {
         let E: i32 = word!(game.cur_enemy_index) as i32;
         CallCeresDoor(((slot!(game, Enemy_CeresDoor[E].var_A)) as u32) | (0xa60000u32), game);
     };
-    [10943346] Zebetites_Init [] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, Enemy_Zebetites[E].base; properties = (slot!(game, Enemy_Zebetites[E].base.properties)) | (0xa000u16),
-        instruction_timer = 1, timer = 0, palette_index = 1024, vram_tiles_index = 128, );
-        slot!(game, Enemy_Zebetites[E].var_C = 0);
-        let mut v1: u16 = (0xa6fc41i32) as u16;
-        if slot!(game, Enemy_Zebetites[E].parameter_1) != 0 {
-            v1 = (0xa6fc5bi32) as u16;
-        }
-        slot!(game, Enemy_Zebetites[E].var_A = v1);
-        let mut r18: u16 = 0;
-        r18 = ((r18 as i32) << 1 | CheckEventHappened(5, game) as i32) as u16;
-        r18 = ((r18 as i32) << 1 | CheckEventHappened(4, game) as i32) as u16;
-        r18 = ((r18 as i32) << 1 | CheckEventHappened(3, game) as i32) as u16;
-        let v2: u16 = r18;
-        slot!(game, Enemy_Zebetites[E].var_D = r18);
-        if v2 as i32 - 4i32 & 0x8000 != 0 {
-            let v3: i32 = v2 as i32;
-            let placement = zebetite_data::placement(game, v3 as isize);
-            slot!(game, Enemy_Zebetites[E].var_F = placement.multi_part);
-            slot!(game, Enemy_Zebetites[E].base.y_height = placement.height);
-            slot!(game, Enemy_Zebetites[E].base.current_instruction = placement.instruction_list);
-            slot!(game, Enemy_Zebetites[E].base.x_pos = placement.x_position);
-            let mut v4: u16 = if slot!(game, Enemy_Zebetites[E].parameter_1) != 0 {
-                placement.y_position_alternate
-            } else {
-                placement.y_position
-            };
-            slot!(game, Enemy_Zebetites[E].base.y_pos = v4);
-        } else {
-            slot!(game, Enemy_Zebetites[E].base.properties = (slot!(game, Enemy_Zebetites[E].base.properties)) | ((kEnemyProps_Deleted) as u16));
-        };
-    };
-    [10943539] Zebetites_Main [] {
-        if word!(game.earthquake_timer) == 0 {
-            slot!(game, Enemy_Zebetites[word!(game.cur_enemy_index) as i32].base.shake_timer = 0);
-        }
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        CallZebetitesFunc(
-            ((slot!(game, Enemy_Zebetites[E].var_A)) as u32) | (0xa60000u32),
-            word!(game.cur_enemy_index),
-            game,
-        );
-    };
-    [10943911] Zebetites_Touch [] {
-        actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
-    };
-    [10943916] Zebetites_Shot [] {
-        QueueSfx3_Max6(9, game);
-        actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::ReactionOnly);
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        let G: i32 = slot!(game, Enemy_Zebetites[E].parameter_2) as i32;
-        slot!(game, Enemy_Zebetites[G].base.health = slot!(game, Enemy_Zebetites[E].base.health));
-        slot!(game, Enemy_Zebetites[G].base.flash_timer = slot!(game, Enemy_Zebetites[E].base.flash_timer));
-    };
+    [10943346] Zebetites_Init [] { sm_game::actors::zebetites::initialize(game); };
+    [10943539] Zebetites_Main [] { sm_game::actors::zebetites::main_ai(game); };
+    [10943911] Zebetites_Touch [] { sm_game::actors::zebetites::touch(game); };
+    [10943916] Zebetites_Shot [] { sm_game::actors::zebetites::shot(game); };
     @forward [pub fn (game: &mut Game)];
     [10911759] Enemy_GrappleReact_CancelBeam_A6 => actors::combat::select_frozen_ai(&mut Runtime::new(game));
     [10911779] Enemy_NormalTouchAI_A6 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);

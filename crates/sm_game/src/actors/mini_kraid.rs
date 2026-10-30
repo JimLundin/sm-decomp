@@ -12,13 +12,11 @@ use crate::enemy_script::EnemyScript;
 use crate::ram::RawRam as _;
 use crate::ram::{slot, word};
 
-/// What Mini Kraid needs beyond the shared boss effects: dying and its drop.
-pub trait Host: crate::actors::host::BossEffects {
-    /// Kill the current actor with death `animation`.
-    fn normal_death(&mut self, animation: u16);
-    /// Scatter the item drop for `source` from actor `index`.
-    fn scatter_enemy_drop(&mut self, source: DropSource, index: u16);
-}
+/// What Mini Kraid needs: the shared boss effects, dying and its drop.
+pub trait Host: crate::actors::host::BossEffects + crate::actors::deaths::Deaths {}
+
+impl<T> Host for T where T: crate::actors::host::BossEffects + crate::actors::deaths::Deaths + ?Sized
+{}
 
 /// Mini Kraid's view of its `EnemyLayout40` slot.
 #[derive(Clone, Copy)]

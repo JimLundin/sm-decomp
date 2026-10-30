@@ -82,6 +82,7 @@ pub mod actors {
     pub mod crocomire_attack;
     pub mod crocomire_reactions;
     pub mod dachora;
+    pub mod deaths;
     pub mod drawing;
     pub mod draygon_death;
     pub mod draygon_eye;
@@ -120,6 +121,7 @@ pub mod actors {
     pub mod state;
     pub mod torizo;
     pub mod yapping_maw;
+    pub mod zebetites;
 }
 pub mod enemy_projectiles;
 pub mod player_collision;

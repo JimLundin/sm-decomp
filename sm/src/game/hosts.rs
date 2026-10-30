@@ -70,7 +70,7 @@ impl sm_game::actors::boulder::Host for Game {
     }
 }
 
-impl sm_game::actors::mini_kraid::Host for Game {
+impl sm_game::actors::deaths::Deaths for Game {
     fn normal_death(&mut self, animation: u16) {
         crate::game::actors::combat::die(
             &mut crate::game::session_runtime::Runtime::new(self),
@@ -83,5 +83,24 @@ impl sm_game::actors::mini_kraid::Host for Game {
         index: u16,
     ) {
         crate::game::enemy_projectiles::scatter_drop(source, index, self);
+    }
+}
+
+impl sm_game::actors::zebetites::Host for Game {
+    fn event_happened(&mut self, event: u16) -> u16 {
+        crate::game::gameplay_flag_runtime::CheckEventHappened(event, self)
+    }
+    fn set_event(&mut self, event: u16) {
+        crate::game::gameplay_flag_runtime::SetEventHappened(event, self);
+    }
+    fn clear_event(&mut self, event: u16) {
+        crate::game::gameplay_flag_runtime::ClearEventHappened(event, self);
+    }
+    fn spawn_population(&mut self, bank: u8, population: u16) -> u16 {
+        crate::game::actors::population::spawn_legacy(
+            &mut crate::game::session_runtime::Runtime::new(self),
+            bank,
+            population,
+        )
     }
 }

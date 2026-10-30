@@ -2885,6 +2885,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/actors/dachora.rs"),
     ),
     (
+        "crates/sm_game/src/actors/deaths.rs",
+        include_bytes!("../../crates/sm_game/src/actors/deaths.rs"),
+    ),
+    (
         "crates/sm_game/src/actors/draygon_death.rs",
         include_bytes!("../../crates/sm_game/src/actors/draygon_death.rs"),
     ),
@@ -2975,6 +2979,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/gameplay_frame.rs",
         include_bytes!("../../crates/sm_game/src/gameplay_frame.rs"),
+    ),
+    (
+        "crates/sm_game/src/actors/zebetites.rs",
+        include_bytes!("../../crates/sm_game/src/actors/zebetites.rs"),
     ),
     (
         "crates/sm_game/src/palette_copies.rs",

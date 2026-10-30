@@ -478,7 +478,6 @@ pub mod game {
     pub(crate) use sm_game::torizo_tables;
     pub(crate) mod vram_read_queue;
     pub(crate) mod xray_background;
-    pub(crate) use sm_game::zebetite_data;
 
     pub(crate) mod player_projectiles;
     #[path = "../verification/room_mechanisms.rs"]
