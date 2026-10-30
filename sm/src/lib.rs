@@ -431,7 +431,6 @@ pub mod game {
     pub use sm_game::drop_rules;
     pub use sm_game::enemy_population;
     pub use sm_game::enemy_script;
-    pub(crate) mod erratic_fireball;
     pub(crate) mod fire_geysers;
     pub(crate) mod flies;
     pub(crate) mod lava_jumper;

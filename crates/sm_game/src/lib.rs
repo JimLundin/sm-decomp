@@ -174,6 +174,7 @@ pub mod actors {
     pub mod mother_brain_rainbow;
     pub mod mother_brain_tubes;
     pub mod movement;
+    pub mod multiviola;
     pub mod oum;
     pub mod overlap;
     pub mod phantoon;
