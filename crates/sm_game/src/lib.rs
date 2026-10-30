@@ -69,6 +69,7 @@ pub mod actors {
     pub mod media;
     pub mod overlap;
     pub mod scene;
+    pub mod shaktool;
     pub mod snapshot;
     pub mod state;
 }
