@@ -115,12 +115,6 @@ fn reflec_shot(game: &mut Game) {
     }
 }
 
-/// The original "X undefined" debug message Kraid's foot and fingernails
-/// print. Was in bank $A7.
-pub(crate) fn print_x_undefined() {
-    unsafe { crate::c_library::printf(c"X undefined\n".as_ptr()) };
-}
-
 /// Sets the shot AI of Kraid's enemy definition at `enemy_ptr`. Was in bank $A7.
 pub(crate) fn set_kraid_shot_ai(enemy_ptr: u16, shot_ai: u16, game: &mut Game) {
     (unsafe { crate::rtl::rom_record(0xa0, enemy_ptr, game) }).set_word(

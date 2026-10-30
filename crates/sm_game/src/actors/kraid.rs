@@ -51,8 +51,6 @@ pub trait Host:
     fn set_boss_word_native(&mut self, area: u16, value: u16);
     /// Set the shot AI of the enemy definition at `enemy_ptr`.
     fn set_shot_ai(&mut self, enemy_ptr: u16, shot_ai: u16);
-    /// The original "X undefined" debug message.
-    fn print_x_undefined(&mut self);
     /// A verifier observation point in the room-cleared fade.
     fn observe_kraid_flags(&mut self, _step: u8) {}
 }
@@ -1514,7 +1512,6 @@ fn foot_retreat_from_lunge<L: Lease + ?Sized>(game: &mut L) {
             session_slot!(game, Part[FOOT].timer = 300);
             session_slot!(game, Part[FOOT].next = function::FOOT_PREPARE_LUNGE);
         } else {
-            game.foreign(|game| game.print_x_undefined());
             let me = current(game);
             session_slot!(game, Part[me].base; current_instruction = animation::FOOT_WALK_BACKWARD, instruction_timer = 1);
         }
@@ -2261,9 +2258,9 @@ pub fn foot_main<L: Lease + ?Sized>(game: &mut L) {
 
 /// A fingernail touched: it shatters. Was `KraidsGoodFingernail_Touch`.
 pub fn fingernail_touch<L: Lease + ?Sized>(game: &mut L) {
-    game.foreign(|game| game.print_x_undefined());
     game.contact_reaction(Death::Finalize);
-    let _actor = game.current_enemy();
+    // The death animation is the touch's leftover A: a living nail's health,
+    // 10, taken as 0, or 0 for a nail the touch already killed.
     game.foreign(|game| game.normal_death(0));
 }
 

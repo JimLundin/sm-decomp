@@ -405,10 +405,6 @@ impl sm_game::actors::kraid::Host for Game {
         crate::game::session_runtime::set_kraid_shot_ai(enemy_ptr, shot_ai, self);
     }
 
-    fn print_x_undefined(&mut self) {
-        crate::game::session_runtime::print_x_undefined();
-    }
-
     #[cfg(sm_verify_dll)]
     fn observe_kraid_flags(&mut self, step: u8) {
         crate::kraid_flags_observer::observe(step, self);
@@ -651,10 +647,6 @@ impl sm_game::actors::ridley::Host for Game {
 
     fn hardware_cosine(&mut self, amplitude: u16, angle: u16) -> u16 {
         crate::game::sm_a9::ComputeCosMult(amplitude, angle, self)
-    }
-
-    fn warn_x_undefined(&mut self) {
-        crate::c_library::print(c"Warning: X undefined\n");
     }
 
     fn move_liquid(&mut self, target: u16, velocity: u16, delay: u16) {

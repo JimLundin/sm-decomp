@@ -59,8 +59,6 @@ pub trait Host:
     fn hardware_sine(&mut self, amplitude: u16, angle: u16) -> u16;
     /// `amplitude` times the cosine of `angle` through the PPU multiplier.
     fn hardware_cosine(&mut self, amplitude: u16, angle: u16) -> u16;
-    /// Print the original "Warning: X undefined" line.
-    fn warn_x_undefined(&mut self);
     /// Move the room's liquid to `target` at `velocity` after `delay` frames.
     fn move_liquid(&mut self, target: u16, velocity: u16, delay: u16);
 }
@@ -1954,9 +1952,8 @@ pub fn falling_apart<L: Lease + ?Sized>(game: &mut L) {
 /// `Ridley_Func_67`.
 pub fn still_falling_apart<L: Lease + ?Sized>(game: &mut L) {
     if timer_expired(game) {
-        // The original reads an undefined X for the drop's enemy index; it is 0.
+        // The drop routine keeps but never reads the X it is passed.
         game.foreign(|game| {
-            game.warn_x_undefined();
             game.set_boss_bit(1);
             game.scatter_enemy_drop(DropSource::Ridley, 0);
             game.queue_music_delayed(3);
