@@ -175,6 +175,9 @@ impl MenuRuntime for Game {
     fn advance_ending_graphics(&mut self, graphics: sm_game::visual_state::EndingGraphics) {
         visual_runtime::advance_ending_graphics(graphics, self)
     }
+    fn advance_cinematic_background_pre(&mut self, command: u32, object: u16) {
+        visual_runtime::advance_cinematic_background_pre(command, object, self)
+    }
     fn spawn_palette_effect(&mut self, definition: u16) {
         crate::game::palette_effects::spawn(definition, self)
     }

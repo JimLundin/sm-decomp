@@ -6,6 +6,14 @@
 use crate::ram::RawRam as _;
 use crate::ram::word;
 
+/// A bank-`BANK` cinematic record at `cursor`, after the low-half diagnostic.
+pub fn cinematic_native_record<const BANK: u8>(
+    cursor: u16,
+    game: &mut (impl crate::menus::host::Host + ?Sized),
+) -> sm_data::cartridge::RomRecord {
+    crate::menus::menu_tilemap::native_record((u32::from(BANK) << 16) | u32::from(cursor), game)
+}
+
 /// The three cinematic object layers.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum CinematicLayer {

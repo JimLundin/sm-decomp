@@ -49,6 +49,8 @@ pub trait MenuRuntime:
     ) -> u8;
     fn spawn_cinematic_sprite_at(&mut self, definition: u16, slot: u16, parameter: u16) -> u8;
     fn spawn_palette_effect(&mut self, definition: u16);
+    /// Run one cinematic background pre-instruction for `object`.
+    fn advance_cinematic_background_pre(&mut self, command: u32, object: u16);
     /// Queue the next ending icon or beam transfer from the imported credits tables.
     fn advance_ending_graphics(&mut self, graphics: crate::visual_state::EndingGraphics);
     fn enable_display_nmi(&mut self, enabled: bool);
