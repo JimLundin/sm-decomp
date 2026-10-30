@@ -63,3 +63,9 @@ impl sm_game::runtime_access::SessionRam for crate::game::session_runtime::Runti
         crate::game::session_runtime::Runtime::write_slice(self, at, bytes)
     }
 }
+
+impl sm_game::actors::boulder::Host for Game {
+    fn enemy_speed32(&self, offset: usize) -> u32 {
+        crate::game::enemy_speeds::word32(&self.enemy_speeds32, &self.capture_native_rom(), offset)
+    }
+}

@@ -74,6 +74,7 @@ pub mod actors {
     pub mod api;
     pub mod botwoon;
     pub mod botwoon_death;
+    pub mod boulder;
     pub mod codec;
     pub mod combat;
     pub mod contacts;
