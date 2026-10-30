@@ -1129,9 +1129,9 @@ fn restrict_samus_x<L: BossLease + ?Sized>(game: &mut L)
 where
     L::Game: Host,
 {
-    if ((word!(game.samus_x_pos)) as i16).wrapping_sub(256) >= 0 {
-        word!(game.samus_x_pos = 256);
-        word!(game.samus_prev_x_pos = 256);
+    if ((game.player_x()) as i16).wrapping_sub(256) >= 0 {
+        game.set_player_x(256);
+        game.set_previous_player_x(256);
     }
 }
 
@@ -1891,8 +1891,8 @@ fn body_touch<S: BossState + ?Sized>(game: &mut S) {
         session_slot!(game, Body[BODY].function),
         function::DEATH_INIT,
     ) {
-        let right: u16 = (word!(game.samus_x_radius)).wrapping_add(word!(game.samus_x_pos));
-        let depth: i16 = ((word!(game.samus_y_pos)) as i16)
+        let right: u16 = (word!(game.samus_x_radius)).wrapping_add(game.player_x());
+        let depth: i16 = ((game.player_y()) as i16)
             .wrapping_sub((session_slot!(game, Body[BODY].base.y_pos)) as i16);
         let mut row: i32 = 0;
         loop {
@@ -1909,20 +1909,19 @@ fn body_touch<S: BossState + ?Sized>(game: &mut S) {
             - right as i32) as i16)
             < 0
         {
-            if !below(word!(game.samus_x_pos), 40) {
-                word!(game.samus_x_pos = word!(game.samus_x_pos).wrapping_sub(8));
-                word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
+            if !below(game.player_x(), 40) {
+                game.set_player_x(word!(game.samus_x_pos).wrapping_sub(8));
+                game.set_previous_player_x(word!(game.samus_x_pos));
             }
-            let mut eject: u16 = (word!(game.samus_y_pos)).wrapping_sub(8);
-            if ((word!(game.samus_y_pos) as i32
-                - 8i32
-                - session_slot!(game, Body[BODY].min_eject_y) as i32) as i16)
+            let mut eject: u16 = (game.player_y()).wrapping_sub(8);
+            if ((game.player_y() as i32 - 8i32 - session_slot!(game, Body[BODY].min_eject_y) as i32)
+                as i16)
                 < 0
             {
                 eject = session_slot!(game, Body[BODY].min_eject_y);
             }
-            word!(game.samus_y_pos = eject);
-            word!(game.samus_prev_y_pos = eject);
+            game.set_player_y(eject);
+            game.set_previous_player_y(eject);
             push_samus(game);
             if word!(game.samus_invincibility_timer) == 0 {
                 game.react_to_contact(Death::Finalize);

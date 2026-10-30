@@ -667,9 +667,9 @@ pub fn lunge<L: BossLease + ?Sized>(game: &mut L)
 where
     L::Game: Host,
 {
-    let x = word!(game.samus_x_pos);
-    let mut y = word!(game.samus_y_pos).wrapping_sub(68);
-    if below(word!(game.samus_y_pos), 132) {
+    let x = game.player_x();
+    let mut y = game.player_y().wrapping_sub(68);
+    if below(game.player_y(), 132) {
         y = 64;
     }
     ridley::ceres_accelerate(0, 0xd, x, y, game);

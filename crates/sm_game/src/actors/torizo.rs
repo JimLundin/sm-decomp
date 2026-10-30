@@ -457,7 +457,7 @@ fn normal_movement<H: Ai>(k: u16, game: &mut H) {
 /// of target position ($AA:D5C2). Was `Torizo_Func_9`.
 fn golden_wake<H: Ai>(game: &mut H) {
     let e = word!(game.cur_enemy_index) as i32;
-    if word!(game.samus_y_pos) > GOLDEN_WAKE_Y && word!(game.samus_x_pos) > GOLDEN_WAKE_X {
+    if game.player_y() > GOLDEN_WAKE_Y && game.player_x() > GOLDEN_WAKE_X {
         slot!(
             game,
             TorizoSlot[e].base.current_instruction =
@@ -1112,7 +1112,7 @@ pub fn call_if_samus_close_in_front<H: Ai>(k: u16, jp: EnemyScript, game: &mut H
     }
     let e = i32::from(k);
     if ((slot!(game, TorizoSlot[e].direction) as i32
-        ^ (word!(game.samus_x_pos) as i32 - slot!(game, TorizoSlot[e].base.x_pos) as i32))
+        ^ (game.player_x() as i32 - slot!(game, TorizoSlot[e].base.x_pos) as i32))
         & SIGN)
         == 0
     {
@@ -1144,8 +1144,8 @@ fn choose_attack<H: Ai>(k: u16, jp: EnemyScript, game: &mut H, missiles: u16) ->
     );
     if word!(game.samus_missiles) < missiles
         || ((word!(game.nmi_frame_counter_word) as i32
-            + (word!(game.samus_x_pos) as i32 & 1)
-            + (word!(game.samus_x_pos) as i32 >> 1))
+            + (game.player_x() as i32 & 1)
+            + (game.player_x() as i32 >> 1))
             & 8)
             != 0
     {

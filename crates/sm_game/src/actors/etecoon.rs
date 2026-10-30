@@ -122,7 +122,7 @@ fn timer_expired<H: Host + ?Sized>(game: &mut H, k: u16) -> bool {
 }
 
 fn sound_near_samus<H: Host + ?Sized>(game: &mut H, sound: u8) {
-    if !below(word!(game.samus_x_pos), SOUND_SAMUS_X) {
+    if !below(game.player_x(), SOUND_SAMUS_X) {
         game.queue_sound(1, sound, 6);
     }
 }

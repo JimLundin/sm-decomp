@@ -1133,8 +1133,8 @@ pub fn hover_towards<L: BossLease + ?Sized>(x: u16, game: &mut L) -> bool
 where
     L::Game: Host,
 {
-    let mut y = word!(game.samus_y_pos);
-    if !below(word!(game.samus_y_pos), 352) {
+    let mut y = game.player_y();
+    if !below(game.player_y(), 352) {
         y = 352;
     }
     accelerate(0, acceleration_factor(game), x, y, game);
@@ -1373,8 +1373,7 @@ where
         session_slot!(game, Ridley[RIDLEY].x_velocity = x_velocity as u16);
     }
     let facing_away = ((session_slot!(game, Ridley[RIDLEY].x_velocity) as i32
-        ^ (session_slot!(game, Ridley[RIDLEY].base.x_pos) as i32
-            - word!(game.samus_x_pos) as i32))
+        ^ (session_slot!(game, Ridley[RIDLEY].base.x_pos) as i32 - game.player_x() as i32))
         & 0x8000)
         == 0;
     let x = session_slot!(game, Ridley[RIDLEY].base.x_pos);
@@ -1442,14 +1441,14 @@ where
 {
     session_slot!(
         game,
-        Ridley[RIDLEY].grabbed_x_offset = (word!(game.samus_x_pos) as i32
+        Ridley[RIDLEY].grabbed_x_offset = (game.player_x() as i32
             - (session_slot!(game, Ridley[RIDLEY].base.x_pos) as i32
                 + ridley_data::feet_x(game, session_slot!(game, Ridley[RIDLEY].facing) as isize)
                     as i32)) as u16
     );
     session_slot!(
         game,
-        Ridley[RIDLEY].grabbed_y_offset = (word!(game.samus_y_pos) as i32
+        Ridley[RIDLEY].grabbed_y_offset = (game.player_y() as i32
             - (session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32
                 + ridley_data::feet_y(
                     game,
@@ -1491,12 +1490,11 @@ where
         && {
             let side =
                 ridley_data::lunge_side(game, session_slot!(game, Ridley[RIDLEY].facing) as isize);
-            let dx = session_slot!(game, Ridley[RIDLEY].base.x_pos)
-                .wrapping_sub(word!(game.samus_x_pos));
+            let dx = session_slot!(game, Ridley[RIDLEY].base.x_pos).wrapping_sub(game.player_x());
             ((side ^ dx) & 0x8000) == 0 || below(abs16(dx), 32)
         }
-        && ((session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32 + 35
-            - word!(game.samus_y_pos) as i32) as i16)
+        && ((session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32 + 35 - game.player_y() as i32)
+            as i16)
             < 0)
     {
         lunge_missed_samus(game);
@@ -1513,8 +1511,8 @@ where
             game,
             session_slot!(game, Ridley[RIDLEY].acceleration_index) as isize,
         ),
-        word!(game.samus_x_pos).wrapping_add(lead as u16),
-        word!(game.samus_y_pos).wrapping_sub(4),
+        game.player_x().wrapping_add(lead as u16),
+        game.player_y().wrapping_sub(4),
         game,
     );
     let rect = Rect {
@@ -1740,7 +1738,7 @@ pub fn samus_in_pogo_zone<L: BossLease + ?Sized>(game: &mut L) -> bool
 where
     L::Game: Host,
 {
-    ((word!(game.samus_y_pos) as i32 - 352) & 0x8000) == 0
+    ((game.player_y() as i32 - 352) & 0x8000) == 0
 }
 
 /// Lunge if power bomb active and not holding Samus ($A6:BD2C). Was
@@ -2653,7 +2651,7 @@ where
         word!(game.tilemap_stuff[tail::active(0)] = 0x8000);
         word!(game.tilemap_stuff[tail::WHIP_TARGET_CLOCKWISE] = NO_WHIP_TARGET);
         word!(game.tilemap_stuff[tail::WHIP_TARGET_ANTICLOCKWISE] = NO_WHIP_TARGET);
-        let delta = if word!(game.samus_x_pos) < 0x70 { 1 } else { 2 };
+        let delta = if game.player_x() < 0x70 { 1 } else { 2 };
         word!(game.tilemap_stuff[tail::ANGLE_DELTA] = delta);
     }
 }
@@ -2677,7 +2675,8 @@ where
     } else if (word!(game.random_number) as u8) >= 0xf0 {
         Some(word!(game.tilemap_stuff[tail::WHIP_REQUEST]).wrapping_sub(1))
     } else if abs16(
-        word!(game.samus_x_pos).wrapping_sub(session_slot!(game, Ridley[RIDLEY].base.x_pos)),
+        game.player_x()
+            .wrapping_sub(session_slot!(game, Ridley[RIDLEY].base.x_pos)),
     ) < 0x80
     {
         Some(0)
@@ -2736,7 +2735,7 @@ where
     if all_tail_segments_active(game)
         && ((word!(game.random_number) as u8) >= 0xf0
             || abs16(
-                word!(game.samus_x_pos)
+                game.player_x()
                     .wrapping_sub(session_slot!(game, Ridley[RIDLEY].base.x_pos)),
             ) < 0x80)
         && (word!(game.tilemap_stuff[tail::WHIP_TARGET_CLOCKWISE])
@@ -3075,9 +3074,9 @@ where
             )
         } else {
             (
-                word!(game.samus_x_pos).wrapping_sub(word!(game.tilemap_stuff[tail::x(0)])),
-                (word!(game.samus_y_pos) as i32 + 24 - word!(game.tilemap_stuff[tail::y(0)]) as i32)
-                    as u16,
+                game.player_x()
+                    .wrapping_sub(word!(game.tilemap_stuff[tail::x(0)])),
+                (game.player_y() as i32 + 24 - word!(game.tilemap_stuff[tail::y(0)]) as i32) as u16,
             )
         };
         let direction = -(angle_from_delta(dx, dy) as i32 + 0x80) as u8 as u16;
@@ -3898,9 +3897,9 @@ pub fn samus_in_rect<L: BossLease + ?Sized>(rect: Rect, game: &mut L) -> bool
 where
     L::Game: Host,
 {
-    let dx = abs16(word!(game.samus_x_pos).wrapping_sub(rect.x));
+    let dx = abs16(game.player_x().wrapping_sub(rect.x));
     if dx < word!(game.samus_x_radius) || dx.wrapping_sub(word!(game.samus_x_radius)) < rect.w {
-        let dy = abs16(word!(game.samus_y_pos).wrapping_sub(rect.y));
+        let dy = abs16(game.player_y().wrapping_sub(rect.y));
         if dy < word!(game.samus_y_radius) || dy.wrapping_sub(word!(game.samus_y_radius)) < rect.h {
             return true;
         }
@@ -4105,8 +4104,8 @@ pub fn set_feet_distance<L: BossLease + ?Sized>(script: EnemyScript, game: &mut 
 where
     L::Game: Host,
 {
-    word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
-    word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
+    game.set_previous_player_x(word!(game.samus_x_pos));
+    game.set_previous_player_y(word!(game.samus_y_pos));
     session_slot!(game, Ridley[RIDLEY].feet_distance_index = script.word(0));
     script.offset(1)
 }
@@ -4186,9 +4185,9 @@ where
     L::Game: Host,
 {
     let angle = if session_slot!(game, Ridley[RIDLEY].facing) != 0 {
-        let dx = (word!(game.samus_x_pos) as i32
+        let dx = (game.player_x() as i32
             - (session_slot!(game, Ridley[RIDLEY].base.x_pos) as i32 + 25)) as u16;
-        let dy = (word!(game.samus_y_pos) as i32
+        let dy = (game.player_y() as i32
             - (session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 43)) as u16;
         let mut angle = -(angle_from_delta(dx, dy) as i32 + 0x80) as u8 as u16;
         if !(0x15..0xc0).contains(&angle) {
@@ -4198,9 +4197,9 @@ where
         }
         angle
     } else {
-        let dx = (word!(game.samus_x_pos) as i32
+        let dx = (game.player_x() as i32
             - (session_slot!(game, Ridley[RIDLEY].base.x_pos) as i32 - 25)) as u16;
-        let dy = (word!(game.samus_y_pos) as i32
+        let dy = (game.player_y() as i32
             - (session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 43)) as u16;
         let mut angle = -(angle_from_delta(dx, dy) as i32 + 0x80) as u8 as u16;
         if !(0x40..0xeb).contains(&angle) {

@@ -424,7 +424,7 @@ fn swoop<S: BossState + ?Sized>(game: &mut S, k: u16) {
     {
         112
     } else {
-        ((word!(game.samus_y_pos)) as i16).wrapping_sub(48)
+        ((game.player_y()) as i16).wrapping_sub(48)
     };
     if target_y.wrapping_sub((session_slot!(game, Body[BODY].base.y_pos)) as i16) < 0 {
         if (session_slot!(game, Tentacles[TENTACLES].swoop_y_speed) as i32 + 1535) & 0x8000 == 0 {
