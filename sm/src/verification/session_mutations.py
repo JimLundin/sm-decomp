@@ -35,6 +35,10 @@ FADES = "visual_fades_round_trip_every_field"
 HDMA = "hdma_objects_round_trip_every_field"
 ACTORS = "actor_extended_ram_round_trips_every_word"
 BOTWOON = "botwoon_death_words_round_trip"
+NO_OVERLAP = "no_two_owners_claim_the_same_byte"
+RANDOM_RAM = "session_round_trips_random_ram"
+LITTLE_ENDIAN = "projection_words_are_little_endian_byte_pairs"
+INPUTS = "inputs_read_every_observation_from_its_address"
 # The shared scalar-word closures carry every table owner below.
 SCALAR_OWNERS = (LANES, CAMERA, FLOW, MENU, ROOM_ENTRY, INVENTORY, LIQUID, EPROJ, HDMA)
 
@@ -154,6 +158,20 @@ MUTATIONS = (
     shift("drop_botwoon_high_byte_read", ENCODING,
           "        if (base..base + 2).contains(&at) {\n            result = Some(word.to_le_bytes()[at - base]);\n        }\n    };\n    botwoon_death_words!(s, select, (&));",
           "        if (base..base + 1).contains(&at) {\n            result = Some(word.to_le_bytes()[at - base]);\n        }\n    };\n    botwoon_death_words!(s, select, (&));", BOTWOON),
+    # Whole-Session properties.
+    shift("encode_one_word_twice", ENCODING,
+          "        $f(0x0d00,$($borrow)* $s.player.swing.length_delta);\n",
+          "        $f(0x0d00,$($borrow)* $s.player.swing.length_delta);\n        $f(0x0d00,$($borrow)* $s.player.swing.length_delta);\n",
+          NO_OVERLAP),
+    shift("encode_skips_a_decoded_word", ENCODING,
+          "    let mut emit = |at: usize, value: &u16| visit(at, *value);\n    scalar_words!(s,emit,(&));",
+          "    let mut emit = |at: usize, value: &u16| if at != 0x0d00 { visit(at, *value) };\n    scalar_words!(s,emit,(&));",
+          RANDOM_RAM),
+    shift("projection_stores_big_endian", "crates/sm_game/src/projection.rs",
+          "    for (lane, value) in value.to_le_bytes().into_iter().enumerate() {",
+          "    for (lane, value) in value.to_be_bytes().into_iter().enumerate() {", LITTLE_ENDIAN),
+    shift("shift_lava_observation", ENCODING,
+          "        lava_y: w(0x1962),", "        lava_y: w(0x1964),", INPUTS),
 )
 
 
