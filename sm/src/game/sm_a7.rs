@@ -2,7 +2,7 @@ use crate::game::actors;
 use crate::game::actors::api as actor_api;
 use crate::game::actors::dachora::load_palette as load_dachora_palette;
 use crate::game::actors::kraid_fingernails::initialize as initialize_fingernail;
-use crate::game::actors::phantoon_actions::Phantoon_SetColorBasedOnHp_FindEntry;
+use crate::game::actors::phantoon_actions::health_palette_colour;
 use crate::game::decompression::decompress_to_ram;
 use crate::game::gameplay_flag_runtime;
 use crate::game::kraid_tables;
@@ -216,7 +216,7 @@ crate::game::callback_dispatch! {
         };
     };
     @external {
-        10997598 => [actors::phantoon_actions::spawn_fireball(k, game)];
+        10997598 => [actors::phantoon_actions::spawn_casual_flame(k, game)];
     }
 }
 pub fn Kraid_Touch_ArmFoot(game: &mut Game) {
@@ -2298,7 +2298,7 @@ pub fn Phantoon_SetColorBasedOnHp(game: &mut Game) -> u8 {
             >= slot!(game, Enemy_Phantoon[E].var_E)
         {
             for v2 in (0u16..32).step_by(2) {
-                Entry = Phantoon_SetColorBasedOnHp_FindEntry(v2, game);
+                Entry = health_palette_colour(v2, game);
                 let j: u16 = Entry.j;
                 let v5: u16 = {
                     let at =
@@ -2887,7 +2887,7 @@ slot!(game, EnemyData[fresh4].properties = (slot!(game, EnemyData[fresh4].proper
         slot!(game, EnemyData[v7 + (3) * 64].ai_var_C = -1i32 as u16);
     };
     [10997414] Phantoon_Main [] {
-        actors::phantoon_actions::debug_toggle_sprite_map(word!(game.cur_enemy_index), game);
+        actors::phantoon_actions::broken_nothingness(word!(game.cur_enemy_index), game);
         let EK = (word!(game.cur_enemy_index) as i32) as i32;
         unsafe { actor_species_pre_instruction(((slot!(game, Enemy_Phantoon[EK].var_F)) as u32) | (0xa70000u32), game) };
         if word!(game.cur_enemy_index) == 0 {
@@ -2936,7 +2936,7 @@ slot!(game, EnemyData[fresh4].properties = (slot!(game, EnemyData[fresh4].proper
         }
         let mut v1: u16 = 30;
         do_until! { ((Entry.k) as i16).wrapping_sub(2) < 0 ;
-            Entry = Phantoon_SetColorBasedOnHp_FindEntry(v1, game);
+            Entry = health_palette_colour(v1, game);
             match (Entry.j, usize::try_from((0xc000) + (((Entry.k as i32 >> 1) + 112) as isize) * 2).expect("native word outside RAM")) { (value, at) => { let bytes = u16::to_ne_bytes(value); game.ram().write_byte(at, bytes[0]); game.ram().write_byte(at + 1, bytes[1]); } };
             v1 = (Entry.k).wrapping_sub(2);
         }
@@ -3144,7 +3144,7 @@ crate::game::callback_dispatch! {
     @functions [pub fn (k: u16, game: &mut Game)];
     [10999114] Phantoon_WavyFadeIn [] {
         Phantoon_FadeIn(0xc, game);
-        if actors::phantoon_actions::approach_speed((words!((g_word_A7CD9D, g_word_A7CD9B))) as i32, game) != 0 {
+        if actors::phantoon_actions::grow_or_shrink_wave_amplitude((words!((g_word_A7CD9D, g_word_A7CD9B))) as i32, game) != 0 {
             let E = (k as i32) as i32;
             slot!(game, Enemy_Phantoon[E].var_F = (0xa7d596i32) as u16);
             slot!(game, Enemy_Phantoon[0xc0i32].parameter_1 = 1);
@@ -3160,7 +3160,7 @@ crate::game::callback_dispatch! {
         };
     };
     [10999271] Phantoon_MovePhantoonInFigure8ThenOpenEye [] {
-        actors::phantoon_motion::advance_figure_eight(k, game);
+        actors::phantoon_motion::fly_figure_eight(k, game);
         let E = (0x40) as i32;
         let v2: bool = slot!(game, Enemy_Phantoon[E].var_A) == 1;
         slot!(game, Enemy_Phantoon[E].var_A = slot!(game, Enemy_Phantoon[E].var_A).wrapping_sub(1));
@@ -3169,7 +3169,7 @@ crate::game::callback_dispatch! {
             slot!(game, Enemy_Phantoon[k as i32].var_F = (0xa7d4a8i32) as u16);
             slot!(game, Enemy_Phantoon[E].base; instruction_timer = 1, current_instruction = addr_kKraid_Ilist_CC53 as u16);
             slot!(game, Enemy_Phantoon[0i32].parameter_2 = 0);
-            actors::phantoon_actions::spawn_fireball_circle(k, game);
+            actors::phantoon_actions::spawn_flame_spiral(k, game);
         }
     };
     [10999309] Phantoon_EyeFollowsSamusUntilTimerRunsOut [] {
@@ -3285,7 +3285,7 @@ crate::game::callback_dispatch! {
     };
     [10999850] Phantoon_FadeOutBeforeFirstFireballRain [] {
         Phantoon_FadeOut(0xc, game);
-        actors::phantoon_motion::advance_figure_eight(k, game);
+        actors::phantoon_motion::fly_figure_eight(k, game);
         let E = (0x40) as i32;
         let v2: bool = slot!(game, Enemy_Phantoon[E].var_A) == 1;
         slot!(game, Enemy_Phantoon[E].var_A = slot!(game, Enemy_Phantoon[E].var_A).wrapping_sub(1));
@@ -3294,9 +3294,9 @@ crate::game::callback_dispatch! {
             slot!(game, Enemy_Phantoon[0x80i32].var_A = 0);
             slot!(game, Enemy_Phantoon[k as i32].var_F = (0xa7d73fi32) as u16);
             if slot!(game, Enemy_Phantoon[0i32].base.x_pos) as i32 - 128i32 & 0x8000 != 0 {
-                actors::phantoon_actions::spawn_fireball_pattern(k, 0, game);
+                actors::phantoon_actions::spawn_flame_rain(k, 0, game);
             } else {
-                actors::phantoon_actions::spawn_fireball_pattern(k, 2, game);
+                actors::phantoon_actions::spawn_flame_rain(k, 2, game);
             }
         }
     };
@@ -3416,7 +3416,7 @@ crate::game::callback_dispatch! {
         QueueSfx2_Max6(0x7e, game);
     };
     [11000454] Phantoon_DyingFadeOut [] {
-        actors::phantoon_actions::approach_speed((words!((g_word_A7CDA1, g_word_A7CD9F))) as i32, game);
+        actors::phantoon_actions::grow_or_shrink_wave_amplitude((words!((g_word_A7CDA1, g_word_A7CD9F))) as i32, game);
         let E = (0x40) as i32;
         if slot!(game, Enemy_Phantoon[E].var_C) == 0xffff {
             Phantoon_FadeOut(0xc, game);
@@ -4013,7 +4013,7 @@ crate::game::callback_dispatch! {
         slot!(game, Enemy_Phantoon[E0].base.y_pos = position.y_position);
         slot!(game, Enemy_Phantoon[0x40i32].var_C = 0);
         slot!(game, Enemy_Phantoon[EK].var_F = (0xa7d73fi32) as u16);
-        actors::phantoon_actions::spawn_fireball_pattern(k, a, game);
+        actors::phantoon_actions::spawn_flame_rain(k, a, game);
     };
     [10999924] Phantoon_MoveEnragedPhantoonToTopCenter {
         slot!(game, Enemy_Phantoon[EK].var_F = (0xa7d891i32) as u16);

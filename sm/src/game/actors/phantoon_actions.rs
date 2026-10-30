@@ -7,18 +7,18 @@ use crate::game_state::Game;
 use crate::types::PairU16;
 use sm_game::actors::phantoon_actions;
 pub(crate) use sm_game::actors::phantoon_actions::{
-    Host, approach_speed, debug_toggle_sprite_map, spawn_fireball, spawn_fireball_circle,
-    spawn_fireball_pattern,
+    Host, broken_nothingness, grow_or_shrink_wave_amplitude, spawn_casual_flame, spawn_flame_rain,
+    spawn_flame_spiral,
 };
 
-#[allow(non_snake_case)]
-pub(crate) fn Phantoon_SetColorBasedOnHp_FindEntry(base: u16, game: &mut Game) -> PairU16 {
-    let (k, j) = phantoon_actions::Phantoon_SetColorBasedOnHp_FindEntry(base, game);
+/// Get Phantoon health-based palette colour ($A7:DC0F), as a `PairU16`.
+pub(crate) fn health_palette_colour(base: u16, game: &mut Game) -> PairU16 {
+    let (k, j) = phantoon_actions::health_palette_colour(base, game);
     PairU16 { k, j }
 }
 
 impl Host for Game {
-    fn spawn_fireball_projectile(&mut self, parameter: u16, k: u16) {
+    fn spawn_destroyable_flame(&mut self, parameter: u16, k: u16) {
         SpawnEprojWithGfx(parameter, k, addr_kEproj_DestroyableFireballs as u16, self);
     }
 }

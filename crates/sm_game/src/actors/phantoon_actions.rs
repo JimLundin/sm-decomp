@@ -1,6 +1,10 @@
-//! Phantoon's fireball spawns, speed approach and debug sprite-map toggle.
+//! Phantoon, the Wrecked Ship's ghost: its flames, wave amplitude, health
+//! palette and leftover debug toggle (bank $A7:CF0C-$A7:DC49).
+//!
+//! Phantoon is four enemies: the body in slot 0, then the eye, tentacles and
+//! mouth. The mouth's slot holds the wavy fade's amplitude.
 #![forbid(unsafe_code)]
-use crate::actors::layouts::EnemyLayout8 as Phantoon;
+use crate::actors::layouts::{EnemyLayout8 as Part, part_view};
 use crate::cartridge::native_record;
 use crate::cartridge::rom_table_word;
 use crate::ram::RawRam as _;
@@ -8,95 +12,136 @@ use crate::ram::{slot, word};
 
 /// What Phantoon's actions need beyond the common actor host.
 pub trait Host: crate::actors::host::ActorHost + crate::effects::SoundEffects {
-    /// Spawn a destroyable fireball from actor `k` with `parameter`.
-    fn spawn_fireball_projectile(&mut self, parameter: u16, k: u16);
+    /// Spawn a Phantoon destroyable flames projectile ($86:9C29) from actor
+    /// `k` with `parameter`.
+    fn spawn_destroyable_flame(&mut self, parameter: u16, k: u16);
 }
 
-/// The high byte of the ypos word in the ExtendedSpriteMap at $A7:902D.
-const SPRITE_MAP: u16 = 0x902d;
-const YPOS_HIGH: usize = 3;
-/// Starting fireball slots per pattern, read as bytes from $A7:CFC2.
-const PATTERN_STARTS: u16 = 0xcfc2;
-
-fn fireball(parameter: u16, k: u16, game: &mut (impl Host + ?Sized)) {
-    game.spawn_fireball_projectile(parameter, k);
-}
-
-/// Debug: controller 1's newly pressed 0x4000 flips the cartridge word in place.
-pub fn debug_toggle_sprite_map(k: u16, game: &mut (impl Host + ?Sized)) {
-    if k == 0 && word!(game.joypad1_newkeys) & 0x4000 != 0 {
-        let map = native_record(0xa7, SPRITE_MAP, game);
-        map.set_word(YPOS_HIGH, u16::from(map.word(YPOS_HIGH) == 0));
+part_view! {
+    /// The mouth's view of its slot.
+    Mouth: EnemyLayout8 {
+        words: [
+            casual_flame_pattern, casual_flame_timer, casual_flame_pattern_index, wave_amplitude,
+            wave_shrinking, var_F, parameter_1, parameter_2,
+        ],
     }
 }
 
-/// Move part 0xC0's speed toward the target in `amount`'s high word, or down
-/// by its low word while decelerating; 1 once deceleration reaches zero.
-pub fn approach_speed(amount: i32, game: &mut (impl Host + ?Sized)) -> u8 {
-    let (step, target) = (amount as u16, (amount >> 16) as u16);
-    let speed = slot!(game, Phantoon[0xc0].var_D);
-    if slot!(game, Phantoon[0xc0].var_E) != 0 {
-        slot!(game, Phantoon[0xc0].var_D = speed.wrapping_sub(step));
-        if speed < step {
-            slot!(game, Phantoon[0xc0].var_D = 0);
+const BANK: u8 = 0xa7;
+/// The mouth's slot.
+pub const MOUTH: i32 = 0xc0;
+
+/// Controller 1's Y button.
+const BUTTON_Y: u16 = 0x4000;
+/// $A7:9030, a word the debug toggle flips and nothing reads: the high byte of
+/// the Y position in the extended spritemap at $A7:902D.
+const UNREAD_WORD: u16 = 0x902d;
+const UNREAD_WORD_OFFSET: usize = 3;
+
+/// Flame projectile parameters: the spiral's 600h, flame rain's 400h, with the
+/// rain's fall time in bits 4-7.
+const SPIRAL: u16 = 0x600;
+const RAIN: i32 = 0x400;
+const SPIRAL_FLAMES: u16 = 8;
+const RAIN_FLAMES: i32 = 8;
+const RAIN_POSITIONS: i16 = 9;
+/// $A7:CFC2: the position of each flame rain pattern's first flame, a byte each.
+const RAIN_FIRST_POSITIONS: u16 = 0xcfc2;
+/// Phantoon's flame (1Dh) and materialises attack (28h), library 3.
+const FLAME_SOUND: u8 = 0x1d;
+const MATERIALISE_SOUND: u8 = 0x28;
+
+/// The health palette steps every 312 health ($9C4 / 8), up to step 7.
+const HEALTH_STEP: u16 = 312;
+const HEALTH_STEPS: i32 = 7;
+/// $A7:DC4A: the palette of each health step.
+const HEALTH_PALETTES: u32 = 0xa7_dc4a;
+const SIGN: i32 = 0x8000;
+
+/// Broken nothingness ($A7:CF0C): newly pressing Y toggles a ROM word nothing
+/// reads; the original forgot its $7E bank. Was `debug_toggle_sprite_map`.
+pub fn broken_nothingness(k: u16, game: &mut (impl Host + ?Sized)) {
+    if k == 0 && word!(game.joypad1_newkeys) & BUTTON_Y != 0 {
+        let map = native_record(BANK, UNREAD_WORD, game);
+        map.set_word(
+            UNREAD_WORD_OFFSET,
+            u16::from(map.word(UNREAD_WORD_OFFSET) == 0),
+        );
+    }
+}
+
+/// Grow/shrink Phantoon wave amplitude ($A7:CF27) by the delta in `amount`'s
+/// low word, growing up to the maximum in its high word; 1 once shrinking has
+/// taken it below zero. Was `approach_speed`.
+pub fn grow_or_shrink_wave_amplitude(amount: i32, game: &mut (impl Host + ?Sized)) -> u8 {
+    let (delta, max) = (amount as u16, (amount >> 16) as u16);
+    let amplitude = slot!(game, Mouth[MOUTH].wave_amplitude);
+    if slot!(game, Mouth[MOUTH].wave_shrinking) != 0 {
+        slot!(
+            game,
+            Mouth[MOUTH].wave_amplitude = amplitude.wrapping_sub(delta)
+        );
+        if amplitude < delta {
+            slot!(game, Mouth[MOUTH].wave_amplitude = 0);
             return 1;
         }
     } else {
-        let next = step.wrapping_add(speed);
-        slot!(game, Phantoon[0xc0].var_D = next);
-        if (i32::from(next >> 8) - i32::from(target >> 8)) & 0x8000 == 0 {
-            slot!(game, Phantoon[0xc0].var_D = target);
+        let next = delta.wrapping_add(amplitude);
+        slot!(game, Mouth[MOUTH].wave_amplitude = next);
+        if (i32::from(next >> 8) - i32::from(max >> 8)) & SIGN == 0 {
+            slot!(game, Mouth[MOUTH].wave_amplitude = max);
         }
     }
     0
 }
 
-pub fn spawn_fireball(k: u16, game: &mut (impl Host + ?Sized)) {
-    fireball(0, k, game);
-    game.queue_sound(2, 0x1d, 6);
+/// Spawn casual flame ($A7:CF5E). Was `spawn_fireball`.
+pub fn spawn_casual_flame(k: u16, game: &mut (impl Host + ?Sized)) {
+    game.spawn_destroyable_flame(0, k);
+    game.queue_sound(2, FLAME_SOUND, 6);
 }
 
-pub fn spawn_fireball_circle(k: u16, game: &mut (impl Host + ?Sized)) {
-    for i in (0..=7u16).rev() {
-        fireball(i | 0x600, k, game);
+/// Phantoon materialisation flame spiral ($A7:CF70). Was `spawn_fireball_circle`.
+pub fn spawn_flame_spiral(k: u16, game: &mut (impl Host + ?Sized)) {
+    for i in (0..SPIRAL_FLAMES).rev() {
+        game.spawn_destroyable_flame(i | SPIRAL, k);
     }
-    game.queue_sound(2, 0x28, 6);
+    game.queue_sound(2, MATERIALISE_SOUND, 6);
 }
 
-/// Eight fireballs whose slot numbers count up from the pattern's start byte,
-/// restarting at zero after a slot of 8 or more.
-pub fn spawn_fireball_pattern(k: u16, pattern: u16, game: &mut (impl Host + ?Sized)) {
-    let mut slot = i16::from(native_record(0xa7, PATTERN_STARTS, game).byte(usize::from(pattern)));
-    for row in 1..=8 {
-        let current = slot;
-        slot += 1;
-        fireball((16 * row | current as i32 | 0x400) as u16, k, game);
-        if current.wrapping_sub(8) >= 0 {
-            slot = 0;
+/// Spawn flame rain enemy projectiles ($A7:CF8B): eight flames at consecutive
+/// positions of nine from the pattern's first, leaving one gap, each falling
+/// for longer. Was `spawn_fireball_pattern`.
+pub fn spawn_flame_rain(k: u16, pattern: u16, game: &mut (impl Host + ?Sized)) {
+    let mut position =
+        i16::from(native_record(BANK, RAIN_FIRST_POSITIONS, game).byte(usize::from(pattern)));
+    for flame in 1..=RAIN_FLAMES {
+        let current = position;
+        position += 1;
+        game.spawn_destroyable_flame((16 * flame | current as i32 | RAIN) as u16, k);
+        if current.wrapping_sub(RAIN_POSITIONS - 1) >= 0 {
+            position = 0;
         }
     }
 }
 
-/// The colour entry for the current part's health: one step per 312 HP up to
-/// seven, offset by the step table at $A7:DC4A from `base`; returns (base, word).
-#[allow(non_snake_case)]
-pub fn Phantoon_SetColorBasedOnHp_FindEntry(
-    base: u16,
-    game: &mut (impl Host + ?Sized),
-) -> (u16, u16) {
-    let (step, mut bound, mut index) = (312u16, 312u16, 0u16);
+/// Get Phantoon health-based palette colour ($A7:DC0F): the colour at `base`
+/// in the palette for the current part's health step; returns (base, colour).
+/// Was `Phantoon_SetColorBasedOnHp_FindEntry`.
+pub fn health_palette_colour(base: u16, game: &mut (impl Host + ?Sized)) -> (u16, u16) {
+    let (mut bound, mut step) = (HEALTH_STEP, 0u16);
     while (bound as i16).wrapping_sub(slot!(
         game,
-        Phantoon[i32::from(word!(game.cur_enemy_index))].base.health
+        Part[i32::from(word!(game.cur_enemy_index))].base.health
     ) as i16)
         < 0
     {
-        bound = bound.wrapping_add(step);
-        index = index.wrapping_add(1);
-        if (i32::from(index) - 7) & 0x8000 == 0 {
+        bound = bound.wrapping_add(HEALTH_STEP);
+        step = step.wrapping_add(1);
+        if (i32::from(step) - HEALTH_STEPS) & SIGN == 0 {
             break;
         }
     }
-    let entry = base.wrapping_add(rom_table_word!(game, 0xa7dc4a, index as isize));
-    (base, native_record(0xa7, entry, game).word(0))
+    let entry = base.wrapping_add(rom_table_word!(game, HEALTH_PALETTES, step as isize));
+    (base, native_record(BANK, entry, game).word(0))
 }
