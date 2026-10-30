@@ -4,11 +4,11 @@
 use super::access::ActorKey as Key;
 use super::{api, combat};
 use crate::game::enemy_layouts::EnemyLayout72Late as Puffer;
-use crate::game::enemy_projectiles::host::Effects;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::rtl::{abs16, sign_extend8};
+use sm_game::enemy_projectiles::host::Effects;
 
 const RECOIL_ANGLES: [u16; 10] = [0xc0, 0xe0, 0, 0x20, 0x40, 0x40, 0x60, 0x80, 0xa0, 0xc0];
 const SPEED_LIMITS: [u16; 8] = [0x3ff, 0x4ff, 0x5ff, 0x6ff, 0x7ff, 0x8ff, 0x9ff, 0xaff];

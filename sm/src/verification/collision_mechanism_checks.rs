@@ -265,9 +265,9 @@ pub(crate) fn run(g: &mut Game, local: u32) {
 }
 
 fn acceleration_step(runtime: &mut Runtime<'_>) {
-    crate::game::player_projectiles::host::Host::player_step(
+    sm_game::player_projectiles::host::Host::player_step(
         runtime,
-        crate::game::player_projectiles::host::PlayerStep::Acceleration,
+        sm_game::player_projectiles::host::PlayerStep::Acceleration,
     );
 }
 fn acceleration_stale(g: &mut Game) {

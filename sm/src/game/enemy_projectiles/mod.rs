@@ -6,9 +6,9 @@ mod effects_runtime;
 mod graphics_runtime;
 pub(crate) use sm_game::enemy_projectiles::host;
 mod runtime;
-use crate::game::enemy_script::EnemyScript;
 use crate::game::session_runtime::Runtime;
 use host::Effects;
+use sm_game::enemy_script::EnemyScript;
 // Enemy-projectile ownership and complete behavior behind one compatibility boundary.
 // State is exclusive during each operation; legacy effects publish and reacquire it.
 use sm_game::enemy_projectiles::attachments_spore_maw;

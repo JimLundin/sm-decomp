@@ -24,7 +24,7 @@ use crate::game::visual_runtime::{
     set_cinematic_backdrop, set_cinematic_blend, set_cinematic_tilemap_updates, set_fixed_color,
     set_hdma_enabled, spawn_cinematic_burst, spawn_cinematic_sprite_at, update_cinematic_transform,
 };
-use crate::game::visual_state::{CinematicDisplay, CinematicFade, CinematicTilemap};
+use sm_game::visual_state::{CinematicDisplay, CinematicFade, CinematicTilemap};
 
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_60::*;

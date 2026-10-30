@@ -96,7 +96,7 @@ impl Effects for Runtime<'_> {
 fn advance_beta(
     mode: FrameBetaMode,
     game: &mut Game,
-) -> Result<(), crate::game::samus_periodic_damage::InvalidDamage> {
+) -> Result<(), sm_game::samus_periodic_damage::InvalidDamage> {
     word!(game.samus_contact_damage_index = 0);
     let handler = word!(game.samus_movement_handler);
     let movement = if handler == 0xa337 {

@@ -199,7 +199,7 @@ fn spin_jump(h: &mut impl Host) -> bool {
         let current = h.session().player.movement_and_facing;
         if (old == 8 && current == 0x0304) || (old == 4 && current == 0x0308) {
             add_extra(h.session_mut());
-            crate::game::samus_palette::cancel_speed_boost(h);
+            sm_game::samus_palette::cancel_speed_boost(h);
             clear_extra(h.session_mut());
         }
     }
@@ -379,7 +379,7 @@ fn ball(h: &mut impl Host, spring: bool) -> bool {
     let current = h.session().player.movement_and_facing as u8;
     if (old == 8 && current == 4) || (old != 8 && current == 8) {
         add_extra(h.session_mut());
-        crate::game::samus_palette::cancel_speed_boost(h);
+        sm_game::samus_palette::cancel_speed_boost(h);
         clear_extra(h.session_mut());
     }
     false

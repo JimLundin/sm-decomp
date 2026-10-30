@@ -2,8 +2,8 @@
 #![forbid(unsafe_code)]
 use super::access::{enemy, read_member, read_member_byte, write_member, write_member_byte};
 use super::host::{EnemyMember as F, Host, NativeRecord};
-pub(super) use crate::game::projectile_geometry::sine_offset;
 use sm_game::geometry::{Point as Point16U, Vector32 as Point32};
+pub(super) use sm_game::projectile_geometry::sine_offset;
 
 fn move_axis(handle: u16, fraction: F, whole: F, velocity: F, ctx: &mut impl Host) -> u16 {
     let index = (handle >> 1) as isize;

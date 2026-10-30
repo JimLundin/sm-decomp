@@ -147,14 +147,14 @@ pub(super) unsafe fn run(
         1029 => {
             // Terrain's stream cursor is linear, unlike the wrapping draw cursor.
             put(game, 0xde6c, 0xfffe);
-            let start = crate::game::enemy_script::bank_base(0x84) as usize + 0xfffe;
+            let start = sm_game::enemy_script::bank_base(0x84) as usize + 0xfffe;
             for (i, value) in [1u16, 0x345, 0].into_iter().enumerate() {
                 for (lane, byte) in value.to_ne_bytes().into_iter().enumerate() {
                     image.write(start + i * 2 + lane, byte);
                 }
             }
             // A wrapping mutant reads these different words instead.
-            let wrapped = crate::game::enemy_script::bank_base(0x84) as usize;
+            let wrapped = sm_game::enemy_script::bank_base(0x84) as usize;
             image.write(wrapped, 0x89);
             image.write(wrapped + 1, 0x07);
             mechanisms::checks::process_draw(0, game);

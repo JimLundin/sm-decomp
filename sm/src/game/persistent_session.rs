@@ -3,7 +3,6 @@
 
 use std::sync::Arc;
 
-use crate::game::external_inputs::ExternalInputs;
 use crate::game::scene::{
     component::{DisplayComponent, DisplayStartMetadata},
     records::SceneMedia,
@@ -12,10 +11,11 @@ use crate::game::scene::{
     start::{DisplayStartDescription, StartError, ValidatedDisplayStart},
     state::DisplayError,
 };
-use crate::game::session::Session;
 pub(crate) use crate::game::session_checkpoint::AuxiliaryGameplayCheckpoint;
-pub(crate) use crate::game::session_owners::*;
 use crate::game_state::{Game, PreparedSamusBinding, SamusBindingDescription, SamusExecution};
+use sm_game::external_inputs::ExternalInputs;
+use sm_game::session::Session;
+pub(crate) use sm_game::session_owners::*;
 
 pub(crate) struct SessionStartDescription {
     pub gameplay: Option<Session>,
@@ -297,9 +297,9 @@ pub(crate) struct PersistentSession {
     pub(crate) required: Arc<SessionStartRequirements>,
 }
 pub(crate) struct IntervalMetadata {
-    pub input: crate::game::scene::start::InputHistory,
-    pub continuation: crate::game::scene::start::ContinuationHistory,
-    pub audio: crate::game::scene::start::InitialAudioIntent,
+    pub input: sm_game::scene::start::InputHistory,
+    pub continuation: sm_game::scene::start::ContinuationHistory,
+    pub audio: sm_game::scene::start::InitialAudioIntent,
 }
 
 pub(crate) enum SessionSlot {
@@ -376,7 +376,7 @@ impl PersistentSession {
         metadata: IntervalMetadata,
         description: crate::game::scene::records::SceneDescription,
         media: Arc<SceneMedia>,
-        effects: &mut impl crate::game::scene::commit::SettlementEffects,
+        effects: &mut impl sm_game::scene::commit::SettlementEffects,
     ) -> Result<(), DisplayError> {
         let current = self.metadata().clone();
         let next_tick = current
@@ -399,8 +399,7 @@ impl PersistentSession {
             || metadata.continuation.auxiliary != current.continuation.auxiliary
             || metadata.continuation.capture != current.identity.capture
             || metadata.continuation.observation_policy != current.reference.observation_policy
-            || metadata.continuation.phase
-                != crate::game::scene::start::CommittedPhase::SettledInterval
+            || metadata.continuation.phase != sm_game::scene::start::CommittedPhase::SettledInterval
             || metadata.input.capture != current.identity.capture
             || metadata.input.policy != current.reference.input_policy
             || metadata.input != current.input_history
@@ -448,7 +447,7 @@ impl PersistentSession {
     }
     pub(crate) fn poison(&mut self) {
         if let Ok(owner) = self.gameplay.presentation.owner_mut() {
-            owner.state.phase = crate::game::scene::state::DisplayPhase::Failed;
+            owner.state.phase = sm_game::scene::state::DisplayPhase::Failed;
         }
         self.gameplay.actor_identity.retain_poison();
     }
@@ -461,10 +460,7 @@ impl SessionCheckpoint {
         &self,
         loaded: Option<&crate::rom::RomImage>,
         native: Option<&crate::rom::RomImage>,
-        sources: &[(
-            crate::game::room_entry::world::ResourceId,
-            crate::rom::RomImage,
-        )],
+        sources: &[(sm_game::room_entry::world::ResourceId, crate::rom::RomImage)],
     ) -> Result<Vec<u8>, String> {
         self.0
             .checkpoint()
@@ -479,7 +475,7 @@ impl SessionCheckpoint {
         else {
             return Err("no owned Session display checkpoint".into());
         };
-        let declarations = crate::game::scene::checkpoint_codec::session_declarations(
+        let declarations = sm_game::scene::checkpoint_codec::session_declarations(
             &state.roles,
             marker,
             actor_queue_projection,
@@ -523,17 +519,14 @@ impl SessionCheckpoint {
     pub(crate) fn decode_binary(
         bytes: &[u8],
         current: &crate::game::actors::identity::ActorIdentityState,
-        world: Arc<crate::game::room_entry::world::WorldBinding>,
+        world: Arc<sm_game::room_entry::world::WorldBinding>,
         media: Arc<SceneMedia>,
         required: SessionStartRequirements,
         loaded: Option<&crate::rom::RomImage>,
         native: Option<&crate::rom::RomImage>,
-        sources: &[(
-            crate::game::room_entry::world::ResourceId,
-            crate::rom::RomImage,
-        )],
+        sources: &[(sm_game::room_entry::world::ResourceId, crate::rom::RomImage)],
     ) -> Result<SuppliedSessionStart, String> {
-        let mut read = crate::game::actors::snapshot::CheckpointReader(bytes);
+        let mut read = sm_game::actors::snapshot::CheckpointReader(bytes);
         if read.bytes(10)? != b"SMSESSION\x01" {
             return Err("unsupported Session checkpoint schema".into());
         }
@@ -562,7 +555,7 @@ impl SessionCheckpoint {
             session_binary_component(&mut read)?,
             &metadata,
         )?;
-        let display = crate::game::scene::component::DisplayCheckpoint::decode_checkpoint(
+        let display = sm_game::scene::component::DisplayCheckpoint::decode_checkpoint(
             session_binary_component(&mut read)?,
             media,
             &metadata,
@@ -648,7 +641,7 @@ impl SessionCheckpoint {
 }
 
 fn session_required_declarations(required: &SessionStartRequirements) -> Vec<u8> {
-    crate::game::scene::checkpoint_codec::session_declarations(
+    sm_game::scene::checkpoint_codec::session_declarations(
         &required.roles,
         &required.marker,
         &required.actor_queue_projection,
@@ -656,7 +649,7 @@ fn session_required_declarations(required: &SessionStartRequirements) -> Vec<u8>
     )
 }
 fn session_binary_component<'a>(
-    read: &mut crate::game::actors::snapshot::CheckpointReader<'a>,
+    read: &mut sm_game::actors::snapshot::CheckpointReader<'a>,
 ) -> Result<&'a [u8], String> {
     let length = usize::try_from(read.counter()?)
         .map_err(|_| "Session checkpoint component length overflow")?;
@@ -719,7 +712,7 @@ impl SessionSnapshotPayload {
     pub(crate) fn decode_gameplay_checkpoint(
         bytes: &[u8],
         metadata: &DisplayStartMetadata,
-        world: Arc<crate::game::room_entry::world::WorldBinding>,
+        world: Arc<sm_game::room_entry::world::WorldBinding>,
     ) -> Result<crate::game::session_checkpoint::NumericGameplayCheckpoint, String> {
         Session::decode_gameplay_checkpoint(bytes, metadata, world)
     }
@@ -734,9 +727,9 @@ impl SessionSnapshotPayload {
     pub(crate) fn decode_room_checkpoint(
         bytes: &[u8],
         metadata: &DisplayStartMetadata,
-        expected: &crate::game::room_entry::world::WorldBinding,
-    ) -> Result<crate::game::session::Room, String> {
-        crate::game::session::Room::decode_checkpoint(bytes, metadata, expected)
+        expected: &sm_game::room_entry::world::WorldBinding,
+    ) -> Result<sm_game::session::Room, String> {
+        sm_game::session::Room::decode_checkpoint(bytes, metadata, expected)
     }
     pub(crate) fn encode_auxiliary_gameplay_checkpoint(&self) -> Result<Vec<u8>, String> {
         let state = self
@@ -752,7 +745,7 @@ impl SessionSnapshotPayload {
         bytes: &[u8],
         metadata: &DisplayStartMetadata,
     ) -> Result<AuxiliaryGameplayCheckpoint, String> {
-        crate::game::session::Session::decode_auxiliary_checkpoint(bytes, metadata)
+        sm_game::session::Session::decode_auxiliary_checkpoint(bytes, metadata)
     }
     pub(crate) fn encode_player_checkpoint(&self) -> Result<Vec<u8>, String> {
         let state = self.0.as_ref().ok_or("no supplied Session player")?;
@@ -765,8 +758,8 @@ impl SessionSnapshotPayload {
     pub(crate) fn decode_player_checkpoint(
         bytes: &[u8],
         metadata: &DisplayStartMetadata,
-    ) -> Result<crate::game::session::Player, String> {
-        crate::game::session::Player::decode_checkpoint(bytes, metadata)
+    ) -> Result<sm_game::session::Player, String> {
+        sm_game::session::Player::decode_checkpoint(bytes, metadata)
     }
     pub(crate) fn encode_enemy_projectile_checkpoint(&self) -> Result<Vec<u8>, String> {
         let state = self
@@ -782,8 +775,8 @@ impl SessionSnapshotPayload {
     pub(crate) fn decode_enemy_projectile_checkpoint(
         bytes: &[u8],
         metadata: &DisplayStartMetadata,
-    ) -> Result<crate::game::session::EnemyProjectiles, String> {
-        crate::game::session::EnemyProjectiles::decode_checkpoint(bytes, metadata)
+    ) -> Result<sm_game::session::EnemyProjectiles, String> {
+        sm_game::session::EnemyProjectiles::decode_checkpoint(bytes, metadata)
     }
     pub(crate) fn encode_projectile_checkpoint(&self) -> Result<Vec<u8>, String> {
         let state = self.0.as_ref().ok_or("no supplied Session projectiles")?;
@@ -796,8 +789,8 @@ impl SessionSnapshotPayload {
     pub(crate) fn decode_projectile_checkpoint(
         bytes: &[u8],
         metadata: &DisplayStartMetadata,
-    ) -> Result<crate::game::session::Projectiles, String> {
-        crate::game::session::Projectiles::decode_checkpoint(bytes, metadata)
+    ) -> Result<sm_game::session::Projectiles, String> {
+        sm_game::session::Projectiles::decode_checkpoint(bytes, metadata)
     }
     pub(crate) fn encode_observation_checkpoint(&self) -> Result<Vec<u8>, String> {
         let state = self.0.as_ref().ok_or("no supplied Session observations")?;
@@ -934,9 +927,9 @@ impl SessionSnapshotPayload {
     }
 }
 
-use crate::game::scene::samus_content::{PreparedBytes, Registration, Role, RoleLease};
-use crate::game::scene::state::{DisplayState, WordOrder};
 use crate::game::scene::{samus, samus_body, samus_position_tiles as positions};
+use sm_game::scene::samus_content::{PreparedBytes, Registration, Role, RoleLease};
+use sm_game::scene::state::{DisplayState, WordOrder};
 
 struct PreparedTable(RoleLease<PreparedBytes>);
 impl positions::Table for PreparedTable {
@@ -960,11 +953,11 @@ impl samus_body::Table for PreparedTable {
 
 struct BodyInputs<'a> {
     game: &'a mut Game,
-    player: &'a mut crate::game::session::Player,
+    player: &'a mut sm_game::session::Player,
     observations: &'a ExternalInputs,
     publications: Arc<SamusPublications>,
     palette: crate::game::scene::records::MediaRef,
-    raster: crate::game::scene::state::RasterState,
+    raster: sm_game::scene::state::RasterState,
 }
 impl BodyInputs<'_> {
     fn source(
@@ -994,8 +987,8 @@ impl samus::Inputs for BodyInputs<'_> {
     }
     fn object_context(
         &mut self,
-        controls: &crate::game::scene::state::DisplayControls,
-        _: &crate::game::scene::state::EffectiveDisplayDescription,
+        controls: &sm_game::scene::state::DisplayControls,
+        _: &sm_game::scene::state::EffectiveDisplayDescription,
     ) -> Result<crate::game::scene::records::ObjectContext, DisplayError> {
         use crate::game::scene::records::{ObjectContext, ObjectSelection};
         let atlases = *self
@@ -1206,9 +1199,9 @@ impl samus_body::Inputs for BodyInputs<'_> {
 }
 
 pub(crate) fn draw_body(
-    owner: &mut crate::game::scene::commit::OwnedDisplay,
+    owner: &mut sm_game::scene::commit::OwnedDisplay,
     game: &mut Game,
-    player: &mut crate::game::session::Player,
+    player: &mut sm_game::session::Player,
     observations: &ExternalInputs,
     publications: Arc<SamusPublications>,
     marker: &MarkerPublication,
@@ -1234,9 +1227,9 @@ pub(crate) fn draw_body(
     )
 }
 pub(crate) fn bottom_visible(
-    owner: &mut crate::game::scene::commit::OwnedDisplay,
+    owner: &mut sm_game::scene::commit::OwnedDisplay,
     game: &mut Game,
-    player: &mut crate::game::session::Player,
+    player: &mut sm_game::session::Player,
     observations: &ExternalInputs,
     publications: Arc<SamusPublications>,
     marker: &MarkerPublication,
@@ -1254,9 +1247,9 @@ pub(crate) fn bottom_visible(
     samus_body::bottom_owned(&mut owner.state, &media, producer, marker, &mut inputs)
 }
 pub(crate) fn draw_sprite(
-    owner: &mut crate::game::scene::commit::OwnedDisplay,
+    owner: &mut sm_game::scene::commit::OwnedDisplay,
     game: &mut Game,
-    player: &mut crate::game::session::Player,
+    player: &mut sm_game::session::Player,
     observations: &ExternalInputs,
     publications: Arc<SamusPublications>,
     producer: crate::game::scene::records::ProducerObjectId,

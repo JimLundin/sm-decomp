@@ -1,13 +1,10 @@
 use crate::game::actors;
-use crate::game::actors::access::ActorKey as Key;
 use crate::game::actors::api as actor_api;
 use crate::game::actors::dachora::Dachora_Func_1;
 use crate::game::actors::kraid_fingernails::KraidFingernailInit;
 use crate::game::actors::phantoon_actions::Phantoon_SetColorBasedOnHp_FindEntry;
 use crate::game::decompression::decompress_to_ram;
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
-use crate::game::enemy_script::EnemyScript;
-use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime;
 use crate::game::kraid_tables;
 use crate::game::music::QueueMusic_Delayed8;
@@ -18,6 +15,9 @@ use crate::ram_map::slot;
 use crate::rom::{RomRecord, lorom_offset};
 use crate::rtl::rom_record;
 use core::mem::offset_of;
+use sm_game::actors::access::ActorKey as Key;
+use sm_game::enemy_script::EnemyScript;
+use sm_game::gameplay_flag_host::BossWordOrder;
 
 pub use crate::game::constants::bank_86::*;
 

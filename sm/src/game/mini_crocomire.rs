@@ -1,12 +1,12 @@
 //! Mini Crocomire walking and firing share the common actor state and movement.
 #![forbid(unsafe_code)]
-use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
 use crate::game::actors::api::{self, MovementResult, SlopePolicy};
-use crate::game::enemy_projectiles::host::Effects;
-use crate::game::enemy_script::EnemyScript;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::words as fields;
+use sm_game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
+use sm_game::enemy_projectiles::host::Effects;
+use sm_game::enemy_script::EnemyScript;
 
 fn selected(runtime: &Runtime<'_>) -> Key {
     Key::from_legacy(runtime.word(fields::cur_enemy_index))

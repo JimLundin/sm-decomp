@@ -1,11 +1,11 @@
 //! The 28 normal movement selectors, sharing complete motion operations.
 #![forbid(unsafe_code)]
 use super::{content::Content, effects::Host, presentation, speed};
-use crate::game::visual_host::Record;
 use crate::game::{
     liquid_surface::LiquidAtHeight, player_collision::operations as collision,
     player_transitions as transitions, samus_palette,
 };
+use sm_game::visual_host::Record;
 
 fn clear_run(h: &mut impl Host) {
     let c = &mut h.session_mut().player.contact;

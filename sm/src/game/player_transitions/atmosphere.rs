@@ -194,11 +194,11 @@ fn submerged_lava_acid(h: &mut impl Host) {
 }
 
 /// Advance the actual owner through the same ordered core as portable G.
-pub(crate) fn draw_atmospheric(h: &mut impl crate::game::visual_host::Host) {
-    crate::game::scene::atmosphere::advance(&mut NativeAdvance(h)).unwrap();
+pub(crate) fn draw_atmospheric(h: &mut impl sm_game::visual_host::Host) {
+    sm_game::scene::atmosphere::advance(&mut NativeAdvance(h)).unwrap();
 }
 struct NativeAdvance<'a, H>(&'a mut H);
-impl<H: crate::game::visual_host::Host> crate::game::scene::atmosphere::AdvanceHost
+impl<H: sm_game::visual_host::Host> sm_game::scene::atmosphere::AdvanceHost
     for NativeAdvance<'_, H>
 {
     type Error = std::convert::Infallible;
@@ -245,21 +245,21 @@ impl<H: crate::game::visual_host::Host> crate::game::scene::atmosphere::AdvanceH
         Ok(self.0.inputs().fx_y)
     }
     fn duration_pointer(&mut self, kind: u16) -> Result<u16, Self::Error> {
-        use crate::game::visual_host::Record;
+        use sm_game::visual_host::Record;
         Ok(self
             .0
-            .table(crate::game::visual_host::Source::Loaded, 0x908b93)
+            .table(sm_game::visual_host::Source::Loaded, 0x908b93)
             .native_word(2 * usize::from(kind)))
     }
     fn duration(&mut self, address: u16) -> Result<u16, Self::Error> {
-        use crate::game::visual_host::Record;
+        use sm_game::visual_host::Record;
         Ok(self.0.legacy_native_record(0x90, address).native_word(0))
     }
     fn frame_count(&mut self, kind: u16) -> Result<u16, Self::Error> {
-        use crate::game::visual_host::Record;
+        use sm_game::visual_host::Record;
         Ok(self
             .0
-            .table(crate::game::visual_host::Source::Loaded, 0x908bef)
+            .table(sm_game::visual_host::Source::Loaded, 0x908bef)
             .native_word(2 * usize::from(kind)))
     }
     fn draw_tile(&mut self, slot: usize, kind: u16) -> Result<(), Self::Error> {

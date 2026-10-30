@@ -159,12 +159,12 @@ pub(crate) fn settle(h: &mut impl Host) {
 
 /// Follow extension cells while preserving the live cursor and width.
 pub(crate) fn redirect_block(
-    h: &mut impl crate::game::player_projectiles::host::Host,
-    axis: crate::game::projectile_room::Axis,
+    h: &mut impl sm_game::player_projectiles::host::Host,
+    axis: sm_game::projectile_room::Axis,
 ) -> u8 {
-    use crate::game::player_projectiles::access::room_bts;
+    use sm_game::player_projectiles::access::room_bts;
     let bts = room_bts(h, h.session().room.collision_cursor);
-    if let Some(cell) = crate::game::projectile_block_reactions::redirect(
+    if let Some(cell) = sm_game::projectile_block_reactions::redirect(
         axis,
         i16::from(bts as i8),
         || h.session().room.width,
@@ -179,9 +179,9 @@ pub(crate) fn redirect_block(
 /// The grapple beam uses collision setup's return flags, unlike ordinary shots.
 pub(crate) fn react_beam(
     h: &mut (
-             impl crate::game::player_projectiles::host::Host
-             + crate::game::room_mechanisms::host::Host
-             + crate::game::projectile_block_reactions::Definitions
+             impl sm_game::player_projectiles::host::Host
+             + sm_game::room_mechanisms::host::Host
+             + sm_game::projectile_block_reactions::Definitions
          ),
 ) -> u8 {
     use crate::game::{
@@ -241,9 +241,9 @@ pub(crate) fn react_beam(
 /// Four signed fixed-point substeps; each setup callback can change the next one.
 pub(crate) fn extend_beam(
     h: &mut (
-             impl crate::game::player_projectiles::host::Host
-             + crate::game::room_mechanisms::host::Host
-             + crate::game::projectile_block_reactions::Definitions
+             impl sm_game::player_projectiles::host::Host
+             + sm_game::room_mechanisms::host::Host
+             + sm_game::projectile_block_reactions::Definitions
          ),
 ) -> u8 {
     let velocity = h.session().player.grapple_velocity;

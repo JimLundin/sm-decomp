@@ -1,12 +1,12 @@
 //! Bouncing goofballs share one rising/falling step and the common actor codec.
 //! Extended bounce words remain RAM-authoritative until their state cohort migrates.
 #![forbid(unsafe_code)]
-use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
 use crate::game::actors::api::{self, Axis};
-use crate::game::enemy_projectiles::host::Effects;
-use crate::game::enemy_script::EnemyScript;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+use sm_game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
+use sm_game::enemy_projectiles::host::Effects;
+use sm_game::enemy_script::EnemyScript;
 
 const LIMIT: usize = 0;
 const DIRECTION: usize = 2;

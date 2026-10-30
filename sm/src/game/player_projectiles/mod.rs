@@ -83,7 +83,7 @@ pub(crate) fn restore_sound(game: &mut Game) {
 pub(crate) use preparation::deselect as deselect_owned;
 pub(crate) fn initialize(
     slot: u16,
-    kind: crate::game::projectile_initialization::Initialization,
+    kind: sm_game::projectile_initialization::Initialization,
     game: &mut Game,
 ) {
     animation::initialize(&mut Runtime::new(game), slot, kind);

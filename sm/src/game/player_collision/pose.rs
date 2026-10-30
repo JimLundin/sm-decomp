@@ -5,7 +5,7 @@ use super::{
     geometry,
     operations::{Axis, Obstruction},
 };
-use crate::game::visual_host::Record;
+use sm_game::visual_host::Record;
 
 // Each call acquires before reading its live pose index, as the source pointer did.
 fn radius<H: Host>(h: &mut H, previous: bool) -> u16 {

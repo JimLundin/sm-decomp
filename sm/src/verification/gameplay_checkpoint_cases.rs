@@ -15,7 +15,7 @@ pub(crate) fn assert_gameplay_checkpoint(metadata: &DisplayStartMetadata) {
     expected.enemy_projectiles.slots[17].x.fraction = 0xabcd;
     expected.compatibility_enemy_scratch = 0x2468;
     expected.room.entry.room =
-        crate::game::room_entry::world::Identity::Known(crate::room_world_fixture::ROOM_A);
+        sm_game::room_entry::world::Identity::Known(crate::room_world_fixture::ROOM_A);
     let bytes = expected.encode_gameplay_checkpoint(metadata).unwrap();
     let decoded = Session::decode_gameplay_checkpoint(&bytes, metadata, world.clone()).unwrap();
     // These separate owners are explicitly supplied for this numeric-only case;

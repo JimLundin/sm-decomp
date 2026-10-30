@@ -1,10 +1,10 @@
 //! Forty bounded actual-4c572a4a common-actor predecessor fixtures.
 //! No copied movement/contact rules. Synthetic records contain no ROM assets.
-use crate::game::session::Vector32;
 use crate::ram_map::{word_arrays as a, words as w};
 use crate::types::{EnemyData, EnemyDef, Point16U, Rect16U};
 use crate::{game_state::Game, rom::RomImage};
 use core::mem::{offset_of, size_of};
+use sm_game::session::Vector32;
 use std::{
     any::Any,
     panic::{AssertUnwindSafe, catch_unwind},

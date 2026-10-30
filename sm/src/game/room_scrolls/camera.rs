@@ -1,8 +1,8 @@
 //! Camera limits and scroll-cell rules; live callers retain RAM authority.
 #![forbid(unsafe_code)]
-use crate::game::room_entry::content::Axis;
 use crate::game_state::Game;
 use crate::ram_map::{word, words as W};
+use sm_game::room_entry::content::Axis;
 
 // Multiplication uses the width's low byte. A column may include a full-word
 // row stride; it is added afterward, with the original word wrapping.

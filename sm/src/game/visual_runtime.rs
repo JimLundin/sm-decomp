@@ -1,5 +1,4 @@
 //! Visual adapters on the one aggregate Session, with explicit legacy effects.
-use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
 use crate::game::imported::{Imported, grid_word, load, word as table_word};
 use crate::game::player_transitions::xray::BeamPhase;
 use crate::game::projectile_presentation_ram as sprite_output;
@@ -22,6 +21,7 @@ use sm_data::shooting_stars::{
     TILE_ADDRESS as STAR_TILE_ADDRESS, TILE_STEPS as STAR_TILE_STEPS, Tiles as StarTiles,
 };
 use sm_data::title_screen::{GRADIENT_ADDRESS, GRADIENTS, Gradients};
+use sm_game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
 use sm_game::display::control::{Brightness, Layers, MainWindowMask, SubScreen};
 
 /// The cinematic and HDMA tables this module reads, imported from the loaded image.
@@ -150,7 +150,7 @@ pub(crate) fn initialize_room_haze(game: &mut Game) {
 }
 
 pub(crate) fn initialize_phantoon_motion(direction: u16, speed: u16, game: &mut Game) {
-    use crate::game::actors::access::AccessMode::Native;
+    use sm_game::actors::access::AccessMode::Native;
     {
         let mut runtime = Runtime::new(game);
         runtime.edit_actor(Key::from_legacy(0x80), Native, |actor| {
@@ -430,7 +430,7 @@ crate::game::address_dispatch! {
 }
 
 unsafe fn run_hdma_program(slot: u8, game: &mut Game) {
-    use crate::game::enemy_script::{EnemyScript as Script, bank_base};
+    use sm_game::enemy_script::{EnemyScript as Script, bank_base};
     let index = usize::from(slot >> 1);
     let pre_instruction = (u32::from(checked_word!(game.hdma_object_pre_instruction_bank[index]))
         << 16)
@@ -471,10 +471,10 @@ unsafe fn run_hdma_program(slot: u8, game: &mut Game) {
 unsafe fn execute_hdma_instruction(
     opcode: u32,
     slot: u16,
-    script: crate::game::enemy_script::EnemyScript,
+    script: sm_game::enemy_script::EnemyScript,
     game: &mut Game,
-) -> crate::game::enemy_script::EnemyScript {
-    use crate::game::enemy_script::{EnemyScript as Script, bank_base};
+) -> sm_game::enemy_script::EnemyScript {
+    use sm_game::enemy_script::{EnemyScript as Script, bank_base};
     let index = usize::from(slot >> 1);
     match opcode {
         8969006 => {}
@@ -667,25 +667,22 @@ impl visual_host::Aliases for Runtime<'_> {
         self.write_word_le(value, at);
     }
 }
-impl crate::game::scene::atmosphere::Host for Runtime<'_> {
+impl sm_game::scene::atmosphere::Host for Runtime<'_> {
     type Error = std::convert::Infallible;
     fn frame_and_kind(&mut self, slot: usize) -> Result<u16, Self::Error> {
-        Ok(
-            crate::game::session_access::SessionAccess::atmospheric(self).slots[slot]
-                .frame_and_kind,
-        )
+        Ok(sm_game::session_access::SessionAccess::atmospheric(self).slots[slot].frame_and_kind)
     }
     fn cursor(&mut self) -> Result<u16, Self::Error> {
         Ok(self.word(0x590))
     }
     fn x(&mut self, slot: usize) -> Result<u16, Self::Error> {
-        Ok(crate::game::session_access::SessionAccess::atmospheric(self).slots[slot].x)
+        Ok(sm_game::session_access::SessionAccess::atmospheric(self).slots[slot].x)
     }
     fn camera_x(&mut self) -> Result<u16, Self::Error> {
         Ok(self.word(0x911))
     }
     fn y(&mut self, slot: usize) -> Result<u16, Self::Error> {
-        Ok(crate::game::session_access::SessionAccess::atmospheric(self).slots[slot].y)
+        Ok(sm_game::session_access::SessionAccess::atmospheric(self).slots[slot].y)
     }
     fn camera_y(&mut self) -> Result<u16, Self::Error> {
         Ok(self.word(0x915))
@@ -717,7 +714,7 @@ impl crate::game::scene::atmosphere::Host for Runtime<'_> {
         Ok(())
     }
     fn written(&mut self) -> Result<(), Self::Error> {
-        crate::game::session_access::SessionAccess::probe(self, "atmosphere.tile.written");
+        sm_game::session_access::SessionAccess::probe(self, "atmosphere.tile.written");
         Ok(())
     }
 }
@@ -758,7 +755,7 @@ impl visual_host::Effects for Runtime<'_> {
         self.foreign(|game| sprite_output::samus(index, (x, y), game, &mut sprite_output::Native));
     }
     fn draw_atmospheric_tile(&mut self, slot: usize, kind: u16) {
-        crate::game::scene::atmosphere::draw_tile(self, slot, kind).unwrap();
+        sm_game::scene::atmosphere::draw_tile(self, slot, kind).unwrap();
     }
 
     fn sound(&mut self, channel: u8, limit: u8, sound: u16) {
@@ -1301,7 +1298,7 @@ impl Runtime<'_> {
     }
 
     pub(crate) fn initialize_phantoon_wave(&mut self, slot: u16) {
-        use crate::game::actors::access::AccessMode::Native;
+        use sm_game::actors::access::AccessMode::Native;
         let motion = Key::from_legacy(0x80);
         let controller = Key::from_legacy(0x40);
         let mode = self.resolve_actor(motion, Native).parameters[0];
@@ -1331,8 +1328,8 @@ impl Runtime<'_> {
     }
 
     pub(crate) fn select_phantoon_layer(&mut self) {
-        use crate::game::actors::access::AccessMode::Native;
         use crate::ram_map::words as ram;
+        use sm_game::actors::access::AccessMode::Native;
         if self.word(ram::phantom_related_layer_flag) & 0x4000 != 0 {
             self.write_slice_le(ram::fx_layer_blending_config_c, 26);
         } else {
@@ -1358,7 +1355,7 @@ impl Runtime<'_> {
     }
 
     pub(crate) fn select_draygon_layer(&mut self, slot: u16) {
-        use crate::game::actors::access::AccessMode::Native;
+        use sm_game::actors::access::AccessMode::Native;
         let actor = self.resolve_actor(Key::from_legacy(0), Native);
         let x = i32::from(actor.x.whole) - i32::from(self.inputs().camera_x);
         let y = i32::from(actor.y.whole) - i32::from(self.inputs().camera_y);
@@ -1382,10 +1379,10 @@ impl Runtime<'_> {
     }
 
     pub(crate) fn advance_hdma_wave(&mut self, slot: u16, wave: HdmaWave) {
-        use crate::game::actors::access::AccessMode::Native;
-        use crate::game::player_projectiles::access::Store;
-        use crate::game::projectile_geometry::SINE_COSINE;
         use crate::ram_map::{word_arrays as arrays, words as ram};
+        use sm_game::actors::access::AccessMode::Native;
+        use sm_game::player_projectiles::access::Store;
+        use sm_game::projectile_geometry::SINE_COSINE;
         let controller = Key::from_legacy(0x40);
         let motion = Key::from_legacy(0xc0);
         let phantoon = matches!(wave, HdmaWave::Phantoon);
@@ -1734,8 +1731,8 @@ impl CinematicObjects {
     }
 
     pub(crate) unsafe fn advance(self, game: &mut Game) {
-        use crate::game::visual_state::CinematicTilemap;
         use CinematicObjects::Background;
+        use sm_game::visual_state::CinematicTilemap;
         if matches!(self, Background) && word!(game.cinematic_enable_objs) & 0x8000 == 0 {
             return;
         }
@@ -3382,10 +3379,10 @@ unsafe fn cinematic_background_command(
 }
 
 pub(crate) fn queue_cinematic_tilemap(
-    tiles: crate::game::visual_state::CinematicTilemap,
+    tiles: sm_game::visual_state::CinematicTilemap,
     game: &mut Game,
 ) {
-    use crate::game::visual_state::CinematicTilemap::*;
+    use sm_game::visual_state::CinematicTilemap::*;
     if !matches!(tiles, Japanese | JapaneseIntro) && game.ram().read_byte(0x55) == 7 {
         return;
     }
@@ -3482,7 +3479,7 @@ fn scaled_cinematic_value(value: u16, scale: u16) -> u16 {
 }
 
 pub(crate) fn update_cinematic_transform(rotated: bool, game: &mut Game) {
-    use crate::game::projectile_geometry::SINE_COSINE;
+    use sm_game::projectile_geometry::SINE_COSINE;
     if rotated {
         let angle = (word!(game.cinematic_var5) as u8).wrapping_add(64);
         let cosine = scaled_cinematic_value(
@@ -3530,10 +3527,10 @@ pub(crate) fn project_cinematic_point_reads(
 }
 
 pub(crate) fn advance_cinematic_fade(
-    fade: crate::game::visual_state::CinematicFade,
+    fade: sm_game::visual_state::CinematicFade,
     game: &mut Game,
 ) -> bool {
-    use crate::game::visual_state::CinematicFade::*;
+    use sm_game::visual_state::CinematicFade::*;
     let slow = matches!(fade, SlowIn | SlowOut);
     if slow {
         // Only the low delay byte decrements, with the signed-byte wrap retained.
@@ -3642,14 +3639,14 @@ pub(crate) fn compose_cinematic_palette(game: &mut Game) {
 
 // Hardware setup remains unsafe: Game construction alone does not attach a PPU.
 pub(crate) unsafe fn configure_cinematic_display(
-    display: crate::game::visual_state::CinematicDisplay,
+    display: sm_game::visual_state::CinematicDisplay,
     game: &mut Game,
 ) {
-    use crate::game::visual_state::CinematicDisplay::*;
     use crate::rtl::{
         BG1SC, BG2SC, BG3SC, BG4SC, BG12NBA, BG34NBA, BGMODE, CGADSUB, CGWSEL, M7SEL, OBSEL,
         SETINI, TM, VMAIN,
     };
+    use sm_game::visual_state::CinematicDisplay::*;
     let title = display == Title;
     let intro = display == Intro;
     let escape = display == Escape;

@@ -1,12 +1,12 @@
 //! Rising/falling actor: wait near Samus, rise, play native motion rows, then reset.
 #![forbid(unsafe_code)]
-use crate::game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::game::actors::api::{self, Axis};
-use crate::game::enemy_projectiles::host::Effects;
 use crate::game::enemy_speeds::SpeedTable;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::words as W;
+use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
+use sm_game::enemy_projectiles::host::Effects;
 
 fn animate(runtime: &mut Runtime<'_>, instruction: u16) {
     let key = Key::from_legacy(runtime.word(W::cur_enemy_index));

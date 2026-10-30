@@ -6,7 +6,6 @@ use super::{
     draygon_flight::{facing_animation, turret},
 };
 use crate::game::enemy_layouts::EnemyLayout104 as Draygon;
-use crate::game::enemy_script::EnemyScript;
 use crate::game::player_movement::forced;
 use crate::game::session_runtime::{
     Runtime, actor_cosine, actor_direction_vector, actor_sine, correct_previous_position,
@@ -18,6 +17,7 @@ use crate::ram_map::{slot, word};
 use crate::rtl::{abs16, words};
 use crate::types::EnemyDef;
 use core::mem::offset_of;
+use sm_game::enemy_script::EnemyScript;
 
 fn pursue(dx: u16, dy: u16, game: &mut Game) {
     let phase = 64u8.wrapping_sub(api::angle_from_delta(dx, dy) as u8) as u16;

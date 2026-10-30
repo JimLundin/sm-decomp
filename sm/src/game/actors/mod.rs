@@ -33,11 +33,9 @@ pub(in crate::game) use sm_game::actors::scene;
 pub(crate) mod shaktool;
 pub(crate) mod shitroid;
 pub(in crate::game) mod sidehopper;
-pub(crate) use sm_game::actors::snapshot;
 pub(crate) mod torizo;
 pub(in crate::game) mod wall_crawlers;
 
-pub(in crate::game) use sm_game::actors::codec;
 mod runtime;
 
 mod content_runtime;

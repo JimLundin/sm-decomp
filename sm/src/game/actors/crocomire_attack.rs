@@ -3,9 +3,9 @@
 use super::access::{AccessMode, ActorKey as Key};
 use crate::game::callback_tables::callback_table;
 use crate::game::constants::{bank_86::addr_stru_868F8F, bank_a4::*};
-use crate::game::enemy_projectiles::host::Host;
-use crate::game::enemy_script::{EnemyScript, bank_base};
 use core::ffi::c_long;
+use sm_game::enemy_projectiles::host::Host;
+use sm_game::enemy_script::{EnemyScript, bank_base};
 
 type Reaction<A> = fn(u16, EnemyScript, &mut A) -> EnemyScript;
 const ATTACK_BOUNDARY: u16 = 0x300;

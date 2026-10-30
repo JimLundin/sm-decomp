@@ -1,11 +1,11 @@
 //! Spike plants and spikey shells share velocity setup and bounded patrol.
 #![forbid(unsafe_code)]
-use crate::game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::game::actors::{api::ShotHandling, combat};
-use crate::game::enemy_projectiles::host::Effects;
 use crate::game::enemy_speeds::SpeedTable;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
+use sm_game::enemy_projectiles::host::Effects;
 
 fn selected(runtime: &Runtime<'_>) -> Key {
     Key::from_legacy(runtime.word(0xe54))

@@ -110,7 +110,7 @@ pub(crate) fn request_fallback_pose(h: &mut impl Host) {
 }
 
 /// End-of-frame input history and hurt-flash health share the player owner.
-pub(crate) fn finish_input(s: &mut crate::game::session::Session, inputs: &ExternalInputs) {
+pub(crate) fn finish_input(s: &mut sm_game::session::Session, inputs: &ExternalInputs) {
     let p = &mut s.player;
     p.contact.auto_jump = if inputs.held & inputs.jump_button != 0
         && inputs.filtered_held & inputs.jump_button != 0

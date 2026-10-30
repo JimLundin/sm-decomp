@@ -1,7 +1,7 @@
 //! Retained fixed clear/DMA leaves for room entry; command execution is owned.
 use crate::game::display_refresh::CopyToVramNow;
 use crate::game::prelude::*;
-use crate::game::room_entry::content::LoadMode;
+use sm_game::room_entry::content::LoadMode;
 
 pub(crate) unsafe fn clear_fx(mode: LoadMode, game: &mut Game) {
     unsafe {

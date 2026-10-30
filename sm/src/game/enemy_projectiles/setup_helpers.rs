@@ -3,7 +3,7 @@ use super::access::enemy;
 use super::coordinates::{block_index, calculate_coordinates};
 use super::host::*;
 use super::shared::*;
-use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
+use sm_game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
 
 /// Keep live enemy reads interleaved with writes, including broad slot aliases.
 pub(super) fn copy_enemy_position(slot: isize, enemy: u16, y_offset: i16, ctx: &mut impl Host) {

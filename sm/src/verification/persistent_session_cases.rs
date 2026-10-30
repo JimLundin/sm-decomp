@@ -228,7 +228,7 @@ pub fn persistent_session_native_rebinding_preserves_ready_owner(
     assert_audio_reference_binding(&owner, &codec_required);
     assert_projectiles_checkpoint(&owner, &codec_required);
     let (numeric_start, _) = owner.checkpoint_session().unwrap().into_start().unwrap();
-    crate::game::actors::snapshot::assert_numeric_checkpoint(
+    sm_game::actors::snapshot::assert_numeric_checkpoint(
         numeric_start
             .gameplay
             .as_ref()
@@ -385,8 +385,8 @@ fn assert_binary_restore_after_failed_interval(
 
 /// No movie covers malformed Projectiles checkpoints or an independently valid binding mismatch.
 fn assert_projectiles_checkpoint(owner: &GameOwner, required: &ss::DisplayStartRequirements) {
-    use crate::game::scene::component::DisplayStartMetadata;
     use crate::game::{launch_motion::MovementDirection, session::Projectiles};
+    use sm_game::scene::component::DisplayStartMetadata;
 
     let (start, _) = owner.checkpoint_session().unwrap().into_start().unwrap();
     let display = start.display;
@@ -462,8 +462,8 @@ fn assert_projectiles_checkpoint(owner: &GameOwner, required: &ss::DisplayStartR
 
 /// No movie covers mismatched detached payloads decoded under another valid Reference.
 fn assert_audio_reference_binding(owner: &GameOwner, required: &ss::DisplayStartRequirements) {
-    use crate::game::scene::component::DisplayStartMetadata;
     use crate::game_state::persistent_session::AudioRequests;
+    use sm_game::scene::component::DisplayStartMetadata;
 
     let (start, _) = owner.checkpoint_session().unwrap().into_start().unwrap();
     let requests = start.audio_requests.unwrap();

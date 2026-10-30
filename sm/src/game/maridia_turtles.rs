@@ -1,16 +1,16 @@
 //! Turtle parent/children, riding interaction and their shared script state.
 #![forbid(unsafe_code)]
-use crate::game::actors::access::{
-    AccessMode::{LittleEndian as Le, Native},
-    ActorAccess, ActorKey as Key,
-};
 use crate::game::actors::{api, combat};
-use crate::game::enemy_projectiles::host::Effects;
-use crate::game::enemy_script::EnemyScript;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::words as fields;
 use crate::rtl::abs16;
+use sm_game::actors::access::{
+    AccessMode::{LittleEndian as Le, Native},
+    ActorAccess, ActorKey as Key,
+};
+use sm_game::enemy_projectiles::host::Effects;
+use sm_game::enemy_script::EnemyScript;
 
 const SHELL_HEIGHT: [i16; 48] = [
     -16, -16, -16, -16, -15, -15, -15, -15, -15, -14, -13, -13, -12, -11, -10, -9, -8, -7, -6, -5,

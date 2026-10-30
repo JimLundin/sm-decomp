@@ -1,10 +1,10 @@
 //! Flies share fractional movement while circling and diving toward the player.
 #![forbid(unsafe_code)]
-use crate::game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::game::actors::api::{self, Axis};
-use crate::game::projectile_geometry::SINE_COSINE;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
+use sm_game::projectile_geometry::SINE_COSINE;
 
 fn move_fly(runtime: &mut Runtime<'_>, key: Key, circling: bool) -> u16 {
     let angle = if circling {

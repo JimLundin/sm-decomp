@@ -342,7 +342,7 @@ fn physical_words() -> Vec<usize> {
     a
 }
 // Read every owned value directly, so an accidentally external lane cannot pass.
-fn typed_image(state: &crate::game::session::Session, bytes: &[u8]) {
+fn typed_image(state: &sm_game::session::Session, bytes: &[u8]) {
     let expect = |at: usize, v: u16| {
         assert_eq!(
             v,
@@ -729,7 +729,7 @@ fn matrix_entries() {
     }
 }
 pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
-    use crate::game::projectile_initialization::Initialization;
+    use sm_game::projectile_initialization::Initialization;
     if !(0..104).contains(&id) {
         return None;
     }

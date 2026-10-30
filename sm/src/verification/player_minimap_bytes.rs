@@ -241,7 +241,7 @@ fn codec_bytes(g: &mut Game) {
             expected[0x7f7 + index] = value;
         }
         // Exercise the retained room-entry adapters, not just their numeric addresses.
-        use crate::game::room_entry::effects::{EntryEffects, ExternalField};
+        use sm_game::room_entry::effects::{EntryEffects, ExternalField};
         EntryEffects::write_external(&mut runtime, ExternalField::LoadingLowByte, 0);
         assert_eq!(
             runtime.session().minimap.disabled,

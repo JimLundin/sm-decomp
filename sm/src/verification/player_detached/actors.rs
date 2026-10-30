@@ -2,7 +2,6 @@
 //! Runtime/backend adapters are deliberately not registered in this target.
 #![forbid(unsafe_code)]
 pub(in crate::game) use sm_game::actors::access;
-pub(in crate::game) use sm_game::actors::codec;
 #[path = "actors_host.rs"]
 mod host;
 

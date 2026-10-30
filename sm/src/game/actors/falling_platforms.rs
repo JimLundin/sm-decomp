@@ -2,10 +2,10 @@
 #![forbid(unsafe_code)]
 use super::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use super::{api, combat};
-use crate::game::enemy_script::EnemyScript;
 use crate::game::enemy_speeds::SpeedTable;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+use sm_game::enemy_script::EnemyScript;
 
 fn extra(key: Key) -> usize {
     0x7800 + usize::from(key.byte_index())

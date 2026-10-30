@@ -1,12 +1,10 @@
 use crate::game::actors;
-use crate::game::actors::access::ActorKey as Key;
 use crate::game::actors::api as actor_api;
 use crate::game::actors::mother_brain_effects::{
     MotherBrain_GenerateExplosions, MotherBrain_HandleRainbowBeamPalette, MotherBrain_WritePalette,
 };
 use crate::game::corpse_tables;
 use crate::game::display_refresh::{native_word, set_native_word};
-use crate::game::enemy_script::EnemyScript;
 use crate::game::menu_tilemap::native_record;
 use crate::game::mother_brain_tables;
 use crate::game::music::QueueMusic_Delayed8;
@@ -18,6 +16,8 @@ use crate::game::session_runtime::Runtime;
 use crate::game::shitroid_tables;
 use crate::game::torizo_corpse_tables;
 use crate::rom::RomRecord;
+use sm_game::actors::access::ActorKey as Key;
+use sm_game::enemy_script::EnemyScript;
 
 use crate::game::beam_windows::calculate_rainbow_window;
 
@@ -39,11 +39,11 @@ use crate::game::music::{
     QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max3, QueueSfx3_Max6,
 };
 use crate::game::palette_effects;
-use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::room_state::load_fx_entry as LoadFxEntry;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::session_runtime::player_mother_brain;
+use sm_game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 
 use crate::game::escape_typewriter::{start_zebes_escape_typewriter, type_escape_text};
 use crate::game::sm_a6::{HomingReversal, Ridley_Func_98, homing_velocity};

@@ -2,8 +2,8 @@
 #![forbid(unsafe_code)]
 use super::access::enemy;
 use super::host::{DefinitionField, Host, LoadedRecord};
-use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
-use crate::game::enemy_script::EnemyScript;
+use sm_game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
+use sm_game::enemy_script::EnemyScript;
 
 pub(super) fn set_enabled(h: &mut impl Host, enabled: bool) {
     let flags = h.session().enemy_projectiles.flags;

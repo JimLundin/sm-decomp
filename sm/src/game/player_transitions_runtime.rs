@@ -400,7 +400,7 @@ pub(super) fn dispatch_input(h: &mut Runtime<'_>) {
         }
         InputMode::Disabled => {}
         InputMode::Unknown(_) => {
-            crate::game::player_projectiles::host::Host::unknown(h);
+            sm_game::player_projectiles::host::Host::unknown(h);
         }
     }
 }
@@ -592,8 +592,8 @@ pub(crate) fn damage_player(amount: u16, game: &mut crate::game_state::Game) {
 impl Runtime<'_> {
     pub(crate) fn apply_contact_damage(&mut self, amount: u16) {
         let frozen = self.inputs().frozen;
-        if crate::game::samus_periodic_damage::direct(self.session_mut(), frozen, amount).is_err() {
-            crate::game::player_projectiles::host::Host::invalid_damage(self);
+        if sm_game::samus_periodic_damage::direct(self.session_mut(), frozen, amount).is_err() {
+            sm_game::player_projectiles::host::Host::invalid_damage(self);
         }
     }
 }
@@ -607,7 +607,7 @@ pub(crate) fn finish_player_frame(h: &mut Runtime<'_>) {
     player_transitions::finish_input(h.session_mut(), &inputs);
     h.write_slice_le(ram::joypad1_input_samusfilter, inputs.held);
     h.write_slice_le(ram::joypad1_newinput_samusfilter, inputs.pressed);
-    h.owned_call(crate::game::player_projectiles::feedback::movement_sound);
+    h.owned_call(sm_game::player_projectiles::feedback::movement_sound);
     if h.word(ram::enable_debug) != 0 {
         if matches!(h.session().player.pose, 0 | 0x9b) {
             if h.word(ram::joypad2_last) & 0x30 == 0x30 && h.word(ram::joypad2_new_keys) & 0x80 != 0

@@ -620,7 +620,7 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             let (site, room, exit, x, y) = if id == 9 {
                 (
                     if g.world().prepared_room_assets().is_some() {
-                        crate::game::room_entry::world::LegacyStartSite { area: 6, index: 0 }
+                        sm_game::room_entry::world::LegacyStartSite { area: 6, index: 0 }
                     } else {
                         fixture::START_A_SITE
                     },
@@ -632,7 +632,7 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             } else {
                 (
                     if g.world().prepared_room_assets().is_some() {
-                        crate::game::room_entry::world::LegacyStartSite { area: 0, index: 18 }
+                        sm_game::room_entry::world::LegacyStartSite { area: 0, index: 18 }
                     } else {
                         fixture::START_B_SITE
                     },
@@ -886,17 +886,17 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
 // Movies cannot author portable lifecycle IDs or retained staging at the owned publication point.
 #[cfg(sm_verify_dll)]
 pub fn verify_owned_atmosphere_prefix(
-    start: crate::game::scene::start::ValidatedDisplayStart,
+    start: sm_game::scene::start::ValidatedDisplayStart,
     camera: [u16; 2],
     liquid_y: u16,
     context: crate::game::scene::records::ObjectContext,
     created_slot: Option<usize>,
 ) -> Result<
     (
-        crate::game::scene::state::DisplayDescription,
-        Result<(), crate::game::scene::state::DisplayError>,
+        sm_game::scene::state::DisplayDescription,
+        Result<(), sm_game::scene::state::DisplayError>,
     ),
-    crate::game::scene::start::StartError,
+    sm_game::scene::start::StartError,
 > {
     use crate::game::scene::{
         atmosphere::Inputs,
@@ -946,10 +946,10 @@ pub fn verify_owned_atmosphere_prefix(
 // Movies cannot supply producer observations at the owned begin/publication/refresh seam.
 #[cfg(sm_verify_dll)]
 fn verification_settlement_produce(
-    owner: &mut crate::game::scene::commit::OwnedDisplay,
+    owner: &mut sm_game::scene::commit::OwnedDisplay,
     supplied: ([u16; 2], u16, crate::game::scene::records::ObjectContext),
     created_slot: Option<usize>,
-) -> Result<(), crate::game::scene::state::DisplayError> {
+) -> Result<(), sm_game::scene::state::DisplayError> {
     use crate::game::scene::{
         atmosphere::Inputs,
         records::ObjectContext,
@@ -993,11 +993,11 @@ fn verification_settlement_produce(
 // Movies cannot supply immutable authored content bindings for a constructed numeric raster row.
 #[cfg(sm_verify_dll)]
 fn verification_settlement_backgrounds(
-    state: &crate::game::scene::state::DisplayDescription,
-    image: &crate::game::scene::commit::DisplayImage,
+    state: &sm_game::scene::state::DisplayDescription,
+    image: &sm_game::scene::commit::DisplayImage,
     media: &crate::game::scene::records::SceneMedia,
-) -> Result<[crate::rendering::Background; 3], crate::game::scene::state::DisplayError> {
-    use crate::game::scene::state::DisplayError;
+) -> Result<[crate::rendering::Background; 3], sm_game::scene::state::DisplayError> {
+    use sm_game::scene::state::DisplayError;
     let compiled = media.image(image.image).map_err(|_| DisplayError::Scene)?;
     let backgrounds = state
         .backgrounds
@@ -1032,12 +1032,12 @@ fn verification_settlement_backgrounds(
 // Movies cannot force portable semantic rejection after this real shared numeric raster completes.
 #[cfg(sm_verify_dll)]
 fn verification_settlement_raster(
-    state: &crate::game::scene::state::DisplayDescription,
-    image: &crate::game::scene::commit::DisplayImage,
+    state: &sm_game::scene::state::DisplayDescription,
+    image: &sm_game::scene::commit::DisplayImage,
     media: &crate::game::scene::records::SceneMedia,
     context: crate::game::scene::records::ObjectContext,
     row: u16,
-) -> Result<crate::rendering::prepared::RenderedLine, crate::game::scene::state::DisplayError> {
+) -> Result<crate::rendering::prepared::RenderedLine, sm_game::scene::state::DisplayError> {
     use crate::{
         game::scene::state::DisplayError,
         rendering::{self as r, prepared as p},
@@ -1138,49 +1138,49 @@ struct VerificationSettlement {
 
 // This quiesced fixture has no movie-reached room transition; unexpected callbacks must fail.
 #[cfg(sm_verify_dll)]
-impl crate::game::scene::commit::RoomEffects for VerificationSettlement {
+impl sm_game::scene::commit::RoomEffects for VerificationSettlement {
     fn follow_transition(
         &mut self,
-        _: &mut crate::game::scene::state::DisplayDescription,
-        _: &mut crate::game::scene::commit::DisplayImage,
+        _: &mut sm_game::scene::state::DisplayDescription,
+        _: &mut sm_game::scene::commit::DisplayImage,
         _: &mut std::sync::Arc<crate::game::scene::records::SceneMedia>,
-    ) -> Result<(), crate::game::scene::state::DisplayError> {
-        Err(crate::game::scene::state::DisplayError::Source)
+    ) -> Result<(), sm_game::scene::state::DisplayError> {
+        Err(sm_game::scene::state::DisplayError::Source)
     }
 }
 
 // This authored fixture disables every channel; unexpected numeric destinations must fail at access.
 #[cfg(sm_verify_dll)]
-impl crate::game::scene::owned_hdma::Destinations for VerificationSettlement {
+impl sm_game::scene::owned_hdma::Destinations for VerificationSettlement {
     fn read_destination(
         &mut self,
-        _: &mut crate::game::scene::state::DisplayDescription,
-        _: &mut crate::game::scene::commit::DisplayImage,
+        _: &mut sm_game::scene::state::DisplayDescription,
+        _: &mut sm_game::scene::commit::DisplayImage,
         _: u8,
-    ) -> Result<u8, crate::game::scene::state::DisplayError> {
-        Err(crate::game::scene::state::DisplayError::Source)
+    ) -> Result<u8, sm_game::scene::state::DisplayError> {
+        Err(sm_game::scene::state::DisplayError::Source)
     }
     fn write_destination(
         &mut self,
-        _: &mut crate::game::scene::state::DisplayDescription,
-        _: &mut crate::game::scene::commit::DisplayImage,
+        _: &mut sm_game::scene::state::DisplayDescription,
+        _: &mut sm_game::scene::commit::DisplayImage,
         _: u8,
         _: u8,
-    ) -> Result<(), crate::game::scene::state::DisplayError> {
-        Err(crate::game::scene::state::DisplayError::Source)
+    ) -> Result<(), sm_game::scene::state::DisplayError> {
+        Err(sm_game::scene::state::DisplayError::Source)
     }
 }
 
 // Movies cannot force post-raster semantic failure while retaining completed numeric row effects.
 #[cfg(sm_verify_dll)]
-impl crate::game::scene::commit::SettlementEffects for VerificationSettlement {
+impl sm_game::scene::commit::SettlementEffects for VerificationSettlement {
     fn raster_row(
         &mut self,
-        state: &mut crate::game::scene::state::DisplayDescription,
-        image: &mut crate::game::scene::commit::DisplayImage,
+        state: &mut sm_game::scene::state::DisplayDescription,
+        image: &mut sm_game::scene::commit::DisplayImage,
         media: &mut std::sync::Arc<crate::game::scene::records::SceneMedia>,
         row: u16,
-    ) -> Result<crate::game::scene::records::ObjectContext, crate::game::scene::state::DisplayError>
+    ) -> Result<crate::game::scene::records::ObjectContext, sm_game::scene::state::DisplayError>
     {
         use crate::game::scene::{
             records::{ObjectContext, ObjectSelection},
@@ -1223,12 +1223,12 @@ impl crate::game::scene::commit::SettlementEffects for VerificationSettlement {
 // Movies cannot author a complete owned producer-to-settlement commitment with supplied new incarnations.
 #[cfg(sm_verify_dll)]
 fn verification_settlement_run(
-    owner: &mut crate::game::scene::commit::OwnedDisplay,
+    owner: &mut sm_game::scene::commit::OwnedDisplay,
     supplied: ([u16; 2], u16, crate::game::scene::records::ObjectContext),
     incarnations: [crate::game::scene::records::MediaRef; 2],
     created_slot: Option<usize>,
     effects: &mut VerificationSettlement,
-) -> Result<(), crate::game::scene::state::DisplayError> {
+) -> Result<(), sm_game::scene::state::DisplayError> {
     use crate::game::scene::{records::DisplayStatus, state::DisplayError};
     let (_, resident, scene, media, _) = owner.checkpoint_parts()?;
     let bindings = media
@@ -1278,17 +1278,17 @@ fn verification_settlement_run(
 // Movies cannot supply portable checkpoint/reset ownership or inspect explicit failure prefixes safely.
 #[cfg(sm_verify_dll)]
 pub fn verify_owned_atmosphere_settlement(
-    mut display: crate::game::scene::component::DisplayComponent,
+    mut display: sm_game::scene::component::DisplayComponent,
     supplied: ([u16; 2], u16, crate::game::scene::records::ObjectContext),
     incarnations: [crate::game::scene::records::MediaRef; 2],
     created_slot: Option<usize>,
     fail_row: Option<u16>,
 ) -> (
-    crate::game::scene::component::DisplayComponent,
-    crate::game::scene::state::DisplayDescription,
+    sm_game::scene::component::DisplayComponent,
+    sm_game::scene::state::DisplayDescription,
     crate::game::scene::ResidentDisplayDescription,
     Vec<crate::rendering::prepared::RenderedLine>,
-    Result<(), crate::game::scene::state::DisplayError>,
+    Result<(), sm_game::scene::state::DisplayError>,
 ) {
     use crate::game::scene::{ResidentDisplayDescription, state::DisplayError};
     let mut effects = VerificationSettlement {
@@ -1300,7 +1300,7 @@ pub fn verify_owned_atmosphere_settlement(
     let owner = display.owner_mut();
     let result =
         verification_settlement_run(owner, supplied, incarnations, created_slot, &mut effects);
-    if result.is_err() && owner.state.phase == crate::game::scene::state::DisplayPhase::Failed {
+    if result.is_err() && owner.state.phase == sm_game::scene::state::DisplayPhase::Failed {
         assert_eq!(owner.refresh(), Err(DisplayError::Poisoned));
         let mut next = owner.committed().description().clone();
         next.tick += 1;
@@ -1326,7 +1326,7 @@ pub fn verify_owned_atmosphere_settlement(
 // Movies cannot supply a portable catalogue/context at the actual common-owner publication seam.
 #[cfg(sm_verify_dll)]
 struct VerificationProducerInputs {
-    catalog: std::sync::Arc<crate::game::scene::samus::SamusCatalog>,
+    catalog: std::sync::Arc<sm_game::scene::samus::SamusCatalog>,
     context: crate::game::scene::records::ObjectContext,
     camera: [u16; 2],
     liquid: u16,
@@ -1334,28 +1334,28 @@ struct VerificationProducerInputs {
 
 // Movies cannot supply selected portable Samus media; unexpected invalid-map hooks must fail lazily.
 #[cfg(sm_verify_dll)]
-impl crate::game::scene::samus::Inputs for VerificationProducerInputs {
+impl sm_game::scene::samus::Inputs for VerificationProducerInputs {
     fn content(
         &mut self,
-        _: &crate::game::scene::state::DisplayDescription,
+        _: &sm_game::scene::state::DisplayDescription,
     ) -> Result<
-        std::sync::Arc<crate::game::scene::samus::SamusCatalog>,
-        crate::game::scene::state::DisplayError,
+        std::sync::Arc<sm_game::scene::samus::SamusCatalog>,
+        sm_game::scene::state::DisplayError,
     > {
         Ok(self.catalog.clone())
     }
     fn invalid_map(
         &mut self,
-        _: &mut crate::game::scene::state::DisplayDescription,
+        _: &mut sm_game::scene::state::DisplayDescription,
         _: u16,
-    ) -> Result<(), crate::game::scene::state::DisplayError> {
-        Err(crate::game::scene::state::DisplayError::Source)
+    ) -> Result<(), sm_game::scene::state::DisplayError> {
+        Err(sm_game::scene::state::DisplayError::Source)
     }
     fn object_context(
         &mut self,
-        _: &crate::game::scene::state::DisplayControls,
-        _: &crate::game::scene::state::EffectiveDisplayDescription,
-    ) -> Result<crate::game::scene::records::ObjectContext, crate::game::scene::state::DisplayError>
+        _: &sm_game::scene::state::DisplayControls,
+        _: &sm_game::scene::state::EffectiveDisplayDescription,
+    ) -> Result<crate::game::scene::records::ObjectContext, sm_game::scene::state::DisplayError>
     {
         Ok(self.context)
     }
@@ -1363,30 +1363,30 @@ impl crate::game::scene::samus::Inputs for VerificationProducerInputs {
 
 // Movies cannot provide portable atmosphere observations during a constructed interleaved lifecycle.
 #[cfg(sm_verify_dll)]
-impl crate::game::scene::atmosphere::Inputs for VerificationProducerInputs {
+impl sm_game::scene::atmosphere::Inputs for VerificationProducerInputs {
     fn camera_x(
         &mut self,
-        _: &crate::game::scene::state::DisplayDescription,
-    ) -> Result<u16, crate::game::scene::state::DisplayError> {
+        _: &sm_game::scene::state::DisplayDescription,
+    ) -> Result<u16, sm_game::scene::state::DisplayError> {
         Ok(self.camera[0])
     }
     fn camera_y(
         &mut self,
-        _: &crate::game::scene::state::DisplayDescription,
-    ) -> Result<u16, crate::game::scene::state::DisplayError> {
+        _: &sm_game::scene::state::DisplayDescription,
+    ) -> Result<u16, sm_game::scene::state::DisplayError> {
         Ok(self.camera[1])
     }
     fn fx_y(
         &mut self,
-        _: &crate::game::scene::state::DisplayDescription,
-    ) -> Result<u16, crate::game::scene::state::DisplayError> {
+        _: &sm_game::scene::state::DisplayDescription,
+    ) -> Result<u16, sm_game::scene::state::DisplayError> {
         Ok(self.liquid)
     }
     fn object_context(
         &mut self,
-        _: &crate::game::scene::state::DisplayControls,
-        _: &crate::game::scene::state::EffectiveDisplayDescription,
-    ) -> Result<crate::game::scene::records::ObjectContext, crate::game::scene::state::DisplayError>
+        _: &sm_game::scene::state::DisplayControls,
+        _: &sm_game::scene::state::EffectiveDisplayDescription,
+    ) -> Result<crate::game::scene::records::ObjectContext, sm_game::scene::state::DisplayError>
     {
         Ok(self.context)
     }
@@ -1395,15 +1395,14 @@ impl crate::game::scene::atmosphere::Inputs for VerificationProducerInputs {
 // Movies cannot supply a common Samus birth while preserving the actual owning failure guard.
 #[cfg(sm_verify_dll)]
 fn verification_producer_allocate(
-    owner: &mut crate::game::scene::commit::OwnedDisplay,
-) -> Result<crate::game::scene::records::ProducerObjectId, crate::game::scene::state::DisplayError>
-{
-    let mut guard = crate::game::scene::delivery::FaultGuard::new(&mut owner.state);
+    owner: &mut sm_game::scene::commit::OwnedDisplay,
+) -> Result<crate::game::scene::records::ProducerObjectId, sm_game::scene::state::DisplayError> {
+    let mut guard = sm_game::scene::delivery::FaultGuard::new(&mut owner.state);
     let result = guard
         .state()
         .producer_ids
         .allocate()
-        .map_err(|_| crate::game::scene::state::DisplayError::Identity);
+        .map_err(|_| sm_game::scene::state::DisplayError::Identity);
     if result.is_ok() {
         guard.disarm();
     }
@@ -1413,12 +1412,12 @@ fn verification_producer_allocate(
 // Movies cannot supply interleaved namespace births, Samus IDs and atmospheric retirement in one owner.
 #[cfg(sm_verify_dll)]
 pub fn verify_owned_namespace_interleaved(
-    mut display: crate::game::scene::component::DisplayComponent,
-    catalog: std::sync::Arc<crate::game::scene::samus::SamusCatalog>,
+    mut display: sm_game::scene::component::DisplayComponent,
+    catalog: std::sync::Arc<sm_game::scene::samus::SamusCatalog>,
     supplied: ([u16; 2], u16, crate::game::scene::records::ObjectContext),
 ) -> (
-    Vec<crate::game::scene::state::DisplayDescription>,
-    Result<(), crate::game::scene::state::DisplayError>,
+    Vec<sm_game::scene::state::DisplayDescription>,
+    Result<(), sm_game::scene::state::DisplayError>,
 ) {
     let media = display.committed_scene().media().clone();
     let owner = display.owner_mut();
@@ -1435,7 +1434,7 @@ pub fn verify_owned_namespace_interleaved(
         owner.atmospheric_created(0)?;
         states.push(owner.state.clone());
         let samus = verification_producer_allocate(owner)?;
-        crate::game::scene::samus::draw_owned(
+        sm_game::scene::samus::draw_owned(
             &mut owner.state,
             &media,
             samus,
@@ -1451,7 +1450,7 @@ pub fn verify_owned_namespace_interleaved(
         owner.state.atmospheric.slots[0] = birth;
         owner.atmospheric_created(0)?;
         states.push(owner.state.clone());
-        crate::game::scene::samus::draw_owned(
+        sm_game::scene::samus::draw_owned(
             &mut owner.state,
             &media,
             samus,
@@ -1469,22 +1468,22 @@ pub fn verify_owned_namespace_interleaved(
 // Movies cannot inject zero/exhausted counters or invalid slots inside an already admitted owned interval.
 #[cfg(sm_verify_dll)]
 pub fn verify_owned_namespace_birth_prefix(
-    mut display: crate::game::scene::component::DisplayComponent,
+    mut display: sm_game::scene::component::DisplayComponent,
     supplied_next: crate::game::scene::records::ProducerObjectId,
     slot: usize,
 ) -> (
-    crate::game::scene::state::DisplayDescription,
-    Result<(), crate::game::scene::state::DisplayError>,
+    sm_game::scene::state::DisplayDescription,
+    Result<(), sm_game::scene::state::DisplayError>,
 ) {
     let owner = display.owner_mut();
     let result = owner.begin_interval(false).and_then(|()| {
         owner.state.producer_ids.next = supplied_next;
         owner.atmospheric_created(slot)
     });
-    if owner.state.phase == crate::game::scene::state::DisplayPhase::Failed {
+    if owner.state.phase == sm_game::scene::state::DisplayPhase::Failed {
         assert_eq!(
             owner.refresh(),
-            Err(crate::game::scene::state::DisplayError::Poisoned)
+            Err(sm_game::scene::state::DisplayError::Poisoned)
         );
     }
     (owner.state.clone(), result)
@@ -1493,13 +1492,13 @@ pub fn verify_owned_namespace_birth_prefix(
 // Movies cannot supply invalid Samus identity after the actual native-equivalent publication prefix.
 #[cfg(sm_verify_dll)]
 pub fn verify_owned_samus_id_prefix(
-    mut display: crate::game::scene::component::DisplayComponent,
-    catalog: std::sync::Arc<crate::game::scene::samus::SamusCatalog>,
+    mut display: sm_game::scene::component::DisplayComponent,
+    catalog: std::sync::Arc<sm_game::scene::samus::SamusCatalog>,
     context: crate::game::scene::records::ObjectContext,
     producer: crate::game::scene::records::ProducerObjectId,
 ) -> (
-    crate::game::scene::state::DisplayDescription,
-    Result<(), crate::game::scene::state::DisplayError>,
+    sm_game::scene::state::DisplayDescription,
+    Result<(), sm_game::scene::state::DisplayError>,
 ) {
     let media = display.committed_scene().media().clone();
     let owner = display.owner_mut();
@@ -1510,7 +1509,7 @@ pub fn verify_owned_samus_id_prefix(
         liquid: 0,
     };
     let result = owner.begin_interval(false).and_then(|()| {
-        crate::game::scene::samus::draw_owned(
+        sm_game::scene::samus::draw_owned(
             &mut owner.state,
             &media,
             producer,
@@ -1519,10 +1518,10 @@ pub fn verify_owned_samus_id_prefix(
             &mut inputs,
         )
     });
-    if owner.state.phase == crate::game::scene::state::DisplayPhase::Failed {
+    if owner.state.phase == sm_game::scene::state::DisplayPhase::Failed {
         assert_eq!(
             owner.refresh(),
-            Err(crate::game::scene::state::DisplayError::Poisoned)
+            Err(sm_game::scene::state::DisplayError::Poisoned)
         );
     }
     (owner.state.clone(), result)
@@ -1549,22 +1548,22 @@ struct VerificationMarkerInputs {
 
 // Movies cannot supply marker-owned Samus content; the original lazy queries use the supplied catalogue.
 #[cfg(sm_verify_dll)]
-impl crate::game::scene::samus::Inputs for VerificationMarkerInputs {
+impl sm_game::scene::samus::Inputs for VerificationMarkerInputs {
     fn content(
         &mut self,
         state: &MarkerState,
-    ) -> Result<std::sync::Arc<crate::game::scene::samus::SamusCatalog>, MarkerError> {
-        crate::game::scene::samus::Inputs::content(&mut self.base, state)
+    ) -> Result<std::sync::Arc<sm_game::scene::samus::SamusCatalog>, MarkerError> {
+        sm_game::scene::samus::Inputs::content(&mut self.base, state)
     }
     fn invalid_map(&mut self, state: &mut MarkerState, cursor: u16) -> Result<(), MarkerError> {
-        crate::game::scene::samus::Inputs::invalid_map(&mut self.base, state, cursor)
+        sm_game::scene::samus::Inputs::invalid_map(&mut self.base, state, cursor)
     }
     fn object_context(
         &mut self,
         controls: &MarkerControls,
         effective: &MarkerEffective,
     ) -> Result<crate::game::scene::records::ObjectContext, MarkerError> {
-        crate::game::scene::samus::Inputs::object_context(&mut self.base, controls, effective)
+        sm_game::scene::samus::Inputs::object_context(&mut self.base, controls, effective)
     }
 }
 
@@ -1591,7 +1590,7 @@ impl vm_body::Inputs for VerificationMarkerInputs {
     fn table(&mut self, _: vm_body::Half) -> MarkerResult<vm_body::BodyTable> {
         Ok(vm_body::BodyTable {
             bytes: std::sync::Arc::from([0, 0]),
-            native_order: crate::game::scene::state::WordOrder::Little,
+            native_order: sm_game::scene::state::WordOrder::Little,
         })
     }
     fn set_sprite(&mut self, _: vm_body::Half, _: u16) -> MarkerResult<()> {
@@ -1611,7 +1610,7 @@ fn verification_marker_position_source(
         return Err(MarkerError::Source);
     };
     Ok(vm_tiles::SourceTable {
-        source: crate::game::scene::state::SourceSpan {
+        source: sm_game::scene::state::SourceSpan {
             asset: reference,
             bytes: atlas
                 .data
@@ -1621,7 +1620,7 @@ fn verification_marker_position_source(
                 .into(),
             offset: 0,
         },
-        native_order: crate::game::scene::state::WordOrder::Little,
+        native_order: sm_game::scene::state::WordOrder::Little,
     })
 }
 
@@ -1653,8 +1652,8 @@ impl vm_tiles::Inputs for VerificationMarkerInputs {
     fn movement(&mut self) -> MarkerResult<u8> {
         Ok(0)
     }
-    fn landing_order(&self) -> crate::game::scene::state::WordOrder {
-        crate::game::scene::state::WordOrder::Little
+    fn landing_order(&self) -> sm_game::scene::state::WordOrder {
+        sm_game::scene::state::WordOrder::Little
     }
     fn position_source(&mut self) -> MarkerResult<vm_tiles::SourceTable> {
         verification_marker_position_source(&self.media, self.base.context.selection.atlases[0])
@@ -1711,8 +1710,8 @@ impl vm_tiles::Inputs for VerificationMarkerInputs {
 // Movies cannot inject owned marker cursor aliases or capture their original native low/high write prefixes.
 #[cfg(sm_verify_dll)]
 pub fn verify_owned_marker_prefix(
-    mut display: crate::game::scene::component::DisplayComponent,
-    catalog: std::sync::Arc<crate::game::scene::samus::SamusCatalog>,
+    mut display: sm_game::scene::component::DisplayComponent,
+    catalog: std::sync::Arc<sm_game::scene::samus::SamusCatalog>,
     context: crate::game::scene::records::ObjectContext,
     marker: vm_body::MarkerPublication,
     cursor: u16,
@@ -1741,7 +1740,7 @@ pub fn verify_owned_marker_prefix(
             &mut inputs,
         )
     });
-    if owner.state.phase == crate::game::scene::state::DisplayPhase::Failed {
+    if owner.state.phase == sm_game::scene::state::DisplayPhase::Failed {
         assert_eq!(owner.refresh(), Err(MarkerError::Poisoned));
     }
     (owner.state.clone(), result)
@@ -1756,7 +1755,7 @@ type VerificationPositionEvents = Vec<(&'static str, usize, usize)>;
 struct VerificationPositionHost {
     frame: u16,
     movement: u8,
-    order: crate::game::scene::state::WordOrder,
+    order: sm_game::scene::state::WordOrder,
     fallback: u8,
     ceres: u16,
     player: [u16; 2],
@@ -1851,7 +1850,7 @@ pub fn verify_samus_position_offset(
     doubled: u16,
     frame: u16,
     movement: u8,
-    order: crate::game::scene::state::WordOrder,
+    order: sm_game::scene::state::WordOrder,
     fallback: u8,
 ) -> (Result<Result<i32, usize>, ()>, VerificationPositionEvents) {
     let mut host = VerificationPositionHost {
@@ -1887,7 +1886,7 @@ pub fn verify_samus_ceres_position(
     let mut host = VerificationPositionHost {
         frame: 2,
         movement: 0,
-        order: crate::game::scene::state::WordOrder::Little,
+        order: sm_game::scene::state::WordOrder::Little,
         fallback: 0x80,
         ceres: 0x8000,
         player: [0x1234, 0x2345],
@@ -1926,7 +1925,7 @@ fn verification_resident_snapshot(
 // Movies cannot inject transfer remap/source faults after a sealed component has adopted valid state.
 #[cfg(sm_verify_dll)]
 pub fn verify_owned_samus_upload(
-    mut display: crate::game::scene::component::DisplayComponent,
+    mut display: sm_game::scene::component::DisplayComponent,
     halves: [witness_state::SamusHalf; 2],
     latches: witness_state::DisplayLatches,
 ) -> (
@@ -1964,15 +1963,15 @@ pub fn verify_resident_append_prefix(
 ) {
     let words = &mut resident.words.to_vec();
     let calls = std::cell::Cell::new(0usize);
-    let result = crate::game::scene::resident_media::append(
-        crate::game::scene::resident_media::Resident {
+    let result = sm_game::scene::resident_media::append(
+        sm_game::scene::resident_media::Resident {
             image: resident.image,
             palette: resident.palette,
             words,
             colors: &resident.colors,
         },
         &media,
-        crate::game::scene::resident_media::Incarnation {
+        sm_game::scene::resident_media::Incarnation {
             image: incarnations[0],
             palette: incarnations[1],
             atlases: std::sync::Arc::from([]),
@@ -1990,7 +1989,7 @@ pub fn verify_resident_append_prefix(
 // Movies cannot author new immutable identities or inspect actual append adoption after an alias prefix.
 #[cfg(sm_verify_dll)]
 pub fn verify_owned_resident_append(
-    mut display: crate::game::scene::component::DisplayComponent,
+    mut display: sm_game::scene::component::DisplayComponent,
     incarnations: [witness_records::MediaRef; 2],
     colors: [u16; 256],
     latches: witness_state::DisplayLatches,
@@ -1999,7 +1998,7 @@ pub fn verify_owned_resident_append(
         std::sync::Arc<[witness_records::MapBinding]>,
     ),
 ) -> (
-    crate::game::scene::component::DisplayComponent,
+    sm_game::scene::component::DisplayComponent,
     witness_commit::ResidentDisplayDescription,
     Result<std::sync::Arc<witness_records::SceneMedia>, witness_state::DisplayError>,
     Option<std::sync::Arc<witness_records::SceneMedia>>,

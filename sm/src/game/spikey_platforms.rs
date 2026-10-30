@@ -1,12 +1,12 @@
 //! Lower Norfair spikey platforms: wait, fall, rest, rise; Samus standing on one
 //! rides it. Extended words (0x7800 block) stay RAM-authoritative.
 #![forbid(unsafe_code)]
-use crate::game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
-use crate::game::enemy_projectiles::host::Effects;
 use crate::game::enemy_speeds::SpeedTable;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::words as fields;
+use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
+use sm_game::enemy_projectiles::host::Effects;
 
 /// Routine words in variable A (bank A6 offsets).
 const WAIT: u16 = 0x8bb4;

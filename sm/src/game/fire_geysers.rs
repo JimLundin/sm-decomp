@@ -1,11 +1,11 @@
 //! Lower Norfair fire geysers: the parent waits, erupts on its script, and the
 //! next slot's hitbox follows the column height. Actor words stay RAM-authoritative.
 #![forbid(unsafe_code)]
-use crate::game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
-use crate::game::enemy_projectiles::host::Effects;
-use crate::game::enemy_script::EnemyScript;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
+use sm_game::enemy_projectiles::host::Effects;
+use sm_game::enemy_script::EnemyScript;
 
 const INVISIBLE: u16 = 0x0100;
 const INTANGIBLE: u16 = 0x0400;

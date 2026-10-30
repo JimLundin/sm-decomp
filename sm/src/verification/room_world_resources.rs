@@ -316,7 +316,7 @@ fn check_live_level(
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             EntryEffects::clear_buffer(
                 &mut crate::game::session_runtime::Runtime::new(&mut game),
-                crate::game::room_entry::effects::BufferClear::InitialLevel,
+                sm_game::room_entry::effects::BufferClear::InitialLevel,
             );
             EntryEffects::decode_level_and_copy_planes(
                 &mut crate::game::session_runtime::Runtime::new(&mut game),

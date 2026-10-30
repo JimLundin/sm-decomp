@@ -5,7 +5,6 @@ use super::access::ActorKey as Key;
 use super::{api, combat};
 use crate::game::enemy_layouts::EnemyLayout40 as Lava;
 use crate::game::enemy_projectiles::SpawnEprojWithGfx;
-use crate::game::enemy_script::EnemyScript;
 use crate::game::enemy_speeds::enemy_speed;
 use crate::game::imported::{Imported, load};
 use crate::game::music::QueueSfx2_Max6;
@@ -16,6 +15,7 @@ use sm_data::magdollite::{
     ARM_BYTES, ARM_GROWTH_ADDRESS, ARM_INSTRUCTION_ADDRESS, ARM_Y_OFFSET_ADDRESS, ArmSteps,
     PALETTE_ADDRESS, PALETTE_BYTES, Palettes, import_palettes,
 };
+use sm_game::enemy_script::EnemyScript;
 
 #[derive(Default)]
 pub(crate) struct ImportedTables {

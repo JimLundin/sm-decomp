@@ -113,7 +113,7 @@ pub(crate) fn unchecked_launch<H: Host>(h: &mut H) {
 // Caller supplies one prepared actual actor at (120,100), radius (2,2).
 // Narrow/wide/narrow checks all use the same owner and never refresh inputs.
 #[cfg(sm_verify_dll)]
-pub(crate) fn same_interval_radius<H: crate::game::actors::access::ActorAccess>(
+pub(crate) fn same_interval_radius<H: sm_game::actors::access::ActorAccess>(
     h: &mut H,
     actor: ActorKey,
 ) {
@@ -149,7 +149,7 @@ pub(crate) fn same_interval_frame<H: visual_host::Host>(h: &mut H) {
         h.session_mut().player.animation_clock.frame = frame;
         h.session_mut().player.palette_frame = 8;
         assert_eq!(
-            crate::game::samus_palette::screw_speed(h),
+            sm_game::samus_palette::screw_speed(h),
             expected_carry,
             "collision.owned.frame_live_palette_decision"
         );

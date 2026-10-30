@@ -3,12 +3,12 @@
 // damage and failure interfaces that still need migration.
 #![deny(unsafe_op_in_unsafe_fn)]
 use crate::game::actors;
-use crate::game::actors::access::ActorKey as Key;
 use crate::game::actors::api as actor_api;
 use crate::game::enemy_layouts::{EnemyLayout72, EnemyLayout72Late};
 use crate::game::enemy_speeds::enemy_speed;
 use crate::game::music::QueueSfx3_Max6;
 use crate::game::session_runtime::Runtime;
+use sm_game::actors::access::ActorKey as Key;
 
 use crate::game_state::Game;
 use crate::ram_map::checked_word as word;

@@ -647,7 +647,7 @@ fn returning_die_load_roles(
     loaded: &Arc<[u8]>,
     native: &Arc<[u8]>,
 ) -> ContentDescription {
-    use crate::game::scene::samus_content::AllocationDeclaration;
+    use sm_game::scene::samus_content::AllocationDeclaration;
     for (&(_, registration), role) in &roles.roles {
         let bytes = match registration {
             Loaded => loaded,

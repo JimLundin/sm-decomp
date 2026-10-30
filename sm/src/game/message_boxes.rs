@@ -271,13 +271,13 @@ unsafe fn advance_audio(game: &mut Game) {
 
 // Only this bridge enters the remaining unsafe presentation/input implementation.
 struct LegacyDialogue<'a>(&'a mut Game);
-impl crate::game::dialogue::Context for LegacyDialogue<'_> {
+impl sm_game::dialogue::Context for LegacyDialogue<'_> {
     type Id = u16;
     fn effect(
         &mut self,
-        state: crate::game::dialogue::Dialogue<u16>,
-        effect: crate::game::dialogue::Effect,
-    ) -> crate::game::dialogue::Dialogue<u16> {
+        state: sm_game::dialogue::Dialogue<u16>,
+        effect: sm_game::dialogue::Effect,
+    ) -> sm_game::dialogue::Dialogue<u16> {
         use crate::game::{dialogue::Effect::*, dialogue_ram};
         dialogue_ram::publish(state, self.0);
         unsafe {
@@ -300,11 +300,8 @@ impl crate::game::dialogue::Context for LegacyDialogue<'_> {
     }
     fn wait(
         &mut self,
-        state: crate::game::dialogue::Dialogue<u16>,
-    ) -> (
-        crate::game::dialogue::Dialogue<u16>,
-        crate::game::dialogue::Outcome,
-    ) {
+        state: sm_game::dialogue::Dialogue<u16>,
+    ) -> (sm_game::dialogue::Dialogue<u16>, sm_game::dialogue::Outcome) {
         use crate::game::{dialogue::Outcome, dialogue_ram};
         dialogue_ram::publish(state, self.0);
         let result = crate::game::display_refresh::wait(false, self.0);
@@ -314,11 +311,8 @@ impl crate::game::dialogue::Context for LegacyDialogue<'_> {
     }
     fn input(
         &mut self,
-        state: crate::game::dialogue::Dialogue<u16>,
-    ) -> (
-        crate::game::dialogue::Dialogue<u16>,
-        crate::game::dialogue::Input,
-    ) {
+        state: sm_game::dialogue::Dialogue<u16>,
+    ) -> (sm_game::dialogue::Dialogue<u16>, sm_game::dialogue::Input) {
         use crate::game::dialogue_ram;
         dialogue_ram::publish(state, self.0);
         crate::game::controller_input::sample(self.0);

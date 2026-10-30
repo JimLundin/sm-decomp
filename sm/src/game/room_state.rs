@@ -325,9 +325,9 @@ pub(crate) fn load_sprite_palettes(game: &mut Game) {
 mod level_copy_checks;
 pub(crate) use level_copy_checks::check_level_copy;
 
-use crate::game::visual_host::{Content, Source};
-use crate::game::visual_state::{PaletteBuffer, Weather};
 use crate::rom::RomRecord;
+use sm_game::visual_host::{Content, Source};
+use sm_game::visual_state::{PaletteBuffer, Weather};
 
 fn apply_fx(h: &mut Runtime<'_>, definition: &FxRecord, palette: PaletteBuffer) {
     h.session_mut().room.liquid_height = definition.word(2);
@@ -636,7 +636,7 @@ fn advance_elevatube(h: &mut Runtime<'_>) {
 }
 
 fn shake_crocomire(h: &mut Runtime<'_>) {
-    use crate::game::actors::access::{AccessMode::Native, ActorAccess, ActorKey};
+    use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey};
     let body = ActorKey::from_legacy(0);
     let legs = ActorKey::from_legacy(64);
     if h.resolve_actor(body, Native).properties & 0x200 != 0 {
@@ -685,7 +685,7 @@ fn shake_crocomire(h: &mut Runtime<'_>) {
 }
 
 fn shake_ridley(h: &mut Runtime<'_>) {
-    use crate::game::actors::access::{AccessMode::Native, ActorAccess, ActorKey};
+    use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey};
     let actor = ActorKey::from_legacy(256);
     let timer = h.resolve_actor(actor, Native).variables[0];
     if timer == 0 {

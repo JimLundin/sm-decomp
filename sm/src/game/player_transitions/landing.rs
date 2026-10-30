@@ -5,7 +5,7 @@ use super::{
     effects::Host,
     pose,
 };
-use crate::game::liquid_surface::LiquidAtHeight;
+use sm_game::liquid_surface::LiquidAtHeight;
 
 pub(crate) fn handle_landing(h: &mut impl Host) {
     if matches!(

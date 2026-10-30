@@ -2,8 +2,8 @@
 #![forbid(unsafe_code)]
 use super::access::{enemy, enemy_byte};
 use super::host::{DefinitionField, Host, LoadedRecord};
-pub use crate::game::drop_rules::DropSource;
-use crate::game::drop_rules::{PICKUPS, Spread, Weights};
+pub use sm_game::drop_rules::DropSource;
+use sm_game::drop_rules::{PICKUPS, Spread, Weights};
 
 pub(super) fn spawn(definition: u16, index: u16, h: &mut impl Host) {
     h.session_mut().enemy_projectiles.spawn.drop_definition = definition;
@@ -112,7 +112,7 @@ pub(super) fn select(index: u16, h: &mut impl Host) -> u16 {
 }
 
 fn award(slot: usize, h: &mut impl Host) {
-    use crate::game::drop_rules::REWARDS;
+    use sm_game::drop_rules::REWARDS;
 
     let (resource, amount, sound) = REWARDS
         [usize::from(enemy!(h, (slot) as isize, behavior_a) >> 1)]
@@ -123,7 +123,7 @@ fn award(slot: usize, h: &mut impl Host) {
 
 /// Advance expiry, then attempt grapple collection before body contact.
 pub(super) fn collect(index: u16, h: &mut impl Host) {
-    use crate::game::contact_rules::axis;
+    use sm_game::contact_rules::axis;
     let slot = usize::from(index >> 1);
     let remaining = enemy!(h, slot as isize, behavior_b).wrapping_sub(1);
     enemy!(h, slot as isize, behavior_b = remaining);

@@ -5,8 +5,6 @@ use super::{
     motion::commit_position,
     operations::{Axis, MotionResult, Obstruction},
 };
-use crate::game::contact_rules::collision_span as span;
-use crate::game::projectile_geometry::{SLOPE_FACTORS, SLOPE_HEIGHTS, square_slope_occupied};
 use crate::game::{
     actors::{
         access::{AccessMode::LittleEndian, ActorKey},
@@ -15,6 +13,8 @@ use crate::game::{
     room_entry::EntryPoll,
     session::{Player, Point},
 };
+use sm_game::contact_rules::collision_span as span;
+use sm_game::projectile_geometry::{SLOPE_FACTORS, SLOPE_HEIGHTS, square_slope_occupied};
 
 // Only source-local geometry survives a synchronous effect. Player and terrain
 // are always reacquired from the host after it returns.
@@ -337,7 +337,7 @@ fn slope(h: &mut impl Host, s: &mut Scan, axis: Axis) -> u8 {
     let block = h.session().room.collision_cursor;
     nonsquare(h, s, axis, block)
 }
-pub(super) fn spike_damage(h: &mut impl crate::game::session_access::SessionAccess, amount: u16) {
+pub(super) fn spike_damage(h: &mut impl sm_game::session_access::SessionAccess, amount: u16) {
     if h.session().player.invincibility != 0 {
         return;
     }

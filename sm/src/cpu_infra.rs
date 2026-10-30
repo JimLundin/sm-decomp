@@ -1198,7 +1198,7 @@ pub unsafe fn DrawFrameToPpu(native_game: &mut Game) {
     // This local capability is constructed only under this function's existing
     // exclusive, live-backend contract. No safe caller can construct it.
     struct NativeSettlement<'a>(&'a mut Game);
-    impl crate::game::scene::settle::SettlementHost for NativeSettlement<'_> {
+    impl sm_game::scene::settle::SettlementHost for NativeSettlement<'_> {
         type Error = std::convert::Infallible;
 
         fn reset_beam(&mut self) {
@@ -1239,7 +1239,7 @@ pub unsafe fn DrawFrameToPpu(native_game: &mut Game) {
     let mut mutation = game
         .begin_samus_mutation()
         .expect("Samus mutation rejected");
-    match crate::game::scene::settle::settle(&mut NativeSettlement(mutation.game())) {
+    match sm_game::scene::settle::settle(&mut NativeSettlement(mutation.game())) {
         Ok(()) => (),
         Err(never) => match never {},
     }

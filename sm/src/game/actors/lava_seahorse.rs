@@ -4,11 +4,11 @@
 use super::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use super::api::{self, MovementResult::Blocked, SlopePolicy};
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, host::Effects};
-use crate::game::enemy_script::EnemyScript;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::words as W;
 use crate::rtl::abs16;
+use sm_game::enemy_script::EnemyScript;
 
 fn selected(runtime: &Runtime<'_>) -> Key {
     Key::from_legacy(runtime.word(W::cur_enemy_index))

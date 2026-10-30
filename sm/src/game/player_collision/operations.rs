@@ -1,7 +1,7 @@
 //! Player collision requests and complete owned operations.
 #![forbid(unsafe_code)]
 
-use crate::game::actors::access::ActorKey;
+use sm_game::actors::access::ActorKey;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Axis {

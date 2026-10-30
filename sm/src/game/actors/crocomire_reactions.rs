@@ -15,8 +15,6 @@ use crate::game::enemy_layouts::EnemyLayout72 as Crocomire;
 use crate::game::enemy_projectiles::{
     ClearEprojs, DropSource, SpawnEprojWithGfx, SpawnEprojWithRoomGfx, scatter_drop as scatter,
 };
-use crate::game::enemy_script::EnemyScript;
-use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime;
 use crate::game::imported::{Imported, word as table_word};
 use crate::game::music::{QueueMusic_Delayed8, QueueSfx2_Max6, QueueSfx3_Max6};
@@ -33,6 +31,8 @@ use sm_data::crocomire::{
     SPIKE_WALL_COLUMNS, SPIKE_WALL_DESTINATION_ADDRESS, SPIKE_WALL_TILE_ADDRESS, ScrollSpritemaps,
     SpikeWallDestinations, SpikeWallTiles, import_words,
 };
+use sm_game::enemy_script::EnemyScript;
+use sm_game::gameplay_flag_host::BossWordOrder;
 
 #[derive(Default)]
 pub(crate) struct ImportedTables {

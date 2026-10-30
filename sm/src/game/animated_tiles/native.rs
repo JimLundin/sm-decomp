@@ -3,7 +3,7 @@ use crate::game_state::Game;
 pub(crate) fn unreachable(game: &mut Game) -> u16 {
     crate::rtl::Unreachable(game) as u16
 }
-pub(crate) fn upload(request: crate::game::visual_state::Upload, game: &mut Game) {
+pub(crate) fn upload(request: sm_game::visual_state::Upload, game: &mut Game) {
     use crate::game::prelude::*;
     unsafe {
         crate::rtl::register_writes! { game;

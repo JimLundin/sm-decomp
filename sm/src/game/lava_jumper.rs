@@ -1,9 +1,9 @@
 //! The lava jumper's flight phases share fractional movement and acceleration.
 #![forbid(unsafe_code)]
-use crate::game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::game::norfair_rio::animate_cached;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 
 pub(crate) enum Flight {
     Rising,

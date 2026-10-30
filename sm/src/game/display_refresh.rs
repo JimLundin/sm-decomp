@@ -355,23 +355,23 @@ pub(crate) unsafe fn run(game: &mut Game) {
     // Native operations and alias domains stay in their original helpers; the
     // ordering implementation is shared with the separately owned display.
     struct NativeRefresh<'a>(&'a mut Game);
-    impl crate::game::scene::commit::RefreshHost for NativeRefresh<'_> {
+    impl sm_game::scene::commit::RefreshHost for NativeRefresh<'_> {
         fn pending_nmi(&self) -> u8 {
             self.0.compatibility_byte(0x5b4)
         }
-        fn palette_and_objects(&mut self) -> Result<(), crate::game::scene::state::DisplayError> {
+        fn palette_and_objects(&mut self) -> Result<(), sm_game::scene::state::DisplayError> {
             unsafe { upload_palette_and_oam(self.0) };
             Ok(())
         }
-        fn samus(&mut self) -> Result<(), crate::game::scene::state::DisplayError> {
+        fn samus(&mut self) -> Result<(), sm_game::scene::state::DisplayError> {
             unsafe { crate::game::display_transfers::upload_samus(self.0) };
             Ok(())
         }
-        fn animations(&mut self) -> Result<(), crate::game::scene::state::DisplayError> {
+        fn animations(&mut self) -> Result<(), sm_game::scene::state::DisplayError> {
             animated_tiles::upload_pending(self.0);
             Ok(())
         }
-        fn controls(&mut self) -> Result<(), crate::game::scene::state::DisplayError> {
+        fn controls(&mut self) -> Result<(), sm_game::scene::state::DisplayError> {
             unsafe { upload_registers(self.0) };
             Ok(())
         }
@@ -390,7 +390,7 @@ pub(crate) unsafe fn run(game: &mut Game) {
             &mut self,
             bank_slot: u16,
             table: u16,
-        ) -> Result<(), crate::game::scene::state::DisplayError> {
+        ) -> Result<(), sm_game::scene::state::DisplayError> {
             unsafe { WriteRegWord(A1T0L as u16 + bank_slot, table, self.0) };
             Ok(())
         }
@@ -400,25 +400,22 @@ pub(crate) unsafe fn run(game: &mut Game) {
         fn fake_mode(&self) -> u8 {
             self.0.compatibility_byte(0x56)
         }
-        fn mode7(&mut self) -> Result<(), crate::game::scene::state::DisplayError> {
+        fn mode7(&mut self) -> Result<(), sm_game::scene::state::DisplayError> {
             unsafe { mode7_transfers::process(self.0) };
             Ok(())
         }
-        fn tilemaps(&mut self) -> Result<(), crate::game::scene::state::DisplayError> {
+        fn tilemaps(&mut self) -> Result<(), sm_game::scene::state::DisplayError> {
             unsafe { flush_tilemaps(self.0) };
             Ok(())
         }
-        fn readbacks(&mut self) -> Result<(), crate::game::scene::state::DisplayError> {
+        fn readbacks(&mut self) -> Result<(), sm_game::scene::state::DisplayError> {
             unsafe { vram_read_queue::process(self.0) };
             Ok(())
         }
         fn hdma_enable(&self) -> u8 {
             self.0.compatibility_byte(0x85)
         }
-        fn publish_hdma(
-            &mut self,
-            value: u8,
-        ) -> Result<(), crate::game::scene::state::DisplayError> {
+        fn publish_hdma(&mut self, value: u8) -> Result<(), sm_game::scene::state::DisplayError> {
             unsafe { WriteReg(HDMAEN as u16, value, self.0) };
             Ok(())
         }
@@ -462,7 +459,7 @@ pub(crate) unsafe fn run(game: &mut Game) {
     }
     // The native adapter's helpers either complete or preserve their original
     // panic/failure behavior; it never produces a portable DisplayError.
-    crate::game::scene::commit::refresh(&mut NativeRefresh(game))
+    sm_game::scene::commit::refresh(&mut NativeRefresh(game))
         .expect("native display refresh adapter cannot return an error");
 }
 

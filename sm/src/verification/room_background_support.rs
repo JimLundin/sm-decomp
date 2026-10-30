@@ -28,12 +28,10 @@ pub(crate) fn literal(r: &RomImage, a: u32, v: &[u8]) {
     bytes(r, a + 1 + v.len() as u32, &[0xff]);
 }
 pub(crate) unsafe fn initialized() -> Box<Game> {
-    unsafe {
-        initialized_with_world(crate::game::room_entry::world::WorldBinding::canonical_legacy())
-    }
+    unsafe { initialized_with_world(sm_game::room_entry::world::WorldBinding::canonical_legacy()) }
 }
 pub(crate) unsafe fn initialized_with_world(
-    world: std::sync::Arc<crate::game::room_entry::world::WorldBinding>,
+    world: std::sync::Arc<sm_game::room_entry::world::WorldBinding>,
 ) -> Box<Game> {
     unsafe {
         let mut g = Game::with_world(world);
@@ -186,7 +184,7 @@ pub(crate) unsafe fn check_prepared_vram(
         let mut h = crate::game::session_runtime::Runtime::new(&mut game);
         EntryEffects::device_byte(
             &mut h,
-            crate::game::room_entry::effects::DeviceByte::VramIncrement,
+            sm_game::room_entry::effects::DeviceByte::VramIncrement,
             0x80,
         );
         EntryEffects::device_vram_address(&mut h, VramDestination::Slot(VramSlot::MainTiles));

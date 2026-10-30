@@ -3,13 +3,13 @@
 #![forbid(unsafe_code)]
 use crate::game::enemy_layouts::EnemyLayout104 as Draygon;
 use crate::game::enemy_projectiles::SpawnEprojWithGfx;
-use crate::game::enemy_script::EnemyScript;
 use crate::game::session_runtime::{Runtime, actor_cosine};
 use crate::game::sprite_effect_runtime::{self as sprites, draygon_body_bubble};
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::rtl::{abs16, words};
 use crate::types::Point16U;
+use sm_game::enemy_script::EnemyScript;
 
 pub(crate) fn facing_animation(
     facing_key: i32,
@@ -102,7 +102,7 @@ pub(crate) fn initialize(install_layers: impl FnOnce(&mut Game), game: &mut Game
     );
     install_layers(game);
     slot!(game, Draygon[0].var_45 = 1);
-    crate::game::player_update::minimap::disable_for_boss(&mut Runtime::new(game));
+    sm_game::player_update::minimap::disable_for_boss(&mut Runtime::new(game));
 }
 pub(crate) fn initialize_part(arms: bool, game: &mut Game) {
     let k = word!(game.cur_enemy_index) as i32;

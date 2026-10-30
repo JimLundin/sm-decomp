@@ -1,15 +1,15 @@
 //! Ceres steam vents and doors: visibility/contact script steps and escape rumble.
 //! Actor words stay RAM-authoritative.
 #![forbid(unsafe_code)]
-use crate::game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::game::actors::{api, combat};
-use crate::game::enemy_script::EnemyScript;
-use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime::boss_word_at;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::{word, words as fields};
 use crate::rtl::abs16;
+use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
+use sm_game::enemy_script::EnemyScript;
+use sm_game::gameplay_flag_host::BossWordOrder;
 
 pub(crate) const INVISIBLE: u16 = 0x0100;
 pub(crate) const TANGIBLE: u16 = 0x0400;

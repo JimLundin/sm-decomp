@@ -5,7 +5,7 @@ use super::{
     pose,
     state::{BombJump, JumpKind, MovementMode},
 };
-use crate::game::liquid_surface::LiquidAtHeight;
+use sm_game::liquid_surface::LiquidAtHeight;
 
 pub(crate) fn initialize_jump(h: &mut impl Host, kind: JumpKind) {
     h.probe(match kind {

@@ -1,10 +1,10 @@
 //! Explicit per-game ownership; RAM bytes retain their exact SNES layout.
 use crate::cpu_infra::Snapshot;
-use crate::game::room_entry::world::WorldBinding;
 use crate::game::scene::{
     records::SceneMedia, samus::SamusCatalog, samus_content as content,
     samus_native_content as native_content, samus_position_tiles::TileRequest, state::DisplayError,
 };
+use sm_game::room_entry::world::WorldBinding;
 #[path = "game/persistent_session.rs"]
 pub mod persistent_session;
 use crate::initial_state::InitialState;
@@ -209,7 +209,7 @@ pub struct Game {
     backend: Option<crate::snes::snes::Backend>,
     _native_player: Option<crate::spc_player::NativePlayer>,
     actor_identity: Option<crate::game::actors::identity::ActorIdentityState>,
-    pub(crate) actor_snapshots: crate::game::actors::snapshot::ActorSnapshotSidecars,
+    pub(crate) actor_snapshots: sm_game::actors::snapshot::ActorSnapshotSidecars,
     world: Arc<WorldBinding>,
     ram: WorkRam,
     pub(crate) loaded_rom: Option<crate::rom::RomImage>,
@@ -1704,10 +1704,7 @@ impl GameOwner {
     }
     pub(crate) fn encode_session_checkpoint_with_sources(
         &self,
-        sources: &[(
-            crate::game::room_entry::world::ResourceId,
-            crate::rom::RomImage,
-        )],
+        sources: &[(sm_game::room_entry::world::ResourceId, crate::rom::RomImage)],
     ) -> Result<Vec<u8>, String> {
         self.with(|game| {
             game.checkpoint_session()
@@ -1734,10 +1731,7 @@ impl GameOwner {
         bytes: &[u8],
         media: Arc<SceneMedia>,
         contract: &persistent_session::SessionStartContract,
-        sources: &[(
-            crate::game::room_entry::world::ResourceId,
-            crate::rom::RomImage,
-        )],
+        sources: &[(sm_game::room_entry::world::ResourceId, crate::rom::RomImage)],
     ) -> Result<(), String> {
         self.with(|game| {
             let current_identity = match &game.persistent_session {
@@ -1805,7 +1799,7 @@ impl persistent_session::AudioHost for Game {
         &mut self,
         operation: impl FnOnce(
             &mut persistent_session::AudioRequests,
-            &mut crate::game::scene::start::InitialAudioIntent,
+            &mut sm_game::scene::start::InitialAudioIntent,
             persistent_session::AudioStamp,
         ) -> Result<R, DisplayError>,
     ) -> Result<Option<R>, DisplayError> {
@@ -1822,7 +1816,7 @@ impl persistent_session::AudioHost for Game {
             return Err(DisplayError::Phase);
         };
         let producing = state.gameplay.presentation.owner()?.state.phase
-            == crate::game::scene::state::DisplayPhase::Producing;
+            == sm_game::scene::state::DisplayPhase::Producing;
         let Control::Owned(control) = &mut state.gameplay.control else {
             return Err(DisplayError::Phase);
         };
@@ -2065,7 +2059,7 @@ impl Game {
         metadata: persistent_session::IntervalMetadata,
         description: crate::game::scene::records::SceneDescription,
         media: Arc<SceneMedia>,
-        effects: &mut impl crate::game::scene::commit::SettlementEffects,
+        effects: &mut impl sm_game::scene::commit::SettlementEffects,
     ) -> Result<(), DisplayError> {
         if self.persistent_ram_epoch != self.ram.write_epoch() {
             return Err(DisplayError::Poisoned);
@@ -2562,7 +2556,7 @@ impl Game {
     }
     pub(crate) fn samus_request(
         &self,
-        half: crate::game::scene::samus_body::Half,
+        half: sm_game::scene::samus_body::Half,
         pointer: u16,
     ) -> Result<Option<TileRequest>, DisplayError> {
         if self.samus_execution()?.is_none() {
@@ -2616,10 +2610,8 @@ impl Game {
             self.actor_identity_mut().retain_poison();
         }
     }
-    pub(crate) fn capture_actor_snapshot(
-        &self,
-    ) -> crate::game::actors::snapshot::ActorSnapshotPayload {
-        crate::game::actors::snapshot::ActorSnapshotPayload::capture(
+    pub(crate) fn capture_actor_snapshot(&self) -> sm_game::actors::snapshot::ActorSnapshotPayload {
+        sm_game::actors::snapshot::ActorSnapshotPayload::capture(
             self.actor_identity(),
             self.world(),
         )

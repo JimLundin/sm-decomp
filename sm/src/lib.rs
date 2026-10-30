@@ -553,7 +553,6 @@ pub mod game {
     pub(crate) use sm_game::session_access;
     pub(crate) mod session_checkpoint;
     pub(crate) mod session_encoding;
-    pub(crate) use sm_game::session_owners;
     pub(crate) mod session_runtime;
     pub(crate) mod shooting_stars;
     pub mod sm_8b;

@@ -184,7 +184,7 @@ pub(crate) fn command<H: Host + player_projectiles::host::Host>(
             1
         }
         0x11 => {
-            crate::game::palette_effects::execution::set_enabled(h.session_mut(), false);
+            sm_game::palette_effects::execution::set_enabled(h.session_mut(), false);
             frozen(h.session_mut());
             1
         }

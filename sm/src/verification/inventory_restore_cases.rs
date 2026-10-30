@@ -130,7 +130,7 @@ fn finish_trace() -> Vec<u8> {
 // This is the only dispatch to retarget when Inventory owns these algorithms.
 // The cases and literal expectations stay unchanged.
 fn restore(resource: u8, amount: u16, game: &mut Game) {
-    use crate::game::item_pickups::Resource;
+    use sm_game::item_pickups::Resource;
     let resource = match resource {
         0 => Resource::Health,
         1 => Resource::Missiles,

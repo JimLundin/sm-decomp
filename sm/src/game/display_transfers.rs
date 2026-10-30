@@ -184,13 +184,13 @@ impl NativeSamusUpload<'_> {
         let (image, base) = self.0.preflight_loaded_rom(address, offset, width);
         crate::game::samus_animation::NativeTable::capture(
             self.0,
-            crate::game::scene::samus_content::Role::UploadDescriptor,
-            crate::game::scene::samus_content::Registration::Loaded,
+            sm_game::scene::samus_content::Role::UploadDescriptor,
+            sm_game::scene::samus_content::Registration::Loaded,
             crate::rom::RomRecord { image, base },
         )
     }
 }
-impl crate::game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
+impl sm_game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
     type Error = std::convert::Infallible;
     type Descriptor = NativeSamusDescriptor;
     type Source = u16;
@@ -198,19 +198,19 @@ impl crate::game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
         unsafe { WriteReg(VMAIN as u16, 0x80, self.0) };
         Ok(())
     }
-    fn enabled(&mut self, half: crate::game::scene::samus_body::Half) -> Result<u8, Self::Error> {
+    fn enabled(&mut self, half: sm_game::scene::samus_body::Half) -> Result<u8, Self::Error> {
         Ok(self.0.compatibility_byte(match half {
-            crate::game::scene::samus_body::Half::Top => 0x71d,
-            crate::game::scene::samus_body::Half::Bottom => 0x71e,
+            sm_game::scene::samus_body::Half::Top => 0x71d,
+            sm_game::scene::samus_body::Half::Bottom => 0x71e,
         }))
     }
     fn descriptor(
         &mut self,
-        half: crate::game::scene::samus_body::Half,
+        half: sm_game::scene::samus_body::Half,
     ) -> Result<Self::Descriptor, Self::Error> {
         let (pointer, vram) = match half {
-            crate::game::scene::samus_body::Half::Top => (0x71f, 0x6000),
-            crate::game::scene::samus_body::Half::Bottom => (0x721, 0x6080),
+            sm_game::scene::samus_body::Half::Top => (0x71f, 0x6000),
+            sm_game::scene::samus_body::Half::Bottom => (0x721, 0x6080),
         };
         let address = u16::from_le_bytes([
             self.0.compatibility_byte(pointer),
@@ -223,8 +223,8 @@ impl crate::game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
             let image = self.0.capture_native_rom();
             let _ = crate::game::samus_animation::NativeTable::capture(
                 self.0,
-                crate::game::scene::samus_content::Role::UploadDescriptor,
-                crate::game::scene::samus_content::Registration::Native,
+                sm_game::scene::samus_content::Role::UploadDescriptor,
+                sm_game::scene::samus_content::Registration::Native,
                 crate::rom::RomRecord {
                     image,
                     base: crate::rtl::lorom_offset(0x920000 | u32::from(address)) as usize,
@@ -239,11 +239,11 @@ impl crate::game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
     fn destination(
         &mut self,
         d: Self::Descriptor,
-        p: crate::game::scene::samus_tile_upload::Part,
+        p: sm_game::scene::samus_tile_upload::Part,
     ) -> Result<(), Self::Error> {
         let address = match p {
-            crate::game::scene::samus_tile_upload::Part::First => d.vram,
-            crate::game::scene::samus_tile_upload::Part::Second => d.vram.wrapping_add(0x100),
+            sm_game::scene::samus_tile_upload::Part::First => d.vram,
+            sm_game::scene::samus_tile_upload::Part::Second => d.vram.wrapping_add(0x100),
         };
         unsafe { WriteRegWord(VMADDL as u16, address, self.0) };
         Ok(())
@@ -270,14 +270,14 @@ impl crate::game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
     fn count(
         &mut self,
         d: Self::Descriptor,
-        p: crate::game::scene::samus_tile_upload::Part,
+        p: sm_game::scene::samus_tile_upload::Part,
     ) -> Result<u16, Self::Error> {
         Ok(self
             .table(
                 d.address,
                 match p {
-                    crate::game::scene::samus_tile_upload::Part::First => 3,
-                    crate::game::scene::samus_tile_upload::Part::Second => 5,
+                    sm_game::scene::samus_tile_upload::Part::First => 3,
+                    sm_game::scene::samus_tile_upload::Part::Second => 5,
                 },
                 2,
             )
@@ -290,7 +290,7 @@ impl crate::game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
     fn dma(
         &mut self,
         _: Self::Descriptor,
-        _: crate::game::scene::samus_tile_upload::Part,
+        _: sm_game::scene::samus_tile_upload::Part,
         _: u16,
         _: u16,
     ) -> Result<(), Self::Error> {
@@ -300,7 +300,7 @@ impl crate::game::scene::samus_tile_upload::Host for NativeSamusUpload<'_> {
 }
 /// Requires a live, exclusively accessed SNES backend.
 pub(crate) unsafe fn upload_samus(game: &mut Game) {
-    crate::game::scene::samus_tile_upload::upload(&mut NativeSamusUpload(game)).unwrap();
+    sm_game::scene::samus_tile_upload::upload(&mut NativeSamusUpload(game)).unwrap();
 }
 
 /// Requires a live, exclusively accessed SNES backend: fill VRAM's low bytes

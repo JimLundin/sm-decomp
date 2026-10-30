@@ -78,7 +78,7 @@ pub fn serialized_layout() -> String {
     <u64>::layout(&mut layout);
     machine_layout(&mut layout);
     layout.push_str("actors:");
-    layout.push_str(&crate::game::actors::snapshot::ActorCheckpointPayload::serialized_layout());
+    layout.push_str(&sm_game::actors::snapshot::ActorCheckpointPayload::serialized_layout());
     layout.push('}');
     layout
 }
@@ -589,10 +589,7 @@ pub unsafe fn capture(game: &mut Game) -> Result<Vec<u8>, String> {
 
 pub(crate) unsafe fn capture_with_sources(
     game: &mut Game,
-    sources: &[(
-        crate::game::room_entry::world::ResourceId,
-        crate::rom::RomImage,
-    )],
+    sources: &[(sm_game::room_entry::world::ResourceId, crate::rom::RomImage)],
 ) -> Result<Vec<u8>, String> {
     unsafe {
         crate::cpu_infra::session_native_adoption::require_legacy_binary(game)?;
@@ -627,7 +624,7 @@ pub(crate) unsafe fn capture_with_sources(
         let Archive::Save(machine) = archive else {
             unreachable!()
         };
-        let actors = crate::game::actors::snapshot::ActorCheckpointPayload::capture(
+        let actors = sm_game::actors::snapshot::ActorCheckpointPayload::capture(
             game.actor_identity(),
             game.world(),
         )?
@@ -661,10 +658,7 @@ pub unsafe fn save_with_sources(
     origin: u64,
     inputs: &[u16],
     completed: usize,
-    sources: &[(
-        crate::game::room_entry::world::ResourceId,
-        crate::rom::RomImage,
-    )],
+    sources: &[(sm_game::room_entry::world::ResourceId, crate::rom::RomImage)],
 ) -> Result<(), String> {
     unsafe {
         if completed > inputs.len() {
@@ -713,10 +707,7 @@ pub unsafe fn load_with_sources(
     game: &mut Game,
     origin: u64,
     inputs: &[u16],
-    sources: &[(
-        crate::game::room_entry::world::ResourceId,
-        crate::rom::RomImage,
-    )],
+    sources: &[(sm_game::room_entry::world::ResourceId, crate::rom::RomImage)],
 ) -> Result<usize, String> {
     unsafe {
         if game.actor_identity_is_with_session() {
@@ -759,10 +750,7 @@ pub unsafe fn load_with_sources(
 pub(crate) unsafe fn restore_capture_with_sources(
     payload: &[u8],
     game: &mut Game,
-    sources: &[(
-        crate::game::room_entry::world::ResourceId,
-        crate::rom::RomImage,
-    )],
+    sources: &[(sm_game::room_entry::world::ResourceId, crate::rom::RomImage)],
 ) -> Result<(), String> {
     unsafe {
         crate::cpu_infra::session_native_adoption::require_legacy_binary(game)?;
@@ -812,7 +800,7 @@ pub(crate) unsafe fn restore_capture_with_sources(
                 .update_bugfix(u16::from_le_bytes([ram[0xc2], ram[0xc3]]));
             Some(projected)
         });
-        let restore = crate::game::actors::snapshot::ActorCheckpointPayload::prepare(
+        let restore = sm_game::actors::snapshot::ActorCheckpointPayload::prepare(
             actor_bytes,
             game.actor_identity(),
             game.world(),

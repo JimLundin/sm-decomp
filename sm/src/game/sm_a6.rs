@@ -1,11 +1,9 @@
 use crate::game::actors;
-use crate::game::actors::access::ActorKey as Key;
 use crate::game::actors::api as actor_api;
 use crate::game::ceres_door_data;
 use crate::game::ceres_doors;
 use crate::game::ceres_ridley_tables;
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
-use crate::game::enemy_script::EnemyScript;
 use crate::game::fire_geysers;
 use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
@@ -22,6 +20,8 @@ use crate::ram_map::slot;
 use sm_data::ridley_explosion::{
     HAND_ADDRESS, LEGS_ADDRESS, MOUTH_ADDRESS, TORSO_ADDRESS, WINGS_ADDRESS,
 };
+use sm_game::actors::access::ActorKey as Key;
+use sm_game::enemy_script::EnemyScript;
 
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a6::*;
@@ -39,7 +39,6 @@ use crate::game::gameplay_flag_runtime::{
 use crate::game::mode7_transfers::enqueue_rom;
 use crate::game::music::{QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
-use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::rom_vram_entries::{
     queue_escape_tile_table, queue_escape_timer_tiles, queue_getaway_tiles,
 };
@@ -47,6 +46,7 @@ use crate::game::session_runtime::damage_player;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_a9::{ComputeCosMult, ComputeSinMult, MoveEnemyWithVelocity};
 use crate::game::sprite_effect_runtime::create_sprite;
+use sm_game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 
 const VANISH: u16 = ceres_doors::TANGIBLE | ceres_doors::INVISIBLE;
 use crate::game::visual_runtime::project_cinematic_point;

@@ -6,9 +6,9 @@ use super::pre_actions::*;
 use super::pre_helpers::*;
 use super::shared::SpawnEprojWithRoomGfx;
 use super::*;
-use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
-use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
+use sm_game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
 use sm_game::geometry::Point;
+use sm_game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 
 #[derive(Clone, Copy)]
 pub(super) struct CollisionRect {

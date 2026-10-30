@@ -1,7 +1,6 @@
 //! Grapple controller, swing placement, rope-length changes and swept block contact.
 #![forbid(unsafe_code)]
 use crate::game::actors::{self, api as actor_api};
-use crate::game::combat_rules::GrappleOutcome;
 use crate::game::display_refresh::queue_native_transfer;
 use crate::game::grapple_aim::{self, ConnectionSet};
 use crate::game::grapple_origins::{self, OriginSet};
@@ -9,10 +8,11 @@ use crate::game::music::{QueueSfx1_Max1, QueueSfx1_Max6, QueueSfx1_Max15};
 use crate::game::player_collision::operations as player_collision;
 use crate::game::player_transitions as pt;
 use crate::game::prelude::*;
-use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
-use crate::game::projectile_room::Axis;
 use crate::game::session_runtime::{Runtime, player_bottom, player_command, settle_grapple};
 use crate::ram_map::words as ram_words;
+use sm_game::combat_rules::GrappleOutcome;
+use sm_game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
+use sm_game::projectile_room::Axis;
 
 fn project_axis(origin: u16, sample: i16, length: u16) -> u16 {
     let distance = if sample == -256 || sample == 256 {
@@ -697,7 +697,7 @@ pub(crate) fn start_firing(game: &mut Game) {
     }
     start_rope_animation(game);
     word! {game; samus_draw_handler = ((0x90eb86i32) as u16); grapple_walljump_timer = 0; }
-    crate::game::samus_palette::write_beam_palette(
+    sm_game::samus_palette::write_beam_palette(
         &mut crate::game::session_runtime::Runtime::new(game),
         2,
     );
@@ -787,7 +787,7 @@ fn finish_release(game: &mut Game) {
         flare_fast_sparks_anim_timer,
     }
     let beams = word!(game.equipped_beams) & 0xfff;
-    crate::game::samus_palette::write_beam_palette(
+    sm_game::samus_palette::write_beam_palette(
         &mut crate::game::session_runtime::Runtime::new(game),
         beams,
     );
@@ -901,9 +901,9 @@ fn dispatch(ea: u32, game: &mut Game) {
                     flare_fast_sparks_anim_frame, flare_animation_timer, flare_slow_sparks_anim_timer,
                     flare_fast_sparks_anim_timer,
                 }
-                crate::game::samus_palette::load_suit(
+                sm_game::samus_palette::load_suit(
                     &mut Runtime::new(game),
-                    crate::game::visual_state::PaletteBuffer::Current,
+                    sm_game::visual_state::PaletteBuffer::Current,
                 );
             }
         }

@@ -50,7 +50,7 @@ pub(crate) fn finish_movement(host: &mut impl effects::Host) {
 /// Continue the post-movement rules into palette work on the same owned Session.
 pub(crate) fn finish_movement_and_palette(host: &mut impl effects::Host) {
     finish_movement(host);
-    crate::game::samus_palette::advance(host);
+    sm_game::samus_palette::advance(host);
 }
 
 #[cfg(sm_verify_dll)]

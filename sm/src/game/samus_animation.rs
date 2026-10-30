@@ -2,12 +2,12 @@
 #![forbid(unsafe_code)]
 use crate::game::player_transitions as pt;
 use crate::game::projectile_presentation_ram as sprite_output;
-use crate::game::scene::samus_body::{self, Body};
-use crate::game::scene::samus_content::{PreparedBytes, Registration, Role, RoleLease};
-use crate::game::scene::samus_native_content::CapturedRom;
 use crate::game::scene::samus_position_tiles;
 use crate::game::session_runtime::Runtime;
-use crate::game::visual_host::{Content, Effects, Record, Source};
+use sm_game::scene::samus_body::{self, Body};
+use sm_game::scene::samus_content::{PreparedBytes, Registration, Role, RoleLease};
+use sm_game::scene::samus_native_content::CapturedRom;
+use sm_game::visual_host::{Content, Effects, Record, Source};
 
 pub use crate::game::prelude::*;
 use crate::game::visual_runtime::project_cinematic_point;

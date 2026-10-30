@@ -2,11 +2,11 @@
 #![forbid(unsafe_code)]
 use super::access::{AccessMode::Native, ActorAccess};
 use super::{api, combat};
-use crate::game::enemy_projectiles::host::Effects;
-use crate::game::enemy_script::EnemyScript;
-use crate::game::player_projectiles::content::table;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+use sm_game::enemy_projectiles::host::Effects;
+use sm_game::enemy_script::EnemyScript;
+use sm_game::player_projectiles::content::table;
 
 fn animate(runtime: &mut Runtime<'_>) {
     let key = combat::current(runtime);

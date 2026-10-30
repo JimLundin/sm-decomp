@@ -435,9 +435,9 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                 display_refresh::enable(false, game);
                 crate::game::scanline_irq::disable(game);
                 crate::game::room_state::load_tiles_and_palette(game);
-                crate::game::room_entry::background::load(
+                sm_game::room_entry::background::load(
                     &mut Runtime::new(game),
-                    crate::game::room_entry::content::LoadMode::Initial,
+                    sm_game::room_entry::content::LoadMode::Initial,
                 );
                 crate::game::room_scrolls::fill_viewport(game, |game| {
                     display_refresh::flush_tilemaps(game)

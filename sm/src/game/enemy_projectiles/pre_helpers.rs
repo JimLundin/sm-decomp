@@ -2,7 +2,7 @@
 #![forbid(unsafe_code)]
 use super::access::{enemy, enemy_byte, read_member, write_member};
 use super::host::{EnemyMember as SlotField, Host, NativeRecord};
-use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
+use sm_game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
 
 use super::*;
 

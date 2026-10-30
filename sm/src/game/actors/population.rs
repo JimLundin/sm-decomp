@@ -9,7 +9,7 @@ use super::{
     effects::ActorHost,
     identity::{InstanceHandle, PendingActorBirth},
 };
-use crate::game::enemy_population::{Creation, EnemyShape, PopulationEntry};
+use sm_game::enemy_population::{Creation, EnemyShape, PopulationEntry};
 
 fn read_entry<H: ActorHost>(h: &mut H, entry: &ActorPopulationCapture) -> PopulationEntry {
     PopulationEntry {
@@ -206,9 +206,7 @@ fn prepare_birth<H: ActorHost>(
         .expect("actor identity counter overflow")
 }
 
-pub(in crate::game) fn install_population<
-    H: ActorHost + crate::game::enemy_projectiles::host::Host,
->(
+pub(in crate::game) fn install_population<H: ActorHost + sm_game::enemy_projectiles::host::Host>(
     h: &mut H,
 ) {
     h.reset_room_enemy_workspace();
@@ -271,7 +269,7 @@ pub(in crate::game) fn install_population<
     h.probe("actors.population.installed.nonempty");
 }
 
-pub(in crate::game) fn respawn<H: ActorHost + crate::game::enemy_projectiles::host::Host>(
+pub(in crate::game) fn respawn<H: ActorHost + sm_game::enemy_projectiles::host::Host>(
     h: &mut H,
     key: ActorKey,
 ) {
@@ -337,12 +335,12 @@ pub(in crate::game) fn respawn<H: ActorHost + crate::game::enemy_projectiles::ho
     h.actor_reference_stage(7, key.byte_index());
 }
 
-fn spawn_from_cursor<H: ActorHost + crate::game::enemy_projectiles::host::Host>(
+fn spawn_from_cursor<H: ActorHost + sm_game::enemy_projectiles::host::Host>(
     h: &mut H,
     mut cursor: super::content::PopulationCursor,
     appearance: Option<super::media::AppearanceId>,
 ) -> Result<Option<(u16, Option<InstanceHandle>)>, super::identity::ActorIdentityError> {
-    use crate::game::enemy_population::{SearchResult, SpawnSearch, SpawnSequence};
+    use sm_game::enemy_population::{SearchResult, SpawnSearch, SpawnSequence};
     let saved = h.session().actors.controls.selected;
     let entry = h.capture_actor_population(&cursor);
     let raw = h.population_definition(&entry);
@@ -435,7 +433,7 @@ fn spawn_from_cursor<H: ActorHost + crate::game::enemy_projectiles::host::Host>(
     Ok(Some((index, last_handle)))
 }
 
-pub(in crate::game) fn spawn<H: ActorHost + crate::game::enemy_projectiles::host::Host>(
+pub(in crate::game) fn spawn<H: ActorHost + sm_game::enemy_projectiles::host::Host>(
     h: &mut H,
     request: super::api::ActorSpawnRequest,
 ) -> Result<Option<InstanceHandle>, super::identity::ActorIdentityError> {
@@ -455,7 +453,7 @@ pub(in crate::game) fn spawn<H: ActorHost + crate::game::enemy_projectiles::host
     Ok(spawn_from_cursor(h, cursor, request.appearance)?.and_then(|(_, handle)| handle))
 }
 
-pub(in crate::game) fn spawn_legacy<H: ActorHost + crate::game::enemy_projectiles::host::Host>(
+pub(in crate::game) fn spawn_legacy<H: ActorHost + sm_game::enemy_projectiles::host::Host>(
     h: &mut H,
     bank: u8,
     address: u16,

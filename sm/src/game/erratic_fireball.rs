@@ -1,9 +1,9 @@
 //! Erratic fireballs recompute their velocity and reflect on blocked movement.
 #![forbid(unsafe_code)]
-use crate::game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::game::actors::api::{self, MovementResult, SlopePolicy};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 
 pub(crate) fn update(initialize: bool, game: &mut Game) {
     let (key, parameters) = {

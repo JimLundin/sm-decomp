@@ -1,8 +1,8 @@
 //! Ordered request algorithms over the actual audio state owner.
 #![forbid(unsafe_code)]
 
-use crate::game::scene::state::DisplayError;
 use crate::game_state::persistent_session::{AudioHost, QueuedMusicMeaning, QueuedSoundMeaning};
+use sm_game::scene::state::DisplayError;
 
 // Complete only after a successful numeric prefix. This neither publishes a
 // request nor supplies a meaning for a rejected slot; Legacy skips the closure.

@@ -138,7 +138,7 @@ fn walljump_delay(h: &mut impl Host) {
         false
     } else {
         let top = pose::loaded_top(h);
-        pose::liquid_at_height(h, top) != crate::game::liquid_surface::LiquidAtHeight::None
+        pose::liquid_at_height(h, top) != sm_game::liquid_surface::LiquidAtHeight::None
     };
     let (sound, advance) = if liquid {
         (0x31, 1)

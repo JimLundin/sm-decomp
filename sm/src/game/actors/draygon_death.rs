@@ -4,7 +4,6 @@
 use super::{api, combat, draygon_flight::facing_animation};
 use crate::game::enemy_layouts::EnemyLayout104 as Draygon;
 use crate::game::enemy_projectiles::{DropSource, scatter_drop};
-use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
 use crate::game::player_movement::forced;
@@ -13,6 +12,7 @@ use crate::game::sprite_effect_runtime as sprites;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::rtl::abs16;
+use sm_game::gameplay_flag_host::BossWordOrder;
 
 pub(crate) fn damage_palette(native: bool, game: &mut Game) {
     let mut cursor = slot!(game, Draygon[0].var_0E).wrapping_mul(4);

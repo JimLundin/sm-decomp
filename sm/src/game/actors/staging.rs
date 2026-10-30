@@ -1,7 +1,7 @@
 //! Population graphics staging and ordered transfer transitions.
 #![forbid(unsafe_code)]
 use super::effects::ActorHost;
-use crate::game::enemy_projectiles::host::Host;
+use sm_game::enemy_projectiles::host::Host;
 
 pub(in crate::game) fn queue_actor_tiles<H: ActorHost + Host>(h: &mut H) {
     if h.session().actors.drawing.tilemap_pending != 0
@@ -128,12 +128,12 @@ pub(in crate::game) fn prepare_room_assets<H: ActorHost + Host>(h: &mut H) {
     load_tile_data(h);
     h.session_mut().actors.staging.transfer_source = 0;
     h.session_mut().actors.controls.projectile_contacts_disabled = 0;
-    crate::game::sprite_objects::clear_for_population_load(h.session_mut());
+    sm_game::sprite_objects::clear_for_population_load(h.session_mut());
 }
 
 fn load_tile_data<H: ActorHost + Host>(h: &mut H) {
     use super::access::{AccessMode::Native, ActorKey};
-    use crate::game::visual_host::{Content, Record, Source};
+    use sm_game::visual_host::{Content, Record, Source};
     // Capture once, then read/write each native word in descending source order.
     let defaults = Content::table(h, Source::Loaded, 0x9ad200);
     for i in 0..256 {

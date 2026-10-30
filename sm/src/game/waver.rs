@@ -1,11 +1,11 @@
 //! Waver movement and animation use the common actor owner between legacy effects.
 //! Animation words remain little-endian reads from the loaded ROM allocation.
 #![deny(unsafe_op_in_unsafe_fn)]
-use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
 use crate::game::actors::api as actor_api;
-use crate::game::enemy_script::EnemyScript;
 use crate::game::session_runtime::{Runtime, actor_sine};
 use crate::game_state::Game;
+use sm_game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
+use sm_game::enemy_script::EnemyScript;
 
 const INITIAL_INSTRUCTION: u16 = 0x86a7;
 const ANIMATION_TABLE: u32 = 0xa386db;

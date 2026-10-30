@@ -3,7 +3,6 @@
 use super::{access::ActorKey as Key, api};
 use crate::game::constants::enemy_properties::*;
 use crate::game::enemy_layouts::EnemyLayout8 as Animal;
-use crate::game::enemy_script::EnemyScript;
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::imported::{Imported, load};
 use crate::game::session_runtime::Runtime;
@@ -11,6 +10,7 @@ use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::rom::RomImage;
 use sm_data::escape_etecoons::{ADDRESS, BYTES, EscapeEtecoon, EscapeEtecoons};
+use sm_game::enemy_script::EnemyScript;
 
 pub(crate) type ImportedTables = Option<Imported<EscapeEtecoons>>;
 

@@ -1,9 +1,9 @@
 //! Compatibility encoding only; effects consume the model before touching RAM.
 #![forbid(unsafe_code)]
-use crate::game::dialogue::{
+use crate::{game_state::Game, ram_map::words as ram};
+use sm_game::dialogue::{
     ChildContinuation, Continuation, Cycle, Dialogue, Input, Message, Phase, Selection,
 };
-use crate::{game_state::Game, ram_map::words as ram};
 
 pub(crate) fn message(id: u16) -> Message<u16> {
     match id {

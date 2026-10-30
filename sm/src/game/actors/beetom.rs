@@ -3,11 +3,11 @@
 #![forbid(unsafe_code)]
 use super::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use super::{api, combat};
-use crate::game::enemy_projectiles::host::Effects;
 use crate::game::hopping_blobs::initial_hop_phase;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::words;
+use sm_game::enemy_projectiles::host::Effects;
 
 const ANIMATION: usize = 0;
 const SMALL_JUMP: usize = 4;

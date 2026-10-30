@@ -82,7 +82,7 @@ impl Content for Composed {
             .events
             .push(CollisionEvent::WalkedTable);
         RomRecord {
-            image: self.transition_image(crate::game::visual_host::Source::Loaded),
+            image: self.transition_image(sm_game::visual_host::Source::Loaded),
             base: 0x11 * 0x8000 + 0x6b74,
         }
     }
@@ -163,7 +163,7 @@ impl Effects for Composed {
         if let Some(callback) = self.collision_contract.on_cancel {
             callback(self);
         }
-        crate::game::samus_palette::cancel_speed_boost(self);
+        sm_game::samus_palette::cancel_speed_boost(self);
     }
     fn boss_defeated(&mut self) -> bool {
         self.collision_contract

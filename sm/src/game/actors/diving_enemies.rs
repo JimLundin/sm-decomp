@@ -6,9 +6,9 @@ use crate::game::enemy_projectiles::{
     host::{Effects, ImportedAliases, ShotMember},
     lifecycle::spawn_from_enemy,
 };
-use crate::game::enemy_script::EnemyScript;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+use sm_game::enemy_script::EnemyScript;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Kind {

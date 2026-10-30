@@ -4,7 +4,7 @@
 use super::{
     ClearEprojs, DisableEprojs, EnableEprojs, EprojRunAll, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
 };
-use crate::game::enemy_script::EnemyScript;
+use sm_game::enemy_script::EnemyScript;
 
 // Candidate-only adapters invoke the maintained implementation and publish the
 // exclusive owner on normal return or unwind before the unchanged observations.

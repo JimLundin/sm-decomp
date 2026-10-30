@@ -4,8 +4,6 @@
 use super::{api, combat};
 use crate::game::enemy_layouts::EnemyLayout104 as Spore;
 use crate::game::enemy_projectiles::{self, SpawnEprojWithRoomGfx};
-use crate::game::enemy_script::EnemyScript;
-use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime as flags;
 use crate::game::music::QueueSfx2_Max6;
 use crate::game::room_mechanisms::{
@@ -18,6 +16,8 @@ use crate::game_state::Game;
 use crate::ram_map::{slot, word, word_arrays};
 use crate::rtl::{abs16, words};
 use crate::types::Point16U;
+use sm_game::enemy_script::EnemyScript;
+use sm_game::gameplay_flag_host::BossWordOrder;
 use sm_game::geometry::Vector32;
 
 pub(crate) fn descend(game: &mut Game) {

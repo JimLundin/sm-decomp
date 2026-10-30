@@ -639,9 +639,9 @@ crate::type_aliases! {
 
 pub type CrocomireFunc = unsafe fn(
     u16,
-    crate::game::enemy_script::EnemyScript,
+    sm_game::enemy_script::EnemyScript,
     &mut Game,
-) -> crate::game::enemy_script::EnemyScript;
+) -> sm_game::enemy_script::EnemyScript;
 
 crate::type_aliases! {
     pub FuncXY_V, Func_CalcHdma, Func_SpazerSba_V = unsafe fn(u16, u16, &mut Game) -> ();

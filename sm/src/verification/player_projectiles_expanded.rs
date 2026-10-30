@@ -2,7 +2,7 @@
 //! This is an input carrier, not expected behavior or a candidate implementation.
 #![forbid(unsafe_code)]
 use super::*;
-use crate::game::projectile_initialization::Initialization;
+use sm_game::projectile_initialization::Initialization;
 
 pub(crate) const CASES: u32 = 102;
 

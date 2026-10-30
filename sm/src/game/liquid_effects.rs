@@ -3,9 +3,9 @@ use crate::game::animated_tiles;
 use crate::game::constants::bank_87::{addr_kAnimtiles_Acid, addr_kAnimtiles_Lava};
 use crate::game::music::QueueSfx2_Max6;
 use crate::game::prelude::*;
-use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::visual_runtime::spawn_bg3_scroll;
 use crate::game::visual_runtime::{shake_room_with_sound, spawn_hdma};
+use sm_game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 
 pub const WATER_WAVE: [i16; 16] = [0, 1, 1, 0, 0, -1, -1, 0, 0, 1, 1, 0, 0, -1, -1, 0];
 

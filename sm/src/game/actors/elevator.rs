@@ -2,9 +2,9 @@
 #![forbid(unsafe_code)]
 use super::access::{AccessMode::Native, ActorAccess};
 use super::combat;
-use crate::game::enemy_projectiles::host::Effects;
 use crate::game::session_runtime::{Runtime, player_command};
 use crate::game_state::Game;
+use sm_game::enemy_projectiles::host::Effects;
 
 fn synchronize_player(runtime: &mut Runtime<'_>) {
     let key = combat::current(runtime);

@@ -9,7 +9,6 @@ pub(crate) use sm_game::room_mechanisms::host;
 use sm_game::room_mechanisms::pre;
 use sm_game::room_mechanisms::presentation;
 mod runtime;
-pub(crate) use sm_game::room_mechanisms::scheduler;
 use sm_game::room_mechanisms::setup;
 mod rules {
     pub(super) use sm_game::room_mechanisms::rules::crumbling_wall;
@@ -84,7 +83,7 @@ pub(crate) fn set_enabled(enabled: bool, game: &mut Game) {
 pub(crate) fn clear(game: &mut Game) {
     clear_session(Runtime::new(game).session_mut());
 }
-pub(crate) fn clear_session(session: &mut crate::game::session::Session) {
+pub(crate) fn clear_session(session: &mut sm_game::session::Session) {
     for slot in session.mechanisms.slots.iter_mut().rev() {
         slot.header = 0;
     }

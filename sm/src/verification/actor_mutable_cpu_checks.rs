@@ -112,7 +112,7 @@ pub(crate) unsafe fn run(game: &mut Game) -> Vec<u8> {
 }
 
 // No movie reaches prepared CPU fallback or a truncated-Cart unwind; canonical RAM code is its control.
-fn cpu_writer_admission(world: std::sync::Arc<crate::game::room_entry::world::WorldBinding>) {
+fn cpu_writer_admission(world: std::sync::Arc<sm_game::room_entry::world::WorldBinding>) {
     use crate::{game::session_runtime::Runtime, game_state::GameOwner, rom::RomImage};
     use std::panic::{AssertUnwindSafe, catch_unwind};
     unsafe {

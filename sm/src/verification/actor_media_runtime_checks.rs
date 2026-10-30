@@ -237,7 +237,7 @@ fn actual_room_palette_decode_clears_obj_receipts_before_dynamic_reselection() {
 
 // Movies cannot compose Prepared Actor media with a full catalog before owner construction.
 fn full_room_catalog_preserves_actor_media_and_accepts_prepared_bg_receipt() {
-    use crate::game::room_entry::world::*;
+    use sm_game::room_entry::world::*;
     let original = super::fixture::binding(false, AppearanceId(20), true);
     let mut world = original.definition().unwrap().clone();
     let mut keys = original.compatibility_keys().clone();

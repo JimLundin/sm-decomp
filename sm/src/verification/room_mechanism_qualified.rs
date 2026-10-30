@@ -2,11 +2,11 @@
 //! Native pose callees are deliberately not executed: their existing odd ROM loads
 //! remain a qualified interval requiring separate route coverage.
 use super::{checks, content::Script};
-use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::session_runtime::Runtime;
 use crate::rom::RomRecord;
 use crate::room_background_support::{ram_bytes, ram_span, ram_word};
 use crate::{game_state::Game, rom::RomImage};
+use sm_game::enemy_script::{EnemyScript, bank_base};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 fn put(bytes: &mut [u8], at: usize, value: u16) {
     bytes[at..at + 2].copy_from_slice(&value.to_le_bytes());

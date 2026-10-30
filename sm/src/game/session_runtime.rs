@@ -10,7 +10,6 @@ use crate::game::player_projectiles::{
     content,
     host::{Drawing, Host, PaletteEffect, PlayerStep},
 };
-use crate::game::session_access::SessionAccess;
 use crate::game::{
     external_inputs::ExternalInputs, session::Session, session_encoding as encoding,
 };
@@ -18,6 +17,7 @@ use crate::{
     game_state::Game,
     rom::{RomImage, RomRecord},
 };
+use sm_game::session_access::SessionAccess;
 
 pub(crate) fn invalid_window(game: &mut Game, address: u32) {
     unsafe {
@@ -93,7 +93,7 @@ pub(crate) struct Runtime<'g> {
     inputs: ExternalInputs,
     persistent_epoch: Option<u64>,
     persistent: Option<(
-        crate::game::scene::samus_content::ContentDescription,
+        sm_game::scene::samus_content::ContentDescription,
         std::sync::Arc<crate::game_state::persistent_session::SessionStartRequirements>,
     )>,
 }
@@ -136,7 +136,7 @@ impl<'g> Runtime<'g> {
     pub(crate) fn has_owned_display(&self) -> bool {
         self.session().presentation.is_owned()
     }
-    pub(crate) fn draw_owned_body(&mut self, mode: crate::game::scene::samus_body::Body) {
+    pub(crate) fn draw_owned_body(&mut self, mode: sm_game::scene::samus_body::Body) {
         use crate::game_state::persistent_session::{self, Presentation};
         assert!(self.persistent_is_current(), "Session lease is dirty");
         let state = self.state.as_mut().expect("Session lease");
@@ -184,7 +184,7 @@ impl<'g> Runtime<'g> {
         .expect("owned Samus bottom")
     }
     pub(crate) fn draw_owned_echo(&mut self, slot: u16) {
-        use crate::game::scene::samus_content::{Registration, Role};
+        use sm_game::scene::samus_content::{Registration, Role};
         let index = usize::from(slot >> 1);
         let y = self.word(0xab8 + index * 2);
         let source = self
@@ -237,12 +237,12 @@ impl<'g> Runtime<'g> {
                 .expect("supplied live echo producer");
             self.draw_owned_samus(producer, index, (x, y));
         } else {
-            crate::game::visual_host::Effects::draw_samus_sprite(self, index, x, y);
+            sm_game::visual_host::Effects::draw_samus_sprite(self, index, x, y);
         }
     }
     pub(crate) fn samus_request_written(
         &mut self,
-        half: crate::game::scene::samus_body::Half,
+        half: sm_game::scene::samus_body::Half,
         pointer: u16,
     ) {
         let request = self
@@ -264,8 +264,8 @@ impl<'g> Runtime<'g> {
             .validate(pointer, &media)
             .expect("Samus request content");
         let slot = match half {
-            crate::game::scene::samus_body::Half::Top => 0,
-            crate::game::scene::samus_body::Half::Bottom => 1,
+            sm_game::scene::samus_body::Half::Top => 0,
+            sm_game::scene::samus_body::Half::Bottom => 1,
         };
         let owner = self
             .session_mut()
@@ -273,7 +273,7 @@ impl<'g> Runtime<'g> {
             .owner_mut()
             .expect("Display owner");
         assert!(
-            owner.state.phase == crate::game::scene::state::DisplayPhase::Producing,
+            owner.state.phase == sm_game::scene::state::DisplayPhase::Producing,
             "Samus publication phase"
         );
         assert!(
@@ -400,7 +400,7 @@ impl<'g> Runtime<'g> {
                 let completed = valid
                     && !std::thread::panicking()
                     && state.presentation.owner().is_ok_and(|owner| {
-                        owner.state.phase != crate::game::scene::state::DisplayPhase::Failed
+                        owner.state.phase != sm_game::scene::state::DisplayPhase::Failed
                     });
                 self.game.return_persistent_session(
                     crate::game_state::persistent_session::PersistentSession {
@@ -524,7 +524,7 @@ impl<'g> Runtime<'g> {
                 .owner_mut()
                 .expect("persistent Display")
                 .state
-                .phase = crate::game::scene::state::DisplayPhase::Failed;
+                .phase = sm_game::scene::state::DisplayPhase::Failed;
         }
         self.inputs = encoding::inputs(&|at| {
             if self.persistent.is_some() {
@@ -619,12 +619,12 @@ impl crate::game_state::persistent_session::AudioHost for Runtime<'_> {
         &mut self,
         operation: impl FnOnce(
             &mut crate::game_state::persistent_session::AudioRequests,
-            &mut crate::game::scene::start::InitialAudioIntent,
+            &mut sm_game::scene::start::InitialAudioIntent,
             crate::game_state::persistent_session::AudioStamp,
-        ) -> Result<R, crate::game::scene::state::DisplayError>,
-    ) -> Result<Option<R>, crate::game::scene::state::DisplayError> {
-        use crate::game::scene::state::{DisplayError, DisplayPhase};
+        ) -> Result<R, sm_game::scene::state::DisplayError>,
+    ) -> Result<Option<R>, sm_game::scene::state::DisplayError> {
         use crate::game_state::persistent_session::Control;
+        use sm_game::scene::state::{DisplayError, DisplayPhase};
         if self.persistent.is_none() {
             return Ok(None);
         }
@@ -724,7 +724,7 @@ impl Host for Runtime<'_> {
     }
     fn player_step(&mut self, step: PlayerStep) {
         if matches!(step, PlayerStep::SuitIndex) {
-            crate::game::samus_palette::update_suit_index(self.session_mut());
+            sm_game::samus_palette::update_suit_index(self.session_mut());
             return;
         }
         if matches!(step, PlayerStep::Acceleration) {
@@ -774,7 +774,7 @@ impl Host for Runtime<'_> {
                 0
             }
             PaletteEffect::Spawn(definition) => {
-                crate::game::palette_effects::execution::spawn(self, definition);
+                sm_game::palette_effects::execution::spawn(self, definition);
                 0
             }
         }
@@ -786,10 +786,10 @@ impl Host for Runtime<'_> {
         self.foreign(|g| crate::game::explosion_window::spawn_power_bomb(g));
     }
     fn spawn_mechanism(&mut self, header: u16) {
-        let mut contact = crate::game::room_mechanisms::host::Contact::Absent;
-        crate::game::room_mechanisms::creation::spawn(
+        let mut contact = sm_game::room_mechanisms::host::Contact::Absent;
+        sm_game::room_mechanisms::creation::spawn(
             self,
-            crate::game::room_mechanisms::host::SpawnSource::Collision { header },
+            sm_game::room_mechanisms::host::SpawnSource::Collision { header },
             &mut contact,
         );
     }
@@ -851,9 +851,9 @@ impl Host for Runtime<'_> {
 /// result in the original order. Do not refresh the local pass after callbacks.
 pub(crate) fn run_mechanisms(
     game: &mut Game,
-    context: crate::game::room_mechanisms::host::CallerContext,
+    context: sm_game::room_mechanisms::host::CallerContext,
 ) -> u8 {
-    use crate::game::room_mechanisms::host::{CallerContext, Pass, RunResult};
+    use sm_game::room_mechanisms::host::{CallerContext, Pass, RunResult};
     let mut pass = match game.ram().read_byte(0x613) {
         0 => Pass::Instructions,
         1 => Pass::DisplayMessage,
@@ -861,7 +861,7 @@ pub(crate) fn run_mechanisms(
     };
     let result = {
         let mut runtime = Runtime::new(game);
-        crate::game::room_mechanisms::scheduler::advance(&mut runtime, &mut pass)
+        sm_game::room_mechanisms::scheduler::advance(&mut runtime, &mut pass)
     };
     match context {
         CallerContext::Gameplay | CallerContext::DoorTransition => match result {
@@ -1012,15 +1012,15 @@ impl Runtime<'_> {
     }
 }
 
-use crate::game::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
 use crate::game::actors::{self, api as actor_api};
-use crate::game::combat_rules::LatchMode;
-use crate::game::enemy_script::EnemyScript;
 use crate::game::moving_platforms::{self as mechanisms, Event, Kind};
 use crate::game::rippers::{self, Kind as RipperKind};
 use crate::game::{ground_patrol, large_snail};
 use crate::game::{sm_a3, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa, space_pirates};
 use crate::types::EnemyData;
+use sm_game::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
+use sm_game::combat_rules::LatchMode;
+use sm_game::enemy_script::EnemyScript;
 crate::game::address_dispatch! {
     unsafe fn actor_species_draw_hook(ea: u32, game: &mut Game) => ea;
         call (game); default { crate::rtl::Unreachable(game); };
@@ -1886,12 +1886,12 @@ pub(crate) fn actor_direction_vector(
     phase: u16,
     amplitude: u16,
     game: &mut Game,
-) -> crate::game::session::Vector32 {
+) -> sm_game::session::Vector32 {
     let [x, y] = [0x40u16, 0x80].map(|offset| {
         let index = usize::from(phase.wrapping_add(offset) & 0x7f);
         u32::from(game.read_rom_word(0xa0b7ee, index * 2)) * u32::from(amplitude)
     });
-    crate::game::session::Vector32 { x, y }
+    sm_game::session::Vector32 { x, y }
 }
 
 // Shared native diagnostic; callers retain their own publication boundary.

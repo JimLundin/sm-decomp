@@ -356,7 +356,7 @@ impl ActorContent for Runtime<'_> {
             world,
             image: record.image,
             base: record.base,
-            access: crate::game::room_entry::content::RecordAccess::Native,
+            access: sm_game::room_entry::content::RecordAccess::Native,
         }
     }
     fn actor_spike_mechanism(&mut self, variant: u16) -> u16 {

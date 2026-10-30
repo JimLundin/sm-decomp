@@ -1,11 +1,11 @@
 //! Lavaquake source actor: proximity, one randomized rock, then cooldown.
 #![forbid(unsafe_code)]
-use crate::game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::game::actors::api::{self, Axis};
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, host::Effects};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::words as W;
+use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 
 pub(crate) fn update(initialize: bool, game: &mut Game) {
     let mut runtime = Runtime::new(game);

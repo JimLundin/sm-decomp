@@ -6,8 +6,8 @@ pub(crate) use camera::{calculate_blocks, calculate_scrolls, debug_position, lay
 pub(crate) mod door;
 
 use crate::game::display_refresh::{ScrollingDmaLayout, queue_scrolling_tiles};
-use crate::game::room_entry::content::Axis as CameraAxis;
 use crate::game_state::Game;
+use sm_game::room_entry::content::Axis as CameraAxis;
 
 #[derive(Clone, Copy)]
 #[repr(u8)]

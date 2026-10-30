@@ -6,12 +6,12 @@ use super::api::{Axis, MovementResult::Blocked, SlopePolicy};
 use super::{api as actor_api, combat};
 use crate::game::enemy_layouts::EnemyLayout40 as Hunter;
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, host::Effects};
-use crate::game::enemy_script::EnemyScript;
 use crate::game::music::QueueSfx2_Max6;
 use crate::game::session_runtime::{Runtime, actor_cosine, actor_sine};
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::rtl::{abs16, words};
+use sm_game::enemy_script::EnemyScript;
 
 fn begin_wing(forward: bool, k: u16, game: &mut Game) {
     let E = k as i32;

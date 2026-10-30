@@ -2,10 +2,10 @@
 //! Tracking and bobbing words remain in authoritative extended actor RAM.
 #![forbid(unsafe_code)]
 use super::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
-use crate::game::enemy_projectiles::host::Effects;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::{word_arrays as A, words as W};
+use sm_game::enemy_projectiles::host::Effects;
 
 const OFFSETS: [u16; 18] = [
     0xffc0, 0xffc0, 0, 0xffc0, 0x40, 0, 0xffc0, 0, 0, 0, 0x40, 0, 0xffc0, 0x40, 0, 0x40, 0x40, 0x40,

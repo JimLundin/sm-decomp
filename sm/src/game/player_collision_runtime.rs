@@ -86,7 +86,7 @@ impl Effects for Runtime<'_> {
     }
 
     fn cancel_speed_boost(&mut self) {
-        crate::game::samus_palette::cancel_speed_boost(self);
+        sm_game::samus_palette::cancel_speed_boost(self);
     }
 
     fn boss_defeated(&mut self) -> bool {

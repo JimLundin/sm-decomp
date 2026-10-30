@@ -1,12 +1,12 @@
 //! Large Snail movement and its ordered carrying/resistance interaction with Samus.
 #![forbid(unsafe_code)]
-use crate::game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::game::actors::{animation, api, combat};
-use crate::game::enemy_projectiles::host::Effects;
 use crate::game::enemy_speeds::SpeedTable;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::words as fields;
+use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
+use sm_game::enemy_projectiles::host::Effects;
 
 fn selected(runtime: &Runtime<'_>) -> u16 {
     runtime.word(fields::cur_enemy_index)

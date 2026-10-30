@@ -1,10 +1,10 @@
 //! Ripper patrols share velocity selection, collision reversal and animation.
 #![forbid(unsafe_code)]
-use crate::game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::game::actors::{api, combat};
 use crate::game::enemy_speeds::SpeedTable;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 
 pub(crate) enum Kind {
     Ripper,

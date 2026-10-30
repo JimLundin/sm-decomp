@@ -1,11 +1,11 @@
 //! Norfair Rio variants share their dive, bounce and animation transitions.
 #![forbid(unsafe_code)]
-use crate::game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::game::actors::api::Axis;
-use crate::game::enemy_script::EnemyScript;
 use crate::game::rio::{aim_velocity, bounce_horizontal, move_axis};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
+use sm_game::enemy_script::EnemyScript;
 
 /// Both Rio variants share resume and follower-offset commands; the cursor is retained.
 pub(crate) fn instruction(address: u32, cursor: EnemyScript, game: &mut Game) -> EnemyScript {

@@ -73,7 +73,7 @@ use super::{
     effects::{ActorAssertion, ActorEffects, ActorHost},
     scene::{ActorDrawRequest, ActorTileChunkSource, ActorTileDestination, ActorTilemapSource},
 };
-use crate::game::enemy_script::EnemyScript;
+use sm_game::enemy_script::EnemyScript;
 impl ActorEffects for Runtime<'_> {
     #[cfg(sm_verify_dll)]
     fn actor_reference_stage(&mut self, event: u16, key: u16) {

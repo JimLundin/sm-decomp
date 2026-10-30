@@ -193,7 +193,7 @@ pub(crate) fn consume_crystal_flash(s: &mut Session, frame: u16) {
     if frame & 7 == 0 {
         ammo.current = ammo.current.wrapping_sub(1);
         s.inventory
-            .restore(crate::game::item_pickups::Resource::Health, 50);
+            .restore(sm_game::item_pickups::Resource::Health, 50);
         s.shared_sequence.stage = s.shared_sequence.stage.wrapping_sub(1);
         if (s.shared_sequence.stage as i16) <= 0 {
             if index < 2 {

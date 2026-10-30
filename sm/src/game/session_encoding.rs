@@ -681,7 +681,7 @@ pub(crate) fn decode(
             *value = read(bytes, 0xa000 + index * 8 + corner * 2);
         }
     }
-    crate::game::actors::codec::import_common(&mut s, bytes, byte_len);
+    sm_game::actors::codec::import_common(&mut s, bytes, byte_len);
     assert!(byte_len >= 0x8840, "short Botwoon death import");
     let mut load = |at, word: &mut u16| *word = read(bytes, at);
     botwoon_death_words!(s, load, (&mut));
@@ -694,7 +694,7 @@ pub(crate) fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
     for (index, pair) in s.minimap.explored.chunks_exact(2).enumerate() {
         visit(0x7f7 + 2 * index, u16::from_le_bytes([pair[0], pair[1]]));
     }
-    crate::game::actors::codec::visit_common(s, &mut visit);
+    sm_game::actors::codec::visit_common(s, &mut visit);
     macro_rules! emit_key {
         ($at:expr, $field:ident, $get:ident, $set:ident) => {
             visit($at, s.world.$get(&s.room.entry.$field));
@@ -772,7 +772,7 @@ pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {
     if (0x7f7..0x8f7).contains(&at) {
         return Some(s.minimap.explored[at - 0x7f7]);
     }
-    if let Some(value) = crate::game::actors::codec::projected_byte(s, at) {
+    if let Some(value) = sm_game::actors::codec::projected_byte(s, at) {
         return Some(value);
     }
     macro_rules! key_byte {
@@ -871,7 +871,7 @@ pub(crate) fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> boo
         s.minimap.explored[at - 0x7f7] = value;
         return true;
     }
-    if crate::game::actors::codec::write_projected_byte(s, at, value) {
+    if sm_game::actors::codec::write_projected_byte(s, at, value) {
         return true;
     }
     macro_rules! write_key {

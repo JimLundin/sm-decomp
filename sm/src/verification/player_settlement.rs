@@ -330,5 +330,5 @@ fn direct_settlement(game: &mut Game) -> bool {
     let mut runtime = crate::game::session_runtime::Runtime::new(game);
     crate::game::player_transitions::finish_movement_and_palette(&mut runtime);
     let frozen = runtime.inputs().frozen;
-    crate::game::samus_periodic_damage::apply(runtime.session_mut(), frozen).is_err()
+    sm_game::samus_periodic_damage::apply(runtime.session_mut(), frozen).is_err()
 }

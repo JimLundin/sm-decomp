@@ -1,20 +1,20 @@
 //! Wall, ninja and walking pirates share checked actor state and movement.
 //! Extended species words remain RAM-authoritative.
 #![forbid(unsafe_code)]
-use crate::game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::game::actors::api::{self, Axis, MovementResult};
 use crate::game::actors::combat;
-use crate::game::enemy_projectiles::host::Effects;
 use crate::game::enemy_projectiles::{
     DropSource, SpawnEprojWithGfx, SpawnEprojWithRoomGfx, scatter_drop,
 };
-use crate::game::enemy_script::EnemyScript;
 use crate::game::session_runtime::{Runtime, actor_cosine, actor_sine};
 use crate::game::sprite_effect_runtime::create_sprite;
 use crate::game_state::Game;
 use crate::ram_map::{word, word_arrays as arrays, words as fields};
 use crate::types::{EnemyDef, Point16U, Rect16U, Vulnerability};
 use core::mem::offset_of;
+use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
+use sm_game::enemy_projectiles::host::Effects;
+use sm_game::enemy_script::EnemyScript;
 
 fn current(runtime: &Runtime<'_>) -> Key {
     Key::from_legacy(runtime.word(0xe54))

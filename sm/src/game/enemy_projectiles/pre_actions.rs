@@ -5,13 +5,13 @@ use super::host::{EnemyMember as SlotField, Host, LoadedRecord};
 use super::pre_helpers::*;
 use super::shared::SpawnEprojWithRoomGfx;
 use super::*;
-use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
-use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::{
     sprite_effect_state::{LegacySpriteDefinition, SpriteSpawn},
     sprite_objects,
 };
+use sm_game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
 use sm_game::geometry::Point;
+use sm_game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 
 pub(super) fn dispatch(ea: u32, k: u16, ctx: &mut impl Host) {
     match ea {
@@ -1626,7 +1626,7 @@ pub(super) fn Eproj_MoveToBlueRingSpawnPosition(k: u16, ctx: &mut impl Host) {
         } else if Eproj_CheckForCollisionWithSamus(k, ctx) & 1 != 0 {
             BlueRingContactExplosion(k, ctx);
             {
-                let damage = crate::game::combat_rules::suit_damage(
+                let damage = sm_game::combat_rules::suit_damage(
                     0x50,
                     ctx.session().inventory.equipment.active,
                 );

@@ -29,7 +29,7 @@ fn began_falling(s: &mut Session) {
     }
 }
 fn cancel_and_fall(h: &mut impl Host) {
-    crate::game::samus_palette::cancel_speed_boost(h);
+    sm_game::samus_palette::cancel_speed_boost(h);
     clear_extra(h.session_mut());
     began_falling(h.session_mut());
 }
@@ -213,12 +213,12 @@ pub(crate) fn momentum(h: &mut impl Host, action: MomentumAction) {
                 cancel_and_fall(h);
             } else {
                 h.session_mut().player.contact.acceleration_mode = 0;
-                crate::game::samus_palette::cancel_speed_boost(h);
+                sm_game::samus_palette::cancel_speed_boost(h);
             }
         }
         2 => {
             h.session_mut().player.contact.acceleration_mode = 0;
-            crate::game::samus_palette::cancel_speed_boost(h);
+            sm_game::samus_palette::cancel_speed_boost(h);
         }
         5 => collision_action(h),
         6 => {
@@ -280,7 +280,7 @@ fn clamp(h: &mut impl Host) {
 }
 fn after_grapple(h: &mut impl Host) {
     clamp(h);
-    crate::game::samus_palette::cancel_speed_boost(h);
+    sm_game::samus_palette::cancel_speed_boost(h);
     clear_base(h.session_mut());
     clear_vertical(h.session_mut());
     clear_extra(h.session_mut());

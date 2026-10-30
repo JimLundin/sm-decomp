@@ -2,11 +2,11 @@
 #![forbid(unsafe_code)]
 use super::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use super::{api, combat};
-use crate::game::enemy_projectiles::host::Effects;
-use crate::game::player_projectiles::content::table;
 use crate::game::session_runtime::{Runtime, actor_cosine_full, actor_sine_full};
 use crate::game_state::Game;
+use sm_game::enemy_projectiles::host::Effects;
 use sm_game::geometry::Vector32;
+use sm_game::player_projectiles::content::table;
 
 fn selected(runtime: &Runtime<'_>) -> (Key, usize) {
     let key = combat::current(runtime);

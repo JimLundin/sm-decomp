@@ -1,10 +1,10 @@
 //! Door camera setup and stepping; RAM remains authoritative between callbacks.
 #![forbid(unsafe_code)]
 use super::{add_native_motion, calculate_blocks, calculate_scrolls, layer2_position, update_map};
-use crate::game::room_entry::content::Axis;
 use crate::game_state::Game;
 use crate::ram_map::{word, words as fields};
 use crate::rtl::words;
+use sm_game::room_entry::content::Axis;
 
 // Door steps retain native split-word and scrolling tilemap publication order.
 pub(crate) fn begin(game: &mut Game) {

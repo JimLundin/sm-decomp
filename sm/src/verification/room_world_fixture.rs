@@ -1,7 +1,7 @@
 //! One authored topology fixture shared by actual Runtime/GameOwner checks.
 //! Keys are compatibility bindings, never the identities or map positions.
 #![forbid(unsafe_code)]
-use crate::game::room_entry::world::*;
+use sm_game::room_entry::world::*;
 use std::{collections::BTreeMap, sync::Arc};
 
 pub(crate) const ROOM_A: RoomId = RoomId(0x1200_0041);

@@ -63,7 +63,7 @@ pub(crate) fn refresh_pose_rules(h: &mut impl Host) {
         3 | 20
     ) && h.session().inventory.equipment.active & 8 != 0
     {
-        crate::game::samus_palette::load_suit(h, PaletteBuffer::Current);
+        sm_game::samus_palette::load_suit(h, PaletteBuffer::Current);
     }
 }
 pub(crate) fn reset_pose_animation(h: &mut impl Host) {

@@ -4,7 +4,6 @@ pub(crate) mod actors;
 pub(crate) mod launch_motion;
 #[path = "player_projectiles.rs"]
 pub(crate) mod player_projectiles;
-pub(crate) use crate::palette as palette_effects;
 pub(crate) use sm_game::projectile_block_reactions;
 pub(crate) use sm_game::projectile_geometry;
 pub(crate) use sm_game::projectile_room;
@@ -22,12 +21,9 @@ pub(crate) mod room_mechanisms;
 #[path = "../../game/constants.rs"]
 pub(crate) mod constants;
 
-pub(crate) use sm_game::combat_rules;
 pub(crate) use sm_game::contact_rules;
-pub(crate) use sm_game::drop_rules;
 #[path = "enemy_projectiles.rs"]
 pub(crate) mod enemy_projectiles;
-pub(crate) use sm_game::enemy_script;
 #[path = "scene.rs"]
 pub(crate) mod scene;
 pub(crate) use sm_game::session_access;

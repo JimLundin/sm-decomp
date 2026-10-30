@@ -1,11 +1,11 @@
 //! Player/enemy projectile contact, with ordered damage and reaction effects.
 #![deny(unsafe_op_in_unsafe_fn)]
 use crate::game::actors;
-use crate::game::contact_rules::axis;
 use crate::game::session_runtime::Runtime;
 use crate::game::session_runtime::damage_player;
 use crate::game_state::Game;
 use crate::ram_map::checked_word as word;
+use sm_game::contact_rules::axis;
 
 fn mark(index: u16, game: &mut Game) {
     word!(game.projectile_dir[index] = word!(game.projectile_dir[index]) | 0x10);

@@ -3,11 +3,11 @@
 use super::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use super::{api, combat};
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, host::Effects};
-use crate::game::enemy_script::EnemyScript;
-use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::{gameplay_flag_runtime, session_runtime::Runtime};
 use crate::game_state::Game;
 use crate::ram_map::{word_arrays as A, words as W};
+use sm_game::enemy_script::EnemyScript;
+use sm_game::gameplay_flag_host::BossWordOrder;
 
 const PALETTE: [i16; 31] = [
     0x1f, 0x18, 0xf, 8, 0x40, 0x18, 0xf, 8, 0x1f, 0x10, 0xf, 8, 0x1f, 0x18, 0x10, 8, 0x1f, 0x18,
