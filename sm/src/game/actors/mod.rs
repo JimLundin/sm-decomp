@@ -54,7 +54,6 @@ pub(in crate::game) mod part_hitboxes;
 pub(in crate::game) mod phantoon_actions;
 pub(in crate::game) use sm_game::actors::population;
 pub(in crate::game) use sm_game::actors::queries;
-pub(in crate::game) mod ridley_tables;
 pub(in crate::game) use sm_game::actors::scheduling;
 pub(in crate::game) use sm_game::actors::staging;
 mod runtime_host;

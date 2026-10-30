@@ -639,3 +639,121 @@ impl sm_game::actors::dachora_run::Host for Game {
         crate::game::sm_a7::run_a7_function(address, self);
     }
 }
+
+// The named bank $A6 functions are the ones `CallRidleyFunc` and
+// `CallRidleyFunc_var40` dispatch on; the two RTS terminators and Ceres
+// Ridley's targets are its other IDs.
+const _: () = {
+    use sm_game::actors::ridley::{baby_metroid_function as b, function as f};
+    const fn at(word: u16) -> u32 {
+        0xa6_0000 | word as u32
+    }
+    assert!(at(f::LIFTOFF) == 10924787 && at(f::DECIDE_ACTION) == 10924833);
+    assert!(at(f::LUNGE_MISSED) == 10925036 && at(f::LUNGE_MISSED_MOVE_TO_POSITION) == 10925048);
+    assert!(at(f::SWOOP) == 10925121 && at(f::SWOOP_MOVE_TO_POSITION) == 10925141);
+    assert!(at(f::SWOOP_AIMING_DOWN) == 10925203 && at(f::SWOOP_AIMING_HORIZONTAL) == 10925265);
+    assert!(at(f::SWOOP_AIMING_UP) == 10925334 && at(f::SWOOP_AIMING_UP_FASTER) == 10925396);
+    assert!(at(f::SWOOP_DECELERATE) == 10925460 && at(f::HOVER) == 10925508);
+    assert!(at(f::HOVER_TO_WALL_BEHIND) == 10925541 && at(f::HOVER_TO_WALL_IN_FRONT) == 10925587);
+    assert!(at(f::POGO_FLY_TO_POSITION) == 10925735 && at(f::POGO_WAIT_AT_POSITION) == 10925789);
+    assert!(at(f::POGO_DESCENDING) == 10925838 && at(f::POGO_ASCENDING) == 10926009);
+    assert!(at(f::LUNGE) == 10926775 && at(f::GRABBED_SAMUS) == 10926991);
+    assert!(at(f::GRABBED_SAMUS_RISING) == 10927044);
+    assert!(at(f::GRABBED_SAMUS_RISING_TO_MIDDLE) == 10927089);
+    assert!(at(f::GRABBED_SAMUS_RELEASE) == 10927150 && at(f::DODGE_POWER_BOMB) == 10927438);
+    assert!(at(f::FAKE_RETREAT_MOVE_TO_POSITION) == 10927514);
+    assert!(at(f::FAKE_RETREAT_RISING) == 10927548 && at(f::DROP_BABY_METROID) == 10927602);
+    assert!(at(f::RETRIEVE_BABY_METROID) == 10927619 && at(b::HELD) == 10927772);
+    assert!(at(b::HELD_BY_FEET) == 10927795 && at(b::START_FALLING) == 10927818);
+    assert!(at(b::FALLING) == 10927836 && at(f::DYING_GRABBED_SAMUS) == 10929464);
+    assert!(at(f::DEATH_ROAR) == 10929470 && at(f::DEATH_MOVE_TO_DEATH_SPOT) == 10929489);
+    assert!(at(f::LOWER_ACID_AND_RELEASE_SAMUS) == 10929544);
+    assert!(at(f::START_FALLING_APART) == 10929576 && at(f::FALLING_APART) == 10929608);
+    assert!(at(f::STILL_FALLING_APART) == 10929626);
+    assert!(at(b::NOTHING) == 10927897 && f::DEAD == crate::game::sm_a6::addr_locret_A6C600 as u16);
+    assert!(at(f::CERES_LIFTOFF_ACCELERATING) == 10921647);
+    assert!(at(f::CERES_REAL_RETREAT_RISING) == 10922353);
+};
+
+// The named instruction lists and tables are the decompilation's addresses.
+const _: () = {
+    use crate::game::sm_a6::*;
+    use sm_game::actors::ridley::{
+        actions, explosion_instruction_list as e, instruction_list as l, tail_data as t,
+    };
+    assert!(
+        l::RETRIEVE_BABY_METROID == addr_kRidley_Ilist_E658 as u16
+            && l::DEATH_ROAR == addr_kRidley_Ilist_E6C8 as u16
+    );
+    assert!(
+        l::TURN_TO_FACE_RIGHT == addr_kRidley_Ilist_E6F0 as u16
+            && l::TURN_TO_FACE_LEFT == addr_kRidley_Ilist_E706 as u16
+    );
+    assert!(l::SHOOT_FIREBALLS == addr_kRidley_Ilist_E73A as u16);
+    assert!(
+        e::TAIL_SEGMENTS_0_1 == addr_kRidleysExplosion_Ilist_CA47 as u16
+            && e::TAIL_SEGMENTS_2_3 == addr_kRidleysExplosion_Ilist_CA4D as u16
+    );
+    assert!(e::TAIL_SEGMENTS_4_5 == addr_kRidleysExplosion_Ilist_CA53 as u16);
+    assert!(
+        actions::POGO_OR_SWOOP == addr_off_A6B38C as u16
+            && actions::SWOOP_OR_POGO == addr_off_A6B39C as u16
+    );
+    assert!(
+        actions::LUNGE_OR_POGO == addr_off_A6B3AC as u16 && actions::POGO == addr_off_A6B3BC as u16
+    );
+    assert!(actions::HOVER == addr_off_A6B3CC as u16 && actions::LUNGE == addr_off_A6B3DC as u16);
+    assert!(t::DIRECTIONS == addr_word_A6D36E as u16 && t::DISTANCES == addr_word_A6D37C as u16);
+    assert!(t::ANGLES == addr_word_A6D38A as u16 && t::X_POSITIONS == addr_word_A6D398 as u16);
+    assert!(t::Y_POSITIONS == addr_word_A6D3A6 as u16);
+};
+
+impl sm_game::actors::ridley::Host for Game {
+    fn run_function(&mut self, function: u16) {
+        crate::game::sm_a6::CallRidleyFunc(0xa6_0000 | u32::from(function), self);
+    }
+
+    fn run_baby_metroid_function(&mut self, function: u16) {
+        crate::game::sm_a6::CallRidleyFunc_var40(0xa6_0000 | u32::from(function), self);
+    }
+
+    fn run_baby_metroid_instruction(&mut self, instruction: u16, arguments: u16) -> u16 {
+        crate::game::sm_a6::CallBabyMetroidInstr(
+            0xa6_0000 | u32::from(instruction),
+            arguments,
+            self,
+        )
+    }
+
+    fn spawn_population(&mut self, bank: u8, population: u16) -> u16 {
+        crate::game::actors::population::spawn_legacy(
+            &mut crate::game::session_runtime::Runtime::new(self),
+            bank,
+            population,
+        )
+    }
+
+    fn set_boss_bit(&mut self, mask: u16) {
+        crate::game::gameplay_flag_runtime::SetBossBitForCurArea(mask, self);
+    }
+
+    fn hardware_sine(&mut self, amplitude: u16, angle: u16) -> u16 {
+        crate::game::sm_a9::ComputeSinMult(amplitude, angle, self)
+    }
+
+    fn hardware_cosine(&mut self, amplitude: u16, angle: u16) -> u16 {
+        crate::game::sm_a9::ComputeCosMult(amplitude, angle, self)
+    }
+
+    fn warn_x_undefined(&mut self) {
+        crate::game::sm_a6::warn_x_undefined();
+    }
+
+    fn move_liquid(&mut self, target: u16, velocity: u16, delay: u16) {
+        let mut runtime = crate::game::session_runtime::Runtime::new(self);
+        let room = &mut runtime.session_mut().room;
+        room.liquid_target = target;
+        room.liquid_velocity = velocity;
+        room.liquid_delay = delay;
+    }
+}
