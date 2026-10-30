@@ -233,8 +233,10 @@ fn move_lower_joint<H: Host + ?Sized>(game: &mut H) {
         }
         _ => {
             game.unreachable();
-            #[allow(clippy::empty_loop)]
-            loop {}
+            // The original hangs here after reporting the failure.
+            loop {
+                std::hint::spin_loop();
+            }
         }
     }
 }
@@ -291,8 +293,10 @@ fn move_upper_joint<H: Host + ?Sized>(game: &mut H) {
         }
         _ => {
             game.unreachable();
-            #[allow(clippy::empty_loop)]
-            loop {}
+            // The original hangs here after reporting the failure.
+            loop {
+                std::hint::spin_loop();
+            }
         }
     }
 }
