@@ -110,6 +110,7 @@ pub trait Host:
     + crate::sprite_output::SpriteHost
     + crate::cartridge::NativeDiagnostics
     + crate::decompression::DecompressionHost
+    + crate::records::Records
     + MenuRuntime
     + crate::records::Records
 {

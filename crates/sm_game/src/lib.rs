@@ -246,6 +246,7 @@ pub mod session_encoding;
 pub mod session_owners;
 pub mod shaktool_tables;
 pub mod shitroid_tables;
+pub mod shooting_star_motion;
 pub mod shooting_stars;
 pub mod sprite_effect_controllers;
 pub mod sprite_effect_host;

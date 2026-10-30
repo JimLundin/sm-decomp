@@ -472,6 +472,7 @@ pub mod game {
     pub(crate) mod prelude;
     pub mod scene;
     pub(crate) mod scrolling_sky;
+    pub(crate) mod shooting_star_motion;
     pub(crate) mod title_screen;
     pub(crate) use sm_game::shaktool_tables;
     pub(crate) use sm_game::shitroid_tables;
@@ -538,7 +539,6 @@ pub mod game {
     pub(crate) mod session_checkpoint;
     pub(crate) mod session_encoding;
     pub(crate) mod session_runtime;
-    pub(crate) use sm_game::shooting_stars;
     pub mod sm_8b;
     pub(crate) mod sprite_drawing;
     pub(crate) use sm_game::sprite_effect_host;
