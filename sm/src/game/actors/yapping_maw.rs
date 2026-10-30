@@ -3,7 +3,7 @@
 #![forbid(unsafe_code)]
 use super::{api, scheduling};
 use crate::game::enemy_projectiles;
-use crate::game::session_runtime::{Runtime, correct_previous_position, player_command};
+use crate::game::session_runtime::{Runtime, player_command};
 use crate::game::sprite_effect_runtime as sprites;
 use crate::game_state::Game;
 pub(crate) use sm_game::actors::yapping_maw::*;
@@ -39,10 +39,6 @@ impl Host for Game {
 
     fn command_player(&mut self, command: u16) {
         player_command(command, self);
-    }
-
-    fn correct_previous_position(&mut self) {
-        correct_previous_position(self);
     }
 
     fn update_maw_visibility(&mut self, actor: i32) {
