@@ -159,53 +159,6 @@ crate::game::address_dispatch! {
 
 // Tail words alias the shared tilemap workspace; keep each load/store ordered.
 
-macro_rules! steer_enemy_speed_and_angle {
-    ($game:ident, $layout:ident, $target_speed:ident, $enemy:ident, $angle_step:ident, $target_angle:ident) => {{
-        if $target_speed != slot!($game, $layout[$enemy].var_0B) {
-            if (($target_speed) as i16).wrapping_sub((slot!($game, $layout[$enemy].var_0B)) as i16)
-                >= 0
-            {
-                let mut v2: u16 = (slot!($game, $layout[$enemy].var_0B)).wrapping_add(32);
-                if v2 as i32 - $target_speed as i32 & 0x8000 == 0 {
-                    v2 = $target_speed;
-                }
-                slot!($game, $layout[$enemy].var_0B = v2);
-            } else {
-                let mut v1: u16 = (slot!($game, $layout[$enemy].var_0B)).wrapping_sub(32);
-                if v1 as i32 - $target_speed as i32 & 0x8000 != 0 {
-                    v1 = $target_speed;
-                }
-                slot!($game, $layout[$enemy].var_0B = v1);
-            }
-        }
-        let mut v3: u16 = 0;
-
-        let use_target_angle: bool = if ($angle_step & 0x8000) != 0 {
-            v3 = (slot!($game, $layout[$enemy].var_0A)).wrapping_add($angle_step);
-            (v3 as i32 - $target_angle as i32 & 0x8000 != 0)
-        } else {
-            v3 = (slot!($game, $layout[$enemy].var_0A)).wrapping_add($angle_step);
-            (v3 as i32 - $target_angle as i32 & 0x8000 == 0)
-        };
-        if use_target_angle {
-            v3 = $target_angle;
-        }
-        slot!($game, $layout[$enemy].var_0A = v3);
-        $angle_step = v3.to_ne_bytes()[1] as u16;
-        slot!(
-            $game,
-            $layout[$enemy].var_B =
-                Math_MultBySin(slot!($game, $layout[$enemy].var_0B), $angle_step)
-        );
-        slot!(
-            $game,
-            $layout[$enemy].var_C =
-                Math_MultByCos(slot!($game, $layout[$enemy].var_0B), $angle_step)
-        );
-    }};
-}
-pub(crate) use steer_enemy_speed_and_angle;
-
 crate::game::callback_dispatch! {
     pub fn CallBabyMetroidInstr(ea: u32, k: u16, game: &mut Game) -> u16 => ea;
     call (k, game); default Unreachable(game) as u16;
@@ -240,29 +193,6 @@ crate::game::callback_dispatch! {
         10942428 => [sm_game::actors::ceres_doors::rumbling_and_explosions(k, game)];
     }
 }
-
-macro_rules! set_explosion_spawn_offset {
-    ($game:ident, $enemy:ident, $offset_table:literal, $offset_index:ident) => {
-        $game.eproj_spawn_pt =
-            Point16U {
-                x: ((slot!($game, EnemyData[$enemy].x_pos)).wrapping_add(
-                    crate::rtl::rom_table_word!($game, $offset_table, $offset_index as isize),
-                )),
-                y: ((slot!($game, EnemyData[$enemy].y_pos)).wrapping_add(
-                    crate::rtl::rom_table_word!($game, $offset_table, ($offset_index + 1) as isize),
-                )),
-            };
-    };
-    ($game:ident, $enemy:ident, $offset:path, $offset_index:ident) => {
-        $game.eproj_spawn_pt = Point16U {
-            x: ((slot!($game, EnemyData[$enemy].x_pos))
-                .wrapping_add($offset($game, $offset_index as isize))),
-            y: ((slot!($game, EnemyData[$enemy].y_pos))
-                .wrapping_add($offset($game, ($offset_index + 1) as isize))),
-        };
-    };
-}
-pub(crate) use set_explosion_spawn_offset;
 
 crate::game::callback_dispatch! {
     pub(crate) fn DispatchEnemyAi(ea: u32, game: &mut Game) => ea;

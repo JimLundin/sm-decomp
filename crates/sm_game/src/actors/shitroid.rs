@@ -18,12 +18,18 @@ part_view! {
     /// The Shitroid's view of its slot.
     Shitroid: EnemyLayout40 {
         words: [
-            function, x_velocity, y_velocity, var_D, palette_handler_delay, var_F, parameter_1,
-            parameter_2,
+            function, x_velocity, y_velocity,
+            // $0FAE: the palette animation frame (low byte) and timer (high byte).
+            palette_animation, palette_handler_delay, function_timer, parameter_1,
+            // $0FB6: the contact reaction.
+            contact_enabled,
         ],
         pad1: [u8; 26696],
         words: [
-            var_00, var_01, var_02, var_03, cry_enabled, cry_timer, var_06, var_07, var_08, var_09,
+            var_00,
+            // $7E:7802: frames left chasing Samus's Y; $7E:7804: how long it
+            // has hovered over her.
+            aggro_timer, proximity_counter, var_03, cry_enabled, cry_timer, var_06, var_07, var_08, var_09,
             var_0A, var_0B, var_0C, var_0D, var_0E, var_0F, var_10, var_11, var_12, var_13, var_14,
             var_15, var_16, var_17, var_18, var_19, var_1A, var_1B, var_1C, var_1D, var_1E, var_1F,
         ],

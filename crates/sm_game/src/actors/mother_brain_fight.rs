@@ -569,6 +569,9 @@ pub(crate) fn QueueSfx2_Max3(sound: u16, game: &mut impl Host) {
 pub(crate) fn QueueSfx2_Max6(sound: u16, game: &mut impl Host) {
     game.queue_sound(1, sound as u8, 6)
 }
+pub(crate) fn QueueSfx3_Max3(sound: u16, game: &mut impl Host) {
+    game.queue_sound(2, sound as u8, 3)
+}
 pub(crate) fn QueueSfx3_Max6(sound: u16, game: &mut impl Host) {
     game.queue_sound(2, sound as u8, 6)
 }

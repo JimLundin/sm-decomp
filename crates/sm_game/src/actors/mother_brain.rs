@@ -173,7 +173,8 @@ part_view! {
             painful_walk_timer,
             // $7854: the Shitroid's enemy index.
             shitroid,
-            var_0B,
+            // $7E:7856: set when the Shitroid lets Samus go (never read).
+            shitroid_released,
             var_0C,
             var_0D,
             var_0E,

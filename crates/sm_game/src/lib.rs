@@ -150,6 +150,8 @@ pub mod actors {
     pub mod scheduling;
     pub mod shaktool;
     pub mod shitroid;
+    pub mod shitroid_cutscene;
+    pub mod shitroid_encounter;
     pub mod snapshot;
     pub mod species;
     pub mod spore_spawn;

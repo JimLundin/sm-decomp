@@ -1468,10 +1468,10 @@ crate::game::callback_dispatch! {
         11062537 | 11062692 | 11062762 | 11062917 | 11062987 | 11062991 | 11063146 | 11063216 | 11063371 | 11063441 | 11063490 | 11063494 | 11063506 | 11063552 | 11063559 | 11063601 | 11063613 | 11063659 => [crate::game::actors::wrecked_ship_robots::instruction(ea, k, j, game)];
         11067164 | 11067187 | 11067193 | 11067199 | 11067235 | 11067249 => [crate::game::actors::lava_seahorse::instruction(ea, j, game)];
         11072806 | 11072996 | 11073151 | 11073234 | 11073240 => [crate::game::actors::ki_hunter::instruction(ea, k, j, game)];
-        11128756 => [sm_a9::Shitroid_Instr_1(k, j)];
-        11128778 => [sm_a9::Shitroid_Instr_2(k, j)];
-        11139360 => [sm_a9::Shitroid_Instr_3(k, j)]; 11139382 => [sm_a9::Shitroid_Instr_4(k, j)];
-        11139472 => [sm_a9::Shitroid_Instr_6(k, j)];
+        11128756 => [sm_game::actors::shitroid_cutscene::Shitroid_Instr_1(k, j)];
+        11128778 => [sm_game::actors::shitroid_cutscene::Shitroid_Instr_2(k, j)];
+        11139360 => [sm_game::actors::shitroid_encounter::Shitroid_Instr_3(k, j)]; 11139382 => [sm_game::actors::shitroid_encounter::Shitroid_Instr_4(k, j)];
+        11139472 => [sm_game::actors::shitroid_encounter::Shitroid_Instr_6(k, j)];
         11190984 => [sm_aa::Torizo_Instr_7(k, j)];
         11196831 => [sm_aa::Shaktool_Instr_6(k, j)];
         10664371 => [{

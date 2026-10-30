@@ -476,7 +476,6 @@ pub mod game {
     pub(crate) mod shooting_star_motion;
     pub(crate) mod title_screen;
     pub(crate) use sm_game::shaktool_tables;
-    pub(crate) use sm_game::shitroid_tables;
     pub(crate) mod visual_checks;
     pub(crate) mod vram_read_queue;
     pub(crate) mod xray_background;

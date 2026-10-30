@@ -4,10 +4,7 @@ use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game_state::Game;
 use crate::types::{Rect16U, SpawnHardcodedPlmArgs, VoidP};
 use sm_game::actors::shitroid;
-pub(crate) use sm_game::actors::shitroid::{
-    Host, accelerate_towards_x, accelerate_towards_y, handle_cry, is_off_screen,
-    separated_from_enemy, wait_for_camera,
-};
+pub(crate) use sm_game::actors::shitroid::Host;
 
 /// Check for enemy collision with rectangle ($A9:EF06), from a `Rect16U`.
 pub(crate) fn separated_from_rect(k: u16, rect: Rect16U, game: &mut Game) -> u8 {
