@@ -1192,7 +1192,6 @@ expect = ["room:DA60"]
 # tail whips before she dies.
 [[segment]]
 id = "boss-draygon-final-whips"
-pending = "awaiting the seeds-v1-final-whips-6295d2432aa88773 ci-data upload"
 seed = "100-boundary:259"
 seed_sha256 = "d8a5b0b9a72ca9d31ab86d21c2ef931303f3a6b48459b057a8db309fe89723d7"
 inputs = "authored-draygon-final-whips.inputs"
