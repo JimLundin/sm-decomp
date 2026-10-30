@@ -74,6 +74,9 @@ pub fn advance_fireflea_lighting<H: crate::menus::host::Host + ?Sized>(game: &mu
     game.ram().write_byte(0x74, shade | 0x20);
 }
 
+/// The least earthquake timer a room shake sets.
+const EARTHQUAKE_TIMER: u16 = 0x20;
+
 pub fn shake_room_with_sound<H: crate::menus::host::Host + ?Sized>(kind: u16, game: &mut H) {
     static SOUNDS: [u16; 17] = [
         0x46, 1, 0x46, 3, 0x46, 2, 0x46, 1, 0x46, 1, 0x46, 2, 0x46, 2, 0x46, 1, 0x8000,
@@ -99,7 +102,7 @@ pub fn shake_room_with_sound<H: crate::menus::host::Host + ?Sized>(kind: u16, ga
     crate::room_view::set_effect(
         game,
         crate::room_view::EffectWord::EarthquakeTimer,
-        crate::room_view::effects(game).earthquake_timer | (0x20),
+        crate::room_view::effects(game).earthquake_timer | EARTHQUAKE_TIMER,
     );
 }
 
@@ -146,10 +149,14 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + ?Sized>(
         Shaking => {
             object.c = object.c.wrapping_sub(1);
             if object.c & 0x8000 != 0 {
+                // The spawns take their initialisation parameter from A: the
+                // shake's earthquake timer 20h ($88:DC2C), then each spawn's
+                // returned slot.
+                let mut parameter = EARTHQUAKE_TIMER;
                 for _ in 0..4 {
-                    game.spawn_room_enemy_projectile(
+                    parameter = game.spawn_room_enemy_projectile(
                         ADDR_K_EPROJ_TOURIAN_STATUE_DUST_CLOUDS as u16,
-                        0,
+                        parameter,
                     );
                 }
                 advance_statue_program(object);

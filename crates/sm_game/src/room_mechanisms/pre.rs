@@ -49,7 +49,9 @@ pub fn run(c: &mut impl Host, ea: u32, k: u16) {
                 };
                 mechanism!(c, slot, instruction_delay = 1);
                 if ea == addresses::pre::TOURIAN_SHAFT_WALL_EXPLODE {
-                    c.enemy_projectile(0xb4b1, 0);
+                    // The spawn's initialisation parameter is A, still the 1
+                    // just stored as the instruction delay.
+                    c.enemy_projectile(0xb4b1, 1);
                 } else {
                     c.session_mut().room.liquid_velocity = (-104i16) as u16;
                     c.session_mut().room.liquid_delay = 16;

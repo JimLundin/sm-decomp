@@ -126,9 +126,11 @@ pub fn initialize_tourian_statue<H: Host + ?Sized>(game: &mut H) {
             .instruction_list;
     slot!(game, Decoration[me].base.current_instruction = list);
     if slot!(game, Decoration[me].kind) == 0 {
-        game.spawn_room_projectile(BASE_DECORATION, 0);
-        game.spawn_room_projectile(RIDLEY, 0);
-        game.spawn_room_projectile(PHANTOON, 0);
+        // The spawns take their initialisation parameter from A: the
+        // instruction list just stored, then each spawn's returned slot.
+        let base = game.spawn_room_projectile(BASE_DECORATION, list);
+        let ridley = game.spawn_room_projectile(RIDLEY, base);
+        game.spawn_room_projectile(PHANTOON, ridley);
     }
     crate::word_transfers!(game, descending, 16;
         le(TARGET_PALETTES, 255) <- rom(TOURIAN_STATUE_BASE_PALETTE, 15),
