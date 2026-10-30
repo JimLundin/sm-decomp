@@ -3,9 +3,9 @@
 #![forbid(unsafe_code)]
 use crate::game::actors::{api::DeathKind, combat};
 use crate::game::session_runtime::{Runtime, actor_cosine, actor_sine};
-use crate::game::visual_runtime::darken_fireflea_room;
 use crate::game_state::Game;
 pub(crate) use sm_game::actors::fireflea::*;
+use sm_game::room_visuals::darken_fireflea_room;
 
 impl Host for Game {
     fn actor_cosine(&mut self, angle: u16, amplitude: u16) -> u16 {

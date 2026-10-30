@@ -30,7 +30,7 @@ impl Ai for Game {
 
 // The named bank $AA functions are the ones `DispatchEnemyPreInstr` dispatches on.
 const _: () = {
-    use crate::game::constants::bank_aa::fnnullsub_274;
+    use sm_game::constants::bank_aa::fnnullsub_274;
     const fn at(word: u16) -> u32 {
         0xaa_0000 | word as u32
     }

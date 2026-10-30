@@ -80,7 +80,7 @@ fn reserves<H: Host + ?Sized>(game: &mut H) {
         |game| super::reserve_tanks::toggle_mode(game),
         |game| super::reserve_tanks::transfer_manual(game),
     ];
-    ACTIONS[usize::from(crate::menu!(game.pausemenu_equipment_category_item) >> 8)](game);
+    actions[usize::from(crate::menu!(game.pausemenu_equipment_category_item) >> 8)](game);
     let previous = crate::menu!(game.pausemenu_equipment_category_item);
     if game.observed_inputs().pressed & kButton_Right as u16 != 0 {
         if game.observed_inputs().pressed & kButton_Down as u16 != 0
