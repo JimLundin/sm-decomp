@@ -56,6 +56,7 @@ pub(in crate::game) use sm_game::actors::queries;
 pub(in crate::game) use sm_game::actors::scheduling;
 pub(in crate::game) use sm_game::actors::staging;
 mod runtime_host;
+mod species_host;
 
 pub(crate) fn prepare_room_assets(h: &mut crate::game::session_runtime::Runtime<'_>) {
     staging::prepare_room_assets(h);

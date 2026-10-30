@@ -590,6 +590,14 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/actors/phantoon_actions.rs"),
     ),
     (
+        "sm/src/game/actors/ridley_tables.rs",
+        include_bytes!("game/actors/ridley_tables.rs"),
+    ),
+    (
+        "sm/src/game/actors/species_host.rs",
+        include_bytes!("game/actors/species_host.rs"),
+    ),
+    (
         "sm/src/game/actors/runtime_host.rs",
         include_bytes!("game/actors/runtime_host.rs"),
     ),
