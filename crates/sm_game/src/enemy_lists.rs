@@ -15,7 +15,7 @@ pub struct ImportedEnemyLists {
     spark: ImportedWords<SPARK_INSTRUCTION_LISTS, SPARK_KINDS>,
     spark_functions: ImportedWords<SPARK_FUNCTIONS, SPARK_KINDS>,
     face_block_glow: ImportedWords<FACE_BLOCK_GLOW_COLOURS, FACE_BLOCK_GLOW_WORDS>,
-    ki_hunter_wings: ImportedWords<KI_HUNTER_WING_INSTRUCTION_LISTS, KI_HUNTER_WING_LISTS>,
+    kihunter_wings: ImportedWords<KIHUNTER_WING_INSTRUCTION_LISTS, KIHUNTER_WING_LISTS>,
     floater_spikes: ImportedWords<FLOATER_SPIKE_INSTRUCTION_LISTS, FLOATER_SPIKE_LISTS>,
     eye: ImportedWords<EYE_INSTRUCTION_LISTS, EYE_FACINGS>,
     pipe_bug: ImportedWords<PIPE_BUG_INSTRUCTION_LISTS, PIPE_BUG_PHASES>,
@@ -28,7 +28,7 @@ pub fn import(image: &RomImage) -> ImportedEnemyLists {
         spark: ImportedWords::import(image),
         spark_functions: ImportedWords::import(image),
         face_block_glow: ImportedWords::import(image),
-        ki_hunter_wings: ImportedWords::import(image),
+        kihunter_wings: ImportedWords::import(image),
         floater_spikes: ImportedWords::import(image),
         eye: ImportedWords::import(image),
         pipe_bug: ImportedWords::import(image),
@@ -60,9 +60,9 @@ pub fn face_block_glow_colour(game: &(impl Records + ?Sized), index: isize) -> u
     lists(game).face_block_glow.word(game.loaded_image(), index)
 }
 
-/// $A8:F3B0: a Ki-Hunter wing instruction list.
-pub fn ki_hunter_wing_instruction_list(game: &(impl Records + ?Sized), index: isize) -> u16 {
-    lists(game).ki_hunter_wings.word(game.loaded_image(), index)
+/// $A8:F3B0: a Kihunter wing instruction list.
+pub fn kihunter_wing_instruction_list(game: &(impl Records + ?Sized), index: isize) -> u16 {
+    lists(game).kihunter_wings.word(game.loaded_image(), index)
 }
 
 /// $A8:C599: a Maridia floater spike instruction list.

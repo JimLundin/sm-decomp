@@ -12,35 +12,35 @@ pub fn prepare_credit_roll<H: crate::menus::host::Host + ?Sized>(
 ) -> u32 {
     crate::word_transfers!(game, descending, 1024; native(0x37fe) <- value(0x7f));
     word! { game, 0;
-        cinematic_var26, cinematic_var21, cinematic_var22, cinematic_var23, cinematic_var24,
+        credits_tilemap_row, credits_instr_list, credits_instruction_timer, credits_timer, credits_pre_instruction,
     }
-    word!(game.cinematicbg_var3 = 18432);
+    word!(game.cinematic_bg_vram_address = 18432);
     word! { game, 0;
-        last_credits_update_y, cinematic_var7, cinematic_var8, cinematic_var9, cinematic_var10,
+        last_credits_update_y, cinematic_x_sub, cinematic_x, cinematic_y_sub, cinematic_y,
     }
-    word!(game.cinematic_var25 |= 0x8000);
+    word!(game.credits_enabled |= 0x8000);
     word! { game, 3; screen_fade_delay, screen_fade_counter }
     let record = cinematic_native_record::<0x8b>(definition, game);
-    word! {game; cinematic_var24 = record.word(2); cinematic_var21 = record.word(4);
-    cinematic_var22 = 1; cinematic_var23 = 0; }
+    word! {game; credits_pre_instruction = record.word(2); credits_instr_list = record.word(4);
+    credits_instruction_timer = 1; credits_timer = 0; }
     0x8b0000 | u32::from(record.word(0))
 }
 
 // False leaves the legacy invalid-opcode report to the bank, before its upload.
 pub fn advance_credit_roll<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> bool {
     // The original pair reads native low then high and writes low before high.
-    let (fraction, carry) = u16::from_le(word!(game.cinematic_var9)).overflowing_add(0x8000);
-    let whole = u16::from_le(word!(game.cinematic_var10)).wrapping_add(u16::from(carry));
-    word!(game.cinematic_var9 = fraction.to_le());
-    word!(game.cinematic_var10 = whole.to_le());
-    if (i32::from(word!(game.cinematic_var10)) - i32::from(word!(game.last_credits_update_y)) - 8)
+    let (fraction, carry) = u16::from_le(word!(game.cinematic_y_sub)).overflowing_add(0x8000);
+    let whole = u16::from_le(word!(game.cinematic_y)).wrapping_add(u16::from(carry));
+    word!(game.cinematic_y_sub = fraction.to_le());
+    word!(game.cinematic_y = whole.to_le());
+    if (i32::from(word!(game.cinematic_y)) - i32::from(word!(game.last_credits_update_y)) - 8)
         & 0x8000
         != 0
     {
         return true;
     }
-    word!(game.last_credits_update_y = word!(game.cinematic_var10));
-    let mut cursor = word!(game.cinematic_var21);
+    word!(game.last_credits_update_y = word!(game.cinematic_y));
+    let mut cursor = word!(game.credits_instr_list);
     loop {
         let record = cinematic_native_record::<0x8c>(cursor, game);
         let command = record.word(0);
@@ -50,32 +50,32 @@ pub fn advance_credit_roll<H: crate::menus::host::Host + ?Sized>(game: &mut H) -
         cursor = cursor.wrapping_add(2);
         match 0x8b0000 | u32::from(command) {
             0x8b99fe => {
-                word!(game.cinematic_var21 = 0);
+                word!(game.credits_instr_list = 0);
                 return true;
             }
             0x8b9a06 => cursor = cinematic_native_record::<0x8c>(cursor, game).word(0),
             0x8b9a0d => {
-                cursor = if word!(game.cinematic_var23 -= 1, reread) != 0 {
+                cursor = if word!(game.credits_timer -= 1, reread) != 0 {
                     cinematic_native_record::<0x8c>(cursor, game).word(0)
                 } else {
                     cursor.wrapping_add(2)
                 };
             }
             0x8b9a17 => {
-                word!(game.cinematic_var23 = cinematic_native_record::<0x8c>(cursor, game).word(0));
+                word!(game.credits_timer = cinematic_native_record::<0x8c>(cursor, game).word(0));
                 cursor = cursor.wrapping_add(2);
             }
             0x8bf6fe => {
-                word!(game.cinematic_var25 &= !0x8000);
+                word!(game.credits_enabled &= !0x8000);
                 crate::word_transfers!(game, ascending, 252; le(palette_buffer, 4) <- rom(0x8ce7e9, 4));
                 game.ram().write_byte(0x69, 0); // reg_TM
                 game.ram().write_byte(0x51, 0x80); // reg_INIDISP
                 word! { game, 0;
-                    screen_fade_delay, screen_fade_counter, cinematic_var9, cinematic_var10,
+                    screen_fade_delay, screen_fade_counter, cinematic_y_sub, cinematic_y,
                 }
                 word!(game.shooting_stars_enabled = 1);
                 crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xe0f4);
-                word!(game.cinematic_var4 = 60);
+                word!(game.cinematic_function_timer = 60);
             }
             _ => return false,
         }
@@ -83,20 +83,20 @@ pub fn advance_credit_roll<H: crate::menus::host::Host + ?Sized>(game: &mut H) -
             return true;
         }
     }
-    let destination = u16::from(word!(game.cinematic_var26) as u8) * 0x40;
+    let destination = u16::from(word!(game.credits_tilemap_row) as u8) * 0x40;
     let source = 0x10000 + u32::from(cinematic_native_record::<0x8c>(cursor, game).word(2));
     crate::word_transfers!(game, ascending, 32; native(0x3000 + destination) <- native(source));
-    word!(game.cinematic_var26 = word!(game.cinematic_var26).wrapping_add(1) & 0x1f);
-    word!(game.cinematic_var21 = cursor.wrapping_add(4));
+    word!(game.credits_tilemap_row = word!(game.credits_tilemap_row).wrapping_add(1) & 0x1f);
+    word!(game.credits_instr_list = cursor.wrapping_add(4));
     true
 }
 
 // Credits retain native pre-instruction and failure order before their tilemap.
 #[forbid(unsafe_code)]
 pub fn advance_credits<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    if word!(game.cinematic_var25) & 0x8000 != 0 {
-        if word!(game.cinematic_var21) != 0 {
-            let command = 0x8b0000 | u32::from(word!(game.cinematic_var24));
+    if word!(game.credits_enabled) & 0x8000 != 0 {
+        if word!(game.credits_instr_list) != 0 {
+            let command = 0x8b0000 | u32::from(word!(game.credits_pre_instruction));
             crate::cinematic_objects::advance_cinematic_background_pre(command, 0, game);
             if !advance_credit_roll(game) {
                 game.rtl_unreachable();

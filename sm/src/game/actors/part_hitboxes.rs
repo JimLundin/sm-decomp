@@ -1,7 +1,7 @@
 //! Boss part hitboxes against Samus: a count word at bank $A9 followed by
 //! eight-byte boxes of left, top, right and bottom extents.
 #![forbid(unsafe_code)]
-use crate::game::constants::bank_a9::addr_kDeadTorizo_Hitbox_D77C;
+use crate::game::constants::bank_a9::ADDR_K_DEAD_TORIZO_HITBOX_D77C;
 use crate::game::session_runtime::native_record;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
@@ -78,5 +78,5 @@ pub(crate) fn dead_torizo_contact(game: &mut Game) -> bool {
         slot!(game, DeadTorizo[0].base.x_pos),
         slot!(game, DeadTorizo[0].base.y_pos),
     );
-    push_out(addr_kDeadTorizo_Hitbox_D77C as u16, x, y, game)
+    push_out(ADDR_K_DEAD_TORIZO_HITBOX_D77C as u16, x, y, game)
 }

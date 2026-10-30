@@ -17,7 +17,8 @@ use crate::actors::ridley::{
 };
 use crate::actors::session_slots::session_slot;
 use crate::constants::enemy_properties::{
-    kEnemyProps_BlockPlasmaBeam, kEnemyProps_Deleted, kEnemyProps_Invisible, kEnemyProps_Tangible,
+    K_ENEMY_PROPS_BLOCK_PLASMA_BEAM, K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE,
+    K_ENEMY_PROPS_TANGIBLE,
 };
 use crate::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
 use crate::projectile_geometry::SINE_COSINE;
@@ -121,9 +122,9 @@ pub fn init<L: Lease + ?Sized>(game: &mut L) {
         session_slot!(
             game,
             Ridley[RIDLEY].base.properties = session_slot!(game, Ridley[RIDLEY].base.properties)
-                | kEnemyProps_Tangible as u16
-                | kEnemyProps_Deleted as u16
-                | kEnemyProps_Invisible as u16
+                | K_ENEMY_PROPS_TANGIBLE as u16
+                | K_ENEMY_PROPS_DELETED as u16
+                | K_ENEMY_PROPS_INVISIBLE as u16
         );
         return;
     }
@@ -145,8 +146,8 @@ pub fn init<L: Lease + ?Sized>(game: &mut L) {
     session_slot!(
         game,
         Ridley[RIDLEY].base.properties = session_slot!(game, Ridley[RIDLEY].base.properties)
-            | kEnemyProps_BlockPlasmaBeam as u16
-            | kEnemyProps_Tangible as u16
+            | K_ENEMY_PROPS_BLOCK_PLASMA_BEAM as u16
+            | K_ENEMY_PROPS_TANGIBLE as u16
     );
     if word!(game.area_index) == NORFAIR {
         session_slot!(game, Ridley[RIDLEY].base.x_pos = 96);
@@ -391,7 +392,7 @@ pub fn fade_in_body<L: Lease + ?Sized>(game: &mut L) {
         session_slot!(
             game,
             Ridley[RIDLEY].base.properties = session_slot!(game, Ridley[RIDLEY].base.properties)
-                & !(kEnemyProps_Tangible as u16)
+                & !(K_ENEMY_PROPS_TANGIBLE as u16)
         );
         session_slot!(game, Ridley[RIDLEY].fade_index = 0);
         session_slot!(game, Ridley[RIDLEY].function = ceres_function::WAIT_TO_ROAR);

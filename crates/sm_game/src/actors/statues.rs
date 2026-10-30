@@ -11,7 +11,7 @@
 use crate::actors::host::{Slopes, abs16};
 use crate::actors::layouts::part_view;
 use crate::constants::enemy_properties::{
-    kEnemyProps_DisableSamusColl, kEnemyProps_ProcessedOffscreen,
+    K_ENEMY_PROPS_DISABLE_SAMUS_COLL, K_ENEMY_PROPS_PROCESSED_OFFSCREEN,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::RawRam as _;
@@ -39,7 +39,7 @@ part_view! {
     /// movement tables; `activated` starts the carry; `variant` is 0 in
     /// Wrecked Ship and 2 in Lower Norfair.
     Statue: EnemyLayout8 {
-        words: [var_A, var_B, movement, var_D, var_E, function, activated, variant],
+        words: [var_a, var_b, movement, var_d, var_e, function, activated, variant],
     }
 }
 
@@ -47,7 +47,7 @@ part_view! {
     /// The Tourian entrance statue's and n00b tube cracks' view of a slot:
     /// `kind` picks the statue part.
     Decoration: EnemyLayout8 {
-        words: [var_A, var_B, var_C, var_D, var_E, var_F, kind, parameter_2],
+        words: [var_a, var_b, var_c, var_d, var_e, var_f, kind, parameter_2],
     }
 }
 
@@ -149,8 +149,8 @@ pub fn initialize_chozo_statue<H: Host + ?Sized>(game: &mut H) {
     slot!(
         game,
         Statue[me].base.properties = (slot!(game, Statue[me].base.properties) as i32
-            | (kEnemyProps_DisableSamusColl as i32
-                | kEnemyProps_ProcessedOffscreen as i32
+            | (K_ENEMY_PROPS_DISABLE_SAMUS_COLL as i32
+                | K_ENEMY_PROPS_PROCESSED_OFFSCREEN as i32
                 | 0x8000)) as u16
     );
     slot!(
@@ -219,8 +219,8 @@ pub fn wrecked_ship<H: Host + ?Sized>(game: &mut H, k: u16) {
             );
             slot!(game, Statue[me].base.instruction_timer = 1);
             // Never read.
-            slot!(game, Statue[me].var_A = 0xff00);
-            slot!(game, Statue[me].var_B = 256);
+            slot!(game, Statue[me].var_a = 0xff00);
+            slot!(game, Statue[me].var_b = 256);
         }
     }
 }

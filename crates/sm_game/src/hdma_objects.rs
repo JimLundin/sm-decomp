@@ -41,7 +41,7 @@ pub enum HdmaEffect {
     AdvanceRainbowBeam,
 }
 use crate::cinematic::set_fixed_color;
-use crate::menus::prelude::SpawnHdmaObject_Args;
+use crate::menus::prelude::HdmaObjectDefinition;
 use sm_data::title_screen::GRADIENT_ADDRESS;
 
 /// Spawn the BG3 scroll object in the last slot, through the host.
@@ -54,11 +54,11 @@ pub fn spawn_bg3_scroll_owned<H>(game: &mut H)
 where
     H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
 {
-    let words = hdma_definition(&SpawnHdmaObject_Args::new(0x43, 0x11, 0xd8d0));
+    let words = hdma_definition(&HdmaObjectDefinition::new(0x43, 0x11, 0xd8d0));
     place_hdma(Some(5), 0x88, |index| words[index], game);
 }
 
-fn hdma_definition(args: &SpawnHdmaObject_Args) -> [u16; 2] {
+fn hdma_definition(args: &HdmaObjectDefinition) -> [u16; 2] {
     [
         u16::from_ne_bytes([args.dma_control, args.target_register]),
         args.instruction_list,
@@ -68,14 +68,14 @@ fn hdma_definition(args: &SpawnHdmaObject_Args) -> [u16; 2] {
 /// Spawn an HDMA object through the host; returns its slot.
 pub fn spawn_hdma<H: crate::menus::host::Host + ?Sized>(
     bank: u8,
-    args: &SpawnHdmaObject_Args,
+    args: &HdmaObjectDefinition,
     game: &mut H,
 ) -> u16 {
     crate::menus::host::MenuRuntime::spawn_hdma(game, bank, args)
 }
 
 /// The host's HDMA spawn on the owned table.
-pub fn spawn_hdma_owned<H>(bank: u8, args: &SpawnHdmaObject_Args, game: &mut H) -> u16
+pub fn spawn_hdma_owned<H>(bank: u8, args: &HdmaObjectDefinition, game: &mut H) -> u16
 where
     H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
 {
@@ -304,8 +304,8 @@ where
         && checked_word!(game.power_bomb_explosion_status) & 0x4000 != 0
     {
         checked_word!(game.power_bomb_explosion_status = 0x8000);
-        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x40, 0x28, 0x8ace), game);
-        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x40, 0x29, 0x8b80), game);
+        spawn_hdma(0x88, &HdmaObjectDefinition::new(0x40, 0x28, 0x8ace), game);
+        spawn_hdma(0x88, &HdmaObjectDefinition::new(0x40, 0x29, 0x8b80), game);
     }
     checked_word!(game.fx_layer_blending_config_c = checked_word!(game.fx_layer_blending_config_a));
     if checked_word!(game.hdma_objects_enable_flag) & 0x8000 != 0 {
@@ -319,7 +319,7 @@ pub(crate) fn refresh_title_gradient<H: crate::menus::host::Host + ?Sized>(game:
         &game.visual_tables().title_gradients,
         game,
         GRADIENT_ADDRESS,
-        ((word!(game.cinematic_var6) & 0xf0) >> 4) as isize,
+        ((word!(game.mode7_zoom) & 0xf0) >> 4) as isize,
     );
     for slot in 0usize.. {
         let value = cinematic_native_record::<0x8c>(cursor, game).word(0);

@@ -1,7 +1,7 @@
 //! The escape critters run in `sm_game::actors::escape_critters`; their
 //! table, events and movement come from here.
 #![forbid(unsafe_code)]
-use crate::game::gameplay_flag_runtime::CheckEventHappened;
+use crate::game::gameplay_flag_runtime::event_has_happened;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::rom::RomImage;
@@ -32,7 +32,7 @@ pub(crate) fn import(image: &RomImage) -> ImportedTables {
 
 impl Host for Game {
     fn event_happened(&mut self, event: u16) -> bool {
-        CheckEventHappened(event, self) != 0
+        event_has_happened(event, self) != 0
     }
 
     /// Other images and indices run the five original indexed loads.

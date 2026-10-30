@@ -98,7 +98,7 @@ pub trait MenuRuntime:
     fn spawn_hdma(
         &mut self,
         bank: u8,
-        args: &crate::display::hdma_spawn::SpawnHdmaObject_Args,
+        args: &crate::display::hdma_spawn::HdmaObjectDefinition,
     ) -> u16;
     /// The original's unreachable-state failure.
     fn rtl_unreachable(&mut self) -> bool;

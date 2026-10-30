@@ -210,7 +210,7 @@ crate::game::callback_dispatch! {
         }
     };
     [9496911] SamusMovementType_Xray [] {
-        if game.ram().read_byte(0xa1f) as i32 != kMovementType_0E_TurningAroundOnGround as i32 {
+        if game.ram().read_byte(0xa1f) as i32 != K_MOVEMENT_TYPE_0E_TURNING_AROUND_ON_GROUND as i32 {
             word!(game.samus_anim_frame_timer = 15);
             let frame = player_movement::xray_animation_frame(game.ram().read_byte(0xa1e), || {
                 word!(game.xray_angle)

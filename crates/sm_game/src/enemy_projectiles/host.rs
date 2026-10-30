@@ -35,7 +35,7 @@ pub trait Content {
     fn native_record(&mut self, bank: u8, bank_address: u16) -> Self::Native;
     // Reproduce current loaded table capture and read boundaries.
     fn screen_shake_word(&self, word_index: isize) -> u16;
-    fn waffle_sine_sample(&mut self, phase: u8) -> u8;
+    fn fire_arc_sine_sample(&mut self, phase: u8) -> u8;
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum EnemyMember {
@@ -91,7 +91,7 @@ pub trait ImportedAliases {
     fn behavior_byte(&self, block_index: u16) -> u8;
 }
 #[derive(Clone, Copy)]
-pub enum WaffleField {
+pub enum FireArcField {
     Behavior,
     Reverse,
     Radius,
@@ -130,8 +130,8 @@ pub trait SpeciesActors {
     fn mini_kraid_spit_x_velocity(&self, index: u16) -> u16;
     fn mini_kraid_spit_y_velocity(&self, index: u16) -> u16;
     fn mini_kraid_spit_x_offset(&self, index: u16) -> u16;
-    fn kraid_unk9000(&self) -> u16;
-    fn nuclear_waffle_part_offset(&self, index: u16) -> u16;
+    fn boss_death_quake_sound_timer(&self) -> u16;
+    fn fire_arc_part_offset(&self, index: u16) -> u16;
     fn enemy_projectile_origin_x(&self, index: u16) -> u16;
     fn enemy_projectile_origin_y(&self, index: u16) -> u16;
     fn maw_body_part_index(&self, index: u16) -> u16;
@@ -178,8 +178,8 @@ pub trait SpeciesActors {
     fn maw_segment_offset_y(&self, enemy: u16, part: u8) -> u16;
     fn maw_palette(&self, enemy: u16) -> u16;
     fn expanding_square_origin(&self) -> u16;
-    fn waffle_field(&self, enemy: usize, field: WaffleField) -> u16;
-    fn set_waffle_field(&mut self, enemy: usize, field: WaffleField, value: u16);
+    fn fire_arc_field(&self, enemy: usize, field: FireArcField) -> u16;
+    fn set_fire_arc_field(&mut self, enemy: usize, field: FireArcField, value: u16);
     fn botwoon_field(&self, enemy: usize, field: BotwoonField) -> u16;
     fn set_botwoon_field(&mut self, enemy: usize, field: BotwoonField, value: u16);
     fn botwoon_history_x(&self, cursor: u16) -> u16;

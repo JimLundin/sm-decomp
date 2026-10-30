@@ -56,5 +56,5 @@ pub(crate) fn flag_command(h: &mut impl Host, identity: u32, k: u16, address: u1
     position
 }
 pub(crate) fn eye_door(h: &mut impl Host, k: u16) {
-    pre_actions::EprojPreInstr_EyeDoorProjectile(k, h);
+    pre_actions::eye_door_projectile_moving_pre_instruction(k, h);
 }

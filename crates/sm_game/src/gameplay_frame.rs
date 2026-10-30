@@ -343,14 +343,14 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
     let mut stage = game.ram().read_byte(0x612);
     let mut waiting = stage >= 2;
     if stage == 0 {
-        let demo = u32::from(word!(game.game_state)) == kGameState_40_TransitionToDemo;
+        let demo = u32::from(word!(game.game_state)) == K_GAME_STATE_40_TRANSITION_TO_DEMO;
         if !demo {
             let loading = u32::from(word!(game.loading_game_state));
-            if loading == kLoadingGameState_1F_StartingAtCeres {
+            if loading == K_LOADING_GAME_STATE_1F_STARTING_AT_CERES {
                 game.runtime().session_mut().room.area = 6;
                 word!(game.load_station_index = 0);
                 escape_timer::clear(game);
-            } else if loading == kLoadingGameState_22_EscapingCeres {
+            } else if loading == K_LOADING_GAME_STATE_22_ESCAPING_CERES {
                 game.runtime().session_mut().room.area = 0;
                 word!(game.load_station_index = 18);
                 save_slots::load_area_map(game);
@@ -383,9 +383,11 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
         game.set_hdma_enabled(true);
         animated_tiles::set_enabled(game.runtime().session_mut(), true);
         crate::player_movement::speed::set_liquid_physics(&mut game.runtime());
-        stage = if u32::from(word!(game.game_state)) == kGameState_40_TransitionToDemo {
+        stage = if u32::from(word!(game.game_state)) == K_GAME_STATE_40_TRANSITION_TO_DEMO {
             2
-        } else if u32::from(word!(game.loading_game_state)) == kLoadingGameState_22_EscapingCeres {
+        } else if u32::from(word!(game.loading_game_state))
+            == K_LOADING_GAME_STATE_22_ESCAPING_CERES
+        {
             game.queue_music_delayed8(5);
             3
         } else {
@@ -418,13 +420,15 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
             demo_rooms::finish_setup(game);
         }
         if stage == 4 {
-            word!(game.game_state = kGameState_7_MainGameplayFadeIn as u16);
+            word!(game.game_state = K_GAME_STATE_7_MAIN_GAMEPLAY_FADE_IN as u16);
         } else {
             word!(game.game_state += 1);
         }
         word_transfers!(game, ascending, 256; native(0xc000) <- le(target_palettes, 0));
         if stage == 4 {
-            if u32::from(word!(game.loading_game_state)) == kLoadingGameState_1F_StartingAtCeres {
+            if u32::from(word!(game.loading_game_state))
+                == K_LOADING_GAME_STATE_1F_STARTING_AT_CERES
+            {
                 word!(game.palette_buffer[223] = 0);
                 game.player_command(8);
             } else {
@@ -459,9 +463,9 @@ fn stop_demo<H: Host>(game: &mut H) -> CoroutineRet {
 
 /// Demo phase: choose the next demo or title step.
 fn next_demo<H: Host>(game: &mut H) -> CoroutineRet {
-    word!(game.game_state = kGameState_1_OpeningCinematic as u16);
+    word!(game.game_state = K_GAME_STATE_1_OPENING_CINEMATIC as u16);
     if (word!(game.substate) & 0x8000) != 0 {
-        word!(game.game_state = kGameState_40_TransitionToDemo as u16);
+        word!(game.game_state = K_GAME_STATE_40_TRANSITION_TO_DEMO as u16);
     } else if word!(game.substate) != 0 {
         game.load_title_sequence_graphics();
         word!(game.eproj_x_pos[4] = 2);
@@ -620,9 +624,9 @@ fn exit_time_up<H: Host>(game: &mut H) -> CoroutineRet {
                 crate::menu!(game.menu_index = 0);
             }
             word_transfers!(game, descending, 128; le(eproj_y_subpos, 142) <- value(0));
-            word!(game.game_state = kGameState_25_SamusNoHealth as u16);
+            word!(game.game_state = K_GAME_STATE_25_SAMUS_NO_HEALTH as u16);
         } else {
-            word!(game.game_state = kGameState_37_CeresGoesBoomWithSamus as u16);
+            word!(game.game_state = K_GAME_STATE_37_CERES_GOES_BOOM_WITH_SAMUS as u16);
             crate::flow::set(
                 game,
                 crate::flow::Word::CinematicFunction,
@@ -644,7 +648,7 @@ fn pass<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
         && game.ram().read_byte(0x612) == 0
         && reserve_tanks::refill_auto(game) != 0
     {
-        word! {game; time_is_frozen_flag = 0; game_state = kGameState_8_MainGameplay as u16; }
+        word! {game; time_is_frozen_flag = 0; game_state = K_GAME_STATE_8_MAIN_GAMEPLAY as u16; }
         game.player_command(0x10);
     }
     let yielded = advance_gameplay(game);
@@ -780,7 +784,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                 if matches!(entry, Entry::FadeIn) {
                     word!(game.game_state += 1);
                 } else {
-                    word!(game.game_state = kGameState_8_MainGameplay as u16);
+                    word!(game.game_state = K_GAME_STATE_8_MAIN_GAMEPLAY as u16);
                 }
             }
         }
@@ -801,8 +805,8 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                         game_options_screen_index, screen_fade_delay, screen_fade_counter,
                     }
                     word_transfers!(game, descending, 128; le(eproj_y_subpos, 142) <- value(0));
-                    word! {game; g_word_7E0DE8 = 16; game_options_screen_index = 3; }
-                    word! { game, 0; g_word_7E0DE4, g_word_7E0DE6 }
+                    word! {game; death_flash_timer = 16; game_options_screen_index = 3; }
+                    word! { game, 0; death_index, death_counter }
                     word!(game.game_state += 1);
                     word!(game.power_bomb_explosion_status = 0);
                     cancel_sound_effects(game, 15);
@@ -810,7 +814,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                     game.queue_music_delayed8(0xff39);
                     game.queue_music_delayed(5, 0xe);
                 } else {
-                    word!(game.game_state = kGameState_36_WhitingOutFromTimeUp as u16);
+                    word!(game.game_state = K_GAME_STATE_36_WHITING_OUT_FROM_TIME_UP as u16);
                     word! { game, 0; screen_fade_delay, screen_fade_counter }
                 }
             }
@@ -825,7 +829,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
             word_transfers!(game, descending, 16; le(target_palettes, 207) <- le(palette_buffer, 207));
             word!(game.game_options_screen_index = 3);
             word! { game, 0;
-                g_word_7E0DE4, g_word_7E0DE6, g_word_7E0DE8, hud_item_index,
+                death_index, death_counter, death_flash_timer, hud_item_index,
                 samus_auto_cancel_hud_item_index, samus_invincibility_timer, samus_knockback_timer,
             }
             word!(game.game_state += 1);
@@ -838,7 +842,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                 finish_gameplay(ceres, game);
                 word! { game, 0; screen_fade_delay, screen_fade_counter }
                 if ceres {
-                    word!(game.loading_game_state = kLoadingGameState_22_EscapingCeres as u16);
+                    word!(game.loading_game_state = K_LOADING_GAME_STATE_22_ESCAPING_CERES as u16);
                     word!(game.game_state = 34);
                     save_slots::save(word!(game.selected_save_slot), game);
                     crate::flow::set(
@@ -848,7 +852,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                     );
                     word! { game, 0; ceres_status, timer_status }
                 } else {
-                    word!(game.game_state = kGameState_39_EndingAndCredits as u16);
+                    word!(game.game_state = K_GAME_STATE_39_ENDING_AND_CREDITS as u16);
                     crate::flow::set(
                         game,
                         crate::flow::Word::CinematicFunction,

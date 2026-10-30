@@ -1,5 +1,5 @@
 //! Room, X-ray and Power Bomb layer/window composition.
-use crate::constants::bank_8f::{addr_kRoom_a66a, addr_kRoom_cefb};
+use crate::constants::bank_8f::{ADDR_K_ROOM_A66A, ADDR_K_ROOM_CEFB};
 use crate::menus::prelude::*;
 use crate::ram::RawRam as _;
 
@@ -95,7 +95,7 @@ pub fn update<H: crate::ram::RamHost + crate::runtime_access::RuntimeAccess + ?S
             };
         }
         if configuration & 0x8000 != 0 {
-            if room_key(game) == addr_kRoom_a66a as u16 {
+            if room_key(game) == ADDR_K_ROOM_A66A as u16 {
                 bomb_mode = 6;
             }
             let special = bomb_mode == 4;
@@ -140,7 +140,7 @@ pub fn update<H: crate::ram::RamHost + crate::runtime_access::RuntimeAccess + ?S
                 ],
                 game,
             );
-            if room_key(game) == addr_kRoom_cefb as u16 {
+            if room_key(game) == ADDR_K_ROOM_CEFB as u16 {
                 game.ram().write_byte(0x69, 17);
             }
         } else if configuration & 0x1000 != 0 {

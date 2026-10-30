@@ -2,8 +2,8 @@
 // Translated modules keep the compat crate's lint policy for their original names.
 pub mod access;
 pub mod addresses;
+pub mod attachments_fire_arc_botwoon;
 pub mod attachments_spore_maw;
-pub mod attachments_waffle_botwoon;
 pub mod collision;
 #[allow(
     dead_code,

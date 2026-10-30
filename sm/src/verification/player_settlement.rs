@@ -140,7 +140,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                 (ram::controller1_new_input_for_demo, 0x200),
                 (ram::demo_backup_prev_controller_input, 0x400),
                 (ram::demo_backup_prev_controller_input_new, 0x800),
-                (ram::cinematic_var15, 0),
+                (ram::intro_samus_display, 0),
             ] {
                 put(game, at, value);
             }

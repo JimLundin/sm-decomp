@@ -26,7 +26,7 @@ pub struct SporeSpawn {
 }
 
 same_words!(SporeSpawn: EnemyLayout104 {
-    function = var_A, max_x_radius = var_0B, angle_delta = var_0C, damaged = var_2F,
+    function = var_a, max_x_radius = var_0b, angle_delta = var_0c, damaged = var_2f,
 });
 
 /// Bank $A5 Spore Spawn instructions.

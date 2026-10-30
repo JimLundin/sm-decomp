@@ -53,7 +53,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
     put(game, w::samus_y_pos, [0xffff, 0, 160, 0x8000][mode]);
     put(game, w::layer1_x_pos, [0, 128, 0xff00, 0x8000][mode]);
     put(game, w::layer1_y_pos, [0, 128, 0xff00, 0x8000][mode]);
-    put(game, w::eproj_unk1995, [0, 63, 128, 255][mode]);
+    put(game, w::eproj_init_param_2, [0, 63, 128, 255][mode]);
     game.eproj_spawn_pt = Point16U {
         x: [0, 0xffff, 1, 0x8000][mode],
         y: [0xffff, 0, 0x8000, 1][mode],
@@ -79,11 +79,11 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
             ),
             (core::mem::offset_of!(EnemyData, parameter_2), mode as u16),
             (
-                core::mem::offset_of!(EnemyData, ai_var_A),
+                core::mem::offset_of!(EnemyData, ai_var_a),
                 [0, 0x100, 0xff00, 0x8000][mode],
             ),
             (
-                core::mem::offset_of!(EnemyData, ai_var_D),
+                core::mem::offset_of!(EnemyData, ai_var_d),
                 [0, 0x3f, 0x8080, 0xffff][mode],
             ),
         ] {
@@ -125,7 +125,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         // This is a linked enemy byte handle, not a velocity.
         put(
             game,
-            0xf78 + core::mem::offset_of!(EnemyData, ai_var_A),
+            0xf78 + core::mem::offset_of!(EnemyData, ai_var_a),
             (mode as u16) * 2,
         );
     }

@@ -60,7 +60,7 @@ const DEMO_DELAY: u16 = 900;
 /// $7E:1C1D, the cinematic object RAM the finish clears.
 const CINEMATIC_OBJECTS: usize = 0x1c1d;
 
-/// The cinematic transition states in `cinematic_var18`.
+/// The cinematic transition states in `skip_to_title_index`.
 fn run_transition<H: Host + ?Sized>(state: u16, game: &mut H) {
     let transitions: [Option<fn(&mut H)>; 4] = [
         None,
@@ -74,8 +74,8 @@ fn run_transition<H: Host + ?Sized>(state: u16, game: &mut H) {
 /// Steps the current transition between the title and the demos. Was
 /// `HandleCinematicsTransitions`.
 pub fn handle_transitions<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.cinematic_var18) != 0 {
-        let state = word!(game.cinematic_var18);
+    if word!(game.skip_to_title_index) != 0 {
+        let state = word!(game.skip_to_title_index);
         run_transition(state, game);
     }
 }
@@ -83,7 +83,7 @@ pub fn handle_transitions<H: Host + ?Sized>(game: &mut H) {
 /// Was `HandleCinematicsTransitions_1`.
 fn fade_out_to_demo<H: Host + ?Sized>(game: &mut H) {
     if advance_cinematic_fade(CinematicFade::FastOut, game) {
-        word!(game.cinematic_var18 = 2);
+        word!(game.skip_to_title_index = 2);
         word!(game.cinematic_function = function::WAITING);
         game.queue_music_delayed8(DEMO_MUSIC);
     }
@@ -97,16 +97,16 @@ fn start_demo_logo<H: Host + ?Sized>(game: &mut H) {
     spawn(game, CinematicObjects::Sprites, object::DEMO_LOGO, 0x0400);
     word!(game.screen_fade_delay = 0);
     word!(game.screen_fade_counter = 2);
-    word!(game.cinematic_var6 = 256);
-    word!(game.cinematic_var8 = 0);
-    word!(game.cinematic_var7 = 0);
-    word!(game.cinematic_var10 = 0);
-    word!(game.cinematic_var9 = 0);
-    word!(game.g_word_7E199B = 0);
-    word!(game.g_word_7E1999 = 0);
-    word!(game.g_word_7E199F = 0);
-    word!(game.g_word_7E199D = 0);
-    word!(game.cinematic_var18 = 3);
+    word!(game.mode7_zoom = 256);
+    word!(game.cinematic_x = 0);
+    word!(game.cinematic_x_sub = 0);
+    word!(game.cinematic_y = 0);
+    word!(game.cinematic_y_sub = 0);
+    word!(game.cinematic_x_speed = 0);
+    word!(game.cinematic_x_subspeed = 0);
+    word!(game.cinematic_y_speed = 0);
+    word!(game.cinematic_y_subspeed = 0);
+    word!(game.skip_to_title_index = 3);
     crate::word_transfers!(game, ascending, 128; le(palette_buffer, 128) <- rom(TITLE_PALETTES, 128));
     word!(game.palette_buffer[201] = 0x7fff);
     word!(game.palette_buffer[202] = 32128);
@@ -121,7 +121,7 @@ fn start_demo_logo<H: Host + ?Sized>(game: &mut H) {
 /// Was `HandleCinematicsTransitions_3`.
 fn fade_in_title<H: Host + ?Sized>(game: &mut H) {
     if advance_cinematic_fade(CinematicFade::FastIn, game) {
-        word!(game.cinematic_var18 = 0);
+        word!(game.skip_to_title_index = 0);
         word!(game.demo_timer = DEMO_DELAY);
         word!(game.cinematic_function = function::TITLE_SCREEN);
     }
@@ -171,10 +171,10 @@ pub fn setup<H: Host + ?Sized>(game: &mut H) {
 /// `CinematicFunc_Func7`.
 pub fn zooming_out<H: Host + ?Sized>(game: &mut H) {
     if (word!(game.nmi_frame_counter_word) & 1) == 0 {
-        if ((word!(game.cinematic_var6)).wrapping_sub(256) as i16) < 0 {
-            word!(game.cinematic_var6 = word!(game.cinematic_var6).wrapping_add(1));
+        if ((word!(game.mode7_zoom)).wrapping_sub(256) as i16) < 0 {
+            word!(game.mode7_zoom = word!(game.mode7_zoom).wrapping_add(1));
         } else {
-            word!(game.cinematic_var6 = 256);
+            word!(game.mode7_zoom = 256);
             word!(game.cinematic_function = function::WAITING);
             spawn(
                 game,
@@ -197,7 +197,7 @@ fn finish<H: Host + ?Sized>(next: u16, game: &mut H, clear_index: impl FnOnce(&m
     word!(game.reg_BG3HOFS = 0);
     word!(game.reg_BG2VOFS = 0);
     word!(game.reg_BG3VOFS = 0);
-    word!(game.cinematic_var5 = 0);
+    word!(game.mode7_angle = 0);
     word!(game.cinematic_function = function::SETUP);
     game.set_palette_effects_enabled(false);
     game.clear_palette_effects();

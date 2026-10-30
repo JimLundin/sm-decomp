@@ -85,21 +85,21 @@ pub struct Botwoon {
 }
 
 same_words!(Botwoon: EnemyLayout104 {
-    body_projectile_index = var_A, position_history_index = var_B, body_travel_time = var_C,
-    function = var_D, movement_function = var_E, head_function = var_F, initial_delay = var_20,
+    body_projectile_index = var_a, position_history_index = var_b, body_travel_time = var_c,
+    function = var_d, movement_function = var_e, head_function = var_f, initial_delay = var_20,
     spit_timer = var_21, pre_death_counter = var_22, death_counter = var_23,
     large_wall_explosion_timer = var_24, wall_smoke_timer = var_25, unread_counter = var_26,
-    falling_y_speed_index = var_28, unread_801c = var_2E, head_hidden = var_33,
+    falling_y_speed_index = var_28, unread_801c = var_2e, head_hidden = var_33,
     previous_head_hidden = var_34, hole_collision_disabled = var_35, target_history_index = var_36,
-    target_hole = var_37, speed = var_38, unread_hole_angle = var_39, target_hole_angle = var_3A,
-    instruction_list = var_3B, going_through_hole = var_3C, spit_angle = var_3D,
-    speed_table_index = var_3F, movement_table_index = var_40, unused_8802 = var_41,
+    target_hole = var_37, speed = var_38, unread_hole_angle = var_39, target_hole_angle = var_3a,
+    instruction_list = var_3b, going_through_hole = var_3c, spit_angle = var_3d,
+    speed_table_index = var_3f, movement_table_index = var_40, unused_8802 = var_41,
     movement_data_pointer = var_42, movement_direction = var_44, smoothed_angle = var_45,
-    unused_8816 = var_4B, palette_data_offset = var_4E, health_palette_index = var_4F,
+    unused_8816 = var_4b, palette_data_offset = var_4e, health_palette_index = var_4f,
     x_1_frame_ago = var_50, y_1_frame_ago = var_51, x_2_frames_ago = var_52,
     y_2_frames_ago = var_53, x_3_frames_ago = var_54, y_3_frames_ago = var_55,
     x_4_frames_ago = var_56, y_4_frames_ago = var_57, initial_leave_hole_action = var_59,
-    spitting = var_5A, max_health = var_5B, half_health = var_5C, quarter_health = var_5D,
+    spitting = var_5a, max_health = var_5b, half_health = var_5c, quarter_health = var_5d,
 });
 
 /// Bank $B3 Botwoon functions, stored in `function`.
@@ -133,8 +133,8 @@ pub mod head_function {
 /// $B3:9389: the hide instruction list.
 pub const HIDE: u16 = 0x9389;
 const BANK: u32 = 0xb3;
-/// Properties bit 10: intangible (the decompiler's `kEnemyProps_Tangible`).
-const INTANGIBLE: u16 = kEnemyProps_Tangible as u16;
+/// Properties bit 10: intangible (the decompiler's `K_ENEMY_PROPS_TANGIBLE`).
+const INTANGIBLE: u16 = K_ENEMY_PROPS_TANGIBLE as u16;
 const SIGN: i32 = 0x8000;
 /// Botwoon trails 24 body projectiles and waits 100h frames before its first move.
 const BODY_PROJECTILES: u16 = 24;
@@ -247,7 +247,7 @@ fn initialize_living<H: Host + ?Sized>(e: i32, game: &mut H) {
     slot!(game, Botwoon[e].body_projectile_index = BODY_PROJECTILES);
     loop {
         let k = word!(game.cur_enemy_index);
-        game.spawn_projectile(BODY_PROJECTILES, k, addr_kEproj_BotwoonsBody as u16);
+        game.spawn_projectile(BODY_PROJECTILES, k, ADDR_K_EPROJ_BOTWOONS_BODY as u16);
         slot!(game, Botwoon[e].body_projectile_index, |old| old
             .wrapping_sub(1));
         let finished = (slot!(game, Botwoon[e].body_projectile_index) as i16).wrapping_sub(1) < 0;
@@ -414,7 +414,10 @@ pub fn fall_to_ground<H: Host + ?Sized>(game: &mut H) {
         let x = slot!(game, Botwoon[e].base.x_pos);
         let y = slot!(game, Botwoon[e].base.y_pos);
         game.set_projectile_spawn_point(x, y);
-        game.spawn_room_projectile(addr_kEproj_DustCloudExplosion as u16, DUST_CLOUD_PARAMETER);
+        game.spawn_room_projectile(
+            ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16,
+            DUST_CLOUD_PARAMETER,
+        );
         game.queue_sound(1, SMALL_EXPLOSION, 6);
         slot!(game, Botwoon[e].base.properties, |old| old
             | LANDED_PROPERTIES);
@@ -459,7 +462,7 @@ pub fn crumbling_wall<H: Host + ?Sized>(k: u16, game: &mut H) {
         slot!(game, Botwoon[e].death_counter, |old| old.wrapping_add(1));
     } else {
         slot!(game, Botwoon[e].base.properties, |old| old
-            | kEnemyProps_Deleted as u16);
+            | K_ENEMY_PROPS_DELETED as u16);
         game.set_boss_bit(BOTWOON_DEAD);
         game.queue_music_delayed(ELEVATOR_MUSIC);
     }
@@ -720,7 +723,7 @@ pub fn head_spit<H: Host + ?Sized>(wide: bool, game: &mut H) {
     let speed = SPIT_SPEEDS[slot!(game, Botwoon[e].speed_table_index) as usize];
     for _ in 0..if wide { 5 } else { 3 } {
         let k = word!(game.cur_enemy_index);
-        game.spawn_projectile(speed, k, addr_kEproj_BotwoonsSpit as u16);
+        game.spawn_projectile(speed, k, ADDR_K_EPROJ_BOTWOONS_SPIT as u16);
         game.ram().write_byte(
             SPIT_PROJECTILE_ANGLE,
             game.ram()
@@ -797,7 +800,7 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
         game.open_passage();
         slot!(game, Botwoon[e].base.current_instruction = HIDE);
         slot!(game, Botwoon[e].base.properties, |old| old
-            | kEnemyProps_Deleted as u16);
+            | K_ENEMY_PROPS_DELETED as u16);
     } else {
         initialize_living(e, game);
     }

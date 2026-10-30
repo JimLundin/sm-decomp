@@ -17,20 +17,20 @@ part_view! {
     /// The roach's view of its slot and extended RAM. Each velocity is a
     /// subvelocity word then a velocity word.
     Roach: EnemyLayout72 {
-        words: [reverse_timer, function, custom_angle, var_D, var_E, movement_timer, speed_and_angle, range_and_activation],
+        words: [reverse_timer, function, custom_angle, var_d, var_e, movement_timer, speed_and_angle, range_and_activation],
         pad1: [u8; 26696],
         words: [
             forward_x, forward_x_high, forward_y, forward_y_high, left_x, left_x_high, left_y,
             left_y_high, right_x, right_x_high, right_y, right_y_high, custom_x, custom_x_high,
             custom_y, custom_y_high, var_10, var_11, var_12, var_13, var_14, var_15, var_16, var_17,
-            var_18, var_19, var_1A, var_1B, var_1C, var_1D, var_1E, var_1F,
+            var_18, var_19, var_1a, var_1b, var_1c, var_1d, var_1e, var_1f,
         ],
         pad2: [u8; 1984],
         words: [
             forward_list_index, left_list_index, right_list_index, custom_list_index,
-            new_instruction_list, instruction_list, var_26, var_27, var_28, var_29, var_2A, var_2B,
-            var_2C, var_2D, var_2E, var_2F, var_30, var_31, var_32, var_33, var_34, var_35, var_36,
-            var_37, var_38, var_39, var_3A, var_3B, var_3C, var_3D, var_3E, var_3F,
+            new_instruction_list, instruction_list, var_26, var_27, var_28, var_29, var_2a, var_2b,
+            var_2c, var_2d, var_2e, var_2f, var_30, var_31, var_32, var_33, var_34, var_35, var_36,
+            var_37, var_38, var_39, var_3a, var_3b, var_3c, var_3d, var_3e, var_3f,
         ],
     }
 }

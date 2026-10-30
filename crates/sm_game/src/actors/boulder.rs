@@ -6,7 +6,7 @@
 #![forbid(unsafe_code)]
 use crate::actors::host::{Axis, Slopes};
 use crate::actors::layouts::{EnemyBase, EnemyLayout40};
-use crate::constants::enemy_properties::{kEnemyProps_Deleted, kEnemyProps_Invisible};
+use crate::constants::enemy_properties::{K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE};
 use crate::ram::RawRam as _;
 use crate::ram::{slot, word};
 use sm_data::enemy_speeds::SpeedTable;
@@ -20,7 +20,6 @@ pub trait Host: crate::actors::host::BossEffects {
 /// The boulder's view of its `EnemyLayout40` slot.
 #[derive(Clone, Copy)]
 #[repr(C)]
-#[allow(non_snake_case)]
 pub struct Boulder {
     pub base: EnemyBase,
     /// Bank $A6 state function, one of [`state`].
@@ -33,7 +32,7 @@ pub struct Boulder {
     pub bounces_left: u16,
     /// One of [`kind`]: which way the boulder rolls, and whether it shatters.
     pub kind: u16,
-    pub var_F: u16,
+    pub var_f: u16,
     pub parameter_1: u16,
     pub parameter_2: u16,
     pub pad: [u8; 26696],
@@ -52,12 +51,12 @@ pub struct Boulder {
     pub starts_rolling: u16,
     pub var_08: u16,
     pub var_09: u16,
-    pub var_0A: u16,
-    pub var_0B: u16,
-    pub var_0C: u16,
-    pub var_0D: u16,
-    pub var_0E: u16,
-    pub var_0F: u16,
+    pub var_0a: u16,
+    pub var_0b: u16,
+    pub var_0c: u16,
+    pub var_0d: u16,
+    pub var_0e: u16,
+    pub var_0f: u16,
     pub var_10: u16,
     pub var_11: u16,
     pub var_12: u16,
@@ -68,17 +67,17 @@ pub struct Boulder {
     pub var_17: u16,
     pub var_18: u16,
     pub var_19: u16,
-    pub var_1A: u16,
-    pub var_1B: u16,
-    pub var_1C: u16,
-    pub var_1D: u16,
-    pub var_1E: u16,
-    pub var_1F: u16,
+    pub var_1a: u16,
+    pub var_1b: u16,
+    pub var_1c: u16,
+    pub var_1d: u16,
+    pub var_1e: u16,
+    pub var_1f: u16,
 }
 
 const _: () = {
     use core::mem::{offset_of, size_of};
-    assert!(offset_of!(Boulder, state) == offset_of!(EnemyLayout40, var_A));
+    assert!(offset_of!(Boulder, state) == offset_of!(EnemyLayout40, var_a));
     assert!(offset_of!(Boulder, parameter_2) == offset_of!(EnemyLayout40, parameter_2));
     assert!(offset_of!(Boulder, pad) == offset_of!(EnemyLayout40, pad1));
     assert!(offset_of!(Boulder, trigger_distance) == offset_of!(EnemyLayout40, var_00));
@@ -339,7 +338,7 @@ fn bounce_fall<H: Host + ?Sized>(game: &mut H) {
             slot!(
                 game,
                 Boulder[me].base.properties =
-                    (slot!(game, Boulder[me].base.properties)) | (kEnemyProps_Deleted as u16)
+                    (slot!(game, Boulder[me].base.properties)) | (K_ENEMY_PROPS_DELETED as u16)
             );
             shatter_dust(game, me);
         } else {
@@ -405,7 +404,7 @@ fn roll<H: Host + ?Sized>(game: &mut H) {
         slot!(
             game,
             Boulder[me].base.properties = (slot!(game, Boulder[me].base.properties))
-                | ((kEnemyProps_Invisible | kEnemyProps_Deleted) as u16)
+                | ((K_ENEMY_PROPS_INVISIBLE | K_ENEMY_PROPS_DELETED) as u16)
         );
         slot!(game, Boulder[me].state = state::STOPPED);
         game.queue_sound(1, LAND_SOUND, 6);

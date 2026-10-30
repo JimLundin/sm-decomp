@@ -1,8 +1,8 @@
 //! Controller sampling, repeat edges, menu filtering and action bindings.
 use super::prelude::*;
 use crate::constants::buttons::{
-    kButton_A, kButton_B, kButton_Down, kButton_L, kButton_Left, kButton_R, kButton_Right,
-    kButton_Select, kButton_Start, kButton_Up, kButton_X, kButton_Y,
+    K_BUTTON_A, K_BUTTON_B, K_BUTTON_DOWN, K_BUTTON_L, K_BUTTON_LEFT, K_BUTTON_R, K_BUTTON_RIGHT,
+    K_BUTTON_SELECT, K_BUTTON_START, K_BUTTON_UP, K_BUTTON_X, K_BUTTON_Y,
 };
 use crate::ram::{checked_word as at, word, words as fields};
 
@@ -62,16 +62,16 @@ pub fn sample<H: Host + ?Sized>(game: &mut H) {
 }
 
 fn debug_controls<H: Host + ?Sized>(game: &mut H) {
-    let reset = (kButton_Select | kButton_Start | kButton_L | kButton_R) as u16;
+    let reset = (K_BUTTON_SELECT | K_BUTTON_START | K_BUTTON_L | K_BUTTON_R) as u16;
     if word!(game.is_uploading_apu) != 0 || game.observed_inputs().held != reset {
         if word!(game.enable_debug) != 0 {
             word! { game, 0; joypad_dbg_1, joypad_dbg_2 }
             if (word!(game.joypad_dbg_flags) & 0x4000) == 0 {
                 for (button, target) in [
-                    (kButton_L, fields::joypad_dbg_1),
-                    (kButton_R, fields::joypad_dbg_2),
+                    (K_BUTTON_L, fields::joypad_dbg_1),
+                    (K_BUTTON_R, fields::joypad_dbg_2),
                 ] {
-                    let chord = (kButton_Select | button) as u16;
+                    let chord = (K_BUTTON_SELECT | button) as u16;
                     if game.observed_inputs().held & chord == chord {
                         at!(game, target; = game.observed_inputs().pressed);
                         word! { game, 0; joypad1_lastkeys, joypad1_newkeys }
@@ -117,12 +117,12 @@ fn debug_controls<H: Host + ?Sized>(game: &mut H) {
 pub fn use_cinematic_bindings<H: Host + ?Sized>(game: &mut H) {
     crate::word_transfers!(game, ascending, 7;
         little(fields::button_config_shoot_x_saved) <- little(fields::button_config_shoot_x));
-    word! {game; button_config_up = kButton_Up as u16; button_config_down = kButton_Down as u16;
-    button_config_left = kButton_Left as u16; button_config_right = kButton_Right as u16;
-    button_config_shoot_x = kButton_X as u16; button_config_jump_a = kButton_A as u16;
-    button_config_run_b = kButton_B as u16; button_config_itemcancel_y = kButton_Y as u16;
-    button_config_itemswitch = kButton_Select as u16;
-    button_config_aim_down_L = kButton_L as u16; button_config_aim_up_R = kButton_R as u16; }
+    word! {game; button_config_up = K_BUTTON_UP as u16; button_config_down = K_BUTTON_DOWN as u16;
+    button_config_left = K_BUTTON_LEFT as u16; button_config_right = K_BUTTON_RIGHT as u16;
+    button_config_shoot_x = K_BUTTON_X as u16; button_config_jump_a = K_BUTTON_A as u16;
+    button_config_run_b = K_BUTTON_B as u16; button_config_itemcancel_y = K_BUTTON_Y as u16;
+    button_config_itemswitch = K_BUTTON_SELECT as u16;
+    button_config_aim_down_L = K_BUTTON_L as u16; button_config_aim_up_R = K_BUTTON_R as u16; }
 }
 
 pub fn restore_cinematic_bindings<H: Host + ?Sized>(game: &mut H) {
@@ -132,15 +132,15 @@ pub fn restore_cinematic_bindings<H: Host + ?Sized>(game: &mut H) {
 
 // The editor assigns the first seven buttons; saved choices also accept Left and Right.
 const BINDING_BUTTONS: [u16; 9] = [
-    kButton_X as u16,
-    kButton_A as u16,
-    kButton_B as u16,
-    kButton_Select as u16,
-    kButton_Y as u16,
-    kButton_L as u16,
-    kButton_R as u16,
-    kButton_Left as u16,
-    kButton_Right as u16,
+    K_BUTTON_X as u16,
+    K_BUTTON_A as u16,
+    K_BUTTON_B as u16,
+    K_BUTTON_SELECT as u16,
+    K_BUTTON_Y as u16,
+    K_BUTTON_L as u16,
+    K_BUTTON_R as u16,
+    K_BUTTON_LEFT as u16,
+    K_BUTTON_RIGHT as u16,
 ];
 
 pub fn load_binding_choices<H: Host + ?Sized>(game: &mut H) {
@@ -159,10 +159,10 @@ pub fn load_binding_choices<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn reset_binding_choices<H: Host + ?Sized>(game: &mut H) {
-    word! {game; button_config_shoot_x = kButton_X as u16;
-    button_config_jump_a = kButton_A as u16; button_config_run_b = kButton_B as u16;
-    button_config_itemcancel_y = kButton_Y as u16; button_config_itemswitch = kButton_Select as u16;
-    button_config_aim_up_R = kButton_R as u16; button_config_aim_down_L = kButton_L as u16; }
+    word! {game; button_config_shoot_x = K_BUTTON_X as u16;
+    button_config_jump_a = K_BUTTON_A as u16; button_config_run_b = K_BUTTON_B as u16;
+    button_config_itemcancel_y = K_BUTTON_Y as u16; button_config_itemswitch = K_BUTTON_SELECT as u16;
+    button_config_aim_up_R = K_BUTTON_R as u16; button_config_aim_down_L = K_BUTTON_L as u16; }
     load_binding_choices(game);
 }
 

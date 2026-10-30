@@ -2,7 +2,7 @@
 #![forbid(unsafe_code)]
 use super::access::ActorKey as Key;
 use super::{api, combat, queries};
-use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
+use crate::game::enemy_projectiles::{spawn_with_enemy_gfx, spawn_with_room_gfx};
 use crate::game::enemy_speeds;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
@@ -77,11 +77,11 @@ impl ActorRuntime for Game {
     }
 
     fn spawn_projectile(&mut self, parameter: u16, k: u16, definition: u16) -> u16 {
-        SpawnEprojWithGfx(parameter, k, definition, self)
+        spawn_with_enemy_gfx(parameter, k, definition, self)
     }
 
     fn spawn_room_projectile(&mut self, definition: u16, parameter: u16) -> u16 {
-        SpawnEprojWithRoomGfx(definition, parameter, self)
+        spawn_with_room_gfx(definition, parameter, self)
     }
 
     fn enemy_speed(&self, table: sm_data::enemy_speeds::SpeedTable, index: isize) -> u16 {

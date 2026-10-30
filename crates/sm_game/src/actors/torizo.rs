@@ -8,7 +8,7 @@
 #![forbid(unsafe_code)]
 use crate::actors::layouts::part_view;
 use crate::constants::enemy_properties::{
-    kEnemyProps_Deleted, kEnemyProps_Invisible, kEnemyProps_Tangible,
+    K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE, K_ENEMY_PROPS_TANGIBLE,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::{CompatibilityRam, RawRam as _, WorkRamAccess, slot, word};
@@ -32,13 +32,13 @@ part_view! {
     /// lists, the animation lock, the last shot's kind, the eye beam's
     /// explosions, Samus's space jump frames and the steps since an attack.
     TorizoSlot: EnemyLayout40 {
-        words: [x_velocity, y_velocity, gravity, var_D, function, movement, direction, damage],
+        words: [x_velocity, y_velocity, gravity, var_d, function, movement, direction, damage],
         pad1: [u8; 26696],
         words: [
             link, saved_list, var_02, turn_around_timer, animation_lock, shot_kind, eye_beam,
-            space_jump_frames, var_08, steps, var_0A, var_0B, var_0C, var_0D, var_0E, var_0F, var_10, var_11, var_12, var_13,
-            var_14, var_15, var_16, var_17, var_18, var_19, var_1A, var_1B, var_1C, var_1D, var_1E,
-            var_1F,
+            space_jump_frames, var_08, steps, var_0a, var_0b, var_0c, var_0d, var_0e, var_0f, var_10, var_11, var_12, var_13,
+            var_14, var_15, var_16, var_17, var_18, var_19, var_1a, var_1b, var_1c, var_1d, var_1e,
+            var_1f,
         ],
     }
 }
@@ -162,7 +162,7 @@ pub fn golden_damaged_shot_reaction(game: &mut impl Host) {
         slot!(
             game,
             TorizoSlot[e].base.properties =
-                slot!(game, TorizoSlot[e].base.properties) | kEnemyProps_Tangible as u16
+                slot!(game, TorizoSlot[e].base.properties) | K_ENEMY_PROPS_TANGIBLE as u16
         );
     }
 }
@@ -696,7 +696,7 @@ pub fn shot<H: Ai>(game: &mut H) {
                 slot!(
                     game,
                     TorizoSlot[e].base.properties = (slot!(game, TorizoSlot[e].base.properties))
-                        | (kEnemyProps_Tangible as u16)
+                        | (K_ENEMY_PROPS_TANGIBLE as u16)
                 );
             }
         }
@@ -788,7 +788,7 @@ pub fn initialize<H: Ai>(game: &mut H) {
         slot!(
             game,
             TorizoSlot[e].base.properties =
-                (slot!(game, TorizoSlot[e].base.properties)) | (kEnemyProps_Deleted as u16)
+                (slot!(game, TorizoSlot[e].base.properties)) | (K_ENEMY_PROPS_DELETED as u16)
         );
         return;
     }
@@ -890,7 +890,7 @@ pub fn set_visible<H: Ai>(k: u16, game: &mut H) {
     slot!(
         game,
         TorizoSlot[e].base.properties = (slot!(game, TorizoSlot[e].base.properties) as i32
-            & !(kEnemyProps_Invisible as i32)) as u16
+            & !(K_ENEMY_PROPS_INVISIBLE as i32)) as u16
     );
 }
 
@@ -900,7 +900,7 @@ pub fn set_invisible<H: Ai>(k: u16, game: &mut H) {
     slot!(
         game,
         TorizoSlot[e].base.properties =
-            (slot!(game, TorizoSlot[e].base.properties)) | (kEnemyProps_Invisible as u16)
+            (slot!(game, TorizoSlot[e].base.properties)) | (K_ENEMY_PROPS_INVISIBLE as u16)
     );
 }
 

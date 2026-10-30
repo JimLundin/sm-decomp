@@ -14,13 +14,13 @@ part_view! {
     /// Kago's view of its slot.
     Kago: EnemyLayout40 {
         words: [
-            function, fast_animation, var_C, var_D, unread_0fb0, unread_0fb2, hits, parameter_2,
+            function, fast_animation, var_c, var_d, unread_0fb0, unread_0fb2, hits, parameter_2,
         ],
         pad1: [u8; 26696],
         words: [
             var_00, var_01, var_02, var_03, hit_counter, var_05, var_06, var_07, var_08, var_09,
-            var_0A, var_0B, var_0C, var_0D, var_0E, var_0F, var_10, var_11, var_12, var_13, var_14,
-            var_15, var_16, var_17, var_18, var_19, var_1A, var_1B, var_1C, var_1D, var_1E, var_1F,
+            var_0a, var_0b, var_0c, var_0d, var_0e, var_0f, var_10, var_11, var_12, var_13, var_14,
+            var_15, var_16, var_17, var_18, var_19, var_1a, var_1b, var_1c, var_1d, var_1e, var_1f,
         ],
     }
 }

@@ -4,9 +4,9 @@ use super::{OUTPUT_BYTES, bytes, put, seed, slot};
 fn CallEprojPreInstr(ea: u32, k: u16, game: &mut Game) {
     super::super::with_execution(game, |ctx| super::super::pre_actions::dispatch(ea, k, ctx));
 }
-fn CallNorfairLavaquakeRocksFunc(ea: u32, k: u16, game: &mut Game) {
+fn dispatch_polyp_rock_function(ea: u32, k: u16, game: &mut Game) {
     super::super::with_execution(game, |ctx| {
-        super::super::shared_pre::CallNorfairLavaquakeRocksFunc(ea, k, ctx)
+        super::super::shared_pre::dispatch_polyp_rock_function(ea, k, ctx)
     });
 }
 use crate::game_state::Game;
@@ -88,7 +88,7 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
             slot(&mut game, a::eproj_y_vel, handle, (id & 1) as u16);
             slot(&mut game, a::eproj_E, handle, 8829974u32 as u16);
             if id < 18 {
-                CallNorfairLavaquakeRocksFunc(8829974, handle, &mut game);
+                dispatch_polyp_rock_function(8829974, handle, &mut game);
             } else {
                 slot(
                     &mut game,

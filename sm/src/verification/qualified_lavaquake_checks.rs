@@ -84,7 +84,7 @@ pub(crate) fn check_case(id: u32) -> bool {
         if id >= 10 {
             super::super::pre_actions::dispatch(8829967, handle, ctx);
         } else {
-            super::super::shared_pre::CallNorfairLavaquakeRocksFunc(function, handle, ctx);
+            super::super::shared_pre::dispatch_polyp_rock_function(function, handle, ctx);
         }
     });
     assert_eq!(

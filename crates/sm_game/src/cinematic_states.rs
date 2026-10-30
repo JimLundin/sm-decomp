@@ -87,10 +87,10 @@ fn run_function<H: Host + ?Sized>(game: &mut H) {
 
 /// The intro and ending's frame counters.
 fn count_frames<H: Host + ?Sized>(game: &mut H) {
-    if (word!(game.cinematic_var11) & 0x8000) == 0 {
-        word!(game.cinematic_var11 = word!(game.cinematic_var11).wrapping_add(1));
+    if (word!(game.intro_frame_counter) & 0x8000) == 0 {
+        word!(game.intro_frame_counter = word!(game.intro_frame_counter).wrapping_add(1));
     }
-    word!(game.cinematic_var12 = word!(game.cinematic_var12).wrapping_add(1));
+    word!(game.cinematic_frame_counter = word!(game.cinematic_frame_counter).wrapping_add(1));
 }
 
 /// Draws the Nintendo logo. Was `AddNintentoLogoToOam`.
@@ -246,7 +246,7 @@ pub fn title_sequence<H: Host + ?Sized>(game: &mut H) -> u8 {
 /// Runs Samus during the intro once she is shown, with her timers. Was
 /// `HandleSamusDuringIntro`.
 pub fn handle_samus_during_intro<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.cinematic_var15) != 0 {
+    if word!(game.intro_samus_display) != 0 {
         game.advance_intro_player();
         if word!(game.samus_invincibility_timer) != 0 {
             word!(

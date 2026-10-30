@@ -11,12 +11,12 @@ use crate::title_sequence::object as title;
 const _: () = {
     use crate::constants::bank_8d as palfx;
     use crate::ending_sequence::palette_effect as e;
-    assert!(crate::intro_sequence::ZEBES_TEXT_FADE_IN == palfx::addr_kPalfx_E1B0 as u16);
-    assert!(e::ZEBES_FADE_OUT == palfx::addr_kPalfx_E1C4 as u16);
-    assert!(e::EXPLOSION_WIDE_FOREGROUND == palfx::addr_kPalfx_E1C8 as u16);
-    assert!(e::EXPLOSION_FINALE == palfx::addr_kPalfx_E1CC as u16);
-    assert!(e::EXPLOSION_SPACE_WHITE_OUT == palfx::addr_kPalfx_E1D0 as u16);
-    assert!(e::EXPLOSION_WIDE_BACKGROUND == palfx::addr_kPalfx_E1E8 as u16);
+    assert!(crate::intro_sequence::ZEBES_TEXT_FADE_IN == palfx::ADDR_K_PALFX_E1B0 as u16);
+    assert!(e::ZEBES_FADE_OUT == palfx::ADDR_K_PALFX_E1C4 as u16);
+    assert!(e::EXPLOSION_WIDE_FOREGROUND == palfx::ADDR_K_PALFX_E1C8 as u16);
+    assert!(e::EXPLOSION_FINALE == palfx::ADDR_K_PALFX_E1CC as u16);
+    assert!(e::EXPLOSION_SPACE_WHITE_OUT == palfx::ADDR_K_PALFX_E1D0 as u16);
+    assert!(e::EXPLOSION_WIDE_BACKGROUND == palfx::ADDR_K_PALFX_E1E8 as u16);
 };
 
 #[derive(Clone, Copy)]
@@ -61,9 +61,9 @@ impl CinematicObjects {
             },
             Self::Background => CinematicObjectLayout {
                 slots: 4,
-                current: w::cinematicbg_var2,
+                current: w::cinematic_bg_object_index,
                 instructions: a::cinematicbg_instr_ptr,
-                parameter: w::cinematicbg_var3,
+                parameter: w::cinematic_bg_vram_address,
                 cleared: &[a::cinematicbg_arr1, a::cinematicbg_arr6],
             },
         }
@@ -156,10 +156,10 @@ pub fn advance_intro_mother_brain<H: crate::menus::host::Host + ?Sized>(
         game.retire_projectile(2 * projectile as u16);
         word!(game.cinematicspr_arr6[slot] = 8);
     } else {
-        if word!(game.cinematic_var12) & 1 != 0 {
-            word!(game.cinematic_var10 -= 4);
+        if word!(game.cinematic_frame_counter) & 1 != 0 {
+            word!(game.cinematic_y -= 4);
         } else {
-            word!(game.cinematic_var10 += 4);
+            word!(game.cinematic_y += 4);
         }
         if stage == 2 {
             crate::intro_pages::wait_for_scene_end(object, true, game);
@@ -235,7 +235,7 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             set_cinematic_blend(3, 16, 2, 34, game);
             game.ram().write_byte(0x5d, 100);
             game.ram().write_byte(0x59, 84);
-            word!(game.cinematic_var4 = 0);
+            word!(game.cinematic_function_timer = 0);
     crate::flow::set(game, crate::flow::Word::CinematicFunction, (0x8be58ai32) as u16);
                 },
             9171588 => {
@@ -268,7 +268,7 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             word! { game, 0x7fff; palette_buffer[0], palette_buffer[128] }
             crate::word_transfers!(game, descending, 16; le(palette_buffer, 31) <- value(0x7fff));
             crate::flow::set(game, crate::flow::Word::CinematicFunction, (0x8bdb9ei32) as u16);
-    word!(game.cinematic_var4 = 120);
+    word!(game.cinematic_function_timer = 120);
                 },
             9172040 => {
             word! { game, 0; screen_fade_delay, screen_fade_counter }
@@ -278,8 +278,8 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             word!(game.cinematicbg_arr9[(k >> 1)] = 3584);
             crate::flow::set(game, crate::flow::Word::CinematicFunction, (0x8be3aei32) as u16);
             set_cinematic_blend(17, 16, 2, -127i32 as u8, game);
-            word! {game; cinematic_var8 = -4i32 as u16; cinematic_var10 = -8i32 as u16;
-                cinematic_var4 = 16; }
+            word! {game; cinematic_x = -4i32 as u16; cinematic_y = -8i32 as u16;
+                cinematic_function_timer = 16; }
             word! { game, 32; cinematic_var14, cinematic_var17 }
             capture_cinematic_palette(game);
             prepare_cinematic_palette_fade(game);
@@ -670,7 +670,9 @@ fn draw_cinematic_background<H: crate::menus::host::Host + ?Sized>(
         0x8849 => {}
         0x884d | 0x88b7 | 0x88fd => {
             if command == 0x884d {
-                word!(game.cinematicbg_var1 = u16::from(word!(game.cinematicbg_var1) == 0));
+                word!(
+                    game.intro_text_click_flag = u16::from(word!(game.intro_text_click_flag) == 0)
+                );
                 crate::intro_pages::spawn_text_glow(definition, position, game);
                 let record = cinematic_native_record::<0x8c>(
                     word!(game.cinematicbg_instr_ptr[(object >> 1)]),
@@ -684,7 +686,7 @@ fn draw_cinematic_background<H: crate::menus::host::Host + ?Sized>(
                     8 * u16::from(record.byte(9))
                 };
                 word!(game.cinematicbg_arr8[15] = bottom.wrapping_sub(8));
-                if record.word(4) != 0xd67d && word!(game.cinematicbg_var1) != 0 {
+                if record.word(4) != 0xd67d && word!(game.intro_text_click_flag) != 0 {
                     game.queue_sound(2, 0xd_u8, 6);
                 }
             }

@@ -1011,7 +1011,7 @@ pub fn dispatch_instruction<G: Pirates + ?Sized>(
                 .resolve_actor(Key::from_legacy(index), Native)
                 .definition;
             let value = runtime.legacy_native_record(0xa0, definition).word(6);
-            runtime.write_word_le(value, fields::cinematic_var8);
+            runtime.write_word_le(value, fields::cinematic_x);
             drop(runtime);
             fire_laser(index, false, 16, game);
             script

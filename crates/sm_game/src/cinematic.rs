@@ -143,7 +143,7 @@ pub fn queue_cinematic_tilemap<H: crate::menus::host::Host + ?Sized>(
             Eyes => 18848,
             Japanese => 16768,
             JapaneseIntro => 20192,
-            _ => word!(game.cinematicbg_var3),
+            _ => word!(game.cinematic_bg_vram_address),
         },
     );
 }
@@ -288,7 +288,7 @@ pub fn clear_cinematic_background<H: crate::menus::host::Host + ?Sized>(fill: u1
         le(cinematicbg_arr1, 3) <- value(0),
         le(cinematicbg_instr_ptr, 3) <- value(0),
     );
-    word!(game.cinematicbg_var1 = 0);
+    word!(game.intro_text_click_flag = 0);
 }
 
 pub fn scaled_cinematic_value(value: u16, scale: u16) -> u16 {

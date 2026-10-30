@@ -29,19 +29,19 @@ const DIGIT_TILES: u16 = bg_tile::tile(4, 2);
 const _: () = assert!(DIGIT_TILES == 2052);
 use super::save_slots;
 use crate::constants::bank_81::{
-    addr_kMenuTilemap_DataClear, addr_kMenuTilemap_DataCopy, addr_kMenuTilemap_Exit,
-    addr_kMenuTilemap_SamusA, addr_kMenuTilemap_SamusB, addr_kMenuTilemap_SamusC,
-    addr_kMenuTilemap_SamusData, addr_kMenuTilemap_TIME,
+    ADDR_K_MENU_TILEMAP_DATA_CLEAR, ADDR_K_MENU_TILEMAP_DATA_COPY, ADDR_K_MENU_TILEMAP_EXIT,
+    ADDR_K_MENU_TILEMAP_SAMUS_A, ADDR_K_MENU_TILEMAP_SAMUS_B, ADDR_K_MENU_TILEMAP_SAMUS_C,
+    ADDR_K_MENU_TILEMAP_SAMUS_DATA, ADDR_K_MENU_TILEMAP_TIME,
 };
 use crate::imported::Imported;
 
 /// Bank $82 equipment screen tilemap offsets for each category, and the
 /// blank icon tilemap.
-const WEAPON_OFFSETS: u32 = crate::constants::bank_82::addr_kEquipmentTilemapOffs_Weapons;
-const SUIT_OFFSETS: u32 = crate::constants::bank_82::addr_kEquipmentTilemapOffs_Suits;
-const BOOT_OFFSETS: u32 = crate::constants::bank_82::addr_kEquipmentTilemapOffs_Boots;
+const WEAPON_OFFSETS: u32 = crate::constants::bank_82::ADDR_K_EQUIPMENT_TILEMAP_OFFS_WEAPONS;
+const SUIT_OFFSETS: u32 = crate::constants::bank_82::ADDR_K_EQUIPMENT_TILEMAP_OFFS_SUITS;
+const BOOT_OFFSETS: u32 = crate::constants::bank_82::ADDR_K_EQUIPMENT_TILEMAP_OFFS_BOOTS;
 const BLANK_ICON_TILEMAP: u16 =
-    crate::constants::bank_82::addr_kEquipmentScreenTilemap_Blank as u16;
+    crate::constants::bank_82::ADDR_K_EQUIPMENT_SCREEN_TILEMAP_BLANK as u16;
 const _: () = assert!(WEAPON_OFFSETS == 0xc06c && SUIT_OFFSETS == 0xc076 && BOOT_OFFSETS == 0xc082);
 const _: () = assert!(BLANK_ICON_TILEMAP == 0xc01a);
 /// Bank $82 equipment bitmasks and pointers to equipment tilemaps, by category.
@@ -55,7 +55,7 @@ const BOOT_TILEMAPS: u32 = 0x82_c0a2;
 const RESERVE_TANK_ANIMATION: u32 = 0x82_c165;
 /// $82:C639: the dummy Samus wireframe tilemap, and where the frame draws
 /// it and the equipped wireframe.
-const DUMMY_WIREFRAME: u16 = crate::constants::bank_82::addr_kDummySamusWireframeTilemap as u16;
+const DUMMY_WIREFRAME: u16 = crate::constants::bank_82::ADDR_K_DUMMY_SAMUS_WIREFRAME_TILEMAP as u16;
 const _: () = assert!(DUMMY_WIREFRAME == 0xc639);
 const WIREFRAME: usize = cell(7, 12);
 /// Bank $81 menu text tilemaps: ENERGY, the clock's colon and NO DATA.
@@ -94,9 +94,9 @@ pub fn import_area_palettes(image: &RomImage) -> Option<ImportedAreaPalettes> {
 
 const MENU_PALETTE: usize = enemy_data::FIRST + enemy_data::PALETTE_INDEX;
 const FILE_LABELS: [u16; 3] = [
-    addr_kMenuTilemap_SamusA as u16,
-    addr_kMenuTilemap_SamusB as u16,
-    addr_kMenuTilemap_SamusC as u16,
+    ADDR_K_MENU_TILEMAP_SAMUS_A as u16,
+    ADDR_K_MENU_TILEMAP_SAMUS_B as u16,
+    ADDR_K_MENU_TILEMAP_SAMUS_C as u16,
 ];
 
 pub fn set_palette<H: Host + ?Sized>(value: u16, game: &mut H) {
@@ -126,7 +126,7 @@ pub fn file_rows<H: Host + ?Sized>(emphasis: FileRowEmphasis, game: &mut H) {
         let base = (slot + 2) << 8;
         health(!word!(game.nonempty_save_slots) & mask, base + 0x18, game);
         time(!word!(game.nonempty_save_slots) & mask, base + 0x72, game);
-        load(base + 0x34, addr_kMenuTilemap_TIME as u16, game);
+        load(base + 0x34, ADDR_K_MENU_TILEMAP_TIME as u16, game);
         load(base + 8, FILE_LABELS[usize::from(slot)], game);
     }
     upload(MENU_TILEMAP_BYTES, MENU_TILEMAP_SOURCE, 0, true, game);
@@ -137,7 +137,7 @@ pub fn main_menu<H: Host + ?Sized>(game: &mut H) {
     clear(game);
     word!(game.nonempty_save_slots = u16::MAX);
     set_palette(0, game);
-    load(0x56, addr_kMenuTilemap_SamusData as u16, game);
+    load(0x56, ADDR_K_MENU_TILEMAP_SAMUS_DATA as u16, game);
     for (slot, label) in FILE_LABELS.into_iter().enumerate() {
         // The first label follows the heading without resetting its live palette.
         if slot != 0 {
@@ -152,17 +152,17 @@ pub fn main_menu<H: Host + ?Sized>(game: &mut H) {
         );
         health(word!(game.nonempty_save_slots) & 0x8000, top + 0x16, game);
         time(word!(game.nonempty_save_slots) & 0x8000, top + 0x6e, game);
-        load(top + 0x30, addr_kMenuTilemap_TIME as u16, game);
+        load(top + 0x30, ADDR_K_MENU_TILEMAP_TIME as u16, game);
     }
     word!(game.nonempty_save_slots = (!word!(game.nonempty_save_slots)).swap_bytes() >> 5);
     if word!(game.nonempty_save_slots) != 0 {
         set_palette(0, game);
-        load(0x508, addr_kMenuTilemap_DataCopy as u16, game);
+        load(0x508, ADDR_K_MENU_TILEMAP_DATA_COPY as u16, game);
         set_palette(0, game);
-        load(0x5c8, addr_kMenuTilemap_DataClear as u16, game);
+        load(0x5c8, ADDR_K_MENU_TILEMAP_DATA_CLEAR as u16, game);
     }
     set_palette(0, game);
-    load(0x688, addr_kMenuTilemap_Exit as u16, game);
+    load(0x688, ADDR_K_MENU_TILEMAP_EXIT as u16, game);
     upload(MENU_TILEMAP_BYTES, MENU_TILEMAP_SOURCE, 0, true, game);
     // The copy arrow's palette timer is outside the Session-owned table.
     word!(game.file_copy_arrow_palette_timer = 0);

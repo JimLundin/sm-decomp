@@ -2,7 +2,8 @@
 //! Declare as a private child of enemy_projectiles to exercise real production paths.
 //! This first tranche does not cover all setup/pre-action/contact/drawing families.
 use super::{
-    ClearEprojs, DisableEprojs, EnableEprojs, EprojRunAll, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
+    ClearEprojs, DisableEprojs, EnableEprojs, EprojRunAll, spawn_with_enemy_gfx,
+    spawn_with_room_gfx,
 };
 use sm_game::enemy_script::EnemyScript;
 
@@ -21,14 +22,14 @@ fn CallEprojInstr(ea: u32, k: u16, script: &EnemyScript, game: &mut Game) -> Opt
             position
         })
 }
-fn MoveEprojWithVelocity(k: u16, game: &mut Game) -> u16 {
-    super::with_execution(game, |ctx| super::shared::MoveEprojWithVelocity(k, ctx))
+fn move_with_velocity(k: u16, game: &mut Game) -> u16 {
+    super::with_execution(game, |ctx| super::shared::move_with_velocity(k, ctx))
 }
-fn MoveEprojWithVelocityX(k: u16, game: &mut Game) -> u16 {
-    super::with_execution(game, |ctx| super::shared::MoveEprojWithVelocityX(k, ctx))
+fn move_with_x_velocity(k: u16, game: &mut Game) -> u16 {
+    super::with_execution(game, |ctx| super::shared::move_with_x_velocity(k, ctx))
 }
-fn MoveEprojWithVelocityY(k: u16, game: &mut Game) -> u16 {
-    super::with_execution(game, |ctx| super::shared::MoveEprojWithVelocityY(k, ctx))
+fn move_with_y_velocity(k: u16, game: &mut Game) -> u16 {
+    super::with_execution(game, |ctx| super::shared::move_with_y_velocity(k, ctx))
 }
 use crate::game_state::Game;
 use crate::ram_map::{word_arrays as a, words as w};
@@ -126,7 +127,7 @@ fn seed(game: &mut Game, image: &RomImage) {
         (w::eproj_enable_flag, 0x9234),
         (w::eproj_index, 34),
         (w::eproj_init_param_1, 0x5678),
-        (w::eproj_unk1995, 0x9876),
+        (w::eproj_init_param_2, 0x9876),
         (w::game_state, 8),
         (w::debug_disable_sounds, 0),
         (w::power_bomb_explosion_status, 0),
@@ -165,8 +166,8 @@ unsafe fn core_case(id: u32, game: &mut Game, image: &RomImage) -> Option<usize>
             0 => EnableEprojs(game),
             1 => DisableEprojs(game),
             2 => ClearEprojs(game),
-            3 => return Some(SpawnEprojWithRoomGfx(0xffff, 0x4321, game) as usize),
-            4 => return Some(SpawnEprojWithGfx(0x4321, 0, 0xffff, game) as usize),
+            3 => return Some(spawn_with_room_gfx(0xffff, 0x4321, game) as usize),
+            4 => return Some(spawn_with_enemy_gfx(0x4321, 0, 0xffff, game) as usize),
             5..=12 | 23 => {
                 if id != 9 {
                     slot(game, a::eproj_id, if id == 6 { 0 } else { 34 }, 0);
@@ -183,9 +184,9 @@ unsafe fn core_case(id: u32, game: &mut Game, image: &RomImage) -> Option<usize>
                     definition(image, 0x8000, 8822936u32 as u16);
                 }
                 return Some(if id == 6 {
-                    SpawnEprojWithGfx(0x4321, 0, 0x8000, game)
+                    spawn_with_enemy_gfx(0x4321, 0, 0x8000, game)
                 } else {
-                    SpawnEprojWithRoomGfx(if id == 8 { 0x2000 } else { 0x8000 }, 0x4321, game)
+                    spawn_with_room_gfx(if id == 8 { 0x2000 } else { 0x8000 }, 0x4321, game)
                 } as usize);
             }
             13..=22 => {
@@ -352,9 +353,9 @@ unsafe fn original_execute(id: u32, game: &mut Game, image: &RomImage) -> Option
             game.ram()
                 .write_byte(a::eproj_y_subpos + usize::from(index) + 1, 0x80);
             return Some(match n % 3 {
-                0 => MoveEprojWithVelocity(index, game),
-                1 => MoveEprojWithVelocityX(index, game),
-                _ => MoveEprojWithVelocityY(index, game),
+                0 => move_with_velocity(index, game),
+                1 => move_with_x_velocity(index, game),
+                _ => move_with_y_velocity(index, game),
             } as usize);
         }
         let n = id - SHORT_START;

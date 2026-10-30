@@ -97,17 +97,17 @@ pub(crate) fn setup_script(address: u32, game: &mut Game) {
         9408974 => scrolling_sky::initialize_ocean(game),
         9408983 => {
             for animation in [
-                addr_kAnimtiles_TourianStatue_Kraid,
-                addr_kAnimtiles_TourianStatue_Phantoon,
-                addr_kAnimtiles_TourianStatue_Draygon,
-                addr_kAnimtiles_TourianStatue_Ridley,
+                ADDR_K_ANIMTILES_TOURIAN_STATUE_KRAID,
+                ADDR_K_ANIMTILES_TOURIAN_STATUE_PHANTOON,
+                ADDR_K_ANIMTILES_TOURIAN_STATUE_DRAYGON,
+                ADDR_K_ANIMTILES_TOURIAN_STATUE_RIDLEY,
             ] {
                 animated_tiles::spawn(animation as u16, game);
             }
         }
         9423048 => {
-            crate::game::enemy_projectiles::SpawnEprojWithRoomGfx(
-                crate::game::constants::bank_86::addr_kEproj_PrePhantomRoom as u16,
+            crate::game::enemy_projectiles::spawn_with_room_gfx(
+                crate::game::constants::bank_86::ADDR_K_EPROJ_PRE_PHANTOM_ROOM as u16,
                 0xc8c8,
                 game,
             );
@@ -128,7 +128,7 @@ pub(crate) fn setup_script(address: u32, game: &mut Game) {
             word!(game.has_area_map = collected);
         }
         9423135 => {
-            crate::game::gameplay_flag_runtime::SetEventHappened(0xe, game);
+            crate::game::gameplay_flag_runtime::mark_event(0xe, game);
             word! {game; earthquake_type = 18; earthquake_timer = u16::MAX; }
         }
         9423155 | 9423187 => {
@@ -177,9 +177,9 @@ pub(crate) unsafe fn door_script(address: u32, game: &mut Game) {
         match address {
             9419121 | 9429464 => {
                 let (animation, mechanism) = if address == 9419121 {
-                    (addr_kAnimtiles_WreckedShipTradmillRight, 0xb64b)
+                    (ADDR_K_ANIMTILES_WRECKED_SHIP_TRADMILL_RIGHT, 0xb64b)
                 } else {
-                    (addr_kAnimtiles_WreckedShipTradmillLeft, 0xb64f)
+                    (ADDR_K_ANIMTILES_WRECKED_SHIP_TRADMILL_LEFT, 0xb64f)
                 };
                 animated_tiles::spawn(animation as u16, game);
                 spawn_hardcoded(SpawnHardcodedPlmArgs::new(4, 9, mechanism), game);
@@ -510,7 +510,7 @@ unsafe fn random_explosions(mask: u16, check_tile: bool, h: &mut Runtime<'_>) {
         if random < 8 {
             let sound = [0x24, 0, 0, 0x25, 0, 0, 0, 0][usize::from(random)];
             if sound != 0 {
-                h.foreign(|game| crate::game::music::QueueSfx2_Max6(sound, game));
+                h.foreign(|game| crate::game::music::queue_sfx2_max6(sound, game));
             }
         }
         let sprite = [3, 3, 9, 12, 12, 18, 18, 21][usize::from(random & 7)];
@@ -573,18 +573,16 @@ unsafe fn advance_script(address: u32, h: &mut Runtime<'_>) {
                     if (room.main_native(0) as i16) < 0 {
                         room.main_variables[0] = 8;
                         let definition = if h.word(ram::random_number) & 0x8000 != 0 {
-                            addr_stru_869742
+                            ADDR_STRU_869742
                         } else {
-                            addr_stru_869734
+                            ADDR_STRU_869734
                         } as u16;
                         let x = [
                             0x50, 0x60, 0x70, 0x80, 0x90, 0xa0, 0xb0, 0xc0, 0xd0, 0xe0, 0xf0,
                             0x110, 0x130, 0x150, 0x170, 0x190,
                         ][usize::from(h.word(ram::random_number) & 15)];
                         h.foreign(|game| {
-                            crate::game::enemy_projectiles::SpawnEprojWithRoomGfx(
-                                definition, x, game,
-                            )
+                            crate::game::enemy_projectiles::spawn_with_room_gfx(definition, x, game)
                         });
                     }
                 }

@@ -1,7 +1,7 @@
 //! Maridia Snail crawling, falls and player reactions share one movement lifecycle.
 #![forbid(unsafe_code)]
 use crate::game::actors::{api, combat};
-use crate::game::music::QueueSfx2_Max3;
+use crate::game::music::queue_sfx2_max3;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::{word_arrays, words};
@@ -325,7 +325,7 @@ fn negate_pair(runtime: &mut Runtime<'_>, at: usize) {
     }
 }
 fn sound(runtime: &mut Runtime<'_>) {
-    runtime.foreign(|game| QueueSfx2_Max3(0x70, game));
+    runtime.foreign(|game| queue_sfx2_max3(0x70, game));
 }
 pub(crate) fn falling(raw: u16, game: &mut Game) {
     let mut runtime = Runtime::new(game);

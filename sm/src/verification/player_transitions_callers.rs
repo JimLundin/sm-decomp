@@ -135,7 +135,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                 (ram::demo_backup_prev_controller_input, 0x400),
                 (ram::demo_backup_prev_controller_input_new, 0x800),
                 (
-                    ram::cinematic_var15,
+                    ram::intro_samus_display,
                     match id {
                         3803 => 1,
                         3804 => 0x8000,
@@ -146,7 +146,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                 put(game, at, value);
             }
             if id == 3801 {
-                put(game, ram::hdma_var_1, 0xa55a);
+                put(game, ram::xray_hdma_table_end, 0xa55a);
             }
             let original_ram = (0..game.ram().len())
                 .map(|at| game.ram().read_byte(at))

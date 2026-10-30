@@ -36,7 +36,7 @@ impl Content for Runtime<'_> {
             .expect("ROM loaded")
             .table_word(crate::rtl::lorom_offset(0x86846b) as usize, word_index)
     }
-    fn waffle_sine_sample(&mut self, phase: u8) -> u8 {
+    fn fire_arc_sine_sample(&mut self, phase: u8) -> u8 {
         self.foreign(|game| game.read_rom_byte(0xa0b143, usize::from(phase)))
     }
 }

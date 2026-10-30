@@ -15,7 +15,9 @@ use {
     },
 };
 use {
-    crate::constants::bank_a0::{addr_kExtendedSpritemap_Nothing_A0, addr_kSpritemap_Nothing_A0},
+    crate::constants::bank_a0::{
+        ADDR_K_EXTENDED_SPRITEMAP_NOTHING_A0, ADDR_K_SPRITEMAP_NOTHING_A0,
+    },
     crate::{
         contact_rules::{Bounds, HitboxEdge, axis, is_shot},
         enemy_projectiles::host::Host as EprojHost,
@@ -223,7 +225,7 @@ fn projectile_contacts<H: ActorHost + EprojHost>(h: &mut H, attack: Attack, exte
             let actor = h.resolve_actor(key, AccessMode::Native);
             if h.session().projectiles.count == 0
                 || actor.spritemap == 0
-                || actor.spritemap == addr_kExtendedSpritemap_Nothing_A0 as u16
+                || actor.spritemap == ADDR_K_EXTENDED_SPRITEMAP_NOTHING_A0 as u16
             {
                 return;
             }
@@ -260,7 +262,7 @@ fn projectile_contacts<H: ActorHost + EprojHost>(h: &mut H, attack: Attack, exte
         let actor = h.resolve_actor(key, AccessMode::Native);
         if h.session().projectiles.count == 0
             || actor.spritemap == 0
-            || actor.spritemap == addr_kSpritemap_Nothing_A0 as u16
+            || actor.spritemap == ADDR_K_SPRITEMAP_NOTHING_A0 as u16
             || actor.properties & 0x400 != 0
             || actor.definition == 0xdaff
             || actor.invincibility != 0

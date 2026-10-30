@@ -4,12 +4,12 @@ use super::prelude::*;
 use super::save_slots;
 use super::save_slots::load_area_map;
 use crate::constants::bank_81::{
-    addr_kMenuTilemap_ClearSamusA, addr_kMenuTilemap_ClearWhichData,
-    addr_kMenuTilemap_CopyCompleted, addr_kMenuTilemap_CopySamusToSamus,
-    addr_kMenuTilemap_CopySamusToWhere, addr_kMenuTilemap_CopyWhichData,
-    addr_kMenuTilemap_DataClearMode, addr_kMenuTilemap_DataCleared, addr_kMenuTilemap_DataCopyMode,
-    addr_kMenuTilemap_Exit, addr_kMenuTilemap_IsThisOk, addr_kMenuTilemap_No,
-    addr_kMenuTilemap_Yes,
+    ADDR_K_MENU_TILEMAP_CLEAR_SAMUS_A, ADDR_K_MENU_TILEMAP_CLEAR_WHICH_DATA,
+    ADDR_K_MENU_TILEMAP_COPY_COMPLETED, ADDR_K_MENU_TILEMAP_COPY_SAMUS_TO_SAMUS,
+    ADDR_K_MENU_TILEMAP_COPY_SAMUS_TO_WHERE, ADDR_K_MENU_TILEMAP_COPY_WHICH_DATA,
+    ADDR_K_MENU_TILEMAP_DATA_CLEAR_MODE, ADDR_K_MENU_TILEMAP_DATA_CLEARED,
+    ADDR_K_MENU_TILEMAP_DATA_COPY_MODE, ADDR_K_MENU_TILEMAP_EXIT, ADDR_K_MENU_TILEMAP_IS_THIS_OK,
+    ADDR_K_MENU_TILEMAP_NO, ADDR_K_MENU_TILEMAP_YES,
 };
 use crate::save_file::header;
 
@@ -120,7 +120,7 @@ fn fade_to_options<H: Host + ?Sized>(game: &mut H) {
     game.fade(false);
     if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 0 {
         {
-            word!(game.game_state = kGameState_2_GameOptionsMenu as u16);
+            word!(game.game_state = K_GAME_STATE_2_GAME_OPTIONS_MENU as u16);
             crate::menu!(game.menu_index = 0);
         }
         // Clear the menu's reused RAM, $198D..BC.
@@ -185,9 +185,9 @@ fn begin_operation<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
 fn reset_copy<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::clear(game);
     menu_tilemap::set_palette(0, game);
-    menu_tilemap::load(0x52, addr_kMenuTilemap_DataCopyMode as u16, game);
-    menu_tilemap::load(0x150, addr_kMenuTilemap_CopyWhichData as u16, game);
-    menu_tilemap::load(0x688, addr_kMenuTilemap_Exit as u16, game);
+    menu_tilemap::load(0x52, ADDR_K_MENU_TILEMAP_DATA_COPY_MODE as u16, game);
+    menu_tilemap::load(0x150, ADDR_K_MENU_TILEMAP_COPY_WHICH_DATA as u16, game);
+    menu_tilemap::load(0x688, ADDR_K_MENU_TILEMAP_EXIT as u16, game);
     menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Occupied, game);
     select_first_slot(game);
     crate::sprite_output::file_slot_cursor(211, game);
@@ -203,9 +203,9 @@ fn select_first_slot<H: Host + ?Sized>(game: &mut H) {
     );
 }
 fn next_occupied_slot<H: Host + ?Sized>(game: &mut H) -> Option<u8> {
-    let up = if game.observed_inputs().pressed as i32 & kButton_Up as i32 != 0 {
+    let up = if game.observed_inputs().pressed as i32 & K_BUTTON_UP as i32 != 0 {
         true
-    } else if game.observed_inputs().pressed as i32 & kButton_Down as i32 != 0 {
+    } else if game.observed_inputs().pressed as i32 & K_BUTTON_DOWN as i32 != 0 {
         false
     } else {
         return None;
@@ -240,7 +240,7 @@ fn choose_source<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
     } else {
         game.ram().read_byte(crate::ram::words::joypad1_newkeys + 1)
     };
-    if game.observed_inputs().pressed as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
+    if game.observed_inputs().pressed as i32 & (K_BUTTON_START as i32 | K_BUTTON_A as i32) != 0 {
         game.queue_sound(0, 0x37_u8, 6);
         if copy_selection(game) != 3 {
             set_copy_source(copy_selection(game), game);
@@ -294,22 +294,22 @@ fn begin_destination<H: Host + ?Sized>(game: &mut H) {
 fn draw_destination<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::clear(game);
     menu_tilemap::set_palette(0, game);
-    menu_tilemap::load(0x52, addr_kMenuTilemap_DataCopyMode as u16, game);
+    menu_tilemap::load(0x52, ADDR_K_MENU_TILEMAP_DATA_COPY_MODE as u16, game);
     menu_tilemap::set_palette(0, game);
-    menu_tilemap::load(0x148, addr_kMenuTilemap_CopySamusToWhere as u16, game);
+    menu_tilemap::load(0x148, ADDR_K_MENU_TILEMAP_COPY_SAMUS_TO_WHERE as u16, game);
     set_native_word(
         0x3000 + 2 * 944,
         (copy_source(game)).wrapping_add(8298),
         game,
     );
-    menu_tilemap::load(0x688, addr_kMenuTilemap_Exit as u16, game);
+    menu_tilemap::load(0x688, ADDR_K_MENU_TILEMAP_EXIT as u16, game);
     menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Destination, game);
 }
 #[forbid(unsafe_code)]
 fn choose_destination<H: Host + ?Sized>(game: &mut H) {
     border(0x49, game);
     crate::sprite_output::menu_selection(game);
-    if game.observed_inputs().pressed as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
+    if game.observed_inputs().pressed as i32 & (K_BUTTON_START as i32 | K_BUTTON_A as i32) != 0 {
         game.queue_sound(0, 0x37_u8, 6);
         if copy_selection(game) != 3 {
             set_copy_destination(copy_selection(game), game);
@@ -320,10 +320,10 @@ fn choose_destination<H: Host + ?Sized>(game: &mut H) {
         }
     } else if (game.observed_inputs().pressed & 0x8000) == 0 {
         'move_selection: {
-            let step = if game.observed_inputs().pressed as i32 & kButton_Up as i32 != 0 {
+            let step = if game.observed_inputs().pressed as i32 & K_BUTTON_UP as i32 != 0 {
                 game.queue_sound(0, 0x37_u8, 6);
                 u16::MAX
-            } else if game.observed_inputs().pressed as i32 & kButton_Down as i32 != 0 {
+            } else if game.observed_inputs().pressed as i32 & K_BUTTON_DOWN as i32 != 0 {
                 game.queue_sound(0, 0x37_u8, 6);
                 1
             } else {
@@ -353,7 +353,7 @@ fn begin_confirmation<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
     border(if COPY { 0x49 } else { 0x4a }, game);
     menu_tilemap::set_palette(0, game);
     if COPY {
-        menu_tilemap::load(0x144, addr_kMenuTilemap_CopySamusToSamus as u16, game);
+        menu_tilemap::load(0x144, ADDR_K_MENU_TILEMAP_COPY_SAMUS_TO_SAMUS as u16, game);
         set_native_word(0x3000 + 2 * 942, copy_source(game).wrapping_add(8298), game);
         set_native_word(
             0x3000 + 2 * 955,
@@ -361,7 +361,7 @@ fn begin_confirmation<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
             game,
         );
     } else {
-        menu_tilemap::load(0x140, addr_kMenuTilemap_ClearSamusA as u16, game);
+        menu_tilemap::load(0x140, ADDR_K_MENU_TILEMAP_CLEAR_SAMUS_A as u16, game);
         set_native_word(0x3000 + 2 * 949, copy_source(game).wrapping_add(8298), game);
         set_copy_destination(3, game);
     }
@@ -374,12 +374,12 @@ fn begin_confirmation<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
 }
 fn draw_confirmation<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::set_palette(0, game);
-    menu_tilemap::load(0x514, addr_kMenuTilemap_IsThisOk as u16, game);
+    menu_tilemap::load(0x514, ADDR_K_MENU_TILEMAP_IS_THIS_OK as u16, game);
     menu_tilemap::set_palette(0, game);
-    menu_tilemap::load(0x59c, addr_kMenuTilemap_Yes as u16, game);
+    menu_tilemap::load(0x59c, ADDR_K_MENU_TILEMAP_YES as u16, game);
     crate::word_transfers!(game, ascending, 32; native(0x3c80) <- value(15));
     menu_tilemap::set_palette(0, game);
-    menu_tilemap::load(0x65c, addr_kMenuTilemap_No as u16, game);
+    menu_tilemap::load(0x65c, ADDR_K_MENU_TILEMAP_NO as u16, game);
     menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Confirmation, game);
 }
 #[forbid(unsafe_code)]
@@ -390,13 +390,14 @@ fn confirm_choice<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
         animate_copy_arrow(game);
         crate::sprite_output::file_copy_arrow(game);
     }
-    if game.observed_inputs().pressed as i32 & (kButton_Up as i32 | kButton_Down as i32) != 0 {
+    if game.observed_inputs().pressed as i32 & (K_BUTTON_UP as i32 | K_BUTTON_DOWN as i32) != 0 {
         set_copy_selection(copy_selection(game) ^ 1, game);
         game.queue_sound(0, 0x37_u8, 6);
     } else {
         let cancelled = if (game.observed_inputs().pressed & 0x8000) != 0 {
             true
-        } else if game.observed_inputs().pressed as i32 & (kButton_Start as i32 | kButton_A as i32)
+        } else if game.observed_inputs().pressed as i32
+            & (K_BUTTON_START as i32 | K_BUTTON_A as i32)
             == 0
         {
             false
@@ -493,7 +494,7 @@ fn copy_slot<H: Host + ?Sized>(game: &mut H) {
             native(0x35c0 + row as usize) <- value(15),
         );
         menu_tilemap::set_palette(0, game);
-        menu_tilemap::load(0x510, addr_kMenuTilemap_CopyCompleted as u16, game);
+        menu_tilemap::load(0x510, ADDR_K_MENU_TILEMAP_COPY_COMPLETED as u16, game);
         menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Confirmation, game);
         game.flush_sram();
     }
@@ -523,9 +524,9 @@ fn resume_main<H: Host + ?Sized>(game: &mut H) {
 fn reset_clear<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::clear(game);
     menu_tilemap::set_palette(0, game);
-    menu_tilemap::load(0x50, addr_kMenuTilemap_DataClearMode as u16, game);
-    menu_tilemap::load(0x140, addr_kMenuTilemap_ClearWhichData as u16, game);
-    menu_tilemap::load(0x688, addr_kMenuTilemap_Exit as u16, game);
+    menu_tilemap::load(0x50, ADDR_K_MENU_TILEMAP_DATA_CLEAR_MODE as u16, game);
+    menu_tilemap::load(0x140, ADDR_K_MENU_TILEMAP_CLEAR_WHICH_DATA as u16, game);
+    menu_tilemap::load(0x688, ADDR_K_MENU_TILEMAP_EXIT as u16, game);
     menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Occupied, game);
     set_copy_source(0, game);
     select_first_slot(game);
@@ -558,7 +559,7 @@ fn clear_slot<H: Host + ?Sized>(game: &mut H) {
         crate::word_transfers!(game, ascending, 288; native(0x3b00) <- value(15));
         word!(game.nonempty_save_slots &= (BIT_SHL_NOT[copy_source(game) as usize]));
         menu_tilemap::set_palette(0, game);
-        menu_tilemap::load(0x500, addr_kMenuTilemap_DataCleared as u16, game);
+        menu_tilemap::load(0x500, ADDR_K_MENU_TILEMAP_DATA_CLEARED as u16, game);
         menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Confirmation, game);
         game.flush_sram();
     }
@@ -571,7 +572,7 @@ fn turn_helmet<H: Host + ?Sized>(game: &mut H) {
     crate::sprite_output::menu_selection(game);
     border(0x48, game);
     crate::sprite_output::file_helmets(true, game);
-    if game.observed_inputs().pressed as i32 & (kButton_Start as i32 | kButton_A as i32) != 0
+    if game.observed_inputs().pressed as i32 & (K_BUTTON_START as i32 | K_BUTTON_A as i32) != 0
         || file_select(game, |menu| {
             (0..3).any(|helmet| {
                 *menu.helmet_animation_frame(helmet) == 7
@@ -616,9 +617,10 @@ fn choose_main<H: Host + ?Sized>(game: &mut H) {
         border(0x48, game);
         crate::sprite_output::menu_selection(game);
         crate::sprite_output::file_helmets(true, game);
-        if game.observed_inputs().pressed as i32 & (kButton_Start as i32 | kButton_A as i32) == 0 {
+        if game.observed_inputs().pressed as i32 & (K_BUTTON_START as i32 | K_BUTTON_A as i32) == 0
+        {
             let selection_unchanged: bool =
-                if (game.observed_inputs().pressed as i32 & kButton_Up as i32) != 0 {
+                if (game.observed_inputs().pressed as i32 & K_BUTTON_UP as i32) != 0 {
                     let occupied = word!(game.nonempty_save_slots) != 0;
                     let selected = word!(game.selected_save_slot);
                     let previous = if (selected as i16).wrapping_sub(1) < 0 {
@@ -630,8 +632,8 @@ fn choose_main<H: Host + ?Sized>(game: &mut H) {
                     };
                     word!(game.selected_save_slot = previous);
                     false
-                } else if (game.observed_inputs().pressed as i32 & kButton_Down as i32) == 0 {
-                    if (game.observed_inputs().pressed as i32 & kButton_B as i32) != 0 {
+                } else if (game.observed_inputs().pressed as i32 & K_BUTTON_DOWN as i32) == 0 {
+                    if (game.observed_inputs().pressed as i32 & K_BUTTON_B as i32) != 0 {
                         game.queue_sound(0, 0x37_u8, 6);
                         crate::menu!(game.menu_index = 33);
                         game.queue_sound(0, 0x37_u8, 6);

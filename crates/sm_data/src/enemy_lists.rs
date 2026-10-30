@@ -15,9 +15,9 @@ pub const SPARK_KINDS: usize = 3;
 pub const FACE_BLOCK_GLOW_COLOURS: u32 = 0xa8_e7cc;
 pub const FACE_BLOCK_GLOW_WORDS: usize = 8 * 4;
 
-/// $A8:F3B0: Ki-Hunter wing instruction lists, two pairs of left and right wings.
-pub const KI_HUNTER_WING_INSTRUCTION_LISTS: u32 = 0xa8_f3b0;
-pub const KI_HUNTER_WING_LISTS: usize = 4;
+/// $A8:F3B0: Kihunter wing instruction lists, two pairs of left and right wings.
+pub const KIHUNTER_WING_INSTRUCTION_LISTS: u32 = 0xa8_f3b0;
+pub const KIHUNTER_WING_LISTS: usize = 4;
 
 /// $A8:C599: Maridia floater spike instruction lists.
 pub const FLOATER_SPIKE_INSTRUCTION_LISTS: u32 = 0xa8_c599;

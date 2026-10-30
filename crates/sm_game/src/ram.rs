@@ -167,7 +167,7 @@ ram_vars! {
     0x00590, uint16 Scalar => [oam_next_ptr];
     0x00592, uint16 Scalar => [power_bomb_explosion_status];
     0x00596 stride 2, uint16 Scalar => [
-        g_word_7E0596, g_word_7E0598, set_to_e0_by_scrolling_sky, UNUSED_word_7E059C
+        fx22_x_table_size, fx22_screen_y, set_to_e0_by_scrolling_sky, UNUSED_word_7E059C
     ];
     0x005A0 stride 2, uint16 Scalar => [
         UNUSED_hdma_contracting_flag, message_box_animation_y_radius, message_box_animation_y0,
@@ -216,11 +216,11 @@ ram_vars! {
     0x0064D stride 3, uint8 Array => [sfx_cur, sfx_clear_delay, sfx_max_queued, sfx1_queue];
     0x00666, uint8 Array => [sfx2_queue];
     0x00676, uint8 Array => [sfx3_queue];
-    0x00686 stride 2, uint16 Scalar => [sound_handler_downtime, croco_target_0688, g_word_7E068A];
-    0x0068C, uint8 Scalar => [croco_word_068C];
+    0x00686 stride 2, uint16 Scalar => [sound_handler_downtime, croco_melt_erase_target, croco_melt_subindex];
+    0x0068C, uint8 Scalar => [croco_melt_erase_rate];
     0x0068E stride 2, uint16 Scalar => [
-        g_word_7E068E, croco_cur_vline_idx, g_word_7E0692, g_word_7E0694, g_word_7E0696,
-        g_word_7E0698, croco_word_7E069A
+        croco_melt_words, croco_cur_vline_idx, croco_melt_displacement, croco_melt_y_offset, croco_melt_unread,
+        croco_melt_max_y, croco_melt_index
     ];
     0x0069C, uint8 Array => [croco_vline_height];
     0x0071C, uint8 Scalar => [UNUSED_byte_7E071C];
@@ -229,16 +229,16 @@ ram_vars! {
         screen_fade_delay, screen_fade_counter, menu_index,
         pausemenu_start_lr_pressed_highlight_timer, pausemenu_lr_animation_timer,
         pausemenu_item_selector_animation_timer, pausemenu_reserve_tank_animation_timer,
-        UNUSED_word_7E0731, pausemenu_uparrow_animation_timer, pausemenu_downarrow_animation_timer,
+        unused_word_7e0731, pausemenu_uparrow_animation_timer, pausemenu_downarrow_animation_timer,
         pausemenu_rightarrow_animation_timer, pausemenu_leftarrow_animation_timer,
-        pausemenu_palette_animation_timer, UNUSED_word_7E073D, pausemenu_lr_animation_frame,
+        pausemenu_palette_animation_timer, unused_word_7e073d, pausemenu_lr_animation_frame,
         pausemenu_item_selector_animation_frame, pausemenu_reserve_tank_animation_frame,
-        UNUSED_word_7E0745, pausemenu_uparrow_animation_frame, pausemenu_downarrow_animation_frame,
+        unused_word_7e0745, pausemenu_uparrow_animation_frame, pausemenu_downarrow_animation_frame,
         pausemenu_rightarrow_animation_frame, pausemenu_leftarrow_animation_frame,
         pausemenu_palette_animation_frame, pausemenu_shoulder_button_highlight,
         pausemenu_button_label_mode, pausemenu_equipment_category_item,
-        pausemenu_reserve_tank_delay_ctr, UNUSED_word_7E0759, UNUSED_word_7E075B,
-        UNUSED_word_7E075D, UNUSED_word_7E075F, UNUSED_word_7E0761, pause_screen_mode
+        pausemenu_reserve_tank_delay_ctr, unused_word_7e0759, unused_word_7e075b,
+        unused_word_7e075d, unused_word_7e075f, unused_word_7e0761, pause_screen_mode
     ];
     0x00765 stride 1, uint8 Scalar => [
         pausemenu_bak_BG1SC, pausemenu_bak_BG2SC, pausemenu_bak_BG3SC,
@@ -255,7 +255,7 @@ ram_vars! {
     ];
     0x00782, uint8 Scalar => [coroutine_completion_flags];
     0x00783 stride 2, uint16 Scalar => [
-        irq_enable_mode7, mode7_rotation_angle, g_word_7E0787, has_area_map, load_station_index,
+        irq_enable_mode7, mode7_rotation_angle, file_select_map_unread, has_area_map, load_station_index,
         door_def_ptr, REMOVED_door_bts, door_direction, elevator_door_properties_orientation,
         door_transition_flag_elevator_zebetites, door_transition_flag_enemies, elevator_direction,
         room_ptr, room_index, area_index, room_x_coordinate_on_map, room_y_coordinate_on_map,
@@ -351,7 +351,7 @@ ram_vars! {
         enable_horiz_slope_coll, samus_hurt_flash_counter, samus_special_super_palette_flags,
         samus_subunit_health, samus_periodic_subdamage, samus_periodic_damage, knockback_dir,
         knockback_x_dir, bomb_jump_dir, samus_movement_handler, frame_handler_gamma,
-        samus_draw_handler, UNUSED_word_7E0A5E, samus_input_handler, samus_var62,
+        samus_draw_handler, UNUSED_word_7E0A5E, samus_input_handler, samus_push_direction,
         samus_grapple_flags, samus_x_speed_divisor, samus_shine_timer, samus_health_warning,
         samus_x_speed_table_pointer, samus_contact_damage_index
     ];
@@ -367,7 +367,7 @@ ram_vars! {
     0x00A8E, uint16 Scalar => [demo_input_prev_new];
     0x00A8E, LongPtr Scalar => ["hdma_ptr_3"];
     0x00A90 stride 1, uint16 Scalar => [
-        demo_backup_prev_controller_input, hdma_var_1, demo_backup_prev_controller_input_new
+        demo_backup_prev_controller_input, xray_hdma_table_end, demo_backup_prev_controller_input_new
     ];
     0x00A94, uint16 Scalar => [samus_anim_frame_timer];
     0x00A96, uint16 Scalar => [samus_anim_frame];
@@ -399,7 +399,7 @@ ram_vars! {
         samus_prev_y_subpos, charged_shot_glow_timer, UNUSED_word_7E0B1A
     ];
     0x00B20 stride 2, uint16 Scalar => [
-        used_for_ball_bounce_on_landing, samus_is_falling_flag, tempB24, tempB26
+        used_for_ball_bounce_on_landing, samus_is_falling_flag, samus_tiles_temp_top, samus_tiles_temp_bottom
     ];
     0x00B2A stride 2, uint16 Scalar => [UNUSED_word_7E0B2A, samus_y_subspeed, samus_y_speed];
     0x00B32 stride 2, uint16 Scalar => [
@@ -424,7 +424,7 @@ ram_vars! {
     ];
     0x00C72 stride 10, uint16 Array => [
         bomb_functions, projectile_variables, "bomb_timers", projectile_timers, "bomb_subspeeds",
-        projectile_unk_A
+        projectile_phases
     ];
     0x00CB8, uint16 Array => [projectile_spritemap_pointers];
     0x00CCC stride 2, uint16 Scalar => [
@@ -435,7 +435,7 @@ ram_vars! {
         power_bomb_explosion_x_pos_plus_0x100, power_bomb_explosion_y_pos_rsub_0x1ff,
         power_bomb_explosion_radius, power_bomb_pre_explosion_flash_radius, power_bomb_flag,
         power_bomb_pre_explosion_radius_speed, pre_scaled_power_bomb_explosion_shape_def_ptr,
-        grapple_beam_flags, grapple_varCF6, slow_grabble_scrolling_flag, grapple_beam_end_angle16
+        grapple_beam_flags, grapple_auto_fire_timer, slow_grabble_scrolling_flag, grapple_beam_end_angle16
     ];
     0x00CFB, uint8 Scalar => [grapple_beam_end_angle_hi];
     0x00CFC stride 2, uint16 Scalar => [
@@ -445,10 +445,10 @@ ram_vars! {
         grapple_beam_end_x_suboffset, grapple_beam_end_x_offset, grapple_beam_end_y_suboffset,
         grapple_beam_end_y_offset, x_pos_of_start_of_grapple_beam, y_pos_of_start_of_grapple_beam,
         x_pos_of_start_of_grapple_beam_prevframe, y_pos_of_start_of_grapple_beam_prevframe,
-        grapple_beam_unkD1E, grapple_beam_unkD20, grapple_beam_extension_x_velocity,
-        grapple_beam_extension_y_velocity, grapple_beam_unkD26, grapple_beam_unkD28,
-        grapple_beam_unkD2A, grapple_beam_unkD2C, grapple_beam_unkD2E, grapple_beam_unkD30,
-        grapple_beam_function, grapple_beam_direction, grapple_beam_unkD36, grapple_beam_unkD38,
+        offscreen_beam_hdma_index, grapple_beam_unkD20, grapple_beam_extension_x_velocity,
+        grapple_beam_extension_y_velocity, grapple_swing_angular_velocity, grapple_swing_angle_acceleration,
+        grapple_swing_input_acceleration, grapple_swing_deceleration, grapple_swing_extra_velocity, grapple_kick_cooldown_timer,
+        grapple_beam_function, grapple_beam_direction, grapple_special_angle_flag, grapple_failed_swing_counter,
         grapple_beam_unkD3A, grapple_beam_unkD3C, grapple_point_anim_timer, grapple_point_anim_ptr
     ];
     0x00D42, uint16 Array => [grapple_segment_anim_instr_timers];
@@ -458,10 +458,10 @@ ram_vars! {
         button_config_itemcancel_y_saved, button_config_itemswitch_saved,
         button_config_aim_down_L_saved, button_config_aim_up_R_saved, grapple_beam_grapple_start_x,
         grapple_beam_grapple_start_y, grapple_beam_grapple_start_block_x,
-        grapple_beam_grapple_start_block_y, g_word_7E0D98
+        grapple_beam_grapple_start_block_y, grapple_collision_distance
     ];
-    0x00D9C, uint16 Scalar => [g_word_7E0D9C];
-    0x00D9E, uint8 Scalar => [g_byte_7E0D9E];
+    0x00D9C, uint16 Scalar => [wavy_samus_enabled];
+    0x00D9E, uint8 Scalar => [wavy_samus_amplitude];
     0x00D9F, uint8 Scalar => [g_byte_7E0D9F];
     0x00DA0 stride 2, uint16 Scalar => [
         loop_counter_transfer_enemies_to_vram, absolute_moved_last_frame_x,
@@ -480,7 +480,7 @@ ram_vars! {
     ];
     0x00DDC stride 2, uint16 Scalar => [
         suit_pickup_light_beam_widening_speed, projectile_index, debug_invincibility,
-        game_options_screen_index, g_word_7E0DE4, g_word_7E0DE6, g_word_7E0DE8,
+        game_options_screen_index, death_index, death_counter, death_flash_timer,
         which_item_to_pickup, substate, suit_pickup_light_beam_pos
     ];
     0x00DF0 stride 1, uint8 Scalar => [
@@ -577,7 +577,7 @@ ram_vars! {
         fx_layer_blending_config_a, fx_layer_blending_config_b, fx_layer_blending_config_c,
         phantom_related_layer_flag
     ];
-    0x0198D, uint16 Scalar => [cinematic_var5];
+    0x0198D, uint16 Scalar => [mode7_angle];
     0x0198D, uint16 Scalar => [eproj_enable_flag];
     // The file select menu's reuse of this region (RAM map, $198D..BC).
     0x0198D stride 2, uint16 Scalar => [
@@ -585,15 +585,15 @@ ram_vars! {
         slot_a_helmet_animation_timer, slot_b_helmet_animation_timer,
         slot_c_helmet_animation_timer
     ];
-    0x0198F, uint16 Scalar => [cinematic_var6];
+    0x0198F, uint16 Scalar => [mode7_zoom];
     0x0198F, uint16 Scalar => [eproj_unk198F];
-    0x01991, uint16 Scalar => [cinematic_var7];
+    0x01991, uint16 Scalar => [cinematic_x_sub];
     0x01991, uint16 Scalar => [eproj_index];
-    0x01993, uint16 Scalar => [cinematic_var8];
+    0x01993, uint16 Scalar => [cinematic_x];
     0x01993, uint16 Scalar => [eproj_init_param_1];
-    0x01995, uint16 Scalar => [cinematic_var9];
-    0x01995, uint16 Scalar => [eproj_unk1995];
-    0x01997, uint16 Scalar => [cinematic_var10];
+    0x01995, uint16 Scalar => [cinematic_y_sub];
+    0x01995, uint16 Scalar => [eproj_init_param_2];
+    0x01997, uint16 Scalar => [cinematic_y];
     0x01997, uint16 Array => [eproj_id];
     0x01997 stride 2, uint16 Scalar => [
         menu_selection_missile_animation_frame, UNUSED_menu_word_7E1999,
@@ -604,7 +604,7 @@ ram_vars! {
         slot_b_helmet_y_pos, slot_c_helmet_y_pos, file_copy_selection, file_copy_source_slot,
         file_copy_destination_slot
     ];
-    0x01999 stride 2, uint16 Scalar => [g_word_7E1999, g_word_7E199B, g_word_7E199D, g_word_7E199F];
+    0x01999 stride 2, uint16 Scalar => [cinematic_x_subspeed, cinematic_x_speed, cinematic_y_subspeed, cinematic_y_speed];
     0x019A1 stride 4, uint16 Array => [
         mode7_obj_instr_ptr, mode7_obj_preinstr_func, mode7_obj_instr_timer, mode7_obj_goto_timer
     ];
@@ -617,10 +617,10 @@ ram_vars! {
     ];
     0x019DF, uint16 Array => [eproj_timers];
     0x019E5, uint16 Array => [cinematicbg_arr6];
-    0x019ED, uint16 Scalar => [cinematicbg_var2];
+    0x019ED, uint16 Scalar => [cinematic_bg_object_index];
     0x019F1 stride 2, uint16 Scalar => [
-        cinematic_enable_objs, cinematic_enable_bg_tilemap, cinematicbg_var3, cinematic_var21,
-        cinematic_var22, cinematic_var23, cinematic_var24, cinematic_var25, cinematic_var26
+        cinematic_enable_objs, cinematic_enable_bg_tilemap, cinematic_bg_vram_address, credits_instr_list,
+        credits_instruction_timer, credits_timer, credits_pre_instruction, credits_enabled, credits_tilemap_row
     ];
     // Bank $8C indirect instruction pointers; text glow is spawned by the
     // intro text pages' BG objects.
@@ -633,13 +633,13 @@ ram_vars! {
         text_glow_timers, text_glow_x_positions, text_glow_y_positions, text_glow_palettes
     ];
     0x01A27, uint16 Array => [eproj_x_subpos];
-    0x01A37, uint16 Scalar => [cinematic_var20];
-    0x01A47 stride 2, uint16 Scalar => [cinematic_var19, cinematic_var4, cinematic_var13];
+    0x01A37, uint16 Scalar => [text_glow_palette_indices];
+    0x01A47 stride 2, uint16 Scalar => [text_glow_object_index, cinematic_function_timer, cinematic_var13];
     0x01A4B, uint16 Array => [eproj_x_pos];
     0x01A4D stride 2, uint16 Scalar => [
-        cinematic_var14, cinematic_var17, cinematic_var12, cinematic_var18
+        cinematic_var14, cinematic_var17, cinematic_frame_counter, skip_to_title_index
     ];
-    0x01A57, uint16 Scalar => [cinematic_var15];
+    0x01A57, uint16 Scalar => [intro_samus_display];
     0x01A59, uint16 Scalar => [cinematic_obj_index];
     0x01A5D, uint16 Array => [cinematicspr_whattodraw];
     0x01A6F, uint16 Array => [eproj_y_subpos];
@@ -673,7 +673,7 @@ ram_vars! {
         eproj_spritemap_ptr, cinematicspr_goto_timer, eproj_instr_timers
     ];
     0x01B9D stride 2, uint16 Scalar => [
-        cinematic_spawn_param, cinematic_var11, cinematicbg_var1, cinematic_var16
+        cinematic_spawn_param, intro_frame_counter, intro_text_click_flag, intro_japanese_text_timer
     ];
     0x01BB3 stride 36, uint16 Array => [eproj_radius, eproj_properties, eproj_G];
     0x01C1F, uint16 Scalar => [message_box_index];
@@ -718,14 +718,14 @@ ram_vars! {
     0x08000, ExtraEnemyRam8000 Array => ["extra_enemy_ram8000"];
     0x08800, ExtraEnemyRam8800 Array => ["extra_enemy_ram8800"];
     0x09000 stride 2, uint16 Scalar => [
-        kraid_unk9000, g_word_7E9002, g_word_7E9004, g_word_7E9006, g_word_7E9008, g_word_7E900A,
+        boss_death_quake_sound_timer, crocomire_bridge_1_crumbled, g_word_7E9004, crocomire_bridge_2_crumbled, g_word_7E9008, crocomire_unread_900a,
         g_word_7E900C
     ];
-    0x0900F stride 3, uint16 Scalar => [g_word_7E900F, g_word_7E9012, g_word_7E9015, g_word_7E9018];
+    0x0900F stride 3, uint16 Scalar => [g_word_7E900F, g_word_7E9012, g_word_7E9015, crocomire_acid_smoke_timer];
     0x09020, uint16 Scalar => [g_word_7E9020];
     0x09022, uint16 Scalar => [g_word_7E9022];
     0x09030, uint16 Scalar => [g_word_7E9030];
-    0x09032, uint16 Scalar => [g_word_7E9032];
+    0x09032, uint16 Scalar => [phantoon_materialisation_sound_index];
     0x09040, uint16 Scalar => [g_word_7E9040];
     0x09042, uint16 Scalar => [g_word_7E9042];
     0x09050, uint16 Scalar => [g_word_7E9050];
@@ -734,9 +734,9 @@ ram_vars! {
     0x09062, uint16 Scalar => [g_word_7E9062];
     0x09070, uint16 Scalar => [g_word_7E9070];
     0x09072, uint16 Scalar => [g_word_7E9072];
-    0x09080, uint16 Scalar => [g_word_7E9080];
-    0x09082, uint16 Scalar => [g_word_7E9082];
-    0x09090, uint16 Scalar => [g_word_7E9090];
+    0x09080, uint16 Scalar => [morph_eye_width_delta];
+    0x09082, uint16 Scalar => [morph_eye_subwidth_delta];
+    0x09090, uint16 Scalar => [morph_eye_colour_index];
     0x09092, uint16 Scalar => [g_word_7E9092];
     0x090A0, uint16 Scalar => [g_word_7E90A0];
     0x090A2, uint16 Scalar => [g_word_7E90A2];
@@ -746,18 +746,18 @@ ram_vars! {
     0x090C2, uint16 Scalar => [g_word_7E90C2];
     0x090D0, uint16 Scalar => [g_word_7E90D0];
     0x090D2, uint16 Scalar => [g_word_7E90D2];
-    0x09100 stride 64, uint16 Scalar => [g_word_7E9100, g_word_7E9140, g_word_7E9180];
+    0x09100 stride 64, uint16 Scalar => [phantoon_waves, g_word_7E9140, g_word_7E9180];
     0x09500 stride 16, uint8 Scalar => [
         g_byte_7E9500, g_byte_7E9510, g_byte_7E9520, g_byte_7E9530, g_byte_7E9540,
         g_byte_7E9550, g_byte_7E9560, g_byte_7E9570, g_byte_7E9580, g_byte_7E9590,
         g_byte_7E95A0, g_byte_7E95B0, g_byte_7E95C0, g_byte_7E95D0, g_byte_7E95E0,
         g_byte_7E95F0, g_byte_7E9600, g_byte_7E9610
     ];
-    0x097DC, uint16 Array => [g_word_7E97DC];
+    0x097DC, uint16 Array => [eproj_angles];
     0x09800, uint16 Array => [hdma_table_1];
     0x09C00, uint8 Array => [mother_brain_indirect_hdma];
-    0x09C44, uint16 Scalar => [g_word_7E9C44];
-    0x09C46, uint16 Array => [g_word_7E9C46];
+    0x09C44, uint16 Scalar => [bg2_y_scroll_spare_entry];
+    0x09C46, uint16 Array => [liquid_bg2_y_scroll_table];
     0x09D00, uint16 Array => [hdma_table_2];
     0x09E00, ExpandingSquareTransitionHdma Array => ["hdma_window_1_left_pos"];
     0x09E10, ExpandingSquareTransitionHdma Array => ["hdma_window_1_right_pos"];
@@ -770,13 +770,13 @@ ram_vars! {
         expand_sq_top_subvel, expand_sq_top_vel, expand_sq_bottom_subvel, expand_sq_bottom_vel,
         expand_sq_timer
     ];
-    0x09E80, uint16 Array => [g_word_7E9E80];
+    0x09E80, uint16 Array => [fx22_x_table];
     0x09F00, uint8 Array => [scrolling_sky_bg2_indirect_hdma];
     0x09F80, uint16 Array => [scrolling_sky_bg2_hdma_data];
     0x0A000, TileTables Scalar => ["tile_table"];
     0x0C000, uint16 Array => [palette_buffer];
     0x0C200, uint16 Array => [target_palettes];
-    0x0C400 stride 2, uint16 Scalar => [palette_change_num, palette_change_denom, g_word_7EC404];
+    0x0C400 stride 2, uint16 Scalar => [palette_change_num, palette_change_denom, palette_change_colour_index];
     0x0C406, uint8 Array => [power_bomb_explosion_left_hdma];
     0x0C506, uint8 Array => [power_bomb_explosion_right_hdma];
     0x0C606, uint8 Scalar => [offscreen_power_bomb_left_hdma];
@@ -799,9 +799,9 @@ ram_vars! {
     0x0CD52, uint16 Array => [explored_map_tiles_saved];
     0x0D552, uint8 Array => [debug_enemy_set_name];
     0x0D55A, uint8 Array => [debug_enemy_set_data];
-    0x0D652, uint16 Scalar => [wrecked_ship_robot_palanim_palindex];
-    0x0D654, uint16 Scalar => [wrecked_ship_robot_palanim_timer];
-    0x0D656, uint8 Scalar => [wrecked_ship_robot_palanim_table_index];
+    0x0D652, uint16 Scalar => [work_robot_palanim_palindex];
+    0x0D654, uint16 Scalar => [work_robot_palanim_timer];
+    0x0D656, uint8 Scalar => [work_robot_palanim_table_index];
     0x0D658 stride 36, uint16 Array => [
         projectiletrail_left_instr_timer, projectiletrail_right_instr_timer,
         projectiletrail_left_instr_list_ptr, projectiletrail_right_instr_list_ptr,

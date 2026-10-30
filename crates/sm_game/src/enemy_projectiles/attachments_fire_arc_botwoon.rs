@@ -11,25 +11,27 @@ use crate::{
 };
 
 use BotwoonField as B;
-use WaffleField as W;
+use FireArcField as W;
 
 // Both helpers reacquire the current enemy handle on each call, as the old
 // helpers did; their callers retain their separately captured parent handles.
 fn classify_phase(phase: u16, ctx: &impl Host) -> (u16, u16) {
     let enemy = usize::from(ctx.inputs().current_enemy);
-    if ctx.waffle_field(enemy, W::Reverse) != 0 {
-        if (phase as i16).wrapping_sub(ctx.waffle_field(enemy, W::FirstTransition) as i16) >= 0 {
+    if ctx.fire_arc_field(enemy, W::Reverse) != 0 {
+        if (phase as i16).wrapping_sub(ctx.fire_arc_field(enemy, W::FirstTransition) as i16) >= 0 {
             (2, 1)
-        } else if (phase as i16).wrapping_sub(ctx.waffle_field(enemy, W::SecondTransition) as i16)
+        } else if (phase as i16).wrapping_sub(ctx.fire_arc_field(enemy, W::SecondTransition) as i16)
             >= 0
         {
             (1, 0)
         } else {
             (0, 0)
         }
-    } else if (phase as i16).wrapping_sub(ctx.waffle_field(enemy, W::FirstTransition) as i16) < 0 {
+    } else if (phase as i16).wrapping_sub(ctx.fire_arc_field(enemy, W::FirstTransition) as i16) < 0
+    {
         (2, 0)
-    } else if (phase as i16).wrapping_sub(ctx.waffle_field(enemy, W::SecondTransition) as i16) < 0 {
+    } else if (phase as i16).wrapping_sub(ctx.fire_arc_field(enemy, W::SecondTransition) as i16) < 0
+    {
         (1, 1)
     } else {
         (0, 0)
@@ -37,20 +39,20 @@ fn classify_phase(phase: u16, ctx: &impl Host) -> (u16, u16) {
 }
 fn clamp_phase(phase: u16, ctx: &impl Host) -> (u16, bool) {
     let enemy = usize::from(ctx.inputs().current_enemy);
-    if ctx.waffle_field(enemy, W::Reverse) == 0 {
-        if (phase as i16).wrapping_sub(ctx.waffle_field(enemy, W::EndPhase) as i16) >= 0 {
-            if (phase as i16).wrapping_sub(ctx.waffle_field(enemy, W::StartPhase) as i16) < 0 {
+    if ctx.fire_arc_field(enemy, W::Reverse) == 0 {
+        if (phase as i16).wrapping_sub(ctx.fire_arc_field(enemy, W::EndPhase) as i16) >= 0 {
+            if (phase as i16).wrapping_sub(ctx.fire_arc_field(enemy, W::StartPhase) as i16) < 0 {
                 return (phase, false);
             }
-            return (ctx.waffle_field(enemy, W::StartPhase), false);
+            return (ctx.fire_arc_field(enemy, W::StartPhase), false);
         }
-    } else if (phase as i16).wrapping_sub(ctx.waffle_field(enemy, W::EndPhase) as i16) < 0 {
-        if (phase as i16).wrapping_sub(ctx.waffle_field(enemy, W::StartPhase) as i16) < 0 {
-            return (ctx.waffle_field(enemy, W::StartPhase), false);
+    } else if (phase as i16).wrapping_sub(ctx.fire_arc_field(enemy, W::EndPhase) as i16) < 0 {
+        if (phase as i16).wrapping_sub(ctx.fire_arc_field(enemy, W::StartPhase) as i16) < 0 {
+            return (ctx.fire_arc_field(enemy, W::StartPhase), false);
         }
         return (phase, false);
     }
-    (ctx.waffle_field(enemy, W::EndPhase), true)
+    (ctx.fire_arc_field(enemy, W::EndPhase), true)
 }
 fn phase_sound(stage: u16, ctx: &mut impl Host) {
     if stage != 2 {
@@ -59,7 +61,7 @@ fn phase_sound(stage: u16, ctx: &mut impl Host) {
 }
 fn orbit_component(phase: u16, amplitude: u16, quarter_turn: u16, ctx: &mut impl Host) -> u16 {
     let phase = phase.wrapping_add(quarter_turn) as u8;
-    let product = u16::from(ctx.waffle_sine_sample(phase & 0x7f)) * u16::from(amplitude as u8);
+    let product = u16::from(ctx.fire_arc_sine_sample(phase & 0x7f)) * u16::from(amplitude as u8);
     let integer = product >> 8;
     if phase & 0x80 != 0 {
         integer.wrapping_neg()
@@ -68,11 +70,11 @@ fn orbit_component(phase: u16, amplitude: u16, quarter_turn: u16, ctx: &mut impl
     }
 }
 
-pub fn advance_waffle_orbit(ctx: &mut impl Host) {
+pub fn advance_fire_arc_orbit(ctx: &mut impl Host) {
     let enemy = usize::from(ctx.inputs().current_enemy);
-    let radius = ctx.waffle_field(enemy, W::Radius);
-    let (stage, sprite) = classify_phase(ctx.waffle_field(enemy, W::Phase), ctx);
-    if stage != ctx.waffle_field(enemy, W::HeadStage) {
+    let radius = ctx.fire_arc_field(enemy, W::Radius);
+    let (stage, sprite) = classify_phase(ctx.fire_arc_field(enemy, W::Phase), ctx);
+    if stage != ctx.fire_arc_field(enemy, W::HeadStage) {
         let x = ctx
             .resolve_actor(Key::from_legacy(enemy as u16), Le)
             .x
@@ -81,7 +83,7 @@ pub fn advance_waffle_orbit(ctx: &mut impl Host) {
             .resolve_actor(Key::from_legacy(enemy as u16), Le)
             .y
             .whole;
-        let palette = ctx.waffle_field(enemy, W::Palette);
+        let palette = ctx.fire_arc_field(enemy, W::Palette);
         sprite_objects::spawn(
             ctx,
             SpriteSpawn {
@@ -98,7 +100,7 @@ pub fn advance_waffle_orbit(ctx: &mut impl Host) {
             .resolve_actor(Key::from_legacy(enemy as u16), Le)
             .y
             .whole;
-        let palette = ctx.waffle_field(enemy, W::Palette);
+        let palette = ctx.fire_arc_field(enemy, W::Palette);
         sprite_objects::spawn(
             ctx,
             SpriteSpawn {
@@ -109,52 +111,52 @@ pub fn advance_waffle_orbit(ctx: &mut impl Host) {
         );
         phase_sound(stage, ctx);
     }
-    ctx.set_waffle_field(enemy, W::HeadStage, stage);
-    let (phase, _) = clamp_phase(ctx.waffle_field(enemy, W::Phase), ctx);
-    let center = ctx.waffle_field(enemy, W::CenterX);
-    let amplitude = ctx.waffle_field(enemy, W::Radius);
+    ctx.set_fire_arc_field(enemy, W::HeadStage, stage);
+    let (phase, _) = clamp_phase(ctx.fire_arc_field(enemy, W::Phase), ctx);
+    let center = ctx.fire_arc_field(enemy, W::CenterX);
+    let amplitude = ctx.fire_arc_field(enemy, W::Radius);
     let x = center.wrapping_add(orbit_component(phase, amplitude, 64, ctx));
     ctx.edit_actor(Key::from_legacy(enemy as u16), Le, |actor| {
         actor.x.whole = x
     });
-    let (phase, _) = clamp_phase(ctx.waffle_field(enemy, W::Phase), ctx);
-    let center = ctx.waffle_field(enemy, W::CenterY);
-    let amplitude = ctx.waffle_field(enemy, W::Radius);
+    let (phase, _) = clamp_phase(ctx.fire_arc_field(enemy, W::Phase), ctx);
+    let center = ctx.fire_arc_field(enemy, W::CenterY);
+    let amplitude = ctx.fire_arc_field(enemy, W::Radius);
     let y = center.wrapping_add(orbit_component(phase, amplitude, 128, ctx));
     ctx.edit_actor(Key::from_legacy(enemy as u16), Le, |actor| {
         actor.y.whole = y
     });
-    advance_waffle_parts(radius, ctx);
-    advance_waffle_sprites(radius, ctx);
+    advance_fire_arc_parts(radius, ctx);
+    advance_fire_arc_sprites(radius, ctx);
     // Original AddToHiLo captures speed high/low, reads phase low/high,
     // then publishes low/high. Its two halves may overlap enemy/owned aliases.
-    let delta = (u32::from(ctx.waffle_field(enemy, W::PhaseSpeed)) << 16)
-        | u32::from(ctx.waffle_field(enemy, W::PhaseSpeedFraction));
-    let low = ctx.waffle_field(enemy, W::PhaseFraction);
-    let high = ctx.waffle_field(enemy, W::Phase);
+    let delta = (u32::from(ctx.fire_arc_field(enemy, W::PhaseSpeed)) << 16)
+        | u32::from(ctx.fire_arc_field(enemy, W::PhaseSpeedFraction));
+    let low = ctx.fire_arc_field(enemy, W::PhaseFraction);
+    let high = ctx.fire_arc_field(enemy, W::Phase);
     let value = ((u32::from(high) << 16) | u32::from(low)).wrapping_add(delta);
-    ctx.set_waffle_field(enemy, W::PhaseFraction, value as u16);
-    ctx.set_waffle_field(enemy, W::Phase, (value >> 16) as u16);
+    ctx.set_fire_arc_field(enemy, W::PhaseFraction, value as u16);
+    ctx.set_fire_arc_field(enemy, W::Phase, (value >> 16) as u16);
 }
 
-fn advance_waffle_parts(radius: u16, ctx: &mut impl Host) {
+fn advance_fire_arc_parts(radius: u16, ctx: &mut impl Host) {
     let enemy = usize::from(ctx.inputs().current_enemy);
-    ctx.set_waffle_field(enemy, W::PartCursor, 8);
+    ctx.set_fire_arc_field(enemy, W::PartCursor, 8);
     let mut phase = ctx
-        .waffle_field(enemy, W::PhaseLead)
-        .wrapping_add(ctx.waffle_field(enemy, W::Phase));
+        .fire_arc_field(enemy, W::PhaseLead)
+        .wrapping_add(ctx.fire_arc_field(enemy, W::Phase));
     let mut reached_end;
     loop {
-        phase = phase.wrapping_sub(ctx.waffle_field(enemy, W::Spacing));
+        phase = phase.wrapping_sub(ctx.fire_arc_field(enemy, W::Spacing));
         let part = usize::from(ctx.inputs().current_enemy)
-            + usize::from(ctx.waffle_field(enemy, W::PartCursor));
-        let projectile = ctx.waffle_field(part, W::Projectile);
+            + usize::from(ctx.fire_arc_field(enemy, W::PartCursor));
+        let projectile = ctx.fire_arc_field(part, W::Projectile);
         let (stage, sprite) = classify_phase(phase, ctx);
-        if stage != ctx.waffle_field(part, W::PartStage) {
+        if stage != ctx.fire_arc_field(part, W::PartStage) {
             let slot = (projectile >> 1) as isize;
             let x = enemy!(ctx, slot, x);
             let y = enemy!(ctx, slot, y);
-            let palette = ctx.waffle_field(enemy, W::Palette);
+            let palette = ctx.fire_arc_field(enemy, W::Palette);
             sprite_objects::spawn(
                 ctx,
                 SpriteSpawn {
@@ -165,7 +167,7 @@ fn advance_waffle_parts(radius: u16, ctx: &mut impl Host) {
             );
             let x = enemy!(ctx, slot, x);
             let y = enemy!(ctx, slot, y);
-            let palette = ctx.waffle_field(enemy, W::Palette);
+            let palette = ctx.fire_arc_field(enemy, W::Palette);
             sprite_objects::spawn(
                 ctx,
                 SpriteSpawn {
@@ -176,43 +178,43 @@ fn advance_waffle_parts(radius: u16, ctx: &mut impl Host) {
             );
             phase_sound(stage, ctx);
         }
-        ctx.set_waffle_field(part, W::PartStage, stage);
+        ctx.set_fire_arc_field(part, W::PartStage, stage);
         let (clamped, _) = clamp_phase(phase, ctx);
         let slot = (projectile >> 1) as isize;
-        let center = ctx.waffle_field(enemy, W::CenterX);
+        let center = ctx.fire_arc_field(enemy, W::CenterX);
         let x = center.wrapping_add(orbit_component(clamped, radius, 64, ctx));
         enemy!(ctx, slot, x = x);
         let (clamped, last_reached_end) = clamp_phase(phase, ctx);
         reached_end = last_reached_end;
-        let center = ctx.waffle_field(enemy, W::CenterY);
+        let center = ctx.fire_arc_field(enemy, W::CenterY);
         let y = center.wrapping_add(orbit_component(clamped, radius, 128, ctx));
         enemy!(ctx, slot, y = y);
-        let next = ctx.waffle_field(enemy, W::PartCursor).wrapping_sub(2);
-        ctx.set_waffle_field(enemy, W::PartCursor, next);
+        let next = ctx.fire_arc_field(enemy, W::PartCursor).wrapping_sub(2);
+        ctx.set_fire_arc_field(enemy, W::PartCursor, next);
         if next == 0 {
             break;
         }
     }
     if reached_end {
-        ctx.set_waffle_field(enemy, W::Behavior, 0x9615);
+        ctx.set_fire_arc_field(enemy, W::Behavior, 0x9615);
         ctx.edit_actor(Key::from_legacy(enemy as u16), Le, |actor| {
             actor.properties &= !0x800
         });
     }
 }
 
-fn advance_waffle_sprites(radius: u16, ctx: &mut impl Host) {
+fn advance_fire_arc_sprites(radius: u16, ctx: &mut impl Host) {
     let enemy = usize::from(ctx.inputs().current_enemy);
-    ctx.set_waffle_field(enemy, W::PartCursor, 6);
-    let mut phase = ctx.waffle_field(enemy, W::Phase);
+    ctx.set_fire_arc_field(enemy, W::PartCursor, 6);
+    let mut phase = ctx.fire_arc_field(enemy, W::Phase);
     loop {
-        phase = phase.wrapping_sub(ctx.waffle_field(enemy, W::Spacing));
+        phase = phase.wrapping_sub(ctx.fire_arc_field(enemy, W::Spacing));
         let part = usize::from(ctx.inputs().current_enemy)
-            + usize::from(ctx.waffle_field(enemy, W::PartCursor));
-        let sprite_handle = ctx.waffle_field(part, W::Sprite);
+            + usize::from(ctx.fire_arc_field(enemy, W::PartCursor));
+        let sprite_handle = ctx.fire_arc_field(part, W::Sprite);
         let (stage, sprite) = classify_phase(phase, ctx);
-        if stage != ctx.waffle_field(part, W::SpriteStage) {
-            let palette = ctx.waffle_field(enemy, W::Palette);
+        if stage != ctx.fire_arc_field(part, W::SpriteStage) {
+            let palette = ctx.fire_arc_field(enemy, W::Palette);
             let handle = LegacySpriteHandle(sprite_handle);
             let position = sprite_effect_controllers::position(ctx, handle);
             sprite_objects::spawn(
@@ -235,12 +237,14 @@ fn advance_waffle_sprites(radius: u16, ctx: &mut impl Host) {
             );
             phase_sound(stage, ctx);
         }
-        ctx.set_waffle_field(part, W::SpriteStage, stage);
+        ctx.set_fire_arc_field(part, W::SpriteStage, stage);
         let (clamped, _) = clamp_phase(phase, ctx);
         let component = orbit_component(clamped, radius, 64, ctx);
-        let x = ctx.waffle_field(enemy, W::CenterX).wrapping_add(component);
+        let x = ctx
+            .fire_arc_field(enemy, W::CenterX)
+            .wrapping_add(component);
         let (clamped, _) = clamp_phase(phase, ctx);
-        let center = ctx.waffle_field(enemy, W::CenterY);
+        let center = ctx.fire_arc_field(enemy, W::CenterY);
         let y = center.wrapping_add(orbit_component(clamped, radius, 128, ctx));
         sprite_effect_controllers::set_position(
             ctx,
@@ -248,8 +252,8 @@ fn advance_waffle_sprites(radius: u16, ctx: &mut impl Host) {
             Point { x, y },
         );
         crate::probe::hit("sprite.waffle.pose");
-        let next = ctx.waffle_field(enemy, W::PartCursor).wrapping_sub(2);
-        ctx.set_waffle_field(enemy, W::PartCursor, next);
+        let next = ctx.fire_arc_field(enemy, W::PartCursor).wrapping_sub(2);
+        ctx.set_fire_arc_field(enemy, W::PartCursor, next);
         if next == 0 {
             break;
         }

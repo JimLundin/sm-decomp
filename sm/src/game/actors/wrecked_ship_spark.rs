@@ -8,25 +8,25 @@ use crate::ram_map::{slot, word};
 use sm_game::actors::layouts::EnemyLayout8 as Spark;
 use sm_game::enemy_script::EnemyScript;
 use {
-    crate::game::enemy_projectiles::SpawnEprojWithGfx, sm_game::enemy_projectiles::host::Effects,
+    crate::game::enemy_projectiles::spawn_with_enemy_gfx, sm_game::enemy_projectiles::host::Effects,
 };
 
 fn reload_delay(k: u16, bias: u16, game: &mut Game) {
     let E = k as i32;
-    let mut delay = slot!(game, Spark[E].var_E);
+    let mut delay = slot!(game, Spark[E].var_e);
     if delay & 0x8000 != 0 {
         delay = (game.next_random() & 0x3f) + 4;
     }
-    slot!(game, Spark[E].var_F = bias.wrapping_add(delay));
+    slot!(game, Spark[E].var_f = bias.wrapping_add(delay));
 }
 pub(crate) fn initialize(game: &mut Game) {
     let E = word!(game.cur_enemy_index) as i32;
     let kind = (slot!(game, Spark[E].parameter_1) & 3) as isize;
     slot!(
         game,
-        Spark[E].var_B = sm_game::enemy_lists::spark_function(game, kind)
+        Spark[E].var_b = sm_game::enemy_lists::spark_function(game, kind)
     );
-    slot!(game, Spark[E].var_E = slot!(game, Spark[E].parameter_2));
+    slot!(game, Spark[E].var_e = slot!(game, Spark[E].parameter_2));
     reload_delay(word!(game.cur_enemy_index), 0, game);
     slot!(game, Spark[E].base; instruction_timer = 1,
         current_instruction = sm_game::enemy_lists::spark_instruction_list(game, kind), timer = 0, instruction_timer = 1);
@@ -41,7 +41,7 @@ pub(crate) fn initialize(game: &mut Game) {
 }
 pub(crate) fn advance(game: &mut Game) {
     let E = word!(game.cur_enemy_index) as i32;
-    let state = slot!(game, Spark[E].var_B);
+    let state = slot!(game, Spark[E].var_b);
     let k = word!(game.cur_enemy_index);
     let E = k as i32;
     match state {
@@ -52,17 +52,17 @@ pub(crate) fn advance(game: &mut Game) {
             return;
         }
     }
-    if slot!(game, Spark[E].var_F) != 1 {
-        slot!(game, Spark[E].var_F, |old| old.wrapping_sub(1));
+    if slot!(game, Spark[E].var_f) != 1 {
+        slot!(game, Spark[E].var_f, |old| old.wrapping_sub(1));
         return;
     }
     if state == 0xe6dc {
         let target = word!(game.cur_enemy_index);
-        SpawnEprojWithGfx(0, word!(game.cur_enemy_index), 0xf498, game);
+        spawn_with_enemy_gfx(0, word!(game.cur_enemy_index), 0xf498, game);
         reload_delay(target, 0, game);
     } else {
         let active = state == 0xe695;
-        slot!(game, Spark[E].var_B = if active { 0xe6b7 } else { 0xe695 });
+        slot!(game, Spark[E].var_b = if active { 0xe6b7 } else { 0xe695 });
         slot!(game, Spark[E].base; current_instruction = if active { 0xe5a7 } else { 0xe5e5 }, instruction_timer = 1);
         reload_delay(k, if active { 0 } else { 8 }, game);
     }

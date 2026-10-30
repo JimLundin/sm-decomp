@@ -9,8 +9,7 @@ use sm_game::geometry::Position;
 use sm_game::item_pickups::Resource;
 use sm_game::{menus::save_slots, message_boxes};
 use {
-    crate::game::enemy_projectiles::SpawnEprojWithRoomGfx,
-    sm_game::enemy_projectiles::host::Effects,
+    crate::game::enemy_projectiles::spawn_with_room_gfx, sm_game::enemy_projectiles::host::Effects,
 };
 
 const X: usize = 2;
@@ -302,7 +301,7 @@ fn move_player(rt: &mut Runtime<'_>, index: u16, phase: u16) {
 
 fn replenish(rt: &mut Runtime<'_>, index: u16) {
     let top = Part::new(index, 0);
-    if rt.foreign(|game| gameplay_flag_runtime::CheckEventHappened(0xe, game)) != 0 {
+    if rt.foreign(|game| gameplay_flag_runtime::event_has_happened(0xe, game)) != 0 {
         top.write(PHASE, 0xabc7, rt);
         Part::new(index, 1).write(PHASE, 0, rt);
         Part::new(index, 1).write(REST_Y, 0, rt);
@@ -382,7 +381,7 @@ fn shake(rt: &mut Runtime<'_>, index: u16) {
     if timer.wrapping_sub(128) & 0x8000 != 0 {
         if timer == 64 {
             for parameter in (0..12).step_by(2) {
-                rt.foreign(|game| SpawnEprojWithRoomGfx(0xa379, parameter, game));
+                rt.foreign(|game| spawn_with_room_gfx(0xa379, parameter, game));
             }
         }
     } else {

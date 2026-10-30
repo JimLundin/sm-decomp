@@ -1,8 +1,8 @@
 //! Mother Brain's effects run in `sm_game::actors::mother_brain_effects`; the
 //! explosion spawns come from here.
 #![forbid(unsafe_code)]
-use crate::game::constants::bank_86::addr_kEproj_MotherBrainDeathExplosion;
-use crate::game::enemy_projectiles::SpawnEprojWithRoomGfx;
+use crate::game::constants::bank_86::ADDR_K_EPROJ_MOTHER_BRAIN_DEATH_EXPLOSION;
+use crate::game::enemy_projectiles::spawn_with_room_gfx;
 use crate::game_state::Game;
 use crate::types::Point16U;
 pub(crate) use sm_game::actors::mother_brain_effects::*;
@@ -13,6 +13,6 @@ impl Host for Game {
     }
 
     fn spawn_death_explosion(&mut self, kind: u16) {
-        SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainDeathExplosion as u16, kind, self);
+        spawn_with_room_gfx(ADDR_K_EPROJ_MOTHER_BRAIN_DEATH_EXPLOSION as u16, kind, self);
     }
 }

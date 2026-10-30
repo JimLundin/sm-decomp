@@ -54,8 +54,8 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game) -> Option<usize> {
         let enemy = if variant & 1 == 0 { 0 } else { 64 };
         put(game, w::cur_enemy_index, enemy);
         for (offset, value) in [
-            (offset_of!(Layout, var_0C), 0xfff0),
-            (offset_of!(Layout, var_0D), 0x7fff),
+            (offset_of!(Layout, var_0c), 0xfff0),
+            (offset_of!(Layout, var_0d), 0x7fff),
             (offset_of!(Layout, var_00), 0x30),
             (offset_of!(Layout, var_01), 0x8001),
             (offset_of!(Layout, var_02), 0xffff),
@@ -112,8 +112,8 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game) -> Option<usize> {
         for (offset, value) in [
             (offset_of!(Layout, base.x_pos), 0xfff0),
             (offset_of!(Layout, base.y_pos), 0x8010),
-            (offset_of!(Layout, var_B), cursor),
-            (offset_of!(Layout, var_C), spacing),
+            (offset_of!(Layout, var_b), cursor),
+            (offset_of!(Layout, var_c), spacing),
             (offset_of!(Layout, var_33), variant as u16 & 1),
             (
                 offset_of!(Layout, var_36),

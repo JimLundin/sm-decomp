@@ -3,7 +3,7 @@
 use crate::{game_state::Game, ram_map::words as ram, rom::RomImage};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use {
-    crate::game::{music::QueueMusic_Delayed8, session_runtime::Runtime},
+    crate::game::{music::queue_music_delayed_8, session_runtime::Runtime},
     sm_game::animated_tiles::execution,
 };
 fn word(bytes: &impl Fn(usize) -> u8, at: usize) -> u16 {
@@ -92,7 +92,7 @@ pub(super) fn run(game: &mut Game) -> bool {
                 catch_unwind(AssertUnwindSafe(|| {
                     runtime.foreign(|game| {
                         assert_eq!(word(&|at| game.ram().read_byte(at), 0x1ef3), 10);
-                        QueueMusic_Delayed8(0x3456, game);
+                        queue_music_delayed_8(0x3456, game);
                         panic!("intentional animation callback unwind");
                     });
                 }))

@@ -1,19 +1,19 @@
 //! Room visual effects: HDMA effect setup, Fireflea lighting, earthquakes, the Tourian statue and weather.
-use crate::constants::bank_86::addr_kEproj_TourianStatueDustClouds;
+use crate::constants::bank_86::ADDR_K_EPROJ_TOURIAN_STATUE_DUST_CLOUDS;
 use crate::hdma_objects::{HdmaEffect, spawn_bg3_scroll, spawn_hdma};
-use crate::menus::prelude::SpawnHdmaObject_Args;
+use crate::menus::prelude::HdmaObjectDefinition;
 use crate::ram::RawRam as _;
 use crate::ram::word;
 use crate::visual_state::{TourianStatuePhase, Weather};
 
 pub fn initialize_ceres_ridley<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    game.spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x40, 5, 0xd906));
-    game.spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x2c, 0xd91d));
+    game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0x40, 5, 0xd906));
+    game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0, 0x2c, 0xd91d));
 }
 
 pub fn initialize_bomb_torizo_haze<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    game.spawn_hdma(0x88, &SpawnHdmaObject_Args::new(2, 0x32, 0xdd4a));
-    game.spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x32, 0xdd62));
+    game.spawn_hdma(0x88, &HdmaObjectDefinition::new(2, 0x32, 0xdd4a));
+    game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0, 0x32, 0xdd62));
 }
 
 pub fn initialize_room_haze<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
@@ -22,12 +22,12 @@ pub fn initialize_room_haze<H: crate::menus::host::Host + ?Sized>(game: &mut H) 
     } else {
         0xded3
     };
-    game.spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x40, 0x32, program));
+    game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0x40, 0x32, program));
 }
 
 pub fn initialize_title_gradient<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    game.spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x32, 0xeb73));
-    game.spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x31, 0xeb85));
+    game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0, 0x32, 0xeb73));
+    game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0, 0x31, 0xeb85));
 }
 
 const FIREFLEA_FLASH: [u16; 12] = [
@@ -44,7 +44,7 @@ pub fn darken_fireflea_room<H: crate::menus::host::Host + ?Sized>(game: &mut H) 
 
 pub fn initialize_fireflea_lighting<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     word! {game; fireflea_flashing_timer = 6; fireflea_flashing_index = 0; }
-    game.spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0x11, 0xb0ac));
+    game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0x42, 0x11, 0xb0ac));
     crate::word_transfers!(game, ascending, 1; native(0x9e00) <- value(0));
     word! { game, 0; UNUSED_word_7E177C, fireflea_darkness_level }
     word!(game.UNUSED_word_7E1780 = 24);
@@ -115,8 +115,8 @@ pub fn initialize_tourian_statue<H: crate::menus::host::Host + ?Sized>(game: &mu
         |words| &mut words.liquid.surface.whole,
         crate::liquid::LiquidWords::read(game).height,
     );
-    game.spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0x11, 0xd856));
-    game.spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0x10, 0xdcfa));
+    game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0x42, 0x11, 0xd856));
+    game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0x42, 0x10, 0xdcfa));
     game.spawn_bg3_scroll();
 }
 
@@ -147,7 +147,10 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + ?Sized>(
             object.c = object.c.wrapping_sub(1);
             if object.c & 0x8000 != 0 {
                 for _ in 0..4 {
-                    game.spawn_room_enemy_projectile(addr_kEproj_TourianStatueDustClouds as u16, 0);
+                    game.spawn_room_enemy_projectile(
+                        ADDR_K_EPROJ_TOURIAN_STATUE_DUST_CLOUDS as u16,
+                        0,
+                    );
                 }
                 advance_statue_program(object);
             }
@@ -187,14 +190,14 @@ fn advance_statue_program(object: &mut crate::hdma::HdmaObject) {
 }
 
 pub fn initialize_weather<H: crate::menus::host::Host + ?Sized>(weather: Weather, game: &mut H) {
-    use crate::constants::bank_87::{addr_kAnimtiles_Rain, addr_kAnimtiles_Spores};
+    use crate::constants::bank_87::{ADDR_K_ANIMTILES_RAIN, ADDR_K_ANIMTILES_SPORES};
     let (control, program, tiles) = match weather {
-        Weather::Rain => (0x43, 0xd96c, Some(addr_kAnimtiles_Rain)),
-        Weather::Spores => (0x42, 0xda2d, Some(addr_kAnimtiles_Spores)),
+        Weather::Rain => (0x43, 0xd96c, Some(ADDR_K_ANIMTILES_RAIN)),
+        Weather::Spores => (0x42, 0xda2d, Some(ADDR_K_ANIMTILES_SPORES)),
         Weather::Fog => (0x43, 0xdb19, None),
     };
     game.ram().write_byte(0x5b, 92);
-    game.spawn_hdma(0x88, &SpawnHdmaObject_Args::new(control, 0x11, program));
+    game.spawn_hdma(0x88, &HdmaObjectDefinition::new(control, 0x11, program));
     if let Some(tiles) = tiles {
         game.spawn_bg3_scroll();
         game.spawn_animated_tiles(tiles as u16);
@@ -202,17 +205,17 @@ pub fn initialize_weather<H: crate::menus::host::Host + ?Sized>(weather: Weather
 }
 
 pub fn initialize_ceres_elevator<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x40, 5, 0xd939), game);
+    spawn_hdma(0x88, &HdmaObjectDefinition::new(0x40, 5, 0xd939), game);
 }
 
 pub fn initialize_draygon_layer<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x2c, 0xdf4f), game);
+    spawn_hdma(0x88, &HdmaObjectDefinition::new(0, 0x2c, 0xdf4f), game);
     word!(game.room_loading_irq_handler = 12);
     spawn_bg3_scroll(game);
 }
 
 pub fn initialize_morph_eye_beam<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x41, 0x26, 0xe8ec), game);
+    spawn_hdma(0x88, &HdmaObjectDefinition::new(0x41, 0x26, 0xe8ec), game);
 }
 
 pub fn initialize_phantoon_motion<H: crate::menus::host::Host + ?Sized>(
@@ -221,11 +224,11 @@ pub fn initialize_phantoon_motion<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     game.hdma_effect(HdmaEffect::SetPhantoonMotion { direction, speed }, 0);
-    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0xf, 0xe4a8), game);
+    spawn_hdma(0x88, &HdmaObjectDefinition::new(0x42, 0xf, 0xe4a8), game);
 }
 
 pub fn initialize_intro_wave<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    word!(game.g_word_7E0D9C = 1);
+    word!(game.wavy_samus_enabled = 1);
     crate::word_transfers!(game, ascending, 1; native(0xd9e) <- value(0x4000));
     word!(game.loop_counter_transfer_enemies_to_vram = 8);
     game.hdma_effect(
@@ -235,7 +238,7 @@ pub fn initialize_intro_wave<H: crate::menus::host::Host + ?Sized>(game: &mut H)
         },
         0,
     );
-    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0x11, 0xec8a), game);
+    spawn_hdma(0x88, &HdmaObjectDefinition::new(0x42, 0x11, 0xec8a), game);
 }
 
 pub fn scroll_weather<H: crate::menus::host::Host + ?Sized>(
@@ -260,13 +263,13 @@ where
     use crate::actors::crocomire_reactions as crocomire;
     use crate::actors::layouts::EnemyLayout72 as Crocomire;
     use crate::ram::slot;
-    static DEFINITION: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x10, 0x9563);
+    static DEFINITION: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0x10, 0x9563);
     if let Some(request) = crocomire::execute_phase(game) {
         game.queue_sound(1, request as u16 as u8, 6);
         crocomire::prepare_scroll_hdma(game);
         slot!(
             game,
-            Crocomire[0].var_1F = spawn_hdma(0xa4, &DEFINITION, game)
+            Crocomire[0].var_1f = spawn_hdma(0xa4, &DEFINITION, game)
         );
     }
     crocomire::samus_collision(game);
@@ -281,7 +284,7 @@ pub fn align_crocomire_background<H: crate::menus::host::Host + ?Sized>(game: &m
     let secondary = i32::from(word!(game.cur_enemy_index)) + 64;
     slot!(
         game,
-        Crocomire[secondary].base.x_pos = slot!(game, Crocomire[secondary].var_A)
+        Crocomire[secondary].base.x_pos = slot!(game, Crocomire[secondary].var_a)
             .wrapping_add(slot!(game, Crocomire[primary].base.x_pos))
     );
     slot!(

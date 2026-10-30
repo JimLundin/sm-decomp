@@ -9,7 +9,7 @@
 use crate::actors::api::PlayerDirection;
 use crate::actors::host::{Axis, Slopes};
 use crate::actors::layouts::part_view;
-use crate::constants::enemy_properties::kEnemyProps_DisableSamusColl;
+use crate::constants::enemy_properties::K_ENEMY_PROPS_DISABLE_SAMUS_COLL;
 use crate::ram::RawRam as _;
 use crate::ram::{slot, word};
 
@@ -182,7 +182,7 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
     slot!(
         game,
         Etecoon[me].base.properties =
-            (slot!(game, Etecoon[me].base.properties)) | (kEnemyProps_DisableSamusColl as u16)
+            (slot!(game, Etecoon[me].base.properties)) | (K_ENEMY_PROPS_DISABLE_SAMUS_COLL as u16)
     );
     slot!(
         game,

@@ -20,7 +20,7 @@ pub struct Body {
 }
 
 same_words!(Body: EnemyLayout8 {
-    movement_index = var_A, speed_subpixel = var_B, speed = var_C, movement_stage = var_D,
+    movement_index = var_a, speed_subpixel = var_b, speed = var_c, movement_stage = var_d,
 });
 
 /// The eye's view of its slot.
@@ -34,7 +34,7 @@ pub struct Eye {
 }
 
 same_words!(Eye: EnemyLayout8 {
-    movement_reversed = var_C,
+    movement_reversed = var_c,
 });
 
 const BANK: u8 = 0xa7;

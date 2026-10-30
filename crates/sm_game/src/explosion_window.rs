@@ -1,6 +1,6 @@
 //! Power Bomb and Crystal Flash window geometry, expansion and afterglow.
-use crate::constants::{Consts_88, Consts_89};
-use crate::display::hdma_spawn::SpawnHdmaObject_Args;
+use crate::constants::{Consts88, Consts89};
+use crate::display::hdma_spawn::HdmaObjectDefinition;
 use crate::hdma::HdmaObject;
 use crate::menus::menu_tilemap::native_record;
 use crate::menus::prelude::do_until;
@@ -27,10 +27,10 @@ pub trait Host:
 fn mult8x8(a: u8, b: u8) -> u16 {
     (a as i32 * b as i32) as u16
 }
-crate::typed_constants! { Consts_88;
+crate::typed_constants! { Consts88;
     ADDR_BYTE_889F06 = 40710, ADDR_POWER_BOMB_EXPLOSION_SHAPE_DEF0 = 37446,
 }
-crate::typed_constants! { Consts_89;
+crate::typed_constants! { Consts89;
     ADDR_INDIRECT_HDMA_TABLE_POWER_BOMB_EXPLODE_RIGHT = 41217, ADDR_INDIRECT_HDMA_TABLE_POWER_BOMB_EXPLODE_LEFT = 38912,
 }
 
@@ -40,8 +40,8 @@ pub fn spawn_power_bomb<H: Host + ?Sized>(game: &mut H) {
     } else {
         game.queue_sound(0, 1_u8, 15);
         word!(game.power_bomb_explosion_status = 0x8000);
-        static UNK_888ABA: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x40, 0x28, 0x8ace_u16);
-        static UNK_888AC2: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x40, 0x29, 0x8b80_u16);
+        static UNK_888ABA: HdmaObjectDefinition = HdmaObjectDefinition::new(0x40, 0x28, 0x8ace_u16);
+        static UNK_888AC2: HdmaObjectDefinition = HdmaObjectDefinition::new(0x40, 0x29, 0x8b80_u16);
         game.spawn_hdma(0x88, &UNK_888ABA);
         game.spawn_hdma(0x88, &UNK_888AC2);
     };
@@ -378,8 +378,8 @@ fn calculate_explosion_hdma_table_pointers<H: Host + ?Sized>(
 
 pub fn spawn_crystal_flash<H: Host + ?Sized>(game: &mut H) {
     word!(game.power_bomb_explosion_status = (0x888000i32) as u16);
-    static UNK_88A2B0: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x40, 0x28, 0xa2bd_u16);
-    static UNK_88A2B8: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x40, 0x29, 0xa32a_u16);
+    static UNK_88A2B0: HdmaObjectDefinition = HdmaObjectDefinition::new(0x40, 0x28, 0xa2bd_u16);
+    static UNK_88A2B8: HdmaObjectDefinition = HdmaObjectDefinition::new(0x40, 0x29, 0xa32a_u16);
     game.spawn_hdma(0x88, &UNK_88A2B0);
     game.spawn_hdma(0x88, &UNK_88A2B8);
 }

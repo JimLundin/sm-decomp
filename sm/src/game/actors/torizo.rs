@@ -3,13 +3,13 @@
 #![forbid(unsafe_code)]
 use crate::game::actors::access::ActorKey as Key;
 use crate::game::actors::{self, api as actor_api};
-use crate::game::constants::bank_86::addr_kEproj_BombTorizoLowHealthInitialDrool;
+use crate::game::constants::bank_86::ADDR_K_EPROJ_BOMB_TORIZO_LOW_HEALTH_INITIAL_DROOL;
 use crate::game::constants::bank_aa::{
-    addr_kTorizo_Ilist_B1C8, addr_kTorizo_Ilist_CDE1, addr_kTorizo_Ilist_CE43,
-    addr_kTorizo_Ilist_CEA5, addr_kTorizo_Ilist_CEFF, addr_kTorizo_Ilist_D1F1,
-    addr_kTorizo_Ilist_D2AD,
+    ADDR_K_TORIZO_ILIST_B1C8, ADDR_K_TORIZO_ILIST_CDE1, ADDR_K_TORIZO_ILIST_CE43,
+    ADDR_K_TORIZO_ILIST_CEA5, ADDR_K_TORIZO_ILIST_CEFF, ADDR_K_TORIZO_ILIST_D1F1,
+    ADDR_K_TORIZO_ILIST_D2AD,
 };
-use crate::game::enemy_projectiles::SpawnEprojWithGfx;
+use crate::game::enemy_projectiles::spawn_with_enemy_gfx;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 pub(crate) use sm_game::actors::torizo::*;
@@ -17,14 +17,14 @@ pub(crate) use sm_game::actors::torizo::*;
 const _: () = {
     use sm_game::actors::torizo::instruction_list as list;
     assert!(
-        list::DEATH_SEQUENCE == addr_kTorizo_Ilist_B1C8 as u16
-            && list::CAUGHT_SUPER_MISSILE_LEFT_LEFT_LEG == addr_kTorizo_Ilist_CDE1 as u16
-            && list::CAUGHT_SUPER_MISSILE_LEFT_RIGHT_LEG == addr_kTorizo_Ilist_CE43 as u16
-            && list::CAUGHT_SUPER_MISSILE_RIGHT_RIGHT_LEG == addr_kTorizo_Ilist_CEA5 as u16
-            && list::CAUGHT_SUPER_MISSILE_RIGHT_LEFT_LEG == addr_kTorizo_Ilist_CEFF as u16
-            && list::DODGE_TURNING_LEFT == addr_kTorizo_Ilist_D1F1 as u16
-            && list::DODGE_TURNING_RIGHT == addr_kTorizo_Ilist_D2AD as u16
-            && LOW_HEALTH_DROOL == addr_kEproj_BombTorizoLowHealthInitialDrool as u16
+        list::DEATH_SEQUENCE == ADDR_K_TORIZO_ILIST_B1C8 as u16
+            && list::CAUGHT_SUPER_MISSILE_LEFT_LEFT_LEG == ADDR_K_TORIZO_ILIST_CDE1 as u16
+            && list::CAUGHT_SUPER_MISSILE_LEFT_RIGHT_LEG == ADDR_K_TORIZO_ILIST_CE43 as u16
+            && list::CAUGHT_SUPER_MISSILE_RIGHT_RIGHT_LEG == ADDR_K_TORIZO_ILIST_CEA5 as u16
+            && list::CAUGHT_SUPER_MISSILE_RIGHT_LEFT_LEG == ADDR_K_TORIZO_ILIST_CEFF as u16
+            && list::DODGE_TURNING_LEFT == ADDR_K_TORIZO_ILIST_D1F1 as u16
+            && list::DODGE_TURNING_RIGHT == ADDR_K_TORIZO_ILIST_D2AD as u16
+            && LOW_HEALTH_DROOL == ADDR_K_EPROJ_BOMB_TORIZO_LOW_HEALTH_INITIAL_DROOL as u16
     );
 };
 
@@ -43,7 +43,7 @@ impl Host for Game {
     }
 
     fn spawn_projectile(&mut self, parameter: u16, k: u16, definition: u16) {
-        SpawnEprojWithGfx(parameter, k, definition, self);
+        spawn_with_enemy_gfx(parameter, k, definition, self);
     }
 
     fn shot_reaction_only(&mut self) {
@@ -68,7 +68,7 @@ impl Ai for Game {
     }
 
     fn set_boss_bit(&mut self, bit: u16) {
-        crate::game::gameplay_flag_runtime::SetBossBitForCurArea(bit, self);
+        crate::game::gameplay_flag_runtime::set_boss_bits_for_current_area(bit, self);
     }
 
     fn set_palette_targets(&mut self, palettes: Palettes) {
@@ -123,60 +123,61 @@ const _: () = {
     );
     assert!(at(f::GOLDEN_NORMAL_MOVEMENT) == 11195878);
     assert!(at(m::WALKING) == 11192146 && at(m::ATTACKING) == 11192360);
-    assert!(at(m::JUMPING_OR_FALLING) == 11192364 && m::NOTHING == aa::addr_locret_AAC95E as u16);
+    assert!(at(m::JUMPING_OR_FALLING) == 11192364 && m::NOTHING == aa::ADDR_LOCRET_AAC95E as u16);
     assert!(at(m::GOLDEN_ATTACKING) == 11195885 && at(m::GOLDEN_WALKING) == 11195889);
     assert!(
-        l::BLOW_UP_GUT == aa::addr_kTorizo_Ilist_B0E5 as u16
-            && l::BLOW_UP_FACE == aa::addr_kTorizo_Ilist_B155 as u16
+        l::BLOW_UP_GUT == aa::ADDR_K_TORIZO_ILIST_B0E5 as u16
+            && l::BLOW_UP_FACE == aa::ADDR_K_TORIZO_ILIST_B155 as u16
     );
     assert!(
-        l::TURNING_LEFT == aa::addr_kTorizo_Ilist_B962 as u16
-            && l::FALLING_FACING_LEFT == aa::addr_off_AABC78 as u16
+        l::TURNING_LEFT == aa::ADDR_K_TORIZO_ILIST_B962 as u16
+            && l::FALLING_FACING_LEFT == aa::ADDR_OFF_AABC78 as u16
     );
     assert!(
-        l::FACELESS_TURNING_LEFT == aa::addr_kTorizo_Ilist_BD0E as u16
-            && l::TURNING_RIGHT == aa::addr_kTorizo_Ilist_BDD8 as u16
+        l::FACELESS_TURNING_LEFT == aa::ADDR_K_TORIZO_ILIST_BD0E as u16
+            && l::TURNING_RIGHT == aa::ADDR_K_TORIZO_ILIST_BDD8 as u16
     );
     assert!(
-        l::FALLING_FACING_RIGHT == aa::addr_off_AAC0F2 as u16
-            && l::FACELESS_TURNING_RIGHT == aa::addr_kTorizo_Ilist_C188 as u16
+        l::FALLING_FACING_RIGHT == aa::ADDR_OFF_AAC0F2 as u16
+            && l::FACELESS_TURNING_RIGHT == aa::ADDR_K_TORIZO_ILIST_C188 as u16
     );
     assert!(
-        l::GOLDEN_TURNING_LEFT == aa::addr_kTorizo_Ilist_D203 as u16
-            && l::GOLDEN_TURNING_RIGHT == aa::addr_kTorizo_Ilist_D2BF as u16
+        l::GOLDEN_TURNING_LEFT == aa::ADDR_K_TORIZO_ILIST_D203 as u16
+            && l::GOLDEN_TURNING_RIGHT == aa::ADDR_K_TORIZO_ILIST_D2BF as u16
     );
-    assert!(l::EXTENDED_SPRITEMAP == aa::addr_kTorizo_ExtSprmap_87D0 as u16);
+    assert!(l::EXTENDED_SPRITEMAP == aa::ADDR_K_TORIZO_EXT_SPRMAP_87D0 as u16);
     assert!(
-        p::CONTINUOUS_DROOL == eproj::addr_stru_86A95B as u16
-            && p::EXPLOSIVE_SWIPE == eproj::addr_kEproj_BombTorizoExplosiveSwipe as u16
-    );
-    assert!(
-        p::LOW_HEALTH_EXPLOSION == eproj::addr_kEproj_BombTorizoLowHealthExplode as u16
-            && p::DEATH_EXPLOSION == eproj::addr_kEproj_BombTorizoDeathExplosion as u16
+        p::CONTINUOUS_DROOL == eproj::ADDR_STRU_86A95B as u16
+            && p::EXPLOSIVE_SWIPE == eproj::ADDR_K_EPROJ_BOMB_TORIZO_EXPLOSIVE_SWIPE as u16
     );
     assert!(
-        p::BOMB_CHOZO_ORBS == eproj::addr_kEproj_BombTorizosChozoOrbs as u16
-            && p::GOLDEN_CHOZO_ORBS == eproj::addr_kEproj_GoldenTorizosChozoOrbs as u16
+        p::LOW_HEALTH_EXPLOSION == eproj::ADDR_K_EPROJ_BOMB_TORIZO_LOW_HEALTH_EXPLODE as u16
+            && p::DEATH_EXPLOSION == eproj::ADDR_K_EPROJ_BOMB_TORIZO_DEATH_EXPLOSION as u16
     );
     assert!(
-        p::BOMB_SONIC_BOOM == eproj::addr_kEproj_BombTorizoSonicBoom as u16
-            && p::GOLDEN_SONIC_BOOM == eproj::addr_kEproj_GoldenTorizoSonicBoom as u16
+        p::BOMB_CHOZO_ORBS == eproj::ADDR_K_EPROJ_BOMB_TORIZOS_CHOZO_ORBS as u16
+            && p::GOLDEN_CHOZO_ORBS == eproj::ADDR_K_EPROJ_GOLDEN_TORIZOS_CHOZO_ORBS as u16
     );
     assert!(
-        p::LANDING_DUST_RIGHT_FOOT == eproj::addr_kEproj_TourianLandingDustCloudsRightFoot as u16
-            && p::LANDING_DUST_LEFT_FOOT == eproj::addr_stru_86AFF3 as u16
+        p::BOMB_SONIC_BOOM == eproj::ADDR_K_EPROJ_BOMB_TORIZO_SONIC_BOOM as u16
+            && p::GOLDEN_SONIC_BOOM == eproj::ADDR_K_EPROJ_GOLDEN_TORIZO_SONIC_BOOM as u16
     );
     assert!(
-        p::GOLDEN_EGG == eproj::addr_stru_86B1C0 as u16
-            && p::GOLDEN_SUPER_MISSILE == eproj::addr_kEproj_GoldenTorizoSuperMissile as u16
+        p::LANDING_DUST_RIGHT_FOOT
+            == eproj::ADDR_K_EPROJ_TOURIAN_LANDING_DUST_CLOUDS_RIGHT_FOOT as u16
+            && p::LANDING_DUST_LEFT_FOOT == eproj::ADDR_STRU_86AFF3 as u16
     );
-    assert!(p::GOLDEN_EYE_BEAM == eproj::addr_kEproj_GoldenTorizoEyeBeam as u16);
+    assert!(
+        p::GOLDEN_EGG == eproj::ADDR_STRU_86B1C0 as u16
+            && p::GOLDEN_SUPER_MISSILE == eproj::ADDR_K_EPROJ_GOLDEN_TORIZO_SUPER_MISSILE as u16
+    );
+    assert!(p::GOLDEN_EYE_BEAM == eproj::ADDR_K_EPROJ_GOLDEN_TORIZO_EYE_BEAM as u16);
     assert!(
         sm_game::actors::torizo::BOMB_BELLY_GLOW
-            == crate::game::constants::bank_8d::addr_stru_8DF759 as u16
+            == crate::game::constants::bank_8d::ADDR_STRU_8DF759 as u16
     );
     assert!(
         sm_game::actors::torizo::GOLDEN_BELLY_GLOW
-            == crate::game::constants::bank_8d::addr_stru_8DF75D as u16
+            == crate::game::constants::bank_8d::ADDR_STRU_8DF75D as u16
     );
 };

@@ -164,10 +164,10 @@ fn records_import_from_the_original_rom() {
         ))
     );
     check!(
-        "enemy_lists::KI_HUNTER_WING_INSTRUCTION_LISTS",
-        table::words::<{ enemy_lists::KI_HUNTER_WING_LISTS }>(&at(
-            enemy_lists::KI_HUNTER_WING_INSTRUCTION_LISTS,
-            2 * enemy_lists::KI_HUNTER_WING_LISTS
+        "enemy_lists::KIHUNTER_WING_INSTRUCTION_LISTS",
+        table::words::<{ enemy_lists::KIHUNTER_WING_LISTS }>(&at(
+            enemy_lists::KIHUNTER_WING_INSTRUCTION_LISTS,
+            2 * enemy_lists::KIHUNTER_WING_LISTS
         ))
     );
     check!(

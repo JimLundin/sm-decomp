@@ -21,21 +21,21 @@ part_view! {
     /// The brain's slot, which holds the body's explosion and rainbow state.
     Brain: EnemyLayout72 {
         words: [
-            var_A, var_B, var_C, var_D, explosion_timer, explosion_index, parameter_1,
+            var_a, var_b, var_c, var_d, explosion_timer, explosion_index, parameter_1,
             parameter_2,
         ],
         pad1: [u8; 26696],
         words: [
             var_00, rainbow_palette_index, var_02, var_03, var_04, var_05, var_06, var_07, var_08,
-            var_09, var_0A, var_0B, var_0C, var_0D, var_0E, var_0F, var_10, var_11, var_12, var_13,
-            var_14, var_15, var_16, var_17, var_18, var_19, var_1A, var_1B, var_1C, var_1D, var_1E,
-            var_1F,
+            var_09, var_0a, var_0b, var_0c, var_0d, var_0e, var_0f, var_10, var_11, var_12, var_13,
+            var_14, var_15, var_16, var_17, var_18, var_19, var_1a, var_1b, var_1c, var_1d, var_1e,
+            var_1f,
         ],
         pad2: [u8; 1984],
         words: [
-            var_20, var_21, var_22, var_23, var_24, var_25, var_26, var_27, var_28, var_29, var_2A,
-            var_2B, var_2C, var_2D, var_2E, var_2F, var_30, var_31, var_32, var_33, var_34, var_35,
-            var_36, var_37, var_38, var_39, var_3A, var_3B, var_3C, var_3D, var_3E, var_3F,
+            var_20, var_21, var_22, var_23, var_24, var_25, var_26, var_27, var_28, var_29, var_2a,
+            var_2b, var_2c, var_2d, var_2e, var_2f, var_30, var_31, var_32, var_33, var_34, var_35,
+            var_36, var_37, var_38, var_39, var_3a, var_3b, var_3c, var_3d, var_3e, var_3f,
         ],
     }
 }

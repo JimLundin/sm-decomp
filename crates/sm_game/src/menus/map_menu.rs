@@ -94,7 +94,7 @@ fn fade_to_options<H: Host + ?Sized>(game: &mut H) {
     game.fade(false);
     if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 0 {
         {
-            word!(game.game_state = kGameState_2_GameOptionsMenu as u16);
+            word!(game.game_state = K_GAME_STATE_2_GAME_OPTIONS_MENU as u16);
             crate::menu!(game.menu_index = 0);
         }
     }
@@ -122,7 +122,7 @@ fn fade_palette<H: Host + ?Sized>(game: &mut H) {
             menu_tilemap::area_palette(area, area == crate::room_view::current(game).area, game);
         }
         crate::menu!(game.menu_index += 1);
-        word!(game.g_word_7E0787 = 0);
+        word!(game.file_select_map_unread = 0);
         game.ram().write_byte(
             crate::ram::mirror::TM,
             crate::display::control::Layers::BG2.byte(),
@@ -132,7 +132,7 @@ fn fade_palette<H: Host + ?Sized>(game: &mut H) {
 fn load_foreground<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::upload(
         2048,
-        0x810000 | addr_kAreaSelectForegroundTilemap,
+        0x810000 | ADDR_K_AREA_SELECT_FOREGROUND_TILEMAP,
         0,
         true,
         game,
@@ -152,7 +152,9 @@ fn load_background<H: Host + ?Sized>(j: u16, game: &mut H) {
     menu_tilemap::upload(
         2048,
         0x810000
-            | u32::from((2048 * i32::from(j) + addr_kAreaSelectBackgroundTilemaps as i32) as u16),
+            | u32::from(
+                (2048 * i32::from(j) + ADDR_K_AREA_SELECT_BACKGROUND_TILEMAPS as i32) as u16,
+            ),
         2,
         false,
         game,
@@ -232,11 +234,11 @@ fn open_area_window<H: Host + ?Sized>(game: &mut H) {
 fn choose_area<H: Host + ?Sized>(game: &mut H) {
     let mut keys = game.observed_inputs().pressed as i16;
     'handle_action: {
-        let previous = game.observed_inputs().pressed & (kButton_Up | kButton_Left) as u16 != 0;
+        let previous = game.observed_inputs().pressed & (K_BUTTON_UP | K_BUTTON_LEFT) as u16 != 0;
         let attempts = if previous {
             3
         } else if game.observed_inputs().pressed
-            & (kButton_Select | kButton_Down | kButton_Right) as u16
+            & (K_BUTTON_SELECT | K_BUTTON_DOWN | K_BUTTON_RIGHT) as u16
             != 0
         {
             6
@@ -271,7 +273,7 @@ fn choose_area<H: Host + ?Sized>(game: &mut H) {
             crate::menu!(game.menu_index = 22);
             break 'handle_action;
         }
-        if keys as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
+        if keys as i32 & (K_BUTTON_START as i32 | K_BUTTON_A as i32) != 0 {
             game.queue_sound(0, 0x38_u8, 6);
             select_area(game);
             return;
@@ -531,7 +533,7 @@ fn choose_room<H: Host + ?Sized>(game: &mut H) {
         scroll(game);
         display_elevator_destinations(game);
         if word!(game.enable_debug) != 0
-            && (word!(game.joypad2_new_keys) as i32 & kButton_Select as i32) != 0
+            && (word!(game.joypad2_new_keys) as i32 & K_BUTTON_SELECT as i32) != 0
         {
             game.queue_sound(0, 0x38_u8, 6);
             let mut unlocked: u16 = native_word(
@@ -629,7 +631,8 @@ fn choose_room<H: Host + ?Sized>(game: &mut H) {
             };
             word!(game.file_select_map_area_index = selection as u16);
             game.queue_sound(0, 0x3c_u8, 6);
-        } else if game.observed_inputs().pressed as i32 & (kButton_Start as i32 | kButton_A as i32)
+        } else if game.observed_inputs().pressed as i32
+            & (K_BUTTON_START as i32 | K_BUTTON_A as i32)
             != 0
         {
             crate::menu!(game.menu_index += 1);
@@ -735,7 +738,8 @@ fn close_room_window<H: Host + ?Sized>(game: &mut H) {
 
 fn station_coordinates<H: Host + ?Sized>(area: u16, game: &mut H) -> sm_data::cartridge::RomRecord {
     let pointer = menu_tilemap::native_record(
-        0x820000 | u32::from((addr_kMapIconDataPointers as i32 + 64 + 2 * i32::from(area)) as u16),
+        0x820000
+            | u32::from((ADDR_K_MAP_ICON_DATA_POINTERS as i32 + 64 + 2 * i32::from(area)) as u16),
         game,
     )
     .word(0);
@@ -1070,7 +1074,7 @@ pub fn reset_animations<H: Host + ?Sized>(game: &mut H) {
         scroll! { game, 0; Bg1H, Bg2H, Bg3H, Bg2V, Bg3V }
         crate::menu!(game.pausemenu_button_label_mode = 0);
         crate::menu!(game.pausemenu_lr_animation_frame = 0);
-        crate::menu!(game.UNUSED_word_7E0745 = 0);
+        crate::menu!(game.unused_word_7e0745 = 0);
         word!(game.samus_position_indicator_animation_frame = 0);
         word!(game.samus_position_indicator_animation_timer = 0);
         word!(game.samus_position_indicator_animation_loop_counter = 0);
@@ -1187,7 +1191,7 @@ fn find_map_edge<H: Host + ?Sized>(
 pub fn scroll_limits<H: Host + ?Sized>(game: &mut H) {
     let source = if word!(game.has_area_map) != 0 {
         let pointer = map_record(
-            (i32::from(addr_kPauseMenuMapData as u16)
+            (i32::from(ADDR_K_PAUSE_MENU_MAP_DATA as u16)
                 + 2 * i32::from(crate::room_view::current(game).area)) as u16,
             game,
         )

@@ -46,7 +46,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         );
         put(
             game,
-            w::eproj_unk1995,
+            w::eproj_init_param_2,
             [0xffff, 0x8000, 1, 0][id as usize % 4],
         );
         {

@@ -8,7 +8,7 @@ pub use crate::display::registers::*;
 pub use crate::effects::{DisplayRefresh as _, SoundEffects as _};
 pub use crate::ram::{CompatibilityRam as _, RawRam as _, WorkRamAccess as _, word};
 
-pub use crate::display::hdma_spawn::SpawnHdmaObject_Args;
+pub use crate::display::hdma_spawn::HdmaObjectDefinition;
 
 /// A bank-local address, as the original's `VoidP`.
 pub type VoidP = u16;
@@ -85,11 +85,11 @@ pub const VRAM_WRITE_ENTRY_BYTES: usize = 7;
 #[repr(C, packed)]
 pub struct EnemyData {
     pub base: crate::actors::layouts::EnemyBase,
-    pub ai_var_A: u16,
-    pub ai_var_B: u16,
-    pub ai_var_C: u16,
-    pub ai_var_D: u16,
-    pub ai_var_E: u16,
+    pub ai_var_a: u16,
+    pub ai_var_b: u16,
+    pub ai_var_c: u16,
+    pub ai_var_d: u16,
+    pub ai_var_e: u16,
     pub ai_preinstr: u16,
     pub parameter_1: u16,
     pub parameter_2: u16,

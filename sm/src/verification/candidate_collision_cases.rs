@@ -1,7 +1,8 @@
 //! Actual-old bounded terrain and power-bomb contact observations.
 //! No raw unaligned operand accesses or intentional extension cycles.
 use super::super::collision::{
-    EprojBlockCollisition_Horiz, EprojBlockCollisition_Vertical, EprojPowerBombCollision,
+    EprojPowerBombCollision, move_horizontally_with_block_collision,
+    move_vertically_with_block_collision,
 };
 use super::{bytes, put, slot};
 use crate::game_state::Game;
@@ -33,9 +34,9 @@ unsafe fn move_one(horizontal: bool, handle: u16, game: &mut Game) -> Option<usi
     Some(usize::from({
         super::super::with_execution(game, |ctx| {
             if horizontal {
-                EprojBlockCollisition_Horiz(handle, ctx)
+                move_horizontally_with_block_collision(handle, ctx)
             } else {
-                EprojBlockCollisition_Vertical(handle, ctx)
+                move_vertically_with_block_collision(handle, ctx)
             }
         })
     }))

@@ -100,7 +100,7 @@ impl sm_game::gameplay_frame::Host for Game {
             UnpauseHook::KraidDead => unpause_dead(self),
             UnpauseHook::KraidAlive => unpause_alive(self),
             UnpauseHook::KraidSinking => unpause_sinking(self),
-            UnpauseHook::MotherBrain => crate::game::sm_a9::MotherBrainsBody_UnpauseHook(self),
+            UnpauseHook::MotherBrain => crate::game::sm_a9::body_unpause_hook(self),
         }
     }
 

@@ -1238,7 +1238,7 @@ pub(crate) unsafe fn SetHiLo(hi: *mut u16, lo: *mut u16, value: u32) {
     }
 }
 
-pub fn Mult8x8(a: u8, b: u8) -> u16 {
+pub fn multiply_8x8(a: u8, b: u8) -> u16 {
     (a as i32 * b as i32) as u16
 }
 pub unsafe fn ReadReg(reg: u16, game: &mut Game) -> u8 {

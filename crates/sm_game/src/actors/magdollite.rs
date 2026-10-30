@@ -8,7 +8,7 @@
 #![forbid(unsafe_code)]
 use crate::actors::host::{Axis, Death, Shot};
 use crate::actors::layouts::part_view;
-use crate::constants::enemy_properties::{kEnemyProps_Deleted, kEnemyProps_Invisible};
+use crate::constants::enemy_properties::{K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE};
 use crate::enemy_script::EnemyScript;
 use crate::ram::RawRam as _;
 use crate::ram::{slot, word};
@@ -34,13 +34,13 @@ const SLOT: i32 = 64;
 part_view! {
     /// The words every part uses.
     Part: EnemyLayout40 {
-        words: [var_A, var_B, shown_animation, animation, var_E, state, kind, parameters],
+        words: [var_a, var_b, shown_animation, animation, var_e, state, kind, parameters],
         pad1: [u8; 26696],
         words: [
             var_00, animation_active, var_02, home_y, cooldown, var_05, var_06, shrink_subspeed,
-            shrink_speed, grow_subspeed, grow_speed, var_0B, var_0C, var_0D, var_0E, var_0F, var_10,
-            var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19, var_1A, var_1B,
-            var_1C, var_1D, var_1E, var_1F,
+            shrink_speed, grow_subspeed, grow_speed, var_0b, var_0c, var_0d, var_0e, var_0f, var_10,
+            var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19, var_1a, var_1b,
+            var_1c, var_1d, var_1e, var_1f,
         ],
     }
 }
@@ -48,13 +48,13 @@ part_view! {
 part_view! {
     /// The head, which surfaces, idles facing Samus and submerges.
     Head: EnemyLayout40 {
-        words: [var_A, var_B, shown_animation, animation, var_E, state, kind, parameters],
+        words: [var_a, var_b, shown_animation, animation, var_e, state, kind, parameters],
         pad1: [u8; 26696],
         words: [
             facing_right, animation_active, waiting_for_arm, home_y, cooldown, var_05, var_06,
-            shrink_subspeed, shrink_speed, grow_subspeed, grow_speed, var_0B, var_0C, var_0D,
-            var_0E, var_0F, var_10, var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18,
-            var_19, var_1A, var_1B, var_1C, var_1D, var_1E, var_1F,
+            shrink_subspeed, shrink_speed, grow_subspeed, grow_speed, var_0b, var_0c, var_0d,
+            var_0e, var_0f, var_10, var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18,
+            var_19, var_1a, var_1b, var_1c, var_1d, var_1e, var_1f,
         ],
     }
 }
@@ -63,14 +63,14 @@ part_view! {
     /// The arm, which grows one segment at a time up to Samus's height.
     Arm: EnemyLayout40 {
         words: [
-            var_A, growth_level, shown_animation, animation, extension, state, kind, parameters,
+            var_a, growth_level, shown_animation, animation, extension, state, kind, parameters,
         ],
         pad1: [u8; 26696],
         words: [
             var_00, animation_active, var_02, home_y, cooldown, var_05, var_06, shrink_subspeed,
-            shrink_speed, grow_subspeed, grow_speed, var_0B, fully_grown, hold_retracted, var_0E,
-            var_0F, var_10, var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19,
-            var_1A, var_1B, var_1C, var_1D, var_1E, var_1F,
+            shrink_speed, grow_subspeed, grow_speed, var_0b, fully_grown, hold_retracted, var_0e,
+            var_0f, var_10, var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19,
+            var_1a, var_1b, var_1c, var_1d, var_1e, var_1f,
         ],
     }
 }
@@ -78,13 +78,13 @@ part_view! {
 part_view! {
     /// The hand, which rides the arm's tip and throws lava.
     Hand: EnemyLayout40 {
-        words: [var_A, throw_right, shown_animation, animation, var_E, state, kind, parameters],
+        words: [var_a, throw_right, shown_animation, animation, var_e, state, kind, parameters],
         pad1: [u8; 26696],
         words: [
             var_00, animation_active, var_02, home_y, cooldown, var_05, var_06, shrink_subspeed,
-            shrink_speed, grow_subspeed, grow_speed, var_0B, var_0C, var_0D, var_0E, var_0F, var_10,
-            home_x, throw_x, throw_y, var_14, var_15, var_16, var_17, var_18, var_19, var_1A,
-            var_1B, var_1C, var_1D, var_1E, var_1F,
+            shrink_speed, grow_subspeed, grow_speed, var_0b, var_0c, var_0d, var_0e, var_0f, var_10,
+            home_x, throw_x, throw_y, var_14, var_15, var_16, var_17, var_18, var_19, var_1a,
+            var_1b, var_1c, var_1d, var_1e, var_1f,
         ],
     }
 }
@@ -268,7 +268,7 @@ fn initialize_arm<H: Host + ?Sized>(game: &mut H) {
         .wrapping_add(START_DEPTH));
     slot!(game, Arm[arm].state = state::ARM_WAIT_HEAD_SUBMERGED);
     slot!(game, Arm[arm].base.properties, |old| old
-        | kEnemyProps_Invisible as u16);
+        | K_ENEMY_PROPS_INVISIBLE as u16);
 }
 fn initialize_hand<H: Host + ?Sized>(game: &mut H) {
     let hand = current(game);
@@ -280,7 +280,7 @@ fn initialize_hand<H: Host + ?Sized>(game: &mut H) {
         .wrapping_add(START_DEPTH));
     slot!(game, Hand[hand].state = state::HAND_IDLE);
     slot!(game, Hand[hand].base.properties, |old| old
-        | kEnemyProps_Invisible as u16);
+        | K_ENEMY_PROPS_INVISIBLE as u16);
 }
 /// Initialisation AI ($A8:AF8B): set up the part `kind` names, then its speeds
 /// and the shared palette cycle.
@@ -347,9 +347,9 @@ pub fn damage<H: Host + ?Sized>(address: u32, game: &mut H) {
     let hand = current(game) + 2 * SLOT;
     if slot!(game, Head[head].base.health) == 0 {
         slot!(game, Arm[arm].base.properties, |old| old
-            | kEnemyProps_Deleted as u16);
+            | K_ENEMY_PROPS_DELETED as u16);
         slot!(game, Hand[hand].base.properties, |old| old
-            | kEnemyProps_Deleted as u16);
+            | K_ENEMY_PROPS_DELETED as u16);
     }
     let frozen = slot!(game, Head[head].base.frozen_timer);
     if frozen != 0 {
@@ -675,7 +675,7 @@ pub fn instruction<H: Host + ?Sized>(
             let depth = if hide { EMERGED_DEPTH } else { SUBMERGED_DEPTH };
             let y = slot!(game, Head[head].home_y).wrapping_add(depth);
             slot!(game, Head[head].base.y_pos = y);
-            let invisible = kEnemyProps_Invisible as u16;
+            let invisible = K_ENEMY_PROPS_INVISIBLE as u16;
             let show_or_hide = |old: u16| {
                 if hide {
                     old | invisible
@@ -700,7 +700,7 @@ pub fn instruction<H: Host + ?Sized>(
             game.spawn_projectile(
                 slot!(game, Hand[hand].throw_right),
                 word!(game.cur_enemy_index),
-                crate::constants::bank_86::addr_kEproj_LavaThrownByLavaman as u16,
+                crate::constants::bank_86::ADDR_K_EPROJ_LAVA_THROWN_BY_MAGDOLLITE as u16,
             );
         }
         OPEN_HAND_RIGHT | OPEN_HAND_LEFT | CLOSED_HAND_RIGHT | CLOSED_HAND_LEFT => {

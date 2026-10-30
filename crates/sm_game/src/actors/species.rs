@@ -10,13 +10,13 @@
 #![forbid(unsafe_code)]
 use crate::actors::host::{ActorHost, ActorRuntime, Death, LeaseActors, Shot};
 use crate::actors::{
-    alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, brinstar_pipe_bug,
-    ceres_doors, ceres_ridley, coven, crawlers, crocomire_reactions, dachora_run, draygon_death,
-    draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator,
-    escape_critters, etecoon, evir, fire_arc, fireflea, fune, kago, kraid, magdollite, metroid,
-    mini_kraid, mochtroid, morph_ball_eye, norfair_pipe_bug, phantoon, phantoon_actions, reflec,
-    ridley, roach, shaktool, sidehopper, skree, skultera, space_pirates, statues, torizo, tripper,
-    yapping_maw, yellow_pipe_bug, zebetites, zoa,
+    alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, ceres_doors,
+    ceres_ridley, covern, crawlers, crocomire_reactions, dachora_run, draygon_death, draygon_eye,
+    draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, etecoon,
+    evir, fire_arc, fireflea, fune, gamet, geega, kago, kraid, magdollite, metroid, mini_kraid,
+    mochtroid, morph_ball_eye, phantoon, phantoon_actions, reflec, ridley, roach, shaktool,
+    sidehopper, skree, skultera, space_pirates, statues, torizo, tripper, yapping_maw, zeb,
+    zebetites, zoa,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -54,7 +54,7 @@ impl<T> B3Host for T where
 /// Contact reactions whose routines still run in the compatibility crate.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NativeTouch {
-    LargeSnail { damage: bool },
+    Oum { damage: bool },
     SporeSpawn,
     CeresSteam,
     MotherBrainBrain,
@@ -80,8 +80,8 @@ pub trait TouchHost:
 pub fn touch<H: TouchHost>(ea: u32, game: &mut H) {
     match ea {
         10518563 => game.contact_reaction(Death::Finalize),
-        10670984 => game.native_touch(NativeTouch::LargeSnail { damage: true }),
-        10670988 => game.native_touch(NativeTouch::LargeSnail { damage: false }),
+        10670984 => game.native_touch(NativeTouch::Oum { damage: true }),
+        10670988 => game.native_touch(NativeTouch::Oum { damage: false }),
         10780707 => game.contact_reaction(Death::Finalize),
         10795325 => crocomire_reactions::touch(game),
         10795344 => (),
@@ -107,7 +107,7 @@ pub fn touch<H: TouchHost>(ea: u32, game: &mut H) {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NativeShot {
     Dud,
-    LargeSnail,
+    Oum,
     SporeSpawn,
     Ridley,
     MotherBrainBody,
@@ -136,7 +136,7 @@ pub fn shot<H: ShotHost>(ea: u32, j: u16, game: &mut H) {
         10518573 => game.shot_reaction(Shot::Finalize),
         10846278 => game.native_shot(NativeShot::Dud),
         10649676 => (),
-        10671028 => game.native_shot(NativeShot::LargeSnail),
+        10671028 => game.native_shot(NativeShot::Oum),
         10780717 => game.shot_reaction(Shot::Finalize),
         10795345 => crocomire_reactions::count_hit(game),
         10795368 => crocomire_reactions::impact(game),
@@ -169,7 +169,7 @@ pub fn shot<H: ShotHost>(ea: u32, j: u16, game: &mut H) {
 pub enum NativeDrawHook {
     ReflecPalette,
     CeresRidleyBabyMetroidAndWings,
-    WreckedShipRobotPalette,
+    WorkRobotPalette,
     BlueFaceBlockPalette,
     MotherBrainBrainAndNeck,
     MotherBrainBrain,
@@ -190,7 +190,7 @@ pub fn draw_hook<H: DrawHookHost>(ea: u32, game: &mut H) {
         10920690 => game.native_draw_hook(NativeDrawHook::CeresRidleyBabyMetroidAndWings),
         11042892 => (),
         11055282 => magdollite::cycle_palette(game),
-        11062375 => game.native_draw_hook(NativeDrawHook::WreckedShipRobotPalette),
+        11062375 => game.native_draw_hook(NativeDrawHook::WorkRobotPalette),
         11069550 => game.native_draw_hook(NativeDrawHook::BlueFaceBlockPalette),
         11110278 => (),
         11110345 => game.native_draw_hook(NativeDrawHook::MotherBrainBrainAndNeck),
@@ -203,23 +203,23 @@ pub fn draw_hook<H: DrawHookHost>(ea: u32, game: &mut H) {
 /// A pipe bug's state routine, keyed by its bank $B3 address.
 pub fn pipe_bug_state<H: B3Host>(ea: u32, _k: u16, game: &mut H) {
     match ea {
-        11766733 => crate::actors::norfair_pipe_bug::await_group(game),
-        11766783 => crate::actors::norfair_pipe_bug::await_player(game),
-        11766950 => crate::actors::norfair_pipe_bug::rise(game),
-        11767039 => crate::actors::norfair_pipe_bug::settle(game),
-        11767052 => crate::actors::norfair_pipe_bug::move_to_limit(-16, game),
-        11767118 => crate::actors::norfair_pipe_bug::move_to_limit(-32, game),
-        11767184 => crate::actors::norfair_pipe_bug::move_to_limit(16, game),
-        11767250 => crate::actors::norfair_pipe_bug::move_to_limit(32, game),
-        11767316 => crate::actors::norfair_pipe_bug::fly(2, game),
-        11767349 => crate::actors::norfair_pipe_bug::fly(0, game),
-        11767386 => crate::actors::norfair_pipe_bug::start_flight(game),
-        11767733 => crate::actors::yellow_pipe_bug::detect_player(game),
-        11767797 => crate::actors::yellow_pipe_bug::launch_delay(word!(game.cur_enemy_index), game),
-        11767848 => crate::actors::yellow_pipe_bug::fly(true, game),
-        11767997 => crate::actors::yellow_pipe_bug::fly(false, game),
-        11768154 => crate::actors::yellow_pipe_bug::turn(true, game),
-        11768280 => crate::actors::yellow_pipe_bug::turn(false, game),
+        11766733 => crate::actors::gamet::await_group(game),
+        11766783 => crate::actors::gamet::await_player(game),
+        11766950 => crate::actors::gamet::rise(game),
+        11767039 => crate::actors::gamet::settle(game),
+        11767052 => crate::actors::gamet::move_to_limit(-16, game),
+        11767118 => crate::actors::gamet::move_to_limit(-32, game),
+        11767184 => crate::actors::gamet::move_to_limit(16, game),
+        11767250 => crate::actors::gamet::move_to_limit(32, game),
+        11767316 => crate::actors::gamet::fly(2, game),
+        11767349 => crate::actors::gamet::fly(0, game),
+        11767386 => crate::actors::gamet::start_flight(game),
+        11767733 => crate::actors::geega::detect_player(game),
+        11767797 => crate::actors::geega::launch_delay(word!(game.cur_enemy_index), game),
+        11767848 => crate::actors::geega::fly(true, game),
+        11767997 => crate::actors::geega::fly(false, game),
+        11768154 => crate::actors::geega::turn(true, game),
+        11768280 => crate::actors::geega::turn(false, game),
         _ => {
             game.unknown_routine();
         }
@@ -229,12 +229,12 @@ pub fn pipe_bug_state<H: B3Host>(ea: u32, _k: u16, game: &mut H) {
 pub fn b3_pre_instruction<H: B3Host>(ea: u32, k: u16, game: &mut H) {
     match ea {
         11763835 => (),
-        11765888 => crate::actors::brinstar_pipe_bug::await_view(k, game),
-        11765904 => crate::actors::brinstar_pipe_bug::await_player(k, game),
-        11765987 => crate::actors::brinstar_pipe_bug::rise(k, game),
-        11766044 => crate::actors::brinstar_pipe_bug::fly(k, game),
-        11766142 => crate::actors::brinstar_pipe_bug::cooldown(k, game),
-        11767039 => crate::actors::norfair_pipe_bug::settle(game),
+        11765888 => crate::actors::zeb::await_view(k, game),
+        11765904 => crate::actors::zeb::await_player(k, game),
+        11765987 => crate::actors::zeb::rise(k, game),
+        11766044 => crate::actors::zeb::fly(k, game),
+        11766142 => crate::actors::zeb::cooldown(k, game),
+        11767039 => crate::actors::gamet::settle(game),
         11789916 => crate::actors::escape_critters::run_for_escape(k, game),
         11789936 => crate::actors::escape_critters::wait_to_express_gratitude(k, game),
         11789952 => crate::actors::escape_critters::run_around_aimlessly(k, game),
@@ -381,9 +381,9 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11698252 => (),
         11763788 => (),
         11765518 => (),
-        11765819 => brinstar_pipe_bug::initialize(game),
-        11766625 => norfair_pipe_bug::initialize(game),
-        11767628 => yellow_pipe_bug::initialize(game),
+        11765819 => zeb::initialize(game),
+        11766625 => gamet::initialize(game),
+        11767628 => geega::initialize(game),
         11769219 => botwoon::initialize(game),
         11790027 => escape_critters::initialize(false, game),
         11791077 => escape_critters::initialize(true, game),
@@ -564,8 +564,8 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         }
         11048675 => fune::initialize(game),
         11048752 => fune::main_ai(game),
-        11049710 => coven::initialize(game),
-        11049788 => coven::main_ai(game),
+        11049710 => covern::initialize(game),
+        11049788 => covern::main_ai(game),
         11053894 => kago::initialize(game),
         11053941 => kago::main_ai(game),
         11053955 => kago::shot(game),

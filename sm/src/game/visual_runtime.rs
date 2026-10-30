@@ -135,11 +135,11 @@ impl visual_host::Composition for Runtime<'_> {
     }
     fn spawn_statue_projectile(&mut self, kind: StatueProjectile, parameter: u16) {
         use crate::game::constants::bank_86::{
-            addr_kEproj_TourianStatueEyeGlow, addr_kEproj_TourianStatueSoul,
+            ADDR_K_EPROJ_TOURIAN_STATUE_EYE_GLOW, ADDR_K_EPROJ_TOURIAN_STATUE_SOUL,
         };
         let definition = match kind {
-            StatueProjectile::EyeGlow => addr_kEproj_TourianStatueEyeGlow,
-            StatueProjectile::Soul => addr_kEproj_TourianStatueSoul,
+            StatueProjectile::EyeGlow => ADDR_K_EPROJ_TOURIAN_STATUE_EYE_GLOW,
+            StatueProjectile::Soul => ADDR_K_EPROJ_TOURIAN_STATUE_SOUL,
         };
         enemy_projectiles::lifecycle::spawn_room(self, definition as u16, parameter);
     }

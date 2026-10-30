@@ -22,7 +22,7 @@ impl Effects for Runtime<'_> {
         self.foreign(|game| super::legacy::ridley_offscreen(x, y, game))
     }
     fn queue_music(&mut self, track: u16) -> () {
-        self.foreign(|game| crate::game::music::QueueMusic_Delayed8(track, game))
+        self.foreign(|game| crate::game::music::queue_music_delayed_8(track, game))
     }
     fn convert_angle_to_xy(&mut self, angle: u16, amplitude: u16) -> sm_game::geometry::Vector32 {
         self.foreign(|game| {

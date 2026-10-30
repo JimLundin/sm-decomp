@@ -141,13 +141,13 @@ impl Runtime<'_> {
     }
 
     pub(crate) fn begin_suit_pickup(&mut self, gravity: bool) {
-        use crate::{game::player_transitions::suit, types::SpawnHdmaObject_Args};
+        use crate::{game::player_transitions::suit, types::HdmaObjectDefinition};
         suit::prepare(self, gravity, Self::suit_window_word);
         self.foreign(|game| crate::game::session_runtime::player_command(0x15, game));
         suit::center(self);
         visual_host::Effects::sound(self, 2, 6, 0x56);
         let program = if gravity { 0xd67a } else { 0xd5a2 };
-        let args = SpawnHdmaObject_Args::new(0x41, 0x26, program);
+        let args = HdmaObjectDefinition::new(0x41, 0x26, program);
         self.foreign(|game| crate::game::visual_runtime::spawn_hdma(0x91, &args, game));
     }
 
@@ -170,7 +170,7 @@ impl Runtime<'_> {
             self.write_slice_native(address, value as u16);
             self.set_byte(address + 2, (value >> 16) as u8);
         }
-        self.write_slice_le(crate::ram_map::words::hdma_var_1, 0);
+        self.write_slice_le(crate::ram_map::words::xray_hdma_table_end, 0);
     }
 
     fn publish_suit_colors(&mut self) {
@@ -577,7 +577,7 @@ impl Runtime<'_> {
         self.session_mut().player.demo.previous_held = 0x98c8;
         self.write_slice_native(0xa8e, 0x9098);
         self.set_byte(0xa90, 0x99);
-        self.write_slice_le(ram::hdma_var_1, 0);
+        self.write_slice_le(ram::xray_hdma_table_end, 0);
         let demo = &mut self.session_mut().player.demo;
         demo.pre_action = 0;
         demo.delay = 0;

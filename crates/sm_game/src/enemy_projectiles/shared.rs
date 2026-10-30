@@ -21,17 +21,17 @@ fn move_axis(handle: u16, fraction: F, whole: F, velocity: F, ctx: &mut impl Hos
     }
     result
 }
-pub fn MoveEprojWithVelocityX(k: u16, ctx: &mut impl Host) -> u16 {
+pub fn move_with_x_velocity(k: u16, ctx: &mut impl Host) -> u16 {
     move_axis(k, F::XFraction, F::X, F::VelocityX, ctx)
 }
-pub fn MoveEprojWithVelocityY(k: u16, ctx: &mut impl Host) -> u16 {
+pub fn move_with_y_velocity(k: u16, ctx: &mut impl Host) -> u16 {
     move_axis(k, F::YFraction, F::Y, F::VelocityY, ctx)
 }
-pub fn MoveEprojWithVelocity(k: u16, ctx: &mut impl Host) -> u16 {
-    MoveEprojWithVelocityX(k, ctx);
-    MoveEprojWithVelocityY(k, ctx)
+pub fn move_with_velocity(k: u16, ctx: &mut impl Host) -> u16 {
+    move_with_x_velocity(k, ctx);
+    move_with_y_velocity(k, ctx)
 }
-pub fn SetAreaDependentEprojPropertiesEx(table: u16, j: u16, ctx: &mut impl Host) {
+pub fn set_area_dependent_damage(table: u16, j: u16, ctx: &mut impl Host) {
     let source = ctx.native_record(0x86, table);
     let index = if ctx.session().room.area == 2 {
         1
@@ -43,12 +43,12 @@ pub fn SetAreaDependentEprojPropertiesEx(table: u16, j: u16, ctx: &mut impl Host
     let value = source.word_le(index);
     enemy!(ctx, (j >> 1) as isize, properties = value);
 }
-pub fn SetEprojSpawnPoint(k: u16, ctx: &mut impl Host) {
+pub fn set_spawn_point_to_projectile(k: u16, ctx: &mut impl Host) {
     let x = enemy!(ctx, (k >> 1) as isize, x);
     let y = enemy!(ctx, (k >> 1) as isize, y);
     ctx.session_mut().enemy_projectiles.spawn.point = crate::geometry::Point { x, y };
 }
-pub fn sub_86A301(j: u16, ctx: &mut impl Host) {
+pub fn init_ceres_elevator(j: u16, ctx: &mut impl Host) {
     let index = (j >> 1) as isize;
     for field in [
         F::XFraction,
@@ -62,7 +62,7 @@ pub fn sub_86A301(j: u16, ctx: &mut impl Host) {
     let x = ctx.session().player.x;
     enemy!(ctx, index, x = x);
 }
-pub fn Eproj_InitXYVelRandom(j: u16, table: u16, point: Point16U, ctx: &mut impl Host) {
+pub fn init_torizo_projectile(j: u16, table: u16, point: Point16U, ctx: &mut impl Host) {
     let source = ctx.native_record(0x86, table);
     let index = (j >> 1) as isize;
     enemy!(ctx, index, program = source.word_le(0));
@@ -92,16 +92,16 @@ fn set_random_velocity(k: u16, field: F, minimum: u8, ctx: &mut impl Host) {
         u16::from(random.max(minimum)),
     );
 }
-pub fn Eproj_SetXvelRandom(k: u16, ctx: &mut impl Host) {
+pub fn set_random_rotation_timer(k: u16, ctx: &mut impl Host) {
     set_random_velocity(k, F::VelocityX, 32, ctx);
 }
-pub fn Eproj_SetYvelRandom(k: u16, ctx: &mut impl Host) {
+pub fn set_random_cooldown_timer(k: u16, ctx: &mut impl Host) {
     set_random_velocity(k, F::VelocityY, 128, ctx);
 }
-pub fn ConvertAngleToXy(angle: u16, amplitude: u16, ctx: &mut impl Host) -> Point32 {
+pub fn convert_angle_to_xy(angle: u16, amplitude: u16, ctx: &mut impl Host) -> Point32 {
     ctx.convert_angle_to_xy(angle, amplitude)
 }
-pub fn Eproj_AngleToSamus(j: u16, x: u16, y: u16, ctx: &mut impl Host) {
+pub fn place_and_aim_at_samus(j: u16, x: u16, y: u16, ctx: &mut impl Host) {
     let index = (j >> 1) as isize;
     enemy!(ctx, index, x = x);
     enemy!(ctx, index, y = y);
@@ -116,9 +116,14 @@ pub fn Eproj_AngleToSamus(j: u16, x: u16, y: u16, ctx: &mut impl Host) {
     enemy!(ctx, index, behavior_b = point.y as u16);
 }
 
-pub fn SpawnEprojWithRoomGfx(definition: u16, parameter: u16, ctx: &mut impl Host) -> u16 {
+pub fn spawn_with_room_gfx(definition: u16, parameter: u16, ctx: &mut impl Host) -> u16 {
     super::lifecycle::spawn_room(ctx, definition, parameter)
 }
-pub fn SpawnEprojWithGfx(parameter: u16, enemy: u16, definition: u16, ctx: &mut impl Host) -> u16 {
+pub fn spawn_with_enemy_gfx(
+    parameter: u16,
+    enemy: u16,
+    definition: u16,
+    ctx: &mut impl Host,
+) -> u16 {
     super::lifecycle::spawn_from_enemy(ctx, parameter, enemy, definition)
 }

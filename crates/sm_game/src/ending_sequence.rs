@@ -175,10 +175,10 @@ pub fn setup<H: Host + ?Sized>(game: &mut H) {
     GraphicsAsset::Decompress(0x99d65b, 0x2000).load(game);
     GraphicsAsset::Decompress(0x99d932, 0x6000).load(game);
     crate::cinematic_display::reset_cinematic_transform(128, 128, game);
-    word!(game.cinematic_var5 = 32);
-    word!(game.cinematic_var6 = 64);
-    word!(game.cinematic_var8 = 0);
-    word!(game.cinematic_var10 = 0);
+    word!(game.mode7_angle = 32);
+    word!(game.mode7_zoom = 64);
+    word!(game.cinematic_x = 0);
+    word!(game.cinematic_y = 0);
     word!(game.door_def_ptr = 0);
     word!(game.layer1_x_pos = 0);
     word!(game.layer1_y_pos = 0);
@@ -224,10 +224,10 @@ pub fn scene_1_setup<H: Host + ?Sized>(game: &mut H) {
     clear_cinematic_sprites(game);
     game.spawn_palette_effect(SCENE_1_GLOW);
     crate::cinematic_objects::spawn_cinematic_burst(object::CLOUDS_TOP, [0; 4], 6, game);
-    word!(game.cinematic_var5 = 32);
-    word!(game.cinematic_var6 = 64);
-    word!(game.cinematic_var8 = 0);
-    word!(game.cinematic_var10 = 0);
+    word!(game.mode7_angle = 32);
+    word!(game.mode7_zoom = 64);
+    word!(game.cinematic_x = 0);
+    word!(game.cinematic_y = 0);
     word!(game.cinematic_function = function::SCENE_1_FADING_IN);
 }
 
@@ -254,23 +254,23 @@ pub fn scene_2_setup<H: Host + ?Sized>(game: &mut H) {
     sprites(game, object::LAVA, 0x0e00);
     sprites(game, object::PURPLE_GLOW, 0x0a00);
     sprites(game, object::STARS, 0x0e00);
-    word!(game.cinematic_var5 = 0);
-    word!(game.cinematic_var6 = 64);
+    word!(game.mode7_angle = 0);
+    word!(game.mode7_zoom = 64);
     word!(game.reg_M7A = 256);
     word!(game.reg_M7B = 0);
     word!(game.reg_M7C = 0);
     word!(game.reg_M7D = 256);
     word!(game.reg_M7X = 128);
     word!(game.reg_M7Y = 128);
-    word!(game.cinematic_var8 = 0);
-    word!(game.cinematic_var10 = 0);
+    word!(game.cinematic_x = 0);
+    word!(game.cinematic_y = 0);
     set_cinematic_blend(1, 16, 2, 33, game);
     capture_cinematic_palette(game);
     prepare_cinematic_palette_fade(game);
     clear_cinematic_colors(0x1a0, 0x10, game);
     clear_cinematic_colors(0x1e0, 0x10, game);
     compose_cinematic_palette(game);
-    word!(game.cinematic_var4 = 63);
+    word!(game.cinematic_function_timer = 63);
     word!(game.cinematic_function = function::SCENE_2_FADING_IN);
 }
 
@@ -289,15 +289,15 @@ pub fn scene_2_fading_in<H: Host + ?Sized>(game: &mut H) {
 /// space view ($8B:DA1A): every other frame a fade step; at the end the
 /// space view's display. Was `CinematicFunction_Intro_Func117`.
 pub fn scene_2<H: Host + ?Sized>(game: &mut H) {
-    word!(game.cinematic_var6 = word!(game.cinematic_var6).wrapping_add(4));
-    if (word!(game.cinematic_var4) & 1) == 0 {
+    word!(game.mode7_zoom = word!(game.mode7_zoom).wrapping_add(4));
+    if (word!(game.cinematic_function_timer) & 1) == 0 {
         fade_cinematic_colors(0xe0, 0x10, false, game);
         fade_cinematic_colors(0x1a0, 0x10, true, game);
         fade_cinematic_colors(0x1e0, 0x10, true, game);
         compose_cinematic_palette(game);
     }
-    word!(game.cinematic_var4 = word!(game.cinematic_var4).wrapping_sub(1));
-    if (word!(game.cinematic_var4) & 0x8000) != 0 {
+    word!(game.cinematic_function_timer = word!(game.cinematic_function_timer).wrapping_sub(1));
+    if (word!(game.cinematic_function_timer) & 0x8000) != 0 {
         crate::word_transfers!(game, ascending, 128; le(palette_buffer, 0) <- rom(SPACE_PALETTES, 0));
         for (at, value) in [
             (mirror::M7SEL, 0),
@@ -321,21 +321,21 @@ pub fn scene_2<H: Host + ?Sized>(game: &mut H) {
         game.write_register(crate::display::registers::COLDATA as u16, 0xe0);
         set_fixed_color([32, 64, 0x80], game);
         game.ram().write_byte(mirror::MOSAIC, 0);
-        word!(game.cinematic_var7 = 0);
-        word!(game.cinematic_var8 = 0);
-        word!(game.cinematic_var9 = 0);
-        word!(game.cinematic_var10 = 0);
-        word!(game.g_word_7E1999 = 0);
-        word!(game.g_word_7E199B = 0);
-        word!(game.g_word_7E199D = 0);
-        word!(game.g_word_7E199F = 0);
+        word!(game.cinematic_x_sub = 0);
+        word!(game.cinematic_x = 0);
+        word!(game.cinematic_y_sub = 0);
+        word!(game.cinematic_y = 0);
+        word!(game.cinematic_x_subspeed = 0);
+        word!(game.cinematic_x_speed = 0);
+        word!(game.cinematic_y_subspeed = 0);
+        word!(game.cinematic_y_speed = 0);
         word!(game.fx_layer_blending_config_a = 0);
         word!(game.reg_BG2HOFS = 0);
         word!(game.reg_BG2VOFS = 0);
         word!(game.screen_fade_delay = 0);
         word!(game.screen_fade_counter = 2);
         word!(game.cinematic_function = function::LOAD_GUNSHIP_BG);
-        word!(game.cinematic_var4 = 0);
+        word!(game.cinematic_function_timer = 0);
     }
 }
 
@@ -367,11 +367,11 @@ pub fn gunship_setup<H: Host + ?Sized>(game: &mut H) {
         game.spawn_palette_effect(SPACE_GLOW_2);
         word!(game.reg_M7X = 56);
         word!(game.reg_M7Y = 24);
-        word!(game.cinematic_var8 = -72i32 as u16);
-        word!(game.cinematic_var10 = -104i32 as u16);
-        word!(game.cinematic_var6 = 3072);
-        word!(game.cinematic_var5 = -112i32 as u16);
-        word!(game.cinematic_var4 = 1);
+        word!(game.cinematic_x = -72i32 as u16);
+        word!(game.cinematic_y = -104i32 as u16);
+        word!(game.mode7_zoom = 3072);
+        word!(game.mode7_angle = -112i32 as u16);
+        word!(game.cinematic_function_timer = 1);
         word!(game.cinematic_var13 = 192);
         word!(game.cinematic_var14 = 0);
         word!(game.cinematic_function = function::GUNSHIP_SPINNING_FAST);
@@ -395,20 +395,20 @@ pub fn gunship_fly_into_camera<H: Host + ?Sized>(game: &mut H) {
     crate::ending_screens::fade_ending_gunship_backdrop(game);
     add_pair!(game, cinematic_var13, cinematic_var14, -256i32 as u32);
     let speed = ((word!(game.cinematic_var13) as u32) << 16) | word!(game.cinematic_var14) as u32;
-    add_pair!(game, cinematic_var8, cinematic_var7, speed);
-    if below(word!(game.cinematic_var6), 384)
-        && (word!(game.cinematic_var12) & 3) == 0
-        && word!(game.cinematic_var5) != 16
+    add_pair!(game, cinematic_x, cinematic_x_sub, speed);
+    if below(word!(game.mode7_zoom), 384)
+        && (word!(game.cinematic_frame_counter) & 3) == 0
+        && word!(game.mode7_angle) != 16
     {
-        word!(game.cinematic_var5 = ((word!(game.cinematic_var5)) as u8).wrapping_add(2) as u16);
+        word!(game.mode7_angle = ((word!(game.mode7_angle)) as u8).wrapping_add(2) as u16);
     }
-    if below(word!(game.cinematic_var6), 32) {
-        let parameter = word!(game.cinematic_var6);
+    if below(word!(game.mode7_zoom), 32) {
+        let parameter = word!(game.mode7_zoom);
         sprites(game, object::GUNSHIP_TEXT, parameter);
         word!(game.cinematic_function = function::GUNSHIP_FREEZE_FRAME);
         crate::word_transfers!(game, descending, 16; le(palette_buffer, 95) <- table(GUNSHIP_GREY, 15));
     } else {
-        word!(game.cinematic_var6 = word!(game.cinematic_var6).wrapping_sub(4));
+        word!(game.mode7_zoom = word!(game.mode7_zoom).wrapping_sub(4));
     }
 }
 
@@ -454,10 +454,10 @@ pub fn credits_setup<H: Host + ?Sized>(game: &mut H) {
         GraphicsAsset::VramWords(0x7f0000, 0x0000, 0x4000).load(game);
     }
     crate::cinematic_display::reset_cinematic_transform(104, 112, game);
-    word!(game.cinematic_var8 = -8i32 as u16);
-    word!(game.cinematic_var10 = -24i32 as u16);
-    word!(game.cinematic_var5 = 0);
-    word!(game.cinematic_var6 = 2304);
+    word!(game.cinematic_x = -8i32 as u16);
+    word!(game.cinematic_y = -24i32 as u16);
+    word!(game.mode7_angle = 0);
+    word!(game.mode7_zoom = 2304);
     game.enable_display_nmi(true);
     game.ram().write_byte(mirror::INIDISP, 15);
     word!(game.layer1_x_pos = 0);
@@ -477,7 +477,7 @@ pub fn credits_setup<H: Host + ?Sized>(game: &mut H) {
 pub fn blank_screen<H: Host + ?Sized>(game: &mut H) {
     if countdown(game) {
         word!(game.cinematic_function = function::FADE_IN_SHOOTING_STARS);
-        word!(game.cinematic_var4 = 120);
+        word!(game.cinematic_function_timer = 120);
         game.ram().write_byte(mirror::TM, 16);
     }
 }
@@ -494,7 +494,7 @@ pub fn fade_in_shooting_stars<H: Host + ?Sized>(game: &mut H) {
         prepare_cinematic_palette_fade(game);
         clear_cinematic_colors(0x40, 0x10, game);
         compose_cinematic_palette(game);
-        word!(game.cinematic_var4 = 32);
+        word!(game.cinematic_function_timer = 32);
         word!(game.cinematic_function = function::FADE_IN_SAMUS);
     }
 }
@@ -506,7 +506,7 @@ pub fn fade_in_samus<H: Host + ?Sized>(game: &mut H) {
     compose_cinematic_palette(game);
     if countdown(game) {
         set_cinematic_blend(18, 4, 2, 2, game);
-        word!(game.cinematic_var4 = 180);
+        word!(game.cinematic_function_timer = 180);
         word!(game.cinematic_function = function::WAVY_SAMUS);
         crate::room_visuals::initialize_intro_wave(game);
     }
@@ -520,9 +520,9 @@ pub fn wavy_samus<H: Host + ?Sized>(game: &mut H) {
         crate::word_transfers!(game, ascending, 288; pause_map(288) <- rom(DEER_FORCE_TILES, 0));
         queue_cinematic_tilemap(CinematicTilemap::FullText, game);
         set_cinematic_blend(1, 0, 0, 0, game);
-        word!(game.cinematic_var4 = 180);
+        word!(game.cinematic_function_timer = 180);
         word!(game.cinematic_function = function::DEER_FORCE);
-        word!(game.g_word_7E0D9C = 0);
+        word!(game.wavy_samus_enabled = 0);
     }
 }
 
@@ -550,7 +550,7 @@ pub fn fade_from_white<H: Host + ?Sized>(game: &mut H) {
     fade_cinematic_fixed_color(game);
     if countdown(game) {
         word!(game.cinematic_function = function::FINISHED);
-        word!(game.cinematicbg_var3 = 20480);
+        word!(game.cinematic_bg_vram_address = 20480);
         queue_cinematic_tilemap(CinematicTilemap::FullText, game);
         word!(game.layer1_x_pos = 256);
         word!(game.layer1_y_pos = 256);
@@ -574,8 +574,8 @@ pub fn grey_out_icon<H: Host + ?Sized>(game: &mut H) {
 /// ($8B:E797): then the percentage, and the completion record. Was
 /// `CinematicFunction_Intro_Func148`.
 pub fn scroll_item_percentage<H: Host + ?Sized>(game: &mut H) {
-    word!(game.cinematic_var10 = word!(game.cinematic_var10).wrapping_sub(2));
-    if below(word!(game.cinematic_var10), ITEM_PERCENTAGE_STOP) {
+    word!(game.cinematic_y = word!(game.cinematic_y).wrapping_sub(2));
+    if below(word!(game.cinematic_y), ITEM_PERCENTAGE_STOP) {
         spawn(
             game,
             CinematicObjects::Background,

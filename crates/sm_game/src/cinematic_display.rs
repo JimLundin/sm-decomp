@@ -98,10 +98,10 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
                 set_fixed_color([32, 64, 0x80], game);
                 word!(game.oam_next_ptr = 0);
                 reset_cinematic_transform(128, 128, game);
-                word! { game; cinematic_var5 = 0; cinematic_var6 = 1; }
+                word! { game; mode7_angle = 0; mode7_zoom = 1; }
                 word! { game, 0;
                     reg_BG1HOFS, reg_BG1VOFS, reg_BG2HOFS, reg_BG2VOFS,
-                    cinematic_var7, cinematic_var8, cinematic_var9, cinematic_var10,
+                    cinematic_x_sub, cinematic_x, cinematic_y_sub, cinematic_y,
                 }
             } else {
                 word! { game, 0; reg_BG1HOFS, reg_BG1VOFS }
@@ -154,35 +154,35 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
             crate::menu!(game.pausemenu_lr_animation_timer = 0);
             crate::menu!(game.pausemenu_item_selector_animation_timer = 0);
             crate::menu!(game.pausemenu_reserve_tank_animation_timer = 0);
-            crate::menu!(game.UNUSED_word_7E0731 = 0);
-            crate::menu!(game.UNUSED_word_7E073D = 0);
+            crate::menu!(game.unused_word_7e0731 = 0);
+            crate::menu!(game.unused_word_7e073d = 0);
             crate::menu!(game.pausemenu_lr_animation_frame = 0);
             crate::menu!(game.pausemenu_item_selector_animation_frame = 0);
             crate::menu!(game.pausemenu_reserve_tank_animation_frame = 0);
-            crate::menu!(game.UNUSED_word_7E0745 = 0);
+            crate::menu!(game.unused_word_7e0745 = 0);
             crate::menu!(game.pausemenu_shoulder_button_highlight = 0);
             crate::menu!(game.pausemenu_button_label_mode = 0);
             crate::menu!(game.pausemenu_equipment_category_item = 0);
             crate::menu!(game.pausemenu_reserve_tank_delay_ctr = 0);
-            crate::menu!(game.UNUSED_word_7E0759 = 0);
+            crate::menu!(game.unused_word_7e0759 = 0);
             crate::inventory::set(game, crate::inventory::Word::ReserveHealth, 0);
             crate::inventory::set(game, crate::inventory::Word::ReserveMissiles, 0);
-            word!(game.cinematic_var5 = 0);
+            word!(game.mode7_angle = 0);
         }
         Intro => {
-            word! { game, 0; oam_next_ptr, cinematic_var5 }
+            word! { game, 0; oam_next_ptr, mode7_angle }
         }
         Escape => {
-            word! { game, 0; oam_next_ptr, screen_fade_delay, screen_fade_counter, cinematic_var5 }
+            word! { game, 0; oam_next_ptr, screen_fade_delay, screen_fade_counter, mode7_angle }
         }
         _ => {}
     }
     if display != Station {
-        word!(game.cinematic_var6 = 256);
+        word!(game.mode7_zoom = 256);
     }
     word! { game, 0;
-        cinematic_var7, cinematic_var8, cinematic_var9, cinematic_var10, g_word_7E1999,
-        g_word_7E199B, g_word_7E199D, g_word_7E199F,
+        cinematic_x_sub, cinematic_x, cinematic_y_sub, cinematic_y, cinematic_x_subspeed,
+        cinematic_x_speed, cinematic_y_subspeed, cinematic_y_speed,
     }
     if matches!(display, Intro | Station) {
         word!(game.fx_layer_blending_config_a = 0);
@@ -225,7 +225,7 @@ fn set_mode7_transform<H: crate::menus::host::Host + ?Sized>(
 }
 
 pub fn draw_intro_sprites<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    let samus = word!(game.cinematic_var15);
+    let samus = word!(game.intro_samus_display);
     if samus & 0x8000 != 0 {
         game.draw_player_frame();
         game.draw_projectiles();

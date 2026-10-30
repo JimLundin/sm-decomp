@@ -143,7 +143,7 @@ impl Effects for Runtime<'_> {
         });
     }
     fn music(&mut self, track: u16) {
-        self.foreign(|game| crate::game::music::QueueMusic_Delayed8(track, game));
+        self.foreign(|game| crate::game::music::queue_music_delayed_8(track, game));
     }
     fn clear_music_queue(&mut self) {
         self.foreign(crate::game::music::clear_queue);

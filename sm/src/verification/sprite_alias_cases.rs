@@ -43,7 +43,7 @@ pub(crate) fn capture_case(id: u32, run: fn(Operation, &mut Game) -> u16) -> Opt
         put(&mut game, w::cur_enemy_index, enemy as u16);
         put(&mut game, w::samus_x_pos, 0x112);
         put(&mut game, w::samus_y_pos, 0x220);
-        put(&mut game, base + offset_of!(Metroid, var_F), 2); // actual Func3, then both attachments
+        put(&mut game, base + offset_of!(Metroid, var_f), 2); // actual Func3, then both attachments
         put(
             &mut game,
             base + offset_of!(Metroid, var_00),

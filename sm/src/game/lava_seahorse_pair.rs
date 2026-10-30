@@ -7,7 +7,7 @@ use crate::ram_map::words as W;
 use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use sm_game::enemy_script::EnemyScript;
 use {
-    crate::game::enemy_projectiles::SpawnEprojWithGfx, sm_game::enemy_projectiles::host::Effects,
+    crate::game::enemy_projectiles::spawn_with_enemy_gfx, sm_game::enemy_projectiles::host::Effects,
 };
 
 fn animate(runtime: &mut Runtime<'_>, child: bool) {
@@ -111,7 +111,7 @@ pub(crate) fn phase(k: u16, phase: u16, game: &mut Game) {
             if runtime.native_word(extra + 4) != 0 {
                 runtime.write_slice_native(extra + 4, 0);
                 runtime.write_slice_native(extra + 2, u16::MAX);
-                runtime.foreign(|game| SpawnEprojWithGfx(0xffff, k, 0xb5cb, game));
+                runtime.foreign(|game| spawn_with_enemy_gfx(0xffff, k, 0xb5cb, game));
                 runtime.queue_sound(2, 6, 0x61);
                 if tick(&mut runtime, key) == 1 {
                     let variant = runtime.native_word(extra).wrapping_sub(4);

@@ -10,7 +10,7 @@ use sm_game::enemy_script::EnemyScript;
 // State is exclusive during each operation; legacy effects publish and reacquire it.
 use sm_game::enemy_projectiles::attachments_spore_maw;
 mod attachments_spore_maw_facade;
-use sm_game::enemy_projectiles::attachments_waffle_botwoon;
+use sm_game::enemy_projectiles::attachments_fire_arc_botwoon;
 mod attachments_waffle_botwoon_facade;
 use sm_game::enemy_projectiles::collision;
 use sm_game::enemy_projectiles::commands;
@@ -21,7 +21,7 @@ mod legacy;
 use crate::game_state::Game;
 pub(crate) use attachments_spore_maw_facade::*;
 pub(crate) use attachments_waffle_botwoon_facade::{
-    advance_botwoon_history, advance_waffle_orbit, follow_botwoon_history, orient_botwoon_body,
+    advance_botwoon_history, advance_fire_arc_orbit, follow_botwoon_history, orient_botwoon_body,
     record_botwoon_head,
 };
 pub use drops::DropSource;
@@ -49,7 +49,7 @@ pub fn DisableEprojs(game: &mut Game) {
 pub fn ClearEprojs(game: &mut Game) {
     with_execution(game, |ctx| lifecycle::clear(ctx));
 }
-pub fn SpawnEprojWithGfx(parameter: u16, enemy: u16, definition: u16, game: &mut Game) -> u16 {
+pub fn spawn_with_enemy_gfx(parameter: u16, enemy: u16, definition: u16, game: &mut Game) -> u16 {
     with_execution(game, |ctx| {
         lifecycle::spawn_from_enemy(ctx, parameter, enemy, definition)
     })
@@ -57,10 +57,10 @@ pub fn SpawnEprojWithGfx(parameter: u16, enemy: u16, definition: u16, game: &mut
 pub(crate) fn spawn_scripted(definition: u16, script: EnemyScript, game: &mut Game) -> EnemyScript {
     let parameter = script.word(0);
     let index = game.cur_enemy_index();
-    SpawnEprojWithGfx(parameter, index, definition, game);
+    spawn_with_enemy_gfx(parameter, index, definition, game);
     script.offset(1)
 }
-pub fn SpawnEprojWithRoomGfx(definition: u16, parameter: u16, game: &mut Game) -> u16 {
+pub fn spawn_with_room_gfx(definition: u16, parameter: u16, game: &mut Game) -> u16 {
     with_execution(game, |ctx| {
         lifecycle::spawn_room(ctx, definition, parameter)
     })
@@ -68,11 +68,11 @@ pub fn SpawnEprojWithRoomGfx(definition: u16, parameter: u16, game: &mut Game) -
 pub fn EprojRunAll(game: &mut Game) {
     with_execution(game, |ctx| lifecycle::advance(ctx));
 }
-pub fn Math_MultBySin(amplitude: u16, angle: u16) -> u16 {
-    shared_pre::Math_MultBySin(amplitude, angle)
+pub fn x_velocity_at_angle(amplitude: u16, angle: u16) -> u16 {
+    shared_pre::x_velocity_at_angle(amplitude, angle)
 }
-pub fn Math_MultByCos(amplitude: u16, angle: u16) -> u16 {
-    shared_pre::Math_MultByCos(amplitude, angle)
+pub fn y_velocity_at_angle(amplitude: u16, angle: u16) -> u16 {
+    shared_pre::y_velocity_at_angle(amplitude, angle)
 }
 pub fn enemy_projectiles_hit_samus(game: &mut Game) {
     with_execution(game, |ctx| contact::enemy_projectiles_hit_samus(ctx));

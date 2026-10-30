@@ -193,7 +193,7 @@ pub trait HdmaEffects: Host {
         let mut phase = self.hdma_object(slot).a;
         // Cinematic BG3 data is separate from Phantoon's BG2 table.
         let (scroll, store, table) = if phantoon {
-            (ram::reg_BG2HOFS, Store::SliceNative, ram::g_word_7E9100)
+            (ram::reg_BG2HOFS, Store::SliceNative, ram::phantoon_waves)
         } else {
             (ram::reg_BG3HOFS, Store::SliceLe, arrays::hdma_table_1)
         };

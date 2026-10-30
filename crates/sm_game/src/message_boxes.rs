@@ -33,7 +33,7 @@ fn initialize_ppu_for_message_boxes<H: crate::menus::host::Host + ?Sized>(game: 
             byte(BG3VOFS as u16, 0); byte(BG3VOFS as u16, 0);
         }
         game.ram().fill(0x3000..0x3082, 0);
-        game.write_register_word(VMADDL as u16, addr_unk_605880 as u16);
+        game.write_register_word(VMADDL as u16, ADDR_UNK_605880 as u16);
         game.read_register_word(RDVRAML as u16);
         crate::display::sequence::register_writes! { game;
             word(DMAP1 as u16, 0x3981); word(A1T1L as u16, 0x4100);
@@ -47,7 +47,7 @@ fn clear_message_box_bg3_tilemap<H: crate::menus::host::Host + ?Sized>(game: &mu
     {
         crate::word_transfers!(game, ascending, 896; little(0x3800) <- value(14));
         crate::display::sequence::register_writes! { game;
-            word(VMADDL as u16, addr_unk_605880 as u16); word(DMAP1 as u16, 0x1801);
+            word(VMADDL as u16, ADDR_UNK_605880 as u16); word(DMAP1 as u16, 0x1801);
             word(A1T1L as u16, 0x3800); word(A1B1 as u16, 0x7e);
             word(DAS1L as u16, 0x700); word(DAS10 as u16, 0);
             word(A2A1H as u16, 0); byte(VMAIN as u16, 0x80);
@@ -250,7 +250,7 @@ fn draw_save_confirmation_selection<H: crate::menus::host::Host + ?Sized>(game: 
             u16::from_le_bytes([game.ram().read_byte(0x5f9), game.ram().read_byte(0x5fa)]);
         write_message_box_tilemap_row(128, composition::selection_row(selection), game);
         crate::display::sequence::register_writes! { game;
-            word(VMADDL as u16, addr_unk_6059A0 as u16); word(DMAP1 as u16, 0x1801);
+            word(VMADDL as u16, ADDR_UNK_6059A0 as u16); word(DMAP1 as u16, 0x1801);
             word(A1T1L as u16, 0x3200); word(A1B1 as u16, 0x7e);
             word(DAS1L as u16, 0x180); word(DAS10 as u16, 0);
             word(A2A1H as u16, 0); byte(VMAIN as u16, 0x80);
@@ -261,7 +261,7 @@ fn draw_save_confirmation_selection<H: crate::menus::host::Host + ?Sized>(game: 
 fn restore_ppu_for_message_box<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     {
         crate::display::sequence::register_writes! { game;
-            word(VMADDL as u16, addr_unk_605880 as u16); word(DMAP1 as u16, 0x1801);
+            word(VMADDL as u16, ADDR_UNK_605880 as u16); word(DMAP1 as u16, 0x1801);
             word(A1T1L as u16, 0x4100); word(A1B1 as u16, 0x7e);
             word(DAS1L as u16, 0x700); word(DAS10 as u16, 0);
             word(A2A1H as u16, 0); byte(VMAIN as u16, 0x80);

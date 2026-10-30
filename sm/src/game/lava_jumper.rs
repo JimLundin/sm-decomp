@@ -67,7 +67,7 @@ pub(crate) fn launch(k: u16, game: &mut Game) {
         actor.properties |= 0x800;
     });
     drop(runtime);
-    crate::game::music::QueueSfx2_Max6(0xd, game);
+    crate::game::music::queue_sfx2_max6(0xd, game);
 }
 
 pub(crate) fn advance(k: u16, phase: Flight, game: &mut Game) {

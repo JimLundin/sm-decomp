@@ -8,7 +8,9 @@
 //! records in the host.
 #![forbid(unsafe_code)]
 use crate::actors::layouts::{EnemyBase, same_words};
-use crate::constants::enemy_properties::{kEnemyProps_DisableSamusColl, kEnemyProps_Invisible};
+use crate::constants::enemy_properties::{
+    K_ENEMY_PROPS_DISABLE_SAMUS_COLL, K_ENEMY_PROPS_INVISIBLE,
+};
 use crate::enemy_script::EnemyScript;
 use crate::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
 use crate::ram::RawRam as _;
@@ -41,7 +43,7 @@ pub struct Steam {
 }
 
 same_words!(Steam: EnemyLayout8 {
-    function = var_A, activation_timer = var_D, kind = parameter_1,
+    function = var_a, activation_timer = var_d, kind = parameter_1,
 });
 
 /// A Ceres door's view of its slot. Enemy 0's `rumble_timer` and
@@ -61,8 +63,8 @@ pub struct Door {
 }
 
 same_words!(Door: EnemyLayout8 {
-    function = var_A, drawn_by_ridley = var_B, rumbling_timer = var_D, rumble_timer = var_E,
-    rumble_index = var_F, kind = parameter_1,
+    function = var_a, drawn_by_ridley = var_b, rumbling_timer = var_d, rumble_timer = var_e,
+    rumble_index = var_f, kind = parameter_1,
 });
 
 /// Bank $A6 steam functions, stored in `function`.
@@ -129,7 +131,7 @@ fn store_word<H: Host + ?Sized>(game: &H, at: usize, value: u16) {
 pub fn initialize_steam<H: Host + ?Sized>(game: &mut H) {
     let e = current(game);
     slot!(game, Steam[e].base; vram_tiles_index = 0,
-        properties = slot!(game, Steam[e].base.properties) | kEnemyProps_DisableSamusColl as u16,
+        properties = slot!(game, Steam[e].base.properties) | K_ENEMY_PROPS_DISABLE_SAMUS_COLL as u16,
         extra_properties = slot!(game, Steam[e].base.extra_properties) | 4, instruction_timer = 1,
         timer = 0, palette_index = 2560, );
     slot!(
@@ -268,10 +270,18 @@ pub fn escape_rumble<H: Host + ?Sized>(earthquake: u16, game: &mut H) {
 /// Ceres door function - Ridley escape mode 7 wall ($A6:F7A5): visible only
 /// during the getaway cutscene. Was `CeresDoor_Func_4`.
 pub fn mode7_wall<H: Host + ?Sized>(game: &mut H) {
-    game.change_properties(word!(game.cur_enemy_index), kEnemyProps_Invisible as u16, 0);
+    game.change_properties(
+        word!(game.cur_enemy_index),
+        K_ENEMY_PROPS_INVISIBLE as u16,
+        0,
+    );
     if word!(game.ceres_status) & RIDLEY_ESCAPING != 0 {
         slot!(game, Door[current(game)].base.palette_index = 3584);
-        game.change_properties(word!(game.cur_enemy_index), 0, kEnemyProps_Invisible as u16);
+        game.change_properties(
+            word!(game.cur_enemy_index),
+            0,
+            K_ENEMY_PROPS_INVISIBLE as u16,
+        );
     }
 }
 
@@ -304,7 +314,7 @@ pub fn rumbling_and_explosions<H: Host + ?Sized>(k: u16, game: &mut H) {
         slot!(
             game,
             Door[e].base.properties =
-                slot!(game, Door[e].base.properties) | kEnemyProps_Invisible as u16
+                slot!(game, Door[e].base.properties) | K_ENEMY_PROPS_INVISIBLE as u16
         );
         slot!(game, Door[e].function = door_function::ELEVATOR_ANIMATIONS);
         start_elevator_rotation(game);

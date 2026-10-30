@@ -16,7 +16,7 @@ part_view! {
         words: [
             // $0FA8: the body's bank $A9 function.
             function,
-            var_B,
+            var_b,
             // $0FAC: the zebetites' palette animation index.
             zebetite_palette_index,
             // $0FAE: brain palette counter (low byte) and timer (high byte).
@@ -78,8 +78,8 @@ part_view! {
             var_19,
             // $7834: the blue rings' target angle.
             ring_target_angle,
-            var_1B,
-            var_1C,
+            var_1b,
+            var_1c,
             // $783A: delete the turrets and rinkas once the first phase ends.
             delete_turrets,
             // $783C: active, moving rinkas.
@@ -102,12 +102,12 @@ part_view! {
             hand_beam_x_speed,
             hand_beam_y_speed,
             hand_beam_angle,
-            var_2A,
-            var_2B,
-            var_2C,
-            var_2D,
-            var_2E,
-            var_2F,
+            var_2a,
+            var_2b,
+            var_2c,
+            var_2d,
+            var_2e,
+            var_2f,
             var_30,
             // $8022: the rainbow beam's angle.
             beam_angle,
@@ -141,9 +141,9 @@ part_view! {
         words: [
             // $0FE8: the brain's bank $A9 function.
             function,
-            var_B,
-            var_C,
-            var_D,
+            var_b,
+            var_c,
+            var_d,
             // $0FF0: a sub-step (the fake death's tube collapse, the death and
             // escape door explosion interval).
             subfunction,
@@ -175,10 +175,10 @@ part_view! {
             baby_metroid,
             // $7E:7856: set when the baby Metroid lets Samus go (never read).
             baby_metroid_released,
-            var_0C,
-            var_0D,
-            var_0E,
-            var_0F,
+            var_0c,
+            var_0d,
+            var_0e,
+            var_0f,
             // $7860, $7862: enable the brain and health-based palettes.
             brain_palette_enabled,
             health_palette_enabled,
@@ -201,8 +201,8 @@ part_view! {
             crouch_timer,
             // $787A: Samus's rainbow palette animation counter.
             samus_rainbow_counter,
-            var_1E,
-            var_1F,
+            var_1e,
+            var_1f,
         ],
         pad2: [u8; 1984],
         words: [
@@ -237,12 +237,12 @@ part_view! {
             var_37,
             var_38,
             var_39,
-            var_3A,
-            var_3B,
-            var_3C,
-            var_3D,
-            var_3E,
-            var_3F,
+            var_3a,
+            var_3b,
+            var_3c,
+            var_3d,
+            var_3e,
+            var_3f,
         ],
     }
 }

@@ -60,7 +60,7 @@ pub fn all<H: crate::ram::RamHost + ?Sized>(duration: u16, game: &mut H) -> u8 {
         return 1;
     }
     for offset in (0u16..512).step_by(2) {
-        word!(game.g_word_7EC404 = offset);
+        word!(game.palette_change_colour_index = offset);
         blend(
             usize::from(offset >> 1),
             word!(game.palette_change_num),
@@ -87,16 +87,16 @@ pub fn selected<H: crate::ram::RamHost + ?Sized>(mut mask: u16, game: &mut H) ->
     if !begin(12, game) {
         return 1;
     }
-    word!(game.g_word_7EC404 = 0);
+    word!(game.palette_change_colour_index = 0);
     while mask != 0 {
         if mask & 1 == 0 {
-            word!(game.g_word_7EC404 += 32);
+            word!(game.palette_change_colour_index += 32);
         } else {
             loop {
-                let index = usize::from(word!(game.g_word_7EC404) >> 1);
+                let index = usize::from(word!(game.palette_change_colour_index) >> 1);
                 blend(index, word!(game.palette_change_num), true, game);
-                word!(game.g_word_7EC404 += 2);
-                if word!(game.g_word_7EC404) & 31 == 0 {
+                word!(game.palette_change_colour_index += 2);
+                if word!(game.palette_change_colour_index) & 31 == 0 {
                     break;
                 }
             }

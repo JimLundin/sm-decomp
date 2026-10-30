@@ -7,10 +7,10 @@ use crate::ram::slot;
 pub fn initialize_banded_sky<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.surface.whole, 1248);
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.kind, 6);
-    static UNK_88A62E: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x2, 0x12, 0xad63 as VoidP);
-    static UNK_88A636: SpawnHdmaObject_Args =
-        SpawnHdmaObject_Args::new(0x42, 0x11, 0xad4e as VoidP);
-    static UNK_88A63E: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0xd, 0xad39 as VoidP);
+    static UNK_88A62E: HdmaObjectDefinition = HdmaObjectDefinition::new(0x2, 0x12, 0xad63 as VoidP);
+    static UNK_88A636: HdmaObjectDefinition =
+        HdmaObjectDefinition::new(0x42, 0x11, 0xad4e as VoidP);
+    static UNK_88A63E: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0xd, 0xad39 as VoidP);
     game.spawn_hdma(0x88, &UNK_88A62E);
     game.spawn_hdma(0x88, &UNK_88A636);
     game.spawn_hdma(0x88, &UNK_88A63E);
@@ -27,7 +27,7 @@ fn sky_table_word<H: crate::menus::host::Host + ?Sized>(
 }
 #[forbid(unsafe_code)]
 fn build_vertical_bands<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u16 {
-    word!(game.g_word_7E0598 = 32);
+    word!(game.fx22_screen_y = 32);
     crate::word_transfers!(game, ascending, 1; native(0x9c00) <- value(31));
     crate::word_transfers!(game, ascending, 1; native(0x9c01) <- value(0));
     let mut row = 3u16;
@@ -53,13 +53,13 @@ fn build_vertical_bands<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u
         crate::word_transfers!(game, ascending, 1; native(0x9c00 + row as isize) <- value(height_word));
         let scroll_word = sky_table_word(0x88a8ec, (band * 3) as isize, game)
             .wrapping_add(inset)
-            .wrapping_sub(word!(game.g_word_7E0598));
+            .wrapping_sub(word!(game.fx22_screen_y));
         crate::word_transfers!(game, ascending, 1; native(0x9c01 + row as isize) <- value(scroll_word));
         let height = u16::from(game.ram().read_byte(0x9c00 + usize::from(row)));
         y = y.wrapping_add(height);
         row = row.wrapping_add(3);
-        word!(game.g_word_7E0598 += height);
-        if word!(game.g_word_7E0598).wrapping_sub(224) & 0x8000 == 0 {
+        word!(game.fx22_screen_y += height);
+        if word!(game.fx22_screen_y).wrapping_sub(224) & 0x8000 == 0 {
             return row;
         }
         inset = 0;
@@ -79,13 +79,15 @@ pub fn update_horizontal_scroll<H: crate::menus::host::Host + ?Sized>(
     let layer1_y = crate::camera::current(game).layer1[1];
     if (layer1_y as i32 - 1024i32) & 0x8000 != 0 {
         if (game.ram().read_byte(0x5b5) & 1) == 0 {
-            word!(game.g_word_7E0596 = ((word!(game.g_word_7E0596) as i32 + 2) & 0x1e) as u16);
+            word!(
+                game.fx22_x_table_size = ((word!(game.fx22_x_table_size) as i32 + 2) & 0x1e) as u16
+            );
         }
-        let mut v1: u16 = word!(game.g_word_7E0596);
+        let mut v1: u16 = word!(game.fx22_x_table_size);
         let mut v2: u16 = 0;
         do_until! { ((v1) as i16).wrapping_sub(32) >= 0 ;
             word!(
-                game.g_word_7E9E80[(v2 >> 1)] =
+                game.fx22_x_table[(v2 >> 1)] =
                     crate::gameplay_tables::sky_scroll_wave(game, (v1 >> 1) as isize)
             );
             v2 = (v2).wrapping_add(2);
@@ -101,7 +103,7 @@ pub fn update_horizontal_scroll<H: crate::menus::host::Host + ?Sized>(
         let mut v5: u16 = object.a;
         for i in (0i32..=30).rev().step_by(2) {
             word!(
-                game.g_word_7E9E80[(v5 >> 1)] =
+                game.fx22_x_table[(v5 >> 1)] =
                     ((WATER_WAVE[(i >> 1) as usize]) as u16).wrapping_add(word!(game.reg_BG1HOFS))
             );
             v5 = ((v5 as i32 - 2i32) & 0x1f) as u16;
@@ -173,8 +175,8 @@ fn append_upper_band<H: crate::menus::host::Host + ?Sized>(
     crate::word_transfers!(game, ascending, 1; native(0x9e01 + v0 as isize) <- value(r20));
     height
 }
-static LAND_SCROLL: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0xf, 0xad76 as VoidP);
-static OCEAN_SCROLL: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0xf, 0xad89 as VoidP);
+static LAND_SCROLL: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0xf, 0xad76 as VoidP);
+static OCEAN_SCROLL: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0xf, 0xad89 as VoidP);
 pub fn initialize_land<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     game.ram()
         .write_byte(0x91b, game.ram().read_byte(0x91b) | 1);

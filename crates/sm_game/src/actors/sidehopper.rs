@@ -16,13 +16,13 @@ use sm_data::{cartridge::RomImage, enemy_speeds::SpeedTable::Quadratic};
 part_view! {
     /// A sidehopper's slot and extended RAM; a non-zero first parameter is upside down.
     Sidehopper: EnemyLayout40 {
-        words: [var_A, function, y_speed_index, x_velocity, y_speed_index_delta, var_F, parameter_1, parameter_2],
+        words: [var_a, function, y_speed_index, x_velocity, y_speed_index_delta, var_f, parameter_1, parameter_2],
         pad1: [u8; 26696],
         words: [
             new_instruction_list, small_hop_y_speed_index, big_hop_y_speed_index, falling, ready_to_hop,
-            hop_table_index, variant_index, var_07, var_08, var_09, var_0A, var_0B, var_0C, var_0D, var_0E,
-            var_0F, var_10, var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19, var_1A,
-            var_1B, var_1C, var_1D, var_1E, var_1F,
+            hop_table_index, variant_index, var_07, var_08, var_09, var_0a, var_0b, var_0c, var_0d, var_0e,
+            var_0f, var_10, var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19, var_1a,
+            var_1b, var_1c, var_1d, var_1e, var_1f,
         ],
     }
 }

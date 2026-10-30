@@ -82,18 +82,18 @@ fn reserves<H: Host + ?Sized>(game: &mut H) {
     ];
     actions[usize::from(crate::menu!(game.pausemenu_equipment_category_item) >> 8)](game);
     let previous = crate::menu!(game.pausemenu_equipment_category_item);
-    if game.observed_inputs().pressed & kButton_Right as u16 != 0 {
-        if game.observed_inputs().pressed & kButton_Down as u16 != 0
+    if game.observed_inputs().pressed & K_BUTTON_RIGHT as u16 != 0 {
+        if game.observed_inputs().pressed & K_BUTTON_DOWN as u16 != 0
             || scan(2, 0, false, None, game) == 0xffff
         {
             scan(3, 0, false, Some(previous), game);
         }
-    } else if game.observed_inputs().pressed & kButton_Up as u16 != 0 {
+    } else if game.observed_inputs().pressed & K_BUTTON_UP as u16 != 0 {
         if crate::menu!(game.pausemenu_equipment_category_item) & 0xff00 != 0 {
             game.queue_sound(0, 0x37_u8, 6);
             crate::menu!(game.pausemenu_equipment_category_item -= 256);
         }
-    } else if game.observed_inputs().pressed & kButton_Down as u16 != 0 {
+    } else if game.observed_inputs().pressed & K_BUTTON_DOWN as u16 != 0 {
         if crate::menu!(game.pausemenu_equipment_category_item) & 0xff00 == 256
             || inventory!(game.ReserveMode) == 1
             || {
@@ -110,19 +110,19 @@ fn reserves<H: Host + ?Sized>(game: &mut H) {
 
 fn beams<H: Host + ?Sized>(game: &mut H) {
     let previous = crate::menu!(game.pausemenu_equipment_category_item);
-    if game.observed_inputs().pressed & kButton_Right as u16 != 0 {
-        if game.observed_inputs().pressed & kButton_Up as u16 != 0 {
+    if game.observed_inputs().pressed & K_BUTTON_RIGHT as u16 != 0 {
+        if game.observed_inputs().pressed & K_BUTTON_UP as u16 != 0 {
             scan(2, 0, false, None, game);
         } else if scan(2, 4, false, None, game) != 0 {
             scan(3, 0, false, Some(previous), game);
         }
-    } else if game.observed_inputs().pressed & kButton_Down as u16 != 0 {
+    } else if game.observed_inputs().pressed & K_BUTTON_DOWN as u16 != 0 {
         if inventory!(game.HyperBeam) == 0
             && crate::menu!(game.pausemenu_equipment_category_item) != 1025
         {
             scan(1, shift(256, game), false, Some(previous), game);
         }
-    } else if game.observed_inputs().pressed & kButton_Up as u16 != 0
+    } else if game.observed_inputs().pressed & K_BUTTON_UP as u16 != 0
         && (crate::menu!(game.pausemenu_equipment_category_item) & 0xff00 == 0
             || scan(1, shift(-256, game), true, None, game) == 0xffff)
         && select_reserves(game) == 0
@@ -133,19 +133,19 @@ fn beams<H: Host + ?Sized>(game: &mut H) {
 
 fn suits<H: Host + ?Sized>(game: &mut H) {
     let previous = crate::menu!(game.pausemenu_equipment_category_item);
-    if game.observed_inputs().pressed & kButton_Left as u16 != 0 {
-        if game.observed_inputs().pressed & kButton_Down as u16 == 0 {
+    if game.observed_inputs().pressed & K_BUTTON_LEFT as u16 != 0 {
+        if game.observed_inputs().pressed & K_BUTTON_DOWN as u16 == 0 {
             if select_reserves(game) != 0 {
                 return;
             }
             crate::menu!(game.pausemenu_equipment_category_item = previous);
         }
         scan(1, 0, false, Some(previous), game);
-    } else if game.observed_inputs().pressed & kButton_Up as u16 != 0 {
+    } else if game.observed_inputs().pressed & K_BUTTON_UP as u16 != 0 {
         if crate::menu!(game.pausemenu_equipment_category_item) & 0xff00 != 0 {
             scan(2, shift(-256, game), true, Some(previous), game);
         }
-    } else if game.observed_inputs().pressed & kButton_Down as u16 != 0
+    } else if game.observed_inputs().pressed & K_BUTTON_DOWN as u16 != 0
         && (crate::menu!(game.pausemenu_equipment_category_item) & 0xff00 == 1280
             || scan(2, shift(256, game), false, None, game) == 0xffff)
     {
@@ -155,18 +155,18 @@ fn suits<H: Host + ?Sized>(game: &mut H) {
 
 fn boots<H: Host + ?Sized>(game: &mut H) {
     let previous = crate::menu!(game.pausemenu_equipment_category_item);
-    if game.observed_inputs().pressed & kButton_Left as u16 != 0 {
-        if (game.observed_inputs().pressed & kButton_Up as u16 != 0
+    if game.observed_inputs().pressed & K_BUTTON_LEFT as u16 != 0 {
+        if (game.observed_inputs().pressed & K_BUTTON_UP as u16 != 0
             || scan(1, 8, true, None, game) == 0xffff)
             && select_reserves(game) == 0
         {
             crate::menu!(game.pausemenu_equipment_category_item = previous);
         }
-    } else if game.observed_inputs().pressed & kButton_Down as u16 != 0 {
+    } else if game.observed_inputs().pressed & K_BUTTON_DOWN as u16 != 0 {
         if crate::menu!(game.pausemenu_equipment_category_item) != 515 {
             scan(3, shift(256, game), false, Some(previous), game);
         }
-    } else if game.observed_inputs().pressed & kButton_Up as u16 != 0
+    } else if game.observed_inputs().pressed & K_BUTTON_UP as u16 != 0
         && (crate::menu!(game.pausemenu_equipment_category_item) & 0xff00 == 0
             || scan(3, shift(-256, game), true, None, game) == 0xffff)
     {
@@ -277,7 +277,7 @@ fn exclude_other_beam<H: Host + ?Sized>(previous: u16, game: &mut H) {
 }
 
 fn toggle<H: Host + ?Sized>(bytes: u16, game: &mut H) {
-    if game.observed_inputs().pressed & kButton_A as u16 == 0 {
+    if game.observed_inputs().pressed & K_BUTTON_A as u16 == 0 {
         return;
     }
     game.queue_sound(0, 0x38_u8, 6);

@@ -206,12 +206,12 @@ pub(crate) fn advance_frame(game: &mut Game) {
 pub(crate) fn low_health(game: &mut Game) {
     if (game.samus_health().wrapping_sub(31) as i16) < 0 {
         if game.samus_health_warning() == 0 {
-            crate::game::music::QueueSfx3_Max6(2, game);
+            crate::game::music::queue_sfx3_max6(2, game);
             game.set_samus_health_warning(1);
         }
     } else if game.samus_health_warning() != 0 {
         game.set_samus_health_warning(0);
-        crate::game::music::QueueSfx3_Max6(1, game);
+        crate::game::music::queue_sfx3_max6(1, game);
     }
 }
 
@@ -219,7 +219,7 @@ pub(crate) fn low_health(game: &mut Game) {
 use crate::game::{
     palette_effects,
     player_movement::forced,
-    prelude::{kButton_Up, kGameState_35_TimeUp, kPose_E9_FaceL_Drained_CrouchFalling},
+    prelude::{K_BUTTON_UP, K_GAME_STATE_35_TIME_UP, K_POSE_E9_FACE_L_DRAINED_CROUCH_FALLING},
 };
 use crate::ram_map::word as legacy_word;
 use sm_game::escape_timer;
@@ -229,9 +229,9 @@ crate::game::callback_dispatch! {
     call (game); default { crate::rtl::Unreachable(game); };
     @functions [pub fn (game: &mut Game)];
     [9494683] Samus_Func1 [] {
-        if legacy_word!(game.samus_pose) as i32 == kPose_E9_FaceL_Drained_CrouchFalling as i32
+        if legacy_word!(game.samus_pose) as i32 == K_POSE_E9_FACE_L_DRAINED_CROUCH_FALLING as i32
             && legacy_word!(game.samus_anim_frame) as i32 - 8i32 & 0x8000 == 0
-            && (legacy_word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0
+            && (legacy_word!(game.joypad1_newkeys) as i32 & K_BUTTON_UP as i32) != 0
         {
             legacy_word! {game; samus_anim_frame_timer = 1; samus_anim_frame = 13;
                 frame_handler_gamma = ((0x90e90ei32) as u16); }
@@ -240,14 +240,14 @@ crate::game::callback_dispatch! {
     [9494725] Samus_Func2 [] {
         if legacy_word!(game.samus_anim_frame) as i32 - 8i32 & 0x8000 == 0
             && legacy_word!(game.samus_anim_frame) as i32 - 12i32 & 0x8000 != 0
-            && (legacy_word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0
+            && (legacy_word!(game.joypad1_newkeys) as i32 & K_BUTTON_UP as i32) != 0
         {
             legacy_word! {game; samus_anim_frame_timer = 1; samus_anim_frame = 18; }
         }
     };
     [9494758] Samus_Func3 [] {
         if escape_timer::advance(game) & 1 != 0 {
-            legacy_word!(game.game_state = kGameState_35_TimeUp as u16);
+            legacy_word!(game.game_state = K_GAME_STATE_35_TIME_UP as u16);
             word_transfers!(game, descending, 256; le(target_palettes, 255) <- value(0x7fff));
             legacy_word!(game.frame_handler_gamma = (0x90e114i32) as u16);
             palette_effects::set_enabled(false, game);

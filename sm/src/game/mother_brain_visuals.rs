@@ -1,7 +1,7 @@
 //! Mother Brain encounter palettes, wall sealing, earthquakes and body flicker.
 use crate::game::constants::bank_86::*;
-use crate::game::enemy_projectiles::SpawnEprojWithRoomGfx;
-use crate::game::music::QueueSfx2_Max6;
+use crate::game::enemy_projectiles::spawn_with_room_gfx;
+use crate::game::music::queue_sfx2_max6;
 use crate::game::prelude::*;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::ram_map::{checked_word, slot};
@@ -149,9 +149,9 @@ pub unsafe fn lights_off(game: &mut Game) {
 
 pub unsafe fn seal_wall(game: &mut Game) {
     game.eproj_spawn_pt = Point16U { x: 248, y: 72 };
-    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9, game);
+    spawn_with_room_gfx(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 9, game);
     game.eproj_spawn_pt = Point16U { x: 248, y: 152 };
-    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9, game);
+    spawn_with_room_gfx(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 9, game);
     spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x4, 0xb673 as VoidP), game);
     spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x9, 0xb673 as VoidP), game);
     slot!(game, MotherBrainBody[0].function = (0xa9881di32) as u16);
@@ -160,7 +160,7 @@ pub unsafe fn seal_wall(game: &mut Game) {
 pub fn start_earthquake(a: u16, game: &mut Game) {
     {
         word! {game; earthquake_type = a; earthquake_timer = 20; }
-        QueueSfx2_Max6(0x25, game);
+        queue_sfx2_max6(0x25, game);
     }
 }
 #[forbid(unsafe_code)]
@@ -168,17 +168,17 @@ pub fn flicker_body(game: &mut Game) {
     if slot!(game, EnemyData[0].frame_counter) & 1 != 0 {
         checked_word!(game, 0x69; = checked_word!(game, 0x69;) | 2);
         slot!(game, EnemyData[0].properties, |properties| properties
-            & !(kEnemyProps_Invisible as u16));
+            & !(K_ENEMY_PROPS_INVISIBLE as u16));
     } else {
         checked_word!(game, 0x69; = checked_word!(game, 0x69;) & !2);
         slot!(game, EnemyData[0].properties, |properties| properties
-            | kEnemyProps_Invisible as u16);
+            | K_ENEMY_PROPS_INVISIBLE as u16);
     };
 }
 
 crate::forward_calls! { pub(crate) fn (game: &mut Game) -> u16;
-    spawn_rising_hdma => crate::game::visual_runtime::spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x2c, 0xe727), game);
-    spawn_rainbow_hdma => crate::game::visual_runtime::spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x41, 0x26, 0xe751), game);
+    spawn_rising_hdma => crate::game::visual_runtime::spawn_hdma(0x88, &HdmaObjectDefinition::new(0, 0x2c, 0xe727), game);
+    spawn_rainbow_hdma => crate::game::visual_runtime::spawn_hdma(0x88, &HdmaObjectDefinition::new(0x41, 0x26, 0xe751), game);
 }
 
 pub(crate) unsafe fn initialize_rainbow_beam(game: &mut Game) {
@@ -189,7 +189,7 @@ pub(crate) unsafe fn initialize_rainbow_beam(game: &mut Game) {
     game.ram().write_byte(0x9c00, 100);
     word_transfers!(game, ascending, 1; native(0x9c01) <- value(0x9d00), native(0x9c03) <- value(0));
     word! {game; hdma_table_2[0] = 0; hdma_table_2[1] = 0x8020; hdma_table_2[2] = 0; }
-    crate::game::sm_a9::MotherBrain_CalculateRainbowBeamHdma(game);
+    crate::game::sm_a9::calculate_rainbow_beam_hdma_tables(game);
 }
 
 pub(crate) unsafe fn advance_rainbow_beam(game: &mut Game) {
@@ -199,7 +199,7 @@ pub(crate) unsafe fn advance_rainbow_beam(game: &mut Game) {
     } else {
         word!(game.fx_layer_blending_config_c = 36);
         if word!(game.game_state) != 27 {
-            crate::game::sm_a9::MotherBrain_CalculateRainbowBeamHdma(game);
+            crate::game::sm_a9::calculate_rainbow_beam_hdma_tables(game);
             advance_rainbow_palette(game);
         }
     }

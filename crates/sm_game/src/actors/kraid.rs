@@ -19,7 +19,7 @@ use crate::actors::session_slots::session_slot;
 use crate::actors::{kraid_fingernails, kraid_lint, kraid_sinking};
 use crate::cartridge::native_record;
 use crate::constants::enemy_properties::{
-    kEnemyProps_Deleted, kEnemyProps_Invisible, kEnemyProps_Tangible,
+    K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE, K_ENEMY_PROPS_TANGIBLE,
 };
 use crate::enemy_projectiles::drops::DropSource;
 use crate::kraid_tables;
@@ -88,12 +88,12 @@ pub struct Body {
 }
 
 same_words!(Body: KraidLayout {
-    function = kraid_var_A, script = kraid_var_B, script_delay = kraid_var_C,
-    mouth_hit_ready = kraid_var_E, timer = kraid_var_F, next = kraid_next, unread_7802 = field_2,
+    function = kraid_var_a, script = kraid_var_b, script_delay = kraid_var_c,
+    mouth_hit_ready = kraid_var_e, timer = kraid_var_f, next = kraid_next, unread_7802 = field_2,
     unread_7804 = field_4, thinking_timer = kraid_thinking, min_eject_y = kraid_min_y_pos_eject,
     mouth_flags = kraid_mouth_flags, health_eighths = kraid_healths_8ths,
     target_x = kraid_target_x, health_quarters = kraid_healths_4ths,
-    hurt_frame = kraid_hurt_frame, hurt_frame_timer = kraid_hurt_frame_timer, unread_782e = field_2E,
+    hurt_frame = kraid_hurt_frame, hurt_frame_timer = kraid_hurt_frame_timer, unread_782e = field_2e,
 });
 
 /// A lint's, the arm's or the foot's view of its slot. The foot's `next`
@@ -125,12 +125,12 @@ pub struct Part {
 }
 
 same_words!(Part: KraidLayout {
-    function = kraid_var_A, progress = kraid_var_B, x_offset = kraid_var_C, timer = kraid_var_F,
+    function = kraid_var_a, progress = kraid_var_b, x_offset = kraid_var_c, timer = kraid_var_f,
     next = kraid_next, unread_7802 = field_2, unread_7804 = field_4, thinking_timer = kraid_thinking,
     min_eject_y = kraid_min_y_pos_eject, mouth_flags = kraid_mouth_flags,
     health_eighths = kraid_healths_8ths, target_x = kraid_target_x,
     health_quarters = kraid_healths_4ths, hurt_frame = kraid_hurt_frame,
-    hurt_frame_timer = kraid_hurt_frame_timer, unread_782e = field_2E,
+    hurt_frame_timer = kraid_hurt_frame_timer, unread_782e = field_2e,
 });
 
 /// A fingernail's view of its slot: its 16.16 velocity. Word 1 of
@@ -164,13 +164,13 @@ pub struct Fingernail {
 }
 
 same_words!(Fingernail: KraidLayout {
-    function = kraid_var_A, x_subspeed = kraid_var_B, x_speed = kraid_var_C,
-    y_subspeed = kraid_var_D, y_speed = kraid_var_E, timer = kraid_var_F,
+    function = kraid_var_a, x_subspeed = kraid_var_b, x_speed = kraid_var_c,
+    y_subspeed = kraid_var_d, y_speed = kraid_var_e, timer = kraid_var_f,
     launched = kraid_parameter_1, next = kraid_next, unread_7802 = field_2, unread_7804 = field_4,
     thinking_timer = kraid_thinking, min_eject_y = kraid_min_y_pos_eject,
     mouth_flags = kraid_mouth_flags, health_eighths = kraid_healths_8ths,
     target_x = kraid_target_x, health_quarters = kraid_healths_4ths,
-    hurt_frame = kraid_hurt_frame, hurt_frame_timer = kraid_hurt_frame_timer, unread_782e = field_2E,
+    hurt_frame = kraid_hurt_frame, hurt_frame_timer = kraid_hurt_frame_timer, unread_782e = field_2e,
 });
 
 const BODY: i32 = 0;
@@ -684,7 +684,7 @@ fn mouth_shots<S: BossState + ?Sized>(game: &mut S) {
             session_slot!(
                 game,
                 Body[BODY].base.properties = (session_slot!(game, Body[BODY].base.properties))
-                    | (kEnemyProps_Tangible as u16)
+                    | (K_ENEMY_PROPS_TANGIBLE as u16)
             );
             load_bg2(game, !(0x2000i32) as u16);
             for part in (0u16..384).step_by(64) {
@@ -692,7 +692,7 @@ fn mouth_shots<S: BossState + ?Sized>(game: &mut S) {
                 session_slot!(
                     game,
                     Part[p].base.properties = (session_slot!(game, Part[p].base.properties))
-                        | (kEnemyProps_Tangible as u16)
+                        | (K_ENEMY_PROPS_TANGIBLE as u16)
                 );
             }
             if below(
@@ -830,14 +830,14 @@ fn fire_lint<L: Lease + ?Sized>(game: &mut L, k: u16) {
         session_slot!(
             game,
             Part[me].base.properties =
-                (session_slot!(game, Part[me].base.properties)) | (kEnemyProps_Tangible as u16)
+                (session_slot!(game, Part[me].base.properties)) | (K_ENEMY_PROPS_TANGIBLE as u16)
         );
     }
     if below(session_slot!(game, Part[me].base.x_pos), 32) {
         session_slot!(
             game,
             Part[me].base.properties =
-                (session_slot!(game, Part[me].base.properties)) | (kEnemyProps_Invisible as u16)
+                (session_slot!(game, Part[me].base.properties)) | (K_ENEMY_PROPS_INVISIBLE as u16)
         );
         session_slot!(game, Part[me].function = function::ALIGN_TO_KRAID);
         session_slot!(game, Part[me].timer = 300);
@@ -981,10 +981,13 @@ fn crumble<L: Lease + ?Sized>(game: &mut L, rock: u16, block_x: u8, plm: u16) {
 }
 
 fn sound_every_half_second<L: Lease + ?Sized>(game: &mut L) {
-    word!(game.kraid_unk9000 = word!(game.kraid_unk9000).wrapping_sub(1));
-    if word!(game.kraid_unk9000) == 0 {
+    word!(
+        game.boss_death_quake_sound_timer =
+            word!(game.boss_death_quake_sound_timer).wrapping_sub(1)
+    );
+    if word!(game.boss_death_quake_sound_timer) == 0 {
         game.queue_sound(2, ROCKS_SOUND, 6);
-        word!(game.kraid_unk9000 = 30);
+        word!(game.boss_death_quake_sound_timer = 30);
     }
 }
 
@@ -1442,9 +1445,10 @@ fn initialize_fingernail_attack<L: Lease + ?Sized>(game: &mut L) {
     session_slot!(game, Fingernail[me]; x_subspeed = speeds.word(0), x_speed = speeds.word(2), y_subspeed = speeds.word(4), y_speed = speeds.word(6), launched = 1);
     session_slot!(
         game,
-        Fingernail[me].base.properties =
-            (session_slot!(game, Fingernail[me].base.properties) as i32
-                & !(kEnemyProps_Tangible as i32 | kEnemyProps_Invisible as i32)) as u16
+        Fingernail[me].base.properties = (session_slot!(game, Fingernail[me].base.properties)
+            as i32
+            & !(K_ENEMY_PROPS_TANGIBLE as i32 | K_ENEMY_PROPS_INVISIBLE as i32))
+            as u16
     );
     session_slot!(game, Fingernail[me].base; instruction_timer = 1, current_instruction = animation::FINGERNAIL);
     session_slot!(game, Fingernail[me].function = function::FINGERNAIL_FIRE);
@@ -1471,7 +1475,7 @@ fn initialize_fingernail_attack<L: Lease + ?Sized>(game: &mut L) {
                         game,
                         Fingernail[me].base.properties =
                             (session_slot!(game, Fingernail[me].base.properties) as i32
-                                | (kEnemyProps_Tangible as i32 | kEnemyProps_Invisible as i32))
+                                | (K_ENEMY_PROPS_TANGIBLE as i32 | K_ENEMY_PROPS_INVISIBLE as i32))
                                 as u16
                     );
                     false
@@ -1594,7 +1598,7 @@ fn death_bg2_bottom_half<L: Lease + ?Sized>(game: &mut L) {
         game,
         Body[BODY].function = function::DEATH_SINK_THROUGH_FLOOR
     );
-    word!(game.kraid_unk9000 = 43);
+    word!(game.boss_death_quake_sound_timer = 43);
     session_slot!(
         game,
         Body[BODY].base.properties = (session_slot!(game, Body[BODY].base.properties)) | 0x8000
@@ -1621,14 +1625,14 @@ pub fn sink_through_floor<L: Lease + ?Sized>(game: &mut L) {
         session_slot!(
             game,
             Body[BODY].base.properties = (session_slot!(game, Body[BODY].base.properties) as i32
-                & !(kEnemyProps_Tangible as i32)) as u16
+                & !(K_ENEMY_PROPS_TANGIBLE as i32)) as u16
         );
         word!(game.enemy_bg2_tilemap_size = 2);
         let enemy_ptr: u16 = session_slot!(game, Body[current(game)].base.enemy_ptr);
         game.foreign(|game| game.set_shot_ai(enemy_ptr, NO_SHOT_AI));
         let deleted: u16 = (session_slot!(game, Part[ARM].base.properties) as i32
-            | kEnemyProps_Tangible as i32
-            | kEnemyProps_Deleted as i32) as u16;
+            | K_ENEMY_PROPS_TANGIBLE as i32
+            | K_ENEMY_PROPS_DELETED as i32) as u16;
         session_slot!(game, Part[ARM].base.properties = deleted);
         let hidden: u16 = deleted & 0x51ff | 0x600;
         session_slot!(game, Part[TOP_LINT].base.properties = hidden);
@@ -2173,7 +2177,7 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
         let all = native_word(game, quarter_at(0)).wrapping_add(three);
         set_native_word(game, quarter_at(3), all);
         set_native_word(game, slot!(@at Body, BODY, unread_782e) + 8 * 2, 0);
-        session_slot!(game, Body[BODY].base; x_pos = 176, y_pos = 592, properties = (session_slot!(game, Body[BODY].base.properties)) | (kEnemyProps_Tangible as u16));
+        session_slot!(game, Body[BODY].base; x_pos = 176, y_pos = 592, properties = (session_slot!(game, Body[BODY].base.properties)) | (K_ENEMY_PROPS_TANGIBLE as u16));
         session_slot!(game, Body[BODY]; function = function::RESTRICT_SAMUS_X, timer = 300, next = function::RAISE_THROUGH_FLOOR, script_delay = 64);
         game.foreign(|game| game.disable_minimap_for_boss());
         game.foreign(|game| {
@@ -2332,7 +2336,7 @@ pub fn fingernail_main<L: Lease + ?Sized>(game: &mut L, nail: i32) {
         session_slot!(
             game,
             Part[nail].base.properties = (session_slot!(game, Part[nail].base.properties) as i32
-                | (kEnemyProps_Deleted as i32 | kEnemyProps_Invisible as i32))
+                | (K_ENEMY_PROPS_DELETED as i32 | K_ENEMY_PROPS_INVISIBLE as i32))
                 as u16
         );
     } else {

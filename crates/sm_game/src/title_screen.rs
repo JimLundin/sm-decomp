@@ -1,7 +1,7 @@
 //! Title screen: Metroid palettes and cry, camera pans, skip and wait, sprite placement.
 use crate::cinematic::{add_native_pair, place_cinematic_sprite, set_cinematic_backdrop};
 use crate::cinematic_objects::CinematicObjects;
-use crate::constants::buttons::{kButton_A, kButton_B, kButton_Start};
+use crate::constants::buttons::{K_BUTTON_A, K_BUTTON_B, K_BUTTON_START};
 use crate::menus::prelude::words;
 use crate::ram::RawRam as _;
 use crate::ram::{word, words as ram_words};
@@ -34,7 +34,7 @@ mod scrolling_text {
 }
 
 /// Buttons that skip ahead or start the game from the title.
-const CONFIRM_BUTTONS: u16 = (kButton_B | kButton_Start | kButton_A) as u16;
+const CONFIRM_BUTTONS: u16 = (K_BUTTON_B | K_BUTTON_START | K_BUTTON_A) as u16;
 
 const _: () = assert!(CONFIRM_BUTTONS == 0x9080);
 const _: () = assert!(function::TITLE_SCREEN.wrapping_neg() == 0x60d7);
@@ -87,16 +87,16 @@ pub fn start_title_pan<H: crate::menus::host::Host + ?Sized>(
     ][stage];
     game.ram().write_byte(crate::ram::mirror::TM, 17);
     crate::flow::set(game, crate::flow::Word::CinematicFunction, next);
-    word!(game.cinematic_var6 = zoom);
-    word!(game.cinematic_var8 = x);
-    word!(game.cinematic_var7 = 0);
-    word!(game.cinematic_var10 = y);
-    word!(game.cinematic_var9 = 0);
-    word!(game.g_word_7E199B = if stage < 2 { -2i16 as u16 } else { 0 });
-    word!(game.g_word_7E1999 = if stage < 2 { 0x8000 } else { 0 });
+    word!(game.mode7_zoom = zoom);
+    word!(game.cinematic_x = x);
+    word!(game.cinematic_x_sub = 0);
+    word!(game.cinematic_y = y);
+    word!(game.cinematic_y_sub = 0);
+    word!(game.cinematic_x_speed = if stage < 2 { -2i16 as u16 } else { 0 });
+    word!(game.cinematic_x_subspeed = if stage < 2 { 0x8000 } else { 0 });
     if stage >= 2 {
-        word! {game; g_word_7E199F = u16::from(stage == 2);
-        g_word_7E199D = if stage == 2 { 0x8000 } else { 0 }; }
+        word! {game; cinematic_y_speed = u16::from(stage == 2);
+        cinematic_y_subspeed = if stage == 2 { 0x8000 } else { 0 }; }
     }
     if matches!(stage, 0 | 2) {
         set_cinematic_backdrop(true, game);
@@ -107,11 +107,11 @@ pub fn start_title_pan<H: crate::menus::host::Host + ?Sized>(
 pub fn advance_title_pan<H: crate::menus::host::Host + ?Sized>(stage: usize, game: &mut H) {
     let (offset, cutoff) = [(0, 7), (0, 176), (4, -163)][stage];
     let velocity = words!((
-        word!(@read game, ram_words::g_word_7E199B + offset),
-        word!(@read game, ram_words::g_word_7E1999 + offset),
+        word!(@read game, ram_words::cinematic_x_speed + offset),
+        word!(@read game, ram_words::cinematic_x_subspeed + offset),
     ));
-    let whole = ram_words::cinematic_var8 + offset;
-    let fraction = ram_words::cinematic_var7 + offset;
+    let whole = ram_words::cinematic_x + offset;
+    let fraction = ram_words::cinematic_x_sub + offset;
     add_native_pair(whole, fraction, velocity, game);
     let negative = (word!(@read game, whole) as i32 + cutoff) & 0x8000 != 0;
     // The vertical pan ends on the opposite side of its cutoff.
@@ -136,9 +136,9 @@ pub fn request_title_skip<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         & 0x8000
         != 0
         && word!(game.joypad1_newkeys) & CONFIRM_BUTTONS != 0
-        && word!(game.cinematic_var18) == 0
+        && word!(game.skip_to_title_index) == 0
     {
-        word! {game; cinematic_var18 = 1; screen_fade_delay = 0; screen_fade_counter = 2; }
+        word! {game; skip_to_title_index = 1; screen_fade_delay = 0; screen_fade_counter = 2; }
     }
 }
 

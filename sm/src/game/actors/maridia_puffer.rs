@@ -21,7 +21,7 @@ pub(crate) fn initialize(game: &mut Game) {
     slot!(game, Puffer[E].base; instruction_timer = 1, timer = 0, current_instruction = 0xd841);
     let rate = 4u16.wrapping_mul(slot!(game, Puffer[E].parameter_1)) as usize >> 1;
     let delay = RATES[rate];
-    slot!(game, Puffer[E]; var_05 = delay, var_F = delay, var_06 = RATES[rate + 1], var_E = 16, var_A = 0xd92b,
+    slot!(game, Puffer[E]; var_05 = delay, var_f = delay, var_06 = RATES[rate + 1], var_e = 16, var_a = 0xd92b,
         var_00 = SPEED_LIMITS[slot!(game, Puffer[E].parameter_2) as usize]);
 }
 fn aim(game: &mut Game) -> (i32, u16) {
@@ -39,7 +39,7 @@ fn drift(game: &mut Game) {
             (slot!(game, Puffer[E].var_02) as u8).wrapping_add(if horizontal { 64 } else { 0 })
                 as isize,
         );
-        let mut amount = u32::from(abs16(component) >> 8) * u32::from(slot!(game, Puffer[E].var_D));
+        let mut amount = u32::from(abs16(component) >> 8) * u32::from(slot!(game, Puffer[E].var_d));
         if component & 0x8000 != 0 {
             amount = amount.wrapping_neg();
         }
@@ -52,21 +52,21 @@ fn drift(game: &mut Game) {
 }
 fn change_speed(accelerating: bool, game: &mut Game) {
     let E = word!(game.cur_enemy_index) as i32;
-    let previous = slot!(game, Puffer[E].var_F);
-    slot!(game, Puffer[E].var_F, |old| old.wrapping_sub(1));
+    let previous = slot!(game, Puffer[E].var_f);
+    slot!(game, Puffer[E].var_f, |old| old.wrapping_sub(1));
     if previous == 1 {
         let delay = if accelerating {
             slot!(game, Puffer[E].var_05)
         } else {
             slot!(game, Puffer[E].var_06)
         };
-        slot!(game, Puffer[E].var_F = delay);
+        slot!(game, Puffer[E].var_f = delay);
         let direction = if accelerating { 1 } else { u16::MAX };
-        slot!(game, Puffer[E].var_B, |old| old.wrapping_add(
-            slot!(game, Puffer[E].var_C).wrapping_mul(direction)
+        slot!(game, Puffer[E].var_b, |old| old.wrapping_add(
+            slot!(game, Puffer[E].var_c).wrapping_mul(direction)
         ));
-        slot!(game, Puffer[E].var_D, |old| old.wrapping_add(
-            slot!(game, Puffer[E].var_B).wrapping_mul(direction)
+        slot!(game, Puffer[E].var_d, |old| old.wrapping_add(
+            slot!(game, Puffer[E].var_b).wrapping_mul(direction)
         ));
     }
 }
@@ -78,22 +78,22 @@ pub(crate) fn advance(game: &mut Game) {
     if cooldown == 0 {
         slot!(game, Puffer[E]; var_07 = 1, var_03 = 0);
     }
-    let state = slot!(game, Puffer[E].var_A);
+    let state = slot!(game, Puffer[E].var_a);
     let E = word!(game.cur_enemy_index) as i32;
     match state {
         0xd92b => {
-            let previous = slot!(game, Puffer[E].var_E);
-            slot!(game, Puffer[E].var_E, |old| old.wrapping_sub(1));
+            let previous = slot!(game, Puffer[E].var_e);
+            slot!(game, Puffer[E].var_e, |old| old.wrapping_sub(1));
             if previous == 1 {
-                slot!(game, Puffer[E]; var_E = 16, var_A = 0xd940);
+                slot!(game, Puffer[E]; var_e = 16, var_a = 0xd940);
             }
         }
         0xd940 => {
             let (E, angle) = aim(game);
-            slot!(game, Puffer[E]; var_02 = angle, var_A = 0xd963, var_C = 24);
+            slot!(game, Puffer[E]; var_02 = angle, var_a = 0xd963, var_c = 24);
         }
         0xd963 => {
-            if (slot!(game, Puffer[E].var_D) as i16)
+            if (slot!(game, Puffer[E].var_d) as i16)
                 .wrapping_sub(slot!(game, Puffer[E].var_00) as i16)
                 < 0
             {
@@ -105,17 +105,17 @@ pub(crate) fn advance(game: &mut Game) {
                 angle.wrapping_sub(slot!(game, Puffer[E].var_02)),
             ));
             if turn as i32 - 48 & 0x8000 == 0 {
-                slot!(game, Puffer[E]; var_A = 0xd97c, var_C = 24);
+                slot!(game, Puffer[E]; var_a = 0xd97c, var_c = 24);
             }
         }
         0xd97c => {
-            if (slot!(game, Puffer[E].var_D) as i16) > 0
-                && (slot!(game, Puffer[E].var_B) as i16) > 0
+            if (slot!(game, Puffer[E].var_d) as i16) > 0
+                && (slot!(game, Puffer[E].var_b) as i16) > 0
             {
                 drift(game);
                 change_speed(false, game);
             } else {
-                slot!(game, Puffer[E]; var_A = 0xd92b, var_B = 0, var_C = 0, var_D = 0);
+                slot!(game, Puffer[E]; var_a = 0xd92b, var_b = 0, var_c = 0, var_d = 0);
             }
         }
         _ => Runtime::new(game).unreachable(),
@@ -132,6 +132,6 @@ pub(crate) fn shot(game: &mut Game) {
         slot!(game, Puffer[E].base; instruction_timer = 1, timer = 0, current_instruction = 0xd855);
         let direction = word!(game.projectile_dir[word!(game.collision_detection_index)]) & 0xf;
         slot!(game, Puffer[E].var_02 = RECOIL_ANGLES[direction as usize]);
-        slot!(game, Puffer[E]; var_B = 256, var_D = 1536, var_A = 0xd97c, var_07 = 48, var_03 = 1);
+        slot!(game, Puffer[E]; var_b = 256, var_d = 1536, var_a = 0xd97c, var_07 = 48, var_03 = 1);
     }
 }

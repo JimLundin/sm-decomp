@@ -30,10 +30,10 @@ impl Ai for Game {
 
 // The named bank $AA functions are the ones `DispatchEnemyPreInstr` dispatches on.
 const _: () = {
-    use sm_game::constants::bank_aa::fnnullsub_274;
+    use sm_game::constants::bank_aa::FNNULLSUB_274;
     const fn at(word: u16) -> u32 {
         0xaa_0000 | word as u32
     }
-    assert!(at(function::NOTHING) == fnnullsub_274 as u32 && at(function::ARM_PIECE) == 11197612);
+    assert!(at(function::NOTHING) == FNNULLSUB_274 as u32 && at(function::ARM_PIECE) == 11197612);
     assert!(at(function::HEAD) == 11197655 && at(function::FINAL_PIECE) == 11197733);
 };

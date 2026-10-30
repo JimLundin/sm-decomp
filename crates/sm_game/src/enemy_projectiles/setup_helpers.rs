@@ -20,7 +20,7 @@ pub fn init_robot_laser(j: u16, y_velocity: u16, clear_graphics: bool, ctx: &mut
     if clear_graphics {
         enemy!(ctx, 0 => slot, graphics);
     }
-    EprojInit_WreckedShipRobotLaserCommon(ctx.inputs().current_enemy, j, ctx);
+    init_work_robot_laser(ctx.inputs().current_enemy, j, ctx);
 }
 
 pub fn init_landing_dust(j: u16, x_offset: i16, ctx: &mut impl Host) {
@@ -38,7 +38,7 @@ pub fn init_statue_piece(j: u16, x: u16, y: u16, ctx: &mut impl Host) {
     enemy!(ctx, y => slot, y);
 }
 
-static kEprojInit_MiniKraidSpikes_Tab0: [i16; 3] = [-2, 12, 24];
+static MINI_KRAID_SPIKE_INIT_TABLE: [i16; 3] = [-2, 12, 24];
 pub fn init_skree_particle(
     j: u16,
     x_offset: i16,
@@ -60,21 +60,21 @@ pub fn init_skree_particle(
     enemy!(ctx, word_index as isize, velocity_x = x_velocity as u16);
 }
 
-pub fn EprojInit_FireballChild(j: u16, x: u16, y: u16, handler: u16, ctx: &mut impl Host) {
+pub fn init_fireball_child(j: u16, x: u16, y: u16, handler: u16, ctx: &mut impl Host) {
     {
         let parent = ctx.session().enemy_projectiles.spawn.primary;
         let slot = usize::from(j >> 1);
         enemy!(ctx, slot as isize, velocity_x = x);
         enemy!(ctx, slot as isize, velocity_y = y);
-        EprojInit_Common(j, parent, handler, ctx);
+        init_afterburn(j, parent, handler, ctx);
     }
 }
 
-pub fn EprojInit_MiniKraidSpikes(j: u16, a: u16, ctx: &mut impl Host) {
+pub fn init_mini_kraid_spikes(j: u16, a: u16, ctx: &mut impl Host) {
     {
         let v2: i32 = j as i32 >> 1;
         enemy!(ctx, a => (v2) as isize, velocity_x);
-        let r18: u16 = kEprojInit_MiniKraidSpikes_Tab0
+        let r18: u16 = MINI_KRAID_SPIKE_INIT_TABLE
             [(ctx.mini_kraid_spike_variant(ctx.inputs().current_enemy) >> 1) as usize]
             as u16;
         let enemy_index = ctx.inputs().current_enemy;
@@ -87,7 +87,7 @@ pub fn EprojInit_MiniKraidSpikes(j: u16, a: u16, ctx: &mut impl Host) {
     }
 }
 
-pub fn EprojInit_KiHunterAcidSpitCommon(k: u16, j: u16, ctx: &mut impl Host) {
+pub fn init_kihunter_acid_spit(k: u16, j: u16, ctx: &mut impl Host) {
     {
         let v2: i32 = j as i32 >> 1;
         enemy!(ctx, 0 => (v2) as isize, velocity_y);
@@ -98,7 +98,7 @@ pub fn EprojInit_KiHunterAcidSpitCommon(k: u16, j: u16, ctx: &mut impl Host) {
     }
 }
 
-pub fn EprojInit_WreckedShipRobotLaserCommon(k: u16, j: u16, ctx: &mut impl Host) {
+pub fn init_work_robot_laser(k: u16, j: u16, ctx: &mut impl Host) {
     {
         let v2 = k;
         let v3: i32 = j as i32 >> 1;
@@ -139,7 +139,7 @@ pub fn EprojInit_WreckedShipRobotLaserCommon(k: u16, j: u16, ctx: &mut impl Host
     }
 }
 
-pub fn EprojInit_SpawnedGate_Common(j: u16, v1: u16, ctx: &mut impl Host) {
+pub fn init_shot_gate(j: u16, v1: u16, ctx: &mut impl Host) {
     {
         let v2: u16 = ctx.session().mechanisms.selected;
         calculate_coordinates(ctx.session().mechanisms.selected, ctx);
@@ -150,7 +150,7 @@ pub fn EprojInit_SpawnedGate_Common(j: u16, v1: u16, ctx: &mut impl Host) {
     }
 }
 
-fn EprojInit_Common(j: u16, k: u16, handler: u16, ctx: &mut impl Host) {
+fn init_afterburn(j: u16, k: u16, handler: u16, ctx: &mut impl Host) {
     let slot = (j >> 1) as isize;
     enemy!(ctx, slot, behavior_b = handler);
     let x = enemy!(ctx, (k >> 1) as isize, x);
@@ -160,8 +160,8 @@ fn EprojInit_Common(j: u16, k: u16, handler: u16, ctx: &mut impl Host) {
     let e = enemy!(ctx, (k >> 1) as isize, behavior_a);
     enemy!(ctx, slot, behavior_a = e);
     enemy!(ctx, slot, graphics = 2560);
-    SetAreaDependentEprojPropertiesEx(
-        crate::constants::bank_86::addr_kRidleysFireball_Tab0 as u16,
+    set_area_dependent_damage(
+        crate::constants::bank_86::ADDR_K_RIDLEYS_FIREBALL_TAB0 as u16,
         j,
         ctx,
     );

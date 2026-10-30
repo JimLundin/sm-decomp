@@ -139,12 +139,12 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
         CollectedBeams, EquippedBeams, CollectedItems, EquippedItems, ReserveMode,
         MaxReserveHealth, ReserveHealth, ReserveMissiles,
     }
-    game_word! {game; button_config_up = kButton_Up as u16; button_config_down = kButton_Down as u16;
-    button_config_left = kButton_Left as u16; button_config_right = kButton_Right as u16;
-    button_config_jump_a = kButton_A as u16; button_config_run_b = kButton_B as u16;
-    button_config_shoot_x = kButton_X as u16; button_config_itemcancel_y = kButton_Y as u16;
-    button_config_itemswitch = kButton_Select as u16;
-    button_config_aim_up_R = kButton_R as u16; button_config_aim_down_L = kButton_L as u16; }
+    game_word! {game; button_config_up = K_BUTTON_UP as u16; button_config_down = K_BUTTON_DOWN as u16;
+    button_config_left = K_BUTTON_LEFT as u16; button_config_right = K_BUTTON_RIGHT as u16;
+    button_config_jump_a = K_BUTTON_A as u16; button_config_run_b = K_BUTTON_B as u16;
+    button_config_shoot_x = K_BUTTON_X as u16; button_config_itemcancel_y = K_BUTTON_Y as u16;
+    button_config_itemswitch = K_BUTTON_SELECT as u16;
+    button_config_aim_up_R = K_BUTTON_R as u16; button_config_aim_down_L = K_BUTTON_L as u16; }
     game_word! { game, 0;
         game_time_frames, game_time_seconds, game_time_minutes, game_time_hours, japanese_text_flag,
         moonwalk_flag, hud_auto_cancel_flag,

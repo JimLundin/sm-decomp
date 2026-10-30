@@ -3,7 +3,7 @@ use super::{bytes, put};
 use sm_game::actors::layouts::EnemyLayout72 as Layout;
 fn CallNuclearWaffleFunc(ea: u32, game: &mut Game) {
     assert_eq!(ea, 10917506);
-    super::super::advance_waffle_orbit(game);
+    super::super::advance_fire_arc_orbit(game);
 }
 use crate::game_state::Game;
 use crate::ram_map::{word_arrays as a, words as w};
@@ -40,9 +40,9 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         );
     }
     for (offset, value) in [
-        (offset_of!(Layout, var_E), (n / 6 % 2) as u16),
+        (offset_of!(Layout, var_e), (n / 6 % 2) as u16),
         (
-            offset_of!(Layout, var_D),
+            offset_of!(Layout, var_d),
             if n & 1 == 0 { 0x00ff } else { 0xff80 },
         ),
         (offset_of!(Layout, var_20), 0xffff),
@@ -59,12 +59,12 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         (offset_of!(Layout, var_26), 0xfff0),
         (offset_of!(Layout, var_27), 0x7fff),
         (
-            offset_of!(Layout, var_2B),
+            offset_of!(Layout, var_2b),
             if n & 1 == 0 { 4 } else { 0x10 },
         ),
-        (offset_of!(Layout, var_2C), 8),
-        (offset_of!(Layout, var_2E), if reverse { 80 } else { 8 }),
-        (offset_of!(Layout, var_2F), if reverse { 48 } else { 16 }),
+        (offset_of!(Layout, var_2c), 8),
+        (offset_of!(Layout, var_2e), if reverse { 80 } else { 8 }),
+        (offset_of!(Layout, var_2f), if reverse { 48 } else { 16 }),
         (offset_of!(Layout, var_30), if reverse { 16 } else { 48 }),
         (
             offset_of!(Layout, var_33),

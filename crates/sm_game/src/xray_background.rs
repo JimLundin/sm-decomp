@@ -393,7 +393,7 @@ pub fn upload_right<H: Host + ?Sized>(game: &mut H) {
         word_transfers!(game, ascending, 1; native(at) <- value(value as u16));
         game.ram().write_byte(at + 2, (value >> 16) as u8);
     }
-    word!(game.hdma_var_1 = 0);
+    word!(game.xray_hdma_table_end = 0);
     let angle = if game.facing() == 4 { 192 } else { 64 };
     stop_demo(angle, game);
 }

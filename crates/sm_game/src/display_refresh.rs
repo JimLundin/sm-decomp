@@ -2,7 +2,7 @@
 //! gameplay and pause display setup, graphics loads and tilemap queues.
 #![forbid(unsafe_code)]
 use crate::constants::bank_60::{
-    addr_unk_6053E0, addr_unk_605000, addr_unk_605400, addr_unk_605880,
+    ADDR_UNK_6053E0, ADDR_UNK_605000, ADDR_UNK_605400, ADDR_UNK_605880,
 };
 use crate::decompression::{self, decompress_to_ram};
 use crate::display::control::{
@@ -589,9 +589,9 @@ pub fn queue_scrolling_tiles<H: Host + ?Sized>(k: u16, layout: ScrollingLayout, 
     let tile_column = word!(game.vram_blocks_to_update_x_block) & 31;
     let origin = tile_row.wrapping_add(2 * tile_column);
     let mut screen = if tile_column >= 16 {
-        addr_unk_6053E0 as u16
+        ADDR_UNK_6053E0 as u16
     } else {
-        addr_unk_605000 as u16
+        ADDR_UNK_605000 as u16
     };
     if k != 0 {
         screen = screen.wrapping_sub(word!(game.size_of_bg2));
@@ -599,9 +599,9 @@ pub fn queue_scrolling_tiles<H: Host + ?Sized>(k: u16, layout: ScrollingLayout, 
     set_native_word(parameters + 4, origin.wrapping_add(screen), game);
     let wrapped_destination = if row {
         let mut wrapped_screen = if tile_column >= 16 {
-            addr_unk_605000 as u16
+            ADDR_UNK_605000 as u16
         } else {
-            addr_unk_605400 as u16
+            ADDR_UNK_605400 as u16
         };
         if k != 0 {
             wrapped_screen = wrapped_screen.wrapping_sub(word!(game.size_of_bg2));
@@ -702,7 +702,7 @@ pub fn queue_fx_clear<H: Host + ?Sized>(game: &mut H) {
     set_native_word(entry + 2, 0x4000, game);
     // The bank store is deliberately a native word, overlapping the destination low byte.
     set_native_word(entry + 4, 126, game);
-    set_native_word(entry + 5, addr_unk_605880 as u16, game);
+    set_native_word(entry + 5, ADDR_UNK_605880 as u16, game);
     word!(game.vram_write_queue_tail = tail.wrapping_add(7));
 }
 

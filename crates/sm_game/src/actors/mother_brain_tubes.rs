@@ -8,7 +8,7 @@
 //! bytes as `EnemyLayout8`.
 #![forbid(unsafe_code)]
 use crate::actors::layouts::part_view;
-use crate::constants::enemy_properties::{kEnemyProps_Deleted, kEnemyProps_Invisible};
+use crate::constants::enemy_properties::{K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE};
 use crate::mother_brain_tables;
 use crate::ram::RawRam as _;
 use crate::ram::{slot, word};
@@ -29,7 +29,7 @@ part_view! {
     /// A falling tube's view of its slot.
     Tube: EnemyLayout8 {
         words: [
-            function, burst_y, fall_speed, smoke_timer, smoke_index, var_F, parameter_1,
+            function, burst_y, fall_speed, smoke_timer, smoke_index, var_f, parameter_1,
             fall_delay,
         ],
     }
@@ -151,7 +151,7 @@ fn burst<H: Host + ?Sized>(game: &mut H, k: u16) {
     slot!(
         game,
         Tube[me].base.properties =
-            slot!(game, Tube[me].base.properties) | kEnemyProps_Deleted as u16
+            slot!(game, Tube[me].base.properties) | K_ENEMY_PROPS_DELETED as u16
     );
     let x = slot!(game, Tube[me].base.x_pos);
     let y = slot!(game, Tube[me].base.y_pos);
@@ -186,7 +186,7 @@ fn fall_with_brain<H: Host + ?Sized>(game: &mut H, k: u16) {
         slot!(
             game,
             Tube[me].base.properties =
-                slot!(game, Tube[me].base.properties) | kEnemyProps_Invisible as u16
+                slot!(game, Tube[me].base.properties) | K_ENEMY_PROPS_INVISIBLE as u16
         );
     }
     slot!(game, Tube[BRAIN].base.y_pos = y.wrapping_sub(BRAIN_OFFSET));

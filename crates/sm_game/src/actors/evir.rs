@@ -14,13 +14,13 @@ use sm_data::enemy_speeds::SpeedTable::Linear;
 part_view! {
     /// An evir part's slot and extended RAM; a non-zero first parameter makes the arms.
     Evir: EnemyLayout40 {
-        words: [var_A, facing, function, var_D, movement_timer, regeneration_x_offset, parameter_1, parameter_2],
+        words: [var_a, facing, function, var_d, movement_timer, regeneration_x_offset, parameter_1, parameter_2],
         pad1: [u8; 26696],
         words: [
             movement_direction, instruction_list, new_instruction_list, down_subvelocity, down_velocity,
             up_subvelocity, up_velocity, x_velocity, x_subvelocity, y_velocity, y_subvelocity, moving,
-            regenerating, var_0D, var_0E, var_0F, var_10, var_11, var_12, var_13, var_14, var_15, var_16,
-            var_17, var_18, var_19, var_1A, var_1B, var_1C, var_1D, var_1E, var_1F,
+            regenerating, var_0d, var_0e, var_0f, var_10, var_11, var_12, var_13, var_14, var_15, var_16,
+            var_17, var_18, var_19, var_1a, var_1b, var_1c, var_1d, var_1e, var_1f,
         ],
     }
 }

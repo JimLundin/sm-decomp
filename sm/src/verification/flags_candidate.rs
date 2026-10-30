@@ -11,14 +11,14 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
 fn run(operation: Operation, image: &RomImage, g: &mut Game) -> Returned {
     unsafe {
         match operation {
-            Operation::EventQuery(bit) => return Returned::word(flags::CheckEventHappened(bit, g)),
-            Operation::EventSet(bit) => flags::SetEventHappened(bit, g),
+            Operation::EventQuery(bit) => return Returned::word(flags::event_has_happened(bit, g)),
+            Operation::EventSet(bit) => flags::mark_event(bit, g),
             Operation::EventClear(bit) => flags::ClearEventHappened(bit, g),
             Operation::Prepare(bit) => return Returned::word(flags::PrepareBitAccess(bit, g)),
             Operation::BossQuery(mask) => {
                 return Returned::word(u16::from(flags::CheckBossBitForCurArea(mask, g)));
             }
-            Operation::BossSet(mask) => flags::SetBossBitForCurArea(mask, g),
+            Operation::BossSet(mask) => flags::set_boss_bits_for_current_area(mask, g),
             Operation::Plm(address) => {
                 let script =
                     EnemyScript::at(image.clone(), crate::rtl::lorom_offset(0x849100) as usize);

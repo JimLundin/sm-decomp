@@ -16,8 +16,8 @@ pub use crate::types::{
     Buttons, CheckEnemyColl_Result, CheckSolidEnemyColl_Result, CoroutineRet, DoorDef, EnemyBase,
     EnemyData, EnemyDef, EnemySpawnData, EnemyTileset, EprojDef, ExpandingSquareTransitionHdma,
     ExtendedSpriteMap, ExtraEnemyRam7800, ExtraEnemyRam8000, Func_U8, Func_V, Func_Y_V, Func_Y_Y,
-    Hitbox, LongPtr, MapIconDataPointers, MapScrollArrowData, OamEnt, Pair_Bool_Amt, PairU16,
-    Point16U, Ram3000, Ram3800, Ram4000, Ram8000_Default, Rect16U, RoomDefHeader, RoomDefRoomstate,
-    SamusPose, SamusPoseParams, SnesRegs, SpawnHardcodedPlmArgs, SpawnHdmaObject_Args, TileTable,
-    TileTables, VoidP, VramWriteEntry, Vulnerability, size_t,
+    HdmaObjectDefinition, Hitbox, LongPtr, MapIconDataPointers, MapScrollArrowData, OamEnt,
+    Pair_Bool_Amt, PairU16, Point16U, Ram3000, Ram3800, Ram4000, Ram8000_Default, Rect16U,
+    RoomDefHeader, RoomDefRoomstate, SamusPose, SamusPoseParams, SnesRegs, SpawnHardcodedPlmArgs,
+    TileTable, TileTables, VoidP, VramWriteEntry, Vulnerability, size_t,
 };

@@ -1,7 +1,7 @@
 //! Candidate-only independent byte expectations. Never execute these old UB paths.
 //! Child of candidate carrier; distinct from differential baseline outcomes.
 use super::{put, seed, slot};
-use crate::game::constants::bank_86::{addr_kEprojInit_AB07_Tile0, addr_kEprojInit_AB07_Tile1};
+use crate::game::constants::bank_86::{ADDR_K_EPROJ_INIT_AB07_TILE0, ADDR_K_EPROJ_INIT_AB07_TILE1};
 use crate::game_state::Game;
 use crate::ram_map::{word_arrays as a, words as w};
 use crate::rom::RomImage;
@@ -27,7 +27,7 @@ pub(crate) fn check_case(id: u32) -> bool {
         put(&mut game, w::cur_enemy_index, enemy);
         put(
             &mut game,
-            0xf78 + enemy as usize + offset_of!(Layout, var_B),
+            0xf78 + enemy as usize + offset_of!(Layout, var_b),
             cursor,
         );
         put(
@@ -90,10 +90,10 @@ pub(crate) fn check_case(id: u32) -> bool {
             .map(|at| game.ram().read_byte(at))
             .collect::<Vec<_>>();
         for (position, source, destination) in [
-            (tail, addr_kEprojInit_AB07_Tile0 as u16, 28160),
+            (tail, ADDR_K_EPROJ_INIT_AB07_TILE0 as u16, 28160),
             (
                 tail.wrapping_add(7),
-                addr_kEprojInit_AB07_Tile1 as u16,
+                ADDR_K_EPROJ_INIT_AB07_TILE1 as u16,
                 28416,
             ),
         ] {

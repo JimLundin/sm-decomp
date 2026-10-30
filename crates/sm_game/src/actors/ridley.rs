@@ -20,10 +20,10 @@ use crate::actors::layouts::{EnemyBase, same_words};
 use crate::actors::ridley_tables::{set_pogo_speeds, set_tail_segments_from_list};
 use crate::actors::session_slots::{SlotAccess, session_slot};
 use crate::constants::enemy_properties::{
-    kEnemyProps_Deleted, kEnemyProps_Invisible, kEnemyProps_Tangible,
+    K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE, K_ENEMY_PROPS_TANGIBLE,
 };
 use crate::enemy_projectiles::drops::DropSource;
-use crate::enemy_projectiles::shared_pre::{Math_MultByCos, Math_MultBySin};
+use crate::enemy_projectiles::shared_pre::{x_velocity_at_angle, y_velocity_at_angle};
 use crate::enemy_script::EnemyScript;
 use crate::geometry::Point;
 use crate::palette_copies::copy_rom_colors_to_palette;
@@ -183,31 +183,31 @@ pub struct CeresDoor {
 }
 
 same_words!(Ridley: EnemyLayout104 {
-    function = var_A, x_velocity = var_B, y_velocity = var_C, fade_index = var_E,
-    function_timer = var_F, parameter_1 = parameter_1, parameter_2 = parameter_2,
+    function = var_a, x_velocity = var_b, y_velocity = var_c, fade_index = var_e,
+    function_timer = var_f, parameter_1 = parameter_1, parameter_2 = parameter_2,
     timer = var_00, fight_mode = var_01, movement_enabled = var_02,
     baby_metroid_instruction = var_03, baby_metroid_instruction_timer = var_04,
     ribs_pointer = var_05, ribs_timer = var_06, wings_frame = var_07, wings_timer_delta = var_08,
-    wings_timer = var_09, swoop_angle = var_0A, swoop_speed = var_0B, palette = var_0C,
-    hit_counter = var_0D, whip_sound_counter = var_0E, roaring = var_0F, facing = var_10,
+    wings_timer = var_09, swoop_angle = var_0a, swoop_speed = var_0b, palette = var_0c,
+    hit_counter = var_0d, whip_sound_counter = var_0e, roaring = var_0f, facing = var_10,
     acceleration_index = var_12, grabbed_x_offset = var_14, grabbed_y_offset = var_15,
     target_x = var_17, target_y = var_18, fireball_x_velocity = var_19,
-    fireball_y_velocity = var_1A, holding_samus = var_1B, tail_damage = var_1C,
-    feet_distance_index = var_1D, intangibility_timer = var_1E, hit_boundary = var_1F,
+    fireball_y_velocity = var_1a, holding_samus = var_1b, tail_damage = var_1c,
+    feet_distance_index = var_1d, intangibility_timer = var_1e, hit_boundary = var_1f,
     min_y = var_20, max_y = var_21, min_x = var_22, max_x = var_23, grabbed_lag_timer = var_24,
     death_lunges = var_25, pogo_bounces = var_26, small_explosion_timer = var_27,
     small_explosion_index = var_28, mode7_zoom = var_30, unread_8022 = var_31,
     getaway_finished = var_32, getaway_index = var_33, mode7_x = var_34, mode7_y = var_35,
     baby_metroid_frame = var_36, mode7_wings_frame = var_37, emergency_glow_index = var_38,
-    typewriter_list = var_3B, typewriter_tilemap = var_3C, typewriter_timer = var_3D,
-    typewriter_timer_reset = var_3E, typewriter_stroke_timer = var_3F,
+    typewriter_list = var_3b, typewriter_tilemap = var_3c, typewriter_timer = var_3d,
+    typewriter_timer_reset = var_3e, typewriter_stroke_timer = var_3f,
     baby_metroid_function = var_40, baby_metroid_x = var_42, baby_metroid_y_subpixel = var_43,
     baby_metroid_y = var_44, baby_metroid_unread = var_45, baby_metroid_y_velocity = var_46,
 });
 same_words!(Explosion: EnemyLayout8 {
-    x_velocity = var_B, y_velocity = var_C, lifetime = var_F, part = parameter_1,
+    x_velocity = var_b, y_velocity = var_c, lifetime = var_f, part = parameter_1,
 });
-same_words!(CeresDoor: EnemyLayout8 { drawn_by_ridley = var_B });
+same_words!(CeresDoor: EnemyLayout8 { drawn_by_ridley = var_b });
 
 pub(crate) const RIDLEY: i32 = 0;
 const CERES_DOOR: i32 = 0x40;
@@ -1504,7 +1504,7 @@ pub fn grab_samus<L: Lease + ?Sized>(game: &mut L) {
     session_slot!(
         game,
         Ridley[RIDLEY].base.properties =
-            session_slot!(game, Ridley[RIDLEY].base.properties) | kEnemyProps_Tangible as u16
+            session_slot!(game, Ridley[RIDLEY].base.properties) | K_ENEMY_PROPS_TANGIBLE as u16
     );
     session_slot!(game, Ridley[RIDLEY].holding_samus = 1);
     game.foreign(|game| game.command_player(LOCK_SAMUS));
@@ -1551,9 +1551,9 @@ pub fn set_tangibility<S: State + ?Sized>(game: &mut S) {
 fn set_tangible<S: State + ?Sized>(game: &mut S, tangible: bool) {
     let properties = session_slot!(game, Ridley[RIDLEY].base.properties);
     let properties = if tangible {
-        (properties as i32 & !(kEnemyProps_Tangible as i32)) as u16
+        (properties as i32 & !(K_ENEMY_PROPS_TANGIBLE as i32)) as u16
     } else {
-        properties | kEnemyProps_Tangible as u16
+        properties | K_ENEMY_PROPS_TANGIBLE as u16
     };
     session_slot!(game, Ridley[RIDLEY].base.properties = properties);
 }
@@ -1935,7 +1935,7 @@ pub fn start_falling_apart<L: Lease + ?Sized>(game: &mut L) {
     session_slot!(
         game,
         Ridley[RIDLEY].base.properties =
-            session_slot!(game, Ridley[RIDLEY].base.properties) | kEnemyProps_Invisible as u16
+            session_slot!(game, Ridley[RIDLEY].base.properties) | K_ENEMY_PROPS_INVISIBLE as u16
     );
     session_slot!(game, Ridley[RIDLEY].function = function::FALLING_APART);
     session_slot!(game, Ridley[RIDLEY].function_timer = 32);
@@ -1968,7 +1968,7 @@ pub fn still_falling_apart<L: Lease + ?Sized>(game: &mut L) {
         session_slot!(
             game,
             Ridley[RIDLEY].base.properties =
-                session_slot!(game, Ridley[RIDLEY].base.properties) | kEnemyProps_Deleted as u16
+                session_slot!(game, Ridley[RIDLEY].base.properties) | K_ENEMY_PROPS_DELETED as u16
         );
         session_slot!(game, Ridley[RIDLEY].function = function::DEAD);
     }
@@ -2142,10 +2142,10 @@ pub fn explosion_flicker<L: Lease + ?Sized>(k: u16, game: &mut L) {
     let odd = session_slot!(game, Explosion[e].base.frame_counter) & 1;
     session_slot!(game, Explosion[e].base.frame_counter = odd);
     let properties = if odd != 0 {
-        session_slot!(game, Explosion[e].base.properties) | kEnemyProps_Invisible as u16
+        session_slot!(game, Explosion[e].base.properties) | K_ENEMY_PROPS_INVISIBLE as u16
     } else {
-        (session_slot!(game, Explosion[e].base.properties) as i32 & !(kEnemyProps_Invisible as i32))
-            as u16
+        (session_slot!(game, Explosion[e].base.properties) as i32
+            & !(K_ENEMY_PROPS_INVISIBLE as i32)) as u16
     };
     session_slot!(game, Explosion[e].base.properties = properties);
 }
@@ -2206,7 +2206,7 @@ pub fn handle_tail<L: Lease + ?Sized>(game: &mut L) {
     update_tail_segment_distances(game);
     if session_slot!(game, Ridley[RIDLEY].holding_samus)
         | (word!(game.samus_invincibility_timer)
-            | session_slot!(game, Ridley[RIDLEY].base.properties) & kEnemyProps_Tangible as u16)
+            | session_slot!(game, Ridley[RIDLEY].base.properties) & K_ENEMY_PROPS_TANGIBLE as u16)
         == 0
     {
         tail_samus_collision(game);
@@ -3096,12 +3096,12 @@ pub fn calculate_swoop_velocities<L: Lease + ?Sized>(
     session_slot!(
         game,
         Ridley[RIDLEY].x_velocity =
-            Math_MultBySin(session_slot!(game, Ridley[RIDLEY].swoop_speed), direction)
+            x_velocity_at_angle(session_slot!(game, Ridley[RIDLEY].swoop_speed), direction)
     );
     session_slot!(
         game,
         Ridley[RIDLEY].y_velocity =
-            Math_MultByCos(session_slot!(game, Ridley[RIDLEY].swoop_speed), direction)
+            y_velocity_at_angle(session_slot!(game, Ridley[RIDLEY].swoop_speed), direction)
     );
 }
 
@@ -3296,7 +3296,7 @@ pub fn draw_wings<L: Lease + ?Sized>(game: &mut L) {
 /// Draw Ridley tail ($A6:DB2A): the tip by its angle, then the segments
 /// towards the base. Was `sub_A6DB2A`.
 pub fn draw_tail<L: Lease + ?Sized>(game: &mut L) {
-    if (session_slot!(game, Ridley[RIDLEY].base.properties) & kEnemyProps_Invisible as u16) != 0 {
+    if (session_slot!(game, Ridley[RIDLEY].base.properties) & K_ENEMY_PROPS_INVISIBLE as u16) != 0 {
         return;
     }
     let tip = ridley_data::tail_tip_spritemap(game, tail_tip_sector(game));
@@ -3541,7 +3541,7 @@ pub fn tail_samus_collision<L: Lease + ?Sized>(game: &mut L) {
 /// or segment 5 deflects in a dust cloud, missiles with a clank. Was
 /// `Ridley_Func_129`.
 pub fn tail_projectile_collision<L: Lease + ?Sized>(game: &mut L) {
-    if (session_slot!(game, Ridley[RIDLEY].base.properties) & kEnemyProps_Tangible as u16) != 0 {
+    if (session_slot!(game, Ridley[RIDLEY].base.properties) & K_ENEMY_PROPS_TANGIBLE as u16) != 0 {
         return;
     }
     let tip = Rect {
@@ -3713,11 +3713,11 @@ pub fn calculate_fireball_velocities<L: Lease + ?Sized>(
     };
     session_slot!(
         game,
-        Ridley[RIDLEY].fireball_x_velocity = Math_MultBySin(0x500, angle)
+        Ridley[RIDLEY].fireball_x_velocity = x_velocity_at_angle(0x500, angle)
     );
     session_slot!(
         game,
-        Ridley[RIDLEY].fireball_y_velocity = Math_MultByCos(0x500, angle)
+        Ridley[RIDLEY].fireball_y_velocity = y_velocity_at_angle(0x500, angle)
     );
     script
 }
@@ -3747,7 +3747,7 @@ pub fn spawn_fireball<L: Lease + ?Sized>(
     afterburn: u16,
     game: &mut L,
 ) -> EnemyScript {
-    word!(game.cinematic_var9 = afterburn);
+    word!(game.cinematic_y_sub = afterburn);
     game.spawn_room_projectile(FIREBALL, session_slot!(game, Ridley[RIDLEY].facing));
     script
 }

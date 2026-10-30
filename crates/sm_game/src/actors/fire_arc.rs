@@ -6,7 +6,7 @@
 //! objects; the active swing runs with them in the enemy projectile code.
 #![forbid(unsafe_code)]
 use crate::actors::layouts::{EnemyBase, EnemyLayout8, same_words};
-use crate::constants::enemy_properties::kEnemyProps_ProcessedOffscreen;
+use crate::constants::enemy_properties::K_ENEMY_PROPS_PROCESSED_OFFSCREEN;
 use crate::ram::RawRam as _;
 use crate::ram::{slot, word};
 use sm_data::enemy_speeds::SpeedTable;
@@ -67,13 +67,13 @@ pub struct FireArc {
 }
 
 same_words!(FireArc: EnemyLayout72 {
-    function = var_A, inactive_timer = var_B, speed_index = var_C, radius = var_D,
-    direction = var_E, inactive_reset = var_F, parameter_1 = parameter_1,
+    function = var_a, inactive_timer = var_b, speed_index = var_c, radius = var_d,
+    direction = var_e, inactive_reset = var_f, parameter_1 = parameter_1,
     parameter_2 = parameter_2, projectile_explosions = var_08, sprite_object = var_10,
     sprite_explosions = var_18, angle = var_21, start_angle = var_23,
     angle_delta_subpixel = var_24, angle_delta = var_25, origin_x = var_26, origin_y = var_27,
-    spawn_x = var_28, spawn_y = var_29, body_index = var_2A, part_angle_2x = var_2B,
-    part_angle = var_2C, finish_angle = var_2E, falling_explosion_angle = var_2F,
+    spawn_x = var_28, spawn_y = var_29, body_index = var_2a, part_angle_2x = var_2b,
+    part_angle = var_2c, finish_angle = var_2e, falling_explosion_angle = var_2f,
     rising_explosion_angle = var_30, head_explosion = var_33, graphics = var_34,
 });
 
@@ -227,7 +227,7 @@ pub fn inactive<H: Host + ?Sized>(game: &mut H) {
     slot!(
         game,
         FireArc[e].base.properties =
-            slot!(game, FireArc[e].base.properties) | kEnemyProps_ProcessedOffscreen as u16
+            slot!(game, FireArc[e].base.properties) | K_ENEMY_PROPS_PROCESSED_OFFSCREEN as u16
     );
 }
 

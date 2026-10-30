@@ -3,7 +3,7 @@
 #![forbid(unsafe_code)]
 use crate::actors::layouts::KraidLayout as Kraid;
 use crate::cartridge::native_record;
-use crate::constants::enemy_properties::kEnemyProps_Tangible;
+use crate::constants::enemy_properties::K_ENEMY_PROPS_TANGIBLE;
 use crate::ram::RawRam as _;
 use crate::ram::{slot, word};
 
@@ -35,7 +35,7 @@ fn hitbox(field: usize, game: &mut (impl Host + ?Sized)) -> i32 {
 /// Kraid lint / Samus collision handling ($A7:B96A). Was `Kraid_EnemyTouch_Lint`.
 pub fn lint_touch_samus(k: u16, game: &mut (impl Host + ?Sized)) {
     let e = i32::from(k);
-    if slot!(game, Kraid[e].base.properties) as i32 & kEnemyProps_Tangible as i32 != 0
+    if slot!(game, Kraid[e].base.properties) as i32 & K_ENEMY_PROPS_TANGIBLE as i32 != 0
         || word!(game.samus_invincibility_timer) != 0
     {
         return;
@@ -73,6 +73,6 @@ pub fn lint_touch_samus(k: u16, game: &mut (impl Host + ?Sized)) {
     slot!(
         game,
         Kraid[e].base.properties =
-            slot!(game, Kraid[e].base.properties) | kEnemyProps_Tangible as u16
+            slot!(game, Kraid[e].base.properties) | K_ENEMY_PROPS_TANGIBLE as u16
     );
 }

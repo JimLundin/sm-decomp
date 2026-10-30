@@ -64,19 +64,19 @@ pub(crate) fn PrepareBitAccess(bit: u16, game: &mut Game) -> u16 {
         bit,
     )
 }
-pub(crate) fn SetBossBitForCurArea(mask: u16, game: &mut Game) {
+pub(crate) fn set_boss_bits_for_current_area(mask: u16, game: &mut Game) {
     flags::mark_boss_defeated(&mut Runtime::new(game), mask);
 }
 pub(crate) fn CheckBossBitForCurArea(mask: u16, game: &mut Game) -> u8 {
     u8::from(flags::boss_defeated(&mut Runtime::new(game), mask))
 }
-pub(crate) fn SetEventHappened(event: u16, game: &mut Game) {
+pub(crate) fn mark_event(event: u16, game: &mut Game) {
     flags::set_event(&mut Runtime::new(game), event);
 }
 pub(crate) fn ClearEventHappened(event: u16, game: &mut Game) {
     flags::clear_event(&mut Runtime::new(game), event);
 }
-pub(crate) fn CheckEventHappened(event: u16, game: &mut Game) -> u16 {
+pub(crate) fn event_has_happened(event: u16, game: &mut Game) -> u16 {
     u16::from(flags::event_happened(&mut Runtime::new(game), event))
 }
 pub(crate) fn boss_byte_at(area: u16, game: &mut Game) -> u8 {

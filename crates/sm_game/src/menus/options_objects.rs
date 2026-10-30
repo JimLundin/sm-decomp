@@ -58,12 +58,12 @@ const OBJECT_PALETTE: u16 = 7 * 0x200;
 
 const _: () = {
     use crate::constants::bank_82::*;
-    assert!(definition::MENU_SELECTION_MISSILE == addr_stru_82F4B8 as u16);
-    assert!(definition::OPTION_MODE_BORDER == addr_stru_82F4C4 as u16);
-    assert!(definition::CONTROLLER_SETTING_MODE_BORDER == addr_stru_82F4CA as u16);
-    assert!(definition::SPECIAL_SETTING_MODE_BORDER == addr_stru_82F4D0 as u16);
-    assert!(definition::SAMUS_DATA_BORDER == addr_stru_82F4D6 as u16);
-    assert!(DELETE_LIST == addr_off_82F4B6 as u16);
+    assert!(definition::MENU_SELECTION_MISSILE == ADDR_STRU_82F4B8 as u16);
+    assert!(definition::OPTION_MODE_BORDER == ADDR_STRU_82F4C4 as u16);
+    assert!(definition::CONTROLLER_SETTING_MODE_BORDER == ADDR_STRU_82F4CA as u16);
+    assert!(definition::SPECIAL_SETTING_MODE_BORDER == ADDR_STRU_82F4D0 as u16);
+    assert!(definition::SAMUS_DATA_BORDER == ADDR_STRU_82F4D6 as u16);
+    assert!(DELETE_LIST == ADDR_OFF_82F4B6 as u16);
     assert!(OBJECT_PALETTE == 3584);
 };
 

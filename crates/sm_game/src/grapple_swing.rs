@@ -204,7 +204,7 @@ fn spike_contact<H: Host + ?Sized>(solid: bool, game: &mut H) -> u8 {
     solid as u8
 }
 fn check_clearance<H: Host + ?Sized>(angle: u16, game: &mut H) -> u8 {
-    word!(game.g_word_7E0D98 = 6);
+    word!(game.grapple_collision_distance = 6);
     let mut length = game.session().player.grapple_length.wrapping_add(8);
     loop {
         place_sample(angle, length, game);
@@ -213,23 +213,23 @@ fn check_clearance<H: Host + ?Sized>(angle: u16, game: &mut H) -> u8 {
             return blocked;
         }
         length = length.wrapping_add(8);
-        if word!(game.g_word_7E0D98 -= 1, reread) == 0 {
+        if word!(game.grapple_collision_distance -= 1, reread) == 0 {
             return 0;
         }
     }
 }
 fn dispatch_connection<H: Host + ?Sized>(ea: u32, game: &mut H) {
     let (pose, transition_graphics) = match ea {
-        10205657 => (kPose_B2_FaceR_Grapple_Air as u16, 9),
-        10205666 => (kPose_B3_FaceL_Grapple_Air as u16, 9),
-        10205674 => (kPose_A8_FaceR_Grappling as u16, 10),
-        10205683 => (kPose_AA_FaceR_Grappling_AimDR as u16, 10),
-        10205692 => (kPose_AB_FaceL_Grappling_AimDL as u16, 10),
-        10205701 => (kPose_A9_FaceL_Grappling as u16, 10),
-        10205710 => (kPose_B4_FaceR_Grappling_Crouch as u16, 10),
-        10205719 => (kPose_B6_FaceR_Grappling_Crouch_AimDR as u16, 10),
-        10205728 => (kPose_B7_FaceL_Grappling_Crouch_AimDL as u16, 10),
-        10205737 => (kPose_B5_FaceL_Grappling_Crouch as u16, 10),
+        10205657 => (K_POSE_B2_FACE_R_GRAPPLE_AIR as u16, 9),
+        10205666 => (K_POSE_B3_FACE_L_GRAPPLE_AIR as u16, 9),
+        10205674 => (K_POSE_A8_FACE_R_GRAPPLING as u16, 10),
+        10205683 => (K_POSE_AA_FACE_R_GRAPPLING_AIM_DR as u16, 10),
+        10205692 => (K_POSE_AB_FACE_L_GRAPPLING_AIM_DL as u16, 10),
+        10205701 => (K_POSE_A9_FACE_L_GRAPPLING as u16, 10),
+        10205710 => (K_POSE_B4_FACE_R_GRAPPLING_CROUCH as u16, 10),
+        10205719 => (K_POSE_B6_FACE_R_GRAPPLING_CROUCH_AIM_DR as u16, 10),
+        10205728 => (K_POSE_B7_FACE_L_GRAPPLING_CROUCH_AIM_DL as u16, 10),
+        10205737 => (K_POSE_B5_FACE_L_GRAPPLING_CROUCH as u16, 10),
         _ => {
             game.grapple_unreachable();
             return;
@@ -238,7 +238,7 @@ fn dispatch_connection<H: Host + ?Sized>(ea: u32, game: &mut H) {
     begin_connection(pose, transition_graphics, game);
 }
 pub fn connect_beam<H: Host + ?Sized>(game: &mut H) {
-    if game.movement_type() as i32 == kMovementType_1A_GrabbedByDraygon as i32 {
+    if game.movement_type() as i32 == K_MOVEMENT_TYPE_1A_GRABBED_BY_DRAYGON as i32 {
         game.session_mut().player.grapple = (0x9bc77ei32) as u16;
         game.session_mut().player.swing.length_delta = 0;
     } else {
@@ -372,11 +372,11 @@ pub fn change_length<H: Host + ?Sized>(game: &mut H) -> u8 {
     0
 }
 pub fn apply_input<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.joypad1_newkeys) & kButton_Up as u16 != 0 {
+    if word!(game.joypad1_newkeys) & K_BUTTON_UP as u16 != 0 {
         if game.session().player.grapple_length != 0 {
             game.session_mut().player.swing.length_delta = (-2i16) as u16;
         }
-    } else if word!(game.joypad1_newkeys) & kButton_Down as u16 != 0 {
+    } else if word!(game.joypad1_newkeys) & K_BUTTON_DOWN as u16 != 0 {
         if (i32::from(game.session().player.grapple_length) - 64) & 0x8000 != 0 {
             game.session_mut().player.swing.length_delta = 2;
         } else {
@@ -522,10 +522,11 @@ pub fn advance_swing<H: Host + ?Sized>(game: &mut H) -> u8 {
             let stopped = ((angle >> 1) << 8) | 0x80;
             game.session_mut().player.grapple_angle = stopped;
             game.session_mut().player.swing.mirrored_angle = stopped;
-            if (word!(game.g_word_7E0D98) == 6 || word!(game.g_word_7E0D98) == 5)
+            if (word!(game.grapple_collision_distance) == 6
+                || word!(game.grapple_collision_distance) == 5)
                 && game.session().player.grapple_length == 8
             {
-                word!(game.grapple_beam_unkD36 |= 0x8000);
+                word!(game.grapple_special_angle_flag |= 0x8000);
                 game.session_mut().player.swing.angular_velocity = 0;
                 game.session_mut().player.swing.extra_angular_velocity = 0;
             } else {
@@ -542,7 +543,7 @@ pub fn advance_swing<H: Host + ?Sized>(game: &mut H) -> u8 {
     game.session_mut().player.grapple_angle =
         game.session().player.grapple_angle.wrapping_add(delta);
     game.session_mut().player.swing.mirrored_angle = game.session().player.grapple_angle;
-    word!(game.grapple_beam_unkD36 &= !0x8000);
+    word!(game.grapple_special_angle_flag &= !0x8000);
     if {
         game.session_mut().player.swing.kick_cooldown =
             game.session().player.swing.kick_cooldown.wrapping_sub(1);
@@ -608,18 +609,18 @@ macro_rules! initialize_grapple_endpoints {
 }
 
 fn draygon_direction<H: Host + ?Sized>(pose: u16, game: &mut H) -> u16 {
-    let (toward, down, up, straight) = if pose as i32 == kPose_BE_FaceL_Draygon_Move as i32 {
-        (kButton_Left, 6, 8, 7)
+    let (toward, down, up, straight) = if pose as i32 == K_POSE_BE_FACE_L_DRAYGON_MOVE as i32 {
+        (K_BUTTON_LEFT, 6, 8, 7)
     } else {
-        (kButton_Right, 3, 1, 2)
+        (K_BUTTON_RIGHT, 3, 1, 2)
     };
     if word!(game.joypad1_lastkeys) as i32 & toward as i32 == 0 {
         return straight;
     }
-    if word!(game.joypad1_lastkeys) as i32 & kButton_Down as i32 != 0 {
+    if word!(game.joypad1_lastkeys) as i32 & K_BUTTON_DOWN as i32 != 0 {
         return down;
     }
-    if word!(game.joypad1_lastkeys) as i32 & kButton_Up as i32 != 0 {
+    if word!(game.joypad1_lastkeys) as i32 & K_BUTTON_UP as i32 != 0 {
         return up;
     }
     straight
@@ -741,8 +742,8 @@ pub fn position_anchored<H: Host + ?Sized>(game: &mut H) {
 pub fn restore_start_positions<H: Host + ?Sized>(game: &mut H) {
     let r22: u16 = native_pose_parameter!(game, 4) as u16;
     let v0: u16 = (2u16).wrapping_mul(game.session().player.grapple_direction);
-    if game.session().player.pose as i32 == kPose_49_FaceL_Moonwalk as i32
-        || game.session().player.pose as i32 == kPose_4A_FaceR_Moonwalk as i32
+    if game.session().player.pose as i32 == K_POSE_49_FACE_L_MOONWALK as i32
+        || game.session().player.pose as i32 == K_POSE_4A_FACE_R_MOONWALK as i32
         || game.movement_type() != 1
     {
         restore_grapple_start_positions!(v0, game, Standard, r22);
@@ -764,7 +765,7 @@ pub fn cancel_incompatible_pose<H: Host + ?Sized>(game: &mut H) {
                 if v0 as i32 == game.session().player.grapple_direction as i32 {
                     return;
                 }
-                if word!(game.grapple_varCF6) != 0 {
+                if word!(game.grapple_auto_fire_timer) != 0 {
                     game.queue_sound(0, 7_u8, 6);
                     game.session_mut().player.grapple = (0x9bc51ei32) as u16;
                     return;
@@ -781,8 +782,8 @@ pub fn cancel_incompatible_pose<H: Host + ?Sized>(game: &mut H) {
 
 pub fn start_firing<H: Host + ?Sized>(game: &mut H) {
     let (r22, v0): (u16, i32) = if game.session().player.pose as i32
-        == kPose_F0_FaceR_Draygon_Move as i32
-        || game.session().player.pose as i32 == kPose_BE_FaceL_Draygon_Move as i32
+        == K_POSE_F0_FACE_R_DRAYGON_MOVE as i32
+        || game.session().player.pose as i32 == K_POSE_BE_FACE_L_DRAYGON_MOVE as i32
     {
         (
             6,
@@ -804,9 +805,9 @@ pub fn start_firing<H: Host + ?Sized>(game: &mut H) {
     word!(game.grapple_beam_extension_y_velocity = extension.y_velocity);
     game.session_mut().player.grapple_angle = extension.angle;
     game.session_mut().player.swing.mirrored_angle = game.session().player.grapple_angle;
-    word!(game.grapple_varCF6 = 10);
-    if game.session().player.pose as i32 == kPose_49_FaceL_Moonwalk as i32
-        || game.session().player.pose as i32 == kPose_4A_FaceR_Moonwalk as i32
+    word!(game.grapple_auto_fire_timer = 10);
+    if game.session().player.pose as i32 == K_POSE_49_FACE_L_MOONWALK as i32
+        || game.session().player.pose as i32 == K_POSE_4A_FACE_R_MOONWALK as i32
         || game.movement_type() != 1
     {
         initialize_grapple_endpoints!(game, Standard, v1, r22);
@@ -828,7 +829,7 @@ pub fn start_firing<H: Host + ?Sized>(game: &mut H) {
     game.session_mut().player.swing.rising_deceleration = 0;
     game.session_mut().player.swing.extra_angular_velocity = 0;
     game.session_mut().player.swing.kick_cooldown = 0;
-    word!(game.grapple_beam_unkD1E = 0);
+    word!(game.offscreen_beam_hdma_index = 0);
     word!(game.grapple_beam_unkD20 = 0);
     game.session_mut().player.swing.start_marks[0] = 2;
     game.session_mut().player.swing.start_marks[1] = 0;
@@ -837,7 +838,7 @@ pub fn start_firing<H: Host + ?Sized>(game: &mut H) {
         grapple_aim::point_animation(game).first;
     game.session_mut().player.swing.probe.x = 0;
     game.session_mut().player.swing.failed_movement_counter = 0;
-    word!(game.grapple_beam_unkD36 = 0);
+    word!(game.grapple_special_angle_flag = 0);
     game.session_mut().player.grapple_slow_scrolling = 0;
     start_rope_animation(game);
     game.session_mut().player.transitions.draw_handler = DrawMode::Grapple;
@@ -855,7 +856,7 @@ pub fn start_firing<H: Host + ?Sized>(game: &mut H) {
 
 pub fn cancel<H: Host + ?Sized>(game: &mut H) {
     game.queue_sound(0, 7_u8, 15);
-    if game.movement_type() == kMovementType_16_Grappling as u8 {
+    if game.movement_type() == K_MOVEMENT_TYPE_16_GRAPPLING as u8 {
         game.with_lease(pt::request_fallback_pose);
     } else {
         game.grapple_pose_command(0x1c);
@@ -865,18 +866,18 @@ pub fn cancel<H: Host + ?Sized>(game: &mut H) {
 
 pub fn release_stationary<H: Host + ?Sized>(game: &mut H) {
     game.queue_sound(0, 7_u8, 15);
-    let pose = if game.session().player.pose == kPose_B2_FaceR_Grapple_Air as u16 {
-        kPose_01_FaceR_Normal as u16
-    } else if game.session().player.pose == kPose_B3_FaceL_Grapple_Air as u16 {
-        kPose_02_FaceL_Normal as u16
+    let pose = if game.session().player.pose == K_POSE_B2_FACE_R_GRAPPLE_AIR as u16 {
+        K_POSE_01_FACE_R_NORMAL as u16
+    } else if game.session().player.pose == K_POSE_B3_FACE_L_GRAPPLE_AIR as u16 {
+        K_POSE_02_FACE_L_NORMAL as u16
     } else {
         let crouching = (i32::from(game.session().player.contact.radius) - 17) & 0x8000 != 0;
         if native_pose_parameter!(game, 3) & 0xf0 != 0 {
             match (crouching, game.facing() == 4) {
-                (true, true) => kPose_28_FaceL_Crouch as u16,
-                (true, false) => kPose_27_FaceR_Crouch as u16,
-                (false, true) => kPose_02_FaceL_Normal as u16,
-                (false, false) => kPose_01_FaceR_Normal as u16,
+                (true, true) => K_POSE_28_FACE_L_CROUCH as u16,
+                (true, false) => K_POSE_27_FACE_R_CROUCH as u16,
+                (false, true) => K_POSE_02_FACE_L_NORMAL as u16,
+                (false, false) => K_POSE_01_FACE_R_NORMAL as u16,
             }
         } else {
             let table = if crouching { 0x9bc9c4 } else { 0x9bc9ba };
@@ -900,10 +901,10 @@ pub fn release_walljump<H: Host + ?Sized>(game: &mut H) {
     game.queue_sound(0, 7_u8, 15);
     if game.facing() == 8 {
         game.session_mut().player.transitions.transitional =
-            PoseRequestWord::from_raw(kPose_84_FaceL_Walljump as u16);
+            PoseRequestWord::from_raw(K_POSE_84_FACE_L_WALLJUMP as u16);
     } else {
         game.session_mut().player.transitions.transitional =
-            PoseRequestWord::from_raw(kPose_83_FaceR_Walljump as u16);
+            PoseRequestWord::from_raw(K_POSE_83_FACE_R_WALLJUMP as u16);
     }
     game.session_mut().player.transitions.hurt = HurtAction::from_raw(6);
     game.session_mut().player.contact.acceleration_mode = 0;
@@ -924,23 +925,23 @@ pub fn release_swing<H: Host + ?Sized>(game: &mut H) {
     game.queue_sound(0, 7_u8, 15);
     if game.session().player.swing.angular_velocity & 0x8000 == 0 {
         game.session_mut().player.transitions.transitional =
-            PoseRequestWord::from_raw(kPose_52_FaceL_Jump_NoAim_MoveF as u16);
+            PoseRequestWord::from_raw(K_POSE_52_FACE_L_JUMP_NO_AIM_MOVE_F as u16);
     } else {
         game.session_mut().player.transitions.transitional =
-            PoseRequestWord::from_raw(kPose_51_FaceR_Jump_NoAim_MoveF as u16);
+            PoseRequestWord::from_raw(K_POSE_51_FACE_R_JUMP_NO_AIM_MOVE_F as u16);
     }
     game.session_mut().player.transitions.hurt = HurtAction::from_raw(7);
     finish_release(game);
 }
 
 fn finish_release<H: Host + ?Sized>(game: &mut H) {
-    word!(game.grapple_beam_unkD1E = 0);
+    word!(game.offscreen_beam_hdma_index = 0);
     word!(game.grapple_beam_unkD20 = 0);
     game.session_mut().player.grapple_direction = 0;
-    word!(game.grapple_beam_unkD36 = 0);
+    word!(game.grapple_special_angle_flag = 0);
     game.session_mut().player.transitions.grapple_walljump_timer = 0;
     game.session_mut().player.grapple_slow_scrolling = 0;
-    word!(game.grapple_varCF6 = 0);
+    word!(game.grapple_auto_fire_timer = 0);
     game.session_mut().player.grapple_flags = 0;
     game.session_mut().projectiles.controls.charge = 0;
     game.session_mut().projectiles.controls.flare_frames[0] = 0;
@@ -1023,8 +1024,8 @@ pub fn update_tiles<
 
 pub fn update<H: Host + ?Sized>(game: &mut H) {
     let r18: u16;
-    if word!(game.grapple_varCF6) != 0 {
-        word!(game.grapple_varCF6 -= 1);
+    if word!(game.grapple_auto_fire_timer) != 0 {
+        word!(game.grapple_auto_fire_timer -= 1);
     }
     game.session_mut().player.grapple_interaction_flags =
         game.session().player.grapple_interaction_flags & (!(1));
@@ -1144,7 +1145,7 @@ fn dispatch<H: Host + ?Sized>(ea: u32, game: &mut H) {
                 accelerate(game);
                 rebound_jump(game);
                 advance_swing(game);
-                if (word!(game.grapple_beam_unkD36) & 0x8000) != 0
+                if (word!(game.grapple_special_angle_flag) & 0x8000) != 0
                     && apply_special_angle(game) & 1 != 0
                 {
                     return;

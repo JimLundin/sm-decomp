@@ -1,7 +1,7 @@
 //! The Ceres and Zebes escape typewriter text, read word by word from bank $A6.
 #![forbid(unsafe_code)]
-use crate::game::constants::bank_a9::addr_loc_A9C49C;
-use crate::game::music::{QueueSfx2_Max3, QueueSfx3_Max3};
+use crate::game::constants::bank_a9::ADDR_LOC_A9C49C;
+use crate::game::music::{queue_sfx2_max3, queue_sfx3_max3};
 use crate::game::session_runtime::native_record;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
@@ -28,7 +28,7 @@ pub(crate) fn start_zebes_escape_typewriter(game: &mut Game) {
     word!(game.palette_buffer[158] = word!(game.palette_buffer[126]));
     slot!(
         game,
-        MotherBrainBody[0].beam_left_edge = addr_loc_A9C49C as u16
+        MotherBrainBody[0].beam_left_edge = ADDR_LOC_A9C49C as u16
     );
     slot!(game, MotherBrainBody[0]; beam_left_origin_x = 0, beam_left_origin_y = 0, beam_right_origin_x = 0, beam_right_origin_y = 0);
     word! { game, 0; reg_BG2HOFS, reg_BG2VOFS }
@@ -119,9 +119,9 @@ pub(crate) fn type_escape_text(tiles: u16, game: &mut Game) -> u8 {
     if (ticks as i32 - 2) & 0x8000 == 0 {
         slot!(game, MotherBrainBody[0].beam_right_origin_y = 0);
         if word!(game.area_index) == 6 {
-            QueueSfx2_Max3(0x45, game);
+            queue_sfx2_max3(0x45, game);
         } else {
-            QueueSfx3_Max3(0xd, game);
+            queue_sfx3_max3(0xd, game);
         }
     }
     0

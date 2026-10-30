@@ -46,7 +46,7 @@ pub(crate) fn seed(id: u32, g: &mut Game, image: &RomImage) -> Operation {
             Operation::MetroidHurt
         }
         88..=91 => {
-            field(g, offset_of!(Metroid, var_F), 2); // Actual Func3 follows Samus without collision traversal.
+            field(g, offset_of!(Metroid, var_f), 2); // Actual Func3 follows Samus without collision traversal.
             put(g, w::samus_x_pos, 0x112);
             put(g, w::samus_y_pos, 0x220);
             let handles = [(62, 60), (0x40, 0x80), (0xffff, 0xfffd), (3, 5)][(id - 88) as usize];
@@ -63,7 +63,7 @@ pub(crate) fn seed(id: u32, g: &mut Game, image: &RomImage) -> Operation {
             field(g, offset_of!(EnemyBase, ai_handler_bits), 0x14);
             field(
                 g,
-                offset_of!(Metroid, var_E),
+                offset_of!(Metroid, var_e),
                 if id & 1 == 0 { 0 } else { 1 },
             );
             put(g, w::equipped_beams, if id & 1 == 0 { 0 } else { 2 });

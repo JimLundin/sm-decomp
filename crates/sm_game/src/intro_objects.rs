@@ -50,7 +50,7 @@ pub fn advance_intro_baby_pursuit<H: crate::menus::host::Host + ?Sized>(object: 
     let slot = usize::from(object >> 1);
     if word!(game.cinematic_var13) == 0 {
         resume_cinematic_sprite(slot, 0xce53, game);
-        word!(game.cinematic_var15 = 0);
+        word!(game.intro_samus_display = 0);
         return;
     }
     if (word!(game.cinematicspr_goto_timer[slot]) as i32 - 128) & 0x8000 != 0 {
@@ -68,7 +68,7 @@ pub fn advance_intro_baby_pursuit<H: crate::menus::host::Host + ?Sized>(object: 
         word!(game.cinematic_var14 += 32);
     }
     word!(
-        game.cinematic_var15 = if word!(game.cinematic_var14) & 0x8000 != 0 {
+        game.intro_samus_display = if word!(game.cinematic_var14) & 0x8000 != 0 {
             1
         } else {
             u16::MAX
@@ -173,9 +173,9 @@ pub fn initialize_ceres_explosion<H: crate::menus::host::Host + ?Sized>(
     // Keep the Y lookup and camera reads after the X store for aliased slots.
     word! { game;
         cinematicbg_arr7[slot] = (x[parameter] as i32 + word!(game.reg_M7X) as i32
-            - word!(game.cinematic_var8) as i32) as u16;
+            - word!(game.cinematic_x) as i32) as u16;
         cinematicbg_arr8[slot] = (y[parameter] as i32 + word!(game.reg_M7Y) as i32
-            - word!(game.cinematic_var10) as i32) as u16;
+            - word!(game.cinematic_y) as i32) as u16;
         cinematicbg_arr9[slot] = 2560;
     }
 }
@@ -184,7 +184,7 @@ pub fn advance_intro_landing_mosaic<H: crate::menus::host::Host + ?Sized>(
     fading: bool,
     game: &mut H,
 ) {
-    if word!(game.cinematic_var12) & 3 == 0 {
+    if word!(game.cinematic_frame_counter) & 3 == 0 {
         game.ram()
             .write_byte(0x57, game.ram().read_byte(0x57).wrapping_sub(16));
         if !fading && game.ram().read_byte(0x57) & 0xf0 == 0 {
@@ -193,8 +193,8 @@ pub fn advance_intro_landing_mosaic<H: crate::menus::host::Host + ?Sized>(
             game.ram().write_byte(0x58, 0);
             game.ram().write_byte(0x5d, 0);
             game.ram().write_byte(0x69, 17);
-            word! {game; cinematic_var8 = 128; cinematic_var10 = -104i32 as u16;
-            cinematic_var5 = 32; cinematic_var6 = 256; }
+            word! {game; cinematic_x = 128; cinematic_y = -104i32 as u16;
+            mode7_angle = 32; mode7_zoom = 256; }
             for (definition, parameter) in [
                 (0xcea3, 0x0100), // The preceding $198F store leaves $0100 in A.
                 (0xcef7, 0x0e00), // Palette left in A by the preceding sprite initializer.
@@ -224,7 +224,7 @@ pub fn advance_ceres_station<H: crate::menus::host::Host + ?Sized>(object: u16, 
         let velocity = ((word!(game.cinematicspr_goto_timer[slot]) as i16 as i32) << 8) as u32;
         advance_cinematic_coordinate(object, true, velocity, game);
         advance_cinematic_coordinate(object, false, velocity, game);
-        for low in [ram_words::cinematic_var7, ram_words::cinematic_var9] {
+        for low in [ram_words::cinematic_x_sub, ram_words::cinematic_y_sub] {
             add_native_pair(low + 2, low, velocity, game);
         }
     }
@@ -232,17 +232,17 @@ pub fn advance_ceres_station<H: crate::menus::host::Host + ?Sized>(object: u16, 
 
 pub fn advance_zebes_flight<H: crate::menus::host::Host + ?Sized>(stage: u8, game: &mut H) {
     if stage == 0 {
-        word!(game.cinematic_var8 = 62);
-        word!(game.cinematic_var10 = -112i16 as u16);
-        word!(game.cinematic_var5 = 32);
-        word!(game.cinematic_var6 = 16);
+        word!(game.cinematic_x = 62);
+        word!(game.cinematic_y = -112i16 as u16);
+        word!(game.mode7_angle = 32);
+        word!(game.mode7_zoom = 16);
         crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xc9f9);
         return;
     }
     let (horizontal, threshold, limit, increment, next) = [
-        (0xffff8000, ram_words::cinematic_var6, 1152, 4, 0xca36),
-        (0xffff8000, ram_words::cinematic_var8, -128, 16, 0xca85),
-        (0x2000, ram_words::cinematic_var6, 0x2000, 32, 0xcad0),
+        (0xffff8000, ram_words::mode7_zoom, 1152, 4, 0xca36),
+        (0xffff8000, ram_words::cinematic_x, -128, 16, 0xca85),
+        (0x2000, ram_words::mode7_zoom, 0x2000, 32, 0xcad0),
     ][usize::from(stage - 1)];
     add_native_pair(0x1997, 0x1995, 0x2000, game);
     add_native_pair(0x1993, 0x1991, horizontal, game);
@@ -253,12 +253,12 @@ pub fn advance_zebes_flight<H: crate::menus::host::Host + ?Sized>(stage: u8, gam
         }
         crate::flow::set(game, crate::flow::Word::CinematicFunction, next);
         if stage == 3 {
-            word!(game.cinematic_var4 = 64);
+            word!(game.cinematic_function_timer = 64);
         }
     } else {
-        word!(game.cinematic_var6 += increment);
-        if stage == 2 && word!(game.cinematic_var5) != 224 {
-            word!(game.cinematic_var5 = (word!(game.cinematic_var5) as u8).wrapping_sub(1) as u16);
+        word!(game.mode7_zoom += increment);
+        if stage == 2 && word!(game.mode7_angle) != 224 {
+            word!(game.mode7_angle = (word!(game.mode7_angle) as u8).wrapping_sub(1) as u16);
         }
     }
 }
@@ -269,11 +269,11 @@ pub fn advance_zebes_destruction_zoom<H: crate::menus::host::Host + ?Sized>(
     fade_in: Option<u16>,
     game: &mut H,
 ) {
-    if word!(game.cinematic_var12) & 1 == 0 {
-        word!(game.cinematic_var5 = (word!(game.cinematic_var5) as u8).wrapping_sub(1) as u16);
+    if word!(game.cinematic_frame_counter) & 1 == 0 {
+        word!(game.mode7_angle = (word!(game.mode7_angle) as u8).wrapping_sub(1) as u16);
     }
-    word!(game.cinematic_var6 += speed);
-    if (word!(game.cinematic_var6) as i32 - 384) & 0x8000 == 0
+    word!(game.mode7_zoom += speed);
+    if (word!(game.mode7_zoom) as i32 - 384) & 0x8000 == 0
         && advance_cinematic_fade(CinematicFade::FastOut, game)
     {
         crate::flow::set(game, crate::flow::Word::CinematicFunction, next_scene);
@@ -346,25 +346,25 @@ pub fn update_cinematic_transform<H: crate::menus::host::Host + ?Sized>(
 ) {
     use crate::projectile_geometry::SINE_COSINE;
     if rotated {
-        let angle = (word!(game.cinematic_var5) as u8).wrapping_add(64);
+        let angle = (word!(game.mode7_angle) as u8).wrapping_add(64);
         let cosine = scaled_cinematic_value(
             SINE_COSINE[usize::from(angle) + 64] as u16,
-            word!(game.cinematic_var6),
+            word!(game.mode7_zoom),
         );
         word!(game.reg_M7A = cosine);
         word!(game.reg_M7D = word!(game.reg_M7A));
-        let angle = word!(game.cinematic_var5) as u8;
+        let angle = word!(game.mode7_angle) as u8;
         let sine = scaled_cinematic_value(
             SINE_COSINE[usize::from(angle) + 64] as u16,
-            word!(game.cinematic_var6),
+            word!(game.mode7_zoom),
         );
         word! {game; reg_M7B = sine; reg_M7C = sine.wrapping_neg(); }
     } else {
-        word! {game; reg_M7A = word!(game.cinematic_var6); reg_M7D = word!(game.cinematic_var6); }
+        word! {game; reg_M7A = word!(game.mode7_zoom); reg_M7D = word!(game.mode7_zoom); }
         word! { game, 0; reg_M7B, reg_M7C }
     }
-    word!(game.reg_BG1HOFS = word!(game.cinematic_var8));
-    word!(game.reg_BG1VOFS = word!(game.cinematic_var10));
+    word!(game.reg_BG1HOFS = word!(game.cinematic_x));
+    word!(game.reg_BG1VOFS = word!(game.cinematic_y));
 }
 
 pub fn draw_cinematic_rectangle<H: crate::menus::host::Host + ?Sized>(

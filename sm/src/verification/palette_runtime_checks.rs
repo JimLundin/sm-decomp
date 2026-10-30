@@ -3,7 +3,7 @@
 use crate::{game_state::Game, ram_map::words as ram, rom::RomImage};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use {
-    crate::game::{music::QueueMusic_Delayed8, session_runtime::Runtime},
+    crate::game::{music::queue_music_delayed_8, session_runtime::Runtime},
     sm_game::palette_effects::execution,
 };
 
@@ -131,7 +131,7 @@ pub(super) fn run(game: &mut Game) -> bool {
                         14
                     );
                     assert_eq!(word(&|at| game.ram().read_byte(at), 0xc00a), 0x4567);
-                    QueueMusic_Delayed8(0x2345, game);
+                    queue_music_delayed_8(0x2345, game);
                     panic!("intentional palette callback unwind");
                 });
             }));

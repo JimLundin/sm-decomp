@@ -1,46 +1,46 @@
 //! Live foreign adapters over the shared Session projection.
 #![forbid(unsafe_code)]
-use super::host::{BotwoonField, SpeciesActors, WaffleField};
+use super::host::{BotwoonField, FireArcField, SpeciesActors};
 use crate::game::session_runtime::Runtime;
 use crate::{ram_map::words as W, types::Ram7800_Kraid};
 use core::mem::offset_of;
 use sm_game::actors::layouts::{EnemyLayout72, EnemyLayout104};
 use sm_game::actors::mother_brain::MotherBrainBody;
-fn waffle_offset(field: WaffleField) -> usize {
+fn waffle_offset(field: FireArcField) -> usize {
     match field {
-        WaffleField::Behavior => offset_of!(EnemyLayout72, var_A),
-        WaffleField::Reverse => offset_of!(EnemyLayout72, var_E),
-        WaffleField::Radius => offset_of!(EnemyLayout72, var_D),
-        WaffleField::PhaseFraction => offset_of!(EnemyLayout72, var_20),
-        WaffleField::Phase => offset_of!(EnemyLayout72, var_21),
-        WaffleField::StartPhase => offset_of!(EnemyLayout72, var_23),
-        WaffleField::PhaseSpeedFraction => offset_of!(EnemyLayout72, var_24),
-        WaffleField::PhaseSpeed => offset_of!(EnemyLayout72, var_25),
-        WaffleField::CenterX => offset_of!(EnemyLayout72, var_26),
-        WaffleField::CenterY => offset_of!(EnemyLayout72, var_27),
-        WaffleField::PartCursor => offset_of!(EnemyLayout72, var_2A),
-        WaffleField::Spacing => offset_of!(EnemyLayout72, var_2B),
-        WaffleField::PhaseLead => offset_of!(EnemyLayout72, var_2C),
-        WaffleField::EndPhase => offset_of!(EnemyLayout72, var_2E),
-        WaffleField::FirstTransition => offset_of!(EnemyLayout72, var_2F),
-        WaffleField::SecondTransition => offset_of!(EnemyLayout72, var_30),
-        WaffleField::HeadStage => offset_of!(EnemyLayout72, var_33),
-        WaffleField::Palette => offset_of!(EnemyLayout72, var_34),
-        WaffleField::Projectile => offset_of!(EnemyLayout72, var_00),
-        WaffleField::PartStage => offset_of!(EnemyLayout72, var_08),
-        WaffleField::Sprite => offset_of!(EnemyLayout72, var_10),
-        WaffleField::SpriteStage => offset_of!(EnemyLayout72, var_18),
+        FireArcField::Behavior => offset_of!(EnemyLayout72, var_a),
+        FireArcField::Reverse => offset_of!(EnemyLayout72, var_e),
+        FireArcField::Radius => offset_of!(EnemyLayout72, var_d),
+        FireArcField::PhaseFraction => offset_of!(EnemyLayout72, var_20),
+        FireArcField::Phase => offset_of!(EnemyLayout72, var_21),
+        FireArcField::StartPhase => offset_of!(EnemyLayout72, var_23),
+        FireArcField::PhaseSpeedFraction => offset_of!(EnemyLayout72, var_24),
+        FireArcField::PhaseSpeed => offset_of!(EnemyLayout72, var_25),
+        FireArcField::CenterX => offset_of!(EnemyLayout72, var_26),
+        FireArcField::CenterY => offset_of!(EnemyLayout72, var_27),
+        FireArcField::PartCursor => offset_of!(EnemyLayout72, var_2a),
+        FireArcField::Spacing => offset_of!(EnemyLayout72, var_2b),
+        FireArcField::PhaseLead => offset_of!(EnemyLayout72, var_2c),
+        FireArcField::EndPhase => offset_of!(EnemyLayout72, var_2e),
+        FireArcField::FirstTransition => offset_of!(EnemyLayout72, var_2f),
+        FireArcField::SecondTransition => offset_of!(EnemyLayout72, var_30),
+        FireArcField::HeadStage => offset_of!(EnemyLayout72, var_33),
+        FireArcField::Palette => offset_of!(EnemyLayout72, var_34),
+        FireArcField::Projectile => offset_of!(EnemyLayout72, var_00),
+        FireArcField::PartStage => offset_of!(EnemyLayout72, var_08),
+        FireArcField::Sprite => offset_of!(EnemyLayout72, var_10),
+        FireArcField::SpriteStage => offset_of!(EnemyLayout72, var_18),
     }
 }
 fn botwoon_offset(field: BotwoonField) -> usize {
     match field {
-        BotwoonField::HistoryCursor => offset_of!(EnemyLayout104, var_B),
-        BotwoonField::HistorySpacing => offset_of!(EnemyLayout104, var_C),
+        BotwoonField::HistoryCursor => offset_of!(EnemyLayout104, var_b),
+        BotwoonField::HistorySpacing => offset_of!(EnemyLayout104, var_c),
         BotwoonField::Projectile => offset_of!(EnemyLayout104, var_00),
         BotwoonField::Visible => offset_of!(EnemyLayout104, var_10),
         BotwoonField::TransitionPending => offset_of!(EnemyLayout104, var_35),
         BotwoonField::TransitionCursor => offset_of!(EnemyLayout104, var_36),
-        BotwoonField::TailState => offset_of!(EnemyLayout104, var_3E),
+        BotwoonField::TailState => offset_of!(EnemyLayout104, var_3e),
         BotwoonField::Pattern => offset_of!(EnemyLayout104, var_33),
     }
 }
@@ -54,10 +54,10 @@ impl SpeciesActors for Runtime<'_> {
     fn mini_kraid_spit_x_offset(&self, index: u16) -> u16 {
         self.word(0x7804 + usize::from(index))
     }
-    fn kraid_unk9000(&self) -> u16 {
-        self.word(W::kraid_unk9000)
+    fn boss_death_quake_sound_timer(&self) -> u16 {
+        self.word(W::boss_death_quake_sound_timer)
     }
-    fn nuclear_waffle_part_offset(&self, index: u16) -> u16 {
+    fn fire_arc_part_offset(&self, index: u16) -> u16 {
         self.word(0x8000 + usize::from(index) + 20)
     }
     fn enemy_projectile_origin_x(&self, index: u16) -> u16 {
@@ -227,14 +227,14 @@ impl SpeciesActors for Runtime<'_> {
         self.word(
             0xf78
                 + usize::from(enemy)
-                + offset_of!(sm_game::actors::layouts::EnemyLayout104, var_0C),
+                + offset_of!(sm_game::actors::layouts::EnemyLayout104, var_0c),
         )
     }
     fn maw_anchor_y(&self, enemy: u16) -> u16 {
         self.word(
             0xf78
                 + usize::from(enemy)
-                + offset_of!(sm_game::actors::layouts::EnemyLayout104, var_0D),
+                + offset_of!(sm_game::actors::layouts::EnemyLayout104, var_0d),
         )
     }
     fn maw_segment_offset_x(&self, enemy: u16, part: u8) -> u16 {
@@ -265,10 +265,10 @@ impl SpeciesActors for Runtime<'_> {
     fn expanding_square_origin(&self) -> u16 {
         self.word(0x9e00)
     }
-    fn waffle_field(&self, enemy: usize, field: WaffleField) -> u16 {
+    fn fire_arc_field(&self, enemy: usize, field: FireArcField) -> u16 {
         self.word(0xf78 + enemy + waffle_offset(field))
     }
-    fn set_waffle_field(&mut self, enemy: usize, field: WaffleField, value: u16) {
+    fn set_fire_arc_field(&mut self, enemy: usize, field: FireArcField, value: u16) {
         self.write_slice_le(0xf78 + enemy + waffle_offset(field), value);
     }
     fn botwoon_field(&self, enemy: usize, field: BotwoonField) -> u16 {

@@ -4,7 +4,7 @@
 use crate::actors::host::ActorHost;
 use crate::actors::layouts::{EnemyBase, KraidLayout as Kraid, same_words};
 use crate::cartridge::native_record;
-use crate::constants::enemy_properties::kEnemyProps_Invisible;
+use crate::constants::enemy_properties::K_ENEMY_PROPS_INVISIBLE;
 use crate::ram::RawRam as _;
 use crate::ram::slot;
 
@@ -35,13 +35,13 @@ pub struct Fingernail {
 }
 
 same_words!(Fingernail: KraidLayout {
-    function = kraid_var_A, x_subvelocity = kraid_var_B, function_timer = kraid_var_F,
+    function = kraid_var_a, x_subvelocity = kraid_var_b, function_timer = kraid_var_f,
     next_function = kraid_next, unread_7802 = field_2, unread_7804 = field_4,
     kraid_thinking = kraid_thinking, kraid_min_y_pos_eject = kraid_min_y_pos_eject,
     kraid_mouth_flags = kraid_mouth_flags, health_eighths = kraid_healths_8ths,
     kraid_target_x = kraid_target_x, health_quarters = kraid_healths_4ths,
     kraid_hurt_frame = kraid_hurt_frame, kraid_hurt_frame_timer = kraid_hurt_frame_timer,
-    unread_782e = field_2E,
+    unread_782e = field_2e,
 });
 
 /// Bank $A7 instruction lists.
@@ -75,7 +75,7 @@ pub fn initialize(k: u16, game: &mut (impl ActorHost + ?Sized)) {
     slot!(
         game,
         Fingernail[nail].base.properties =
-            slot!(game, Fingernail[nail].base.properties) | kEnemyProps_Invisible as u16
+            slot!(game, Fingernail[nail].base.properties) | K_ENEMY_PROPS_INVISIBLE as u16
     );
     slot!(game, Fingernail[nail].base;
         instruction_timer = HOLD, current_instruction = instruction_list::FINGERNAIL);

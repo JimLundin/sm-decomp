@@ -9,7 +9,9 @@
 use crate::actors::dachora::load_palette;
 use crate::actors::host::{Axis, Slopes};
 use crate::actors::layouts::part_view;
-use crate::constants::enemy_properties::{kEnemyProps_DisableSamusColl, kEnemyProps_Invisible};
+use crate::constants::enemy_properties::{
+    K_ENEMY_PROPS_DISABLE_SAMUS_COLL, K_ENEMY_PROPS_INVISIBLE,
+};
 use crate::ram::RawRam as _;
 use crate::ram::{slot, word};
 
@@ -44,7 +46,7 @@ part_view! {
     /// the frames until the next echo is placed. `parameter_1` is negative,
     /// bit 0 facing right.
     Echo: EnemyLayout8 {
-        words: [spawn_timer, var_B, var_C, lifetime, var_E, function, parameter_1, parameter_2],
+        words: [spawn_timer, var_b, var_c, lifetime, var_e, function, parameter_1, parameter_2],
     }
 }
 
@@ -123,7 +125,7 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
     slot!(
         game,
         Dachora[me].base.properties =
-            (slot!(game, Dachora[me].base.properties)) | (kEnemyProps_DisableSamusColl as u16)
+            (slot!(game, Dachora[me].base.properties)) | (K_ENEMY_PROPS_DISABLE_SAMUS_COLL as u16)
     );
     slot!(
         game,
@@ -398,7 +400,7 @@ pub fn echo<H: Host + ?Sized>(game: &mut H, k: u16) {
             slot!(
                 game,
                 Echo[me].base.properties = (slot!(game, Echo[me].base.properties) as i32
-                    & !(kEnemyProps_Invisible as i32))
+                    & !(K_ENEMY_PROPS_INVISIBLE as i32))
                     as u16
             );
             return;
@@ -407,7 +409,7 @@ pub fn echo<H: Host + ?Sized>(game: &mut H, k: u16) {
     slot!(
         game,
         Echo[me].base.properties =
-            (slot!(game, Echo[me].base.properties)) | (kEnemyProps_Invisible as u16)
+            (slot!(game, Echo[me].base.properties)) | (K_ENEMY_PROPS_INVISIBLE as u16)
     );
 }
 

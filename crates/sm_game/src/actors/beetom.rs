@@ -12,13 +12,13 @@ use crate::session_slot;
 
 part_view! {
     Beetom: EnemyLayout40 {
-        words: [var_A, y_speed_index, function, function_timer, button_counter, previous_input, parameter_1, parameter_2],
+        words: [var_a, y_speed_index, function, function_timer, button_counter, previous_input, parameter_1, parameter_2],
         pad1: [u8; 26696],
         words: [
             instruction_list, var_01, short_hop_y_speed_index, long_hop_y_speed_index, lunge_y_speed_index,
-            falling, samus_x_offset, samus_y_offset, attached, direction, var_0A, var_0B, var_0C, var_0D,
-            var_0E, var_0F, var_10, var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19,
-            var_1A, var_1B, var_1C, var_1D, var_1E, var_1F,
+            falling, samus_x_offset, samus_y_offset, attached, direction, var_0a, var_0b, var_0c, var_0d,
+            var_0e, var_0f, var_10, var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19,
+            var_1a, var_1b, var_1c, var_1d, var_1e, var_1f,
         ],
     }
 }
@@ -99,7 +99,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
     let runtime = &mut lease;
     let beetom = current_slot(runtime);
     session_slot!(runtime, Beetom[beetom]; function_timer = 0, function = 0, falling = 0, attached = 0,
-        var_A = 0, button_counter = BUTTON_PRESSES);
+        var_a = 0, button_counter = BUTTON_PRESSES);
     let input = runtime.word(words::joypad1_lastkeys);
     session_slot!(runtime, Beetom[beetom].previous_input = input);
     runtime.write_slice_le(words::random_number, 0x17);

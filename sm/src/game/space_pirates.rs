@@ -1,7 +1,7 @@
 //! Space pirates run in `sm_game::actors::space_pirates`; the game side of
 //! their hosts lives here.
 #![forbid(unsafe_code)]
-use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx, scatter_drop};
+use crate::game::enemy_projectiles::{scatter_drop, spawn_with_enemy_gfx, spawn_with_room_gfx};
 use crate::game::session_runtime::{Runtime, actor_cosine, actor_sine};
 use crate::game::sprite_effect_runtime::create_sprite;
 use crate::game_state::Game;
@@ -40,7 +40,7 @@ impl Pirates for Game {
     fn fire_laser(&mut self, x: u16, y: u16, right: bool) {
         self.eproj_spawn_pt = Point16U { x, y };
         self.eproj_spawn_r22 = u16::from(right);
-        SpawnEprojWithRoomGfx(0xa17b, u16::from(right), self);
+        spawn_with_room_gfx(0xa17b, u16::from(right), self);
     }
 
     fn spawn_in_rect(&mut self, x: u16, y: u16, width: u16, height: u16, parameter: u16) {
@@ -50,7 +50,7 @@ impl Pirates for Game {
             w: width,
             h: height,
         };
-        SpawnEprojWithGfx(parameter, word!(self.cur_enemy_index), 0xa189, self);
+        spawn_with_enemy_gfx(parameter, word!(self.cur_enemy_index), 0xa189, self);
     }
 
     fn scatter_pirate_drop(&mut self, index: u16) {

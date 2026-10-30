@@ -12,7 +12,7 @@ use sm_data::corpses::*;
 #[derive(Default)]
 pub struct ImportedCorpses {
     hops: Option<Imported<Hops>>,
-    zoomer: Option<Imported<Variants<ZOOMER_ROWS>>>,
+    geemer: Option<Imported<Variants<GEEMER_ROWS>>>,
     ripper: Option<Imported<Variants<RIPPER_ROWS>>>,
     skree: Option<Imported<Variants<SKREE_ROWS>>>,
 }
@@ -20,7 +20,7 @@ pub struct ImportedCorpses {
 pub fn import(image: &RomImage) -> ImportedCorpses {
     ImportedCorpses {
         hops: Imported::import(image, HOP_ADDRESS, HOP_BYTES, import_hops),
-        zoomer: Imported::import(image, ZOOMER_ADDRESS, ZOOMER_ROWS * 4, import_variants),
+        geemer: Imported::import(image, GEEMER_ADDRESS, GEEMER_ROWS * 4, import_variants),
         ripper: Imported::import(image, RIPPER_ADDRESS, RIPPER_ROWS * 4, import_variants),
         skree: Imported::import(image, SKREE_ADDRESS, SKREE_ROWS * 4, import_variants),
     }
@@ -38,7 +38,7 @@ pub fn hop(game: &(impl Records + ?Sized), index: isize) -> Hop {
 /// A corpse whose variants the tables above choose between.
 #[derive(Clone, Copy)]
 pub enum Corpse {
-    Zoomer,
+    Geemer,
     Ripper,
     Skree,
 }
@@ -48,10 +48,10 @@ pub fn variant(game: &(impl Records + ?Sized), corpse: Corpse, index: isize) -> 
     let rom = rom(game);
     let tables = &game.records().corpse_tables;
     let (variant, address, rotting) = match corpse {
-        Corpse::Zoomer => (
-            row(&tables.zoomer, rom, index),
-            ZOOMER_ADDRESS,
-            ZOOMER_ROTTING_ADDRESS,
+        Corpse::Geemer => (
+            row(&tables.geemer, rom, index),
+            GEEMER_ADDRESS,
+            GEEMER_ROTTING_ADDRESS,
         ),
         Corpse::Ripper => (
             row(&tables.ripper, rom, index),

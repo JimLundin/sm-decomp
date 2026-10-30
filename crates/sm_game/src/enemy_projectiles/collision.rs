@@ -319,12 +319,10 @@ fn move_against_blocks(handle: u16, axis: Axis, h: &mut impl Host) -> u8 {
     1
 }
 
-#[allow(non_snake_case)]
-pub fn EprojBlockCollisition_Horiz(handle: u16, h: &mut impl Host) -> u8 {
+pub fn move_horizontally_with_block_collision(handle: u16, h: &mut impl Host) -> u8 {
     move_against_blocks(handle, Axis::Horizontal, h)
 }
-#[allow(non_snake_case)]
-pub fn EprojBlockCollisition_Vertical(handle: u16, h: &mut impl Host) -> u8 {
+pub fn move_vertically_with_block_collision(handle: u16, h: &mut impl Host) -> u8 {
     move_against_blocks(handle, Axis::Vertical, h)
 }
 

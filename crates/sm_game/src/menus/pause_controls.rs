@@ -159,7 +159,7 @@ pub fn resume<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     game.update_beam_tiles_and_palette();
     // Palette timer/frame and pause_screen_mode survive this ordered reset.
     crate::word_transfers!(game, ascending, 10; little(fields::menu_index) <- value(0));
-    crate::word_transfers!(game, ascending, 9; little(fields::UNUSED_word_7E073D) <- value(0));
+    crate::word_transfers!(game, ascending, 9; little(fields::unused_word_7e073d) <- value(0));
     crate::word_transfers!(game, ascending, 9; little(fields::pausemenu_shoulder_button_highlight) <- value(0));
     game.player_command(0xc);
 }
@@ -198,7 +198,7 @@ fn advance<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     shoulder_input(game);
     map_menu::animate_pause_sprite(2, 0x18, 0xd0, game);
     map_menu::animate_pause_sprite(2, 0xe8, 0xd0, game);
-    if word!(game.newly_held_down_timed_held_input) & kButton_Start as u16 != 0 {
+    if word!(game.newly_held_down_timed_held_input) & K_BUTTON_START as u16 != 0 {
         game.queue_sound(0, 0x38_u8, 6);
         word! { game, 1; screen_fade_delay, screen_fade_counter }
         let previous = crate::menu!(game.pausemenu_button_label_mode);
@@ -213,12 +213,12 @@ fn advance<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 
 fn shoulder_input<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     let (menu, highlight, mode) =
-        if word!(game.newly_held_down_timed_held_input) & kButton_L as u16 != 0 {
+        if word!(game.newly_held_down_timed_held_input) & K_BUTTON_L as u16 != 0 {
             if crate::menu!(game.pausemenu_button_label_mode) == 0 {
                 return;
             }
             (5, 1, 0)
-        } else if word!(game.newly_held_down_timed_held_input) & kButton_R as u16 != 0
+        } else if word!(game.newly_held_down_timed_held_input) & K_BUTTON_R as u16 != 0
             && crate::menu!(game.pausemenu_button_label_mode) != 2
         {
             (2, 2, 2)

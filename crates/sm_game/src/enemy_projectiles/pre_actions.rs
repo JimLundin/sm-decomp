@@ -4,7 +4,7 @@ use super::access::{enemy, enemy_add, enemy_byte, enemy_decrement, read_member};
 use super::addresses;
 use super::host::{EnemyMember as SlotField, Host, LoadedRecord};
 use super::pre_helpers::*;
-use super::shared::SpawnEprojWithRoomGfx;
+use super::shared::spawn_with_room_gfx;
 use super::*;
 use crate::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
 use crate::geometry::Point;
@@ -17,167 +17,141 @@ use crate::{
 pub fn dispatch(ea: u32, k: u16, ctx: &mut impl Host) {
     use addresses::pre::*;
     match ea {
-        SKREE_PARTICLE => Eproj_PreInstr_SkreeParticle(k, ctx),
-        SPIKE_SHOOTING_PLANT_SPIKES_MOVE_Y1 => {
-            EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(k, ctx)
-        }
-        SPIKE_SHOOTING_PLANT_SPIKES_MOVE_X1 => {
-            EprojPreInstr_SpikeShootingPlantSpikes_MoveX1(k, ctx)
-        }
-        SPIKE_SHOOTING_PLANT_SPIKES_MOVE_X2 => {
-            EprojPreInstr_SpikeShootingPlantSpikes_MoveX2(k, ctx)
-        }
-        SPIKE_SHOOTING_PLANT_SPIKES_6_MOVE_X1_Y1 => {
-            EprojPreInstr_SpikeShootingPlantSpikes_6_MoveX1Y1(k, ctx)
-        }
-        SPIKE_SHOOTING_PLANT_SPIKES_7_MOVE_X2_Y1 => {
-            EprojPreInstr_SpikeShootingPlantSpikes_7_MoveX2Y1(k, ctx)
-        }
-        DUST_CLOUD_OR_EXPLOSION => EprojPreInstr_DustCloudOrExplosion(k, ctx),
-        AT_8DCA => EprojPreInstr_8DCA(k, ctx),
-        DRAYGONS_TURRET_8_DFF => EprojPreInstr_DraygonsTurret_8DFF(k, ctx),
-        DRAYGONS_GUNK_8_E0_F => EprojPreInstr_DraygonsGunk_8E0F(k, ctx),
-        CROCOMIRE_PROJECTILE => EprojPreInstr_CrocomireProjectile(k, ctx),
-        SUB_8690_B3 => sub_8690B3(k, ctx),
-        CROCOMIRE_BRIDGE_CRUMBLING => EprojPreInstr_CrocomireBridgeCrumbling(k, ctx),
-        RIDLEYS_FIREBALL => EprojPreInstr_9642_RidleysFireball(k, ctx),
-        AT_966C => EprojPreInstr_966C(k, ctx),
-        AT_9688 => EprojPreInstr_9688(k, ctx),
-        AT_96A4 => EprojPreInstr_96A4(k, ctx),
-        AT_96C0 => EprojPreInstr_96C0(k, ctx),
-        CERES_FALLING_DEBRIS => EprojPreInstr_9734_CeresFallingDebris(k, ctx),
-        PHANTOON_DESTROYABLE_FIREBALLS => EprojPreInstr_PhantoonDestroyableFireballs(k, ctx),
-        PHANTOON_DESTROYABLE_FIREBALLS_3 => EprojPreInstr_PhantoonDestroyableFireballs_3(k, ctx),
-        PHANTOON_STARTING_FIREBALLS_B => EprojPreInstr_PhantoonStartingFireballsB(k, ctx),
-        KRAID_ROCKS => EprojPreInstr_KraidRocks(k, ctx),
-        ROCKS_FALLING_KRAID_CEILING => EprojPreInstr_RocksFallingKraidCeiling(k, ctx),
-        SUB_869_DA5 => sub_869DA5(k, ctx),
-        MINI_KRAID_SPIT => EprojPreInit_MiniKraidSpit(k, ctx),
-        MINI_KRAID_SPIKES => EprojPreInstr_MiniKraidSpikes(k, ctx),
-        WALKING_LAVA_SEAHORSE_FIREBALL => EprojPreInstr_WalkingLavaSeahorseFireball(k, ctx),
-        CERES_ELEVATOR_PAD => EprojPreInstr_CeresElevatorPad(k, ctx),
-        CERES_ELEVATOR_PLATFORM => EprojPreInstr_CeresElevatorPlatform(k, ctx),
-        AT_A977 => EprojPreInstr_A977(k, ctx),
-        BOMB_TORIZOS_CHOZO_ORBS => EprojPreInstr_BombTorizosChozoOrbs(k, ctx),
-        GOLDEN_TORIZOS_CHOZO_ORBS => EprojPreInstr_GoldenTorizosChozoOrbs(k, ctx),
-        TORIZO_SONIC_BOOM => EprojPreInstr_TorizoSonicBoom(k, ctx),
-        SUB_86_B0_B9 => sub_86B0B9(k, ctx),
-        SUB_86_B0_DD => sub_86B0DD(k, ctx),
-        AT_B237 => EprojPreInstr_B237(k, ctx),
-        GOLDEN_TORIZO_EYE_BEAM => EprojPreInstr_GoldenTorizoEyeBeam(k, ctx),
-        EYE_DOOR_PROJECTILE => EprojPreInstr_EyeDoorProjectile(k, ctx),
-        EYE_DOOR_SWEAT => EprojPreInstr_EyeDoorSweat(k, ctx),
+        SKREE_PARTICLE => skree_particle_pre_instruction(k, ctx),
+        CACATAC_SPIKES_MOVE_Y1 => move_cacatac_spike_up(k, ctx),
+        CACATAC_SPIKES_MOVE_X1 => move_cacatac_spike_left(k, ctx),
+        CACATAC_SPIKES_MOVE_X2 => move_cacatac_spike_right(k, ctx),
+        CACATAC_SPIKES_6_MOVE_X1_Y1 => cacatac_spike_up_left(k, ctx),
+        CACATAC_SPIKES_7_MOVE_X2_Y1 => cacatac_spike_up_right(k, ctx),
+        DUST_CLOUD_OR_EXPLOSION => dust_cloud_explosion_pre_instruction(k, ctx),
+        AT_8DCA => draygon_goop_stuck_to_samus_pre_instruction(k, ctx),
+        DRAYGONS_TURRET_8_DFF => draygon_turret_projectile_fired_pre_instruction(k, ctx),
+        DRAYGON_GOOP_8_E0_F => draygon_goop_pre_instruction(k, ctx),
+        CROCOMIRE_PROJECTILE => crocomire_projectile_setup_pre_instruction(k, ctx),
+        SUB_8690_B3 => crocomire_projectile_fired_pre_instruction(k, ctx),
+        CROCOMIRE_BRIDGE_CRUMBLING => crocomire_bridge_crumbling_pre_instruction(k, ctx),
+        RIDLEYS_FIREBALL => ridleys_fireball_pre_instruction(k, ctx),
+        AT_966C => horizontal_afterburn_pre_instruction(k, ctx),
+        AT_9688 => vertical_afterburn_pre_instruction(k, ctx),
+        AT_96A4 => proto_horizontal_afterburn_pre_instruction(k, ctx),
+        AT_96C0 => proto_vertical_afterburn_up_pre_instruction(k, ctx),
+        CERES_FALLING_DEBRIS => ceres_falling_debris_pre_instruction(k, ctx),
+        PHANTOON_DESTROYABLE_FIREBALLS => phantoon_enraged_flame_pre_instruction(k, ctx),
+        PHANTOON_DESTROYABLE_FIREBALLS_3 => phantoon_flame_spiral_pre_instruction(k, ctx),
+        PHANTOON_STARTING_FIREBALLS_B => phantoon_starting_flames_pre_instruction(k, ctx),
+        KRAID_ROCKS => kraid_rocks_pre_instruction(k, ctx),
+        ROCKS_FALLING_KRAID_CEILING => kraid_ceiling_rocks_pre_instruction(k, ctx),
+        SUB_869_DA5 => kraid_rocks_use_palette_0_pre_instruction(k, ctx),
+        MINI_KRAID_SPIT => mini_kraid_spit_pre_instruction(k, ctx),
+        MINI_KRAID_SPIKES => mini_kraid_spikes_pre_instruction(k, ctx),
+        ALCOON_FIREBALL => alcoon_fireball_pre_instruction(k, ctx),
+        CERES_ELEVATOR_PAD => ceres_elevator_pad_pre_instruction(k, ctx),
+        CERES_ELEVATOR_PLATFORM => ceres_elevator_pad_concealer_pre_instruction(k, ctx),
+        AT_A977 => bomb_torizo_statue_breaking_falling_pre_instruction(k, ctx),
+        BOMB_TORIZOS_CHOZO_ORBS => bomb_torizos_chozo_orbs_pre_instruction(k, ctx),
+        GOLDEN_TORIZOS_CHOZO_ORBS => golden_torizos_chozo_orbs_pre_instruction(k, ctx),
+        TORIZO_SONIC_BOOM => torizo_sonic_boom_pre_instruction(k, ctx),
+        SUB_86_B0_B9 => golden_torizo_egg_hatched_pre_instruction(k, ctx),
+        SUB_86_B0_DD => golden_torizo_egg_hit_wall_pre_instruction(k, ctx),
+        AT_B237 => golden_torizo_super_missile_thrown_pre_instruction(k, ctx),
+        GOLDEN_TORIZO_EYE_BEAM => golden_torizo_eye_beam_pre_instruction(k, ctx),
+        EYE_DOOR_PROJECTILE => eye_door_projectile_moving_pre_instruction(k, ctx),
+        EYE_DOOR_SWEAT => eye_door_sweat_pre_instruction(k, ctx),
         TOURIAN_STATUE_UNLOCKING_PARTICLE_WATER_SPLASH => {
-            EprojPreInstr_TourianStatueUnlockingParticleWaterSplash(k, ctx)
+            tourian_statue_particle_splash_pre_instruction(k, ctx)
         }
-        TOURIAN_STATUE_STUFF => EprojPreInstr_TourianStatueStuff(k, ctx),
+        TOURIAN_STATUE_STUFF => tourian_statue_base_decoration_pre_instruction(k, ctx),
         DESPAWN_OFF_SCREEN_BD1E => despawn_off_screen(k, ctx),
-        NORFAIR_LAVAQUAKE_ROCKS => EprojPreInstr_NorfairLavaquakeRocks(k, ctx),
-        MOTHER_BRAIN_ROOM_TURRETS => EprojPreInstr_MotherBrainRoomTurrets(k, ctx),
-        MOTHER_BRAIN_BOMB => EprojPreInstr_MotherBrainBomb(k, ctx),
-        MOTHER_BRAIN_RAINBOW_BEAM => EprojPreInstr_MotherBrainRainbowBeam(k, ctx),
-        MOTHER_BRAINS_DEATH_EXPLOSION_0 => EprojPreInit_MotherBrainsDeathExplosion_0(k, ctx),
-        MOTHER_BRAIN_TUBE_FALLING => EprojPreInstr_MotherBrainTubeFalling(k, ctx),
-        MOTHER_BRAIN_GLASS_SHATTERING_SHARD => {
-            EprojPreInstr_MotherBrainGlassShatteringShard(k, ctx)
-        }
-        KAGOS_BUGS => EprojPreInstr_KagosBugs(k, ctx),
-        AT_D0EC => EprojPreInstr_D0EC(k, ctx),
-        N00B_TUBE_SHARDS => EprojPreInstr_N00bTubeShards(k, ctx),
-        SUB_86_D83_D => sub_86D83D(k, ctx),
-        SUB_86_D89_F => sub_86D89F(k, ctx),
-        SUB_86_D8_DF => sub_86D8DF(k, ctx),
-        SPIKE_SHOOTING_PLANT_SPIKES_4_MOVE_Y2 => {
-            EprojPreInstr_SpikeShootingPlantSpikes_4_MoveY2(k, ctx)
-        }
-        SPIKE_SHOOTING_PLANT_SPIKES_8_MOVE_X1_Y2 => {
-            EprojPreInstr_SpikeShootingPlantSpikes_8_MoveX1Y2(k, ctx)
-        }
-        SPIKE_SHOOTING_PLANT_SPIKES_9_MOVE_X2_Y2 => {
-            EprojPreInstr_SpikeShootingPlantSpikes_9_MoveX2Y2(k, ctx)
-        }
-        SPIKE_SHOOTING_PLANT_SPIKES => EprojPreInstr_SpikeShootingPlantSpikes(k, ctx),
+        POLYP_ROCKS => polyp_rock_pre_instruction(k, ctx),
+        MOTHER_BRAIN_ROOM_TURRETS => mother_brain_turrets_pre_instruction(k, ctx),
+        MOTHER_BRAIN_BOMB => mother_brain_bomb_pre_instruction(k, ctx),
+        MOTHER_BRAIN_RAINBOW_BEAM => mother_brain_rainbow_beam_charging_pre_instruction(k, ctx),
+        MOTHER_BRAINS_DEATH_EXPLOSION_0 => mother_brain_death_explosion_pre_instruction(k, ctx),
+        MOTHER_BRAIN_TUBE_FALLING => mother_brain_tube_falling_pre_instruction(k, ctx),
+        MOTHER_BRAIN_GLASS_SHATTERING_SHARD => mother_brain_glass_shard_pre_instruction(k, ctx),
+        KAGOS_BUGS => kago_bug_idling_pre_instruction(k, ctx),
+        AT_D0EC => kago_bug_jumping_pre_instruction(k, ctx),
+        N00B_TUBE_SHARDS => n00b_tube_shard_flying_pre_instruction(k, ctx),
+        SUB_86_D83_D => n00b_tube_shard_falling_pre_instruction(k, ctx),
+        SUB_86_D89_F => n00b_tube_air_bubbles_falling_pre_instruction(k, ctx),
+        SUB_86_D8_DF => n00b_tube_air_bubbles_flying_pre_instruction(k, ctx),
+        CACATAC_SPIKES_4_MOVE_Y2 => cacatac_spike_down(k, ctx),
+        CACATAC_SPIKES_8_MOVE_X1_Y2 => cacatac_spike_down_left(k, ctx),
+        CACATAC_SPIKES_9_MOVE_X2_Y2 => cacatac_spike_down_right(k, ctx),
+        CACATAC_SPIKES => cacatac_spike_pre_instruction(k, ctx),
         DESPAWN_OFF_SCREEN_DBB6 => despawn_off_screen(k, ctx),
-        AT_DBF2 => EprojPreInstr_DBF2(k, ctx),
-        SPORE_SPAWNERS => EprojPreInstr_SporeSpawners(k, ctx),
-        BOTWOONS_BODY => EprojPreInstr_BotwoonsBody(k, ctx),
-        BOTWOONS_SPIT => EprojPreInstr_BotwoonsSpit(k, ctx),
-        SUB_86_A887 => sub_86A887(k, ctx),
-        AT_D128 => EprojPreInstr_D128(k, ctx),
-        NAMI_FUNE_FIREBALL => EprojPreInstr_NamiFuneFireball(k, ctx),
-        SUB_86_E049 => sub_86E049(k, ctx),
-        AT_BA42 => EprojPreInstr_BA42(k, ctx),
-        MOTHER_BRAINS_DROOL_FALLING => EprojInit_MotherBrainsDrool_Falling(k, ctx),
-        SHAKTOOL_ATTACK_FRONT_CIRCLE => EprojInit_ShaktoolAttackFrontCircle(k, ctx),
-        PRE_INIT_0X8AAF => Eproj_PreInit_0x8aaf(k, ctx),
-        CROCOMIRE_SPIKE_WALL_PIECES => EprojPreInstr_CrocomireSpikeWallPieces(k, ctx),
-        AT_9634 => EprojPreInstr_9634(k, ctx),
-        PHANTOON_STARTING_FIREBALLS => EprojPreInstr_PhantoonStartingFireballs(k, ctx),
-        PHANTOON_STARTING_FIREBALLS2 => EprojPreInstr_PhantoonStartingFireballs2(k, ctx),
-        PHANTOON_STARTING_FIREBALLS3 => EprojPreInstr_PhantoonStartingFireballs3(k, ctx),
-        PHANTOON_DESTROYABLE_FIREBALLS_2 => EprojPreInstr_PhantoonDestroyableFireballs_2(k, ctx),
-        PHANTOON_STARTING_FIREBALLS_B_2 => EprojPreInstr_PhantoonStartingFireballsB_2(k, ctx),
-        PIRATE_MOTHER_BRAIN_LASER_MOVE_LEFT => {
-            EprojPreInstr_PirateMotherBrainLaser_MoveLeft(k, ctx)
+        AT_DBF2 => mini_crocomire_projectile_pre_instruction(k, ctx),
+        SPORE_SPAWNERS => spore_spawner_pre_instruction(k, ctx),
+        BOTWOONS_BODY => botwoons_body_pre_instruction(k, ctx),
+        BOTWOONS_SPIT => botwoons_spit_pre_instruction(k, ctx),
+        SUB_86_A887 => bomb_torizo_drool_falling_pre_instruction(k, ctx),
+        AT_D128 => kago_bug_falling_pre_instruction(k, ctx),
+        NAMIHE_FUNE_FIREBALL => namihe_fune_fireball_pre_instruction(k, ctx),
+        SUB_86_E049 => lava_thrown_by_magdollite_pre_instruction(k, ctx),
+        AT_BA42 => tourian_statue_decoration_pre_instruction(k, ctx),
+        MOTHER_BRAINS_DROOL_FALLING => mother_brain_drool_falling_pre_instruction(k, ctx),
+        SHAKTOOL_ATTACK_FRONT_CIRCLE => shaktool_attack_front_circle_pre_instruction(k, ctx),
+        PRE_INIT_0X8AAF => projectile_8aaf_pre_instruction(k, ctx),
+        CROCOMIRE_SPIKE_WALL_PIECES => crocomire_spike_wall_pieces_pre_instruction(k, ctx),
+        AT_9634 => unused_9634_pre_instruction(k, ctx),
+        PHANTOON_STARTING_FIREBALLS => phantoon_casual_flame_falling_pre_instruction(k, ctx),
+        PHANTOON_STARTING_FIREBALLS2 => phantoon_casual_flame_hit_ground_pre_instruction(k, ctx),
+        PHANTOON_STARTING_FIREBALLS3 => phantoon_casual_flame_bouncing_pre_instruction(k, ctx),
+        PHANTOON_DESTROYABLE_FIREBALLS_2 => phantoon_flame_rain_pre_instruction(k, ctx),
+        PHANTOON_STARTING_FIREBALLS_B_2 => {
+            phantoon_starting_flames_activated_pre_instruction(k, ctx)
         }
-        PIRATE_MOTHER_BRAIN_LASER_MOVE_RIGHT => {
-            EprojPreInstr_PirateMotherBrainLaser_MoveRight(k, ctx)
+        PIRATE_MOTHER_BRAIN_LASER_MOVE_LEFT => pirate_laser_move_left_pre_instruction(k, ctx),
+        PIRATE_MOTHER_BRAIN_LASER_MOVE_RIGHT => pirate_laser_move_right_pre_instruction(k, ctx),
+        PIRATE_CLAW_THROWN_LEFT => pirate_claw_thrown_left_pre_instruction(k, ctx),
+        PIRATE_CLAW_THROWN_RIGHT => pirate_claw_thrown_right_pre_instruction(k, ctx),
+        AT_AB07 => projectile_ab07_pre_instruction(k, ctx),
+        GOLDEN_TORIZO_EGG => golden_torizo_egg_bouncing_pre_instruction(k, ctx),
+        GOLDEN_TORIZO_SUPER_MISSILE => golden_torizo_super_missile_held_pre_instruction(k, ctx),
+        SUB_86_B535 => dragon_fireball_pre_instruction(k, ctx),
+        TOURIAN_STATUE_UNLOCKING_PARTICLE => {
+            tourian_statue_unlocking_particle_pre_instruction(k, ctx)
         }
-        PIRATE_CLAW_THROWN_LEFT => EprojPreInstr_PirateClawThrownLeft(k, ctx),
-        PIRATE_CLAW_THROWN_RIGHT => EprojPreInstr_PirateClawThrownRight(k, ctx),
-        AT_AB07 => EprojPreInstr_AB07(k, ctx),
-        GOLDEN_TORIZO_EGG => EprojPreInstr_GoldenTorizoEgg(k, ctx),
-        GOLDEN_TORIZO_SUPER_MISSILE => EprojPreInstr_GoldenTorizoSuperMissile(k, ctx),
-        SUB_86_B535 => sub_86B535(k, ctx),
-        TOURIAN_STATUE_UNLOCKING_PARTICLE => EprojPreInstr_TourianStatueUnlockingParticle(k, ctx),
-        TOURIAN_STATUE_SOUL => EprojPreInstr_TourianStatueSoul(k, ctx),
-        AT_BE12 => EprojPreInstr_BE12(k, ctx),
-        MOTHER_BRAIN_ROOM_TURRET_BULLETS => EprojPreInstr_MotherBrainRoomTurretBullets(k, ctx),
-        MOVE_TO_BLUE_RING_SPAWN_POSITION => Eproj_MoveToBlueRingSpawnPosition(k, ctx),
-        AT_C84D => EprojPreInstr_C84D(k, ctx),
+        TOURIAN_STATUE_SOUL => tourian_statue_soul_pre_instruction(k, ctx),
+        AT_BE12 => shaktool_attack_back_circle_moving_pre_instruction(k, ctx),
+        MOTHER_BRAIN_ROOM_TURRET_BULLETS => mother_brain_turret_bullets_pre_instruction(k, ctx),
+        MOVE_TO_BLUE_RING_SPAWN_POSITION => mother_brain_blue_ring_lasers_pre_instruction(k, ctx),
+        AT_C84D => mother_brain_drool_attached_pre_instruction(k, ctx),
         MOTHER_BRAINS_RAINBOW_BEAM_EXPLOSION => {
-            EprojPreInstr_MotherBrainsRainbowBeamExplosion(k, ctx)
+            mother_brain_rainbow_beam_explosion_pre_instruction(k, ctx)
         }
         MOTHER_BRAINS_EXPLODED_DOOR_PARTICLES => {
-            EprojPreInstr_MotherBrainsExplodedDoorParticles(k, ctx)
+            mother_brain_escape_door_particles_pre_instruction(k, ctx)
         }
-        TIME_BOMB_SET_JAPANESE_TEXT => EprojPreInstr_TimeBombSetJapaneseText(k, ctx),
-        SUB_86_CFD5 => sub_86CFD5(k, ctx),
-        SUB_86_CFE6 => sub_86CFE6(k, ctx),
-        SUB_86_CFF8 => sub_86CFF8(k, ctx),
+        TIME_BOMB_SET_JAPANESE_TEXT => time_bomb_set_japanese_text_pre_instruction(k, ctx),
+        SUB_86_CFD5 => kihunter_acid_spit_left_start_pre_instruction(k, ctx),
+        SUB_86_CFE6 => kihunter_acid_spit_right_start_pre_instruction(k, ctx),
+        SUB_86_CFF8 => kihunter_acid_spit_moving_pre_instruction(k, ctx),
         KAGO_BUG_CRY_COUNTDOWN => kago_bug_cry_countdown(k, ctx),
         KAGO_BUG_FLAG_WHEN_FAR => kago_bug_flag_when_far(k, ctx),
-        MARIDIA_FLOATERS_SPIKES => EprojPreInstr_MaridiaFloatersSpikes(k, ctx),
-        WRECKED_SHIP_ROBOT_LASER => EprojPreInstr_WreckedShipRobotLaser(k, ctx),
-        SUB_86_D7_BF => sub_86D7BF(k, ctx),
-        SUB_86_D7_DE => sub_86D7DE(k, ctx),
-        SPIKE_SHOOTING_PLANT_SPIKES_MOVE_Y2 => {
-            EprojPreInstr_SpikeShootingPlantSpikes_MoveY2(k, ctx)
-        }
-        MOVE_X1 => EprojPreInstr_DBF2_MoveX1(k, ctx),
-        SPORES => EprojPreInstr_Spores(k, ctx),
-        AT_E605 => EprojPreInstr_E605(k, ctx),
-        SPARKS => EprojPreInstr_Sparks(k, ctx),
-        SPIKE_SHOOTING_PLANT_SPIKES_0_MOVE_X1 => {
-            EprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1(k, ctx)
-        }
-        SPIKE_SHOOTING_PLANT_SPIKES_2_MOVE_X2 => {
-            EprojPreInstr_SpikeShootingPlantSpikes_2_MoveX2(k, ctx)
-        }
-        SPIKE_SHOOTING_PLANT_SPIKES_1_MOVE_Y1 => {
-            EprojPreInstr_SpikeShootingPlantSpikes_1_MoveY1(k, ctx)
-        }
+        POWAMP_SPIKES => powamp_spike_pre_instruction(k, ctx),
+        WORK_ROBOT_LASER => work_robot_laser_pre_instruction(k, ctx),
+        SUB_86_D7_BF => n00b_tube_crack_flickering_pre_instruction(k, ctx),
+        SUB_86_D7_DE => n00b_tube_crack_falling_pre_instruction(k, ctx),
+        CACATAC_SPIKES_MOVE_Y2 => move_cacatac_spike_down(k, ctx),
+        MOVE_X1 => mini_crocomire_projectile_move_left(k, ctx),
+        SPORES => spores_pre_instruction(k, ctx),
+        AT_E605 => dust_cloud_moving_pre_instruction(k, ctx),
+        SPARKS => falling_spark_pre_instruction(k, ctx),
+        CACATAC_SPIKES_0_MOVE_X1 => cacatac_spike_left(k, ctx),
+        CACATAC_SPIKES_2_MOVE_X2 => cacatac_spike_right(k, ctx),
+        CACATAC_SPIKES_1_MOVE_Y1 => cacatac_spike_up(k, ctx),
         COLLECT_DROP => collect_drop(k, ctx),
         NONE_A918 => (),
         NONE_8170 => (),
         NONE_84FB => (),
         NONE_8D54 => (),
         NONE_950C => (),
-        AT_96CE => EprojPreInstr_96CE(k, ctx),
+        AT_96CE => proto_vertical_afterburn_down_pre_instruction(k, ctx),
         NONE_9A44 => (),
         NONE_A05B => (),
         NONE_A327 => (),
-        PRE_PHANTOM_ROOM => EprojPreInstr_PrePhantomRoom(k, ctx),
+        PRE_PHANTOM_ROOM => pre_phantoon_room_pre_instruction(k, ctx),
         NONE_A919 => (),
         NONE_B4B0 => (),
         NONE_BB4F => (),
@@ -188,7 +162,7 @@ pub fn dispatch(ea: u32, k: u16, ctx: &mut impl Host) {
         NONE_CAA3 => (),
         NONE_CFF7 => (),
         NONE_D0EB => (),
-        MOVE_X2 => EprojPreInstr_DBF2_MoveX2(k, ctx),
+        MOVE_X2 => mini_crocomire_projectile_move_right(k, ctx),
         NONE_DD44 => (),
         NONE_E508 => (),
         NONE_E604 => (),
@@ -200,11 +174,11 @@ pub fn dispatch(ea: u32, k: u16, ctx: &mut impl Host) {
     }
 }
 
-pub fn Eproj_PreInstr_SkreeParticle(k: u16, ctx: &mut impl Host) {
+pub fn skree_particle_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     integrate_shard(v1 as isize, SlotField::X, SlotField::XFraction, ctx);
     enemy_add!(ctx, (v1 as usize) as isize, velocity_y, 80);
-    if CheckIfEprojIsOffScreen(k, ctx) != 0 {
+    if is_off_screen(k, ctx) != 0 {
         enemy!(ctx, (v1 as usize) as isize, definition = 0);
     }
 }
@@ -220,35 +194,35 @@ fn move_spike_axis(k: u16, x: bool, velocity: SlotField, ctx: &mut impl Host) {
     add_split(high, low, index, amount, ctx);
 }
 
-pub fn EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(k: u16, ctx: &mut impl Host) {
+pub fn move_cacatac_spike_up(k: u16, ctx: &mut impl Host) {
     move_spike_axis(k, false, SlotField::VelocityY, ctx);
 }
 
-pub fn EprojPreInstr_SpikeShootingPlantSpikes_MoveX1(k: u16, ctx: &mut impl Host) {
+pub fn move_cacatac_spike_left(k: u16, ctx: &mut impl Host) {
     move_spike_axis(k, true, SlotField::VelocityY, ctx);
 }
 
-pub fn EprojPreInstr_SpikeShootingPlantSpikes_MoveX2(k: u16, ctx: &mut impl Host) {
+pub fn move_cacatac_spike_right(k: u16, ctx: &mut impl Host) {
     move_spike_axis(k, true, SlotField::VelocityX, ctx);
 }
 
-pub fn EprojPreInstr_SpikeShootingPlantSpikes_6_MoveX1Y1(k: u16, ctx: &mut impl Host) {
-    EprojPreInstr_SpikeShootingPlantSpikes_MoveX1(k, ctx);
-    EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(k, ctx);
+pub fn cacatac_spike_up_left(k: u16, ctx: &mut impl Host) {
+    move_cacatac_spike_left(k, ctx);
+    move_cacatac_spike_up(k, ctx);
 }
 
-pub fn EprojPreInstr_SpikeShootingPlantSpikes_7_MoveX2Y1(k: u16, ctx: &mut impl Host) {
-    EprojPreInstr_SpikeShootingPlantSpikes_MoveX2(k, ctx);
-    EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(k, ctx);
+pub fn cacatac_spike_up_right(k: u16, ctx: &mut impl Host) {
+    move_cacatac_spike_right(k, ctx);
+    move_cacatac_spike_up(k, ctx);
 }
 
-pub fn EprojPreInstr_DustCloudOrExplosion(k: u16, ctx: &mut impl Host) {
-    if CheckIfEprojIsOffScreen(k, ctx) != 0 {
+pub fn dust_cloud_explosion_pre_instruction(k: u16, ctx: &mut impl Host) {
+    if is_off_screen(k, ctx) != 0 {
         enemy!(ctx, (usize::from(k >> 1)) as isize, definition = 0);
     }
 }
 
-pub fn EprojPreInstr_8DCA(k: u16, ctx: &mut impl Host) {
+pub fn draygon_goop_stuck_to_samus_pre_instruction(k: u16, ctx: &mut impl Host) {
     EprojPowerBombCollision(k, ctx);
     if ctx.session().player.contact.contact_attack != 0
         || {
@@ -274,7 +248,7 @@ pub fn EprojPreInstr_8DCA(k: u16, ctx: &mut impl Host) {
     }
 }
 
-pub fn EprojPreInstr_DraygonsTurret_8DFF(k: u16, ctx: &mut impl Host) {
+pub fn draygon_turret_projectile_fired_pre_instruction(k: u16, ctx: &mut impl Host) {
     EprojPowerBombCollision(k, ctx);
     move_along_angle(k, ctx);
     let mut v1: i16 = outside_512_pixel_square(k, ctx) as i16;
@@ -283,7 +257,7 @@ pub fn EprojPreInstr_DraygonsTurret_8DFF(k: u16, ctx: &mut impl Host) {
     }
 }
 
-pub fn EprojPreInstr_DraygonsGunk_8E0F(k: u16, ctx: &mut impl Host) {
+pub fn draygon_goop_pre_instruction(k: u16, ctx: &mut impl Host) {
     EprojPowerBombCollision(k, ctx);
     move_along_angle(k, ctx);
     let v1: i32 = k as i32 >> 1;
@@ -303,8 +277,8 @@ pub fn EprojPreInstr_DraygonsGunk_8E0F(k: u16, ctx: &mut impl Host) {
     }
 }
 
-pub fn EprojPreInstr_CrocomireProjectile(k: u16, ctx: &mut impl Host) {
-    EprojBlockCollisition_Horiz(k, ctx);
+pub fn crocomire_projectile_setup_pre_instruction(k: u16, ctx: &mut impl Host) {
+    move_horizontally_with_block_collision(k, ctx);
     enemy!(ctx, 2560 => 0_isize, graphics);
     {
         let index = (k >> 1) as isize;
@@ -328,27 +302,27 @@ pub fn EprojPreInstr_CrocomireProjectile(k: u16, ctx: &mut impl Host) {
     enemy!(ctx, (0x8690b3 & 0xffff) as u16 => (v2) as isize, pre_action);
 }
 
-pub fn sub_8690B3(k: u16, ctx: &mut impl Host) {
-    if EprojBlockCollisition_Horiz(k, ctx) & 1 != 0
-        || EprojBlockCollisition_Vertical(k, ctx) & 1 != 0
+pub fn crocomire_projectile_fired_pre_instruction(k: u16, ctx: &mut impl Host) {
+    if move_horizontally_with_block_collision(k, ctx) & 1 != 0
+        || move_vertically_with_block_collision(k, ctx) & 1 != 0
     {
         enemy!(ctx, 0 => (k >> 1) as isize, definition);
     }
 }
 
-pub fn EprojPreInstr_CrocomireBridgeCrumbling(k: u16, ctx: &mut impl Host) {
-    if EprojBlockCollisition_Vertical(k, ctx) & 1 != 0 {
+pub fn crocomire_bridge_crumbling_pre_instruction(k: u16, ctx: &mut impl Host) {
+    if move_vertically_with_block_collision(k, ctx) & 1 != 0 {
         enemy!(ctx, 0 => (k >> 1) as isize, definition);
     } else {
         enemy!(ctx, ((enemy!(ctx, (k >> 1) as isize, velocity_y) as i32 + 24) & 0x3fff) as u16 => (k >> 1) as isize, velocity_y);
     };
 }
 
-pub fn EprojPreInstr_9642_RidleysFireball(k: u16, ctx: &mut impl Host) {
-    let mut v1: u16 = if EprojBlockCollisition_Horiz(k, ctx) & 1 != 0 {
+pub fn ridleys_fireball_pre_instruction(k: u16, ctx: &mut impl Host) {
+    let mut v1: u16 = if move_horizontally_with_block_collision(k, ctx) & 1 != 0 {
         -27042i32 as u16
     } else {
-        if EprojBlockCollisition_Vertical(k, ctx) & 1 == 0 {
+        if move_vertically_with_block_collision(k, ctx) & 1 == 0 {
             return;
         }
         -27056i32 as u16
@@ -356,54 +330,54 @@ pub fn EprojPreInstr_9642_RidleysFireball(k: u16, ctx: &mut impl Host) {
     let v2: i32 = k as i32 >> 1;
     enemy!(ctx, (v2 as usize) as isize, definition = 0);
     if enemy!(ctx, (v2 as usize) as isize, behavior_b) == 0 {
-        SetEprojSpawnPoint(k, ctx);
-        SpawnEprojWithRoomGfx(v1, 3, ctx);
+        set_spawn_point_to_projectile(k, ctx);
+        spawn_with_room_gfx(v1, 3, ctx);
         ctx.queue_sound(2, 6, 0x2b);
     }
 }
 
-pub fn EprojPreInstr_966C(k: u16, ctx: &mut impl Host) {
-    MoveEprojWithVelocityX(k, ctx);
-    if EprojBlockCollisition_Vertical(k, ctx) & 1 != 0 {
+pub fn horizontal_afterburn_pre_instruction(k: u16, ctx: &mut impl Host) {
+    move_with_x_velocity(k, ctx);
+    if move_vertically_with_block_collision(k, ctx) & 1 != 0 {
         let slot = usize::from(k >> 1);
-        enemy!(ctx, (slot) as isize, program = addr_off_869574 as u16);
+        enemy!(ctx, (slot) as isize, program = ADDR_OFF_869574 as u16);
         enemy!(ctx, (slot) as isize, delay = 1);
     }
 }
 
-pub fn EprojPreInstr_9688(k: u16, ctx: &mut impl Host) {
-    MoveEprojWithVelocityY(k, ctx);
-    if EprojBlockCollisition_Horiz(k, ctx) & 1 != 0 {
+pub fn vertical_afterburn_pre_instruction(k: u16, ctx: &mut impl Host) {
+    move_with_y_velocity(k, ctx);
+    if move_horizontally_with_block_collision(k, ctx) & 1 != 0 {
         let slot = usize::from(k >> 1);
-        enemy!(ctx, (slot) as isize, program = addr_off_869574 as u16);
+        enemy!(ctx, (slot) as isize, program = ADDR_OFF_869574 as u16);
         enemy!(ctx, (slot) as isize, delay = 1);
     }
 }
 
-pub fn EprojPreInstr_96A4(k: u16, ctx: &mut impl Host) {
-    if EprojBlockCollisition_Horiz(k, ctx) & 1 != 0 {
+pub fn proto_horizontal_afterburn_pre_instruction(k: u16, ctx: &mut impl Host) {
+    if move_horizontally_with_block_collision(k, ctx) & 1 != 0 {
         enemy!(ctx, 0 => (k >> 1) as isize, definition);
     }
 }
 
-pub fn EprojPreInstr_96C0(k: u16, ctx: &mut impl Host) {
-    if EprojBlockCollisition_Vertical(k, ctx) & 1 != 0 {
+pub fn proto_vertical_afterburn_up_pre_instruction(k: u16, ctx: &mut impl Host) {
+    if move_vertically_with_block_collision(k, ctx) & 1 != 0 {
         enemy!(ctx, 0 => (k >> 1) as isize, definition);
     }
 }
 
-pub fn EprojPreInstr_9734_CeresFallingDebris(k: u16, ctx: &mut impl Host) {
+pub fn ceres_falling_debris_pre_instruction(k: u16, ctx: &mut impl Host) {
     let slot = usize::from(k >> 1);
     enemy_add!(ctx, (slot) as isize, velocity_y, 16);
-    if EprojBlockCollisition_Vertical(k, ctx) & 1 != 0 {
+    if move_vertically_with_block_collision(k, ctx) & 1 != 0 {
         enemy!(ctx, (slot) as isize, definition = 0);
-        SetEprojSpawnPoint(k, ctx);
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9, ctx);
+        set_spawn_point_to_projectile(k, ctx);
+        spawn_with_room_gfx(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 9, ctx);
         ctx.queue_sound(2, 6, 0x6d);
     }
 }
 
-pub fn EprojPreInstr_PhantoonDestroyableFireballs(k: u16, ctx: &mut impl Host) {
+pub fn phantoon_enraged_flame_pre_instruction(k: u16, ctx: &mut impl Host) {
     let mut v5: u16 = 0;
     let v1: i32 = k as i32 >> 1;
     enemy_add!(ctx, (v1) as isize, velocity_y, 4);
@@ -412,7 +386,7 @@ pub fn EprojPreInstr_PhantoonDestroyableFireballs(k: u16, ctx: &mut impl Host) {
     move_phantoon_orbit(v1 as isize, v2, &mut v5, ctx);
 }
 
-pub fn EprojPreInstr_PhantoonDestroyableFireballs_3(k: u16, ctx: &mut impl Host) {
+pub fn phantoon_flame_spiral_pre_instruction(k: u16, ctx: &mut impl Host) {
     let mut v5: u16 = 0;
     let v1: i32 = k as i32 >> 1;
     enemy_add!(ctx, (v1) as isize, velocity_y, 2);
@@ -420,7 +394,7 @@ pub fn EprojPreInstr_PhantoonDestroyableFireballs_3(k: u16, ctx: &mut impl Host)
     move_phantoon_orbit(v1 as isize, v2, &mut v5, ctx);
 }
 
-pub fn EprojPreInstr_PhantoonStartingFireballsB(k: u16, ctx: &mut impl Host) {
+pub fn phantoon_starting_flames_pre_instruction(k: u16, ctx: &mut impl Host) {
     if ctx.resolve_actor(Key::from_legacy(0), Le).variables[1] != 0 {
         let v1: i32 = k as i32 >> 1;
         enemy!(ctx, (0x869b41 & 0xffff) as u16 => (v1) as isize, pre_action);
@@ -429,9 +403,9 @@ pub fn EprojPreInstr_PhantoonStartingFireballsB(k: u16, ctx: &mut impl Host) {
     }
 }
 
-pub fn EprojPreInstr_KraidRocks(k: u16, ctx: &mut impl Host) {
-    if EprojBlockCollisition_Horiz(k, ctx) & 1 != 0
-        || EprojBlockCollisition_Vertical(k, ctx) & 1 != 0
+pub fn kraid_rocks_pre_instruction(k: u16, ctx: &mut impl Host) {
+    if move_horizontally_with_block_collision(k, ctx) & 1 != 0
+        || move_vertically_with_block_collision(k, ctx) & 1 != 0
     {
         enemy!(ctx, (usize::from(k >> 1)) as isize, definition = 0);
     } else {
@@ -445,15 +419,15 @@ pub fn EprojPreInstr_KraidRocks(k: u16, ctx: &mut impl Host) {
     };
 }
 
-pub use self::EprojPreInstr_CrocomireBridgeCrumbling as EprojPreInstr_RocksFallingKraidCeiling;
+pub use self::crocomire_bridge_crumbling_pre_instruction as kraid_ceiling_rocks_pre_instruction;
 
-pub fn sub_869DA5(k: u16, ctx: &mut impl Host) {
+pub fn kraid_rocks_use_palette_0_pre_instruction(k: u16, ctx: &mut impl Host) {
     enemy!(ctx, 0 => (k >> 1) as isize, graphics);
 }
 
-pub fn EprojPreInit_MiniKraidSpit(k: u16, ctx: &mut impl Host) {
-    if EprojBlockCollisition_Horiz(k, ctx) & 1 != 0
-        || EprojBlockCollisition_Vertical(k, ctx) & 1 != 0
+pub fn mini_kraid_spit_pre_instruction(k: u16, ctx: &mut impl Host) {
+    if move_horizontally_with_block_collision(k, ctx) & 1 != 0
+        || move_vertically_with_block_collision(k, ctx) & 1 != 0
     {
         enemy!(ctx, (usize::from(k >> 1)) as isize, definition = 0);
     } else {
@@ -466,16 +440,16 @@ pub fn EprojPreInit_MiniKraidSpit(k: u16, ctx: &mut impl Host) {
     };
 }
 
-pub fn EprojPreInstr_MiniKraidSpikes(k: u16, ctx: &mut impl Host) {
-    if EprojBlockCollisition_Horiz(k, ctx) & 1 != 0 {
+pub fn mini_kraid_spikes_pre_instruction(k: u16, ctx: &mut impl Host) {
+    if move_horizontally_with_block_collision(k, ctx) & 1 != 0 {
         enemy!(ctx, (usize::from(k >> 1)) as isize, definition = 0);
     }
 }
 
-pub fn EprojPreInstr_WalkingLavaSeahorseFireball(k: u16, ctx: &mut impl Host) {
+pub fn alcoon_fireball_pre_instruction(k: u16, ctx: &mut impl Host) {
     let mut v2: u16 = 0;
-    if EprojBlockCollisition_Vertical(k, ctx) & 1 != 0
-        || EprojBlockCollisition_Horiz(k, ctx) & 1 != 0
+    if move_vertically_with_block_collision(k, ctx) & 1 != 0
+        || move_horizontally_with_block_collision(k, ctx) & 1 != 0
     {
         enemy!(ctx, 0 => (k >> 1) as isize, definition);
     } else {
@@ -497,7 +471,7 @@ pub fn EprojPreInstr_WalkingLavaSeahorseFireball(k: u16, ctx: &mut impl Host) {
     };
 }
 
-pub fn EprojPreInstr_CeresElevatorPad(k: u16, ctx: &mut impl Host) {
+pub fn ceres_elevator_pad_pre_instruction(k: u16, ctx: &mut impl Host) {
     let mut v3: bool = false;
     let v1: i32 = k as i32 >> 1;
     if enemy!(ctx, (v1) as isize, behavior_a) == 0
@@ -518,22 +492,22 @@ pub fn EprojPreInstr_CeresElevatorPad(k: u16, ctx: &mut impl Host) {
         if (fresh113 as i32 - 73i32) & 0x8000 == 0 {
             ctx.session_mut().player.y = 72;
             enemy!(ctx, 1 => (v1) as isize, delay);
-            enemy!(ctx, addr_off_86A28B as u16 => (v1) as isize, program);
+            enemy!(ctx, ADDR_OFF_86A28B as u16 => (v1) as isize, program);
             ctx.resume_player_after_elevator();
         }
     }
 }
 
-pub fn EprojPreInstr_CeresElevatorPlatform(k: u16, ctx: &mut impl Host) {
+pub fn ceres_elevator_pad_concealer_pre_instruction(k: u16, ctx: &mut impl Host) {
     if ctx.session().player.y == 72 {
         let v1: i32 = k as i32 >> 1;
         enemy!(ctx, 1 => (v1) as isize, delay);
-        enemy!(ctx, addr_off_86A28B as u16 => (v1) as isize, program);
+        enemy!(ctx, ADDR_OFF_86A28B as u16 => (v1) as isize, program);
     }
 }
 
-pub fn EprojPreInstr_A977(k: u16, ctx: &mut impl Host) {
-    let carry: u8 = EprojBlockCollisition_Vertical(k, ctx);
+pub fn bomb_torizo_statue_breaking_falling_pre_instruction(k: u16, ctx: &mut impl Host) {
+    let carry: u8 = move_vertically_with_block_collision(k, ctx);
     let v1: i32 = k as i32 >> 1;
     if (enemy!(ctx, (v1) as isize, velocity_y) & 0x8000) != 0 || carry == 0 {
         let v2: u16 =
@@ -547,12 +521,12 @@ pub fn EprojPreInstr_A977(k: u16, ctx: &mut impl Host) {
     };
 }
 
-pub fn EprojPreInstr_BombTorizosChozoOrbs(k: u16, ctx: &mut impl Host) {
-    if EprojBlockCollisition_Horiz(k, ctx) != 0 {
+pub fn bomb_torizos_chozo_orbs_pre_instruction(k: u16, ctx: &mut impl Host) {
+    if move_horizontally_with_block_collision(k, ctx) != 0 {
         let v3: i32 = k as i32 >> 1;
-        start_instruction((v3 as usize) as isize, addr_off_86AB25 as u16, ctx);
+        start_instruction((v3 as usize) as isize, ADDR_OFF_86AB25 as u16, ctx);
     } else {
-        let carry: u8 = EprojBlockCollisition_Vertical(k, ctx);
+        let carry: u8 = move_vertically_with_block_collision(k, ctx);
         let v1: i32 = k as i32 >> 1;
         if (enemy!(ctx, (v1) as isize, velocity_y) & 0x8000) != 0 || carry == 0 {
             let v2: u16 = enemy_add!(ctx, (v1 as usize) as isize, velocity_y, 18);
@@ -562,18 +536,18 @@ pub fn EprojPreInstr_BombTorizosChozoOrbs(k: u16, ctx: &mut impl Host) {
         } else {
             let v4: i32 = k as i32 >> 1;
             enemy!(ctx, (enemy!(ctx, (k >> 1) as isize, y) & 0xfff0 | 8).wrapping_sub(2) => (v4) as isize, y);
-            start_instruction((v4 as usize) as isize, addr_off_86AB41 as u16, ctx);
+            start_instruction((v4 as usize) as isize, ADDR_OFF_86AB41 as u16, ctx);
         }
     };
 }
 
-pub fn EprojPreInstr_GoldenTorizosChozoOrbs(k: u16, ctx: &mut impl Host) {
+pub fn golden_torizos_chozo_orbs_pre_instruction(k: u16, ctx: &mut impl Host) {
     let mut v1: i32 = 0;
     let mut v3: u16 = 0;
-    if EprojBlockCollisition_Horiz(k, ctx) & 1 != 0 {
+    if move_horizontally_with_block_collision(k, ctx) & 1 != 0 {
         enemy!(ctx, -(enemy!(ctx, (k >> 1) as isize, velocity_x) as i32) as u16 => (k >> 1) as isize, velocity_x);
     }
-    if EprojBlockCollisition_Vertical(k, ctx) & 1 != 0
+    if move_vertically_with_block_collision(k, ctx) & 1 != 0
         && {
             v1 = k as i32 >> 1;
             (enemy!(ctx, (v1) as isize, velocity_y) & 0x8000) == 0
@@ -593,17 +567,17 @@ pub fn EprojPreInstr_GoldenTorizosChozoOrbs(k: u16, ctx: &mut impl Host) {
     {
         let v5: i32 = k as i32 >> 1;
         enemy!(ctx, ((enemy!(ctx, (v5) as isize, y) as i32 & 0xfff0 | 8) - 2i32) as u16 => (v5) as isize, y);
-        enemy!(ctx, addr_off_86AB41 as u16 => (v5) as isize, program);
+        enemy!(ctx, ADDR_OFF_86AB41 as u16 => (v5) as isize, program);
         enemy!(ctx, 1 => (v5) as isize, delay);
     } else {
         enemy_add!(ctx, (k >> 1) as isize, velocity_y, 24);
     };
 }
 
-pub fn EprojPreInstr_TorizoSonicBoom(k: u16, ctx: &mut impl Host) {
-    if EprojBlockCollisition_Horiz(k, ctx) & 1 != 0 {
+pub fn torizo_sonic_boom_pre_instruction(k: u16, ctx: &mut impl Host) {
+    if move_horizontally_with_block_collision(k, ctx) & 1 != 0 {
         let v4: i32 = k as i32 >> 1;
-        enemy!(ctx, addr_off_86ADE5 as u16 => (v4) as isize, program);
+        enemy!(ctx, ADDR_OFF_86ADE5 as u16 => (v4) as isize, program);
         enemy!(ctx, 1 => (v4) as isize, delay);
         enemy!(ctx, enemy!(ctx, (v4) as isize, x) => (v4) as isize, behavior_a);
         enemy!(ctx, enemy!(ctx, (v4) as isize, y) => (v4) as isize, behavior_b);
@@ -626,9 +600,9 @@ pub fn EprojPreInstr_TorizoSonicBoom(k: u16, ctx: &mut impl Host) {
     };
 }
 
-pub fn sub_86B0B9(k: u16, ctx: &mut impl Host) {
+pub fn golden_torizo_egg_hatched_pre_instruction(k: u16, ctx: &mut impl Host) {
     let mut v2: i16 = 0;
-    if EprojBlockCollisition_Horiz(k, ctx) & 1 != 0 {
+    if move_horizontally_with_block_collision(k, ctx) & 1 != 0 {
         let v3: i32 = k as i32 >> 1;
         enemy!(ctx, 0xb0dd => (v3) as isize, pre_action);
         enemy!(ctx, 0 => (v3) as isize, velocity_y);
@@ -643,13 +617,13 @@ pub fn sub_86B0B9(k: u16, ctx: &mut impl Host) {
     };
 }
 
-pub fn sub_86B0DD(k: u16, ctx: &mut impl Host) {
-    if EprojBlockCollisition_Vertical(k, ctx) & 1 != 0 {
+pub fn golden_torizo_egg_hit_wall_pre_instruction(k: u16, ctx: &mut impl Host) {
+    if move_vertically_with_block_collision(k, ctx) & 1 != 0 {
         let v1: i32 = k as i32 >> 1;
         enemy!(ctx, (if (enemy!(ctx, (v1) as isize, behavior_a) & 0x8000) != 0 {
-                addr_off_86B1A8 as i32
+                ADDR_OFF_86B1A8 as i32
             } else {
-                addr_off_86B190 as i32
+                ADDR_OFF_86B190 as i32
             }) as u16 => (v1) as isize, program);
         enemy!(ctx, 1 => (v1) as isize, delay);
     } else {
@@ -657,15 +631,15 @@ pub fn sub_86B0DD(k: u16, ctx: &mut impl Host) {
     };
 }
 
-pub fn EprojPreInstr_B237(k: u16, ctx: &mut impl Host) {
+pub fn golden_torizo_super_missile_thrown_pre_instruction(k: u16, ctx: &mut impl Host) {
     let mut v1: i32 = 0;
-    if EprojBlockCollisition_Horiz(k, ctx) != 0 || {
-        let mut carry: u8 = EprojBlockCollisition_Vertical(k, ctx);
+    if move_horizontally_with_block_collision(k, ctx) != 0 || {
+        let mut carry: u8 = move_vertically_with_block_collision(k, ctx);
         v1 = k as i32 >> 1;
         (enemy!(ctx, (v1) as isize, velocity_y) & 0x8000) == 0 && carry != 0
     } {
         let v3: i32 = k as i32 >> 1;
-        enemy!(ctx, addr_off_86B2EF as u16 => (v3) as isize, program);
+        enemy!(ctx, ADDR_OFF_86B2EF as u16 => (v3) as isize, program);
         enemy!(ctx, 1 => (v3) as isize, delay);
     } else {
         let v2: u16 = (enemy!(ctx, (v1) as isize, velocity_y) as i32 + 16) as u16;
@@ -676,24 +650,24 @@ pub fn EprojPreInstr_B237(k: u16, ctx: &mut impl Host) {
     };
 }
 
-pub fn EprojPreInstr_GoldenTorizoEyeBeam(k: u16, ctx: &mut impl Host) {
-    if EprojBlockCollisition_Horiz(k, ctx) & 1 != 0 {
-        enemy!(ctx, addr_off_86B3CD as u16 => (k >> 1) as isize, program);
+pub fn golden_torizo_eye_beam_pre_instruction(k: u16, ctx: &mut impl Host) {
+    if move_horizontally_with_block_collision(k, ctx) & 1 != 0 {
+        enemy!(ctx, ADDR_OFF_86B3CD as u16 => (k >> 1) as isize, program);
         enemy!(ctx, 1 => (k >> 1) as isize, delay);
         return;
     }
-    if EprojBlockCollisition_Vertical(k, ctx) & 1 != 0 {
+    if move_vertically_with_block_collision(k, ctx) & 1 != 0 {
         let v1: i32 = k as i32 >> 1;
         enemy!(ctx, ((enemy!(ctx, (v1) as isize, y) as i32 & 0xfff0 | 8) - 2i32) as u16 => (v1) as isize, y);
-        enemy!(ctx, addr_off_86B3E5 as u16 => (v1) as isize, program);
+        enemy!(ctx, ADDR_OFF_86B3E5 as u16 => (v1) as isize, program);
         enemy!(ctx, 1 => (v1) as isize, delay);
     }
 }
 
-pub fn EprojPreInstr_EyeDoorProjectile(k: u16, ctx: &mut impl Host) {
+pub fn eye_door_projectile_moving_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v3: i32 = k as i32 >> 1;
-    if !(EprojBlockCollisition_Horiz(k, ctx) & 1 != 0
-        || EprojBlockCollisition_Vertical(k, ctx) & 1 != 0)
+    if !(move_horizontally_with_block_collision(k, ctx) & 1 != 0
+        || move_vertically_with_block_collision(k, ctx) & 1 != 0)
     {
         let v1: i32 = enemy!(ctx, (k >> 1) as isize, behavior_a) as i32 >> 1;
         {
@@ -713,26 +687,26 @@ pub fn EprojPreInstr_EyeDoorProjectile(k: u16, ctx: &mut impl Host) {
             return;
         }
     }
-    start_instruction((v3 as usize) as isize, addr_off_86B5F3 as u16, ctx);
+    start_instruction((v3 as usize) as isize, ADDR_OFF_86B5F3 as u16, ctx);
 }
 
-pub fn EprojPreInstr_EyeDoorSweat(k: u16, ctx: &mut impl Host) {
-    EprojBlockCollisition_Horiz(k, ctx);
-    let carry: u8 = EprojBlockCollisition_Vertical(k, ctx);
+pub fn eye_door_sweat_pre_instruction(k: u16, ctx: &mut impl Host) {
+    move_horizontally_with_block_collision(k, ctx);
+    let carry: u8 = move_vertically_with_block_collision(k, ctx);
     let v1: i32 = k as i32 >> 1;
     if (enemy!(ctx, (v1) as isize, velocity_y) & 0x8000) != 0 || carry == 0 {
         enemy_add!(ctx, (v1 as usize) as isize, velocity_y, 12);
     } else {
         enemy_add!(ctx, (v1 as usize) as isize, y, (-4i16) as u16);
-        start_instruction((v1 as usize) as isize, addr_off_86B61D as u16, ctx);
+        start_instruction((v1 as usize) as isize, ADDR_OFF_86B61D as u16, ctx);
     };
 }
 
-pub fn EprojPreInstr_TourianStatueUnlockingParticleWaterSplash(k: u16, ctx: &mut impl Host) {
+pub fn tourian_statue_particle_splash_pre_instruction(k: u16, ctx: &mut impl Host) {
     enemy!(ctx, (ctx.inputs().fx_y as i32 - 4i32) as u16 => (k >> 1) as isize, y);
 }
 
-pub fn EprojPreInstr_TourianStatueStuff(k: u16, ctx: &mut impl Host) {
+pub fn tourian_statue_base_decoration_pre_instruction(k: u16, ctx: &mut impl Host) {
     if ctx.session().mechanisms.statue_animation == 0 {
         {
             let old = ctx.session().mechanisms.statue_finished;
@@ -740,7 +714,7 @@ pub fn EprojPreInstr_TourianStatueStuff(k: u16, ctx: &mut impl Host) {
             ctx.session_mut().mechanisms.statue_finished = value;
         };
     }
-    EprojPreInstr_BA42(k, ctx);
+    tourian_statue_decoration_pre_instruction(k, ctx);
 }
 
 /// Despawns the projectile once it leaves the camera view.
@@ -751,8 +725,8 @@ pub fn despawn_off_screen(k: u16, ctx: &mut impl Host) {
     }
 }
 
-pub fn EprojPreInstr_NorfairLavaquakeRocks(k: u16, ctx: &mut impl Host) {
-    CallNorfairLavaquakeRocksFunc(
+pub fn polyp_rock_pre_instruction(k: u16, ctx: &mut impl Host) {
+    dispatch_polyp_rock_function(
         (enemy!(ctx, (k >> 1) as isize, behavior_a) as i32 | 0x860000) as u32,
         k,
         ctx,
@@ -760,8 +734,8 @@ pub fn EprojPreInstr_NorfairLavaquakeRocks(k: u16, ctx: &mut impl Host) {
     despawn_off_screen(k, ctx);
 }
 
-pub fn EprojPreInstr_MotherBrainRoomTurrets(k: u16, ctx: &mut impl Host) {
-    if Eproj_MotherBrainRoomTurretBullets_CheckIfTurretOnScreen(k, ctx) & 1 != 0 {
+pub fn mother_brain_turrets_pre_instruction(k: u16, ctx: &mut impl Host) {
+    if is_turret_on_screen(k, ctx) & 1 != 0 {
         if ctx.mother_brain_turret_destroyed() != 0 {
             clear_unrounded_definition(k, ctx);
         }
@@ -772,13 +746,13 @@ pub fn EprojPreInstr_MotherBrainRoomTurrets(k: u16, ctx: &mut impl Host) {
             x: enemy!(ctx, (v5) as isize, x),
             y: enemy!(ctx, (v5) as isize, y),
         };
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0xc, ctx);
+        spawn_with_room_gfx(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 0xc, ctx);
     } else {
         let v1: i32 = k as i32 >> 1;
         let fresh89 = enemy_decrement!(ctx, v1 as isize, velocity_x);
         let mut v2: bool = fresh89 == 1;
         if v2 {
-            Eproj_SetXvelRandom(k, ctx);
+            set_random_rotation_timer(k, ctx);
             turret_bullet_step_direction(k, ctx);
             let v3: i32 = k as i32 >> 1;
             enemy!(ctx, turret_instruction(enemy_byte!(ctx, v3 as isize * 2, y_fraction) as isize, ctx) => (v3) as isize, program);
@@ -788,8 +762,8 @@ pub fn EprojPreInstr_MotherBrainRoomTurrets(k: u16, ctx: &mut impl Host) {
         let fresh93 = enemy_decrement!(ctx, v4 as isize, velocity_y);
         v2 = fresh93 == 1;
         if v2 {
-            Eproj_SetYvelRandom(k, ctx);
-            SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainRoomTurretBullets as u16, k, ctx);
+            set_random_cooldown_timer(k, ctx);
+            spawn_with_room_gfx(ADDR_K_EPROJ_MOTHER_BRAIN_ROOM_TURRET_BULLETS as u16, k, ctx);
         }
     };
 }
@@ -799,8 +773,8 @@ fn decelerated_magnitude(velocity: u16, decrement: u16) -> i16 {
     (((velocity as i16).unsigned_abs() as i32 - i32::from(decrement)) as i16).max(0)
 }
 
-pub fn EprojPreInstr_MotherBrainBomb(k: u16, ctx: &mut impl Host) {
-    if MotherBrainBomb_Bomb_CollDetect_DoubleRet(k, ctx) != 0 {
+pub fn mother_brain_bomb_pre_instruction(k: u16, ctx: &mut impl Host) {
+    if mother_brain_bomb_collides_with_bomb(k, ctx) != 0 {
         return;
     }
     let v1: i32 = k as i32 >> 1;
@@ -821,8 +795,8 @@ pub fn EprojPreInstr_MotherBrainBomb(k: u16, ctx: &mut impl Host) {
                 x: enemy!(ctx, (v4) as isize, x),
                 y: enemy!(ctx, (v4) as isize, y),
             };
-            SpawnEprojWithRoomGfx(
-                addr_stru_869650 as u16,
+            spawn_with_room_gfx(
+                ADDR_STRU_869650 as u16,
                 enemy_byte!(ctx, v4 as isize * 2, x_fraction) as u16,
                 ctx,
             );
@@ -830,11 +804,11 @@ pub fn EprojPreInstr_MotherBrainBomb(k: u16, ctx: &mut impl Host) {
                 x: enemy!(ctx, (v4) as isize, x),
                 y: enemy!(ctx, (v4) as isize, y),
             };
-            SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 3, ctx);
+            spawn_with_room_gfx(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 3, ctx);
             ctx.queue_sound(3, 6, 0x13);
             return;
         }
-        MoveMotherBrainBomb(k, v5, ctx) & 1 != 0
+        move_mother_brain_bomb(k, v5, ctx) & 1 != 0
     } else {
         let v2 = decelerated_magnitude(enemy!(ctx, (v1) as isize, velocity_x), 2);
         enemy!(ctx, (if enemy!(ctx, (v1) as isize, velocity_x) & 0x8000 != 0 {
@@ -842,7 +816,7 @@ pub fn EprojPreInstr_MotherBrainBomb(k: u16, ctx: &mut impl Host) {
             } else {
                 v2 as i32
             }) as u16 => (v1) as isize, velocity_x);
-        MoveMotherBrainBomb(k, 7, ctx) & 1 != 0
+        move_mother_brain_bomb(k, 7, ctx) & 1 != 0
     };
     if advance_bomb_phase {
         let v3: i32 = k as i32 >> 1;
@@ -850,27 +824,27 @@ pub fn EprojPreInstr_MotherBrainBomb(k: u16, ctx: &mut impl Host) {
     };
 }
 
-pub fn EprojPreInstr_MotherBrainRainbowBeam(k: u16, ctx: &mut impl Host) {
+pub fn mother_brain_rainbow_beam_charging_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v2: i32 = k as i32 >> 1;
     enemy!(ctx, ctx.resolve_actor(Key::from_legacy(64), Le).x.whole => (v2) as isize, x);
     enemy!(ctx, ctx.resolve_actor(Key::from_legacy(64), Le).y.whole => (v2) as isize, y);
 }
 
-pub fn EprojPreInit_MotherBrainsDeathExplosion_0(k: u16, ctx: &mut impl Host) {
+pub fn mother_brain_death_explosion_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v2: i32 = k as i32 >> 1;
     enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(0), Le).x.whole as i32 + enemy!(ctx, (v2) as isize, velocity_x) as i32) as u16 => (v2) as isize, x);
     enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32 + enemy!(ctx, (v2) as isize, velocity_y) as i32) as u16 => (v2) as isize, y);
 }
 
-pub fn EprojPreInstr_MotherBrainTubeFalling(k: u16, ctx: &mut impl Host) {
-    CallMotherBrainTubeFallingFunc(
+pub fn mother_brain_tube_falling_pre_instruction(k: u16, ctx: &mut impl Host) {
+    dispatch_mother_brain_tube_falling_function(
         (enemy!(ctx, (k >> 1) as isize, behavior_a) as i32 | 0x860000) as u32,
         k,
         ctx,
     );
 }
 
-pub fn EprojPreInstr_MotherBrainGlassShatteringShard(k: u16, ctx: &mut impl Host) {
+pub fn mother_brain_glass_shard_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1 = (k >> 1) as i32;
     integrate_shard(v1 as isize, SlotField::X, SlotField::XFraction, ctx);
     let _v6: u16 = enemy!(ctx, (v1) as isize, y_fraction);
@@ -879,30 +853,34 @@ pub fn EprojPreInstr_MotherBrainGlassShatteringShard(k: u16, ctx: &mut impl Host
     } else {
         enemy_add!(ctx, (v1) as isize, velocity_y, 32);
         if (ctx.next_random() & 0x420) == 0 {
-            SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainGlassShatteringSparkle as u16, k, ctx);
+            spawn_with_room_gfx(
+                ADDR_K_EPROJ_MOTHER_BRAIN_GLASS_SHATTERING_SPARKLE as u16,
+                k,
+                ctx,
+            );
         }
     };
 }
 
-pub fn EprojPreInstr_KagosBugs(k: u16, ctx: &mut impl Host) {
+pub fn kago_bug_idling_pre_instruction(k: u16, ctx: &mut impl Host) {
     kago_bug_cry_countdown(k, ctx);
     kago_bug_flag_when_far(k, ctx);
     let v1: i32 = k as i32 >> 1;
     if enemy!(ctx, (v1) as isize, behavior_c) != 0 {
         let _fresh71 = enemy_add!(ctx, (v1 as usize) as isize, behavior_c, u16::MAX);
     } else {
-        start_instruction((v1 as usize) as isize, addr_word_86D052 as u16, ctx);
+        start_instruction((v1 as usize) as isize, ADDR_WORD_86D052 as u16, ctx);
         enemy!(ctx, (0x86d0ebi32) as u16 => (v1) as isize, pre_action);
     };
 }
 
-pub fn EprojPreInstr_D0EC(k: u16, ctx: &mut impl Host) {
+pub fn kago_bug_jumping_pre_instruction(k: u16, ctx: &mut impl Host) {
     kago_bug_cry_countdown(k, ctx);
     kago_bug_flag_when_far(k, ctx);
-    let reset_vertical_speed: bool = if EprojBlockCollisition_Horiz(k, ctx) != 0 {
+    let reset_vertical_speed: bool = if move_horizontally_with_block_collision(k, ctx) != 0 {
         enemy!(ctx, 0 => (k >> 1) as isize, velocity_x);
         true
-    } else if EprojBlockCollisition_Vertical(k, ctx) != 0 {
+    } else if move_vertically_with_block_collision(k, ctx) != 0 {
         true
     } else {
         let v2: u16 = enemy!(ctx, (k >> 1) as isize, velocity_y);
@@ -918,16 +896,16 @@ pub fn EprojPreInstr_D0EC(k: u16, ctx: &mut impl Host) {
         enemy!(ctx, 256 => (k >> 1) as isize, velocity_y);
     }
     enemy!(ctx, (0x86d128i32) as u16 => (k >> 1) as isize, pre_action);
-    start_instruction((usize::from(k >> 1)) as isize, addr_word_86D04A as u16, ctx);
+    start_instruction((usize::from(k >> 1)) as isize, ADDR_WORD_86D04A as u16, ctx);
 }
 
-pub fn EprojPreInstr_N00bTubeShards(k: u16, ctx: &mut impl Host) {
+pub fn n00b_tube_shard_flying_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1 = (k >> 1) as i32;
     integrate_shard(v1 as isize, SlotField::BehaviorB, SlotField::BehaviorA, ctx);
-    Eproj_DeleteIfYposOutside(k, ctx);
+    delete_if_vertically_off_screen(k, ctx);
 }
 
-pub fn sub_86D83D(k: u16, ctx: &mut impl Host) {
+pub fn n00b_tube_shard_falling_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v2: i32 = (enemy!(ctx, (k >> 1) as isize, velocity_x) as i32 & 0x17e | 0x80) >> 1;
     let v6: i32 = ctx.session().enemy_projectiles.selected as i32 >> 1;
     let mut amt: i32 = ((kSinCosTable8bit_Sext[(v2 + 64) as usize] >> 2) as i32) << 8;
@@ -947,10 +925,10 @@ pub fn sub_86D83D(k: u16, ctx: &mut impl Host) {
         amt as u32,
         ctx,
     );
-    Eproj_DeleteIfYposOutside(ctx.session().enemy_projectiles.selected, ctx);
+    delete_if_vertically_off_screen(ctx.session().enemy_projectiles.selected, ctx);
 }
 
-pub fn sub_86D89F(k: u16, ctx: &mut impl Host) {
+pub fn n00b_tube_air_bubbles_falling_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: u16 = (enemy!(ctx, (k >> 1) as isize, velocity_x) & 0x17e | 0x80);
     let v2: i32 = v1 as i32 >> 1;
     let amt: i32 = ((kSinCosTable8bit_Sext[(v2 + 64) as usize] >> 2) as i32) << 8;
@@ -963,30 +941,30 @@ pub fn sub_86D89F(k: u16, ctx: &mut impl Host) {
         ctx,
     );
     enemy_add!(ctx, (v5) as isize, velocity_x, 4);
-    sub_86D8DF(ctx.session().enemy_projectiles.selected, ctx);
+    n00b_tube_air_bubbles_flying_pre_instruction(ctx.session().enemy_projectiles.selected, ctx);
 }
 
-pub fn sub_86D8DF(k: u16, ctx: &mut impl Host) {
+pub fn n00b_tube_air_bubbles_flying_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v5: i32 = k as i32 >> 1;
     move_spike_axis(k, false, SlotField::VelocityY, ctx);
     enemy!(ctx, enemy!(ctx, (v5) as isize, behavior_b) => (v5) as isize, x);
 }
 
-pub fn EprojPreInstr_SpikeShootingPlantSpikes_4_MoveY2(k: u16, ctx: &mut impl Host) {
-    EprojPreInstr_SpikeShootingPlantSpikes_MoveY2(k, ctx);
+pub fn cacatac_spike_down(k: u16, ctx: &mut impl Host) {
+    move_cacatac_spike_down(k, ctx);
 }
 
-pub fn EprojPreInstr_SpikeShootingPlantSpikes_8_MoveX1Y2(k: u16, ctx: &mut impl Host) {
-    EprojPreInstr_SpikeShootingPlantSpikes_MoveX1(k, ctx);
-    EprojPreInstr_SpikeShootingPlantSpikes_MoveY2(k, ctx);
+pub fn cacatac_spike_down_left(k: u16, ctx: &mut impl Host) {
+    move_cacatac_spike_left(k, ctx);
+    move_cacatac_spike_down(k, ctx);
 }
 
-pub fn EprojPreInstr_SpikeShootingPlantSpikes_9_MoveX2Y2(k: u16, ctx: &mut impl Host) {
-    EprojPreInstr_SpikeShootingPlantSpikes_MoveX2(k, ctx);
-    EprojPreInstr_SpikeShootingPlantSpikes_MoveY2(k, ctx);
+pub fn cacatac_spike_down_right(k: u16, ctx: &mut impl Host) {
+    move_cacatac_spike_right(k, ctx);
+    move_cacatac_spike_down(k, ctx);
 }
 
-pub fn EprojPreInstr_SpikeShootingPlantSpikes(k: u16, ctx: &mut impl Host) {
+pub fn cacatac_spike_pre_instruction(k: u16, ctx: &mut impl Host) {
     plant_pre(
         (enemy!(ctx, (k >> 1) as isize, behavior_a) >> 1) as usize,
         k,
@@ -995,7 +973,7 @@ pub fn EprojPreInstr_SpikeShootingPlantSpikes(k: u16, ctx: &mut impl Host) {
     despawn_off_screen(k, ctx);
 }
 
-pub fn EprojPreInstr_DBF2(k: u16, ctx: &mut impl Host) {
+pub fn mini_crocomire_projectile_pre_instruction(k: u16, ctx: &mut impl Host) {
     dispatch(
         (enemy!(ctx, (k >> 1) as isize, behavior_a) as i32 | 0x860000) as u32,
         k,
@@ -1004,11 +982,11 @@ pub fn EprojPreInstr_DBF2(k: u16, ctx: &mut impl Host) {
     despawn_off_screen(k, ctx);
 }
 
-pub fn EprojPreInstr_SporeSpawners(k: u16, ctx: &mut impl Host) {
-    if ctx.kraid_unk9000() == 0 {
+pub fn spore_spawner_pre_instruction(k: u16, ctx: &mut impl Host) {
+    if ctx.boss_death_quake_sound_timer() == 0 {
         let v1: i32 = k as i32 >> 1;
         if enemy!(ctx, (v1) as isize, behavior_b) == 0 {
-            enemy!(ctx, addr_word_86DC06 as u16 => (v1) as isize, program);
+            enemy!(ctx, ADDR_WORD_86DC06 as u16 => (v1) as isize, program);
             enemy!(ctx, 1 => (v1) as isize, delay);
             enemy!(ctx, ctx.next_random() & 0x1ff => (v1) as isize, behavior_b);
         }
@@ -1016,27 +994,27 @@ pub fn EprojPreInstr_SporeSpawners(k: u16, ctx: &mut impl Host) {
     }
 }
 
-pub fn EprojPreInstr_BotwoonsBody(k: u16, ctx: &mut impl Host) {
+pub fn botwoons_body_pre_instruction(k: u16, ctx: &mut impl Host) {
     if ctx.botwoon_death_phase() != 0 {
         let v1: i32 = k as i32 >> 1;
         if enemy!(ctx, (v1) as isize, velocity_x) as i32 == 0x86ea98 & 0xffff {
             enemy!(ctx, (0x86eaf4 & 0xffff) as u16 => (v1) as isize, velocity_x);
         }
     }
-    CallBotwoonEprojFunc(
+    dispatch_botwoon_body_function(
         (enemy!(ctx, (k >> 1) as isize, velocity_x) as i32 | 0x860000) as u32,
         k,
         ctx,
     );
 }
 
-pub fn EprojPreInstr_BotwoonsSpit(k: u16, ctx: &mut impl Host) {
+pub fn botwoons_spit_pre_instruction(k: u16, ctx: &mut impl Host) {
     move_along_angle(k, ctx);
-    sub_86EC0C(k, ctx);
+    delete_botwoon_spit_if_off_screen(k, ctx);
 }
 
-pub fn sub_86A887(v0: u16, ctx: &mut impl Host) {
-    if EprojBlockCollisition_Horiz(v0, ctx) & 1 != 0 {
+pub fn bomb_torizo_drool_falling_pre_instruction(v0: u16, ctx: &mut impl Host) {
+    if move_horizontally_with_block_collision(v0, ctx) & 1 != 0 {
         let v6: i32 = v0 as i32 >> 1;
         enemy!(ctx, 0xa48a => (v6) as isize, program);
         enemy!(ctx, 1 => (v6) as isize, delay);
@@ -1056,7 +1034,7 @@ pub fn sub_86A887(v0: u16, ctx: &mut impl Host) {
             }
             enemy!(ctx, v3 as u16 => (v1) as isize, velocity_x);
         }
-        let carry: u8 = EprojBlockCollisition_Vertical(v0, ctx);
+        let carry: u8 = move_vertically_with_block_collision(v0, ctx);
         if (enemy!(ctx, (v1) as isize, velocity_y) & 0x8000) != 0 || carry == 0 {
             let v5: u16 = enemy_add!(ctx, (v1 as usize) as isize, velocity_y, 16);
             if (v5 & 0xf000) == 4096 {
@@ -1070,64 +1048,64 @@ pub fn sub_86A887(v0: u16, ctx: &mut impl Host) {
     };
 }
 
-pub fn EprojPreInstr_D128(v0: u16, ctx: &mut impl Host) {
+pub fn kago_bug_falling_pre_instruction(v0: u16, ctx: &mut impl Host) {
     kago_bug_cry_countdown(v0, ctx);
     kago_bug_flag_when_far(v0, ctx);
-    if EprojBlockCollisition_Horiz(v0, ctx) & 1 != 0 {
+    if move_horizontally_with_block_collision(v0, ctx) & 1 != 0 {
         enemy!(ctx, 0 => (v0 >> 1) as isize, velocity_x);
-    } else if EprojBlockCollisition_Vertical(v0, ctx) & 1 != 0 {
+    } else if move_vertically_with_block_collision(v0, ctx) & 1 != 0 {
         let v1: i32 = v0 as i32 >> 1;
         enemy!(ctx, (0x86d0ebi32) as u16 => (v1) as isize, pre_action);
-        start_instruction((v1 as usize) as isize, addr_word_86D03C as u16, ctx);
+        start_instruction((v1 as usize) as isize, ADDR_WORD_86D03C as u16, ctx);
     } else {
         enemy_add!(ctx, (v0 >> 1) as isize, velocity_y, WORD_86_D082);
     };
 }
 
-pub fn EprojPreInstr_NamiFuneFireball(v0: u16, ctx: &mut impl Host) {
-    CallNamiFuneFireballFunc(
+pub fn namihe_fune_fireball_pre_instruction(v0: u16, ctx: &mut impl Host) {
+    dispatch_namihe_fune_fireball_function(
         (enemy!(ctx, (v0 >> 1) as isize, behavior_a) as i32 | 0x860000) as u32,
         v0,
         ctx,
     );
-    Eproj_NamiFuneFireball_After(v0, ctx);
+    delete_namihe_fune_fireball_if_off_screen(v0, ctx);
 }
 
-pub fn sub_86E049(v0: u16, ctx: &mut impl Host) {
-    CallLavamanFunc(
+pub fn lava_thrown_by_magdollite_pre_instruction(v0: u16, ctx: &mut impl Host) {
+    dispatch_magdollite_lava_function(
         (enemy!(ctx, (v0 >> 1) as isize, behavior_a) as i32 | 0x860000) as u32,
         v0,
         ctx,
     );
-    sub_86E0A4(v0, ctx);
+    delete_magdollite_lava_if_off_screen(v0, ctx);
 }
 
-pub fn EprojPreInstr_BA42(k: u16, ctx: &mut impl Host) {
+pub fn tourian_statue_decoration_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     enemy!(ctx, enemy!(ctx, (v1) as isize, behavior_a) => (v1) as isize, x);
     enemy!(ctx, (enemy!(ctx, (v1) as isize, behavior_b) as i32 + ctx.inputs().camera_y as i32
             - ctx.expanding_square_origin() as i32) as u16 => (v1) as isize, y);
 }
 
-pub fn EprojInit_MotherBrainsDrool_Falling(k: u16, ctx: &mut impl Host) {
+pub fn mother_brain_drool_falling_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     enemy_add!(ctx, (v1) as isize, velocity_y, 12);
-    if MoveEprojWithVelocityY(k, ctx) >= 0xd7 {
+    if move_with_y_velocity(k, ctx) >= 0xd7 {
         enemy_add!(ctx, (v1) as isize, y, (-4i16) as u16);
-        enemy!(ctx, addr_off_86C8E1 as u16 => (v1) as isize, program);
+        enemy!(ctx, ADDR_OFF_86C8E1 as u16 => (v1) as isize, program);
         enemy!(ctx, 1 => (v1) as isize, delay);
     }
 }
 
-pub fn EprojInit_ShaktoolAttackFrontCircle(v1: u16, ctx: &mut impl Host) {
-    if EprojBlockCollisition_Horiz(v1, ctx) & 1 != 0
-        || EprojBlockCollisition_Vertical(v1, ctx) & 1 != 0
+pub fn shaktool_attack_front_circle_pre_instruction(v1: u16, ctx: &mut impl Host) {
+    if move_horizontally_with_block_collision(v1, ctx) & 1 != 0
+        || move_vertically_with_block_collision(v1, ctx) & 1 != 0
     {
         enemy!(ctx, 0 => (v1 >> 1) as isize, definition);
     }
 }
 
-pub fn Eproj_PreInit_0x8aaf(k: u16, ctx: &mut impl Host) {
+pub fn projectile_8aaf_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     move_spike_axis(k, false, SlotField::VelocityY, ctx);
     if enemy!(ctx, (v1) as isize, y) >= enemy!(ctx, (v1) as isize, counter) {
@@ -1135,7 +1113,7 @@ pub fn Eproj_PreInit_0x8aaf(k: u16, ctx: &mut impl Host) {
     }
 }
 
-pub fn EprojPreInstr_CrocomireSpikeWallPieces(k: u16, ctx: &mut impl Host) {
+pub fn crocomire_spike_wall_pieces_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let mut v2: u16 = enemy!(ctx, (v1) as isize, behavior_a);
     if v2 != CROCOMIRE_SPIKE_WALL_PIECES_TAB1[v1 as usize] {
@@ -1208,17 +1186,17 @@ pub fn EprojPreInstr_CrocomireSpikeWallPieces(k: u16, ctx: &mut impl Host) {
             x: enemy!(ctx, (v12) as isize, x),
             y: enemy!(ctx, (v12) as isize, y),
         };
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15, ctx);
+        spawn_with_room_gfx(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 0x15, ctx);
         ctx.queue_sound(2, 6, 0x25);
     }
 }
 
-pub fn EprojPreInstr_9634(k: u16, ctx: &mut impl Host) {
+pub fn unused_9634_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     if enemy!(ctx, (v1) as isize, behavior_a) >= 8 {
-        MoveEprojWithVelocity(k, ctx);
-        if EprojBlockCollisition_Vertical(k, ctx) & 1 != 0 {
-            enemy!(ctx, addr_off_869574 as u16 => (v1) as isize, program);
+        move_with_velocity(k, ctx);
+        if move_vertically_with_block_collision(k, ctx) & 1 != 0 {
+            enemy!(ctx, ADDR_OFF_869574 as u16 => (v1) as isize, program);
             enemy_add!(ctx, (v1) as isize, behavior_a, 1);
             enemy!(ctx, 1 => (v1) as isize, delay);
             enemy!(ctx, 0 => (v1) as isize, velocity_x);
@@ -1231,26 +1209,26 @@ pub fn EprojPreInstr_9634(k: u16, ctx: &mut impl Host) {
     };
 }
 
-pub fn EprojPreInstr_PhantoonStartingFireballs(k: u16, ctx: &mut impl Host) {
+pub fn phantoon_casual_flame_falling_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     enemy_add!(ctx, (v1) as isize, velocity_y, 16);
-    if EprojBlockCollisition_Vertical(k, ctx) & 1 != 0 {
+    if move_vertically_with_block_collision(k, ctx) & 1 != 0 {
         enemy!(ctx, (enemy!(ctx, (v1) as isize, properties) & 0xfff | 0x8000) => (v1) as isize, properties);
         enemy!(ctx, (0x8699bf & 0xffff) as u16 => (v1) as isize, pre_action);
-        enemy!(ctx, addr_word_86976C as u16 => (v1) as isize, program);
+        enemy!(ctx, ADDR_WORD_86976C as u16 => (v1) as isize, program);
         enemy!(ctx, 1 => (v1) as isize, delay);
         enemy!(ctx, 8 => (v1) as isize, behavior_a);
         enemy_add!(ctx, (v1) as isize, y, 8);
     }
 }
 
-pub fn EprojPreInstr_PhantoonStartingFireballs2(k: u16, ctx: &mut impl Host) {
+pub fn phantoon_casual_flame_hit_ground_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let v2: bool = enemy!(ctx, (v1) as isize, behavior_a) == 1;
     let v3: bool = (enemy_add!(ctx, (v1) as isize, behavior_a, (-1i16) as u16) & 0x8000) != 0;
     if v2 || v3 {
         enemy!(ctx, (0x869a01 & 0xffff) as u16 => (v1) as isize, pre_action);
-        enemy!(ctx, addr_word_869772 as u16 => (v1) as isize, program);
+        enemy!(ctx, ADDR_WORD_869772 as u16 => (v1) as isize, program);
         enemy!(ctx, 1 => (v1) as isize, delay);
         enemy_add!(ctx, (v1) as isize, y, (-8i16) as u16);
         enemy!(ctx, -768i32 as u16 => (v1) as isize, velocity_y);
@@ -1263,10 +1241,10 @@ pub fn EprojPreInstr_PhantoonStartingFireballs2(k: u16, ctx: &mut impl Host) {
     }
 }
 
-pub fn EprojPreInstr_PhantoonStartingFireballs3(k: u16, ctx: &mut impl Host) {
+pub fn phantoon_casual_flame_bouncing_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     enemy_add!(ctx, (v1) as isize, velocity_y, 16);
-    let switch_fireball_phase: bool = if EprojBlockCollisition_Vertical(k, ctx) & 1 != 0 {
+    let switch_fireball_phase: bool = if move_vertically_with_block_collision(k, ctx) & 1 != 0 {
         let v2: u16 = (enemy!(ctx, (v1) as isize, behavior_a) as i32 + 1) as u16;
         enemy!(ctx, v2 => (v1) as isize, behavior_a);
         if (v2 as i32 - 3i32) & 0x8000 != 0 {
@@ -1275,16 +1253,16 @@ pub fn EprojPreInstr_PhantoonStartingFireballs3(k: u16, ctx: &mut impl Host) {
         }
         true
     } else {
-        EprojBlockCollisition_Horiz(k, ctx) & 1 != 0
+        move_horizontally_with_block_collision(k, ctx) & 1 != 0
     };
     if switch_fireball_phase {
-        enemy!(ctx, addr_word_869782 as u16 => (v1) as isize, program);
+        enemy!(ctx, ADDR_WORD_869782 as u16 => (v1) as isize, program);
         enemy!(ctx, 1 => (v1) as isize, delay);
         enemy!(ctx, (0x869a44 & 0xffff) as u16 => (v1) as isize, pre_action);
     };
 }
 
-pub fn EprojPreInstr_PhantoonDestroyableFireballs_2(k: u16, ctx: &mut impl Host) {
+pub fn phantoon_flame_rain_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let apply_gravity: bool = (enemy!(ctx, (v1) as isize, velocity_x) == 0)
         || ({
@@ -1299,8 +1277,8 @@ pub fn EprojPreInstr_PhantoonDestroyableFireballs_2(k: u16, ctx: &mut impl Host)
         });
     if apply_gravity {
         enemy_add!(ctx, (v1) as isize, velocity_y, 16);
-        if EprojBlockCollisition_Vertical(k, ctx) & 1 != 0 {
-            enemy!(ctx, addr_word_8697AC as u16 => (v1) as isize, program);
+        if move_vertically_with_block_collision(k, ctx) & 1 != 0 {
+            enemy!(ctx, ADDR_WORD_8697AC as u16 => (v1) as isize, program);
             enemy!(ctx, 1 => (v1) as isize, delay);
             enemy_add!(ctx, (v1) as isize, y, 8);
             enemy!(ctx, (0x869a44 & 0xffff) as u16 => (v1) as isize, pre_action);
@@ -1309,7 +1287,7 @@ pub fn EprojPreInstr_PhantoonDestroyableFireballs_2(k: u16, ctx: &mut impl Host)
     };
 }
 
-pub fn EprojPreInstr_PhantoonStartingFireballsB_2(k: u16, ctx: &mut impl Host) {
+pub fn phantoon_starting_flames_activated_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let v2: u16 = enemy!(ctx, (v1) as isize, velocity_x);
     if v2 != 0 {
@@ -1321,7 +1299,7 @@ pub fn EprojPreInstr_PhantoonStartingFireballsB_2(k: u16, ctx: &mut impl Host) {
             enemy!(ctx, ctx.resolve_actor(Key::from_legacy(0), Le).x.whole => (v1) as isize, x);
             enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32 + 16) as u16 => (v1) as isize, y);
             enemy!(ctx, 1 => (v1) as isize, delay);
-            enemy!(ctx, addr_off_8697F8 as u16 => (v1) as isize, program);
+            enemy!(ctx, ADDR_OFF_8697F8 as u16 => (v1) as isize, program);
             return;
         }
     }
@@ -1332,37 +1310,37 @@ pub fn EprojPreInstr_PhantoonStartingFireballsB_2(k: u16, ctx: &mut impl Host) {
     enemy!(ctx, (pt.y as i32 + ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32 + 16) as u16 => (v1) as isize, y);
 }
 
-pub fn EprojPreInstr_PirateMotherBrainLaser_MoveLeft(k: u16, ctx: &mut impl Host) {
+pub fn pirate_laser_move_left_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     enemy_add!(ctx, (v1 as usize) as isize, x, (-2i16) as u16);
     if (enemy!(ctx, (v1) as isize, behavior_a) & 0x8000) == 0 {
         enemy_add!(ctx, (v1) as isize, x, (-2i16) as u16);
     }
-    if CheckIfEprojIsOffScreen(k, ctx) != 0 {
+    if is_off_screen(k, ctx) != 0 {
         enemy!(ctx, (v1 as usize) as isize, definition = 0);
     }
 }
 
-pub fn EprojPreInstr_PirateMotherBrainLaser_MoveRight(k: u16, ctx: &mut impl Host) {
+pub fn pirate_laser_move_right_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     enemy_add!(ctx, (v1 as usize) as isize, x, 2);
     if (enemy!(ctx, (v1) as isize, behavior_a) & 0x8000) == 0 {
         enemy_add!(ctx, (v1) as isize, x, 2);
     }
-    if CheckIfEprojIsOffScreen(k, ctx) != 0 {
+    if is_off_screen(k, ctx) != 0 {
         enemy!(ctx, (v1 as usize) as isize, definition = 0);
     }
 }
 
-pub fn EprojPreInstr_PirateClawThrownLeft(k: u16, ctx: &mut impl Host) {
+pub fn pirate_claw_thrown_left_pre_instruction(k: u16, ctx: &mut impl Host) {
     advance_thrown_claw(k, false, ctx);
 }
 
-pub fn EprojPreInstr_PirateClawThrownRight(k: u16, ctx: &mut impl Host) {
+pub fn pirate_claw_thrown_right_pre_instruction(k: u16, ctx: &mut impl Host) {
     advance_thrown_claw(k, true, ctx);
 }
 
-pub fn EprojPreInstr_AB07(k: u16, ctx: &mut impl Host) {
+pub fn projectile_ab07_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let mut amt: i32 = ((8 * (ctx.session().player.x as i32 - enemy!(ctx, (v1) as isize, x) as i32))
         as i16 as i32)
@@ -1386,7 +1364,7 @@ pub fn EprojPreInstr_AB07(k: u16, ctx: &mut impl Host) {
     );
 }
 
-pub fn EprojPreInstr_GoldenTorizoEgg(k: u16, ctx: &mut impl Host) {
+pub fn golden_torizo_egg_bouncing_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     if (enemy_add!(ctx, (v1) as isize, behavior_b, (-1i16) as u16) & 0x8000) != 0 {
         enemy_add!(ctx, (v1) as isize, program, 2);
@@ -1397,7 +1375,7 @@ pub fn EprojPreInstr_GoldenTorizoEgg(k: u16, ctx: &mut impl Host) {
                 -256i32
             }) as u16 => (v1) as isize, velocity_x);
     } else {
-        if EprojBlockCollisition_Horiz(k, ctx) & 1 != 0 {
+        if move_horizontally_with_block_collision(k, ctx) & 1 != 0 {
             enemy!(ctx, -(enemy!(ctx, (v1) as isize, velocity_x) as i32) as u16 => (v1) as isize, velocity_x);
             {
                 let index = (v1) as isize;
@@ -1406,7 +1384,7 @@ pub fn EprojPreInstr_GoldenTorizoEgg(k: u16, ctx: &mut impl Host) {
                 enemy!(ctx, index, behavior_a = value);
             };
         }
-        if EprojBlockCollisition_Vertical(k, ctx) & 1 != 0
+        if move_vertically_with_block_collision(k, ctx) & 1 != 0
             && (enemy!(ctx, (v1) as isize, velocity_y) & 0x8000) == 0
         {
             {
@@ -1429,7 +1407,7 @@ pub fn EprojPreInstr_GoldenTorizoEgg(k: u16, ctx: &mut impl Host) {
     };
 }
 
-pub fn EprojPreInstr_GoldenTorizoSuperMissile(k: u16, ctx: &mut impl Host) {
+pub fn golden_torizo_super_missile_held_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let v2 = enemy!(ctx, (v1) as isize, behavior_a);
     let v3: i32 = if (ctx.resolve_actor(Key::from_legacy(v2), Le).parameters[0] & 0x8000) != 0 {
@@ -1441,7 +1419,7 @@ pub fn EprojPreInstr_GoldenTorizoSuperMissile(k: u16, ctx: &mut impl Host) {
     enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v2), Le).y.whole as i32 - 52i32) as u16 => (v1) as isize, y);
 }
 
-pub fn sub_86B535(k: u16, ctx: &mut impl Host) {
+pub fn dragon_fireball_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     move_spike_axis(k, true, SlotField::VelocityX, ctx);
     move_spike_axis(k, false, SlotField::VelocityY, ctx);
@@ -1452,7 +1430,7 @@ pub fn sub_86B535(k: u16, ctx: &mut impl Host) {
             (v1 as usize) as isize,
             velocity_y = (v6 as u16).wrapping_add(32)
         );
-        Eproj_DeleteIfYposOutside(k, ctx);
+        delete_if_vertically_off_screen(k, ctx);
     } else {
         enemy!(
             ctx,
@@ -1462,9 +1440,9 @@ pub fn sub_86B535(k: u16, ctx: &mut impl Host) {
         if (v6).wrapping_add(32) >= 0 {
             {
                 let instruction: u16 = (if (enemy!(ctx, (v1) as isize, velocity_x) & 0x8000) == 0 {
-                    addr_word_86B4E3 as i32
+                    ADDR_WORD_86B4E3 as i32
                 } else {
-                    addr_word_86B4D7 as i32
+                    ADDR_WORD_86B4D7 as i32
                 }) as u16;
                 start_instruction((v1 as usize) as isize, instruction, ctx);
             }
@@ -1472,7 +1450,7 @@ pub fn sub_86B535(k: u16, ctx: &mut impl Host) {
     };
 }
 
-pub fn Eproj_DeleteIfYposOutside(k: u16, ctx: &mut impl Host) {
+pub fn delete_if_vertically_off_screen(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     if ((enemy!(ctx, (v1) as isize, y)) as i16).wrapping_sub((ctx.inputs().camera_y) as i16) >= 288
     {
@@ -1480,7 +1458,7 @@ pub fn Eproj_DeleteIfYposOutside(k: u16, ctx: &mut impl Host) {
     }
 }
 
-pub fn EprojPreInstr_TourianStatueUnlockingParticle(k: u16, ctx: &mut impl Host) {
+pub fn tourian_statue_unlocking_particle_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     move_spike_axis(k, true, SlotField::VelocityX, ctx);
     let v7: u16 = (ctx.inputs().fx_y as i32 - enemy!(ctx, (v1) as isize, y) as i32) as u16;
@@ -1488,28 +1466,28 @@ pub fn EprojPreInstr_TourianStatueUnlockingParticle(k: u16, ctx: &mut impl Host)
     if ((v7 as i32 ^ (ctx.inputs().fx_y as i32 - enemy!(ctx, (v1) as isize, y) as i32)) & 0x8000)
         != 0
     {
-        SpawnEprojWithRoomGfx(addr_stru_86BA5C as u16, k, ctx);
+        spawn_with_room_gfx(ADDR_STRU_86BA5C as u16, k, ctx);
     }
     if (enemy!(ctx, (v1) as isize, y) & 0xff00) == 256 {
-        enemy!(ctx, addr_off_86B79F as u16 => (v1) as isize, program);
+        enemy!(ctx, ADDR_OFF_86B79F as u16 => (v1) as isize, program);
         enemy!(ctx, 1 => (v1) as isize, delay);
     } else {
         enemy_add!(ctx, (v1) as isize, velocity_y, 16);
     };
 }
 
-pub fn EprojPreInstr_TourianStatueSoul(k: u16, ctx: &mut impl Host) {
+pub fn tourian_statue_soul_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
-    EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(k, ctx);
+    move_cacatac_spike_up(k, ctx);
     if (enemy!(ctx, (v1) as isize, y) & 0x100) != 0 {
-        enemy!(ctx, addr_off_86B79F as u16 => (v1) as isize, program);
+        enemy!(ctx, ADDR_OFF_86B79F as u16 => (v1) as isize, program);
         enemy!(ctx, 1 => (v1) as isize, delay);
     }
     enemy_add!(ctx, (v1) as isize, velocity_y, (-128i16) as u16);
 }
 
 /// A lavaquake rock rising and slowing. Was `Eproj_NorfairLavaquakeRocks_Func1`.
-pub fn lavaquake_rock_rise(k: u16, ctx: &mut impl Host) {
+pub fn polyp_rock_rise(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let mut v2: i16 = (enemy!(ctx, (v1) as isize, velocity_y) as i32 - 2i32) as i16;
     enemy!(ctx, v2 as u16 => (v1) as isize, velocity_y);
@@ -1520,9 +1498,9 @@ pub fn lavaquake_rock_rise(k: u16, ctx: &mut impl Host) {
                 v3 = 0;
             }
             let t: i32 = (8 * v3 as i32 + 4) >> 1;
-            apply_lavaquake_sample(v1 as isize, t, ctx);
+            apply_polyp_rock_sample(v1 as isize, t, ctx);
         }
-        lavaquake_rock_move_x(k, ctx);
+        polyp_rock_move_x(k, ctx);
     } else {
         enemy!(ctx, 0 => (v1) as isize, velocity_y);
         enemy!(ctx, (0x86bc8f & 0xffff) as u16 => (v1) as isize, behavior_a);
@@ -1530,7 +1508,7 @@ pub fn lavaquake_rock_rise(k: u16, ctx: &mut impl Host) {
 }
 
 /// A lavaquake rock falling, capped at speed 64. Was `Eproj_NorfairLavaquakeRocks_Func2`.
-pub fn lavaquake_rock_fall(k: u16, ctx: &mut impl Host) {
+pub fn polyp_rock_fall(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let v2: u16 = (enemy!(ctx, (v1) as isize, velocity_y) as i32 + 2) as u16;
     enemy!(ctx, v2 => (v1) as isize, velocity_y);
@@ -1539,15 +1517,15 @@ pub fn lavaquake_rock_fall(k: u16, ctx: &mut impl Host) {
     }
     for n in (1i32..=2).rev() {
         let t: i32 = (8 * (enemy!(ctx, (v1) as isize, velocity_y) as i32 - n + 1)) >> 1;
-        apply_lavaquake_sample(v1 as isize, t, ctx);
+        apply_polyp_rock_sample(v1 as isize, t, ctx);
     }
-    lavaquake_rock_move_x(k, ctx);
+    polyp_rock_move_x(k, ctx);
 }
 
 /// A lavaquake rock's horizontal move. Was `Eproj_NorfairLavaquakeRocks_Func3`.
-pub use self::EprojPreInstr_SpikeShootingPlantSpikes_MoveX2 as lavaquake_rock_move_x;
+pub use self::move_cacatac_spike_right as polyp_rock_move_x;
 
-pub fn EprojPreInstr_BE12(k: u16, ctx: &mut impl Host) {
+pub fn shaktool_attack_back_circle_moving_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     if enemy!(
         ctx,
@@ -1555,14 +1533,14 @@ pub fn EprojPreInstr_BE12(k: u16, ctx: &mut impl Host) {
         definition
     ) != 0
     {
-        EprojBlockCollisition_Horiz(k, ctx);
-        EprojBlockCollisition_Vertical(k, ctx);
+        move_horizontally_with_block_collision(k, ctx);
+        move_vertically_with_block_collision(k, ctx);
     } else {
         enemy!(ctx, 0 => (v1) as isize, definition);
     };
 }
 
-pub fn EprojPreInstr_MotherBrainRoomTurretBullets(k: u16, ctx: &mut impl Host) {
+pub fn mother_brain_turret_bullets_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     {
         let index = (v1) as isize;
@@ -1570,7 +1548,7 @@ pub fn EprojPreInstr_MotherBrainRoomTurretBullets(k: u16, ctx: &mut impl Host) {
         let value = old ^ (0x8000);
         enemy!(ctx, index, properties = value);
     };
-    MoveEprojWithVelocity(k, ctx);
+    move_with_velocity(k, ctx);
     if ctx.ridley_offscreen(enemy!(ctx, (v1) as isize, x), enemy!(ctx, (v1) as isize, y)) & 1 != 0 {
         {
             let index = (ctx.session().enemy_projectiles.selected >> 1) as isize;
@@ -1579,20 +1557,20 @@ pub fn EprojPreInstr_MotherBrainRoomTurretBullets(k: u16, ctx: &mut impl Host) {
     }
 }
 
-pub fn sub_86C320(k: u16, ctx: &mut impl Host) {
+pub fn move_to_blue_ring_spawn_position(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(64), Le).x.whole as i32 + 10) as u16 => (v1) as isize, x);
     enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(64), Le).y.whole as i32 + 16) as u16 => (v1) as isize, y);
 }
 
-pub fn Eproj_MoveToBlueRingSpawnPosition(k: u16, ctx: &mut impl Host) {
+pub fn mother_brain_blue_ring_lasers_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     if enemy!(ctx, (v1) as isize, behavior_a) != 0 {
         enemy_decrement!(ctx, (v1) as isize, behavior_a);
-        sub_86C320(k, ctx);
+        move_to_blue_ring_spawn_position(k, ctx);
     } else {
-        MoveEprojWithVelocity(k, ctx);
-        let t: u8 = CheckForCollisionWithBabyMetroid_DoubleRet(k, ctx);
+        move_with_velocity(k, ctx);
+        let t: u8 = check_for_collision_with_baby_metroid(k, ctx);
         if t & 0x80 != 0 {
             return;
         }
@@ -1601,7 +1579,7 @@ pub fn Eproj_MoveToBlueRingSpawnPosition(k: u16, ctx: &mut impl Host) {
                 let value = ctx.mother_brain_blue_ring_contacts().wrapping_add(1);
                 ctx.set_mother_brain_blue_ring_contacts(value);
             }
-            BlueRingContactExplosion(k, ctx);
+            blue_ring_contact_explosion(k, ctx);
             let v3: u16 = ctx.mother_brain_target_enemy();
             {
                 let target = ctx.mother_brain_target_enemy();
@@ -1612,8 +1590,8 @@ pub fn Eproj_MoveToBlueRingSpawnPosition(k: u16, ctx: &mut impl Host) {
                 let health = (i32::from(actor.health) - 80) as i16;
                 actor.health = if health < 0 { 0 } else { health as u16 };
             });
-        } else if Eproj_CheckForCollisionWithSamus(k, ctx) & 1 != 0 {
-            BlueRingContactExplosion(k, ctx);
+        } else if check_for_collision_with_samus(k, ctx) & 1 != 0 {
+            blue_ring_contact_explosion(k, ctx);
             {
                 let damage = crate::combat_rules::suit_damage(
                     0x50,
@@ -1627,25 +1605,25 @@ pub fn Eproj_MoveToBlueRingSpawnPosition(k: u16, ctx: &mut impl Host) {
                 - enemy!(ctx, (k >> 1) as isize, x) as i32)
                 as i16)
                 >= 0) as u16;
-        } else if CheckForBlueRingCollisionWithRoom(k, ctx) & 1 != 0 {
-            Eproj_Earthqhake5(k, ctx);
+        } else if check_for_blue_ring_collision_with_room(k, ctx) & 1 != 0 {
+            handle_blue_ring_collision_with_room(k, ctx);
         }
     };
 }
 
-pub fn BlueRingContactExplosion(k: u16, ctx: &mut impl Host) {
+pub fn blue_ring_contact_explosion(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     enemy!(ctx, 0 => (v1) as isize, definition);
     ctx.session_mut().enemy_projectiles.spawn.point = Point {
         x: enemy!(ctx, (v1) as isize, x),
         y: enemy!(ctx, (v1) as isize, y),
     };
-    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 3, ctx);
+    spawn_with_room_gfx(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 3, ctx);
     ctx.queue_sound(3, 6, 0x13);
-    sub_86C42E(k, ctx);
+    use_palette_0(k, ctx);
 }
 
-pub fn EprojPreInstr_C84D(k: u16, ctx: &mut impl Host) {
+pub fn mother_brain_drool_attached_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let v2: i32 = (4 * enemy!(ctx, (v1) as isize, behavior_a) as i32) as u16 as i32 >> 1;
     enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(64), Le).x.whole as i32 + K_EPROJ_INIT_MOTHER_BRAINS_DROOL[v2 as usize] as i32) as u16 => (v1) as isize, x);
@@ -1655,13 +1633,13 @@ pub fn EprojPreInstr_C84D(k: u16, ctx: &mut impl Host) {
     enemy!(ctx, 0 => (v1) as isize, velocity_y);
 }
 
-pub fn EprojPreInstr_MotherBrainsRainbowBeamExplosion(k: u16, ctx: &mut impl Host) {
+pub fn mother_brain_rainbow_beam_explosion_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     enemy!(ctx, (ctx.session().player.x as i32 + enemy!(ctx, (v1) as isize, velocity_x) as i32) as u16 => (v1) as isize, x);
     enemy!(ctx, (ctx.session().player.y as i32 + enemy!(ctx, (v1) as isize, velocity_y) as i32) as u16 => (v1) as isize, y);
 }
 
-pub fn EprojPreInstr_MotherBrainsExplodedDoorParticles(k: u16, ctx: &mut impl Host) {
+pub fn mother_brain_escape_door_particles_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let v2 = decelerated_magnitude(enemy!(ctx, (v1) as isize, velocity_x), 16);
     enemy!(ctx, (if enemy!(ctx, (v1) as isize, velocity_x) & 0x8000 != 0 {
@@ -1670,7 +1648,7 @@ pub fn EprojPreInstr_MotherBrainsExplodedDoorParticles(k: u16, ctx: &mut impl Ho
             v2 as i32
         }) as u16 => (v1) as isize, velocity_x);
     enemy_add!(ctx, (v1) as isize, velocity_y, 32);
-    MoveEprojWithVelocity(k, ctx);
+    move_with_velocity(k, ctx);
     if (enemy_add!(ctx, (v1) as isize, behavior_a, (-1i16) as u16) & 0x8000) != 0 {
         enemy!(ctx, 0 => (v1) as isize, definition);
         enemy_add!(ctx, (v1) as isize, y, (-4i16) as u16);
@@ -1678,11 +1656,11 @@ pub fn EprojPreInstr_MotherBrainsExplodedDoorParticles(k: u16, ctx: &mut impl Ho
             x: enemy!(ctx, (v1) as isize, x),
             y: enemy!(ctx, (v1) as isize, y),
         };
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9, ctx);
+        spawn_with_room_gfx(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 9, ctx);
     }
 }
 
-pub fn EprojPreInstr_TimeBombSetJapaneseText(k: u16, ctx: &mut impl Host) {
+pub fn time_bomb_set_japanese_text_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     enemy!(ctx, 0 => (v1) as isize, velocity_x);
     enemy!(ctx, 0 => (v1) as isize, velocity_y);
@@ -1698,7 +1676,7 @@ pub fn falling_tube_burst(k: u16, ctx: &mut impl Host) {
         x: enemy!(ctx, (v1) as isize, x),
         y: (enemy!(ctx, (v1) as isize, y) as i32 + 8) as u16,
     };
-    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9, ctx);
+    spawn_with_room_gfx(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 9, ctx);
     enemy!(ctx, (0x86cc08 & 0xffff) as u16 => (v1) as isize, behavior_a);
     falling_tube_fall(k, ctx);
 }
@@ -1708,35 +1686,35 @@ pub fn falling_tube_burst(k: u16, ctx: &mut impl Host) {
 pub fn falling_tube_fall(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     enemy_add!(ctx, (v1) as isize, velocity_y, 6);
-    let mut v2: i16 = MoveEprojWithVelocityY(k, ctx) as i16;
+    let mut v2: i16 = move_with_y_velocity(k, ctx) as i16;
     if (v2 as i32 - 208i32) & 0x8000 == 0 {
         enemy!(ctx, 0 => (v1) as isize, definition);
         ctx.session_mut().enemy_projectiles.spawn.point = Point {
             x: enemy!(ctx, (v1) as isize, x),
             y: enemy!(ctx, (v1) as isize, y),
         };
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0xc, ctx);
+        spawn_with_room_gfx(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 0xc, ctx);
     }
 }
 
-pub fn sub_86CFD5(k: u16, ctx: &mut impl Host) {
+pub fn kihunter_acid_spit_left_start_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     enemy!(ctx, (0x86cff8 & 0xffff) as u16 => (v1) as isize, pre_action);
     enemy_add!(ctx, (v1) as isize, x, (-19i16) as u16);
 }
 
-pub fn sub_86CFE6(k: u16, ctx: &mut impl Host) {
+pub fn kihunter_acid_spit_right_start_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     enemy!(ctx, (0x86cff8 & 0xffff) as u16 => (v1) as isize, pre_action);
     enemy_add!(ctx, (v1) as isize, x, 19);
 }
 
-pub fn sub_86CFF8(k: u16, ctx: &mut impl Host) {
+pub fn kihunter_acid_spit_moving_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
-    if EprojBlockCollisition_Vertical(k, ctx) & 1 != 0 {
-        enemy!(ctx, addr_off_86CF56 as u16 => (v1) as isize, program);
+    if move_vertically_with_block_collision(k, ctx) & 1 != 0 {
+        enemy!(ctx, ADDR_OFF_86CF56 as u16 => (v1) as isize, program);
         enemy!(ctx, 1 => (v1) as isize, delay);
-    } else if EprojBlockCollisition_Horiz(k, ctx) & 1 != 0 {
+    } else if move_horizontally_with_block_collision(k, ctx) & 1 != 0 {
         enemy!(ctx, 0 => (k >> 1) as isize, velocity_x);
     } else {
         let mut v2: u16 = (enemy!(ctx, (v1) as isize, velocity_y) as i32 + 16) as u16;
@@ -1774,7 +1752,7 @@ pub fn kago_bug_flag_when_far(k: u16, ctx: &mut impl Host) {
     }
 }
 
-pub fn EprojPreInstr_MaridiaFloatersSpikes(k: u16, ctx: &mut impl Host) {
+pub fn powamp_spike_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     {
         let index = (v1) as isize;
@@ -1784,7 +1762,7 @@ pub fn EprojPreInstr_MaridiaFloatersSpikes(k: u16, ctx: &mut impl Host) {
             as u16;
         enemy!(ctx, index, velocity_x = value);
     };
-    if EprojBlockCollisition_Horiz(k, ctx) & 1 != 0 || {
+    if move_horizontally_with_block_collision(k, ctx) & 1 != 0 || {
         {
             let index = (v1) as isize;
             let old = enemy!(ctx, index, velocity_y);
@@ -1793,24 +1771,24 @@ pub fn EprojPreInstr_MaridiaFloatersSpikes(k: u16, ctx: &mut impl Host) {
                 as u16;
             enemy!(ctx, index, velocity_y = value);
         };
-        EprojBlockCollisition_Vertical(k, ctx) & 1 != 0
+        move_vertically_with_block_collision(k, ctx) & 1 != 0
     } {
-        enemy!(ctx, addr_off_86D218 as u16 => (v1) as isize, program);
+        enemy!(ctx, ADDR_OFF_86D218 as u16 => (v1) as isize, program);
         enemy!(ctx, 1 => (v1) as isize, delay);
     }
 }
 
-pub fn EprojPreInstr_WreckedShipRobotLaser(k: u16, ctx: &mut impl Host) {
+pub fn work_robot_laser_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     enemy!(ctx, 0 => (v1) as isize, graphics);
-    if EprojBlockCollisition_Horiz(k, ctx) & 1 != 0
-        || EprojBlockCollisition_Vertical(k, ctx) & 1 != 0
+    if move_horizontally_with_block_collision(k, ctx) & 1 != 0
+        || move_vertically_with_block_collision(k, ctx) & 1 != 0
     {
         enemy!(ctx, 0 => (v1) as isize, definition);
     }
 }
 
-pub fn sub_86D7BF(k: u16, ctx: &mut impl Host) {
+pub fn n00b_tube_crack_flickering_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     if enemy!(ctx, (v1) as isize, x) != 0xee00 {
         enemy!(ctx, enemy!(ctx, (v1) as isize, x) => (v1) as isize, behavior_a);
@@ -1822,7 +1800,7 @@ pub fn sub_86D7BF(k: u16, ctx: &mut impl Host) {
     };
 }
 
-pub fn sub_86D7DE(k: u16, ctx: &mut impl Host) {
+pub fn n00b_tube_crack_falling_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let amt: i32 = (192i16 as i32) << 8;
     add_split(
@@ -1834,13 +1812,13 @@ pub fn sub_86D7DE(k: u16, ctx: &mut impl Host) {
     );
 }
 
-pub fn EprojPreInstr_SpikeShootingPlantSpikes_MoveY2(k: u16, ctx: &mut impl Host) {
+pub fn move_cacatac_spike_down(k: u16, ctx: &mut impl Host) {
     move_spike_axis(k, false, SlotField::VelocityX, ctx);
 }
 
-pub use self::EprojPreInstr_SpikeShootingPlantSpikes_MoveX1 as EprojPreInstr_DBF2_MoveX1;
+pub use self::move_cacatac_spike_left as mini_crocomire_projectile_move_left;
 
-pub fn EprojPreInstr_Spores(k: u16, ctx: &mut impl Host) {
+pub fn spores_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let v2: u16 = enemy_byte!(ctx, v1 as isize * 2, behavior_a) as u16;
     let mut r18: u16 = (spore_delta(enemy_byte!(ctx, v1 as isize * 2, behavior_a) as isize, ctx)
@@ -1858,7 +1836,7 @@ pub fn EprojPreInstr_Spores(k: u16, ctx: &mut impl Host) {
     enemy!(ctx, (enemy_byte!(ctx, v1 as isize * 2, behavior_a) as i32 + 2) as u8 as u16 => (v1) as isize, behavior_a);
 }
 
-pub fn EprojPreInstr_E605(k: u16, ctx: &mut impl Host) {
+pub fn dust_cloud_moving_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let mut v2: u16 = (enemy!(ctx, (v1) as isize, counter))
         .wrapping_add(((enemy!(ctx, (v1) as isize, velocity_y)) as i16).unsigned_abs());
@@ -1908,7 +1886,7 @@ pub fn move_along_angle(k: u16, ctx: &mut impl Host) {
     );
 }
 
-pub fn Eproj_BotwoonsBody_Main(k: u16, ctx: &mut impl Host) {
+pub fn botwoon_body_main(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let v2: u16 = {
         let record = ctx.loaded_record(0x86, 0xe9f1);
@@ -1923,10 +1901,10 @@ pub fn Eproj_BotwoonsBody_Main(k: u16, ctx: &mut impl Host) {
         enemy!(ctx, v2 => (v1) as isize, behavior_b);
         enemy!(ctx, 1 => (v1) as isize, delay);
     }
-    Eproj_BotwoonsBodyHurtFlashHandling1(k, ctx);
+    botwoon_body_hurt_flash(k, ctx);
 }
 
-pub fn Eproj_BotwoonsBodyHurtFlashHandling1(k: u16, ctx: &mut impl Host) {
+pub fn botwoon_body_hurt_flash(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     {
         let index = (v1) as isize;
@@ -1946,10 +1924,10 @@ pub fn Eproj_BotwoonsBodyHurtFlashHandling1(k: u16, ctx: &mut impl Host) {
     }
 }
 
-pub fn EprojPreInstr_Sparks(k: u16, ctx: &mut impl Host) {
+pub fn falling_spark_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     if (enemy!(ctx, (v1) as isize, velocity_y) & 0x8000) == 0 {
-        if EprojBlockCollisition_Vertical(k, ctx) & 1 != 0 {
+        if move_vertically_with_block_collision(k, ctx) & 1 != 0 {
             enemy!(ctx, 0xf363 => (v1) as isize, program);
             enemy!(ctx, 1 => (v1) as isize, delay);
             for _ in 0..2 {
@@ -2004,19 +1982,19 @@ pub fn EprojPreInstr_Sparks(k: u16, ctx: &mut impl Host) {
     }
 }
 
-pub fn EprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1(k: u16, ctx: &mut impl Host) {
-    EprojPreInstr_SpikeShootingPlantSpikes_MoveX1(k, ctx)
+pub fn cacatac_spike_left(k: u16, ctx: &mut impl Host) {
+    move_cacatac_spike_left(k, ctx)
 }
 
-pub fn EprojPreInstr_SpikeShootingPlantSpikes_2_MoveX2(k: u16, ctx: &mut impl Host) {
-    EprojPreInstr_SpikeShootingPlantSpikes_MoveX2(k, ctx)
+pub fn cacatac_spike_right(k: u16, ctx: &mut impl Host) {
+    move_cacatac_spike_right(k, ctx)
 }
 
-pub fn EprojPreInstr_SpikeShootingPlantSpikes_1_MoveY1(k: u16, ctx: &mut impl Host) {
-    EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(k, ctx)
+pub fn cacatac_spike_up(k: u16, ctx: &mut impl Host) {
+    move_cacatac_spike_up(k, ctx)
 }
 
-pub use self::EprojPreInstr_96C0 as EprojPreInstr_96CE;
+pub use self::proto_vertical_afterburn_up_pre_instruction as proto_vertical_afterburn_down_pre_instruction;
 
 fn advance_thrown_claw(k: u16, initially_right: bool, ctx: &mut impl Host) {
     let index = (k >> 1) as isize;
@@ -2047,7 +2025,7 @@ fn advance_thrown_claw(k: u16, initially_right: bool, ctx: &mut impl Host) {
         enemy_add!(ctx, index, behavior_a, 32);
     }
     enemy_add!(ctx, index, y, 1);
-    if CheckIfEprojIsOffScreen(k, ctx) != 0 {
+    if is_off_screen(k, ctx) != 0 {
         enemy!(ctx, index, definition = 0);
     }
 }
@@ -2074,8 +2052,8 @@ fn integrate_angle_axis(
     add_split(high, low, index, amount, ctx);
 }
 
-fn apply_lavaquake_sample(index: isize, table_index: i32, ctx: &mut impl Host) {
-    let amount = lavaquake_delta((table_index >> 1) as isize, ctx);
+fn apply_polyp_rock_sample(index: isize, table_index: i32, ctx: &mut impl Host) {
+    let amount = polyp_rock_delta((table_index >> 1) as isize, ctx);
     add_split(SlotField::Y, SlotField::YFraction, index, amount, ctx);
     let record = ctx.loaded_record(0xa0, 0xcbc7);
     let value = record.native_word(((table_index + 1) as isize).checked_mul(2).unwrap());

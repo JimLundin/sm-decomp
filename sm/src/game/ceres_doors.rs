@@ -49,7 +49,7 @@ fn branch(taken: bool, script: EnemyScript) -> EnemyScript {
 }
 
 pub(crate) fn play_open_sound(script: EnemyScript, game: &mut Game) -> EnemyScript {
-    crate::game::music::QueueSfx3_Max6(0x2c, game);
+    crate::game::music::queue_sfx3_max6(0x2c, game);
     script
 }
 

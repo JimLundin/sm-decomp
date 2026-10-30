@@ -21,12 +21,12 @@ pub const MISSILE_BIT: u16 = 0x0100;
 pub const SUPER_MISSILE_BIT: u16 = 0x0200;
 
 const _: () = {
-    assert!(TYPE_MASK as u32 == kProjectileType_TypeMask);
-    assert!(MISSILE as u32 == kProjectileType_Missile);
-    assert!(SUPER_MISSILE as u32 == kProjectileType_SuperMissile);
-    assert!(POWER_BOMB as u32 == kProjectileType_PowerBomb);
-    assert!(BOMB as u32 == kProjectileType_Bomb);
-    assert!(BEAM_EXPLOSION as u32 == kProjectileType_BeamExplosion);
-    assert!(MISSILE_EXPLOSION as u32 == kProjectileType_MissileExplosion);
-    assert!(NO_SAMUS_CONTACT as u32 == kProjectileType_DontInteractWithSamus);
+    assert!(TYPE_MASK as u32 == K_PROJECTILE_TYPE_TYPE_MASK);
+    assert!(MISSILE as u32 == K_PROJECTILE_TYPE_MISSILE);
+    assert!(SUPER_MISSILE as u32 == K_PROJECTILE_TYPE_SUPER_MISSILE);
+    assert!(POWER_BOMB as u32 == K_PROJECTILE_TYPE_POWER_BOMB);
+    assert!(BOMB as u32 == K_PROJECTILE_TYPE_BOMB);
+    assert!(BEAM_EXPLOSION as u32 == K_PROJECTILE_TYPE_BEAM_EXPLOSION);
+    assert!(MISSILE_EXPLOSION as u32 == K_PROJECTILE_TYPE_MISSILE_EXPLOSION);
+    assert!(NO_SAMUS_CONTACT as u32 == K_PROJECTILE_TYPE_DONT_INTERACT_WITH_SAMUS);
 };

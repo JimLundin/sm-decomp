@@ -2,7 +2,9 @@
 //! Boss counters and spawn occupancy remain RAM-authoritative during migration.
 #![forbid(unsafe_code)]
 use crate::game::actors::api::{DeathHandling, DeathKind, ShotHandling, angle_from_delta};
-use crate::game::enemy_projectiles::{Math_MultByCos, Math_MultBySin, SpawnEprojWithRoomGfx};
+use crate::game::enemy_projectiles::{
+    spawn_with_room_gfx, x_velocity_at_angle, y_velocity_at_angle,
+};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use sm_game::geometry::Position;
@@ -210,7 +212,7 @@ fn react_to_death(runtime: &mut Runtime<'_>, index: u16) {
         };
         runtime.foreign(|game| {
             game.eproj_spawn_pt = point;
-            SpawnEprojWithRoomGfx(0xe509, 3, game);
+            spawn_with_room_gfx(0xe509, 3, game);
         });
         runtime.edit_actor(key, Native, |actor| {
             actor.variables[0] = 0xb844;
@@ -294,8 +296,8 @@ pub(crate) fn advance(game: &mut Game) -> bool {
                         .wrapping_sub(runtime.resolve_actor(key, Native).y.whole);
                     let angle = (-(i32::from(angle_from_delta(x, y)) + 0x80)) as u8 as u16;
                     runtime.edit_actor(key, Native, |actor| {
-                        actor.variables[1] = Math_MultBySin(0x120, angle);
-                        actor.variables[2] = Math_MultByCos(0x120, angle);
+                        actor.variables[1] = x_velocity_at_angle(0x120, angle);
+                        actor.variables[2] = y_velocity_at_angle(0x120, angle);
                     });
                 }
             }

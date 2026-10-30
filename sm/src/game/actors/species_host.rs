@@ -17,10 +17,10 @@ impl sm_game::actors::species::TouchHost for Game {
     fn native_touch(&mut self, touch: sm_game::actors::species::NativeTouch) {
         use sm_game::actors::species::NativeTouch::*;
         match touch {
-            LargeSnail { damage } => crate::game::large_snail::touch(damage, self),
+            Oum { damage } => crate::game::large_snail::touch(damage, self),
             SporeSpawn => actors::spore_spawn::touch(self),
             CeresSteam => crate::game::ceres_doors::steam_touch(self),
-            MotherBrainBrain => sm_a9::MotherBrainsBrain_Touch(self),
+            MotherBrainBrain => sm_a9::brain_touch(self),
         }
     }
 }
@@ -30,11 +30,11 @@ impl sm_game::actors::species::ShotHost for Game {
         use sm_game::actors::species::NativeShot::*;
         match shot {
             Dud => api::create_dud(&mut Runtime::new(self)),
-            LargeSnail => crate::game::large_snail::shot(self),
+            Oum => crate::game::large_snail::shot(self),
             SporeSpawn => actors::spore_spawn::shot(self),
             Ridley => sm_game::actors::ridley::shot(self),
-            MotherBrainBody => sm_a9::MotherBrainsBody_Shot(self),
-            MotherBrainBrain => sm_a9::MotherBrainsBrain_Shot(self),
+            MotherBrainBody => sm_a9::body_shot(self),
+            MotherBrainBrain => sm_a9::brain_shot(self),
         }
     }
 }
@@ -47,11 +47,11 @@ impl sm_game::actors::species::DrawHookHost for Game {
             CeresRidleyBabyMetroidAndWings => {
                 sm_game::actors::ridley::draw_baby_metroid_and_door(self)
             }
-            WreckedShipRobotPalette => crate::game::actors::wrecked_ship_robots::palette(self),
+            WorkRobotPalette => crate::game::actors::wrecked_ship_robots::palette(self),
             BlueFaceBlockPalette => sm_game::actors::blue_brinstar_face_block::cycle_palette(self),
-            MotherBrainBrainAndNeck => sm_a9::MotherBrain_DrawBrainNeck_EnemyGfxDrawHook(self),
-            MotherBrainBrain => sm_a9::MotherBrainsBrain_GfxDrawHook(self),
-            DeadTorizo => sm_game::actors::corpses::DeadTorizo_MainGfxHook(self),
+            MotherBrainBrainAndNeck => sm_a9::draw_brain_and_neck_hook(self),
+            MotherBrainBrain => sm_a9::draw_brain_hook(self),
+            DeadTorizo => sm_game::actors::corpses::torizo_corpse_graphics_drawn_hook(self),
         }
     }
 }

@@ -74,7 +74,8 @@ pub(crate) fn seed(g: &mut Game, image: &RomImage) {
     g.register_native_rom(image.clone());
     g.register_rom(image.clone());
     g.g_fail = false;
-    g.ram().copy_in(ram::kraid_unk9000, &2u16.to_ne_bytes());
+    g.ram()
+        .copy_in(ram::boss_death_quake_sound_timer, &2u16.to_ne_bytes());
     g.ram()
         .copy_in(ram::camera_distance_index, &0x4567u16.to_ne_bytes());
     g.ram()
@@ -155,7 +156,7 @@ pub(crate) fn write_checked(g: &mut Game, image: &RomImage) {
         put(&mut expected, 0xf78 + slot * 64 + 0xe, 0x600);
     }
     put(&mut expected, 0xf78 + 0x30, 0xc715);
-    put(&mut expected, ram::kraid_unk9000, 1);
+    put(&mut expected, ram::boss_death_quake_sound_timer, 1);
     put(&mut expected, ram::enemy_bg2_tilemap_size, 2);
     put(&mut expected, ram::camera_distance_index, 0);
     put(&mut expected, ram::palette_change_num, 0);

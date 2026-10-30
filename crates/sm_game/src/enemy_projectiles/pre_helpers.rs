@@ -69,7 +69,7 @@ pub fn add_split(high: SlotField, low: SlotField, index: isize, amount: u32, ctx
         ctx.probe("eproj.motion.applied");
     }
 }
-pub fn lavaquake_delta(index: isize, ctx: &mut impl Host) -> u32 {
+pub fn polyp_rock_delta(index: isize, ctx: &mut impl Host) -> u32 {
     ctx.native_record(0xa0, 0xcbc7)
         .long_le(index.checked_mul(4).unwrap())
 }

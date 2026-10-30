@@ -113,7 +113,6 @@ pub mod actors {
     pub mod botwoon;
     pub mod botwoon_death;
     pub mod boulder;
-    pub mod brinstar_pipe_bug;
     pub mod ceres_doors;
     pub mod ceres_ridley;
     pub mod codec;
@@ -121,7 +120,7 @@ pub mod actors {
     pub mod contacts;
     pub mod content;
     pub mod corpses;
-    pub mod coven;
+    pub mod covern;
     pub mod crawlers;
     pub mod crocomire_attack;
     pub mod crocomire_reactions;
@@ -145,6 +144,8 @@ pub mod actors {
     pub mod fireflea;
     pub mod fixture;
     pub mod fune;
+    pub mod gamet;
+    pub mod geega;
     pub mod host;
     pub mod identity;
     pub mod kago;
@@ -166,7 +167,6 @@ pub mod actors {
     pub mod mother_brain_neck;
     pub mod mother_brain_tubes;
     pub mod movement;
-    pub mod norfair_pipe_bug;
     pub mod overlap;
     pub mod phantoon;
     pub mod phantoon_actions;
@@ -194,7 +194,7 @@ pub mod actors {
     pub mod torizo;
     pub mod tripper;
     pub mod yapping_maw;
-    pub mod yellow_pipe_bug;
+    pub mod zeb;
     pub mod zebetites;
     pub mod zoa;
 }

@@ -34,9 +34,9 @@ pub struct CorpseVariant {
 }
 
 /// $A9:D86A instruction lists then $A9:D870 rotting definitions (zoomer corpse).
-pub const ZOOMER_ADDRESS: u32 = 0xa9_d86a;
-pub const ZOOMER_ROTTING_ADDRESS: u32 = 0xa9_d870;
-pub const ZOOMER_ROWS: usize = 3;
+pub const GEEMER_ADDRESS: u32 = 0xa9_d86a;
+pub const GEEMER_ROTTING_ADDRESS: u32 = 0xa9_d870;
+pub const GEEMER_ROWS: usize = 3;
 /// $A9:D897 instruction lists then $A9:D89B rotting definitions (ripper corpse).
 pub const RIPPER_ADDRESS: u32 = 0xa9_d897;
 pub const RIPPER_ROTTING_ADDRESS: u32 = 0xa9_d89b;

@@ -3,7 +3,7 @@
 #![forbid(unsafe_code)]
 use crate::game::actors::api;
 use crate::game::enemy_projectiles::{self, scatter_drop};
-use crate::game::gameplay_flag_runtime::{SetBossBitForCurArea, boss_byte_at};
+use crate::game::gameplay_flag_runtime::{boss_byte_at, set_boss_bits_for_current_area};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::rom::RomImage;
@@ -83,7 +83,7 @@ impl Host for Game {
     }
 
     fn set_boss_bit(&mut self, mask: u16) {
-        SetBossBitForCurArea(mask, self);
+        set_boss_bits_for_current_area(mask, self);
     }
 
     fn boss_byte(&mut self, area: u16) -> u8 {

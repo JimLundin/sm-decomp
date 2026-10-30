@@ -41,10 +41,10 @@ impl SpeciesActors for Composed {
     fn mini_kraid_spit_x_offset(&self, index: u16) -> u16 {
         panic!("unprepared enemy operation: mini_kraid_spit_x_offset")
     }
-    fn kraid_unk9000(&self) -> u16 {
+    fn boss_death_quake_sound_timer(&self) -> u16 {
         panic!("unprepared enemy operation: kraid_unk9000")
     }
-    fn nuclear_waffle_part_offset(&self, index: u16) -> u16 {
+    fn fire_arc_part_offset(&self, index: u16) -> u16 {
         panic!("unprepared enemy operation: nuclear_waffle_part_offset")
     }
     fn enemy_projectile_origin_x(&self, index: u16) -> u16 {
@@ -185,10 +185,10 @@ impl SpeciesActors for Composed {
     fn expanding_square_origin(&self) -> u16 {
         panic!("unprepared enemy operation: expanding_square_origin")
     }
-    fn waffle_field(&self, enemy: usize, field: WaffleField) -> u16 {
+    fn fire_arc_field(&self, enemy: usize, field: FireArcField) -> u16 {
         panic!("unprepared enemy operation: waffle_field")
     }
-    fn set_waffle_field(&mut self, enemy: usize, field: WaffleField, value: u16) {
+    fn set_fire_arc_field(&mut self, enemy: usize, field: FireArcField, value: u16) {
         panic!("unprepared enemy operation: set_waffle_field")
     }
     fn botwoon_field(&self, enemy: usize, field: BotwoonField) -> u16 {
@@ -329,7 +329,7 @@ impl Content for Composed {
     fn screen_shake_word(&self, _: isize) -> u16 {
         panic!("unprepared screen shake")
     }
-    fn waffle_sine_sample(&mut self, _: u8) -> u8 {
+    fn fire_arc_sine_sample(&mut self, _: u8) -> u8 {
         panic!("unprepared waffle sine")
     }
 }

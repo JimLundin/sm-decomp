@@ -44,13 +44,13 @@ impl Kind {
 part_view! {
     /// A crawler's view of its slot and extended RAM.
     Crawler: EnemyLayout40 {
-        words: [x_velocity, y_velocity, var_C, var_D, var_E, function, speed_index, instruction_lists],
+        words: [x_velocity, y_velocity, var_c, var_d, var_e, function, speed_index, instruction_lists],
         pad1: [u8; 26696],
         words: [
             var_00, falling_y_subvelocity, falling_y_velocity, non_falling_function, turn_counter,
-            var_05, var_06, var_07, var_08, var_09, var_0A, var_0B, var_0C, var_0D, var_0E, var_0F,
-            var_10, var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19, var_1A,
-            var_1B, var_1C, var_1D, var_1E, var_1F,
+            var_05, var_06, var_07, var_08, var_09, var_0a, var_0b, var_0c, var_0d, var_0e, var_0f,
+            var_10, var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19, var_1a,
+            var_1b, var_1c, var_1d, var_1e, var_1f,
         ],
     }
 }

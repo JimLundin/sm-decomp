@@ -116,9 +116,9 @@ pub fn input<H: crate::ram::RamHost + ?Sized>(game: &H) -> Input {
         read(game, ram::joypad1_lastkeys) != 0
     };
     Input {
-        confirm: keys & kButton_A as u16 != 0,
-        cancel: keys & kButton_B as u16 != 0,
-        toggle: keys & (kButton_Select | kButton_Left | kButton_Right) as u16 != 0,
+        confirm: keys & K_BUTTON_A as u16 != 0,
+        cancel: keys & K_BUTTON_B as u16 != 0,
+        toggle: keys & (K_BUTTON_SELECT | K_BUTTON_LEFT | K_BUTTON_RIGHT) as u16 != 0,
         dismiss,
     }
 }

@@ -4,7 +4,7 @@
 use crate::game::actors::{api, combat};
 use crate::game::enemy_projectiles::scatter_drop;
 use crate::game::gameplay_flag_runtime;
-use crate::game::music::QueueMusic_Delayed8;
+use crate::game::music::queue_music_delayed_8;
 use crate::game::player_movement::forced;
 use crate::game::session_runtime::{
     Runtime, actor_cosine, actor_direction_vector, actor_sine, correct_previous_position,
@@ -201,7 +201,7 @@ impl BossEffects for Game {
     }
 
     fn queue_music_delayed(&mut self, track: u16) {
-        QueueMusic_Delayed8(track, self);
+        queue_music_delayed_8(track, self);
     }
 
     fn boss_word(&mut self, area: u16) -> u16 {

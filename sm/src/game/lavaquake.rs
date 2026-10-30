@@ -6,7 +6,7 @@ use crate::game_state::Game;
 use crate::ram_map::words as W;
 use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use {
-    crate::game::enemy_projectiles::SpawnEprojWithGfx, sm_game::enemy_projectiles::host::Effects,
+    crate::game::enemy_projectiles::spawn_with_enemy_gfx, sm_game::enemy_projectiles::host::Effects,
 };
 
 pub(crate) fn update(initialize: bool, game: &mut Game) {
@@ -37,12 +37,12 @@ pub(crate) fn update(initialize: bool, game: &mut Game) {
             let image = runtime.loaded_image().expect("ROM must be loaded");
             let index = (runtime.next_random() & 0x1e) >> 1;
             let position = image.table_word(0x113550, index as isize);
-            runtime.write_word_le(position, W::cinematic_var9);
+            runtime.write_word_le(position, W::cinematic_y_sub);
             let index = (runtime.next_random() & 0x1e) >> 1;
             let image = runtime.loaded_image().expect("ROM must be loaded");
             let parameter = image.table_word(0x113530, index as isize);
             let live = runtime.word(W::cur_enemy_index);
-            runtime.foreign(|game| SpawnEprojWithGfx(parameter, live, 0xbd5a, game));
+            runtime.foreign(|game| spawn_with_enemy_gfx(parameter, live, 0xbd5a, game));
             let live = Key::from_legacy(runtime.word(W::cur_enemy_index));
             runtime.edit_actor(live, Native, |actor| actor.variables[0] = 0xb5ea);
             let image = runtime.loaded_image().expect("ROM must be loaded");

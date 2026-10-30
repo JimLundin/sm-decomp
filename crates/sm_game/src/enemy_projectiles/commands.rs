@@ -117,7 +117,7 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
         CALL_EXTERNAL_FUNCTION => {
             // This operand reads three bytes; Load24 also reads the fourth byte.
             match u32::from(script.word(0)) | (u32::from(script.byte(2)) << 16) {
-                AT_C7FB => super::shared_pre::SpawnMotherBrainDeathBeam(k, h),
+                AT_C7FB => super::shared_pre::spawn_mother_brain_hand_beam(k, h),
                 _ => h.unreachable(),
             }
             script.advance(3)
@@ -152,12 +152,12 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
         | AT_D1CE
         | AT_DC61 => {
             let definition = match ea {
-                SPAWN_CROCOMIRE_DROPS => addr_kEnemyDef_DDBF,
-                SPAWN_PHANTOON_DROP => addr_kEnemyDef_E4FF,
-                AT_DFEA => addr_kEnemyDef_E83F,
-                SPAWN_DRAYGON_EYE_DROPS => addr_kEnemyDef_DE7F,
-                AT_D1CE => addr_kEnemyDef_E7FF,
-                _ => addr_kEnemyDef_DF7F,
+                SPAWN_CROCOMIRE_DROPS => ADDR_K_ENEMY_DEF_DDBF,
+                SPAWN_PHANTOON_DROP => ADDR_K_ENEMY_DEF_E4FF,
+                AT_DFEA => ADDR_K_ENEMY_DEF_E83F,
+                SPAWN_DRAYGON_EYE_DROPS => ADDR_K_ENEMY_DEF_DE7F,
+                AT_D1CE => ADDR_K_ENEMY_DEF_E7FF,
+                _ => ADDR_K_ENEMY_DEF_DF7F,
             } as u16;
             drop_at_projectile(h, k, definition);
             script.advance(0)
@@ -176,9 +176,9 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
             script.advance(4)
         }
         GO_TO_BY_DIRECTION => EnemyScript::jump(if enemy!(h, slot, behavior_a) & 0x8000 != 0 {
-            addr_off_86B166 as u16
+            ADDR_OFF_86B166 as u16
         } else {
-            addr_off_86B14B as u16
+            ADDR_OFF_86B14B as u16
         }),
         START_EARTHQUAKE => {
             h.session_mut().feedback.earthquake_kind = 1;
@@ -340,9 +340,9 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
         }
         AT_B7EA | AT_B818 => {
             let definition = if ea == AT_B7EA {
-                addr_kEproj_TourianStatueUnlockingParticle
+                ADDR_K_EPROJ_TOURIAN_STATUE_UNLOCKING_PARTICLE
             } else {
-                addr_kEproj_TourianStatueUnlockingParticleTail
+                ADDR_K_EPROJ_TOURIAN_STATUE_UNLOCKING_PARTICLE_TAIL
             } as u16;
             super::lifecycle::spawn_room(h, definition, k);
             script.advance(0)
@@ -378,9 +378,9 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
         }
         SPAWN_HORIZONTAL_AFTERBURN | SPAWN_VERTICAL_AFTERBURN => {
             let definitions = if ea == SPAWN_HORIZONTAL_AFTERBURN {
-                [addr_stru_86966C, addr_stru_86967A]
+                [ADDR_STRU_86966C, ADDR_STRU_86967A]
             } else {
-                [addr_stru_869688, addr_stru_869696]
+                [ADDR_STRU_869688, ADDR_STRU_869696]
             };
             for definition in definitions {
                 h.session_mut().enemy_projectiles.spawn.secondary = 0;
@@ -511,7 +511,7 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
                 y: enemy!(h, slot, y),
             };
             let parameter = h.session().enemy_projectiles.spawn.point.y;
-            super::lifecycle::spawn_room(h, addr_kEproj_Spores as u16, parameter);
+            super::lifecycle::spawn_room(h, ADDR_K_EPROJ_SPORES as u16, parameter);
             script.advance(0)
         }
         AT_ECE3 | AT_ED17 => {
@@ -543,11 +543,11 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
         GO_TO => EnemyScript::jump(script.word(0)),
         GO_TO_RELATIVE => script.advance(script.byte(0) as i8 as isize),
         PIRATE_LASER_MOVE_RIGHT => {
-            super::pre_actions::EprojPreInstr_PirateMotherBrainLaser_MoveRight(k, h);
+            super::pre_actions::pirate_laser_move_right_pre_instruction(k, h);
             script.advance(0)
         }
         PIRATE_LASER_MOVE_LEFT => {
-            super::pre_actions::EprojPreInstr_PirateMotherBrainLaser_MoveLeft(k, h);
+            super::pre_actions::pirate_laser_move_left_pre_instruction(k, h);
             script.advance(0)
         }
         NOP => script.advance(0),

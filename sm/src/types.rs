@@ -36,8 +36,8 @@ crate::typed_struct! {
             extra_properties, ai_handler_bits, health, spritemap_pointer, timer,
             current_instruction, instruction_timer, palette_index, vram_tiles_index, layer,
             flash_timer, frozen_timer, invincibility_timer, shake_timer, frame_counter: u16;
-        pub bank, field_2F: u8;
-        pub ai_var_A, ai_var_B, ai_var_C, ai_var_D, ai_var_E, ai_preinstr, parameter_1, parameter_2:
+        pub bank, field_2f: u8;
+        pub ai_var_a, ai_var_b, ai_var_c, ai_var_d, ai_var_e, ai_preinstr, parameter_1, parameter_2:
             u16;
     }
 
@@ -52,7 +52,7 @@ crate::typed_struct! {
         pub main_ai, grapple_ai, hurt_ai, frozen_ai, time_is_frozen_ai: VoidP;
         pub death_anim, field_24, field_26: u16;
         pub powerbomb_reaction, field_2A: VoidP;
-        pub field_2C, field_2E: u16;
+        pub field_2C, field_2e: u16;
         pub touch_ai, shot_ai, field_34: VoidP;
         pub tile_data: LongPtr;
         pub layer: u8;
@@ -61,7 +61,7 @@ crate::typed_struct! {
 
     pub struct EnemySpawnData {
         pub some_flag, cause_of_death, field_4, vram_tiles_index, palette_index, field_A, field_C,
-            field_E, xpos2, ypos2, field_14, field_16, field_18, field_1A, field_1C, id, x_pos,
+            field_E, xpos2, ypos2, field_14, field_16, field_18, field_1A, field_1c, id, x_pos,
             y_pos, init_param, properties, extra_properties, param_1, param_2: u16;
         pub name: [u8; 18];
     }
@@ -142,7 +142,7 @@ crate::typed_struct! {
         pub kraid_next, field_2, field_4, kraid_thinking, kraid_min_y_pos_eject, kraid_mouth_flags:
             u16;
         pub kraid_healths_8ths: [u16; 8];
-        pub field_1C, kraid_target_x: u16;
+        pub field_1c, kraid_target_x: u16;
         pub kraid_healths_4ths: [u16; 4];
         pub field_28, kraid_hurt_frame, kraid_hurt_frame_timer: u16;
     }
@@ -245,9 +245,9 @@ crate::typed_struct! {
     }
 
     pub struct Ram8000_Default {
-        pub var_20, var_21, var_22, var_23, var_24, var_25, var_26, var_27, var_28, var_29, var_2A,
-            var_2B, var_2C, var_2D, var_2E, var_2F, var_30, var_31, var_32, var_33, var_34, var_35,
-            var_36, var_37, var_38, var_39, var_3A, var_3B, var_3C, var_3D, var_3E, var_3F: u16;
+        pub var_20, var_21, var_22, var_23, var_24, var_25, var_26, var_27, var_28, var_29, var_2a,
+            var_2b, var_2c, var_2d, var_2e, var_2f, var_30, var_31, var_32, var_33, var_34, var_35,
+            var_36, var_37, var_38, var_39, var_3a, var_3b, var_3c, var_3d, var_3e, var_3f: u16;
     }
 
     pub struct Rect16U {
@@ -611,12 +611,11 @@ crate::typed_struct! {
 }
 
 pub use crate::game::constants::{
-    Buttons, Consts_8B, Consts_8C, Consts_8D, Consts_8F, Consts_9B, Consts_60, Consts_81,
-    Consts_82, Consts_83, Consts_84, Consts_86, Consts_87, Consts_88, Consts_89, Consts_90,
-    Consts_91, Consts_94, Consts_A0, Consts_A2, Consts_A3, Consts_A4, Consts_A5, Consts_A6,
-    Consts_A7, Consts_A8, Consts_A9, Consts_AA, Consts_AD, Consts_B2, Consts_B3, Consts_B4,
-    Consts_B7, EnemyProps, GameState, LoadingGameState, ProjectileType, SamusMovementType,
-    SamusPose,
+    Buttons, Consts8B, Consts8C, Consts8D, Consts8F, Consts9B, Consts60, Consts81, Consts82,
+    Consts83, Consts84, Consts86, Consts87, Consts88, Consts89, Consts90, Consts91, Consts94,
+    ConstsA0, ConstsA2, ConstsA3, ConstsA4, ConstsA5, ConstsA6, ConstsA7, ConstsA8, ConstsA9,
+    ConstsAA, ConstsAD, ConstsB2, ConstsB3, ConstsB4, ConstsB7, EnemyProps, GameState,
+    LoadingGameState, ProjectileType, SamusMovementType, SamusPose,
 };
 
 crate::type_aliases! {
@@ -704,7 +703,7 @@ impl SpawnHardcodedPlmArgs {
     }
 }
 
-pub use sm_game::display::hdma_spawn::SpawnHdmaObject_Args;
+pub use sm_game::display::hdma_spawn::HdmaObjectDefinition;
 
 impl TileTables {}
 
@@ -804,7 +803,7 @@ macro_rules! assert_enemy_base_prefix {
         $(const _: () = assert!(
             ::core::mem::offset_of!(EnemyBase, $field) == ::core::mem::offset_of!(EnemyData, $field)
         );)+
-        const _: () = assert!(::core::mem::size_of::<EnemyBase>() == ::core::mem::offset_of!(EnemyData, ai_var_A));
+        const _: () = assert!(::core::mem::size_of::<EnemyBase>() == ::core::mem::offset_of!(EnemyData, ai_var_a));
     };
 }
 assert_enemy_base_prefix!(
@@ -832,5 +831,5 @@ assert_enemy_base_prefix!(
     shake_timer,
     frame_counter,
     bank,
-    field_2F
+    field_2f
 );

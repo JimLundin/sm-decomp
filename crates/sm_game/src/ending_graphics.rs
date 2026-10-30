@@ -11,7 +11,7 @@ use sm_data::credits::{
 };
 
 pub fn advance_ending_logo_palette<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> bool {
-    let pair = (word!(game.cinematic_var4).wrapping_mul(4) >> 1) as isize;
+    let pair = (word!(game.cinematic_function_timer).wrapping_mul(4) >> 1) as isize;
     let step = Imported::read(
         &game.visual_tables().icon_palettes,
         game,
@@ -31,7 +31,7 @@ pub fn advance_ending_logo_palette<H: crate::menus::host::Host + ?Sized>(game: &
             source = source.wrapping_sub(2);
         }
     }
-    (word!(game.cinematic_var4 += 1, reread) as i32 - 16) & 0x8000 == 0
+    (word!(game.cinematic_function_timer += 1, reread) as i32 - 16) & 0x8000 == 0
 }
 
 pub fn advance_ending_graphics<H: crate::menus::host::Host + ?Sized>(

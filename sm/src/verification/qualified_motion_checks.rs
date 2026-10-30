@@ -71,7 +71,7 @@ pub(crate) fn check_case(id: u32) -> bool {
         }
     }
     super::super::with_execution(&mut game, |ctx| {
-        super::super::shared_pre::CallBotwoonEprojFunc(8842015, handle, ctx);
+        super::super::shared_pre::dispatch_botwoon_body_function(8842015, handle, ctx);
     });
     assert_eq!(
         (0..game.ram().len())

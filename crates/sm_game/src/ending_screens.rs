@@ -123,8 +123,8 @@ pub fn update_ending_critters<H: crate::menus::host::Host + ?Sized>(
 }
 
 pub fn fade_ending_gunship_backdrop<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    let expired = word!(game.cinematic_var4 -= 1, reread) & 0x8000 != 0;
-    if word!(game.cinematic_var4) == 0 || expired {
+    let expired = word!(game.cinematic_function_timer -= 1, reread) & 0x8000 != 0;
+    if word!(game.cinematic_function_timer) == 0 || expired {
         fade_cinematic_fixed_color(game);
         if game.ram().read_byte(crate::ram::mirror::COLDATA) == 32
             && game.ram().read_byte(crate::ram::bytes::reg_COLDATA + 1) == 64
@@ -133,7 +133,7 @@ pub fn fade_ending_gunship_backdrop<H: crate::menus::host::Host + ?Sized>(game: 
             game.ram().write_byte(crate::ram::mirror::CGWSEL, 0);
             game.ram().write_byte(crate::ram::mirror::CGADSUB, 0);
         }
-        word!(game.cinematic_var4 = 8);
+        word!(game.cinematic_function_timer = 8);
     }
 }
 
@@ -147,11 +147,8 @@ pub fn advance_ending_gunship_spin<H: crate::menus::host::Host + ?Sized>(
         word!(game.cinematic_var13 -= 1);
     }
     let (rotation, mask) = if slow { (1, 7) } else { (4, 15) };
-    if !slow || word!(game.cinematic_var5) != 224 {
-        word!(
-            game.cinematic_var5 =
-                u16::from((word!(game.cinematic_var5) as u8).wrapping_sub(rotation))
-        );
+    if !slow || word!(game.mode7_angle) != 224 {
+        word!(game.mode7_angle = u16::from((word!(game.mode7_angle) as u8).wrapping_sub(rotation)));
     }
     let index = usize::from(word!(game.cinematic_var14));
     let velocity = if slow {
@@ -159,11 +156,11 @@ pub fn advance_ending_gunship_spin<H: crate::menus::host::Host + ?Sized>(
     } else {
         [1i32, 1, 1, 1, -1, -1, 1, 1, 1, 1, -1, -1, 1, 1, -1, -1][index] * 0x8000
     };
-    let fraction = ram_words::cinematic_var7;
+    let fraction = ram_words::cinematic_x_sub;
     add_native_pair(fraction + 2, fraction, velocity as u32, game);
     word!(game.cinematic_var14 = word!(game.cinematic_var14).wrapping_add(1) & mask);
-    word!(game.cinematic_var6 -= if slow { 2 } else { 8 });
-    if (word!(game.cinematic_var6) as i32 - (if slow { 1184 } else { 1456 })) & 0x8000 == 0 {
+    word!(game.mode7_zoom -= if slow { 2 } else { 8 });
+    if (word!(game.mode7_zoom) as i32 - (if slow { 1184 } else { 1456 })) & 0x8000 == 0 {
         return false;
     }
     if slow {
@@ -231,7 +228,7 @@ pub fn position_ending_samus_head<H: crate::menus::host::Host + ?Sized>(
 }
 
 pub fn fade_postcredits_samus_suit<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    if word!(game.cinematic_var4) & 3 == 0 {
+    if word!(game.cinematic_function_timer) & 3 == 0 {
         fade_cinematic_colors(0x40, 0x10, false, game);
         if (word!(game.game_time_hours) as i32 - 3) & 0x8000 == 0 {
             fade_cinematic_colors(0x1c0, 0x10, true, game);
@@ -249,12 +246,12 @@ pub fn advance_postcredits_samus_reveal<H: crate::menus::host::Host + ?Sized>(
         fade_postcredits_samus_suit(game);
     }
     let initial = stage == 0;
-    let timer = word!(game.cinematic_var4 -= 1, reread);
+    let timer = word!(game.cinematic_function_timer -= 1, reread);
     if (initial && timer != 0) || (!initial && timer & 0x8000 == 0) {
         return;
     }
     if initial {
-        word!(game.cinematic_var4 = 127);
+        word!(game.cinematic_function_timer = 127);
     } else {
         set_cinematic_blend(16, 0, 0, 0, game);
         game.ram().write_byte(crate::ram::mirror::BGMODE, 7);
@@ -326,7 +323,7 @@ pub fn advance_postcredits_samus_message<H: crate::menus::host::Host + ?Sized>(
     if fade_suit {
         fade_postcredits_samus_suit(game);
     }
-    if (word!(game.cinematic_var4 -= 1, reread) as i32 - 65) & 0x8000 != 0 {
+    if (word!(game.cinematic_function_timer -= 1, reread) as i32 - 65) & 0x8000 != 0 {
         crate::word_transfers!(game, descending, 288; native(0x347e) <- value(127));
         crate::word_transfers!(game, ascending, 64; pause_map(384) <- rom(0x8cdedb, 0));
         queue_cinematic_tilemap(CinematicTilemap::FullText, game);
@@ -377,7 +374,7 @@ pub fn wait_ending_cloud<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     let threshold = if band { 176 } else { 96 };
-    let below = word!(game.cinematic_var6).wrapping_sub(threshold) & 0x8000 != 0;
+    let below = word!(game.mode7_zoom).wrapping_sub(threshold) & 0x8000 != 0;
     if below == band {
         word!(game.cinematicspr_preinstr_func[(object >> 1)] = next);
     }
@@ -430,36 +427,36 @@ pub fn advance_postcredits_zoom<H: crate::menus::host::Host + ?Sized>(zooming: b
     if zooming && word!(game.cinematic_var14) != 0 {
         word!(game.cinematic_var14 -= 1);
         fade_cinematic_colors(0x180, 0x10, false, game);
-        if word!(game.cinematic_var4) != 0 {
+        if word!(game.cinematic_function_timer) != 0 {
             compose_cinematic_palette(game);
         }
     }
-    if !zooming || word!(game.cinematic_var4) == 0 {
+    if !zooming || word!(game.cinematic_function_timer) == 0 {
         if word!(game.cinematic_var17) != 0 {
             word!(game.cinematic_var17 -= 1);
             fade_cinematic_colors(0x1e0, 0x10, false, game);
             compose_cinematic_palette(game);
         }
     } else {
-        word!(game.cinematic_var4 -= 1);
+        word!(game.cinematic_function_timer -= 1);
     }
     if zooming {
-        word!(game.cinematic_var5 = u16::from((word!(game.cinematic_var5) as u8).wrapping_sub(8)));
-        word!(game.cinematic_var6 -= 64);
-        if (word!(game.cinematic_var6) as i32 - 24) & 0x8000 != 0 {
-            word!(game.cinematic_var6 = 24);
+        word!(game.mode7_angle = u16::from((word!(game.mode7_angle) as u8).wrapping_sub(8)));
+        word!(game.mode7_zoom -= 64);
+        if (word!(game.mode7_zoom) as i32 - 24) & 0x8000 != 0 {
+            word!(game.mode7_zoom = 24);
             crate::flow::set(
                 game,
                 crate::flow::Word::CinematicFunction,
                 function::FADE_TO_WHITE,
             );
-            word!(game.cinematic_var4 = 180);
+            word!(game.cinematic_function_timer = 180);
             word!(game.cinematic_var14 = 0);
         }
         return;
     }
     crate::ending_graphics::advance_ending_graphics(EndingGraphics::Background, game);
-    if word!(game.cinematic_var4 -= 1, reread) == 0 {
+    if word!(game.cinematic_function_timer -= 1, reread) == 0 {
         game.ram().write_byte(crate::ram::mirror::BGMODE, 1);
         set_cinematic_blend(17, 0, 0, 49, game);
         set_fixed_color([63, 95, 159], game);
@@ -467,16 +464,16 @@ pub fn advance_postcredits_zoom<H: crate::menus::host::Host + ?Sized>(zooming: b
         game.ram().write_byte(crate::ram::mirror::BG1SC, 78);
         game.ram().write_byte(crate::ram::mirror::BG12NBA, 84);
         crate::word_transfers!(game, ascending, 16; le(palette_buffer, 192) <- rom(0x8ce7e9, 192));
-        word! { game, 0; cinematic_var8, cinematic_var10 }
+        word! { game, 0; cinematic_x, cinematic_y }
         crate::flow::set(
             game,
             crate::flow::Word::CinematicFunction,
             function::FADE_FROM_WHITE,
         );
-        word!(game.cinematic_var4 = 32);
+        word!(game.cinematic_function_timer = 32);
         enable_cinematic_background(game);
         set_cinematic_tilemap_updates(true, game);
-        word!(game.cinematicbg_var3 = 19456);
+        word!(game.cinematic_bg_vram_address = 19456);
         crate::word_transfers!(game, descending, 64; native(0x337e) <- value(127));
         queue_cinematic_tilemap(CinematicTilemap::FullText, game);
     }

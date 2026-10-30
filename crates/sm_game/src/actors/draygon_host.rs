@@ -77,16 +77,16 @@ pub struct Draygon {
 }
 
 same_words!(Draygon: EnemyLayout104 {
-    function = var_A, function_timer = var_B, swoop_duration = var_C, x_speed = var_D,
-    x_subspeed = var_E, left_reset_x = var_00, reset_y = var_01, right_reset_x = var_02,
+    function = var_a, function_timer = var_b, swoop_duration = var_c, x_speed = var_d,
+    x_subspeed = var_e, left_reset_x = var_00, reset_y = var_01, right_reset_x = var_02,
     goop_counter = var_03, spiral_x_radius = var_05, spiral_x = var_06, spiral_y = var_07,
-    spiral_angle = var_08, spiral_x_subradius = var_09, spiral_y_subpixel = var_0A,
-    spiral_angle_delta = var_0B, tail_whip_timer = var_0C, goop_y_angle = var_0D,
-    health_palette = var_0E, swoop_y_acceleration = var_0F, facing_right = var_20,
-    death_x_speed = var_28, death_x_subspeed = var_29, death_y_speed = var_2A,
-    death_y_subspeed = var_2B, turret_destroyed = var_40, death_angle = var_43,
-    turret_5_destroyed = var_45, graphics_x_displacement = var_5E,
-    graphics_y_displacement = var_5F,
+    spiral_angle = var_08, spiral_x_subradius = var_09, spiral_y_subpixel = var_0a,
+    spiral_angle_delta = var_0b, tail_whip_timer = var_0c, goop_y_angle = var_0d,
+    health_palette = var_0e, swoop_y_acceleration = var_0f, facing_right = var_20,
+    death_x_speed = var_28, death_x_subspeed = var_29, death_y_speed = var_2a,
+    death_y_subspeed = var_2b, turret_destroyed = var_40, death_angle = var_43,
+    turret_5_destroyed = var_45, graphics_x_displacement = var_5e,
+    graphics_y_displacement = var_5f,
 });
 
 /// The parts' slots.
@@ -176,7 +176,7 @@ pub mod instruction_list {
 pub const BANK: u8 = 0xa5;
 /// Grapple beam function $C8C5: dropped.
 pub const GRAPPLE_DROPPED: u16 = 0xc8c5;
-/// Properties bit 10: intangible (the decompiler's `kEnemyProps_Tangible`).
+/// Properties bit 10: intangible (the decompiler's `K_ENEMY_PROPS_TANGIBLE`).
 pub const INTANGIBLE: u16 = 0x400;
 /// Properties bit 9: delete.
 pub const DELETE: u16 = 0x200;

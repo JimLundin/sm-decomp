@@ -63,7 +63,7 @@ pub struct Actors {
     pub extended: ExtendedRam,
 }
 /// The slots' extended RAM ($7E:7800..$7E:8FFF): three blocks of 32 words per
-/// slot, the original's `var_00`..`var_5F`, as the words of each block in RAM
+/// slot, the original's `var_00`..`var_5f`, as the words of each block in RAM
 /// order (40h bytes per slot). It lives beside the slot records rather than in
 /// `Actor`, because clearing or spawning a slot leaves it untouched, as the
 /// original does.

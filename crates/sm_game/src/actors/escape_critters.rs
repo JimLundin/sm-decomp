@@ -26,7 +26,7 @@ pub trait Host: crate::actors::host::ActorHost {
 part_view! {
     /// A critter's view of its slot.
     Critter: EnemyLayout8 {
-        words: [x_velocity, var_B, var_C, var_D, var_E, function, etecoon_index, parameter_2],
+        words: [x_velocity, var_b, var_c, var_d, var_e, function, etecoon_index, parameter_2],
     }
 }
 
@@ -60,11 +60,11 @@ const BANK: u32 = 0xb3;
 /// Game event 0Fh: the critters escaped.
 const CRITTERS_ESCAPED: u16 = 0xf;
 /// Properties bit 13, process instructions (the decompiler's
-/// `kEnemyProps_DisableSamusColl`); the etecoons also set bit 10, intangible
-/// (`kEnemyProps_Tangible`), and bit 15.
-const PROCESS_INSTRUCTIONS: u16 = kEnemyProps_DisableSamusColl as u16;
+/// `K_ENEMY_PROPS_DISABLE_SAMUS_COLL`); the etecoons also set bit 10, intangible
+/// (`K_ENEMY_PROPS_TANGIBLE`), and bit 15.
+const PROCESS_INSTRUCTIONS: u16 = K_ENEMY_PROPS_DISABLE_SAMUS_COLL as u16;
 const ETECOON_PROPERTIES: u16 =
-    (kEnemyProps_DisableSamusColl | kEnemyProps_Tangible) as u16 | 0x8000;
+    (K_ENEMY_PROPS_DISABLE_SAMUS_COLL | K_ENEMY_PROPS_TANGIBLE) as u16 | 0x8000;
 /// $B3:804D, the dachora's placeholder spritemap.
 const NO_SPRITEMAP: u16 = 0x804d;
 /// Running for escape moves 3.8000h px right a frame.
@@ -79,7 +79,7 @@ pub fn initialize(dachora: bool, game: &mut (impl Host + ?Sized)) {
     let e = i32::from(word!(game.cur_enemy_index));
     if game.event_happened(CRITTERS_ESCAPED) {
         slot!(game, Critter[e].base.properties, |old| old
-            | kEnemyProps_Deleted as u16);
+            | K_ENEMY_PROPS_DELETED as u16);
         return;
     }
     let flags = if dachora {

@@ -4,5 +4,5 @@
 // The destroyable flames are the decompilation's projectile.
 const _: () = assert!(
     sm_game::actors::phantoon_actions::DESTROYABLE_FLAMES
-        == crate::game::constants::bank_86::addr_kEproj_DestroyableFireballs as u16
+        == crate::game::constants::bank_86::ADDR_K_EPROJ_DESTROYABLE_FIREBALLS as u16
 );

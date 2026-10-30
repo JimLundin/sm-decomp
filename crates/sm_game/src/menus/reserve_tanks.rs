@@ -57,7 +57,7 @@ pub fn prepare_menu<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn toggle_mode<H: Host + ?Sized>(game: &mut H) {
-    if game.observed_inputs().pressed & kButton_A as u16 == 0
+    if game.observed_inputs().pressed & K_BUTTON_A as u16 == 0
         || inventory!(game.MaxReserveHealth) == 0
     {
         return;
@@ -90,7 +90,7 @@ fn transfer_one<H: Host + ?Sized>(adjust_zero: bool, game: &mut H) -> bool {
 
 pub fn transfer_manual<H: Host + ?Sized>(game: &mut H) {
     if crate::menu!(game.pausemenu_reserve_tank_delay_ctr) == 0 {
-        if game.observed_inputs().pressed & kButton_A as u16 == 0 {
+        if game.observed_inputs().pressed & K_BUTTON_A as u16 == 0 {
             return;
         }
         crate::menu!(

@@ -6,7 +6,7 @@
 #![forbid(unsafe_code)]
 use crate::actors::host::{Death, Shot, Slopes};
 use crate::actors::layouts::{EnemyBase, EnemyLayout40};
-use crate::constants::enemy_properties::kEnemyProps_DisableSamusColl;
+use crate::constants::enemy_properties::K_ENEMY_PROPS_DISABLE_SAMUS_COLL;
 use crate::enemy_projectiles::drops::DropSource;
 use crate::enemy_script::EnemyScript;
 use crate::ram::RawRam as _;
@@ -21,10 +21,9 @@ impl<T> Host for T where T: crate::actors::host::BossEffects + crate::actors::de
 /// Mini Kraid's view of its `EnemyLayout40` slot.
 #[derive(Clone, Copy)]
 #[repr(C)]
-#[allow(non_snake_case)]
 pub struct MiniKraid {
     pub base: EnemyBase,
-    pub var_A: u16,
+    pub var_a: u16,
     /// Pixels per step, signed: negative walks left.
     pub walk_speed: u16,
     /// [`FACING_LEFT`] or [`FACING_RIGHT`]: toward Samus at each step.
@@ -33,7 +32,7 @@ pub struct MiniKraid {
     pub steps_until_turn: u16,
     /// Walk cycles left before spitting.
     pub cycles_until_spit: u16,
-    pub var_F: u16,
+    pub var_f: u16,
     pub parameter_1: u16,
     pub parameter_2: u16,
     pub pad: [u8; 26696],
@@ -53,12 +52,12 @@ pub struct MiniKraid {
     pub spike_cycle: u16,
     pub var_08: u16,
     pub var_09: u16,
-    pub var_0A: u16,
-    pub var_0B: u16,
-    pub var_0C: u16,
-    pub var_0D: u16,
-    pub var_0E: u16,
-    pub var_0F: u16,
+    pub var_0a: u16,
+    pub var_0b: u16,
+    pub var_0c: u16,
+    pub var_0d: u16,
+    pub var_0e: u16,
+    pub var_0f: u16,
     pub var_10: u16,
     pub var_11: u16,
     pub var_12: u16,
@@ -69,18 +68,18 @@ pub struct MiniKraid {
     pub var_17: u16,
     pub var_18: u16,
     pub var_19: u16,
-    pub var_1A: u16,
-    pub var_1B: u16,
-    pub var_1C: u16,
-    pub var_1D: u16,
-    pub var_1E: u16,
-    pub var_1F: u16,
+    pub var_1a: u16,
+    pub var_1b: u16,
+    pub var_1c: u16,
+    pub var_1d: u16,
+    pub var_1e: u16,
+    pub var_1f: u16,
 }
 
 const _: () = {
     use core::mem::{offset_of, size_of};
-    assert!(offset_of!(MiniKraid, walk_speed) == offset_of!(EnemyLayout40, var_B));
-    assert!(offset_of!(MiniKraid, cycles_until_spit) == offset_of!(EnemyLayout40, var_E));
+    assert!(offset_of!(MiniKraid, walk_speed) == offset_of!(EnemyLayout40, var_b));
+    assert!(offset_of!(MiniKraid, cycles_until_spit) == offset_of!(EnemyLayout40, var_e));
     assert!(offset_of!(MiniKraid, pad) == offset_of!(EnemyLayout40, pad1));
     assert!(offset_of!(MiniKraid, spit_x_velocity) == offset_of!(EnemyLayout40, var_00));
     assert!(offset_of!(MiniKraid, spike_timer) == offset_of!(EnemyLayout40, var_03));
@@ -143,8 +142,8 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
     slot!(game, MiniKraid[me].spike_cycle = 0);
     slot!(
         game,
-        MiniKraid[me].base.properties =
-            (slot!(game, MiniKraid[me].base.properties)) | (kEnemyProps_DisableSamusColl as u16)
+        MiniKraid[me].base.properties = (slot!(game, MiniKraid[me].base.properties))
+            | (K_ENEMY_PROPS_DISABLE_SAMUS_COLL as u16)
     );
     slot!(game, MiniKraid[me].base.instruction_timer = 1);
     slot!(game, MiniKraid[me].base.timer = 0);

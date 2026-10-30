@@ -11,7 +11,7 @@ pub(crate) fn separated_from_rect(k: u16, rect: Rect16U, game: &mut Game) -> u8 
     baby_metroid::separated_from_rect(k, (rect.x, rect.y, rect.w, rect.h), game)
 }
 
-// The named function is the one `sm_a9` dispatches on (`BabyMetroid_Func_5`).
+// The named function is the one `sm_a9` dispatches on (`let_sidehopper_live_for_a_bit`).
 const _: () = assert!((0xa9_0000 | baby_metroid::LET_SIDEHOPPER_LIVE as u32) == 11137067);
 
 impl Host for Game {

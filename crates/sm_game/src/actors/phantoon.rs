@@ -16,9 +16,10 @@ use crate::actors::layouts::{EnemyBase, same_words};
 use crate::actors::session_slots::session_slot;
 use crate::actors::{phantoon_actions, phantoon_motion};
 use crate::constants::enemy_properties::{
-    kEnemyProps_Deleted, kEnemyProps_DisableSamusColl, kEnemyProps_Invisible, kEnemyProps_Tangible,
+    K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_DISABLE_SAMUS_COLL, K_ENEMY_PROPS_INVISIBLE,
+    K_ENEMY_PROPS_TANGIBLE,
 };
-use crate::display::hdma_spawn::SpawnHdmaObject_Args;
+use crate::display::hdma_spawn::HdmaObjectDefinition;
 use crate::enemy_projectiles::drops::DropSource;
 use crate::phantoon_tables::{self, Timer};
 use crate::ram::CompatibilityRam as _;
@@ -43,7 +44,7 @@ pub trait Host:
     /// Which way Samus is from the current enemy.
     fn direction_to_player(&mut self) -> PlayerDirection;
     /// Spawn an HDMA object from bank `bank`.
-    fn spawn_hdma(&mut self, bank: u8, args: &SpawnHdmaObject_Args);
+    fn spawn_hdma(&mut self, bank: u8, args: &HdmaObjectDefinition);
     /// Start the wavy BG2 effect moving in `direction` with phase `speed`.
     fn start_wave(&mut self, direction: u16, speed: u16);
 }
@@ -65,8 +66,8 @@ pub struct Body {
 }
 
 same_words!(Body: EnemyLayout8 {
-    movement_index = var_A, speed_subpixel = var_B, speed = var_C, movement_stage = var_D,
-    timer = var_E, function = var_F, flame_rain_next = parameter_2,
+    movement_index = var_a, speed_subpixel = var_b, speed = var_c, movement_stage = var_d,
+    timer = var_e, function = var_f, flame_rain_next = parameter_2,
 });
 
 /// The eye's view of its slot. In the death sequence `movement_reversed`
@@ -87,8 +88,8 @@ pub struct Eye {
 }
 
 same_words!(Eye: EnemyLayout8 {
-    timer = var_A, unread_shot_value = var_B, movement_reversed = var_C, fade_steps = var_D,
-    fade_step = var_E, fade_complete = var_F, background_held = parameter_1,
+    timer = var_a, unread_shot_value = var_b, movement_reversed = var_c, fade_steps = var_d,
+    fade_step = var_e, fade_complete = var_f, background_held = parameter_1,
     parameter_2 = parameter_2,
 });
 
@@ -108,8 +109,8 @@ pub struct Tentacles {
 }
 
 same_words!(Tentacles: EnemyLayout8 {
-    swooping = var_A, damage_taken = var_B, swoop_x_speed = var_C, swoop_y_speed = var_D,
-    swoop_target_x = var_E, explosion = var_F, wave_direction = parameter_1,
+    swooping = var_a, damage_taken = var_b, swoop_x_speed = var_c, swoop_y_speed = var_d,
+    swoop_target_x = var_e, explosion = var_f, wave_direction = parameter_1,
     hurt_flash = parameter_2,
 });
 
@@ -129,8 +130,8 @@ pub struct Mouth {
 }
 
 same_words!(Mouth: EnemyLayout8 {
-    casual_flame_pattern = var_A, casual_flame_timer = var_B, casual_flame_pattern_index = var_C,
-    wave_amplitude = var_D, wave_shrinking = var_E, semi_transparency = parameter_1,
+    casual_flame_pattern = var_a, casual_flame_timer = var_b, casual_flame_pattern_index = var_c,
+    wave_amplitude = var_d, wave_shrinking = var_e, semi_transparency = parameter_1,
     shot_roll = parameter_2,
 });
 
@@ -207,7 +208,7 @@ const DUST_CLOUD: u16 = 0xe509;
 /// The tiles and HDMA objects of Phantoon's BG2.
 const BLANK_BG2_TILE: u16 = 824;
 const BG2_TILEMAP_SIZE: u16 = 864;
-const SEMI_TRANSPARENCY_HDMA: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x1, 0x14, 0xce96);
+const SEMI_TRANSPARENCY_HDMA: HdmaObjectDefinition = HdmaObjectDefinition::new(0x1, 0x14, 0xce96);
 /// Health lost in one swoop or volley that makes Phantoon flee or enrage.
 const ENRAGE_DAMAGE: u16 = 300;
 /// The super missile projectile type bits.
@@ -295,21 +296,23 @@ fn close_eye<S: BossState + ?Sized>(game: &mut S, eye_list: u16) {
     session_slot!(
         game,
         Body[BODY].base.properties =
-            (session_slot!(game, Body[BODY].base.properties)) | (kEnemyProps_Tangible as u16)
+            (session_slot!(game, Body[BODY].base.properties)) | (K_ENEMY_PROPS_TANGIBLE as u16)
     );
 }
 
 /// Instruction: the materialisation sound, cycling through three. Was
 /// `Phantoon_Func_1`.
 pub fn materialisation_sound<S: BossState + ?Sized>(game: &mut S) {
-    let sound =
-        crate::boss_lists::phantoon_materialisation_sound(game, word!(game.g_word_7E9032) as isize);
+    let sound = crate::boss_lists::phantoon_materialisation_sound(
+        game,
+        word!(game.phantoon_materialisation_sound_index) as isize,
+    );
     game.queue_sound(1, sound as u8, 6);
-    let mut next: u16 = (word!(game.g_word_7E9032)).wrapping_add(1);
-    if !below(word!(game.g_word_7E9032), 2) {
+    let mut next: u16 = (word!(game.phantoon_materialisation_sound_index)).wrapping_add(1);
+    if !below(word!(game.phantoon_materialisation_sound_index), 2) {
         next = 0;
     }
-    word!(game.g_word_7E9032 = next);
+    word!(game.phantoon_materialisation_sound_index = next);
 }
 
 /// Instruction: opens the eye for the figure-8's vulnerable window. Was
@@ -320,7 +323,7 @@ pub fn open_eye<S: BossState + ?Sized>(game: &mut S) {
     session_slot!(
         game,
         Body[BODY].base.properties = (session_slot!(game, Body[BODY].base.properties) as i32
-            & !(kEnemyProps_Tangible as i32)) as u16
+            & !(K_ENEMY_PROPS_TANGIBLE as i32)) as u16
     );
     let roll = (game.roll_random() as i32 & 7) as usize;
     session_slot!(
@@ -679,12 +682,12 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
     let me = current(game);
     slot!(game, Body[me].timer = 120);
     slot!(game, Body[me]; movement_index = 0, speed_subpixel = 0);
-    word!(game.g_word_7E9032 = 0);
+    word!(game.phantoon_materialisation_sound_index = 0);
     slot!(game, Eye[EYE]; background_held = 0, parameter_2 = 0);
     slot!(
         game,
         Body[BODY].base.properties =
-            (slot!(game, Body[BODY].base.properties)) | (kEnemyProps_Tangible as u16)
+            (slot!(game, Body[BODY].base.properties)) | (K_ENEMY_PROPS_TANGIBLE as u16)
     );
     game.spawn_hdma(0xa7, &SEMI_TRANSPARENCY_HDMA);
     initialize_part(game);
@@ -852,7 +855,7 @@ pub fn shot<S: BossState + ?Sized>(game: &mut S) {
         session_slot!(
             game,
             Body[BODY].base.properties =
-                (session_slot!(game, Body[BODY].base.properties)) | (kEnemyProps_Tangible as u16)
+                (session_slot!(game, Body[BODY].base.properties)) | (K_ENEMY_PROPS_TANGIBLE as u16)
         );
         start_dying(game, k);
         return;
@@ -919,7 +922,7 @@ pub fn shot<S: BossState + ?Sized>(game: &mut S) {
             session_slot!(
                 game,
                 Body[BODY].base.properties = (session_slot!(game, Body[BODY].base.properties))
-                    | (kEnemyProps_Tangible as u16)
+                    | (K_ENEMY_PROPS_TANGIBLE as u16)
             );
             session_slot!(game, Eye[EYE].fade_complete = 0);
         }
@@ -985,7 +988,7 @@ pub fn eye_follows_samus<S: BossState + ?Sized>(game: &mut S, k: u16) {
             session_slot!(
                 game,
                 Body[BODY].base.properties = (session_slot!(game, Body[BODY].base.properties))
-                    | (kEnemyProps_Tangible as u16)
+                    | (K_ENEMY_PROPS_TANGIBLE as u16)
             );
             session_slot!(game, Body[BODY].flame_rain_next = 1);
             return;
@@ -1086,7 +1089,7 @@ pub fn fade_in_during_flame_rain<S: BossState + ?Sized>(game: &mut S, k: u16) {
         session_slot!(
             game,
             Body[BODY].base.properties = (session_slot!(game, Body[BODY].base.properties) as i32
-                & !(kEnemyProps_Tangible as i32)) as u16
+                & !(K_ENEMY_PROPS_TANGIBLE as i32)) as u16
         );
         session_slot!(
             game,
@@ -1230,11 +1233,11 @@ pub fn wavy_dying_cry<L: Lease + ?Sized>(game: &mut L, k: u16) {
     session_slot!(game, Body[k as i32].function = function::DYING_FADE_OUT);
     session_slot!(game, Eye[EYE].movement_reversed = 2);
     let hidden: u16 = (session_slot!(game, Body[BODY].base.properties) as i32
-        & !(kEnemyProps_DisableSamusColl as i32
-            | kEnemyProps_Tangible as i32
-            | kEnemyProps_Invisible as i32)
-        | kEnemyProps_Tangible as i32
-        | kEnemyProps_Invisible as i32) as u16;
+        & !(K_ENEMY_PROPS_DISABLE_SAMUS_COLL as i32
+            | K_ENEMY_PROPS_TANGIBLE as i32
+            | K_ENEMY_PROPS_INVISIBLE as i32)
+        | K_ENEMY_PROPS_TANGIBLE as i32
+        | K_ENEMY_PROPS_INVISIBLE as i32) as u16;
     session_slot!(game, Eye[EYE].base.properties = hidden);
     session_slot!(game, Tentacles[TENTACLES].base.properties = hidden);
     session_slot!(game, Mouth[MOUTH].base.properties = hidden);
@@ -1310,7 +1313,7 @@ pub fn dead<L: Lease + ?Sized>(game: &mut L, k: u16) {
             game.set_slot_byte(MAIN_SCREEN_LAYERS, value);
             game.foreign(|game| game.scatter_enemy_drop(DropSource::Phantoon, k));
             let deleted: u16 =
-                (session_slot!(game, Body[BODY].base.properties)) | (kEnemyProps_Deleted as u16);
+                (session_slot!(game, Body[BODY].base.properties)) | (K_ENEMY_PROPS_DELETED as u16);
             session_slot!(game, Body[BODY].base.properties = deleted);
             session_slot!(game, Eye[EYE].base.properties = deleted);
             session_slot!(game, Tentacles[TENTACLES].base.properties = deleted);

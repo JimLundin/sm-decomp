@@ -15,7 +15,7 @@ fn enqueue(track: u16, delay: u16, reject_full: bool, game: &mut Game) {
 }
 
 #[forbid(unsafe_code)]
-pub fn QueueMusic_Delayed8(track: u16, game: &mut Game) {
+pub fn queue_music_delayed_8(track: u16, game: &mut Game) {
     enqueue(track, 8, true, game);
 }
 #[forbid(unsafe_code)]
@@ -72,8 +72,8 @@ pub fn LoadRoomMusic(game: &mut Game) {
         && checked_word!(game.room_music_data_index) != 0
         && checked_word!(game.room_music_data_index) != checked_word!(game.music_data_index)
     {
-        QueueMusic_Delayed8(0, game);
-        QueueMusic_Delayed8(checked_word!(game.room_music_data_index) | 0xff00, game);
+        queue_music_delayed_8(0, game);
+        queue_music_delayed_8(checked_word!(game.room_music_data_index) | 0xff00, game);
     }
 }
 
@@ -95,7 +95,7 @@ pub fn LoadNewMusicTrackIfChanged(game: &mut Game) {
 pub fn PlayRoomMusicTrackAfterAFrames(delay: u16, game: &mut Game) {
     if checked_word!(game.game_state) < 40 {
         QueueMusic_DelayedY(0, delay, game);
-        QueueMusic_Delayed8(checked_word!(game.music_track_index), game);
+        queue_music_delayed_8(checked_word!(game.music_track_index), game);
     }
 }
 
@@ -148,21 +148,21 @@ crate::forward_calls! { pub fn (sound: u16, game: &mut Game);
     QueueSfx1_Max9 => queue_sfx(0, sound as u8, 9, game);
     QueueSfx1_Max3 => queue_sfx(0, sound as u8, 3, game);
     QueueSfx1_Max1 => queue_sfx(0, sound as u8, 1, game);
-    QueueSfx1_Max6 => queue_sfx(0, sound as u8, 6, game);
+    queue_sfx1_max6 => queue_sfx(0, sound as u8, 6, game);
 }
 crate::forward_calls! { pub fn (sound: u16, game: &mut Game);
     QueueSfx2_Max15 => queue_sfx(1, sound as u8, 15, game);
     QueueSfx2_Max9 => queue_sfx(1, sound as u8, 9, game);
-    QueueSfx2_Max3 => queue_sfx(1, sound as u8, 3, game);
+    queue_sfx2_max3 => queue_sfx(1, sound as u8, 3, game);
     QueueSfx2_Max1 => queue_sfx(1, sound as u8, 1, game);
-    QueueSfx2_Max6 => queue_sfx(1, sound as u8, 6, game);
+    queue_sfx2_max6 => queue_sfx(1, sound as u8, 6, game);
 }
 crate::forward_calls! { pub fn (sound: u16, game: &mut Game);
     QueueSfx3_Max15 => queue_sfx(2, sound as u8, 15, game);
     QueueSfx3_Max9 => queue_sfx(2, sound as u8, 9, game);
-    QueueSfx3_Max3 => queue_sfx(2, sound as u8, 3, game);
+    queue_sfx3_max3 => queue_sfx(2, sound as u8, 3, game);
     QueueSfx3_Max1 => queue_sfx(2, sound as u8, 1, game);
-    QueueSfx3_Max6 => queue_sfx(2, sound as u8, 6, game);
+    queue_sfx3_max6 => queue_sfx(2, sound as u8, 6, game);
 }
 pub(crate) fn advance_sound_effects(
     game: &mut Game,

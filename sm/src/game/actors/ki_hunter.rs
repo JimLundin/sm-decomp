@@ -3,7 +3,7 @@
 #![forbid(unsafe_code)]
 use crate::game::actors::api::{Axis, MovementResult::Blocked, SlopePolicy};
 use crate::game::actors::{api as actor_api, combat};
-use crate::game::music::QueueSfx2_Max6;
+use crate::game::music::queue_sfx2_max6;
 use crate::game::session_runtime::{Runtime, actor_cosine, actor_sine};
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
@@ -12,13 +12,13 @@ use sm_game::actors::access::ActorKey as Key;
 use sm_game::actors::layouts::EnemyLayout40 as Hunter;
 use sm_game::enemy_script::EnemyScript;
 use {
-    crate::game::enemy_projectiles::SpawnEprojWithGfx, sm_game::enemy_projectiles::host::Effects,
+    crate::game::enemy_projectiles::spawn_with_enemy_gfx, sm_game::enemy_projectiles::host::Effects,
 };
 
 fn begin_wing(forward: bool, k: u16, game: &mut Game) {
     let E = k as i32;
     slot!(game, Hunter[E]; var_00 = if forward { 0xf7db } else { 0xf8ad },
-        var_B = slot!(game, Hunter[E].var_0A), var_F = if forward { 0xe000 } else { 0xa000 },
+        var_b = slot!(game, Hunter[E].var_0a), var_f = if forward { 0xe000 } else { 0xa000 },
         var_05 = slot!(game, Hunter[E].base.x_pos), var_06 = slot!(game, Hunter[E].base.y_pos));
 }
 
@@ -26,8 +26,8 @@ fn wing_arc(forward: bool, game: &mut Game) {
     let E = word!(game.cur_enemy_index) as i32;
     let record = Runtime::new(game).legacy_native_record(0xa2, 0x838f);
     let speed = record
-        .word(8 * usize::from(slot!(byte game, Hunter[E].var_B[1])) + if forward { 5 } else { 1 });
-    slot!(game, Hunter[E].var_F, |old| old.wrapping_add(speed));
+        .word(8 * usize::from(slot!(byte game, Hunter[E].var_b[1])) + if forward { 5 } else { 1 });
+    slot!(game, Hunter[E].var_f, |old| old.wrapping_add(speed));
     let y = wing_coordinate(E, false, forward, game);
     if forward {
         slot!(game, Hunter[E].base.y_pos = y);
@@ -41,7 +41,7 @@ fn wing_arc(forward: bool, game: &mut Game) {
             slot!(game, Hunter[E].base.x_pos = slot!(game, Hunter[E].var_08));
             let y = slot!(game, Hunter[E].var_07);
             slot!(game, Hunter[E].base.y_pos = y);
-            slot!(game, Hunter[word!(game.cur_enemy_index) as i32].var_B = y);
+            slot!(game, Hunter[word!(game.cur_enemy_index) as i32].var_b = y);
             return;
         }
     }
@@ -49,10 +49,10 @@ fn wing_arc(forward: bool, game: &mut Game) {
         game,
         Hunter[E].base.x_pos = wing_coordinate(E, true, forward, game)
     );
-    if ((slot!(game, Hunter[E].var_F).wrapping_add(0x4000) & 0x8000) != 0) == forward {
+    if ((slot!(game, Hunter[E].var_f).wrapping_add(0x4000) & 0x8000) != 0) == forward {
         begin_wing(!forward, word!(game.cur_enemy_index), game);
     } else {
-        let speed = (slot!(game, Hunter[E].var_B) as i16).wrapping_sub(384);
+        let speed = (slot!(game, Hunter[E].var_b) as i16).wrapping_sub(384);
         let target = if forward {
             E
         } else {
@@ -60,7 +60,7 @@ fn wing_arc(forward: bool, game: &mut Game) {
         };
         slot!(
             game,
-            Hunter[target].var_B = if speed < 0 { 256 } else { speed as u16 }
+            Hunter[target].var_b = if speed < 0 { 256 } else { speed as u16 }
         );
     }
 }
@@ -71,15 +71,15 @@ pub(crate) fn initialize(game: &mut Game) {
         | ((0x2000) as u16));
     slot!(game, Hunter[E].var_14 = 0);
     slot!(game, Hunter[E].base; instruction_timer = 1, timer = 0, current_instruction = 0xe9fa as u16);
-    slot!(game, Hunter[E]; var_F = 0, var_A = 0xf268, var_08 = 0, var_09 = 1, var_06 = 0, var_07 = -1i32 as u16);
+    slot!(game, Hunter[E]; var_f = 0, var_a = 0xf268, var_08 = 0, var_09 = 1, var_06 = 0, var_07 = -1i32 as u16);
     let v1: u16 = (slot!(game, Hunter[E].base.y_pos)).wrapping_sub(16);
-    slot!(game, Hunter[E].var_0A = v1);
-    slot!(game, Hunter[E].var_0B = (v1).wrapping_add(32));
-    slot!(game, Hunter[E].var_0C = slot!(game, Hunter[E].base.x_pos));
-    slot!(game, Hunter[E].var_0D = slot!(game, Hunter[E].base.y_pos));
+    slot!(game, Hunter[E].var_0a = v1);
+    slot!(game, Hunter[E].var_0b = (v1).wrapping_add(32));
+    slot!(game, Hunter[E].var_0c = slot!(game, Hunter[E].base.x_pos));
+    slot!(game, Hunter[E].var_0d = slot!(game, Hunter[E].base.y_pos));
     if (slot!(game, Hunter[E].parameter_1) & 0x8000) != 0 {
         slot!(game, Hunter[E].var_14 = 1);
-        slot!(game, Hunter[E].var_A = 0xf55a);
+        slot!(game, Hunter[E].var_a = 0xf55a);
         slot!(game, Hunter[E].var_08 = 0);
         slot!(game, Hunter[E].var_09 = 1);
     }
@@ -94,7 +94,7 @@ pub(crate) fn initialize_wings(game: &mut Game) {
     slot!(game, Hunter[E].base.current_instruction = 0xea4e as u16);
     let v2: i32 = word!(game.cur_enemy_index) as i32 >> 1;
     copy_drawing(E as u16, &[(6, 93), (2, 91)], game);
-    slot!(game, Hunter[E].var_A = 0xf6f3);
+    slot!(game, Hunter[E].var_a = 0xf6f3);
     copy_drawing(E as u16, &[(0x1e, 105), (0x20, 106)], game);
     if (word!(game.enemy_drawing_queue_sizes[(v2 + 6)]) & 0x8000) != 0 {
         slot!(game, Hunter[E].base.properties, |old| (old)
@@ -104,15 +104,15 @@ pub(crate) fn initialize_wings(game: &mut Game) {
 
 fn prepare_wing_acceleration(game: &mut Game) {
     let E = word!(game.cur_enemy_index) as i32;
-    slot!(game, Hunter[E]; var_0A = 0, var_B = 0);
+    slot!(game, Hunter[E]; var_0a = 0, var_b = 0);
     loop {
-        let speed = slot!(game, Hunter[E].var_0A).wrapping_add(384);
-        slot!(game, Hunter[E].var_0A = speed);
+        let speed = slot!(game, Hunter[E].var_0a).wrapping_add(384);
+        slot!(game, Hunter[E].var_0a = speed);
         let record = Runtime::new(game).legacy_native_record(0xa2, 0x838f);
         let phase = record
             .word(8 * usize::from(speed >> 8) + 1)
-            .wrapping_add(slot!(game, Hunter[E].var_D));
-        slot!(game, Hunter[E].var_D = phase);
+            .wrapping_add(slot!(game, Hunter[E].var_d));
+        slot!(game, Hunter[E].var_d = phase);
         if phase.wrapping_sub(0x2000) & 0x8000 == 0 {
             break;
         }
@@ -130,14 +130,14 @@ pub(crate) fn shot(game: &mut Game) {
             || ((health) as i16).wrapping_sub((slot!(game, Hunter[E1].parameter_1)) as i16) < 0
         {
             if slot!(game, Hunter[EK].var_14) == 0 {
-                slot!(game, Hunter[EK]; var_14 = 1, var_A = 0xf55a, var_08 = 0, var_09 = 1);
+                slot!(game, Hunter[EK]; var_14 = 1, var_a = 0xf55a, var_08 = 0, var_09 = 1);
                 word!(game.cur_enemy_index = (old_cur_enemy_index).wrapping_add(64));
-                if slot!(game, Hunter[E1].var_A) as i32 != 0xa8f7cf & 0xffff {
+                if slot!(game, Hunter[E1].var_a) as i32 != 0xa8f7cf & 0xffff {
                     slot!(game, Hunter[E1].var_07 = slot!(game, Hunter[E1].base.y_pos));
                     slot!(game, Hunter[E1].var_08 = slot!(game, Hunter[E1].base.x_pos));
                     prepare_wing_acceleration(game);
                     wing_origins(game);
-                    slot!(game, Hunter[E1]; var_F = -8192i32 as u16, var_A = 0xf7cf, var_00 = 0xf7db, var_06 = (slot!(game, Hunter[E1].var_07)).wrapping_sub(slot!(game, Hunter[E1].var_0B)), var_05 = slot!(game, Hunter[E1].base.x_pos), var_B = slot!(game, Hunter[E1].var_0A));
+                    slot!(game, Hunter[E1]; var_f = -8192i32 as u16, var_a = 0xf7cf, var_00 = 0xf7db, var_06 = (slot!(game, Hunter[E1].var_07)).wrapping_sub(slot!(game, Hunter[E1].var_0b)), var_05 = slot!(game, Hunter[E1].base.x_pos), var_b = slot!(game, Hunter[E1].var_0a));
                     slot!(game, Hunter[E1].base.current_instruction = 0xea7e as u16);
                     slot!(game, Hunter[E1].base.spritemap_pointer = 0x804d as u16);
                     slot!(game, Hunter[E1].base.instruction_timer = 1);
@@ -160,9 +160,9 @@ pub(crate) fn shot(game: &mut Game) {
 }
 
 fn spit(j: u16, game: &mut Game) {
-    QueueSfx2_Max6(0x4c, game);
-    SpawnEprojWithGfx(0, word!(game.cur_enemy_index), j, game);
-    slot!(game, Hunter[word!(game.cur_enemy_index) as i32].var_0F = 24);
+    queue_sfx2_max6(0x4c, game);
+    spawn_with_enemy_gfx(0, word!(game.cur_enemy_index), j, game);
+    slot!(game, Hunter[word!(game.cur_enemy_index) as i32].var_0f = 24);
 }
 
 fn wing_origins(game: &mut Game) {
@@ -177,7 +177,7 @@ fn wing_origins(game: &mut Game) {
 
 fn paired_animation(k: u16, index: u16, game: &mut Game) {
     for (offset, entry) in [(0, index), (64, index + 1)] {
-        let value = sm_game::enemy_lists::ki_hunter_wing_instruction_list(game, entry as isize);
+        let value = sm_game::enemy_lists::kihunter_wing_instruction_list(game, entry as isize);
         Runtime::new(game).write_slice_native(0xf92 + usize::from(k) + offset, value);
     }
     for offset in [0, 64] {
@@ -187,16 +187,16 @@ fn paired_animation(k: u16, index: u16, game: &mut Game) {
 pub(crate) fn advance(game: &mut Game) {
     let k = word!(game.cur_enemy_index);
     let E = k as i32;
-    let state = slot!(game, Hunter[E].var_A);
+    let state = slot!(game, Hunter[E].var_a);
     match state {
         0xf268 => {
             let vertical = if move_velocity(k, Axis::Y, game) {
                 Some(slot!(game, Hunter[E].var_09).wrapping_neg())
             } else {
                 let y = slot!(game, Hunter[E].base.y_pos);
-                if (y as i16).wrapping_sub(slot!(game, Hunter[E].var_0A) as i16) < 0 {
+                if (y as i16).wrapping_sub(slot!(game, Hunter[E].var_0a) as i16) < 0 {
                     Some(1)
-                } else if (y as i16).wrapping_sub(slot!(game, Hunter[E].var_0B) as i16) >= 0 {
+                } else if (y as i16).wrapping_sub(slot!(game, Hunter[E].var_0b) as i16) >= 0 {
                     Some(u16::MAX)
                 } else {
                     None
@@ -227,26 +227,26 @@ pub(crate) fn advance(game: &mut Game) {
                     slot!(game, Hunter[E].var_04 = -1i32 as u16);
                     slot!(game, Hunter[E].var_07 = -1i32 as u16);
                     slot!(game, Hunter[E].var_05 = -8192i32 as u16);
-                    slot!(game, Hunter[E].var_F = 255);
-                    slot!(game, Hunter[E].var_0E = 240);
+                    slot!(game, Hunter[E].var_f = 255);
+                    slot!(game, Hunter[E].var_0e = 240);
                     0
                 } else {
                     slot!(game, Hunter[E].var_00 = 2);
                     slot!(game, Hunter[E]; var_02 = 0, var_03 = 0, var_04 = 0);
                     slot!(game, Hunter[E].var_05 = 0x2000);
-                    slot!(game, Hunter[E].var_F = 128);
+                    slot!(game, Hunter[E].var_f = 128);
                     slot!(game, Hunter[E].var_07 = 1);
-                    slot!(game, Hunter[E].var_0E = 144);
+                    slot!(game, Hunter[E].var_0e = 144);
                     4
                 };
                 paired_animation(k, v9 >> 1, game);
-                slot!(game, Hunter[E]; var_B = (r18).wrapping_add(slot!(game, Hunter[E].base.x_pos)), var_C = slot!(game, Hunter[E].base.y_pos), var_A = 0xf3b8, var_12 = r24, var_11 = r20, var_10 = 0);
+                slot!(game, Hunter[E]; var_b = (r18).wrapping_add(slot!(game, Hunter[E].base.x_pos)), var_c = slot!(game, Hunter[E].base.y_pos), var_a = 0xf3b8, var_12 = r24, var_11 = r20, var_10 = 0);
             }
         }
         0xf3b8 => {
             let moving_forward = (slot!(game, Hunter[E].var_04) & 0x8000) == 0;
-            let past_turn = ((slot!(game, Hunter[E].var_F)) as i16)
-                .wrapping_sub((slot!(game, Hunter[E].var_0E)) as i16)
+            let past_turn = ((slot!(game, Hunter[E].var_f)) as i16)
+                .wrapping_sub((slot!(game, Hunter[E].var_0e)) as i16)
                 >= 0;
             if moving_forward == past_turn && slot!(game, Hunter[E].var_10) == 0 {
                 slot!(game, Hunter[E].var_10 = 1);
@@ -271,21 +271,21 @@ pub(crate) fn advance(game: &mut Game) {
             }
             slot!(
                 game,
-                Hunter[E].var_F =
-                    (slot!(game, Hunter[E].var_F)).wrapping_add(slot!(game, Hunter[E].var_02))
+                Hunter[E].var_f =
+                    (slot!(game, Hunter[E].var_f)).wrapping_add(slot!(game, Hunter[E].var_02))
             );
             let finished_arc = if moving_forward {
-                slot!(game, Hunter[E].var_F) as i32 - 256i32 & 0x8000 == 0
+                slot!(game, Hunter[E].var_f) as i32 - 256i32 & 0x8000 == 0
             } else {
-                slot!(game, Hunter[E].var_F) as i32 - 128i32 & 0x8000 != 0
+                slot!(game, Hunter[E].var_f) as i32 - 128i32 & 0x8000 != 0
             };
             if finished_arc {
-                slot!(game, Hunter[E].var_A = 0xf268);
+                slot!(game, Hunter[E].var_a = 0xf268);
                 return;
             }
-            let mut r20: u16 = (slot!(game, Hunter[E].var_B) as i32
+            let mut r20: u16 = (slot!(game, Hunter[E].var_b) as i32
                 + actor_cosine(
-                    slot!(game, Hunter[E].var_F),
+                    slot!(game, Hunter[E].var_f),
                     slot!(game, Hunter[E].var_11),
                     game,
                 ) as i32
@@ -297,9 +297,9 @@ pub(crate) fn advance(game: &mut Game) {
                 true
             } else {
                 snap(k, game);
-                r20 = (slot!(game, Hunter[E].var_C) as i32
+                r20 = (slot!(game, Hunter[E].var_c) as i32
                     + actor_sine(
-                        slot!(game, Hunter[E].var_F),
+                        slot!(game, Hunter[E].var_f),
                         slot!(game, Hunter[E].var_12),
                         game,
                     ) as i32
@@ -307,7 +307,7 @@ pub(crate) fn advance(game: &mut Game) {
                 move_by(k, Axis::Y, (r20 as i16 as i32) << 16, game)
             };
             if collided {
-                slot!(game, Hunter[E].var_A = 0xf4ed);
+                slot!(game, Hunter[E].var_a = 0xf4ed);
                 slot!(game, Hunter[E].var_08 = 0);
                 slot!(game, Hunter[E].var_09 = -1i32 as u16);
             };
@@ -319,21 +319,21 @@ pub(crate) fn advance(game: &mut Game) {
                     move_velocity(k, Axis::Y, game)
                 }
                 || ((slot!(game, Hunter[E].base.y_pos)) as i16)
-                    .wrapping_sub((slot!(game, Hunter[E].var_0D)) as i16)
+                    .wrapping_sub((slot!(game, Hunter[E].var_0d)) as i16)
                     < 0
             {
-                slot!(game, Hunter[E].var_A = 0xf268);
+                slot!(game, Hunter[E].var_a = 0xf268);
             }
         }
         0xf55a => {
             if move_velocity(k, Axis::Y, game) {
-                slot!(game, Hunter[E].var_A = 0xf58b);
+                slot!(game, Hunter[E].var_a = 0xf58b);
             } else {
                 slot!(game, Hunter[E](var_09, var_08) += words!((0x0, 0xe000)));
             };
         }
         0xf58b => {
-            slot!(game, Hunter[E].var_A = 0xf5e3 as u16);
+            slot!(game, Hunter[E].var_a = 0xf5e3 as u16);
             slot!(game, Hunter[E].var_08 = 0);
             slot!(
                 game,
@@ -360,8 +360,8 @@ pub(crate) fn advance(game: &mut Game) {
                 } else {
                     slot!(game, Hunter[E].var_08 = 0);
                     slot!(game, Hunter[E].var_09 = -4i32 as u16);
-                    slot!(game, Hunter[E].var_A = 0xf5e3 as u16);
-                    slot!(game, Hunter[E].var_0F = 12);
+                    slot!(game, Hunter[E].var_a = 0xf5e3 as u16);
+                    slot!(game, Hunter[E].var_0f = 12);
                     let mut v4: u16 = 0xeac2 as u16;
                     if slot!(game, Hunter[E].base.current_instruction) as i32 + 0x155a & 0x8000 == 0
                     {
@@ -380,8 +380,8 @@ pub(crate) fn advance(game: &mut Game) {
             };
         }
         0xf68b => {
-            let v2: u16 = (slot!(game, Hunter[E].var_0F)).wrapping_sub(1);
-            slot!(game, Hunter[E].var_0F = v2);
+            let v2: u16 = (slot!(game, Hunter[E].var_0f)).wrapping_sub(1);
+            slot!(game, Hunter[E].var_0f = v2);
             if v2 == 0 {
                 let mut v3: u16 = 0xf58b;
                 let v4: u16 = abs16(
@@ -390,7 +390,7 @@ pub(crate) fn advance(game: &mut Game) {
                 if v4 as i32 - 96i32 & 0x8000 != 0 {
                     v3 = 0xf6b3;
                 }
-                slot!(game, Hunter[E].var_A = v3);
+                slot!(game, Hunter[E].var_a = v3);
             }
         }
         0xf6b3 => {
@@ -402,7 +402,7 @@ pub(crate) fn advance(game: &mut Game) {
                 v1 = 0xeb10 as u16;
             }
             slot!(game, Hunter[E].base; current_instruction = v1, instruction_timer = 1);
-            slot!(game, Hunter[E].var_A = 0xf5e3 as u16);
+            slot!(game, Hunter[E].var_a = 0xf5e3 as u16);
         }
         0xf6f3 => copy_drawing(k, &[(2, 91), (6, 93)], game),
         0xf7cf => {
@@ -434,7 +434,7 @@ pub(crate) fn instruction(
             };
             slot!(game, Hunter[E].base; current_instruction = attached, instruction_timer = 1);
             let peer = E + 64;
-            if slot!(game, Hunter[peer].var_A) == 0xf6f3 {
+            if slot!(game, Hunter[peer].var_a) == 0xf6f3 {
                 slot!(game, Hunter[peer].base; current_instruction = attached, instruction_timer = 1);
             }
             return EnemyScript::jump(next);
@@ -442,7 +442,7 @@ pub(crate) fn instruction(
         11072996 | 11073151 => {
             slot!(
                 game,
-                Hunter[word!(game.cur_enemy_index) as i32].var_A =
+                Hunter[word!(game.cur_enemy_index) as i32].var_a =
                     if address == 11072996 { 0xf5f0 } else { 0xf68b }
             );
         }
@@ -486,7 +486,7 @@ fn copy_drawing(k: u16, fields: &[(usize, i32)], game: &mut Game) {
 fn wing_coordinate(E: i32, x: bool, forward: bool, game: &mut Game) -> u16 {
     let at = 0x7800 + E as usize;
     let center = Runtime::new(game).native_word(at + if x { 10 } else { 12 });
-    let phase = slot!(byte game, Hunter[E].var_F[1]) as u16;
+    let phase = slot!(byte game, Hunter[E].var_f[1]) as u16;
     let wave = if x { actor_cosine } else { actor_sine };
     let displacement = wave(phase, 0x30, game);
     let field = if forward { 6 } else { 2 };

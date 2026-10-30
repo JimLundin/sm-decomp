@@ -17,23 +17,23 @@ part_view! {
     /// Bang's view of its slot and extended RAM.
     Bang: EnemyLayout72 {
         words: [
-            var_A, idle_palette, var_C, unread_0fae, damage, movement_function, ai_function,
+            var_a, idle_palette, var_c, unread_0fae, damage, movement_function, ai_function,
             parameter_2,
         ],
         pad1: [u8; 26696],
         words: [
             movement_delay_timer, angle, angle_to_samus, var_03, var_04, var_05, var_06,
             moving_left, moving_up, acceleration, speed, max_speed, acceleration_interval_timer,
-            acceleration_interval_reset, deceleration_interval_reset, var_0F, var_10, var_11,
-            var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19, var_1A, var_1B, var_1C,
-            var_1D, var_1E, var_1F,
+            acceleration_interval_reset, deceleration_interval_reset, var_0f, var_10, var_11,
+            var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19, var_1a, var_1b, var_1c,
+            var_1d, var_1e, var_1f,
         ],
         pad2: [u8; 1984],
         words: [
             new_instruction_list_index, instruction_list_index, finished_growing, var_23, var_24,
-            var_25, var_26, var_27, var_28, var_29, var_2A, var_2B, var_2C, var_2D, var_2E, var_2F,
-            var_30, var_31, var_32, var_33, var_34, var_35, var_36, var_37, var_38, var_39, var_3A,
-            var_3B, var_3C, var_3D, var_3E, var_3F,
+            var_25, var_26, var_27, var_28, var_29, var_2a, var_2b, var_2c, var_2d, var_2e, var_2f,
+            var_30, var_31, var_32, var_33, var_34, var_35, var_36, var_37, var_38, var_39, var_3a,
+            var_3b, var_3c, var_3d, var_3e, var_3f,
         ],
     }
 }

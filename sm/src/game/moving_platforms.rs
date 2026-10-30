@@ -5,7 +5,7 @@
 use crate::game::actors;
 use crate::game::actors::api as actor_api;
 use crate::game::enemy_speeds::enemy_speed;
-use crate::game::music::QueueSfx3_Max6;
+use crate::game::music::queue_sfx3_max6;
 use crate::game::session_runtime::Runtime;
 use sm_game::actors::access::ActorKey as Key;
 use sm_game::actors::layouts::{EnemyLayout72, EnemyLayout72Late};
@@ -97,7 +97,7 @@ macro_rules! field {
 #[forbid(unsafe_code)]
 fn movement_sound(game: &mut Game) {
     if u16::from(actor_api::current_outside_screen(&Runtime::new(game))) == 0 {
-        QueueSfx3_Max6(0xe, game);
+        queue_sfx3_max6(0xe, game);
     }
 }
 
@@ -108,7 +108,7 @@ pub(crate) fn initialize(kind: Kind, game: &mut Game) {
         field!(
             game,
             e,
-            var_A = crate::rtl::rom_table_word!(
+            var_a = crate::rtl::rom_table_word!(
                 game,
                 0xa2ea4e,
                 (field!(game, e, base.current_instruction) as i32
@@ -120,12 +120,12 @@ pub(crate) fn initialize(kind: Kind, game: &mut Game) {
         } else {
             8
         };
-        field!(game, e, var_B = field!(game, e, base.y_pos));
-        field!(game, e, var_C = field!(game, e, var_B).wrapping_add(step));
-        field!(game, e, var_D = field!(game, e, var_C).wrapping_add(step));
-        field!(game, e, var_E = field!(game, e, var_D).wrapping_add(step));
+        field!(game, e, var_b = field!(game, e, base.y_pos));
+        field!(game, e, var_c = field!(game, e, var_b).wrapping_add(step));
+        field!(game, e, var_d = field!(game, e, var_c).wrapping_add(step));
+        field!(game, e, var_e = field!(game, e, var_d).wrapping_add(step));
         field!(game, e, base.extra_properties = 0);
-        field!(game, e, var_F = 0);
+        field!(game, e, var_f = 0);
         field!(game, e, base.current_instruction = 0xe998);
         let i = 2 * (field!(game, e, parameter_2) as u8) as isize;
         field!(
@@ -147,10 +147,10 @@ pub(crate) fn initialize(kind: Kind, game: &mut Game) {
         var_00 = field!(game, e, base.current_instruction) as u8 as u16
     );
     let i = 4 * field!(game, e, var_00) as isize;
-    field!(game, e, var_D = enemy_speed!(game, Linear, i));
-    field!(game, e, var_C = enemy_speed!(game, Linear, i + 1));
-    field!(game, e, var_F = enemy_speed!(game, Linear, i + 2));
-    field!(game, e, var_E = enemy_speed!(game, Linear, i + 3));
+    field!(game, e, var_d = enemy_speed!(game, Linear, i));
+    field!(game, e, var_c = enemy_speed!(game, Linear, i + 1));
+    field!(game, e, var_f = enemy_speed!(game, Linear, i + 2));
+    field!(game, e, var_e = enemy_speed!(game, Linear, i + 3));
     field!(
         game,
         e,
@@ -185,7 +185,7 @@ pub(crate) fn initialize(kind: Kind, game: &mut Game) {
     field!(game, e, var_07 = 2u16.wrapping_mul(field!(game, e, var_04)));
     field!(game, e, var_05 = field!(game, e, parameter_1) >> 8);
     field!(game, e, var_06 = field!(game, e, parameter_2));
-    field!(game, e, var_B = field!(game, e, parameter_2));
+    field!(game, e, var_b = field!(game, e, parameter_2));
     let pos = if p.horizontal {
         field!(game, e, base.x_pos)
     } else {
@@ -194,7 +194,7 @@ pub(crate) fn initialize(kind: Kind, game: &mut Game) {
     let (low, high) = if p.horizontal {
         (field!(@offset var_11), field!(@offset var_12))
     } else {
-        (field!(@offset var_0F), field!(@offset var_10))
+        (field!(@offset var_0f), field!(@offset var_10))
     };
     word!(game, e + low; = pos);
     word!(game, e + high; = field!(game, e, var_05).wrapping_add(pos));
@@ -202,14 +202,14 @@ pub(crate) fn initialize(kind: Kind, game: &mut Game) {
         word!(game, e + high; = pos);
         word!(game, e + low; = pos.wrapping_sub(field!(game, e, var_05)));
     }
-    field!(game, e, var_A = p.state(WaitForTrigger));
+    field!(game, e, var_a = p.state(WaitForTrigger));
     if p.horizontal {
         field!(game, e, var_15 = word!(game.samus_x_pos));
     }
     field!(game, e, base.extra_properties = 0);
-    field!(game, e, var_0A = 0);
+    field!(game, e, var_0a = 0);
     if p.horizontal {
-        field!(game, e, var_0B = 0);
+        field!(game, e, var_0b = 0);
     }
     field!(
         game,
@@ -229,12 +229,12 @@ pub(crate) unsafe fn update(kind: Kind, game: &mut Game) {
     }
     let e = slot(game);
     // Both original entry points dispatch both axes' phase addresses.
-    let p = if VERTICAL.phases.contains(&field!(game, e, var_A)) {
+    let p = if VERTICAL.phases.contains(&field!(game, e, var_a)) {
         &VERTICAL
     } else {
         &HORIZONTAL
     };
-    let Some(phase) = p.decode(field!(game, e, var_A)) else {
+    let Some(phase) = p.decode(field!(game, e, var_a)) else {
         Unreachable(game);
         return;
     };
@@ -247,10 +247,10 @@ pub(crate) unsafe fn update(kind: Kind, game: &mut Game) {
             };
             let ready = match trigger {
                 0 => {
-                    let old = field!(game, e, var_B);
-                    field!(game, e, var_B = old.wrapping_sub(1));
+                    let old = field!(game, e, var_b);
+                    field!(game, e, var_b = old.wrapping_sub(1));
                     if old == 1 {
-                        field!(game, e, var_B = field!(game, e, var_06));
+                        field!(game, e, var_b = field!(game, e, var_06));
                     }
                     old == 1
                 }
@@ -274,7 +274,7 @@ pub(crate) unsafe fn update(kind: Kind, game: &mut Game) {
                 field!(
                     game,
                     e,
-                    var_A = p.state(if field!(game, e, var_01) != 0 {
+                    var_a = p.state(if field!(game, e, var_01) != 0 {
                         MovingPositive
                     } else {
                         MovingNegative
@@ -287,15 +287,15 @@ pub(crate) unsafe fn update(kind: Kind, game: &mut Game) {
         }
         MovingNegative | MovingPositive => travel(p, phase == MovingPositive, game),
         WaitingAtLow | WaitingAtHigh => {
-            field!(game, e, var_B = field!(game, e, var_B).wrapping_sub(1));
-            if field!(game, e, var_B) & 0x8000 != 0 {
+            field!(game, e, var_b = field!(game, e, var_b).wrapping_sub(1));
+            if field!(game, e, var_b) & 0x8000 != 0 {
                 if !p.horizontal && phase == WaitingAtHigh {
                     movement_sound(game);
                 }
                 field!(
                     game,
                     e,
-                    var_A = p.state(if phase == WaitingAtLow {
+                    var_a = p.state(if phase == WaitingAtLow {
                         MovingPositive
                     } else {
                         MovingNegative
@@ -304,7 +304,7 @@ pub(crate) unsafe fn update(kind: Kind, game: &mut Game) {
                 if field!(game, e, var_04) == 1
                     && (field!(game, e, var_01) != 0) == (phase == WaitingAtLow)
                 {
-                    field!(game, e, var_A = p.state(WaitForProximity));
+                    field!(game, e, var_a = p.state(WaitForProximity));
                 }
                 if !p.horizontal
                     && phase == WaitingAtLow
@@ -321,8 +321,8 @@ pub(crate) unsafe fn update(kind: Kind, game: &mut Game) {
         & word!(game.enemy_index_colliding_dirs[2])
         & word!(game.enemy_index_colliding_dirs[1])
         & word!(game.enemy_index_colliding_dirs[0]);
-    if field!(game, e, var_A) != p.state(MovingNegative)
-        && field!(game, e, var_A) != p.state(MovingPositive)
+    if field!(game, e, var_a) != p.state(MovingNegative)
+        && field!(game, e, var_a) != p.state(MovingPositive)
         && collision != 0xffff
         && collision == word!(game.cur_enemy_index)
         && word!(game.samus_contact_damage_index) != 0
@@ -339,12 +339,12 @@ pub(crate) unsafe fn update(kind: Kind, game: &mut Game) {
 fn travel(p: &Motion, positive: bool, game: &mut Game) {
     let e = slot(game);
     let speed = if positive {
-        (u32::from(field!(game, e, var_D)) << 16) | u32::from(field!(game, e, var_C))
+        (u32::from(field!(game, e, var_d)) << 16) | u32::from(field!(game, e, var_c))
     } else {
-        (u32::from(field!(game, e, var_F)) << 16) | u32::from(field!(game, e, var_E))
+        (u32::from(field!(game, e, var_f)) << 16) | u32::from(field!(game, e, var_e))
     };
     let (pos, limit) = if p.horizontal {
-        field!(game, e, var_0D = field!(game, e, base.x_pos));
+        field!(game, e, var_0d = field!(game, e, base.x_pos));
         field!(game, e, var_13 = 0);
         if ({
             let actor = word!(game.cur_enemy_index);
@@ -378,8 +378,8 @@ fn travel(p: &Motion, positive: bool, game: &mut Game) {
             },
         )
     } else {
-        field!(game, e, var_0E = field!(game, e, base.y_pos));
-        field!(game, e, var_0A = 0);
+        field!(game, e, var_0e = field!(game, e, base.y_pos));
+        field!(game, e, var_0a = 0);
         if ({
             let actor = word!(game.cur_enemy_index);
             0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(
@@ -388,17 +388,17 @@ fn travel(p: &Motion, positive: bool, game: &mut Game) {
             )))
         }) != 0
         {
-            field!(game, e, var_0A = 1);
+            field!(game, e, var_0a = 1);
         }
         let next = (u32::from(field!(game, e, base.y_subpos))
             | (u32::from(field!(game, e, base.y_pos)) << 16))
             .wrapping_add(speed);
         field!(game, e, base.y_subpos = next as u16);
         field!(game, e, base.y_pos = (next >> 16) as u16);
-        if field!(game, e, var_0A) != 0 {
+        if field!(game, e, var_0a) != 0 {
             word!(
                 game.extra_samus_y_displacement =
-                    field!(game, e, base.y_pos).wrapping_sub(field!(game, e, var_0E))
+                    field!(game, e, base.y_pos).wrapping_sub(field!(game, e, var_0e))
             );
         }
         (
@@ -406,7 +406,7 @@ fn travel(p: &Motion, positive: bool, game: &mut Game) {
             if positive {
                 field!(game, e, var_10)
             } else {
-                field!(game, e, var_0F)
+                field!(game, e, var_0f)
             },
         )
     };
@@ -422,13 +422,13 @@ fn travel(p: &Motion, positive: bool, game: &mut Game) {
             field!(game, e, var_08)
         };
         if delay == 4080 {
-            field!(game, e, var_A = p.state(Stopped));
+            field!(game, e, var_a = p.state(Stopped));
         } else {
-            field!(game, e, var_B = delay);
+            field!(game, e, var_b = delay);
             field!(
                 game,
                 e,
-                var_A = p.state(if positive {
+                var_a = p.state(if positive {
                     WaitingAtHigh
                 } else {
                     WaitingAtLow
@@ -452,13 +452,13 @@ fn activate(p: &Motion, game: &mut Game) {
     let e = slot(game);
     if field!(game, e, var_07).wrapping_sub(6) & 0x8000 == 0 {
         if field!(game, e, var_07) != 8 {
-            if field!(game, e, var_0C) != 0 {
+            if field!(game, e, var_0c) != 0 {
                 return;
             }
-            field!(game, e, var_0C = 1);
+            field!(game, e, var_0c = 1);
         }
-        if field!(game, e, var_A) == p.state(MovingNegative)
-            || field!(game, e, var_A) == p.state(MovingPositive)
+        if field!(game, e, var_a) == p.state(MovingNegative)
+            || field!(game, e, var_a) == p.state(MovingPositive)
         {
             return;
         }
@@ -468,7 +468,7 @@ fn activate(p: &Motion, game: &mut Game) {
         field!(
             game,
             e,
-            var_A = p.state(if field!(game, e, var_20) != 0 {
+            var_a = p.state(if field!(game, e, var_20) != 0 {
                 MovingPositive
             } else {
                 MovingNegative
@@ -499,7 +499,7 @@ pub(crate) unsafe fn react(kind: Kind, event: Event, game: &mut Game) {
     }
     if kind == Kind::HorizontalShutter && matches!(event, Event::Touch) {
         let e = slot(game);
-        if field!(game, e, var_A) == HORIZONTAL.state(Stopped) {
+        if field!(game, e, var_a) == HORIZONTAL.state(Stopped) {
             let positive = (word!(game.samus_x_pos) as i16)
                 .wrapping_sub(field!(game, e, base.x_pos) as i16)
                 >= 0;
@@ -516,9 +516,9 @@ pub(crate) unsafe fn react(kind: Kind, event: Event, game: &mut Game) {
 
 unsafe fn update_timed(game: &mut Game) {
     let e = slot(game);
-    match field!(game, e, var_A) {
+    match field!(game, e, var_a) {
         0xeabd | 0xead1 | 0xeae7 | 0xeafd => {
-            let proximity = field!(game, e, var_A) == 0xead1 || field!(game, e, var_A) == 0xeae7;
+            let proximity = field!(game, e, var_a) == 0xead1 || field!(game, e, var_a) == 0xeae7;
             let ready = if proximity {
                 ({
                     let (actor, distance) =
@@ -545,7 +545,7 @@ unsafe fn update_timed(game: &mut Game) {
                 field!(
                     game,
                     e,
-                    var_A = if field!(game, e, var_A) == 0xeabd || field!(game, e, var_A) == 0xead1
+                    var_a = if field!(game, e, var_a) == 0xeabd || field!(game, e, var_a) == 0xead1
                     {
                         0xec13
                     } else {
@@ -555,14 +555,14 @@ unsafe fn update_timed(game: &mut Game) {
             }
         }
         0xeb11 | 0xec13 => {
-            let opening = field!(game, e, var_A) == 0xec13;
+            let opening = field!(game, e, var_a) == 0xec13;
             if opening {
                 field!(game, e, var_40 = field!(game, e, base.y_pos));
             }
             let stage = (if opening {
-                field!(game, e, var_F) & 0x7fff
+                field!(game, e, var_f) & 0x7fff
             } else {
-                field!(game, e, var_F)
+                field!(game, e, var_f)
             }) as usize;
             assert!(stage < 5, "timed shutter stage out of bounds");
             if stage < 4 {
@@ -575,10 +575,10 @@ unsafe fn update_timed(game: &mut Game) {
                 field!(game, e, base.y_subpos = next as u16);
                 field!(game, e, base.y_pos = (next >> 16) as u16);
                 let stop = [
-                    field!(game, e, var_B),
-                    field!(game, e, var_C),
-                    field!(game, e, var_D),
-                    field!(game, e, var_E),
+                    field!(game, e, var_b),
+                    field!(game, e, var_c),
+                    field!(game, e, var_d),
+                    field!(game, e, var_e),
                 ][stage];
                 let limit = stop.wrapping_add(if opening { -16i16 as u16 } else { 16 });
                 let delta = (limit as i16).wrapping_sub(field!(game, e, base.y_pos) as i16);
@@ -594,7 +594,7 @@ unsafe fn update_timed(game: &mut Game) {
                             stop.wrapping_add(9)
                         }
                     );
-                    field!(game, e, var_F = field!(game, e, var_F).wrapping_add(1));
+                    field!(game, e, var_f = field!(game, e, var_f).wrapping_add(1));
                     if stage != 3 {
                         field!(game, e, base.instruction_timer = 1);
                         field!(

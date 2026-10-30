@@ -16,7 +16,7 @@ impl<T: ActorHost + ActorRuntime + Records + ?Sized> Host for T {}
 part_view! {
     /// The face block's view of its slot.
     FaceBlock: EnemyLayout8 {
-        words: [activated, direction_to_samus, var_C, var_D, var_E, var_F, range, direction_to_not_turn],
+        words: [activated, direction_to_samus, var_c, var_d, var_e, var_f, range, direction_to_not_turn],
     }
 }
 

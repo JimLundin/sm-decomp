@@ -1,5 +1,5 @@
 //! Legacy entry and backend boundary for the shared owned sprite-effect core.
-use crate::game::enemy_projectiles::SpawnEprojWithGfx;
+use crate::game::enemy_projectiles::spawn_with_enemy_gfx;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::types::Point16U;
@@ -175,6 +175,6 @@ pub(crate) fn draygon_spit(right: bool, game: &mut Game) {
         y: slot!(game, Draygon[0].base.y_pos).wrapping_sub(16),
     };
     let direction = if right { 192 } else { 128 };
-    word!(game.cinematic_var9 = (game.next_random() & 0x3f) + direction);
-    SpawnEprojWithGfx(2, word!(game.cur_enemy_index), 0x8e50, game);
+    word!(game.cinematic_y_sub = (game.next_random() & 0x3f) + direction);
+    spawn_with_enemy_gfx(2, word!(game.cur_enemy_index), 0x8e50, game);
 }

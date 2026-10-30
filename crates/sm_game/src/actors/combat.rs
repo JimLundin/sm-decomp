@@ -91,7 +91,7 @@ fn death<H: ActorHost + EprojHost>(h: &mut H, animation: u16, limit: u16, actor:
         h,
         animation,
         selected,
-        crate::constants::bank_86::addr_kEproj_EnemyDeathExplosion as u16,
+        crate::constants::bank_86::ADDR_K_EPROJ_ENEMY_DEATH_EXPLOSION as u16,
     );
     let preserve = h.resolve_actor(actor, AccessMode::Native).properties & 0x4000 != 0;
     h.edit_actor(actor, AccessMode::Native, |actor| *actor = Actor::default());

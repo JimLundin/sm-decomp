@@ -100,17 +100,17 @@ macro_rules! menu_words {
         $f(ram::pausemenu_lr_animation_timer,$($borrow)* $c.pausemenu_lr_animation_timer);
         $f(ram::pausemenu_item_selector_animation_timer,$($borrow)* $c.pausemenu_item_selector_animation_timer);
         $f(ram::pausemenu_reserve_tank_animation_timer,$($borrow)* $c.pausemenu_reserve_tank_animation_timer);
-        $f(ram::UNUSED_word_7E0731,$($borrow)* $c.UNUSED_word_7E0731);
+        $f(ram::unused_word_7e0731,$($borrow)* $c.unused_word_7e0731);
         $f(ram::pausemenu_uparrow_animation_timer,$($borrow)* $c.pausemenu_uparrow_animation_timer);
         $f(ram::pausemenu_downarrow_animation_timer,$($borrow)* $c.pausemenu_downarrow_animation_timer);
         $f(ram::pausemenu_rightarrow_animation_timer,$($borrow)* $c.pausemenu_rightarrow_animation_timer);
         $f(ram::pausemenu_leftarrow_animation_timer,$($borrow)* $c.pausemenu_leftarrow_animation_timer);
         $f(ram::pausemenu_palette_animation_timer,$($borrow)* $c.pausemenu_palette_animation_timer);
-        $f(ram::UNUSED_word_7E073D,$($borrow)* $c.UNUSED_word_7E073D);
+        $f(ram::unused_word_7e073d,$($borrow)* $c.unused_word_7e073d);
         $f(ram::pausemenu_lr_animation_frame,$($borrow)* $c.pausemenu_lr_animation_frame);
         $f(ram::pausemenu_item_selector_animation_frame,$($borrow)* $c.pausemenu_item_selector_animation_frame);
         $f(ram::pausemenu_reserve_tank_animation_frame,$($borrow)* $c.pausemenu_reserve_tank_animation_frame);
-        $f(ram::UNUSED_word_7E0745,$($borrow)* $c.UNUSED_word_7E0745);
+        $f(ram::unused_word_7e0745,$($borrow)* $c.unused_word_7e0745);
         $f(ram::pausemenu_uparrow_animation_frame,$($borrow)* $c.pausemenu_uparrow_animation_frame);
         $f(ram::pausemenu_downarrow_animation_frame,$($borrow)* $c.pausemenu_downarrow_animation_frame);
         $f(ram::pausemenu_rightarrow_animation_frame,$($borrow)* $c.pausemenu_rightarrow_animation_frame);
@@ -120,11 +120,11 @@ macro_rules! menu_words {
         $f(ram::pausemenu_button_label_mode,$($borrow)* $c.pausemenu_button_label_mode);
         $f(ram::pausemenu_equipment_category_item,$($borrow)* $c.pausemenu_equipment_category_item);
         $f(ram::pausemenu_reserve_tank_delay_ctr,$($borrow)* $c.pausemenu_reserve_tank_delay_ctr);
-        $f(ram::UNUSED_word_7E0759,$($borrow)* $c.UNUSED_word_7E0759);
-        $f(ram::UNUSED_word_7E075B,$($borrow)* $c.UNUSED_word_7E075B);
-        $f(ram::UNUSED_word_7E075D,$($borrow)* $c.UNUSED_word_7E075D);
-        $f(ram::UNUSED_word_7E075F,$($borrow)* $c.UNUSED_word_7E075F);
-        $f(ram::UNUSED_word_7E0761,$($borrow)* $c.UNUSED_word_7E0761);
+        $f(ram::unused_word_7e0759,$($borrow)* $c.unused_word_7e0759);
+        $f(ram::unused_word_7e075b,$($borrow)* $c.unused_word_7e075b);
+        $f(ram::unused_word_7e075d,$($borrow)* $c.unused_word_7e075d);
+        $f(ram::unused_word_7e075f,$($borrow)* $c.unused_word_7e075f);
+        $f(ram::unused_word_7e0761,$($borrow)* $c.unused_word_7e0761);
         $f(ram::pause_screen_mode,$($borrow)* $c.pause_screen_mode);
     };
 }

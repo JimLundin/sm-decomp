@@ -3,7 +3,7 @@
 #![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode, ActorKey as Key};
 use crate::actors::layouts::{EnemyBase, same_words};
-use crate::constants::bank_86::addr_stru_868F8F;
+use crate::constants::bank_86::ADDR_STRU_868F8F;
 use crate::enemy_projectiles::host::Host;
 use crate::enemy_script::{EnemyScript, bank_base};
 use core::ffi::c_long;
@@ -36,9 +36,9 @@ pub struct Crocomire {
 }
 
 same_words!(Crocomire: EnemyLayout72 {
-    death_sequence_index = var_A, fight_flags = var_B, fight_function = var_C,
-    step_counter = var_D, y_velocity = var_E, projectile_counter = var_F, unread_7800 = var_00,
-    unread_7802 = var_01, melting_hdma_object = var_1F, acid_damage_sound_timer = var_20,
+    death_sequence_index = var_a, fight_flags = var_b, fight_function = var_c,
+    step_counter = var_d, y_velocity = var_e, projectile_counter = var_f, unread_7800 = var_00,
+    unread_7802 = var_01, melting_hdma_object = var_1f, acid_damage_sound_timer = var_20,
 });
 
 /// The actor words Crocomire's fight uses, by `variables` lane.
@@ -88,20 +88,20 @@ pub mod fight {
 /// Bank $A4 Crocomire instruction lists.
 pub mod instruction_list {
     use crate::constants::bank_a4::*;
-    pub const INITIAL: u16 = addr_kCrocomire_Ilist_BADE as u16;
-    pub const CHARGE_FORWARD_ONE_STEP: u16 = addr_kCrocomire_Ilist_BAEA as u16;
-    pub const PROJECTILE_ATTACK: u16 = addr_kCrocomire_Ilist_BB36 as u16;
-    pub const STEP_FORWARD_AFTER_DELAY: u16 = addr_kCrocomire_Ilist_BBCA as u16;
-    pub const STEP_FORWARD: u16 = addr_kCrocomire_Ilist_BBCE as u16;
-    pub const STEP_BACK: u16 = addr_kCrocomire_Ilist_BC30 as u16;
-    pub const STEPPING_BACK: u16 = addr_kCrocomire_Ilist_BC34 as u16;
-    pub const WAIT_FOR_DAMAGE: u16 = addr_kCrocomire_Ilist_BC56 as u16;
-    pub const WAIT_FOR_DAMAGE_MOVING_CLAWS: u16 = addr_kCrocomire_Ilist_BCD8 as u16;
-    pub const WAIT_FOR_DAMAGE_ROAR: u16 = addr_kCrocomire_Ilist_BD2A as u16;
-    pub const WAIT_FOR_DAMAGE_ROAR_CLOSE_MOUTH: u16 = addr_kCrocomire_Ilist_BD8E as u16;
-    pub const WAIT_FOR_DAMAGE_ROAR_END: u16 = addr_kCrocomire_Ilist_BDA2 as u16;
-    pub const NEAR_SPIKE_WALL_CHARGE: u16 = addr_kCrocomire_Ilist_BE7E as u16;
-    pub const BACK_OFF_FROM_SPIKE_WALL: u16 = addr_kCrocomire_Ilist_BF3C as u16;
+    pub const INITIAL: u16 = ADDR_K_CROCOMIRE_ILIST_BADE as u16;
+    pub const CHARGE_FORWARD_ONE_STEP: u16 = ADDR_K_CROCOMIRE_ILIST_BAEA as u16;
+    pub const PROJECTILE_ATTACK: u16 = ADDR_K_CROCOMIRE_ILIST_BB36 as u16;
+    pub const STEP_FORWARD_AFTER_DELAY: u16 = ADDR_K_CROCOMIRE_ILIST_BBCA as u16;
+    pub const STEP_FORWARD: u16 = ADDR_K_CROCOMIRE_ILIST_BBCE as u16;
+    pub const STEP_BACK: u16 = ADDR_K_CROCOMIRE_ILIST_BC30 as u16;
+    pub const STEPPING_BACK: u16 = ADDR_K_CROCOMIRE_ILIST_BC34 as u16;
+    pub const WAIT_FOR_DAMAGE: u16 = ADDR_K_CROCOMIRE_ILIST_BC56 as u16;
+    pub const WAIT_FOR_DAMAGE_MOVING_CLAWS: u16 = ADDR_K_CROCOMIRE_ILIST_BCD8 as u16;
+    pub const WAIT_FOR_DAMAGE_ROAR: u16 = ADDR_K_CROCOMIRE_ILIST_BD2A as u16;
+    pub const WAIT_FOR_DAMAGE_ROAR_CLOSE_MOUTH: u16 = ADDR_K_CROCOMIRE_ILIST_BD8E as u16;
+    pub const WAIT_FOR_DAMAGE_ROAR_END: u16 = ADDR_K_CROCOMIRE_ILIST_BDA2 as u16;
+    pub const NEAR_SPIKE_WALL_CHARGE: u16 = ADDR_K_CROCOMIRE_ILIST_BE7E as u16;
+    pub const BACK_OFF_FROM_SPIKE_WALL: u16 = ADDR_K_CROCOMIRE_ILIST_BF3C as u16;
 }
 
 use flag::*;
@@ -226,7 +226,7 @@ fn projectile_attack<A: Host>(_k: u16, jp: EnemyScript, h: &mut A) -> EnemyScrip
             h,
             index,
             selected,
-            addr_stru_868F8F as u16,
+            ADDR_STRU_868F8F as u16,
         );
         h.queue_sound(3, 6, PROJECTILE_SOUND);
     }

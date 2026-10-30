@@ -1,15 +1,15 @@
 //! Liquid setup, rising motion, tide and background HDMA tables.
-use crate::constants::bank_87::{addr_kAnimtiles_Acid, addr_kAnimtiles_Lava};
+use crate::constants::bank_87::{ADDR_K_ANIMTILES_ACID, ADDR_K_ANIMTILES_LAVA};
 use crate::hdma::HdmaObject;
 use crate::menus::prelude::*;
 
 pub const WATER_WAVE: [i16; 16] = [0, 1, 1, 0, 0, -1, -1, 0, 0, 1, 1, 0, 0, -1, -1, 0];
 
 pub fn initialize_lava<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    initialize_hot(addr_kAnimtiles_Lava as u16, game);
+    initialize_hot(ADDR_K_ANIMTILES_LAVA as u16, game);
 }
 pub fn initialize_acid<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    initialize_hot(addr_kAnimtiles_Acid as u16, game);
+    initialize_hot(ADDR_K_ANIMTILES_ACID as u16, game);
 }
 fn initialize_hot<H: crate::menus::host::Host + ?Sized>(tiles: u16, game: &mut H) {
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.rising, 0xb343);
@@ -18,8 +18,8 @@ fn initialize_hot<H: crate::menus::host::Host + ?Sized>(tiles: u16, game: &mut H
         |words| &mut words.liquid.lava_acid.whole,
         crate::liquid::LiquidWords::read(game).height,
     );
-    static SURFACE: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x12, 0xc3e1);
-    static BACKGROUND: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x10, 0xc3f0);
+    static SURFACE: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0x12, 0xc3e1);
+    static BACKGROUND: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0x10, 0xc3f0);
     game.spawn_hdma(0x88, &SURFACE);
     game.spawn_hdma(0x88, &BACKGROUND);
     game.spawn_bg3_scroll();
@@ -32,8 +32,8 @@ pub fn initialize_water<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         |words| &mut words.liquid.surface.whole,
         crate::liquid::LiquidWords::read(game).height,
     );
-    static SURFACE: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x11, 0xd856);
-    static BACKGROUND: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0xf, 0xd847);
+    static SURFACE: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0x11, 0xd856);
+    static BACKGROUND: HdmaObjectDefinition = HdmaObjectDefinition::new(0x42, 0xf, 0xd847);
     game.spawn_hdma(0x88, &SURFACE);
     if crate::liquid::LiquidWords::read(game).options & 2 != 0 {
         game.spawn_hdma(0x88, &BACKGROUND);
@@ -254,7 +254,8 @@ fn fill_wave<H: crate::menus::host::Host + ?Sized>(
         };
         // Water's table starts one word later than lava/acid's.
         word!(
-            game.g_word_7E9C46[(row >> 1) as usize + matches!(wave, Wave::Water) as usize] = value
+            game.liquid_bg2_y_scroll_table
+                [(row >> 1) as usize + matches!(wave, Wave::Water) as usize] = value
         );
         row = row.wrapping_sub(2) & 0x1e;
         sample = sample.wrapping_sub(2) & 0x1e;
@@ -265,7 +266,7 @@ pub fn lava_background<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     {
-        word!(game.g_word_7E9C44 = word!(game.reg_BG2VOFS));
+        word!(game.bg2_y_scroll_spare_entry = word!(game.reg_BG2VOFS));
         let active = word!(game.time_is_frozen_flag) == 0
             && crate::liquid::LiquidWords::read(game).options & 6 != 0;
         let horizontal = active && crate::liquid::LiquidWords::read(game).options & 2 == 0;
@@ -285,7 +286,7 @@ pub fn lava_background<H: crate::menus::host::Host + ?Sized>(
             );
         } else {
             let value = word!(game.reg_BG2VOFS) & 0x1ff;
-            crate::word_transfers!(game, descending, 16; le(g_word_7E9C46, 15) <- value(value));
+            crate::word_transfers!(game, descending, 16; le(liquid_bg2_y_scroll_table, 15) <- value(value));
         }
         object.table = 3 * (word!(game.reg_BG2VOFS) & 0xf) + 0xc0b1;
     }
@@ -295,7 +296,7 @@ pub fn water_background<H: crate::menus::host::Host + ?Sized>(
     object: &mut HdmaObject,
     game: &mut H,
 ) {
-    word!(game.g_word_7E9C44 = word!(game.reg_BG2HOFS));
+    word!(game.bg2_y_scroll_spare_entry = word!(game.reg_BG2HOFS));
     if word!(game.time_is_frozen_flag) != 0 {
         water_flat(game);
     } else if crate::liquid::LiquidWords::read(game).options & 2 == 0 {

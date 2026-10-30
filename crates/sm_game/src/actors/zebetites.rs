@@ -7,7 +7,7 @@
 #![forbid(unsafe_code)]
 use crate::actors::host::{Death, Shot};
 use crate::actors::layouts::{EnemyBase, EnemyLayout8};
-use crate::constants::enemy_properties::kEnemyProps_Deleted;
+use crate::constants::enemy_properties::K_ENEMY_PROPS_DELETED;
 use crate::palette_copies::copy_rom_colors_to_palette;
 use crate::ram::RawRam as _;
 use crate::ram::{slot, word};
@@ -28,17 +28,16 @@ pub trait Host:
 /// A zebetite's view of its `EnemyLayout8` slot.
 #[derive(Clone, Copy)]
 #[repr(C)]
-#[allow(non_snake_case)]
 pub struct Zebetite {
     pub base: EnemyBase,
     /// Bank $A6 state function, one of [`state`].
     pub state: u16,
-    pub var_B: u16,
+    pub var_b: u16,
     /// The glow palette frame, 0 to 7. Only the first enemy slot's is used.
     pub glow_frame: u16,
     /// How many zebetites have been destroyed, from the event flags.
     pub destroyed: u16,
-    pub var_E: u16,
+    pub var_e: u16,
     /// Bit 15 set when this placement is a pair of small zebetites.
     pub pair: u16,
     /// Nonzero for the second zebetite of a pair.
@@ -49,9 +48,9 @@ pub struct Zebetite {
 
 const _: () = {
     use core::mem::{offset_of, size_of};
-    assert!(offset_of!(Zebetite, state) == offset_of!(EnemyLayout8, var_A));
-    assert!(offset_of!(Zebetite, glow_frame) == offset_of!(EnemyLayout8, var_C));
-    assert!(offset_of!(Zebetite, pair) == offset_of!(EnemyLayout8, var_F));
+    assert!(offset_of!(Zebetite, state) == offset_of!(EnemyLayout8, var_a));
+    assert!(offset_of!(Zebetite, glow_frame) == offset_of!(EnemyLayout8, var_c));
+    assert!(offset_of!(Zebetite, pair) == offset_of!(EnemyLayout8, var_f));
     assert!(offset_of!(Zebetite, partner) == offset_of!(EnemyLayout8, parameter_2));
     assert!(size_of::<Zebetite>() == size_of::<EnemyLayout8>());
 };
@@ -117,7 +116,7 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
         slot!(
             game,
             Zebetite[me].base.properties =
-                (slot!(game, Zebetite[me].base.properties)) | (kEnemyProps_Deleted as u16)
+                (slot!(game, Zebetite[me].base.properties)) | (K_ENEMY_PROPS_DELETED as u16)
         );
     }
 }

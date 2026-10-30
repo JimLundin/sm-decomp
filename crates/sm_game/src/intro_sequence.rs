@@ -152,11 +152,11 @@ fn below(value: u16, limit: u16) -> bool {
     (value.wrapping_sub(limit) as i16) < 0
 }
 
-/// Counts down `cinematic_var4`; true when it reaches zero or below.
+/// Counts down `cinematic_function_timer`; true when it reaches zero or below.
 pub fn countdown<H: Host + ?Sized>(game: &mut H) -> bool {
-    word!(game.cinematic_var4 = word!(game.cinematic_var4).wrapping_sub(1));
-    let expired = (word!(game.cinematic_var4) & 0x8000) != 0;
-    word!(game.cinematic_var4) == 0 || expired
+    word!(game.cinematic_function_timer = word!(game.cinematic_function_timer).wrapping_sub(1));
+    let expired = (word!(game.cinematic_function_timer) & 0x8000) != 0;
+    word!(game.cinematic_function_timer) == 0 || expired
 }
 
 fn load_space_graphics<H: Host + ?Sized>(game: &mut H) {
@@ -187,7 +187,7 @@ pub fn initial<H: Host + ?Sized>(game: &mut H) {
     game.update_beam_tiles_and_palette();
     inventory::set(game, Word::MaxMissiles, INTRO_MISSILES);
     inventory::set(game, Word::Missiles, INTRO_MISSILES);
-    word!(game.cinematic_var15 = 0);
+    word!(game.intro_samus_display = 0);
     word!(game.samus_draw_handler = DEFAULT_DRAW_HANDLER);
     game.use_cinematic_bindings();
     word!(game.samus_invincibility_timer = 0);
@@ -217,10 +217,10 @@ pub fn initial<H: Host + ?Sized>(game: &mut H) {
     word!(game.door_def_ptr = 0);
     word!(game.layer1_x_pos = 0);
     word!(game.layer1_y_pos = 0);
-    word!(game.cinematic_var16 = 0);
+    word!(game.intro_japanese_text_timer = 0);
     crate::word_transfers!(game, descending, 1024; cinematic_bg(1023) <- native(BG_SOURCE));
     crate::word_transfers!(game, descending, 128; pause_map(127) <- rom(INTRO_PAUSE_MAP, 127));
-    word!(game.cinematic_var11 = 0xffff);
+    word!(game.intro_frame_counter = 0xffff);
     word!(game.cinematic_function = function::WAIT_FOR_MUSIC_AND_FADE_IN);
     game.queue_music_delayed8(NO_MUSIC);
     game.queue_music_delayed8(INTRO_MUSIC_DATA);
@@ -232,7 +232,7 @@ pub fn initial<H: Host + ?Sized>(game: &mut H) {
 pub fn last_metroid_in_captivity<H: Host + ?Sized>(game: &mut H) {
     if countdown(game) {
         word!(game.cinematic_function = function::GALAXY_IS_AT_PEACE);
-        word!(game.cinematic_var4 = 200);
+        word!(game.cinematic_function_timer = 200);
         game.queue_music_delayed8(LAST_METROID_MUSIC);
     }
 }
@@ -274,7 +274,7 @@ pub fn set_up_text_page_1<H: Host + ?Sized>(game: &mut H) {
     clear_cinematic_background(0x2f, game);
     enable_cinematic_background(game);
     set_cinematic_tilemap_updates(true, game);
-    word!(game.cinematicbg_var3 = 0x4c00);
+    word!(game.cinematic_bg_vram_address = 0x4c00);
     crate::word_transfers!(game, descending, 128;
         pause_map(127) <- value(BLANK_TEXT_TILE),
         pause_map(1023) <- value(BLANK_TEXT_TILE),
@@ -283,14 +283,14 @@ pub fn set_up_text_page_1<H: Host + ?Sized>(game: &mut H) {
     game.ram()
         .copy_in(NEXT_PAGE_ARROW, &NEXT_PAGE_ARROW_TILES.to_ne_bytes());
     sprites(game, object::TEXT_CARET, 0x1c29);
-    word!(game.cinematic_var4 = 127);
+    word!(game.cinematic_function_timer = 127);
     spawn(
         game,
         CinematicObjects::Background,
         object::SAMUS_BLINKING,
         0x4c00,
     );
-    word!(game.cinematic_var10 = 8);
+    word!(game.cinematic_y = 8);
     word!(game.reg_BG2VOFS = 8);
     word!(game.reg_BG3VOFS = 8);
     crate::intro_pages::clear_english_text(game);
@@ -312,14 +312,14 @@ pub fn ceres_initial<H: Host + ?Sized>(game: &mut H) {
     load_space_graphics(game);
     GraphicsAsset::VramLowBytes(0x7f4000, 0x0000, 0x300).load_planes(0x8c, true, game);
     crate::cinematic_display::reset_cinematic_transform(56, 24, game);
-    word!(game.cinematic_var8 = -72i32 as u16);
-    word!(game.cinematic_var10 = -104i32 as u16);
-    word!(game.cinematic_var5 = 224);
-    word!(game.cinematic_var6 = 512);
+    word!(game.cinematic_x = -72i32 as u16);
+    word!(game.cinematic_y = -104i32 as u16);
+    word!(game.mode7_angle = 224);
+    word!(game.mode7_zoom = 512);
     game.clear_palette_effects();
     game.set_palette_effects_enabled(true);
     clear_cinematic_background(0, game);
-    word!(game.cinematicbg_var3 = 23552);
+    word!(game.cinematic_bg_vram_address = 23552);
     game.enable_display_nmi(true);
     sprites(game, object::CERES_STARS, 0);
     word!(game.cinematic_function = function::CERES_WAIT_FOR_MUSIC);
@@ -339,15 +339,15 @@ pub fn ceres_wait_for_music<H: Host + ?Sized>(game: &mut H) {
 /// Cinematic function - fly to Ceres - flying into camera ($8B:BDF9): zoom
 /// in, then show Ceres under attack. Was `CinematicFunction_Intro_Func56`.
 pub fn ceres_flying_into_camera<H: Host + ?Sized>(game: &mut H) {
-    if below(word!(game.cinematic_var6), 32) {
+    if below(word!(game.mode7_zoom), 32) {
         game.ram().write_byte(0x6f, 0);
         game.ram().write_byte(0x72, 49);
         set_fixed_color([63, 95, 0x9f], game);
         clear_cinematic_sprites(game);
         game.enqueue_mode7_rom(0x8b, mode7::FLYING_INTO_CERES);
-        word!(game.cinematic_var8 = -32i32 as u16);
-        word!(game.cinematic_var10 = -128i32 as u16);
-        word!(game.cinematic_var5 = 32);
+        word!(game.cinematic_x = -32i32 as u16);
+        word!(game.cinematic_y = -128i32 as u16);
+        word!(game.mode7_angle = 32);
         // Each parameter is what the preceding store or initializer leaves in A.
         sprites(game, object::CERES_LARGE_ASTEROIDS, 0x0020);
         sprites(game, object::CERES_UNDER_ATTACK, 0x0800);
@@ -358,7 +358,7 @@ pub fn ceres_flying_into_camera<H: Host + ?Sized>(game: &mut H) {
         game.spawn_palette_effect(CERES_GLOW_1);
         game.spawn_palette_effect(CERES_GLOW_2);
     } else {
-        word!(game.cinematic_var6 = word!(game.cinematic_var6).wrapping_sub(16));
+        word!(game.mode7_zoom = word!(game.mode7_zoom).wrapping_sub(16));
     }
 }
 
@@ -366,23 +366,23 @@ pub fn ceres_flying_into_camera<H: Host + ?Sized>(game: &mut H) {
 /// in on Ceres, then show its background. Was `CinematicFunction_Intro_Func67`.
 pub fn ceres_flying_into_ceres<H: Host + ?Sized>(game: &mut H) {
     fade_cinematic_fixed_color(game);
-    add_pair!(game, cinematic_var8, cinematic_var7, -0x2000i32 as u32);
-    if below(word!(game.cinematic_var6), 3072) {
-        word!(game.cinematic_var6 = word!(game.cinematic_var6).wrapping_add(16));
-    } else if below(word!(game.cinematic_var6), 0x2000) {
-        word!(game.cinematic_var6 = word!(game.cinematic_var6).wrapping_add(32));
+    add_pair!(game, cinematic_x, cinematic_x_sub, -0x2000i32 as u32);
+    if below(word!(game.mode7_zoom), 3072) {
+        word!(game.mode7_zoom = word!(game.mode7_zoom).wrapping_add(16));
+    } else if below(word!(game.mode7_zoom), 0x2000) {
+        word!(game.mode7_zoom = word!(game.mode7_zoom).wrapping_add(32));
     } else {
         game.ram().write_byte(mirror::TM, 17);
         game.ram().write_byte(mirror::BGMODE, 1);
         game.ram().write_byte(mirror::M7SEL, 0);
         game.ram().write_byte(mirror::BG1SC, 92);
         game.ram().write_byte(mirror::BG12NBA, 6);
-        word!(game.cinematic_var6 = 256);
-        word!(game.cinematic_var5 = 0);
-        word!(game.cinematic_var7 = 0);
-        word!(game.cinematic_var8 = 0);
-        word!(game.cinematic_var9 = 0);
-        word!(game.cinematic_var10 = 0);
+        word!(game.mode7_zoom = 256);
+        word!(game.mode7_angle = 0);
+        word!(game.cinematic_x_sub = 0);
+        word!(game.cinematic_x = 0);
+        word!(game.cinematic_y_sub = 0);
+        word!(game.cinematic_y = 0);
         enable_cinematic_background(game);
         set_cinematic_tilemap_updates(true, game);
         spawn(game, CinematicObjects::Background, object::CERES_BG, 0x5c00);
@@ -413,16 +413,16 @@ pub fn boom_initial<H: Host + ?Sized>(game: &mut H) {
     GraphicsAsset::VramLowBytes(0x7f4600, 0x0000, 0x600).load_planes(0x8c, false, game);
     GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x1a00).load(game);
     crate::cinematic_display::reset_cinematic_transform(52, 48, game);
-    word!(game.cinematic_var8 = -44i32 as u16);
-    word!(game.cinematic_var10 = -112i32 as u16);
-    word!(game.cinematic_var5 = 0);
-    word!(game.cinematic_var6 = 256);
+    word!(game.cinematic_x = -44i32 as u16);
+    word!(game.cinematic_y = -112i32 as u16);
+    word!(game.mode7_angle = 0);
+    word!(game.mode7_zoom = 256);
     game.set_hdma_enabled(false);
     game.clear_hdma();
     game.clear_palette_effects();
     game.set_palette_effects_enabled(true);
     clear_cinematic_background(0x2f, game);
-    word!(game.cinematicbg_var3 = 0);
+    word!(game.cinematic_bg_vram_address = 0);
     sprites(game, object::CERES_GUNSHIP, 0);
     spawn_at(game, object::CERES_SMALL_ASTEROIDS, 2, 0x0002);
     spawn_at(game, object::CERES_VORTEX, 0, 0x0000);
@@ -453,15 +453,15 @@ pub fn boom_wait_for_music<H: Host + ?Sized>(game: &mut H) {
 /// Cinematic function - Ceres goes boom - small Ceres explosions - fading in
 /// ($8B:C2F1). Was `CinematicFunction_Intro_Func75`.
 pub fn boom_small_explosions<H: Host + ?Sized>(game: &mut H) {
-    add_pair!(game, cinematic_var10, cinematic_var9, 4096u32);
-    add_pair!(game, cinematic_var8, cinematic_var7, -0x4000i32 as u32);
-    word!(game.cinematic_var6 = word!(game.cinematic_var6).wrapping_add(1));
+    add_pair!(game, cinematic_y, cinematic_y_sub, 4096u32);
+    add_pair!(game, cinematic_x, cinematic_x_sub, -0x4000i32 as u32);
+    word!(game.mode7_zoom = word!(game.mode7_zoom).wrapping_add(1));
     crate::display_refresh::fade(true, game);
     if game.ram().read_byte(mirror::INIDISP) == 15 {
         word!(game.screen_fade_delay = 0);
         word!(game.screen_fade_counter = 0);
         word!(game.cinematic_function = function::BOOM_EXPLOSIONS);
-        word!(game.cinematic_var4 = 1);
+        word!(game.cinematic_function_timer = 1);
         word!(game.cinematic_var13 = 0);
     }
 }
@@ -470,24 +470,24 @@ pub fn boom_small_explosions<H: Host + ?Sized>(game: &mut H) {
 /// zoom out, then the power bomb blast and the gunship. Was
 /// `CinematicFunction_Intro_Func76`.
 pub fn boom_explosions<H: Host + ?Sized>(game: &mut H) {
-    add_pair!(game, cinematic_var10, cinematic_var9, 4096u32);
-    add_pair!(game, cinematic_var8, cinematic_var7, -0x4000i32 as u32);
-    if below(word!(game.cinematic_var6), 640) {
-        word!(game.cinematic_var6 = word!(game.cinematic_var6).wrapping_add(1));
+    add_pair!(game, cinematic_y, cinematic_y_sub, 4096u32);
+    add_pair!(game, cinematic_x, cinematic_x_sub, -0x4000i32 as u32);
+    if below(word!(game.mode7_zoom), 640) {
+        word!(game.mode7_zoom = word!(game.mode7_zoom).wrapping_add(1));
     } else {
         word!(
             game.power_bomb_explosion_x_pos =
-                (word!(game.reg_M7X)).wrapping_sub(word!(game.cinematic_var8))
+                (word!(game.reg_M7X)).wrapping_sub(word!(game.cinematic_x))
         );
         word!(
             game.power_bomb_explosion_y_pos =
-                (word!(game.reg_M7Y)).wrapping_sub(word!(game.cinematic_var10))
+                (word!(game.reg_M7Y)).wrapping_sub(word!(game.cinematic_y))
         );
         game.set_hdma_enabled(true);
         game.spawn_power_bomb();
         game.ram().write_byte(0x6f, 16);
         game.ram().write_byte(0x72, 55);
-        word!(game.cinematic_var6 = 768);
+        word!(game.mode7_zoom = 768);
         sprites(game, object::CERES_EXPLOSION_GUNSHIP, 0);
         if word!(game.game_state) == BOOM_WITH_SAMUS {
             game.enqueue_mode7_rom(0x8b, mode7::BOOM_WITH_SAMUS);
@@ -504,13 +504,13 @@ pub fn boom_explosions<H: Host + ?Sized>(game: &mut H) {
 pub fn boom_gunship_flying_away<H: Host + ?Sized>(game: &mut H) {
     game.ram().write_byte(0x6f, 16);
     game.ram().write_byte(0x72, 55);
-    word!(game.cinematic_var8 = word!(game.cinematic_var8).wrapping_add(2));
-    word!(game.cinematic_var5 = ((word!(game.cinematic_var5)) as u8).wrapping_sub(1) as u16);
-    if below(word!(game.cinematic_var6), 16) {
+    word!(game.cinematic_x = word!(game.cinematic_x).wrapping_add(2));
+    word!(game.mode7_angle = ((word!(game.mode7_angle)) as u8).wrapping_sub(1) as u16);
+    if below(word!(game.mode7_zoom), 16) {
         word!(game.cinematic_function = function::BOOM_WAIT_C0H_FRAMES);
-        word!(game.cinematic_var4 = 192);
+        word!(game.cinematic_function_timer = 192);
     } else {
-        word!(game.cinematic_var6 = word!(game.cinematic_var6).wrapping_sub(16));
+        word!(game.mode7_zoom = word!(game.mode7_zoom).wrapping_sub(16));
     }
 }
 
@@ -570,10 +570,10 @@ pub fn zebes_initial<H: Host + ?Sized>(game: &mut H) {
     GraphicsAsset::VramWords(0x7f9000, 0x5c00, 0x800).load(game);
     GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
     crate::cinematic_display::reset_cinematic_transform(56, 24, game);
-    word!(game.cinematic_var8 = 0);
-    word!(game.cinematic_var10 = 0);
-    word!(game.cinematic_var5 = 0);
-    word!(game.cinematic_var6 = 256);
+    word!(game.cinematic_x = 0);
+    word!(game.cinematic_y = 0);
+    word!(game.mode7_angle = 0);
+    word!(game.mode7_zoom = 256);
     game.set_hdma_enabled(false);
     game.clear_hdma();
     game.clear_palette_effects();
@@ -656,7 +656,7 @@ pub fn explosion_spawner<H: Host + ?Sized>(k: u16, game: &mut H) {
     } else if countdown(game) {
         let pattern = word!(game.cinematic_var13);
         sprites(game, object::CERES_EXPLOSION_2, pattern);
-        word!(game.cinematic_var4 = 12);
+        word!(game.cinematic_function_timer = 12);
         word!(game.cinematic_var13 = (word!(game.cinematic_var13).wrapping_add(1)) & 7);
     }
 }

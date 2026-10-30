@@ -223,7 +223,7 @@ impl BombActor {
                 // The death script sets Deleted immediately after its boss flag.
                 deleted: word(core::mem::offset_of!(EnemyData, properties)) & 0x200 != 0,
                 health: word(core::mem::offset_of!(EnemyData, health)),
-                phase: word(core::mem::offset_of!(EnemyData, ai_var_E)),
+                phase: word(core::mem::offset_of!(EnemyData, ai_var_e)),
                 parameter: word(core::mem::offset_of!(EnemyData, parameter_2)),
             });
         }
@@ -298,7 +298,7 @@ impl CoverageState {
             actor_bank: game
                 .ram()
                 .read_byte(0xf78 + core::mem::offset_of!(sm::types::EnemyData, bank)),
-            actor_phase: word(0xf78 + core::mem::offset_of!(sm::types::EnemyData, ai_var_A)),
+            actor_phase: word(0xf78 + core::mem::offset_of!(sm::types::EnemyData, ai_var_a)),
             selected_save_slot: word(0x952),
             load_station: word(0x78b),
             loading_state: word(0xd914),
@@ -838,7 +838,7 @@ impl ReplayCoverage {
         if trace
             && (self.last_state_room != Some(state_room)
                 || (u32::from(state)
-                    == sm::game::constants::game_states::kGameState_8_MainGameplay
+                    == sm::game::constants::game_states::K_GAME_STATE_8_MAIN_GAMEPLAY
                     && frame % 100 == 0))
         {
             eprintln!(
@@ -860,7 +860,7 @@ impl ReplayCoverage {
             self.unchanged_frames = 1;
         }
         self.longest_unchanged = self.longest_unchanged.max(self.unchanged_frames);
-        if u32::from(state) == sm::game::constants::game_states::kGameState_8_MainGameplay {
+        if u32::from(state) == sm::game::constants::game_states::K_GAME_STATE_8_MAIN_GAMEPLAY {
             self.gameplay_frames += 1;
             self.rooms.insert(room);
             self.areas.insert(current.area);
@@ -891,7 +891,7 @@ impl ReplayCoverage {
 
     fn credits_frames(&self) -> usize {
         self.states
-            .get(&(sm::game::constants::game_states::kGameState_39_EndingAndCredits as u16))
+            .get(&(sm::game::constants::game_states::K_GAME_STATE_39_ENDING_AND_CREDITS as u16))
             .copied()
             .unwrap_or(0)
     }

@@ -32,8 +32,8 @@ pub struct Mouth {
 }
 
 same_words!(Mouth: EnemyLayout8 {
-    casual_flame_pattern = var_A, casual_flame_timer = var_B, casual_flame_pattern_index = var_C,
-    wave_amplitude = var_D, wave_shrinking = var_E,
+    casual_flame_pattern = var_a, casual_flame_timer = var_b, casual_flame_pattern_index = var_c,
+    wave_amplitude = var_d, wave_shrinking = var_e,
 });
 
 const BANK: u8 = 0xa7;

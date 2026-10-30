@@ -20,14 +20,14 @@ pub fn finish_health_and_time<H: Host + ?Sized>(game: &mut H) {
     if (inventory.health.current as i16) <= 0 {
         if (inventory.reserve_mode & 1) != 0 && inventory.reserve_health != 0 {
             word!(game.time_is_frozen_flag = 0x8000);
-            word!(game.game_state = kGameState_27_ReserveTanksAuto as u16);
+            word!(game.game_state = K_GAME_STATE_27_RESERVE_TANKS_AUTO as u16);
             game.player_command(0x1b);
-        } else if word!(game.game_state) as i32 != kGameState_8_MainGameplay as i32 {
+        } else if word!(game.game_state) as i32 != K_GAME_STATE_8_MAIN_GAMEPLAY as i32 {
             return;
         } else {
             word!(game.time_is_frozen_flag = 0x8000);
             game.player_command(0x11);
-            word!(game.game_state = kGameState_19_SamusNoHealth as u16);
+            word!(game.game_state = K_GAME_STATE_19_SAMUS_NO_HEALTH as u16);
         }
     }
     // Clock words are frames, seconds, minutes, then hours in ascending RAM order.

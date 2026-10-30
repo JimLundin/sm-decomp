@@ -2,9 +2,9 @@
 //! RAM retains the boss-specific state while common actors/projectiles stay owned.
 #![forbid(unsafe_code)]
 use crate::game::actors::{api, combat};
-use crate::game::enemy_projectiles::{self, SpawnEprojWithRoomGfx};
+use crate::game::enemy_projectiles::{self, spawn_with_room_gfx};
 use crate::game::gameplay_flag_runtime as flags;
-use crate::game::music::QueueSfx2_Max6;
+use crate::game::music::queue_sfx2_max6;
 use crate::game::session_runtime::{Runtime, actor_cosine, actor_direction_vector, actor_sine};
 use crate::game::sprite_effect_runtime::create_sprite;
 use crate::game_state::Game;
@@ -32,12 +32,12 @@ pub(crate) fn descend(game: &mut Game) {
     if y.wrapping_sub(624) & 0x8000 == 0 {
         slot!(game, Spore[k].base; current_instruction = 0xe6d5, instruction_timer = 1);
     }
-    slot!(game, Spore[0]; var_0B = 48, var_0C = 1, var_0A = 192);
+    slot!(game, Spore[0]; var_0b = 48, var_0c = 1, var_0a = 192);
 }
 pub(crate) fn initialize(game: &mut Game) {
     word_transfers!(game, ascending, 16; le(target_palettes, 240) <- rom(0xa5e359, 0));
     for part in 0..4 {
-        enemy_projectiles::SpawnEprojWithGfx(part, word!(game.cur_enemy_index), 0xde6c, game);
+        enemy_projectiles::spawn_with_enemy_gfx(part, word!(game.cur_enemy_index), 0xde6c, game);
     }
     let k = word!(game.cur_enemy_index) as i32;
     slot!(game, Spore[k].var_04 = slot!(game, Spore[k].base.x_pos));
@@ -45,12 +45,12 @@ pub(crate) fn initialize(game: &mut Game) {
         game,
         Spore[k].var_05 = slot!(game, Spore[k].base.y_pos).wrapping_sub(72)
     );
-    slot!(game, Spore[k].var_C = slot!(game, Spore[k].base.x_pos));
-    slot!(game, Spore[k].var_D = slot!(game, Spore[k].base.y_pos));
-    slot!(game, Spore[k].var_F = 0);
+    slot!(game, Spore[k].var_c = slot!(game, Spore[k].base.x_pos));
+    slot!(game, Spore[k].var_d = slot!(game, Spore[k].base.y_pos));
+    slot!(game, Spore[k].var_f = 0);
     if flags::boss_byte_at(word!(game.area_index), game) & 2 != 0 {
         slot!(game, Spore[0].base.current_instruction = 0xe6b9);
-        slot!(game, Spore[0].var_A = 0xeb1a);
+        slot!(game, Spore[0].var_a = 0xeb1a);
         slot!(game, Spore[0].base.properties, |old| old | 0x8000);
         enemy_projectiles::update_spore_stem(game);
         creation::spawn(
@@ -67,18 +67,18 @@ pub(crate) fn initialize(game: &mut Game) {
         slot!(game, Spore[0].base.current_instruction = 0xe6c7);
         word!(game.flag_process_all_enemies = 0xffff);
         let spawn_key = word!(game.cur_enemy_index);
-        slot!(game, Spore[k].var_A = 0xeb1a);
+        slot!(game, Spore[k].var_a = 0xeb1a);
         word!(game.scrolling_finished_hook = 0x9589);
         slot!(game, Spore[k].base.y_pos, |old| old.wrapping_sub(128));
         for part in 0..4 {
-            enemy_projectiles::SpawnEprojWithGfx(part, spawn_key, 0xde88, game);
+            enemy_projectiles::spawn_with_enemy_gfx(part, spawn_key, 0xde88, game);
         }
         enemy_projectiles::update_spore_stem(game);
     }
 }
 pub(crate) fn update(game: &mut Game) {
     let k = word!(game.cur_enemy_index) as i32;
-    match u32::from(slot!(game, Spore[k].var_A)) | 0xa50000 {
+    match u32::from(slot!(game, Spore[k].var_a)) | 0xa50000 {
         10873626 => {}
         10873627 => descend(game),
         10873682 => orbit(word!(game.cur_enemy_index), game),
@@ -96,7 +96,7 @@ pub(crate) fn after_damage(game: &mut Game) {
     }
     // The original reselects after its health query, before clearing actor timers.
     let k = word!(game.cur_enemy_index) as i32;
-    slot!(game, Spore[0].var_0E = 0);
+    slot!(game, Spore[0].var_0e = 0);
     slot!(game, Spore[k].base; invincibility_timer = 0, flash_timer = 0, ai_handler_bits = 0);
     slot!(game, Spore[k].base.properties, |old| old | 0x400);
     word_transfers!(game, descending, 14; native(0x19b1) <- value(0));
@@ -128,18 +128,18 @@ pub(crate) fn shot(game: &mut Game) {
     combat::shot_reaction(&mut Runtime::new(game), api::ShotHandling::Flash);
     let k = word!(game.cur_enemy_index) as i32;
     if slot!(game, Spore[k].base.flash_timer) != 0 {
-        slot!(game, Spore[k].var_A = 0xeb52);
+        slot!(game, Spore[k].var_a = 0xeb52);
         if slot!(game, Spore[k].base.health).wrapping_sub(400) & 0x8000 != 0 {
-            let speed = if slot!(game, Spore[0].var_0C) & 0x8000 != 0 {
+            let speed = if slot!(game, Spore[0].var_0c) & 0x8000 != 0 {
                 0xfffe
             } else {
                 2
             };
-            slot!(game, Spore[0].var_0C = speed);
+            slot!(game, Spore[0].var_0c = speed);
         }
-        if slot!(game, Spore[0].var_2F) == 0 {
-            slot!(game, Spore[0].var_0C, |old| 0u16.wrapping_sub(old));
-            slot!(game, Spore[0].var_2F = 1);
+        if slot!(game, Spore[0].var_2f) == 0 {
+            slot!(game, Spore[0].var_0c, |old| 0u16.wrapping_sub(old));
+            slot!(game, Spore[0].var_2f = 1);
             slot!(game, Spore[k].base; current_instruction = 0xe729, instruction_timer = 1);
             let health = slot!(game, Spore[k].base.health);
             let mut cursor = 96;
@@ -159,23 +159,23 @@ pub(crate) fn shot(game: &mut Game) {
 }
 pub(crate) fn orbit(k: u16, game: &mut Game) {
     enemy_projectiles::update_spore_stem(game);
-    let x = slot!(game, Spore[k as i32].var_C).wrapping_add(actor_cosine(
-        slot!(game, Spore[0].var_0A),
-        slot!(game, Spore[0].var_0B),
+    let x = slot!(game, Spore[k as i32].var_c).wrapping_add(actor_cosine(
+        slot!(game, Spore[0].var_0a),
+        slot!(game, Spore[0].var_0b),
         game,
     ));
     slot!(game, Spore[k as i32].base.x_pos = x);
-    let y = slot!(game, Spore[k as i32].var_D).wrapping_add(actor_sine(
-        (2 * (i32::from(slot!(game, Spore[0].var_0A)) - 64)) as u16,
-        slot!(game, Spore[0].var_0B).wrapping_sub(16),
+    let y = slot!(game, Spore[k as i32].var_d).wrapping_add(actor_sine(
+        (2 * (i32::from(slot!(game, Spore[0].var_0a)) - 64)) as u16,
+        slot!(game, Spore[0].var_0b).wrapping_sub(16),
         game,
     ));
     slot!(game, Spore[k as i32].base.y_pos = y);
     slot!(
         game,
-        Spore[0].var_0A = u16::from(slot!(byte game, Spore[0].var_0C[0]).wrapping_add(slot!(
+        Spore[0].var_0a = u16::from(slot!(byte game, Spore[0].var_0c[0]).wrapping_add(slot!(
             game,
-            Spore[0].var_0A
+            Spore[0].var_0a
         )
             as u8))
     );
@@ -189,21 +189,21 @@ pub(crate) fn begin_return(game: &mut Game) {
     );
     let k = word!(game.cur_enemy_index) as i32;
     let vector = actor_direction_vector(u16::from(slot!(byte game, Spore[0].var_43[0])), 1, game);
-    slot!(game, Spore[k]; var_28 = (vector.x >> 16) as u16, var_29 = vector.x as u16, var_2A = (vector.y >> 16) as u16, var_2B = vector.y as u16);
+    slot!(game, Spore[k]; var_28 = (vector.x >> 16) as u16, var_29 = vector.x as u16, var_2a = (vector.y >> 16) as u16, var_2b = vector.y as u16);
 }
 pub(crate) fn finish_return(game: &mut Game) {
     let k = word!(game.cur_enemy_index) as i32;
     let phase = u16::from(slot!(byte game, Spore[0].var_43[0]));
     let vector = Vector32 {
         x: words!((slot!(game, Spore[k].var_28), slot!(game, Spore[k].var_29))),
-        y: words!((slot!(game, Spore[k].var_2A), slot!(game, Spore[k].var_2B))),
+        y: words!((slot!(game, Spore[k].var_2a), slot!(game, Spore[k].var_2b))),
     };
     Runtime::new(game).session_mut().compatibility_enemy_scratch = phase;
     api::apply_vector(&mut Runtime::new(game), phase, vector);
     if abs16(slot!(game, Spore[0].base.x_pos).wrapping_sub(128)).wrapping_sub(8) & 0x8000 != 0
         && abs16(slot!(game, Spore[0].base.y_pos).wrapping_sub(624)).wrapping_sub(8) & 0x8000 != 0
     {
-        slot!(game, Spore[0].var_A = 0xeb1a);
+        slot!(game, Spore[0].var_a = 0xeb1a);
     }
     enemy_projectiles::update_spore_stem(game);
     bubbles(game);
@@ -247,8 +247,8 @@ pub(crate) fn emit_spore(script: EnemyScript, game: &mut Game) -> EnemyScript {
     let dy = ((word!(game.random_number) >> 8) & 0x7f).wrapping_sub(64);
     let y = slot!(game, Spore[0].base.y_pos).wrapping_add(dy);
     game.eproj_spawn_pt = Point16U { x, y };
-    SpawnEprojWithRoomGfx(0xe509, 0x15, game);
-    QueueSfx2_Max6(0x29, game);
+    spawn_with_room_gfx(0xe509, 0x15, game);
+    queue_sfx2_max6(0x29, game);
     script
 }
 pub(crate) fn emit_hurt(script: EnemyScript, game: &mut Game) -> EnemyScript {
@@ -260,7 +260,7 @@ pub(crate) fn emit_hurt(script: EnemyScript, game: &mut Game) -> EnemyScript {
         .wrapping_add((word!(game.random_number) >> 8) & 0x3f)
         .wrapping_sub(32);
     create_sprite(x, y, 3, 0, game);
-    QueueSfx2_Max6(0x25, game);
+    queue_sfx2_max6(0x25, game);
     script
 }
 

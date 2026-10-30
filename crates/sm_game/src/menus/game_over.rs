@@ -2,8 +2,9 @@
 use super::prelude::*;
 use crate::actors::layouts::EnemyBase;
 use crate::constants::bank_81::{
-    addr_kMenuTilemap_FindMetroidLarva, addr_kMenuTilemap_GameOver, addr_kMenuTilemap_NoGoToTitle,
-    addr_kMenuTilemap_TryAgain, addr_kMenuTilemap_YesReturnToGame,
+    ADDR_K_MENU_TILEMAP_FIND_METROID_LARVA, ADDR_K_MENU_TILEMAP_GAME_OVER,
+    ADDR_K_MENU_TILEMAP_NO_GO_TO_TITLE, ADDR_K_MENU_TILEMAP_TRY_AGAIN,
+    ADDR_K_MENU_TILEMAP_YES_RETURN_TO_GAME,
 };
 use crate::enemy_projectiles::table::with_file_select;
 use crate::menus::menu_tilemap;
@@ -66,11 +67,11 @@ fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     );
     menu_tilemap::set_palette(0, game);
     for (destination, text) in [
-        (0x156, addr_kMenuTilemap_GameOver),
-        (0x38a, addr_kMenuTilemap_FindMetroidLarva),
-        (0x414, addr_kMenuTilemap_TryAgain),
-        (0x4ce, addr_kMenuTilemap_YesReturnToGame),
-        (0x5ce, addr_kMenuTilemap_NoGoToTitle),
+        (0x156, ADDR_K_MENU_TILEMAP_GAME_OVER),
+        (0x38a, ADDR_K_MENU_TILEMAP_FIND_METROID_LARVA),
+        (0x414, ADDR_K_MENU_TILEMAP_TRY_AGAIN),
+        (0x4ce, ADDR_K_MENU_TILEMAP_YES_RETURN_TO_GAME),
+        (0x5ce, ADDR_K_MENU_TILEMAP_NO_GO_TO_TITLE),
     ] {
         menu_tilemap::load(destination, text as u16, game);
     }
@@ -85,7 +86,7 @@ fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     game.clear_hdma();
     game.set_hdma_enabled(true);
     for (register, script) in [(0x32, 0x927d), (0x31, 0x928d)] {
-        game.spawn_hdma(0x81, &SpawnHdmaObject_Args::new(0, register, script));
+        game.spawn_hdma(0x81, &HdmaObjectDefinition::new(0, register, script));
     }
     game.set_blank(false);
     crate::menu!(game.menu_index += 1);
@@ -122,15 +123,16 @@ fn choose<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         game.rtl_unreachable();
     });
     crate::sprite_output::menu_selection(game);
-    if game.observed_inputs().pressed & (kButton_Select | kButton_Up | kButton_Down) as u16 != 0 {
+    if game.observed_inputs().pressed & (K_BUTTON_SELECT | K_BUTTON_UP | K_BUTTON_DOWN) as u16 != 0
+    {
         game.queue_sound(0, 0x37_u8, 6);
         word!(game.file_select_map_area_index ^= 1);
-    } else if game.observed_inputs().pressed & kButton_A as u16 != 0 {
+    } else if game.observed_inputs().pressed & K_BUTTON_A as u16 != 0 {
         slot!(game, EnemyBase[0].instruction_timer = 180);
         if word!(game.file_select_map_area_index) != 0 {
             crate::menu!(game.menu_index = 7);
         } else {
-            if word!(game.loading_game_state) == kGameState_31_SetUpNewGame as u16 {
+            if word!(game.loading_game_state) == K_GAME_STATE_31_SET_UP_NEW_GAME as u16 {
                 word!(game.game_state = word!(game.loading_game_state));
             } else {
                 crate::menu!(game.menu_index += 1);
@@ -163,7 +165,7 @@ fn place_missile<H: Host + ?Sized>(y: u16, game: &mut H) {
 fn load_map<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     game.set_hdma_enabled(false);
     game.clear_hdma();
-    word!(game.game_state = kGameState_5_FileSelectMap as u16);
+    word!(game.game_state = K_GAME_STATE_5_FILE_SELECT_MAP as u16);
     crate::menu!(game.menu_index = 0);
 }
 

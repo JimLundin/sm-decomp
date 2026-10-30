@@ -375,7 +375,7 @@ pub fn run<H: Host>(h: &mut H, ea: u32, p: Script<H::Record>, k: u16) -> Option<
                 return p.jump_word(0);
             }
             h.enemy_projectile(
-                crate::constants::bank_86::addr_kEproj_SaveStationElectricity as u16,
+                crate::constants::bank_86::ADDR_K_EPROJ_SAVE_STATION_ELECTRICITY as u16,
                 0,
             );
             let selected = usize::from(h.session().mechanisms.selected >> 1);
@@ -437,7 +437,7 @@ pub fn run<H: Host>(h: &mut H, ea: u32, p: Script<H::Record>, k: u16) -> Option<
         }
         addresses::instructions::SHOOT_EYE_DOOR_PROJECTILE => {
             h.enemy_projectile(
-                crate::constants::bank_86::addr_kEproj_EyeDoorProjectile as u16,
+                crate::constants::bank_86::ADDR_K_EPROJ_EYE_DOOR_PROJECTILE as u16,
                 p.word(0),
             );
             h.sound(SoundChannel::Two, 6, 0x4c);
@@ -445,14 +445,14 @@ pub fn run<H: Host>(h: &mut H, ea: u32, p: Script<H::Record>, k: u16) -> Option<
         }
         addresses::instructions::SPAWN_EYE_DOOR_SWEAT => {
             h.enemy_projectile(
-                crate::constants::bank_86::addr_kEproj_EyeDoorSweat as u16,
+                crate::constants::bank_86::ADDR_K_EPROJ_EYE_DOOR_SWEAT as u16,
                 p.word(0),
             );
             Some(p.advance(2))
         }
         addresses::instructions::SPAWN_EYE_DOOR_SWEAT_DROP => {
             h.enemy_projectile(
-                crate::constants::bank_86::addr_kEproj_EyeDoorSmoke as u16,
+                crate::constants::bank_86::ADDR_K_EPROJ_EYE_DOOR_SMOKE as u16,
                 0xb,
             );
             Some(p)

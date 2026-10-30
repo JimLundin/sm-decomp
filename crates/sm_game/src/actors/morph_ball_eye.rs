@@ -18,7 +18,7 @@ impl<T: ActorHost + ActorRuntime + SoundEffects + Records + ?Sized> Host for T {
 part_view! {
     /// The eye's view of its slot.
     Eye: EnemyLayout8 {
-        words: [var_A, var_B, activated, angle, function_timer, function, facing_left, mount],
+        words: [var_a, var_b, activated, angle, function_timer, function, facing_left, mount],
     }
 }
 

@@ -106,14 +106,14 @@ fn finish_initialization<H: ActorHost>(
     let extra = h.resolve_actor(key, Native).extra_properties;
     use crate::constants::{bank_a0, bank_a4};
     let empty = match creation {
-        Creation::Room => bank_a4::addr_kSpritemap_Nothing_A4,
-        Creation::Dynamic => bank_a0::addr_kSpritemap_Nothing_A0,
+        Creation::Room => bank_a4::ADDR_K_SPRITEMAP_NOTHING_A4,
+        Creation::Dynamic => bank_a0::ADDR_K_SPRITEMAP_NOTHING_A0,
     } as u16;
     if let Some(map) = creation.initial_spritemap(
         properties,
         extra,
         empty,
-        bank_a4::addr_kExtendedSpritemap_Nothing_A4 as u16,
+        bank_a4::ADDR_K_EXTENDED_SPRITEMAP_NOTHING_A4 as u16,
     ) {
         h.edit_actor(key, Native, |a| a.spritemap = map);
     }

@@ -1,7 +1,7 @@
 //! Samus's health and ammo during the Mother Brain fight: the rainbow beam drains both,
 //! the baby Metroid drains health while latched on, then refills it.
 #![forbid(unsafe_code)]
-use crate::game::music::QueueSfx3_Max3;
+use crate::game::music::queue_sfx3_max3;
 use crate::game_state::Game;
 use crate::ram_map::word;
 
@@ -47,7 +47,7 @@ fn health_change_sound(game: &mut Game) {
     if !negative(word!(game.samus_health).wrapping_sub(81))
         && word!(game.random_enemy_counter) & 7 == 0
     {
-        QueueSfx3_Max3(0x2d, game);
+        queue_sfx3_max3(0x2d, game);
     }
 }
 

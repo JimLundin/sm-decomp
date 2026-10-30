@@ -15,7 +15,7 @@ use crate::game::mother_brain_samus_vitals as vitals;
 use crate::game::mother_brain_visuals;
 use sm_game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 
-pub use crate::types::Consts_B7;
+pub use crate::types::ConstsB7;
 
 /// Mother Brain's fight runs in `sm_game::actors::mother_brain_fight`.
 pub use sm_game::actors::mother_brain_fight::*;
@@ -126,40 +126,40 @@ crate::game::callback_dispatch! {
     [11108367] Enemy_GrappleReact_CancelBeam_A9 => actors::combat::select_frozen_ai(&mut Runtime::new(game));
     [11108417] Enemy_NormalFrozenAI_A9 => actors::scheduling::update_frozen_enemy(&mut Runtime::new(game));
     @external {
-        11110023 => mother_brain_fight::MotherBrainsBody_Init;
-        11110149 => mother_brain_fight::MotherBrainsBrain_Init;
-        11110206 => mother_brain_fight::MotherBrainsBody_Hurt;
-        11110279 => mother_brain_fight::MotherBrainsBody_Powerbomb;
-        11110283 => mother_brain_fight::MotherBrainsBrain_Hurt;
+        11110023 => mother_brain_fight::initialize_body;
+        11110149 => mother_brain_fight::initialize_brain;
+        11110206 => mother_brain_fight::body_main_ai;
+        11110279 => mother_brain_fight::power_bomb_reaction;
+        11110283 => mother_brain_fight::brain_main_ai;
         11111221 => sm_game::actors::mother_brain_tubes::initialize;
-        11121923 => mother_brain_fight::MotherBrainsBody_Shot;
-        11122118 => mother_brain_fight::MotherBrainsBrain_Touch;
-        11129608 => corpses::DeadTorizo_Init;
-        11129704 => corpses::DeadTorizo_Main;
-        11129898 => corpses::DeadTorizo_Powerbomb;
-        11129907 => corpses::DeadTorizo_Shot;
-        11130806 => corpses::DeadSidehopper_Init;
-        11130953 => corpses::DeadZoomer_Init;
-        11130998 => corpses::DeadRipper_Init;
-        11131039 => corpses::DeadSkree_Init;
-        11131084 => corpses::DeadSidehopper_Powerbomb;
-        11131099 => corpses::DeadSidehopper_Main;
-        11132141 => corpses::DeadZoomer_Powerbomb;
-        11132152 => corpses::DeadZoomer_Shot;
-        11132157 => corpses::DeadRipper_Powerbomb;
-        11132168 => corpses::DeadRipper_Shot;
-        11132173 => corpses::DeadSkree_Powerbomb;
-        11132184 => corpses::DeadSkree_Shot;
-        11132189 => corpses::DeadSidehopper_Shot;
-        11132228 => corpses::DeadSidehopper_Touch;
-        11126544 => baby_metroid_cutscene::BabyMetroidInCutscene_Init;
-        11126649 => baby_metroid_cutscene::BabyMetroidInCutscene_Main;
-        11128579 => baby_metroid_cutscene::BabyMetroidInCutscene_Touch;
-        11136823 => baby_metroid_encounter::BabyMetroid_Init;
-        11136954 => baby_metroid_encounter::BabyMetroid_Powerbomb;
-        11136965 => baby_metroid_encounter::BabyMetroid_Main;
-        11138953 => baby_metroid_encounter::BabyMetroid_Touch;
-        11139138 => baby_metroid_encounter::BabyMetroid_Shot;
+        11121923 => mother_brain_fight::body_shot;
+        11122118 => mother_brain_fight::brain_touch;
+        11129608 => corpses::initialize_torizo_corpse;
+        11129704 => corpses::torizo_corpse_main_ai;
+        11129898 => corpses::torizo_corpse_power_bomb_reaction;
+        11129907 => corpses::torizo_corpse_touch_or_shot;
+        11130806 => corpses::initialize_sidehopper_corpse;
+        11130953 => corpses::initialize_geemer_corpse;
+        11130998 => corpses::initialize_ripper_corpse;
+        11131039 => corpses::initialize_skree_corpse;
+        11131084 => corpses::sidehopper_corpse_power_bomb_reaction;
+        11131099 => corpses::corpse_main_ai;
+        11132141 => corpses::geemer_corpse_power_bomb_reaction;
+        11132152 => corpses::geemer_corpse_touch_or_shot;
+        11132157 => corpses::ripper_corpse_power_bomb_reaction;
+        11132168 => corpses::ripper_corpse_touch_or_shot;
+        11132173 => corpses::skree_corpse_power_bomb_reaction;
+        11132184 => corpses::skree_corpse_touch_or_shot;
+        11132189 => corpses::sidehopper_corpse_shot;
+        11132228 => corpses::sidehopper_corpse_touch;
+        11126544 => baby_metroid_cutscene::initialize;
+        11126649 => baby_metroid_cutscene::main_ai;
+        11128579 => baby_metroid_cutscene::touch;
+        11136823 => baby_metroid_encounter::initialize;
+        11136954 => baby_metroid_encounter::power_bomb_reaction;
+        11136965 => baby_metroid_encounter::main_ai;
+        11138953 => baby_metroid_encounter::touch;
+        11139138 => baby_metroid_encounter::shot;
     }
 }
 
@@ -167,11 +167,11 @@ crate::game::callback_dispatch! {
     pub(crate) fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { match crate::game::mother_brain_body::dispatch_instruction(ea, j, game) { Some(script) => script, None => { crate::rtl::Unreachable(game); EnemyScript::Stop } } };
     @external {
-        11115208 => mother_brain_fight::MotherBrain_Instr_SpawnEprojToOffset;
-        11115247 => mother_brain_fight::MotherBrain_Instr_SpawnDeathBeamEproj;
-        11115269 => mother_brain_fight::MotherBrain_Instr_IncrBeamAttackPhase;
-        11136208 => corpses::sub_A9ECD0;
-        11139476 => baby_metroid_encounter::BabyMetroid_Instr_5;
+        11115208 => mother_brain_fight::spawn_projectile_at_offset;
+        11115247 => mother_brain_fight::spawn_hand_beam_projectile;
+        11115269 => mother_brain_fight::increment_hand_beam_attack_phase;
+        11136208 => corpses::sidehopper_corpse_end_hop;
+        11139476 => baby_metroid_encounter::branch_or_queue_remorse_sound;
     }
 }
 
@@ -281,11 +281,11 @@ impl sm_game::actors::mother_brain_fight::Host for Game {
     }
 
     fn process_corpse_rotting(&mut self, k: u16) -> u8 {
-        corpses::ProcessCorpseRotting(k, self)
+        corpses::process_corpse_rotting(k, self)
     }
 
     fn process_corpse_rotting_vram_transfers(&mut self, k: u16) {
-        corpses::ProcessCorpseRottingVramTransfers(k, self);
+        corpses::process_corpse_rotting_vram_transfers(k, self);
     }
 
     fn start_zebes_escape_typewriter(&mut self) {
@@ -297,15 +297,15 @@ impl sm_game::actors::mother_brain_fight::Host for Game {
     }
 
     fn set_boss_bit_for_current_area(&mut self, mask: u16) {
-        crate::game::gameplay_flag_runtime::SetBossBitForCurArea(mask, self);
+        crate::game::gameplay_flag_runtime::set_boss_bits_for_current_area(mask, self);
     }
 
     fn set_event_happened(&mut self, event: u16) {
-        crate::game::gameplay_flag_runtime::SetEventHappened(event, self);
+        crate::game::gameplay_flag_runtime::mark_event(event, self);
     }
 
     fn check_event_happened(&mut self, event: u16) -> u16 {
-        crate::game::gameplay_flag_runtime::CheckEventHappened(event, self)
+        crate::game::gameplay_flag_runtime::event_has_happened(event, self)
     }
 
     fn spawn_rainbow_hdma(&mut self) -> u16 {
@@ -356,7 +356,7 @@ impl sm_game::actors::mother_brain_fight::Host for Game {
     }
 
     fn initialize_corpse_rotting(&mut self, k: u16, definition: u16) {
-        corpses::InitializeEnemyCorpseRotting(k, definition, self);
+        corpses::initialize_enemy_corpse_rotting(k, definition, self);
     }
 
     fn queue_sound_result(&mut self, channel: usize, sound: u8, max_queued: u8) -> u16 {

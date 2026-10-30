@@ -8,14 +8,14 @@ use crate::ram_map::{slot, word};
 use sm_game::actors::access::ActorKey as Key;
 use sm_game::actors::layouts::EnemyLayout8 as Floater;
 use {
-    crate::game::enemy_projectiles::SpawnEprojWithGfx, sm_game::enemy_projectiles::host::Effects,
+    crate::game::enemy_projectiles::spawn_with_enemy_gfx, sm_game::enemy_projectiles::host::Effects,
 };
 
 const BOB: [u16; 12] = [0, 1, 2, 3, 2, 1, 0, 0xffff, 0xfffe, 0xfffd, 0xfffe, 0xffff];
 
 fn spawn_spikes(k: u16, game: &mut Game) {
     for direction in (0..=7).rev() {
-        SpawnEprojWithGfx(direction, k, 0xd298, game);
+        spawn_with_enemy_gfx(direction, k, 0xd298, game);
     }
 }
 
@@ -39,41 +39,41 @@ fn draw_stem(k: u16, game: &mut Game) {
 // Return true only when a requested center stop is reached on this bob tick.
 fn bob(k: u16, stop_at_center: bool, game: &mut Game) -> bool {
     let E = k as i32;
-    let expired = slot!(game, Floater[E].var_D) == 1;
-    slot!(game, Floater[E].var_D, |old| old.wrapping_sub(1));
-    let negative = slot!(game, Floater[E].var_D) & 0x8000 != 0;
+    let expired = slot!(game, Floater[E].var_d) == 1;
+    slot!(game, Floater[E].var_d, |old| old.wrapping_sub(1));
+    let negative = slot!(game, Floater[E].var_d) & 0x8000 != 0;
     if !expired && !negative {
         return false;
     }
-    slot!(game, Floater[E].var_D = 5);
+    slot!(game, Floater[E].var_d = 5);
     let drawing = k as i32 >> 1;
-    let x = BOB[slot!(game, Floater[E].var_C) as usize]
+    let x = BOB[slot!(game, Floater[E].var_c) as usize]
         .wrapping_add(word!(game.enemy_drawing_queue_sizes[drawing]));
     word!(game.enemy_drawing_queue[(drawing + 91)] = x);
     slot!(game, Floater[E].base.x_pos = x);
     if stop_at_center && centered(k, game) {
         return true;
     }
-    let mut next = slot!(game, Floater[E].var_C).wrapping_add(1);
+    let mut next = slot!(game, Floater[E].var_c).wrapping_add(1);
     let wrap = if stop_at_center {
         next as i32 - 12 & 0x8000 == 0
     } else {
-        slot!(game, Floater[E].var_C) as i32 - 11 & 0x8000 == 0
+        slot!(game, Floater[E].var_c) as i32 - 11 & 0x8000 == 0
     };
     if wrap {
         next = 0;
     }
-    slot!(game, Floater[E].var_C = next);
+    slot!(game, Floater[E].var_c = next);
     false
 }
 fn centered(k: u16, game: &mut Game) -> bool {
-    slot!(game, Floater[k as i32].var_C) == 0 || slot!(game, Floater[k as i32].var_C) == 6
+    slot!(game, Floater[k as i32].var_c) == 0 || slot!(game, Floater[k as i32].var_c) == 6
 }
 fn move_vertical(k: u16, game: &mut Game) -> bool {
     // The zero acceleration still reads and publishes the split native words.
-    slot!(game, Floater[k as i32](var_A, var_B) += 0);
-    let amount = (u32::from(slot!(game, Floater[k as i32].var_A)) << 16)
-        | u32::from(slot!(game, Floater[k as i32].var_B));
+    slot!(game, Floater[k as i32](var_a, var_b) += 0);
+    let amount = (u32::from(slot!(game, Floater[k as i32].var_a)) << 16)
+        | u32::from(slot!(game, Floater[k as i32].var_b));
     api::move_vertical(&mut Runtime::new(game), Key::from_legacy(k), amount as i32)
         == api::MovementResult::Blocked
 }
@@ -82,7 +82,7 @@ fn native_size(index: usize, game: &Game) -> u16 {
     u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])
 }
 fn begin_descent(k: u16, game: &mut Game) {
-    slot!(game, Floater[k as i32]; var_F = 0xc500, var_E = 10);
+    slot!(game, Floater[k as i32]; var_f = 0xc500, var_e = 10);
     let drawing = k as i32 >> 1;
     word!(game.enemy_drawing_queue[(drawing + 104)] = 1);
     word!(game.enemy_drawing_queue[(drawing + 103)] = 0xc191);
@@ -90,34 +90,34 @@ fn begin_descent(k: u16, game: &mut Game) {
 
 pub(crate) fn state_address(game: &mut Game) -> u32 {
     let E = word!(game.cur_enemy_index) as i32;
-    u32::from(slot!(game, Floater[E].var_F)) | 0xa80000
+    u32::from(slot!(game, Floater[E].var_f)) | 0xa80000
 }
 
 pub(crate) fn advance(mut state: u16, k: u16, game: &mut Game) {
     let E = k as i32;
     let drawing = k as i32 >> 1;
     if state == 0xc2cf && slot!(game, Floater[E].base.ai_handler_bits) & 1 != 0 {
-        slot!(game, Floater[E].var_F = 0xc3e1);
+        slot!(game, Floater[E].var_f = 0xc3e1);
         state = 0xc3e1;
     }
     match state {
         0xc283 | 0xc2a6 | 0xc500 | 0xc59f => {
-            let expired = slot!(game, Floater[E].var_E) == 1;
-            slot!(game, Floater[E].var_E, |old| old.wrapping_sub(1));
-            let negative = slot!(game, Floater[E].var_E) & 0x8000 != 0;
+            let expired = slot!(game, Floater[E].var_e) == 1;
+            slot!(game, Floater[E].var_e, |old| old.wrapping_sub(1));
+            let negative = slot!(game, Floater[E].var_e) & 0x8000 != 0;
             if expired || negative {
                 match state {
                     0xc283 => {
                         word!(game.enemy_drawing_queue[(drawing + 104)] = 1);
                         word!(game.enemy_drawing_queue[(drawing + 103)] = 0xc183);
-                        slot!(game, Floater[E]; var_F = 0xc2a6, var_E = 10);
+                        slot!(game, Floater[E]; var_f = 0xc2a6, var_e = 10);
                     }
                     0xc2a6 => {
-                        slot!(game, Floater[E]; var_F = 0xc2cf, var_A = 0xffff, var_B = 0x8000);
+                        slot!(game, Floater[E]; var_f = 0xc2cf, var_a = 0xffff, var_b = 0x8000);
                         slot!(game, Floater[E].base; instruction_timer = 1, current_instruction = 0xc163);
                     }
                     0xc500 => {
-                        slot!(game, Floater[E]; var_F = 0xc51d, var_A = 1, var_B = 0);
+                        slot!(game, Floater[E]; var_f = 0xc51d, var_a = 1, var_b = 0);
                     }
                     _ => {
                         word!(game.enemy_drawing_queue[(drawing + 100)] = 0);
@@ -135,7 +135,7 @@ pub(crate) fn advance(mut state: u16, k: u16, game: &mut Game) {
         0xc2cf | 0xc3e1 => {
             let reacting = state == 0xc3e1;
             if reacting && slot!(game, Floater[E].base.ai_handler_bits) & 1 == 0 {
-                slot!(game, Floater[E].var_F = 0xc36b);
+                slot!(game, Floater[E].var_f = 0xc36b);
                 return;
             }
             bob(k, false, game);
@@ -151,26 +151,26 @@ pub(crate) fn advance(mut state: u16, k: u16, game: &mut Game) {
             if reached {
                 if centered(k, game) {
                     if reacting {
-                        slot!(game, Floater[E].var_F = 0xc4dc);
+                        slot!(game, Floater[E].var_f = 0xc4dc);
                     } else {
                         begin_descent(k, game);
                     }
                 } else {
                     slot!(
                         game,
-                        Floater[E].var_F = if reacting { 0xc469 } else { 0xc36b }
+                        Floater[E].var_f = if reacting { 0xc469 } else { 0xc36b }
                     );
                 }
             }
         }
         0xc36b | 0xc469 => {
             if state == 0xc469 && slot!(game, Floater[E].base.ai_handler_bits) & 1 == 0 {
-                slot!(game, Floater[E].var_F = 0xc36b);
+                slot!(game, Floater[E].var_f = 0xc36b);
                 return;
             }
             if bob(k, true, game) {
                 if state == 0xc469 {
-                    slot!(game, Floater[E].var_F = 0xc4dc);
+                    slot!(game, Floater[E].var_f = 0xc4dc);
                 } else {
                     begin_descent(k, game);
                 }
@@ -193,7 +193,7 @@ pub(crate) fn advance(mut state: u16, k: u16, game: &mut Game) {
                     game,
                     Floater[E].base.y_pos = word!(game.enemy_drawing_queue_sizes[(drawing + 1)])
                 );
-                slot!(game, Floater[E]; var_F = 0xc283, var_E = 60);
+                slot!(game, Floater[E]; var_f = 0xc283, var_e = 60);
                 slot!(game, Floater[E].base; instruction_timer = 1, current_instruction = 0xc173);
             }
         }
@@ -213,7 +213,7 @@ pub(crate) fn advance(mut state: u16, k: u16, game: &mut Game) {
                     word!(game.enemy_drawing_queue[(drawing + 104)] = 1);
                 }
             }
-            slot!(game, Floater[E]; var_F = 0xc59f, var_E = 32);
+            slot!(game, Floater[E]; var_f = 0xc59f, var_e = 32);
         }
         0xc568 => return,
         _ => {
@@ -232,14 +232,14 @@ pub(crate) fn initialize(game: &mut Game) {
     slot!(game, Floater[E].base.instruction_timer = 1);
     slot!(game, Floater[E].base.timer = 0);
     if slot!(game, Floater[E].parameter_1) != 0 {
-        slot!(game, Floater[E].var_A = slot!(game, Floater[E].base.x_pos));
-        slot!(game, Floater[E].var_B = slot!(game, Floater[E].base.y_pos));
-        slot!(game, Floater[E].var_F = (0xa8c568i32) as u16);
+        slot!(game, Floater[E].var_a = slot!(game, Floater[E].base.x_pos));
+        slot!(game, Floater[E].var_b = slot!(game, Floater[E].base.y_pos));
+        slot!(game, Floater[E].var_f = (0xa8c568i32) as u16);
         slot!(game, Floater[E].base.current_instruction = 0xc199 as u16);
-        slot!(game, Floater[E].var_D = slot!(game, Floater[E].parameter_2));
+        slot!(game, Floater[E].var_d = slot!(game, Floater[E].parameter_2));
     } else {
-        slot!(game, Floater[E].var_E = 60);
-        slot!(game, Floater[E].var_F = (0xa8c283i32) as u16);
+        slot!(game, Floater[E].var_e = 60);
+        slot!(game, Floater[E].var_f = (0xa8c283i32) as u16);
         slot!(game, Floater[E].base.current_instruction = 0xc173 as u16);
     };
 }
@@ -276,7 +276,7 @@ pub(crate) fn shot(game: &mut Game) {
             word!(game.enemy_drawing_queue[(v3 + 99)] |= (2u16));
         }
         if slot!(game, Floater[E].base.health) == 0 {
-            slot!(game, Floater[E].var_F = (0xa8c569i32) as u16);
+            slot!(game, Floater[E].var_f = (0xa8c569i32) as u16);
             slot!(game, Floater[E].parameter_2 = 1);
         }
     }

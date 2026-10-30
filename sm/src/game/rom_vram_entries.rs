@@ -1,6 +1,6 @@
 //! VRAM write-queue entries copied from cartridge tables through the native image.
 #![forbid(unsafe_code)]
-use crate::game::constants::bank_a6::{addr_byte_A6C15D, addr_stru_A6C3B8};
+use crate::game::constants::bank_a6::{ADDR_BYTE_A6C15D, ADDR_STRU_A6C3B8};
 use crate::game::session_runtime::native_record as read;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
@@ -30,7 +30,7 @@ fn push(entry: &RomRecord, game: &mut Game) {
 /// Ceres Ridley's single getaway tile entry.
 /// Was Ridley_Func_59.
 pub(crate) fn queue_getaway_tiles(game: &mut Game) {
-    let entry = read(0xa6, addr_byte_A6C15D as u16, game);
+    let entry = read(0xa6, ADDR_BYTE_A6C15D as u16, game);
     push(&entry, game);
 }
 
@@ -38,7 +38,7 @@ pub(crate) fn queue_getaway_tiles(game: &mut Game) {
 /// Was Ridley_Func_62.
 pub(crate) fn queue_escape_tile_table(game: &mut Game) {
     let (mut cursor, mut tail) = (
-        addr_stru_A6C3B8 as u16,
+        ADDR_STRU_A6C3B8 as u16,
         usize::from(word!(game.vram_write_queue_tail)),
     );
     loop {
@@ -56,11 +56,11 @@ pub(crate) fn queue_escape_tile_table(game: &mut Game) {
 /// One escape-timer entry per call; 1 once the table at enemy 0's cursor is exhausted.
 /// Was ProcessEscapeTimerTileTransfers.
 pub(crate) fn queue_escape_timer_tiles(game: &mut Game) -> u8 {
-    let cursor = slot!(game, EnemyData[0].ai_var_E);
+    let cursor = slot!(game, EnemyData[0].ai_var_e);
     let entry = read(0xa6, cursor, game);
     if entry.word(0) != 0 {
         push(&entry, game);
-        slot!(game, EnemyData[0].ai_var_E = cursor.wrapping_add(ENTRY));
+        slot!(game, EnemyData[0].ai_var_e = cursor.wrapping_add(ENTRY));
         if read(0xa6, cursor.wrapping_add(ENTRY), game).word(0) != 0 {
             return 0;
         }
