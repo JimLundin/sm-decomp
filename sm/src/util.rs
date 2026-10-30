@@ -3,8 +3,6 @@ pub use crate::types::{FILE, size_t};
 use core::ffi::{c_char, c_void};
 
 pub const NULL: *mut c_void = core::ptr::null_mut::<c_void>();
-pub const true_0: i32 = 1;
-pub const false_0: i32 = 0;
 
 // Preserve the native lexical policy: directory bytes plus the full new name.
 // Absolute names, dots and slash styles are copied without normalization.

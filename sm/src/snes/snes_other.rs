@@ -24,8 +24,6 @@ crate::typed_struct! {
         pub cartType: u8;
     }
 }
-pub const true_0: i32 = 1;
-pub const false_0: i32 = 0;
 pub unsafe fn snes_loadRom(mut data: *const u8, mut length: i32, game: &mut Game) -> bool {
     unsafe {
         if length < 0x8000 {
@@ -33,7 +31,7 @@ pub unsafe fn snes_loadRom(mut data: *const u8, mut length: i32, game: &mut Game
                 c"Failed to load rom: rom to small (%d bytes)\n".as_ptr(),
                 length,
             );
-            return false_0 != 0;
+            return false;
         }
         let mut headers: [CartHeader; 4] = [CartHeader {
             headerVersion: 0,
@@ -111,7 +109,7 @@ pub unsafe fn snes_loadRom(mut data: *const u8, mut length: i32, game: &mut Game
                 c"Failed to load rom: unsupported type (%d)\n".as_ptr(),
                 headers[used as usize].cartType as i32,
             );
-            return false_0 != 0;
+            return false;
         }
         let mut newLength: i32 = 0x8000;
         while length > newLength {
@@ -147,8 +145,8 @@ pub unsafe fn snes_loadRom(mut data: *const u8, mut length: i32, game: &mut Game
                 0
             }) as i32,
         );
-        execution.reset(true_0 != 0);
-        true_0 != 0
+        execution.reset(true);
+        true
     }
 }
 unsafe fn readHeader(data: *const u8, length: i32, location: i32, header: *mut CartHeader) {

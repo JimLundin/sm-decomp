@@ -6,8 +6,6 @@ use ::core::mem::transmute;
 
 use crate::c_library::printf;
 pub use crate::types::{Dma, Snes, size_t};
-pub const true_0: i32 = 1;
-pub const false_0: i32 = 0;
 pub const __ASSERT_FUNCTION: [c_char; 34] =
     unsafe { transmute::<[u8; 34], [c_char; 34]>(*b"uint8_t dma_read(Dma *, uint16_t)\0") };
 static bAdrOffsets: [[i32; 4]; 8] = [
@@ -157,7 +155,7 @@ impl crate::execution::Execution<'_> {
                     let channel = self.backend.dma_state().channel[i];
                     words!(i32, channel, aBank, aAdr)
                 });
-                *self.host.g_fail = true_0 != 0;
+                *self.host.g_fail = true;
             }
             let fresh0 = {
                 let mut dma = self.backend.dma_state();

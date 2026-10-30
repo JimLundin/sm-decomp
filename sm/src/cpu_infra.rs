@@ -66,8 +66,6 @@ pub const RM_BOTH: RunMode = 0;
 pub const RM_THEIRS: RunMode = 2;
 pub use crate::types::RunMode;
 pub const NULL: *mut c_void = null_mut::<c_void>();
-pub const true_0: i32 = 1;
-pub const false_0: i32 = 0;
 #[inline]
 unsafe fn get_ProjectileInstr(a: u16, game: &mut HookContext<'_, '_>) -> *mut ProjectileInstr {
     unsafe {
@@ -126,19 +124,19 @@ unsafe fn fix_bug_hook(addr: u32, host: &mut HostContext<'_>) -> bool {
                 if crate::oracle_mode::installs(crate::oracle_mode::PatchKind::BugHook, addr) {
                     image.write(addr, 0, 0);
                 }
-                return false_0 != 0;
+                return false;
             }
             2 => {
                 if addr == *host.hookadr {
                     *host.hookmode = 3;
-                    return true_0 != 0;
+                    return true;
                 }
                 *host.hookcnt = (*host.hookcnt).wrapping_add(1);
-                return false_0 != 0;
+                return false;
             }
             _ => {}
         }
-        false_0 != 0
+        false
     }
 }
 static kPatchedCarrys: [u32; 155] = [
@@ -407,8 +405,8 @@ unsafe fn hooked_return_parts(is_long: i32, host: &mut HostContext<'_>) -> bool 
     unsafe {
         if *host.g_calling_asm_from_c {
             *host.g_calling_asm_from_c_ret = is_long;
-            *host.g_calling_asm_from_c = false_0 != 0;
-            return false_0 != 0;
+            *host.g_calling_asm_from_c = false;
+            return false;
         }
         crate::native_assertion! {
             '_c2rust_label;
@@ -771,7 +769,7 @@ unsafe fn VerifySnapshotsEq(
             (size_of::<u16>() as size_t).wrapping_mul(0x8000 as size_t),
         ) != 0
         {
-            game.g_fail = true_0 != 0;
+            game.g_fail = true;
             fprintf(
                 stderr,
                 c"@%d: VRAM compare failed (mine != theirs, prev):\n".as_ptr(),
@@ -788,7 +786,7 @@ unsafe fn VerifySnapshotsEq(
                         (*a).ppu.vram[i_1 as usize] as i32,
                         (*prev).ppu.vram[i_1 as usize] as i32,
                     );
-                    game.g_fail = true_0 != 0;
+                    game.g_fail = true;
                     j_1 = j_1.wrapping_add(1);
                     if j_1 >= 32 as size_t {
                         break;
@@ -993,7 +991,7 @@ pub unsafe fn RunAsmCode(
             crate::set_fields! {[(*game.g_cpu)]; db = (pc >> 16) as u8, a = a, x = x, y = y,
             spBreakpoint = (*game.g_cpu).sp, k = (pc >> 16) as u8, pc = (pc & 0xffff) as u16,
             mf = flags & 1 != 0, xf = (flags & 2) >> 1 != 0, };
-            game.g_calling_asm_from_c = true_0 != 0;
+            game.g_calling_asm_from_c = true;
             while game.g_calling_asm_from_c {
                 let _pc_0: u32 = (words!(i32, (*(*game.g_snes).cpu), k, pc)) as u32;
                 if (*game.g_snes).debug_cycles {
@@ -1207,7 +1205,7 @@ pub unsafe fn RunOneFrameOfGame_Emulated(native_game: &mut Game) {
             (*cpu).pc = 0x8462;
         }
         RunCpuUntilPC(0x808343, 0x85813c, game);
-        (*(*game.g_snes).cpu).nmiWanted = true_0 != 0;
+        (*(*game.g_snes).cpu).nmiWanted = true;
         RunCpuUntilPC(0x80834a, 0x858142, game);
         word!(game.BUG_FIX_COUNTER = bug_fix_bak);
         game.commit_actor_canonical(actor_transition);
@@ -1256,7 +1254,7 @@ pub unsafe fn DrawFrameToPpu(native_game: &mut Game) {
             Ok(())
         }
         fn clear_nmi(&mut self) {
-            unsafe { (*(*self.0.g_snes).cpu).nmiWanted = false_0 != 0 };
+            unsafe { (*(*self.0.g_snes).cpu).nmiWanted = false };
         }
     }
     game.preflight_samus_runtime()
@@ -1287,7 +1285,7 @@ pub unsafe fn SaveBugSnapshot(game: &mut Game) {
                 c"saves/bug-%d.sav".as_ptr(),
                 time(null_mut::<time_t>()) as i32,
             );
-            RtlSaveSnapshot(&raw mut buffer as *mut c_char, true_0 != 0, game);
+            RtlSaveSnapshot(&raw mut buffer as *mut c_char, true, game);
         }
         game.g_got_mismatch_count = 5 * 60;
     }
@@ -1485,7 +1483,7 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
                         report_first_verify_failure(game);
                     }
                 }
-                game.g_fail = false_0 != 0;
+                game.g_fail = false;
                 if !game.VERIFY_ACTIVE || game.VERIFY_FAILURES == 1 {
                     printf(c"Verify failure!\n".as_ptr());
                 }

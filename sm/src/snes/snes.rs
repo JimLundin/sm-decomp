@@ -13,8 +13,6 @@ use crate::types::{Apu, ApuRegisters, Cart, Cpu, Dma, DmaChannel, Dsp, Input, Pp
 pub use crate::types::{Snes, size_t};
 use std::cell::{Cell, UnsafeCell};
 use std::rc::Rc;
-pub const true_0: i32 = 1;
-pub const false_0: i32 = 0;
 
 /// Own every device in one retained backend. Each allocation is stable and
 /// separate; raw repr(C) links are borrowed views, never the owners. Rc keeps
@@ -489,10 +487,10 @@ impl crate::execution::Execution<'_> {
                         let _data: i32 = self.read_with_dma_source(t, source) as i32
                             | (self.read_with_dma_source(t.wrapping_add(1), source) as i32) << 8;
                     }
-                    self.start_dma(val, false_0 != 0);
+                    self.start_dma(val, false);
                     while self.step_dma_with_source(source) {}
                 }
-                0x420c => self.start_dma(val, true_0 != 0),
+                0x420c => self.start_dma(val, true),
                 0x420d => (*snes).fastMem = val & 0x1 != 0,
                 _ => {}
             };

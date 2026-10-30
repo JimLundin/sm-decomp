@@ -10,8 +10,6 @@ crate::type_aliases! {
 }
 pub const kPpuExtraLeftRight: C2RustUnnamed_0 = 0;
 
-pub const true_0: i32 = 1;
-pub const false_0: i32 = 0;
 pub const __ASSERT_FUNCTION: [c_char; 43] = unsafe {
     transmute::<[u8; 43], [c_char; 43]>(*b"void PpuDrawBackgrounds(Ppu *, int, _Bool)\0")
 };
@@ -89,7 +87,7 @@ pub unsafe fn ppu_handleVblank(ppu: *mut Ppu) {
         if !(*ppu).forcedBlank {
             (*ppu).oamAdr = (*ppu).oamAdrWritten;
             (*ppu).oamInHigh = (*ppu).oamInHighWritten;
-            (*ppu).oamSecondWrite = false_0 != 0;
+            (*ppu).oamSecondWrite = false;
         }
         (*ppu).frameInterlace = (*ppu).interlace;
     }
@@ -222,8 +220,8 @@ unsafe fn ppu_line_config<'a>(ppu: *mut Ppu) -> raster::LineConfig<'a> {
 pub(crate) unsafe fn ppu_run_line(ppu: *mut Ppu, line: i32, new_ppu: &bool) {
     unsafe {
         if line == 0 {
-            set_fields! {[(*ppu)]; mosaicStartLine = 1, rangeOver = false_0 != 0,
-            timeOver = false_0 != 0, evenFrame = !(*ppu).evenFrame, };
+            set_fields! {[(*ppu)]; mosaicStartLine = 1, rangeOver = false,
+            timeOver = false, evenFrame = !(*ppu).evenFrame, };
         } else {
             if (*ppu).brightness != (*ppu).lastBrightnessMult {
                 let brightness = (*ppu).brightness;

@@ -140,8 +140,6 @@ crate::type_aliases! {
     pub C2RustUnnamed_1 = u32;
 }
 pub const NULL: *mut c_void = null_mut::<c_void>();
-pub const true_0: i32 = 1;
-pub const false_0: i32 = 0;
 
 pub unsafe fn RtlSetupEmuCallbacks(
     emu_ram: *mut u8,
@@ -221,7 +219,7 @@ unsafe fn finish_load_snes_state(native_game: &mut Game, complete_load: bool) {
             .expect("Samus mutation rejected");
         let game = mutation.game();
         crate::snes::ppu::PpuRestoreRenderRouting(&mut *(*game.g_snes).ppu);
-        (*(*game.g_snes).cpu).e = false_0 != 0;
+        (*(*game.g_snes).cpu).e = false;
         let ram = game.ram();
         let next: u32 = ((ram.read_byte(((*(*game.g_snes).cpu).sp as i32 + 3) as usize) as i32
             | (ram.read_byte(((*(*game.g_snes).cpu).sp as i32 + 4) as usize) as i32) << 8
@@ -286,13 +284,13 @@ unsafe fn reset(mode: i32, native_game: &mut Game, complete_load: bool) {
             .expect("Samus mutation rejected");
         let game = mutation.game();
         game.snes_frame_counter = 0;
-        game.execution().reset(true_0 != 0);
+        game.execution().reset(true);
         if mode & 1 == 0 {
             game.g_sram.fill(0..0x2000, 0);
         }
         game.ram().write_byte(0x611, 1);
         RtlApuLock();
-        RtlRestoreMusicAfterLoad_Locked(true_0 != 0, game);
+        RtlRestoreMusicAfterLoad_Locked(true, game);
         RtlApuUnlock();
         synchronize_whole_state(game, complete_load);
         game.commit_actor_canonical(actor_transition);
@@ -332,9 +330,9 @@ unsafe fn state_recorder_load(
             return false;
         }
         let mut hdr: [u32; 16] = [0i32 as u32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-        let is_old: bool = false_0 != 0;
+        let is_old: bool = false;
         let mut read_complete = true;
-        let mut is_reset: bool = false_0 != 0;
+        let mut is_reset: bool = false;
         read_complete &= read_file_block(
             f,
             &raw mut hdr as *mut u32 as *mut c_void,
@@ -417,7 +415,7 @@ unsafe fn state_recorder_load(
                             [..crate::recording::BASE_SRAM_SIZE],
                     );
                 }
-                is_reset = true_0 != 0;
+                is_reset = true;
             }
         } else {
             game.state_recorder.replay_pos_last_complete = hdr[7i32 as usize];
@@ -447,7 +445,7 @@ unsafe fn state_recorder_load(
             }
         }
         if !is_reset {
-            RtlRestoreMusicAfterLoad_Locked(false_0 != 0, game);
+            RtlRestoreMusicAfterLoad_Locked(false, game);
         }
         // The extension describes the final snapshot, not a replay's base state.
         if !replay_mode && hdr[10] == u32::from_le_bytes(*b"APQ1") {
@@ -717,7 +715,7 @@ pub unsafe fn StateRecorder_ReadNextReplayState(game: &mut Game) -> u16 {
         game.state_recorder.replay_frame_counter =
             game.state_recorder.replay_frame_counter.wrapping_add(1);
         if game.state_recorder.replay_frame_counter >= game.state_recorder.total_frames {
-            game.state_recorder.replay_mode = false_0 != 0;
+            game.state_recorder.replay_mode = false;
         }
         game.state_recorder.last_inputs
     }
@@ -949,7 +947,7 @@ pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, native_game: &mut Game) {
                     .expect("Session native continuation adoption rejected");
             }
         } else {
-            RtlSaveSnapshot(&raw mut name as *mut c_char, false_0 != 0, game);
+            RtlSaveSnapshot(&raw mut name as *mut c_char, false, game);
         };
     }
 }
@@ -1090,7 +1088,7 @@ pub(crate) unsafe fn rom_ptr_parts(addr: u32, host: &mut HostContext<'_>) -> *co
     unsafe {
         if addr & 0x8000 == 0 {
             printf(c"RomPtr - Invalid access 0x%x!\n".as_ptr(), addr);
-            *host.g_fail = true_0 != 0;
+            *host.g_fail = true;
             #[cfg(sm_verify_dll)]
             crate::room_contact_start_observer::diagnostic_parts(
                 addr,
