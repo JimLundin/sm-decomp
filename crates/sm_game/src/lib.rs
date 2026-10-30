@@ -283,16 +283,27 @@ pub mod ceres_door_data;
 pub mod ceres_elevator;
 pub mod ceres_ridley_tables;
 pub mod corpse_tables;
+pub mod explosion_window;
+#[allow(non_upper_case_globals)]
+pub mod gameplay_frame;
+pub mod gameplay_rules;
 pub mod grapple_aim;
 pub mod grapple_origins;
 pub mod grapple_rope;
+#[allow(non_upper_case_globals, non_snake_case, unused_mut, unused_assignments)]
+pub mod grapple_swing;
 pub mod kraid_tables;
 pub mod mother_brain_tables;
 pub mod phantoon_tables;
 pub mod records;
 pub mod ridley_data;
 pub mod ridley_explosion_data;
+pub mod room_scrolls;
+pub mod room_state;
 pub mod room_visuals;
+pub mod runtime_access;
+pub mod samus_death;
+pub mod samus_drawing;
 pub mod samus_palette;
 pub mod samus_periodic_damage;
 pub mod sand_heap;
@@ -316,20 +327,3 @@ pub mod torizo_tables;
 pub mod transition_trace;
 pub mod visual_host;
 pub mod zebetite_data;
-// Translated scrolling code keeps the compat crate's lint policy for its original names.
-#[allow(non_upper_case_globals, unused_mut)]
-pub mod room_scrolls;
-// Translated window code keeps the compat crate's lint policy for its original names.
-#[allow(non_upper_case_globals, non_snake_case, unused_mut, unused_assignments)]
-pub mod explosion_window;
-#[allow(non_upper_case_globals)]
-pub mod gameplay_frame;
-#[allow(non_upper_case_globals)]
-pub mod gameplay_rules;
-#[allow(non_upper_case_globals, non_snake_case, unused_mut, unused_assignments)]
-pub mod grapple_swing;
-#[allow(unused_assignments)]
-pub mod room_state;
-pub mod runtime_access;
-pub mod samus_death;
-pub mod samus_drawing;

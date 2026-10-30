@@ -47,7 +47,7 @@ pub fn finish_health_and_time<H: Host + ?Sized>(game: &mut H) {
     }
 }
 
-static kRoomShakes: [u16; 144] = [
+static ROOM_SHAKES: [u16; 144] = [
     1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 3, 0, 0, 0, 0, 3, 0, 0,
     3, 3, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 2, 0, 2, 0, 0, 2, 0, 2, 2, 2, 2, 2, 3, 0, 3, 0,
     0, 3, 0, 3, 3, 3, 3, 3, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 2, 0, 2, 0, 0, 2, 0, 2, 2, 2, 2, 2,
@@ -75,7 +75,7 @@ pub fn finish_frame<H: Host + ?Sized>(game: &mut H) {
         .into_iter()
         .enumerate()
         {
-            checked_word!(game, register; += kRoomShakes[index + offset].wrapping_mul(direction));
+            checked_word!(game, register; += ROOM_SHAKES[index + offset].wrapping_mul(direction));
         }
         word!(game.earthquake_timer -= 1);
         if (word!(game.earthquake_type) as i16).wrapping_sub(18) >= 0 {

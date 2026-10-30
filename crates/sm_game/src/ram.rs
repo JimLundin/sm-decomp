@@ -62,26 +62,24 @@ pub struct RamVar {
 macro_rules! ram_vars {
     ($($base:literal $(stride $stride:literal)?, $ty:ident $shape:ident => [$($name:tt),+ $(,)?];)*) => {
         /// Sorted by address. Several names can share an address; order is significant.
-        // The last group's cursor advance is never read.
-        #[allow(unused_assignments)]
         pub const RAM_VARS: &[RamVar] = &{
             let mut rows = [RamVar { addr: 0, name: "", ty: "", shape: Shape::Scalar };
                 0 $(+ [$(ram_vars!(@name $name)),*].len())*];
             let mut index = 0;
             $(
-                let mut addr = $base;
+                let first = index;
                 let stride = ram_vars!(@stride $($stride)?);
                 $(
                     rows[index] = RamVar {
-                        addr,
+                        addr: $base + (index - first) as u32 * stride,
                         name: ram_vars!(@name $name),
                         ty: stringify!($ty),
                         shape: Shape::$shape,
                     };
                     index += 1;
-                    addr += stride;
                 )*
             )*
+            assert!(index == rows.len());
             rows
         };
 
@@ -1140,7 +1138,6 @@ macro_rules! ram_words {
 /// The work RAM bytes that mirror PPU and CPU registers ($7E:0051..), written
 /// by game code and copied to the hardware during NMI. Each is checked against
 /// `RAM_VARS` by name.
-#[allow(non_upper_case_globals)]
 pub mod mirror {
     pub const INIDISP: usize = 0x51;
     pub const OBSEL: usize = 0x52;

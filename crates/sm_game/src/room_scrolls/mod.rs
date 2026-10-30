@@ -142,7 +142,7 @@ fn add_native_motion<H: Host + ?Sized>(high: usize, low: usize, amount: u32, gam
 pub fn advance_camera<H: Host + ?Sized>(game: &mut H) {
     if word!(game.slow_grabble_scrolling_flag) != 0 {
         if (game.player_x() & 0x8000) == 0 {
-            let mut v0: u16 = (game.player_x()).wrapping_sub(game.session().room.camera.layer1[0]);
+            let v0: u16 = (game.player_x()).wrapping_sub(game.session().room.camera.layer1[0]);
             if game.player_x() < game.session().room.camera.layer1[0] || v0 < 0x60 {
                 set_layer1(
                     game,
@@ -239,8 +239,8 @@ macro_rules! chase_ideal_layer_position {
 }
 
 fn follow_x<H: Host + ?Sized>(game: &mut H) {
-    static kSamus_HandleScroll_X_FaceLeft: [u16; 4] = [0xa0, 0x50, 0x20, 0xe0];
-    static kSamus_HandleScroll_X_FaceRight: [u16; 4] = [0x60, 0x40, 0x20, 0xe0];
+    static SAMUS_HANDLE_SCROLL_X_FACE_LEFT: [u16; 4] = [0xa0, 0x50, 0x20, 0xe0];
+    static SAMUS_HANDLE_SCROLL_X_FACE_RIGHT: [u16; 4] = [0x60, 0x40, 0x20, 0xe0];
     if game.previous_player_x() == game.player_x() {
         auto_x(game);
         return;
@@ -251,9 +251,9 @@ fn follow_x<H: Host + ?Sized>(game: &mut H) {
         ^ (game.facing() != 4) as i32
         != 0
     {
-        &kSamus_HandleScroll_X_FaceRight
+        &SAMUS_HANDLE_SCROLL_X_FACE_RIGHT
     } else {
-        &kSamus_HandleScroll_X_FaceLeft
+        &SAMUS_HANDLE_SCROLL_X_FACE_LEFT
     };
     game.session_mut().room.camera.ideal_layer1[0] = game
         .player_x()
@@ -290,12 +290,12 @@ fn follow_y<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn fill_viewport<H: Host + ?Sized>(game: &mut H) {
-    let mut v1: i32 = (game.byte(0x58) as i32 - game.byte(0x59) as i32) << 8;
+    let v1: i32 = (game.byte(0x58) as i32 - game.byte(0x59) as i32) << 8;
     word!(game.size_of_bg2 = (v1 & 0xf800) as u16);
     calculate_blocks(game);
     let mut v2: i32 = 0;
     do_until! { v3 == 16 ;
-        let mut v3: i32 = v2;
+        let v3: i32 = v2;
         word!(game.blocks_to_update_x_block = game.session().room.camera.layer1_block[0]);
         word!(game.blocks_to_update_y_block = game.session().room.camera.layer1_block[1]);
         word!(game.vram_blocks_to_update_x_block = game.session().room.camera.bg1_block[0]);
