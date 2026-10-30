@@ -1,0 +1,124 @@
+//! Title screen: Metroid palettes and cry, camera pans, skip and wait, sprite placement.
+// The original's names and assignment shapes are kept.
+#![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
+use crate::cinematic::CinematicLayer;
+use crate::cinematic::{add_native_pair, place_cinematic_sprite, set_cinematic_backdrop};
+use crate::menus::prelude::words;
+#[allow(unused_imports)]
+use crate::ram::RawRam as _;
+use crate::ram::{word, words as ram_words};
+
+pub const METROID_PAL_1: [u16; 16] = [
+    0x1000, 0x6bf5, 0x2e41, 0x2da1, 0x2d01, 0x5e5f, 0x183f, 0x1014, 0x80a, 0x404, 0x4f9f, 0x3ed8,
+    0x2e12, 0x6f70, 0x7fff, 0x5ee0,
+];
+pub const METROID_PAL_2: [u16; 16] = [
+    0x3800, 0x6bf5, 0x6e1, 0x641, 0x5a1, 0x5e5f, 0x183f, 0x1014, 0x80a, 0x404, 0x4f9f, 0x3ed8,
+    0x2e12, 0x6f70, 0x7fff, 0x5ee0,
+];
+pub const METROID_PAL_3: [u16; 16] = [
+    0x3800, 0x77f8, 0x1344, 0x12a4, 0x1204, 0x6abf, 0x249f, 0x1c77, 0x146d, 0x1067, 0x5bff, 0x4b38,
+    0x3a72, 0x7bd3, 0x7fff, 0x6b43,
+];
+pub const METROID_PAL_4: [u16; 16] = [
+    0x3800, 0x7ffb, 0x1fa7, 0x1f07, 0x1e67, 0x771f, 0x30ff, 0x28da, 0x20d0, 0x1cca, 0x67ff, 0x579b,
+    0x46d5, 0x7bd6, 0x7fff, 0x77a6,
+];
+
+pub fn title_metroid_cry<H: crate::menus::host::Host + ?Sized>(
+    sound: u16,
+    cursor: u16,
+    game: &mut H,
+) -> u16 {
+    game.queue_sound(2, (sound) as u8, 6);
+    cursor
+}
+
+pub fn title_metroid_palette<H: crate::menus::host::Host + ?Sized>(
+    palette: [u16; 16],
+    cursor: u16,
+    game: &mut H,
+) -> u16 {
+    crate::word_transfers!(game, descending, 16; le(palette_buffer, 63) <- table(palette, 15));
+    cursor
+}
+
+pub fn start_title_pan<H: crate::menus::host::Host + ?Sized>(
+    stage: usize,
+    cursor: u16,
+    game: &mut H,
+) -> u16 {
+    let (next, zoom, x, y) = [
+        (0x9d17, 72, 315, 225),
+        (0x9d90, 96, 44, -155i16 as u16),
+        (0x9e12, 96, -177i16 as u16, -160i16 as u16),
+        (0x9e8b, 67, 0, 0),
+    ][stage];
+    game.ram().write_byte(0x69, 17);
+    word! {game; cinematic_function = next; cinematic_var6 = zoom;
+    cinematic_var8 = x; cinematic_var7 = 0; cinematic_var10 = y; cinematic_var9 = 0;
+    g_word_7E199B = if stage < 2 { -2i16 as u16 } else { 0 };
+    g_word_7E1999 = if stage < 2 { 0x8000 } else { 0 }; }
+    if stage >= 2 {
+        word! {game; g_word_7E199F = u16::from(stage == 2);
+        g_word_7E199D = if stage == 2 { 0x8000 } else { 0 }; }
+    }
+    if matches!(stage, 0 | 2) {
+        set_cinematic_backdrop(true, game);
+    }
+    cursor
+}
+
+pub fn advance_title_pan<H: crate::menus::host::Host + ?Sized>(stage: usize, game: &mut H) {
+    let (offset, cutoff) = [(0, 7), (0, 176), (4, -163)][stage];
+    let velocity = words!((
+        word!(@read game, ram_words::g_word_7E199B + offset),
+        word!(@read game, ram_words::g_word_7E1999 + offset),
+    ));
+    let whole = ram_words::cinematic_var8 + offset;
+    let fraction = ram_words::cinematic_var7 + offset;
+    add_native_pair(whole, fraction, velocity, game);
+    let negative = (word!(@read game, whole) as i32 + cutoff) & 0x8000 != 0;
+    // The vertical pan ends on the opposite side of its cutoff.
+    if negative != (stage == 2) {
+        game.ram().write_byte(0x69, 16);
+        word!(game.cinematic_function = 0x9a47);
+        let definition = [0xa0f5, 0xa0fb, 0xa101][stage];
+        game.spawn_cinematic_object(CinematicLayer::Sprites, definition, 0x9a47);
+        set_cinematic_backdrop(false, game);
+    }
+    request_title_skip(game);
+}
+
+pub fn request_title_skip<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    if word!(game.cinematic_function) as i32 + 0x60d8 & 0x8000 != 0
+        && word!(game.joypad1_newkeys) & 0x9080 != 0
+        && word!(game.cinematic_var18) == 0
+    {
+        word! {game; cinematic_var18 = 1; screen_fade_delay = 0; screen_fade_counter = 2; }
+    }
+}
+
+pub fn advance_title_wait<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    let expired = word!(game.demo_timer -= 1, reread) & 0x8000 != 0;
+    if word!(game.demo_timer) == 0 || expired {
+        word!(game.cinematic_function = 0x9fae);
+    } else {
+        if word!(game.joypad1_newkeys) & 0x9080 == 0 {
+            return;
+        }
+        word!(game.cinematic_function = 0x9f52);
+    }
+    word! { game, 2; screen_fade_delay, screen_fade_counter }
+}
+
+pub fn initialize_title_sprite<H: crate::menus::host::Host + ?Sized>(
+    object: u16,
+    variant: usize,
+    game: &mut H,
+) {
+    let (y, palette, effect) =
+        [(48, 1024, 0xe194), (81, 512, 0xe198), (196, 2048, 0xe19c)][variant];
+    place_cinematic_sprite(object, (128, y), palette, game);
+    game.spawn_palette_effect(effect);
+}

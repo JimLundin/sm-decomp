@@ -7,6 +7,11 @@ pub(crate) use crate::game::cinematic::{
 use crate::game::imported::{Imported, grid_word, load, word as table_word};
 use crate::game::player_transitions::xray::BeamPhase;
 use crate::game::projectile_presentation_ram as sprite_output;
+pub(crate) use crate::game::title_screen::{
+    METROID_PAL_1, METROID_PAL_2, METROID_PAL_3, METROID_PAL_4, advance_title_pan,
+    advance_title_wait, initialize_title_sprite, request_title_skip, start_title_pan,
+    title_metroid_cry, title_metroid_palette,
+};
 use crate::game::xray_background::{self, finish_restore, restore_left, restore_right};
 use crate::game::{
     explosion_window::{self, Phase},
@@ -27,6 +32,10 @@ use sm_data::shooting_stars::{
 };
 use sm_data::title_screen::{GRADIENT_ADDRESS, GRADIENTS, Gradients};
 use sm_game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
+pub(crate) use sm_game::cinematic::{
+    add_native_pair, advance_cinematic_coordinate, place_cinematic_sprite, set_cinematic_backdrop,
+    set_fixed_color,
+};
 use sm_game::display::control::{Brightness, Layers, MainWindowMask, SubScreen};
 
 /// The cinematic and HDMA tables this module reads, imported from the loaded image.
@@ -882,33 +891,6 @@ pub(crate) fn check_animation_guard(game: &mut Game) -> bool {
 }
 #[path = "../verification/samus_palette_observer.rs"]
 pub(crate) mod samus_observer;
-
-pub(crate) const METROID_PAL_1: [u16; 16] = [
-    0x1000, 0x6bf5, 0x2e41, 0x2da1, 0x2d01, 0x5e5f, 0x183f, 0x1014, 0x80a, 0x404, 0x4f9f, 0x3ed8,
-    0x2e12, 0x6f70, 0x7fff, 0x5ee0,
-];
-pub(crate) const METROID_PAL_2: [u16; 16] = [
-    0x3800, 0x6bf5, 0x6e1, 0x641, 0x5a1, 0x5e5f, 0x183f, 0x1014, 0x80a, 0x404, 0x4f9f, 0x3ed8,
-    0x2e12, 0x6f70, 0x7fff, 0x5ee0,
-];
-pub(crate) const METROID_PAL_3: [u16; 16] = [
-    0x3800, 0x77f8, 0x1344, 0x12a4, 0x1204, 0x6abf, 0x249f, 0x1c77, 0x146d, 0x1067, 0x5bff, 0x4b38,
-    0x3a72, 0x7bd3, 0x7fff, 0x6b43,
-];
-pub(crate) const METROID_PAL_4: [u16; 16] = [
-    0x3800, 0x7ffb, 0x1fa7, 0x1f07, 0x1e67, 0x771f, 0x30ff, 0x28da, 0x20d0, 0x1cca, 0x67ff, 0x579b,
-    0x46d5, 0x7bd6, 0x7fff, 0x77a6,
-];
-
-pub(crate) fn title_metroid_cry(sound: u16, cursor: u16, game: &mut Game) -> u16 {
-    crate::game::music::QueueSfx3_Max6(sound, game);
-    cursor
-}
-
-pub(crate) fn title_metroid_palette(palette: [u16; 16], cursor: u16, game: &mut Game) -> u16 {
-    word_transfers!(game, descending, 16; le(palette_buffer, 63) <- table(palette, 15));
-    cursor
-}
 
 fn refresh_title_gradient(game: &mut Game) {
     let mut cursor = table_word(
@@ -1875,26 +1857,6 @@ pub(crate) fn advance_intro_rinka(object: u16, misses_samus: bool, game: &mut Ga
 }
 
 // Native split words retain low-before-high reads and writes.
-fn add_native_pair(high: usize, low: usize, velocity: u32, game: &mut Game) {
-    let fraction = u16::from_ne_bytes([game.ram().read_byte(low), game.ram().read_byte(low + 1)]);
-    let whole = u16::from_ne_bytes([game.ram().read_byte(high), game.ram().read_byte(high + 1)]);
-    let position = (u32::from(fraction) | (u32::from(whole) << 16)).wrapping_add(velocity);
-    word_transfers!(game, ascending, 1;
-        native(low) <- value(position as u16),
-        native(high) <- value((position >> 16) as u16),
-    );
-}
-
-pub(crate) fn advance_cinematic_coordinate(
-    object: u16,
-    vertical: bool,
-    velocity: u32,
-    game: &mut Game,
-) {
-    let offset = usize::from(object & !1) + if vertical { 0x20 } else { 0 };
-    add_native_pair(0x1a7d + offset, 0x1add + offset, velocity, game);
-}
-
 pub(crate) fn initialize_intro_brain_particle(object: u16, big: bool, game: &mut Game) {
     let parameter = usize::from(word!(game.cinematic_spawn_param));
     let slot = usize::from(object >> 1);
@@ -2645,90 +2607,6 @@ pub(crate) fn advance_ending_logo_palette(game: &mut Game) -> bool {
         }
     }
     word!(game.cinematic_var4 += 1, reread) as i32 - 16 & 0x8000 == 0
-}
-
-pub(crate) fn start_title_pan(stage: usize, cursor: u16, game: &mut Game) -> u16 {
-    let (next, zoom, x, y) = [
-        (0x9d17, 72, 315, 225),
-        (0x9d90, 96, 44, -155i16 as u16),
-        (0x9e12, 96, -177i16 as u16, -160i16 as u16),
-        (0x9e8b, 67, 0, 0),
-    ][stage];
-    game.ram().write_byte(0x69, 17);
-    word! {game; cinematic_function = next; cinematic_var6 = zoom;
-    cinematic_var8 = x; cinematic_var7 = 0; cinematic_var10 = y; cinematic_var9 = 0;
-    g_word_7E199B = if stage < 2 { -2i16 as u16 } else { 0 };
-    g_word_7E1999 = if stage < 2 { 0x8000 } else { 0 }; }
-    if stage >= 2 {
-        word! {game; g_word_7E199F = u16::from(stage == 2);
-        g_word_7E199D = if stage == 2 { 0x8000 } else { 0 }; }
-    }
-    if matches!(stage, 0 | 2) {
-        set_cinematic_backdrop(true, game);
-    }
-    cursor
-}
-
-pub(crate) fn advance_title_pan(stage: usize, game: &mut Game) {
-    let (offset, cutoff) = [(0, 7), (0, 176), (4, -163)][stage];
-    let velocity = words!((
-        word!(@read game, ram_words::g_word_7E199B + offset),
-        word!(@read game, ram_words::g_word_7E1999 + offset),
-    ));
-    let whole = ram_words::cinematic_var8 + offset;
-    let fraction = ram_words::cinematic_var7 + offset;
-    add_native_pair(whole, fraction, velocity, game);
-    let negative = (word!(@read game, whole) as i32 + cutoff) & 0x8000 != 0;
-    // The vertical pan ends on the opposite side of its cutoff.
-    if negative != (stage == 2) {
-        game.ram().write_byte(0x69, 16);
-        word!(game.cinematic_function = 0x9a47);
-        let definition = [0xa0f5, 0xa0fb, 0xa101][stage];
-        CinematicObjects::Sprites.spawn(definition, 0x9a47, game);
-        set_cinematic_backdrop(false, game);
-    }
-    request_title_skip(game);
-}
-
-pub(crate) fn request_title_skip(game: &mut Game) {
-    if word!(game.cinematic_function) as i32 + 0x60d8 & 0x8000 != 0
-        && word!(game.joypad1_newkeys) & 0x9080 != 0
-        && word!(game.cinematic_var18) == 0
-    {
-        word! {game; cinematic_var18 = 1; screen_fade_delay = 0; screen_fade_counter = 2; }
-    }
-}
-
-pub(crate) fn advance_title_wait(game: &mut Game) {
-    let expired = word!(game.demo_timer -= 1, reread) & 0x8000 != 0;
-    if word!(game.demo_timer) == 0 || expired {
-        word!(game.cinematic_function = 0x9fae);
-    } else {
-        if word!(game.joypad1_newkeys) & 0x9080 == 0 {
-            return;
-        }
-        word!(game.cinematic_function = 0x9f52);
-    }
-    word! { game, 2; screen_fade_delay, screen_fade_counter }
-}
-
-pub(crate) fn initialize_title_sprite(object: u16, variant: usize, game: &mut Game) {
-    let (y, palette, effect) =
-        [(48, 1024, 0xe194), (81, 512, 0xe198), (196, 2048, 0xe19c)][variant];
-    place_cinematic_sprite(object, (128, y), palette, game);
-    palette_effects::spawn(effect, game);
-}
-
-pub(crate) fn place_cinematic_sprite(
-    object: u16,
-    position: (u16, u16),
-    palette: u16,
-    game: &mut Game,
-) {
-    let slot = usize::from(object >> 1);
-    word!(game.cinematicbg_arr7[slot] = position.0);
-    word!(game.cinematicbg_arr8[slot] = position.1);
-    word!(game.cinematicbg_arr9[slot] = palette);
 }
 
 pub(crate) fn spawn_cinematic_sprite_at(
@@ -3658,19 +3536,6 @@ pub(crate) unsafe fn configure_cinematic_display(
 pub(crate) unsafe fn reset_cinematic_transform(x: u16, y: u16, game: &mut Game) {
     let transform = sm_game::display::control::Mode7Transform::identity(x, y);
     unsafe { crate::game::display_transfers::set_mode7_transform(transform, game) }
-}
-
-pub(crate) fn set_fixed_color(channels: [u8; 3], game: &mut Game) {
-    for (channel, value) in channels.into_iter().enumerate() {
-        game.ram().write_byte(0x74 + channel, value);
-    }
-}
-
-pub(crate) fn set_cinematic_backdrop(lit: bool, game: &mut Game) {
-    game.ram().write_byte(0x6f, 0);
-    game.ram().write_byte(0x72, if lit { 0x81 } else { 0 });
-    let color = if lit { [56, 88, 0x80] } else { [32, 64, 0x80] };
-    set_fixed_color(color, game);
 }
 
 pub(crate) fn draw_cinematic_rectangle(

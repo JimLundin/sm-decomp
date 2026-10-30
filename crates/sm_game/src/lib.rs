@@ -52,6 +52,7 @@ pub mod special_geometry;
 pub mod sprite_drawing;
 pub mod sprite_effect_state;
 pub mod sprite_output;
+pub mod title_screen;
 pub mod visual_state;
 pub mod word_transfers;
 

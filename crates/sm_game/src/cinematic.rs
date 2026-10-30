@@ -190,3 +190,53 @@ pub fn cinematic_color_indices(mut offset: u16, count: u16) -> impl Iterator<Ite
         index
     })
 }
+
+pub fn add_native_pair<H: crate::menus::host::Host + ?Sized>(
+    high: usize,
+    low: usize,
+    velocity: u32,
+    game: &mut H,
+) {
+    let fraction = u16::from_ne_bytes([game.ram().read_byte(low), game.ram().read_byte(low + 1)]);
+    let whole = u16::from_ne_bytes([game.ram().read_byte(high), game.ram().read_byte(high + 1)]);
+    let position = (u32::from(fraction) | (u32::from(whole) << 16)).wrapping_add(velocity);
+    crate::word_transfers!(game, ascending, 1;
+        native(low) <- value(position as u16),
+        native(high) <- value((position >> 16) as u16),
+    );
+}
+
+pub fn advance_cinematic_coordinate<H: crate::menus::host::Host + ?Sized>(
+    object: u16,
+    vertical: bool,
+    velocity: u32,
+    game: &mut H,
+) {
+    let offset = usize::from(object & !1) + if vertical { 0x20 } else { 0 };
+    add_native_pair(0x1a7d + offset, 0x1add + offset, velocity, game);
+}
+
+pub fn set_fixed_color<H: crate::menus::host::Host + ?Sized>(channels: [u8; 3], game: &mut H) {
+    for (channel, value) in channels.into_iter().enumerate() {
+        game.ram().write_byte(0x74 + channel, value);
+    }
+}
+
+pub fn set_cinematic_backdrop<H: crate::menus::host::Host + ?Sized>(lit: bool, game: &mut H) {
+    game.ram().write_byte(0x6f, 0);
+    game.ram().write_byte(0x72, if lit { 0x81 } else { 0 });
+    let color = if lit { [56, 88, 0x80] } else { [32, 64, 0x80] };
+    set_fixed_color(color, game);
+}
+
+pub fn place_cinematic_sprite<H: crate::menus::host::Host + ?Sized>(
+    object: u16,
+    position: (u16, u16),
+    palette: u16,
+    game: &mut H,
+) {
+    let slot = usize::from(object >> 1);
+    word!(game.cinematicbg_arr7[slot] = position.0);
+    word!(game.cinematicbg_arr8[slot] = position.1);
+    word!(game.cinematicbg_arr9[slot] = palette);
+}

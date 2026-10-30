@@ -471,6 +471,7 @@ pub mod game {
     pub(crate) mod prelude;
     pub mod scene;
     pub(crate) mod scrolling_sky;
+    pub(crate) mod title_screen;
     pub(crate) use sm_game::shaktool_tables;
     pub(crate) use sm_game::shitroid_tables;
     pub(crate) use sm_game::statue_tables;
