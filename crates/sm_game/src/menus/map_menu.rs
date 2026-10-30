@@ -86,14 +86,17 @@ pub fn advance<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
         close_room_window::<H>,
         fade_to_options::<H>,
     ];
-    states[word!(game.menu_index) as usize](game);
+    states[crate::menu!(game.menu_index) as usize](game);
     0
 }
 fn fade_to_options<H: Host + ?Sized>(game: &mut H) {
     draw_area_labels(game);
     game.fade(false);
     if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 0 {
-        word! {game; game_state = kGameState_2_GameOptionsMenu as u16; menu_index = 0; }
+        {
+            word!(game.game_state = kGameState_2_GameOptionsMenu as u16);
+            crate::menu!(game.menu_index = 0);
+        }
     }
 }
 fn prepare<H: Host + ?Sized>(game: &mut H) {
@@ -103,7 +106,7 @@ fn prepare<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::load_palette(game);
     crate::word_transfers!(game, ascending, 32; le(target_palettes, 0) <- le(palette_buffer, 0));
     word! { game, 0; target_palettes[14], target_palettes[30] }
-    word!(game.menu_index += 1);
+    crate::menu!(game.menu_index += 1);
 }
 fn fade_palette<H: Host + ?Sized>(game: &mut H) {
     if game.file_select_fade() != 0 {
@@ -112,7 +115,7 @@ fn fade_palette<H: Host + ?Sized>(game: &mut H) {
         for area in 0..6 {
             menu_tilemap::area_palette(area, area == word!(game.area_index), game);
         }
-        word!(game.menu_index += 1);
+        crate::menu!(game.menu_index += 1);
         word!(game.g_word_7E0787 = 0);
         game.ram().write_byte(
             crate::ram::mirror::TM,
@@ -133,10 +136,10 @@ fn load_foreground<H: Host + ?Sized>(game: &mut H) {
         ((game.ram().read_byte(crate::ram::mirror::OBSEL) as i32) << 8 | 0xf) as u16,
         game,
     );
-    word!(game.menu_index += 1);
+    crate::menu!(game.menu_index += 1);
 }
 fn begin_background<H: Host + ?Sized>(game: &mut H) {
-    word!(game.menu_index += 1);
+    crate::menu!(game.menu_index += 1);
     load_background(word!(game.area_index), game);
 }
 fn load_background<H: Host + ?Sized>(j: u16, game: &mut H) {
@@ -166,9 +169,11 @@ fn begin_area_window<H: Host + ?Sized>(game: &mut H) {
         crate::display::sequence::write_register_and_mirror(game, HDMAEN as u16, 0xc, 0x85, true);
         configure_area_window(game);
         game.clear_hdma_flags();
-        game.ram().write_byte(
-            crate::ram::words::menu_index,
-            ((word!(game.menu_index)) as u8).wrapping_add(1),
+        crate::menu_state::set_byte(
+            game,
+            crate::menu_state::Word::menu_index,
+            0,
+            ((crate::menu!(game.menu_index)) as u8).wrapping_add(1),
         );
     }
 }
@@ -188,9 +193,11 @@ fn configure_area_window<H: Host + ?Sized>(game: &mut H) {
 fn open_area_window<H: Host + ?Sized>(game: &mut H) {
     draw_area_labels(game);
     if super::menu_window::open_from_center(game) {
-        game.ram().write_byte(
-            crate::ram::words::menu_index,
-            ((word!(game.menu_index)) as u8).wrapping_add(1),
+        crate::menu_state::set_byte(
+            game,
+            crate::menu_state::Word::menu_index,
+            0,
+            ((crate::menu!(game.menu_index)) as u8).wrapping_add(1),
         );
         game.ram().write_byte(
             crate::ram::mirror::TM,
@@ -205,7 +212,10 @@ fn open_area_window<H: Host + ?Sized>(game: &mut H) {
             crate::ram::mirror::TSW,
             crate::display::control::Layers::NONE.byte(),
         );
-        word! {game; reg_BG2VOFS = 24; pausemenu_palette_animation_timer = 1; }
+        {
+            word!(game.reg_BG2VOFS = 24);
+            crate::menu!(game.pausemenu_palette_animation_timer = 1);
+        }
         let mut _v1: u16 = 0;
         crate::word_transfers!(game, ascending, 800; xray(0) <- rom(0xb6e000, 0));
         _v1 = 800;
@@ -256,7 +266,7 @@ fn choose_area<H: Host + ?Sized>(game: &mut H) {
             }
         }
         if keys < 0 {
-            word!(game.menu_index = 22);
+            crate::menu!(game.menu_index = 22);
             break 'handle_action;
         }
         if keys as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
@@ -283,7 +293,7 @@ fn next_area(a: u16) -> u16 {
 }
 #[forbid(unsafe_code)]
 fn select_area<H: Host + ?Sized>(game: &mut H) {
-    word!(game.menu_index += 1);
+    crate::menu!(game.menu_index += 1);
     if word!(game.enable_debug) == 0 {
         word!(game.area_index = word!(game.sram_area_index));
         word!(game.load_station_index = word!(game.sram_save_station_index));
@@ -449,14 +459,14 @@ fn begin_room_window<H: Host + ?Sized>(game: &mut H) {
         super::menu_window::load_velocities(word!(game.area_index), game);
         super::menu_window::project(game);
         crate::display::sequence::write_register_and_mirror(game, HDMAEN as u16, 0xc, 0x85, true);
-        word!(game.menu_index += 1);
-        game.queue_sound(0, 0x3b_u8, 6);
+        crate::menu!(game.menu_index += 1);
+        game.queue_sound(0, (0x3b) as u8, 6);
     }
 }
 fn open_room_window<H: Host + ?Sized>(game: &mut H) {
     super::menu_window::advance(super::menu_window::Motion::Expand, game);
     if (word!(game.expand_sq_timer -= 1, reread) & 0x8000) != 0 {
-        word!(game.menu_index += 1);
+        crate::menu!(game.menu_index += 1);
         game.ram().write_byte(
             crate::ram::mirror::TM,
             crate::display::control::Layers::BG2.byte(),
@@ -496,7 +506,7 @@ fn initialize_room<H: Host + ?Sized>(game: &mut H) {
         word!(game.map_min_y_scroll += 24);
         word!(game.reg_BG2VOFS = 24);
         crate::ram::checked_word!(game, 0x69; = crate::ram::checked_word!(game, 0x69;) & !4);
-        word!(game.menu_index += 1);
+        crate::menu!(game.menu_index += 1);
         word! { game, 0;
             map_scrolling_direction, map_scrolling_speed_index,
             samus_position_indicator_animation_frame, samus_position_indicator_animation_timer,
@@ -603,7 +613,7 @@ fn choose_room<H: Host + ?Sized>(game: &mut H) {
                 word!(game.reg_BG1VOFS = scroll_y);
             }
         } else if (word!(game.joypad1_newkeys) & 0x8000) != 0 {
-            word!(game.menu_index += 5);
+            crate::menu!(game.menu_index += 5);
             let Some(selection) = area_selection(game) else {
                 word!(game.file_select_map_area_index = 0);
                 return;
@@ -613,22 +623,22 @@ fn choose_room<H: Host + ?Sized>(game: &mut H) {
         } else if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32)
             != 0
         {
-            word!(game.menu_index += 1);
-            game.queue_sound(0, 0x38_u8, 6);
+            crate::menu!(game.menu_index += 1);
+            game.queue_sound(0, (0x38) as u8, 6);
         }
     }
 }
 fn show_room<H: Host + ?Sized>(game: &mut H) {
     draw_icons(IconMode::FileSelect, game);
     display_elevator_destinations(game);
-    word!(game.menu_index += 1);
+    crate::menu!(game.menu_index += 1);
 }
 fn fade_room<H: Host + ?Sized>(game: &mut H) {
     draw_icons(IconMode::FileSelect, game);
     display_elevator_destinations(game);
     game.fade(false);
     if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 0 {
-        word!(game.menu_index += 1);
+        crate::menu!(game.menu_index += 1);
         set_native_word(enemy_data::FIRST + enemy_data::X_POS, 32, game);
     }
 }
@@ -638,7 +648,7 @@ fn start_game<H: Host + ?Sized>(game: &mut H) {
     if native_word(timer, game) == 0 {
         game.set_blank(true);
         word!(game.game_state += 1);
-        word!(game.menu_index = 0);
+        crate::menu!(game.menu_index = 0);
     }
 }
 fn clear_room<H: Host + ?Sized>(game: &mut H) {
@@ -648,7 +658,7 @@ fn clear_room<H: Host + ?Sized>(game: &mut H) {
     );
     crate::word_transfers!(game, descending, 1024; native(0x37fe) <- value(15));
     menu_tilemap::upload(2048, 0x7e3000, 0, true, game);
-    word!(game.menu_index += 1);
+    crate::menu!(game.menu_index += 1);
 }
 fn restore_area<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::load_palette(game);
@@ -657,7 +667,7 @@ fn restore_area<H: Host + ?Sized>(game: &mut H) {
     }
     menu_tilemap::area_palette(word!(game.area_index), true, game);
     load_background(word!(game.area_index), game);
-    word!(game.menu_index += 1);
+    crate::menu!(game.menu_index += 1);
 }
 fn begin_return_window<H: Host + ?Sized>(game: &mut H) {
     {
@@ -679,7 +689,7 @@ fn begin_return_window<H: Host + ?Sized>(game: &mut H) {
             expand_sq_bottom_subpos,
         }
         super::menu_window::project(game);
-        word!(game.menu_index += 1);
+        crate::menu!(game.menu_index += 1);
         crate::display::sequence::register_writes! { game;
             mirror(HDMAEN as u16, 0xc, 0x85, true); mirror(W12SEL as u16, 0x32, 0x60, true);
             mirror(W34SEL as u16, 2, 0x61, true);
@@ -698,7 +708,7 @@ fn close_room_window<H: Host + ?Sized>(game: &mut H) {
     super::menu_window::advance(super::menu_window::Motion::Contract, game);
     draw_area_labels(game);
     if (word!(game.expand_sq_timer -= 1, reread) & 0x8000) != 0 {
-        word!(game.menu_index -= 15);
+        crate::menu!(game.menu_index -= 15);
         game.ram().write_byte(
             crate::ram::mirror::TM,
             crate::display::control::Layers::BG1_SPRITES.byte(),
@@ -937,34 +947,45 @@ fn boss_icons<H: Host + ?Sized>(sprite: u16, table: u16, game: &mut H) {
 }
 
 pub fn animate_palette<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.pausemenu_palette_animation_timer) as u8 == 0 {
+    if crate::menu!(game.pausemenu_palette_animation_timer) as u8 == 0 {
         return;
     }
-    game.ram().write_byte(
-        crate::ram::words::pausemenu_palette_animation_timer,
-        (word!(game.pausemenu_palette_animation_timer) as u8).wrapping_sub(1),
+    crate::menu_state::set_byte(
+        game,
+        crate::menu_state::Word::pausemenu_palette_animation_timer,
+        0,
+        (crate::menu!(game.pausemenu_palette_animation_timer) as u8).wrapping_sub(1),
     );
-    if word!(game.pausemenu_palette_animation_timer) as u8 != 0 {
+    if crate::menu!(game.pausemenu_palette_animation_timer) as u8 != 0 {
         return;
     }
-    let mut frame = i32::from(word!(game.pausemenu_palette_animation_frame)) + 1;
+    let mut frame = i32::from(crate::menu!(game.pausemenu_palette_animation_frame)) + 1;
     loop {
-        game.ram().write_byte(
-            crate::ram::words::pausemenu_palette_animation_frame,
+        crate::menu_state::set_byte(
+            game,
+            crate::menu_state::Word::pausemenu_palette_animation_frame,
+            0,
             frame as u8,
         );
         let timer = game
             .native_image()
             .read(sm_data::cartridge::lorom_offset(0x82c10c) as usize + 3 * frame as usize);
         if timer != 0xff {
-            game.ram()
-                .write_byte(crate::ram::words::pausemenu_palette_animation_timer, timer);
+            crate::menu_state::set_byte(
+                game,
+                crate::menu_state::Word::pausemenu_palette_animation_timer,
+                0,
+                timer,
+            );
             break;
         }
         game.queue_sound(2, 0x2a_u8, 6);
         frame = 0;
     }
-    let frame_word = u16::from_ne_bytes([0, word!(game.pausemenu_palette_animation_frame) as u8]);
+    let frame_word = u16::from_ne_bytes([
+        0,
+        crate::menu!(game.pausemenu_palette_animation_frame) as u8,
+    ]);
     let mut source = (frame_word >> 3) + 30;
     for index in (176..192).rev() {
         let color = grid_word(
@@ -1037,14 +1058,29 @@ pub fn display_elevator_destinations<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn reset_animations<H: Host + ?Sized>(game: &mut H) {
-    word! { game, 0;
-        pausemenu_reserve_tank_delay_ctr, reg_BG1HOFS, reg_BG2HOFS, reg_BG3HOFS, reg_BG2VOFS,
-        reg_BG3VOFS, pausemenu_button_label_mode, pausemenu_lr_animation_frame, UNUSED_word_7E0745,
-        samus_position_indicator_animation_frame, samus_position_indicator_animation_timer,
-        samus_position_indicator_animation_loop_counter,
+    {
+        crate::menu!(game.pausemenu_reserve_tank_delay_ctr = 0);
+        word!(game.reg_BG1HOFS = 0);
+        word!(game.reg_BG2HOFS = 0);
+        word!(game.reg_BG3HOFS = 0);
+        word!(game.reg_BG2VOFS = 0);
+        word!(game.reg_BG3VOFS = 0);
+        crate::menu!(game.pausemenu_button_label_mode = 0);
+        crate::menu!(game.pausemenu_lr_animation_frame = 0);
+        crate::menu!(game.UNUSED_word_7E0745 = 0);
+        word!(game.samus_position_indicator_animation_frame = 0);
+        word!(game.samus_position_indicator_animation_timer = 0);
+        word!(game.samus_position_indicator_animation_loop_counter = 0);
     }
-    word! {game; pausemenu_lr_animation_timer = game.native_image().table_word(sm_data::cartridge::lorom_offset(0x82c10c) as usize, 0);
-    pausemenu_palette_animation_timer = 1; pausemenu_palette_animation_frame = 0; }
+    {
+        crate::menu!(
+            game.pausemenu_lr_animation_timer = game
+                .native_image()
+                .table_word(sm_data::cartridge::lorom_offset(0x82c10c) as usize, 0)
+        );
+        crate::menu!(game.pausemenu_palette_animation_timer = 1);
+        crate::menu!(game.pausemenu_palette_animation_frame = 0);
+    }
 }
 
 pub fn center_map<H: Host + ?Sized>(vertical_center: u16, game: &mut H) {
@@ -1324,13 +1360,14 @@ pub fn draw_equipment_selector<H: Host + ?Sized>(game: &mut H) {
         &game.pause_menu_tables().selector_positions,
         game,
         SELECTOR_POSITION_ADDRESS,
-        word!(game.pausemenu_equipment_category_item) as u8 as isize,
+        crate::menu!(game.pausemenu_equipment_category_item) as u8 as isize,
     )
     .wrapping_add(
-        4 * u16::from(
-            game.ram()
-                .read_byte(crate::ram::words::pausemenu_equipment_category_item + 1),
-        ),
+        4 * u16::from(crate::menu_state::get_byte(
+            &*game,
+            crate::menu_state::Word::pausemenu_equipment_category_item,
+            1,
+        )),
     );
     let position = map_record(address, game);
     animate_pause_sprite(3, position.word(0).wrapping_sub(1), position.word(2), game);

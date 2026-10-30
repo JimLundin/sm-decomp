@@ -301,7 +301,10 @@ pub fn fade_out<H: Host + ?Sized>(game: &mut H, screen: u16, enable: fn(&mut H))
         }
         11 => {
             word!(game.game_state = 4);
-            word! { game, 0; menu_index, game_options_screen_index }
+            {
+                crate::menu!(game.menu_index = 0);
+                word!(game.game_options_screen_index = 0);
+            }
         }
         _ => word!(game.game_options_screen_index = 4),
     }

@@ -514,7 +514,7 @@ fn setup_pause<H: Host>(game: &mut H) -> CoroutineRet {
 fn advance_pause<H: Host>(game: &mut H) -> CoroutineRet {
     controller_input::filter(3, game);
     // Preserve the eight-entry bounds failure before any tab work.
-    let tab = [0, 1, 2, 3, 4, 5, 6, 7][usize::from(word!(game.menu_index))];
+    let tab = [0, 1, 2, 3, 4, 5, 6, 7][usize::from(crate::menu!(game.menu_index))];
     match tab {
         0 => pause_controls::update_map(game),
         1 => pause_controls::update_equipment(game),
@@ -598,7 +598,10 @@ fn fade_out<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
         word! { game, 0; screen_fade_delay, screen_fade_counter }
         word!(game.game_state += 1);
         if matches!(entry, Entry::GameOverFadeOut) {
-            word! { game, 0; menu_index, debug_disable_sounds }
+            {
+                crate::menu!(game.menu_index = 0);
+                word!(game.debug_disable_sounds = 0);
+            }
         }
     }
     0
@@ -615,7 +618,10 @@ fn exit_time_up<H: Host>(game: &mut H) -> CoroutineRet {
         }
         cancel_sound_effects(game, 15);
         if crate::progress::event_happened(&mut game.runtime(), 0xe) {
-            word! { game, 0; game_options_screen_index, menu_index }
+            {
+                word!(game.game_options_screen_index = 0);
+                crate::menu!(game.menu_index = 0);
+            }
             word_transfers!(game, descending, 128; le(eproj_y_subpos, 142) <- value(0));
             word!(game.game_state = kGameState_25_SamusNoHealth as u16);
         } else {

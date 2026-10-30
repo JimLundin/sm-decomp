@@ -21,14 +21,17 @@ pub fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     map_menu::scroll_limits(game);
     map_menu::center_map(0x80, game);
     word! { game, 1; screen_fade_delay, screen_fade_counter }
-    word! { game; pausemenu_leftarrow_animation_frame = 0; pausemenu_palette_animation_timer = 1; }
+    {
+        crate::menu!(game.pausemenu_leftarrow_animation_frame = 0);
+        crate::menu!(game.pausemenu_palette_animation_timer = 1);
+    }
     word! { game, 0; map_scrolling_direction, map_scrolling_speed_index }
     game.queue_fx_clear();
     word!(game.game_state += 1);
 }
 
 pub fn fade_in<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u8 {
-    if word!(game.menu_index) != 0 {
+    if crate::menu!(game.menu_index) != 0 {
         draw_equipment(game);
     } else {
         draw_map(game);
@@ -46,14 +49,14 @@ pub fn update_map<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     map_menu::scroll_arrows(map_menu::MapScreen::Pause, game);
     map_menu::scroll(game);
     draw_map(game);
-    word!(game.pause_screen_mode = 0);
+    crate::menu!(game.pause_screen_mode = 0);
 }
 
 pub fn update_equipment<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     word! { game, 0; reg_BG1HOFS, reg_BG1VOFS }
     equipment_menu::update(game);
     advance(game);
-    word!(game.pause_screen_mode = 1);
+    crate::menu!(game.pause_screen_mode = 1);
 }
 
 pub fn fade_tab<const EQUIPMENT: bool, H: crate::menus::host::Host + ?Sized>(game: &mut H) {
@@ -62,15 +65,15 @@ pub fn fade_tab<const EQUIPMENT: bool, H: crate::menus::host::Host + ?Sized>(gam
     } else {
         draw_map(game);
     }
-    word!(game.pause_screen_mode = u16::from(EQUIPMENT));
+    crate::menu!(game.pause_screen_mode = u16::from(EQUIPMENT));
     game.fade(true);
     if game.ram().read_byte(crate::ram::mirror::INIDISP) == 15 {
         word! { game, 0; screen_fade_delay, screen_fade_counter }
-        let mut selected = word!(game.pausemenu_button_label_mode);
-        if word!(game.pausemenu_button_label_mode) != 0 {
+        let mut selected = crate::menu!(game.pausemenu_button_label_mode);
+        if crate::menu!(game.pausemenu_button_label_mode) != 0 {
             selected = 1;
         }
-        word!(game.menu_index = selected);
+        crate::menu!(game.menu_index = selected);
     }
 }
 
@@ -89,13 +92,13 @@ pub fn fade_out_tab<H: crate::menus::host::Host + ?Sized>(
     draw_shoulder(game);
     // Equipment fade preserves this mode; map fade resets it after drawing.
     if !equipment {
-        word!(game.pause_screen_mode = 0);
+        crate::menu!(game.pause_screen_mode = 0);
     }
     game.fade(false);
     if game.ram().read_byte(crate::ram::mirror::INIDISP) == 0x80 {
         enable(game);
         word! { game, 0; screen_fade_delay, screen_fade_counter }
-        word!(game.menu_index += 1);
+        crate::menu!(game.menu_index += 1);
     }
 }
 
@@ -111,16 +114,18 @@ pub fn load_tab<H: crate::menus::host::Host + ?Sized>(
     upload(game);
     if equipment {
         word!(game.reg_BG1VOFS = 0);
-        word!(game.pause_screen_mode = 1);
+        crate::menu!(game.pause_screen_mode = 1);
     }
-    menu_tilemap::pause_labels(word!(game.pausemenu_button_label_mode), game);
-    word!(game.pausemenu_lr_animation_frame = 0);
-    word!(game.pausemenu_lr_animation_timer = menu_tilemap::native_record(0x82c10c, game).word(0));
+    menu_tilemap::pause_labels(crate::menu!(game.pausemenu_button_label_mode), game);
+    crate::menu!(game.pausemenu_lr_animation_frame = 0);
+    crate::menu!(
+        game.pausemenu_lr_animation_timer = menu_tilemap::native_record(0x82c10c, game).word(0)
+    );
     word! { game, 1; screen_fade_delay, screen_fade_counter }
     if !equipment {
-        word!(game.pause_screen_mode = 0);
+        crate::menu!(game.pause_screen_mode = 0);
     }
-    word!(game.menu_index += 1);
+    crate::menu!(game.menu_index += 1);
 }
 
 fn draw_map<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
@@ -136,7 +141,7 @@ pub fn draw_equipment<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 
 pub fn draw_unpause<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     draw_start(game);
-    if word!(game.pause_screen_mode) == 1 {
+    if crate::menu!(game.pause_screen_mode) == 1 {
         draw_equipment(game);
         draw_shoulder(game);
     } else {
@@ -198,11 +203,11 @@ fn advance<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     if word!(game.newly_held_down_timed_held_input) & kButton_Start as u16 != 0 {
         game.queue_sound(0, 0x38_u8, 6);
         word! { game, 1; screen_fade_delay, screen_fade_counter }
-        let previous = word!(game.pausemenu_button_label_mode);
-        word!(game.pausemenu_button_label_mode = 1);
-        menu_tilemap::pause_labels(word!(game.pausemenu_button_label_mode), game);
-        word!(game.pausemenu_button_label_mode = previous);
-        word!(game.pausemenu_start_lr_pressed_highlight_timer = 11);
+        let previous = crate::menu!(game.pausemenu_button_label_mode);
+        crate::menu!(game.pausemenu_button_label_mode = 1);
+        menu_tilemap::pause_labels(crate::menu!(game.pausemenu_button_label_mode), game);
+        crate::menu!(game.pausemenu_button_label_mode = previous);
+        crate::menu!(game.pausemenu_start_lr_pressed_highlight_timer = 11);
         word!(game.game_state += 1);
     }
     menu_tilemap::queue_pause_labels(game);
@@ -211,34 +216,39 @@ fn advance<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 fn shoulder_input<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     let (menu, highlight, mode) =
         if word!(game.newly_held_down_timed_held_input) & kButton_L as u16 != 0 {
-            if word!(game.pausemenu_button_label_mode) == 0 {
+            if crate::menu!(game.pausemenu_button_label_mode) == 0 {
                 return;
             }
             (5, 1, 0)
         } else if word!(game.newly_held_down_timed_held_input) & kButton_R as u16 != 0
-            && word!(game.pausemenu_button_label_mode) != 2
+            && crate::menu!(game.pausemenu_button_label_mode) != 2
         {
             (2, 2, 2)
         } else {
             return;
         };
-    word!(game.pausemenu_start_lr_pressed_highlight_timer = 5);
-    word! {game; menu_index = menu; pausemenu_shoulder_button_highlight = highlight; pausemenu_button_label_mode = mode; }
-    menu_tilemap::pause_labels(word!(game.pausemenu_button_label_mode), game);
-    game.queue_sound(0, 0x38_u8, 6);
+    crate::menu!(game.pausemenu_start_lr_pressed_highlight_timer = 5);
+    {
+        crate::menu!(game.menu_index = menu);
+        crate::menu!(game.pausemenu_shoulder_button_highlight = highlight);
+        crate::menu!(game.pausemenu_button_label_mode = mode);
+    }
+    menu_tilemap::pause_labels(crate::menu!(game.pausemenu_button_label_mode), game);
+    game.queue_sound(0, (0x38) as u8, 6);
 }
 
 fn tick_highlight<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> bool {
-    if word!(game.pausemenu_start_lr_pressed_highlight_timer) == 0 {
+    if crate::menu!(game.pausemenu_start_lr_pressed_highlight_timer) == 0 {
         return false;
     }
-    word!(game.pausemenu_start_lr_pressed_highlight_timer -= 1);
+    crate::menu!(game.pausemenu_start_lr_pressed_highlight_timer -= 1);
     true
 }
 
 pub fn draw_shoulder<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    if tick_highlight(game) && word!(game.pausemenu_shoulder_button_highlight) != 0 {
-        let index = (i32::from(word!(game.pausemenu_shoulder_button_highlight)) - 1) as usize;
+    if tick_highlight(game) && crate::menu!(game.pausemenu_shoulder_button_highlight) != 0 {
+        let index =
+            (i32::from(crate::menu!(game.pausemenu_shoulder_button_highlight)) - 1) as usize;
         let (sprite, x) = [(0x28, 0x18), (0x29, 0xe8)][index];
         crate::sprite_output::menu(sprite, x, 0xcf, 0, game);
     }

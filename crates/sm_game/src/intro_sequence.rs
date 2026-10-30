@@ -534,7 +534,7 @@ pub fn boom_fade_out<H: Host + ?Sized>(game: &mut H) {
             game.ram().write_byte(mirror::TSW, 0);
             game.ram().write_byte(mirror::BGMODE, 9);
             word!(game.game_options_screen_index = 0);
-            word!(game.menu_index = 0);
+            crate::menu!(game.menu_index = 0);
             crate::word_transfers!(game, descending, 128; le(cinematicbg_arr7, 135) <- value(0));
             word!(game.game_state = SAMUS_NO_HEALTH);
         } else {

@@ -149,16 +149,28 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
     }
     match display {
         Title => {
-            word! { game, 0;
-                oam_next_ptr, menu_option_index, screen_fade_delay, screen_fade_counter,
-                pausemenu_start_lr_pressed_highlight_timer, pausemenu_lr_animation_timer,
-                pausemenu_item_selector_animation_timer, pausemenu_reserve_tank_animation_timer,
-                UNUSED_word_7E0731, UNUSED_word_7E073D, pausemenu_lr_animation_frame,
-                pausemenu_item_selector_animation_frame, pausemenu_reserve_tank_animation_frame,
-                UNUSED_word_7E0745, pausemenu_shoulder_button_highlight, pausemenu_button_label_mode,
-                pausemenu_equipment_category_item, pausemenu_reserve_tank_delay_ctr, UNUSED_word_7E0759,
-                samus_reserve_health, samus_reserve_missiles, cinematic_var5,
-            }
+            word!(game.oam_next_ptr = 0);
+            word!(game.menu_option_index = 0);
+            word!(game.screen_fade_delay = 0);
+            word!(game.screen_fade_counter = 0);
+            crate::menu!(game.pausemenu_start_lr_pressed_highlight_timer = 0);
+            crate::menu!(game.pausemenu_lr_animation_timer = 0);
+            crate::menu!(game.pausemenu_item_selector_animation_timer = 0);
+            crate::menu!(game.pausemenu_reserve_tank_animation_timer = 0);
+            crate::menu!(game.UNUSED_word_7E0731 = 0);
+            crate::menu!(game.UNUSED_word_7E073D = 0);
+            crate::menu!(game.pausemenu_lr_animation_frame = 0);
+            crate::menu!(game.pausemenu_item_selector_animation_frame = 0);
+            crate::menu!(game.pausemenu_reserve_tank_animation_frame = 0);
+            crate::menu!(game.UNUSED_word_7E0745 = 0);
+            crate::menu!(game.pausemenu_shoulder_button_highlight = 0);
+            crate::menu!(game.pausemenu_button_label_mode = 0);
+            crate::menu!(game.pausemenu_equipment_category_item = 0);
+            crate::menu!(game.pausemenu_reserve_tank_delay_ctr = 0);
+            crate::menu!(game.UNUSED_word_7E0759 = 0);
+            word!(game.samus_reserve_health = 0);
+            word!(game.samus_reserve_missiles = 0);
+            word!(game.cinematic_var5 = 0);
         }
         Intro => {
             word! { game, 0; oam_next_ptr, cinematic_var5 }

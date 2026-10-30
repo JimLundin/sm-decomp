@@ -16,18 +16,18 @@ pub fn prepare_menu<H: Host + ?Sized>(game: &mut H) {
         let label = menu_tilemap::native_record(address, game);
         menu_tilemap::reserve_label(|index| label.word(2 * index), game);
     }
-    word!(game.pausemenu_item_selector_animation_frame = 0);
-    word!(
+    crate::menu!(game.pausemenu_item_selector_animation_frame = 0);
+    crate::menu!(
         game.pausemenu_item_selector_animation_timer =
             u16::from(menu_tilemap::native_record(0x82c10c, game).byte(0))
     );
-    word!(game.pausemenu_reserve_tank_animation_frame = 0);
-    word!(
+    crate::menu!(game.pausemenu_reserve_tank_animation_frame = 0);
+    crate::menu!(
         game.pausemenu_reserve_tank_animation_timer =
             u16::from(menu_tilemap::native_record(0x82c165, game).byte(0))
     );
     if word!(game.samus_max_reserve_health) != 0 {
-        word!(game.pausemenu_equipment_category_item = 0);
+        crate::menu!(game.pausemenu_equipment_category_item = 0);
     } else {
         'category: for (category, count, masks, collected) in [
             (1, 5, 0x82c04c, fields::collected_beams),
@@ -39,7 +39,7 @@ pub fn prepare_menu<H: Host + ?Sized>(game: &mut H) {
             for index in 0..count {
                 if crate::menu_lists::equipment_bit(game, masks, index) & at!(game, collected;) != 0
                 {
-                    word!(
+                    crate::menu!(
                         game.pausemenu_equipment_category_item =
                             u16::from_ne_bytes([0, index as u8]) | category
                     );
@@ -89,24 +89,27 @@ fn transfer_one<H: Host + ?Sized>(adjust_zero: bool, game: &mut H) -> bool {
 }
 
 pub fn transfer_manual<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.pausemenu_reserve_tank_delay_ctr) == 0 {
+    if crate::menu!(game.pausemenu_reserve_tank_delay_ctr) == 0 {
         if word!(game.joypad1_newkeys) & kButton_A as u16 == 0 {
             return;
         }
-        word!(
+        crate::menu!(
             game.pausemenu_reserve_tank_delay_ctr =
                 (i32::from(word!(game.samus_reserve_health)) + 7 & 0xfff8) as u16
         );
     }
-    if word!(game.pausemenu_reserve_tank_delay_ctr -= 1, reread) & 7 == 7 {
-        game.queue_sound(2, 0x2d_u8, 6);
+    if crate::menu!(game.pausemenu_reserve_tank_delay_ctr -= 1, reread) & 7 == 7 {
+        game.queue_sound(2, (0x2d) as u8, 6);
     }
     if transfer_one(true, game) {
         return;
     }
-    word! { game, 0; samus_reserve_health, pausemenu_reserve_tank_delay_ctr }
+    {
+        word!(game.samus_reserve_health = 0);
+        crate::menu!(game.pausemenu_reserve_tank_delay_ctr = 0);
+    }
     menu_tilemap::reserve_arrow_tiles(false, game);
-    word!(game.pausemenu_equipment_category_item = 0);
+    crate::menu!(game.pausemenu_equipment_category_item = 0);
 }
 
 pub fn refill_auto<H: Host + ?Sized>(game: &mut H) -> u8 {

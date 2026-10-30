@@ -114,6 +114,16 @@ pub fn set<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, value: u16) {
     }
 }
 
+/// Byte `lane` (0 low, 1 high) of `word` as the host's projection holds it.
+pub fn get_byte<H: CompatibilityRam + ?Sized>(h: &H, word: Word, lane: usize) -> u8 {
+    h.compatibility_byte(MENU + 2 * word as usize + lane)
+}
+
+/// Store byte `lane` (0 low, 1 high) of `word` through the host's projection.
+pub fn set_byte<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, lane: usize, value: u8) {
+    h.compatibility_write_byte(MENU + 2 * word as usize + lane, value);
+}
+
 /// Typed access to the menu words through the host's projected bytes, in the
 /// shapes the named word accesses used: read, store, `+=`/`-=` (reading the
 /// old value first), and `-=` with a reread of the stored value.

@@ -123,7 +123,7 @@ pub fn main_menu<H: Host + ?Sized>(game: &mut H) {
     word! {game; slot_a_helmet_y_pos = 47; slot_b_helmet_y_pos = 87; slot_c_helmet_y_pos = 127; }
     word! { game, 1; screen_fade_delay, screen_fade_counter }
     game.set_blank(false);
-    word!(game.menu_index += 1);
+    crate::menu!(game.menu_index += 1);
     word! { game, 0; file_copy_selection, file_copy_source_slot, file_copy_destination_slot }
 }
 
@@ -385,13 +385,14 @@ pub enum ReserveArrow {
 }
 
 pub fn update_reserve_arrow<H: Host + ?Sized>(game: &mut H) {
-    let mode = if word!(game.pausemenu_equipment_category_item) as u8 != 0 {
+    let mode = if crate::menu!(game.pausemenu_equipment_category_item) as u8 != 0 {
         ReserveArrow::Off
     } else {
-        [ReserveArrow::Animated, ReserveArrow::On][usize::from(
-            game.ram()
-                .read_byte(crate::ram::words::pausemenu_equipment_category_item + 1),
-        )]
+        [ReserveArrow::Animated, ReserveArrow::On][usize::from(crate::menu_state::get_byte(
+            &*game,
+            crate::menu_state::Word::pausemenu_equipment_category_item,
+            1,
+        ))]
     };
     reserve_arrow(mode, game);
 }
@@ -619,18 +620,19 @@ fn reserve_palette<H: Host + ?Sized>(game: &mut H) -> u16 {
     if word!(game.samus_reserve_health) == 0 {
         return 1536;
     }
-    let expired = word!(game.pausemenu_reserve_tank_animation_timer -= 1, reread) & 0x8000 != 0;
-    if word!(game.pausemenu_reserve_tank_animation_timer) == 0 || expired {
-        word!(game.pausemenu_reserve_tank_animation_frame += 1);
+    let expired =
+        crate::menu!(game.pausemenu_reserve_tank_animation_timer -= 1, reread) & 0x8000 != 0;
+    if crate::menu!(game.pausemenu_reserve_tank_animation_timer) == 0 || expired {
+        crate::menu!(game.pausemenu_reserve_tank_animation_frame += 1);
         let mut timer = u16::from(
             native_record(0x82c165, game)
-                .byte(2 * usize::from(word!(game.pausemenu_reserve_tank_animation_frame))),
+                .byte(2 * usize::from(crate::menu!(game.pausemenu_reserve_tank_animation_frame))),
         );
         if timer == 255 {
-            word!(game.pausemenu_reserve_tank_animation_frame = 0);
+            crate::menu!(game.pausemenu_reserve_tank_animation_frame = 0);
             timer = u16::from(native_record(0x82c165, game).byte(0));
         }
-        word!(game.pausemenu_reserve_tank_animation_timer = timer);
+        crate::menu!(game.pausemenu_reserve_tank_animation_timer = timer);
     }
     super::map_menu::animation_palette(game, 3)
 }

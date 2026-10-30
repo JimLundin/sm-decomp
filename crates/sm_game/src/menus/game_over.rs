@@ -24,7 +24,7 @@ pub fn advance<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> CoroutineR
         load_map::<H>,
         fade_to_title::<H>,
     ];
-    states[word!(game.menu_index) as usize](game);
+    states[crate::menu!(game.menu_index) as usize](game);
     0
 }
 
@@ -45,7 +45,7 @@ fn prepare<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
             reg_BG1HOFS, reg_BG2HOFS, reg_BG3HOFS, reg_BG1VOFS, reg_BG2VOFS, reg_BG3VOFS,
         }
         menu_tilemap::load_palette(game);
-        word!(game.menu_index += 1);
+        crate::menu!(game.menu_index += 1);
     }
 }
 
@@ -83,7 +83,7 @@ fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
             game.spawn_hdma(0x81, &SpawnHdmaObject_Args::new(0, register, script));
         }
         game.set_blank(false);
-        word!(game.menu_index += 1);
+        crate::menu!(game.menu_index += 1);
         word! { game, 0; screen_fade_delay, screen_fade_counter, file_select_map_area_index }
         word! {game; menu_selection_missile_x_pos = 40; menu_selection_missile_y_pos = 160; }
     }
@@ -91,7 +91,7 @@ fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 
 fn wait_for_music<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     if game.has_queued_music() == 0 {
-        word!(game.menu_index += 1);
+        crate::menu!(game.menu_index += 1);
         game.queue_music_delayed8(4);
     }
 }
@@ -109,7 +109,7 @@ fn fade<H: crate::menus::host::Host + ?Sized>(fade_in: bool, brightness: u8, gam
     crate::sprite_output::menu_selection(game);
     game.fade(fade_in);
     if game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf == brightness {
-        word!(game.menu_index += 1);
+        crate::menu!(game.menu_index += 1);
     }
 }
 
@@ -124,12 +124,12 @@ fn choose<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     } else if word!(game.joypad1_newkeys) & kButton_A as u16 != 0 {
         slot!(game, EnemyBase[0].instruction_timer = 180);
         if word!(game.file_select_map_area_index) != 0 {
-            word!(game.menu_index = 7);
+            crate::menu!(game.menu_index = 7);
         } else {
             if word!(game.loading_game_state) == kGameState_31_SetUpNewGame as u16 {
                 word!(game.game_state = word!(game.loading_game_state));
             } else {
-                word!(game.menu_index += 1);
+                crate::menu!(game.menu_index += 1);
             }
             let _load_result = save_slots::load(word!(game.selected_save_slot), game);
             game.observe_selected_continue(_load_result);
@@ -149,7 +149,10 @@ fn load_map<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     {
         game.clear_hdma()
     };
-    word! {game; game_state = kGameState_5_FileSelectMap as u16; menu_index = 0; }
+    {
+        word!(game.game_state = kGameState_5_FileSelectMap as u16);
+        crate::menu!(game.menu_index = 0);
+    }
 }
 
 fn fade_to_title<H: crate::menus::host::Host + ?Sized>(game: &mut H) {

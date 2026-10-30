@@ -51,7 +51,7 @@ fn category<H: Host + ?Sized>(game: &H, index: isize) -> Category {
 }
 
 pub fn update<H: Host + ?Sized>(game: &mut H) {
-    let category = word!(game.pausemenu_equipment_category_item) as u8;
+    let category = crate::menu!(game.pausemenu_equipment_category_item) as u8;
     let NAVIGATE: [fn(&mut H); 4] = [reserves, beams, suits, boots];
     NAVIGATE[usize::from(category)](game);
     match category {
@@ -59,14 +59,14 @@ pub fn update<H: Host + ?Sized>(game: &mut H) {
         1 => {
             let previous = word!(game.equipped_beams);
             if word!(game.collected_beams) != 0
-                && word!(game.pausemenu_equipment_category_item) as u8 == 1
+                && crate::menu!(game.pausemenu_equipment_category_item) as u8 == 1
             {
                 toggle(10, game);
                 exclude_other_beam(previous, game);
             }
         }
         _ => {
-            if word!(game.pausemenu_equipment_category_item) as u8 == category {
+            if crate::menu!(game.pausemenu_equipment_category_item) as u8 == category {
                 toggle(18, game);
             }
         }
@@ -81,11 +81,12 @@ fn reserves<H: Host + ?Sized>(game: &mut H) {
         |game| super::reserve_tanks::toggle_mode(game),
         |game| super::reserve_tanks::transfer_manual(game),
     ];
-    ACTIONS[usize::from(
-        game.ram()
-            .read_byte(crate::ram::words::pausemenu_equipment_category_item + 1),
-    )](game);
-    let previous = word!(game.pausemenu_equipment_category_item);
+    ACTIONS[usize::from(crate::menu_state::get_byte(
+        &*game,
+        crate::menu_state::Word::pausemenu_equipment_category_item,
+        1,
+    ))](game);
+    let previous = crate::menu!(game.pausemenu_equipment_category_item);
     if word!(game.joypad1_newkeys) & kButton_Right as u16 != 0 {
         if word!(game.joypad1_newkeys) & kButton_Down as u16 != 0
             || scan(2, 0, false, None, game) == 0xffff
@@ -93,15 +94,15 @@ fn reserves<H: Host + ?Sized>(game: &mut H) {
             scan(3, 0, false, Some(previous), game);
         }
     } else if word!(game.joypad1_newkeys) & kButton_Up as u16 != 0 {
-        if word!(game.pausemenu_equipment_category_item) & 0xff00 != 0 {
-            game.queue_sound(0, 0x37_u8, 6);
-            word!(game.pausemenu_equipment_category_item -= 256);
+        if crate::menu!(game.pausemenu_equipment_category_item) & 0xff00 != 0 {
+            game.queue_sound(0, (0x37) as u8, 6);
+            crate::menu!(game.pausemenu_equipment_category_item -= 256);
         }
     } else if word!(game.joypad1_newkeys) & kButton_Down as u16 != 0 {
-        if word!(game.pausemenu_equipment_category_item) & 0xff00 == 256
+        if crate::menu!(game.pausemenu_equipment_category_item) & 0xff00 == 256
             || word!(game.reserve_health_mode) == 1
             || {
-                word!(game.pausemenu_equipment_category_item += 256);
+                crate::menu!(game.pausemenu_equipment_category_item += 256);
                 word!(game.samus_reserve_health) == 0
             }
         {
@@ -113,7 +114,7 @@ fn reserves<H: Host + ?Sized>(game: &mut H) {
 }
 
 fn beams<H: Host + ?Sized>(game: &mut H) {
-    let previous = word!(game.pausemenu_equipment_category_item);
+    let previous = crate::menu!(game.pausemenu_equipment_category_item);
     if word!(game.joypad1_newkeys) & kButton_Right as u16 != 0 {
         if word!(game.joypad1_newkeys) & kButton_Up as u16 != 0 {
             scan(2, 0, false, None, game);
@@ -121,35 +122,36 @@ fn beams<H: Host + ?Sized>(game: &mut H) {
             scan(3, 0, false, Some(previous), game);
         }
     } else if word!(game.joypad1_newkeys) & kButton_Down as u16 != 0 {
-        if word!(game.hyper_beam_flag) == 0 && word!(game.pausemenu_equipment_category_item) != 1025
+        if word!(game.hyper_beam_flag) == 0
+            && crate::menu!(game.pausemenu_equipment_category_item) != 1025
         {
             scan(1, shift(256, game), false, Some(previous), game);
         }
     } else if word!(game.joypad1_newkeys) & kButton_Up as u16 != 0
-        && (word!(game.pausemenu_equipment_category_item) & 0xff00 == 0
+        && (crate::menu!(game.pausemenu_equipment_category_item) & 0xff00 == 0
             || scan(1, shift(-256, game), true, None, game) == 0xffff)
         && select_reserves(game) == 0
     {
-        word!(game.pausemenu_equipment_category_item = previous);
+        crate::menu!(game.pausemenu_equipment_category_item = previous);
     }
 }
 
 fn suits<H: Host + ?Sized>(game: &mut H) {
-    let previous = word!(game.pausemenu_equipment_category_item);
+    let previous = crate::menu!(game.pausemenu_equipment_category_item);
     if word!(game.joypad1_newkeys) & kButton_Left as u16 != 0 {
         if word!(game.joypad1_newkeys) & kButton_Down as u16 == 0 {
             if select_reserves(game) != 0 {
                 return;
             }
-            word!(game.pausemenu_equipment_category_item = previous);
+            crate::menu!(game.pausemenu_equipment_category_item = previous);
         }
         scan(1, 0, false, Some(previous), game);
     } else if word!(game.joypad1_newkeys) & kButton_Up as u16 != 0 {
-        if word!(game.pausemenu_equipment_category_item) & 0xff00 != 0 {
+        if crate::menu!(game.pausemenu_equipment_category_item) & 0xff00 != 0 {
             scan(2, shift(-256, game), true, Some(previous), game);
         }
     } else if word!(game.joypad1_newkeys) & kButton_Down as u16 != 0
-        && (word!(game.pausemenu_equipment_category_item) & 0xff00 == 1280
+        && (crate::menu!(game.pausemenu_equipment_category_item) & 0xff00 == 1280
             || scan(2, shift(256, game), false, None, game) == 0xffff)
     {
         scan(3, 0, false, Some(previous), game);
@@ -157,20 +159,20 @@ fn suits<H: Host + ?Sized>(game: &mut H) {
 }
 
 fn boots<H: Host + ?Sized>(game: &mut H) {
-    let previous = word!(game.pausemenu_equipment_category_item);
+    let previous = crate::menu!(game.pausemenu_equipment_category_item);
     if word!(game.joypad1_newkeys) & kButton_Left as u16 != 0 {
         if (word!(game.joypad1_newkeys) & kButton_Up as u16 != 0
             || scan(1, 8, true, None, game) == 0xffff)
             && select_reserves(game) == 0
         {
-            word!(game.pausemenu_equipment_category_item = previous);
+            crate::menu!(game.pausemenu_equipment_category_item = previous);
         }
     } else if word!(game.joypad1_newkeys) & kButton_Down as u16 != 0 {
-        if word!(game.pausemenu_equipment_category_item) != 515 {
+        if crate::menu!(game.pausemenu_equipment_category_item) != 515 {
             scan(3, shift(256, game), false, Some(previous), game);
         }
     } else if word!(game.joypad1_newkeys) & kButton_Up as u16 != 0
-        && (word!(game.pausemenu_equipment_category_item) & 0xff00 == 0
+        && (crate::menu!(game.pausemenu_equipment_category_item) & 0xff00 == 0
             || scan(3, shift(-256, game), true, None, game) == 0xffff)
     {
         scan(2, 10, true, Some(previous), game);
@@ -178,19 +180,20 @@ fn boots<H: Host + ?Sized>(game: &mut H) {
 }
 
 fn shift<H: Host + ?Sized>(amount: i16, game: &mut H) -> u16 {
-    word!(game.pausemenu_equipment_category_item += amount as u16);
+    crate::menu!(game.pausemenu_equipment_category_item += amount as u16);
     // The original selector reads this physical byte, independently of host endian.
-    2 * u16::from(
-        game.ram()
-            .read_byte(crate::ram::words::pausemenu_equipment_category_item + 1),
-    )
+    2 * u16::from(crate::menu_state::get_byte(
+        &*game,
+        crate::menu_state::Word::pausemenu_equipment_category_item,
+        1,
+    ))
 }
 
 fn select_reserves<H: Host + ?Sized>(game: &mut H) -> u16 {
     let maximum = word!(game.samus_max_reserve_health);
     if word!(game.samus_max_reserve_health) != 0 {
-        word!(game.pausemenu_equipment_category_item = 0);
-        game.queue_sound(0, 0x37_u8, 6);
+        crate::menu!(game.pausemenu_equipment_category_item = 0);
+        game.queue_sound(0, (0x37) as u8, 6);
         1
     } else {
         maximum
@@ -237,18 +240,18 @@ fn scan<H: Host + ?Sized>(
     }
     if !found {
         if let Some(previous) = fallback {
-            word!(game.pausemenu_equipment_category_item = previous);
+            crate::menu!(game.pausemenu_equipment_category_item = previous);
         }
         return 0xffff;
     }
     let selection = ((offset >> 1) << 8) | category;
     // Downward beam selection stores before sound; all other paths store after it.
     if category == 1 && !upward {
-        word!(game.pausemenu_equipment_category_item = selection);
-        game.queue_sound(0, 0x37_u8, 6);
+        crate::menu!(game.pausemenu_equipment_category_item = selection);
+        game.queue_sound(0, (0x37) as u8, 6);
     } else {
-        game.queue_sound(0, 0x37_u8, 6);
-        word!(game.pausemenu_equipment_category_item = selection);
+        game.queue_sound(0, (0x37) as u8, 6);
+        crate::menu!(game.pausemenu_equipment_category_item = selection);
     }
     if category == 2 && !upward {
         0
@@ -286,12 +289,13 @@ fn toggle<H: Host + ?Sized>(bytes: u16, game: &mut H) {
     if word!(game.joypad1_newkeys) & kButton_A as u16 == 0 {
         return;
     }
-    game.queue_sound(0, 0x38_u8, 6);
-    let item = u16::from(
-        game.ram()
-            .read_byte(crate::ram::words::pausemenu_equipment_category_item + 1),
-    );
-    let category = word!(game.pausemenu_equipment_category_item) as u8 as isize;
+    game.queue_sound(0, (0x38) as u8, 6);
+    let item = u16::from(crate::menu_state::get_byte(
+        &*game,
+        crate::menu_state::Word::pausemenu_equipment_category_item,
+        1,
+    ));
+    let category = crate::menu!(game.pausemenu_equipment_category_item) as u8 as isize;
     let tables = self::category(game, category);
     let target = list_entry(tables.tilemap_offsets, item, game) as usize;
     let address = tables.equipped_address;
