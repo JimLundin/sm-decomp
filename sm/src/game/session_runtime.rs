@@ -1034,7 +1034,7 @@ use crate::game::actors::{self, api as actor_api};
 use crate::game::moving_platforms::{self as mechanisms, Event, Kind};
 use crate::game::rippers::{self, Kind as RipperKind};
 use crate::game::{ground_patrol, large_snail};
-use crate::game::{sm_a3, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa, space_pirates};
+use crate::game::{sm_a3, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa};
 use crate::types::EnemyData;
 use sm_game::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
 use sm_game::combat_rules::LatchMode;
@@ -1337,7 +1337,6 @@ crate::game::callback_dispatch! {
         0xa80000..=0xa8ffff => [sm_a8::DispatchEnemyAi(ea, game)];
         0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyAi(ea, game)];
         0xaa0000..=0xaaffff => [sm_aa::DispatchEnemyAi(ea, game)];
-        0xb20000..=0xb2ffff => [space_pirates::dispatch_ai(ea, game)];
         0xb30000..=0xb3ffff => [{ crate::rtl::Unreachable(game); }];
     }
 }
@@ -1529,7 +1528,6 @@ crate::game::callback_dispatch! {
 
         0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyInstr(ea, k, j, game)];
         0xaa0000..=0xaaffff => [sm_aa::DispatchEnemyInstr(ea, k, j, game)];
-        0xb20000..=0xb2ffff => [space_pirates::dispatch_instruction(ea, k, j, game)];
 
 
         11769031 | 11769095 | 11769111 | 11769175 => [{ actors::botwoon::set_hitbox(8, 16, game); j }];
