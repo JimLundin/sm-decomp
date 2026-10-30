@@ -49,30 +49,8 @@ pub struct MiniKraid {
     pub last_spike: u16,
     /// The spike timer checked this frame, as a byte offset: 0, 2 or 4.
     pub spike_cycle: u16,
-    pub var_08: u16,
-    pub var_09: u16,
-    pub var_0a: u16,
-    pub var_0b: u16,
-    pub var_0c: u16,
-    pub var_0d: u16,
-    pub var_0e: u16,
-    pub var_0f: u16,
-    pub var_10: u16,
-    pub var_11: u16,
-    pub var_12: u16,
-    pub var_13: u16,
-    pub var_14: u16,
-    pub var_15: u16,
-    pub var_16: u16,
-    pub var_17: u16,
-    pub var_18: u16,
-    pub var_19: u16,
-    pub var_1a: u16,
-    pub var_1b: u16,
-    pub var_1c: u16,
-    pub var_1d: u16,
-    pub var_1e: u16,
-    pub var_1f: u16,
+    /// The slot's remaining words, unused by the Mini Kraid.
+    pub unused: [u16; 24],
 }
 
 const _: () = {

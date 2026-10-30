@@ -48,30 +48,8 @@ pub struct Boulder {
     pub trigger_height: u16,
     /// Nonzero when the boulder starts on the ground and rolls straight away.
     pub starts_rolling: u16,
-    pub var_08: u16,
-    pub var_09: u16,
-    pub var_0a: u16,
-    pub var_0b: u16,
-    pub var_0c: u16,
-    pub var_0d: u16,
-    pub var_0e: u16,
-    pub var_0f: u16,
-    pub var_10: u16,
-    pub var_11: u16,
-    pub var_12: u16,
-    pub var_13: u16,
-    pub var_14: u16,
-    pub var_15: u16,
-    pub var_16: u16,
-    pub var_17: u16,
-    pub var_18: u16,
-    pub var_19: u16,
-    pub var_1a: u16,
-    pub var_1b: u16,
-    pub var_1c: u16,
-    pub var_1d: u16,
-    pub var_1e: u16,
-    pub var_1f: u16,
+    /// The slot's remaining words, unused by the boulder.
+    pub unused: [u16; 24],
 }
 
 const _: () = {
