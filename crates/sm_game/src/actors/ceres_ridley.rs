@@ -567,8 +567,9 @@ pub fn fireballs_shooting<L: Lease + ?Sized>(game: &mut L) {
     } else {
         word!(game.RANDOM_NUMBER) as i32 & 7
     } as u16;
-    let x = session_slot!(game, Ridley[RIDLEY].target_x).wrapping_add(jitter);
-    let y = session_slot!(game, Ridley[RIDLEY].target_y).wrapping_add(jitter);
+    // The Y add's ADC carries in from the X add, so a negative jitter adds one more.
+    let (x, carry) = crate::carry::adc(session_slot!(game, Ridley[RIDLEY].target_x), jitter, false);
+    let y = crate::carry::adc(session_slot!(game, Ridley[RIDLEY].target_y), jitter, carry).0;
     ridley::ceres_accelerate(0, 0, x, y, game);
     let timer = (session_slot!(game, Ridley[RIDLEY].timer) as i16).wrapping_sub(1);
     session_slot!(game, Ridley[RIDLEY].timer = timer as u16);

@@ -7,6 +7,7 @@ use crate::actors::boss_lease::BossLease;
 use crate::actors::crocomire_attack::{Crocomire, flag, lane};
 use crate::actors::host::{ActorLease, BossEffects, Death, LeaseActors, Slopes};
 use crate::actors::session_slots::session_slot;
+use crate::carry::{adc, sbc};
 use crate::constants::{
     bank_86::{
         ADDR_K_EPROJ_CROCOMIRE_SPIKE_WALL_PIECES, ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION,
@@ -368,8 +369,15 @@ pub fn touch<L: Lease + ?Sized>(game: &mut L) {
 }
 /// Crocomire / Samus collision handling ($A4:8C95). Was `push_player`.
 pub fn samus_collision<L: Lease + ?Sized>(game: &mut L) {
+    // The test's subtracts carry their borrows on, as the original's do ($A4:8C9A).
+    let (edge, carry) = sbc(
+        session_slot!(game, Crocomire[0].base.x_pos),
+        session_slot!(game, Crocomire[0].base.x_width),
+        true,
+    );
+    let (edge, carry) = sbc(edge, word!(game.SAMUS_X_RADIUS), carry);
     if session_slot!(game, Crocomire[0].death_sequence_index) == 0
-        && ((contact_edge(game) - game.player_x() as i32) as i16) < 0
+        && (sbc(edge, game.player_x(), carry).0 as i16) < 0
     {
         contact(game);
         let edge = contact_edge(game) as u16;
@@ -1428,9 +1436,10 @@ fn spawn_dust<H: Host + ?Sized>(jp: EnemyScript, offset: u16, game: &mut H) -> E
     let (x, y) = {
         let runtime = game.lease();
         let actor = runtime.resolve_actor(Key::from_legacy(0), AccessMode::Native);
-        let random = runtime.word(ram::RANDOM_NUMBER) & 7;
+        // The offset's add carries in from the random add, as the original's does.
+        let (x, carry) = adc(runtime.word(ram::RANDOM_NUMBER) & 7, actor.x.whole, false);
         (
-            (actor.x.whole as u32 + offset as u32 + random as u32) as u16,
+            adc(x, offset, carry).0,
             actor.radius.y.wrapping_add(actor.y.whole).wrapping_sub(16),
         )
     };
@@ -1554,14 +1563,13 @@ pub fn instruction<H: Host + ?Sized>(
             let can_walk = {
                 let runtime = game.lease();
                 let actor = runtime.resolve_actor(Key::from_legacy(0), AccessMode::Native);
-                ((actor.x.whole as i32
-                    - actor.radius.x as i32
-                    - 260
-                    - crate::session_access::SessionAccess::session(&runtime)
-                        .room
-                        .camera
-                        .layer1[0] as i32) as i16)
-                    < 0
+                // The subtracts carry their borrows on, as the original's do ($A4:9067).
+                let (edge, carry) = sbc(actor.x.whole, actor.radius.x, true);
+                let (edge, carry) = sbc(edge, 0x100, carry);
+                let camera = crate::session_access::SessionAccess::session(&runtime)
+                    .room
+                    .camera;
+                (sbc(edge, 4, carry).0.wrapping_sub(camera.layer1[0]) as i16) < 0
             };
             if can_walk {
                 walk(game.current_enemy(), 4, game);

@@ -18,6 +18,7 @@ use crate::actors::host::{Death, Shot, abs16, below};
 use crate::actors::layouts::{EnemyBase, same_words};
 use crate::actors::ridley_tables::{set_pogo_speeds, set_tail_segments_from_list};
 use crate::actors::session_slots::{SlotAccess, session_slot};
+use crate::carry::{adc, sbc};
 use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE, K_ENEMY_PROPS_TANGIBLE,
 };
@@ -592,18 +593,6 @@ pub fn homing_velocity(
 enum Deceleration {
     Force(u16),
     DoubleStep,
-}
-
-/// The 65816's 16-bit `ADC`: the sum and its carry out.
-fn adc(a: u16, b: u16, carry: bool) -> (u16, bool) {
-    let sum = u32::from(a) + u32::from(b) + u32::from(carry);
-    (sum as u16, sum > 0xffff)
-}
-
-/// The 65816's 16-bit `SBC`: the difference and its carry (no borrow) out.
-fn sbc(a: u16, b: u16, carry: bool) -> (u16, bool) {
-    let difference = i32::from(a) - i32::from(b) - i32::from(!carry);
-    (difference as u16, difference >= 0)
 }
 
 /// One axis of Ridley's accelerations toward `target`, with the carry the
