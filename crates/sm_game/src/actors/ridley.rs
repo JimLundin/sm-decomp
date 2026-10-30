@@ -3747,7 +3747,7 @@ pub fn spawn_fireball<L: Lease + ?Sized>(
     afterburn: u16,
     game: &mut L,
 ) -> EnemyScript {
-    word!(game.cinematic_y_sub = afterburn);
+    word!(game.eproj_init_param_2 = afterburn);
     game.spawn_room_projectile(FIREBALL, session_slot!(game, Ridley[RIDLEY].facing));
     script
 }
