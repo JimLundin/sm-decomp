@@ -46,9 +46,6 @@ impl sm_game::gameplay_frame::Host for Game {
         self.next_random();
     }
     fn advance_native_state(&mut self, state: NativeState) -> u8 {
-        use crate::game::samus_animation::{
-            advance_death_pose, begin_death, explode_suit, flash_death,
-        };
         use crate::game::sm_8b::{
             GameState_1_OpeningCinematic_, GameState_37_CeresGoesBoomWithSamus_,
             GameState_39_EndingAndCredits_,
@@ -57,10 +54,6 @@ impl sm_game::gameplay_frame::Host for Game {
             NativeState::OpeningCinematic => GameState_1_OpeningCinematic_(self),
             NativeState::CeresGoesBoom => GameState_37_CeresGoesBoomWithSamus_(self),
             NativeState::EndingAndCredits => GameState_39_EndingAndCredits_(self),
-            NativeState::BeginDeath => begin_death(self),
-            NativeState::DeathPose => advance_death_pose(self),
-            NativeState::FlashDeath => flash_death(self),
-            NativeState::ExplodeSuit => explode_suit(self),
         }
     }
     fn resume_room_entry(&mut self, signal: EntrySignal) -> u8 {

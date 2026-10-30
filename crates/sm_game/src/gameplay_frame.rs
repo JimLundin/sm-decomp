@@ -27,7 +27,7 @@ use crate::room_scrolls::{advance_camera, debug_position, fill_viewport, update_
 use crate::runtime_access::RuntimeAccess;
 use crate::session_access::SessionAccess;
 use crate::word_transfers;
-use crate::{escape_timer, hud, message_boxes, sprite_drawing};
+use crate::{escape_timer, hud, message_boxes, samus_death, sprite_drawing};
 
 /// State callbacks the compatibility runtime still implements.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -35,10 +35,6 @@ pub enum NativeState {
     OpeningCinematic,
     CeresGoesBoom,
     EndingAndCredits,
-    BeginDeath,
-    DeathPose,
-    FlashDeath,
-    ExplodeSuit,
 }
 
 /// The room hooks run when the pause screen opens.
@@ -66,6 +62,7 @@ pub trait Host:
     + crate::room_scrolls::Host
     + crate::gameplay_rules::Host
     + crate::display_refresh::Host
+    + crate::samus_death::Host
     + RuntimeAccess
 {
     /// Admit the owned Session for this frame; `fresh` when no pass is resuming.
@@ -120,6 +117,10 @@ enum StateEntry {
     MapMenu,
     PauseFadeIn,
     GameOver,
+    BeginDeath,
+    DeathPose,
+    FlashDeath,
+    ExplodeSuit,
     Door(EntrySignal),
     Demo,
     Options,
@@ -128,8 +129,8 @@ enum StateEntry {
     Debug,
 }
 use StateEntry::{
-    Advance, Debug, Demo, DemoReset, Door, FileMenu, GameOver, MapMenu, Native, Null, Options,
-    PauseFadeIn, Unused,
+    Advance, BeginDeath, DeathPose, Debug, Demo, DemoReset, Door, ExplodeSuit, FileMenu,
+    FlashDeath, GameOver, MapMenu, Native, Null, Options, PauseFadeIn, Unused,
 };
 
 static GAME_STATE_ENTRIES: [StateEntry; 45] = [
@@ -154,10 +155,10 @@ static GAME_STATE_ENTRIES: [StateEntry; 45] = [
     Advance(Entry::Unpause),
     Advance(Entry::PrepareDeath),
     Advance(Entry::DeathBlackout),
-    Native(NativeState::BeginDeath),
-    Native(NativeState::DeathPose),
-    Native(NativeState::FlashDeath),
-    Native(NativeState::ExplodeSuit),
+    BeginDeath,
+    DeathPose,
+    FlashDeath,
+    ExplodeSuit,
     Advance(Entry::GameOverFadeOut),
     GameOver,
     Advance(Entry::ReserveTanks),
@@ -298,6 +299,10 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
             MapMenu => map_menu::advance(game),
             PauseFadeIn => pause_controls::fade_in(game),
             GameOver => game_over::advance(game),
+            BeginDeath => samus_death::begin_death(game),
+            DeathPose => samus_death::advance_death_pose(game),
+            FlashDeath => samus_death::flash_death(game),
+            ExplodeSuit => samus_death::explode_suit(game),
             Door(signal) => game.resume_room_entry(signal),
             Demo => demo_rooms::play(game, |game| advance(Entry::Gameplay, game)),
             Null => 0,

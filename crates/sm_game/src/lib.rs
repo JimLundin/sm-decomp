@@ -254,3 +254,4 @@ pub mod grapple_swing;
 #[allow(unused_assignments)]
 pub mod room_state;
 pub mod runtime_access;
+pub mod samus_death;
