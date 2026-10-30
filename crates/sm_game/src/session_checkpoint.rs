@@ -20,6 +20,7 @@ use std::sync::Arc;
 pub struct AuxiliaryGameplayCheckpoint {
     pub botwoon_death: crate::actors::botwoon_death::DeathProtocol,
     pub timing: crate::session::Timing,
+    pub flow: crate::flow::Flow,
     pub gameplay_flags: crate::gameplay_flag_state::GameplayFlags,
     pub flag_compatibility: crate::gameplay_flag_state::FlagCompatibility,
     pub sprite_effects: crate::sprite_effect_state::SpriteEffects,
@@ -1487,6 +1488,10 @@ checkpoint_fields!(checkpoint_spawn_scratch, checkpoint_read_spawn_scratch, Spaw
     argument: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_timing, checkpoint_read_timing, Timing,
     frame_counter: checkpoint_word/checkpoint_read_word);
+checkpoint_fields!(checkpoint_flow, checkpoint_read_flow, crate::flow::Flow,
+    cinematic_function: checkpoint_word/checkpoint_read_word, demo_timer: checkpoint_word/checkpoint_read_word,
+    demo_set: checkpoint_word/checkpoint_read_word, demo_scene: checkpoint_word/checkpoint_read_word,
+    num_demo_sets: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_sequence, checkpoint_read_sequence, collision::SequenceWorkspace,
     stage: checkpoint_word/checkpoint_read_word, value: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_multiply, checkpoint_read_multiply, collision::MultiplyScratch,
@@ -1505,7 +1510,7 @@ macro_rules! checkpoint_auxiliary {
                 if metadata.identity.reference != metadata.reference.fingerprint {
                     return Err("auxiliary gameplay checkpoint Reference identity mismatch".into());
                 }
-                let mut bytes = Vec::from(b"SMAUXGS\x03".as_slice());
+                let mut bytes = Vec::from(b"SMAUXGS\x04".as_slice());
                 let binding = observation_binding(metadata);
                 bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
                 bytes.extend_from_slice(&binding);
@@ -1514,7 +1519,7 @@ macro_rules! checkpoint_auxiliary {
             }
             pub fn decode_auxiliary_checkpoint(bytes: &[u8], metadata: &DisplayStartMetadata) -> Result<AuxiliaryGameplayCheckpoint, String> {
                 let mut read = CheckpointReader(bytes);
-                if read.bytes(8)? != b"SMAUXGS\x03" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
+                if read.bytes(8)? != b"SMAUXGS\x04" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
                 let size = usize::try_from(read.counter()?).map_err(|_| "auxiliary gameplay checkpoint binding length overflow")?;
                 if metadata.identity.reference != metadata.reference.fingerprint || read.bytes(size)? != observation_binding(metadata) {
                     return Err("auxiliary gameplay checkpoint source identity or Reference changed".into());
@@ -1566,6 +1571,7 @@ fn checkpoint_read_hdma(
 checkpoint_auxiliary!(
     botwoon_death: checkpoint_botwoon_death/checkpoint_read_botwoon_death,
     timing: checkpoint_timing/checkpoint_read_timing,
+    flow: checkpoint_flow/checkpoint_read_flow,
     gameplay_flags: checkpoint_flags/checkpoint_read_flags,
     flag_compatibility: checkpoint_flag_compatibility/checkpoint_read_flag_compatibility,
     sprite_effects: checkpoint_sprite_effects/checkpoint_read_sprite_effects,
@@ -2186,6 +2192,7 @@ impl NumericGameplayCheckpoint {
         let AuxiliaryGameplayCheckpoint {
             botwoon_death,
             timing,
+            flow,
             gameplay_flags,
             flag_compatibility,
             sprite_effects,
@@ -2208,6 +2215,7 @@ impl NumericGameplayCheckpoint {
             actors: self.actors,
             botwoon_death,
             timing,
+            flow,
             world: self.world,
             control,
             gameplay_flags,

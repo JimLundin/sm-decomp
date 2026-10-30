@@ -31,8 +31,7 @@
 //! no typed copy competes with them. Each moves onto these fields when its domain does; the projection
 //! can shrink once no reader or writer names the RAM words.
 #![forbid(unsafe_code)]
-use crate::runtime_access::{RuntimeAccess, SessionRam};
-use crate::session_access::SessionAccess;
+use crate::runtime_access::SessionRam;
 
 /// The camera's words; see the module documentation for the RAM layout.
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
@@ -59,9 +58,11 @@ pub struct Camera {
     pub ideal_layer1: [u16; 2],
 }
 
-/// The camera as the owned Session holds it, for hosts outside a lease.
-pub fn current<H: RuntimeAccess + ?Sized>(h: &mut H) -> Camera {
-    h.runtime().session().room.camera
+/// The camera as the host's projection holds it, for hosts outside a
+/// lease: the owned Session's projection while one is installed, the byte
+/// image otherwise. It opens no lease.
+pub fn current<H: crate::ram::CompatibilityRam + ?Sized>(h: &H) -> Camera {
+    crate::session_encoding::camera(&|at| h.compatibility_byte(at))
 }
 
 /// Store layer 1's whole position on `axis` (0 = x, 1 = y). The store is

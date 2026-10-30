@@ -5,6 +5,51 @@ use crate::ram::{word_arrays as arrays, words as ram};
 use crate::room_entry::{effects::AssetSlot, world::WorldBinding};
 use crate::{external_inputs::ExternalInputs, session::Session};
 use std::sync::Arc;
+// The camera (`crate::camera`): each axis's x word, then its y word.
+macro_rules! camera_words {
+    (($c:expr), $f:ident, ($($borrow:tt)*)) => {
+        for axis in 0..2 {
+            $f(ram::layer1_x_block+axis*2,$($borrow)* $c.layer1_block[axis]);
+            $f(ram::layer2_x_block+axis*2,$($borrow)* $c.layer2_block[axis]);
+            $f(ram::previous_layer1_x_block+axis*2,$($borrow)* $c.previous_layer1_block[axis]);
+            $f(ram::previous_layer2_x_block+axis*2,$($borrow)* $c.previous_layer2_block[axis]);
+            $f(ram::bg1_x_block+axis*2,$($borrow)* $c.bg1_block[axis]);
+            $f(ram::bg2_x_block+axis*2,$($borrow)* $c.bg2_block[axis]);
+            $f(ram::layer1_x_subpos+axis*4,$($borrow)* $c.layer1_fraction[axis]);
+            $f(ram::layer1_x_pos+axis*4,$($borrow)* $c.layer1[axis]);
+            $f(ram::layer2_x_pos+axis*2,$($borrow)* $c.layer2[axis]);
+            $f(ram::bg1_x_offset+axis*2,$($borrow)* $c.bg1_offset[axis]);
+            $f(ram::bg2_x_scroll+axis*2,$($borrow)* $c.bg2_scroll[axis]);
+            $f(ram::ideal_layer1_xpos+axis*4,$($borrow)* $c.ideal_layer1[axis]);
+        }
+    };
+}
+// The game flow (`crate::flow`), in RAM order.
+macro_rules! flow_words {
+    (($c:expr), $f:ident, ($($borrow:tt)*)) => {
+        $f(ram::cinematic_function,$($borrow)* $c.cinematic_function);
+        $f(ram::demo_timer,$($borrow)* $c.demo_timer);
+        $f(ram::demo_set,$($borrow)* $c.demo_set);
+        $f(ram::demo_scene,$($borrow)* $c.demo_scene);
+        $f(ram::num_demo_sets,$($borrow)* $c.num_demo_sets);
+    };
+}
+/// RAM address of the first flow word, `cinematic_function`.
+pub const FLOW: usize = ram::cinematic_function;
+/// The camera as `bytes` encode it.
+pub fn camera(bytes: &impl Fn(usize) -> u8) -> crate::camera::Camera {
+    let mut camera = crate::camera::Camera::default();
+    let load = |at: usize, value: &mut u16| *value = read(bytes, at);
+    camera_words!((camera), load, (&mut));
+    camera
+}
+/// The flow as `bytes` encode it.
+pub fn flow(bytes: &impl Fn(usize) -> u8) -> crate::flow::Flow {
+    let mut flow = crate::flow::Flow::default();
+    let load = |at: usize, value: &mut u16| *value = read(bytes, at);
+    flow_words!((flow), load, (&mut));
+    flow
+}
 // Head0 owns only these ten bytes; full/odd accesses still project each lane.
 macro_rules! botwoon_death_words {
     ($s:ident, $f:ident, ($($borrow:tt)*)) => {
@@ -570,20 +615,8 @@ macro_rules! scalar_words {
         $f(0xd91a,$($borrow)* $s.room.loaded_items);
         $f(0xcea,$($borrow)* $s.room.power_bomb_radius);
         for index in 0..4 { $f(0x7e1+index*2,$($borrow)* $s.room.main_variables[index]); }
-        for axis in 0..2 {
-            $f(0x8f7+axis*2,$($borrow)* $s.room.camera.layer1_block[axis]);
-            $f(0x8fb+axis*2,$($borrow)* $s.room.camera.layer2_block[axis]);
-            $f(0x8ff+axis*2,$($borrow)* $s.room.camera.previous_layer1_block[axis]);
-            $f(0x903+axis*2,$($borrow)* $s.room.camera.previous_layer2_block[axis]);
-            $f(0x907+axis*2,$($borrow)* $s.room.camera.bg1_block[axis]);
-            $f(0x90b+axis*2,$($borrow)* $s.room.camera.bg2_block[axis]);
-            $f(0x90f+axis*4,$($borrow)* $s.room.camera.layer1_fraction[axis]);
-            $f(0x911+axis*4,$($borrow)* $s.room.camera.layer1[axis]);
-            $f(0x917+axis*2,$($borrow)* $s.room.camera.layer2[axis]);
-            $f(0x91d+axis*2,$($borrow)* $s.room.camera.bg1_offset[axis]);
-            $f(0x921+axis*2,$($borrow)* $s.room.camera.bg2_scroll[axis]);
-            $f(0xb0a+axis*4,$($borrow)* $s.room.camera.ideal_layer1[axis]);
-        }
+        camera_words!(($s.room.camera), $f, ($($borrow)*));
+        flow_words!(($s.flow), $f, ($($borrow)*));
         $f(0x5f5,$($borrow)* $s.feedback.sound_disabled);
         $f(0x5f7,$($borrow)* $s.minimap.disabled);
         for row in 0..3 {
