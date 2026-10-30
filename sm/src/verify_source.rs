@@ -618,14 +618,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/actors/diving_enemies.rs"),
     ),
     (
-        "sm/src/game/options_settings.rs",
-        include_bytes!("game/options_settings.rs"),
-    ),
-    (
-        "sm/src/game/pause_controls.rs",
-        include_bytes!("game/pause_controls.rs"),
-    ),
-    (
         "crates/sm_game/src/phantoon_tables.rs",
         include_bytes!("../../crates/sm_game/src/phantoon_tables.rs"),
     ),
@@ -660,10 +652,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/actors/wrecked_ship_spark.rs",
         include_bytes!("game/actors/wrecked_ship_spark.rs"),
-    ),
-    (
-        "sm/src/game/reserve_tanks.rs",
-        include_bytes!("game/reserve_tanks.rs"),
     ),
     (
         "sm/src/game/actors/ki_hunter.rs",
@@ -781,10 +769,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/escape_timer.rs",
         include_bytes!("game/escape_timer.rs"),
-    ),
-    (
-        "sm/src/game/game_over.rs",
-        include_bytes!("game/game_over.rs"),
     ),
     ("sm/src/game/hud.rs", include_bytes!("game/hud.rs")),
     (
@@ -2031,10 +2015,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/shooting_stars.rs"),
     ),
     (
-        "sm/src/game/file_menu.rs",
-        include_bytes!("game/file_menu.rs"),
-    ),
-    (
         "sm/src/game/demo_rooms.rs",
         include_bytes!("game/demo_rooms.rs"),
     ),
@@ -2963,6 +2943,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/actors/yapping_maw.rs",
         include_bytes!("../../crates/sm_game/src/actors/yapping_maw.rs"),
+    ),
+    (
+        "crates/sm_game/src/gameplay_frame.rs",
+        include_bytes!("../../crates/sm_game/src/gameplay_frame.rs"),
     ),
     (
         "crates/sm_game/src/palette_copies.rs",

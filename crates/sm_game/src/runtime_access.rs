@@ -18,6 +18,8 @@ pub trait SessionView:
     + crate::actors::effects::ActorHost
     + crate::enemy_projectiles::host::Host
     + crate::visual_host::Host
+    + crate::room_entry::effects::EntryHost
+    + crate::player_movement::effects::Host
 {
 }
 impl<T> SessionView for T where
@@ -32,6 +34,8 @@ impl<T> SessionView for T where
         + crate::actors::effects::ActorHost
         + crate::enemy_projectiles::host::Host
         + crate::visual_host::Host
+        + crate::room_entry::effects::EntryHost
+        + crate::player_movement::effects::Host
 {
 }
 

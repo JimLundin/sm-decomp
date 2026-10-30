@@ -450,8 +450,6 @@ pub mod game {
     pub(crate) mod enemy_speeds;
 
     pub(crate) mod explosion_window;
-    pub(crate) mod file_menu;
-    pub(crate) mod game_over;
     pub(crate) mod gameplay;
     pub(crate) mod grapple_swing;
     pub(crate) mod imported;
@@ -524,10 +522,7 @@ pub mod game {
     pub(crate) mod hud;
     pub(crate) mod maridia_turtles;
     pub(crate) mod mini_crocomire;
-    pub(crate) mod options_settings;
-    pub(crate) mod pause_controls;
     pub mod progress_flags;
-    pub(crate) mod reserve_tanks;
     pub(crate) mod rinka;
     pub(crate) mod room_backgrounds;
     pub mod room_entry;

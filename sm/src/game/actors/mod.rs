@@ -40,6 +40,7 @@ mod content_runtime;
 #[cfg(sm_verify_dll)]
 pub(in crate::game) use sm_game::actors::animation;
 pub(in crate::game) use sm_game::actors::combat;
+#[cfg(sm_verify_dll)]
 pub(in crate::game) use sm_game::actors::contacts;
 pub(in crate::game) mod dachora;
 pub(in crate::game) use sm_game::actors::drawing;
