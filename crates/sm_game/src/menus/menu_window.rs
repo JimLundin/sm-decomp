@@ -3,7 +3,7 @@ use super::prelude::*;
 use crate::ram::checked_word as word;
 
 /// Work RAM ($7E) layout of the map-menu window.
-mod ram {
+pub(super) mod ram {
     /// Indirect HDMA tables for window 1 and window 2.
     pub const WINDOW_1_TABLE: usize = 0x9e00;
     pub const WINDOW_2_TABLE: usize = 0x9e10;

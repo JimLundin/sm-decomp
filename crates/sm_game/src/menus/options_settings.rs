@@ -4,6 +4,11 @@ use super::menu_tilemap;
 use super::prelude::*;
 use crate::ram::word;
 
+/// The options screen's BG tilemap buffer ($7E:3000, `ram3000`).
+const TILEMAP: usize = 0x3000;
+/// The language highlight's last tile in that buffer.
+const LANGUAGE_HIGHLIGHT_TILE: usize = TILEMAP + 0x3b8;
+
 pub fn initialize<H: Host + ?Sized>(game: &mut H, upload: fn(&mut H)) {
     game.ram().write_byte(crate::ram::mirror::BG12NBA, 0);
     game.ram().write_byte(
@@ -26,8 +31,10 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H, upload: fn(&mut H)) {
     }
     copy_screen(0x1c7fe, false, game);
     // The ROM keeps the final copied tile in A through the object clear.
-    let initial_tile =
-        u16::from_le_bytes([game.ram().read_byte(0x3000), game.ram().read_byte(0x3001)]);
+    let initial_tile = u16::from_le_bytes([
+        game.ram().read_byte(TILEMAP),
+        game.ram().read_byte(TILEMAP + 1),
+    ]);
     word!(game.menu_option_index = 0);
     super::options_objects::clear(game);
     super::options_objects::spawn(initial_tile, 0xf4b8, game);
@@ -265,16 +272,18 @@ pub fn scroll<const DOWN: bool, H: Host + ?Sized>(game: &mut H) {
 
 pub fn fade_out<H: Host + ?Sized>(game: &mut H, screen: u16, enable: fn(&mut H)) {
     game.fade(false);
-    if screen == 5 && game.ram().read_byte(0x57) != 0xf3 {
+    if screen == 5 && game.ram().read_byte(crate::ram::mirror::MOSAIC) != 0xf3 {
         game.ram().write_byte(
             crate::ram::mirror::MOSAIC,
-            game.ram().read_byte(0x57).wrapping_add(16),
+            game.ram()
+                .read_byte(crate::ram::mirror::MOSAIC)
+                .wrapping_add(16),
         );
     }
-    if game.ram().read_byte(0x51) != 0x80 {
-        if screen == 0 && game.ram().read_byte(0x51) == 14 {
-            let subscreen = u16::from(game.ram().read_byte(0x6b));
-            if game.ram().read_byte(0x6b) & 4 == 0 {
+    if game.ram().read_byte(crate::ram::mirror::INIDISP) != 0x80 {
+        if screen == 0 && game.ram().read_byte(crate::ram::mirror::INIDISP) == 14 {
+            let subscreen = u16::from(game.ram().read_byte(crate::ram::mirror::TS));
+            if game.ram().read_byte(crate::ram::mirror::TS) & 4 == 0 {
                 super::options_objects::spawn(subscreen, 0xf4d6, game);
             }
         }
@@ -299,13 +308,15 @@ pub fn fade_out<H: Host + ?Sized>(game: &mut H, screen: u16, enable: fn(&mut H))
 
 pub fn fade_in<const DISSOLVE: bool, H: Host + ?Sized>(game: &mut H) {
     game.fade(true);
-    if DISSOLVE && game.ram().read_byte(0x57) != 3 {
+    if DISSOLVE && game.ram().read_byte(crate::ram::mirror::MOSAIC) != 3 {
         game.ram().write_byte(
             crate::ram::mirror::MOSAIC,
-            game.ram().read_byte(0x57).wrapping_sub(16),
+            game.ram()
+                .read_byte(crate::ram::mirror::MOSAIC)
+                .wrapping_sub(16),
         );
     }
-    if game.ram().read_byte(0x51) != 15 {
+    if game.ram().read_byte(crate::ram::mirror::INIDISP) != 15 {
         return;
     }
     if DISSOLVE {
@@ -340,8 +351,10 @@ pub fn replace_screen<H: Host + ?Sized>(game: &mut H) {
             let source = 0x1cffe + usize::from(word!(game.japanese_text_flag) != 0) * 0x800;
             copy_screen(source, true, game);
             // The controller initializer receives the final native word copied to tile zero.
-            let tile =
-                u16::from_ne_bytes([game.ram().read_byte(0x3000), game.ram().read_byte(0x3001)]);
+            let tile = u16::from_ne_bytes([
+                game.ram().read_byte(TILEMAP),
+                game.ram().read_byte(TILEMAP + 1),
+            ]);
             spawn(tile, 0xf4ca, game);
             super::controller_input::load_binding_choices(game);
             menu_tilemap::controller_bindings(game);
@@ -350,7 +363,10 @@ pub fn replace_screen<H: Host + ?Sized>(game: &mut H) {
         copy_screen(0x1c7fe, false, game);
         highlight_language(game);
         // The ROM passes the final language-highlight tile left in A (82:EFD7).
-        let tile = u16::from_le_bytes([game.ram().read_byte(0x33b8), game.ram().read_byte(0x33b9)]);
+        let tile = u16::from_le_bytes([
+            game.ram().read_byte(LANGUAGE_HIGHLIGHT_TILE),
+            game.ram().read_byte(LANGUAGE_HIGHLIGHT_TILE + 1),
+        ]);
         spawn(tile, 0xf4c4, game);
     }
 }

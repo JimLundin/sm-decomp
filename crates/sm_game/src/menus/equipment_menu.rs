@@ -81,7 +81,10 @@ fn reserves<H: Host + ?Sized>(game: &mut H) {
         |game| super::reserve_tanks::toggle_mode(game),
         |game| super::reserve_tanks::transfer_manual(game),
     ];
-    ACTIONS[usize::from(game.ram().read_byte(0x756))](game);
+    ACTIONS[usize::from(
+        game.ram()
+            .read_byte(crate::ram::words::pausemenu_equipment_category_item + 1),
+    )](game);
     let previous = word!(game.pausemenu_equipment_category_item);
     if word!(game.joypad1_newkeys) & kButton_Right as u16 != 0 {
         if word!(game.joypad1_newkeys) & kButton_Down as u16 != 0
@@ -177,7 +180,10 @@ fn boots<H: Host + ?Sized>(game: &mut H) {
 fn shift<H: Host + ?Sized>(amount: i16, game: &mut H) -> u16 {
     word!(game.pausemenu_equipment_category_item += amount as u16);
     // The original selector reads this physical byte, independently of host endian.
-    2 * u16::from(game.ram().read_byte(0x756))
+    2 * u16::from(
+        game.ram()
+            .read_byte(crate::ram::words::pausemenu_equipment_category_item + 1),
+    )
 }
 
 fn select_reserves<H: Host + ?Sized>(game: &mut H) -> u16 {
@@ -281,7 +287,10 @@ fn toggle<H: Host + ?Sized>(bytes: u16, game: &mut H) {
         return;
     }
     game.queue_sound(0, (0x38) as u8, 6);
-    let item = u16::from(game.ram().read_byte(0x756));
+    let item = u16::from(
+        game.ram()
+            .read_byte(crate::ram::words::pausemenu_equipment_category_item + 1),
+    );
     let category = word!(game.pausemenu_equipment_category_item) as u8 as isize;
     let tables = self::category(game, category);
     let target = list_entry(tables.tilemap_offsets, item, game) as usize;

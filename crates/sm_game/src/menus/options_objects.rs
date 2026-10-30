@@ -102,13 +102,16 @@ fn before_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
         }
         0xf376 => {
             if word!(game.game_state) != 2
-                || word!(game.game_options_screen_index) == 6 && game.ram().read_byte(0x51) == 0x80
+                || word!(game.game_options_screen_index) == 6
+                    && game.ram().read_byte(crate::ram::mirror::INIDISP) == 0x80
             {
                 end_script(slot, game);
             }
         }
         0xf3a0 => match word!(game.game_options_screen_index) {
-            6 if game.ram().read_byte(0x51) == 0x80 => end_script(slot, game),
+            6 if game.ram().read_byte(crate::ram::mirror::INIDISP) == 0x80 => {
+                end_script(slot, game)
+            }
             9 => {
                 word!(game.cinematicbg_arr9[slot] -= 2);
             }
@@ -118,7 +121,9 @@ fn before_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
             _ => {}
         },
         0xf3e2 => {
-            if word!(game.game_options_screen_index) == 6 && game.ram().read_byte(0x51) == 0x80 {
+            if word!(game.game_options_screen_index) == 6
+                && game.ram().read_byte(crate::ram::mirror::INIDISP) == 0x80
+            {
                 end_script(slot, game);
             }
         }

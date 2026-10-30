@@ -299,7 +299,12 @@ pub fn advance<H: HudHost + ?Sized>(game: &mut H) {
                 game.queue_sound(0, (0x39) as u8, 6);
             }
         }
-        let palette = if game.ram().read_byte(0x5b5) & 0x10 != 0 {
+        let palette = if game
+            .ram()
+            .read_byte(crate::ram::bytes::nmi_frame_counter_byte)
+            & 0x10
+            != 0
+        {
             SELECTED_PALETTE
         } else {
             UNSELECTED_PALETTE

@@ -64,7 +64,7 @@ fn border<H: Host + ?Sized>(sprite: u16, game: &mut H) {
 fn prepare<H: Host + ?Sized>(game: &mut H) {
     {
         game.fade(false);
-        if (game.ram().read_byte(0x51) & 0xf) != 0 {
+        if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) != 0 {
             return;
         }
         game.set_blank(true);
@@ -84,7 +84,7 @@ fn fade_to_options<H: Host + ?Sized>(game: &mut H) {
     border(0x48, game);
     crate::sprite_output::file_helmets(false, game);
     game.fade(false);
-    if (game.ram().read_byte(0x51) & 0xf) == 0 {
+    if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 0 {
         word! {game; game_state = kGameState_2_GameOptionsMenu as u16; menu_index = 0; }
         crate::word_transfers!(game, ascending, 24; native(0x198d) <- value(0));
     }
@@ -93,7 +93,7 @@ fn fade_to_title<H: Host + ?Sized>(game: &mut H) {
     border(0x48, game);
     crate::sprite_output::file_helmets(false, game);
     game.fade(false);
-    if (game.ram().read_byte(0x51) & 0xf) == 0 {
+    if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 0 {
         game.request_reset();
     }
 }
@@ -105,10 +105,11 @@ fn fade_to_main<H: Host + ?Sized>(game: &mut H) {
     game.fade(false);
     game.ram().write_byte(
         crate::ram::mirror::MOSAIC,
-        (game.ram().read_byte(0x57) as i32 & 0xf
-            | 16 * (game.ram().read_byte(0x51) as i32 & 0xf) ^ 0xf0) as u8,
+        (game.ram().read_byte(crate::ram::mirror::MOSAIC) as i32 & 0xf
+            | 16 * (game.ram().read_byte(crate::ram::mirror::INIDISP) as i32 & 0xf) ^ 0xf0)
+            as u8,
     );
-    if (game.ram().read_byte(0x51) & 0xf) == 0 {
+    if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 0 {
         game.set_blank(true);
         word!(game.menu_index += 1);
     }
@@ -122,10 +123,11 @@ fn fade_in<H: Host + ?Sized>(game: &mut H) {
     game.fade(true);
     game.ram().write_byte(
         crate::ram::mirror::MOSAIC,
-        (game.ram().read_byte(0x57) as i32 & 0xf
-            | 16 * (game.ram().read_byte(0x51) as i32 & 0xf) ^ 0xf0) as u8,
+        (game.ram().read_byte(crate::ram::mirror::MOSAIC) as i32 & 0xf
+            | 16 * (game.ram().read_byte(crate::ram::mirror::INIDISP) as i32 & 0xf) ^ 0xf0)
+            as u8,
     );
-    if (game.ram().read_byte(0x51) & 0xf) == 15 {
+    if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 15 {
         word!(game.menu_index += 1);
     }
 }
@@ -188,7 +190,11 @@ fn next_occupied_slot<H: Host + ?Sized>(game: &mut H) -> Option<u8> {
 fn choose_source<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
     border(if COPY { 0x49 } else { 0x4a }, game);
     crate::sprite_output::menu_selection(game);
-    let movement_high = if COPY { 0 } else { game.ram().read_byte(0x90) };
+    let movement_high = if COPY {
+        0
+    } else {
+        game.ram().read_byte(crate::ram::words::joypad1_newkeys + 1)
+    };
     if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
         game.queue_sound(0, (0x37) as u8, 6);
         if word!(game.eproj_id[15]) != 3 {
@@ -208,7 +214,8 @@ fn choose_source<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
         }
     } else {
         if let Some(slot) = next_occupied_slot(game) {
-            game.ram().write_byte(0x19b5, slot);
+            game.ram()
+                .write_byte(crate::ram::word_arrays::cinematicbg_arr1, slot);
             let sound = if COPY {
                 0x37
             } else {
@@ -533,7 +540,7 @@ fn fade_in_main<H: Host + ?Sized>(game: &mut H) {
     crate::sprite_output::menu_selection(game);
     border(0x48, game);
     game.fade(true);
-    if (game.ram().read_byte(0x51) & 0xf) == 15 {
+    if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 15 {
         word!(game.menu_index += 1);
     }
 }

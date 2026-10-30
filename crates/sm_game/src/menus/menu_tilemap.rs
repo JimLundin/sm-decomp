@@ -158,7 +158,8 @@ pub fn upload<H: Host + ?Sized>(
     } else {
         game.ram().write_byte(entry + 4, bank);
     }
-    let destination = u16::from(game.ram().read_byte(0x58 + screen) & 0xfc) << 8;
+    let destination =
+        u16::from(game.ram().read_byte(crate::ram::mirror::BG1SC + screen) & 0xfc) << 8;
     game.ram().copy_in(entry + 5, &destination.to_ne_bytes());
     word!(game.vram_write_queue_tail = tail.wrapping_add(7));
 }
@@ -368,7 +369,10 @@ pub fn update_reserve_arrow<H: Host + ?Sized>(game: &mut H) {
     let mode = if word!(game.pausemenu_equipment_category_item) as u8 != 0 {
         ReserveArrow::Off
     } else {
-        [ReserveArrow::Animated, ReserveArrow::On][usize::from(game.ram().read_byte(0x756))]
+        [ReserveArrow::Animated, ReserveArrow::On][usize::from(
+            game.ram()
+                .read_byte(crate::ram::words::pausemenu_equipment_category_item + 1),
+        )]
     };
     reserve_arrow(mode, game);
 }
@@ -380,7 +384,11 @@ pub fn reserve_arrow<H: Host + ?Sized>(mode: ReserveArrow, game: &mut H) {
         ReserveArrow::Off => false,
     };
     if matches!(mode, ReserveArrow::Animated) && lit {
-        let index = usize::from(game.ram().read_byte(0x5b5) & 0x1f);
+        let index = usize::from(
+            game.ram()
+                .read_byte(crate::ram::bytes::nmi_frame_counter_byte)
+                & 0x1f,
+        );
         word!(game.palette_buffer[102] = RESERVE_ARROW_COLORS[index]);
         word!(game.palette_buffer[107] = RESERVE_ARROW_SHADOWS[index]);
     } else {
@@ -568,7 +576,7 @@ pub fn queue_pause_labels<H: Host + ?Sized>(game: &mut H) {
         128,
         &|_| 0x3640,
         126,
-        &|game| (u16::from(game.ram().read_byte(0x59) & 0xfc) << 8) + 800,
+        &|game| (u16::from(game.ram().read_byte(crate::ram::mirror::BG2SC) & 0xfc) << 8) + 800,
     );
 }
 
@@ -624,7 +632,11 @@ pub fn reserve_tanks<H: Host + ?Sized>(game: &mut H) {
         let mut frame = 2 * (remainder / 14);
         if (i32::from(frame) - 7) & 0x8000 != 0
             && remainder % 14 != 0
-            && game.ram().read_byte(0x5b5) & 4 == 0
+            && game
+                .ram()
+                .read_byte(crate::ram::bytes::nmi_frame_counter_byte)
+                & 4
+                == 0
         {
             frame = frame.wrapping_add(2);
         }

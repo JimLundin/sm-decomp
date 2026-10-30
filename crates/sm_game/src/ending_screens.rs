@@ -61,9 +61,9 @@ pub fn fade_ending_gunship_backdrop<H: crate::menus::host::Host + ?Sized>(game: 
     let expired = word!(game.cinematic_var4 -= 1, reread) & 0x8000 != 0;
     if word!(game.cinematic_var4) == 0 || expired {
         fade_cinematic_fixed_color(game);
-        if game.ram().read_byte(0x74) == 32
-            && game.ram().read_byte(0x75) == 64
-            && game.ram().read_byte(0x76) == 0x80
+        if game.ram().read_byte(crate::ram::mirror::COLDATA) == 32
+            && game.ram().read_byte(crate::ram::bytes::reg_COLDATA + 1) == 64
+            && game.ram().read_byte(crate::ram::bytes::reg_COLDATA + 2) == 0x80
         {
             game.ram().write_byte(crate::ram::mirror::CGWSEL, 0);
             game.ram().write_byte(crate::ram::mirror::CGADSUB, 0);

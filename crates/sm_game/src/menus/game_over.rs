@@ -31,7 +31,7 @@ pub fn advance<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> CoroutineR
 fn prepare<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     {
         game.fade(false);
-        if game.ram().read_byte(0x51) & 0xf != 0 {
+        if game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf != 0 {
             return;
         }
         game.set_blank(true);
@@ -73,8 +73,9 @@ fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         animate_baby(game, |game| {
             game.rtl_unreachable();
         });
-        let color = u16::from(game.ram().read_byte(0x70)) << 8;
-        game.ram().copy_in(0x6f, &color.to_ne_bytes());
+        let color = u16::from(game.ram().read_byte(crate::ram::bytes::gameplay_CGWSEL)) << 8;
+        game.ram()
+            .copy_in(crate::ram::mirror::CGWSEL, &color.to_ne_bytes());
         game.set_hdma_enabled(false);
         game.clear_hdma();
         game.set_hdma_enabled(true);
@@ -107,7 +108,7 @@ fn fade<H: crate::menus::host::Host + ?Sized>(fade_in: bool, brightness: u8, gam
     });
     crate::sprite_output::menu_selection(game);
     game.fade(fade_in);
-    if game.ram().read_byte(0x51) & 0xf == brightness {
+    if game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf == brightness {
         word!(game.menu_index += 1);
     }
 }
@@ -157,7 +158,7 @@ fn fade_to_title<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         game.rtl_unreachable();
     });
     game.fade(false);
-    if game.ram().read_byte(0x51) & 0xf == 0 {
+    if game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf == 0 {
         game.request_reset();
     }
 }

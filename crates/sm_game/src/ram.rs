@@ -91,6 +91,12 @@ macro_rules! ram_vars {
         pub mod word_arrays {
             $(ram_vars!(@offsets array, $base, ram_vars!(@stride $($stride)?), $ty, $shape; $($name),*);)*
         }
+
+        /// Named byte offsets and byte-array bases.
+        #[allow(non_upper_case_globals)]
+        pub mod bytes {
+            $(ram_vars!(@offsets byte, $base, ram_vars!(@stride $($stride)?), $ty, $shape; $($name),*);)*
+        }
     };
     (@stride) => { 0 };
     (@stride $stride:literal) => { $stride };
@@ -106,29 +112,34 @@ macro_rules! ram_vars {
     };
     (@word $addr:expr, $name:ident, uint16, Array) => {};
     (@word $addr:expr, $name:literal, $ty:ident, $shape:ident) => {};
+    (@word $addr:expr, $name:ident, uint8, $shape:ident) => {};
     (@array $addr:expr, $name:ident, uint16, Array) => {
         pub const $name: usize = $addr;
     };
     (@array $addr:expr, $name:tt, $ty:ident, $shape:ident) => {};
+    (@byte $addr:expr, $name:ident, uint8, $shape:ident) => {
+        pub const $name: usize = $addr;
+    };
+    (@byte $addr:expr, $name:tt, $ty:ident, $shape:ident) => {};
 }
 
 ram_vars! {
     0x00012 stride 2, uint16 Scalar => [REMOVED_R18, REMOVED_R20, REMOVED_R22];
-    0x00051, uint8 Scalar => ["reg_INIDISP"];
-    0x00052, uint8 Scalar => ["reg_OBSEL"];
+    0x00051, uint8 Scalar => [reg_INIDISP];
+    0x00052, uint8 Scalar => [reg_OBSEL];
     0x00053, uint16 Scalar => [reg_OAMaddr_UNUSED];
     0x00055 stride 1, uint8 Scalar => [
-        "reg_BGMODE", "reg_BGMODE_fake", "reg_MOSAIC", "reg_BG1SC", "reg_BG2SC", "reg_BG3SC",
-        "gameplay_BG3SC", "reg_BG4SC", "reg_BG12NBA", "reg_BG34NBA", "reg_M7SEL", "reg_W12SEL",
-        "reg_W34SEL", "reg_WOBJSEL", "reg_WH0", "reg_WH1", "reg_WH2", "reg_WH3", "reg_WBGLOG",
-        "reg_WOBJLOG", "reg_TM", "gameplay_TM", "reg_TS", "reg_TMW", "reg_TSW",
-        "next_gameplay_CGWSEL", "reg_CGWSEL", "gameplay_CGWSEL", "next_gameplay_CGADSUB",
-        "reg_CGADSUB", "gameplay_CGADSUB"
+        reg_BGMODE, reg_BGMODE_fake, reg_MOSAIC, reg_BG1SC, reg_BG2SC, reg_BG3SC,
+        gameplay_BG3SC, reg_BG4SC, reg_BG12NBA, reg_BG34NBA, reg_M7SEL, reg_W12SEL,
+        reg_W34SEL, reg_WOBJSEL, reg_WH0, reg_WH1, reg_WH2, reg_WH3, reg_WBGLOG,
+        reg_WOBJLOG, reg_TM, gameplay_TM, reg_TS, reg_TMW, reg_TSW,
+        next_gameplay_CGWSEL, reg_CGWSEL, gameplay_CGWSEL, next_gameplay_CGADSUB,
+        reg_CGADSUB, gameplay_CGADSUB
     ];
-    0x00074, uint8 Array => ["reg_COLDATA"];
-    0x00077, uint8 Scalar => ["reg_SETINI"];
+    0x00074, uint8 Array => [reg_COLDATA];
+    0x00077, uint8 Scalar => [reg_SETINI];
     0x00078 stride 2, uint16 Scalar => [reg_M7A, reg_M7B, reg_M7C, reg_M7D, reg_M7X, reg_M7Y];
-    0x00084 stride 1, uint8 Scalar => ["reg_NMITIMEN", "reg_HDMAEN", "reg_MEMSEL"];
+    0x00084 stride 1, uint8 Scalar => [reg_NMITIMEN, reg_HDMAEN, reg_MEMSEL];
     0x00087 stride 2, uint16 Scalar => [
         joypad_ctr_repeat_first, joypad_ctr_repeat_next, joypad1_lastkeys, joypad2_last,
         joypad1_newkeys, joypad2_new_keys, joypad1_newkeys2_UNUSED, joypad2_newkeys2, joypad1_prev,
@@ -160,12 +171,12 @@ ram_vars! {
         message_box_animation_y1, message_box_animation_y2, message_box_animation_y3,
         map_min_x_scroll, map_max_x_scroll, map_min_y_scroll, map_max_y_scroll
     ];
-    0x005B4, uint8 Scalar => ["waiting_for_nmi"];
-    0x005B5, uint8 Scalar => ["nmi_frame_counter_byte"];
+    0x005B4, uint8 Scalar => [waiting_for_nmi];
+    0x005B5, uint8 Scalar => [nmi_frame_counter_byte];
     0x005B6, uint16 Scalar => [nmi_frame_counter_word];
     0x005B8, uint16 Scalar => [nmi_frame_counter_including_lag];
-    0x005BA, uint8 Scalar => ["nmi_frames_missed"];
-    0x005BB, uint8 Scalar => ["nmi_frames_missed_max"];
+    0x005BA, uint8 Scalar => [nmi_frames_missed];
+    0x005BB, uint8 Scalar => [nmi_frames_missed_max];
     0x005C5 stride 2, uint16 Scalar => [
         joypad_dbg_1, joypad_dbg_2, joypad_dbg_missiles_swap, joypad_dbg_super_missiles_swap,
         joypad_dbg_power_bombs_swap, joypad_dbg_flags, enable_debug,
@@ -183,12 +194,12 @@ ram_vars! {
     0x00604, LongPtr Scalar => ["unpause_hook"];
     0x00607, uint16 Scalar => [earthquake_sfx_index];
     0x00609, uint16 Scalar => [earthquake_sfx_timer];
-    0x0060B, uint8 Scalar => ["eproj_init_param_3"];
+    0x0060B, uint8 Scalar => [eproj_init_param_3];
     0x0060D, uint16 Scalar => [REMOVED_remaining_enemy_hitbox_entries];
     0x0060F, uint16 Scalar => [REMOVED_num_projectiles_to_check_enemy_coll];
     0x00611 stride 1, uint8 Scalar => [
-        "coroutine_state_0", "coroutine_state_1", "coroutine_state_2", "coroutine_state_3",
-        "coroutine_state_4"
+        coroutine_state_0, coroutine_state_1, coroutine_state_2, coroutine_state_3,
+        coroutine_state_4
     ];
     0x00617, uint16 Scalar => [is_uploading_apu];
     0x00619, uint16 Array => [music_queue_track];
@@ -197,19 +208,19 @@ ram_vars! {
         music_queue_write_pos, music_queue_read_pos, music_entry, music_timer,
         REMOVED_apu_attempts_countdown
     ];
-    0x00643 stride 3, uint8 Array => ["sfx_readpos", "sfx_writepos", "sfx_state"];
-    0x0064C, uint8 Scalar => ["cur_music_track"];
-    0x0064D stride 3, uint8 Array => ["sfx_cur", "sfx_clear_delay", "sfx_max_queued", "sfx1_queue"];
-    0x00666, uint8 Array => ["sfx2_queue"];
-    0x00676, uint8 Array => ["sfx3_queue"];
+    0x00643 stride 3, uint8 Array => [sfx_readpos, sfx_writepos, sfx_state];
+    0x0064C, uint8 Scalar => [cur_music_track];
+    0x0064D stride 3, uint8 Array => [sfx_cur, sfx_clear_delay, sfx_max_queued, sfx1_queue];
+    0x00666, uint8 Array => [sfx2_queue];
+    0x00676, uint8 Array => [sfx3_queue];
     0x00686 stride 2, uint16 Scalar => [sound_handler_downtime, croco_target_0688, g_word_7E068A];
-    0x0068C, uint8 Scalar => ["croco_word_068C"];
+    0x0068C, uint8 Scalar => [croco_word_068C];
     0x0068E stride 2, uint16 Scalar => [
         g_word_7E068E, croco_cur_vline_idx, g_word_7E0692, g_word_7E0694, g_word_7E0696,
         g_word_7E0698, croco_word_7E069A
     ];
-    0x0069C, uint8 Array => ["croco_vline_height"];
-    0x0071C, uint8 Scalar => ["UNUSED_byte_7E071C"];
+    0x0069C, uint8 Array => [croco_vline_height];
+    0x0071C, uint8 Scalar => [UNUSED_byte_7E071C];
     0x0071D stride 2, uint16 Scalar => [
         nmi_copy_samus_halves, nmi_copy_samus_top_half_src, nmi_copy_samus_bottom_half_src,
         screen_fade_delay, screen_fade_counter, menu_index,
@@ -227,19 +238,19 @@ ram_vars! {
         UNUSED_word_7E075D, UNUSED_word_7E075F, UNUSED_word_7E0761, pause_screen_mode
     ];
     0x00765 stride 1, uint8 Scalar => [
-        "pausemenu_bak_BG1SC", "pausemenu_bak_BG2SC", "pausemenu_bak_BG3SC",
-        "pausemenu_bak_BG12NBA", "pausemenu_bak_BG34NBA", "pausemenu_bak_OBSEL",
-        "pausemenu_bak_BG1HOFS", "pausemenu_bak_BG2HOFS", "pausemenu_bak_BG3HOFS",
-        "pausemenu_bak_BG1VOFS", "pausemenu_bak_BG2VOFS", "pausemenu_bak_BG3VOFS",
-        "pausemenu_bak_BGMODE", "pausemenu_bak_layer2_scroll_x", "pausemenu_bak_layer2_scroll_y",
-        "pausemenu_bak_MOSAIC", "pausemenu_bak_CGADSUB"
+        pausemenu_bak_BG1SC, pausemenu_bak_BG2SC, pausemenu_bak_BG3SC,
+        pausemenu_bak_BG12NBA, pausemenu_bak_BG34NBA, pausemenu_bak_OBSEL,
+        pausemenu_bak_BG1HOFS, pausemenu_bak_BG2HOFS, pausemenu_bak_BG3HOFS,
+        pausemenu_bak_BG1VOFS, pausemenu_bak_BG2VOFS, pausemenu_bak_BG3VOFS,
+        pausemenu_bak_BGMODE, pausemenu_bak_layer2_scroll_x, pausemenu_bak_layer2_scroll_y,
+        pausemenu_bak_MOSAIC, pausemenu_bak_CGADSUB
     ];
     0x00776 stride 2, uint16 Scalar => [
         samus_position_indicator_animation_frame, samus_position_indicator_animation_timer,
         samus_position_indicator_animation_loop_counter, hud_item_tilemap_palette_bits, my_counter,
         my_counter2
     ];
-    0x00782, uint8 Scalar => ["coroutine_completion_flags"];
+    0x00782, uint8 Scalar => [coroutine_completion_flags];
     0x00783 stride 2, uint16 Scalar => [
         irq_enable_mode7, mode7_rotation_angle, g_word_7E0787, has_area_map, load_station_index,
         door_def_ptr, REMOVED_door_bts, door_direction, elevator_door_properties_orientation,
@@ -258,20 +269,20 @@ ram_vars! {
         room_enemy_population_ptr, room_enemy_tilesets_ptr
     ];
     0x007DF, uint16 Scalar => [room_main_code_ptr];
-    0x007E1, uint8 Array => ["room_main_asm_variables"];
+    0x007E1, uint8 Array => [room_main_asm_variables];
     0x007E9, uint16 Scalar => [scrolling_finished_hook];
     0x007EB, uint16 Scalar => [hdma_data_table_in_ceres];
     0x007F3, uint16 Scalar => [music_data_index];
     0x007F5, uint16 Scalar => [music_track_index];
-    0x007F7, uint8 Array => ["map_tiles_explored"];
+    0x007F7, uint8 Array => [map_tiles_explored];
     0x008F7 stride 2, uint16 Scalar => [
         layer1_x_block, layer1_y_block, layer2_x_block, layer2_y_block, previous_layer1_x_block,
         previous_layer1_y_block, previous_layer2_x_block, previous_layer2_y_block, bg1_x_block,
         bg1_y_block, bg2_x_block, bg2_y_block, layer1_x_subpos, layer1_x_pos, layer1_y_subpos,
         layer1_y_pos, layer2_x_pos, layer2_y_pos
     ];
-    0x0091B, uint8 Scalar => ["layer2_scroll_x"];
-    0x0091C, uint8 Scalar => ["layer2_scroll_y"];
+    0x0091B, uint8 Scalar => [layer2_scroll_x];
+    0x0091C, uint8 Scalar => [layer2_scroll_y];
     0x0091D stride 2, uint16 Scalar => [
         bg1_x_offset, bg1_y_offset, bg2_x_scroll, bg2_y_scroll, door_transition_frame_counter,
         door_destination_x_pos, door_destination_y_pos, samus_door_transition_subspeed,
@@ -279,7 +290,7 @@ ram_vars! {
         REMOVED_var933, REMOVED_var935, REMOVED_var937, REMOVED_var939, REMOVED_var93B
     ];
     0x0093F stride 2, uint16 Scalar => [ceres_status, camera_distance_index, timer_status];
-    0x00945 stride 1, uint8 Scalar => ["timer_centiseconds", "timer_seconds", "timer_minutes"];
+    0x00945 stride 1, uint8 Scalar => [timer_centiseconds, timer_seconds, timer_minutes];
     0x00948, uint16 Scalar => [timer_x_pos];
     0x0094A, uint16 Scalar => [timer_y_pos];
     0x00950 stride 2, uint16 Scalar => [
@@ -314,20 +325,20 @@ ram_vars! {
         samus_auto_cancel_hud_item_index, samus_prev_health, samus_prev_missiles,
         samus_prev_super_missiles, samus_prev_power_bombs, samus_prev_hud_item_index
     ];
-    0x00A11, uint8 Scalar => ["samus_prev_movement_type"];
+    0x00A11, uint8 Scalar => [samus_prev_movement_type];
     0x00A12 stride 2, uint16 Scalar => [
         samus_prev_health_for_flash, controller1_input_for_demo, controller1_new_input_for_demo,
         UNUSED_word_7E0A18
     ];
     0x00A1C, uint16 Scalar => [samus_pose];
-    0x00A1E, uint8 Scalar => ["samus_pose_x_dir"];
-    0x00A1F, uint8 Scalar => ["samus_movement_type"];
+    0x00A1E, uint8 Scalar => [samus_pose_x_dir];
+    0x00A1F, uint8 Scalar => [samus_movement_type];
     0x00A20, uint16 Scalar => [samus_prev_pose];
-    0x00A22, uint8 Scalar => ["samus_prev_pose_x_dir"];
-    0x00A23, uint8 Scalar => ["samus_prev_movement_type2"];
+    0x00A22, uint8 Scalar => [samus_prev_pose_x_dir];
+    0x00A23, uint8 Scalar => [samus_prev_movement_type2];
     0x00A24, uint16 Scalar => [samus_last_different_pose];
-    0x00A26, uint8 Scalar => ["samus_last_different_pose_x_dir"];
-    0x00A27, uint8 Scalar => ["samus_last_different_pose_movement_type"];
+    0x00A26, uint8 Scalar => [samus_last_different_pose_x_dir];
+    0x00A27, uint8 Scalar => [samus_last_different_pose_movement_type];
     0x00A28 stride 2, uint16 Scalar => [
         samus_new_pose, samus_new_pose_interrupted, samus_new_pose_transitional,
         samus_momentum_routine_index, samus_special_transgfx_index, samus_hurt_switch_index,
@@ -361,8 +372,8 @@ ram_vars! {
         samus_anim_frame_skip, samus_anim_frame_buffer, grapple_walljump_timer,
         reached_ceres_elevator_fade_timer, timer_for_shinesparks_startstop, UNUSEDword_7E0AA4
     ];
-    0x00AA6, uint8 Scalar => ["flag_arm_cannon_open_or_opening"];
-    0x00AA7, uint8 Scalar => ["flag_arm_cannon_opening_or_closing"];
+    0x00AA6, uint8 Scalar => [flag_arm_cannon_open_or_opening];
+    0x00AA7, uint8 Scalar => [flag_arm_cannon_opening_or_closing];
     0x00AA8 stride 2, uint16 Scalar => [
         arm_cannon_frame, hud_item_changed_this_frame, arm_cannon_drawing_mode, speed_echoes_index
     ];
@@ -396,7 +407,7 @@ ram_vars! {
         samus_x_extra_run_speed, samus_x_extra_run_subspeed, samus_x_base_speed,
         samus_x_base_subspeed, samus_x_accel_mode
     ];
-    0x00B4C, uint8 Scalar => ["samus_x_decel_mult"];
+    0x00B4C, uint8 Scalar => [samus_x_decel_mult];
     0x00B56 stride 2, uint16 Scalar => [
         extra_samus_x_subdisplacement, extra_samus_x_displacement, extra_samus_y_subdisplacement,
         extra_samus_y_displacement, new_projectile_direction_changed_pose, used_for_sba_attacksB60,
@@ -423,7 +434,7 @@ ram_vars! {
         power_bomb_pre_explosion_radius_speed, pre_scaled_power_bomb_explosion_shape_def_ptr,
         grapple_beam_flags, grapple_varCF6, slow_grabble_scrolling_flag, grapple_beam_end_angle16
     ];
-    0x00CFB, uint8 Scalar => ["grapple_beam_end_angle_hi"];
+    0x00CFB, uint8 Scalar => [grapple_beam_end_angle_hi];
     0x00CFC stride 2, uint16 Scalar => [
         grapple_beam_end_angles_mirror, grapple_beam_length, grapple_beam_length_delta,
         grapple_beam_origin_x_offset, grapple_beam_origin_y_offset, grapple_beam_end_x_subpos,
@@ -447,8 +458,8 @@ ram_vars! {
         grapple_beam_grapple_start_block_y, g_word_7E0D98
     ];
     0x00D9C, uint16 Scalar => [g_word_7E0D9C];
-    0x00D9E, uint8 Scalar => ["g_byte_7E0D9E"];
-    0x00D9F, uint8 Scalar => ["g_byte_7E0D9F"];
+    0x00D9E, uint8 Scalar => [g_byte_7E0D9E];
+    0x00D9F, uint8 Scalar => [g_byte_7E0D9F];
     0x00DA0 stride 2, uint16 Scalar => [
         loop_counter_transfer_enemies_to_vram, absolute_moved_last_frame_x,
         absolute_moved_last_frame_x_fract, absolute_moved_last_frame_y,
@@ -470,8 +481,8 @@ ram_vars! {
         which_item_to_pickup, substate, suit_pickup_light_beam_pos
     ];
     0x00DF0 stride 1, uint8 Scalar => [
-        "suit_pickup_color_math_R", "suit_pickup_color_math_G", "suit_pickup_color_math_B",
-        "suit_pickup_palette_transition_color"
+        suit_pickup_color_math_R, suit_pickup_color_math_G, suit_pickup_color_math_B,
+        suit_pickup_palette_transition_color
     ];
     0x00DF4 stride 2, uint16 Scalar => [
         UNUSED_debug_spare_cpu_display_flag, UNUSED_word_7E0DF6, UNUSED_word_7E0DF8,
@@ -480,7 +491,7 @@ ram_vars! {
         distance_to_eject_samus_left, distance_to_eject_samus_right, distance_to_eject_samus_up,
         distance_to_eject_samus_down
     ];
-    0x00E0C, uint8 Array => ["g_byte_7E0E0C"];
+    0x00E0C, uint8 Array => [g_byte_7E0E0C];
     0x00E12, uint16 Scalar => [debug_disable_sprite_interact];
     0x00E16 stride 2, uint16 Scalar => [
         elevator_flags, elevator_status, health_drop_bias_flag, enemy_index_to_shake,
@@ -710,14 +721,14 @@ ram_vars! {
     0x090D2, uint16 Scalar => [g_word_7E90D2];
     0x09100 stride 64, uint16 Scalar => [g_word_7E9100, g_word_7E9140, g_word_7E9180];
     0x09500 stride 16, uint8 Scalar => [
-        "g_byte_7E9500", "g_byte_7E9510", "g_byte_7E9520", "g_byte_7E9530", "g_byte_7E9540",
-        "g_byte_7E9550", "g_byte_7E9560", "g_byte_7E9570", "g_byte_7E9580", "g_byte_7E9590",
-        "g_byte_7E95A0", "g_byte_7E95B0", "g_byte_7E95C0", "g_byte_7E95D0", "g_byte_7E95E0",
-        "g_byte_7E95F0", "g_byte_7E9600", "g_byte_7E9610"
+        g_byte_7E9500, g_byte_7E9510, g_byte_7E9520, g_byte_7E9530, g_byte_7E9540,
+        g_byte_7E9550, g_byte_7E9560, g_byte_7E9570, g_byte_7E9580, g_byte_7E9590,
+        g_byte_7E95A0, g_byte_7E95B0, g_byte_7E95C0, g_byte_7E95D0, g_byte_7E95E0,
+        g_byte_7E95F0, g_byte_7E9600, g_byte_7E9610
     ];
     0x097DC, uint16 Array => [g_word_7E97DC];
     0x09800, uint16 Array => [hdma_table_1];
-    0x09C00, uint8 Array => ["mother_brain_indirect_hdma"];
+    0x09C00, uint8 Array => [mother_brain_indirect_hdma];
     0x09C44, uint16 Scalar => [g_word_7E9C44];
     0x09C46, uint16 Array => [g_word_7E9C46];
     0x09D00, uint16 Array => [hdma_table_2];
@@ -733,16 +744,16 @@ ram_vars! {
         expand_sq_timer
     ];
     0x09E80, uint16 Array => [g_word_7E9E80];
-    0x09F00, uint8 Array => ["scrolling_sky_bg2_indirect_hdma"];
+    0x09F00, uint8 Array => [scrolling_sky_bg2_indirect_hdma];
     0x09F80, uint16 Array => [scrolling_sky_bg2_hdma_data];
     0x0A000, TileTables Scalar => ["tile_table"];
     0x0C000, uint16 Array => [palette_buffer];
     0x0C200, uint16 Array => [target_palettes];
     0x0C400 stride 2, uint16 Scalar => [palette_change_num, palette_change_denom, g_word_7EC404];
-    0x0C406, uint8 Array => ["power_bomb_explosion_left_hdma"];
-    0x0C506, uint8 Array => ["power_bomb_explosion_right_hdma"];
-    0x0C606, uint8 Scalar => ["offscreen_power_bomb_left_hdma"];
-    0x0C607, uint8 Scalar => ["offscreen_power_bomb_right_hdma"];
+    0x0C406, uint8 Array => [power_bomb_explosion_left_hdma];
+    0x0C506, uint8 Array => [power_bomb_explosion_right_hdma];
+    0x0C606, uint8 Scalar => [offscreen_power_bomb_left_hdma];
+    0x0C607, uint8 Scalar => [offscreen_power_bomb_right_hdma];
     0x0C608, uint16 Array => [hud_tilemap];
     0x0C6C8, uint16 Array => ["plm_draw_tilemap"];
     0x0C8C8 stride 64, uint16 Array => [
@@ -750,20 +761,20 @@ ram_vars! {
         bg1_column_update_tilemap_top_halves
     ];
     0x0C98C, uint16 Array => [bg1_column_update_tilemap_bottom_halves];
-    0x0C9D0, uint8 Array => ["bg2_column_update_tilemap_left_halves"];
+    0x0C9D0, uint8 Array => [bg2_column_update_tilemap_left_halves];
     0x0CA10, uint16 Array => ["bg2_column_update_tilemap_right_halves"];
-    0x0CA50, uint8 Array => ["bg2_column_update_tilemap_top_halves"];
-    0x0CA94, uint8 Array => ["bg2_column_update_tilemap_bottom_halves"];
+    0x0CA50, uint8 Array => [bg2_column_update_tilemap_top_halves];
+    0x0CA94, uint8 Array => [bg2_column_update_tilemap_bottom_halves];
     0x0CAD8 stride 2, uint16 Scalar => [hud_bg3_xpos, hud_bg3_ypos, bg3_xpos, bg3_ypos];
-    0x0CAE0, uint8 Array => ["crocomire_bg2_scroll_hdma_indirect"];
+    0x0CAE0, uint8 Array => [crocomire_bg2_scroll_hdma_indirect];
     0x0CAF0, uint16 Array => [crocomire_bg2_scroll_hdma_data];
-    0x0CD20, uint8 Array => ["scrolls"];
+    0x0CD20, uint8 Array => [scrolls];
     0x0CD52, uint16 Array => [explored_map_tiles_saved];
-    0x0D552, uint8 Array => ["debug_enemy_set_name"];
-    0x0D55A, uint8 Array => ["debug_enemy_set_data"];
+    0x0D552, uint8 Array => [debug_enemy_set_name];
+    0x0D55A, uint8 Array => [debug_enemy_set_data];
     0x0D652, uint16 Scalar => [wrecked_ship_robot_palanim_palindex];
     0x0D654, uint16 Scalar => [wrecked_ship_robot_palanim_timer];
-    0x0D656, uint8 Scalar => ["wrecked_ship_robot_palanim_table_index"];
+    0x0D656, uint8 Scalar => [wrecked_ship_robot_palanim_table_index];
     0x0D658 stride 36, uint16 Array => [
         projectiletrail_left_instr_timer, projectiletrail_right_instr_timer,
         projectiletrail_left_instr_list_ptr, projectiletrail_right_instr_list_ptr,
@@ -772,18 +783,18 @@ ram_vars! {
         projectiletrail_right_y_pos, player_data_saved
     ];
     0x0D820 stride 8, uint8 Array => [
-        "events_that_happened", "boss_bits_for_area", "room_chozo_bits"
+        events_that_happened, boss_bits_for_area, room_chozo_bits
     ];
-    0x0D870, uint8 Array => ["item_bit_array"];
-    0x0D8B0, uint8 Array => ["opened_door_bit_array"];
+    0x0D870, uint8 Array => [item_bit_array];
+    0x0D8B0, uint8 Array => [opened_door_bit_array];
     0x0D8F0, uint16 Array => [UNUSED_word_7ED8F0];
-    0x0D8F8, uint8 Array => ["used_save_stations_and_elevators"];
-    0x0D908, uint8 Array => ["map_station_byte_array"];
+    0x0D8F8, uint8 Array => [used_save_stations_and_elevators];
+    0x0D908, uint8 Array => [map_station_byte_array];
     0x0D914 stride 2, uint16 Scalar => [
         loading_game_state, sram_save_station_index, sram_area_index,
         global_number_of_items_loaded_ctr
     ];
-    0x0D91C, uint8 Array => ["compressed_map_data"];
+    0x0D91C, uint8 Array => [compressed_map_data];
     0x0DE1C stride 80, uint16 Array => [
         plm_instruction_timer, plm_instruction_draw_ptr, plm_instruction_list_link_reg,
         plm_variables, "backup_of_bg2_during_pause"
@@ -805,7 +816,7 @@ ram_vars! {
     0x0F436, uint16 Scalar => [special_death_item_drop_y_origin_pos];
     0x10000, uint16 Scalar => [ram7F_start];
     0x10002, uint16 Array => [level_data];
-    0x16402, uint8 Array => ["BTS"];
+    0x16402, uint8 Array => [BTS];
     0x19602, uint16 Array => [custom_background];
     0x1FF00, uint16 Scalar => [bug_fix_counter_BAD];
 }

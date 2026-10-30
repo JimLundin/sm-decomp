@@ -88,7 +88,7 @@ pub fn start_title_pan<H: crate::menus::host::Host + ?Sized>(
         (function::PAN_DOWN, 96, -177i16 as u16, -160i16 as u16),
         (function::ZOOM_OUT, 67, 0, 0),
     ][stage];
-    game.ram().write_byte(0x69, 17);
+    game.ram().write_byte(crate::ram::mirror::TM, 17);
     word! {game; cinematic_function = next; cinematic_var6 = zoom;
     cinematic_var8 = x; cinematic_var7 = 0; cinematic_var10 = y; cinematic_var9 = 0;
     g_word_7E199B = if stage < 2 { -2i16 as u16 } else { 0 };
@@ -115,7 +115,7 @@ pub fn advance_title_pan<H: crate::menus::host::Host + ?Sized>(stage: usize, gam
     let negative = (word!(@read game, whole) as i32 + cutoff) & 0x8000 != 0;
     // The vertical pan ends on the opposite side of its cutoff.
     if negative != (stage == 2) {
-        game.ram().write_byte(0x69, 16);
+        game.ram().write_byte(crate::ram::mirror::TM, 16);
         word!(game.cinematic_function = function::IDLE);
         let definition = [
             scrolling_text::NINTENDO,

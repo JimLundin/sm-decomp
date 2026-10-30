@@ -193,9 +193,9 @@ pub fn load_area_map<H: Host + ?Sized>(game: &mut H) {
         crate::word_transfers!(game, ascending, 1; native(0x7f7 + active * 2) <- le(explored_map_tiles_saved, saved));
     }
     word!(
-        game.has_area_map =
-            game.ram()
-                .read_byte(0xd908 + usize::from(word!(game.area_index))) as u16
+        game.has_area_map = game.ram().read_byte(
+            crate::ram::bytes::map_station_byte_array + usize::from(word!(game.area_index))
+        ) as u16
     );
 }
 

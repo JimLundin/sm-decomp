@@ -34,7 +34,7 @@ pub fn fade_in<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u8 {
         draw_map(game);
     }
     game.fade(true);
-    if game.ram().read_byte(0x51) == 15 {
+    if game.ram().read_byte(crate::ram::mirror::INIDISP) == 15 {
         word! { game, 0; screen_fade_delay, screen_fade_counter }
         word!(game.game_state += 1);
     }
@@ -64,7 +64,7 @@ pub fn fade_tab<const EQUIPMENT: bool, H: crate::menus::host::Host + ?Sized>(gam
     }
     word!(game.pause_screen_mode = u16::from(EQUIPMENT));
     game.fade(true);
-    if game.ram().read_byte(0x51) == 15 {
+    if game.ram().read_byte(crate::ram::mirror::INIDISP) == 15 {
         word! { game, 0; screen_fade_delay, screen_fade_counter }
         let mut selected = word!(game.pausemenu_button_label_mode);
         if word!(game.pausemenu_button_label_mode) != 0 {
@@ -92,7 +92,7 @@ pub fn fade_out_tab<H: crate::menus::host::Host + ?Sized>(
         word!(game.pause_screen_mode = 0);
     }
     game.fade(false);
-    if game.ram().read_byte(0x51) == 0x80 {
+    if game.ram().read_byte(crate::ram::mirror::INIDISP) == 0x80 {
         enable(game);
         word! { game, 0; screen_fade_delay, screen_fade_counter }
         word!(game.menu_index += 1);
@@ -176,13 +176,16 @@ pub fn save_graphics<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         } else {
             game.ram().read_byte(source)
         };
-        game.ram().write_byte(0x765 + index, value);
+        game.ram()
+            .write_byte(crate::ram::bytes::pausemenu_bak_BG1SC + index, value);
     }
 }
 
 pub fn restore_graphics<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     for index in [13, 14, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 15, 16] {
-        let value = game.ram().read_byte(0x765 + index);
+        let value = game
+            .ram()
+            .read_byte(crate::ram::bytes::pausemenu_bak_BG1SC + index);
         game.ram().write_byte(GRAPHICS_MIRRORS[index], value);
     }
 }

@@ -92,7 +92,7 @@ pub fn advance<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
 fn fade_to_options<H: Host + ?Sized>(game: &mut H) {
     draw_area_labels(game);
     game.fade(false);
-    if (game.ram().read_byte(0x51) & 0xf) == 0 {
+    if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 0 {
         word! {game; game_state = kGameState_2_GameOptionsMenu as u16; menu_index = 0; }
     }
 }
@@ -130,7 +130,7 @@ fn load_foreground<H: Host + ?Sized>(game: &mut H) {
     );
     set_native_word(
         0x51,
-        ((game.ram().read_byte(0x52) as i32) << 8 | 0xf) as u16,
+        ((game.ram().read_byte(crate::ram::mirror::OBSEL) as i32) << 8 | 0xf) as u16,
         game,
     );
     word!(game.menu_index += 1);
@@ -159,15 +159,17 @@ fn begin_area_window<H: Host + ?Sized>(game: &mut H) {
             show_mirror(SubScreen(Layers::of(false, false, true, false, false)), 0x6d, false); show(SubWindowMask(Layers::of(false, false, true, false, false)));
             mirror(CGWSEL as u16, 2, 0x6f, true); mirror(CGADSUB as u16, 0x25, 0x72, true);
         }
-        game.ram().write_byte(0x74 + 2, 0x80);
-        game.ram().write_byte(0x74 + 1, 64);
-        game.ram().write_byte(0x74 + 0, 32);
+        game.ram().write_byte(crate::ram::mirror::COLDATA + 2, 0x80);
+        game.ram().write_byte(crate::ram::mirror::COLDATA + 1, 64);
+        game.ram().write_byte(crate::ram::mirror::COLDATA + 0, 32);
         super::menu_window::initialize(game);
         crate::display::sequence::write_register_and_mirror(game, HDMAEN as u16, 0xc, 0x85, true);
         configure_area_window(game);
         word!(game.hdma_objects_enable_flag = 0);
-        game.ram()
-            .write_byte(0x727, ((word!(game.menu_index)) as u8).wrapping_add(1));
+        game.ram().write_byte(
+            crate::ram::words::menu_index,
+            ((word!(game.menu_index)) as u8).wrapping_add(1),
+        );
     }
 }
 fn configure_area_window<H: Host + ?Sized>(game: &mut H) {
@@ -186,8 +188,10 @@ fn configure_area_window<H: Host + ?Sized>(game: &mut H) {
 fn open_area_window<H: Host + ?Sized>(game: &mut H) {
     draw_area_labels(game);
     if super::menu_window::open_from_center(game) {
-        game.ram()
-            .write_byte(0x727, ((word!(game.menu_index)) as u8).wrapping_add(1));
+        game.ram().write_byte(
+            crate::ram::words::menu_index,
+            ((word!(game.menu_index)) as u8).wrapping_add(1),
+        );
         game.ram().write_byte(
             crate::ram::mirror::TM,
             game.ram().read_byte(crate::ram::mirror::TM)
@@ -417,8 +421,11 @@ fn begin_room_window<H: Host + ?Sized>(game: &mut H) {
             mirror(CGADSUB as u16, 5, 0x72, true); mirror(WOBJSEL as u16, 0x22, 0x62, true);
         }
         game.ram().write_byte(crate::ram::mirror::BG12NBA, 48);
-        game.ram().write_byte(0x9e09, 0);
-        game.ram().write_byte(0x9e19, 0);
+        // Close both windows' middle line counts.
+        game.ram()
+            .write_byte(super::menu_window::ram::WINDOW_1_TABLE + 9, 0);
+        game.ram()
+            .write_byte(super::menu_window::ram::WINDOW_2_TABLE + 9, 0);
         menu_tilemap::area_label(game);
         menu_tilemap::upload(512, 0x7e4000, 1, false, game);
         word! {game; expand_sq_timer = WINDOW_TIMERS[word!(game.area_index) as usize]; }
@@ -605,7 +612,7 @@ fn fade_room<H: Host + ?Sized>(game: &mut H) {
     draw_icons(IconMode::FileSelect, game);
     display_elevator_destinations(game);
     game.fade(false);
-    if (game.ram().read_byte(0x51) & 0xf) == 0 {
+    if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 0 {
         word!(game.menu_index += 1);
         set_native_word(0xf78 + enemy_data::X_POS, 32, game);
     }
@@ -664,8 +671,11 @@ fn begin_return_window<H: Host + ?Sized>(game: &mut H) {
         }
         game.ram().write_byte(crate::ram::mirror::BG12NBA, 48);
         game.ram().write_byte(crate::ram::mirror::WOBJSEL, 34);
-        game.ram().write_byte(0x9e09, 0);
-        game.ram().write_byte(0x9e19, 0);
+        // Close both windows' middle line counts.
+        game.ram()
+            .write_byte(super::menu_window::ram::WINDOW_1_TABLE + 9, 0);
+        game.ram()
+            .write_byte(super::menu_window::ram::WINDOW_2_TABLE + 9, 0);
         word! { game, 0; reg_BG1VOFS, reg_BG1HOFS }
     }
 }
@@ -872,7 +882,10 @@ fn icon_group<H: Host + ?Sized>(
 fn explored<H: Host + ?Sized>(x: u16, y: u16, game: &mut H) -> bool {
     let offset =
         usize::from((x & 0xff00) >> 1) + usize::from(x as u8 >> 6) + usize::from((y & 0xfff8) >> 1);
-    game.ram().read_byte(0x7f7 + offset) & (0x80 >> ((x >> 3) & 7)) != 0
+    game.ram()
+        .read_byte(crate::ram::bytes::map_tiles_explored + offset)
+        & (0x80 >> ((x >> 3) & 7))
+        != 0
 }
 
 fn boss_icons<H: Host + ?Sized>(sprite: u16, table: u16, game: &mut H) {
@@ -913,7 +926,7 @@ pub fn animate_palette<H: Host + ?Sized>(game: &mut H) {
         return;
     }
     game.ram().write_byte(
-        0x73b,
+        crate::ram::words::pausemenu_palette_animation_timer,
         (word!(game.pausemenu_palette_animation_timer) as u8).wrapping_sub(1),
     );
     if word!(game.pausemenu_palette_animation_timer) as u8 != 0 {
@@ -921,12 +934,16 @@ pub fn animate_palette<H: Host + ?Sized>(game: &mut H) {
     }
     let mut frame = i32::from(word!(game.pausemenu_palette_animation_frame)) + 1;
     loop {
-        game.ram().write_byte(0x74f, frame as u8);
+        game.ram().write_byte(
+            crate::ram::words::pausemenu_palette_animation_frame,
+            frame as u8,
+        );
         let timer = game
             .native_image()
             .read(sm_data::cartridge::lorom_offset(0x82c10c) as usize + 3 * frame as usize);
         if timer != 0xff {
-            game.ram().write_byte(0x73b, timer);
+            game.ram()
+                .write_byte(crate::ram::words::pausemenu_palette_animation_timer, timer);
             break;
         }
         game.queue_sound(2, (0x2a) as u8, 6);
@@ -969,10 +986,10 @@ pub fn draw_player_marker<H: Host + ?Sized>(game: &mut H) {
     crate::sprite_output::menu(
         sprite,
         (8 * (i32::from(word!(game.room_x_coordinate_on_map))
-            + i32::from(game.ram().read_byte(0xaf7)))
+            + i32::from(game.ram().read_byte(crate::ram::words::samus_x_pos + 1)))
             - i32::from(word!(game.reg_BG1HOFS))) as u16,
         (8 * (i32::from(word!(game.room_y_coordinate_on_map))
-            + i32::from(game.ram().read_byte(0xafb))
+            + i32::from(game.ram().read_byte(crate::ram::words::samus_y_pos + 1))
             + 1)
             - i32::from(word!(game.reg_BG1VOFS))) as u16,
         3584,
@@ -983,7 +1000,7 @@ pub fn draw_player_marker<H: Host + ?Sized>(game: &mut H) {
 pub fn display_elevator_destinations<H: Host + ?Sized>(game: &mut H) {
     if game
         .ram()
-        .read_byte(0xd908 + usize::from(word!(game.area_index)))
+        .read_byte(crate::ram::bytes::map_station_byte_array + usize::from(word!(game.area_index)))
         == 0
     {
         return;
@@ -1042,7 +1059,7 @@ pub fn center_map<H: Host + ?Sized>(vertical_center: u16, game: &mut H) {
     word!(game.reg_BG1VOFS = (-aligned) as u16);
     let y = (8
         * (i32::from(word!(game.room_y_coordinate_on_map))
-            + i32::from(game.ram().read_byte(0xafb))
+            + i32::from(game.ram().read_byte(crate::ram::words::samus_y_pos + 1))
             + 1)
         + aligned) as u16;
     let top = 64i16.wrapping_sub(y as i16);
@@ -1069,7 +1086,9 @@ fn find_map_edge<H: Host + ?Sized>(
 ) -> u16 {
     let read = |offset: usize| match source {
         Some(record) => record.byte(offset),
-        None => game.ram().read_byte(0x7f7 + offset),
+        None => game
+            .ram()
+            .read_byte(crate::ram::bytes::map_tiles_explored + offset),
     };
     match edge {
         MapEdge::Left | MapEdge::Right => {
@@ -1169,7 +1188,7 @@ pub fn render_map<H: Host + ?Sized>(screen: MapScreen, game: &mut H) {
     );
     if game
         .ram()
-        .read_byte(0xd908 + usize::from(word!(game.area_index)))
+        .read_byte(crate::ram::bytes::map_station_byte_array + usize::from(word!(game.area_index)))
         != 0
     {
         let mut mapped = bitmap.word(0).swap_bytes();
@@ -1292,7 +1311,12 @@ pub fn draw_equipment_selector<H: Host + ?Sized>(game: &mut H) {
         SELECTOR_POSITION_ADDRESS,
         word!(game.pausemenu_equipment_category_item) as u8 as isize,
     )
-    .wrapping_add(4 * u16::from(game.ram().read_byte(0x756)));
+    .wrapping_add(
+        4 * u16::from(
+            game.ram()
+                .read_byte(crate::ram::words::pausemenu_equipment_category_item + 1),
+        ),
+    );
     let position = map_record(address, game);
     animate_pause_sprite(3, position.word(0).wrapping_sub(1), position.word(2), game);
 }
