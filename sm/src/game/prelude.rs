@@ -12,8 +12,7 @@ pub use crate::game::constants::samus_poses::*;
 pub(crate) use crate::game_state::Game;
 pub(crate) use crate::ram_map::word;
 pub(crate) use crate::rtl::{
-    MakePairU16, Mult8x8, ReadRegWord, SnesDivide, Unreachable, WriteReg, WriteRegWord, abs16,
-    words,
+    MakePairU16, Mult8x8, ReadRegWord, SnesDivide, Unreachable, WriteReg, abs16, words,
 };
 pub use crate::snes::registers::*;
 pub use crate::types::{

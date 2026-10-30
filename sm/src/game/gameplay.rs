@@ -104,20 +104,8 @@ impl sm_game::gameplay_frame::Host for Game {
     fn initialize_player(&mut self) {
         crate::game::session_runtime::initialize_player(self);
     }
-    fn enable_enemy_projectiles(&mut self) {
-        crate::game::enemy_projectiles::EnableEprojs(self);
-    }
-    fn set_room_mechanisms_enabled(&mut self, enabled: bool) {
-        crate::game::room_mechanisms::set_enabled(enabled, self);
-    }
-    fn reload_room_tiles(&mut self) {
-        crate::game::room_state::load_tiles_and_palette(self);
-    }
     fn flush_tilemaps(&mut self) {
         unsafe { display_refresh::flush_tilemaps(self) }
-    }
-    fn reload_mechanism_graphics(&mut self) {
-        unsafe { crate::game::room_mechanisms::reload_graphics(self) }
     }
 
     fn load_title_sequence_graphics(&mut self) {
@@ -133,12 +121,6 @@ impl sm_game::gameplay_frame::Host for Game {
         display_refresh::reset_layer_mirrors(self);
     }
 
-    fn clear_hdma_channels(&mut self) {
-        unsafe { crate::rtl::write_register_and_mirror(HDMAEN as u16, 0, 0x85, true, self) }
-    }
-    fn clear_dma_channels(&mut self) {
-        unsafe { WriteRegWord(MDMAEN as u16, 0, self) }
-    }
     fn capture_pause_background(&mut self) {
         unsafe { display_refresh::capture_pause_background(self) }
     }
@@ -160,9 +142,6 @@ impl sm_game::gameplay_frame::Host for Game {
             UnpauseHook::MotherBrain => crate::game::sm_a9::MotherBrainsBody_UnpauseHook(self),
         }
     }
-    fn cancel_sound_effects(&mut self, max_queued: u8) {
-        crate::game::music::cancel_effects(max_queued, self);
-    }
     fn load_pause_assets(&mut self) {
         unsafe { display_refresh::load_pause_assets(self) }
     }
@@ -176,9 +155,6 @@ impl sm_game::gameplay_frame::Host for Game {
     fn finish_gameplay_display(&mut self, clear_current_irq: bool) {
         unsafe { display_refresh::finish_gameplay(clear_current_irq, self) }
     }
-    fn event_happened(&mut self, event: u16) -> bool {
-        crate::game::gameplay_flag_runtime::CheckEventHappened(event, self) != 0
-    }
     fn queue_music_delayed(&mut self, track: u16, delay: u16) {
         crate::game::music::QueueMusic_DelayedY(track, delay, self);
     }
@@ -186,26 +162,14 @@ impl sm_game::gameplay_frame::Host for Game {
         crate::game::session_runtime::player_update_runtime::low_health(self);
     }
 
-    fn prepare_player_projectiles(&mut self) {
-        crate::game::player_projectiles::prepare(self);
-    }
     fn player_projectiles_hit_samus(&mut self) {
         unsafe { crate::game::projectile_contact::player_projectiles_hit_samus(self) }
     }
     fn advance_player(&mut self) {
         crate::game::session_runtime::player_update_runtime::advance_frame(self);
     }
-    fn run_enemy_projectiles(&mut self) {
-        crate::game::enemy_projectiles::EprojRunAll(self);
-    }
     fn run_room_mechanisms(&mut self) -> u8 {
         unsafe { crate::game::room_mechanisms::run(self) }
-    }
-    fn enemy_projectiles_hit_samus(&mut self) {
-        crate::game::enemy_projectiles::enemy_projectiles_hit_samus(self);
-    }
-    fn shoot_enemy_projectiles(&mut self) {
-        crate::game::enemy_projectiles::shoot_enemy_projectiles(self);
     }
     fn advance_room(&mut self) {
         unsafe { crate::game::room_state::advance_room(self) }

@@ -9,6 +9,9 @@ use crate::animated_tiles::execution as animated_tiles;
 use crate::constants::game_states::*;
 use crate::constants::loading_game_states::*;
 use crate::demo_rooms;
+use crate::display::registers::{HDMAEN, MDMAEN};
+use crate::display::sequence::write_register_and_mirror;
+use crate::enemy_projectiles;
 use crate::gameplay_rules::{finish_frame, finish_health_and_time};
 use crate::menus::prelude::CoroutineRet;
 use crate::menus::{
@@ -89,11 +92,7 @@ pub trait Host:
     // Room transition phase.
     fn initialize_gameplay_display(&mut self);
     fn initialize_player(&mut self);
-    fn enable_enemy_projectiles(&mut self);
-    fn set_room_mechanisms_enabled(&mut self, enabled: bool);
-    fn reload_room_tiles(&mut self);
     fn flush_tilemaps(&mut self);
-    fn reload_mechanism_graphics(&mut self);
 
     // Demo phase.
     fn load_title_sequence_graphics(&mut self);
@@ -102,33 +101,22 @@ pub trait Host:
     fn reset_layer_mirrors(&mut self);
 
     // Pause phase.
-    /// Write zero to HDMAEN and its mirror.
-    fn clear_hdma_channels(&mut self);
-    /// Write zero to MDMAEN.
-    fn clear_dma_channels(&mut self);
     fn capture_pause_background(&mut self);
     fn pause_hook(&mut self, hook: PauseHook);
     fn unpause_hook(&mut self, hook: UnpauseHook) -> u8;
-    /// Cancel sound effects, keeping at most `max_queued` queued.
-    fn cancel_sound_effects(&mut self, max_queued: u8);
     fn load_pause_assets(&mut self);
     fn upload_pause_map(&mut self);
     fn pause_graphics(&mut self, paused: bool);
 
     // Death phase.
     fn finish_gameplay_display(&mut self, clear_current_irq: bool);
-    fn event_happened(&mut self, event: u16) -> bool;
     fn queue_music_delayed(&mut self, track: u16, delay: u16);
     fn advance_low_health_warning(&mut self);
 
     // Gameplay pass.
-    fn prepare_player_projectiles(&mut self);
     fn player_projectiles_hit_samus(&mut self);
     fn advance_player(&mut self);
-    fn run_enemy_projectiles(&mut self);
     fn run_room_mechanisms(&mut self) -> u8;
-    fn enemy_projectiles_hit_samus(&mut self);
-    fn shoot_enemy_projectiles(&mut self);
     fn advance_room(&mut self);
 }
 
@@ -395,8 +383,8 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
         word_transfers!(game, ascending, 16; native(0xc380) <- native(0xc180));
         word! { game, 1; screen_fade_delay, screen_fade_counter }
         game.enable_display_nmi(true);
-        game.enable_enemy_projectiles();
-        game.set_room_mechanisms_enabled(true);
+        enemy_projectiles::lifecycle::set_enabled(&mut game.runtime(), true);
+        set_mechanisms_enabled(game, true);
         palette_effects::set_enabled(game.runtime().session_mut(), true);
         game.set_hdma_enabled(true);
         animated_tiles::set_enabled(game.runtime().session_mut(), true);
@@ -493,7 +481,7 @@ fn next_demo<H: Host>(game: &mut H) -> CoroutineRet {
 /// Pause phase: enter the pause screen.
 fn setup_pause<H: Host>(game: &mut H) -> CoroutineRet {
     game.set_hdma_enabled(false);
-    game.clear_hdma_channels();
+    write_register_and_mirror(game, HDMAEN as u16, 0, 0x85, true);
     animated_tiles::set_enabled(game.runtime().session_mut(), false);
     game.capture_pause_background();
     match pause_controls::hook_address(true, game) {
@@ -504,7 +492,7 @@ fn setup_pause<H: Host>(game: &mut H) -> CoroutineRet {
             game.rtl_unreachable();
         }
     }
-    game.cancel_sound_effects(6);
+    cancel_sound_effects(game, 6);
     pause_controls::save_graphics(game);
     game.load_pause_assets();
     game.upload_pause_map();
@@ -549,13 +537,13 @@ fn setup_unpause<H: Host>(game: &mut H) -> CoroutineRet {
         word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- pause_map(384));
         game.pause_graphics(false);
         pause_controls::resume(game);
-        game.clear_dma_channels();
+        game.write_register_word(MDMAEN as u16, 0);
         game.enable_display_nmi(false);
         game.disable_scanline_irq();
-        game.reload_room_tiles();
+        crate::room_entry::installation::load_tiles_and_palette(&mut game.runtime());
         crate::room_entry::background::load(&mut game.runtime(), LoadMode::Initial);
         fill_viewport(game, |game| game.flush_tilemaps());
-        game.reload_mechanism_graphics();
+        crate::room_mechanisms::graphics::reload_graphics(&mut game.runtime());
         game.enable_display_nmi(true);
         game.enable_scanline_irq(false);
         pause_controls::restore_graphics(game);
@@ -618,8 +606,8 @@ fn exit_time_up<H: Host>(game: &mut H) -> CoroutineRet {
         word! { game, 0;
             screen_fade_delay, screen_fade_counter, ceres_status, timer_status,
         }
-        game.cancel_sound_effects(15);
-        if game.event_happened(0xe) {
+        cancel_sound_effects(game, 15);
+        if crate::progress::event_happened(&mut game.runtime(), 0xe) {
             word! { game, 0; game_options_screen_index, menu_index }
             word_transfers!(game, descending, 128; le(eproj_y_subpos, 142) <- value(0));
             word!(game.game_state = kGameState_25_SamusNoHealth as u16);
@@ -660,7 +648,7 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
     if resume == ResumePoint::Start {
         actors::scheduling::select(&mut game.runtime());
         palette_effects::advance(&mut game.runtime());
-        game.prepare_player_projectiles();
+        crate::player_projectiles::feedback::grapple_flare(&mut game.runtime());
         if word!(game.debug_disable_sprite_interact) == 0 {
             game.player_projectiles_hit_samus();
         }
@@ -679,7 +667,7 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
     }
     if matches!(resume, ResumePoint::Start | ResumePoint::EnemyMessage) {
         game.advance_player();
-        game.run_enemy_projectiles();
+        enemy_projectiles::lifecycle::advance(&mut game.runtime());
     }
     if resume != ResumePoint::Skip {
         let yielded = game.run_room_mechanisms();
@@ -690,8 +678,8 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
         animated_tiles::advance(&mut game.runtime());
         // This is a new read: earlier callbacks may change interaction policy.
         if word!(game.debug_disable_sprite_interact) == 0 {
-            game.enemy_projectiles_hit_samus();
-            game.shoot_enemy_projectiles();
+            enemy_projectiles::contact::enemy_projectiles_hit_samus(&mut game.runtime());
+            enemy_projectiles::contact::shoot_enemy_projectiles(&mut game.runtime());
             actors::contacts::apply_power_bomb_to_enemies(&mut game.runtime());
         }
         advance_camera(game);
@@ -709,6 +697,23 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
     }
     game.set_resume_point(ResumePoint::Start as u8);
     0
+}
+
+/// Cancel the three sound channels, keeping at most `max_queued` queued.
+fn cancel_sound_effects<H: Host>(game: &mut H, max_queued: u8) {
+    for (channel, sound) in [2, 0x71, 1].into_iter().enumerate() {
+        game.queue_sound(channel, sound, max_queued);
+    }
+}
+
+fn set_mechanisms_enabled<H: Host>(game: &mut H, enabled: bool) {
+    let mut h = game.runtime();
+    let flags = h.session().mechanisms.flags;
+    h.session_mut().mechanisms.flags = if enabled {
+        flags | 0x8000
+    } else {
+        flags & !0x8000
+    };
 }
 
 /// Per-state work after a completed gameplay pass.
@@ -746,7 +751,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                     word! { game, 0; g_word_7E0DE4, g_word_7E0DE6 }
                     word!(game.game_state += 1);
                     word!(game.power_bomb_explosion_status = 0);
-                    game.cancel_sound_effects(15);
+                    cancel_sound_effects(game, 15);
                     game.queue_music_delayed8(0);
                     game.queue_music_delayed8(0xff39);
                     game.queue_music_delayed(5, 0xe);
@@ -789,7 +794,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                     cinematic_function = ((0x8bd480i32) as u16); timer_status = 0; }
                 }
                 game.queue_music_delayed8(0);
-                game.cancel_sound_effects(15);
+                cancel_sound_effects(game, 15);
             }
         }
         Entry::PauseFadeOut => {
