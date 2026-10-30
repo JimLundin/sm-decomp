@@ -266,13 +266,12 @@ pub fn check_for_blue_ring_collision_with_room(k: u16, ctx: &mut impl Host) -> u
 
 pub fn set_up_collision_detection(k: u16, ctx: &mut impl Host) -> CollisionRect {
     let v1: i32 = k as i32 >> 1;
-    let rect: CollisionRect = CollisionRect {
+    CollisionRect {
         x: enemy!(ctx, (v1) as isize, x),
         y: enemy!(ctx, (v1) as isize, y),
         w: enemy_byte!(ctx, v1 as isize * 2, radius) as u16,
         h: enemy_byte!(ctx, v1 as isize * 2 + 1, radius) as u16,
-    };
-    rect
+    }
 }
 
 pub fn handle_blue_ring_collision_with_room(k: u16, ctx: &mut impl Host) {
@@ -283,24 +282,15 @@ pub fn handle_blue_ring_collision_with_room(k: u16, ctx: &mut impl Host) {
 
 pub fn mother_brain_bomb_collides_with_bomb(k: u16, ctx: &mut impl Host) -> u8 {
     let v1: i32 = k as i32 >> 1;
-    let rect: CollisionRect = CollisionRect {
-        x: enemy!(ctx, (v1) as isize, x),
-        y: enemy!(ctx, (v1) as isize, y),
-        w: enemy_byte!(ctx, v1 as isize * 2, radius) as u16,
-        h: enemy_byte!(ctx, v1 as isize * 2 + 1, radius) as u16,
-    };
+    let rect = set_up_collision_detection(k, ctx);
     if check_for_bomb_collision_with_rectangle(rect, ctx) == 0 {
         return 0;
     }
-    {
-        let value = ctx.mother_brain_active_bombs().wrapping_sub(1);
-        ctx.set_mother_brain_active_bombs(value);
-    }
-    {
-        enemy!(ctx, 0 => (v1) as isize, velocity_x);
-        enemy!(ctx, 0 => (v1) as isize, velocity_y);
-        enemy!(ctx, 0 => (v1) as isize, definition);
-    }
+    let value = ctx.mother_brain_active_bombs().wrapping_sub(1);
+    ctx.set_mother_brain_active_bombs(value);
+    enemy!(ctx, 0 => (v1) as isize, velocity_x);
+    enemy!(ctx, 0 => (v1) as isize, velocity_y);
+    enemy!(ctx, 0 => (v1) as isize, definition);
     ctx.session_mut().enemy_projectiles.spawn.point = Point {
         x: enemy!(ctx, (v1) as isize, x),
         y: enemy!(ctx, (v1) as isize, y),

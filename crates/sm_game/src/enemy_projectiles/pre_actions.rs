@@ -693,11 +693,7 @@ pub fn tourian_statue_particle_splash_pre_instruction(k: u16, ctx: &mut impl Hos
 
 pub fn tourian_statue_base_decoration_pre_instruction(k: u16, ctx: &mut impl Host) {
     if ctx.session().mechanisms.statue_animation == 0 {
-        {
-            let old = ctx.session().mechanisms.statue_finished;
-            let value = old | (0x8000);
-            ctx.session_mut().mechanisms.statue_finished = value;
-        };
+        ctx.session_mut().mechanisms.statue_finished |= 0x8000;
     }
     tourian_statue_decoration_pre_instruction(k, ctx);
 }
@@ -1889,10 +1885,8 @@ pub fn falling_spark_pre_instruction(k: u16, ctx: &mut impl Host) {
                 let low = enemy!(ctx, v1 as isize, behavior_a).wrapping_mul(2);
                 enemy!(ctx, v1 as isize, behavior_a = low);
             }
-            {
-                enemy!(ctx, 0x8000 => (v1) as isize, velocity_x);
-                enemy!(ctx, -1i32 as u16 => (v1) as isize, velocity_y);
-            }
+            enemy!(ctx, 0x8000 => (v1) as isize, velocity_x);
+            enemy!(ctx, -1i32 as u16 => (v1) as isize, velocity_y);
             enemy_add!(ctx, (v1) as isize, y, (-2i16) as u16);
             return;
         }

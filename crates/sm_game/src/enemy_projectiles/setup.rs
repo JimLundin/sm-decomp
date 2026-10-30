@@ -239,12 +239,10 @@ pub fn init_phantoon_destroyable_flames(j: u16, ctx: &mut impl Host) {
             } else {
                 enemy!(ctx, 2 => (v3) as isize, velocity_x);
             }
-            {
-                enemy!(ctx, BYTE_8698_B4[v4 as usize] as u16 => (v3) as isize, behavior_a);
-                enemy!(ctx, ctx.resolve_actor(Key::from_legacy(0), Le).x.whole => (v3) as isize, x);
-                enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32 + 32) as u16 => (v3) as isize, y);
-                enemy!(ctx, (0x869a45 & 0xffff) as u16 => (v3) as isize, pre_action);
-            }
+            enemy!(ctx, BYTE_8698_B4[v4 as usize] as u16 => (v3) as isize, behavior_a);
+            enemy!(ctx, ctx.resolve_actor(Key::from_legacy(0), Le).x.whole => (v3) as isize, x);
+            enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32 + 32) as u16 => (v3) as isize, y);
+            enemy!(ctx, (0x869a45 & 0xffff) as u16 => (v3) as isize, pre_action);
         }
         4 => {
             let v5: i32 = j as i32 >> 1;
@@ -1660,16 +1658,11 @@ pub fn init_bomb_torizo_low_health_explosion(j: u16, ctx: &mut impl Host) {
         & 0x8000)
         == 0
     {
-        {
-            let old = ctx.session().enemy_projectiles.spawn.primary;
-            let value = ((old as i32) + (2)) as u16;
-            ctx.session_mut().enemy_projectiles.spawn.primary = value;
-        };
+        let spawn = &mut ctx.session_mut().enemy_projectiles.spawn;
+        spawn.primary = spawn.primary.wrapping_add(2);
     }
-    {
-        let old = ctx.session().enemy_projectiles.spawn.primary;
-        ctx.session_mut().enemy_projectiles.spawn.primary = old.wrapping_add(2);
-    };
+    let spawn = &mut ctx.session_mut().enemy_projectiles.spawn;
+    spawn.primary = spawn.primary.wrapping_add(2);
     let v3: i32 = ctx.session().enemy_projectiles.spawn.primary as i32 >> 1;
     let v4: u16 = (K_EPROJ_INIT_BOMB_TORIZO_LOW_HEALTH_EXPLODE_X[v3 as usize] as i32
         + enemy!(ctx, (v2) as isize, x) as i32) as u16;

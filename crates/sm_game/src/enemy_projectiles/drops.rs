@@ -37,9 +37,7 @@ pub fn scatter(source: DropSource, index: u16, h: &mut impl Host) {
                     ((h.inputs().random & 0x3f00) >> 8).wrapping_add(y);
             }
         }
-        {
-            spawn(definition, index, h);
-        }
+        spawn(definition, index, h);
     }
 }
 

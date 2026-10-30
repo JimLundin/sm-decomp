@@ -276,11 +276,9 @@ pub fn initialize_room_effects<H: crate::menus::host::Host + ?Sized>(game: &mut 
         native(0x602) <- value(0x8800), native(0x605) <- value(0x8800),
         native(0x601) <- value(0x83e1), native(0x604) <- value(0x83e1),
     }
-    {
-        crate::display::sequence::register_writes! { game;
-            byte(WMADDL as u16, 0xf0); byte(WMADDM as u16, 0xff);
-            byte(WMADDH as u16, 1);
-        }
+    crate::display::sequence::register_writes! { game;
+        byte(WMADDL as u16, 0xf0); byte(WMADDM as u16, 0xff);
+        byte(WMADDH as u16, 1);
     }
     game.ram().write_byte(0x85, 0);
     set_fixed_color([32, 64, 0x80], game);
