@@ -336,6 +336,7 @@ pub mod statue_tables;
 pub mod torizo_corpse_tables;
 pub mod torizo_tables;
 #[cfg(sm_verify_dll)]
+#[path = "verification/transition_trace.rs"]
 pub mod transition_trace;
 pub mod visual_host;
 pub mod zebetite_data;

@@ -447,7 +447,7 @@ impl ActorsCheckpoint for Actors {
 }
 
 #[cfg(sm_verify_dll)]
-#[path = "numeric_checkpoint_cases.rs"]
+#[path = "../verification/numeric_checkpoint_cases.rs"]
 mod numeric_checkpoint_cases;
 #[cfg(sm_verify_dll)]
 pub use numeric_checkpoint_cases::assert_numeric_checkpoint;

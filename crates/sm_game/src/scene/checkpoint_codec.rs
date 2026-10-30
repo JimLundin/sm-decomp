@@ -1438,7 +1438,7 @@ pub fn decode(
 }
 
 #[cfg(sm_verify_dll)]
-#[path = "display_checkpoint_rejections.rs"]
+#[path = "../verification/display_checkpoint_rejections.rs"]
 mod display_checkpoint_rejections;
 
 #[cfg(sm_verify_dll)]

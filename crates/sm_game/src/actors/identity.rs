@@ -590,11 +590,11 @@ impl ActorIdentityState {
 }
 
 #[cfg(test)]
-#[path = "actor_identity_checks.rs"]
+#[path = "../verification/actor_identity_checks.rs"]
 mod actor_identity_checks;
 
 #[cfg(sm_verify_dll)]
-#[path = "actor_owned_checkpoint_cases.rs"]
+#[path = "../verification/actor_owned_checkpoint_cases.rs"]
 mod owned_checkpoint_cases;
 #[cfg(sm_verify_dll)]
 pub use owned_checkpoint_cases::{assert_installed_epoch, assert_owned_checkpoint};
