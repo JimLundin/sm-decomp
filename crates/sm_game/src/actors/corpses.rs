@@ -18,6 +18,7 @@ use crate::actors::mother_brain_fight::{
     MoveEnemyWithVelocity, QueueSfx2_Max3, QueueSfx2_Max6, SpawnEprojWithRoomGfx, Unreachable,
     native_word, set_graphics_drawn_hook, set_native_word,
 };
+use crate::actors::session_slots::session_slot;
 use crate::constants::bank_86::*;
 use crate::constants::bank_a9::*;
 use crate::constants::enemy_properties::*;
@@ -26,7 +27,7 @@ use crate::menus::menu_tilemap::native_record;
 use crate::menus::prelude::do_until;
 use crate::palette_copies::copy_rom_colors_to_palette;
 use crate::ram::RawRam as _;
-use crate::ram::{slot, word};
+use crate::ram::word;
 use crate::word_transfers;
 use crate::{corpse_tables, torizo_corpse_tables};
 use sm_data::cartridge::RomRecord;
@@ -429,7 +430,7 @@ crate::dispatch::instruction_callbacks! {
     CorpseRottingRotEntryFinishedHook [] {
         let v0: i32 = word!(game.cur_enemy_index) as i32;
         {
-            let (x, y) = ((slot!(game, Corpse[v0].base.x_pos) as i32 + (word!(game.random_number) as i32 & 0x1a) - 14i32) as u16, ((slot!(game, Corpse[v0].base.y_pos)).wrapping_add(16)));
+            let (x, y) = ((session_slot!(game, Corpse[v0].base.x_pos) as i32 + (word!(game.random_number) as i32 & 0x1a) - 14i32) as u16, ((session_slot!(game, Corpse[v0].base.y_pos)).wrapping_add(16)));
             crate::actors::host::BossEffects::set_projectile_spawn_point(game, x, y);
         }
         SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0xa, game);
@@ -445,30 +446,30 @@ crate::dispatch::callback_dispatch! {
     @functions [pub fn (game: &mut impl Host)];
     [11129800] DeadTorizo_PreRotDelay [] {
         let E: i32 = 0;
-        let v1: u16 = (slot!(game, DeadTorizo[E].pre_rot_delay)).wrapping_add(1);
-        slot!(game, DeadTorizo[E].pre_rot_delay = v1);
+        let v1: u16 = (session_slot!(game, DeadTorizo[E].pre_rot_delay)).wrapping_add(1);
+        session_slot!(game, DeadTorizo[E].pre_rot_delay = v1);
         if v1 >= 0x10 {
-            slot!(game, DeadTorizo[E].base.properties = (slot!(game, DeadTorizo[E].base.properties)) | ((kEnemyProps_Tangible) as u16));
-            slot!(game, DeadTorizo[E].function = function::TORIZO_ROTTING);
+            session_slot!(game, DeadTorizo[E].base.properties = (session_slot!(game, DeadTorizo[E].base.properties)) | ((kEnemyProps_Tangible) as u16));
+            session_slot!(game, DeadTorizo[E].function = function::TORIZO_ROTTING);
             DeadTorizo_Rotting(game);
         }
     };
     [11129830] DeadTorizo_Rotting [] {
         let E: i32 = 0;
-        let v1: u16 = (slot!(game, DeadTorizo[E].rot_timer)).wrapping_add(1);
-        slot!(game, DeadTorizo[E].rot_timer = v1);
+        let v1: u16 = (session_slot!(game, DeadTorizo[E].rot_timer)).wrapping_add(1);
+        session_slot!(game, DeadTorizo[E].rot_timer = v1);
         if v1 >= 0xf {
-            slot!(game, DeadTorizo[E].rot_timer = 0);
-            let sand_heap_lines: u16 = slot!(game, DeadTorizo[E].sand_heap_lines);
+            session_slot!(game, DeadTorizo[E].rot_timer = 0);
+            let sand_heap_lines: u16 = session_slot!(game, DeadTorizo[E].sand_heap_lines);
             if sand_heap_lines != 0 {
                 DeadTorizo_CopyLineOfSandHeapTileData(sand_heap_lines, game);
-                slot!(game, DeadTorizo[E].sand_heap_lines = slot!(game, DeadTorizo[E].sand_heap_lines).wrapping_sub(1));
+                session_slot!(game, DeadTorizo[E].sand_heap_lines = session_slot!(game, DeadTorizo[E].sand_heap_lines).wrapping_sub(1));
             }
         }
-        slot!(game, DeadTorizo[E].y_velocity = slot!(game, DeadTorizo[E].y_velocity).wrapping_add(1));
+        session_slot!(game, DeadTorizo[E].y_velocity = session_slot!(game, DeadTorizo[E].y_velocity).wrapping_add(1));
         MoveEnemyWithVelocity(game);
         if ProcessCorpseRotting(0, game) & 1 == 0 {
-            slot!(game, DeadTorizo[E].function = function::TORIZO_ROTTED);
+            session_slot!(game, DeadTorizo[E].function = function::TORIZO_ROTTED);
         }
     };
     @external {
@@ -489,7 +490,7 @@ pub fn DeadTorizo_WaitForSamusColl(k: u16, game: &mut impl Host) {
         || k == word!(game.enemy_index_colliding_dirs[2])
         || k == word!(game.enemy_index_colliding_dirs[3])
     {
-        slot!(
+        session_slot!(
             game,
             DeadTorizo[0i32].function = function::TORIZO_PRE_ROT_DELAY
         );
@@ -544,15 +545,15 @@ pub fn DeadTorizo_Func_1(game: &mut impl Host) {
     let mut v5 = 0usize;
     let mut v10 = 0usize;
     let E: i32 = 0;
-    let v1: u16 = (slot!(game, DeadTorizo[E].tile_frame)).wrapping_add(1);
-    slot!(game, DeadTorizo[E].tile_frame = v1);
+    let v1: u16 = (session_slot!(game, DeadTorizo[E].tile_frame)).wrapping_add(1);
+    session_slot!(game, DeadTorizo[E].tile_frame = v1);
     let mut v3: u16 = word!(game.vram_write_queue_tail);
     if v1 & 1 != 0 {
         queue_dead_torizo_tile_transfers!(game, torizo_corpse_tables::Frame::Odd, v10, v3);
     } else {
         queue_dead_torizo_tile_transfers!(game, torizo_corpse_tables::Frame::Even, v5, v3);
     }
-    slot!(game, CorpseTiles[0i32].sprite_tile_transfer = 0);
+    session_slot!(game, CorpseTiles[0i32].sprite_tile_transfer = 0);
     word!(game.vram_write_queue_tail = v3);
 }
 pub fn DeadTorizo_CopyLineOfSandHeapTileData(a: u16, game: &mut impl Host) {
@@ -570,29 +571,31 @@ pub fn DeadTorizo_CopyLineOfSandHeapTileData(a: u16, game: &mut impl Host) {
 }
 pub fn DeadSidehopper_Init_0(game: &mut impl Host) {
     let E: i32 = word!(game.cur_enemy_index) as i32;
-    slot!(
+    session_slot!(
         game,
-        Corpse[E].base.properties = (slot!(game, Corpse[E].base.properties) as i32 & 0x77ff
+        Corpse[E].base.properties = (session_slot!(game, Corpse[E].base.properties) as i32 & 0x77ff
             | kEnemyProps_ProcessedOffscreen as i32) as u16
     );
-    if (slot!(game, Corpse[0i32].base.properties) as i32 & kEnemyProps_Invisible as i32) != 0 {
-        slot!(
+    if (session_slot!(game, Corpse[0i32].base.properties) as i32 & kEnemyProps_Invisible as i32)
+        != 0
+    {
+        session_slot!(
             game,
             Corpse[E].base.properties =
-                (slot!(game, Corpse[E].base.properties)) | ((kEnemyProps_Deleted) as u16)
+                (session_slot!(game, Corpse[E].base.properties)) | ((kEnemyProps_Deleted) as u16)
         );
     }
-    slot!(game, Corpse[E].drained_palette_index = 0);
-    slot!(game, Corpse[E].x_velocity = 96);
-    slot!(game, Corpse[E].y_velocity = 256);
-    slot!(game, Corpse[E].base.x_pos = 488);
-    slot!(game, Corpse[E].base.y_pos = 184);
-    slot!(
+    session_slot!(game, Corpse[E].drained_palette_index = 0);
+    session_slot!(game, Corpse[E].x_velocity = 96);
+    session_slot!(game, Corpse[E].y_velocity = 256);
+    session_slot!(game, Corpse[E].base.x_pos = 488);
+    session_slot!(game, Corpse[E].base.y_pos = 184);
+    session_slot!(
         game,
         Corpse[E].function = function::SIDEHOPPER_ALIVE_WAITING_FOR_ACTIVATION
     );
-    slot!(game, Corpse[E].base.palette_index = 512);
-    slot!(game, Corpse[E].base.y_height = 21);
+    session_slot!(game, Corpse[E].base.palette_index = 512);
+    session_slot!(game, Corpse[E].base.y_height = 21);
     Enemy_SetInstrList(
         word!(game.cur_enemy_index),
         addr_kDeadMonsters_Ilist_ECE3 as u16,
@@ -602,12 +605,12 @@ pub fn DeadSidehopper_Init_0(game: &mut impl Host) {
 }
 pub fn DeadSidehopper_Init_1(game: &mut impl Host) {
     let E: i32 = word!(game.cur_enemy_index) as i32;
-    slot!(game, Corpse[E].drained_palette_index = -1i32 as u16);
-    slot!(
+    session_slot!(game, Corpse[E].drained_palette_index = -1i32 as u16);
+    session_slot!(
         game,
         Corpse[E].function = function::SIDEHOPPER_DEAD_WAIT_FOR_SAMUS_COLLISION
     );
-    slot!(game, Corpse[E].base.palette_index = 3584);
+    session_slot!(game, Corpse[E].base.palette_index = 3584);
     Enemy_SetInstrList(
         word!(game.cur_enemy_index),
         addr_kDeadMonsters_Ilist_ECEF as u16,
@@ -620,9 +623,9 @@ macro_rules! initialize_rotting_enemy_corpse {
     (
         $enemy:ident, $function:expr, $game:ident, $corpse:expr $(,)?
     ) => {
-        slot!($game, Corpse[$enemy].base.palette_index = 3584);
-        slot!($game, Corpse[$enemy].function = $function);
-        let v2: i32 = slot!($game, Corpse[$enemy].parameter_1) as i32 >> 1;
+        session_slot!($game, Corpse[$enemy].base.palette_index = 3584);
+        session_slot!($game, Corpse[$enemy].function = $function);
+        let v2: i32 = session_slot!($game, Corpse[$enemy].parameter_1) as i32 >> 1;
         Enemy_SetInstrList(
             word!($game.cur_enemy_index),
             corpse_tables::variant($game, $corpse, v2 as isize).instruction_list,
@@ -643,60 +646,60 @@ crate::dispatch::callback_dispatch! {
     @functions [pub fn (k: u16, game: &mut impl Host)];
     [11131106] DeadSidehopper_Alive_WaitForActivate [] {
         if word!(game.layer1_x_pos) as i32 - 513i32 & 0x8000 != 0 {
-            slot!(game, Corpse[k as i32].function = function::SIDEHOPPER_HOPPING);
+            session_slot!(game, Corpse[k as i32].function = function::SIDEHOPPER_HOPPING);
             DeadSidehopper_Activated(k, game);
         }
     };
     [11131121] DeadSidehopper_Activated [] {
         if DeadMonsters_Func_3(k, game) & 1 != 0 {
             let E: i32 = k as i32;
-            slot!(game, Corpse[E].hop = (slot!(game, Corpse[E].hop) as i32 + 1 & 3) as u16);
+            session_slot!(game, Corpse[E].hop = (session_slot!(game, Corpse[E].hop) as i32 + 1 & 3) as u16);
             Enemy_SetInstrList(k, addr_kDeadMonsters_Ilist_ECAC as u16, game);
-            slot!(game, Corpse[E].function = function::SIDEHOPPER_HOPPING_IDLE);
+            session_slot!(game, Corpse[E].function = function::SIDEHOPPER_HOPPING_IDLE);
         }
     };
     [11131152] DeadMonsters_Func_1 [] {
         let E: i32 = k as i32;
-        slot!(game, Corpse[E].function = function::SIDEHOPPER_IDLING);
-        slot!(game, Corpse[E].function_timer = 64);
+        session_slot!(game, Corpse[E].function = function::SIDEHOPPER_IDLING);
+        session_slot!(game, Corpse[E].function_timer = 64);
     };
     [11131165] DeadMonsters_Func_2 [] {
         let E: i32 = k as i32;
-        slot!(game, Corpse[E].function_timer = slot!(game, Corpse[E].function_timer).wrapping_sub(1));
-        if (slot!(game, Corpse[E].function_timer) & 0x8000) != 0 {
-            if slot!(game, Corpse[E].drained_palette_index) != 0 {
-                slot!(game, Corpse[E].function = function::SIDEHOPPER_BEING_DRAINED);
+        session_slot!(game, Corpse[E].function_timer = session_slot!(game, Corpse[E].function_timer).wrapping_sub(1));
+        if (session_slot!(game, Corpse[E].function_timer) & 0x8000) != 0 {
+            if session_slot!(game, Corpse[E].drained_palette_index) != 0 {
+                session_slot!(game, Corpse[E].function = function::SIDEHOPPER_BEING_DRAINED);
             } else {
-                slot!(game, Corpse[E].function = function::SIDEHOPPER_HOPPING);
+                session_slot!(game, Corpse[E].function = function::SIDEHOPPER_HOPPING);
                 Enemy_SetInstrList(k, addr_kDeadMonsters_Ilist_ECE3 as u16, game);
-                let v3: i32 = slot!(game, Corpse[E].hop) as i32;
+                let v3: i32 = session_slot!(game, Corpse[E].hop) as i32;
                 let hop = corpse_tables::hop(game, v3 as isize);
-                slot!(game, Corpse[E].y_velocity = hop.y_velocity);
-                slot!(game, Corpse[E].x_velocity = hop.x_velocity);
+                session_slot!(game, Corpse[E].y_velocity = hop.y_velocity);
+                session_slot!(game, Corpse[E].x_velocity = hop.x_velocity);
             }
         }
     };
     [11131400] DeadMonsters_Func_5 [] {
         let E: i32 = k as i32;
-        let v2: u16 = (slot!(game, Corpse[E].drained_palette_timer)).wrapping_add(1);
-        slot!(game, Corpse[E].drained_palette_timer = v2);
+        let v2: u16 = (session_slot!(game, Corpse[E].drained_palette_timer)).wrapping_add(1);
+        session_slot!(game, Corpse[E].drained_palette_timer = v2);
         if v2 >= 8 {
-            slot!(game, Corpse[E].drained_palette_timer = 0);
+            session_slot!(game, Corpse[E].drained_palette_timer = 0);
             copy_rom_colors_to_palette(
                 0x122,
                 0xa9,
-                (32 * (slot!(game, Corpse[E].drained_palette_index) as i32 - 1i32) - 0x1434i32) as u16,
+                (32 * (session_slot!(game, Corpse[E].drained_palette_index) as i32 - 1i32) - 0x1434i32) as u16,
                 0xf,
                 game,
             );
             let v3: u16 = word!(game.cur_enemy_index);
-            let v5: u16 = (slot!(game, Corpse[E].drained_palette_index)).wrapping_add(1);
-            slot!(game, Corpse[E].drained_palette_index = v5);
+            let v5: u16 = (session_slot!(game, Corpse[E].drained_palette_index)).wrapping_add(1);
+            session_slot!(game, Corpse[E].drained_palette_index = v5);
             if v5 >= 8 {
                 Enemy_SetInstrList(v3, addr_kDeadMonsters_Ilist_ECE9 as u16, game);
-                slot!(game, Corpse[E].function = function::SIDEHOPPER_DEAD_WAIT_FOR_SAMUS_COLLISION);
-                slot!(game, Corpse[E].base.properties = (slot!(game, Corpse[E].base.properties)) | (0x8000u16));
-                slot!(game, Corpse[E].base.y_height = 12);
+                session_slot!(game, Corpse[E].function = function::SIDEHOPPER_DEAD_WAIT_FOR_SAMUS_COLLISION);
+                session_slot!(game, Corpse[E].base.properties = (session_slot!(game, Corpse[E].base.properties)) | (0x8000u16));
+                session_slot!(game, Corpse[E].base.y_height = 12);
             }
         }
     };
@@ -704,17 +707,17 @@ crate::dispatch::callback_dispatch! {
     [11131578] DeadSidehopper_Rotting [] {
         let v1: u8 = ProcessCorpseRotting(k, game);
         if v1 & 1 == 0 {
-            slot!(game, Corpse[word!(game.cur_enemy_index) as i32].function = function::SIDEHOPPER_DEAD_WAIT_FOR_SAMUS_COLLISION);
+            session_slot!(game, Corpse[word!(game.cur_enemy_index) as i32].function = function::SIDEHOPPER_DEAD_WAIT_FOR_SAMUS_COLLISION);
         }
-        let vram_transfers: u16 = slot!(game, Corpse[word!(game.cur_enemy_index) as i32].vram_transfers);
+        let vram_transfers: u16 = session_slot!(game, Corpse[word!(game.cur_enemy_index) as i32].vram_transfers);
         ProcessCorpseRottingVramTransfers(vram_transfers, game);
     };
     [11131600] DeadZoomer_Rotting [] {
         let v1: u8 = ProcessCorpseRotting(k, game);
         if v1 & 1 == 0 {
-            slot!(game, Corpse[word!(game.cur_enemy_index) as i32].function = function::CORPSE_ROTTED);
+            session_slot!(game, Corpse[word!(game.cur_enemy_index) as i32].function = function::CORPSE_ROTTED);
         }
-        let vram_transfers: u16 = slot!(game, Corpse[word!(game.cur_enemy_index) as i32].vram_transfers);
+        let vram_transfers: u16 = session_slot!(game, Corpse[word!(game.cur_enemy_index) as i32].vram_transfers);
         ProcessCorpseRottingVramTransfers(vram_transfers, game);
     };
     @forward [pub fn (k: u16, game: &mut impl Host)];
@@ -743,21 +746,21 @@ crate::dispatch::callback_dispatch! {
 pub fn DeadMonsters_Func_3(k: u16, game: &mut impl Host) -> u8 {
     {
         let E: i32 = k as i32;
-        DeadMonsters_Func_4(k, slot!(game, Corpse[E].x_velocity), game);
+        DeadMonsters_Func_4(k, session_slot!(game, Corpse[E].x_velocity), game);
         let mut v2: u16 = 32;
-        if (slot!(game, Corpse[E].y_velocity) & 0x8000) == 0 {
+        if (session_slot!(game, Corpse[E].y_velocity) & 0x8000) == 0 {
             v2 = 128;
         }
-        let mut v3: u16 = (slot!(game, Corpse[E].y_velocity)).wrapping_add(v2);
-        slot!(game, Corpse[E].y_velocity = v3);
-        if slot!(game, Corpse[E].base.x_pos) as i32 - 544i32 & 0x8000 != 0 {
-            let full: i32 =
-                slot!(byte game, Corpse[E].base.y_subpos[1]) as i32 + v3.to_ne_bytes()[0] as i32;
-            slot!(byte game, Corpse[E].base.y_subpos[1] = full as u8);
-            let v12: u16 = (slot!(game, Corpse[E].base.y_pos) as i32
+        let mut v3: u16 = (session_slot!(game, Corpse[E].y_velocity)).wrapping_add(v2);
+        session_slot!(game, Corpse[E].y_velocity = v3);
+        if session_slot!(game, Corpse[E].base.x_pos) as i32 - 544i32 & 0x8000 != 0 {
+            let full: i32 = session_slot!(byte game, Corpse[E].base.y_subpos[1]) as i32
+                + v3.to_ne_bytes()[0] as i32;
+            session_slot!(byte game, Corpse[E].base.y_subpos[1] = full as u8);
+            let v12: u16 = (session_slot!(game, Corpse[E].base.y_pos) as i32
                 + (v3 >> 8) as i8 as i32
                 + (full >> 8)) as u16;
-            slot!(game, Corpse[E].base.y_pos = v12);
+            session_slot!(game, Corpse[E].base.y_pos = v12);
             ((v12 as i32 - 184i32 & 0x8000) == 0) as u8
         } else {
             {
@@ -770,13 +773,13 @@ pub fn DeadMonsters_Func_3(k: u16, game: &mut impl Host) -> u8 {
 pub fn DeadMonsters_Func_4(k: u16, mut a: u16, game: &mut impl Host) {
     {
         let E: i32 = k as i32;
-        if slot!(game, Corpse[E].base.x_pos) as i32 - 544i32 & 0x8000 != 0 {
-            let full: i32 =
-                slot!(byte game, Corpse[E].base.x_subpos[1]) as i32 + a.to_ne_bytes()[0] as i32;
-            slot!(byte game, Corpse[E].base.x_subpos[1] = full as u8);
-            slot!(
+        if session_slot!(game, Corpse[E].base.x_pos) as i32 - 544i32 & 0x8000 != 0 {
+            let full: i32 = session_slot!(byte game, Corpse[E].base.x_subpos[1]) as i32
+                + a.to_ne_bytes()[0] as i32;
+            session_slot!(byte game, Corpse[E].base.x_subpos[1] = full as u8);
+            session_slot!(
                 game,
-                Corpse[E].base.x_pos = (slot!(game, Corpse[E].base.x_pos) as i32
+                Corpse[E].base.x_pos = (session_slot!(game, Corpse[E].base.x_pos) as i32
                     + ((a >> 8) as i8 as i32 + (full >> 8)))
                     as u16
             );
@@ -794,21 +797,21 @@ pub fn DeadMonsters_WaitForSamusColl(k: u16, j: u16, game: &mut impl Host) {
         || k == word!(game.enemy_index_colliding_dirs[2])
         || k == word!(game.enemy_index_colliding_dirs[3])
     {
-        slot!(game, Corpse[k as i32].function = j);
+        session_slot!(game, Corpse[k as i32].function = j);
     }
 }
 pub fn DeadMonsters_PreRotDelay_Common(k: u16, j: u16, game: &mut impl Host) {
     let E: i32 = k as i32;
-    slot!(
+    session_slot!(
         game,
-        Corpse[E].pre_rot_delay = slot!(game, Corpse[E].pre_rot_delay).wrapping_add(1)
+        Corpse[E].pre_rot_delay = session_slot!(game, Corpse[E].pre_rot_delay).wrapping_add(1)
     );
-    if slot!(game, Corpse[E].pre_rot_delay) >= 0x10 {
-        slot!(game, Corpse[E].function = j);
-        slot!(
+    if session_slot!(game, Corpse[E].pre_rot_delay) >= 0x10 {
+        session_slot!(game, Corpse[E].function = j);
+        session_slot!(
             game,
             Corpse[E].base.properties =
-                (slot!(game, Corpse[E].base.properties)) | ((kEnemyProps_Tangible) as u16)
+                (session_slot!(game, Corpse[E].base.properties)) | ((kEnemyProps_Tangible) as u16)
         );
     }
 }
@@ -817,8 +820,8 @@ pub use self::DeadZoomer_Rotting as DeadSkree_Rotting;
 pub fn ProcessCorpseRotting(k: u16, game: &mut impl Host) -> u8 {
     let EK: i32 = k as i32;
     let mut E0: i32 = 0;
-    slot! { game, Corpse[E0]; active_height = slot!(game, Corpse[EK].height), active_last_row = slot!(game, Corpse[EK].last_row), active_second_last_row = slot!(game, Corpse[EK].second_last_row), active_next_row_offset = slot!(game, Corpse[EK].next_row_offset), active_finished_hook = slot!(game, Corpse[EK].finished_hook), active_row_offsets = slot!(game, Corpse[EK].row_offsets), active_copy_function = slot!(game, Corpse[EK].copy_function), active_move_function = slot!(game, Corpse[EK].move_function) };
-    let mut rot_entry_at: u16 = slot!(game, Corpse[EK].rot_table);
+    session_slot! { game, Corpse[E0]; active_height = session_slot!(game, Corpse[EK].height), active_last_row = session_slot!(game, Corpse[EK].last_row), active_second_last_row = session_slot!(game, Corpse[EK].second_last_row), active_next_row_offset = session_slot!(game, Corpse[EK].next_row_offset), active_finished_hook = session_slot!(game, Corpse[EK].finished_hook), active_row_offsets = session_slot!(game, Corpse[EK].row_offsets), active_copy_function = session_slot!(game, Corpse[EK].copy_function), active_move_function = session_slot!(game, Corpse[EK].move_function) };
+    let mut rot_entry_at: u16 = session_slot!(game, Corpse[EK].rot_table);
     let mut v4: u16 = 0;
     loop {
         let mut v15: u16 = v4;
@@ -831,13 +834,14 @@ pub fn ProcessCorpseRotting(k: u16, game: &mut impl Host) -> u8 {
                 set_native_word(v5 + 2, v8 as u16, game);
                 if (v8 as u16) < 4 {
                     E0 = 0;
-                    let mut r18: u16 = slot!(game, Corpse[E0].active_copy_function);
-                    if v15 >= slot!(game, Corpse[E0].active_second_last_row) {
-                        r18 = slot!(game, Corpse[E0].active_move_function);
+                    let mut r18: u16 = session_slot!(game, Corpse[E0].active_copy_function);
+                    if v15 >= session_slot!(game, Corpse[E0].active_second_last_row) {
+                        r18 = session_slot!(game, Corpse[E0].active_move_function);
                     }
                     CopyMoveCorpseRottingRotEntry(
                         native_record(
-                            0xa90000 | u32::from(slot!(game, Corpse[E0].active_row_offsets)),
+                            0xa90000
+                                | u32::from(session_slot!(game, Corpse[E0].active_row_offsets)),
                             game,
                         ),
                         native_word(v6, game),
@@ -847,11 +851,11 @@ pub fn ProcessCorpseRotting(k: u16, game: &mut impl Host) -> u8 {
                 }
             } else {
                 let mut E: i32 = 0;
-                let mut r18_0: u16 = slot!(game, Corpse[E].active_move_function);
+                let mut r18_0: u16 = session_slot!(game, Corpse[E].active_move_function);
                 let v11: usize = rot_entry_at as usize;
                 CopyMoveCorpseRottingRotEntry(
                     native_record(
-                        0xa90000 | u32::from(slot!(game, Corpse[E].active_row_offsets)),
+                        0xa90000 | u32::from(session_slot!(game, Corpse[E].active_row_offsets)),
                         game,
                     ),
                     native_word(v11, game),
@@ -859,14 +863,15 @@ pub fn ProcessCorpseRotting(k: u16, game: &mut impl Host) -> u8 {
                     game,
                 );
                 let mut v12: u16 = (native_word(v11, game)).wrapping_add(2);
-                if v12 < slot!(game, Corpse[E].active_last_row) {
+                if v12 < session_slot!(game, Corpse[E].active_last_row) {
                     set_native_word(v11, v12, game);
                 } else {
                     CallCorpseRottingFinish(
-                        ((slot!(game, Corpse[E].active_finished_hook)) as u32) | (0xa90000u32),
+                        ((session_slot!(game, Corpse[E].active_finished_hook)) as u32)
+                            | (0xa90000u32),
                         game,
                     );
-                    if v15 >= slot!(game, Corpse[0i32].active_last_row) {
+                    if v15 >= session_slot!(game, Corpse[0i32].active_last_row) {
                         break;
                     }
                     set_native_word(v11, -1i32 as u16, game);
@@ -876,22 +881,22 @@ pub fn ProcessCorpseRotting(k: u16, game: &mut impl Host) -> u8 {
         rot_entry_at = (rot_entry_at).wrapping_add(4);
         v4 = (v15).wrapping_add(1);
         E0 = 0;
-        if ((v15 as i32 + 1 - slot!(game, Corpse[E0].active_height) as i32) as i16) >= 0 {
-            return ((v15).wrapping_add(1) >= slot!(game, Corpse[E0].active_height)) as u8;
+        if ((v15 as i32 + 1 - session_slot!(game, Corpse[E0].active_height) as i32) as i16) >= 0 {
+            return ((v15).wrapping_add(1) >= session_slot!(game, Corpse[E0].active_height)) as u8;
         }
     }
     0
 }
 pub fn CopyMoveCorpseRottingRotEntry(r20: RomRecord, a: u16, r18: u16, game: &mut impl Host) {
     let E: i32 = 0;
-    slot!(game, Corpse[E].rot_entry = a);
+    session_slot!(game, Corpse[E].rot_entry = a);
     let v1: u16 = ((a) & (0xfff8u16)) >> 2;
     let v2: u16 = (a) & (7u16);
     let v6: u16 = (r20.table_word((v1 >> 1) as isize) as i32 + 2 * v2 as i32) as u16;
     if v2 >= 6 {
         CallCorpseRottingMove(
             ((r18) as u32) | (0xa90000u32),
-            (slot!(game, Corpse[E].active_next_row_offset)).wrapping_add(v6),
+            (session_slot!(game, Corpse[E].active_next_row_offset)).wrapping_add(v6),
             v6,
             game,
         );
@@ -913,10 +918,10 @@ pub fn InitializeCorpseRottingDataTable(mut table: usize, a: u16, game: &mut imp
 pub fn InitializeEnemyCorpseRotting(k: u16, j: u16, game: &mut impl Host) {
     let v2 = native_record(0xa90000 | u32::from(j), game);
     let E: i32 = k as i32;
-    slot! { game, Corpse[E]; rot_table = v2.word(0), vram_transfers = v2.word(2), copy_function = v2.word(4), move_function = v2.word(6), finished_hook = v2.word(14) };
+    session_slot! { game, Corpse[E]; rot_table = v2.word(0), vram_transfers = v2.word(2), copy_function = v2.word(4), move_function = v2.word(6), finished_hook = v2.word(14) };
     let v4: u16 = v2.word(12);
-    slot!(game, Corpse[E].row_offsets = v4);
-    slot!(
+    session_slot!(game, Corpse[E].row_offsets = v4);
+    session_slot!(
         game,
         Corpse[E].next_row_offset = native_record(0xa90000 | u32::from(v4), game)
             .word(2)
@@ -926,9 +931,9 @@ pub fn InitializeEnemyCorpseRotting(k: u16, j: u16, game: &mut impl Host) {
     let mut v6: u16 = v5.word(8);
     let fresh5 = v6;
     v6 = v6.wrapping_sub(1);
-    slot!(game, Corpse[E].height = fresh5);
-    slot!(game, Corpse[E].last_row = v6);
-    slot!(game, Corpse[E].second_last_row = (v6).wrapping_sub(1));
+    session_slot!(game, Corpse[E].height = fresh5);
+    session_slot!(game, Corpse[E].last_row = v6);
+    session_slot!(game, Corpse[E].second_last_row = (v6).wrapping_sub(1));
     InitializeCorpseRottingDataTable(v5.word(0) as usize, v5.word(8), game);
     CallCorpseRottingInit(((v5.word(10)) as u32) | (0xa90000u32), game);
 }
@@ -947,7 +952,7 @@ pub fn ProcessCorpseRottingVramTransfers(k: u16, game: &mut impl Host) {
         offset += 8;
         v2 = p.word(offset);
     }
-    slot!(game, CorpseTiles[0i32].sprite_tile_transfer = 0);
+    session_slot!(game, CorpseTiles[0i32].sprite_tile_transfer = 0);
     word!(game.vram_write_queue_tail = v1);
 }
 pub fn DeadSidehopper_DD31(game: &mut impl Host) {
@@ -957,10 +962,10 @@ pub fn DeadSidehopper_DD31(game: &mut impl Host) {
 }
 pub fn DeadSidehopper_DD34(a: u16, game: &mut impl Host) {
     let E: i32 = word!(game.cur_enemy_index) as i32;
-    slot!(game, Corpse[E].function = a);
-    slot!(
+    session_slot!(game, Corpse[E].function = a);
+    session_slot!(
         game,
-        Corpse[E].base.properties = (slot!(game, Corpse[E].base.properties) as i32
+        Corpse[E].base.properties = (session_slot!(game, Corpse[E].base.properties) as i32
             | (kEnemyProps_ProcessedOffscreen as i32 | kEnemyProps_Tangible as i32))
             as u16
     );
@@ -1032,55 +1037,60 @@ fn transfer_corpse_tiles(
 pub fn DeadTorizo_Init(game: &mut impl Host) {
     word_transfers!(game, descending, 2048; le(tilemap_stuff, 2047) <- value(0));
     let E: i32 = 0;
-    slot!(
+    session_slot!(
         game,
         DeadTorizo[E].function = function::TORIZO_WAIT_FOR_SAMUS_COLLISION
     );
-    slot!(
+    session_slot!(
         game,
-        DeadTorizo[E].base.properties = (slot!(game, DeadTorizo[E].base.properties)) | (0xa000u16)
+        DeadTorizo[E].base.properties =
+            (session_slot!(game, DeadTorizo[E].base.properties)) | (0xa000u16)
     );
-    slot! { game, DeadTorizo[E].base; current_instruction = addr_kDeadTorizo_Ilist_D6DC as u16, instruction_timer = 1 }
-    slot!(game, DeadTorizo[E].base.timer = 0);
-    slot!(game, DeadTorizo[E].base.palette_index = 512);
-    slot! { game, DeadTorizo[E]; x_velocity = 0, y_velocity = 8, pre_rot_delay = 0, sand_heap_lines = 15, rot_timer = 0 };
+    session_slot! { game, DeadTorizo[E].base; current_instruction = addr_kDeadTorizo_Ilist_D6DC as u16, instruction_timer = 1 }
+    session_slot!(game, DeadTorizo[E].base.timer = 0);
+    session_slot!(game, DeadTorizo[E].base.palette_index = 512);
+    session_slot! { game, DeadTorizo[E]; x_velocity = 0, y_velocity = 8, pre_rot_delay = 0, sand_heap_lines = 15, rot_timer = 0 };
     InitializeEnemyCorpseRotting(0, addr_stru_A9DD58 as u16, game);
 }
 pub fn DeadTorizo_Main(game: &mut impl Host) {
     let E: i32 = 0;
-    if (slot!(game, DeadTorizo[E].base.properties) as i32 & kEnemyProps_Tangible as i32) == 0
+    if (session_slot!(game, DeadTorizo[E].base.properties) as i32 & kEnemyProps_Tangible as i32)
+        == 0
         && game.dead_torizo_contact()
     {
-        slot!(
+        session_slot!(
             game,
-            DeadTorizo[E].base.properties =
-                (slot!(game, DeadTorizo[E].base.properties)) | ((kEnemyProps_Tangible) as u16)
+            DeadTorizo[E].base.properties = (session_slot!(game, DeadTorizo[E].base.properties))
+                | ((kEnemyProps_Tangible) as u16)
         );
-        slot!(game, DeadTorizo[E].function = function::TORIZO_ROTTING);
+        session_slot!(game, DeadTorizo[E].function = function::TORIZO_ROTTING);
     }
     set_graphics_drawn_hook(DRAW_DEAD_TORIZO_HOOK, game);
     CallDeadTorizoFuncA(
-        ((slot!(game, DeadTorizo[E].function)) as u32) | (0xa90000u32),
+        ((session_slot!(game, DeadTorizo[E].function)) as u32) | (0xa90000u32),
         game,
     );
     DeadTorizo_Func_1(game);
 }
 pub fn DeadTorizo_Powerbomb(game: &mut impl Host) {
-    if (slot!(game, DeadTorizo[0i32].base.properties) as i32 & kEnemyProps_Tangible as i32) == 0 {
+    if (session_slot!(game, DeadTorizo[0i32].base.properties) as i32 & kEnemyProps_Tangible as i32)
+        == 0
+    {
         DeadTorizo_Shot(game);
     }
 }
 pub fn DeadTorizo_Shot(game: &mut impl Host) {
     let E: i32 = 0;
-    slot!(
+    session_slot!(
         game,
         DeadTorizo[E].base.properties =
-            (slot!(game, DeadTorizo[E].base.properties)) | ((kEnemyProps_Tangible) as u16)
+            (session_slot!(game, DeadTorizo[E].base.properties)) | ((kEnemyProps_Tangible) as u16)
     );
-    slot!(game, DeadTorizo[E].function = function::TORIZO_ROTTING);
+    session_slot!(game, DeadTorizo[E].function = function::TORIZO_ROTTING);
 }
 pub fn DeadSidehopper_Init(game: &mut impl Host) {
-    let dsr_parameter_1: u16 = slot!(game, Corpse[word!(game.cur_enemy_index) as i32].parameter_1);
+    let dsr_parameter_1: u16 =
+        session_slot!(game, Corpse[word!(game.cur_enemy_index) as i32].parameter_1);
     if dsr_parameter_1 != 0 {
         if dsr_parameter_1 != 2 {
             Unreachable(game);
@@ -1118,7 +1128,7 @@ pub fn DeadSkree_Init(game: &mut impl Host) {
     );
 }
 pub fn DeadSidehopper_Powerbomb(game: &mut impl Host) {
-    if slot!(
+    if session_slot!(
         game,
         Corpse[word!(game.cur_enemy_index) as i32].drained_palette_index
     ) >= 8
@@ -1131,13 +1141,13 @@ pub fn DeadSidehopper_Powerbomb(game: &mut impl Host) {
 pub fn DeadSidehopper_Main(game: &mut impl Host) {
     let E: i32 = word!(game.cur_enemy_index) as i32;
     CallDeadSidehopperFunc(
-        ((slot!(game, Corpse[E].function)) as u32) | (0xa90000u32),
+        ((session_slot!(game, Corpse[E].function)) as u32) | (0xa90000u32),
         word!(game.cur_enemy_index),
         game,
     );
 }
 pub fn DeadZoomer_Powerbomb(game: &mut impl Host) {
-    if (slot!(
+    if (session_slot!(
         game,
         Corpse[word!(game.cur_enemy_index) as i32].base.properties
     ) as i32
@@ -1151,7 +1161,7 @@ pub fn DeadZoomer_Shot(game: &mut impl Host) {
     DeadSidehopper_DD34(function::ZOOMER_ROTTING, game);
 }
 pub fn DeadRipper_Powerbomb(game: &mut impl Host) {
-    if (slot!(
+    if (session_slot!(
         game,
         Corpse[word!(game.cur_enemy_index) as i32].base.properties
     ) as i32
@@ -1165,7 +1175,7 @@ pub fn DeadRipper_Shot(game: &mut impl Host) {
     DeadSidehopper_DD34(function::RIPPER_ROTTING, game);
 }
 pub fn DeadSkree_Powerbomb(game: &mut impl Host) {
-    if (slot!(
+    if (session_slot!(
         game,
         Corpse[word!(game.cur_enemy_index) as i32].base.properties
     ) as i32
@@ -1180,14 +1190,14 @@ pub fn DeadSkree_Shot(game: &mut impl Host) {
 }
 pub fn DeadSidehopper_Shot(game: &mut impl Host) {
     let E: i32 = word!(game.cur_enemy_index) as i32;
-    if !((slot!(game, Corpse[E].base.properties) as i32 & kEnemyProps_Tangible as i32) != 0
-        || slot!(game, Corpse[E].drained_palette_index) < 8)
+    if !((session_slot!(game, Corpse[E].base.properties) as i32 & kEnemyProps_Tangible as i32) != 0
+        || session_slot!(game, Corpse[E].drained_palette_index) < 8)
     {
         DeadSidehopper_DD31(game);
     }
 }
 pub fn DeadSidehopper_Touch(game: &mut impl Host) {
-    if slot!(
+    if session_slot!(
         game,
         Corpse[word!(game.cur_enemy_index) as i32].drained_palette_index
     ) < 8
@@ -1200,9 +1210,9 @@ pub fn DeadSidehopper_Touch(game: &mut impl Host) {
 pub fn sub_A9ECD0(k: u16, jp: EnemyScript, game: &mut impl Host) -> EnemyScript {
     let mut v2: u16 = function::SIDEHOPPER_START_IDLING;
     let E: i32 = k as i32;
-    if slot!(game, Corpse[E].drained_palette_index) != 0 {
+    if session_slot!(game, Corpse[E].drained_palette_index) != 0 {
         v2 = function::SIDEHOPPER_BEING_DRAINED;
     }
-    slot!(game, Corpse[E].function = v2);
+    session_slot!(game, Corpse[E].function = v2);
     jp
 }

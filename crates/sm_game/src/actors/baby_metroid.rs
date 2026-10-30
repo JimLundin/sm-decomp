@@ -3,12 +3,13 @@
 //! and cry.
 #![forbid(unsafe_code)]
 use crate::actors::layouts::part_view;
+use crate::actors::session_slots::{SlotAccess, session_slot};
 use crate::effects::SoundEffects;
-use crate::ram::{CompatibilityRam, RawRam as _, WorkRamAccess, slot, word};
+use crate::ram::{CompatibilityRam, RawRam as _, WorkRamAccess, word};
 
 /// What the baby Metroid needs beyond work RAM and sound: hardcoded PLM spawns.
 pub trait Host:
-    WorkRamAccess + CompatibilityRam + SoundEffects + crate::runtime_access::RuntimeAccess
+    WorkRamAccess + CompatibilityRam + SoundEffects + crate::runtime_access::RuntimeAccess + SlotAccess
 {
     /// Spawn the PLM with `header` at block (`block_x`, `block_y`).
     fn spawn_hardcoded_plm(&mut self, block_x: u8, block_y: u8, header: u16);
@@ -74,19 +75,20 @@ fn abs16(value: u16) -> u16 {
 pub fn separated_from_enemy(k: u16, j: u16, game: &mut impl Host) -> u8 {
     let e = i32::from(j);
     let g = i32::from(k);
-    let width = (slot!(game, BabyMetroid[g].base.x_width) as i32
-        + slot!(game, BabyMetroid[e].base.x_width) as i32
+    let width = (session_slot!(game, BabyMetroid[g].base.x_width) as i32
+        + session_slot!(game, BabyMetroid[e].base.x_width) as i32
         + 1) as u16;
     let dx = abs16(
-        slot!(game, BabyMetroid[e].base.x_pos).wrapping_sub(slot!(game, BabyMetroid[g].base.x_pos)),
+        session_slot!(game, BabyMetroid[e].base.x_pos)
+            .wrapping_sub(session_slot!(game, BabyMetroid[g].base.x_pos)),
     );
     if dx < width {
-        let height = (slot!(game, BabyMetroid[g].base.y_height) as i32
-            + slot!(game, BabyMetroid[e].base.y_height) as i32
+        let height = (session_slot!(game, BabyMetroid[g].base.y_height) as i32
+            + session_slot!(game, BabyMetroid[e].base.y_height) as i32
             + 1) as u16;
         return (abs16(
-            slot!(game, BabyMetroid[e].base.y_pos)
-                .wrapping_sub(slot!(game, BabyMetroid[g].base.y_pos)),
+            session_slot!(game, BabyMetroid[e].base.y_pos)
+                .wrapping_sub(session_slot!(game, BabyMetroid[g].base.y_pos)),
         ) >= height) as u8;
     }
     1
@@ -98,11 +100,13 @@ pub fn separated_from_enemy(k: u16, j: u16, game: &mut impl Host) -> u8 {
 pub fn separated_from_rect(k: u16, rect: (u16, u16, u16, u16), game: &mut impl Host) -> u8 {
     let (x, y, w, h) = rect;
     let e = i32::from(k);
-    let width = (slot!(game, BabyMetroid[e].base.x_width) as i32 + w as i32 + 1) as u16;
-    let dx = abs16(x.wrapping_sub(slot!(game, BabyMetroid[e].base.x_pos)));
+    let width = (session_slot!(game, BabyMetroid[e].base.x_width) as i32 + w as i32 + 1) as u16;
+    let dx = abs16(x.wrapping_sub(session_slot!(game, BabyMetroid[e].base.x_pos)));
     if dx < width {
-        let height = (slot!(game, BabyMetroid[e].base.y_height) as i32 + h as i32 + 1) as u16;
-        return (abs16(y.wrapping_sub(slot!(game, BabyMetroid[e].base.y_pos))) >= height) as u8;
+        let height =
+            (session_slot!(game, BabyMetroid[e].base.y_height) as i32 + h as i32 + 1) as u16;
+        return (abs16(y.wrapping_sub(session_slot!(game, BabyMetroid[e].base.y_pos))) >= height)
+            as u8;
     }
     1
 }
@@ -124,8 +128,8 @@ pub fn wait_for_camera(game: &mut impl Host) {
             game.spawn_hardcoded_plm(block_x, block_y, INVISIBLE_WALL);
         }
         let e = word!(game.cur_enemy_index) as i32;
-        slot!(game, BabyMetroid[e].function = LET_SIDEHOPPER_LIVE);
-        slot!(game, BabyMetroid[e].cry_enabled = 1);
+        session_slot!(game, BabyMetroid[e].function = LET_SIDEHOPPER_LIVE);
+        session_slot!(game, BabyMetroid[e].cry_enabled = 1);
     }
 }
 
@@ -133,12 +137,12 @@ pub fn wait_for_camera(game: &mut impl Host) {
 /// the screen margins, 1 otherwise. Was `BabyMetroid_CheckIfOnScreen`.
 pub fn is_off_screen(k: u16, game: &mut impl Host) -> u8 {
     let e = i32::from(k);
-    let y_pos = slot!(game, BabyMetroid[e].base.y_pos) as i16;
+    let y_pos = session_slot!(game, BabyMetroid[e].base.y_pos) as i16;
     if y_pos >= 0 {
         let y =
             (y_pos as i32 + SCREEN_Y_MARGIN - crate::camera::current(game).layer1[1] as i32) as i16;
         if y >= 0 && y as i32 - SCREEN_HEIGHT & SIGN != 0 {
-            let x_pos = slot!(game, BabyMetroid[e].base.x_pos) as i16;
+            let x_pos = session_slot!(game, BabyMetroid[e].base.x_pos) as i16;
             if x_pos >= 0 {
                 let x = (x_pos as i32 + SCREEN_X_MARGIN
                     - crate::camera::current(game).layer1[0] as i32) as i16;
@@ -157,33 +161,36 @@ pub fn is_off_screen(k: u16, game: &mut impl Host) -> u8 {
 pub fn accelerate_towards_y(k: u16, target: u16, acceleration: u16, game: &mut impl Host) -> u16 {
     let e = i32::from(k);
     let mut result: u16 = 0;
-    let offset = (slot!(game, BabyMetroid[e].base.y_pos) as i16).wrapping_sub(target as i16);
+    let offset =
+        (session_slot!(game, BabyMetroid[e].base.y_pos) as i16).wrapping_sub(target as i16);
     if offset == 0 {
         result = result.wrapping_add(1);
     } else if offset >= 0 {
-        let mut velocity = slot!(game, BabyMetroid[e].y_velocity).wrapping_sub(acceleration);
+        let mut velocity =
+            session_slot!(game, BabyMetroid[e].y_velocity).wrapping_sub(acceleration);
         if velocity as i32 + i32::from(MAX_SPEED) & SIGN != 0 {
             velocity = MAX_SPEED.wrapping_neg();
         }
-        slot!(game, BabyMetroid[e].y_velocity = velocity);
-        if ((slot!(game, BabyMetroid[e].base.y_pos) as i32 + (velocity >> 8) as i8 as i32
+        session_slot!(game, BabyMetroid[e].y_velocity = velocity);
+        if ((session_slot!(game, BabyMetroid[e].base.y_pos) as i32 + (velocity >> 8) as i8 as i32
             - target as i32) as i16)
             <= 0
         {
-            slot!(game, BabyMetroid[e].y_velocity = 0);
+            session_slot!(game, BabyMetroid[e].y_velocity = 0);
             result = result.wrapping_add(1);
         }
     } else {
-        let mut velocity = acceleration.wrapping_add(slot!(game, BabyMetroid[e].y_velocity));
+        let mut velocity =
+            acceleration.wrapping_add(session_slot!(game, BabyMetroid[e].y_velocity));
         if velocity as i32 - i32::from(MAX_SPEED) & SIGN == 0 {
             velocity = MAX_SPEED;
         }
-        slot!(game, BabyMetroid[e].y_velocity = velocity);
-        if ((slot!(game, BabyMetroid[e].base.y_pos) as i32 + (velocity >> 8) as i8 as i32
+        session_slot!(game, BabyMetroid[e].y_velocity = velocity);
+        if ((session_slot!(game, BabyMetroid[e].base.y_pos) as i32 + (velocity >> 8) as i8 as i32
             - target as i32) as i16)
             >= 0
         {
-            slot!(game, BabyMetroid[e].y_velocity = 0);
+            session_slot!(game, BabyMetroid[e].y_velocity = 0);
             result = result.wrapping_add(1);
         }
     }
@@ -196,30 +203,32 @@ pub fn accelerate_towards_y(k: u16, target: u16, acceleration: u16, game: &mut i
 pub fn accelerate_towards_x(k: u16, target: u16, acceleration: u16, game: &mut impl Host) -> u16 {
     let e = i32::from(k);
     let mut result: u16 = 0;
-    if (slot!(game, BabyMetroid[e].base.x_pos) as i16).wrapping_sub(target as i16) >= 0 {
-        let mut velocity = slot!(game, BabyMetroid[e].x_velocity).wrapping_sub(acceleration);
+    if (session_slot!(game, BabyMetroid[e].base.x_pos) as i16).wrapping_sub(target as i16) >= 0 {
+        let mut velocity =
+            session_slot!(game, BabyMetroid[e].x_velocity).wrapping_sub(acceleration);
         if velocity as i32 + i32::from(MAX_SPEED) & SIGN != 0 {
             velocity = MAX_SPEED.wrapping_neg();
         }
-        slot!(game, BabyMetroid[e].x_velocity = velocity);
-        if ((slot!(game, BabyMetroid[e].base.x_pos) as i32 + (velocity >> 8) as i8 as i32
+        session_slot!(game, BabyMetroid[e].x_velocity = velocity);
+        if ((session_slot!(game, BabyMetroid[e].base.x_pos) as i32 + (velocity >> 8) as i8 as i32
             - target as i32) as i16)
             <= 0
         {
-            slot!(game, BabyMetroid[e].x_velocity = 0);
+            session_slot!(game, BabyMetroid[e].x_velocity = 0);
             result = result.wrapping_add(1);
         }
     } else {
-        let mut velocity = acceleration.wrapping_add(slot!(game, BabyMetroid[e].x_velocity));
+        let mut velocity =
+            acceleration.wrapping_add(session_slot!(game, BabyMetroid[e].x_velocity));
         if velocity as i32 - i32::from(MAX_SPEED) & SIGN == 0 {
             velocity = MAX_SPEED;
         }
-        slot!(game, BabyMetroid[e].x_velocity = velocity);
-        if ((slot!(game, BabyMetroid[e].base.x_pos) as i32 + (velocity >> 8) as i8 as i32
+        session_slot!(game, BabyMetroid[e].x_velocity = velocity);
+        if ((session_slot!(game, BabyMetroid[e].base.x_pos) as i32 + (velocity >> 8) as i8 as i32
             - target as i32) as i16)
             >= 0
         {
-            slot!(game, BabyMetroid[e].x_velocity = 0);
+            session_slot!(game, BabyMetroid[e].x_velocity = 0);
             result = result.wrapping_add(1);
         }
     }
@@ -231,16 +240,17 @@ pub fn accelerate_towards_x(k: u16, target: u16, acceleration: u16, game: &mut i
 pub fn handle_cry(k: u16, a: u16, game: &mut impl Host) -> u16 {
     if a == CRY_FRAME {
         let e = i32::from(k);
-        if slot!(game, BabyMetroid[e].cry_enabled) != 0 {
-            let count = slot!(game, BabyMetroid[e].cry_timer).wrapping_add(1);
-            slot!(game, BabyMetroid[e].cry_timer = count);
+        if session_slot!(game, BabyMetroid[e].cry_enabled) != 0 {
+            let count = session_slot!(game, BabyMetroid[e].cry_timer).wrapping_add(1);
+            session_slot!(game, BabyMetroid[e].cry_timer = count);
             if count >= CRY_CYCLES {
-                slot!(game, BabyMetroid[e].cry_timer = 0);
-                let effect = if slot!(game, BabyMetroid[e].palette_handler_delay) < DRAINING_DELAY {
-                    DRAINING
-                } else {
-                    CRY
-                };
+                session_slot!(game, BabyMetroid[e].cry_timer = 0);
+                let effect =
+                    if session_slot!(game, BabyMetroid[e].palette_handler_delay) < DRAINING_DELAY {
+                        DRAINING
+                    } else {
+                        CRY
+                    };
                 game.queue_sound(1, effect, 6);
             }
         }
