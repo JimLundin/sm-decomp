@@ -2686,6 +2686,19 @@ impl sm_game::ram::RawRam for WorkRam {
     }
 }
 
+/// The RAM image as its own projection, for code shared with session leases.
+impl sm_game::runtime_access::SessionRam for Game {
+    fn byte(&self, at: usize) -> u8 {
+        self.ram().read_byte(at)
+    }
+    fn set_byte(&mut self, at: usize, value: u8) {
+        self.ram().write_byte(at, value);
+    }
+    fn write_slice(&mut self, at: usize, bytes: &[u8]) {
+        self.ram().copy_in(at, bytes);
+    }
+}
+
 /// Slot words on the RAM image, native order, as `slot!` reads and stores them.
 impl sm_game::actors::session_slots::SlotAccess for Game {
     fn slot_word(&self, at: usize) -> u16 {

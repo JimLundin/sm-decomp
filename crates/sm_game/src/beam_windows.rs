@@ -1,11 +1,12 @@
 //! HDMA window tables for the X-ray beam and Mother Brain's rainbow beam.
 #![forbid(unsafe_code)]
 use crate::actors::mother_brain::{MotherBrainBody, MotherBrainBrain};
+use crate::actors::session_slots::SlotAccess;
 use crate::imported::{Imported, word};
 use crate::menus::host::Host;
 use crate::menus::prelude::do_until;
-use crate::ram::RawRam as _;
-use crate::ram::{slot, word};
+use crate::runtime_access::SessionRam;
+use crate::session_slot as slot_view;
 use sm_data::beam_gradients::{ADDRESS, BYTES, BeamGradients};
 
 /// The X-ray beam's edge gradients, one word per angle, in bank $91.
@@ -26,6 +27,11 @@ pub struct BeamScratch {
     pub row: u16,
 }
 
+/// The beam windows' host: tables through the RAM projection, Mother Brain's
+/// beam words through the slot view, and the cartridge reads.
+pub trait BeamHost: Host + SessionRam + SlotAccess {}
+impl<T: Host + SessionRam + SlotAccess + ?Sized> BeamHost for T {}
+
 pub type ImportedTables = Option<Imported<BeamGradients>>;
 
 pub fn import(image: &sm_data::cartridge::RomImage) -> ImportedTables {
@@ -34,7 +40,7 @@ pub fn import(image: &sm_data::cartridge::RomImage) -> ImportedTables {
 
 /// The rainbow edge gradient for `angle`; other images and angles past 80h
 /// run the original indexed load.
-fn rainbow_gradient<H: Host + ?Sized>(game: &H, angle: isize) -> u16 {
+fn rainbow_gradient<H: BeamHost + ?Sized>(game: &H, angle: isize) -> u16 {
     word(game.beam_gradients(), game, ADDRESS, angle)
 }
 
@@ -133,7 +139,7 @@ enum XrayBeamDirection {
 /// first row's byte offset, the shared origin and the two edge steps.
 #[derive(Clone, Copy)]
 struct PositiveRows {
-    base: u32,
+    base: usize,
     start: u16,
     origin: u16,
     low_step: u16,
@@ -142,7 +148,7 @@ struct PositiveRows {
 
 /// $91:C87A's on-screen stores: the low edge writes whole words, then the
 /// high edge replaces their high bytes, then the low edge's carry row closes.
-fn store_onscreen_positive_rows(mut write: impl FnMut(u32, u8), rows: PositiveRows) {
+fn store_onscreen_positive_rows(ram: &mut (impl SessionRam + ?Sized), rows: PositiveRows) {
     let PositiveRows {
         base,
         start,
@@ -150,21 +156,12 @@ fn store_onscreen_positive_rows(mut write: impl FnMut(u32, u8), rows: PositiveRo
         low_step,
         high_step,
     } = rows;
-    let mut low_edge = origin;
-    let mut high_edge = origin;
+    let (mut low_edge, mut high_edge) = (origin, origin);
     // Zero doubles as the ROM's no-carry sentinel, even for a carry at row 0.
     let mut carry_row = 0;
     // The ROM uses the N flag after CPY #$01CC, including wrapped Y.
-    fn continues(index: u16) -> bool {
-        index.wrapping_sub(TABLE_BYTES) & 0x8000 != 0
-    }
-    fn store_word(write: &mut impl FnMut(u32, u8), base: u32, index: u16, value: u16) {
-        let address = base + u32::from(index);
-        let [low, high] = value.to_le_bytes();
-        write(address, low);
-        write(address + 1, high);
-    }
-
+    let continues = |index: u16| index.wrapping_sub(TABLE_BYTES) & 0x8000 != 0;
+    let at = |index: u16| base + usize::from(index);
     let mut index = start;
     do_until! { !continues(index);
         let (value, carry) = low_edge.overflowing_add(low_step);
@@ -172,39 +169,37 @@ fn store_onscreen_positive_rows(mut write: impl FnMut(u32, u8), rows: PositiveRo
         if carry {
             carry_row = index;
             do_until! { !continues(index);
-                store_word(&mut write, base, index, 0x00ff);
+                ram.write_slice_le(at(index), 0x00ff);
                 index = index.wrapping_add(2);
             }
             break;
         }
         // The high-edge pass overwrites this word's high byte.
-        store_word(&mut write, base, index, low_edge >> 8);
+        ram.write_slice_le(at(index), low_edge >> 8);
         index = index.wrapping_add(2);
     }
-
     index = start.wrapping_add(1);
     loop {
         let (value, carry) = high_edge.overflowing_add(high_step);
         high_edge = value;
         if carry {
             do_until! { !continues(index);
-                write(base + u32::from(index), 0xff);
+                ram.set_byte(at(index), 0xff);
                 index = index.wrapping_add(2);
             }
             break;
         }
-        write(base + u32::from(index), (high_edge >> 8) as u8);
+        ram.set_byte(at(index), (high_edge >> 8) as u8);
         index = index.wrapping_add(2);
         if !continues(index) {
             // The ROM reaches cleanup only when this edge carries.
             return;
         }
     }
-
     if carry_row != 0 {
         index = carry_row.wrapping_add(2);
         while continues(index) {
-            store_word(&mut write, base, index, 0x00ff);
+            ram.write_slice_le(at(index), 0x00ff);
             index = index.wrapping_add(2);
         }
     }
@@ -212,7 +207,7 @@ fn store_onscreen_positive_rows(mut write: impl FnMut(u32, u8), rows: PositiveRo
 
 /// The off-screen stores: each edge runs until it carries, and the cleanup
 /// passes depend on both edges' crossing rows.
-fn store_offscreen_positive_rows(mut write: impl FnMut(u32, u8), rows: PositiveRows) {
+fn store_offscreen_positive_rows(ram: &mut (impl SessionRam + ?Sized), rows: PositiveRows) {
     let PositiveRows {
         base,
         start,
@@ -222,31 +217,23 @@ fn store_offscreen_positive_rows(mut write: impl FnMut(u32, u8), rows: PositiveR
     } = rows;
     // The ROM wraps the 16-bit index before adding the table base.
     // At start zero, cleanup can therefore reach the following WRAM bank.
-    fn store_byte(write: &mut impl FnMut(u32, u8), base: u32, index: i32, value: u8) {
-        write(base + u32::from(index as u16), value);
-    }
-    fn store_word(write: &mut impl FnMut(u32, u8), base: u32, index: i32, value: u16) {
-        let address = base + u32::from(index as u16);
-        write(address, value as u8);
-        write(address + 1, (value >> 8) as u8);
-    }
-    fn store(write: &mut impl FnMut(u32, u8), base: u32, index: i32, value: u16, high: bool) {
+    fn store(ram: &mut (impl SessionRam + ?Sized), at: usize, value: u16, high: bool) {
         if high {
-            store_byte(write, base, index, value as u8);
+            ram.set_byte(at, value as u8);
         } else {
-            store_word(write, base, index, value);
+            ram.write_slice_le(at, value);
         }
     }
     /// Rasterize one edge; returns the row index the cleanup passes use.
     fn edge(
-        write: &mut impl FnMut(u32, u8),
-        base: u32,
-        mut index: i32,
-        mut value: u16,
+        ram: &mut (impl SessionRam + ?Sized),
+        base: usize,
+        (mut index, mut value): (i32, u16),
         step: u16,
         high: bool,
     ) -> i32 {
         let end = i32::from(TABLE_BYTES);
+        let at = |index: i32| base + usize::from(index as u16);
         loop {
             let (next, carry) = value.overflowing_add(step);
             value = next;
@@ -258,7 +245,7 @@ fn store_offscreen_positive_rows(mut write: impl FnMut(u32, u8), rows: PositiveR
                 return index;
             }
         }
-        store(write, base, index, value >> 8, high);
+        store(ram, at(index), value >> 8, high);
         index += 2;
         if index >= end {
             return if high { end - 1 } else { end - 2 };
@@ -270,61 +257,50 @@ fn store_offscreen_positive_rows(mut write: impl FnMut(u32, u8), rows: PositiveR
             if carry {
                 break;
             }
-            store(write, base, index, value >> 8, high);
+            store(ram, at(index), value >> 8, high);
             index += 2;
             if index >= end {
                 return crossing;
             }
         }
         while index < end {
-            store(write, base, index, CLOSED, high);
+            store(ram, at(index), CLOSED, high);
             index += 2;
         }
         crossing
     }
     // The low edge writes whole words first; the high edge then replaces
     // their high bytes. The cleanup passes depend on both crossing indices.
-    let low = edge(&mut write, base, i32::from(start), origin, low_step, false);
-    let high = edge(
-        &mut write,
-        base,
-        i32::from(start) + 1,
-        origin,
-        high_step,
-        true,
-    );
+    let low = edge(ram, base, (i32::from(start), origin), low_step, false);
+    let high = edge(ram, base, (i32::from(start) + 1, origin), high_step, true);
+    let at = |index: i32| base + usize::from(index as u16);
     let mut index = low;
     do_until! { index < high;
-        store_byte(&mut write, base, index, 0);
+        ram.set_byte(at(index), 0);
         index -= 2;
     }
     let mut index = high - 1;
     do_until! { index < 0;
-        store_word(&mut write, base, index, CLOSED);
+        ram.write_slice_le(at(index), CLOSED);
         index -= 2;
     }
 }
 
 /// The on-screen positive table: the anchor row, the edge stores, then the
 /// rows above the start reopened until an already-open word.
-fn fill_onscreen_positive_table(ram: &(impl crate::ram::RawRam + ?Sized), rows: PositiveRows) {
-    let table = rows.base as usize;
+fn fill_onscreen_positive_table(ram: &mut (impl SessionRam + ?Sized), rows: PositiveRows) {
     // Wrap the byte offset before adding the table base, including at row zero.
-    let anchor = table + usize::from(rows.start.wrapping_sub(2));
-    ram.fill(anchor..anchor + 2, (rows.origin >> 8) as u8);
-    store_onscreen_positive_rows(
-        |address, value| ram.write_byte(address as usize, value),
-        rows,
-    );
-
+    let anchor = rows.base + usize::from(rows.start.wrapping_sub(2));
+    ram.write_slice(anchor, &[(rows.origin >> 8) as u8; 2]);
+    store_onscreen_positive_rows(ram, rows);
     let mut index = rows.start.wrapping_sub(4);
     loop {
         // The ROM checks the first word even when the initial index is negative.
-        let address = table + usize::from(index);
-        if u16::from_le_bytes([ram.read_byte(address), ram.read_byte(address + 1)]) == 0x00ff {
+        let address = rows.base + usize::from(index);
+        if SessionRam::word(ram, address) == 0x00ff {
             return;
         }
-        ram.copy_in(address, &0x00ffu16.to_le_bytes());
+        ram.write_slice_le(address, 0x00ff);
         index = index.wrapping_sub(2);
         if index & 0x8000 != 0 {
             return;
@@ -346,7 +322,7 @@ pub struct XrayWindow {
 }
 
 /// Fill `window.table` with the beam's per-row window words.
-pub fn calculate_xray_window<H: Host + ?Sized>(window: XrayWindow, game: &mut H) {
+pub fn calculate_xray_window<H: BeamHost + ?Sized>(window: XrayWindow, game: &mut H) {
     use XrayBeamDirection::*;
     let XrayWindow {
         x,
@@ -401,7 +377,7 @@ pub fn calculate_xray_window<H: Host + ?Sized>(window: XrayWindow, game: &mut H)
         let address = table
             .checked_add_signed(offset as isize)
             .expect("X-ray table offset");
-        game.ram().copy_in(address, &value.to_ne_bytes());
+        game.write_slice(address, &value.to_ne_bytes());
     };
     if matches!(direction, Horizontal) {
         let anchor = y.wrapping_sub(1).wrapping_mul(2);
@@ -420,19 +396,16 @@ pub fn calculate_xray_window<H: Host + ?Sized>(window: XrayWindow, game: &mut H)
     }
     if matches!(direction, Down) && upper_angle.wrapping_sub(128) & 0x8000 != 0 {
         let rows = PositiveRows {
-            base: table as u32,
+            base: table,
             start: y.wrapping_mul(2),
             origin,
             low_step: upper_gradient,
             high_step: lower_gradient,
         };
         if off_screen {
-            store_offscreen_positive_rows(
-                |address, value| game.ram().write_byte(address as usize, value),
-                rows,
-            );
+            store_offscreen_positive_rows(game, rows);
         } else {
-            fill_onscreen_positive_table(game.ram(), rows);
+            fill_onscreen_positive_table(game, rows);
         }
         return;
     }
@@ -496,8 +469,15 @@ pub fn calculate_xray_window<H: Host + ?Sized>(window: XrayWindow, game: &mut H)
 }
 
 /// One native-order word of the rainbow beam's HDMA tables at RAM `at`.
-fn store_rainbow_word<H: Host + ?Sized>(at: isize, value: u16, game: &mut H) {
-    crate::word_transfers!(game, ascending, 1; native(at) <- value(value));
+fn store_rainbow_word<H: BeamHost + ?Sized>(at: isize, value: u16, game: &mut H) {
+    game.write_slice_native(at as usize, value);
+}
+
+/// Close the rainbow window table's first two rows.
+fn close_rainbow_top<H: BeamHost + ?Sized>(game: &mut H) {
+    for row in [RAINBOW_ROWS, RAINBOW_ROWS + 2] {
+        game.write_slice_le(row as usize, CLOSED);
+    }
 }
 
 /// The two quadrant bits of a beam edge angle.
@@ -506,25 +486,25 @@ fn quadrant(angle: u16) -> u16 {
 }
 
 /// Fill the rainbow beam's window table for Mother Brain's current beam.
-pub fn calculate_rainbow_window<H: Host + ?Sized>(game: &mut H) {
-    let half_width = u16::from(slot!(byte game, MotherBrainBody[0].beam_width[1]) >> 1);
-    let angle = slot!(game, MotherBrainBody[0].beam_angle);
-    slot!(
+pub fn calculate_rainbow_window<H: BeamHost + ?Sized>(game: &mut H) {
+    let half_width = u16::from(slot_view!(byte game, MotherBrainBody[0].beam_width[1]) >> 1);
+    let angle = slot_view!(game, MotherBrainBody[0].beam_angle);
+    slot_view!(
         game,
         MotherBrainBody[0].beam_right_edge = angle.wrapping_sub(half_width)
     );
-    let angle = slot!(game, MotherBrainBody[0].beam_angle);
-    slot!(
+    let angle = slot_view!(game, MotherBrainBody[0].beam_angle);
+    slot_view!(
         game,
         MotherBrainBody[0].beam_left_edge = half_width.wrapping_add(angle)
     );
-    let origin_x =
-        ((i32::from(slot!(game, MotherBrainBody[0x41].base.enemy_ptr)) + 3584) & 0xff00) as u16;
-    slot!(game, MotherBrainBody[0]; beam_left_origin_x = origin_x, beam_right_origin_x = origin_x);
-    let origin_y = slot!(game, MotherBrainBrain[0x40].base.y_pos).wrapping_add(5);
-    slot!(game, MotherBrainBody[0]; beam_left_origin_y = origin_y, beam_right_origin_y = origin_y);
-    let right_quadrant = quadrant(slot!(game, MotherBrainBody[0].beam_right_edge));
-    let left_quadrant = quadrant(slot!(game, MotherBrainBody[0].beam_left_edge));
+    let origin_x = ((i32::from(slot_view!(game, MotherBrainBody[0x41].base.enemy_ptr)) + 3584)
+        & 0xff00) as u16;
+    slot_view!(game, MotherBrainBody[0]; beam_left_origin_x = origin_x, beam_right_origin_x = origin_x);
+    let origin_y = slot_view!(game, MotherBrainBrain[0x40].base.y_pos).wrapping_add(5);
+    slot_view!(game, MotherBrainBody[0]; beam_left_origin_y = origin_y, beam_right_origin_y = origin_y);
+    let right_quadrant = quadrant(slot_view!(game, MotherBrainBody[0].beam_right_edge));
+    let left_quadrant = quadrant(slot_view!(game, MotherBrainBody[0].beam_left_edge));
     match (right_quadrant << 2) | left_quadrant {
         0 | 12 | 15 => {
             let direction = match (right_quadrant & 2) | (left_quadrant >> 1) {
@@ -549,15 +529,15 @@ pub fn calculate_rainbow_window<H: Host + ?Sized>(game: &mut H) {
 }
 
 /// The beam's left and right origin X, as the rasterizers start from them.
-fn rainbow_origins<H: Host + ?Sized>(game: &mut H) -> [u16; 2] {
+fn rainbow_origins<H: BeamHost + ?Sized>(game: &mut H) -> [u16; 2] {
     [
-        slot!(game, MotherBrainBody[0].beam_left_origin_x),
-        slot!(game, MotherBrainBody[0].beam_right_origin_x),
+        slot_view!(game, MotherBrainBody[0].beam_left_origin_x),
+        slot_view!(game, MotherBrainBody[0].beam_right_origin_x),
     ]
 }
 
 /// The downward header: two closed 16-row blocks, then the rows at `tail`.
-fn store_rainbow_header<H: Host + ?Sized>(tail: u16, game: &mut H) {
+fn store_rainbow_header<H: BeamHost + ?Sized>(tail: u16, game: &mut H) {
     store_rainbow_word(RAINBOW_HEADER, 16, game);
     store_rainbow_word(RAINBOW_HEADER + 1, 0x9c00, game);
     store_rainbow_word(RAINBOW_HEADER + 3, 16, game);
@@ -571,18 +551,18 @@ fn store_rainbow_header<H: Host + ?Sized>(tail: u16, game: &mut H) {
 
 /// A beam opening to the right of both edges: the right edge's rows run up
 /// from the origin row, the left edge's rows run down.
-fn rasterize_rainbow_right_edges<H: Host + ?Sized>(origins: [u16; 2], game: &mut H) {
+fn rasterize_rainbow_right_edges<H: BeamHost + ?Sized>(origins: [u16; 2], game: &mut H) {
     let [mut lower_edge, mut upper_edge] = origins;
-    word! { game, 255; hdma_table_2[0], hdma_table_2[1] }
+    close_rainbow_top(game);
     let lower_step = rainbow_gradient(
         game,
-        slot!(byte game, MotherBrainBody[0].beam_right_edge[0]) as isize,
+        slot_view!(byte game, MotherBrainBody[0].beam_right_edge[0]) as isize,
     );
     let upper_step = rainbow_gradient(
         game,
-        slot!(byte game, MotherBrainBody[0].beam_left_edge[0]) as isize,
+        slot_view!(byte game, MotherBrainBody[0].beam_left_edge[0]) as isize,
     );
-    let mut row = slot!(game, MotherBrainBody[0].beam_right_origin_y);
+    let mut row = slot_view!(game, MotherBrainBody[0].beam_right_origin_y);
     let mut dst = RAINBOW_ROWS + 2 * (row as isize - 32 + 1);
     store_rainbow_word(dst + 2, CLOSED, game);
     store_rainbow_word(dst + 4, CLOSED, game);
@@ -603,7 +583,7 @@ fn rasterize_rainbow_right_edges<H: Host + ?Sized>(origins: [u16; 2], game: &mut
         row = row.wrapping_sub(1);
     }
     let mut dst = origin_dst + 2;
-    let mut row = slot!(game, BeamScratch[0x7088].row);
+    let mut row = slot_view!(game, BeamScratch[0x7088].row);
     loop {
         let (value, overflow) = lower_step.overflowing_add(lower_edge);
         if overflow {
@@ -625,9 +605,9 @@ fn rasterize_rainbow_right_edges<H: Host + ?Sized>(origins: [u16; 2], game: &mut
 }
 
 /// An upward beam: its rows, then a header sized by the origin row.
-fn rasterize_rainbow_up<H: Host + ?Sized>(game: &mut H) {
-    let right_quadrant = quadrant(slot!(game, MotherBrainBody[0].beam_right_edge));
-    let left_quadrant = quadrant(slot!(game, MotherBrainBody[0].beam_left_edge));
+fn rasterize_rainbow_up<H: BeamHost + ?Sized>(game: &mut H) {
+    let right_quadrant = quadrant(slot_view!(game, MotherBrainBody[0].beam_right_edge));
+    let left_quadrant = quadrant(slot_view!(game, MotherBrainBody[0].beam_left_edge));
     let direction = match (right_quadrant & 2) | (left_quadrant >> 1) {
         0 => RainbowDirection::UpRight,
         1 => RainbowDirection::Up,
@@ -640,7 +620,7 @@ fn rasterize_rainbow_up<H: Host + ?Sized>(game: &mut H) {
     store_rainbow_word(RAINBOW_HEADER + 1, 0x9d00, game);
     store_rainbow_word(RAINBOW_HEADER + 3, 16, game);
     store_rainbow_word(RAINBOW_HEADER + 4, 0x9d02, game);
-    let rows_above = slot!(game, MotherBrainBody[0].beam_left_origin_y).wrapping_sub(32);
+    let rows_above = slot_view!(game, MotherBrainBody[0].beam_left_origin_y).wrapping_sub(32);
     game.print_carry_message();
     if rows_above >= 0x80 {
         // The rows above 127 need a second indirect block.
@@ -676,7 +656,7 @@ enum RainbowDirection {
 }
 
 /// A beam opening up or down: both edges advance together from the origins.
-fn rasterize_rainbow_vertical<H: Host + ?Sized>(
+fn rasterize_rainbow_vertical<H: BeamHost + ?Sized>(
     direction: RainbowDirection,
     origins: [u16; 2],
     game: &mut H,
@@ -686,22 +666,22 @@ fn rasterize_rainbow_vertical<H: Host + ?Sized>(
     let add_left = matches!(direction, UpRight | DownRight);
     let add_right = matches!(direction, UpRight | Up | DownRight | Down);
     let zero_sentinel = matches!(direction, DownLeft);
-    word! { game, 255; hdma_table_2[0], hdma_table_2[1] }
+    close_rainbow_top(game);
     let edge_angle =
         |angle: u8, add: bool| (if add { angle } else { angle.wrapping_neg() }) as isize;
     let left_angle = if down {
-        slot!(byte game, MotherBrainBody[0].beam_right_edge[0])
+        slot_view!(byte game, MotherBrainBody[0].beam_right_edge[0])
     } else {
-        slot!(byte game, MotherBrainBody[0].beam_left_edge[0])
+        slot_view!(byte game, MotherBrainBody[0].beam_left_edge[0])
     };
     let left_step = rainbow_gradient(game, edge_angle(left_angle, add_left));
     let right_angle = if down {
-        slot!(byte game, MotherBrainBody[0].beam_left_edge[0])
+        slot_view!(byte game, MotherBrainBody[0].beam_left_edge[0])
     } else {
-        slot!(byte game, MotherBrainBody[0].beam_right_edge[0])
+        slot_view!(byte game, MotherBrainBody[0].beam_right_edge[0])
     };
     let right_step = rainbow_gradient(game, edge_angle(right_angle, add_right));
-    let mut row = slot!(game, MotherBrainBody[0].beam_left_origin_y);
+    let mut row = slot_view!(game, MotherBrainBody[0].beam_left_origin_y);
     let mut dst = if down {
         let mut remaining = row.wrapping_sub(32);
         let mut dst = RAINBOW_ROWS + 4;
@@ -711,7 +691,7 @@ fn rasterize_rainbow_vertical<H: Host + ?Sized>(
             remaining = remaining.wrapping_sub(1);
         }
         // Preserve the original post-fill read of the starting row.
-        row = slot!(game, MotherBrainBody[0].beam_left_origin_y);
+        row = slot_view!(game, MotherBrainBody[0].beam_left_origin_y);
         dst
     } else {
         let dst = RAINBOW_ROWS + 2 * (row as isize - 32 + 1);
