@@ -119,7 +119,7 @@ impl BossState for Runtime<'_> {
         self.session().room.camera
     }
     fn current_enemy(&self) -> u16 {
-        self.inputs().current_enemy
+        self.session().actors.controls.selected
     }
     fn area(&self) -> u16 {
         self.session().room.area
