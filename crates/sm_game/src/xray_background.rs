@@ -48,10 +48,22 @@ fn camera<H: Host + ?Sized>(game: &mut H) -> crate::camera::Camera {
     game.runtime().session().room.camera
 }
 
-fn mult8x8(a: u8, b: u8) -> u16 {
-    (a as i32 * b as i32) as u16
+/// Stop demo playback's program and input and set the beam's angle.
+fn stop_demo<H: Host + ?Sized>(angle: u16, game: &mut H) {
+    let mut runtime = game.runtime();
+    let player = &mut runtime.session_mut().player;
+    let demo = &mut player.demo;
+    demo.pre_action = 0;
+    demo.delay = 0;
+    demo.program = 0;
+    demo.held = 0;
+    demo.pressed = 0;
+    player.transitions.xray_angle = angle;
 }
-
+fn set_backdrop_color<H: Host + ?Sized>(color: u16, game: &mut H) {
+    let mut runtime = game.runtime();
+    runtime.session_mut().presentation.visual_mut().colors[0] = color;
+}
 fn upload_screen<H: Host + ?Sized>(source: u16, screen: u16, game: &mut H) {
     let tail = word!(game.vram_write_queue_tail);
     let entry = 0xd0 + usize::from(tail);
@@ -125,31 +137,24 @@ pub fn build_overlay<H: Host + ?Sized>(game: &mut H) {
         game.overlay_origin_assertion();
     }
     {
+        // Reveal the screen's 16 rows of 16 blocks and the block past the right edge.
         let h = &mut game.runtime();
-        let mut r34: u16 = (mult8x8(
-            (h.session().room.camera.layer1[1] >> 4) as u8,
-            h.session().room.width as u8,
-        ) as i32
-            + (h.session().room.camera.layer1[0] as i32 >> 4)) as u16;
-        let mut r22: u16 = 0;
-        let mut m = 16;
-        loop {
-            reveal_left_neighbor(r22, r34, h);
-            let mut r36: u16 = r34;
-            for n_0 in (1i32..=16).rev() {
-                reveal_block(n_0 as u16, r22, r36, h);
-                r22 = (r22).wrapping_add(4);
-                r36 = (r36).wrapping_add(1);
+        let room = &h.session().room;
+        let width = room.width;
+        let [x, y] = room.camera.layer1.map(|position| position >> 4);
+        let mut row_start = (u16::from(y as u8) * u16::from(width as u8)).wrapping_add(x);
+        let mut destination: u16 = 0;
+        for _ in 0..16 {
+            reveal_left_neighbor(destination, row_start, h);
+            let mut block = row_start;
+            for columns_left in (1..=16).rev() {
+                reveal_block(columns_left, destination, block, h);
+                destination = destination.wrapping_add(4);
+                block = block.wrapping_add(1);
             }
-            let v12: u16 = r22;
-            r22 = r22.wrapping_add(1984);
-            reveal_block(0, r22, r36, h);
-            r22 = (v12).wrapping_add(64);
-            r34 = (r34).wrapping_add(h.session().room.width);
-            m -= 1;
-            if m == 0 {
-                break;
-            }
+            reveal_block(0, destination.wrapping_add(1984), block, h);
+            destination = destination.wrapping_add(64);
+            row_start = row_start.wrapping_add(width);
         }
         reveal_room_items(h);
     }
@@ -164,8 +169,7 @@ fn definition_word<R: SessionView>(index: usize, h: &R) -> u16 {
     h.table(Source::Native, 0x91d2d6).native_word(2 * index)
 }
 
-fn block_definition<R: SessionView>(k: u16, h: &mut R) -> Option<<R as Content>::Record> {
-    let game = h;
+fn block_definition<R: SessionView>(k: u16, game: &mut R) -> Option<<R as Content>::Record> {
     let bts = u16::from(behavior(game, i32::from(k)));
     let kind = level(game, usize::from(k)) & 0xf000;
     let mut index = 0i32;
@@ -240,10 +244,8 @@ fn follow_extension<R: SessionView>(dst_r22: u16, r36: u16, which_dir: bool, gam
             *variable = (*variable as i32 + step) as u16;
             let pos = y as i32 * game.session().room.width as i32 + x as i32;
             step = behavior(game, pos) as i8 as i32;
-            kind = level(
-                game,
-                usize::try_from(pos).expect("word address outside RAM"),
-            ) & 0xf000;
+            let at = usize::try_from(pos).expect("word address outside RAM");
+            kind = level(game, at) & 0xf000;
             if kind == 0xd000 {
                 vertical = true;
             } else {
@@ -305,12 +307,8 @@ fn dispatch_reveal<R: SessionView>(
             if column == 1 && columns_left == 1 {
                 continue;
             }
-            let descriptor = if repeat_tile {
-                2
-            } else {
-                2 + 2 * (row * width + column)
-            };
-            let tile = jp.native_word(descriptor);
+            let index = if repeat_tile { 0 } else { row * width + column };
+            let tile = jp.native_word(2 + 2 * index);
             let base = row * 64 + column * 2;
             write_block(
                 destination,
@@ -351,7 +349,7 @@ pub fn reveal_room_block<R: SessionView>(a: u16, k: u16, j: u16, game: &mut R) {
 }
 pub fn capture_bg2_right<H: Host + ?Sized>(game: &mut H) {
     if can_reveal_blocks(game) {
-        if word!(game.earthquake_timer) != 0 {
+        if game.runtime().session().feedback.earthquake_timer != 0 {
             let camera = camera(game);
             word! { game;
                 reg_BG1HOFS = camera.layer1[0].wrapping_add(camera.bg1_offset[0]);
@@ -380,62 +378,61 @@ pub fn upload_right<H: Host + ?Sized>(game: &mut H) {
         word_transfers!(game, ascending, 1; native(at) <- value(value as u16));
         game.ram().write_byte(at + 2, (value >> 16) as u8);
     }
-    word! { game, 0;
-        hdma_var_1, demo_input_pre_instr, demo_input_instr_timer, demo_input_instr_ptr, demo_input,
-        demo_input_new,
-    }
-    if game.facing() == 4 {
-        word!(game.xray_angle = 192);
-    } else {
-        word!(game.xray_angle = 64);
-    };
+    word!(game.hdma_var_1 = 0);
+    let angle = if game.facing() == 4 { 192 } else { 64 };
+    stop_demo(angle, game);
 }
 pub fn setup_blending<H: Host + ?Sized>(_k: u16, game: &mut H) {
     game.apply_xray_blending(BlendPhase::Setup);
 }
 pub fn set_backdrop<H: Host + ?Sized>(game: &mut H) {
-    {
-        word!(game.palette_buffer[0] = 3171);
-    }
+    set_backdrop_color(0xc63, game);
 }
 pub fn restore_left<H: Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
     word_transfers!(game, ascending, 1; native(0xa88) <- value(1));
     game.ram().write_byte(0xa8a, 0x98);
     word_transfers!(game, ascending, 1; native(0xa8b) <- value(0));
-    word! { game, 0;
-        demo_input_prev, demo_input_prev_new, demo_backup_prev_controller_input,
-    }
+    clear_previous_demo_input(game);
     word!(game.hdma_table_1[0] = 255);
     game.apply_xray_blending(BlendPhase::Restore);
-    word!(game.palette_buffer[0] = 0);
+    set_backdrop_color(0, game);
     word!(game.reg_BG2HOFS = object.a);
     word!(game.reg_BG2VOFS = object.b);
     game.ram().write_byte(0x59, object.c as u8);
     if (word!(game.vram_write_queue_tail) as i16).wrapping_sub(240) < 0 {
         upload_screen(0x5000, 0, game);
-        word!(game.demo_input_pre_instr += 1);
+        advance_stage(game);
     }
+}
+/// Step the x-ray background's restore stage, kept in the demo pre-action.
+fn advance_stage<H: Host + ?Sized>(game: &mut H) {
+    let mut runtime = game.runtime();
+    let demo = &mut runtime.session_mut().player.demo;
+    demo.pre_action = demo.pre_action.wrapping_add(1);
+}
+/// Clear the demo's previous input and the controller backup after it.
+fn clear_previous_demo_input<H: Host + ?Sized>(game: &mut H) {
+    word!(game.demo_backup_prev_controller_input = 0);
+    let mut runtime = game.runtime();
+    let demo = &mut runtime.session_mut().player.demo;
+    (demo.previous_held, demo.previous_pressed) = (0, 0);
 }
 pub fn restore_right<H: Host + ?Sized>(game: &mut H) {
     game.apply_xray_blending(BlendPhase::Restore);
     if (word!(game.vram_write_queue_tail) as i16).wrapping_sub(240) < 0 {
         upload_screen(0x5800, 1, game);
-        word!(game.demo_input_pre_instr += 1);
+        advance_stage(game);
     }
 }
 pub fn finish_restore<H: Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
     game.apply_xray_blending(BlendPhase::Restore);
     if word!(game.time_is_frozen_flag) != 0 {
-        word! { game, 0;
-            time_is_frozen_flag, demo_input_pre_instr, demo_input_instr_timer, demo_input_instr_ptr,
-            xray_angle, demo_input, demo_input_new,
-        }
+        word!(game.time_is_frozen_flag = 0);
+        stop_demo(0, game);
         word_transfers!(game, ascending, 1; native(0xa88) <- value(1));
         game.ram().write_byte(0xa8a, 0x98);
         word_transfers!(game, ascending, 1; native(0xa8b) <- value(0));
-        word! { game, 0;
-            demo_input_prev, demo_input_prev_new, demo_backup_prev_controller_input,
-        }
+        clear_previous_demo_input(game);
         game.finish_xray();
         object.channels = 0;
         game.queue_sound(0, 0xa, 6);
@@ -445,8 +442,10 @@ pub fn finish_restore<H: Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
             game.ram().write_byte(0x74, 32);
         }
         word_transfers!(game, descending, 256; le(hdma_table_1, 255) <- value(0xff));
-        if word!(game.samus_auto_cancel_hud_item_index) != 0 {
-            word! { game, 0; hud_item_index, samus_auto_cancel_hud_item_index }
+        let mut runtime = game.runtime();
+        let controls = &mut runtime.session_mut().projectiles.controls;
+        if controls.automatic_weapon != 0 {
+            (controls.selected_weapon, controls.automatic_weapon) = (0, 0);
         }
     }
 }
