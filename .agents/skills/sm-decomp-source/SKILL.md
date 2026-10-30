@@ -78,7 +78,7 @@ the shell, Python and children together within the whole-family grant.
    and primary root. Label unobserved behavior accurately. Compilation and replay
    completion belong to their assigned executors unless you also own those roles.
    Format pruned snapshots directly with rustfmt using the project edition and skip_children=true; retain exact inputs/timing/results without copying verification/assets/caches just for module resolution.
-   Register added Rust files in literal sm/src/verify_source.rs for source proof.
+   tools/verify_dll.py binds every library source into the verifier for source proof.
    Persisted field or opaque payload changes must reach the complete layout schema
    before freeze; source-file inventories remain separate qualification inputs.
    Retain executed nontrivial preservation guard code and its hash with the source

@@ -515,9 +515,18 @@ pub mod snapshot_io;
 /// Execution requirements for focused verifier scenarios.
 pub mod verify_probe;
 
+/// Source bytes captured by the game library compilation; the launcher
+/// checks this complete list before trusting cached output.
 #[cfg(sm_verify_dll)]
 #[doc(hidden)]
-pub mod verify_source;
+pub mod verify_source {
+    // tools/verify_dll.py writes the table from the library's source tree and
+    // names it in SM_VERIFY_SOURCE_INVENTORY; other builds bind no sources.
+    #[cfg(sm_source_inventory)]
+    include!(env!("SM_VERIFY_SOURCE_INVENTORY"));
+    #[cfg(not(sm_source_inventory))]
+    pub static FILES: &[(&str, &[u8])] = &[];
+}
 
 #[doc(hidden)]
 pub fn verify_player_projectiles() -> u32 {

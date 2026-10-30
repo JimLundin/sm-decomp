@@ -81,38 +81,30 @@ def library_source_paths(root):
 
 
 def check_source_inventory(root):
-    """Reject incomplete literal source bindings before starting a compiler."""
-    expected = library_source_paths(root)
-    inventory = (root / "sm/src/verify_source.rs").read_text(encoding="utf-8")
-    declaration = re.fullmatch(
-        r'(?:\s*//![^\n]*\n)*\s*pub\s+static\s+FILES\s*:\s*'
-        r'&\[\(&str,\s*&\[u8\]\)\]\s*=\s*&\[(.*)\];\s*',
-        inventory, re.DOTALL,
-    )
-    if declaration is None:
-        raise RuntimeError("source preflight requires the literal FILES declaration in sm/src/verify_source.rs")
-    entries = declaration.group(1)
-    offset = 0
-    for binding in re.finditer(
-        r'\(\s*"([^"\\]+)",\s*include_bytes!\s*\(\s*"([^"\\]+)"\s*\),?\s*\)\s*,',
-        entries,
-    ):
-        if entries[offset:binding.start()].strip():
-            raise RuntimeError("source preflight requires literal FILES tuples; comments or expressions need review")
-        offset = binding.end()
-        path, included = binding.groups()
-        if path not in expected:
-            raise RuntimeError(f"unexpected or repeated game-library source: {path}; "
-                               "update sm/src/verify_source.rs before building")
-        expected.remove(path)
-        if (root / "sm/src" / included).resolve() != (root / path).resolve():
-            raise RuntimeError(f"game-library source include differs: {path}; "
-                               "update sm/src/verify_source.rs before building")
-    if entries[offset:].strip():
-        raise RuntimeError("source preflight requires literal FILES tuples; comments or expressions need review")
-    if expected:
-        raise RuntimeError("game-library source list incomplete; update sm/src/verify_source.rs: "
-                           + ", ".join(sorted(expected)))
+    """The library's sources, sorted; each must be a readable file before a compiler starts."""
+    paths = sorted(library_source_paths(root))
+    for path in paths:
+        if not (root / path).is_file():
+            raise RuntimeError(f"game-library source is not a file: {path}")
+    return paths
+
+
+def write_source_inventory(root, output):
+    """Write sm::verify_source::FILES, binding every library source with include_bytes!.
+
+    The sm library includes this file when compiled with `--cfg sm_source_inventory`
+    and SM_VERIFY_SOURCE_INVENTORY naming it. An unchanged table is not rewritten.
+    """
+    lines = ["pub static FILES: &[(&str, &[u8])] = &["]
+    for path in check_source_inventory(root):
+        absolute = json.dumps(str((root / path).resolve()), ensure_ascii=False)
+        lines.append(f"    ({json.dumps(path, ensure_ascii=False)}, include_bytes!({absolute})),")
+    lines.append("];\n")
+    text = "\n".join(lines)
+    inventory = output / "source_inventory.rs"
+    if not inventory.is_file() or inventory.read_text(encoding="utf-8") != text:
+        inventory.write_text(text, encoding="utf-8", newline="\n")
+    return inventory
 
 
 def check_library(host, root):
@@ -138,7 +130,7 @@ def check_library(host, root):
         if ctypes.string_at(source.data, source.data_len) != (root / path).read_bytes():
             raise RuntimeError(f"stale game-library source: {path}; rebuild")
     if expected:
-        raise RuntimeError("game-library source list incomplete; update sm/src/verify_source.rs: "
+        raise RuntimeError("game-library source list incomplete; rebuild: "
                            + ", ".join(sorted(expected)))
     if not hasattr(host, "sm_verify_backend_source_hash"):
         raise RuntimeError("cached DLL has no backend source stamp; rebuild")
@@ -155,7 +147,7 @@ def check_library(host, root):
         raise RuntimeError("stale native utilities; rerun tools/install_native_config.py and rebuild")
 
 
-def cargo_host(root, rustc, output, source, frontend=False, retry=True):
+def cargo_host(root, rustc, output, source, inventory, frontend=False, retry=True):
     cargo = shutil.which("cargo") or str(Path(rustc).with_name("cargo.exe"))
     # Backdated files in another checkout can look fresh in a shared target
     # directory. Keep this game's and host's artifacts with their source.
@@ -164,7 +156,8 @@ def cargo_host(root, rustc, output, source, frontend=False, retry=True):
     command = [cargo, "build", "-p", "sm", "--release", "--example", "sm_verify",
                "--locked", "-j", "1", "--target-dir", str(root / "target"),
                "--message-format=json"]
-    environment = dict(os.environ, RUSTC=rustc, SM_VERIFY_SOURCE_HASH=source)
+    environment = dict(os.environ, RUSTC=rustc, SM_VERIFY_SOURCE_HASH=source,
+                       SM_VERIFY_SOURCE_INVENTORY=str(inventory))
     if frontend:
         # The desktop requires the ordinary library configuration. The verifier
         # cfg excludes its config/platform modules, so use a separate build.
@@ -185,7 +178,7 @@ def cargo_host(root, rustc, output, source, frontend=False, retry=True):
     if flags is None:
         flags = "\x1f".join(environment.get("RUSTFLAGS", "").split())
     environment["CARGO_ENCODED_RUSTFLAGS"] = (
-        flags + ("\x1f" if flags else "") + "--cfg\x1fsm_verify_dll"
+        flags + ("\x1f" if flags else "") + "--cfg\x1fsm_verify_dll\x1f--cfg\x1fsm_source_inventory"
     )
     dll = None
     compiled = []
@@ -242,7 +235,7 @@ def cargo_host(root, rustc, output, source, frontend=False, retry=True):
             target_root = root / "crates" / package / "src/lib.rs"
             if target_root.is_file():
                 target_root.touch()
-        return cargo_host(root, rustc, output, source, frontend=frontend, retry=False)
+        return cargo_host(root, rustc, output, source, inventory, frontend=frontend, retry=False)
     # Preserve --no-build's existing path. An unchanged DLL can still be loaded
     # by another replay; do not overwrite it merely to refresh its timestamp.
     cached = output / HOST_LIBRARY
@@ -252,10 +245,10 @@ def cargo_host(root, rustc, output, source, frontend=False, retry=True):
 
 
 def build(root, rustc, use_cargo=None, frontend=False):
-    check_source_inventory(root)
     source = source_hash(root)
     output = root / "target" / "verify-dll"
     output.mkdir(parents=True, exist_ok=True)
+    inventory = write_source_inventory(root, output)
     library = output / "libsm.rlib"
     game = output / "libsm_game.rlib"
     data_root = root / "crates/sm_data/src/lib.rs"
@@ -275,7 +268,7 @@ def build(root, rustc, use_cargo=None, frontend=False):
     if frontend and not use_cargo:
         raise RuntimeError("--frontend-check requires the Cargo/SDL2 build path")
     if use_cargo:
-        dll = cargo_host(root, rustc, output, source, frontend)
+        dll = cargo_host(root, rustc, output, source, inventory, frontend)
         if source_hash(root) != source:
             raise RuntimeError("source changed during build; rebuild before replay")
         return dll
@@ -356,9 +349,10 @@ def build(root, rustc, use_cargo=None, frontend=False):
     subprocess.run(
         common + (["-C", f"incremental={output / 'incremental-sm'}"] if incremental else [])
         + ["--crate-name", "sm", "--crate-type", "rlib", "--cfg", "sm_verify_dll",
+                  "--cfg", "sm_source_inventory",
                   "sm/src/lib.rs", "--extern", f"sm_game={game}", *data_flags, *runtime_flags,
                   "-L", f"dependency={output}", "-o", str(library)],
-        cwd=root, check=True,
+        cwd=root, env=dict(os.environ, SM_VERIFY_SOURCE_INVENTORY=str(inventory)), check=True,
     )
     subprocess.run(
         common + (["-C", f"incremental={output / 'incremental-host'}"] if incremental else [])
