@@ -53,7 +53,6 @@ pub(in crate::game) mod mother_brain_effects;
 pub(in crate::game) use sm_game::actors::movement;
 pub(in crate::game) mod part_hitboxes;
 pub(in crate::game) mod phantoon_actions;
-pub(in crate::game) mod phantoon_motion;
 pub(in crate::game) use sm_game::actors::population;
 pub(in crate::game) use sm_game::actors::queries;
 pub(in crate::game) mod ridley_tables;

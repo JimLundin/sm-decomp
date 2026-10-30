@@ -266,3 +266,82 @@ impl sm_game::actors::mother_brain_neck::Host for Game {
         crate::game::sm_a9::ComputeCosMult(length, angle, self)
     }
 }
+
+// The named bank $A7 functions are the ones `DispatchEnemyPreInstr` dispatches on.
+const _: () = {
+    use sm_game::actors::phantoon::function as f;
+    const fn at(word: u16) -> u32 {
+        0xa7_0000 | word as u32
+    }
+    assert!(
+        at(f::SPAWN_STARTING_FLAMES) == 10998953 && at(f::WAIT_BEFORE_SPINNING_FLAMES) == 10999022
+    );
+    assert!(at(f::SPAWN_FLAMES_BEFORE_FIGHT) == 10999048 && at(f::WAVY_FADE_IN) == 10999114);
+    assert!(at(f::PICK_ROUND_1_PATTERN) == 10999190 && at(f::FIGURE_EIGHT) == 10999271);
+    assert!(at(f::EYE_FOLLOWS_SAMUS) == 10999309 && at(f::BECOME_SOLID_AND_SWOOP) == 10999388);
+    assert!(at(f::SWOOPING) == 10999416 && at(f::FADE_OUT_WITH_SWOOP) == 10999481);
+    assert!(at(f::WAIT_AFTER_FADE_OUT) == 10999508 && at(f::REAPPEAR) == 10999522);
+    assert!(
+        at(f::FADE_IN_BEFORE_FIGURE_EIGHT) == 10999597
+            && at(f::BECOME_SOLID_AFTER_FLAME_RAIN) == 10999615
+    );
+    assert!(
+        at(f::FADE_IN_DURING_FLAME_RAIN) == 10999655
+            && at(f::FOLLOW_SAMUS_DURING_FLAME_RAIN) == 10999688
+    );
+    assert!(at(f::FADE_OUT_DURING_FLAME_RAIN) == 10999765 && at(f::SPAWN_FLAME_RAIN) == 10999799);
+    assert!(
+        at(f::FADE_OUT_BEFORE_FIRST_FLAME_RAIN) == 10999850
+            && at(f::FADE_OUT_BEFORE_ENRAGE) == 10999900
+    );
+    assert!(at(f::MOVE_TO_TOP_CENTRE) == 10999924 && at(f::FADE_IN_ENRAGED) == 10999953);
+    assert!(at(f::ENRAGED) == 10999980 && at(f::FADE_OUT_AFTER_ENRAGE) == 11000086);
+    assert!(
+        at(f::FINISH_SWOOP_AFTER_FATAL_SHOT) == 11000110 && at(f::DYING_FADE_IN_OUT) == 11000136
+    );
+    assert!(at(f::DYING_EXPLOSIONS) == 11000203 && at(f::WAVY_DYING_CRY) == 11000401);
+    assert!(at(f::DYING_FADE_OUT) == 11000454 && at(f::ALMOST_DEAD) == 11000535);
+    assert!(at(f::DEAD) == 11000637 && f::NOTHING == crate::game::sm_a7::fnnullsub_237 as u16);
+};
+
+// The named instruction lists are the decompilation's `kKraid_Ilist_CCxx`.
+const _: () = {
+    use crate::game::sm_a7::*;
+    use sm_game::actors::phantoon::animation as a;
+    assert!(
+        a::BODY_INVULNERABLE == addr_kKraid_Ilist_CC41 as u16
+            && a::BODY_FULL_HITBOX == addr_kKraid_Ilist_CC47 as u16
+    );
+    assert!(
+        a::BODY_EYE_HITBOX == addr_kKraid_Ilist_CC4D as u16
+            && a::EYE_OPEN == addr_kKraid_Ilist_CC53 as u16
+    );
+    assert!(
+        a::EYE_CLOSE_AND_PICK_PATTERN == addr_kKraid_Ilist_CC81 as u16
+            && a::EYE_CLOSE == addr_kKraid_Ilist_CC91 as u16
+    );
+    assert!(
+        a::EYEBALL_CENTRED == addr_kKraid_Ilist_CC9D as u16
+            && a::NOTHING_SPRITEMAP == addr_kSpritemap_Nothing_A7 as u16
+    );
+};
+
+impl sm_game::actors::phantoon::Host for Game {
+    fn run_function(&mut self, address: u32) {
+        crate::game::sm_a7::run_phantoon_function(address, self);
+    }
+
+    fn direction_to_player(&mut self) -> sm_game::actors::api::PlayerDirection {
+        crate::game::actors::api::direction_to_player(
+            &mut crate::game::session_runtime::Runtime::new(self),
+        )
+    }
+
+    fn spawn_hdma(&mut self, bank: u8, args: &sm_game::display::hdma_spawn::SpawnHdmaObject_Args) {
+        crate::game::visual_runtime::spawn_hdma(bank, args, self);
+    }
+
+    fn start_wave(&mut self, direction: u16, speed: u16) {
+        crate::game::visual_runtime::initialize_phantoon_motion(direction, speed, self);
+    }
+}

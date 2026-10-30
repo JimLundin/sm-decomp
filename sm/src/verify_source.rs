@@ -562,10 +562,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/actors/runtime_host.rs"),
     ),
     (
-        "sm/src/game/actors/phantoon_motion.rs",
-        include_bytes!("game/actors/phantoon_motion.rs"),
-    ),
-    (
         "sm/src/game/actors/escape_critters.rs",
         include_bytes!("game/actors/escape_critters.rs"),
     ),
@@ -3019,6 +3015,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/actors/magdollite.rs",
         include_bytes!("../../crates/sm_game/src/actors/magdollite.rs"),
+    ),
+    (
+        "crates/sm_game/src/actors/phantoon.rs",
+        include_bytes!("../../crates/sm_game/src/actors/phantoon.rs"),
     ),
     (
         "crates/sm_game/src/actors/phantoon_actions.rs",

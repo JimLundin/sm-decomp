@@ -117,6 +117,7 @@ pub mod actors {
     pub mod mother_brain_tubes;
     pub mod movement;
     pub mod overlap;
+    pub mod phantoon;
     pub mod phantoon_actions;
     pub mod phantoon_motion;
     pub mod population;
