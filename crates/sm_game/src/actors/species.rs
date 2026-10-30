@@ -10,9 +10,10 @@
 #![forbid(unsafe_code)]
 use crate::actors::host::{ActorHost, ActorRuntime, Death, LeaseActors, Shot};
 use crate::actors::{
-    botwoon, brinstar_pipe_bug, crocomire_reactions, draygon_death, draygon_eye, draygon_flight,
-    draygon_grab, draygon_host, escape_critters, magdollite, norfair_pipe_bug, shaktool,
-    space_pirates, statues, torizo, yapping_maw, yellow_pipe_bug,
+    botwoon, brinstar_pipe_bug, crocomire_reactions, dachora_run, draygon_death, draygon_eye,
+    draygon_flight, draygon_grab, draygon_host, escape_critters, etecoon, kraid, magdollite,
+    norfair_pipe_bug, phantoon, phantoon_actions, shaktool, space_pirates, statues, torizo,
+    yapping_maw, yellow_pipe_bug,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -53,9 +54,6 @@ pub enum NativeTouch {
     LargeSnail { damage: bool },
     SporeSpawn,
     CeresSteam,
-    KraidArmAndFoot,
-    KraidArm,
-    Phantoon,
     MotherBrainBrain,
 }
 
@@ -69,6 +67,8 @@ pub trait TouchHost:
     + torizo::Ai
     + shaktool::Ai
     + statues::Host
+    + kraid::Host
+    + phantoon::Host
 {
     fn native_touch(&mut self, touch: NativeTouch);
 }
@@ -89,9 +89,9 @@ pub fn touch<H: TouchHost>(ea: u32, game: &mut H) {
         10936153 => game.contact_reaction(Death::LeavePending),
         10940479 => game.native_touch(NativeTouch::CeresSteam),
         10977356 => (),
-        10982539 => game.native_touch(NativeTouch::KraidArmAndFoot),
-        10982544 => game.native_touch(NativeTouch::KraidArm),
-        11001237 => game.native_touch(NativeTouch::Phantoon),
+        10982539 => kraid::touch_arm_or_foot(game),
+        10982544 => kraid::arm_touch(game),
+        11001237 => phantoon::touch(game),
         11122117 => (),
         11122118 => game.native_touch(NativeTouch::MotherBrainBrain),
         11192695 => torizo::touch(game),
@@ -107,11 +107,6 @@ pub enum NativeShot {
     LargeSnail,
     SporeSpawn,
     Ridley,
-    /// Kraid's arm, with the projectile that hit it.
-    KraidArm {
-        projectile: u16,
-    },
-    Phantoon,
     MotherBrainBody,
     MotherBrainBrain,
 }
@@ -126,6 +121,8 @@ pub trait ShotHost:
     + torizo::Ai
     + shaktool::Ai
     + statues::Host
+    + kraid::Host
+    + phantoon::Host
 {
     fn native_shot(&mut self, shot: NativeShot);
 }
@@ -150,8 +147,8 @@ pub fn shot<H: ShotHost>(ea: u32, j: u16, game: &mut H) {
         10936202 => game.native_shot(NativeShot::Ridley),
         10977356 => (),
         10982581 => (),
-        10982582 => game.native_shot(NativeShot::KraidArm { projectile: j }),
-        11001243 => game.native_shot(NativeShot::Phantoon),
+        10982582 => kraid::arm_shot(game, j),
+        11001243 => phantoon::shot(game),
         11121923 => game.native_shot(NativeShot::MotherBrainBody),
         11121927 => game.native_shot(NativeShot::MotherBrainBrain),
         11192700 => torizo::shot(game),
@@ -262,6 +259,10 @@ pub trait AiHost:
     + torizo::Ai
     + shaktool::Ai
     + statues::Host
+    + kraid::Host
+    + phantoon::Host
+    + etecoon::Host
+    + dachora_run::Host
 {
     /// An AI routine whose arm is still in the compatibility table.
     fn native_ai(&mut self, ea: u32);
@@ -330,6 +331,40 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10780717 => game.shot_reaction(Shot::Finalize),
         10783322 => crocomire_reactions::initialize(game),
         10795410 => crocomire_reactions::power_bomb(game),
+        // Bank $A7: Kraid, Phantoon, the etecoons and the dachora, with the
+        // bank's common reactions.
+        10982544 => kraid::arm_touch(game),
+        10987865 => kraid::initialize(game),
+        10988355 => kraid::initialize_arm(game),
+        10988392 => kraid::initialize_lint(game, 0x80),
+        10988444 => kraid::initialize_lint(game, 0xc0),
+        10988490 => kraid::initialize_lint(game, 0x100),
+        10988536 => kraid::initialize_foot(game),
+        10988577 => kraid::main_ai(game),
+        10991549 => kraid::arm_main(game),
+        10991617 => kraid::lint_main_ai(game, 0x80),
+        10991629 => kraid::lint_main_ai(game, 0xc0),
+        10991641 => kraid::lint_main_ai(game, 0x100),
+        10992118 => kraid::foot_main(game),
+        10992847 | 10992862 => kraid::fingernail_touch(game),
+        10992946 => kraid::fingernail_main(game, 0x180),
+        10992969 => kraid::fingernail_main(game, 0x1c0),
+        10997235 => phantoon::initialize(game),
+        10997333 => phantoon::initialize_part(game),
+        10997414 => phantoon::main_ai(game),
+        11001151 => phantoon::hurt(game),
+        11001237 => phantoon::touch(game),
+        11001243 => phantoon::shot(game),
+        11004178 => etecoon::initialize(game),
+        11004224 => etecoon::main_ai(game),
+        11007197 => dachora_run::initialize(game),
+        11007278 => dachora_run::main_ai(game),
+        10977295 => crate::actors::combat::select_frozen_ai(&mut LeaseActors::lease(game)),
+        10977325 => game.shot_reaction(Shot::Finalize),
+        10977340 => game.power_bomb_reaction(Death::LeavePending),
+        10977345 => crate::actors::scheduling::update_frozen_enemy(&mut LeaseActors::lease(game)),
+        10982559 => kraid::touch(game),
+        10992879 | 10992941 => kraid::initialize_fingernail(game),
         // Bank $A8: the common grapple, contact, shot and frozen reactions.
         11042826 => game.grapple_kill(),
         11042831 | 11042846 => {
@@ -376,7 +411,14 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
 
 /// What the pre-instruction table needs beyond its actors' own hosts.
 pub trait PreInstructionHost:
-    B3Host + magdollite::Host + torizo::Ai + shaktool::Ai + statues::Host
+    B3Host
+    + magdollite::Host
+    + torizo::Ai
+    + shaktool::Ai
+    + statues::Host
+    + phantoon::Host
+    + etecoon::Host
+    + dachora_run::Host
 {
     /// A pre-instruction whose arm is still in the compatibility table, for
     /// the current enemy `k` read before dispatch.
@@ -411,6 +453,68 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
         11200474 => (),
         11197611 => (),
         0xb30000..=0xb3ffff => crate::actors::species::b3_pre_instruction(ea, k, game),
+        // Bank $A7: Phantoon, the etecoons and the dachora.
+        10999114 => phantoon::wavy_fade_in(game, k),
+        10999271 => phantoon::figure_eight(game, k),
+        10999309 => phantoon::eye_follows_samus(game, k),
+        10999416 => phantoon::swooping(game, k),
+        10999481 => phantoon::fade_out_with_swoop(game, k),
+        10999522 => phantoon::reappear(game, k),
+        10999597 => phantoon::fade_in_before_figure_eight(game),
+        10999615 => phantoon::become_solid_after_flame_rain(game, k),
+        10999655 => phantoon::fade_in_during_flame_rain(game, k),
+        10999765 => phantoon::fade_out_during_flame_rain(game, k),
+        10999850 => phantoon::fade_out_before_first_flame_rain(game, k),
+        10999900 => phantoon::fade_out_before_enrage(game, k),
+        10999953 => phantoon::fade_in_enraged(game, k),
+        10999980 => phantoon::enraged(game, k),
+        11000086 => phantoon::fade_out_after_enrage(game, k),
+        11000110 => phantoon::finish_swoop_after_fatal_shot(game, k),
+        11000136 => phantoon::dying_fade_in_out(game, k),
+        11000401 => phantoon::wavy_dying_cry(game, k),
+        11000454 => phantoon::dying_fade_out(game, k),
+        11000535 => phantoon::almost_dead(game, k),
+        11000637 => phantoon::dead(game, k),
+        11004335 => etecoon::initial(game, k),
+        11004471 => etecoon::hopping_bottom(game, k),
+        11004674 => etecoon::running_left(game, k),
+        11004716 => etecoon::running_right(game, k),
+        11004752 => etecoon::jumping(game, k),
+        11004877 => etecoon::wall_jump(game, k),
+        11005079 => etecoon::run_to_left_run_up_point(game, k),
+        11005115 => etecoon::run_to_right_run_up_point(game, k),
+        11005151 => etecoon::running_for_tunnel_jump(game, k),
+        11005193 => etecoon::tunnel_jump(game, k),
+        11005226 => etecoon::running_through_tunnel(game, k),
+        11005268 => etecoon::falling_from_tunnel_ledge(game, k),
+        11005301 => etecoon::hopping_top(game, k),
+        11005383 => etecoon::start_hop_top(game, k),
+        11005502 => etecoon::hop_until_samus_near(game, k),
+        11005594 => etecoon::running_for_failed_tunnel_jump(game, k),
+        11005624 => etecoon::failed_tunnel_jump(game, k),
+        11007344 => dachora_run::wait_for_samus(game, k),
+        11007420 => dachora_run::start_running(game, k),
+        11007469 => dachora_run::running_left(game, k),
+        11007582 => dachora_run::running_right(game, k),
+        11007887 => dachora_run::activate_shinespark(game, k),
+        11008006 => dachora_run::shinesparking(game, k),
+        11008309 => dachora_run::falling(game, k),
+        11008396 => dachora_run::echo(game, k),
+        10999388 => phantoon::become_solid_and_swoop(game, k),
+        10998953 => phantoon::countdown(game, k, phantoon::function::SPAWN_STARTING_FLAMES),
+        10999022 => phantoon::countdown(game, k, phantoon::function::WAIT_BEFORE_SPINNING_FLAMES),
+        10999048 => phantoon::countdown(game, k, phantoon::function::SPAWN_FLAMES_BEFORE_FIGHT),
+        10999190 => phantoon::countdown(game, k, phantoon::function::PICK_ROUND_1_PATTERN),
+        10999508 => phantoon::countdown(game, k, phantoon::function::WAIT_AFTER_FADE_OUT),
+        10999688 => {
+            phantoon::countdown(game, k, phantoon::function::FOLLOW_SAMUS_DURING_FLAME_RAIN)
+        }
+        10999799 => phantoon::countdown(game, k, phantoon::function::SPAWN_FLAME_RAIN),
+        10999924 => phantoon::countdown(game, k, phantoon::function::MOVE_TO_TOP_CENTRE),
+        11000203 => phantoon::countdown(game, k, phantoon::function::DYING_EXPLOSIONS),
+        11004416 => etecoon::start_hop_bottom(game, k),
+        11004597 => etecoon::look_at_samus(game, k),
+        11004955 => etecoon::landed_from_jump(game, k),
         // Bank $AA: the Torizos, Shaktool and the statues.
         11192146 => torizo::walking(k, game),
         11192364 => torizo::jumping_or_falling(k, game),
@@ -427,7 +531,8 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
 
 /// What the instruction table needs beyond its actors' own hosts.
 pub trait InstructionHost:
-    crocomire_reactions::Host
+    SpeciesHost
+    + crocomire_reactions::Host
     + yapping_maw::Host
     + magdollite::Host
     + escape_critters::Host
@@ -437,9 +542,22 @@ pub trait InstructionHost:
     + torizo::Ai
     + shaktool::Ai
     + statues::Host
+    + kraid::Host
+    + phantoon::Host
 {
     /// An instruction whose arm is still in the compatibility table.
     fn native_instruction(&mut self, ea: u32, k: u16, j: EnemyScript) -> EnemyScript;
+}
+
+/// The bank $A7 functions Phantoon's instruction lists call, keyed by address.
+fn call_a7_function<H: InstructionHost>(ea: u32, k: u16, game: &mut H) {
+    match ea {
+        10997485 => phantoon::materialisation_sound(game),
+        10997598 => phantoon_actions::spawn_casual_flame(k, game),
+        10997823 => phantoon::open_eye(game),
+        10997878 => phantoon::pick_pattern(game),
+        _ => game.unknown_routine(),
+    }
 }
 
 /// An enemy species' instruction, keyed by its address; `k` is the enemy and
@@ -464,6 +582,45 @@ pub fn instruction<H: InstructionHost>(
         11789840 => escape_critters::move_x(k, j, game),
         11791049 => escape_critters::shift_dachora(0xfffa, j, game),
         11791063 => escape_critters::shift_dachora(6, j, game),
+        // Bank $A7: Kraid's steps and the calls into Phantoon's functions; Kraid's
+        // identity instruction returns the script unchanged.
+        10977418 => {
+            call_a7_function(j.word(0) as u32 | 0xa70000, k, game);
+            j.offset(1)
+        }
+        10991155 => j,
+        10979983 => match kraid::arm_swipe_when_hurt(game) {
+            Some(list) => EnemyScript::jump(list),
+            None => j,
+        },
+        10991158 => {
+            kraid::step_up(game);
+            j
+        }
+        10991164 => {
+            kraid::step_down_and_shake(game);
+            j
+        }
+        10991182 => {
+            kraid::stomp_sound(game);
+            j
+        }
+        10991194 => {
+            kraid::step_back(game);
+            j
+        }
+        10991207 => {
+            kraid::step_back(game);
+            j
+        }
+        10991220 => {
+            kraid::step_forward(game);
+            j
+        }
+        10991235 => {
+            kraid::lunge_right(game);
+            j
+        }
         // Bank $AA: the Torizos, Shaktool and the statues; the two identity
         // instructions return the script unchanged.
         11190984 | 11196831 => j,

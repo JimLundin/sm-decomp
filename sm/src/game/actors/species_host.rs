@@ -4,7 +4,7 @@
 use crate::game::actors::reflec;
 use crate::game::actors::{self, api};
 use crate::game::session_runtime::Runtime;
-use crate::game::{sm_a6, sm_a7, sm_a9};
+use crate::game::{sm_a6, sm_a9};
 use crate::game_state::Game;
 
 impl sm_game::actors::species::SpeciesHost for Game {
@@ -20,9 +20,6 @@ impl sm_game::actors::species::TouchHost for Game {
             LargeSnail { damage } => crate::game::large_snail::touch(damage, self),
             SporeSpawn => actors::spore_spawn::touch(self),
             CeresSteam => crate::game::ceres_doors::steam_touch(self),
-            KraidArmAndFoot => sm_a7::Kraid_Touch_ArmFoot(self),
-            KraidArm => sm_a7::KraidsArm_Touch(self),
-            Phantoon => sm_a7::Phantoon_Touch(self),
             MotherBrainBrain => sm_a9::MotherBrainsBrain_Touch(self),
         }
     }
@@ -36,8 +33,6 @@ impl sm_game::actors::species::ShotHost for Game {
             LargeSnail => crate::game::large_snail::shot(self),
             SporeSpawn => actors::spore_spawn::shot(self),
             Ridley => sm_a6::Ridley_Shot(self),
-            KraidArm { projectile } => sm_a7::Kraid_Arm_Shot(projectile, self),
-            Phantoon => sm_a7::Phantoon_Shot(self),
             MotherBrainBody => sm_a9::MotherBrainsBody_Shot(self),
             MotherBrainBrain => sm_a9::MotherBrainsBrain_Shot(self),
         }
