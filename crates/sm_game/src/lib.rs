@@ -167,6 +167,7 @@ pub mod player_projectiles {
 }
 pub mod room_mechanisms {
     pub mod access;
+    pub mod addresses;
     pub mod commands;
     pub mod content;
     pub mod creation;

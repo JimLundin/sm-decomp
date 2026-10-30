@@ -1,5 +1,6 @@
 //! Semantic setup actions and exact encoded dispatch identity.
 #![forbid(unsafe_code)]
+use super::addresses;
 use super::rules::gates::{Color, Direction, Side};
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Contact {
@@ -64,214 +65,344 @@ impl From<Decoded> for Setup<u32> {
 }
 fn decode(original: u32) -> Decoded {
     let action = match original {
-        8711757 => Setup::Item(super::rules::item_setup::Setup::Initialize(
-            super::rules::item_setup::Container::Visible,
-            Some(super::rules::item_setup::Graphic::EnergyTank),
-        )),
-        8711762 => Setup::Item(super::rules::item_setup::Setup::Initialize(
-            super::rules::item_setup::Container::Visible,
-            Some(super::rules::item_setup::Graphic::MissileTank),
-        )),
-        8711767 => Setup::Item(super::rules::item_setup::Setup::Initialize(
-            super::rules::item_setup::Container::Visible,
-            Some(super::rules::item_setup::Graphic::SuperMissileTank),
-        )),
-        8711772 => Setup::Item(super::rules::item_setup::Setup::Initialize(
-            super::rules::item_setup::Container::Visible,
-            Some(super::rules::item_setup::Graphic::PowerBombTank),
-        )),
-        8711780 => Setup::Item(super::rules::item_setup::Setup::Initialize(
-            super::rules::item_setup::Container::Visible,
-            None,
-        )),
-        8711799 => Setup::Item(super::rules::item_setup::Setup::Initialize(
-            super::rules::item_setup::Container::ShotBlock,
-            Some(super::rules::item_setup::Graphic::EnergyTank),
-        )),
-        8711804 => Setup::Item(super::rules::item_setup::Setup::Initialize(
-            super::rules::item_setup::Container::ShotBlock,
-            Some(super::rules::item_setup::Graphic::MissileTank),
-        )),
-        8711809 => Setup::Item(super::rules::item_setup::Setup::Initialize(
-            super::rules::item_setup::Container::ShotBlock,
-            Some(super::rules::item_setup::Graphic::SuperMissileTank),
-        )),
-        8711814 => Setup::Item(super::rules::item_setup::Setup::Initialize(
-            super::rules::item_setup::Container::ShotBlock,
-            Some(super::rules::item_setup::Graphic::PowerBombTank),
-        )),
-        8711822 => Setup::Item(super::rules::item_setup::Setup::Initialize(
-            super::rules::item_setup::Container::ShotBlock,
-            None,
-        )),
-        8711851 => Setup::Item(super::rules::item_setup::Setup::Trigger),
-        8696634 => Setup::Scroll(super::rules::scroll_setup::Setup::Place(
-            super::rules::scroll_setup::Tile::Extension(
+        addresses::setup::SETUP_ITEM_EE4D => {
+            Setup::Item(super::rules::item_setup::Setup::Initialize(
+                super::rules::item_setup::Container::Visible,
+                Some(super::rules::item_setup::Graphic::EnergyTank),
+            ))
+        }
+        addresses::setup::SETUP_ITEM_EE52 => {
+            Setup::Item(super::rules::item_setup::Setup::Initialize(
+                super::rules::item_setup::Container::Visible,
+                Some(super::rules::item_setup::Graphic::MissileTank),
+            ))
+        }
+        addresses::setup::SETUP_ITEM_EE57 => {
+            Setup::Item(super::rules::item_setup::Setup::Initialize(
+                super::rules::item_setup::Container::Visible,
+                Some(super::rules::item_setup::Graphic::SuperMissileTank),
+            ))
+        }
+        addresses::setup::SETUP_ITEM_EE5C => {
+            Setup::Item(super::rules::item_setup::Setup::Initialize(
+                super::rules::item_setup::Container::Visible,
+                Some(super::rules::item_setup::Graphic::PowerBombTank),
+            ))
+        }
+        addresses::setup::SETUP_ITEM_EE64 => {
+            Setup::Item(super::rules::item_setup::Setup::Initialize(
+                super::rules::item_setup::Container::Visible,
+                None,
+            ))
+        }
+        addresses::setup::SETUP_ITEM_EE77 => {
+            Setup::Item(super::rules::item_setup::Setup::Initialize(
+                super::rules::item_setup::Container::ShotBlock,
+                Some(super::rules::item_setup::Graphic::EnergyTank),
+            ))
+        }
+        addresses::setup::SETUP_ITEM_EE7C => {
+            Setup::Item(super::rules::item_setup::Setup::Initialize(
+                super::rules::item_setup::Container::ShotBlock,
+                Some(super::rules::item_setup::Graphic::MissileTank),
+            ))
+        }
+        addresses::setup::SETUP_ITEM_EE81 => {
+            Setup::Item(super::rules::item_setup::Setup::Initialize(
+                super::rules::item_setup::Container::ShotBlock,
+                Some(super::rules::item_setup::Graphic::SuperMissileTank),
+            ))
+        }
+        addresses::setup::SETUP_ITEM_EE86 => {
+            Setup::Item(super::rules::item_setup::Setup::Initialize(
+                super::rules::item_setup::Container::ShotBlock,
+                Some(super::rules::item_setup::Graphic::PowerBombTank),
+            ))
+        }
+        addresses::setup::SETUP_ITEM_EE8E => {
+            Setup::Item(super::rules::item_setup::Setup::Initialize(
+                super::rules::item_setup::Container::ShotBlock,
+                None,
+            ))
+        }
+        addresses::setup::ITEM_TRIGGER => Setup::Item(super::rules::item_setup::Setup::Trigger),
+        addresses::setup::SETUP_SCROLL_B33A => Setup::Scroll(
+            super::rules::scroll_setup::Setup::Place(super::rules::scroll_setup::Tile::Extension(
                 super::rules::scroll_setup::Direction::Right,
-            ),
-        )),
-        8696645 => Setup::Scroll(super::rules::scroll_setup::Setup::Place(
-            super::rules::scroll_setup::Tile::Extension(
+            )),
+        ),
+        addresses::setup::SETUP_SCROLL_B345 => Setup::Scroll(
+            super::rules::scroll_setup::Setup::Place(super::rules::scroll_setup::Tile::Extension(
                 super::rules::scroll_setup::Direction::Left,
-            ),
-        )),
-        8696656 => Setup::Scroll(super::rules::scroll_setup::Setup::Place(
-            super::rules::scroll_setup::Tile::Extension(
+            )),
+        ),
+        addresses::setup::SETUP_SCROLL_B350 => Setup::Scroll(
+            super::rules::scroll_setup::Setup::Place(super::rules::scroll_setup::Tile::Extension(
                 super::rules::scroll_setup::Direction::Down,
-            ),
-        )),
-        8696667 => Setup::Scroll(super::rules::scroll_setup::Setup::Place(
-            super::rules::scroll_setup::Tile::Extension(super::rules::scroll_setup::Direction::Up),
-        )),
-        8696689 => Setup::Scroll(super::rules::scroll_setup::Setup::Place(
-            super::rules::scroll_setup::Tile::Scroll(super::rules::scroll_setup::Solidity::Air),
-        )),
-        8696706 => Setup::Scroll(super::rules::scroll_setup::Setup::Place(
-            super::rules::scroll_setup::Tile::Scroll(super::rules::scroll_setup::Solidity::Solid),
-        )),
-        8696723 => Setup::Scroll(super::rules::scroll_setup::Setup::Touch),
-        8696264 => Setup::Station(super::rules::stations::Setup::Access(
-            super::rules::stations::Service::Map,
-            super::rules::stations::Side::Right,
-        )),
-        8696304 => Setup::Station(super::rules::stations::Setup::Access(
-            super::rules::stations::Service::Map,
-            super::rules::stations::Side::Left,
-        )),
-        8696429 => Setup::Station(super::rules::stations::Setup::Access(
-            super::rules::stations::Service::Energy,
-            super::rules::stations::Side::Right,
-        )),
-        8696477 => Setup::Station(super::rules::stations::Setup::Access(
-            super::rules::stations::Service::Energy,
-            super::rules::stations::Side::Left,
-        )),
-        8696528 => Setup::Station(super::rules::stations::Setup::Access(
-            super::rules::stations::Service::Missile,
-            super::rules::stations::Side::Right,
-        )),
-        8696576 => Setup::Station(super::rules::stations::Setup::Access(
-            super::rules::stations::Service::Missile,
-            super::rules::stations::Side::Left,
-        )),
-        8697232 => Setup::Station(super::rules::stations::Setup::SaveTrigger),
-        8697326 => Setup::Station(super::rules::stations::Setup::Save),
-        8696203 => Setup::Station(super::rules::stations::Setup::Place(
-            super::rules::stations::Service::Map,
-        )),
-        8696349 => Setup::Station(super::rules::stations::Setup::Place(
-            super::rules::stations::Service::Energy,
-        )),
-        8696389 => Setup::Station(super::rules::stations::Setup::Place(
-            super::rules::stations::Service::Missile,
-        )),
-        8696811 => Setup::Contact(Contact::Physics(super::rules::contact_physics::Setup::Ice)),
-        8696840 => Setup::Contact(Contact::Physics(
+            )),
+        ),
+        addresses::setup::SETUP_SCROLL_B35B => Setup::Scroll(
+            super::rules::scroll_setup::Setup::Place(super::rules::scroll_setup::Tile::Extension(
+                super::rules::scroll_setup::Direction::Up,
+            )),
+        ),
+        addresses::setup::SETUP_SCROLL_B371 => {
+            Setup::Scroll(super::rules::scroll_setup::Setup::Place(
+                super::rules::scroll_setup::Tile::Scroll(super::rules::scroll_setup::Solidity::Air),
+            ))
+        }
+        addresses::setup::SETUP_SCROLL_B382 => Setup::Scroll(
+            super::rules::scroll_setup::Setup::Place(super::rules::scroll_setup::Tile::Scroll(
+                super::rules::scroll_setup::Solidity::Solid,
+            )),
+        ),
+        addresses::setup::SCROLL_TOUCH => Setup::Scroll(super::rules::scroll_setup::Setup::Touch),
+        addresses::setup::SETUP_STATION_B1C8 => {
+            Setup::Station(super::rules::stations::Setup::Access(
+                super::rules::stations::Service::Map,
+                super::rules::stations::Side::Right,
+            ))
+        }
+        addresses::setup::SETUP_STATION_B1F0 => {
+            Setup::Station(super::rules::stations::Setup::Access(
+                super::rules::stations::Service::Map,
+                super::rules::stations::Side::Left,
+            ))
+        }
+        addresses::setup::SETUP_STATION_B26D => {
+            Setup::Station(super::rules::stations::Setup::Access(
+                super::rules::stations::Service::Energy,
+                super::rules::stations::Side::Right,
+            ))
+        }
+        addresses::setup::SETUP_STATION_B29D => {
+            Setup::Station(super::rules::stations::Setup::Access(
+                super::rules::stations::Service::Energy,
+                super::rules::stations::Side::Left,
+            ))
+        }
+        addresses::setup::SETUP_STATION_B2D0 => {
+            Setup::Station(super::rules::stations::Setup::Access(
+                super::rules::stations::Service::Missile,
+                super::rules::stations::Side::Right,
+            ))
+        }
+        addresses::setup::SETUP_STATION_B300 => {
+            Setup::Station(super::rules::stations::Setup::Access(
+                super::rules::stations::Service::Missile,
+                super::rules::stations::Side::Left,
+            ))
+        }
+        addresses::setup::STATION_SAVE_TRIGGER => {
+            Setup::Station(super::rules::stations::Setup::SaveTrigger)
+        }
+        addresses::setup::STATION_SAVE => Setup::Station(super::rules::stations::Setup::Save),
+        addresses::setup::SETUP_STATION_B18B => Setup::Station(
+            super::rules::stations::Setup::Place(super::rules::stations::Service::Map),
+        ),
+        addresses::setup::SETUP_STATION_B21D => Setup::Station(
+            super::rules::stations::Setup::Place(super::rules::stations::Service::Energy),
+        ),
+        addresses::setup::SETUP_STATION_B245 => Setup::Station(
+            super::rules::stations::Setup::Place(super::rules::stations::Service::Missile),
+        ),
+        addresses::setup::CONTACT_ICE => {
+            Setup::Contact(Contact::Physics(super::rules::contact_physics::Setup::Ice))
+        }
+        addresses::setup::SETUP_CONTACT_B408 => Setup::Contact(Contact::Physics(
             super::rules::contact_physics::Setup::Surface,
         )),
-        8696983 => Setup::Contact(Contact::Physics(
+        addresses::setup::SETUP_CONTACT_B497 => Setup::Contact(Contact::Physics(
             super::rules::contact_physics::Setup::Submerge,
         )),
-        8697000 => Setup::Contact(Contact::Physics(
+        addresses::setup::SETUP_CONTACT_B4A8 => Setup::Contact(Contact::Physics(
             super::rules::contact_physics::Setup::SlowFall,
         )),
-        8697014 => Setup::Contact(Contact::Physics(
+        addresses::setup::SETUP_CONTACT_B4B6 => Setup::Contact(Contact::Physics(
             super::rules::contact_physics::Setup::FastFall,
         )),
-        8697153 => Setup::Contact(Contact::Physics(
+        addresses::setup::SETUP_CONTACT_B541 => Setup::Contact(Contact::Physics(
             super::rules::contact_physics::Setup::StopVertical,
         )),
-        8697028 => Setup::Contact(Contact::Physics(
+        addresses::setup::SETUP_CONTACT_B4C4 => Setup::Contact(Contact::Physics(
             super::rules::contact_physics::Setup::CollisionSurface,
         )),
-        8704399 => Setup::Contact(Contact::Hand(super::rules::hands::Hand::LowerNorfair)),
-        8705568 => Setup::Contact(Contact::Hand(super::rules::hands::Hand::WreckedShip)),
-        8697336 => Setup::Door(super::rules::doors::Setup::MotherBrainEscape),
-        8698353 => Setup::Door(super::rules::doors::Setup::CeresEscape),
-        8701844 => Setup::Door(super::rules::doors::Setup::Grey),
-        8701883 => Setup::Door(super::rules::doors::Setup::Blue),
-        8701873 => Setup::Door(super::rules::doors::Setup::Colored),
-        8701922 => Setup::Door(super::rules::doors::Setup::ShotSignal),
-        8701261 => Setup::Gate(super::rules::gates::Setup::Trigger(
+        addresses::setup::CONTACT_HANDS_LOWER_NORFAIR => {
+            Setup::Contact(Contact::Hand(super::rules::hands::Hand::LowerNorfair))
+        }
+        addresses::setup::CONTACT_HANDS_WRECKED_SHIP => {
+            Setup::Contact(Contact::Hand(super::rules::hands::Hand::WreckedShip))
+        }
+        addresses::setup::DOOR_MOTHER_BRAIN_ESCAPE => {
+            Setup::Door(super::rules::doors::Setup::MotherBrainEscape)
+        }
+        addresses::setup::DOOR_CERES_ESCAPE => Setup::Door(super::rules::doors::Setup::CeresEscape),
+        addresses::setup::DOOR_GREY => Setup::Door(super::rules::doors::Setup::Grey),
+        addresses::setup::DOOR_BLUE => Setup::Door(super::rules::doors::Setup::Blue),
+        addresses::setup::DOOR_COLORED => Setup::Door(super::rules::doors::Setup::Colored),
+        addresses::setup::DOOR_SHOT_SIGNAL => Setup::Door(super::rules::doors::Setup::ShotSignal),
+        addresses::setup::SETUP_GATE_C54D => Setup::Gate(super::rules::gates::Setup::Trigger(
             Side::Left,
             Color::Green,
         )),
-        8701292 => Setup::Gate(super::rules::gates::Setup::Trigger(
+        addresses::setup::SETUP_GATE_C56C => Setup::Gate(super::rules::gates::Setup::Trigger(
             Side::Right,
             Color::Green,
         )),
-        8701323 => Setup::Gate(super::rules::gates::Setup::Trigger(Side::Left, Color::Red)),
-        8701359 => Setup::Gate(super::rules::gates::Setup::Trigger(Side::Right, Color::Red)),
-        8701395 => Setup::Gate(super::rules::gates::Setup::Trigger(
+        addresses::setup::GATE_TRIGGER_LEFT_RED => {
+            Setup::Gate(super::rules::gates::Setup::Trigger(Side::Left, Color::Red))
+        }
+        addresses::setup::GATE_TRIGGER_RIGHT_RED => {
+            Setup::Gate(super::rules::gates::Setup::Trigger(Side::Right, Color::Red))
+        }
+        addresses::setup::SETUP_GATE_C5D3 => Setup::Gate(super::rules::gates::Setup::Trigger(
             Side::Left,
             Color::Yellow,
         )),
-        8701425 => Setup::Gate(super::rules::gates::Setup::Trigger(
+        addresses::setup::SETUP_GATE_C5F1 => Setup::Gate(super::rules::gates::Setup::Trigger(
             Side::Right,
             Color::Yellow,
         )),
-        8701456 => Setup::Gate(super::rules::gates::Setup::Trigger(Side::Left, Color::Blue)),
-        8701479 => Setup::Gate(super::rules::gates::Setup::Trigger(
+        addresses::setup::GATE_TRIGGER_LEFT_BLUE => {
+            Setup::Gate(super::rules::gates::Setup::Trigger(Side::Left, Color::Blue))
+        }
+        addresses::setup::SETUP_GATE_C627 => Setup::Gate(super::rules::gates::Setup::Trigger(
             Side::Right,
             Color::Blue,
         )),
-        8701630 => Setup::Gate(super::rules::gates::Setup::Placement(Direction::Down, true)),
-        8701643 => Setup::Gate(super::rules::gates::Setup::Placement(Direction::Up, true)),
-        8701656 => Setup::Gate(super::rules::gates::Setup::Placement(
+        addresses::setup::GATE_PLACEMENT_DOWN_SOLID => {
+            Setup::Gate(super::rules::gates::Setup::Placement(Direction::Down, true))
+        }
+        addresses::setup::GATE_PLACEMENT_UP_SOLID => {
+            Setup::Gate(super::rules::gates::Setup::Placement(Direction::Up, true))
+        }
+        addresses::setup::SETUP_GATE_C6D8 => Setup::Gate(super::rules::gates::Setup::Placement(
             Direction::Down,
             false,
         )),
-        8701660 => Setup::Gate(super::rules::gates::Setup::Placement(Direction::Up, false)),
-        8701664 => Setup::Gate(super::rules::gates::Setup::Shootblock(Direction::Down)),
-        8701754 => Setup::Gate(super::rules::gates::Setup::Shootblock(Direction::Up)),
-        8703426 => Setup::Terrain(super::rules::terrain_setup::Setup::ScrewAttack),
-        8703466 => Setup::Terrain(super::rules::terrain_setup::Setup::SpeedBoost),
-        8703543 => Setup::Terrain(super::rules::terrain_setup::Setup::Crumble),
-        8703595 => Setup::Terrain(super::rules::terrain_setup::Setup::Shot),
-        8703619 => Setup::Terrain(super::rules::terrain_setup::Setup::BombContact),
-        8703706 => Setup::Terrain(super::rules::terrain_setup::Setup::BombShot),
-        8703790 => Setup::Terrain(super::rules::terrain_setup::Setup::PowerBombShot),
-        8703847 => Setup::Terrain(super::rules::terrain_setup::Setup::SuperMissileShot),
-        8703904 => Setup::Terrain(super::rules::terrain_setup::Setup::PowerBombTrigger),
-        8698232 => Setup::Terrain(super::rules::terrain_setup::Setup::CrittersEscape),
-        8703925 => Setup::Terrain(super::rules::terrain_setup::Setup::Grapple),
-        8696769 => Setup::Terrain(super::rules::terrain_setup::Setup::Deactivate),
-        8696788 => Setup::Terrain(super::rules::terrain_setup::Setup::EnemyBreakable),
-        8707732 => Setup::Cannon(super::rules::cannon_setup::Setup::Right),
-        8707769 => Setup::Cannon(super::rules::cannon_setup::Setup::DiagonalRight),
-        8707824 => Setup::Cannon(super::rules::cannon_setup::Setup::Left),
-        8707861 => Setup::Cannon(super::rules::cannon_setup::Setup::DiagonalLeft),
-        8707916 => Setup::Cannon(super::rules::cannon_setup::Setup::Unshielded),
-        8696028 => Setup::Plant(super::rules::plants::Surface::Floor),
-        8696083 => Setup::Plant(super::rules::plants::Surface::Ceiling),
-        8697795 => Setup::SoundDelay,
-        8698012 => Setup::BoosterEscape,
-        8705663 => Setup::TubeTerrain(super::rules::noob_tube::Setup::Air),
-        8705673 => Setup::TubeTerrain(super::rules::noob_tube::Setup::Solid),
-        8705683 => Setup::TubeTerrain(super::rules::noob_tube::Setup::FourBlocks),
-        8705740 => Setup::NoobTube,
-        8705542 => Setup::TorizoStatue,
-        8705526 => Setup::MotherBrainGlass,
-        8694568 => Setup::CrumblingWall,
-        8695882 => Setup::Treadmill,
-        8703957 => Setup::PeriodicDamage,
-        8704264 => Setup::Terrain(super::rules::terrain_setup::Setup::Blank),
-        8704279 => Setup::Terrain(super::rules::terrain_setup::Setup::ShotBlock),
-        8704299 => Setup::Terrain(super::rules::terrain_setup::Setup::GrappleBlock),
-        8705558 => Setup::HandTrigger,
-        8698076 => Setup::Shaktool,
-        8697169 => Setup::TourianWall(super::rules::tourian_wall::Setup::Open),
-        8697199 => Setup::TourianWall(super::rules::tourian_wall::Setup::Close),
-        8698309 => Setup::AnimalRescue(super::rules::animal_rescue::Setup::RescueWall),
-        8698633 => Setup::AnimalRescue(super::rules::animal_rescue::Setup::MainStreetPassage),
-        8706846 => Setup::MetroidQuota,
-        8706700 => Setup::EyeDoor(super::rules::eye_door::Part::Eye),
-        8706745 => Setup::EyeDoor(super::rules::eye_door::Part::Body),
-        8694567 | 8696783 | 8698095 | 8698618 | 8705782 | 8705783 | 8704398 | 8696784 | 8697167
-        | 8698220 => Setup::Return(0),
-        8696786 | 8703953 => Setup::Return(1),
-        8703949 => Setup::Return(0x41),
-        8696803 => Setup::Diagnostic(Diagnostic::UnsupportedB3E3),
+        addresses::setup::GATE_PLACEMENT_UP_OPEN => {
+            Setup::Gate(super::rules::gates::Setup::Placement(Direction::Up, false))
+        }
+        addresses::setup::GATE_SHOOTBLOCK_DOWN => {
+            Setup::Gate(super::rules::gates::Setup::Shootblock(Direction::Down))
+        }
+        addresses::setup::GATE_SHOOTBLOCK_UP => {
+            Setup::Gate(super::rules::gates::Setup::Shootblock(Direction::Up))
+        }
+        addresses::setup::TERRAIN_SCREW_ATTACK => {
+            Setup::Terrain(super::rules::terrain_setup::Setup::ScrewAttack)
+        }
+        addresses::setup::TERRAIN_SPEED_BOOST => {
+            Setup::Terrain(super::rules::terrain_setup::Setup::SpeedBoost)
+        }
+        addresses::setup::TERRAIN_CRUMBLE => {
+            Setup::Terrain(super::rules::terrain_setup::Setup::Crumble)
+        }
+        addresses::setup::TERRAIN_SHOT => Setup::Terrain(super::rules::terrain_setup::Setup::Shot),
+        addresses::setup::TERRAIN_BOMB_CONTACT => {
+            Setup::Terrain(super::rules::terrain_setup::Setup::BombContact)
+        }
+        addresses::setup::TERRAIN_BOMB_SHOT => {
+            Setup::Terrain(super::rules::terrain_setup::Setup::BombShot)
+        }
+        addresses::setup::TERRAIN_POWER_BOMB_SHOT => {
+            Setup::Terrain(super::rules::terrain_setup::Setup::PowerBombShot)
+        }
+        addresses::setup::TERRAIN_SUPER_MISSILE_SHOT => {
+            Setup::Terrain(super::rules::terrain_setup::Setup::SuperMissileShot)
+        }
+        addresses::setup::TERRAIN_POWER_BOMB_TRIGGER => {
+            Setup::Terrain(super::rules::terrain_setup::Setup::PowerBombTrigger)
+        }
+        addresses::setup::TERRAIN_CRITTERS_ESCAPE => {
+            Setup::Terrain(super::rules::terrain_setup::Setup::CrittersEscape)
+        }
+        addresses::setup::TERRAIN_GRAPPLE => {
+            Setup::Terrain(super::rules::terrain_setup::Setup::Grapple)
+        }
+        addresses::setup::TERRAIN_DEACTIVATE => {
+            Setup::Terrain(super::rules::terrain_setup::Setup::Deactivate)
+        }
+        addresses::setup::TERRAIN_ENEMY_BREAKABLE => {
+            Setup::Terrain(super::rules::terrain_setup::Setup::EnemyBreakable)
+        }
+        addresses::setup::CANNON_RIGHT => Setup::Cannon(super::rules::cannon_setup::Setup::Right),
+        addresses::setup::CANNON_DIAGONAL_RIGHT => {
+            Setup::Cannon(super::rules::cannon_setup::Setup::DiagonalRight)
+        }
+        addresses::setup::CANNON_LEFT => Setup::Cannon(super::rules::cannon_setup::Setup::Left),
+        addresses::setup::CANNON_DIAGONAL_LEFT => {
+            Setup::Cannon(super::rules::cannon_setup::Setup::DiagonalLeft)
+        }
+        addresses::setup::CANNON_UNSHIELDED => {
+            Setup::Cannon(super::rules::cannon_setup::Setup::Unshielded)
+        }
+        addresses::setup::PLANT_PLANTS_FLOOR => Setup::Plant(super::rules::plants::Surface::Floor),
+        addresses::setup::PLANT_PLANTS_CEILING => {
+            Setup::Plant(super::rules::plants::Surface::Ceiling)
+        }
+        addresses::setup::SOUND_DELAY => Setup::SoundDelay,
+        addresses::setup::BOOSTER_ESCAPE => Setup::BoosterEscape,
+        addresses::setup::TUBE_TERRAIN_AIR => {
+            Setup::TubeTerrain(super::rules::noob_tube::Setup::Air)
+        }
+        addresses::setup::TUBE_TERRAIN_SOLID => {
+            Setup::TubeTerrain(super::rules::noob_tube::Setup::Solid)
+        }
+        addresses::setup::TUBE_TERRAIN_FOUR_BLOCKS => {
+            Setup::TubeTerrain(super::rules::noob_tube::Setup::FourBlocks)
+        }
+        addresses::setup::NOOB_TUBE => Setup::NoobTube,
+        addresses::setup::TORIZO_STATUE => Setup::TorizoStatue,
+        addresses::setup::MOTHER_BRAIN_GLASS => Setup::MotherBrainGlass,
+        addresses::setup::CRUMBLING_WALL => Setup::CrumblingWall,
+        addresses::setup::TREADMILL => Setup::Treadmill,
+        addresses::setup::PERIODIC_DAMAGE => Setup::PeriodicDamage,
+        addresses::setup::TERRAIN_BLANK => {
+            Setup::Terrain(super::rules::terrain_setup::Setup::Blank)
+        }
+        addresses::setup::TERRAIN_SHOT_BLOCK => {
+            Setup::Terrain(super::rules::terrain_setup::Setup::ShotBlock)
+        }
+        addresses::setup::TERRAIN_GRAPPLE_BLOCK => {
+            Setup::Terrain(super::rules::terrain_setup::Setup::GrappleBlock)
+        }
+        addresses::setup::HAND_TRIGGER => Setup::HandTrigger,
+        addresses::setup::SHAKTOOL => Setup::Shaktool,
+        addresses::setup::TOURIAN_WALL_OPEN => {
+            Setup::TourianWall(super::rules::tourian_wall::Setup::Open)
+        }
+        addresses::setup::TOURIAN_WALL_CLOSE => {
+            Setup::TourianWall(super::rules::tourian_wall::Setup::Close)
+        }
+        addresses::setup::ANIMAL_RESCUE_RESCUE_WALL => {
+            Setup::AnimalRescue(super::rules::animal_rescue::Setup::RescueWall)
+        }
+        addresses::setup::ANIMAL_RESCUE_MAIN_STREET_PASSAGE => {
+            Setup::AnimalRescue(super::rules::animal_rescue::Setup::MainStreetPassage)
+        }
+        addresses::setup::METROID_QUOTA => Setup::MetroidQuota,
+        addresses::setup::EYE_DOOR_EYE_DOOR_EYE => {
+            Setup::EyeDoor(super::rules::eye_door::Part::Eye)
+        }
+        addresses::setup::EYE_DOOR_EYE_DOOR_BODY => {
+            Setup::EyeDoor(super::rules::eye_door::Part::Body)
+        }
+        addresses::setup::CLEAR_BOTWOON_WALL
+        | addresses::setup::RETURN_0_B3CF
+        | addresses::setup::MARIDIA_ELEVATUBE
+        | addresses::setup::WRECKED_SHIP_ATTIC
+        | addresses::setup::WRECKED_SHIP_CHOZO_SLOPE_ACCESS
+        | addresses::setup::RETURN_0_D6F7
+        | addresses::setup::LOWER_NORFAIR_CHOZO_HAND
+        | addresses::setup::RETURN_0_B3D0
+        | addresses::setup::MARIDIA_SAND_FALLS
+        | addresses::setup::GATE_BLOCK => Setup::Return(0),
+        addresses::setup::RETURN_1_B3D2 | addresses::setup::RETURN_1_CFD1 => Setup::Return(1),
+        addresses::setup::RETURN_0_X41 => Setup::Return(0x41),
+        addresses::setup::DIAGNOSTIC_UNSUPPORTED_B3_E3 => {
+            Setup::Diagnostic(Diagnostic::UnsupportedB3E3)
+        }
         a => Setup::External(a),
     };
     Decoded { original, action }

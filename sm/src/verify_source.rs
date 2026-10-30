@@ -1834,6 +1834,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/room_mechanisms/access.rs"),
     ),
     (
+        "crates/sm_game/src/room_mechanisms/addresses.rs",
+        include_bytes!("../../crates/sm_game/src/room_mechanisms/addresses.rs"),
+    ),
+    (
         "crates/sm_game/src/room_mechanisms/commands.rs",
         include_bytes!("../../crates/sm_game/src/room_mechanisms/commands.rs"),
     ),
