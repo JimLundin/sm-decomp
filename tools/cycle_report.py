@@ -31,6 +31,32 @@ COUPLINGS = {
     "audio backend calls (sites)": (re.compile(r"native_audio::(write_sound_port|upload_bank)\b"), "sites"),
 }
 
+# Rewrite progress: compat RAM and register access still inside sm_game. Moved
+# code that reads the emulator's RAM image is relocated, not yet owned state.
+RAM_COUPLINGS = {
+    "named RAM words (word!/checked_word!/ram_word!)": re.compile(r"\b(?:ram_)?(?:checked_)?word!\s*[({]"),
+    "raw enemy slots (slot!)": re.compile(r"\bslot!\s*[({]"),
+    "word transfers (word_transfers!)": re.compile(r"\bword_transfers!"),
+    "register writes (register_writes!/write_register)": re.compile(r"\bregister_writes!|\bwrite_register(?:_word)?\("),
+    "raw RAM hosts (RawRam/compatibility_byte)": re.compile(r"\bRawRam\b|\bcompatibility_(?:write_)?byte\b"),
+}
+
+
+def sm_game_ram_couplings():
+    counts, files = {}, {}
+    sources = {}
+    for root, _, names in os.walk(os.path.join("crates", "sm_game", "src")):
+        for name in names:
+            if name.endswith(".rs"):
+                with open(os.path.join(root, name), encoding="utf-8", errors="replace") as source:
+                    sources[os.path.join(root, name)] = source.read()
+    for label, pattern in RAM_COUPLINGS.items():
+        hits = {path: len(pattern.findall(text)) for path, text in sources.items()}
+        counts[label] = sum(hits.values())
+        files[label] = sum(1 for n in hits.values() if n)
+    coupled = sum(1 for text in sources.values() if any(p.search(text) for p in RAM_COUPLINGS.values()))
+    return {"files": len(sources), "coupled_files": coupled, "sites": counts, "site_files": files}
+
 
 def verification(rel):
     return (rel.startswith(("verification/", "verify/", "bin/"))
@@ -158,6 +184,7 @@ def main():
         "legacy_bank_lines": sum(lines[r] for r in legacy),
         "game_unsafe_sites": sum(len(re.findall(r"\bunsafe\s*(?:fn|\{|impl)", files[r])) for r in game),
         "couplings": coupling,
+        "sm_game_ram": sm_game_ram_couplings(),
         "outside_cycle": free,
     }
     if "--json" in sys.argv:
@@ -171,6 +198,10 @@ def main():
     print(f"unsafe fns/blocks/impls in game/: {report['game_unsafe_sites']}")
     for name, value in coupling.items():
         print(f"  {name}: {value}")
+    ram = report["sm_game_ram"]
+    print(f"sm_game files still on compat RAM/registers: {ram['coupled_files']} of {ram['files']}")
+    for name, value in ram["sites"].items():
+        print(f"  {name}: {value} sites in {ram['site_files'][name]} files")
 
 
 if __name__ == "__main__":
