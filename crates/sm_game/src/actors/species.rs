@@ -14,8 +14,9 @@ use crate::actors::{
     ceres_doors, coven, crawlers, crocomire_reactions, dachora_run, draygon_death, draygon_eye,
     draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, etecoon,
     fire_arc, fireflea, fune, kago, kraid, magdollite, mini_kraid, mochtroid, morph_ball_eye,
-    norfair_pipe_bug, phantoon, phantoon_actions, reflec, roach, shaktool, skree, skultera,
-    space_pirates, statues, torizo, tripper, yapping_maw, yellow_pipe_bug, zebetites, zoa,
+    norfair_pipe_bug, phantoon, phantoon_actions, reflec, roach, shaktool, sidehopper, skree,
+    skultera, space_pirates, statues, torizo, tripper, yapping_maw, yellow_pipe_bug, zebetites,
+    zoa,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -530,6 +531,8 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10738643 => reflec::initialize(game),
         10723661 => roach::initialize(game),
         10724048 => roach::main_ai(game),
+        10726153 => sidehopper::initialize(game),
+        10726351 => sidehopper::main_ai(game),
         10728522 => zoa::initialize(game),
         10728572 => zoa::main_ai(game),
         10733230 => skree::initialize(skree::Kind::Skree, game),
@@ -735,6 +738,8 @@ pub fn instruction<H: InstructionHost>(
         10717526 | 10733220 => skree::set_attack_ready(j, game),
         10722411 | 10722433 => tripper::set_x_movement(false, j, game),
         10722422 | 10722444 => tripper::set_x_movement(true, j, game),
+        10725992 => sidehopper::queue_sound(j, game),
+        10726142 => sidehopper::ready_to_hop(j, game),
         10728489 => zoa::set_x_speed_index(4, j, game),
         10728500 => zoa::set_x_speed_index(8, j, game),
         10728511 => zoa::set_x_speed_index(12, j, game),

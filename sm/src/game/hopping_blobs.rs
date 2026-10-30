@@ -18,19 +18,6 @@ fn rom_bytes<const N: usize>(runtime: &Runtime<'_>, address: u32, offset: usize)
 fn rom_word(runtime: &Runtime<'_>, address: u32, offset: u16) -> u16 {
     u16::from_ne_bytes(rom_bytes(runtime, address, usize::from(offset)))
 }
-// Shared by Beetom and Sidehopper. The table uses odd, native word reads
-// at a widened phase offset; it is not a wrapping bank-address calculation.
-pub(crate) fn initial_hop_phase(height: u16, step: u16, image: crate::rom::RomImage) -> u16 {
-    let (mut phase, mut distance) = (0u16, 0u16);
-    loop {
-        phase = phase.wrapping_add(step);
-        let at = crate::rom::lorom_offset(0xa2838f) as usize + 8 * usize::from(phase) + 1;
-        distance = distance.wrapping_add(u16::from_ne_bytes([image.read(at), image.read(at + 1)]));
-        if distance.wrapping_sub(height) & 0x8000 == 0 {
-            return phase;
-        }
-    }
-}
 fn animate(runtime: &mut Runtime<'_>, instruction: u16) {
     let (key, _) = selected(runtime);
     runtime.edit_actor(key, Native, |actor| {

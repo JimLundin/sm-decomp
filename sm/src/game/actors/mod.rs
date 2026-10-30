@@ -22,7 +22,6 @@ pub(crate) mod movement_verification;
 #[path = "../../verification/actor_population_animation_entry.rs"]
 pub(crate) mod reference_population_animation;
 pub(crate) mod shaktool;
-pub(in crate::game) mod sidehopper;
 pub(in crate::game) mod skultera;
 pub(crate) mod torizo;
 

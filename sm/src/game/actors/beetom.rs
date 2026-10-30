@@ -2,11 +2,11 @@
 //! Extended animation and jump words remain native, RAM-authoritative storage.
 #![forbid(unsafe_code)]
 use crate::game::actors::{api, combat};
-use crate::game::hopping_blobs::initial_hop_phase;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::words;
 use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
+use sm_game::actors::sidehopper::initial_hop_phase;
 use sm_game::enemy_projectiles::host::Effects;
 
 const ANIMATION: usize = 0;

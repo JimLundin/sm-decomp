@@ -177,6 +177,7 @@ pub mod actors {
     pub mod scheduling;
     pub mod session_slots;
     pub mod shaktool;
+    pub mod sidehopper;
     pub mod skree;
     pub mod skultera;
     pub mod snapshot;

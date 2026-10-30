@@ -1,5 +1,5 @@
 //! One aggregate authority for player, projectiles, mechanisms and their room.
-use crate::game::actors::{bang, maridia_snail, metroid, reflec, sidehopper};
+use crate::game::actors::{bang, maridia_snail, metroid, reflec};
 use crate::game::enemy_speeds::SpeedTable;
 use crate::{
     game_state::Game,
@@ -1177,7 +1177,6 @@ crate::game::callback_dispatch! {
         10742351 => metroid::initialize; 10742502 => metroid::frozen;
         10742579 => metroid::hurt; 10742680 => metroid::advance;
         10743275 => metroid::touch; 10743559 => metroid::shot;
-        10726153 => sidehopper::initialize; 10726351 => sidehopper::advance;
         10743874 => metroid::power_bomb;
 
 
@@ -1477,7 +1476,6 @@ crate::game::callback_dispatch! {
         10651845 => [j];
         11044751 | 11044763 | 11044790 | 11044811 => [crate::game::actors::evir::instruction(ea, j, game)];
         10716899 => crate::game::waver::Waver_Instr_1;
-        10725992 => [sidehopper::instruction(true, j, game)]; 10726142 => [sidehopper::instruction(false, j, game)];
         10734646 => [maridia_snail::instruction(k, 0, j, game)];
         10734655 => [maridia_snail::instruction(k, 1, j, game)];
         10734664 => [maridia_snail::instruction(k, 2, j, game)];
