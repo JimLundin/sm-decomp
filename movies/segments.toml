@@ -1186,3 +1186,18 @@ input_sha256 = "0d92ae6888f4a47a6ece72977903d19e0353ed9f7c2d327be1d305259d6e6a3c
 start_frame = 0
 frames = 2650
 expect = ["room:DA60"]
+
+# The boss-draygon words to 1,480, then the long-release recipe: with the
+# gravity suit Samus outlasts the rising spiral, and Draygon starts the final
+# tail whips before she dies.
+[[segment]]
+id = "boss-draygon-final-whips"
+pending = "awaiting the seeds-v1-final-whips-6295d2432aa88773 ci-data upload"
+seed = "100-boundary:259"
+seed_sha256 = "d8a5b0b9a72ca9d31ab86d21c2ef931303f3a6b48459b057a8db309fe89723d7"
+inputs = "authored-draygon-final-whips.inputs"
+input_sha256 = "5719e698dd89cfa9d33fc19165f4e9449d2614ee86dccafc434022970aad6d29"
+start_frame = 0
+frames = 4480
+expect = ["room:DA60", "death"]
+require_hit = ["draygon_grab.final_tail_whips"]

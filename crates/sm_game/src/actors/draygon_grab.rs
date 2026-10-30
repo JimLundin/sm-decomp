@@ -150,6 +150,7 @@ pub fn chase_samus<L: Lease>(game: &mut L) {
 }
 /// Draygon body function - repelled by grapple ($A5:8F10). Was `cancel_grapple`.
 pub fn repelled_by_grapple<S: BossState>(game: &mut S) {
+    crate::probe::hit("draygon_grab.repelled_by_grapple");
     word!(game.GRAPPLE_BEAM_FUNCTION = GRAPPLE_DROPPED);
     session_slot!(
         game,
@@ -274,6 +275,7 @@ pub fn tail_whip<S: BossState>(k: u16, game: &mut S) {
 /// Draygon body function - grabbed Samus - final tail whips - start ($A5:9105).
 /// Was `start_release`.
 pub fn final_tail_whips<S: BossState>(k: u16, game: &mut S) {
+    crate::probe::hit("draygon_grab.final_tail_whips");
     move_samus_with_draygon(k, game);
     facing_animation(
         k as i32,
@@ -305,6 +307,7 @@ pub fn move_samus_with_draygon<S: BossState>(k: u16, game: &mut S) {
 /// Draygon body function - flail tail and fly straight up ($A5:9128). Was
 /// `release`.
 pub fn flail_tail_and_fly_straight_up<L: Lease>(game: &mut L) {
+    crate::probe::hit("draygon_grab.flail_tail_and_fly_straight_up");
     game.foreign(|game| game.release_samus());
     word!(game.SAMUS_GRAPPLE_FLAGS = 0);
     session_slot!(game, Draygon[BODY].function = function::FLY_STRAIGHT_UP);

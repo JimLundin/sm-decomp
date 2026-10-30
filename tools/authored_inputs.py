@@ -78,8 +78,14 @@ VOLCANO_ROOM = [*[("Right", 10), ("Right+A", 20)] * 8, ("", 600)]
 # low% Draygon fight, Samus then stays caught instead of grappling a turret.
 RELEASE = [("", 1600)]
 
+# The same from the 100% Draygon fight (seed 100-boundary:259) after 1,480
+# movie words: with the gravity suit Samus outlasts the spiral, and Draygon
+# reaches the final tail whips.
+LONG_RELEASE = [("", 3000)]
+
 RECIPES = {"pause-menu-tour": PAUSE_MENU_TOUR, "options-tour": OPTIONS_TOUR,
-           "volcano-room": VOLCANO_ROOM, "release": RELEASE}
+           "volcano-room": VOLCANO_ROOM, "release": RELEASE,
+           "long-release": LONG_RELEASE}
 
 
 def words(steps):
