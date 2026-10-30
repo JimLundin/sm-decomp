@@ -3,6 +3,9 @@ name: Corpus coverage
 # Runs movies/segments.toml rows with an LLVM-instrumented verifier DLL and
 # reports which engine sources (crates/sm_game, sm/src/game) the corpus never
 # executes. Manual only; landings use the uninstrumented corpus replay.
+# With full_route, the 100% route chunks also run instrumented (from the
+# boundary checkpoints full-route.yml cached for the same sources) and the
+# report lists what the route executes that the corpus never does.
 # The ROM comes from repository secrets; ROM-derived files (inputs, checkpoints)
 # stay private; the seed release asset is encrypted with a ROM-derived key.
 on:
@@ -12,6 +15,10 @@ on:
         description: Space-separated row ids (empty = full corpus / review waypoint)
         required: false
         default: ''
+      full_route:
+        description: Also replay the full 100% route instrumented and compare
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -243,8 +250,123 @@ jobs:
           retention-days: 2
           if-no-files-found: warn
 
+  route-plan:
+    if: inputs.full_route
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: plan
+        run: python3 .github/scripts/full_route.py plan
+
+  route-chunks:
+    needs: [route-plan, build]
+    runs-on: windows-2022
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix: ${{ fromJson(needs.route-plan.outputs.matrix) }}
+    name: route-${{ matrix.name }}
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/download-artifact@v4
+        with:
+          name: verifier
+          path: verifier
+      - name: Place the verifier
+        run: |
+          New-Item -ItemType Directory -Force -Path target/verify-dll | Out-Null
+          Copy-Item verifier/sm_verify.dll target/verify-dll/
+          "LIBRARY_PATH=$((Resolve-Path verifier/sdk/lib).Path)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Cache the pinned 100% movie
+        uses: actions/cache@v4
+        with:
+          path: movies/super-metroid-100-4010.lsmv
+          key: ${{ runner.os }}-movie-100-4010
+      - name: Prepare the ROM and the 100% inputs
+        env:
+          ROM_00: ${{ secrets.SM_ROM_00 }}
+          ROM_01: ${{ secrets.SM_ROM_01 }}
+          ROM_02: ${{ secrets.SM_ROM_02 }}
+          ROM_03: ${{ secrets.SM_ROM_03 }}
+          ROM_04: ${{ secrets.SM_ROM_04 }}
+          ROM_05: ${{ secrets.SM_ROM_05 }}
+          ROM_06: ${{ secrets.SM_ROM_06 }}
+          ROM_07: ${{ secrets.SM_ROM_07 }}
+          ROM_08: ${{ secrets.SM_ROM_08 }}
+          ROM_09: ${{ secrets.SM_ROM_09 }}
+          ROM_10: ${{ secrets.SM_ROM_10 }}
+          ROM_11: ${{ secrets.SM_ROM_11 }}
+          ROM_12: ${{ secrets.SM_ROM_12 }}
+          ROM_13: ${{ secrets.SM_ROM_13 }}
+          ROM_14: ${{ secrets.SM_ROM_14 }}
+          ROM_15: ${{ secrets.SM_ROM_15 }}
+          ROM_16: ${{ secrets.SM_ROM_16 }}
+          ROM_17: ${{ secrets.SM_ROM_17 }}
+          ROM_18: ${{ secrets.SM_ROM_18 }}
+          ROM_19: ${{ secrets.SM_ROM_19 }}
+          ROM_20: ${{ secrets.SM_ROM_20 }}
+          ROM_21: ${{ secrets.SM_ROM_21 }}
+          ROM_22: ${{ secrets.SM_ROM_22 }}
+          ROM_23: ${{ secrets.SM_ROM_23 }}
+          ROM_24: ${{ secrets.SM_ROM_24 }}
+          ROM_25: ${{ secrets.SM_ROM_25 }}
+          ROM_26: ${{ secrets.SM_ROM_26 }}
+          ROM_27: ${{ secrets.SM_ROM_27 }}
+          ROM_28: ${{ secrets.SM_ROM_28 }}
+          ROM_29: ${{ secrets.SM_ROM_29 }}
+          ROM_30: ${{ secrets.SM_ROM_30 }}
+          ROM_31: ${{ secrets.SM_ROM_31 }}
+          ROM_32: ${{ secrets.SM_ROM_32 }}
+          ROM_33: ${{ secrets.SM_ROM_33 }}
+          ROM_34: ${{ secrets.SM_ROM_34 }}
+          ROM_35: ${{ secrets.SM_ROM_35 }}
+          ROM_36: ${{ secrets.SM_ROM_36 }}
+          ROM_37: ${{ secrets.SM_ROM_37 }}
+          ROM_38: ${{ secrets.SM_ROM_38 }}
+          ROM_39: ${{ secrets.SM_ROM_39 }}
+          ROM_40: ${{ secrets.SM_ROM_40 }}
+          ROM_41: ${{ secrets.SM_ROM_41 }}
+          ROM_42: ${{ secrets.SM_ROM_42 }}
+          ROM_43: ${{ secrets.SM_ROM_43 }}
+          ROM_44: ${{ secrets.SM_ROM_44 }}
+        run: |
+          python -B .github/scripts/full_route.py prepare
+          if ($LASTEXITCODE -ne 0) { throw 'Input preparation failed' }
+      - name: Restore the boundary checkpoints
+        uses: actions/cache/restore@v4
+        with:
+          path: target/full-route
+          key: ${{ runner.os }}-full-route-${{ hashFiles('sm/src/verify/checkpoint.rs', 'sm/src/verify/seed.rs', 'sm/src/**/*.rs', 'crates/**/*.rs') }}
+          fail-on-cache-miss: true
+      - name: Replay the chunk in lockstep
+        timeout-minutes: 140
+        env:
+          LLVM_PROFILE_FILE: ${{ github.workspace }}/profiles/%p-%m.profraw
+        run: |
+          python -B .github/scripts/full_route.py chunk ${{ matrix.index }} target/full-route 2>&1 | Tee-Object -FilePath chunk.log
+          $code = $LASTEXITCODE
+          "### ${{ matrix.name }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          Select-String -Path chunk.log -Pattern '^(chunk|Verified|FAIL|Progress)' | Select-Object -Last 3 | ForEach-Object { $_.Line } | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          if ($code -ne 0) { throw "Chunk failed ($code)" }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: route-profiles-${{ strategy.job-index }}
+          path: profiles
+          retention-days: 2
+          if-no-files-found: warn
+
   report:
-    needs: [build, segments]
+    needs: [build, segments, route-chunks]
     if: always() && needs.build.result == 'success'
     runs-on: windows-2022
     timeout-minutes: 60
@@ -265,6 +387,12 @@ jobs:
           pattern: profiles-*
           path: profiles
           merge-multiple: true
+      - uses: actions/download-artifact@v4
+        if: inputs.full_route
+        with:
+          pattern: route-profiles-*
+          path: route-profiles
+          merge-multiple: true
       - name: Install the LLVM tools matching the build compiler
         env:
           RUST_VERSION: ${{ needs.build.outputs.rust }}
@@ -282,7 +410,16 @@ jobs:
           $raw | Out-File -FilePath profiles.txt -Encoding ascii
           & (Join-Path $env:LLVM_BIN 'llvm-profdata.exe') merge -sparse -f profiles.txt -o corpus.profdata
           if ($LASTEXITCODE -ne 0) { throw 'Profile merge failed' }
-          python -B tools/coverage_summary.py (Join-Path $env:LLVM_BIN 'llvm-cov.exe') corpus.profdata verifier/sm_verify.dll coverage.md
+          $compare = @()
+          $route = @(Get-ChildItem -Recurse -Filter *.profraw route-profiles -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName })
+          if ($route.Count -gt 0) {
+            "Merging $($route.Count) full-route profiles"
+            $route | Out-File -FilePath route-profiles.txt -Encoding ascii
+            & (Join-Path $env:LLVM_BIN 'llvm-profdata.exe') merge -sparse -f route-profiles.txt -o route.profdata
+            if ($LASTEXITCODE -ne 0) { throw 'Route profile merge failed' }
+            $compare = @('route.profdata')
+          }
+          python -B tools/coverage_summary.py (Join-Path $env:LLVM_BIN 'llvm-cov.exe') corpus.profdata verifier/sm_verify.dll coverage.md @compare
           if ($LASTEXITCODE -ne 0) { throw 'Coverage summary failed' }
           Get-Content coverage.md -TotalCount 80 | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
       - uses: actions/upload-artifact@v4
