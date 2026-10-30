@@ -18,9 +18,6 @@ impl sm_game::xray_background::Host for Game {
     fn finish_xray(&mut self) {
         crate::game::session_runtime::finish_xray(self);
     }
-    fn xray_unreachable(&mut self) {
-        crate::rtl::Unreachable(self);
-    }
     fn overlay_origin_assertion(&mut self) {
         // SAFETY: the original's assertion failure reports and does not return.
         unsafe {
@@ -40,5 +37,5 @@ pub unsafe fn finish_restore(k: u16, game: &mut Game) {
     sm_game::xray_background::finish_restore(k, game);
 }
 pub unsafe fn reveal_room_items(game: &mut Game) {
-    sm_game::xray_background::reveal_room_items(game);
+    sm_game::xray_background::reveal_room_items(&mut Runtime::new(game));
 }

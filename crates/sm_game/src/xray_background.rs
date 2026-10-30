@@ -2,10 +2,11 @@
 #![forbid(unsafe_code)]
 use crate::display_refresh::enqueue_readback;
 use crate::player_transitions::xray::BlendPhase;
-use crate::ram::{RawRam, word};
-use crate::runtime_access::RuntimeAccess;
+use crate::ram::{RawRam, word, words as fields};
+use crate::runtime_access::{RuntimeAccess, SessionRam, SessionView};
+use crate::session_access::SessionAccess;
+use crate::visual_host::{Content, Record, Source};
 use crate::word_transfers;
-use sm_data::cartridge::RomRecord;
 
 /// What X-ray needs besides the display host, sound and the native image:
 /// the blend mask and blending owned by the player view, and the original's
@@ -20,10 +21,26 @@ pub trait Host:
     fn xray_blend_mask(&mut self) -> u16;
     fn apply_xray_blending(&mut self, phase: BlendPhase);
     fn finish_xray(&mut self);
-    /// The original's unreachable reveal routine.
-    fn xray_unreachable(&mut self);
     /// The original's failed assertion that layer 1's Y position is below $1000.
     fn overlay_origin_assertion(&mut self);
+}
+
+// The hidden-block reveal runs on the owned-Session view: room terrain,
+// tiles and geometry are Session fields; the overlay is work RAM.
+
+fn level<R: SessionView>(h: &R, block: usize) -> u16 {
+    match h.session().room.terrain.cells().get(block) {
+        Some(cell) => cell.level,
+        None => h.word(0x10002 + 2 * block),
+    }
+}
+
+fn behavior<R: SessionView>(h: &R, block: i32) -> u8 {
+    let block = usize::try_from(block).expect("X-ray BTS outside RAM");
+    match h.session().room.terrain.cells().get(block) {
+        Some(cell) => cell.behavior,
+        None => h.byte(0x16402 + block),
+    }
 }
 
 fn mult8x8(a: u8, b: u8) -> u16 {
@@ -43,15 +60,11 @@ fn upload_screen<H: Host + ?Sized>(source: u16, screen: u16, game: &mut H) {
 }
 
 // Capture all four source tiles before the reverse-order writes, even when RAM aliases.
-fn write_block<H: Host + ?Sized>(destination: u16, tile: u16, offsets: [usize; 4], game: &mut H) {
-    let index = usize::from(tile);
-    let () = [(); 0x2000 / 8][index];
-    let mut tiles = [0; 8];
-    game.ram().copy_out(0xa000 + 8 * index, &mut tiles);
+fn write_block<R: SessionView>(destination: u16, tile: u16, offsets: [usize; 4], h: &mut R) {
+    let tiles = h.session().room.terrain.tiles()[usize::from(tile)];
     for corner in (0..4).rev() {
-        let value = u16::from_ne_bytes([tiles[2 * corner], tiles[2 * corner + 1]]);
         let at = 0x4000 + usize::from(destination) + 2 * offsets[corner];
-        game.ram().copy_in(at, &value.to_ne_bytes());
+        h.write_slice(at, &tiles[corner].to_le_bytes());
     }
 }
 
@@ -114,68 +127,66 @@ pub fn build_overlay<H: Host + ?Sized>(game: &mut H) {
     if (word!(game.layer1_y_pos) >> 12) != 0 {
         game.overlay_origin_assertion();
     }
-    let mut r34: u16 = (mult8x8(
-        (word!(game.layer1_y_pos) >> 4) as u8,
-        word!(game.room_width_in_blocks) as u8,
-    ) as i32
-        + (word!(game.layer1_x_pos) as i32 >> 4)) as u16;
-    let mut r22: u16 = 0;
-    let mut m = 16;
-    loop {
-        reveal_left_neighbor(r22, r34, game);
-        let mut r36: u16 = r34;
-        for n_0 in (1i32..=16).rev() {
-            reveal_block(n_0 as u16, r22, r36, game);
-            r22 = (r22).wrapping_add(4);
-            r36 = (r36).wrapping_add(1);
+    {
+        let h = &mut game.runtime();
+        let mut r34: u16 = (mult8x8(
+            (h.word(fields::layer1_y_pos) >> 4) as u8,
+            h.session().room.width as u8,
+        ) as i32
+            + (h.word(fields::layer1_x_pos) as i32 >> 4)) as u16;
+        let mut r22: u16 = 0;
+        let mut m = 16;
+        loop {
+            reveal_left_neighbor(r22, r34, h);
+            let mut r36: u16 = r34;
+            for n_0 in (1i32..=16).rev() {
+                reveal_block(n_0 as u16, r22, r36, h);
+                r22 = (r22).wrapping_add(4);
+                r36 = (r36).wrapping_add(1);
+            }
+            let v12: u16 = r22;
+            r22 = r22.wrapping_add(1984);
+            reveal_block(0, r22, r36, h);
+            r22 = (v12).wrapping_add(64);
+            r34 = (r34).wrapping_add(h.session().room.width);
+            m -= 1;
+            if m == 0 {
+                break;
+            }
         }
-        let v12: u16 = r22;
-        r22 = r22.wrapping_add(1984);
-        reveal_block(0, r22, r36, game);
-        r22 = (v12).wrapping_add(64);
-        r34 = (r34).wrapping_add(word!(game.room_width_in_blocks));
-        m -= 1;
-        if m == 0 {
-            break;
-        }
+        reveal_room_items(h);
     }
-    reveal_room_items(game);
     enqueue_readback(0x59, 0, 0x5000, 2048, false, game);
 }
 
-fn native_record<H: Host + ?Sized>(bank: u8, address: u16, game: &mut H) -> RomRecord {
-    crate::cartridge::native_record(bank, address, game)
+fn native_record<R: SessionView>(bank: u8, address: u16, h: &mut R) -> <R as Content>::Record {
+    h.legacy_native_record(bank, address)
 }
 
-fn definition_word<H: Host + ?Sized>(index: isize, game: &H) -> u16 {
-    game.native_image()
-        .table_word(sm_data::cartridge::lorom_offset(0x91d2d6) as usize, index)
+fn definition_word<R: SessionView>(index: usize, h: &R) -> u16 {
+    h.table(Source::Native, 0x91d2d6).native_word(2 * index)
 }
 
-fn block_bts<H: Host + ?Sized>(block: i32, game: &H) -> u8 {
-    let at = usize::try_from(0x16402isize + block as isize).expect("X-ray BTS outside RAM");
-    game.ram().read_byte(at)
-}
-
-fn block_definition<H: Host + ?Sized>(k: u16, game: &mut H) -> Option<RomRecord> {
-    let bts = u16::from(block_bts(i32::from(k), game));
-    let kind = word!(game.level_data[k]) & 0xf000;
+fn block_definition<R: SessionView>(k: u16, h: &mut R) -> Option<<R as Content>::Record> {
+    let game = h;
+    let bts = u16::from(behavior(game, i32::from(k)));
+    let kind = level(game, usize::from(k)) & 0xf000;
     let mut index = 0i32;
     loop {
-        let value = definition_word(2 * index as isize, game);
+        let value = definition_word(2 * index as usize, game);
         if value == 0xffff {
             return None;
         }
         if value == kind {
-            let entries = native_record(0x91, definition_word(2 * index as isize + 1, game), game);
+            let entries = native_record(0x91, definition_word(2 * index as usize + 1, game), game);
             let mut offset = 0;
             loop {
-                let value = entries.word(offset);
+                let value = entries.native_word(offset);
                 if value == 0xffff {
                     return None;
                 }
                 if value == 0xff00 || value == bts {
-                    return Some(native_record(0x91, entries.word(offset + 2), game));
+                    return Some(native_record(0x91, entries.native_word(offset + 2), game));
                 }
                 offset += 4;
             }
@@ -185,44 +196,42 @@ fn block_definition<H: Host + ?Sized>(k: u16, game: &mut H) -> Option<RomRecord>
 }
 
 // Neighbor tiles read each corner immediately before its ascending store, including aliases.
-fn write_neighbor<H: Host + ?Sized>(
-    destination: u16,
-    tile: u16,
-    offsets: [usize; 4],
-    game: &mut H,
-) {
+fn write_neighbor<R: SessionView>(destination: u16, tile: u16, offsets: [usize; 4], h: &mut R) {
     for (corner, offset) in offsets.into_iter().enumerate() {
-        let source = 0xa000 + 8 * usize::from(tile) + 2 * corner;
-        let value = u16::from_ne_bytes([
-            game.ram().read_byte(source),
-            game.ram().read_byte(source + 1),
-        ]);
+        let bytes = match h.session().room.terrain.tiles().get(usize::from(tile)) {
+            Some(tile) => tile[corner].to_le_bytes(),
+            None => {
+                let source = 0xa000 + 8 * usize::from(tile) + 2 * corner;
+                [h.byte(source), h.byte(source + 1)]
+            }
+        };
         let at = 0x4000 + usize::from(destination) + 2 * offset;
-        game.ram().copy_in(at, &value.to_ne_bytes());
+        h.write_slice(at, &bytes);
     }
 }
 
-pub fn reveal_left_neighbor<H: Host + ?Sized>(dst_r22: u16, r34: u16, game: &mut H) {
+pub fn reveal_left_neighbor<R: SessionView>(dst_r22: u16, r34: u16, game: &mut R) {
     if r34 == 0 {
         return;
     }
     let Some(descriptor) = block_definition(r34.wrapping_sub(1), game) else {
         return;
     };
-    if descriptor.word(0) != 0xcf4e {
-        if descriptor.word(0) != 0xcf6f {
+    if descriptor.native_word(0) != 0xcf4e {
+        if descriptor.native_word(0) != 0xcf6f {
             return;
         }
-        write_neighbor(dst_r22, descriptor.word(8), [64, 65, 96, 97], game);
+        write_neighbor(dst_r22, descriptor.native_word(8), [64, 65, 96, 97], game);
     }
-    write_neighbor(dst_r22, descriptor.word(4), [0, 1, 32, 33], game);
+    write_neighbor(dst_r22, descriptor.native_word(4), [0, 1, 32, 33], game);
 }
 
-fn follow_extension<H: Host + ?Sized>(dst_r22: u16, r36: u16, which_dir: bool, game: &mut H) {
-    let mut y = (r36 as i32 / word!(game.room_width_in_blocks) as i32) as u16;
-    let mut x = (r36 as i32 % word!(game.room_width_in_blocks) as i32) as u16;
-    let mut kind = word!(game.level_data[r36]) & 0xf000;
-    let mut step = block_bts(i32::from(r36), game) as i8 as i32;
+fn follow_extension<R: SessionView>(dst_r22: u16, r36: u16, which_dir: bool, game: &mut R) {
+    let width = game.session().room.width;
+    let mut y = (r36 as i32 / width as i32) as u16;
+    let mut x = (r36 as i32 % width as i32) as u16;
+    let mut kind = level(game, usize::from(r36)) & 0xf000;
+    let mut step = behavior(game, i32::from(r36)) as i8 as i32;
     if step != 0 {
         let mut vertical = which_dir;
         loop {
@@ -232,9 +241,12 @@ fn follow_extension<H: Host + ?Sized>(dst_r22: u16, r36: u16, which_dir: bool, g
                 return;
             }
             *variable = (*variable as i32 + step) as u16;
-            let pos = y as i32 * word!(game.room_width_in_blocks) as i32 + x as i32;
-            step = block_bts(pos, game) as i8 as i32;
-            kind = word!(game.level_data[pos]) & 0xf000;
+            let pos = y as i32 * game.session().room.width as i32 + x as i32;
+            step = behavior(game, pos) as i8 as i32;
+            kind = level(
+                game,
+                usize::try_from(pos).expect("word address outside RAM"),
+            ) & 0xf000;
             if kind == 0xd000 {
                 vertical = true;
             } else {
@@ -250,10 +262,12 @@ fn follow_extension<H: Host + ?Sized>(dst_r22: u16, r36: u16, which_dir: bool, g
     if definition_word(2, game) == kind {
         let entries = native_record(0x91, definition_word(3, game), game);
         let mut offset = 0;
-        while entries.word(offset) != 0xffff {
-            if entries.word(offset) == 0xff00 || entries.word(offset) as i32 == step & 0xff {
-                let tile =
-                    native_record(0x91, entries.word(offset + 2).wrapping_add(2), game).word(0);
+        while entries.native_word(offset) != 0xffff {
+            if entries.native_word(offset) == 0xff00
+                || entries.native_word(offset) as i32 == step & 0xff
+            {
+                let address = entries.native_word(offset + 2).wrapping_add(2);
+                let tile = native_record(0x91, address, game).native_word(0);
                 write_block(dst_r22, tile, [0, 1, 32, 33], game);
                 return;
             }
@@ -262,13 +276,13 @@ fn follow_extension<H: Host + ?Sized>(dst_r22: u16, r36: u16, which_dir: bool, g
     }
 }
 
-fn dispatch_reveal<H: Host + ?Sized>(
+fn dispatch_reveal<R: SessionView>(
     ea: u32,
-    jp: &RomRecord,
+    jp: &<R as Content>::Record,
     columns_left: u16,
     destination: u16,
     block: u16,
-    game: &mut H,
+    game: &mut R,
 ) {
     let (width, height, repeat_tile) = match ea {
         0x91ce79 => {
@@ -279,13 +293,13 @@ fn dispatch_reveal<H: Host + ?Sized>(
             follow_extension(destination, block, false, game);
             return;
         }
-        0x91cf3e if word!(game.area_index) != 1 => return,
+        0x91cf3e if game.session().room.area != 1 => return,
         0x91cf36 | 0x91cf3e => (1, 1, false),
         0x91cf4e => (2, 1, false),
         0x91cf62 => (1, 2, true),
         0x91cf6f => (2, 2, false),
         _ => {
-            game.xray_unreachable();
+            crate::player_projectiles::host::Host::unknown(game);
             return;
         }
     };
@@ -299,7 +313,7 @@ fn dispatch_reveal<H: Host + ?Sized>(
             } else {
                 2 + 2 * (row * width + column)
             };
-            let tile = jp.word(descriptor);
+            let tile = jp.native_word(descriptor);
             let base = row * 64 + column * 2;
             write_block(
                 destination,
@@ -311,15 +325,22 @@ fn dispatch_reveal<H: Host + ?Sized>(
     }
 }
 
-pub fn reveal_block<H: Host + ?Sized>(r18: u16, r22: u16, r36: u16, game: &mut H) {
+pub fn reveal_block<R: SessionView>(r18: u16, r22: u16, r36: u16, game: &mut R) {
     if let Some(jp) = block_definition(r36, game) {
-        dispatch_reveal(u32::from(jp.word(0)) | 0x910000, &jp, r18, r22, r36, game);
+        dispatch_reveal(
+            u32::from(jp.native_word(0)) | 0x910000,
+            &jp,
+            r18,
+            r22,
+            r36,
+            game,
+        );
     }
 }
 
-pub fn reveal_room_block<H: Host + ?Sized>(a: u16, k: u16, j: u16, game: &mut H) {
-    let r24: u16 = (k as i32 - (word!(game.layer1_x_pos) as i32 >> 4)) as u16;
-    let r26: u16 = (j as i32 - (word!(game.layer1_y_pos) as i32 >> 4)) as u16;
+pub fn reveal_room_block<R: SessionView>(a: u16, k: u16, j: u16, game: &mut R) {
+    let r24: u16 = (k as i32 - (game.word(fields::layer1_x_pos) as i32 >> 4)) as u16;
+    let r26: u16 = (j as i32 - (game.word(fields::layer1_y_pos) as i32 >> 4)) as u16;
     if r24 & 0x8000 == 0
         && r24 as i32 - 16i32 & 0x8000 != 0
         && r26 & 0x8000 == 0
@@ -437,15 +458,16 @@ pub fn finish_restore<H: Host + ?Sized>(_k: u16, game: &mut H) {
     }
 }
 
-pub fn reveal_room_items<H: Host + ?Sized>(game: &mut H) {
-    crate::room_mechanisms::graphics::reveal_items(&mut game.runtime());
-    let state = native_record(0x8f, word!(game.roomdefroomstate_ptr), game);
-    if state.word(0x10) != 0 {
-        let entries = native_record(0x8f, state.word(0x10), game);
+pub fn reveal_room_items<R: SessionView>(game: &mut R) {
+    crate::room_mechanisms::graphics::reveal_items(game);
+    let state = game.session().state_key();
+    let state = native_record(0x8f, state, game);
+    if state.native_word(0x10) != 0 {
+        let entries = native_record(0x8f, state.native_word(0x10), game);
         let mut offset = 0;
         while entries.byte(offset) != 0 || entries.byte(offset + 1) != 0 {
             reveal_room_block(
-                entries.word(offset + 2),
+                entries.native_word(offset + 2),
                 entries.byte(offset) as u16,
                 entries.byte(offset + 1) as u16,
                 game,

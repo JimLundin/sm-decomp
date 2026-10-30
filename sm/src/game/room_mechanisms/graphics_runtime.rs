@@ -158,7 +158,7 @@ impl Graphics for Runtime<'_> {
         self.write_slice_le(0xa000 + byte_offset, value);
     }
     fn reveal_block(&mut self, block: u16, x: u16, y: u16) {
-        self.foreign(|game| reveal_room_block(block, x, y, game));
+        reveal_room_block(block, x, y, self);
     }
 }
 // Transfer descriptors store bank7E and a byte identity, exactly as the existing

@@ -129,6 +129,21 @@ pub struct Session {
     pub multiply_scratch: crate::player_collision::state::MultiplyScratch,
 }
 impl Session {
+    /// The current room's compatibility key, as $079B encodes it.
+    pub fn room_key(&self) -> u16 {
+        self.world.room_key(&self.room.entry.room)
+    }
+    /// The current room state's compatibility key, as $07BB encodes it.
+    pub fn state_key(&self) -> u16 {
+        self.world.state_key(&self.room.entry.state)
+    }
+    pub fn set_room_key(&mut self, key: u16) {
+        self.room.entry.room = self.world.room_identity(key);
+    }
+    /// Select the exit by its compatibility key, as a store to $078D.
+    pub fn set_exit_key(&mut self, key: u16) {
+        self.room.entry.exit = self.world.exit_identity(key);
+    }
     pub fn with_world(world: std::sync::Arc<crate::room_entry::world::WorldBinding>) -> Self {
         Self {
             actor_identity: crate::actors::identity::ActorIdentityState::empty(),
