@@ -1,15 +1,19 @@
 //! Enemy species dispatch tables keyed by the routine addresses the original
-//! enemy definitions name: contact and shot reactions, graphics draw hooks,
-//! bank $B3 pre-instructions and pipe bug state routines.
+//! enemy definitions name: AI, pre-instructions, instructions, contact and
+//! shot reactions, graphics draw hooks, bank $B3 pre-instructions and pipe bug
+//! state routines.
 //!
-//! Each table is one `match` from address to routine. Moving another routine
-//! here means adding its arm; the compat dispatcher still owns the rest.
+//! Each table is one `match` from address to routine. Arms whose routines
+//! still run in the compatibility crate go to its host: a named native enum
+//! for the small tables, the same address for the large ones. Moving a
+//! routine here means moving its arm.
 #![forbid(unsafe_code)]
 use crate::actors::host::{ActorHost, ActorRuntime, Death, LeaseActors, Shot};
 use crate::actors::{
-    botwoon, crocomire_reactions, draygon_death, draygon_flight, draygon_host, escape_critters,
-    magdollite,
+    botwoon, brinstar_pipe_bug, crocomire_reactions, draygon_death, draygon_flight, draygon_host,
+    escape_critters, magdollite, norfair_pipe_bug, yapping_maw, yellow_pipe_bug,
 };
+use crate::enemy_script::EnemyScript;
 use crate::ram::word;
 
 /// The failure every table shares.
@@ -238,5 +242,149 @@ pub fn b3_pre_instruction<H: B3Host + ?Sized>(ea: u32, k: u16, game: &mut H) {
         _ => {
             game.unknown_routine();
         }
+    }
+}
+
+/// What the AI table needs beyond its actors' own hosts.
+pub trait AiHost: B3Host + DrawHookHost + yapping_maw::Host + crocomire_reactions::Host {
+    /// An AI routine whose arm is still in the compatibility table.
+    fn native_ai(&mut self, ea: u32);
+}
+
+/// An enemy species' AI routine, keyed by its address. Arms not here are in
+/// the compatibility table until their routines move.
+pub fn ai<H: AiHost + ?Sized>(ea: u32, game: &mut H) {
+    match ea {
+        11763747 => game.contact_reaction(Death::Finalize),
+        11763757 => game.shot_reaction(Shot::Finalize),
+        10518583 | 10649655 | 10715191 | 10780727 | 10846263 | 10911799 | 10977335 | 11042871
+        | 11108407 | 11173943 | 11698231 | 11763767 => game.power_bomb_reaction(Death::Finalize),
+        10715212 => (),
+        10725800 => game.shot_reaction(Shot::Finalize),
+        10723079 => (),
+        10715171 => game.contact_reaction(Death::Finalize),
+        10715181 => game.shot_reaction(Shot::Finalize),
+        10738715 => (),
+        10780748 => (),
+        10795344 => (),
+        10811067 => (),
+        10846284 => (),
+        10851824 => draygon_death::shot(game),
+        10864042 => (),
+        10864068 => (),
+        10874354 => (),
+        10911820 => (),
+        10942752 => (),
+        10977356 => (),
+        10982543 => (),
+        10982581 => (),
+        11001242 => (),
+        11001873 => (),
+        11042892 => (),
+        11051336 => yapping_maw::initialize(game),
+        11052953 => yapping_maw::touch(game),
+        11052989 => yapping_maw::shot(game),
+        11053109 => yapping_maw::frozen(game),
+        11054987 => magdollite::initialize(game),
+        11056128 | 11056134 | 11056140 => magdollite::damage(ea, game),
+        11062374 => (),
+        11108428 => (),
+        11122117 => (),
+        11173964 => (),
+        11196359 => (),
+        11200475 => (),
+        11200476 => (),
+        11698252 => (),
+        11763788 => (),
+        11765518 => (),
+        11765819 => brinstar_pipe_bug::initialize(game),
+        11766625 => norfair_pipe_bug::initialize(game),
+        11767628 => yellow_pipe_bug::initialize(game),
+        11769219 => botwoon::initialize(game),
+        11790027 => escape_critters::initialize(false, game),
+        11791077 => escape_critters::initialize(true, game),
+        11791130 => (),
+        10649635 => game.contact_reaction(Death::Finalize),
+        10649645 => game.shot_reaction(Shot::Finalize),
+        10782343 => crocomire_reactions::hurt(game),
+        10811002 => crocomire_reactions::initialize_tongue(game),
+        10780707 => game.contact_reaction(Death::Finalize),
+        10780717 => game.shot_reaction(Shot::Finalize),
+        10783322 => crocomire_reactions::initialize(game),
+        10795410 => crocomire_reactions::power_bomb(game),
+        _ => game.native_ai(ea),
+    }
+}
+
+/// What the pre-instruction table needs beyond its actors' own hosts.
+pub trait PreInstructionHost: B3Host + magdollite::Host {
+    /// A pre-instruction whose arm is still in the compatibility table, for
+    /// the current enemy `k` read before dispatch.
+    fn native_pre_instruction(&mut self, ea: u32, k: u16);
+}
+
+/// An enemy species' pre-instruction, keyed by its address. The current
+/// enemy index is read once, before dispatch, as the original did.
+pub fn pre_instruction<H: PreInstructionHost + ?Sized>(ea: u32, game: &mut H) {
+    let k: u16 = word!(game.cur_enemy_index);
+    match ea {
+        10518651 => (),
+        10649723 => (),
+        10652277 => (),
+        10657819 => (),
+        10659799 => (),
+        10676097 => (),
+        10730689 => (),
+        10735455 => (),
+        10739850 => (),
+        10741441 => (),
+        10998952 => (),
+        11047388 => (),
+        11055386 | 11055477 | 11055507 | 11055544 | 11055581 | 11055885 | 11055903 | 11055958
+        | 11056039 => magdollite::run_state(ea as u16, game),
+        11055761 => (),
+        11055765 => magdollite::shrink_arm(game),
+        11192670 => (),
+        11197610 => (),
+        11200422 => (),
+        11174011 => (),
+        11200474 => (),
+        11197611 => (),
+        0xb30000..=0xb3ffff => crate::actors::species::b3_pre_instruction(ea, k, game),
+        _ => game.native_pre_instruction(ea, k),
+    }
+}
+
+/// What the instruction table needs beyond its actors' own hosts.
+pub trait InstructionHost:
+    crocomire_reactions::Host + yapping_maw::Host + magdollite::Host + escape_critters::Host
+{
+    /// An instruction whose arm is still in the compatibility table.
+    fn native_instruction(&mut self, ea: u32, k: u16, j: EnemyScript) -> EnemyScript;
+}
+
+/// An enemy species' instruction, keyed by its address; `k` is the enemy and
+/// `j` the script position.
+pub fn instruction<H: InstructionHost + ?Sized>(
+    ea: u32,
+    k: u16,
+    j: EnemyScript,
+    game: &mut H,
+) -> EnemyScript {
+    match ea {
+        0xa40000..=0xa4ffff => crocomire_reactions::instruction(ea, k, j, game),
+        11051207 | 11051225 | 11051243 | 11051261 | 11051279 | 11051297 | 11051315 => {
+            yapping_maw::instruction(ea, j, game)
+        }
+        11054610 | 11054630 | 11054640 | 11054650 | 11054661 | 11054672 | 11054682 | 11054692
+        | 11054728 | 11054742 | 11054778 | 11054794 | 11054820 | 11054846 | 11054872 | 11054916 => {
+            magdollite::instruction(ea, j, game)
+        }
+        11789637 | 11791016 => escape_critters::go_to_if(false, j, game),
+        11791032 => escape_critters::go_to_if(true, j, game),
+        11789840 => escape_critters::move_x(k, j, game),
+        11791049 => escape_critters::shift_dachora(0xfffa, j, game),
+        11791063 => escape_critters::shift_dachora(6, j, game),
+        _ => game.native_instruction(ea, k, j),
     }
 }

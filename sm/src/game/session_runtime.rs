@@ -99,6 +99,30 @@ pub struct Runtime<'g> {
         std::sync::Arc<crate::game_state::persistent_session::SessionStartRequirements>,
     )>,
 }
+/// Every pre-instruction enters through the sm_game table, which reads the
+/// current enemy once and falls back to the compatibility arms.
+pub(crate) unsafe fn actor_species_pre_instruction(ea: u32, game: &mut Game) {
+    sm_game::actors::species::pre_instruction(ea, game);
+}
+
+impl sm_game::actors::species::AiHost for Game {
+    fn native_ai(&mut self, ea: u32) {
+        unsafe { native_ai(ea, self) }
+    }
+}
+
+impl sm_game::actors::species::PreInstructionHost for Game {
+    fn native_pre_instruction(&mut self, ea: u32, k: u16) {
+        unsafe { native_pre_instruction(ea, k, self) }
+    }
+}
+
+impl sm_game::actors::species::InstructionHost for Game {
+    fn native_instruction(&mut self, ea: u32, k: u16, j: EnemyScript) -> EnemyScript {
+        unsafe { native_instruction(ea, k, j, self) }
+    }
+}
+
 impl<'g> Runtime<'g> {
     pub fn new(game: &'g mut Game) -> Self {
         #[cfg(sm_verify_dll)]
@@ -1016,7 +1040,7 @@ use sm_game::combat_rules::LatchMode;
 use sm_game::enemy_script::EnemyScript;
 
 crate::game::callback_dispatch! {
-    unsafe fn actor_species_ai(ea: u32, game: &mut Game) => ea;
+    unsafe fn native_ai(ea: u32, game: &mut Game) => ea;
     call (game); default { crate::rtl::Unreachable(game); };
     @external {
         10715136 | 10846208 | 10911744 | 10977280 | 11042816 | 11763712 => [actor_api::resume_ai(&mut Runtime::new(game))];
@@ -1024,10 +1048,8 @@ crate::game::callback_dispatch! {
         11042836 => [actor_api::latch(&mut Runtime::new(game), LatchMode::Active)];
         11763722 => [crate::game::actors::combat::die(&mut Runtime::new(game), actor_api::DeathKind::Grapple)];
         11763727 => [crate::game::actors::combat::select_frozen_ai(&mut Runtime::new(game))];
-        11763747 => [actor_api::contact_reaction(&mut Runtime::new(game), actor_api::DeathHandling::Finalize)];
-        11763757 => [actor_api::shot_reaction(&mut Runtime::new(game), actor_api::ShotHandling::Finalize)];
+
         11763777 => [crate::game::actors::scheduling::update_frozen_enemy(&mut Runtime::new(game))];
-        10518583 | 10649655 | 10715191 | 10780727 | 10846263 | 10911799 | 10977335 | 11042871 | 11108407 | 11173943 | 11698231 | 11763767 => [actor_api::power_bomb_reaction(&mut Runtime::new(game), actor_api::DeathHandling::Finalize)];
         10649676 => [{
             #[cfg(sm_verify_dll)]
             crate::game::actors::reference_population_animation::dispatch_noop(game);
@@ -1055,7 +1077,7 @@ crate::game::callback_dispatch! {
         10679256 => [mechanisms::react(Kind::HorizontalShutter, Event::Touch, game)];
         10679310 => [mechanisms::react(Kind::HorizontalShutter, Event::Shot, game)];
         10679322 => [mechanisms::react(Kind::HorizontalShutter, Event::PowerBomb, game)];
-        10715212 => [()]; 10716909 => crate::game::waver::Waver_Init;
+        10716909 => crate::game::waver::Waver_Init;
         10717004 => crate::game::waver::Waver_Main; 10717536 => [diving_enemies::initialize(DivingKind::Metalee, game)];
         10717561 => [diving_enemies::advance(DivingKind::Metalee, game)]; 10717967 => [diving_enemies::shot(DivingKind::Metalee, game)];
         10718509 => actors::fireflea::initialize;
@@ -1068,8 +1090,7 @@ crate::game::callback_dispatch! {
         10722463 => [falling_platforms::initialize(true, game)]; 10722490 => [falling_platforms::initialize(false, game)];
         10722582 => falling_platforms::advance; 10723080 => falling_platforms::shot;
         10725245 => mochtroid::initialize; 10725264 => mochtroid::advance; 10725715 => mochtroid::touch;
-        10725800 => [actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize)];
-        10723079 => [()];
+
         10720995 => [wall_crawlers::initialize(wall_crawlers::Kind::Crab, game)];
         10721595 => [wall_crawlers::initialize(wall_crawlers::Kind::Slug, game)];
         10729071 => [wall_crawlers::initialize(wall_crawlers::Kind::Fireball, game)];
@@ -1081,8 +1102,7 @@ crate::game::callback_dispatch! {
         10738716 => sm_a3::Reflec_Shot;
         10715146 => [crate::game::actors::combat::die(&mut Runtime::new(game), actor_api::DeathKind::Grapple)];
         10715151 => [crate::game::actors::combat::select_frozen_ai(&mut Runtime::new(game))];
-        10715171 => [actor_api::contact_reaction(&mut Runtime::new(game), actor_api::DeathHandling::Finalize)];
-        10715181 => [actor_api::shot_reaction(&mut Runtime::new(game), actor_api::ShotHandling::Finalize)];
+
         10715201 => [crate::game::actors::scheduling::update_frozen_enemy(&mut Runtime::new(game))];
         10738643 => reflec::initialize;
         10735074 => maridia_snail::initialize;
@@ -1097,28 +1117,19 @@ crate::game::callback_dispatch! {
         10728522 => refill_candy::initialize; 10728572 => refill_candy::advance;
         10733230 => [diving_enemies::initialize(DivingKind::Skree, game)]; 10733255 => [diving_enemies::advance(DivingKind::Skree, game)];
         10733557 => [diving_enemies::shot(DivingKind::Skree, game)];
-        10738715 => [()];
         10743874 => metroid::power_bomb;
-        10780748 => [()];
-        10795344 => [()];
-        10811067 => [()];
-        10846284 => [()];
-        10851824 => actors::draygon_death::shot;
-        10864042 => [()];
-        10864068 => [()];
-        10874354 => [()];
-        10911820 => [()];
+
+
+
+
         10913525 => sm_a6::Boulder_Init; 10913683 => sm_a6::Boulder_Main;
         10914607 => crate::game::spikey_platforms::initialize; 10914733 => crate::game::spikey_platforms::run;
         10920181 => sm_a6::CeresRidley_Init; 10920584 => sm_a6::CeresRidley_Main;
         10924583 => sm_a6::Ridley_Main;
         10924682 => sm_a6::Ridley_Func_2; 10924695 => sm_a6::Ridley_Hurt;
-        10942752 => [()];
-        10977356 => [()]; 10982543 => [()];
-        10982581 => [()];
-        11001242 => [()];
-        11001873 => [()];
-        11042892 => [()];
+
+
+
         11044832 => crate::game::actors::evir::initialize;
         11045040 => crate::game::actors::evir::initialize_projectile;
         11045147 => crate::game::actors::evir::advance;
@@ -1134,7 +1145,6 @@ crate::game::callback_dispatch! {
         11048752 => crate::game::actors::fune::advance;
         11049710 => crate::game::actors::wrecked_ship_ghost::initialize;
         11049788 => crate::game::actors::wrecked_ship_ghost::advance;
-        11051336 => crate::game::actors::yapping_maw::initialize;
         11051537 => [{
             if !crate::game::actors::yapping_maw::main_ai(game, |operand, game| {
                 crate::rtl::WriteReg(crate::rtl::WRMPYA as u16, operand, game);
@@ -1143,14 +1153,10 @@ crate::game::callback_dispatch! {
             }
             crate::game::actors::yapping_maw::update_segments(game);
         }];
-        11052953 => crate::game::actors::yapping_maw::touch;
-        11052989 => crate::game::actors::yapping_maw::shot;
-        11053109 => crate::game::actors::yapping_maw::frozen;
+
         11053894 => crate::game::actors::kago::initialize;
         11053941 => crate::game::actors::kago::advance; 11053955 => crate::game::actors::kago::shot;
-        11054987 => crate::game::actors::magdollite::initialize;
         11055370 => [{ let address = crate::game::actors::magdollite::main_ai(game); actor_species_pre_instruction(address, game); }];
-        11056128 | 11056134 | 11056140 => [crate::game::actors::magdollite::damage(ea, game)];
         11057014 => crate::game::actors::beetom::initialize;
         11057165 => crate::game::actors::beetom::advance; 11058734 => crate::game::actors::beetom::touch;
         11058860 => crate::game::actors::beetom::shot;
@@ -1165,7 +1171,6 @@ crate::game::callback_dispatch! {
         11063668 => crate::game::actors::wrecked_ship_robots::touch_dormant;
         11063693 => crate::game::actors::wrecked_ship_robots::shot_dormant;
         11063698 => crate::game::actors::wrecked_ship_robots::shot;
-        11062374 => [()];
         11065545 => crate::game::actors::maridia_puffer::initialize;
         11065611 => crate::game::actors::maridia_puffer::advance; 11066132 => crate::game::actors::maridia_puffer::shot;
         11066573 => crate::game::actors::lava_seahorse::initialize;
@@ -1181,46 +1186,35 @@ crate::game::callback_dispatch! {
         11072020 => crate::game::actors::ki_hunter::initialize_wings; 11072092 => crate::game::actors::ki_hunter::advance;
         11072098 => crate::game::actors::ki_hunter::advance;
         11073281 => crate::game::actors::ki_hunter::shot;
-        11108428 => [()];
         11111301 => [{
                     sm_a9::MotherBrainsTubesFalling_Main(crate::ram_map::word!(game.cur_enemy_index), game);
                 }];
         11121927 => sm_a9::MotherBrainsBrain_Shot;
-        11122117 => [()];
-        11173964 => [()];
-        11196359 => [()];
-        11200475 => [()];
-        11200476 => [()];
-        11698252 => [()];
-        11763788 => [()];
+
+
+
         11765499 => [{
             let e = i32::from(crate::ram_map::word!(game.cur_enemy_index));
             crate::ram_map::slot!(game, EnemyData[e].properties, |old| old | crate::game::constants::enemy_properties::kEnemyProps_DisableSamusColl as u16);
             crate::ram_map::slot!(game, EnemyData[e].current_instruction = 0x86a7);
         }];
-        11765518 => [()];
-        11765819 => crate::game::actors::brinstar_pipe_bug::initialize;
+
         11765882 => [{ let address = crate::game::actors::brinstar_pipe_bug::state_address(game); actor_species_pre_instruction(address, game); }];
-        11766625 => crate::game::actors::norfair_pipe_bug::initialize;
         11766686 => [{
             let address = crate::game::actors::norfair_pipe_bug::state_address(game);
             sm_game::actors::species::pipe_bug_state(address, crate::ram_map::word!(game.cur_enemy_index), game);
             crate::game::actors::norfair_pipe_bug::reset_offscreen(game);
         }];
-        11767628 => crate::game::actors::yellow_pipe_bug::initialize;
         11767726 => [{
             let address = crate::game::actors::yellow_pipe_bug::state_address(game);
             sm_game::actors::species::pipe_bug_state(address, crate::ram_map::word!(game.cur_enemy_index), game);
         }];
-        11769219 => actors::botwoon::initialize;
         11769448 => [actors::botwoon::main_ai(&mut Runtime::new(game))];
         11771903 => [actors::botwoon::contact(false, &mut Runtime::new(game))];
         11771969 => [actors::botwoon::contact(true, &mut Runtime::new(game))];
         11771926 => [actors::botwoon::shot(&mut Runtime::new(game))];
         11789909 => [actor_species_pre_instruction(actors::escape_critters::main_ai(game), game)];
-        11790027 => [actors::escape_critters::initialize(false, game)];
-        11791077 => [actors::escape_critters::initialize(true, game)];
-        11791130 => [()];
+
         10652144 => [{
             let index = game.cur_enemy_index();
             let preinstruction = Runtime::new(game)
@@ -1298,8 +1292,7 @@ crate::game::callback_dispatch! {
         10649615 => [actors::combat::select_frozen_ai(&mut Runtime::new(game))];
         10649610 => [actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Grapple)];
         10649665 => [actors::scheduling::update_frozen_enemy(&mut Runtime::new(game))];
-        10649635 => [actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize)];
-        10649645 => [actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize)];
+
         10670988 => [large_snail::touch(false, game)];
         10671028 => large_snail::shot;
         10658809 => ground_patrol::initialize_shell;
@@ -1333,14 +1326,10 @@ crate::game::callback_dispatch! {
             actor_species_pre_instruction(0xa20000 | u32::from(phase), game);
         }];
         0xa30000..=0xa3ffff => [{ crate::rtl::Unreachable(game); }];
-        10782343 => actors::crocomire_reactions::hurt;
         10783748 => crate::game::visual_runtime::advance_crocomire;
-        10811002 => actors::crocomire_reactions::initialize_tongue;
-        10780707 => [actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize)];
-        10780717 => [actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize)];
+
         10780737 => [actors::scheduling::update_frozen_enemy(&mut Runtime::new(game))];
-        10783322 => actors::crocomire_reactions::initialize;
-        10795410 => actors::crocomire_reactions::power_bomb;
+
         0xa50000..=0xa5ffff => [sm_a5::DispatchEnemyAi(ea, game)];
         0xa60000..=0xa6ffff => [sm_a6::DispatchEnemyAi(ea, game)];
         0xa70000..=0xa7ffff => [sm_a7::DispatchEnemyAi(ea, game)];
@@ -1352,14 +1341,11 @@ crate::game::callback_dispatch! {
     }
 }
 crate::game::address_dispatch! {
-    pub(crate) unsafe fn actor_species_pre_instruction(ea: u32, game: &mut Game) => ea;
-        setup { let k: u16 = crate::ram_map::word!(game.cur_enemy_index); }
+    unsafe fn native_pre_instruction(ea: u32, k: u16, game: &mut Game) => ea;
         call (k, game); default { crate::rtl::Unreachable(game); };
     {
-        10518651 => [()]; 10649723 => [()];
-        10652277 => [()];
-        10657819 => [()]; 10659799 => [()];
-        10676097 => [()]; 10730689 => [()];
+
+
         10730661 => [bang::wait(game)]; 10730693 => [bang::aim(game)];
         10730780 => [bang::fly(false, game)]; 10730796 => [bang::fly(true, game)];
         10735526 => [maridia_snail::crawl(k, actor_api::Axis::Y, 0xa3cce2, game)];
@@ -1376,30 +1362,24 @@ crate::game::address_dispatch! {
         10741448 => [wall_crawlers::crawl(k, actor_api::Axis::X, false, game)];
         10741746 => [wall_crawlers::crawl(k, actor_api::Axis::Y, false, game)];
         10741637 => [wall_crawlers::falling(k, game)];
-        10735455 => [()];
-        10739850 => [()]; 10741441 => [()];
-        10998952 => [()];
+
         11047153 | 11047214 | 11047264 | 11047374 => [{
             if crate::game::actors::morph_ball_eye::prepare_update(ea as u16, k, game) {
                 crate::game::visual_runtime::initialize_morph_eye_beam(game);
                 crate::game::actors::morph_ball_eye::finish_beam(k, game);
             }
         }];
-        11047388 => [()];
-        11055386 | 11055477 | 11055507 | 11055544 | 11055581 | 11055885 | 11055903 | 11055958 | 11056039 => [crate::game::actors::magdollite::run_state(ea as u16, game)];
+
         11055620 => [{
             let (actor, diagnostic) = crate::game::actors::magdollite::grow_arm(game);
             if let Some(value) = diagnostic { sm_a8::warn_lava_height(value); }
             crate::game::actors::magdollite::finish_arm_growth(actor, game);
         }];
-        11055761 => [()]; 11055765 => [crate::game::actors::magdollite::shrink_arm(game)];
         11059843 | 11059878 | 11059919 | 11060075 | 11060193 | 11060329 | 11060444 | 11060480 | 11060509 | 11060584 | 11060585 | 11060639 => [crate::game::actors::maridia_floater::advance(ea as u16, k, game)];
-        11192670 => [()]; 11197610 => [()]; 11200422 => [()]; 11174011 => [()];
         11192146 => sm_aa::Torizo_Func_5;
         11192364 => sm_aa::Torizo_Func_7;
         11195889 => sm_aa::Torizo_D5F1;
-        11200474 => [()];
-        11197611 => [()];
+
         10665692 => [crate::game::lava_jumper::follow_parent(k, game)];
         10665754 => [crate::game::lava_jumper::launch(k, game)];
         10665790 => [crate::game::lava_jumper::advance(k, crate::game::lava_jumper::Flight::Rising, game)];
@@ -1450,11 +1430,10 @@ crate::game::address_dispatch! {
         10661165 => [crate::game::gunship::phase(k, 0xad2d, game)];
         0xa70000..=0xa7ffff => [sm_a7::DispatchEnemyPreInstr(ea, k, game)];
         0xaa0000..=0xaaffff => [sm_aa::DispatchEnemyPreInstr(ea, k, game)];
-        0xb30000..=0xb3ffff => [sm_game::actors::species::b3_pre_instruction(ea, k, game)];
     }
 }
 crate::game::callback_dispatch! {
-    unsafe fn actor_species_instruction(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
+    unsafe fn native_instruction(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
     @external {
         11763819 | 11763828 => [{
@@ -1543,20 +1522,15 @@ crate::game::callback_dispatch! {
         10651846 => [crate::game::goofball::landed(j, game)];
         10719382 | 10719392 | 10719402 => [actors::maridia_fish::instruction(ea, j, game)];
         0xa30000..=0xa3ffff => [{ crate::rtl::Unreachable(game); EnemyScript::Stop }];
-        0xa40000..=0xa4ffff => [actors::crocomire_reactions::instruction(ea, k, j, game)];
         0xa50000..=0xa5ffff => [sm_a5::DispatchEnemyInstr(ea, k, j, game)];
         0xa60000..=0xa6ffff => [sm_a6::DispatchEnemyInstr(ea, k, j, game)];
         0xa70000..=0xa7ffff => [sm_a7::DispatchEnemyInstr(ea, k, j, game)];
-        11051207 | 11051225 | 11051243 | 11051261 | 11051279 | 11051297 | 11051315 => [crate::game::actors::yapping_maw::instruction(ea, j, game)];
-        11054610 | 11054630 | 11054640 | 11054650 | 11054661 | 11054672 | 11054682 | 11054692 | 11054728 | 11054742 | 11054778 | 11054794 | 11054820 | 11054846 | 11054872 | 11054916 => [crate::game::actors::magdollite::instruction(ea, j, game)];
+
         0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyInstr(ea, k, j, game)];
         0xaa0000..=0xaaffff => [sm_aa::DispatchEnemyInstr(ea, k, j, game)];
         0xb20000..=0xb2ffff => [space_pirates::dispatch_instruction(ea, k, j, game)];
-        11789637 | 11791016 => [actors::escape_critters::go_to_if(false, j, game)];
-        11791032 => [actors::escape_critters::go_to_if(true, j, game)];
-        11789840 => [actors::escape_critters::move_x(k, j, game)];
-        11791049 => [actors::escape_critters::shift_dachora(0xfffa, j, game)];
-        11791063 => [actors::escape_critters::shift_dachora(6, j, game)];
+
+
         11769031 | 11769095 | 11769111 | 11769175 => [{ actors::botwoon::set_hitbox(8, 16, game); j }];
         11769047 | 11769079 | 11769127 | 11769159 => [{ actors::botwoon::set_hitbox(12, 12, game); j }];
         11769063 | 11769143 => [{ actors::botwoon::set_hitbox(16, 8, game); j }];
@@ -1573,7 +1547,7 @@ impl Runtime<'_> {
             11771903 | 11771969 => {
                 self.owned_call(|runtime| actors::botwoon::contact(routine == 11771969, runtime))
             }
-            _ => self.foreign(|game| unsafe { actor_species_ai(routine, game) }),
+            _ => self.foreign(|game| sm_game::actors::species::ai(routine, game)),
         }
     }
     pub(crate) fn actor_instruction_legacy(
@@ -1582,7 +1556,7 @@ impl Runtime<'_> {
         actor: u16,
         script: EnemyScript,
     ) -> EnemyScript {
-        self.foreign(|game| unsafe { actor_species_instruction(routine, actor, script, game) })
+        self.foreign(|game| sm_game::actors::species::instruction(routine, actor, script, game))
     }
     pub(crate) fn actor_touch_legacy(&mut self, routine: u32) {
         self.foreign(|game| sm_game::actors::species::touch(routine, game));
