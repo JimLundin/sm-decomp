@@ -441,10 +441,9 @@ pub mod game {
     pub(crate) use callback_dispatch;
 
     pub(crate) mod beam_windows;
-    pub mod constants;
-    pub(crate) use sm_game::corpse_tables;
     pub(crate) mod cinematic_display;
     pub(crate) mod cinematic_objects;
+    pub mod constants;
     pub(crate) mod credits;
     pub(crate) mod decompression;
     pub(crate) mod demo_rooms;
@@ -478,7 +477,6 @@ pub mod game {
     pub(crate) mod title_screen;
     pub(crate) use sm_game::shaktool_tables;
     pub(crate) use sm_game::shitroid_tables;
-    pub(crate) use sm_game::torizo_corpse_tables;
     pub(crate) mod visual_checks;
     pub(crate) mod vram_read_queue;
     pub(crate) mod xray_background;
@@ -531,7 +529,6 @@ pub mod game {
     pub mod room_state;
     pub mod samus_animation;
     pub(crate) use sm_game::samus_palette;
-    pub(crate) use sm_game::sand_heap;
     pub mod save_slots;
     pub(crate) mod scanline_irq;
     pub(crate) use sm_game::session;

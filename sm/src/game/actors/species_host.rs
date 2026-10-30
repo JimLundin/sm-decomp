@@ -61,7 +61,7 @@ impl sm_game::actors::species::DrawHookHost for Game {
             BlueFaceBlockPalette => crate::game::actors::blue_face_block::palette(self),
             MotherBrainBrainAndNeck => sm_a9::MotherBrain_DrawBrainNeck_EnemyGfxDrawHook(self),
             MotherBrainBrain => sm_a9::MotherBrainsBrain_GfxDrawHook(self),
-            DeadTorizo => sm_a9::DeadTorizo_MainGfxHook(self),
+            DeadTorizo => sm_game::actors::corpses::DeadTorizo_MainGfxHook(self),
         }
     }
 }

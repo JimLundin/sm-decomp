@@ -41,7 +41,7 @@ use crate::ram::{slot, word};
 use crate::word_transfers;
 
 /// A bank-local address, as the original's `VoidP`.
-type VoidP = u16;
+pub(crate) type VoidP = u16;
 type CoroutineRet = u8;
 type Enemy_DeadMonsters = crate::actors::layouts::EnemyLayout72Late;
 const kCoroutineNone: i32 = 0;
@@ -456,7 +456,7 @@ const _: () = assert!(DRAW_BRAIN_AND_NECK_HOOK == 11110345 && DRAW_BRAIN_HOOK ==
 const GRAPHICS_DRAWN_HOOK: usize = 0x178c;
 
 /// Set the enemy graphics drawn hook, low byte first and the bank last.
-fn set_graphics_drawn_hook(hook: u32, game: &mut impl Host) {
+pub(crate) fn set_graphics_drawn_hook(hook: u32, game: &mut impl Host) {
     let bytes = hook.to_le_bytes();
     game.ram().write_byte(GRAPHICS_DRAWN_HOOK, bytes[0]);
     game.ram().write_byte(GRAPHICS_DRAWN_HOOK + 1, bytes[1]);
@@ -533,20 +533,20 @@ pub trait Host:
 }
 
 // Forwarding helpers under the original names, so the moved bodies are unchanged.
-fn Unreachable(game: &mut impl Host) -> bool {
+pub(crate) fn Unreachable(game: &mut impl Host) -> bool {
     game.bank_unreachable()
 }
-fn SpawnEprojWithRoomGfx(definition: u16, parameter: u16, game: &mut impl Host) -> u16 {
+pub(crate) fn SpawnEprojWithRoomGfx(definition: u16, parameter: u16, game: &mut impl Host) -> u16 {
     game.spawn_room_projectile(definition, parameter)
 }
 #[derive(Clone, Copy)]
-struct SpawnHardcodedPlmArgs {
+pub(crate) struct SpawnHardcodedPlmArgs {
     block_x: u8,
     block_y: u8,
     header: VoidP,
 }
 impl SpawnHardcodedPlmArgs {
-    fn new(block_x: u8, block_y: u8, header: VoidP) -> Self {
+    pub(crate) fn new(block_x: u8, block_y: u8, header: VoidP) -> Self {
         Self {
             block_x,
             block_y,
@@ -554,85 +554,85 @@ impl SpawnHardcodedPlmArgs {
         }
     }
 }
-fn spawn_hardcoded(args: SpawnHardcodedPlmArgs, game: &mut impl Host) {
+pub(crate) fn spawn_hardcoded(args: SpawnHardcodedPlmArgs, game: &mut impl Host) {
     game.spawn_plm(args.block_x, args.block_y, args.header)
 }
-fn QueueMusic_Delayed8(track: u16, game: &mut impl Host) {
+pub(crate) fn QueueMusic_Delayed8(track: u16, game: &mut impl Host) {
     game.queue_music_delayed(track)
 }
-fn QueueSfx1_Max6(sound: u16, game: &mut impl Host) {
+pub(crate) fn QueueSfx1_Max6(sound: u16, game: &mut impl Host) {
     game.queue_sound(0, sound as u8, 6)
 }
-fn QueueSfx2_Max3(sound: u16, game: &mut impl Host) {
+pub(crate) fn QueueSfx2_Max3(sound: u16, game: &mut impl Host) {
     game.queue_sound(1, sound as u8, 3)
 }
-fn QueueSfx2_Max6(sound: u16, game: &mut impl Host) {
+pub(crate) fn QueueSfx2_Max6(sound: u16, game: &mut impl Host) {
     game.queue_sound(1, sound as u8, 6)
 }
-fn QueueSfx3_Max6(sound: u16, game: &mut impl Host) {
+pub(crate) fn QueueSfx3_Max6(sound: u16, game: &mut impl Host) {
     game.queue_sound(2, sound as u8, 6)
 }
-fn CallSomeSamusCode(command: u16, game: &mut impl Host) -> u16 {
+pub(crate) fn CallSomeSamusCode(command: u16, game: &mut impl Host) -> u16 {
     game.command_player(command)
 }
-fn native_word(offset: usize, game: &mut impl Host) -> u16 {
+pub(crate) fn native_word(offset: usize, game: &mut impl Host) -> u16 {
     game.native_word(offset)
 }
-fn set_native_word(offset: usize, value: u16, game: &mut impl Host) {
+pub(crate) fn set_native_word(offset: usize, value: u16, game: &mut impl Host) {
     game.set_native_word(offset, value)
 }
-fn queue_mother_brain_sprite_tiles(bank: u8, start: u16, game: &mut impl Host) -> u8 {
+pub(crate) fn queue_mother_brain_sprite_tiles(bank: u8, start: u16, game: &mut impl Host) -> u8 {
     game.queue_mother_brain_sprite_tiles(bank, start)
 }
-fn ProcessCorpseRotting(k: u16, game: &mut impl Host) -> u8 {
+pub(crate) fn ProcessCorpseRotting(k: u16, game: &mut impl Host) -> u8 {
     game.process_corpse_rotting(k)
 }
-fn ProcessCorpseRottingVramTransfers(k: u16, game: &mut impl Host) {
+pub(crate) fn ProcessCorpseRottingVramTransfers(k: u16, game: &mut impl Host) {
     game.process_corpse_rotting_vram_transfers(k)
 }
-fn start_zebes_escape_typewriter(game: &mut impl Host) {
+pub(crate) fn start_zebes_escape_typewriter(game: &mut impl Host) {
     game.start_zebes_escape_typewriter()
 }
-fn type_escape_text(tiles: u16, game: &mut impl Host) -> u8 {
+pub(crate) fn type_escape_text(tiles: u16, game: &mut impl Host) -> u8 {
     game.type_escape_text(tiles)
 }
-fn SetBossBitForCurArea(mask: u16, game: &mut impl Host) {
+pub(crate) fn SetBossBitForCurArea(mask: u16, game: &mut impl Host) {
     game.set_boss_bit_for_current_area(mask)
 }
-fn SetEventHappened(event: u16, game: &mut impl Host) {
+pub(crate) fn SetEventHappened(event: u16, game: &mut impl Host) {
     game.set_event_happened(event)
 }
-fn CheckEventHappened(event: u16, game: &mut impl Host) -> u16 {
+pub(crate) fn CheckEventHappened(event: u16, game: &mut impl Host) -> u16 {
     game.check_event_happened(event)
 }
-fn spawn_rainbow_hdma(game: &mut impl Host) -> u16 {
+pub(crate) fn spawn_rainbow_hdma(game: &mut impl Host) -> u16 {
     game.spawn_rainbow_hdma()
 }
-fn spawn_rising_hdma(game: &mut impl Host) -> u16 {
+pub(crate) fn spawn_rising_hdma(game: &mut impl Host) -> u16 {
     game.spawn_rising_hdma()
 }
-fn player_mother_brain(command: u16, game: &mut impl Host) {
+pub(crate) fn player_mother_brain(command: u16, game: &mut impl Host) {
     game.player_mother_brain(command)
 }
-fn LoadFxEntry(index: u16, game: &mut impl Host) {
+pub(crate) fn LoadFxEntry(index: u16, game: &mut impl Host) {
     game.load_fx_entry(index)
 }
-fn samus_contact(boxes: u16, x: u16, y: u16, game: &mut impl Host) -> Contact {
+pub(crate) fn samus_contact(boxes: u16, x: u16, y: u16, game: &mut impl Host) -> Contact {
     game.samus_contact(boxes, x, y)
 }
-fn Ridley_Func_98(game: &mut impl Host) {
+pub(crate) fn Ridley_Func_98(game: &mut impl Host) {
     game.ridley_func_98()
 }
-fn move_samus_horizontally_towards_wall(amount: u16, game: &mut impl Host) -> u8 {
+pub(crate) fn move_samus_horizontally_towards_wall(amount: u16, game: &mut impl Host) -> u8 {
     game.move_samus_horizontally_towards_wall(amount)
 }
-fn move_samus_vertically_towards_ceiling_floor(amount: u16, game: &mut impl Host) -> u8 {
+pub(crate) fn move_samus_vertically_towards_ceiling_floor(amount: u16, game: &mut impl Host) -> u8 {
     game.move_samus_vertically_towards_ceiling_floor(amount)
 }
-fn add_glass_hits(slot: usize, amount: u16, game: &mut impl Host) {
+pub(crate) fn add_glass_hits(slot: usize, amount: u16, game: &mut impl Host) {
     game.add_glass_hits(slot, amount)
 }
-fn spawn_palette_effect(definition: u16, game: &mut impl Host) {
+pub(crate) fn spawn_palette_effect(definition: u16, game: &mut impl Host) {
     game.spawn_palette_effect(definition)
 }
 
