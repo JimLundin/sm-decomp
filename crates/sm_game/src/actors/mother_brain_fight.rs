@@ -20,6 +20,7 @@ use crate::actors::mother_brain_effects::{
 };
 use crate::actors::mother_brain_neck::function as neck;
 use crate::actors::session_slots::{SlotAccess, session_slot};
+use crate::escape_typewriter;
 use crate::runtime_access::SessionRam;
 // The game's traits, for the calls made on it through `foreign`.
 use crate::actors::host::{ActorRuntime as _, BossEffects as _, Random as _};
@@ -839,6 +840,7 @@ pub trait Host:
     + crate::records::Records
     + crate::cartridge::NativeImage
     + SlotAccess
+    + escape_typewriter::Host
 {
     /// The original's unreachable-state failure. Was `Unreachable`.
     fn bank_unreachable(&mut self) -> bool;
@@ -861,8 +863,6 @@ pub trait Host:
     fn queue_mother_brain_sprite_tiles(&mut self, bank: u8, start: u16) -> u8;
     fn process_corpse_rotting(&mut self, k: u16) -> u8;
     fn process_corpse_rotting_vram_transfers(&mut self, k: u16);
-    fn start_zebes_escape_typewriter(&mut self);
-    fn type_escape_text(&mut self, tiles: u16) -> u8;
     fn set_boss_bit_for_current_area(&mut self, mask: u16);
     fn set_event_happened(&mut self, event: u16);
     fn check_event_happened(&mut self, event: u16) -> u16;
@@ -908,8 +908,6 @@ on_game! {
     queue_mother_brain_sprite_tiles(bank: u8, start: u16) -> u8 => queue_mother_brain_sprite_tiles;
     process_corpse_rotting(k: u16) -> u8 => process_corpse_rotting;
     process_corpse_rotting_vram_transfers(k: u16) => process_corpse_rotting_vram_transfers;
-    start_zebes_escape_typewriter() => start_zebes_escape_typewriter;
-    type_escape_text(tiles: u16) -> u8 => type_escape_text;
     set_boss_bit_for_current_area(mask: u16) => set_boss_bit_for_current_area;
     set_event_happened(event: u16) => set_event_happened;
     check_event_happened(event: u16) -> u16 => check_event_happened;
@@ -1222,7 +1220,7 @@ crate::dispatch::callback_dispatch! {
             spawn_palette_effect(ADDR_K_PALFX_FFD1 as u16, game);
             spawn_palette_effect(ADDR_K_PALFX_FFD5 as u16, game);
             session_slot!(game, MotherBrainBrain[BRAIN].unpause_hook = 0);
-            start_zebes_escape_typewriter(game);
+            game.foreign(escape_typewriter::set_up_zebes);
             session_slot!(game, MotherBrainBody[BODY].function_timer = 32);
             let mut v1: u16 = function::PHASE_3_DEATH_SPAWN_TIME_BOMB_SET_JAPANESE_TEXT;
             if word!(game.JAPANESE_TEXT_FLAG) == 0 {
@@ -1232,7 +1230,7 @@ crate::dispatch::callback_dispatch! {
         }
     };
     [11121379] phase3_death_type_out_zebes_escape_text [] {
-        if type_escape_text(0x2610, game) & 1 != 0 {
+        if game.foreign(|game| escape_typewriter::handle_text(game, 0x2610)) {
             session_slot!(game, MotherBrainBody[BODY]; function = function::PHASE_3_DEATH_ESCAPE_DOOR_IS_EXPLODING_START_ESCAPE_TIMER,
                 function_timer = 32);
         }

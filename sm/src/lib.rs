@@ -369,7 +369,6 @@ pub mod game {
 
     pub mod animated_tiles;
     pub mod enemy_projectiles;
-    pub(crate) mod escape_typewriter;
     pub(crate) mod gameplay_flag_runtime;
     pub use sm_game::item_pickups;
     pub(crate) mod item_pickups_runtime;

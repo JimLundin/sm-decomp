@@ -735,9 +735,29 @@ impl sm_game::actors::ceres_ridley::Host for Game {
     fn queue_escape_tile_table(&mut self) {
         crate::game::rom_vram_entries::queue_escape_tile_table(self);
     }
+}
 
-    fn type_escape_text(&mut self, tiles: u16) -> bool {
-        crate::game::escape_typewriter::type_escape_text(tiles, self) & 1 != 0
+impl sm_game::escape_typewriter::Host for Game {
+    fn colour(&self, index: usize) -> u16 {
+        crate::ram_map::word!(self.PALETTE_BUFFER[index])
+    }
+    fn set_colour(&mut self, index: usize, value: u16) {
+        crate::ram_map::word!(self.PALETTE_BUFFER[index] = value);
+    }
+    fn area(&self) -> u16 {
+        crate::ram_map::word!(self.AREA_INDEX)
+    }
+}
+
+impl sm_game::display::transfer::TilemapQueue for Game {
+    fn tilemap_queue_tail(&self) -> u16 {
+        crate::ram_map::word!(self.VRAM_WRITE_QUEUE_TAIL)
+    }
+    fn set_tilemap_queue_tail(&mut self, tail: u16) {
+        crate::ram_map::word!(self.VRAM_WRITE_QUEUE_TAIL = tail);
+    }
+    fn set_tilemap_queue_byte(&mut self, at: usize, value: u8) {
+        self.ram().write_byte(at, value);
     }
 }
 
