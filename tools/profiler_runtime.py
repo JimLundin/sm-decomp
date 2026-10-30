@@ -6,7 +6,7 @@ The pinned x86_64-pc-windows-gnu toolchain has no `profiler_builtins`, so
 from the exact rust-lang/llvm-project commit the compiler was built from (as
 library/profiler_builtins/build.rs does) with Zig, wraps it in a
 `profiler_builtins` rlib, and prints the directory to pass as
-`-L dependency=DIR` next to `-C instrument-coverage`.
+`-L DIR` (crate and dependency lookup) next to `-C instrument-coverage`.
 
 Usage: profiler_runtime.py --rustc RUSTC --zig ZIG --out DIR
 """

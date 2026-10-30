@@ -126,7 +126,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Profiler runtime build failed' }
       - name: Build the verifier DLL (direct, as the local Fast loop does)
         env:
-          RUSTFLAGS: -C instrument-coverage -L crate=${{ runner.temp }}/profiler
+          RUSTFLAGS: -C instrument-coverage -L ${{ runner.temp }}/profiler
         run: |
           python tools/verify_dll.py --build-only --direct
           if ($LASTEXITCODE -ne 0) { throw 'Verifier DLL build failed' }
