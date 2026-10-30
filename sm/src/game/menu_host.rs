@@ -389,63 +389,55 @@ const _: () = {
     );
 };
 
-// The cinematic engine's local copies of these bank $8B definitions must match.
+// The cinematic engine's named bank $8B definitions must match.
 const _: () = {
     use crate::game::sm_8b as bank;
-    use sm_game::cinematic_objects as engine;
+    use sm_game::ending_screens::samus as s;
+    use sm_game::ending_sequence::object as e;
+    use sm_game::intro_sequence::{self as i, mode7 as m};
+    use sm_game::title_sequence::object as t;
+    assert!(t::COPYRIGHT_FADE_IN == bank::addr_kCinematicSpriteObjectDef_8BA113 as u16);
     assert!(
-        engine::addr_kCinematicSpriteObjectDef_8BA113
-            == bank::addr_kCinematicSpriteObjectDef_8BA113 as u32
+        i::object::PLANET_ZEBES_JAPANESE_TEXT == bank::addr_kCinematicSpriteObjectDef_8BCEB5 as u16
+    );
+    assert!(i::ZEBES_TEXT_FADE_OUT == bank::addr_loc_8BE1B4 as u16);
+    assert!(m::JAPANESE_TEXT_PAGE_1 == bank::addr_kMode7ObjectDef_8BD401 as u16);
+    assert!(m::JAPANESE_TEXT_PAGE_2 == bank::addr_kMode7ObjectDef_8BD407 as u16);
+    assert!(m::JAPANESE_TEXT_PAGE_3 == bank::addr_kMode7ObjectDef_8BD413 as u16);
+    assert!(m::JAPANESE_TEXT_PAGE_4 == bank::addr_kMode7ObjectDef_8BD41F as u16);
+    assert!(m::JAPANESE_TEXT_PAGE_5 == bank::addr_kMode7ObjectDef_8BD42B as u16);
+    assert!(m::JAPANESE_TEXT_PAGE_6 == bank::addr_kMode7ObjectDef_8BD437 as u16);
+    assert!(e::ZEBES_SILHOUETTE == bank::addr_kCinematicSpriteObjectDef_8BEEB5 as u16);
+    assert!(e::ZEBES_STARS_RIGHT == bank::addr_kCinematicSpriteObjectDef_8BEEBB as u16);
+    assert!(e::ZEBES_AFTERGLOW == bank::addr_kCinematicSpriteObjectDef_8BEEC1 as u16);
+    assert!(e::COMPLETED_SUCCESSFULLY == bank::addr_kCinematicSpriteObjectDef_8BEECD as u16);
+    assert!(e::ZEBES_STARS_LEFT == bank::addr_kCinematicSpriteObjectDef_8BEEF7 as u16);
+    assert!(e::CLEAR_TIME == bank::addr_kCinematicSpriteObjectDef_8BEEFD as u16);
+    assert!(e::CLEAR_TIME_DIGITS == bank::addr_kCinematicSpriteObjectDef_8BEF03 as u16);
+    assert!(s::SUITLESS_IDLE == bank::addr_kCinematicSpriteObjectDef_8BEF27 as u16);
+    assert!(s::SUITLESS_IDLE_LEGS == bank::addr_kCinematicSpriteObjectDef_8BEF2D as u16);
+    assert!(s::SUITLESS_LETTING_HAIR_DOWN == bank::addr_kCinematicSpriteObjectDef_8BEF33 as u16);
+    assert!(
+        s::SUITLESS_LETTING_HAIR_DOWN_LEGS == bank::addr_kCinematicSpriteObjectDef_8BEF39 as u16
+    );
+    assert!(s::SUITLESS_JUMP == bank::addr_kCinematicSpriteObjectDef_8BEF3F as u16);
+    assert!(s::SUITED_IDLE_BODY == bank::addr_kCinematicSpriteObjectDef_8BEF45 as u16);
+    assert!(s::SUITED_IDLE_HEAD_WITH_HELMET == bank::addr_kCinematicSpriteObjectDef_8BEF4B as u16);
+    assert!(
+        s::SUITED_IDLE_HEAD_WITHOUT_HELMET == bank::addr_kCinematicSpriteObjectDef_8BEF51 as u16
+    );
+    assert!(s::SUITED_THUMBS_UP_BODY == bank::addr_kCinematicSpriteObjectDef_8BEF57 as u16);
+    assert!(s::SUITED_THUMBS_UP_ARM == bank::addr_kCinematicSpriteObjectDef_8BEF5D as u16);
+    assert!(
+        s::SUITED_THUMBS_UP_HEAD_WITH_HELMET == bank::addr_kCinematicSpriteObjectDef_8BEF63 as u16
     );
     assert!(
-        engine::addr_kCinematicSpriteObjectDef_8BCEB5
-            == bank::addr_kCinematicSpriteObjectDef_8BCEB5 as u32
+        s::SUITED_THUMBS_UP_HEAD_WITHOUT_HELMET
+            == bank::addr_kCinematicSpriteObjectDef_8BEF69 as u16
     );
+    assert!(s::SUITED_JUMP_BODY == bank::addr_kCinematicSpriteObjectDef_8BEF6F as u16);
+    assert!(s::SUITED_JUMP_HEAD_WITH_HELMET == bank::addr_kCinematicSpriteObjectDef_8BEF75 as u16);
     assert!(
-        engine::addr_kCinematicSpriteObjectDef_8BEEB5
-            == bank::addr_kCinematicSpriteObjectDef_8BEEB5 as u32
+        s::SUITED_JUMP_HEAD_WITHOUT_HELMET == bank::addr_kCinematicSpriteObjectDef_8BEF7B as u16
     );
-    assert!(
-        engine::addr_kCinematicSpriteObjectDef_8BEEBB
-            == bank::addr_kCinematicSpriteObjectDef_8BEEBB as u32
-    );
-    assert!(
-        engine::addr_kCinematicSpriteObjectDef_8BEEC1
-            == bank::addr_kCinematicSpriteObjectDef_8BEEC1 as u32
-    );
-    assert!(
-        engine::addr_kCinematicSpriteObjectDef_8BEECD
-            == bank::addr_kCinematicSpriteObjectDef_8BEECD as u32
-    );
-    assert!(
-        engine::addr_kCinematicSpriteObjectDef_8BEEF7
-            == bank::addr_kCinematicSpriteObjectDef_8BEEF7 as u32
-    );
-    assert!(
-        engine::addr_kCinematicSpriteObjectDef_8BEEFD
-            == bank::addr_kCinematicSpriteObjectDef_8BEEFD as u32
-    );
-    assert!(
-        engine::addr_kCinematicSpriteObjectDef_8BEF3F
-            == bank::addr_kCinematicSpriteObjectDef_8BEF3F as u32
-    );
-    assert!(
-        engine::addr_kCinematicSpriteObjectDef_8BEF6F
-            == bank::addr_kCinematicSpriteObjectDef_8BEF6F as u32
-    );
-    assert!(
-        engine::addr_kCinematicSpriteObjectDef_8BEF7B
-            == bank::addr_kCinematicSpriteObjectDef_8BEF7B as u32
-    );
-    assert!(
-        engine::addr_kCinematicSpriteObjectDef_8BEF75
-            == bank::addr_kCinematicSpriteObjectDef_8BEF75 as u32
-    );
-    assert!(engine::addr_loc_8BE1B4 == bank::addr_loc_8BE1B4 as u32);
-    assert!(engine::addr_kMode7ObjectDef_8BD401 == bank::addr_kMode7ObjectDef_8BD401 as u32);
-    assert!(engine::addr_kMode7ObjectDef_8BD407 == bank::addr_kMode7ObjectDef_8BD407 as u32);
-    assert!(engine::addr_kMode7ObjectDef_8BD413 == bank::addr_kMode7ObjectDef_8BD413 as u32);
-    assert!(engine::addr_kMode7ObjectDef_8BD41F == bank::addr_kMode7ObjectDef_8BD41F as u32);
-    assert!(engine::addr_kMode7ObjectDef_8BD42B == bank::addr_kMode7ObjectDef_8BD42B as u32);
-    assert!(engine::addr_kMode7ObjectDef_8BD437 == bank::addr_kMode7ObjectDef_8BD437 as u32);
 };

@@ -37,6 +37,8 @@ pub mod object {
     pub const SCROLLING_1994: u16 = 0xa0ef;
     pub const TITLE_LOGO: u16 = 0xa107;
     pub const COPYRIGHT: u16 = 0xa119;
+    /// $8B:A113: the Nintendo copyright, fading in.
+    pub const COPYRIGHT_FADE_IN: u16 = 0xa113;
     pub const DEMO_LOGO: u16 = 0xa125;
     pub const BABY_METROID: u16 = 0xa355;
 }
