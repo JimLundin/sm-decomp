@@ -279,6 +279,7 @@ fn toggle<H: Host + ?Sized>(bytes: u16, game: &mut H) {
     if game.observed_inputs().pressed & K_BUTTON_A as u16 == 0 {
         return;
     }
+    crate::probe::hit("equipment_menu.toggle");
     game.queue_sound(0, 0x38_u8, 6);
     let item = crate::menu!(game.PausemenuEquipmentCategoryItem) >> 8;
     let category = crate::menu!(game.PausemenuEquipmentCategoryItem) as u8 as isize;

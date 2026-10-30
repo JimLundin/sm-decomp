@@ -103,6 +103,7 @@ pub fn advance_ending_graphics<H: crate::menus::host::Host + ?Sized>(
 }
 
 pub fn draw_cinematic_item_percentage<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    crate::probe::hit("ending_graphics.item_percentage");
     let mut count = 0u16;
     for index in (0..=4).rev() {
         let address = table_word(

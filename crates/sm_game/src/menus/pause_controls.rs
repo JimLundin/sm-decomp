@@ -224,6 +224,7 @@ fn shoulder_input<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         } else {
             return;
         };
+    crate::probe::hit("pause_controls.shoulder_input");
     crate::menu!(game.PausemenuStartLrPressedHighlightTimer = 5);
     crate::menu!(game.MenuIndex = menu);
     crate::menu!(game.PausemenuShoulderButtonHighlight = highlight);

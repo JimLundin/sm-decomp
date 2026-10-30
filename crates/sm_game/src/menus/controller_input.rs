@@ -176,6 +176,7 @@ pub fn store_binding_choices<H: Host + ?Sized>(game: &mut H) -> u8 {
 }
 
 pub fn remap_binding<H: Host + ?Sized>(game: &mut H) {
+    crate::probe::hit("controller_input.remap_binding");
     let Some(choice) = BINDING_BUTTONS[..7]
         .iter()
         .rposition(|button| button & game.observed_inputs().pressed != 0)

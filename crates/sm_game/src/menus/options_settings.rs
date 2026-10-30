@@ -114,6 +114,7 @@ fn back<H: Host + ?Sized>(game: &mut H) {
 }
 
 fn toggle_language<H: Host + ?Sized>(game: &mut H) {
+    crate::probe::hit("options_settings.toggle_language");
     word!(game.MENU_OPTION_INDEX = 0);
     word!(game.JAPANESE_TEXT_FLAG = u16::from(word!(game.JAPANESE_TEXT_FLAG) == 0));
     highlight_language(game);
@@ -156,6 +157,7 @@ fn setting_address<H: Host + ?Sized>(game: &mut H) -> usize {
 }
 
 fn toggle_special<H: Host + ?Sized>(game: &mut H) {
+    crate::probe::hit("options_settings.toggle_special");
     let address = setting_address(game);
     let value = u16::from_ne_bytes([
         game.ram().read_byte(address),

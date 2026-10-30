@@ -10,6 +10,7 @@ use {
 };
 
 pub(crate) fn update(initialize: bool, game: &mut Game) {
+    crate::verify_probe::hit("lavaquake.update");
     let mut runtime = Runtime::new(game);
     let key = Key::from_legacy(runtime.word(W::CUR_ENEMY_INDEX));
     if initialize {

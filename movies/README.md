@@ -163,8 +163,16 @@ A short replay does not establish completion of the published movie.
 
 Rows that test menus or other play the movies never reach use authored
 controller inputs. [authored_inputs.py](../tools/authored_inputs.py) holds their
-recipes and writes each input; a seeded recipe keeps the movie word latched at
-its seed as its first word.
+recipes in a small input language (frame-exact holds, presses, repeats and
+named moves) and writes each input; a seeded recipe keeps the movie word
+latched at its seed as its first word. Its sweeps write one input per
+parameter set and print the matching rows; `check` keeps the pinned recipes.
+
+A row's `require_hit` names the probes it must reach, and the row fails if
+any never runs. Routines a row exists to cover carry a probe named
+`module.routine`, for example `draygon_grab.tail_whip`; add one with
+`crate::probe::hit` (or `crate::verify_probe::hit` in `sm`) inside the
+branch that does the work.
 
 Keep ROMs, movies, input files, memory dumps, checkpoints and capture logs local
 and ignored by Git. Publish only permitted metadata or encrypted bundles;

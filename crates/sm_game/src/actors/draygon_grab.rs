@@ -126,6 +126,7 @@ pub fn chase_samus<L: Lease>(game: &mut L) {
         let repelled = game.foreign(|game| {
             let repelled = game.command_player(GRAB_COMMAND) != 0;
             if !repelled {
+                crate::probe::hit("draygon_grab.grab");
                 game.grab_samus(direction);
             }
             repelled
@@ -264,6 +265,7 @@ pub fn tail_whip<S: BossState>(k: u16, game: &mut S) {
             Draygon[BODY].function = function::GRABBED_RISING_SPIRAL
         );
     } else if remaining == TAIL_WHIP_LASH {
+        crate::probe::hit("draygon_grab.tail_whip");
         facing_animation(
             BODY,
             TAIL,

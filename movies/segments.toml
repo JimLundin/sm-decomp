@@ -1117,6 +1117,7 @@ input_sha256 = "f25e99ae0e1fdb5d4a40b90019ba216ead2694ae5d0061b1fea5f6e1fca97eb1
 start_frame = 0
 frames = 1512
 expect = ["state:15", "state:18", "room:9A44"]
+require_hit = ["pause_controls.shoulder_input", "equipment_menu.toggle", "reserve_tanks.transfer_manual"]
 
 # From power-on, the options-tour recipe: title, file select, controller
 # remapping, special settings, both languages, back to file select, start.
@@ -1127,6 +1128,7 @@ input_sha256 = "b06fcdb5eddf0784604c5e8e2c7d4a6f724ecffb62e762b82c799e0a75bc0128
 start_frame = 0
 frames = 2310
 expect = ["state:2", "state:4", "state:30"]
+require_hit = ["controller_input.remap_binding", "options_settings.toggle_special", "options_settings.toggle_language"]
 
 # The low% movie's Draygon fight: Draygon grabs Samus, who grapples a turret.
 [[segment]]
@@ -1138,6 +1140,7 @@ input_sha256 = "733d6f51465b761d6d6567d1807ba146faaf428b4da5ead6470b8c61862cf0e5
 start_frame = 0
 frames = 3585
 expect = ["boss:draygon", "room:DA60", "room:D78F"]
+require_hit = ["draygon_grab.grab"]
 
 # seed-credits.inputs followed by 4,000 released words: the post-roll ending,
 # Samus, the clear time and the item percentage.
@@ -1150,6 +1153,7 @@ input_sha256 = "5b6ffc5db37ecd8f79aafbac3351af1ecda182a585df97634ee6a75b1980386c
 start_frame = 0
 frames = 15900
 expect = ["credits-complete"]
+require_hit = ["ending_graphics.item_percentage"]
 
 # The Volcano Room (AE32) is on no movie's route; its lavaquake runs only there.
 # Low% seed85's latched word, then the volcano-room recipe.
@@ -1162,6 +1166,7 @@ input_sha256 = "32d9f08bdfd0b2bac2f6f56b45f27867d30287a2b0a0ae3f9938892971ffc550
 start_frame = 0
 frames = 841
 expect = ["room:AE74", "room:AE32"]
+require_hit = ["lavaquake.update"]
 
 # The low% movie's first 1,902 Draygon words, then the release recipe: Samus
 # stays caught, so Draygon spirals up and tail-whips her until the reserve refills.
@@ -1174,6 +1179,7 @@ input_sha256 = "04a5cdab779fb74c0ca5d93603eb9365f3d5ed88ec9ced18ec60c717400d18d5
 start_frame = 0
 frames = 3500
 expect = ["room:DA60", "state:27"]
+require_hit = ["draygon_grab.grab", "draygon_grab.tail_whip"]
 
 # The first 1,880 words, then the release recipe: Draygon misses Samus and
 # begins a later swoop.

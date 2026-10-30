@@ -100,6 +100,7 @@ pub fn transfer_manual<H: Host + ?Sized>(game: &mut H) {
     if crate::menu!(game.PausemenuReserveTankDelayCtr -= 1, reread) & 7 == 7 {
         game.queue_sound(2, 0x2d_u8, 6);
     }
+    crate::probe::hit("reserve_tanks.transfer_manual");
     if transfer_one(true, game) {
         return;
     }
