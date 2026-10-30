@@ -1,7 +1,9 @@
 use crate::game::actors;
 use crate::game::actors::api as actor_api;
 use crate::game::actors::mother_brain_effects::{
-    MotherBrain_GenerateExplosions, MotherBrain_HandleRainbowBeamPalette, MotherBrain_WritePalette,
+    generate_explosions as generate_body_explosions,
+    handle_rainbow_palette as handle_body_rainbow_palette,
+    write_palette as write_mother_brain_palette,
 };
 use crate::game::corpse_tables;
 use crate::game::display_refresh::{native_word, set_native_word};
@@ -747,7 +749,7 @@ crate::game::callback_dispatch! {
     };
     [11123173] MotherBomb_FiringRainbowBeam_6_MoveSamusToWall [] {
         MotherBrain_PlayRainbowBeamSfx(game);
-        MotherBrain_HandleRainbowBeamPalette(game);
+        handle_body_rainbow_palette(game);
         MotherBrain_AimBeamAndIncrWidth(game);
         MotherBrain_HandleRainbowBeamExplosions(game);
         if MotherBrain_MoveSamusTowardsWallDueToBeam(game) & 1 != 0 {
@@ -758,7 +760,7 @@ crate::game::callback_dispatch! {
     };
     [11123200] MotherBomb_FiringRainbowBeam_7_DelayFrame [] {
         MotherBrain_PlayRainbowBeamSfx(game);
-        MotherBrain_HandleRainbowBeamPalette(game);
+        handle_body_rainbow_palette(game);
         MotherBrain_AimBeamAndIncrWidth(game);
         MotherBrain_HandleRainbowBeamExplosions(game);
         MotherBrain_MoveSamusTowardsWallDueToBeam(game);
@@ -778,7 +780,7 @@ crate::game::callback_dispatch! {
     };
     [11123260] MotherBomb_FiringRainbowBeam_9_DrainingSamus [] {
         MotherBrain_PlayRainbowBeamSfx(game);
-        MotherBrain_HandleRainbowBeamPalette(game);
+        handle_body_rainbow_palette(game);
         MotherBrain_AimBeamAndIncrWidth(game);
         MotherBrain_HandleRainbowBeamExplosions(game);
         vitals::drain_health_by_rainbow_beam(game);
@@ -792,7 +794,7 @@ crate::game::callback_dispatch! {
     };
     [11123294] MotherBomb_FiringRainbowBeam_10_FinishFiringRainbow [] {
         MotherBrain_PlayRainbowBeamSfx(game);
-        MotherBrain_HandleRainbowBeamPalette(game);
+        handle_body_rainbow_palette(game);
         MotherBrain_AimBeam(game);
         MotherBrain_HandleRainbowBeamExplosions(game);
         let E: i32 = 0;
@@ -866,7 +868,7 @@ crate::game::callback_dispatch! {
         }
     };
     [11124317] MotherBrain_DrainedByShitroid_1 [] {
-        MotherBrain_HandleRainbowBeamPalette(game);
+        handle_body_rainbow_palette(game);
         let E: i32 = 0;
         slot!(game, Enemy_MotherBrain[E].var_F = slot!(game, Enemy_MotherBrain[E].var_F).wrapping_sub(1));
         if (slot!(game, Enemy_MotherBrain[E].var_F) & 0x8000) != 0 {
@@ -955,7 +957,7 @@ crate::game::callback_dispatch! {
         if slot!(game, Enemy_MotherBrain[E1].var_00) == 0 {
             slot!(game, Enemy_MotherBrain[E1].var_00 = 50);
         }
-        MotherBrain_HandleRainbowBeamPalette(game);
+        handle_body_rainbow_palette(game);
         CallMotherBrainPainfulWalk(((slot!(game, Enemy_MotherBrain[E1].var_08)) as u32) | (0xa90000u32), game);
         let v2: u16 = (2u16).wrapping_mul(slot!(game, Enemy_MotherBrain[E1].var_06));
         slot!(game, Enemy_MotherBrain[E1].var_07 = g_byte_A9BEEE[v2 as usize] as u16);
@@ -2174,9 +2176,9 @@ pub fn MotherBrain_Instr_AimRings(x: u16, y: u16, game: &mut Game) {
 }
 crate::forward_calls! { pub fn (game: &mut Game);
     MotherBrain_GenerateSmokyExplosions =>
-        MotherBrain_GenerateExplosions(0x10, addr_word_A9B10F as u16, 2, game);
+        generate_body_explosions(0x10, addr_word_A9B10F as u16, 2, game);
     MotherBrain_GenerateMixedExplosions =>
-        MotherBrain_GenerateExplosions(8, addr_word_A9B109 as u16, 4, game);
+        generate_body_explosions(8, addr_word_A9B109 as u16, 4, game);
 }
 pub fn MotherBrain_ExplodeEscapeDoor(game: &mut Game) {
     {
@@ -2550,7 +2552,7 @@ pub fn MotherBrain_WriteDefaultPalette(game: &mut Game) {
 }
 pub fn MotherBrain_WritePhase2DeathPalette(game: &mut Game) {
     {
-        MotherBrain_WritePalette(
+        write_mother_brain_palette(
             mother_brain_tables::rainbow_beam_palette(game, 6).colors,
             game,
         );
