@@ -15,7 +15,7 @@ use crate::actors::{
     escape_critters, etecoon, evir, fire_arc, fireflea, fune, gamet, geega, kago, kraid,
     magdollite, metroid, mini_kraid, mochtroid, morph_ball_eye, oum, phantoon, phantoon_actions,
     puyo, reflec, ridley, rinka, roach, shaktool, sidehopper, skree, skultera, space_pirates,
-    statues, tatori, torizo, tripper, yapping_maw, zeb, zebetites, zoa,
+    statues, tatori, torizo, tripper, work_robot, yapping_maw, zeb, zebetites, zoa,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -164,9 +164,7 @@ pub fn shot<H: ShotHost>(ea: u32, j: u16, game: &mut H) {
 /// Graphics draw hooks whose routines still run in the compatibility crate.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NativeDrawHook {
-    ReflecPalette,
     CeresRidleyBabyMetroidAndWings,
-    WorkRobotPalette,
     BlueFaceBlockPalette,
     MotherBrainBrainAndNeck,
     MotherBrainBrain,
@@ -174,7 +172,7 @@ pub enum NativeDrawHook {
 }
 
 /// What the draw hooks need beyond their actors' own hosts.
-pub trait DrawHookHost: SpeciesHost + magdollite::Host + draygon_host::Host {
+pub trait DrawHookHost: SpeciesHost + LeaseActors + magdollite::Host + draygon_host::Host {
     fn native_draw_hook(&mut self, hook: NativeDrawHook);
 }
 
@@ -182,12 +180,12 @@ pub trait DrawHookHost: SpeciesHost + magdollite::Host + draygon_host::Host {
 pub fn draw_hook<H: DrawHookHost>(ea: u32, game: &mut H) {
     match ea {
         10518604 => (),
-        10738444 => game.native_draw_hook(NativeDrawHook::ReflecPalette),
+        10738444 => reflec::cycle_palette(game),
         10851138 => draygon_flight::set_bg2_scroll(game),
         10920690 => game.native_draw_hook(NativeDrawHook::CeresRidleyBabyMetroidAndWings),
         11042892 => (),
         11055282 => magdollite::cycle_palette(game),
-        11062375 => game.native_draw_hook(NativeDrawHook::WorkRobotPalette),
+        11062375 => work_robot::palette(game),
         11069550 => game.native_draw_hook(NativeDrawHook::BlueFaceBlockPalette),
         11110278 => (),
         11110345 => game.native_draw_hook(NativeDrawHook::MotherBrainBrainAndNeck),
@@ -273,6 +271,7 @@ pub trait AiHost:
     + fireflea::Host
     + skultera::Host
     + atomic::Host
+    + crate::actors::host::EnemyHost
     + crate::effects::SoundEffects
 {
     /// An AI routine whose arm is still in the compatibility table.
@@ -544,6 +543,12 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10654337 | 10654367 => tatori::touch(ea == 10654367, game),
         10654479 => tatori::shot(game),
         10663426 => rinka::initialize(game),
+        11062135 => work_robot::initialize(game),
+        11062220 => work_robot::initialize_deactivated(game),
+        11062326 => work_robot::main_ai(game),
+        11063668 => work_robot::touch(game),
+        11063693 => work_robot::shot_deactivated(game),
+        11063698 => work_robot::shot(game),
         10663876 => {
             if !rinka::main_ai(game) {
                 game.unknown_routine();
@@ -771,6 +776,7 @@ pub trait InstructionHost:
     + ceres_doors::Host
     + mini_kraid::Host
     + skultera::Host
+    + crate::actors::host::EnemyHost
     + crate::effects::SoundEffects
 {
     /// An instruction whose arm is still in the compatibility table.
@@ -802,6 +808,9 @@ pub fn instruction<H: InstructionHost>(
         10722422 | 10722444 => tripper::set_x_movement(true, j, game),
         10725992 => sidehopper::queue_sound(j, game),
         10657941 => cacatac::resume_moving(k, j, game),
+        11062537 | 11062692 | 11062762 | 11062917 | 11062987 | 11062991 | 11063146 | 11063216
+        | 11063371 | 11063441 | 11063490 | 11063494 | 11063506 | 11063552 | 11063559 | 11063601
+        | 11063613 | 11063659 => work_robot::instruction(ea, k, j, game),
         10654593 | 10654738 | 10654791 | 10654801 | 10654827 | 10654853 | 10654881 | 10654919 => {
             tatori::instruction(ea, j, game)
         }

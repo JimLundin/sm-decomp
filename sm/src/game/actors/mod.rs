@@ -100,6 +100,5 @@ pub(crate) mod magdollite;
 pub(in crate::game) mod maridia_floater;
 pub(in crate::game) mod maridia_puffer;
 pub(crate) mod spore_spawn;
-pub(in crate::game) mod wrecked_ship_robots;
 pub(in crate::game) mod wrecked_ship_spark;
 pub(crate) mod yapping_maw;

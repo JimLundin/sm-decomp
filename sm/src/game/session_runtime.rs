@@ -1187,12 +1187,6 @@ crate::game::callback_dispatch! {
         11060670 => crate::game::actors::maridia_floater::touch;
         11060719 => crate::game::actors::maridia_floater::shot;
         11060799 => crate::game::actors::maridia_floater::power_bomb;
-        11062135 => crate::game::actors::wrecked_ship_robots::initialize;
-        11062220 => crate::game::actors::wrecked_ship_robots::initialize_dormant;
-        11062326 => crate::game::actors::wrecked_ship_robots::advance;
-        11063668 => crate::game::actors::wrecked_ship_robots::touch_dormant;
-        11063693 => crate::game::actors::wrecked_ship_robots::shot_dormant;
-        11063698 => crate::game::actors::wrecked_ship_robots::shot;
         11065545 => crate::game::actors::maridia_puffer::initialize;
         11065611 => crate::game::actors::maridia_puffer::advance; 11066132 => crate::game::actors::maridia_puffer::shot;
         11068983 => crate::game::actors::wrecked_ship_spark::initialize;
@@ -1405,7 +1399,6 @@ crate::game::callback_dispatch! {
         10734712 => [maridia_snail::instruction(k, 4, j, game)];
         11056990 => [j];
         11068957 | 11068970 => [crate::game::actors::wrecked_ship_spark::instruction(ea == 11068957, j, game)];
-        11062537 | 11062692 | 11062762 | 11062917 | 11062987 | 11062991 | 11063146 | 11063216 | 11063371 | 11063441 | 11063490 | 11063494 | 11063506 | 11063552 | 11063559 | 11063601 | 11063613 | 11063659 => [crate::game::actors::wrecked_ship_robots::instruction(ea, k, j, game)];
         11072806 | 11072996 | 11073151 | 11073234 | 11073240 => [crate::game::actors::ki_hunter::instruction(ea, k, j, game)];
         11128756 => [sm_game::actors::baby_metroid_cutscene::go_to_initial(k, j)];
         11128778 => [sm_game::actors::baby_metroid_cutscene::go_to_draining_mother_brain(k, j)];

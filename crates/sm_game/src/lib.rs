@@ -201,6 +201,7 @@ pub mod actors {
     pub mod tatori;
     pub mod torizo;
     pub mod tripper;
+    pub mod work_robot;
     pub mod yapping_maw;
     pub mod zeb;
     pub mod zebetites;

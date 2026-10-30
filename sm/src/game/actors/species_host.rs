@@ -1,12 +1,27 @@
 //! The compatibility side of the enemy species tables in `sm_game::actors::species`:
 //! the routines that still run here, by name.
 #![forbid(unsafe_code)]
-use crate::game::actors::reflec;
 use crate::game::actors::{self, api};
 use crate::game::session_runtime::Runtime;
 use crate::game::sm_a9;
 use crate::game_state::Game;
+use crate::ram_map::word;
+use sm_game::actors::access::ActorKey;
 
+impl sm_game::actors::host::EnemyHost for Game {
+    fn current_enemy(&self) -> u16 {
+        word!(self.CUR_ENEMY_INDEX)
+    }
+    fn area_boss_flags(&mut self) -> u8 {
+        crate::game::gameplay_flag_runtime::boss_byte_at(word!(self.AREA_INDEX), self)
+    }
+    fn angle_to_player(&mut self, k: u16) -> u16 {
+        api::angle_to_player(&Runtime::new(self), ActorKey::from_legacy(k))
+    }
+    fn collided_projectile_direction(&self) -> u16 {
+        word!(self.PROJECTILE_DIR[word!(self.COLLISION_DETECTION_INDEX)])
+    }
+}
 impl sm_game::actors::species::SpeciesHost for Game {
     fn unknown_routine(&mut self) {
         crate::rtl::Unreachable(self);
@@ -41,11 +56,9 @@ impl sm_game::actors::species::DrawHookHost for Game {
     fn native_draw_hook(&mut self, hook: sm_game::actors::species::NativeDrawHook) {
         use sm_game::actors::species::NativeDrawHook::*;
         match hook {
-            ReflecPalette => reflec::cycle_palette(self),
             CeresRidleyBabyMetroidAndWings => {
                 sm_game::actors::ridley::draw_baby_metroid_and_door(self)
             }
-            WorkRobotPalette => crate::game::actors::wrecked_ship_robots::palette(self),
             BlueFaceBlockPalette => sm_game::actors::blue_brinstar_face_block::cycle_palette(self),
             MotherBrainBrainAndNeck => sm_a9::draw_brain_and_neck_hook(self),
             MotherBrainBrain => sm_a9::draw_brain_hook(self),
