@@ -73,6 +73,9 @@ pub mod actors {
     pub mod content;
     pub mod dachora;
     pub mod drawing;
+    pub mod draygon_flight;
+    pub mod draygon_host;
+    pub mod draygon_sweep;
     pub mod effects;
     pub mod escape_animals;
     #[doc(hidden)] // Shared verification world for compat and detached checks.
