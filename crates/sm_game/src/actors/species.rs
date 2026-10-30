@@ -20,7 +20,13 @@ pub trait SpeciesHost {
 
 /// What the bank $B3 routines need beyond their actors' own hosts.
 pub trait B3Host:
-    SpeciesHost + ActorHost + ActorRuntime + LeaseActors + botwoon::Host + escape_critters::Host
+    SpeciesHost
+    + ActorHost
+    + ActorRuntime
+    + LeaseActors
+    + botwoon::Host
+    + escape_critters::Host
+    + crate::records::Records
 {
 }
 
@@ -31,6 +37,7 @@ impl<T> B3Host for T where
         + LeaseActors
         + botwoon::Host
         + escape_critters::Host
+        + crate::records::Records
         + ?Sized
 {
 }

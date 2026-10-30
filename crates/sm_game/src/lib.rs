@@ -91,8 +91,8 @@ pub mod actors {
     pub mod api;
     pub mod botwoon;
     pub mod botwoon_death;
-    pub mod brinstar_pipe_bug;
     pub mod boulder;
+    pub mod brinstar_pipe_bug;
     pub mod ceres_doors;
     pub mod ceres_ridley;
     pub mod codec;

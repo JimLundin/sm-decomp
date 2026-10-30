@@ -7,11 +7,12 @@ use crate::actors::host::abs16;
 use crate::actors::host::{ActorHost, ActorRuntime, Axis};
 use crate::actors::layouts::EnemyLayout72 as Bug;
 use crate::actors::queries;
-use crate::cartridge::rom_table_word;
 use crate::ram::RawRam as _;
 use crate::ram::{slot, word};
 
-pub fn initialize<H: ActorHost + ActorRuntime + LeaseActors + ?Sized>(game: &mut H) {
+pub fn initialize<H: ActorHost + ActorRuntime + LeaseActors + crate::records::Records + ?Sized>(
+    game: &mut H,
+) {
     let e = i32::from(word!(game.cur_enemy_index));
     slot!(game, Bug[e].var_B = slot!(game, Bug[e].base.x_pos));
     let y = slot!(game, Bug[e].base.y_pos);
@@ -21,30 +22,42 @@ pub fn initialize<H: ActorHost + ActorRuntime + LeaseActors + ?Sized>(game: &mut
         slot!(game, Bug[e].base.current_instruction = 0x8a1d);
     }
 }
-pub fn state_address<H: ActorHost + ActorRuntime + LeaseActors + ?Sized>(game: &H) -> u32 {
+pub fn state_address<
+    H: ActorHost + ActorRuntime + LeaseActors + crate::records::Records + ?Sized,
+>(
+    game: &H,
+) -> u32 {
     let e = i32::from(word!(game.cur_enemy_index));
     0xb30000 | u32::from(slot!(game, Bug[e].var_F))
 }
-fn update_animation<H: ActorHost + ActorRuntime + LeaseActors + ?Sized>(game: &mut H) {
+fn update_animation<
+    H: ActorHost + ActorRuntime + LeaseActors + crate::records::Records + ?Sized,
+>(
+    game: &mut H,
+) {
     let e = i32::from(word!(game.cur_enemy_index));
     let phase = slot!(game, Bug[e].var_E);
     if phase != slot!(game, Bug[e].var_01) {
         slot!(game, Bug[e].var_01 = phase);
-        let table = if slot!(game, Bug[e].parameter_1) != 0 {
-            0xb38833
-        } else {
-            0xb3882b
-        };
-        slot!(game, Bug[e].base; current_instruction = rom_table_word!(game, table, phase as isize), instruction_timer = 1, timer = 0);
+        let alternate = slot!(game, Bug[e].parameter_1) != 0;
+        slot!(game, Bug[e].base; current_instruction = crate::enemy_lists::pipe_bug_instruction_list(game, alternate, phase as isize), instruction_timer = 1, timer = 0);
     }
 }
-pub fn await_view<H: ActorHost + ActorRuntime + LeaseActors + ?Sized>(_: u16, game: &mut H) {
+pub fn await_view<H: ActorHost + ActorRuntime + LeaseActors + crate::records::Records + ?Sized>(
+    _: u16,
+    game: &mut H,
+) {
     if !game.current_outside_screen() {
         let current = i32::from(word!(game.cur_enemy_index));
         slot!(game, Bug[current].var_F = 0x8890);
     }
 }
-pub fn await_player<H: ActorHost + ActorRuntime + LeaseActors + ?Sized>(k: u16, game: &mut H) {
+pub fn await_player<
+    H: ActorHost + ActorRuntime + LeaseActors + crate::records::Records + ?Sized,
+>(
+    k: u16,
+    game: &mut H,
+) {
     let e = i32::from(k);
     let dy = game.player_delta(k, Axis::Y) as i16;
     if dy < 0 && (i32::from(dy) + 96) & 0x8000 == 0 {
@@ -68,7 +81,10 @@ pub fn await_player<H: ActorHost + ActorRuntime + LeaseActors + ?Sized>(k: u16, 
         }
     }
 }
-pub fn rise<H: ActorHost + ActorRuntime + LeaseActors + ?Sized>(k: u16, game: &mut H) {
+pub fn rise<H: ActorHost + ActorRuntime + LeaseActors + crate::records::Records + ?Sized>(
+    k: u16,
+    game: &mut H,
+) {
     let e = i32::from(k);
     let previous = slot!(game, Bug[e].base.y_subpos);
     slot!(
@@ -88,7 +104,10 @@ pub fn rise<H: ActorHost + ActorRuntime + LeaseActors + ?Sized>(k: u16, game: &m
         slot!(game, Bug[e].var_F = 0x891c);
     }
 }
-pub fn fly<H: ActorHost + ActorRuntime + LeaseActors + ?Sized>(k: u16, game: &mut H) {
+pub fn fly<H: ActorHost + ActorRuntime + LeaseActors + crate::records::Records + ?Sized>(
+    k: u16,
+    game: &mut H,
+) {
     let e = i32::from(k);
     let step = if slot!(game, Bug[e].var_A) & 0x8000 == 0 {
         2
@@ -114,7 +133,10 @@ pub fn fly<H: ActorHost + ActorRuntime + LeaseActors + ?Sized>(k: u16, game: &mu
         slot!(game, Bug[e]; var_D = 48, var_F = 0x897e);
     }
 }
-pub fn cooldown<H: ActorHost + ActorRuntime + LeaseActors + ?Sized>(k: u16, game: &mut H) {
+pub fn cooldown<H: ActorHost + ActorRuntime + LeaseActors + crate::records::Records + ?Sized>(
+    k: u16,
+    game: &mut H,
+) {
     let e = i32::from(k);
     let previous = slot!(game, Bug[e].var_D);
     slot!(
