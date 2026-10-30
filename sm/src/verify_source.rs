@@ -214,6 +214,46 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/imported.rs"),
     ),
     (
+        "crates/sm_game/src/menus/equipment_menu.rs",
+        include_bytes!("../../crates/sm_game/src/menus/equipment_menu.rs"),
+    ),
+    (
+        "crates/sm_game/src/menus/file_menu.rs",
+        include_bytes!("../../crates/sm_game/src/menus/file_menu.rs"),
+    ),
+    (
+        "crates/sm_game/src/menus/host.rs",
+        include_bytes!("../../crates/sm_game/src/menus/host.rs"),
+    ),
+    (
+        "crates/sm_game/src/menus/map_menu.rs",
+        include_bytes!("../../crates/sm_game/src/menus/map_menu.rs"),
+    ),
+    (
+        "crates/sm_game/src/menus/menu_tilemap.rs",
+        include_bytes!("../../crates/sm_game/src/menus/menu_tilemap.rs"),
+    ),
+    (
+        "crates/sm_game/src/menus/mod.rs",
+        include_bytes!("../../crates/sm_game/src/menus/mod.rs"),
+    ),
+    (
+        "crates/sm_game/src/menus/options_objects.rs",
+        include_bytes!("../../crates/sm_game/src/menus/options_objects.rs"),
+    ),
+    (
+        "crates/sm_game/src/menus/options_settings.rs",
+        include_bytes!("../../crates/sm_game/src/menus/options_settings.rs"),
+    ),
+    (
+        "crates/sm_game/src/menus/prelude.rs",
+        include_bytes!("../../crates/sm_game/src/menus/prelude.rs"),
+    ),
+    (
+        "crates/sm_game/src/menus/save_slots.rs",
+        include_bytes!("../../crates/sm_game/src/menus/save_slots.rs"),
+    ),
+    (
         "crates/sm_game/src/ram.rs",
         include_bytes!("../../crates/sm_game/src/ram.rs"),
     ),
@@ -468,10 +508,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/options_settings.rs",
         include_bytes!("game/options_settings.rs"),
-    ),
-    (
-        "sm/src/game/options_objects.rs",
-        include_bytes!("game/options_objects.rs"),
     ),
     (
         "sm/src/game/pause_controls.rs",
@@ -1487,6 +1523,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/scene/state.rs",
         include_bytes!("../../crates/sm_game/src/scene/state.rs"),
+    ),
+    (
+        "sm/src/game/menu_host.rs",
+        include_bytes!("game/menu_host.rs"),
     ),
     (
         "sm/src/game/menu_tilemap.rs",

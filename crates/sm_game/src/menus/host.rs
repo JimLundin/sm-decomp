@@ -1,0 +1,111 @@
+//! What the menus need from the runtime: named and raw work RAM, SRAM, the
+//! cartridge, register writes, sound and brightness, plus the sprite,
+//! window, HDMA, binding, reserve-tank and room-entry operations still
+//! implemented by the compatibility runtime.
+use crate::cartridge::{LoadedImage, NativeImage};
+use crate::display::sequence::Registers;
+use crate::effects::{DisplayRefresh, SoundEffects};
+use crate::ram::{CompatibilityRam, WorkRamAccess};
+use crate::word_transfers::LoadedRom;
+
+/// Battery-backed save RAM.
+pub trait SaveRam {
+    fn word(&self, at: usize) -> u16;
+    fn set_word(&self, at: usize, value: u16);
+    fn bytes(&self, range: core::ops::Range<usize>) -> Vec<u8>;
+    fn write_bytes(&self, at: usize, input: &[u8]);
+    fn copy_within(&self, source: core::ops::Range<usize>, destination: usize);
+    fn fill(&self, range: core::ops::Range<usize>, value: u8);
+}
+
+/// How the menu window's square moves this frame.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum WindowMotion {
+    Expand,
+    Contract,
+}
+
+/// Menu sprite output into the OAM buffer.
+pub trait MenuSprites {
+    fn menu_sprite(&mut self, index: u16, x: u16, y: u16, palette: u16);
+    fn menu_selection_sprite(&mut self);
+    fn file_slot_cursor(&mut self, exit_y: u16);
+    fn file_helmets(&mut self, animate: bool);
+    fn file_menu_cursor(&mut self);
+    fn file_copy_arrow(&mut self);
+    /// A bank `bank` spritemap at `address`, recoloured with `palette`;
+    /// `bounded` clips it to the screen.
+    fn paletted_sprite(
+        &mut self,
+        bank: u8,
+        address: u16,
+        position: (u16, u16),
+        palette: u16,
+        bounded: bool,
+    );
+}
+
+/// The runtime operations the menus call.
+pub trait MenuRuntime {
+    fn window_initialize(&mut self);
+    fn window_open_from_center(&mut self) -> bool;
+    fn window_project(&mut self);
+    fn window_load_velocities(&mut self, area: u16);
+    fn window_advance(&mut self, motion: WindowMotion);
+    fn reserve_toggle_mode(&mut self);
+    fn reserve_transfer_manual(&mut self);
+    fn load_binding_choices(&mut self);
+    fn reset_binding_choices(&mut self);
+    fn store_binding_choices(&mut self) -> u8;
+    fn remap_binding(&mut self);
+    fn set_hdma_enabled(&mut self, enabled: bool);
+    fn clear_hdma(&mut self);
+    /// Queue a tilemap transfer whose source and destination are read from
+    /// the host after the size word is written.
+    fn queue_native_transfer(
+        &mut self,
+        cursor: u16,
+        size: u16,
+        source: &dyn Fn(&Self) -> u16,
+        bank: u8,
+        destination: &dyn Fn(&Self) -> u16,
+    ) -> u16;
+    /// Upload `bytes` from `source` to VRAM word address `destination`.
+    fn load_vram_words(&mut self, source: u32, destination: u16, bytes: u16);
+    fn decompress_to_ram(&mut self, source: u32, destination: usize) -> usize;
+    fn file_select_fade(&mut self) -> u8;
+    fn boss_byte(&mut self, area: u16) -> u8;
+    /// Begin entering the room at the current load station.
+    fn enter_load_station(&mut self);
+    fn request_reset(&mut self);
+    fn flush_sram(&mut self);
+    fn native_rom_diagnostic(&mut self, address: u32);
+    fn invalid_window(&mut self, address: u32);
+    /// The original's failed drawing or bounds assertion.
+    fn legacy_assertion(&self, drawing: bool) -> !;
+    /// The original's unreachable native routine.
+    fn unreachable_native(&mut self) -> u16;
+    /// Verification observers; the defaults observe nothing.
+    fn observe_map_write(&self, _byte: usize, _index: usize, _stage: u8) {}
+    fn observe_flags_save(&mut self, _stage: u8) {}
+}
+
+pub trait Host:
+    CompatibilityRam
+    + WorkRamAccess
+    + LoadedRom
+    + LoadedImage
+    + NativeImage
+    + Registers
+    + SoundEffects
+    + DisplayRefresh
+    + MenuSprites
+    + MenuRuntime
+{
+    type Sram: SaveRam + ?Sized;
+    fn sram(&self) -> &Self::Sram;
+    fn pause_menu_tables(&self) -> &super::map_menu::ImportedTables;
+    fn equipment_screen_tables(&self) -> &super::equipment_menu::ImportedTables;
+    fn save_slot_offsets(&self) -> &Option<super::save_slots::ImportedSlots>;
+    fn area_select_palettes(&self) -> &Option<super::menu_tilemap::ImportedAreaPalettes>;
+}

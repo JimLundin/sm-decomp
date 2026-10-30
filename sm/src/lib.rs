@@ -377,6 +377,7 @@ pub mod game {
     pub(crate) mod layer_blending;
     pub(crate) mod liquid_effects;
     pub(crate) mod map_menu;
+    pub(crate) mod menu_host;
     pub mod menu_tilemap;
     pub mod menu_window;
     pub mod message_boxes;
@@ -445,7 +446,6 @@ pub mod game {
     pub(crate) mod hud;
     pub(crate) mod maridia_turtles;
     pub(crate) mod mini_crocomire;
-    pub(crate) mod options_objects;
     pub(crate) mod options_settings;
     pub(crate) mod pause_controls;
     pub mod progress_flags;

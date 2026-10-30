@@ -25,6 +25,7 @@ pub mod imported;
 pub mod item_pickups;
 pub mod launch_motion;
 pub mod liquid_surface;
+pub mod menus;
 pub mod message_composition;
 pub mod probe;
 pub mod progress;

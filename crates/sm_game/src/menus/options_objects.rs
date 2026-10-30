@@ -1,19 +1,17 @@
 //! Options sprites: allocation, script execution and drawing in their original order.
 #![forbid(unsafe_code)]
-use crate::game::{
-    menu_tilemap::native_record, projectile_presentation_ram as sprites, sprite_drawing::Clip,
-};
-use crate::game_state::Game;
-use crate::ram_map::word;
+use super::menu_tilemap::native_record;
+use super::prelude::*;
+use crate::ram::word;
 
-pub(crate) fn clear(game: &mut Game) {
-    word_transfers!(game, descending, 8;
+pub fn clear<H: Host + ?Sized>(game: &mut H) {
+    crate::word_transfers!(game, descending, 8;
         le(eproj_y_pos, 12) <- value(0),
         le(eproj_y_vel, 24) <- value(0),
     );
 }
 
-pub(crate) fn spawn(parameter: u16, address: u16, game: &mut Game) -> u8 {
+pub fn spawn<H: Host + ?Sized>(parameter: u16, address: u16, game: &mut H) -> u8 {
     word!(game.options_menu_init_param = parameter);
     let mut index = 14u16;
     while word!(game.cinematicspr_arr7[index >> 1]) != 0 {
@@ -47,13 +45,13 @@ pub(crate) fn spawn(parameter: u16, address: u16, game: &mut Game) -> u8 {
             word! { game; cinematicbg_arr9[slot] = 16; optionsmenu_arr10[slot] = 3584; }
         }
         _ => {
-            crate::game::animated_tiles::native::unreachable(game);
+            game.unreachable_native();
         }
     }
     0
 }
 
-pub(crate) fn advance_and_draw(game: &mut Game) {
+pub fn advance_and_draw<H: Host + ?Sized>(game: &mut H) {
     let mut index = 14i32;
     while index >= 0 {
         word!(game.optionsmenu_index = index as u16);
@@ -65,7 +63,7 @@ pub(crate) fn advance_and_draw(game: &mut Game) {
     }
     for slot in (0..8).rev() {
         if word!(game.cinematicbg_arr8[slot]) != 0 {
-            sprites::paletted(
+            game.paletted_sprite(
                 0x82,
                 word!(game.cinematicbg_arr8[slot]),
                 (
@@ -73,23 +71,22 @@ pub(crate) fn advance_and_draw(game: &mut Game) {
                     word!(game.cinematicbg_arr9[slot]),
                 ),
                 word!(game.optionsmenu_arr10[slot]),
-                Clip::Bounded,
-                game,
+                true,
             );
         }
     }
 }
 
-fn end_script(slot: u16, game: &mut Game) {
+fn end_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
     word! { game; cinematicspr_instr_ptr[slot] = 1; cinematicspr_arr7[slot] = 0xf4b6; }
 }
 
-fn before_script(slot: u16, game: &mut Game) {
+fn before_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
     match word!(game.optionsmenu_arr1[slot]) {
         0xf2a9 => {
             if word!(game.game_state) == 2 {
                 let screen = word!(game.game_options_screen_index);
-                let table = crate::rtl::rom_table_word!(game, 0x82f2ed, screen as isize);
+                let table = crate::cartridge::rom_table_word!(game, 0x82f2ed, screen as isize);
                 if table != 0 {
                     let address = table.wrapping_add(word!(game.menu_option_index).wrapping_mul(4));
                     let record = native_record(0x820000 | u32::from(address), game);
@@ -131,12 +128,12 @@ fn before_script(slot: u16, game: &mut Game) {
         }
         0x8c10 => {}
         _ => {
-            crate::game::animated_tiles::native::unreachable(game);
+            game.unreachable_native();
         }
     }
 }
 
-fn instruction(opcode: u16, slot: u16, address: u16, game: &mut Game) -> u16 {
+fn instruction<H: Host + ?Sized>(opcode: u16, slot: u16, address: u16, game: &mut H) -> u16 {
     match opcode {
         0x8c5a => {
             word! { game, 0; cinematicbg_arr8[slot], cinematicspr_arr7[slot] }
@@ -169,11 +166,11 @@ fn instruction(opcode: u16, slot: u16, address: u16, game: &mut Game) -> u16 {
                 native_record(0x820000 | u32::from(address), game).word(0)
             }
         }
-        _ => crate::game::animated_tiles::native::unreachable(game),
+        _ => game.unreachable_native(),
     }
 }
 
-fn advance(index: u16, game: &mut Game) {
+fn advance<H: Host + ?Sized>(index: u16, game: &mut H) {
     before_script(index >> 1, game);
     let index = word!(game.optionsmenu_index);
     let slot = word!(game.optionsmenu_index) >> 1;
