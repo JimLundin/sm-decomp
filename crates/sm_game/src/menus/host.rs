@@ -38,6 +38,20 @@ pub trait MenuRuntime {
     /// Begin entering the room at the current load station.
     fn enter_load_station(&mut self);
     fn request_reset(&mut self);
+    /// Spawn a cinematic object; returns the original's failure flag.
+    fn spawn_cinematic_object(
+        &mut self,
+        layer: crate::cinematic::CinematicLayer,
+        definition: u16,
+        parameter: u16,
+    ) -> u8;
+    fn spawn_cinematic_sprite_at(&mut self, definition: u16, slot: u16, parameter: u16) -> u8;
+    fn spawn_palette_effect(&mut self, definition: u16);
+    fn enable_display_nmi(&mut self, enabled: bool);
+    /// Samus's pending pose change, as the intro's demo applies it.
+    fn finish_pose_change(&mut self);
+    fn demo_start(&mut self);
+    fn demo_load(&mut self, mode: u16, input: u16);
     /// The message box DMA length the original kept outside RAM.
     fn message_box_das0l_value(&self) -> u16;
     fn set_message_box_das0l_value(&mut self, value: u16);
@@ -98,5 +112,6 @@ pub trait Host:
     fn save_slot_offsets(&self) -> &Option<super::save_slots::ImportedSlots>;
     fn demo_sets(&self) -> &Option<crate::demo_rooms::ImportedSets>;
     fn demo_scenes(&self) -> &Option<crate::demo_rooms::ImportedScenes>;
+    fn intro_palette(&self) -> &Option<crate::intro_pages::ImportedIntroPalette>;
     fn area_select_palettes(&self) -> &Option<super::menu_tilemap::ImportedAreaPalettes>;
 }

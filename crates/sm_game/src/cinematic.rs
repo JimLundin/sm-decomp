@@ -6,6 +6,14 @@
 use crate::ram::RawRam as _;
 use crate::ram::word;
 
+/// The three cinematic object layers.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CinematicLayer {
+    Background,
+    Mode7,
+    Sprites,
+}
+
 pub fn advance_cinematic_fade<H: crate::menus::host::Host + ?Sized>(
     fade: crate::visual_state::CinematicFade,
     game: &mut H,

@@ -154,6 +154,40 @@ impl MenuRuntime for Game {
     fn set_message_box_das0l_value(&mut self, value: u16) {
         self.message_box_das0l_value = value;
     }
+    fn spawn_cinematic_object(
+        &mut self,
+        layer: sm_game::cinematic::CinematicLayer,
+        definition: u16,
+        parameter: u16,
+    ) -> u8 {
+        use sm_game::cinematic::CinematicLayer::*;
+        use visual_runtime::CinematicObjects;
+        let objects = match layer {
+            Background => CinematicObjects::Background,
+            Mode7 => CinematicObjects::Mode7,
+            Sprites => CinematicObjects::Sprites,
+        };
+        objects.spawn(definition, parameter, self)
+    }
+    fn spawn_cinematic_sprite_at(&mut self, definition: u16, slot: u16, parameter: u16) -> u8 {
+        visual_runtime::spawn_cinematic_sprite_at(definition, slot, parameter, self)
+    }
+    fn spawn_palette_effect(&mut self, definition: u16) {
+        crate::game::palette_effects::spawn(definition, self)
+    }
+    fn enable_display_nmi(&mut self, enabled: bool) {
+        // SAFETY: the intro runs from the frame loop with the backend installed.
+        unsafe { crate::game::display_refresh::enable(enabled, self) }
+    }
+    fn finish_pose_change(&mut self) {
+        crate::game::player_transitions::finish_pose_change(&mut Runtime::new(self));
+    }
+    fn demo_start(&mut self) {
+        crate::game::player_transitions::demo::start(Runtime::new(self).session_mut());
+    }
+    fn demo_load(&mut self, mode: u16, input: u16) {
+        crate::game::player_transitions::demo::load(&mut Runtime::new(self), mode, input);
+    }
     fn request_reset(&mut self) {
         Game::request_reset(self)
     }
@@ -203,6 +237,9 @@ impl Host for Game {
     fn demo_scenes(&self) -> &Option<sm_game::demo_rooms::ImportedScenes> {
         &self.demo_scenes
     }
+    fn intro_palette(&self) -> &Option<sm_game::intro_pages::ImportedIntroPalette> {
+        &self.intro_palette
+    }
     fn area_select_palettes(&self) -> &Option<sm_game::menus::menu_tilemap::ImportedAreaPalettes> {
         &self.area_select_palettes
     }
@@ -236,3 +273,43 @@ const _: () = assert!(
     core::mem::offset_of!(crate::types::EnemyData, ai_preinstr)
         == core::mem::offset_of!(sm_game::menus::prelude::EnemyData, ai_preinstr)
 );
+
+// The intro's local copies of these bank $8B definitions must match.
+const _: () = {
+    use crate::game::sm_8b as bank;
+    use sm_game::intro_pages as intro;
+    assert!(
+        intro::addr_kCinematicBgObjectDef_8BCF3F == bank::addr_kCinematicBgObjectDef_8BCF3F as u32
+    );
+    assert!(
+        intro::addr_kCinematicBgObjectDef_8BCF5D == bank::addr_kCinematicBgObjectDef_8BCF5D as u32
+    );
+    assert!(
+        intro::addr_kCinematicSpriteObjectDef_8BCE5B
+            == bank::addr_kCinematicSpriteObjectDef_8BCE5B as u32
+    );
+    assert!(
+        intro::addr_kCinematicSpriteObjectDef_8BCE55
+            == bank::addr_kCinematicSpriteObjectDef_8BCE55 as u32
+    );
+    assert!(
+        intro::addr_kCinematicSpriteObjectDef_8BCE61
+            == bank::addr_kCinematicSpriteObjectDef_8BCE61 as u32
+    );
+    assert!(
+        intro::addr_kCinematicSpriteObjectDef_8BCE67
+            == bank::addr_kCinematicSpriteObjectDef_8BCE67 as u32
+    );
+    assert!(
+        intro::addr_kCinematicSpriteObjectDef_8BCE73
+            == bank::addr_kCinematicSpriteObjectDef_8BCE73 as u32
+    );
+    assert!(
+        intro::addr_kCinematicSpriteObjectDef_8BCE79
+            == bank::addr_kCinematicSpriteObjectDef_8BCE79 as u32
+    );
+    assert!(
+        intro::addr_kCinematicSpriteObjectDef_8BCF27
+            == bank::addr_kCinematicSpriteObjectDef_8BCF27 as u32
+    );
+};

@@ -28,6 +28,7 @@ pub mod gameplay_flag_state;
 pub mod geometry;
 pub mod hud;
 pub mod imported;
+pub mod intro_pages;
 pub mod item_pickups;
 pub mod launch_motion;
 pub mod layer_blending;
