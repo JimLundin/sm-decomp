@@ -233,8 +233,8 @@ impl Mode7Transform {
     }
 }
 
-/// A typed display value and the register it sets, for `register_writes!`'s
-/// `show` and `show_mirror` kinds.
+/// A typed display value and the register it sets, for the register
+/// sequence's `show` and `show_mirror` kinds.
 pub trait DisplayRegister {
     fn register(&self) -> u16;
     fn value(&self) -> u8;
