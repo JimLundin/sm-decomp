@@ -1146,7 +1146,7 @@ crate::game::callback_dispatch! {
         11049788 => crate::game::actors::wrecked_ship_ghost::advance;
         11051336 => crate::game::actors::yapping_maw::initialize;
         11051537 => [{
-            if !crate::game::actors::yapping_maw::advance(game, |operand, game| {
+            if !crate::game::actors::yapping_maw::main_ai(game, |operand, game| {
                 crate::rtl::WriteReg(crate::rtl::WRMPYA as u16, operand, game);
             }) {
                 crate::rtl::Unreachable(game);

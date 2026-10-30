@@ -7,6 +7,15 @@ use crate::game::session_runtime::{Runtime, correct_previous_position, player_co
 use crate::game::sprite_effect_runtime as sprites;
 use crate::game_state::Game;
 pub(crate) use sm_game::actors::yapping_maw::*;
+
+// The named bank $A8 addresses are the ones `session_runtime` dispatches on.
+const _: () = {
+    use sm_game::actors::yapping_maw::instruction as i;
+    assert!(i::OFFSET_SAMUS_UP_RIGHT == 11051207 && i::OFFSET_SAMUS_UP_LEFT == 11051225);
+    assert!(i::OFFSET_SAMUS_DOWN_RIGHT == 11051243 && i::OFFSET_SAMUS_DOWN_LEFT == 11051261);
+    assert!(i::OFFSET_SAMUS_UP == 11051279 && i::OFFSET_SAMUS_DOWN == 11051297);
+    assert!(i::QUEUE_SOUND_IF_ON_SCREEN == 11051315);
+};
 use sm_game::geometry::Point;
 
 impl Host for Game {
