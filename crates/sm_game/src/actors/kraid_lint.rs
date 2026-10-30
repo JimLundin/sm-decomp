@@ -36,7 +36,7 @@ fn hitbox(field: usize, game: &mut (impl Host + ?Sized)) -> i32 {
 pub fn lint_touch_samus(k: u16, game: &mut (impl Host + ?Sized)) {
     let e = i32::from(k);
     if slot!(game, Kraid[e].base.properties) as i32 & K_ENEMY_PROPS_TANGIBLE as i32 != 0
-        || word!(game.samus_invincibility_timer) != 0
+        || game.invincibility_timer() != 0
     {
         return;
     }

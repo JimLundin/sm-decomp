@@ -1,4 +1,4 @@
-//! Samus's position, as the player domain owns it.
+//! Samus's position and damage timers, as the player domain owns them.
 //!
 //! Code outside the player modules (rooms, scrolling, actors, cinematics, the
 //! grapple) reads and moves Samus through this trait instead of naming the
@@ -21,6 +21,11 @@ pub trait PlayerPosition {
     fn set_previous_player_y(&mut self, y: u16);
     fn set_previous_player_x_fraction(&mut self, fraction: u16);
     fn set_previous_player_y_fraction(&mut self, fraction: u16);
+    /// $18A8 and $18AA: invincibility and knockback frames left.
+    fn invincibility_timer(&self) -> u16;
+    fn knockback_timer(&self) -> u16;
+    fn set_invincibility_timer(&mut self, frames: u16);
+    fn set_knockback_timer(&mut self, frames: u16);
 }
 
 /// Samus's facing and movement type, and the grapple angle bytes, as the

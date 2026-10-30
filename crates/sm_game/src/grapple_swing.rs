@@ -197,7 +197,7 @@ fn spike_contact<H: Host + ?Sized>(solid: bool, game: &mut H) -> u8 {
                     native(0xa4e) <- value(sum as u16),
                     native(0xa50) <- value((sum >> 16) as u16));
                 game.session_mut().player.invincibility = 60;
-                word!(game.samus_knockback_timer = 10);
+                game.session_mut().player.knockback_timer = 10;
             }
         }
     }

@@ -112,6 +112,10 @@ macro_rules! compatibility_player_position {
             fn set_previous_player_y(&mut self, y: u16) { let game = self; sm_game::ram_word!(game.samus_prev_y_pos = y) }
             fn set_previous_player_x_fraction(&mut self, fraction: u16) { let game = self; sm_game::ram_word!(game.samus_prev_x_subpos = fraction) }
             fn set_previous_player_y_fraction(&mut self, fraction: u16) { let game = self; sm_game::ram_word!(game.samus_prev_y_subpos = fraction) }
+            fn invincibility_timer(&self) -> u16 { let game = self; sm_game::ram_word!(game.samus_invincibility_timer) }
+            fn knockback_timer(&self) -> u16 { let game = self; sm_game::ram_word!(game.samus_knockback_timer) }
+            fn set_invincibility_timer(&mut self, frames: u16) { let game = self; sm_game::ram_word!(game.samus_invincibility_timer = frames) }
+            fn set_knockback_timer(&mut self, frames: u16) { let game = self; sm_game::ram_word!(game.samus_knockback_timer = frames) }
         }
     )+};
 }
@@ -168,6 +172,18 @@ impl sm_game::player_position::PlayerPosition for crate::game::session_runtime::
     }
     fn set_previous_player_y_fraction(&mut self, fraction: u16) {
         self.write_word_le(fraction, 0xb16)
+    }
+    fn invincibility_timer(&self) -> u16 {
+        self.owned_player(|player| player.invincibility, 0x18a8)
+    }
+    fn knockback_timer(&self) -> u16 {
+        self.owned_player(|player| player.knockback_timer, 0x18aa)
+    }
+    fn set_invincibility_timer(&mut self, frames: u16) {
+        self.write_word_le(frames, 0x18a8)
+    }
+    fn set_knockback_timer(&mut self, frames: u16) {
+        self.write_word_le(frames, 0x18aa)
     }
 }
 

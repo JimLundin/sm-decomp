@@ -107,7 +107,8 @@ pub fn advance_intro_rinka<H: crate::menus::host::Host + ?Sized>(
             return;
         }
     } else {
-        word! { game, 11; samus_invincibility_timer, samus_knockback_timer }
+        game.set_invincibility_timer(11);
+        game.set_knockback_timer(11);
         word!(game.knockback_x_dir = 1);
     }
     resume_cinematic_sprite(slot, 0xce53, game);

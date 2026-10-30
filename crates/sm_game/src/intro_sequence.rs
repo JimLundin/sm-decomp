@@ -190,8 +190,8 @@ pub fn initial<H: Host + ?Sized>(game: &mut H) {
     word!(game.intro_samus_display = 0);
     word!(game.samus_draw_handler = DEFAULT_DRAW_HANDLER);
     game.use_cinematic_bindings();
-    word!(game.samus_invincibility_timer = 0);
-    word!(game.samus_knockback_timer = 0);
+    game.set_invincibility_timer(0);
+    game.set_knockback_timer(0);
     clear_cinematic_objects(game);
     crate::word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(INTRO_PALETTES, 0));
     GraphicsAsset::Decompress(0x95f90e, 0x10000).load(game);
@@ -537,8 +537,8 @@ pub fn boom_fade_out<H: Host + ?Sized>(game: &mut H) {
             game.queue_music_delayed8(NO_MUSIC);
             word!(game.hud_item_index = 0);
             word!(game.samus_auto_cancel_hud_item_index = 0);
-            word!(game.samus_invincibility_timer = 0);
-            word!(game.samus_knockback_timer = 0);
+            game.set_invincibility_timer(0);
+            game.set_knockback_timer(0);
             game.clear_hdma();
             game.disable_scanline_irq();
             word!(game.fx_layer_blending_config_a = 0);

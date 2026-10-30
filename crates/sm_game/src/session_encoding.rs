@@ -1274,6 +1274,7 @@ mod player_lane_tests {
         (0xcf8, |s| &mut s.player.grapple_slow_scrolling),
         (0xa9e, |s| &mut s.player.transitions.grapple_walljump_timer),
         (0x18a8, |s| &mut s.player.invincibility),
+        (0x18aa, |s| &mut s.player.knockback_timer),
         (0xb36, |s| &mut s.player.contact.y_direction),
         (0xb4a, |s| &mut s.player.contact.acceleration_mode),
         (0xb00, |s| &mut s.player.contact.radius),

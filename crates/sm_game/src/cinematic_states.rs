@@ -248,14 +248,11 @@ pub fn title_sequence<H: Host + ?Sized>(game: &mut H) -> u8 {
 pub fn handle_samus_during_intro<H: Host + ?Sized>(game: &mut H) {
     if word!(game.intro_samus_display) != 0 {
         game.advance_intro_player();
-        if word!(game.samus_invincibility_timer) != 0 {
-            word!(
-                game.samus_invincibility_timer =
-                    word!(game.samus_invincibility_timer).wrapping_sub(1)
-            );
+        if game.invincibility_timer() != 0 {
+            game.set_invincibility_timer(game.invincibility_timer() - 1);
         }
-        if word!(game.samus_knockback_timer) != 0 {
-            word!(game.samus_knockback_timer = word!(game.samus_knockback_timer).wrapping_sub(1));
+        if game.knockback_timer() != 0 {
+            game.set_knockback_timer(game.knockback_timer() - 1);
         }
     }
 }
