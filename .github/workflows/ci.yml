@@ -39,6 +39,8 @@ jobs:
         run: python3 tools/ram_ratchet.py
       - name: Keep the oracle patch policy in step with its inventory
         run: python3 tools/oracle_patch_policy.py --check
+      - name: Keep the authored corpus recipes and their input language
+        run: python3 tools/authored_inputs.py check
       - name: Keep every mutation anchor present (the mutants run nightly)
         run: |
           python3 sm/src/verification/player_detached/mutations.py --check-anchors
