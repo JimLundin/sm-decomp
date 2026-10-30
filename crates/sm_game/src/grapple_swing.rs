@@ -875,7 +875,17 @@ fn connected_to_block<H: Host + ?Sized>(game: &mut H) -> bool {
     connected
 }
 
-pub fn update_tiles<H: Host + crate::menus::host::MenuRuntime + ?Sized>(game: &mut H) {
+/// The grapple point's tile upload runs on the compat game: it queues native
+/// VRAM transfers, so it needs only RAM words, the menu runtime and records.
+pub fn update_tiles<
+    H: crate::ram::CompatibilityRam
+        + crate::menus::host::MenuRuntime
+        + crate::player_position::PlayerFacts
+        + crate::records::Records
+        + ?Sized,
+>(
+    game: &mut H,
+) {
     if (word!(game.grapple_point_anim_timer -= 1, reread) & 0x8000) != 0 {
         word!(game.grapple_point_anim_timer = 5);
         word!(game.grapple_point_anim_ptr += 512);
