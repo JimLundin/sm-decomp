@@ -1,15 +1,6 @@
 //! Candidate-only actual spawn/initializer publication and nested-unwind checks.
 //! No predecessor carrier bytes or assertions are changed by this module.
 #![forbid(unsafe_code)]
-use super::{
-    api::ActorSpawnRequest,
-    content::{
-        ActorProgramDefinition, ActorProgramId, ActorTemplateId, PopulationEntry,
-        PopulationEntryId, SpeciesId,
-    },
-    identity::{ActorBirthOrigin, ActorObservation},
-    media::AppearanceId,
-};
 use crate::{
     game::{
         room_entry::world::{CompatibilityKeys, ResourceId, WorldBinding},
@@ -26,6 +17,19 @@ use std::{
     collections::BTreeMap,
     panic::{AssertUnwindSafe, catch_unwind},
     sync::Arc,
+};
+use {
+    crate::game::actors::{
+        api::ActorSpawnRequest,
+        identity::{ActorBirthOrigin, ActorObservation},
+    },
+    sm_game::actors::{
+        content::{
+            ActorProgramDefinition, ActorProgramId, ActorTemplateId, PopulationEntry,
+            PopulationEntryId, SpeciesId,
+        },
+        media::AppearanceId,
+    },
 };
 
 const UNWIND: &str = "actor initializer fixture deliberate nested dispatch unwind";
@@ -155,7 +159,7 @@ pub(super) fn dispatch_noop(game: &mut Game) {
     });
     // Release the observer borrow before the actual nested Runtime/spawn entry.
     if ordinal == 0 && mode != Mode::Single {
-        let handle = super::population::spawn(
+        let handle = crate::game::actors::population::spawn(
             &mut Runtime::new(game),
             ActorSpawnRequest {
                 template: ActorTemplateId(12),
@@ -183,7 +187,7 @@ pub(super) fn dispatch_noop(game: &mut Game) {
 }
 
 fn binding() -> Arc<WorldBinding> {
-    let base = super::fixture::binding(false, AppearanceId(20), false);
+    let base = sm_game::actors::fixture::binding(false, AppearanceId(20), false);
     let world = base.definition().unwrap().clone();
     let keys = CompatibilityKeys {
         starts: BTreeMap::new(),
@@ -261,19 +265,21 @@ fn game() -> Box<Game> {
     );
     {
         let mut runtime = Runtime::new(&mut game);
-        use super::access::ActorCollections;
+        use sm_game::actors::access::ActorCollections;
         // Verification resource setup uses the actual palette-copy capability;
         // actors are born ONLY by the actual spawn below, never a seed helper.
         for (row, resource, address) in [
             (9u16, ResourceId(3), 0xb48000),
             (10, ResourceId(4), 0xb49000),
         ] {
-            let captured = super::content::ActorLiveRecord {
+            let captured = sm_game::actors::content::ActorLiveRecord {
                 image: image.clone(),
                 base: lorom_offset(address) as usize,
             };
-            let mapped =
-                super::media::palette_resource_for_capture(&captured, &runtime.session().world);
+            let mapped = sm_game::actors::media::palette_resource_for_capture(
+                &captured,
+                &runtime.session().world,
+            );
             assert_eq!(
                 mapped,
                 Some(resource),
@@ -365,7 +371,7 @@ fn run(mode: Mode) {
     let mut game = game();
     let active = ActiveGuard::begin(mode);
     let result = catch_unwind(AssertUnwindSafe(|| {
-        super::population::spawn(
+        crate::game::actors::population::spawn(
             &mut Runtime::new(&mut game),
             ActorSpawnRequest {
                 template: ActorTemplateId(11),

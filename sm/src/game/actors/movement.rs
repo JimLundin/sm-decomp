@@ -1,15 +1,6 @@
 //! Actor movement, terrain reactions and ordered fixed-point commits.
 #![forbid(unsafe_code)]
-use super::{
-    access::{
-        AccessMode::{LittleEndian, Native},
-        ActorAccess, ActorKey,
-    },
-    api::{MoveScan, MovementResult, SlopePolicy, VerticalProbeEdge},
-    effects::ActorHost,
-};
 use sm_game::geometry::{Point, Position, Vector32};
-#[cfg(not(sm_verify_dll))]
 use sm_game::room_mechanisms::{
     creation,
     host::{Contact, SpawnSource},
@@ -17,6 +8,16 @@ use sm_game::room_mechanisms::{
 use sm_game::{
     projectile_geometry::square_slope_occupied,
     room_mechanisms::host::{ByteOrder, Host as MechanismHost, ImportedAliases},
+};
+use {
+    crate::game::actors::api::{MoveScan, MovementResult, SlopePolicy, VerticalProbeEdge},
+    sm_game::actors::{
+        access::{
+            AccessMode::{LittleEndian, Native},
+            ActorAccess, ActorKey,
+        },
+        effects::ActorHost,
+    },
 };
 fn current(h: &impl ActorAccess) -> ActorKey {
     ActorKey::from_legacy(h.session().actors.controls.selected)
@@ -139,12 +140,12 @@ pub(in crate::game) fn apply_vector<H: ActorAccess>(h: &mut H, phase: u16, vecto
         a.x.fraction = position as u16;
     });
     #[cfg(sm_verify_dll)]
-    super::movement_verification::vector_store(h, key, false);
+    h.actor_vector_store(key, false);
     h.edit_actor(key, LittleEndian, |a| {
         a.x.whole = (position >> 16) as u16;
     });
     #[cfg(sm_verify_dll)]
-    super::movement_verification::vector_store(h, key, false);
+    h.actor_vector_store(key, false);
     let y = if phase.wrapping_add(128) & 0x80 != 0 {
         vector.y.wrapping_neg()
     } else {
@@ -155,12 +156,12 @@ pub(in crate::game) fn apply_vector<H: ActorAccess>(h: &mut H, phase: u16, vecto
         a.y.fraction = position as u16;
     });
     #[cfg(sm_verify_dll)]
-    super::movement_verification::vector_store(h, key, true);
+    h.actor_vector_store(key, true);
     h.edit_actor(key, LittleEndian, |a| {
         a.y.whole = (position >> 16) as u16;
     });
     #[cfg(sm_verify_dll)]
-    super::movement_verification::vector_store(h, key, true);
+    h.actor_vector_store(key, true);
 }
 fn square<H: ActorAccess>(h: &H, scan: &MoveScan, bts: u8, vertical: bool) -> bool {
     let index = usize::from(bts & 0x1f) * 4
@@ -291,7 +292,7 @@ fn react<H: ActorHost + MechanismHost>(
                     return true;
                 }
                 #[cfg(sm_verify_dll)]
-                super::movement_verification::spike(h, header);
+                observed_spike(h, header);
                 #[cfg(not(sm_verify_dll))]
                 creation::spawn(h, SpawnSource::Collision { header }, &mut Contact::Absent);
                 return false;
@@ -481,4 +482,26 @@ pub(in crate::game) fn snap_to_slopes<H: ActorHost + ImportedAliases>(
         }
     }
     hit
+}
+
+/// The spike PLM spawn with the verifier's movement-case observations around it.
+#[cfg(sm_verify_dll)]
+fn observed_spike<H: ActorHost + MechanismHost>(h: &mut H, header: u16) -> u8 {
+    use std::panic::{AssertUnwindSafe, catch_unwind, resume_unwind};
+    if !h.actor_spike_armed(header) {
+        return creation::spawn(h, SpawnSource::Collision { header }, &mut Contact::Absent);
+    }
+    h.actor_movement_observe(2);
+    let returned = catch_unwind(AssertUnwindSafe(|| {
+        creation::spawn(h, SpawnSource::Collision { header }, &mut Contact::Absent)
+    }));
+    h.actor_movement_observe(if returned.is_ok() { 3 } else { 5 });
+    match returned {
+        Err(payload) => resume_unwind(payload),
+        Ok(value) => {
+            assert_eq!(value, 0, "actual B3D0 no-op PLM return");
+            h.actor_movement_observe(4);
+            value
+        }
+    }
 }

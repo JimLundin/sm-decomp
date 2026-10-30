@@ -1,10 +1,10 @@
 //! Fune fire after a delay or when Samus enters their vertical range.
 //! The saved animation word remains RAM-authoritative.
 #![forbid(unsafe_code)]
-use super::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
-use super::api::{self, Axis};
+use crate::game::actors::api::{self, Axis};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use sm_game::enemy_script::EnemyScript;
 use {
     crate::game::enemy_projectiles::SpawnEprojWithGfx, sm_game::enemy_projectiles::host::Effects,

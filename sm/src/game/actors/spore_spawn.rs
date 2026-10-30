@@ -1,7 +1,7 @@
 //! Spore Spawn stem motion, native orbit words and scripted palettes.
 //! RAM retains the boss-specific state while common actors/projectiles stay owned.
 #![forbid(unsafe_code)]
-use super::{api, combat};
+use crate::game::actors::{api, combat};
 use crate::game::enemy_layouts::EnemyLayout104 as Spore;
 use crate::game::enemy_projectiles::{self, SpawnEprojWithRoomGfx};
 use crate::game::gameplay_flag_runtime as flags;

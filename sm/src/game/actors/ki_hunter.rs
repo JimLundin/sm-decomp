@@ -1,15 +1,15 @@
 //! KiHunter body, attached wings and detached wing motion.
 //! Native actor and extended words remain authoritative during the migration.
 #![forbid(unsafe_code)]
-use super::access::ActorKey as Key;
-use super::api::{Axis, MovementResult::Blocked, SlopePolicy};
-use super::{api as actor_api, combat};
+use crate::game::actors::api::{Axis, MovementResult::Blocked, SlopePolicy};
+use crate::game::actors::{api as actor_api, combat};
 use crate::game::enemy_layouts::EnemyLayout40 as Hunter;
 use crate::game::music::QueueSfx2_Max6;
 use crate::game::session_runtime::{Runtime, actor_cosine, actor_sine};
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::rtl::{abs16, words};
+use sm_game::actors::access::ActorKey as Key;
 use sm_game::enemy_script::EnemyScript;
 use {
     crate::game::enemy_projectiles::SpawnEprojWithGfx, sm_game::enemy_projectiles::host::Effects,

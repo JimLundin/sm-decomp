@@ -1,9 +1,9 @@
 //! Maridia refill creatures rise toward Samus, dash, and return off screen.
 #![forbid(unsafe_code)]
-use super::access::{AccessMode::Native, ActorAccess};
-use super::{api, combat};
+use crate::game::actors::{api, combat};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+use sm_game::actors::access::{AccessMode::Native, ActorAccess};
 use sm_game::enemy_projectiles::host::Effects;
 use sm_game::enemy_script::EnemyScript;
 use sm_game::player_projectiles::content::table;

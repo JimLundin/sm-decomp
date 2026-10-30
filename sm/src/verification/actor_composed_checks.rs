@@ -1,26 +1,29 @@
 //! Passive staging/birth/scene observations and an explicit rejected-spawn check.
 //! No receipt, slot or identity seeding; only owned observations are retained.
 #![forbid(unsafe_code)]
-use super::{
-    composed_fixture as fixture,
-    content::ActorContentError,
-    identity::InstanceHandle,
-    media::AppearanceId,
-    scene::{ActorDrawRequest, ActorVisualSelection},
-};
 use std::cell::RefCell;
+use {
+    crate::game::actors::{composed_fixture as fixture, identity::InstanceHandle},
+    sm_game::actors::{
+        content::ActorContentError,
+        media::AppearanceId,
+        scene::{ActorDrawRequest, ActorVisualSelection},
+    },
+};
 use {crate::game::session_runtime::Runtime, sm_game::room_entry::world::Identity};
 // Keep checkpoint operations beside the private actor lifecycle they exercise.
 pub(crate) fn checkpoint_stage_tilesets(h: &mut Runtime<'_>, tilesets: u16) {
     h.session_mut().room.entry.enemy_tilesets_key = tilesets;
-    super::staging::stage_tilesets(h);
+    crate::game::actors::staging::stage_tilesets(h);
 }
 pub(crate) fn checkpoint_spawn(
     h: &mut Runtime<'_>,
-    request: super::api::ActorSpawnRequest,
+    request: crate::game::actors::api::ActorSpawnRequest,
     remove: bool,
 ) {
-    let handle = super::population::spawn(h, request).unwrap().unwrap();
+    let handle = crate::game::actors::population::spawn(h, request)
+        .unwrap()
+        .unwrap();
     let key = h
         .session()
         .actor_identity
@@ -28,7 +31,7 @@ pub(crate) fn checkpoint_spawn(
         .unwrap();
     if remove {
         h.session_mut().actors.controls.selected = key.byte_index();
-        super::population::delete_connected(h);
+        crate::game::actors::population::delete_connected(h);
     }
 }
 
@@ -109,9 +112,9 @@ pub(crate) fn reject_unstaged_spawn(h: &mut Runtime<'_>) {
     }
     let before: Vec<u8> = (0..131072).map(|at| h.byte(at)).collect();
     let identity = h.session().actor_identity.clone();
-    let result = super::population::spawn(
+    let result = crate::game::actors::population::spawn(
         h,
-        super::api::ActorSpawnRequest {
+        crate::game::actors::api::ActorSpawnRequest {
             template: fixture::TEMPLATE,
             appearance: Some(fixture::APPEARANCES[0]),
         },
@@ -119,7 +122,7 @@ pub(crate) fn reject_unstaged_spawn(h: &mut Runtime<'_>) {
     assert!(
         matches!(
             result,
-            Err(super::identity::ActorIdentityError::Content(
+            Err(crate::game::actors::identity::ActorIdentityError::Content(
                 ActorContentError::PaletteNotResident(_)
             ))
         ),
@@ -245,7 +248,7 @@ pub(super) fn draw(h: &Runtime<'_>, request: &ActorDrawRequest) {
     });
 }
 pub(crate) fn source_transfer(h: &mut Runtime<'_>) -> bool {
-    super::staging::transfer_actor_tiles_and_initialize(h);
+    crate::game::actors::staging::transfer_actor_tiles_and_initialize(h);
     h.session().actors.staging.transfer_source == 0xffff
 }
 pub(crate) fn source(h: &mut Runtime<'_>, reversed: bool) {
@@ -265,9 +268,9 @@ pub(crate) fn source(h: &mut Runtime<'_>, reversed: bool) {
             "composed.source.reordered-entry"
         );
     }
-    let handle = super::population::spawn(
+    let handle = crate::game::actors::population::spawn(
         h,
-        super::api::ActorSpawnRequest {
+        crate::game::actors::api::ActorSpawnRequest {
             template: fixture::TEMPLATE,
             appearance: Some(fixture::APPEARANCES[1]),
         },
@@ -310,7 +313,7 @@ fn run_actor_frame(h: &mut Runtime<'_>, count: usize) {
         .iter()
         .map(|a| a.frame)
         .collect();
-    super::scheduling::select(h);
+    crate::game::actors::scheduling::select(h);
     assert_eq!(
         h.session().actors.controls.selection_visits,
         visits.wrapping_add(1)
@@ -320,7 +323,7 @@ fn run_actor_frame(h: &mut Runtime<'_>, count: usize) {
         count as u16 * 2,
         "composed.select.all-actual-births"
     );
-    super::scheduling::advance_selected(h);
+    crate::game::actors::scheduling::advance_selected(h);
     for (i, frame) in frames.into_iter().enumerate() {
         let actor = &h.session().actors.slots[i];
         assert_eq!(
@@ -335,7 +338,7 @@ fn run_actor_frame(h: &mut Runtime<'_>, count: usize) {
         );
         assert_eq!(actor.instruction, 0xe004, "composed.animation.cursor");
     }
-    super::drawing::draw_scene(h);
+    crate::game::actors::drawing::draw_scene(h);
 }
 pub(crate) fn destination(h: &mut Runtime<'_>) {
     assert_eq!(

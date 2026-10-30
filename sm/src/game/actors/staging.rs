@@ -1,6 +1,6 @@
 //! Population graphics staging and ordered transfer transitions.
 #![forbid(unsafe_code)]
-use super::effects::ActorHost;
+use sm_game::actors::effects::ActorHost;
 use sm_game::enemy_projectiles::host::Host;
 
 pub(in crate::game) fn queue_actor_tiles<H: ActorHost + Host>(h: &mut H) {
@@ -12,7 +12,7 @@ pub(in crate::game) fn queue_actor_tiles<H: ActorHost + Host>(h: &mut H) {
         h.set_vram_queue_size(cursor, size);
         h.set_vram_queue_source(cursor, 0x2000);
         h.write_collection_byte(
-            super::access::CollectionWindow::VramQueue,
+            sm_game::actors::access::CollectionWindow::VramQueue,
             usize::from(cursor) + 4,
             126,
         );
@@ -33,7 +33,7 @@ pub(in crate::game) fn transfer_actor_tiles_and_initialize<H: ActorHost + Host>(
     match source {
         0xffff => {}
         0xfffe => {
-            super::population::install_population(h);
+            crate::game::actors::population::install_population(h);
             h.session_mut().actors.staging.transfer_source = 0xffff;
         }
         0x9800 => h.session_mut().actors.staging.transfer_source = 0xfffe,
@@ -57,10 +57,10 @@ pub(in crate::game) fn transfer_actor_tiles_and_initialize<H: ActorHost + Host>(
 
 pub(super) fn load_graphics<H: ActorHost + Host>(
     h: &mut H,
-    population: &super::content::PopulationCursor,
-    key: super::access::ActorKey,
+    population: &sm_game::actors::content::PopulationCursor,
+    key: sm_game::actors::access::ActorKey,
 ) {
-    use super::access::AccessMode::Native;
+    use sm_game::actors::access::AccessMode::Native;
     #[cfg(sm_verify_dll)]
     h.actor_reference_stage(1, key.byte_index());
     let mut address = h.session().room.entry.enemy_tilesets_key;
@@ -95,8 +95,9 @@ pub(super) fn load_graphics<H: ActorHost + Host>(
             return;
         }
         let raw = h.tileset_definition(&tileset, 0);
-        let definition =
-            h.capture_actor_definition(super::content::ActorDefinitionKey::from_legacy(raw));
+        let definition = h.capture_actor_definition(
+            sm_game::actors::content::ActorDefinitionKey::from_legacy(raw),
+        );
         tiles = tiles.wrapping_add(h.definition_tile_size(&definition) >> 5);
         address = address.wrapping_add(4);
     }
@@ -117,7 +118,7 @@ pub(in crate::game) fn prepare_room_assets<H: ActorHost + Host>(h: &mut H) {
         h.session_mut().actors.slots[i] = Default::default();
         h.session_mut().actor_identity.retire(i as u16);
     }
-    let cursor = super::content::PopulationCursor::Legacy {
+    let cursor = sm_game::actors::content::PopulationCursor::Legacy {
         bank: 0xa1,
         address: h.session().room.entry.enemy_population_key,
     };
@@ -132,7 +133,7 @@ pub(in crate::game) fn prepare_room_assets<H: ActorHost + Host>(h: &mut H) {
 }
 
 fn load_tile_data<H: ActorHost + Host>(h: &mut H) {
-    use super::access::{AccessMode::Native, ActorKey};
+    use sm_game::actors::access::{AccessMode::Native, ActorKey};
     use sm_game::visual_host::{Content, Record, Source};
     // Capture once, then read/write each native word in descending source order.
     let defaults = Content::table(h, Source::Loaded, 0x9ad200);
@@ -154,8 +155,8 @@ fn load_tile_data<H: ActorHost + Host>(h: &mut H) {
             let bytes = source.to_le_bytes();
             let chunk = h.capture_tile_chunk([bytes[0], bytes[1], bank], 0);
             h.copy_actor_tile_chunk(
-                super::scene::ActorTileChunkSource::from_record(chunk),
-                super::scene::ActorTileDestination::from_legacy(destination),
+                sm_game::actors::scene::ActorTileChunkSource::from_record(chunk),
+                sm_game::actors::scene::ActorTileDestination::from_legacy(destination),
             );
             destination = destination.wrapping_add(8);
             source = source.wrapping_add(8);
@@ -183,16 +184,20 @@ pub(super) fn stage_tilesets<H: ActorHost + Host>(h: &mut H) {
         (0usize, 0usize, 0u16, 0u16, 2048u16);
     while h.tileset_definition(&tileset, entry) != 0xffff {
         let raw = h.tileset_definition(&tileset, entry);
-        let definition =
-            h.capture_actor_definition(super::content::ActorDefinitionKey::from_legacy(raw));
-        h.session_mut().compatibility_enemy_scratch =
-            h.definition_word(&definition, super::content::DefinitionWord::NativeBank);
+        let definition = h.capture_actor_definition(
+            sm_game::actors::content::ActorDefinitionKey::from_legacy(raw),
+        );
+        h.session_mut().compatibility_enemy_scratch = h.definition_word(
+            &definition,
+            sm_game::actors::content::DefinitionWord::NativeBank,
+        );
         // Native destination byte is observed before palette acquisition/diagnostic.
         let palette_row = h.tileset_destination_byte(&tileset, entry);
         let palette = h.definition_palette(&definition);
         let colors = h.palette_bytes(&palette);
         let row = u16::from(palette_row) + 8;
-        let resource = super::media::palette_resource_for_capture(&palette, &h.session().world);
+        let resource =
+            sm_game::actors::media::palette_resource_for_capture(&palette, &h.session().world);
         // Source capture is complete. Revoke before the write-capable copy; a
         // failed/unknown overwrite cannot leave a receipt for previous pixels.
         h.session_mut()
@@ -238,23 +243,23 @@ pub(super) fn stage_tilesets<H: ActorHost + Host>(h: &mut H) {
 // These are fixed collection projections, not addresses or independent RAM owners.
 fn load_word<H: ActorHost>(h: &H, descriptor: usize, field: usize) -> u16 {
     h.collection_word(
-        super::access::CollectionWindow::TileLoad,
+        sm_game::actors::access::CollectionWindow::TileLoad,
         descriptor + field,
-        super::access::AccessMode::Native,
+        sm_game::actors::access::AccessMode::Native,
     )
 }
 fn load_byte<H: ActorHost>(h: &H, descriptor: usize, field: usize) -> u8 {
     h.collection_byte(
-        super::access::CollectionWindow::TileLoad,
+        sm_game::actors::access::CollectionWindow::TileLoad,
         descriptor + field,
     )
 }
 fn set_load_word<H: ActorHost>(h: &mut H, descriptor: usize, field: usize, value: u16) {
     h.write_collection_word(
-        super::access::CollectionWindow::TileLoad,
+        sm_game::actors::access::CollectionWindow::TileLoad,
         descriptor + field,
         value,
-        super::access::CollectionStore::SliceNative,
+        sm_game::actors::access::CollectionStore::SliceNative,
     );
 }
 fn set_load_source<H: ActorHost>(h: &mut H, descriptor: usize, source: [u8; 3]) {
@@ -262,25 +267,25 @@ fn set_load_source<H: ActorHost>(h: &mut H, descriptor: usize, source: [u8; 3]) 
 }
 fn set_graphics_tiles<H: ActorHost>(h: &mut H, index: usize, value: u16) {
     h.write_collection_word(
-        super::access::CollectionWindow::GraphicsTiles,
+        sm_game::actors::access::CollectionWindow::GraphicsTiles,
         2 * index,
         value,
-        super::access::CollectionStore::SliceNative,
+        sm_game::actors::access::CollectionStore::SliceNative,
     );
 }
 fn set_graphics_definition<H: ActorHost>(h: &mut H, index: usize, value: u16) {
     h.write_collection_word(
-        super::access::CollectionWindow::GraphicsDefinitions,
+        sm_game::actors::access::CollectionWindow::GraphicsDefinitions,
         2 * index,
         value,
-        super::access::CollectionStore::PrefixLe,
+        sm_game::actors::access::CollectionStore::PrefixLe,
     );
 }
 fn set_graphics_route<H: ActorHost>(h: &mut H, index: usize, value: u16) {
     h.write_collection_word(
-        super::access::CollectionWindow::GraphicsRoutes,
+        sm_game::actors::access::CollectionWindow::GraphicsRoutes,
         2 * index,
         value,
-        super::access::CollectionStore::PrefixLe,
+        sm_game::actors::access::CollectionStore::PrefixLe,
     );
 }

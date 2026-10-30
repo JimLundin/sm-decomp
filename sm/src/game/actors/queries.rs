@@ -1,13 +1,15 @@
 //! Common actor/player spatial queries over borrowed actor state.
 #![forbid(unsafe_code)]
-use super::overlap::axis_overlaps;
-use super::{
-    access::{AccessMode::LittleEndian, ActorAccess, ActorKey},
-    api::{Axis, DistanceDirection, PlayerDirection},
-    content::ActorContent,
-    effects::ActorHost,
-};
+use sm_game::actors::overlap::axis_overlaps;
 use sm_game::geometry::Point;
+use {
+    crate::game::actors::api::{Axis, DistanceDirection, PlayerDirection},
+    sm_game::actors::{
+        access::{AccessMode::LittleEndian, ActorAccess, ActorKey},
+        content::ActorContent,
+        effects::ActorHost,
+    },
+};
 
 fn current(h: &impl ActorAccess) -> ActorKey {
     ActorKey::from_legacy(h.session().actors.controls.selected)

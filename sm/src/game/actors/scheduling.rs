@@ -1,17 +1,17 @@
 //! Selection and update retain captured actor keys across ordered foreign effects.
 #![forbid(unsafe_code)]
-use super::{
-    access::{AccessMode, ActorAccess, ActorCollections, ActorKey, CollectionWindow},
-    api::DeathKind,
-    combat, contacts,
-    content::{ActorDefinitionKey, ActorRoutine, DefinitionRoutine},
-    drawing,
-    effects::ActorHost,
-};
 use sm_game::player_projectiles::access::Store;
 use sm_game::{
     enemy_projectiles::host::Host as EprojHost, room_mechanisms::host::Effects as MechanismEffects,
     sprite_objects,
+};
+use {
+    crate::game::actors::{api::DeathKind, combat, contacts, drawing},
+    sm_game::actors::{
+        access::{AccessMode, ActorAccess, ActorCollections, ActorKey, CollectionWindow},
+        content::{ActorDefinitionKey, ActorRoutine, DefinitionRoutine},
+        effects::ActorHost,
+    },
 };
 
 fn frozen(h: &impl ActorAccess) -> bool {
@@ -235,7 +235,7 @@ fn process_actor<H: ActorHost + EprojHost + MechanismEffects>(h: &mut H, key: Ac
             });
             if h.resolve_actor(key, AccessMode::Native).properties & 0x2000 != 0 {
                 h.session_mut().room.enemy_processing_stage = 2;
-                super::animation::advance_animation(h);
+                crate::game::actors::animation::advance_animation(h);
             }
         }
     }
@@ -247,7 +247,7 @@ fn process_actor<H: ActorHost + EprojHost + MechanismEffects>(h: &mut H, key: Ac
         combat::die(h, DeathKind::Normal { animation: 0 });
     }
     if (h.resolve_actor(key, AccessMode::Native).extra_properties & 4 != 0
-        || !super::queries::current_normal_sprite_outside_screen(h))
+        || !crate::game::actors::queries::current_normal_sprite_outside_screen(h))
         && h.resolve_actor(key, AccessMode::Native).properties & 0x300 == 0
         && h.session().actors.schedule.compatibility_179e[2] & 1 == 0
     {

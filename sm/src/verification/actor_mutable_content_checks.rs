@@ -1,10 +1,5 @@
 //! Actual Kraid writer and live shot consumer; RAM replacement is component evidence.
 #![deny(unsafe_op_in_unsafe_fn)]
-use super::{
-    content::{ActorContent, ActorDefinitionKey, ActorTemplateId, SpeciesId},
-    identity::{ActorBirthOrigin, ActorProvenance},
-    media::AppearanceId,
-};
 use crate::{
     game::session_runtime::Runtime,
     game_state::Game,
@@ -13,6 +8,13 @@ use crate::{
     types::{EnemyDef, ExtendedSpriteMap, Hitbox},
 };
 use core::mem::offset_of;
+use {
+    crate::game::actors::identity::{ActorBirthOrigin, ActorProvenance},
+    sm_game::actors::{
+        content::{ActorContent, ActorDefinitionKey, ActorTemplateId, SpeciesId},
+        media::AppearanceId,
+    },
+};
 
 const DEFINITION: u16 = 0xd000;
 const SHOT: usize = offset_of!(EnemyDef, shot_ai);
@@ -249,7 +251,7 @@ pub(crate) fn consume_checked(g: &mut Game, ignored: bool, label: &str) {
     }
     let identity = g.actor_identity().clone();
     let before_native = native(g);
-    super::contacts::process_contacts(&mut Runtime::new(g));
+    crate::game::actors::contacts::process_contacts(&mut Runtime::new(g));
     assert_eq!(
         (0..g.ram().len())
             .map(|at| g.ram().read_byte(at))

@@ -1,10 +1,10 @@
 //! Kago damage releases a bug after updating its animation and death state.
 //! The extended hit counter remains RAM-authoritative for native consumers.
 #![forbid(unsafe_code)]
-use super::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
-use super::{api, combat};
+use crate::game::actors::{api, combat};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use {
     crate::game::enemy_projectiles::SpawnEprojWithGfx, sm_game::enemy_projectiles::host::Effects,
 };

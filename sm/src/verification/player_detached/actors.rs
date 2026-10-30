@@ -18,5 +18,3 @@ use sm_game::actors::{content, fixture, identity, media, scene, snapshot};
 #[path = "../actor_palette_checks.rs"]
 mod palette_checks;
 
-pub(in crate::game) use overlap::axis_overlaps;
-use sm_game::actors::overlap;

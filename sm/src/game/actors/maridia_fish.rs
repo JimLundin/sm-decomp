@@ -1,12 +1,12 @@
 //! Maridia Fish share their two swim legs and retain live collision callbacks.
 #![forbid(unsafe_code)]
-use super::{access::ActorKey as Key, api};
 use crate::game::enemy_layouts::EnemyLayout40 as Fish;
 use crate::game::enemy_speeds::enemy_speed;
 use crate::game::session_runtime::{Runtime, actor_sine};
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use sm_game::enemy_script::EnemyScript;
+use {crate::game::actors::api, sm_game::actors::access::ActorKey as Key};
 
 fn wave_sample(key: i32, game: &mut Game) -> u16 {
     actor_sine(

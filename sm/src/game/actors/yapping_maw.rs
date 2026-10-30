@@ -1,7 +1,7 @@
 //! Yapping Maw reach, articulated body, player grip and attachment lifecycle.
 //! RAM words remain authoritative; operand writes run immediately through the caller.
 #![forbid(unsafe_code)]
-use super::{api, combat, scheduling};
+use crate::game::actors::{api, combat, scheduling};
 use crate::game::enemy_layouts::EnemyLayout104 as Maw;
 use crate::game::enemy_projectiles::{self, SpawnEprojWithGfx};
 use crate::game::enemy_speeds::enemy_speed;

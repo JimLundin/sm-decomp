@@ -1,13 +1,13 @@
 //! Draygon eye tracking shares one facing-dependent animation rule.
 //! Common actor fields use the existing owner; outer boss dispatch stays in bank A5.
 #![forbid(unsafe_code)]
-use super::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
-use super::api::angle_from_delta;
+use crate::game::actors::api::angle_from_delta;
 use crate::game::enemy_projectiles::SpawnEprojWithRoomGfx;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::words;
 use crate::types::Point16U;
+use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use sm_game::enemy_script::EnemyScript;
 
 pub(crate) fn initialize(game: &mut Game) {

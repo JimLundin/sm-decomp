@@ -1,6 +1,5 @@
 //! Escape-room Etecoons and Dachora: setup, wall turns and script conditions.
 #![forbid(unsafe_code)]
-use super::{access::ActorKey as Key, api};
 use crate::game::constants::enemy_properties::*;
 use crate::game::enemy_layouts::EnemyLayout8 as Animal;
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
@@ -11,6 +10,7 @@ use crate::ram_map::{slot, word};
 use crate::rom::RomImage;
 use sm_data::escape_etecoons::{ADDRESS, BYTES, EscapeEtecoon, EscapeEtecoons};
 use sm_game::enemy_script::EnemyScript;
+use {crate::game::actors::api, sm_game::actors::access::ActorKey as Key};
 
 pub(crate) type ImportedTables = Option<Imported<EscapeEtecoons>>;
 

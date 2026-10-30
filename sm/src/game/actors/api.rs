@@ -1,6 +1,6 @@
 //! Semantic operation signatures. Bodies are intentionally declaration-only.
 #![forbid(unsafe_code)]
-use super::{
+use sm_game::actors::{
     content::{ActorDefinitionKey, ActorTemplateId},
     media::AppearanceId,
 };
@@ -96,37 +96,37 @@ pub(crate) struct ActorSpawnRequest {
     pub template: ActorTemplateId,
     pub appearance: Option<AppearanceId>,
 }
-pub(in crate::game) use super::combat::contact_reaction;
-pub(in crate::game) use super::combat::create_dud;
-pub(in crate::game) use super::combat::latch;
-pub(in crate::game) use super::combat::power_bomb_reaction;
-pub(in crate::game) use super::combat::resume_ai;
-pub(in crate::game) use super::combat::shot_reaction;
-pub(in crate::game) use super::movement::apply_vector;
-pub(in crate::game) use super::movement::move_horizontal;
-pub(in crate::game) use super::movement::move_vertical;
-pub(in crate::game) use super::movement::probe_horizontal;
-pub(in crate::game) use super::movement::probe_vertical;
-pub(in crate::game) use super::movement::probe_vertical_offset;
-pub(in crate::game) use super::movement::select_block_at;
-pub(in crate::game) use super::movement::snap_to_slopes;
+pub(in crate::game) use crate::game::actors::combat::contact_reaction;
+pub(in crate::game) use crate::game::actors::combat::create_dud;
+pub(in crate::game) use crate::game::actors::combat::latch;
+pub(in crate::game) use crate::game::actors::combat::power_bomb_reaction;
+pub(in crate::game) use crate::game::actors::combat::resume_ai;
+pub(in crate::game) use crate::game::actors::combat::shot_reaction;
+pub(in crate::game) use crate::game::actors::movement::apply_vector;
+pub(in crate::game) use crate::game::actors::movement::move_horizontal;
+pub(in crate::game) use crate::game::actors::movement::move_vertical;
+pub(in crate::game) use crate::game::actors::movement::probe_horizontal;
+pub(in crate::game) use crate::game::actors::movement::probe_vertical;
+pub(in crate::game) use crate::game::actors::movement::probe_vertical_offset;
+pub(in crate::game) use crate::game::actors::movement::select_block_at;
+pub(in crate::game) use crate::game::actors::movement::snap_to_slopes;
 #[cfg(sm_verify_dll)]
-pub(in crate::game) use super::population::respawn;
-pub(in crate::game) use super::queries::angle_between;
-pub(in crate::game) use super::queries::angle_from_delta;
-pub(in crate::game) use super::queries::angle_to_player;
-pub(in crate::game) use super::queries::current_outside_padded_screen;
-pub(in crate::game) use super::queries::current_outside_screen;
-pub(in crate::game) use super::queries::direction_to_player;
-pub(in crate::game) use super::queries::distance_and_direction;
-pub(in crate::game) use super::queries::leaving_screen;
-pub(in crate::game) use super::queries::overlaps_player_with_padding;
-pub(in crate::game) use super::queries::player_delta;
-pub(in crate::game) use super::queries::player_within;
-pub(in crate::game) use super::queries::touches_player_from_above;
+pub(in crate::game) use crate::game::actors::population::respawn;
+pub(in crate::game) use crate::game::actors::queries::angle_between;
+pub(in crate::game) use crate::game::actors::queries::angle_from_delta;
+pub(in crate::game) use crate::game::actors::queries::angle_to_player;
+pub(in crate::game) use crate::game::actors::queries::current_outside_padded_screen;
+pub(in crate::game) use crate::game::actors::queries::current_outside_screen;
+pub(in crate::game) use crate::game::actors::queries::direction_to_player;
+pub(in crate::game) use crate::game::actors::queries::distance_and_direction;
+pub(in crate::game) use crate::game::actors::queries::leaving_screen;
+pub(in crate::game) use crate::game::actors::queries::overlaps_player_with_padding;
+pub(in crate::game) use crate::game::actors::queries::player_delta;
+pub(in crate::game) use crate::game::actors::queries::player_within;
+pub(in crate::game) use crate::game::actors::queries::touches_player_from_above;
 #[cfg(sm_verify_dll)]
-pub(in crate::game) use super::scheduling::advance_selected;
+pub(in crate::game) use crate::game::actors::scheduling::advance_selected;
 #[cfg(sm_verify_dll)]
-pub(in crate::game) use super::staging::prepare_room_assets;
+pub(in crate::game) use crate::game::actors::staging::prepare_room_assets;
 #[cfg(sm_verify_dll)]
-pub(in crate::game) use super::staging::transfer_actor_tiles_and_initialize;
+pub(in crate::game) use crate::game::actors::staging::transfer_actor_tiles_and_initialize;

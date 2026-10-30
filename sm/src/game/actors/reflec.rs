@@ -1,10 +1,10 @@
 //! Reflec palette cycling and projectile reflection with checked actor access.
 #![forbid(unsafe_code)]
-use super::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
-use super::{api, combat};
+use crate::game::actors::{api, combat};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::{word_arrays, words};
+use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use sm_game::enemy_script::EnemyScript;
 use sm_game::player_projectiles::{access::shot, content::table, host::Host, motion};
 use {

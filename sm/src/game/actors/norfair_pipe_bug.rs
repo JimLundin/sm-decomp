@@ -1,13 +1,13 @@
 //! Norfair Pipe Bug's ordered five-part emergence and flight.
 //! Native actor words remain authoritative across the existing query boundaries.
 #![forbid(unsafe_code)]
-use super::access::ActorKey as Key;
-use super::api;
+use crate::game::actors::api;
 use crate::game::enemy_layouts::EnemyLayout72 as Bug;
 use crate::game::enemy_speeds::enemy_speed;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
+use sm_game::actors::access::ActorKey as Key;
 
 pub(crate) fn initialize(game: &mut Game) {
     let e = i32::from(word!(game.cur_enemy_index));

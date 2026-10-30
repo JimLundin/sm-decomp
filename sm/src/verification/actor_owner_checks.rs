@@ -1,9 +1,9 @@
 //! Actual Actor/eproj angle ownership across Runtime foreign handoffs.
 //! New ownership invariant, not a simulated codec or predecessor capture.
 #![forbid(unsafe_code)]
-use super::access::{AccessMode, ActorAccess, ActorKey};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+use sm_game::actors::access::{AccessMode, ActorAccess, ActorKey};
 
 const ANGLES: usize = 0x97dc;
 const COUNT: usize = 18;

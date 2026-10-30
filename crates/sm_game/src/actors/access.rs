@@ -43,6 +43,17 @@ pub trait ActorAccess: SessionAccess {
     }
     #[cfg(sm_verify_dll)]
     fn actor_movement_observe(&mut self, _tag: u8) {}
+    /// Verifier movement case: one stored coordinate word of `key`.
+    #[cfg(sm_verify_dll)]
+    fn actor_vector_store(&self, _key: ActorKey, _y: bool) {}
+    /// Verifier movement case: the body-contact processing stage.
+    #[cfg(sm_verify_dll)]
+    fn actor_body_stage(&mut self) {}
+    /// Verifier movement case: whether a spike PLM spawn of `header` is observed.
+    #[cfg(sm_verify_dll)]
+    fn actor_spike_armed(&mut self, _header: u16) -> bool {
+        false
+    }
     fn resolve_actor<'a>(&'a self, key: ActorKey, mode: AccessMode) -> ActorRead<'a>;
     /// R is independent of the actor borrow; references cannot escape the edit.
     fn edit_actor<R>(

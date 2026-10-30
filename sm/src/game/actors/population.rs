@@ -1,15 +1,17 @@
 //! Population creation, shared slot initialization and semantic birth boundaries.
 #![forbid(unsafe_code)]
-use super::{
-    access::{AccessMode::Native, ActorKey},
-    content::{
-        ActorDefinitionCapture, ActorDefinitionKey, ActorPopulationCapture, ActorRoutine,
-        DefinitionByte as DB, DefinitionRoutine, DefinitionWord as DW, PopulationWord as PW,
-    },
-    effects::ActorHost,
-    identity::{InstanceHandle, PendingActorBirth},
-};
 use sm_game::enemy_population::{Creation, EnemyShape, PopulationEntry};
+use {
+    crate::game::actors::identity::{InstanceHandle, PendingActorBirth},
+    sm_game::actors::{
+        access::{AccessMode::Native, ActorKey},
+        content::{
+            ActorDefinitionCapture, ActorDefinitionKey, ActorPopulationCapture, ActorRoutine,
+            DefinitionByte as DB, DefinitionRoutine, DefinitionWord as DW, PopulationWord as PW,
+        },
+        effects::ActorHost,
+    },
+};
 
 fn read_entry<H: ActorHost>(h: &mut H, entry: &ActorPopulationCapture) -> PopulationEntry {
     PopulationEntry {
@@ -157,7 +159,7 @@ pub(in crate::game) fn record_spawn<H: ActorHost>(h: &mut H, key: ActorKey) {
     let definition = h.capture_actor_definition(ActorDefinitionKey::from_legacy(raw));
     let mut words = [0; 6];
     if let Some(text) = h.definition_name(&definition) {
-        use super::content::ActorNameWord::*;
+        use sm_game::actors::content::ActorNameWord::*;
         for (word, field) in words.iter_mut().zip([At0, At2, At4, At6, At8, At12]) {
             *word = h.name_word(&text, field);
         }
@@ -172,9 +174,9 @@ pub(in crate::game) fn record_spawn<H: ActorHost>(h: &mut H, key: ActorKey) {
 }
 
 fn captured_origin(
-    cursor: &super::content::PopulationCursor,
-) -> Option<super::content::PopulationPosition> {
-    use super::content::{PopulationCursor as C, PopulationPosition as P};
+    cursor: &sm_game::actors::content::PopulationCursor,
+) -> Option<sm_game::actors::content::PopulationPosition> {
+    use sm_game::actors::content::{PopulationCursor as C, PopulationPosition as P};
     match *cursor {
         C::Prepared { population, entry } => Some(P::Room { population, entry }),
         C::Template { template, part } => Some(P::Template { template, part }),
@@ -185,12 +187,12 @@ fn prepare_birth<H: ActorHost>(
     h: &H,
     key: ActorKey,
     capture: &ActorPopulationCapture,
-    cursor: &super::content::PopulationCursor,
+    cursor: &sm_game::actors::content::PopulationCursor,
     definition: u16,
-    appearance: Option<super::media::AppearanceId>,
+    appearance: Option<sm_game::actors::media::AppearanceId>,
     respawn: bool,
 ) -> Option<PendingActorBirth> {
-    let (provenance, appearance) = super::content::birth_metadata_from_capture(
+    let (provenance, appearance) = sm_game::actors::content::birth_metadata_from_capture(
         capture,
         captured_origin(cursor),
         definition,
@@ -214,11 +216,11 @@ pub(in crate::game) fn install_population<H: ActorHost + sm_game::enemy_projecti
     h.session_mut().room.enemy_deaths = 0;
     h.session_mut().actors.controls.process_all = 0;
     sm_game::enemy_projectiles::drops::reset_room_metadata(h);
-    let mut cursor = super::content::PopulationCursor::Legacy {
+    let mut cursor = sm_game::actors::content::PopulationCursor::Legacy {
         bank: 0xa1,
         address: h.session().room.entry.enemy_population_key,
     };
-    let check_cursor = super::content::PopulationCursor::Legacy {
+    let check_cursor = sm_game::actors::content::PopulationCursor::Legacy {
         bank: 0xa1,
         address: h.session().room.entry.enemy_population_key,
     };
@@ -233,7 +235,7 @@ pub(in crate::game) fn install_population<H: ActorHost + sm_game::enemy_projecti
         let key = ActorKey::from_legacy(index);
         validate_birth_appearance(h, &check, &cursor, checked_definition, None, false)
             .expect("initial actor appearance must be resident");
-        super::staging::load_graphics(h, &cursor, key);
+        crate::game::actors::staging::load_graphics(h, &cursor, key);
         let capture = h.capture_actor_population(&cursor);
         let raw = h.population_definition(&capture);
         let definition = h.capture_actor_definition(ActorDefinitionKey::from_legacy(raw));
@@ -274,7 +276,7 @@ pub(in crate::game) fn respawn<H: ActorHost + sm_game::enemy_projectiles::host::
     key: ActorKey,
 ) {
     h.session_mut().actors.controls.selected = key.byte_index();
-    let cursor = super::content::PopulationCursor::Legacy {
+    let cursor = sm_game::actors::content::PopulationCursor::Legacy {
         bank: 0xa1,
         address: h
             .session()
@@ -337,9 +339,10 @@ pub(in crate::game) fn respawn<H: ActorHost + sm_game::enemy_projectiles::host::
 
 fn spawn_from_cursor<H: ActorHost + sm_game::enemy_projectiles::host::Host>(
     h: &mut H,
-    mut cursor: super::content::PopulationCursor,
-    appearance: Option<super::media::AppearanceId>,
-) -> Result<Option<(u16, Option<InstanceHandle>)>, super::identity::ActorIdentityError> {
+    mut cursor: sm_game::actors::content::PopulationCursor,
+    appearance: Option<sm_game::actors::media::AppearanceId>,
+) -> Result<Option<(u16, Option<InstanceHandle>)>, crate::game::actors::identity::ActorIdentityError>
+{
     use sm_game::enemy_population::{SearchResult, SpawnSearch, SpawnSequence};
     let saved = h.session().actors.controls.selected;
     let entry = h.capture_actor_population(&cursor);
@@ -397,14 +400,14 @@ fn spawn_from_cursor<H: ActorHost + sm_game::enemy_projectiles::host::Host>(
         #[cfg(sm_verify_dll)]
         h.actor_reference_stage(4, key.byte_index());
         let entry = read_entry(h, &capture);
-        let (provenance, selected) = super::content::birth_metadata_from_capture(
+        let (provenance, selected) = sm_game::actors::content::birth_metadata_from_capture(
             &capture,
             captured_origin(&cursor),
             entry.definition,
             appearance,
             false,
         )
-        .map_err(super::identity::ActorIdentityError::Content)?;
+        .map_err(crate::game::actors::identity::ActorIdentityError::Content)?;
         validate_selected_appearance(h, &capture, selected)?;
         let birth = h
             .session()
@@ -421,10 +424,10 @@ fn spawn_from_cursor<H: ActorHost + sm_game::enemy_projectiles::host::Host>(
         }
         index = sequence.slot;
         cursor = match cursor {
-            super::content::PopulationCursor::Legacy { bank, .. } => {
+            sm_game::actors::content::PopulationCursor::Legacy { bank, .. } => {
                 let address = h.session().compatibility_enemy_scratch.wrapping_add(16);
                 h.session_mut().compatibility_enemy_scratch = address;
-                super::content::PopulationCursor::Legacy { bank, address }
+                sm_game::actors::content::PopulationCursor::Legacy { bank, address }
             }
             other => next_cursor(other),
         };
@@ -435,18 +438,20 @@ fn spawn_from_cursor<H: ActorHost + sm_game::enemy_projectiles::host::Host>(
 
 pub(in crate::game) fn spawn<H: ActorHost + sm_game::enemy_projectiles::host::Host>(
     h: &mut H,
-    request: super::api::ActorSpawnRequest,
-) -> Result<Option<InstanceHandle>, super::identity::ActorIdentityError> {
+    request: crate::game::actors::api::ActorSpawnRequest,
+) -> Result<Option<InstanceHandle>, crate::game::actors::identity::ActorIdentityError> {
     let definitions = h
         .session()
         .world
         .actors()
         .definitions()
-        .ok_or(super::content::ActorContentError::UnsupportedForm)?;
+        .ok_or(sm_game::actors::content::ActorContentError::UnsupportedForm)?;
     if !definitions.templates.contains_key(&request.template) {
-        return Err(super::content::ActorContentError::MissingTemplate(request.template).into());
+        return Err(
+            sm_game::actors::content::ActorContentError::MissingTemplate(request.template).into(),
+        );
     }
-    let cursor = super::content::PopulationCursor::Template {
+    let cursor = sm_game::actors::content::PopulationCursor::Template {
         template: request.template,
         part: 0,
     };
@@ -461,7 +466,7 @@ pub(in crate::game) fn spawn_legacy<H: ActorHost + sm_game::enemy_projectiles::h
     h.session_mut().compatibility_enemy_scratch = address;
     spawn_from_cursor(
         h,
-        super::content::PopulationCursor::Legacy { bank, address },
+        sm_game::actors::content::PopulationCursor::Legacy { bank, address },
         None,
     )
     .expect("legacy actor spawn identity overflow")
@@ -469,8 +474,10 @@ pub(in crate::game) fn spawn_legacy<H: ActorHost + sm_game::enemy_projectiles::h
     .unwrap_or(0xffff)
 }
 
-fn next_cursor(cursor: super::content::PopulationCursor) -> super::content::PopulationCursor {
-    use super::content::PopulationCursor as C;
+fn next_cursor(
+    cursor: sm_game::actors::content::PopulationCursor,
+) -> sm_game::actors::content::PopulationCursor {
+    use sm_game::actors::content::PopulationCursor as C;
     match cursor {
         C::Legacy { bank, address } => C::Legacy {
             bank,
@@ -490,8 +497,8 @@ fn next_cursor(cursor: super::content::PopulationCursor) -> super::content::Popu
 fn validate_selected_appearance<H: ActorHost>(
     h: &H,
     capture: &ActorPopulationCapture,
-    appearance: Option<super::media::AppearanceId>,
-) -> Result<(), super::content::ActorContentError> {
+    appearance: Option<sm_game::actors::media::AppearanceId>,
+) -> Result<(), sm_game::actors::content::ActorContentError> {
     if let Some(appearance) = appearance {
         capture.world.actor_media().validate_appearance_residency(
             appearance,
@@ -505,12 +512,12 @@ fn validate_selected_appearance<H: ActorHost>(
 fn validate_birth_appearance<H: ActorHost>(
     h: &H,
     capture: &ActorPopulationCapture,
-    cursor: &super::content::PopulationCursor,
+    cursor: &sm_game::actors::content::PopulationCursor,
     definition: u16,
-    requested: Option<super::media::AppearanceId>,
+    requested: Option<sm_game::actors::media::AppearanceId>,
     respawn: bool,
-) -> Result<(), super::content::ActorContentError> {
-    let (_, appearance) = super::content::birth_metadata_from_capture(
+) -> Result<(), sm_game::actors::content::ActorContentError> {
+    let (_, appearance) = sm_game::actors::content::birth_metadata_from_capture(
         capture,
         captured_origin(cursor),
         definition,

@@ -1,11 +1,11 @@
 //! Common animation rules. Captured slots and script allocations survive callbacks.
 #![forbid(unsafe_code)]
-use super::{
+use crate::game::session_runtime::Runtime;
+use sm_game::actors::{
     access::{AccessMode::LittleEndian as LE, ActorKey},
     content::ActorRoutine,
     effects::{ActorAssertion, ActorHost},
 };
-use crate::game::session_runtime::Runtime;
 use sm_game::{
     enemy_projectiles::host::Host,
     enemy_script::{EnemyScript, bank_base},
@@ -127,10 +127,10 @@ pub(in crate::game) fn dispatch_instruction<H: ActorHost + Host>(
             h.set_vram_queue_source(cursor, value);
             let value = pc.word(3);
             h.write_collection_word(
-                super::access::CollectionWindow::VramQueue,
+                sm_game::actors::access::CollectionWindow::VramQueue,
                 usize::from(cursor) + 3,
                 value,
-                super::access::CollectionStore::SliceLe,
+                sm_game::actors::access::CollectionStore::SliceLe,
             );
             let value = pc.word(5);
             h.set_vram_queue_destination(cursor, value);

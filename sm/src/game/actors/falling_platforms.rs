@@ -1,10 +1,10 @@
 //! Falling and fast sinking platforms share travel, rider carry and animation.
 #![forbid(unsafe_code)]
-use super::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
-use super::{api, combat};
+use crate::game::actors::{api, combat};
 use crate::game::enemy_speeds::SpeedTable;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use sm_game::enemy_script::EnemyScript;
 
 fn extra(key: Key) -> usize {

@@ -1,9 +1,9 @@
 //! Elevator travel shares one movement path and the room-entry state owner.
 #![forbid(unsafe_code)]
-use super::access::{AccessMode::Native, ActorAccess};
-use super::combat;
+use crate::game::actors::combat;
 use crate::game::session_runtime::{Runtime, player_command};
 use crate::game_state::Game;
+use sm_game::actors::access::{AccessMode::Native, ActorAccess};
 use sm_game::enemy_projectiles::host::Effects;
 
 fn synchronize_player(runtime: &mut Runtime<'_>) {

@@ -1,9 +1,9 @@
 //! Crocomire attack reactions over the existing owned actor state.
 #![forbid(unsafe_code)]
-use super::access::{AccessMode, ActorKey as Key};
 use crate::game::callback_tables::callback_table;
 use crate::game::constants::{bank_86::addr_stru_868F8F, bank_a4::*};
 use core::ffi::c_long;
+use sm_game::actors::access::{AccessMode, ActorKey as Key};
 use sm_game::enemy_projectiles::host::Host;
 use sm_game::enemy_script::{EnemyScript, bank_base};
 

@@ -1,9 +1,9 @@
 //! Bang shares native flight and speed changes across its pursuit phases.
 #![forbid(unsafe_code)]
-use super::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
-use super::{api, combat};
+use crate::game::actors::{api, combat};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use sm_game::enemy_script::EnemyScript;
 use sm_game::player_projectiles::content::{self, table};
 use {crate::game::enemy_projectiles::shot_word, sm_game::enemy_projectiles::host::ShotMember};

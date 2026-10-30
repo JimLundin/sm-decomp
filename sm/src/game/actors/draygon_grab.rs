@@ -1,7 +1,7 @@
 //! Draygon acquisition, carrying, tail attacks and release share the player owner.
 //! Boss-specific words retain their native compatibility layout; no player copy exists.
 #![forbid(unsafe_code)]
-use super::{
+use crate::game::actors::{
     api, combat,
     draygon_flight::{facing_animation, turret},
 };
@@ -123,7 +123,7 @@ pub(crate) fn orbit(k: u16, game: &mut Game) {
             game
         ))
     );
-    super::draygon_flight::shed_particle(k, 7, game);
+    crate::game::actors::draygon_flight::shed_particle(k, 7, game);
     slot!(game, Draygon[0](var_05, var_09) += 0x2000);
     let mut finished = slot!(game, Draygon[0].var_05).wrapping_sub(160) & 0x8000 == 0;
     if !finished {

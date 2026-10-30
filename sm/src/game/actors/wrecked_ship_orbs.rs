@@ -1,14 +1,14 @@
 //! Wrecked Ship Orb pursuit with native split-coordinate movement.
 //! Actor state and loaded-ROM velocity pairs remain authoritative.
 #![forbid(unsafe_code)]
-use super::access::ActorKey as Key;
-use super::api::{self, Axis};
+use crate::game::actors::api::{self, Axis};
 use crate::game::enemy_layouts::EnemyLayout40 as Orb;
 use crate::game::enemy_speeds::enemy_speed;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::rtl::words;
+use sm_game::actors::access::ActorKey as Key;
 use sm_game::enemy_projectiles::host::Effects;
 
 pub(crate) fn initialize(game: &mut Game) {

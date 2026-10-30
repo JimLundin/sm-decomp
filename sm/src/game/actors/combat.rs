@@ -1,16 +1,20 @@
 //! Common actor combat over the owned Session; compatibility calls end every borrow.
 #![forbid(unsafe_code)]
-use super::{
-    access::{AccessMode, ActorAccess, ActorKey},
-    api::{DeathHandling, DeathKind, GrappleContact, GrappleReaction, ShotHandling},
-    content::{
-        ActorDefinitionCapture, ActorDefinitionKey, ActorRoutine, DefinitionByte,
-        DefinitionRoutine, DefinitionWord,
-    },
-    effects::ActorHost,
-};
 use sm_game::actors::state::Actor;
 use sm_game::geometry::Point;
+use {
+    crate::game::actors::api::{
+        DeathHandling, DeathKind, GrappleContact, GrappleReaction, ShotHandling,
+    },
+    sm_game::actors::{
+        access::{AccessMode, ActorAccess, ActorKey},
+        content::{
+            ActorDefinitionCapture, ActorDefinitionKey, ActorRoutine, DefinitionByte,
+            DefinitionRoutine, DefinitionWord,
+        },
+        effects::ActorHost,
+    },
+};
 use {
     sm_game::enemy_projectiles::{
         access::{set_shot_direction, shot_word},

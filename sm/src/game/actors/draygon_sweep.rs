@@ -1,7 +1,7 @@
 //! Draygon's mirrored sweep shares its path builder and every table consumer.
 //! The native table remains authoritative and may alias other compatibility state.
 #![forbid(unsafe_code)]
-use super::draygon_flight::{displace, turret};
+use crate::game::actors::draygon_flight::{displace, turret};
 use crate::game::enemy_layouts::EnemyLayout104 as Draygon;
 use crate::game::sprite_effect_runtime::draygon_body_bubble;
 use crate::game_state::Game;

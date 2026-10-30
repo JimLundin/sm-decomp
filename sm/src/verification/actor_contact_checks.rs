@@ -1,11 +1,5 @@
 //! Actual Runtime contact assertions for stage aliases and appearance-independent geometry.
 #![forbid(unsafe_code)]
-use super::{
-    access::{AccessMode, ActorAccess, ActorCollections, ActorKey},
-    content::*,
-    identity::{ActorBirthOrigin, ActorProvenance},
-    media::*,
-};
 use crate::{
     game::{room_entry::world::*, session_runtime::Runtime},
     game_state::Game,
@@ -14,6 +8,14 @@ use crate::{
 };
 use core::mem::offset_of;
 use std::{collections::BTreeMap, sync::Arc};
+use {
+    crate::game::actors::identity::{ActorBirthOrigin, ActorProvenance},
+    sm_game::actors::{
+        access::{AccessMode, ActorAccess, ActorCollections, ActorKey},
+        content::*,
+        media::*,
+    },
+};
 
 fn native(image: &RomImage, address: u32, offset: usize, value: u16) {
     let at = lorom_offset(address) as usize + offset;
@@ -48,7 +50,7 @@ fn direct_touch_body_publishes_stage_before_aliased_map() {
         "actor.contact.alias_fixture_map_starts_zero"
     );
     // Existing thin verification delegate executes the actual private touch_body.
-    super::contacts::movement_verification_body(&mut runtime);
+    crate::game::actors::contacts::movement_verification_body(&mut runtime);
     assert_eq!(
         runtime.session().player.invincibility,
         0,
@@ -61,7 +63,7 @@ fn direct_touch_body_publishes_stage_before_aliased_map() {
     );
 }
 fn collision_world() -> Arc<WorldBinding> {
-    let base = super::fixture::binding(false, AppearanceId(20), false);
+    let base = sm_game::actors::fixture::binding(false, AppearanceId(20), false);
     let definition = base.definition().unwrap().clone();
     let keys = CompatibilityKeys {
         starts: BTreeMap::new(),
@@ -96,7 +98,10 @@ fn stage_materials(runtime: &mut Runtime<'_>, image: &RomImage) {
             base: lorom_offset(address) as usize,
         };
         assert_eq!(
-            super::media::palette_resource_for_capture(&capture, &runtime.session().world),
+            sm_game::actors::media::palette_resource_for_capture(
+                &capture,
+                &runtime.session().world
+            ),
             Some(resource)
         );
         let colors = core::array::from_fn(|lane| image.read(capture.base + lane));
@@ -190,7 +195,7 @@ fn same_behavior_pose_two_appearances_have_identical_actual_shot_contact() {
         let pose = runtime.capture_actor_pose(ActorKey::from_legacy(slot * 64));
         assert_eq!(pose.position, Some(PoseId(9)));
         // Full actual ordered shot/bomb/touch producer, including actual no-op hitbox callback.
-        super::contacts::process_contacts(&mut runtime);
+        crate::game::actors::contacts::process_contacts(&mut runtime);
         assert_eq!(
             (
                 runtime.session().projectiles.shots[0].direction & 0x10,

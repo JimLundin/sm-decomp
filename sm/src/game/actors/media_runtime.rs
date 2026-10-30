@@ -1,6 +1,6 @@
 //! Compatible resource emission; material rows must already be staged at room preparation.
 #![forbid(unsafe_code)]
-use super::{
+use sm_game::actors::{
     content::ActorContentError,
     media::{ActorMaterialDefinition, MaterialId, VisualResourceId},
     scene::{

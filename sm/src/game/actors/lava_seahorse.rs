@@ -1,12 +1,12 @@
 //! Walking lava seahorse jumps, walking and fire commands.
 //! Jump acceleration and home coordinates remain in native compatibility words.
 #![forbid(unsafe_code)]
-use super::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
-use super::api::{self, MovementResult::Blocked, SlopePolicy};
+use crate::game::actors::api::{self, MovementResult::Blocked, SlopePolicy};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::words as W;
 use crate::rtl::abs16;
+use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use sm_game::enemy_script::EnemyScript;
 use {
     crate::game::enemy_projectiles::SpawnEprojWithGfx, sm_game::enemy_projectiles::host::Effects,

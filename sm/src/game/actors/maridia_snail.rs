@@ -1,11 +1,11 @@
 //! Maridia Snail crawling, falls and player reactions share one movement lifecycle.
 #![forbid(unsafe_code)]
-use super::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
-use super::{api, combat, wall_crawlers};
+use crate::game::actors::{api, combat, wall_crawlers};
 use crate::game::music::QueueSfx2_Max3;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::{word_arrays, words};
+use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use sm_game::enemy_script::EnemyScript;
 use sm_game::player_projectiles::content::{self, table};
 

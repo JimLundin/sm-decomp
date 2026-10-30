@@ -1,12 +1,12 @@
 //! Evir's body, attachment and projectile share positioning and damage state.
 //! Extended words and widened peer aliases remain RAM-authoritative.
 #![forbid(unsafe_code)]
-use super::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
-use super::{api, combat};
+use crate::game::actors::{api, combat};
 use crate::game::enemy_speeds::SpeedTable;
 use crate::game::session_runtime::{Runtime, actor_cosine_full, actor_sine_full};
 use crate::game_state::Game;
 use crate::ram_map::{word_arrays as A, words as W};
+use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use sm_game::enemy_projectiles::host::Effects;
 use sm_game::enemy_script::EnemyScript;
 

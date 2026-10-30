@@ -1,13 +1,13 @@
 //! Blue Brinstar Face Block proximity activation and palette cycling.
 //! Native hook words, actor words and little-endian hook variables stay authoritative.
 #![forbid(unsafe_code)]
-use super::access::ActorKey as Key;
-use super::api::{self, Axis};
+use crate::game::actors::api::{self, Axis};
 use crate::game::enemy_layouts::EnemyLayout8 as Face;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::rtl::abs16;
+use sm_game::actors::access::ActorKey as Key;
 
 fn publish_palette(E: i32, game: &mut Game) {
     let palette = slot!(game, Face[E].base.palette_index);

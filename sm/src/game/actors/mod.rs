@@ -6,9 +6,7 @@ pub(in crate::game) mod bang;
 pub(in crate::game) mod beetom;
 pub(crate) mod botwoon;
 pub(in crate::game) use sm_game::actors::botwoon_death;
-pub(in crate::game) use sm_game::actors::content;
 pub(in crate::game) mod diving_enemies;
-pub(in crate::game) use sm_game::actors::effects;
 pub(in crate::game) mod elevator;
 pub(crate) mod escape_animals;
 pub(in crate::game) mod falling_platforms;
@@ -17,7 +15,6 @@ pub(crate) mod identity;
 pub(in crate::game) mod kago;
 pub(in crate::game) mod maridia_fish;
 pub(in crate::game) mod maridia_snail;
-pub(in crate::game) use sm_game::actors::media;
 pub(crate) mod metroid;
 pub(in crate::game) mod mochtroid;
 #[cfg(sm_verify_dll)]
@@ -29,7 +26,6 @@ pub(crate) mod reference_population_animation;
 pub(in crate::game) mod refill_candy;
 pub(in crate::game) mod reflec;
 pub(in crate::game) mod roach;
-pub(in crate::game) use sm_game::actors::scene;
 pub(crate) mod shaktool;
 pub(crate) mod shitroid;
 pub(in crate::game) mod sidehopper;
@@ -71,8 +67,6 @@ mod runtime_checks;
 pub(crate) use runtime_checks::run_checked as verify_runtime_ownership;
 
 #[cfg(sm_verify_dll)]
-use sm_game::actors::fixture;
-#[cfg(sm_verify_dll)]
 #[path = "../../verification/actor_media_runtime_checks.rs"]
 mod media_checks;
 
@@ -103,8 +97,6 @@ pub(crate) mod collision_composed_actor;
 #[path = "../../verification/actor_composed_checks.rs"]
 pub(crate) mod composed_checks;
 
-pub(in crate::game) use overlap::axis_overlaps;
-use sm_game::actors::overlap;
 pub(in crate::game) mod blue_face_block;
 pub(in crate::game) mod brinstar_pipe_bug;
 pub(in crate::game) mod crocomire_attack;

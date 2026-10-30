@@ -1,12 +1,12 @@
 //! Maridia Floater body, bobbing, ascent and delayed spike burst.
 //! Native actor words and little-endian drawing aliases remain authoritative.
 #![forbid(unsafe_code)]
-use super::access::ActorKey as Key;
-use super::{api, combat};
+use crate::game::actors::{api, combat};
 use crate::game::enemy_layouts::EnemyLayout8 as Floater;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
+use sm_game::actors::access::ActorKey as Key;
 use {
     crate::game::enemy_projectiles::SpawnEprojWithGfx, sm_game::enemy_projectiles::host::Effects,
 };

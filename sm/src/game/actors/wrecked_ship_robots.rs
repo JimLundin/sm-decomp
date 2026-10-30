@@ -1,10 +1,10 @@
 //! Wrecked Ship robots share walking, laser timing and their palette animation.
 #![forbid(unsafe_code)]
-use super::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
-use super::{api, combat};
+use crate::game::actors::{api, combat};
 use crate::game::{gameplay_flag_runtime, session_runtime::Runtime};
 use crate::game_state::Game;
 use crate::ram_map::{word_arrays as A, words as W};
+use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use sm_game::enemy_script::EnemyScript;
 use sm_game::gameplay_flag_host::BossWordOrder;
 use {

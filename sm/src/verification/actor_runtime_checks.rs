@@ -1,10 +1,5 @@
 //! Actual Game/Runtime ownership tests, registered only in the existing DLL verifier.
 #![forbid(unsafe_code)]
-use super::{
-    content::{ActorTemplateId, SpeciesId},
-    identity::{ActorBirthOrigin, ActorProvenance, InstanceHandle},
-    media::AppearanceId,
-};
 use crate::{
     game::{
         room_entry::world::WorldBinding,
@@ -14,6 +9,13 @@ use crate::{
     game_state::Game,
 };
 use std::panic::{AssertUnwindSafe, catch_unwind};
+use {
+    crate::game::actors::identity::{ActorBirthOrigin, ActorProvenance, InstanceHandle},
+    sm_game::actors::{
+        content::{ActorTemplateId, SpeciesId},
+        media::AppearanceId,
+    },
+};
 
 fn panic_text(error: Box<dyn core::any::Any + Send>) -> String {
     if let Some(text) = error.downcast_ref::<&str>() {
@@ -57,13 +59,13 @@ fn birth(runtime: &mut Runtime<'_>, slot: u16, appearance: u32) -> InstanceHandl
 }
 
 pub(crate) fn run_checked() {
-    super::initializer_checks::run_checked();
-    super::owner_checks::run_checked();
+    crate::game::actors::initializer_checks::run_checked();
+    crate::game::actors::owner_checks::run_checked();
     occupied_game_export_rejected_before_effects();
     mismatched_runtime_returns_original_identity_without_second_panic();
     nested_foreign_unwind_keeps_both_committed_occurrences();
-    super::media_checks::run_checked();
-    super::contact_checks::run_checked();
+    crate::game::actors::media_checks::run_checked();
+    crate::game::actors::contact_checks::run_checked();
     botwoon_maw_publication_preserves_owned_aliases_and_capture_epoch();
 }
 

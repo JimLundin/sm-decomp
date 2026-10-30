@@ -1,12 +1,29 @@
 //! Actor compatibility implementations on the single aggregate Runtime.
 #![forbid(unsafe_code)]
-use super::access::*;
 use crate::game::session_runtime::Runtime;
+use sm_game::actors::access::*;
 use sm_game::actors::state::{Actor, SpawnRecord};
 impl ActorAccess for Runtime<'_> {
     #[cfg(sm_verify_dll)]
     fn actor_movement_observe(&mut self, tag: u8) {
         self.observe_actor_movement(tag);
+    }
+    #[cfg(sm_verify_dll)]
+    fn actor_vector_store(&self, key: ActorKey, y: bool) {
+        crate::game::actors::movement_verification::vector_store(self, key, y);
+    }
+    #[cfg(sm_verify_dll)]
+    fn actor_body_stage(&mut self) {
+        crate::game::actors::movement_verification::body_stage(self);
+    }
+    #[cfg(sm_verify_dll)]
+    fn actor_spike_armed(&mut self, header: u16) -> bool {
+        crate::actor_movement_observer::start_spike(
+            header,
+            self.session().room.collision_cursor,
+            self.session().actors.controls.selected,
+        )
+        .is_some()
     }
     fn resolve_actor<'a>(&'a self, key: ActorKey, mode: AccessMode) -> ActorRead<'a> {
         resolve_actor_with(self, key, mode, Runtime::byte)
@@ -68,7 +85,7 @@ impl ActorCollections for Runtime<'_> {
     }
 }
 
-use super::{
+use sm_game::actors::{
     content::ActorRoutine,
     effects::{ActorAssertion, ActorEffects, ActorHost},
     scene::{ActorDrawRequest, ActorTileChunkSource, ActorTileDestination, ActorTilemapSource},
@@ -77,7 +94,7 @@ use sm_game::enemy_script::EnemyScript;
 impl ActorEffects for Runtime<'_> {
     #[cfg(sm_verify_dll)]
     fn actor_reference_stage(&mut self, event: u16, key: u16) {
-        super::composed_checks::stage(self, event, key);
+        crate::game::actors::composed_checks::stage(self, event, key);
         if crate::actor_population_animation_observer::active() {
             self.foreign(|game| {
                 crate::actor_population_animation_observer::stage(event, key, game);
@@ -108,10 +125,14 @@ impl ActorEffects for Runtime<'_> {
     ) -> EnemyScript {
         match routine.0 {
             10782374 => self.owned_call(|runtime| {
-                super::crocomire_attack::dispatch(actor.byte_index(), script, runtime)
+                crate::game::actors::crocomire_attack::dispatch(actor.byte_index(), script, runtime)
             }),
             10782546 => self.owned_call(|runtime| {
-                super::crocomire_attack::choose_spit(actor.byte_index(), script, runtime)
+                crate::game::actors::crocomire_attack::choose_spit(
+                    actor.byte_index(),
+                    script,
+                    runtime,
+                )
             }),
             _ => self.actor_instruction_legacy(routine.0, actor.byte_index(), script),
         }
@@ -130,14 +151,16 @@ impl ActorEffects for Runtime<'_> {
     }
     fn draw_actor_visual(&mut self, request: ActorDrawRequest) {
         #[cfg(sm_verify_dll)]
-        super::composed_checks::draw(self, &request);
-        super::media_runtime::draw(self, request).expect("actor visual binding invalid");
+        crate::game::actors::composed_checks::draw(self, &request);
+        crate::game::actors::media_runtime::draw(self, request)
+            .expect("actor visual binding invalid");
     }
     fn actor_assertion(&mut self, site: ActorAssertion) {
         self.actor_assertion_legacy(matches!(site, ActorAssertion::DrawingQueueAddress));
     }
     fn copy_actor_tilemap(&mut self, source: ActorTilemapSource) {
-        super::media_runtime::copy(self, source).expect("actor tilemap binding invalid");
+        crate::game::actors::media_runtime::copy(self, source)
+            .expect("actor tilemap binding invalid");
         let pending = self
             .session()
             .actors

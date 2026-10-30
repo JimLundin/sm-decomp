@@ -1,15 +1,15 @@
 //! Finite live actor content acquisition at the retained backend boundary.
 #![forbid(unsafe_code)]
-use super::{
-    access::{AccessMode, ActorAccess, ActorKey},
-    content::*,
-    media::VisualResourceId,
-};
 use crate::{
     rom::{RomImage, RomRecord, lorom_offset},
     types::{EnemyDef, ExtendedSpriteMap, Hitbox},
 };
 use core::mem::{offset_of, size_of};
+use sm_game::actors::{
+    access::{AccessMode, ActorAccess, ActorKey},
+    content::*,
+    media::VisualResourceId,
+};
 use std::sync::Arc;
 use {
     crate::game::session_runtime::Runtime,

@@ -1,14 +1,18 @@
 //! Ordered contact scans with owned actors and separately captured live content.
 #![forbid(unsafe_code)]
-use super::{
-    access::{AccessMode, ActorAccess, ActorKey},
-    api::{GrappleContact, GrappleReaction},
-    combat::current,
-    content::{
-        ActorCallbackTarget, ActorCollisionCapture, ActorCollisionWord, ActorCountWidth,
-        ActorDefinitionKey, ActorPartTraversal, ActorPartWord, ActorRoutine, DefinitionRoutine,
+use {
+    crate::game::actors::{
+        api::{GrappleContact, GrappleReaction},
+        combat::current,
     },
-    effects::ActorHost,
+    sm_game::actors::{
+        access::{AccessMode, ActorAccess, ActorKey},
+        content::{
+            ActorCallbackTarget, ActorCollisionCapture, ActorCollisionWord, ActorCountWidth,
+            ActorDefinitionKey, ActorPartTraversal, ActorPartWord, ActorRoutine, DefinitionRoutine,
+        },
+        effects::ActorHost,
+    },
 };
 use {
     crate::game::constants::bank_a0::{
@@ -78,7 +82,7 @@ fn touch_body<H: ActorHost>(h: &mut H) {
     let key = current(h);
     h.session_mut().room.enemy_processing_stage = 9;
     #[cfg(sm_verify_dll)]
-    super::movement_verification::body_stage(h);
+    h.actor_body_stage();
     if h.resolve_actor(key, AccessMode::Native).spritemap == 0 {
         return;
     }
@@ -361,7 +365,8 @@ pub(in crate::game) fn grapple_contact<H: ActorHost + EprojHost + MechanismEffec
     h.session_mut().room.collision_detection_index = 0;
     let mut index = 0usize;
     loop {
-        h.session_mut().actors.controls.selected = super::scheduling::interactive(h, index);
+        h.session_mut().actors.controls.selected =
+            crate::game::actors::scheduling::interactive(h, index);
         if h.session().actors.controls.selected == 0xffff {
             return None;
         }
@@ -403,7 +408,7 @@ pub(in crate::game) fn grapple_contact<H: ActorHost + EprojHost + MechanismEffec
                     | GrappleReaction::AttachAlternate2
             ) {
                 let selected = current(h);
-                super::combat::snap_grapple(h, selected);
+                crate::game::actors::combat::snap_grapple(h, selected);
             }
             return Some(GrappleContact {
                 reaction,

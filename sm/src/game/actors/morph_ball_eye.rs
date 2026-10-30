@@ -1,13 +1,13 @@
 //! Morph Ball Eye proximity, opening, tracking and closing.
 //! Native actor words remain authoritative; the runtime owns beam hardware startup.
 #![forbid(unsafe_code)]
-use super::access::ActorKey as Key;
-use super::api::{self, Axis};
+use crate::game::actors::api::{self, Axis};
 use crate::game::enemy_layouts::EnemyLayout8 as Eye;
 use crate::game::music::QueueSfx2_Max6;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
+use sm_game::actors::access::ActorKey as Key;
 
 fn animate(E: i32, clear: u16, set: u16, game: &mut Game) {
     let instruction = if slot!(game, Eye[E].parameter_1) & 1 == 0 {

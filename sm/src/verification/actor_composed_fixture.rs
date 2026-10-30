@@ -1,10 +1,10 @@
 //! Two-room authored actor fixture. Synthetic records only; no exported ROM bytes.
 #![forbid(unsafe_code)]
-use super::{content::*, media::*};
 use crate::{
     game::{room_entry::world::*, session::Point},
     game_state::Game,
 };
+use sm_game::actors::{content::*, media::*};
 use std::{collections::BTreeMap, sync::Arc};
 
 pub(crate) const SPECIES: SpeciesId = SpeciesId(0x17000007);

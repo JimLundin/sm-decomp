@@ -1,23 +1,16 @@
 //! Candidate dispatcher and observation adapters; no predecessor gameplay rules.
 #![forbid(unsafe_code)]
-use super::{
-    access::{AccessMode, ActorAccess, ActorKey},
-    api::{MovementResult, SlopePolicy, VerticalProbeEdge},
-    contacts,
-    effects::ActorHost,
-    movement, queries,
-};
 use crate::{actor_movement_cases::Operation, game_state::Game};
-use std::panic::{AssertUnwindSafe, catch_unwind, resume_unwind};
+use {
+    crate::game::actors::{
+        api::{MovementResult, SlopePolicy, VerticalProbeEdge},
+        contacts, movement, queries,
+    },
+    sm_game::actors::access::{AccessMode, ActorAccess, ActorKey},
+};
 use {
     crate::game::session_runtime::Runtime,
-    sm_game::{
-        room_mechanisms::{
-            creation,
-            host::{Contact, Host as MechanismHost, SpawnSource},
-        },
-        session::{Point, Vector32},
-    },
+    sm_game::session::{Point, Vector32},
 };
 
 fn result(value: MovementResult) -> u64 {
@@ -142,29 +135,5 @@ pub(super) fn body_stage(h: &mut impl ActorAccess) {
         .spritemap;
     if crate::actor_movement_observer::check_body_stage(stage, map) {
         h.actor_movement_observe(6);
-    }
-}
-pub(super) fn spike<H: ActorHost + MechanismHost>(h: &mut H, header: u16) -> u8 {
-    let armed = crate::actor_movement_observer::start_spike(
-        header,
-        h.session().room.collision_cursor,
-        h.session().actors.controls.selected,
-    )
-    .is_some();
-    if !armed {
-        return creation::spawn(h, SpawnSource::Collision { header }, &mut Contact::Absent);
-    }
-    h.actor_movement_observe(2);
-    let returned = catch_unwind(AssertUnwindSafe(|| {
-        creation::spawn(h, SpawnSource::Collision { header }, &mut Contact::Absent)
-    }));
-    h.actor_movement_observe(if returned.is_ok() { 3 } else { 5 });
-    match returned {
-        Err(payload) => resume_unwind(payload),
-        Ok(value) => {
-            assert_eq!(value, 0, "actual B3D0 no-op PLM return");
-            h.actor_movement_observe(4);
-            value
-        }
     }
 }

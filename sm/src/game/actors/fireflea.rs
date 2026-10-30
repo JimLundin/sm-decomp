@@ -1,6 +1,6 @@
 //! Fireflea motion and combat preserve native lanes and callback intervals.
 #![forbid(unsafe_code)]
-use super::{
+use crate::game::actors::{
     api::{DeathHandling, DeathKind, ShotHandling},
     combat,
 };

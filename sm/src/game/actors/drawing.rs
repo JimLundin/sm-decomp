@@ -1,19 +1,21 @@
 //! Layer-ordered actor scene contribution; presentation changes do not own collision.
 #![forbid(unsafe_code)]
-use super::{
-    access::{AccessMode, ActorAccess, ActorCollections, ActorKey, CollectionWindow},
-    combat::current,
-    content::{ActorCountWidth, ActorPartTraversal, ActorPartWord},
-    effects::{ActorAssertion, ActorHost},
-    media::AppearanceId,
-    scene::{self, ActorDrawMode, ActorDrawRequest, ActorPaletteMode},
-};
 use sm_game::geometry::Point;
 use sm_game::player_projectiles::access::Store;
 use sm_game::{
     enemy_projectiles::{host::Host as EprojHost, presentation as eproj_presentation},
     player_projectiles::{host::Host as ShotHost, presentation as shot_presentation},
     sprite_objects,
+};
+use {
+    crate::game::actors::combat::current,
+    sm_game::actors::{
+        access::{AccessMode, ActorAccess, ActorCollections, ActorKey, CollectionWindow},
+        content::{ActorCountWidth, ActorPartTraversal, ActorPartWord},
+        effects::{ActorAssertion, ActorHost},
+        media::AppearanceId,
+        scene::{self, ActorDrawMode, ActorDrawRequest, ActorPaletteMode},
+    },
 };
 
 fn appearance(h: &impl ActorAccess, key: ActorKey) -> Option<AppearanceId> {
@@ -79,7 +81,7 @@ pub(in crate::game) fn draw_scene<H: ActorHost + EprojHost + ShotHost>(h: &mut H
         }
     }
     let hook = u32::from_ne_bytes(h.session().actors.drawing.hook_address) & 0xffffff;
-    h.actor_graphics_hook(super::content::ActorRoutine(hook));
+    h.actor_graphics_hook(sm_game::actors::content::ActorRoutine(hook));
 }
 fn draw_actor<H: ActorHost + EprojHost>(h: &mut H) {
     let key = current(h);

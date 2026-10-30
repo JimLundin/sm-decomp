@@ -1,8 +1,7 @@
 //! Crocomire phases and attack scripts retain native actor words and captured script images.
 //! Hardware effects remain in the visual owner; RAM remains authoritative.
 #![forbid(unsafe_code)]
-use super::access::{AccessMode, ActorAccess, ActorKey as Key};
-use super::api as actor_api;
+use crate::game::actors::api as actor_api;
 use crate::game::callback_tables::callback_table;
 use crate::game::constants::{
     bank_86::{
@@ -31,6 +30,7 @@ use sm_data::crocomire::{
     SPIKE_WALL_COLUMNS, SPIKE_WALL_DESTINATION_ADDRESS, SPIKE_WALL_TILE_ADDRESS, ScrollSpritemaps,
     SpikeWallDestinations, SpikeWallTiles, import_words,
 };
+use sm_game::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
 use sm_game::enemy_script::EnemyScript;
 use sm_game::gameplay_flag_host::BossWordOrder;
 
@@ -87,10 +87,10 @@ pub(crate) fn import(image: &crate::rom::RomImage) -> ImportedTables {
 use crate::types::{Point16U, SpawnHardcodedPlmArgs, VoidP};
 
 pub(crate) fn dispatch(k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript {
-    super::crocomire_attack::dispatch(k, jp, &mut Runtime::new(game))
+    crate::game::actors::crocomire_attack::dispatch(k, jp, &mut Runtime::new(game))
 }
 pub(crate) fn choose_spit(k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript {
-    super::crocomire_attack::choose_spit(k, jp, &mut Runtime::new(game))
+    crate::game::actors::crocomire_attack::choose_spit(k, jp, &mut Runtime::new(game))
 }
 
 fn cap_byte(value: u8, limit: u8) -> u8 {
@@ -306,7 +306,10 @@ fn contact_edge(game: &mut Game) -> i32 {
         - word!(game.samus_x_radius) as i32
 }
 fn contact(game: &mut Game) {
-    super::combat::contact_reaction(&mut Runtime::new(game), super::api::DeathHandling::Finalize);
+    crate::game::actors::combat::contact_reaction(
+        &mut Runtime::new(game),
+        crate::game::actors::api::DeathHandling::Finalize,
+    );
 }
 pub(crate) fn touch(game: &mut Game) {
     contact(game);

@@ -1,11 +1,6 @@
 //! Botwoon motion, path programs, attack animation and combat over native fields.
 //! Native-field compatibility retains independent body and callback epochs.
 #![forbid(unsafe_code)]
-use super::botwoon_death::Host as DeathHost;
-use super::{
-    access::{AccessMode::Native, ActorAccess, ActorKey as Key},
-    api, botwoon_death, combat,
-};
 use crate::game::constants::{bank_86::*, enemy_properties::*};
 use crate::game::enemy_layouts::EnemyLayout104 as Boss;
 use crate::game::enemy_projectiles::{
@@ -28,6 +23,14 @@ use crate::types::{Point16U, SpawnHardcodedPlmArgs};
 use sm_data::botwoon_holes::{ADDRESS as HOLES, BYTES as HOLE_BYTES, BotwoonHoles, Hole};
 use sm_data::botwoon_speeds::{
     ADDRESS as SPEEDS, BYTES as SPEED_BYTES, BotwoonSpeed, BotwoonSpeeds,
+};
+use sm_game::actors::botwoon_death::Host as DeathHost;
+use {
+    crate::game::actors::{api, combat},
+    sm_game::actors::{
+        access::{AccessMode::Native, ActorAccess, ActorKey as Key},
+        botwoon_death,
+    },
 };
 
 fn initialize_living(e: i32, game: &mut Game) {

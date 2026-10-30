@@ -1,6 +1,5 @@
 //! Actual room-palette decode and actual prepared SpriteMap emission on Runtime.
 #![forbid(unsafe_code)]
-use super::{access::ActorCollections, content::*, identity::*, media::*, scene::*};
 use crate::{
     game::{
         room_entry::{
@@ -13,6 +12,10 @@ use crate::{
     },
     game_state::Game,
     rom::{RomImage, lorom_offset},
+};
+use {
+    crate::game::actors::identity::*,
+    sm_game::actors::{access::ActorCollections, content::*, media::*, scene::*},
 };
 
 fn write_word(image: &RomImage, at: usize, value: u16) {
@@ -45,7 +48,8 @@ fn stage_receipt(runtime: &mut Runtime<'_>, image: &RomImage, resource: Resource
         image: image.clone(),
         base: at,
     };
-    let mapped = super::media::palette_resource_for_capture(&captured, &runtime.session().world);
+    let mapped =
+        sm_game::actors::media::palette_resource_for_capture(&captured, &runtime.session().world);
     assert_eq!(
         mapped,
         Some(resource),
@@ -69,7 +73,7 @@ pub(crate) fn run_checked() {
 }
 
 fn prepared_sprite_palette_modes_use_actual_oam_emission() {
-    let world = super::fixture::binding(false, AppearanceId(20), false);
+    let world = sm_game::actors::fixture::binding(false, AppearanceId(20), false);
     let image = RomImage::zeroed(0x200000);
     let map = lorom_offset(0xa08000) as usize;
     write_word(&image, map, 1);
@@ -102,7 +106,7 @@ fn prepared_sprite_palette_modes_use_actual_oam_emission() {
             .actor_media()
             .resolve(AppearanceId(20), PoseId(9), pose)
             .unwrap();
-        super::media_runtime::draw(
+        crate::game::actors::media_runtime::draw(
             &mut runtime,
             ActorDrawRequest {
                 visual: ActorVisualSelection::Prepared(visual),
@@ -129,7 +133,7 @@ fn prepared_sprite_palette_modes_use_actual_oam_emission() {
 }
 
 fn actual_room_palette_decode_clears_obj_receipts_before_dynamic_reselection() {
-    let world = super::fixture::binding(false, AppearanceId(20), true);
+    let world = sm_game::actors::fixture::binding(false, AppearanceId(20), true);
     let image = RomImage::zeroed(0x200000);
     let stream = lorom_offset(0xb49000) as usize;
     image.write(stream, 31); // Two actual literal decode commands,32 bytes each.
@@ -238,7 +242,7 @@ fn actual_room_palette_decode_clears_obj_receipts_before_dynamic_reselection() {
 // Movies cannot compose Prepared Actor media with a full catalog before owner construction.
 fn full_room_catalog_preserves_actor_media_and_accepts_prepared_bg_receipt() {
     use sm_game::room_entry::world::*;
-    let original = super::fixture::binding(false, AppearanceId(20), true);
+    let original = sm_game::actors::fixture::binding(false, AppearanceId(20), true);
     let mut world = original.definition().unwrap().clone();
     let mut keys = original.compatibility_keys().clone();
     world

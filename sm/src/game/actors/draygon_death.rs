@@ -1,7 +1,7 @@
 //! Draygon damage, death approach, ring, sinking and rewards.
 //! Boss words remain native compatibility state; player and sprites use their owners.
 #![forbid(unsafe_code)]
-use super::{api, combat, draygon_flight::facing_animation};
+use crate::game::actors::{api, combat, draygon_flight::facing_animation};
 use crate::game::enemy_layouts::EnemyLayout104 as Draygon;
 use crate::game::enemy_projectiles::{DropSource, scatter_drop};
 use crate::game::gameplay_flag_runtime;
@@ -119,7 +119,7 @@ pub(crate) fn after_damage(game: &mut Game) {
 }
 pub(crate) fn approach(game: &mut Game) {
     let k = word!(game.cur_enemy_index) as i32;
-    super::draygon_flight::shed_particle(k as u16, 0xf, game);
+    crate::game::actors::draygon_flight::shed_particle(k as u16, 0xf, game);
     let dx = (64 - (i32::from(slot!(game, Draygon[0].base.x_pos)) >> 2)) as u16;
     let dy = (120 - (i32::from(slot!(game, Draygon[0].base.y_pos)) >> 2)) as u16;
     slot!(
