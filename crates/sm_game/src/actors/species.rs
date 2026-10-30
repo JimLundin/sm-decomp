@@ -14,9 +14,9 @@ use crate::actors::{
     ceres_ridley, choot, covern, crawlers, crocomire_reactions, dachora_run, draygon_death,
     draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator,
     escape_critters, etecoon, evir, fire_arc, fireflea, fune, gamet, geega, kago, kraid,
-    magdollite, metroid, mini_kraid, mochtroid, morph_ball_eye, phantoon, phantoon_actions, reflec,
-    ridley, roach, shaktool, sidehopper, skree, skultera, space_pirates, statues, torizo, tripper,
-    yapping_maw, zeb, zebetites, zoa,
+    magdollite, metroid, mini_kraid, mochtroid, morph_ball_eye, phantoon, phantoon_actions, puyo,
+    reflec, ridley, roach, shaktool, sidehopper, skree, skultera, space_pirates, statues, torizo,
+    tripper, yapping_maw, zeb, zebetites, zoa,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -532,6 +532,12 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10738643 => reflec::initialize(game),
         10723661 => roach::initialize(game),
         10724048 => roach::main_ai(game),
+        10656319 => puyo::initialize(game),
+        10656381 => {
+            if !puyo::main_ai(game) {
+                game.unknown_routine();
+            }
+        }
         10657608 => cacatac::initialize(game),
         10658809 => cacatac::owtch::initialize(game),
         10658942 => cacatac::owtch::main_ai(game),
