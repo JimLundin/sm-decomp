@@ -522,6 +522,7 @@ pub mod game {
     pub(crate) mod escape_timer;
     pub(crate) mod goofball;
     pub(crate) mod gunship;
+    mod hosts;
     pub(crate) mod hud;
     pub(crate) mod maridia_turtles;
     pub(crate) mod mini_crocomire;

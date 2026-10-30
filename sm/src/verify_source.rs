@@ -1945,6 +1945,7 @@ pub static FILES: &[(&str, &[u8])] = &[
         "crates/sm_game/src/room_scrolls/mod.rs",
         include_bytes!("../../crates/sm_game/src/room_scrolls/mod.rs"),
     ),
+    ("sm/src/game/hosts.rs", include_bytes!("game/hosts.rs")),
     (
         "sm/src/game/room_scrolls.rs",
         include_bytes!("game/room_scrolls.rs"),
