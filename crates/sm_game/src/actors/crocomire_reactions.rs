@@ -939,10 +939,7 @@ pub fn melting<H: Host + ?Sized>(game: &mut H) {
         i += 8;
     }
     word!(game.croco_word_7E069A = (i + 2) as u16);
-    word!(
-        game.hdma_object_channels_bitmask[(slot!(game, Crocomire[E0].melting_hdma_object) >> 1)] =
-            0
-    );
+    crate::hdma_objects::free_hdma_object(slot!(game, Crocomire[E0].melting_hdma_object), game);
 }
 
 fn erase_melt_columns<H: Host + ?Sized>(game: &mut H) -> u16 {

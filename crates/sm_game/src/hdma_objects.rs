@@ -98,7 +98,7 @@ where
 /// `action` changed it.
 fn with_table<H, T>(game: &mut H, action: impl FnOnce(&mut crate::hdma::HdmaObjects) -> T) -> T
 where
-    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
+    H: crate::ram::WorkRamAccess + crate::runtime_access::RuntimeAccess + ?Sized,
 {
     use crate::session_access::SessionAccess;
     if game.runtime_admissible() {
@@ -166,6 +166,24 @@ where
     with_table(game, |table| {
         table.enabled = (table.enabled & 0x7fff) | (u16::from(enabled) << 15);
     });
+}
+
+/// Free the object at byte slot `slot` by clearing its channel mask, as the
+/// bosses do when their effect ends. A slot past the table (a failed spawn's
+/// `u16::MAX`) keeps the original's store to the word it names.
+pub fn free_hdma_object<H>(slot: u16, game: &mut H)
+where
+    H: crate::ram::WorkRamAccess
+        + crate::ram::CompatibilityRam
+        + crate::runtime_access::RuntimeAccess
+        + ?Sized,
+{
+    let index = usize::from(slot >> 1);
+    if index < crate::hdma::OBJECTS {
+        with_table(game, |table| table.objects[index].channels = 0);
+    } else {
+        checked_word!(game.hdma_object_channels_bitmask[index] = 0);
+    }
 }
 
 /// Clear the whole flag word, as the map screen does on entry.
@@ -334,7 +352,7 @@ pub(crate) struct Bridged<'a, H: ?Sized> {
     objects: crate::hdma::HdmaObjects,
 }
 
-impl<'a, H: crate::menus::host::Host + ?Sized> Bridged<'a, H> {
+impl<'a, H: crate::ram::WorkRamAccess + ?Sized> Bridged<'a, H> {
     pub(crate) fn load(game: &'a mut H) -> Self {
         let mut bridge = Self {
             game,

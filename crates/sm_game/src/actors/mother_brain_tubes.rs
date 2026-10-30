@@ -195,9 +195,8 @@ fn fall_with_brain<H: Host + ?Sized>(game: &mut H, k: u16) {
     } else {
         game.end_screen_flash();
         game.start_earthquake(LANDING_EARTHQUAKE);
-        word! { game, 0;
-            hdma_object_channels_bitmask[0], hdma_object_channels_bitmask[1],
-        }
+        crate::hdma_objects::free_hdma_object(0, game);
+        crate::hdma_objects::free_hdma_object(2, game);
         slot!(game, Tube[BRAIN].base.y_pos = BRAIN_LANDING_Y);
         slot!(game, Tube[BODY].base.x_pos = BODY_X);
         slot!(game, Tube[BODY].base.y_pos = BODY_Y);

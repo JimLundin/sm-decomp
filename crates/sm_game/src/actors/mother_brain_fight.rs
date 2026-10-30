@@ -1285,9 +1285,8 @@ crate::dispatch::callback_dispatch! {
             slot!(game, MotherBrainBody[E].beam_width = 512);
             slot!(game, MotherBrainBody[E].cooldown = -256i32 as u16);
             slot!(game, MotherBrainBody[E].explosion_timer = 0);
-            word! { game, 0;
-                hdma_object_channels_bitmask[(slot!(game, MotherBrainBody[E].hdma_object) as i32 >> 1)], earthquake_timer,
-            }
+            crate::hdma_objects::free_hdma_object(slot!(game, MotherBrainBody[E].hdma_object), game);
+            word!(game.earthquake_timer = 0);
             MotherBrain_SetBrainInstrs(animation::BRAIN_NEUTRAL_PHASE_2, game);
             MotherBrain_SetupBrainNormalPal(game);
             MotherBrain_WriteDefaultPalette(game);
@@ -1520,9 +1519,8 @@ crate::dispatch::callback_dispatch! {
         }) {
             word!(game.enemy_bg2_tilemap_size = 320);
             slot!(game, MotherBrainBody[E].base.y_pos = 188);
-            word! { game, 0;
-                earthquake_timer, hdma_object_channels_bitmask[(slot!(game, MotherBrainBody[E].hdma_object) as i32 >> 1)],
-            }
+            word!(game.earthquake_timer = 0);
+            crate::hdma_objects::free_hdma_object(slot!(game, MotherBrainBody[E].hdma_object), game);
             MotherBrain_SetBodyInstrs(animation::BODY_STAND_UP_FROM_CROUCH_SLOW, game);
             slot!(game, MotherBrainBody[E].function = function::FAKE_DEATH_ASCENT_WAIT_UNTIL_MOTHER_BRAIN_HAS_FINISHED_UNCROUCHING);
             MotherBrainBody_FakeDeath_Ascent_14_WaitForUncouching(game);
