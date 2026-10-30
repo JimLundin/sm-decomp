@@ -1196,9 +1196,6 @@ crate::game::callback_dispatch! {
         }];
 
         11055370 => [{ let address = crate::game::actors::magdollite::main_ai(game); actor_species_pre_instruction(address, game); }];
-        11057014 => crate::game::actors::beetom::initialize;
-        11057165 => crate::game::actors::beetom::advance; 11058734 => crate::game::actors::beetom::touch;
-        11058860 => crate::game::actors::beetom::shot;
         11059657 => crate::game::actors::maridia_floater::initialize;
         11059740 => [{ let address = crate::game::actors::maridia_floater::state_address(game); actor_species_pre_instruction(address, game); }];
         11060670 => crate::game::actors::maridia_floater::touch;

@@ -40,6 +40,10 @@ impl ActorLease for Runtime<'_> {
         Runtime::enemy_speed(self, table, index)
     }
 
+    fn lease_enemy_speed32(&self, offset: usize) -> u32 {
+        Runtime::native_speed32(self, offset)
+    }
+
     fn lease_byte(&self, at: usize) -> u8 {
         Runtime::byte(self, at)
     }

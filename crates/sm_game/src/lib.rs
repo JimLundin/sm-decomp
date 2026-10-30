@@ -107,6 +107,7 @@ pub mod actors {
     pub mod baby_metroid_cutscene;
     pub mod baby_metroid_encounter;
     pub mod bang;
+    pub mod beetom;
     pub mod blue_brinstar_face_block;
     pub mod boss_lease;
     pub mod botwoon;

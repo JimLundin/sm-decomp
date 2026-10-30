@@ -183,6 +183,8 @@ pub trait ActorLease:
     fn lease_native_record(&mut self, bank: u8, address: u16) -> sm_data::cartridge::RomRecord;
     /// The common enemy speed table word at signed word `index`.
     fn lease_enemy_speed(&self, table: sm_data::enemy_speeds::SpeedTable, index: isize) -> u16;
+    /// The 32-bit quadratic speed table ($A0:CBC7) entry at byte `offset`.
+    fn lease_enemy_speed32(&self, offset: usize) -> u32;
     /// The byte at `at`, through the session projection.
     fn lease_byte(&self, at: usize) -> u8;
     /// Run `action` on the lease as an owned Session call: the lease is

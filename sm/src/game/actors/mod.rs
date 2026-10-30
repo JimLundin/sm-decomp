@@ -5,7 +5,6 @@ pub(in crate::game) use sm_game::actors::api;
 pub(in crate::game) use sm_game::actors::bang;
 pub(in crate::game) use sm_game::actors::morph_ball_eye;
 pub(in crate::game) use sm_game::actors::reflec;
-pub(in crate::game) mod beetom;
 pub(in crate::game) mod boss_lease;
 pub(crate) mod botwoon;
 pub(in crate::game) use sm_game::actors::botwoon_death;
