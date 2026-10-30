@@ -44,6 +44,16 @@ impl sm_game::runtime_access::RuntimeAccess for Game {
 }
 
 impl sm_game::grapple_swing::Host for Game {
+    type Lease<'a> = crate::game::session_runtime::Runtime<'a>;
+    fn with_lease<'s, R>(&'s mut self, action: impl FnOnce(&mut Self::Lease<'s>) -> R) -> R {
+        action(&mut crate::game::session_runtime::Runtime::new(self))
+    }
+    fn grapple_unreachable(&mut self) -> bool {
+        sm_game::menus::host::MenuRuntime::rtl_unreachable(self)
+    }
+    fn grapple_pose_command(&mut self, command: u16) -> u16 {
+        sm_game::menus::host::MenuRuntime::player_command(self, command)
+    }
     fn multiply_with_scratch(&mut self, a: u16, b: u16) -> u32 {
         Game::multiply_with_scratch(self, a, b)
     }
