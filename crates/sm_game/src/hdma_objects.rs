@@ -25,6 +25,23 @@ pub enum HdmaEffect {
         speed: u16,
     },
     ScrollWeather(crate::visual_state::Weather),
+    BeginHaze {
+        color: u16,
+    },
+    AdvanceHaze(crate::visual_state::HazePhase),
+    SelectDraygonLayer,
+    SelectPhantoonLayer,
+    AdvanceWave(crate::visual_state::HdmaWave),
+    AdvanceEyeBeam(crate::visual_state::EyeBeamPhase),
+    AdvanceXrayBackground,
+    AdvanceXrayBeam(crate::player_transitions::xray::BeamPhase),
+    InitializeSuitPickup,
+    AdvanceSuitPickup {
+        gravity: bool,
+    },
+    /// Mother Brain's rainbow beam, which runs on the compatibility host.
+    InitializeRainbowBeam,
+    AdvanceRainbowBeam,
 }
 use crate::cinematic::set_fixed_color;
 use crate::menus::prelude::SpawnHdmaObject_Args;

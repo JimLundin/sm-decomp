@@ -20,23 +20,20 @@ pub(crate) use crate::game::ending_screens::{
     fade_ending_gunship_backdrop, move_ending_cloud, update_ending_critters, wait_ending_cloud,
 };
 pub(crate) use crate::game::hdma_objects::{
-    advance_intro_crossfade, advance_title_gradient, clear_hdma, clear_hdma_channels,
-    initialize_room_effects, set_hdma_enabled, spawn_bg3_scroll, spawn_hdma, spawn_hdma_words,
-    update_hdma,
+    clear_hdma, clear_hdma_channels, initialize_room_effects, set_hdma_enabled, spawn_bg3_scroll,
+    spawn_hdma, spawn_hdma_words, update_hdma,
 };
 pub(crate) use crate::game::intro_objects::{
     advance_ceres_station, advance_intro_baby_pursuit, advance_intro_landing_mosaic,
     advance_intro_rinka, advance_zebes_destruction_zoom, advance_zebes_flight, advance_zebes_stars,
     chase_intro_baby_y, launch_cinematic_sprite, update_cinematic_transform, wait_cinematic_scene,
 };
-use crate::game::player_transitions::xray::BeamPhase;
 use crate::game::projectile_presentation_ram as sprite_output;
 pub(crate) use crate::game::room_visuals::{
-    advance_fireflea_lighting, advance_tourian_statue, darken_fireflea_room,
-    initialize_bomb_torizo_haze, initialize_ceres_elevator, initialize_ceres_ridley,
-    initialize_draygon_layer, initialize_fireflea_lighting, initialize_intro_wave,
-    initialize_morph_eye_beam, initialize_phantoon_motion, initialize_room_haze,
-    initialize_title_gradient, initialize_tourian_statue, initialize_weather, scroll_weather,
+    darken_fireflea_room, initialize_bomb_torizo_haze, initialize_ceres_elevator,
+    initialize_ceres_ridley, initialize_draygon_layer, initialize_fireflea_lighting,
+    initialize_intro_wave, initialize_morph_eye_beam, initialize_phantoon_motion,
+    initialize_room_haze, initialize_title_gradient, initialize_tourian_statue, initialize_weather,
     shake_room_with_sound,
 };
 pub(crate) use crate::game::shooting_star_motion::{
@@ -45,28 +42,19 @@ pub(crate) use crate::game::shooting_star_motion::{
 pub(crate) use crate::game::title_screen::{
     advance_title_pan, advance_title_wait, request_title_skip, start_title_pan,
 };
-use crate::game::xray_background::{self, finish_restore, restore_left, restore_right};
-use crate::game::{
-    explosion_window::{self, Phase},
-    liquid_effects, mother_brain_visuals, scrolling_sky,
-};
 use crate::ram_map::word;
-use crate::rtl::Unreachable;
 pub(crate) use sm_game::cinematic::{
     advance_cinematic_coordinate, capture_cinematic_palette, clear_cinematic_background,
     clear_cinematic_sprites, drift_cinematic_sprite, enable_cinematic_background,
     fade_cinematic_fixed_color, scaled_cinematic_value, set_cinematic_backdrop, set_fixed_color,
 };
-pub(crate) use sm_game::hdma_effects::HdmaEffects;
 
 use crate::{
     game::{
         animated_tiles, enemy_projectiles, palette_effects, player_projectiles,
         session_runtime::Runtime,
         visual_host::{self, AnimationMember, PaletteMember, Source, StatueProjectile},
-        visual_state::{
-            EyeBeamPhase, HazePhase, HdmaWave, PaletteBuffer, TourianStatuePhase, Upload, Weather,
-        },
+        visual_state::{PaletteBuffer, Upload},
     },
     game_state::Game,
     rom::RomRecord,
@@ -88,76 +76,6 @@ pub(crate) fn advance_crocomire(game: &mut Game) {
     }
     crocomire::samus_collision(game);
     crocomire::update_palette(game);
-}
-
-crate::game::address_dispatch! {
-    pub(crate) unsafe fn run_hdma_call(ea: u32, k: u16, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    {
-        8972135 => mother_brain_visuals::initialize_rainbow_beam;
-        8948500 => explosion_window::begin_pre_flash; 8948530 => explosion_window::begin_prescaled_pre_flash;
-        8948537 => explosion_window::begin_explosion; 8948551 => explosion_window::begin_prescaled_explosion;
-        8948558 => [explosion_window::finish_power_bomb(k, game)]; 8954596 => explosion_window::begin_crystal_flash;
-        8954633 => explosion_window::begin_explosion; 8954647 => [explosion_window::finish_crystal_flash(k, game)];
-        8970129 => [()]; 8970130 => [()]; 8972070 => [()];
-        9554681 => [xray_background::freeze_and_backup(k, game)];
-        9554716 => xray_background::capture_bg1_right;
-        9554775 => xray_background::capture_bg1_left; 9554830 => xray_background::build_overlay;
-        9556179 => xray_background::capture_bg2_right; 9556339 => xray_background::upload_left; 9556384 => xray_background::upload_right;
-        9556668 => xray_background::set_backdrop; 9557650 => [Runtime::new(game).initialize_suit_pickup_hdma()];
-    }
-}
-crate::game::address_dispatch! {
-    pub(crate) unsafe fn run_hdma_pre_action(ea: u32, k: u16, game: &mut Game) => ea;
-        call (k, game); default { Unreachable(game); };
-    {
-        8491739 => [()]; 8946872 => [()]; 10785852 => [()]; 9556607 => xray_background::setup_blending;
-        8947439 => [Runtime::new(game).advance_xray_background()]; 8947506 => [Runtime::new(game).advance_xray_beam(BeamPhase::Initial)];
-        8947540 => [Runtime::new(game).advance_xray_beam(BeamPhase::Widening)];
-        8947627 => [Runtime::new(game).advance_xray_beam(BeamPhase::Full)];
-        8948020 => restore_left;
-        8948154 => restore_right;
-        8948232 => finish_restore;
-        8948623 => explosion_window::set_power_bomb_blending;
-        8948632 => explosion_window::power_bomb_afterglow;
-        8949225 => [explosion_window::update_scaled(k, Phase::PowerBomb, game)];
-        8949426 => [explosion_window::update_prescaled(k, Phase::PowerBomb, game)];
-        8949983 => [explosion_window::update_scaled(k, Phase::PreFlash, game)];
-        8950184 => [explosion_window::update_prescaled(k, Phase::PreFlash, game)];
-        8954681 => explosion_window::set_crystal_flash_blending;
-        8954717 => explosion_window::crystal_flash_afterglow;
-        8955218 => [explosion_window::update_scaled(k, Phase::CrystalFlash, game)];
-        8955459 => scrolling_sky::update_vertical_scroll; 8955507 => scrolling_sky::update_horizontal_scroll;
-        8957362 => scrolling_sky::update_parallax; 8957370 => scrolling_sky::update_parallax;
-        8957378 => scrolling_sky::advance_parallax;
-        8958140 => [advance_fireflea_lighting(game)];
-        8958896 => liquid_effects::lava_surface;
-        8959189 => liquid_effects::lava_background; 8963214 => liquid_effects::water_surface;
-        8963465 => liquid_effects::water_background;
-        8963556 => liquid_effects::water_wave;
-        8963638 => liquid_effects::water_flat;
-        8968609 => [scroll_weather(k, Weather::Rain, game)];
-        8968775 => [scroll_weather(k, Weather::Spores, game)];
-        8969014 => [scroll_weather(k, Weather::Fog, game)];
-        8969175 => [advance_tourian_statue(k, TourianStatuePhase::Waiting, game)]; 8969251 => [advance_tourian_statue(k, TourianStatuePhase::Shaking, game)];
-        8969321 => [advance_tourian_statue(k, TourianStatuePhase::Sinking, game)]; 8969402 => [advance_tourian_statue(k, TourianStatuePhase::Finished, game)];
-        8969539 => [word!(game.fx_layer_blending_config_c = 44)];
-        8969744 => [Runtime::new(game).begin_haze(k, 0x80)];
-        8969749 => [Runtime::new(game).begin_haze(k, 0x20)];
-        8969773 => [Runtime::new(game).advance_haze(k, HazePhase::FadingIn)];
-        8969844 => [Runtime::new(game).advance_haze(k, HazePhase::FadedIn)];
-        8969878 => [Runtime::new(game).advance_haze(k, HazePhase::FadingOut)];
-        8970132 => [Runtime::new(game).select_draygon_layer(k)]; 8970278 => [Runtime::new(game).advance_suit_pickup(false)];
-        8970332 => [Runtime::new(game).advance_suit_pickup(true)]; 8971337 => [Runtime::new(game).select_phantoon_layer()];
-        8971623 => [Runtime::new(game).advance_hdma_wave(k, HdmaWave::Phantoon)]; 8972220 => [mother_brain_visuals::advance_rainbow_beam(game)];
-        0x88e9e6 => [Runtime::new(game).advance_eye_beam(k, EyeBeamPhase::Widening)];
-        0x88ea3c => [Runtime::new(game).advance_eye_beam(k, EyeBeamPhase::Full)];
-        0x88eacb => [Runtime::new(game).advance_eye_beam(k, EyeBeamPhase::Fading)];
-        8973232 => [advance_title_gradient(true, game)];
-        8973266 => [advance_title_gradient(false, game)];
-        8973341 => [advance_intro_crossfade(game)]; 8972070 => [()];
-        8973494 => [Runtime::new(game).advance_hdma_wave(k, HdmaWave::Intro)];
-    }
 }
 
 impl visual_host::Content for Runtime<'_> {

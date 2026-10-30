@@ -35,6 +35,7 @@ pub mod gameplay_flag_state;
 pub mod gameplay_tables;
 pub mod geometry;
 pub mod hdma;
+pub mod hdma_dispatch;
 pub mod hdma_effects;
 pub mod hdma_objects;
 pub mod hud;

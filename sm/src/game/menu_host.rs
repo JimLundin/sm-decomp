@@ -207,16 +207,24 @@ impl MenuRuntime for Game {
         unsafe { crate::game::music::HandleMusicQueue(self) }
     }
     fn hdma_pre_action(&mut self, address: u32, slot: u16) {
-        // SAFETY: as above; the pre-instructions reach the installed backend.
-        unsafe { visual_runtime::run_hdma_pre_action(address, slot, self) }
+        sm_game::hdma_dispatch::hdma_pre_action(address, slot, self)
     }
     fn hdma_call(&mut self, address: u32, slot: u16) {
-        // SAFETY: as above.
-        unsafe { visual_runtime::run_hdma_call(address, slot, self) }
+        sm_game::hdma_dispatch::hdma_call(address, slot, self)
     }
     fn hdma_effect(&mut self, effect: sm_game::hdma_objects::HdmaEffect, slot: u16) {
         use sm_game::hdma_effects::HdmaEffects;
         use sm_game::hdma_objects::HdmaEffect::*;
+        match effect {
+            // SAFETY: HDMA runs from the frame loop with the backend installed.
+            InitializeRainbowBeam => {
+                return unsafe { crate::game::mother_brain_visuals::initialize_rainbow_beam(self) };
+            }
+            AdvanceRainbowBeam => {
+                return unsafe { crate::game::mother_brain_visuals::advance_rainbow_beam(self) };
+            }
+            _ => {}
+        }
         let mut runtime = Runtime::new(self);
         match effect {
             AdvanceProgram => runtime.advance_hdma_program(),
@@ -226,6 +234,17 @@ impl MenuRuntime for Game {
             InitializeWavePair { base, primary } => runtime.initialize_wave_pair(base, primary),
             SetPhantoonMotion { direction, speed } => runtime.set_phantoon_motion(direction, speed),
             ScrollWeather(weather) => runtime.scroll_weather_layers(slot, weather),
+            BeginHaze { color } => runtime.begin_haze(slot, color),
+            AdvanceHaze(phase) => runtime.advance_haze(slot, phase),
+            SelectDraygonLayer => runtime.select_draygon_layer(slot),
+            SelectPhantoonLayer => runtime.select_phantoon_layer(),
+            AdvanceWave(wave) => runtime.advance_hdma_wave(slot, wave),
+            AdvanceEyeBeam(phase) => runtime.advance_eye_beam(slot, phase),
+            AdvanceXrayBackground => runtime.advance_xray_background(),
+            AdvanceXrayBeam(phase) => runtime.advance_xray_beam(phase),
+            InitializeSuitPickup => runtime.initialize_suit_pickup_hdma(),
+            AdvanceSuitPickup { gravity } => runtime.advance_suit_pickup(gravity),
+            InitializeRainbowBeam | AdvanceRainbowBeam => unreachable!(),
         }
     }
     fn retire_projectile(&mut self, slot: u16) {

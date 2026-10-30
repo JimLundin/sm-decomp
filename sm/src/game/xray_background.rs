@@ -3,10 +3,7 @@
 use crate::game::player_transitions::xray::BlendPhase;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
-pub(crate) use sm_game::xray_background::{
-    capture_bg1_left, capture_bg1_right, capture_bg2_right, freeze_and_backup, restore_left,
-    restore_right, reveal_room_block, set_backdrop, setup_blending, upload_left, upload_right,
-};
+pub(crate) use sm_game::xray_background::{restore_left, restore_right, reveal_room_block};
 
 impl sm_game::xray_background::Host for Game {
     fn xray_blend_mask(&mut self) -> u16 {
