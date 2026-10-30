@@ -1,19 +1,71 @@
-//! Bank $B3 enemy pre-instructions and pipe bug state routines, keyed by the
-//! routine addresses the original enemy definitions name.
+//! Enemy species dispatch tables keyed by the routine addresses the original
+//! enemy definitions name: graphics draw hooks, bank $B3 pre-instructions and
+//! pipe bug state routines.
 //!
 //! Each table is one `match` from address to routine. Moving another routine
 //! here means adding its arm; the compat dispatcher still owns the rest.
 #![forbid(unsafe_code)]
 use crate::actors::host::{ActorHost, ActorRuntime, LeaseActors};
-use crate::actors::{botwoon, escape_critters};
+use crate::actors::{botwoon, draygon_flight, draygon_host, escape_critters, magdollite};
 use crate::ram::word;
+
+/// The failure every table shares.
+pub trait SpeciesHost {
+    /// The original failure for an address no routine answers.
+    fn unknown_routine(&mut self);
+}
 
 /// What the bank $B3 routines need beyond their actors' own hosts.
 pub trait B3Host:
-    ActorHost + ActorRuntime + LeaseActors + botwoon::Host + escape_critters::Host
+    SpeciesHost + ActorHost + ActorRuntime + LeaseActors + botwoon::Host + escape_critters::Host
 {
-    /// The original failure for an address no routine answers.
-    fn unknown_routine(&mut self);
+}
+
+impl<T> B3Host for T where
+    T: SpeciesHost
+        + ActorHost
+        + ActorRuntime
+        + LeaseActors
+        + botwoon::Host
+        + escape_critters::Host
+        + ?Sized
+{
+}
+
+/// Graphics draw hooks whose routines still run in the compatibility crate.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum NativeDrawHook {
+    ReflecPalette,
+    CeresRidleyBabyMetroidAndWings,
+    WreckedShipRobotPalette,
+    BlueFaceBlockPalette,
+    MotherBrainBrainAndNeck,
+    MotherBrainBrain,
+    DeadTorizo,
+}
+
+/// What the draw hooks need beyond their actors' own hosts.
+pub trait DrawHookHost: SpeciesHost + magdollite::Host + draygon_host::Host {
+    fn native_draw_hook(&mut self, hook: NativeDrawHook);
+}
+
+/// An enemy species' graphics draw hook, keyed by its address.
+pub fn draw_hook<H: DrawHookHost + ?Sized>(ea: u32, game: &mut H) {
+    match ea {
+        10518604 => (),
+        10738444 => game.native_draw_hook(NativeDrawHook::ReflecPalette),
+        10851138 => draygon_flight::set_bg2_scroll(game),
+        10920690 => game.native_draw_hook(NativeDrawHook::CeresRidleyBabyMetroidAndWings),
+        11042892 => (),
+        11055282 => magdollite::cycle_palette(game),
+        11062375 => game.native_draw_hook(NativeDrawHook::WreckedShipRobotPalette),
+        11069550 => game.native_draw_hook(NativeDrawHook::BlueFaceBlockPalette),
+        11110278 => (),
+        11110345 => game.native_draw_hook(NativeDrawHook::MotherBrainBrainAndNeck),
+        11110365 => game.native_draw_hook(NativeDrawHook::MotherBrainBrain),
+        11129754 => game.native_draw_hook(NativeDrawHook::DeadTorizo),
+        _ => game.unknown_routine(),
+    }
 }
 
 /// A pipe bug's state routine, keyed by its bank $B3 address.

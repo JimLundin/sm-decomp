@@ -99,9 +99,24 @@ pub struct Runtime<'g> {
         std::sync::Arc<crate::game_state::persistent_session::SessionStartRequirements>,
     )>,
 }
-impl sm_game::actors::species::B3Host for Game {
+impl sm_game::actors::species::SpeciesHost for Game {
     fn unknown_routine(&mut self) {
         crate::rtl::Unreachable(self);
+    }
+}
+
+impl sm_game::actors::species::DrawHookHost for Game {
+    fn native_draw_hook(&mut self, hook: sm_game::actors::species::NativeDrawHook) {
+        use sm_game::actors::species::NativeDrawHook::*;
+        match hook {
+            ReflecPalette => reflec::palette(self),
+            CeresRidleyBabyMetroidAndWings => sm_a6::Ridley_A2F2(self),
+            WreckedShipRobotPalette => crate::game::actors::wrecked_ship_robots::palette(self),
+            BlueFaceBlockPalette => crate::game::actors::blue_face_block::palette(self),
+            MotherBrainBrainAndNeck => sm_a9::MotherBrain_DrawBrainNeck_EnemyGfxDrawHook(self),
+            MotherBrainBrain => sm_a9::MotherBrainsBrain_GfxDrawHook(self),
+            DeadTorizo => sm_a9::DeadTorizo_MainGfxHook(self),
+        }
     }
 }
 
@@ -1019,17 +1034,6 @@ use crate::types::EnemyData;
 use sm_game::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
 use sm_game::combat_rules::LatchMode;
 use sm_game::enemy_script::EnemyScript;
-crate::game::address_dispatch! {
-    unsafe fn actor_species_draw_hook(ea: u32, game: &mut Game) => ea;
-        call (game); default { crate::rtl::Unreachable(game); };
-    {
-        10518604 => [()]; 10738444 => reflec::palette; 10851138 => actors::draygon_flight::set_bg2_scroll;
-        10920690 => sm_a6::Ridley_A2F2; 11042892 => [()]; 11055282 => crate::game::actors::magdollite::cycle_palette;
-        11062375 => crate::game::actors::wrecked_ship_robots::palette; 11069550 => crate::game::actors::blue_face_block::palette;
-        11110278 => [()]; 11110345 => sm_a9::MotherBrain_DrawBrainNeck_EnemyGfxDrawHook;
-        11110365 => sm_a9::MotherBrainsBrain_GfxDrawHook; 11129754 => sm_a9::DeadTorizo_MainGfxHook;
-    }
-}
 
 crate::game::callback_dispatch! {
     unsafe fn actor_species_ai(ea: u32, game: &mut Game) => ea;
@@ -1643,7 +1647,7 @@ impl Runtime<'_> {
         self.foreign(|game| unsafe { actor_species_shot(routine, argument, game) });
     }
     pub(crate) fn actor_hook_legacy(&mut self, routine: u32) {
-        self.foreign(|game| unsafe { actor_species_draw_hook(routine, game) });
+        self.foreign(|game| sm_game::actors::species::draw_hook(routine, game));
     }
     pub(crate) fn produce_player_scene(&mut self) {
         self.owned_player_call(|runtime| {
