@@ -1050,7 +1050,7 @@ unsafe fn loadRom(name: *const c_char, game: &mut Game) -> bool {
         }
         bytes.spare_capacity_mut()[length].write(MaybeUninit::new(0));
         let data = bytes.as_mut_ptr().cast::<u8>();
-        if fread(data.cast(), 1, length, file.0) as u32 as size_t != length {
+        if fread(data.cast(), 1, length, file.0) != length {
             crate::host::Die(c"fread failed".as_ptr());
         }
         drop(file);

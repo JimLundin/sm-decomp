@@ -145,12 +145,12 @@ unsafe fn returning_die_short_load_case(rom: &CStr, fixture: &CStr) -> Result<()
                 0,
             ];
             assert_eq!(
-                sm::c_library::fwrite(header.as_ptr().cast(), 1, 64, file) as usize,
+                sm::c_library::fwrite(header.as_ptr().cast(), 1, 64, file),
                 64
             );
             let log = [0x31u8, 0x42];
             assert_eq!(
-                sm::c_library::fwrite(log.as_ptr().cast(), 1, log.len(), file) as usize,
+                sm::c_library::fwrite(log.as_ptr().cast(), 1, log.len(), file),
                 2
             );
             assert_eq!(sm::c_library::ftell(file), 66);

@@ -273,7 +273,7 @@ pub unsafe fn ReadFromFile(f: *mut FILE, data: *mut c_void, n: size_t) {
 }
 unsafe fn read_file_block(f: *mut FILE, data: *mut c_void, n: size_t) -> bool {
     unsafe {
-        let complete = fread(data, 1 as size_t, n, f) as size_t == n;
+        let complete = fread(data, 1 as size_t, n, f) == n;
         if !complete {
             Die(c"fread failed\n".as_ptr());
         }
@@ -1547,11 +1547,11 @@ pub unsafe fn RtlReadSram(game: &mut Game) {
                 f,
             );
             game.g_sram.write_bytes(0, &bytes);
-            if count != crate::recording::BASE_SRAM_SIZE as u32 {
+            if count != crate::recording::BASE_SRAM_SIZE {
                 fprintf(stderr, c"Error reading saves/sm.srm\n".as_ptr());
             }
             fclose(f);
-            synchronize_whole_state(game, count == crate::recording::BASE_SRAM_SIZE as u32);
+            synchronize_whole_state(game, count == crate::recording::BASE_SRAM_SIZE);
             recording_allocation(
                 game.state_recorder
                     .base_snapshot
@@ -1560,7 +1560,7 @@ pub unsafe fn RtlReadSram(game: &mut Game) {
             game.state_recorder.has_base_audio_queue = false;
             game.g_sram
                 .read_bytes(0, game.state_recorder.base_snapshot.as_mut_slice());
-            if count == crate::recording::BASE_SRAM_SIZE as u32 {
+            if count == crate::recording::BASE_SRAM_SIZE {
                 mutation
                     .finish_current()
                     .expect("Samus SRAM adoption rejected");

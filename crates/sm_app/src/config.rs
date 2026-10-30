@@ -218,7 +218,7 @@ unsafe extern "C-unwind" fn sm_config_read_file(
         buffer.resize(extent, 0);
         buffer[length] = 0;
         let data = buffer.as_mut_ptr();
-        if fread(data.cast(), 1, length, file.0) as u32 as size_t != length {
+        if fread(data.cast(), 1, length, file.0) != length {
             sm::host::Die(c"fread failed".as_ptr());
         }
         drop(file);
