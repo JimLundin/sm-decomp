@@ -44,7 +44,8 @@ jobs:
       - name: Check every sm_data record imports from the original ROM
         # A record that rejects the cartridge leaves the game on its original ROM
         # reads, so replays would pass without exercising it. The log can hold
-        # ROM-derived values, so only pass/fail is printed.
+        # ROM-derived values, so only pass/fail, the rejected record names and
+        # error kinds, and the failing assertion's source location are printed.
         env:
           ROM_00: ${{ secrets.SM_ROM_00 }}
           ROM_01: ${{ secrets.SM_ROM_01 }}
@@ -94,8 +95,15 @@ jobs:
         run: |
           python3 -B .github/scripts/prepare_rom.py
           if SM_ROM=rom/sm.smc cargo test --locked -p sm_data --test rom_import > rom_import.log 2>&1; then status=0; else status=$?; fi
+          grep -E 'rejected the original ROM|panicked at' rom_import.log > rom_import.failures || true
           rm -rf rom rom_import.log
-          if [ "$status" -ne 0 ]; then echo 'sm_data ROM import check: FAIL'; exit 1; fi
+          if [ "$status" -ne 0 ]; then
+            echo 'sm_data ROM import check: FAIL'
+            grep -oE 'rejected the original ROM: \[[^]]*\]' rom_import.failures | head -5 || true
+            grep -oE 'panicked at [^ ]+:[0-9]+:[0-9]+' rom_import.failures | head -5 || true
+            rm -f rom_import.failures
+            exit 1
+          fi
           echo 'sm_data ROM import check: PASS'
       - name: Run the full corpus after bank retirement
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
