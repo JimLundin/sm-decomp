@@ -118,7 +118,7 @@ pub fn main_ai(game: &mut impl EnemyHost) {
             let (bull, angle) = aim(game);
             let off_target = angle.wrapping_sub(session_slot!(game, Bull[bull].angle));
             let turn = abs16(sign_extend8(off_target));
-            if turn as i32 - 48 & 0x8000 == 0 {
+            if (turn as i32 - 48) & 0x8000 == 0 {
                 session_slot!(game, Bull[bull]; function = DECELERATING, acceleration_delta = 24);
             }
         }

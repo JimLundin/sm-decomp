@@ -154,7 +154,7 @@ pub fn abs16(value: u16) -> u16 {
 }
 /// Bit 7 copied up through the high byte, which a clear bit 7 leaves as it was.
 pub fn sign_extend8(value: u16) -> u16 {
-    value | 0xff00 * (value >> 7 & 1)
+    value | (0xff00 * (value >> 7 & 1))
 }
 
 /// What enemies that run on the host itself, without a lease, need of it.
