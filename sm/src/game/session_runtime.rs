@@ -492,14 +492,15 @@ impl<'g> Runtime<'g> {
         let game = &mut *self.game;
         crate::ram_map::slot!(game, Maw[actor].var_36 = outside);
         // Retain raw LOW/HIGH stores and all old owned-region overwrites.
-        // Only newly owned death/body lanes adopt this raw store.
+        // Only newly owned death/body lanes and the actors' extended RAM,
+        // which holds this word, adopt this raw store.
         let at = crate::ram_map::slot!(@at Maw, actor, var_36);
         let bytes = outside.to_ne_bytes();
         let state = self.state.as_mut().expect("aggregate unavailable");
         encoding::write_botwoon_death_byte(state, at, bytes[0]);
         encoding::write_botwoon_death_byte(state, at + 1, bytes[1]);
         for lane in [at, at + 1] {
-            if (0xb04..0xb08).contains(&lane) {
+            if (0xb04..0xb08).contains(&lane) || (0x7800..0x9000).contains(&lane) {
                 encoding::write_projected_byte(state, lane, game.ram().read_byte(lane));
             }
         }

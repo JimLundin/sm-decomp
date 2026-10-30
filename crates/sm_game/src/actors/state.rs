@@ -29,10 +29,6 @@ pub struct Actor {
     pub variables: [u16; 5],
     pub pre_instruction: u16,
     pub parameters: [u16; 2],
-    /// The slot's three extended RAM blocks of 32 words, at $7E:7800,
-    /// $7E:8000 and $7E:8800 plus 40h bytes per slot (the original's
-    /// `var_00`..`var_5F`).
-    pub extended: [[u16; 32]; 3],
 }
 #[derive(Debug, Default, PartialEq)]
 pub struct SpawnRecord {
@@ -64,6 +60,23 @@ pub struct Actors {
     pub schedule: ActorSchedule,
     pub compatibility: ActorCompatibility,
     pub diagnostics: ActorDiagnostics,
+    pub extended: ExtendedRam,
+}
+/// The slots' extended RAM ($7E:7800..$7E:8FFF): three blocks of 32 words per
+/// slot, the original's `var_00`..`var_5F`, as the words of each block in RAM
+/// order (40h bytes per slot). It lives beside the slot records rather than in
+/// `Actor`, because clearing or spawning a slot leaves it untouched, as the
+/// original does.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ExtendedRam {
+    pub blocks: [[u16; 1024]; 3],
+}
+impl Default for ExtendedRam {
+    fn default() -> Self {
+        Self {
+            blocks: [[0; 1024]; 3],
+        }
+    }
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct ActorControls {
@@ -183,7 +196,6 @@ impl Actor {
             variables: self.variables,
             pre_instruction: self.pre_instruction,
             parameters: self.parameters,
-            extended: self.extended,
         }
     }
 }
@@ -201,6 +213,7 @@ impl Clone for Actors {
             schedule: self.schedule.clone(),
             compatibility: self.compatibility.clone(),
             diagnostics: self.diagnostics.clone(),
+            extended: self.extended.clone(),
         }
     }
 }

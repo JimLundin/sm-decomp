@@ -126,8 +126,8 @@ macro_rules! common_word {
             at @ 0x7000..=0x77fe => spawn_word!(
                 $s.actors.saved[(at - 0x7000) / 64], (at - 0x7000) % 64, ($($borrow)*)),
             0x801e | 0x8020 | 0x803c | 0x8818 | 0x883e => None,
-            at @ 0x7800..=0x8ffe => Some($($borrow)* $s.actors.slots[(at - 0x7800) % 0x800 / 64]
-                .extended[(at - 0x7800) / 0x800][(at - 0x7800) % 64 / 2]),
+            at @ 0x7800..=0x8ffe => Some($($borrow)* $s.actors.extended.blocks[(at - 0x7800) / 0x800]
+                [(at - 0x7800) % 0x800 / 2]),
             0x0e12 => Some($($borrow)* $s.actors.diagnostics.sprite_contacts_disabled),
             0x0e1c => Some($($borrow)* $s.actors.controls.shake_request),
             0x0e1e => Some($($borrow)* $s.actors.drawing.tilemap_pending),

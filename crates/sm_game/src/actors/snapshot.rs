@@ -308,8 +308,7 @@ numeric_checkpoint!(
     hurt_time,
     variables,
     pre_instruction,
-    parameters,
-    extended
+    parameters
 );
 numeric_checkpoint!(
     SpawnRecord,
@@ -410,8 +409,10 @@ numeric_checkpoint!(
     drawing,
     schedule,
     compatibility,
-    diagnostics
+    diagnostics,
+    extended
 );
+numeric_checkpoint!(ExtendedRam, blocks);
 /// The actor table's numeric checkpoint, bound to its display start metadata.
 pub trait ActorsCheckpoint: Sized {
     fn encode_numeric_checkpoint(&self, metadata: &DisplayStartMetadata)
