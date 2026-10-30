@@ -39,6 +39,18 @@ pub trait Host: ActorHost + ActorRuntime + SoundEffects + LoadedRom {
     /// Contact damage `amount` after Samus's suit.
     fn suit_damage(&mut self, amount: u16) -> u16;
     fn damage_player(&mut self, amount: u16);
+    fn draygon_spawn_ring(&mut self);
+    fn draygon_death_bubble(&mut self);
+    /// Draygon's sprite motion with `horizontal_bias`.
+    fn draygon_motion(&mut self, horizontal_bias: u16);
+    fn retire_all_sprites(&mut self);
+    /// Queue music `track` with the original eight-frame delay.
+    fn queue_music_delayed(&mut self, track: u16);
+    /// The boss word for `area`, little-endian.
+    fn boss_word(&mut self, area: u16) -> u16;
+    fn set_boss_word(&mut self, area: u16, value: u16);
+    /// Draygon's death drop for `area`.
+    fn scatter_draygon_drop(&mut self, area: u16);
     /// The original unknown-address failure.
     fn unreachable(&mut self);
 }
