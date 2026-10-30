@@ -1224,8 +1224,6 @@ crate::game::callback_dispatch! {
         10873619 => [actors::spore_spawn::main_ai(game)];
         10874202 => [actors::spore_spawn::shot(game)];
         10874348 => [actors::spore_spawn::touch(game)];
-        10915836 => [crate::game::fire_geysers::initialize(game)];
-        10915875 => [crate::game::fire_geysers::run(game)];
         0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyAi(ea, game)];
         0xb30000..=0xb3ffff => [{ crate::rtl::Unreachable(game); }];
     }
@@ -1302,7 +1300,6 @@ crate::game::callback_dispatch! {
         10852216 => [{ crate::game::sprite_effect_runtime::draygon_random_sprite(24, game); j }];
         10854268 => [{ crate::game::sprite_effect_runtime::draygon_spit(false, game); j }];
         10854318 => [{ crate::game::sprite_effect_runtime::draygon_spit(true, game); j }];
-        10915247 | 10915347..=10915793 => [crate::game::fire_geysers::instruction(ea, j, game)];
         10940701 => [crate::game::ceres_doors::change_properties(k, sm_game::actors::ceres_doors::VANISH, 0, j, game)];
         10940725 => [crate::game::ceres_doors::change_properties(k, 0, sm_game::actors::ceres_doors::VANISH, j, game)];
         10942014 => crate::game::ceres_doors::branch_unless_samus_near;

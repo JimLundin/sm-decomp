@@ -148,6 +148,7 @@ pub mod actors {
     pub mod evir;
     #[doc(hidden)] // Shared verification world for compat and detached checks.
     pub mod fire_arc;
+    pub mod fire_pillar;
     pub mod fireflea;
     pub mod fixture;
     pub mod flies;
