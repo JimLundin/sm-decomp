@@ -35,6 +35,8 @@ jobs:
         run: |
           sh tools/progress.sh
           python3 tools/cycle_report.py
+      - name: Hold the Phase 2 ratchets (RAM coupling and production lines)
+        run: python3 tools/ram_ratchet.py
       - name: Keep target packages independent of the emulator crate
         # sm_game and sm_runtime may depend only on sm_data, never on sm.
         run: |
