@@ -550,7 +550,6 @@ pub mod game {
     pub(crate) mod visual_runtime;
     pub(crate) use sm_game::visual_state;
 
-    pub(crate) use sm_game::ceres_door_data;
     pub(crate) mod ceres_doors;
     pub(crate) mod cinematic;
     pub use sm_game::combat_rules;

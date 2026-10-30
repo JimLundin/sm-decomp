@@ -91,6 +91,7 @@ pub mod actors {
     pub mod botwoon;
     pub mod botwoon_death;
     pub mod boulder;
+    pub mod ceres_doors;
     pub mod ceres_ridley;
     pub mod codec;
     pub mod combat;
@@ -112,6 +113,7 @@ pub mod actors {
     pub mod escape_critters;
     pub mod etecoon;
     #[doc(hidden)] // Shared verification world for compat and detached checks.
+    pub mod fire_arc;
     pub mod fixture;
     pub mod host;
     pub mod identity;

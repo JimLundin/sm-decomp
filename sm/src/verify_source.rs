@@ -2982,6 +2982,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/actors/botwoon.rs"),
     ),
     (
+        "crates/sm_game/src/actors/ceres_doors.rs",
+        include_bytes!("../../crates/sm_game/src/actors/ceres_doors.rs"),
+    ),
+    (
         "crates/sm_game/src/actors/ceres_ridley.rs",
         include_bytes!("../../crates/sm_game/src/actors/ceres_ridley.rs"),
     ),
@@ -3024,6 +3028,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/actors/draygon_sweep.rs",
         include_bytes!("../../crates/sm_game/src/actors/draygon_sweep.rs"),
+    ),
+    (
+        "crates/sm_game/src/actors/fire_arc.rs",
+        include_bytes!("../../crates/sm_game/src/actors/fire_arc.rs"),
     ),
     (
         "crates/sm_game/src/actors/escape_critters.rs",

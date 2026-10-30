@@ -59,6 +59,22 @@ macro_rules! part_view {
 }
 pub(crate) use part_view;
 
+/// Checks a hand-written view of an enemy slot: its size and base, and each
+/// named field's offset, against the layout word it names. Unused words are
+/// the view's private padding.
+macro_rules! same_words {
+    ($view:ident: $layout:ident { $($field:ident = $word:ident),* $(,)? }) => {
+        const _: () = {
+            use ::core::mem::{offset_of, size_of};
+            use crate::actors::layouts::$layout as Layout;
+            assert!(size_of::<$view>() == size_of::<Layout>());
+            assert!(offset_of!($view, base) == offset_of!(Layout, base));
+            $(assert!(offset_of!($view, $field) == offset_of!(Layout, $word));)*
+        };
+    };
+}
+pub(crate) use same_words;
+
 /// The common enemy slot fields at $7E:0F78 + slot; every layout starts with it.
 #[derive(Copy, Clone)]
 #[repr(C, packed)]

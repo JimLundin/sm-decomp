@@ -13,7 +13,7 @@
 #![forbid(unsafe_code)]
 use crate::actors::api::angle_from_delta;
 use crate::actors::host::{Death, Shot, abs16};
-use crate::actors::layouts::EnemyBase;
+use crate::actors::layouts::{EnemyBase, same_words};
 use crate::actors::ridley_tables::{copy_words_to_ram_fan, pick_random_speed_row};
 use crate::constants::enemy_properties::{
     kEnemyProps_Deleted, kEnemyProps_Invisible, kEnemyProps_Tangible,
@@ -171,19 +171,6 @@ pub struct CeresDoor {
     pad_0fa8: [u16; 1],
     pub drawn_by_ridley: u16,
     pad_0fac: [u16; 6],
-}
-
-/// Each view field is its layout's word.
-macro_rules! same_words {
-    ($view:ident: $layout:ident { $($field:ident = $word:ident),* $(,)? }) => {
-        const _: () = {
-            use ::core::mem::{offset_of, size_of};
-            use crate::actors::layouts::$layout as Layout;
-            assert!(size_of::<$view>() == size_of::<Layout>());
-            assert!(offset_of!($view, base) == offset_of!(Layout, base));
-            $(assert!(offset_of!($view, $field) == offset_of!(Layout, $word));)*
-        };
-    };
 }
 
 same_words!(Ridley: EnemyLayout104 {

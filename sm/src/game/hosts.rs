@@ -839,3 +839,69 @@ impl sm_game::actors::ceres_ridley::Host for Game {
         crate::game::escape_typewriter::type_escape_text(tiles, self) & 1 != 0
     }
 }
+
+// The fire arc's functions and data are its dispatch IDs and the
+// decompilation's addresses.
+const _: () = {
+    use crate::game::sm_a6::*;
+    use sm_game::actors::fire_arc::{self as a, function as f};
+    assert!((0xa6_0000 | f::INACTIVE as u32) == 10917397);
+    assert!((0xa6_0000 | f::ACTIVE as u32) == 10917506);
+    assert!(a::INSTRUCTION_LIST == addr_kNuclearWaffle_Ilist_9490 as u16);
+    assert!(a::BODY_PROJECTILE == addr_kEproj_NuclearWaffleBody as u16);
+};
+
+impl sm_game::actors::fire_arc::Host for Game {
+    fn run_fire_arc_function(&mut self, function: u16) {
+        crate::game::sm_a6::CallNuclearWaffleFunc(0xa6_0000 | u32::from(function), self);
+    }
+}
+
+// The door functions, palettes and spritemap are the dispatch IDs and the
+// decompilation's addresses; the steam's hidden state is the doors' one.
+const _: () = {
+    use crate::game::sm_a6::*;
+    use sm_game::actors::ceres_doors::{self as c, door_function as f};
+    assert!((0xa6_0000 | f::RUMBLING_AND_EXPLOSIONS as u32) == 10942428);
+    assert!((0xa6_0000 | f::ELEVATOR_ANIMATIONS as u32) == 10942544);
+    assert!(c::DOOR_PALETTE == addr_kCeresDoor_Palette as u16);
+    assert!(c::ESCAPE_DOOR_PALETTE == addr_word_A6F50C as u16);
+    assert!(c::DOOR_SPRITEMAP == addr_kCeresDoor_Sprmap_FAC7 as u16);
+    assert!(c::VANISH == crate::game::ceres_doors::TANGIBLE | crate::game::ceres_doors::INVISIBLE);
+};
+
+impl sm_game::actors::ceres_doors::Host for Game {
+    fn run_steam_function(&mut self, function: u16, k: u16) {
+        crate::game::sm_a6::CallCeresSteamFunc(0xa6_0000 | u32::from(function), k, self);
+    }
+
+    fn run_door_function(&mut self, function: u16) {
+        crate::game::sm_a6::CallCeresDoor(0xa6_0000 | u32::from(function), self);
+    }
+
+    fn change_properties(&mut self, k: u16, set: u16, clear: u16) {
+        crate::game::ceres_doors::change_properties(
+            k,
+            set,
+            clear,
+            sm_game::enemy_script::EnemyScript::Stop,
+            self,
+        );
+    }
+
+    fn rom_script(&mut self, bank: u8, address: u16) -> sm_game::enemy_script::EnemyScript {
+        crate::game::sm_a6::steam_script(bank, address, self)
+    }
+
+    fn project_cinematic_point(&mut self, x: u16, y: u16) -> (u16, u16) {
+        let point = crate::game::visual_runtime::project_cinematic_point(
+            crate::types::Point16U { x, y },
+            self,
+        );
+        (point.x, point.y)
+    }
+
+    fn queue_mode7_transfer(&mut self, bank: u8, list: u16) {
+        crate::game::mode7_transfers::enqueue_rom(bank, list, self);
+    }
+}

@@ -97,21 +97,3 @@ pub(crate) fn steam_touch(game: &mut Game) {
     runtime.edit_actor(key, Native, |actor| actor.health = 0x7fff);
     combat::contact_reaction(&mut runtime, api::DeathHandling::Finalize);
 }
-
-/// Escape rumble: a rare stronger earthquake type replaces the base one.
-pub(crate) fn escape_rumble(earthquake: u16, game: &mut Game) {
-    if word!(game.ceres_status) >= 2 && word!(game.earthquake_timer) == 0 {
-        if (word!(game.random_number) & 0xfff) < 0x80 {
-            word! {game; earthquake_timer = 4; earthquake_type = earthquake.wrapping_add(6); }
-        } else {
-            word! {game; earthquake_timer = 2; earthquake_type = earthquake; }
-        }
-    }
-}
-
-/// Ceres status leaves its first escape state once a door finishes exploding.
-pub(crate) fn finish_door_explosion(game: &mut Game) {
-    if word!(game.ceres_status) != 0 {
-        word!(game.ceres_status = 0x8000);
-    }
-}
