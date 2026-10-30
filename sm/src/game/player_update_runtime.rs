@@ -217,11 +217,12 @@ pub(crate) fn low_health(game: &mut Game) {
 
 // Retained gamma effects; uncovered drain/timer bodies keep their original order.
 use crate::game::{
-    escape_timer, palette_effects,
+    palette_effects,
     player_movement::forced,
     prelude::{kButton_Up, kGameState_35_TimeUp, kPose_E9_FaceL_Drained_CrouchFalling},
 };
 use crate::ram_map::word as legacy_word;
+use sm_game::escape_timer;
 crate::game::callback_dispatch! {
     #[allow(unused_unsafe)]
     unsafe fn advance_gamma(ea: u32, game: &mut Game) => ea;

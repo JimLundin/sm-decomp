@@ -91,8 +91,6 @@ pub(crate) mod collision_composed_actor;
 pub(crate) mod composed_checks;
 
 pub(in crate::game) mod atomic;
-pub(in crate::game) mod brinstar_pipe_bug;
-pub(in crate::game) mod crocomire_attack;
 pub(crate) mod crocomire_reactions;
 pub(in crate::game) mod draygon_eye;
 pub(in crate::game) mod draygon_flight;
@@ -101,9 +99,7 @@ pub(in crate::game) mod ki_hunter;
 pub(crate) mod magdollite;
 pub(in crate::game) mod maridia_floater;
 pub(in crate::game) mod maridia_puffer;
-pub(in crate::game) mod norfair_pipe_bug;
 pub(crate) mod spore_spawn;
 pub(in crate::game) mod wrecked_ship_robots;
 pub(in crate::game) mod wrecked_ship_spark;
 pub(crate) mod yapping_maw;
-pub(in crate::game) mod yellow_pipe_bug;

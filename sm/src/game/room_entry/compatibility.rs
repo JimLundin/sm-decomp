@@ -119,7 +119,7 @@ impl EntryEffects for Runtime<'_> {
                     actors::staging::queue_actor_tiles(&mut Runtime::new(game));
                 }
                 LeafEffect::DrawTimer => {
-                    game::escape_timer::draw(game);
+                    sm_game::escape_timer::draw(game);
                 }
                 LeafEffect::SpinJumpSound => {
                     game::session_runtime::player_command(0x1c, game);
@@ -170,13 +170,13 @@ impl EntryEffects for Runtime<'_> {
                     game::visual_runtime::spawn_bg3_scroll(game);
                 }
                 LeafEffect::SaveExploredMap => {
-                    game::save_slots::save_area_map(game);
+                    sm_game::menus::save_slots::save_area_map(game);
                 }
                 LeafEffect::LoadExploredMap => {
-                    game::save_slots::load_area_map(game);
+                    sm_game::menus::save_slots::load_area_map(game);
                 }
                 LeafEffect::MarkElevatorsUsed => {
-                    game::save_slots::mark_elevator(game);
+                    sm_game::menus::save_slots::mark_elevator(game);
                 }
                 LeafEffect::EnableNmi => {
                     crate::game::display_refresh::enable(true, game);
@@ -383,8 +383,8 @@ impl EntryEffects for Runtime<'_> {
             InstallBuffer::Background(target) => target.compatibility_offset(),
         };
         let produced = self.foreign(|game| match prepared {
-            Some(stream) => game::decompression::decompress_prepared_table(&stream, at, game),
-            None => game::decompression::decompress_to_ram(legacy.unwrap(), at, game),
+            Some(stream) => sm_game::decompression::decompress_prepared_table(&stream, at, game),
+            None => sm_game::decompression::decompress_to_ram(legacy.unwrap(), at, game),
         });
         if palette {
             if let (Some(assets), Some(resource)) = (&assets, palette_resource) {
@@ -462,7 +462,7 @@ impl EntryEffects for Runtime<'_> {
                 .stream(&source)
                 .expect("selected Level stream is unavailable");
             self.foreign(|game| {
-                game::decompression::decompress_prepared_table(&stream, 0x10000, game);
+                sm_game::decompression::decompress_prepared_table(&stream, 0x10000, game);
                 game::room_state::copy_level_planes(game);
             });
         } else {

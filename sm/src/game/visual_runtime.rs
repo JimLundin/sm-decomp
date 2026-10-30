@@ -1,9 +1,9 @@
 //! Visual adapters on the one aggregate Session, with explicit legacy effects.
-pub(crate) use crate::game::hdma_objects::{
+pub(crate) use sm_game::hdma_objects::{
     clear_hdma, clear_hdma_channels, initialize_room_effects, set_hdma_enabled, spawn_bg3_scroll,
     spawn_hdma, spawn_hdma_words, update_hdma,
 };
-pub(crate) use crate::game::room_visuals::{
+pub(crate) use sm_game::room_visuals::{
     advance_crocomire, align_crocomire_background, initialize_bomb_torizo_haze,
     initialize_ceres_elevator, initialize_ceres_ridley, initialize_draygon_layer,
     initialize_fireflea_lighting, initialize_morph_eye_beam, initialize_phantoon_motion,
@@ -148,6 +148,6 @@ impl visual_host::Host for Runtime<'_> {}
 
 impl sm_game::hdma_effects::Host for Runtime<'_> {
     fn calculate_xray_window(&mut self, window: sm_game::beam_windows::XrayWindow) {
-        self.foreign(|game| crate::game::beam_windows::calculate_xray_window(window, game));
+        self.foreign(|game| sm_game::beam_windows::calculate_xray_window(window, game));
     }
 }

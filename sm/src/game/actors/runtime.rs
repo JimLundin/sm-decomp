@@ -125,10 +125,10 @@ impl ActorEffects for Runtime<'_> {
     ) -> EnemyScript {
         match routine.0 {
             10782374 => self.owned_call(|runtime| {
-                crate::game::actors::crocomire_attack::fight_ai(actor.byte_index(), script, runtime)
+                sm_game::actors::crocomire_attack::fight_ai(actor.byte_index(), script, runtime)
             }),
             10782546 => self.owned_call(|runtime| {
-                crate::game::actors::crocomire_attack::maybe_start_projectile_attack(
+                sm_game::actors::crocomire_attack::maybe_start_projectile_attack(
                     actor.byte_index(),
                     script,
                     runtime,

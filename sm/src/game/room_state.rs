@@ -1,5 +1,4 @@
 //! Compatibility entry adapters and retained level/graphics backend leaves.
-use crate::game::decompression::decompress_to_ram;
 use crate::game::display_refresh::CopyToVramNow;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
@@ -7,6 +6,7 @@ use crate::ram_map::{checked_word, word, words as ram};
 use crate::rtl::rom_bank_record;
 use crate::types::{EnemyDef, EnemyTileset};
 use core::mem::offset_of;
+use sm_game::decompression::decompress_to_ram;
 use sm_game::room_entry::{
     content::{LoadMode, SelectorCursor, SelectorKind},
     installation, selection,
@@ -79,8 +79,9 @@ pub(crate) fn unpause_draygon(game: &mut Game) -> crate::types::CoroutineRet {
 pub(crate) fn setup_script(address: u32, game: &mut Game) {
     use crate::game::room_mechanisms::spawn_hardcoded;
     use crate::game::visual_runtime::initialize_room_haze;
-    use crate::game::{animated_tiles, constants::bank_87::*, scrolling_sky};
+    use crate::game::{animated_tiles, constants::bank_87::*};
     use crate::types::SpawnHardcodedPlmArgs;
+    use sm_game::scrolling_sky;
     match address {
         9408916 => {
             spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x3d, 0xb, 0xbb30), game);
@@ -376,7 +377,7 @@ fn fx_definition(address: u16, game: &mut Game) -> FxRecord {
             base: crate::rom::lorom_offset(full) as usize,
         }
     } else {
-        FxRecord::Legacy(crate::game::menu_tilemap::native_record(full, game))
+        FxRecord::Legacy(sm_game::menus::menu_tilemap::native_record(full, game))
     }
 }
 fn fx_table(h: &Runtime<'_>, address: u32) -> FxRecord {
@@ -397,9 +398,8 @@ pub(crate) fn load_fx_entry(index: u16, game: &mut Game) {
 }
 
 pub(crate) fn load_fx_header(game: &mut Game) {
-    use crate::game::{
-        animated_tiles, liquid_effects, palette_effects, scrolling_sky, visual_runtime,
-    };
+    use crate::game::{animated_tiles, palette_effects, visual_runtime};
+    use sm_game::{liquid_effects, scrolling_sky};
     let mut address = checked_word!(game.room_layer3_asm_ptr);
     if address == 0 {
         return;
@@ -538,7 +538,8 @@ unsafe fn select_earthquake(
 }
 
 unsafe fn advance_script(address: u32, h: &mut Runtime<'_>) {
-    use crate::game::{constants::bank_86::*, scrolling_sky};
+    use crate::game::constants::bank_86::*;
+    use sm_game::scrolling_sky;
     unsafe {
         match address {
             9421078 => h.foreign(|game| scrolling_sky::queue_land_rows(game)),

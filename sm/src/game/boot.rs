@@ -1,6 +1,4 @@
 //! Boot/reset sequencing over the authoritative compatibility state.
-use crate::game::save_slots;
-use crate::game::sprite_drawing::{clear_high_table, finish_frame};
 use crate::game_state::Game;
 use crate::ram_map::word;
 use crate::rtl::{
@@ -13,6 +11,8 @@ use sm_game::display::control::{
     BgMode, Brightness, FixedColor, Layers, MainScreen, MainWindowMask, Mode7Settings, SubScreen,
     SubWindowMask,
 };
+use sm_game::menus::save_slots;
+use sm_game::sprite_drawing::{clear_high_table, finish_frame};
 
 fn clear_work_ram(bytes: usize, game: &mut Game) {
     let bug_fix_counter = word!(game.bug_fix_counter);

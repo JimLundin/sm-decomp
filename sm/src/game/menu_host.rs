@@ -474,7 +474,7 @@ impl sm_game::cinematic_host::Host for Game {
     }
 
     fn spawn_power_bomb(&mut self) {
-        crate::game::explosion_window::spawn_power_bomb(self);
+        sm_game::explosion_window::spawn_power_bomb(self);
     }
 
     fn initialize_player(&mut self) {
@@ -482,7 +482,7 @@ impl sm_game::cinematic_host::Host for Game {
     }
 
     fn use_cinematic_bindings(&mut self) {
-        crate::game::controller_input::use_cinematic_bindings(self);
+        sm_game::menus::controller_input::use_cinematic_bindings(self);
     }
 
     fn disable_scanline_irq(&mut self) {

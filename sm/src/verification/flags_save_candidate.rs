@@ -7,7 +7,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             super::flags_save_oracle::guard(game, original)?;
             let slot = case::seed(id, game)?;
             observer::begin(id);
-            crate::game::save_slots::save(slot, game);
+            sm_game::menus::save_slots::save(slot, game);
             observer::take()
         });
         observer::clear();

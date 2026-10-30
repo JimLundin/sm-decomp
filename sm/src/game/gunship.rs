@@ -2,13 +2,12 @@
 //! Part addresses stay widened; Runtime projects their bytes through the existing owners.
 #![forbid(unsafe_code)]
 use crate::game::session_runtime::{Runtime, player_command, player_face_forward};
-use crate::game::{
-    gameplay_flag_runtime, item_pickups_runtime, message_boxes, palette_effects, save_slots,
-};
+use crate::game::{gameplay_flag_runtime, item_pickups_runtime, palette_effects};
 use crate::game_state::Game;
 use crate::ram_map::words as ram;
 use sm_game::geometry::Position;
 use sm_game::item_pickups::Resource;
+use sm_game::{menus::save_slots, message_boxes};
 use {
     crate::game::enemy_projectiles::SpawnEprojWithRoomGfx,
     sm_game::enemy_projectiles::host::Effects,

@@ -54,7 +54,7 @@ pub(crate) unsafe fn display(request: u16, game: &mut Game) -> u8 {
             marker
         })
     });
-    let returned = crate::game::message_boxes::display(request, game);
+    let returned = sm_game::message_boxes::display(request, game);
     if let Some(marker) = marker {
         assert_eq!(
             game.ram().read_byte(0x613),

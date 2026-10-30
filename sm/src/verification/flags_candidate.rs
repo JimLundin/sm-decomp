@@ -40,11 +40,11 @@ fn run(operation: Operation, image: &RomImage, g: &mut Game) -> Returned {
                 ));
             }
             Operation::PalettePre => crate::game::palette_effects::checks::pre(9301701, 0, g),
-            Operation::NewSave => crate::game::save_slots::initialize(g),
-            Operation::Demo => crate::game::demo_rooms::load(g),
-            Operation::DemoBoss => crate::game::demo_rooms::run_room_hook(0x828932, g),
+            Operation::NewSave => sm_game::menus::save_slots::initialize(g),
+            Operation::Demo => sm_game::demo_rooms::load(g),
+            Operation::DemoBoss => sm_game::demo_rooms::run_room_hook(0x828932, g),
             Operation::Load(slot) => {
-                return Returned::word(u16::from(crate::game::save_slots::load(slot, g)));
+                return Returned::word(u16::from(sm_game::menus::save_slots::load(slot, g)));
             }
             Operation::SporeDeath => crate::game::actors::spore_spawn::after_damage(g),
         }

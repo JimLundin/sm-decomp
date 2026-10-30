@@ -164,12 +164,12 @@ impl Effects for Runtime<'_> {
             }
             #[cfg(not(sm_verify_dll))]
             {
-                crate::game::message_boxes::display(request, game)
+                sm_game::message_boxes::display(request, game)
             }
         })
     }
     fn poll_message(&mut self, request: u16) -> i32 {
-        self.foreign(|game| crate::game::message_boxes::poll(request, game))
+        self.foreign(|game| sm_game::message_boxes::poll(request, game))
     }
     fn player_control(&mut self, operation: u16) {
         self.foreign(|game| {
@@ -190,7 +190,7 @@ impl Effects for Runtime<'_> {
     }
     fn pickup_visual(&mut self, visual: VisualUpdate) {
         self.foreign(|game| {
-            use crate::game::hud::{self, Item};
+            use sm_game::hud::{self, Item};
             match visual {
                 VisualUpdate::None => {}
                 VisualUpdate::Beams => {
@@ -205,7 +205,7 @@ impl Effects for Runtime<'_> {
         });
     }
     fn save(&mut self, slot: u16) {
-        self.foreign(|game| crate::game::save_slots::save(slot, game));
+        self.foreign(|game| sm_game::menus::save_slots::save(slot, game));
     }
     fn enemy_projectile(&mut self, definition: u16, parameter: u16) {
         sm_game::enemy_projectiles::lifecycle::spawn_room(self, definition, parameter);

@@ -253,7 +253,7 @@ impl sm_game::actors::mother_brain_fight::Host for Game {
     }
 
     fn calculate_rainbow_window(&mut self) {
-        crate::game::beam_windows::calculate_rainbow_window(self);
+        sm_game::beam_windows::calculate_rainbow_window(self);
     }
 
     fn flicker_body(&mut self) {

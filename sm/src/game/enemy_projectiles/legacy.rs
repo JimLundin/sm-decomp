@@ -27,7 +27,7 @@ pub(super) fn draw_spritemap(
     graphics: u16,
     game: &mut Game,
 ) {
-    use crate::game::sprite_drawing::Clip;
+    use sm_game::sprite_drawing::Clip;
     let clip = if offscreen {
         Clip::Outside
     } else {

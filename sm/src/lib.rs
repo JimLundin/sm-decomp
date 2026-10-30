@@ -352,34 +352,22 @@ pub mod game {
     }
     pub(crate) use callback_dispatch;
 
-    pub(crate) mod beam_windows;
     pub mod constants;
-    pub(crate) mod decompression;
-    pub(crate) mod demo_rooms;
     pub(crate) mod ending_screens;
     pub(crate) mod enemy_layouts;
     pub(crate) mod enemy_speeds;
 
-    pub(crate) mod explosion_window;
     pub(crate) mod gameplay;
-    pub(crate) mod grapple_swing;
-    pub(crate) mod hdma_objects;
     pub(crate) mod imported;
-    pub(crate) mod intro_pages;
     pub(crate) mod launch_motion;
     pub(crate) mod launch_motion_ram;
-    pub(crate) mod liquid_effects;
     pub(crate) mod map_menu;
     pub(crate) mod menu_host;
-    pub mod menu_tilemap;
-    pub mod message_boxes;
     pub mod message_composition;
     pub(crate) mod mode7_transfers;
     pub(crate) mod moving_platforms;
     pub(crate) mod prelude;
-    pub(crate) mod room_visuals;
     pub mod scene;
-    pub(crate) mod scrolling_sky;
     pub(crate) use sm_game::shaktool_tables;
     pub(crate) mod visual_checks;
     pub(crate) mod vram_read_queue;
@@ -394,7 +382,6 @@ pub mod game {
 
     pub mod animated_tiles;
     pub mod enemy_projectiles;
-    pub(crate) mod equipment_menu;
     pub(crate) mod escape_typewriter;
     pub(crate) mod gameplay_flag_runtime;
     pub use sm_game::item_pickups;
@@ -402,7 +389,6 @@ pub mod game {
     pub(crate) use sm_game::liquid_surface;
     pub(crate) mod mechanism_displacement;
     pub mod music;
-    pub(crate) mod palette_copies;
     pub(crate) mod palette_effects;
     pub(crate) mod player_collision;
     #[cfg(any(test, sm_verify_dll))]
@@ -414,14 +400,11 @@ pub mod game {
     pub(crate) mod rom_vram_entries;
 
     pub(crate) mod boot;
-    pub(crate) mod controller_input;
     pub(crate) mod display_refresh;
     pub(crate) mod display_transfers;
-    pub(crate) mod escape_timer;
     pub(crate) mod goofball;
     pub(crate) mod gunship;
     pub(crate) mod hosts;
-    pub(crate) mod hud;
     pub(crate) mod maridia_turtles;
     pub(crate) mod mini_crocomire;
     pub mod progress_flags;
@@ -433,13 +416,11 @@ pub mod game {
     pub mod room_state;
     pub mod samus_animation;
     pub(crate) use sm_game::samus_palette;
-    pub mod save_slots;
     pub(crate) mod scanline_irq;
     pub(crate) use sm_game::session;
     pub(crate) mod session_checkpoint;
     pub(crate) mod session_encoding;
     pub(crate) mod session_runtime;
-    pub(crate) mod sprite_drawing;
     pub(crate) use sm_game::sprite_effect_host;
     pub(crate) mod sprite_effect_runtime;
     #[cfg(test)]

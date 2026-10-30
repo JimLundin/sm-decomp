@@ -981,7 +981,7 @@ impl sm_game::player_drawing::Host for crate::game::session_runtime::Runtime<'_>
         self.owned_call(|runtime| sm_game::grapple_swing::restore_start_positions(runtime));
     }
     fn update_grapple_tiles(&mut self) {
-        self.foreign(crate::game::grapple_swing::update_tiles);
+        self.foreign(sm_game::grapple_swing::update_tiles);
     }
     fn draw_grapple_rope(&mut self) {
         self.owned_player_call(|runtime| sm_game::grapple_rope::draw(runtime));

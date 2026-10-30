@@ -3,7 +3,6 @@ use crate::game::constants::bank_86::*;
 use crate::game::enemy_projectiles::SpawnEprojWithRoomGfx;
 use crate::game::imported::{Imported, word};
 use crate::game::music::QueueSfx2_Max6;
-use crate::game::palette_copies::copy_rom_colors_to_palette;
 use crate::game::prelude::*;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::ram_map::{checked_word, slot};
@@ -12,6 +11,7 @@ use sm_data::mother_brain::{
     RAINBOW_ADDRESS, RAINBOW_BYTES, RainbowColors, import_health_palettes, import_rainbow,
 };
 use sm_game::actors::mother_brain::{MotherBrainBody, MotherBrainBrain};
+use sm_game::palette_copies::copy_rom_colors_to_palette;
 
 #[derive(Default)]
 pub(crate) struct ImportedTables {

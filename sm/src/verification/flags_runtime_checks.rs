@@ -83,10 +83,10 @@ fn next_random(g: &mut Game) -> u16 {
     g.next_random()
 }
 fn new_save_file(g: &mut Game) {
-    crate::game::save_slots::initialize(g)
+    sm_game::menus::save_slots::initialize(g)
 }
 fn load_from_sram(slot: u16, g: &mut Game) -> u8 {
-    crate::game::save_slots::load(slot, g)
+    sm_game::menus::save_slots::load(slot, g)
 }
 #[forbid(unsafe_code)]
 fn load_entry(case: u32) {

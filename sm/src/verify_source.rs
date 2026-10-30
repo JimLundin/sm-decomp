@@ -630,10 +630,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/actors/fireflea.rs"),
     ),
     (
-        "sm/src/game/actors/crocomire_attack.rs",
-        include_bytes!("game/actors/crocomire_attack.rs"),
-    ),
-    (
         "sm/src/game/actors/crocomire_reactions.rs",
         include_bytes!("game/actors/crocomire_reactions.rs"),
     ),
@@ -662,16 +658,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/actors/torizo.rs"),
     ),
     (
-        "sm/src/game/actors/norfair_pipe_bug.rs",
-        include_bytes!("game/actors/norfair_pipe_bug.rs"),
-    ),
-    (
         "sm/src/game/actors/magdollite.rs",
         include_bytes!("game/actors/magdollite.rs"),
-    ),
-    (
-        "sm/src/game/actors/yellow_pipe_bug.rs",
-        include_bytes!("game/actors/yellow_pipe_bug.rs"),
     ),
     (
         "sm/src/game/actors/yapping_maw.rs",
@@ -690,16 +678,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/ridley_explosion_data.rs"),
     ),
     (
-        "sm/src/game/actors/brinstar_pipe_bug.rs",
-        include_bytes!("game/actors/brinstar_pipe_bug.rs"),
-    ),
-    (
         "sm/src/game/actors/atomic.rs",
         include_bytes!("game/actors/atomic.rs"),
-    ),
-    (
-        "sm/src/game/equipment_menu.rs",
-        include_bytes!("game/equipment_menu.rs"),
     ),
     (
         "sm/src/game/actors/wrecked_ship_spark.rs",
@@ -736,10 +716,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/escape_typewriter.rs",
         include_bytes!("game/escape_typewriter.rs"),
-    ),
-    (
-        "sm/src/game/palette_copies.rs",
-        include_bytes!("game/palette_copies.rs"),
     ),
     (
         "sm/src/game/rom_vram_entries.rs",
@@ -787,10 +763,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     ),
     ("sm/src/game/boot.rs", include_bytes!("game/boot.rs")),
     (
-        "sm/src/game/controller_input.rs",
-        include_bytes!("game/controller_input.rs"),
-    ),
-    (
         "sm/src/game/display_refresh.rs",
         include_bytes!("game/display_refresh.rs"),
     ),
@@ -798,11 +770,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         "sm/src/game/display_transfers.rs",
         include_bytes!("game/display_transfers.rs"),
     ),
-    (
-        "sm/src/game/escape_timer.rs",
-        include_bytes!("game/escape_timer.rs"),
-    ),
-    ("sm/src/game/hud.rs", include_bytes!("game/hud.rs")),
     (
         "sm/src/game/map_menu.rs",
         include_bytes!("game/map_menu.rs"),
@@ -1340,10 +1307,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/beam_definitions.rs"),
     ),
     (
-        "sm/src/game/beam_windows.rs",
-        include_bytes!("game/beam_windows.rs"),
-    ),
-    (
         "crates/sm_game/src/combat_rules.rs",
         include_bytes!("../../crates/sm_game/src/combat_rules.rs"),
     ),
@@ -1358,10 +1321,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/contact_rules.rs",
         include_bytes!("../../crates/sm_game/src/contact_rules.rs"),
-    ),
-    (
-        "sm/src/game/decompression.rs",
-        include_bytes!("game/decompression.rs"),
     ),
     (
         "crates/sm_game/src/dialogue.rs",
@@ -1508,10 +1467,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/explosion_window.rs"),
     ),
     (
-        "sm/src/game/explosion_window.rs",
-        include_bytes!("game/explosion_window.rs"),
-    ),
-    (
         "crates/sm_game/src/external_inputs.rs",
         include_bytes!("../../crates/sm_game/src/external_inputs.rs"),
     ),
@@ -1532,20 +1487,12 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/grapple_swing.rs"),
     ),
     (
-        "sm/src/game/grapple_swing.rs",
-        include_bytes!("game/grapple_swing.rs"),
-    ),
-    (
         "crates/sm_game/src/grapple_rope.rs",
         include_bytes!("../../crates/sm_game/src/grapple_rope.rs"),
     ),
     (
         "sm/src/game/imported.rs",
         include_bytes!("game/imported.rs"),
-    ),
-    (
-        "sm/src/game/intro_pages.rs",
-        include_bytes!("game/intro_pages.rs"),
     ),
     (
         "crates/sm_game/src/kraid_tables.rs",
@@ -1600,20 +1547,12 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/launch_motion_ram.rs"),
     ),
     (
-        "sm/src/game/liquid_effects.rs",
-        include_bytes!("game/liquid_effects.rs"),
-    ),
-    (
         "crates/sm_game/src/liquid_surface.rs",
         include_bytes!("../../crates/sm_game/src/liquid_surface.rs"),
     ),
     (
         "sm/src/game/mechanism_displacement.rs",
         include_bytes!("game/mechanism_displacement.rs"),
-    ),
-    (
-        "sm/src/game/message_boxes.rs",
-        include_bytes!("game/message_boxes.rs"),
     ),
     (
         "sm/src/game/message_composition/mod.rs",
@@ -1682,10 +1621,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/menu_host.rs",
         include_bytes!("game/menu_host.rs"),
-    ),
-    (
-        "sm/src/game/menu_tilemap.rs",
-        include_bytes!("game/menu_tilemap.rs"),
     ),
     (
         "sm/src/game/mode7_transfers.rs",
@@ -2023,10 +1958,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/samus_animation.rs"),
     ),
     (
-        "sm/src/game/save_slots.rs",
-        include_bytes!("game/save_slots.rs"),
-    ),
-    (
         "crates/sm_game/src/samus_palette.rs",
         include_bytes!("../../crates/sm_game/src/samus_palette.rs"),
     ),
@@ -2037,10 +1968,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/sand_heap.rs",
         include_bytes!("../../crates/sm_game/src/sand_heap.rs"),
-    ),
-    (
-        "sm/src/game/scrolling_sky.rs",
-        include_bytes!("game/scrolling_sky.rs"),
     ),
     (
         "crates/sm_game/src/session.rs",
@@ -2071,10 +1998,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/shooting_stars.rs"),
     ),
     (
-        "sm/src/game/demo_rooms.rs",
-        include_bytes!("game/demo_rooms.rs"),
-    ),
-    (
         "sm/src/game/actors/spore_spawn.rs",
         include_bytes!("game/actors/spore_spawn.rs"),
     ),
@@ -2090,10 +2013,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/special_geometry.rs",
         include_bytes!("../../crates/sm_game/src/special_geometry.rs"),
-    ),
-    (
-        "sm/src/game/sprite_drawing.rs",
-        include_bytes!("game/sprite_drawing.rs"),
     ),
     (
         "crates/sm_game/src/sprite_effect_state.rs",
@@ -2142,14 +2061,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/ending_screens.rs",
         include_bytes!("game/ending_screens.rs"),
-    ),
-    (
-        "sm/src/game/room_visuals.rs",
-        include_bytes!("game/room_visuals.rs"),
-    ),
-    (
-        "sm/src/game/hdma_objects.rs",
-        include_bytes!("game/hdma_objects.rs"),
     ),
     (
         "sm/src/game/visual_checks.rs",

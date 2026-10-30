@@ -444,7 +444,7 @@ impl Runtime<'_> {
                 off_screen: offscreen,
                 table: 0x9800,
             };
-            crate::game::beam_windows::calculate_xray_window(window, game)
+            sm_game::beam_windows::calculate_xray_window(window, game)
         });
     }
 

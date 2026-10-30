@@ -885,7 +885,7 @@ impl Host for Runtime<'_> {
         self.foreign(|g| crate::game::visual_runtime::set_hdma_enabled(true, g));
     }
     fn spawn_power_bomb(&mut self) {
-        self.foreign(|g| crate::game::explosion_window::spawn_power_bomb(g));
+        self.foreign(|g| sm_game::explosion_window::spawn_power_bomb(g));
     }
     fn spawn_mechanism(&mut self, header: u16) {
         let mut contact = sm_game::room_mechanisms::host::Contact::Absent;
@@ -1225,14 +1225,14 @@ crate::game::callback_dispatch! {
             crate::ram_map::slot!(game, EnemyData[e].current_instruction = 0x86a7);
         }];
 
-        11765882 => [{ let address = crate::game::actors::brinstar_pipe_bug::state_address(game); actor_species_pre_instruction(address, game); }];
+        11765882 => [{ let address = sm_game::actors::brinstar_pipe_bug::state_address(game); actor_species_pre_instruction(address, game); }];
         11766686 => [{
-            let address = crate::game::actors::norfair_pipe_bug::state_address(game);
+            let address = sm_game::actors::norfair_pipe_bug::state_address(game);
             sm_game::actors::species::pipe_bug_state(address, crate::ram_map::word!(game.cur_enemy_index), game);
-            crate::game::actors::norfair_pipe_bug::reset_offscreen(game);
+            sm_game::actors::norfair_pipe_bug::reset_offscreen(game);
         }];
         11767726 => [{
-            let address = crate::game::actors::yellow_pipe_bug::state_address(game);
+            let address = sm_game::actors::yellow_pipe_bug::state_address(game);
             sm_game::actors::species::pipe_bug_state(address, crate::ram_map::word!(game.cur_enemy_index), game);
         }];
         11769448 => [actors::botwoon::main_ai(&mut Runtime::new(game))];
@@ -1628,7 +1628,7 @@ impl Runtime<'_> {
         offscreen: bool,
     ) {
         self.foreign(|game| {
-            use crate::game::sprite_drawing::Clip;
+            use sm_game::sprite_drawing::Clip;
             let clip = if base {
                 Clip::None
             } else if offscreen {
@@ -1699,10 +1699,8 @@ impl Runtime<'_> {
         offscreen: bool,
     ) {
         self.foreign(|game| {
-            use crate::game::{
-                projectile_presentation_ram::{Native, sprite_map},
-                sprite_drawing::Clip,
-            };
+            use crate::game::projectile_presentation_ram::{Native, sprite_map};
+            use sm_game::sprite_drawing::Clip;
             if base && address == 0 {
                 return;
             }

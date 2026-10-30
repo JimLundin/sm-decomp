@@ -90,17 +90,17 @@ pub(crate) fn ceres_movement(game: &mut crate::game_state::Game, action: fn(&mut
     let mut runtime = Runtime::new(game);
     action(&mut runtime);
     runtime.foreign(|game| {
-        crate::game::escape_timer::advance(game);
+        sm_game::escape_timer::advance(game);
         if crate::ram_map::word!(game.timer_status) != 0 {
-            crate::game::escape_timer::draw(game);
+            sm_game::escape_timer::draw(game);
         }
     });
 }
 
+use sm_game::explosion_window::spawn_crystal_flash;
 // Raw movement identities and uncovered callbacks remain at the compatibility boundary.
 use {
     crate::game::{
-        explosion_window::spawn_crystal_flash,
         music::QueueSfx3_Max15,
         player_collision::operations as player_collision,
         player_movement::{self, forced, speed},

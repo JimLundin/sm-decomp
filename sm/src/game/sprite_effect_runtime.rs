@@ -2,11 +2,11 @@
 use crate::game::enemy_layouts::EnemyLayout104 as Draygon;
 use crate::game::enemy_projectiles::SpawnEprojWithGfx;
 use crate::game::projectile_presentation_ram as sprite_output;
-use crate::game::sprite_drawing::Clip;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::types::Point16U;
 use sm_game::geometry::Point;
+use sm_game::sprite_drawing::Clip;
 use {
     crate::game::session_runtime::Runtime,
     sm_game::{
