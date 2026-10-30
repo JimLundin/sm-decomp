@@ -1,15 +1,2 @@
-docs/PLAN.md text eol=lf
-
-# Preserve the exact source bytes bound to verifier DLLs and checkpoints.
-sm/**/*.rs -text
-crates/sm_app/**/*.rs -text
-sm/src/**/*.c -text
-sm/src/**/*.h -text
-tools/install_native_config.py -text
-tools/install_native_desktop.py -text
-tools/verify_dll.py -text
-Cargo.toml -text
-Cargo.lock -text
-sm/Cargo.toml -text
-rust-toolchain.toml -text
-.cargo/* -text
+# Every text file is stored and checked out with LF line endings.
+* text=auto eol=lf
