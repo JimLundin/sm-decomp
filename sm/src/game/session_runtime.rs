@@ -461,11 +461,10 @@ impl<'g> Runtime<'g> {
             runtime: self,
             completed: false,
         };
+        // The former foreign entry imported these fresh, so refresh them on entry too.
+        call.runtime.refresh_actor_observations();
         let result = action(&mut *call.runtime);
-        call.runtime.inputs.enemy_zero_health = call.runtime.native_word(0xF8C);
-        call.runtime.inputs.current_enemy = call.runtime.word(0xE54);
-        call.runtime.inputs.random_enemy_counter = call.runtime.word(0xE44);
-        call.runtime.inputs.debug_enemy_freeze = call.runtime.word(0x185E);
+        call.runtime.refresh_actor_observations();
         call.completed = true;
         result
     }
@@ -477,6 +476,12 @@ impl<'g> Runtime<'g> {
             runtime.refresh_player_observations();
             result
         })
+    }
+    fn refresh_actor_observations(&mut self) {
+        self.inputs.enemy_zero_health = self.native_word(0xF8C);
+        self.inputs.current_enemy = self.word(0xE54);
+        self.inputs.random_enemy_counter = self.word(0xE44);
+        self.inputs.debug_enemy_freeze = self.word(0x185E);
     }
     pub(crate) fn refresh_player_observations(&mut self) {
         assert!(self.persistent_is_current(), "Session lease is dirty");

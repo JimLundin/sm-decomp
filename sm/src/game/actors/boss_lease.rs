@@ -125,7 +125,8 @@ impl BossState for Runtime<'_> {
         self.session().room.area
     }
     fn frame(&self) -> u16 {
-        self.inputs().frame
+        // The display owner's word while the lease holds it, the live RAM otherwise.
+        self.word(sm_game::ram::words::NMI_FRAME_COUNTER_WORD)
     }
     fn scaled_cosine(&mut self, phase: u16, amplitude: u16) -> u16 {
         (queries::sine_product(self, amplitude, phase.wrapping_add(64) as u8 as u16) >> 16) as u16
