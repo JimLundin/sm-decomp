@@ -229,8 +229,8 @@ pub struct Game {
     pub(crate) demo_scenes: Option<sm_game::demo_rooms::ImportedScenes>,
     /// Imported from `loaded_rom` by `register_rom`; see game::visual_runtime.
     pub(crate) visual_tables: sm_game::visual_tables::ImportedTables,
-    /// Imported from `loaded_rom` by `register_rom`; see game::map_menu.
-    pub(crate) pause_menu: crate::game::map_menu::ImportedTables,
+    /// Imported from `loaded_rom` by `register_rom`; see sm_game::menus::map_menu.
+    pub(crate) pause_menu: sm_game::menus::map_menu::ImportedTables,
     /// Imported from `loaded_rom` by `register_rom`; see game::actors::crocomire_reactions.
     pub(crate) crocomire: crate::game::actors::crocomire_reactions::ImportedTables,
     /// Imported from `loaded_rom` by `register_rom`; see game::actors::magdollite.
@@ -1234,7 +1234,7 @@ impl Game {
         self.records.baby_metroid_tables = sm_game::baby_metroid_tables::import(image);
         self.records.mother_brain_tables = sm_game::mother_brain_tables::import(image);
         self.visual_tables = sm_game::visual_tables::import(image);
-        self.pause_menu = crate::game::map_menu::import(image);
+        self.pause_menu = sm_game::menus::map_menu::import(image);
         self.crocomire = crate::game::actors::crocomire_reactions::import(image);
         self.magdollite = crate::game::actors::magdollite::import(image);
         self.equipment_screen = sm_game::menus::equipment_menu::import(image);

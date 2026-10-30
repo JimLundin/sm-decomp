@@ -1,8 +1,8 @@
 //! Candidate-only contracts for retained callbacks and physical map writes.
 //! Runs on an initialized verification host; no predecessor unaligned u16 path.
 use super::Runtime;
-use crate::game::map_menu::{MapScreen, render_map};
 use crate::{game_state::Game, rom::RomImage};
+use sm_game::menus::map_menu::{MapScreen, render_map};
 use std::cell::RefCell;
 pub(crate) const COUNT: usize = 1;
 

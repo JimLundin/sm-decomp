@@ -631,3 +631,7 @@ const _: () = {
             && o::CREDITS == ADDR_STRU_8BF6F8 as u16
     );
 };
+
+// The menus address these enemy record fields by offset.
+const _: () = assert!(core::mem::offset_of!(crate::types::EnemyData, x_pos) == 2);
+const _: () = assert!(core::mem::offset_of!(crate::types::EnemyData, palette_index) == 30);

@@ -359,7 +359,6 @@ pub mod game {
     pub(crate) mod gameplay;
     pub(crate) mod launch_motion;
     pub(crate) mod launch_motion_ram;
-    pub(crate) mod map_menu;
     pub(crate) mod menu_host;
     pub mod message_composition;
     pub(crate) mod mode7_transfers;
