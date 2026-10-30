@@ -78,7 +78,7 @@ impl MenuRuntime for Game {
             .load(self)
     }
     fn file_select_fade(&mut self) -> u8 {
-        crate::game::palette_effects::fading::file_select(self)
+        sm_game::palette_effects::fading::file_select(self)
     }
     fn boss_byte(&mut self, area: u16) -> u8 {
         crate::game::gameplay_flag_runtime::boss_byte_at(area, self)

@@ -934,7 +934,7 @@ impl sm_game::lease::Lease for crate::game::session_runtime::Runtime<'_> {
         crate::game::session_runtime::Runtime::draw_owned_samus(self, producer, index, (x, y));
     }
     fn native_samus_sprite(&mut self, index: u16, x: u16, y: u16) {
-        use crate::game::projectile_presentation_ram as sprite_output;
+        use sm_game::sprite_output;
         self.foreign(|game| sprite_output::samus(index, (x, y), game, &mut sprite_output::Native));
     }
     fn native_music_delayed8(&mut self, track: u16) {

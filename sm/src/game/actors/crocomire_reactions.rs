@@ -3,7 +3,6 @@
 #![forbid(unsafe_code)]
 use crate::game::enemy_projectiles::{ClearEprojs, scatter_drop};
 use crate::game::gameplay_flag_runtime;
-use crate::game::imported::{Imported, word as table_word};
 use crate::game_state::Game;
 use sm_data::crocomire::{
     BRIDGE_DEBRIS, BRIDGE_DEBRIS_ADDRESS, BridgeDebris, FLESH_TILEMAP_ADDRESS, MELT_TILEMAP_BYTES,
@@ -12,6 +11,7 @@ use sm_data::crocomire::{
     SpikeWallDestinations, SpikeWallTiles, import_words,
 };
 pub(crate) use sm_game::actors::crocomire_reactions::*;
+use sm_game::imported::{Imported, word as table_word};
 
 // The named bank $A4 instructions are the ones `session_runtime` dispatches on.
 const _: () = {

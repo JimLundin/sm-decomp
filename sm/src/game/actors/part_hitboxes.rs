@@ -2,11 +2,11 @@
 //! eight-byte boxes of left, top, right and bottom extents.
 #![forbid(unsafe_code)]
 use crate::game::constants::bank_a9::addr_kDeadTorizo_Hitbox_D77C;
-use crate::game::enemy_layouts::EnemyLayout40 as DeadTorizo;
-use crate::game::enemy_layouts::EnemyLayout72 as MotherBrain;
 use crate::game::session_runtime::native_record;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
+use sm_game::actors::layouts::EnemyLayout40 as DeadTorizo;
+use sm_game::actors::layouts::EnemyLayout72 as MotherBrain;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Contact {

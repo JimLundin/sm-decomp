@@ -1,9 +1,9 @@
 //! Enemy speed table reads through the imported `sm_data` block.
 #![forbid(unsafe_code)]
-use crate::game::imported::Imported;
 use crate::rom::{RomImage, lorom_offset};
 pub(crate) use sm_data::enemy_speeds::SpeedTable;
 use sm_data::enemy_speeds::{ADDRESS, ADDRESS32, BYTES, BYTES32, EnemySpeeds, Speeds32};
+use sm_game::imported::Imported;
 
 pub(crate) type ImportedSpeeds = Imported<EnemySpeeds>;
 pub(crate) type ImportedSpeeds32 = Imported<Speeds32>;

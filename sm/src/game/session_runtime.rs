@@ -595,7 +595,7 @@ impl<'g> Runtime<'g> {
     // Legacy aliases observe the raw result before Drop republishes Session.
     pub(crate) fn update_maw_visibility(&mut self, actor: i32) {
         assert!(self.persistent_is_current(), "Session lease is dirty");
-        use crate::game::enemy_layouts::EnemyLayout104 as Maw;
+        use sm_game::actors::layouts::EnemyLayout104 as Maw;
         let outside = u16::from(crate::game::actors::api::current_outside_screen(&*self));
         let game = &mut *self.game;
         crate::ram_map::slot!(game, Maw[actor].var_36 = outside);
@@ -897,7 +897,7 @@ impl Host for Runtime<'_> {
     }
     fn draw(&mut self, drawing: Drawing) {
         self.foreign(|g| {
-            use crate::game::projectile_presentation_ram as output;
+            use sm_game::sprite_output as output;
             match drawing {
                 Drawing::Projectile { slot, x, y } => {
                     output::projectile(slot, (x, y), g, &mut output::Native);
@@ -1633,7 +1633,7 @@ impl Runtime<'_> {
             } else {
                 Clip::Inside
             };
-            crate::game::projectile_presentation_ram::with_base_tile(
+            sm_game::sprite_output::with_base_tile(
                 bank,
                 address,
                 (x, y),
@@ -1696,8 +1696,8 @@ impl Runtime<'_> {
         offscreen: bool,
     ) {
         self.foreign(|game| {
-            use crate::game::projectile_presentation_ram::{Native, sprite_map};
             use sm_game::sprite_drawing::Clip;
+            use sm_game::sprite_output::{Native, sprite_map};
             if base && address == 0 {
                 return;
             }

@@ -4,7 +4,6 @@
 use crate::game::actors::api;
 use crate::game::enemy_projectiles::{self, scatter_drop};
 use crate::game::gameplay_flag_runtime::{SetBossBitForCurArea, boss_byte_at};
-use crate::game::imported::Imported;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::rom::RomImage;
@@ -16,6 +15,7 @@ use sm_data::botwoon_speeds::{
 use sm_game::actors::access::ActorKey as Key;
 pub(crate) use sm_game::actors::botwoon::*;
 use sm_game::enemy_projectiles::drops::DropSource;
+use sm_game::imported::Imported;
 
 // The named bank $B3 functions are the ones `session_runtime` dispatches on.
 const _: () = {

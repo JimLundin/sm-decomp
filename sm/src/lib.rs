@@ -354,11 +354,9 @@ pub mod game {
 
     pub mod constants;
     pub(crate) mod ending_screens;
-    pub(crate) mod enemy_layouts;
     pub(crate) mod enemy_speeds;
 
     pub(crate) mod gameplay;
-    pub(crate) mod imported;
     pub(crate) mod launch_motion;
     pub(crate) mod launch_motion_ram;
     pub(crate) mod map_menu;
@@ -378,7 +376,6 @@ pub mod game {
     pub(crate) mod room_mechanism_checks;
 
     pub(crate) mod projectile_block_reactions_ram;
-    pub(crate) mod projectile_presentation_ram;
 
     pub mod animated_tiles;
     pub mod enemy_projectiles;

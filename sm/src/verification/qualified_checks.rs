@@ -2,11 +2,11 @@
 //! Child of candidate carrier; distinct from differential baseline outcomes.
 use super::{put, seed, slot};
 use crate::game::constants::bank_86::{addr_kEprojInit_AB07_Tile0, addr_kEprojInit_AB07_Tile1};
-use crate::game::enemy_layouts::EnemyLayout104 as Layout;
 use crate::game_state::Game;
 use crate::ram_map::{word_arrays as a, words as w};
 use crate::rom::RomImage;
 use core::mem::offset_of;
+use sm_game::actors::layouts::EnemyLayout104 as Layout;
 pub(crate) const CASES: u32 = 24;
 fn write(bytes: &mut [u8], at: usize, value: u16) {
     bytes[at..at + 2].copy_from_slice(&value.to_le_bytes());

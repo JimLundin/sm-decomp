@@ -1,14 +1,9 @@
 //! Real maintained enemy controller fixtures; no replacement controller logic.
 #![forbid(unsafe_code)]
 use super::sprite_effect_cases::{Operation, put, word};
-use crate::{
-    game::enemy_layouts::{EnemyLayout40 as Metroid, EnemyLayout104 as Boss},
-    game_state::Game,
-    ram_map::words as w,
-    rom::RomImage,
-    types::EnemyBase,
-};
+use crate::{game_state::Game, ram_map::words as w, rom::RomImage, types::EnemyBase};
 use core::mem::offset_of;
+use sm_game::actors::layouts::{EnemyLayout40 as Metroid, EnemyLayout104 as Boss};
 fn field(g: &mut Game, offset: usize, value: u16) {
     put(g, 0xf78 + offset, value);
 }

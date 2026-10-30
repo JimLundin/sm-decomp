@@ -2,12 +2,9 @@
 #![forbid(unsafe_code)]
 use super::host::{BotwoonField, SpeciesActors, WaffleField};
 use crate::game::session_runtime::Runtime;
-use crate::{
-    game::enemy_layouts::{EnemyLayout72, EnemyLayout104},
-    ram_map::words as W,
-    types::Ram7800_Kraid,
-};
+use crate::{ram_map::words as W, types::Ram7800_Kraid};
 use core::mem::offset_of;
+use sm_game::actors::layouts::{EnemyLayout72, EnemyLayout104};
 use sm_game::actors::mother_brain::MotherBrainBody;
 fn waffle_offset(field: WaffleField) -> usize {
     match field {
@@ -193,13 +190,13 @@ impl SpeciesActors for Runtime<'_> {
         self.write_slice_le(0x883e, value);
     }
     fn spore_stem_anchor_x(&self) -> u16 {
-        self.word(0xf78 + offset_of!(crate::game::enemy_layouts::EnemyLayout104, var_04))
+        self.word(0xf78 + offset_of!(sm_game::actors::layouts::EnemyLayout104, var_04))
     }
     fn spore_stem_anchor_y(&self) -> u16 {
-        self.word(0xf78 + offset_of!(crate::game::enemy_layouts::EnemyLayout104, var_05))
+        self.word(0xf78 + offset_of!(sm_game::actors::layouts::EnemyLayout104, var_05))
     }
     fn set_spore_stem_control_x(&mut self, part: u8, value: u16) {
-        use crate::game::enemy_layouts::EnemyLayout104 as Layout;
+        use sm_game::actors::layouts::EnemyLayout104 as Layout;
         let offset = [
             offset_of!(Layout, var_20),
             offset_of!(Layout, var_21),
@@ -208,7 +205,7 @@ impl SpeciesActors for Runtime<'_> {
         self.write_slice_le(0xf78 + offset, value);
     }
     fn set_spore_stem_control_y(&mut self, part: u8, value: u16) {
-        use crate::game::enemy_layouts::EnemyLayout104 as Layout;
+        use sm_game::actors::layouts::EnemyLayout104 as Layout;
         let offset = [
             offset_of!(Layout, var_23),
             offset_of!(Layout, var_24),
@@ -217,7 +214,7 @@ impl SpeciesActors for Runtime<'_> {
         self.write_slice_le(0xf78 + offset, value);
     }
     fn maw_segment_handle(&self, enemy: u16, part: u8) -> u16 {
-        use crate::game::enemy_layouts::EnemyLayout104 as Layout;
+        use sm_game::actors::layouts::EnemyLayout104 as Layout;
         let offset = [
             offset_of!(Layout, var_40),
             offset_of!(Layout, var_41),
@@ -230,18 +227,18 @@ impl SpeciesActors for Runtime<'_> {
         self.word(
             0xf78
                 + usize::from(enemy)
-                + offset_of!(crate::game::enemy_layouts::EnemyLayout104, var_0C),
+                + offset_of!(sm_game::actors::layouts::EnemyLayout104, var_0C),
         )
     }
     fn maw_anchor_y(&self, enemy: u16) -> u16 {
         self.word(
             0xf78
                 + usize::from(enemy)
-                + offset_of!(crate::game::enemy_layouts::EnemyLayout104, var_0D),
+                + offset_of!(sm_game::actors::layouts::EnemyLayout104, var_0D),
         )
     }
     fn maw_segment_offset_x(&self, enemy: u16, part: u8) -> u16 {
-        use crate::game::enemy_layouts::EnemyLayout104 as Layout;
+        use sm_game::actors::layouts::EnemyLayout104 as Layout;
         let offset = [
             offset_of!(Layout, var_00),
             offset_of!(Layout, var_02),
@@ -250,7 +247,7 @@ impl SpeciesActors for Runtime<'_> {
         self.word(0xf78 + usize::from(enemy) + offset)
     }
     fn maw_segment_offset_y(&self, enemy: u16, part: u8) -> u16 {
-        use crate::game::enemy_layouts::EnemyLayout104 as Layout;
+        use sm_game::actors::layouts::EnemyLayout104 as Layout;
         let offset = [
             offset_of!(Layout, var_01),
             offset_of!(Layout, var_03),
@@ -262,7 +259,7 @@ impl SpeciesActors for Runtime<'_> {
         self.word(
             0xf78
                 + usize::from(enemy)
-                + offset_of!(crate::game::enemy_layouts::EnemyLayout104, var_45),
+                + offset_of!(sm_game::actors::layouts::EnemyLayout104, var_45),
         )
     }
     fn expanding_square_origin(&self) -> u16 {

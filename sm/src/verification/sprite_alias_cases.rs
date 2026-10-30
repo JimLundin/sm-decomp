@@ -1,13 +1,9 @@
 //! Appended actual-controller alias cases; frozen0..116 fixtures are unchanged.
 #![forbid(unsafe_code)]
 use super::sprite_effect_cases::{Operation, put};
-use crate::{
-    game::enemy_layouts::{EnemyLayout40 as Metroid, EnemyLayout104 as Maw},
-    game_state::Game,
-    ram_map::words as w,
-    types::EnemyBase,
-};
+use crate::{game_state::Game, ram_map::words as w, types::EnemyBase};
 use core::mem::{offset_of, size_of};
+use sm_game::actors::layouts::{EnemyLayout40 as Metroid, EnemyLayout104 as Maw};
 pub(crate) const FIRST: u32 = 117;
 pub(crate) const END: u32 = 121;
 fn read(game: &Game, address: usize) -> u16 {

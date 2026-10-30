@@ -1,12 +1,12 @@
 //! Legacy entry and backend boundary for the shared owned sprite-effect core.
-use crate::game::enemy_layouts::EnemyLayout104 as Draygon;
 use crate::game::enemy_projectiles::SpawnEprojWithGfx;
-use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::types::Point16U;
+use sm_game::actors::layouts::EnemyLayout104 as Draygon;
 use sm_game::geometry::Point;
 use sm_game::sprite_drawing::Clip;
+use sm_game::sprite_output;
 use {
     crate::game::session_runtime::Runtime,
     sm_game::{

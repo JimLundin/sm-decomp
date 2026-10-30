@@ -1,12 +1,12 @@
 //! Magdollite runs in `sm_game::actors::magdollite`; its tables come from here.
 #![forbid(unsafe_code)]
-use crate::game::imported::{Imported, load};
 use crate::game_state::Game;
 use sm_data::magdollite::{
     ARM_BYTES, ARM_GROWTH_ADDRESS, ARM_INSTRUCTION_ADDRESS, ArmSteps, PALETTE_ADDRESS,
     PALETTE_BYTES, Palettes, import_palettes,
 };
 pub(crate) use sm_game::actors::magdollite::*;
+use sm_game::imported::{Imported, load};
 
 // The named bank $A8 addresses are the ones `session_runtime` dispatches on.
 const _: () = {
@@ -53,7 +53,7 @@ impl Host for Game {
             &self.magdollite.palettes,
             self,
             |table| {
-                let palette = table.row(crate::game::imported::row_of(source, 16)?)?;
+                let palette = table.row(sm_game::imported::row_of(source, 16)?)?;
                 Some(core::array::from_fn(|i| palette[9 + i]))
             },
             |rom| core::array::from_fn(|i| load(rom, PALETTE_ADDRESS, source + 9 + i as isize)),

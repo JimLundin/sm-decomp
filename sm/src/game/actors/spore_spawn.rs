@@ -2,7 +2,6 @@
 //! RAM retains the boss-specific state while common actors/projectiles stay owned.
 #![forbid(unsafe_code)]
 use crate::game::actors::{api, combat};
-use crate::game::enemy_layouts::EnemyLayout104 as Spore;
 use crate::game::enemy_projectiles::{self, SpawnEprojWithRoomGfx};
 use crate::game::gameplay_flag_runtime as flags;
 use crate::game::music::QueueSfx2_Max6;
@@ -12,6 +11,7 @@ use crate::game_state::Game;
 use crate::ram_map::{slot, word, word_arrays};
 use crate::rtl::{abs16, words};
 use crate::types::Point16U;
+use sm_game::actors::layouts::EnemyLayout104 as Spore;
 pub(crate) use sm_game::actors::spore_spawn::{
     clear_damaged_flag, harden, increase_max_x_radius, set_function,
     set_max_x_radius_and_angle_delta,

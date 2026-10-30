@@ -1,7 +1,7 @@
 //! Defined-old attachment observations; child of the core verification carrier.
 //! Does not exercise Waffle or the intervening Botwoon enemy pre-instruction.
 use super::{put, slot};
-use crate::game::enemy_layouts::EnemyLayout104 as Layout;
+use sm_game::actors::layouts::EnemyLayout104 as Layout;
 mod sm_a5 {
     pub(super) use super::super::super::update_spore_stem as SporeSpawn_Func_5;
 }

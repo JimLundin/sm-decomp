@@ -722,10 +722,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/rom_vram_entries.rs"),
     ),
     (
-        "sm/src/game/palette_effects/fading.rs",
-        include_bytes!("game/palette_effects/fading.rs"),
-    ),
-    (
         "sm/src/game/palette_effects/torizo.rs",
         include_bytes!("game/palette_effects/torizo.rs"),
     ),
@@ -1331,10 +1327,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/drop_rules.rs"),
     ),
     (
-        "sm/src/game/enemy_layouts.rs",
-        include_bytes!("game/enemy_layouts.rs"),
-    ),
-    (
         "crates/sm_game/src/enemy_population.rs",
         include_bytes!("../../crates/sm_game/src/enemy_population.rs"),
     ),
@@ -1489,10 +1481,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/grapple_rope.rs",
         include_bytes!("../../crates/sm_game/src/grapple_rope.rs"),
-    ),
-    (
-        "sm/src/game/imported.rs",
-        include_bytes!("game/imported.rs"),
     ),
     (
         "crates/sm_game/src/kraid_tables.rs",
@@ -1775,10 +1763,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/projectile_initialization.rs",
         include_bytes!("../../crates/sm_game/src/projectile_initialization.rs"),
-    ),
-    (
-        "sm/src/game/projectile_presentation_ram.rs",
-        include_bytes!("game/projectile_presentation_ram.rs"),
     ),
     (
         "crates/sm_game/src/projectile_room.rs",

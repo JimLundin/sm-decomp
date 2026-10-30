@@ -33,15 +33,7 @@ pub(super) fn draw_spritemap(
     } else {
         Clip::Inside
     };
-    crate::game::projectile_presentation_ram::with_base_tile(
-        bank,
-        map,
-        (x, y),
-        graphics,
-        tile,
-        clip,
-        game,
-    );
+    sm_game::sprite_output::with_base_tile(bank, map, (x, y), graphics, tile, clip, game);
 }
 
 pub(super) fn respawn_enemy(index: u16, game: &mut Game) {

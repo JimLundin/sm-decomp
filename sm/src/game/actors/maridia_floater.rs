@@ -2,11 +2,11 @@
 //! Native actor words and little-endian drawing aliases remain authoritative.
 #![forbid(unsafe_code)]
 use crate::game::actors::{api, combat};
-use crate::game::enemy_layouts::EnemyLayout8 as Floater;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use sm_game::actors::access::ActorKey as Key;
+use sm_game::actors::layouts::EnemyLayout8 as Floater;
 use {
     crate::game::enemy_projectiles::SpawnEprojWithGfx, sm_game::enemy_projectiles::host::Effects,
 };

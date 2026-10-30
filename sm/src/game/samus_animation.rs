@@ -218,11 +218,7 @@ impl samus_drawing::Authority for Runtime<'_> {
     }
     fn draw_native_echo(&mut self, slot: u16) {
         self.foreign(|game| {
-            crate::game::projectile_presentation_ram::echo(
-                slot,
-                game,
-                &mut crate::game::projectile_presentation_ram::Native,
-            )
+            sm_game::sprite_output::echo(slot, game, &mut sm_game::sprite_output::Native)
         });
     }
     fn samus_source_diagnostic(&mut self, address: u32) {

@@ -2,12 +2,12 @@
 //! table, events and movement come from here.
 #![forbid(unsafe_code)]
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
-use crate::game::imported::{Imported, load};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::rom::RomImage;
 use sm_data::escape_etecoons::{ADDRESS, BYTES, EscapeEtecoon, EscapeEtecoons};
 pub(crate) use sm_game::actors::escape_critters::*;
+use sm_game::imported::{Imported, load};
 
 // The named bank $B3 addresses are the ones `session_runtime` dispatches on.
 const _: () = {

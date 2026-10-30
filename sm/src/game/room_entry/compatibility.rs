@@ -231,7 +231,7 @@ impl EntryEffects for Runtime<'_> {
         }
     }
     fn palette_fade(&mut self) -> u8 {
-        self.foreign(|game| game::palette_effects::fading::all(12, game))
+        self.foreign(|game| sm_game::palette_effects::fading::all(12, game))
     }
     fn wait(&mut self, cause: EntryWait) -> u8 {
         self.foreign(|game| unsafe {

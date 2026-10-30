@@ -692,7 +692,7 @@ pub type time_t = __time_t;
 
 pub type CheckEnemyColl_Result = CheckSolidEnemyColl_Result;
 
-pub type Enemy_Botwoon = crate::game::enemy_layouts::EnemyLayout104;
+pub type Enemy_Botwoon = sm_game::actors::layouts::EnemyLayout104;
 
 impl SpawnHardcodedPlmArgs {
     pub const fn new(block_x: u8, block_y: u8, header: VoidP) -> Self {
