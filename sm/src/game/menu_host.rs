@@ -74,10 +74,8 @@ impl MenuRuntime for Game {
         )
     }
     fn load_vram_words(&mut self, source: u32, destination: u16, bytes: u16) {
-        unsafe {
-            crate::game::display_refresh::GraphicsAsset::VramWords(source, destination, bytes)
-                .load(self)
-        }
+        crate::game::display_refresh::GraphicsAsset::VramWords(source, destination, bytes)
+            .load(self)
     }
     fn file_select_fade(&mut self) -> u8 {
         crate::game::palette_effects::fading::file_select(self)
@@ -251,8 +249,7 @@ impl MenuRuntime for Game {
         crate::game::palette_effects::spawn(definition, self)
     }
     fn enable_display_nmi(&mut self, enabled: bool) {
-        // SAFETY: the intro runs from the frame loop with the backend installed.
-        unsafe { crate::game::display_refresh::enable(enabled, self) }
+        crate::game::display_refresh::enable(enabled, self)
     }
     fn finish_pose_change(&mut self) {
         crate::game::player_transitions::finish_pose_change(&mut Runtime::new(self));

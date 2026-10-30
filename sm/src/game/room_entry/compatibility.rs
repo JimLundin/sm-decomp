@@ -432,13 +432,9 @@ impl EntryEffects for Runtime<'_> {
             VramDecodeTarget::MainTiles => 0,
             VramDecodeTarget::Cre => 0x5000,
         };
-        self.foreign(|game| unsafe {
-            match prepared {
-                Some(stream) => {
-                    game::display_refresh::decompress_prepared_vram(&stream, target, game)
-                }
-                None => game::display_refresh::DecompressToVRAM(legacy.unwrap(), target, game),
-            }
+        self.foreign(|game| match prepared {
+            Some(stream) => game::display_refresh::decompress_prepared_vram(&stream, target, game),
+            None => game::display_refresh::DecompressToVRAM(legacy.unwrap(), target, game),
         });
     }
     fn copy_vram(&mut self, destination: VramDestination, source: AssetSource, bytes: u16) {
