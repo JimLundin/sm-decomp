@@ -1110,7 +1110,6 @@ expect = ["state:8"]
 # both tabs, manual reserve transfer, every equipment toggle, then unpause.
 [[segment]]
 id = "pause-menu-tour"
-pending = "awaiting the seeds-v1-coverage-54f838bfd8146bf7 ci-data upload"
 seed = "100-input-phase:303"
 seed_sha256 = "cbcebcf17718dc609535549e2418f47201e1ef76db49952cda452fc54084dd50"
 inputs = "authored-pause-menu-tour.inputs"
@@ -1123,7 +1122,6 @@ expect = ["state:15", "state:18", "room:9A44"]
 # remapping, special settings, both languages, back to file select, start.
 [[segment]]
 id = "options-menu-tour"
-pending = "awaiting the seeds-v1-coverage-54f838bfd8146bf7 ci-data upload"
 inputs = "authored-options-tour.inputs"
 input_sha256 = "b06fcdb5eddf0784604c5e8e2c7d4a6f724ecffb62e762b82c799e0a75bc0128"
 start_frame = 0
@@ -1133,7 +1131,6 @@ expect = ["state:2", "state:4", "state:30"]
 # The low% movie's Draygon fight: Draygon grabs Samus, who grapples a turret.
 [[segment]]
 id = "boss-draygon-grab"
-pending = "awaiting the seeds-v1-coverage-54f838bfd8146bf7 ci-data upload"
 seed = "low-input-phase:129"
 seed_sha256 = "987fcffbe5a3c0e86996b029eaf95b6b2341edec5927dd979faaa4c8c83777cf"
 inputs = "seed-draygon-grab.inputs"
