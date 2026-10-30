@@ -2,7 +2,6 @@
 #![forbid(unsafe_code)]
 use super::menu_tilemap;
 use super::prelude::*;
-use crate::ram::word;
 
 pub fn prepare_menu<H: Host + ?Sized>(game: &mut H) {
     scroll! {game; Bg4H = scroll!(game.Bg1H); Bg4V = scroll!(game.Bg1V); }
@@ -58,7 +57,8 @@ pub fn prepare_menu<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn toggle_mode<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.joypad1_newkeys) & kButton_A as u16 == 0 || inventory!(game.MaxReserveHealth) == 0
+    if game.observed_inputs().pressed & kButton_A as u16 == 0
+        || inventory!(game.MaxReserveHealth) == 0
     {
         return;
     }
@@ -90,7 +90,7 @@ fn transfer_one<H: Host + ?Sized>(adjust_zero: bool, game: &mut H) -> bool {
 
 pub fn transfer_manual<H: Host + ?Sized>(game: &mut H) {
     if crate::menu!(game.pausemenu_reserve_tank_delay_ctr) == 0 {
-        if word!(game.joypad1_newkeys) & kButton_A as u16 == 0 {
+        if game.observed_inputs().pressed & kButton_A as u16 == 0 {
             return;
         }
         crate::menu!(
@@ -112,7 +112,7 @@ pub fn transfer_manual<H: Host + ?Sized>(game: &mut H) {
 
 pub fn refill_auto<H: Host + ?Sized>(game: &mut H) -> u8 {
     if inventory!(game.ReserveHealth) != 0 {
-        if word!(game.nmi_frame_counter_word) & 7 == 0 {
+        if game.observed_inputs().frame & 7 == 0 {
             game.queue_sound(2, 0x2d_u8, 3);
         }
         if !transfer_one(false, game) {
