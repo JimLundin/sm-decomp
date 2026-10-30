@@ -1,7 +1,7 @@
 use crate::game::actors;
 use crate::game::actors::api as actor_api;
 use crate::game::actors::dachora::load_palette as load_dachora_palette;
-use crate::game::actors::kraid_fingernails::KraidFingernailInit;
+use crate::game::actors::kraid_fingernails::initialize as initialize_fingernail;
 use crate::game::actors::phantoon_actions::Phantoon_SetColorBasedOnHp_FindEntry;
 use crate::game::decompression::decompress_to_ram;
 use crate::game::gameplay_flag_runtime;
@@ -957,7 +957,7 @@ pub fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
                         .load(game)
                     });
                     if ((slot!(game, Enemy_Kraid[0i32].base.y_pos)) as i16)
-                        .wrapping_sub(actors::kraid_sinking::row(0, game).word(0) as i16)
+                        .wrapping_sub(actors::kraid_sinking::sinking_row(0, game).word(0) as i16)
                         >= 0
                     {
                         word! {game; my_counter = 0; my_counter2 = word!(game.vram_write_queue_tail); }
@@ -971,8 +971,10 @@ pub fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
             };
             loop {
                 if queue_transfer {
-                    let entry =
-                        actors::kraid_sinking::row(usize::from(word!(game.my_counter)), game);
+                    let entry = actors::kraid_sinking::sinking_row(
+                        usize::from(word!(game.my_counter)),
+                        game,
+                    );
                     if !(entry.word(0) != 0xffff
                         && ((slot!(game, Enemy_Kraid[0i32].base.y_pos)) as i16)
                             .wrapping_sub(entry.word(0) as i16)
@@ -980,7 +982,7 @@ pub fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
                     {
                         break 's_100;
                     }
-                    actors::kraid_sinking::queue_tiles(
+                    actors::kraid_sinking::queue_row_clear(
                         word!(game.my_counter2),
                         entry.word(2),
                         game,
@@ -1012,7 +1014,7 @@ pub fn Kraid_PlaySoundEveryHalfSecond(game: &mut Game) {
     }
 }
 pub fn Kraid_HandleSinking(game: &mut Game) {
-    if let Some(callback) = actors::kraid_sinking::sink_row(game) {
+    if let Some(callback) = actors::kraid_sinking::handle_sinking(game) {
         {
             CallKraidSinkTableFunc(callback, game)
         };
@@ -3073,8 +3075,8 @@ slot!(game, EnemyData[fresh4].properties = (slot!(game, EnemyData[fresh4].proper
     [10982559] Kraid_Touch => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
     Kraid_Shot => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
     @forward [pub fn (game: &mut Game)];
-    [10992879] KraidsGoodFingernail_Init => KraidFingernailInit(word!(game.cur_enemy_index), game);
-    [10992941] KraidsBadFingernail_Init => KraidFingernailInit(word!(game.cur_enemy_index), game);
+    [10992879] KraidsGoodFingernail_Init => initialize_fingernail(word!(game.cur_enemy_index), game);
+    [10992941] KraidsBadFingernail_Init => initialize_fingernail(word!(game.cur_enemy_index), game);
 }
 
 crate::game::callback_dispatch! {
