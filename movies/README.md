@@ -8,7 +8,7 @@ must match. The [README](../README.md#verification) lists what this does not
 cover.
 
 [segments.toml](segments.toml) defines the scenarios (rows), their inputs and
-required events: 87 rows, 152,728 selected frames. Follow the
+required events: 93 rows, 163,598 selected frames. Follow the
 [build guide](../docs/ITERATION.md) first; commands below run from the
 repository root with Python 3.11+ (`python3` on systems without `python`).
 You need your own unheadered ROM at `rom/sm.smc`. The verifier builds only on
@@ -116,6 +116,35 @@ function coverage of `crates/sm_game` and `sm/src/game` with
 [coverage_summary.py](../tools/coverage_summary.py). The `coverage` artifact
 lists files and the largest functions the corpus never executes; no
 ROM-derived data is recorded. It is manual and does not gate landing.
+
+### Mother Brain by phase
+
+The room-to-room chain does not leave Mother Brain's room, so her fight is
+covered by phase rows instead. Each `mother-brain-*` row starts from one of the
+`100-mb-phases` observations (captured when her form word `$7E:7800` changes)
+and requires the probe at the next form change, with 120 frames after it:
+
+| Row | Seed | Probe |
+| --- | --- | --- |
+| `mother-brain-glass` | 324 | `mother-brain.form-1`: the glass phase ends |
+| `mother-brain-fake-death` | 325 | `mother-brain.form-2`: she rises for phase 2 |
+| `mother-brain-phase2` | 326 | `mother-brain.form-3`: the baby Metroid latches on |
+| `mother-brain-baby-metroid-drain` | 327 | `mother-brain.drained`: she is drained grey |
+| `mother-brain-baby-metroid-sacrifice` | 328 | `baby-metroid.fatal-blow`, `mother-brain.form-4` |
+
+`boss-mother-brain` covers the defeat from seed 329, and
+`mother-brain-escape-door` continues from the same seed through the escape
+timer and the door to `$DE4D`. Each row's input is the lag-aligned import
+from its seed:
+
+```sh
+python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-mother-brain-glass.inputs --rom rom/sm.smc --lag-log target/seeds/100-mb-phases/lag.csv --seed target/seeds/100-mb-phases/0324-DD58-wram.bin --frames 760
+```
+
+with seeds 0325, 0326, 0327, 0328 and 0329 and frames 1360, 2940, 1480,
+2830 and 1500 for the following rows. The inputs agree with the chain's
+room-324 input: each later seed's input is the chain's from native step
+602, 1804, 4584, 5910 and 8582.
 
 ## Import or capture other inputs
 

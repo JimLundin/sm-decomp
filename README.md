@@ -87,7 +87,7 @@ port state, and the rendered 256x240 image. Any difference fails the run. The
 | Check | Workflow | Runs | Covers |
 | --- | --- | --- | --- |
 | PR CI | [`ci.yml`](.github/workflows/ci.yml) | Every pull request and push to main | Formatting, progress reports, dependency direction, target-crate tests, the `sm_data` ROM import check, Windows build of native libraries, verifier DLL and desktop, verifier unit tests, detached composition checks |
-| Corpus | [`segments.yml`](.github/workflows/segments.yml) | Every 3 hours, on dispatch, and after a push that deletes a legacy bank file | The 87 rows of [`movies/segments.toml`](movies/segments.toml): 152,728 selected frames covering every area and boss, item pickups, doors, elevators, saves, death and credits |
+| Corpus | [`segments.yml`](.github/workflows/segments.yml) | Every 3 hours, on dispatch, and after a push that deletes a legacy bank file | The 93 rows of [`movies/segments.toml`](movies/segments.toml): 163,598 selected frames covering every area and boss, item pickups, doors, elevators, saves, death and credits |
 | Full route | [`full-route.yml`](.github/workflows/full-route.yml) | Nightly and on dispatch | The whole 100% TAS, 222,788 frames, in 20,000-frame chunks started from checkpoints that the original produces from boot |
 | Coverage | [`coverage.yml`](.github/workflows/coverage.yml) | Manual | The corpus on an instrumented verifier; reports `sm_game` and `sm/src/game` code it never executes |
 
