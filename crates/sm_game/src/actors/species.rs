@@ -10,11 +10,12 @@
 #![forbid(unsafe_code)]
 use crate::actors::host::{ActorHost, ActorRuntime, Death, LeaseActors, Shot};
 use crate::actors::{
-    botwoon, boulder, brinstar_pipe_bug, ceres_doors, crocomire_reactions, dachora_run,
-    draygon_death, draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep,
-    escape_critters, etecoon, fire_arc, kraid, magdollite, mini_kraid, norfair_pipe_bug, phantoon,
-    phantoon_actions, shaktool, space_pirates, statues, torizo, yapping_maw, yellow_pipe_bug,
-    zebetites,
+    alcoon, atomic, bang, blue_brinstar_face_block, botwoon, boulder, brinstar_pipe_bug,
+    ceres_doors, coven, crawlers, crocomire_reactions, dachora_run, draygon_death, draygon_eye,
+    draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, etecoon,
+    fire_arc, fireflea, fune, kago, kraid, magdollite, mini_kraid, mochtroid, morph_ball_eye,
+    norfair_pipe_bug, phantoon, phantoon_actions, reflec, roach, shaktool, skree, skultera,
+    space_pirates, statues, torizo, tripper, yapping_maw, yellow_pipe_bug, zebetites, zoa,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -269,6 +270,11 @@ pub trait AiHost:
     + fire_arc::Host
     + mini_kraid::Host
     + zebetites::Host
+    + PreInstructionHost
+    + fireflea::Host
+    + skultera::Host
+    + atomic::Host
+    + crate::effects::SoundEffects
 {
     /// An AI routine whose arm is still in the compatibility table.
     fn native_ai(&mut self, ea: u32);
@@ -488,6 +494,67 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10851818 => draygon_death::touch(game),
         10851847 => draygon_death::power_bomb(game),
         10863723 => draygon_eye::initialize(game),
+        // Bank $A3: the crawlers, divers, platforms, bugs and fish.
+        10717536 => skree::initialize(skree::Kind::Metaree, game),
+        10717561 => skree::main_ai(skree::Kind::Metaree, game),
+        10717967 => skree::shot(skree::Kind::Metaree, game),
+        10718509 => fireflea::initialize(game),
+        10718702 => fireflea::main_ai(game),
+        10718827 => fireflea::touch(game),
+        10718851 => fireflea::power_bomb(game),
+        10718857 => fireflea::shot(game),
+        10719413 => skultera::initialize(game),
+        10719531 => skultera::main_ai(game),
+        10720486 => elevator::initialize(game),
+        10720554 => elevator::main_ai(game),
+        10722463 => tripper::initialize(true, game),
+        10722490 => tripper::initialize(false, game),
+        10722582 => tripper::main_ai(game),
+        10723080 => tripper::shot(game),
+        10725245 => mochtroid::initialize(game),
+        10725264 => mochtroid::main_ai(game),
+        10725715 => mochtroid::touch(game),
+        10720995 => crawlers::initialize(crawlers::Kind::Sciser, game),
+        10721595 => crawlers::initialize(crawlers::Kind::Zero, game),
+        10729071 => crawlers::initialize(crawlers::Kind::Viola, game),
+        10739779 => crawlers::initialize(crawlers::Kind::OrangeGeemer, game),
+        10740436 => crawlers::initialize(crawlers::Kind::Zeela, game),
+        10741148 => crawlers::initialize(crawlers::Kind::Sova, game),
+        10741353 => crawlers::initialize(crawlers::Kind::Geemer, game),
+        10739851 | 10741442 => {
+            let function = crawlers::main_ai(game);
+            pre_instruction(function, game);
+        }
+        10730163 => bang::initialize(game),
+        10731261 => bang::shot(game),
+        10738643 => reflec::initialize(game),
+        10723661 => roach::initialize(game),
+        10724048 => roach::main_ai(game),
+        10728522 => zoa::initialize(game),
+        10728572 => zoa::main_ai(game),
+        10733230 => skree::initialize(skree::Kind::Skree, game),
+        10733255 => skree::main_ai(skree::Kind::Skree, game),
+        10733557 => skree::shot(skree::Kind::Skree, game),
+        // Bank $A8.
+        11047000 => morph_ball_eye::initialize(game),
+        11047138 => {
+            if let Some(function) = morph_ball_eye::main_ai(game) {
+                pre_instruction(function, game);
+            }
+        }
+        11048675 => fune::initialize(game),
+        11048752 => fune::main_ai(game),
+        11049710 => coven::initialize(game),
+        11049788 => coven::main_ai(game),
+        11053894 => kago::initialize(game),
+        11053941 => kago::main_ai(game),
+        11053955 => kago::shot(game),
+        11066573 => alcoon::initialize(game),
+        11066731 => alcoon::main_ai(game),
+        11068296 => atomic::initialize(game),
+        11068355 => atomic::main_ai(game),
+        11069486 => blue_brinstar_face_block::initialize(game),
+        11069614 => blue_brinstar_face_block::main_ai(game),
         _ => game.native_ai(ea),
     }
 }
@@ -513,6 +580,15 @@ pub trait PreInstructionHost:
 pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
     let k: u16 = word!(game.cur_enemy_index);
     match ea {
+        10730661 => bang::movement_delay(game),
+        10730693 => bang::target_samus(game),
+        10730780 => bang::fly(false, game),
+        10730796 => bang::fly(true, game),
+        10739857 => crawlers::crawl(k, crate::actors::api::Axis::X, true, game),
+        10740072 => crawlers::crawl(k, crate::actors::api::Axis::Y, true, game),
+        10741448 => crawlers::crawl(k, crate::actors::api::Axis::X, false, game),
+        10741746 => crawlers::crawl(k, crate::actors::api::Axis::Y, false, game),
+        10741637 => crawlers::falling(k, game),
         10518651 => (),
         10649723 => (),
         10652277 => (),
@@ -629,6 +705,8 @@ pub trait InstructionHost:
     + phantoon::Host
     + ceres_doors::Host
     + mini_kraid::Host
+    + skultera::Host
+    + crate::effects::SoundEffects
 {
     /// An instruction whose arm is still in the compatibility table.
     fn native_instruction(&mut self, ea: u32, k: u16, j: EnemyScript) -> EnemyScript;
@@ -654,6 +732,27 @@ pub fn instruction<H: InstructionHost>(
     game: &mut H,
 ) -> EnemyScript {
     match ea {
+        10717526 | 10733220 => skree::set_attack_ready(j, game),
+        10722411 | 10722433 => tripper::set_x_movement(false, j, game),
+        10722422 | 10722444 => tripper::set_x_movement(true, j, game),
+        10728489 => zoa::set_x_speed_index(4, j, game),
+        10728500 => zoa::set_x_speed_index(8, j, game),
+        10728511 => zoa::set_x_speed_index(12, j, game),
+        // Bang's queue acquired suit sound effect: 56h, library 2.
+        10730104 => {
+            game.queue_sound(1, 0x56, 6);
+            j
+        }
+        10730152 => bang::set_finished_growing(j, game),
+        10738632 => reflec::set_reflection_axis(k, j, game),
+        10741344 | 10739650 => crawlers::set_function(k, j, game),
+        10719382 | 10719392 | 10719402 => skultera::instruction(ea, j, game),
+        11048485 | 11048497 | 11048522 | 11048547 | 11048572 | 11048597 | 11048628 => {
+            fune::instruction(ea, j, game)
+        }
+        11067164 | 11067187 | 11067193 | 11067199 | 11067235 | 11067249 => {
+            alcoon::instruction(ea, j, game)
+        }
         0xa40000..=0xa4ffff => crocomire_reactions::instruction(ea, k, j, game),
         11051207 | 11051225 | 11051243 | 11051261 | 11051279 | 11051297 | 11051315 => {
             yapping_maw::instruction(ea, j, game)

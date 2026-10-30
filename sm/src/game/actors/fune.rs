@@ -1,6 +1,5 @@
 //! Fune and namihe run in `sm_game::actors::fune` through the actor lease.
 #![forbid(unsafe_code)]
-pub(crate) use sm_game::actors::fune::*;
 
 // The named bank $A8 addresses are the ones `session_runtime` dispatches on.
 const _: () = {

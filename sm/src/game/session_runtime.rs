@@ -1,9 +1,5 @@
 //! One aggregate authority for player, projectiles, mechanisms and their room.
-use crate::game::actors::skree::{self, Kind as DivingKind};
-use crate::game::actors::{
-    bang, crawlers, elevator, maridia_snail, metroid, mochtroid, reflec, roach, sidehopper,
-    tripper, zoa,
-};
+use crate::game::actors::{bang, maridia_snail, metroid, reflec, sidehopper};
 use crate::game::enemy_speeds::SpeedTable;
 use crate::{
     game_state::Game,
@@ -1167,47 +1163,21 @@ crate::game::callback_dispatch! {
         10679310 => [mechanisms::react(Kind::HorizontalShutter, Event::Shot, game)];
         10679322 => [mechanisms::react(Kind::HorizontalShutter, Event::PowerBomb, game)];
         10716909 => crate::game::waver::Waver_Init;
-        10717004 => crate::game::waver::Waver_Main; 10717536 => [skree::initialize(DivingKind::Metaree, game)];
-        10717561 => [skree::main_ai(DivingKind::Metaree, game)]; 10717967 => [skree::shot(DivingKind::Metaree, game)];
-        10718509 => actors::fireflea::initialize;
-        10718702 => actors::fireflea::main_ai;
-        10718827 => actors::fireflea::touch;
-        10718851 => actors::fireflea::power_bomb;
-        10718857 => actors::fireflea::shot;
-        10719413 => actors::skultera::initialize; 10719531 => actors::skultera::main_ai;
-        10720486 => elevator::initialize; 10720554 => elevator::main_ai;
-        10722463 => [tripper::initialize(true, game)]; 10722490 => [tripper::initialize(false, game)];
-        10722582 => tripper::main_ai; 10723080 => tripper::shot;
-        10725245 => mochtroid::initialize; 10725264 => mochtroid::main_ai; 10725715 => mochtroid::touch;
+        10717004 => crate::game::waver::Waver_Main;
 
-        10720995 => [crawlers::initialize(crawlers::Kind::Sciser, game)];
-        10721595 => [crawlers::initialize(crawlers::Kind::Zero, game)];
-        10729071 => [crawlers::initialize(crawlers::Kind::Viola, game)];
-        10739779 => [crawlers::initialize(crawlers::Kind::OrangeGeemer, game)];
-        10740436 => [crawlers::initialize(crawlers::Kind::Zeela, game)];
-        10741148 => [crawlers::initialize(crawlers::Kind::Sova, game)];
-        10741353 => [crawlers::initialize(crawlers::Kind::Geemer, game)];
-        10739851 | 10741442 => [{ let phase = crawlers::main_ai(game); actor_species_pre_instruction(phase, game); }];
-        10730163 => bang::initialize; 10731261 => bang::shot;
         10730277 => [{ let address = bang::main_ai(game); crate::cpu_infra::Call(address, game); }];
         10738716 => reflec_shot;
         10715146 => [crate::game::actors::combat::die(&mut Runtime::new(game), actor_api::DeathKind::Grapple)];
         10715151 => [crate::game::actors::combat::select_frozen_ai(&mut Runtime::new(game))];
 
         10715201 => [crate::game::actors::scheduling::update_frozen_enemy(&mut Runtime::new(game))];
-        10738643 => reflec::initialize;
         10735074 => maridia_snail::initialize;
         10735204 => [{ let phase = maridia_snail::prepare(game); actor_species_pre_instruction(phase, game); }];
         10736560 => maridia_snail::touch; 10736745 => maridia_snail::shot;
         10742351 => metroid::initialize; 10742502 => metroid::frozen;
         10742579 => metroid::hurt; 10742680 => metroid::advance;
         10743275 => metroid::touch; 10743559 => metroid::shot;
-        10723661 => roach::initialize;
-        10724048 => roach::main_ai;
         10726153 => sidehopper::initialize; 10726351 => sidehopper::advance;
-        10728522 => zoa::initialize; 10728572 => zoa::main_ai;
-        10733230 => [skree::initialize(DivingKind::Skree, game)]; 10733255 => [skree::main_ai(DivingKind::Skree, game)];
-        10733557 => [skree::shot(DivingKind::Skree, game)];
         10743874 => metroid::power_bomb;
 
 
@@ -1225,16 +1195,6 @@ crate::game::callback_dispatch! {
         11045147 => crate::game::actors::evir::advance;
         11045278 => crate::game::actors::evir::advance_projectile;
         11045638 | 11045644 | 11045650 => [crate::game::actors::evir::damage(ea, game)];
-        11047000 => crate::game::actors::morph_ball_eye::initialize;
-        11047138 => [{
-            if let Some(address) = crate::game::actors::morph_ball_eye::main_ai(game) {
-                actor_species_pre_instruction(address, game);
-            }
-        }];
-        11048675 => crate::game::actors::fune::initialize;
-        11048752 => crate::game::actors::fune::main_ai;
-        11049710 => crate::game::actors::coven::initialize;
-        11049788 => crate::game::actors::coven::main_ai;
         11051537 => [{
             if !crate::game::actors::yapping_maw::main_ai(game, |operand, game| {
                 crate::rtl::WriteReg(crate::rtl::WRMPYA as u16, operand, game);
@@ -1244,8 +1204,6 @@ crate::game::callback_dispatch! {
             crate::game::actors::yapping_maw::update_segments(game);
         }];
 
-        11053894 => crate::game::actors::kago::initialize;
-        11053941 => crate::game::actors::kago::main_ai; 11053955 => crate::game::actors::kago::shot;
         11055370 => [{ let address = crate::game::actors::magdollite::main_ai(game); actor_species_pre_instruction(address, game); }];
         11057014 => crate::game::actors::beetom::initialize;
         11057165 => crate::game::actors::beetom::advance; 11058734 => crate::game::actors::beetom::touch;
@@ -1263,15 +1221,9 @@ crate::game::callback_dispatch! {
         11063698 => crate::game::actors::wrecked_ship_robots::shot;
         11065545 => crate::game::actors::maridia_puffer::initialize;
         11065611 => crate::game::actors::maridia_puffer::advance; 11066132 => crate::game::actors::maridia_puffer::shot;
-        11066573 => crate::game::actors::alcoon::initialize;
-        11066731 => crate::game::actors::alcoon::main_ai;
-        11068296 => crate::game::actors::atomic::initialize;
-        11068355 => crate::game::actors::atomic::main_ai;
         11068983 => crate::game::actors::wrecked_ship_spark::initialize;
         11069070 => crate::game::actors::wrecked_ship_spark::advance;
         11069198 | 11069725 => [crate::ram_map::word!(game.projectile_dir[crate::ram_map::word!(game.collision_detection_index)] &= !(0x10))];
-        11069486 => crate::game::actors::blue_brinstar_face_block::initialize;
-        11069614 => crate::game::actors::blue_brinstar_face_block::main_ai;
         11071880 => crate::game::actors::ki_hunter::initialize;
         11072020 => crate::game::actors::ki_hunter::initialize_wings; 11072092 => crate::game::actors::ki_hunter::advance;
         11072098 => crate::game::actors::ki_hunter::advance;
@@ -1437,8 +1389,6 @@ crate::game::address_dispatch! {
     {
 
 
-        10730661 => [bang::movement_delay(game)]; 10730693 => [bang::target_samus(game)];
-        10730780 => [bang::fly(false, game)]; 10730796 => [bang::fly(true, game)];
         10735526 => [maridia_snail::crawl(k, actor_api::Axis::Y, 0xa3cce2, game)];
         10735543 => [maridia_snail::crawl(k, actor_api::Axis::X, 0xa3ccea, game)];
         10735549 => [maridia_snail::crawl(k, actor_api::Axis::Y, 0xa3ccf2, game)];
@@ -1448,11 +1398,6 @@ crate::game::address_dispatch! {
         10735595 => [maridia_snail::crawl(k, actor_api::Axis::Y, 0xa3cd12, game)];
         10735612 => [maridia_snail::crawl(k, actor_api::Axis::X, 0xa3cd1a, game)];
         10735456 => [maridia_snail::probe_edge(k, game)]; 10736051 => [maridia_snail::falling(k, game)];
-        10739857 => [crawlers::crawl(k, actor_api::Axis::X, true, game)];
-        10740072 => [crawlers::crawl(k, actor_api::Axis::Y, true, game)];
-        10741448 => [crawlers::crawl(k, actor_api::Axis::X, false, game)];
-        10741746 => [crawlers::crawl(k, actor_api::Axis::Y, false, game)];
-        10741637 => [crawlers::falling(k, game)];
 
         11047153 | 11047214 | 11047264 | 11047374 => [{
             if crate::game::actors::morph_ball_eye::run_function(ea as u16, k, game) {
@@ -1532,26 +1477,16 @@ crate::game::callback_dispatch! {
         10651845 => [j];
         11044751 | 11044763 | 11044790 | 11044811 => [crate::game::actors::evir::instruction(ea, j, game)];
         10716899 => crate::game::waver::Waver_Instr_1;
-        10717526 | 10733220 => [skree::set_attack_ready(j, game)];
-        10722411 | 10722433 => [tripper::set_x_movement(false, j, game)];
-        10722422 | 10722444 => [tripper::set_x_movement(true, j, game)];
         10725992 => [sidehopper::instruction(true, j, game)]; 10726142 => [sidehopper::instruction(false, j, game)];
-        10728489 => [zoa::set_x_speed_index(4, j, game)]; 10728500 => [zoa::set_x_speed_index(8, j, game)];
-        10728511 => [zoa::set_x_speed_index(12, j, game)];
-        10730104 => [{ crate::game::music::QueueSfx2_Max6(0x56, game); j }]; 10730152 => [bang::set_finished_growing(j, game)];
-        10738632 => [reflec::set_reflection_axis(k, j, game)];
         10734646 => [maridia_snail::instruction(k, 0, j, game)];
         10734655 => [maridia_snail::instruction(k, 1, j, game)];
         10734664 => [maridia_snail::instruction(k, 2, j, game)];
         10734687 => [maridia_snail::instruction(k, 3, j, game)];
         10734712 => [maridia_snail::instruction(k, 4, j, game)];
         10742437 => [metroid::sound(false, j, game)]; 10742449 => [metroid::sound(true, j, game)];
-        10741344 | 10739650 => [crawlers::set_function(k, j, game)];
-        11048485 | 11048497 | 11048522 | 11048547 | 11048572 | 11048597 | 11048628 => [crate::game::actors::fune::instruction(ea, j, game)];
         11056990 => [j];
         11068957 | 11068970 => [crate::game::actors::wrecked_ship_spark::instruction(ea == 11068957, j, game)];
         11062537 | 11062692 | 11062762 | 11062917 | 11062987 | 11062991 | 11063146 | 11063216 | 11063371 | 11063441 | 11063490 | 11063494 | 11063506 | 11063552 | 11063559 | 11063601 | 11063613 | 11063659 => [crate::game::actors::wrecked_ship_robots::instruction(ea, k, j, game)];
-        11067164 | 11067187 | 11067193 | 11067199 | 11067235 | 11067249 => [crate::game::actors::alcoon::instruction(ea, j, game)];
         11072806 | 11072996 | 11073151 | 11073234 | 11073240 => [crate::game::actors::ki_hunter::instruction(ea, k, j, game)];
         11128756 => [sm_game::actors::baby_metroid_cutscene::BabyMetroid_Instr_1(k, j)];
         11128778 => [sm_game::actors::baby_metroid_cutscene::BabyMetroid_Instr_2(k, j)];
@@ -1603,7 +1538,6 @@ crate::game::callback_dispatch! {
         10652048 => [crate::game::mini_crocomire::resume(false, j, game)];
         10652061 => [crate::game::mini_crocomire::resume(true, j, game)];
         10651846 => [crate::game::goofball::landed(j, game)];
-        10719382 | 10719392 | 10719402 => [actors::skultera::instruction(ea, j, game)];
         0xa30000..=0xa3ffff => [{ crate::rtl::Unreachable(game); EnemyScript::Stop }];
         10872671 => [{ actors::spore_spawn::increase_max_x_radius(game); j }];
         10872689 => [{ actors::spore_spawn::clear_damaged_flag(game); j }];

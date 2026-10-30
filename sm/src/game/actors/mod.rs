@@ -1,21 +1,10 @@
 //! Common actor state, gameplay rules and explicit compatibility boundaries.
 #![forbid(unsafe_code)]
 pub(in crate::game) use sm_game::actors::access;
-pub(in crate::game) use sm_game::actors::alcoon;
 pub(in crate::game) use sm_game::actors::api;
 pub(in crate::game) use sm_game::actors::bang;
-pub(in crate::game) use sm_game::actors::blue_brinstar_face_block;
-pub(in crate::game) use sm_game::actors::coven;
-pub(in crate::game) use sm_game::actors::crawlers;
-pub(in crate::game) use sm_game::actors::elevator;
-pub(in crate::game) use sm_game::actors::kago;
-pub(in crate::game) use sm_game::actors::mochtroid;
 pub(in crate::game) use sm_game::actors::morph_ball_eye;
 pub(in crate::game) use sm_game::actors::reflec;
-pub(in crate::game) use sm_game::actors::roach;
-pub(in crate::game) use sm_game::actors::skree;
-pub(in crate::game) use sm_game::actors::tripper;
-pub(in crate::game) use sm_game::actors::zoa;
 pub(in crate::game) mod beetom;
 pub(in crate::game) mod boss_lease;
 pub(crate) mod botwoon;
