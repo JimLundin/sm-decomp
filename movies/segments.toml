@@ -280,6 +280,75 @@ frames = 1380
 expect = ["boss:mother-brain", "room:DD58"]
 after_expectations = 120
 
+# Mother Brain's room by phase, each from its original-emulator phase seed
+# (movies/README.md, Mother Brain phase observations) through the next form change.
+[[segment]]
+id = "mother-brain-glass"
+seed = "100-mb-phases:324"
+seed_sha256 = "7f9ca83538b709b2c9e33a6546c06144711b731583646caab506fb9067abae8d"
+inputs = "seed-mother-brain-glass.inputs"
+input_sha256 = "a12347ce17ca83dfd37351265fdfb1b68452074bcccb8411eec07432eca12f22"
+start_frame = 0
+frames = 760
+require_hit = ["mother-brain.form-1"]
+after_hits = 120
+
+[[segment]]
+id = "mother-brain-fake-death"
+seed = "100-mb-phases:325"
+seed_sha256 = "ba069ef8a5c528bca6a76417cdb0c85c1b7a3b097fe54519925c8927b2527a83"
+inputs = "seed-mother-brain-fake-death.inputs"
+input_sha256 = "eba42ff4c42831739b61f32222c29ce43ba29df6671a993f323cd92c0391aade"
+start_frame = 0
+frames = 1360
+require_hit = ["mother-brain.form-2"]
+after_hits = 120
+
+[[segment]]
+id = "mother-brain-phase2"
+seed = "100-mb-phases:326"
+seed_sha256 = "7ca74c7521eab3beebcfef0e51d1b52a3aff685797896736fefefc42e078a12c"
+inputs = "seed-mother-brain-phase2.inputs"
+input_sha256 = "9b1c1ccc9570e64b0dfb83b6894e2903a760f4344540eb8fd24930d98e57bcf8"
+start_frame = 0
+frames = 2940
+require_hit = ["mother-brain.form-3"]
+after_hits = 120
+
+[[segment]]
+id = "mother-brain-baby-metroid-drain"
+seed = "100-mb-phases:327"
+seed_sha256 = "f301c0ce3fa916bfe21cc3decbeabf24f012148cebe2439432bebe90ba3ab9c1"
+inputs = "seed-mother-brain-baby-metroid-drain.inputs"
+input_sha256 = "e5dfed658652da7037e02db0ab8112ac10d4ac007247842cc56d9a7edf332cbd"
+start_frame = 0
+frames = 1480
+require_hit = ["mother-brain.drained"]
+after_hits = 120
+
+[[segment]]
+id = "mother-brain-baby-metroid-sacrifice"
+seed = "100-mb-phases:328"
+seed_sha256 = "f29c6e9e32db7e70db7f816ccd14b26059b664fcc316e1aa41c76719ff54ad93"
+inputs = "seed-mother-brain-baby-metroid-sacrifice.inputs"
+input_sha256 = "55fb211aea3aeeebdfe1de89b5a74752503e128f708b3cd1e4139ddb5a03dac1"
+start_frame = 0
+frames = 2830
+require_hit = ["baby-metroid.fatal-blow", "mother-brain.form-4"]
+after_hits = 120
+
+# Final form through the defeat, the escape timer and the door out of the room.
+[[segment]]
+id = "mother-brain-escape-door"
+seed = "100-mb-phases:329"
+seed_sha256 = "e0990c38601961b4cd287d9b092fbfdda2909da6c7fc01ad76258e3fccb8ae58"
+inputs = "seed-mother-brain-escape-door.inputs"
+input_sha256 = "5fc4d3f2bddeeab0555711e09739771495fab5960ed448bb30041eac93d1c989"
+start_frame = 0
+frames = 1500
+expect = ["boss:mother-brain", "room:DE4D"]
+after_expectations = 100
+
 [[segment]]
 id = "item-morph-ball"
 seed = "100-input-phase:17"
