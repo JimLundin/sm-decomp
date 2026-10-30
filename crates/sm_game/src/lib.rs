@@ -120,6 +120,7 @@ pub mod actors {
     pub mod kraid;
     pub mod kraid_fingernails;
     pub mod kraid_lint;
+    pub mod kraid_pause;
     pub mod kraid_sinking;
     pub mod layouts;
     pub mod magdollite;

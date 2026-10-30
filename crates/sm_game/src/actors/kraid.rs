@@ -7,8 +7,8 @@
 //! the body in slot 0, then the arm, the top, middle and bottom lint, the
 //! foot, and the good and bad fingernails. Every part runs the bank $A7
 //! function in its `function` word; the views below name the slot words over
-//! the same RAM bytes as `KraidLayout`. The pause and unpause hooks, which load
-//! graphics through the backend, stay in compat.
+//! the same RAM bytes as `KraidLayout`. The pause and unpause hooks are in
+//! `kraid_pause`.
 #![forbid(unsafe_code)]
 use crate::actors::host::{Death, Shot, Slopes};
 use crate::actors::layouts::part_view;

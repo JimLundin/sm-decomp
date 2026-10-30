@@ -93,18 +93,16 @@ impl sm_game::gameplay_frame::Host for Game {
     fn pause_hook(&mut self, hook: PauseHook) {
         match hook {
             PauseHook::Draygon => crate::game::room_state::pause_draygon(self),
-            PauseHook::Kraid => crate::game::sm_a7::PauseHook_Kraid(self),
+            PauseHook::Kraid => sm_game::actors::kraid_pause::pause(self),
         }
     }
     fn unpause_hook(&mut self, hook: UnpauseHook) -> u8 {
-        use crate::game::sm_a7::{
-            Kraid_UnpauseHook_IsSinking, UnpauseHook_Kraid_IsAlive, UnpauseHook_Kraid_IsDead,
-        };
+        use sm_game::actors::kraid_pause::{unpause_alive, unpause_dead, unpause_sinking};
         match hook {
             UnpauseHook::Draygon => crate::game::room_state::unpause_draygon(self),
-            UnpauseHook::KraidDead => UnpauseHook_Kraid_IsDead(self),
-            UnpauseHook::KraidAlive => UnpauseHook_Kraid_IsAlive(self),
-            UnpauseHook::KraidSinking => Kraid_UnpauseHook_IsSinking(self),
+            UnpauseHook::KraidDead => unpause_dead(self),
+            UnpauseHook::KraidAlive => unpause_alive(self),
+            UnpauseHook::KraidSinking => unpause_sinking(self),
             UnpauseHook::MotherBrain => crate::game::sm_a9::MotherBrainsBody_UnpauseHook(self),
         }
     }

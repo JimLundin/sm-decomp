@@ -5,8 +5,6 @@ use crate::ram_map::checked_word as word;
 use crate::rtl::WriteReg;
 use crate::snes::registers::*;
 
-pub(super) use sm_game::display_refresh::enqueue_readback as enqueue;
-
 pub(super) unsafe fn process(game: &mut Game) {
     let tail = word!(game.vram_read_queue_tail) as u8;
     if tail != 0 {

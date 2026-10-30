@@ -1,15 +1,11 @@
 use crate::game::actors;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
-use crate::ram_map::slot;
 use crate::rtl::rom_record;
 use core::mem::offset_of;
 use sm_game::enemy_script::EnemyScript;
 
 pub use crate::game::constants::bank_86::*;
-
-use crate::game::display_refresh::GraphicsAsset;
-use crate::game::enemy_layouts::KraidLayout as Enemy_Kraid;
 
 crate::typed_struct! {
     [
@@ -62,7 +58,6 @@ crate::type_aliases! {
 }
 
 crate::game::constants::typed_constants! { i32;
-    kCoroutineNone = 0,
     fnnullsub_170_A7 = 0xa7804c,
     fnUnpauseHook_Kraid_IsDead = 0xa7c1fb, fnUnpauseHook_Kraid_IsAlive = 0xa7c24e,
     fnKraid_UnpauseHook_IsSinking = 0xa7c2a0, fnPauseHook_Kraid = 0xa7c325,
@@ -135,113 +130,6 @@ pub(crate) fn set_kraid_shot_ai(enemy_ptr: u16, shot_ai: u16, game: &mut Game) {
     (unsafe { rom_record(0xa0, enemy_ptr, game) }).set_word(offset_of!(EnemyDef, shot_ai), shot_ai);
     #[cfg(sm_verify_dll)]
     crate::verify_probe::hit("actors.kraid.shot_ai.disabled");
-}
-pub fn UnpauseHook_Kraid_IsDead(game: &mut Game) -> CoroutineRet {
-    {
-        crate::game::display_refresh::set_blank(true, game);
-        (unsafe {
-            GraphicsAsset::VramWords(
-                0xa7a716,
-                ((16 * (game.ram().read_byte(0x5d) as i32 & 0xf) + 63) as u8 as u16) << 8,
-                0x200,
-            )
-            .load(game)
-        });
-        unsafe { GraphicsAsset::VramWords(0x9ab200, 0x4000, 0x800).load(game) };
-        Kraid_TransferTopHalfToVram(game);
-        kCoroutineNone as CoroutineRet
-    }
-}
-pub fn UnpauseHook_Kraid_IsAlive(game: &mut Game) -> CoroutineRet {
-    {
-        crate::game::display_refresh::set_blank(true, game);
-        (unsafe {
-            GraphicsAsset::VramWords(
-                0x7e5000,
-                ((game.ram().read_byte(0x5d)).wrapping_add(62) as u16) << 8,
-                0x400,
-            )
-            .load(game)
-        });
-        Kraid_TransferTopHalfToVram(game);
-        kCoroutineNone as CoroutineRet
-    }
-}
-pub fn Kraid_TransferTopHalfToVram(game: &mut Game) {
-    {
-        (unsafe {
-            GraphicsAsset::VramWords(
-                0x7e2000,
-                ((game.ram().read_byte(0x59) & 0xfc) as u16) << 8,
-                0x800,
-            )
-            .load(game)
-        });
-        crate::game::display_refresh::set_blank(false, game);
-    }
-}
-pub fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
-    {
-        's_100: {
-            let mut queue_transfer = match game.ram().read_byte(0x613) as i32 {
-                0 => {
-                    crate::game::display_refresh::set_blank(true, game);
-                    (unsafe {
-                        GraphicsAsset::VramWords(
-                            0x7e5000,
-                            ((game.ram().read_byte(0x5d)).wrapping_add(62) as u16) << 8,
-                            0x400,
-                        )
-                        .load(game)
-                    });
-                    if ((slot!(game, Enemy_Kraid[0i32].base.y_pos)) as i16)
-                        .wrapping_sub(actors::kraid_sinking::sinking_row(0, game).word(0) as i16)
-                        >= 0
-                    {
-                        word! {game; my_counter = 0; my_counter2 = word!(game.vram_write_queue_tail); }
-                        true
-                    } else {
-                        break 's_100;
-                    }
-                }
-                1 => false,
-                _ => break 's_100,
-            };
-            loop {
-                if queue_transfer {
-                    let entry = actors::kraid_sinking::sinking_row(
-                        usize::from(word!(game.my_counter)),
-                        game,
-                    );
-                    if !(entry.word(0) != 0xffff
-                        && ((slot!(game, Enemy_Kraid[0i32].base.y_pos)) as i16)
-                            .wrapping_sub(entry.word(0) as i16)
-                            >= 0)
-                    {
-                        break 's_100;
-                    }
-                    actors::kraid_sinking::queue_row_clear(
-                        word!(game.my_counter2),
-                        entry.word(2),
-                        game,
-                    );
-                }
-                let mut _coret_: u8 = crate::game::display_refresh::wait(true, game);
-                if _coret_ != 0 {
-                    game.ram().write_byte(0x613, 1);
-                    return _coret_;
-                }
-                word!(game.my_counter += 1);
-                queue_transfer = true;
-            }
-        }
-        game.ram().write_byte(0x613, 0);
-        0 as CoroutineRet
-    }
-}
-#[forbid(unsafe_code)]
-pub fn PauseHook_Kraid(game: &mut Game) {
-    crate::game::vram_read_queue::enqueue(0x5d, 15872, 0x5000, 1024, false, game);
 }
 crate::game::callback_dispatch! {
     pub(crate) fn DispatchEnemyAi(ea: u32, game: &mut Game) => ea;
