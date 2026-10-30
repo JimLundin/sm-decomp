@@ -1,8 +1,4 @@
-use crate::game::actors;
-use crate::game::ceres_doors;
-use crate::game::fire_geysers;
 pub use crate::game::prelude::*;
-use crate::game::session_runtime::Runtime;
 pub use sm_game::actors::ceres_ridley::{
     handle_getaway_if_active as HandleCeresRidleyGetawayCutscene,
     spawn_getaway_walls as CeresRidley_Func_25,
@@ -17,33 +13,9 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a6::*;
 pub use crate::game::constants::bank_a9::*;
 
-const VANISH: u16 = ceres_doors::TANGIBLE | ceres_doors::INVISIBLE;
-
-/// The steam's next script at `bank:address`, as the original ROM pointer.
-pub(crate) fn steam_script(bank: u8, address: u16, game: &mut Game) -> EnemyScript {
-    let record = unsafe { crate::rtl::rom_record(bank, address, game) };
-    EnemyScript::at(record.image, record.base)
-}
-
 /// Ridley's "Warning: X undefined" line, for `still_falling_apart`.
 pub(crate) fn warn_x_undefined() {
     unsafe { printf(b"Warning: X undefined\n\0" as *const u8 as *const c_char) };
-}
-/// The boulder runs in `sm_game::actors::boulder`.
-pub fn Boulder_Init(game: &mut Game) {
-    sm_game::actors::boulder::initialize(game);
-}
-pub fn Boulder_Main(game: &mut Game) {
-    sm_game::actors::boulder::main_ai(game);
-}
-crate::game::callback_dispatch! {
-    pub fn CallNuclearWaffleFunc(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub fn (game: &mut Game)];
-    [10917397] NuclearWaffle_Func_1 [] { sm_game::actors::fire_arc::inactive(game) };
-    [10917506] NuclearWaffle_Func_2 [] {
-        crate::game::enemy_projectiles::advance_waffle_orbit(game);
-    };
 }
 
 crate::game::callback_dispatch! {
@@ -169,84 +141,21 @@ crate::game::callback_dispatch! {
     [10928114] BabyMetroid_Instr_1 [] { sm_game::actors::ridley::baby_metroid_goto_if_moving(k, game) };
     [10928120] BabyMetroid_Goto [] { sm_game::actors::ridley::baby_metroid_goto(k, game) };
 }
-crate::game::callback_dispatch! {
-    pub fn CallCeresSteamFunc(ea: u32, k: u16, game: &mut Game) => ea;
-    call (k, game); default { Unreachable(game); };
-    @functions [pub fn (k: u16, game: &mut Game)];
-    [10940441] CeresSteam_Func_1 [] { sm_game::actors::ceres_doors::steam_rotating_offset(k, game) };
-    @external {
-        10940404 => [()];
-    }
-}
-crate::game::callback_dispatch! {
-    pub fn CallCeresDoor(ea: u32, game: &mut Game) => ea;
-    setup { let k: u16 = word!(game.cur_enemy_index); }
-    call (game); default { Unreachable(game); };
-    @functions [pub fn (game: &mut Game)];
-    [10942373] CeresDoor_Func_4 [] { sm_game::actors::ceres_doors::mode7_wall(game) };
-    [10942544] CeresDoor_Func_7 [] { sm_game::actors::ceres_doors::elevator_animations(game) };
-    @forward [pub fn (game: &mut Game)];
-    [10942315] CeresDoor_Func_2 => sm_game::actors::ceres_doors::escape_rumble(0x14, game);
-    [10942320] CeresDoor_Func_3 => sm_game::actors::ceres_doors::escape_rumble(0x1d, game);
-    @external {
-        10942397 => [sm_game::actors::ceres_doors::elevator_default(k, game)];
-        10942428 => [sm_game::actors::ceres_doors::rumbling_and_explosions(k, game)];
-    }
-}
 
 crate::game::callback_dispatch! {
     pub(crate) fn DispatchEnemyAi(ea: u32, game: &mut Game) => ea;
     call (game); default { crate::rtl::Unreachable(game); };
-    @functions [pub fn (game: &mut Game)];
-    [10914693 | 10914713] SpikeyPlatform2ndEnemy_Init [] { sm_game::actors::fire_arc::initialize_spike_platform_bottom(game) };
-    [10917060] NuclearWaffle_Init [] { sm_game::actors::fire_arc::initialize(game) };
-    [10917390] NuclearWaffle_Main [] { sm_game::actors::fire_arc::main_ai(game) };
-    [10918488] FakeKraid_Init [] { sm_game::actors::mini_kraid::initialize(game); };
-    [10918594] FakeKraid_Main [] { sm_game::actors::mini_kraid::main_ai(game); };
-    [10918946] FakeKraid_Touch [] { sm_game::actors::mini_kraid::touch(game); };
-    [10918969] FakeKraid_Shot [] { sm_game::actors::mini_kraid::shot(game); };
-
-    [10940337] CeresSteam_Init [] { sm_game::actors::ceres_doors::initialize_steam(game) };
-    [10940429] CeresSteam_Main [] { sm_game::actors::ceres_doors::steam_main(game) };
-    [10942149] CeresDoor_Init [] { sm_game::actors::ceres_doors::initialize_door(game) };
-    [10942309] CeresDoor_Main [] { sm_game::actors::ceres_doors::door_main(game) };
-    [10943346] Zebetites_Init [] { sm_game::actors::zebetites::initialize(game); };
-    [10943539] Zebetites_Main [] { sm_game::actors::zebetites::main_ai(game); };
-    [10943911] Zebetites_Touch [] { sm_game::actors::zebetites::touch(game); };
-    [10943916] Zebetites_Shot [] { sm_game::actors::zebetites::shot(game); };
     @functions [pub fn (game: &mut Game)];
     [10920659] CeresRidley_Hurt [] { sm_game::actors::ceres_ridley::hurt(game) };
     [10929814] RidleysExplosion_Init [] { sm_game::actors::ridley::explosion_init(game) };
     [10930388] RidleysExplosion_Main [] { sm_game::actors::ridley::explosion_main(game) };
     [10936202] Ridley_Shot [] { sm_game::actors::ridley::shot(game) };
     [10936242] Ridley_Powerbomb [] { sm_game::actors::ridley::power_bomb(game) };
-    @forward [pub fn (game: &mut Game)];
-    [10911759] Enemy_GrappleReact_CancelBeam_A6 => actors::combat::select_frozen_ai(&mut Runtime::new(game));
-    [10911779] Enemy_NormalTouchAI_A6 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
-    [10911789] Enemy_NormalShotAI_A6 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
-    [10911809] Enemy_NormalFrozenAI_A6 => actors::scheduling::update_frozen_enemy(&mut Runtime::new(game));
-    @external {
-        10915836 => [fire_geysers::initialize(game)];
-        10915875 => [fire_geysers::run(game)];
-    }
 }
 
 crate::game::callback_dispatch! {
     pub(crate) fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
-    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10918694] FakeKraid_Instr_2 [jp] { sm_game::actors::mini_kraid::step(game); };
-    @functions [pub fn (_k: u16, _jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10918772] FakeKraid_Instr_1 [] { sm_game::actors::mini_kraid::choose_animation(game) };
-    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10918834] FakeKraid_Instr_3 [jp] { sm_game::actors::mini_kraid::roar(game); };
-    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10918852] FakeKraid_Instr_4 [jp] { sm_game::actors::mini_kraid::spit_left(game); };
-    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10918914] FakeKraid_Instr_5 [jp] { sm_game::actors::mini_kraid::spit_right(game); };
-
-    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10940711] CeresSteam_Instr_2 [] { sm_game::actors::ceres_doors::steam_activate(k, jp, game) };
     @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10937534] Ridley_Instr_5 [] { sm_game::actors::ridley::roar(jp, game) };
     [10937546] Ridley_Instr_6 [] { sm_game::actors::ridley::stop_roaring(jp, game) };
@@ -265,20 +174,4 @@ crate::game::callback_dispatch! {
     @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10938628] Ridley_Instr_12 [] { sm_game::actors::ridley::fireball_with_afterburn(jp, game) };
     [10938633] Ridley_Instr_13 [] { sm_game::actors::ridley::fireball_without_afterburn(jp, game) };
-
-    @external {
-        10915247 | 10915347..=10915793 => [fire_geysers::instruction(ea, j, game)];
-        10940701 => [ceres_doors::change_properties(k, VANISH, 0, j, game)];
-        10940725 => [ceres_doors::change_properties(k, 0, VANISH, j, game)];
-        10942014 => ceres_doors::branch_unless_samus_near;
-        10942058 => [ceres_doors::branch_unless_boss_defeated(j, game)];
-        10942072 => [ceres_doors::branch_unless_escape(j, game)];
-        10942091 => [ceres_doors::change_properties(k, ceres_doors::TANGIBLE, 0, j, game)];
-        10942101 => [ceres_doors::change_properties(k, 0, ceres_doors::TANGIBLE, j, game)];
-        10942111 => [ceres_doors::mark_open(k, true, j, game)];
-        10942118 => [ceres_doors::change_properties(k, ceres_doors::INVISIBLE, 0, j, game)];
-        10942128 => [ceres_doors::mark_open(k, false, j, game)];
-        10942131 => [ceres_doors::change_properties(k, 0, ceres_doors::INVISIBLE, j, game)];
-        10942141 => [ceres_doors::play_open_sound(j, game)];
-    }
 }

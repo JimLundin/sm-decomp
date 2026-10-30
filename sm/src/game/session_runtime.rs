@@ -139,6 +139,13 @@ pub(crate) fn run_a7_function(address: u32, game: &mut Game) {
     unsafe { actor_species_pre_instruction(address, game) };
 }
 
+/// The steam's next script at `bank:address`, as the original ROM pointer.
+/// Was in bank $A6.
+pub(crate) fn steam_script(bank: u8, address: u16, game: &mut Game) -> EnemyScript {
+    let record = unsafe { crate::rtl::rom_record(bank, address, game) };
+    EnemyScript::at(record.image, record.base)
+}
+
 /// Magdollite's diagnostic for an undefined lava height. Was in bank $A8.
 fn warn_lava_height(value: i32) {
     unsafe { crate::c_library::printf(c"Y undefined %d!\n".as_ptr(), value) };
@@ -1206,7 +1213,6 @@ crate::game::callback_dispatch! {
 
 
 
-        10913525 => sm_a6::Boulder_Init; 10913683 => sm_a6::Boulder_Main;
         10914607 => crate::game::spikey_platforms::initialize; 10914733 => crate::game::spikey_platforms::run;
         10920181 => sm_a6::CeresRidley_Init; 10920584 => sm_a6::CeresRidley_Main;
         10924583 => sm_a6::Ridley_Main;
@@ -1418,6 +1424,8 @@ crate::game::callback_dispatch! {
         10873619 => [actors::spore_spawn::update(game)];
         10874202 => [actors::spore_spawn::shot(game)];
         10874348 => [actors::spore_spawn::touch(game)];
+        10915836 => [crate::game::fire_geysers::initialize(game)];
+        10915875 => [crate::game::fire_geysers::run(game)];
         0xa60000..=0xa6ffff => [sm_a6::DispatchEnemyAi(ea, game)];
         0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyAi(ea, game)];
         0xb30000..=0xb3ffff => [{ crate::rtl::Unreachable(game); }];
@@ -1619,6 +1627,19 @@ crate::game::callback_dispatch! {
         10852216 => [{ crate::game::sprite_effect_runtime::draygon_random_sprite(24, game); j }];
         10854268 => [{ crate::game::sprite_effect_runtime::draygon_spit(false, game); j }];
         10854318 => [{ crate::game::sprite_effect_runtime::draygon_spit(true, game); j }];
+        10915247 | 10915347..=10915793 => [crate::game::fire_geysers::instruction(ea, j, game)];
+        10940701 => [crate::game::ceres_doors::change_properties(k, sm_game::actors::ceres_doors::VANISH, 0, j, game)];
+        10940725 => [crate::game::ceres_doors::change_properties(k, 0, sm_game::actors::ceres_doors::VANISH, j, game)];
+        10942014 => crate::game::ceres_doors::branch_unless_samus_near;
+        10942058 => [crate::game::ceres_doors::branch_unless_boss_defeated(j, game)];
+        10942072 => [crate::game::ceres_doors::branch_unless_escape(j, game)];
+        10942091 => [crate::game::ceres_doors::change_properties(k, crate::game::ceres_doors::TANGIBLE, 0, j, game)];
+        10942101 => [crate::game::ceres_doors::change_properties(k, 0, crate::game::ceres_doors::TANGIBLE, j, game)];
+        10942111 => [crate::game::ceres_doors::mark_open(k, true, j, game)];
+        10942118 => [crate::game::ceres_doors::change_properties(k, crate::game::ceres_doors::INVISIBLE, 0, j, game)];
+        10942128 => [crate::game::ceres_doors::mark_open(k, false, j, game)];
+        10942131 => [crate::game::ceres_doors::change_properties(k, 0, crate::game::ceres_doors::INVISIBLE, j, game)];
+        10942141 => [crate::game::ceres_doors::play_open_sound(j, game)];
         0xa60000..=0xa6ffff => [sm_a6::DispatchEnemyInstr(ea, k, j, game)];
 
         0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyInstr(ea, k, j, game)];

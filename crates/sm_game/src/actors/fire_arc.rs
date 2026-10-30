@@ -13,8 +13,9 @@ use sm_data::enemy_speeds::SpeedTable;
 
 /// What the fire arc needs beyond the shared boss effects.
 pub trait Host: crate::actors::host::BossEffects {
-    /// Run the bank $A6 fire arc function at `function`.
-    fn run_fire_arc_function(&mut self, function: u16);
+    /// Fire arc function - active ($A6:9682): advance the orbit, whose
+    /// projectiles run in the host. Was `NuclearWaffle_Func_2`.
+    fn advance_orbit(&mut self);
 }
 
 /// The fire arc's view of its slot and two RAM blocks. Was
@@ -195,7 +196,11 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
 /// Main AI - enemy $E0BF (fire arc) ($A6:960E). Was `NuclearWaffle_Main`.
 pub fn main_ai<H: Host + ?Sized>(game: &mut H) {
     let e = current(game);
-    game.run_fire_arc_function(slot!(game, FireArc[e].function));
+    match slot!(game, FireArc[e].function) {
+        function::INACTIVE => inactive(game),
+        function::ACTIVE => game.advance_orbit(),
+        _ => game.unreachable(),
+    }
 }
 
 /// Fire arc function - inactive ($A6:9615): when the inactive timer runs out,

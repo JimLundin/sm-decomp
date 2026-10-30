@@ -16,10 +16,6 @@ use crate::ram::{slot, word};
 
 /// What the steam and doors need beyond the shared boss effects.
 pub trait Host: crate::actors::host::BossEffects + crate::records::Records {
-    /// Run the bank $A6 steam function at `function` for enemy `k`.
-    fn run_steam_function(&mut self, function: u16, k: u16);
-    /// Run the bank $A6 door function at `function`.
-    fn run_door_function(&mut self, function: u16);
     /// Set and then clear the property bits of enemy `k`, through its actor
     /// record.
     fn change_properties(&mut self, k: u16, set: u16, clear: u16);
@@ -69,8 +65,18 @@ same_words!(Door: EnemyLayout8 {
     rumble_index = var_F, kind = parameter_1,
 });
 
+/// Bank $A6 steam functions, stored in `function`.
+pub mod steam_function {
+    pub const NONE: u16 = 0xeff4;
+    pub const CALCULATE_ROTATING_ELEVATOR_OFFSET: u16 = 0xf019;
+}
+
 /// Bank $A6 door functions, stored in `function`.
 pub mod door_function {
+    pub const HANDLE_ESCAPE_EARTHQUAKE: u16 = 0xf76b;
+    pub const HANDLE_RIDLEYS_ROOM_ESCAPE_EARTHQUAKE: u16 = 0xf770;
+    pub const RIDLEY_ESCAPE_MODE7_WALL: u16 = 0xf7a5;
+    pub const ELEVATOR_DEFAULT: u16 = 0xf7bd;
     pub const RUMBLING_AND_EXPLOSIONS: u16 = 0xf7dc;
     pub const ELEVATOR_ANIMATIONS: u16 = 0xf850;
 }
@@ -143,8 +149,12 @@ pub fn initialize_steam<H: Host + ?Sized>(game: &mut H) {
 pub fn steam_main<H: Host + ?Sized>(game: &mut H) {
     let e = current(game);
     slot!(game, Steam[e].base.health = 0x7fff);
-    let function = slot!(game, Steam[e].function);
-    game.run_steam_function(function, word!(game.cur_enemy_index));
+    let k = word!(game.cur_enemy_index);
+    match slot!(game, Steam[e].function) {
+        steam_function::NONE => (),
+        steam_function::CALCULATE_ROTATING_ELEVATOR_OFFSET => steam_rotating_offset(k, game),
+        _ => game.unreachable(),
+    }
 }
 
 /// Steam function - calculate graphical offset in rotating elevator room
@@ -231,7 +241,16 @@ pub fn load_overlay_tiles<H: Host + ?Sized>(k: u16, game: &mut H) {
 /// Main AI - enemy $E23F (Ceres door) ($A6:F765). Was `CeresDoor_Main`.
 pub fn door_main<H: Host + ?Sized>(game: &mut H) {
     let e = current(game);
-    game.run_door_function(slot!(game, Door[e].function));
+    let k = word!(game.cur_enemy_index);
+    match slot!(game, Door[e].function) {
+        door_function::HANDLE_ESCAPE_EARTHQUAKE => escape_rumble(0x14, game),
+        door_function::HANDLE_RIDLEYS_ROOM_ESCAPE_EARTHQUAKE => escape_rumble(0x1d, game),
+        door_function::RIDLEY_ESCAPE_MODE7_WALL => mode7_wall(game),
+        door_function::ELEVATOR_DEFAULT => elevator_default(k, game),
+        door_function::RUMBLING_AND_EXPLOSIONS => rumbling_and_explosions(k, game),
+        door_function::ELEVATOR_ANIMATIONS => elevator_animations(game),
+        _ => game.unreachable(),
+    }
 }
 
 /// Handle Ceres door earthquake during escape ($A6:F773): a rare stronger

@@ -10,10 +10,11 @@
 #![forbid(unsafe_code)]
 use crate::actors::host::{ActorHost, ActorRuntime, Death, LeaseActors, Shot};
 use crate::actors::{
-    botwoon, brinstar_pipe_bug, crocomire_reactions, dachora_run, draygon_death, draygon_eye,
-    draygon_flight, draygon_grab, draygon_host, draygon_sweep, escape_critters, etecoon, kraid,
-    magdollite, norfair_pipe_bug, phantoon, phantoon_actions, shaktool, space_pirates, statues,
-    torizo, yapping_maw, yellow_pipe_bug,
+    botwoon, boulder, brinstar_pipe_bug, ceres_doors, crocomire_reactions, dachora_run,
+    draygon_death, draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep,
+    escape_critters, etecoon, fire_arc, kraid, magdollite, mini_kraid, norfair_pipe_bug, phantoon,
+    phantoon_actions, shaktool, space_pirates, statues, torizo, yapping_maw, yellow_pipe_bug,
+    zebetites,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -263,6 +264,11 @@ pub trait AiHost:
     + phantoon::Host
     + etecoon::Host
     + dachora_run::Host
+    + boulder::Host
+    + ceres_doors::Host
+    + fire_arc::Host
+    + mini_kraid::Host
+    + zebetites::Host
 {
     /// An AI routine whose arm is still in the compatibility table.
     fn native_ai(&mut self, ea: u32);
@@ -382,6 +388,29 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10780717 => game.shot_reaction(Shot::Finalize),
         10783322 => crocomire_reactions::initialize(game),
         10795410 => crocomire_reactions::power_bomb(game),
+        // Bank $A6: the boulder, the fire arc, Mini-Kraid, Ceres's steam and
+        // doors and the zebetites, with the bank's common reactions.
+        10911759 => crate::actors::combat::select_frozen_ai(&mut LeaseActors::lease(game)),
+        10911779 => game.contact_reaction(Death::Finalize),
+        10911789 => game.shot_reaction(Shot::Finalize),
+        10911809 => crate::actors::scheduling::update_frozen_enemy(&mut LeaseActors::lease(game)),
+        10913525 => boulder::initialize(game),
+        10913683 => boulder::main_ai(game),
+        10914693 | 10914713 => fire_arc::initialize_spike_platform_bottom(game),
+        10917060 => fire_arc::initialize(game),
+        10917390 => fire_arc::main_ai(game),
+        10918488 => mini_kraid::initialize(game),
+        10918594 => mini_kraid::main_ai(game),
+        10918946 => mini_kraid::touch(game),
+        10918969 => mini_kraid::shot(game),
+        10940337 => ceres_doors::initialize_steam(game),
+        10940429 => ceres_doors::steam_main(game),
+        10942149 => ceres_doors::initialize_door(game),
+        10942309 => ceres_doors::door_main(game),
+        10943346 => zebetites::initialize(game),
+        10943539 => zebetites::main_ai(game),
+        10943911 => zebetites::touch(game),
+        10943916 => zebetites::shot(game),
         // Bank $A7: Kraid, Phantoon, the etecoons and the dachora, with the
         // bank's common reactions.
         10982544 => kraid::arm_touch(game),
@@ -598,6 +627,8 @@ pub trait InstructionHost:
     + statues::Host
     + kraid::Host
     + phantoon::Host
+    + ceres_doors::Host
+    + mini_kraid::Host
 {
     /// An instruction whose arm is still in the compatibility table.
     fn native_instruction(&mut self, ea: u32, k: u16, j: EnemyScript) -> EnemyScript;
@@ -636,6 +667,25 @@ pub fn instruction<H: InstructionHost>(
         11789840 => escape_critters::move_x(k, j, game),
         11791049 => escape_critters::shift_dachora(0xfffa, j, game),
         11791063 => escape_critters::shift_dachora(6, j, game),
+        // Bank $A6: Mini-Kraid and the steam.
+        10918694 => {
+            mini_kraid::step(game);
+            j
+        }
+        10918772 => mini_kraid::choose_animation(game),
+        10918834 => {
+            mini_kraid::roar(game);
+            j
+        }
+        10918852 => {
+            mini_kraid::spit_left(game);
+            j
+        }
+        10918914 => {
+            mini_kraid::spit_right(game);
+            j
+        }
+        10940711 => ceres_doors::steam_activate(k, j, game),
         // Bank $A7: Kraid's steps and the calls into Phantoon's functions; Kraid's
         // identity instruction returns the script unchanged.
         10977418 => {
