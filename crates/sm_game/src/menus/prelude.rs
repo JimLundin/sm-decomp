@@ -61,6 +61,8 @@ pub type CoroutineRet = u8;
 
 /// Byte offsets of enemy record fields, from the record at $7E:0F78.
 pub mod enemy_data {
+    /// The first enemy record, `enemy_data[0]`.
+    pub const FIRST: usize = 0xf78;
     pub const X_POS: usize = 2;
     pub const PALETTE_INDEX: usize = 30;
 }

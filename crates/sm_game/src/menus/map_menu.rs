@@ -347,6 +347,8 @@ fn switch_area<H: Host + ?Sized>(area: u16, game: &mut H) {
     menu_tilemap::area_palette(AREAS[area as usize], true, game);
     load_background(AREAS[word!(game.file_select_map_area_index) as usize], game);
 }
+/// The current area's explored map tiles.
+const EXPLORED: usize = crate::ram::bytes::map_tiles_explored;
 /// Each area's used save station and elevator bits.
 const USED_STATIONS: usize = crate::ram::bytes::used_save_stations_and_elevators;
 /// The area select label (X, Y) of each area.
@@ -435,10 +437,10 @@ fn begin_room_window<H: Host + ?Sized>(game: &mut H) {
         menu_tilemap::area_label(game);
         menu_tilemap::upload(512, 0x7e4000, 1, false, game);
         word! {game; expand_sq_timer = WINDOW_TIMERS[word!(game.area_index) as usize]; }
-        let v2: i32 = ((4u16).wrapping_mul(word!(game.area_index))) as i32 >> 1;
-        word!(game.expand_sq_left_pos = LABEL_POSITIONS[v2 as usize]);
+        let label: i32 = ((4u16).wrapping_mul(word!(game.area_index))) as i32 >> 1;
+        word!(game.expand_sq_left_pos = LABEL_POSITIONS[label as usize]);
         word!(game.expand_sq_right_pos = word!(game.expand_sq_left_pos));
-        word!(game.expand_sq_top_pos = LABEL_POSITIONS[(v2 + 1) as usize]);
+        word!(game.expand_sq_top_pos = LABEL_POSITIONS[(label + 1) as usize]);
         word!(game.expand_sq_bottom_pos = word!(game.expand_sq_top_pos));
         word! { game, 0;
             expand_sq_left_subpos, expand_sq_right_subpos, expand_sq_top_subpos,
@@ -627,11 +629,11 @@ fn fade_room<H: Host + ?Sized>(game: &mut H) {
     game.fade(false);
     if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 0 {
         word!(game.menu_index += 1);
-        set_native_word(0xf78 + enemy_data::X_POS, 32, game);
+        set_native_word(enemy_data::FIRST + enemy_data::X_POS, 32, game);
     }
 }
 fn start_game<H: Host + ?Sized>(game: &mut H) {
-    let timer = 0xf78 + enemy_data::X_POS;
+    let timer = enemy_data::FIRST + enemy_data::X_POS;
     set_native_word(timer, native_word(timer, game).wrapping_sub(1), game);
     if native_word(timer, game) == 0 {
         game.set_blank(true);
@@ -971,7 +973,7 @@ pub fn animate_palette<H: Host + ?Sized>(game: &mut H) {
             PALETTE_ANIMATION_ADDRESS,
             (source >> 1) as isize,
         );
-        crate::word_transfers!(game, ascending, 1; native(0xc000 + 2 * index) <- value(color));
+        crate::word_transfers!(game, ascending, 1; native(crate::ram::word_arrays::palette_buffer + 2 * index) <- value(color));
         source = source.wrapping_sub(2);
     }
 }
@@ -1205,7 +1207,7 @@ pub fn render_map<H: Host + ?Sized>(screen: MapScreen, game: &mut H) {
         != 0
     {
         let mut mapped = bitmap.word(0).swap_bytes();
-        let mut explored = native_word(0x7f7, game).swap_bytes();
+        let mut explored = native_word(EXPLORED, game).swap_bytes();
         for index in 0..2048 {
             let mut value = tiles.word(2 * index);
             if explored & 0x8000 != 0 {
@@ -1220,7 +1222,7 @@ pub fn render_map<H: Host + ?Sized>(screen: MapScreen, game: &mut H) {
                 // Retain the native/physical prefetch after the final tile too.
                 let offset = 2 * ((index + 1) / 16);
                 mapped = bitmap.word(offset).swap_bytes();
-                explored = native_word(0x7f7 + offset, game).swap_bytes();
+                explored = native_word(EXPLORED + offset, game).swap_bytes();
             }
         }
     } else {

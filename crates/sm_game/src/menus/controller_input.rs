@@ -78,12 +78,12 @@ fn debug_controls<H: Host + ?Sized>(game: &mut H) {
                     }
                 }
                 if (word!(game.joypad_dbg_2) & 0x80) != 0 {
-                    at!(game, 0x84; ^= 0x30);
+                    at!(game, crate::ram::mirror::NMITIMEN; ^= 0x30);
                 }
                 if (word!(game.joypad_dbg_2) & 0x8000) != 0 {
-                    let v2: bool = (!(word!(game.joypad_dbg_flags)) & 0x8000) != 0;
+                    let entering_swap = (!(word!(game.joypad_dbg_flags)) & 0x8000) != 0;
                     word!(game.joypad_dbg_flags ^= (0x8000u16));
-                    if v2 {
+                    if entering_swap {
                         word! { game;
                             joypad_dbg_missiles_swap = word!(game.samus_missiles);
                             joypad_dbg_super_missiles_swap = word!(game.samus_super_missiles);
@@ -207,6 +207,7 @@ pub fn remap_binding<H: Host + ?Sized>(game: &mut H) {
     let previous = word!(game.options_controller_bindings[selected]);
     word!(game.options_controller_bindings[selected] = choice as u16);
     crate::word_transfers!(game, ascending, 1;
-        native(0x1b23 + 2 * ((next as isize >> 1) + 13)) <- value(previous));
+        native(crate::ram::word_arrays::options_controller_bindings as isize + 2 * (next as isize >> 1))
+            <- value(previous));
     super::menu_tilemap::controller_bindings(game);
 }

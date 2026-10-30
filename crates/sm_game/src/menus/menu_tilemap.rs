@@ -33,7 +33,7 @@ pub fn import_area_palettes(image: &RomImage) -> Option<ImportedAreaPalettes> {
     )
 }
 
-const MENU_PALETTE: usize = 0xf78 + enemy_data::PALETTE_INDEX;
+const MENU_PALETTE: usize = enemy_data::FIRST + enemy_data::PALETTE_INDEX;
 const FILE_LABELS: [u16; 3] = [
     addr_kMenuTilemap_SamusA as u16,
     addr_kMenuTilemap_SamusB as u16,

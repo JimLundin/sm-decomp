@@ -13,6 +13,10 @@ use crate::constants::bank_81::{
 };
 use crate::save_file::header;
 
+const PALETTE_BUFFER: usize = crate::ram::word_arrays::palette_buffer;
+/// The MOSAIC mirror and the BG1SC mirror after it, read as one word.
+const MOSAIC: usize = crate::ram::mirror::MOSAIC;
+
 static kBitShl: [u8; 3] = [1, 2, 4];
 
 /// Requires a live, exclusively accessed backend for screen and graphics transitions.
@@ -87,7 +91,9 @@ fn fade_to_options<H: Host + ?Sized>(game: &mut H) {
     game.fade(false);
     if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 0 {
         word! {game; game_state = kGameState_2_GameOptionsMenu as u16; menu_index = 0; }
-        crate::word_transfers!(game, ascending, 24; native(0x198d) <- value(0));
+        // Clear the menu's reused RAM, $198D..BC.
+        crate::word_transfers!(game, ascending, 24;
+            native(crate::ram::words::menu_selection_missile_animation_timer) <- value(0));
     }
 }
 fn fade_to_title<H: Host + ?Sized>(game: &mut H) {
@@ -401,9 +407,11 @@ fn animate_copy_arrow<H: Host + ?Sized>(game: &mut H) {
     if word!(game.file_copy_arrow_palette_timer) != 0 {
         if word!(game.file_copy_arrow_palette_timer -= 1, reread) == 0 {
             word!(game.file_copy_arrow_palette_timer = 4);
-            let v0: u16 = word!(game.palette_buffer[145]);
-            crate::word_transfers!(game, ascending, 6; native(0xc122) <- native(0xc124));
-            word!(game.palette_buffer[151] = v0);
+            // Rotate the arrow's six colours, 145..151, by one entry.
+            let first: u16 = word!(game.palette_buffer[145]);
+            crate::word_transfers!(game, ascending, 6;
+                native(PALETTE_BUFFER + 2 * 145) <- native(PALETTE_BUFFER + 2 * 146));
+            word!(game.palette_buffer[151] = first);
         }
     }
 }
@@ -619,7 +627,7 @@ fn choose_main<H: Host + ?Sized>(game: &mut H) {
                 game.queue_sound(0, (0x37) as u8, 6);
             }
         } else {
-            let mut v0: i16 = word!(game.selected_save_slot) as i16;
+            let mut selection: i16 = word!(game.selected_save_slot) as i16;
             if word!(game.selected_save_slot) as i32 - 3i32 & 0x8000 != 0 {
                 game.queue_sound(0, (0x2a) as u8, 6);
                 word!(game.menu_index += 27);
@@ -647,15 +655,15 @@ fn choose_main<H: Host + ?Sized>(game: &mut H) {
                 if word!(game.selected_save_slot) == 3 {
                     game.queue_sound(0, (0x37) as u8, 6);
                     word!(game.menu_index += 1);
-                    set_native_word(0x57, native_word(0x57, game) & 0xff0c | 3, game);
+                    set_native_word(MOSAIC, native_word(MOSAIC, game) & 0xff0c | 3, game);
                 } else {
                     if word!(game.selected_save_slot) == 4 {
                         game.queue_sound(0, (0x37) as u8, 6);
                         word!(game.menu_index += 15);
-                        v0 = (i32::from(native_word(0x57, game)) & 0xff0c | 3) as i16;
-                        set_native_word(0x57, v0 as u16, game);
+                        selection = (i32::from(native_word(MOSAIC, game)) & 0xff0c | 3) as i16;
+                        set_native_word(MOSAIC, selection as u16, game);
                     }
-                    if v0 == 5 {
+                    if selection == 5 {
                         word!(game.menu_index = 33);
                     }
                 }
