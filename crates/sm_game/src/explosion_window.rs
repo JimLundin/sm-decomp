@@ -51,7 +51,6 @@ static POWER_BOMB_PRE_EXPLOSION_RADIUS_ACCEL: u16 = 0x80;
 static G_WORD_888B96: u16 = 3;
 static POWER_BOMB_EXPLOSION_RADIUS_SPEED: u16 = 0;
 static POWER_BOMB_EXPLOSION_RADIUS_ACCEL: u16 = 0x30;
-#[forbid(unsafe_code)]
 pub fn begin_pre_flash<H: Host + ?Sized>(game: &mut H) {
     game.ram().write_byte(0xc606, 255);
     game.ram().write_byte(0xc607, 0);
@@ -118,7 +117,6 @@ pub fn set_power_bomb_blending<H: Host + ?Sized>(_k: u16, game: &mut H) {
     word!(game.fx_layer_blending_config_c |= (0x8000u16));
 }
 
-#[forbid(unsafe_code)]
 fn fade_explosion_afterglow_color<H: Host + ?Sized>(game: &mut H) {
     for (address, mask) in [(0x74, 0x20), (0x75, 0x40), (0x76, 0x80)] {
         if game.ram().read_byte(address) & 0x1f != 0 {
@@ -128,7 +126,6 @@ fn fade_explosion_afterglow_color<H: Host + ?Sized>(game: &mut H) {
     }
 }
 
-#[forbid(unsafe_code)]
 pub fn power_bomb_afterglow<H: Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
     if (word!(game.power_bomb_explosion_status) & 0x8000) != 0 {
         object.timer = object.timer.wrapping_sub(1);
@@ -167,7 +164,6 @@ enum ExplosionWindowScale {
     CrystalFlash,
 }
 
-#[forbid(unsafe_code)]
 fn explosion_window_side<H: Host + ?Sized>(byte_read: bool, game: &mut H) -> ExplosionWindowSide {
     let high_byte = || {
         if byte_read {
@@ -189,7 +185,6 @@ fn explosion_window_side<H: Host + ?Sized>(byte_read: bool, game: &mut H) -> Exp
 
 macro_rules! write_explosion_window_row {
     ($k:expr, $left:expr, $right:expr, $game:ident) => {{
-        #[forbid(unsafe_code)]
         {
             let left = $left;
             $game.ram().write_byte((0xc406isize + $k) as usize, left);
@@ -199,7 +194,6 @@ macro_rules! write_explosion_window_row {
     }};
 }
 
-#[forbid(unsafe_code)]
 fn calculate_power_bomb_hdma<H: Host + ?Sized>(
     mut k: u16,
     mut j: sm_data::cartridge::RomRecord,
@@ -244,7 +238,6 @@ fn calculate_power_bomb_hdma<H: Host + ?Sized>(
     }
 }
 
-#[forbid(unsafe_code)]
 fn calculate_explosion_hdma_scaled<H: Host + ?Sized>(
     mut k: u16,
     mut j: u16,
@@ -383,7 +376,6 @@ pub fn spawn_crystal_flash<H: Host + ?Sized>(game: &mut H) {
     game.spawn_hdma(0x88, &UNK_88A2B0);
     game.spawn_hdma(0x88, &UNK_88A2B8);
 }
-#[forbid(unsafe_code)]
 pub fn begin_crystal_flash<H: Host + ?Sized>(game: &mut H) {
     begin_pre_flash(game);
     game.queue_sound(0, 1_u8, 6);
@@ -397,7 +389,6 @@ pub fn finish_crystal_flash<H: Host + ?Sized>(object: &mut HdmaObject, k: u16, g
         power_bomb_pre_explosion_flash_radius, power_bomb_explosion_radius,
     }
 }
-#[forbid(unsafe_code)]
 pub fn set_crystal_flash_blending<H: Host + ?Sized>(_k: u16, game: &mut H) {
     game.ram().write_byte(0x60, 0);
     game.ram().write_byte(0x61, 8);
@@ -407,7 +398,6 @@ pub fn set_crystal_flash_blending<H: Host + ?Sized>(_k: u16, game: &mut H) {
     game.ram().write_byte(0x6c, 0);
     game.ram().write_byte(0x6d, 4);
 }
-#[forbid(unsafe_code)]
 pub fn crystal_flash_afterglow<H: Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
     if (word!(game.power_bomb_explosion_status) & 0x8000) != 0 {
         object.timer = object.timer.wrapping_sub(1);
@@ -454,7 +444,6 @@ impl Phase {
             );
         }
     }
-    #[forbid(unsafe_code)]
     fn set_color<H: Host + ?Sized>(self, game: &mut H) {
         let high = (self.radius(game) >> 8) as i32;
         let (table, index) = if self == Self::PreFlash {
@@ -484,7 +473,6 @@ fn advance_instruction(object: &mut HdmaObject) {
     object.timer = 0;
 }
 
-#[forbid(unsafe_code)]
 pub fn update_scaled<H: Host + ?Sized>(
     object: &mut HdmaObject,
     k: u16,

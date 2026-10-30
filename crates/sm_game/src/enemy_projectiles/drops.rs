@@ -148,7 +148,6 @@ pub fn collect(index: u16, h: &mut impl Host) {
     dismiss(slot, h);
 }
 
-#[forbid(unsafe_code)]
 fn dismiss(slot: usize, h: &mut impl Host) {
     enemy!(h, 0xeca3 => (slot) as isize, program);
     enemy!(h, 1 => (slot) as isize, delay);
@@ -156,7 +155,6 @@ fn dismiss(slot: usize, h: &mut impl Host) {
     enemy!(h, 0xefdf => (slot) as isize, pre_action);
 }
 
-#[forbid(unsafe_code)]
 fn begin_pickup(slot: usize, kind: u16, h: &mut impl Host) {
     let code = kind.wrapping_mul(2);
     enemy!(h, code => (slot) as isize, behavior_a);

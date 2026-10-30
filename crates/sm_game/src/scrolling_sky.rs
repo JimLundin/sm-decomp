@@ -16,7 +16,6 @@ pub fn initialize_banded_sky<H: crate::menus::host::Host + ?Sized>(game: &mut H)
     game.spawn_hdma(0x88, &UNK_88A63E);
     update_vertical_scroll(game);
 }
-#[forbid(unsafe_code)]
 fn sky_table_word<H: crate::menus::host::Host + ?Sized>(
     address: u32,
     index: isize,
@@ -25,7 +24,6 @@ fn sky_table_word<H: crate::menus::host::Host + ?Sized>(
     game.native_image()
         .table_word(sm_data::cartridge::lorom_offset(address) as usize, index)
 }
-#[forbid(unsafe_code)]
 fn build_vertical_bands<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u16 {
     word!(game.fx22_screen_y = 32);
     crate::word_transfers!(game, ascending, 1; native(0x9c00) <- value(31));
@@ -65,13 +63,11 @@ fn build_vertical_bands<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u
         inset = 0;
     }
 }
-#[forbid(unsafe_code)]
 pub fn update_vertical_scroll<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     damage_above_screen(game);
     let row = build_vertical_bands(game);
     crate::word_transfers!(game, ascending, 1; native(0x9c00 + row as isize) <- value(0));
 }
-#[forbid(unsafe_code)]
 pub fn update_horizontal_scroll<H: crate::menus::host::Host + ?Sized>(
     object: &mut crate::hdma::HdmaObject,
     game: &mut H,
@@ -135,7 +131,6 @@ pub fn update_horizontal_scroll<H: crate::menus::host::Host + ?Sized>(
     write_scroll_pair(v7 as usize + 1, -24960i32 as u16, game);
     write_scroll_pair(v7 as usize + 3, 0, game);
 }
-#[forbid(unsafe_code)]
 fn append_upper_band<H: crate::menus::host::Host + ?Sized>(
     k: u16,
     r18: u16,
@@ -197,12 +192,10 @@ fn damage_above_screen<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         word!(game.samus_periodic_damage = 8);
     }
 }
-#[forbid(unsafe_code)]
 fn write_sky_word<H: crate::menus::host::Host + ?Sized>(value: u16, offset: isize, game: &mut H) {
     crate::word_transfers!(game, ascending, 1; native(0x9f00 + offset) <- value(value));
 }
 
-#[forbid(unsafe_code)]
 pub fn advance_parallax<H: crate::menus::host::Host + ?Sized>(_k: u16, game: &mut H) {
     game.ram().write_byte(0x59, 74);
     for v1 in 0u16..23 {
@@ -255,13 +248,11 @@ pub fn advance_parallax<H: crate::menus::host::Host + ?Sized>(_k: u16, game: &mu
     write_sky_word(181, v6 as isize + 1, game);
     write_sky_word(0, v6 as isize + 3, game);
 }
-#[forbid(unsafe_code)]
 pub fn update_parallax<H: crate::menus::host::Host + ?Sized>(k: u16, game: &mut H) {
     if word!(game.time_is_frozen_flag) == 0 {
         advance_parallax(k, game);
     }
 }
-#[forbid(unsafe_code)]
 fn queue_tile_rows<H: crate::menus::host::Host + ?Sized>(address: u32, game: &mut H) {
     // Capture the original native source even when frozen; reads remain lazy.
     let src = game.native_image();
@@ -303,16 +294,13 @@ fn queue_tile_rows<H: crate::menus::host::Host + ?Sized>(address: u32, game: &mu
         word!(game.vram_write_queue_tail = (v0).wrapping_add(28));
     };
 }
-#[forbid(unsafe_code)]
 pub fn queue_land_rows<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     queue_tile_rows(0x88ad9c, game);
 }
-#[forbid(unsafe_code)]
 pub fn queue_ocean_rows<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     queue_tile_rows(0x88ada6, game);
 }
 // HDMA entries overlap word stores at byte offsets; retain channel write order.
-#[forbid(unsafe_code)]
 fn write_scroll_pair<H: crate::menus::host::Host + ?Sized>(
     offset: usize,
     value: u16,
