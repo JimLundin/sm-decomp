@@ -18,7 +18,6 @@ use crate::actors::mother_brain_fight::{
     player_mother_brain, queue_music, queue_sfx2_max6, run_samus_command,
     set_enemy_instruction_list, spawn_plm,
 };
-use crate::actors::ridley::{HomingReversal, homing_velocity};
 use crate::actors::session_slots::session_slot;
 use crate::runtime_access::SessionRam;
 // The game's traits, for the calls made on it through `foreign`.
@@ -334,11 +333,15 @@ crate::dispatch::callback_dispatch! {
             queue_music(music::SONG_2, game);
         } else {
             { game.set_owned(OwnedWord::Cooldown, 8); game.set_owned(OwnedWord::BombCounter, 5); game.set_owned(OwnedWord::SpeedDivisor, 2); }
-            if (game.owned(OwnedWord::SamusYSpeed) as i32 - 4i32) & 0x8000 == 0 {
+            let y_speed = game.owned(OwnedWord::SamusYSpeed);
+            if (y_speed as i32 - 4i32) & 0x8000 == 0 {
                 game.set_owned(OwnedWord::SamusYSpeed, 2);
             }
+            // The speed compare ($A9:F238) leaves the carry the shake's add takes:
+            // set when the speed was at least 4, unsigned.
+            let carry = u16::from(y_speed >= 4);
             let v2: i32 = (session_slot!(game, BabyMetroid[e].base.frame_counter) as i32 & 6) >> 1;
-            session_slot!(game, BabyMetroid[e].base.x_pos = (game.player_x()).wrapping_add((SHAKE_X_OFFSETS[v2 as usize]) as u16));
+            session_slot!(game, BabyMetroid[e].base.x_pos = (game.player_x()).wrapping_add((SHAKE_X_OFFSETS[v2 as usize]) as u16).wrapping_add(carry));
             session_slot!(game, BabyMetroid[e].base.y_pos = (game.player_y() as i32 + SHAKE_Y_OFFSETS[v2 as usize] as i32 - 20i32) as u16);
             game.foreign(|game| game.drain_health_by_baby_metroid());
         };
@@ -494,25 +497,14 @@ pub fn gradually_accelerate_towards_point(
     r26: u16,
     game: &mut impl Lease,
 ) {
-    {
-        game.foreign(|game| game.homing_probe());
-        let divisor = GRADUAL_ACCELERATION_DIVISORS[j as usize];
-        gradually_accelerate_horizontally(k, r18, divisor as u16, r26, game);
-        let e: i32 = k as i32;
-        let distance =
-            (session_slot!(game, BabyMetroid[e].base.y_pos) as i16).wrapping_sub(r20 as i16);
-        if distance != 0 {
-            session_slot!(
-                game,
-                BabyMetroid[e].y_velocity = homing_velocity(
-                    distance,
-                    session_slot!(game, BabyMetroid[e].y_velocity),
-                    divisor as u8,
-                    HomingReversal::ExtraForce(8),
-                    1280,
-                )
-            );
-        }
+    game.foreign(|game| game.homing_probe());
+    let divisor = GRADUAL_ACCELERATION_DIVISORS[j as usize] as u8;
+    gradually_accelerate_horizontally(k, r18, u16::from(divisor), r26, game);
+    let e: i32 = k as i32;
+    let position = session_slot!(game, BabyMetroid[e].base.y_pos);
+    let velocity = session_slot!(game, BabyMetroid[e].y_velocity);
+    if let Some(velocity) = homing_step(position, r20, velocity, divisor, None, 0x500) {
+        session_slot!(game, BabyMetroid[e].y_velocity = velocity);
     }
 }
 pub fn gradually_accelerate_horizontally(
@@ -522,32 +514,85 @@ pub fn gradually_accelerate_horizontally(
     r26: u16,
     game: &mut impl State,
 ) {
-    {
-        let e: i32 = k as i32;
-        let distance =
-            (session_slot!(game, BabyMetroid[e].base.x_pos) as i16).wrapping_sub(r18 as i16);
-        if distance != 0 {
-            // Capture velocity before the screen check, as in both original branches.
-            let velocity = session_slot!(game, BabyMetroid[e].x_velocity);
-            let reversing = (velocity as i16 >= 0) == (distance > 0);
-            let force = if reversing && crate::actors::baby_metroid::is_off_screen(k, game) & 1 != 0
-            {
-                r26.wrapping_add(8)
-            } else {
-                8
-            };
-            session_slot!(
-                game,
-                BabyMetroid[e].x_velocity = homing_velocity(
-                    distance,
-                    velocity,
-                    r24 as u8,
-                    HomingReversal::ExtraForce(force),
-                    2048,
-                )
-            );
-        }
+    let e: i32 = k as i32;
+    let position = session_slot!(game, BabyMetroid[e].base.x_pos);
+    // Capture velocity before the screen check, as in both original branches.
+    let velocity = session_slot!(game, BabyMetroid[e].x_velocity);
+    let toward_left = position.wrapping_sub(r18) & 0x8000 == 0;
+    let reversing = position != r18 && (velocity & 0x8000 == 0) == toward_left;
+    let off_screen = reversing && crate::actors::baby_metroid::is_off_screen(k, game) & 1 != 0;
+    let extra = off_screen.then_some(r26);
+    if let Some(velocity) = homing_step(position, r18, velocity, r24 as u8, extra, 0x800) {
+        session_slot!(game, BabyMetroid[e].x_velocity = velocity);
     }
+}
+
+/// One axis of gradually accelerate towards point ($A9:F476 and $A9:F4E6),
+/// with the 65816's carry: the position compare's carry feeds the final add
+/// or subtract, and reversing chains its eight and its step through the carry.
+/// `extra` is $1A when the reversing enemy is off-screen; the screen check
+/// returns with the carry set, so the add takes one more. None when the
+/// position is already the target.
+fn homing_step(
+    position: u16,
+    target: u16,
+    velocity: u16,
+    divisor: u8,
+    extra: Option<u16>,
+    limit: u16,
+) -> Option<u16> {
+    let difference = position.wrapping_sub(target);
+    let compare_carry = position >= target;
+    if difference == 0 {
+        return None;
+    }
+    let add = |a: u16, b: u16, carry: bool| {
+        let sum = u32::from(a) + u32::from(b) + u32::from(carry);
+        (sum as u16, sum > 0xffff)
+    };
+    let subtract = |a: u16, b: u16, carry: bool| {
+        let borrow = u32::from(!carry);
+        (
+            a.wrapping_sub(b).wrapping_sub(borrow as u16),
+            u32::from(a) >= u32::from(b) + borrow,
+        )
+    };
+    Some(if difference & 0x8000 == 0 {
+        let step = snes_divide(difference, divisor).max(1);
+        let (velocity, carry) = if velocity & 0x8000 == 0 {
+            let velocity = extra.map_or(velocity, |extra| subtract(velocity, extra, true).0);
+            let (velocity, carry) = subtract(velocity, 8, true);
+            subtract(velocity, step, carry)
+        } else {
+            (velocity, compare_carry)
+        };
+        let velocity = subtract(velocity, step, carry).0;
+        let floor = 0u16.wrapping_sub(limit);
+        if velocity.wrapping_sub(floor) & 0x8000 == 0 {
+            velocity
+        } else {
+            floor
+        }
+    } else {
+        let step = snes_divide(difference.wrapping_neg(), divisor).max(1);
+        let (velocity, carry) = if velocity & 0x8000 != 0 {
+            let velocity = extra.map_or(velocity, |extra| add(velocity, extra, true).0);
+            let (velocity, carry) = add(velocity, 8, false);
+            add(velocity, step, carry)
+        } else {
+            (velocity, compare_carry)
+        };
+        let velocity = add(velocity, step, carry).0;
+        if velocity.wrapping_sub(limit) & 0x8000 != 0 {
+            velocity
+        } else {
+            limit
+        }
+    })
+}
+/// The hardware divider's quotient; a zero divisor leaves FFFFh.
+fn snes_divide(dividend: u16, divisor: u8) -> u16 {
+    dividend.checked_div(u16::from(divisor)).unwrap_or(0xffff)
 }
 pub fn accelerate_towards_point(k: u16, a: u16, r18: u16, r20: u16, game: &mut impl State) -> u8 {
     let mut r28: u16 = 0;
