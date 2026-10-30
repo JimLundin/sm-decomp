@@ -81,18 +81,15 @@ pub fn begin_prescaled_explosion<H: Host + ?Sized>(game: &mut H) {
 // Rejection and pose publication precede Session admission, including import failures.
 pub fn try_crystal_flash<H: Host + ?Sized>(game: &mut H) -> bool {
     use crate::ram::checked_word as word;
+    let inventory = crate::inventory::current(game);
     if !forced::crystal_flash_allowed(
         word!(game.game_state),
         word!(game.joypad1_lastkeys),
         word!(game.button_config_shoot_x),
         word!(game.samus_y_speed) == 0 && word!(game.samus_y_subspeed) == 0,
-        word!(game.samus_health),
-        word!(game.samus_reserve_health),
-        [
-            word!(game.samus_missiles),
-            word!(game.samus_super_missiles),
-            word!(game.samus_power_bombs),
-        ],
+        inventory.health.current,
+        inventory.reserve_health,
+        inventory.ammunition.map(|supply| supply.current),
     ) {
         return false;
     }

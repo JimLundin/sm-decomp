@@ -15,6 +15,7 @@ use crate::cinematic::{
 use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;
 use crate::display_refresh::GraphicsAsset;
+use crate::inventory::{self, Word};
 use crate::ram::RawRam as _;
 use crate::ram::mirror;
 use crate::ram::word;
@@ -184,8 +185,8 @@ pub fn initial<H: Host + ?Sized>(game: &mut H) {
     word!(game.room_height_in_blocks = 16);
     game.initialize_player();
     game.update_beam_tiles_and_palette();
-    word!(game.samus_max_missiles = INTRO_MISSILES);
-    word!(game.samus_missiles = INTRO_MISSILES);
+    inventory::set(game, Word::MaxMissiles, INTRO_MISSILES);
+    inventory::set(game, Word::Missiles, INTRO_MISSILES);
     word!(game.cinematic_var15 = 0);
     word!(game.samus_draw_handler = DEFAULT_DRAW_HANDLER);
     game.use_cinematic_bindings();
@@ -599,7 +600,7 @@ pub fn zebes_load_game_data<H: Host + ?Sized>(game: &mut H) {
     game.ram().write_byte(mirror::INIDISP, 0x80);
     clear_cinematic_objects(game);
     word!(game.game_state = LOADING_GAME_DATA);
-    word!(game.samus_health = word!(game.samus_max_health));
+    inventory::set(game, Word::Health, inventory::get(game, Word::MaxHealth));
 }
 
 /// Pre-instruction - the confused baby metroid waits for its egg to hatch

@@ -54,11 +54,9 @@ pub fn begin_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
         player.animation_clock.frame = frame;
         drop(lease);
         let layer1 = crate::camera::current(game).layer1;
-        let x = game.player_x();
-        let x = x.wrapping_sub(layer1[0]);
+        let x = game.player_x().wrapping_sub(layer1[0]);
         game.set_player_x(x);
-        let y = game.player_y();
-        let y = y.wrapping_sub(layer1[1]);
+        let y = game.player_y().wrapping_sub(layer1[1]);
         game.set_player_y(y);
         word!(game.game_state += 1);
     }

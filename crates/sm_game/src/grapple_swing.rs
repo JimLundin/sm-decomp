@@ -947,7 +947,7 @@ fn finish_release<H: Host + ?Sized>(game: &mut H) {
     game.session_mut().projectiles.controls.flare_timers[0] = 0;
     game.session_mut().projectiles.controls.flare_timers[1] = 0;
     game.session_mut().projectiles.controls.flare_timers[2] = 0;
-    let beams = word!(game.equipped_beams) & 0xfff;
+    let beams = game.session().inventory.beams.active & 0xfff;
     game.with_lease(|lease| crate::samus_palette::write_beam_palette(lease, beams));
     game.session_mut().player.grapple = (0x9bc4f0i32) as u16;
     game.session_mut().player.transitions.draw_handler = DrawMode::Normal;

@@ -16,8 +16,9 @@ impl<T> Host for T where
 }
 
 pub fn finish_health_and_time<H: Host + ?Sized>(game: &mut H) {
-    if (word!(game.samus_health) as i16) <= 0 {
-        if (word!(game.reserve_health_mode) & 1) != 0 && word!(game.samus_reserve_health) != 0 {
+    let inventory = crate::inventory::current(game);
+    if (inventory.health.current as i16) <= 0 {
+        if (inventory.reserve_mode & 1) != 0 && inventory.reserve_health != 0 {
             word!(game.time_is_frozen_flag = 0x8000);
             word!(game.game_state = kGameState_27_ReserveTanksAuto as u16);
             game.player_command(0x1b);

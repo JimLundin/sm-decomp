@@ -168,8 +168,8 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
             crate::menu!(game.pausemenu_equipment_category_item = 0);
             crate::menu!(game.pausemenu_reserve_tank_delay_ctr = 0);
             crate::menu!(game.UNUSED_word_7E0759 = 0);
-            word!(game.samus_reserve_health = 0);
-            word!(game.samus_reserve_missiles = 0);
+            crate::inventory::set(game, crate::inventory::Word::ReserveHealth, 0);
+            crate::inventory::set(game, crate::inventory::Word::ReserveMissiles, 0);
             word!(game.cinematic_var5 = 0);
         }
         Intro => {

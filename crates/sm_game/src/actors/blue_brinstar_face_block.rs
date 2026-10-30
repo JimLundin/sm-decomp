@@ -4,6 +4,7 @@
 #![forbid(unsafe_code)]
 use crate::actors::host::{ActorHost, ActorRuntime, Axis, abs16};
 use crate::actors::layouts::part_view;
+use crate::inventory::{self, Word};
 use crate::ram::RawRam as _;
 use crate::ram::{slot, word};
 use crate::records::Records;
@@ -63,7 +64,7 @@ pub fn initialize(game: &mut (impl Host + ?Sized)) {
         game,
         FaceBlock[block].base.current_instruction = instruction_list::FACING_FORWARD
     );
-    let hook: u16 = if word!(game.collected_items) & MORPH_BALL == 0 {
+    let hook: u16 = if inventory::get(game, Word::CollectedItems) & MORPH_BALL == 0 {
         NO_HOOK
     } else {
         PALETTE_CYCLE_HOOK
@@ -79,7 +80,7 @@ pub fn initialize(game: &mut (impl Host + ?Sized)) {
 /// Main AI - blue Brinstar face block ($A8:E8AE): once Samus is in range,
 /// turn towards her, unless she is on the side it never turns to. Was `advance`.
 pub fn main_ai(game: &mut (impl Host + ?Sized)) {
-    if word!(game.collected_items) & MORPH_BALL == 0 {
+    if inventory::get(game, Word::CollectedItems) & MORPH_BALL == 0 {
         return;
     }
     game.ram()
