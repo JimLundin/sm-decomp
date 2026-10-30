@@ -66,6 +66,17 @@ pub fn set_effect<H: CompatibilityRam + ?Sized>(h: &mut H, word: EffectWord, val
     crate::projection::set_word(h, crate::session_encoding::room_effect_address(word), value);
 }
 
+/// Take the area and map position from room header bytes 1..=3, storing only
+/// each word's low byte, as the original's byte stores did.
+pub fn enter_header<H: CompatibilityRam + ?Sized>(h: &mut H, bytes: [u8; 3]) {
+    let area = crate::session_encoding::room_geometry_addresses()[Word::Area as usize];
+    let [x, y] =
+        [EffectWord::MapX, EffectWord::MapY].map(crate::session_encoding::room_effect_address);
+    for (at, byte) in [area, x, y].into_iter().zip(bytes) {
+        crate::projection::set_byte(h, at, byte);
+    }
+}
+
 /// A room word, by its Session field.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Word {

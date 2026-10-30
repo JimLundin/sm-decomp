@@ -505,13 +505,9 @@ fn initialize_room<H: Host + ?Sized>(game: &mut H) {
         game.enter_load_station();
         game.set_hdma_enabled(false);
         game.clear_hdma();
-        let room = menu_tilemap::native_record(0x8f0000 | u32::from(word!(game.room_ptr)), game);
-        game.ram()
-            .write_byte(crate::ram::words::area_index, room.byte(1));
-        game.ram()
-            .write_byte(crate::ram::words::room_x_coordinate_on_map, room.byte(2));
-        game.ram()
-            .write_byte(crate::ram::words::room_y_coordinate_on_map, room.byte(3));
+        let header = crate::projection::word(game, crate::ram::words::room_ptr);
+        let room = menu_tilemap::native_record(0x8f0000 | u32::from(header), game);
+        crate::room_view::enter_header(game, [1, 2, 3].map(|at| room.byte(at)));
         reset_animations(game);
         scroll_limits(game);
         center_map(112, game);
