@@ -59,3 +59,10 @@ jobs:
           python sm/src/verification/player_detached/mutations.py
           if ($LASTEXITCODE -ne 0) { throw 'A mutant survived or the mutation run failed' }
           "mutation run took $([int]((Get-Date) - $started).TotalMinutes) minutes"
+      - name: Kill every Session mapping mutant
+        # Each perturbed RAM mapping must fail its named sm_game unit test.
+        run: |
+          $started = Get-Date
+          python sm/src/verification/session_mutations.py
+          if ($LASTEXITCODE -ne 0) { throw 'A Session mapping mutant survived or the run failed' }
+          "session mutation run took $([int]((Get-Date) - $started).TotalMinutes) minutes"

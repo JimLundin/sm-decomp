@@ -38,7 +38,9 @@ jobs:
       - name: Hold the Phase 2 ratchets (RAM coupling and production lines)
         run: python3 tools/ram_ratchet.py
       - name: Keep every mutation anchor present (the mutants run nightly)
-        run: python3 sm/src/verification/player_detached/mutations.py --check-anchors
+        run: |
+          python3 sm/src/verification/player_detached/mutations.py --check-anchors
+          python3 sm/src/verification/session_mutations.py --check-anchors
       - name: Keep target packages independent of the emulator crate
         # sm_game and sm_runtime may depend only on sm_data, never on sm.
         run: |
