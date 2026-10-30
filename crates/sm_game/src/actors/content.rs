@@ -112,16 +112,16 @@ pub struct ActorCompatibilityKeys {
     pub poses: BTreeMap<PoseId, (u8, u16)>,
     pub room_populations: BTreeMap<ResourceId, PopulationId>,
 }
-// Built once per catalog, so the size difference is not worth a box.
-#[allow(clippy::large_enum_variant)]
+#[derive(Clone, Debug, PartialEq)]
+pub struct PreparedActorCatalog {
+    pub definitions: ActorDefinitions,
+    pub keys: ActorCompatibilityKeys,
+    pub revision: GameplayRevision,
+}
 #[derive(Clone, Debug, PartialEq)]
 pub enum ActorCatalog {
     LegacyBound,
-    Prepared {
-        definitions: ActorDefinitions,
-        keys: ActorCompatibilityKeys,
-        revision: GameplayRevision,
-    },
+    Prepared(Box<PreparedActorCatalog>),
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ActorContentError {
@@ -549,29 +549,29 @@ impl ActorCatalog {
             }
         }
         let revision = gameplay_revision(&definitions, &keys);
-        Ok(Self::Prepared {
+        Ok(Self::Prepared(Box::new(PreparedActorCatalog {
             definitions,
             keys,
             revision,
-        })
+        })))
     }
 
     pub fn definitions(&self) -> Option<&ActorDefinitions> {
         match self {
             Self::LegacyBound => None,
-            Self::Prepared { definitions, .. } => Some(definitions),
+            Self::Prepared(catalog) => Some(&catalog.definitions),
         }
     }
     pub fn keys(&self) -> Option<&ActorCompatibilityKeys> {
         match self {
             Self::LegacyBound => None,
-            Self::Prepared { keys, .. } => Some(keys),
+            Self::Prepared(catalog) => Some(&catalog.keys),
         }
     }
     pub fn revision(&self) -> Option<GameplayRevision> {
         match self {
             Self::LegacyBound => None,
-            Self::Prepared { revision, .. } => Some(*revision),
+            Self::Prepared(catalog) => Some(catalog.revision),
         }
     }
     pub fn species_for_key(&self, key: u16) -> Option<SpeciesId> {
