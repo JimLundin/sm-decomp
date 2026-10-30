@@ -6,7 +6,8 @@
 //!
 //! A species module writes its state steps against [`BossState`]: slot words
 //! through `session_slot!`, named RAM through `word!`, sounds, the cartridge
-//! and records, plus the few effects every boss's frame uses. The game
+//! and records, Samus's position, the shared actor operations, plus the few
+//! effects every boss's frame uses. The game
 //! implements it over the RAM image, delegating to its existing effects, and
 //! the lease implements it on the Session, running those effects on the same
 //! lease (they were leases of their own on the game). So a step behaves the same
@@ -25,6 +26,7 @@ pub trait BossState:
     + crate::cartridge::NativeDiagnostics
     + crate::records::Records
     + crate::player_position::PlayerPosition
+    + crate::actors::host::ActorRuntime
 {
     /// The shared shot reaction for the current actor.
     fn react_to_shot(&mut self, shot: Shot);
