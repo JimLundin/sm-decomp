@@ -7,6 +7,11 @@ use crate::menus::prelude::*;
 use crate::ram::RawRam as _;
 
 // W12SEL, W34SEL, WOBJSEL, TM, TS, TMW, TSW, CGWSEL and CGADSUB shadows.
+fn room_key<H: crate::runtime_access::RuntimeAccess + ?Sized>(game: &mut H) -> u16 {
+    use crate::session_access::SessionAccess;
+    game.runtime().session().room_key()
+}
+
 fn apply<H: crate::ram::RamHost + ?Sized>(settings: [u8; 9], game: &mut H) {
     for (address, value) in [0x60, 0x61, 0x62, 0x69, 0x6b, 0x6c, 0x6d, 0x6e, 0x71]
         .into_iter()
@@ -57,7 +62,9 @@ const ROOM_SETTINGS: [&[(usize, u8)]; 27] = [
     &[],
 ];
 
-pub fn update<H: crate::ram::RamHost + ?Sized>(game: &mut H) {
+pub fn update<H: crate::ram::RamHost + crate::runtime_access::RuntimeAccess + ?Sized>(
+    game: &mut H,
+) {
     {
         let configuration = word!(game.fx_layer_blending_config_c);
         let mut bomb_mode = 0;
@@ -91,7 +98,7 @@ pub fn update<H: crate::ram::RamHost + ?Sized>(game: &mut H) {
             };
         }
         if configuration & 0x8000 != 0 {
-            if word!(game.room_ptr) == addr_kRoom_a66a as u16 {
+            if room_key(game) == addr_kRoom_a66a as u16 {
                 bomb_mode = 6;
             }
             let special = bomb_mode == 4;
@@ -136,7 +143,7 @@ pub fn update<H: crate::ram::RamHost + ?Sized>(game: &mut H) {
                 ],
                 game,
             );
-            if word!(game.room_ptr) == addr_kRoom_cefb as u16 {
+            if room_key(game) == addr_kRoom_cefb as u16 {
                 game.ram().write_byte(0x69, 17);
             }
         } else if configuration & 0x1000 != 0 {

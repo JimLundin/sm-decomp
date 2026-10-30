@@ -7,10 +7,13 @@ use crate::ram_words as words;
 use crate::room_entry::content::Axis;
 
 // Door steps retain native split-word and scrolling tilemap publication order.
-pub fn begin<H: Host + ?Sized>(game: &mut H) {
+pub fn begin<H: Host + crate::runtime_access::RuntimeAccess + ?Sized>(game: &mut H) {
     word!(game.layer1_x_pos = word!(game.door_destination_x_pos));
     word!(game.layer1_y_pos = word!(game.door_destination_y_pos));
-    let direction = word!(game.door_direction) & 3;
+    let direction = {
+        use crate::session_access::SessionAccess;
+        game.runtime().session().room.entry.direction & 3
+    };
     let backwards = matches!(direction, 0 | 2);
     let block_delta = if backwards { u16::MAX } else { 1 };
     layer2_position(Axis::X, game);

@@ -128,8 +128,11 @@ pub fn advance_set<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     }
 }
 
-pub fn load<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    word!(game.door_def_ptr = 0);
+pub fn load<H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized>(
+    game: &mut H,
+) {
+    use crate::session_access::SessionAccess;
+    game.runtime().session_mut().set_exit_key(0);
     // Loading reads the scene before the set table; the resumed hook does the reverse.
     let offset = 18 * i32::from(word!(game.demo_scene));
     let base = set_start(game, word!(game.demo_set));
@@ -148,8 +151,11 @@ pub fn load<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
             hook: record.word(16),
         }
     });
-    word!(game.room_ptr = room.room);
-    word!(game.door_def_ptr = room.door);
+    {
+        let mut runtime = game.runtime();
+        runtime.session_mut().set_room_key(room.room);
+        runtime.session_mut().set_exit_key(room.door);
+    }
     word!(game.layer1_x_pos = room.layer1_x);
     word!(game.bg1_x_offset = word!(game.layer1_x_pos));
     word!(game.layer1_y_pos = room.layer1_y);
@@ -163,8 +169,13 @@ pub fn load<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     );
     game.set_previous_player_x(game.player_x());
     word!(game.demo_timer = room.timer);
-    let value = native_record(0x8f0000 | u32::from(word!(game.room_ptr)), game).byte(1);
-    game.ram().write_byte(0x79f, value);
+    let room_key = game.runtime().session().room_key();
+    let value = native_record(0x8f0000 | u32::from(room_key), game).byte(1);
+    // The original stores only the area's low byte.
+    let mut runtime = game.runtime();
+    let area = &mut runtime.session_mut().room.area;
+    *area = *area & 0xff00 | u16::from(value);
+    drop(runtime);
     word! { game, 0; reg_BG1HOFS, reg_BG1VOFS }
     word!(game.demo_scene += 1);
     crate::word_transfers!(game, ascending, 4;

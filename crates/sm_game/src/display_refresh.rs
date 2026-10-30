@@ -162,7 +162,11 @@ pub fn load_pause_assets<H: Host + crate::menus::host::Host + ?Sized>(game: &mut
 }
 
 /// Upload the pause map and the area label.
-pub fn upload_pause_map<H: Host + crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn upload_pause_map<
+    H: Host + crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
+>(
+    game: &mut H,
+) {
     word! {game; reg_BG1HOFS = word!(game.reg_BG4HOFS); reg_BG1VOFS = word!(game.reg_BG4VOFS); }
     register_writes! { game;
         byte(VMADDL as u16, 0); byte(VMADDH as u16, 0x30);
@@ -176,8 +180,8 @@ pub fn upload_pause_map<H: Host + crate::menus::host::Host + ?Sized>(game: &mut 
         byte(DMAP1 as u16, 1); byte(BBAD1 as u16, 0x18);
         byte(DAS1L as u16, 0x18); byte(DAS1H as u16, 0);
     }
-    let mut area: u16 = word!(game.area_index);
-    if word!(game.area_index) as i32 - 7i32 & 0x8000 == 0 {
+    let mut area: u16 = room_area(game);
+    if room_area(game) as i32 - 7i32 & 0x8000 == 0 {
         area = 0;
     }
     register_writes! { game;
@@ -185,6 +189,11 @@ pub fn upload_pause_map<H: Host + crate::menus::host::Host + ?Sized>(game: &mut 
         crate::gameplay_tables::area_label(game, area as isize),); byte(A1B1 as u16, 0x82);
         byte(MDMAEN as u16, 2);
     }
+}
+
+fn room_area<H: crate::runtime_access::RuntimeAccess + ?Sized>(game: &mut H) -> u16 {
+    use crate::session_access::SessionAccess;
+    game.runtime().session().room.area
 }
 
 pub fn reset_gameplay_layers<H: Host + ?Sized>(clear_current_irq: bool, game: &mut H) {

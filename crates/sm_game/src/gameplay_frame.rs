@@ -348,11 +348,13 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
         if !demo {
             match u32::from(word!(game.loading_game_state)) {
                 kLoadingGameState_1F_StartingAtCeres => {
-                    word! {game; area_index = 6; load_station_index = 0; }
+                    game.runtime().session_mut().room.area = 6;
+                    word!(game.load_station_index = 0);
                     escape_timer::clear(game);
                 }
                 kLoadingGameState_22_EscapingCeres => {
-                    word! {game; area_index = 0; load_station_index = 18; }
+                    game.runtime().session_mut().room.area = 0;
+                    word!(game.load_station_index = 18);
                     save_slots::load_area_map(game);
                 }
                 _ => {}
