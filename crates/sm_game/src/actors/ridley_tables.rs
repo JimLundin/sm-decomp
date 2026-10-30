@@ -1,46 +1,76 @@
-//! Ridley's table reads from bank $A6: tail-speed picks and RAM word fans.
+//! Ridley's pogo speeds and tail data copies from bank $A6 ($A6:B90F, $A6:D3B4).
 #![forbid(unsafe_code)]
 use crate::actors::host::ActorHost;
-use crate::actors::layouts::EnemyLayout104 as Ridley;
+use crate::actors::ridley::Ridley;
 use crate::cartridge::native_record;
 use crate::cartridge::rom_table_word;
 use crate::ram::RawRam as _;
 use crate::ram::{slot, word};
 
-/// Pick a random speed row: two row pointers by `random & 3`, the scroll pair
-/// by Ridley's step, then var_C from the first row and a signed var_B from the
-/// second, each through its own native fetch.
-/// Was Ridley_Func_29.
-pub fn pick_random_speed_row(game: &mut (impl ActorHost + ?Sized)) {
-    let pick = (word!(game.random_number) & 3) as isize;
-    let r18 = rom_table_word!(game, 0xa6b965, pick);
-    let r20 = rom_table_word!(game, 0xa6b96d, pick);
-    let offset = (2 * (i32::from(slot!(game, Ridley[0].var_12)) + 2)) as u16;
+const BANK: u8 = 0xa6;
+const RIDLEY: i32 = 0;
+/// $A6:B965 and $A6:B96D: four pointers each to rows of X and Y velocities,
+/// picked at random.
+const X_VELOCITY_ROWS: u32 = 0xa6_b965;
+const Y_VELOCITY_ROWS: u32 = 0xa6_b96d;
+const ROW_CHOICES: u16 = 3;
+/// $A6:B94D and $A6:B959: the pogo's upwards and downwards Y accelerations,
+/// by acceleration index.
+const UPWARDS_ACCELERATIONS: u32 = 0xa6_b94d;
+const DOWNWARDS_ACCELERATIONS: u32 = 0xa6_b959;
+/// $7E:200E and $7E:200C: the pogo's upwards and downwards Y accelerations.
+const UPWARDS_ACCELERATION: usize = 7;
+const DOWNWARDS_ACCELERATION: usize = 6;
+/// Ridley's tail has seven segments, 20 bytes apart in tail RAM.
+const TAIL_SEGMENTS: usize = 7;
+const TAIL_SEGMENT_BYTES: usize = 20;
+const SIGN: u16 = 0x8000;
+
+/// Set Ridley pogo speeds ($A6:B90F): a random row of velocities, the
+/// accelerations for Ridley's acceleration index, then the Y velocity from
+/// its row and the X velocity, keeping its sign, from the other, each through
+/// its own native fetch. Was `Ridley_Func_29`.
+pub fn set_pogo_speeds(game: &mut (impl ActorHost + ?Sized)) {
+    let pick = (word!(game.random_number) & ROW_CHOICES) as isize;
+    let x_row = rom_table_word!(game, X_VELOCITY_ROWS, pick);
+    let y_row = rom_table_word!(game, Y_VELOCITY_ROWS, pick);
+    let offset = (2 * (i32::from(slot!(game, Ridley[RIDLEY].acceleration_index)) + 2)) as u16;
     let step = (offset >> 1) as isize;
-    word!(game.tilemap_stuff[7] = rom_table_word!(game, 0xa6b94d, step));
-    word!(game.tilemap_stuff[6] = rom_table_word!(game, 0xa6b959, step));
-    slot!(
-        game,
-        Ridley[0].var_C = native_record(0xa6, r20, game).word(usize::from(offset))
+    word!(
+        game.tilemap_stuff[UPWARDS_ACCELERATION] =
+            rom_table_word!(game, UPWARDS_ACCELERATIONS, step)
     );
-    let t = native_record(0xa6, r18, game).word(usize::from(offset));
+    word!(
+        game.tilemap_stuff[DOWNWARDS_ACCELERATION] =
+            rom_table_word!(game, DOWNWARDS_ACCELERATIONS, step)
+    );
     slot!(
         game,
-        Ridley[0].var_B = (if slot!(game, Ridley[0].var_B) & 0x8000 != 0 {
-            -i32::from(t)
+        Ridley[RIDLEY].y_velocity = native_record(BANK, y_row, game).word(usize::from(offset))
+    );
+    let speed = native_record(BANK, x_row, game).word(usize::from(offset));
+    slot!(
+        game,
+        Ridley[RIDLEY].x_velocity = (if slot!(game, Ridley[RIDLEY].x_velocity) & SIGN != 0 {
+            -i32::from(speed)
         } else {
-            i32::from(t)
+            i32::from(speed)
         }) as u16
     );
 }
 
-/// Copy seven native words from bank $A6 at `source` to RAM, 20 bytes apart.
-/// Was Ridley_Func_93.
-pub fn copy_words_to_ram_fan(destination: u16, source: u16, game: &mut (impl ActorHost + ?Sized)) {
-    let words = native_record(0xa6, source, game);
-    for i in 0..7 {
+/// Set Ridley tail segments variable from list ($A6:D3B4): copy the seven
+/// words of the tail data list at `source` to the tail segments' variable at
+/// `destination`. Was `Ridley_Func_93`.
+pub fn set_tail_segments_from_list(
+    destination: u16,
+    source: u16,
+    game: &mut (impl ActorHost + ?Sized),
+) {
+    let words = native_record(BANK, source, game);
+    for i in 0..TAIL_SEGMENTS {
         let bytes = words.word(2 * i).to_ne_bytes();
-        let at = usize::from(destination) + 20 * i;
+        let at = usize::from(destination) + TAIL_SEGMENT_BYTES * i;
         game.ram().write_byte(at, bytes[0]);
         game.ram().write_byte(at + 1, bytes[1]);
     }

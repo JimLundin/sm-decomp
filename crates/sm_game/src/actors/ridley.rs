@@ -14,7 +14,7 @@
 use crate::actors::api::angle_from_delta;
 use crate::actors::host::{Death, Shot, abs16};
 use crate::actors::layouts::{EnemyBase, same_words};
-use crate::actors::ridley_tables::{copy_words_to_ram_fan, pick_random_speed_row};
+use crate::actors::ridley_tables::{set_pogo_speeds, set_tail_segments_from_list};
 use crate::actors::session_slots::{SlotAccess, session_slot};
 use crate::constants::enemy_properties::{
     kEnemyProps_Deleted, kEnemyProps_Invisible, kEnemyProps_Tangible,
@@ -1017,7 +1017,7 @@ pub fn pogo_wait_at_position<H: Host + ?Sized>(game: &mut H) {
     accelerate(0, 0, slot!(game, Ridley[RIDLEY].base.x_pos), 288, game);
     if timer_expired(game) {
         set_up_pogo_tail(game);
-        pick_random_speed_row(game);
+        set_pogo_speeds(game);
         slot!(game, Ridley[RIDLEY].function = function::POGO_DESCENDING);
         slot!(
             game,
@@ -1049,8 +1049,8 @@ pub fn pogo_descending<H: Host + ?Sized>(game: &mut H) {
         game.queue_sound(1, 0x76, 6);
         word! {game; earthquake_type = 13; earthquake_timer = 4; }
         set_pogo_x_direction(game);
-        pick_random_speed_row(game);
-        copy_words_to_ram_fan(tail_address(tail::distance(0)), tail_data::DISTANCES, game);
+        set_pogo_speeds(game);
+        set_tail_segments_from_list(tail_address(tail::distance(0)), tail_data::DISTANCES, game);
         for segment in 0..7 {
             word!(game.tilemap_stuff[tail::target_distance(segment)] = 3072);
         }
@@ -2657,15 +2657,15 @@ pub fn initialise_tail<H: Host + ?Sized>(game: &mut H) {
     for segment in 0..7 {
         word!(game.tilemap_stuff[tail::stagger_angle(segment)] = 17);
     }
-    copy_words_to_ram_fan(
+    set_tail_segments_from_list(
         tail_address(tail::direction(0)),
         tail_data::DIRECTIONS,
         game,
     );
-    copy_words_to_ram_fan(tail_address(tail::distance(0)), tail_data::DISTANCES, game);
-    copy_words_to_ram_fan(tail_address(tail::angle(0)), tail_data::ANGLES, game);
-    copy_words_to_ram_fan(tail_address(tail::x(0)), tail_data::X_POSITIONS, game);
-    copy_words_to_ram_fan(tail_address(tail::y(0)), tail_data::Y_POSITIONS, game);
+    set_tail_segments_from_list(tail_address(tail::distance(0)), tail_data::DISTANCES, game);
+    set_tail_segments_from_list(tail_address(tail::angle(0)), tail_data::ANGLES, game);
+    set_tail_segments_from_list(tail_address(tail::x(0)), tail_data::X_POSITIONS, game);
+    set_tail_segments_from_list(tail_address(tail::y(0)), tail_data::Y_POSITIONS, game);
     set_tail_segment_flags(0, game);
 }
 
@@ -2684,7 +2684,7 @@ pub fn set_tail_segment_flags<H: Host + ?Sized>(flags: u16, game: &mut H) {
 /// Flip Ridley tail ($A6:D3F9): mirror every segment's angle and turn it
 /// anticlockwise. Was `Ridley_Func_96`.
 pub fn flip_tail<H: Host + ?Sized>(game: &mut H) {
-    copy_words_to_ram_fan(tail_address(tail::distance(0)), tail_data::DISTANCES, game);
+    set_tail_segments_from_list(tail_address(tail::distance(0)), tail_data::DISTANCES, game);
     for segment in 0..7 {
         word!(
             game.tilemap_stuff[tail::angle(segment)] =
