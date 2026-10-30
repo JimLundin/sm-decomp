@@ -266,10 +266,10 @@ fn scene_fixture() -> (sc::SceneDescription, Arc<sc::SceneMedia>) {
             height: 32,
             cells: hud_cells.clone(),
         }),
-        sc::SceneAsset::Palette(sc::Palette {
+        sc::SceneAsset::Palette(Box::new(sc::Palette {
             reference: reference(6),
             colors,
-        }),
+        })),
         sc::SceneAsset::Visual(sc::Visual {
             reference: reference(7),
             frames: vec![sc::VisualFrame {
@@ -3124,10 +3124,10 @@ fn scene_component_fixture() -> (
         revision,
     };
     assets.push(sc::SceneAsset::Room(room));
-    assets.push(sc::SceneAsset::Palette(sc::Palette {
+    assets.push(sc::SceneAsset::Palette(Box::new(sc::Palette {
         reference: final_palette,
         colors: resident.colors,
-    }));
+    })));
     let media = Arc::new(sc::SceneMedia::new(media.revision(), assets, palettes, images).unwrap());
     let committed = start.committed_scene.take().unwrap();
     let mut description = committed.description().clone();

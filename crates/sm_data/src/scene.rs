@@ -251,13 +251,11 @@ pub struct Font {
     pub reference: AssetRef,
     pub atlas: AssetRef,
 }
-// Built once at import, so the size difference is not worth a box.
-#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum SceneAsset {
     Atlas(TileAtlas),
     Map(Tilemap),
-    Palette(Palette),
+    Palette(Box<Palette>),
     Visual(Visual),
     Font(Font),
     Room(AssetRef),

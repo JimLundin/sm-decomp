@@ -280,7 +280,7 @@ impl Field for r::SceneAsset {
         match u8::get(read)? {
             0 => Ok(Self::Atlas(Field::get(read)?)),
             1 => Ok(Self::Map(Field::get(read)?)),
-            2 => Ok(Self::Palette(Field::get(read)?)),
+            2 => Ok(Self::Palette(Box::new(Field::get(read)?))),
             3 => Ok(Self::Visual(Field::get(read)?)),
             4 => Ok(Self::Font(Field::get(read)?)),
             5 => Ok(Self::Room(Field::get(read)?)),
