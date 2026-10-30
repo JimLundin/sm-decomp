@@ -290,7 +290,6 @@ pub mod gameplay_rules;
 pub mod grapple_aim;
 pub mod grapple_origins;
 pub mod grapple_rope;
-#[allow(non_upper_case_globals, non_snake_case, unused_mut, unused_assignments)]
 pub mod grapple_swing;
 pub mod kraid_tables;
 pub mod mother_brain_tables;

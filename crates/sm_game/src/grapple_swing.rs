@@ -717,7 +717,7 @@ pub fn position_swing<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn clamp_swing_position<H: Host + ?Sized>(game: &mut H) {
-    let mut v0: i16 = ((game.player_x()) as i16).wrapping_sub((game.previous_player_x()) as i16);
+    let v0: i16 = ((game.player_x()) as i16).wrapping_sub((game.previous_player_x()) as i16);
     game.with_lease(|lease| {
         pt::clamp_previous_position(crate::session_access::SessionAccess::session_mut(lease), v0)
     });
@@ -759,7 +759,7 @@ pub fn cancel_incompatible_pose<H: Host + ?Sized>(game: &mut H) {
         if game.session().player.grapple as i32 != 0x9bc4f0 & 0xffff
             && (game.session().player.grapple as i32 + 0x3882) & 0x8000 != 0
         {
-            let mut v0: i16 = native_pose_parameter!(game, 3) as i16;
+            let v0: i16 = native_pose_parameter!(game, 3) as i16;
             if (v0 as u16 & 0xf0) == 0 {
                 if v0 as i32 == game.session().player.grapple_direction as i32 {
                     return;
@@ -780,21 +780,23 @@ pub fn cancel_incompatible_pose<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn start_firing<H: Host + ?Sized>(game: &mut H) {
-    let mut r22: u16 = 0;
-    let mut v0: i32 = 0;
-    if game.session().player.pose as i32 == kPose_F0_FaceR_Draygon_Move as i32
+    let (r22, v0): (u16, i32) = if game.session().player.pose as i32
+        == kPose_F0_FaceR_Draygon_Move as i32
         || game.session().player.pose as i32 == kPose_BE_FaceL_Draygon_Move as i32
     {
-        v0 = draygon_direction(game.session().player.pose, game) as i32;
-        r22 = 6;
+        (
+            6,
+            draygon_direction(game.session().player.pose, game) as i32,
+        )
     } else {
-        r22 = native_pose_parameter!(game, 4) as u16;
-        v0 = native_pose_parameter!(game, 3) as i32;
+        let r22 = native_pose_parameter!(game, 4) as u16;
+        let v0 = native_pose_parameter!(game, 3) as i32;
         if (v0 & 0xf0) != 0 {
             game.session_mut().player.grapple = (0x9bc856i32) as u16;
             return;
         }
-    }
+        (r22, v0)
+    };
     game.session_mut().player.grapple_direction = v0 as u16;
     let v1: i32 = v0;
     let extension = grapple_aim::extension(game, v1 as isize);
@@ -1023,7 +1025,7 @@ pub fn update_tiles<
 }
 
 pub fn update<H: Host + ?Sized>(game: &mut H) {
-    let mut r18: u16 = 0;
+    let r18: u16;
     if word!(game.grapple_varCF6) != 0 {
         word!(game.grapple_varCF6 -= 1);
     }
