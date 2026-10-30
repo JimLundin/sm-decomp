@@ -4,7 +4,7 @@
 use crate::game::actors::reflec;
 use crate::game::actors::{self, api};
 use crate::game::session_runtime::Runtime;
-use crate::game::{sm_a6, sm_a7, sm_a9, sm_aa, space_pirates};
+use crate::game::{sm_a6, sm_a7, sm_a9, sm_aa};
 use crate::game_state::Game;
 
 impl sm_game::actors::species::SpeciesHost for Game {
@@ -25,7 +25,6 @@ impl sm_game::actors::species::TouchHost for Game {
             Phantoon => sm_a7::Phantoon_Touch(self),
             MotherBrainBrain => sm_a9::MotherBrainsBrain_Touch(self),
             GoldenTorizo => sm_aa::GoldTorizo_Touch(self),
-            SpacePirate => space_pirates::touch(self),
         }
     }
 }
@@ -44,9 +43,6 @@ impl sm_game::actors::species::ShotHost for Game {
             MotherBrainBrain => sm_a9::MotherBrainsBrain_Shot(self),
             Torizo => sm_aa::Torizo_Shot(self),
             TorizoOutsideCrateria => sm_aa::Torizo_Func_8(self),
-            SpacePirate => space_pirates::shot(self),
-            SpacePirateCheck => space_pirates::check_shot(self),
-            SpacePirateReflect => space_pirates::reflect(self),
         }
     }
 }

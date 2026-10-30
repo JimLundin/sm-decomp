@@ -11,7 +11,7 @@
 use crate::actors::host::{ActorHost, ActorRuntime, Death, LeaseActors, Shot};
 use crate::actors::{
     botwoon, brinstar_pipe_bug, crocomire_reactions, draygon_death, draygon_flight, draygon_host,
-    escape_critters, magdollite, norfair_pipe_bug, yapping_maw, yellow_pipe_bug,
+    escape_critters, magdollite, norfair_pipe_bug, space_pirates, yapping_maw, yellow_pipe_bug,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -57,12 +57,11 @@ pub enum NativeTouch {
     Phantoon,
     MotherBrainBrain,
     GoldenTorizo,
-    SpacePirate,
 }
 
 /// What the contact reactions need beyond their actors' own hosts.
 pub trait TouchHost:
-    SpeciesHost + ActorRuntime + crocomire_reactions::Host + draygon_host::Host
+    SpeciesHost + ActorRuntime + crocomire_reactions::Host + draygon_host::Host + space_pirates::Pirates
 {
     fn native_touch(&mut self, touch: NativeTouch);
 }
@@ -89,7 +88,7 @@ pub fn touch<H: TouchHost + ?Sized>(ea: u32, game: &mut H) {
         11122117 => (),
         11122118 => game.native_touch(NativeTouch::MotherBrainBrain),
         11192695 => game.native_touch(NativeTouch::GoldenTorizo),
-        11700076 => game.native_touch(NativeTouch::SpacePirate),
+        11700076 => space_pirates::touch(game),
         _ => game.unknown_routine(),
     }
 }
@@ -111,14 +110,11 @@ pub enum NativeShot {
     Torizo,
     /// The Torizo shot reaction that only runs outside Crateria.
     TorizoOutsideCrateria,
-    SpacePirate,
-    SpacePirateCheck,
-    SpacePirateReflect,
 }
 
 /// What the shot reactions need beyond their actors' own hosts.
 pub trait ShotHost:
-    SpeciesHost + ActorRuntime + crocomire_reactions::Host + draygon_host::Host
+    SpeciesHost + ActorRuntime + crocomire_reactions::Host + draygon_host::Host + space_pirates::Pirates
 {
     fn native_shot(&mut self, shot: NativeShot);
 }
@@ -150,9 +146,9 @@ pub fn shot<H: ShotHost + ?Sized>(ea: u32, j: u16, game: &mut H) {
         11192700 => game.native_shot(NativeShot::Torizo),
         11192769 => (),
         11192770 => game.native_shot(NativeShot::TorizoOutsideCrateria),
-        11700089 => game.native_shot(NativeShot::SpacePirate),
-        11700168 => game.native_shot(NativeShot::SpacePirateCheck),
-        11700286 => game.native_shot(NativeShot::SpacePirateReflect),
+        11700089 => space_pirates::shot(game),
+        11700168 => space_pirates::check_shot(game),
+        11700286 => space_pirates::reflect(game),
         _ => game.unknown_routine(),
     }
 }
