@@ -5,7 +5,11 @@ name: Full 100% route
 # lag-aligned inputs and must reach the next room. WRAM, VRAM, CGRAM, OAM, PPU
 # state and pixels are compared every frame. Seeds and inputs come from an
 # encrypted ci-data release asset (see .github/scripts/full_route.py).
+# Runs on every pull request (land.sh gates on this workflow's run for the PR
+# head), nightly, and on dispatch. Pull requests need the repository secrets,
+# so only in-repo branches can run it.
 on:
+  pull_request:
   schedule:
     - cron: '41 2 * * *'
   workflow_dispatch:
@@ -200,3 +204,18 @@ jobs:
           Select-String -Path rooms.log -Pattern '^(job|PASS|FAIL|Corpus)' | ForEach-Object { $_.Line } | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           if ($code -ne 0) { throw "Rooms failed ($code)" }
+
+  result:
+    name: Full 100% route result
+    needs: [plan, build, rooms]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require every room job to pass
+        env:
+          PLAN: ${{ needs.plan.result }}
+          BUILD: ${{ needs.build.result }}
+          ROOMS: ${{ needs.rooms.result }}
+        run: |
+          echo "plan $PLAN, build $BUILD, rooms $ROOMS"
+          test "$PLAN" = success && test "$BUILD" = success && test "$ROOMS" = success
