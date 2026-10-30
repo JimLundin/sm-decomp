@@ -1,23 +1,19 @@
 //! Scrolling sky setup, parallax, HDMA bands and tile uploads.
-// The original's names and assignment shapes are kept.
-#![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
 use crate::liquid_effects::WATER_WAVE;
 use crate::menus::menu_tilemap::native_record;
 use crate::menus::prelude::*;
-#[allow(unused_imports)]
-use crate::ram::RawRam as _;
 use crate::ram::slot;
 
 pub fn initialize_banded_sky<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     word! {game; fx_y_pos = 1248; fx_type = 6; }
-    static unk_88A62E: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x2, 0x12, 0xad63 as VoidP);
-    static unk_88A636: SpawnHdmaObject_Args =
+    static UNK_88A62E: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x2, 0x12, 0xad63 as VoidP);
+    static UNK_88A636: SpawnHdmaObject_Args =
         SpawnHdmaObject_Args::new(0x42, 0x11, 0xad4e as VoidP);
-    static unk_88A63E: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0xd, 0xad39 as VoidP);
-    game.spawn_hdma(0x88, &unk_88A62E);
-    game.spawn_hdma(0x88, &unk_88A636);
-    game.spawn_hdma(0x88, &unk_88A63E);
-    update_vertical_scroll(0, game);
+    static UNK_88A63E: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0xd, 0xad39 as VoidP);
+    game.spawn_hdma(0x88, &UNK_88A62E);
+    game.spawn_hdma(0x88, &UNK_88A636);
+    game.spawn_hdma(0x88, &UNK_88A63E);
+    update_vertical_scroll(game);
 }
 #[forbid(unsafe_code)]
 fn sky_table_word<H: crate::menus::host::Host + ?Sized>(
@@ -69,10 +65,10 @@ fn build_vertical_bands<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u
     }
 }
 #[forbid(unsafe_code)]
-pub fn update_vertical_scroll<H: crate::menus::host::Host + ?Sized>(mut k: u16, game: &mut H) {
+pub fn update_vertical_scroll<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     damage_above_screen(game);
-    k = build_vertical_bands(game);
-    crate::word_transfers!(game, ascending, 1; native(0x9c00 + k as isize) <- value(0));
+    let row = build_vertical_bands(game);
+    crate::word_transfers!(game, ascending, 1; native(0x9c00 + row as isize) <- value(0));
 }
 #[forbid(unsafe_code)]
 pub fn update_horizontal_scroll<H: crate::menus::host::Host + ?Sized>(
@@ -139,41 +135,42 @@ pub fn update_horizontal_scroll<H: crate::menus::host::Host + ?Sized>(
 #[forbid(unsafe_code)]
 fn append_upper_band<H: crate::menus::host::Host + ?Sized>(
     k: u16,
-    mut r18: u16,
+    r18: u16,
     r20: u16,
     r22: u16,
     game: &mut H,
 ) -> u16 {
-    let mut v0: u16 = k;
     let layer1_y = crate::camera::current(game).layer1[1];
-    let mut v1: u16 = (1216u16).wrapping_sub(layer1_y);
-    let mut r24: u16 = (1216u16).wrapping_sub(layer1_y);
-    if (1216i16).wrapping_sub(layer1_y as i16) >= 0 && layer1_y != 1216 {
-        if (v1 as i32 - 128i32) & 0x8000 != 0 {
-            r18 = (1216u16).wrapping_sub(layer1_y);
-        } else {
-            r18 = (1216u16).wrapping_sub(layer1_y);
-            if (v1 as i32 - 193i32) & 0x8000 == 0 {
-                v1 = 193;
-            }
-            r18 = v1;
-            r24 = v1;
-            loop {
-                let mut v2: i16 = ((v1) as i16).wrapping_sub(16);
-                if v2 < 0 {
-                    break;
-                }
-                r24 = v2 as u16;
-                crate::word_transfers!(game, ascending, 1; native(0x9e00 + v0 as isize) <- value(r22 | 0x10));
-                crate::word_transfers!(game, ascending, 1; native(0x9e01 + v0 as isize) <- value(r20));
-                v1 = r24;
-                v0 = (v0).wrapping_add(3);
-            }
-        }
-        crate::word_transfers!(game, ascending, 1; native(0x9e00 + v0 as isize) <- value(r22 | r24));
-        crate::word_transfers!(game, ascending, 1; native(0x9e01 + v0 as isize) <- value(r20));
+    let visible = 1216u16.wrapping_sub(layer1_y);
+    if (1216i16).wrapping_sub(layer1_y as i16) < 0 || layer1_y == 1216 {
+        return r18;
     }
-    r18
+    let mut v0: u16 = k;
+    let mut r24 = visible;
+    let height = if (visible as i32 - 128i32) & 0x8000 != 0 {
+        visible
+    } else {
+        let height = if (visible as i32 - 193i32) & 0x8000 == 0 {
+            193
+        } else {
+            visible
+        };
+        r24 = height;
+        loop {
+            let v2: i16 = (r24 as i16).wrapping_sub(16);
+            if v2 < 0 {
+                break;
+            }
+            r24 = v2 as u16;
+            crate::word_transfers!(game, ascending, 1; native(0x9e00 + v0 as isize) <- value(r22 | 0x10));
+            crate::word_transfers!(game, ascending, 1; native(0x9e01 + v0 as isize) <- value(r20));
+            v0 = v0.wrapping_add(3);
+        }
+        height
+    };
+    crate::word_transfers!(game, ascending, 1; native(0x9e00 + v0 as isize) <- value(r22 | r24));
+    crate::word_transfers!(game, ascending, 1; native(0x9e01 + v0 as isize) <- value(r20));
+    height
 }
 static LAND_SCROLL: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0xf, 0xad76 as VoidP);
 static OCEAN_SCROLL: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0xf, 0xad89 as VoidP);

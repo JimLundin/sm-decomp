@@ -332,7 +332,7 @@ fn host_pre_action<H: DispatchHost + ?Sized>(target: HdmaPreAction, k: u16, game
         RestoreRight => xray_background::restore_right(game),
         PowerBombBlending => explosion_window::set_power_bomb_blending(k, game),
         CrystalFlashBlending => explosion_window::set_crystal_flash_blending(k, game),
-        SkyVerticalScroll => scrolling_sky::update_vertical_scroll(k, game),
+        SkyVerticalScroll => scrolling_sky::update_vertical_scroll(game),
         SkyParallax => scrolling_sky::update_parallax(k, game),
         AdvanceSkyParallax => scrolling_sky::advance_parallax(k, game),
         FirefleaLighting => room_visuals::advance_fireflea_lighting(game),
