@@ -1659,11 +1659,11 @@ impl GameOwner {
         self.with(|game| {
             game.checkpoint_session()
                 .map_err(|error| format!("Session capture {error:?}"))?
-                .encode_binary(
-                    game.loaded_rom.as_ref(),
-                    game.capture_native_rom_binding().as_ref(),
-                    sources,
-                )
+                .encode_binary(sm_game::actors::snapshot::CheckpointImages {
+                    loaded: game.loaded_rom.as_ref(),
+                    native: game.capture_native_rom_binding().as_ref(),
+                    sources: sources,
+                })
         })
     }
     /// Decode and install under the same gate, keeping epoch preflight and
@@ -1704,9 +1704,11 @@ impl GameOwner {
                 game.world().clone(),
                 media,
                 contract.requirements().clone(),
-                game.loaded_rom.as_ref(),
-                game.capture_native_rom_binding().as_ref(),
-                sources,
+                sm_game::actors::snapshot::CheckpointImages {
+                    loaded: game.loaded_rom.as_ref(),
+                    native: game.capture_native_rom_binding().as_ref(),
+                    sources: sources,
+                },
             )?;
             let (description, media, required) = supplied.into_parts();
             let prepared = persistent_session::prepare(game, description, media, &required)

@@ -2,6 +2,7 @@
 //! owner and its intervals, semantic checkpoints and snapshot payloads.
 #![forbid(unsafe_code)]
 
+use crate::actors::snapshot::CheckpointImages;
 use std::sync::Arc;
 
 use crate::external_inputs::ExternalInputs;
@@ -219,15 +220,7 @@ impl PersistentSession {
 impl SessionCheckpoint {
     /// Full owned state with immutable declarations sealed against the supplied
     /// contract. Allocation roles come from the actual caller, never defaults.
-    pub fn encode_binary(
-        &self,
-        loaded: Option<&sm_data::cartridge::RomImage>,
-        native: Option<&sm_data::cartridge::RomImage>,
-        sources: &[(
-            crate::room_entry::world::ResourceId,
-            sm_data::cartridge::RomImage,
-        )],
-    ) -> Result<Vec<u8>, String> {
+    pub fn encode_binary(&self, images: CheckpointImages<'_>) -> Result<Vec<u8>, String> {
         self.0
             .checkpoint()
             .map_err(|error| format!("Session checkpoint {error:?}"))?;
@@ -256,12 +249,9 @@ impl SessionCheckpoint {
             state
                 .gameplay
                 .encode_gameplay_checkpoint(state.metadata())?,
-            state.gameplay.encode_actor_identity_checkpoint(
-                state.metadata(),
-                loaded,
-                native,
-                sources,
-            )?,
+            state
+                .gameplay
+                .encode_actor_identity_checkpoint(state.metadata(), images)?,
             crate::session_checkpoint::encode_observations_checkpoint(
                 &state.observations,
                 state.metadata(),
@@ -288,12 +278,7 @@ impl SessionCheckpoint {
         world: Arc<crate::room_entry::world::WorldBinding>,
         media: Arc<SceneMedia>,
         required: SessionStartRequirements,
-        loaded: Option<&sm_data::cartridge::RomImage>,
-        native: Option<&sm_data::cartridge::RomImage>,
-        sources: &[(
-            crate::room_entry::world::ResourceId,
-            sm_data::cartridge::RomImage,
-        )],
+        images: CheckpointImages<'_>,
     ) -> Result<SuppliedSessionStart, String> {
         let mut read = crate::actors::snapshot::CheckpointReader(bytes);
         if read.bytes(10)? != b"SMSESSION\x01" {
@@ -316,9 +301,7 @@ impl SessionCheckpoint {
             session_binary_component(&mut read)?,
             current,
             &metadata,
-            loaded,
-            native,
-            sources,
+            images,
         )?;
         let observations = crate::session_checkpoint::decode_observations_checkpoint(
             session_binary_component(&mut read)?,

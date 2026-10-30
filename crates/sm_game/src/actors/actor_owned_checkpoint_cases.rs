@@ -1,5 +1,6 @@
 //! Movies cannot author malformed identity payloads or inspect detached handle epochs.
 use super::*;
+use crate::actors::snapshot::CheckpointImages;
 use crate::{rom::RomImage, room_entry::world::WorldBinding};
 use crate::{scene::component::DisplayStartMetadata, session::Session};
 use std::sync::Arc;
@@ -40,9 +41,11 @@ fn assert_checkpoint_binding(session: &Session, loaded: &RomImage, native: &RomI
             &session.actors,
             &session.world,
             metadata,
-            Some(loaded),
-            Some(native),
-            &[],
+            CheckpointImages {
+                loaded: Some(loaded),
+                native: Some(native),
+                sources: &[],
+            },
         )
         .unwrap();
     let decoded = ActorIdentityState::decode_owned_checkpoint(
@@ -51,9 +54,11 @@ fn assert_checkpoint_binding(session: &Session, loaded: &RomImage, native: &RomI
         &session.actors,
         &session.world,
         metadata,
-        Some(loaded),
-        Some(native),
-        &[],
+        CheckpointImages {
+            loaded: Some(loaded),
+            native: Some(native),
+            sources: &[],
+        },
     )
     .unwrap();
     assert_eq!(decoded.timeline, current.timeline);
@@ -65,9 +70,11 @@ fn assert_checkpoint_binding(session: &Session, loaded: &RomImage, native: &RomI
                 &session.actors,
                 &session.world,
                 metadata,
-                Some(loaded),
-                Some(native),
-                &[]
+                CheckpointImages {
+                    loaded: Some(loaded),
+                    native: Some(native),
+                    sources: &[]
+                }
             )
             .unwrap(),
         bytes
@@ -130,9 +137,11 @@ fn authored_timeline(session: &Session, loaded: &RomImage, native: &RomImage) {
             &actors,
             &session.world,
             metadata,
-            Some(loaded),
-            Some(native),
-            &[],
+            CheckpointImages {
+                loaded: Some(loaded),
+                native: Some(native),
+                sources: &[],
+            },
         )
         .unwrap();
     let decoded = ActorIdentityState::decode_owned_checkpoint(
@@ -141,9 +150,11 @@ fn authored_timeline(session: &Session, loaded: &RomImage, native: &RomImage) {
         &actors,
         &session.world,
         metadata,
-        Some(loaded),
-        Some(native),
-        &[],
+        CheckpointImages {
+            loaded: Some(loaded),
+            native: Some(native),
+            sources: &[],
+        },
     )
     .unwrap();
     check_authored(
@@ -166,9 +177,11 @@ fn authored_timeline(session: &Session, loaded: &RomImage, native: &RomImage) {
         &zero,
         &session.world,
         metadata,
-        Some(loaded),
-        Some(native),
-        &[],
+        CheckpointImages {
+            loaded: Some(loaded),
+            native: Some(native),
+            sources: &[],
+        },
     )
     .unwrap();
     assert_eq!(retained.timeline, expected.timeline);
@@ -294,9 +307,11 @@ fn authority_failures(session: &Session, loaded: &RomImage, native: &RomImage) {
             &session.actors,
             &session.world,
             metadata,
-            Some(loaded),
-            Some(native),
-            &[],
+            CheckpointImages {
+                loaded: Some(loaded),
+                native: Some(native),
+                sources: &[],
+            },
         )
         .unwrap();
     let mut overflow = actual.clone();
@@ -309,9 +324,11 @@ fn authority_failures(session: &Session, loaded: &RomImage, native: &RomImage) {
             &session.actors,
             &session.world,
             metadata,
-            Some(loaded),
-            Some(native),
-            &[]
+            CheckpointImages {
+                loaded: Some(loaded),
+                native: Some(native),
+                sources: &[]
+            }
         )
         .err()
         .as_deref(),
@@ -327,9 +344,11 @@ fn authority_failures(session: &Session, loaded: &RomImage, native: &RomImage) {
                 &session.actors,
                 &session.world,
                 metadata,
-                Some(loaded),
-                Some(native),
-                &[]
+                CheckpointImages {
+                    loaded: Some(loaded),
+                    native: Some(native),
+                    sources: &[]
+                }
             )
             .err()
             .as_deref(),
@@ -343,9 +362,11 @@ fn authority_failures(session: &Session, loaded: &RomImage, native: &RomImage) {
         &session.actors,
         &session.world,
         metadata,
-        Some(loaded),
-        Some(native),
-        &[],
+        CheckpointImages {
+            loaded: Some(loaded),
+            native: Some(native),
+            sources: &[],
+        },
     )
     .unwrap();
     assert!(!recovered.is_poisoned());
@@ -414,7 +435,16 @@ fn check_authored(
     );
     assert_eq!(
         decoded
-            .encode_owned_checkpoint(&actors, world, metadata, Some(loaded), Some(native), &[])
+            .encode_owned_checkpoint(
+                &actors,
+                world,
+                metadata,
+                CheckpointImages {
+                    loaded: Some(loaded),
+                    native: Some(native),
+                    sources: &[]
+                }
+            )
             .unwrap(),
         bytes.to_vec()
     );
@@ -446,9 +476,11 @@ fn forbidden_lineage(session: &Session, loaded: &RomImage, native: &RomImage) {
                 &session.actors,
                 &session.world,
                 metadata,
-                Some(loaded),
-                Some(native),
-                &[]
+                CheckpointImages {
+                    loaded: Some(loaded),
+                    native: Some(native),
+                    sources: &[]
+                }
             )
             .err()
             .as_deref(),
@@ -466,9 +498,11 @@ fn forbidden_lineage(session: &Session, loaded: &RomImage, native: &RomImage) {
                 &session.actors,
                 &session.world,
                 metadata,
-                Some(loaded),
-                Some(native),
-                &[]
+                CheckpointImages {
+                    loaded: Some(loaded),
+                    native: Some(native),
+                    sources: &[]
+                }
             )
             .err()
             .as_deref(),
@@ -494,9 +528,11 @@ fn expect_rejection(
             actors,
             world,
             metadata,
-            Some(loaded),
-            Some(native),
-            &[]
+            CheckpointImages {
+                loaded: Some(loaded),
+                native: Some(native),
+                sources: &[]
+            }
         )
         .err()
         .as_deref(),

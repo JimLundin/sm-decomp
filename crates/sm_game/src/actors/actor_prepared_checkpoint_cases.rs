@@ -1,5 +1,6 @@
 //! Movies cannot supply authored lineage and nonempty palette receipts to a detached restore.
 use super::*;
+use crate::actors::snapshot::CheckpointImages;
 use crate::{
     actors::{content::*, media::*},
     room_entry::world::*,
@@ -130,9 +131,11 @@ pub fn run(session: &Session, loaded: &RomImage, native: &RomImage) {
             &actors,
             &world,
             metadata,
-            Some(loaded),
-            Some(native),
-            &sources,
+            CheckpointImages {
+                loaded: Some(loaded),
+                native: Some(native),
+                sources: &sources,
+            },
         )
         .unwrap();
     let before = current.clone();
@@ -142,9 +145,11 @@ pub fn run(session: &Session, loaded: &RomImage, native: &RomImage) {
         &actors,
         &world,
         metadata,
-        Some(loaded),
-        Some(native),
-        &sources,
+        CheckpointImages {
+            loaded: Some(loaded),
+            native: Some(native),
+            sources: &sources,
+        },
     )
     .unwrap();
     assert_occurrence(&decoded, &actors, old);
@@ -157,9 +162,11 @@ pub fn run(session: &Session, loaded: &RomImage, native: &RomImage) {
                 &actors,
                 &world,
                 metadata,
-                Some(loaded),
-                Some(native),
-                &sources
+                CheckpointImages {
+                    loaded: Some(loaded),
+                    native: Some(native),
+                    sources: &sources
+                }
             )
             .unwrap(),
         bytes
@@ -261,9 +268,11 @@ fn changed_catalogs(
                 actors,
                 &changed,
                 metadata,
-                Some(loaded),
-                Some(native),
-                &sources
+                CheckpointImages {
+                    loaded: Some(loaded),
+                    native: Some(native),
+                    sources: &sources
+                }
             )
             .err()
             .as_deref(),
@@ -305,9 +314,11 @@ fn changed_palette_source(
             actors,
             world,
             metadata,
-            Some(&changed),
-            Some(native),
-            &sources,
+            CheckpointImages {
+                loaded: Some(&changed),
+                native: Some(native),
+                sources: &sources,
+            },
         )
         .unwrap();
     let accepted = ActorIdentityState::decode_owned_checkpoint(
@@ -316,9 +327,11 @@ fn changed_palette_source(
         actors,
         world,
         metadata,
-        Some(&changed),
-        Some(native),
-        &sources,
+        CheckpointImages {
+            loaded: Some(&changed),
+            native: Some(native),
+            sources: &sources,
+        },
     )
     .unwrap();
     assert_palettes(&accepted, world, &changed);
@@ -329,9 +342,11 @@ fn changed_palette_source(
             actors,
             world,
             metadata,
-            Some(&changed),
-            Some(native),
-            &sources
+            CheckpointImages {
+                loaded: Some(&changed),
+                native: Some(native),
+                sources: &sources
+            }
         )
         .err()
         .as_deref(),
@@ -415,9 +430,11 @@ fn changed_prepared_catalog(
             actors,
             &changed,
             metadata,
-            Some(loaded),
-            Some(native),
-            &sources
+            CheckpointImages {
+                loaded: Some(loaded),
+                native: Some(native),
+                sources: &sources
+            }
         )
         .err()
         .as_deref(),
@@ -437,7 +454,16 @@ fn accept_changed_catalog(
     sources: &[(ResourceId, RomImage)],
 ) {
     let own = current
-        .encode_owned_checkpoint(actors, world, metadata, Some(loaded), Some(native), sources)
+        .encode_owned_checkpoint(
+            actors,
+            world,
+            metadata,
+            CheckpointImages {
+                loaded: Some(loaded),
+                native: Some(native),
+                sources: sources,
+            },
+        )
         .unwrap();
     let accepted = ActorIdentityState::decode_owned_checkpoint(
         &own,
@@ -445,9 +471,11 @@ fn accept_changed_catalog(
         actors,
         world,
         metadata,
-        Some(loaded),
-        Some(native),
-        sources,
+        CheckpointImages {
+            loaded: Some(loaded),
+            native: Some(native),
+            sources: sources,
+        },
     )
     .unwrap();
     assert_eq!(accepted.timeline, current.timeline);

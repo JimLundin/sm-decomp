@@ -160,21 +160,15 @@ impl ActorIdentityState {
         actors: &Actors,
         world: &Arc<WorldBinding>,
         metadata: &DisplayStartMetadata,
-        loaded: Option<&sm_data::cartridge::RomImage>,
-        native: Option<&sm_data::cartridge::RomImage>,
-        sources: &[(
-            crate::room_entry::world::ResourceId,
-            sm_data::cartridge::RomImage,
-        )],
+        images: CheckpointImages<'_>,
     ) -> Result<Vec<u8>, String> {
         let payload = ActorCheckpointPayload::capture(self, world)?;
         if metadata.identity.reference != metadata.reference.fingerprint {
             return Err("actor owned checkpoint Reference identity mismatch".into());
         }
         let binding = crate::checkpoint_binding::observation_binding(metadata);
-        let body = payload.encode_occupancy(loaded, native, sources, &|index| {
-            actors.slots[index].definition != 0
-        })?;
+        let body =
+            payload.encode_occupancy(images, &|index| actors.slots[index].definition != 0)?;
         let mut bytes = Vec::from(b"ACTOROWN1".as_slice());
         bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
         bytes.extend_from_slice(&binding);
@@ -191,12 +185,7 @@ impl ActorIdentityState {
         actors: &Actors,
         world: &Arc<WorldBinding>,
         metadata: &DisplayStartMetadata,
-        loaded: Option<&sm_data::cartridge::RomImage>,
-        native: Option<&sm_data::cartridge::RomImage>,
-        sources: &[(
-            crate::room_entry::world::ResourceId,
-            sm_data::cartridge::RomImage,
-        )],
+        images: CheckpointImages<'_>,
     ) -> Result<Self, String> {
         current
             .checked_next_epoch()
@@ -216,9 +205,7 @@ impl ActorIdentityState {
             read.0,
             current,
             world,
-            loaded,
-            native,
-            sources,
+            images,
             &|index| actors.slots[index].definition != 0,
             None,
         )?;
@@ -604,6 +591,17 @@ fn image_class(
         images.len() - 1
     }
 }
+/// The cartridge images a checkpoint binds: the loaded and native images
+/// and the named palette sources supplied by the caller.
+#[derive(Clone, Copy)]
+pub struct CheckpointImages<'a> {
+    pub loaded: Option<&'a sm_data::cartridge::RomImage>,
+    pub native: Option<&'a sm_data::cartridge::RomImage>,
+    pub sources: &'a [(
+        crate::room_entry::world::ResourceId,
+        sm_data::cartridge::RomImage,
+    )],
+}
 fn named_images(
     sources: &[(
         crate::room_entry::world::ResourceId,
@@ -625,16 +623,25 @@ fn named_images(
     }
     Ok(result)
 }
-checkpoint_layout!(actor_checkpoint_layout, write_actor_checkpoint(
-    bytes,
-    world: &WorldBinding,
+/// One actor checkpoint record's contents, written in layout order.
+struct ActorCheckpointFields<'a> {
+    world: &'a WorldBinding,
     loaded: Option<usize>,
     native: Option<usize>,
     roles: Vec<(crate::room_entry::world::ResourceId, usize)>,
-    images: &[sm_data::cartridge::RomImage],
-    timeline: &[u8],
-    rows: Vec<(usize, crate::room_entry::world::ResourceId, super::media::PaletteCheckpoint)>
+    images: &'a [sm_data::cartridge::RomImage],
+    timeline: &'a [u8],
+    rows: Vec<(
+        usize,
+        crate::room_entry::world::ResourceId,
+        super::media::PaletteCheckpoint,
+    )>,
+}
+checkpoint_layout!(actor_checkpoint_layout, write_actor_checkpoint(
+    bytes,
+    fields: ActorCheckpointFields<'_>
 ) {
+    bind ActorCheckpointFields { world, loaded, native, roles, images, timeline, rows } = fields;
     magic schema = b"ACTORCP3";
     fixed world_revision: [u8; 32] = world.revision().0;
     bind revisions = [world.actor_gameplay_revision().map(|id| id.0), world.actor_media_revision().map(|id| id.0)];
@@ -683,15 +690,10 @@ impl ActorCheckpointPayload {
 
     pub fn encode(
         &self,
-        loaded: Option<&sm_data::cartridge::RomImage>,
-        native: Option<&sm_data::cartridge::RomImage>,
-        sources: &[(
-            crate::room_entry::world::ResourceId,
-            sm_data::cartridge::RomImage,
-        )],
+        images: CheckpointImages<'_>,
         ram: &impl Fn(usize) -> u8,
     ) -> Result<Vec<u8>, String> {
-        self.encode_occupancy(loaded, native, sources, &|index| {
+        self.encode_occupancy(images, &|index| {
             let at = 0xf78 + index * 64;
             [ram(at), ram(at + 1)] != [0, 0]
         })
@@ -699,14 +701,14 @@ impl ActorCheckpointPayload {
 
     fn encode_occupancy(
         &self,
-        loaded: Option<&sm_data::cartridge::RomImage>,
-        native: Option<&sm_data::cartridge::RomImage>,
-        sources: &[(
-            crate::room_entry::world::ResourceId,
-            sm_data::cartridge::RomImage,
-        )],
+        images: CheckpointImages<'_>,
         live: &impl Fn(usize) -> bool,
     ) -> Result<Vec<u8>, String> {
+        let CheckpointImages {
+            loaded,
+            native,
+            sources,
+        } = images;
         let world = &self.actors.binding;
         let named = named_images(sources, world)?;
         let mut timeline = Vec::new();
@@ -742,7 +744,16 @@ impl ActorCheckpointPayload {
         super::media::ActorPaletteResidency::checkpoint_restore(&rows, &images, world)?;
         let mut bytes = Vec::new();
         write_actor_checkpoint(
-            &mut bytes, world, loaded, native, roles, &images, &timeline, rows,
+            &mut bytes,
+            ActorCheckpointFields {
+                world,
+                loaded,
+                native,
+                roles,
+                images: &images,
+                timeline: &timeline,
+                rows,
+            },
         );
         Ok(bytes)
     }
@@ -751,12 +762,7 @@ impl ActorCheckpointPayload {
         bytes: &[u8],
         current: &ActorIdentityState,
         world: &Arc<WorldBinding>,
-        loaded: Option<&sm_data::cartridge::RomImage>,
-        native: Option<&sm_data::cartridge::RomImage>,
-        sources: &[(
-            crate::room_entry::world::ResourceId,
-            sm_data::cartridge::RomImage,
-        )],
+        images: CheckpointImages<'_>,
         ram: &impl Fn(usize) -> u8,
         loaded_after_patch: Option<&sm_data::cartridge::RomImage>,
     ) -> Result<PreparedActorRestore, String> {
@@ -764,9 +770,7 @@ impl ActorCheckpointPayload {
             bytes,
             current,
             world,
-            loaded,
-            native,
-            sources,
+            images,
             &|index| {
                 let at = 0xf78 + index * 64;
                 [ram(at), ram(at + 1)] != [0, 0]
@@ -779,15 +783,15 @@ impl ActorCheckpointPayload {
         bytes: &[u8],
         current: &ActorIdentityState,
         world: &Arc<WorldBinding>,
-        loaded: Option<&sm_data::cartridge::RomImage>,
-        native: Option<&sm_data::cartridge::RomImage>,
-        sources: &[(
-            crate::room_entry::world::ResourceId,
-            sm_data::cartridge::RomImage,
-        )],
+        images: CheckpointImages<'_>,
         live: &impl Fn(usize) -> bool,
         loaded_after_patch: Option<&sm_data::cartridge::RomImage>,
     ) -> Result<PreparedActorRestore, String> {
+        let CheckpointImages {
+            loaded,
+            native,
+            sources,
+        } = images;
         let next_epoch = current
             .checked_next_epoch()
             .map_err(|error| format!("{error:?}"))?;

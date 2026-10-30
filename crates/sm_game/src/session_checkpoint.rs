@@ -1,6 +1,7 @@
 //! Detached Session checkpoint components; registered by the production Session.
 #![forbid(unsafe_code)]
 use crate::actors::snapshot::ActorsCheckpoint;
+use crate::actors::snapshot::CheckpointImages;
 use crate::actors::snapshot::CheckpointReader;
 use crate::checkpoint_binding::{audio_reference_bytes, observation_binding};
 use crate::scene::{
@@ -2152,18 +2153,10 @@ impl Session {
     pub fn encode_actor_identity_checkpoint(
         &self,
         metadata: &DisplayStartMetadata,
-        loaded: Option<&sm_data::cartridge::RomImage>,
-        native: Option<&sm_data::cartridge::RomImage>,
-        sources: &[(world::ResourceId, sm_data::cartridge::RomImage)],
+        images: CheckpointImages<'_>,
     ) -> Result<Vec<u8>, String> {
-        self.actor_identity.encode_owned_checkpoint(
-            &self.actors,
-            &self.world,
-            metadata,
-            loaded,
-            native,
-            sources,
-        )
+        self.actor_identity
+            .encode_owned_checkpoint(&self.actors, &self.world, metadata, images)
     }
 }
 impl NumericGameplayCheckpoint {
@@ -2172,9 +2165,7 @@ impl NumericGameplayCheckpoint {
         bytes: &[u8],
         current: &crate::actors::identity::ActorIdentityState,
         metadata: &DisplayStartMetadata,
-        loaded: Option<&sm_data::cartridge::RomImage>,
-        native: Option<&sm_data::cartridge::RomImage>,
-        sources: &[(world::ResourceId, sm_data::cartridge::RomImage)],
+        images: CheckpointImages<'_>,
     ) -> Result<crate::actors::identity::ActorIdentityState, String> {
         crate::actors::identity::ActorIdentityState::decode_owned_checkpoint(
             bytes,
@@ -2182,9 +2173,7 @@ impl NumericGameplayCheckpoint {
             &self.actors,
             &self.world,
             metadata,
-            loaded,
-            native,
-            sources,
+            images,
         )
     }
     /// Constructs a detached replacement from decoded numeric fields and the
