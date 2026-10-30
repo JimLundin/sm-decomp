@@ -364,7 +364,6 @@ pub mod game {
     pub(crate) mod moving_platforms;
     pub(crate) mod prelude;
     pub mod scene;
-    pub(crate) use sm_game::shaktool_tables;
     pub(crate) mod visual_checks;
     pub(crate) mod vram_read_queue;
     pub(crate) mod xray_background;
