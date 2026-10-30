@@ -3,11 +3,13 @@
 #![forbid(unsafe_code)]
 use crate::actors::access::AccessMode::Native;
 use crate::actors::api::{self, Axis, MovementResult::Blocked, SlopePolicy::Ignore};
+use crate::actors::combat::{self, current_slot};
 use crate::actors::host::{ActorLease, LeaseActors};
-use crate::actors::{combat, layouts::part_view};
+use crate::actors::layouts::part_view;
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
-use crate::player_projectiles::{content, host::Host as _};
+use crate::player_projectiles::content::{self, table};
+use crate::player_projectiles::host::Host as _;
 use crate::session_slot;
 use sm_data::{cartridge::RomImage, enemy_speeds::SpeedTable::Quadratic};
 
@@ -62,13 +64,6 @@ const SUPER_HOPS: u16 = 2;
 const MAX_FALLING_Y_SPEED_INDEX: u16 = 64;
 const SIGN: u16 = 0x8000;
 
-fn current(runtime: &impl ActorLease) -> i32 {
-    i32::from(combat::current(runtime).byte_index())
-}
-fn table(runtime: &impl ActorLease, address: u32, index: u16) -> u16 {
-    let image = runtime.leased_image().expect("ROM must be loaded");
-    image.table_word(content::offset(address), index as isize)
-}
 fn upside_down(runtime: &impl ActorLease, hopper: i32) -> usize {
     usize::from(session_slot!(runtime, Sidehopper[hopper].parameter_1) != 0)
 }
@@ -77,7 +72,7 @@ fn negate_x_velocity(runtime: &mut impl ActorLease, hopper: i32) {
 }
 /// Store the variant's list in `lists`; set enemy instruction list ($A3:ABBB) unless `stored_only`.
 fn store_list(runtime: &mut impl ActorLease, hopper: i32, lists: u32, stored_only: bool) {
-    let index = session_slot!(runtime, Sidehopper[hopper].variant_index) >> 1;
+    let index = (session_slot!(runtime, Sidehopper[hopper].variant_index) >> 1) as isize;
     let list = table(runtime, lists, index);
     session_slot!(runtime, Sidehopper[hopper].new_instruction_list = list);
     if !stored_only {
@@ -104,7 +99,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
     let runtime = &mut lease;
     runtime.write_slice_le(crate::ram::words::random_number, RANDOM_SEED);
     runtime.next_random();
-    let hopper = current(runtime);
+    let hopper = current_slot(runtime);
     session_slot!(runtime, Sidehopper[hopper]; falling = 0, ready_to_hop = 0, hop_table_index = 0);
     let definition = session_slot!(runtime, Sidehopper[hopper].base.enemy_ptr);
     let variant = runtime.record(0xa0, definition).word(0x2a);
@@ -116,7 +111,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
         session_slot!(runtime, Sidehopper[hopper].hop_table_index = SUPER_HOPS);
     }
     for (hop, big) in HOP_TABLES.into_iter().zip([false, true]) {
-        let index = session_slot!(runtime, Sidehopper[hopper].hop_table_index) >> 1;
+        let index = (session_slot!(runtime, Sidehopper[hopper].hop_table_index) >> 1) as isize;
         let height = table(runtime, hop + HEIGHT, index);
         let step = table(runtime, hop, index);
         let phase = initial_hop_phase(height, step, runtime.native_image());
@@ -189,16 +184,16 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
     use function::*;
     let mut lease = game.lease();
     let runtime = &mut lease;
-    let hopper = current(runtime);
+    let hopper = current_slot(runtime);
     let phase = session_slot!(runtime, Sidehopper[hopper].function);
     let next = match phase {
         HOP => {
-            let index = runtime.next_random() & 1;
+            let index = (runtime.next_random() & 1) as isize;
             table(runtime, HOP_FUNCTIONS, index)
         }
         SMALL_HOP | BIG_HOP => {
             let hop = HOP_TABLES[usize::from(phase == BIG_HOP)];
-            let index = session_slot!(runtime, Sidehopper[hopper].hop_table_index) >> 1;
+            let index = (session_slot!(runtime, Sidehopper[hopper].hop_table_index) >> 1) as isize;
             let delta = table(runtime, hop, index);
             let speed = table(runtime, hop + X_SPEED, index);
             let initial = match phase {
@@ -275,6 +270,6 @@ pub fn queue_sound<H: LeaseActors + ?Sized>(script: EnemyScript, game: &mut H) -
 pub fn ready_to_hop<H: LeaseActors + ?Sized>(script: EnemyScript, game: &mut H) -> EnemyScript {
     let mut lease = game.lease();
     let runtime = &mut lease;
-    session_slot!(runtime, Sidehopper[current(runtime)].ready_to_hop = 1);
+    session_slot!(runtime, Sidehopper[current_slot(runtime)].ready_to_hop = 1);
     script
 }

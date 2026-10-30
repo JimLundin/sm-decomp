@@ -4,7 +4,7 @@
 #![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{self, MovementResult, ShotHandling, SlopePolicy};
-use crate::actors::combat;
+use crate::actors::combat::{self, current_slot};
 use crate::actors::host::{ActorLease, LeaseActors};
 use crate::actors::layouts::part_view;
 use crate::enemy_script::EnemyScript;
@@ -60,13 +60,10 @@ const FROZEN_LEFT: u16 = 0xa009;
 const FROZEN_RIGHT: u16 = 0xa015;
 const SIGN: u16 = 0x8000;
 
-fn current(runtime: &impl ActorLease) -> i32 {
-    i32::from(combat::current(runtime).byte_index())
-}
 /// Set the instruction list for the platform's kind, motion and direction
 /// ($A3:9E47-$A3:9E9E).
 fn set_instruction_list(runtime: &mut impl ActorLease, moving: bool, right: bool) {
-    let platform = current(runtime);
+    let platform = current_slot(runtime);
     let suspensor = session_slot!(runtime, Platform[platform].suspensor_platform) & SIGN != 0;
     let instruction = [
         [
@@ -85,7 +82,7 @@ fn set_instruction_list(runtime: &mut impl ActorLease, moving: bool, right: bool
 /// Set tripper / suspensor platform instruction list - vertically moving
 /// ($A3:9EBB) or still ($A3:9EE1), once.
 fn set_vertical_motion(runtime: &mut impl ActorLease, moving: bool) {
-    let platform = current(runtime);
+    let platform = current_slot(runtime);
     let flag = if moving {
         session_slot!(runtime, Platform[platform].vertically_moving)
     } else {
@@ -112,7 +109,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(suspensor: bool, game: &mut H) {
     let mut lease = game.lease();
     let runtime = &mut lease;
     let key = combat::current(runtime);
-    let platform = current(runtime);
+    let platform = current_slot(runtime);
     if suspensor {
         session_slot!(runtime, Platform[platform].suspensor_platform = 0xffff);
     }
@@ -165,7 +162,7 @@ fn accelerate(runtime: &mut impl ActorLease, key: Key) -> u16 {
 /// or right ($A3:9D83): turn round at walls.
 fn move_x(runtime: &mut impl ActorLease, right: bool) {
     let key = combat::current(runtime);
-    let platform = current(runtime);
+    let platform = current_slot(runtime);
     let x = runtime.resolve_actor(key, Native).x.whole;
     session_slot!(runtime, Platform[platform].previous_position = x);
     let current = combat::current(runtime);
@@ -192,7 +189,7 @@ fn move_x(runtime: &mut impl ActorLease, right: bool) {
 /// to the target Y, or sinking ($A3:9DE4) under Samus, carrying her.
 fn move_y(runtime: &mut impl ActorLease, sinking: bool) {
     let key = combat::current(runtime);
-    let platform = current(runtime);
+    let platform = current_slot(runtime);
     let mut stopped = !sinking && {
         let actor = runtime.resolve_actor(key, Native);
         (actor.y.whole as i16).wrapping_sub(actor.variables[lane::TARGET_Y] as i16) < 0
@@ -241,7 +238,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
     let mut lease = game.lease();
     let runtime = &mut lease;
     let key = combat::current(runtime);
-    let platform = current(runtime);
+    let platform = current_slot(runtime);
     session_slot!(runtime, Platform[platform].y_movement_function = 0);
     if api::touches_player_from_above(runtime, combat::current(runtime)) {
         session_slot!(runtime, Platform[platform].y_movement_function = 1);
@@ -252,7 +249,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
         Platform[platform].x_movement_function
     ))];
     move_x(runtime, right);
-    let current = current(runtime);
+    let current = current_slot(runtime);
     let sinking = [false, true][usize::from(session_slot!(
         runtime,
         Platform[current].y_movement_function
@@ -276,7 +273,7 @@ pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
     combat::shot_reaction(runtime, ShotHandling::Finalize);
     let key = combat::current(runtime);
     if runtime.resolve_actor(key, Native).frozen != 0 {
-        let platform = current(runtime);
+        let platform = current_slot(runtime);
         let right = session_slot!(runtime, Platform[platform].x_movement_function) != 0;
         runtime.edit_actor(key, Native, |actor| {
             actor.spritemap = if right { FROZEN_RIGHT } else { FROZEN_LEFT }
@@ -292,7 +289,7 @@ pub fn set_x_movement<H: LeaseActors + ?Sized>(
 ) -> EnemyScript {
     let mut lease = game.lease();
     let runtime = &mut lease;
-    let platform = current(runtime);
+    let platform = current_slot(runtime);
     session_slot!(
         runtime,
         Platform[platform].x_movement_function = u16::from(right)

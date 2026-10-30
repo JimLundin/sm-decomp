@@ -3,13 +3,13 @@
 #![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorAccess};
 use crate::actors::api;
-use crate::actors::combat;
+use crate::actors::combat::{self, current_slot};
 use crate::actors::host::{ActorLease, LeaseActors};
 use crate::actors::layouts::part_view;
 use crate::enemy_projectiles::access::shot_word;
 use crate::enemy_projectiles::host::ShotMember;
 use crate::enemy_script::EnemyScript;
-use crate::player_projectiles::content;
+use crate::player_projectiles::content::{self, table};
 use crate::session_access::SessionAccess as _;
 use crate::session_slot;
 
@@ -90,16 +90,9 @@ fn sign_extend8(value: u16) -> u16 {
         value
     }
 }
-fn current(runtime: &impl ActorLease) -> i32 {
-    i32::from(combat::current(runtime).byte_index())
-}
-fn table(runtime: &impl ActorLease, address: u32, index: isize) -> u16 {
-    let image = runtime.leased_image().expect("ROM must be loaded");
-    image.table_word(content::offset(address), index)
-}
 /// Set bang instruction list: start the list for the new index if it changed.
 fn set_instruction_list(runtime: &mut impl ActorLease) {
-    let bang = current(runtime);
+    let bang = current_slot(runtime);
     let index = session_slot!(runtime, Bang[bang].new_instruction_list_index);
     if index != session_slot!(runtime, Bang[bang].instruction_list_index) {
         session_slot!(runtime, Bang[bang].instruction_list_index = index);
@@ -113,7 +106,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
     let mut lease = game.lease();
     let runtime = &mut lease;
     let key = combat::current(runtime);
-    let bang = current(runtime);
+    let bang = current_slot(runtime);
     runtime.edit_actor(key, Native, |actor| {
         actor.variables[1] = actor.palette;
         actor.properties |= BLOCK_PLASMA;
@@ -155,7 +148,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) -> u32 {
 pub fn movement_delay<H: LeaseActors + ?Sized>(game: &mut H) {
     let mut lease = game.lease();
     let runtime = &mut lease;
-    let bang = current(runtime);
+    let bang = current_slot(runtime);
     let remaining = session_slot!(runtime, Bang[bang].movement_delay_timer).wrapping_sub(1);
     session_slot!(runtime, Bang[bang].movement_delay_timer = remaining);
     if remaining == 0 {
@@ -179,7 +172,7 @@ pub fn target_samus<H: LeaseActors + ?Sized>(game: &mut H) {
     let mut lease = game.lease();
     let runtime = &mut lease;
     let angle = angle_to_samus(runtime);
-    let bang = current(runtime);
+    let bang = current_slot(runtime);
     session_slot!(runtime, Bang[bang].angle = angle);
     let key = combat::current(runtime);
     runtime.edit_actor(key, Native, |actor| {
@@ -195,7 +188,7 @@ pub fn fly<H: LeaseActors + ?Sized>(decelerating: bool, game: &mut H) {
     let mut lease = game.lease();
     let runtime = &mut lease;
     for (x, adjustment) in [(true, QUARTER_TURN), (false, 0)] {
-        let bang = current(runtime);
+        let bang = current_slot(runtime);
         let angle = (session_slot!(runtime, Bang[bang].angle) as u8).wrapping_add(adjustment);
         let sine = table(runtime, SINE, angle as isize);
         if sine & SIGN != 0 {
@@ -224,7 +217,7 @@ pub fn fly<H: LeaseActors + ?Sized>(decelerating: bool, game: &mut H) {
             }
         });
     }
-    let bang = current(runtime);
+    let bang = current_slot(runtime);
     let remaining = session_slot!(runtime, Bang[bang].acceleration_interval_timer).wrapping_sub(1);
     session_slot!(runtime, Bang[bang].acceleration_interval_timer = remaining);
     if remaining & SIGN != 0 {
@@ -254,7 +247,7 @@ pub fn fly<H: LeaseActors + ?Sized>(decelerating: bool, game: &mut H) {
         }
     }
     if decelerating {
-        let bang = current(runtime);
+        let bang = current_slot(runtime);
         if session_slot!(runtime, Bang[bang].speed) != 0
             || session_slot!(runtime, Bang[bang].acceleration) as i16 <= 0
         {
@@ -265,7 +258,7 @@ pub fn fly<H: LeaseActors + ?Sized>(decelerating: bool, game: &mut H) {
         }
     } else {
         let angle = angle_to_samus(runtime);
-        let bang = current(runtime);
+        let bang = current_slot(runtime);
         session_slot!(runtime, Bang[bang].angle_to_samus = angle);
         let difference = sign_extend8(angle.wrapping_sub(session_slot!(runtime, Bang[bang].angle)));
         if (difference as i16).unsigned_abs().wrapping_sub(OFF_TARGET) & SIGN == 0 {
@@ -281,7 +274,7 @@ pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
     let mut lease = game.lease();
     let runtime = &mut lease;
     let key = combat::current(runtime);
-    let bang = current(runtime);
+    let bang = current_slot(runtime);
     if runtime.resolve_actor(key, Native).pre_instruction != function::NO_MOVEMENT {
         let image = runtime.leased_image().expect("ROM must be loaded");
         let index = runtime.session().room.collision_detection_index as isize;
@@ -319,7 +312,7 @@ pub fn set_finished_growing<H: LeaseActors + ?Sized>(
 ) -> EnemyScript {
     let mut lease = game.lease();
     let runtime = &mut lease;
-    let bang = current(runtime);
+    let bang = current_slot(runtime);
     session_slot!(runtime, Bang[bang].finished_growing = 1);
     cursor
 }

@@ -11,7 +11,7 @@ use crate::actors::host::{ActorLease, BossEffects as _, LeaseActors};
 use crate::actors::layouts::part_view;
 use crate::enemy_script::EnemyScript;
 use crate::geometry::Point;
-use crate::player_projectiles::content;
+use crate::player_projectiles::content::{self, table};
 use crate::ram::word_arrays;
 use crate::session_access::SessionAccess as _;
 use crate::session_slot;
@@ -110,10 +110,6 @@ const SLOPE_BTS_BITS: u8 = 31;
 const FIRST_STEEP_SLOPE: u8 = 5;
 const SIGN: u16 = 0x8000;
 
-fn table(runtime: &impl ActorLease, address: u32, index: isize) -> u16 {
-    let image = runtime.leased_image().expect("ROM must be loaded");
-    image.table_word(content::offset(address), index)
-}
 /// Common crawler initialisation AI ($A3:E67A) with `common`, or the speed
 /// half the orange Geemer shares.
 fn set_speed(runtime: &mut impl ActorLease, key: Key, common: bool) {

@@ -32,6 +32,10 @@ use {
 pub fn current(h: &impl ActorAccess) -> ActorKey {
     ActorKey::from_legacy(h.session().actors.controls.selected)
 }
+/// The current actor's slot, as `session_slot!` indexes it.
+pub fn current_slot(h: &impl ActorAccess) -> i32 {
+    i32::from(current(h).byte_index())
+}
 fn capture_definition(h: &mut impl ActorHost, actor: ActorKey) -> ActorDefinitionCapture {
     let key = h.resolve_actor(actor, AccessMode::Native).definition;
     h.capture_actor_definition(ActorDefinitionKey(key))

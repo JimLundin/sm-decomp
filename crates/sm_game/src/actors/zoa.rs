@@ -8,7 +8,7 @@ use crate::actors::combat;
 use crate::actors::host::{ActorLease, LeaseActors};
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
-use crate::player_projectiles::content::offset;
+use crate::player_projectiles::content::table;
 
 /// Zoa's actor words, by `variables` lane; its function is in its first
 /// parameter word.
@@ -52,10 +52,6 @@ const SIGN: u16 = 0x8000;
 
 fn x_speed_index(runtime: &impl ActorLease) -> usize {
     X_SPEED_INDEX + usize::from(combat::current(runtime).byte_index())
-}
-fn table(runtime: &impl ActorLease, address: u32, index: isize) -> u16 {
-    let image = runtime.leased_image().expect("ROM must be loaded");
-    image.table_word(offset(address), index)
 }
 /// Start the instruction list for Zoa's instruction list index, if it changed.
 fn set_instruction_list(runtime: &mut impl ActorLease) {

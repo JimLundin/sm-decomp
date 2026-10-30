@@ -3,13 +3,13 @@
 #![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorAccess};
 use crate::actors::api::{self, Axis, MovementResult, SlopePolicy};
-use crate::actors::combat;
+use crate::actors::combat::{self, current_slot};
 use crate::actors::host::{ActorLease, BossEffects as _, LeaseActors};
 use crate::actors::layouts::part_view;
 use crate::actors::session_slots::SlotAccess as _;
 use crate::enemy_projectiles::host::Effects as _;
 use crate::geometry::Vector32;
-use crate::player_projectiles::content;
+use crate::player_projectiles::content::table;
 use crate::session_access::SessionAccess as _;
 use crate::session_slot;
 
@@ -89,13 +89,6 @@ const HALF_TURN_FACINGS: u16 = 4;
 const FACINGS: u16 = 7;
 const SIGN: u16 = 0x8000;
 
-fn current(runtime: &impl ActorLease) -> i32 {
-    i32::from(combat::current(runtime).byte_index())
-}
-fn table(runtime: &impl ActorLease, address: u32, index: isize) -> u16 {
-    let image = runtime.leased_image().expect("ROM must be loaded");
-    image.table_word(content::offset(address), index)
-}
 /// The 16.16 velocity whose subvelocity word is at `at`.
 fn velocity(runtime: &impl ActorLease, at: usize) -> u32 {
     (u32::from(runtime.slot_word(at + 2)) << 16) | u32::from(runtime.slot_word(at))
@@ -118,7 +111,7 @@ fn custom_x(roach: i32) -> usize {
 }
 /// Set roach instruction list ($A3:A12F), if it changed.
 fn set_instruction_list(runtime: &mut impl ActorLease) {
-    let roach = current(runtime);
+    let roach = current_slot(runtime);
     let instruction = session_slot!(runtime, Roach[roach].new_instruction_list);
     if instruction != session_slot!(runtime, Roach[roach].instruction_list) {
         session_slot!(runtime, Roach[roach].instruction_list = instruction);
@@ -139,7 +132,7 @@ fn calculate_velocities(
     adjustment: Option<u8>,
 ) {
     let key = combat::current(runtime);
-    let roach = current(runtime);
+    let roach = current_slot(runtime);
     for (axis_offset, cosine) in [(0, true), (4, false)] {
         let (angle, speed) = {
             let actor = runtime.resolve_actor(key, Native);
@@ -164,7 +157,7 @@ fn calculate_velocities(
 fn retarget(runtime: &mut impl ActorLease, roach: i32) {
     calculate_velocities(runtime, custom_x, None);
     let key = combat::current(runtime);
-    let current = current(runtime);
+    let current = current_slot(runtime);
     let angle = runtime.resolve_actor(key, Native).variables[lane::CUSTOM_ANGLE] as u8;
     session_slot!(
         runtime,
@@ -176,7 +169,7 @@ fn retarget(runtime: &mut impl ActorLease, roach: i32) {
 /// Move the roach by the velocities at `x`.
 fn translate(runtime: &mut impl ActorLease, x: impl Fn(i32) -> usize) {
     let key = combat::current(runtime);
-    let roach = current(runtime);
+    let roach = current_slot(runtime);
     let dx = velocity(runtime, x(roach));
     runtime.edit_actor(key, Native, |actor| actor.x.advance(dx as i32));
     let dy = velocity(runtime, x(roach) + 4);
@@ -185,7 +178,7 @@ fn translate(runtime: &mut impl ActorLease, x: impl Fn(i32) -> usize) {
 /// Move roach forward ($A3:A578), along its angle with the forward speeds.
 fn move_forward(runtime: &mut impl ActorLease) {
     let key = combat::current(runtime);
-    let roach = current(runtime);
+    let roach = current_slot(runtime);
     let angle = u16::from(runtime.resolve_actor(key, Native).parameters[0].to_ne_bytes()[1]);
     let point = Vector32 {
         x: velocity(runtime, forward_x(roach)),
@@ -196,7 +189,7 @@ fn move_forward(runtime: &mut impl ActorLease) {
 }
 /// Reverse roach custom angle ($A3:A52A).
 fn reverse(runtime: &mut impl ActorLease) {
-    let roach = current(runtime);
+    let roach = current_slot(runtime);
     let at = custom_x(roach);
     // Each native word is negated independently; this is not 32-bit negation.
     for offset in [2, 0, 6, 4] {
@@ -213,10 +206,10 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
     let mut lease = game.lease();
     let runtime = &mut lease;
     let key = combat::current(runtime);
-    let roach = current(runtime);
+    let roach = current_slot(runtime);
     session_slot!(runtime, Roach[roach]; instruction_list = 0, new_instruction_list = 0);
     // Calculate moving forward speeds ($A3:A183).
-    let live = current(runtime);
+    let live = current_slot(runtime);
     let parameter = runtime
         .resolve_actor(combat::current(runtime), Native)
         .parameters[0]
@@ -233,7 +226,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
         (Some(true), LEFT_FACING),
         (Some(false), RIGHT_FACING),
     ] {
-        let live = current(runtime);
+        let live = current_slot(runtime);
         let angle = runtime
             .resolve_actor(combat::current(runtime), Native)
             .parameters[0]
@@ -256,7 +249,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
     let mut lease = game.lease();
     let runtime = &mut lease;
     let key = combat::current(runtime);
-    let roach = current(runtime);
+    let roach = current_slot(runtime);
     let function = runtime.resolve_actor(key, Native).variables[lane::FUNCTION];
     match function {
         // Roach function - wait for Samus to get near ($A3:A2D7).
@@ -319,7 +312,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
                 api::angle_to_player(runtime, current) as u8
             };
             let current = combat::current(runtime);
-            let current_roach = self::current(runtime);
+            let current_roach = current_slot(runtime);
             runtime.edit_actor(current, Native, |actor| {
                 actor.variables[lane::CUSTOM_ANGLE] = if random {
                     actor.variables[lane::CUSTOM_ANGLE]
@@ -378,7 +371,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
                 move_forward(runtime);
             } else {
                 let current = combat::current(runtime);
-                let current_roach = self::current(runtime);
+                let current_roach = current_slot(runtime);
                 let x = velocity(runtime, custom_x(current_roach)) as i32;
                 let mut blocked = api::move_horizontal(runtime, current, x, SlopePolicy::Ignore)
                     == MovementResult::Blocked;
