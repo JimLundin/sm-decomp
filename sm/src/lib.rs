@@ -230,69 +230,6 @@ pub mod game {
     #[path = "../verification/actor_composed_route.rs"]
     pub(crate) mod actor_composed_route;
     pub(crate) mod actors;
-    // Share the exact countdown prefix and expiry test across named callbacks.
-    macro_rules! countdown_callbacks {
-        (
-            $visibility:vis unsafe fn $parameters:tt;
-            before $before:tt
-            when $condition:expr;
-            $(
-                $name:ident $effects:tt
-                $(else $otherwise:tt)?
-                $(after $after:tt)?;
-            )+
-        ) => {
-            $(
-                $crate::game::countdown_callbacks! {
-                    @function [$visibility unsafe fn $name $parameters]
-                    $before [$condition] $effects
-                    $(else $otherwise)? $(after $after)?
-                }
-            )+
-        };
-        (
-            $visibility:vis fn $parameters:tt;
-            before $before:tt
-            when $condition:expr;
-            $(
-                $name:ident $effects:tt
-                $(else $otherwise:tt)?
-                $(after $after:tt)?;
-            )+
-        ) => {
-            $(
-                $crate::game::countdown_callbacks! {
-                    @safe [$visibility fn $name $parameters]
-                    $before [$condition] $effects
-                    $(else $otherwise)? $(after $after)?
-                }
-            )+
-        };
-        (
-            @safe [$($header:tt)*]
-            { $($before:tt)* } [$condition:expr] $effects:block
-            $(else $otherwise:block)? $(after { $($after:tt)* })?
-        ) => {
-            $($header)* {
-                $($before)*
-                if $condition $effects $(else $otherwise)?
-                $($($after)*)?
-            }
-        };
-        (
-            @function [$($header:tt)*]
-            { $($before:tt)* } [$condition:expr] $effects:block
-            $(else $otherwise:block)? $(after { $($after:tt)* })?
-        ) => {
-            $($header)* { #[allow(unused_unsafe)] unsafe {
-                $($before)*
-                if $condition $effects $(else $otherwise)?
-                $($($after)*)?
-            }}
-        };
-    }
-    pub(crate) use countdown_callbacks;
-
     // Declare address tables with the same calls and unreachable fallback.
     macro_rules! address_dispatch {
         ($($(#[$metadata:meta])* $visibility:vis unsafe fn $name:ident $parameters:tt $(-> $result:ty)?
@@ -346,11 +283,6 @@ pub mod game {
                 @forward [$($forward_header:tt)*];
                 $($([$forward_pattern:pat])? $forward_callback:ident => $forward_call:expr;)*
             )*
-            $(
-                @countdown [$($count_header:tt)*]; before $before:tt when $condition:expr;
-                $($([$count_pattern:pat])? $count_callback:ident $effects:tt
-                    $(else $otherwise:tt)? $(after $after:tt)?;)*
-            )*
             $(@external {$($external_pattern:pat => $target:tt $(::$path_tail:ident)*;)*})?
         ) => {
             $(
@@ -364,12 +296,6 @@ pub mod game {
                     $($forward_header)*; $($forward_callback => $forward_call;)*
                 }
             )*
-            $(
-                $crate::game::countdown_callbacks! {
-                    $($count_header)*; before $before when $condition;
-                    $($count_callback $effects $(else $otherwise)? $(after $after)?;)*
-                }
-            )*
             $(#[$metadata])*
             $visibility unsafe fn $name $parameters $(-> $result)? {
                 $crate::game::callback_dispatch!(@body [$($body_mode)?] {
@@ -377,7 +303,6 @@ pub mod game {
                 match $selector {
                     $($($($pattern => $crate::game::address_dispatch!(@call $arguments $callback),)?)*)*
                     $($($($forward_pattern => $crate::game::address_dispatch!(@call $arguments $forward_callback),)?)*)*
-                    $($($($count_pattern => $crate::game::address_dispatch!(@call $arguments $count_callback),)?)*)*
                     $($($external_pattern => $crate::game::address_dispatch!(@call $arguments $target $(::$path_tail)*),)*)?
                     _ => $fallback
                 }
@@ -396,11 +321,6 @@ pub mod game {
                 @forward [$($forward_header:tt)*];
                 $($([$forward_pattern:pat])? $forward_callback:ident => $forward_call:expr;)*
             )*
-            $(
-                @countdown [$($count_header:tt)*]; before $before:tt when $condition:expr;
-                $($([$count_pattern:pat])? $count_callback:ident $effects:tt
-                    $(else $otherwise:tt)? $(after $after:tt)?;)*
-            )*
             $(@external {$($external_pattern:pat => $target:tt $(::$path_tail:ident)*;)*})?
         ) => {
             $(
@@ -414,12 +334,6 @@ pub mod game {
                     $($forward_header)*; $($forward_callback => $forward_call;)*
                 }
             )*
-            $(
-                $crate::game::countdown_callbacks! {
-                    $($count_header)*; before $before when $condition;
-                    $($count_callback $effects $(else $otherwise)? $(after $after)?;)*
-                }
-            )*
             $(#[$metadata])*
             $visibility fn $name $parameters $(-> $result)? {
                 $crate::game::callback_dispatch!(@body [checked] {
@@ -427,7 +341,6 @@ pub mod game {
                 match $selector {
                     $($($($pattern => $crate::game::address_dispatch!(@call $arguments $callback),)?)*)*
                     $($($($forward_pattern => $crate::game::address_dispatch!(@call $arguments $forward_callback),)?)*)*
-                    $($($($count_pattern => $crate::game::address_dispatch!(@call $arguments $count_callback),)?)*)*
                     $($($external_pattern => $crate::game::address_dispatch!(@call $arguments $target $(::$path_tail)*),)*)?
                     _ => $fallback
                 }

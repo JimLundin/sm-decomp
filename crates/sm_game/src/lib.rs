@@ -95,10 +95,10 @@ pub mod actors {
     pub mod access;
     pub mod animation;
     pub mod api;
-    pub mod blue_brinstar_face_block;
     pub mod baby_metroid;
     pub mod baby_metroid_cutscene;
     pub mod baby_metroid_encounter;
+    pub mod blue_brinstar_face_block;
     pub mod boss_lease;
     pub mod botwoon;
     pub mod botwoon_death;
