@@ -12,11 +12,11 @@ use crate::actors::{
     alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, bull, cacatac,
     ceres_doors, ceres_ridley, choot, covern, crawlers, crocomire_reactions, dachora_run,
     draygon_death, draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep,
-    elevator, escape_critters, etecoon, evir, fire_arc, fireflea, fune, gamet, geega, kago,
+    elevator, escape_critters, etecoon, evir, fire_arc, fireflea, fune, gamet, geega, geruta, kago,
     kihunter, kraid, magdollite, metroid, mini_kraid, mochtroid, morph_ball_eye, multiviola, oum,
     phantoon, phantoon_actions, polyp, powamp, puyo, reflec, ridley, rinka, rio, rippers, roach,
-    shaktool, sidehopper, skree, skultera, space_pirates, statues, tatori, torizo, tripper,
-    work_robot, wrecked_ship_spark, yapping_maw, yard, zeb, zebetites, zoa,
+    shaktool, sidehopper, skree, skultera, space_pirates, squeept, statues, tatori, torizo,
+    tripper, work_robot, wrecked_ship_spark, yapping_maw, yard, zeb, zebetites, zoa,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -671,6 +671,13 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10675418 => rippers::main_ai(rippers::Kind::Ripper, game),
         10664909 => rio::initialize(game),
         10664931 => rio::main_ai(game),
+        10666562 => geruta::initialize(false, game),
+        10667763 => geruta::initialize(true, game),
+        10665625 => squeept::initialize(game),
+        10662175 | 10665682 | 10666615 | 10667812 => {
+            game.next_random();
+            pre_instruction(geruta::function(game), game);
+        }
         _ => game.native_ai(ea),
     }
 }
@@ -834,6 +841,23 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
             }
             magdollite::finish_arm_growth(actor, game);
         }
+        10666625 => geruta::flames(k, false, game),
+        10666727 => geruta::idle(k, false, game),
+        10666815 => geruta::finish_animation(k, false, false, game),
+        10667014 => geruta::finish_animation(k, false, true, game),
+        10667822 => geruta::flames(k, true, game),
+        10667889 => geruta::idle(k, true, game),
+        10667963 => geruta::finish_animation(k, true, false, game),
+        10668168 => geruta::finish_animation(k, true, true, game),
+        10666849 => geruta::swoop(k, false, true, game),
+        10666929 => geruta::swoop(k, false, false, game),
+        10667990 => geruta::swoop(k, true, true, game),
+        10668077 => geruta::swoop(k, true, false, game),
+        10665692 => squeept::flame(k, game),
+        10665754 => squeept::jump(k, game),
+        10665790 => squeept::fly(k, squeept::Flight::Rising, game),
+        10665852 => squeept::fly(k, squeept::Flight::Flipping, game),
+        10665916 => squeept::fly(k, squeept::Flight::Falling, game),
         _ => game.native_pre_instruction(ea, k),
     }
 }
@@ -1233,6 +1257,14 @@ pub fn instruction<H: InstructionHost>(
         11769191 => botwoon::set_spitting(j, game),
         10664899 => {
             rio::set_animation_finished(game);
+            j
+        }
+        10666441 | 10666452 | 10666463 | 10666474 | 10666485 | 10666496 | 10666507 | 10666518
+        | 10666529 | 10666540 | 10666551 | 10667730 | 10667741 | 10667752 => {
+            geruta::instruction(ea, j, game)
+        }
+        10665614 => {
+            squeept::set_animation_finished(game);
             j
         }
         _ => game.native_instruction(ea, k, j),
