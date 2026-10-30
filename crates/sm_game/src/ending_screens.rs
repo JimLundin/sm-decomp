@@ -65,8 +65,8 @@ pub fn fade_ending_gunship_backdrop<H: crate::menus::host::Host + ?Sized>(game: 
             && game.ram().read_byte(0x75) == 64
             && game.ram().read_byte(0x76) == 0x80
         {
-            game.ram().write_byte(0x6f, 0);
-            game.ram().write_byte(0x72, 0);
+            game.ram().write_byte(crate::ram::mirror::CGWSEL, 0);
+            game.ram().write_byte(crate::ram::mirror::CGADSUB, 0);
         }
         word!(game.cinematic_var4 = 8);
     }
@@ -129,7 +129,7 @@ pub fn advance_ending_samus_jump<H: crate::menus::host::Host + ?Sized>(
         }
     } else if word!(game.cinematicbg_arr8[slot]) as i32 + 80 & 0x8000 != 0 {
         if phase == 0 {
-            game.ram().write_byte(0x52, 3);
+            game.ram().write_byte(crate::ram::mirror::OBSEL, 3);
         }
         word! {game; cinematicspr_instr_timer[slot] = 1;
         cinematicspr_instr_ptr[slot] = if phase == 0 { 0xed95 } else { 0xee9b }; }
@@ -180,10 +180,10 @@ pub fn advance_postcredits_samus_reveal<H: crate::menus::host::Host + ?Sized>(
         word!(game.cinematic_var4 = 127);
     } else {
         set_cinematic_blend(16, 0, 0, 0, game);
-        game.ram().write_byte(0x55, 7);
-        game.ram().write_byte(0x5f, 0x80);
-        game.ram().write_byte(0x58, 0);
-        game.ram().write_byte(0x5d, 0);
+        game.ram().write_byte(crate::ram::mirror::BGMODE, 7);
+        game.ram().write_byte(crate::ram::mirror::M7SEL, 0x80);
+        game.ram().write_byte(crate::ram::mirror::BG1SC, 0);
+        game.ram().write_byte(crate::ram::mirror::BG12NBA, 0);
         word! {game; cinematic_function = 0xdb9d; cinematic_var14 = 0; }
     }
     let under_three = word!(game.game_time_hours) as i32 - 3 & 0x8000 != 0;
@@ -348,12 +348,12 @@ pub fn advance_postcredits_zoom<H: crate::menus::host::Host + ?Sized>(zooming: b
     }
     game.advance_ending_graphics(EndingGraphics::Background);
     if word!(game.cinematic_var4 -= 1, reread) == 0 {
-        game.ram().write_byte(0x55, 1);
+        game.ram().write_byte(crate::ram::mirror::BGMODE, 1);
         set_cinematic_blend(17, 0, 0, 49, game);
         set_fixed_color([63, 95, 159], game);
-        game.ram().write_byte(0x5f, 0);
-        game.ram().write_byte(0x58, 78);
-        game.ram().write_byte(0x5d, 84);
+        game.ram().write_byte(crate::ram::mirror::M7SEL, 0);
+        game.ram().write_byte(crate::ram::mirror::BG1SC, 78);
+        game.ram().write_byte(crate::ram::mirror::BG12NBA, 84);
         crate::word_transfers!(game, ascending, 16; le(palette_buffer, 192) <- rom(0x8ce7e9, 192));
         word! { game, 0; cinematic_var8, cinematic_var10 }
         word! {game; cinematic_function = 0xe504; cinematic_var4 = 32; }

@@ -1096,3 +1096,85 @@ macro_rules! ram_words {
         (($crate::ram_word!($game.$hi) as u32) << 16i32) | ($crate::ram_word!($game.$lo) as u32)
     };
 }
+
+/// The work RAM bytes that mirror PPU and CPU registers ($7E:0051..), written
+/// by game code and copied to the hardware during NMI. Each is checked against
+/// `RAM_VARS` by name.
+#[allow(non_upper_case_globals)]
+pub mod mirror {
+    pub const INIDISP: usize = 0x51;
+    pub const OBSEL: usize = 0x52;
+    pub const BGMODE: usize = 0x55;
+    pub const MOSAIC: usize = 0x57;
+    pub const BG1SC: usize = 0x58;
+    pub const BG2SC: usize = 0x59;
+    pub const BG3SC: usize = 0x5a;
+    pub const BG4SC: usize = 0x5c;
+    pub const BG12NBA: usize = 0x5d;
+    pub const BG34NBA: usize = 0x5e;
+    pub const M7SEL: usize = 0x5f;
+    pub const W12SEL: usize = 0x60;
+    pub const W34SEL: usize = 0x61;
+    pub const WOBJSEL: usize = 0x62;
+    pub const WH0: usize = 0x63;
+    pub const WH1: usize = 0x64;
+    pub const WH2: usize = 0x65;
+    pub const WH3: usize = 0x66;
+    pub const WBGLOG: usize = 0x67;
+    pub const WOBJLOG: usize = 0x68;
+    pub const TM: usize = 0x69;
+    pub const TS: usize = 0x6b;
+    pub const TMW: usize = 0x6c;
+    pub const TSW: usize = 0x6d;
+    pub const CGWSEL: usize = 0x6f;
+    pub const CGADSUB: usize = 0x72;
+    pub const COLDATA: usize = 0x74;
+    pub const SETINI: usize = 0x77;
+    pub const NMITIMEN: usize = 0x84;
+    pub const HDMAEN: usize = 0x85;
+    pub const MEMSEL: usize = 0x86;
+
+    #[cfg(test)]
+    #[test]
+    fn match_the_named_ram_table() {
+        for (addr, name) in [
+            (INIDISP, "reg_INIDISP"),
+            (OBSEL, "reg_OBSEL"),
+            (BGMODE, "reg_BGMODE"),
+            (MOSAIC, "reg_MOSAIC"),
+            (BG1SC, "reg_BG1SC"),
+            (BG2SC, "reg_BG2SC"),
+            (BG3SC, "reg_BG3SC"),
+            (BG4SC, "reg_BG4SC"),
+            (BG12NBA, "reg_BG12NBA"),
+            (BG34NBA, "reg_BG34NBA"),
+            (M7SEL, "reg_M7SEL"),
+            (W12SEL, "reg_W12SEL"),
+            (W34SEL, "reg_W34SEL"),
+            (WOBJSEL, "reg_WOBJSEL"),
+            (WH0, "reg_WH0"),
+            (WH1, "reg_WH1"),
+            (WH2, "reg_WH2"),
+            (WH3, "reg_WH3"),
+            (WBGLOG, "reg_WBGLOG"),
+            (WOBJLOG, "reg_WOBJLOG"),
+            (TM, "reg_TM"),
+            (TS, "reg_TS"),
+            (TMW, "reg_TMW"),
+            (TSW, "reg_TSW"),
+            (CGWSEL, "reg_CGWSEL"),
+            (CGADSUB, "reg_CGADSUB"),
+            (COLDATA, "reg_COLDATA"),
+            (SETINI, "reg_SETINI"),
+            (NMITIMEN, "reg_NMITIMEN"),
+            (HDMAEN, "reg_HDMAEN"),
+            (MEMSEL, "reg_MEMSEL"),
+        ] {
+            let row = super::RAM_VARS
+                .iter()
+                .find(|row| row.name == name)
+                .expect(name);
+            assert_eq!(row.addr as usize, addr, "{name}");
+        }
+    }
+}

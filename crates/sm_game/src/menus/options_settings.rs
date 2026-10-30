@@ -5,8 +5,8 @@ use super::prelude::*;
 use crate::ram::word;
 
 pub fn initialize<H: Host + ?Sized>(game: &mut H, upload: fn(&mut H)) {
-    game.ram().write_byte(0x5d, 0);
-    game.ram().write_byte(0x69, 19);
+    game.ram().write_byte(crate::ram::mirror::BG12NBA, 0);
+    game.ram().write_byte(crate::ram::mirror::TM, 19);
     for mirror in [0x6b, 0x6c, 0x6d, 0x6e, 0x71, 0x6f] {
         game.ram().write_byte(mirror, 0);
     }
@@ -93,7 +93,7 @@ pub fn finish_start<H: Host + ?Sized>(game: &mut H) {
 }
 
 fn dissolve<H: Host + ?Sized>(game: &mut H) {
-    game.ram().write_byte(0x57, 3);
+    game.ram().write_byte(crate::ram::mirror::MOSAIC, 3);
     word! { game, 0; screen_fade_delay, screen_fade_counter }
     word!(game.game_options_screen_index = 5);
 }
@@ -263,8 +263,10 @@ pub fn scroll<const DOWN: bool, H: Host + ?Sized>(game: &mut H) {
 pub fn fade_out<H: Host + ?Sized>(game: &mut H, screen: u16, enable: fn(&mut H)) {
     game.fade(false);
     if screen == 5 && game.ram().read_byte(0x57) != 0xf3 {
-        game.ram()
-            .write_byte(0x57, game.ram().read_byte(0x57).wrapping_add(16));
+        game.ram().write_byte(
+            crate::ram::mirror::MOSAIC,
+            game.ram().read_byte(0x57).wrapping_add(16),
+        );
     }
     if game.ram().read_byte(0x51) != 0x80 {
         if screen == 0 && game.ram().read_byte(0x51) == 14 {
@@ -295,14 +297,16 @@ pub fn fade_out<H: Host + ?Sized>(game: &mut H, screen: u16, enable: fn(&mut H))
 pub fn fade_in<const DISSOLVE: bool, H: Host + ?Sized>(game: &mut H) {
     game.fade(true);
     if DISSOLVE && game.ram().read_byte(0x57) != 3 {
-        game.ram()
-            .write_byte(0x57, game.ram().read_byte(0x57).wrapping_sub(16));
+        game.ram().write_byte(
+            crate::ram::mirror::MOSAIC,
+            game.ram().read_byte(0x57).wrapping_sub(16),
+        );
     }
     if game.ram().read_byte(0x51) != 15 {
         return;
     }
     if DISSOLVE {
-        game.ram().write_byte(0x57, 0);
+        game.ram().write_byte(crate::ram::mirror::MOSAIC, 0);
     }
     word! { game, 0; screen_fade_delay, screen_fade_counter }
     if !DISSOLVE {

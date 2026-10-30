@@ -114,7 +114,7 @@ fn fade_palette<H: Host + ?Sized>(game: &mut H) {
         }
         word!(game.menu_index += 1);
         word!(game.g_word_7E0787 = 0);
-        game.ram().write_byte(0x69, 2);
+        game.ram().write_byte(crate::ram::mirror::TM, 2);
     }
 }
 fn load_foreground<H: Host + ?Sized>(game: &mut H) {
@@ -148,7 +148,7 @@ fn load_background<H: Host + ?Sized>(j: u16, game: &mut H) {
 }
 fn begin_area_window<H: Host + ?Sized>(game: &mut H) {
     {
-        game.ram().write_byte(0x6b, 4);
+        game.ram().write_byte(crate::ram::mirror::TS, 4);
         crate::display::sequence::register_writes! { game;
             show_mirror(SubScreen(Layers::of(false, false, true, false, false)), 0x6d, false); show(SubWindowMask(Layers::of(false, false, true, false, false)));
             mirror(CGWSEL as u16, 2, 0x6f, true); mirror(CGADSUB as u16, 0x25, 0x72, true);
@@ -166,7 +166,7 @@ fn begin_area_window<H: Host + ?Sized>(game: &mut H) {
 }
 fn configure_area_window<H: Host + ?Sized>(game: &mut H) {
     {
-        game.ram().write_byte(0x69, 19);
+        game.ram().write_byte(crate::ram::mirror::TM, 19);
         crate::display::sequence::register_writes! { game;
             show_mirror(MainScreen(Layers::of(true, true, false, false, true)), 0x6c, false); show(MainWindowMask(Layers::of(true, true, false, false, true)));
             mirror(W12SEL as u16, 0x23, 0x60, true); mirror(W34SEL as u16, 3, 0x61, true);
@@ -179,9 +179,10 @@ fn open_area_window<H: Host + ?Sized>(game: &mut H) {
     if super::menu_window::open_from_center(game) {
         game.ram()
             .write_byte(0x727, ((word!(game.menu_index)) as u8).wrapping_add(1));
-        game.ram().write_byte(0x69, game.ram().read_byte(0x69) & !2);
-        game.ram().write_byte(0x6c, 0);
-        game.ram().write_byte(0x6d, 0);
+        game.ram()
+            .write_byte(crate::ram::mirror::TM, game.ram().read_byte(0x69) & !2);
+        game.ram().write_byte(crate::ram::mirror::TMW, 0);
+        game.ram().write_byte(crate::ram::mirror::TSW, 0);
         word! {game; reg_BG2VOFS = 24; pausemenu_palette_animation_timer = 1; }
         let mut _v1: u16 = 0;
         crate::word_transfers!(game, ascending, 800; xray(0) <- rom(0xb6e000, 0));
@@ -385,13 +386,13 @@ fn begin_room_window<H: Host + ?Sized>(game: &mut H) {
     {
         draw_area_labels(game);
         super::menu_window::initialize(game);
-        game.ram().write_byte(0x69, 19);
-        game.ram().write_byte(0x6c, 19);
+        game.ram().write_byte(crate::ram::mirror::TM, 19);
+        game.ram().write_byte(crate::ram::mirror::TMW, 19);
         crate::display::sequence::register_writes! { game;
             mirror(W12SEL as u16, 0x32, 0x60, true); mirror(W34SEL as u16, 2, 0x61, true);
             mirror(CGADSUB as u16, 5, 0x72, true); mirror(WOBJSEL as u16, 0x22, 0x62, true);
         }
-        game.ram().write_byte(0x5d, 48);
+        game.ram().write_byte(crate::ram::mirror::BG12NBA, 48);
         game.ram().write_byte(0x9e09, 0);
         game.ram().write_byte(0x9e19, 0);
         menu_tilemap::area_label(game);
@@ -417,10 +418,10 @@ fn open_room_window<H: Host + ?Sized>(game: &mut H) {
     super::menu_window::advance(super::menu_window::Motion::Expand, game);
     if (word!(game.expand_sq_timer -= 1, reread) & 0x8000) != 0 {
         word!(game.menu_index += 1);
-        game.ram().write_byte(0x69, 2);
-        game.ram().write_byte(0x6c, 0);
-        game.ram().write_byte(0x6d, 0);
-        game.ram().write_byte(0x6b, 0);
+        game.ram().write_byte(crate::ram::mirror::TM, 2);
+        game.ram().write_byte(crate::ram::mirror::TMW, 0);
+        game.ram().write_byte(crate::ram::mirror::TSW, 0);
+        game.ram().write_byte(crate::ram::mirror::TS, 0);
     }
     draw_area_labels(game);
 }
@@ -432,9 +433,12 @@ fn initialize_room<H: Host + ?Sized>(game: &mut H) {
         game.set_hdma_enabled(false);
         game.clear_hdma();
         let room = menu_tilemap::native_record(0x8f0000 | u32::from(word!(game.room_ptr)), game);
-        game.ram().write_byte(0x79f, room.byte(1));
-        game.ram().write_byte(0x7a1, room.byte(2));
-        game.ram().write_byte(0x7a3, room.byte(3));
+        game.ram()
+            .write_byte(crate::ram::words::area_index, room.byte(1));
+        game.ram()
+            .write_byte(crate::ram::words::room_x_coordinate_on_map, room.byte(2));
+        game.ram()
+            .write_byte(crate::ram::words::room_y_coordinate_on_map, room.byte(3));
         reset_animations(game);
         scroll_limits(game);
         center_map(112, game);
@@ -580,7 +584,7 @@ fn start_game<H: Host + ?Sized>(game: &mut H) {
     }
 }
 fn clear_room<H: Host + ?Sized>(game: &mut H) {
-    game.ram().write_byte(0x69, 18);
+    game.ram().write_byte(crate::ram::mirror::TM, 18);
     crate::word_transfers!(game, descending, 1024; native(0x37fe) <- value(15));
     menu_tilemap::upload(2048, 0x7e3000, 0, true, game);
     word!(game.menu_index += 1);
@@ -596,7 +600,7 @@ fn restore_area<H: Host + ?Sized>(game: &mut H) {
 }
 fn begin_return_window<H: Host + ?Sized>(game: &mut H) {
     {
-        game.ram().write_byte(0x85, 0);
+        game.ram().write_byte(crate::ram::mirror::HDMAEN, 0);
         game.queue_sound(0, (0x3c) as u8, 6);
         word! { game;
             expand_sq_timer =
@@ -619,8 +623,8 @@ fn begin_return_window<H: Host + ?Sized>(game: &mut H) {
             mirror(HDMAEN as u16, 0xc, 0x85, true); mirror(W12SEL as u16, 0x32, 0x60, true);
             mirror(W34SEL as u16, 2, 0x61, true);
         }
-        game.ram().write_byte(0x5d, 48);
-        game.ram().write_byte(0x62, 34);
+        game.ram().write_byte(crate::ram::mirror::BG12NBA, 48);
+        game.ram().write_byte(crate::ram::mirror::WOBJSEL, 34);
         game.ram().write_byte(0x9e09, 0);
         game.ram().write_byte(0x9e19, 0);
         word! { game, 0; reg_BG1VOFS, reg_BG1HOFS }
@@ -631,9 +635,9 @@ fn close_room_window<H: Host + ?Sized>(game: &mut H) {
     draw_area_labels(game);
     if (word!(game.expand_sq_timer -= 1, reread) & 0x8000) != 0 {
         word!(game.menu_index -= 15);
-        game.ram().write_byte(0x69, 17);
-        game.ram().write_byte(0x6c, 0);
-        game.ram().write_byte(0x6d, 0);
+        game.ram().write_byte(crate::ram::mirror::TM, 17);
+        game.ram().write_byte(crate::ram::mirror::TMW, 0);
+        game.ram().write_byte(crate::ram::mirror::TSW, 0);
     }
 }
 
@@ -1162,8 +1166,8 @@ pub fn render_map<H: Host + ?Sized>(screen: MapScreen, game: &mut H) {
 }
 
 fn draw_room_map<H: Host + ?Sized>(game: &mut H) {
-    game.ram().write_byte(0x5d, 51);
-    game.ram().write_byte(0x69, 19);
+    game.ram().write_byte(crate::ram::mirror::BG12NBA, 51);
+    game.ram().write_byte(crate::ram::mirror::TM, 19);
     word!(game.reg_BG1VOFS = -40i16 as u16);
     render_map(MapScreen::FileSelect, game);
     menu_tilemap::upload(4096, 0x7e3000, 0, false, game);

@@ -104,7 +104,7 @@ fn fade_from_main<H: Host + ?Sized>(game: &mut H) {
 fn fade_to_main<H: Host + ?Sized>(game: &mut H) {
     game.fade(false);
     game.ram().write_byte(
-        0x57,
+        crate::ram::mirror::MOSAIC,
         (game.ram().read_byte(0x57) as i32 & 0xf
             | 16 * (game.ram().read_byte(0x51) as i32 & 0xf) ^ 0xf0) as u8,
     );
@@ -121,7 +121,7 @@ fn fade_in<H: Host + ?Sized>(game: &mut H) {
     crate::sprite_output::menu_selection(game);
     game.fade(true);
     game.ram().write_byte(
-        0x57,
+        crate::ram::mirror::MOSAIC,
         (game.ram().read_byte(0x57) as i32 & 0xf
             | 16 * (game.ram().read_byte(0x51) as i32 & 0xf) ^ 0xf0) as u8,
     );
