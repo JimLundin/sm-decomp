@@ -1339,7 +1339,7 @@ crate::dispatch::callback_dispatch! {
     };
     [11123173] phase_2_firing_rainbow_beam_move_samus_towards_wall [] {
         play_rainbow_beam_sound(game);
-        game.foreign(handle_body_rainbow_palette);
+        handle_body_rainbow_palette(game);
         aim_beam_and_increment_width(game);
         handle_rainbow_beam_explosions(game);
         if move_samus_towards_wall_due_to_beam(game) & 1 != 0 {
@@ -1350,7 +1350,7 @@ crate::dispatch::callback_dispatch! {
     };
     [11123200] phase_2_firing_rainbow_beam_1_frame_delay [] {
         play_rainbow_beam_sound(game);
-        game.foreign(handle_body_rainbow_palette);
+        handle_body_rainbow_palette(game);
         aim_beam_and_increment_width(game);
         handle_rainbow_beam_explosions(game);
         move_samus_towards_wall_due_to_beam(game);
@@ -1370,7 +1370,7 @@ crate::dispatch::callback_dispatch! {
     };
     [11123260] phase_2_firing_rainbow_beam_draining_samus [] {
         play_rainbow_beam_sound(game);
-        game.foreign(handle_body_rainbow_palette);
+        handle_body_rainbow_palette(game);
         aim_beam_and_increment_width(game);
         handle_rainbow_beam_explosions(game);
         game.foreign(|game| {
@@ -1386,7 +1386,7 @@ crate::dispatch::callback_dispatch! {
     };
     [11123294] phase_2_firing_rainbow_beam_finish_firing_rainbow_beam [] {
         play_rainbow_beam_sound(game);
-        game.foreign(handle_body_rainbow_palette);
+        handle_body_rainbow_palette(game);
         aim_beam(game);
         handle_rainbow_beam_explosions(game);
         let e: i32 = 0;
@@ -1459,7 +1459,7 @@ crate::dispatch::callback_dispatch! {
         }
     };
     [11124317] drained_by_baby_metroid_regain_balance [] {
-        game.foreign(handle_body_rainbow_palette);
+        handle_body_rainbow_palette(game);
         let e: i32 = 0;
         session_slot!(game, MotherBrainBody[e].function_timer = session_slot!(game, MotherBrainBody[e].function_timer).wrapping_sub(1));
         if (session_slot!(game, MotherBrainBody[e].function_timer) & 0x8000) != 0 {
@@ -1550,7 +1550,7 @@ crate::dispatch::callback_dispatch! {
         if session_slot!(game, MotherBrainBrain[e1].shake_timer) == 0 {
             session_slot!(game, MotherBrainBrain[e1].shake_timer = 50);
         }
-        game.foreign(handle_body_rainbow_palette);
+        handle_body_rainbow_palette(game);
         run_painful_walking_function(((session_slot!(game, MotherBrainBrain[e1].painful_walk_function)) as u32) | (BANK_BASE), game);
         let v2: u16 = (2u16).wrapping_mul(session_slot!(game, MotherBrainBrain[e1].painful_walk_stage));
         session_slot!(game, MotherBrainBrain[e1].painful_walk_delay = WALKING_ANIMATION_DELAYS[v2 as usize] as u16);
@@ -2377,8 +2377,8 @@ pub fn body_first_phase(game: &mut impl Lease) {
     }
 }
 /// The falling tubes run in `crate::actors::mother_brain_tubes`.
-pub fn tubes_falling_main(k: u16, game: &mut impl Lease) {
-    game.foreign(|game| crate::actors::mother_brain_tubes::main_ai(game, k));
+pub fn tubes_falling_main(k: u16, game: &mut impl Host) {
+    crate::actors::mother_brain_tubes::main_ai(&mut game.lease(), k);
 }
 crate::dispatch::callback_dispatch! {
     pub fn run_instruction(ea: u32, k: u16, game: &mut impl Lease) -> u16 => ea;
@@ -2651,9 +2651,9 @@ pub fn instruction_aim_rings(x: u16, y: u16, game: &mut impl State) {
 }
 crate::dispatch::forward_calls! { pub fn (game: &mut impl Lease);
     generate_smoky_explosions =>
-        game.foreign(|game| generate_body_explosions(0x10, ADDR_WORD_A9B10F as u16, 2, game));
+        generate_body_explosions(0x10, ADDR_WORD_A9B10F as u16, 2, game);
     generate_mixed_explosions =>
-        game.foreign(|game| generate_body_explosions(8, ADDR_WORD_A9B109 as u16, 4, game));
+        generate_body_explosions(8, ADDR_WORD_A9B109 as u16, 4, game);
 }
 pub fn explode_escape_door(game: &mut impl Lease) {
     {
@@ -2968,12 +2968,10 @@ pub fn write_default_palette(game: &mut impl State) {
 }
 pub fn write_phase_2_death_palette(game: &mut impl Lease) {
     {
-        game.foreign(|game| {
-            write_mother_brain_palette(
-                mother_brain_tables::rainbow_beam_palette(game, 6).colors,
-                game,
-            )
-        });
+        write_mother_brain_palette(
+            mother_brain_tables::rainbow_beam_palette(game, 6).colors,
+            game,
+        );
     }
 }
 pub fn spawn_baby_metroid_in_cutscene(game: &mut impl Lease) {
@@ -3173,17 +3171,10 @@ crate::dispatch::callback_dispatch! {
         }
     };
 }
-/// The neck runs in `crate::actors::mother_brain_neck`.
-pub fn handle_neck(game: &mut impl Lease) {
-    game.foreign(crate::actors::mother_brain_neck::handle_neck);
-}
-pub fn retract_head(game: &mut impl Lease) {
-    game.foreign(crate::actors::mother_brain_neck::retract_head);
-}
-/// The phase-3 neck functions run in `crate::actors::mother_brain_neck`.
-pub fn phase_3_neck_handler(game: &mut impl Lease) {
-    game.foreign(crate::actors::mother_brain_neck::run_phase3);
-}
+/// The neck, on the frame's lease.
+pub use crate::actors::mother_brain_neck::{
+    handle_neck, retract_head, run_phase3 as phase_3_neck_handler,
+};
 pub fn move_enemy_with_velocity(game: &mut impl State) {
     {
         let v0: i32 = word!(game.cur_enemy_index) as i32;

@@ -210,10 +210,6 @@ impl sm_game::actors::mother_brain_tubes::Host for Game {
     fn start_earthquake(&mut self, kind: u16) {
         crate::game::mother_brain_visuals::start_earthquake(kind, self);
     }
-
-    fn setup_neck_for_fake_ascent(&mut self) {
-        sm_game::actors::mother_brain_neck::setup_for_fake_ascent(self);
-    }
 }
 
 // The phase-3 neck functions are the ones `dispatch_neck_function` dispatched on.
