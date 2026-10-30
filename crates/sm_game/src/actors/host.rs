@@ -160,12 +160,13 @@ pub fn sign_extend8(value: u16) -> u16 {
 /// What enemies that run on the host itself, without a lease, need of it.
 pub trait EnemyHost:
     crate::actors::session_slots::SlotAccess
-    + Random
-    + ActorRuntime
+    + BossEffects
     + crate::records::Records
     + crate::actors::species::SpeciesHost
 {
     fn current_enemy(&self) -> u16;
+    fn set_current_enemy(&mut self, k: u16);
+    fn random_number(&self) -> u16;
     fn area_boss_flags(&mut self) -> u8;
     fn angle_to_player(&mut self, k: u16) -> u16;
     /// The direction of the projectile the current enemy collided with.

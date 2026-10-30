@@ -1193,10 +1193,6 @@ crate::game::callback_dispatch! {
         11060719 => crate::game::actors::maridia_floater::shot;
         11060799 => crate::game::actors::maridia_floater::power_bomb;
         11069198 | 11069725 => [crate::ram_map::word!(game.PROJECTILE_DIR[crate::ram_map::word!(game.COLLISION_DETECTION_INDEX)] &= !(0x10))];
-        11071880 => crate::game::actors::ki_hunter::initialize;
-        11072020 => crate::game::actors::ki_hunter::initialize_wings; 11072092 => crate::game::actors::ki_hunter::advance;
-        11072098 => crate::game::actors::ki_hunter::advance;
-        11073281 => crate::game::actors::ki_hunter::shot;
         11111301 => [{
                     sm_a9::tubes_falling_main_ai(crate::ram_map::word!(game.CUR_ENEMY_INDEX), game);
                 }];
@@ -1399,7 +1395,6 @@ crate::game::callback_dispatch! {
         10734687 => [maridia_snail::instruction(k, 3, j, game)];
         10734712 => [maridia_snail::instruction(k, 4, j, game)];
         11056990 => [j];
-        11072806 | 11072996 | 11073151 | 11073234 | 11073240 => [crate::game::actors::ki_hunter::instruction(ea, k, j, game)];
         11128756 => [sm_game::actors::baby_metroid_cutscene::go_to_initial(k, j)];
         11128778 => [sm_game::actors::baby_metroid_cutscene::go_to_draining_mother_brain(k, j)];
         11139360 => [sm_game::actors::baby_metroid_encounter::go_to_normal(k, j)]; 11139382 => [sm_game::actors::baby_metroid_encounter::go_to_latched_on(k, j)];

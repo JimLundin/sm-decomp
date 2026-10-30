@@ -12,11 +12,11 @@ use crate::actors::{
     alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, bull, cacatac,
     ceres_doors, ceres_ridley, choot, covern, crawlers, crocomire_reactions, dachora_run,
     draygon_death, draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep,
-    elevator, escape_critters, etecoon, evir, fire_arc, fireflea, fune, gamet, geega, kago, kraid,
-    magdollite, metroid, mini_kraid, mochtroid, morph_ball_eye, oum, phantoon, phantoon_actions,
-    puyo, reflec, ridley, rinka, roach, shaktool, sidehopper, skree, skultera, space_pirates,
-    statues, tatori, torizo, tripper, work_robot, wrecked_ship_spark, yapping_maw, zeb, zebetites,
-    zoa,
+    elevator, escape_critters, etecoon, evir, fire_arc, fireflea, fune, gamet, geega, kago,
+    kihunter, kraid, magdollite, metroid, mini_kraid, mochtroid, morph_ball_eye, oum, phantoon,
+    phantoon_actions, puyo, reflec, ridley, rinka, roach, shaktool, sidehopper, skree, skultera,
+    space_pirates, statues, tatori, torizo, tripper, work_robot, wrecked_ship_spark, yapping_maw,
+    zeb, zebetites, zoa,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -553,6 +553,10 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11065545 => bull::initialize(game),
         11065611 => bull::main_ai(game),
         11066132 => bull::shot(game),
+        11071880 => kihunter::initialize(game),
+        11072020 => kihunter::initialize_wings(game),
+        11072092 | 11072098 => kihunter::main_ai(game),
+        11073281 => kihunter::shot(game),
         11068983 => wrecked_ship_spark::initialize(game),
         11069070 => wrecked_ship_spark::main_ai(game),
         10663876 => {
@@ -815,6 +819,9 @@ pub fn instruction<H: InstructionHost>(
         10725992 => sidehopper::queue_sound(j, game),
         10657941 => cacatac::resume_moving(k, j, game),
         11068957 | 11068970 => wrecked_ship_spark::set_intangible(game, ea == 11068957, j),
+        11072806 | 11072996 | 11073151 | 11073234 | 11073240 => {
+            kihunter::instruction(game, ea, k, j)
+        }
         11062537 | 11062692 | 11062762 | 11062917 | 11062987 | 11062991 | 11063146 | 11063216
         | 11063371 | 11063441 | 11063490 | 11063494 | 11063506 | 11063552 | 11063559 | 11063601
         | 11063613 | 11063659 => work_robot::instruction(ea, k, j, game),

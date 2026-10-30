@@ -153,6 +153,7 @@ pub mod actors {
     pub mod host;
     pub mod identity;
     pub mod kago;
+    pub mod kihunter;
     pub mod kraid;
     pub mod kraid_fingernails;
     pub mod kraid_lint;

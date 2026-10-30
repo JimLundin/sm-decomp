@@ -12,6 +12,12 @@ impl sm_game::actors::host::EnemyHost for Game {
     fn current_enemy(&self) -> u16 {
         word!(self.CUR_ENEMY_INDEX)
     }
+    fn set_current_enemy(&mut self, k: u16) {
+        word!(self.CUR_ENEMY_INDEX = k);
+    }
+    fn random_number(&self) -> u16 {
+        word!(self.RANDOM_NUMBER)
+    }
     fn area_boss_flags(&mut self) -> u8 {
         crate::game::gameplay_flag_runtime::boss_byte_at(word!(self.AREA_INDEX), self)
     }

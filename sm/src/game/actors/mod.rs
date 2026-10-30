@@ -95,7 +95,6 @@ pub(crate) mod crocomire_reactions;
 pub(in crate::game) mod draygon_eye;
 pub(in crate::game) mod draygon_flight;
 pub(in crate::game) mod fune;
-pub(in crate::game) mod ki_hunter;
 pub(crate) mod magdollite;
 pub(in crate::game) mod maridia_floater;
 pub(crate) mod spore_spawn;
