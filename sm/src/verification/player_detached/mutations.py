@@ -459,7 +459,7 @@ def main():
         raise RuntimeError("mutation builds and execution are restricted to GitHub CI")
     # Installed at sm/src/verification/player_detached/mutations.py.
     source = Path(__file__).resolve().parents[2]
-    if not (source / "game" / "launch_motion.rs").is_file():
+    if not (source / "verification" / "player_detached" / "main.rs").is_file():
         raise RuntimeError("install this runner alongside the repo detached harness")
     with tempfile.TemporaryDirectory(prefix="player-detached-mutations-") as directory:
         work = Path(directory)

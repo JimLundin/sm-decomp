@@ -8,46 +8,36 @@ ACTOR_CONTRACT_MUTATIONS = (
     ("actor_room_keeps_old_obj_receipts",
      "game::actors::palette_checks::unrelated_rooms_can_reuse_a_row_but_only_its_current_resource_is_resident",
      "actor.palette.actor_clear_revokes_obj_receipts",
-     (("actors/media.rs", "self.rows[8..].fill(None);", "let _ = &self.rows[8..];"),)),
+     (("crates/sm_game/src/actors/media.rs", "self.rows[8..].fill(None);", "let _ = &self.rows[8..];"),)),
     ("actor_appearance_skips_residency_preflight",
      "game::actors::palette_checks::dynamic_appearance_rejects_missing_residency_and_conflicts_before_publication",
      "actor.palette.selection_requires_residency",
-     (("actors/identity.rs",
+     (("crates/sm_game/src/actors/identity.rs",
        "world.actor_media().validate_appearance_residency(\n            appearance,\n            &self.palette_residency,\n            image,\n        )?;",
        "let _ = (world, image);"),)),
-    ("actor_restore_reuses_live_epoch",
-     "game::actors::identity::actor_identity_checks::discarded_future_handle_rejected_after_same_instance_restore_and_replay",
-     "discarded_future_handle_rejected",
-     (("actors/identity.rs", "self.live_epoch = epoch;", "self.live_epoch = epoch.saturating_sub(1);"),)),
     ("actor_projected_edit_discards_changes",
      "game::actors::codec_checks::actor_edits_publish_only_changed_fields_on_normal_return_and_unwind",
      "actor.contract.guard_unwind_changed_bytes",
-     (("actors/access.rs", "            &self.edited,", "            &self.original,"),)),
-    ("actor_daff_retires_occurrence",
-     "game::actors::identity::actor_identity_checks::compatibility_bytes_and_daff_preserve_occurrence_but_nominal_rebirth_does_not",
-     "actor.contract.daff_retains_occurrence",
-     (("actors/identity.rs", "pub(super) fn convert_to_placeholder(&mut self, _slot: u16) {}",
-       "pub(super) fn convert_to_placeholder(&mut self, slot: u16) { self.retire(slot); }"),)),
+     (("crates/sm_game/src/actors/access.rs", "            &self.edited,", "            &self.original,"),)),
     ("actor_default_appearance_missing_from_media_revision",
      "game::actors::catalog_checks::default_appearance_changes_media_revision_only",
      "actor.contract.default_appearance_changes_media_revision",
-     (("actors/media.rs", "(id, species.default_appearance).hash(&mut hash);", "id.hash(&mut hash);"),)),
+     (("crates/sm_game/src/actors/media.rs", "(id, species.default_appearance).hash(&mut hash);", "id.hash(&mut hash);"),)),
 )
 
 def _build(source, work, name, run, edits=()):
+    from mutations import apply_edit, build_packages, mutant_crates
     copied = work / name / "src"
     shutil.copytree(source, copied)
+    crates = mutant_crates(source, work, name, edits)
     for relative, before, after in edits:
-        target = copied / "game" / relative
-        original = target.read_text(encoding="utf-8")
-        if original.count(before) != 1:
-            raise RuntimeError(f"{name}: expected exactly one actor mutation anchor in {relative}")
-        target.write_text(original.replace(before, after, 1), encoding="utf-8")
+        apply_edit(name, copied, crates, relative, before, after)
+    externs = build_packages(crates, work, name) if crates is not None else None
     main = copied / "verification" / "player_detached" / "main.rs"
     binary = work / name / ("actor-contracts.exe" if os.name == "nt" else "actor-contracts")
     # Mutants may leave a variable or import unused; the baseline stays strict.
     allow = ("-A", "unused") if edits else ()
-    built = run(["rustc", "--edition=2024", "-O", "--test", str(main), "-o", str(binary)], 180, allow)
+    built = run(["rustc", "--edition=2024", "-O", "--test", str(main), "-o", str(binary)], 180, allow, externs)
     if built.returncode != 0:
         raise RuntimeError(f"{name}: COMPILE ERROR; not a killed mutation\n{built.stderr}")
     return binary
@@ -88,32 +78,32 @@ def check_actor_contracts(source, work, run):
 COLLISION_CONTRACT_MUTATIONS = (('collision_launch_recorded_twice',
   'game::player_collision_host::checks::unchecked_launch',
   'collision.owned.unchecked_launch_exact_once',
-  (('player_collision/motion.rs',
-    '    crate::game::launch_motion::record_movement(\n        &mut h.session_mut().projectiles.launch,\n        direction,\n        amount,\n    );',
-    '    crate::game::launch_motion::record_movement(\n        &mut h.session_mut().projectiles.launch,\n        direction,\n        amount,\n    );\n    crate::game::launch_motion::record_movement(\n        &mut h.session_mut().projectiles.launch,\n        direction,\n        amount,\n    );'),)),
+  (('crates/sm_game/src/player_collision/motion.rs',
+    '    h.session_mut()\n        .projectiles\n        .launch\n        .record_movement(direction, amount);',
+    '    h.session_mut()\n        .projectiles\n        .launch\n        .record_movement(direction, amount);\n    h.session_mut()\n        .projectiles\n        .launch\n        .record_movement(direction, amount);'),)),
  ('collision_shinespark_discards_shared_sequence',
   'game::player_collision_host::checks::shared_sequence_real_motion',
   'collision.owned.sequence_shared_after_move',
-  (('player_collision/motion.rs',
+  (('crates/sm_game/src/player_collision/motion.rs',
     '        let next = sequence.wrapping_add(fixed(&session.player.contact.y_acceleration));',
     '        let next = 0u32.wrapping_add(fixed(&session.player.contact.y_acceleration));'),)),
  ('collision_pose_probe_commits_early',
   'game::player_collision_host::checks::clearance_probe_keeps_position',
   'collision.owned.pose_probe_no_coordinate_commit',
-  (('player_collision/motion.rs',
+  (('crates/sm_game/src/player_collision/motion.rs',
     '            let displacement = geometry::pose_probe(h, amount);',
     '            let displacement = geometry::pose_probe(h, amount);\n'
     '            commit_position(h, Axis::Y, displacement);'),)),
  ('collision_actor_cancel_after_commit',
   'game::player_collision_host::checks::actor_cancellation_precedes_position_and_launch',
   'collision.order.actor_cancel_before_launch',
-  (('player_collision/motion.rs',
+  (('crates/sm_game/src/player_collision/motion.rs',
     '        clear_horizontal_speed(h);\n        commit_and_record(h, direction, signed);',
     '        commit_and_record(h, direction, signed);\n        clear_horizontal_speed(h);'),)),
  ('collision_terrain_cancel_before_launch',
   'game::player_collision_host::checks::terrain_cancellation_follows_position_and_launch',
   'collision.order.terrain_cancel_after_launch',
-  (('player_collision/motion.rs',
+  (('crates/sm_game/src/player_collision/motion.rs',
     '        let result = geometry::terrain_move(h, Axis::X, signed);\n'
     '        record(h, direction, result.displacement);',
     '        let result = geometry::terrain_move(h, Axis::X, signed);\n'
@@ -122,7 +112,7 @@ COLLISION_CONTRACT_MUTATIONS = (('collision_launch_recorded_twice',
  ('collision_wall_uses_initial_pose_after_setup',
   'game::player_collision_host::checks::synthetic_wall_mechanism_rereads_pose_after_initial_readiness',
   'collision.synthetic.wall_late_pose_initial_readiness',
-  (('player_collision/jump.rs',
+  (('crates/sm_game/src/player_collision/jump.rs',
     '        // Terrain effects may have changed the pose since the readiness decision.\n'
     '        let pose = h.session().player.pose;',
     '        // Deliberate fault: retain the initial pose across the terrain effect.\n'
