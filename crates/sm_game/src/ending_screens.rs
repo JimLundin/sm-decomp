@@ -9,35 +9,53 @@ use crate::ram::RawRam as _;
 use crate::ram::{word, words as ram_words};
 use crate::visual_state::{CinematicTilemap, EndingGraphics};
 
-/// Bank $8B cinematic functions the ending sets, named for what runs.
+/// Bank $8B cinematic functions the ending sets, with the bank log's names.
 pub mod function {
-    /// Nothing; the cinematic waits on its objects.
+    /// $8B:DB9D: an RTS; the cinematic waits on its objects.
     pub const IDLE: u16 = 0xdb9d;
-    /// The gunship's slow spin, after the fast one.
-    pub const SLOW_GUNSHIP_SPIN: u16 = 0xdd42;
-    /// The gunship backdrop fade, after the slow spin.
-    pub const GUNSHIP_BACKDROP_FADE: u16 = 0xddcd;
-    /// The post-credits message, fading Samus's suit, or not.
-    pub const POSTCREDITS_MESSAGE_FADING_SUIT: u16 = 0xe265;
-    pub const POSTCREDITS_MESSAGE: u16 = 0xe293;
-    /// The full post-credits text, held for its timer.
-    pub const POSTCREDITS_TEXT_HOLD: u16 = 0xe2dd;
-    /// The zoomed-out post-credits background.
-    pub const POSTCREDITS_ZOOMED: u16 = 0xe48a;
-    /// The fixed-colour fade after the zoom.
-    pub const POSTCREDITS_FIXED_COLOR_FADE: u16 = 0xe504;
+    /// $8B:DD42: space view, gunship emergence, spinning slow.
+    pub const GUNSHIP_SPINNING_SLOW: u16 = 0xdd42;
+    /// $8B:DDCD: space view, gunship emergence, fly into camera.
+    pub const GUNSHIP_FLY_INTO_CAMERA: u16 = 0xddcd;
+    /// $8B:E265: post-credits idle Samus 1/2, cross-fading out Samus's suit.
+    pub const IDLE_SAMUS_SUIT_CROSS_FADE: u16 = 0xe265;
+    /// $8B:E293: post-credits idle Samus 1/2.
+    pub const IDLE_SAMUS: u16 = 0xe293;
+    /// $8B:E2DD: post-credits 1994 Nintendo.
+    pub const NINTENDO_1994: u16 = 0xe2dd;
+    /// $8B:E48A: post-credits fade to white.
+    pub const FADE_TO_WHITE: u16 = 0xe48a;
+    /// $8B:E504: post-credits fade from white.
+    pub const FADE_FROM_WHITE: u16 = 0xe504;
 }
 
-/// Bank $8B cinematic sprite scripts the ending switches objects to.
+/// Bank $8B cinematic sprite scripts, with the bank log's names.
 mod sprite {
-    /// $8B:93D9: an RTS pre-instruction; the object stops moving itself.
+    /// $8B:93D9: an RTS pre-instruction.
     pub const NO_PREINSTRUCTION: u16 = 0x93d9;
-    /// Samus's jump: rising, falling into the landing, and landed.
-    pub const JUMP_RISING: u16 = 0xed95;
+    /// $8B:ED95: Samus's jump, falling.
+    pub const JUMP_FALLING: u16 = 0xed95;
+    /// $8B:ED9D: Samus's jump, landed.
     pub const JUMP_LANDED: u16 = 0xed9d;
-    pub const JUMP_FALLING: u16 = 0xee9b;
-    /// The pre-instruction that carries Samus across the screen after the jump.
-    pub const JUMP_CARRY: u16 = 0xf5dd;
+    /// $8B:EE9B: delete.
+    pub const DELETE: u16 = 0xee9b;
+    /// $8B:F5DD: the pre-instruction of Samus's falling jump.
+    pub const JUMP_FALLING_PREINSTRUCTION: u16 = 0xf5dd;
+}
+
+/// Bank $8B cinematic sprite definitions of the post-credits Samus, by ending.
+mod samus {
+    pub const SUITLESS_IDLE: u16 = 0xef27;
+    pub const SUITLESS_IDLE_LEGS: u16 = 0xef2d;
+    pub const SUITLESS_LETTING_HAIR_DOWN: u16 = 0xef33;
+    pub const SUITLESS_LETTING_HAIR_DOWN_LEGS: u16 = 0xef39;
+    pub const SUITED_IDLE_BODY: u16 = 0xef45;
+    pub const SUITED_IDLE_HEAD_WITH_HELMET: u16 = 0xef4b;
+    pub const SUITED_IDLE_HEAD_WITHOUT_HELMET: u16 = 0xef51;
+    pub const SUITED_THUMBS_UP_BODY: u16 = 0xef57;
+    pub const SUITED_THUMBS_UP_ARM: u16 = 0xef5d;
+    pub const SUITED_THUMBS_UP_HEAD_WITH_HELMET: u16 = 0xef63;
+    pub const SUITED_THUMBS_UP_HEAD_WITHOUT_HELMET: u16 = 0xef69;
 }
 
 /// The ending sprites' palette index: palette 7, a multiple of $200.
@@ -92,7 +110,7 @@ pub fn update_ending_critters<H: crate::menus::host::Host + ?Sized>(
     advance_cinematic_coordinate(object, true, 128, game);
     word!(game.cinematicspr_arr6[slot] = word!(game.cinematicspr_arr6[slot]));
     if word!(game.cinematicbg_arr7[slot] += 1, reread) as i32 - 272 & 0x8000 == 0 {
-        resume_cinematic_sprite(slot, sprite::JUMP_FALLING, game);
+        resume_cinematic_sprite(slot, sprite::DELETE, game);
     }
 }
 
@@ -144,7 +162,7 @@ pub fn advance_ending_gunship_spin<H: crate::menus::host::Host + ?Sized>(
         crate::flow::set(
             game,
             crate::flow::Word::CinematicFunction,
-            function::GUNSHIP_BACKDROP_FADE,
+            function::GUNSHIP_FLY_INTO_CAMERA,
         );
         word!(game.cinematic_var14 = 0x8000);
         word!(game.cinematic_var13 = 0);
@@ -154,7 +172,7 @@ pub fn advance_ending_gunship_spin<H: crate::menus::host::Host + ?Sized>(
         crate::flow::set(
             game,
             crate::flow::Word::CinematicFunction,
-            function::SLOW_GUNSHIP_SPIN,
+            function::GUNSHIP_SPINNING_SLOW,
         );
     }
     true
@@ -183,9 +201,9 @@ pub fn advance_ending_samus_jump<H: crate::menus::host::Host + ?Sized>(
             game.ram().write_byte(crate::ram::mirror::OBSEL, 3);
         }
         word! {game; cinematicspr_instr_timer[slot] = 1;
-        cinematicspr_instr_ptr[slot] = if phase == 0 { sprite::JUMP_RISING } else { sprite::JUMP_FALLING }; }
+        cinematicspr_instr_ptr[slot] = if phase == 0 { sprite::JUMP_FALLING } else { sprite::DELETE }; }
         if phase == 0 {
-            word! {game; cinematicspr_preinstr_func[slot] = sprite::JUMP_CARRY; cinematicbg_arr9[slot] = SAMUS_PALETTE; }
+            word! {game; cinematicspr_preinstr_func[slot] = sprite::JUMP_FALLING_PREINSTRUCTION; cinematicbg_arr9[slot] = SAMUS_PALETTE; }
         }
     }
 }
@@ -245,12 +263,26 @@ pub fn advance_postcredits_samus_reveal<H: crate::menus::host::Host + ?Sized>(
         prepare_cinematic_palette_fade(game);
     }
     let sprites: &[u16] = match (initial, under_three, under_ten) {
-        (true, true, _) => &[0xef27, 0xef2d],
-        (true, false, true) => &[0xef51, 0xef45],
-        (true, false, false) => &[0xef4b, 0xef45],
-        (false, true, _) => &[0xef33, 0xef39],
-        (false, false, true) => &[0xef69, 0xef5d, 0xef57],
-        (false, false, false) => &[0xef63, 0xef5d, 0xef57],
+        (true, true, _) => &[samus::SUITLESS_IDLE, samus::SUITLESS_IDLE_LEGS],
+        (true, false, true) => &[
+            samus::SUITED_IDLE_HEAD_WITHOUT_HELMET,
+            samus::SUITED_IDLE_BODY,
+        ],
+        (true, false, false) => &[samus::SUITED_IDLE_HEAD_WITH_HELMET, samus::SUITED_IDLE_BODY],
+        (false, true, _) => &[
+            samus::SUITLESS_LETTING_HAIR_DOWN,
+            samus::SUITLESS_LETTING_HAIR_DOWN_LEGS,
+        ],
+        (false, false, true) => &[
+            samus::SUITED_THUMBS_UP_HEAD_WITHOUT_HELMET,
+            samus::SUITED_THUMBS_UP_ARM,
+            samus::SUITED_THUMBS_UP_BODY,
+        ],
+        (false, false, false) => &[
+            samus::SUITED_THUMBS_UP_HEAD_WITH_HELMET,
+            samus::SUITED_THUMBS_UP_ARM,
+            samus::SUITED_THUMBS_UP_BODY,
+        ],
     };
     for &definition in sprites {
         CinematicObjects::Sprites.spawn(definition, 0, game);
@@ -260,7 +292,7 @@ pub fn advance_postcredits_samus_reveal<H: crate::menus::host::Host + ?Sized>(
             crate::flow::set(
                 game,
                 crate::flow::Word::CinematicFunction,
-                function::POSTCREDITS_MESSAGE,
+                function::IDLE_SAMUS,
             );
             set_cinematic_blend(16, 0, 0, 0, game);
         } else {
@@ -273,7 +305,7 @@ pub fn advance_postcredits_samus_reveal<H: crate::menus::host::Host + ?Sized>(
             crate::flow::set(
                 game,
                 crate::flow::Word::CinematicFunction,
-                function::POSTCREDITS_MESSAGE_FADING_SUIT,
+                function::IDLE_SAMUS_SUIT_CROSS_FADE,
             );
         }
     }
@@ -295,7 +327,7 @@ pub fn advance_postcredits_samus_message<H: crate::menus::host::Host + ?Sized>(
         crate::flow::set(
             game,
             crate::flow::Word::CinematicFunction,
-            function::POSTCREDITS_TEXT_HOLD,
+            function::NINTENDO_1994,
         );
     }
 }
@@ -411,7 +443,7 @@ pub fn advance_postcredits_zoom<H: crate::menus::host::Host + ?Sized>(zooming: b
             crate::flow::set(
                 game,
                 crate::flow::Word::CinematicFunction,
-                function::POSTCREDITS_ZOOMED,
+                function::FADE_TO_WHITE,
             );
             word!(game.cinematic_var4 = 180);
             word!(game.cinematic_var14 = 0);
@@ -431,7 +463,7 @@ pub fn advance_postcredits_zoom<H: crate::menus::host::Host + ?Sized>(zooming: b
         crate::flow::set(
             game,
             crate::flow::Word::CinematicFunction,
-            function::POSTCREDITS_FIXED_COLOR_FADE,
+            function::FADE_FROM_WHITE,
         );
         word!(game.cinematic_var4 = 32);
         enable_cinematic_background(game);

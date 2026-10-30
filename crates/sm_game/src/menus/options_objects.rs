@@ -4,44 +4,38 @@ use super::menu_tilemap::native_record;
 use super::prelude::*;
 use crate::ram::word;
 
-/// Game options menu object definitions in bank $82: an initialisation
-/// function, a pre-instruction and an instruction list, named for the object.
+/// Game options menu object definitions in bank $82 ($F4B8): a setup, a
+/// pre-instruction and an instruction list each, with the bank log's names.
 pub mod definition {
-    pub const MENU_CURSOR: u16 = 0xf4b8;
-    pub const OPTIONS_TITLE: u16 = 0xf4c4;
-    pub const CONTROLLER_TITLE: u16 = 0xf4ca;
-    pub const SPECIAL_TITLE: u16 = 0xf4d0;
-    pub const FADE_IN_TITLE: u16 = 0xf4d6;
+    pub const MENU_SELECTION_MISSILE: u16 = 0xf4b8;
+    pub const OPTION_MODE_BORDER: u16 = 0xf4c4;
+    pub const CONTROLLER_SETTING_MODE_BORDER: u16 = 0xf4ca;
+    pub const SPECIAL_SETTING_MODE_BORDER: u16 = 0xf4d0;
+    pub const SAMUS_DATA_BORDER: u16 = 0xf4d6;
 }
 
-/// The definitions' initialisation functions.
+/// The definitions' setups.
 mod init {
-    /// The menu cursor, and an unspawned cursor at the screen's right.
-    pub const MENU_CURSOR: u16 = 0xf296;
-    pub const RIGHT_CURSOR: u16 = 0xf419;
-    /// The screen titles, one per definition above.
-    pub const OPTIONS_TITLE: u16 = 0xf34b;
-    pub const CONTROLLER_TITLE: u16 = 0xf353;
-    pub const SPECIAL_TITLE: u16 = 0xf35b;
-    pub const FADE_IN_TITLE: u16 = 0xf363;
+    pub const MENU_SELECTION_MISSILE: u16 = 0xf296;
+    /// The unused file select menu Samus helmet ($F4BE).
+    pub const FILE_SELECT_SAMUS_HELMET: u16 = 0xf419;
+    pub const OPTION_MODE_BORDER: u16 = 0xf34b;
+    pub const CONTROLLER_SETTING_MODE_BORDER: u16 = 0xf353;
+    pub const SPECIAL_SETTING_MODE_BORDER: u16 = 0xf35b;
+    pub const SAMUS_DATA_BORDER: u16 = 0xf363;
 }
 
-/// Pre-instructions, named for what they do.
+/// Pre-instructions, with the bank log's names.
 mod preinstruction {
-    /// $82:8C10: an RTS; nothing happens.
+    /// $82:8C10: an RTS.
     pub const NONE: u16 = 0x8c10;
     /// $82:8C81: the target of "clear pre-instruction".
     pub const CLEARED: u16 = 0x8c81;
-    /// Place the cursor at the current menu option.
-    pub const FOLLOW_MENU_OPTION: u16 = 0xf2a9;
-    /// End outside the options state, or on the blanked screen 6.
-    pub const END_OUTSIDE_OPTIONS_OR_BLANK: u16 = 0xf376;
-    /// Scroll with screens 9 and 10; end on the blanked screen 6.
-    pub const SCROLL_WITH_SCREEN: u16 = 0xf3a0;
-    /// End on the blanked screen 6.
-    pub const END_ON_BLANK: u16 = 0xf3e2;
-    /// End outside the options state.
-    pub const END_OUTSIDE_OPTIONS: u16 = 0xf42c;
+    pub const MENU_SELECTION_MISSILE: u16 = 0xf2a9;
+    pub const OPTION_MODE_BORDER: u16 = 0xf376;
+    pub const CONTROLLER_SETTING_MODE_BORDER: u16 = 0xf3a0;
+    pub const SPECIAL_SETTING_MODE_BORDER: u16 = 0xf3e2;
+    pub const FILE_SELECT_SAMUS_HELMET: u16 = 0xf42c;
 }
 
 /// Instructions, with the bank log's names.
@@ -59,16 +53,16 @@ mod instruction {
 const BANK: u32 = 0x82_0000;
 /// $82:F4B6: an instruction list that deletes the object.
 const DELETE_LIST: u16 = 0xf4b6;
-/// The titles and cursors' sprite palette index: palette 7, a multiple of $200.
+/// The objects' sprite palette index: palette 7, a multiple of $200.
 const OBJECT_PALETTE: u16 = 7 * 0x200;
 
 const _: () = {
     use crate::constants::bank_82::*;
-    assert!(definition::MENU_CURSOR == addr_stru_82F4B8 as u16);
-    assert!(definition::OPTIONS_TITLE == addr_stru_82F4C4 as u16);
-    assert!(definition::CONTROLLER_TITLE == addr_stru_82F4CA as u16);
-    assert!(definition::SPECIAL_TITLE == addr_stru_82F4D0 as u16);
-    assert!(definition::FADE_IN_TITLE == addr_stru_82F4D6 as u16);
+    assert!(definition::MENU_SELECTION_MISSILE == addr_stru_82F4B8 as u16);
+    assert!(definition::OPTION_MODE_BORDER == addr_stru_82F4C4 as u16);
+    assert!(definition::CONTROLLER_SETTING_MODE_BORDER == addr_stru_82F4CA as u16);
+    assert!(definition::SPECIAL_SETTING_MODE_BORDER == addr_stru_82F4D0 as u16);
+    assert!(definition::SAMUS_DATA_BORDER == addr_stru_82F4D6 as u16);
     assert!(DELETE_LIST == addr_off_82F4B6 as u16);
     assert!(OBJECT_PALETTE == 3584);
 };
@@ -98,19 +92,19 @@ pub fn spawn<H: Host + ?Sized>(parameter: u16, address: u16, game: &mut H) -> u8
     }
     let entry = record.word(0);
     match entry {
-        init::MENU_CURSOR | init::RIGHT_CURSOR => {
-            let left = entry == init::MENU_CURSOR;
+        init::MENU_SELECTION_MISSILE | init::FILE_SELECT_SAMUS_HELMET => {
+            let left = entry == init::MENU_SELECTION_MISSILE;
             word! { game; options_object_x_pos[slot] = if left { 24 } else { 216 };
             options_object_y_pos[slot] = if left { 56 } else { 16 };
             options_object_palettes[slot] = OBJECT_PALETTE; }
         }
-        init::OPTIONS_TITLE
-        | init::CONTROLLER_TITLE
-        | init::SPECIAL_TITLE
-        | init::FADE_IN_TITLE => {
+        init::OPTION_MODE_BORDER
+        | init::CONTROLLER_SETTING_MODE_BORDER
+        | init::SPECIAL_SETTING_MODE_BORDER
+        | init::SAMUS_DATA_BORDER => {
             let x: u16 = match entry {
-                init::OPTIONS_TITLE => 124,
-                init::CONTROLLER_TITLE => 132,
+                init::OPTION_MODE_BORDER => 124,
+                init::CONTROLLER_SETTING_MODE_BORDER => 132,
                 _ => 128,
             };
             let at = crate::ram::word_arrays::options_object_x_pos + 2 * usize::from(slot);
@@ -157,7 +151,7 @@ fn end_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
 
 fn before_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
     match word!(game.options_object_preinstrs[slot]) {
-        preinstruction::FOLLOW_MENU_OPTION => {
+        preinstruction::MENU_SELECTION_MISSILE => {
             if word!(game.game_state) == 2 {
                 let screen = word!(game.game_options_screen_index);
                 let table = crate::menu_lists::options_screen_objects(game, screen as isize);
@@ -173,7 +167,7 @@ fn before_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
                 end_script(slot, game);
             }
         }
-        preinstruction::END_OUTSIDE_OPTIONS_OR_BLANK => {
+        preinstruction::OPTION_MODE_BORDER => {
             if word!(game.game_state) != 2
                 || word!(game.game_options_screen_index) == 6
                     && game.ram().read_byte(crate::ram::mirror::INIDISP) == 0x80
@@ -181,26 +175,28 @@ fn before_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
                 end_script(slot, game);
             }
         }
-        preinstruction::SCROLL_WITH_SCREEN => match word!(game.game_options_screen_index) {
-            6 if game.ram().read_byte(crate::ram::mirror::INIDISP) == 0x80 => {
-                end_script(slot, game)
+        preinstruction::CONTROLLER_SETTING_MODE_BORDER => {
+            match word!(game.game_options_screen_index) {
+                6 if game.ram().read_byte(crate::ram::mirror::INIDISP) == 0x80 => {
+                    end_script(slot, game)
+                }
+                9 => {
+                    word!(game.options_object_y_pos[slot] -= 2);
+                }
+                10 => {
+                    word!(game.options_object_y_pos[slot] += 2);
+                }
+                _ => {}
             }
-            9 => {
-                word!(game.options_object_y_pos[slot] -= 2);
-            }
-            10 => {
-                word!(game.options_object_y_pos[slot] += 2);
-            }
-            _ => {}
-        },
-        preinstruction::END_ON_BLANK => {
+        }
+        preinstruction::SPECIAL_SETTING_MODE_BORDER => {
             if word!(game.game_options_screen_index) == 6
                 && game.ram().read_byte(crate::ram::mirror::INIDISP) == 0x80
             {
                 end_script(slot, game);
             }
         }
-        preinstruction::END_OUTSIDE_OPTIONS => {
+        preinstruction::FILE_SELECT_SAMUS_HELMET => {
             if word!(game.game_state) != 2 {
                 end_script(slot, game);
             }

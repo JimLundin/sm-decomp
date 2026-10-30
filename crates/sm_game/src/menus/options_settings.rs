@@ -38,9 +38,9 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H, upload: fn(&mut H)) {
     ]);
     word!(game.menu_option_index = 0);
     super::options_objects::clear(game);
-    super::options_objects::spawn(initial_tile, definition::MENU_CURSOR, game);
+    super::options_objects::spawn(initial_tile, definition::MENU_SELECTION_MISSILE, game);
     // The first initializer leaves its palette $0E00 in A for this call.
-    super::options_objects::spawn(0x0e00, definition::OPTIONS_TITLE, game);
+    super::options_objects::spawn(0x0e00, definition::OPTION_MODE_BORDER, game);
     word!(game.game_options_screen_index += 1);
     highlight_language(game);
 }
@@ -285,7 +285,7 @@ pub fn fade_out<H: Host + ?Sized>(game: &mut H, screen: u16, enable: fn(&mut H))
         if screen == 0 && game.ram().read_byte(crate::ram::mirror::INIDISP) == 14 {
             let subscreen = u16::from(game.ram().read_byte(crate::ram::mirror::TS));
             if game.ram().read_byte(crate::ram::mirror::TS) & 4 == 0 {
-                super::options_objects::spawn(subscreen, definition::FADE_IN_TITLE, game);
+                super::options_objects::spawn(subscreen, definition::SAMUS_DATA_BORDER, game);
             }
         }
         return;
@@ -347,7 +347,7 @@ pub fn replace_screen<H: Host + ?Sized>(game: &mut H) {
             word!(game.menu_option_index = 1);
             highlight_special(game);
             word!(game.menu_option_index = 4);
-            spawn(4, definition::SPECIAL_TITLE, game);
+            spawn(4, definition::SPECIAL_SETTING_MODE_BORDER, game);
         } else {
             let source = 0x1cffe + usize::from(word!(game.japanese_text_flag) != 0) * 0x800;
             copy_screen(source, true, game);
@@ -356,7 +356,7 @@ pub fn replace_screen<H: Host + ?Sized>(game: &mut H) {
                 game.ram().read_byte(TILEMAP),
                 game.ram().read_byte(TILEMAP + 1),
             ]);
-            spawn(tile, definition::CONTROLLER_TITLE, game);
+            spawn(tile, definition::CONTROLLER_SETTING_MODE_BORDER, game);
             super::controller_input::load_binding_choices(game);
             menu_tilemap::controller_bindings(game);
         }
@@ -368,7 +368,7 @@ pub fn replace_screen<H: Host + ?Sized>(game: &mut H) {
             game.ram().read_byte(LANGUAGE_HIGHLIGHT_TILE),
             game.ram().read_byte(LANGUAGE_HIGHLIGHT_TILE + 1),
         ]);
-        spawn(tile, definition::OPTIONS_TITLE, game);
+        spawn(tile, definition::OPTION_MODE_BORDER, game);
     }
 }
 
