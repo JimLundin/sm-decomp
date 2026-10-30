@@ -16,11 +16,11 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cycle_report  # noqa: E402
 
-# Measured on main 91d0bcce (2026-10-30).
+# Lowered with #111 (2026-10-30); first measured on main 91d0bcce.
 BASELINE = {
-    "sm_game_ram_sites": 6933,
-    "sm_game_coupled_files": 111,
-    "production_lines": 179520,
+    "sm_game_ram_sites": 5041,
+    "sm_game_coupled_files": 106,
+    "production_lines": 177239,
 }
 
 
