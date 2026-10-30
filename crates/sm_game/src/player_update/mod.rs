@@ -1,10 +1,6 @@
 //! Ordered player beta work over the same owned Session.
 #![forbid(unsafe_code)]
 
-#[allow(
-    unused_imports,
-    reason = "The detached harness has no player-update runtime."
-)]
 pub mod content;
 pub mod effects;
 pub mod minimap;
