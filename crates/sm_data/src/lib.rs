@@ -6,6 +6,7 @@
 #![forbid(unsafe_code)]
 
 pub mod area_select_palettes;
+pub mod baby_metroid;
 pub mod beam_gradients;
 pub mod boss_lists;
 pub mod botwoon_holes;
@@ -41,7 +42,6 @@ pub mod sand_heap;
 pub mod save_slots;
 pub mod scene;
 pub mod shaktool;
-pub mod shitroid;
 pub mod shooting_stars;
 pub mod statues;
 pub mod table;

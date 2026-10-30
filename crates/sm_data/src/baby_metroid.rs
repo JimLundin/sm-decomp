@@ -1,4 +1,4 @@
-//! The Shitroid's palette tables in bank $AD: the health-based shell and
+//! The baby Metroid's palette tables in bank $AD: the health-based shell and
 //! innards colours and the colours it fades to black through in the cutscene.
 pub use crate::table::LengthError;
 use crate::table::Rows;

@@ -254,7 +254,7 @@ pub fn Math_MultBySinCos(r38: u16, a: u16) -> u16 {
     }) as u16
 }
 
-pub fn CheckForCollisionWithShitroid_DoubleRet(v0: u16, ctx: &mut impl Host) -> u8 {
+pub fn CheckForCollisionWithBabyMetroid_DoubleRet(v0: u16, ctx: &mut impl Host) -> u8 {
     if ctx.mother_brain_target_enemy() == 0 {
         return 0;
     }

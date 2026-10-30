@@ -91,6 +91,9 @@ pub mod actors {
     pub mod access;
     pub mod animation;
     pub mod api;
+    pub mod baby_metroid;
+    pub mod baby_metroid_cutscene;
+    pub mod baby_metroid_encounter;
     pub mod botwoon;
     pub mod botwoon_death;
     pub mod boulder;
@@ -149,9 +152,6 @@ pub mod actors {
     pub mod scene;
     pub mod scheduling;
     pub mod shaktool;
-    pub mod shitroid;
-    pub mod shitroid_cutscene;
-    pub mod shitroid_encounter;
     pub mod snapshot;
     pub mod species;
     pub mod spore_spawn;
@@ -245,6 +245,7 @@ pub mod room_mechanisms {
     }
     pub mod setup;
 }
+pub mod baby_metroid_tables;
 pub mod ceres_door_data;
 pub mod ceres_elevator;
 pub mod ceres_ridley_tables;
@@ -270,7 +271,6 @@ pub mod session_checkpoint;
 pub mod session_encoding;
 pub mod session_owners;
 pub mod shaktool_tables;
-pub mod shitroid_tables;
 pub mod shooting_star_motion;
 pub mod shooting_stars;
 pub mod sprite_effect_controllers;

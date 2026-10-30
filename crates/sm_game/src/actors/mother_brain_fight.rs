@@ -1,6 +1,6 @@
 //! Mother Brain's fight: the first phase behind the glass, the fake death
 //! and its tube collapse, the second phase's walking, bombs, laser and
-//! rainbow beam, the Shitroid cutscene, the third phase and the death and
+//! rainbow beam, the baby Metroid cutscene, the third phase and the death and
 //! escape sequence, with the brain's instruction list and palettes.
 //!
 //! Was `MotherBrain*`, `MotherBrainBody*`, `MotherBrainsBody*` and `MotherBomb*`
@@ -243,25 +243,25 @@ pub mod function {
     /// $A9:BDC1: Mother Brain body function - second phase - finish Samus off - charge final rainbow beam.
     pub const PHASE_2_FINISH_SAMUS_OFF_CHARGE_FINAL_RAINBOW_BEAM: u16 = 0xbdc1;
     /// $A9:BDD2: Mother Brain body function - second phase - finish Samus off - charge final rainbow beam / load Shitroid.
-    pub const PHASE_2_FINISH_SAMUS_OFF_CHARGE_FINAL_RAINBOW_BEAM_LOAD_SHITROID: u16 = 0xbdd2;
+    pub const PHASE_2_FINISH_SAMUS_OFF_CHARGE_FINAL_RAINBOW_BEAM_LOAD_BABY_METROID: u16 = 0xbdd2;
     /// $A9:BDED: Mother Brain body function - second phase - finish Samus off - fire final rainbow beam.
     pub const PHASE_2_FINISH_SAMUS_OFF_FIRE_FINAL_RAINBOW_BEAM: u16 = 0xbded;
-    /// Nothing: the Shitroid takes over the cutscene.
+    /// Nothing: the baby Metroid takes over the cutscene.
     pub const PHASE_2_CUTSCENE_WAIT: u16 = 0xbe1a;
     /// $A9:BE5D: Mother Brain body function - drained by Shitroid - regain balance.
-    pub const DRAINED_BY_SHITROID_REGAIN_BALANCE: u16 = 0xbe5d;
+    pub const DRAINED_BY_BABY_METROID_REGAIN_BALANCE: u16 = 0xbe5d;
     /// $A9:BE96: Mother Brain body function - drained by Shitroid - firing rainbow beam.
-    pub const DRAINED_BY_SHITROID_FIRING_RAINBOW_BEAM: u16 = 0xbe96;
+    pub const DRAINED_BY_BABY_METROID_FIRING_RAINBOW_BEAM: u16 = 0xbe96;
     /// $A9:BF0E: Mother Brain body function - drained by Shitroid - rainbow beam has run out.
-    pub const DRAINED_BY_SHITROID_RAINBOW_BEAM_HAS_RUN_OUT: u16 = 0xbf0e;
+    pub const DRAINED_BY_BABY_METROID_RAINBOW_BEAM_HAS_RUN_OUT: u16 = 0xbf0e;
     /// $A9:BF41: Mother Brain body function - drained by Shitroid - move to back of room.
-    pub const DRAINED_BY_SHITROID_MOVE_TO_BACK_OF_ROOM: u16 = 0xbf41;
+    pub const DRAINED_BY_BABY_METROID_MOVE_TO_BACK_OF_ROOM: u16 = 0xbf41;
     /// $A9:BF56: Mother Brain body function - drained by Shitroid - go into low power mode.
-    pub const DRAINED_BY_SHITROID_GO_INTO_LOW_POWER_MODE: u16 = 0xbf56;
+    pub const DRAINED_BY_BABY_METROID_GO_INTO_LOW_POWER_MODE: u16 = 0xbf56;
     /// $A9:BF7D: Mother Brain body function - drained by Shitroid - prepare transition to grey.
-    pub const DRAINED_BY_SHITROID_PREPARE_TRANSITION_TO_GREY: u16 = 0xbf7d;
+    pub const DRAINED_BY_BABY_METROID_PREPARE_TRANSITION_TO_GREY: u16 = 0xbf7d;
     /// $A9:BF95: Mother Brain body function - drained by Shitroid - transition to grey.
-    pub const DRAINED_BY_SHITROID_TRANSITION_TO_GREY: u16 = 0xbf95;
+    pub const DRAINED_BY_BABY_METROID_TRANSITION_TO_GREY: u16 = 0xbf95;
     /// $A9:BFD0: Mother Brain painful walking function - walk forwards.
     pub const PAINFUL_WALK_FORWARDS: u16 = 0xbfd0;
     /// $A9:BFE8: Mother Brain painful walking function - walking forwards.
@@ -283,17 +283,17 @@ pub mod function {
     /// $A9:C0E4: Mother Brain body function - second phase - revive self - wake-up stretch.
     pub const PHASE_2_REVIVE_SELF_WAKE_UP_STRETCH: u16 = 0xc0e4;
     /// $A9:C0FB: Mother Brain body function - second phase - revive self - walk up to Shitroid.
-    pub const PHASE_2_REVIVE_SELF_WALK_UP_TO_SHITROID: u16 = 0xc0fb;
+    pub const PHASE_2_REVIVE_SELF_WALK_UP_TO_BABY_METROID: u16 = 0xc0fb;
     /// $A9:C11E: Mother Brain body function - second phase - revive self - prepare neck for Shitroid murder.
-    pub const PHASE_2_REVIVE_SELF_PREPARE_NECK_FOR_SHITROID_MURDER: u16 = 0xc11e;
+    pub const PHASE_2_REVIVE_SELF_PREPARE_NECK_FOR_BABY_METROID_MURDER: u16 = 0xc11e;
     /// $A9:C147: Mother Brain body function - second phase - revive self - finish preparing for Shitroid murder.
-    pub const PHASE_2_REVIVE_SELF_FINISH_PREPARING_FOR_SHITROID_MURDER: u16 = 0xc147;
+    pub const PHASE_2_REVIVE_SELF_FINISH_PREPARING_FOR_BABY_METROID_MURDER: u16 = 0xc147;
     /// $A9:C15C: Mother Brain body function - second phase - murder Shitroid - attack Shitroid.
-    pub const PHASE_2_MURDER_SHITROID_ATTACK_SHITROID: u16 = 0xc15c;
+    pub const PHASE_2_MURDER_BABY_METROID_ATTACK_BABY_METROID: u16 = 0xc15c;
     /// $A9:C182: Mother Brain body function - second phase - murder Shitroid - Shitroid attack cooldown.
-    pub const PHASE_2_MURDER_SHITROID_SHITROID_ATTACK_COOLDOWN: u16 = 0xc182;
-    /// Nothing: the Shitroid's last attack takes over.
-    pub const FINAL_SHITROID_WAIT: u16 = 0xc1a6;
+    pub const PHASE_2_MURDER_BABY_METROID_BABY_METROID_ATTACK_COOLDOWN: u16 = 0xc182;
+    /// Nothing: the baby Metroid's last attack takes over.
+    pub const FINAL_BABY_METROID_WAIT: u16 = 0xc1a6;
     /// $A9:C1F0: Mother Brain body function - third phase - recover from cutscene - set up for fighting.
     pub const PHASE_3_RECOVER_FROM_CUTSCENE_SET_UP_FOR_FIGHTING: u16 = 0xc1f0;
     /// $A9:C209: Mother Brain body function - third phase - fighting - main.
@@ -412,16 +412,18 @@ const _: () = {
     assert!(at(f::PHASE_2_FINISH_SAMUS_OFF_STAND_UP) == 11124120);
     assert!(at(f::PHASE_2_FINISH_SAMUS_OFF_ADMIRE_JOB_WELL_DONE) == 11124137);
     assert!(at(f::PHASE_2_FINISH_SAMUS_OFF_CHARGE_FINAL_RAINBOW_BEAM) == 11124161);
-    assert!(at(f::PHASE_2_FINISH_SAMUS_OFF_CHARGE_FINAL_RAINBOW_BEAM_LOAD_SHITROID) == 11124178);
+    assert!(
+        at(f::PHASE_2_FINISH_SAMUS_OFF_CHARGE_FINAL_RAINBOW_BEAM_LOAD_BABY_METROID) == 11124178
+    );
     assert!(at(f::PHASE_2_FINISH_SAMUS_OFF_FIRE_FINAL_RAINBOW_BEAM) == 11124205);
     assert!(at(f::PHASE_2_CUTSCENE_WAIT) == 11124250);
-    assert!(at(f::DRAINED_BY_SHITROID_REGAIN_BALANCE) == 11124317);
-    assert!(at(f::DRAINED_BY_SHITROID_FIRING_RAINBOW_BEAM) == 11124374);
-    assert!(at(f::DRAINED_BY_SHITROID_RAINBOW_BEAM_HAS_RUN_OUT) == 11124494);
-    assert!(at(f::DRAINED_BY_SHITROID_MOVE_TO_BACK_OF_ROOM) == 11124545);
-    assert!(at(f::DRAINED_BY_SHITROID_GO_INTO_LOW_POWER_MODE) == 11124566);
-    assert!(at(f::DRAINED_BY_SHITROID_PREPARE_TRANSITION_TO_GREY) == 11124605);
-    assert!(at(f::DRAINED_BY_SHITROID_TRANSITION_TO_GREY) == 11124629);
+    assert!(at(f::DRAINED_BY_BABY_METROID_REGAIN_BALANCE) == 11124317);
+    assert!(at(f::DRAINED_BY_BABY_METROID_FIRING_RAINBOW_BEAM) == 11124374);
+    assert!(at(f::DRAINED_BY_BABY_METROID_RAINBOW_BEAM_HAS_RUN_OUT) == 11124494);
+    assert!(at(f::DRAINED_BY_BABY_METROID_MOVE_TO_BACK_OF_ROOM) == 11124545);
+    assert!(at(f::DRAINED_BY_BABY_METROID_GO_INTO_LOW_POWER_MODE) == 11124566);
+    assert!(at(f::DRAINED_BY_BABY_METROID_PREPARE_TRANSITION_TO_GREY) == 11124605);
+    assert!(at(f::DRAINED_BY_BABY_METROID_TRANSITION_TO_GREY) == 11124629);
     assert!(at(f::PAINFUL_WALK_FORWARDS) == 11124688);
     assert!(at(f::PAINFUL_WALKING_FORWARDS) == 11124712);
     assert!(at(f::PAINFUL_WALK_BACKWARDS) == 11124740);
@@ -432,12 +434,12 @@ const _: () = {
     assert!(at(f::PHASE_2_REVIVE_SELF_TRANSITION_FROM_GREY) == 11124879);
     assert!(at(f::PHASE_2_REVIVE_SELF_WAKE_UP) == 11124922);
     assert!(at(f::PHASE_2_REVIVE_SELF_WAKE_UP_STRETCH) == 11124964);
-    assert!(at(f::PHASE_2_REVIVE_SELF_WALK_UP_TO_SHITROID) == 11124987);
-    assert!(at(f::PHASE_2_REVIVE_SELF_PREPARE_NECK_FOR_SHITROID_MURDER) == 11125022);
-    assert!(at(f::PHASE_2_REVIVE_SELF_FINISH_PREPARING_FOR_SHITROID_MURDER) == 11125063);
-    assert!(at(f::PHASE_2_MURDER_SHITROID_ATTACK_SHITROID) == 11125084);
-    assert!(at(f::PHASE_2_MURDER_SHITROID_SHITROID_ATTACK_COOLDOWN) == 11125122);
-    assert!(at(f::FINAL_SHITROID_WAIT) == 11125158);
+    assert!(at(f::PHASE_2_REVIVE_SELF_WALK_UP_TO_BABY_METROID) == 11124987);
+    assert!(at(f::PHASE_2_REVIVE_SELF_PREPARE_NECK_FOR_BABY_METROID_MURDER) == 11125022);
+    assert!(at(f::PHASE_2_REVIVE_SELF_FINISH_PREPARING_FOR_BABY_METROID_MURDER) == 11125063);
+    assert!(at(f::PHASE_2_MURDER_BABY_METROID_ATTACK_BABY_METROID) == 11125084);
+    assert!(at(f::PHASE_2_MURDER_BABY_METROID_BABY_METROID_ATTACK_COOLDOWN) == 11125122);
+    assert!(at(f::FINAL_BABY_METROID_WAIT) == 11125158);
     assert!(at(f::PHASE_3_RECOVER_FROM_CUTSCENE_SET_UP_FOR_FIGHTING) == 11125232);
     assert!(at(f::PHASE_3_FIGHTING_MAIN) == 11125257);
     assert!(at(f::PHASE_3_FIGHTING_ATTACK_COOLDOWN) == 11125326);
@@ -486,8 +488,8 @@ pub mod animation {
     pub const BRAIN_FOUR_BLUE_RINGS_PHASE_2: u16 = 0x9d3d;
     /// Brain: attacking with two blue rings, phase 2.
     pub const BRAIN_TWO_BLUE_RINGS_PHASE_2: u16 = 0x9d7f;
-    /// Brain: attacking the Shitroid.
-    pub const BRAIN_ATTACKING_SHITROID: u16 = 0x9db1;
+    /// Brain: attacking the baby Metroid.
+    pub const BRAIN_ATTACKING_BABY_METROID: u16 = 0x9db1;
     /// Brain: attacking Samus with four blue rings, phase 3.
     pub const BRAIN_FOUR_BLUE_RINGS_PHASE_3: u16 = 0x9dbb;
     /// Brain: attacking with a bomb, phase 2.
@@ -522,7 +524,7 @@ const _: () = {
     assert!(a::BRAIN_CORPSE == addr_kMotherBrain_Ilist_9D25 as u16);
     assert!(a::BRAIN_FOUR_BLUE_RINGS_PHASE_2 == addr_kMotherBrain_Ilist_9D3D as u16);
     assert!(a::BRAIN_TWO_BLUE_RINGS_PHASE_2 == addr_kMotherBrain_Ilist_9D7F as u16);
-    assert!(a::BRAIN_ATTACKING_SHITROID == addr_kMotherBrain_Ilist_9DB1 as u16);
+    assert!(a::BRAIN_ATTACKING_BABY_METROID == addr_kMotherBrain_Ilist_9DB1 as u16);
     assert!(a::BRAIN_FOUR_BLUE_RINGS_PHASE_3 == addr_kMotherBrain_Ilist_9DBB as u16);
     assert!(a::BRAIN_BOMB_PHASE_2 == addr_kMotherBrain_Ilist_9ECC as u16);
     assert!(a::BRAIN_BOMB_PHASE_3 == addr_kMotherBrain_Ilist_9F00 as u16);
@@ -1340,18 +1342,18 @@ crate::dispatch::callback_dispatch! {
     [11124178] MotherBrain_Phase2Cut_4 [] {
         if queue_mother_brain_sprite_tiles(0xa9, addr_stru_A98FE5 as u16, game) != 0 {
             MotherBrain_RetractHead(game);
-            MotherBrain_SpawnShitroidInCutscene(game);
+            MotherBrain_SpawnBabyMetroidInCutscene(game);
             let E: i32 = 0;
             slot!(game, MotherBrainBody[E].function = function::PHASE_2_FINISH_SAMUS_OFF_FIRE_FINAL_RAINBOW_BEAM);
             slot!(game, MotherBrainBody[E].function_timer = 256);
         }
     };
-    [11124317] MotherBrain_DrainedByShitroid_1 [] {
+    [11124317] MotherBrain_DrainedByBabyMetroid_1 [] {
         handle_body_rainbow_palette(game);
         let E: i32 = 0;
         slot!(game, MotherBrainBody[E].function_timer = slot!(game, MotherBrainBody[E].function_timer).wrapping_sub(1));
         if (slot!(game, MotherBrainBody[E].function_timer) & 0x8000) != 0 {
-            slot!(game, MotherBrainBody[E].function = function::DRAINED_BY_SHITROID_FIRING_RAINBOW_BEAM);
+            slot!(game, MotherBrainBody[E].function = function::DRAINED_BY_BABY_METROID_FIRING_RAINBOW_BEAM);
             let E1: i32 = 0x40;
             slot!(game, MotherBrainBrain[E1].painful_walk_function = function::PAINFUL_WALK_FORWARDS);
             slot!(game, MotherBrainBrain[E1].painful_walk_stage = 0);
@@ -1359,11 +1361,11 @@ crate::dispatch::callback_dispatch! {
             slot!(game, MotherBrainBrain[E1].upper_motion = 4);
         }
     };
-    [11124545] MotherBrain_DrainedByShitroid_4 [] {
+    [11124545] MotherBrain_DrainedByBabyMetroid_4 [] {
         if MotherBrain_MakeWalkBackwards(0x28, 0, game) & 1 != 0 {
-            slot!(game, MotherBrainBody[0i32].function = function::DRAINED_BY_SHITROID_GO_INTO_LOW_POWER_MODE);
+            slot!(game, MotherBrainBody[0i32].function = function::DRAINED_BY_BABY_METROID_GO_INTO_LOW_POWER_MODE);
             slot!(game, MotherBrainBrain[0x40i32].upper_motion = 0);
-            MotherBrain_DrainedByShitroid_5(game);
+            MotherBrain_DrainedByBabyMetroid_5(game);
         }
     };
     [11124922] MotherBrain_Phase2_Revive_4 [] {
@@ -1380,31 +1382,31 @@ crate::dispatch::callback_dispatch! {
     };
     [11125063] MotherBrain_Phase2_Revive_8 [] {
         if MotherBrain_MakeHerStandUp(game) & 1 != 0 {
-            slot!(game, MotherBrainBody[0i32].function = function::PHASE_2_MURDER_SHITROID_ATTACK_SHITROID);
+            slot!(game, MotherBrainBody[0i32].function = function::PHASE_2_MURDER_BABY_METROID_ATTACK_BABY_METROID);
             MotherBrain_MakeWalkForwards(0xa, 0x50, game);
-            MotherBrain_Phase2_MurderShitroid_1(game);
+            MotherBrain_Phase2_MurderBabyMetroid_1(game);
         }
     };
-    [11125084] MotherBrain_Phase2_MurderShitroid_1 [] {
+    [11125084] MotherBrain_Phase2_MurderBabyMetroid_1 [] {
         MotherBrain_MaybeStandupOrLeanDown(game);
         if (word!(game.random_number) & 0x8000) != 0 {
             let mut v0: u16 = animation::BRAIN_FOUR_BLUE_RINGS_PHASE_3;
-            if slot!(game, MotherBrainBrain[0x40i32].shitroid) != 0 {
-                v0 = animation::BRAIN_ATTACKING_SHITROID;
+            if slot!(game, MotherBrainBrain[0x40i32].baby_metroid) != 0 {
+                v0 = animation::BRAIN_ATTACKING_BABY_METROID;
             }
             MotherBrain_SetBrainInstrs(v0, game);
             let E: i32 = 0;
-            slot!(game, MotherBrainBody[E].function = function::PHASE_2_MURDER_SHITROID_SHITROID_ATTACK_COOLDOWN);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_2_MURDER_BABY_METROID_BABY_METROID_ATTACK_COOLDOWN);
             slot!(game, MotherBrainBody[E].function_timer = 64);
         }
     };
-    [11125134] MotherBrain_Phase2_PrepareForFinalShitroid [] {
+    [11125134] MotherBrain_Phase2_PrepareForFinalBabyMetroid [] {
         MotherBrain_MakeHerStandUp(game);
         MotherBrain_MakeWalkBackwards(0x40, 4, game);
     };
-    [11125146] MotherBrain_Phase2_ExecuteFinalkShitroid [] {
-        MotherBrain_SetBrainInstrs(animation::BRAIN_ATTACKING_SHITROID, game);
-        slot!(game, MotherBrainBody[0i32].function = function::FINAL_SHITROID_WAIT);
+    [11125146] MotherBrain_Phase2_ExecuteFinalkBabyMetroid [] {
+        MotherBrain_SetBrainInstrs(animation::BRAIN_ATTACKING_BABY_METROID, game);
+        slot!(game, MotherBrainBody[0i32].function = function::FINAL_BABY_METROID_WAIT);
     };
     [11125257] MotherBrain_Phase3_Fighting_Main [] {
         if slot!(game, MotherBrainBrain[0x40i32].base.health) != 0 {
@@ -1432,7 +1434,7 @@ crate::dispatch::callback_dispatch! {
         slot!(game, MotherBrainBody[E].function = function::PHASE_2_FIRING_RAINBOW_BEAM_DECIDE_NEXT_ACTION);
         slot!(game, MotherBrainBody[E].function_timer = 128);
     };
-    [11124374] MotherBrain_DrainedByShitroid_2 [] {
+    [11124374] MotherBrain_DrainedByBabyMetroid_2 [] {
         if slot!(game, MotherBrainBrain[E1].shake_timer) == 0 {
             slot!(game, MotherBrainBrain[E1].shake_timer = 50);
         }
@@ -1447,26 +1449,26 @@ crate::dispatch::callback_dispatch! {
             slot!(game, MotherBrainBrain[E1].brain_palette_enabled = 0);
             MotherBrain_WritePhase2DeathPalette(game);
             QueueSfx1_Max6(2, game);
-            slot!(game, MotherBrainBody[E].function = function::DRAINED_BY_SHITROID_RAINBOW_BEAM_HAS_RUN_OUT);
+            slot!(game, MotherBrainBody[E].function = function::DRAINED_BY_BABY_METROID_RAINBOW_BEAM_HAS_RUN_OUT);
         }
     };
-    [11124494] MotherBrain_DrainedByShitroid_3 [] {
+    [11124494] MotherBrain_DrainedByBabyMetroid_3 [] {
         CallMotherBrainPainfulWalk(((slot!(game, MotherBrainBrain[E1].painful_walk_function)) as u32) | (0xa90000u32), game);
         if slot!(game, MotherBrainBrain[E1].painful_walk_stage) as i32 - 8i32 & 0x8000 == 0 {
             slot!(game, MotherBrainBrain[E1].neck_speed = 64);
             slot! { game, MotherBrainBrain[E1]; lower_motion = 8, upper_motion = 8 }
             MotherBrain_SetBrainInstrs(animation::BRAIN_DYING_DROOL, game);
-            slot!(game, MotherBrainBody[0i32].function = function::DRAINED_BY_SHITROID_MOVE_TO_BACK_OF_ROOM);
-            MotherBrain_DrainedByShitroid_4(game);
+            slot!(game, MotherBrainBody[0i32].function = function::DRAINED_BY_BABY_METROID_MOVE_TO_BACK_OF_ROOM);
+            MotherBrain_DrainedByBabyMetroid_4(game);
         }
     };
-    [11124566] MotherBrain_DrainedByShitroid_5 [] {
+    [11124566] MotherBrain_DrainedByBabyMetroid_5 [] {
         if { let at = slot!(@at MotherBrainBrain, E1, lower_motion); u32::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1), game.ram().read_byte(at + 2), game.ram().read_byte(at + 3)]) } == 0 {
             slot!(game, MotherBrainBrain[E1].drool_enabled = (slot!(game, MotherBrainBrain[E1].upper_motion)) | (slot!(game, MotherBrainBrain[E1].lower_motion)));
             let E: i32 = 0;
             if slot!(game, MotherBrainBody[E].pose) == 0 {
                 MotherBrain_SetBodyInstrs(animation::BODY_CROUCH_FAST, game);
-                slot!(game, MotherBrainBody[E].function = function::DRAINED_BY_SHITROID_PREPARE_TRANSITION_TO_GREY);
+                slot!(game, MotherBrainBody[E].function = function::DRAINED_BY_BABY_METROID_PREPARE_TRANSITION_TO_GREY);
                 slot!(game, MotherBrainBody[E].function_timer = 64);
             }
         }
@@ -1729,16 +1731,16 @@ crate::dispatch::callback_dispatch! {
             QueueSfx2_Max6(0x24, game);
         }
     };
-    [11124280] MotherBrain_DrainedByShitroid_0 [] {
+    [11124280] MotherBrain_DrainedByBabyMetroid_0 [] {
         slot!(game, MotherBrainBody[E].form = 3);
         let E1: i32 = 0x40;
         slot! { game, MotherBrainBrain[E1]; lower_motion = 8, upper_motion = 8 }
         slot!(game, MotherBrainBrain[E1].neck_speed = 1792);
-        slot!(game, MotherBrainBody[E].function = function::DRAINED_BY_SHITROID_REGAIN_BALANCE);
+        slot!(game, MotherBrainBody[E].function = function::DRAINED_BY_BABY_METROID_REGAIN_BALANCE);
         slot!(game, MotherBrainBody[E].function_timer = 48);
-        MotherBrain_DrainedByShitroid_1(game);
+        MotherBrain_DrainedByBabyMetroid_1(game);
     };
-    [11124629] MotherBrain_DrainedByShitroid_7 [] {
+    [11124629] MotherBrain_DrainedByBabyMetroid_7 [] {
         slot!(game, MotherBrainBody[E].function_timer = slot!(game, MotherBrainBody[E].function_timer).wrapping_sub(1));
         let v2: bool = (slot!(game, MotherBrainBody[E].function_timer) & 0x8000) != 0;
         if v2 && {
@@ -1783,7 +1785,7 @@ crate::dispatch::callback_dispatch! {
         slot!(game, MotherBrainBody[E].function_timer = slot!(game, MotherBrainBody[E].function_timer).wrapping_sub(1));
         let v1: bool = (slot!(game, MotherBrainBody[E].function_timer) & 0x8000) != 0;
         if v1 && MotherBrain_MakeWalkForwards(4, 0x50, game) & 1 != 0 {
-            slot!(game, MotherBrainBody[E].function = function::PHASE_2_REVIVE_SELF_PREPARE_NECK_FOR_SHITROID_MURDER);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_2_REVIVE_SELF_PREPARE_NECK_FOR_BABY_METROID_MURDER);
             slot!(game, MotherBrainBody[E].corpse_state = 2);
             slot!(game, MotherBrainBrain[0x40i32].health_palette_enabled = 1);
         }
@@ -1792,7 +1794,7 @@ crate::dispatch::callback_dispatch! {
         slot!(game, MotherBrainBody[E].ring_volleys = 0);
         let E1: i32 = 0x40;
         slot! { game, MotherBrainBrain[E1]; neck_moving = 1, lower_motion = 2, upper_motion = 4, neck_speed = 64 };
-        slot!(game, MotherBrainBody[E].function = function::PHASE_2_REVIVE_SELF_FINISH_PREPARING_FOR_SHITROID_MURDER);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_2_REVIVE_SELF_FINISH_PREPARING_FOR_BABY_METROID_MURDER);
         MotherBrain_Phase2_Revive_8(game);
     };
     [11125199] MotherBrain_Phase3_Recover_MakeDistance [] {
@@ -2164,7 +2166,7 @@ crate::dispatch::callback_dispatch! {
     };
     [11124161] MotherBrain_Phase2Cut_3 {
         MotherBrain_SetBrainInstrs(animation::BRAIN_CHARGING_RAINBOW_BEAM, game);
-        slot!(game, MotherBrainBody[E].function = function::PHASE_2_FINISH_SAMUS_OFF_CHARGE_FINAL_RAINBOW_BEAM_LOAD_SHITROID);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_2_FINISH_SAMUS_OFF_CHARGE_FINAL_RAINBOW_BEAM_LOAD_BABY_METROID);
         MotherBrain_Phase2Cut_4(game);
     };
     [11124205] MotherBrain_Phase2Cut_5 {
@@ -2176,11 +2178,11 @@ crate::dispatch::callback_dispatch! {
         QueueSfx2_Max6(0x71, game);
         slot!(game, MotherBrainBody[E].function = function::PHASE_2_CUTSCENE_WAIT);
     };
-    [11124605] MotherBrain_DrainedByShitroid_6 {
+    [11124605] MotherBrain_DrainedByBabyMetroid_6 {
         slot!(game, MotherBrainBody[E].grey_transition = 0);
-        slot!(game, MotherBrainBody[E].function = function::DRAINED_BY_SHITROID_TRANSITION_TO_GREY);
+        slot!(game, MotherBrainBody[E].function = function::DRAINED_BY_BABY_METROID_TRANSITION_TO_GREY);
         slot!(game, MotherBrainBody[E].function_timer = 16);
-        MotherBrain_DrainedByShitroid_7(game);
+        MotherBrain_DrainedByBabyMetroid_7(game);
     };
     [11124838] MotherBrain_Phase2_Revive_1 {
         let E1: i32 = 0x40;
@@ -2191,12 +2193,12 @@ crate::dispatch::callback_dispatch! {
     };
     [11124964] MotherBrain_Phase2_Revive_5 {
         MotherBrain_SetBrainInstrs(animation::BRAIN_STRETCHING_PHASE_3, game);
-        slot!(game, MotherBrainBody[E].function = function::PHASE_2_REVIVE_SELF_WALK_UP_TO_SHITROID);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_2_REVIVE_SELF_WALK_UP_TO_BABY_METROID);
         slot!(game, MotherBrainBody[E].function_timer = 128);
         MotherBrain_Phase2_Revive_6(game);
     };
-    [11125122] MotherBrain_Phase2_MurderShitroid_2 {
-        slot!(game, MotherBrainBody[E].function = function::PHASE_2_MURDER_SHITROID_ATTACK_SHITROID);
+    [11125122] MotherBrain_Phase2_MurderBabyMetroid_2 {
+        slot!(game, MotherBrainBody[E].function = function::PHASE_2_MURDER_BABY_METROID_ATTACK_BABY_METROID);
     };
     [11125232] MotherBrain_Phase3_Recover_SetupForFight {
         slot!(game, MotherBrainBody[E].function = function::PHASE_3_FIGHTING_MAIN);
@@ -2313,7 +2315,7 @@ crate::dispatch::callback_dispatch! {
             return MotherBrain_Instr_Goto2(k);
         }
     };
-    [11116023] MotherBrain_Instr_QueueShitroidAttackSfx [k] {
+    [11116023] MotherBrain_Instr_QueueBabyMetroidAttackSfx [k] {
         if slot!(game, MotherBrainBody[0].ring_volleys) != 11 {
             QueueSfx2_Max6(g_word_A99E0F[0i32 as usize], game);
         }
@@ -2327,9 +2329,9 @@ crate::dispatch::callback_dispatch! {
             game,
         );
     };
-    [11116087] MotherBrain_Instr_AimRingsAtShitroid [k] {
+    [11116087] MotherBrain_Instr_AimRingsAtBabyMetroid [k] {
         let E: i32 = 0x40;
-        let E1: i32 = slot!(game, MotherBrainBrain[E].shitroid) as i32;
+        let E1: i32 = slot!(game, MotherBrainBrain[E].baby_metroid) as i32;
         MotherBrain_Instr_AimRings(
             (slot!(game, MotherBrainBody[E1].base.x_pos) as i32 - slot!(game, MotherBrainBrain[E].base.x_pos) as i32 - 10i32) as u16,
             (slot!(game, MotherBrainBody[E1].base.y_pos) as i32 - slot!(game, MotherBrainBrain[E].base.y_pos) as i32 - 16i32) as u16,
@@ -2345,7 +2347,7 @@ crate::dispatch::callback_dispatch! {
         );
     };
     @functions [pub fn (k: u16, game: &mut impl Host) -> u16];
-    [11116195] MotherBrain_Instr_IncrShitroidAttackCtr [k] {
+    [11116195] MotherBrain_Instr_IncrBabyMetroidAttackCtr [k] {
         let E: i32 = 0;
         let mut v3: i16 = ((slot!(game, MotherBrainBody[E].ring_volleys)) as i16).wrapping_add(1);
         if (v3 as u16) >= 0xc {
@@ -2354,7 +2356,7 @@ crate::dispatch::callback_dispatch! {
         slot!(game, MotherBrainBody[E].ring_volleys = v3 as u16);
     };
     [11116213]
-    MotherBrain_Instr_SetShitroidAttackCtr0 [k] { slot!(game, MotherBrainBody[0].ring_volleys = 0); };
+    MotherBrain_Instr_SetBabyMetroidAttackCtr0 [k] { slot!(game, MotherBrainBody[0].ring_volleys = 0); };
     [11116221] MotherBrain_Instr_SpawnBombEproj [(k).wrapping_add(2)] {
         let v2 = native_record(0xa90000 | u32::from(k), game);
         SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainBomb as u16, v2.word(0), game);
@@ -2721,7 +2723,7 @@ pub fn MotherBrain_FiringBomb_Finish(game: &mut impl Host) {
     let mut v0: u16 = function::PHASE_2_THINKING;
     let E: i32 = 0;
     if slot!(game, MotherBrainBody[E].corpse_state) != 0 {
-        v0 = function::PHASE_2_MURDER_SHITROID_ATTACK_SHITROID;
+        v0 = function::PHASE_2_MURDER_BABY_METROID_ATTACK_BABY_METROID;
     }
     slot!(game, MotherBrainBody[E].function = v0);
 }
@@ -2846,10 +2848,10 @@ pub fn MotherBrain_WritePhase2DeathPalette(game: &mut impl Host) {
         );
     }
 }
-pub fn MotherBrain_SpawnShitroidInCutscene(game: &mut impl Host) {
+pub fn MotherBrain_SpawnBabyMetroidInCutscene(game: &mut impl Host) {
     slot!(
         game,
-        MotherBrainBrain[0x40i32].shitroid = {
+        MotherBrainBrain[0x40i32].baby_metroid = {
             let (bank, population) = (0xa9, addr_stru_A9BE28 as u16);
             game.spawn_legacy_population(bank, population)
         }

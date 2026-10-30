@@ -1,4 +1,4 @@
-//! The corpses: the dead Torizo, the dead sidehopper the Shitroid drains, the
+//! The corpses: the dead Torizo, the dead sidehopper the baby Metroid drains, the
 //! dead zoomers, rippers and skrees in Tourian, and the corpse rotting that
 //! crumbles them (and Mother Brain's brain) row by row.
 //!

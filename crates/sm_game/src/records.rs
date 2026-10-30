@@ -13,7 +13,7 @@ pub struct RomRecords {
     pub torizo_tables: crate::torizo_tables::ImportedTorizos,
     pub corpse_tables: crate::corpse_tables::ImportedCorpses,
     pub torizo_corpse_tables: crate::torizo_corpse_tables::ImportedTorizoCorpse,
-    pub shitroid_tables: crate::shitroid_tables::ImportedShitroid,
+    pub baby_metroid_tables: crate::baby_metroid_tables::ImportedBabyMetroid,
     pub mother_brain_tables: crate::mother_brain_tables::ImportedMotherBrain,
     pub flame_rain: Option<crate::phantoon_tables::ImportedFlameRain>,
     pub phantoon_timers: Option<crate::phantoon_tables::ImportedTimers>,

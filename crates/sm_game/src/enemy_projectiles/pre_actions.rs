@@ -1677,7 +1677,7 @@ pub fn Eproj_MoveToBlueRingSpawnPosition(k: u16, ctx: &mut impl Host) {
         sub_86C320(k, ctx);
     } else {
         MoveEprojWithVelocity(k, ctx);
-        let t: u8 = CheckForCollisionWithShitroid_DoubleRet(k, ctx);
+        let t: u8 = CheckForCollisionWithBabyMetroid_DoubleRet(k, ctx);
         if t & 0x80 != 0 {
             return;
         }

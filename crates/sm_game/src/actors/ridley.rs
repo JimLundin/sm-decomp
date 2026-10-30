@@ -415,7 +415,7 @@ pub struct Rect {
     pub h: u16,
 }
 
-/// Check for enemy collision with rectangle ($A9:EF06, as the Shitroid's):
+/// Check for enemy collision with rectangle ($A9:EF06, as the baby Metroid's):
 /// whether enemy `k`'s hitbox is clear of `rect`.
 pub(crate) fn separated_from_rect<H: Host + ?Sized>(k: u16, rect: Rect, game: &mut H) -> bool {
     let e = i32::from(k);
@@ -506,7 +506,7 @@ fn queue_tile_pair<H: Host + ?Sized>(
     store(game, entry(2), 0);
 }
 
-/// The two-direction homing reversal of the Ridley and Shitroid accelerations.
+/// The two-direction homing reversal of the Ridley and baby Metroid accelerations.
 pub enum HomingReversal {
     ExtraForce(u16),
     DoubleStep,

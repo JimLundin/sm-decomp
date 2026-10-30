@@ -1231,7 +1231,7 @@ impl Game {
         self.records.torizo_tables = sm_game::torizo_tables::import(image);
         self.records.corpse_tables = sm_game::corpse_tables::import(image);
         self.records.torizo_corpse_tables = sm_game::torizo_corpse_tables::import(image);
-        self.records.shitroid_tables = sm_game::shitroid_tables::import(image);
+        self.records.baby_metroid_tables = sm_game::baby_metroid_tables::import(image);
         self.records.mother_brain_tables = sm_game::mother_brain_tables::import(image);
         self.visual_tables = sm_game::visual_tables::import(image);
         self.pause_menu = crate::game::map_menu::import(image);

@@ -3,7 +3,7 @@ pub use crate::game::prelude::*;
 use crate::game::session_runtime::Runtime;
 use sm_game::actors::corpses;
 use sm_game::actors::mother_brain_fight;
-use sm_game::actors::{shitroid_cutscene, shitroid_encounter};
+use sm_game::actors::{baby_metroid_cutscene, baby_metroid_encounter};
 use sm_game::enemy_script::EnemyScript;
 
 pub use crate::game::constants::bank_8d::*;
@@ -152,14 +152,14 @@ crate::game::callback_dispatch! {
         11132184 => corpses::DeadSkree_Shot;
         11132189 => corpses::DeadSidehopper_Shot;
         11132228 => corpses::DeadSidehopper_Touch;
-        11126544 => shitroid_cutscene::ShitroidInCutscene_Init;
-        11126649 => shitroid_cutscene::ShitroidInCutscene_Main;
-        11128579 => shitroid_cutscene::ShitroidInCutscene_Touch;
-        11136823 => shitroid_encounter::Shitroid_Init;
-        11136954 => shitroid_encounter::Shitroid_Powerbomb;
-        11136965 => shitroid_encounter::Shitroid_Main;
-        11138953 => shitroid_encounter::Shitroid_Touch;
-        11139138 => shitroid_encounter::Shitroid_Shot;
+        11126544 => baby_metroid_cutscene::BabyMetroidInCutscene_Init;
+        11126649 => baby_metroid_cutscene::BabyMetroidInCutscene_Main;
+        11128579 => baby_metroid_cutscene::BabyMetroidInCutscene_Touch;
+        11136823 => baby_metroid_encounter::BabyMetroid_Init;
+        11136954 => baby_metroid_encounter::BabyMetroid_Powerbomb;
+        11136965 => baby_metroid_encounter::BabyMetroid_Main;
+        11138953 => baby_metroid_encounter::BabyMetroid_Touch;
+        11139138 => baby_metroid_encounter::BabyMetroid_Shot;
     }
 }
 
@@ -171,12 +171,12 @@ crate::game::callback_dispatch! {
         11115247 => mother_brain_fight::MotherBrain_Instr_SpawnDeathBeamEproj;
         11115269 => mother_brain_fight::MotherBrain_Instr_IncrBeamAttackPhase;
         11136208 => corpses::sub_A9ECD0;
-        11139476 => shitroid_encounter::Shitroid_Instr_5;
+        11139476 => baby_metroid_encounter::BabyMetroid_Instr_5;
     }
 }
 
-impl shitroid_encounter::Host for Game {
-    fn drain_health_by_shitroid(&mut self) {
+impl baby_metroid_encounter::Host for Game {
+    fn drain_health_by_baby_metroid(&mut self) {
         vitals::drain_health_by_baby_metroid(self);
     }
 
@@ -185,12 +185,12 @@ impl shitroid_encounter::Host for Game {
     }
 }
 
-impl shitroid_cutscene::Host for Game {
+impl baby_metroid_cutscene::Host for Game {
     fn lights_off(&mut self) {
         unsafe { mother_brain_visuals::lights_off(self) };
     }
 
-    fn heal_by_shitroid(&mut self) -> bool {
+    fn heal_by_baby_metroid(&mut self) -> bool {
         vitals::heal_by_baby_metroid(self)
     }
 }

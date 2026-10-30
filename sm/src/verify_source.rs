@@ -118,8 +118,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_data/src/torizo_corpse.rs"),
     ),
     (
-        "crates/sm_data/src/shitroid.rs",
-        include_bytes!("../../crates/sm_data/src/shitroid.rs"),
+        "crates/sm_data/src/baby_metroid.rs",
+        include_bytes!("../../crates/sm_data/src/baby_metroid.rs"),
     ),
     (
         "crates/sm_data/src/magdollite.rs",
@@ -226,8 +226,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/actors/shaktool.rs"),
     ),
     (
-        "crates/sm_game/src/actors/shitroid.rs",
-        include_bytes!("../../crates/sm_game/src/actors/shitroid.rs"),
+        "crates/sm_game/src/actors/baby_metroid.rs",
+        include_bytes!("../../crates/sm_game/src/actors/baby_metroid.rs"),
     ),
     (
         "crates/sm_game/src/actors/torizo.rs",
@@ -662,8 +662,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/actors/shaktool.rs"),
     ),
     (
-        "sm/src/game/actors/shitroid.rs",
-        include_bytes!("game/actors/shitroid.rs"),
+        "sm/src/game/actors/baby_metroid.rs",
+        include_bytes!("game/actors/baby_metroid.rs"),
     ),
     (
         "sm/src/game/actors/torizo.rs",
@@ -1628,8 +1628,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/torizo_corpse_tables.rs"),
     ),
     (
-        "crates/sm_game/src/shitroid_tables.rs",
-        include_bytes!("../../crates/sm_game/src/shitroid_tables.rs"),
+        "crates/sm_game/src/baby_metroid_tables.rs",
+        include_bytes!("../../crates/sm_game/src/baby_metroid_tables.rs"),
     ),
     (
         "crates/sm_game/src/mother_brain_tables.rs",
@@ -3110,12 +3110,12 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/actors/corpses.rs"),
     ),
     (
-        "crates/sm_game/src/actors/shitroid_cutscene.rs",
-        include_bytes!("../../crates/sm_game/src/actors/shitroid_cutscene.rs"),
+        "crates/sm_game/src/actors/baby_metroid_cutscene.rs",
+        include_bytes!("../../crates/sm_game/src/actors/baby_metroid_cutscene.rs"),
     ),
     (
-        "crates/sm_game/src/actors/shitroid_encounter.rs",
-        include_bytes!("../../crates/sm_game/src/actors/shitroid_encounter.rs"),
+        "crates/sm_game/src/actors/baby_metroid_encounter.rs",
+        include_bytes!("../../crates/sm_game/src/actors/baby_metroid_encounter.rs"),
     ),
     (
         "crates/sm_game/src/actors/mother_brain_effects.rs",

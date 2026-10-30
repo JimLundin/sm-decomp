@@ -1,4 +1,4 @@
-//! The Shitroid, the baby Metroid that hatched from the last Metroid (bank
+//! The baby Metroid, hatched from the last Metroid (bank
 //! $A9:EED1-$A9:FB6F): its hitbox tests, camera wait, screen test, steering
 //! and cry.
 #![forbid(unsafe_code)]
@@ -6,7 +6,7 @@ use crate::actors::layouts::part_view;
 use crate::effects::SoundEffects;
 use crate::ram::{CompatibilityRam, RawRam as _, WorkRamAccess, slot, word};
 
-/// What the Shitroid needs beyond work RAM and sound: hardcoded PLM spawns.
+/// What the baby Metroid needs beyond work RAM and sound: hardcoded PLM spawns.
 pub trait Host:
     WorkRamAccess + CompatibilityRam + SoundEffects + crate::runtime_access::RuntimeAccess
 {
@@ -15,8 +15,8 @@ pub trait Host:
 }
 
 part_view! {
-    /// The Shitroid's view of its slot.
-    Shitroid: EnemyLayout40 {
+    /// The baby Metroid's view of its slot.
+    BabyMetroid: EnemyLayout40 {
         words: [
             function, x_velocity, y_velocity,
             // $0FAE: the palette animation frame (low byte) and timer (high byte).
@@ -38,7 +38,7 @@ part_view! {
 
 /// $A9:F02B: Shitroid function - let sidehopper live for a bit.
 pub const LET_SIDEHOPPER_LIVE: u16 = 0xf02b;
-/// PLM $B767, the Shitroid invisible wall, at its two blocks.
+/// PLM $B767, the baby Metroid invisible wall, at its two blocks.
 const INVISIBLE_WALL: u16 = 0xb767;
 const INVISIBLE_WALLS: [(u8, u8); 2] = [(0x30, 3), (0x1f, 3)];
 /// The camera stops at X 200h.
@@ -70,45 +70,46 @@ fn abs16(value: u16) -> u16 {
 }
 
 /// Check for enemy collision with enemy ($A9:EED1): 1 when actor `k`'s and
-/// actor `j`'s hitboxes do not overlap. Was `Shitroid_Func_1`.
+/// actor `j`'s hitboxes do not overlap. Was `BabyMetroid_Func_1`.
 pub fn separated_from_enemy(k: u16, j: u16, game: &mut impl Host) -> u8 {
     let e = i32::from(j);
     let g = i32::from(k);
-    let width = (slot!(game, Shitroid[g].base.x_width) as i32
-        + slot!(game, Shitroid[e].base.x_width) as i32
+    let width = (slot!(game, BabyMetroid[g].base.x_width) as i32
+        + slot!(game, BabyMetroid[e].base.x_width) as i32
         + 1) as u16;
     let dx = abs16(
-        slot!(game, Shitroid[e].base.x_pos).wrapping_sub(slot!(game, Shitroid[g].base.x_pos)),
+        slot!(game, BabyMetroid[e].base.x_pos).wrapping_sub(slot!(game, BabyMetroid[g].base.x_pos)),
     );
     if dx < width {
-        let height = (slot!(game, Shitroid[g].base.y_height) as i32
-            + slot!(game, Shitroid[e].base.y_height) as i32
+        let height = (slot!(game, BabyMetroid[g].base.y_height) as i32
+            + slot!(game, BabyMetroid[e].base.y_height) as i32
             + 1) as u16;
         return (abs16(
-            slot!(game, Shitroid[e].base.y_pos).wrapping_sub(slot!(game, Shitroid[g].base.y_pos)),
+            slot!(game, BabyMetroid[e].base.y_pos)
+                .wrapping_sub(slot!(game, BabyMetroid[g].base.y_pos)),
         ) >= height) as u8;
     }
     1
 }
 
 /// Check for enemy collision with rectangle ($A9:EF06): 1 when actor `k`'s
-/// hitbox does not overlap `rect`. Was `Shitroid_Func_2`.
+/// hitbox does not overlap `rect`. Was `BabyMetroid_Func_2`.
 /// `rect` is (x, y, half width, half height).
 pub fn separated_from_rect(k: u16, rect: (u16, u16, u16, u16), game: &mut impl Host) -> u8 {
     let (x, y, w, h) = rect;
     let e = i32::from(k);
-    let width = (slot!(game, Shitroid[e].base.x_width) as i32 + w as i32 + 1) as u16;
-    let dx = abs16(x.wrapping_sub(slot!(game, Shitroid[e].base.x_pos)));
+    let width = (slot!(game, BabyMetroid[e].base.x_width) as i32 + w as i32 + 1) as u16;
+    let dx = abs16(x.wrapping_sub(slot!(game, BabyMetroid[e].base.x_pos)));
     if dx < width {
-        let height = (slot!(game, Shitroid[e].base.y_height) as i32 + h as i32 + 1) as u16;
-        return (abs16(y.wrapping_sub(slot!(game, Shitroid[e].base.y_pos))) >= height) as u8;
+        let height = (slot!(game, BabyMetroid[e].base.y_height) as i32 + h as i32 + 1) as u16;
+        return (abs16(y.wrapping_sub(slot!(game, BabyMetroid[e].base.y_pos))) >= height) as u8;
     }
     1
 }
 
-/// Shitroid function - wait for camera ($A9:EFE6): once the camera is left of
+/// Baby Metroid function - wait for camera ($A9:EFE6): once the camera is left of
 /// the stop, pin it there, turn scrolls 1 and 3 red, raise the invisible walls,
-/// let the sidehopper live and enable the cry. Was `Shitroid_Func_4`.
+/// let the sidehopper live and enable the cry. Was `BabyMetroid_Func_4`.
 pub fn wait_for_camera(game: &mut impl Host) {
     if crate::camera::current(game).layer1[0] as i32 - (i32::from(CAMERA_STOP_X) + 1) & SIGN != 0 {
         crate::camera::set_layer1(&mut game.runtime(), 0, CAMERA_STOP_X);
@@ -123,21 +124,21 @@ pub fn wait_for_camera(game: &mut impl Host) {
             game.spawn_hardcoded_plm(block_x, block_y, INVISIBLE_WALL);
         }
         let e = word!(game.cur_enemy_index) as i32;
-        slot!(game, Shitroid[e].function = LET_SIDEHOPPER_LIVE);
-        slot!(game, Shitroid[e].cry_enabled = 1);
+        slot!(game, BabyMetroid[e].function = LET_SIDEHOPPER_LIVE);
+        slot!(game, BabyMetroid[e].cry_enabled = 1);
     }
 }
 
 /// Check if enemy is vaguely on screen ($A9:F57A): 0 while actor `k` is within
-/// the screen margins, 1 otherwise. Was `Shitroid_CheckIfOnScreen`.
+/// the screen margins, 1 otherwise. Was `BabyMetroid_CheckIfOnScreen`.
 pub fn is_off_screen(k: u16, game: &mut impl Host) -> u8 {
     let e = i32::from(k);
-    let y_pos = slot!(game, Shitroid[e].base.y_pos) as i16;
+    let y_pos = slot!(game, BabyMetroid[e].base.y_pos) as i16;
     if y_pos >= 0 {
         let y =
             (y_pos as i32 + SCREEN_Y_MARGIN - crate::camera::current(game).layer1[1] as i32) as i16;
         if y >= 0 && y as i32 - SCREEN_HEIGHT & SIGN != 0 {
-            let x_pos = slot!(game, Shitroid[e].base.x_pos) as i16;
+            let x_pos = slot!(game, BabyMetroid[e].base.x_pos) as i16;
             if x_pos >= 0 {
                 let x = (x_pos as i32 + SCREEN_X_MARGIN
                     - crate::camera::current(game).layer1[0] as i32) as i16;
@@ -150,92 +151,92 @@ pub fn is_off_screen(k: u16, game: &mut impl Host) -> u8 {
     1
 }
 
-/// Accelerate Shitroid towards Y position ($A9:F5B5): accelerate the Y
+/// Accelerate baby Metroid towards Y position ($A9:F5B5): accelerate the Y
 /// velocity by `acceleration` towards `target`, capped at 500h; 1 once there.
-/// Was `Shitroid_AccelerateTowardsY`.
+/// Was `BabyMetroid_AccelerateTowardsY`.
 pub fn accelerate_towards_y(k: u16, target: u16, acceleration: u16, game: &mut impl Host) -> u16 {
     let e = i32::from(k);
     let mut result: u16 = 0;
-    let offset = (slot!(game, Shitroid[e].base.y_pos) as i16).wrapping_sub(target as i16);
+    let offset = (slot!(game, BabyMetroid[e].base.y_pos) as i16).wrapping_sub(target as i16);
     if offset == 0 {
         result = result.wrapping_add(1);
     } else if offset >= 0 {
-        let mut velocity = slot!(game, Shitroid[e].y_velocity).wrapping_sub(acceleration);
+        let mut velocity = slot!(game, BabyMetroid[e].y_velocity).wrapping_sub(acceleration);
         if velocity as i32 + i32::from(MAX_SPEED) & SIGN != 0 {
             velocity = MAX_SPEED.wrapping_neg();
         }
-        slot!(game, Shitroid[e].y_velocity = velocity);
-        if ((slot!(game, Shitroid[e].base.y_pos) as i32 + (velocity >> 8) as i8 as i32
+        slot!(game, BabyMetroid[e].y_velocity = velocity);
+        if ((slot!(game, BabyMetroid[e].base.y_pos) as i32 + (velocity >> 8) as i8 as i32
             - target as i32) as i16)
             <= 0
         {
-            slot!(game, Shitroid[e].y_velocity = 0);
+            slot!(game, BabyMetroid[e].y_velocity = 0);
             result = result.wrapping_add(1);
         }
     } else {
-        let mut velocity = acceleration.wrapping_add(slot!(game, Shitroid[e].y_velocity));
+        let mut velocity = acceleration.wrapping_add(slot!(game, BabyMetroid[e].y_velocity));
         if velocity as i32 - i32::from(MAX_SPEED) & SIGN == 0 {
             velocity = MAX_SPEED;
         }
-        slot!(game, Shitroid[e].y_velocity = velocity);
-        if ((slot!(game, Shitroid[e].base.y_pos) as i32 + (velocity >> 8) as i8 as i32
+        slot!(game, BabyMetroid[e].y_velocity = velocity);
+        if ((slot!(game, BabyMetroid[e].base.y_pos) as i32 + (velocity >> 8) as i8 as i32
             - target as i32) as i16)
             >= 0
         {
-            slot!(game, Shitroid[e].y_velocity = 0);
+            slot!(game, BabyMetroid[e].y_velocity = 0);
             result = result.wrapping_add(1);
         }
     }
     result
 }
 
-/// Accelerate Shitroid towards X position ($A9:F615): accelerate the X
+/// Accelerate baby Metroid towards X position ($A9:F615): accelerate the X
 /// velocity by `acceleration` towards `target`, capped at 500h; 1 once there.
-/// Was `Shitroid_AccelerateTowardsX`.
+/// Was `BabyMetroid_AccelerateTowardsX`.
 pub fn accelerate_towards_x(k: u16, target: u16, acceleration: u16, game: &mut impl Host) -> u16 {
     let e = i32::from(k);
     let mut result: u16 = 0;
-    if (slot!(game, Shitroid[e].base.x_pos) as i16).wrapping_sub(target as i16) >= 0 {
-        let mut velocity = slot!(game, Shitroid[e].x_velocity).wrapping_sub(acceleration);
+    if (slot!(game, BabyMetroid[e].base.x_pos) as i16).wrapping_sub(target as i16) >= 0 {
+        let mut velocity = slot!(game, BabyMetroid[e].x_velocity).wrapping_sub(acceleration);
         if velocity as i32 + i32::from(MAX_SPEED) & SIGN != 0 {
             velocity = MAX_SPEED.wrapping_neg();
         }
-        slot!(game, Shitroid[e].x_velocity = velocity);
-        if ((slot!(game, Shitroid[e].base.x_pos) as i32 + (velocity >> 8) as i8 as i32
+        slot!(game, BabyMetroid[e].x_velocity = velocity);
+        if ((slot!(game, BabyMetroid[e].base.x_pos) as i32 + (velocity >> 8) as i8 as i32
             - target as i32) as i16)
             <= 0
         {
-            slot!(game, Shitroid[e].x_velocity = 0);
+            slot!(game, BabyMetroid[e].x_velocity = 0);
             result = result.wrapping_add(1);
         }
     } else {
-        let mut velocity = acceleration.wrapping_add(slot!(game, Shitroid[e].x_velocity));
+        let mut velocity = acceleration.wrapping_add(slot!(game, BabyMetroid[e].x_velocity));
         if velocity as i32 - i32::from(MAX_SPEED) & SIGN == 0 {
             velocity = MAX_SPEED;
         }
-        slot!(game, Shitroid[e].x_velocity = velocity);
-        if ((slot!(game, Shitroid[e].base.x_pos) as i32 + (velocity >> 8) as i8 as i32
+        slot!(game, BabyMetroid[e].x_velocity = velocity);
+        if ((slot!(game, BabyMetroid[e].base.x_pos) as i32 + (velocity >> 8) as i8 as i32
             - target as i32) as i16)
             >= 0
         {
-            slot!(game, Shitroid[e].x_velocity = 0);
+            slot!(game, BabyMetroid[e].x_velocity = 0);
             result = result.wrapping_add(1);
         }
     }
     result
 }
 
-/// Handle Shitroid cry sound effect ($A9:F751): on palette frame 5, cry every
-/// fourth time while the cry is enabled. Was `Shitroid_HandleCrySoundEffect`.
+/// Handle baby Metroid cry sound effect ($A9:F751): on palette frame 5, cry every
+/// fourth time while the cry is enabled. Was `BabyMetroid_HandleCrySoundEffect`.
 pub fn handle_cry(k: u16, a: u16, game: &mut impl Host) -> u16 {
     if a == CRY_FRAME {
         let e = i32::from(k);
-        if slot!(game, Shitroid[e].cry_enabled) != 0 {
-            let count = slot!(game, Shitroid[e].cry_timer).wrapping_add(1);
-            slot!(game, Shitroid[e].cry_timer = count);
+        if slot!(game, BabyMetroid[e].cry_enabled) != 0 {
+            let count = slot!(game, BabyMetroid[e].cry_timer).wrapping_add(1);
+            slot!(game, BabyMetroid[e].cry_timer = count);
             if count >= CRY_CYCLES {
-                slot!(game, Shitroid[e].cry_timer = 0);
-                let effect = if slot!(game, Shitroid[e].palette_handler_delay) < DRAINING_DELAY {
+                slot!(game, BabyMetroid[e].cry_timer = 0);
+                let effect = if slot!(game, BabyMetroid[e].palette_handler_delay) < DRAINING_DELAY {
                     DRAINING
                 } else {
                     CRY

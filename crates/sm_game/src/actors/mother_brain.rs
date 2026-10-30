@@ -63,10 +63,10 @@ part_view! {
             var_10,
             var_11,
             var_12,
-            // $7826: blue ring volleys fired at the Shitroid while it refills.
+            // $7826: blue ring volleys fired at the baby Metroid while it refills.
             ring_volleys,
-            // $7828: play the Shitroid's cry.
-            shitroid_cry,
+            // $7828: play the baby Metroid's cry.
+            baby_metroid_cry,
             // $782A: rainbow beam sounds still to queue.
             beam_sounds_left,
             // $782C: the rainbow beam sound is playing (checked on unpause).
@@ -135,7 +135,7 @@ part_view! {
 
 part_view! {
     /// The brain's view of slot $40: its shake, the painful walk, the
-    /// Shitroid, palettes, drool and breath, the third phase's neck and walk,
+    /// baby Metroid, palettes, drool and breath, the third phase's neck and walk,
     /// and the neck's joints and segments.
     MotherBrainBrain: EnemyLayout72 {
         words: [
@@ -171,10 +171,10 @@ part_view! {
             painful_walk_delay,
             painful_walk_function,
             painful_walk_timer,
-            // $7854: the Shitroid's enemy index.
-            shitroid,
-            // $7E:7856: set when the Shitroid lets Samus go (never read).
-            shitroid_released,
+            // $7854: the baby Metroid's enemy index.
+            baby_metroid,
+            // $7E:7856: set when the baby Metroid lets Samus go (never read).
+            baby_metroid_released,
             var_0C,
             var_0D,
             var_0E,

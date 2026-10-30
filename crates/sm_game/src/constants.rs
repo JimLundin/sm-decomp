@@ -406,8 +406,8 @@ pub mod bank_a9 {
         addr_byte_A9B6DF = 0xb6df, addr_stru_A9BE28 = 0xbe28,
         addr_locret_A9C18D = 0xc18d, addr_locret_A9C353 = 0xc353,
         addr_loc_A9C49C = 0xc49c, addr_loc_A9C959 = 0xc959,
-        addr_stru_A9CA24 = 0xca24, addr_kShitroid_Ilist_CFA2 = 0xcfa2,
-        addr_kShitroid_Ilist_CFB8 = 0xcfb8, addr_kShitroid_Ilist_CFCE = 0xcfce,
+        addr_stru_A9CA24 = 0xca24, addr_kBabyMetroid_Ilist_CFA2 = 0xcfa2,
+        addr_kBabyMetroid_Ilist_CFB8 = 0xcfb8, addr_kBabyMetroid_Ilist_CFCE = 0xcfce,
         addr_stru_A9D046 = 0xd046, addr_word_A9D082 = 0xd082,
         addr_kDeadTorizo_Ilist_D6DC = 0xd6dc, addr_kDeadTorizo_Sprmap_D761 = 0xd761,
         addr_kDeadTorizo_Hitbox_D77C = 0xd77c, addr_stru_A9DD58 = 0xdd58,
@@ -416,9 +416,9 @@ pub mod bank_a9 {
         addr_kDeadMonsters_Ilist_ECE3 = 0xece3, addr_kDeadMonsters_Ilist_ECE9 = 0xece9,
         addr_kDeadMonsters_Ilist_ECEF = 0xecef, addr_word_A9F6D1 = 0xf6d1,
         addr_word_A9F711 = 0xf711, addr_kDeadSidehopper_Palette_0 = 0xf8a6,
-        addr_word_A9F8C6 = 0xf8c6, addr_kShitroidInCutscene_Palette = 0xf8e6,
-        addr_kShitroid_Ilist_F906 = 0xf906, addr_kShitroid_Ilist_F90E = 0xf90e,
-        addr_kShitroid_Ilist_F924 = 0xf924, addr_kShitroid_Ilist_F93A = 0xf93a,
+        addr_word_A9F8C6 = 0xf8c6, addr_kBabyMetroidInCutscene_Palette = 0xf8e6,
+        addr_kBabyMetroid_Ilist_F906 = 0xf906, addr_kBabyMetroid_Ilist_F90E = 0xf90e,
+        addr_kBabyMetroid_Ilist_F924 = 0xf924, addr_kBabyMetroid_Ilist_F93A = 0xf93a,
     }
 }
 
