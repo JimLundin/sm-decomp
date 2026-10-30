@@ -2,7 +2,6 @@
 use crate::display::registers::{MDMAEN, VMADDL, VMAIN};
 use crate::display::transfer::setup_transfer;
 use crate::menus::menu_tilemap::native_record;
-use crate::ram::RawRam as _;
 
 /// The Session-owned player and inventory values the HUD shows. `sm` reads the
 /// compat words for the game; a Session lease reads its owned fields.
@@ -25,25 +24,27 @@ pub trait HudPlayer {
     fn grapple_function(&self) -> u16;
 }
 
-/// What the HUD reads and writes: RAM, registers, sound effects and the
-/// native cartridge.
-pub trait HudHost:
+/// What the HUD's frame step needs: RAM words, its player values, sound
+/// effects and the native cartridge. A Session lease can provide it.
+pub trait HudFrameHost:
     HudPlayer
-    + crate::ram::RamHost
+    + crate::ram::CompatibilityRam
     + crate::player_position::PlayerFacts
-    + crate::display::sequence::Registers
     + crate::effects::SoundEffects
     + crate::cartridge::NativeDiagnostics
 {
+    /// The raw work-RAM NMI frame counter byte, as the item blink reads it.
+    fn raw_frame_counter_byte(&self) -> u8;
+}
+
+/// What the whole HUD reads and writes: the frame step's host, plus raw RAM
+/// and the registers its initial upload uses.
+pub trait HudHost:
+    HudFrameHost + crate::ram::RamHost + crate::display::sequence::Registers
+{
 }
 impl<T> HudHost for T where
-    T: HudPlayer
-        + crate::ram::RamHost
-        + crate::player_position::PlayerFacts
-        + crate::display::sequence::Registers
-        + crate::effects::SoundEffects
-        + crate::cartridge::NativeDiagnostics
-        + ?Sized
+    T: HudFrameHost + crate::ram::RamHost + crate::display::sequence::Registers + ?Sized
 {
 }
 use crate::ram::{checked_word as at, word, words as fields};
@@ -164,7 +165,7 @@ const fn initial_tiles() -> [u16; 96] {
     tiles
 }
 
-fn stamp<H: HudHost + ?Sized>(
+fn stamp<H: crate::ram::CompatibilityRam + ?Sized>(
     base: usize,
     columns: usize,
     count: usize,
@@ -236,7 +237,7 @@ pub fn initialize<H: HudHost + ?Sized>(game: &mut H) {
     }
 }
 
-fn ammunition<H: HudHost + ?Sized>(initial: bool, game: &mut H) {
+fn ammunition<H: HudFrameHost + ?Sized>(initial: bool, game: &mut H) {
     {
         const ROWS: [(usize, u16); 3] = [
             (fields::samus_prev_missiles, 0x94),
@@ -264,7 +265,7 @@ fn ammunition<H: HudHost + ?Sized>(initial: bool, game: &mut H) {
 }
 
 /// Native table capture retains its original diagnostic and allocation contract.
-pub fn advance<H: HudHost + ?Sized>(game: &mut H) {
+pub fn advance<H: HudFrameHost + ?Sized>(game: &mut H) {
     {
         if game.reserve_mode() == 1 {
             let reserve = native_record(RESERVE_TILES, game);
@@ -307,12 +308,7 @@ pub fn advance<H: HudHost + ?Sized>(game: &mut H) {
                 game.queue_sound(0, 0x39_u8, 6);
             }
         }
-        let palette = if game
-            .ram()
-            .read_byte(crate::ram::bytes::nmi_frame_counter_byte)
-            & 0x10
-            != 0
-        {
+        let palette = if game.raw_frame_counter_byte() & 0x10 != 0 {
             SELECTED_PALETTE
         } else {
             UNSELECTED_PALETTE
@@ -333,7 +329,7 @@ pub fn advance<H: HudHost + ?Sized>(game: &mut H) {
     }
 }
 
-fn highlight<H: HudHost + ?Sized>(selection: u16, palette: u16, game: &mut H) {
+fn highlight<H: HudFrameHost + ?Sized>(selection: u16, palette: u16, game: &mut H) {
     word!(game.hud_item_tilemap_palette_bits = palette);
     let item = (selection as i16).wrapping_sub(1);
     if item >= 0 {
@@ -355,7 +351,7 @@ fn highlight<H: HudHost + ?Sized>(selection: u16, palette: u16, game: &mut H) {
     }
 }
 
-fn number<H: HudHost + ?Sized>(
+fn number<H: HudFrameHost + ?Sized>(
     address: u32,
     mut value: u16,
     mut cursor: u16,
@@ -380,7 +376,12 @@ fn number<H: HudHost + ?Sized>(
     }
 }
 
-pub fn menu_reserve_mode<H: HudHost + ?Sized>(automatic: bool, game: &mut H) {
+pub fn menu_reserve_mode<
+    H: HudPlayer + crate::ram::CompatibilityRam + crate::cartridge::NativeDiagnostics + ?Sized,
+>(
+    automatic: bool,
+    game: &mut H,
+) {
     if automatic {
         // The equipment menu intentionally uses bank82, unlike the ordinary HUD.
         let cursor = if game.reserve_health() == 0 {
