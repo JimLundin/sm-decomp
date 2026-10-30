@@ -969,7 +969,12 @@ crate::game::callback_dispatch! {
     };
     @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11199529] Shaktool_Instr_9 [jp] {
-        word! {game; fx_timer = 32; fx_y_vel = 64; }
+        {
+            let mut runtime = crate::game::session_runtime::Runtime::new(game);
+            let room = &mut runtime.session_mut().room;
+            room.liquid_delay = 32;
+            room.liquid_velocity = 64;
+        }
     };
     @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11199542] Shaktool_Instr_11 [jp] { crate::game::room_mechanisms::lower_acid(game); };

@@ -736,7 +736,13 @@ crate::game::callback_dispatch! {
         slot!(game, Enemy_Ridley[E].var_F = slot!(game, Enemy_Ridley[E].var_F).wrapping_sub(1));
         if (slot!(game, Enemy_Ridley[E].var_F) & 0x8000) != 0 {
             slot!(game, Enemy_Ridley[E]; var_B = 0, var_C = 0);
-            word! {game; fx_target_y_pos = 528; fx_y_vel = 64; fx_timer = 1; }
+            {
+                let mut runtime = Runtime::new(game);
+                let room = &mut runtime.session_mut().room;
+                room.liquid_target = 528;
+                room.liquid_velocity = 64;
+                room.liquid_delay = 1;
+            }
             slot!(game, Enemy_Ridley[E]; var_27 = 0, var_28 = 0);
             slot!(game, Enemy_Ridley[E].var_A = (0xa6c588i32) as u16);
             slot!(game, Enemy_Ridley[E].var_F = 160);
@@ -917,7 +923,13 @@ crate::game::callback_dispatch! {
             if CeresRidley_Func_8((v2).wrapping_sub(1), game) & 1 == 0 {
                 return;
             }
-            word! {game; fx_target_y_pos = 440; fx_y_vel = -96i32 as u16; fx_timer = 32; }
+            {
+                let mut runtime = Runtime::new(game);
+                let room = &mut runtime.session_mut().room;
+                room.liquid_target = 440;
+                room.liquid_velocity = -96i32 as u16;
+                room.liquid_delay = 32;
+            }
         } else {
             slot!(game, Enemy_CeresRidley[E].var_F = slot!(game, Enemy_CeresRidley[E].var_F).wrapping_sub(1));
             let v1_0: bool = (slot!(game, Enemy_CeresRidley[E].var_F) & 0x8000) != 0;
