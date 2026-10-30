@@ -30,6 +30,7 @@ pub mod launch_motion;
 pub mod liquid_surface;
 pub mod menus;
 pub mod message_composition;
+pub mod palette_copies;
 pub mod probe;
 pub mod progress;
 pub mod projectile_block_reactions;
@@ -77,6 +78,7 @@ pub mod actors {
     pub mod kraid_sinking;
     pub mod layouts;
     pub mod media;
+    pub mod mother_brain_effects;
     pub mod movement;
     pub mod overlap;
     pub mod phantoon_actions;
