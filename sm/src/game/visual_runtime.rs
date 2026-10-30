@@ -62,6 +62,7 @@ use crate::{
     },
     rom::RomRecord,
 };
+use sm_game::visual_host::session_aliases as aliases;
 
 impl visual_host::Content for Runtime<'_> {
     type Record = RomRecord;
@@ -82,61 +83,33 @@ impl visual_host::Content for Runtime<'_> {
         player_projectiles::content::captured(image, address)
     }
 }
-fn palette_address(member: PaletteMember, handle: u16) -> usize {
-    let base = match member {
-        PaletteMember::Definition => 0x1e7d,
-        PaletteMember::ColorOffset => 0x1e8d,
-        PaletteMember::PreAction => 0x1ead,
-        PaletteMember::Program => 0x1ebd,
-        PaletteMember::Delay => 0x1ecd,
-        PaletteMember::Counter => 0x1edd,
-    };
-    base + usize::from(handle & !1)
-}
-fn animation_address(member: AnimationMember, handle: u16) -> usize {
-    let base = match member {
-        AnimationMember::Definition => 0x1ef5,
-        AnimationMember::Counter => 0x1f01,
-        AnimationMember::Program => 0x1f0d,
-        AnimationMember::Delay => 0x1f19,
-        AnimationMember::Source => 0x1f25,
-    };
-    base + usize::from(handle & !1)
-}
 impl visual_host::Aliases for Runtime<'_> {
     fn palette_word(&self, member: PaletteMember, handle: u16) -> u16 {
-        self.word(palette_address(member, handle))
+        aliases::palette_word(self, member, handle)
     }
     fn set_palette_word_slice(&mut self, member: PaletteMember, handle: u16, value: u16) {
-        self.write_slice_le(palette_address(member, handle), value);
+        aliases::set_palette_word_slice(self, member, handle, value)
     }
     fn set_palette_counter_byte(&mut self, handle: u16, value: u8) {
-        self.set_byte(0x1edd + usize::from(handle), value);
+        aliases::set_palette_counter_byte(self, handle, value)
     }
     fn palette_flag_native(&self, displacement: u16) -> u16 {
-        self.native_word(0x1e79 + usize::from(displacement))
+        aliases::palette_flag_native(self, displacement)
     }
     fn animation_word(&self, member: AnimationMember, handle: u16) -> u16 {
-        self.word(animation_address(member, handle))
+        aliases::animation_word(self, member, handle)
     }
     fn set_animation_word_prefix(&mut self, member: AnimationMember, handle: u16, value: u16) {
-        self.write_word_le(value, animation_address(member, handle));
+        aliases::set_animation_word_prefix(self, member, handle, value)
     }
     fn set_animation_counter_byte(&mut self, handle: u16, value: u8) {
-        self.set_byte(0x1f01 + usize::from(handle), value);
+        aliases::set_animation_counter_byte(self, handle, value)
     }
     fn set_palette_color_slice(&mut self, displacement: u16, value: u16) {
-        self.write_slice_le(0xc000 + usize::from(displacement & !1), value);
+        aliases::set_palette_color_slice(self, displacement, value)
     }
     fn set_color_prefix(&mut self, buffer: PaletteBuffer, index: usize, value: u16) {
-        let base: usize = match buffer {
-            PaletteBuffer::Current => 0xc000,
-            PaletteBuffer::Target => 0xc200,
-        };
-        let at = base
-            .checked_add(index.checked_mul(2).expect("palette index overflow"))
-            .expect("palette address overflow");
-        self.write_word_le(value, at);
+        aliases::set_color_prefix(self, buffer, index, value)
     }
 }
 impl visual_host::Effects for Runtime<'_> {

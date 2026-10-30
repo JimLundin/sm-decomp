@@ -121,3 +121,90 @@ impl Record for sm_data::cartridge::RomRecord {
         core::array::from_fn(|index| self.image.read(start + index))
     }
 }
+
+/// The palette-effect and animated-tile aliases over a session lease's RAM
+/// projection, at the original RAM addresses.
+pub mod session_aliases {
+    use super::{AnimationMember, PaletteMember};
+    use crate::runtime_access::SessionRam;
+    use crate::visual_state::PaletteBuffer;
+
+    fn palette_address(member: PaletteMember, handle: u16) -> usize {
+        let base = match member {
+            PaletteMember::Definition => 0x1e7d,
+            PaletteMember::ColorOffset => 0x1e8d,
+            PaletteMember::PreAction => 0x1ead,
+            PaletteMember::Program => 0x1ebd,
+            PaletteMember::Delay => 0x1ecd,
+            PaletteMember::Counter => 0x1edd,
+        };
+        base + usize::from(handle & !1)
+    }
+    fn animation_address(member: AnimationMember, handle: u16) -> usize {
+        let base = match member {
+            AnimationMember::Definition => 0x1ef5,
+            AnimationMember::Counter => 0x1f01,
+            AnimationMember::Program => 0x1f0d,
+            AnimationMember::Delay => 0x1f19,
+            AnimationMember::Source => 0x1f25,
+        };
+        base + usize::from(handle & !1)
+    }
+    pub fn palette_word(h: &(impl SessionRam + ?Sized), member: PaletteMember, handle: u16) -> u16 {
+        h.word(palette_address(member, handle))
+    }
+    pub fn set_palette_word_slice(
+        h: &mut (impl SessionRam + ?Sized),
+        member: PaletteMember,
+        handle: u16,
+        value: u16,
+    ) {
+        h.write_slice_le(palette_address(member, handle), value);
+    }
+    pub fn set_palette_counter_byte(h: &mut (impl SessionRam + ?Sized), handle: u16, value: u8) {
+        h.set_byte(0x1edd + usize::from(handle), value);
+    }
+    pub fn palette_flag_native(h: &(impl SessionRam + ?Sized), displacement: u16) -> u16 {
+        h.native_word(0x1e79 + usize::from(displacement))
+    }
+    pub fn animation_word(
+        h: &(impl SessionRam + ?Sized),
+        member: AnimationMember,
+        handle: u16,
+    ) -> u16 {
+        h.word(animation_address(member, handle))
+    }
+    pub fn set_animation_word_prefix(
+        h: &mut (impl SessionRam + ?Sized),
+        member: AnimationMember,
+        handle: u16,
+        value: u16,
+    ) {
+        h.write_word_le(value, animation_address(member, handle));
+    }
+    pub fn set_animation_counter_byte(h: &mut (impl SessionRam + ?Sized), handle: u16, value: u8) {
+        h.set_byte(0x1f01 + usize::from(handle), value);
+    }
+    pub fn set_palette_color_slice(
+        h: &mut (impl SessionRam + ?Sized),
+        displacement: u16,
+        value: u16,
+    ) {
+        h.write_slice_le(0xc000 + usize::from(displacement & !1), value);
+    }
+    pub fn set_color_prefix(
+        h: &mut (impl SessionRam + ?Sized),
+        buffer: PaletteBuffer,
+        index: usize,
+        value: u16,
+    ) {
+        let base: usize = match buffer {
+            PaletteBuffer::Current => 0xc000,
+            PaletteBuffer::Target => 0xc200,
+        };
+        let at = base
+            .checked_add(index.checked_mul(2).expect("palette index overflow"))
+            .expect("palette address overflow");
+        h.write_word_le(value, at);
+    }
+}
