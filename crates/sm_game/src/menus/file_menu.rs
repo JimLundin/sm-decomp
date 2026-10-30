@@ -13,6 +13,37 @@ use crate::constants::bank_81::{
 };
 use crate::save_file::header;
 
+use crate::enemy_projectiles::table::with_file_select as file_select;
+
+/// The selection missile's x beside the confirmation's yes and no.
+const CONFIRMATION_MISSILE_X: u16 = 94;
+
+fn copy_selection<H: Host + ?Sized>(game: &mut H) -> u16 {
+    file_select(game, |menu| *menu.file_copy_selection())
+}
+fn set_copy_selection<H: Host + ?Sized>(value: u16, game: &mut H) {
+    file_select(game, |menu| *menu.file_copy_selection() = value);
+}
+fn copy_source<H: Host + ?Sized>(game: &mut H) -> u16 {
+    file_select(game, |menu| *menu.file_copy_source_slot())
+}
+fn set_copy_source<H: Host + ?Sized>(value: u16, game: &mut H) {
+    file_select(game, |menu| *menu.file_copy_source_slot() = value);
+}
+fn copy_destination<H: Host + ?Sized>(game: &mut H) -> u16 {
+    file_select(game, |menu| *menu.file_copy_destination_slot())
+}
+fn set_copy_destination<H: Host + ?Sized>(value: u16, game: &mut H) {
+    file_select(game, |menu| *menu.file_copy_destination_slot() = value);
+}
+/// Restart the selection missile's animation at its first frame.
+fn restart_missile<H: Host + ?Sized>(game: &mut H) {
+    file_select(game, |menu| {
+        *menu.missile_animation_timer() = 1;
+        *menu.missile_animation_frame() = 0;
+    });
+}
+
 const PALETTE_BUFFER: usize = crate::ram::word_arrays::palette_buffer;
 /// The MOSAIC mirror and the BG1SC mirror after it, read as one word.
 const MOSAIC: usize = crate::ram::mirror::MOSAIC;
@@ -162,10 +193,16 @@ fn reset_copy<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Occupied, game);
     select_first_slot(game);
     crate::sprite_output::file_slot_cursor(211, game);
-    word! { game, 0; file_copy_source_slot, file_copy_destination_slot }
+    file_select(game, |menu| {
+        *menu.file_copy_source_slot() = 0;
+        *menu.file_copy_destination_slot() = 0;
+    });
 }
 fn select_first_slot<H: Host + ?Sized>(game: &mut H) {
-    word!(game.file_copy_selection = (word!(game.nonempty_save_slots) | 8).trailing_zeros() as u16);
+    set_copy_selection(
+        (word!(game.nonempty_save_slots) | 8).trailing_zeros() as u16,
+        game,
+    );
 }
 fn next_occupied_slot<H: Host + ?Sized>(game: &mut H) -> Option<u8> {
     let up = if word!(game.joypad1_newkeys) as i32 & kButton_Up as i32 != 0 {
@@ -175,7 +212,7 @@ fn next_occupied_slot<H: Host + ?Sized>(game: &mut H) -> Option<u8> {
     } else {
         return None;
     };
-    let mut slot = word!(game.file_copy_selection) as u8;
+    let mut slot = copy_selection(game) as u8;
     loop {
         if up {
             slot = slot.wrapping_sub(1);
@@ -207,8 +244,8 @@ fn choose_source<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
     };
     if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
         game.queue_sound(0, 0x37_u8, 6);
-        if word!(game.file_copy_selection) != 3 {
-            word!(game.file_copy_source_slot = word!(game.file_copy_selection));
+        if copy_selection(game) != 3 {
+            set_copy_source(copy_selection(game), game);
             crate::menu!(game.menu_index += 1);
             return;
         }
@@ -246,13 +283,14 @@ fn begin_destination<H: Host + ?Sized>(game: &mut H) {
     draw_destination(game);
     crate::menu!(game.menu_index += 1);
     let mut selection: u16 = 0;
-    while selection == word!(game.file_copy_source_slot) {
+    let source = copy_source(game);
+    while selection == source {
         selection = selection.wrapping_add(1);
         if selection as i32 - 3i32 & 0x8000 == 0 {
             break;
         }
     }
-    word!(game.file_copy_selection = selection);
+    set_copy_selection(selection, game);
     crate::sprite_output::file_slot_cursor(211, game);
 }
 fn draw_destination<H: Host + ?Sized>(game: &mut H) {
@@ -263,7 +301,7 @@ fn draw_destination<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::load(0x148, addr_kMenuTilemap_CopySamusToWhere as u16, game);
     set_native_word(
         0x3000 + 2 * 944,
-        (word!(game.file_copy_source_slot)).wrapping_add(8298),
+        (copy_source(game)).wrapping_add(8298),
         game,
     );
     menu_tilemap::load(0x688, addr_kMenuTilemap_Exit as u16, game);
@@ -275,8 +313,8 @@ fn choose_destination<H: Host + ?Sized>(game: &mut H) {
     crate::sprite_output::menu_selection(game);
     if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
         game.queue_sound(0, 0x37_u8, 6);
-        if word!(game.file_copy_selection) != 3 {
-            word!(game.file_copy_destination_slot = word!(game.file_copy_selection));
+        if copy_selection(game) != 3 {
+            set_copy_destination(copy_selection(game), game);
             crate::menu!(game.menu_index += 1);
         } else {
             crate::menu!(game.menu_index += 5);
@@ -293,18 +331,19 @@ fn choose_destination<H: Host + ?Sized>(game: &mut H) {
             } else {
                 break 'move_selection;
             };
-            let mut slot = word!(game.file_copy_selection);
-            do_until! { slot != word!(game.file_copy_source_slot);
+            let mut slot = copy_selection(game);
+            let source = copy_source(game);
+            do_until! { slot != source;
                 slot = slot.wrapping_add(step);
                 if step == u16::MAX && slot & 0x8000 != 0 || step == 1 && slot == 4 {
                     break 'move_selection;
                 }
             }
-            word!(game.file_copy_selection = slot);
+            set_copy_selection(slot, game);
         }
     } else {
         crate::menu!(game.menu_index -= 2);
-        word!(game.file_copy_selection = word!(game.file_copy_source_slot));
+        set_copy_selection(copy_source(game), game);
         game.queue_sound(0, 0x37_u8, 6);
         reset_copy(game);
         return;
@@ -317,28 +356,20 @@ fn begin_confirmation<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::set_palette(0, game);
     if COPY {
         menu_tilemap::load(0x144, addr_kMenuTilemap_CopySamusToSamus as u16, game);
-        set_native_word(
-            0x3000 + 2 * 942,
-            word!(game.file_copy_source_slot).wrapping_add(8298),
-            game,
-        );
+        set_native_word(0x3000 + 2 * 942, copy_source(game).wrapping_add(8298), game);
         set_native_word(
             0x3000 + 2 * 955,
-            word!(game.file_copy_destination_slot).wrapping_add(8298),
+            copy_destination(game).wrapping_add(8298),
             game,
         );
     } else {
         menu_tilemap::load(0x140, addr_kMenuTilemap_ClearSamusA as u16, game);
-        set_native_word(
-            0x3000 + 2 * 949,
-            word!(game.file_copy_source_slot).wrapping_add(8298),
-            game,
-        );
-        word!(game.file_copy_destination_slot = 3);
+        set_native_word(0x3000 + 2 * 949, copy_source(game).wrapping_add(8298), game);
+        set_copy_destination(3, game);
     }
     draw_confirmation(game);
     crate::menu!(game.menu_index += 1);
-    word!(game.file_copy_selection = 0);
+    set_copy_selection(0, game);
     if COPY {
         word!(game.file_copy_arrow_palette_timer = 8);
     }
@@ -362,7 +393,7 @@ fn confirm_choice<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
         crate::sprite_output::file_copy_arrow(game);
     }
     if word!(game.joypad1_newkeys) as i32 & (kButton_Up as i32 | kButton_Down as i32) != 0 {
-        word!(game.file_copy_selection ^= (1u16));
+        set_copy_selection(copy_selection(game) ^ 1, game);
         game.queue_sound(0, 0x37_u8, 6);
     } else {
         let cancelled = if (word!(game.joypad1_newkeys) & 0x8000) != 0 {
@@ -373,7 +404,7 @@ fn confirm_choice<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
             false
         } else {
             game.queue_sound(0, 0x38_u8, 6);
-            if word!(game.file_copy_selection) == 0 {
+            if copy_selection(game) == 0 {
                 crate::menu!(game.menu_index += 1);
                 return;
             }
@@ -387,10 +418,10 @@ fn confirm_choice<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
         if cancelled {
             if COPY {
                 crate::menu!(game.menu_index -= 3);
-                word!(game.file_copy_selection = word!(game.file_copy_destination_slot));
+                set_copy_selection(copy_destination(game), game);
             } else {
                 crate::menu!(game.menu_index -= 2);
-                word!(game.file_copy_selection = word!(game.file_copy_source_slot));
+                set_copy_selection(copy_source(game), game);
             }
             game.queue_sound(0, 0x37_u8, 6);
             if !COPY {
@@ -399,12 +430,11 @@ fn confirm_choice<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
             return;
         }
     }
-    let y = if word!(game.file_copy_selection) != 0 {
-        208
-    } else {
-        184
-    };
-    word! {game; menu_selection_missile_y_pos = y; menu_selection_missile_x_pos = 94; }
+    let y = if copy_selection(game) != 0 { 208 } else { 184 };
+    file_select(game, |menu| {
+        *menu.missile_y() = y;
+        *menu.missile_x() = CONFIRMATION_MISSILE_X;
+    });
 }
 fn animate_copy_arrow<H: Host + ?Sized>(game: &mut H) {
     if word!(game.file_copy_arrow_palette_timer) != 0
@@ -425,16 +455,15 @@ fn copy_slot<H: Host + ?Sized>(game: &mut H) {
         crate::sprite_output::menu_selection(game);
         animate_copy_arrow(game);
         crate::sprite_output::file_copy_arrow(game);
-        let src_addr: u16 =
-            save_slots::sram_offset(game, word!(game.file_copy_source_slot) as isize);
-        let dst_addr: u16 =
-            save_slots::sram_offset(game, word!(game.file_copy_destination_slot) as isize);
+        let (source, destination) = (copy_source(game), copy_destination(game));
+        let src_addr: u16 = save_slots::sram_offset(game, source as isize);
+        let dst_addr: u16 = save_slots::sram_offset(game, destination as isize);
         game.sram().copy_within(
             src_addr as usize..src_addr as usize + 1628,
             dst_addr as usize,
         );
         // Copy the source's header words; the reads precede every header write.
-        let source = usize::from(word!(game.file_copy_source_slot));
+        let source = usize::from(copy_source(game));
         let mirrored_checksum = game
             .sram()
             .word(header::slot(header::MIRRORED_CHECKSUMS, source));
@@ -442,7 +471,7 @@ fn copy_slot<H: Host + ?Sized>(game: &mut H) {
             .sram()
             .word(header::slot(header::MIRRORED_COMPLEMENTS, source));
         let checksum = game.sram().word(header::slot(header::CHECKSUMS, source));
-        let destination = usize::from(word!(game.file_copy_destination_slot));
+        let destination = usize::from(copy_destination(game));
         game.sram().set_word(
             header::slot(header::COMPLEMENTS, destination),
             game.sram().word(header::slot(header::COMPLEMENTS, source)),
@@ -459,11 +488,8 @@ fn copy_slot<H: Host + ?Sized>(game: &mut H) {
         );
         crate::menu!(game.menu_index += 1);
         crate::word_transfers!(game, ascending, 288; native(0x3b00) <- value(15));
-        word!(
-            game.nonempty_save_slots |=
-                (kBitShl_16bit[word!(game.file_copy_destination_slot) as usize])
-        );
-        let row = ((4 * i32::from(word!(game.file_copy_destination_slot)) + 9) << 6) + 24;
+        word!(game.nonempty_save_slots |= (kBitShl_16bit[copy_destination(game) as usize]));
+        let row = ((4 * i32::from(copy_destination(game)) + 9) << 6) + 24;
         crate::word_transfers!(game, (2), 11;
             native(menu_tilemap::MENU_TILEMAP + row as usize) <- value(menu_tilemap::BLANK_TILE),
             native(0x35c0 + row as usize) <- value(15),
@@ -503,7 +529,7 @@ fn reset_clear<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::load(0x140, addr_kMenuTilemap_ClearWhichData as u16, game);
     menu_tilemap::load(0x688, addr_kMenuTilemap_Exit as u16, game);
     menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Occupied, game);
-    word!(game.file_copy_source_slot = 0);
+    set_copy_source(0, game);
     select_first_slot(game);
     crate::sprite_output::file_slot_cursor(211, game);
 }
@@ -511,12 +537,12 @@ fn clear_slot<H: Host + ?Sized>(game: &mut H) {
     {
         static kBitShl_Not: [u16; 3] = [0xfffe, 0xfffd, 0xfffb];
         border(0x4a, game);
-        let sram_addr: i32 =
-            save_slots::sram_offset(game, word!(game.file_copy_source_slot) as isize) as i32;
+        let source = copy_source(game);
+        let sram_addr: i32 = save_slots::sram_offset(game, source as isize) as i32;
         game.sram()
             .fill(sram_addr as usize..sram_addr as usize + 1628, 0);
-        let _v1: u16 = (2u16).wrapping_mul(word!(game.file_copy_source_slot));
-        let slot = usize::from(word!(game.file_copy_source_slot));
+        let _v1: u16 = (2u16).wrapping_mul(copy_source(game));
+        let slot = usize::from(copy_source(game));
         for table in [
             header::CHECKSUMS,
             header::COMPLEMENTS,
@@ -527,13 +553,11 @@ fn clear_slot<H: Host + ?Sized>(game: &mut H) {
         }
         crate::menu!(game.menu_index += 1);
         save_slots::initialize(game);
-        save_slots::load(word!(game.file_copy_source_slot), game);
-        word!(game.area_index = word!(game.file_copy_source_slot));
+        save_slots::load(copy_source(game), game);
+        word!(game.area_index = copy_source(game));
         load_area_map(game);
         crate::word_transfers!(game, ascending, 288; native(0x3b00) <- value(15));
-        word!(
-            game.nonempty_save_slots &= (kBitShl_Not[word!(game.file_copy_source_slot) as usize])
-        );
+        word!(game.nonempty_save_slots &= (kBitShl_Not[copy_source(game) as usize]));
         menu_tilemap::set_palette(0, game);
         menu_tilemap::load(0x500, addr_kMenuTilemap_DataCleared as u16, game);
         menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Confirmation, game);
@@ -549,12 +573,12 @@ fn turn_helmet<H: Host + ?Sized>(game: &mut H) {
     border(0x48, game);
     crate::sprite_output::file_helmets(true, game);
     if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0
-        || word!(game.slot_a_helmet_animation_frame) == 7
-            && word!(game.slot_a_helmet_animation_timer) == 0
-        || word!(game.slot_b_helmet_animation_frame) == 7
-            && word!(game.slot_b_helmet_animation_timer) == 0
-        || word!(game.slot_c_helmet_animation_frame) == 7
-            && word!(game.slot_c_helmet_animation_timer) == 0
+        || file_select(game, |menu| {
+            (0..3).any(|helmet| {
+                *menu.helmet_animation_frame(helmet) == 7
+                    && *menu.helmet_animation_timer(helmet) == 0
+            })
+        })
     {
         crate::menu!(game.menu_index += 1);
     }
@@ -570,7 +594,7 @@ fn load_background<H: Host + ?Sized>(game: &mut H) {
         game,
     );
     crate::menu!(game.menu_index += 1);
-    word! {game; menu_selection_missile_animation_timer = 1; menu_selection_missile_animation_frame = 0; }
+    restart_missile(game);
 }
 fn initialize<H: Host + ?Sized>(game: &mut H) {
     {
@@ -641,12 +665,17 @@ fn choose_main<H: Host + ?Sized>(game: &mut H) {
                 game.queue_sound(0, 0x2a_u8, 6);
                 crate::menu!(game.menu_index += 27);
                 // Start the selected slot's helmet animation.
-                set_native_word(
-                    crate::ram::words::slot_a_helmet_animation_timer
-                        + 2 * usize::from(word!(game.selected_save_slot)),
-                    1,
-                    game,
-                );
+                let helmet = usize::from(word!(game.selected_save_slot));
+                if helmet < 3 {
+                    file_select(game, |menu| *menu.helmet_animation_timer(helmet) = 1);
+                } else {
+                    // A slot past the third names a word past the helmets.
+                    set_native_word(
+                        crate::ram::words::slot_a_helmet_animation_timer + 2 * helmet,
+                        1,
+                        game,
+                    );
+                }
                 game.sram()
                     .set_word(header::LAST_SLOT, word!(game.selected_save_slot));
                 game.sram().set_word(
