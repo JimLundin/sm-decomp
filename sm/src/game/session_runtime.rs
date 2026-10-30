@@ -1920,6 +1920,17 @@ impl sm_game::ram::CompatibilityRam for Runtime<'_> {
 }
 impl sm_game::effects::SoundEffects for Runtime<'_> {
     fn queue_sound(&mut self, channel: usize, sound: u8, max_queued: u8) {
+        // As Runtime's projectile sounds: an owned Display queues on the
+        // lease, otherwise the compat queue runs on the exported game.
+        if self.has_owned_display() {
+            self.owned_call(|runtime| {
+                #[cfg(sm_verify_dll)]
+                crate::game::visual_runtime::samus_observer::sound(channel, sound, max_queued);
+                crate::game::music::requests::queue_sfx(channel, sound, max_queued, runtime)
+                    .expect("audio sound enqueue");
+            });
+            return;
+        }
         self.foreign(|game| crate::game::music::queue_sfx(channel, sound, max_queued, game));
     }
 }
