@@ -1,6 +1,4 @@
 //! Checked drawing compatibility boundary. Only the native warning remains unsafe.
-// The original's zero-initialised assignments are kept.
-#![allow(unused_assignments)]
 use crate::ram::RawRam as _;
 use crate::ram::checked_word as word;
 use crate::sprite_drawing::{Clip, SpriteMap};

@@ -1,8 +1,5 @@
 //! Shooting-star motion and drawing for the ending's star field.
-// The original's names and assignment shapes are kept.
-#![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
 use crate::imported::word as table_word;
-#[allow(unused_imports)]
 use crate::ram::RawRam as _;
 use crate::ram::{checked_word, word};
 use sm_data::shooting_stars::TILE_ADDRESS as STAR_TILE_ADDRESS;
@@ -75,7 +72,7 @@ pub fn advance_shooting_stars<H: crate::menus::host::Host + ?Sized>(game: &mut H
         }
         let x = u16::from_le(checked_word!(game, at + 2;)) as i16;
         let oam = 0x370 + usize::from(output);
-        let mut y = 0i16;
+        let y: i16;
         if game.ram().read_byte(at + 3) != 0
             || (i32::from(x) - 4) & 0xff00 != 0
             || {
