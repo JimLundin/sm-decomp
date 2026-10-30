@@ -9,6 +9,10 @@ use crate::actors::host::BossEffects;
 pub use crate::actors::host::abs16;
 use crate::actors::layouts::{EnemyBase, same_words};
 
+/// A lease on a game with Draygon's effects.
+pub trait Lease: BossLease<Game: Host> {}
+impl<T: BossLease<Game: Host> + ?Sized> Lease for T {}
+
 pub trait Host: BossEffects + BossLease<Game = Self> + LeaseBoss {
     fn draygon_spawn_trails(&mut self);
     fn draygon_trajectory(&mut self);

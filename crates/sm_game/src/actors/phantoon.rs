@@ -25,6 +25,10 @@ use crate::ram::CompatibilityRam as _;
 use crate::ram::RawRam as _;
 use crate::ram::{slot, word};
 
+/// A lease on a game with Phantoon's effects.
+pub trait Lease: BossLease<Game: Host> {}
+impl<T: BossLease<Game: Host> + ?Sized> Lease for T {}
+
 /// What Phantoon needs beyond the shared boss effects, deaths and flames.
 pub trait Host:
     crate::actors::host::BossEffects
@@ -755,10 +759,7 @@ pub fn main_ai<H: Host + ?Sized>(game: &mut H) {
 /// Run the bank $A7 function `function` for the current part, as the bank's
 /// pre-instruction dispatch does: Phantoon's on this lease, any other on the
 /// game.
-fn run_function_on<L: BossLease + ?Sized>(game: &mut L, function: u16)
-where
-    L::Game: Host,
-{
+fn run_function_on<L: Lease + ?Sized>(game: &mut L, function: u16) {
     let k = word!(game.cur_enemy_index);
     match function {
         function::WAVY_FADE_IN => wavy_fade_in(game, k),
@@ -1226,10 +1227,7 @@ pub fn dying_fade_in_out<S: BossState + ?Sized>(game: &mut S, k: u16) {
 }
 
 /// Starts the dying wave and cry. Was `Phantoon_WavyDyingPhantoonAndCry`.
-pub fn wavy_dying_cry<L: BossLease + ?Sized>(game: &mut L, k: u16)
-where
-    L::Game: Host,
-{
+pub fn wavy_dying_cry<L: Lease + ?Sized>(game: &mut L, k: u16) {
     game.foreign(|game| game.start_wave(1, WAVE_PHASE_DELTA));
     session_slot!(game, Mouth[MOUTH].wave_amplitude = 0);
     session_slot!(game, Body[k as i32].function = function::DYING_FADE_OUT);
@@ -1301,10 +1299,7 @@ pub fn almost_dead<S: BossState + ?Sized>(game: &mut S, k: u16) {
 
 /// Fades the room to its powered-on colours, then dies: the drop, the boss
 /// flag, the door PLM and the music. Was `Phantoon_Dead`.
-pub fn dead<L: BossLease + ?Sized>(game: &mut L, k: u16)
-where
-    L::Game: Host,
-{
+pub fn dead<L: Lease + ?Sized>(game: &mut L, k: u16) {
     let me = k as i32;
     if session_slot!(game, Body[me].timer) != 0 {
         session_slot!(
@@ -1344,10 +1339,7 @@ pub fn become_solid_and_swoop<S: BossState + ?Sized>(game: &mut S, k: u16) {
 
 /// The countdown functions: each runs its step when the body's timer runs
 /// out. Was the `@countdown` group of `DispatchEnemyPreInstr`.
-pub fn countdown<L: BossLease + ?Sized>(game: &mut L, k: u16, function: u16)
-where
-    L::Game: Host,
-{
+pub fn countdown<L: Lease + ?Sized>(game: &mut L, k: u16, function: u16) {
     if !timer_expired(game, k) {
         return;
     }
@@ -1380,10 +1372,7 @@ where
 }
 
 /// One of the eight opening flames. Was `Phantoon_Spawn8FireballsInCircleAtStart`.
-fn spawn_starting_flame<L: BossLease + ?Sized>(game: &mut L, k: u16)
-where
-    L::Game: Host,
-{
+fn spawn_starting_flame<L: Lease + ?Sized>(game: &mut L, k: u16) {
     game.spawn_actor_eproj(
         session_slot!(game, Body[BODY].movement_index),
         k,
@@ -1407,10 +1396,7 @@ where
 
 /// The opening flames fly off and the wavy fade-in starts the fight. Was
 /// `Phantoon_SpawnFireballsBeforeFight`.
-fn start_fight<L: BossLease + ?Sized>(game: &mut L, k: u16)
-where
-    L::Game: Host,
-{
+fn start_fight<L: Lease + ?Sized>(game: &mut L, k: u16) {
     session_slot!(game, Body[k as i32].speed_subpixel = 0);
     word!(game.phantom_related_layer_flag |= HIDE_BG2);
     session_slot!(game, Body[k as i32].function = function::WAVY_FADE_IN);

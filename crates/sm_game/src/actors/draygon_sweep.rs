@@ -2,13 +2,14 @@
 //! ascents, mirrored for each side (bank $A5:87F4-$A5:8B09).
 //! The native table remains authoritative and may alias other compatibility state.
 #![forbid(unsafe_code)]
-use crate::actors::boss_lease::{BossLease, BossState};
+use crate::actors::boss_lease::BossState;
+use crate::actors::draygon_host::Lease;
 use crate::actors::host::BossEffects as _;
 use crate::actors::session_slots::session_slot;
 
 use crate::actors::draygon_flight::{body_bubble, fire_wall_turret, move_horizontally};
 use crate::actors::draygon_host::{
-    ARMS, BODY, Draygon, Host, SIGN, abs16, function, instruction_list as list,
+    ARMS, BODY, Draygon, SIGN, abs16, function, instruction_list as list,
 };
 use crate::ram::word;
 
@@ -31,10 +32,7 @@ fn write_y_position<S: BossState + ?Sized>(index: u16, value: u16, game: &mut S)
 }
 /// Calculate Draygon swoop Y positions ($A5:8817): fall with the swoop Y
 /// acceleration to the reset Y, then set the X speed that reaches Samus.
-fn calculate_swoop_y_positions<L: BossLease + ?Sized>(game: &mut L)
-where
-    L::Game: Host,
-{
+fn calculate_swoop_y_positions<L: Lease + ?Sized>(game: &mut L) {
     let (mut height, mut velocity, mut index) = (SWOOP_START_Y, 0u16, 0u16);
     loop {
         velocity = velocity.wrapping_add(session_slot!(game, Draygon[BODY].swoop_y_acceleration));
@@ -60,10 +58,7 @@ where
 }
 /// Draygon body function - swoop right ($A5:87F4) or left ($A5:89B3) - setup.
 /// Was `begin`.
-pub fn swoop_setup<L: BossLease + ?Sized>(right: bool, game: &mut L)
-where
-    L::Game: Host,
-{
+pub fn swoop_setup<L: Lease + ?Sized>(right: bool, game: &mut L) {
     if right {
         fire_wall_turret(game);
         calculate_swoop_y_positions(game);
@@ -121,10 +116,7 @@ pub fn swoop_apex<S: BossState + ?Sized>(right: bool, game: &mut S) {
 /// Draygon body function - swoop right or left - descending ($A5:88B1,
 /// $A5:8A00) or, with `ascending`, ascending ($A5:8951, $A5:8A90): follow the
 /// swoop Y positions, then pick the next attack. Was `advance`.
-pub fn swoop<L: BossLease + ?Sized>(right: bool, ascending: bool, game: &mut L)
-where
-    L::Game: Host,
-{
+pub fn swoop<L: Lease + ?Sized>(right: bool, ascending: bool, game: &mut L) {
     fire_wall_turret(game);
     if !right || !ascending {
         body_bubble(game);

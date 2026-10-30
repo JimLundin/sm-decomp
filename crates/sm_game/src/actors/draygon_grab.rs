@@ -2,8 +2,9 @@
 //! letting her go (bank $A5:8E19-$A5:94DC, $A5:9B9A).
 //! Boss-specific words retain their native compatibility layout; no player copy exists.
 #![forbid(unsafe_code)]
-use crate::actors::boss_lease::{BossLease, BossState};
+use crate::actors::boss_lease::BossState;
 use crate::actors::draygon_flight::{facing_animation, fire_wall_turret, foam_at_mouth};
+use crate::actors::draygon_host::Lease;
 use crate::actors::draygon_host::{
     ARMS, BODY, Draygon, GRAPPLE_DROPPED, Host, INTANGIBLE, SIGN, TAIL, abs16, function,
     instruction_list as list,
@@ -97,10 +98,7 @@ fn hold_offset<S: BossState + ?Sized>(k: i32, game: &mut S) -> u16 {
 }
 /// Draygon body function - chase Samus ($A5:8E19): fly at Samus and grab her,
 /// unless the grapple repels Draygon. Was `acquire`.
-pub fn chase_samus<L: BossLease + ?Sized>(game: &mut L)
-where
-    L::Game: Host,
-{
+pub fn chase_samus<L: Lease + ?Sized>(game: &mut L) {
     fire_wall_turret(game);
     if word!(game.samus_x_speed_divisor) == 0 {
         session_slot!(game, Draygon[BODY].function = function::FLY_STRAIGHT_UP);
@@ -193,10 +191,7 @@ pub fn move_to_target<S: BossState + ?Sized>(k: u16, game: &mut S) {
 /// Draygon body function - grabbed Samus - rising spiral movement ($A5:8FD6):
 /// widen and raise the spiral, now and then whipping the tail, until it is wide
 /// or high enough for the final tail whips. Was `orbit`.
-pub fn rising_spiral<L: BossLease + ?Sized>(k: u16, game: &mut L)
-where
-    L::Game: Host,
-{
+pub fn rising_spiral<L: Lease + ?Sized>(k: u16, game: &mut L) {
     if hurt_by_grapple(game) {
         return;
     }
@@ -310,10 +305,7 @@ pub fn move_samus_with_draygon<S: BossState + ?Sized>(k: u16, game: &mut S) {
 }
 /// Draygon body function - flail tail and fly straight up ($A5:9128). Was
 /// `release`.
-pub fn flail_tail_and_fly_straight_up<L: BossLease + ?Sized>(game: &mut L)
-where
-    L::Game: Host,
-{
+pub fn flail_tail_and_fly_straight_up<L: Lease + ?Sized>(game: &mut L) {
     game.foreign(|game| game.release_samus());
     word!(game.samus_grapple_flags = 0);
     session_slot!(game, Draygon[BODY].function = function::FLY_STRAIGHT_UP);

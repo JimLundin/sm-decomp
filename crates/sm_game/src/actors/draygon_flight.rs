@@ -2,7 +2,8 @@
 //! instructions its body scripts call (bank $A5:8687-$A5:9E0A).
 //! Extended motion words stay native compatibility state until the whole boss migrates.
 #![forbid(unsafe_code)]
-use crate::actors::boss_lease::{BossLease, BossState};
+use crate::actors::boss_lease::BossState;
+use crate::actors::draygon_host::Lease;
 use crate::actors::draygon_host::{
     ARMS, BANK, BODY, Draygon, EYE, Host, INTANGIBLE, SIGN, TAIL, abs16, function,
     instruction_list as list,
@@ -76,10 +77,7 @@ pub fn facing_animation<S: BossState + ?Sized>(
 }
 /// On frames matching `frame_mask`, Draygon foams at the mouth. Was
 /// `shed_particle`.
-pub fn foam_at_mouth<L: BossLease + ?Sized>(k: u16, frame_mask: u16, game: &mut L)
-where
-    L::Game: Host,
-{
+pub fn foam_at_mouth<L: Lease + ?Sized>(k: u16, frame_mask: u16, game: &mut L) {
     if session_slot!(game, Draygon[k as i32].base.frame_counter) & frame_mask == 0 {
         let dx = if session_slot!(game, Draygon[BODY].facing_right) != 0 {
             FOAM_X
@@ -106,10 +104,7 @@ pub fn fire_wall_turret<S: BossState + ?Sized>(game: &mut S) {
 }
 /// Draygon body function - fight intro: the initial delay ($A5:871B, with
 /// `first`) or the dance ($A5:878B). Was `opening`.
-pub fn fight_intro<L: BossLease + ?Sized>(first: bool, game: &mut L)
-where
-    L::Game: Host,
-{
+pub fn fight_intro<L: Lease + ?Sized>(first: bool, game: &mut L) {
     fire_wall_turret(game);
     let limit = if first { INTRO_DELAY } else { INTRO_DANCE };
     if session_slot!(game, Draygon[BODY].function_timer).wrapping_sub(limit) & SIGN != 0 {
@@ -252,14 +247,12 @@ pub fn main_ai<H: Host + ?Sized>(
 /// Run the bank $A5 body function `function` for part `k`, as the species
 /// table's dispatch does: the flight, swoop and grab functions on this lease, the rest
 /// through `fallback` on the game.
-fn run_function_on<L: BossLease + ?Sized>(
+fn run_function_on<L: Lease + ?Sized>(
     game: &mut L,
     function: u16,
     k: u16,
     fallback: impl FnOnce(&mut L::Game),
-) where
-    L::Game: Host,
-{
+) {
     use crate::actors::{draygon_grab as grab, draygon_sweep as sweep};
     match function {
         function::FIGHT_INTRO_INITIAL_DELAY => fight_intro(true, game),
@@ -368,10 +361,7 @@ pub fn goop_setup<S: BossState + ?Sized>(right: bool, game: &mut S) {
 }
 /// Every 128 frames of the current part, a bubble (sprite object 18h) 10h px
 /// left of and above the body.
-pub fn body_bubble<L: BossLease + ?Sized>(game: &mut L)
-where
-    L::Game: Host,
-{
+pub fn body_bubble<L: Lease + ?Sized>(game: &mut L) {
     let k = word!(game.cur_enemy_index) as i32;
     if session_slot!(game, Draygon[k].base.frame_counter) & 0x7f == 0 {
         let x = session_slot!(game, Draygon[BODY].base.x_pos).wrapping_sub(BUBBLE_OFFSET);
@@ -381,10 +371,7 @@ where
 }
 /// Draygon body function - goop right ($A5:8B52) or left ($A5:8CD4) - move
 /// until Samus in range. Was `approach`.
-pub fn goop_move_until_in_range<L: BossLease + ?Sized>(right: bool, game: &mut L)
-where
-    L::Game: Host,
-{
+pub fn goop_move_until_in_range<L: Lease + ?Sized>(right: bool, game: &mut L) {
     fire_wall_turret(game);
     body_bubble(game);
     let distance =
@@ -437,10 +424,7 @@ pub fn goop_firing<S: BossState + ?Sized>(right: bool, game: &mut S) {
 }
 /// Draygon body function - goop right ($A5:8C33) or left ($A5:8DB2) - move
 /// until off-screen. Was `exit`.
-pub fn goop_move_until_off_screen<L: BossLease + ?Sized>(right: bool, game: &mut L)
-where
-    L::Game: Host,
-{
+pub fn goop_move_until_off_screen<L: Lease + ?Sized>(right: bool, game: &mut L) {
     body_bubble(game);
     if !right && word!(game.samus_x_speed_divisor) != 0 {
         session_slot!(game, Draygon[BODY].function = function::CHASE_SAMUS);
