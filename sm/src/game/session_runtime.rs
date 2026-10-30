@@ -1220,8 +1220,6 @@ crate::game::callback_dispatch! {
         10676168 => [{ actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize); crate::game::lava_seahorse_pair::synchronize(game); }];
         10676174 => [{ actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize); crate::game::lava_seahorse_pair::synchronize(game); }];
         10676180 => [{ actors::combat::power_bomb_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize); crate::game::lava_seahorse_pair::synchronize(game); }];
-        10651420 => crate::game::goofball::initialize;
-        10651548 => crate::game::goofball::advance;
         0xa30000..=0xa3ffff => [{ crate::rtl::Unreachable(game); }];
         10783748 => crate::game::visual_runtime::advance_crocomire;
 
@@ -1289,7 +1287,6 @@ crate::game::callback_dispatch! {
         10657578 => [{ crate::game::music::queue_sfx2_max6(0x34, game); j }];
         10657959 => [crate::game::enemy_projectiles::spawn_scripted(0xdafe, j, game)];
         10652030 => [crate::game::enemy_projectiles::spawn_scripted(0xdbf2, j, game)];
-        10651846 => [crate::game::goofball::landed(j, game)];
         0xa30000..=0xa3ffff => [{ crate::rtl::Unreachable(game); EnemyScript::Stop }];
         10872671 => [{ actors::spore_spawn::increase_max_x_radius(game); j }];
         10872689 => [{ actors::spore_spawn::clear_damaged_flag(game); j }];

@@ -9,7 +9,7 @@
 //! routine here means moving its arm.
 use crate::actors::host::{ActorHost, ActorRuntime, Death, LeaseActors, Shot};
 use crate::actors::{
-    alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, bull, cacatac,
+    alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, boyon, bull, cacatac,
     ceres_doors, ceres_ridley, choot, covern, crawlers, crocomire_reactions, dachora_run,
     draygon_death, draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep,
     elevator, escape_critters, etecoon, evir, fire_arc, fireflea, flies, fune, gamet, geega,
@@ -683,6 +683,8 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10652077 => mini_crocomire::initialize(game),
         10716909 => waver::initialize(game),
         10717004 => waver::main_ai(game),
+        10651420 => boyon::initialize(game),
+        10651548 => boyon::main_ai(game),
         _ => game.native_ai(ea),
     }
 }
@@ -1281,6 +1283,7 @@ pub fn instruction<H: InstructionHost>(
         10652048 => mini_crocomire::set_moving(false, j, game),
         10652061 => mini_crocomire::set_moving(true, j, game),
         10716899 => waver::set_spin_finished(j, game),
+        10651846 => boyon::start_bounce(j, game),
         _ => game.native_instruction(ea, k, j),
     }
 }

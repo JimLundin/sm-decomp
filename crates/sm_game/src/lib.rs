@@ -115,6 +115,7 @@ pub mod actors {
     pub mod botwoon;
     pub mod botwoon_death;
     pub mod boulder;
+    pub mod boyon;
     pub mod bull;
     pub mod cacatac;
     pub mod ceres_doors;
