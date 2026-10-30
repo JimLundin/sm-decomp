@@ -29,6 +29,10 @@ pub struct Actor {
     pub variables: [u16; 5],
     pub pre_instruction: u16,
     pub parameters: [u16; 2],
+    /// The slot's three extended RAM blocks of 32 words, at $7E:7800,
+    /// $7E:8000 and $7E:8800 plus 40h bytes per slot (the original's
+    /// `var_00`..`var_5F`).
+    pub extended: [[u16; 32]; 3],
 }
 #[derive(Debug, Default, PartialEq)]
 pub struct SpawnRecord {
@@ -179,6 +183,7 @@ impl Actor {
             variables: self.variables,
             pre_instruction: self.pre_instruction,
             parameters: self.parameters,
+            extended: self.extended,
         }
     }
 }

@@ -87,9 +87,11 @@ macro_rules! spawn_word {
 }
 
 // Only the new common bytes. Existing room counters at E50/E52 and all
-// previously owned bytes stay with the original Session codec. Extended
-// species RAM 7800..97DC is not owned here; angles97DC..9800 stay with eproj.
-const COMMON_RANGES: [(usize, usize); 18] = [
+// previously owned bytes stay with the original Session codec. The slots'
+// extended RAM 7800..9000 is owned here except the five Botwoon death words
+// (801E, 8020, 803C, 8818, 883E), which keep their own cohort; 9000..97DC is
+// not owned, and the angles 97DC..9800 stay with eproj.
+const COMMON_RANGES: [(usize, usize); 23] = [
     (0x0e12, 0x0e14),
     (0x0e1c, 0x0e20),
     (0x0e40, 0x0e42),
@@ -106,6 +108,11 @@ const COMMON_RANGES: [(usize, usize); 18] = [
     (0x185c, 0x186e),
     (0x18ae, 0x18b0),
     (0x7000, 0x7800),
+    (0x7800, 0x801e),
+    (0x8022, 0x803c),
+    (0x803e, 0x8818),
+    (0x881a, 0x883e),
+    (0x8840, 0x9000),
     (0xef5c, 0xef74),
     (0xef74, 0xef78),
 ];
@@ -118,6 +125,9 @@ macro_rules! common_word {
                 $s.actors.slots[(at - 0x0f78) / 64], (at - 0x0f78) % 64, ($($borrow)*)),
             at @ 0x7000..=0x77fe => spawn_word!(
                 $s.actors.saved[(at - 0x7000) / 64], (at - 0x7000) % 64, ($($borrow)*)),
+            0x801e | 0x8020 | 0x803c | 0x8818 | 0x883e => None,
+            at @ 0x7800..=0x8ffe => Some($($borrow)* $s.actors.slots[(at - 0x7800) % 0x800 / 64]
+                .extended[(at - 0x7800) / 0x800][(at - 0x7800) % 64 / 2]),
             0x0e12 => Some($($borrow)* $s.actors.diagnostics.sprite_contacts_disabled),
             0x0e1c => Some($($borrow)* $s.actors.controls.shake_request),
             0x0e1e => Some($($borrow)* $s.actors.drawing.tilemap_pending),
