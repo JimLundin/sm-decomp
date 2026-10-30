@@ -186,6 +186,12 @@ impl sm_game::actors::ridley::Lease for Runtime<'_> {
         Runtime::foreign(self, action)
     }
 }
+impl sm_game::actors::mother_brain_fight::Lease for Runtime<'_> {
+    type Game = crate::game_state::Game;
+    fn foreign<T>(&mut self, action: impl FnOnce(&mut crate::game_state::Game) -> T) -> T {
+        Runtime::foreign(self, action)
+    }
+}
 impl sm_game::actors::session_slots::SessionSlots for Runtime<'_> {
     fn projected_slot_byte(&self, at: usize) -> u8 {
         self.byte(at)

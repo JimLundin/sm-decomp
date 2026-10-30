@@ -24,6 +24,7 @@ use crate::actors::mother_brain_fight::{
     QueueSfx3_Max6, SpawnEprojWithRoomGfx, Unreachable, g_word_A993BB, g_word_A993C3,
     player_mother_brain, queue_mother_brain_sprite_tiles,
 };
+use crate::actors::mother_brain_fight::{Lease, State};
 use crate::actors::session_slots::session_slot;
 use crate::baby_metroid_tables;
 use crate::constants::bank_86::*;
@@ -33,6 +34,7 @@ use crate::enemy_projectiles::shared_pre::{Math_MultByCos, Math_MultBySin};
 use crate::enemy_script::EnemyScript;
 use crate::menus::menu_tilemap::native_record;
 use crate::palette_copies::copy_rom_colors_to_palette;
+use crate::ram::CompatibilityRam as _;
 use crate::ram::word;
 
 /// What the cutscene reaches beyond the baby Metroid's encounter.
@@ -213,7 +215,7 @@ crate::dispatch::callback_dispatch! {
     pub fn CallBabyMetroidCutsceneFuncA(ea: u32, k: u16, game: &mut impl Host) => ea;
     call (k, game); default { Unreachable(game); };
     @body checked;
-    @functions [pub fn (k: u16, game: &mut impl Host)];
+    @functions [pub fn (k: u16, game: &mut (impl State + ?Sized))];
     [11126764] BabyMetroidInCutscene_CurveTowardsBrain [] {
         BabyMetroidInCutscene_UpdateSpeedAndAngle(k, -384i32 as u16, -20480i32 as u16, 2560, game);
         let E: i32 = k as i32;
@@ -223,6 +225,7 @@ crate::dispatch::callback_dispatch! {
             session_slot!(game, BabyMetroidInCutscene[E].function_timer = 9);
         }
     };
+    @functions [pub fn (k: u16, game: &mut impl Host)];
     [11126801] BabyMetroidInCutscene_GetIntoFace [] {
         BabyMetroidInCutscene_UpdateSpeedAndAngle(k, -1536i32 as u16, -32256i32 as u16, 3584, game);
         let mut E: i32 = 0x40;
@@ -275,6 +278,7 @@ crate::dispatch::callback_dispatch! {
             session_slot!(game, MotherBrainBody[E0].beam_sound_playing = 1);
         }
     };
+    @functions [pub fn (k: u16, game: &mut (impl State + ?Sized))];
     [11127061] BabyMetroidInCutscene_StopDraining [] {
         let E: i32 = k as i32;
         let E1: i32 = 0x40;
@@ -289,6 +293,7 @@ crate::dispatch::callback_dispatch! {
             session_slot! { game, BabyMetroidInCutscene[E]; x_velocity = 0, y_velocity = 0 }
         }
     };
+    @functions [pub fn (k: u16, game: &mut impl Host)];
     [11127129] BabyMetroidInCutscene_MoveUpToCeiling [] {
         let rect = (session_slot!(game, MotherBrainBrain[0x40i32].base.x_pos), 0, 4, 4);
         BabyMetroid_Func_GraduallyAccelerateTowards0x400(k, 0, rect.0, rect.1, game);
@@ -449,7 +454,7 @@ crate::dispatch::callback_dispatch! {
             session_slot!(game, MotherBrainBrain[0x40i32].baby_metroid = 0);
         }
     };
-    @functions [pub fn (k: u16, game: &mut impl Host)];
+    @functions [pub fn (k: u16, game: &mut (impl State + ?Sized))];
     @prefix { let E: i32 = k as i32; };
     [11127010] BabyMetroidInCutscene_BrainTurnsToCorpse [] {
         let E1: i32 = 0x40;
@@ -461,6 +466,8 @@ crate::dispatch::callback_dispatch! {
             session_slot!(game, BabyMetroidInCutscene[E].function_timer = 64);
         }
     };
+    @functions [pub fn (k: u16, game: &mut impl Host)];
+    @prefix { let E: i32 = k as i32; };
     [11127115] BabyMetroidInCutscene_LetGoAndSpawnDust [] {
         session_slot!(game, BabyMetroidInCutscene[E].function_timer = session_slot!(game, BabyMetroidInCutscene[E].function_timer).wrapping_sub(1));
         if (session_slot!(game, BabyMetroidInCutscene[E].function_timer) & 0x8000) != 0 {
@@ -568,6 +575,8 @@ crate::dispatch::callback_dispatch! {
             }
         }
     };
+    @functions [pub fn (k: u16, game: &mut (impl State + ?Sized))];
+    @prefix { let E: i32 = k as i32; };
     BabyMetroidInCutscene_Shake [] {
         session_slot!(game, BabyMetroidInCutscene[E].y_velocity = session_slot!(game, BabyMetroidInCutscene[E].y_velocity).wrapping_sub(1));
         let v2: i32 = (session_slot!(game, BabyMetroidInCutscene[E].base.frame_counter) as i32 & 6) >> 1;
@@ -601,7 +610,19 @@ crate::dispatch::callback_dispatch! {
         11125133 => [()];
     }
 }
-pub fn BabyMetroidInCutscene_Flashing(k: u16, game: &mut impl Host) {
+/// Run the cutscene baby Metroid's function `ea` on the lease when it needs no more than the
+/// state, and on the game otherwise.
+fn run_cutscene_function<H: Host, L: Lease<Game = H> + ?Sized>(ea: u32, k: u16, lease: &mut L) {
+    match ea {
+        11126764 => BabyMetroidInCutscene_CurveTowardsBrain(k, lease),
+        11127061 => BabyMetroidInCutscene_StopDraining(k, lease),
+        11127010 => BabyMetroidInCutscene_BrainTurnsToCorpse(k, lease),
+        11125133 => {}
+        _ => lease.foreign(|game| CallBabyMetroidCutsceneFuncA(ea, k, game)),
+    }
+}
+
+pub fn BabyMetroidInCutscene_Flashing(k: u16, game: &mut (impl State + ?Sized)) {
     let mut v1: i16 = 3584;
     let E: i32 = k as i32;
     let flash_timer: u16 = session_slot!(game, BabyMetroidInCutscene[E].flash_timer);
@@ -666,7 +687,7 @@ pub fn HandleSamusRainbowPaletteAnimation(k: u16, game: &mut impl Host) {
         CallSamusRainbowPaletteFunc(((r18) as u32) | (0xa90000u32), k, game);
     }
 }
-pub fn SamusRainbowPaletteFunc_GraduallySlowDown(game: &mut impl Host) {
+pub fn SamusRainbowPaletteFunc_GraduallySlowDown(game: &mut (impl State + ?Sized)) {
     let E: i32 = 0x40;
     let rainbow_counter: u16 = session_slot!(game, MotherBrainBrain[E].samus_rainbow_counter);
     session_slot!(
@@ -709,7 +730,7 @@ pub fn BabyMetroidInCutscene_FadeBabyMetroidToBlack(k: u16, game: &mut impl Host
         0
     }
 }
-pub fn BabyMetroidInCutscene_HandleEnemyBlinking(k: u16, game: &mut impl Host) {
+pub fn BabyMetroidInCutscene_HandleEnemyBlinking(k: u16, game: &mut (impl State + ?Sized)) {
     let E: i32 = k as i32;
     if (session_slot!(game, BabyMetroidInCutscene[E].base.frame_counter) & 1) != 0 {
         session_slot!(
@@ -727,7 +748,7 @@ pub fn BabyMetroidInCutscene_HandleEnemyBlinking(k: u16, game: &mut impl Host) {
         );
     };
 }
-pub fn BabyMetroidInCutscene_AccelerateDownwards(k: u16, game: &mut impl Host) {
+pub fn BabyMetroidInCutscene_AccelerateDownwards(k: u16, game: &mut (impl State + ?Sized)) {
     let E: i32 = k as i32;
     let mut v2: i16 =
         ((abs16(session_slot!(game, BabyMetroidInCutscene[E].x_velocity))) as i16).wrapping_sub(32);
@@ -754,7 +775,7 @@ pub fn BabyMetroidInCutscene_UpdateSpeedAndAngle(
     mut r18: u16,
     r20: u16,
     r22: u16,
-    game: &mut impl Host,
+    game: &mut (impl State + ?Sized),
 ) {
     {
         let E: i32 = k as i32;
@@ -843,22 +864,28 @@ pub fn BabyMetroidInCutscene_Init(game: &mut impl Host) {
         game,
     );
 }
+/// Main AI - baby Metroid in the cutscene: one lease for the frame; the
+/// function, the health-based palette and the palette function run on the
+/// game.
 pub fn BabyMetroidInCutscene_Main(game: &mut impl Host) {
-    let E: i32 = word!(game.cur_enemy_index) as i32;
-    session_slot!(game, BabyMetroidInCutscene[E].base.shake_timer = 0);
-    CallBabyMetroidCutsceneFuncA(
-        ((session_slot!(game, BabyMetroidInCutscene[E].function)) as u32) | (0xa90000u32),
-        word!(game.cur_enemy_index),
-        game,
-    );
-    MoveEnemyWithVelocity(game);
-    BabyMetroidInCutscene_Flashing(word!(game.cur_enemy_index), game);
-    BabyMetroidInCutscene_HandleHealthBasedPalette(word!(game.cur_enemy_index), game);
-    let r18: u16 = session_slot!(
-        game,
-        BabyMetroidInCutscene[word!(game.cur_enemy_index) as i32].palette_function
-    );
-    CallBabyMetroidCutsceneFunc0F(((r18) as u32) | (0xa90000u32), game);
+    let mut lease = game.lease();
+    let lease = &mut lease;
+    let E: i32 = word!(lease.cur_enemy_index) as i32;
+    session_slot!(lease, BabyMetroidInCutscene[E].base.shake_timer = 0);
+    let baby_function = session_slot!(lease, BabyMetroidInCutscene[E].function);
+    let k = word!(lease.cur_enemy_index);
+    run_cutscene_function((baby_function as u32) | (0xa90000u32), k, lease);
+    MoveEnemyWithVelocity(lease);
+    BabyMetroidInCutscene_Flashing(word!(lease.cur_enemy_index), lease);
+    let k = word!(lease.cur_enemy_index);
+    lease.foreign(|game| {
+        BabyMetroidInCutscene_HandleHealthBasedPalette(k, game);
+        let r18: u16 = session_slot!(
+            game,
+            BabyMetroidInCutscene[word!(game.cur_enemy_index) as i32].palette_function
+        );
+        CallBabyMetroidCutsceneFunc0F(((r18) as u32) | (0xa90000u32), game);
+    });
 }
 pub fn BabyMetroidInCutscene_Touch(game: &mut impl Host) {
     let E: i32 = word!(game.cur_enemy_index) as i32;

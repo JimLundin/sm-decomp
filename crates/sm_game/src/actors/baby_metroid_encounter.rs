@@ -17,6 +17,7 @@ use crate::actors::mother_brain_fight::{
     QueueSfx2_Max6, SpawnHardcodedPlmArgs, Unreachable, VoidP, g_word_A993BB, g_word_A993C3,
     player_mother_brain, spawn_hardcoded,
 };
+use crate::actors::mother_brain_fight::{Lease, State};
 use crate::actors::ridley::{HomingReversal, homing_velocity};
 use crate::actors::session_slots::session_slot;
 use crate::constants::bank_a9::*;
@@ -24,6 +25,7 @@ use crate::constants::enemy_properties::*;
 use crate::enemy_projectiles::shared_pre::{Math_MultByCos, Math_MultBySin};
 use crate::enemy_script::EnemyScript;
 use crate::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
+use crate::ram::CompatibilityRam as _;
 use crate::ram::RawRam as _;
 use crate::ram::word;
 use crate::word_transfers;
@@ -246,16 +248,20 @@ crate::dispatch::callback_dispatch! {
             BabyMetroid_F3C4(k, game);
         }
     };
-    @functions [pub fn (k: u16, game: &mut impl Host)];
+    @functions [pub fn (k: u16, game: &mut (impl State + ?Sized))];
     @prefix { let E: i32 = k as i32; };
     [11136991] BabyMetroid_Func_3 [] {
         session_slot! { game, BabyMetroid[E]; x_velocity = 0, y_velocity = 0 }
     };
+    @functions [pub fn (k: u16, game: &mut impl Host)];
+    @prefix { let E: i32 = k as i32; };
     [11137067] BabyMetroid_Func_5 [] {
         session_slot!(game, BabyMetroid[E].function = function::QUEUE_BATTLE_MUSIC);
         session_slot!(game, BabyMetroid[E].function_timer = 464);
         BabyMetroid_Func_6(k, game);
     };
+    @functions [pub fn (k: u16, game: &mut (impl State + ?Sized))];
+    @prefix { let E: i32 = k as i32; };
     [11137254] BabyMetroid_Func_10 [] {
         let v2: i32 = (session_slot!(game, BabyMetroid[E].base.frame_counter) as i32 & 6) >> 1;
         let E1: i32 = k as i32 + 64;
@@ -270,6 +276,8 @@ crate::dispatch::callback_dispatch! {
             session_slot!(game, BabyMetroid[E].palette_handler_delay = 10);
         }
     };
+    @functions [pub fn (k: u16, game: &mut impl Host)];
+    @prefix { let E: i32 = k as i32; };
     [11137336] BabyMetroid_Func_12 [] {
         BabyMetroid_Func_GraduallyAccelerateTowards0x400(k, 0, session_slot!(game, BabyMetroid[E].base.x_pos), 104, game);
         session_slot!(game, BabyMetroid[E].function_timer = session_slot!(game, BabyMetroid[E].function_timer).wrapping_sub(1));
@@ -380,6 +388,16 @@ crate::dispatch::callback_dispatch! {
         11137901 => [BabyMetroid_Func_23(game)];
     }
 }
+/// Run the baby Metroid's function `ea` on the lease when it needs no more than the
+/// state, and on the game otherwise.
+fn run_baby_metroid_function<H: Host, L: Lease<Game = H> + ?Sized>(ea: u32, k: u16, lease: &mut L) {
+    match ea {
+        11136991 => BabyMetroid_Func_3(k, lease),
+        11137254 => BabyMetroid_Func_10(k, lease),
+        _ => lease.foreign(|game| CallBabyMetroidFunc(ea, k, game)),
+    }
+}
+
 pub fn BabyMetroid_Func_20(game: &mut impl Host) {
     {
         BabyMetroid_Func_GraduallyAccelerateTowards0x400(
@@ -451,13 +469,13 @@ pub fn BabyMetroid_Func_23(game: &mut impl Host) {
         }
     }
 }
-pub fn BabyMetroid_F3C4(k: u16, game: &mut impl Host) {
+pub fn BabyMetroid_F3C4(k: u16, game: &mut (impl State + ?Sized)) {
     session_slot!(
         game,
         BabyMetroid[k as i32].function = function::FLEE_REMORSEFULLY
     );
 }
-pub fn BabyMetroid_Func_26(k: u16, game: &mut impl Host) {
+pub fn BabyMetroid_Func_26(k: u16, game: &mut (impl State + ?Sized)) {
     {
         if session_slot!(game, BabyMetroid[k as i32].function) == function::REMORSE {
             BabyMetroid_F3C4(k, game);
@@ -675,17 +693,19 @@ pub fn BabyMetroid_Powerbomb(game: &mut impl Host) {
     }
     BabyMetroid_Main(game);
 }
+/// Main AI - baby Metroid: one lease for the frame; the function and the
+/// palette run on the game.
 pub fn BabyMetroid_Main(game: &mut impl Host) {
-    let E: i32 = word!(game.cur_enemy_index) as i32;
-    session_slot!(game, BabyMetroid[E].base.health = 0x7fff);
-    CallBabyMetroidFunc(
-        ((session_slot!(game, BabyMetroid[E].function)) as u32) | (0xa90000u32),
-        word!(game.cur_enemy_index),
-        game,
-    );
-    MoveEnemyWithVelocity(game);
-    if word!(game.palette_change_num) == 0 {
-        BabyMetroid_HandleNormalPalette(game);
+    let mut lease = game.lease();
+    let lease = &mut lease;
+    let E: i32 = word!(lease.cur_enemy_index) as i32;
+    session_slot!(lease, BabyMetroid[E].base.health = 0x7fff);
+    let baby_function = session_slot!(lease, BabyMetroid[E].function);
+    let k = word!(lease.cur_enemy_index);
+    run_baby_metroid_function((baby_function as u32) | (0xa90000u32), k, lease);
+    MoveEnemyWithVelocity(lease);
+    if word!(lease.palette_change_num) == 0 {
+        lease.foreign(|game| BabyMetroid_HandleNormalPalette(game));
     }
 }
 pub fn BabyMetroid_Touch(game: &mut impl Host) {
@@ -736,7 +756,7 @@ pub fn BabyMetroid_Touch(game: &mut impl Host) {
         }
     }
 }
-pub fn BabyMetroid_Shot(game: &mut impl Host) {
+pub fn BabyMetroid_Shot(game: &mut (impl State + ?Sized)) {
     let E: i32 = word!(game.cur_enemy_index) as i32;
     if session_slot!(game, BabyMetroid[E].contact_enabled) != 0 {
         BabyMetroid_Func_26(word!(game.cur_enemy_index), game);

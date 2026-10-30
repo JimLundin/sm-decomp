@@ -202,6 +202,11 @@ impl corpses::Host for Game {
 }
 
 impl sm_game::actors::mother_brain_fight::Host for Game {
+    type Lease<'a> = crate::game::session_runtime::Runtime<'a>;
+    fn lease(&mut self) -> crate::game::session_runtime::Runtime<'_> {
+        crate::game::session_runtime::Runtime::new(self)
+    }
+
     fn bank_unreachable(&mut self) -> bool {
         crate::rtl::Unreachable(self)
     }
