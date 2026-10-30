@@ -1099,7 +1099,7 @@ crate::game::callback_dispatch! {
         10740436 | 10741148 | 10741353 => [wall_crawlers::initialize(wall_crawlers::Kind::Common, game)];
         10739851 | 10741442 => [{ let phase = wall_crawlers::state_address(game); actor_species_pre_instruction(phase, game); }];
         10730163 => bang::initialize; 10731261 => bang::shot;
-        10730277 => [{ let address = bang::main_address(game); crate::cpu_infra::Call(address, game); }];
+        10730277 => [{ let address = bang::main_ai(game); crate::cpu_infra::Call(address, game); }];
         10738716 => sm_a3::Reflec_Shot;
         10715146 => [crate::game::actors::combat::die(&mut Runtime::new(game), actor_api::DeathKind::Grapple)];
         10715151 => [crate::game::actors::combat::select_frozen_ai(&mut Runtime::new(game))];
@@ -1347,7 +1347,7 @@ crate::game::address_dispatch! {
     {
 
 
-        10730661 => [bang::wait(game)]; 10730693 => [bang::aim(game)];
+        10730661 => [bang::movement_delay(game)]; 10730693 => [bang::target_samus(game)];
         10730780 => [bang::fly(false, game)]; 10730796 => [bang::fly(true, game)];
         10735526 => [maridia_snail::crawl(k, actor_api::Axis::Y, 0xa3cce2, game)];
         10735543 => [maridia_snail::crawl(k, actor_api::Axis::X, 0xa3ccea, game)];
@@ -1453,7 +1453,7 @@ crate::game::callback_dispatch! {
         10725992 => [sidehopper::instruction(true, j, game)]; 10726142 => [sidehopper::instruction(false, j, game)];
         10728489 => [zoa::set_x_speed_index(4, j, game)]; 10728500 => [zoa::set_x_speed_index(8, j, game)];
         10728511 => [zoa::set_x_speed_index(12, j, game)];
-        10730104 => [{ crate::game::music::QueueSfx2_Max6(0x56, game); j }]; 10730152 => [bang::arm(j, game)];
+        10730104 => [{ crate::game::music::QueueSfx2_Max6(0x56, game); j }]; 10730152 => [bang::set_finished_growing(j, game)];
         10738632 => [reflec::set_parameter(k, j, game)];
         10734646 => [maridia_snail::instruction(k, 0, j, game)];
         10734655 => [maridia_snail::instruction(k, 1, j, game)];

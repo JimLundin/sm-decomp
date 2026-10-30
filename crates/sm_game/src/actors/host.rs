@@ -151,6 +151,7 @@ pub trait ActorLease:
     + crate::room_mechanisms::host::Host
     + crate::room_mechanisms::host::Effects
     + crate::player_position::PlayerPosition
+    + crate::actors::session_slots::SessionSlots
 {
     type Game: BossEffects + ?Sized;
     /// The compatibility word at `at`, through the session projection.

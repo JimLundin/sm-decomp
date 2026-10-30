@@ -630,10 +630,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/actors/crocomire_reactions.rs"),
     ),
     (
-        "sm/src/game/actors/bang.rs",
-        include_bytes!("game/actors/bang.rs"),
-    ),
-    (
         "sm/src/game/actors/reflec.rs",
         include_bytes!("game/actors/reflec.rs"),
     ),
@@ -3104,6 +3100,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/actors/baby_metroid_encounter.rs",
         include_bytes!("../../crates/sm_game/src/actors/baby_metroid_encounter.rs"),
+    ),
+    (
+        "crates/sm_game/src/actors/bang.rs",
+        include_bytes!("../../crates/sm_game/src/actors/bang.rs"),
     ),
     (
         "crates/sm_game/src/actors/mother_brain_effects.rs",
