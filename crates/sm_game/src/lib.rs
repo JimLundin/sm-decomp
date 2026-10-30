@@ -37,6 +37,7 @@ pub mod intro_pages;
 pub mod item_pickups;
 pub mod launch_motion;
 pub mod layer_blending;
+pub mod liquid;
 pub mod liquid_effects;
 pub mod liquid_surface;
 pub mod menu_lists;
