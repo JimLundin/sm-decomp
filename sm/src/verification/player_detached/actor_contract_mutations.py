@@ -32,7 +32,7 @@ def _build(source, work, name, run, edits=()):
     crates = mutant_crates(source, work, name, edits)
     for relative, before, after in edits:
         apply_edit(name, copied, crates, relative, before, after)
-    externs = build_packages(crates, work, name) if crates is not None else None
+    externs = build_packages(crates, work, name, edits) if crates is not None else None
     main = copied / "verification" / "player_detached" / "main.rs"
     binary = work / name / ("actor-contracts.exe" if os.name == "nt" else "actor-contracts")
     # Mutants may leave a variable or import unused; the baseline stays strict.

@@ -37,6 +37,8 @@ jobs:
           python3 tools/cycle_report.py
       - name: Hold the Phase 2 ratchets (RAM coupling and production lines)
         run: python3 tools/ram_ratchet.py
+      - name: Keep every mutation anchor present (the mutants run nightly)
+        run: python3 sm/src/verification/player_detached/mutations.py --check-anchors
       - name: Keep target packages independent of the emulator crate
         # sm_game and sm_runtime may depend only on sm_data, never on sm.
         run: |
@@ -170,14 +172,6 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Detached projectile compilation failed' }
           & $playerDetached
           if ($LASTEXITCODE -ne 0) { throw 'Detached projectile checks failed' }
-      - name: Reject projectile collision and retirement mutations
-        if: github.event_name == 'workflow_dispatch'
-        # Mutation execution remains hosted under the local Defender restriction.
-        # The preceding baseline must pass before deliberately broken variants run.
-        # Keep each fault isolated from the production checkout.
-        run: |
-          python sm/src/verification/player_detached/mutations.py
-          if ($LASTEXITCODE -ne 0) { throw 'Projectile mutation checks failed' }
 
   build:
     # Native desktop/utilities currently require the Windows GNU ABI.

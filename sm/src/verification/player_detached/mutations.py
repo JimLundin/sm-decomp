@@ -5,6 +5,7 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 from actor_contract_mutations import check_actor_contracts, check_collision_contracts
 
@@ -20,22 +21,22 @@ UPLOAD_SOURCE_CLEAR = """        host.session_mut()
             .source = 0;"""
 UPLOAD_ACK = "        host.upload(request);\n" + UPLOAD_SOURCE_CLEAR
 MUTATIONS = (
-    ("ignore_positive_beam_radius", "player_projectiles/collision.rs", LEADING_EDGE, "        position"),
-    ("skip_collision_retirement", "player_projectiles/collision.rs", "    super::lifecycle::retire(room.0, raw);", "    let _ = raw;"),
-    ("ignore_plant_position", "room_mechanisms/rules/plants.rs", "c.session_mut().player.x = mechanism!(c, slot, work0);", "let _ = mechanism!(c, slot, work0);"),
-    ("ignore_new_beam", "player_projectiles/weapons.rs", "let kind = h.session().inventory.beams.active | 0x8000;", "let kind = 0x8000;"),
+    ("ignore_positive_beam_radius", "crates/sm_game/src/player_projectiles/collision.rs", LEADING_EDGE, "        position"),
+    ("skip_collision_retirement", "crates/sm_game/src/player_projectiles/collision.rs", "    super::lifecycle::retire(room.0, raw);", "    let _ = raw;"),
+    ("ignore_plant_position", "crates/sm_game/src/room_mechanisms/rules/plants.rs", "c.session_mut().player.x = mechanism!(c, slot, work0);", "let _ = mechanism!(c, slot, work0);"),
+    ("ignore_new_beam", "crates/sm_game/src/player_projectiles/weapons.rs", "let kind = h.session().inventory.beams.active | 0x8000;", "let kind = 0x8000;"),
 )
 # New mutants require their named assertion, not just any panic in a check file.
 NEW_MUTATIONS = (
-    ("award_to_private_inventory_copy", "enemy_projectiles/drops.rs",
+    ("award_to_private_inventory_copy", "crates/sm_game/src/enemy_projectiles/drops.rs",
      "h.session_mut().inventory.restore(resource, amount);",
      "h.session().inventory.clone().restore(resource, amount);",
      "1053 actual drop award before sound"),
-    ("discard_shared_shot_mark", "enemy_projectiles/contact.rs",
+    ("discard_shared_shot_mark", "crates/sm_game/src/enemy_projectiles/contact.rs",
      "set_shot_direction(h, shot as isize, direction);",
      "let _ = direction;",
      "1052 shared shot mark"),
-    ("stale_room_selected_after_spawn", "room_mechanisms/scheduler.rs",
+    ("stale_room_selected_after_spawn", "crates/sm_game/src/room_mechanisms/scheduler.rs",
      "let selected = h.session().mechanisms.selected;\n            let Some(next) = commands::run(h, identity, current.advance(2), selected) else {",
      "let selected = 2;\n            let Some(next) = commands::run(h, identity, current.advance(2), selected) else {",
      "1050 captured old program"),
@@ -44,58 +45,58 @@ NEW_MUTATIONS = (
 VISUAL_MUTATIONS = (
     ("omit_fractional_heat", "heat",
      "visual.composition.heat_fraction_before_sound",
-     (("palette_effects/execution.rs",
+     (("crates/sm_game/src/palette_effects/execution.rs",
        "let damage = (u32::from(fraction) | (u32::from(amount) << 16)).wrapping_add(0x4000);",
        "let damage = (u32::from(fraction) | (u32::from(amount) << 16)).wrapping_add(0);"),)),
     ("cache_heat_equipment_before_sound", "heat",
      "visual.composition.heat_equipment_reread",
-     (("palette_effects/execution.rs", "        9298809 => {",
+     (("crates/sm_game/src/palette_effects/execution.rs", "        9298809 => {",
        "        9298809 => {\n            let mutation_equipment = host.session().inventory.equipment.active;"),
-      ("palette_effects/execution.rs",
+      ("crates/sm_game/src/palette_effects/execution.rs",
        "                let table = if host.session().inventory.equipment.active & 0x20 != 0 {",
        "                let table = if mutation_equipment & 0x20 != 0 {"),
-      ("palette_effects/execution.rs",
+      ("crates/sm_game/src/palette_effects/execution.rs",
        "                } else if host.session().inventory.equipment.active & 1 != 0 {",
        "                } else if mutation_equipment & 1 != 0 {"))),
     ("discard_palette_cross_owner_alias", "alias",
      "visual.composition.palette_timer_alias",
-     (("palette_effects/execution.rs",
+     (("crates/sm_game/src/palette_effects/execution.rs",
        "        None => host.set_palette_color_slice(displacement, value),",
        "        None => {},"),)),
     ("acknowledge_live_upload_selection", "upload_ack",
      "visual.composition.upload_captured_ack",
-     (("animated_tiles/execution.rs",
+     (("crates/sm_game/src/animated_tiles/execution.rs",
        UPLOAD_ACK,
        "        host.upload(request);\n        let selected = usize::from(host.session().presentation.visual().animated_tiles.selected >> 1);\n        host.session_mut().presentation.visual_mut().animated_tiles.slots[selected].source = 0;"),)),
     ("acknowledge_failed_upload", "upload_failure",
      "visual.composition.upload_failure_source",
-     (("animated_tiles/execution.rs",
+     (("crates/sm_game/src/animated_tiles/execution.rs",
        UPLOAD_ACK,
        UPLOAD_SOURCE_CLEAR + "\n        host.upload(request);"),)),
     ("discard_shared_palette_color", "eye",
      "visual.composition.animation_palette_after_eye",
-     (("palette_effects/execution.rs", "            *color = value;",
+     (("crates/sm_game/src/palette_effects/execution.rs", "            *color = value;",
        "            let _ = value;"),)),
     ("discard_eye_palette_producer", "eye",
      "visual.composition.eye_shared_colors",
-     (("enemy_projectiles/setup.rs", "            ctx.set_palette_buffer((i >> 1) as isize, value);",
+     (("crates/sm_game/src/enemy_projectiles/setup.rs", "            ctx.set_palette_buffer((i >> 1) as isize, value);",
        "            let _ = value;"),)),
     ("replace_misc_carry_with_signed_branch", "samus_carry",
      "visual.composition.misc_unsigned_carry",
-     (("samus_palette.rs", "        return carry(value >= 60);",
+     (("crates/sm_game/src/samus_palette.rs", "        return carry(value >= 60);",
        "        return carry(value.wrapping_sub(60) & 0x8000 == 0);"),)),
     ("omit_selector2_final_misc", "samus_carry",
      "visual.composition.misc_unsigned_carry",
-     (("samus_palette.rs",
+     (("crates/sm_game/src/samus_palette.rs",
        "    h.probe(\"samus.palette.tail\");\n    misc(h);\n    h.probe(\"samus.palette.return\");",
        "    h.probe(\"samus.palette.tail\");\n    h.probe(\"samus.palette.return\");"),)),
     ("replace_charge_carry_with_signed_branch", "samus_carry",
      "visual.composition.misc_charge_unsigned_carry",
-     (("samus_palette.rs", "                return carry(charge >= 16);",
+     (("crates/sm_game/src/samus_palette.rs", "                return carry(charge >= 16);",
        "                return carry(charge.wrapping_sub(16) & 0x8000 == 0);"),)),
     ("replace_grapple_carry_with_signed_branch", "samus_carry",
      "visual.composition.misc_grapple_unsigned_carry",
-     (("samus_palette.rs", "            return carry(grapple >= 0xc856);",
+     (("crates/sm_game/src/samus_palette.rs", "            return carry(grapple >= 0xc856);",
        "            return carry(grapple.wrapping_sub(0xc856) & 0x8000 == 0);"),)),
 )
 # Actual sprite faults use the same strict selected-case build and assertion rules.
@@ -103,101 +104,101 @@ SPRITE_MUTATIONS = (
     ('sprite_allocate_lowest_free', 'allocation',
      'sprite.mutation.allocation_captured_highest',
      (
-         ('sprite_objects.rs',
+         ('crates/sm_game/src/sprite_objects.rs',
           '        .rposition(|slot| slot.instruction == 0)',
           '        .position(|slot| slot.instruction == 0)'),
      )),
     ('sprite_population_clear_slot_zero', 'clears',
      'sprite.mutation.population_clear_extent',
      (
-         ('sprite_objects.rs',
+         ('crates/sm_game/src/sprite_objects.rs',
           '        if index != 0 {\n            slot.instruction = 0;',
           '        if true {\n            slot.instruction = 0;'),
      )),
     ('sprite_population_preserve_tails', 'clears',
      'sprite.mutation.population_clear_extent',
      (
-         ('sprite_objects.rs',
+         ('crates/sm_game/src/sprite_objects.rs',
           '    let tails = &mut session.sprite_compatibility;\n    tails.instruction.fill(0);\n    tails.timer.fill(0);\n    tails.appearance.fill(0);\n    tails.x.fill(0);\n    tails.x_fraction.fill(0);\n    tails.y.fill(0);\n    tails.y_fraction.fill(0);\n    tails.disable_flags.fill(0);\n',
           '    // Mutation: leave serialized compatibility tails unchanged.\n'),
      )),
     ('sprite_retire_clears_timers', 'clears',
      'sprite.mutation.retirement_preserves_columns',
      (
-         ('sprite_objects.rs',
-          'pub(crate) fn retire_all(session: &mut Session) {\n    for slot in &mut session.sprite_effects.active {\n        slot.instruction = 0;',
-          'pub(crate) fn retire_all(session: &mut Session) {\n    for slot in &mut session.sprite_effects.active {\n        slot.instruction = 0;\n        slot.timer = 0;'),
+         ('crates/sm_game/src/sprite_objects.rs',
+          'pub fn retire_all(session: &mut Session) {\n    for slot in &mut session.sprite_effects.active {\n        slot.instruction = 0;',
+          'pub fn retire_all(session: &mut Session) {\n    for slot in &mut session.sprite_effects.active {\n        slot.instruction = 0;\n        slot.timer = 0;'),
      )),
     ('sprite_update_captured_timer_slot', 'live_selected',
      'sprite.update.live-selected',
      (
-         ('sprite_objects.rs',
+         ('crates/sm_game/src/sprite_objects.rs',
           '                    if timer & 0x8000 == 0 {\n                        write_selected_native!(host, timer, Timer, timer);',
           '                    if timer & 0x8000 == 0 {\n                        write_slot!(host, index, timer, Timer, timer);'),
      )),
     ('sprite_capture_content_before_diagnostic', 'live_selected',
      'sprite.content.post-diagnostic',
      (
-         ('sprite_objects.rs',
+         ('crates/sm_game/src/sprite_objects.rs',
           '                    let record = host.record(Source::Loaded, 0xb4, next);\n                    timer = record.native_word(0);',
           '                    let record = host.table(Source::Loaded, 0xb40000 | u32::from(next));\n                    let _diagnosed = host.record(Source::Loaded, 0xb4, next);\n                    timer = record.native_word(0);'),
      )),
     ('sprite_draw_ascending', 'draw_live',
      'sprite.mutation.draw_order_and_live_next',
      (
-         ('sprite_objects.rs',
+         ('crates/sm_game/src/sprite_objects.rs',
           '    for index in (0..32).rev() {',
           '    for index in 0..32 {'),
      )),
     ('sprite_draw_cached_future_slots', 'draw_live',
      'sprite.mutation.draw_order_and_live_next',
      (
-         ('sprite_objects.rs',
-          'pub(crate) fn draw(host: &mut impl Host) {\n    for index in (0..32).rev() {\n        if host.session().sprite_effects.active[index].instruction == 0 {\n            continue;\n        }\n        let x = host.session().sprite_effects.active[index]\n            .x\n            .whole\n            .wrapping_sub(host.inputs().camera_x);\n        if (x as i16).wrapping_add(16) < 0 || (i32::from(x) - 272) & 0x8000 == 0 {\n            continue;\n        }\n        let y = (host.session().sprite_effects.active[index].y.whole as i16)\n            .wrapping_sub(host.inputs().camera_y as i16);\n        if y < 0 || (i32::from(y) - 272) & 0x8000 == 0 {\n            continue;\n        }\n        let palette = host.session().sprite_effects.active[index].appearance & 0xe00;\n        let base_tile = host.session().sprite_effects.active[index].appearance & 0x1ff;\n        let cursor = host.session().sprite_effects.active[index].instruction;\n        let record = host.record(Source::Loaded, 0xb4, cursor);\n        let map = LegacySpriteMap(record.native_word(2));\n        host.submit_sprite(SpriteDraw {\n            map,\n            position: Point { x, y: y as u16 },\n            palette,\n            base_tile,\n        });\n        host.probe("sprite.draw.submitted");\n    }\n}',
-          'pub(crate) fn draw(host: &mut impl Host) {\n    let mutation_slots = host.session().sprite_effects.active;\n    for index in (0..32).rev() {\n        if mutation_slots[index].instruction == 0 {\n            continue;\n        }\n        let x = mutation_slots[index]\n            .x\n            .whole\n            .wrapping_sub(host.inputs().camera_x);\n        if (x as i16).wrapping_add(16) < 0 || (i32::from(x) - 272) & 0x8000 == 0 {\n            continue;\n        }\n        let y = (mutation_slots[index].y.whole as i16)\n            .wrapping_sub(host.inputs().camera_y as i16);\n        if y < 0 || (i32::from(y) - 272) & 0x8000 == 0 {\n            continue;\n        }\n        let palette = mutation_slots[index].appearance & 0xe00;\n        let base_tile = mutation_slots[index].appearance & 0x1ff;\n        let cursor = mutation_slots[index].instruction;\n        let record = host.record(Source::Loaded, 0xb4, cursor);\n        let map = LegacySpriteMap(record.native_word(2));\n        host.submit_sprite(SpriteDraw {\n            map,\n            position: Point { x, y: y as u16 },\n            palette,\n            base_tile,\n        });\n        host.probe("sprite.draw.submitted");\n    }\n}'),
+         ('crates/sm_game/src/sprite_objects.rs',
+          'pub fn draw(host: &mut impl Host) {\n    for index in (0..32).rev() {\n        if host.session().sprite_effects.active[index].instruction == 0 {\n            continue;\n        }\n        let x = host.session().sprite_effects.active[index]\n            .x\n            .whole\n            .wrapping_sub(host.inputs().camera_x);\n        if (x as i16).wrapping_add(16) < 0 || (i32::from(x) - 272) & 0x8000 == 0 {\n            continue;\n        }\n        let y = (host.session().sprite_effects.active[index].y.whole as i16)\n            .wrapping_sub(host.inputs().camera_y as i16);\n        if y < 0 || (i32::from(y) - 272) & 0x8000 == 0 {\n            continue;\n        }\n        let palette = host.session().sprite_effects.active[index].appearance & 0xe00;\n        let base_tile = host.session().sprite_effects.active[index].appearance & 0x1ff;\n        let cursor = host.session().sprite_effects.active[index].instruction;\n        let record = host.record(Source::Loaded, 0xb4, cursor);\n        let map = LegacySpriteMap(record.native_word(2));\n        host.submit_sprite(SpriteDraw {\n            map,\n            position: Point { x, y: y as u16 },\n            palette,\n            base_tile,\n        });\n        host.probe("sprite.draw.submitted");\n    }\n}',
+          'pub fn draw(host: &mut impl Host) {\n    let mutation_slots = host.session().sprite_effects.active;\n    for index in (0..32).rev() {\n        if mutation_slots[index].instruction == 0 {\n            continue;\n        }\n        let x = mutation_slots[index]\n            .x\n            .whole\n            .wrapping_sub(host.inputs().camera_x);\n        if (x as i16).wrapping_add(16) < 0 || (i32::from(x) - 272) & 0x8000 == 0 {\n            continue;\n        }\n        let y = (mutation_slots[index].y.whole as i16)\n            .wrapping_sub(host.inputs().camera_y as i16);\n        if y < 0 || (i32::from(y) - 272) & 0x8000 == 0 {\n            continue;\n        }\n        let palette = mutation_slots[index].appearance & 0xe00;\n        let base_tile = mutation_slots[index].appearance & 0x1ff;\n        let cursor = mutation_slots[index].instruction;\n        let record = host.record(Source::Loaded, 0xb4, cursor);\n        let map = LegacySpriteMap(record.native_word(2));\n        host.submit_sprite(SpriteDraw {\n            map,\n            position: Point { x, y: y as u16 },\n            palette,\n            base_tile,\n        });\n        host.probe("sprite.draw.submitted");\n    }\n}'),
      )),
     ('sprite_drop_fractional_carry', 'draygon',
      'sprite.draygon42.carry-borrow',
      (
-         ('sprite_effect_controllers.rs',
+         ('crates/sm_game/src/sprite_effect_controllers.rs',
           '    let value = (u32::from(fraction) | (u32::from(whole) << 16)).wrapping_add(delta);',
           '    let value = (u32::from(fraction).wrapping_add(delta) & 0xffff)\n        | (u32::from(whole.wrapping_add((delta >> 16) as u16)) << 16);'),
      )),
     ('sprite_actor_cache_y_before_x_write', 'actor_alias',
      'sprite.actor.attach_live_y_alias',
      (
-         ('sprite_effect_controllers.rs',
+         ('crates/sm_game/src/sprite_effect_controllers.rs',
           '    let x = host.attachment_x(enemy);\n    write!(host, index, X, x.whole, x);\n    let y = host.attachment_y(enemy);',
           '    let x = host.attachment_x(enemy);\n    let y = host.attachment_y(enemy);\n    write!(host, index, X, x.whole, x);'),
      )),
     ('sprite_actor_cache_timer_before_clear', 'actor_alias',
      'sprite.actor.maw_live_first_timer',
      (
-         ('sprite_effect_controllers.rs',
-          'pub(crate) fn maw_appearance(\n    host: &mut impl Host,\n    handle: LegacySpriteHandle,\n    appearance: u16,\n    enemy: u16,\n) {',
-          'pub(crate) fn maw_appearance(\n    host: &mut impl Host,\n    handle: LegacySpriteHandle,\n    appearance: u16,\n    enemy: u16,\n) {\n    let mutation_frozen_timer = host.attachment_frozen_timer(enemy);'),
-         ('sprite_effect_controllers.rs',
+         ('crates/sm_game/src/sprite_effect_controllers.rs',
+          'pub fn maw_appearance(\n    host: &mut impl Host,\n    handle: LegacySpriteHandle,\n    appearance: u16,\n    enemy: u16,\n) {',
+          'pub fn maw_appearance(\n    host: &mut impl Host,\n    handle: LegacySpriteHandle,\n    appearance: u16,\n    enemy: u16,\n) {\n    let mutation_frozen_timer = host.attachment_frozen_timer(enemy);'),
+         ('crates/sm_game/src/sprite_effect_controllers.rs',
           '    if host.attachment_frozen_timer(enemy) != 0 {',
           '    if mutation_frozen_timer != 0 {'),
      )),
     ('sprite_actor_cache_timer_before_freeze', 'actor_alias',
      'sprite.actor.maw_live_second_timer',
      (
-         ('sprite_effect_controllers.rs',
+         ('crates/sm_game/src/sprite_effect_controllers.rs',
           '    if host.attachment_frozen_timer(enemy) != 0 {\n        let old = read!(host, index, Appearance, appearance);\n        write!(host, index, Appearance, appearance, (old & 0xf1ff) | 0xc00);\n        let frozen_timer = host.attachment_frozen_timer(enemy);',
           '    if host.attachment_frozen_timer(enemy) != 0 {\n        let frozen_timer = host.attachment_frozen_timer(enemy);\n        let old = read!(host, index, Appearance, appearance);\n        write!(host, index, Appearance, appearance, (old & 0xf1ff) | 0xc00);'),
      )),
     ('sprite_maw_group_first_or_before_mask', 'maw_first_grouping',
      'sprite.maw.first_write_grouping',
      (
-         ('sprite_effect_controllers.rs',
+         ('crates/sm_game/src/sprite_effect_controllers.rs',
           '        appearance | (old & 0xf1ff)\n    );\n    if host.attachment_frozen_timer(enemy) != 0 {',
           '        (appearance | old) & 0xf1ff\n    );\n    if host.attachment_frozen_timer(enemy) != 0 {'),
      )),
     ('sprite_maw_group_final_or_before_mask', 'maw_final_grouping',
      'sprite.maw.final_restore_grouping',
      (
-         ('sprite_effect_controllers.rs',
+         ('crates/sm_game/src/sprite_effect_controllers.rs',
           '                appearance | (old & 0xf1ff)\n            );',
           '                (appearance | old) & 0xf1ff\n            );'),
      )),
@@ -235,10 +236,10 @@ FLAGS_MUTATIONS = (
     ('flags_rng_caches_prior_scratch', 'rng_scratch',
      'flags.eproj.rng_live_scratch',
      (
-         ('enemy_projectiles/commands.rs',
-          '        8836577 | 8836762 => {\n            h.next_random();',
-          '        8836577 | 8836762 => {\n            let mutation_mask = h.session().flag_compatibility.bitmask;\n            h.next_random();'),
-         ('enemy_projectiles/commands.rs',
+         ('crates/sm_game/src/enemy_projectiles/commands.rs',
+          '        AT_D5E1 | AT_D69A => {\n            h.next_random();',
+          '        AT_D5E1 | AT_D69A => {\n            let mutation_mask = h.session().flag_compatibility.bitmask;\n            h.next_random();'),
+         ('crates/sm_game/src/enemy_projectiles/commands.rs',
           '                    (h.inputs().random >> 8) | (h.session().flag_compatibility.bitmask << 8)',
           '                    (h.inputs().random >> 8) | (mutation_mask << 8)'),
      )),
@@ -361,9 +362,15 @@ def mutant_crates(source, work, name, edits):
     return crates
 
 
-def build_packages(crates, work, name):
-    externs = ["-L", f"dependency={work / name}"]
+def build_packages(crates, work, name, edits):
+    """Rebuild the mutated packages (and every package above a mutated sm_data);
+    link the untouched ones from the baseline libraries in `work`."""
+    touched = {relative.split("/")[1] for relative, _, _ in edits if relative.startswith("crates/")}
+    externs = ["-L", f"dependency={work / name}", "-L", f"dependency={work}"]
     for crate in ("sm_data", "sm_game", "sm_runtime"):
+        if "sm_data" not in touched and crate not in touched:
+            externs += ["--extern", f"{crate}={work / f'lib{crate}.rlib'}"]
+            continue
         library = work / name / f"lib{crate}.rlib"
         built = run(["rustc", "--edition=2024", "-O", "--crate-name", crate, "--crate-type", "rlib",
                      str(crates / crate / "src" / "lib.rs"), "-o", str(library)], 180,
@@ -378,19 +385,17 @@ def check(source, work, name, mutation=None, expected_assertion=None):
     # Every build starts from the untouched source tree, never another mutant.
     copied = work / name / "src"
     shutil.copytree(source, copied)
-    if mutation is not None:
-        relative, before, after = mutation
-        target = copied / "game" / relative
-        original = target.read_text(encoding="utf-8")
-        if original.count(before) != 1:
-            raise RuntimeError(f"{name}: mutation target must occur exactly once")
-        target.write_text(original.replace(before, after, 1), encoding="utf-8")
+    edits = () if mutation is None else (mutation,)
+    crates = mutant_crates(source, work, name, edits)
+    for relative, before, after in edits:
+        apply_edit(name, copied, crates, relative, before, after)
+    externs = None if crates is None else build_packages(crates, work, name, edits)
     main = copied / "verification" / "player_detached" / "main.rs"
     binary = work / name / ("check.exe" if os.name == "nt" else "check")
     # A mutant that deletes the last use of an item leaves it unused; the
     # baseline stays strict and mutants are judged only by execution.
     allow = () if mutation is None else ("-A", "unused")
-    compiled = run(["rustc", "--edition=2024", "-O", str(main), "-o", str(binary)], 180, allow)
+    compiled = run(["rustc", "--edition=2024", "-O", str(main), "-o", str(binary)], 180, allow, externs)
     if compiled.returncode != 0:
         raise RuntimeError(f"{name}: COMPILE ERROR; not a killed mutant\n{compiled.stderr}")
     print(f"{name}: compile PASS", flush=True)
@@ -436,7 +441,7 @@ def check_visual(source, work, mutation, baseline_binary, family="visual"):
     crates = mutant_crates(source, work, name, edits)
     for relative, before, after in edits:
         apply_edit(name, copied, crates, relative, before, after)
-    externs = None if crates is None else build_packages(crates, work, name)
+    externs = None if crates is None else build_packages(crates, work, name, edits)
     binary = work / name / ("check.exe" if os.name == "nt" else "check")
     main = copied / "verification" / "player_detached" / "main.rs"
     # A mutant that deletes the last use of an item leaves it unused; the
@@ -454,7 +459,41 @@ def check_visual(source, work, mutation, baseline_binary, family="visual"):
     print(f"{name}: KILLED by {label}", flush=True)
 
 
+def all_edits():
+    """Every suite's (mutation name, relative path, anchor) edits."""
+    import actor_contract_mutations as contracts
+    for name, relative, before, _after in (*MUTATIONS, *((n, r, b, a) for n, r, b, a, _ in NEW_MUTATIONS)):
+        yield name, relative, before
+    for suite in (VISUAL_MUTATIONS, SPRITE_MUTATIONS, FLAGS_MUTATIONS,
+                  contracts.ACTOR_CONTRACT_MUTATIONS, contracts.COLLISION_CONTRACT_MUTATIONS):
+        for name, _selected, _label, edits in suite:
+            for relative, before, _after in edits:
+                yield name, relative, before
+
+
+def check_anchors(source):
+    """Fail when a mutation's file or anchor no longer exists exactly once."""
+    stale = []
+    count = 0
+    for name, relative, before in all_edits():
+        count += 1
+        if relative.startswith("crates/"):
+            target = source.parent.parent / relative
+        else:
+            target = source / "game" / relative
+        text = target.read_bytes().decode("utf-8").replace("\r\n", "\n") if target.is_file() else None
+        if text is None or text.count(before) != 1:
+            found = "missing file" if text is None else f"anchor occurs {text.count(before)} times"
+            stale.append(f"{name}: {relative}: {found}")
+    if stale:
+        raise RuntimeError("stale mutation anchors:\n" + "\n".join(stale))
+    print(f"mutation anchors: {count}/{count} present exactly once", flush=True)
+
+
 def main():
+    if "--check-anchors" in sys.argv[1:]:
+        check_anchors(Path(__file__).resolve().parents[2])
+        return
     if os.environ.get("GITHUB_ACTIONS") != "true":
         raise RuntimeError("mutation builds and execution are restricted to GitHub CI")
     # Installed at sm/src/verification/player_detached/mutations.py.

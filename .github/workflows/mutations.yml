@@ -1,0 +1,61 @@
+name: Mutations
+
+# Builds each deliberately broken variant of the detached cores and requires
+# the named check to kill it: projectile, room mechanism, visual, sprite,
+# flag, actor contract and collision contract suites
+# (sm/src/verification/player_detached/mutations.py). A surviving mutant, a
+# compile error or an unrelated panic fails the run. Pull requests only check
+# that every mutation anchor still exists (ci.yml); the mutants themselves run
+# nightly and on demand. Each mutant rebuilds sm_game and the harness, so a
+# full run is expected to take hours (the job logs it): too slow to gate
+# pull requests until measured.
+on:
+  schedule:
+    - cron: '23 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mutations-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mutations:
+    # Mutation execution stays hosted: the local Defender policy blocks it.
+    runs-on: windows-2022
+    timeout-minutes: 300
+    env:
+      RUSTUP_TOOLCHAIN: stable-x86_64-pc-windows-gnu
+      CARGO_BUILD_JOBS: 1
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: msys2/setup-msys2@v2
+        id: msys
+        with:
+          msystem: MINGW64
+          install: mingw-w64-x86_64-gcc
+      - name: Install the GNU Rust toolchain and linker
+        env:
+          MSYS_LOCATION: ${{ steps.msys.outputs.msys2-location }}
+        run: |
+          rustup toolchain install stable-x86_64-pc-windows-gnu --profile minimal
+          if ($LASTEXITCODE -ne 0) { throw 'Rust toolchain installation failed' }
+          $linker = Join-Path $env:MSYS_LOCATION 'mingw64/bin'
+          if (!(Test-Path -LiteralPath "$linker/gcc.exe")) { throw 'MinGW GCC is missing' }
+          $linker | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          "CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=$linker/gcc.exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Kill every detached-core mutant
+        # Each fault is built in its own copy; the baseline must pass first.
+        run: |
+          $started = Get-Date
+          python sm/src/verification/player_detached/mutations.py
+          if ($LASTEXITCODE -ne 0) { throw 'A mutant survived or the mutation run failed' }
+          "mutation run took $([int]((Get-Date) - $started).TotalMinutes) minutes"
