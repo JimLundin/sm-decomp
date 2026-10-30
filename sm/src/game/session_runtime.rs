@@ -1082,7 +1082,7 @@ crate::game::callback_dispatch! {
         10717004 => crate::game::waver::Waver_Main; 10717536 => [diving_enemies::initialize(DivingKind::Metalee, game)];
         10717561 => [diving_enemies::advance(DivingKind::Metalee, game)]; 10717967 => [diving_enemies::shot(DivingKind::Metalee, game)];
         10718509 => actors::fireflea::initialize;
-        10718702 => actors::fireflea::advance;
+        10718702 => actors::fireflea::main_ai;
         10718827 => actors::fireflea::touch;
         10718851 => actors::fireflea::power_bomb;
         10718857 => actors::fireflea::shot;
