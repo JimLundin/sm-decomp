@@ -79,7 +79,7 @@ The [147 record](https://github.com/JimLundin/sm-decomp/blob/2c2928e725dc30cf6e1
 [146 record](https://github.com/JimLundin/sm-decomp/blob/0ec67ed08e303adc0078c84ee54cb961df3563ba/docs/PLAN.md#current-work-and-limits),
 [DSP93/earlier cohorts](https://github.com/JimLundin/sm-decomp/blob/170bc5351c64f0846bbcb7b4714064a7230db153/docs/PLAN.md#current-work-and-limits),
 [SOURCE15–38](https://github.com/JimLundin/sm-decomp/blob/4c302a50/docs/PLAN.md#qualified-history)
-and [M1a audit](M1A-REVIEW.md) preserve historical proofs and scoped contracts.
+and [M1a audit](archive/M1A-REVIEW.md) preserve historical proofs and scoped contracts.
 Reach the applicable frozen record when touching its owner; history assigns no
 work and authorizes no repeated accepted campaign.
 
