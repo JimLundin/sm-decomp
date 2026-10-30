@@ -28,5 +28,5 @@ and line numbers and has no role in building or maintaining the current Rust.
 Check performed before deleting the C: on the same synthetic ROM, the C binary
 and the Rust binary produce byte-identical output. That only exercises boot
 and ROM patching. The real check is the per-frame comparison against the
-original ROM (`docs/PLAN.md`, phase 1), which needs a real ROM and was not run
-when this was committed.
+original ROM ([movies/README.md](../../movies/README.md)), which needs a real
+ROM and was not run when this was committed.

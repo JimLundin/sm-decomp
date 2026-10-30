@@ -11,6 +11,27 @@ graphs and explicit opt-in re-spin/QoL mechanics. Keep content, topology and
 options separate from platform and ROM/RAM compatibility. Vanilla is the first
 fidelity profile; intentional options need their own interaction checks.
 
+## Current status (2026-10-30)
+
+These notes record where the code stands; they do not change the design.
+
+- `sm_data`, `sm_game`, `sm_runtime` and `sm_app` exist as workspace crates
+  under `crates/`; `sm_tools` does not yet. Replay and import tooling is the
+  verifier in `sm` and the Python scripts in `tools/`.
+- CI requires `sm_game` and `sm_runtime` to depend only on `sm_data`, and
+  `sm_data` to depend on nothing. All three forbid `unsafe`.
+- Gameplay modules are moving from `sm/src/game/` into `sm_game` behind
+  narrow host traits that `sm` implements. Moved code that still reads the
+  RAM image is relocated, not owned: `tools/cycle_report.py` counts those
+  files and sites.
+- `sm_runtime` holds the shared scanline renderer, which the emulated PPU
+  also uses, and Scene and message consumers. Audio is still in `sm`.
+- `sm_app` is still the SDL2/OpenGL desktop built on `sm`, not the
+  `winit`/`wgpu`/`cpal` runtime described here.
+- No part of the game runs without the emulated backend, and no
+  [validation gate](VALIDATION.md) has been run. [REVIEW](../REVIEW.md)
+  holds the current milestone phase.
+
 ## Migration policy
 
 Windows workers may retain the current Rust game's emulated backend and built-in
@@ -33,14 +54,14 @@ The source is authoritative; these destinations describe responsibilities, not a
 second work queue. Each replacement names its callers, inputs/results, failure
 and suspension paths, retained dependencies and their removal condition.
 
-| Current responsibility | Destination | Removal condition |
-| --- | --- | --- |
-| `sm/src/game/`, `game_state.rs`, `ram_map.rs` | `sm_game`: owned Session and private gameplay modules | Complete producer/consumer cohorts use typed state; remaining RAM consumers have migrated. |
-| `main.rs`, `host.rs`, `config.rs`, host portions of `rtl.rs` | `sm_app`: input, clock, lifecycle; `sm_runtime`: devices/storage | Gameplay consumes recorded values and returns owned records without host policy. |
-| `platform/`, PPU/DMA drawing and effects | `sm_runtime`: our renderer/shaders; `sm_game`: Scene extraction | Complete drawing-to-pixels behavior is preserved; remaining game/oracle backend consumers are accounted for. |
-| `spc_player.rs`, `native_audio.rs`, SNES audio/DSP | `sm_runtime`: our sequencer, voices, mixer/output | Cue order, instruments, pitch, envelopes, voice rules and echo have independent checks. |
-| ROM tables, content interpretation, state formats | `sm_data`: validated definitions/records; `sm_tools`: offline importer/compiler | Prepared content and explicit schemas replace ROM layout as the public interface. |
-| `verify.rs`, `verify_dll.rs`, `cpu_infra.rs`, `verify/`, comparison tools | Development oracle; target `sm_tools`: replay/scenarios/capture | Equivalent observations/coverage exist before retiring the working comparison path. |
+| Current responsibility | Destination | Removal condition | Status (2026-10-30) |
+| --- | --- | --- | --- |
+| `sm/src/game/`, `game_state.rs`, `ram_map.rs` | `sm_game`: owned Session and private gameplay modules | Complete producer/consumer cohorts use typed state; remaining RAM consumers have migrated. | Moving: `sm_game` has 363 files, 88 of them still on compat RAM or registers. |
+| `main.rs`, `host.rs`, `config.rs`, host portions of `rtl.rs` | `sm_app`: input, clock, lifecycle; `sm_runtime`: devices/storage | Gameplay consumes recorded values and returns owned records without host policy. | `main.rs` and `config.rs` are in `crates/sm_app`; `host.rs` and `rtl.rs` remain in `sm`. |
+| `platform/`, PPU/DMA drawing and effects | `sm_runtime`: our renderer/shaders; `sm_game`: Scene extraction | Complete drawing-to-pixels behavior is preserved; remaining game/oracle backend consumers are accounted for. | `platform/` is in `crates/sm_app`; the shared scanline core is in `sm_runtime`. |
+| `spc_player.rs`, `native_audio.rs`, SNES audio/DSP | `sm_runtime`: our sequencer, voices, mixer/output | Cue order, instruments, pitch, envelopes, voice rules and echo have independent checks. | Still in `sm`; `sm_data` has a `Cue` record. |
+| ROM tables, content interpretation, state formats | `sm_data`: validated definitions/records; `sm_tools`: offline importer/compiler | Prepared content and explicit schemas replace ROM layout as the public interface. | Records in `sm_data`, imported from the cartridge at load; no `sm_tools` yet. |
+| `verify.rs`, `verify_dll.rs`, `cpu_infra.rs`, `verify/`, comparison tools | Development oracle; target `sm_tools`: replay/scenarios/capture | Equivalent observations/coverage exist before retiring the working comparison path. | Still in `sm` and `tools/`. |
 
 Preserve whole-RAM comparisons while representations agree; otherwise compare
 explicit semantic observations at the same Tick/phase, with named exclusions.
