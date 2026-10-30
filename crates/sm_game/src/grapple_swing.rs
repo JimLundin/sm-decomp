@@ -14,8 +14,11 @@ use crate::word_transfers;
 
 /// What the grapple controller needs from the runtime besides named RAM,
 /// sound, the cartridge images and the owned-Session view.
+/// The grapple runs on a Session lease: its Session-owned player fields are
+/// read and written by name, the rest through the lease's RAM projection.
 pub trait Host:
-    crate::ram::CompatibilityRam
+    crate::session_access::SessionAccess
+    + crate::ram::CompatibilityRam
     + crate::effects::SoundEffects
     + crate::cartridge::NativeImage
     + crate::cartridge::LoadedImage

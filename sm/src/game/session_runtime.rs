@@ -1689,7 +1689,7 @@ impl Runtime<'_> {
 
 #[path = "player_collision_runtime.rs"]
 mod player_collision_runtime;
-pub(crate) use player_collision_runtime::{player_bottom, set_player_radius, settle_grapple};
+pub(crate) use player_collision_runtime::set_player_radius;
 #[path = "player_movement_runtime.rs"]
 mod player_movement_runtime;
 pub(crate) use player_movement_runtime::{

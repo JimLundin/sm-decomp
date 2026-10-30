@@ -732,7 +732,11 @@ pub fn verify_enemy_projectile_qualified_case(id: u32) -> bool {
 
 #[doc(hidden)]
 pub fn verify_player_projectile_expanded_case(id: u32) -> Option<Vec<u8>> {
-    game::player_projectiles::checks::expanded::capture(id, game::grapple_swing::react_beam)
+    // The grapple host is the lease; the game entry opens one, as before.
+    game::player_projectiles::checks::expanded::capture(id, |game| {
+        let mut lease = game::session_runtime::Runtime::new(game);
+        sm_game::player_collision::grapple::react_beam(&mut lease)
+    })
 }
 
 #[doc(hidden)]
