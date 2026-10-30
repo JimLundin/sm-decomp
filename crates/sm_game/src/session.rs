@@ -121,6 +121,8 @@ pub struct Session {
     pub mechanisms: Mechanisms,
     pub room: Room,
     pub feedback: Feedback,
+    /// HDMA objects ($18B0â€“$195B); see `crate::hdma`.
+    pub hdma: crate::hdma::HdmaObjects,
     pub messages: MessageRequests,
     pub spawn_scratch: SpawnScratch,
     // Shared last-written actor/projectile compatibility word ($0E20).
@@ -165,6 +167,7 @@ impl Session {
             inventory: Default::default(),
             mechanisms: Default::default(),
             feedback: Default::default(),
+            hdma: Default::default(),
             messages: Default::default(),
             spawn_scratch: Default::default(),
             compatibility_enemy_scratch: 0,

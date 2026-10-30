@@ -585,6 +585,24 @@ macro_rules! scalar_words {
             $f(0xdebc+index*2,$($borrow)* $s.mechanisms.slots[index].return_program);
             $f(0xdf0c+index*2,$($borrow)* $s.mechanisms.slots[index].work1);
         }
+        $f(0x18b0,$($borrow)* $s.hdma.enabled);
+        $f(0x18b2,$($borrow)* $s.hdma.selected);
+        for index in 0..crate::hdma::OBJECTS {
+            $f(0x18b4+index*2,$($borrow)* $s.hdma.objects[index].channels);
+            $f(0x18c0+index*2,$($borrow)* $s.hdma.objects[index].bank_slot);
+            $f(0x18cc+index*2,$($borrow)* $s.hdma.objects[index].instruction_list);
+            $f(0x18d8+index*2,$($borrow)* $s.hdma.objects[index].table);
+            $f(0x18e4+index*2,$($borrow)* $s.hdma.objects[index].instruction_timer);
+            $f(0x18f0+index*2,$($borrow)* $s.hdma.objects[index].pre_instruction);
+            $f(0x18fc+index*2,$($borrow)* $s.hdma.objects[index].pre_instruction_bank);
+            $f(0x1908+index*2,$($borrow)* $s.hdma.objects[index].timer);
+            $f(0x1914+index*2,$($borrow)* $s.hdma.objects[index].a);
+            $f(0x1920+index*2,$($borrow)* $s.hdma.objects[index].b);
+            $f(0x192c+index*2,$($borrow)* $s.hdma.objects[index].c);
+            $f(0x1938+index*2,$($borrow)* $s.hdma.objects[index].d);
+            $f(0x1944+index*2,$($borrow)* $s.hdma.objects[index].e);
+            $f(0x1950+index*2,$($borrow)* $s.hdma.objects[index].f);
+        }
         $f(0x198d,$($borrow)* $s.enemy_projectiles.flags);
         $f(0x1991,$($borrow)* $s.enemy_projectiles.selected);
         $f(0x1993,$($borrow)* $s.enemy_projectiles.spawn.primary);

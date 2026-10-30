@@ -28,6 +28,7 @@ pub struct AuxiliaryGameplayCheckpoint {
     pub inventory: crate::item_pickups::Inventory,
     pub mechanisms: crate::session::Mechanisms,
     pub feedback: crate::session::Feedback,
+    pub hdma: crate::hdma::HdmaObjects,
     pub messages: crate::session::MessageRequests,
     pub spawn_scratch: crate::session::SpawnScratch,
     pub compatibility_enemy_scratch: u16,
@@ -1490,7 +1491,7 @@ macro_rules! checkpoint_auxiliary {
                 if metadata.identity.reference != metadata.reference.fingerprint {
                     return Err("auxiliary gameplay checkpoint Reference identity mismatch".into());
                 }
-                let mut bytes = Vec::from(b"SMAUXGS\x02".as_slice());
+                let mut bytes = Vec::from(b"SMAUXGS\x03".as_slice());
                 let binding = observation_binding(metadata);
                 bytes.extend_from_slice(&(binding.len() as u64).to_le_bytes());
                 bytes.extend_from_slice(&binding);
@@ -1499,7 +1500,7 @@ macro_rules! checkpoint_auxiliary {
             }
             pub fn decode_auxiliary_checkpoint(bytes: &[u8], metadata: &DisplayStartMetadata) -> Result<AuxiliaryGameplayCheckpoint, String> {
                 let mut read = CheckpointReader(bytes);
-                if read.bytes(8)? != b"SMAUXGS\x02" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
+                if read.bytes(8)? != b"SMAUXGS\x03" { return Err("unsupported auxiliary gameplay checkpoint schema".into()); }
                 let size = usize::try_from(read.counter()?).map_err(|_| "auxiliary gameplay checkpoint binding length overflow")?;
                 if metadata.identity.reference != metadata.reference.fingerprint || read.bytes(size)? != observation_binding(metadata) {
                     return Err("auxiliary gameplay checkpoint source identity or Reference changed".into());
@@ -1510,6 +1511,43 @@ macro_rules! checkpoint_auxiliary {
             }
         }
     };
+}
+checkpoint_fields!(checkpoint_hdma_object, checkpoint_read_hdma_object, crate::hdma::HdmaObject,
+    channels: checkpoint_word/checkpoint_read_word,
+    bank_slot: checkpoint_word/checkpoint_read_word,
+    instruction_list: checkpoint_word/checkpoint_read_word,
+    table: checkpoint_word/checkpoint_read_word,
+    instruction_timer: checkpoint_word/checkpoint_read_word,
+    pre_instruction: checkpoint_word/checkpoint_read_word,
+    pre_instruction_bank: checkpoint_word/checkpoint_read_word,
+    timer: checkpoint_word/checkpoint_read_word,
+    a: checkpoint_word/checkpoint_read_word,
+    b: checkpoint_word/checkpoint_read_word,
+    c: checkpoint_word/checkpoint_read_word,
+    d: checkpoint_word/checkpoint_read_word,
+    e: checkpoint_word/checkpoint_read_word,
+    f: checkpoint_word/checkpoint_read_word);
+fn checkpoint_hdma(bytes: &mut Vec<u8>, value: &crate::hdma::HdmaObjects) {
+    checkpoint_word(bytes, &value.enabled);
+    checkpoint_word(bytes, &value.selected);
+    for object in &value.objects {
+        checkpoint_hdma_object(bytes, object);
+    }
+}
+fn checkpoint_read_hdma(
+    read: &mut CheckpointReader<'_>,
+) -> Result<crate::hdma::HdmaObjects, String> {
+    let enabled = read.word()?;
+    let selected = read.word()?;
+    let mut objects = [crate::hdma::HdmaObject::default(); crate::hdma::OBJECTS];
+    for object in &mut objects {
+        *object = checkpoint_read_hdma_object(read)?;
+    }
+    Ok(crate::hdma::HdmaObjects {
+        enabled,
+        selected,
+        objects,
+    })
 }
 checkpoint_auxiliary!(
     botwoon_death: checkpoint_botwoon_death/checkpoint_read_botwoon_death,
@@ -1522,6 +1560,7 @@ checkpoint_auxiliary!(
     inventory: checkpoint_inventory/checkpoint_read_inventory,
     mechanisms: checkpoint_mechanisms/checkpoint_read_mechanisms,
     feedback: checkpoint_feedback/checkpoint_read_feedback,
+    hdma: checkpoint_hdma/checkpoint_read_hdma,
     messages: checkpoint_messages/checkpoint_read_messages,
     spawn_scratch: checkpoint_spawn_scratch/checkpoint_read_spawn_scratch,
     compatibility_enemy_scratch: checkpoint_word/checkpoint_read_word,
@@ -2133,6 +2172,7 @@ impl NumericGameplayCheckpoint {
             inventory,
             mechanisms,
             feedback,
+            hdma,
             messages,
             spawn_scratch,
             compatibility_enemy_scratch,
@@ -2161,6 +2201,7 @@ impl NumericGameplayCheckpoint {
             mechanisms,
             room: self.room,
             feedback,
+            hdma,
             messages,
             spawn_scratch,
             compatibility_enemy_scratch,
