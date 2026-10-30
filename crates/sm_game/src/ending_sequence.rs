@@ -51,14 +51,41 @@ pub mod object {
     pub const PURPLE_GLOW: u16 = 0xeea3;
     pub const STARS: u16 = 0xeea9;
     pub const LAVA: u16 = 0xeeaf;
+    /// $8B:EEB5..EEC1: the Zebes explosion's silhouette, right stars and
+    /// afterglow.
+    pub const ZEBES_SILHOUETTE: u16 = 0xeeb5;
+    pub const ZEBES_STARS_RIGHT: u16 = 0xeebb;
+    pub const ZEBES_AFTERGLOW: u16 = 0xeec1;
     pub const GUNSHIP_TEXT: u16 = 0xeec7;
+    /// $8B:EECD: 'COMPLETED SUCCESSFULLY'.
+    pub const COMPLETED_SUCCESSFULLY: u16 = 0xeecd;
     pub const CLOUDS_TOP: u16 = 0xeed3;
     pub const CLOUDS_RIGHT: u16 = 0xeeeb;
+    /// $8B:EEF7: the Zebes explosion's left stars.
+    pub const ZEBES_STARS_LEFT: u16 = 0xeef7;
+    /// $8B:EEFD: the clear time, and from $EF03 its hours tens, hours units,
+    /// colon, minutes tens and minutes units, six bytes apart.
+    pub const CLEAR_TIME: u16 = 0xeefd;
+    pub const CLEAR_TIME_DIGITS: u16 = 0xef03;
     pub const CRITTERS_ESCAPE: u16 = 0xef21;
     pub const ICON_S_TOP: u16 = 0xef81;
     pub const ITEM_PERCENTAGE: u16 = 0xf748;
     pub const ICON: u16 = 0xf74e;
     pub const CREDITS: u16 = 0xf6f8;
+}
+
+/// Bank $8D palette effects of Zebes's explosion, with the bank log's names.
+pub mod palette_effect {
+    /// $8D:E1C4: fade out the zoomed-out exploding Zebes.
+    pub const ZEBES_FADE_OUT: u16 = 0xe1c4;
+    /// $8D:E1C8 and $8D:E1E8: the explosion's wide part, foreground and
+    /// background.
+    pub const EXPLOSION_WIDE_FOREGROUND: u16 = 0xe1c8;
+    pub const EXPLOSION_WIDE_BACKGROUND: u16 = 0xe1e8;
+    /// $8D:E1CC: the explosion's finale.
+    pub const EXPLOSION_FINALE: u16 = 0xe1cc;
+    /// $8D:E1D0: white out space during the explosion.
+    pub const EXPLOSION_SPACE_WHITE_OUT: u16 = 0xe1d0;
 }
 
 /// Bank $8D palette effects.

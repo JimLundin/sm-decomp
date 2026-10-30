@@ -58,6 +58,8 @@ pub mod object {
     pub const CERES_UNDER_ATTACK: u16 = 0xce85;
     pub const CERES_SMALL_ASTEROIDS: u16 = 0xce8b;
     pub const CERES_VORTEX: u16 = 0xce91;
+    /// $8B:CEB5: the Japanese text under PLANET ZEBES.
+    pub const PLANET_ZEBES_JAPANESE_TEXT: u16 = 0xceb5;
     pub const CERES_EXPLOSION_2: u16 = 0xcec1;
     pub const SLIME_DROPS: u16 = 0xcef1;
     pub const CERES_STARS: u16 = 0xcf0f;
@@ -77,7 +79,20 @@ pub mod mode7 {
     pub const BOOM: u16 = 0xc3e6;
     pub const BOOM_GUNSHIP: u16 = 0xc3f0;
     pub const BOOM_WITH_SAMUS: u16 = 0xc3fa;
+    /// $8B:D401..D437: the Japanese intro text's pages, each page's first
+    /// subpage.
+    pub const JAPANESE_TEXT_PAGE_1: u16 = 0xd401;
+    pub const JAPANESE_TEXT_PAGE_2: u16 = 0xd407;
+    pub const JAPANESE_TEXT_PAGE_3: u16 = 0xd413;
+    pub const JAPANESE_TEXT_PAGE_4: u16 = 0xd41f;
+    pub const JAPANESE_TEXT_PAGE_5: u16 = 0xd42b;
+    pub const JAPANESE_TEXT_PAGE_6: u16 = 0xd437;
 }
+
+/// $8D:E1B0 and $8D:E1B4: the palette effects fading the PLANET ZEBES text
+/// in and out.
+pub const ZEBES_TEXT_FADE_IN: u16 = 0xe1b0;
+pub const ZEBES_TEXT_FADE_OUT: u16 = 0xe1b4;
 
 /// Bank $8D palette effects.
 const CERES_GLOW_1: u16 = 0xe1a8;

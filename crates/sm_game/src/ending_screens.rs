@@ -43,19 +43,30 @@ mod sprite {
     pub const JUMP_FALLING_PREINSTRUCTION: u16 = 0xf5dd;
 }
 
-/// Bank $8B cinematic sprite definitions of the post-credits Samus, by ending.
-mod samus {
+/// Bank $8B cinematic sprite definitions of the post-credits Samus, with the
+/// bank log's names. Suitless Samus is the best ending's; the helmeted head
+/// the worst's, the bare head the mediocre's, and the suited body both.
+pub mod samus {
+    /// $8B:EF27..EF3F: suitless Samus idle, its legs, letting her hair down,
+    /// its legs, and her jump.
     pub const SUITLESS_IDLE: u16 = 0xef27;
     pub const SUITLESS_IDLE_LEGS: u16 = 0xef2d;
     pub const SUITLESS_LETTING_HAIR_DOWN: u16 = 0xef33;
     pub const SUITLESS_LETTING_HAIR_DOWN_LEGS: u16 = 0xef39;
+    pub const SUITLESS_JUMP: u16 = 0xef3f;
+    /// $8B:EF45..EF51: suited Samus idle, body and either head.
     pub const SUITED_IDLE_BODY: u16 = 0xef45;
     pub const SUITED_IDLE_HEAD_WITH_HELMET: u16 = 0xef4b;
     pub const SUITED_IDLE_HEAD_WITHOUT_HELMET: u16 = 0xef51;
+    /// $8B:EF57..EF69: suited Samus thumbs up, body, arm and either head.
     pub const SUITED_THUMBS_UP_BODY: u16 = 0xef57;
     pub const SUITED_THUMBS_UP_ARM: u16 = 0xef5d;
     pub const SUITED_THUMBS_UP_HEAD_WITH_HELMET: u16 = 0xef63;
     pub const SUITED_THUMBS_UP_HEAD_WITHOUT_HELMET: u16 = 0xef69;
+    /// $8B:EF6F..EF7B: suited Samus jump, body and either head.
+    pub const SUITED_JUMP_BODY: u16 = 0xef6f;
+    pub const SUITED_JUMP_HEAD_WITH_HELMET: u16 = 0xef75;
+    pub const SUITED_JUMP_HEAD_WITHOUT_HELMET: u16 = 0xef7b;
 }
 
 /// The ending sprites' palette index: palette 7, a multiple of $200.
