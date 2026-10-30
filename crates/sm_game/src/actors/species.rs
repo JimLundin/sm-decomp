@@ -10,7 +10,13 @@
 #![forbid(unsafe_code)]
 use crate::actors::host::{ActorHost, ActorRuntime, Death, LeaseActors, Shot};
 use crate::actors::{
-    alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, brinstar_pipe_bug, ceres_doors, ceres_ridley, coven, crawlers, crocomire_reactions, dachora_run, draygon_death, draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, etecoon, evir, fire_arc, fireflea, fune, kago, kraid, magdollite, metroid, mini_kraid, mochtroid, morph_ball_eye, norfair_pipe_bug, phantoon, phantoon_actions, reflec, ridley, roach, shaktool, sidehopper, skree, skultera, space_pirates, statues, torizo, tripper, yapping_maw, yellow_pipe_bug, zebetites, zoa,
+    alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, brinstar_pipe_bug,
+    ceres_doors, ceres_ridley, coven, crawlers, crocomire_reactions, dachora_run, draygon_death,
+    draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator,
+    escape_critters, etecoon, evir, fire_arc, fireflea, fune, kago, kraid, magdollite, metroid,
+    mini_kraid, mochtroid, morph_ball_eye, norfair_pipe_bug, phantoon, phantoon_actions, reflec,
+    ridley, roach, shaktool, sidehopper, skree, skultera, space_pirates, statues, torizo, tripper,
+    yapping_maw, yellow_pipe_bug, zebetites, zoa,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
