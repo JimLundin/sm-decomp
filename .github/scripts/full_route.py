@@ -11,13 +11,17 @@
   chunk INDEX CHECKPOINT_DIR   replay one chunk from its boundary checkpoint
 
 Every frame is compared exactly as in the corpus: WRAM, VRAM, CGRAM, OAM, PPU
-state and rendered pixels.
+state and rendered pixels. Lockstep agreement alone does not show the replay
+follows the TAS (both sides take the same wrong path after a desync), so each
+chunk also expects the rooms the original-emulator capture entered inside it
+(movies/room-seeds-100.csv).
 """
-import base64, gzip, hashlib, io, json, os, pathlib, subprocess, sys, tomllib, urllib.request, zipfile
+import base64, csv, gzip, hashlib, io, json, os, pathlib, subprocess, sys, tomllib, urllib.request, zipfile
 
 CHUNK_FRAMES = 20000  # ~60 fps lockstep on hosted runners: about 6 minutes per chunk.
 INPUTS = pathlib.Path("movies/100.inputs")
 INPUTS_SHA256 = "80aeef2665bac311"  # prefix of the canonical CRLF import; checked in prepare
+ROOM_MARGIN = 600  # expect only rooms entered this far inside a chunk, away from lag drift
 
 
 def movie():
@@ -87,13 +91,25 @@ def checkpoints(out_dir):
         previous = target
 
 
+def expected_rooms(start, frames):
+    """Rooms the original capture entered well inside [start, start + frames), in order."""
+    rooms = []
+    with open("movies/room-seeds-100.csv", newline="") as stream:
+        for row in csv.DictReader(stream):
+            entered = int(row["next_input_index"])
+            if start + ROOM_MARGIN <= entered < start + frames - ROOM_MARGIN and row["room"] not in rooms:
+                rooms.append(row["room"])
+    return rooms
+
+
 def chunk(index, checkpoint_dir):
     index = int(index)
     start, frames = chunks()[index]
-    extra = ["--frames", str(frames)]
+    rooms = expected_rooms(start, frames)
+    extra = ["--frames", str(frames), *(arg for room in rooms for arg in ("--expect", f"room:{room}"))]
     if index:
         extra = ["--checkpoint-in", str(pathlib.Path(checkpoint_dir) / f"100-{index:02d}.smvchk"), *extra]
-    print(f"chunk {index}: frames {start}..{start + frames}", flush=True)
+    print(f"chunk {index}: frames {start}..{start + frames}; expects rooms {' '.join(rooms) or 'none'}", flush=True)
     verify(*extra)
 
 
