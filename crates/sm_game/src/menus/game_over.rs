@@ -163,10 +163,8 @@ fn place_missile<H: Host + ?Sized>(y: u16, game: &mut H) {
 fn load_map<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     game.set_hdma_enabled(false);
     game.clear_hdma();
-    {
-        word!(game.game_state = kGameState_5_FileSelectMap as u16);
-        crate::menu!(game.menu_index = 0);
-    }
+    word!(game.game_state = kGameState_5_FileSelectMap as u16);
+    crate::menu!(game.menu_index = 0);
 }
 
 fn fade_to_title<H: crate::menus::host::Host + ?Sized>(game: &mut H) {

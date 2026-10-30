@@ -21,10 +21,8 @@ pub fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     map_menu::scroll_limits(game);
     map_menu::center_map(0x80, game);
     word! { game, 1; screen_fade_delay, screen_fade_counter }
-    {
-        crate::menu!(game.pausemenu_leftarrow_animation_frame = 0);
-        crate::menu!(game.pausemenu_palette_animation_timer = 1);
-    }
+    crate::menu!(game.pausemenu_leftarrow_animation_frame = 0);
+    crate::menu!(game.pausemenu_palette_animation_timer = 1);
     word! { game, 0; map_scrolling_direction, map_scrolling_speed_index }
     game.queue_fx_clear();
     word!(game.game_state += 1);
