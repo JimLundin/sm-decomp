@@ -693,7 +693,7 @@ crate::game::callback_dispatch! {
     };
     [11122813] MotherBomb_FiringDeathBeam [] {
         let v0: i32 = slot!(game, Enemy_MotherBrain[0i32].var_17) as i32;
-        (unsafe { off_A9B887[v0 as usize](game) });
+        unsafe { off_A9B887[v0 as usize](game) };
     };
     [11122923] MotherBomb_FiringRainbowBeam_0 [] {
         MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9C87 as u16, game);
@@ -1541,7 +1541,7 @@ crate::game::callback_dispatch! {
         let E1: i32 = 0x40;
         slot! { game, Enemy_MotherBrain[E1]; var_32 = 0, var_33 = 0, var_12 = 0, var_14 = 0, var_10 = 0, var_11 = 0 }
         word_transfers!(game, descending, 15; le(palette_buffer, 255) <- le(palette_buffer, 159));
-        (unsafe { mother_brain_visuals::update_health_palette(game) });
+        unsafe { mother_brain_visuals::update_health_palette(game) };
         slot!(game, Enemy_MotherBrain[E].var_0D = 3584);
         slot! { game, Enemy_MotherBrain[E1]; var_E = 0, var_F = 0 }
         slot!(game, Enemy_MotherBrain[E].var_A = (0xa9af9di32) as u16);
@@ -1794,7 +1794,7 @@ pub fn MotherBrainsBody_FirstPhase_DoubleRet(game: &mut Game) {
                 slot! { game, Enemy_MotherBrain[E]; var_1D = 1, var_00 = 1 }
                 minimap::disable_for_boss(&mut crate::game::session_runtime::Runtime::new(game));
                 QueueMusic_Delayed8(6, game);
-                (unsafe { mother_brain_visuals::seal_wall(game) });
+                unsafe { mother_brain_visuals::seal_wall(game) };
             }
         }
         MotherBrain_SamusCollDetect(game);
@@ -2144,7 +2144,7 @@ pub fn MotherBrain_AddSpritemapToOam(j: u16, r18: u16, r20: u16, r22: u16, game:
 }
 pub fn MotherBrain_CalculateRainbowBeamHdma(game: &mut Game) {
     {
-        (unsafe { calculate_rainbow_window(game) });
+        unsafe { calculate_rainbow_window(game) };
     }
 }
 pub fn MotherBrain_Instr_Goto2(_k: u16) -> u16 {
@@ -2886,7 +2886,7 @@ crate::game::callback_dispatch! {
             MotherBrain_HandleBrainPal(game);
         }
         if slot!(game, Enemy_MotherBrain[E].var_11) != 0 {
-            (unsafe { mother_brain_visuals::update_health_palette(game) });
+            unsafe { mother_brain_visuals::update_health_palette(game) };
         }
     };
     @external {
@@ -3257,7 +3257,7 @@ crate::game::callback_dispatch! {
             slot!(game, Enemy_ShitroidInCutscene[E].var_0F = (0xa9cc98i32) as u16);
             slot!(game, Enemy_ShitroidInCutscene[E].base.vram_tiles_index = 4256);
             QueueSfx3_Max6(0x19, game);
-            (unsafe { mother_brain_visuals::lights_off(game) });
+            unsafe { mother_brain_visuals::lights_off(game) };
             Enemy_SetInstrList(k, addr_kShitroid_Ilist_CFCE as u16, game);
             slot! { game, Enemy_ShitroidInCutscene[E]; var_B = 0, var_C = 0 }
             slot!(game, Enemy_ShitroidInCutscene[0i32].var_A = addr_locret_A9C18D as u16);

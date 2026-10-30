@@ -195,9 +195,11 @@ pub fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
                 }
             }
             set_fixed_color([32, 64, 0x80], game);
-            unsafe { crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game) };
-            unsafe { GraphicsAsset::Decompress(0x9580d8, 0x15000).load(game) };
-            unsafe { GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game) };
+            unsafe {
+                crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game);
+                GraphicsAsset::Decompress(0x9580d8, 0x15000).load(game);
+                GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
+            }
             game.ram().write_byte(0x51, 0x80);
             word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce1e9, 0));
             unsafe { crate::game::display_refresh::enable(true, game) };
@@ -284,8 +286,10 @@ pub fn GameState_1_OpeningCinematic_(game: &mut Game) -> CoroutineRet {
             ((word!(game.cinematic_function)) as u32) | (0x8b0000u32),
             game,
         );
-        unsafe { CinematicSprites.advance(game) };
-        unsafe { CinematicMode7.advance(game) };
+        unsafe {
+            CinematicSprites.advance(game);
+            CinematicMode7.advance(game);
+        }
         palette_effects::advance(game);
         draw_cinematic_sprites(false, game);
         request_title_skip(game);
@@ -350,15 +354,19 @@ pub fn LoadTitleSequenceGraphics(game: &mut Game) {
         unsafe { configure_cinematic_display(CinematicDisplay::Title, game) };
         word! { game, 0; cur_irq_handler, irqhandler_next_handler }
         word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce1e9, 0));
-        unsafe { GraphicsAsset::Decompress(0x94e000, 0x10000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x96fc04, 0x14000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x9580d8, 0x15000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x95a5e1, 0x19000).load(game) };
+        unsafe {
+            GraphicsAsset::Decompress(0x94e000, 0x10000).load(game);
+            GraphicsAsset::Decompress(0x96fc04, 0x14000).load(game);
+            GraphicsAsset::Decompress(0x9580d8, 0x15000).load(game);
+            GraphicsAsset::Decompress(0x95a5e1, 0x19000).load(game);
+        }
         unsafe {
             GraphicsAsset::VramLowBytes(0x7f4000, 0x0000, 0x1000).load_planes(0xff, false, game)
         };
-        unsafe { reset_cinematic_transform(128, 128, game) };
-        unsafe { crate::game::display_refresh::enable(true, game) };
+        unsafe {
+            reset_cinematic_transform(128, 128, game);
+            crate::game::display_refresh::enable(true, game);
+        }
         word! { game, 1; screen_fade_delay, screen_fade_counter }
         set_hdma_enabled(true, game);
         palette_effects::set_enabled(true, game);
@@ -401,9 +409,11 @@ pub fn GameState_37_CeresGoesBoomWithSamus_(game: &mut Game) -> CoroutineRet {
         }
         word!(game.cinematic_var12 += 1);
         handle_samus_during_intro(game);
-        unsafe { CinematicSprites.advance(game) };
-        unsafe { CinematicMode7.advance(game) };
-        unsafe { CinematicBackground.advance(game) };
+        unsafe {
+            CinematicSprites.advance(game);
+            CinematicMode7.advance(game);
+            CinematicBackground.advance(game);
+        }
         intro_pages::advance_text_glow(game);
         palette_effects::advance(game);
         unsafe { draw_intro_sprites(game) };
@@ -527,21 +537,23 @@ crate::game::callback_dispatch! {
         word! { game, 0; samus_invincibility_timer, samus_knockback_timer }
         word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
         word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce3e9, 0));
-        unsafe { GraphicsAsset::Decompress(0x95f90e, 0x10000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x95d089, 0x18000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x9788cc, 0x19000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x96ff14, 0x19800).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x95e4c2, 0x1b800).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x978d12, 0x1e000).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x7f0000, 0x0000, 0x8000).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x7f8000, 0x4000, 0x900).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x7f9000, 0x4800, 0x800).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x7fe000, 0x4c00, 0x800).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x7f9800, 0x5000, 0x2000).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x2000).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x7fb800, 0x6e00, 0x2400).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x95d713, 0x1a000).load(game) };
-        unsafe { crate::game::display_refresh::enable(true, game) };
+        unsafe {
+            GraphicsAsset::Decompress(0x95f90e, 0x10000).load(game);
+            GraphicsAsset::Decompress(0x95d089, 0x18000).load(game);
+            GraphicsAsset::Decompress(0x9788cc, 0x19000).load(game);
+            GraphicsAsset::Decompress(0x96ff14, 0x19800).load(game);
+            GraphicsAsset::Decompress(0x95e4c2, 0x1b800).load(game);
+            GraphicsAsset::Decompress(0x978d12, 0x1e000).load(game);
+            GraphicsAsset::VramWords(0x7f0000, 0x0000, 0x8000).load(game);
+            GraphicsAsset::VramWords(0x7f8000, 0x4000, 0x900).load(game);
+            GraphicsAsset::VramWords(0x7f9000, 0x4800, 0x800).load(game);
+            GraphicsAsset::VramWords(0x7fe000, 0x4c00, 0x800).load(game);
+            GraphicsAsset::VramWords(0x7f9800, 0x5000, 0x2000).load(game);
+            GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x2000).load(game);
+            GraphicsAsset::VramWords(0x7fb800, 0x6e00, 0x2400).load(game);
+            GraphicsAsset::Decompress(0x95d713, 0x1a000).load(game);
+            crate::game::display_refresh::enable(true, game);
+        }
         word! { game, 3; screen_fade_delay, screen_fade_counter }
         set_hdma_enabled(true, game);
         palette_effects::clear(game);
@@ -555,8 +567,10 @@ crate::game::callback_dispatch! {
     };
     [9152111] CinematicFunc_Intro_SetupTextPage2 [] {
         intro_pages::clear_japanese_tiles(game);
-        unsafe { GraphicsAsset::VramWords(0x7e4000, 0x4180, 0x600).load(game) };
-        unsafe { crate::rtl::write_register_and_mirror(TM as u16, 0x16, 0x69, false, game) };
+        unsafe {
+            GraphicsAsset::VramWords(0x7e4000, 0x4180, 0x600).load(game);
+            crate::rtl::write_register_and_mirror(TM as u16, 0x16, 0x69, false, game);
+        }
         clear_cinematic_background(0x2f, game);
         enable_cinematic_background(game);
         set_cinematic_tilemap_updates(true, game);
@@ -584,9 +598,11 @@ crate::game::callback_dispatch! {
         clear_cinematic_sprites(game);
         word! { game, 0; cur_irq_handler, irqhandler_next_handler }
         word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce5e9, 0));
-        unsafe { GraphicsAsset::Decompress(0x95a82f, 0x10000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x96fe69, 0x14000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x96d10a, 0x15000).load(game) };
+        unsafe {
+            GraphicsAsset::Decompress(0x95a82f, 0x10000).load(game);
+            GraphicsAsset::Decompress(0x96fe69, 0x14000).load(game);
+            GraphicsAsset::Decompress(0x96d10a, 0x15000).load(game);
+        }
         (unsafe { GraphicsAsset::VramLowBytes(0x7f4000, 0x0000, 0x300)
             .load_planes(0x8c, true, game) });
         unsafe { reset_cinematic_transform(56, 24, game) };
@@ -672,13 +688,17 @@ crate::game::callback_dispatch! {
         word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
         word! { game, 0; door_def_ptr, layer1_x_pos, layer1_y_pos }
         word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce5e9, 0));
-        unsafe { GraphicsAsset::Decompress(0x95a82f, 0x10000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x96fe69, 0x14000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x96d10a, 0x15000).load(game) };
+        unsafe {
+            GraphicsAsset::Decompress(0x95a82f, 0x10000).load(game);
+            GraphicsAsset::Decompress(0x96fe69, 0x14000).load(game);
+            GraphicsAsset::Decompress(0x96d10a, 0x15000).load(game);
+        }
         (unsafe { GraphicsAsset::VramLowBytes(0x7f4600, 0x0000, 0x600)
             .load_planes(0x8c, false, game) });
-        unsafe { GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x1a00).load(game) };
-        unsafe { reset_cinematic_transform(52, 48, game) };
+        unsafe {
+            GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x1a00).load(game);
+            reset_cinematic_transform(52, 48, game);
+        }
         word! {game; cinematic_var8 = -44i32 as u16; cinematic_var10 = -112i32 as u16;
             cinematic_var5 = 0; cinematic_var6 = 256; }
         set_hdma_enabled(false, game);
@@ -802,12 +822,14 @@ crate::game::callback_dispatch! {
     [9160345] CinematicFunction_Intro_Func86 [] {
         unsafe { configure_cinematic_display(CinematicDisplay::Landing, game) };
         word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
-        unsafe { GraphicsAsset::Decompress(0x978adb, 0x19000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x96ec76, 0x15000).load(game) };
-        unsafe { GraphicsAsset::VramLowBytes(0x7f4300, 0x0000, 0x300).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x7f9000, 0x5c00, 0x800).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game) };
-        unsafe { reset_cinematic_transform(56, 24, game) };
+        unsafe {
+            GraphicsAsset::Decompress(0x978adb, 0x19000).load(game);
+            GraphicsAsset::Decompress(0x96ec76, 0x15000).load(game);
+            GraphicsAsset::VramLowBytes(0x7f4300, 0x0000, 0x300).load(game);
+            GraphicsAsset::VramWords(0x7f9000, 0x5c00, 0x800).load(game);
+            GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
+            reset_cinematic_transform(56, 24, game);
+        }
         word! { game, 0; cinematic_var8, cinematic_var10, cinematic_var5 }
         word!(game.cinematic_var6 = 256);
         set_hdma_enabled(false, game);
@@ -831,25 +853,29 @@ crate::game::callback_dispatch! {
         unsafe { configure_cinematic_display(CinematicDisplay::Escape, game) };
         word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
         word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8cede9, 0));
-        unsafe { GraphicsAsset::Decompress(0x98bcd6, 0x10000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x99a56f, 0x14000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x99d17e, 0x18000).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x7f8000, 0x0000, 0x4000).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x7f8000, 0x2000, 0x4000).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x7f4000, 0x6000, 0x4000).load(game) };
-        unsafe { GraphicsAsset::VramHighBytes(0x7f0000, 0x0000, 0x4000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x988304, 0x18000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x95a82f, 0x10000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x96fe69, 0x14000).load(game) };
+        unsafe {
+            GraphicsAsset::Decompress(0x98bcd6, 0x10000).load(game);
+            GraphicsAsset::Decompress(0x99a56f, 0x14000).load(game);
+            GraphicsAsset::Decompress(0x99d17e, 0x18000).load(game);
+            GraphicsAsset::VramWords(0x7f8000, 0x0000, 0x4000).load(game);
+            GraphicsAsset::VramWords(0x7f8000, 0x2000, 0x4000).load(game);
+            GraphicsAsset::VramWords(0x7f4000, 0x6000, 0x4000).load(game);
+            GraphicsAsset::VramHighBytes(0x7f0000, 0x0000, 0x4000).load(game);
+            GraphicsAsset::Decompress(0x988304, 0x18000).load(game);
+            GraphicsAsset::Decompress(0x95a82f, 0x10000).load(game);
+            GraphicsAsset::Decompress(0x96fe69, 0x14000).load(game);
+        }
         word_transfers!(game, ascending, 7808; native(0x14300) <- value(0x8c8c));
-        unsafe { GraphicsAsset::Decompress(0x98b5c1, 0x1e000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x98b857, 0x1e800).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x98baed, 0x1f000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x98bccd, 0x1f800).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x97e7de, 0xa000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x99d65b, 0x2000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x99d932, 0x6000).load(game) };
-        unsafe { reset_cinematic_transform(128, 128, game) };
+        unsafe {
+            GraphicsAsset::Decompress(0x98b5c1, 0x1e000).load(game);
+            GraphicsAsset::Decompress(0x98b857, 0x1e800).load(game);
+            GraphicsAsset::Decompress(0x98baed, 0x1f000).load(game);
+            GraphicsAsset::Decompress(0x98bccd, 0x1f800).load(game);
+            GraphicsAsset::Decompress(0x97e7de, 0xa000).load(game);
+            GraphicsAsset::Decompress(0x99d65b, 0x2000).load(game);
+            GraphicsAsset::Decompress(0x99d932, 0x6000).load(game);
+            reset_cinematic_transform(128, 128, game);
+        }
         word! {game; cinematic_var5 = 32; cinematic_var6 = 64; }
         word! { game, 0;
             cinematic_var8, cinematic_var10, door_def_ptr, layer1_x_pos, layer1_y_pos,
@@ -876,10 +902,12 @@ crate::game::callback_dispatch! {
         }
     };
     [9164593] CinematicFunction_Intro_Func112 [] {
-        unsafe { GraphicsAsset::VramWords(0x7e2000, 0x0000, 0x4000).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x7e2000, 0x2000, 0x4000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x98ed4f, 0x2000).load(game) };
-        unsafe { GraphicsAsset::VramHighBytes(0x7e2000, 0x0000, 0x4000).load(game) };
+        unsafe {
+            GraphicsAsset::VramWords(0x7e2000, 0x0000, 0x4000).load(game);
+            GraphicsAsset::VramWords(0x7e2000, 0x2000, 0x4000).load(game);
+            GraphicsAsset::Decompress(0x98ed4f, 0x2000).load(game);
+            GraphicsAsset::VramHighBytes(0x7e2000, 0x0000, 0x4000).load(game);
+        }
         palette_effects::clear(game);
         clear_cinematic_sprites(game);
         palette_effects::spawn(addr_kPalfx_E1E0 as u16, game);
@@ -889,16 +917,18 @@ crate::game::callback_dispatch! {
         word!(game.cinematic_function = (0x8bd7f8i32) as u16);
     };
     [9164855] CinematicFunction_Intro_Func115 [] {
-        unsafe { GraphicsAsset::VramWords(0x7e6000, 0x0000, 0x4000).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x7e6000, 0x2000, 0x4000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x999101, 0x6000).load(game) };
-        unsafe { GraphicsAsset::VramHighBytes(0x7e6000, 0x0000, 0x4000).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x7f8000, 0x4000, 0x6000).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x7fe000, 0x7000, 0x800).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x7fe800, 0x7400, 0x800).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x7ff000, 0x7800, 0x800).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x7ff800, 0x7c00, 0x800).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x7ea000, 0x5000, 0x1000).load(game) };
+        unsafe {
+            GraphicsAsset::VramWords(0x7e6000, 0x0000, 0x4000).load(game);
+            GraphicsAsset::VramWords(0x7e6000, 0x2000, 0x4000).load(game);
+            GraphicsAsset::Decompress(0x999101, 0x6000).load(game);
+            GraphicsAsset::VramHighBytes(0x7e6000, 0x0000, 0x4000).load(game);
+            GraphicsAsset::VramWords(0x7f8000, 0x4000, 0x6000).load(game);
+            GraphicsAsset::VramWords(0x7fe000, 0x7000, 0x800).load(game);
+            GraphicsAsset::VramWords(0x7fe800, 0x7400, 0x800).load(game);
+            GraphicsAsset::VramWords(0x7ff000, 0x7800, 0x800).load(game);
+            GraphicsAsset::VramWords(0x7ff800, 0x7c00, 0x800).load(game);
+            GraphicsAsset::VramWords(0x7ea000, 0x5000, 0x1000).load(game);
+        }
         game.ram().write_byte(0x52, 2);
         palette_effects::clear(game);
         clear_cinematic_sprites(game);
@@ -1029,22 +1059,24 @@ crate::game::callback_dispatch! {
         clear_cinematic_sprites(game);
         palette_effects::clear(game);
         word_transfers!(game, ascending, 128; le(palette_buffer, 0) <- rom(0x8ce9e9, 0));
-        unsafe { GraphicsAsset::Decompress(0x979803, 0x10000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x97b957, 0x2000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x97d7fc, 0x6000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x97e7de, 0x1c000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x9796f4, 0x1e000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x97f987, 0x14000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x99da9f, 0x1e800).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x99dab1, 0x1f000).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x7fe800, 0x2000, 0x100).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x7ff000, 0x2400, 0x800).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x7fc000, 0x4000, 0x1000).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x7e6000, 0x6000, 0x4000).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x7f0000, 0x5000, 0x2000).load(game) };
-        unsafe { GraphicsAsset::VramWords(0x7fe000, 0x4c00, 0x800).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x99e089, 0x6000).load(game) };
-        unsafe { GraphicsAsset::Decompress(0x99ecc4, 0x8000).load(game) };
+        unsafe {
+            GraphicsAsset::Decompress(0x979803, 0x10000).load(game);
+            GraphicsAsset::Decompress(0x97b957, 0x2000).load(game);
+            GraphicsAsset::Decompress(0x97d7fc, 0x6000).load(game);
+            GraphicsAsset::Decompress(0x97e7de, 0x1c000).load(game);
+            GraphicsAsset::Decompress(0x9796f4, 0x1e000).load(game);
+            GraphicsAsset::Decompress(0x97f987, 0x14000).load(game);
+            GraphicsAsset::Decompress(0x99da9f, 0x1e800).load(game);
+            GraphicsAsset::Decompress(0x99dab1, 0x1f000).load(game);
+            GraphicsAsset::VramWords(0x7fe800, 0x2000, 0x100).load(game);
+            GraphicsAsset::VramWords(0x7ff000, 0x2400, 0x800).load(game);
+            GraphicsAsset::VramWords(0x7fc000, 0x4000, 0x1000).load(game);
+            GraphicsAsset::VramWords(0x7e6000, 0x6000, 0x4000).load(game);
+            GraphicsAsset::VramWords(0x7f0000, 0x5000, 0x2000).load(game);
+            GraphicsAsset::VramWords(0x7fe000, 0x4c00, 0x800).load(game);
+            GraphicsAsset::Decompress(0x99e089, 0x6000).load(game);
+            GraphicsAsset::Decompress(0x99ecc4, 0x8000).load(game);
+        }
         if word!(game.game_time_hours) as i32 - 3i32 & 0x8000 != 0 {
             unsafe { GraphicsAsset::VramWords(0x7e2000, 0x0000, 0x4000).load(game) };
         } else {

@@ -2105,7 +2105,7 @@ crate::game::callback_dispatch! {
     };
     [10929626] Ridley_Func_67 {
         let k: u16 = 0;
-        (unsafe { printf(b"Warning: X undefined\n\0" as *const u8 as *const c_char) });
+        unsafe { printf(b"Warning: X undefined\n\0" as *const u8 as *const c_char) };
         SetBossBitForCurArea(1, game);
         scatter(DropSource::Ridley, k, game);
         QueueMusic_Delayed8(3, game);
@@ -2447,7 +2447,7 @@ static off_A6CB21: [Func_V; 9] = callback_table! { nonnull Func_V;
 pub fn Ridley_Func_70(game: &mut Game) {
     {
         Ridley_Func_91(game);
-        (unsafe { off_A6CB21[word!(game.tilemap_stuff[0]) as usize](game) });
+        unsafe { off_A6CB21[word!(game.tilemap_stuff[0]) as usize](game) };
         Ridley_Func_86(game);
         Ridley_Func_87(game);
         let E: i32 = 0;

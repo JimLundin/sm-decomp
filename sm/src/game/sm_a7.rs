@@ -906,7 +906,7 @@ pub fn UnpauseHook_Kraid_IsDead(game: &mut Game) -> CoroutineRet {
             )
             .load(game)
         });
-        (unsafe { GraphicsAsset::VramWords(0x9ab200, 0x4000, 0x800).load(game) });
+        unsafe { GraphicsAsset::VramWords(0x9ab200, 0x4000, 0x800).load(game) };
         Kraid_TransferTopHalfToVram(game);
         kCoroutineNone as CoroutineRet
     }
@@ -1510,7 +1510,7 @@ crate::game::callback_dispatch! {
                 slot!(game, Enemy_Kraid[E5].kraid_var_F = 300);
                 slot!(game, Enemy_Kraid[E5].kraid_next = (0xa7bf2di32) as u16);
             } else {
-                (unsafe { printf(b"X undefined\n\0" as *const u8 as *const c_char) });
+                unsafe { printf(b"X undefined\n\0" as *const u8 as *const c_char) };
                 let E = (word!(game.cur_enemy_index) as i32) as i32;
                 slot!(game, Enemy_Kraid[E].base; current_instruction = addr_kKraid_Ilist_8887 as u16, instruction_timer = 1);
             }
@@ -2821,7 +2821,7 @@ crate::game::callback_dispatch! {
     };
     [10992847 | 10992862] KraidsGoodFingernail_Touch [] {
         let v0: u16 = 0;
-        (unsafe { printf(b"X undefined\n\0" as *const u8 as *const c_char) });
+        unsafe { printf(b"X undefined\n\0" as *const u8 as *const c_char) };
         actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
         ({ let (_ignored_key, animation) = (word!(game.cur_enemy_index), v0); actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Normal { animation }) });
     };
@@ -2884,7 +2884,7 @@ slot!(game, EnemyData[fresh4].properties = (slot!(game, EnemyData[fresh4].proper
     [10997414] Phantoon_Main [] {
         actors::phantoon_actions::debug_toggle_sprite_map(word!(game.cur_enemy_index), game);
         let EK = (word!(game.cur_enemy_index) as i32) as i32;
-        (unsafe { actor_species_pre_instruction(((slot!(game, Enemy_Phantoon[EK].var_F)) as u32) | (0xa70000u32), game) });
+        unsafe { actor_species_pre_instruction(((slot!(game, Enemy_Phantoon[EK].var_F)) as u32) | (0xa70000u32), game) };
         if word!(game.cur_enemy_index) == 0 {
             let E0 = (0) as i32;
             let E1 = (0x40) as i32;
@@ -3030,7 +3030,7 @@ slot!(game, EnemyData[fresh4].properties = (slot!(game, EnemyData[fresh4].proper
         if slot!(byte game, Enemy_Etecoon[E].parameter_2[1]) != 0 {
             slot!(game, Enemy_Etecoon[E].parameter_2 = (slot!(game, Enemy_Etecoon[E].parameter_2)).wrapping_sub(256));
         } else {
-            (unsafe { actor_species_pre_instruction(((slot!(game, Enemy_Etecoon[E].var_F)) as u32) | (0xa70000u32), game) });
+            unsafe { actor_species_pre_instruction(((slot!(game, Enemy_Etecoon[E].var_F)) as u32) | (0xa70000u32), game) };
         };
     };
     [11007197] Dachora_Init [] {
@@ -3058,7 +3058,7 @@ slot!(game, EnemyData[fresh4].properties = (slot!(game, EnemyData[fresh4].proper
     };
     [11007278] Dachora_Main [] {
         let E = (word!(game.cur_enemy_index) as i32) as i32;
-        (unsafe { actor_species_pre_instruction(((slot!(game, Enemy_Dachora[E].var_F)) as u32) | (0xa70000u32), game) });
+        unsafe { actor_species_pre_instruction(((slot!(game, Enemy_Dachora[E].var_F)) as u32) | (0xa70000u32), game) };
     };
     @forward [pub fn (game: &mut Game)];
     [10977295] Enemy_GrappleReact_CancelBeam_A7 => actors::combat::select_frozen_ai(&mut Runtime::new(game));
@@ -4085,7 +4085,7 @@ crate::game::callback_dispatch! {
     [11004955] Etecoon_Func_12 {
         slot!(game, Enemy_Etecoon[E].var_A = g_word_A7E900);
         slot!(game, Enemy_Etecoon[E].var_B = g_word_A7E902);
-        (unsafe { funcs_A2A79[slot!(byte game, Enemy_Etecoon[E].parameter_2[0]) as usize](k, game) });
+        unsafe { funcs_A2A79[slot!(byte game, Enemy_Etecoon[E].parameter_2[0]) as usize](k, game) };
         slot!(game, Enemy_Etecoon[k as i32].base.instruction_timer = 1);
     };
 }
