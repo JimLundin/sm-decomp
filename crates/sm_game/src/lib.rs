@@ -101,6 +101,7 @@ pub mod actors {
     pub mod staging;
     pub mod state;
     pub mod torizo;
+    pub mod yapping_maw;
 }
 pub mod enemy_projectiles;
 pub mod player_collision;
