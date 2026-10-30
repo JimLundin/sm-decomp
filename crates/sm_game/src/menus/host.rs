@@ -142,6 +142,11 @@ pub trait Host:
     fn demo_sets(&self) -> &Option<crate::demo_rooms::ImportedSets>;
     fn demo_scenes(&self) -> &Option<crate::demo_rooms::ImportedScenes>;
     fn intro_palette(&self) -> &Option<crate::intro_pages::ImportedIntroPalette>;
+    fn beam_gradients(&self) -> &crate::beam_windows::ImportedTables;
+    /// The decompilation's "Carry crap!" diagnostic on stdout.
+    fn print_carry_message(&mut self);
+    /// The loaded image's little-endian word at LoROM `address` plus `offset`.
+    fn read_rom_word(&self, address: u32, offset: usize) -> u16;
     fn visual_tables(&self) -> &crate::visual_tables::ImportedTables;
     fn area_select_palettes(&self) -> &Option<super::menu_tilemap::ImportedAreaPalettes>;
 }
