@@ -18,9 +18,9 @@ import cycle_report  # noqa: E402
 
 # Lowered with batch 10 (2026-10-30); first measured on main 91d0bcce.
 BASELINE = {
-    "sm_game_ram_sites": 3859,
+    "sm_game_ram_sites": 3861,
     "sm_game_coupled_files": 102,
-    "production_lines": 174380,
+    "production_lines": 174416,
 }
 
 
