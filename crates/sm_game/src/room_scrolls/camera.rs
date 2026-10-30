@@ -1,19 +1,20 @@
 //! Camera limits and scroll-cell rules; live callers retain RAM authority.
 #![forbid(unsafe_code)]
-use crate::game_state::Game;
-use crate::ram_map::{word, words as W};
-use sm_game::room_entry::content::Axis;
+use super::Host;
+use crate::ram::RawRam as _;
+use crate::ram::{word, words as W};
+use crate::room_entry::content::Axis;
 
 // Multiplication uses the width's low byte. A column may include a full-word
 // row stride; it is added afterward, with the original word wrapping.
-fn camera_scroll_value(column: u16, row: u8, game: &Game) -> u8 {
+fn camera_scroll_value<H: Host + ?Sized>(column: u16, row: u8, game: &H) -> u8 {
     let index =
         (u16::from(row) * u16::from(word!(game.room_width_in_scrolls) as u8)).wrapping_add(column);
     game.ram().read_byte(0xcd20 + usize::from(index))
 }
 
-pub(super) fn auto_x(game: &mut Game) {
-    crate::verify_probe::hit("camera.auto_x");
+pub fn auto_x<H: Host + ?Sized>(game: &mut H) {
+    crate::probe::hit("camera.auto_x");
     if word!(game.time_is_frozen_flag) != 0 {
         return;
     }
@@ -65,8 +66,8 @@ pub(super) fn auto_x(game: &mut Game) {
     };
     word!(game.layer1_x_pos = next);
 }
-pub(super) fn trigger_right(game: &mut Game) {
-    crate::verify_probe::hit("camera.trigger_right");
+pub fn trigger_right<H: Host + ?Sized>(game: &mut H) {
+    crate::probe::hit("camera.trigger_right");
     let previous = word!(game.layer1_x_pos);
     if (word!(game.ideal_layer1_xpos).wrapping_sub(word!(game.layer1_x_pos)) as i16) < 0 {
         word! {game; layer1_x_pos = word!(game.ideal_layer1_xpos); layer1_x_subpos = 0; }
@@ -90,8 +91,8 @@ pub(super) fn trigger_right(game: &mut Game) {
         );
     }
 }
-pub(super) fn trigger_left(game: &mut Game) {
-    crate::verify_probe::hit("camera.trigger_left");
+pub fn trigger_left<H: Host + ?Sized>(game: &mut H) {
+    crate::probe::hit("camera.trigger_left");
     let previous = word!(game.layer1_x_pos);
     if (word!(game.layer1_x_pos).wrapping_sub(word!(game.ideal_layer1_xpos)) as i16) < 0 {
         word! {game; layer1_x_pos = word!(game.ideal_layer1_xpos); layer1_x_subpos = 0; }
@@ -112,8 +113,8 @@ pub(super) fn trigger_left(game: &mut Game) {
         word!(game.layer1_x_pos = next.min(boundary));
     }
 }
-pub(super) fn auto_y(game: &mut Game) {
-    crate::verify_probe::hit("camera.auto_y");
+pub fn auto_y<H: Host + ?Sized>(game: &mut H) {
+    crate::probe::hit("camera.auto_y");
     if word!(game.time_is_frozen_flag) != 0 {
         return;
     }
@@ -171,8 +172,8 @@ pub(super) fn auto_y(game: &mut Game) {
         }
     }
 }
-pub(super) fn trigger_down(game: &mut Game) {
-    crate::verify_probe::hit("camera.trigger_down");
+pub fn trigger_down<H: Host + ?Sized>(game: &mut H) {
+    crate::probe::hit("camera.trigger_down");
     let previous = word!(game.layer1_y_pos);
     let column = word!(game.layer1_x_pos).wrapping_add(128) >> 8;
     let row = (word!(game.layer1_y_pos) >> 8) as u8;
@@ -206,8 +207,8 @@ pub(super) fn trigger_down(game: &mut Game) {
         );
     }
 }
-pub(super) fn trigger_up(game: &mut Game) {
-    crate::verify_probe::hit("camera.trigger_up");
+pub fn trigger_up<H: Host + ?Sized>(game: &mut H) {
+    crate::probe::hit("camera.trigger_up");
     let previous = word!(game.layer1_y_pos);
     if (word!(game.layer1_y_pos).wrapping_sub(word!(game.ideal_layer1_ypos)) as i16) < 0 {
         word! {game; layer1_y_pos = word!(game.ideal_layer1_ypos); layer1_y_subpos = 0; }
@@ -237,7 +238,7 @@ fn retreat_to_boundary(previous: u16, distance: u16, boundary: u16) -> u16 {
     }
 }
 
-pub(crate) fn layer2_position(axis: Axis, game: &mut Game) -> u8 {
+pub fn layer2_position<H: Host + ?Sized>(axis: Axis, game: &mut H) -> u8 {
     let (control, source, destination) = match axis {
         Axis::X => (0x91b, W::layer1_x_pos, W::layer2_x_pos),
         Axis::Y => (0x91c, W::layer1_y_pos, W::layer2_y_pos),
@@ -256,7 +257,7 @@ pub(crate) fn layer2_position(axis: Axis, game: &mut Game) -> u8 {
     0
 }
 
-pub(crate) fn calculate_scrolls(game: &mut Game) {
+pub fn calculate_scrolls<H: Host + ?Sized>(game: &mut H) {
     {
         word!(game.reg_BG1HOFS = (word!(game.bg1_x_offset)).wrapping_add(word!(game.layer1_x_pos)));
         word!(game.reg_BG1VOFS = (word!(game.bg1_y_offset)).wrapping_add(word!(game.layer1_y_pos)));
@@ -265,9 +266,9 @@ pub(crate) fn calculate_scrolls(game: &mut Game) {
     }
 }
 
-pub(crate) fn calculate_blocks(game: &mut Game) {
+pub fn calculate_blocks<H: Host + ?Sized>(game: &mut H) {
     {
-        crate::verify_probe::hit("camera.blocks");
+        crate::probe::hit("camera.blocks");
         word! {game; bg1_x_block = word!(game.reg_BG1HOFS) >> 4;
         bg2_x_block = word!(game.reg_BG2HOFS) >> 4;
         layer1_x_block = ((word!(game.layer1_x_pos) as i16) >> 4) as u16;
@@ -278,7 +279,7 @@ pub(crate) fn calculate_blocks(game: &mut Game) {
     }
 }
 
-pub(crate) fn debug_position(game: &mut Game) {
+pub fn debug_position<H: Host + ?Sized>(game: &mut H) {
     {
         if (word!(game.joypad2_new_keys) & 0x40) != 0 {
             word!(game.debug_saveload_scrollpos_toggle += 1);

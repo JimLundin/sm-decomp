@@ -1,13 +1,13 @@
 //! Door camera setup and stepping; RAM remains authoritative between callbacks.
 #![forbid(unsafe_code)]
+use super::Host;
 use super::{add_native_motion, calculate_blocks, calculate_scrolls, layer2_position, update_map};
-use crate::game_state::Game;
-use crate::ram_map::{word, words as fields};
-use crate::rtl::words;
-use sm_game::room_entry::content::Axis;
+use crate::ram::{word, words as fields};
+use crate::ram_words as words;
+use crate::room_entry::content::Axis;
 
 // Door steps retain native split-word and scrolling tilemap publication order.
-pub(crate) fn begin(game: &mut Game) {
+pub fn begin<H: Host + ?Sized>(game: &mut H) {
     word!(game.layer1_x_pos = word!(game.door_destination_x_pos));
     word!(game.layer1_y_pos = word!(game.door_destination_y_pos));
     let direction = word!(game.door_direction) & 3;
@@ -56,7 +56,7 @@ pub(crate) fn begin(game: &mut Game) {
     }
 }
 
-fn prepare_blocks(vertical: bool, delta: u16, game: &mut Game) {
+fn prepare_blocks<H: Host + ?Sized>(vertical: bool, delta: u16, game: &mut H) {
     {
         calculate_blocks(game);
     }
@@ -73,13 +73,13 @@ fn prepare_blocks(vertical: bool, delta: u16, game: &mut Game) {
     }
 }
 
-pub(crate) fn fix_up(game: &mut Game) {
+pub fn fix_up<H: Host + ?Sized>(game: &mut H) {
     word!(game.door_transition_frame_counter = 0);
     prepare_blocks(true, 1, game);
     up(game);
 }
 
-pub(crate) fn horizontal(left: bool, game: &mut Game) -> u8 {
+pub fn horizontal<H: Host + ?Sized>(left: bool, game: &mut H) -> u8 {
     let frame = word!(game.door_transition_frame_counter);
     let speed = words!(
         game.samus_door_transition_speed,
@@ -99,7 +99,7 @@ pub(crate) fn horizontal(left: bool, game: &mut Game) -> u8 {
     (frame == 63) as u8
 }
 
-fn first_vertical_frame(offset: u16, block_delta: u16, game: &mut Game) {
+fn first_vertical_frame<H: Host + ?Sized>(offset: u16, block_delta: u16, game: &mut H) {
     let bg1 = word!(game.reg_BG1VOFS);
     let bg2 = word!(game.reg_BG2VOFS);
     let layer1 = word!(game.layer1_y_pos);
@@ -112,7 +112,7 @@ fn first_vertical_frame(offset: u16, block_delta: u16, game: &mut Game) {
     reg_BG2VOFS = bg2; reg_BG1VOFS = bg1; }
 }
 
-pub(crate) fn down(game: &mut Game) -> u8 {
+pub fn down<H: Host + ?Sized>(game: &mut H) -> u8 {
     let frame = word!(game.door_transition_frame_counter);
     if frame == 0 {
         first_vertical_frame(15, u16::MAX, game);
@@ -139,7 +139,7 @@ pub(crate) fn down(game: &mut Game) -> u8 {
     1
 }
 
-pub(crate) fn up(game: &mut Game) -> u8 {
+pub fn up<H: Host + ?Sized>(game: &mut H) -> u8 {
     let frame = word!(game.door_transition_frame_counter);
     if frame == 0 {
         first_vertical_frame(16, 1, game);

@@ -213,3 +213,6 @@ pub mod torizo_tables;
 pub mod transition_trace;
 pub mod visual_host;
 pub mod zebetite_data;
+// Translated scrolling code keeps the compat crate's lint policy for its original names.
+#[allow(non_upper_case_globals, unused_mut)]
+pub mod room_scrolls;

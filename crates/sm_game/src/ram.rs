@@ -1082,3 +1082,15 @@ macro_rules! ram_slot {
 pub use crate::ram_slot as slot;
 /// Compile-time proof that an enemy-record field is one u16 word.
 pub fn word_field<L>(_: fn(L) -> u16) {}
+
+/// A 32-bit value split across a high and a low named word; the high word
+/// is read first. The `i32` form keeps the original signed casts.
+#[macro_export]
+macro_rules! ram_words {
+    (i32, $game:ident.$hi:ident, $lo:ident $(,)?) => {
+        (($crate::ram_word!($game.$hi) as i32) << 16i32) | ($crate::ram_word!($game.$lo) as i32)
+    };
+    ($game:ident.$hi:ident, $lo:ident $(,)?) => {
+        (($crate::ram_word!($game.$hi) as u32) << 16i32) | ($crate::ram_word!($game.$lo) as u32)
+    };
+}

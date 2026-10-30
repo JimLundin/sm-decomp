@@ -768,12 +768,12 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/map_menu.rs"),
     ),
     (
-        "sm/src/game/room_scrolls/camera.rs",
-        include_bytes!("game/room_scrolls/camera.rs"),
+        "crates/sm_game/src/room_scrolls/camera.rs",
+        include_bytes!("../../crates/sm_game/src/room_scrolls/camera.rs"),
     ),
     (
-        "sm/src/game/room_scrolls/door.rs",
-        include_bytes!("game/room_scrolls/door.rs"),
+        "crates/sm_game/src/room_scrolls/door.rs",
+        include_bytes!("../../crates/sm_game/src/room_scrolls/door.rs"),
     ),
     (
         "sm/src/game/scanline_irq.rs",
@@ -1936,6 +1936,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/room_mechanisms/setup.rs",
         include_bytes!("../../crates/sm_game/src/room_mechanisms/setup.rs"),
+    ),
+    (
+        "crates/sm_game/src/room_scrolls/mod.rs",
+        include_bytes!("../../crates/sm_game/src/room_scrolls/mod.rs"),
     ),
     (
         "sm/src/game/room_scrolls.rs",
