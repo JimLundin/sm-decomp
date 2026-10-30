@@ -293,7 +293,6 @@ pub mod game {
     }
     pub(crate) use countdown_callbacks;
 
-    pub(crate) mod callback_tables;
     // Declare address tables with the same calls and unreachable fallback.
     macro_rules! address_dispatch {
         ($($(#[$metadata:meta])* $visibility:vis unsafe fn $name:ident $parameters:tt $(-> $result:ty)?

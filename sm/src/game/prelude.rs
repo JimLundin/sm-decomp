@@ -1,7 +1,6 @@
 //! Common gameplay names from shared owners; bank-specific names stay local.
 
 pub(crate) use crate::c_library::printf;
-pub(crate) use crate::game::callback_tables::callback_table;
 pub use crate::game::constants::buttons::*;
 pub use crate::game::constants::enemy_properties::*;
 pub use crate::game::constants::game_states::*;

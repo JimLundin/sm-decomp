@@ -34,19 +34,18 @@ pub(crate) use crate::game::room_visuals::{
     initialize_bomb_torizo_haze, initialize_ceres_elevator, initialize_ceres_ridley,
     initialize_draygon_layer, initialize_fireflea_lighting, initialize_intro_wave,
     initialize_morph_eye_beam, initialize_phantoon_motion, initialize_room_haze,
-    initialize_title_gradient, initialize_tourian_statue, initialize_weather,
-    shake_room_with_sound,
+    initialize_tourian_statue, initialize_weather, shake_room_with_sound,
 };
 pub(crate) use crate::game::shooting_star_motion::{
     advance_shooting_stars, initialize_shooting_stars,
 };
 pub(crate) use crate::game::title_screen::{
-    advance_title_pan, advance_title_wait, request_title_skip, start_title_pan,
+    advance_title_pan, advance_title_wait, request_title_skip,
 };
 pub(crate) use sm_game::cinematic::{
     advance_cinematic_coordinate, capture_cinematic_palette, clear_cinematic_background,
     clear_cinematic_sprites, drift_cinematic_sprite, enable_cinematic_background,
-    fade_cinematic_fixed_color, set_cinematic_backdrop, set_fixed_color,
+    fade_cinematic_fixed_color, set_fixed_color,
 };
 
 pub(crate) use crate::game::hosts::{draw_player_frame, update_beam_tiles_and_palette};

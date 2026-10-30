@@ -21,8 +21,8 @@ use crate::game::visual_runtime::{
     clear_cinematic_colors, clear_cinematic_sprites, clear_hdma, compose_cinematic_palette,
     configure_cinematic_display, enable_cinematic_background, fade_cinematic_colors,
     prepare_cinematic_palette_fade, queue_cinematic_tilemap, reset_cinematic_transform,
-    set_cinematic_backdrop, set_cinematic_blend, set_cinematic_tilemap_updates, set_fixed_color,
-    set_hdma_enabled, spawn_cinematic_burst, spawn_cinematic_sprite_at, update_cinematic_transform,
+    set_cinematic_blend, set_cinematic_tilemap_updates, set_fixed_color, set_hdma_enabled,
+    spawn_cinematic_burst, spawn_cinematic_sprite_at, update_cinematic_transform,
 };
 use sm_game::visual_state::{CinematicDisplay, CinematicFade, CinematicTilemap};
 
@@ -38,7 +38,7 @@ use crate::game::palette_effects;
 use crate::game::player_projectiles::prepare;
 use crate::game::session_runtime::initialize_player;
 use crate::game::sprite_drawing::{clear_high_table, finish_frame};
-use crate::game::visual_runtime::{initialize_intro_wave, initialize_title_gradient};
+use crate::game::visual_runtime::initialize_intro_wave;
 
 pub use crate::types::Consts_8B;
 
@@ -297,105 +297,12 @@ pub fn GameState_1_OpeningCinematic_(game: &mut Game) -> CoroutineRet {
     }
 }
 pub fn CinematicFunctionNone() {}
-pub fn HandleCinematicsTransitions_1(game: &mut Game) {
-    if advance_cinematic_fade(CinematicFade::FastOut, game) {
-        word! {game; cinematic_var18 = 2; cinematic_function = ((0x8b9f28i32) as u16); }
-        QueueMusic_Delayed8(6, game);
-    }
-}
-pub fn HandleCinematicsTransitions_2(game: &mut Game) {
-    clear_cinematic_sprites(game);
-    CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BA119 as u16, 0, game);
-    CinematicSprites.spawn(
-        addr_kCinematicSpriteObjectDef_8BA125 as u16,
-        0x0400, // Palette left in A by the first sprite initializer.
-        game,
-    );
-    word! {game; screen_fade_delay = 0; screen_fade_counter = 2; cinematic_var6 = 256; }
-    word! { game, 0;
-        cinematic_var8, cinematic_var7, cinematic_var10, cinematic_var9, g_word_7E199B,
-        g_word_7E1999, g_word_7E199F, g_word_7E199D,
-    }
-    word!(game.cinematic_var18 = 3);
-    word_transfers!(game, ascending, 128; le(palette_buffer, 128) <- rom(0x8ce1e9, 128));
-    word! {game; palette_buffer[201] = 0x7fff; palette_buffer[202] = 32128; }
-    palette_effects::clear(game);
-    palette_effects::spawn(addr_kPalfx_E1A0 as u16, game);
-    palette_effects::spawn(addr_kPalfx_E1A4 as u16, game);
-    set_cinematic_backdrop(false, game);
-    game.ram().write_byte(0x69, 17);
-    initialize_title_gradient(game);
-}
-pub fn HandleCinematicsTransitions_3(game: &mut Game) {
-    if advance_cinematic_fade(CinematicFade::FastIn, game) {
-        word! {game; cinematic_var18 = 0; demo_timer = 900;
-        cinematic_function = ((0x8b9f29i32) as u16); }
-    }
-}
-static off_8B9A7B: [Option<Func_V>; 4] = callback_table! { Func_V;
-    None, HandleCinematicsTransitions_1, HandleCinematicsTransitions_2,
-    HandleCinematicsTransitions_3,
-};
-pub fn HandleCinematicsTransitions(game: &mut Game) {
-    {
-        if word!(game.cinematic_var18) != 0 {
-            (unsafe {
-                off_8B9A7B[word!(game.cinematic_var18) as usize].expect("non-null function pointer")(
-                    game,
-                )
-            });
-        }
-    }
-}
 pub fn LoadTitleSequenceGraphics(game: &mut Game) {
-    {
-        configure_cinematic_display(CinematicDisplay::Title, game);
-        word! { game, 0; cur_irq_handler, irqhandler_next_handler }
-        word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce1e9, 0));
-        unsafe {
-            GraphicsAsset::Decompress(0x94e000, 0x10000).load(game);
-            GraphicsAsset::Decompress(0x96fc04, 0x14000).load(game);
-            GraphicsAsset::Decompress(0x9580d8, 0x15000).load(game);
-            GraphicsAsset::Decompress(0x95a5e1, 0x19000).load(game);
-        }
-        unsafe {
-            GraphicsAsset::VramLowBytes(0x7f4000, 0x0000, 0x1000).load_planes(0xff, false, game)
-        };
-        unsafe {
-            reset_cinematic_transform(128, 128, game);
-            crate::game::display_refresh::enable(true, game);
-        }
-        word! { game, 1; screen_fade_delay, screen_fade_counter }
-        set_hdma_enabled(true, game);
-        palette_effects::set_enabled(true, game);
-        word!(game.fx_layer_blending_config_a = 0);
-        palette_effects::spawn(addr_kPalfx_E1A0 as u16, game);
-        palette_effects::spawn(addr_kPalfx_E1A4 as u16, game);
-        CinematicMode7.spawn(
-            addr_kMode7ObjBabyMetroidInTitle as u16,
-            0x000c, // The second title palette allocation leaves its slot offset in A.
-            game,
-        );
-    }
+    sm_game::title_sequence::load_graphics(game);
 }
-macro_rules! finish_cinematic_and_clear_effects {
-    ($game:ident, $next_state:literal, $index_field:ident) => { {
-        crate::game::display_refresh::enable(true, $game);
-        $game.ram().write_byte(0x55, 1);
-        word! { $game, 0;
-            screen_fade_delay, screen_fade_counter, reg_BG2HOFS, reg_BG3HOFS, reg_BG2VOFS,
-            reg_BG3VOFS, cinematic_var5,
-        }
-        word!($game.cinematic_function = ((0x8b9b68i32) as u16));
-        palette_effects::set_enabled(false, $game);
-        palette_effects::clear($game);
-        word_transfers!($game, descending, 329; native(0x1c1d) <- value(0));
-        word_transfers!($game, descending, 256; le(hdma_table_1, 255) <- value(0));
-        word!($game.game_state = $next_state);
-        word!($game.$index_field = 0);
-    }};
+pub fn HandleCinematicsTransitions(game: &mut Game) {
+    sm_game::title_sequence::handle_transitions(game);
 }
-
 pub fn GameState_37_CeresGoesBoomWithSamus_(game: &mut Game) -> CoroutineRet {
     {
         CallCinematicFunction(
@@ -488,39 +395,10 @@ crate::game::callback_dispatch! {
     pub fn CallCinematicFunction(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
     @functions [pub fn (game: &mut Game)];
-    [9149288] CinematicFunctionOpening [] {
-        LoadTitleSequenceGraphics(game);
-        QueueMusic_Delayed8(0xff03, game);
-        word!(game.cinematic_function = (0x8b9a47i32) as u16);
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BA0EF as u16,
-            (0x8b9a47i32) as u16,
-            game,
-        );
-        QueueMusic_Delayed8(5, game);
-    };
-    [9150091] CinematicFunc_Func7 [] {
-        if (word!(game.nmi_frame_counter_word) & 1) == 0 {
-            if word!(game.cinematic_var6) as i32 - 256i32 & 0x8000 != 0 {
-                word!(game.cinematic_var6 += 1);
-            } else {
-                word! {game; cinematic_var6 = 256; cinematic_function = ((0x8b9f28i32) as u16); }
-                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BA107 as u16,
-                    (0x8b9f28i32) as u16,
-                    game,
-                );
-            }
-        }
-    };
-    [9150290] CinematicFunc_Func10 [] {
-        if advance_cinematic_fade(CinematicFade::SlowOut, game) {
-            unsafe { finish_cinematic_and_clear_effects!(game, 4, game_options_screen_index) };
-        }
-    };
-    [9150382] CinematicFunc_Func9 [] {
-        if advance_cinematic_fade(CinematicFade::SlowOut, game) {
-            unsafe { finish_cinematic_and_clear_effects!(game, 40, demo_scene) };
-        }
-    };
+    [9149288] CinematicFunctionOpening [] { sm_game::title_sequence::setup(game); };
+    [9150091] CinematicFunc_Func7 [] { sm_game::title_sequence::zooming_out(game); };
+    [9150290] CinematicFunc_Func10 [] { sm_game::title_sequence::to_file_select(game); };
+    [9150382] CinematicFunc_Func9 [] { sm_game::title_sequence::to_demos(game); };
     [9151381] CinematicFunction_Intro_Initial [] {
         configure_cinematic_display(CinematicDisplay::Intro, game);
         word! { game, 0; cur_irq_handler, irqhandler_next_handler, area_index }
@@ -1258,9 +1136,7 @@ pub fn CallCinematicSprInstr(ea: u32, k: u16, j: u16, game: &mut Game) -> u16 {
     {
         cursor
     } else if ea == 9150040 {
-        crate::game::visual_runtime::start_title_pan(3, j, game);
-        initialize_title_gradient(game);
-        j
+        sm_game::title_sequence::start_scene_3(j, game)
     } else {
         Unreachable(game) as u16
     }
@@ -1289,10 +1165,7 @@ crate::game::callback_dispatch! {
     pub fn CallCinematicSprPreInstr(ea: u32, j: u16, game: &mut Game) => ea;
     call (j, game); default { Unreachable(game); };
     @functions [pub fn (k: u16, game: &mut Game)];
-    [9149647] sub_8B9CCF [] {
-        game.ram().write_byte(0x51, 15);
-        word!(game.cinematicspr_preinstr_func[(k >> 1)] = (0x8b93d9i32) as u16);
-    };
+    [9149647] sub_8B9CCF [] { sm_game::title_sequence::scrolling_1994(k, game); };
     [9157389] CinematicFunction_Intro_Func52 [] {
         let v1: bool = (word!(game.cinematic_var14 -= 1, reread) & 0x8000) != 0;
         if word!(game.cinematic_var14) == 0 || v1 {
@@ -1431,5 +1304,43 @@ crate::game::callback_dispatch! {
         9160968 => [launch_cinematic_sprite(j, 32, false, game)];
         9158617 => [()]; 9147353 => [()]; 9147487 => [()]; 9152724 => [()];
         9172252 => [()];
+    }
+}
+
+impl sm_game::cinematic_host::Host for Game {
+    fn clear_palette_effects(&mut self) {
+        palette_effects::clear(self);
+    }
+
+    fn set_palette_effects_enabled(&mut self, enabled: bool) {
+        palette_effects::set_enabled(enabled, self);
+    }
+
+    fn queue_music_delayed(&mut self, track: u16, delay: u16) {
+        QueueMusic_DelayedY(track, delay, self);
+    }
+
+    fn enqueue_mode7_transfers(&mut self, cursor: u16) {
+        enqueue_rom(0x8b, cursor, self);
+    }
+
+    fn spawn_power_bomb(&mut self) {
+        spawn_power_bomb(self);
+    }
+
+    fn initialize_player(&mut self) {
+        initialize_player(self);
+    }
+
+    fn use_cinematic_bindings(&mut self) {
+        crate::game::controller_input::use_cinematic_bindings(self);
+    }
+
+    fn disable_scanline_irq(&mut self) {
+        crate::game::scanline_irq::disable(self);
+    }
+
+    fn event_happened(&mut self, event: u16) -> bool {
+        CheckEventHappened(event, self) != 0
     }
 }

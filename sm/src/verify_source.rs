@@ -1392,10 +1392,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/beam_windows.rs"),
     ),
     (
-        "sm/src/game/callback_tables.rs",
-        include_bytes!("game/callback_tables.rs"),
-    ),
-    (
         "crates/sm_game/src/combat_rules.rs",
         include_bytes!("../../crates/sm_game/src/combat_rules.rs"),
     ),
@@ -3148,6 +3144,14 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/actors/dachora_run.rs",
         include_bytes!("../../crates/sm_game/src/actors/dachora_run.rs"),
+    ),
+    (
+        "crates/sm_game/src/cinematic_host.rs",
+        include_bytes!("../../crates/sm_game/src/cinematic_host.rs"),
+    ),
+    (
+        "crates/sm_game/src/title_sequence.rs",
+        include_bytes!("../../crates/sm_game/src/title_sequence.rs"),
     ),
     (
         "crates/sm_game/src/actors/statues.rs",

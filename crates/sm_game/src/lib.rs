@@ -72,6 +72,7 @@ pub mod sprite_drawing;
 pub mod sprite_effect_state;
 pub mod sprite_output;
 pub mod title_screen;
+pub mod title_sequence;
 pub mod visual_state;
 pub mod visual_tables;
 pub mod word_transfers;
@@ -184,6 +185,7 @@ pub mod animated_tiles {
 pub mod checkpoint_binding;
 pub mod cinematic;
 pub mod cinematic_display;
+pub mod cinematic_host;
 pub mod cinematic_objects;
 pub mod enemy_script;
 pub mod gameplay_flag_host;
