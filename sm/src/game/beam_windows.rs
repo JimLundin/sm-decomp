@@ -1,8 +1,9 @@
 use crate::game::imported::{Imported, word};
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
-use crate::types::{Enemy_MotherBrain, Ram8000_Default};
+use crate::types::Ram8000_Default;
 use sm_data::beam_gradients::{ADDRESS, BYTES, BeamGradients};
+use sm_game::actors::mother_brain::{MotherBrainBody, MotherBrainBrain};
 
 pub(crate) type ImportedTables = Option<Imported<BeamGradients>>;
 
@@ -464,28 +465,29 @@ fn write_rainbow_word(value: u16, at: isize, game: &mut Game) {
 
 pub unsafe fn calculate_rainbow_window(game: &mut Game) {
     unsafe {
-        let mut r18 = u16::from(slot!(byte game, Enemy_MotherBrain[0].var_33[1]) >> 1);
+        let mut r18 = u16::from(slot!(byte game, MotherBrainBody[0].beam_width[1]) >> 1);
         slot!(
             game,
-            Enemy_MotherBrain[0].var_3A =
-                slot!(game, Enemy_MotherBrain[0].var_31).wrapping_sub(r18)
+            MotherBrainBody[0].beam_right_edge =
+                slot!(game, MotherBrainBody[0].beam_angle).wrapping_sub(r18)
         );
         slot!(
             game,
-            Enemy_MotherBrain[0].var_3B =
-                r18.wrapping_add(slot!(game, Enemy_MotherBrain[0].var_31))
+            MotherBrainBody[0].beam_left_edge =
+                r18.wrapping_add(slot!(game, MotherBrainBody[0].beam_angle))
         );
         let v2 =
-            (i32::from(slot!(game, Enemy_MotherBrain[0x41].base.enemy_ptr)) + 3584 & 0xff00) as u16;
-        slot!(game, Enemy_MotherBrain[0]; var_3C = v2, var_3E = v2);
-        let v3 = slot!(game, Enemy_MotherBrain[0x40].base.y_pos).wrapping_add(5);
-        slot!(game, Enemy_MotherBrain[0]; var_3D = v3, var_3F = v3);
-        r18 = (4 * (i32::from(slot!(game, Enemy_MotherBrain[0].var_3A)) & 0xc0)) as u16;
-        let i = (i32::from(r18) | i32::from(slot!(game, Enemy_MotherBrain[0].var_3B)) & 0xc0) >> 6;
+            (i32::from(slot!(game, MotherBrainBody[0x41].base.enemy_ptr)) + 3584 & 0xff00) as u16;
+        slot!(game, MotherBrainBody[0]; beam_left_origin_x = v2, beam_right_origin_x = v2);
+        let v3 = slot!(game, MotherBrainBrain[0x40].base.y_pos).wrapping_add(5);
+        slot!(game, MotherBrainBody[0]; beam_left_origin_y = v3, beam_right_origin_y = v3);
+        r18 = (4 * (i32::from(slot!(game, MotherBrainBody[0].beam_right_edge)) & 0xc0)) as u16;
+        let i = (i32::from(r18) | i32::from(slot!(game, MotherBrainBody[0].beam_left_edge)) & 0xc0)
+            >> 6;
         match i {
             0 | 12 | 15 => {
-                let direction = match (slot!(game, Enemy_MotherBrain[0].var_3A) >> 6 & 2)
-                    | (slot!(game, Enemy_MotherBrain[0].var_3B) >> 7 & 1)
+                let direction = match (slot!(game, MotherBrainBody[0].beam_right_edge) >> 6 & 2)
+                    | (slot!(game, MotherBrainBody[0].beam_left_edge) >> 7 & 1)
                 {
                     0 => RainbowDirection::DownRight,
                     2 => RainbowDirection::Down,
@@ -493,16 +495,16 @@ pub unsafe fn calculate_rainbow_window(game: &mut Game) {
                     _ => panic!("non-null function pointer"),
                 };
                 let edges = [
-                    slot!(game, Enemy_MotherBrain[0].var_3C),
-                    slot!(game, Enemy_MotherBrain[0].var_3E),
+                    slot!(game, MotherBrainBody[0].beam_left_origin_x),
+                    slot!(game, MotherBrainBody[0].beam_right_origin_x),
                 ];
                 rasterize_rainbow_vertical(direction, edges[0], edges[1], game);
                 write_rainbow_fixed_header(0x9de6, game);
             }
             1 => {
                 let edges = [
-                    slot!(game, Enemy_MotherBrain[0].var_3C),
-                    slot!(game, Enemy_MotherBrain[0].var_3E),
+                    slot!(game, MotherBrainBody[0].beam_left_origin_x),
+                    slot!(game, MotherBrainBody[0].beam_right_origin_x),
                 ];
                 rasterize_rainbow_right_edges(edges[0], edges[1], game);
                 write_rainbow_fixed_header(0x9dec, game);
@@ -530,13 +532,13 @@ fn rasterize_rainbow_right_edges(mut r22: u16, mut r24: u16, game: &mut Game) {
     word! { game, 255; hdma_table_2[0], hdma_table_2[1] }
     let r18 = gradient(
         game,
-        slot!(byte game, Enemy_MotherBrain[0].var_3A[0]) as isize,
+        slot!(byte game, MotherBrainBody[0].beam_right_edge[0]) as isize,
     );
     let r20 = gradient(
         game,
-        slot!(byte game, Enemy_MotherBrain[0].var_3B[0]) as isize,
+        slot!(byte game, MotherBrainBody[0].beam_left_edge[0]) as isize,
     );
-    let mut mbn_var_3F = slot!(game, Enemy_MotherBrain[0].var_3F);
+    let mut mbn_var_3F = slot!(game, MotherBrainBody[0].beam_right_origin_y);
     let mut dst = 0x9d00 + 2 * (mbn_var_3F as isize - 32 + 1);
     write_rainbow_word(255, dst + 2, game);
     write_rainbow_word(255, dst + 4, game);
@@ -579,8 +581,8 @@ fn rasterize_rainbow_right_edges(mut r22: u16, mut r24: u16, game: &mut Game) {
 }
 unsafe fn rasterize_rainbow_up(game: &mut Game) {
     unsafe {
-        let direction = match (slot!(game, Enemy_MotherBrain[0].var_3A) >> 6 & 2)
-            | (slot!(game, Enemy_MotherBrain[0].var_3B) >> 7 & 1)
+        let direction = match (slot!(game, MotherBrainBody[0].beam_right_edge) >> 6 & 2)
+            | (slot!(game, MotherBrainBody[0].beam_left_edge) >> 7 & 1)
         {
             0 => RainbowDirection::UpRight,
             1 => RainbowDirection::Up,
@@ -588,15 +590,15 @@ unsafe fn rasterize_rainbow_up(game: &mut Game) {
             _ => panic!("non-null function pointer"),
         };
         let edges = [
-            slot!(game, Enemy_MotherBrain[0].var_3C),
-            slot!(game, Enemy_MotherBrain[0].var_3E),
+            slot!(game, MotherBrainBody[0].beam_left_origin_x),
+            slot!(game, MotherBrainBody[0].beam_right_origin_x),
         ];
         rasterize_rainbow_vertical(direction, edges[0], edges[1], game);
         write_rainbow_word(16, 0x9c00, game);
         write_rainbow_word(-25344i32 as u16, 0x9c01, game);
         write_rainbow_word(16, 0x9c03, game);
         write_rainbow_word(-25342i32 as u16, 0x9c04, game);
-        let v2 = slot!(game, Enemy_MotherBrain[0].var_3D).wrapping_sub(32);
+        let v2 = slot!(game, MotherBrainBody[0].beam_left_origin_y).wrapping_sub(32);
         printf(c"Carry crap!\n".as_ptr());
         if v2 >= 0x80 {
             write_rainbow_word((v2 as i32 - 127 | 0x80) as u16, 0x9c06, game);
@@ -635,9 +637,9 @@ fn rasterize_rainbow_vertical(direction: RainbowDirection, left: u16, right: u16
     word! { game, 255; hdma_table_2[0], hdma_table_2[1] }
     let left_angle = {
         let angle = if down {
-            slot!(byte game, Enemy_MotherBrain[0].var_3A[0])
+            slot!(byte game, MotherBrainBody[0].beam_right_edge[0])
         } else {
-            slot!(byte game, Enemy_MotherBrain[0].var_3B[0])
+            slot!(byte game, MotherBrainBody[0].beam_left_edge[0])
         };
         (if add_left {
             angle
@@ -648,9 +650,9 @@ fn rasterize_rainbow_vertical(direction: RainbowDirection, left: u16, right: u16
     let left_step = gradient(game, left_angle);
     let right_angle = {
         let angle = if down {
-            slot!(byte game, Enemy_MotherBrain[0].var_3B[0])
+            slot!(byte game, MotherBrainBody[0].beam_left_edge[0])
         } else {
-            slot!(byte game, Enemy_MotherBrain[0].var_3A[0])
+            slot!(byte game, MotherBrainBody[0].beam_right_edge[0])
         };
         (if add_right {
             angle
@@ -659,7 +661,7 @@ fn rasterize_rainbow_vertical(direction: RainbowDirection, left: u16, right: u16
         }) as isize
     };
     let right_step = gradient(game, right_angle);
-    let mut row = slot!(game, Enemy_MotherBrain[0].var_3D);
+    let mut row = slot!(game, MotherBrainBody[0].beam_left_origin_y);
     let mut dst = if down {
         let mut remaining = row.wrapping_sub(32);
         let mut dst = 0x9d00 + 4;
@@ -669,7 +671,7 @@ fn rasterize_rainbow_vertical(direction: RainbowDirection, left: u16, right: u16
             remaining = remaining.wrapping_sub(1);
         }
         // Preserve the original post-fill read of the starting row.
-        row = slot!(game, Enemy_MotherBrain[0].var_3D);
+        row = slot!(game, MotherBrainBody[0].beam_left_origin_y);
         dst
     } else {
         let dst = 0x9d00 + 2 * (row as isize - 32 + 1);

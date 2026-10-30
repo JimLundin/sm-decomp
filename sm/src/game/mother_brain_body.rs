@@ -4,14 +4,14 @@
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::word;
-use crate::types::Enemy_MotherBrain;
 use core::mem::offset_of;
 use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
+use sm_game::actors::mother_brain::MotherBrainBody;
 use sm_game::enemy_script::EnemyScript;
 
 const BODY: Key = Key::from_legacy(0);
-const POSE: usize = 0xf78 + offset_of!(Enemy_MotherBrain, var_02);
-const PHASE: usize = 0xf78 + offset_of!(Enemy_MotherBrain, var_00);
+const POSE: usize = 0xf78 + offset_of!(MotherBrainBody, pose);
+const PHASE: usize = 0xf78 + offset_of!(MotherBrainBody, form);
 
 /// Body poses written by the walking, crouching and beam scripts.
 #[derive(Clone, Copy)]

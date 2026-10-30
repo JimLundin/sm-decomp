@@ -3062,6 +3062,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/actors/mother_brain_effects.rs"),
     ),
     (
+        "crates/sm_game/src/actors/mother_brain.rs",
+        include_bytes!("../../crates/sm_game/src/actors/mother_brain.rs"),
+    ),
+    (
         "crates/sm_game/src/actors/mother_brain_neck.rs",
         include_bytes!("../../crates/sm_game/src/actors/mother_brain_neck.rs"),
     ),

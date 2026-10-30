@@ -738,8 +738,6 @@ pub type CheckEnemyColl_Result = CheckSolidEnemyColl_Result;
 
 pub type Enemy_Botwoon = crate::game::enemy_layouts::EnemyLayout104;
 
-pub type Enemy_MotherBrain = crate::game::enemy_layouts::EnemyLayout72;
-
 impl SpawnHardcodedPlmArgs {
     pub const fn new(block_x: u8, block_y: u8, header: VoidP) -> Self {
         Self {

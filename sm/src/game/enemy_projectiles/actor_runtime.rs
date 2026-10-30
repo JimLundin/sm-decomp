@@ -5,9 +5,10 @@ use crate::game::session_runtime::Runtime;
 use crate::{
     game::enemy_layouts::{EnemyLayout72, EnemyLayout104},
     ram_map::words as W,
-    types::{Enemy_MotherBrain, Ram7800_Kraid},
+    types::Ram7800_Kraid,
 };
 use core::mem::offset_of;
+use sm_game::actors::mother_brain::MotherBrainBody;
 fn waffle_offset(field: WaffleField) -> usize {
     match field {
         WaffleField::Behavior => offset_of!(EnemyLayout72, var_A),
@@ -126,46 +127,58 @@ impl SpeciesActors for Runtime<'_> {
         self.write_slice_le(0x7840 + offset_of!(Ram7800_Kraid, kraid_hurt_frame), value);
     }
     fn mother_brain_beam_x_fraction(&self) -> u16 {
-        self.word(0xf78 + offset_of!(Enemy_MotherBrain, var_23))
+        self.word(0xf78 + offset_of!(MotherBrainBody, hand_beam_x_subpos))
     }
     fn set_mother_brain_beam_x_fraction(&mut self, value: u16) {
-        self.write_slice_le(0xf78 + offset_of!(Enemy_MotherBrain, var_23), value);
+        self.write_slice_le(
+            0xf78 + offset_of!(MotherBrainBody, hand_beam_x_subpos),
+            value,
+        );
     }
     fn mother_brain_beam_x(&self) -> u16 {
-        self.word(0xf78 + offset_of!(Enemy_MotherBrain, var_24))
+        self.word(0xf78 + offset_of!(MotherBrainBody, hand_beam_x))
     }
     fn set_mother_brain_beam_x(&mut self, value: u16) {
-        self.write_slice_le(0xf78 + offset_of!(Enemy_MotherBrain, var_24), value);
+        self.write_slice_le(0xf78 + offset_of!(MotherBrainBody, hand_beam_x), value);
     }
     fn mother_brain_beam_y_fraction(&self) -> u16 {
-        self.word(0xf78 + offset_of!(Enemy_MotherBrain, var_25))
+        self.word(0xf78 + offset_of!(MotherBrainBody, hand_beam_y_subpos))
     }
     fn set_mother_brain_beam_y_fraction(&mut self, value: u16) {
-        self.write_slice_le(0xf78 + offset_of!(Enemy_MotherBrain, var_25), value);
+        self.write_slice_le(
+            0xf78 + offset_of!(MotherBrainBody, hand_beam_y_subpos),
+            value,
+        );
     }
     fn mother_brain_beam_y(&self) -> u16 {
-        self.word(0xf78 + offset_of!(Enemy_MotherBrain, var_26))
+        self.word(0xf78 + offset_of!(MotherBrainBody, hand_beam_y))
     }
     fn set_mother_brain_beam_y(&mut self, value: u16) {
-        self.write_slice_le(0xf78 + offset_of!(Enemy_MotherBrain, var_26), value);
+        self.write_slice_le(0xf78 + offset_of!(MotherBrainBody, hand_beam_y), value);
     }
     fn mother_brain_beam_velocity_x(&self) -> u16 {
-        self.word(0xf78 + offset_of!(Enemy_MotherBrain, var_27))
+        self.word(0xf78 + offset_of!(MotherBrainBody, hand_beam_x_speed))
     }
     fn set_mother_brain_beam_velocity_x(&mut self, value: u16) {
-        self.write_slice_le(0xf78 + offset_of!(Enemy_MotherBrain, var_27), value);
+        self.write_slice_le(
+            0xf78 + offset_of!(MotherBrainBody, hand_beam_x_speed),
+            value,
+        );
     }
     fn mother_brain_beam_velocity_y(&self) -> u16 {
-        self.word(0xf78 + offset_of!(Enemy_MotherBrain, var_28))
+        self.word(0xf78 + offset_of!(MotherBrainBody, hand_beam_y_speed))
     }
     fn set_mother_brain_beam_velocity_y(&mut self, value: u16) {
-        self.write_slice_le(0xf78 + offset_of!(Enemy_MotherBrain, var_28), value);
+        self.write_slice_le(
+            0xf78 + offset_of!(MotherBrainBody, hand_beam_y_speed),
+            value,
+        );
     }
     fn mother_brain_beam_angle(&self) -> u16 {
-        self.word(0xf78 + offset_of!(Enemy_MotherBrain, var_29))
+        self.word(0xf78 + offset_of!(MotherBrainBody, hand_beam_angle))
     }
     fn set_mother_brain_beam_angle(&mut self, value: u16) {
-        self.write_slice_le(0xf78 + offset_of!(Enemy_MotherBrain, var_29), value);
+        self.write_slice_le(0xf78 + offset_of!(MotherBrainBody, hand_beam_angle), value);
     }
     fn set_enemy_extra_health_fraction(&mut self, index: u16, element: usize, value: u16) {
         self.write_slice_le(

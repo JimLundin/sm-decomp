@@ -14,12 +14,12 @@ pub(crate) use crate::ram_map::word;
 pub(crate) use crate::rtl::{MakePairU16, ReadRegWord, Unreachable, WriteReg, abs16, words};
 pub use crate::snes::registers::*;
 pub use crate::types::{
-    Buttons, CheckEnemyColl_Result, CheckSolidEnemyColl_Result, CoroutineRet, DoorDef,
-    Enemy_MotherBrain, EnemyBase, EnemyData, EnemyDef, EnemySpawnData, EnemyTileset, EprojDef,
-    ExpandingSquareTransitionHdma, ExtendedSpriteMap, ExtraEnemyRam7800, ExtraEnemyRam8000,
-    Func_U8, Func_V, Func_Y_V, Func_Y_Y, Hitbox, LongPtr, MapIconDataPointers, MapScrollArrowData,
-    OamEnt, Pair_Bool_Amt, PairU16, Point16U, Ram3000, Ram3800, Ram4000, Ram8000_Default, Rect16U,
-    RoomDefHeader, RoomDefRoomstate, SamusPose, SamusPoseParams, SnesRegs, SpawnHardcodedPlmArgs,
-    SpawnHdmaObject_Args, TileTable, TileTables, VoidP, VramWriteEntry, Vulnerability, size_t,
+    Buttons, CheckEnemyColl_Result, CheckSolidEnemyColl_Result, CoroutineRet, DoorDef, EnemyBase,
+    EnemyData, EnemyDef, EnemySpawnData, EnemyTileset, EprojDef, ExpandingSquareTransitionHdma,
+    ExtendedSpriteMap, ExtraEnemyRam7800, ExtraEnemyRam8000, Func_U8, Func_V, Func_Y_V, Func_Y_Y,
+    Hitbox, LongPtr, MapIconDataPointers, MapScrollArrowData, OamEnt, Pair_Bool_Amt, PairU16,
+    Point16U, Ram3000, Ram3800, Ram4000, Ram8000_Default, Rect16U, RoomDefHeader, RoomDefRoomstate,
+    SamusPose, SamusPoseParams, SnesRegs, SpawnHardcodedPlmArgs, SpawnHdmaObject_Args, TileTable,
+    TileTables, VoidP, VramWriteEntry, Vulnerability, size_t,
 };
 pub(crate) use ::core::ffi::{c_char, c_long};

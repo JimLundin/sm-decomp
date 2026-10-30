@@ -5,7 +5,8 @@ use crate::game::session_runtime::native_record as read;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::rom::RomRecord;
-use crate::types::{Enemy_MotherBrain, EnemyData};
+use crate::types::EnemyData;
+use sm_game::actors::mother_brain::MotherBrainBody;
 
 const QUEUE: usize = 0xd0;
 const ENTRY: u16 = 7;
@@ -71,7 +72,7 @@ pub(crate) fn queue_escape_timer_tiles(game: &mut Game) -> u8 {
 /// 1 and a cleared cursor once the table is exhausted.
 /// Was ProcessSpriteTilesTransfers.
 pub(crate) fn queue_mother_brain_sprite_tiles(bank: u8, start: u16, game: &mut Game) -> u8 {
-    let mut cursor = slot!(game, Enemy_MotherBrain[0].var_22);
+    let mut cursor = slot!(game, MotherBrainBody[0].sprite_tile_transfer);
     if cursor == 0 {
         cursor = start;
     }
@@ -81,13 +82,18 @@ pub(crate) fn queue_mother_brain_sprite_tiles(bank: u8, start: u16, game: &mut G
         push(&entry, game);
         slot!(
             game,
-            Enemy_MotherBrain[0].var_22 = cursor.wrapping_add(ENTRY)
+            MotherBrainBody[0].sprite_tile_transfer = cursor.wrapping_add(ENTRY)
         );
-        size = read(bank, slot!(game, Enemy_MotherBrain[0].var_22), game).word(0);
+        size = read(
+            bank,
+            slot!(game, MotherBrainBody[0].sprite_tile_transfer),
+            game,
+        )
+        .word(0);
         if size != 0 {
             return 0;
         }
     }
-    slot!(game, Enemy_MotherBrain[0].var_22 = size);
+    slot!(game, MotherBrainBody[0].sprite_tile_transfer = size);
     1
 }

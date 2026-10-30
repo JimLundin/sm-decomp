@@ -5,9 +5,8 @@
 //! Was `MotherBrain_HandleNeck*`, `MotherBrain_SetupNeckForFakeAscent`,
 //! `MotherBrain_RetractHead` and `MotherBrain_Phase3_Neck_*` in the original
 //! decompilation (bank $A9). The body's and the brain's views name their slot
-//! words over the same RAM bytes as `EnemyLayout72`.
+//! words through `mother_brain`'s views.
 #![forbid(unsafe_code)]
-use crate::actors::layouts::part_view;
 use crate::ram::RawRam as _;
 use crate::ram::{slot, word};
 
@@ -20,53 +19,9 @@ pub trait Host: crate::actors::host::BossEffects {
     fn cosine_times(&mut self, length: u16, angle: u16) -> u16;
 }
 
-part_view! {
-    /// The body's view of slot 0: where the neck starts, the hyper beam
-    /// recoil flag and the brain's instruction-list request.
-    Body: EnemyLayout72 {
-        words: [var_A, var_B, var_C, var_D, var_E, var_F, parameter_1, parameter_2],
-        pad1: [u8; 26696],
-        words: [
-            var_00, var_01, var_02, var_03, var_04, var_05, hyper_beam_recoil, var_07, var_08,
-            var_09, neck_base_x, neck_base_y, var_0C, var_0D, var_0E, var_0F, var_10, var_11,
-            var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19, var_1A, var_1B,
-            var_1C, var_1D, var_1E, var_1F,
-        ],
-        pad2: [u8; 1984],
-        words: [
-            brain_instructions_pending, brain_instructions, var_22, var_23, var_24, var_25,
-            var_26, var_27, var_28, var_29, var_2A, var_2B, var_2C, var_2D, var_2E, var_2F,
-            var_30, var_31, var_32, var_33, var_34, var_35, var_36, var_37, var_38, var_39,
-            var_3A, var_3B, var_3C, var_3D, var_3E, var_3F,
-        ],
-    }
-}
-
-part_view! {
-    /// The brain's view of slot $40: the neck's joints, segments and motion.
-    /// Angles keep the joint's direction in their high byte.
-    Brain: EnemyLayout72 {
-        words: [var_A, var_B, var_C, var_D, var_E, var_F, parameter_1, parameter_2],
-        pad1: [u8; 26696],
-        words: [
-            flash_override, var_01, var_02, var_03, var_04, var_05, var_06, var_07, var_08,
-            var_09, var_0A, var_0B, var_0C, var_0D, var_0E, var_0F, var_10, var_11, var_12,
-            var_13, var_14, var_15, var_16, var_17, neck_function, neck_timer, var_1A, var_1B,
-            var_1C, var_1D, var_1E, var_1F,
-        ],
-        pad2: [u8; 1984],
-        words: [
-            lower_angle, upper_angle, segment_1_x, segment_1_y, segment_1_length, segment_2_x,
-            segment_2_y, segment_2_length, segment_3_x, segment_3_y, segment_3_length,
-            segment_4_x, segment_4_y, segment_4_length, segment_5_x, segment_5_y,
-            segment_5_length, neck_moving, lower_motion, upper_motion, neck_speed, var_35,
-            var_36, var_37, var_38, var_39, var_3A, var_3B, var_3C, var_3D, var_3E, var_3F,
-        ],
-    }
-}
-
-const BODY: i32 = 0;
-const BRAIN: i32 = 0x40;
+use crate::actors::mother_brain::{
+    BODY, BRAIN, MotherBrainBody as Body, MotherBrainBrain as Brain,
+};
 
 /// How a joint moves, in `lower_motion` and `upper_motion`.
 pub mod motion {
@@ -126,7 +81,7 @@ const RETRACT_SPEED: u16 = 80;
 /// Starts a brain instruction list. Was `MotherBrain_SetBrainInstrs`.
 fn set_brain_instructions<H: Host + ?Sized>(game: &mut H, list: u16) {
     slot!(game, Body[BODY].brain_instructions = list);
-    slot!(game, Body[BODY].brain_instructions_pending = 1);
+    slot!(game, Body[BODY].brain_instruction_timer = 1);
 }
 
 /// Moves both joints, then places the five segments along them.
@@ -407,9 +362,9 @@ fn phase3_recoil_recovery<H: Host + ?Sized>(game: &mut H) {
 /// Throws the head back from the hyper beam. Was `MotherBrain_Phase3_Neck_SetupHyperBeamRecoil`.
 fn phase3_setup_hyper_beam_recoil<H: Host + ?Sized>(game: &mut H) {
     slot!(game, Brain[BRAIN].neck_moving = 1);
-    slot!(game, Body[BODY].hyper_beam_recoil = 1);
+    slot!(game, Body[BODY].attacks_disabled = 1);
     set_brain_instructions(game, animation::HYPER_BEAM_HIT);
-    slot!(game, Brain[BRAIN].flash_override = HYPER_BEAM_FLASH);
+    slot!(game, Brain[BRAIN].shake_timer = HYPER_BEAM_FLASH);
     slot!(game, Brain[BRAIN].neck_speed = HYPER_BEAM_SPEED);
     slot!(game, Brain[BRAIN]; lower_motion = motion::RAISE, upper_motion = motion::RAISE);
     slot!(
@@ -425,7 +380,7 @@ fn phase3_hyper_beam_recoil<H: Host + ?Sized>(game: &mut H) {
     let frames: i16 = (slot!(game, Brain[BRAIN].neck_timer) as i16).wrapping_sub(1);
     if frames < 0 {
         slot!(game, Brain[BRAIN].neck_speed = NORMAL_SPEED);
-        slot!(game, Body[BODY].hyper_beam_recoil = 0);
+        slot!(game, Body[BODY].attacks_disabled = 0);
         slot!(
             game,
             Brain[BRAIN].neck_function = function::SETUP_RECOIL_RECOVERY

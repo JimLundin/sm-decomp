@@ -11,6 +11,7 @@ use sm_data::mother_brain::{
     BACK_LEG_PALETTES_ADDRESS, BODY_PALETTES_ADDRESS, HealthPalettes, PALETTES_BYTES,
     RAINBOW_ADDRESS, RAINBOW_BYTES, RainbowColors, import_health_palettes, import_rainbow,
 };
+use sm_game::actors::mother_brain::{MotherBrainBody, MotherBrainBrain};
 
 #[derive(Default)]
 pub(crate) struct ImportedTables {
@@ -96,10 +97,10 @@ pub unsafe fn fade(kind: Fade, frame: u16, game: &mut Game) -> u8 {
 
 pub unsafe fn update_health_palette(game: &mut Game) {
     {
-        if slot!(game, Enemy_MotherBrain[0].var_1F) < 2 {
+        if slot!(game, MotherBrainBody[0].corpse_state) < 2 {
             return;
         }
-        let health = slot!(game, Enemy_MotherBrain[0x40].base.health);
+        let health = slot!(game, MotherBrainBrain[0x40].base.health);
         let level = if health >= 9000 {
             0
         } else if health >= 5400 {
@@ -153,7 +154,7 @@ pub unsafe fn seal_wall(game: &mut Game) {
     SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9, game);
     spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x4, 0xb673 as VoidP), game);
     spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x9, 0xb673 as VoidP), game);
-    slot!(game, Enemy_MotherBrain[0].var_A = (0xa9881di32) as u16);
+    slot!(game, MotherBrainBody[0].function = (0xa9881di32) as u16);
 }
 #[forbid(unsafe_code)]
 pub fn start_earthquake(a: u16, game: &mut Game) {
