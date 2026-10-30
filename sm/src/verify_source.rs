@@ -270,6 +270,14 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/ram.rs"),
     ),
     (
+        "crates/sm_game/src/escape_timer.rs",
+        include_bytes!("../../crates/sm_game/src/escape_timer.rs"),
+    ),
+    (
+        "crates/sm_game/src/palette_effects/fading.rs",
+        include_bytes!("../../crates/sm_game/src/palette_effects/fading.rs"),
+    ),
+    (
         "crates/sm_game/src/sprite_drawing.rs",
         include_bytes!("../../crates/sm_game/src/sprite_drawing.rs"),
     ),

@@ -23,6 +23,10 @@ pub trait WorkRamAccess {
     fn ram(&self) -> &Self::Ram;
 }
 
+/// Named and raw work RAM together, for modules that need nothing else.
+pub trait RamHost: CompatibilityRam + WorkRamAccess {}
+impl<T: CompatibilityRam + WorkRamAccess + ?Sized> RamHost for T {}
+
 pub trait CompatibilityRam {
     fn compatibility_byte(&self, at: usize) -> u8;
     fn compatibility_write_byte(&mut self, at: usize, value: u8);

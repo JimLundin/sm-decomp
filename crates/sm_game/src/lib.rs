@@ -18,6 +18,7 @@ pub mod dialogue;
 pub mod drop_rules;
 pub mod effects;
 pub mod enemy_population;
+pub mod escape_timer;
 pub mod external_inputs;
 pub mod gameplay_flag_state;
 pub mod geometry;
@@ -106,6 +107,7 @@ pub mod enemy_script;
 pub mod gameplay_flag_host;
 pub mod palette_effects {
     pub mod execution;
+    pub mod fading;
 }
 pub mod player_movement {
     pub mod content;
