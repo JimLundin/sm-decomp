@@ -190,8 +190,7 @@ pub fn setup<H: Host + ?Sized>(game: &mut H) {
             game,
         );
     }
-    word!(game.SCREEN_FADE_DELAY = 0);
-    word!(game.SCREEN_FADE_COUNTER = 2);
+    crate::screen_fade::set_both(game, 0, 2);
     word!(game.CINEMATIC_FUNCTION = function::WAIT_FOR_MUSIC);
     game.queue_music_delayed8(NO_MUSIC);
     game.queue_music_delayed8(ESCAPE_MUSIC_DATA);
@@ -274,8 +273,7 @@ pub fn scene_2_setup<H: Host + ?Sized>(game: &mut H) {
 pub fn scene_2_fading_in<H: Host + ?Sized>(game: &mut H) {
     scene_2(game);
     if crate::cinematic::advance_cinematic_fade(CinematicFade::FastIn, game) {
-        word!(game.SCREEN_FADE_DELAY = 2);
-        word!(game.SCREEN_FADE_COUNTER = 2);
+        crate::screen_fade::set_both(game, 2, 2);
         word!(game.CINEMATIC_FUNCTION = function::SCENE_2);
     }
 }
@@ -327,8 +325,7 @@ pub fn scene_2<H: Host + ?Sized>(game: &mut H) {
         word!(game.FX_LAYER_BLENDING_CONFIG_A = 0);
         word!(game.REG_BG2HOFS = 0);
         word!(game.REG_BG2VOFS = 0);
-        word!(game.SCREEN_FADE_DELAY = 0);
-        word!(game.SCREEN_FADE_COUNTER = 2);
+        crate::screen_fade::set_both(game, 0, 2);
         word!(game.CINEMATIC_FUNCTION = function::LOAD_GUNSHIP_BG);
         word!(game.CINEMATIC_FUNCTION_TIMER = 0);
     }
@@ -410,11 +407,10 @@ pub fn gunship_fly_into_camera<H: Host + ?Sized>(game: &mut H) {
 /// Cinematic function - ending - space view - transition to credits
 /// ($8B:DE64). Was `CinematicFunction_Intro_Func125`.
 pub fn transition_to_credits<H: Host + ?Sized>(game: &mut H) {
-    word!(game.SCREEN_FADE_COUNTER = 1);
+    crate::screen_fade::set_counter(game, 1);
     if crate::cinematic::advance_cinematic_fade(CinematicFade::FastOut, game) {
         game.enable_display_nmi(true);
-        word!(game.SCREEN_FADE_DELAY = 0);
-        word!(game.SCREEN_FADE_COUNTER = 0);
+        crate::screen_fade::set_both(game, 0, 0);
         word!(game.CINEMATIC_FUNCTION = function::CREDITS_SETUP);
     }
 }
@@ -483,8 +479,7 @@ pub fn fade_in_shooting_stars<H: Host + ?Sized>(game: &mut H) {
     crate::display_refresh::fade(true, game);
     if game.ram().read_byte(mirror::INIDISP) == 15 {
         set_cinematic_blend(2, 16, 2, 34, game);
-        word!(game.SCREEN_FADE_DELAY = 0);
-        word!(game.SCREEN_FADE_COUNTER = 0);
+        crate::screen_fade::set_both(game, 0, 0);
         capture_cinematic_palette(game);
         prepare_cinematic_palette_fade(game);
         clear_cinematic_colors(0x40, 0x10, game);

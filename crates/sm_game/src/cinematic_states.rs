@@ -164,8 +164,7 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
         game.ram().write_byte(mirror::INIDISP, 0x80);
         crate::word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- rom(TITLE_PALETTES, 0));
         game.enable_display_nmi(true);
-        word!(game.SCREEN_FADE_DELAY = 1);
-        word!(game.SCREEN_FADE_COUNTER = 1);
+        crate::screen_fade::set_both(game, 1, 1);
     }
     // Stages 1..=6 resume a pending NMI before drawing the next frame.
     while stage <= 6 {
@@ -178,8 +177,7 @@ pub fn nintendo_logo<H: Host + ?Sized>(game: &mut H) -> u8 {
             match stage {
                 2 => word!(game.GAME_OPTIONS_SCREEN_INDEX = LOGO_HOLD),
                 4 => {
-                    word!(game.SCREEN_FADE_DELAY = 1);
-                    word!(game.SCREEN_FADE_COUNTER = 1);
+                    crate::screen_fade::set_both(game, 1, 1);
                 }
                 6 => {
                     crate::display::sequence::write_register_and_mirror(

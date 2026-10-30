@@ -200,7 +200,7 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             },
             9158818 => {
             crate::flow::set(game, crate::flow::Word::CinematicFunction, (0x8bc0c5i32) as u16);
-            word! { game, 1; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+            crate::screen_fade::set_both(game, 1, 1);
             },
             // The instruction's own address is in A at $F51D.
             9172253 => {
@@ -272,7 +272,7 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
     word!(game.CINEMATIC_FUNCTION_TIMER = 120);
                 },
             9172040 => {
-            word! { game, 0; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+            crate::screen_fade::set_both(game, 0, 0);
             crate::flow::set(game, crate::flow::Word::CinematicFunction, (0x8bde64i32) as u16);
                 },
             9172484 => {

@@ -138,7 +138,8 @@ pub fn request_title_skip<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         && word!(game.JOYPAD1_NEWKEYS) & CONFIRM_BUTTONS != 0
         && word!(game.SKIP_TO_TITLE_INDEX) == 0
     {
-        word! {game; SKIP_TO_TITLE_INDEX = 1; SCREEN_FADE_DELAY = 0; SCREEN_FADE_COUNTER = 2; }
+        word!(game.SKIP_TO_TITLE_INDEX = 1);
+        crate::screen_fade::set_both(game, 0, 2);
     }
 }
 
@@ -165,7 +166,7 @@ pub fn advance_title_wait<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
             function::TO_FILE_SELECT,
         );
     }
-    word! { game, 2; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+    crate::screen_fade::set_both(game, 2, 2);
 }
 
 pub fn initialize_title_sprite<H: crate::menus::host::Host + ?Sized>(

@@ -347,7 +347,7 @@ pub fn wait_for_music<H: crate::menus::host::Host + ?Sized>(next: u16, game: &mu
         if next == 0xa64c {
             word!(game.CINEMATIC_FUNCTION_TIMER = 240);
         } else {
-            word! { game, 2; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+            crate::screen_fade::set_both(game, 2, 2);
             if next == 0xa84a {
                 CinematicObjects::Background.spawn(
                     ADDR_CINEMATIC_BG_OBJECT_DEF_8BCF3F as u16,
@@ -533,10 +533,8 @@ pub fn fade_out_to_ceres<H: crate::menus::host::Host + ?Sized>(restore_samus: bo
     game.fade(false);
     if game.ram().read_byte(0x51) == 0x80 {
         game.enable_display_nmi(true);
-        word! { game, 0;
-            SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER, REG_BG2HOFS, REG_BG3HOFS, REG_BG2VOFS,
-            REG_BG3VOFS, MODE7_ANGLE,
-        }
+        crate::screen_fade::set_both(game, 0, 0);
+        word! { game, 0; REG_BG2HOFS, REG_BG3HOFS, REG_BG2VOFS, REG_BG3VOFS, MODE7_ANGLE }
         crate::word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
         crate::flow::set(
             game,
@@ -556,7 +554,7 @@ pub fn finish_pages<H: crate::menus::host::Host + ?Sized>(j: u16, game: &mut H) 
         crate::flow::Word::CinematicFunction,
         (0x8bb72fi32) as u16,
     );
-    word! { game, 1; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+    crate::screen_fade::set_both(game, 1, 1);
     j
 }
 

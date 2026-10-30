@@ -214,15 +214,15 @@ pub fn reset_layer_mirrors<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn fade<H: Host + ?Sized>(fade_in: bool, game: &mut H) {
-    let remaining = word!(game.SCREEN_FADE_COUNTER).wrapping_sub(1);
+    use crate::screen_fade;
+    let remaining = screen_fade::current(game).counter.wrapping_sub(1);
     let due = (remaining as i16) < 0;
-    word!(
-        game.SCREEN_FADE_COUNTER = if due {
-            word!(game.SCREEN_FADE_DELAY)
-        } else {
-            remaining
-        }
-    );
+    let counter = if due {
+        screen_fade::current(game).delay
+    } else {
+        remaining
+    };
+    screen_fade::set_counter(game, counter);
     if !due {
         return;
     }

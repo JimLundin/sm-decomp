@@ -14,13 +14,14 @@ pub fn advance_cinematic_fade<H: crate::menus::host::Host + ?Sized>(
     fade: crate::visual_state::CinematicFade,
     game: &mut H,
 ) -> bool {
+    use crate::screen_fade;
     use crate::visual_state::CinematicFade::*;
     let slow = matches!(fade, SlowIn | SlowOut);
     if slow {
         // Only the low delay byte decrements, with the signed-byte wrap retained.
-        game.ram()
-            .write_byte(0x723, (word!(game.SCREEN_FADE_DELAY) as u8).wrapping_sub(1));
-        if (game.ram().read_byte(0x723) as i8) > 0 {
+        let delay = (screen_fade::current(game).delay as u8).wrapping_sub(1);
+        screen_fade::set_low(game, false, delay);
+        if (screen_fade::current(game).delay as u8 as i8) > 0 {
             return false;
         }
     }
@@ -32,7 +33,7 @@ pub fn advance_cinematic_fade<H: crate::menus::host::Host + ?Sized>(
     let step = if slow {
         1
     } else {
-        word!(game.SCREEN_FADE_COUNTER) as u8
+        screen_fade::current(game).counter as u8
     };
     let (next, complete) = if increasing {
         let next = brightness.wrapping_add(step) & 31;
@@ -44,16 +45,14 @@ pub fn advance_cinematic_fade<H: crate::menus::host::Host + ?Sized>(
     };
     game.ram().write_byte(0x51, next);
     if slow {
-        game.ram().write_byte(
-            0x723,
-            if complete {
-                0
-            } else {
-                word!(game.SCREEN_FADE_COUNTER) as u8
-            },
-        );
+        let delay = if complete {
+            0
+        } else {
+            screen_fade::current(game).counter as u8
+        };
+        screen_fade::set_low(game, false, delay);
         if complete {
-            game.ram().write_byte(0x725, 0);
+            screen_fade::set_low(game, true, 0);
         }
     }
     complete

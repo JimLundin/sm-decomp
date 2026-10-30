@@ -212,7 +212,7 @@ pub fn advance_intro_landing_mosaic<H: crate::menus::host::Host + ?Sized>(
     if fading {
         game.fade(true);
         if game.ram().read_byte(0x51) == 15 {
-            word! { game, 0; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+            crate::screen_fade::set_both(game, 0, 0);
             crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xc7ca);
         }
     }

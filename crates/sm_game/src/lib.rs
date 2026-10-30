@@ -326,6 +326,7 @@ pub mod samus_palette;
 pub mod samus_periodic_damage;
 pub mod sand_heap;
 pub mod scene;
+pub mod screen_fade;
 pub mod scrolling_sky;
 pub mod session;
 pub mod session_access;

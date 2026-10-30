@@ -140,8 +140,7 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
         Title => {
             word!(game.OAM_NEXT_PTR = 0);
             word!(game.MENU_OPTION_INDEX = 0);
-            word!(game.SCREEN_FADE_DELAY = 0);
-            word!(game.SCREEN_FADE_COUNTER = 0);
+            crate::screen_fade::set_both(game, 0, 0);
             crate::menu!(game.PausemenuStartLrPressedHighlightTimer = 0);
             crate::menu!(game.PausemenuLrAnimationTimer = 0);
             crate::menu!(game.PausemenuItemSelectorAnimationTimer = 0);
@@ -165,7 +164,9 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
             word! { game, 0; OAM_NEXT_PTR, MODE7_ANGLE }
         }
         Escape => {
-            word! { game, 0; OAM_NEXT_PTR, SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER, MODE7_ANGLE }
+            word!(game.OAM_NEXT_PTR = 0);
+            crate::screen_fade::set_both(game, 0, 0);
+            word!(game.MODE7_ANGLE = 0);
         }
         _ => {}
     }

@@ -94,8 +94,7 @@ fn start_demo_logo<H: Host + ?Sized>(game: &mut H) {
     spawn(game, CinematicObjects::Sprites, object::COPYRIGHT, 0);
     // The palette the first sprite initializer leaves in A.
     spawn(game, CinematicObjects::Sprites, object::DEMO_LOGO, 0x0400);
-    word!(game.SCREEN_FADE_DELAY = 0);
-    word!(game.SCREEN_FADE_COUNTER = 2);
+    crate::screen_fade::set_both(game, 0, 2);
     word!(game.MODE7_ZOOM = 256);
     word!(game.CINEMATIC_X = 0);
     word!(game.CINEMATIC_X_SUB = 0);
@@ -139,8 +138,7 @@ pub fn load_graphics<H: Host + ?Sized>(game: &mut H) {
     GraphicsAsset::VramLowBytes(0x7f4000, 0x0000, 0x1000).load_planes(0xff, false, game);
     crate::cinematic_display::reset_cinematic_transform(128, 128, game);
     game.enable_display_nmi(true);
-    word!(game.SCREEN_FADE_DELAY = 1);
-    word!(game.SCREEN_FADE_COUNTER = 1);
+    crate::screen_fade::set_both(game, 1, 1);
     game.set_hdma_enabled(true);
     game.set_palette_effects_enabled(true);
     word!(game.FX_LAYER_BLENDING_CONFIG_A = 0);
@@ -190,8 +188,7 @@ pub fn zooming_out<H: Host + ?Sized>(game: &mut H) {
 fn finish<H: Host + ?Sized>(next: u16, game: &mut H, clear_index: impl FnOnce(&mut H)) {
     game.enable_display_nmi(true);
     game.ram().write_byte(crate::ram::mirror::BGMODE, 1);
-    word!(game.SCREEN_FADE_DELAY = 0);
-    word!(game.SCREEN_FADE_COUNTER = 0);
+    crate::screen_fade::set_both(game, 0, 0);
     word!(game.REG_BG2HOFS = 0);
     word!(game.REG_BG3HOFS = 0);
     word!(game.REG_BG2VOFS = 0);

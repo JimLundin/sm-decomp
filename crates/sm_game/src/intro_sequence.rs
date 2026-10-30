@@ -204,8 +204,7 @@ pub fn initial<H: Host + ?Sized>(game: &mut H) {
     GraphicsAsset::VramWords(0x7fb800, 0x6e00, 0x2400).load(game);
     GraphicsAsset::Decompress(0x95d713, 0x1a000).load(game);
     game.enable_display_nmi(true);
-    word!(game.SCREEN_FADE_DELAY = 3);
-    word!(game.SCREEN_FADE_COUNTER = 3);
+    crate::screen_fade::set_both(game, 3, 3);
     game.set_hdma_enabled(true);
     game.clear_palette_effects();
     game.set_palette_effects_enabled(true);
@@ -248,8 +247,7 @@ pub fn galaxy_is_at_peace<H: Host + ?Sized>(game: &mut H) {
 pub fn fade_out<H: Host + ?Sized>(game: &mut H) {
     if countdown(game) {
         word!(game.CINEMATIC_FUNCTION = function::WAIT_FOR_FADE_OUT);
-        word!(game.SCREEN_FADE_DELAY = 2);
-        word!(game.SCREEN_FADE_COUNTER = 2);
+        crate::screen_fade::set_both(game, 2, 2);
     }
 }
 
@@ -425,8 +423,7 @@ pub fn boom_initial<H: Host + ?Sized>(game: &mut H) {
     sprites(game, object::CERES_EXPLOSION_SPAWNER, 0x0800);
     game.spawn_palette_effect(BOOM_GLOW);
     game.enable_display_nmi(true);
-    word!(game.SCREEN_FADE_DELAY = 1);
-    word!(game.SCREEN_FADE_COUNTER = 1);
+    crate::screen_fade::set_both(game, 1, 1);
     word!(game.CINEMATIC_FUNCTION = function::BOOM_WAIT_FOR_MUSIC);
     game.queue_music_delayed8(NO_MUSIC);
     game.queue_music_delayed8(CERES_MUSIC_DATA);
@@ -453,8 +450,7 @@ pub fn boom_small_explosions<H: Host + ?Sized>(game: &mut H) {
     word!(game.MODE7_ZOOM = word!(game.MODE7_ZOOM).wrapping_add(1));
     crate::display_refresh::fade(true, game);
     if game.ram().read_byte(mirror::INIDISP) == 15 {
-        word!(game.SCREEN_FADE_DELAY = 0);
-        word!(game.SCREEN_FADE_COUNTER = 0);
+        crate::screen_fade::set_both(game, 0, 0);
         word!(game.CINEMATIC_FUNCTION = function::BOOM_EXPLOSIONS);
         word!(game.CINEMATIC_FUNCTION_TIMER = 1);
         word!(game.CINEMATIC_VAR13 = 0);
@@ -513,8 +509,7 @@ pub fn boom_gunship_flying_away<H: Host + ?Sized>(game: &mut H) {
 /// `CinematicFunction_Intro_Func84`.
 pub fn boom_wait<H: Host + ?Sized>(game: &mut H) {
     if countdown(game) {
-        word!(game.SCREEN_FADE_DELAY = 1);
-        word!(game.SCREEN_FADE_COUNTER = 1);
+        crate::screen_fade::set_both(game, 1, 1);
         word!(game.CINEMATIC_FUNCTION = function::BOOM_FADE_OUT);
     }
 }
@@ -526,8 +521,7 @@ pub fn boom_fade_out<H: Host + ?Sized>(game: &mut H) {
     crate::display_refresh::fade(false, game);
     if game.ram().read_byte(mirror::INIDISP) == 0x80 {
         game.enable_display_nmi(true);
-        word!(game.SCREEN_FADE_DELAY = 0);
-        word!(game.SCREEN_FADE_COUNTER = 0);
+        crate::screen_fade::set_both(game, 0, 0);
         if word!(game.GAME_STATE) == BOOM_WITH_SAMUS {
             game.queue_music_delayed8(NO_MUSIC);
             word!(game.HUD_ITEM_INDEX = 0);
@@ -577,8 +571,7 @@ pub fn zebes_initial<H: Host + ?Sized>(game: &mut H) {
     game.spawn_palette_effect(CERES_GLOW_1);
     word!(game.CINEMATIC_FUNCTION = function::ZEBES_FADING_IN);
     game.enable_display_nmi(true);
-    word!(game.SCREEN_FADE_DELAY = 1);
-    word!(game.SCREEN_FADE_COUNTER = 1);
+    crate::screen_fade::set_both(game, 1, 1);
 }
 
 /// Cinematic function - fly to Zebes - hold on scene for 40h frames

@@ -19,7 +19,7 @@ pub fn prepare_credit_roll<H: crate::menus::host::Host + ?Sized>(
         LAST_CREDITS_UPDATE_Y, CINEMATIC_X_SUB, CINEMATIC_X, CINEMATIC_Y_SUB, CINEMATIC_Y,
     }
     word!(game.CREDITS_ENABLED |= 0x8000);
-    word! { game, 3; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+    crate::screen_fade::set_both(game, 3, 3);
     let record = cinematic_native_record::<0x8b>(definition, game);
     word! {game; CREDITS_PRE_INSTRUCTION = record.word(2); CREDITS_INSTR_LIST = record.word(4);
     CREDITS_INSTRUCTION_TIMER = 1; CREDITS_TIMER = 0; }
@@ -70,9 +70,8 @@ pub fn advance_credit_roll<H: crate::menus::host::Host + ?Sized>(game: &mut H) -
                 crate::word_transfers!(game, ascending, 252; le(PALETTE_BUFFER, 4) <- rom(0x8ce7e9, 4));
                 game.ram().write_byte(0x69, 0); // reg_TM
                 game.ram().write_byte(0x51, 0x80); // reg_INIDISP
-                word! { game, 0;
-                    SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER, CINEMATIC_Y_SUB, CINEMATIC_Y,
-                }
+                crate::screen_fade::set_both(game, 0, 0);
+                word! { game, 0; CINEMATIC_Y_SUB, CINEMATIC_Y }
                 word!(game.SHOOTING_STARS_ENABLED = 1);
                 crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xe0f4);
                 word!(game.CINEMATIC_FUNCTION_TIMER = 60);
