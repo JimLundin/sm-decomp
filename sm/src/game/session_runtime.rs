@@ -112,9 +112,9 @@ pub(crate) fn run_aa_function(address: u32, game: &mut Game) {
 /// Reflec's shot reaction, with the original diagnostic when it cannot tell
 /// which projectile hit it. Was `Reflec_Shot` in bank $A3.
 fn reflec_shot(game: &mut Game) {
-    if let Some(target) = reflec::prepare_shot(game) {
+    if let Some(target) = reflec::reflect_shot(game) {
         unsafe { crate::c_library::printf(c"Possible bug. What is X?\n".as_ptr()) };
-        reflec::absorb(target, game);
+        reflec::absorb_shot(target, game);
     }
 }
 
@@ -1522,7 +1522,7 @@ crate::game::callback_dispatch! {
         10728489 => [zoa::set_x_speed_index(4, j, game)]; 10728500 => [zoa::set_x_speed_index(8, j, game)];
         10728511 => [zoa::set_x_speed_index(12, j, game)];
         10730104 => [{ crate::game::music::QueueSfx2_Max6(0x56, game); j }]; 10730152 => [bang::set_finished_growing(j, game)];
-        10738632 => [reflec::set_parameter(k, j, game)];
+        10738632 => [reflec::set_reflection_axis(k, j, game)];
         10734646 => [maridia_snail::instruction(k, 0, j, game)];
         10734655 => [maridia_snail::instruction(k, 1, j, game)];
         10734664 => [maridia_snail::instruction(k, 2, j, game)];
