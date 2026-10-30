@@ -41,20 +41,8 @@ pub(crate) fn load_state(game: &mut Game) {
     installation::load_state(&mut Runtime::new(game));
 }
 
-pub(crate) fn load_destination_cre(game: &mut Game) {
-    installation::load_destination_cre(&mut Runtime::new(game));
-}
-
 pub(crate) fn load_door(game: &mut Game) {
     installation::load_door(&mut Runtime::new(game));
-}
-
-pub(crate) fn load_destination_map(game: &mut Game) {
-    installation::load_destination_map(&mut Runtime::new(game));
-}
-
-pub(crate) fn run_room_setup(game: &mut Game) {
-    installation::run_room_setup(&mut Runtime::new(game));
 }
 
 pub(crate) fn pause_draygon(game: &mut Game) {

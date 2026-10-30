@@ -33,10 +33,6 @@ use sm_game::enemy_projectiles::setup;
 use sm_game::enemy_projectiles::shared;
 use sm_game::enemy_projectiles::shared_pre;
 
-const fnEprojPreInstr_nullsub_83: u32 = 8815867;
-const fnEproj_Init_0x8bde_SkreeDownLeft: u32 = 8817429;
-const fnEprojPreInstr_Empty: i32 = 0x86efdf;
-
 fn with_execution<R>(game: &mut Game, operation: impl FnOnce(&mut Runtime<'_>) -> R) -> R {
     operation(&mut Runtime::new(game))
 }

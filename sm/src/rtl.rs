@@ -151,11 +151,6 @@ pub unsafe fn RtlSetupEmuCallbacks(
     game.g_rtl_runframe = func;
     game.g_rtl_syncall = sync_all;
 }
-unsafe fn RtlSynchronizeWholeState(game: &mut Game) {
-    unsafe {
-        synchronize_whole_state(game, true);
-    }
-}
 unsafe fn synchronize_whole_state(native_game: &mut Game, complete_load: bool) {
     let game = &mut *native_game;
     unsafe {
@@ -1198,44 +1193,6 @@ pub(crate) fn abs16(value: u16) -> u16 {
     (value as i16).unsigned_abs()
 }
 
-/// Preserve the input high byte when bit 7 is clear.
-pub(crate) fn sign_extend8(value: u16) -> u16 {
-    if value & 0x80 != 0 {
-        value | 0xff00
-    } else {
-        value
-    }
-}
-
-/// Add to a split word pair, reading low then high and writing low then high.
-///
-/// # Safety
-/// Both pointers must allow initialized word reads and word writes. They may
-/// be unaligned or overlap; neither pointee may be concurrently accessed.
-#[inline]
-pub(crate) unsafe fn AddToHiLo(hi: *mut u16, lo: *mut u16, value: u32) {
-    unsafe {
-        let low = u32::from(lo.read_unaligned());
-        let high = u32::from(hi.read_unaligned());
-        let sum = (low | (high << 16)).wrapping_add(value);
-        lo.write_unaligned(sum as u16);
-        hi.write_unaligned((sum >> 16) as u16);
-    }
-}
-
-/// Set a split word pair, writing low before high even when the words overlap.
-///
-/// # Safety
-/// Both pointers must allow word writes. They may be unaligned or overlap;
-/// neither pointee may be concurrently accessed.
-#[inline]
-pub(crate) unsafe fn SetHiLo(hi: *mut u16, lo: *mut u16, value: u32) {
-    unsafe {
-        lo.write_unaligned(value as u16);
-        hi.write_unaligned((value >> 16) as u16);
-    }
-}
-
 pub fn multiply_8x8(a: u8, b: u8) -> u16 {
     (a as i32 * b as i32) as u16
 }
@@ -1539,16 +1496,5 @@ pub unsafe fn RtlWriteSram(game: &mut Game) {
         } else {
             fprintf(stderr, c"Unable to write saves/sm.srm\n".as_ptr());
         };
-    }
-}
-
-/// Store one SNES word without imposing host alignment.
-///
-/// # Safety
-/// `destination` must be valid for writing two bytes. It may be unaligned.
-#[inline]
-pub(crate) unsafe fn write_word(value: u16, destination: *mut u16) {
-    unsafe {
-        destination.write_unaligned(value.to_le());
     }
 }

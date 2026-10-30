@@ -8,13 +8,9 @@ use core::mem::{offset_of, size_of};
 use sm_game::actors::{
     access::{AccessMode, ActorAccess, ActorKey},
     content::*,
-    media::VisualResourceId,
 };
 use std::sync::Arc;
-use {
-    crate::game::session_runtime::Runtime,
-    sm_game::room_entry::world::{ResourceKey, WorldBinding},
-};
+use {crate::game::session_runtime::Runtime, sm_game::room_entry::world::WorldBinding};
 
 fn live(record: RomRecord) -> ActorLiveRecord {
     ActorLiveRecord {
@@ -99,20 +95,6 @@ fn prepared_collision(source: &ActorCollisionCapture) -> Option<&CollisionPart> 
     {
         CollisionLayout::Parts(parts) => parts.get(position.part),
         CollisionLayout::Body { .. } => None,
-    }
-}
-fn resource_address(world: &WorldBinding, id: VisualResourceId) -> (u8, u16) {
-    let media = world
-        .actor_media()
-        .definitions()
-        .expect("prepared actor media");
-    let (resource, _) = media.resources[&id].binding();
-    match world.resource_key(resource) {
-        ResourceKey::Long(address) => (
-            address.0[2],
-            u16::from_le_bytes([address.0[0], address.0[1]]),
-        ),
-        ResourceKey::Word { bank, offset } => (bank, offset),
     }
 }
 

@@ -1340,11 +1340,6 @@ impl Game {
         self.compatibility_write_owned_byte(0x612, value);
     }
 
-    fn long_pointer_bytes(pointer: LongPtr) -> [u8; 3] {
-        let [low, high] = pointer.addr.to_le_bytes();
-        [low, high, pointer.bank]
-    }
-
     /// Compressed tileset graphics address ($7E:07C3 in ram_map).
     pub fn tileset_tiles_pointer(&self) -> u32 {
         u32::from_le_bytes([
@@ -1387,18 +1382,6 @@ impl Game {
             self.compatibility_byte(offset),
             self.compatibility_byte(offset + 1),
         ])
-    }
-
-    /// Follow extension blocks until the selected reaction finishes.
-    pub(crate) fn react_to_block(&mut self, mut react: impl FnMut(u16, &mut Game) -> u8) -> u8 {
-        loop {
-            // Callbacks can change the live block index before requesting another reaction.
-            let block_type = self.current_level_block() >> 12;
-            let result = react(block_type, self);
-            if result & 0x80 == 0 {
-                return result;
-            }
-        }
     }
 
     /// Write a word in the backing VRAM queue, including overlapping fields.

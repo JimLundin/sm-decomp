@@ -1,6 +1,6 @@
 //! Checked, ordered byte transfers for the existing save-state format.
 #![forbid(unsafe_code)]
-use crate::{game_state::WorkRam, recording::RecordingBytes};
+use crate::recording::RecordingBytes;
 use std::collections::TryReserveError;
 
 pub enum SnapshotIo<'a> {
@@ -25,13 +25,6 @@ impl SnapshotIo<'_> {
             Self::Load(bytes) => bytes.len(),
             Self::Save(_) => 0,
         }
-    }
-
-    pub(crate) fn work_ram(&mut self, ram: &WorkRam) -> Result<(), TransferError> {
-        self.block(ram.len(), |block| match block {
-            Block::Save(output) => ram.copy_out(0, output),
-            Block::Load(input) => ram.copy_in(0, input),
-        })
     }
 
     pub fn transfer(&mut self, state: &mut [u8]) -> Result<(), TransferError> {

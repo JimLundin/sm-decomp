@@ -14,7 +14,6 @@ use crate::game::session as state;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use host::Host;
-use sm_game::player_projectiles::weapons;
 #[path = "../../verification/player_projectiles.rs"]
 pub(crate) mod checks;
 
@@ -73,9 +72,6 @@ pub(crate) fn flare(game: &mut Game) {
 pub(crate) fn grapple_flare(game: &mut Game) {
     feedback::grapple_flare(&mut Runtime::new(game));
 }
-pub(crate) fn draw_flare(slot: u16, game: &mut Game) {
-    feedback::draw_flare(&mut Runtime::new(game), slot);
-}
 pub(crate) fn restore_sound(game: &mut Game) {
     feedback::restore_sound(&mut Runtime::new(game));
 }
@@ -93,7 +89,4 @@ pub(crate) fn call_motion(address: u32, slot: u16, game: &mut Game) {
         return;
     }
     motion::run(&mut h, address as u16, slot);
-}
-pub(crate) fn clear_animation(game: &mut Game) {
-    weapons::clear_animation(&mut Runtime::new(game));
 }

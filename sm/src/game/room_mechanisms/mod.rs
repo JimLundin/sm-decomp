@@ -3,7 +3,6 @@ use sm_game::room_mechanisms::commands;
 use sm_game::room_mechanisms::content;
 mod content_runtime;
 pub(crate) use sm_game::room_mechanisms::creation;
-use sm_game::room_mechanisms::graphics;
 mod graphics_runtime;
 pub(crate) use sm_game::room_mechanisms::host;
 use sm_game::room_mechanisms::pre;
@@ -62,9 +61,6 @@ fn contact<'a>(value: &'a mut Displacement<'_>) -> Contact<'a> {
 pub(crate) unsafe fn close_door(game: &mut Game) {
     creation::close_door(&mut Runtime::new(game));
 }
-pub(crate) unsafe fn reload_graphics(game: &mut Game) {
-    graphics::reload_graphics(&mut Runtime::new(game));
-}
 pub(crate) unsafe fn run(game: &mut Game) -> u8 {
     session_runtime::run_mechanisms(game, host::CallerContext::Gameplay)
 }
@@ -105,9 +101,6 @@ pub(crate) fn wait_statue(index: u16, game: &mut Game) {
     }
     h.music(6);
     h.statue_wait_actor(index, false);
-}
-pub(crate) unsafe fn reveal_items(game: &mut Game) {
-    graphics::reveal_items(&mut Runtime::new(game));
 }
 
 /// Numeric identities retained only for the actual-old verification carrier.
