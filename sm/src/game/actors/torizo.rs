@@ -14,16 +14,19 @@ use crate::game::sm_aa::{
 use crate::game_state::Game;
 pub(crate) use sm_game::actors::torizo::*;
 
-const _: () = assert!(
-    DEATH == addr_kTorizo_Ilist_B1C8 as u16
-        && CAUGHT_SUPER_MISSILE_LEFT_LEFT_LEG == addr_kTorizo_Ilist_CDE1 as u16
-        && CAUGHT_SUPER_MISSILE_LEFT_RIGHT_LEG == addr_kTorizo_Ilist_CE43 as u16
-        && CAUGHT_SUPER_MISSILE_RIGHT_RIGHT_LEG == addr_kTorizo_Ilist_CEA5 as u16
-        && CAUGHT_SUPER_MISSILE_RIGHT_LEFT_LEG == addr_kTorizo_Ilist_CEFF as u16
-        && DODGE_TURNING_LEFT == addr_kTorizo_Ilist_D1F1 as u16
-        && DODGE_TURNING_RIGHT == addr_kTorizo_Ilist_D2AD as u16
-        && LOW_HEALTH_DROOL == addr_kEproj_BombTorizoLowHealthInitialDrool as u16
-);
+const _: () = {
+    use sm_game::actors::torizo::instruction_list as list;
+    assert!(
+        list::DEATH_SEQUENCE == addr_kTorizo_Ilist_B1C8 as u16
+            && list::CAUGHT_SUPER_MISSILE_LEFT_LEFT_LEG == addr_kTorizo_Ilist_CDE1 as u16
+            && list::CAUGHT_SUPER_MISSILE_LEFT_RIGHT_LEG == addr_kTorizo_Ilist_CE43 as u16
+            && list::CAUGHT_SUPER_MISSILE_RIGHT_RIGHT_LEG == addr_kTorizo_Ilist_CEA5 as u16
+            && list::CAUGHT_SUPER_MISSILE_RIGHT_LEFT_LEG == addr_kTorizo_Ilist_CEFF as u16
+            && list::DODGE_TURNING_LEFT == addr_kTorizo_Ilist_D1F1 as u16
+            && list::DODGE_TURNING_RIGHT == addr_kTorizo_Ilist_D2AD as u16
+            && LOW_HEALTH_DROOL == addr_kEproj_BombTorizoLowHealthInitialDrool as u16
+    );
+};
 
 impl Host for Game {
     fn move_horizontal_ignoring_slopes(&mut self, k: u16, amount: i32) -> bool {
