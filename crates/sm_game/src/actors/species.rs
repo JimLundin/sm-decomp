@@ -10,7 +10,7 @@
 use crate::actors::host::{ActorHost, ActorRuntime, Death, LeaseActors, Shot};
 use crate::actors::{
     alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, boyon, bull, cacatac,
-    ceres_doors, ceres_ridley, choot, covern, crawlers, crocomire_reactions, dachora_run,
+    ceres_doors, ceres_ridley, choot, covern, crawlers, crocomire_reactions, dachora_run, dragon,
     draygon_death, draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep,
     elevator, escape_critters, etecoon, evir, fire_arc, fireflea, flies, fune, gamet, geega,
     geruta, kago, kihunter, kraid, magdollite, metroid, mini_crocomire, mini_kraid, mochtroid,
@@ -685,6 +685,9 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10717004 => waver::main_ai(game),
         10651420 => boyon::initialize(game),
         10651548 => boyon::main_ai(game),
+        10675718 => dragon::initialize(game),
+        10675790 => pre_instruction(geruta::function(game), game),
+        10676168 | 10676174 | 10676180 => dragon::react(ea, game),
         _ => game.native_ai(ea),
     }
 }
@@ -871,6 +874,7 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
         10662354 => flies::dive(k, true, game),
         10652227 => mini_crocomire::patrol(false, game),
         10652252 => mini_crocomire::patrol(true, game),
+        10675796 | 10675885 | 10675953 | 10676020 | 10676041 => dragon::step(k, ea as u16, game),
         _ => game.native_pre_instruction(ea, k),
     }
 }
@@ -1284,6 +1288,7 @@ pub fn instruction<H: InstructionHost>(
         10652061 => mini_crocomire::set_moving(true, j, game),
         10716899 => waver::set_spin_finished(j, game),
         10651846 => boyon::start_bounce(j, game),
+        10675707 => dragon::set_animation_finished(j, game),
         _ => game.native_instruction(ea, k, j),
     }
 }

@@ -133,6 +133,7 @@ pub mod actors {
     pub mod dachora;
     pub mod dachora_run;
     pub mod deaths;
+    pub mod dragon;
     pub mod drawing;
     pub mod draygon_death;
     pub mod draygon_eye;

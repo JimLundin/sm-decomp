@@ -1215,11 +1215,6 @@ crate::game::callback_dispatch! {
         10649610 => [actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Grapple)];
         10649665 => [actors::scheduling::update_frozen_enemy(&mut Runtime::new(game))];
 
-        10675718 => crate::game::lava_seahorse_pair::initialize;
-        10675790 => [actor_species_pre_instruction(crate::game::lava_seahorse_pair::pre_instruction(game), game)];
-        10676168 => [{ actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize); crate::game::lava_seahorse_pair::synchronize(game); }];
-        10676174 => [{ actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize); crate::game::lava_seahorse_pair::synchronize(game); }];
-        10676180 => [{ actors::combat::power_bomb_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize); crate::game::lava_seahorse_pair::synchronize(game); }];
         0xa30000..=0xa3ffff => [{ crate::rtl::Unreachable(game); }];
         10783748 => crate::game::visual_runtime::advance_crocomire;
 
@@ -1241,8 +1236,6 @@ crate::game::address_dispatch! {
     {
 
 
-        10675796 | 10675885 | 10675953 | 10676020 | 10676041
-            => [crate::game::lava_seahorse_pair::phase(k, ea as u16, game)];
         10659852 => [crate::game::gunship::phase(k, 0xa80c, game)];
         10660048 => [crate::game::gunship::phase(k, 0xa8d0, game)];
         10660162 => [crate::game::gunship::phase(k, 0xa942, game)];
@@ -1282,7 +1275,6 @@ crate::game::callback_dispatch! {
         11139360 => [sm_game::actors::baby_metroid_encounter::go_to_normal(k, j)]; 11139382 => [sm_game::actors::baby_metroid_encounter::go_to_latched_on(k, j)];
         11139472 => [sm_game::actors::baby_metroid_encounter::go_to_remorse(k, j)];
         10668907 => [{ crate::game::music::queue_sfx2_max6(0xe, game); j }];
-        10675707 => [crate::game::lava_seahorse_pair::fire_ready(j, game)];
         10654929 => [{ crate::game::music::queue_sfx2_max6(0x3a, game); j }];
         10657578 => [{ crate::game::music::queue_sfx2_max6(0x34, game); j }];
         10657959 => [crate::game::enemy_projectiles::spawn_scripted(0xdafe, j, game)];

@@ -22,7 +22,6 @@ pub(in crate::game) mod skultera;
 pub(crate) mod torizo;
 
 mod runtime;
-pub(crate) use runtime::restart_from_native_cache;
 
 mod content_runtime;
 

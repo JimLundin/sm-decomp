@@ -40,7 +40,7 @@ pub fn instruction<H: LeaseActors>(address: u32, cursor: EnemyScript, game: &mut
     cursor
 }
 
-/// The function the flies', Squeept's, Geruta's and Holtz's main AI runs after a random draw.
+/// The function that the flies', Squeept's, Geruta's, Holtz's and Dragon's main AI runs.
 pub fn function<H: LeaseActors>(game: &mut H) -> u32 {
     let runtime = game.lease();
     let function = runtime

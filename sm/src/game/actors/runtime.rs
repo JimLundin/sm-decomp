@@ -264,21 +264,3 @@ impl sm_game::actors::session_slots::SessionSlots for Runtime<'_> {
         self.set_byte(at, value);
     }
 }
-
-/// Native overlay variants shared by Snail and both A2 Seahorse bodies.
-/// The wide offset retains children past u16::MAX; the cache commits before ROM reads.
-pub(crate) fn restart_from_native_cache(runtime: &mut Runtime<'_>, raw: usize, table: u32) {
-    let extra = 0x7800 + raw;
-    let variant = runtime.native_word(extra);
-    if variant != runtime.native_word(extra + 2) {
-        runtime.write_slice_native(extra + 2, variant);
-        let instruction = runtime
-            .loaded_image()
-            .expect("ROM must be loaded")
-            .table_word(crate::rom::lorom_offset(table) as usize, variant as isize);
-        let base = 0xf78 + raw;
-        runtime.write_slice_native(base + 0x1a, instruction);
-        runtime.write_slice_native(base + 0x1c, 1);
-        runtime.write_slice_native(base + 0x18, 0);
-    }
-}
