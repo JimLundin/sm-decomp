@@ -5,6 +5,7 @@ pub(in crate::game) use sm_game::actors::api;
 pub(in crate::game) use sm_game::actors::bang;
 pub(in crate::game) use sm_game::actors::blue_brinstar_face_block;
 pub(in crate::game) use sm_game::actors::elevator;
+pub(in crate::game) use sm_game::actors::kago;
 pub(in crate::game) use sm_game::actors::mochtroid;
 pub(in crate::game) use sm_game::actors::morph_ball_eye;
 pub(in crate::game) use sm_game::actors::zoa;
@@ -18,7 +19,6 @@ pub(crate) mod escape_critters;
 pub(in crate::game) mod falling_platforms;
 pub(in crate::game) mod fireflea;
 pub(crate) mod identity;
-pub(in crate::game) mod kago;
 pub(in crate::game) mod maridia_snail;
 pub(crate) mod metroid;
 #[cfg(sm_verify_dll)]

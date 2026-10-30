@@ -1156,7 +1156,7 @@ crate::game::callback_dispatch! {
         }];
 
         11053894 => crate::game::actors::kago::initialize;
-        11053941 => crate::game::actors::kago::advance; 11053955 => crate::game::actors::kago::shot;
+        11053941 => crate::game::actors::kago::main_ai; 11053955 => crate::game::actors::kago::shot;
         11055370 => [{ let address = crate::game::actors::magdollite::main_ai(game); actor_species_pre_instruction(address, game); }];
         11057014 => crate::game::actors::beetom::initialize;
         11057165 => crate::game::actors::beetom::advance; 11058734 => crate::game::actors::beetom::touch;
