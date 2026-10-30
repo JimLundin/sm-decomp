@@ -39,7 +39,7 @@ impl WordEndpoint<'_> {
                 let offset = address(*base, byte_offset);
                 u16::from_ne_bytes([
                     words[offset / 2].to_ne_bytes()[offset & 1],
-                    words[(offset + 1) / 2].to_ne_bytes()[(offset + 1) & 1],
+                    words[offset.div_ceil(2)].to_ne_bytes()[(offset + 1) & 1],
                 ])
             }
             Self::Value(value) => *value,

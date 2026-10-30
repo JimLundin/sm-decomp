@@ -211,7 +211,6 @@ fn process_actor<H: ActorHost + EprojHost + MechanismEffects>(h: &mut H, key: Ac
             };
             let bank = actor.bank;
             let definition = actor.definition.wrapping_add(2 * handler);
-            drop(actor);
             let capture = h.capture_actor_definition(ActorDefinitionKey(definition));
             let routine = h.definition_routine_offset(&capture, DefinitionRoutine::Main);
             h.actor_ai(ActorRoutine(u32::from(bank) << 16 | u32::from(routine)));

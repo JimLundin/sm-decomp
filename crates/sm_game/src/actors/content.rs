@@ -112,6 +112,8 @@ pub struct ActorCompatibilityKeys {
     pub poses: BTreeMap<PoseId, (u8, u16)>,
     pub room_populations: BTreeMap<ResourceId, PopulationId>,
 }
+// Built once per catalog, so the size difference is not worth a box.
+#[allow(clippy::large_enum_variant)]
 #[derive(Clone, Debug, PartialEq)]
 pub enum ActorCatalog {
     LegacyBound,
@@ -673,12 +675,12 @@ pub fn birth_metadata_from_capture(
             return Err(ActorContentError::MissingAppearance(appearance));
         }
     }
-    if let Some(position) = position {
-        if world.actors().definitions().is_some() {
-            return world
-                .actors()
-                .birth_metadata(position, live_definition, requested, respawn);
-        }
+    if let Some(position) = position
+        && world.actors().definitions().is_some()
+    {
+        return world
+            .actors()
+            .birth_metadata(position, live_definition, requested, respawn);
     }
     Ok((
         ActorProvenance {
@@ -718,10 +720,10 @@ fn validate_entry(
     if !definitions.programs.contains_key(&entry.initial_program) {
         return Err(ActorContentError::MissingProgram(entry.initial_program));
     }
-    if let Some(appearance) = entry.appearance {
-        if !media.appearances.contains_key(&appearance) {
-            return Err(ActorContentError::MissingAppearance(appearance));
-        }
+    if let Some(appearance) = entry.appearance
+        && !media.appearances.contains_key(&appearance)
+    {
+        return Err(ActorContentError::MissingAppearance(appearance));
     }
     Ok(())
 }

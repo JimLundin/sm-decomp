@@ -910,10 +910,10 @@ impl ActorCheckpointPayload {
                 {
                     return Err("checkpoint allocation content differs".into());
                 }
-                if let Some(previous) = &bound[index] {
-                    if !previous.same_allocation(image) {
-                        return Err("checkpoint allocation alias differs".into());
-                    }
+                if let Some(previous) = &bound[index]
+                    && !previous.same_allocation(image)
+                {
+                    return Err("checkpoint allocation alias differs".into());
                 }
                 if bound.iter().enumerate().any(|(other, value)| {
                     other != index

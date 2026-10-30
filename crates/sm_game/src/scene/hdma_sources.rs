@@ -653,10 +653,10 @@ impl SourceBinding {
     fn offset(&self, bank: u8, address: u16) -> Result<usize, DisplayError> {
         let mut found = None;
         for window in self.windows()? {
-            if let Some(offset) = window.resolve(bank, address) {
-                if found.replace(offset).is_some() {
-                    return Err(DisplayError::Source);
-                }
+            if let Some(offset) = window.resolve(bank, address)
+                && found.replace(offset).is_some()
+            {
+                return Err(DisplayError::Source);
             }
         }
         found.ok_or(DisplayError::Source)

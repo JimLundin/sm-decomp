@@ -76,7 +76,7 @@ fn decrement_decimal<H: crate::sprite_output::SpriteHost + ?Sized>(
     if result < 0x10 {
         result = result - 0x6 & (if result - 0x6 < 0 { 0xf } else { 0x1f });
     }
-    result = (game.ram().read_byte(at) as i32 & 0xf0) + (!(value as i32) & 0xf0) + result;
+    result += (game.ram().read_byte(at) as i32 & 0xf0) + (!(value as i32) & 0xf0);
     if result < 0x100 {
         result -= 0x60;
     }

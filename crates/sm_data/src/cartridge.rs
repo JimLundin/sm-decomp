@@ -25,6 +25,10 @@ impl RomImage {
         self.0.cells.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.0.cells.is_empty()
+    }
+
     pub fn read(&self, offset: usize) -> u8 {
         self.0.cells[offset].get()
     }

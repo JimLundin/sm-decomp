@@ -61,7 +61,7 @@ pub fn toggle_mode<H: Host + ?Sized>(game: &mut H) {
     {
         return;
     }
-    game.queue_sound(0, (0x37) as u8, 6);
+    game.queue_sound(0, 0x37_u8, 6);
     let automatic = word!(game.reserve_health_mode) != 1;
     word!(game.reserve_health_mode = if automatic { 1 } else { 2 });
     crate::hud::menu_reserve_mode(automatic, game);
@@ -99,7 +99,7 @@ pub fn transfer_manual<H: Host + ?Sized>(game: &mut H) {
         );
     }
     if word!(game.pausemenu_reserve_tank_delay_ctr -= 1, reread) & 7 == 7 {
-        game.queue_sound(2, (0x2d) as u8, 6);
+        game.queue_sound(2, 0x2d_u8, 6);
     }
     if transfer_one(true, game) {
         return;
@@ -112,7 +112,7 @@ pub fn transfer_manual<H: Host + ?Sized>(game: &mut H) {
 pub fn refill_auto<H: Host + ?Sized>(game: &mut H) -> u8 {
     if word!(game.samus_reserve_health) != 0 {
         if word!(game.nmi_frame_counter_word) & 7 == 0 {
-            game.queue_sound(2, (0x2d) as u8, 3);
+            game.queue_sound(2, 0x2d_u8, 3);
         }
         if !transfer_one(false, game) {
             word!(game.samus_reserve_health = 0);

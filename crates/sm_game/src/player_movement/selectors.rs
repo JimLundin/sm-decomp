@@ -26,7 +26,7 @@ fn clear_pose_input(h: &mut impl Host) {
 pub fn advance(h: &mut impl Host) {
     let movement = usize::from(h.session().player.movement_and_facing >> 8);
     // Keep the original checked 28-entry dispatch, including invalid selectors.
-    let _ = [(); 28][movement];
+    [(); 28][movement];
     match movement {
         0 => standing(h),
         1 => running(h),

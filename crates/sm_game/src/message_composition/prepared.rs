@@ -214,14 +214,14 @@ impl PreparedOwner {
     }
     pub fn poll(&mut self, id: MessageId) -> Result<Option<u16>, Fault> {
         self.healthy()?;
-        if let Some((completed, selection)) = self.state.completed {
-            if completed == id {
-                self.state.completed = None;
-                if self.state.runner.continuation == d::Continuation::Start {
-                    self.state.runner.message = d::Message::Content(MessageId(0));
-                }
-                return Ok(Some(selection));
+        if let Some((completed, selection)) = self.state.completed
+            && completed == id
+        {
+            self.state.completed = None;
+            if self.state.runner.continuation == d::Continuation::Start {
+                self.state.runner.message = d::Message::Content(MessageId(0));
             }
+            return Ok(Some(selection));
         }
         self.queue(id)?;
         Ok(None)

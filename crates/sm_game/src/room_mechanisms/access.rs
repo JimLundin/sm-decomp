@@ -158,60 +158,57 @@ macro_rules! mechanism_byte {
 pub use crate::{mechanism, mechanism_byte, mechanism_member};
 
 pub fn terrain_word<H: Host>(h: &H, byte_block: usize, order: ByteOrder) -> u16 {
-    if byte_block & 1 == 0 {
-        if let Some(cell) = h.session().room.terrain.cells().get(byte_block / 2) {
-            return match order {
-                ByteOrder::Little => cell.level,
-                ByteOrder::Native => u16::from_ne_bytes(cell.level.to_le_bytes()),
-            };
-        }
+    if byte_block & 1 == 0
+        && let Some(cell) = h.session().room.terrain.cells().get(byte_block / 2)
+    {
+        return match order {
+            ByteOrder::Little => cell.level,
+            ByteOrder::Native => u16::from_ne_bytes(cell.level.to_le_bytes()),
+        };
     }
     h.terrain_word(byte_block, order)
 }
 pub fn set_terrain_word<H: Host>(h: &mut H, byte_block: usize, value: u16, order: ByteOrder) {
-    if byte_block & 1 == 0 {
-        if let Some(cell) = h
+    if byte_block & 1 == 0
+        && let Some(cell) = h
             .session_mut()
             .room
             .terrain
             .cells_mut()
             .get_mut(byte_block / 2)
-        {
-            cell.level = match order {
-                ByteOrder::Little => value,
-                ByteOrder::Native => u16::from_le_bytes(value.to_ne_bytes()),
-            };
-            return;
-        }
+    {
+        cell.level = match order {
+            ByteOrder::Little => value,
+            ByteOrder::Native => u16::from_le_bytes(value.to_ne_bytes()),
+        };
+        return;
     }
     h.set_terrain_word(byte_block, value, order);
 }
 pub fn terrain_high<H: Host>(h: &H, byte_block: u16) -> u8 {
-    if byte_block & 1 == 0 {
-        if let Some(cell) = h
+    if byte_block & 1 == 0
+        && let Some(cell) = h
             .session()
             .room
             .terrain
             .cells()
             .get(usize::from(byte_block / 2))
-        {
-            return (cell.level >> 8) as u8;
-        }
+    {
+        return (cell.level >> 8) as u8;
     }
     h.terrain_high(byte_block)
 }
 pub fn set_terrain_high<H: Host>(h: &mut H, byte_block: u16, value: u8) {
-    if byte_block & 1 == 0 {
-        if let Some(cell) = h
+    if byte_block & 1 == 0
+        && let Some(cell) = h
             .session_mut()
             .room
             .terrain
             .cells_mut()
             .get_mut(usize::from(byte_block / 2))
-        {
-            cell.level = (cell.level & 0xff) | (u16::from(value) << 8);
-            return;
-        }
+    {
+        cell.level = (cell.level & 0xff) | (u16::from(value) << 8);
+        return;
     }
     h.set_terrain_high(byte_block, value);
 }

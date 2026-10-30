@@ -13,7 +13,7 @@ use crate::{
 
 pub fn handle_input(h: &mut impl Host) {
     let movement = h.session().player.movement_and_facing >> 8;
-    let _ = [(); 28][usize::from(movement)];
+    [(); 28][usize::from(movement)];
     if matches!(movement, 7 | 9 | 11 | 15)
         || (movement == 0
             && matches!(h.session().player.pose, 0 | 0x9b)

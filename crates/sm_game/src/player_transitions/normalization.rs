@@ -39,7 +39,7 @@ fn reload(h: &mut impl Host, #[cfg(sm_verify_dll)] publication: u16) {
 }
 pub fn normalize(h: &mut impl Host) {
     let movement = usize::from(h.session().player.movement_and_facing >> 8);
-    let _ = [(); 28][movement];
+    [(); 28][movement];
     let changed = match movement {
         0 => standing(h),
         1 => running(h),
@@ -128,39 +128,34 @@ fn normal_jump(h: &mut impl Host) -> bool {
         0x4e | 0x16 | 0x6a => Some(0xc8),
         _ => None,
     };
-    if let Some(selected) = candidate {
-        if h.session().player.shine_timer != 0 {
+    if let Some(selected) = candidate
+        && h.session().player.shine_timer != 0
+    {
+        #[cfg(sm_verify_dll)]
+        let observed_before = h.session().player.pose;
+        h.session_mut().player.pose = selected;
+        #[cfg(sm_verify_dll)]
+        crate::transition_trace::publication(4, 0xa1c, observed_before, h.session().player.pose);
+        jump::start_shinespark(h);
+        if previous_movement(h) == 2 {
             #[cfg(sm_verify_dll)]
-            let observed_before = h.session().player.pose;
-            h.session_mut().player.pose = selected;
+            let observed_y = h.session().player.y;
+            h.session_mut().player.y = h.session().player.y.wrapping_sub(1);
+            let updated_y = h.session().player.y;
+            #[cfg(sm_verify_dll)]
+            crate::transition_trace::publication(5, 0xafa, observed_y, h.session().player.y);
+            #[cfg(sm_verify_dll)]
+            let observed_previous_y = h.session().player.previous_position.y.whole;
+            h.session_mut().player.previous_position.y.whole = updated_y;
             #[cfg(sm_verify_dll)]
             crate::transition_trace::publication(
-                4,
-                0xa1c,
-                observed_before,
-                h.session().player.pose,
+                6,
+                0xb14,
+                observed_previous_y,
+                h.session().player.previous_position.y.whole,
             );
-            jump::start_shinespark(h);
-            if previous_movement(h) == 2 {
-                #[cfg(sm_verify_dll)]
-                let observed_y = h.session().player.y;
-                h.session_mut().player.y = h.session().player.y.wrapping_sub(1);
-                let updated_y = h.session().player.y;
-                #[cfg(sm_verify_dll)]
-                crate::transition_trace::publication(5, 0xafa, observed_y, h.session().player.y);
-                #[cfg(sm_verify_dll)]
-                let observed_previous_y = h.session().player.previous_position.y.whole;
-                h.session_mut().player.previous_position.y.whole = updated_y;
-                #[cfg(sm_verify_dll)]
-                crate::transition_trace::publication(
-                    6,
-                    0xb14,
-                    observed_previous_y,
-                    h.session().player.previous_position.y.whole,
-                );
-            }
-            return true;
         }
+        return true;
     }
     acceleration(h);
     if matches!(h.session().player.pose, 0x15 | 0x16)
@@ -235,7 +230,7 @@ fn crouch_transition(h: &mut impl Host) -> bool {
             (2 * (i32::from(pose) - 0x35)) as u16
         } else {
             let index = (i32::from(pose) - 0xdb) as usize;
-            let _ = [(); 4][index];
+            [(); 4][index];
             return if index < 2 { morph(h) } else { false };
         }
     } else if pose.wrapping_sub(0xf7) & 0x8000 != 0 {
@@ -246,7 +241,7 @@ fn crouch_transition(h: &mut impl Host) -> bool {
     };
     h.session_mut().player.transitions.momentum = MomentumAction::from_raw(7);
     let index = usize::from(selector >> 1);
-    let _ = [(); 12][index];
+    [(); 12][index];
     match index {
         0 | 1 => crouch(h),
         2 | 3 => morph(h),

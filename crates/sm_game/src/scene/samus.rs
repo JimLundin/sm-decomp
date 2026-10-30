@@ -37,7 +37,7 @@ pub fn draw<H: Host>(host: &mut H, index: u16, position: (u16, u16)) -> Result<(
             &mut map,
             position,
             objects::Clip::None,
-            |word| Ok(word),
+            Ok,
             |host, part, entry, x, y, word| host.published(part, entry, x, y, word),
         )?;
     }

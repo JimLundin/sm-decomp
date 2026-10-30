@@ -27,7 +27,9 @@ use crate::session_access::SessionAccess;
 fn extended_index(at: usize) -> Option<(usize, usize)> {
     match at {
         0x801e | 0x8020 | 0x803c | 0x8818 | 0x883e => None,
-        0x7800..0x9000 if at % 2 == 0 => Some(((at - 0x7800) / 0x800, (at - 0x7800) % 0x800 / 2)),
+        0x7800..0x9000 if at.is_multiple_of(2) => {
+            Some(((at - 0x7800) / 0x800, (at - 0x7800) % 0x800 / 2))
+        }
         _ => None,
     }
 }

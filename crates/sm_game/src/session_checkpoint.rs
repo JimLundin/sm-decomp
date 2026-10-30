@@ -2003,15 +2003,14 @@ fn checkpoint_validate_room(value: &Room, binding: &world::WorldBinding) -> Resu
         (&value.entry.tiles, world::ResourceKind::Tiles),
         (&value.entry.palette, world::ResourceKind::Palette),
     ] {
-        if let room_content::AssetRef::Prepared(id) = asset {
-            if expected.resources.get(id) != Some(&kind)
+        if let room_content::AssetRef::Prepared(id) = asset
+            && (expected.resources.get(id) != Some(&kind)
                 || !matches!(
                     binding.compatibility_keys().resources.get(id),
                     Some(world::ResourceKey::Long(_))
-                )
-            {
-                return Err("room checkpoint missing or mismatched authored asset".into());
-            }
+                ))
+        {
+            return Err("room checkpoint missing or mismatched authored asset".into());
         }
     }
     Ok(())

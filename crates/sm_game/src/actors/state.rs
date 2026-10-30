@@ -113,22 +113,12 @@ pub struct ActorGraphics {
     pub compatibility_write_position: u16,
     pub compatibility_next_tile: u16,
 }
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct ActorDrawing {
     pub hook_address: [u8; 4],
     pub hook_work: [u16; 3],
     pub tilemap_size: u16,
     pub tilemap_pending: u16,
-}
-impl Default for ActorDrawing {
-    fn default() -> Self {
-        Self {
-            hook_address: [0; 4],
-            hook_work: [0; 3],
-            tilemap_size: 0,
-            tilemap_pending: 0,
-        }
-    }
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct ActorSchedule {
@@ -205,14 +195,14 @@ impl Clone for Actors {
         Self {
             slots: core::array::from_fn(|i| self.slots[i].duplicate_for_storage()),
             saved: core::array::from_fn(|i| self.saved[i].duplicate_for_storage()),
-            controls: self.controls.clone(),
-            combat: self.combat.clone(),
-            staging: self.staging.clone(),
-            graphics: self.graphics.clone(),
+            controls: self.controls,
+            combat: self.combat,
+            staging: self.staging,
+            graphics: self.graphics,
             drawing: self.drawing.clone(),
-            schedule: self.schedule.clone(),
-            compatibility: self.compatibility.clone(),
-            diagnostics: self.diagnostics.clone(),
+            schedule: self.schedule,
+            compatibility: self.compatibility,
+            diagnostics: self.diagnostics,
             extended: self.extended.clone(),
         }
     }

@@ -322,11 +322,9 @@ pub fn with_base_tile<H: SpriteHost + ?Sized>(
 #[forbid(unsafe_code)]
 pub fn menu_selection<H: SpriteHost + ?Sized>(game: &mut H) {
     const SPRITES: [u16; 4] = [0x37, 0x36, 0x35, 0x34];
-    if word!(game.cinematic_var5) != 0 {
-        if game_word!(game.cinematic_var5 -= 1, reread) == 0 {
-            word!(game.eproj_id[0] = (u16::from(game.ram().read_byte(0x1997)) + 1) & 3);
-            word!(game.cinematic_var5 = 8);
-        }
+    if word!(game.cinematic_var5) != 0 && game_word!(game.cinematic_var5 -= 1, reread) == 0 {
+        word!(game.eproj_id[0] = (u16::from(game.ram().read_byte(0x1997)) + 1) & 3);
+        word!(game.cinematic_var5 = 8);
     }
     menu(
         SPRITES[usize::from(word!(game.eproj_id[0]))],

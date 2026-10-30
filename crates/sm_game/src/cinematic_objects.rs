@@ -698,7 +698,7 @@ fn draw_cinematic_background<H: crate::menus::host::Host + ?Sized>(
                 };
                 word!(game.cinematicbg_arr8[15] = bottom.wrapping_sub(8));
                 if record.word(4) != 0xd67d && word!(game.cinematicbg_var1) != 0 {
-                    game.queue_sound(2, (0xd) as u8, 6);
+                    game.queue_sound(2, 0xd_u8, 6);
                 }
             }
             draw_cinematic_rectangle(command != 0x88fd, definition, position, game);

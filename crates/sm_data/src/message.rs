@@ -139,7 +139,7 @@ impl Definitions {
         if font.id.0 == 0
             || font.revision != revision
             || font.words.is_empty()
-            || font.words.len() % 8 != 0
+            || !font.words.len().is_multiple_of(8)
             || usize::from(font.first_word) + font.words.len() > 0x8000
             || messages.len() > 256
         {

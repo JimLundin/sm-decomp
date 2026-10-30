@@ -582,14 +582,13 @@ impl SessionSnapshotPayload {
                 for at in range.clone() {
                     if let Some(byte) =
                         crate::session_encoding::projected_byte(&source.0.gameplay, at)
-                    {
-                        if !crate::session_encoding::write_projected_byte(
+                        && !crate::session_encoding::write_projected_byte(
                             &mut target.0.gameplay,
                             at,
                             byte,
-                        ) {
-                            return Err(DisplayError::Incomplete);
-                        }
+                        )
+                    {
+                        return Err(DisplayError::Incomplete);
                     }
                     match at {
                         0x611 => {

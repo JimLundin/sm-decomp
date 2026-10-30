@@ -35,7 +35,7 @@ fn prepare<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
             return;
         }
         game.set_blank(true);
-        game.queue_sound(2, (1) as u8, 6);
+        game.queue_sound(2, 1_u8, 6);
         game.set_hdma_enabled(false);
         game.clear_hdma();
         crate::word_transfers!(game, ascending, 256; pause_map(384) <- le(palette_buffer, 0));
@@ -119,7 +119,7 @@ fn choose<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     });
     crate::sprite_output::menu_selection(game);
     if word!(game.joypad1_newkeys) & (kButton_Select | kButton_Up | kButton_Down) as u16 != 0 {
-        game.queue_sound(0, (0x37) as u8, 6);
+        game.queue_sound(0, 0x37_u8, 6);
         word!(game.file_select_map_area_index ^= 1);
     } else if word!(game.joypad1_newkeys) & kButton_A as u16 != 0 {
         slot!(game, EnemyBase[0].instruction_timer = 180);

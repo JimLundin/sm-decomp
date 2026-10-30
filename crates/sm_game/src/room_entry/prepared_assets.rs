@@ -171,7 +171,7 @@ impl PreparedRoomAssets {
     ) -> Result<Self, PreparedRoomError> {
         let (specs, end) = specifications(world, keys)?;
         let source_size = source.len();
-        if source_size < 0xd8001 || source_size > 0x400000 {
+        if !(0xd8001..=0x400000).contains(&source_size) {
             return Err(PreparedRoomError::Limit);
         }
         if !source_size.is_power_of_two() {
@@ -284,7 +284,7 @@ impl PreparedRoomAssets {
             streams.insert(actual, Arc::from(validated));
         }
         let source_size = number(&mut rest)?;
-        if source_size < 0xd8001 || source_size > 0x400000 {
+        if !(0xd8001..=0x400000).contains(&source_size) {
             return Err(PreparedRoomError::Limit);
         }
         if !source_size.is_power_of_two() {
@@ -416,10 +416,10 @@ impl Output for Validation<'_> {
         byte
     }
     fn read(&mut self, position: i32) -> u8 {
-        if let Target::Ram(base) = self.target {
-            if !(0..0x20000).contains(&(base as i64 + i64::from(position))) {
-                self.error = true;
-            }
+        if let Target::Ram(base) = self.target
+            && !(0..0x20000).contains(&(base as i64 + i64::from(position)))
+        {
+            self.error = true;
         }
         // VRAM references retain the actual u16 byte-address wrap and live PPU read.
         0

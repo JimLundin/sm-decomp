@@ -23,10 +23,10 @@ fn current(h: &impl ActorAccess) -> ActorKey {
     ActorKey::from_legacy(h.session().actors.controls.selected)
 }
 fn level<H: ActorAccess + ImportedAliases>(h: &H, byte_offset: usize) -> u16 {
-    if byte_offset & 1 == 0 {
-        if let Some(cell) = h.session().room.terrain.cells().get(byte_offset / 2) {
-            return cell.level;
-        }
+    if byte_offset & 1 == 0
+        && let Some(cell) = h.session().room.terrain.cells().get(byte_offset / 2)
+    {
+        return cell.level;
     }
     ImportedAliases::terrain_word(h, byte_offset, ByteOrder::Little)
 }

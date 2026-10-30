@@ -123,7 +123,7 @@ fn fade_palette<H: Host + ?Sized>(game: &mut H) {
 fn load_foreground<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::upload(
         2048,
-        0x810000 | u32::from(addr_kAreaSelectForegroundTilemap),
+        0x810000 | addr_kAreaSelectForegroundTilemap,
         0,
         true,
         game,
@@ -161,7 +161,7 @@ fn begin_area_window<H: Host + ?Sized>(game: &mut H) {
         }
         game.ram().write_byte(crate::ram::mirror::COLDATA + 2, 0x80);
         game.ram().write_byte(crate::ram::mirror::COLDATA + 1, 64);
-        game.ram().write_byte(crate::ram::mirror::COLDATA + 0, 32);
+        game.ram().write_byte(crate::ram::mirror::COLDATA, 32);
         super::menu_window::initialize(game);
         crate::display::sequence::write_register_and_mirror(game, HDMAEN as u16, 0xc, 0x85, true);
         configure_area_window(game);
@@ -243,11 +243,11 @@ fn choose_area<H: Host + ?Sized>(game: &mut H) {
                     };
                     if area_available(selection, game) != 0 {
                         if previous {
-                            game.queue_sound(0, (0x37) as u8, 6);
+                            game.queue_sound(0, 0x37_u8, 6);
                         }
                         switch_area(selection, game);
                         if !previous {
-                            game.queue_sound(0, (0x37) as u8, 6);
+                            game.queue_sound(0, 0x37_u8, 6);
                         }
                         break 'handle_action;
                     }
@@ -260,7 +260,7 @@ fn choose_area<H: Host + ?Sized>(game: &mut H) {
             break 'handle_action;
         }
         if keys as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
-            game.queue_sound(0, (0x38) as u8, 6);
+            game.queue_sound(0, 0x38_u8, 6);
             select_area(game);
             return;
         }
@@ -381,7 +381,7 @@ fn draw_area_labels<H: Host + ?Sized>(game: &mut H) {
         let mut remaining: i32 = 16;
         while station.word(0) != 0xffff {
             let is_unlocked: i32 = unlocked as i32 & 1;
-            unlocked = unlocked >> 1;
+            unlocked >>= 1;
             if !(is_unlocked != 0 && station.word(0) != 0xfffe) {
                 station.base += 4;
                 remaining -= 1;
@@ -450,7 +450,7 @@ fn begin_room_window<H: Host + ?Sized>(game: &mut H) {
         super::menu_window::project(game);
         crate::display::sequence::write_register_and_mirror(game, HDMAEN as u16, 0xc, 0x85, true);
         word!(game.menu_index += 1);
-        game.queue_sound(0, (0x3b) as u8, 6);
+        game.queue_sound(0, 0x3b_u8, 6);
     }
 }
 fn open_room_window<H: Host + ?Sized>(game: &mut H) {
@@ -513,14 +513,14 @@ fn choose_room<H: Host + ?Sized>(game: &mut H) {
         if word!(game.enable_debug) != 0
             && (word!(game.joypad2_new_keys) as i32 & kButton_Select as i32) != 0
         {
-            game.queue_sound(0, (0x38) as u8, 6);
+            game.queue_sound(0, 0x38_u8, 6);
             let mut unlocked: u16 = native_word(
                 USED_STATIONS + 2 * usize::from(word!(game.area_index)),
                 game,
             );
             let mut remaining: i16 = word!(game.load_station_index) as i16;
             do_until! { remaining < 0 ;
-                unlocked = unlocked >> 1;
+                unlocked >>= 1;
                 remaining -= 1;
             }
             let stations = station_coordinates(word!(game.area_index), game);
@@ -557,7 +557,7 @@ fn choose_room<H: Host + ?Sized>(game: &mut H) {
                     }
                 }
                 let mut is_unlocked: i8 = ((unlocked) as i8) & (1i8);
-                unlocked = unlocked >> 1;
+                unlocked >>= 1;
                 if is_unlocked == 0
                     || stations.image.table_word(
                         stations.base,
@@ -609,12 +609,12 @@ fn choose_room<H: Host + ?Sized>(game: &mut H) {
                 return;
             };
             word!(game.file_select_map_area_index = selection as u16);
-            game.queue_sound(0, (0x3c) as u8, 6);
+            game.queue_sound(0, 0x3c_u8, 6);
         } else if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32)
             != 0
         {
             word!(game.menu_index += 1);
-            game.queue_sound(0, (0x38) as u8, 6);
+            game.queue_sound(0, 0x38_u8, 6);
         }
     }
 }
@@ -662,7 +662,7 @@ fn restore_area<H: Host + ?Sized>(game: &mut H) {
 fn begin_return_window<H: Host + ?Sized>(game: &mut H) {
     {
         game.ram().write_byte(crate::ram::mirror::HDMAEN, 0);
-        game.queue_sound(0, (0x3c) as u8, 6);
+        game.queue_sound(0, 0x3c_u8, 6);
         word! { game;
             expand_sq_timer =
                 (WINDOW_TIMERS[word!(game.area_index) as usize]).wrapping_sub(12);
@@ -766,7 +766,7 @@ pub fn scroll<H: Host + ?Sized>(game: &mut H) {
     };
     word!(game.map_scrolling_speed_index += 1);
     if word!(game.map_scrolling_speed_index += 1, reread) & 0xf == 0 {
-        game.queue_sound(0, (0x36) as u8, 6);
+        game.queue_sound(0, 0x36_u8, 6);
         word! { game, 0; map_scrolling_direction, map_scrolling_speed_index }
         if word!(game.map_scrolling_gear_switch_timer) != 0 {
             word!(game.map_scrolling_gear_switch_timer -= 1);
@@ -961,7 +961,7 @@ pub fn animate_palette<H: Host + ?Sized>(game: &mut H) {
                 .write_byte(crate::ram::words::pausemenu_palette_animation_timer, timer);
             break;
         }
-        game.queue_sound(2, (0x2a) as u8, 6);
+        game.queue_sound(2, 0x2a_u8, 6);
         frame = 0;
     }
     let frame_word = u16::from_ne_bytes([0, word!(game.pausemenu_palette_animation_frame) as u8]);

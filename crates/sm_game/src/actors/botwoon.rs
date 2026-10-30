@@ -785,7 +785,7 @@ pub fn main_ai<R: RuntimeHost>(runtime: &mut R) {
             }
         }
         function::DEATH_PRE_DEATH_DELAY => pre_death_delay(runtime),
-        function::DEATH_FALLING_TO_GROUND => runtime.foreign(|game| fall_to_ground(game)),
+        function::DEATH_FALLING_TO_GROUND => runtime.foreign(fall_to_ground),
         function::DEATH_WAIT_FOR_BODY_TO_FALL => {
             let actor = runtime.selected_actor();
             if botwoon_death::landed(runtime, actor.byte_index()) {
