@@ -160,7 +160,7 @@ pub fn advance_intro_mother_brain<H: crate::menus::host::Host + ?Sized>(
         else {
             return;
         };
-        if word!(game.projectile_x_pos[projectile]) as i32 - 84 & 0x8000 == 0 {
+        if (word!(game.projectile_x_pos[projectile]) as i32 - 84) & 0x8000 == 0 {
             return;
         }
         game.retire_projectile(2 * projectile as u16);
@@ -183,7 +183,7 @@ pub fn advance_intro_mother_brain<H: crate::menus::host::Host + ?Sized>(
         spawn_cinematic_burst(0xcf1b, 0..3, 0, game);
         spawn_cinematic_burst(0xcf15, 0..5, 0, game);
     }
-    if stage == 1 && count as i32 - 128 & 0x8000 == 0 {
+    if stage == 1 && (count as i32 - 128) & 0x8000 == 0 {
         resume_cinematic_sprite(slot, 0xcb19, game);
     }
 }
@@ -222,7 +222,7 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEF3F as u16, 0, 0, game);
             },
             9172308 => {
-            if word!(game.game_time_hours) as i32 - 10i32 & 0x8000 != 0 {
+            if (word!(game.game_time_hours) as i32 - 10i32) & 0x8000 != 0 {
                 spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEF7B as u16, 2, 0, game);
             } else {
                 spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEF75 as u16, 2, 0, game);
@@ -296,12 +296,12 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             word! { game, 32; cinematic_var14, cinematic_var17 }
             capture_cinematic_palette(game);
             prepare_cinematic_palette_fade(game);
-            game.queue_sound(0, (0x22) as u8, 15);
+            game.queue_sound(0, 0x22_u8, 15);
                 },
             9172561 => {
             word! {game; samus_y_subspeed = 0; samus_y_speed = -16i32 as u16; }
                 },
-            9152792 => { spawn_cinematic_burst(0xcecd, 0..6, 6, game); game.queue_sound(1, (0xb) as u8, 6); },
+            9152792 => { spawn_cinematic_burst(0xcecd, 0..6, 6, game); game.queue_sound(1, 0xb_u8, 6); },
             9159684 => { spawn_cinematic_burst(0xcebb, 0..5, 0, game); },
             9159948 => { spawn_cinematic_burst(0xcec7, 0..4, 0, game); },
             9157153 => { spawn_cinematic_burst(0xcf21, 0..2, 0, game); },
@@ -698,7 +698,7 @@ fn draw_cinematic_background<H: crate::menus::host::Host + ?Sized>(
                 };
                 word!(game.cinematicbg_arr8[15] = bottom.wrapping_sub(8));
                 if record.word(4) != 0xd67d && word!(game.cinematicbg_var1) != 0 {
-                    game.queue_sound(2, (0xd) as u8, 6);
+                    game.queue_sound(2, 0xd_u8, 6);
                 }
             }
             draw_cinematic_rectangle(command != 0x88fd, definition, position, game);

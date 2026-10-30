@@ -512,11 +512,11 @@ fn queue_tile_pair<H: Host + ?Sized>(
     for n in 0..2 {
         store(game, entry(n) + 3, TILE_BANK);
     }
-    for n in 0..2 {
-        store(game, entry(n) + 2, sources[n]);
+    for (n, &source) in sources.iter().enumerate() {
+        store(game, entry(n) + 2, source);
     }
-    for n in 0..2 {
-        store(game, entry(n) + 5, destinations[n]);
+    for (n, &destination) in destinations.iter().enumerate() {
+        store(game, entry(n) + 5, destination);
     }
     for n in 0..2 {
         store(game, entry(n), size);
@@ -751,13 +751,13 @@ pub fn fight_action_choices<H: Host + ?Sized>(game: &mut H) -> u16 {
             Ridley[RIDLEY].death_lunges = slot!(game, Ridley[RIDLEY].death_lunges).wrapping_add(1)
         );
         actions::LUNGE
-    } else if health as i32 - 14400 & 0x8000 != 0 {
+    } else if (health as i32 - 14400) & 0x8000 != 0 {
         actions::POGO_OR_SWOOP
     } else if samus_in_pogo_zone(game) {
         actions::POGO
     } else if samus_not_spinning(game) {
         actions::LUNGE_OR_POGO
-    } else if slot!(game, Ridley[RIDLEY].base.health) as i32 - 9000 & 0x8000 != 0 {
+    } else if (slot!(game, Ridley[RIDLEY].base.health) as i32 - 9000) & 0x8000 != 0 {
         actions::SWOOP_OR_POGO
     } else {
         actions::POGO_OR_SWOOP
@@ -969,7 +969,7 @@ fn hover_movement<H: Host + ?Sized>(game: &mut H, x: u16, timeout: u16) {
 /// jumps; true when she does not, so the pogo starts. Was `Ridley_Func_17`.
 pub fn hover_towards<H: Host + ?Sized>(x: u16, game: &mut H) -> bool {
     let mut y = word!(game.samus_y_pos);
-    if word!(game.samus_y_pos) as i32 - 352 & 0x8000 == 0 {
+    if (word!(game.samus_y_pos) as i32 - 352) & 0x8000 == 0 {
         y = 352;
     }
     accelerate(0, acceleration_factor(game), x, y, game);
@@ -998,7 +998,7 @@ pub fn set_up_pogo_from_hover<H: Host + ?Sized>(game: &mut H) {
 /// Ridley action / function - pogo - fly to position ($A6:B6A7). Was
 /// `Ridley_Func_19`.
 pub fn pogo_fly_to_position<H: Host + ?Sized>(game: &mut H) {
-    if slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 288 & 0x8000 != 0 {
+    if (slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 288) & 0x8000 != 0 {
         face_room_middle(game);
         slot!(
             game,
@@ -1037,7 +1037,7 @@ pub fn pogo_descending<H: Host + ?Sized>(game: &mut H) {
     }
     let mut y_velocity = (word!(game.tilemap_stuff[tail::POGO_DOWN_ACCELERATION]) as i16)
         .wrapping_add(slot!(game, Ridley[RIDLEY].y_velocity) as i16);
-    if y_velocity as i32 - 1536 & 0x8000 == 0 {
+    if (y_velocity as i32 - 1536) & 0x8000 == 0 {
         y_velocity = 1536;
     }
     slot!(game, Ridley[RIDLEY].y_velocity = y_velocity as u16);
@@ -1056,7 +1056,7 @@ pub fn pogo_descending<H: Host + ?Sized>(game: &mut H) {
         }
         word!(game.tilemap_stuff[tail::FUNCTION] = 4);
         let mut bounces = slot!(game, Ridley[RIDLEY].pogo_bounces).wrapping_add(1);
-        if slot!(game, Ridley[RIDLEY].pogo_bounces) as i32 - 1 & 0x8000 == 0 {
+        if (slot!(game, Ridley[RIDLEY].pogo_bounces) as i32 - 1) & 0x8000 == 0 {
             if slot!(game, Ridley[RIDLEY].facing) != FACING_FORWARD {
                 set_instruction_list(instruction_list::SHOOT_FIREBALLS, game);
             }
@@ -1144,7 +1144,7 @@ pub fn grab_samus_from_pogo<H: Host + ?Sized>(game: &mut H) {
     if y_velocity >= 0 {
         y_velocity = -(y_velocity as i32) as i16;
     }
-    if y_velocity as i32 + 512 & 0x8000 == 0 {
+    if (y_velocity as i32 + 512) & 0x8000 == 0 {
         y_velocity = -512;
     }
     slot!(game, Ridley[RIDLEY].y_velocity = y_velocity as u16);
@@ -1165,7 +1165,7 @@ pub fn set_pogo_x_direction<H: Host + ?Sized>(game: &mut H) {
         slot!(game, Ridley[RIDLEY].x_velocity = x_velocity as u16);
     }
     let facing_away = ((slot!(game, Ridley[RIDLEY].x_velocity) as i32
-        ^ slot!(game, Ridley[RIDLEY].base.x_pos) as i32 - word!(game.samus_x_pos) as i32)
+        ^ (slot!(game, Ridley[RIDLEY].base.x_pos) as i32 - word!(game.samus_x_pos) as i32))
         & 0x8000)
         == 0;
     let x = slot!(game, Ridley[RIDLEY].base.x_pos);
@@ -1246,7 +1246,7 @@ pub fn set_grabbed_samus_offset<H: Host + ?Sized>(game: &mut H) {
 /// Ridley lunge missed Samus ($A6:BA85): dodge a power bomb, retreat, or after
 /// ten lunges at no health, die. Was `Ridley_Func_32`.
 pub fn lunge_missed_samus<H: Host + ?Sized>(game: &mut H) {
-    if slot!(game, Ridley[RIDLEY].death_lunges) as i32 - 10 & 0x8000 != 0 {
+    if (slot!(game, Ridley[RIDLEY].death_lunges) as i32 - 10) & 0x8000 != 0 {
         if word!(game.power_bomb_flag) != 0 {
             slot!(game, Ridley[RIDLEY].function = function::DODGE_POWER_BOMB);
             dodge_power_bomb(game);
@@ -1270,7 +1270,7 @@ pub fn lunge<H: Host + ?Sized>(game: &mut H) {
         && {
             let side = ridley_data::lunge_side(game, slot!(game, Ridley[RIDLEY].facing) as isize);
             let dx = slot!(game, Ridley[RIDLEY].base.x_pos).wrapping_sub(word!(game.samus_x_pos));
-            ((side ^ dx) & 0x8000) == 0 || abs16(dx) as i32 - 32 & 0x8000 != 0
+            ((side ^ dx) & 0x8000) == 0 || (abs16(dx) as i32 - 32) & 0x8000 != 0
         }
         && ((slot!(game, Ridley[RIDLEY].base.y_pos) as i32 + 35 - word!(game.samus_y_pos) as i32)
             as i16)
@@ -1339,7 +1339,7 @@ pub fn grabbed_samus<H: Host + ?Sized>(game: &mut H) {
         Ridley[RIDLEY].target_x = TARGET_X[slot!(game, Ridley[RIDLEY].facing) as usize]
     );
     let mut y = (slot!(game, Ridley[RIDLEY].base.y_pos) as i16).wrapping_sub(64);
-    if slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 320 & 0x8000 != 0 {
+    if (slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 320) & 0x8000 != 0 {
         y = 256;
     }
     slot!(game, Ridley[RIDLEY].target_y = y as u16);
@@ -1483,7 +1483,7 @@ const MOVEMENT_TYPE_FLAGS: [u8; 28] = [
 /// Check if Samus is in pogo zone ($A6:BD20): at or below Y 352. Was
 /// `Ridley_Func_41`.
 pub fn samus_in_pogo_zone<H: Host + ?Sized>(game: &mut H) -> bool {
-    (word!(game.samus_y_pos) as i32 - 352 & 0x8000) == 0
+    ((word!(game.samus_y_pos) as i32 - 352) & 0x8000) == 0
 }
 
 /// Lunge if power bomb active and not holding Samus ($A6:BD2C). Was
@@ -1505,12 +1505,12 @@ pub fn lunge_if_power_bomb<S: State + ?Sized>(game: &mut S) {
 pub fn dodge_power_bomb<H: Host + ?Sized>(game: &mut H) {
     if word!(game.power_bomb_flag) != 0 {
         slot!(game, Ridley[RIDLEY].fight_mode = 2);
-        let x = if word!(game.power_bomb_explosion_x_pos) as i32 - 128 & 0x8000 != 0 {
+        let x = if (word!(game.power_bomb_explosion_x_pos) as i32 - 128) & 0x8000 != 0 {
             192
         } else {
             80
         };
-        let y = if word!(game.power_bomb_explosion_y_pos) as i32 - 256 & 0x8000 != 0 {
+        let y = if (word!(game.power_bomb_explosion_y_pos) as i32 - 256) & 0x8000 != 0 {
             384
         } else {
             192
@@ -1531,7 +1531,7 @@ pub fn dodge_power_bomb<H: Host + ?Sized>(game: &mut H) {
 /// `Ridley_Func_44`.
 pub fn fake_retreat_move_to_position<H: Host + ?Sized>(game: &mut H) {
     ceres_accelerate(0, 1, 192, 128, game);
-    if slot!(game, Ridley[RIDLEY].base.x_pos) as i32 - 192 & 0x8000 == 0 {
+    if (slot!(game, Ridley[RIDLEY].base.x_pos) as i32 - 192) & 0x8000 == 0 {
         slot!(
             game,
             Ridley[RIDLEY].function = function::FAKE_RETREAT_RISING
@@ -1544,7 +1544,7 @@ pub fn fake_retreat_move_to_position<H: Host + ?Sized>(game: &mut H) {
 pub fn fake_retreat_rising<H: Host + ?Sized>(game: &mut H) {
     slot!(game, Ridley[RIDLEY].min_y = -192i32 as u16);
     ceres_accelerate(0, 1, 192, -128i32 as u16, game);
-    if slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 32 & 0x8000 != 0 {
+    if (slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 32) & 0x8000 != 0 {
         slot!(
             game,
             Ridley[RIDLEY].baby_metroid_function = baby_metroid_function::START_FALLING
@@ -1662,7 +1662,7 @@ pub fn baby_metroid_falling<H: Host + ?Sized>(game: &mut H) {
             + ((velocity >> 8) as i8 as i32 + (subpixel >> 8)))
             as u16
     );
-    if slot!(game, Ridley[RIDLEY].baby_metroid_y) as i32 - 192 & 0x8000 == 0 {
+    if (slot!(game, Ridley[RIDLEY].baby_metroid_y) as i32 - 192) & 0x8000 == 0 {
         slot!(game, Ridley[RIDLEY].baby_metroid_y = 192);
         slot!(
             game,
@@ -1840,7 +1840,7 @@ pub fn spawn_small_explosion<H: Host + ?Sized>(game: &mut H) {
     }
     slot!(game, Ridley[RIDLEY].small_explosion_timer = 4);
     let mut index = slot!(game, Ridley[RIDLEY].small_explosion_index).wrapping_add(1);
-    if slot!(game, Ridley[RIDLEY].small_explosion_index) as i32 - 9 & 0x8000 == 0 {
+    if (slot!(game, Ridley[RIDLEY].small_explosion_index) as i32 - 9) & 0x8000 == 0 {
         index = 0;
     }
     slot!(game, Ridley[RIDLEY].small_explosion_index = index);
@@ -2636,10 +2636,10 @@ fn projectile_overlaps<H: Host + ?Sized>(game: &H, n: usize, rect: Rect) -> bool
 /// Handle Ridley tail whip sound effect ($A6:D2AA): every 16 frames of a fast
 /// tail, unless roaring. Was `Ridley_Func_91`.
 pub fn tail_whip_sound<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.tilemap_stuff[tail::ANGLE_DELTA]) as i32 - 8 & 0x8000 == 0 {
+    if (word!(game.tilemap_stuff[tail::ANGLE_DELTA]) as i32 - 8) & 0x8000 == 0 {
         let counter = slot!(game, Ridley[RIDLEY].whip_sound_counter).wrapping_add(1);
         slot!(game, Ridley[RIDLEY].whip_sound_counter = counter);
-        if counter as i32 - 16 & 0x8000 != 0 {
+        if (counter as i32 - 16) & 0x8000 != 0 {
             return;
         }
         if slot!(game, Ridley[RIDLEY].roaring) == 0 {
@@ -2761,7 +2761,7 @@ pub fn ceres_health_palette<H: Host + ?Sized>(game: &mut H) {
 pub fn hurt_flash<S: State + ?Sized>(game: &mut S) {
     let mut palette = 3584;
     if session_slot!(game, Ridley[RIDLEY].base.flash_timer) >= 2
-        && (word!(game.random_enemy_counter) as i32 + 1 & 2) != 0
+        && ((word!(game.random_enemy_counter) as i32 + 1) & 2) != 0
     {
         palette = 0;
     }
@@ -2892,13 +2892,13 @@ pub fn calculate_swoop_velocities<H: Host + ?Sized>(
     if target_speed != slot!(game, Ridley[RIDLEY].swoop_speed) {
         if (target_speed as i16).wrapping_sub(slot!(game, Ridley[RIDLEY].swoop_speed) as i16) >= 0 {
             let mut speed = slot!(game, Ridley[RIDLEY].swoop_speed).wrapping_add(32);
-            if speed as i32 - target_speed as i32 & 0x8000 == 0 {
+            if (speed as i32 - target_speed as i32) & 0x8000 == 0 {
                 speed = target_speed;
             }
             slot!(game, Ridley[RIDLEY].swoop_speed = speed);
         } else {
             let mut speed = slot!(game, Ridley[RIDLEY].swoop_speed).wrapping_sub(32);
-            if speed as i32 - target_speed as i32 & 0x8000 != 0 {
+            if (speed as i32 - target_speed as i32) & 0x8000 != 0 {
                 speed = target_speed;
             }
             slot!(game, Ridley[RIDLEY].swoop_speed = speed);
@@ -2906,9 +2906,9 @@ pub fn calculate_swoop_velocities<H: Host + ?Sized>(
     }
     let mut angle = slot!(game, Ridley[RIDLEY].swoop_angle).wrapping_add(angle_step);
     let past_target = if (angle_step & 0x8000) != 0 {
-        angle as i32 - target_angle as i32 & 0x8000 != 0
+        (angle as i32 - target_angle as i32) & 0x8000 != 0
     } else {
-        angle as i32 - target_angle as i32 & 0x8000 == 0
+        (angle as i32 - target_angle as i32) & 0x8000 == 0
     };
     if past_target {
         angle = target_angle;
@@ -3046,10 +3046,10 @@ pub fn wings_animation_timer<S: State + ?Sized>(game: &mut S) {
         return;
     }
     let mut speed = sum.wrapping_sub(x_speed);
-    if speed as i32 - x_speed as i32 & 0x8000 != 0 {
+    if (speed as i32 - x_speed as i32) & 0x8000 != 0 {
         speed = x_speed;
     }
-    let index = ((4 * speed as i32 & 0xf00) >> 8).min(7);
+    let index = (((4 * speed as i32) & 0xf00) >> 8).min(7);
     let mut delta = DELTAS[index as usize];
     if (session_slot!(game, Ridley[RIDLEY].y_velocity) & 0x8000) == 0 {
         delta >>= 1;
@@ -3141,9 +3141,9 @@ pub fn draw_tail<H: Host + ?Sized>(game: &mut H) {
 
 /// The tail tip's direction in 16 sectors: segment 5 and 6 angles' low bytes.
 fn tail_tip_sector<H: Host + ?Sized>(game: &H) -> isize {
-    ((game.ram().read_byte(TAIL_RAM + 2 * tail::angle(5)) as i32
+    (((game.ram().read_byte(TAIL_RAM + 2 * tail::angle(5)) as i32
         + game.ram().read_byte(TAIL_RAM + 2 * tail::angle(6)) as i32
-        + 8
+        + 8)
         & 0xf0) as u8
         >> 4) as isize
 }
@@ -3206,7 +3206,7 @@ pub fn add_spritemap<H: Host + ?Sized>(spritemap: u16, x: u16, y: u16, palette: 
     let layer1 = crate::camera::current(game).layer1;
     loop {
         let screen_y = (y as i32 + map.byte(entry + 2) as i8 as i32 - layer1[1] as i32) as i16;
-        if screen_y >= 0 && screen_y as i32 - 224 & 0x8000 != 0 {
+        if screen_y >= 0 && (screen_y as i32 - 224) & 0x8000 != 0 {
             let screen_x = (x as i32 + map.word(entry) as i32 - layer1[0] as i32) as u16;
             let at = OAM + index as usize;
             game.ram().write_byte(at, screen_x as u8);
@@ -3216,11 +3216,11 @@ pub fn add_spritemap<H: Host + ?Sized>(spritemap: u16, x: u16, y: u16, palette: 
             game.ram().write_byte(at + 3, tile[1]);
             word!(
                 bits_i32,
-                game.oam_ext[(index >> 5)] |= ((screen_x as i32 & 0x100) >> 8
-                    | ((map.word(entry) as i16) < 0) as i32 * 2)
-                    << 2 * (index >> 2 & 7)
+                game.oam_ext[(index >> 5)] |= (((screen_x as i32 & 0x100) >> 8)
+                    | (((map.word(entry) as i16) < 0) as i32 * 2))
+                    << (2 * (index >> 2 & 7))
             );
-            index = index + 4 & 0x1ff;
+            index = (index + 4) & 0x1ff;
         }
         entry += 5;
         count -= 1;
@@ -3237,11 +3237,11 @@ pub fn off_screen<S: State + ?Sized>(game: &mut S) -> bool {
     let y = session_slot!(game, Ridley[RIDLEY].base.y_pos) as i16;
     if y >= 0 {
         let screen_y = (y as i32 + 32 - word!(game.layer1_y_pos) as i32) as i16;
-        if screen_y >= 0 && screen_y as i32 - 288 & 0x8000 != 0 {
+        if screen_y >= 0 && (screen_y as i32 - 288) & 0x8000 != 0 {
             let x = session_slot!(game, Ridley[RIDLEY].base.x_pos) as i16;
             if x >= 0 {
                 let screen_x = (x as i32 + 32 - word!(game.layer1_x_pos) as i32) as i16;
-                if screen_x >= 0 && screen_x as i32 - 320 & 0x8000 != 0 {
+                if screen_x >= 0 && (screen_x as i32 - 320) & 0x8000 != 0 {
                     return false;
                 }
             }
@@ -3260,7 +3260,7 @@ pub fn projectile_in_rect<H: Host + ?Sized>(rect: Rect, game: &mut H) -> Option<
     let n = (0..5).find(|&n| {
         let kind = word!(game.projectile_type[n]) as i16;
         kind < 0
-            && (kind.to_ne_bytes()[1] as i32 & 0xf) - 3 & 0x8000 != 0
+            && ((kind.to_ne_bytes()[1] as i32 & 0xf) - 3) & 0x8000 != 0
             && projectile_overlaps(game, n, rect)
     })?;
     word! {game; projectile_x_pos[n] = rect.x; projectile_y_pos[n] = rect.y; }
@@ -3402,7 +3402,7 @@ pub fn goto_if_samus_health_low<H: Host + ?Sized>(
     script: EnemyScript,
     game: &mut H,
 ) -> EnemyScript {
-    if word!(game.area_index) == NORFAIR || word!(game.samus_health) as i32 - 30 & 0x8000 == 0 {
+    if word!(game.area_index) == NORFAIR || (word!(game.samus_health) as i32 - 30) & 0x8000 == 0 {
         return script.offset(1);
     }
     slot!(game, Ridley[RIDLEY].timer = 8);

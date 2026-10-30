@@ -332,11 +332,11 @@ pub fn EprojPreInstr_DraygonsGunk_8E0F(k: u16, ctx: &mut impl Host) {
     let v2: u16 = (((ctx.session().player.x as i32 - enemy!(ctx, (v1) as isize, x) as i32) as u16)
         as i16)
         .unsigned_abs();
-    if v2 as i32 - 16i32 & 0x8000 != 0 && {
+    if (v2 as i32 - 16i32) & 0x8000 != 0 && {
         let mut v3: u16 = (((ctx.session().player.y as i32 - enemy!(ctx, (v1) as isize, y) as i32)
             as u16) as i16)
             .unsigned_abs();
-        v3 as i32 - 20i32 & 0x8000 != 0
+        (v3 as i32 - 20i32) & 0x8000 != 0
     } {
         {
             enemy!(ctx, 0x8c38 => (v1) as isize, program);
@@ -384,7 +384,7 @@ pub fn EprojPreInstr_CrocomireBridgeCrumbling(k: u16, ctx: &mut impl Host) {
     if EprojBlockCollisition_Vertical(k, ctx) & 1 != 0 {
         enemy!(ctx, 0 => (k >> 1) as isize, definition);
     } else {
-        enemy!(ctx, (enemy!(ctx, (k >> 1) as isize, velocity_y) as i32 + 24 & 0x3fff) as u16 => (k >> 1) as isize, velocity_y);
+        enemy!(ctx, ((enemy!(ctx, (k >> 1) as isize, velocity_y) as i32 + 24) & 0x3fff) as u16 => (k >> 1) as isize, velocity_y);
     };
 }
 
@@ -483,7 +483,7 @@ pub fn EprojPreInstr_KraidRocks(k: u16, ctx: &mut impl Host) {
     } else {
         let v1: i32 = k as i32 >> 1;
         let mut v2: u16 = enemy_add!(ctx, (v1 as usize) as isize, velocity_x, 8);
-        if v2 as i32 - 256i32 & 0x8000 == 0 {
+        if (v2 as i32 - 256i32) & 0x8000 == 0 {
             v2 = -256i32 as u16;
         }
         enemy!(ctx, v2 => (v1) as isize, velocity_x);
@@ -505,7 +505,7 @@ pub fn EprojPreInit_MiniKraidSpit(k: u16, ctx: &mut impl Host) {
     } else {
         let v1: i32 = k as i32 >> 1;
         let mut v2: i16 = ((enemy!(ctx, (v1) as isize, velocity_y)) as i16).wrapping_add(64);
-        if v2 >= 0 && enemy!(ctx, (v1) as isize, velocity_y) as i32 - 960i32 & 0x8000 == 0 {
+        if v2 >= 0 && (enemy!(ctx, (v1) as isize, velocity_y) as i32 - 960i32) & 0x8000 == 0 {
             v2 = 1024;
         }
         enemy!(ctx, v2 as u16 => (v1) as isize, velocity_y);
@@ -529,13 +529,13 @@ pub fn EprojPreInstr_WalkingLavaSeahorseFireball(k: u16, ctx: &mut impl Host) {
         if (enemy!(ctx, (v1) as isize, velocity_x) & 0x8000) == 0 {
             v2 = (enemy!(ctx, (v1) as isize, velocity_x) as i32 - 64i32) as u16;
             enemy!(ctx, v2 => (v1) as isize, velocity_x);
-            if v2 as i32 - 512i32 & 0x8000 != 0 {
+            if (v2 as i32 - 512i32) & 0x8000 != 0 {
                 v2 = 512;
             }
         } else {
             v2 = (enemy!(ctx, (v1) as isize, velocity_x) as i32 + 64) as u16;
             enemy!(ctx, v2 => (v1) as isize, velocity_x);
-            if v2 as i32 + 512 & 0x8000 == 0 {
+            if (v2 as i32 + 512) & 0x8000 == 0 {
                 v2 = -512i32 as u16;
             }
         }
@@ -561,7 +561,7 @@ pub fn EprojPreInstr_CeresElevatorPad(k: u16, ctx: &mut impl Host) {
             ctx.session_mut().player.y = value;
             value
         };
-        if fresh113 as i32 - 73i32 & 0x8000 == 0 {
+        if (fresh113 as i32 - 73i32) & 0x8000 == 0 {
             {
                 {
                     let value = 72;
@@ -1342,7 +1342,7 @@ pub fn EprojPreInstr_PhantoonStartingFireballs3(k: u16, ctx: &mut impl Host) {
     let switch_fireball_phase: bool = if EprojBlockCollisition_Vertical(k, ctx) & 1 != 0 {
         let v2: u16 = (enemy!(ctx, (v1) as isize, behavior_a) as i32 + 1) as u16;
         enemy!(ctx, v2 => (v1) as isize, behavior_a);
-        if v2 as i32 - 3i32 & 0x8000 != 0 {
+        if (v2 as i32 - 3i32) & 0x8000 != 0 {
             enemy!(ctx, WORD_869_A3_E[v2 as usize] => (v1) as isize, velocity_y);
             return;
         }
@@ -1564,7 +1564,8 @@ pub fn EprojPreInstr_TourianStatueUnlockingParticle(k: u16, ctx: &mut impl Host)
     move_spike_axis(k, true, SlotField::VelocityX, ctx);
     let v7: u16 = (ctx.inputs().fx_y as i32 - enemy!(ctx, (v1) as isize, y) as i32) as u16;
     move_spike_axis(k, false, SlotField::VelocityY, ctx);
-    if ((v7 as i32 ^ ctx.inputs().fx_y as i32 - enemy!(ctx, (v1) as isize, y) as i32) & 0x8000) != 0
+    if ((v7 as i32 ^ (ctx.inputs().fx_y as i32 - enemy!(ctx, (v1) as isize, y) as i32)) & 0x8000)
+        != 0
     {
         SpawnEprojWithRoomGfx(addr_stru_86BA5C as u16, k, ctx);
     }
@@ -1597,7 +1598,7 @@ pub fn lavaquake_rock_rise(k: u16, ctx: &mut impl Host) {
             if v3 < 0 {
                 v3 = 0;
             }
-            let t: i32 = 8 * v3 as i32 + 4 >> 1;
+            let t: i32 = (8 * v3 as i32 + 4) >> 1;
             apply_lavaquake_sample(v1 as isize, t, ctx);
         }
         lavaquake_rock_move_x(k, ctx);
@@ -1614,11 +1615,11 @@ pub fn lavaquake_rock_fall(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let v2: u16 = (enemy!(ctx, (v1) as isize, velocity_y) as i32 + 2) as u16;
     enemy!(ctx, v2 => (v1) as isize, velocity_y);
-    if v2 as i32 - 64i32 & 0x8000 == 0 {
+    if (v2 as i32 - 64i32) & 0x8000 == 0 {
         enemy!(ctx, 64 => (v1) as isize, velocity_y);
     }
     for n in (1i32..=2).rev() {
-        let t: i32 = 8 * (enemy!(ctx, (v1) as isize, velocity_y) as i32 - n + 1) >> 1;
+        let t: i32 = (8 * (enemy!(ctx, (v1) as isize, velocity_y) as i32 - n + 1)) >> 1;
         apply_lavaquake_sample(v1 as isize, t, ctx);
     }
     lavaquake_rock_move_x(k, ctx);
@@ -1810,7 +1811,7 @@ pub fn falling_tube_fall(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     enemy_add!(ctx, (v1) as isize, velocity_y, 6);
     let mut v2: i16 = MoveEprojWithVelocityY(k, ctx) as i16;
-    if v2 as i32 - 208i32 & 0x8000 == 0 {
+    if (v2 as i32 - 208i32) & 0x8000 == 0 {
         enemy!(ctx, 0 => (v1) as isize, definition);
         ctx.session_mut().enemy_projectiles.spawn.point = Point {
             x: enemy!(ctx, (v1) as isize, x),
@@ -1842,7 +1843,7 @@ pub fn sub_86CFF8(k: u16, ctx: &mut impl Host) {
     } else {
         let mut v2: u16 = (enemy!(ctx, (v1) as isize, velocity_y) as i32 + 16) as u16;
         enemy!(ctx, v2 => (v1) as isize, velocity_y);
-        if v2 as i32 - 512i32 & 0x8000 == 0 {
+        if (v2 as i32 - 512i32) & 0x8000 == 0 {
             v2 = 512;
         }
         enemy!(ctx, v2 => (v1) as isize, velocity_y);
@@ -1870,7 +1871,7 @@ pub fn kago_bug_flag_when_far(k: u16, ctx: &mut impl Host) {
     let v3: u16 = (((ctx.resolve_actor(Key::from_legacy(enemy_index), Le).x.whole)
         .wrapping_sub(enemy!(ctx, (k >> 1) as isize, x))) as i16)
         .unsigned_abs();
-    if v3 as i32 - 23i32 & 0x8000 == 0 {
+    if (v3 as i32 - 23i32) & 0x8000 == 0 {
         set_property_bits((v1 as usize) as isize, 0x8000, ctx);
     }
 }
@@ -1953,7 +1954,7 @@ pub fn EprojPreInstr_Spores(k: u16, ctx: &mut impl Host) {
     r18 = (spore_delta((v2 as i32 + 1) as isize, ctx) as u16) as u8 as i8 as i16 as u16;
     let v3: u16 = (r18 as i32 + enemy!(ctx, (v1) as isize, y) as i32 + r18 as i32) as u16;
     enemy!(ctx, v3 => (v1) as isize, y);
-    if v3 as i32 - 768i32 & 0x8000 == 0 {
+    if (v3 as i32 - 768i32) & 0x8000 == 0 {
         enemy!(ctx, 0 => (v1) as isize, definition);
     }
     enemy!(ctx, (enemy_byte!(ctx, v1 as isize * 2, behavior_a) as i32 + 2) as u8 as u16 => (v1) as isize, behavior_a);
@@ -2167,7 +2168,7 @@ fn integrate_angle_axis(
     ctx: &mut impl Host,
 ) {
     // Y must reread Angle after the complete X integration.
-    let negative = (enemy!(ctx, index, angle) as i32 + phase & 0x80) != 0;
+    let negative = ((enemy!(ctx, index, angle) as i32 + phase) & 0x80) != 0;
     let amount = (((read_member(ctx, velocity, index)) as u32) << 16)
         | ((read_member(ctx, fraction, index)) as u32);
     // Preserve the original signed-min negation panic in checked builds.

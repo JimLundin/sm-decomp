@@ -340,9 +340,9 @@ pub fn reveal_room_block<R: SessionView>(a: u16, k: u16, j: u16, game: &mut R) {
     let r24: u16 = (k as i32 - (layer1[0] as i32 >> 4)) as u16;
     let r26: u16 = (j as i32 - (layer1[1] as i32 >> 4)) as u16;
     if r24 & 0x8000 == 0
-        && r24 as i32 - 16i32 & 0x8000 != 0
+        && (r24 as i32 - 16i32) & 0x8000 != 0
         && r26 & 0x8000 == 0
-        && r26 as i32 - 16i32 & 0x8000 != 0
+        && (r26 as i32 - 16i32) & 0x8000 != 0
     {
         let r22: u16 = (4 * (r24 as i32 + 32 * r26 as i32)) as u16;
         let offsets = [0, 1, 32, 33].map(|corner| corner ^ usize::from((a & 0x800) >> 6));

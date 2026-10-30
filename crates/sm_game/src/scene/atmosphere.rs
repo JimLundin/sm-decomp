@@ -301,7 +301,7 @@ fn object_geometry(
     x: u16,
     y: u16,
 ) -> Result<(u16, u16, ObjectSize), DisplayError> {
-    let bits = objects.byte(512 + entry / 16)? >> (2 * (entry / 4 & 3));
+    let bits = objects.byte(512 + entry / 16)? >> (2 * ((entry / 4) & 3));
     // Native high-table stores OR their bits, so use the completed staging
     // geometry rather than clearing retained X-high or size bits in Scene.
     let x = (x & !0x01ff) | u16::from(objects.byte(entry)?) | (u16::from(bits & 1) << 8);

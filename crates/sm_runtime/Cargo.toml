@@ -11,12 +11,3 @@ sm_data = { path = "../sm_data" }
 
 [lints.rust]
 warnings = { level = "deny", priority = -1 }
-
-[lints.clippy]
-# Expression and signature shapes kept from the original C routines.
-precedence = "allow"
-too_many_arguments = "allow"
-type_complexity = "allow"
-# `[(); N][index];` deliberately reproduces the original's bounds-failure order.
-no_effect = "allow"
-unnecessary_operation = "allow"

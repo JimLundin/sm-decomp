@@ -239,7 +239,7 @@ impl<I: Inputs> Host for Owned<'_, I> {
         if entry >= 512 || entry & 3 != 0 {
             return Err(DisplayError::Alias { offset: entry });
         }
-        let bits = self.state.objects.byte(512 + entry / 16)? >> (2 * (entry / 4 & 3));
+        let bits = self.state.objects.byte(512 + entry / 16)? >> (2 * ((entry / 4) & 3));
         let size = if bits & 2 != 0 {
             ObjectSize::Large
         } else {

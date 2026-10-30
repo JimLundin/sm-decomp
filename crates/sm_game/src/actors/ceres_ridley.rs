@@ -395,7 +395,7 @@ pub fn liftoff_accelerating<H: Host + ?Sized>(game: &mut H) {
         game,
         Ridley[RIDLEY].y_velocity = slot!(game, Ridley[RIDLEY].y_velocity).wrapping_sub(16)
     );
-    if slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 112 & 0x8000 != 0 {
+    if (slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 112) & 0x8000 != 0 {
         slot!(
             game,
             Ridley[RIDLEY].function = ceres_function::LIFTOFF_DECELERATING
@@ -411,7 +411,7 @@ pub fn liftoff_decelerating<H: Host + ?Sized>(game: &mut H) {
         game,
         Ridley[RIDLEY].y_velocity = slot!(game, Ridley[RIDLEY].y_velocity).wrapping_add(20)
     );
-    if slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 80 & 0x8000 != 0 {
+    if (slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 80) & 0x8000 != 0 {
         slot!(game, Ridley[RIDLEY].function = ceres_function::HOVERING);
         slot!(game, Ridley[RIDLEY].fight_mode = 1);
     }
@@ -428,7 +428,7 @@ pub fn hovering<H: Host + ?Sized>(game: &mut H) {
             Ridley[RIDLEY].function = function::FAKE_RETREAT_MOVE_TO_POSITION
         );
         ridley::fake_retreat_move_to_position(game);
-    } else if word!(game.samus_health) as i32 - 30 & 0x8000 != 0 {
+    } else if (word!(game.samus_health) as i32 - 30) & 0x8000 != 0 {
         slot!(game, Ridley[RIDLEY].fight_mode = 0);
         slot!(
             game,
@@ -474,13 +474,13 @@ pub fn fireballs_move_to_position<H: Host + ?Sized>(game: &mut H) {
     };
     slot!(game, Ridley[RIDLEY].y_velocity = y_velocity as u16);
     ridley::ceres_accelerate(0, 0, slot!(game, Ridley[RIDLEY].base.x_pos), 88, game);
-    if slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 80 & 0x8000 != 0 {
+    if (slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 80) & 0x8000 != 0 {
         let timer = slot!(game, Ridley[RIDLEY].timer).wrapping_add(1);
         slot!(game, Ridley[RIDLEY].timer = timer);
         if timer >= 0x30 {
             slot!(game, Ridley[RIDLEY].function = ceres_function::SWOOP_SETUP);
         }
-    } else if slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 128 & 0x8000 != 0 {
+    } else if (slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 128) & 0x8000 != 0 {
         slot!(
             game,
             Ridley[RIDLEY].target_x = slot!(game, Ridley[RIDLEY].base.x_pos)
@@ -532,7 +532,7 @@ pub fn lunge_setup<H: Host + ?Sized>(game: &mut H) {
 pub fn lunge<H: Host + ?Sized>(game: &mut H) {
     let x = word!(game.samus_x_pos);
     let mut y = word!(game.samus_y_pos).wrapping_sub(68);
-    if word!(game.samus_y_pos) as i32 - 132 & 0x8000 != 0 {
+    if (word!(game.samus_y_pos) as i32 - 132) & 0x8000 != 0 {
         y = 64;
     }
     ridley::ceres_accelerate(0, 0xd, x, y, game);
@@ -568,7 +568,7 @@ pub fn swoop_setup<H: Host + ?Sized>(game: &mut H) {
 /// `CeresRidley_Func_17`.
 pub fn swoop_move_to_position<H: Host + ?Sized>(game: &mut H) {
     ridley::ceres_accelerate(0, 1, 192, 80, game);
-    if slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 96 & 0x8000 != 0 {
+    if (slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 96) & 0x8000 != 0 {
         slot!(
             game,
             Ridley[RIDLEY].function = ceres_function::SWOOP_AIMING_DOWN
@@ -638,7 +638,7 @@ pub fn swoop_aiming_up_faster<H: Host + ?Sized>(game: &mut H) {
 pub fn real_retreat_rising<H: Host + ?Sized>(game: &mut H) {
     slot!(game, Ridley[RIDLEY].min_y = -192i32 as u16);
     ridley::ceres_accelerate(0, 1, 192, -128i32 as u16, game);
-    if slot!(game, Ridley[RIDLEY].base.y_pos) as i32 + 128 & 0x8000 != 0 {
+    if (slot!(game, Ridley[RIDLEY].base.y_pos) as i32 + 128) & 0x8000 != 0 {
         real_retreat_risen(game);
     }
 }
@@ -796,13 +796,13 @@ fn sine_256(angle: u16) -> u16 {
 /// 8-bit sine multiplication ($A6:AC30): `amplitude` times the sine of
 /// `angle`, over 100h. Was `CeresRidley_AC30`.
 pub fn sine_multiply(angle: u16, amplitude: i16) -> i16 {
-    (SINE_COSINE[((angle as i32 & 0xff) + 64) as usize] as i32 * amplitude as i32 >> 8) as i16
+    ((SINE_COSINE[((angle as i32 & 0xff) + 64) as usize] as i32 * amplitude as i32) >> 8) as i16
 }
 
 /// Signed `a` times unsigned `b` over 100h (16-bit multiplication, $A6:AC58).
 /// Was `CeresMult`.
 fn signed_scale(a: u16, b: u16) -> u16 {
-    let product = (abs16(a) as i32 * b as i32 >> 8) as u16;
+    let product = ((abs16(a) as i32 * b as i32) >> 8) as u16;
     (if a & 0x8000 != 0 {
         -(product as i32)
     } else {

@@ -198,7 +198,7 @@ fn move_lower_joint<H: Host + ?Sized>(game: &mut H) {
             slot!(game, Brain[BRAIN].lower_angle = angle as u16);
         }
         motion::BOB_UP => {
-            if slot!(game, Brain[BRAIN].base.y_pos) as i32 - BRAIN_TOP_Y as i32 & 0x8000 != 0 {
+            if (slot!(game, Brain[BRAIN].base.y_pos) as i32 - BRAIN_TOP_Y as i32) & 0x8000 != 0 {
                 slot!(game, Brain[BRAIN].lower_motion = motion::BOB_DOWN);
             } else {
                 let mut angle: i16 = (slot!(game, Brain[BRAIN].neck_speed) as i16)

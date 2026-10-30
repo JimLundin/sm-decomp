@@ -95,7 +95,7 @@ pub fn transfer_manual<H: Host + ?Sized>(game: &mut H) {
         }
         word!(
             game.pausemenu_reserve_tank_delay_ctr =
-                (i32::from(word!(game.samus_reserve_health)) + 7 & 0xfff8) as u16
+                ((i32::from(word!(game.samus_reserve_health)) + 7) & 0xfff8) as u16
         );
     }
     if word!(game.pausemenu_reserve_tank_delay_ctr -= 1, reread) & 7 == 7 {

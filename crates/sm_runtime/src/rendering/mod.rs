@@ -231,9 +231,9 @@ pub fn affine_start(
         Quantization::Reference => u32::from(ry as u8),
     };
     let start = |a: i16, b: i16, center: i32| {
-        ((i32::from(a) * horizontal & !63) as u32)
+        (((i32::from(a) * horizontal) & !63) as u32)
             .wrapping_add((b as u32).wrapping_mul(ry) & !63)
-            .wrapping_add((i32::from(b) * vertical & !63) as u32)
+            .wrapping_add(((i32::from(b) * vertical) & !63) as u32)
             .wrapping_add((center << 8) as u32)
     };
     Ok((

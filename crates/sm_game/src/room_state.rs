@@ -70,8 +70,8 @@ pub fn advance_ceres_elevator<H: MainCodeHost + ?Sized>(h: &mut H) {
     if (h.word(fields::ceres_status) & 0x8000) != 0 {
         if (112i16).wrapping_sub(h.session().player.x as i16) < 0
             && (144i16).wrapping_sub(h.session().player.x as i16) >= 0
-            && h.session().player.y as i32 - 128i32 & 0x8000 != 0
-            && h.session().player.y as i32 - 75i32 & 0x8000 == 0
+            && (h.session().player.y as i32 - 128i32) & 0x8000 != 0
+            && (h.session().player.y as i32 - 75i32) & 0x8000 == 0
             && h.word(fields::samus_y_speed) == 0
             && h.word(fields::samus_y_subspeed) == 0
             && h.word(fields::game_state) as i32 == 8

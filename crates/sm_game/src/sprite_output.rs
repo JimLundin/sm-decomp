@@ -257,7 +257,7 @@ pub fn file_helmets<H: SpriteHost + ?Sized>(animate: bool, game: &mut H) {
             if remaining == 0 {
                 game.ram().copy_in(timer, &8u16.to_ne_bytes());
                 let mut frame = word!(game.eproj_id[slot]).wrapping_add(1);
-                if i32::from(word!(game.eproj_id[slot])) - 7 & 0x8000 == 0 {
+                if (i32::from(word!(game.eproj_id[slot])) - 7) & 0x8000 == 0 {
                     game.ram().fill(timer..timer + 2, 0);
                     frame = 7;
                 }
@@ -313,7 +313,7 @@ pub fn with_base_tile<H: SpriteHost + ?Sized>(
     }
     sprite_map(bank, address, game, &mut Native).draw(
         position,
-        |tile| (i32::from(palette) | i32::from(base_tile) + i32::from(tile)) as u16,
+        |tile| (i32::from(palette) | (i32::from(base_tile) + i32::from(tile))) as u16,
         clip,
         game,
     );
@@ -340,7 +340,8 @@ pub fn file_copy_arrow<H: SpriteHost + ?Sized>(game: &mut H) {
     let mut v0: u16 = 0;
     if ((word!(game.eproj_id[16])) as i16).wrapping_sub((word!(game.eproj_id[17])) as i16) >= 0 {
         v0 = 3;
-        if word!(game.eproj_id[16]) as i32 - word!(game.eproj_id[17]) as i32 - 2i32 & 0x8000 != 0 {
+        if (word!(game.eproj_id[16]) as i32 - word!(game.eproj_id[17]) as i32 - 2i32) & 0x8000 != 0
+        {
             v0 = 4;
             if word!(game.eproj_id[16]) != 1 {
                 v0 = 5;
@@ -348,7 +349,8 @@ pub fn file_copy_arrow<H: SpriteHost + ?Sized>(game: &mut H) {
         }
     } else {
         v0 = 0;
-        if word!(game.eproj_id[17]) as i32 - word!(game.eproj_id[16]) as i32 - 2i32 & 0x8000 != 0 {
+        if (word!(game.eproj_id[17]) as i32 - word!(game.eproj_id[16]) as i32 - 2i32) & 0x8000 != 0
+        {
             v0 = 1;
             if word!(game.eproj_id[16]) != 0 {
                 v0 = 2;

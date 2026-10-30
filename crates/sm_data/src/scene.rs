@@ -624,7 +624,7 @@ impl ProducedObject {
             return Err(SceneError::Geometry);
         }
         let entry = usize::from(self.object.order) * 4;
-        let bits = objects[512 + entry / 16] >> (2 * (entry / 4 & 3));
+        let bits = objects[512 + entry / 16] >> (2 * ((entry / 4) & 3));
         let mut selected = self.clone();
         selected.context = context;
         selected.object.position.x = ((self.object.position.x as u16 & !0x01ff)

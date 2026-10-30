@@ -395,7 +395,7 @@ pub fn advance<H: Host + ?Sized>(game: &mut H, upload: fn(&mut H), enable: fn(&m
         _ => fade_out(game, screen, enable),
     }
     super::options_objects::advance_and_draw(game);
-    if word!(game.game_options_screen_index) as i32 - 2i32 & 0x8000 == 0 {
+    if (word!(game.game_options_screen_index) as i32 - 2i32) & 0x8000 == 0 {
         super::menu_tilemap::queue_options(game);
     }
     0

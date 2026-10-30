@@ -227,7 +227,7 @@ fn project<H: Host + ?Sized>(
     }
     let product = u16::from(operand) * u16::from(distance as u8);
     if sine < 0 {
-        (2 * ((-(product as i32) as u16 as i32) >> 8) | 0xff00) as u16
+        ((2 * ((-(product as i32) as u16 as i32) >> 8)) | 0xff00) as u16
     } else {
         2 * (product >> 8)
     }

@@ -61,7 +61,7 @@ const SIGN: i32 = 0x8000;
 /// Instruction - increase Spore Spawn max X radius ($A5:E75F). Was
 /// `increase_grab_speed`.
 pub fn increase_max_x_radius<H: ActorHost + ?Sized>(game: &mut H) {
-    if slot!(game, SporeSpawn[0].max_x_radius) as i32 - RADIUS_LIMIT & SIGN != 0 {
+    if (slot!(game, SporeSpawn[0].max_x_radius) as i32 - RADIUS_LIMIT) & SIGN != 0 {
         slot!(game, SporeSpawn[0].max_x_radius, |old| old
             .wrapping_add(RADIUS_STEP));
     }

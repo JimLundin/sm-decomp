@@ -52,18 +52,18 @@ pub fn update(h: &mut impl Host) {
     let shift = (bit + 6) & 7;
     let origin = byte_index.wrapping_sub(if crossed_byte { 5 } else { 4 });
     let mut explored = [0u16; 3];
-    for row in 0..3 {
+    for (row, explored) in explored.iter_mut().enumerate() {
         let offset = origin as isize + 4 * row as isize;
         // Preserve native-word interpretation without an unaligned reference.
-        explored[row] = (0xfc00u16 >> shift)
+        *explored = (0xfc00u16 >> shift)
             & u16::from_ne_bytes([explored_byte(h, offset), explored_byte(h, offset + 1)])
                 .swap_bytes();
     }
     let area = h.session().room.area;
     let map = h.area_exploration_mask(area);
     let mut mapped = [0u16; 3];
-    for row in 0..3 {
-        mapped[row] = map.native_word(usize::from(origin) + 4 * row).swap_bytes();
+    for (row, mapped) in mapped.iter_mut().enumerate() {
+        *mapped = map.native_word(usize::from(origin) + 4 * row).swap_bytes();
     }
     if origin & 3 == 3 && (if crossed_byte { shift } else { bit }) >= 6 {
         let other_half = if half != 0 {

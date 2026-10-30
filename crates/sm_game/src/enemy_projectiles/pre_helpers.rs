@@ -39,7 +39,7 @@ pub fn move_phantoon_orbit(index: isize, angle: u16, y_position: &mut u16, ctx: 
     let value = (point.x as i32 + ctx.resolve_actor(Key::from_legacy(0), Le).x.whole as i32) as u16;
     enemy!(ctx, index, x = value);
     if negative_x
-        || x as i32 - 256i32 & 0x8000 == 0
+        || (x as i32 - 256i32) & 0x8000 == 0
         || {
             let negative_y = ((point.y as i32
                 + ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32
@@ -51,7 +51,7 @@ pub fn move_phantoon_orbit(index: isize, angle: u16, y_position: &mut u16, ctx: 
             enemy!(ctx, index, y = *y_position);
             negative_y
         }
-        || *y_position as i32 - 256i32 & 0x8000 == 0
+        || (*y_position as i32 - 256i32) & 0x8000 == 0
     {
         enemy!(ctx, index, program = 0x97f8);
         enemy!(ctx, index, delay = 1);

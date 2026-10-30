@@ -57,10 +57,10 @@ pub fn begin_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
 }
 
 pub fn flash_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
-    if word!(game.g_word_7E0DE6) as i32 - 4i32 & 0x8000 != 0 {
+    if (word!(game.g_word_7E0DE6) as i32 - 4i32) & 0x8000 != 0 {
         queue_death_tiles((2u16).wrapping_mul(word!(game.g_word_7E0DE6)), game);
     }
-    if word!(game.g_word_7E0DE6 += 1, reread) as i32 - 60i32 & 0x8000 != 0 {
+    if (word!(game.g_word_7E0DE6 += 1, reread) as i32 - 60i32) & 0x8000 != 0 {
         let expired = word!(game.game_options_screen_index -= 1, reread) & 0x8000 != 0;
         if word!(game.game_options_screen_index) == 0 || expired {
             if word!(game.g_word_7E0DE4) != 0 {
@@ -138,7 +138,7 @@ fn whiten_death_palette<H: Host + ?Sized>(game: &mut H) {
         let shade = SHADES[usize::from(word!(game.g_word_7E0DE6))];
         word_transfers!(game, ascending, 192; native(0xc000) <- value(shade));
         word_transfers!(game, ascending, 32; native(0xc1a0) <- value(shade));
-        if word!(game.g_word_7E0DE6) as i32 - 20i32 & 0x8000 != 0 {
+        if (word!(game.g_word_7E0DE6) as i32 - 20i32) & 0x8000 != 0 {
             word!(game.g_word_7E0DE6 += 1);
         }
     }
@@ -156,14 +156,14 @@ pub fn explode_suit<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
 fn advance_suit_explosion<H: Host + ?Sized>(game: &mut H) -> bool {
     let expired = word!(game.game_options_screen_index -= 1, reread) & 0x8000 != 0;
     if word!(game.game_options_screen_index) == 0 || expired {
-        if word!(game.g_word_7E0DE4 += 1, reread) as i32 - 9i32 & 0x8000 == 0 {
+        if (word!(game.g_word_7E0DE4 += 1, reread) as i32 - 9i32) & 0x8000 == 0 {
             word!(game.g_word_7E0DE6 = 21);
             whiten_death_palette(game);
             word!(game.substate = 0);
             return true;
         }
         let recolor =
-            word!(game.substate) == 0 || word!(game.g_word_7E0DE4) as i32 - 2i32 & 0x8000 != 0;
+            word!(game.substate) == 0 || (word!(game.g_word_7E0DE4) as i32 - 2i32) & 0x8000 != 0;
         // Each read captures the native table afresh; the frame index is a RAM
         // read, so taking it first leaves the captured bytes unchanged.
         let index = 2 * usize::from(word!(game.g_word_7E0DE4));

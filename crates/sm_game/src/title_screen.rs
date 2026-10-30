@@ -134,8 +134,8 @@ pub fn advance_title_pan<H: crate::menus::host::Host + ?Sized>(stage: usize, gam
 
 pub fn request_title_skip<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     // Before the title screen: the original adds the function's negation plus one.
-    if crate::flow::current(game).cinematic_function as i32
-        + (function::TITLE_SCREEN.wrapping_neg() as i32 + 1)
+    if (crate::flow::current(game).cinematic_function as i32
+        + (function::TITLE_SCREEN.wrapping_neg() as i32 + 1))
         & 0x8000
         != 0
         && word!(game.joypad1_newkeys) & CONFIRM_BUTTONS != 0

@@ -273,7 +273,7 @@ pub const HDMA_DESCRIPTOR: [u8; 7] = [0xff, 0x00, 0x30, 0xe1, 0xfe, 0x30, 0x00];
 /// Fixed indirect two-byte transfers:127 repeating rows at3000, then97 at30fe.
 /// This maps emitted scroll words; it does not replace them with a rectangle.
 pub fn scanline_scroll(values: RadiusValues, line_zero_based: usize) -> u16 {
-    let _ = &[(); 224][line_zero_based];
+    crate::table::check_index(line_zero_based, 224);
     let block = if line_zero_based < usize::from(HDMA_DESCRIPTOR[0] & 0x7f) {
         0
     } else {

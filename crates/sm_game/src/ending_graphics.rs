@@ -34,7 +34,7 @@ pub fn advance_ending_logo_palette<H: crate::menus::host::Host + ?Sized>(game: &
             source = source.wrapping_sub(2);
         }
     }
-    word!(game.cinematic_var4 += 1, reread) as i32 - 16 & 0x8000 == 0
+    (word!(game.cinematic_var4 += 1, reread) as i32 - 16) & 0x8000 == 0
 }
 
 pub fn advance_ending_graphics<H: crate::menus::host::Host + ?Sized>(

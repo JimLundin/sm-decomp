@@ -423,7 +423,7 @@ pub fn head(k: u16, game: &mut impl Ai) {
         };
     }
     // The aim rounded to one of eight directions.
-    let direction: u16 = (aim.to_ne_bytes()[1] as i32 + 8 & 0xe0) as u16;
+    let direction: u16 = ((aim.to_ne_bytes()[1] as i32 + 8) & 0xe0) as u16;
     slot!(byte game, Piece[piece].direction[0] = direction as u8);
     slot!(
         game,

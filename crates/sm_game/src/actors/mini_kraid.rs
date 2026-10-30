@@ -163,7 +163,7 @@ pub fn main_ai<H: Host + ?Sized>(game: &mut H) {
     let me = current(game);
     let spike = slot!(game, MiniKraid[me].spike_cycle);
     let mut next = spike.wrapping_add(2);
-    if spike as i32 - 4i32 & 0x8000 == 0 {
+    if (spike as i32 - 4i32) & 0x8000 == 0 {
         next = 0;
     }
     slot!(game, MiniKraid[me].spike_cycle = next);

@@ -209,14 +209,10 @@ fn DrawRunButtonAndSetupPpuForLargeMessageBox<H: crate::menus::host::Host + ?Siz
     }
 }
 fn SetupPpuForSmallMessageBox<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    {
-        SetupPpuForActiveMessageBox(composition::map_offset(composition::BoxSize::Small), game)
-    };
+    SetupPpuForActiveMessageBox(composition::map_offset(composition::BoxSize::Small), game);
 }
 fn SetupPpuForLargeMessageBox<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    {
-        SetupPpuForActiveMessageBox(composition::map_offset(composition::BoxSize::Large), game)
-    };
+    SetupPpuForActiveMessageBox(composition::map_offset(composition::BoxSize::Large), game);
 }
 /// The original's modify table, keyed by routine address.
 fn CallMsgBoxModify<H: crate::menus::host::Host + ?Sized>(ea: u32, game: &mut H) {

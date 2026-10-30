@@ -117,8 +117,8 @@ pub fn outside_camera_view(k: u16, ctx: &mut impl Host) -> u16 {
 
 /// Steps a turret bullet's direction. Was `Eproj_MotherBrainRoomTurretBullets_Func2`.
 pub fn turret_bullet_step_direction(v0: u16, ctx: &mut impl Host) {
-    let r20: u8 = (enemy_byte!(ctx, v0 as isize + 1, y_fraction) as i32
-        + enemy_byte!(ctx, v0 as isize, y_fraction) as i32
+    let r20: u8 = ((enemy_byte!(ctx, v0 as isize + 1, y_fraction) as i32
+        + enemy_byte!(ctx, v0 as isize, y_fraction) as i32)
         & 7) as u8;
     let r18: u16 = enemy!(ctx, (v0 >> 1) as isize, x_fraction);
     if turret_direction(r18, (r20 as i32 & 7) as isize, ctx) != 0 {
@@ -143,11 +143,11 @@ pub fn Eproj_MotherBrainRoomTurretBullets_CheckIfTurretOnScreen(k: u16, ctx: &mu
     let result: u8 = 1;
     if v2 >= 0 {
         let mut v3: i16 = (v2 as i32 + 16 - ctx.inputs().camera_y as i32) as i16;
-        if v3 >= 0 && v3 as i32 - 256i32 & 0x8000 != 0 {
+        if v3 >= 0 && (v3 as i32 - 256i32) & 0x8000 != 0 {
             let mut v4: i16 = enemy!(ctx, (v1) as isize, x) as i16;
             if v4 >= 0 {
                 let mut v5: i16 = (v4 as i32 + 4 - ctx.inputs().camera_x as i32) as i16;
-                if v5 >= 0 && v5 as i32 - 264i32 & 0x8000 != 0 {
+                if v5 >= 0 && (v5 as i32 - 264i32) & 0x8000 != 0 {
                     return 0;
                 }
             }
@@ -255,13 +255,13 @@ pub fn CheckForCollisionWithBabyMetroid_DoubleRet(v0: u16, ctx: &mut impl Host) 
 pub fn CheckForBlueRingCollisionWithRoom(k: u16, ctx: &mut impl Host) -> u8 {
     let v1: i32 = k as i32 >> 1;
     let result: u8 = 1;
-    if enemy!(ctx, (v1) as isize, y) as i32 - 32i32 & 0x8000 == 0
+    if (enemy!(ctx, (v1) as isize, y) as i32 - 32i32) & 0x8000 == 0
         && enemy!(ctx, (v1) as isize, y) < 0xd8
     {
         let mut v2: i16 = enemy!(ctx, (v1) as isize, x) as i16;
         if v2 >= 0 {
             let mut v3: i16 = (v2 as i32 - ctx.inputs().camera_x as i32) as i16;
-            if v3 >= 0 && v3 as i32 - 248i32 & 0x8000 != 0 {
+            if v3 >= 0 && (v3 as i32 - 248i32) & 0x8000 != 0 {
                 return 0;
             }
         }
@@ -331,10 +331,10 @@ pub fn MoveMotherBrainBomb(k: u16, a: u16, ctx: &mut impl Host) -> u8 {
     let v2: i32 = k as i32 >> 1;
     enemy_add!(ctx, (v2) as isize, velocity_y, a);
     MoveEprojWithVelocity(k, ctx);
-    if enemy!(ctx, (v2) as isize, x) as i32 - 240i32 & 0x8000 == 0 {
+    if (enemy!(ctx, (v2) as isize, x) as i32 - 240i32) & 0x8000 == 0 {
         enemy!(ctx, -(enemy!(ctx, (v2) as isize, velocity_x) as i32) as u16 => (v2) as isize, velocity_x);
     }
-    if enemy!(ctx, (v2) as isize, y) as i32 - 208i32 & 0x8000 != 0 {
+    if (enemy!(ctx, (v2) as isize, y) as i32 - 208i32) & 0x8000 != 0 {
         return 0;
     }
     enemy!(ctx, 208 => (v2) as isize, y);
@@ -385,9 +385,9 @@ pub fn outside_512_pixel_square(k: u16, ctx: &mut impl Host) -> u16 {
     let v1: i32 = k as i32 >> 1;
     let mut v2: i16 = enemy!(ctx, (v1) as isize, x) as i16;
     let result: u16 = 1;
-    if v2 >= 0 && v2 as i32 - 512i32 & 0x8000 != 0 {
+    if v2 >= 0 && (v2 as i32 - 512i32) & 0x8000 != 0 {
         let mut v3: i16 = enemy!(ctx, (v1) as isize, y) as i16;
-        if v3 >= 0 && v3 as i32 - 512i32 & 0x8000 != 0 {
+        if v3 >= 0 && (v3 as i32 - 512i32) & 0x8000 != 0 {
             return 0;
         }
     }
@@ -417,7 +417,7 @@ pub fn Eproj_BotwonsBodyFunction_Dying(v0: u16, ctx: &mut impl Host) {
 
 pub fn Eproj_BotwonsBodyFunction_Dying2(v0: u16, ctx: &mut impl Host) {
     let v1: i32 = v0 as i32 >> 1;
-    if enemy_add!(ctx, (v1) as isize, behavior_a, 1) as i32 - 256i32 & 0x8000 == 0 {
+    if (enemy_add!(ctx, (v1) as isize, behavior_a, 1) as i32 - 256i32) & 0x8000 == 0 {
         enemy!(ctx, (0x86eb1f & 0xffff) as u16 => (v1) as isize, velocity_x);
     }
     enemy!(ctx, 0 => (v1) as isize, delay);
@@ -426,13 +426,13 @@ pub fn Eproj_BotwonsBodyFunction_Dying2(v0: u16, ctx: &mut impl Host) {
 
 pub fn Eproj_BotwonsBodyFunction_DyingFalling(v0: u16, ctx: &mut impl Host) {
     let v1: i32 = v0 as i32 >> 1;
-    let v3: i32 = 8 * ((enemy!(ctx, (v1) as isize, velocity_y) as i32 & 0xff00) >> 8) >> 1;
+    let v3: i32 = (8 * ((enemy!(ctx, (v1) as isize, velocity_y) as i32 & 0xff00) >> 8)) >> 1;
     {
         let index = v1 as isize;
         let amount = lavaquake_delta((v3 >> 1) as isize, ctx);
         add_split(SlotField::Y, SlotField::YFraction, index, amount, ctx);
     };
-    if enemy!(ctx, (v1) as isize, y) as i32 - 200i32 & 0x8000 != 0 {
+    if (enemy!(ctx, (v1) as isize, y) as i32 - 200i32) & 0x8000 != 0 {
         let v7: i32 = v0 as i32 >> 1;
         enemy_add!(ctx, (v7) as isize, velocity_y, 192);
         enemy!(ctx, 0 => (v7) as isize, delay);

@@ -112,8 +112,8 @@ fn extension<H: Host>(
 ) -> Result<(), H::Error> {
     let offset = 512 + 2 * (index >> 5);
     let old = host.read_native_word(offset)?;
-    let bits =
-        ((x & 0x100) >> 8 | u16::from((map.x(record)? as i16) < 0) * 2) << (2 * (index >> 2 & 7));
+    let bits = (((x & 0x100) >> 8) | (u16::from((map.x(record)? as i16) < 0) * 2))
+        << (2 * (index >> 2 & 7));
     host.write_native_slice(offset, old | bits)
 }
 

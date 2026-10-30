@@ -40,5 +40,21 @@ Before changing ownership, interfaces or backend architecture, read the
 `sm/src` is authoritative; preserve behavior and SNES RAM compatibility. Use the
 oracle, `ram_map.rs` and [bank logs](https://patrickjohnston.org/bank/) for unclear behavior.
 
+## Rust style
+
+Code in the target packages is idiomatic Rust, not transpiled C. Preserve the
+original's behavior, not its C shapes:
+
+- Iterate (`iter().enumerate()`, `iter_mut()`) instead of `for i in 0..N { a[i] }`.
+- Parenthesize mixed shift, bitwise and arithmetic expressions.
+- Name checks: `sm_data::table::check_index(i, N)`, never a no-op expression
+  such as `[(); N][i];`.
+- Use `From`/`TryFrom` and `wrapping_*` instead of chains of `as` casts.
+- Use `std::fs` and owned buffers, not libc `fopen`/`fread`/`malloc`.
+- Store text files with LF line endings (`.gitattributes` enforces it).
+
+`cargo clippy -p sm_data -p sm_game -p sm_runtime --all-targets` must pass in
+CI. Fix findings; do not add `allow`s for these patterns.
+
 Pre-2026-10-17 workflows, `.scratch/`, readiness gates, acceptance pointers and
 translation scopes are inactive in `archive/pre-transpile-2026-10-17`.

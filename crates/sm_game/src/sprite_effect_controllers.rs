@@ -123,7 +123,7 @@ pub fn maw_appearance(
         let old = read!(host, index, Appearance, appearance);
         write!(host, index, Appearance, appearance, (old & 0xf1ff) | 0xc00);
         let frozen_timer = host.attachment_frozen_timer(enemy);
-        if frozen_timer as i32 - 90 & 0x8000 != 0 && frozen_timer & 2 == 0 {
+        if (frozen_timer as i32 - 90) & 0x8000 != 0 && frozen_timer & 2 == 0 {
             let old = read!(host, index, Appearance, appearance);
             write!(
                 host,

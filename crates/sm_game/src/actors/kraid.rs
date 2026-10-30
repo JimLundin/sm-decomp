@@ -559,20 +559,20 @@ fn mouth_shots<S: BossState + ?Sized>(game: &mut S) {
             let mut index: u16 = 2u16.wrapping_mul(word!(game.projectile_counter));
             loop {
                 let p: i32 = index as i32 >> 1;
-                if !(word!(game.projectile_y_pos[p]) as i32
+                if !((word!(game.projectile_y_pos[p]) as i32
                     - word!(game.projectile_y_radius[p]) as i32
                     - 1i32
-                    - bottom as i32
+                    - bottom as i32)
                     & 0x8000
                     == 0
-                    || word!(game.projectile_y_radius[p]) as i32
+                    || (word!(game.projectile_y_radius[p]) as i32
                         + word!(game.projectile_y_pos[p]) as i32
-                        - top as i32
+                        - top as i32)
                         & 0x8000
                         != 0
-                    || word!(game.projectile_x_radius[p]) as i32
+                    || (word!(game.projectile_x_radius[p]) as i32
                         + word!(game.projectile_x_pos[p]) as i32
-                        - right as i32
+                        - right as i32)
                         & 0x8000
                         != 0)
                 {
@@ -786,7 +786,7 @@ fn fire_lint<H: Host + ?Sized>(game: &mut H, k: u16) {
         let sum = (low | (high << 16)).wrapping_add(-LINT_SPEED as u32);
         word!(game.extra_samus_x_subdisplacement = sum as u16);
         word!(game.extra_samus_x_displacement = (sum >> 16) as u16);
-        if word!(game.extra_samus_x_displacement) as i32 + 16 & 0x8000 != 0 {
+        if (word!(game.extra_samus_x_displacement) as i32 + 16) & 0x8000 != 0 {
             word!(game.extra_samus_x_displacement = -16i32 as u16);
         }
     }
@@ -877,9 +877,9 @@ fn fire_fingernail<H: Host + ?Sized>(game: &mut H, k: u16) {
         }
         let left: u16 = (kraid_tables::fingernail_boundary(game, (row >> 2) as usize).left)
             .wrapping_add(slot!(game, Fingernail[BODY].base.x_pos));
-        if slot!(game, Fingernail[me].base.x_width) as i32
+        if (slot!(game, Fingernail[me].base.x_width) as i32
             + slot!(game, Fingernail[me].base.x_pos) as i32
-            - left as i32
+            - left as i32)
             & 0x8000
             == 0
             && (slot!(game, Fingernail[me].x_speed) & 0x8000) == 0
@@ -1273,12 +1273,12 @@ fn glow_eye<H: Host + ?Sized>(game: &mut H) {
     for v0 in (226u16..232).step_by(2) {
         let c: i32 = v0 as i32 >> 1;
         let mut red: u16 = ((word!(game.palette_buffer[c]) as i32 & 0x1f) + 1) as u16;
-        if (word!(game.palette_buffer[c]) as i32 & 0x1f) - 30i32 & 0x8000 == 0 {
+        if ((word!(game.palette_buffer[c]) as i32 & 0x1f) - 30i32) & 0x8000 == 0 {
             lit += 1;
             red = 31;
         }
         let mut green: u16 = ((word!(game.palette_buffer[c]) as i32 & 0x3e0) + 32) as u16;
-        if (word!(game.palette_buffer[c]) as i32 & 0x3e0) - 960i32 & 0x8000 == 0 {
+        if ((word!(game.palette_buffer[c]) as i32 & 0x3e0) - 960i32) & 0x8000 == 0 {
             lit += 1;
             green = 992;
         }
@@ -1406,9 +1406,9 @@ fn initialize_fingernail_attack<H: Host + ?Sized>(game: &mut H) {
         set_health_eighth(game, me, 1, 0);
         slot!(
             game,
-            Fingernail[me].base.x_pos = (slot!(game, Fingernail[BODY].base.x_pos) as i32
+            Fingernail[me].base.x_pos = ((slot!(game, Fingernail[BODY].base.x_pos) as i32
                 - slot!(game, Fingernail[BODY].base.x_width) as i32
-                - slot!(game, Fingernail[me].base.x_width) as i32
+                - slot!(game, Fingernail[me].base.x_width) as i32)
                 & 0xfff0) as u16
         );
         slot!(
@@ -1722,21 +1722,21 @@ fn body_shots<S: BossState + ?Sized>(game: &mut S) {
             let mut i: i32 = 2 * word!(game.projectile_counter) as i32;
             while i >= 0 {
                 let p: i32 = i >> 1;
-                let hit_body: bool = if word!(game.projectile_y_pos[p]) as i32
+                let hit_body: bool = if (word!(game.projectile_y_pos[p]) as i32
                     - word!(game.projectile_y_radius[p]) as i32
                     - 1i32
-                    - bottom as i32
+                    - bottom as i32)
                     & 0x8000
                     != 0
                 {
-                    word!(game.projectile_y_radius[p]) as i32
+                    (word!(game.projectile_y_radius[p]) as i32
                         + word!(game.projectile_y_pos[p]) as i32
-                        - top as i32
+                        - top as i32)
                         & 0x8000
                         == 0
-                        && word!(game.projectile_x_radius[p]) as i32
+                        && (word!(game.projectile_x_radius[p]) as i32
                             + word!(game.projectile_x_pos[p]) as i32
-                            - right as i32
+                            - right as i32)
                             & 0x8000
                             == 0
                 } else {

@@ -111,7 +111,8 @@ pub fn separated_from_rect(k: u16, rect: (u16, u16, u16, u16), game: &mut impl H
 /// the stop, pin it there, turn scrolls 1 and 3 red, raise the invisible walls,
 /// let the sidehopper live and enable the cry. Was `BabyMetroid_Func_4`.
 pub fn wait_for_camera(game: &mut impl Host) {
-    if crate::camera::current(game).layer1[0] as i32 - (i32::from(CAMERA_STOP_X) + 1) & SIGN != 0 {
+    if (crate::camera::current(game).layer1[0] as i32 - (i32::from(CAMERA_STOP_X) + 1)) & SIGN != 0
+    {
         crate::camera::set_layer1(&mut game.runtime(), 0, CAMERA_STOP_X);
         // Red is the scroll word's low byte with its high byte cleared.
         for scroll in SCROLLS {
@@ -137,12 +138,12 @@ pub fn is_off_screen(k: u16, game: &mut impl Host) -> u8 {
     if y_pos >= 0 {
         let y =
             (y_pos as i32 + SCREEN_Y_MARGIN - crate::camera::current(game).layer1[1] as i32) as i16;
-        if y >= 0 && y as i32 - SCREEN_HEIGHT & SIGN != 0 {
+        if y >= 0 && (y as i32 - SCREEN_HEIGHT) & SIGN != 0 {
             let x_pos = slot!(game, BabyMetroid[e].base.x_pos) as i16;
             if x_pos >= 0 {
                 let x = (x_pos as i32 + SCREEN_X_MARGIN
                     - crate::camera::current(game).layer1[0] as i32) as i16;
-                if x >= 0 && x as i32 - SCREEN_WIDTH & SIGN != 0 {
+                if x >= 0 && (x as i32 - SCREEN_WIDTH) & SIGN != 0 {
                     return 0;
                 }
             }
@@ -162,7 +163,7 @@ pub fn accelerate_towards_y(k: u16, target: u16, acceleration: u16, game: &mut i
         result = result.wrapping_add(1);
     } else if offset >= 0 {
         let mut velocity = slot!(game, BabyMetroid[e].y_velocity).wrapping_sub(acceleration);
-        if velocity as i32 + i32::from(MAX_SPEED) & SIGN != 0 {
+        if (velocity as i32 + i32::from(MAX_SPEED)) & SIGN != 0 {
             velocity = MAX_SPEED.wrapping_neg();
         }
         slot!(game, BabyMetroid[e].y_velocity = velocity);
@@ -175,7 +176,7 @@ pub fn accelerate_towards_y(k: u16, target: u16, acceleration: u16, game: &mut i
         }
     } else {
         let mut velocity = acceleration.wrapping_add(slot!(game, BabyMetroid[e].y_velocity));
-        if velocity as i32 - i32::from(MAX_SPEED) & SIGN == 0 {
+        if (velocity as i32 - i32::from(MAX_SPEED)) & SIGN == 0 {
             velocity = MAX_SPEED;
         }
         slot!(game, BabyMetroid[e].y_velocity = velocity);
@@ -198,7 +199,7 @@ pub fn accelerate_towards_x(k: u16, target: u16, acceleration: u16, game: &mut i
     let mut result: u16 = 0;
     if (slot!(game, BabyMetroid[e].base.x_pos) as i16).wrapping_sub(target as i16) >= 0 {
         let mut velocity = slot!(game, BabyMetroid[e].x_velocity).wrapping_sub(acceleration);
-        if velocity as i32 + i32::from(MAX_SPEED) & SIGN != 0 {
+        if (velocity as i32 + i32::from(MAX_SPEED)) & SIGN != 0 {
             velocity = MAX_SPEED.wrapping_neg();
         }
         slot!(game, BabyMetroid[e].x_velocity = velocity);
@@ -211,7 +212,7 @@ pub fn accelerate_towards_x(k: u16, target: u16, acceleration: u16, game: &mut i
         }
     } else {
         let mut velocity = acceleration.wrapping_add(slot!(game, BabyMetroid[e].x_velocity));
-        if velocity as i32 - i32::from(MAX_SPEED) & SIGN == 0 {
+        if (velocity as i32 - i32::from(MAX_SPEED)) & SIGN == 0 {
             velocity = MAX_SPEED;
         }
         slot!(game, BabyMetroid[e].x_velocity = velocity);

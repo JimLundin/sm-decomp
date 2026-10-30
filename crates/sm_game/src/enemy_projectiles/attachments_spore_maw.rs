@@ -114,7 +114,7 @@ pub fn update_maw_palette(handle: u16, ctx: &mut impl Host) {
     if ctx.resolve_actor(Key::from_legacy(enemy), Le).frozen != 0 {
         enemy!(ctx, enemy!(ctx, segment, graphics) & 0xf1ff | 0xc00 => segment, graphics);
         let frozen_timer = ctx.resolve_actor(Key::from_legacy(enemy), Le).frozen;
-        if frozen_timer as i32 - 90i32 & 0x8000 != 0 && (frozen_timer & 2) == 0 {
+        if (frozen_timer as i32 - 90i32) & 0x8000 != 0 && (frozen_timer & 2) == 0 {
             enemy!(ctx, ctx.maw_palette(enemy) | enemy!(ctx, segment, graphics) & 0xf1ff => segment, graphics);
         }
     }

@@ -142,8 +142,7 @@ where
             crate::camera::current(game).layer1[1],
             false,
         );
-        object.table = (3 * ((v8 as i32 ^ 0x1ff) + 1 & 0x3ff) + 0xb62a) as u16;
-    } else {
+        object.table = (3 * (((v8 as i32 ^ 0x1ff) + 1) & 0x3ff) + 0xb62a) as u16;
     }
 }
 #[forbid(unsafe_code)]
@@ -163,13 +162,13 @@ where
     object.b = remaining.wrapping_sub(1);
     if remaining == 1 {
         object.b = 10;
-        object.a = (object.a as i32 + 2 & 0x1e) as u16;
+        object.a = ((object.a as i32 + 2) & 0x1e) as u16;
     }
     let mut v7: u8 = object.a as u8;
     for i in (0i32..=30).rev().step_by(2) {
         let value = (WATER_WAVE[(i >> 1) as usize] as u16).wrapping_add(r20);
         crate::word_transfers!(game, ascending, 1; native(0x9c04 + usize::from(v7)) <- value(value));
-        v7 = (v7 as i32 - 2i32 & 0x1e) as u8;
+        v7 = ((v7 as i32 - 2i32) & 0x1e) as u8;
     }
     if (word!(game.fx_liquid_options) & 1) != 0 {
         object.c = object.c.wrapping_add(64);
@@ -179,7 +178,7 @@ where
         crate::camera::current(game).layer1[1],
         true,
     );
-    object.table = (3 * ((v9 as i32 ^ 0x1ff) + 1 & 0x3ff) + 0xc645) as u16;
+    object.table = (3 * (((v9 as i32 ^ 0x1ff) + 1) & 0x3ff) + 0xc645) as u16;
 }
 
 #[derive(Clone, Copy)]
@@ -202,7 +201,7 @@ fn fill_wave<H: crate::menus::host::Host + ?Sized>(
             6
         };
         let step = if matches!(wave, Wave::Water) { 2 } else { -2 };
-        object.a = (object.a as i32 + step & 0x1e) as u16;
+        object.a = ((object.a as i32 + step) & 0x1e) as u16;
     }
     let horizontal = matches!(wave, Wave::LavaHorizontal);
     let scroll_phase = if horizontal {
@@ -212,9 +211,9 @@ fn fill_wave<H: crate::menus::host::Host + ?Sized>(
     };
     let mut sample = object.a as u8;
     if !horizontal {
-        sample = (sample as u16 + scroll_phase & 0x1e) as u8;
+        sample = ((sample as u16 + scroll_phase) & 0x1e) as u8;
     }
-    let mut row = (scroll_phase + 30 & 0x1e) as u8;
+    let mut row = ((scroll_phase + 30) & 0x1e) as u8;
     for _ in 0..16 {
         let value = match wave {
             Wave::LavaHorizontal => {

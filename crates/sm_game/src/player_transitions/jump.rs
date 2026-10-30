@@ -50,7 +50,7 @@ pub fn initialize_jump(h: &mut impl Host, kind: JumpKind) {
 }
 pub fn handle_transition(h: &mut impl Host) {
     let movement = usize::from(h.session().player.movement_and_facing >> 8);
-    [(); 28][movement];
+    sm_data::table::check_index(movement, 28);
     match movement {
         2 => {
             let pose = h.session().player.pose;
