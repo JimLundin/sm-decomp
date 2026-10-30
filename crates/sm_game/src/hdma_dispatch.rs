@@ -239,6 +239,7 @@ where
         WaterBackground => it.with_object(index, liquid_effects::water_background),
         WaterWave => it.with_object(index, liquid_effects::water_wave),
         WaterFlat => it.foreign(liquid_effects::water_flat),
+        SkyHorizontalScroll => it.with_object(index, scrolling_sky::update_horizontal_scroll),
         _ => it.foreign(|game| host_pre_action(target, slot, game)),
     }
 }
@@ -248,7 +249,7 @@ fn host_pre_action<H: DispatchHost + ?Sized>(target: HdmaPreAction, k: u16, game
     use HdmaPreAction::*;
     match target {
         Nothing | LavaSurface | LavaBackground | WaterSurface | WaterBackground | WaterWave
-        | WaterFlat => unreachable!("run_pre_action runs {target:?}"),
+        | WaterFlat | SkyHorizontalScroll => unreachable!("run_pre_action runs {target:?}"),
         SetupXrayBlending => xray_background::setup_blending(k, game),
         AdvanceXrayBackground => game.hdma_effect(HdmaEffect::AdvanceXrayBackground, k),
         XrayBeamInitial => game.hdma_effect(HdmaEffect::AdvanceXrayBeam(BeamPhase::Initial), k),
@@ -267,7 +268,6 @@ fn host_pre_action<H: DispatchHost + ?Sized>(target: HdmaPreAction, k: u16, game
         CrystalFlashAfterglow => explosion_window::crystal_flash_afterglow(k, game),
         CrystalFlashScaled => explosion_window::update_scaled(k, Phase::CrystalFlash, game),
         SkyVerticalScroll => scrolling_sky::update_vertical_scroll(k, game),
-        SkyHorizontalScroll => scrolling_sky::update_horizontal_scroll(k, game),
         SkyParallax => scrolling_sky::update_parallax(k, game),
         AdvanceSkyParallax => scrolling_sky::advance_parallax(k, game),
         FirefleaLighting => room_visuals::advance_fireflea_lighting(game),

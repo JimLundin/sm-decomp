@@ -75,7 +75,10 @@ pub fn update_vertical_scroll<H: crate::menus::host::Host + ?Sized>(mut k: u16, 
     crate::word_transfers!(game, ascending, 1; native(0x9c00 + k as isize) <- value(0));
 }
 #[forbid(unsafe_code)]
-pub fn update_horizontal_scroll<H: crate::menus::host::Host + ?Sized>(k: u16, game: &mut H) {
+pub fn update_horizontal_scroll<H: crate::menus::host::Host + ?Sized>(
+    object: &mut crate::hdma::HdmaObject,
+    game: &mut H,
+) {
     let layer1_y = crate::camera::current(game).layer1[1];
     if layer1_y as i32 - 1024i32 & 0x8000 != 0 {
         if (game.ram().read_byte(0x5b5) & 1) == 0 {
@@ -92,14 +95,13 @@ pub fn update_horizontal_scroll<H: crate::menus::host::Host + ?Sized>(k: u16, ga
             v1 = (v1).wrapping_add(2);
         }
     } else {
-        let v3: i32 = k as i32 >> 1;
-        let timer = word!(game.hdma_object_B[v3]);
-        word!(game.hdma_object_B[v3] = word!(game.hdma_object_B[v3]).wrapping_sub(1));
+        let timer = object.b;
+        object.b = timer.wrapping_sub(1);
         if timer == 1 {
-            word! {game; hdma_object_B[v3] = 6;
-            hdma_object_A[v3] = (word!(game.hdma_object_A[v3]) as i32 + 2 & 0x1f) as u16; }
+            object.b = 6;
+            object.a = (object.a as i32 + 2 & 0x1f) as u16;
         }
-        let mut v5: u16 = word!(game.hdma_object_A[v3]);
+        let mut v5: u16 = object.a;
         for i in (0i32..=30).rev().step_by(2) {
             word!(
                 game.g_word_7E9E80[(v5 >> 1)] =
