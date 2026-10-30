@@ -2157,7 +2157,7 @@ pub fn spawn_explosions<L: Lease + ?Sized>(game: &mut L) {
 /// Was `Ridley_Func_61`.
 pub fn emergency_text_glow<L: Lease + ?Sized>(game: &mut L) {
     if word!(game.DOOR_TRANSITION_FLAG_ENEMIES) | word!(game.PALETTE_CHANGE_NUM) == 0
-        && (word!(game.NMI_FRAME_COUNTER_WORD) & 3) == 0
+        && (game.frame() & 3) == 0
     {
         let mut step = session_slot!(game, Ridley[RIDLEY].emergency_glow_index).wrapping_add(1);
         if step >= 0x10 {
@@ -3460,7 +3460,7 @@ pub fn touch<L: Lease + ?Sized>(game: &mut L) {
 /// Enemy shot - enemy $E13F/$E17F (Ridley) ($A6:DF8A): Norfair Ridley reacts
 /// normally; Ceres Ridley flashes and counts the hit. Was `Ridley_Shot`.
 pub fn shot<L: Lease + ?Sized>(game: &mut L) {
-    if word!(game.AREA_INDEX) == NORFAIR {
+    if game.area() == NORFAIR {
         game.shot_reaction(Shot::ReactionOnly);
         return;
     }
@@ -3577,7 +3577,7 @@ pub fn goto_if_samus_health_low<L: Lease + ?Sized>(
     script: EnemyScript,
     game: &mut L,
 ) -> EnemyScript {
-    if word!(game.AREA_INDEX) == NORFAIR || !below(word!(game.SAMUS_HEALTH), 30) {
+    if game.area() == NORFAIR || !below(word!(game.SAMUS_HEALTH), 30) {
         return script.offset(1);
     }
     session_slot!(game, Ridley[RIDLEY].timer = 8);

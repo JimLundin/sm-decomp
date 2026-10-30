@@ -168,7 +168,7 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
     );
     session_slot!(game, Spore[k]; stem_anchor_x = x, stem_anchor_y = y.wrapping_sub(72), origin_x = x,
         origin_y = y, unread_0fb2 = 0);
-    let area = word!(game.AREA_INDEX);
+    let area = game.area();
     if game.foreign(|game| game.boss_bits(area)) & DEAD as u8 != 0 {
         session_slot!(game, Spore[0].base.current_instruction = list::DEAD);
         session_slot!(game, Spore[0].function = function::NOTHING);
@@ -275,7 +275,7 @@ pub fn finish_return<L: Lease + ?Sized>(game: &mut L) {
         session_slot!(game, Spore[0].function = function::NOTHING);
     }
     game.foreign(|game| game.update_spore_stem());
-    if word!(game.NMI_FRAME_COUNTER_WORD) & 0xf == 0 {
+    if game.frame() & 0xf == 0 {
         let random = game.roll_random();
         let (x, y) = ((random & 0x3f) + 96, ((random >> 8) & 0xf) + 480);
         game.foreign(|game| game.create_sprite(x, y, 21, 0));
@@ -296,7 +296,7 @@ pub fn after_damage<L: Lease + ?Sized>(game: &mut L) {
     session_slot!(game, Spore[k].base.properties, |old| old | 0x400);
     crate::word_transfers!(game, descending, 14; native(0x19b1) <- value(0));
     session_slot!(game, Spore[0].base; current_instruction = list::DEATH, instruction_timer = 1);
-    let area = word!(game.AREA_INDEX);
+    let area = game.area();
     game.foreign(|game| {
         let bits = game.boss_word(area);
         game.set_boss_word(area, bits | DEAD);

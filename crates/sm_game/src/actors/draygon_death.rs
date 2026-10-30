@@ -258,8 +258,8 @@ pub fn buried_by_evirs<L: Lease>(game: &mut L) {
         let properties = session_slot!(game, Draygon[BODY].base.properties) | DELETE;
         session_slot!(game, Draygon[BODY].base.properties = properties);
         session_slot!(game, Draygon[EYE].base.properties = properties);
-        let drop_index = word!(game.AREA_INDEX);
-        let area = word!(game.AREA_INDEX);
+        let drop_index = game.area();
+        let area = game.area();
         let bits = game.foreign(|game| game.boss_word(area));
         game.foreign(|game| {
             game.set_boss_word(area, bits | DRAYGON_DEAD);

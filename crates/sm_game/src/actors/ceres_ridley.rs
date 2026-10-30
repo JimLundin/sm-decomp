@@ -7,7 +7,8 @@
 //! and RAM, so it shares the `Ridley` view and his tail, baby metroid,
 //! movement and drawing in `ridley`; the intro (`initial` to
 //! `roar_before_flying`) and `init` serve both fights.
-use crate::actors::boss_lease::BossLease;
+#![forbid(unsafe_code)]
+use crate::actors::boss_lease::{BossLease, BossState as _};
 use crate::actors::host::BossEffects as _;
 use crate::actors::host::{abs16, below};
 use crate::actors::ridley::Host as _;
@@ -21,7 +22,6 @@ use crate::constants::enemy_properties::{
 };
 use crate::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
 use crate::projectile_geometry::SINE_COSINE;
-use crate::ram::CompatibilityRam as _;
 use crate::ram::word;
 use sm_data::cartridge::lorom_offset;
 
@@ -117,7 +117,7 @@ const ESCAPE_STARTED: u16 = 2;
 /// Initialisation AI - enemy $E13F/$E17F (Ridley) ($A6:A0F5), for both fights;
 /// a defeated Ridley is deleted. Was `CeresRidley_Init`.
 pub fn init<L: Lease + ?Sized>(game: &mut L) {
-    if (game.foreign(|game| game.boss_byte(word!(game.AREA_INDEX))) & 1) != 0 {
+    if (game.foreign(|game| game.boss_byte(game.area())) & 1) != 0 {
         session_slot!(
             game,
             Ridley[RIDLEY].base.properties = session_slot!(game, Ridley[RIDLEY].base.properties)
@@ -148,7 +148,7 @@ pub fn init<L: Lease + ?Sized>(game: &mut L) {
             | K_ENEMY_PROPS_BLOCK_PLASMA_BEAM as u16
             | K_ENEMY_PROPS_TANGIBLE as u16
     );
-    if word!(game.AREA_INDEX) == NORFAIR {
+    if game.area() == NORFAIR {
         session_slot!(game, Ridley[RIDLEY].base.x_pos = 96);
         session_slot!(game, Ridley[RIDLEY].base.y_pos = 394);
         session_slot!(game, Ridley[RIDLEY].function = ceres_function::INITIAL);
@@ -300,11 +300,7 @@ pub fn initial<L: Lease + ?Sized>(game: &mut L) {
             game,
             Ridley[RIDLEY].function = ceres_function::WAIT_TO_FADE_IN
         );
-        let wait = if word!(game.AREA_INDEX) == NORFAIR {
-            170
-        } else {
-            512
-        };
+        let wait = if game.area() == NORFAIR { 170 } else { 512 };
         session_slot!(game, Ridley[RIDLEY].function_timer = wait);
         wait_to_fade_in(game);
     }
@@ -385,7 +381,7 @@ pub fn fade_in_body<L: Lease + ?Sized>(game: &mut L) {
         second += 1;
     }
     if index >= 0x160 {
-        if word!(game.AREA_INDEX) == NORFAIR {
+        if game.area() == NORFAIR {
             session_slot!(game, Ridley[RIDLEY].base.layer = 2);
         }
         session_slot!(
@@ -412,7 +408,7 @@ pub fn wait_to_roar<L: Lease + ?Sized>(game: &mut L) {
             game,
             Ridley[RIDLEY].function = ceres_function::ROAR_BEFORE_FLYING
         );
-        if word!(game.AREA_INDEX) != NORFAIR {
+        if game.area() != NORFAIR {
             session_slot!(game, Ridley[RIDLEY].function_timer = 252);
         }
     }
@@ -424,7 +420,7 @@ pub fn roar_before_flying<L: Lease + ?Sized>(game: &mut L) {
     if !timer_expired(game) {
         return;
     }
-    if word!(game.AREA_INDEX) == NORFAIR {
+    if game.area() == NORFAIR {
         session_slot!(game, Ridley[RIDLEY].function_timer = 2);
         let step = session_slot!(game, Ridley[RIDLEY].fade_index).wrapping_add(1);
         session_slot!(game, Ridley[RIDLEY].fade_index = step);
@@ -887,7 +883,7 @@ fn signed_scale(a: u16, b: u16) -> u16 {
 /// Animate Ceres Ridley mode 7 baby metroid ($A6:ACBC): four frames, one
 /// every fourth frame. Was `CeresRidley_Func_33`.
 pub fn animate_mode7_baby_metroid<L: Lease + ?Sized>(game: &mut L) {
-    if (word!(game.NMI_FRAME_COUNTER_WORD) & 3) == 0 {
+    if (game.frame() & 3) == 0 {
         let frame = session_slot!(game, Ridley[RIDLEY].baby_metroid_frame).wrapping_add(1) & 3;
         session_slot!(game, Ridley[RIDLEY].baby_metroid_frame = frame);
         let list = crate::ceres_ridley_tables::baby_metroid_frame(game, frame as isize);
@@ -898,7 +894,7 @@ pub fn animate_mode7_baby_metroid<L: Lease + ?Sized>(game: &mut L) {
 /// Animate Ceres Ridley mode 7 wings ($A6:AD27): two frames, one every
 /// eighth frame. Was `CeresRidley_Func_34`.
 pub fn animate_mode7_wings<L: Lease + ?Sized>(game: &mut L) {
-    if (word!(game.NMI_FRAME_COUNTER_WORD) & 7) == 0 {
+    if (game.frame() & 7) == 0 {
         let frame = session_slot!(game, Ridley[RIDLEY].mode7_wings_frame).wrapping_add(1) & 1;
         session_slot!(game, Ridley[RIDLEY].mode7_wings_frame = frame);
         let list = crate::ceres_ridley_tables::wing_frame(game, frame as isize);

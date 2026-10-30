@@ -54,6 +54,14 @@ impl BossState for Game {
     fn current_enemy(&self) -> u16 {
         Game::cur_enemy_index(self)
     }
+    fn area(&self) -> u16 {
+        let game = self;
+        sm_game::ram_word!(game.AREA_INDEX)
+    }
+    fn frame(&self) -> u16 {
+        let game = self;
+        sm_game::ram_word!(game.NMI_FRAME_COUNTER_WORD)
+    }
     fn scaled_cosine(&mut self, phase: u16, amplitude: u16) -> u16 {
         BossEffects::actor_cosine(self, phase, amplitude)
     }
@@ -112,6 +120,12 @@ impl BossState for Runtime<'_> {
     }
     fn current_enemy(&self) -> u16 {
         self.inputs().current_enemy
+    }
+    fn area(&self) -> u16 {
+        self.session().room.area
+    }
+    fn frame(&self) -> u16 {
+        self.inputs().frame
     }
     fn scaled_cosine(&mut self, phase: u16, amplitude: u16) -> u16 {
         (queries::sine_product(self, amplitude, phase.wrapping_add(64) as u8 as u16) >> 16) as u16

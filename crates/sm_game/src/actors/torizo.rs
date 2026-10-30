@@ -123,7 +123,7 @@ pub fn walk<L: Lease>(
 /// Handle low-health initial drool ($AA:C620): in Crateria, now and then
 /// drool while health is low. Was `Torizo_C620`.
 pub fn drool_at_low_health<L: Lease>(k: u16, game: &mut L) {
-    if word!(game.AREA_INDEX) == CRATERIA && word!(game.RANDOM_NUMBER) & DROOL_CHANCE == 0 {
+    if game.area() == CRATERIA && word!(game.RANDOM_NUMBER) & DROOL_CHANCE == 0 {
         let health: u16 = session_slot!(game, TorizoSlot[k as i32].base.health);
         if health != 0 && health < LOW_HEALTH {
             game.spawn_projectile(health, k, LOW_HEALTH_DROOL);
@@ -663,7 +663,7 @@ pub fn touch<L: Lease>(game: &mut L) {
 /// Norfair; the Bomb Torizo is hurt when unlocked and not flashing, and dies
 /// at no health. Was `Torizo_Shot`.
 pub fn shot<L: Lease>(game: &mut L) {
-    if word!(game.AREA_INDEX) != 0 {
+    if game.area() != 0 {
         golden_shot(game);
     } else {
         let e = game.current_enemy() as i32;
@@ -697,7 +697,7 @@ pub fn shot<L: Lease>(game: &mut L) {
 
 /// Enemy shot - torizo - stand up / sit down ($AA:C9C2). Was `Torizo_Func_8`.
 pub fn standing_shot<L: Lease>(game: &mut L) {
-    if word!(game.AREA_INDEX) != 0 {
+    if game.area() != 0 {
         golden_standing_shot(game);
     }
 }
@@ -779,7 +779,7 @@ pub fn initialize<L: Lease>(game: &mut L) {
         );
         return;
     }
-    let torizo = (word!(game.AREA_INDEX) as i32 >> 1) as usize;
+    let torizo = (game.area() as i32 >> 1) as usize;
     session_slot!(
         game,
         TorizoSlot[e].base.properties =
@@ -811,7 +811,7 @@ pub fn initialize<L: Lease>(game: &mut L) {
     session_slot!(game, TorizoSlot[e].x_velocity = 0);
     session_slot!(game, TorizoSlot[e].y_velocity = LANDED_Y_VELOCITY);
     game.foreign(|game| game.initialize_palette_targets());
-    if word!(game.AREA_INDEX) != 0 {
+    if game.area() != 0 {
         game.foreign(|game| game.set_palette_targets(Palettes::GoldenStart));
         if word!(game.JOYPAD1_LASTKEYS) == DEBUG_KEYS {
             word!(game.SAMUS_HEALTH = 700);
@@ -902,7 +902,7 @@ pub fn defeated<L: Lease>(k: u16, game: &mut L) {
         game.set_boss_bit(TORIZO_DEAD);
         game.queue_music_delayed(ELEVATOR_MUSIC);
     });
-    if word!(game.AREA_INDEX) != 0 {
+    if game.area() != 0 {
         game.foreign(|game| {
             game.scatter_enemy_drop(crate::enemy_projectiles::drops::DropSource::GoldenTorizo, k)
         });
@@ -950,7 +950,7 @@ pub fn branch_if_faceless<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> En
     if (session_slot!(game, TorizoSlot[k as i32].damage) & FACE_BLOWN_UP) != 0 {
         return EnemyScript::jump(jp.word(0));
     }
-    if word!(game.AREA_INDEX) != 0 {
+    if game.area() != 0 {
         EnemyScript::jump(jp.word(2))
     } else {
         jp.offset(2)
@@ -1132,9 +1132,7 @@ fn choose_attack<L: Lease>(k: u16, jp: EnemyScript, game: &mut L, missiles: u16)
         TorizoSlot[k as i32].link = list_address(game, k, jp.offset(2))
     );
     if word!(game.SAMUS_MISSILES) < missiles
-        || ((word!(game.NMI_FRAME_COUNTER_WORD) as i32
-            + (game.player_x() as i32 & 1)
-            + (game.player_x() as i32 >> 1))
+        || ((game.frame() as i32 + (game.player_x() as i32 & 1) + (game.player_x() as i32 >> 1))
             & 8)
             != 0
     {

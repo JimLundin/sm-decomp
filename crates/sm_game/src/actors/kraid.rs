@@ -448,7 +448,7 @@ pub fn arm_shot<L: Lease + ?Sized>(game: &mut L, j: u16) {
 
 /// Whether Kraid's boss bit is set for this area. Was `Kraid_CheckIfDead`.
 pub fn is_dead<L: Lease + ?Sized>(game: &mut L) -> u16 {
-    let area = word!(game.AREA_INDEX);
+    let area = game.area();
     ((game.foreign(|game| game.boss_word_native(area)) & 1) != 0) as u16
 }
 
@@ -1203,7 +1203,7 @@ pub fn run_function<L: Lease + ?Sized>(game: &mut L, function: u16) {
 /// Kraid grows, shaking, and breaks the ceiling platforms. Was
 /// `Kraid_GetsBig_BreakCeilingPlatforms`.
 fn break_ceiling<L: Lease + ?Sized>(game: &mut L) {
-    if (word!(game.NMI_FRAME_COUNTER_WORD) & 7) == 0 {
+    if (game.frame() & 7) == 0 {
         quake_rocks(game);
     }
     let mut step: u16 = 1;
@@ -1621,12 +1621,12 @@ pub fn fade_in_bg6<L: Lease + ?Sized>(game: &mut L) {
         game.foreign(|game| game.observe_kraid_flags(1));
         game.foreign(|game| game.queue_music_delayed(3));
         game.foreign(|game| game.observe_kraid_flags(2));
-        let area = word!(game.AREA_INDEX);
+        let area = game.area();
         let bits: i16 = game.foreign(|game| game.boss_word_native(area)) as i16;
         if (bits as u16 & 1) != 0 {
             session_slot!(game, Body[BODY].function = function::FADE_IN_DEAD_WAS_DEAD);
         } else {
-            let area = word!(game.AREA_INDEX);
+            let area = game.area();
             game.foreign(|game| game.set_boss_word_native(area, (bits as u16) | 1));
             session_slot!(game, Body[BODY].function = function::FADE_IN_DEAD_WAS_ALIVE);
         }

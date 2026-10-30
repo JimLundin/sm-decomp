@@ -21,7 +21,6 @@ use crate::constants::enemy_properties::{
 use crate::display::hdma_spawn::HdmaObjectDefinition;
 use crate::enemy_projectiles::drops::DropSource;
 use crate::phantoon_tables::{self, Timer};
-use crate::ram::CompatibilityRam as _;
 use crate::ram::RawRam as _;
 use crate::ram::{slot, word};
 
@@ -334,7 +333,7 @@ pub fn pick_pattern<S: BossState + ?Sized>(game: &mut S) {
     let roll = (game.roll_random() as i32 & 7) as usize;
     let closed: u16 = phantoon_tables::timer(game, Timer::EyeClosed, roll);
     session_slot!(game, Eye[EYE].timer = closed);
-    if (word!(game.NMI_FRAME_COUNTER_WORD) & 1) != 0 {
+    if (game.frame() & 1) != 0 {
         if session_slot!(game, Eye[EYE].movement_reversed) == 0 {
             let index: i16 =
                 ((session_slot!(game, Body[BODY].movement_index)) as i16).wrapping_sub(1);
@@ -510,9 +509,7 @@ fn start_dying<S: BossState + ?Sized>(game: &mut S, k: u16) {
 /// Fades the body palette one step toward black, every other frame, until
 /// `steps` steps. Was `Phantoon_FadeOut`.
 fn fade_out<S: BossState + ?Sized>(game: &mut S, steps: u16) {
-    if (word!(game.NMI_FRAME_COUNTER_WORD) & 1) == 0
-        && session_slot!(game, Eye[EYE].fade_complete) == 0
-    {
+    if (game.frame() & 1) == 0 && session_slot!(game, Eye[EYE].fade_complete) == 0 {
         session_slot!(game, Eye[EYE].fade_steps = steps);
         if fade_step_toward_target(game) & 1 != 0 {
             session_slot!(game, Eye[EYE].fade_complete = 1);
@@ -523,9 +520,7 @@ fn fade_out<S: BossState + ?Sized>(game: &mut S, steps: u16) {
 /// Fades the body palette one step toward its health colours, every other
 /// frame, until `steps` steps. Was `Phantoon_FadeIn`.
 fn fade_in<S: BossState + ?Sized>(game: &mut S, steps: u16) {
-    if (word!(game.NMI_FRAME_COUNTER_WORD) & 1) == 0
-        && session_slot!(game, Eye[EYE].fade_complete) == 0
-    {
+    if (game.frame() & 1) == 0 && session_slot!(game, Eye[EYE].fade_complete) == 0 {
         session_slot!(game, Eye[EYE].fade_steps = steps);
         if fade_step_toward_health(game) & 1 != 0 {
             session_slot!(game, Eye[EYE].fade_complete = 1);
@@ -1230,7 +1225,7 @@ pub fn dying_fade_out<S: BossState + ?Sized>(game: &mut S, k: u16) {
         if session_slot!(game, Eye[EYE].fade_complete) != 0 {
             session_slot!(game, Body[k as i32].function = function::ALMOST_DEAD);
         }
-    } else if (word!(game.NMI_FRAME_COUNTER_WORD) & 0xf) == 0 {
+    } else if (game.frame() & 0xf) == 0 {
         if session_slot!(byte game, Eye[EYE].movement_reversed[0]) == 0xf2 {
             session_slot!(game, Eye[EYE].movement_reversed = -1i32 as u16);
             session_slot!(game, Eye[EYE].fade_complete = 0);
@@ -1280,7 +1275,7 @@ pub fn dead<L: Lease + ?Sized>(game: &mut L, k: u16) {
     let me = k as i32;
     if session_slot!(game, Body[me].timer) != 0 {
         session_slot!(game, Body[me].timer, |old| old.wrapping_sub(1));
-    } else if (word!(game.NMI_FRAME_COUNTER_WORD) & 3) == 0 {
+    } else if (game.frame() & 3) == 0 {
         session_slot!(game, Eye[EYE].fade_steps = 12);
         if fade_step_toward_powered_on(game) & 1 != 0 {
             let value = game.slot_byte(MAIN_SCREEN_LAYERS) | BG2_ENABLED;
@@ -1293,7 +1288,7 @@ pub fn dead<L: Lease + ?Sized>(game: &mut L, k: u16) {
             session_slot!(game, Tentacles[TENTACLES].base.properties = deleted);
             session_slot!(game, Mouth[MOUTH].base.properties = deleted);
             game.foreign(|game| {
-                let area = word!(game.AREA_INDEX);
+                let area = game.area();
                 let bits = game.boss_word(area);
                 game.set_boss_word(area, bits | 1);
                 game.spawn_plm(0, 0x6, DEFEAT_PLM);
@@ -1391,7 +1386,7 @@ fn pick_first_pattern<S: BossState + ?Sized>(game: &mut S, k: u16) {
         Eye[EYE].timer = phantoon_tables::timer(
             game,
             Timer::EyeClosed,
-            (word!(game.NMI_FRAME_COUNTER_WORD) as i32 >> 1 & 3) as usize
+            (game.frame() as i32 >> 1 & 3) as usize
         )
     );
     if (game.roll_random() & 1) != 0 {

@@ -1025,7 +1025,7 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
     word!(game.BOSS_ID = 6);
     crate::word_transfers!(game, ascending, 2048; le(TILEMAP_STUFF, 0) <- value(824));
     if ({
-        let area = word!(game.AREA_INDEX);
+        let area = game.area();
         game.foreign(|game| game.boss_word_native(area))
     } & 2)
         != 0
@@ -1450,7 +1450,7 @@ fn walk<L: Lease + ?Sized>(k: u16, pixels: i32, game: &mut L) -> bool {
 fn mark_event_and_start_music<L: Lease + ?Sized>(game: &mut L) {
     game.foreign(|game| game.queue_music_delayed(6));
     word!(game.CAMERA_DISTANCE_INDEX = 0);
-    let area = word!(game.AREA_INDEX);
+    let area = game.area();
     let bits = game.foreign(|game| game.boss_word(area));
     game.foreign(|game| {
         game.set_boss_word(area, bits | 2);
@@ -1470,7 +1470,7 @@ pub fn hurt<L: Lease + ?Sized>(game: &mut L) {
 pub fn initialize_tongue<L: Lease + ?Sized>(game: &mut L) {
     let e: i32 = game.current_enemy() as i32;
     if ({
-        let area = word!(game.AREA_INDEX);
+        let area = game.area();
         game.foreign(|game| game.boss_word_native(area))
     } & 2)
         != 0

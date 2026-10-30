@@ -380,7 +380,7 @@ pub fn echo<L: Lease>(game: &mut L, k: u16) {
     let lifetime: u16 = session_slot!(game, Echo[me].lifetime);
     if lifetime != 0 {
         session_slot!(game, Echo[me].lifetime = lifetime.wrapping_sub(1));
-        let odd_frame = (word!(game.NMI_FRAME_COUNTER_WORD) & 1) != 0;
+        let odd_frame = (game.frame() & 1) != 0;
         // Odd echo slots show on odd frames, the others on even frames.
         let keep_hidden = if (k & 0x40) != 0 {
             !odd_frame

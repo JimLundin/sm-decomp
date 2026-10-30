@@ -90,7 +90,7 @@ pub fn foam_at_mouth<L: Lease>(k: u16, frame_mask: u16, game: &mut L) {
 /// Handle firing wall turret ($A5:87AA): every 40h frames, a random turret of
 /// the last four fires unless destroyed. Was `turret`.
 pub fn fire_wall_turret<S: BossState>(game: &mut S) {
-    if word!(game.NMI_FRAME_COUNTER_WORD) & TURRET_FRAMES == 0 {
+    if game.frame() & TURRET_FRAMES == 0 {
         let index = 2 * ((game.roll_random() & 3) + 2);
         if session_slot!(game, Draygon[index as i32].turret_destroyed) == 0 {
             let x = crate::cartridge::rom_table_word!(game, TURRET_POSITIONS, index as isize);
