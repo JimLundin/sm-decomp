@@ -67,6 +67,7 @@ pub mod word_transfers;
 pub mod xray_background;
 
 pub mod display {
+    pub mod bg_tile;
     pub mod control;
     pub mod error;
     pub mod hdma;

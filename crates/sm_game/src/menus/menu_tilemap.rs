@@ -1,5 +1,13 @@
 //! Menu tilemaps: native word stores, live palette reads and ROM text controls.
 use super::prelude::*;
+use crate::display::bg_tile;
+
+/// The pause menu's map and equipment BG tilemap buffers in work RAM.
+const PAUSE_TILEMAP: usize = 0x3000;
+const EQUIPMENT_TILEMAP: usize = 0x3800;
+/// The first reserve-energy digit tile, 0, in palette 2.
+const DIGIT_TILES: u16 = bg_tile::tile(4, 2);
+const _: () = assert!(DIGIT_TILES == 2052);
 use super::save_slots;
 use crate::constants::bank_81::{
     addr_kMenuTilemap_DataClear, addr_kMenuTilemap_DataCopy, addr_kMenuTilemap_Exit,
@@ -398,9 +406,13 @@ pub fn reserve_arrow<H: Host + ?Sized>(mode: ReserveArrow, game: &mut H) {
 }
 
 pub fn reserve_arrow_tiles<H: Host + ?Sized>(lit: bool, game: &mut H) {
-    let palette = if lit { 0x1800 } else { 0x1c00 };
+    let palette = if lit {
+        bg_tile::palette(6)
+    } else {
+        bg_tile::palette(7)
+    };
     for index in (0..8).map(|row| 129 + row * 32).chain(385..387) {
-        recolor_native(0x3800 + 2 * index, palette, 1, game);
+        recolor_native(EQUIPMENT_TILEMAP + 2 * index, palette, 1, game);
     }
 }
 
@@ -430,7 +442,7 @@ pub fn recolor_native<H: Host + ?Sized>(
             game.ram().read_byte(address + 1),
         ]);
         crate::word_transfers!(game, ascending, 1;
-            native(address) <- value((tile & !0x1c00) | palette));
+            native(address) <- value(bg_tile::recolour(tile, palette)));
     }
 }
 
@@ -470,7 +482,7 @@ pub fn equipment_icons<H: Host + ?Sized>(game: &mut H) {
                     & crate::menu_lists::equipment_bit(game, masks, index as isize)
                     == 0
                 {
-                    recolor_native(destination, 3072, bytes / 2, game);
+                    recolor_native(destination, bg_tile::palette(3), bytes / 2, game);
                 }
             } else {
                 copy_native_tiles(destination, 0xc01a, bytes, game);
@@ -538,13 +550,13 @@ pub fn equipment_wireframe<H: Host + ?Sized>(game: &mut H) {
 
 pub fn reserve_label<H: Host + ?Sized>(tile: impl Fn(usize) -> u16, game: &mut H) {
     for index in 0..4 {
-        let address = 0x3800 + 2 * (327 + index);
+        let address = EQUIPMENT_TILEMAP + 2 * (327 + index);
         let previous = u16::from_ne_bytes([
             game.ram().read_byte(address),
             game.ram().read_byte(address + 1),
         ]);
         crate::word_transfers!(game, ascending, 1;
-            native(address) <- value((previous & 0xfc00) | tile(index)));
+            native(address) <- value((previous & !0x3ff) | tile(index)));
     }
 }
 
@@ -555,7 +567,7 @@ fn reserve_digits<H: Host + ?Sized>(hundreds: u16, remainder: u16, game: &mut H)
         (392, hundreds),
     ] {
         crate::word_transfers!(game, ascending, 1;
-                native(0x3800 + 2 * index) <- value(digit + 2052));
+                native(EQUIPMENT_TILEMAP + 2 * index) <- value(digit + DIGIT_TILES));
     }
 }
 
@@ -665,13 +677,15 @@ pub fn pause_labels<H: Host + ?Sized>(mode: u16, game: &mut H) {
     const LEFT: (usize, usize) = (805, 5);
     const START: (usize, usize) = (812, 4);
     const RIGHT: (usize, usize) = (822, 5);
-    const TILEMAP: usize = 0x3000;
+    const TILEMAP: usize = PAUSE_TILEMAP;
 
+    const LIT: u16 = bg_tile::palette(2);
+    const DIM: u16 = bg_tile::palette(5);
     // Modes retain the original label order, including the unpause mode (1).
     let labels = [
-        [(RIGHT, 0x0800), (START, 0x0800), (LEFT, 0x1400)],
-        [(START, 0x0800), (LEFT, 0x1400), (RIGHT, 0x1400)],
-        [(LEFT, 0x0800), (START, 0x0800), (RIGHT, 0x1400)],
+        [(RIGHT, LIT), (START, LIT), (LEFT, DIM)],
+        [(START, LIT), (LEFT, DIM), (RIGHT, DIM)],
+        [(LEFT, LIT), (START, LIT), (RIGHT, DIM)],
     ][usize::from(mode)];
     for ((first_tile, width), palette) in labels {
         for row in [first_tile, first_tile + 32] {
@@ -681,7 +695,7 @@ pub fn pause_labels<H: Host + ?Sized>(mode: u16, game: &mut H) {
                     game.ram().read_byte(address),
                     game.ram().read_byte(address + 1),
                 ]);
-                let word = (word & !0x1c00) | palette;
+                let word = bg_tile::recolour(word, palette);
                 game.ram().copy_in(address, &word.to_le_bytes());
             }
         }
