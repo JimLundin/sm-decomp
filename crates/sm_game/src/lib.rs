@@ -189,6 +189,7 @@ pub mod actors {
     pub mod ridley;
     pub mod ridley_tables;
     pub mod rinka;
+    pub mod rio;
     pub mod rippers;
     pub mod roach;
     pub mod scene;

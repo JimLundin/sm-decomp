@@ -14,7 +14,7 @@ use crate::actors::{
     draygon_death, draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep,
     elevator, escape_critters, etecoon, evir, fire_arc, fireflea, fune, gamet, geega, kago,
     kihunter, kraid, magdollite, metroid, mini_kraid, mochtroid, morph_ball_eye, multiviola, oum,
-    phantoon, phantoon_actions, polyp, powamp, puyo, reflec, ridley, rinka, rippers, roach,
+    phantoon, phantoon_actions, polyp, powamp, puyo, reflec, ridley, rinka, rio, rippers, roach,
     shaktool, sidehopper, skree, skultera, space_pirates, statues, tatori, torizo, tripper,
     work_robot, wrecked_ship_spark, yapping_maw, yard, zeb, zebetites, zoa,
 };
@@ -669,6 +669,8 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10675113 => rippers::shot(game),
         10675359 => rippers::initialize(rippers::Kind::Ripper, game),
         10675418 => rippers::main_ai(rippers::Kind::Ripper, game),
+        10664909 => rio::initialize(game),
+        10664931 => rio::main_ai(game),
         _ => game.native_ai(ea),
     }
 }
@@ -1229,6 +1231,10 @@ pub fn instruction<H: InstructionHost>(
         11769047 | 11769079 | 11769127 | 11769159 => botwoon::set_hitbox(12, 12, j, game),
         11769063 | 11769143 => botwoon::set_hitbox(16, 8, j, game),
         11769191 => botwoon::set_spitting(j, game),
+        10664899 => {
+            rio::set_animation_finished(game);
+            j
+        }
         _ => game.native_instruction(ea, k, j),
     }
 }

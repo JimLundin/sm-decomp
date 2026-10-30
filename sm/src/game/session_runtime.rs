@@ -1206,13 +1206,6 @@ crate::game::callback_dispatch! {
             let phase = crate::game::gunship::advance(game);
             actor_species_pre_instruction(phase, game);
         }];
-        10664909 => [crate::game::rio::initialize(game)];
-        10664931 => [{
-            game.next_random();
-            if !crate::game::rio::advance(game) {
-                crate::rtl::Unreachable(game);
-            }
-        }];
         10657715 => [{
             let phase = {
                 let runtime = Runtime::new(game);
@@ -1330,10 +1323,6 @@ crate::game::callback_dispatch! {
         11128778 => [sm_game::actors::baby_metroid_cutscene::go_to_draining_mother_brain(k, j)];
         11139360 => [sm_game::actors::baby_metroid_encounter::go_to_normal(k, j)]; 11139382 => [sm_game::actors::baby_metroid_encounter::go_to_latched_on(k, j)];
         11139472 => [sm_game::actors::baby_metroid_encounter::go_to_remorse(k, j)];
-        10664899 => [{
-            crate::game::rio::instruction_finished(game);
-            j
-        }];
         10665614 => [{
             crate::game::lava_jumper::instruction_finished(game);
             j
