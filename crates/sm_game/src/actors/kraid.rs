@@ -956,10 +956,9 @@ where
         }
         let left: u16 = (kraid_tables::fingernail_boundary(game, (row >> 2) as usize).left)
             .wrapping_add(session_slot!(game, Fingernail[BODY].base.x_pos));
-        if session_slot!(game, Fingernail[me].base.x_width) as i32
+        if (session_slot!(game, Fingernail[me].base.x_width) as i32
             + session_slot!(game, Fingernail[me].base.x_pos) as i32
-            - left as i32
-            & 0x8000
+            - left as i32) & 0x8000
             == 0
             && (session_slot!(game, Fingernail[me].x_speed) & 0x8000) == 0
         {
@@ -1543,10 +1542,9 @@ where
         set_health_eighth(game, me, 1, 0);
         session_slot!(
             game,
-            Fingernail[me].base.x_pos = (session_slot!(game, Fingernail[BODY].base.x_pos) as i32
+            Fingernail[me].base.x_pos = ((session_slot!(game, Fingernail[BODY].base.x_pos) as i32
                 - session_slot!(game, Fingernail[BODY].base.x_width) as i32
-                - session_slot!(game, Fingernail[me].base.x_width) as i32
-                & 0xfff0) as u16
+                - session_slot!(game, Fingernail[me].base.x_width) as i32) & 0xfff0) as u16
         );
         session_slot!(
             game,

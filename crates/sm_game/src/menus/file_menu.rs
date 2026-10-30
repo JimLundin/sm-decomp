@@ -661,7 +661,7 @@ fn choose_main<H: Host + ?Sized>(game: &mut H) {
             }
         } else {
             let mut selection: i16 = word!(game.selected_save_slot) as i16;
-            if word!(game.selected_save_slot) as i32 - 3i32 & 0x8000 != 0 {
+            if (word!(game.selected_save_slot) as i32 - 3i32) & 0x8000 != 0 {
                 game.queue_sound(0, 0x2a_u8, 6);
                 crate::menu!(game.menu_index += 27);
                 // Start the selected slot's helmet animation.

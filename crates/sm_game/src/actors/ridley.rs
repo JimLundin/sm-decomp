@@ -848,7 +848,7 @@ where
         actions::POGO
     } else if samus_not_spinning(game) {
         actions::LUNGE_OR_POGO
-    } else if session_slot!(game, Ridley[RIDLEY].base.health) as i32 - 9000 & 0x8000 != 0 {
+    } else if (session_slot!(game, Ridley[RIDLEY].base.health) as i32 - 9000) & 0x8000 != 0 {
         actions::SWOOP_OR_POGO
     } else {
         actions::POGO_OR_SWOOP
@@ -1143,7 +1143,7 @@ pub fn pogo_fly_to_position<L: BossLease + ?Sized>(game: &mut L)
 where
     L::Game: Host,
 {
-    if session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 288 & 0x8000 != 0 {
+    if (session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 288) & 0x8000 != 0 {
         face_room_middle(game);
         session_slot!(
             game,
@@ -1194,7 +1194,7 @@ where
     }
     let mut y_velocity = (word!(game.tilemap_stuff[tail::POGO_DOWN_ACCELERATION]) as i16)
         .wrapping_add(session_slot!(game, Ridley[RIDLEY].y_velocity) as i16);
-    if y_velocity as i32 - 1536 & 0x8000 == 0 {
+    if (y_velocity as i32 - 1536) & 0x8000 == 0 {
         y_velocity = 1536;
     }
     session_slot!(game, Ridley[RIDLEY].y_velocity = y_velocity as u16);
@@ -1219,7 +1219,7 @@ where
         }
         word!(game.tilemap_stuff[tail::FUNCTION] = 4);
         let mut bounces = session_slot!(game, Ridley[RIDLEY].pogo_bounces).wrapping_add(1);
-        if session_slot!(game, Ridley[RIDLEY].pogo_bounces) as i32 - 1 & 0x8000 == 0 {
+        if (session_slot!(game, Ridley[RIDLEY].pogo_bounces) as i32 - 1) & 0x8000 == 0 {
             if session_slot!(game, Ridley[RIDLEY].facing) != FACING_FORWARD {
                 set_instruction_list(instruction_list::SHOOT_FIREBALLS, game);
             }
@@ -1346,8 +1346,7 @@ where
         };
         session_slot!(game, Ridley[RIDLEY].x_velocity = x_velocity as u16);
     }
-    let facing_away = ((session_slot!(game, Ridley[RIDLEY].x_velocity) as i32
-        ^ session_slot!(game, Ridley[RIDLEY].base.x_pos) as i32 - word!(game.samus_x_pos) as i32)
+    let facing_away = ((session_slot!(game, Ridley[RIDLEY].x_velocity) as i32 ^ (session_slot!(game, Ridley[RIDLEY].base.x_pos) as i32 - word!(game.samus_x_pos) as i32))
         & 0x8000)
         == 0;
     let x = session_slot!(game, Ridley[RIDLEY].base.x_pos);
@@ -1437,7 +1436,7 @@ pub fn lunge_missed_samus<L: BossLease + ?Sized>(game: &mut L)
 where
     L::Game: Host,
 {
-    if session_slot!(game, Ridley[RIDLEY].death_lunges) as i32 - 10 & 0x8000 != 0 {
+    if (session_slot!(game, Ridley[RIDLEY].death_lunges) as i32 - 10) & 0x8000 != 0 {
         if word!(game.power_bomb_flag) != 0 {
             session_slot!(game, Ridley[RIDLEY].function = function::DODGE_POWER_BOMB);
             dodge_power_bomb(game);
@@ -1466,7 +1465,7 @@ where
                 ridley_data::lunge_side(game, session_slot!(game, Ridley[RIDLEY].facing) as isize);
             let dx = session_slot!(game, Ridley[RIDLEY].base.x_pos)
                 .wrapping_sub(word!(game.samus_x_pos));
-            ((side ^ dx) & 0x8000) == 0 || abs16(dx) as i32 - 32 & 0x8000 != 0
+            ((side ^ dx) & 0x8000) == 0 || (abs16(dx) as i32 - 32) & 0x8000 != 0
         }
         && ((session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32 + 35
             - word!(game.samus_y_pos) as i32) as i16)
@@ -1539,7 +1538,7 @@ where
         Ridley[RIDLEY].target_x = TARGET_X[session_slot!(game, Ridley[RIDLEY].facing) as usize]
     );
     let mut y = (session_slot!(game, Ridley[RIDLEY].base.y_pos) as i16).wrapping_sub(64);
-    if session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 320 & 0x8000 != 0 {
+    if (session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 320) & 0x8000 != 0 {
         y = 256;
     }
     session_slot!(game, Ridley[RIDLEY].target_y = y as u16);
@@ -1713,7 +1712,7 @@ pub fn samus_in_pogo_zone<L: BossLease + ?Sized>(game: &mut L) -> bool
 where
     L::Game: Host,
 {
-    (word!(game.samus_y_pos) as i32 - 352 & 0x8000) == 0
+    ((word!(game.samus_y_pos) as i32 - 352) & 0x8000) == 0
 }
 
 /// Lunge if power bomb active and not holding Samus ($A6:BD2C). Was
@@ -1738,7 +1737,7 @@ where
 {
     if word!(game.power_bomb_flag) != 0 {
         session_slot!(game, Ridley[RIDLEY].fight_mode = 2);
-        let x = if word!(game.power_bomb_explosion_x_pos) as i32 - 128 & 0x8000 != 0 {
+        let x = if (word!(game.power_bomb_explosion_x_pos) as i32 - 128) & 0x8000 != 0 {
             192
         } else {
             80
@@ -1767,7 +1766,7 @@ where
     L::Game: Host,
 {
     ceres_accelerate(0, 1, 192, 128, game);
-    if session_slot!(game, Ridley[RIDLEY].base.x_pos) as i32 - 192 & 0x8000 == 0 {
+    if (session_slot!(game, Ridley[RIDLEY].base.x_pos) as i32 - 192) & 0x8000 == 0 {
         session_slot!(
             game,
             Ridley[RIDLEY].function = function::FAKE_RETREAT_RISING
@@ -1783,7 +1782,7 @@ where
 {
     session_slot!(game, Ridley[RIDLEY].min_y = -192i32 as u16);
     ceres_accelerate(0, 1, 192, -128i32 as u16, game);
-    if session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 32 & 0x8000 != 0 {
+    if (session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 32) & 0x8000 != 0 {
         session_slot!(
             game,
             Ridley[RIDLEY].baby_metroid_function = baby_metroid_function::START_FALLING
@@ -1931,7 +1930,7 @@ where
             + ((velocity >> 8) as i8 as i32 + (subpixel >> 8)))
             as u16
     );
-    if session_slot!(game, Ridley[RIDLEY].baby_metroid_y) as i32 - 192 & 0x8000 == 0 {
+    if (session_slot!(game, Ridley[RIDLEY].baby_metroid_y) as i32 - 192) & 0x8000 == 0 {
         session_slot!(game, Ridley[RIDLEY].baby_metroid_y = 192);
         session_slot!(
             game,
@@ -2153,7 +2152,7 @@ where
     }
     session_slot!(game, Ridley[RIDLEY].small_explosion_timer = 4);
     let mut index = session_slot!(game, Ridley[RIDLEY].small_explosion_index).wrapping_add(1);
-    if session_slot!(game, Ridley[RIDLEY].small_explosion_index) as i32 - 9 & 0x8000 == 0 {
+    if (session_slot!(game, Ridley[RIDLEY].small_explosion_index) as i32 - 9) & 0x8000 == 0 {
         index = 0;
     }
     session_slot!(game, Ridley[RIDLEY].small_explosion_index = index);
@@ -3077,10 +3076,10 @@ pub fn tail_whip_sound<L: BossLease + ?Sized>(game: &mut L)
 where
     L::Game: Host,
 {
-    if word!(game.tilemap_stuff[tail::ANGLE_DELTA]) as i32 - 8 & 0x8000 == 0 {
+    if (word!(game.tilemap_stuff[tail::ANGLE_DELTA]) as i32 - 8) & 0x8000 == 0 {
         let counter = session_slot!(game, Ridley[RIDLEY].whip_sound_counter).wrapping_add(1);
         session_slot!(game, Ridley[RIDLEY].whip_sound_counter = counter);
-        if counter as i32 - 16 & 0x8000 != 0 {
+        if (counter as i32 - 16) & 0x8000 != 0 {
             return;
         }
         if session_slot!(game, Ridley[RIDLEY].roaring) == 0 {
@@ -3387,13 +3386,13 @@ pub fn calculate_swoop_velocities<L: BossLease + ?Sized>(
             >= 0
         {
             let mut speed = session_slot!(game, Ridley[RIDLEY].swoop_speed).wrapping_add(32);
-            if speed as i32 - target_speed as i32 & 0x8000 == 0 {
+            if (speed as i32 - target_speed as i32) & 0x8000 == 0 {
                 speed = target_speed;
             }
             session_slot!(game, Ridley[RIDLEY].swoop_speed = speed);
         } else {
             let mut speed = session_slot!(game, Ridley[RIDLEY].swoop_speed).wrapping_sub(32);
-            if speed as i32 - target_speed as i32 & 0x8000 != 0 {
+            if (speed as i32 - target_speed as i32) & 0x8000 != 0 {
                 speed = target_speed;
             }
             session_slot!(game, Ridley[RIDLEY].swoop_speed = speed);
@@ -3660,10 +3659,9 @@ fn tail_tip_sector<L: BossLease + ?Sized>(game: &L) -> isize
 where
     L::Game: Host,
 {
-    ((game.slot_byte(TAIL_RAM + 2 * tail::angle(5)) as i32
+    (((game.slot_byte(TAIL_RAM + 2 * tail::angle(5)) as i32
         + game.slot_byte(TAIL_RAM + 2 * tail::angle(6)) as i32
-        + 8
-        & 0xf0) as u8
+        + 8) & 0xf0) as u8
         >> 4) as isize
 }
 
@@ -3974,7 +3972,7 @@ pub fn goto_if_samus_health_low<L: BossLease + ?Sized>(
 where
     L::Game: Host,
 {
-    if word!(game.area_index) == NORFAIR || word!(game.samus_health) as i32 - 30 & 0x8000 == 0 {
+    if word!(game.area_index) == NORFAIR || (word!(game.samus_health) as i32 - 30) & 0x8000 == 0 {
         return script.offset(1);
     }
     session_slot!(game, Ridley[RIDLEY].timer = 8);

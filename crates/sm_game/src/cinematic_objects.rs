@@ -212,7 +212,7 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             spawn_cinematic_sprite_at(samus::SUITLESS_JUMP, 0, 0, game);
             },
             9172308 => {
-            if word!(game.game_time_hours) as i32 - 10i32 & 0x8000 != 0 {
+            if (word!(game.game_time_hours) as i32 - 10i32) & 0x8000 != 0 {
                 spawn_cinematic_sprite_at(samus::SUITED_JUMP_HEAD_WITHOUT_HELMET, 2, 0, game);
             } else {
                 spawn_cinematic_sprite_at(samus::SUITED_JUMP_HEAD_WITH_HELMET, 2, 0, game);

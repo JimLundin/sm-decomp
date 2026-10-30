@@ -152,9 +152,7 @@ fn choose<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 
 fn load_map<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     game.set_hdma_enabled(false);
-    {
-        game.clear_hdma()
-    };
+    game.clear_hdma();
     {
         word!(game.game_state = kGameState_5_FileSelectMap as u16);
         crate::menu!(game.menu_index = 0);

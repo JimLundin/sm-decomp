@@ -120,7 +120,7 @@ pub fn update_ending_critters<H: crate::menus::host::Host + ?Sized>(
     }
     advance_cinematic_coordinate(object, true, 128, game);
     word!(game.cinematicspr_arr6[slot] = word!(game.cinematicspr_arr6[slot]));
-    if word!(game.cinematicbg_arr7[slot] += 1, reread) as i32 - 272 & 0x8000 == 0 {
+    if (word!(game.cinematicbg_arr7[slot] += 1, reread) as i32 - 272) & 0x8000 == 0 {
         resume_cinematic_sprite(slot, sprite::DELETE, game);
     }
 }

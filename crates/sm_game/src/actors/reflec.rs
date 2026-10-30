@@ -95,7 +95,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
     runtime.write_slice_native(GFX_DRAWN_HOOK, PALETTE_CYCLE_HOOK);
     runtime.write_slice_native(GFX_DRAWN_HOOK_BANK, BANK);
     let palette =
-        ((16 * u32::from(runtime.resolve_actor(key, Native).palette) & 0xff00) >> 8) as u16;
+        (((16 * u32::from(runtime.resolve_actor(key, Native).palette)) & 0xff00) >> 8) as u16;
     runtime.write_slice_le(
         word_arrays::variables_for_enemy_graphics_drawn_hook + HOOK_PALETTE,
         palette,

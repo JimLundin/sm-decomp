@@ -142,7 +142,7 @@ where
             crate::camera::current(game).layer1[1],
             false,
         );
-        object.table = (3 * ((v8 as i32 ^ 0x1ff) + 1 & 0x3ff) + 0xb62a) as u16;
+        object.table = (3 * (((v8 as i32 ^ 0x1ff) + 1) & 0x3ff) + 0xb62a) as u16;
     }
 }
 #[forbid(unsafe_code)]

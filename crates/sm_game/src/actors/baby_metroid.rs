@@ -142,7 +142,7 @@ pub fn is_off_screen(k: u16, game: &mut impl Host) -> u8 {
     if y_pos >= 0 {
         let y =
             (y_pos as i32 + SCREEN_Y_MARGIN - crate::camera::current(game).layer1[1] as i32) as i16;
-        if y >= 0 && y as i32 - SCREEN_HEIGHT & SIGN != 0 {
+        if y >= 0 && (y as i32 - SCREEN_HEIGHT) & SIGN != 0 {
             let x_pos = session_slot!(game, BabyMetroid[e].base.x_pos) as i16;
             if x_pos >= 0 {
                 let x = (x_pos as i32 + SCREEN_X_MARGIN
@@ -169,7 +169,7 @@ pub fn accelerate_towards_y(k: u16, target: u16, acceleration: u16, game: &mut i
     } else if offset >= 0 {
         let mut velocity =
             session_slot!(game, BabyMetroid[e].y_velocity).wrapping_sub(acceleration);
-        if velocity as i32 + i32::from(MAX_SPEED) & SIGN != 0 {
+        if (velocity as i32 + i32::from(MAX_SPEED)) & SIGN != 0 {
             velocity = MAX_SPEED.wrapping_neg();
         }
         session_slot!(game, BabyMetroid[e].y_velocity = velocity);
@@ -183,7 +183,7 @@ pub fn accelerate_towards_y(k: u16, target: u16, acceleration: u16, game: &mut i
     } else {
         let mut velocity =
             acceleration.wrapping_add(session_slot!(game, BabyMetroid[e].y_velocity));
-        if velocity as i32 - i32::from(MAX_SPEED) & SIGN == 0 {
+        if (velocity as i32 - i32::from(MAX_SPEED)) & SIGN == 0 {
             velocity = MAX_SPEED;
         }
         session_slot!(game, BabyMetroid[e].y_velocity = velocity);
@@ -207,7 +207,7 @@ pub fn accelerate_towards_x(k: u16, target: u16, acceleration: u16, game: &mut i
     if (session_slot!(game, BabyMetroid[e].base.x_pos) as i16).wrapping_sub(target as i16) >= 0 {
         let mut velocity =
             session_slot!(game, BabyMetroid[e].x_velocity).wrapping_sub(acceleration);
-        if velocity as i32 + i32::from(MAX_SPEED) & SIGN != 0 {
+        if (velocity as i32 + i32::from(MAX_SPEED)) & SIGN != 0 {
             velocity = MAX_SPEED.wrapping_neg();
         }
         session_slot!(game, BabyMetroid[e].x_velocity = velocity);
@@ -221,7 +221,7 @@ pub fn accelerate_towards_x(k: u16, target: u16, acceleration: u16, game: &mut i
     } else {
         let mut velocity =
             acceleration.wrapping_add(session_slot!(game, BabyMetroid[e].x_velocity));
-        if velocity as i32 - i32::from(MAX_SPEED) & SIGN == 0 {
+        if (velocity as i32 - i32::from(MAX_SPEED)) & SIGN == 0 {
             velocity = MAX_SPEED;
         }
         session_slot!(game, BabyMetroid[e].x_velocity = velocity);
