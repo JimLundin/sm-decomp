@@ -4,10 +4,32 @@ use crate::display::transfer::setup_transfer;
 use crate::menus::menu_tilemap::native_record;
 use crate::ram::RawRam as _;
 
+/// The Session-owned player and inventory values the HUD shows. `sm` reads the
+/// compat words for the game; a Session lease reads its owned fields.
+pub trait HudPlayer {
+    /// $09C2 and $09C4.
+    fn health(&self) -> u16;
+    fn max_health(&self) -> u16;
+    /// $09C6/$09CA/$09CE and $09C8/$09CC/$09D0: missiles, supers, power bombs.
+    fn ammunition(&self, index: usize) -> u16;
+    fn max_ammunition(&self, index: usize) -> u16;
+    /// $09D6 and $09C0.
+    fn reserve_health(&self) -> u16;
+    fn reserve_mode(&self) -> u16;
+    /// $09A2.
+    fn equipped_items(&self) -> u16;
+    /// $09D2 and $0A04: the selected and automatically cancelled HUD items.
+    fn selected_item(&self) -> u16;
+    fn automatic_item(&self) -> u16;
+    /// $0D32.
+    fn grapple_function(&self) -> u16;
+}
+
 /// What the HUD reads and writes: RAM, registers, sound effects and the
 /// native cartridge.
 pub trait HudHost:
-    crate::ram::RamHost
+    HudPlayer
+    + crate::ram::RamHost
     + crate::player_position::PlayerFacts
     + crate::display::sequence::Registers
     + crate::effects::SoundEffects
@@ -15,7 +37,8 @@ pub trait HudHost:
 {
 }
 impl<T> HudHost for T where
-    T: crate::ram::RamHost
+    T: HudPlayer
+        + crate::ram::RamHost
         + crate::player_position::PlayerFacts
         + crate::display::sequence::Registers
         + crate::effects::SoundEffects
@@ -188,23 +211,22 @@ pub fn initialize<H: HudHost + ?Sized>(game: &mut H) {
         game.write_register(MDMAEN as u16, 2);
         crate::word_transfers!(game, ascending, 96; le(hud_tilemap, 0) <- table(INITIAL_TILES, 0));
         for (item, mask) in [(Item::Xray, XRAY_SCOPE), (Item::Grapple, GRAPPLING_BEAM)] {
-            if word!(game.equipped_items) & mask != 0 {
+            if game.equipped_items() & mask != 0 {
                 install(item, game);
             }
         }
-        for (item, maximum) in [
-            (Item::Missiles, fields::samus_max_missiles),
-            (Item::SuperMissiles, fields::samus_max_super_missiles),
-            (Item::PowerBombs, fields::samus_max_power_bombs),
-        ] {
-            if at!(game, maximum;) != 0 {
+        for (index, item) in [Item::Missiles, Item::SuperMissiles, Item::PowerBombs]
+            .into_iter()
+            .enumerate()
+        {
+            if game.max_ammunition(index) != 0 {
                 install(item, game);
             }
         }
         word! { game, 0; samus_prev_health, samus_prev_missiles, samus_prev_super_missiles,
         samus_prev_power_bombs, samus_prev_hud_item_index, }
         ammunition(true, game);
-        highlight(word!(game.hud_item_index), SELECTED_PALETTE, game);
+        highlight(game.selected_item(), SELECTED_PALETTE, game);
         highlight(
             word!(game.samus_prev_hud_item_index),
             UNSELECTED_PALETTE,
@@ -216,35 +238,25 @@ pub fn initialize<H: HudHost + ?Sized>(game: &mut H) {
 
 fn ammunition<H: HudHost + ?Sized>(initial: bool, game: &mut H) {
     {
-        const ROWS: [(usize, usize, usize, u16); 3] = [
-            (
-                fields::samus_max_missiles,
-                fields::samus_missiles,
-                fields::samus_prev_missiles,
-                0x94,
-            ),
-            (
-                fields::samus_max_super_missiles,
-                fields::samus_super_missiles,
-                fields::samus_prev_super_missiles,
-                0x9c,
-            ),
-            (
-                fields::samus_max_power_bombs,
-                fields::samus_power_bombs,
-                fields::samus_prev_power_bombs,
-                0xa2,
-            ),
+        const ROWS: [(usize, u16); 3] = [
+            (fields::samus_prev_missiles, 0x94),
+            (fields::samus_prev_super_missiles, 0x9c),
+            (fields::samus_prev_power_bombs, 0xa2),
         ];
-        for (index, &(maximum, current, previous, offset)) in ROWS.iter().enumerate() {
-            if at!(game, maximum;) != 0 && (initial || at!(game, current;) != at!(game, previous;))
+        for (index, &(previous, offset)) in ROWS.iter().enumerate() {
+            if game.max_ammunition(index) != 0
+                && (initial || game.ammunition(index) != at!(game, previous;))
             {
                 if !initial {
-                    at!(game, previous; = at!(game, current;));
+                    at!(game, previous; = game.ammunition(index));
                 }
                 let three = index == 0
                     || (!initial && index == 1 && word!(game.joypad_dbg_flags) & 0x1f40 != 0);
-                let count = at!(game, if !initial && index == 1 { previous } else { current };);
+                let count = if !initial && index == 1 {
+                    at!(game, previous;)
+                } else {
+                    game.ammunition(index)
+                };
                 number(WEAPON_DIGITS, count, offset, three, game);
             }
         }
@@ -254,20 +266,16 @@ fn ammunition<H: HudHost + ?Sized>(initial: bool, game: &mut H) {
 /// Native table capture retains its original diagnostic and allocation contract.
 pub fn advance<H: HudHost + ?Sized>(game: &mut H) {
     {
-        if word!(game.reserve_health_mode) == 1 {
+        if game.reserve_mode() == 1 {
             let reserve = native_record(RESERVE_TILES, game);
-            let start = if word!(game.samus_reserve_health) == 0 {
-                12
-            } else {
-                0
-            };
+            let start = if game.reserve_health() == 0 { 12 } else { 0 };
             stamp(8, 2, 6, |i| reserve.word(start + 2 * i), game);
         }
-        if word!(game.samus_health) != word!(game.samus_prev_health) {
-            word!(game.samus_prev_health = word!(game.samus_health));
-            let mut filled = word!(game.samus_health) / 100;
-            let remainder = word!(game.samus_health) % 100;
-            let count = usize::from(word!(game.samus_max_health) / 100);
+        if game.health() != word!(game.samus_prev_health) {
+            word!(game.samus_prev_health = game.health());
+            let mut filled = game.health() / 100;
+            let remainder = game.health() % 100;
+            let count = usize::from(game.max_health() / 100);
             const TANKS: [u16; 14] = [
                 0x42, 0x44, 0x46, 0x48, 0x4a, 0x4c, 0x4e, 2, 4, 6, 8, 0xa, 0xc, 0xe,
             ];
@@ -283,17 +291,17 @@ pub fn advance<H: HudHost + ?Sized>(game: &mut H) {
             number(HEALTH_DIGITS, remainder, 0x8c, false, game);
         }
         ammunition(false, game);
-        if word!(game.hud_item_index) != word!(game.samus_prev_hud_item_index) {
-            highlight(word!(game.hud_item_index), SELECTED_PALETTE, game);
+        if game.selected_item() != word!(game.samus_prev_hud_item_index) {
+            highlight(game.selected_item(), SELECTED_PALETTE, game);
             highlight(
                 word!(game.samus_prev_hud_item_index),
                 UNSELECTED_PALETTE,
                 game,
             );
-            word!(game.samus_prev_hud_item_index = word!(game.hud_item_index));
+            word!(game.samus_prev_hud_item_index = game.selected_item());
             if game.movement_type() != SPIN_JUMPING
                 && game.movement_type() != WALL_JUMPING
-                && word!(game.grapple_beam_function) == GRAPPLE_INACTIVE
+                && game.grapple_function() == GRAPPLE_INACTIVE
                 && word!(game.time_is_frozen_flag) == 0
             {
                 game.queue_sound(0, 0x39_u8, 6);
@@ -309,7 +317,7 @@ pub fn advance<H: HudHost + ?Sized>(game: &mut H) {
         } else {
             UNSELECTED_PALETTE
         };
-        highlight(word!(game.samus_auto_cancel_hud_item_index), palette, game);
+        highlight(game.automatic_item(), palette, game);
         let tail = word!(game.vram_write_queue_tail);
         // Wrap each field cursor before widening; the native bank word overlaps destination.
         for (offset, value) in [
@@ -375,7 +383,7 @@ fn number<H: HudHost + ?Sized>(
 pub fn menu_reserve_mode<H: HudHost + ?Sized>(automatic: bool, game: &mut H) {
     if automatic {
         // The equipment menu intentionally uses bank82, unlike the ordinary HUD.
-        let cursor = if word!(game.samus_reserve_health) == 0 {
+        let cursor = if game.reserve_health() == 0 {
             0x9997
         } else {
             0x998b
