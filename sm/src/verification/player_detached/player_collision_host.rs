@@ -1,9 +1,14 @@
 //! Verification-only finite collision host over the actual Composed Session.
 //! Prepared backend callbacks are contract witnesses, not vanilla backend proof.
 #![forbid(unsafe_code)]
-use {crate::game::{room_entry::EntryPoll}, sm_game::{player_collision::effects::{Content, Effects, ImportedCollisionReads, MechanismHeader}}};
 use crate::{Composed, rom::RomRecord};
 use std::collections::BTreeMap;
+use {
+    crate::game::room_entry::EntryPoll,
+    sm_game::player_collision::effects::{
+        Content, Effects, ImportedCollisionReads, MechanismHeader,
+    },
+};
 
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) enum CollisionEvent {
@@ -106,11 +111,8 @@ impl Content for Composed {
 }
 impl ImportedCollisionReads for Composed {
     fn imported_level_word(&self, byte_offset: usize) -> u16 {
-        self.collision_word(
-            0x10002usize
-                .checked_add(byte_offset)
-                .expect("level offset overflow"),
-        )
+        let [low, high] = sm_game::player_collision::geometry::level_word_bytes(byte_offset);
+        u16::from_le_bytes([self.collision_byte(low), self.collision_byte(high)])
     }
     fn imported_behavior_byte(&self, index: usize) -> u8 {
         self.collision_byte(
@@ -129,7 +131,11 @@ impl ImportedCollisionReads for Composed {
 }
 impl Effects for Composed {
     #[cfg(any(test, sm_verify_dll))]
-    fn record_launch(&mut self, direction: sm_game::launch_motion::MovementDirection, displacement: i32) {
+    fn record_launch(
+        &mut self,
+        direction: sm_game::launch_motion::MovementDirection,
+        displacement: i32,
+    ) {
         crate::game::player_collision_owned_checks::record_launch(direction, displacement);
     }
     fn apply_mechanism(&mut self, header: MechanismHeader, displacement: &mut i32) -> u8 {
@@ -189,7 +195,10 @@ impl Effects for Composed {
 #[cfg(test)]
 mod checks {
     use super::*;
-    use {crate::game::{player_collision_owned_checks as owned}, sm_game::{actors::access::{AccessMode, ActorAccess, ActorKey}}};
+    use {
+        crate::game::player_collision_owned_checks as owned,
+        sm_game::actors::access::{AccessMode, ActorAccess, ActorKey},
+    };
     pub(super) fn empty_room() -> Composed {
         let mut h = Composed::new();
         let s = &mut h.world.player;
@@ -285,7 +294,7 @@ mod checks {
         h.world.player.player.movement_and_facing = 0x108;
         h.world.player.player.collision.solid_actor_flags = 1;
         h.world.player.player.transitions.ordinary =
-        crate::game::player_transitions::state::PoseRequestWord::from_raw(3);
+            crate::game::player_transitions::state::PoseRequestWord::from_raw(3);
         h.byte(0x91, 0xb629 + 2 * 8 + 3, 5);
         h.byte(0x91, 0xb629 + 3 * 8 + 3, 7);
         h.word(0x91, 0xeb74 + 5 * 2, 0x1234);
