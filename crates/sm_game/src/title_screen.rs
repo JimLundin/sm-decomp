@@ -3,10 +3,44 @@
 #![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
 use crate::cinematic::CinematicLayer;
 use crate::cinematic::{add_native_pair, place_cinematic_sprite, set_cinematic_backdrop};
+use crate::constants::buttons::{kButton_A, kButton_B, kButton_Start};
 use crate::menus::prelude::words;
 #[allow(unused_imports)]
 use crate::ram::RawRam as _;
 use crate::ram::{word, words as ram_words};
+
+/// Bank $8B cinematic functions of the title sequence.
+mod function {
+    /// $8B:9A47: the return that leaves the cinematic idle.
+    pub const IDLE: u16 = 0x9a47;
+    /// $8B:9D17: scene 0, panning left over the lower half.
+    pub const PAN_LEFT_LOWER: u16 = 0x9d17;
+    /// $8B:9D90: scene 1, panning left over the upper half.
+    pub const PAN_LEFT_UPPER: u16 = 0x9d90;
+    /// $8B:9E12: scene 2, panning down.
+    pub const PAN_DOWN: u16 = 0x9e12;
+    /// $8B:9E8B: scene 3, zooming out.
+    pub const ZOOM_OUT: u16 = 0x9e8b;
+    /// $8B:9F29: the title screen itself; earlier functions can be skipped.
+    pub const TITLE_SCREEN: u16 = 0x9f29;
+    /// $8B:9F52: transition to the file select menu.
+    pub const TO_FILE_SELECT: u16 = 0x9f52;
+    /// $8B:9FAE: transition to the demos.
+    pub const TO_DEMOS: u16 = 0x9fae;
+}
+
+/// The scrolling text cinematic objects, one per panning scene.
+mod scrolling_text {
+    pub const NINTENDO: u16 = 0xa0f5;
+    pub const PRESENTS: u16 = 0xa0fb;
+    pub const METROID_3: u16 = 0xa101;
+}
+
+/// Buttons that skip ahead or start the game from the title.
+const CONFIRM_BUTTONS: u16 = (kButton_B | kButton_Start | kButton_A) as u16;
+
+const _: () = assert!(CONFIRM_BUTTONS == 0x9080);
+const _: () = assert!(function::TITLE_SCREEN.wrapping_neg() == 0x60d7);
 
 pub const METROID_PAL_1: [u16; 16] = [
     0x1000, 0x6bf5, 0x2e41, 0x2da1, 0x2d01, 0x5e5f, 0x183f, 0x1014, 0x80a, 0x404, 0x4f9f, 0x3ed8,
@@ -49,10 +83,10 @@ pub fn start_title_pan<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) -> u16 {
     let (next, zoom, x, y) = [
-        (0x9d17, 72, 315, 225),
-        (0x9d90, 96, 44, -155i16 as u16),
-        (0x9e12, 96, -177i16 as u16, -160i16 as u16),
-        (0x9e8b, 67, 0, 0),
+        (function::PAN_LEFT_LOWER, 72, 315, 225),
+        (function::PAN_LEFT_UPPER, 96, 44, -155i16 as u16),
+        (function::PAN_DOWN, 96, -177i16 as u16, -160i16 as u16),
+        (function::ZOOM_OUT, 67, 0, 0),
     ][stage];
     game.ram().write_byte(0x69, 17);
     word! {game; cinematic_function = next; cinematic_var6 = zoom;
@@ -82,17 +116,24 @@ pub fn advance_title_pan<H: crate::menus::host::Host + ?Sized>(stage: usize, gam
     // The vertical pan ends on the opposite side of its cutoff.
     if negative != (stage == 2) {
         game.ram().write_byte(0x69, 16);
-        word!(game.cinematic_function = 0x9a47);
-        let definition = [0xa0f5, 0xa0fb, 0xa101][stage];
-        game.spawn_cinematic_object(CinematicLayer::Sprites, definition, 0x9a47);
+        word!(game.cinematic_function = function::IDLE);
+        let definition = [
+            scrolling_text::NINTENDO,
+            scrolling_text::PRESENTS,
+            scrolling_text::METROID_3,
+        ][stage];
+        game.spawn_cinematic_object(CinematicLayer::Sprites, definition, function::IDLE);
         set_cinematic_backdrop(false, game);
     }
     request_title_skip(game);
 }
 
 pub fn request_title_skip<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    if word!(game.cinematic_function) as i32 + 0x60d8 & 0x8000 != 0
-        && word!(game.joypad1_newkeys) & 0x9080 != 0
+    // Before the title screen: the original adds the function's negation plus one.
+    if word!(game.cinematic_function) as i32 + (function::TITLE_SCREEN.wrapping_neg() as i32 + 1)
+        & 0x8000
+        != 0
+        && word!(game.joypad1_newkeys) & CONFIRM_BUTTONS != 0
         && word!(game.cinematic_var18) == 0
     {
         word! {game; cinematic_var18 = 1; screen_fade_delay = 0; screen_fade_counter = 2; }
@@ -102,12 +143,12 @@ pub fn request_title_skip<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 pub fn advance_title_wait<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     let expired = word!(game.demo_timer -= 1, reread) & 0x8000 != 0;
     if word!(game.demo_timer) == 0 || expired {
-        word!(game.cinematic_function = 0x9fae);
+        word!(game.cinematic_function = function::TO_DEMOS);
     } else {
-        if word!(game.joypad1_newkeys) & 0x9080 == 0 {
+        if word!(game.joypad1_newkeys) & CONFIRM_BUTTONS == 0 {
             return;
         }
-        word!(game.cinematic_function = 0x9f52);
+        word!(game.cinematic_function = function::TO_FILE_SELECT);
     }
     word! { game, 2; screen_fade_delay, screen_fade_counter }
 }
