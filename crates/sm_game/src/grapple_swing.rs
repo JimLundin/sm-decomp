@@ -142,21 +142,21 @@ fn place_sample<H: Host + ?Sized>(angle: u16, length: u16, game: &mut H) {
             kSinCosTable8bit_Sext[index + 64],
             length,
         );
-        word!(game.grapple_beam_grapple_start_x = x);
-        word!(game.grapple_beam_grapple_start_block_x = (x >> 4) as u8 as u16);
+        game.session_mut().player.swing.probe.x = x;
+        game.session_mut().player.swing.probe_block.x = (x >> 4) as u8 as u16;
         let y = project_axis(
             game.session().player.grapple_endpoint.y,
             kSinCosTable8bit_Sext[index],
             length,
         );
-        word!(game.grapple_beam_grapple_start_y = y);
-        word!(game.grapple_beam_grapple_start_block_y = (y >> 4) as u8 as u16);
+        game.session_mut().player.swing.probe.y = y;
+        game.session_mut().player.swing.probe_block.y = (y >> 4) as u8 as u16;
     }
 }
 fn contact<H: Host + ?Sized>(game: &mut H) -> u8 {
-    let x = word!(game.grapple_beam_grapple_start_block_x);
+    let x = game.session().player.swing.probe_block.x;
     let row = Mult8x8(
-        word!(game.grapple_beam_grapple_start_block_y) as u8,
+        game.session().player.swing.probe_block.y as u8,
         word!(game.room_width_in_blocks) as u8,
     );
     word!(game.cur_block_index = row.wrapping_add(x));
@@ -236,7 +236,7 @@ fn dispatch_connection<H: Host + ?Sized>(ea: u32, game: &mut H) {
 pub fn connect_beam<H: Host + ?Sized>(game: &mut H) {
     if game.movement_type() as i32 == kMovementType_1A_GrabbedByDraygon as i32 {
         game.session_mut().player.grapple = (0x9bc77ei32) as u16;
-        word!(game.grapple_beam_length_delta = 0);
+        game.session_mut().player.swing.length_delta = 0;
     } else {
         let v1: i32 = 2 * game.session().player.grapple_direction as i32;
         let set = if word!(game.samus_y_speed) != 0 || word!(game.samus_y_subspeed) != 0 {
@@ -314,7 +314,7 @@ fn begin_connection<H: Host + ?Sized>(pose: u16, transition_graphics: u16, game:
     ));
     game.session_mut().player.grapple_angle = angle;
     word!(game.grapple_beam_end_angles_mirror = angle);
-    word!(game.grapple_beam_length_delta = 0);
+    game.session_mut().player.swing.length_delta = 0;
     if game.session().player.grapple_length as i32 - 64i32 & 0x8000 == 0 {
         game.session_mut().player.grapple_length =
             game.session().player.grapple_length.wrapping_sub(24);
@@ -326,21 +326,25 @@ pub fn place_rope_origin<H: Host + ?Sized>(game: &mut H) {
     let angle = 2 * game.grapple_angle() as u16;
     let length = game.session().player.grapple_length;
     place_sample(angle, length, game);
-    word!(game.x_pos_of_start_of_grapple_beam = word!(game.grapple_beam_grapple_start_x));
-    word!(game.y_pos_of_start_of_grapple_beam = word!(game.grapple_beam_grapple_start_y));
+    game.session_mut().player.swing.start.x = game.session().player.swing.probe.x;
+    game.session_mut().player.swing.start.y = game.session().player.swing.probe.y;
 }
 pub fn change_length<H: Host + ?Sized>(game: &mut H) -> u8 {
-    if word!(game.grapple_beam_length_delta) == 0 {
+    if game.session().player.swing.length_delta == 0 {
         return 0;
     }
-    let mut end =
-        word!(game.grapple_beam_length_delta).wrapping_add(game.session().player.grapple_length);
-    let shortening = word!(game.grapple_beam_length_delta) & 0x8000 != 0;
+    let mut end = game
+        .session()
+        .player
+        .swing
+        .length_delta
+        .wrapping_add(game.session().player.grapple_length);
+    let shortening = game.session().player.swing.length_delta & 0x8000 != 0;
     if shortening && end < 8 {
-        word!(game.grapple_beam_length_delta = 0);
+        game.session_mut().player.swing.length_delta = 0;
         end = 8;
     } else if !shortening && end >= 63 {
-        word!(game.grapple_beam_length_delta = 0);
+        game.session_mut().player.swing.length_delta = 0;
         end = 63;
     }
     let angle = 2 * game.grapple_angle() as u16;
@@ -364,11 +368,11 @@ pub fn change_length<H: Host + ?Sized>(game: &mut H) -> u8 {
 pub fn apply_input<H: Host + ?Sized>(game: &mut H) {
     if word!(game.joypad1_newkeys) & kButton_Up as u16 != 0 {
         if game.session().player.grapple_length != 0 {
-            word!(game.grapple_beam_length_delta = (-2i16) as u16);
+            game.session_mut().player.swing.length_delta = (-2i16) as u16;
         }
     } else if word!(game.joypad1_newkeys) & kButton_Down as u16 != 0 {
         if (i32::from(game.session().player.grapple_length) - 64) & 0x8000 != 0 {
-            word!(game.grapple_beam_length_delta = 2);
+            game.session_mut().player.swing.length_delta = 2;
         } else {
             game.session_mut().player.grapple_length = 64;
         }
@@ -383,8 +387,8 @@ pub fn apply_input<H: Host + ?Sized>(game: &mut H) {
             0
         };
         if direction != 0 {
-            if angle == 0x8000 && word!(game.grapple_beam_unkD26) == 0 {
-                word!(game.grapple_beam_unkD26 = (direction * 256) as u16);
+            if angle == 0x8000 && game.session().player.swing.angular_velocity == 0 {
+                game.session_mut().player.swing.angular_velocity = (direction * 256) as u16;
             }
             let acceleration = if game.session().player.grapple_flags != 0
                 && game.session().player.grapple_flags & 1 != 0
@@ -393,19 +397,20 @@ pub fn apply_input<H: Host + ?Sized>(game: &mut H) {
             } else {
                 12
             };
-            word!(game.grapple_beam_unkD2A = (direction * acceleration) as u16);
+            game.session_mut().player.swing.input_acceleration = (direction * acceleration) as u16;
             return;
         }
     }
-    word!(game.grapple_beam_unkD2A = 0);
+    game.session_mut().player.swing.input_acceleration = 0;
 }
 
 pub fn apply_gravity<H: Host + ?Sized>(game: &mut H) {
     let angle = game.session().player.grapple_angle;
     if angle & 0xff00 == 0x8000 {
-        word! { game, 0; grapple_beam_unkD28, grapple_beam_unkD2C }
-        if abs16(word!(game.grapple_beam_unkD26)).to_ne_bytes()[1] == 0 {
-            word!(game.grapple_beam_unkD26 = 0);
+        game.session_mut().player.swing.angle_acceleration = 0;
+        game.session_mut().player.swing.rising_deceleration = 0;
+        if abs16(game.session().player.swing.angular_velocity).to_ne_bytes()[1] == 0 {
+            game.session_mut().player.swing.angular_velocity = 0;
         }
         return;
     }
@@ -415,37 +420,44 @@ pub fn apply_gravity<H: Host + ?Sized>(game: &mut H) {
     } else {
         0
     };
-    word!(game.grapple_beam_unkD2C = (direction * (5 >> shift)) as u16);
+    game.session_mut().player.swing.rising_deceleration = (direction * (5 >> shift)) as u16;
     let shift = shift
         + u32::from(
             game.session().player.grapple_flags != 0
                 && game.session().player.grapple_flags & 1 != 0,
         );
-    word!(game.grapple_beam_unkD28 = (direction * (24 >> shift)) as u16);
+    game.session_mut().player.swing.angle_acceleration = (direction * (24 >> shift)) as u16;
 }
 
 pub fn accelerate<H: Host + ?Sized>(game: &mut H) {
-    word!(
-        checked_i32,
-        game.grapple_beam_unkD26 +=
-            (word!(game.grapple_beam_unkD2A) as i32 + word!(game.grapple_beam_unkD28) as i32)
-    );
-    if (word!(game.grapple_beam_unkD26) ^ game.session().player.grapple_angle) & 0x8000 != 0 {
-        word!(game.grapple_beam_unkD26 += word!(game.grapple_beam_unkD2C));
+    // As the checked_i32 word update: old load, then the operand, in i32.
+    game.session_mut().player.swing.angular_velocity =
+        (game.session().player.swing.angular_velocity as i32
+            + (game.session().player.swing.input_acceleration as i32
+                + game.session().player.swing.angle_acceleration as i32)) as u16;
+    if (game.session().player.swing.angular_velocity ^ game.session().player.grapple_angle) & 0x8000
+        != 0
+    {
+        game.session_mut().player.swing.angular_velocity = game
+            .session()
+            .player
+            .swing
+            .angular_velocity
+            .wrapping_add(game.session().player.swing.rising_deceleration);
     }
-    let velocity = word!(game.grapple_beam_unkD26) as i16;
+    let velocity = game.session().player.swing.angular_velocity as i16;
     if velocity.unsigned_abs() >= 0x480 {
-        word!(game.grapple_beam_unkD26 = velocity.clamp(-0x480, 0x480) as u16);
+        game.session_mut().player.swing.angular_velocity = velocity.clamp(-0x480, 0x480) as u16;
     }
 }
 
 pub fn rebound_jump<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.grapple_beam_unkD30) == 0
+    if game.session().player.swing.kick_cooldown == 0
         || word!(game.button_config_jump_a) & word!(game.joypad1_newkeys) == 0
     {
         return;
     }
-    let velocity = word!(game.grapple_beam_unkD26);
+    let velocity = game.session().player.swing.angular_velocity;
     let impulse = if velocity == 0 {
         0
     } else {
@@ -462,7 +474,7 @@ pub fn rebound_jump<H: Host + ?Sized>(game: &mut H) {
             magnitude
         }
     };
-    word!(game.grapple_beam_unkD2E = impulse);
+    game.session_mut().player.swing.extra_angular_velocity = impulse;
 }
 
 pub fn advance_swing<H: Host + ?Sized>(game: &mut H) -> u8 {
@@ -471,7 +483,12 @@ pub fn advance_swing<H: Host + ?Sized>(game: &mut H) -> u8 {
     } else {
         256
     };
-    let velocity = word!(game.grapple_beam_unkD2E).wrapping_add(word!(game.grapple_beam_unkD26));
+    let velocity = game
+        .session()
+        .player
+        .swing
+        .extra_angular_velocity
+        .wrapping_add(game.session().player.swing.angular_velocity);
     let backwards = velocity & 0x8000 != 0;
     let magnitude = if backwards {
         velocity.wrapping_neg()
@@ -503,13 +520,14 @@ pub fn advance_swing<H: Host + ?Sized>(game: &mut H) -> u8 {
                 && game.session().player.grapple_length == 8
             {
                 word!(game.grapple_beam_unkD36 |= 0x8000);
-                word! {game, 0; grapple_beam_unkD26, grapple_beam_unkD2E}
+                game.session_mut().player.swing.angular_velocity = 0;
+                game.session_mut().player.swing.extra_angular_velocity = 0;
             } else {
-                word! {game;
-                    grapple_beam_unkD30 = 16;
-                    grapple_beam_unkD26 = -(word!(game.grapple_beam_unkD26) as i16 as i32 >> 1) as u16;
-                    grapple_beam_unkD2E = -(word!(game.grapple_beam_unkD2E) as i16 as i32 >> 1) as u16;
-                }
+                game.session_mut().player.swing.kick_cooldown = 16;
+                game.session_mut().player.swing.angular_velocity =
+                    -(game.session().player.swing.angular_velocity as i16 as i32 >> 1) as u16;
+                game.session_mut().player.swing.extra_angular_velocity =
+                    -(game.session().player.swing.extra_angular_velocity as i16 as i32 >> 1) as u16;
             }
             return 1;
         }
@@ -519,25 +537,31 @@ pub fn advance_swing<H: Host + ?Sized>(game: &mut H) -> u8 {
         game.session().player.grapple_angle.wrapping_add(delta);
     word!(game.grapple_beam_end_angles_mirror = game.session().player.grapple_angle);
     word!(game.grapple_beam_unkD36 &= !0x8000);
-    if word!(game.grapple_beam_unkD30 -= 1, reread) & 0x8000 != 0 {
-        word!(game.grapple_beam_unkD30 = 0);
+    if {
+        game.session_mut().player.swing.kick_cooldown =
+            game.session().player.swing.kick_cooldown.wrapping_sub(1);
+        game.session().player.swing.kick_cooldown
+    } & 0x8000
+        != 0
+    {
+        game.session_mut().player.swing.kick_cooldown = 0;
     }
-    let impulse = word!(game.grapple_beam_unkD2E) as i16;
+    let impulse = game.session().player.swing.extra_angular_velocity as i16;
     let decayed = if impulse >= 0 {
         impulse.wrapping_sub(6).max(0)
     } else {
         impulse.wrapping_add(6).min(0)
     };
-    word!(game.grapple_beam_unkD2E = decayed as u16);
+    game.session_mut().player.swing.extra_angular_velocity = decayed as u16;
     0
 }
 
 pub fn launch_from_swing<H: Host + ?Sized>(game: &mut H) {
-    let backwards = word!(game.grapple_beam_unkD26) & 0x8000 != 0;
+    let backwards = game.session().player.swing.angular_velocity & 0x8000 != 0;
     let magnitude = if backwards {
-        (-2i32 * i32::from(word!(game.grapple_beam_unkD26))) as u16
+        (-2i32 * i32::from(game.session().player.swing.angular_velocity)) as u16
     } else {
-        2u16.wrapping_mul(word!(game.grapple_beam_unkD26))
+        2u16.wrapping_mul(game.session().player.swing.angular_velocity)
     };
     let sample = kSinCosTable8bit_Sext[usize::from(game.grapple_angle()) + 64];
     let vertical = game.multiply_with_scratch(sample.unsigned_abs(), magnitude);
@@ -563,14 +587,14 @@ macro_rules! initialize_grapple_endpoints {
         word!($game.grapple_beam_origin_x_offset = origin.x);
         word!($game.grapple_beam_origin_y_offset = origin.y.wrapping_sub($y_adjustment));
         $game.session_mut().player.grapple_endpoint.x = origin.x.wrapping_add($game.player_x());
-        word!($game.x_pos_of_start_of_grapple_beam = $game.session().player.grapple_endpoint.x);
+        $game.session_mut().player.swing.start.x = $game.session().player.grapple_endpoint.x;
         word!(
             $game.x_pos_of_start_of_grapple_beam_prevframe =
                 origin.previous_x.wrapping_add($game.player_x())
         );
         $game.session_mut().player.grapple_endpoint.y =
             (origin.y as i32 + $game.player_y() as i32 - $y_adjustment as i32) as u16;
-        word!($game.y_pos_of_start_of_grapple_beam = $game.session().player.grapple_endpoint.y);
+        $game.session_mut().player.swing.start.y = $game.session().player.grapple_endpoint.y;
         word!(
             $game.y_pos_of_start_of_grapple_beam_prevframe =
                 (origin.previous_y as i32 + $game.player_y() as i32 - $y_adjustment as i32) as u16
@@ -614,10 +638,10 @@ macro_rules! native_pose_parameter {
 }
 macro_rules! place_samus_relative_to_grapple_origin {
     ($game:ident, $offset_table:literal, $offset_index:ident) => {
-        $game.set_player_x((word!($game.x_pos_of_start_of_grapple_beam)).wrapping_add(
+        $game.set_player_x(($game.session().player.swing.start.x).wrapping_add(
             native_grapple_byte!($game, $offset_table, usize::from($offset_index)) as i8 as u16,
         ));
-        $game.set_player_y((word!($game.y_pos_of_start_of_grapple_beam)).wrapping_add(
+        $game.set_player_y(($game.session().player.swing.start.y).wrapping_add(
             native_grapple_byte!($game, $offset_table, usize::from($offset_index) + 1) as i8 as u16,
         ));
     };
@@ -627,21 +651,22 @@ macro_rules! restore_grapple_start_positions {
     ($pose_offset:ident, $game:ident, $set:ident, $y_adjustment:ident $(,)?) => {
         let v1: i32 = $pose_offset as i32 >> 1;
         let origin = grapple_origins::origin($game, OriginSet::$set, v1 as isize);
-        word! { $game;
-            x_pos_of_start_of_grapple_beam = origin.x.wrapping_add($game.player_x());
-            x_pos_of_start_of_grapple_beam_prevframe =
-                origin.previous_x.wrapping_add($game.player_x());
-            y_pos_of_start_of_grapple_beam = (origin.y as i32 + $game.player_y() as i32
-                - $y_adjustment as i32) as u16;
-            y_pos_of_start_of_grapple_beam_prevframe = (origin.previous_y as i32
-                + $game.player_y() as i32
-                - $y_adjustment as i32) as u16;
-        }
+        $game.session_mut().player.swing.start.x = origin.x.wrapping_add($game.player_x());
+        word!(
+            $game.x_pos_of_start_of_grapple_beam_prevframe =
+                origin.previous_x.wrapping_add($game.player_x())
+        );
+        $game.session_mut().player.swing.start.y =
+            (origin.y as i32 + $game.player_y() as i32 - $y_adjustment as i32) as u16;
+        word!(
+            $game.y_pos_of_start_of_grapple_beam_prevframe =
+                (origin.previous_y as i32 + $game.player_y() as i32 - $y_adjustment as i32) as u16
+        );
     };
 }
 
 pub fn position_swing<H: Host + ?Sized>(game: &mut H) {
-    let v0: u16 = abs16(word!(game.grapple_beam_unkD26));
+    let v0: u16 = abs16(game.session().player.swing.angular_velocity);
     let mut v1: u16 = 0;
     let start_grapple_animation: bool = if v0 as i32 - 64i32 & 0x8000 == 0 {
         game.session_mut().player.grapple_slow_scrolling = 1;
@@ -669,7 +694,7 @@ pub fn position_swing<H: Host + ?Sized>(game: &mut H) {
         game.session_mut().player.animation_clock.frame = v1;
     }
     let v2: u16 = (2u16).wrapping_mul(v1);
-    if (abs16(word!(game.grapple_beam_unkD2E)) & 0xff00) == 256 {
+    if (abs16(game.session().player.swing.extra_angular_velocity) & 0xff00) == 256 {
         let mut v3: u16 = game.session().player.animation_clock.frame;
         if game.session().player.animation_clock.frame as i32 - 64i32 & 0x8000 == 0 {
             v3 = 16;
@@ -681,10 +706,8 @@ pub fn position_swing<H: Host + ?Sized>(game: &mut H) {
     } else {
         place_samus_relative_to_grapple_origin!(game, 0x9bc302, v2);
     }
-    word! { game;
-        x_pos_of_start_of_grapple_beam_prevframe = word!(game.x_pos_of_start_of_grapple_beam);
-        y_pos_of_start_of_grapple_beam_prevframe = word!(game.y_pos_of_start_of_grapple_beam);
-    }
+    word!(game.x_pos_of_start_of_grapple_beam_prevframe = game.session().player.swing.start.x);
+    word!(game.y_pos_of_start_of_grapple_beam_prevframe = game.session().player.swing.start.y);
     clamp_swing_position(game);
 }
 
@@ -698,12 +721,12 @@ pub fn clamp_swing_position<H: Host + ?Sized>(game: &mut H) {
 pub fn position_anchored<H: Host + ?Sized>(game: &mut H) {
     let v0: i32 = game.session().player.grapple_direction as i32;
     let origin = grapple_origins::origin(game, OriginSet::Standard, v0 as isize);
-    game.set_player_x((word!(game.x_pos_of_start_of_grapple_beam)).wrapping_sub(origin.x));
+    game.set_player_x((game.session().player.swing.start.x).wrapping_sub(origin.x));
     word!(
         game.x_pos_of_start_of_grapple_beam_prevframe =
             origin.previous_x.wrapping_add(game.player_x())
     );
-    game.set_player_y((word!(game.y_pos_of_start_of_grapple_beam)).wrapping_sub(origin.y));
+    game.set_player_y((game.session().player.swing.start.y).wrapping_sub(origin.y));
     word!(
         game.y_pos_of_start_of_grapple_beam_prevframe =
             origin.previous_y.wrapping_add(game.player_y())
@@ -790,21 +813,22 @@ pub fn start_firing<H: Host + ?Sized>(game: &mut H) {
     word!(game.grapple_beam_end_y_suboffset = 0);
     word!(game.grapple_beam_end_y_offset = 0);
     game.session_mut().player.grapple_flags = 0;
-    word!(game.grapple_beam_length_delta = 12);
+    game.session_mut().player.swing.length_delta = 12;
     game.session_mut().player.grapple_length = 0;
-    word!(game.grapple_beam_unkD26 = 0);
-    word!(game.grapple_beam_unkD28 = 0);
-    word!(game.grapple_beam_unkD2A = 0);
-    word!(game.grapple_beam_unkD2C = 0);
-    word!(game.grapple_beam_unkD2E = 0);
-    word!(game.grapple_beam_unkD30 = 0);
+    game.session_mut().player.swing.angular_velocity = 0;
+    game.session_mut().player.swing.angle_acceleration = 0;
+    game.session_mut().player.swing.input_acceleration = 0;
+    game.session_mut().player.swing.rising_deceleration = 0;
+    game.session_mut().player.swing.extra_angular_velocity = 0;
+    game.session_mut().player.swing.kick_cooldown = 0;
     word!(game.grapple_beam_unkD1E = 0);
     word!(game.grapple_beam_unkD20 = 0);
-    word! {game; grapple_beam_unkD3A = 2; grapple_beam_unkD3C = 0;
-    grapple_point_anim_timer = 5;
-    grapple_point_anim_ptr = grapple_aim::point_animation(game).first; }
-    word!(game.grapple_beam_grapple_start_x = 0);
-    word!(game.grapple_beam_unkD38 = 0);
+    game.session_mut().player.swing.start_marks[0] = 2;
+    game.session_mut().player.swing.start_marks[1] = 0;
+    word!(game.grapple_point_anim_timer = 5);
+    word!(game.grapple_point_anim_ptr = grapple_aim::point_animation(game).first);
+    game.session_mut().player.swing.probe.x = 0;
+    game.session_mut().player.swing.failed_movement_counter = 0;
     word!(game.grapple_beam_unkD36 = 0);
     game.session_mut().player.grapple_slow_scrolling = 0;
     start_rope_animation(game);
@@ -886,7 +910,7 @@ pub fn release_walljump<H: Host + ?Sized>(game: &mut H) {
 
 pub fn release_swing<H: Host + ?Sized>(game: &mut H) {
     game.queue_sound(0, (7) as u8, 15);
-    if word!(game.grapple_beam_unkD26) & 0x8000 == 0 {
+    if game.session().player.swing.angular_velocity & 0x8000 == 0 {
         word!(game.samus_new_pose_transitional = kPose_52_FaceL_Jump_NoAim_MoveF as u16);
     } else {
         word!(game.samus_new_pose_transitional = kPose_51_FaceR_Jump_NoAim_MoveF as u16);
@@ -1047,7 +1071,7 @@ fn dispatch<H: Host + ?Sized>(ea: u32, game: &mut H) {
                     .session()
                     .player
                     .grapple_length
-                    .wrapping_add(word!(game.grapple_beam_length_delta));
+                    .wrapping_add(game.session().player.swing.length_delta);
             }
             if !shooting || game.session().player.grapple_length as i32 - 128 & 0x8000 == 0 {
                 game.session_mut().player.grapple = 0xc856;
@@ -1077,7 +1101,7 @@ fn dispatch<H: Host + ?Sized>(ea: u32, game: &mut H) {
             }
             game.queue_sound(0, (6) as u8, 6);
             connect_beam(game);
-            word!(game.grapple_beam_length_delta = -8i32 as u16);
+            game.session_mut().player.swing.length_delta = -8i32 as u16;
             game.session_mut().player.grapple_interaction_flags =
                 game.session().player.grapple_interaction_flags | (1u16);
         }
@@ -1100,7 +1124,7 @@ fn dispatch<H: Host + ?Sized>(ea: u32, game: &mut H) {
         0x9bc79d => {
             if shoot_held(game) {
                 apply_input(game);
-                if word!(game.grapple_beam_length_delta) != 0 {
+                if game.session().player.swing.length_delta != 0 {
                     change_length(game);
                 }
                 apply_gravity(game);
@@ -1128,7 +1152,8 @@ fn dispatch<H: Host + ?Sized>(ea: u32, game: &mut H) {
                     return;
                 }
             }
-            if word!(game.grapple_beam_unkD26) != 0 || game.session().player.grapple_angle != 0x8000
+            if game.session().player.swing.angular_velocity != 0
+                || game.session().player.grapple_angle != 0x8000
             {
                 launch_from_swing(game);
                 game.session_mut().player.grapple = (0x9bcb8bi32) as u16;
