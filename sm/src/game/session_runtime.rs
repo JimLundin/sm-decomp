@@ -541,6 +541,15 @@ impl<'g> Runtime<'g> {
     /// A Samus field from the owned Session while this lease is current; the
     /// projected word at `at` otherwise. Both read the same value whenever the
     /// projection would serve the Session, so callers observe no difference.
+    /// A Session field while this lease is current; the projected word at `at`
+    /// otherwise, which is the same value whenever the projection serves it.
+    pub(crate) fn owned_session(&self, field: impl Fn(&Session) -> u16, at: usize) -> u16 {
+        if self.persistent_is_current() {
+            field(self.session())
+        } else {
+            self.word(at)
+        }
+    }
     pub(crate) fn owned_player(
         &self,
         field: impl Fn(&sm_game::session::Player) -> u16,
