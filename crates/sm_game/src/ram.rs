@@ -16,6 +16,8 @@ pub trait RawRam {
     fn copy_in(&self, at: usize, input: &[u8]);
     fn copy_out(&self, at: usize, out: &mut [u8]);
     fn fill(&self, range: core::ops::Range<usize>, value: u8);
+    /// Copy `source` to `destination` as if through a temporary buffer.
+    fn copy_within(&self, source: core::ops::Range<usize>, destination: usize);
 }
 
 /// The raw work RAM a host owns.

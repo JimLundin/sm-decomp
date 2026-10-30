@@ -2653,6 +2653,9 @@ impl sm_game::ram::RawRam for WorkRam {
     fn fill(&self, range: core::ops::Range<usize>, value: u8) {
         WorkRam::fill(self, range, value)
     }
+    fn copy_within(&self, source: core::ops::Range<usize>, destination: usize) {
+        WorkRam::copy_within(self, source, destination)
+    }
 }
 
 impl sm_game::ram::WorkRamAccess for Game {

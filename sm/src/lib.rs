@@ -558,7 +558,6 @@ pub mod game {
     pub(crate) use sm_game::ceres_door_data;
     pub(crate) mod ceres_doors;
     pub(crate) mod cinematic;
-    pub(crate) use sm_game::ceres_elevator;
     pub(crate) use sm_game::ceres_ridley_tables;
     pub use sm_game::combat_rules;
     pub use sm_game::contact_rules;

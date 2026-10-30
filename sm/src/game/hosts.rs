@@ -51,3 +51,15 @@ impl sm_game::grapple_swing::Host for Game {
         crate::game::session_runtime::settle_grapple(self)
     }
 }
+
+impl sm_game::runtime_access::SessionRam for crate::game::session_runtime::Runtime<'_> {
+    fn byte(&self, at: usize) -> u8 {
+        crate::game::session_runtime::Runtime::byte(self, at)
+    }
+    fn set_byte(&mut self, at: usize, value: u8) {
+        crate::game::session_runtime::Runtime::set_byte(self, at, value)
+    }
+    fn write_slice(&mut self, at: usize, bytes: &[u8]) {
+        crate::game::session_runtime::Runtime::write_slice(self, at, bytes)
+    }
+}

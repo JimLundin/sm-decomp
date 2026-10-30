@@ -232,4 +232,6 @@ pub mod room_scrolls;
 pub mod explosion_window;
 #[allow(non_upper_case_globals, non_snake_case, unused_mut, unused_assignments)]
 pub mod grapple_swing;
+#[allow(unused_assignments)]
+pub mod room_state;
 pub mod runtime_access;
