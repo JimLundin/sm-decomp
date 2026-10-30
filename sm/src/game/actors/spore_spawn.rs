@@ -220,7 +220,7 @@ pub(crate) fn palette(mut cursor: u16, game: &mut Game) {
     for index in 144..160 {
         word!(
             game.palette_buffer[index] =
-                crate::rtl::rom_table_word!(game, 0xa5e379, (cursor >> 1) as isize)
+                sm_game::gameplay_tables::spore_spawn_colour(game, (cursor >> 1) as isize)
         );
         cursor = cursor.wrapping_add(2);
     }

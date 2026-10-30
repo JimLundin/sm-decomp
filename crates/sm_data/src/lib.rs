@@ -21,6 +21,7 @@ pub mod enemy_lists;
 pub mod enemy_speeds;
 pub mod equipment_screen;
 pub mod escape_etecoons;
+pub mod gameplay_tables;
 pub mod grapple_aim;
 pub mod grapple_origins;
 pub mod hdma_objects;

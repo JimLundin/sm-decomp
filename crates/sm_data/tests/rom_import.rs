@@ -198,6 +198,76 @@ fn records_import_from_the_original_rom() {
             2 * enemy_lists::PIPE_BUG_PHASES
         ))
     );
+    check!(
+        "gameplay_tables::AREA_LABELS",
+        table::words::<{ gameplay_tables::AREAS }>(&at(
+            gameplay_tables::AREA_LABELS,
+            2 * gameplay_tables::AREAS
+        ))
+    );
+    check!(
+        "gameplay_tables::TORIZO_LOW_PALETTE_BANDS",
+        table::words::<{ gameplay_tables::TORIZO_PALETTE_WORDS }>(&at(
+            gameplay_tables::TORIZO_LOW_PALETTE_BANDS,
+            2 * gameplay_tables::TORIZO_PALETTE_WORDS
+        ))
+    );
+    check!(
+        "gameplay_tables::TORIZO_HIGH_PALETTE_BANDS",
+        table::words::<{ gameplay_tables::TORIZO_PALETTE_WORDS }>(&at(
+            gameplay_tables::TORIZO_HIGH_PALETTE_BANDS,
+            2 * gameplay_tables::TORIZO_PALETTE_WORDS
+        ))
+    );
+    check!(
+        "gameplay_tables::DEATH_PALETTES",
+        table::words::<{ gameplay_tables::SUITS }>(&at(
+            gameplay_tables::DEATH_PALETTES,
+            2 * gameplay_tables::SUITS
+        ))
+    );
+    check!(
+        "gameplay_tables::DEATH_FLASH_PALETTES",
+        table::words::<{ gameplay_tables::SUITS }>(&at(
+            gameplay_tables::DEATH_FLASH_PALETTES,
+            2 * gameplay_tables::SUITS
+        ))
+    );
+    check!(
+        "gameplay_tables::DEATH_FRAME_PALETTES",
+        table::words::<{ gameplay_tables::DEATH_FRAMES }>(&at(
+            gameplay_tables::DEATH_FRAME_PALETTES,
+            2 * gameplay_tables::DEATH_FRAMES
+        ))
+    );
+    check!(
+        "gameplay_tables::ENEMY_SINE",
+        table::words::<{ gameplay_tables::ANGLES }>(&at(
+            gameplay_tables::ENEMY_SINE,
+            2 * gameplay_tables::ANGLES
+        ))
+    );
+    check!(
+        "gameplay_tables::SHUTTER_TIMERS",
+        table::words::<{ gameplay_tables::SHUTTER_TIMER_WORDS }>(&at(
+            gameplay_tables::SHUTTER_TIMERS,
+            2 * gameplay_tables::SHUTTER_TIMER_WORDS
+        ))
+    );
+    check!(
+        "gameplay_tables::SPORE_SPAWN_PALETTES",
+        table::words::<{ gameplay_tables::SPORE_SPAWN_PALETTE_WORDS }>(&at(
+            gameplay_tables::SPORE_SPAWN_PALETTES,
+            2 * gameplay_tables::SPORE_SPAWN_PALETTE_WORDS
+        ))
+    );
+    check!(
+        "gameplay_tables::PIRATE_INSTRUCTION_LISTS",
+        table::words::<{ gameplay_tables::PIRATE_CHOICES }>(&at(
+            gameplay_tables::PIRATE_INSTRUCTION_LISTS,
+            2 * gameplay_tables::PIRATE_CHOICES
+        ))
+    );
     assert!(
         failures.is_empty(),
         "rejected the original ROM: {failures:?}"

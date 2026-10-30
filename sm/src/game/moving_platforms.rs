@@ -131,12 +131,12 @@ pub(crate) fn initialize(kind: Kind, game: &mut Game) {
         field!(
             game,
             e,
-            var_00 = crate::rtl::rom_table_word!(game, 0xa2ea56, i)
+            var_00 = sm_game::gameplay_tables::shutter_timer(game, i)
         );
         field!(
             game,
             e,
-            var_01 = crate::rtl::rom_table_word!(game, 0xa2ea56, i + 1)
+            var_01 = sm_game::gameplay_tables::shutter_timer(game, i + 1)
         );
         return;
     }

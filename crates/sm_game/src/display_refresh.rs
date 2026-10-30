@@ -32,6 +32,7 @@ pub trait Host:
     + crate::word_transfers::LoadedRom
     + crate::cartridge::LoadedImage
     + crate::decompression::DecompressionHost
+    + crate::records::Records
 {
     /// Store `value` at `at` through the owned display state.
     fn write_owned_byte(&mut self, at: usize, value: u8);
@@ -181,7 +182,7 @@ pub fn upload_pause_map<H: Host + crate::menus::host::Host + ?Sized>(game: &mut 
     }
     register_writes! { game;
         word(A1T1L as u16,
-        crate::cartridge::rom_table_word!(game, 0x82965f, area as isize),); byte(A1B1 as u16, 0x82);
+        crate::gameplay_tables::area_label(game, area as isize),); byte(A1B1 as u16, 0x82);
         byte(MDMAEN as u16, 2);
     }
 }

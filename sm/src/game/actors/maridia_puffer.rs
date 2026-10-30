@@ -34,11 +34,10 @@ fn aim(game: &mut Game) -> (i32, u16) {
 fn drift(game: &mut Game) {
     for horizontal in [true, false] {
         let E = word!(game.cur_enemy_index) as i32;
-        let component = crate::rtl::rom_table_word!(
+        let component = sm_game::gameplay_tables::enemy_sine(
             game,
-            0xa0b1c3,
             (slot!(game, Puffer[E].var_02) as u8).wrapping_add(if horizontal { 64 } else { 0 })
-                as isize
+                as isize,
         );
         let mut amount = u32::from(abs16(component) >> 8) * u32::from(slot!(game, Puffer[E].var_D));
         if component & 0x8000 != 0 {

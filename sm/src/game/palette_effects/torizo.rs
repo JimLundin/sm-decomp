@@ -81,8 +81,8 @@ pub(crate) fn health_current(health: u16, game: &mut Game) {
     let band = isize::from((health.to_ne_bytes()[1] & 0x78).min(0x38)) * 2;
     for index in (0isize..16).rev() {
         word! { game;
-            palette_buffer[index + 160] = crate::rtl::rom_table_word!(game, 0x848132, band + index);
-            palette_buffer[index + 144] = crate::rtl::rom_table_word!(game, 0x848032, band + index);
+            palette_buffer[index + 160] = sm_game::gameplay_tables::torizo_palette_colour(game, true, band + index);
+            palette_buffer[index + 144] = sm_game::gameplay_tables::torizo_palette_colour(game, false, band + index);
         }
     }
 }

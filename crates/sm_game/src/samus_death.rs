@@ -13,7 +13,9 @@ use crate::word_transfers;
 
 /// The death sequence draws Samus through the host, which chooses between
 /// the owned display and the native body tables.
-pub trait Host: crate::menus::host::Host + crate::display_refresh::Host + RuntimeAccess {
+pub trait Host:
+    crate::menus::host::Host + crate::display_refresh::Host + crate::records::Records + RuntimeAccess
+{
     fn draw_samus(&mut self, body: Body);
 }
 
@@ -92,11 +94,10 @@ pub fn flash_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
 }
 
 fn death_palette<H: Host + ?Sized>(frame: Option<u16>, game: &mut H) {
-    let table = if frame.is_some() { 0x9bb6d2 } else { 0x9bb5c8 };
-    let pointer = crate::cartridge::rom_table_word!(
+    let pointer = crate::gameplay_tables::death_palette(
         game,
-        table,
-        (word!(game.samus_suit_palette_index) >> 1) as isize
+        frame.is_some(),
+        (word!(game.samus_suit_palette_index) >> 1) as isize,
     )
     .wrapping_add(frame.unwrap_or(0));
     let address = game
@@ -110,7 +111,7 @@ fn death_palette<H: Host + ?Sized>(frame: Option<u16>, game: &mut H) {
     game.ram().copy_in(0xc180, &colors);
     // The second source is resolved only after the first complete palette copy.
     let address = match frame {
-        Some(frame) => crate::cartridge::rom_table_word!(game, 0x9bb80f, (frame >> 1) as isize),
+        Some(frame) => crate::gameplay_tables::death_frame_palette(game, (frame >> 1) as isize),
         None => 0xa120,
     };
     let colors = game

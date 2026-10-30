@@ -483,8 +483,8 @@ fn select_leap(game: &mut Game) {
         } else {
             0
         };
-    let instruction =
-        runtime.foreign(|game| crate::rtl::rom_table_word!(game, 0xb2f959, choice as isize));
+    let instruction = runtime
+        .foreign(|game| sm_game::gameplay_tables::pirate_instruction_list(game, choice as isize));
     runtime.edit_actor(key, Native, |actor| {
         actor.instruction = instruction;
         actor.instruction_delay = 1;

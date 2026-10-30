@@ -10,6 +10,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_data/src/enemy_lists.rs"),
     ),
     (
+        "crates/sm_data/src/gameplay_tables.rs",
+        include_bytes!("../../crates/sm_data/src/gameplay_tables.rs"),
+    ),
+    (
         "crates/sm_data/src/lib.rs",
         include_bytes!("../../crates/sm_data/src/lib.rs"),
     ),
@@ -172,6 +176,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/enemy_lists.rs",
         include_bytes!("../../crates/sm_game/src/enemy_lists.rs"),
+    ),
+    (
+        "crates/sm_game/src/gameplay_tables.rs",
+        include_bytes!("../../crates/sm_game/src/gameplay_tables.rs"),
     ),
     (
         "crates/sm_game/src/lib.rs",
