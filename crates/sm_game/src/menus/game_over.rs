@@ -90,7 +90,8 @@ fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     }
     game.set_blank(false);
     crate::menu!(game.MenuIndex += 1);
-    word! { game, 0; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER, FILE_SELECT_MAP_AREA_INDEX }
+    crate::screen_fade::set_both(game, 0, 0);
+    word! { game, 0; FILE_SELECT_MAP_AREA_INDEX }
     place_missile(FIRST_CHOICE_ROW, game);
 }
 

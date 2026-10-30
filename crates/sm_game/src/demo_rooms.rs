@@ -110,7 +110,7 @@ pub fn play<H: crate::menus::host::Host + ?Sized>(
         word!(game.GAME_STATE += 1);
         word!(game.DEBUG_DISABLE_SOUNDS = 0);
         game.ram().write_byte(0x51, 0x80);
-        word! { game, 1; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+        crate::screen_fade::set_both(game, 1, 1);
     }
     game.ram().write_byte(0x614, 0);
     0

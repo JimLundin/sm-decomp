@@ -179,7 +179,7 @@ pub fn main_menu<H: Host + ?Sized>(game: &mut H) {
             *menu.helmet_y(helmet) = y;
         }
     });
-    word! { game, 1; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+    crate::screen_fade::set_both(game, 1, 1);
     game.set_blank(false);
     crate::menu!(game.MenuIndex += 1);
     with_file_select(game, |menu| {

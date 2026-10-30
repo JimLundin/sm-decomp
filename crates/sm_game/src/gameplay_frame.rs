@@ -374,7 +374,7 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
         }
         hud::initialize(game);
         word_transfers!(game, ascending, 16; native(0xc380) <- native(0xc180));
-        word! { game, 1; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+        crate::screen_fade::set_both(game, 1, 1);
         game.enable_display_nmi(true);
         enemy_projectiles::lifecycle::set_enabled(&mut game.runtime(), true);
         set_mechanisms_enabled(game, true);
@@ -446,7 +446,7 @@ fn stop_demo<H: Host>(game: &mut H) -> CoroutineRet {
     }
     game.enable_display_nmi(true);
     word!(game.GAME_STATE += 1);
-    word! { game, 0; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+    crate::screen_fade::set_both(game, 0, 0);
     game.clear_hdma();
     game.disable_scanline_irq();
     word! { game, 0;
@@ -559,7 +559,7 @@ fn setup_unpause<H: Host>(game: &mut H) -> CoroutineRet {
             u16::from(game.ram().read_byte(0x59) & 0xfc) << 8,
             0x1000,
         );
-        word! { game, 1; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+        crate::screen_fade::set_both(game, 1, 1);
     }
     if resume <= 1 {
         let yielded = match pause_controls::hook_address(false, game) {
@@ -595,7 +595,7 @@ fn fade_out<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
     game.fade(false);
     if game.ram().read_byte(0x51) == 0x80 {
         game.enable_display_nmi(true);
-        word! { game, 0; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+        crate::screen_fade::set_both(game, 0, 0);
         word!(game.GAME_STATE += 1);
         if matches!(entry, Entry::GameOverFadeOut) {
             crate::menu!(game.MenuIndex = 0);
@@ -611,9 +611,8 @@ fn exit_time_up<H: Host>(game: &mut H) -> CoroutineRet {
     if game.ram().read_byte(0x51) == 0x80 {
         game.enable_display_nmi(true);
         finish_gameplay(true, game);
-        word! { game, 0;
-            SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER, CERES_STATUS, TIMER_STATUS,
-        }
+        crate::screen_fade::set_both(game, 0, 0);
+        word! { game, 0; CERES_STATUS, TIMER_STATUS }
         cancel_sound_effects(game, 15);
         if crate::progress::event_happened(&mut game.runtime(), 0xe) {
             word!(game.GAME_OPTIONS_SCREEN_INDEX = 0);
@@ -775,7 +774,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
         Entry::FadeIn | Entry::Unpause => {
             game.fade(true);
             if game.ram().read_byte(0x51) == 15 {
-                word! { game, 0; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+                crate::screen_fade::set_both(game, 0, 0);
                 if matches!(entry, Entry::FadeIn) {
                     word!(game.GAME_STATE += 1);
                 } else {
@@ -788,7 +787,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                 (word!(game.REACHED_CERES_ELEVATOR_FADE_TIMER -= 1, reread) & 0x8000) != 0;
             if word!(game.REACHED_CERES_ELEVATOR_FADE_TIMER) == 0 || negative {
                 word!(game.GAME_STATE += 1);
-                word! { game, 0; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+                crate::screen_fade::set_both(game, 0, 0);
             }
         }
         Entry::TimeUp | Entry::DeathBlackout => {
@@ -796,9 +795,8 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
             if fading::all(if death { 6 } else { 8 }, game) != 0 {
                 if death {
                     finish_gameplay(true, game);
-                    word! { game, 0;
-                        GAME_OPTIONS_SCREEN_INDEX, SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER,
-                    }
+                    word! { game, 0; GAME_OPTIONS_SCREEN_INDEX }
+                    crate::screen_fade::set_both(game, 0, 0);
                     word_transfers!(game, descending, 128; le(EPROJ_Y_SUBPOS, 142) <- value(0));
                     word! {game; DEATH_FLASH_TIMER = 16; GAME_OPTIONS_SCREEN_INDEX = 3; }
                     word! { game, 0; DEATH_INDEX, DEATH_COUNTER }
@@ -810,7 +808,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                     game.queue_music_delayed(5, 0xe);
                 } else {
                     word!(game.GAME_STATE = K_GAME_STATE_36_WHITING_OUT_FROM_TIME_UP as u16);
-                    word! { game, 0; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+                    crate::screen_fade::set_both(game, 0, 0);
                 }
             }
         }
@@ -835,7 +833,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                 let ceres = matches!(entry, Entry::CeresBlackout);
                 game.enable_display_nmi(true);
                 finish_gameplay(ceres, game);
-                word! { game, 0; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+                crate::screen_fade::set_both(game, 0, 0);
                 if ceres {
                     word!(game.LOADING_GAME_STATE = K_LOADING_GAME_STATE_22_ESCAPING_CERES as u16);
                     word!(game.GAME_STATE = 34);
@@ -863,7 +861,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
             game.fade(false);
             if game.ram().read_byte(0x51) & 0xf == 0 {
                 game.enable_display_nmi(true);
-                word! { game, 0; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+                crate::screen_fade::set_both(game, 0, 0);
                 word!(game.GAME_STATE += 1);
             }
         }

@@ -153,7 +153,7 @@ fn whiten_death_palette<H: Host + ?Sized>(game: &mut H) {
 pub fn explode_suit<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
     whiten_death_palette(game);
     if advance_suit_explosion(game) {
-        word! { game, 1; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+        crate::screen_fade::set_both(game, 1, 1);
         word!(game.GAME_STATE += 1);
     }
     0

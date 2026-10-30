@@ -76,8 +76,7 @@ pub fn advance_ceres_elevator<H: MainCodeHost + ?Sized>(h: &mut H) {
             && h.word(fields::GAME_STATE) as i32 == 8
         {
             h.command_player(2);
-            h.write_word_le(0, fields::SCREEN_FADE_DELAY);
-            h.write_word_le(0, fields::SCREEN_FADE_COUNTER);
+            h.session_mut().presentation.visual_mut().screen_fade = Default::default();
             h.write_word_le(32, fields::GAME_STATE);
         }
         // Variable 1 counts frames to the next rotation step; variable 0 is

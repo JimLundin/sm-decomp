@@ -75,7 +75,7 @@ fn start<H: Host + ?Sized>(game: &mut H) {
     {
         word!(game.GAME_OPTIONS_SCREEN_INDEX = 4);
     } else {
-        word! { game, 0; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+        crate::screen_fade::set_both(game, 0, 0);
         word!(game.GAME_OPTIONS_SCREEN_INDEX = 12);
     }
 }
@@ -97,13 +97,14 @@ pub fn finish_start<H: Host + ?Sized>(game: &mut H) {
     } else {
         word!(game.GAME_STATE = 30);
         crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xa395);
-        word! { game, 0; MENU_OPTION_INDEX, SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+        word! { game, 0; MENU_OPTION_INDEX }
+        crate::screen_fade::set_both(game, 0, 0);
     }
 }
 
 fn dissolve<H: Host + ?Sized>(game: &mut H) {
     game.ram().write_byte(crate::ram::mirror::MOSAIC, 3);
-    word! { game, 0; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+    crate::screen_fade::set_both(game, 0, 0);
     word!(game.GAME_OPTIONS_SCREEN_INDEX = 5);
 }
 
@@ -289,7 +290,7 @@ pub fn fade_out<H: Host + ?Sized>(game: &mut H, screen: u16, enable: fn(&mut H))
         return;
     }
     enable(game);
-    word! { game, 0; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+    crate::screen_fade::set_both(game, 0, 0);
     match screen {
         0 => word!(game.GAME_OPTIONS_SCREEN_INDEX += 1),
         5 => {
@@ -322,7 +323,7 @@ pub fn fade_in<const DISSOLVE: bool, H: Host + ?Sized>(game: &mut H) {
     if DISSOLVE {
         game.ram().write_byte(crate::ram::mirror::MOSAIC, 0);
     }
-    word! { game, 0; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+    crate::screen_fade::set_both(game, 0, 0);
     if !DISSOLVE {
         word!(game.GAME_OPTIONS_SCREEN_INDEX += 1);
     } else if word!(game.MENU_OPTION_INDEX) == 0 {
