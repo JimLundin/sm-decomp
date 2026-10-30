@@ -132,6 +132,13 @@ impl FileSelect<'_> {
     pub fn helmet_y(&mut self, helmet: usize) -> &mut u16 {
         &mut self.0.slots[12 + helmet].definition
     }
+    /// $1999, $19A3, $19AD: the RAM map's unused words between the
+    /// missile's and helmets' frames and positions.
+    pub fn clear_unused_words(&mut self) {
+        for slot in [1, 6, 11] {
+            self.0.slots[slot].definition = 0;
+        }
+    }
     /// $19B5: `file_copy_selection`.
     pub fn file_copy_selection(&mut self) -> &mut u16 {
         &mut self.0.slots[15].definition

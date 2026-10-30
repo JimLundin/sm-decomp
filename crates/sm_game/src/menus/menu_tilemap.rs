@@ -1,6 +1,7 @@
 //! Menu tilemaps: native word stores, live palette reads and ROM text controls.
 use super::prelude::*;
 use crate::display::bg_tile;
+use crate::enemy_projectiles::table::with_file_select;
 
 /// The pause menu's map and equipment BG tilemap buffers in work RAM.
 const PAUSE_TILEMAP: usize = 0x3000;
@@ -113,11 +114,12 @@ pub fn file_rows<H: Host + ?Sized>(emphasis: FileRowEmphasis, game: &mut H) {
         save_slots::load(slot, game);
         let dim = match emphasis {
             FileRowEmphasis::Occupied => word!(game.nonempty_save_slots) & (1 << slot) == 0,
-            FileRowEmphasis::Destination => word!(game.file_copy_source_slot) == slot,
-            FileRowEmphasis::Confirmation => {
-                word!(game.file_copy_source_slot) != slot
-                    && word!(game.file_copy_destination_slot) != slot
+            FileRowEmphasis::Destination => {
+                with_file_select(game, |menu| *menu.file_copy_source_slot() == slot)
             }
+            FileRowEmphasis::Confirmation => with_file_select(game, |menu| {
+                *menu.file_copy_source_slot() != slot && *menu.file_copy_destination_slot() != slot
+            }),
         };
         set_palette(if dim { 1024 } else { 0 }, game);
         let mask = 1 << slot;
@@ -162,18 +164,34 @@ pub fn main_menu<H: Host + ?Sized>(game: &mut H) {
     set_palette(0, game);
     load(0x688, addr_kMenuTilemap_Exit as u16, game);
     upload(MENU_TILEMAP_BYTES, MENU_TILEMAP_SOURCE, 0, true, game);
-    word!(game.menu_selection_missile_animation_timer = 1);
-    word! { game, 0;
-        file_copy_arrow_palette_timer, slot_a_helmet_animation_timer, slot_b_helmet_animation_timer, slot_c_helmet_animation_timer, menu_selection_missile_animation_frame, UNUSED_menu_word_7E1999,
-        slot_a_helmet_animation_frame, slot_b_helmet_animation_frame, slot_c_helmet_animation_frame, menu_selection_missile_x_pos, menu_selection_missile_y_pos, UNUSED_menu_word_7E19A3, UNUSED_menu_word_7E19AD,
-    }
-    word! { game, 100; slot_a_helmet_x_pos, slot_b_helmet_x_pos, slot_c_helmet_x_pos }
-    word! {game; slot_a_helmet_y_pos = 47; slot_b_helmet_y_pos = 87; slot_c_helmet_y_pos = 127; }
+    // The copy arrow's palette timer is outside the Session-owned table.
+    word!(game.file_copy_arrow_palette_timer = 0);
+    with_file_select(game, |menu| {
+        *menu.missile_animation_timer() = 1;
+        *menu.missile_animation_frame() = 0;
+        *menu.missile_x() = 0;
+        *menu.missile_y() = 0;
+        menu.clear_unused_words();
+        for (helmet, y) in HELMET_ROWS.into_iter().enumerate() {
+            *menu.helmet_animation_timer(helmet) = 0;
+            *menu.helmet_animation_frame(helmet) = 0;
+            *menu.helmet_x(helmet) = HELMET_X;
+            *menu.helmet_y(helmet) = y;
+        }
+    });
     word! { game, 1; screen_fade_delay, screen_fade_counter }
     game.set_blank(false);
     crate::menu!(game.menu_index += 1);
-    word! { game, 0; file_copy_selection, file_copy_source_slot, file_copy_destination_slot }
+    with_file_select(game, |menu| {
+        *menu.file_copy_selection() = 0;
+        *menu.file_copy_source_slot() = 0;
+        *menu.file_copy_destination_slot() = 0;
+    });
 }
+
+/// The slot helmets' x, and their y beside each save slot's row.
+const HELMET_X: u16 = 100;
+const HELMET_ROWS: [u16; 3] = [47, 87, 127];
 
 /// Requires a live, exclusively accessed SNES backend.
 pub fn prepare_graphics<H: Host + ?Sized>(game: &mut H) {

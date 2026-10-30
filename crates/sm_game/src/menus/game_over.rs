@@ -5,6 +5,7 @@ use crate::constants::bank_81::{
     addr_kMenuTilemap_FindMetroidLarva, addr_kMenuTilemap_GameOver, addr_kMenuTilemap_NoGoToTitle,
     addr_kMenuTilemap_TryAgain, addr_kMenuTilemap_YesReturnToGame,
 };
+use crate::enemy_projectiles::table::with_file_select;
 use crate::menus::menu_tilemap;
 use crate::menus::save_slots;
 use crate::ram::RawRam as _;
@@ -56,7 +57,10 @@ fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         }
         game.queue_music_delayed8(0);
         game.queue_music_delayed8(0xff03);
-        word! {game; menu_selection_missile_animation_timer = 1; menu_selection_missile_animation_frame = 0; }
+        with_file_select(game, |menu| {
+            *menu.missile_animation_timer() = 1;
+            *menu.missile_animation_frame() = 0;
+        });
         crate::word_transfers!(game, ascending, 1024; native(menu_tilemap::MENU_TILEMAP) <- value(menu_tilemap::BLANK_TILE));
         menu_tilemap::upload(
             menu_tilemap::MENU_TILEMAP_BYTES,
@@ -91,7 +95,7 @@ fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         game.set_blank(false);
         crate::menu!(game.menu_index += 1);
         word! { game, 0; screen_fade_delay, screen_fade_counter, file_select_map_area_index }
-        word! {game; menu_selection_missile_x_pos = 40; menu_selection_missile_y_pos = 160; }
+        place_missile(FIRST_CHOICE_ROW, game);
     }
 }
 
@@ -142,12 +146,24 @@ fn choose<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         }
         return;
     }
-    let y = if word!(game.file_select_map_area_index) != 0 {
-        192
+    let row = if word!(game.file_select_map_area_index) != 0 {
+        SECOND_CHOICE_ROW
     } else {
-        160
+        FIRST_CHOICE_ROW
     };
-    word! {game; menu_selection_missile_x_pos = 40; menu_selection_missile_y_pos = y; }
+    place_missile(row, game);
+}
+
+/// The selection missile's x beside the game over menu's two choices, and their rows.
+const MISSILE_X: u16 = 40;
+const FIRST_CHOICE_ROW: u16 = 160;
+const SECOND_CHOICE_ROW: u16 = 192;
+
+fn place_missile<H: Host + ?Sized>(y: u16, game: &mut H) {
+    with_file_select(game, |menu| {
+        *menu.missile_x() = MISSILE_X;
+        *menu.missile_y() = y;
+    });
 }
 
 fn load_map<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
