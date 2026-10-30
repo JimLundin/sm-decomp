@@ -2087,7 +2087,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/demo_rooms.rs"),
     ),
     ("sm/src/game/sm_8b.rs", include_bytes!("game/sm_8b.rs")),
-    ("sm/src/game/sm_a3.rs", include_bytes!("game/sm_a3.rs")),
     ("sm/src/game/sm_a5.rs", include_bytes!("game/sm_a5.rs")),
     (
         "sm/src/game/actors/spore_spawn.rs",
@@ -2115,7 +2114,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     ),
     ("sm/src/game/sm_a6.rs", include_bytes!("game/sm_a6.rs")),
     ("sm/src/game/sm_a7.rs", include_bytes!("game/sm_a7.rs")),
-    ("sm/src/game/sm_a8.rs", include_bytes!("game/sm_a8.rs")),
     ("sm/src/game/sm_a9.rs", include_bytes!("game/sm_a9.rs")),
     ("sm/src/game/sm_aa.rs", include_bytes!("game/sm_aa.rs")),
     (

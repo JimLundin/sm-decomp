@@ -99,6 +99,20 @@ pub struct Runtime<'g> {
         std::sync::Arc<crate::game_state::persistent_session::SessionStartRequirements>,
     )>,
 }
+/// Reflec's shot reaction, with the original diagnostic when it cannot tell
+/// which projectile hit it. Was `Reflec_Shot` in bank $A3.
+fn reflec_shot(game: &mut Game) {
+    if let Some(target) = reflec::prepare_shot(game) {
+        unsafe { crate::c_library::printf(c"Possible bug. What is X?\n".as_ptr()) };
+        reflec::absorb(target, game);
+    }
+}
+
+/// Magdollite's diagnostic for an undefined lava height. Was in bank $A8.
+fn warn_lava_height(value: i32) {
+    unsafe { crate::c_library::printf(c"Y undefined %d!\n".as_ptr(), value) };
+}
+
 /// Every pre-instruction enters through the sm_game table, which reads the
 /// current enemy once and falls back to the compatibility arms.
 pub(crate) unsafe fn actor_species_pre_instruction(ea: u32, game: &mut Game) {
@@ -108,6 +122,9 @@ pub(crate) unsafe fn actor_species_pre_instruction(ea: u32, game: &mut Game) {
 impl sm_game::actors::species::AiHost for Game {
     fn native_ai(&mut self, ea: u32) {
         unsafe { native_ai(ea, self) }
+    }
+    fn grapple_kill(&mut self) {
+        actors::combat::die(&mut Runtime::new(self), actors::api::DeathKind::Grapple);
     }
 }
 
@@ -1034,7 +1051,7 @@ use crate::game::actors::{self, api as actor_api};
 use crate::game::moving_platforms::{self as mechanisms, Event, Kind};
 use crate::game::rippers::{self, Kind as RipperKind};
 use crate::game::{ground_patrol, large_snail};
-use crate::game::{sm_a3, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa};
+use crate::game::{sm_a5, sm_a6, sm_a7, sm_a9, sm_aa};
 use crate::types::EnemyData;
 use sm_game::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
 use sm_game::combat_rules::LatchMode;
@@ -1100,7 +1117,7 @@ crate::game::callback_dispatch! {
         10739851 | 10741442 => [{ let phase = wall_crawlers::state_address(game); actor_species_pre_instruction(phase, game); }];
         10730163 => bang::initialize; 10731261 => bang::shot;
         10730277 => [{ let address = bang::main_ai(game); crate::cpu_infra::Call(address, game); }];
-        10738716 => sm_a3::Reflec_Shot;
+        10738716 => reflec_shot;
         10715146 => [crate::game::actors::combat::die(&mut Runtime::new(game), actor_api::DeathKind::Grapple)];
         10715151 => [crate::game::actors::combat::select_frozen_ai(&mut Runtime::new(game))];
 
@@ -1334,7 +1351,6 @@ crate::game::callback_dispatch! {
         0xa50000..=0xa5ffff => [sm_a5::DispatchEnemyAi(ea, game)];
         0xa60000..=0xa6ffff => [sm_a6::DispatchEnemyAi(ea, game)];
         0xa70000..=0xa7ffff => [sm_a7::DispatchEnemyAi(ea, game)];
-        0xa80000..=0xa8ffff => [sm_a8::DispatchEnemyAi(ea, game)];
         0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyAi(ea, game)];
         0xaa0000..=0xaaffff => [sm_aa::DispatchEnemyAi(ea, game)];
         0xb30000..=0xb3ffff => [{ crate::rtl::Unreachable(game); }];
@@ -1372,7 +1388,7 @@ crate::game::address_dispatch! {
 
         11055620 => [{
             let (actor, diagnostic) = crate::game::actors::magdollite::grow_arm(game);
-            if let Some(value) = diagnostic { sm_a8::warn_lava_height(value); }
+            if let Some(value) = diagnostic { warn_lava_height(value); }
             crate::game::actors::magdollite::finish_arm_growth(actor, game);
         }];
         11059843 | 11059878 | 11059919 | 11060075 | 11060193 | 11060329 | 11060444 | 11060480 | 11060509 | 11060584 | 11060585 | 11060639 => [crate::game::actors::maridia_floater::advance(ea as u16, k, game)];
