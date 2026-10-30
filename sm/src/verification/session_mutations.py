@@ -44,6 +44,8 @@ COLLISION_WRAP = "collision_wrap.rs:out_of_room_level_words_wrap_like_the_long_i
 GEOMETRY = "crates/sm_game/src/player_collision/geometry.rs"
 SWING = "crates/sm_game/src/grapple_swing.rs"
 SWING_TESTS = "grapple_swing.rs:"
+POSITION = "crates/sm_game/src/player_position.rs"
+PLAYER_WORDS = "player_words.rs:every_player_word_reads_the_field_its_address_projects_to"
 # The shared scalar-word closures carry every table owner below.
 SCALAR_OWNERS = (LANES, CAMERA, FLOW, MENU, ROOM_ENTRY, INVENTORY, LIQUID, EPROJ, HDMA)
 
@@ -211,6 +213,14 @@ MUTATIONS = (
     shift("grapple_length_stops_past_3fh", SWING,
           "    } else if !shortening && end >= 63 {", "    } else if !shortening && end > 63 {",
           SWING_TESTS + "length_changes_stop_at_8_and_3fh"),
+    # The lease's PlayerPosition word table (player_position::PlayerWord).
+    shift("player_word_x_reads_its_fraction", POSITION,
+          "    X => 0xaf6, x;", "    X => 0xaf6, x_fraction;", PLAYER_WORDS),
+    shift("player_word_knockback_address_shifted", POSITION,
+          "    Knockback => 0x18aa, knockback_timer;", "    Knockback => 0x18ac, knockback_timer;", PLAYER_WORDS),
+    shift("player_words_previous_axes_swapped", POSITION,
+          "    PreviousX => 0xb10, previous_position.x.whole;", "    PreviousX => 0xb10, previous_position.y.whole;",
+          PLAYER_WORDS),
 )
 
 
