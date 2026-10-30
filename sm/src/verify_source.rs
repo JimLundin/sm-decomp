@@ -518,8 +518,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/actors/phantoon_motion.rs"),
     ),
     (
-        "sm/src/game/actors/escape_animals.rs",
-        include_bytes!("game/actors/escape_animals.rs"),
+        "sm/src/game/actors/escape_critters.rs",
+        include_bytes!("game/actors/escape_critters.rs"),
     ),
     (
         "sm/src/game/actors/maridia_fish.rs",
@@ -2893,8 +2893,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/actors/draygon_sweep.rs"),
     ),
     (
-        "crates/sm_game/src/actors/escape_animals.rs",
-        include_bytes!("../../crates/sm_game/src/actors/escape_animals.rs"),
+        "crates/sm_game/src/actors/escape_critters.rs",
+        include_bytes!("../../crates/sm_game/src/actors/escape_critters.rs"),
     ),
     (
         "sm/src/verification/actor_codec_checks.rs",

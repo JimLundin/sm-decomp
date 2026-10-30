@@ -1237,9 +1237,9 @@ crate::game::callback_dispatch! {
         11771903 => [actors::botwoon::contact(false, &mut Runtime::new(game))];
         11771969 => [actors::botwoon::contact(true, &mut Runtime::new(game))];
         11771926 => [actors::botwoon::shot(&mut Runtime::new(game))];
-        11789909 => [actor_species_pre_instruction(actors::escape_animals::state_address(game), game)];
-        11790027 => [actors::escape_animals::initialize(false, game)];
-        11791077 => [actors::escape_animals::initialize(true, game)];
+        11789909 => [actor_species_pre_instruction(actors::escape_critters::main_ai(game), game)];
+        11790027 => [actors::escape_critters::initialize(false, game)];
+        11791077 => [actors::escape_critters::initialize(true, game)];
         11791130 => [()];
         10652144 => [{
             let index = game.cur_enemy_index();
@@ -1406,9 +1406,9 @@ pub(crate) fn actor_b3_pre_instruction(ea: u32, k: u16, game: &mut Game) {
         11766044 => actors::brinstar_pipe_bug::fly(k, game),
         11766142 => actors::brinstar_pipe_bug::cooldown(k, game),
         11767039 => actors::norfair_pipe_bug::settle(game),
-        11789916 => actors::escape_animals::run_right(k, game),
-        11789936 => actors::escape_animals::await_rescue(k, game),
-        11789952 => actors::escape_animals::walk(k, game),
+        11789916 => actors::escape_critters::run_for_escape(k, game),
+        11789936 => actors::escape_critters::wait_to_express_gratitude(k, game),
+        11789952 => actors::escape_critters::run_around_aimlessly(k, game),
         11771328 => actors::botwoon::animate_motion(game),
         11771517 => {
             let address = actors::botwoon::aim_spit(game);
@@ -1659,11 +1659,11 @@ crate::game::callback_dispatch! {
         0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyInstr(ea, k, j, game)];
         0xaa0000..=0xaaffff => [sm_aa::DispatchEnemyInstr(ea, k, j, game)];
         0xb20000..=0xb2ffff => [space_pirates::dispatch_instruction(ea, k, j, game)];
-        11789637 | 11791016 => [actors::escape_animals::branch(false, j, game)];
-        11791032 => [actors::escape_animals::branch(true, j, game)];
-        11789840 => [actors::escape_animals::move_scripted(k, j, game)];
-        11791049 => [actors::escape_animals::step_dachora(0xfffa, j, game)];
-        11791063 => [actors::escape_animals::step_dachora(6, j, game)];
+        11789637 | 11791016 => [actors::escape_critters::go_to_if(false, j, game)];
+        11791032 => [actors::escape_critters::go_to_if(true, j, game)];
+        11789840 => [actors::escape_critters::move_x(k, j, game)];
+        11791049 => [actors::escape_critters::shift_dachora(0xfffa, j, game)];
+        11791063 => [actors::escape_critters::shift_dachora(6, j, game)];
         11769031 | 11769095 | 11769111 | 11769175 => [{ actors::botwoon::set_hitbox(8, 16, game); j }];
         11769047 | 11769079 | 11769127 | 11769159 => [{ actors::botwoon::set_hitbox(12, 12, game); j }];
         11769063 | 11769143 => [{ actors::botwoon::set_hitbox(16, 8, game); j }];

@@ -88,7 +88,7 @@ pub mod actors {
     pub mod draygon_host;
     pub mod draygon_sweep;
     pub mod effects;
-    pub mod escape_animals;
+    pub mod escape_critters;
     #[doc(hidden)] // Shared verification world for compat and detached checks.
     pub mod fixture;
     pub mod host;

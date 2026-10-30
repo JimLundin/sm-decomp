@@ -8,7 +8,7 @@ pub(crate) mod botwoon;
 pub(in crate::game) use sm_game::actors::botwoon_death;
 pub(in crate::game) mod diving_enemies;
 pub(in crate::game) mod elevator;
-pub(crate) mod escape_animals;
+pub(crate) mod escape_critters;
 pub(in crate::game) mod falling_platforms;
 pub(in crate::game) mod fireflea;
 pub(crate) mod identity;
