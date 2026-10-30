@@ -1179,7 +1179,6 @@ expect = ["room:DA60", "state:27"]
 # begins a later swoop.
 [[segment]]
 id = "boss-draygon-later-swoop"
-pending = "Draygon enemy_data+$38 ($7E0FB0) is 0000, not 024A, at input frame 2530 (swoop setup)"
 seed = "low-input-phase:129"
 seed_sha256 = "987fcffbe5a3c0e86996b029eaf95b6b2341edec5927dd979faaa4c8c83777cf"
 inputs = "authored-draygon-left-swoop.inputs"
