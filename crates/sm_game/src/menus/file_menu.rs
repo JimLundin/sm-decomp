@@ -203,9 +203,9 @@ fn select_first_slot<H: Host + ?Sized>(game: &mut H) {
     );
 }
 fn next_occupied_slot<H: Host + ?Sized>(game: &mut H) -> Option<u8> {
-    let up = if word!(game.joypad1_newkeys) as i32 & kButton_Up as i32 != 0 {
+    let up = if game.observed_inputs().pressed as i32 & kButton_Up as i32 != 0 {
         true
-    } else if word!(game.joypad1_newkeys) as i32 & kButton_Down as i32 != 0 {
+    } else if game.observed_inputs().pressed as i32 & kButton_Down as i32 != 0 {
         false
     } else {
         return None;
@@ -240,7 +240,7 @@ fn choose_source<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
     } else {
         game.ram().read_byte(crate::ram::words::joypad1_newkeys + 1)
     };
-    if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
+    if game.observed_inputs().pressed as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
         game.queue_sound(0, 0x37_u8, 6);
         if copy_selection(game) != 3 {
             set_copy_source(copy_selection(game), game);
@@ -251,7 +251,7 @@ fn choose_source<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
             crate::menu!(game.menu_index += 7);
             return;
         }
-    } else if (word!(game.joypad1_newkeys) & 0x8000) != 0 {
+    } else if (game.observed_inputs().pressed & 0x8000) != 0 {
         if COPY {
             crate::menu!(game.menu_index += 7);
             game.queue_sound(0, 0x37_u8, 6);
@@ -309,7 +309,7 @@ fn draw_destination<H: Host + ?Sized>(game: &mut H) {
 fn choose_destination<H: Host + ?Sized>(game: &mut H) {
     border(0x49, game);
     crate::sprite_output::menu_selection(game);
-    if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
+    if game.observed_inputs().pressed as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
         game.queue_sound(0, 0x37_u8, 6);
         if copy_selection(game) != 3 {
             set_copy_destination(copy_selection(game), game);
@@ -318,12 +318,12 @@ fn choose_destination<H: Host + ?Sized>(game: &mut H) {
             crate::menu!(game.menu_index += 5);
             return;
         }
-    } else if (word!(game.joypad1_newkeys) & 0x8000) == 0 {
+    } else if (game.observed_inputs().pressed & 0x8000) == 0 {
         'move_selection: {
-            let step = if word!(game.joypad1_newkeys) as i32 & kButton_Up as i32 != 0 {
+            let step = if game.observed_inputs().pressed as i32 & kButton_Up as i32 != 0 {
                 game.queue_sound(0, 0x37_u8, 6);
                 u16::MAX
-            } else if word!(game.joypad1_newkeys) as i32 & kButton_Down as i32 != 0 {
+            } else if game.observed_inputs().pressed as i32 & kButton_Down as i32 != 0 {
                 game.queue_sound(0, 0x37_u8, 6);
                 1
             } else {
@@ -390,13 +390,13 @@ fn confirm_choice<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
         animate_copy_arrow(game);
         crate::sprite_output::file_copy_arrow(game);
     }
-    if word!(game.joypad1_newkeys) as i32 & (kButton_Up as i32 | kButton_Down as i32) != 0 {
+    if game.observed_inputs().pressed as i32 & (kButton_Up as i32 | kButton_Down as i32) != 0 {
         set_copy_selection(copy_selection(game) ^ 1, game);
         game.queue_sound(0, 0x37_u8, 6);
     } else {
-        let cancelled = if (word!(game.joypad1_newkeys) & 0x8000) != 0 {
+        let cancelled = if (game.observed_inputs().pressed & 0x8000) != 0 {
             true
-        } else if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32)
+        } else if game.observed_inputs().pressed as i32 & (kButton_Start as i32 | kButton_A as i32)
             == 0
         {
             false
@@ -501,7 +501,7 @@ fn copy_slot<H: Host + ?Sized>(game: &mut H) {
 #[forbid(unsafe_code)]
 fn complete_operation<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
     border(if COPY { 0x49 } else { 0x4a }, game);
-    if word!(game.joypad1_newkeys) != 0 {
+    if game.observed_inputs().pressed != 0 {
         game.queue_sound(0, 0x37_u8, 6);
         crate::menu!(game.menu_index += 1);
         if COPY {
@@ -571,7 +571,7 @@ fn turn_helmet<H: Host + ?Sized>(game: &mut H) {
     crate::sprite_output::menu_selection(game);
     border(0x48, game);
     crate::sprite_output::file_helmets(true, game);
-    if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0
+    if game.observed_inputs().pressed as i32 & (kButton_Start as i32 | kButton_A as i32) != 0
         || file_select(game, |menu| {
             (0..3).any(|helmet| {
                 *menu.helmet_animation_frame(helmet) == 7
@@ -616,9 +616,9 @@ fn choose_main<H: Host + ?Sized>(game: &mut H) {
         border(0x48, game);
         crate::sprite_output::menu_selection(game);
         crate::sprite_output::file_helmets(true, game);
-        if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) == 0 {
+        if game.observed_inputs().pressed as i32 & (kButton_Start as i32 | kButton_A as i32) == 0 {
             let selection_unchanged: bool =
-                if (word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0 {
+                if (game.observed_inputs().pressed as i32 & kButton_Up as i32) != 0 {
                     let occupied = word!(game.nonempty_save_slots) != 0;
                     let selected = word!(game.selected_save_slot);
                     let previous = if (selected as i16).wrapping_sub(1) < 0 {
@@ -630,8 +630,8 @@ fn choose_main<H: Host + ?Sized>(game: &mut H) {
                     };
                     word!(game.selected_save_slot = previous);
                     false
-                } else if (word!(game.joypad1_newkeys) as i32 & kButton_Down as i32) == 0 {
-                    if (word!(game.joypad1_newkeys) as i32 & kButton_B as i32) != 0 {
+                } else if (game.observed_inputs().pressed as i32 & kButton_Down as i32) == 0 {
+                    if (game.observed_inputs().pressed as i32 & kButton_B as i32) != 0 {
                         game.queue_sound(0, 0x37_u8, 6);
                         crate::menu!(game.menu_index = 33);
                         game.queue_sound(0, 0x37_u8, 6);
