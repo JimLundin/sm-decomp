@@ -214,21 +214,21 @@ pub fn initialize_tail_or_arms<S: BossState + ?Sized>(arms: bool, game: &mut S) 
 }
 /// Main AI - Draygon body ($A5:86FC, with `body`) or eye ($A5:C486): run the
 /// part's function, then the body carries the other parts with it. Was `update`.
-pub fn main_ai<H: Host + ?Sized>(
+pub fn main_ai<L: Lease + ?Sized>(
     body: bool,
-    dispatch: impl FnOnce(u32, u16, &mut H),
-    game: &mut H,
+    dispatch: impl FnOnce(u32, u16, &mut L::Game),
+    game: &mut L,
 ) {
     if !body {
-        let k = word!(game.cur_enemy_index) as i32;
-        let state = u32::from(BANK) << 16 | u32::from(slot!(game, Draygon[k].function));
-        dispatch(state, word!(game.cur_enemy_index), game);
-        return;
+        return game.foreign(|game| {
+            let k = word!(game.cur_enemy_index) as i32;
+            let state =
+                (u32::from(BANK) << 16) | u32::from(session_slot!(game, Draygon[k].function));
+            dispatch(state, word!(game.cur_enemy_index), game)
+        });
     }
-    // One lease per frame; the body's function runs on it, the effects that
-    // need the game in foreign calls.
-    let mut lease = game.lease_boss();
-    let game = &mut lease;
+    // The body's function runs on the lease, the effects that need the game
+    // in foreign calls.
     let k = word!(game.cur_enemy_index);
     let function = session_slot!(game, Draygon[k as i32].function);
     run_function_on(game, function, k, |game| {

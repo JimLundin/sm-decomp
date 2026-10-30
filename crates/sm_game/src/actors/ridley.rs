@@ -12,7 +12,7 @@
 //! dispatches both through the bank's function table.
 #![forbid(unsafe_code)]
 use crate::actors::api::angle_from_delta;
-use crate::actors::boss_lease::{BossLease, LeaseBoss};
+use crate::actors::boss_lease::BossLease;
 use crate::actors::deaths::Deaths as _;
 use crate::actors::host::BossEffects as _;
 use crate::actors::host::{Death, Shot, abs16, below};
@@ -48,7 +48,6 @@ pub trait Host:
     + crate::cartridge::NativeImage
     + crate::sprite_output::SpriteHost
     + BossLease<Game = Self>
-    + LeaseBoss
 {
     /// Run the bank $A6 Ridley function at `function`, Norfair's or Ceres's.
     fn run_function(&mut self, function: u16);
@@ -660,11 +659,9 @@ pub fn draw_baby_metroid_and_door<L: Lease + ?Sized>(game: &mut L) {
 }
 
 /// Main AI - enemy $E17F (Ridley) ($A6:B227). Was `Ridley_Main`.
-pub fn main<H: Host + ?Sized>(game: &mut H) {
-    // One lease per frame: the state steps and Ridley's function on it, the
-    // tail, drawing and ribs in one trip to the game.
-    let mut lease = game.lease_boss();
-    let lease = &mut lease;
+pub fn main<L: Lease + ?Sized>(lease: &mut L) {
+    // The state steps and Ridley's function run on the lease, the tail,
+    // drawing and ribs in one trip to the game.
     let mut lag = (session_slot!(lease, Ridley[RIDLEY].grabbed_lag_timer) as i16).wrapping_sub(4);
     if lag < 0 {
         lag = 0;

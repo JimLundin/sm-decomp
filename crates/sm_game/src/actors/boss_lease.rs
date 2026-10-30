@@ -69,11 +69,3 @@ pub trait BossLease: BossState {
     type Game: ?Sized;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
 }
-
-/// A game that can lease its Session for a boss's frame.
-pub trait LeaseBoss {
-    type Lease<'a>: BossLease<Game = Self>
-    where
-        Self: 'a;
-    fn lease_boss(&mut self) -> Self::Lease<'_>;
-}

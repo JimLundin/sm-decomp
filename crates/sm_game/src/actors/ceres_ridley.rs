@@ -197,11 +197,9 @@ pub fn init<L: Lease + ?Sized>(game: &mut L) {
 /// Main AI - enemy $E13F (Ceres Ridley) ($A6:A288): immortal; until the
 /// getaway it moves, animates and draws as Norfair Ridley does. Was
 /// `CeresRidley_Main`.
-pub fn main<H: Host + ?Sized>(game: &mut H) {
-    // One lease per frame: the state steps and the function on it, the tail,
-    // drawing, ribs and baby metroid in one trip to the game.
-    let mut lease = game.lease_boss();
-    let game = &mut lease;
+pub fn main<L: Lease + ?Sized>(game: &mut L) {
+    // The state steps and the function run on the lease, the tail, drawing,
+    // ribs and baby metroid in one trip to the game.
     session_slot!(game, Ridley[RIDLEY].base.health = 0x7fff);
     let function = session_slot!(game, Ridley[RIDLEY].function);
     run_function(game, function);

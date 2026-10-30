@@ -10,7 +10,7 @@
 //! the same RAM bytes as `KraidLayout`. The pause and unpause hooks are in
 //! `kraid_pause`.
 #![forbid(unsafe_code)]
-use crate::actors::boss_lease::{BossLease, BossState, LeaseBoss};
+use crate::actors::boss_lease::{BossLease, BossState};
 use crate::actors::deaths::Deaths as _;
 use crate::actors::host::BossEffects as _;
 use crate::actors::host::{Death, Shot, Slopes, below};
@@ -41,7 +41,6 @@ pub trait Host:
     + crate::records::Records
     + crate::decompression::DecompressionHost
     + BossLease<Game = Self>
-    + LeaseBoss
 {
     /// Queue a VRAM write of Kraid's tilemap row at bank $A7 `source`, as an
     /// entry at queue `tail`, to BG2's tilemap.
@@ -2241,11 +2240,9 @@ pub fn initialize_foot<L: Lease + ?Sized>(game: &mut L) {
 
 /// Mouth and body shots, the palette, contact and BG2's scroll, then the
 /// body's function. Was `Kraid_Main`.
-pub fn main_ai<H: Host + ?Sized>(game: &mut H) {
-    // One lease per frame: the shots, palette, contact, BG2 scroll and the
-    // body's function on the Session, what needs the game in foreign calls.
-    let mut lease = game.lease_boss();
-    let game = &mut lease;
+pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
+    // The shots, palette, contact, BG2 scroll and the body's function run on
+    // the lease, what needs the game in foreign calls.
     mouth_shots(game);
     palette(game);
     body_shots(game);

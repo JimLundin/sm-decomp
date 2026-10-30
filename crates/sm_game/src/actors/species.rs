@@ -286,7 +286,7 @@ pub trait AiHost:
 }
 
 /// The bank $A5 functions Draygon's parts run, keyed by address.
-fn draygon_function<H: AiHost>(ea: u32, k: u16, game: &mut H) {
+pub fn draygon_function<H: AiHost>(ea: u32, k: u16, game: &mut H) {
     match ea {
         10848691 => {
             draygon_flight::fire_wall_turret(game);

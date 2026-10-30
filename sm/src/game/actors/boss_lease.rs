@@ -4,7 +4,7 @@
 use super::{api, combat, queries};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
-use sm_game::actors::boss_lease::{BossLease, BossState, LeaseBoss};
+use sm_game::actors::boss_lease::{BossLease, BossState};
 use sm_game::actors::host::{ActorRuntime, BossEffects, Death, Shot};
 use sm_game::geometry::{Point, Vector32};
 
@@ -78,13 +78,6 @@ impl BossLease for Game {
     type Game = Game;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Game) -> T) -> T {
         action(self)
-    }
-}
-
-impl LeaseBoss for Game {
-    type Lease<'a> = Runtime<'a>;
-    fn lease_boss(&mut self) -> Runtime<'_> {
-        Runtime::new(self)
     }
 }
 

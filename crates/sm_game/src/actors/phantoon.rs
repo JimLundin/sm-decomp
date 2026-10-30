@@ -8,7 +8,7 @@
 //! `phantoon_motion` and `phantoon_actions`.
 #![forbid(unsafe_code)]
 use crate::actors::api::PlayerDirection;
-use crate::actors::boss_lease::{BossLease, BossState, LeaseBoss};
+use crate::actors::boss_lease::{BossLease, BossState};
 use crate::actors::deaths::Deaths as _;
 use crate::actors::host::BossEffects as _;
 use crate::actors::host::{Death, Shot, below};
@@ -37,7 +37,6 @@ pub trait Host:
     + crate::records::Records
     + crate::cartridge::NativeImage
     + BossLease<Game = Self>
-    + LeaseBoss
 {
     /// Run the bank $A7 function at `address` for the current enemy.
     fn run_function(&mut self, address: u32);
@@ -723,11 +722,9 @@ pub fn initialize_part<S: BossState + ?Sized>(game: &mut S) {
 
 /// Runs the current function; the body carries the other parts and BG2.
 /// Was `Phantoon_Main`.
-pub fn main_ai<H: Host + ?Sized>(game: &mut H) {
-    // One lease per frame; the bank $A7 function runs on it, the effects
-    // that need the game in grouped foreign calls.
-    let mut lease = game.lease_boss();
-    let game = &mut lease;
+pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
+    // The bank $A7 function runs on the lease, the effects that need the
+    // game in grouped foreign calls.
     phantoon_actions::broken_nothingness(word!(game.cur_enemy_index), game);
     let me = current(game);
     let function = session_slot!(game, Body[me].function);

@@ -1580,6 +1580,14 @@ impl Runtime<'_> {
     pub(crate) fn actor_ai_legacy(&mut self, routine: u32) {
         match routine {
             11769448 => self.owned_call(actors::botwoon::main_ai),
+            10920584 => self.owned_call(sm_game::actors::ceres_ridley::main),
+            10924583 => self.owned_call(sm_game::actors::ridley::main),
+            10988577 => self.owned_call(sm_game::actors::kraid::main_ai),
+            10997414 => self.owned_call(sm_game::actors::phantoon::main_ai),
+            10847996 | 10863750 => self.owned_call(|runtime| {
+                use sm_game::actors::{draygon_flight, species};
+                draygon_flight::main_ai(routine == 10847996, species::draygon_function, runtime)
+            }),
             11771926 => self.owned_call(actors::botwoon::shot),
             11771903 | 11771969 => {
                 self.owned_call(|runtime| actors::botwoon::contact(routine == 11771969, runtime))

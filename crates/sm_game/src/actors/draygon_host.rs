@@ -4,7 +4,7 @@
 //!
 //! Draygon is four enemies: the body in slot 0, then the eye, tail and arms.
 #![forbid(unsafe_code)]
-use crate::actors::boss_lease::{BossLease, LeaseBoss};
+use crate::actors::boss_lease::BossLease;
 use crate::actors::host::BossEffects;
 pub use crate::actors::host::abs16;
 use crate::actors::layouts::{EnemyBase, same_words};
@@ -13,7 +13,7 @@ use crate::actors::layouts::{EnemyBase, same_words};
 pub trait Lease: BossLease<Game: Host> {}
 impl<T: BossLease<Game: Host> + ?Sized> Lease for T {}
 
-pub trait Host: BossEffects + BossLease<Game = Self> + LeaseBoss {
+pub trait Host: BossEffects + BossLease<Game = Self> {
     fn draygon_spawn_trails(&mut self);
     fn draygon_trajectory(&mut self);
     /// Draygon grabs Samus, facing `direction`.
