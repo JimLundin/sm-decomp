@@ -65,17 +65,22 @@ pub mod actors {
     pub mod combat;
     pub mod contacts;
     pub mod content;
+    pub mod dachora;
     pub mod drawing;
     pub mod effects;
     #[doc(hidden)] // Shared verification world for compat and detached checks.
     pub mod fixture;
+    pub mod host;
     pub mod identity;
+    pub mod kraid_fingernails;
+    pub mod kraid_sinking;
     pub mod layouts;
     pub mod media;
     pub mod movement;
     pub mod overlap;
     pub mod population;
     pub mod queries;
+    pub mod ridley_tables;
     pub mod scene;
     pub mod scheduling;
     pub mod shaktool;
