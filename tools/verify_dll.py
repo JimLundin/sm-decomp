@@ -68,13 +68,15 @@ def library_source_paths(root):
              for path in (root / "sm" / "src").rglob("*")
              if path.suffix in (".rs", ".c", ".h")}
     # Target-package crates are compiled into the same verifier library.
+    # The desktop application (sm_app) is not part of the verifier library.
     paths.update(path.relative_to(root).as_posix()
-                 for path in (root / "crates").glob("*/src/**/*.rs"))
+                 for path in (root / "crates").glob("*/src/**/*.rs")
+                 if not path.is_relative_to(root / "crates" / "sm_app"))
     paths.update(path.relative_to(root).as_posix()
-                 for path in (root / "crates").glob("*/Cargo.toml"))
-    paths.difference_update(("sm/src/main.rs", "sm/src/verify.rs",
-                             "sm/src/verify_dll.rs", "sm/src/verify/checkpoint.rs",
-                             "sm/src/verify/seed.rs"))
+                 for path in (root / "crates").glob("*/Cargo.toml")
+                 if not path.is_relative_to(root / "crates" / "sm_app"))
+    paths.difference_update(("sm/src/verify.rs", "sm/src/verify_dll.rs",
+                             "sm/src/verify/checkpoint.rs", "sm/src/verify/seed.rs"))
     return paths
 
 
@@ -166,9 +168,11 @@ def cargo_host(root, rustc, output, source, frontend=False, retry=True):
     if frontend:
         # The desktop requires the ordinary library configuration. The verifier
         # cfg excludes its config/platform modules, so use a separate build.
+        # The desktop binary is the sm_app package's `sm`.
         frontend_command = command.copy()
+        frontend_command[frontend_command.index("-p") + 1] = "sm_app"
         selector = frontend_command.index("--example")
-        frontend_command[selector:selector + 2] = ["--lib", "--bin", "sm"]
+        frontend_command[selector:selector + 2] = ["--bin", "sm"]
         frontend_log = output / "frontend-build.log"
         print(f"Compiling release frontend; log {frontend_log}",
               file=sys.stderr, flush=True)

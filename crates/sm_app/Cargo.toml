@@ -1,0 +1,22 @@
+[package]
+name = "sm_app"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "The Super Metroid desktop application: window, input, configuration and the run loop"
+autobins = false
+
+# The desktop binary keeps its name and command line.
+[[bin]]
+name = "sm"
+path = "src/main.rs"
+
+# The compatibility runtime stays a dependency until it is replaced.
+[dependencies]
+sm = { path = "../../sm", features = ["frontend"] }
+sdl2-sys = "0.38.0"
+
+[lints.rust]
+warnings = { level = "deny", priority = -1 }
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(sm_verify_dll)"] }

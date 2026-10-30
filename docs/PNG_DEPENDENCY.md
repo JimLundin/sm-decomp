@@ -83,7 +83,7 @@ Copy-Item -LiteralPath THIRD_PARTY_NOTICES.md -Destination (Join-Path $codecNati
 $env:PATH = (Join-Path $env:USERPROFILE '.rustup/toolchains/stable-x86_64-pc-windows-gnu/bin') + ';' + $env:PATH
 if (-not $env:LIBRARY_PATH) { $env:LIBRARY_PATH = $codecNativeDirectory }
 $env:CARGO_BUILD_JOBS = '1'
-cargo build --release -p sm
+cargo build --release -p sm_app
 if ($LASTEXITCODE -ne 0) { throw 'Game build failed.' }
 ```
 
@@ -116,7 +116,7 @@ clang -O2 -std=c11 -fPIC -ftrivial-auto-var-init=zero -I "$(dirname "$codec_head
 ar rcs "$codec_work/libsm_stb_image.a" "$codec_work/stb_image.o"
 cp "$codec_work/libsm_stb_image.a" "$codec_lib/libsm_stb_image.a"
 cp THIRD_PARTY_NOTICES.md "$codec_lib/LICENSE-third-party"
-LIBRARY_PATH="$codec_lib${LIBRARY_PATH:+:$LIBRARY_PATH}" cargo build --release -p sm
+LIBRARY_PATH="$codec_lib${LIBRARY_PATH:+:$LIBRARY_PATH}" cargo build --release -p sm_app
 ```
 
 The last command supplies both static dependencies through the normal linker

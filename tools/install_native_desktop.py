@@ -16,7 +16,7 @@ FILES = {
     "src/types.h": "af3bbac047a9a6db0707f9241aa9e19767147ab3783b523cb22cfd55b0409e23",
     "LICENSE.txt": "78b243fa858f4bcb49f8ccca14fec262f62fcee4e44a1ce7565840bdb4ca2217",
 }
-NATIVE_INPUTS = ("sm/src/main.rs", "sm/src/native_desktop.c", "sm/src/native_desktop.h",
+NATIVE_INPUTS = ("crates/sm_app/src/main.rs", "sm/src/native_desktop.c", "sm/src/native_desktop.h",
                  "sm/src/types.rs", "sm/src/platform/opengl.rs", "tools/install_native_desktop.py",
                  "tools/install_native_config.py")
 

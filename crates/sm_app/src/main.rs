@@ -14,6 +14,8 @@ use sm::game_state::{Game, GameOwner};
 use sm::host::Die;
 use sm::rtl::*;
 use sm::types::{FILE, RendererFuncs, Snes, size_t};
+// The replay runner is shared with the sm_verify host.
+#[path = "../../../sm/src/verify.rs"]
 mod verify;
 const kWindowTitle: &[u8] = b"SuperMet\0";
 const NULL: *mut c_void = null_mut();
@@ -44,12 +46,12 @@ unsafe extern "C-unwind" {
 fn check_dependency() {
     for (index, source) in [
         include_bytes!("main.rs").as_slice(),
-        include_bytes!("native_desktop.c").as_slice(),
-        include_bytes!("native_desktop.h").as_slice(),
-        include_bytes!("types.rs").as_slice(),
-        include_bytes!("platform/opengl.rs").as_slice(),
-        include_bytes!("../../tools/install_native_desktop.py").as_slice(),
-        include_bytes!("../../tools/install_native_config.py").as_slice(),
+        include_bytes!("../../../sm/src/native_desktop.c").as_slice(),
+        include_bytes!("../../../sm/src/native_desktop.h").as_slice(),
+        include_bytes!("../../../sm/src/types.rs").as_slice(),
+        include_bytes!("../../../sm/src/platform/opengl.rs").as_slice(),
+        include_bytes!("../../../tools/install_native_desktop.py").as_slice(),
+        include_bytes!("../../../tools/install_native_config.py").as_slice(),
     ]
     .into_iter()
     .enumerate()

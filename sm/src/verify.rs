@@ -3,6 +3,8 @@ use sm::game_state::Game;
 use std::{collections::BTreeSet, ffi::CString, time::Instant};
 
 use sm::verification_checkpoint as checkpoint;
+// Explicit so the desktop binary in sm_app can share this module.
+#[path = "verify/seed.rs"]
 mod seed;
 
 #[derive(Clone, Debug, PartialEq, Eq)]

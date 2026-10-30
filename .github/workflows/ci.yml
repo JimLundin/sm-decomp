@@ -181,8 +181,10 @@ jobs:
           foreach ($archive in @('sm_desktop', 'lakesnes_cpu', 'lakesnes_backend', 'sm_config', 'sm_stb_image')) {
             if (!(Test-Path -LiteralPath "$env:LIBRARY_PATH/lib$archive.a")) { throw "Missing native archive: $archive" }
           }
-          cargo build --release --locked --lib --bin sm --example sm_verify
+          cargo build --release --locked -p sm --lib --example sm_verify
           if ($LASTEXITCODE -ne 0) { throw 'Cargo build failed' }
+          cargo build --release --locked -p sm_app --bin sm
+          if ($LASTEXITCODE -ne 0) { throw 'Desktop build failed' }
       - name: Check Cargo verifier configuration and actor exports
         run: |
           python tools/verify_dll.py --build-only --cargo

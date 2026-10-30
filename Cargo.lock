@@ -69,6 +69,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "sm_app"
+version = "0.1.0"
+dependencies = [
+ "sdl2-sys",
+ "sm",
+]
+
+[[package]]
 name = "sm_data"
 version = "0.1.0"
 

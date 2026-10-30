@@ -10,11 +10,6 @@ autobins = false
 [lib]
 path = "src/lib.rs"
 
-[[bin]]
-name = "sm"
-path = "src/main.rs"
-required-features = ["frontend"]
-
 # Cargo tracks the Windows verifier host and its included source files too.
 [[example]]
 name = "sm_verify"
