@@ -127,11 +127,19 @@ pub fn abs16(value: u16) -> u16 {
 /// A session lease over the actors: what a compat `Runtime` gives code that
 /// edits actors directly, plus the session-aware RAM word read and `foreign`
 /// onto the leased game.
-pub trait ActorLease: crate::actors::access::ActorAccess {
+pub trait ActorLease:
+    crate::actors::access::ActorAccess + crate::enemy_projectiles::host::Host
+{
     type Game: BossEffects + ?Sized;
     /// The compatibility word at `at`, through the session projection.
     fn word(&self, at: usize) -> u16;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
+    /// Store `value` natively at `at` through the session projection.
+    fn write_slice_native(&mut self, at: usize, value: u16);
+    /// Store `value` little-endian at `at` through the session projection.
+    fn write_slice_le(&mut self, at: usize, value: u16);
+    /// The loaded cartridge image, when one is loaded.
+    fn leased_image(&self) -> Option<sm_data::cartridge::RomImage>;
 }
 
 /// A host that can lease its actors; each `lease` is one original `Runtime`.

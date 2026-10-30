@@ -16,6 +16,18 @@ impl ActorLease for Runtime<'_> {
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Game) -> T) -> T {
         Runtime::foreign(self, action)
     }
+
+    fn write_slice_native(&mut self, at: usize, value: u16) {
+        Runtime::write_slice_native(self, at, value);
+    }
+
+    fn write_slice_le(&mut self, at: usize, value: u16) {
+        Runtime::write_slice_le(self, at, value);
+    }
+
+    fn leased_image(&self) -> Option<crate::rom::RomImage> {
+        Runtime::loaded_image(self)
+    }
 }
 
 impl LeaseActors for Game {
