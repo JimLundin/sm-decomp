@@ -29,7 +29,7 @@ fn repeat<H: Host + ?Sized>(offset: usize, sampled: u16, game: &mut H) {
 
 pub fn filter<H: Host + ?Sized>(delay: u16, game: &mut H) {
     word!(game.timed_held_input_timer_reset = delay);
-    let held = !word!(game.joypad1_newkeys) & word!(game.joypad1_lastkeys);
+    let held = !game.observed_inputs().pressed & game.observed_inputs().held;
     let unchanged = held == word!(game.joypad_released_keys);
     word!(game.joypad_released_keys = held);
     if !unchanged {
@@ -63,7 +63,7 @@ pub fn sample<H: Host + ?Sized>(game: &mut H) {
 
 fn debug_controls<H: Host + ?Sized>(game: &mut H) {
     let reset = (kButton_Select | kButton_Start | kButton_L | kButton_R) as u16;
-    if word!(game.is_uploading_apu) != 0 || word!(game.joypad1_lastkeys) != reset {
+    if word!(game.is_uploading_apu) != 0 || game.observed_inputs().held != reset {
         if word!(game.enable_debug) != 0 {
             word! { game, 0; joypad_dbg_1, joypad_dbg_2 }
             if (word!(game.joypad_dbg_flags) & 0x4000) == 0 {
@@ -72,8 +72,8 @@ fn debug_controls<H: Host + ?Sized>(game: &mut H) {
                     (kButton_R, fields::joypad_dbg_2),
                 ] {
                     let chord = (kButton_Select | button) as u16;
-                    if word!(game.joypad1_lastkeys) & chord == chord {
-                        at!(game, target; = word!(game.joypad1_newkeys));
+                    if game.observed_inputs().held & chord == chord {
+                        at!(game, target; = game.observed_inputs().pressed);
                         word! { game, 0; joypad1_lastkeys, joypad1_newkeys }
                     }
                 }
@@ -178,7 +178,7 @@ pub fn store_binding_choices<H: Host + ?Sized>(game: &mut H) -> u8 {
 pub fn remap_binding<H: Host + ?Sized>(game: &mut H) {
     let Some(choice) = BINDING_BUTTONS[..7]
         .iter()
-        .rposition(|button| button & word!(game.joypad1_newkeys) != 0)
+        .rposition(|button| button & game.observed_inputs().pressed != 0)
     else {
         return;
     };

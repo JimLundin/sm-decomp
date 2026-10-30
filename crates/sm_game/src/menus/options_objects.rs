@@ -152,7 +152,7 @@ fn end_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
 fn before_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
     match word!(game.options_object_preinstrs[slot]) {
         preinstruction::MENU_SELECTION_MISSILE => {
-            if word!(game.game_state) == 2 {
+            if game.observed_inputs().transitions.game_state == 2 {
                 let screen = word!(game.game_options_screen_index);
                 let table = crate::menu_lists::options_screen_objects(game, screen as isize);
                 if table != 0 {
@@ -168,7 +168,7 @@ fn before_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
             }
         }
         preinstruction::OPTION_MODE_BORDER => {
-            if word!(game.game_state) != 2
+            if game.observed_inputs().transitions.game_state != 2
                 || word!(game.game_options_screen_index) == 6
                     && game.ram().read_byte(crate::ram::mirror::INIDISP) == 0x80
             {
@@ -197,7 +197,7 @@ fn before_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
             }
         }
         preinstruction::FILE_SELECT_SAMUS_HELMET => {
-            if word!(game.game_state) != 2 {
+            if game.observed_inputs().transitions.game_state != 2 {
                 end_script(slot, game);
             }
         }

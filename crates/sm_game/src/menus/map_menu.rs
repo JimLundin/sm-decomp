@@ -230,12 +230,12 @@ fn open_area_window<H: Host + ?Sized>(game: &mut H) {
 }
 #[forbid(unsafe_code)]
 fn choose_area<H: Host + ?Sized>(game: &mut H) {
-    let mut keys = word!(game.joypad1_newkeys) as i16;
+    let mut keys = game.observed_inputs().pressed as i16;
     'handle_action: {
-        let previous = word!(game.joypad1_newkeys) & (kButton_Up | kButton_Left) as u16 != 0;
+        let previous = game.observed_inputs().pressed & (kButton_Up | kButton_Left) as u16 != 0;
         let attempts = if previous {
             3
-        } else if word!(game.joypad1_newkeys)
+        } else if game.observed_inputs().pressed
             & (kButton_Select | kButton_Down | kButton_Right) as u16
             != 0
         {
@@ -613,7 +613,7 @@ fn choose_room<H: Host + ?Sized>(game: &mut H) {
                 }
                 scroll!(game.Bg1V = scroll_y);
             }
-        } else if (word!(game.joypad1_newkeys) & 0x8000) != 0 {
+        } else if (game.observed_inputs().pressed & 0x8000) != 0 {
             crate::menu!(game.menu_index += 5);
             let Some(selection) = area_selection(game) else {
                 word!(game.file_select_map_area_index = 0);
@@ -621,7 +621,7 @@ fn choose_room<H: Host + ?Sized>(game: &mut H) {
             };
             word!(game.file_select_map_area_index = selection as u16);
             game.queue_sound(0, 0x3c_u8, 6);
-        } else if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32)
+        } else if game.observed_inputs().pressed as i32 & (kButton_Start as i32 | kButton_A as i32)
             != 0
         {
             crate::menu!(game.menu_index += 1);
@@ -1373,8 +1373,7 @@ fn scroll_arrow<H: Host + ?Sized>(address: u32, game: &mut H) {
     animate_pause_sprite(record.word(4), record.word(0), record.word(2), game);
     // Drawing can replace the image; input and direction use a fresh capture.
     let record = menu_tilemap::native_record(address, game);
-    if word!(game.joypad1_lastkeys) & record.word(6) != 0
-        && word!(game.map_scrolling_direction) == 0
+    if game.observed_inputs().held & record.word(6) != 0 && word!(game.map_scrolling_direction) == 0
     {
         word!(game.map_scrolling_direction = record.word(8));
     }

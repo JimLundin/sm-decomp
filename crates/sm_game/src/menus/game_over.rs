@@ -122,10 +122,10 @@ fn choose<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         game.rtl_unreachable();
     });
     crate::sprite_output::menu_selection(game);
-    if word!(game.joypad1_newkeys) & (kButton_Select | kButton_Up | kButton_Down) as u16 != 0 {
+    if game.observed_inputs().pressed & (kButton_Select | kButton_Up | kButton_Down) as u16 != 0 {
         game.queue_sound(0, 0x37_u8, 6);
         word!(game.file_select_map_area_index ^= 1);
-    } else if word!(game.joypad1_newkeys) & kButton_A as u16 != 0 {
+    } else if game.observed_inputs().pressed & kButton_A as u16 != 0 {
         slot!(game, EnemyBase[0].instruction_timer = 180);
         if word!(game.file_select_map_area_index) != 0 {
             crate::menu!(game.menu_index = 7);

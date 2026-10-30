@@ -45,12 +45,12 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H, upload: fn(&mut H)) {
 }
 
 fn navigate<H: Host + ?Sized>(last: u16, game: &mut H) {
-    if word!(game.joypad1_newkeys) & kButton_Up as u16 != 0 {
+    if game.observed_inputs().pressed & kButton_Up as u16 != 0 {
         game.queue_sound(0, 0x37_u8, 6);
         if word!(game.menu_option_index -= 1, reread) & 0x8000 != 0 {
             word!(game.menu_option_index = last);
         }
-    } else if word!(game.joypad1_newkeys) & kButton_Down as u16 != 0 {
+    } else if game.observed_inputs().pressed & kButton_Down as u16 != 0 {
         game.queue_sound(0, 0x37_u8, 6);
         if word!(game.menu_option_index += 1, reread) == last + 1 {
             word!(game.menu_option_index = 0);
@@ -60,9 +60,9 @@ fn navigate<H: Host + ?Sized>(last: u16, game: &mut H) {
 
 pub fn main_menu<H: Host + ?Sized>(game: &mut H) {
     navigate(4, game);
-    if word!(game.joypad1_newkeys) & kButton_B as u16 != 0 {
+    if game.observed_inputs().pressed & kButton_B as u16 != 0 {
         word!(game.game_options_screen_index = 11);
-    } else if word!(game.joypad1_newkeys) & (kButton_A | kButton_Start) as u16 != 0 {
+    } else if game.observed_inputs().pressed & (kButton_A | kButton_Start) as u16 != 0 {
         game.queue_sound(0, 0x38_u8, 6);
         let actions: [fn(&mut H); 5] =
             [start, toggle_language, toggle_language, dissolve, dissolve];
@@ -71,7 +71,7 @@ pub fn main_menu<H: Host + ?Sized>(game: &mut H) {
 }
 
 fn start<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.enable_debug) != 0 && word!(game.joypad1_lastkeys) & kButton_L as u16 == 0
+    if word!(game.enable_debug) != 0 && game.observed_inputs().held & kButton_L as u16 == 0
         || word!(game.loading_game_state) == 5
     {
         word!(game.game_options_screen_index = 4);
@@ -83,7 +83,7 @@ fn start<H: Host + ?Sized>(game: &mut H) {
 
 pub fn finish_start<H: Host + ?Sized>(game: &mut H) {
     word!(game.game_options_screen_index = 0);
-    if word!(game.enable_debug) != 0 && (word!(game.joypad1_lastkeys) & 0x20) == 0 {
+    if word!(game.enable_debug) != 0 && (game.observed_inputs().held & 0x20) == 0 {
         word!(game.game_state = 5);
         if word!(game.loading_game_state) != 5 {
             word!(game.loading_game_state = 5);
@@ -133,10 +133,10 @@ pub fn highlight_language<H: Host + ?Sized>(game: &mut H) {
 
 pub fn special<H: Host + ?Sized>(game: &mut H) {
     navigate(2, game);
-    if word!(game.joypad1_newkeys) & kButton_B as u16 != 0 {
+    if game.observed_inputs().pressed & kButton_B as u16 != 0 {
         game.queue_sound(0, 0x38_u8, 6);
         back(game);
-    } else if word!(game.joypad1_newkeys)
+    } else if game.observed_inputs().pressed
         & (kButton_Start | kButton_Left | kButton_Right | kButton_A) as u16
         != 0
     {
@@ -190,7 +190,7 @@ pub fn highlight_special<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn controller<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.joypad1_newkeys) & kButton_Up as u16 != 0 {
+    if game.observed_inputs().pressed & kButton_Up as u16 != 0 {
         game.queue_sound(0, 0x37_u8, 6);
         let selected = word!(game.menu_option_index -= 1, reread);
         if word!(game.menu_option_index) & 0x8000 != 0 {
@@ -200,7 +200,7 @@ pub fn controller<H: Host + ?Sized>(game: &mut H) {
         }
         return;
     }
-    if word!(game.joypad1_newkeys) & kButton_Down as u16 != 0 {
+    if game.observed_inputs().pressed & kButton_Down as u16 != 0 {
         game.queue_sound(0, 0x37_u8, 6);
         let selected = word!(game.menu_option_index).wrapping_add(1);
         word!(game.menu_option_index = selected);
@@ -211,7 +211,7 @@ pub fn controller<H: Host + ?Sized>(game: &mut H) {
         if selected == 9 {
             word! { game; menu_option_index = 0; game_options_screen_index = 10; }
         }
-    } else if word!(game.joypad1_newkeys) != 0 {
+    } else if game.observed_inputs().pressed != 0 {
         game.queue_sound(0, 0x38_u8, 6);
         let remap: fn(&mut H) = |game| super::controller_input::remap_binding(game);
         let actions: [fn(&mut H); 9] = [
@@ -245,7 +245,7 @@ pub fn controller<H: Host + ?Sized>(game: &mut H) {
 }
 
 fn accept_bindings<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.joypad1_newkeys) & (kButton_Start | kButton_A) as u16 != 0
+    if game.observed_inputs().pressed & (kButton_Start | kButton_A) as u16 != 0
         && super::controller_input::store_binding_choices(game) == 0
     {
         back(game);
@@ -253,7 +253,7 @@ fn accept_bindings<H: Host + ?Sized>(game: &mut H) {
 }
 
 fn reset_bindings<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.joypad1_newkeys) & (kButton_Start | kButton_A) as u16 != 0 {
+    if game.observed_inputs().pressed & (kButton_Start | kButton_A) as u16 != 0 {
         super::controller_input::reset_binding_choices(game);
         menu_tilemap::controller_bindings(game);
     }
