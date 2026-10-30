@@ -66,9 +66,7 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
         );
         record(&mut output, 1, result, &game);
         if id >= 6 {
-            unsafe {
-                sm_a7::Kraid_FadeInBg_FadeInBp6(&mut game);
-            }
+            sm_a7::Kraid_FadeInBg_FadeInBp6(&mut game);
             // Last interpolation step copies actual target colours and returns
             // before music, native boss read/store and enemy transition.
             let targets = expected[0xc2c0..0xc2e0].to_vec();
@@ -86,9 +84,7 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
             assert!(!game.g_fail, "flags.kraid.palette.diagnostic");
             record(&mut output, 2, 0, &game);
         }
-        unsafe {
-            sm_a7::Kraid_FadeInBg_FadeInBp6(&mut game);
-        }
+        sm_a7::Kraid_FadeInBg_FadeInBp6(&mut game);
         put(&mut expected, 0xc400, 0);
         put(&mut expected, 0xc402, 12);
         put(&mut expected, 0x619, 3);

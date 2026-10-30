@@ -188,9 +188,7 @@ pub(crate) unsafe fn initialize_rainbow_beam(game: &mut Game) {
     game.ram().write_byte(0x9c00, 100);
     word_transfers!(game, ascending, 1; native(0x9c01) <- value(0x9d00), native(0x9c03) <- value(0));
     word! {game; hdma_table_2[0] = 0; hdma_table_2[1] = 0x8020; hdma_table_2[2] = 0; }
-    unsafe {
-        crate::game::sm_a9::MotherBrain_CalculateRainbowBeamHdma(game);
-    }
+    crate::game::sm_a9::MotherBrain_CalculateRainbowBeamHdma(game);
 }
 
 pub(crate) unsafe fn advance_rainbow_beam(game: &mut Game) {
@@ -200,9 +198,7 @@ pub(crate) unsafe fn advance_rainbow_beam(game: &mut Game) {
     } else {
         word!(game.fx_layer_blending_config_c = 36);
         if word!(game.game_state) != 27 {
-            unsafe {
-                crate::game::sm_a9::MotherBrain_CalculateRainbowBeamHdma(game);
-            }
+            crate::game::sm_a9::MotherBrain_CalculateRainbowBeamHdma(game);
             advance_rainbow_palette(game);
         }
     }

@@ -251,6 +251,35 @@ pub mod game {
             )+
         };
         (
+            $visibility:vis fn $parameters:tt;
+            before $before:tt
+            when $condition:expr;
+            $(
+                $name:ident $effects:tt
+                $(else $otherwise:tt)?
+                $(after $after:tt)?;
+            )+
+        ) => {
+            $(
+                $crate::game::countdown_callbacks! {
+                    @safe [$visibility fn $name $parameters]
+                    $before [$condition] $effects
+                    $(else $otherwise)? $(after $after)?
+                }
+            )+
+        };
+        (
+            @safe [$($header:tt)*]
+            { $($before:tt)* } [$condition:expr] $effects:block
+            $(else $otherwise:block)? $(after { $($after:tt)* })?
+        ) => {
+            $($header)* {
+                $($before)*
+                if $condition $effects $(else $otherwise)?
+                $($($after)*)?
+            }
+        };
+        (
             @function [$($header:tt)*]
             { $($before:tt)* } [$condition:expr] $effects:block
             $(else $otherwise:block)? $(after { $($after:tt)* })?
@@ -272,13 +301,27 @@ pub mod game {
             { $($pattern:pat => $target:tt $(::$tail:ident)*;)* })*) => {
             $(
                 $(#[$metadata])*
-                $visibility unsafe fn $name $parameters $(-> $result)? { unsafe {
+                $visibility unsafe fn $name $parameters $(-> $result)? { #[allow(unused_unsafe)] unsafe {
                     $($($setup)*)?
                     match $selector {
                         $($pattern => $crate::game::address_dispatch!(@call $arguments $target $(::$tail)*),)*
                         _ => $fallback
                     }
                 }}
+            )*
+        };
+        ($($(#[$metadata:meta])* $visibility:vis fn $name:ident $parameters:tt $(-> $result:ty)?
+            => $selector:expr; $(setup { $($setup:tt)* })? call $arguments:tt; default $fallback:expr;
+            { $($pattern:pat => $target:tt $(::$tail:ident)*;)* })*) => {
+            $(
+                $(#[$metadata])*
+                $visibility fn $name $parameters $(-> $result)? {
+                    $($($setup)*)?
+                    match $selector {
+                        $($pattern => $crate::game::address_dispatch!(@call $arguments $target $(::$tail)*),)*
+                        _ => $fallback
+                    }
+                }
             )*
         };
         (@call ($($argument:expr),* $(,)?) $target:path) => {
@@ -331,6 +374,56 @@ pub mod game {
             $(#[$metadata])*
             $visibility unsafe fn $name $parameters $(-> $result)? {
                 $crate::game::callback_dispatch!(@body [$($body_mode)?] {
+                $($($setup)*)?
+                match $selector {
+                    $($($($pattern => $crate::game::address_dispatch!(@call $arguments $callback),)?)*)*
+                    $($($($forward_pattern => $crate::game::address_dispatch!(@call $arguments $forward_callback),)?)*)*
+                    $($($($count_pattern => $crate::game::address_dispatch!(@call $arguments $count_callback),)?)*)*
+                    $($($external_pattern => $crate::game::address_dispatch!(@call $arguments $target $(::$path_tail)*),)*)?
+                    _ => $fallback
+                }
+                })
+            }
+        };
+        (
+            $(#[$metadata:meta])* $visibility:vis fn $name:ident $parameters:tt $(-> $result:ty)?
+            => $selector:expr; $(setup { $($setup:tt)* })? call $arguments:tt; default $fallback:expr;
+            $(@body $body_mode:ident;)?
+            $(
+                @functions [$($header:tt)*]; $(@prefix {$($prefix:tt)*};)?
+                $($([$pattern:pat])? $callback:ident $tail:tt $body:tt;)*
+            )*
+            $(
+                @forward [$($forward_header:tt)*];
+                $($([$forward_pattern:pat])? $forward_callback:ident => $forward_call:expr;)*
+            )*
+            $(
+                @countdown [$($count_header:tt)*]; before $before:tt when $condition:expr;
+                $($([$count_pattern:pat])? $count_callback:ident $effects:tt
+                    $(else $otherwise:tt)? $(after $after:tt)?;)*
+            )*
+            $(@external {$($external_pattern:pat => $target:tt $(::$path_tail:ident)*;)*})?
+        ) => {
+            $(
+                $crate::instruction_callbacks! {
+                    $($header)*; @prefix {$($($prefix)*)?};
+                    $($callback $tail $body;)*
+                }
+            )*
+            $(
+                $crate::forward_calls! {
+                    $($forward_header)*; $($forward_callback => $forward_call;)*
+                }
+            )*
+            $(
+                $crate::game::countdown_callbacks! {
+                    $($count_header)*; before $before when $condition;
+                    $($count_callback $effects $(else $otherwise)? $(after $after)?;)*
+                }
+            )*
+            $(#[$metadata])*
+            $visibility fn $name $parameters $(-> $result)? {
+                $crate::game::callback_dispatch!(@body [checked] {
                 $($($setup)*)?
                 match $selector {
                     $($($($pattern => $crate::game::address_dispatch!(@call $arguments $callback),)?)*)*

@@ -107,9 +107,9 @@ static g_byte_A6D712: [u8; 16] = [
 ];
 static g_word_A6D9ED: [u16; 8] = [0xc, 0xe, 0x10, 0x12, 0x1c, 0x20, 0x28, 0x30];
 crate::game::callback_dispatch! {
-    pub unsafe fn CallBoulderFunc(ea: u32, game: &mut Game) => ea;
+    pub fn CallBoulderFunc(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
+    @functions [pub fn (game: &mut Game)];
     [10913690] Boulder_Func_1 [] {
         let mut SamusEnemyDelta_Y: i16 =
             ({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y) }) as i16;
@@ -140,7 +140,7 @@ crate::game::callback_dispatch! {
             }
         }
     };
-    @functions [pub unsafe fn (game: &mut Game)];
+    @functions [pub fn (game: &mut Game)];
     @prefix { let E: i32 = word!(game.cur_enemy_index) as i32; };
     Boulder_Init [] {
         slot!(game, Enemy_Boulder[E]; var_C = 0, var_B = 0);
@@ -307,9 +307,9 @@ pub fn Boulder_Func_9(j: u16, game: &mut Game) {
     );
 }
 crate::game::callback_dispatch! {
-    pub unsafe fn CallNuclearWaffleFunc(ea: u32, game: &mut Game) => ea;
+    pub fn CallNuclearWaffleFunc(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
+    @functions [pub fn (game: &mut Game)];
     [10917397] NuclearWaffle_Func_1 [] {
         let E: i32 = word!(game.cur_enemy_index) as i32;
         slot!(game, Enemy_NuclearWaffle[E].var_B = slot!(game, Enemy_NuclearWaffle[E].var_B).wrapping_sub(1));
@@ -401,8 +401,8 @@ pub fn CeresRidley_Func_1(game: &mut Game) {
         }
     }
 }
-pub unsafe fn Ridley_A2DC(game: &mut Game) {
-    unsafe {
+pub fn Ridley_A2DC(game: &mut Game) {
+    {
         Ridley_Func_49(game);
         if slot!(game, Enemy_CeresRidley[0i32].var_02) != 0 {
             game.ram().write_byte(0x178c, 0xf2);
@@ -413,8 +413,8 @@ pub unsafe fn Ridley_A2DC(game: &mut Game) {
         };
     }
 }
-pub unsafe fn Ridley_A2F2(game: &mut Game) {
-    unsafe {
+pub fn Ridley_A2F2(game: &mut Game) {
+    {
         if word!(game.ceres_status) == 0 {
             DrawBabyMetroid_0(game);
         }
@@ -487,8 +487,8 @@ pub fn CeresRidley_Func_27(game: &mut Game) {
     slot!(game, Enemy_CeresRidley[E].var_30 = 2048);
     slot!(game, Enemy_CeresRidley[E].var_31 = 1024);
 }
-pub unsafe fn HandleCeresRidleyGetawayCutscene(game: &mut Game) {
-    unsafe {
+pub fn HandleCeresRidleyGetawayCutscene(game: &mut Game) {
+    {
         if slot!(game, Enemy_CeresRidley[0i32].var_32) == 0 {
             CeresRidley_Func_28(game);
         }
@@ -529,12 +529,12 @@ pub fn CeresRidley_Func_34(game: &mut Game) {
         );
     }
 }
-pub unsafe fn CeresRidley_Func_35(mut a: u16, game: &mut Game) {
-    unsafe {
+pub fn CeresRidley_Func_35(mut a: u16, game: &mut Game) {
+    {
         copy_rom_colors_to_palette(
             0xa2,
             0xa6,
-            (32 * byte!(a; 1) as i32 - 0x4ef9i32) as u16,
+            (32 * a.to_ne_bytes()[1] as i32 - 0x4ef9i32) as u16,
             0xf,
             game,
         );
@@ -718,9 +718,9 @@ macro_rules! reduce_ridley_axis_speed {
 }
 
 crate::game::callback_dispatch! {
-    pub unsafe fn CallRidleyFunc(ea: u32, game: &mut Game) => ea;
+    pub fn CallRidleyFunc(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
+    @functions [pub fn (game: &mut Game)];
     [10920795] CeresRidley_Func_3 [] {
         if word!(game.door_transition_flag_enemies) == 0 {
             let E: i32 = 0;
@@ -1028,7 +1028,7 @@ crate::game::callback_dispatch! {
         slot!(game, Enemy_Ridley[E].var_A = (0xa6c5c8i32) as u16);
         slot!(game, Enemy_Ridley[E].var_F = 32);
     };
-    @functions [pub unsafe fn (game: &mut Game)];
+    @functions [pub fn (game: &mut Game)];
     @prefix { let E: i32 = 0; };
     CeresRidley_Init [] {
         if (gameplay_flag_runtime::boss_byte_at(word!(game.area_index), game) & 1) != 0 {
@@ -1353,7 +1353,7 @@ crate::game::callback_dispatch! {
             );
         }
     };
-    @functions [pub unsafe fn (game: &mut Game)];
+    @functions [pub fn (game: &mut Game)];
     @prefix { let E: i32 = 0; };
     Ridley_Main [] {
         let mut v1: i16 = ((slot!(game, Enemy_Ridley[E].var_24)) as i16).wrapping_sub(4);
@@ -2061,7 +2061,7 @@ crate::game::callback_dispatch! {
             slot!(game, Enemy_Ridley[E].var_A = (0xa6c538i32) as u16);
         }
     };
-    @countdown [pub unsafe fn (game: &mut Game)];
+    @countdown [pub fn (game: &mut Game)];
     before {
         let E: i32 = 0;
         slot!(game, Enemy_CeresRidley[E].var_F = slot!(game, Enemy_CeresRidley[E].var_F).wrapping_sub(1));
@@ -2088,7 +2088,7 @@ crate::game::callback_dispatch! {
         copy_rom_colors_to_palette(0x42, 0xa6, addr_word_A6AA01 as u16, 8, game);
         copy_rom_colors_to_palette(0x1e2, 0xa6, addr_word_A6AA01 as u16, 8, game);
     };
-    @countdown [pub unsafe fn (game: &mut Game)];
+    @countdown [pub fn (game: &mut Game)];
     before {
         let E: i32 = 0;
         slot!(game, Enemy_Ridley[E].var_F = slot!(game, Enemy_Ridley[E].var_F).wrapping_sub(1));
@@ -2105,7 +2105,7 @@ crate::game::callback_dispatch! {
     };
     [10929626] Ridley_Func_67 {
         let k: u16 = 0;
-        printf(b"Warning: X undefined\n\0" as *const u8 as *const c_char);
+        (unsafe { printf(b"Warning: X undefined\n\0" as *const u8 as *const c_char) });
         SetBossBitForCurArea(1, game);
         scatter(DropSource::Ridley, k, game);
         QueueMusic_Delayed8(3, game);
@@ -2117,8 +2117,8 @@ crate::game::callback_dispatch! {
         10929664 => [()];
     }
 }
-pub unsafe fn Ridley_Func_37(game: &mut Game) {
-    unsafe {
+pub fn Ridley_Func_37(game: &mut Game) {
+    {
         Ridley_Func_31(game);
         let E: i32 = 0;
         slot!(
@@ -2180,23 +2180,23 @@ pub fn Ridley_Func_48(rect: Rect16U, game: &mut Game) -> u8 {
     result
 }
 crate::game::address_dispatch! {
-    pub unsafe fn CallRidleyFunc_var40(ea: u32, game: &mut Game) => ea;
+    pub fn CallRidleyFunc_var40(ea: u32, game: &mut Game) => ea;
         call (game); default { Unreachable(game); };
     {
         10927772 => Ridley_Func_50; 10927795 => Ridley_Func_51; 10927818 => Ridley_Func_52;
         10927836 => Ridley_Func_53; 10927897 => [()];
     }
 }
-pub unsafe fn Ridley_Func_49(game: &mut Game) {
-    unsafe {
+pub fn Ridley_Func_49(game: &mut Game) {
+    {
         CallRidleyFunc_var40(
             ((slot!(game, Enemy_Ridley[0i32].var_40)) as u32) | (0xa60000u32),
             game,
         );
     }
 }
-pub unsafe fn DrawBabyMetroid_0(game: &mut Game) {
-    unsafe {
+pub fn DrawBabyMetroid_0(game: &mut Game) {
+    {
         let v0: i32 = BabyMetroid_DBCB_DoubleRetEx(0x7806, game);
         if v0 < 0 {
             return;
@@ -2315,8 +2315,8 @@ pub fn Ridley_C104(game: &mut Game) {
         }
     }
 }
-pub unsafe fn Ridley_Func_58(game: &mut Game) {
-    unsafe {
+pub fn Ridley_Func_58(game: &mut Game) {
+    {
         Ridley_Func_61(game);
         CeresRidley_Func_2(game);
         let E: i32 = 0;
@@ -2444,10 +2444,10 @@ static off_A6CB21: [Func_V; 9] = callback_table! { nonnull Func_V;
     locret_A6CB20, Ridley_CBC0, Ridley_Func_71, Ridley_Func_72, Ridley_CBC7, Ridley_CBCE,
     Ridley_Func_73, Ridley_Func_74, Ridley_CBD5,
 };
-pub unsafe fn Ridley_Func_70(game: &mut Game) {
-    unsafe {
+pub fn Ridley_Func_70(game: &mut Game) {
+    {
         Ridley_Func_91(game);
-        off_A6CB21[word!(game.tilemap_stuff[0]) as usize](game);
+        (unsafe { off_A6CB21[word!(game.tilemap_stuff[0]) as usize](game) });
         Ridley_Func_86(game);
         Ridley_Func_87(game);
         let E: i32 = 0;
@@ -2461,35 +2461,35 @@ pub unsafe fn Ridley_Func_70(game: &mut Game) {
         }
     }
 }
-pub unsafe fn Ridley_Func_71(game: &mut Game) {
-    unsafe {
+pub fn Ridley_Func_71(game: &mut Game) {
+    {
         word!(game.tilemap_stuff[10] = 8);
         Ridley_Func_75(game);
         word!(game.tilemap_stuff[0] = 3);
     }
 }
-pub unsafe fn Ridley_Func_72(game: &mut Game) {
-    unsafe {
+pub fn Ridley_Func_72(game: &mut Game) {
+    {
         word!(game.tilemap_stuff[10] = 8);
         Ridley_Func_75(game);
     }
 }
-pub unsafe fn Ridley_Func_73(game: &mut Game) {
-    unsafe {
+pub fn Ridley_Func_73(game: &mut Game) {
+    {
         word!(game.tilemap_stuff[10] = 3);
         Ridley_Func_75(game);
         word!(game.tilemap_stuff[0] = 6);
     }
 }
-pub unsafe fn Ridley_Func_74(game: &mut Game) {
-    unsafe {
+pub fn Ridley_Func_74(game: &mut Game) {
+    {
         word!(game.tilemap_stuff[10] = 2);
         Ridley_Func_75(game);
         word!(game.tilemap_stuff[0] = 7);
     }
 }
-pub unsafe fn Ridley_Func_75(game: &mut Game) {
-    unsafe {
+pub fn Ridley_Func_75(game: &mut Game) {
+    {
         if slot!(game, Enemy_Ridley[0i32].var_10) != 0 {
             word! {game; tilemap_stuff[13] = 0x4000; tilemap_stuff[14] = -1i32 as u16; }
         } else {
@@ -2509,32 +2509,32 @@ pub unsafe fn Ridley_Func_75(game: &mut Game) {
         }
     }
 }
-pub unsafe fn Ridley_CBC0(game: &mut Game) {
-    unsafe {
+pub fn Ridley_CBC0(game: &mut Game) {
+    {
         Ridley_Func_79(game);
         Ridley_CBDC(game);
     }
 }
-pub unsafe fn Ridley_CBC7(game: &mut Game) {
-    unsafe {
+pub fn Ridley_CBC7(game: &mut Game) {
+    {
         Ridley_Func_83(game);
         Ridley_CBDC(game);
     }
 }
-pub unsafe fn Ridley_CBCE(game: &mut Game) {
-    unsafe {
+pub fn Ridley_CBCE(game: &mut Game) {
+    {
         Ridley_Func_84(game);
         Ridley_CBDC(game);
     }
 }
-pub unsafe fn Ridley_CBD5(game: &mut Game) {
-    unsafe {
+pub fn Ridley_CBD5(game: &mut Game) {
+    {
         Ridley_Func_81(game);
         Ridley_CBDC(game);
     }
 }
-pub unsafe fn Ridley_CBDC(game: &mut Game) {
-    unsafe {
+pub fn Ridley_CBDC(game: &mut Game) {
+    {
         let mut v0: u16 = 7;
         let mut v1: u16 = 0;
         do_until! { fresh11 == 1 ;
@@ -2586,8 +2586,8 @@ macro_rules! start_ridley_tile_effect_when_idle {
     };
 }
 
-pub unsafe fn Ridley_Func_79(game: &mut Game) {
-    unsafe {
+pub fn Ridley_Func_79(game: &mut Game) {
+    {
         Ridley_Func_77(game);
         if Ridley_Func_78(game) != 0 && Ridley_Func_80_DoubleRet(game) != 0 {
             return;
@@ -2595,8 +2595,8 @@ pub unsafe fn Ridley_Func_79(game: &mut Game) {
         start_ridley_tile_effect_when_idle!(game);
     }
 }
-pub unsafe fn Ridley_Func_80_DoubleRet(game: &mut Game) -> u8 {
-    unsafe {
+pub fn Ridley_Func_80_DoubleRet(game: &mut Game) -> u8 {
+    {
         let E: i32 = 0;
         let mut retval: bool = false_0 != 0;
         let attack = if word!(game.tilemap_stuff[2]) != 0
@@ -2623,8 +2623,8 @@ pub unsafe fn Ridley_Func_80_DoubleRet(game: &mut Game) -> u8 {
         retval as u8
     }
 }
-pub unsafe fn Ridley_Func_81(game: &mut Game) {
-    unsafe {
+pub fn Ridley_Func_81(game: &mut Game) {
+    {
         Ridley_Func_77(game);
         if Ridley_Func_78(game) & 1 != 0 && Ridley_Func_82_DoubleRet(game) {
             return;
@@ -2632,8 +2632,8 @@ pub unsafe fn Ridley_Func_81(game: &mut Game) {
         start_ridley_tile_effect_when_idle!(game);
     }
 }
-pub unsafe fn Ridley_Func_82_DoubleRet(game: &mut Game) -> bool {
-    unsafe {
+pub fn Ridley_Func_82_DoubleRet(game: &mut Game) -> bool {
+    {
         if word!(game.tilemap_stuff[2]) != 0
             && (word!(game.tilemap_stuff[13]) & word!(game.tilemap_stuff[14]) & 0x8000) != 0
         {
@@ -2708,8 +2708,8 @@ pub fn Ridley_Func_87(game: &mut Game) {
     ridley_tail_length(ram, 69, 4608, 2048);
     ridley_tail_length(ram, 79, 1280, 1280);
 }
-pub unsafe fn Ridley_Func_88(k: u16, game: &mut Game) {
-    unsafe {
+pub fn Ridley_Func_88(k: u16, game: &mut Game) {
+    {
         let mut v6: i16 = 0;
         let mut v2: u16 = 0;
         let v1: i32 = k as i32 >> 1;
@@ -2813,14 +2813,18 @@ pub unsafe fn Ridley_Func_88(k: u16, game: &mut Game) {
         }
     }
 }
-pub unsafe fn Ridley_Func_89(a: u16, game: &mut Game) {
-    unsafe {
+pub fn Ridley_Func_89(a: u16, game: &mut Game) {
+    {
         let mut v1: u16 = 0;
         let mut r18: u16 = 0;
         let mut r20: u16 = 0;
         let mut v2: i8 = a as i8;
-        byte!(v1; 0) = 0;
-        byte!(v1; 1) = v2 as u8;
+        unsafe {
+            byte!(v1; 0) = 0;
+        }
+        unsafe {
+            byte!(v1; 1) = v2 as u8;
+        }
         word!(game.tilemap_stuff[5] = v1);
         let E: i32 = 0;
         if slot!(game, Enemy_Ridley[E].var_10) != 1 && slot!(game, Enemy_Ridley[E].var_01) != 0 {
@@ -3142,9 +3146,11 @@ pub fn Ridley_Func_107(k: u16, r18: u16, r24: u16, game: &mut Game) {
 }
 
 macro_rules! steer_enemy_speed_and_angle {
-    ($game:ident, $layout:ident, $target_speed:ident, $enemy:ident, $angle_step:ident, $target_angle:ident) => {
+    ($game:ident, $layout:ident, $target_speed:ident, $enemy:ident, $angle_step:ident, $target_angle:ident) => {{
         if $target_speed != slot!($game, $layout[$enemy].var_0B) {
-            if (($target_speed) as i16).wrapping_sub((slot!($game, $layout[$enemy].var_0B)) as i16) >= 0 {
+            if (($target_speed) as i16).wrapping_sub((slot!($game, $layout[$enemy].var_0B)) as i16)
+                >= 0
+            {
                 let mut v2: u16 = (slot!($game, $layout[$enemy].var_0B)).wrapping_add(32);
                 if v2 as i32 - $target_speed as i32 & 0x8000 == 0 {
                     v2 = $target_speed;
@@ -3171,15 +3177,23 @@ macro_rules! steer_enemy_speed_and_angle {
             v3 = $target_angle;
         }
         slot!($game, $layout[$enemy].var_0A = v3);
-        $angle_step = byte!(v3; 1) as u16;
-        slot!($game, $layout[$enemy].var_B = Math_MultBySin(slot!($game, $layout[$enemy].var_0B), $angle_step));
-        slot!($game, $layout[$enemy].var_C = Math_MultByCos(slot!($game, $layout[$enemy].var_0B), $angle_step));
-    };
+        $angle_step = v3.to_ne_bytes()[1] as u16;
+        slot!(
+            $game,
+            $layout[$enemy].var_B =
+                Math_MultBySin(slot!($game, $layout[$enemy].var_0B), $angle_step)
+        );
+        slot!(
+            $game,
+            $layout[$enemy].var_C =
+                Math_MultByCos(slot!($game, $layout[$enemy].var_0B), $angle_step)
+        );
+    }};
 }
 pub(crate) use steer_enemy_speed_and_angle;
 
-pub unsafe fn Ridley_Func_111(mut r18: u16, r20: u16, r22: u16, game: &mut Game) {
-    unsafe {
+pub fn Ridley_Func_111(mut r18: u16, r20: u16, r22: u16, game: &mut Game) {
+    {
         let E: i32 = 0;
         steer_enemy_speed_and_angle!(game, Enemy_Ridley, r22, E, r18, r20);
     }
@@ -3259,8 +3273,8 @@ pub fn Ridley_Func_113(k: u16, game: &mut Game) {
         }
     }
 }
-pub unsafe fn Ridley_Func_115(game: &mut Game) {
-    unsafe {
+pub fn Ridley_Func_115(game: &mut Game) {
+    {
         Ridley_Func_116(game);
         let E: i32 = 0;
         let mut v1: i16 = ((slot!(game, Enemy_Ridley[E].var_09)) as i16)
@@ -3392,9 +3406,9 @@ pub fn sub_A6DBC2(j: u16, x: u16, y: u16, game: &mut Game) {
     }
 }
 crate::game::callback_dispatch! {
-    pub unsafe fn CallBabyMetroidInstr(ea: u32, k: u16, game: &mut Game) -> u16 => ea;
+    pub fn CallBabyMetroidInstr(ea: u32, k: u16, game: &mut Game) -> u16 => ea;
     call (k, game); default Unreachable(game) as u16;
-    @functions [pub unsafe fn (k: u16, game: &mut Game) -> u16];
+    @functions [pub fn (k: u16, game: &mut Game) -> u16];
     [10928073] BabyMetroid_Instr_2 [(k).wrapping_add(2)] {
         if slot!(game, Enemy_Ridley[0].var_46) == 0 && (word!(game.random_number) & 1) != 0 {
             return BabyMetroid_Goto(k, game);
@@ -3412,13 +3426,13 @@ crate::game::callback_dispatch! {
             (k).wrapping_add(2)
         }
     };
-    @functions [pub unsafe fn (k: u16, game: &mut Game) -> u16];
+    @functions [pub fn (k: u16, game: &mut Game) -> u16];
     [10928120] BabyMetroid_Goto [] {
         crate::game::session_runtime::native_record(0xa6, k, game).word(0)
     };
 }
-unsafe fn BabyMetroid_DBCB_DoubleRetEx(a: u16, game: &mut Game) -> i32 {
-    unsafe {
+fn BabyMetroid_DBCB_DoubleRetEx(a: u16, game: &mut Game) -> i32 {
+    {
         let st: i32 = i32::from(a) - 0xf78;
         if (slot!(game, BabyMetroidExecState[st].ip) & 0x8000) == 0 {
             return -1i32;
@@ -3504,8 +3518,8 @@ pub fn Ridley_Func_121(game: &mut Game) -> u8 {
     }
     result
 }
-pub unsafe fn Ridley_Func_122(rect: Rect16U, game: &mut Game) -> u16 {
-    unsafe {
+pub fn Ridley_Func_122(rect: Rect16U, game: &mut Game) -> u16 {
+    {
         if word!(game.projectile_counter) == 0 {
             return 0xffff;
         }
@@ -3513,7 +3527,7 @@ pub unsafe fn Ridley_Func_122(rect: Rect16U, game: &mut Game) -> u16 {
         loop {
             let v1: i32 = result as i32 >> 1;
             let mut v2: i16 = word!(game.projectile_type[v1]) as i16;
-            if v2 < 0 && (byte!(v2; 1) as i32 & 0xf) - 3i32 & 0x8000 != 0 {
+            if v2 < 0 && (v2.to_ne_bytes()[1] as i32 & 0xf) - 3i32 & 0x8000 != 0 {
                 let v3: u16 = abs16((word!(game.projectile_x_pos[v1])).wrapping_sub(rect.x));
                 let mut v4: bool = v3 < word!(game.projectile_x_radius[v1]);
                 let v5: u16 = (v3).wrapping_sub(word!(game.projectile_x_radius[v1]));
@@ -3553,7 +3567,7 @@ pub fn Ridley_Func_124(rect: Rect16U, game: &mut Game) -> u8 {
         0
     }
 }
-crate::forward_calls! { pub unsafe fn (game: &mut Game);
+crate::forward_calls! { pub fn (game: &mut Game);
     sub_A6DF59 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
 }
 pub fn Ridley_Func_127(game: &mut Game) {
@@ -3581,8 +3595,8 @@ pub fn Ridley_Func_127(game: &mut Game) {
         );
     }
 }
-pub unsafe fn Ridley_Func_129(game: &mut Game) {
-    unsafe {
+pub fn Ridley_Func_129(game: &mut Game) {
+    {
         if (slot!(game, Enemy_Ridley[0i32].base.properties) as i32 & kEnemyProps_Tangible as i32)
             == 0
         {
@@ -3635,9 +3649,9 @@ pub fn Ridley_E90C(_k: u16, jp: EnemyScript, a: u16, game: &mut Game) -> EnemySc
     jp
 }
 crate::game::callback_dispatch! {
-    pub unsafe fn CallCeresSteamFunc(ea: u32, k: u16, game: &mut Game) => ea;
+    pub fn CallCeresSteamFunc(ea: u32, k: u16, game: &mut Game) => ea;
     call (k, game); default { Unreachable(game); };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
+    @functions [pub fn (k: u16, game: &mut Game)];
     [10940441] CeresSteam_Func_1 [] {
         let E: i32 = k as i32;
         let pt: Point16U = project_cinematic_point(
@@ -3676,10 +3690,10 @@ pub fn CeresDoor_Func_1(k: u16, game: &mut Game) {
     }
 }
 crate::game::callback_dispatch! {
-    pub unsafe fn CallCeresDoor(ea: u32, game: &mut Game) => ea;
+    pub fn CallCeresDoor(ea: u32, game: &mut Game) => ea;
     setup { let k: u16 = word!(game.cur_enemy_index); }
     call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
+    @functions [pub fn (game: &mut Game)];
     [10942373] CeresDoor_Func_4 [] {
         ceres_doors::change_properties(word!(game.cur_enemy_index), ceres_doors::INVISIBLE, 0, EnemyScript::Stop, game);
         if word!(game.ceres_status) & 1 != 0 {
@@ -3706,8 +3720,8 @@ crate::game::callback_dispatch! {
         10942397 => [CeresDoor_Func_5(k, game)]; 10942428 => [CeresDoor_Func_6(k, game)];
     }
 }
-pub unsafe fn CeresDoor_Func_5(k: u16, game: &mut Game) {
-    unsafe {
+pub fn CeresDoor_Func_5(k: u16, game: &mut Game) {
+    {
         CeresDoor_Func_7(game);
         if word!(game.ceres_status) >= 2 {
             let E: i32 = k as i32;
@@ -3798,9 +3812,9 @@ pub fn CeresDoor_Func_8(game: &mut Game) {
     }
 }
 crate::game::callback_dispatch! {
-    pub unsafe fn CallZebetitesFunc(ea: u32, k: u16, game: &mut Game) => ea;
+    pub fn CallZebetitesFunc(ea: u32, k: u16, game: &mut Game) => ea;
     call (k, game); default { Unreachable(game); };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
+    @functions [pub fn (k: u16, game: &mut Game)];
     [10943553] Zebetites_Func_1 [] {
         let E: i32 = k as i32;
         if (slot!(game, Enemy_Zebetites[E].var_F) & 0x8000) != 0 {
@@ -3932,9 +3946,9 @@ pub fn Zebetites_Func_4(game: &mut Game) {
 }
 
 crate::game::callback_dispatch! {
-    pub(crate) unsafe fn DispatchEnemyAi(ea: u32, game: &mut Game) => ea;
+    pub(crate) fn DispatchEnemyAi(ea: u32, game: &mut Game) => ea;
     call (game); default { crate::rtl::Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
+    @functions [pub fn (game: &mut Game)];
     [10914693 | 10914713] SpikeyPlatform2ndEnemy_Init [] {
         let v0: i32 = word!(game.cur_enemy_index) as i32 >> 1;
         let v1: i32 = word!(game.cur_enemy_index) as i32;
@@ -4284,7 +4298,7 @@ crate::game::callback_dispatch! {
         slot!(game, Enemy_Zebetites[G].base.health = slot!(game, Enemy_Zebetites[E].base.health));
         slot!(game, Enemy_Zebetites[G].base.flash_timer = slot!(game, Enemy_Zebetites[E].base.flash_timer));
     };
-    @forward [pub unsafe fn (game: &mut Game)];
+    @forward [pub fn (game: &mut Game)];
     [10911759] Enemy_GrappleReact_CancelBeam_A6 => actors::combat::select_frozen_ai(&mut Runtime::new(game));
     [10911779] Enemy_NormalTouchAI_A6 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
     [10911789] Enemy_NormalShotAI_A6 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
@@ -4296,9 +4310,9 @@ crate::game::callback_dispatch! {
 }
 
 crate::game::callback_dispatch! {
-    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
+    pub(crate) fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
-    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10918694] FakeKraid_Instr_2 [jp] {
         let E: i32 = word!(game.cur_enemy_index) as i32;
         if slot!(game, Enemy_FakeKraid[E].var_E) != 0 {
@@ -4320,7 +4334,7 @@ crate::game::callback_dispatch! {
             slot!(game, Enemy_FakeKraid[E].var_C = 4);
         }
     };
-    @functions [pub unsafe fn (_k: u16, _jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (_k: u16, _jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10918772] FakeKraid_Instr_1 [] {
         let E: i32 = word!(game.cur_enemy_index) as i32;
         if slot!(game, Enemy_FakeKraid[E].var_E) != 0 {
@@ -4344,17 +4358,17 @@ crate::game::callback_dispatch! {
             EnemyScript::jump(addr_kFakeKraid_Ilist_9A2A as u16)
         }
     };
-    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10918834] FakeKraid_Instr_3 [jp] {
         if u16::from(actor_api::current_outside_screen(&Runtime::new(game))) == 0 {
             QueueSfx2_Max6(0x16, game);
         }
     };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10918852] FakeKraid_Instr_4 [jp] { FakeKraid_InstrHelper_45(k, 0, 0xfffc, game); };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10918914] FakeKraid_Instr_5 [jp] { FakeKraid_InstrHelper_45(k, 8, 4, game); };
-    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10937534] Ridley_Instr_5 [jp] {
         slot!(game, Enemy_Ridley[0].var_0F = 89);
         QueueSfx2_Max6(0x59, game);
@@ -4426,15 +4440,15 @@ crate::game::callback_dispatch! {
         slot!(game, Enemy_Ridley[E].var_19 = Math_MultBySin(0x500, r18));
         slot!(game, Enemy_Ridley[E].var_1A = Math_MultByCos(0x500, r18));
     };
-    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     @prefix { let E: i32 = 0; };
     [10938729]
     Ridley_Instr_15 [jp] {  slot!(game, Enemy_Ridley[E].var_A = (0xa6a6afi32) as u16); slot!(game, Enemy_Ridley[E].var_C = -352i32 as u16); };
     [10938742]
     Ridley_Instr_16 [jp] {  slot!(game, Enemy_Ridley[E].var_A = (0xa6b2f3i32) as u16); slot!(game, Enemy_Ridley[E].var_C = -352i32 as u16); };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10940711]
-    CeresSteam_Instr_2 [ceres_doors::change_properties(k, 0, VANISH, { let record = crate::rtl::rom_record(0xa6, jp.word(2), game); EnemyScript::at(record.image, record.base) }, game)] {
+    CeresSteam_Instr_2 [ceres_doors::change_properties(k, 0, VANISH, { let record = unsafe { crate::rtl::rom_record(0xa6, jp.word(2), game) }; EnemyScript::at(record.image, record.base) }, game)] {
         let E: i32 = k as i32;
         let fresh0 = slot!(game, Enemy_CeresSteam[E].var_D);
         slot!(game, Enemy_CeresSteam[E].var_D = slot!(game, Enemy_CeresSteam[E].var_D).wrapping_sub(1));
@@ -4442,7 +4456,7 @@ crate::game::callback_dispatch! {
             return EnemyScript::jump(jp.word(0));
         }
     };
-    @forward [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @forward [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10938628] Ridley_Instr_12 => Ridley_E90C(k, jp, 0, game);
     [10938633] Ridley_Instr_13 => Ridley_E90C(k, jp, 0xe, game);
     @external {

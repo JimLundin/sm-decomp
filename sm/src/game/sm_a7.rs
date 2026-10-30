@@ -151,9 +151,9 @@ static g_word_A7F4D7: u16 = 0;
 static g_word_A7F4D9: u16 = 0;
 static g_word_A7F4DB: u16 = 0x1000;
 crate::game::callback_dispatch! {
-    pub unsafe fn CallEnemyInstrExtFunc(ea: u32, k: u16, game: &mut Game) => ea;
+    pub fn CallEnemyInstrExtFunc(ea: u32, k: u16, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
+    @functions [pub fn (game: &mut Game)];
     [10997485] Phantoon_Func_1 [] {
         QueueSfx2_Max6(
             crate::rtl::rom_table_word!(game, 0xa7cded, word!(game.g_word_7E9032) as isize),
@@ -325,14 +325,14 @@ pub fn Kraid_DrawRoomBg(game: &mut Game) {
     };
     word!(game.vram_write_queue_tail = (v2).wrapping_add(7));
 }
-pub unsafe fn Kraid_GetsBig_Thinking_Setup(game: &mut Game) {
-    unsafe {
+pub fn Kraid_GetsBig_Thinking_Setup(game: &mut Game) {
+    {
         slot!(game, Enemy_Kraid[0i32].kraid_var_A = (0xa7aec4i32) as u16);
         Kraid_SetLintYAndRandomThinkTimer(game);
     }
 }
-pub unsafe fn Kraid_Mainloop_Thinking_Setup(game: &mut Game) {
-    unsafe {
+pub fn Kraid_Mainloop_Thinking_Setup(game: &mut Game) {
+    {
         slot!(game, Enemy_Kraid[0i32].kraid_var_A = (0xa7aea4i32) as u16);
         Kraid_SetLintYAndRandomThinkTimer(game);
     }
@@ -406,8 +406,8 @@ macro_rules! advance_kraid_mouth_hit_response {
     };
 }
 
-pub unsafe fn Kraid_ProcessKraidInstr(game: &mut Game) -> u16 {
-    unsafe {
+pub fn Kraid_ProcessKraidInstr(game: &mut Game) -> u16 {
+    {
         let E = (0) as i32;
         let result: u16 = slot!(game, Enemy_Kraid[E].kraid_var_C);
         if result != 0 {
@@ -425,14 +425,14 @@ pub unsafe fn Kraid_ProcessKraidInstr(game: &mut Game) -> u16 {
     }
 }
 crate::game::callback_dispatch! {
-    pub unsafe fn CallKraidInstr(ea: u32, game: &mut Game) => ea;
+    pub fn CallKraidInstr(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
-    @forward [pub unsafe fn (game: &mut Game)];
+    @forward [pub fn (game: &mut Game)];
     [10989460] KraidInstr_PlayRoarSfx => QueueSfx2_Max6(0x2d, game);
     [10989471] KraidInstr_PlayDyingSfx => QueueSfx2_Max15(0x2e, game);
 }
-pub unsafe fn Kraid_ExecuteInstr(game: &mut Game) -> u16 {
-    unsafe {
+pub fn Kraid_ExecuteInstr(game: &mut Game) -> u16 {
+    {
         let E = (0) as i32;
         loop {
             let kraid_var_B: u16 = slot!(game, Enemy_Kraid[E].kraid_var_B);
@@ -637,8 +637,8 @@ pub fn Kraid_HealthBasedPaletteHandling(game: &mut Game) {
 pub fn Kraid_Instr_1(_k: u16, jp: EnemyScript) -> EnemyScript {
     jp
 }
-pub unsafe fn KraidLintCommon_Main(k: u16, game: &mut Game) {
-    unsafe {
+pub fn KraidLintCommon_Main(k: u16, game: &mut Game) {
+    {
         actors::kraid_lint::lint_touch_samus(k, game);
         let v1 = (k as i32) as i32;
         CallKraidFunc(
@@ -774,14 +774,14 @@ pub fn Kraid_AlignEnemyToKraid(k: u16, game: &mut Game) {
         KraidEnemy_HandleFunctionTimer(k, game);
     }
 }
-pub unsafe fn KraidFoot_FirstPhase_Thinking(k: u16, game: &mut Game) {
-    unsafe {
+pub fn KraidFoot_FirstPhase_Thinking(k: u16, game: &mut Game) {
+    {
         Kraid_HandleFirstPhase(game);
         KraidEnemy_HandleFunctionTimer(k, game);
     }
 }
-pub unsafe fn KraidEnemy_ProcessInstrEnemyTimer(k: u16, game: &mut Game) {
-    unsafe {
+pub fn KraidEnemy_ProcessInstrEnemyTimer(k: u16, game: &mut Game) {
+    {
         Kraid_ProcessKraidInstr(game);
         KraidEnemy_HandleFunctionTimer(k, game);
     }
@@ -885,7 +885,7 @@ pub fn KraidsFingernail_Fire(k: u16, game: &mut Game) {
         );
     }
 }
-crate::forward_calls! { pub unsafe fn (game: &mut Game);
+crate::forward_calls! { pub fn (game: &mut Game);
     Kraid_SpawnPlmToClearCeiling => spawn_hardcoded(
         SpawnHardcodedPlmArgs::new(0x2, 0x12, 0xb7b7 as VoidP),
         game,
@@ -895,56 +895,64 @@ crate::forward_calls! { pub unsafe fn (game: &mut Game);
         game,
     );
 }
-pub unsafe fn UnpauseHook_Kraid_IsDead(game: &mut Game) -> CoroutineRet {
-    unsafe {
+pub fn UnpauseHook_Kraid_IsDead(game: &mut Game) -> CoroutineRet {
+    {
         crate::game::display_refresh::set_blank(true, game);
-        GraphicsAsset::VramWords(
-            0xa7a716,
-            ((16 * (game.ram().read_byte(0x5d) as i32 & 0xf) + 63) as u8 as u16) << 8,
-            0x200,
-        )
-        .load(game);
-        GraphicsAsset::VramWords(0x9ab200, 0x4000, 0x800).load(game);
+        (unsafe {
+            GraphicsAsset::VramWords(
+                0xa7a716,
+                ((16 * (game.ram().read_byte(0x5d) as i32 & 0xf) + 63) as u8 as u16) << 8,
+                0x200,
+            )
+            .load(game)
+        });
+        (unsafe { GraphicsAsset::VramWords(0x9ab200, 0x4000, 0x800).load(game) });
         Kraid_TransferTopHalfToVram(game);
         kCoroutineNone as CoroutineRet
     }
 }
-pub unsafe fn UnpauseHook_Kraid_IsAlive(game: &mut Game) -> CoroutineRet {
-    unsafe {
+pub fn UnpauseHook_Kraid_IsAlive(game: &mut Game) -> CoroutineRet {
+    {
         crate::game::display_refresh::set_blank(true, game);
-        GraphicsAsset::VramWords(
-            0x7e5000,
-            ((game.ram().read_byte(0x5d)).wrapping_add(62) as u16) << 8,
-            0x400,
-        )
-        .load(game);
+        (unsafe {
+            GraphicsAsset::VramWords(
+                0x7e5000,
+                ((game.ram().read_byte(0x5d)).wrapping_add(62) as u16) << 8,
+                0x400,
+            )
+            .load(game)
+        });
         Kraid_TransferTopHalfToVram(game);
         kCoroutineNone as CoroutineRet
     }
 }
-pub unsafe fn Kraid_TransferTopHalfToVram(game: &mut Game) {
-    unsafe {
-        GraphicsAsset::VramWords(
-            0x7e2000,
-            ((game.ram().read_byte(0x59) & 0xfc) as u16) << 8,
-            0x800,
-        )
-        .load(game);
+pub fn Kraid_TransferTopHalfToVram(game: &mut Game) {
+    {
+        (unsafe {
+            GraphicsAsset::VramWords(
+                0x7e2000,
+                ((game.ram().read_byte(0x59) & 0xfc) as u16) << 8,
+                0x800,
+            )
+            .load(game)
+        });
         crate::game::display_refresh::set_blank(false, game);
     }
 }
-pub unsafe fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
-    unsafe {
+pub fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
+    {
         's_100: {
             let mut queue_transfer = match game.ram().read_byte(0x613) as i32 {
                 0 => {
                     crate::game::display_refresh::set_blank(true, game);
-                    GraphicsAsset::VramWords(
-                        0x7e5000,
-                        ((game.ram().read_byte(0x5d)).wrapping_add(62) as u16) << 8,
-                        0x400,
-                    )
-                    .load(game);
+                    (unsafe {
+                        GraphicsAsset::VramWords(
+                            0x7e5000,
+                            ((game.ram().read_byte(0x5d)).wrapping_add(62) as u16) << 8,
+                            0x400,
+                        )
+                        .load(game)
+                    });
                     if ((slot!(game, Enemy_Kraid[0i32].base.y_pos)) as i16)
                         .wrapping_sub(actors::kraid_sinking::row(0, game).word(0) as i16)
                         >= 0
@@ -1000,15 +1008,17 @@ pub fn Kraid_PlaySoundEveryHalfSecond(game: &mut Game) {
         }
     }
 }
-pub unsafe fn Kraid_HandleSinking(game: &mut Game) {
+pub fn Kraid_HandleSinking(game: &mut Game) {
     if let Some(callback) = actors::kraid_sinking::sink_row(game) {
-        unsafe { CallKraidSinkTableFunc(callback, game) };
+        {
+            CallKraidSinkTableFunc(callback, game)
+        };
     }
 }
 crate::game::callback_dispatch! {
-    pub unsafe fn CallKraidSinkTableFunc(ea: u32, game: &mut Game) => ea;
+    pub fn CallKraidSinkTableFunc(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
+    @functions [pub fn (game: &mut Game)];
     [10995345] Kraid_CrumbleLeftPlatform_Left [] {
         SpawnEprojWithGfx(
             0x70,
@@ -1218,10 +1228,10 @@ pub fn Kraid_RestrictSamusXtoFirstScreen_2(game: &mut Game) {
     }
 }
 crate::game::callback_dispatch! {
-    pub unsafe fn CallKraidFunc(ea: u32, game: &mut Game) => ea;
+    pub fn CallKraidFunc(ea: u32, game: &mut Game) => ea;
     setup { let k: u16 = word!(game.cur_enemy_index); }
     call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
+    @functions [pub fn (game: &mut Game)];
     [10988621] Kraid_GetsBig_BreakCeilingPlatforms [] {
         let mut kraid_var_F: u16 = 0;
         if (word!(game.nmi_frame_counter_word) & 7) == 0 {
@@ -1500,7 +1510,7 @@ crate::game::callback_dispatch! {
                 slot!(game, Enemy_Kraid[E5].kraid_var_F = 300);
                 slot!(game, Enemy_Kraid[E5].kraid_next = (0xa7bf2di32) as u16);
             } else {
-                printf(b"X undefined\n\0" as *const u8 as *const c_char);
+                (unsafe { printf(b"X undefined\n\0" as *const u8 as *const c_char) });
                 let E = (word!(game.cur_enemy_index) as i32) as i32;
                 slot!(game, Enemy_Kraid[E].base; current_instruction = addr_kKraid_Ilist_8887 as u16, instruction_timer = 1);
             }
@@ -1563,7 +1573,7 @@ crate::game::callback_dispatch! {
             slot!(game, Enemy_Kraid[E0].base.properties = (slot!(game, Enemy_Kraid[E0].base.properties) as i32 & !(kEnemyProps_Tangible as i32)) as u16);
             word!(game.enemy_bg2_tilemap_size = 2);
             let enemy_ptr: u16 = slot!(game, Enemy_Kraid[word!(game.cur_enemy_index) as i32].base.enemy_ptr);
-            rom_record(0xa0, enemy_ptr, game).set_word(offset_of!(EnemyDef, shot_ai), (0xa7804ci32) as u16);
+            (unsafe { rom_record(0xa0, enemy_ptr, game) }).set_word(offset_of!(EnemyDef, shot_ai), (0xa7804ci32) as u16);
             #[cfg(sm_verify_dll)]
             crate::verify_probe::hit("actors.kraid.shot_ai.disabled");
             let E1 = (0x40) as i32;
@@ -1719,7 +1729,7 @@ crate::game::callback_dispatch! {
             slot!(game, Enemy_Kraid[E1].base; current_instruction = addr_kKraid_Ilist_89F3 as u16, instruction_timer = 1);
         }
     };
-    @functions [pub unsafe fn (game: &mut Game)];
+    @functions [pub fn (game: &mut Game)];
     @prefix { let E = (0) as i32; };
     [10988942] Kraid_GetsBig_DrawRoomBg [] {
         slot!(game, Enemy_Kraid[E].kraid_var_A = (0xa7ae23i32) as u16);
@@ -1957,7 +1967,7 @@ crate::game::callback_dispatch! {
         match (257, usize::try_from((0xcd20) + (2)).expect("native word outside RAM")) { (value, at) => { let bytes = u16::to_ne_bytes(value); game.ram().write_byte(at, bytes[0]); game.ram().write_byte(at + 1, bytes[1]); } };
         slot!(game, Enemy_Kraid[E].kraid_min_y_pos_eject = 164);
     };
-    @functions [pub unsafe fn (game: &mut Game)];
+    @functions [pub fn (game: &mut Game)];
     @prefix { let E0 = (0) as i32; };
     [10992453] KraidsFoot_SecondPhase_WalkingBackwards [] {
         let kraid_target_x: u16 = slot!(game, Enemy_Kraid[E0].kraid_target_x);
@@ -2628,9 +2638,9 @@ pub fn Dachora_Func_10(k: u16, game: &mut Game) {
 }
 
 crate::game::callback_dispatch! {
-    pub(crate) unsafe fn DispatchEnemyAi(ea: u32, game: &mut Game) => ea;
+    pub(crate) fn DispatchEnemyAi(ea: u32, game: &mut Game) => ea;
     call (game); default { crate::rtl::Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
+    @functions [pub fn (game: &mut Game)];
     [10982544] KraidsArm_Touch [] {
         if word!(game.samus_invincibility_timer) == 0 {
             Kraid_Func_1(game);
@@ -2811,7 +2821,7 @@ crate::game::callback_dispatch! {
     };
     [10992847 | 10992862] KraidsGoodFingernail_Touch [] {
         let v0: u16 = 0;
-        printf(b"X undefined\n\0" as *const u8 as *const c_char);
+        (unsafe { printf(b"X undefined\n\0" as *const u8 as *const c_char) });
         actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
         ({ let (_ignored_key, animation) = (word!(game.cur_enemy_index), v0); actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Normal { animation }) });
     };
@@ -2874,7 +2884,7 @@ slot!(game, EnemyData[fresh4].properties = (slot!(game, EnemyData[fresh4].proper
     [10997414] Phantoon_Main [] {
         actors::phantoon_actions::debug_toggle_sprite_map(word!(game.cur_enemy_index), game);
         let EK = (word!(game.cur_enemy_index) as i32) as i32;
-        actor_species_pre_instruction(((slot!(game, Enemy_Phantoon[EK].var_F)) as u32) | (0xa70000u32), game);
+        (unsafe { actor_species_pre_instruction(((slot!(game, Enemy_Phantoon[EK].var_F)) as u32) | (0xa70000u32), game) });
         if word!(game.cur_enemy_index) == 0 {
             let E0 = (0) as i32;
             let E1 = (0x40) as i32;
@@ -2974,7 +2984,7 @@ slot!(game, EnemyData[fresh4].properties = (slot!(game, EnemyData[fresh4].proper
                         slot!(game, Enemy_Phantoon[EK].var_F = (0xa7d6b9i32) as u16);
                     } else {
                         let v10: u16 = (game.next_random()) & (7u16);
-                        slot!(game, Enemy_Phantoon[0x40i32].var_B = *(&raw const g_byte_A7CDA5 as *const u8).offset(v10 as i32 as isize)
+                        slot!(game, Enemy_Phantoon[0x40i32].var_B = (unsafe { *(&raw const g_byte_A7CDA5 as *const u8).offset(v10 as i32 as isize) })
                                 as u16);
                         slot!(game, Enemy_Phantoon[0xc0i32].parameter_2 = v10);
                         let E2x = (0x80) as i32;
@@ -3020,7 +3030,7 @@ slot!(game, EnemyData[fresh4].properties = (slot!(game, EnemyData[fresh4].proper
         if slot!(byte game, Enemy_Etecoon[E].parameter_2[1]) != 0 {
             slot!(game, Enemy_Etecoon[E].parameter_2 = (slot!(game, Enemy_Etecoon[E].parameter_2)).wrapping_sub(256));
         } else {
-            actor_species_pre_instruction(((slot!(game, Enemy_Etecoon[E].var_F)) as u32) | (0xa70000u32), game);
+            (unsafe { actor_species_pre_instruction(((slot!(game, Enemy_Etecoon[E].var_F)) as u32) | (0xa70000u32), game) });
         };
     };
     [11007197] Dachora_Init [] {
@@ -3048,31 +3058,31 @@ slot!(game, EnemyData[fresh4].properties = (slot!(game, EnemyData[fresh4].proper
     };
     [11007278] Dachora_Main [] {
         let E = (word!(game.cur_enemy_index) as i32) as i32;
-        actor_species_pre_instruction(((slot!(game, Enemy_Dachora[E].var_F)) as u32) | (0xa70000u32), game);
+        (unsafe { actor_species_pre_instruction(((slot!(game, Enemy_Dachora[E].var_F)) as u32) | (0xa70000u32), game) });
     };
-    @forward [pub unsafe fn (game: &mut Game)];
+    @forward [pub fn (game: &mut Game)];
     [10977295] Enemy_GrappleReact_CancelBeam_A7 => actors::combat::select_frozen_ai(&mut Runtime::new(game));
     [10977325] Enemy_NormalShotAI_A7 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
     [10977340]
     Enemy_NormalPowerBombAI_SkipDeathAnim_A7 => actors::combat::power_bomb_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
     [10977345] Enemy_NormalFrozenAI_A7 => actors::scheduling::update_frozen_enemy(&mut Runtime::new(game));
-    @forward [pub unsafe fn (game: &mut Game)];
+    @forward [pub fn (game: &mut Game)];
     [10982559] Kraid_Touch => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
     Kraid_Shot => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
-    @forward [pub unsafe fn (game: &mut Game)];
+    @forward [pub fn (game: &mut Game)];
     [10992879] KraidsGoodFingernail_Init => KraidFingernailInit(word!(game.cur_enemy_index), game);
     [10992941] KraidsBadFingernail_Init => KraidFingernailInit(word!(game.cur_enemy_index), game);
 }
 
 crate::game::callback_dispatch! {
-    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
+    pub(crate) fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10977418] EnemyInstr_Call_A7 [] {
         CallEnemyInstrExtFunc(((jp.word(0)) as u32) | (0xa70000u32), k, game);
         jp.offset(1)
     };
-    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10979983] Kraid_Instr_9 [] {
         let E = (0) as i32;
         if ((slot!(game, Enemy_Kraid[E].base.health)) as i16).wrapping_sub(({ let at = slot!(@at Enemy_Kraid, E, kraid_healths_8ths) + (3i32 as usize) * 2; u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]) }) as i16)
@@ -3085,7 +3095,7 @@ crate::game::callback_dispatch! {
         }
         jp
     };
-    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10991158] Kraid_Instr_DecYpos [jp] {
         let E = (0) as i32;
         slot!(game, Enemy_Kraid[E].base.y_pos = slot!(game, Enemy_Kraid[E].base.y_pos).wrapping_sub(1));
@@ -3124,9 +3134,9 @@ crate::game::callback_dispatch! {
 }
 
 crate::game::callback_dispatch! {
-    pub(crate) unsafe fn DispatchEnemyPreInstr(ea: u32, k: u16, game: &mut Game) => ea;
+    pub(crate) fn DispatchEnemyPreInstr(ea: u32, k: u16, game: &mut Game) => ea;
     call (k, game); default { crate::rtl::Unreachable(game); };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
+    @functions [pub fn (k: u16, game: &mut Game)];
     [10999114] Phantoon_WavyFadeIn [] {
         Phantoon_FadeIn(0xc, game);
         if actors::phantoon_actions::approach_speed((words!((g_word_A7CD9D, g_word_A7CD9B))) as i32, game) != 0 {
@@ -3231,14 +3241,14 @@ crate::game::callback_dispatch! {
         slot!(game, Enemy_Phantoon[k as i32].var_F = (0xa7d72di32) as u16);
         slot!(game, Enemy_Phantoon[E1].var_F = 0);
     };
-    @functions [pub unsafe fn (_k: u16, game: &mut Game)];
+    @functions [pub fn (_k: u16, game: &mut Game)];
     [10999597] Phantoon_FadeInBeforeFigure8 [] {
         Phantoon_FadeIn(0xc, game);
         if slot!(game, Enemy_Phantoon[0x40i32].var_F) != 0 {
             slot!(game, Enemy_Phantoon[0i32].var_F = (0xa7d5e7i32) as u16);
         }
     };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
+    @functions [pub fn (k: u16, game: &mut Game)];
     [10999615] Phantoon_BecomeSolidAfterRainingFireballs [] {
         let E1 = (0x40) as i32;
         slot!(game, Enemy_Phantoon[E1].var_F = 0);
@@ -3895,7 +3905,7 @@ crate::game::callback_dispatch! {
         }
         slot!(game, Enemy_Dachora[E].base.properties = (slot!(game, Enemy_Dachora[E].base.properties)) | ((kEnemyProps_Invisible) as u16));
     };
-    @functions [pub unsafe fn (v0: u16, game: &mut Game)];
+    @functions [pub fn (v0: u16, game: &mut Game)];
     [10999388] Phantoon_BecomesSolidAndBodyVuln [] {
         Phantoon_ChangeEyeSpriteBasedOnSamusDist(game);
         word!(game.phantom_related_layer_flag &= !(0x4000));
@@ -3903,7 +3913,7 @@ crate::game::callback_dispatch! {
         let E = (0) as i32;
         slot!(game, Enemy_Phantoon[E].base; instruction_timer = 1, current_instruction = addr_kKraid_Ilist_CC47 as u16);
     };
-    @countdown [pub unsafe fn (k: u16, game: &mut Game)];
+    @countdown [pub fn (k: u16, game: &mut Game)];
     before {
         let EK = (k as i32) as i32;
         let v2: bool = slot!(game, Enemy_Phantoon[EK].var_E) == 1;
@@ -4041,7 +4051,7 @@ crate::game::callback_dispatch! {
             }
         }
     };
-    @countdown [pub unsafe fn (k: u16, game: &mut Game)];
+    @countdown [pub fn (k: u16, game: &mut Game)];
     before {
         let E = (k as i32) as i32;
         let v2: bool = slot!(game, Enemy_Etecoon[E].var_E) == 1;
@@ -4075,7 +4085,7 @@ crate::game::callback_dispatch! {
     [11004955] Etecoon_Func_12 {
         slot!(game, Enemy_Etecoon[E].var_A = g_word_A7E900);
         slot!(game, Enemy_Etecoon[E].var_B = g_word_A7E902);
-        funcs_A2A79[slot!(byte game, Enemy_Etecoon[E].parameter_2[0]) as usize](k, game);
+        (unsafe { funcs_A2A79[slot!(byte game, Enemy_Etecoon[E].parameter_2[0]) as usize](k, game) });
         slot!(game, Enemy_Etecoon[k as i32].base.instruction_timer = 1);
     };
 }
