@@ -109,9 +109,9 @@ impl Effects for Runtime<'_> {
         self.foreign(crate::game_state::Game::next_random)
     }
     fn grapple_transition(&mut self, transition: GrappleTransition) {
-        self.foreign(|game| match transition {
-            GrappleTransition::SwingPose => crate::game::grapple_swing::position_swing(game),
-            GrappleTransition::AnchoredPose => crate::game::grapple_swing::position_anchored(game),
+        self.owned_call(|runtime| match transition {
+            GrappleTransition::SwingPose => sm_game::grapple_swing::position_swing(runtime),
+            GrappleTransition::AnchoredPose => sm_game::grapple_swing::position_anchored(runtime),
         });
     }
     fn invalid_bounce(&mut self, _site: BounceFault, _value: u16) {
