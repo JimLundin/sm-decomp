@@ -1,9 +1,8 @@
 use crate::game::actors;
-use crate::game::palette_copies::copy_rom_colors_to_target_palette;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::Runtime;
 use sm_game::actors::corpses;
-use sm_game::actors::mother_brain::{MotherBrainBody, MotherBrainBrain};
+use sm_game::actors::mother_brain_fight;
 use sm_game::actors::{shitroid_cutscene, shitroid_encounter};
 use sm_game::enemy_script::EnemyScript;
 
@@ -12,43 +11,12 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a6::*;
 pub use crate::game::constants::bank_a9::*;
 
-use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::mother_brain_samus_vitals as vitals;
 use crate::game::mother_brain_visuals;
-use crate::game::room_state::load_fx_entry as LoadFxEntry;
 use sm_game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
-
-use crate::ram_map::slot;
 
 pub use crate::types::Consts_B7;
 
-crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C)]
-    pub struct MotherBrainInstrExecState {
-        pub ip, timer: u16;
-    }
-}
-
-crate::type_aliases! {
-    pub Enemy_Shitroid, Enemy_DeadTorizo, Enemy_DeadSidehopper =
-        crate::game::enemy_layouts::EnemyLayout40;
-}
-
-pub type Enemy_DeadMonsters = crate::game::enemy_layouts::EnemyLayout72Late;
-
-pub type Enemy_ShitroidInCutscene = crate::game::enemy_layouts::EnemyLayout72;
-
-pub type Enemy_DeadEnemy = crate::game::enemy_layouts::EnemyLayout40Late;
-
-crate::game::constants::typed_constants! { i32;
-    kCoroutineNone = 0,
-    fnEproj_Init_0x8bde_SkreeDownLeft = 0x868b15, fnMotherBrainsBody_UnpauseHook = 0xa98763,
-    fnMotherBrainsBody_FirstPhase_DoubleRet = 0xa987e1,
-}
-crate::game::constants::typed_constants! { u32;
-    fnMotherBrainBody_FakeDeath_Descent_0_Pause = 11110429,
-}
 /// Mother Brain's fight runs in `sm_game::actors::mother_brain_fight`.
 pub use sm_game::actors::mother_brain_fight::*;
 /// Kept unsafe for the player collision ownership checks, which wrap it in an unsafe block.
@@ -154,98 +122,18 @@ pub fn sub_A9C46C(a: u16, j: u16, game: &mut Game) -> u16 {
 crate::game::callback_dispatch! {
     pub(crate) fn DispatchEnemyAi(ea: u32, game: &mut Game) => ea;
     call (game); default { crate::rtl::Unreachable(game); };
-    @functions [pub fn (game: &mut Game)];
-    [11110023] MotherBrainsBody_Init [] {
-        word_transfers!(game, descending, 2048; le(tilemap_stuff, 2047) <- value(824));
-        MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_9C13 as u16, game);
-        let E: i32 = 0;
-        slot!(game, MotherBrainBody[E].base.vram_tiles_index = 0);
-        slot!(game, MotherBrainBody[E].base.properties = (slot!(game, MotherBrainBody[E].base.properties) as i32
-            | (kEnemyProps_BlockPlasmaBeam as i32
-                | kEnemyProps_Tangible as i32
-                | kEnemyProps_Invisible as i32)) as u16);
-        slot!(game, MotherBrainBody[E].base.palette_index = 0);
-        copy_rom_colors_to_target_palette(
-            0xa9,
-            0x162,
-            (addr_kMotherBrainPalette_4 as i32 + 2) as u16,
-            0xf,
-            game,
-        );
-        copy_rom_colors_to_target_palette(
-            0xa9,
-            0x1e2,
-            (addr_kMotherBrainPalette_3 as i32 + 2) as u16,
-            0xf,
-            game,
-        );
-        slot!(game, MotherBrainBody[E].form = 0);
-        let E1: i32 = 0x40;
-        slot!(game, MotherBrainBrain[E1].unpause_hook = 0);
-        slot!(game, MotherBrainBody[E].hitboxes = 2);
-        slot!(game, MotherBrainBrain[E1].function = (0xa987d0i32) as u16);
-        slot!(game, MotherBrainBody[E].function = (0xa987e1i32) as u16);
-        LoadFxEntry(1, game);
-        for v3 in 0u16..12 {
-            SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainRoomTurrets as u16, v3, game);
-        }
-    };
-    [11110149] MotherBrainsBrain_Init [] {
-        corpses::InitializeEnemyCorpseRotting(0x40, addr_stru_A9DE08 as u16, game);
-        let E1: i32 = 0x40;
-        slot!(game, MotherBrainBrain[E1].base.health = 3000);
-        MotherBrain_SetBrainUnusedInstrs(addr_kMotherBrain_Ilist_9C13 as u16, game);
-        slot! { game, MotherBrainBrain[E1].base; vram_tiles_index = 0, properties = (slot!(game, MotherBrainBrain[E1].base.properties)) | (0x1100u16), palette_index = 512 };
-        let E: i32 = 0;
-        slot! { game, MotherBrainBody[E]; neck_palette = 512, brain_palette = 512 }
-        MotherBrain_SetBrainInstrs(addr_stru_A99C21 as u16, game);
-        MotherBrain_SetupBrainNormalPal(game);
-    };
-    [11110206] MotherBrainsBody_Hurt [] {
-        MotherBrain_Pal_HandleRoomPal(game);
-        let E: i32 = 0;
-        if slot!(game, MotherBrainBody[E].function) == (fnMotherBrainsBody_FirstPhase_DoubleRet as u16) {
-            MotherBrainsBody_FirstPhase_DoubleRet(game);
-            return;
-        }
-        CallMotherBrainFunc(((slot!(game, MotherBrainBody[E].function)) as u32) | (0xa90000u32), game);
-        MotherBrain_HandlePalette(game);
-        MotherBrain_SamusCollDetect(game);
-        MotherBrain_Pal_ProcessInvincibility(game);
-        if slot!(game, MotherBrainBrain[0x40i32].unpause_hook) != 0 {
-            { let value: u32 = fnMotherBrainsBody_UnpauseHook as u32; { let value: u16 = value as u16; let at: usize = 0x604; let bytes = value.to_ne_bytes(); game.ram().write_byte(at, bytes[0]); game.ram().write_byte(at + 1, bytes[1]); }; game.ram().write_byte(0x604 + 2, (value >> 16) as u8); };
-        }
-    };
-    [11110279] MotherBrainsBody_Powerbomb [] {
-        actors::combat::power_bomb_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
-        MotherBrainsBrain_Hurt(game);
-    };
-    [11110283] MotherBrainsBrain_Hurt [] {
-        { let value: u32 = 0xa98786; { let value: u16 = value as u16; let at: usize = 0x178c; let bytes = value.to_ne_bytes(); game.ram().write_byte(at, bytes[0]); game.ram().write_byte(at + 1, bytes[1]); }; game.ram().write_byte(0x178c + 2, (value >> 16) as u8); };
-        let v0: i32 = 0;
-        if (slot!(game, EnemyData[v0 + core::mem::size_of::<EnemyData>() as i32].properties) & 0x100) != 0 {
-            CallMotherBrainFunc(((slot!(game, EnemyData[v0 + core::mem::size_of::<EnemyData>() as i32].ai_var_A)) as u32) | (0xa90000u32), game);
-        }
-    };
-    [11111221] MotherBrainsTubesFalling_Init [] { sm_game::actors::mother_brain_tubes::initialize(game); };
-    [11121923] MotherBrainsBody_Shot [] {
-        actors::combat::create_dud(&mut Runtime::new(game));
-    };
-    [11122118] MotherBrainsBrain_Touch [] {
-        if game.ram().read_byte(0xa1f) == 3 {
-            let mut v0: i16 = 13;
-            let v1: i32 = 0;
-            let flash_timer: u16 = slot!(game, EnemyData[v1 + core::mem::size_of::<EnemyData>() as i32].flash_timer);
-            if flash_timer != 0 && flash_timer & 1 != 0 {
-                v0 = 14;
-            }
-            slot!(game, EnemyData[v1 + core::mem::size_of::<EnemyData>() as i32].flash_timer = v0 as u16);
-        }
-    };
     @forward [pub fn (game: &mut Game)];
     [11108367] Enemy_GrappleReact_CancelBeam_A9 => actors::combat::select_frozen_ai(&mut Runtime::new(game));
     [11108417] Enemy_NormalFrozenAI_A9 => actors::scheduling::update_frozen_enemy(&mut Runtime::new(game));
     @external {
+        11110023 => mother_brain_fight::MotherBrainsBody_Init;
+        11110149 => mother_brain_fight::MotherBrainsBrain_Init;
+        11110206 => mother_brain_fight::MotherBrainsBody_Hurt;
+        11110279 => mother_brain_fight::MotherBrainsBody_Powerbomb;
+        11110283 => mother_brain_fight::MotherBrainsBrain_Hurt;
+        11111221 => sm_game::actors::mother_brain_tubes::initialize;
+        11121923 => mother_brain_fight::MotherBrainsBody_Shot;
+        11122118 => mother_brain_fight::MotherBrainsBrain_Touch;
         11129608 => corpses::DeadTorizo_Init;
         11129704 => corpses::DeadTorizo_Main;
         11129898 => corpses::DeadTorizo_Powerbomb;
@@ -278,31 +166,10 @@ crate::game::callback_dispatch! {
 crate::game::callback_dispatch! {
     pub(crate) fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { match crate::game::mother_brain_body::dispatch_instruction(ea, j, game) { Some(script) => script, None => { crate::rtl::Unreachable(game); EnemyScript::Stop } } };
-    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11115208] MotherBrain_Instr_SpawnEprojToOffset [jp.offset(3)] {
-        let E: i32 = 0;
-        game.eproj_spawn_pt = Point16U {
-            x: ((slot!(game, MotherBrainBody[E].base.x_pos)).wrapping_add(jp.word(0))),
-            y: ((slot!(game, MotherBrainBody[E].base.y_pos)).wrapping_add(jp.word(2))),
-        };
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, jp.word(4), game);
-    };
-    [11115247] MotherBrain_Instr_SpawnDeathBeamEproj [jp] {
-        let spawn_parameter = crate::game::music::queue_sfx(1, 0x63, 6, game);
-        SpawnEprojWithGfx(
-            spawn_parameter,
-            0x40,
-            addr_kEproj_MotherBrainDeathBeamCharging as u16,
-            game,
-        );
-    };
-    [11115269] MotherBrain_Instr_IncrBeamAttackPhase [jp] {
-        let E: i32 = 0;
-        slot!(game, MotherBrainBody[E].hand_beam_phase = slot!(game, MotherBrainBody[E].hand_beam_phase).wrapping_add(1));
-    };
     @external {
+        11115208 => mother_brain_fight::MotherBrain_Instr_SpawnEprojToOffset;
+        11115247 => mother_brain_fight::MotherBrain_Instr_SpawnDeathBeamEproj;
+        11115269 => mother_brain_fight::MotherBrain_Instr_IncrBeamAttackPhase;
         11136208 => corpses::sub_A9ECD0;
         11139476 => shitroid_encounter::Shitroid_Instr_5;
     }
@@ -481,6 +348,14 @@ impl sm_game::actors::mother_brain_fight::Host for Game {
 
     fn move_samus_horizontally_towards_wall(&mut self, amount: u16) -> u8 {
         crate::game::sm_a9::move_samus_horizontally_towards_wall(amount, self)
+    }
+
+    fn initialize_corpse_rotting(&mut self, k: u16, definition: u16) {
+        corpses::InitializeEnemyCorpseRotting(k, definition, self);
+    }
+
+    fn queue_sound_result(&mut self, channel: usize, sound: u8, max_queued: u8) -> u16 {
+        crate::game::music::queue_sfx(channel, sound, max_queued, self)
     }
 
     fn move_samus_vertically_towards_ceiling_floor(&mut self, amount: u16) -> u8 {

@@ -19,7 +19,7 @@
 )]
 #![allow(unused_mut, unused_assignments, clippy::all)]
 use crate::actors::host::abs16;
-use crate::actors::mother_brain::{MotherBrainBody, MotherBrainBrain};
+use crate::actors::mother_brain::{BRAIN, MotherBrainBody, MotherBrainBrain};
 use crate::actors::mother_brain_effects::{
     generate_explosions as generate_body_explosions,
     handle_rainbow_palette as handle_body_rainbow_palette,
@@ -32,10 +32,11 @@ use crate::constants::bank_a6::*;
 use crate::constants::bank_a9::*;
 use crate::constants::enemy_properties::*;
 use crate::enemy_projectiles::shared_pre::Math_MultByCos;
+use crate::enemy_script::EnemyScript;
 use crate::menus::menu_tilemap::native_record;
 use crate::menus::prelude::{EnemyData, do_until};
 use crate::mother_brain_tables;
-use crate::palette_copies::copy_rom_colors_to_palette;
+use crate::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
 use crate::ram::RawRam as _;
 use crate::ram::{slot, word};
 use crate::word_transfers;
@@ -51,6 +52,7 @@ const kCoroutineNone: i32 = 0;
 pub mod function {
     pub const BRAIN_SETUP_BRAIN_AND_NECK_TO_DRAW: u16 = 0x87a2;
     pub const BRAIN_SETUP_BRAIN_TO_DRAW: u16 = 0x87d0;
+    pub const FIRST_PHASE: u16 = 0x87e1;
     pub const FAKE_DEATH_DESCENT_1: u16 = 0x8829;
     pub const FAKE_DEATH_DESCENT_2: u16 = 0x884d;
     pub const FAKE_DEATH_DESCENT_3: u16 = 0x886c;
@@ -188,6 +190,7 @@ const _: () = {
     }
     assert!(at(f::BRAIN_SETUP_BRAIN_AND_NECK_TO_DRAW) == 11110306);
     assert!(at(f::BRAIN_SETUP_BRAIN_TO_DRAW) == 11110352);
+    assert!(at(f::FIRST_PHASE) == 11110369);
     assert!(at(f::FAKE_DEATH_DESCENT_1) == 11110441);
     assert!(at(f::FAKE_DEATH_DESCENT_2) == 11110477);
     assert!(at(f::FAKE_DEATH_DESCENT_3) == 11110508);
@@ -457,11 +460,25 @@ const GRAPHICS_DRAWN_HOOK: usize = 0x178c;
 
 /// Set the enemy graphics drawn hook, low byte first and the bank last.
 pub(crate) fn set_graphics_drawn_hook(hook: u32, game: &mut impl Host) {
-    let bytes = hook.to_le_bytes();
-    game.ram().write_byte(GRAPHICS_DRAWN_HOOK, bytes[0]);
-    game.ram().write_byte(GRAPHICS_DRAWN_HOOK + 1, bytes[1]);
-    game.ram().write_byte(GRAPHICS_DRAWN_HOOK + 2, bytes[2]);
+    write_long_pointer(GRAPHICS_DRAWN_HOOK, hook, game);
 }
+
+/// Store a long pointer at `at`, low byte first and the bank last.
+fn write_long_pointer(at: usize, pointer: u32, game: &mut impl Host) {
+    let bytes = pointer.to_le_bytes();
+    game.ram().write_byte(at, bytes[0]);
+    game.ram().write_byte(at + 1, bytes[1]);
+    game.ram().write_byte(at + 2, bytes[2]);
+}
+
+/// $A9:8786: an RTL, the graphics drawn hook that draws nothing.
+const NO_DRAW_HOOK: u32 = 0xa9_8786;
+const _: () = assert!(NO_DRAW_HOOK == 11110278);
+/// $7E:0604: the unpause hook; $A9:8763: Mother Brain body's, which
+/// `gameplay_frame` dispatches on.
+const UNPAUSE_HOOK: usize = 0x604;
+const UNPAUSE_BODY_HOOK: u32 = 0xa9_8763;
+const _: () = assert!(UNPAUSE_BODY_HOOK == 11110243);
 
 /// Mother Brain's palette fades, by colour table.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -530,6 +547,11 @@ pub trait Host:
     fn ridley_func_98(&mut self);
     fn move_samus_horizontally_towards_wall(&mut self, amount: u16) -> u8;
     fn move_samus_vertically_towards_ceiling_floor(&mut self, amount: u16) -> u8;
+    /// Start the corpse rotting of slot `k` from `definition`. Was
+    /// `InitializeEnemyCorpseRotting`.
+    fn initialize_corpse_rotting(&mut self, k: u16, definition: u16);
+    /// Queue a sound; the value the original left in A. Was `queue_sfx`.
+    fn queue_sound_result(&mut self, channel: usize, sound: u8, max_queued: u8) -> u16;
 }
 
 // Forwarding helpers under the original names, so the moved bodies are unchanged.
@@ -3115,4 +3137,145 @@ pub fn MotherBrain_SetupBrainNormalPal(game: &mut impl Host) {
 }
 pub fn MotherBrain_SetupBrainPalForLaser(game: &mut impl Host) {
     slot!(game, MotherBrainBody[0i32].brain_palette_reload = 514);
+}
+
+// Mother Brain's AI and instruction entries, forwarded from the bank's dispatch.
+pub fn MotherBrainsBody_Init(game: &mut impl Host) {
+    word_transfers!(game, descending, 2048; le(tilemap_stuff, 2047) <- value(824));
+    MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_9C13 as u16, game);
+    let E: i32 = 0;
+    slot!(game, MotherBrainBody[E].base.vram_tiles_index = 0);
+    slot!(
+        game,
+        MotherBrainBody[E].base.properties =
+            (slot!(game, MotherBrainBody[E].base.properties) as i32
+                | (kEnemyProps_BlockPlasmaBeam as i32
+                    | kEnemyProps_Tangible as i32
+                    | kEnemyProps_Invisible as i32)) as u16
+    );
+    slot!(game, MotherBrainBody[E].base.palette_index = 0);
+    copy_rom_colors_to_target_palette(
+        0xa9,
+        0x162,
+        (addr_kMotherBrainPalette_4 as i32 + 2) as u16,
+        0xf,
+        game,
+    );
+    copy_rom_colors_to_target_palette(
+        0xa9,
+        0x1e2,
+        (addr_kMotherBrainPalette_3 as i32 + 2) as u16,
+        0xf,
+        game,
+    );
+    slot!(game, MotherBrainBody[E].form = 0);
+    let E1: i32 = 0x40;
+    slot!(game, MotherBrainBrain[E1].unpause_hook = 0);
+    slot!(game, MotherBrainBody[E].hitboxes = 2);
+    slot!(
+        game,
+        MotherBrainBrain[E1].function = function::BRAIN_SETUP_BRAIN_TO_DRAW
+    );
+    slot!(game, MotherBrainBody[E].function = function::FIRST_PHASE);
+    LoadFxEntry(1, game);
+    for v3 in 0u16..12 {
+        SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainRoomTurrets as u16, v3, game);
+    }
+}
+pub fn MotherBrainsBrain_Init(game: &mut impl Host) {
+    game.initialize_corpse_rotting(0x40, addr_stru_A9DE08 as u16);
+    let E1: i32 = 0x40;
+    slot!(game, MotherBrainBrain[E1].base.health = 3000);
+    MotherBrain_SetBrainUnusedInstrs(addr_kMotherBrain_Ilist_9C13 as u16, game);
+    slot! { game, MotherBrainBrain[E1].base; vram_tiles_index = 0, properties = (slot!(game, MotherBrainBrain[E1].base.properties)) | (0x1100u16), palette_index = 512 };
+    let E: i32 = 0;
+    slot! { game, MotherBrainBody[E]; neck_palette = 512, brain_palette = 512 }
+    MotherBrain_SetBrainInstrs(addr_stru_A99C21 as u16, game);
+    MotherBrain_SetupBrainNormalPal(game);
+}
+pub fn MotherBrainsBody_Hurt(game: &mut impl Host) {
+    MotherBrain_Pal_HandleRoomPal(game);
+    let E: i32 = 0;
+    if slot!(game, MotherBrainBody[E].function) == function::FIRST_PHASE {
+        MotherBrainsBody_FirstPhase_DoubleRet(game);
+        return;
+    }
+    CallMotherBrainFunc(
+        ((slot!(game, MotherBrainBody[E].function)) as u32) | (0xa90000u32),
+        game,
+    );
+    MotherBrain_HandlePalette(game);
+    MotherBrain_SamusCollDetect(game);
+    MotherBrain_Pal_ProcessInvincibility(game);
+    if slot!(game, MotherBrainBrain[0x40i32].unpause_hook) != 0 {
+        write_long_pointer(UNPAUSE_HOOK, UNPAUSE_BODY_HOOK, game);
+    }
+}
+pub fn MotherBrainsBody_Powerbomb(game: &mut impl Host) {
+    game.power_bomb_reaction(crate::actors::host::Death::LeavePending);
+    MotherBrainsBrain_Hurt(game);
+}
+pub fn MotherBrainsBrain_Hurt(game: &mut impl Host) {
+    set_graphics_drawn_hook(NO_DRAW_HOOK, game);
+    if (slot!(game, MotherBrainBrain[BRAIN].base.properties) & 0x100) != 0 {
+        CallMotherBrainFunc(
+            ((slot!(game, MotherBrainBrain[BRAIN].function)) as u32) | (0xa90000u32),
+            game,
+        );
+    }
+}
+pub fn MotherBrainsBody_Shot(game: &mut impl Host) {
+    game.create_dud();
+}
+pub fn MotherBrainsBrain_Touch(game: &mut impl Host) {
+    if game.ram().read_byte(0xa1f) == 3 {
+        let mut v0: i16 = 13;
+        let flash_timer: u16 = slot!(game, MotherBrainBrain[BRAIN].base.flash_timer);
+        if flash_timer != 0 && flash_timer & 1 != 0 {
+            v0 = 14;
+        }
+        slot!(game, MotherBrainBrain[BRAIN].base.flash_timer = v0 as u16);
+    }
+}
+pub fn MotherBrain_Instr_SpawnEprojToOffset(
+    _k: u16,
+    jp: EnemyScript,
+    game: &mut impl Host,
+) -> EnemyScript {
+    let E: i32 = 0;
+    {
+        let (x, y) = (
+            ((slot!(game, MotherBrainBody[E].base.x_pos)).wrapping_add(jp.word(0))),
+            ((slot!(game, MotherBrainBody[E].base.y_pos)).wrapping_add(jp.word(2))),
+        );
+        crate::actors::host::BossEffects::set_projectile_spawn_point(game, x, y);
+    }
+    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, jp.word(4), game);
+    jp.offset(3)
+}
+pub fn MotherBrain_Instr_SpawnDeathBeamEproj(
+    _k: u16,
+    jp: EnemyScript,
+    game: &mut impl Host,
+) -> EnemyScript {
+    let spawn_parameter = game.queue_sound_result(1, 0x63, 6);
+    game.spawn_projectile(
+        spawn_parameter,
+        0x40,
+        addr_kEproj_MotherBrainDeathBeamCharging as u16,
+    );
+    jp
+}
+pub fn MotherBrain_Instr_IncrBeamAttackPhase(
+    _k: u16,
+    jp: EnemyScript,
+    game: &mut impl Host,
+) -> EnemyScript {
+    let E: i32 = 0;
+    slot!(
+        game,
+        MotherBrainBody[E].hand_beam_phase =
+            slot!(game, MotherBrainBody[E].hand_beam_phase).wrapping_add(1)
+    );
+    jp
 }
