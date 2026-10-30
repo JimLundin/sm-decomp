@@ -11,6 +11,7 @@ use crate::actors::session_slots::session_slot;
 use crate::actors::{combat, queries};
 use crate::cartridge::rom_table_word;
 use crate::constants::{bank_86::*, enemy_properties::*};
+use crate::enemy_script::EnemyScript;
 use crate::ram::RawRam as _;
 use crate::ram::{CompatibilityRam as _, WorkRamAccess as _};
 use crate::ram::{slot, word};
@@ -801,14 +802,16 @@ pub fn hole_collision<L: Lease + ?Sized>(k: u16, game: &mut L) {
     }
 }
 /// Instruction - enemy radius = `x` x `y` ($B3:94C7, $B3:94D7, $B3:94E7).
-pub fn set_hitbox<L: Lease + ?Sized>(x: u16, y: u16, game: &mut L) {
+pub fn set_hitbox<L: Lease + ?Sized>(x: u16, y: u16, j: EnemyScript, game: &mut L) -> EnemyScript {
     let e = i32::from(game.current_enemy());
     session_slot!(game, Botwoon[e].base; x_width = x, y_height = y);
+    j
 }
 /// Instruction - set Botwoon spitting flag ($B3:9567).
-pub fn set_spitting<L: Lease + ?Sized>(game: &mut L) {
+pub fn set_spitting<L: Lease + ?Sized>(j: EnemyScript, game: &mut L) -> EnemyScript {
     let e = i32::from(game.current_enemy());
     session_slot!(game, Botwoon[e].spitting = 1);
+    j
 }
 
 /// Initialisation AI - Botwoon ($B3:9583): once dead, clear its wall.

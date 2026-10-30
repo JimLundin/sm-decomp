@@ -197,7 +197,7 @@ pub fn draw_hook<H: DrawHookHost>(ea: u32, game: &mut H) {
 }
 
 /// A pipe bug's state routine, keyed by its bank $B3 address.
-pub fn pipe_bug_state<H: B3Host>(ea: u32, _k: u16, game: &mut H) {
+pub fn pipe_bug_state<H: B3Host>(ea: u32, game: &mut H) {
     match ea {
         11766733 => crate::actors::gamet::await_group(game),
         11766783 => crate::actors::gamet::await_player(game),
@@ -279,6 +279,8 @@ pub trait AiHost:
     fn native_ai(&mut self, ea: u32);
     /// Kill the current enemy with the grapple, through one lease.
     fn grapple_kill(&mut self);
+    /// Write `operand` to the multiplicand register, for Yapping Maw.
+    fn write_multiplicand(&mut self, operand: u8);
     /// Install Draygon's BG layers as its initialisation does.
     fn install_draygon_layers(&mut self);
     /// A bank $A5 function Draygon's dispatch shares with Spore Spawn, whose
@@ -642,6 +644,20 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10930388 => ridley::explosion_main(game),
         10936202 => ridley::shot(game),
         10936242 => ridley::power_bomb(game),
+        11051537 => {
+            if !yapping_maw::main_ai(game, |operand, game| game.write_multiplicand(operand)) {
+                game.unknown_routine();
+            }
+            yapping_maw::update_segments(game);
+        }
+        11055370 => pre_instruction(magdollite::main_ai(game), game),
+        11765882 => pre_instruction(zeb::state_address(game), game),
+        11766686 => {
+            pipe_bug_state(gamet::state_address(game), game);
+            gamet::reset_offscreen(game);
+        }
+        11767726 => pipe_bug_state(geega::state_address(game), game),
+        11789909 => pre_instruction(escape_critters::main_ai(game), game),
         _ => game.native_ai(ea),
     }
 }
@@ -661,6 +677,10 @@ pub trait PreInstructionHost:
     /// A pre-instruction whose arm is still in the compatibility table, for
     /// the current enemy `k` read before dispatch.
     fn native_pre_instruction(&mut self, ea: u32, k: u16);
+    /// Magdollite's original diagnostic for an undefined lava height.
+    fn warn_lava_height(&mut self, value: i32);
+    /// Start the morph ball eye's beam effect.
+    fn initialize_morph_eye_beam(&mut self);
 }
 
 /// An enemy species' pre-instruction, keyed by its address. The current
@@ -788,6 +808,19 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
         11197612 => shaktool::arm_piece(k, game),
         11197655 => shaktool::head(k, game),
         11197733 => shaktool::final_piece(k, game),
+        11047153 | 11047214 | 11047264 | 11047374 => {
+            if morph_ball_eye::run_function(ea as u16, k, game) {
+                game.initialize_morph_eye_beam();
+                morph_ball_eye::start_tracking(k, game);
+            }
+        }
+        11055620 => {
+            let (actor, diagnostic) = magdollite::grow_arm(game);
+            if let Some(value) = diagnostic {
+                game.warn_lava_height(value);
+            }
+            magdollite::finish_arm_growth(actor, game);
+        }
         _ => game.native_pre_instruction(ea, k),
     }
 }
@@ -813,6 +846,7 @@ pub trait InstructionHost:
     + skultera::Host
     + crate::actors::host::EnemyHost
     + crate::effects::SoundEffects
+    + botwoon::Host
 {
     /// An instruction whose arm is still in the compatibility table.
     fn native_instruction(&mut self, ea: u32, k: u16, j: EnemyScript) -> EnemyScript;
@@ -1180,6 +1214,10 @@ pub fn instruction<H: InstructionHost>(
             Ok(next) => next,
             Err(j) => game.native_instruction(ea, k, j),
         },
+        11769031 | 11769095 | 11769111 | 11769175 => botwoon::set_hitbox(8, 16, j, game),
+        11769047 | 11769079 | 11769127 | 11769159 => botwoon::set_hitbox(12, 12, j, game),
+        11769063 | 11769143 => botwoon::set_hitbox(16, 8, j, game),
+        11769191 => botwoon::set_spitting(j, game),
         _ => game.native_instruction(ea, k, j),
     }
 }
