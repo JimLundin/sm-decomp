@@ -220,7 +220,8 @@ fn follow_x<H: Host + ?Sized>(game: &mut H) {
         &kSamus_HandleScroll_X_FaceLeft
     };
     word!(
-        game.ideal_layer1_xpos = word!(game.samus_x_pos)
+        game.ideal_layer1_xpos = game
+            .player_x()
             .wrapping_sub(distances[(word!(game.camera_distance_index) >> 1) as usize])
     );
     chase_ideal_layer_position!(
@@ -240,14 +241,10 @@ fn follow_y<H: Host + ?Sized>(game: &mut H) {
     } else {
         if word!(game.samus_y_dir) == 1 {
             word!(
-                game.ideal_layer1_ypos =
-                    (word!(game.samus_y_pos)).wrapping_sub(word!(game.down_scroller))
+                game.ideal_layer1_ypos = (game.player_y()).wrapping_sub(word!(game.down_scroller))
             );
         } else {
-            word!(
-                game.ideal_layer1_ypos =
-                    (word!(game.samus_y_pos)).wrapping_sub(word!(game.up_scroller))
-            );
+            word!(game.ideal_layer1_ypos = (game.player_y()).wrapping_sub(word!(game.up_scroller)));
         }
         chase_ideal_layer_position!(
             game,
