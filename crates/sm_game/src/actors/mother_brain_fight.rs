@@ -47,139 +47,265 @@ type CoroutineRet = u8;
 type Enemy_DeadMonsters = crate::actors::layouts::EnemyLayout72Late;
 const kCoroutineNone: i32 = 0;
 
-/// The bank $A9 functions Mother Brain's body and brain run, by their
-/// dispatch names.
+/// The bank $A9 functions Mother Brain's body and brain run, named after the
+/// bank log's headings.
 pub mod function {
-    pub const BRAIN_SETUP_BRAIN_AND_NECK_TO_DRAW: u16 = 0x87a2;
-    pub const BRAIN_SETUP_BRAIN_TO_DRAW: u16 = 0x87d0;
+    /// $A9:87A2: Mother Brain brain function - set up brain and neck to be drawn.
+    pub const BRAIN_SET_UP_BRAIN_AND_NECK_TO_BE_DRAWN: u16 = 0x87a2;
+    /// $A9:87D0: Mother Brain brain function - set up brain to be drawn.
+    pub const BRAIN_SET_UP_BRAIN_TO_BE_DRAWN: u16 = 0x87d0;
+    /// $A9:87E1: Mother Brain body function - first phase.
     pub const FIRST_PHASE: u16 = 0x87e1;
-    pub const FAKE_DEATH_DESCENT_1: u16 = 0x8829;
-    pub const FAKE_DEATH_DESCENT_2: u16 = 0x884d;
-    pub const FAKE_DEATH_DESCENT_3: u16 = 0x886c;
-    pub const FAKE_DEATH_DESCENT_4: u16 = 0x8884;
-    pub const FAKE_DEATH_DESCENT_5: u16 = 0x88b2;
-    pub const FAKE_DEATH_DESCENT_6: u16 = 0x88d3;
-    pub const TUBES_0_WAIT: u16 = 0x8949;
-    pub const TUBES_1_CLEAR_BOTTOM_LEFT_TUBE: u16 = 0x896e;
-    pub const TUBES_2_SPAWN_TOP_RIGHT_TUBE_FALLING: u16 = 0x8983;
-    pub const TUBES_4_SPAWN_TOP_LEFT_TUBE_FALLING: u16 = 0x89b5;
-    pub const TUBES_4_CLEAR_CEILING_BLOCK_6: u16 = 0x89d2;
-    pub const TUBES_5_SPAWN_TUBE_FALLING_ENEMY_1: u16 = 0x89e7;
-    pub const TUBES_6_CLEAR_BOTTOM_RIGHT_TUBE: u16 = 0x89fa;
-    pub const TUBES_7_SPAWN_TUBE_FALLING_ENEMY_2: u16 = 0x8a0f;
-    pub const TUBES_8_CLEAR_BOTTOM_MIDDLE_LEFT_TUBE: u16 = 0x8a22;
-    pub const TUBES_9_SPAWN_TOP_MIDDLE_LEFT_FALLING: u16 = 0x8a37;
-    pub const TUBES_10_CLEAR_CEILING_TUBE_COLUMN_7: u16 = 0x8a54;
-    pub const TUBES_11_SPAWN_TOP_MIDDLE_RIGHT_FALLING: u16 = 0x8a69;
-    pub const TUBES_12_CLEAR_CEILING_TUBE_COLUMN_8: u16 = 0x8a86;
-    pub const TUBES_13_SPAWN_TUBE_FALLING_ENEMY_3: u16 = 0x8a9b;
-    pub const TUBES_14_CLEAR_BOTTOM_MIDDLE_RIGHT_TUBE: u16 = 0x8aae;
-    pub const TUBES_15_SPAWN_TUBE_FALLING_ENEMY_4: u16 = 0x8ac3;
-    pub const TUBES_16_CLEAR_BOTTOM_MIDDLE_TUBES: u16 = 0x8ad6;
-    pub const FAKE_DEATH_ASCENT_1_DRAW_BG1_ROWS_4_5: u16 = 0x8c9e;
-    pub const FAKE_DEATH_ASCENT_2_DRAW_BG1_ROWS_6_7: u16 = 0x8cb5;
-    pub const FAKE_DEATH_ASCENT_3_DRAW_BG1_ROWS_8_9: u16 = 0x8ccc;
-    pub const FAKE_DEATH_ASCENT_4_DRAW_BG1_ROWS_A_B: u16 = 0x8ce3;
-    pub const FAKE_DEATH_ASCENT_5_DRAW_BG1_ROWS_C_D: u16 = 0x8cfa;
-    pub const FAKE_DEATH_ASCENT_6_SETUP_PHASE_2_GFX: u16 = 0x8d11;
-    pub const FAKE_DEATH_ASCENT_7_SETUP_PHASE_2_BRAIN: u16 = 0x8d49;
-    pub const FAKE_DEATH_ASCENT_8_PAUSE: u16 = 0x8d79;
-    pub const FAKE_DEATH_ASCENT_9_PREPARE_RISE: u16 = 0x8d8b;
-    pub const FAKE_DEATH_ASCENT_10_LOAD_LEG_TILES: u16 = 0x8db4;
-    pub const FAKE_DEATH_ASCENT_11_CONTINUE_PAUSE: u16 = 0x8dc3;
-    pub const FAKE_DEATH_ASCENT_12_START_MUSIC: u16 = 0x8dec;
-    pub const FAKE_DEATH_ASCENT_13_RAISE: u16 = 0x8e4d;
-    pub const FAKE_DEATH_ASCENT_14_WAIT_FOR_UNCOUCHING: u16 = 0x8e95;
-    pub const FAKE_DEATH_ASCENT_15_TRANSITION_FROM_GREY: u16 = 0x8eaa;
-    pub const PHASE_2_16_SHAKE_HEAD_MENACINGLY: u16 = 0x8ef5;
-    pub const PHASE_2_17_BRING_HEAD_BACK_UP: u16 = 0x8f14;
-    pub const PHASE_2_18_FINISH_STRETCHING: u16 = 0x8f33;
-    pub const PHASE_3_DEATH_0: u16 = 0xaee1;
-    pub const PHASE_3_DEATH_1: u16 = 0xaf12;
-    pub const PHASE_3_DEATH_2: u16 = 0xaf21;
-    pub const PHASE_3_DEATH_3: u16 = 0xaf54;
-    pub const PHASE_3_DEATH_4: u16 = 0xaf9d;
-    pub const PHASE_3_DEATH_5: u16 = 0xafb6;
-    pub const PHASE_3_DEATH_6: u16 = 0xb013;
-    pub const PHASE_3_DEATH_7: u16 = 0xb115;
-    pub const PHASE_3_DEATH_8: u16 = 0xb12d;
-    pub const PHASE_3_DEATH_9: u16 = 0xb15e;
-    pub const PHASE_3_DEATH_10: u16 = 0xb173;
-    pub const PHASE_3_DEATH_11: u16 = 0xb189;
-    pub const PHASE_3_DEATH_12: u16 = 0xb1b8;
-    pub const PHASE_3_DEATH_13: u16 = 0xb1d5;
-    pub const PHASE_3_DEATH_14_DELAY_20_FRAMES: u16 = 0xb211;
-    pub const PHASE_3_DEATH_15_LOAD_ESCAPE_TIMER_TILES: u16 = 0xb258;
-    pub const PHASE_3_DEATH_16_START_ESCAPE: u16 = 0xb26d;
-    pub const PHASE_3_DEATH_17_SPAWN_TIME_BOMB: u16 = 0xb2d1;
-    pub const PHASE_3_DEATH_18_TYPES_ZEBES_TEXT: u16 = 0xb2e3;
-    pub const PHASE_3_DEATH_19_ESCAPE_DOOR_EXPLODING: u16 = 0xb2f9;
-    pub const PHASE_3_DEATH_20_BLOW_UP_ESCAPE_DOOR: u16 = 0xb32a;
-    pub const PHASE_3_DEATH_21_KEEP_EARTHQUAKE_GOING: u16 = 0xb33c;
-    pub const BODY_PHASE_2_THINKING: u16 = 0xb605;
-    pub const BODY_PHASE_2_TRY_ATTACK: u16 = 0xb64b;
+    /// $A9:8829: Mother Brain body function - fake death - descent - lock Samus and set scroll region.
+    pub const FAKE_DEATH_DESCENT_LOCK_SAMUS_AND_SET_SCROLL_REGION: u16 = 0x8829;
+    /// $A9:884D: Mother Brain body function - fake death - descent - queue Mother Brain music.
+    pub const FAKE_DEATH_DESCENT_QUEUE_MOTHER_BRAIN_MUSIC: u16 = 0x884d;
+    /// $A9:886C: Mother Brain body function - fake death - descent - unlock Samus.
+    pub const FAKE_DEATH_DESCENT_UNLOCK_SAMUS: u16 = 0x886c;
+    /// $A9:8884: Mother Brain body function - fake death - descent - begin screen flashing and lower acid.
+    pub const FAKE_DEATH_DESCENT_BEGIN_SCREEN_FLASHING_AND_LOWER_ACID: u16 = 0x8884;
+    /// $A9:88B2: Mother Brain body function - fake death - descent - transition Mother Brain palette to grey.
+    pub const FAKE_DEATH_DESCENT_TRANSITION_MOTHER_BRAIN_PALETTE_TO_GREY: u16 = 0x88b2;
+    /// $A9:88D3: Mother Brain body function - fake death - descent - collapse tubes.
+    pub const FAKE_DEATH_DESCENT_COLLAPSE_TUBES: u16 = 0x88d3;
+    /// $A9:8949: Mother brain body subfunction - wait until there are less than 4 enemy projectiles alive and spawn tubes falling enemy 0.
+    pub const TUBES_WAIT_AND_SPAWN_TUBES_FALLING_ENEMY_0: u16 = 0x8949;
+    /// $A9:896E: Mother brain body subfunction - clear bottom-left tube.
+    pub const TUBES_CLEAR_BOTTOM_LEFT_TUBE: u16 = 0x896e;
+    /// $A9:8983: Mother brain body subfunction - spawn top-right tube falling enemy projectile.
+    pub const TUBES_SPAWN_TOP_RIGHT_TUBE_FALLING_PROJECTILE: u16 = 0x8983;
+    /// $A9:89B5: Mother brain body subfunction - spawn top-left tube falling enemy projectile.
+    pub const TUBES_SPAWN_TOP_LEFT_TUBE_FALLING_PROJECTILE: u16 = 0x89b5;
+    /// $A9:89D2: Mother brain body subfunction - clear ceiling block column 6.
+    pub const TUBES_CLEAR_CEILING_BLOCK_COLUMN_6: u16 = 0x89d2;
+    /// $A9:89E7: Mother brain body subfunction - spawn tubes falling enemy 1.
+    pub const TUBES_SPAWN_TUBES_FALLING_ENEMY_1: u16 = 0x89e7;
+    /// $A9:89FA: Mother brain body subfunction - clear bottom-right tube.
+    pub const TUBES_CLEAR_BOTTOM_RIGHT_TUBE: u16 = 0x89fa;
+    /// $A9:8A0F: Mother brain body subfunction - spawn tubes falling enemy 2.
+    pub const TUBES_SPAWN_TUBES_FALLING_ENEMY_2: u16 = 0x8a0f;
+    /// $A9:8A22: Mother brain body subfunction - clear bottom-middle-left tube.
+    pub const TUBES_CLEAR_BOTTOM_MIDDLE_LEFT_TUBE: u16 = 0x8a22;
+    /// $A9:8A37: Mother brain body subfunction - spawn top-middle-left tube falling enemy projectile.
+    pub const TUBES_SPAWN_TOP_MIDDLE_LEFT_TUBE_FALLING_PROJECTILE: u16 = 0x8a37;
+    /// $A9:8A54: Mother brain body subfunction - clear ceiling tube column 7.
+    pub const TUBES_CLEAR_CEILING_TUBE_COLUMN_7: u16 = 0x8a54;
+    /// $A9:8A69: Mother brain body subfunction - spawn top-middle-right tube falling enemy projectile.
+    pub const TUBES_SPAWN_TOP_MIDDLE_RIGHT_TUBE_FALLING_PROJECTILE: u16 = 0x8a69;
+    /// $A9:8A86: Mother brain body subfunction - clear ceiling tube column 8.
+    pub const TUBES_CLEAR_CEILING_TUBE_COLUMN_8: u16 = 0x8a86;
+    /// $A9:8A9B: Mother brain body subfunction - spawn tubes falling enemy 3.
+    pub const TUBES_SPAWN_TUBES_FALLING_ENEMY_3: u16 = 0x8a9b;
+    /// $A9:8AAE: Mother brain body subfunction - clear bottom-middle-right tube.
+    pub const TUBES_CLEAR_BOTTOM_MIDDLE_RIGHT_TUBE: u16 = 0x8aae;
+    /// $A9:8AC3: Mother brain body subfunction - spawn tubes falling enemy 4.
+    pub const TUBES_SPAWN_TUBES_FALLING_ENEMY_4: u16 = 0x8ac3;
+    /// $A9:8AD6: Mother brain body subfunction - clear bottom-middle tubes.
+    pub const TUBES_CLEAR_BOTTOM_MIDDLE_TUBES: u16 = 0x8ad6;
+    /// $A9:8C9E: Mother Brain body function - fake death - ascent - draw room background on BG1 - rows 4/5.
+    pub const FAKE_DEATH_ASCENT_DRAW_ROOM_BACKGROUND_ON_BG1_ROWS_4_5: u16 = 0x8c9e;
+    /// $A9:8CB5: Mother Brain body function - fake death - ascent - draw room background on BG1 - rows 6/7.
+    pub const FAKE_DEATH_ASCENT_DRAW_ROOM_BACKGROUND_ON_BG1_ROWS_6_7: u16 = 0x8cb5;
+    /// $A9:8CCC: Mother Brain body function - fake death - ascent - draw room background on BG1 - rows 8/9.
+    pub const FAKE_DEATH_ASCENT_DRAW_ROOM_BACKGROUND_ON_BG1_ROWS_8_9: u16 = 0x8ccc;
+    /// $A9:8CE3: Mother Brain body function - fake death - ascent - draw room background on BG1 - rows Ah/Bh.
+    pub const FAKE_DEATH_ASCENT_DRAW_ROOM_BACKGROUND_ON_BG1_ROWS_A_B: u16 = 0x8ce3;
+    /// $A9:8CFA: Mother Brain body function - fake death - ascent - draw room background on BG1 - rows Ch/Dh.
+    pub const FAKE_DEATH_ASCENT_DRAW_ROOM_BACKGROUND_ON_BG1_ROWS_C_D: u16 = 0x8cfa;
+    /// $A9:8D11: Mother Brain body function - fake death - ascent - set up Mother Brain phase 2 graphics.
+    pub const FAKE_DEATH_ASCENT_SET_UP_MOTHER_BRAIN_PHASE_2_GRAPHICS: u16 = 0x8d11;
+    /// $A9:8D49: Mother Brain body function - fake death - ascent - set up Mother Brain phase 2 brain.
+    pub const FAKE_DEATH_ASCENT_SET_UP_MOTHER_BRAIN_PHASE_2_BRAIN: u16 = 0x8d49;
+    /// $A9:8D79: Mother Brain body function - fake death - ascent - pause for suspense.
+    pub const FAKE_DEATH_ASCENT_PAUSE_FOR_SUSPENSE: u16 = 0x8d79;
+    /// $A9:8D8B: Mother Brain body function - fake death - ascent - prepare Mother Brain for rising.
+    pub const FAKE_DEATH_ASCENT_PREPARE_MOTHER_BRAIN_FOR_RISING: u16 = 0x8d8b;
+    /// $A9:8DB4: Mother Brain body function - fake death - ascent - load Mother Brain's legs tiles.
+    pub const FAKE_DEATH_ASCENT_LOAD_MOTHER_BRAINS_LEGS_TILES: u16 = 0x8db4;
+    /// $A9:8DC3: Mother Brain body function - fake death - ascent - continue pausing for suspense.
+    pub const FAKE_DEATH_ASCENT_CONTINUE_PAUSING_FOR_SUSPENSE: u16 = 0x8dc3;
+    /// $A9:8DEC: Mother Brain body function - fake death - ascent - start music and earthquake.
+    pub const FAKE_DEATH_ASCENT_START_MUSIC_AND_EARTHQUAKE: u16 = 0x8dec;
+    /// $A9:8E4D: Mother Brain body function - fake death - ascent - raise Mother Brain.
+    pub const FAKE_DEATH_ASCENT_RAISE_MOTHER_BRAIN: u16 = 0x8e4d;
+    /// $A9:8E95: Mother Brain body function - fake death - ascent - wait until Mother Brain has finished uncrouching.
+    pub const FAKE_DEATH_ASCENT_WAIT_UNTIL_MOTHER_BRAIN_HAS_FINISHED_UNCROUCHING: u16 = 0x8e95;
+    /// $A9:8EAA: Mother Brain body function - fake death - ascent - transition Mother Brain from grey and lower her head.
+    pub const FAKE_DEATH_ASCENT_TRANSITION_MOTHER_BRAIN_FROM_GREY_AND_LOWER_HER_HEAD: u16 = 0x8eaa;
+    /// $A9:8EF5: Mother Brain body function - second phase - stretching - shake head menacingly.
+    pub const PHASE_2_STRETCHING_SHAKE_HEAD_MENACINGLY: u16 = 0x8ef5;
+    /// $A9:8F14: Mother Brain body function - second phase - stretching - bring head back up.
+    pub const PHASE_2_STRETCHING_BRING_HEAD_BACK_UP: u16 = 0x8f14;
+    /// $A9:8F33: Mother Brain body function - second phase - stretching - finish stretching.
+    pub const PHASE_2_STRETCHING_FINISH_STRETCHING: u16 = 0x8f33;
+    /// $A9:AEE1: Mother Brain body function - third phase - death sequence - move to back of room.
+    pub const PHASE_3_DEATH_MOVE_TO_BACK_OF_ROOM: u16 = 0xaee1;
+    /// $A9:AF12: Mother Brain body function - third phase - death sequence - idle whilst exploding.
+    pub const PHASE_3_DEATH_IDLE_WHILST_EXPLODING: u16 = 0xaf12;
+    /// $A9:AF21: Mother Brain body function - third phase - death sequence - stumble to middle of room and drool.
+    pub const PHASE_3_DEATH_STUMBLE_TO_MIDDLE_OF_ROOM_AND_DROOL: u16 = 0xaf21;
+    /// $A9:AF54: Mother Brain body function - third phase - death sequence - disable brain effects.
+    pub const PHASE_3_DEATH_DISABLE_BRAIN_EFFECTS: u16 = 0xaf54;
+    /// $A9:AF9D: Mother Brain body function - third phase - death sequence - set up body fade out.
+    pub const PHASE_3_DEATH_SET_UP_BODY_FADE_OUT: u16 = 0xaf9d;
+    /// $A9:AFB6: Mother Brain body function - third phase - death sequence - fade out body.
+    pub const PHASE_3_DEATH_FADE_OUT_BODY: u16 = 0xafb6;
+    /// $A9:B013: Mother Brain body function - third phase - death sequence - final few explosions.
+    pub const PHASE_3_DEATH_FINAL_FEW_EXPLOSIONS: u16 = 0xb013;
+    /// $A9:B115: Mother Brain body function - third phase - death sequence - realise decapitation.
+    pub const PHASE_3_DEATH_REALISE_DECAPITATION: u16 = 0xb115;
+    /// $A9:B12D: Mother Brain body function - third phase - death sequence - brain falls to ground.
+    pub const PHASE_3_DEATH_BRAIN_FALLS_TO_GROUND: u16 = 0xb12d;
+    /// $A9:B15E: Mother Brain body function - third phase - death sequence - load corpse tiles.
+    pub const PHASE_3_DEATH_LOAD_CORPSE_TILES: u16 = 0xb15e;
+    /// $A9:B173: Mother Brain body function - third phase - death sequence - set up fade to grey.
+    pub const PHASE_3_DEATH_SET_UP_FADE_TO_GREY: u16 = 0xb173;
+    /// $A9:B189: Mother Brain body function - third phase - death sequence - fade to grey.
+    pub const PHASE_3_DEATH_FADE_TO_GREY: u16 = 0xb189;
+    /// $A9:B1B8: Mother Brain body function - third phase - death sequence - corpse tips over.
+    pub const PHASE_3_DEATH_CORPSE_TIPS_OVER: u16 = 0xb1b8;
+    /// $A9:B1D5: Mother Brain body function - third phase - death sequence - corpse rots away.
+    pub const PHASE_3_DEATH_CORPSE_ROTS_AWAY: u16 = 0xb1d5;
+    /// $A9:B211: Mother Brain body function - third phase - death sequence - 20 frame delay.
+    pub const PHASE_3_DEATH_20_FRAME_DELAY: u16 = 0xb211;
+    /// $A9:B258: Mother Brain body function - third phase - death sequence - load escape timer tiles.
+    pub const PHASE_3_DEATH_LOAD_ESCAPE_TIMER_TILES: u16 = 0xb258;
+    /// $A9:B26D: Mother Brain body function - third phase - death sequence - start escape sequence.
+    pub const PHASE_3_DEATH_START_ESCAPE_SEQUENCE: u16 = 0xb26d;
+    /// $A9:B2D1: Mother Brain body function - third phase - death sequence - spawn time bomb set Japanese text.
+    pub const PHASE_3_DEATH_SPAWN_TIME_BOMB_SET_JAPANESE_TEXT: u16 = 0xb2d1;
+    /// $A9:B2E3: Mother Brain body function - third phase - death sequence - type out Zebes escape text.
+    pub const PHASE_3_DEATH_TYPE_OUT_ZEBES_ESCAPE_TEXT: u16 = 0xb2e3;
+    /// $A9:B2F9: Mother Brain body function - third phase - death sequence - escape door is exploding, start escape timer.
+    pub const PHASE_3_DEATH_ESCAPE_DOOR_IS_EXPLODING_START_ESCAPE_TIMER: u16 = 0xb2f9;
+    /// $A9:B32A: Mother Brain body function - third phase - death sequence - blow up escape door.
+    pub const PHASE_3_DEATH_BLOW_UP_ESCAPE_DOOR: u16 = 0xb32a;
+    /// $A9:B33C: Mother Brain body function - third phase - death sequence - keep earthquake going.
+    pub const PHASE_3_DEATH_KEEP_EARTHQUAKE_GOING: u16 = 0xb33c;
+    /// $A9:B605: Mother Brain body function - second phase - thinking.
+    pub const PHASE_2_THINKING: u16 = 0xb605;
+    /// $A9:B64B: Mother Brain body function - second phase - try attack.
+    pub const PHASE_2_TRY_ATTACK: u16 = 0xb64b;
+    /// $A9:B781: Mother Brain body function - firing bomb - decide on walking.
     pub const FIRING_BOMB_DECIDE_ON_WALKING: u16 = 0xb781;
+    /// $A9:B7AC: Mother Brain body function - firing bomb - walking backwards.
     pub const FIRING_BOMB_WALKING_BACKWARDS: u16 = 0xb7ac;
+    /// $A9:B7C6: Mother Brain body function - firing bomb - crouch.
     pub const FIRING_BOMB_CROUCH: u16 = 0xb7c6;
-    pub const FIRING_BOMB_FIRED: u16 = 0xb7e8;
-    pub const FIRING_BOMB_STANDUP: u16 = 0xb7f8;
-    pub const FIRING_LASER_POSITION_HEAD: u16 = 0xb80e;
-    pub const FIRING_LASER_POSITION_HEAD_SLOWLY_FIRE: u16 = 0xb839;
-    pub const FIRING_LASER_FINISH_ATTACK: u16 = 0xb863;
-    pub const FIRING_DEATH_BEAM: u16 = 0xb87d;
-    pub const FIRING_RAINBOW_BEAM_0: u16 = 0xb8eb;
-    pub const FIRING_RAINBOW_BEAM_1_START_CHARGE: u16 = 0xb91a;
-    pub const FIRING_RAINBOW_BEAM_2_RETRACT_NECK: u16 = 0xb92b;
-    pub const FIRING_RAINBOW_BEAM_3_WAIT: u16 = 0xb93f;
-    pub const FIRING_RAINBOW_BEAM_4_EXTEND_NECK_DOWN: u16 = 0xb951;
-    pub const FIRING_RAINBOW_BEAM_5_START_FIRING: u16 = 0xb975;
-    pub const FIRING_RAINBOW_BEAM_6_MOVE_SAMUS_TO_WALL: u16 = 0xb9e5;
-    pub const FIRING_RAINBOW_BEAM_7_DELAY_FRAME: u16 = 0xba00;
-    pub const FIRING_RAINBOW_BEAM_8_START_DRAIN_SAMUS: u16 = 0xba27;
-    pub const FIRING_RAINBOW_BEAM_9_DRAINING_SAMUS: u16 = 0xba3c;
-    pub const FIRING_RAINBOW_BEAM_10_FINISH_FIRING_RAINBOW: u16 = 0xba5e;
-    pub const FIRING_RAINBOW_BEAM_11_LET_SAMUS_FALL: u16 = 0xbac4;
-    pub const FIRING_RAINBOW_BEAM_12_WAIT_FOR_SAMUS_HIT_GROUND: u16 = 0xbad1;
-    pub const FIRING_RAINBOW_BEAM_13_LOWER_HEAD: u16 = 0xbadd;
-    pub const FIRING_RAINBOW_BEAM_14_DECIDE_NEXT_ACTION: u16 = 0xbb06;
-    pub const PHASE_2_CUT_0: u16 = 0xbd45;
-    pub const PHASE_2_CUT_1: u16 = 0xbd98;
-    pub const PHASE_2_CUT_2: u16 = 0xbda9;
-    pub const PHASE_2_CUT_3: u16 = 0xbdc1;
-    pub const PHASE_2_CUT_4: u16 = 0xbdd2;
-    pub const PHASE_2_CUT_5: u16 = 0xbded;
+    /// $A9:B7E8: Mother Brain body function - firing bomb - fired bomb.
+    pub const FIRING_BOMB_FIRED_BOMB: u16 = 0xb7e8;
+    /// $A9:B7F8: Mother Brain body function - firing bomb - stand up.
+    pub const FIRING_BOMB_STAND_UP: u16 = 0xb7f8;
+    /// $A9:B80E: Mother Brain body function - second phase - firing laser - position head quickly.
+    pub const PHASE_2_FIRING_LASER_POSITION_HEAD_QUICKLY: u16 = 0xb80e;
+    /// $A9:B839: Mother Brain body function - second phase - firing laser - position head slowly and fire.
+    pub const PHASE_2_FIRING_LASER_POSITION_HEAD_SLOWLY_AND_FIRE: u16 = 0xb839;
+    /// $A9:B863: Mother Brain body function - second phase - firing laser - finish attack.
+    pub const PHASE_2_FIRING_LASER_FINISH_ATTACK: u16 = 0xb863;
+    /// $A9:B87D: Mother Brain body function - second phase - firing hand beam.
+    pub const PHASE_2_FIRING_HAND_BEAM: u16 = 0xb87d;
+    /// $A9:B8EB: Mother Brain body function - second phase - firing rainbow beam - extend neck.
+    pub const PHASE_2_FIRING_RAINBOW_BEAM_EXTEND_NECK: u16 = 0xb8eb;
+    /// $A9:B91A: Mother Brain body function - second phase - firing rainbow beam - start charging rainbow beam.
+    pub const PHASE_2_FIRING_RAINBOW_BEAM_START_CHARGING_RAINBOW_BEAM: u16 = 0xb91a;
+    /// $A9:B92B: Mother Brain body function - second phase - firing rainbow beam - retract neck.
+    pub const PHASE_2_FIRING_RAINBOW_BEAM_RETRACT_NECK: u16 = 0xb92b;
+    /// $A9:B93F: Mother Brain body function - second phase - firing rainbow beam - wait for beam to charge.
+    pub const PHASE_2_FIRING_RAINBOW_BEAM_WAIT_FOR_BEAM_TO_CHARGE: u16 = 0xb93f;
+    /// $A9:B951: Mother Brain body function - second phase - firing rainbow beam - extend neck down.
+    pub const PHASE_2_FIRING_RAINBOW_BEAM_EXTEND_NECK_DOWN: u16 = 0xb951;
+    /// $A9:B975: Mother Brain body function - second phase - firing rainbow beam - start firing rainbow beam.
+    pub const PHASE_2_FIRING_RAINBOW_BEAM_START_FIRING_RAINBOW_BEAM: u16 = 0xb975;
+    /// $A9:B9E5: Mother Brain body function - second phase - firing rainbow beam - move Samus towards wall.
+    pub const PHASE_2_FIRING_RAINBOW_BEAM_MOVE_SAMUS_TOWARDS_WALL: u16 = 0xb9e5;
+    /// $A9:BA00: Mother Brain body function - second phase - firing rainbow beam - 1 frame delay.
+    pub const PHASE_2_FIRING_RAINBOW_BEAM_1_FRAME_DELAY: u16 = 0xba00;
+    /// $A9:BA27: Mother Brain body function - second phase - firing rainbow beam - start draining Samus.
+    pub const PHASE_2_FIRING_RAINBOW_BEAM_START_DRAINING_SAMUS: u16 = 0xba27;
+    /// $A9:BA3C: Mother Brain body function - second phase - firing rainbow beam - draining Samus.
+    pub const PHASE_2_FIRING_RAINBOW_BEAM_DRAINING_SAMUS: u16 = 0xba3c;
+    /// $A9:BA5E: Mother Brain body function - second phase - firing rainbow beam - finish firing rainbow beam.
+    pub const PHASE_2_FIRING_RAINBOW_BEAM_FINISH_FIRING_RAINBOW_BEAM: u16 = 0xba5e;
+    /// $A9:BAC4: Mother Brain body function - second phase - firing rainbow beam - let Samus fall.
+    pub const PHASE_2_FIRING_RAINBOW_BEAM_LET_SAMUS_FALL: u16 = 0xbac4;
+    /// $A9:BAD1: Mother Brain body function - second phase - firing rainbow beam - wait for Samus to hit ground.
+    pub const PHASE_2_FIRING_RAINBOW_BEAM_WAIT_FOR_SAMUS_TO_HIT_GROUND: u16 = 0xbad1;
+    /// $A9:BADD: Mother Brain body function - second phase - firing rainbow beam - lower head.
+    pub const PHASE_2_FIRING_RAINBOW_BEAM_LOWER_HEAD: u16 = 0xbadd;
+    /// $A9:BB06: Mother Brain body function - second phase - firing rainbow beam - decide next action.
+    pub const PHASE_2_FIRING_RAINBOW_BEAM_DECIDE_NEXT_ACTION: u16 = 0xbb06;
+    /// $A9:BD45: Mother Brain body function - second phase - finish Samus off - get Samus to low health.
+    pub const PHASE_2_FINISH_SAMUS_OFF_GET_SAMUS_TO_LOW_HEALTH: u16 = 0xbd45;
+    /// $A9:BD98: Mother Brain body function - second phase - finish Samus off - stand up.
+    pub const PHASE_2_FINISH_SAMUS_OFF_STAND_UP: u16 = 0xbd98;
+    /// $A9:BDA9: Mother Brain body function - second phase - finish Samus off - admire job well done.
+    pub const PHASE_2_FINISH_SAMUS_OFF_ADMIRE_JOB_WELL_DONE: u16 = 0xbda9;
+    /// $A9:BDC1: Mother Brain body function - second phase - finish Samus off - charge final rainbow beam.
+    pub const PHASE_2_FINISH_SAMUS_OFF_CHARGE_FINAL_RAINBOW_BEAM: u16 = 0xbdc1;
+    /// $A9:BDD2: Mother Brain body function - second phase - finish Samus off - charge final rainbow beam / load Shitroid.
+    pub const PHASE_2_FINISH_SAMUS_OFF_CHARGE_FINAL_RAINBOW_BEAM_LOAD_SHITROID: u16 = 0xbdd2;
+    /// $A9:BDED: Mother Brain body function - second phase - finish Samus off - fire final rainbow beam.
+    pub const PHASE_2_FINISH_SAMUS_OFF_FIRE_FINAL_RAINBOW_BEAM: u16 = 0xbded;
     /// Nothing: the Shitroid takes over the cutscene.
     pub const PHASE_2_CUTSCENE_WAIT: u16 = 0xbe1a;
-    pub const DRAINED_BY_SHITROID_1: u16 = 0xbe5d;
-    pub const DRAINED_BY_SHITROID_2: u16 = 0xbe96;
-    pub const DRAINED_BY_SHITROID_3: u16 = 0xbf0e;
-    pub const DRAINED_BY_SHITROID_4: u16 = 0xbf41;
-    pub const DRAINED_BY_SHITROID_5: u16 = 0xbf56;
-    pub const DRAINED_BY_SHITROID_6: u16 = 0xbf7d;
-    pub const DRAINED_BY_SHITROID_7: u16 = 0xbf95;
+    /// $A9:BE5D: Mother Brain body function - drained by Shitroid - regain balance.
+    pub const DRAINED_BY_SHITROID_REGAIN_BALANCE: u16 = 0xbe5d;
+    /// $A9:BE96: Mother Brain body function - drained by Shitroid - firing rainbow beam.
+    pub const DRAINED_BY_SHITROID_FIRING_RAINBOW_BEAM: u16 = 0xbe96;
+    /// $A9:BF0E: Mother Brain body function - drained by Shitroid - rainbow beam has run out.
+    pub const DRAINED_BY_SHITROID_RAINBOW_BEAM_HAS_RUN_OUT: u16 = 0xbf0e;
+    /// $A9:BF41: Mother Brain body function - drained by Shitroid - move to back of room.
+    pub const DRAINED_BY_SHITROID_MOVE_TO_BACK_OF_ROOM: u16 = 0xbf41;
+    /// $A9:BF56: Mother Brain body function - drained by Shitroid - go into low power mode.
+    pub const DRAINED_BY_SHITROID_GO_INTO_LOW_POWER_MODE: u16 = 0xbf56;
+    /// $A9:BF7D: Mother Brain body function - drained by Shitroid - prepare transition to grey.
+    pub const DRAINED_BY_SHITROID_PREPARE_TRANSITION_TO_GREY: u16 = 0xbf7d;
+    /// $A9:BF95: Mother Brain body function - drained by Shitroid - transition to grey.
+    pub const DRAINED_BY_SHITROID_TRANSITION_TO_GREY: u16 = 0xbf95;
+    /// $A9:BFD0: Mother Brain painful walking function - walk forwards.
     pub const PAINFUL_WALK_FORWARDS: u16 = 0xbfd0;
+    /// $A9:BFE8: Mother Brain painful walking function - walking forwards.
     pub const PAINFUL_WALKING_FORWARDS: u16 = 0xbfe8;
+    /// $A9:C004: Mother Brain painful walking function - walk backwards.
     pub const PAINFUL_WALK_BACKWARDS: u16 = 0xc004;
+    /// $A9:C01C: Mother Brain painful walking function - walking backwards.
     pub const PAINFUL_WALKING_BACKWARDS: u16 = 0xc01c;
-    pub const PHASE_2_REVIVE_0: u16 = 0xc059;
-    pub const PHASE_2_REVIVE_1: u16 = 0xc066;
-    pub const PHASE_2_REVIVE_2: u16 = 0xc082;
-    pub const PHASE_2_REVIVE_3: u16 = 0xc08f;
-    pub const PHASE_2_REVIVE_4: u16 = 0xc0ba;
-    pub const PHASE_2_REVIVE_5: u16 = 0xc0e4;
-    pub const PHASE_2_REVIVE_6: u16 = 0xc0fb;
-    pub const PHASE_2_REVIVE_7: u16 = 0xc11e;
-    pub const PHASE_2_REVIVE_8: u16 = 0xc147;
-    pub const PHASE_2_MURDER_SHITROID_1: u16 = 0xc15c;
-    pub const PHASE_2_MURDER_SHITROID_2: u16 = 0xc182;
+    /// $A9:C059: Mother Brain body function - second phase - revive self - inanimate grey.
+    pub const PHASE_2_REVIVE_SELF_INANIMATE_GREY: u16 = 0xc059;
+    /// $A9:C066: Mother Brain body function - second phase - revive self - show signs of life.
+    pub const PHASE_2_REVIVE_SELF_SHOW_SIGNS_OF_LIFE: u16 = 0xc066;
+    /// $A9:C082: Mother Brain body function - second phase - revive self - prepare transition from grey.
+    pub const PHASE_2_REVIVE_SELF_PREPARE_TRANSITION_FROM_GREY: u16 = 0xc082;
+    /// $A9:C08F: Mother Brain body function - second phase - revive self - transition from grey.
+    pub const PHASE_2_REVIVE_SELF_TRANSITION_FROM_GREY: u16 = 0xc08f;
+    /// $A9:C0BA: Mother Brain body function - second phase - revive self - wake up.
+    pub const PHASE_2_REVIVE_SELF_WAKE_UP: u16 = 0xc0ba;
+    /// $A9:C0E4: Mother Brain body function - second phase - revive self - wake-up stretch.
+    pub const PHASE_2_REVIVE_SELF_WAKE_UP_STRETCH: u16 = 0xc0e4;
+    /// $A9:C0FB: Mother Brain body function - second phase - revive self - walk up to Shitroid.
+    pub const PHASE_2_REVIVE_SELF_WALK_UP_TO_SHITROID: u16 = 0xc0fb;
+    /// $A9:C11E: Mother Brain body function - second phase - revive self - prepare neck for Shitroid murder.
+    pub const PHASE_2_REVIVE_SELF_PREPARE_NECK_FOR_SHITROID_MURDER: u16 = 0xc11e;
+    /// $A9:C147: Mother Brain body function - second phase - revive self - finish preparing for Shitroid murder.
+    pub const PHASE_2_REVIVE_SELF_FINISH_PREPARING_FOR_SHITROID_MURDER: u16 = 0xc147;
+    /// $A9:C15C: Mother Brain body function - second phase - murder Shitroid - attack Shitroid.
+    pub const PHASE_2_MURDER_SHITROID_ATTACK_SHITROID: u16 = 0xc15c;
+    /// $A9:C182: Mother Brain body function - second phase - murder Shitroid - Shitroid attack cooldown.
+    pub const PHASE_2_MURDER_SHITROID_SHITROID_ATTACK_COOLDOWN: u16 = 0xc182;
     /// Nothing: the Shitroid's last attack takes over.
     pub const FINAL_SHITROID_WAIT: u16 = 0xc1a6;
-    pub const PHASE_3_RECOVER_SETUP_FOR_FIGHT: u16 = 0xc1f0;
+    /// $A9:C1F0: Mother Brain body function - third phase - recover from cutscene - set up for fighting.
+    pub const PHASE_3_RECOVER_FROM_CUTSCENE_SET_UP_FOR_FIGHTING: u16 = 0xc1f0;
+    /// $A9:C209: Mother Brain body function - third phase - fighting - main.
     pub const PHASE_3_FIGHTING_MAIN: u16 = 0xc209;
-    pub const PHASE_3_FIGHTING_COOLDOWN: u16 = 0xc24e;
-    pub const PHASE_3_WALK_TRY_TO_INCH_FORWARD: u16 = 0xc26a;
-    pub const PHASE_3_WALK_RETREAT_QUICKLY: u16 = 0xc2b3;
-    pub const PHASE_3_WALK_RETREAT_SLOWLY: u16 = 0xc2d2;
+    /// $A9:C24E: Mother Brain body function - third phase - fighting - attack cooldown.
+    pub const PHASE_3_FIGHTING_ATTACK_COOLDOWN: u16 = 0xc24e;
+    /// $A9:C26A: Mother Brain walking function - try to inch forward.
+    pub const WALK_TRY_TO_INCH_FORWARD: u16 = 0xc26a;
+    /// $A9:C2B3: Mother Brain walking function - retreat quickly.
+    pub const WALK_RETREAT_QUICKLY: u16 = 0xc2b3;
+    /// $A9:C2D2: Mother Brain walking function - retreat slowly.
+    pub const WALK_RETREAT_SLOWLY: u16 = 0xc2d2;
 }
 
 // Each named function is the one its dispatch entry runs.
@@ -188,134 +314,136 @@ const _: () = {
     const fn at(word: u16) -> u32 {
         0xa9_0000 | word as u32
     }
-    assert!(at(f::BRAIN_SETUP_BRAIN_AND_NECK_TO_DRAW) == 11110306);
-    assert!(at(f::BRAIN_SETUP_BRAIN_TO_DRAW) == 11110352);
+    assert!(at(f::BRAIN_SET_UP_BRAIN_AND_NECK_TO_BE_DRAWN) == 11110306);
+    assert!(at(f::BRAIN_SET_UP_BRAIN_TO_BE_DRAWN) == 11110352);
     assert!(at(f::FIRST_PHASE) == 11110369);
-    assert!(at(f::FAKE_DEATH_DESCENT_1) == 11110441);
-    assert!(at(f::FAKE_DEATH_DESCENT_2) == 11110477);
-    assert!(at(f::FAKE_DEATH_DESCENT_3) == 11110508);
-    assert!(at(f::FAKE_DEATH_DESCENT_4) == 11110532);
-    assert!(at(f::FAKE_DEATH_DESCENT_5) == 11110578);
-    assert!(at(f::FAKE_DEATH_DESCENT_6) == 11110611);
-    assert!(at(f::TUBES_0_WAIT) == 11110729);
-    assert!(at(f::TUBES_1_CLEAR_BOTTOM_LEFT_TUBE) == 11110766);
-    assert!(at(f::TUBES_2_SPAWN_TOP_RIGHT_TUBE_FALLING) == 11110787);
-    assert!(at(f::TUBES_4_SPAWN_TOP_LEFT_TUBE_FALLING) == 11110837);
-    assert!(at(f::TUBES_4_CLEAR_CEILING_BLOCK_6) == 11110866);
-    assert!(at(f::TUBES_5_SPAWN_TUBE_FALLING_ENEMY_1) == 11110887);
-    assert!(at(f::TUBES_6_CLEAR_BOTTOM_RIGHT_TUBE) == 11110906);
-    assert!(at(f::TUBES_7_SPAWN_TUBE_FALLING_ENEMY_2) == 11110927);
-    assert!(at(f::TUBES_8_CLEAR_BOTTOM_MIDDLE_LEFT_TUBE) == 11110946);
-    assert!(at(f::TUBES_9_SPAWN_TOP_MIDDLE_LEFT_FALLING) == 11110967);
-    assert!(at(f::TUBES_10_CLEAR_CEILING_TUBE_COLUMN_7) == 11110996);
-    assert!(at(f::TUBES_11_SPAWN_TOP_MIDDLE_RIGHT_FALLING) == 11111017);
-    assert!(at(f::TUBES_12_CLEAR_CEILING_TUBE_COLUMN_8) == 11111046);
-    assert!(at(f::TUBES_13_SPAWN_TUBE_FALLING_ENEMY_3) == 11111067);
-    assert!(at(f::TUBES_14_CLEAR_BOTTOM_MIDDLE_RIGHT_TUBE) == 11111086);
-    assert!(at(f::TUBES_15_SPAWN_TUBE_FALLING_ENEMY_4) == 11111107);
-    assert!(at(f::TUBES_16_CLEAR_BOTTOM_MIDDLE_TUBES) == 11111126);
-    assert!(at(f::FAKE_DEATH_ASCENT_1_DRAW_BG1_ROWS_4_5) == 11111582);
-    assert!(at(f::FAKE_DEATH_ASCENT_2_DRAW_BG1_ROWS_6_7) == 11111605);
-    assert!(at(f::FAKE_DEATH_ASCENT_3_DRAW_BG1_ROWS_8_9) == 11111628);
-    assert!(at(f::FAKE_DEATH_ASCENT_4_DRAW_BG1_ROWS_A_B) == 11111651);
-    assert!(at(f::FAKE_DEATH_ASCENT_5_DRAW_BG1_ROWS_C_D) == 11111674);
-    assert!(at(f::FAKE_DEATH_ASCENT_6_SETUP_PHASE_2_GFX) == 11111697);
-    assert!(at(f::FAKE_DEATH_ASCENT_7_SETUP_PHASE_2_BRAIN) == 11111753);
-    assert!(at(f::FAKE_DEATH_ASCENT_8_PAUSE) == 11111801);
-    assert!(at(f::FAKE_DEATH_ASCENT_9_PREPARE_RISE) == 11111819);
-    assert!(at(f::FAKE_DEATH_ASCENT_10_LOAD_LEG_TILES) == 11111860);
-    assert!(at(f::FAKE_DEATH_ASCENT_11_CONTINUE_PAUSE) == 11111875);
-    assert!(at(f::FAKE_DEATH_ASCENT_12_START_MUSIC) == 11111916);
-    assert!(at(f::FAKE_DEATH_ASCENT_13_RAISE) == 11112013);
-    assert!(at(f::FAKE_DEATH_ASCENT_14_WAIT_FOR_UNCOUCHING) == 11112085);
-    assert!(at(f::FAKE_DEATH_ASCENT_15_TRANSITION_FROM_GREY) == 11112106);
-    assert!(at(f::PHASE_2_16_SHAKE_HEAD_MENACINGLY) == 11112181);
-    assert!(at(f::PHASE_2_17_BRING_HEAD_BACK_UP) == 11112212);
-    assert!(at(f::PHASE_2_18_FINISH_STRETCHING) == 11112243);
-    assert!(at(f::PHASE_3_DEATH_0) == 11120353);
-    assert!(at(f::PHASE_3_DEATH_1) == 11120402);
-    assert!(at(f::PHASE_3_DEATH_2) == 11120417);
-    assert!(at(f::PHASE_3_DEATH_3) == 11120468);
-    assert!(at(f::PHASE_3_DEATH_4) == 11120541);
-    assert!(at(f::PHASE_3_DEATH_5) == 11120566);
-    assert!(at(f::PHASE_3_DEATH_6) == 11120659);
-    assert!(at(f::PHASE_3_DEATH_7) == 11120917);
-    assert!(at(f::PHASE_3_DEATH_8) == 11120941);
-    assert!(at(f::PHASE_3_DEATH_9) == 11120990);
-    assert!(at(f::PHASE_3_DEATH_10) == 11121011);
-    assert!(at(f::PHASE_3_DEATH_11) == 11121033);
-    assert!(at(f::PHASE_3_DEATH_12) == 11121080);
-    assert!(at(f::PHASE_3_DEATH_13) == 11121109);
-    assert!(at(f::PHASE_3_DEATH_14_DELAY_20_FRAMES) == 11121169);
-    assert!(at(f::PHASE_3_DEATH_15_LOAD_ESCAPE_TIMER_TILES) == 11121240);
-    assert!(at(f::PHASE_3_DEATH_16_START_ESCAPE) == 11121261);
-    assert!(at(f::PHASE_3_DEATH_17_SPAWN_TIME_BOMB) == 11121361);
-    assert!(at(f::PHASE_3_DEATH_18_TYPES_ZEBES_TEXT) == 11121379);
-    assert!(at(f::PHASE_3_DEATH_19_ESCAPE_DOOR_EXPLODING) == 11121401);
-    assert!(at(f::PHASE_3_DEATH_20_BLOW_UP_ESCAPE_DOOR) == 11121450);
-    assert!(at(f::PHASE_3_DEATH_21_KEEP_EARTHQUAKE_GOING) == 11121468);
-    assert!(at(f::BODY_PHASE_2_THINKING) == 11122181);
-    assert!(at(f::BODY_PHASE_2_TRY_ATTACK) == 11122251);
+    assert!(at(f::FAKE_DEATH_DESCENT_LOCK_SAMUS_AND_SET_SCROLL_REGION) == 11110441);
+    assert!(at(f::FAKE_DEATH_DESCENT_QUEUE_MOTHER_BRAIN_MUSIC) == 11110477);
+    assert!(at(f::FAKE_DEATH_DESCENT_UNLOCK_SAMUS) == 11110508);
+    assert!(at(f::FAKE_DEATH_DESCENT_BEGIN_SCREEN_FLASHING_AND_LOWER_ACID) == 11110532);
+    assert!(at(f::FAKE_DEATH_DESCENT_TRANSITION_MOTHER_BRAIN_PALETTE_TO_GREY) == 11110578);
+    assert!(at(f::FAKE_DEATH_DESCENT_COLLAPSE_TUBES) == 11110611);
+    assert!(at(f::TUBES_WAIT_AND_SPAWN_TUBES_FALLING_ENEMY_0) == 11110729);
+    assert!(at(f::TUBES_CLEAR_BOTTOM_LEFT_TUBE) == 11110766);
+    assert!(at(f::TUBES_SPAWN_TOP_RIGHT_TUBE_FALLING_PROJECTILE) == 11110787);
+    assert!(at(f::TUBES_SPAWN_TOP_LEFT_TUBE_FALLING_PROJECTILE) == 11110837);
+    assert!(at(f::TUBES_CLEAR_CEILING_BLOCK_COLUMN_6) == 11110866);
+    assert!(at(f::TUBES_SPAWN_TUBES_FALLING_ENEMY_1) == 11110887);
+    assert!(at(f::TUBES_CLEAR_BOTTOM_RIGHT_TUBE) == 11110906);
+    assert!(at(f::TUBES_SPAWN_TUBES_FALLING_ENEMY_2) == 11110927);
+    assert!(at(f::TUBES_CLEAR_BOTTOM_MIDDLE_LEFT_TUBE) == 11110946);
+    assert!(at(f::TUBES_SPAWN_TOP_MIDDLE_LEFT_TUBE_FALLING_PROJECTILE) == 11110967);
+    assert!(at(f::TUBES_CLEAR_CEILING_TUBE_COLUMN_7) == 11110996);
+    assert!(at(f::TUBES_SPAWN_TOP_MIDDLE_RIGHT_TUBE_FALLING_PROJECTILE) == 11111017);
+    assert!(at(f::TUBES_CLEAR_CEILING_TUBE_COLUMN_8) == 11111046);
+    assert!(at(f::TUBES_SPAWN_TUBES_FALLING_ENEMY_3) == 11111067);
+    assert!(at(f::TUBES_CLEAR_BOTTOM_MIDDLE_RIGHT_TUBE) == 11111086);
+    assert!(at(f::TUBES_SPAWN_TUBES_FALLING_ENEMY_4) == 11111107);
+    assert!(at(f::TUBES_CLEAR_BOTTOM_MIDDLE_TUBES) == 11111126);
+    assert!(at(f::FAKE_DEATH_ASCENT_DRAW_ROOM_BACKGROUND_ON_BG1_ROWS_4_5) == 11111582);
+    assert!(at(f::FAKE_DEATH_ASCENT_DRAW_ROOM_BACKGROUND_ON_BG1_ROWS_6_7) == 11111605);
+    assert!(at(f::FAKE_DEATH_ASCENT_DRAW_ROOM_BACKGROUND_ON_BG1_ROWS_8_9) == 11111628);
+    assert!(at(f::FAKE_DEATH_ASCENT_DRAW_ROOM_BACKGROUND_ON_BG1_ROWS_A_B) == 11111651);
+    assert!(at(f::FAKE_DEATH_ASCENT_DRAW_ROOM_BACKGROUND_ON_BG1_ROWS_C_D) == 11111674);
+    assert!(at(f::FAKE_DEATH_ASCENT_SET_UP_MOTHER_BRAIN_PHASE_2_GRAPHICS) == 11111697);
+    assert!(at(f::FAKE_DEATH_ASCENT_SET_UP_MOTHER_BRAIN_PHASE_2_BRAIN) == 11111753);
+    assert!(at(f::FAKE_DEATH_ASCENT_PAUSE_FOR_SUSPENSE) == 11111801);
+    assert!(at(f::FAKE_DEATH_ASCENT_PREPARE_MOTHER_BRAIN_FOR_RISING) == 11111819);
+    assert!(at(f::FAKE_DEATH_ASCENT_LOAD_MOTHER_BRAINS_LEGS_TILES) == 11111860);
+    assert!(at(f::FAKE_DEATH_ASCENT_CONTINUE_PAUSING_FOR_SUSPENSE) == 11111875);
+    assert!(at(f::FAKE_DEATH_ASCENT_START_MUSIC_AND_EARTHQUAKE) == 11111916);
+    assert!(at(f::FAKE_DEATH_ASCENT_RAISE_MOTHER_BRAIN) == 11112013);
+    assert!(at(f::FAKE_DEATH_ASCENT_WAIT_UNTIL_MOTHER_BRAIN_HAS_FINISHED_UNCROUCHING) == 11112085);
+    assert!(
+        at(f::FAKE_DEATH_ASCENT_TRANSITION_MOTHER_BRAIN_FROM_GREY_AND_LOWER_HER_HEAD) == 11112106
+    );
+    assert!(at(f::PHASE_2_STRETCHING_SHAKE_HEAD_MENACINGLY) == 11112181);
+    assert!(at(f::PHASE_2_STRETCHING_BRING_HEAD_BACK_UP) == 11112212);
+    assert!(at(f::PHASE_2_STRETCHING_FINISH_STRETCHING) == 11112243);
+    assert!(at(f::PHASE_3_DEATH_MOVE_TO_BACK_OF_ROOM) == 11120353);
+    assert!(at(f::PHASE_3_DEATH_IDLE_WHILST_EXPLODING) == 11120402);
+    assert!(at(f::PHASE_3_DEATH_STUMBLE_TO_MIDDLE_OF_ROOM_AND_DROOL) == 11120417);
+    assert!(at(f::PHASE_3_DEATH_DISABLE_BRAIN_EFFECTS) == 11120468);
+    assert!(at(f::PHASE_3_DEATH_SET_UP_BODY_FADE_OUT) == 11120541);
+    assert!(at(f::PHASE_3_DEATH_FADE_OUT_BODY) == 11120566);
+    assert!(at(f::PHASE_3_DEATH_FINAL_FEW_EXPLOSIONS) == 11120659);
+    assert!(at(f::PHASE_3_DEATH_REALISE_DECAPITATION) == 11120917);
+    assert!(at(f::PHASE_3_DEATH_BRAIN_FALLS_TO_GROUND) == 11120941);
+    assert!(at(f::PHASE_3_DEATH_LOAD_CORPSE_TILES) == 11120990);
+    assert!(at(f::PHASE_3_DEATH_SET_UP_FADE_TO_GREY) == 11121011);
+    assert!(at(f::PHASE_3_DEATH_FADE_TO_GREY) == 11121033);
+    assert!(at(f::PHASE_3_DEATH_CORPSE_TIPS_OVER) == 11121080);
+    assert!(at(f::PHASE_3_DEATH_CORPSE_ROTS_AWAY) == 11121109);
+    assert!(at(f::PHASE_3_DEATH_20_FRAME_DELAY) == 11121169);
+    assert!(at(f::PHASE_3_DEATH_LOAD_ESCAPE_TIMER_TILES) == 11121240);
+    assert!(at(f::PHASE_3_DEATH_START_ESCAPE_SEQUENCE) == 11121261);
+    assert!(at(f::PHASE_3_DEATH_SPAWN_TIME_BOMB_SET_JAPANESE_TEXT) == 11121361);
+    assert!(at(f::PHASE_3_DEATH_TYPE_OUT_ZEBES_ESCAPE_TEXT) == 11121379);
+    assert!(at(f::PHASE_3_DEATH_ESCAPE_DOOR_IS_EXPLODING_START_ESCAPE_TIMER) == 11121401);
+    assert!(at(f::PHASE_3_DEATH_BLOW_UP_ESCAPE_DOOR) == 11121450);
+    assert!(at(f::PHASE_3_DEATH_KEEP_EARTHQUAKE_GOING) == 11121468);
+    assert!(at(f::PHASE_2_THINKING) == 11122181);
+    assert!(at(f::PHASE_2_TRY_ATTACK) == 11122251);
     assert!(at(f::FIRING_BOMB_DECIDE_ON_WALKING) == 11122561);
     assert!(at(f::FIRING_BOMB_WALKING_BACKWARDS) == 11122604);
     assert!(at(f::FIRING_BOMB_CROUCH) == 11122630);
-    assert!(at(f::FIRING_BOMB_FIRED) == 11122664);
-    assert!(at(f::FIRING_BOMB_STANDUP) == 11122680);
-    assert!(at(f::FIRING_LASER_POSITION_HEAD) == 11122702);
-    assert!(at(f::FIRING_LASER_POSITION_HEAD_SLOWLY_FIRE) == 11122745);
-    assert!(at(f::FIRING_LASER_FINISH_ATTACK) == 11122787);
-    assert!(at(f::FIRING_DEATH_BEAM) == 11122813);
-    assert!(at(f::FIRING_RAINBOW_BEAM_0) == 11122923);
-    assert!(at(f::FIRING_RAINBOW_BEAM_1_START_CHARGE) == 11122970);
-    assert!(at(f::FIRING_RAINBOW_BEAM_2_RETRACT_NECK) == 11122987);
-    assert!(at(f::FIRING_RAINBOW_BEAM_3_WAIT) == 11123007);
-    assert!(at(f::FIRING_RAINBOW_BEAM_4_EXTEND_NECK_DOWN) == 11123025);
-    assert!(at(f::FIRING_RAINBOW_BEAM_5_START_FIRING) == 11123061);
-    assert!(at(f::FIRING_RAINBOW_BEAM_6_MOVE_SAMUS_TO_WALL) == 11123173);
-    assert!(at(f::FIRING_RAINBOW_BEAM_7_DELAY_FRAME) == 11123200);
-    assert!(at(f::FIRING_RAINBOW_BEAM_8_START_DRAIN_SAMUS) == 11123239);
-    assert!(at(f::FIRING_RAINBOW_BEAM_9_DRAINING_SAMUS) == 11123260);
-    assert!(at(f::FIRING_RAINBOW_BEAM_10_FINISH_FIRING_RAINBOW) == 11123294);
-    assert!(at(f::FIRING_RAINBOW_BEAM_11_LET_SAMUS_FALL) == 11123396);
-    assert!(at(f::FIRING_RAINBOW_BEAM_12_WAIT_FOR_SAMUS_HIT_GROUND) == 11123409);
-    assert!(at(f::FIRING_RAINBOW_BEAM_13_LOWER_HEAD) == 11123421);
-    assert!(at(f::FIRING_RAINBOW_BEAM_14_DECIDE_NEXT_ACTION) == 11123462);
-    assert!(at(f::PHASE_2_CUT_0) == 11124037);
-    assert!(at(f::PHASE_2_CUT_1) == 11124120);
-    assert!(at(f::PHASE_2_CUT_2) == 11124137);
-    assert!(at(f::PHASE_2_CUT_3) == 11124161);
-    assert!(at(f::PHASE_2_CUT_4) == 11124178);
-    assert!(at(f::PHASE_2_CUT_5) == 11124205);
+    assert!(at(f::FIRING_BOMB_FIRED_BOMB) == 11122664);
+    assert!(at(f::FIRING_BOMB_STAND_UP) == 11122680);
+    assert!(at(f::PHASE_2_FIRING_LASER_POSITION_HEAD_QUICKLY) == 11122702);
+    assert!(at(f::PHASE_2_FIRING_LASER_POSITION_HEAD_SLOWLY_AND_FIRE) == 11122745);
+    assert!(at(f::PHASE_2_FIRING_LASER_FINISH_ATTACK) == 11122787);
+    assert!(at(f::PHASE_2_FIRING_HAND_BEAM) == 11122813);
+    assert!(at(f::PHASE_2_FIRING_RAINBOW_BEAM_EXTEND_NECK) == 11122923);
+    assert!(at(f::PHASE_2_FIRING_RAINBOW_BEAM_START_CHARGING_RAINBOW_BEAM) == 11122970);
+    assert!(at(f::PHASE_2_FIRING_RAINBOW_BEAM_RETRACT_NECK) == 11122987);
+    assert!(at(f::PHASE_2_FIRING_RAINBOW_BEAM_WAIT_FOR_BEAM_TO_CHARGE) == 11123007);
+    assert!(at(f::PHASE_2_FIRING_RAINBOW_BEAM_EXTEND_NECK_DOWN) == 11123025);
+    assert!(at(f::PHASE_2_FIRING_RAINBOW_BEAM_START_FIRING_RAINBOW_BEAM) == 11123061);
+    assert!(at(f::PHASE_2_FIRING_RAINBOW_BEAM_MOVE_SAMUS_TOWARDS_WALL) == 11123173);
+    assert!(at(f::PHASE_2_FIRING_RAINBOW_BEAM_1_FRAME_DELAY) == 11123200);
+    assert!(at(f::PHASE_2_FIRING_RAINBOW_BEAM_START_DRAINING_SAMUS) == 11123239);
+    assert!(at(f::PHASE_2_FIRING_RAINBOW_BEAM_DRAINING_SAMUS) == 11123260);
+    assert!(at(f::PHASE_2_FIRING_RAINBOW_BEAM_FINISH_FIRING_RAINBOW_BEAM) == 11123294);
+    assert!(at(f::PHASE_2_FIRING_RAINBOW_BEAM_LET_SAMUS_FALL) == 11123396);
+    assert!(at(f::PHASE_2_FIRING_RAINBOW_BEAM_WAIT_FOR_SAMUS_TO_HIT_GROUND) == 11123409);
+    assert!(at(f::PHASE_2_FIRING_RAINBOW_BEAM_LOWER_HEAD) == 11123421);
+    assert!(at(f::PHASE_2_FIRING_RAINBOW_BEAM_DECIDE_NEXT_ACTION) == 11123462);
+    assert!(at(f::PHASE_2_FINISH_SAMUS_OFF_GET_SAMUS_TO_LOW_HEALTH) == 11124037);
+    assert!(at(f::PHASE_2_FINISH_SAMUS_OFF_STAND_UP) == 11124120);
+    assert!(at(f::PHASE_2_FINISH_SAMUS_OFF_ADMIRE_JOB_WELL_DONE) == 11124137);
+    assert!(at(f::PHASE_2_FINISH_SAMUS_OFF_CHARGE_FINAL_RAINBOW_BEAM) == 11124161);
+    assert!(at(f::PHASE_2_FINISH_SAMUS_OFF_CHARGE_FINAL_RAINBOW_BEAM_LOAD_SHITROID) == 11124178);
+    assert!(at(f::PHASE_2_FINISH_SAMUS_OFF_FIRE_FINAL_RAINBOW_BEAM) == 11124205);
     assert!(at(f::PHASE_2_CUTSCENE_WAIT) == 11124250);
-    assert!(at(f::DRAINED_BY_SHITROID_1) == 11124317);
-    assert!(at(f::DRAINED_BY_SHITROID_2) == 11124374);
-    assert!(at(f::DRAINED_BY_SHITROID_3) == 11124494);
-    assert!(at(f::DRAINED_BY_SHITROID_4) == 11124545);
-    assert!(at(f::DRAINED_BY_SHITROID_5) == 11124566);
-    assert!(at(f::DRAINED_BY_SHITROID_6) == 11124605);
-    assert!(at(f::DRAINED_BY_SHITROID_7) == 11124629);
+    assert!(at(f::DRAINED_BY_SHITROID_REGAIN_BALANCE) == 11124317);
+    assert!(at(f::DRAINED_BY_SHITROID_FIRING_RAINBOW_BEAM) == 11124374);
+    assert!(at(f::DRAINED_BY_SHITROID_RAINBOW_BEAM_HAS_RUN_OUT) == 11124494);
+    assert!(at(f::DRAINED_BY_SHITROID_MOVE_TO_BACK_OF_ROOM) == 11124545);
+    assert!(at(f::DRAINED_BY_SHITROID_GO_INTO_LOW_POWER_MODE) == 11124566);
+    assert!(at(f::DRAINED_BY_SHITROID_PREPARE_TRANSITION_TO_GREY) == 11124605);
+    assert!(at(f::DRAINED_BY_SHITROID_TRANSITION_TO_GREY) == 11124629);
     assert!(at(f::PAINFUL_WALK_FORWARDS) == 11124688);
     assert!(at(f::PAINFUL_WALKING_FORWARDS) == 11124712);
     assert!(at(f::PAINFUL_WALK_BACKWARDS) == 11124740);
     assert!(at(f::PAINFUL_WALKING_BACKWARDS) == 11124764);
-    assert!(at(f::PHASE_2_REVIVE_0) == 11124825);
-    assert!(at(f::PHASE_2_REVIVE_1) == 11124838);
-    assert!(at(f::PHASE_2_REVIVE_2) == 11124866);
-    assert!(at(f::PHASE_2_REVIVE_3) == 11124879);
-    assert!(at(f::PHASE_2_REVIVE_4) == 11124922);
-    assert!(at(f::PHASE_2_REVIVE_5) == 11124964);
-    assert!(at(f::PHASE_2_REVIVE_6) == 11124987);
-    assert!(at(f::PHASE_2_REVIVE_7) == 11125022);
-    assert!(at(f::PHASE_2_REVIVE_8) == 11125063);
-    assert!(at(f::PHASE_2_MURDER_SHITROID_1) == 11125084);
-    assert!(at(f::PHASE_2_MURDER_SHITROID_2) == 11125122);
+    assert!(at(f::PHASE_2_REVIVE_SELF_INANIMATE_GREY) == 11124825);
+    assert!(at(f::PHASE_2_REVIVE_SELF_SHOW_SIGNS_OF_LIFE) == 11124838);
+    assert!(at(f::PHASE_2_REVIVE_SELF_PREPARE_TRANSITION_FROM_GREY) == 11124866);
+    assert!(at(f::PHASE_2_REVIVE_SELF_TRANSITION_FROM_GREY) == 11124879);
+    assert!(at(f::PHASE_2_REVIVE_SELF_WAKE_UP) == 11124922);
+    assert!(at(f::PHASE_2_REVIVE_SELF_WAKE_UP_STRETCH) == 11124964);
+    assert!(at(f::PHASE_2_REVIVE_SELF_WALK_UP_TO_SHITROID) == 11124987);
+    assert!(at(f::PHASE_2_REVIVE_SELF_PREPARE_NECK_FOR_SHITROID_MURDER) == 11125022);
+    assert!(at(f::PHASE_2_REVIVE_SELF_FINISH_PREPARING_FOR_SHITROID_MURDER) == 11125063);
+    assert!(at(f::PHASE_2_MURDER_SHITROID_ATTACK_SHITROID) == 11125084);
+    assert!(at(f::PHASE_2_MURDER_SHITROID_SHITROID_ATTACK_COOLDOWN) == 11125122);
     assert!(at(f::FINAL_SHITROID_WAIT) == 11125158);
-    assert!(at(f::PHASE_3_RECOVER_SETUP_FOR_FIGHT) == 11125232);
+    assert!(at(f::PHASE_3_RECOVER_FROM_CUTSCENE_SET_UP_FOR_FIGHTING) == 11125232);
     assert!(at(f::PHASE_3_FIGHTING_MAIN) == 11125257);
-    assert!(at(f::PHASE_3_FIGHTING_COOLDOWN) == 11125326);
-    assert!(at(f::PHASE_3_WALK_TRY_TO_INCH_FORWARD) == 11125354);
-    assert!(at(f::PHASE_3_WALK_RETREAT_QUICKLY) == 11125427);
-    assert!(at(f::PHASE_3_WALK_RETREAT_SLOWLY) == 11125458);
+    assert!(at(f::PHASE_3_FIGHTING_ATTACK_COOLDOWN) == 11125326);
+    assert!(at(f::WALK_TRY_TO_INCH_FORWARD) == 11125354);
+    assert!(at(f::WALK_RETREAT_QUICKLY) == 11125427);
+    assert!(at(f::WALK_RETREAT_SLOWLY) == 11125458);
 };
 
 /// Bank $A9 instruction lists for the body and brain.
@@ -712,7 +840,7 @@ crate::dispatch::callback_dispatch! {
     };
     [11110429] MotherBrainBody_FakeDeath_Descent_0_Pause [] {
         let E: i32 = 0;
-        slot!(game, MotherBrainBody[E].function = function::FAKE_DEATH_DESCENT_1);
+        slot!(game, MotherBrainBody[E].function = function::FAKE_DEATH_DESCENT_LOCK_SAMUS_AND_SET_SCROLL_REGION);
         slot!(game, MotherBrainBody[E].function_timer = 64);
         MotherBrainBody_FakeDeath_Descent_1(game);
     };
@@ -732,55 +860,55 @@ crate::dispatch::callback_dispatch! {
         }
         if (v1).wrapping_sub(4) >= 0 {
             game.spawn_legacy_population(0xa9, addr_stru_A98AE5 as u16);
-            slot!(game, MotherBrainBrain[0x40i32].subfunction = function::TUBES_1_CLEAR_BOTTOM_LEFT_TUBE);
+            slot!(game, MotherBrainBrain[0x40i32].subfunction = function::TUBES_CLEAR_BOTTOM_LEFT_TUBE);
         }
     };
     [11110766] MotherBrainBody_1_ClearBottomLeftTube [] {
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x5, 0x9, plm::CLEAR_BOTTOM_LEFT_TUBE), game);
         let E: i32 = 0x40;
-        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_2_SPAWN_TOP_RIGHT_TUBE_FALLING);
+        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_SPAWN_TOP_RIGHT_TUBE_FALLING_PROJECTILE);
         slot!(game, MotherBrainBrain[E].subfunction_timer = 32);
     };
     [11110816] MotherBrainBody_3_ClearCeilingBlock9 [] {
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x9, 0x2, plm::CLEAR_CEILING_BLOCK), game);
         let E: i32 = 0x40;
-        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_4_SPAWN_TOP_LEFT_TUBE_FALLING);
+        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_SPAWN_TOP_LEFT_TUBE_FALLING_PROJECTILE);
         slot!(game, MotherBrainBrain[E].subfunction_timer = 32);
     };
     [11110866] MotherBrainBody_4_ClearCeilingBlock6 [] {
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x6, 0x2, plm::CLEAR_CEILING_BLOCK), game);
         let E: i32 = 0x40;
-        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_5_SPAWN_TUBE_FALLING_ENEMY_1);
+        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_SPAWN_TUBES_FALLING_ENEMY_1);
         slot!(game, MotherBrainBrain[E].subfunction_timer = 32);
     };
     [11110906] MotherBrainBody_6_ClearBottomRightTube [] {
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xa, 0x9, plm::CLEAR_BOTTOM_RIGHT_TUBE), game);
         let E: i32 = 0x40;
-        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_7_SPAWN_TUBE_FALLING_ENEMY_2);
+        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_SPAWN_TUBES_FALLING_ENEMY_2);
         slot!(game, MotherBrainBrain[E].subfunction_timer = 32);
     };
     [11110946] MotherBrainBody_8_ClearBottomMiddleLeftTube [] {
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x6, 0xa, plm::CLEAR_BOTTOM_MIDDLE_SIDE_TUBE), game);
         let E: i32 = 0x40;
-        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_9_SPAWN_TOP_MIDDLE_LEFT_FALLING);
+        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_SPAWN_TOP_MIDDLE_LEFT_TUBE_FALLING_PROJECTILE);
         slot!(game, MotherBrainBrain[E].subfunction_timer = 32);
     };
     [11110996] MotherBrainBody_10_ClearCeilingTubeColumn7 [] {
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x7, 0x2, plm::CLEAR_CEILING_TUBE), game);
         let E: i32 = 0x40;
-        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_11_SPAWN_TOP_MIDDLE_RIGHT_FALLING);
+        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_SPAWN_TOP_MIDDLE_RIGHT_TUBE_FALLING_PROJECTILE);
         slot!(game, MotherBrainBrain[E].subfunction_timer = 32);
     };
     [11111046] MotherBrainBody_12_ClearCeilingTubeColumn8 [] {
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x8, 0x2, plm::CLEAR_CEILING_TUBE), game);
         let E: i32 = 0x40;
-        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_13_SPAWN_TUBE_FALLING_ENEMY_3);
+        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_SPAWN_TUBES_FALLING_ENEMY_3);
         slot!(game, MotherBrainBrain[E].subfunction_timer = 32);
     };
     [11111086] MotherBrainBody_14_ClearBottomMiddleRightTube [] {
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x9, 0xa, plm::CLEAR_BOTTOM_MIDDLE_SIDE_TUBE), game);
         let E: i32 = 0x40;
-        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_15_SPAWN_TUBE_FALLING_ENEMY_4);
+        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_SPAWN_TUBES_FALLING_ENEMY_4);
         slot!(game, MotherBrainBrain[E].subfunction_timer = 2);
     };
     [11111126] MotherBrainBody_16_ClearBottomMiddleTubes [] {
@@ -790,32 +918,32 @@ crate::dispatch::callback_dispatch! {
     [11111559] MotherBrainBody_FakeDeath_Ascent_0_DrawBG1Row23 [] {
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x2, 0x2, plm::BACKGROUND_ROW_2), game);
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x2, 0x3, plm::BACKGROUND_ROW_3), game);
-        slot!(game, MotherBrainBody[0i32].function = function::FAKE_DEATH_ASCENT_1_DRAW_BG1_ROWS_4_5);
+        slot!(game, MotherBrainBody[0i32].function = function::FAKE_DEATH_ASCENT_DRAW_ROOM_BACKGROUND_ON_BG1_ROWS_4_5);
     };
     [11111582] MotherBrainBody_FakeDeath_Ascent_1_DrawBG1Row45 [] {
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x2, 0x4, plm::BACKGROUND_ROW_4), game);
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x2, 0x5, plm::BACKGROUND_ROW_5), game);
-        slot!(game, MotherBrainBody[0i32].function = function::FAKE_DEATH_ASCENT_2_DRAW_BG1_ROWS_6_7);
+        slot!(game, MotherBrainBody[0i32].function = function::FAKE_DEATH_ASCENT_DRAW_ROOM_BACKGROUND_ON_BG1_ROWS_6_7);
     };
     [11111605] MotherBrainBody_FakeDeath_Ascent_2_DrawBG1Row67 [] {
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x2, 0x6, plm::BACKGROUND_ROW_6), game);
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x2, 0x7, plm::BACKGROUND_ROW_7), game);
-        slot!(game, MotherBrainBody[0i32].function = function::FAKE_DEATH_ASCENT_3_DRAW_BG1_ROWS_8_9);
+        slot!(game, MotherBrainBody[0i32].function = function::FAKE_DEATH_ASCENT_DRAW_ROOM_BACKGROUND_ON_BG1_ROWS_8_9);
     };
     [11111628] MotherBrainBody_FakeDeath_Ascent_3_DrawBG1Row89 [] {
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x2, 0x8, plm::BACKGROUND_ROW_8), game);
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x2, 0x9, plm::BACKGROUND_ROW_9), game);
-        slot!(game, MotherBrainBody[0i32].function = function::FAKE_DEATH_ASCENT_4_DRAW_BG1_ROWS_A_B);
+        slot!(game, MotherBrainBody[0i32].function = function::FAKE_DEATH_ASCENT_DRAW_ROOM_BACKGROUND_ON_BG1_ROWS_A_B);
     };
     [11111651] MotherBrainBody_FakeDeath_Ascent_4_DrawBG1RowAB [] {
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x2, 0xa, plm::BACKGROUND_ROW_A), game);
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x2, 0xb, plm::BACKGROUND_ROW_B), game);
-        slot!(game, MotherBrainBody[0i32].function = function::FAKE_DEATH_ASCENT_5_DRAW_BG1_ROWS_C_D);
+        slot!(game, MotherBrainBody[0i32].function = function::FAKE_DEATH_ASCENT_DRAW_ROOM_BACKGROUND_ON_BG1_ROWS_C_D);
     };
     [11111674] MotherBrainBody_FakeDeath_Ascent_5_DrawBG1RowCD [] {
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x2, 0xc, plm::BACKGROUND_ROW_C), game);
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x2, 0xd, plm::BACKGROUND_ROW_D), game);
-        slot!(game, MotherBrainBody[0i32].function = function::FAKE_DEATH_ASCENT_6_SETUP_PHASE_2_GFX);
+        slot!(game, MotherBrainBody[0i32].function = function::FAKE_DEATH_ASCENT_SET_UP_MOTHER_BRAIN_PHASE_2_GRAPHICS);
     };
     [11111697] MotherBrainBody_FakeDeath_Ascent_6_SetupPhase2Gfx [] {
         { let value: u16 = 257; let at: usize = 0x91b; let bytes = value.to_ne_bytes(); game.ram().write_byte(at, bytes[0]); game.ram().write_byte(at + 1, bytes[1]); };
@@ -834,25 +962,25 @@ crate::dispatch::callback_dispatch! {
             0xf,
             game,
         );
-        slot!(game, MotherBrainBody[0i32].function = function::FAKE_DEATH_ASCENT_7_SETUP_PHASE_2_BRAIN);
+        slot!(game, MotherBrainBody[0i32].function = function::FAKE_DEATH_ASCENT_SET_UP_MOTHER_BRAIN_PHASE_2_BRAIN);
         word!(game.nmi_flag_bg2_enemy_vram_transfer = 1);
         slot!(game, MotherBrainBrain[0x40i32].unpause_hook = 1);
     };
     [11111753] MotherBrainBody_FakeDeath_Ascent_7_SetupPhase2Brain [] {
         word!(game.fx_layer_blending_config_a = 52);
         let E: i32 = 0x40;
-        slot!(game, MotherBrainBrain[E].function = function::BRAIN_SETUP_BRAIN_AND_NECK_TO_DRAW);
+        slot!(game, MotherBrainBrain[E].function = function::BRAIN_SET_UP_BRAIN_AND_NECK_TO_BE_DRAWN);
         let E0: i32 = 0;
         slot!(game, MotherBrainBody[E0].base.properties = (slot!(game, MotherBrainBody[E0].base.properties) as i32 & !(kEnemyProps_Tangible as i32)) as u16);
         slot!(game, MotherBrainBrain[E].base.properties = slot!(game, MotherBrainBrain[E].base.properties) & !(0x400));
         slot!(game, MotherBrainBrain[E].base.health = 18000);
-        slot!(game, MotherBrainBody[E0].function = function::FAKE_DEATH_ASCENT_8_PAUSE);
+        slot!(game, MotherBrainBody[E0].function = function::FAKE_DEATH_ASCENT_PAUSE_FOR_SUSPENSE);
         slot!(game, MotherBrainBody[E0].function_timer = 128);
         MotherBrainBody_FakeDeath_Ascent_8_Pause(game);
     };
     [11111860] MotherBrainBody_FakeDeath_Ascent_10_LoadLegTiles [] {
         if queue_mother_brain_sprite_tiles(0xa9, addr_stru_A98F8F as u16, game) != 0 {
-            slot!(game, MotherBrainBody[0i32].function = function::FAKE_DEATH_ASCENT_11_CONTINUE_PAUSE);
+            slot!(game, MotherBrainBody[0i32].function = function::FAKE_DEATH_ASCENT_CONTINUE_PAUSING_FOR_SUSPENSE);
             MotherBrainBody_FakeDeath_Ascent_11_ContinuePause(game);
         }
     };
@@ -868,7 +996,7 @@ crate::dispatch::callback_dispatch! {
         QueueMusic_Delayed8(5, game);
         word! {game; earthquake_type = 2; earthquake_timer = 256; }
         slot! { game, MotherBrainBrain[E1]; neck_speed = 80, neck_moving = 1, lower_motion = 8, upper_motion = 6 };
-        slot!(game, MotherBrainBody[E0].function = function::FAKE_DEATH_ASCENT_13_RAISE);
+        slot!(game, MotherBrainBody[E0].function = function::FAKE_DEATH_ASCENT_RAISE_MOTHER_BRAIN);
     };
     [11120417] MotherBrain_Phase3_Death_2 [] {
         MotherBrain_GenerateSmokyExplosions(game);
@@ -878,7 +1006,7 @@ crate::dispatch::callback_dispatch! {
             slot! { game, MotherBrainBrain[E1]; lower_motion = 6, upper_motion = 6 }
             slot!(game, MotherBrainBrain[E1].neck_speed = 1280);
             let E: i32 = 0;
-            slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_3);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_DISABLE_BRAIN_EFFECTS);
             slot!(game, MotherBrainBody[E].function_timer = 32);
         }
     };
@@ -897,23 +1025,23 @@ crate::dispatch::callback_dispatch! {
                 word!(game.nmi_flag_bg2_enemy_vram_transfer = 1);
                 slot!(game, MotherBrainBody[E].base.properties = slot!(game, MotherBrainBody[E].base.properties) & 0xdeff | 0x100);
                 slot!(game, MotherBrainBody[E].base.extra_properties = 0);
-                slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_6);
+                slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_FINAL_FEW_EXPLOSIONS);
                 slot!(game, MotherBrainBody[E].function_timer = 16);
             }
         }
     };
     [11120917] MotherBrain_Phase3_Death_7 [] {
         MotherBrain_SetBrainInstrs(animation::BRAIN_DECAPITATED, game);
-        slot!(game, MotherBrainBrain[0x40i32].function = function::BRAIN_SETUP_BRAIN_TO_DRAW);
+        slot!(game, MotherBrainBrain[0x40i32].function = function::BRAIN_SET_UP_BRAIN_TO_BE_DRAWN);
         let E: i32 = 0;
         slot!(game, MotherBrainBody[E].function_timer = 0);
-        slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_8);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_BRAIN_FALLS_TO_GROUND);
         MotherBrain_Phase3_Death_8(game);
     };
     [11120990] MotherBrain_Phase3_Death_9 [] {
         if queue_mother_brain_sprite_tiles(0xa9, addr_stru_A99003 as u16, game) != 0 {
             let E: i32 = 0;
-            slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_10);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_SET_UP_FADE_TO_GREY);
             slot!(game, MotherBrainBody[E].function_timer = 32);
         }
     };
@@ -928,14 +1056,14 @@ crate::dispatch::callback_dispatch! {
             QueueMusic_Delayed8(0, game);
             QueueMusic_Delayed8(0xff24, game);
             E1 = 0;
-            slot!(game, Enemy_DeadMonsters[E1].var_A = function::PHASE_3_DEATH_14_DELAY_20_FRAMES);
+            slot!(game, Enemy_DeadMonsters[E1].var_A = function::PHASE_3_DEATH_20_FRAME_DELAY);
             slot!(game, Enemy_DeadMonsters[E1].var_F = 20);
             MotherBrain_Phase3_Death_14_20framedelay(game);
         };
     };
     [11121240] MotherBrain_Phase3_Death_15_LoadEscapeTimerTiles [] {
         if queue_mother_brain_sprite_tiles(0xa6, addr_stru_A6C4CB as u16, game) != 0 {
-            slot!(game, MotherBrainBody[0i32].function = function::PHASE_3_DEATH_16_START_ESCAPE);
+            slot!(game, MotherBrainBody[0i32].function = function::PHASE_3_DEATH_START_ESCAPE_SEQUENCE);
             MotherBrain_Phase3_Death_16_StartEscape(game);
         }
     };
@@ -958,9 +1086,9 @@ crate::dispatch::callback_dispatch! {
             start_zebes_escape_typewriter(game);
             let E: i32 = 0;
             slot!(game, MotherBrainBody[E].function_timer = 32);
-            let mut v1: u16 = function::PHASE_3_DEATH_17_SPAWN_TIME_BOMB;
+            let mut v1: u16 = function::PHASE_3_DEATH_SPAWN_TIME_BOMB_SET_JAPANESE_TEXT;
             if word!(game.japanese_text_flag) == 0 {
-                v1 = function::PHASE_3_DEATH_18_TYPES_ZEBES_TEXT;
+                v1 = function::PHASE_3_DEATH_TYPE_OUT_ZEBES_ESCAPE_TEXT;
             }
             slot!(game, MotherBrainBody[E].function = v1);
         }
@@ -968,7 +1096,7 @@ crate::dispatch::callback_dispatch! {
     [11121379] MotherBrain_Phase3_Death_18_TypesZebesText [] {
         if type_escape_text(0x2610, game) & 1 != 0 {
             let E: i32 = 0;
-            slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_19_ESCAPE_DOOR_EXPLODING);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_ESCAPE_DOOR_IS_EXPLODING_START_ESCAPE_TIMER);
             slot!(game, MotherBrainBody[E].function_timer = 32);
         }
     };
@@ -981,14 +1109,14 @@ crate::dispatch::callback_dispatch! {
             word!(game.timer_status = 2);
             SetBossBitForCurArea(2, game);
             SetEventHappened(0xe, game);
-            slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_20_BLOW_UP_ESCAPE_DOOR);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_BLOW_UP_ESCAPE_DOOR);
             let E1: i32 = 0x40;
             slot! { game, MotherBrainBrain[E1]; subfunction = 0, subfunction_timer = 0 }
         }
     };
     [11121450] MotherBrain_Phase3_Death_20_BlowUpEscapeDoor [] {
         MotherBrain_ExplodeEscapeDoor(game);
-        slot!(game, MotherBrainBody[0i32].function = function::PHASE_3_DEATH_21_KEEP_EARTHQUAKE_GOING);
+        slot!(game, MotherBrainBody[0i32].function = function::PHASE_3_DEATH_KEEP_EARTHQUAKE_GOING);
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0, 0x6, plm::ESCAPE_DOOR), game);
     };
     [11121468] MotherBrain_Phase3_Death_21_KeepEarthquakeGoing [] {
@@ -1035,7 +1163,7 @@ crate::dispatch::callback_dispatch! {
         slot!(game, MotherBrainBrain[E1].upper_motion = v0 as u16);
         slot!(game, MotherBrainBrain[E1].neck_speed = 512);
         let E: i32 = 0;
-        slot!(game, MotherBrainBody[E].function = function::FIRING_LASER_POSITION_HEAD_SLOWLY_FIRE);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_2_FIRING_LASER_POSITION_HEAD_SLOWLY_AND_FIRE);
         slot!(game, MotherBrainBody[E].function_timer = 4);
     };
     [11122813] MotherBomb_FiringDeathBeam [] {
@@ -1053,13 +1181,13 @@ crate::dispatch::callback_dispatch! {
         let E1: i32 = 0x40;
         slot! { game, MotherBrainBrain[E1]; neck_speed = 64, neck_moving = 1, lower_motion = 2, upper_motion = 4 };
         let E: i32 = 0;
-        slot!(game, MotherBrainBody[E].function = function::FIRING_RAINBOW_BEAM_1_START_CHARGE);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_2_FIRING_RAINBOW_BEAM_START_CHARGING_RAINBOW_BEAM);
         slot!(game, MotherBrainBody[E].function_timer = 256);
     };
     [11122987] MotherBomb_FiringRainbowBeam_2_RetractNeck [] {
         if MotherBrain_WalkBackwardsSlowlyAndRetractHead(0x28, game) & 1 != 0 {
             let E: i32 = 0;
-            slot!(game, MotherBrainBody[E].function = function::FIRING_RAINBOW_BEAM_3_WAIT);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_2_FIRING_RAINBOW_BEAM_WAIT_FOR_BEAM_TO_CHARGE);
             slot!(game, MotherBrainBody[E].function_timer = 256);
             MotherBomb_FiringRainbowBeam_3_Wait(game);
         }
@@ -1070,7 +1198,7 @@ crate::dispatch::callback_dispatch! {
         slot! { game, MotherBrainBrain[E1]; lower_motion = 6, upper_motion = 6 }
         slot!(game, MotherBrainBrain[E1].neck_speed = 1280);
         let E: i32 = 0;
-        slot!(game, MotherBrainBody[E].function = function::FIRING_RAINBOW_BEAM_5_START_FIRING);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_2_FIRING_RAINBOW_BEAM_START_FIRING_RAINBOW_BEAM);
         slot!(game, MotherBrainBody[E].function_timer = 16);
         MotherBomb_FiringRainbowBeam_5_StartFiring(game);
     };
@@ -1094,7 +1222,7 @@ crate::dispatch::callback_dispatch! {
                 }
                 CallSomeSamusCode(v4, game);
                 slot!(game, MotherBrainBody[E].beam_sounds_left = 6);
-                slot!(game, MotherBrainBody[E].function = function::FIRING_RAINBOW_BEAM_6_MOVE_SAMUS_TO_WALL);
+                slot!(game, MotherBrainBody[E].function = function::PHASE_2_FIRING_RAINBOW_BEAM_MOVE_SAMUS_TOWARDS_WALL);
             }
         }
     };
@@ -1105,7 +1233,7 @@ crate::dispatch::callback_dispatch! {
         MotherBrain_HandleRainbowBeamExplosions(game);
         if MotherBrain_MoveSamusTowardsWallDueToBeam(game) & 1 != 0 {
             let E: i32 = 0;
-            slot!(game, MotherBrainBody[E].function = function::FIRING_RAINBOW_BEAM_7_DELAY_FRAME);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_2_FIRING_RAINBOW_BEAM_1_FRAME_DELAY);
             slot!(game, MotherBrainBody[E].function_timer = 0);
         }
     };
@@ -1119,12 +1247,12 @@ crate::dispatch::callback_dispatch! {
         slot!(game, MotherBrainBody[E].function_timer = slot!(game, MotherBrainBody[E].function_timer).wrapping_sub(1));
         if (slot!(game, MotherBrainBody[E].function_timer) & 0x8000) != 0 {
             word! { game, 8; earthquake_type, earthquake_timer }
-            slot!(game, MotherBrainBody[E].function = function::FIRING_RAINBOW_BEAM_8_START_DRAIN_SAMUS);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_2_FIRING_RAINBOW_BEAM_START_DRAINING_SAMUS);
         }
     };
     [11123239] MotherBomb_FiringRainbowBeam_8_StartDrainSamus [] {
         let E: i32 = 0;
-        slot!(game, MotherBrainBody[E].function = function::FIRING_RAINBOW_BEAM_9_DRAINING_SAMUS);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_2_FIRING_RAINBOW_BEAM_DRAINING_SAMUS);
         slot!(game, MotherBrainBody[E].function_timer = 299);
         word! {game; earthquake_timer = 299; earthquake_type = 8; }
         MotherBomb_FiringRainbowBeam_9_DrainingSamus(game);
@@ -1140,7 +1268,7 @@ crate::dispatch::callback_dispatch! {
         let E: i32 = 0;
         slot!(game, MotherBrainBody[E].function_timer = slot!(game, MotherBrainBody[E].function_timer).wrapping_sub(1));
         if (slot!(game, MotherBrainBody[E].function_timer) & 0x8000) != 0 {
-            slot!(game, MotherBrainBody[E].function = function::FIRING_RAINBOW_BEAM_10_FINISH_FIRING_RAINBOW);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_2_FIRING_RAINBOW_BEAM_FINISH_FIRING_RAINBOW_BEAM);
         }
     };
     [11123294] MotherBomb_FiringRainbowBeam_10_FinishFiringRainbow [] {
@@ -1165,23 +1293,23 @@ crate::dispatch::callback_dispatch! {
             slot!(game, MotherBrainBody[E].beam_sound_playing = 0);
             CallSomeSamusCode(1, game);
             word!(game.cooldown_timer = 8);
-            slot!(game, MotherBrainBody[E].function = function::FIRING_RAINBOW_BEAM_11_LET_SAMUS_FALL);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_2_FIRING_RAINBOW_BEAM_LET_SAMUS_FALL);
         }
     };
     [11123396] MotherBomb_FiringRainbowBeam_11_LetSamusFall [] {
         player_mother_brain(0, game);
-        slot!(game, MotherBrainBody[0i32].function = function::FIRING_RAINBOW_BEAM_12_WAIT_FOR_SAMUS_HIT_GROUND);
+        slot!(game, MotherBrainBody[0i32].function = function::PHASE_2_FIRING_RAINBOW_BEAM_WAIT_FOR_SAMUS_TO_HIT_GROUND);
         MotherBomb_FiringRainbowBeam_12_WaitForSamusHitGround(game);
     };
     [11123409] MotherBomb_FiringRainbowBeam_12_WaitForSamusHitGround [] {
         if MotherBrain_MoveSamusForFallingAfterBeam(game) & 1 != 0 {
-            slot!(game, MotherBrainBody[0i32].function = function::FIRING_RAINBOW_BEAM_13_LOWER_HEAD);
+            slot!(game, MotherBrainBody[0i32].function = function::PHASE_2_FIRING_RAINBOW_BEAM_LOWER_HEAD);
         }
     };
     [11124037] MotherBrain_Phase2Cut_0 [] {
         let v0: u16 = { let amount = 0x50; game.suit_damage(amount) };
         if ((4 * v0 as i32 + 20 - word!(game.samus_health) as i32) as i16) >= 0 {
-            slot!(game, MotherBrainBody[0i32].function = function::PHASE_2_CUT_1);
+            slot!(game, MotherBrainBody[0i32].function = function::PHASE_2_FINISH_SAMUS_OFF_STAND_UP);
         } else if (word!(game.random_number) & 0xfff) < 0xfa0 {
             if (slot!(game, MotherBrainBody[0i32].base.frame_counter) & 0x1f) == 0 {
                 MotherBrain_MaybeStandupOrLeanDown(game);
@@ -1204,7 +1332,7 @@ crate::dispatch::callback_dispatch! {
     [11124120] MotherBrain_Phase2Cut_1 [] {
         if MotherBrain_MakeHerStandUp(game) & 1 != 0 {
             let E: i32 = 0;
-            slot!(game, MotherBrainBody[E].function = function::PHASE_2_CUT_2);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_2_FINISH_SAMUS_OFF_ADMIRE_JOB_WELL_DONE);
             slot!(game, MotherBrainBody[E].function_timer = 16);
             MotherBrain_Phase2Cut_2(game);
         }
@@ -1214,7 +1342,7 @@ crate::dispatch::callback_dispatch! {
             MotherBrain_RetractHead(game);
             MotherBrain_SpawnShitroidInCutscene(game);
             let E: i32 = 0;
-            slot!(game, MotherBrainBody[E].function = function::PHASE_2_CUT_5);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_2_FINISH_SAMUS_OFF_FIRE_FINAL_RAINBOW_BEAM);
             slot!(game, MotherBrainBody[E].function_timer = 256);
         }
     };
@@ -1223,7 +1351,7 @@ crate::dispatch::callback_dispatch! {
         let E: i32 = 0;
         slot!(game, MotherBrainBody[E].function_timer = slot!(game, MotherBrainBody[E].function_timer).wrapping_sub(1));
         if (slot!(game, MotherBrainBody[E].function_timer) & 0x8000) != 0 {
-            slot!(game, MotherBrainBody[E].function = function::DRAINED_BY_SHITROID_2);
+            slot!(game, MotherBrainBody[E].function = function::DRAINED_BY_SHITROID_FIRING_RAINBOW_BEAM);
             let E1: i32 = 0x40;
             slot!(game, MotherBrainBrain[E1].painful_walk_function = function::PAINFUL_WALK_FORWARDS);
             slot!(game, MotherBrainBrain[E1].painful_walk_stage = 0);
@@ -1233,7 +1361,7 @@ crate::dispatch::callback_dispatch! {
     };
     [11124545] MotherBrain_DrainedByShitroid_4 [] {
         if MotherBrain_MakeWalkBackwards(0x28, 0, game) & 1 != 0 {
-            slot!(game, MotherBrainBody[0i32].function = function::DRAINED_BY_SHITROID_5);
+            slot!(game, MotherBrainBody[0i32].function = function::DRAINED_BY_SHITROID_GO_INTO_LOW_POWER_MODE);
             slot!(game, MotherBrainBrain[0x40i32].upper_motion = 0);
             MotherBrain_DrainedByShitroid_5(game);
         }
@@ -1245,14 +1373,14 @@ crate::dispatch::callback_dispatch! {
             slot!(game, MotherBrainBrain[E1].neck_speed = 1280);
             slot!(game, MotherBrainBrain[E1].neck_moving = 1);
             let E: i32 = 0;
-            slot!(game, MotherBrainBody[E].function = function::PHASE_2_REVIVE_5);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_2_REVIVE_SELF_WAKE_UP_STRETCH);
             slot!(game, MotherBrainBody[E].function_timer = 16);
             MotherBrain_Phase2_Revive_5(game);
         }
     };
     [11125063] MotherBrain_Phase2_Revive_8 [] {
         if MotherBrain_MakeHerStandUp(game) & 1 != 0 {
-            slot!(game, MotherBrainBody[0i32].function = function::PHASE_2_MURDER_SHITROID_1);
+            slot!(game, MotherBrainBody[0i32].function = function::PHASE_2_MURDER_SHITROID_ATTACK_SHITROID);
             MotherBrain_MakeWalkForwards(0xa, 0x50, game);
             MotherBrain_Phase2_MurderShitroid_1(game);
         }
@@ -1266,7 +1394,7 @@ crate::dispatch::callback_dispatch! {
             }
             MotherBrain_SetBrainInstrs(v0, game);
             let E: i32 = 0;
-            slot!(game, MotherBrainBody[E].function = function::PHASE_2_MURDER_SHITROID_2);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_2_MURDER_SHITROID_SHITROID_ATTACK_COOLDOWN);
             slot!(game, MotherBrainBody[E].function_timer = 64);
         }
     };
@@ -1289,11 +1417,11 @@ crate::dispatch::callback_dispatch! {
                     v1 = animation::BRAIN_FOUR_BLUE_RINGS_PHASE_3;
                 }
                 MotherBrain_SetBrainInstrs(v1, game);
-                slot!(game, MotherBrainBody[E].function = function::PHASE_3_FIGHTING_COOLDOWN);
+                slot!(game, MotherBrainBody[E].function = function::PHASE_3_FIGHTING_ATTACK_COOLDOWN);
                 slot!(game, MotherBrainBody[E].function_timer = 64);
             }
         } else {
-            slot!(game, MotherBrainBody[0i32].function = function::PHASE_3_DEATH_0);
+            slot!(game, MotherBrainBody[0i32].function = function::PHASE_3_DEATH_MOVE_TO_BACK_OF_ROOM);
         };
     };
     @functions [pub fn (game: &mut impl Host)];
@@ -1301,7 +1429,7 @@ crate::dispatch::callback_dispatch! {
     [11123421] MotherBomb_FiringRainbowBeam_13_LowerHead [] {
         slot! { game, MotherBrainBrain[E1]; neck_speed = 64, neck_moving = 1, lower_motion = 2, upper_motion = 4 };
         let E: i32 = 0;
-        slot!(game, MotherBrainBody[E].function = function::FIRING_RAINBOW_BEAM_14_DECIDE_NEXT_ACTION);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_2_FIRING_RAINBOW_BEAM_DECIDE_NEXT_ACTION);
         slot!(game, MotherBrainBody[E].function_timer = 128);
     };
     [11124374] MotherBrain_DrainedByShitroid_2 [] {
@@ -1319,7 +1447,7 @@ crate::dispatch::callback_dispatch! {
             slot!(game, MotherBrainBrain[E1].brain_palette_enabled = 0);
             MotherBrain_WritePhase2DeathPalette(game);
             QueueSfx1_Max6(2, game);
-            slot!(game, MotherBrainBody[E].function = function::DRAINED_BY_SHITROID_3);
+            slot!(game, MotherBrainBody[E].function = function::DRAINED_BY_SHITROID_RAINBOW_BEAM_HAS_RUN_OUT);
         }
     };
     [11124494] MotherBrain_DrainedByShitroid_3 [] {
@@ -1328,7 +1456,7 @@ crate::dispatch::callback_dispatch! {
             slot!(game, MotherBrainBrain[E1].neck_speed = 64);
             slot! { game, MotherBrainBrain[E1]; lower_motion = 8, upper_motion = 8 }
             MotherBrain_SetBrainInstrs(animation::BRAIN_DYING_DROOL, game);
-            slot!(game, MotherBrainBody[0i32].function = function::DRAINED_BY_SHITROID_4);
+            slot!(game, MotherBrainBody[0i32].function = function::DRAINED_BY_SHITROID_MOVE_TO_BACK_OF_ROOM);
             MotherBrain_DrainedByShitroid_4(game);
         }
     };
@@ -1338,7 +1466,7 @@ crate::dispatch::callback_dispatch! {
             let E: i32 = 0;
             if slot!(game, MotherBrainBody[E].pose) == 0 {
                 MotherBrain_SetBodyInstrs(animation::BODY_CROUCH_FAST, game);
-                slot!(game, MotherBrainBody[E].function = function::DRAINED_BY_SHITROID_6);
+                slot!(game, MotherBrainBody[E].function = function::DRAINED_BY_SHITROID_PREPARE_TRANSITION_TO_GREY);
                 slot!(game, MotherBrainBody[E].function_timer = 64);
             }
         }
@@ -1352,7 +1480,7 @@ crate::dispatch::callback_dispatch! {
             let v2: u16 = (slot!(game, MotherBrainBody[E].grey_transition)).wrapping_add(1);
             slot!(game, MotherBrainBody[E].grey_transition = v2);
             if game.fade(Fade::FakeDeathToGray, (v2).wrapping_sub(1)) & 1 != 0 {
-                slot!(game, MotherBrainBody[E].function = function::FAKE_DEATH_DESCENT_6);
+                slot!(game, MotherBrainBody[E].function = function::FAKE_DEATH_DESCENT_COLLAPSE_TUBES);
             }
         }
         MotherBrainBody_FakeDeath_Descent_6(game);
@@ -1394,14 +1522,14 @@ crate::dispatch::callback_dispatch! {
                 earthquake_timer, hdma_object_channels_bitmask[(slot!(game, MotherBrainBody[E].hdma_object) as i32 >> 1)],
             }
             MotherBrain_SetBodyInstrs(animation::BODY_STAND_UP_FROM_CROUCH_SLOW, game);
-            slot!(game, MotherBrainBody[E].function = function::FAKE_DEATH_ASCENT_14_WAIT_FOR_UNCOUCHING);
+            slot!(game, MotherBrainBody[E].function = function::FAKE_DEATH_ASCENT_WAIT_UNTIL_MOTHER_BRAIN_HAS_FINISHED_UNCROUCHING);
             MotherBrainBody_FakeDeath_Ascent_14_WaitForUncouching(game);
         }
     };
     [11112085] MotherBrainBody_FakeDeath_Ascent_14_WaitForUncouching [] {
         if slot!(game, MotherBrainBody[E].pose) == 0 {
             slot!(game, MotherBrainBody[E].grey_transition = 0);
-            slot!(game, MotherBrainBody[E].function = function::FAKE_DEATH_ASCENT_15_TRANSITION_FROM_GREY);
+            slot!(game, MotherBrainBody[E].function = function::FAKE_DEATH_ASCENT_TRANSITION_MOTHER_BRAIN_FROM_GREY_AND_LOWER_HER_HEAD);
             slot!(game, MotherBrainBody[E].function_timer = 0);
         }
     };
@@ -1411,7 +1539,7 @@ crate::dispatch::callback_dispatch! {
         slot!(game, MotherBrainBrain[E1].base.properties = (slot!(game, MotherBrainBrain[E1].base.properties)) | (0x400u16));
         slot!(game, MotherBrainBody[E].hitboxes = 0);
         if MotherBrain_MakeWalkBackwards(0x28, 6, game) & 1 != 0 {
-            slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_1);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_IDLE_WHILST_EXPLODING);
             slot!(game, MotherBrainBody[E].function_timer = 128);
             MotherBrain_Phase3_Death_1(game);
         }
@@ -1423,7 +1551,7 @@ crate::dispatch::callback_dispatch! {
         let mut v3: i16 = ((slot!(game, MotherBrainBrain[E1].base.y_pos)) as i16).wrapping_add((v1.to_ne_bytes()[1]) as i16);
         if (v3 as u16) >= 0xc4 {
             crate::actors::mother_brain_tubes::Host::start_earthquake(game, 2);
-            slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_9);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_LOAD_CORPSE_TILES);
             slot!(game, MotherBrainBody[E].function_timer = 256);
             v3 = 196;
         }
@@ -1432,10 +1560,10 @@ crate::dispatch::callback_dispatch! {
     [11121361] MotherBrain_Phase3_Death_17_SpawnTimeBomb [] {
         slot!(game, MotherBrainBody[E].function_timer = slot!(game, MotherBrainBody[E].function_timer).wrapping_sub(1));
         if (slot!(game, MotherBrainBody[E].function_timer) & 0x8000) != 0 {
-            slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_18_TYPES_ZEBES_TEXT);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_TYPE_OUT_ZEBES_ESCAPE_TEXT);
             SpawnEprojWithRoomGfx(
                 addr_kEproj_TimeBombSetJapaneseText as u16,
-                function::PHASE_3_DEATH_18_TYPES_ZEBES_TEXT,
+                function::PHASE_3_DEATH_TYPE_OUT_ZEBES_ESCAPE_TEXT,
                 game,
             );
         }
@@ -1483,7 +1611,7 @@ crate::dispatch::callback_dispatch! {
     [11122181] MotherBrain_Body_Phase2_Thinking [] {
         let E1: i32 = 0x40;
         if slot!(game, MotherBrainBrain[E1].base.health) == 0 {
-            slot!(game, MotherBrainBody[E].function = function::FIRING_RAINBOW_BEAM_0);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_2_FIRING_RAINBOW_BEAM_EXTEND_NECK);
             MotherBomb_FiringRainbowBeam_0(game);
             return;
         }
@@ -1495,13 +1623,13 @@ crate::dispatch::callback_dispatch! {
             } else if word!(game.random_number) >= 0xa000 {
                 false
             } else {
-                slot!(game, MotherBrainBody[E].function = function::FIRING_DEATH_BEAM);
+                slot!(game, MotherBrainBody[E].function = function::PHASE_2_FIRING_HAND_BEAM);
                 return;
             };
             if keep_walking {
                 MotherBrain_HandleWalking(game)
             } else {
-                slot!(game, MotherBrainBody[E].function = function::BODY_PHASE_2_TRY_ATTACK);
+                slot!(game, MotherBrainBody[E].function = function::PHASE_2_TRY_ATTACK);
             }
         }
     };
@@ -1547,7 +1675,7 @@ crate::dispatch::callback_dispatch! {
                     MotherBrain_FiringBomb_DecideOnWalking(game);
                 }
             } else if v6 == animation::BRAIN_LASER {
-                slot!(game, MotherBrainBody[E].function = function::FIRING_LASER_POSITION_HEAD);
+                slot!(game, MotherBrainBody[E].function = function::PHASE_2_FIRING_LASER_POSITION_HEAD_QUICKLY);
                 MotherBomb_FiringLaser_PositionHead(game);
             } else {
                 MotherBrain_SetBrainInstrs(v6, game);
@@ -1563,7 +1691,7 @@ crate::dispatch::callback_dispatch! {
     };
     MotherBrain_Phase2_Attack_End [] {
         slot!(game, MotherBrainBody[E].attack_phase = 0);
-        slot!(game, MotherBrainBody[E].function = function::BODY_PHASE_2_THINKING);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_2_THINKING);
     };
     [11122604] MotherBrain_FiringBomb_WalkingBackwards [] {
         if MotherBrain_MakeWalkBackwards(slot!(game, MotherBrainBody[E].function_timer), 6, game) & 1 != 0 {
@@ -1606,7 +1734,7 @@ crate::dispatch::callback_dispatch! {
         let E1: i32 = 0x40;
         slot! { game, MotherBrainBrain[E1]; lower_motion = 8, upper_motion = 8 }
         slot!(game, MotherBrainBrain[E1].neck_speed = 1792);
-        slot!(game, MotherBrainBody[E].function = function::DRAINED_BY_SHITROID_1);
+        slot!(game, MotherBrainBody[E].function = function::DRAINED_BY_SHITROID_REGAIN_BALANCE);
         slot!(game, MotherBrainBody[E].function_timer = 48);
         MotherBrain_DrainedByShitroid_1(game);
     };
@@ -1624,15 +1752,15 @@ crate::dispatch::callback_dispatch! {
             slot!(game, MotherBrainBody[E].corpse_state = 1);
             slot!(game, MotherBrainBrain[E1].breath_enabled = 0);
             slot!(game, MotherBrainBody[E].form = 2);
-            slot!(game, MotherBrainBody[E].function = function::PHASE_2_REVIVE_0);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_2_REVIVE_SELF_INANIMATE_GREY);
         }
     };
     [11124825] MotherBrain_Phase2_Revive_0 [] {
-        slot!(game, MotherBrainBody[E].function = function::PHASE_2_REVIVE_1);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_2_REVIVE_SELF_SHOW_SIGNS_OF_LIFE);
         slot!(game, MotherBrainBody[E].function_timer = 768);
     };
     [11124866] MotherBrain_Phase2_Revive_2 [] {
-        slot!(game, MotherBrainBody[E].function = function::PHASE_2_REVIVE_3);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_2_REVIVE_SELF_TRANSITION_FROM_GREY);
         slot!(game, MotherBrainBody[E].grey_transition = 0);
         MotherBrain_Phase2_Revive_3(game);
     };
@@ -1645,7 +1773,7 @@ crate::dispatch::callback_dispatch! {
             slot!(game, MotherBrainBody[E].grey_transition = v2);
             game.fade(Fade::DrainedFromGray, (v2).wrapping_sub(1)) & 1 != 0
         } {
-            slot!(game, MotherBrainBody[E].function = function::PHASE_2_REVIVE_4);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_2_REVIVE_SELF_WAKE_UP);
             slot!(game, MotherBrainBrain[0x40i32].brain_palette_enabled = 1);
             MotherBrain_SetupBrainNormalPal(game);
             MotherBrain_Phase2_Revive_4(game);
@@ -1655,7 +1783,7 @@ crate::dispatch::callback_dispatch! {
         slot!(game, MotherBrainBody[E].function_timer = slot!(game, MotherBrainBody[E].function_timer).wrapping_sub(1));
         let v1: bool = (slot!(game, MotherBrainBody[E].function_timer) & 0x8000) != 0;
         if v1 && MotherBrain_MakeWalkForwards(4, 0x50, game) & 1 != 0 {
-            slot!(game, MotherBrainBody[E].function = function::PHASE_2_REVIVE_7);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_2_REVIVE_SELF_PREPARE_NECK_FOR_SHITROID_MURDER);
             slot!(game, MotherBrainBody[E].corpse_state = 2);
             slot!(game, MotherBrainBrain[0x40i32].health_palette_enabled = 1);
         }
@@ -1664,12 +1792,12 @@ crate::dispatch::callback_dispatch! {
         slot!(game, MotherBrainBody[E].ring_volleys = 0);
         let E1: i32 = 0x40;
         slot! { game, MotherBrainBrain[E1]; neck_moving = 1, lower_motion = 2, upper_motion = 4, neck_speed = 64 };
-        slot!(game, MotherBrainBody[E].function = function::PHASE_2_REVIVE_8);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_2_REVIVE_SELF_FINISH_PREPARING_FOR_SHITROID_MURDER);
         MotherBrain_Phase2_Revive_8(game);
     };
     [11125199] MotherBrain_Phase3_Recover_MakeDistance [] {
         slot!(game, MotherBrainBody[E].form = 4);
-        slot!(game, MotherBrainBody[E].function = function::PHASE_3_RECOVER_SETUP_FOR_FIGHT);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_3_RECOVER_FROM_CUTSCENE_SET_UP_FOR_FIGHTING);
         slot!(game, MotherBrainBody[E].function_timer = 32);
         MotherBrain_MakeWalkBackwards((slot!(game, MotherBrainBody[E].base.x_pos)).wrapping_sub(14), 2, game);
     };
@@ -1696,7 +1824,7 @@ crate::dispatch::callback_dispatch! {
             let v6: u16 = (slot!(game, MotherBrainBody[E].base.x_pos)).wrapping_sub(14);
             let E1_0: i32 = 0x40;
             slot!(game, MotherBrainBrain[E1_0].target_x = v6);
-            slot!(game, MotherBrainBrain[E1_0].walk_function = function::PHASE_3_WALK_RETREAT_QUICKLY);
+            slot!(game, MotherBrainBrain[E1_0].walk_function = function::WALK_RETREAT_QUICKLY);
             MotherBrain_Phase3_Walk_RetreatQuickly(game);
         };
     };
@@ -1786,15 +1914,15 @@ crate::dispatch::callback_dispatch! {
             0x2f,
             game,
         );
-        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_4_CLEAR_CEILING_BLOCK_6);
+        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_CLEAR_CEILING_BLOCK_COLUMN_6);
     };
     [11110887] MotherBrainBody_5_SpawnTubeFallingEnemy1 {
         game.spawn_legacy_population(0xa9, addr_stru_A98AF5 as u16);
-        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_6_CLEAR_BOTTOM_RIGHT_TUBE);
+        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_CLEAR_BOTTOM_RIGHT_TUBE);
     };
     [11110927] MotherBrainBody_7_SpawnTubeFallingEnemy2 {
         game.spawn_legacy_population(0xa9, addr_stru_A98B05 as u16);
-        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_8_CLEAR_BOTTOM_MIDDLE_LEFT_TUBE);
+        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_CLEAR_BOTTOM_MIDDLE_LEFT_TUBE);
     };
     [11110967] MotherBrainBody_9_SpawnTopMiddleLeftFalling {
         crate::actors::host::BossEffects::set_projectile_spawn_point(game, 120, 59);
@@ -1803,7 +1931,7 @@ crate::dispatch::callback_dispatch! {
             0x3b,
             game,
         );
-        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_10_CLEAR_CEILING_TUBE_COLUMN_7);
+        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_CLEAR_CEILING_TUBE_COLUMN_7);
     };
     [11111017] MotherBrainBody_11_SpawnTopMiddleRightFalling {
         crate::actors::host::BossEffects::set_projectile_spawn_point(game, 136, 59);
@@ -1812,15 +1940,15 @@ crate::dispatch::callback_dispatch! {
             0x3b,
             game,
         );
-        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_12_CLEAR_CEILING_TUBE_COLUMN_8);
+        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_CLEAR_CEILING_TUBE_COLUMN_8);
     };
     [11111067] MotherBrainBody_13_SpawnTubeFallingEnemy3 {
         ({ let (bank, population) = (0xa9, ((0x868b15i32) as u16)); game.spawn_legacy_population(bank, population) });
-        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_14_CLEAR_BOTTOM_MIDDLE_RIGHT_TUBE);
+        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_CLEAR_BOTTOM_MIDDLE_RIGHT_TUBE);
     };
     [11111107] MotherBrainBody_15_SpawnTubeFallingEnemy4 {
         game.spawn_legacy_population(0xa9, addr_stru_A98B25 as u16);
-        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_16_CLEAR_BOTTOM_MIDDLE_TUBES);
+        slot!(game, MotherBrainBrain[E].subfunction = function::TUBES_CLEAR_BOTTOM_MIDDLE_TUBES);
     };
     @countdown [pub fn (game: &mut impl Host)];
     before {
@@ -1831,25 +1959,25 @@ crate::dispatch::callback_dispatch! {
     [11110441] MotherBrainBody_FakeDeath_Descent_1 {
         CallSomeSamusCode(0, game);
         { let value: u16 = game.ram().read_byte(0xcd20 + 0) as u16; let at: usize = 0xcd20; let bytes = value.to_ne_bytes(); game.ram().write_byte(at, bytes[0]); game.ram().write_byte(at + 1, bytes[1]); };
-        slot!(game, MotherBrainBody[E].function = function::FAKE_DEATH_DESCENT_2);
+        slot!(game, MotherBrainBody[E].function = function::FAKE_DEATH_DESCENT_QUEUE_MOTHER_BRAIN_MUSIC);
         slot!(game, MotherBrainBody[E].function_timer = 32);
         MotherBrainBody_FakeDeath_Descent_2(game);
     };
     [11110477] MotherBrainBody_FakeDeath_Descent_2 {
         QueueMusic_Delayed8(0, game);
         QueueMusic_Delayed8(0xff21, game);
-        slot!(game, MotherBrainBody[E].function = function::FAKE_DEATH_DESCENT_3);
+        slot!(game, MotherBrainBody[E].function = function::FAKE_DEATH_DESCENT_UNLOCK_SAMUS);
         slot!(game, MotherBrainBody[E].function_timer = 12);
         MotherBrainBody_FakeDeath_Descent_3(game);
     };
     [11110508] MotherBrainBody_FakeDeath_Descent_3 {
         CallSomeSamusCode(1, game);
-        slot!(game, MotherBrainBody[E].function = function::FAKE_DEATH_DESCENT_4);
+        slot!(game, MotherBrainBody[E].function = function::FAKE_DEATH_DESCENT_BEGIN_SCREEN_FLASHING_AND_LOWER_ACID);
         slot!(game, MotherBrainBody[E].function_timer = 8);
         MotherBrainBody_FakeDeath_Descent_4(game);
     };
     [11111801] MotherBrainBody_FakeDeath_Ascent_8_Pause {
-        slot!(game, MotherBrainBody[E].function = function::FAKE_DEATH_ASCENT_9_PREPARE_RISE);
+        slot!(game, MotherBrainBody[E].function = function::FAKE_DEATH_ASCENT_PREPARE_MOTHER_BRAIN_FOR_RISING);
         slot!(game, MotherBrainBody[E].function_timer = 32);
         MotherBrainBody_FakeDeath_Ascent_9_PrepareRise(game);
     };
@@ -1861,7 +1989,7 @@ crate::dispatch::callback_dispatch! {
     }
     when (slot!(game, MotherBrainBody[E].function_timer) & 0x8000) != 0;
     [11120402] MotherBrain_Phase3_Death_1 {
-        slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_2);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_STUMBLE_TO_MIDDLE_OF_ROOM_AND_DROOL);
     };
     [11120468] MotherBrain_Phase3_Death_3 {
         let E1: i32 = 0x40;
@@ -1870,7 +1998,7 @@ crate::dispatch::callback_dispatch! {
         game.update_health_palette();
         slot!(game, MotherBrainBody[E].brain_palette = 3584);
         slot! { game, MotherBrainBrain[E1]; subfunction = 0, subfunction_timer = 0 }
-        slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_4);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_SET_UP_BODY_FADE_OUT);
         MotherBrain_Phase3_Death_4(game);
     };
     @countdown [pub fn (game: &mut impl Host)];
@@ -1882,12 +2010,12 @@ crate::dispatch::callback_dispatch! {
     when (slot!(game, MotherBrainBody[E].function_timer) & 0x8000) != 0;
     [11120541] MotherBrain_Phase3_Death_4 {
         slot!(game, MotherBrainBody[E].grey_transition = 0);
-        slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_5);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_FADE_OUT_BODY);
         slot!(game, MotherBrainBody[E].function_timer = 0);
         MotherBrain_Phase3_Death_5(game);
     };
     [11120659] MotherBrain_Phase3_Death_6 {
-        slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_7);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_REALISE_DECAPITATION);
     };
     @countdown [pub fn (game: &mut impl Host)];
     before {
@@ -1897,20 +2025,20 @@ crate::dispatch::callback_dispatch! {
     when (slot!(game, MotherBrainBody[E].function_timer) & 0x8000) != 0;
     [11122970] MotherBomb_FiringRainbowBeam_1_StartCharge {
         MotherBrain_SetBrainInstrs(animation::BRAIN_CHARGING_RAINBOW_BEAM, game);
-        slot!(game, MotherBrainBody[E].function = function::FIRING_RAINBOW_BEAM_2_RETRACT_NECK);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_2_FIRING_RAINBOW_BEAM_RETRACT_NECK);
         MotherBomb_FiringRainbowBeam_2_RetractNeck(game);
     };
     [11123007] MotherBomb_FiringRainbowBeam_3_Wait {
         QueueSfx2_Max6(0x71, game);
-        slot!(game, MotherBrainBody[E].function = function::FIRING_RAINBOW_BEAM_4_EXTEND_NECK_DOWN);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_2_FIRING_RAINBOW_BEAM_EXTEND_NECK_DOWN);
         MotherBomb_FiringRainbowBeam_4_ExtendNeckDown(game);
     };
     [11123462] MotherBomb_FiringRainbowBeam_14_DecideNextAction {
         if word!(game.samus_health) as i32 - 400i32 & 0x8000 != 0 {
             MotherBrain_MakeWalkForwards(0xa, (slot!(game, MotherBrainBody[E].base.x_pos)).wrapping_add(16), game);
-            slot!(game, MotherBrainBody[E].function = function::PHASE_2_CUT_0);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_2_FINISH_SAMUS_OFF_GET_SAMUS_TO_LOW_HEALTH);
         } else {
-            slot!(game, MotherBrainBody[E].function = function::FIRING_RAINBOW_BEAM_0);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_2_FIRING_RAINBOW_BEAM_EXTEND_NECK);
         }
     };
     @countdown [pub fn (game: &mut impl Host)];
@@ -1922,8 +2050,8 @@ crate::dispatch::callback_dispatch! {
     [11110532] MotherBrainBody_FakeDeath_Descent_4 {
         MotherBrain_Pal_BeginScreenFlash(game);
         LoadFxEntry(2, game);
-        slot!(game, MotherBrainBrain[0x40i32].subfunction = function::TUBES_0_WAIT);
-        slot!(game, MotherBrainBody[E].function = function::FAKE_DEATH_DESCENT_5);
+        slot!(game, MotherBrainBrain[0x40i32].subfunction = function::TUBES_WAIT_AND_SPAWN_TUBES_FALLING_ENEMY_0);
+        slot!(game, MotherBrainBody[E].function = function::FAKE_DEATH_DESCENT_TRANSITION_MOTHER_BRAIN_PALETTE_TO_GREY);
         slot! { game, MotherBrainBody[E]; function_timer = 0, grey_transition = 0 }
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xe, 0x2, plm::CLEAR_CEILING_BLOCK), game);
     };
@@ -1932,7 +2060,7 @@ crate::dispatch::callback_dispatch! {
         let E1: i32 = 0x40;
         slot!(game, MotherBrainBrain[E1].base.properties = (slot!(game, MotherBrainBrain[E1].base.properties)) | (0x100u16));
         MotherBrain_SetBrainInstrs(addr_stru_A99C21 as u16, game);
-        slot!(game, MotherBrainBody[E].function = function::FAKE_DEATH_ASCENT_10_LOAD_LEG_TILES);
+        slot!(game, MotherBrainBody[E].function = function::FAKE_DEATH_ASCENT_LOAD_MOTHER_BRAINS_LEGS_TILES);
         slot!(game, MotherBrainBody[E].function_timer = 256);
         MotherBrainBody_FakeDeath_Ascent_10_LoadLegTiles(game);
     };
@@ -1941,7 +2069,7 @@ crate::dispatch::callback_dispatch! {
         slot!(game, MotherBrainBody[E].base.y_pos = 279);
         word! {game; reg_BG2HOFS = -27i32 as u16; reg_BG2VOFS = -217i32 as u16; }
         slot!(game, MotherBrainBody[E].hitboxes = 7);
-        slot!(game, MotherBrainBody[E].function = function::FAKE_DEATH_ASCENT_12_START_MUSIC);
+        slot!(game, MotherBrainBody[E].function = function::FAKE_DEATH_ASCENT_START_MUSIC_AND_EARTHQUAKE);
     };
     [11112106] MotherBrainBody_FakeDeath_Ascent_15_TransitionFromGrey {
         slot!(game, MotherBrainBody[E].function_timer = 4);
@@ -1954,13 +2082,13 @@ crate::dispatch::callback_dispatch! {
             slot!(game, MotherBrainBrain[E1].drool_enabled = 1);
             slot! { game, MotherBrainBrain[E1]; lower_motion = 6, upper_motion = 6 }
             slot!(game, MotherBrainBrain[E1].neck_speed = 1280);
-            slot!(game, MotherBrainBody[E].function = function::PHASE_2_16_SHAKE_HEAD_MENACINGLY);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_2_STRETCHING_SHAKE_HEAD_MENACINGLY);
             slot!(game, MotherBrainBody[E].function_timer = 23);
         }
     };
     [11112181] MotherBrainBody_2ndphase_16_ShakeHeadMenacingly {
         MotherBrain_SetBrainInstrs(animation::BRAIN_STRETCHING_PHASE_2, game);
-        slot!(game, MotherBrainBody[E].function = function::PHASE_2_17_BRING_HEAD_BACK_UP);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_2_STRETCHING_BRING_HEAD_BACK_UP);
         slot!(game, MotherBrainBrain[0x40i32].neck_speed = 64);
         slot!(game, MotherBrainBody[E].function_timer = 256);
         MotherBrainBody_2ndphase_17_BringHeadBackUp(game);
@@ -1969,17 +2097,17 @@ crate::dispatch::callback_dispatch! {
         let E1: i32 = 0x40;
         slot!(game, MotherBrainBrain[E1].lower_motion = 2);
         slot!(game, MotherBrainBrain[E1].upper_motion = 4);
-        slot!(game, MotherBrainBody[E].function = function::PHASE_2_18_FINISH_STRETCHING);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_2_STRETCHING_FINISH_STRETCHING);
         slot!(game, MotherBrainBody[E].function_timer = 64);
         MotherBrainBody_2ndphase_18_FinishStretching(game);
     };
     [11112243] MotherBrainBody_2ndphase_18_FinishStretching {
         slot!(game, MotherBrainBrain[0x40i32].breath_enabled = 1);
-        slot!(game, MotherBrainBody[E].function = function::BODY_PHASE_2_THINKING);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_2_THINKING);
     };
     [11121011] MotherBrain_Phase3_Death_10 {
         slot!(game, MotherBrainBody[E].grey_transition = 0);
-        slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_11);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_FADE_TO_GREY);
         slot!(game, MotherBrainBody[E].function_timer = 0);
     };
     [11121033] MotherBrain_Phase3_Death_11 {
@@ -1987,14 +2115,14 @@ crate::dispatch::callback_dispatch! {
         slot!(game, MotherBrainBody[E].grey_transition = v2);
         if game.fade(Fade::RealDeathToGray, (v2).wrapping_sub(1)) & 1 != 0 {
             MotherBrain_SetBrainInstrs(animation::BRAIN_CORPSE, game);
-            slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_12);
+            slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_CORPSE_TIPS_OVER);
             slot!(game, MotherBrainBody[E].function_timer = 256);
         } else {
             slot!(game, MotherBrainBody[E].function_timer = 16);
         }
     };
     [11121080] MotherBrain_Phase3_Death_12 {
-        slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_13);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_CORPSE_ROTS_AWAY);
         let E1: i32 = 0x40;
         slot!(game, MotherBrainBrain[E1].base.properties = (slot!(game, MotherBrainBrain[E1].base.properties)) | (0x400u16));
         slot!(game, MotherBrainBody[E].hitboxes = 0);
@@ -2002,13 +2130,13 @@ crate::dispatch::callback_dispatch! {
     [11121169] MotherBrain_Phase3_Death_14_20framedelay {
         let E1: i32 = 0x40;
         slot! { game, MotherBrainBrain[E1].base; x_pos = 0, y_pos = 0 }
-        slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_15_LOAD_ESCAPE_TIMER_TILES);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_3_DEATH_LOAD_ESCAPE_TIMER_TILES);
     };
     [11122664] MotherBrain_FiringBomb_Fired {
         if MotherBrain_MakeHerStandUp(game) & 1 != 0 {
             MotherBrain_FiringBomb_Finish(game);
         } else {
-            slot!(game, MotherBrainBody[E].function = function::FIRING_BOMB_STANDUP);
+            slot!(game, MotherBrainBody[E].function = function::FIRING_BOMB_STAND_UP);
             MotherBrain_FiringBomb_Standup(game);
         }
     };
@@ -2020,23 +2148,23 @@ crate::dispatch::callback_dispatch! {
         }
         slot!(game, MotherBrainBrain[E1].neck_speed = v2 as u16);
         MotherBrain_SetBrainInstrs(animation::BRAIN_LASER, game);
-        slot!(game, MotherBrainBody[E].function = function::FIRING_LASER_FINISH_ATTACK);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_2_FIRING_LASER_FINISH_ATTACK);
         slot!(game, MotherBrainBody[E].function_timer = 16);
     };
     [11122787] MotherBomb_FiringLaser_FinishAttack {
         let E1: i32 = 0x40;
         slot! { game, MotherBrainBrain[E1]; lower_motion = 4, upper_motion = 4 }
-        slot!(game, MotherBrainBody[E].function = function::BODY_PHASE_2_THINKING);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_2_THINKING);
         MotherBrain_Body_Phase2_Thinking(game);
     };
     [11124137] MotherBrain_Phase2Cut_2 {
         MotherBrain_SetBrainInstrs(animation::BRAIN_STRETCHING_PHASE_2, game);
-        slot!(game, MotherBrainBody[E].function = function::PHASE_2_CUT_3);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_2_FINISH_SAMUS_OFF_CHARGE_FINAL_RAINBOW_BEAM);
         slot!(game, MotherBrainBody[E].function_timer = 256);
     };
     [11124161] MotherBrain_Phase2Cut_3 {
         MotherBrain_SetBrainInstrs(animation::BRAIN_CHARGING_RAINBOW_BEAM, game);
-        slot!(game, MotherBrainBody[E].function = function::PHASE_2_CUT_4);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_2_FINISH_SAMUS_OFF_CHARGE_FINAL_RAINBOW_BEAM_LOAD_SHITROID);
         MotherBrain_Phase2Cut_4(game);
     };
     [11124205] MotherBrain_Phase2Cut_5 {
@@ -2050,31 +2178,31 @@ crate::dispatch::callback_dispatch! {
     };
     [11124605] MotherBrain_DrainedByShitroid_6 {
         slot!(game, MotherBrainBody[E].grey_transition = 0);
-        slot!(game, MotherBrainBody[E].function = function::DRAINED_BY_SHITROID_7);
+        slot!(game, MotherBrainBody[E].function = function::DRAINED_BY_SHITROID_TRANSITION_TO_GREY);
         slot!(game, MotherBrainBody[E].function_timer = 16);
         MotherBrain_DrainedByShitroid_7(game);
     };
     [11124838] MotherBrain_Phase2_Revive_1 {
         let E1: i32 = 0x40;
         slot! { game, MotherBrainBrain[E1]; breath_enabled = 1, drool_enabled = 1 }
-        slot!(game, MotherBrainBody[E].function = function::PHASE_2_REVIVE_2);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_2_REVIVE_SELF_PREPARE_TRANSITION_FROM_GREY);
         slot!(game, MotherBrainBody[E].function_timer = 224);
         MotherBrain_Phase2_Revive_2(game);
     };
     [11124964] MotherBrain_Phase2_Revive_5 {
         MotherBrain_SetBrainInstrs(animation::BRAIN_STRETCHING_PHASE_3, game);
-        slot!(game, MotherBrainBody[E].function = function::PHASE_2_REVIVE_6);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_2_REVIVE_SELF_WALK_UP_TO_SHITROID);
         slot!(game, MotherBrainBody[E].function_timer = 128);
         MotherBrain_Phase2_Revive_6(game);
     };
     [11125122] MotherBrain_Phase2_MurderShitroid_2 {
-        slot!(game, MotherBrainBody[E].function = function::PHASE_2_MURDER_SHITROID_1);
+        slot!(game, MotherBrainBody[E].function = function::PHASE_2_MURDER_SHITROID_ATTACK_SHITROID);
     };
     [11125232] MotherBrain_Phase3_Recover_SetupForFight {
         slot!(game, MotherBrainBody[E].function = function::PHASE_3_FIGHTING_MAIN);
         let E1: i32 = 0x40;
         slot!(game, MotherBrainBrain[E1].neck_function = neck::NORMAL);
-        slot!(game, MotherBrainBrain[E1].walk_function = function::PHASE_3_WALK_TRY_TO_INCH_FORWARD);
+        slot!(game, MotherBrainBrain[E1].walk_function = function::WALK_TRY_TO_INCH_FORWARD);
         MotherBrain_Phase3_Fighting_Main(game);
     };
     [11125326] MotherBrain_Phase3_Fighting_Cooldown {
@@ -2550,7 +2678,8 @@ pub fn MotherBrain_Phase2_DecideAttackStrategy_DoubleRet(game: &mut impl Host) -
             if word!(game.random_number) as u8 as i32 - 128i32 & 0x8000 != 0 {
                 slot!(
                     game,
-                    MotherBrainBody[0i32].function = function::FIRING_LASER_POSITION_HEAD
+                    MotherBrainBody[0i32].function =
+                        function::PHASE_2_FIRING_LASER_POSITION_HEAD_QUICKLY
                 );
                 MotherBomb_FiringLaser_PositionHead(game);
             } else {
@@ -2583,16 +2712,16 @@ pub fn MotherBrain_B7CB(game: &mut impl Host) {
         MotherBrain_SetBrainInstrs(v0, game);
         slot!(
             game,
-            MotherBrainBody[E].function = function::FIRING_BOMB_FIRED
+            MotherBrainBody[E].function = function::FIRING_BOMB_FIRED_BOMB
         );
         slot!(game, MotherBrainBody[E].function_timer = 44);
     }
 }
 pub fn MotherBrain_FiringBomb_Finish(game: &mut impl Host) {
-    let mut v0: u16 = function::BODY_PHASE_2_THINKING;
+    let mut v0: u16 = function::PHASE_2_THINKING;
     let E: i32 = 0;
     if slot!(game, MotherBrainBody[E].corpse_state) != 0 {
-        v0 = function::PHASE_2_MURDER_SHITROID_1;
+        v0 = function::PHASE_2_MURDER_SHITROID_ATTACK_SHITROID;
     }
     slot!(game, MotherBrainBody[E].function = v0);
 }
@@ -2635,7 +2764,7 @@ pub fn MotherBomb_FiringDeathBeam_3(game: &mut impl Host) {
         slot!(game, MotherBrainBody[E].hand_beam_phase = 0);
         slot!(
             game,
-            MotherBrainBody[E].function = function::BODY_PHASE_2_THINKING
+            MotherBrainBody[E].function = function::PHASE_2_THINKING
         );
     }
 }
@@ -2787,7 +2916,7 @@ pub fn MotherBrain_SetToTryToInchForward(a: u16, game: &mut impl Host) {
     let E1: i32 = 0x40;
     slot!(
         game,
-        MotherBrainBrain[E1].walk_function = function::PHASE_3_WALK_TRY_TO_INCH_FORWARD
+        MotherBrainBrain[E1].walk_function = function::WALK_TRY_TO_INCH_FORWARD
     );
     slot!(
         game,
@@ -2893,7 +3022,7 @@ crate::dispatch::callback_dispatch! {
     MotherBrain_Phase3_Walk_RetreatQuickly [] {
         if MotherBrain_MakeWalkBackwards(slot!(game, MotherBrainBrain[E].target_x), 2, game) & 1 != 0 {
             slot!(game, MotherBrainBrain[E].target_x = (slot!(game, MotherBrainBody[0i32].base.x_pos)).wrapping_sub(14));
-            slot!(game, MotherBrainBrain[E].walk_function = function::PHASE_3_WALK_RETREAT_SLOWLY);
+            slot!(game, MotherBrainBrain[E].walk_function = function::WALK_RETREAT_SLOWLY);
         }
     };
     MotherBrain_Phase3_Walk_RetreatSlowly [] {
@@ -3174,7 +3303,7 @@ pub fn MotherBrainsBody_Init(game: &mut impl Host) {
     slot!(game, MotherBrainBody[E].hitboxes = 2);
     slot!(
         game,
-        MotherBrainBrain[E1].function = function::BRAIN_SETUP_BRAIN_TO_DRAW
+        MotherBrainBrain[E1].function = function::BRAIN_SET_UP_BRAIN_TO_BE_DRAWN
     );
     slot!(game, MotherBrainBody[E].function = function::FIRST_PHASE);
     LoadFxEntry(1, game);

@@ -37,31 +37,52 @@ pub trait Host: crate::actors::mother_brain_fight::Host {
     fn dead_torizo_contact(&mut self) -> bool;
 }
 
-/// The bank $A9 functions these slots run, by their dispatch names.
+/// The bank $A9 functions these slots run, named after the bank log's headings.
 pub mod function {
-    pub const DEAD_TORIZO_WAIT_FOR_SAMUS_COLLISION: u16 = 0xd3ad;
-    pub const DEAD_TORIZO_ROTTED: u16 = 0xd3c7;
-    pub const DEAD_TORIZO_PRE_ROT_DELAY: u16 = 0xd3c8;
-    pub const DEAD_TORIZO_ROTTING: u16 = 0xd3e6;
-    pub const DEAD_SIDEHOPPER_ALIVE_WAIT_FOR_ACTIVATE: u16 = 0xd8e2;
-    pub const DEAD_SIDEHOPPER_ACTIVATED: u16 = 0xd8f1;
-    pub const DEAD_SIDEHOPPER_HOPPING: u16 = 0xd90f;
+    /// $A9:D3AD: Torizo corpse function - wait for Samus collision.
+    pub const TORIZO_WAIT_FOR_SAMUS_COLLISION: u16 = 0xd3ad;
+    pub const TORIZO_ROTTED: u16 = 0xd3c7;
+    /// $A9:D3C8: Torizo corpse function - pre-rot delay.
+    pub const TORIZO_PRE_ROT_DELAY: u16 = 0xd3c8;
+    /// $A9:D3E6: Torizo corpse function - rotting.
+    pub const TORIZO_ROTTING: u16 = 0xd3e6;
+    /// $A9:D8E2: Sidehopper corpse function - alive - waiting for activation.
+    pub const SIDEHOPPER_ALIVE_WAITING_FOR_ACTIVATION: u16 = 0xd8e2;
+    /// $A9:D8F1: Sidehopper corpse function - hopping.
+    pub const SIDEHOPPER_HOPPING: u16 = 0xd8f1;
+    pub const SIDEHOPPER_HOPPING_IDLE: u16 = 0xd90f;
+    /// $A9:D910: Sidehopper corpse function - start idling.
     pub const SIDEHOPPER_START_IDLING: u16 = 0xd910;
+    /// $A9:D91D: Sidehopper corpse function - idling.
     pub const SIDEHOPPER_IDLING: u16 = 0xd91d;
+    /// $A9:DA08: Sidehopper corpse function - being drained.
     pub const SIDEHOPPER_BEING_DRAINED: u16 = 0xda08;
+    /// $A9:DA63: RTS.
     pub const CORPSE_ROTTED: u16 = 0xda63;
-    pub const DEAD_SIDEHOPPER_WAIT_FOR_SAMUS_COLL: u16 = 0xda64;
-    pub const DEAD_ZOOMER_WAIT_FOR_SAMUS_COLL: u16 = 0xda69;
-    pub const DEAD_SKREE_WAIT_FOR_SAMUS_COLL: u16 = 0xda6e;
-    pub const DEAD_RIPPER_WAIT_FOR_SAMUS_COLL: u16 = 0xda73;
-    pub const DEAD_SIDEHOPPER_PRE_ROT_DELAY: u16 = 0xda8f;
-    pub const DEAD_ZOOMER_PRE_ROT_DELAY: u16 = 0xda94;
-    pub const DEAD_RIPPER_PRE_ROT_DELAY: u16 = 0xda99;
-    pub const DEAD_SKREE_PRE_ROT_DELAY: u16 = 0xda9e;
-    pub const DEAD_SIDEHOPPER_ROTTING: u16 = 0xdaba;
-    pub const DEAD_ZOOMER_ROTTING: u16 = 0xdad0;
-    pub const DEAD_RIPPER_ROTTING: u16 = 0xdae6;
-    pub const DEAD_SKREE_ROTTING: u16 = 0xdafc;
+    /// $A9:DA64: Sidehopper corpse function - dead - wait for Samus collision.
+    pub const SIDEHOPPER_DEAD_WAIT_FOR_SAMUS_COLLISION: u16 = 0xda64;
+    /// $A9:DA69: Zoomer corpse function - wait for Samus collision.
+    pub const ZOOMER_WAIT_FOR_SAMUS_COLLISION: u16 = 0xda69;
+    /// $A9:DA6E: Skree corpse function - wait for Samus collision.
+    pub const SKREE_WAIT_FOR_SAMUS_COLLISION: u16 = 0xda6e;
+    /// $A9:DA73: Ripper corpse function - wait for Samus collision.
+    pub const RIPPER_WAIT_FOR_SAMUS_COLLISION: u16 = 0xda73;
+    /// $A9:DA8F: Sidehopper corpse function - pre-rot delay.
+    pub const SIDEHOPPER_PRE_ROT_DELAY: u16 = 0xda8f;
+    /// $A9:DA94: Zoomer corpse function - pre-rot delay.
+    pub const ZOOMER_PRE_ROT_DELAY: u16 = 0xda94;
+    /// $A9:DA99: Ripper corpse function - pre-rot delay.
+    pub const RIPPER_PRE_ROT_DELAY: u16 = 0xda99;
+    /// $A9:DA9E: Skree corpse function - pre-rot delay.
+    pub const SKREE_PRE_ROT_DELAY: u16 = 0xda9e;
+    /// $A9:DABA: Sidehopper corpse function - rotting.
+    pub const SIDEHOPPER_ROTTING: u16 = 0xdaba;
+    /// $A9:DAD0: Zoomer corpse function - rotting.
+    pub const ZOOMER_ROTTING: u16 = 0xdad0;
+    /// $A9:DAE6: Ripper corpse function - rotting.
+    pub const RIPPER_ROTTING: u16 = 0xdae6;
+    /// $A9:DAFC: Skree corpse function - rotting.
+    pub const SKREE_ROTTING: u16 = 0xdafc;
 }
 
 // Each named function is the one its dispatch entry runs.
@@ -70,29 +91,29 @@ const _: () = {
     const fn at(word: u16) -> u32 {
         0xa9_0000 | word as u32
     }
-    assert!(at(f::DEAD_TORIZO_WAIT_FOR_SAMUS_COLLISION) == 11129773);
-    assert!(at(f::DEAD_TORIZO_ROTTED) == 11129799);
-    assert!(at(f::DEAD_TORIZO_PRE_ROT_DELAY) == 11129800);
-    assert!(at(f::DEAD_TORIZO_ROTTING) == 11129830);
-    assert!(at(f::DEAD_SIDEHOPPER_ALIVE_WAIT_FOR_ACTIVATE) == 11131106);
-    assert!(at(f::DEAD_SIDEHOPPER_ACTIVATED) == 11131121);
-    assert!(at(f::DEAD_SIDEHOPPER_HOPPING) == 11131151);
+    assert!(at(f::TORIZO_WAIT_FOR_SAMUS_COLLISION) == 11129773);
+    assert!(at(f::TORIZO_ROTTED) == 11129799);
+    assert!(at(f::TORIZO_PRE_ROT_DELAY) == 11129800);
+    assert!(at(f::TORIZO_ROTTING) == 11129830);
+    assert!(at(f::SIDEHOPPER_ALIVE_WAITING_FOR_ACTIVATION) == 11131106);
+    assert!(at(f::SIDEHOPPER_HOPPING) == 11131121);
+    assert!(at(f::SIDEHOPPER_HOPPING_IDLE) == 11131151);
     assert!(at(f::SIDEHOPPER_START_IDLING) == 11131152);
     assert!(at(f::SIDEHOPPER_IDLING) == 11131165);
     assert!(at(f::SIDEHOPPER_BEING_DRAINED) == 11131400);
     assert!(at(f::CORPSE_ROTTED) == 11131491);
-    assert!(at(f::DEAD_SIDEHOPPER_WAIT_FOR_SAMUS_COLL) == 11131492);
-    assert!(at(f::DEAD_ZOOMER_WAIT_FOR_SAMUS_COLL) == 11131497);
-    assert!(at(f::DEAD_SKREE_WAIT_FOR_SAMUS_COLL) == 11131502);
-    assert!(at(f::DEAD_RIPPER_WAIT_FOR_SAMUS_COLL) == 11131507);
-    assert!(at(f::DEAD_SIDEHOPPER_PRE_ROT_DELAY) == 11131535);
-    assert!(at(f::DEAD_ZOOMER_PRE_ROT_DELAY) == 11131540);
-    assert!(at(f::DEAD_RIPPER_PRE_ROT_DELAY) == 11131545);
-    assert!(at(f::DEAD_SKREE_PRE_ROT_DELAY) == 11131550);
-    assert!(at(f::DEAD_SIDEHOPPER_ROTTING) == 11131578);
-    assert!(at(f::DEAD_ZOOMER_ROTTING) == 11131600);
-    assert!(at(f::DEAD_RIPPER_ROTTING) == 11131622);
-    assert!(at(f::DEAD_SKREE_ROTTING) == 11131644);
+    assert!(at(f::SIDEHOPPER_DEAD_WAIT_FOR_SAMUS_COLLISION) == 11131492);
+    assert!(at(f::ZOOMER_WAIT_FOR_SAMUS_COLLISION) == 11131497);
+    assert!(at(f::SKREE_WAIT_FOR_SAMUS_COLLISION) == 11131502);
+    assert!(at(f::RIPPER_WAIT_FOR_SAMUS_COLLISION) == 11131507);
+    assert!(at(f::SIDEHOPPER_PRE_ROT_DELAY) == 11131535);
+    assert!(at(f::ZOOMER_PRE_ROT_DELAY) == 11131540);
+    assert!(at(f::RIPPER_PRE_ROT_DELAY) == 11131545);
+    assert!(at(f::SKREE_PRE_ROT_DELAY) == 11131550);
+    assert!(at(f::SIDEHOPPER_ROTTING) == 11131578);
+    assert!(at(f::ZOOMER_ROTTING) == 11131600);
+    assert!(at(f::RIPPER_ROTTING) == 11131622);
+    assert!(at(f::SKREE_ROTTING) == 11131644);
 };
 
 part_view! {
@@ -428,7 +449,7 @@ crate::dispatch::callback_dispatch! {
         slot!(game, DeadTorizo[E].pre_rot_delay = v1);
         if v1 >= 0x10 {
             slot!(game, DeadTorizo[E].base.properties = (slot!(game, DeadTorizo[E].base.properties)) | ((kEnemyProps_Tangible) as u16));
-            slot!(game, DeadTorizo[E].function = function::DEAD_TORIZO_ROTTING);
+            slot!(game, DeadTorizo[E].function = function::TORIZO_ROTTING);
             DeadTorizo_Rotting(game);
         }
     };
@@ -447,7 +468,7 @@ crate::dispatch::callback_dispatch! {
         slot!(game, DeadTorizo[E].y_velocity = slot!(game, DeadTorizo[E].y_velocity).wrapping_add(1));
         MoveEnemyWithVelocity(game);
         if ProcessCorpseRotting(0, game) & 1 == 0 {
-            slot!(game, DeadTorizo[E].function = function::DEAD_TORIZO_ROTTED);
+            slot!(game, DeadTorizo[E].function = function::TORIZO_ROTTED);
         }
     };
     @external {
@@ -470,7 +491,7 @@ pub fn DeadTorizo_WaitForSamusColl(k: u16, game: &mut impl Host) {
     {
         slot!(
             game,
-            DeadTorizo[0i32].function = function::DEAD_TORIZO_PRE_ROT_DELAY
+            DeadTorizo[0i32].function = function::TORIZO_PRE_ROT_DELAY
         );
     }
 }
@@ -568,7 +589,7 @@ pub fn DeadSidehopper_Init_0(game: &mut impl Host) {
     slot!(game, Corpse[E].base.y_pos = 184);
     slot!(
         game,
-        Corpse[E].function = function::DEAD_SIDEHOPPER_ALIVE_WAIT_FOR_ACTIVATE
+        Corpse[E].function = function::SIDEHOPPER_ALIVE_WAITING_FOR_ACTIVATION
     );
     slot!(game, Corpse[E].base.palette_index = 512);
     slot!(game, Corpse[E].base.y_height = 21);
@@ -584,7 +605,7 @@ pub fn DeadSidehopper_Init_1(game: &mut impl Host) {
     slot!(game, Corpse[E].drained_palette_index = -1i32 as u16);
     slot!(
         game,
-        Corpse[E].function = function::DEAD_SIDEHOPPER_WAIT_FOR_SAMUS_COLL
+        Corpse[E].function = function::SIDEHOPPER_DEAD_WAIT_FOR_SAMUS_COLLISION
     );
     slot!(game, Corpse[E].base.palette_index = 3584);
     Enemy_SetInstrList(
@@ -622,7 +643,7 @@ crate::dispatch::callback_dispatch! {
     @functions [pub fn (k: u16, game: &mut impl Host)];
     [11131106] DeadSidehopper_Alive_WaitForActivate [] {
         if word!(game.layer1_x_pos) as i32 - 513i32 & 0x8000 != 0 {
-            slot!(game, Corpse[k as i32].function = function::DEAD_SIDEHOPPER_ACTIVATED);
+            slot!(game, Corpse[k as i32].function = function::SIDEHOPPER_HOPPING);
             DeadSidehopper_Activated(k, game);
         }
     };
@@ -631,7 +652,7 @@ crate::dispatch::callback_dispatch! {
             let E: i32 = k as i32;
             slot!(game, Corpse[E].hop = (slot!(game, Corpse[E].hop) as i32 + 1 & 3) as u16);
             Enemy_SetInstrList(k, addr_kDeadMonsters_Ilist_ECAC as u16, game);
-            slot!(game, Corpse[E].function = function::DEAD_SIDEHOPPER_HOPPING);
+            slot!(game, Corpse[E].function = function::SIDEHOPPER_HOPPING_IDLE);
         }
     };
     [11131152] DeadMonsters_Func_1 [] {
@@ -646,7 +667,7 @@ crate::dispatch::callback_dispatch! {
             if slot!(game, Corpse[E].drained_palette_index) != 0 {
                 slot!(game, Corpse[E].function = function::SIDEHOPPER_BEING_DRAINED);
             } else {
-                slot!(game, Corpse[E].function = function::DEAD_SIDEHOPPER_ACTIVATED);
+                slot!(game, Corpse[E].function = function::SIDEHOPPER_HOPPING);
                 Enemy_SetInstrList(k, addr_kDeadMonsters_Ilist_ECE3 as u16, game);
                 let v3: i32 = slot!(game, Corpse[E].hop) as i32;
                 let hop = corpse_tables::hop(game, v3 as isize);
@@ -673,7 +694,7 @@ crate::dispatch::callback_dispatch! {
             slot!(game, Corpse[E].drained_palette_index = v5);
             if v5 >= 8 {
                 Enemy_SetInstrList(v3, addr_kDeadMonsters_Ilist_ECE9 as u16, game);
-                slot!(game, Corpse[E].function = function::DEAD_SIDEHOPPER_WAIT_FOR_SAMUS_COLL);
+                slot!(game, Corpse[E].function = function::SIDEHOPPER_DEAD_WAIT_FOR_SAMUS_COLLISION);
                 slot!(game, Corpse[E].base.properties = (slot!(game, Corpse[E].base.properties)) | (0x8000u16));
                 slot!(game, Corpse[E].base.y_height = 12);
             }
@@ -683,7 +704,7 @@ crate::dispatch::callback_dispatch! {
     [11131578] DeadSidehopper_Rotting [] {
         let v1: u8 = ProcessCorpseRotting(k, game);
         if v1 & 1 == 0 {
-            slot!(game, Corpse[word!(game.cur_enemy_index) as i32].function = function::DEAD_SIDEHOPPER_WAIT_FOR_SAMUS_COLL);
+            slot!(game, Corpse[word!(game.cur_enemy_index) as i32].function = function::SIDEHOPPER_DEAD_WAIT_FOR_SAMUS_COLLISION);
         }
         let vram_transfers: u16 = slot!(game, Corpse[word!(game.cur_enemy_index) as i32].vram_transfers);
         ProcessCorpseRottingVramTransfers(vram_transfers, game);
@@ -698,22 +719,22 @@ crate::dispatch::callback_dispatch! {
     };
     @forward [pub fn (k: u16, game: &mut impl Host)];
     [11131492]
-    DeadSidehopper_WaitForSamusColl => DeadMonsters_WaitForSamusColl(k, function::DEAD_SIDEHOPPER_PRE_ROT_DELAY, game);
+    DeadSidehopper_WaitForSamusColl => DeadMonsters_WaitForSamusColl(k, function::SIDEHOPPER_PRE_ROT_DELAY, game);
     [11131497]
-    DeadZoomer_WaitForSamusColl => DeadMonsters_WaitForSamusColl(k, function::DEAD_ZOOMER_PRE_ROT_DELAY, game);
+    DeadZoomer_WaitForSamusColl => DeadMonsters_WaitForSamusColl(k, function::ZOOMER_PRE_ROT_DELAY, game);
     [11131502]
-    DeadSkree_WaitForSamusColl => DeadMonsters_WaitForSamusColl(k, function::DEAD_SKREE_PRE_ROT_DELAY, game);
+    DeadSkree_WaitForSamusColl => DeadMonsters_WaitForSamusColl(k, function::SKREE_PRE_ROT_DELAY, game);
     [11131507]
-    DeadRipper_WaitForSamusColl => DeadMonsters_WaitForSamusColl(k, function::DEAD_RIPPER_PRE_ROT_DELAY, game);
+    DeadRipper_WaitForSamusColl => DeadMonsters_WaitForSamusColl(k, function::RIPPER_PRE_ROT_DELAY, game);
     @forward [pub fn (k: u16, game: &mut impl Host)];
     [11131535]
-    DeadSidehopper_PreRotDelay => DeadMonsters_PreRotDelay_Common(k, function::DEAD_SIDEHOPPER_ROTTING, game);
+    DeadSidehopper_PreRotDelay => DeadMonsters_PreRotDelay_Common(k, function::SIDEHOPPER_ROTTING, game);
     [11131540]
-    DeadZoomer_PreRotDelay => DeadMonsters_PreRotDelay_Common(k, function::DEAD_ZOOMER_ROTTING, game);
+    DeadZoomer_PreRotDelay => DeadMonsters_PreRotDelay_Common(k, function::ZOOMER_ROTTING, game);
     [11131545]
-    DeadRipper_PreRotDelay => DeadMonsters_PreRotDelay_Common(k, function::DEAD_RIPPER_ROTTING, game);
+    DeadRipper_PreRotDelay => DeadMonsters_PreRotDelay_Common(k, function::RIPPER_ROTTING, game);
     [11131550]
-    DeadSkree_PreRotDelay => DeadMonsters_PreRotDelay_Common(k, function::DEAD_SKREE_ROTTING, game);
+    DeadSkree_PreRotDelay => DeadMonsters_PreRotDelay_Common(k, function::SKREE_ROTTING, game);
     @external {
         11131644 => DeadSkree_Rotting; 11131622 => DeadRipper_Rotting;
         11131151 => [()]; 11131491 => [()];
@@ -931,7 +952,7 @@ pub fn ProcessCorpseRottingVramTransfers(k: u16, game: &mut impl Host) {
 }
 pub fn DeadSidehopper_DD31(game: &mut impl Host) {
     {
-        DeadSidehopper_DD34(function::DEAD_SIDEHOPPER_ROTTING, game);
+        DeadSidehopper_DD34(function::SIDEHOPPER_ROTTING, game);
     }
 }
 pub fn DeadSidehopper_DD34(a: u16, game: &mut impl Host) {
@@ -1013,7 +1034,7 @@ pub fn DeadTorizo_Init(game: &mut impl Host) {
     let E: i32 = 0;
     slot!(
         game,
-        DeadTorizo[E].function = function::DEAD_TORIZO_WAIT_FOR_SAMUS_COLLISION
+        DeadTorizo[E].function = function::TORIZO_WAIT_FOR_SAMUS_COLLISION
     );
     slot!(
         game,
@@ -1035,7 +1056,7 @@ pub fn DeadTorizo_Main(game: &mut impl Host) {
             DeadTorizo[E].base.properties =
                 (slot!(game, DeadTorizo[E].base.properties)) | ((kEnemyProps_Tangible) as u16)
         );
-        slot!(game, DeadTorizo[E].function = function::DEAD_TORIZO_ROTTING);
+        slot!(game, DeadTorizo[E].function = function::TORIZO_ROTTING);
     }
     set_graphics_drawn_hook(DRAW_DEAD_TORIZO_HOOK, game);
     CallDeadTorizoFuncA(
@@ -1056,7 +1077,7 @@ pub fn DeadTorizo_Shot(game: &mut impl Host) {
         DeadTorizo[E].base.properties =
             (slot!(game, DeadTorizo[E].base.properties)) | ((kEnemyProps_Tangible) as u16)
     );
-    slot!(game, DeadTorizo[E].function = function::DEAD_TORIZO_ROTTING);
+    slot!(game, DeadTorizo[E].function = function::TORIZO_ROTTING);
 }
 pub fn DeadSidehopper_Init(game: &mut impl Host) {
     let dsr_parameter_1: u16 = slot!(game, Corpse[word!(game.cur_enemy_index) as i32].parameter_1);
@@ -1073,7 +1094,7 @@ pub fn DeadZoomer_Init(game: &mut impl Host) {
     let v1: i32 = word!(game.cur_enemy_index) as i32;
     initialize_rotting_enemy_corpse!(
         v1,
-        function::DEAD_ZOOMER_WAIT_FOR_SAMUS_COLL,
+        function::ZOOMER_WAIT_FOR_SAMUS_COLLISION,
         game,
         corpse_tables::Corpse::Zoomer
     );
@@ -1082,7 +1103,7 @@ pub fn DeadRipper_Init(game: &mut impl Host) {
     let v1: i32 = word!(game.cur_enemy_index) as i32;
     initialize_rotting_enemy_corpse!(
         v1,
-        function::DEAD_RIPPER_WAIT_FOR_SAMUS_COLL,
+        function::RIPPER_WAIT_FOR_SAMUS_COLLISION,
         game,
         corpse_tables::Corpse::Ripper
     );
@@ -1091,7 +1112,7 @@ pub fn DeadSkree_Init(game: &mut impl Host) {
     let v1: i32 = word!(game.cur_enemy_index) as i32;
     initialize_rotting_enemy_corpse!(
         v1,
-        function::DEAD_SKREE_WAIT_FOR_SAMUS_COLL,
+        function::SKREE_WAIT_FOR_SAMUS_COLLISION,
         game,
         corpse_tables::Corpse::Skree
     );
@@ -1127,7 +1148,7 @@ pub fn DeadZoomer_Powerbomb(game: &mut impl Host) {
     }
 }
 pub fn DeadZoomer_Shot(game: &mut impl Host) {
-    DeadSidehopper_DD34(function::DEAD_ZOOMER_ROTTING, game);
+    DeadSidehopper_DD34(function::ZOOMER_ROTTING, game);
 }
 pub fn DeadRipper_Powerbomb(game: &mut impl Host) {
     if (slot!(
@@ -1141,7 +1162,7 @@ pub fn DeadRipper_Powerbomb(game: &mut impl Host) {
     }
 }
 pub fn DeadRipper_Shot(game: &mut impl Host) {
-    DeadSidehopper_DD34(function::DEAD_RIPPER_ROTTING, game);
+    DeadSidehopper_DD34(function::RIPPER_ROTTING, game);
 }
 pub fn DeadSkree_Powerbomb(game: &mut impl Host) {
     if (slot!(
@@ -1155,7 +1176,7 @@ pub fn DeadSkree_Powerbomb(game: &mut impl Host) {
     }
 }
 pub fn DeadSkree_Shot(game: &mut impl Host) {
-    DeadSidehopper_DD34(function::DEAD_SKREE_ROTTING, game);
+    DeadSidehopper_DD34(function::SKREE_ROTTING, game);
 }
 pub fn DeadSidehopper_Shot(game: &mut impl Host) {
     let E: i32 = word!(game.cur_enemy_index) as i32;

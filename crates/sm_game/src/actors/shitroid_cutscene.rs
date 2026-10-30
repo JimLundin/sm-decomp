@@ -43,7 +43,7 @@ pub trait Host: crate::actors::shitroid_encounter::Host {
     fn heal_by_shitroid(&mut self) -> bool;
 }
 
-/// The bank $A9 functions these slots run, by their dispatch names.
+/// The bank $A9 functions these slots run, named after the bank log's headings.
 pub mod function {
     /// $A9:BE38: Mother Brain body function - drained by Shitroid - taken aback by Shitroid.
     pub const MOTHER_BRAIN_DRAINED_BY_SHITROID_TAKEN_ABACK: u16 = 0xbe38;

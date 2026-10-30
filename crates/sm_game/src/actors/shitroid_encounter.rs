@@ -28,7 +28,7 @@ use crate::ram::{slot, word};
 use crate::word_transfers;
 
 /// What the Shitroid reaches beyond Mother Brain's fight and its own helpers.
-/// The bank $A9 functions these slots run, by their dispatch names.
+/// The bank $A9 functions these slots run, named after the bank log's headings.
 pub mod function {
     /// $A9:EFDF: Shitroid function - disappeared.
     pub const DISAPPEARED: u16 = 0xefdf;
