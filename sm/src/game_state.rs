@@ -2692,6 +2692,9 @@ impl sm_game::ram::RawRam for WorkRam {
     fn copy_in(&self, at: usize, input: &[u8]) {
         WorkRam::copy_in(self, at, input)
     }
+    fn copy_out(&self, at: usize, out: &mut [u8]) {
+        WorkRam::copy_out(self, at, out)
+    }
     fn fill(&self, range: core::ops::Range<usize>, value: u8) {
         WorkRam::fill(self, range, value)
     }

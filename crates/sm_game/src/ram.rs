@@ -14,6 +14,7 @@ pub trait RawRam {
     fn read_byte(&self, at: usize) -> u8;
     fn write_byte(&self, at: usize, value: u8);
     fn copy_in(&self, at: usize, input: &[u8]);
+    fn copy_out(&self, at: usize, out: &mut [u8]);
     fn fill(&self, range: core::ops::Range<usize>, value: u8);
 }
 

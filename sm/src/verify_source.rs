@@ -270,6 +270,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/ram.rs"),
     ),
     (
+        "crates/sm_game/src/menus/pause_controls.rs",
+        include_bytes!("../../crates/sm_game/src/menus/pause_controls.rs"),
+    ),
+    (
         "crates/sm_game/src/decompression.rs",
         include_bytes!("../../crates/sm_game/src/decompression.rs"),
     ),

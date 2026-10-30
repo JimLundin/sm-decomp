@@ -417,8 +417,8 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                         display_refresh::upload_pause_map(game);
                     }
                 }),
-                4 => pause_controls::fade_tab::<true>(game),
-                _ => pause_controls::fade_tab::<false>(game),
+                4 => pause_controls::fade_tab::<true, _>(game),
+                _ => pause_controls::fade_tab::<false, _>(game),
             }
             crate::game::hud::advance(game);
             crate::game::map_menu::animate_palette(game);

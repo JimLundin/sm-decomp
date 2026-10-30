@@ -88,6 +88,15 @@ impl MenuRuntime for Game {
             ArrivalRequest::Start(StartSite::CurrentLoadStation),
         );
     }
+    fn queue_fx_clear(&mut self) {
+        crate::game::display_refresh::queue_fx_clear(self)
+    }
+    fn player_command(&mut self, command: u16) -> u16 {
+        crate::game::session_runtime::player_command(command, self)
+    }
+    fn update_beam_tiles_and_palette(&mut self) {
+        crate::game::visual_runtime::update_beam_tiles_and_palette(self)
+    }
     fn request_reset(&mut self) {
         Game::request_reset(self)
     }

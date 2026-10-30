@@ -38,6 +38,10 @@ pub trait MenuRuntime {
     /// Begin entering the room at the current load station.
     fn enter_load_station(&mut self);
     fn request_reset(&mut self);
+    fn queue_fx_clear(&mut self);
+    /// Run Samus's pose command `command`; returns the original's result.
+    fn player_command(&mut self, command: u16) -> u16;
+    fn update_beam_tiles_and_palette(&mut self);
     fn flush_sram(&mut self);
     fn invalid_window(&mut self, address: u32);
     /// The original's failed drawing or bounds assertion.
