@@ -13,7 +13,6 @@ pub(crate) mod escape_critters;
 pub(in crate::game) mod fireflea;
 pub(crate) mod identity;
 pub(in crate::game) mod maridia_snail;
-pub(crate) mod metroid;
 #[cfg(sm_verify_dll)]
 #[path = "../../verification/actor_movement_candidate.rs"]
 pub(crate) mod movement_verification;

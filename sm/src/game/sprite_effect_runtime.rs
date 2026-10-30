@@ -13,8 +13,8 @@ use {
         sprite_effect_controllers as controllers,
         sprite_effect_host::{self, SpriteMember},
         sprite_effect_state::{
-            LegacySpriteDefinition, LegacySpriteHandle, LegacySpriteProgram, LegacySpriteWordIndex,
-            SpriteDraw, SpriteSpawn,
+            LegacySpriteDefinition, LegacySpriteHandle, LegacySpriteWordIndex, SpriteDraw,
+            SpriteSpawn,
         },
         sprite_objects,
     },
@@ -150,32 +150,6 @@ pub(crate) fn retire_all(game: &mut Game) {
 }
 pub(crate) fn retire(handle: u16, game: &mut Game) {
     controllers::retire(&mut Runtime::new(game), LegacySpriteHandle(handle));
-}
-pub(crate) fn retire_native(handle: u16, game: &mut Game) {
-    controllers::retire_native(&mut Runtime::new(game), LegacySpriteHandle(handle));
-}
-pub(crate) fn freeze_attachment(handle: u16, appearance: u16, program: u16, game: &mut Game) {
-    controllers::freeze_attachment(
-        &mut Runtime::new(game),
-        LegacySpriteHandle(handle),
-        appearance,
-        LegacySpriteProgram(program),
-    );
-}
-pub(crate) fn attach_actor(handle: u16, enemy: u16, appearance: u16, game: &mut Game) {
-    controllers::attach_actor(
-        &mut Runtime::new(game),
-        LegacySpriteHandle(handle),
-        enemy,
-        appearance,
-    );
-}
-pub(crate) fn flash_attachment(handle: u16, appearance: u16, game: &mut Game) {
-    controllers::flash_attachment(
-        &mut Runtime::new(game),
-        LegacySpriteHandle(handle),
-        appearance,
-    );
 }
 pub(crate) fn maw_appearance(handle: u16, appearance: u16, enemy: u16, game: &mut Game) {
     controllers::maw_appearance(

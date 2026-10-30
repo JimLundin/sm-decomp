@@ -98,6 +98,13 @@ pub trait BossEffects:
 {
     /// Create a sprite object of `kind` at (`x`, `y`); its handle.
     fn create_sprite(&mut self, x: u16, y: u16, kind: u16, appearance: u16) -> u16;
+    /// Freeze, flash, attach to an enemy and natively retire sprite object `handle`, and
+    /// scatter a killed metroid's drops by its shell's handle.
+    fn freeze_sprite_attachment(&mut self, handle: u16, appearance: u16, program: u16);
+    fn flash_sprite_attachment(&mut self, handle: u16, appearance: u16);
+    fn attach_sprite(&mut self, handle: u16, enemy: u16, appearance: u16);
+    fn retire_sprite_natively(&mut self, handle: u16);
+    fn scatter_metroid_drop(&mut self, handle: u16);
     /// Where the next enemy projectile spawns.
     fn set_projectile_spawn_point(&mut self, x: u16, y: u16);
     /// Store each (at, value) word natively, in order, through one session lease.

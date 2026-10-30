@@ -20,6 +20,8 @@ use sm_game::actors::host::BossEffects;
 use sm_game::enemy_projectiles::drops::DropSource;
 use sm_game::gameplay_flag_host::BossWordOrder;
 use sm_game::geometry::Vector32;
+use sm_game::sprite_effect_controllers as controllers;
+use sm_game::sprite_effect_state::{LegacySpriteHandle as Handle, LegacySpriteProgram};
 
 const _: () = assert!(
     offset_of!(EnemyDef, hurt_ai_time) == ENEMY_DEF_HURT_AI_TIME
@@ -96,6 +98,27 @@ impl Host for Game {
 impl BossEffects for Game {
     fn create_sprite(&mut self, x: u16, y: u16, kind: u16, appearance: u16) -> u16 {
         sprites::create_sprite(x, y, kind, appearance, self)
+    }
+
+    fn freeze_sprite_attachment(&mut self, handle: u16, appearance: u16, program: u16) {
+        let (handle, program) = (Handle(handle), LegacySpriteProgram(program));
+        controllers::freeze_attachment(&mut Runtime::new(self), handle, appearance, program);
+    }
+
+    fn flash_sprite_attachment(&mut self, handle: u16, appearance: u16) {
+        controllers::flash_attachment(&mut Runtime::new(self), Handle(handle), appearance);
+    }
+
+    fn attach_sprite(&mut self, handle: u16, enemy: u16, appearance: u16) {
+        controllers::attach_actor(&mut Runtime::new(self), Handle(handle), enemy, appearance);
+    }
+
+    fn retire_sprite_natively(&mut self, handle: u16) {
+        controllers::retire_native(&mut Runtime::new(self), Handle(handle));
+    }
+
+    fn scatter_metroid_drop(&mut self, handle: u16) {
+        scatter_drop(DropSource::Metroid, handle, self);
     }
 
     fn set_projectile_spawn_point(&mut self, x: u16, y: u16) {

@@ -10,7 +10,7 @@
 #![forbid(unsafe_code)]
 use crate::actors::host::{ActorHost, ActorRuntime, Death, LeaseActors, Shot};
 use crate::actors::{
-    alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, brinstar_pipe_bug, ceres_doors, ceres_ridley, coven, crawlers, crocomire_reactions, dachora_run, draygon_death, draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, etecoon, evir, fire_arc, fireflea, fune, kago, kraid, magdollite, mini_kraid, mochtroid, morph_ball_eye, norfair_pipe_bug, phantoon, phantoon_actions, reflec, ridley, roach, shaktool, sidehopper, skree, skultera, space_pirates, statues, torizo, tripper, yapping_maw, yellow_pipe_bug, zebetites, zoa,
+    alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, brinstar_pipe_bug, ceres_doors, ceres_ridley, coven, crawlers, crocomire_reactions, dachora_run, draygon_death, draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, etecoon, evir, fire_arc, fireflea, fune, kago, kraid, magdollite, metroid, mini_kraid, mochtroid, morph_ball_eye, norfair_pipe_bug, phantoon, phantoon_actions, reflec, ridley, roach, shaktool, sidehopper, skree, skultera, space_pirates, statues, torizo, tripper, yapping_maw, yellow_pipe_bug, zebetites, zoa,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -526,6 +526,13 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10738643 => reflec::initialize(game),
         10723661 => roach::initialize(game),
         10724048 => roach::main_ai(game),
+        10742351 => metroid::initialize(game),
+        10742502 => metroid::frozen(game),
+        10742579 => metroid::hurt(game),
+        10742680 => metroid::main_ai(game),
+        10743275 => metroid::touch(game),
+        10743559 => metroid::shot(game),
+        10743874 => metroid::power_bomb(game),
         10726153 => sidehopper::initialize(game),
         10726351 => sidehopper::main_ai(game),
         10728522 => zoa::initialize(game),
@@ -754,6 +761,8 @@ pub fn instruction<H: InstructionHost>(
         10722411 | 10722433 => tripper::set_x_movement(false, j, game),
         10722422 | 10722444 => tripper::set_x_movement(true, j, game),
         10725992 => sidehopper::queue_sound(j, game),
+        10742437 => metroid::draining_sound(j, game),
+        10742449 => metroid::random_cry(j, game),
         11044751 | 11044763 | 11044790 | 11044811 => evir::instruction(ea, j, game),
         10726142 => sidehopper::ready_to_hop(j, game),
         10728489 => zoa::set_x_speed_index(4, j, game),

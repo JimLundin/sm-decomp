@@ -1,5 +1,5 @@
 //! One aggregate authority for player, projectiles, mechanisms and their room.
-use crate::game::actors::{bang, maridia_snail, metroid, reflec};
+use crate::game::actors::{bang, maridia_snail, reflec};
 use crate::game::enemy_speeds::SpeedTable;
 use crate::{
     game_state::Game,
@@ -1174,10 +1174,6 @@ crate::game::callback_dispatch! {
         10735074 => maridia_snail::initialize;
         10735204 => [{ let phase = maridia_snail::prepare(game); actor_species_pre_instruction(phase, game); }];
         10736560 => maridia_snail::touch; 10736745 => maridia_snail::shot;
-        10742351 => metroid::initialize; 10742502 => metroid::frozen;
-        10742579 => metroid::hurt; 10742680 => metroid::advance;
-        10743275 => metroid::touch; 10743559 => metroid::shot;
-        10743874 => metroid::power_bomb;
 
 
 
@@ -1468,7 +1464,6 @@ crate::game::callback_dispatch! {
         10734664 => [maridia_snail::instruction(k, 2, j, game)];
         10734687 => [maridia_snail::instruction(k, 3, j, game)];
         10734712 => [maridia_snail::instruction(k, 4, j, game)];
-        10742437 => [metroid::sound(false, j, game)]; 10742449 => [metroid::sound(true, j, game)];
         11056990 => [j];
         11068957 | 11068970 => [crate::game::actors::wrecked_ship_spark::instruction(ea == 11068957, j, game)];
         11062537 | 11062692 | 11062762 | 11062917 | 11062987 | 11062991 | 11063146 | 11063216 | 11063371 | 11063441 | 11063490 | 11063494 | 11063506 | 11063552 | 11063559 | 11063601 | 11063613 | 11063659 => [crate::game::actors::wrecked_ship_robots::instruction(ea, k, j, game)];
