@@ -2,12 +2,12 @@
 #![forbid(unsafe_code)]
 use super::access::{enemy, enemy_byte};
 use super::host::{EnemyMember as F, Host, NativeRecord};
-use crate::game::constants::{bank_86::*, bank_a0::*};
-use sm_game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
-use sm_game::enemy_script::EnemyScript;
-use sm_game::geometry::Point;
-use sm_game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
-use sm_game::{
+use crate::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
+use crate::constants::{bank_86::*, bank_a0::*};
+use crate::enemy_script::EnemyScript;
+use crate::geometry::Point;
+use crate::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
+use crate::{
     sprite_effect_state::{LegacySpriteDefinition, SpriteSpawn},
     sprite_objects,
 };
@@ -85,7 +85,7 @@ fn set_velocity_toward(h: &mut impl Host, k: u16, angle: u16) {
         velocity_y = (4 * i32::from(kSinCosTable8bit_Sext[usize::from(angle)])) as u16
     );
 }
-pub(super) fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> EnemyScript {
+pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> EnemyScript {
     let slot = (k >> 1) as isize;
     let result = match ea {
         8814932 => {

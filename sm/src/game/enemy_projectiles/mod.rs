@@ -1,7 +1,6 @@
 pub(in crate::game) use access::{set_shot_direction, shot_word};
 use sm_game::enemy_projectiles::access;
 mod actor_runtime;
-pub(crate) use sm_game::enemy_projectiles::coordinates;
 mod effects_runtime;
 mod graphics_runtime;
 pub(crate) use sm_game::enemy_projectiles::host;
@@ -15,37 +14,27 @@ use sm_game::enemy_projectiles::attachments_spore_maw;
 mod attachments_spore_maw_facade;
 use sm_game::enemy_projectiles::attachments_waffle_botwoon;
 mod attachments_waffle_botwoon_facade;
+pub(crate) use drops::reset_room_metadata as reset_room_metadata_owned;
 use sm_game::enemy_projectiles::collision;
-mod commands;
+use sm_game::enemy_projectiles::commands;
 use sm_game::enemy_projectiles::contact;
 use sm_game::enemy_projectiles::content;
-mod drops;
-pub(crate) use drops::reset_room_metadata as reset_room_metadata_owned;
+use sm_game::enemy_projectiles::drops;
 mod legacy;
-pub(in crate::game) mod lifecycle;
-mod pre_actions;
-mod pre_helpers;
-pub(in crate::game) use sm_game::enemy_projectiles::presentation;
-mod setup;
-mod setup_helpers;
-mod shared;
-mod shared_pre;
-use crate::game::constants::{bank_86::*, bank_a0::*};
 use crate::game_state::Game;
 pub(crate) use attachments_spore_maw_facade::*;
 pub(crate) use attachments_waffle_botwoon_facade::{
     advance_botwoon_history, advance_waffle_orbit, follow_botwoon_history, orient_botwoon_body,
     record_botwoon_head,
 };
-use collision::*;
 pub use drops::DropSource;
-use drops::collect as collect_drop;
 pub use presentation::Priority as EprojPriority;
-use setup::*;
-use shared::*;
-use shared_pre::*;
-use sm_game::enemy_projectiles::tables;
-use tables::*;
+pub(in crate::game) use sm_game::enemy_projectiles::lifecycle;
+use sm_game::enemy_projectiles::pre_actions;
+pub(in crate::game) use sm_game::enemy_projectiles::presentation;
+use sm_game::enemy_projectiles::setup;
+use sm_game::enemy_projectiles::shared;
+use sm_game::enemy_projectiles::shared_pre;
 
 const fnEprojPreInstr_nullsub_83: u32 = 8815867;
 const fnEproj_Init_0x8bde_SkreeDownLeft: u32 = 8817429;

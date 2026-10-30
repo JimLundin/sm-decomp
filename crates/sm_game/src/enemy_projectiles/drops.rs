@@ -2,10 +2,10 @@
 #![forbid(unsafe_code)]
 use super::access::{enemy, enemy_byte};
 use super::host::{DefinitionField, Host, LoadedRecord};
-pub use sm_game::drop_rules::DropSource;
-use sm_game::drop_rules::{PICKUPS, Spread, Weights};
+pub use crate::drop_rules::DropSource;
+use crate::drop_rules::{PICKUPS, Spread, Weights};
 
-pub(super) fn spawn(definition: u16, index: u16, h: &mut impl Host) {
+pub fn spawn(definition: u16, index: u16, h: &mut impl Host) {
     h.session_mut().enemy_projectiles.spawn.drop_definition = definition;
     {
         super::lifecycle::spawn_from_enemy(
@@ -17,7 +17,7 @@ pub(super) fn spawn(definition: u16, index: u16, h: &mut impl Host) {
     }
 }
 
-pub(super) fn scatter(source: DropSource, index: u16, h: &mut impl Host) {
+pub fn scatter(source: DropSource, index: u16, h: &mut impl Host) {
     let (definition, spread) = source.pattern();
     let count = match spread {
         Spread::Nearby(count) => count,
@@ -50,7 +50,7 @@ pub(super) fn scatter(source: DropSource, index: u16, h: &mut impl Host) {
     }
 }
 
-pub(super) fn select(index: u16, h: &mut impl Host) -> u16 {
+pub fn select(index: u16, h: &mut impl Host) -> u16 {
     let definition = enemy!(h, (index >> 1) as isize, drop_definition);
     if definition == 0 {
         return 6;
@@ -112,7 +112,7 @@ pub(super) fn select(index: u16, h: &mut impl Host) -> u16 {
 }
 
 fn award(slot: usize, h: &mut impl Host) {
-    use sm_game::drop_rules::REWARDS;
+    use crate::drop_rules::REWARDS;
 
     let (resource, amount, sound) = REWARDS
         [usize::from(enemy!(h, (slot) as isize, behavior_a) >> 1)]
@@ -122,8 +122,8 @@ fn award(slot: usize, h: &mut impl Host) {
 }
 
 /// Advance expiry, then attempt grapple collection before body contact.
-pub(super) fn collect(index: u16, h: &mut impl Host) {
-    use sm_game::contact_rules::axis;
+pub fn collect(index: u16, h: &mut impl Host) {
+    use crate::contact_rules::axis;
     let slot = usize::from(index >> 1);
     let remaining = enemy!(h, slot as isize, behavior_b).wrapping_sub(1);
     enemy!(h, slot as isize, behavior_b = remaining);
@@ -183,7 +183,7 @@ fn begin_pickup(slot: usize, kind: u16, h: &mut impl Host) {
     enemy!(h, 400 => (slot) as isize, behavior_b);
 }
 
-pub(super) fn initialize(index: u16, h: &mut impl Host) {
+pub fn initialize(index: u16, h: &mut impl Host) {
     let slot = usize::from(index >> 1);
     enemy!(h, h.session().enemy_projectiles.spawn.point.x => (slot) as isize, x);
     enemy!(h, h.session().enemy_projectiles.spawn.point.y => (slot) as isize, y);
@@ -198,7 +198,7 @@ pub(super) fn initialize(index: u16, h: &mut impl Host) {
     }
 }
 
-pub(super) fn convert(index: u16, h: &mut impl Host) -> u16 {
+pub fn convert(index: u16, h: &mut impl Host) -> u16 {
     let kind = { select(index, h) };
     let slot = usize::from(index >> 1);
     // Conversion tests the incoming index, unlike initialization's drop-code test.
@@ -218,14 +218,14 @@ pub(super) fn convert(index: u16, h: &mut impl Host) -> u16 {
 }
 
 /// Read the original marker before the population respawn effect can mutate slots.
-pub(super) fn respawn(index: u16, h: &mut impl Host) {
+pub fn respawn(index: u16, h: &mut impl Host) {
     let marker = enemy!(h, (index >> 1) as isize, killed_enemy);
     if (marker as i16) <= -2 {
         h.respawn_enemy(marker & 0x7fff);
     }
 }
 
-pub(crate) fn reset_room_metadata(h: &mut impl Host) {
+pub fn reset_room_metadata(h: &mut impl Host) {
     // The original 144-word span includes other columns and foreign bytes.
     // Preserve its descending order through the qualified compatibility edge.
     for i in (0..144).rev() {

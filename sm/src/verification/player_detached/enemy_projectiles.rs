@@ -1,30 +1,13 @@
 //! Actual candidate enemy algorithms; wrappers expose existing core entries.
-pub(crate) use sm_game::enemy_projectiles::access;
-pub(crate) use sm_game::enemy_projectiles::collision;
-#[path = "../../game/enemy_projectiles/commands.rs"]
-pub(crate) mod commands;
+pub(crate) use sm_game::enemy_projectiles::commands;
 pub(crate) use sm_game::enemy_projectiles::contact;
 pub(crate) use sm_game::enemy_projectiles::content;
-#[path = "../../game/enemy_projectiles/drops.rs"]
-pub(crate) mod drops;
+pub(crate) use sm_game::enemy_projectiles::drops;
 pub(crate) use sm_game::enemy_projectiles::host;
-#[path = "../../game/enemy_projectiles/lifecycle.rs"]
-pub(crate) mod lifecycle;
-#[path = "../../game/enemy_projectiles/pre_actions.rs"]
-pub(crate) mod pre_actions;
-#[path = "../../game/enemy_projectiles/pre_helpers.rs"]
-pub(crate) mod pre_helpers;
-#[path = "../../game/enemy_projectiles/setup.rs"]
-pub(crate) mod setup;
-#[path = "../../game/enemy_projectiles/setup_helpers.rs"]
-pub(crate) mod setup_helpers;
-#[path = "../../game/enemy_projectiles/shared.rs"]
-pub(crate) mod shared;
-#[path = "../../game/enemy_projectiles/shared_pre.rs"]
-pub(crate) mod shared_pre;
+pub(crate) use sm_game::enemy_projectiles::lifecycle;
+pub(crate) use sm_game::enemy_projectiles::pre_actions;
 use sm_game::enemy_script::EnemyScript;
 use host::Host;
-pub(crate) use sm_game::enemy_projectiles::tables;
 pub(crate) fn spawn_room(h: &mut impl Host, definition: u16, parameter: u16) -> u16 {
     lifecycle::spawn_room(h, definition, parameter)
 }
@@ -43,16 +26,8 @@ pub(crate) fn spawn_drop(h: &mut impl Host, definition: u16, enemy: u16, paramet
     drops::spawn(definition, enemy, h);
 }
 
-pub(crate) use sm_game::enemy_projectiles::coordinates;
 
 // Match the production parent's pure imports required by maintained sibling cores.
-use crate::game::constants::{bank_86::*, bank_a0::*};
-use collision::*;
-use drops::collect as collect_drop;
-use setup::*;
-use shared::*;
-use shared_pre::*;
-use tables::*;
 
 // Maintained numeric dispatch identities from the production parent module.
 const fnEprojPreInstr_nullsub_83: u32 = 8815867;

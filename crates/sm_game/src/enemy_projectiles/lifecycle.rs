@@ -2,10 +2,10 @@
 #![forbid(unsafe_code)]
 use super::access::enemy;
 use super::host::{DefinitionField, Host, LoadedRecord};
-use sm_game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
-use sm_game::enemy_script::EnemyScript;
+use crate::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
+use crate::enemy_script::EnemyScript;
 
-pub(super) fn set_enabled(h: &mut impl Host, enabled: bool) {
+pub fn set_enabled(h: &mut impl Host, enabled: bool) {
     let flags = h.session().enemy_projectiles.flags;
     h.session_mut().enemy_projectiles.flags = if enabled {
         flags | 0x8000
@@ -13,7 +13,7 @@ pub(super) fn set_enabled(h: &mut impl Host, enabled: bool) {
         flags & !0x8000
     };
 }
-pub(crate) fn clear(h: &mut impl Host) {
+pub fn clear(h: &mut impl Host) {
     for slot in h.session_mut().enemy_projectiles.slots.iter_mut().rev() {
         slot.definition = 0;
     }
@@ -49,22 +49,17 @@ fn allocate(h: &mut impl Host, definition: u16, graphics: u16) -> Option<u16> {
     h.probe("eproj.spawn.initialized");
     Some(handle)
 }
-pub(crate) fn spawn_room(h: &mut impl Host, definition: u16, parameter: u16) -> u16 {
+pub fn spawn_room(h: &mut impl Host, definition: u16, parameter: u16) -> u16 {
     h.session_mut().enemy_projectiles.spawn.primary = parameter;
     allocate(h, definition, 0).unwrap_or_else(|| enemy!(h, 0, definition))
 }
-pub(in crate::game) fn spawn_from_enemy(
-    h: &mut impl Host,
-    parameter: u16,
-    enemy: u16,
-    definition: u16,
-) -> u16 {
+pub fn spawn_from_enemy(h: &mut impl Host, parameter: u16, enemy: u16, definition: u16) -> u16 {
     h.session_mut().enemy_projectiles.spawn.primary = parameter;
     let graphics = h.resolve_actor(Key::from_legacy(enemy), Le).tile
         | h.resolve_actor(Key::from_legacy(enemy), Le).palette;
     allocate(h, definition, graphics).unwrap_or(graphics)
 }
-pub(super) fn process(h: &mut impl Host, handle: u16) {
+pub fn process(h: &mut impl Host, handle: u16) {
     let pre_action = 0x860000 | u32::from(enemy!(h, (handle >> 1) as isize, pre_action));
     super::pre_actions::dispatch(pre_action, handle, h);
     h.probe("eproj.pre.executed");
@@ -98,7 +93,7 @@ pub(super) fn process(h: &mut impl Host, handle: u16) {
     );
     h.probe("eproj.frame.saved");
 }
-pub(crate) fn advance(h: &mut impl Host) {
+pub fn advance(h: &mut impl Host) {
     if h.session().enemy_projectiles.flags & 0x8000 == 0 {
         return;
     }

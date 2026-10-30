@@ -2,8 +2,8 @@
 #![forbid(unsafe_code)]
 use super::access::{enemy, read_member, read_member_byte, write_member, write_member_byte};
 use super::host::{EnemyMember as F, Host, NativeRecord};
-use sm_game::geometry::{Point as Point16U, Vector32 as Point32};
-pub(super) use sm_game::projectile_geometry::sine_offset;
+use crate::geometry::{Point as Point16U, Vector32 as Point32};
+pub use crate::projectile_geometry::sine_offset;
 
 fn move_axis(handle: u16, fraction: F, whole: F, velocity: F, ctx: &mut impl Host) -> u16 {
     let index = (handle >> 1) as isize;
@@ -21,17 +21,17 @@ fn move_axis(handle: u16, fraction: F, whole: F, velocity: F, ctx: &mut impl Hos
     }
     result
 }
-pub(super) fn MoveEprojWithVelocityX(k: u16, ctx: &mut impl Host) -> u16 {
+pub fn MoveEprojWithVelocityX(k: u16, ctx: &mut impl Host) -> u16 {
     move_axis(k, F::XFraction, F::X, F::VelocityX, ctx)
 }
-pub(super) fn MoveEprojWithVelocityY(k: u16, ctx: &mut impl Host) -> u16 {
+pub fn MoveEprojWithVelocityY(k: u16, ctx: &mut impl Host) -> u16 {
     move_axis(k, F::YFraction, F::Y, F::VelocityY, ctx)
 }
-pub(super) fn MoveEprojWithVelocity(k: u16, ctx: &mut impl Host) -> u16 {
+pub fn MoveEprojWithVelocity(k: u16, ctx: &mut impl Host) -> u16 {
     MoveEprojWithVelocityX(k, ctx);
     MoveEprojWithVelocityY(k, ctx)
 }
-pub(super) fn SetAreaDependentEprojPropertiesEx(table: u16, j: u16, ctx: &mut impl Host) {
+pub fn SetAreaDependentEprojPropertiesEx(table: u16, j: u16, ctx: &mut impl Host) {
     let source = ctx.native_record(0x86, table);
     let index = if ctx.session().room.area == 2 {
         1
@@ -43,12 +43,12 @@ pub(super) fn SetAreaDependentEprojPropertiesEx(table: u16, j: u16, ctx: &mut im
     let value = source.word_le(index);
     enemy!(ctx, (j >> 1) as isize, properties = value);
 }
-pub(super) fn SetEprojSpawnPoint(k: u16, ctx: &mut impl Host) {
+pub fn SetEprojSpawnPoint(k: u16, ctx: &mut impl Host) {
     let x = enemy!(ctx, (k >> 1) as isize, x);
     let y = enemy!(ctx, (k >> 1) as isize, y);
-    ctx.session_mut().enemy_projectiles.spawn.point = sm_game::geometry::Point { x, y };
+    ctx.session_mut().enemy_projectiles.spawn.point = crate::geometry::Point { x, y };
 }
-pub(super) fn sub_86A301(j: u16, ctx: &mut impl Host) {
+pub fn sub_86A301(j: u16, ctx: &mut impl Host) {
     let index = (j >> 1) as isize;
     for field in [
         F::XFraction,
@@ -62,7 +62,7 @@ pub(super) fn sub_86A301(j: u16, ctx: &mut impl Host) {
     let x = ctx.session().player.x;
     enemy!(ctx, index, x = x);
 }
-pub(super) fn Eproj_InitXYVelRandom(j: u16, table: u16, point: Point16U, ctx: &mut impl Host) {
+pub fn Eproj_InitXYVelRandom(j: u16, table: u16, point: Point16U, ctx: &mut impl Host) {
     let source = ctx.native_record(0x86, table);
     let index = (j >> 1) as isize;
     enemy!(ctx, index, program = source.word_le(0));
@@ -92,16 +92,16 @@ fn set_random_velocity(k: u16, field: F, minimum: u8, ctx: &mut impl Host) {
         u16::from(random.max(minimum)),
     );
 }
-pub(super) fn Eproj_SetXvelRandom(k: u16, ctx: &mut impl Host) {
+pub fn Eproj_SetXvelRandom(k: u16, ctx: &mut impl Host) {
     set_random_velocity(k, F::VelocityX, 32, ctx);
 }
-pub(super) fn Eproj_SetYvelRandom(k: u16, ctx: &mut impl Host) {
+pub fn Eproj_SetYvelRandom(k: u16, ctx: &mut impl Host) {
     set_random_velocity(k, F::VelocityY, 128, ctx);
 }
-pub(super) fn ConvertAngleToXy(angle: u16, amplitude: u16, ctx: &mut impl Host) -> Point32 {
+pub fn ConvertAngleToXy(angle: u16, amplitude: u16, ctx: &mut impl Host) -> Point32 {
     ctx.convert_angle_to_xy(angle, amplitude)
 }
-pub(super) fn Eproj_AngleToSamus(j: u16, x: u16, y: u16, ctx: &mut impl Host) {
+pub fn Eproj_AngleToSamus(j: u16, x: u16, y: u16, ctx: &mut impl Host) {
     let index = (j >> 1) as isize;
     enemy!(ctx, index, x = x);
     enemy!(ctx, index, y = y);
@@ -116,14 +116,9 @@ pub(super) fn Eproj_AngleToSamus(j: u16, x: u16, y: u16, ctx: &mut impl Host) {
     enemy!(ctx, index, behavior_b = point.y as u16);
 }
 
-pub(super) fn SpawnEprojWithRoomGfx(definition: u16, parameter: u16, ctx: &mut impl Host) -> u16 {
+pub fn SpawnEprojWithRoomGfx(definition: u16, parameter: u16, ctx: &mut impl Host) -> u16 {
     super::lifecycle::spawn_room(ctx, definition, parameter)
 }
-pub(super) fn SpawnEprojWithGfx(
-    parameter: u16,
-    enemy: u16,
-    definition: u16,
-    ctx: &mut impl Host,
-) -> u16 {
+pub fn SpawnEprojWithGfx(parameter: u16, enemy: u16, definition: u16, ctx: &mut impl Host) -> u16 {
     super::lifecycle::spawn_from_enemy(ctx, parameter, enemy, definition)
 }

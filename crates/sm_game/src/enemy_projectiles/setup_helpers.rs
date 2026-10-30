@@ -3,17 +3,17 @@ use super::access::enemy;
 use super::coordinates::{block_index, calculate_coordinates};
 use super::host::*;
 use super::shared::*;
-use sm_game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
+use crate::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
 
 /// Keep live enemy reads interleaved with writes, including broad slot aliases.
-pub(super) fn copy_enemy_position(slot: isize, enemy: u16, y_offset: i16, ctx: &mut impl Host) {
+pub fn copy_enemy_position(slot: isize, enemy: u16, y_offset: i16, ctx: &mut impl Host) {
     enemy!(ctx, ctx.resolve_actor(Key::from_legacy(enemy), Le).x.whole => slot, x);
     enemy!(ctx, ctx.resolve_actor(Key::from_legacy(enemy), Le).x.fraction => slot, x_fraction);
     enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(enemy), Le).y.whole as i32 + y_offset as i32) as u16 => slot, y);
     enemy!(ctx, ctx.resolve_actor(Key::from_legacy(enemy), Le).y.fraction => slot, y_fraction);
 }
 
-pub(super) fn init_robot_laser(j: u16, y_velocity: u16, clear_graphics: bool, ctx: &mut impl Host) {
+pub fn init_robot_laser(j: u16, y_velocity: u16, clear_graphics: bool, ctx: &mut impl Host) {
     let slot = (j >> 1) as isize;
     enemy!(ctx, ctx.resolve_actor(Key::from_legacy(ctx.inputs().current_enemy), Le).variables[0] => slot, velocity_x);
     enemy!(ctx, y_velocity => slot, velocity_y);
@@ -23,14 +23,14 @@ pub(super) fn init_robot_laser(j: u16, y_velocity: u16, clear_graphics: bool, ct
     EprojInit_WreckedShipRobotLaserCommon(ctx.inputs().current_enemy, j, ctx);
 }
 
-pub(super) fn init_landing_dust(j: u16, x_offset: i16, ctx: &mut impl Host) {
+pub fn init_landing_dust(j: u16, x_offset: i16, ctx: &mut impl Host) {
     let enemy = ctx.inputs().current_enemy;
     let slot = (j >> 1) as isize;
     enemy!(ctx, ctx.resolve_actor(Key::from_legacy(enemy), Le).y.whole.wrapping_add(48) => slot, y);
     enemy!(ctx, ctx.resolve_actor(Key::from_legacy(enemy), Le).x.whole.wrapping_add_signed(x_offset) => slot, x);
 }
 
-pub(super) fn init_statue_piece(j: u16, x: u16, y: u16, ctx: &mut impl Host) {
+pub fn init_statue_piece(j: u16, x: u16, y: u16, ctx: &mut impl Host) {
     let slot = (j >> 1) as isize;
     enemy!(ctx, x => slot, behavior_a);
     enemy!(ctx, x => slot, x);
@@ -39,7 +39,7 @@ pub(super) fn init_statue_piece(j: u16, x: u16, y: u16, ctx: &mut impl Host) {
 }
 
 static kEprojInit_MiniKraidSpikes_Tab0: [i16; 3] = [-2, 12, 24];
-pub(super) fn init_skree_particle(
+pub fn init_skree_particle(
     j: u16,
     x_offset: i16,
     x_velocity: i16,
@@ -60,7 +60,7 @@ pub(super) fn init_skree_particle(
     enemy!(ctx, word_index as isize, velocity_x = x_velocity as u16);
 }
 
-pub(super) fn EprojInit_FireballChild(j: u16, x: u16, y: u16, handler: u16, ctx: &mut impl Host) {
+pub fn EprojInit_FireballChild(j: u16, x: u16, y: u16, handler: u16, ctx: &mut impl Host) {
     {
         let parent = ctx.session().enemy_projectiles.spawn.primary;
         let slot = usize::from(j >> 1);
@@ -70,7 +70,7 @@ pub(super) fn EprojInit_FireballChild(j: u16, x: u16, y: u16, handler: u16, ctx:
     }
 }
 
-pub(super) fn EprojInit_MiniKraidSpikes(j: u16, a: u16, ctx: &mut impl Host) {
+pub fn EprojInit_MiniKraidSpikes(j: u16, a: u16, ctx: &mut impl Host) {
     {
         let v2: i32 = j as i32 >> 1;
         enemy!(ctx, a => (v2) as isize, velocity_x);
@@ -87,7 +87,7 @@ pub(super) fn EprojInit_MiniKraidSpikes(j: u16, a: u16, ctx: &mut impl Host) {
     }
 }
 
-pub(super) fn EprojInit_KiHunterAcidSpitCommon(k: u16, j: u16, ctx: &mut impl Host) {
+pub fn EprojInit_KiHunterAcidSpitCommon(k: u16, j: u16, ctx: &mut impl Host) {
     {
         let v2: i32 = j as i32 >> 1;
         enemy!(ctx, 0 => (v2) as isize, velocity_y);
@@ -98,7 +98,7 @@ pub(super) fn EprojInit_KiHunterAcidSpitCommon(k: u16, j: u16, ctx: &mut impl Ho
     }
 }
 
-pub(super) fn EprojInit_WreckedShipRobotLaserCommon(k: u16, j: u16, ctx: &mut impl Host) {
+pub fn EprojInit_WreckedShipRobotLaserCommon(k: u16, j: u16, ctx: &mut impl Host) {
     {
         let v2 = k;
         let v3: i32 = j as i32 >> 1;
@@ -139,7 +139,7 @@ pub(super) fn EprojInit_WreckedShipRobotLaserCommon(k: u16, j: u16, ctx: &mut im
     }
 }
 
-pub(super) fn EprojInit_SpawnedGate_Common(j: u16, v1: u16, ctx: &mut impl Host) {
+pub fn EprojInit_SpawnedGate_Common(j: u16, v1: u16, ctx: &mut impl Host) {
     {
         let v2: u16 = ctx.session().mechanisms.selected;
         calculate_coordinates(ctx.session().mechanisms.selected, ctx);
@@ -161,7 +161,7 @@ fn EprojInit_Common(j: u16, k: u16, handler: u16, ctx: &mut impl Host) {
     enemy!(ctx, slot, behavior_a = e);
     enemy!(ctx, slot, graphics = 2560);
     SetAreaDependentEprojPropertiesEx(
-        crate::game::constants::bank_86::addr_kRidleysFireball_Tab0 as u16,
+        crate::constants::bank_86::addr_kRidleysFireball_Tab0 as u16,
         j,
         ctx,
     );

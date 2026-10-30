@@ -1332,8 +1332,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/enemy_projectiles/collision.rs"),
     ),
     (
-        "sm/src/game/enemy_projectiles/commands.rs",
-        include_bytes!("game/enemy_projectiles/commands.rs"),
+        "crates/sm_game/src/enemy_projectiles/commands.rs",
+        include_bytes!("../../crates/sm_game/src/enemy_projectiles/commands.rs"),
     ),
     (
         "crates/sm_game/src/enemy_projectiles/contact.rs",
@@ -1348,8 +1348,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/enemy_projectiles/coordinates.rs"),
     ),
     (
-        "sm/src/game/enemy_projectiles/drops.rs",
-        include_bytes!("game/enemy_projectiles/drops.rs"),
+        "crates/sm_game/src/enemy_projectiles/drops.rs",
+        include_bytes!("../../crates/sm_game/src/enemy_projectiles/drops.rs"),
     ),
     (
         "sm/src/game/enemy_projectiles/effects_runtime.rs",
@@ -1368,20 +1368,24 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/enemy_projectiles/legacy.rs"),
     ),
     (
-        "sm/src/game/enemy_projectiles/lifecycle.rs",
-        include_bytes!("game/enemy_projectiles/lifecycle.rs"),
+        "crates/sm_game/src/enemy_projectiles/mod.rs",
+        include_bytes!("../../crates/sm_game/src/enemy_projectiles/mod.rs"),
+    ),
+    (
+        "crates/sm_game/src/enemy_projectiles/lifecycle.rs",
+        include_bytes!("../../crates/sm_game/src/enemy_projectiles/lifecycle.rs"),
     ),
     (
         "sm/src/game/enemy_projectiles/mod.rs",
         include_bytes!("game/enemy_projectiles/mod.rs"),
     ),
     (
-        "sm/src/game/enemy_projectiles/pre_actions.rs",
-        include_bytes!("game/enemy_projectiles/pre_actions.rs"),
+        "crates/sm_game/src/enemy_projectiles/pre_actions.rs",
+        include_bytes!("../../crates/sm_game/src/enemy_projectiles/pre_actions.rs"),
     ),
     (
-        "sm/src/game/enemy_projectiles/pre_helpers.rs",
-        include_bytes!("game/enemy_projectiles/pre_helpers.rs"),
+        "crates/sm_game/src/enemy_projectiles/pre_helpers.rs",
+        include_bytes!("../../crates/sm_game/src/enemy_projectiles/pre_helpers.rs"),
     ),
     (
         "crates/sm_game/src/enemy_projectiles/presentation.rs",
@@ -1392,20 +1396,20 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/enemy_projectiles/runtime.rs"),
     ),
     (
-        "sm/src/game/enemy_projectiles/setup.rs",
-        include_bytes!("game/enemy_projectiles/setup.rs"),
+        "crates/sm_game/src/enemy_projectiles/setup.rs",
+        include_bytes!("../../crates/sm_game/src/enemy_projectiles/setup.rs"),
     ),
     (
-        "sm/src/game/enemy_projectiles/setup_helpers.rs",
-        include_bytes!("game/enemy_projectiles/setup_helpers.rs"),
+        "crates/sm_game/src/enemy_projectiles/setup_helpers.rs",
+        include_bytes!("../../crates/sm_game/src/enemy_projectiles/setup_helpers.rs"),
     ),
     (
-        "sm/src/game/enemy_projectiles/shared.rs",
-        include_bytes!("game/enemy_projectiles/shared.rs"),
+        "crates/sm_game/src/enemy_projectiles/shared.rs",
+        include_bytes!("../../crates/sm_game/src/enemy_projectiles/shared.rs"),
     ),
     (
-        "sm/src/game/enemy_projectiles/shared_pre.rs",
-        include_bytes!("game/enemy_projectiles/shared_pre.rs"),
+        "crates/sm_game/src/enemy_projectiles/shared_pre.rs",
+        include_bytes!("../../crates/sm_game/src/enemy_projectiles/shared_pre.rs"),
     ),
     (
         "crates/sm_game/src/enemy_projectiles/tables.rs",

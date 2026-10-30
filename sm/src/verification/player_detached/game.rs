@@ -14,8 +14,6 @@ pub(crate) mod room_entry;
 #[path = "room.rs"]
 pub(crate) mod room_mechanisms;
 
-#[path = "../../game/constants.rs"]
-pub(crate) mod constants;
 
 #[path = "enemy_projectiles.rs"]
 pub(crate) mod enemy_projectiles;

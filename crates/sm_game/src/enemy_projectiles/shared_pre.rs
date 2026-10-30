@@ -6,25 +6,25 @@ use super::pre_actions::*;
 use super::pre_helpers::*;
 use super::shared::SpawnEprojWithRoomGfx;
 use super::*;
-use sm_game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
-use sm_game::geometry::Point;
-use sm_game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
+use crate::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
+use crate::geometry::Point;
+use crate::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 
 #[derive(Clone, Copy)]
-pub(super) struct CollisionRect {
+pub struct CollisionRect {
     pub x: u16,
     pub y: u16,
     pub w: u16,
     pub h: u16,
 }
 
-pub(super) use self::EprojPreInstr_NorfairLavaquakeRocks_Inner2 as EprojPreInstrHelper_DBF2_Func2;
-pub(super) use super::pre_actions::Eproj_NorfairLavaquakeRocks_Func3 as EprojPreInstr_DBF2_MoveX2;
-pub(super) use super::pre_actions::Eproj_NorfairLavaquakeRocks_Func3 as Eproj_LavaThrownByLavaman_MoveX2;
-pub(super) use super::pre_actions::EprojPreInstr_DBF2_MoveX1 as Eproj_LavaThrownByLavaman_MoveX1;
-pub(super) use super::pre_actions::sub_869DA5 as sub_86C42E;
+pub use self::EprojPreInstr_NorfairLavaquakeRocks_Inner2 as EprojPreInstrHelper_DBF2_Func2;
+pub use super::pre_actions::Eproj_NorfairLavaquakeRocks_Func3 as EprojPreInstr_DBF2_MoveX2;
+pub use super::pre_actions::Eproj_NorfairLavaquakeRocks_Func3 as Eproj_LavaThrownByLavaman_MoveX2;
+pub use super::pre_actions::EprojPreInstr_DBF2_MoveX1 as Eproj_LavaThrownByLavaman_MoveX1;
+pub use super::pre_actions::sub_869DA5 as sub_86C42E;
 
-pub(super) fn plant_pre<H: Host>(index: usize, k: u16, ctx: &mut H) {
+pub fn plant_pre<H: Host>(index: usize, k: u16, ctx: &mut H) {
     let actions: [fn(u16, &mut H); 10] = [
         EprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1,
         EprojPreInstr_SpikeShootingPlantSpikes_1_MoveY1,
@@ -40,14 +40,14 @@ pub(super) fn plant_pre<H: Host>(index: usize, k: u16, ctx: &mut H) {
     actions[index](k, ctx);
 }
 
-pub(super) fn Math_MultBySin(a: u16, angle: u16) -> u16 {
+pub fn Math_MultBySin(a: u16, angle: u16) -> u16 {
     Math_MultBySinCos(a, angle)
 }
-pub(super) fn Math_MultByCos(a: u16, angle: u16) -> u16 {
+pub fn Math_MultByCos(a: u16, angle: u16) -> u16 {
     Math_MultBySinCos(a, angle.wrapping_add(64))
 }
 
-pub(super) fn CallNorfairLavaquakeRocksFunc(ea: u32, k: u16, ctx: &mut impl Host) {
+pub fn CallNorfairLavaquakeRocksFunc(ea: u32, k: u16, ctx: &mut impl Host) {
     match ea {
         8829974 => Eproj_NorfairLavaquakeRocks_Func1(k, ctx),
         8830095 => Eproj_NorfairLavaquakeRocks_Func2(k, ctx),
@@ -55,7 +55,7 @@ pub(super) fn CallNorfairLavaquakeRocksFunc(ea: u32, k: u16, ctx: &mut impl Host
     }
 }
 
-pub(super) fn CallMotherBrainTubeFallingFunc(ea: u32, k: u16, ctx: &mut impl Host) {
+pub fn CallMotherBrainTubeFallingFunc(ea: u32, k: u16, ctx: &mut impl Host) {
     match ea {
         8834026 => MotherBrainTubeFallingFunc_GenerateExplosion(k, ctx),
         8834056 => MotherBrainTubeFallingFunc_Falling(k, ctx),
@@ -63,7 +63,7 @@ pub(super) fn CallMotherBrainTubeFallingFunc(ea: u32, k: u16, ctx: &mut impl Hos
     }
 }
 
-pub(super) fn CallNamiFuneFireballFunc(ea: u32, k: u16, ctx: &mut impl Host) {
+pub fn CallNamiFuneFireballFunc(ea: u32, k: u16, ctx: &mut impl Host) {
     match ea {
         8838976 => EprojInit_NamiFuneFireball_MoveX1(k, ctx),
         8839018 => EprojInit_NamiFuneFireball_MoveX2(k, ctx),
@@ -71,7 +71,7 @@ pub(super) fn CallNamiFuneFireballFunc(ea: u32, k: u16, ctx: &mut impl Host) {
     }
 }
 
-pub(super) fn CallLavamanFunc(ea: u32, k: u16, ctx: &mut impl Host) {
+pub fn CallLavamanFunc(ea: u32, k: u16, ctx: &mut impl Host) {
     match ea {
         8839248 => Eproj_LavaThrownByLavaman_MoveX1(k, ctx),
         8839290 => Eproj_LavaThrownByLavaman_MoveX2(k, ctx),
@@ -79,7 +79,7 @@ pub(super) fn CallLavamanFunc(ea: u32, k: u16, ctx: &mut impl Host) {
     }
 }
 
-pub(super) fn CallBotwoonEprojFunc(ea: u32, k: u16, ctx: &mut impl Host) {
+pub fn CallBotwoonEprojFunc(ea: u32, k: u16, ctx: &mut impl Host) {
     match ea {
         8841972 => Eproj_BotwonsBodyFunction_Dying(k, ctx),
         8841988 => Eproj_BotwonsBodyFunction_Dying2(k, ctx),
@@ -90,7 +90,7 @@ pub(super) fn CallBotwoonEprojFunc(ea: u32, k: u16, ctx: &mut impl Host) {
     }
 }
 
-pub(super) fn EprojPreInstr_NorfairLavaquakeRocks_Inner2(k: u16, ctx: &mut impl Host) -> u16 {
+pub fn EprojPreInstr_NorfairLavaquakeRocks_Inner2(k: u16, ctx: &mut impl Host) -> u16 {
     let v1: i32 = k as i32 >> 1;
     (((enemy!(ctx, (v1) as isize, x) as i32 - ctx.inputs().camera_x as i32) as i16) < 0
         || ((ctx.inputs().camera_x as i32 + 256 - enemy!(ctx, (v1) as isize, x) as i32) as i16) < 0
@@ -99,7 +99,7 @@ pub(super) fn EprojPreInstr_NorfairLavaquakeRocks_Inner2(k: u16, ctx: &mut impl 
         as u16
 }
 
-pub(super) fn Eproj_MotherBrainRoomTurretBullets_Func2(v0: u16, ctx: &mut impl Host) {
+pub fn Eproj_MotherBrainRoomTurretBullets_Func2(v0: u16, ctx: &mut impl Host) {
     let r20: u8 = (enemy_byte!(ctx, v0 as isize + 1, y_fraction) as i32
         + enemy_byte!(ctx, v0 as isize, y_fraction) as i32
         & 7) as u8;
@@ -120,10 +120,7 @@ pub(super) fn Eproj_MotherBrainRoomTurretBullets_Func2(v0: u16, ctx: &mut impl H
     };
 }
 
-pub(super) fn Eproj_MotherBrainRoomTurretBullets_CheckIfTurretOnScreen(
-    k: u16,
-    ctx: &mut impl Host,
-) -> u8 {
+pub fn Eproj_MotherBrainRoomTurretBullets_CheckIfTurretOnScreen(k: u16, ctx: &mut impl Host) -> u8 {
     let v1: i32 = k as i32 >> 1;
     let mut v2: i16 = enemy!(ctx, (v1) as isize, y) as i16;
     let result: u8 = 1;
@@ -142,7 +139,7 @@ pub(super) fn Eproj_MotherBrainRoomTurretBullets_CheckIfTurretOnScreen(
     result
 }
 
-pub(super) fn Eproj_CheckForBombCollisionWithRect(rect: CollisionRect, ctx: &mut impl Host) -> u8 {
+pub fn Eproj_CheckForBombCollisionWithRect(rect: CollisionRect, ctx: &mut impl Host) -> u8 {
     if ctx.session().projectiles.bomb_count == 0 {
         return 0;
     }
@@ -195,7 +192,7 @@ pub(super) fn Eproj_CheckForBombCollisionWithRect(rect: CollisionRect, ctx: &mut
     0
 }
 
-pub(super) fn Eproj_CheckForEnemyCollisionWithRect(
+pub fn Eproj_CheckForEnemyCollisionWithRect(
     k: u16,
     rect: CollisionRect,
     ctx: &mut impl Host,
@@ -212,7 +209,7 @@ pub(super) fn Eproj_CheckForEnemyCollisionWithRect(
             < rect.h as i32) as u8
 }
 
-pub(super) fn Eproj_CheckForCollisionWithSamus(v0: u16, ctx: &mut impl Host) -> u8 {
+pub fn Eproj_CheckForCollisionWithSamus(v0: u16, ctx: &mut impl Host) -> u8 {
     let rect: CollisionRect = Eproj_GetCollDetectRect(v0, ctx);
     let v1: u16 = (((ctx.session().player.x as i32 - rect.x as i32) as u16) as i16).unsigned_abs();
     let mut v2: bool = v1 < ctx.session().player.contact.x_radius;
@@ -230,7 +227,7 @@ pub(super) fn Eproj_CheckForCollisionWithSamus(v0: u16, ctx: &mut impl Host) -> 
     result
 }
 
-pub(super) fn Math_MultBySinCos(r38: u16, a: u16) -> u16 {
+pub fn Math_MultBySinCos(r38: u16, a: u16) -> u16 {
     let r46: u16 = kSinCosTable8bit_Sext[((a as i32 & 0xff) + 64) as usize] as u16;
     let prod: u16 = ((r38 as u32).wrapping_mul(((r46) as i16).unsigned_abs() as u32) >> 8) as u16;
     (if r46 & 0x8000 != 0 {
@@ -240,7 +237,7 @@ pub(super) fn Math_MultBySinCos(r38: u16, a: u16) -> u16 {
     }) as u16
 }
 
-pub(super) fn CheckForCollisionWithShitroid_DoubleRet(v0: u16, ctx: &mut impl Host) -> u8 {
+pub fn CheckForCollisionWithShitroid_DoubleRet(v0: u16, ctx: &mut impl Host) -> u8 {
     if ctx.mother_brain_target_enemy() == 0 {
         return 0;
     }
@@ -256,7 +253,7 @@ pub(super) fn CheckForCollisionWithShitroid_DoubleRet(v0: u16, ctx: &mut impl Ho
     0xff
 }
 
-pub(super) fn CheckForBlueRingCollisionWithRoom(k: u16, ctx: &mut impl Host) -> u8 {
+pub fn CheckForBlueRingCollisionWithRoom(k: u16, ctx: &mut impl Host) -> u8 {
     let v1: i32 = k as i32 >> 1;
     let result: u8 = 1;
     if enemy!(ctx, (v1) as isize, y) as i32 - 32i32 & 0x8000 == 0
@@ -273,7 +270,7 @@ pub(super) fn CheckForBlueRingCollisionWithRoom(k: u16, ctx: &mut impl Host) -> 
     result
 }
 
-pub(super) fn Eproj_GetCollDetectRect(k: u16, ctx: &mut impl Host) -> CollisionRect {
+pub fn Eproj_GetCollDetectRect(k: u16, ctx: &mut impl Host) -> CollisionRect {
     let v1: i32 = k as i32 >> 1;
     let rect: CollisionRect = CollisionRect {
         x: enemy!(ctx, (v1) as isize, x),
@@ -284,7 +281,7 @@ pub(super) fn Eproj_GetCollDetectRect(k: u16, ctx: &mut impl Host) -> CollisionR
     rect
 }
 
-pub(super) fn Eproj_Earthqhake5(k: u16, ctx: &mut impl Host) {
+pub fn Eproj_Earthqhake5(k: u16, ctx: &mut impl Host) {
     {
         {
             let value = 10;
@@ -298,7 +295,7 @@ pub(super) fn Eproj_Earthqhake5(k: u16, ctx: &mut impl Host) {
     BlueRingContactExplosion(k, ctx);
 }
 
-pub(super) fn MotherBrainBomb_Bomb_CollDetect_DoubleRet(k: u16, ctx: &mut impl Host) -> u8 {
+pub fn MotherBrainBomb_Bomb_CollDetect_DoubleRet(k: u16, ctx: &mut impl Host) -> u8 {
     let v1: i32 = k as i32 >> 1;
     let rect: CollisionRect = CollisionRect {
         x: enemy!(ctx, (v1) as isize, x),
@@ -331,7 +328,7 @@ pub(super) fn MotherBrainBomb_Bomb_CollDetect_DoubleRet(k: u16, ctx: &mut impl H
     1
 }
 
-pub(super) fn MoveMotherBrainBomb(k: u16, a: u16, ctx: &mut impl Host) -> u8 {
+pub fn MoveMotherBrainBomb(k: u16, a: u16, ctx: &mut impl Host) -> u8 {
     let v2: i32 = k as i32 >> 1;
     enemy_add!(ctx, (v2) as isize, velocity_y, a);
     MoveEprojWithVelocity(k, ctx);
@@ -351,7 +348,7 @@ pub(super) fn MoveMotherBrainBomb(k: u16, a: u16, ctx: &mut impl Host) -> u8 {
     1
 }
 
-pub(super) fn SpawnMotherBrainDeathBeam(x: u16, ctx: &mut impl Host) {
+pub fn SpawnMotherBrainDeathBeam(x: u16, ctx: &mut impl Host) {
     SpawnEprojWithRoomGfx(
         addr_kEproj_MotherBrainDeathBeamFired as u16,
         enemy!(ctx, (x >> 1) as isize, behavior_a),
@@ -359,13 +356,13 @@ pub(super) fn SpawnMotherBrainDeathBeam(x: u16, ctx: &mut impl Host) {
     );
 }
 
-pub(super) use super::pre_actions::EprojPreInstr_NorfairLavaquakeRocks_Inner as EprojPreInstrHelper_SpikeShootingPlantSpikes_Func1;
+pub use super::pre_actions::EprojPreInstr_NorfairLavaquakeRocks_Inner as EprojPreInstrHelper_SpikeShootingPlantSpikes_Func1;
 
-pub(super) use super::pre_actions::EprojPreInstr_NorfairLavaquakeRocks_Inner as Eproj_NamiFuneFireball_After;
+pub use super::pre_actions::EprojPreInstr_NorfairLavaquakeRocks_Inner as Eproj_NamiFuneFireball_After;
 
-pub(super) use super::pre_actions::EprojPreInstr_NorfairLavaquakeRocks_Inner as sub_86E0A4;
+pub use super::pre_actions::EprojPreInstr_NorfairLavaquakeRocks_Inner as sub_86E0A4;
 
-pub(super) fn CheckIfEprojIsOffScreen(k: u16, ctx: &mut impl Host) -> u16 {
+pub fn CheckIfEprojIsOffScreen(k: u16, ctx: &mut impl Host) -> u16 {
     if (enemy!(ctx, (k >> 1) as isize, x).wrapping_sub(ctx.inputs().camera_x) as i16) < 0 {
         return 1;
     }
@@ -385,7 +382,7 @@ pub(super) fn CheckIfEprojIsOffScreen(k: u16, ctx: &mut impl Host) -> u16 {
     )
 }
 
-pub(super) fn Eproj_FuncE722(k: u16, ctx: &mut impl Host) -> u16 {
+pub fn Eproj_FuncE722(k: u16, ctx: &mut impl Host) -> u16 {
     let v1: i32 = k as i32 >> 1;
     let mut v2: i16 = enemy!(ctx, (v1) as isize, x) as i16;
     let result: u16 = 1;
@@ -398,19 +395,19 @@ pub(super) fn Eproj_FuncE722(k: u16, ctx: &mut impl Host) -> u16 {
     result
 }
 
-pub(super) use super::pre_actions::Eproj_BotwoonsBodyHurtFlashHandling1 as Eproj_BotwoonsBodyHurtFlashHandling2;
+pub use super::pre_actions::Eproj_BotwoonsBodyHurtFlashHandling1 as Eproj_BotwoonsBodyHurtFlashHandling2;
 
-pub(super) fn QueueSmallExplosionSfx(ctx: &mut impl Host) {
+pub fn QueueSmallExplosionSfx(ctx: &mut impl Host) {
     ctx.queue_sound(2, 6, 0x24);
 }
 
-pub(super) use super::pre_actions::EprojPreInstr_NorfairLavaquakeRocks_Inner as sub_86EC0C;
+pub use super::pre_actions::EprojPreInstr_NorfairLavaquakeRocks_Inner as sub_86EC0C;
 
-pub(super) use super::pre_actions::EprojPreInstr_SpikeShootingPlantSpikes_MoveX1 as EprojInit_NamiFuneFireball_MoveX1;
+pub use super::pre_actions::EprojPreInstr_SpikeShootingPlantSpikes_MoveX1 as EprojInit_NamiFuneFireball_MoveX1;
 
-pub(super) use super::pre_actions::EprojPreInstr_SpikeShootingPlantSpikes_MoveX2 as EprojInit_NamiFuneFireball_MoveX2;
+pub use super::pre_actions::EprojPreInstr_SpikeShootingPlantSpikes_MoveX2 as EprojInit_NamiFuneFireball_MoveX2;
 
-pub(super) fn Eproj_BotwonsBodyFunction_Dying(v0: u16, ctx: &mut impl Host) {
+pub fn Eproj_BotwonsBodyFunction_Dying(v0: u16, ctx: &mut impl Host) {
     let v1: i32 = v0 as i32 >> 1;
     {
         enemy!(ctx, (4 * v0 as i32 + 96) as u16 => (v1) as isize, behavior_a);
@@ -419,7 +416,7 @@ pub(super) fn Eproj_BotwonsBodyFunction_Dying(v0: u16, ctx: &mut impl Host) {
     Eproj_BotwonsBodyFunction_Dying2(v0, ctx);
 }
 
-pub(super) fn Eproj_BotwonsBodyFunction_Dying2(v0: u16, ctx: &mut impl Host) {
+pub fn Eproj_BotwonsBodyFunction_Dying2(v0: u16, ctx: &mut impl Host) {
     let v1: i32 = v0 as i32 >> 1;
     if enemy_add!(ctx, (v1) as isize, behavior_a, 1) as i32 - 256i32 & 0x8000 == 0 {
         enemy!(ctx, (0x86eb1f & 0xffff) as u16 => (v1) as isize, velocity_x);
@@ -428,7 +425,7 @@ pub(super) fn Eproj_BotwonsBodyFunction_Dying2(v0: u16, ctx: &mut impl Host) {
     Eproj_BotwoonsBodyHurtFlashHandling1(v0, ctx);
 }
 
-pub(super) fn Eproj_BotwonsBodyFunction_DyingFalling(v0: u16, ctx: &mut impl Host) {
+pub fn Eproj_BotwonsBodyFunction_DyingFalling(v0: u16, ctx: &mut impl Host) {
     let v1: i32 = v0 as i32 >> 1;
     let v3: i32 = 8 * ((enemy!(ctx, (v1) as isize, velocity_y) as i32 & 0xff00) >> 8) >> 1;
     {

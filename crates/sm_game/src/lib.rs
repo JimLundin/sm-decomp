@@ -75,18 +75,7 @@ pub mod actors {
     pub mod state;
     pub mod torizo;
 }
-pub mod enemy_projectiles {
-    pub mod access;
-    pub mod attachments_spore_maw;
-    pub mod attachments_waffle_botwoon;
-    pub mod collision;
-    pub mod contact;
-    pub mod content;
-    pub mod coordinates;
-    pub mod host;
-    pub mod presentation;
-    pub mod tables;
-}
+pub mod enemy_projectiles;
 pub mod player_collision {
     pub mod effects;
     pub mod state;
