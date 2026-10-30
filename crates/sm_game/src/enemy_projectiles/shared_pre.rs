@@ -1,6 +1,7 @@
 //! Shared pre-action behavior and numeric dispatch. No legacy projectile callbacks.
 #![forbid(unsafe_code)]
 use super::access::{enemy, enemy_add, enemy_byte, shot_word};
+use super::addresses;
 use super::host::{EnemyMember as SlotField, Host};
 use super::pre_actions::*;
 use super::pre_helpers::*;
@@ -48,43 +49,57 @@ pub fn Math_MultByCos(a: u16, angle: u16) -> u16 {
 
 pub fn CallNorfairLavaquakeRocksFunc(ea: u32, k: u16, ctx: &mut impl Host) {
     match ea {
-        8829974 => lavaquake_rock_rise(k, ctx),
-        8830095 => lavaquake_rock_fall(k, ctx),
+        addresses::functions::LAVAQUAKE_ROCK_RISE => lavaquake_rock_rise(k, ctx),
+        addresses::functions::LAVAQUAKE_ROCK_FALL => lavaquake_rock_fall(k, ctx),
         _ => ctx.unreachable(),
     }
 }
 
 pub fn CallMotherBrainTubeFallingFunc(ea: u32, k: u16, ctx: &mut impl Host) {
     match ea {
-        8834026 => falling_tube_burst(k, ctx),
-        8834056 => falling_tube_fall(k, ctx),
+        addresses::functions::FALLING_TUBE_BURST => falling_tube_burst(k, ctx),
+        addresses::functions::FALLING_TUBE_FALL => falling_tube_fall(k, ctx),
         _ => ctx.unreachable(),
     }
 }
 
 pub fn CallNamiFuneFireballFunc(ea: u32, k: u16, ctx: &mut impl Host) {
     match ea {
-        8838976 => EprojInit_NamiFuneFireball_MoveX1(k, ctx),
-        8839018 => EprojInit_NamiFuneFireball_MoveX2(k, ctx),
+        addresses::functions::NAMI_FUNE_FIREBALL_MOVE_X1 => {
+            EprojInit_NamiFuneFireball_MoveX1(k, ctx)
+        }
+        addresses::functions::NAMI_FUNE_FIREBALL_MOVE_X2 => {
+            EprojInit_NamiFuneFireball_MoveX2(k, ctx)
+        }
         _ => ctx.unreachable(),
     }
 }
 
 pub fn CallLavamanFunc(ea: u32, k: u16, ctx: &mut impl Host) {
     match ea {
-        8839248 => Eproj_LavaThrownByLavaman_MoveX1(k, ctx),
-        8839290 => Eproj_LavaThrownByLavaman_MoveX2(k, ctx),
+        addresses::functions::LAVA_THROWN_BY_LAVAMAN_MOVE_X1 => {
+            Eproj_LavaThrownByLavaman_MoveX1(k, ctx)
+        }
+        addresses::functions::LAVA_THROWN_BY_LAVAMAN_MOVE_X2 => {
+            Eproj_LavaThrownByLavaman_MoveX2(k, ctx)
+        }
         _ => ctx.unreachable(),
     }
 }
 
 pub fn CallBotwoonEprojFunc(ea: u32, k: u16, ctx: &mut impl Host) {
     match ea {
-        8841972 => Eproj_BotwonsBodyFunction_Dying(k, ctx),
-        8841988 => Eproj_BotwonsBodyFunction_Dying2(k, ctx),
-        8842015 => Eproj_BotwonsBodyFunction_DyingFalling(k, ctx),
-        8841880 => Eproj_BotwoonsBody_Main(k, ctx),
-        8842131 => (),
+        addresses::functions::BOTWONS_BODY_FUNCTION_DYING => {
+            Eproj_BotwonsBodyFunction_Dying(k, ctx)
+        }
+        addresses::functions::BOTWONS_BODY_FUNCTION_DYING2 => {
+            Eproj_BotwonsBodyFunction_Dying2(k, ctx)
+        }
+        addresses::functions::BOTWONS_BODY_FUNCTION_DYING_FALLING => {
+            Eproj_BotwonsBodyFunction_DyingFalling(k, ctx)
+        }
+        addresses::functions::BOTWOONS_BODY_MAIN => Eproj_BotwoonsBody_Main(k, ctx),
+        addresses::functions::NONE_EB93 => (),
         _ => ctx.unreachable(),
     }
 }

@@ -1364,6 +1364,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/enemy_projectiles/actor_runtime.rs"),
     ),
     (
+        "crates/sm_game/src/enemy_projectiles/addresses.rs",
+        include_bytes!("../../crates/sm_game/src/enemy_projectiles/addresses.rs"),
+    ),
+    (
         "crates/sm_game/src/enemy_projectiles/attachments_spore_maw.rs",
         include_bytes!("../../crates/sm_game/src/enemy_projectiles/attachments_spore_maw.rs"),
     ),

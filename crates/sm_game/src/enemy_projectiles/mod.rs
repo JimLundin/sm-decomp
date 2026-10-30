@@ -1,6 +1,7 @@
 //! Enemy projectiles: owned state, behaviour and the host they run against.
 // Translated modules keep the compat crate's lint policy for their original names.
 pub mod access;
+pub mod addresses;
 pub mod attachments_spore_maw;
 pub mod attachments_waffle_botwoon;
 pub mod collision;
