@@ -173,6 +173,7 @@ pub mod actors {
     pub mod skree;
     pub mod skultera;
     pub mod snapshot;
+    pub mod space_pirates;
     pub mod species;
     pub mod spore_spawn;
     pub mod staging;
