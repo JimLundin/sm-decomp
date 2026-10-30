@@ -1235,12 +1235,6 @@ crate::game::callback_dispatch! {
                 .pre_instruction;
             actor_species_pre_instruction(u32::from(preinstruction) | 0xa20000, game);
         }];
-        10653138 => [{
-            if !crate::game::maridia_turtles::advance(false, game) { crate::rtl::Unreachable(game); }
-        }];
-        10653998 => [{
-            if !crate::game::maridia_turtles::advance(true, game) { crate::rtl::Unreachable(game); }
-        }];
         10659396 => [crate::game::gunship::initialize_top(game)];
         10659538 => [crate::game::gunship::initialize_bottom(game)];
         10659673 => [{
@@ -1285,11 +1279,6 @@ crate::game::callback_dispatch! {
         10676180 => [{ actors::combat::power_bomb_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize); crate::game::lava_seahorse_pair::synchronize(game); }];
         10663280 => [crate::game::lavaquake::update(true, game)];
         10663311 => [crate::game::lavaquake::update(false, game)];
-        10653036 => [crate::game::maridia_turtles::initialize(false, game)];
-        10653085 => [crate::game::maridia_turtles::initialize(true, game)];
-        10654337 => [crate::game::maridia_turtles::touch(false, game)];
-        10654367 => [crate::game::maridia_turtles::touch(true, game)];
-        10654479 => crate::game::maridia_turtles::shot;
         10652077 => crate::game::mini_crocomire::initialize;
         10651420 => crate::game::goofball::initialize;
         10651548 => crate::game::goofball::advance;
@@ -1432,14 +1421,6 @@ crate::game::callback_dispatch! {
         10666441 | 10666452 | 10666463 | 10666474 | 10666485 | 10666496 | 10666507
         | 10666518 | 10666529 | 10666540 | 10666551 | 10667730 | 10667741 | 10667752
             => [crate::game::norfair_rio::instruction(ea, j, game)];
-        10654593 => [crate::game::maridia_turtles::instruction(0x9381, j, game)];
-        10654738 => [crate::game::maridia_turtles::instruction(0x9412, j, game)];
-        10654791 => [crate::game::maridia_turtles::instruction(0x9447, j, game)];
-        10654801 => [crate::game::maridia_turtles::instruction(0x9451, j, game)];
-        10654827 => [crate::game::maridia_turtles::instruction(0x946b, j, game)];
-        10654853 => [crate::game::maridia_turtles::instruction(0x9485, j, game)];
-        10654881 => [crate::game::maridia_turtles::instruction(0x94a1, j, game)];
-        10654919 => [crate::game::maridia_turtles::instruction(0x94c7, j, game)];
         10654929 => [{ crate::game::music::queue_sfx2_max6(0x3a, game); j }];
         10657578 => [{ crate::game::music::queue_sfx2_max6(0x34, game); j }];
         10657959 => [crate::game::enemy_projectiles::spawn_scripted(0xdafe, j, game)];

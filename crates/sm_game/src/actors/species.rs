@@ -16,7 +16,7 @@ use crate::actors::{
     escape_critters, etecoon, evir, fire_arc, fireflea, fune, gamet, geega, kago, kraid,
     magdollite, metroid, mini_kraid, mochtroid, morph_ball_eye, oum, phantoon, phantoon_actions,
     puyo, reflec, ridley, rinka, roach, shaktool, sidehopper, skree, skultera, space_pirates,
-    statues, torizo, tripper, yapping_maw, zeb, zebetites, zoa,
+    statues, tatori, torizo, tripper, yapping_maw, zeb, zebetites, zoa,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -536,6 +536,14 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
                 game.unknown_routine();
             }
         }
+        10653036 | 10653085 => tatori::initialize(ea == 10653085, game),
+        10653138 | 10653998 => {
+            if !tatori::main_ai(ea == 10653998, game) {
+                game.unknown_routine();
+            }
+        }
+        10654337 | 10654367 => tatori::touch(ea == 10654367, game),
+        10654479 => tatori::shot(game),
         10663426 => rinka::initialize(game),
         10663876 => {
             if !rinka::main_ai(game) {
@@ -795,6 +803,9 @@ pub fn instruction<H: InstructionHost>(
         10722422 | 10722444 => tripper::set_x_movement(true, j, game),
         10725992 => sidehopper::queue_sound(j, game),
         10657941 => cacatac::resume_moving(k, j, game),
+        10654593 | 10654738 | 10654791 | 10654801 | 10654827 | 10654853 | 10654881 | 10654919 => {
+            tatori::instruction(ea, j, game)
+        }
         10664371 | 10664381 | 10664391 => rinka::instruction(ea, k, j, game),
         10669235 | 10669246 | 10669257 => oum::instruction(ea, j, game),
         10659181 | 10659185 => cacatac::owtch::set_function_index(ea, k, j, game),

@@ -197,6 +197,7 @@ pub mod actors {
     pub mod staging;
     pub mod state;
     pub mod statues;
+    pub mod tatori;
     pub mod torizo;
     pub mod tripper;
     pub mod yapping_maw;
