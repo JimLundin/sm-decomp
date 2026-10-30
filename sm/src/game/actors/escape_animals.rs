@@ -1,7 +1,6 @@
 //! The escape-room animals run in `sm_game::actors::escape_animals`; their
 //! table, events and movement come from here.
 #![forbid(unsafe_code)]
-use {crate::game::actors::api, sm_game::actors::access::ActorKey as Key};
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::imported::{Imported, load};
 use crate::game::session_runtime::Runtime;
@@ -9,6 +8,7 @@ use crate::game_state::Game;
 use crate::rom::RomImage;
 use sm_data::escape_etecoons::{ADDRESS, BYTES, EscapeEtecoon, EscapeEtecoons};
 pub(crate) use sm_game::actors::escape_animals::*;
+use {crate::game::actors::api, sm_game::actors::access::ActorKey as Key};
 
 pub(crate) type ImportedTables = Option<Imported<EscapeEtecoons>>;
 
