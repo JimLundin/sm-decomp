@@ -8,24 +8,11 @@ use crate::samus_drawing;
 use crate::scene::samus_body::Body;
 use crate::visual_host::Source;
 
-/// The session lease the frame draws on. Owned calls keep the Session leased
-/// and refresh the external observations at their seams; the effects below
-/// leave the lease, export the Session to the compatibility host, and resume.
-pub trait Host: SessionRam + crate::visual_host::Host + samus_drawing::Authority {
-    /// Run `action` on this lease with the former foreign entry's preflight,
-    /// unwind publication and refreshed input observations.
-    fn owned_call<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R;
-    /// Re-read the external observations from the lease's RAM view.
-    fn refresh_player_observations(&mut self);
-    /// An owned call bracketed by player-observation refreshes.
-    fn owned_player_call<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R {
-        self.owned_call(|lease| {
-            lease.refresh_player_observations();
-            let result = action(lease);
-            lease.refresh_player_observations();
-            result
-        })
-    }
+/// The session lease the frame draws on; the effects below leave the lease,
+/// export the Session to the compatibility host, and resume.
+pub trait Host:
+    SessionRam + crate::visual_host::Host + samus_drawing::Authority + crate::lease::Lease
+{
     /// The charge flare and grapple flare, on the compatibility host.
     fn draw_flare(&mut self);
     fn draw_grapple_flare(&mut self);
@@ -35,8 +22,6 @@ pub trait Host: SessionRam + crate::visual_host::Host + samus_drawing::Authority
     fn draw_grapple_rope(&mut self);
     /// The player projectiles, on the compatibility host.
     fn draw_projectiles(&mut self);
-    /// The original's failure for an unknown draw handler.
-    fn invalid_draw_mode(&mut self);
     /// Publish the finished player frame.
     fn finish_player_frame(&mut self);
 }
@@ -140,7 +125,7 @@ pub fn draw_player_frame<H: Host>(h: &mut H) {
             h.owned_player_call(|runtime| samus_drawing::draw_body(runtime, Body::Frozen));
         }
         DrawMode::Disabled | DrawMode::Empty | DrawMode::Elevator => {}
-        DrawMode::Unknown(_) => h.invalid_draw_mode(),
+        DrawMode::Unknown(_) => h.native_unreachable(),
     }
     h.draw_projectiles();
     h.finish_player_frame();
