@@ -38,6 +38,13 @@ pub trait MenuRuntime {
     /// Begin entering the room at the current load station.
     fn enter_load_station(&mut self);
     fn request_reset(&mut self);
+    /// The message box DMA length the original kept outside RAM.
+    fn message_box_das0l_value(&self) -> u16;
+    fn set_message_box_das0l_value(&mut self, value: u16);
+    /// Advance the music queue and emit the queued dialogue sound effects as Cues.
+    fn advance_dialogue_audio(&mut self);
+    /// Restore Samus's movement sound after a message box.
+    fn restore_movement_sound(&mut self);
     /// Wait for the next display refresh; nonzero yields to the frame loop.
     fn display_wait(&mut self, update: bool) -> u8;
     fn set_boss_byte(&mut self, area: u16, value: u8);

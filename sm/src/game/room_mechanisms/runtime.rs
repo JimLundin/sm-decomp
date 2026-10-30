@@ -154,6 +154,8 @@ impl Effects for Runtime<'_> {
     fn delayed_room_music(&mut self, frames: u16) {
         self.foreign(|game| crate::game::music::PlayRoomMusicTrackAfterAFrames(frames, game));
     }
+    // The verifier's callback edge is unsafe; the plain build calls safe code.
+    #[allow(unused_unsafe)]
     fn display_message(&mut self, request: u16) -> u8 {
         self.foreign(|game| unsafe {
             #[cfg(sm_verify_dll)]

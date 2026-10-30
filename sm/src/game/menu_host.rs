@@ -127,6 +127,33 @@ impl MenuRuntime for Game {
     fn native_image_binding(&self) -> Option<crate::rom::RomImage> {
         self.capture_native_rom_binding()
     }
+    fn advance_dialogue_audio(&mut self) {
+        // SAFETY: the dialogue runs from the frame loop with the backend installed.
+        unsafe { crate::game::music::HandleMusicQueue(self) };
+        crate::game::music::advance_sound_effects(self, |channel, value, meaning, game| {
+            // SAFETY: as above; the Cue sink writes the installed APU queue.
+            unsafe {
+                crate::native_audio::emit(
+                    crate::native_audio::sound_cue(
+                        channel,
+                        sm_data::OriginalSoundEffect(value),
+                        meaning,
+                    ),
+                    sm_data::CuePhase::DialogueSound,
+                    game,
+                )
+            }
+        });
+    }
+    fn restore_movement_sound(&mut self) {
+        crate::game::player_projectiles::restore_sound(self)
+    }
+    fn message_box_das0l_value(&self) -> u16 {
+        self.message_box_das0l_value
+    }
+    fn set_message_box_das0l_value(&mut self, value: u16) {
+        self.message_box_das0l_value = value;
+    }
     fn request_reset(&mut self) {
         Game::request_reset(self)
     }

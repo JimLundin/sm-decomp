@@ -35,12 +35,15 @@ macro_rules! register_sequence {
     ($game:ident; $($kind:ident($($argument:tt)*);)*) => {
         $($crate::register_sequence!(@write $game; $kind($($argument)*));)*
     };
-    (@write $game:ident; byte($address:expr, $value:expr $(,)?)) => {
-        $crate::display::sequence::Registers::write_register(&mut *$game, $address, $value)
-    };
-    (@write $game:ident; word($address:expr, $value:expr $(,)?)) => {
-        $crate::display::sequence::Registers::write_register_word(&mut *$game, $address, $value)
-    };
+    // Address then value are evaluated before the write, as in the original call.
+    (@write $game:ident; byte($address:expr, $value:expr $(,)?)) => {{
+        let (address, value) = ($address, $value);
+        $crate::display::sequence::Registers::write_register(&mut *$game, address, value)
+    }};
+    (@write $game:ident; word($address:expr, $value:expr $(,)?)) => {{
+        let (address, value) = ($address, $value);
+        $crate::display::sequence::Registers::write_register_word(&mut *$game, address, value)
+    }};
     (@write $game:ident; mirror($address:expr, $value:expr, $offset:expr, $before:expr $(,)?)) => {
         $crate::display::sequence::write_register_and_mirror(&mut *$game, $address, $value, $offset, $before)
     };

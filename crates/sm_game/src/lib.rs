@@ -34,6 +34,7 @@ pub mod layer_blending;
 pub mod liquid_effects;
 pub mod liquid_surface;
 pub mod menus;
+pub mod message_boxes;
 pub mod message_composition;
 pub mod palette_copies;
 pub mod probe;

@@ -445,7 +445,6 @@ pub mod game {
     pub(crate) use sm_game::corpse_tables;
     pub(crate) mod decompression;
     pub(crate) mod demo_rooms;
-    pub(crate) mod dialogue_ram;
     pub(crate) mod enemy_layouts;
     pub(crate) mod enemy_speeds;
 
