@@ -355,8 +355,8 @@ pub(crate) fn initialize(game: &mut crate::game_state::Game) {
     }
     rt.session_mut().player.contact.y_acceleration.fraction = 0x1c00;
     rt.session_mut().player.contact.y_acceleration.whole = 0;
-    rt.write_slice_le(ram::fx_y_pos, u16::MAX);
-    rt.write_slice_le(ram::lava_acid_y_pos, u16::MAX);
+    rt.session_mut().room.liquid.surface.whole = u16::MAX;
+    rt.session_mut().room.liquid.lava_acid.whole = u16::MAX;
     rt.foreign(crate::game::visual_runtime::update_beam_tiles_and_palette);
     rt.write_slice_le(ram::cinematic_function, 0);
     let state = rt.session_mut();

@@ -342,6 +342,8 @@ pub struct Room {
     pub liquid_target: u16,
     pub liquid_velocity: u16,
     pub liquid_delay: u16,
+    /// The rest of the liquid block; see `crate::liquid`.
+    pub liquid: crate::liquid::Liquid,
     pub enemy_deaths: u16,
     pub enemy_quota: u16,
     pub loaded_items: u16,
@@ -410,6 +412,7 @@ impl Room {
             liquid_target: 0,
             liquid_velocity: 0,
             liquid_delay: 0,
+            liquid: Default::default(),
             enemy_deaths: 0,
             enemy_quota: 0,
             loaded_items: 0,

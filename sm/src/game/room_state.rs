@@ -399,10 +399,10 @@ pub(crate) fn load_fx_header(game: &mut Game) {
     let mut h = Runtime::new(game);
     apply_fx(&mut h, &definition, PaletteBuffer::Target);
     let kind = definition.byte(9);
-    h.write_word_le(u16::from(kind), ram::fx_type);
+    h.session_mut().room.liquid.kind = u16::from(kind);
     if kind != 0 {
         let tilemap = fx_table(&h, 0x83abf0).word(usize::from(kind & !1));
-        h.write_word_le(tilemap, ram::fx_tilemap_ptr);
+        h.session_mut().room.liquid.tilemap = tilemap;
         let initialize: Option<fn(&mut Game)> = match kind >> 1 {
             0 | 7..=15 => None,
             1 => Some(liquid_effects::initialize_lava),

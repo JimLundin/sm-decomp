@@ -1901,6 +1901,11 @@ fn checkpoint_read_terrain(read: &mut CheckpointReader<'_>) -> Result<Terrain, S
     Terrain::from_owned(cells.into_boxed_slice(), tiles.into_boxed_slice())
         .map_err(|error| format!("room checkpoint {error:?}"))
 }
+checkpoint_fields!(checkpoint_liquid, checkpoint_read_liquid, crate::liquid::Liquid,
+    surface: checkpoint_position/checkpoint_read_position, lava_acid: checkpoint_position/checkpoint_read_position,
+    tilemap: checkpoint_word/checkpoint_read_word, rising: checkpoint_word/checkpoint_read_word,
+    kind: checkpoint_word/checkpoint_read_word, offset: checkpoint_position/checkpoint_read_position,
+    tide_phase: checkpoint_word/checkpoint_read_word, base_fraction: checkpoint_word/checkpoint_read_word);
 checkpoint_fields!(checkpoint_room, checkpoint_read_room, Room,
     entry: checkpoint_room_entry/checkpoint_read_room_entry, terrain: checkpoint_terrain/checkpoint_read_terrain,
     area: checkpoint_word/checkpoint_read_word, width: checkpoint_word/checkpoint_read_word,
@@ -1909,6 +1914,7 @@ checkpoint_fields!(checkpoint_room, checkpoint_read_room, Room,
     collision_cursor: checkpoint_word/checkpoint_read_word, liquid_options: checkpoint_word/checkpoint_read_word,
     liquid_height: checkpoint_word/checkpoint_read_word, liquid_target: checkpoint_word/checkpoint_read_word,
     liquid_velocity: checkpoint_word/checkpoint_read_word, liquid_delay: checkpoint_word/checkpoint_read_word,
+    liquid: checkpoint_liquid/checkpoint_read_liquid,
     enemy_deaths: checkpoint_word/checkpoint_read_word, enemy_quota: checkpoint_word/checkpoint_read_word,
     loaded_items: checkpoint_word/checkpoint_read_word, power_bomb_radius: checkpoint_word/checkpoint_read_word,
     enemy_processing_stage: checkpoint_word/checkpoint_read_word, collision_detection_index: checkpoint_word/checkpoint_read_word,

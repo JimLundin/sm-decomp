@@ -538,6 +538,17 @@ macro_rules! scalar_words {
         $f(0x197a,$($borrow)* $s.room.liquid_target);
         $f(0x197c,$($borrow)* $s.room.liquid_velocity);
         $f(0x1980,$($borrow)* $s.room.liquid_delay);
+        $f(0x195c,$($borrow)* $s.room.liquid.surface.fraction);
+        $f(0x195e,$($borrow)* $s.room.liquid.surface.whole);
+        $f(0x1960,$($borrow)* $s.room.liquid.lava_acid.fraction);
+        $f(0x1962,$($borrow)* $s.room.liquid.lava_acid.whole);
+        $f(0x1964,$($borrow)* $s.room.liquid.tilemap);
+        $f(0x196c,$($borrow)* $s.room.liquid.rising);
+        $f(0x196e,$($borrow)* $s.room.liquid.kind);
+        $f(0x1970,$($borrow)* $s.room.liquid.offset.fraction);
+        $f(0x1972,$($borrow)* $s.room.liquid.offset.whole);
+        $f(0x1974,$($borrow)* $s.room.liquid.tide_phase);
+        $f(0x1976,$($borrow)* $s.room.liquid.base_fraction);
         $f(0xe50,$($borrow)* $s.room.enemy_deaths);
         $f(0xe52,$($borrow)* $s.room.enemy_quota);
         $f(0xd91a,$($borrow)* $s.room.loaded_items);

@@ -1,16 +1,16 @@
 //! Room liquid (FX) and HDMA objects as one Session-owned domain: design.
 //!
-//! Nothing here is implemented yet; this records the plan the coordinator
-//! reviews before code lands. Constraints come from docs/ENGINE_STATE_MIGRATION.md.
+//! Step 1 (liquid) is implemented below; step 2 (HDMA objects) is planned.
+//! Constraints come from docs/ENGINE_STATE_MIGRATION.md.
 //!
 //! # Scope and owner types
 //!
-//! Step 1, liquid: `Room::liquid: Liquid` replaces the five `room.liquid_*`
-//! words and adds the rest of the $195C–$1980 block (not $1966–$196A, which
+//! Step 1, liquid: `Room::liquid: Liquid` joins the five existing `room.liquid_*`
+//! words (kept as they are) with the rest of the $195C–$1980 block (not $1966–$196A, which
 //! is unnamed; not the layer blending words at $1982–$1986, which belong to
 //! display):
 //!
-//! | RAM | field | today |
+//! | RAM | field | before step 1 |
 //! |---|---|---|
 //! | $195C/$195E | `surface: Position` (fx_y_subpos/pos) | RAM only |
 //! | $1960/$1962 | `lava_acid: Position` | RAM only |
@@ -19,11 +19,8 @@
 //! | $196E | `kind: u16` (fx_type) | RAM only |
 //! | $1970/$1972 | `offset: Position` | RAM only |
 //! | $1974 | `tide_phase: u16` | RAM only |
-//! | $1976/$1978 | `base: Position` (whole = old `liquid_height`) | whole owned |
-//! | $197A | `target: u16` | owned (`liquid_target`) |
-//! | $197C | `velocity: u16` | owned |
-//! | $197E | `options: u16` | owned |
-//! | $1980 | `delay: u16` | owned |
+//! | $1976 | `base_fraction: u16` (whole stays `room.liquid_height`) | RAM only |
+//! | $1978–$1980 | `room.liquid_{height,target,velocity,options,delay}` | owned |
 //!
 //! Step 2, HDMA objects: `Presentation::hdma: HdmaObjects` takes $18B0–$1958:
 //! the enable flag, selected index, and six slots of channel mask, bank,
@@ -49,13 +46,16 @@
 //! compat writes outside a lease write RAM, bump the epoch and are re-imported
 //! at the next lease (the existing bridge), so none is lost.
 //!
-//! - `liquid_effects` (sm_game; HDMA pre-instructions): closed. Each callback
-//!   runs on one lease and uses `session().room.liquid` / `presentation.hdma`.
-//! - `room_state::set_fx_kind`, `player_transitions_runtime` (reset to
-//!   $FFFF): closed; they already hold a Runtime, so they write typed fields.
-//! - `sm_a6` (Ridley/Ceres rising lava) and `sm_aa` (Torizo acid): closed by
-//!   writing the three words through one lease where the original wrote them
-//!   together.
+//! Verifier-observed lease and transfer counts must not change, so no writer
+//! gains a lease it did not already have:
+//!
+//! - `room_state` (FX kind and tilemap) and `player_transitions_runtime`
+//!   (surface reset to $FFFF): closed. They already hold a Runtime lease, so
+//!   they write the typed fields.
+//! - `liquid_effects` (sm_game; HDMA pre-instructions), `sm_a6` (Ridley/Ceres
+//!   rising lava), `sm_aa` (Torizo acid) and `visual_runtime`: bridged. They run
+//!   on `Game` without a lease; their RAM writes suspend the owner, which is
+//!   re-imported at the next lease. They close when their callers run on one.
 //! - `visual_runtime` HDMA interpreter: bridged in step 1; closed in step 2,
 //!   when it runs the slot table from `presentation.hdma`.
 //! - Readers (grapple, sky, x-ray, Crocomire, escape critters, explosion
@@ -65,8 +65,28 @@
 //!
 //! # Risks
 //!
-//! - Extra leases add import/export transfers, which some verifier checks
-//!   count; per-callback leases must replace the old accesses one-for-one.
 //! - Step 1 is a complete closure only for the liquid words; it lands as one
 //!   commit, step 2 as another, each behind a full corpus.
 #![forbid(unsafe_code)]
+use crate::geometry::Position;
+
+/// The room liquid's motion and surface words not already in `Room`.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct Liquid {
+    /// $195C/$195E: the drawn liquid surface.
+    pub surface: Position,
+    /// $1960/$1962: the lava or acid surface used for damage.
+    pub lava_acid: Position,
+    /// $1964: FX tilemap pointer.
+    pub tilemap: u16,
+    /// $196C: the bank $88 rising handler.
+    pub rising: u16,
+    /// $196E: FX type.
+    pub kind: u16,
+    /// $1970/$1972: the surface's wave offset.
+    pub offset: Position,
+    /// $1974.
+    pub tide_phase: u16,
+    /// $1976: the fraction of the base height, whose whole is `Room::liquid_height`.
+    pub base_fraction: u16,
+}
