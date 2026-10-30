@@ -237,14 +237,14 @@ pub fn apply_special_angle<H: Host + ?Sized>(game: &mut H) -> u8 {
             return 0;
         }
     }
-    word! { game;
-        samus_new_pose_interrupted = special_angle_word!(game, row, 2);
-        samus_x_pos = word!(game.grapple_beam_end_x_pos)
-            .wrapping_add(special_angle_word!(game, row, 4));
-        samus_y_pos = word!(game.grapple_beam_end_y_pos)
-            .wrapping_add(special_angle_word!(game, row, 6));
-        grapple_beam_function = special_angle_word!(game, row, 8);
-    }
+    word!(game.samus_new_pose_interrupted = special_angle_word!(game, row, 2));
+    game.set_player_x(
+        word!(game.grapple_beam_end_x_pos).wrapping_add(special_angle_word!(game, row, 4)),
+    );
+    game.set_player_y(
+        word!(game.grapple_beam_end_y_pos).wrapping_add(special_angle_word!(game, row, 6)),
+    );
+    word!(game.grapple_beam_function = special_angle_word!(game, row, 8));
     word! { game, 0; samus_special_transgfx_index, slow_grabble_scrolling_flag }
     clamp_previous_grapple_position!(game, samus_x_pos, samus_prev_x_pos);
     clamp_previous_grapple_position!(game, samus_y_pos, samus_prev_y_pos);
@@ -553,14 +553,12 @@ macro_rules! native_pose_parameter {
 }
 macro_rules! place_samus_relative_to_grapple_origin {
     ($game:ident, $offset_table:literal, $offset_index:ident) => {
-        word! { $game;
-            samus_x_pos = (word!($game.x_pos_of_start_of_grapple_beam)).wrapping_add(
-                native_grapple_byte!($game, $offset_table, usize::from($offset_index)) as i8 as u16,
-            );
-            samus_y_pos = (word!($game.y_pos_of_start_of_grapple_beam)).wrapping_add(
-                native_grapple_byte!($game, $offset_table, usize::from($offset_index) + 1) as i8 as u16,
-            );
-        }
+        $game.set_player_x((word!($game.x_pos_of_start_of_grapple_beam)).wrapping_add(
+            native_grapple_byte!($game, $offset_table, usize::from($offset_index)) as i8 as u16,
+        ));
+        $game.set_player_y((word!($game.y_pos_of_start_of_grapple_beam)).wrapping_add(
+            native_grapple_byte!($game, $offset_table, usize::from($offset_index) + 1) as i8 as u16,
+        ));
     };
 }
 
@@ -635,14 +633,16 @@ pub fn clamp_swing_position<H: Host + ?Sized>(game: &mut H) {
 pub fn position_anchored<H: Host + ?Sized>(game: &mut H) {
     let v0: i32 = word!(game.grapple_beam_direction) as i32;
     let origin = grapple_origins::origin(game, OriginSet::Standard, v0 as isize);
-    word! { game;
-        samus_x_pos = (word!(game.x_pos_of_start_of_grapple_beam)).wrapping_sub(origin.x);
-        x_pos_of_start_of_grapple_beam_prevframe =
-            origin.previous_x.wrapping_add(game.player_x());
-        samus_y_pos = (word!(game.y_pos_of_start_of_grapple_beam)).wrapping_sub(origin.y);
-        y_pos_of_start_of_grapple_beam_prevframe =
-            origin.previous_y.wrapping_add(game.player_y());
-    }
+    game.set_player_x((word!(game.x_pos_of_start_of_grapple_beam)).wrapping_sub(origin.x));
+    word!(
+        game.x_pos_of_start_of_grapple_beam_prevframe =
+            origin.previous_x.wrapping_add(game.player_x())
+    );
+    game.set_player_y((word!(game.y_pos_of_start_of_grapple_beam)).wrapping_sub(origin.y));
+    word!(
+        game.y_pos_of_start_of_grapple_beam_prevframe =
+            origin.previous_y.wrapping_add(game.player_y())
+    );
 }
 
 pub fn restore_start_positions<H: Host + ?Sized>(game: &mut H) {

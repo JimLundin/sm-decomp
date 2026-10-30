@@ -244,8 +244,12 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(scene: Scene, game: 
             word!(game.samus_pose = kPose_02_FaceL_Normal as u16);
             game.finish_pose_change();
             let (x, y) = if mother_brain { (155, 115) } else { (376, 147) };
-            word! {game; samus_x_pos = x; samus_prev_x_pos = x; samus_y_pos = y;
-            samus_prev_y_pos = y; cinematic_var8 = 0; cinematic_var13 = 127; }
+            game.set_player_x(x);
+            game.set_previous_player_x(x);
+            game.set_player_y(y);
+            game.set_previous_player_y(y);
+            word!(game.cinematic_var8 = 0);
+            word!(game.cinematic_var13 = 127);
             if mother_brain {
                 // The preceding $1A4B store leaves $007F in the ROM accumulator.
                 game.spawn_cinematic_sprite_at(

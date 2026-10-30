@@ -148,19 +148,21 @@ pub fn load<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
             hook: record.word(16),
         }
     });
-    word! { game;
-        room_ptr = room.room;
-        door_def_ptr = room.door;
-        layer1_x_pos = room.layer1_x;
-        bg1_x_offset = word!(game.layer1_x_pos);
-        layer1_y_pos = room.layer1_y;
-        bg1_y_offset = word!(game.layer1_y_pos);
-        samus_y_pos = word!(game.layer1_y_pos).wrapping_add(room.samus_y_offset);
-        samus_prev_y_pos = game.player_y();
-        samus_x_pos = room.samus_x_offset.wrapping_add(word!(game.layer1_x_pos)).wrapping_add(128);
-        samus_prev_x_pos = game.player_x();
-        demo_timer = room.timer;
-    }
+    word!(game.room_ptr = room.room);
+    word!(game.door_def_ptr = room.door);
+    word!(game.layer1_x_pos = room.layer1_x);
+    word!(game.bg1_x_offset = word!(game.layer1_x_pos));
+    word!(game.layer1_y_pos = room.layer1_y);
+    word!(game.bg1_y_offset = word!(game.layer1_y_pos));
+    game.set_player_y(word!(game.layer1_y_pos).wrapping_add(room.samus_y_offset));
+    game.set_previous_player_y(game.player_y());
+    game.set_player_x(
+        room.samus_x_offset
+            .wrapping_add(word!(game.layer1_x_pos))
+            .wrapping_add(128),
+    );
+    game.set_previous_player_x(game.player_x());
+    word!(game.demo_timer = room.timer);
     let value = native_record(0x8f0000 | u32::from(word!(game.room_ptr)), game).byte(1);
     game.ram().write_byte(0x79f, value);
     word! { game, 0; reg_BG1HOFS, reg_BG1VOFS }
