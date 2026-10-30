@@ -894,10 +894,8 @@ impl sm_game::actors::ceres_doors::Host for Game {
     }
 
     fn project_cinematic_point(&mut self, x: u16, y: u16) -> (u16, u16) {
-        let point = crate::game::visual_runtime::project_cinematic_point(
-            crate::types::Point16U { x, y },
-            self,
-        );
+        let point =
+            sm_game::cinematic::project_cinematic_point(sm_game::geometry::Point { x, y }, self);
         (point.x, point.y)
     }
 
