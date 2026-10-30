@@ -2796,6 +2796,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/actors/kraid_sinking.rs"),
     ),
     (
+        "crates/sm_game/src/actors/mother_brain_effects.rs",
+        include_bytes!("../../crates/sm_game/src/actors/mother_brain_effects.rs"),
+    ),
+    (
         "crates/sm_game/src/actors/phantoon_actions.rs",
         include_bytes!("../../crates/sm_game/src/actors/phantoon_actions.rs"),
     ),
@@ -2806,6 +2810,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/actors/ridley_tables.rs",
         include_bytes!("../../crates/sm_game/src/actors/ridley_tables.rs"),
+    ),
+    (
+        "crates/sm_game/src/palette_copies.rs",
+        include_bytes!("../../crates/sm_game/src/palette_copies.rs"),
     ),
     (
         "sm/src/verification/actor_palette_checks.rs",
