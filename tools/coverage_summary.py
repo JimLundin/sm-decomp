@@ -73,6 +73,8 @@ def main():
     llvm_cov, profdata, obj, output = sys.argv[1:5]
     route = sys.argv[5] if len(sys.argv) > 5 else None
     files, functions = load(llvm_cov, profdata, obj)
+    if not files:
+        raise SystemExit("no engine sources in the coverage mapping (were .lcovfun records linked?)")
     modules = collections.defaultdict(lambda: [0, 0, 0, 0])
     for path, value in files.items():
         module = path.rsplit("/", 1)[0] if path.count("/") > 3 else path
