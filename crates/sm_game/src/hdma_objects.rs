@@ -197,7 +197,7 @@ pub fn initialize_room_effects<H: crate::menus::host::Host + ?Sized>(game: &mut 
 
 pub fn update_hdma<H>(game: &mut H)
 where
-    H: crate::menus::host::Host + crate::hdma_program::LeaseHdma + ?Sized,
+    H: crate::hdma_dispatch::DispatchHost + crate::hdma_program::LeaseHdma + ?Sized,
 {
     {
         game.handle_music_queue();
@@ -279,7 +279,9 @@ impl<'a, H: crate::menus::host::Host + ?Sized> Bridged<'a, H> {
     }
 }
 
-impl<H: crate::menus::host::Host + ?Sized> crate::hdma_program::Interpreter for Bridged<'_, H> {
+impl<H: crate::hdma_dispatch::DispatchHost + ?Sized> crate::hdma_program::Interpreter
+    for Bridged<'_, H>
+{
     type Game = H;
     fn objects(&mut self) -> &mut crate::hdma::HdmaObjects {
         &mut self.objects

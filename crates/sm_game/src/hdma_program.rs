@@ -11,7 +11,8 @@
 #![forbid(unsafe_code)]
 
 use crate::enemy_script::{EnemyScript as Script, bank_base};
-use crate::hdma::{HdmaObjects, OBJECTS};
+use crate::hdma::{HdmaObject, HdmaObjects, OBJECTS};
+use crate::hdma_dispatch::DispatchHost;
 use crate::hdma_objects::Bridged;
 use crate::hdma_objects::HdmaEffect;
 use crate::menus::host::{Host, MenuRuntime as _};
@@ -23,7 +24,7 @@ pub trait HdmaLease:
     + crate::runtime_access::SessionRam
     + crate::cartridge::NativeImage
 {
-    type Game: Host + ?Sized;
+    type Game: DispatchHost + ?Sized;
     /// Run `action` on the compatibility host with the Session published.
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
 }
@@ -39,7 +40,7 @@ pub trait LeaseHdma: crate::runtime_access::RuntimeAccess {
 
 /// What one interpreter frame needs from either the lease or the RAM copy.
 pub(crate) trait Interpreter {
-    type Game: Host + ?Sized;
+    type Game: DispatchHost + ?Sized;
     fn objects(&mut self) -> &mut HdmaObjects;
     /// Work RAM outside the object table.
     fn byte(&self, at: usize) -> u8;
@@ -48,6 +49,19 @@ pub(crate) trait Interpreter {
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
     fn word(&self, at: usize) -> u16 {
         u16::from_le_bytes([self.byte(at), self.byte(at + 1)])
+    }
+    /// Run `action` on the compatibility host with object `index` lent to it
+    /// as typed fields. `action` must not read the host's copy of that object;
+    /// its words are restored from the lent object after.
+    fn with_object<T>(
+        &mut self,
+        index: usize,
+        action: impl FnOnce(&mut HdmaObject, &mut Self::Game) -> T,
+    ) -> T {
+        let mut object = self.objects().objects[index];
+        let result = self.foreign(|game| action(&mut object, game));
+        self.objects().objects[index] = object;
+        result
     }
     fn set_word(&mut self, at: usize, value: u16) {
         let [low, high] = value.to_le_bytes();
@@ -109,7 +123,7 @@ pub(crate) fn table_words(objects: &mut HdmaObjects, mut each: impl FnMut(usize,
 
 /// Run every active object's program once, as the enabled branch of
 /// `update_hdma`.
-pub fn run_objects<H: Host + LeaseHdma + ?Sized>(game: &mut H) {
+pub fn run_objects<H: DispatchHost + LeaseHdma + ?Sized>(game: &mut H) {
     if game.runtime_admissible() {
         run(&mut Leased(game.hdma_lease()));
     } else {
@@ -141,13 +155,10 @@ fn run<I: Interpreter>(it: &mut I) {
 }
 
 fn run_program<I: Interpreter>(index: usize, it: &mut I) {
-    let slot = 2 * index as u16;
     let object = it.objects().objects[index];
     let pre_instruction =
         (u32::from(object.pre_instruction_bank) << 16) | u32::from(object.pre_instruction);
-    if !crate::hdma_dispatch::pre_action_is_nothing(pre_instruction) {
-        it.foreign(|game| game.hdma_pre_action(pre_instruction, slot));
-    }
+    crate::hdma_dispatch::run_pre_action(pre_instruction, index, it);
     let object = &mut it.objects().objects[index];
     let timer = object.instruction_timer;
     object.instruction_timer = timer.wrapping_sub(1);

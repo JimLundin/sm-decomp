@@ -213,25 +213,42 @@ where
     }
 }
 
-/// Whether `address` names a pre-instruction that does nothing.
-pub fn pre_action_is_nothing(address: u32) -> bool {
-    HDMA_PRE_ACTIONS
-        .iter()
-        .any(|&(at, action)| at == address && matches!(action, HdmaPreAction::Nothing))
-}
+/// The hosts every pre-instruction target runs on.
+pub trait DispatchHost: Host + explosion_window::Host + xray_background::Host {}
+impl<T: Host + explosion_window::Host + xray_background::Host + ?Sized> DispatchHost for T {}
 
-/// Run the pre-instruction at `address` for HDMA object `k`.
-pub fn hdma_pre_action<H>(address: u32, k: u16, game: &mut H)
+/// Run the pre-instruction at `address` for HDMA object `index`. Targets
+/// that own their object's words run on it as typed fields; the rest run on
+/// the compatibility host.
+pub(crate) fn run_pre_action<I>(address: u32, index: usize, it: &mut I)
 where
-    H: Host + explosion_window::Host + xray_background::Host + ?Sized,
+    I: crate::hdma_program::Interpreter,
+    I::Game: DispatchHost,
 {
+    let slot = 2 * index as u16;
     let Some(&(_, target)) = HDMA_PRE_ACTIONS.iter().find(|(at, _)| *at == address) else {
-        game.rtl_unreachable();
+        it.foreign(|game| crate::menus::host::MenuRuntime::rtl_unreachable(game));
         return;
     };
     use HdmaPreAction::*;
     match target {
         Nothing => {}
+        LavaSurface => it.with_object(index, liquid_effects::lava_surface),
+        LavaBackground => it.with_object(index, liquid_effects::lava_background),
+        WaterSurface => it.with_object(index, liquid_effects::water_surface),
+        WaterBackground => it.with_object(index, liquid_effects::water_background),
+        WaterWave => it.with_object(index, liquid_effects::water_wave),
+        WaterFlat => it.foreign(liquid_effects::water_flat),
+        _ => it.foreign(|game| host_pre_action(target, slot, game)),
+    }
+}
+
+/// A pre-instruction target that runs on the compatibility host.
+fn host_pre_action<H: DispatchHost + ?Sized>(target: HdmaPreAction, k: u16, game: &mut H) {
+    use HdmaPreAction::*;
+    match target {
+        Nothing | LavaSurface | LavaBackground | WaterSurface | WaterBackground | WaterWave
+        | WaterFlat => unreachable!("run_pre_action runs {target:?}"),
         SetupXrayBlending => xray_background::setup_blending(k, game),
         AdvanceXrayBackground => game.hdma_effect(HdmaEffect::AdvanceXrayBackground, k),
         XrayBeamInitial => game.hdma_effect(HdmaEffect::AdvanceXrayBeam(BeamPhase::Initial), k),
@@ -254,12 +271,6 @@ where
         SkyParallax => scrolling_sky::update_parallax(k, game),
         AdvanceSkyParallax => scrolling_sky::advance_parallax(k, game),
         FirefleaLighting => room_visuals::advance_fireflea_lighting(game),
-        LavaSurface => liquid_effects::lava_surface(k, game),
-        LavaBackground => liquid_effects::lava_background(k, game),
-        WaterSurface => liquid_effects::water_surface(k, game),
-        WaterBackground => liquid_effects::water_background(k, game),
-        WaterWave => liquid_effects::water_wave(k, game),
-        WaterFlat => liquid_effects::water_flat(k, game),
         Rain => room_visuals::scroll_weather(k, Weather::Rain, game),
         Spores => room_visuals::scroll_weather(k, Weather::Spores, game),
         Fog => room_visuals::scroll_weather(k, Weather::Fog, game),
