@@ -235,6 +235,22 @@ macro_rules! scalar_words {
         $f(0x0d14,$($borrow)* $s.player.grapple_offset[1].whole);
         $f(0x0d22,$($borrow)* $s.player.grapple_velocity.x);
         $f(0x0d24,$($borrow)* $s.player.grapple_velocity.y);
+        $f(0x0d00,$($borrow)* $s.player.swing.length_delta);
+        $f(0x0d16,$($borrow)* $s.player.swing.start.x);
+        $f(0x0d18,$($borrow)* $s.player.swing.start.y);
+        $f(0x0d26,$($borrow)* $s.player.swing.angular_velocity);
+        $f(0x0d28,$($borrow)* $s.player.swing.angle_acceleration);
+        $f(0x0d2a,$($borrow)* $s.player.swing.input_acceleration);
+        $f(0x0d2c,$($borrow)* $s.player.swing.rising_deceleration);
+        $f(0x0d2e,$($borrow)* $s.player.swing.extra_angular_velocity);
+        $f(0x0d30,$($borrow)* $s.player.swing.kick_cooldown);
+        $f(0x0d38,$($borrow)* $s.player.swing.failed_movement_counter);
+        $f(0x0d3a,$($borrow)* $s.player.swing.start_marks[0]);
+        $f(0x0d3c,$($borrow)* $s.player.swing.start_marks[1]);
+        $f(0x0d90,$($borrow)* $s.player.swing.probe.x);
+        $f(0x0d92,$($borrow)* $s.player.swing.probe.y);
+        $f(0x0d94,$($borrow)* $s.player.swing.probe_block.x);
+        $f(0x0d96,$($borrow)* $s.player.swing.probe_block.y);
         for i in 0..16 {
             $f(0x0d42 + 2*i,$($borrow)* $s.player.grapple_animation_delay[i]);
             $f(0x0d62 + 2*i,$($borrow)* $s.player.grapple_animation_program[i]);
@@ -1127,6 +1143,22 @@ mod player_lane_tests {
         (0xb12, |s| &mut s.player.previous_position.x.fraction),
         (0xb14, |s| &mut s.player.previous_position.y.whole),
         (0xb16, |s| &mut s.player.previous_position.y.fraction),
+        (0xd00, |s| &mut s.player.swing.length_delta),
+        (0xd16, |s| &mut s.player.swing.start.x),
+        (0xd18, |s| &mut s.player.swing.start.y),
+        (0xd26, |s| &mut s.player.swing.angular_velocity),
+        (0xd28, |s| &mut s.player.swing.angle_acceleration),
+        (0xd2a, |s| &mut s.player.swing.input_acceleration),
+        (0xd2c, |s| &mut s.player.swing.rising_deceleration),
+        (0xd2e, |s| &mut s.player.swing.extra_angular_velocity),
+        (0xd30, |s| &mut s.player.swing.kick_cooldown),
+        (0xd38, |s| &mut s.player.swing.failed_movement_counter),
+        (0xd3a, |s| &mut s.player.swing.start_marks[0]),
+        (0xd3c, |s| &mut s.player.swing.start_marks[1]),
+        (0xd90, |s| &mut s.player.swing.probe.x),
+        (0xd92, |s| &mut s.player.swing.probe.y),
+        (0xd94, |s| &mut s.player.swing.probe_block.x),
+        (0xd96, |s| &mut s.player.swing.probe_block.y),
     ];
 
     fn session() -> Session {

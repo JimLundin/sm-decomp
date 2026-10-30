@@ -51,6 +51,36 @@ pub trait Host:
     fn periodic_damage(&self) -> (u16, u16);
 }
 
+/// The grapple swing's working words, owned by `Session::player.swing`. Names
+/// follow the $7E RAM map; the swing itself is bank $9B.
+#[derive(Clone, Default, Debug, PartialEq)]
+pub struct SwingState {
+    /// $0D00: change applied to the beam length.
+    pub length_delta: u16,
+    /// $0D16/$0D18: the beam's start position.
+    pub start: crate::geometry::Point,
+    /// $0D26: angular velocity, pi/8000h radians; positive is clockwise.
+    pub angular_velocity: u16,
+    /// $0D28: angular acceleration due to the swing's angle.
+    pub angle_acceleration: u16,
+    /// $0D2A: angular acceleration due to button input.
+    pub input_acceleration: u16,
+    /// $0D2C: angular deceleration due to the swing's angle, while Samus rises.
+    pub rising_deceleration: u16,
+    /// $0D2E: extra angular velocity, outside the 480h speed cap.
+    pub extra_angular_velocity: u16,
+    /// $0D30: kick cooldown, set after bouncing off a wall or ceiling.
+    pub kick_cooldown: u16,
+    /// $0D38: failed swing movement counter ($94:ACFE's unused branch).
+    pub failed_movement_counter: u16,
+    /// $0D3A/$0D3C: set to 2 and cleared when the beam starts; never read.
+    pub start_marks: [u16; 2],
+    /// $0D90/$0D92: the swing collision probe's position ($94:A957).
+    pub probe: crate::geometry::Point,
+    /// $0D94/$0D96: the swing collision probe's block ($94:A957).
+    pub probe_block: crate::geometry::Point,
+}
+
 fn abs16(value: u16) -> u16 {
     (value as i16).unsigned_abs()
 }

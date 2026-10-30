@@ -243,6 +243,7 @@ pub struct Player {
     pub speed_divisor: u16,
     pub knockback_timer: u16,
     pub knockback_x_direction: u16,
+    pub swing: crate::grapple_swing::SwingState,
 }
 impl Player {
     pub fn animation_frame(&self) -> u16 {
