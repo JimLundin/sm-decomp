@@ -61,13 +61,18 @@ pub mod actors {
     pub mod botwoon_death;
     pub mod codec;
     pub mod content;
+    pub mod dachora;
     pub mod effects;
     #[doc(hidden)] // Shared verification world for compat and detached checks.
     pub mod fixture;
+    pub mod host;
     pub mod identity;
+    pub mod kraid_fingernails;
+    pub mod kraid_sinking;
     pub mod layouts;
     pub mod media;
     pub mod overlap;
+    pub mod ridley_tables;
     pub mod scene;
     pub mod shaktool;
     pub mod shitroid;

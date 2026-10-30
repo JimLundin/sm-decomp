@@ -30,3 +30,20 @@ macro_rules! cartridge_table_word {
     };
 }
 pub use crate::cartridge_table_word as rom_table_word;
+
+/// The native image at `bank:cursor`, as one original RomPtr fetch: a cursor
+/// below $8000 reports the invalid-window diagnostic and still reads its offset.
+pub fn native_record<H: NativeDiagnostics + ?Sized>(
+    bank: u8,
+    cursor: u16,
+    host: &mut H,
+) -> sm_data::cartridge::RomRecord {
+    let address = (u32::from(bank) << 16) | u32::from(cursor);
+    if address & 0x8000 == 0 {
+        host.native_rom_diagnostic(address);
+    }
+    sm_data::cartridge::RomRecord {
+        image: host.native_image(),
+        base: sm_data::cartridge::lorom_offset(address) as usize,
+    }
+}

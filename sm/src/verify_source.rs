@@ -2760,6 +2760,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/actors/actor_identity_checks.rs"),
     ),
     (
+        "crates/sm_game/src/actors/dachora.rs",
+        include_bytes!("../../crates/sm_game/src/actors/dachora.rs"),
+    ),
+    (
         "sm/src/verification/actor_codec_checks.rs",
         include_bytes!("verification/actor_codec_checks.rs"),
     ),
@@ -2774,6 +2778,22 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/actors/fixture.rs",
         include_bytes!("../../crates/sm_game/src/actors/fixture.rs"),
+    ),
+    (
+        "crates/sm_game/src/actors/host.rs",
+        include_bytes!("../../crates/sm_game/src/actors/host.rs"),
+    ),
+    (
+        "crates/sm_game/src/actors/kraid_fingernails.rs",
+        include_bytes!("../../crates/sm_game/src/actors/kraid_fingernails.rs"),
+    ),
+    (
+        "crates/sm_game/src/actors/kraid_sinking.rs",
+        include_bytes!("../../crates/sm_game/src/actors/kraid_sinking.rs"),
+    ),
+    (
+        "crates/sm_game/src/actors/ridley_tables.rs",
+        include_bytes!("../../crates/sm_game/src/actors/ridley_tables.rs"),
     ),
     (
         "sm/src/verification/actor_palette_checks.rs",
