@@ -90,9 +90,10 @@ macro_rules! spawn_word {
 // extended RAM 7800..9000 is owned here except the five Botwoon death words
 // (801E, 8020, 803C, 8818, 883E), which keep their own cohort; 9000..97DC is
 // not owned, and the angles 97DC..9800 stay with eproj.
-const COMMON_RANGES: [(usize, usize); 23] = [
+const COMMON_RANGES: [(usize, usize); 24] = [
     (0x0e12, 0x0e14),
     (0x0e1c, 0x0e20),
+    (0x0e22, 0x0e2c),
     (0x0e40, 0x0e42),
     (0x0e44, 0x0e50),
     (0x0e54, 0x0e84),
@@ -130,6 +131,7 @@ macro_rules! common_word {
             0x0e12 => Some($($borrow)* $s.actors.diagnostics.sprite_contacts_disabled),
             0x0e1c => Some($($borrow)* $s.actors.controls.shake_request),
             0x0e1e => Some($($borrow)* $s.actors.drawing.tilemap_pending),
+            at @ 0x0e22..=0x0e2a => Some($($borrow)* $s.actors.compatibility.scratch[(at - 0x0e22) / 2]),
             0x0e40 => Some($($borrow)* $s.actors.combat.last_power),
             0x0e44 => Some($($borrow)* $s.actors.controls.phase_counter),
             0x0e46 => Some($($borrow)* $s.actors.controls.selection_visits),
