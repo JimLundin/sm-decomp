@@ -2,32 +2,6 @@
 #![forbid(unsafe_code)]
 use crate::game_state::Game;
 
-/// The owned-Session view's projected bytes, for code that names RAM words.
-impl sm_game::ram::CompatibilityRam for crate::game::session_runtime::Runtime<'_> {
-    fn compatibility_byte(&self, at: usize) -> u8 {
-        crate::game::session_runtime::Runtime::byte(self, at)
-    }
-    fn compatibility_write_byte(&mut self, at: usize, value: u8) {
-        crate::game::session_runtime::Runtime::set_byte(self, at, value)
-    }
-}
-
-/// The facts' projected bytes, as the Game reads them from work RAM.
-impl sm_game::player_position::PlayerFacts for crate::game::session_runtime::Runtime<'_> {
-    fn facing(&self) -> u8 {
-        self.byte(0xa1e)
-    }
-    fn movement_type(&self) -> u8 {
-        self.byte(0xa1f)
-    }
-    fn grapple_angle(&self) -> u8 {
-        self.byte(0xcfb)
-    }
-    fn grapple_mirrored_angle(&self) -> u8 {
-        self.byte(0xcfd)
-    }
-}
-
 impl sm_game::explosion_window::Host for Game {
     fn initialize_crystal_flash(&mut self) -> bool {
         sm_game::player_movement::forced::initialize_crystal_flash(
