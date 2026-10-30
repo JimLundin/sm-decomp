@@ -409,8 +409,8 @@ numeric_checkpoint!(
     drawing,
     schedule,
     compatibility,
-    diagnostics,
-    extended
+    extended,
+    diagnostics
 );
 numeric_checkpoint!(ExtendedRam, blocks);
 /// The actor table's numeric checkpoint, bound to its display start metadata.
