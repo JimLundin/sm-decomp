@@ -273,15 +273,13 @@ pub fn Eproj_GetCollDetectRect(k: u16, ctx: &mut impl Host) -> CollisionRect {
 
 pub fn Eproj_Earthqhake5(k: u16, ctx: &mut impl Host) {
     {
-        {
-            let value = 10;
-            ctx.session_mut().feedback.earthquake_timer = value;
-        };
-        {
-            let value = 5;
-            ctx.session_mut().feedback.earthquake_kind = value;
-        };
-    }
+        let value = 10;
+        ctx.session_mut().feedback.earthquake_timer = value;
+    };
+    {
+        let value = 5;
+        ctx.session_mut().feedback.earthquake_kind = value;
+    };
     BlueRingContactExplosion(k, ctx);
 }
 
@@ -399,10 +397,8 @@ pub use super::pre_actions::EprojPreInstr_SpikeShootingPlantSpikes_MoveX2 as Epr
 
 pub fn Eproj_BotwonsBodyFunction_Dying(v0: u16, ctx: &mut impl Host) {
     let v1: i32 = v0 as i32 >> 1;
-    {
-        enemy!(ctx, (4 * v0 as i32 + 96) as u16 => (v1) as isize, behavior_a);
-        enemy!(ctx, 0xeb04 => (v1) as isize, velocity_x);
-    }
+    enemy!(ctx, (4 * v0 as i32 + 96) as u16 => (v1) as isize, behavior_a);
+    enemy!(ctx, 0xeb04 => (v1) as isize, velocity_x);
     Eproj_BotwonsBodyFunction_Dying2(v0, ctx);
 }
 
@@ -429,13 +425,11 @@ pub fn Eproj_BotwonsBodyFunction_DyingFalling(v0: u16, ctx: &mut impl Host) {
         enemy!(ctx, 0 => (v7) as isize, delay);
         Eproj_BotwoonsBodyHurtFlashHandling2(v0, ctx);
     } else {
-        {
-            enemy!(ctx, 200 => (v1) as isize, y);
-            enemy!(ctx, (0x86eb93 & 0xffff) as u16 => (v1) as isize, velocity_x);
-            enemy!(ctx, addr_word_86E208 as u16 => (v1) as isize, program);
-            enemy!(ctx, 2560 => (v1) as isize, graphics);
-            enemy!(ctx, 1 => (v1) as isize, delay);
-        }
+        enemy!(ctx, 200 => (v1) as isize, y);
+        enemy!(ctx, (0x86eb93 & 0xffff) as u16 => (v1) as isize, velocity_x);
+        enemy!(ctx, addr_word_86E208 as u16 => (v1) as isize, program);
+        enemy!(ctx, 2560 => (v1) as isize, graphics);
+        enemy!(ctx, 1 => (v1) as isize, delay);
         QueueSmallExplosionSfx(ctx);
         if v0 == 10 {
             ctx.set_botwoon_body_landed(1);

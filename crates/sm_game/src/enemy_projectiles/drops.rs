@@ -7,14 +7,7 @@ use crate::drop_rules::{PICKUPS, Spread, Weights};
 
 pub fn spawn(definition: u16, index: u16, h: &mut impl Host) {
     h.session_mut().enemy_projectiles.spawn.drop_definition = definition;
-    {
-        super::lifecycle::spawn_from_enemy(
-            h,
-            h.session().compatibility_enemy_scratch,
-            index,
-            0xf337,
-        );
-    }
+    super::lifecycle::spawn_from_enemy(h, h.session().compatibility_enemy_scratch, index, 0xf337);
 }
 
 pub fn scatter(source: DropSource, index: u16, h: &mut impl Host) {

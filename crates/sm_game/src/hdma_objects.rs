@@ -208,10 +208,8 @@ pub fn clear_hdma<H>(game: &mut H)
 where
     H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
 {
-    {
-        crate::display::sequence::register_writes! { game;
-            byte(MDMAEN as u16, 0); byte(HDMAEN as u16, 0);
-        }
+    crate::display::sequence::register_writes! { game;
+        byte(MDMAEN as u16, 0); byte(HDMAEN as u16, 0);
     }
     clear_hdma_channels(game);
 }
@@ -230,9 +228,7 @@ pub fn initialize_room_effects<H: crate::menus::host::Host + ?Sized>(game: &mut 
     for channel in (0x20..0x80u16).step_by(0x10) {
         for register in [0, 1, 2, 3, 4, 5, 6, 8, 9] {
             let value = if register == 1 { 0x13 } else { 0 };
-            {
-                game.write_register(0x4300 + channel + register, value);
-            }
+            game.write_register(0x4300 + channel + register, value);
         }
     }
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.surface.fraction, 0);
@@ -303,9 +299,7 @@ pub fn update_hdma<H>(game: &mut H)
 where
     H: crate::hdma_dispatch::DispatchHost + crate::hdma_program::LeaseHdma + ?Sized,
 {
-    {
-        game.handle_music_queue();
-    }
+    game.handle_music_queue();
     if checked_word!(game.time_is_frozen_flag) == 0
         && checked_word!(game.power_bomb_explosion_status) & 0x4000 != 0
     {

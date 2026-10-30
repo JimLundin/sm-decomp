@@ -189,12 +189,10 @@ pub fn initialize_ocean<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     word! {game; set_to_e0_by_scrolling_sky = 224; UNUSED_word_7E059C = 0; }
 }
 fn damage_above_screen<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    if ((game.player_y()) as i16).wrapping_sub((word!(game.samus_y_radius)) as i16) < 0
+        || (game.player_y() as i32 - word!(game.samus_y_radius) as i32 - 17i32) & 0x8000 != 0
     {
-        if ((game.player_y()) as i16).wrapping_sub((word!(game.samus_y_radius)) as i16) < 0
-            || (game.player_y() as i32 - word!(game.samus_y_radius) as i32 - 17i32) & 0x8000 != 0
-        {
-            word!(game.samus_periodic_damage = 8);
-        }
+        word!(game.samus_periodic_damage = 8);
     }
 }
 #[forbid(unsafe_code)]

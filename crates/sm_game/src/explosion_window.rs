@@ -59,23 +59,17 @@ pub fn begin_pre_flash<H: Host + ?Sized>(game: &mut H) {
     word!(game.power_bomb_pre_explosion_radius_speed = POWER_BOMB_PRE_EXPLOSION_RADIUS_SPEED);
 }
 pub fn begin_prescaled_pre_flash<H: Host + ?Sized>(game: &mut H) {
-    {
-        word!(game.pre_scaled_power_bomb_explosion_shape_def_ptr = ADDR_BYTE_889F06 as u16);
-    }
+    word!(game.pre_scaled_power_bomb_explosion_shape_def_ptr = ADDR_BYTE_889F06 as u16);
 }
 pub fn begin_explosion<H: Host + ?Sized>(game: &mut H) {
-    {
-        word!(game.power_bomb_explosion_radius = 1024);
-        word!(game.power_bomb_pre_explosion_radius_speed = POWER_BOMB_EXPLOSION_RADIUS_SPEED);
-    }
+    word!(game.power_bomb_explosion_radius = 1024);
+    word!(game.power_bomb_pre_explosion_radius_speed = POWER_BOMB_EXPLOSION_RADIUS_SPEED);
 }
 pub fn begin_prescaled_explosion<H: Host + ?Sized>(game: &mut H) {
-    {
-        word!(
-            game.pre_scaled_power_bomb_explosion_shape_def_ptr =
-                ADDR_POWER_BOMB_EXPLOSION_SHAPE_DEF0 as u16
-        );
-    }
+    word!(
+        game.pre_scaled_power_bomb_explosion_shape_def_ptr =
+            ADDR_POWER_BOMB_EXPLOSION_SHAPE_DEF0 as u16
+    );
 }
 // Rejection and pose publication precede Session admission, including import failures.
 pub fn try_crystal_flash<H: Host + ?Sized>(game: &mut H) -> bool {
@@ -121,9 +115,7 @@ pub fn finish_power_bomb<H: Host + ?Sized>(object: &mut HdmaObject, v0: u16, gam
     }
 }
 pub fn set_power_bomb_blending<H: Host + ?Sized>(_k: u16, game: &mut H) {
-    {
-        word!(game.fx_layer_blending_config_c |= (0x8000u16));
-    }
+    word!(game.fx_layer_blending_config_c |= (0x8000u16));
 }
 
 #[forbid(unsafe_code)]
@@ -443,27 +435,23 @@ pub enum Phase {
 }
 impl Phase {
     fn radius<H: Host + ?Sized>(self, game: &mut H) -> u16 {
-        {
-            if self == Self::PreFlash {
-                word!(game.power_bomb_pre_explosion_flash_radius)
-            } else {
-                word!(game.power_bomb_explosion_radius)
-            }
+        if self == Self::PreFlash {
+            word!(game.power_bomb_pre_explosion_flash_radius)
+        } else {
+            word!(game.power_bomb_explosion_radius)
         }
     }
     fn expand<H: Host + ?Sized>(self, game: &mut H) {
-        {
-            if self == Self::PreFlash {
-                word!(
-                    game.power_bomb_pre_explosion_flash_radius +=
-                        word!(game.power_bomb_pre_explosion_radius_speed)
-                );
-            } else {
-                word!(
-                    game.power_bomb_explosion_radius +=
-                        word!(game.power_bomb_pre_explosion_radius_speed)
-                );
-            }
+        if self == Self::PreFlash {
+            word!(
+                game.power_bomb_pre_explosion_flash_radius +=
+                    word!(game.power_bomb_pre_explosion_radius_speed)
+            );
+        } else {
+            word!(
+                game.power_bomb_explosion_radius +=
+                    word!(game.power_bomb_pre_explosion_radius_speed)
+            );
         }
     }
     #[forbid(unsafe_code)]
@@ -481,17 +469,12 @@ impl Phase {
         }
     }
     fn accelerate<H: Host + ?Sized>(self, game: &mut H) {
-        {
-            if self == Self::PreFlash {
-                word!(
-                    game.power_bomb_pre_explosion_radius_speed -=
-                        POWER_BOMB_PRE_EXPLOSION_RADIUS_ACCEL
-                );
-            } else {
-                word!(
-                    game.power_bomb_pre_explosion_radius_speed += POWER_BOMB_EXPLOSION_RADIUS_ACCEL
-                );
-            }
+        if self == Self::PreFlash {
+            word!(
+                game.power_bomb_pre_explosion_radius_speed -= POWER_BOMB_PRE_EXPLOSION_RADIUS_ACCEL
+            );
+        } else {
+            word!(game.power_bomb_pre_explosion_radius_speed += POWER_BOMB_EXPLOSION_RADIUS_ACCEL);
         }
     }
 }

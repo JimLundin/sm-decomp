@@ -253,11 +253,9 @@ pub fn EprojPreInstr_8DCA(k: u16, ctx: &mut impl Host) {
     if ctx.session().player.contact.contact_attack != 0
         || {
             let mut v1: i32 = k as i32 >> 1;
-            {
-                enemy!(ctx, ctx.session().player.x => (v1) as isize, x);
-                enemy!(ctx, (ctx.session().player.y as i32 + 4 * enemy!(ctx, (v1) as isize, behavior_b) as i32
-                    - 12i32) as u16 => (v1) as isize, y);
-            }
+            enemy!(ctx, ctx.session().player.x => (v1) as isize, x);
+            enemy!(ctx, (ctx.session().player.y as i32 + 4 * enemy!(ctx, (v1) as isize, behavior_b) as i32
+                - 12i32) as u16 => (v1) as isize, y);
             enemy_decrement!(ctx, (v1) as isize, behavior_a);
             enemy!(ctx, (v1) as isize, behavior_a) == 0
         }
@@ -301,10 +299,8 @@ pub fn EprojPreInstr_DraygonsGunk_8E0F(k: u16, ctx: &mut impl Host) {
             .unsigned_abs();
         (v3 as i32 - 20i32) & 0x8000 != 0
     } {
-        {
-            enemy!(ctx, 0x8c38 => (v1) as isize, program);
-            enemy!(ctx, 1 => (v1) as isize, delay);
-        }
+        enemy!(ctx, 0x8c38 => (v1) as isize, program);
+        enemy!(ctx, 1 => (v1) as isize, delay);
     } else if outside_512_pixel_square(k, ctx) != 0 {
         enemy!(ctx, 0 => (v1) as isize, definition);
     }
@@ -430,11 +426,9 @@ pub fn EprojPreInstr_PhantoonDestroyableFireballs_3(k: u16, ctx: &mut impl Host)
 pub fn EprojPreInstr_PhantoonStartingFireballsB(k: u16, ctx: &mut impl Host) {
     if ctx.resolve_actor(Key::from_legacy(0), Le).variables[1] != 0 {
         let v1: i32 = k as i32 >> 1;
-        {
-            enemy!(ctx, (0x869b41 & 0xffff) as u16 => (v1) as isize, pre_action);
-            enemy!(ctx, 180 => (v1) as isize, velocity_x);
-            enemy!(ctx, 48 => (v1) as isize, velocity_y);
-        }
+        enemy!(ctx, (0x869b41 & 0xffff) as u16 => (v1) as isize, pre_action);
+        enemy!(ctx, 180 => (v1) as isize, velocity_x);
+        enemy!(ctx, 48 => (v1) as isize, velocity_y);
     }
 }
 
@@ -526,13 +520,11 @@ pub fn EprojPreInstr_CeresElevatorPad(k: u16, ctx: &mut impl Host) {
         };
         if (fresh113 as i32 - 73i32) & 0x8000 == 0 {
             {
-                {
-                    let value = 72;
-                    ctx.session_mut().player.y = value;
-                };
-                enemy!(ctx, 1 => (v1) as isize, delay);
-                enemy!(ctx, addr_off_86A28B as u16 => (v1) as isize, program);
-            }
+                let value = 72;
+                ctx.session_mut().player.y = value;
+            };
+            enemy!(ctx, 1 => (v1) as isize, delay);
+            enemy!(ctx, addr_off_86A28B as u16 => (v1) as isize, program);
             ctx.resume_player_after_elevator();
         }
     }
@@ -606,11 +598,9 @@ pub fn EprojPreInstr_GoldenTorizosChozoOrbs(k: u16, ctx: &mut impl Host) {
         }
     {
         let v5: i32 = k as i32 >> 1;
-        {
-            enemy!(ctx, ((enemy!(ctx, (v5) as isize, y) as i32 & 0xfff0 | 8) - 2i32) as u16 => (v5) as isize, y);
-            enemy!(ctx, addr_off_86AB41 as u16 => (v5) as isize, program);
-            enemy!(ctx, 1 => (v5) as isize, delay);
-        }
+        enemy!(ctx, ((enemy!(ctx, (v5) as isize, y) as i32 & 0xfff0 | 8) - 2i32) as u16 => (v5) as isize, y);
+        enemy!(ctx, addr_off_86AB41 as u16 => (v5) as isize, program);
+        enemy!(ctx, 1 => (v5) as isize, delay);
     } else {
         enemy_add!(ctx, (k >> 1) as isize, velocity_y, 24);
     };
@@ -619,12 +609,10 @@ pub fn EprojPreInstr_GoldenTorizosChozoOrbs(k: u16, ctx: &mut impl Host) {
 pub fn EprojPreInstr_TorizoSonicBoom(k: u16, ctx: &mut impl Host) {
     if EprojBlockCollisition_Horiz(k, ctx) & 1 != 0 {
         let v4: i32 = k as i32 >> 1;
-        {
-            enemy!(ctx, addr_off_86ADE5 as u16 => (v4) as isize, program);
-            enemy!(ctx, 1 => (v4) as isize, delay);
-            enemy!(ctx, enemy!(ctx, (v4) as isize, x) => (v4) as isize, behavior_a);
-            enemy!(ctx, enemy!(ctx, (v4) as isize, y) => (v4) as isize, behavior_b);
-        }
+        enemy!(ctx, addr_off_86ADE5 as u16 => (v4) as isize, program);
+        enemy!(ctx, 1 => (v4) as isize, delay);
+        enemy!(ctx, enemy!(ctx, (v4) as isize, x) => (v4) as isize, behavior_a);
+        enemy!(ctx, enemy!(ctx, (v4) as isize, y) => (v4) as isize, behavior_b);
     } else {
         let v1: i32 = k as i32 >> 1;
         {
@@ -648,10 +636,8 @@ pub fn sub_86B0B9(k: u16, ctx: &mut impl Host) {
     let mut v2: i16 = 0;
     if EprojBlockCollisition_Horiz(k, ctx) & 1 != 0 {
         let v3: i32 = k as i32 >> 1;
-        {
-            enemy!(ctx, 0xb0dd => (v3) as isize, pre_action);
-            enemy!(ctx, 0 => (v3) as isize, velocity_y);
-        }
+        enemy!(ctx, 0xb0dd => (v3) as isize, pre_action);
+        enemy!(ctx, 0 => (v3) as isize, velocity_y);
     } else {
         let v1: i32 = k as i32 >> 1;
         if (enemy!(ctx, (v1) as isize, behavior_a) & 0x8000) != 0 {
@@ -704,11 +690,9 @@ pub fn EprojPreInstr_GoldenTorizoEyeBeam(k: u16, ctx: &mut impl Host) {
     }
     if EprojBlockCollisition_Vertical(k, ctx) & 1 != 0 {
         let v1: i32 = k as i32 >> 1;
-        {
-            enemy!(ctx, ((enemy!(ctx, (v1) as isize, y) as i32 & 0xfff0 | 8) - 2i32) as u16 => (v1) as isize, y);
-            enemy!(ctx, addr_off_86B3E5 as u16 => (v1) as isize, program);
-            enemy!(ctx, 1 => (v1) as isize, delay);
-        }
+        enemy!(ctx, ((enemy!(ctx, (v1) as isize, y) as i32 & 0xfff0 | 8) - 2i32) as u16 => (v1) as isize, y);
+        enemy!(ctx, addr_off_86B3E5 as u16 => (v1) as isize, program);
+        enemy!(ctx, 1 => (v1) as isize, delay);
     }
 }
 
@@ -832,10 +816,8 @@ pub fn EprojPreInstr_MotherBrainBomb(k: u16, ctx: &mut impl Host) {
         let v5: u16 = K_MOTHER_BRAINS_BOMB_YACCEL
             [(enemy!(ctx, (v4) as isize, behavior_b) >> 1) as usize] as u16;
         if v5 == 0 {
-            {
-                enemy!(ctx, 0 => (v4) as isize, velocity_x);
-                enemy!(ctx, 0 => (v4) as isize, velocity_y);
-            }
+            enemy!(ctx, 0 => (v4) as isize, velocity_x);
+            enemy!(ctx, 0 => (v4) as isize, velocity_y);
             {
                 let value = ctx.mother_brain_active_bombs().wrapping_sub(1);
                 ctx.set_mother_brain_active_bombs(value);
@@ -882,10 +864,8 @@ pub fn EprojPreInstr_MotherBrainRainbowBeam(k: u16, ctx: &mut impl Host) {
 
 pub fn EprojPreInit_MotherBrainsDeathExplosion_0(k: u16, ctx: &mut impl Host) {
     let v2: i32 = k as i32 >> 1;
-    {
-        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(0), Le).x.whole as i32 + enemy!(ctx, (v2) as isize, velocity_x) as i32) as u16 => (v2) as isize, x);
-        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32 + enemy!(ctx, (v2) as isize, velocity_y) as i32) as u16 => (v2) as isize, y);
-    }
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(0), Le).x.whole as i32 + enemy!(ctx, (v2) as isize, velocity_x) as i32) as u16 => (v2) as isize, x);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32 + enemy!(ctx, (v2) as isize, velocity_y) as i32) as u16 => (v2) as isize, y);
 }
 
 pub fn EprojPreInstr_MotherBrainTubeFalling(k: u16, ctx: &mut impl Host) {
@@ -1034,11 +1014,9 @@ pub fn EprojPreInstr_SporeSpawners(k: u16, ctx: &mut impl Host) {
     if ctx.kraid_unk9000() == 0 {
         let v1: i32 = k as i32 >> 1;
         if enemy!(ctx, (v1) as isize, behavior_b) == 0 {
-            {
-                enemy!(ctx, addr_word_86DC06 as u16 => (v1) as isize, program);
-                enemy!(ctx, 1 => (v1) as isize, delay);
-                enemy!(ctx, ctx.next_random() & 0x1ff => (v1) as isize, behavior_b);
-            }
+            enemy!(ctx, addr_word_86DC06 as u16 => (v1) as isize, program);
+            enemy!(ctx, 1 => (v1) as isize, delay);
+            enemy!(ctx, ctx.next_random() & 0x1ff => (v1) as isize, behavior_b);
         }
         enemy_decrement!(ctx, (v1) as isize, behavior_b);
     }
@@ -1066,10 +1044,8 @@ pub fn EprojPreInstr_BotwoonsSpit(k: u16, ctx: &mut impl Host) {
 pub fn sub_86A887(v0: u16, ctx: &mut impl Host) {
     if EprojBlockCollisition_Horiz(v0, ctx) & 1 != 0 {
         let v6: i32 = v0 as i32 >> 1;
-        {
-            enemy!(ctx, 0xa48a => (v6) as isize, program);
-            enemy!(ctx, 1 => (v6) as isize, delay);
-        }
+        enemy!(ctx, 0xa48a => (v6) as isize, program);
+        enemy!(ctx, 1 => (v6) as isize, delay);
     } else {
         let v1: i32 = v0 as i32 >> 1;
         let mut v2: i16 = enemy!(ctx, (v1) as isize, velocity_x) as i16;
@@ -1251,10 +1227,8 @@ pub fn EprojPreInstr_9634(k: u16, ctx: &mut impl Host) {
             enemy!(ctx, addr_off_869574 as u16 => (v1) as isize, program);
             enemy_add!(ctx, (v1) as isize, behavior_a, 1);
             enemy!(ctx, 1 => (v1) as isize, delay);
-            {
-                enemy!(ctx, 0 => (v1) as isize, velocity_x);
-                enemy!(ctx, 0 => (v1) as isize, velocity_y);
-            }
+            enemy!(ctx, 0 => (v1) as isize, velocity_x);
+            enemy!(ctx, 0 => (v1) as isize, velocity_y);
             enemy!(ctx, 2560 => (v1) as isize, graphics);
             ctx.queue_sound(2, 6, 0x2b);
         }
@@ -1281,16 +1255,12 @@ pub fn EprojPreInstr_PhantoonStartingFireballs2(k: u16, ctx: &mut impl Host) {
     let v2: bool = enemy!(ctx, (v1) as isize, behavior_a) == 1;
     let v3: bool = (enemy_add!(ctx, (v1) as isize, behavior_a, (-1i16) as u16) & 0x8000) != 0;
     if v2 || v3 {
-        {
-            enemy!(ctx, (0x869a01 & 0xffff) as u16 => (v1) as isize, pre_action);
-            enemy!(ctx, addr_word_869772 as u16 => (v1) as isize, program);
-            enemy!(ctx, 1 => (v1) as isize, delay);
-        }
+        enemy!(ctx, (0x869a01 & 0xffff) as u16 => (v1) as isize, pre_action);
+        enemy!(ctx, addr_word_869772 as u16 => (v1) as isize, program);
+        enemy!(ctx, 1 => (v1) as isize, delay);
         enemy_add!(ctx, (v1) as isize, y, (-8i16) as u16);
-        {
-            enemy!(ctx, -768i32 as u16 => (v1) as isize, velocity_y);
-            enemy!(ctx, 0 => (v1) as isize, behavior_a);
-        }
+        enemy!(ctx, -768i32 as u16 => (v1) as isize, velocity_y);
+        enemy!(ctx, 0 => (v1) as isize, behavior_a);
         if (ctx.inputs().frame & 1) != 0 {
             enemy!(ctx, -128i32 as u16 => (v1) as isize, velocity_x);
         } else {
@@ -1314,11 +1284,9 @@ pub fn EprojPreInstr_PhantoonStartingFireballs3(k: u16, ctx: &mut impl Host) {
         EprojBlockCollisition_Horiz(k, ctx) & 1 != 0
     };
     if switch_fireball_phase {
-        {
-            enemy!(ctx, addr_word_869782 as u16 => (v1) as isize, program);
-            enemy!(ctx, 1 => (v1) as isize, delay);
-            enemy!(ctx, (0x869a44 & 0xffff) as u16 => (v1) as isize, pre_action);
-        }
+        enemy!(ctx, addr_word_869782 as u16 => (v1) as isize, program);
+        enemy!(ctx, 1 => (v1) as isize, delay);
+        enemy!(ctx, (0x869a44 & 0xffff) as u16 => (v1) as isize, pre_action);
     };
 }
 
@@ -1356,22 +1324,18 @@ pub fn EprojPreInstr_PhantoonStartingFireballsB_2(k: u16, ctx: &mut impl Host) {
         let v3: u16 = (enemy!(ctx, (v1) as isize, velocity_y) as i32 - 1i32) as u16;
         enemy!(ctx, v3 => (v1) as isize, velocity_y);
         if v3 == 0 {
-            {
-                enemy!(ctx, ctx.resolve_actor(Key::from_legacy(0), Le).x.whole => (v1) as isize, x);
-                enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32 + 16) as u16 => (v1) as isize, y);
-                enemy!(ctx, 1 => (v1) as isize, delay);
-                enemy!(ctx, addr_off_8697F8 as u16 => (v1) as isize, program);
-            }
+            enemy!(ctx, ctx.resolve_actor(Key::from_legacy(0), Le).x.whole => (v1) as isize, x);
+            enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32 + 16) as u16 => (v1) as isize, y);
+            enemy!(ctx, 1 => (v1) as isize, delay);
+            enemy!(ctx, addr_off_8697F8 as u16 => (v1) as isize, program);
             return;
         }
     }
     let v4: u8 = (enemy!(ctx, (v1) as isize, behavior_a) as i32 + 1) as u8;
     enemy!(ctx, v4 as u16 => (v1) as isize, behavior_a);
     let pt = sine_offset::<false>(v4 as u16, enemy!(ctx, (v1) as isize, velocity_y));
-    {
-        enemy!(ctx, (pt.x as i32 + ctx.resolve_actor(Key::from_legacy(0), Le).x.whole as i32) as u16 => (v1) as isize, x);
-        enemy!(ctx, (pt.y as i32 + ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32 + 16) as u16 => (v1) as isize, y);
-    }
+    enemy!(ctx, (pt.x as i32 + ctx.resolve_actor(Key::from_legacy(0), Le).x.whole as i32) as u16 => (v1) as isize, x);
+    enemy!(ctx, (pt.y as i32 + ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32 + 16) as u16 => (v1) as isize, y);
 }
 
 pub fn EprojPreInstr_PirateMotherBrainLaser_MoveLeft(k: u16, ctx: &mut impl Host) {
@@ -1566,10 +1530,8 @@ pub fn lavaquake_rock_rise(k: u16, ctx: &mut impl Host) {
         }
         lavaquake_rock_move_x(k, ctx);
     } else {
-        {
-            enemy!(ctx, 0 => (v1) as isize, velocity_y);
-            enemy!(ctx, (0x86bc8f & 0xffff) as u16 => (v1) as isize, behavior_a);
-        }
+        enemy!(ctx, 0 => (v1) as isize, velocity_y);
+        enemy!(ctx, (0x86bc8f & 0xffff) as u16 => (v1) as isize, behavior_a);
     };
 }
 
@@ -1625,10 +1587,8 @@ pub fn EprojPreInstr_MotherBrainRoomTurretBullets(k: u16, ctx: &mut impl Host) {
 
 pub fn sub_86C320(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
-    {
-        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(64), Le).x.whole as i32 + 10) as u16 => (v1) as isize, x);
-        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(64), Le).y.whole as i32 + 16) as u16 => (v1) as isize, y);
-    }
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(64), Le).x.whole as i32 + 10) as u16 => (v1) as isize, x);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(64), Le).y.whole as i32 + 16) as u16 => (v1) as isize, y);
 }
 
 pub fn Eproj_MoveToBlueRingSpawnPosition(k: u16, ctx: &mut impl Host) {
@@ -1703,23 +1663,17 @@ pub fn BlueRingContactExplosion(k: u16, ctx: &mut impl Host) {
 pub fn EprojPreInstr_C84D(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let v2: i32 = (4 * enemy!(ctx, (v1) as isize, behavior_a) as i32) as u16 as i32 >> 1;
-    {
-        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(64), Le).x.whole as i32 + K_EPROJ_INIT_MOTHER_BRAINS_DROOL[v2 as usize] as i32) as u16 => (v1) as isize, x);
-        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(64), Le).y.whole as i32 + K_EPROJ_INIT_MOTHER_BRAINS_DROOL[(v2 + 1) as usize] as i32)
-                as u16 => (v1) as isize, y);
-    }
-    {
-        enemy!(ctx, 0 => (v1) as isize, velocity_x);
-        enemy!(ctx, 0 => (v1) as isize, velocity_y);
-    }
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(64), Le).x.whole as i32 + K_EPROJ_INIT_MOTHER_BRAINS_DROOL[v2 as usize] as i32) as u16 => (v1) as isize, x);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(64), Le).y.whole as i32 + K_EPROJ_INIT_MOTHER_BRAINS_DROOL[(v2 + 1) as usize] as i32)
+            as u16 => (v1) as isize, y);
+    enemy!(ctx, 0 => (v1) as isize, velocity_x);
+    enemy!(ctx, 0 => (v1) as isize, velocity_y);
 }
 
 pub fn EprojPreInstr_MotherBrainsRainbowBeamExplosion(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
-    {
-        enemy!(ctx, (ctx.session().player.x as i32 + enemy!(ctx, (v1) as isize, velocity_x) as i32) as u16 => (v1) as isize, x);
-        enemy!(ctx, (ctx.session().player.y as i32 + enemy!(ctx, (v1) as isize, velocity_y) as i32) as u16 => (v1) as isize, y);
-    }
+    enemy!(ctx, (ctx.session().player.x as i32 + enemy!(ctx, (v1) as isize, velocity_x) as i32) as u16 => (v1) as isize, x);
+    enemy!(ctx, (ctx.session().player.y as i32 + enemy!(ctx, (v1) as isize, velocity_y) as i32) as u16 => (v1) as isize, y);
 }
 
 pub fn EprojPreInstr_MotherBrainsExplodedDoorParticles(k: u16, ctx: &mut impl Host) {
@@ -1745,14 +1699,10 @@ pub fn EprojPreInstr_MotherBrainsExplodedDoorParticles(k: u16, ctx: &mut impl Ho
 
 pub fn EprojPreInstr_TimeBombSetJapaneseText(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
-    {
-        enemy!(ctx, 0 => (v1) as isize, velocity_x);
-        enemy!(ctx, 0 => (v1) as isize, velocity_y);
-    }
-    {
-        enemy!(ctx, 128 => (v1) as isize, x);
-        enemy!(ctx, 192 => (v1) as isize, y);
-    }
+    enemy!(ctx, 0 => (v1) as isize, velocity_x);
+    enemy!(ctx, 0 => (v1) as isize, velocity_y);
+    enemy!(ctx, 128 => (v1) as isize, x);
+    enemy!(ctx, 192 => (v1) as isize, y);
 }
 
 /// A falling tube bursting into dust, then falling.
@@ -1984,11 +1934,9 @@ pub fn Eproj_BotwoonsBody_Main(k: u16, ctx: &mut impl Host) {
         )
     };
     if v2 != enemy!(ctx, (v1) as isize, behavior_b) {
-        {
-            enemy!(ctx, v2 => (v1) as isize, program);
-            enemy!(ctx, v2 => (v1) as isize, behavior_b);
-            enemy!(ctx, 1 => (v1) as isize, delay);
-        }
+        enemy!(ctx, v2 => (v1) as isize, program);
+        enemy!(ctx, v2 => (v1) as isize, behavior_b);
+        enemy!(ctx, 1 => (v1) as isize, delay);
     }
     Eproj_BotwoonsBodyHurtFlashHandling1(k, ctx);
 }
@@ -2017,10 +1965,8 @@ pub fn EprojPreInstr_Sparks(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     if (enemy!(ctx, (v1) as isize, velocity_y) & 0x8000) == 0 {
         if EprojBlockCollisition_Vertical(k, ctx) & 1 != 0 {
-            {
-                enemy!(ctx, 0xf363 => (v1) as isize, program);
-                enemy!(ctx, 1 => (v1) as isize, delay);
-            }
+            enemy!(ctx, 0xf363 => (v1) as isize, program);
+            enemy!(ctx, 1 => (v1) as isize, delay);
             for _ in 0..2 {
                 let high = (enemy!(ctx, v1 as isize, behavior_b) as i32 * 2
                     + (enemy!(ctx, v1 as isize, behavior_a) as i32 >> 15))

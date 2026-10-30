@@ -1314,15 +1314,13 @@ pub fn EprojInit_MotherBrainDeathBeemFired(j: u16, ctx: &mut impl Host) {
         SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x1d, ctx);
         ctx.queue_sound(3, 6, 0x13);
         {
-            {
-                let value = 10;
-                ctx.session_mut().feedback.earthquake_timer = value;
-            };
-            {
-                let value = 5;
-                ctx.session_mut().feedback.earthquake_kind = value;
-            };
-        }
+            let value = 10;
+            ctx.session_mut().feedback.earthquake_timer = value;
+        };
+        {
+            let value = 5;
+            ctx.session_mut().feedback.earthquake_kind = value;
+        };
     } else {
         enemy!(ctx, ((enemy!(ctx, (v1) as isize, behavior_a) as i32 + 1) & 3) as u16 => (v1) as isize, behavior_a);
 
