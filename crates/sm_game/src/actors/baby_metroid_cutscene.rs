@@ -384,6 +384,7 @@ crate::dispatch::callback_dispatch! {
             session_slot!(game, BabyMetroidInCutscene[e].palette_function = function::DEATH_SEQUENCE_PENDING);
             session_slot!(game, BabyMetroidInCutscene[e].base.vram_tiles_index = 4256);
             queue_sound_3_max_6(sound::BABY_METROID_DIES, game);
+            crate::probe::hit("baby-metroid.fatal-blow");
             game.foreign(|game| game.lights_off());
             set_enemy_instruction_list(k, ADDR_K_BABY_METROID_ILIST_CFCE as u16, game);
             session_slot! { game, BabyMetroidInCutscene[e]; x_velocity = 0, y_velocity = 0 }
