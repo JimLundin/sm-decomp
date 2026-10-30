@@ -211,12 +211,11 @@ impl MenuRuntime for Game {
         use sm_game::hdma_effects::HdmaEffects;
         use sm_game::hdma_objects::HdmaEffect::*;
         match effect {
-            // SAFETY: HDMA runs from the frame loop with the backend installed.
             InitializeRainbowBeam => {
-                return unsafe { crate::game::mother_brain_visuals::initialize_rainbow_beam(self) };
+                return sm_game::actors::mother_brain_rainbow::initialize_hdma(self);
             }
             AdvanceRainbowBeam => {
-                return unsafe { crate::game::mother_brain_visuals::advance_rainbow_beam(self) };
+                return sm_game::actors::mother_brain_rainbow::advance_hdma(self);
             }
             _ => {}
         }
@@ -312,15 +311,8 @@ impl Host for Game {
     fn intro_palette(&self) -> &Option<sm_game::intro_pages::ImportedIntroPalette> {
         &self.intro_palette
     }
-    fn beam_gradients(&self) -> &sm_game::beam_windows::ImportedTables {
-        &self.beam_gradients
-    }
     fn read_rom_word(&self, address: u32, offset: usize) -> u16 {
         Game::read_rom_word(self, address, offset)
-    }
-    fn print_carry_message(&mut self) {
-        // SAFETY: a NUL-terminated literal through the C library's printf.
-        unsafe { crate::c_library::printf(c"Carry crap!\n".as_ptr()) };
     }
     fn visual_tables(&self) -> &sm_game::visual_tables::ImportedTables {
         &self.visual_tables
@@ -464,12 +456,6 @@ const _: () = {
             == bank::ADDR_K_CINEMATIC_SPRITE_OBJECT_DEF_8BEF7B as u16
     );
 };
-
-// The beam window's local scratch layout must match the decompilation's.
-const _: () = assert!(
-    core::mem::offset_of!(sm_game::beam_windows::BeamScratch, row)
-        == core::mem::offset_of!(crate::types::Ram8000_Default, var_3f)
-);
 
 impl sm_game::cinematic_host::Host for Game {
     fn clear_palette_effects(&mut self) {

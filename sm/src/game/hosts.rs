@@ -204,7 +204,7 @@ const _: () = {
 
 impl sm_game::actors::mother_brain_tubes::Host for Game {
     fn end_screen_flash(&mut self) {
-        crate::game::sm_a9::end_screen_flashing(self);
+        crate::game::sm_a9::palette_end_screen_flash(self);
     }
 
     fn start_earthquake(&mut self, kind: u16) {

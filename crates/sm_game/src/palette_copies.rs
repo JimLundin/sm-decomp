@@ -1,13 +1,13 @@
 //! Palette copies from cartridge words, read through the native ROM image.
 #![forbid(unsafe_code)]
-use crate::actors::host::ActorHost;
+use crate::cartridge::NativeDiagnostics;
 use crate::cartridge::native_record;
 use crate::ram::word;
 
 /// Copy native-order words from `bank:source`, reading each before its store.
 /// A cursor below $8000 reports the invalid-window diagnostic and still reads;
 /// like the original do-until loop, a zero count does not stop.
-fn copy<H: ActorHost + ?Sized>(
+fn copy<H: crate::ram::CompatibilityRam + NativeDiagnostics + ?Sized>(
     mut k: u16,
     bank: u8,
     mut source: u16,
@@ -31,7 +31,7 @@ pub fn copy_rom_colors_to_palette(
     bank: u8,
     source: u16,
     count: u16,
-    game: &mut (impl ActorHost + ?Sized),
+    game: &mut (impl crate::ram::CompatibilityRam + NativeDiagnostics + ?Sized),
 ) {
     copy(k, bank, source, count, game, |game, i, value| {
         word!(game.palette_buffer[i] = value)
@@ -43,7 +43,7 @@ pub fn copy_rom_colors_to_target_palette(
     k: u16,
     source: u16,
     count: u16,
-    game: &mut (impl ActorHost + ?Sized),
+    game: &mut (impl crate::ram::CompatibilityRam + NativeDiagnostics + ?Sized),
 ) {
     copy(k, bank, source, count, game, |game, i, value| {
         word!(game.target_palettes[i] = value)
