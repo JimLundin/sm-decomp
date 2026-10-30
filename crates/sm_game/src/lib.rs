@@ -169,6 +169,7 @@ pub mod actors {
     pub mod yapping_maw;
     pub mod yellow_pipe_bug;
     pub mod zebetites;
+    pub mod zoa;
 }
 pub mod enemy_projectiles;
 pub mod player_collision;

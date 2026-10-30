@@ -1,8 +1,8 @@
 //! One aggregate authority for player, projectiles, mechanisms and their room.
 use crate::game::actors::diving_enemies::{self, Kind as DivingKind};
 use crate::game::actors::{
-    bang, elevator, falling_platforms, maridia_snail, metroid, mochtroid, refill_candy, reflec,
-    roach, sidehopper, wall_crawlers,
+    bang, elevator, falling_platforms, maridia_snail, metroid, mochtroid, reflec, roach,
+    sidehopper, wall_crawlers, zoa,
 };
 use crate::game::enemy_speeds::SpeedTable;
 use crate::{
@@ -1115,7 +1115,7 @@ crate::game::callback_dispatch! {
         10723661 => roach::initialize;
         10724048 => roach::advance;
         10726153 => sidehopper::initialize; 10726351 => sidehopper::advance;
-        10728522 => refill_candy::initialize; 10728572 => refill_candy::advance;
+        10728522 => zoa::initialize; 10728572 => zoa::main_ai;
         10733230 => [diving_enemies::initialize(DivingKind::Skree, game)]; 10733255 => [diving_enemies::advance(DivingKind::Skree, game)];
         10733557 => [diving_enemies::shot(DivingKind::Skree, game)];
         10743874 => metroid::power_bomb;
@@ -1451,8 +1451,8 @@ crate::game::callback_dispatch! {
         10722411 | 10722433 => [falling_platforms::direction(false, j, game)];
         10722422 | 10722444 => [falling_platforms::direction(true, j, game)];
         10725992 => [sidehopper::instruction(true, j, game)]; 10726142 => [sidehopper::instruction(false, j, game)];
-        10728489 => [refill_candy::instruction(4, j, game)]; 10728500 => [refill_candy::instruction(8, j, game)];
-        10728511 => [refill_candy::instruction(12, j, game)];
+        10728489 => [zoa::set_x_speed_index(4, j, game)]; 10728500 => [zoa::set_x_speed_index(8, j, game)];
+        10728511 => [zoa::set_x_speed_index(12, j, game)];
         10730104 => [{ crate::game::music::QueueSfx2_Max6(0x56, game); j }]; 10730152 => [bang::arm(j, game)];
         10738632 => [reflec::set_parameter(k, j, game)];
         10734646 => [maridia_snail::instruction(k, 0, j, game)];
