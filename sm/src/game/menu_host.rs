@@ -172,6 +172,9 @@ impl MenuRuntime for Game {
     fn spawn_cinematic_sprite_at(&mut self, definition: u16, slot: u16, parameter: u16) -> u8 {
         visual_runtime::spawn_cinematic_sprite_at(definition, slot, parameter, self)
     }
+    fn advance_ending_graphics(&mut self, graphics: sm_game::visual_state::EndingGraphics) {
+        visual_runtime::advance_ending_graphics(graphics, self)
+    }
     fn spawn_palette_effect(&mut self, definition: u16) {
         crate::game::palette_effects::spawn(definition, self)
     }

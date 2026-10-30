@@ -240,3 +240,55 @@ pub fn place_cinematic_sprite<H: crate::menus::host::Host + ?Sized>(
     word!(game.cinematicbg_arr8[slot] = position.1);
     word!(game.cinematicbg_arr9[slot] = palette);
 }
+
+pub fn drift_cinematic_sprite<H: crate::menus::host::Host + ?Sized>(
+    object: u16,
+    horizontal: u32,
+    vertical: Option<u32>,
+    wrap_horizontal: bool,
+    game: &mut H,
+) {
+    if let Some(velocity) = vertical {
+        advance_cinematic_coordinate(object, true, velocity, game);
+    }
+    advance_cinematic_coordinate(object, false, horizontal, game);
+    if wrap_horizontal {
+        word!(game.cinematicbg_arr7[(object >> 1)] &= 0x1ff);
+    }
+}
+
+pub fn capture_cinematic_palette<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    crate::word_transfers!(game, ascending, 256; native(0x2200) <- le(palette_buffer, 0));
+}
+
+pub fn fade_cinematic_fixed_color<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    for (lane, black) in [0x20u8, 0x40, 0x80].into_iter().enumerate() {
+        let at = 0x74 + lane;
+        // Keep decrement and clamp as separate stores in channel order.
+        game.ram()
+            .write_byte(at, game.ram().read_byte(at).wrapping_sub(1));
+        if game.ram().read_byte(at).wrapping_sub(black) & 0x80 != 0 {
+            game.ram().write_byte(at, black);
+        }
+    }
+}
+
+pub fn enable_cinematic_background<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    word!(game.cinematic_enable_objs |= 0x8000);
+}
+
+pub fn clear_cinematic_sprites<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    crate::word_transfers!(game, descending, 16;
+        le(cinematicspr_instr_ptr, 15) <- value(0),
+        le(cinematicspr_whattodraw, 15) <- value(0),
+    );
+}
+
+pub fn clear_cinematic_background<H: crate::menus::host::Host + ?Sized>(fill: u16, game: &mut H) {
+    crate::word_transfers!(game, descending, 1024; native(0x37fe) <- value(fill));
+    crate::word_transfers!(game, descending, 4;
+        le(cinematicbg_arr1, 3) <- value(0),
+        le(cinematicbg_instr_ptr, 3) <- value(0),
+    );
+    word!(game.cinematicbg_var1 = 0);
+}

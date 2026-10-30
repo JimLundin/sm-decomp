@@ -47,6 +47,8 @@ pub trait MenuRuntime {
     ) -> u8;
     fn spawn_cinematic_sprite_at(&mut self, definition: u16, slot: u16, parameter: u16) -> u8;
     fn spawn_palette_effect(&mut self, definition: u16);
+    /// Queue the next ending icon or beam transfer from the imported credits tables.
+    fn advance_ending_graphics(&mut self, graphics: crate::visual_state::EndingGraphics);
     fn enable_display_nmi(&mut self, enabled: bool);
     /// Samus's pending pose change, as the intro's demo applies it.
     fn finish_pose_change(&mut self);

@@ -21,6 +21,7 @@ pub mod dialogue_ram;
 pub mod dispatch;
 pub mod drop_rules;
 pub mod effects;
+pub mod ending_screens;
 pub mod enemy_population;
 pub mod escape_timer;
 pub mod external_inputs;
