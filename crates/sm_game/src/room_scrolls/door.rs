@@ -9,8 +9,8 @@ use crate::room_entry::content::Axis;
 
 // Door steps retain native split-word and scrolling tilemap publication order.
 pub fn begin<H: Host + ?Sized>(game: &mut H) {
-    set_layer1(game, 0, word!(game.door_destination_x_pos));
-    set_layer1(game, 1, word!(game.door_destination_y_pos));
+    set_layer1(game, 0, game.session().room.entry.arrival_x);
+    set_layer1(game, 1, game.session().room.entry.arrival_y);
     let direction = game.session().room.entry.direction & 3;
     let backwards = matches!(direction, 0 | 2);
     let block_delta = if backwards { u16::MAX } else { 1 };
@@ -62,7 +62,8 @@ pub fn begin<H: Host + ?Sized>(game: &mut H) {
     game.session_mut().room.camera.bg2_scroll[1] =
         word!(game.reg_BG2VOFS).wrapping_sub(game.session().room.camera.layer1[1]);
     if direction == 3 {
-        word!(game.door_destination_y_pos += 32);
+        game.session_mut().room.entry.arrival_y =
+            game.session().room.entry.arrival_y.wrapping_add(32);
     }
     prepare_blocks(direction >= 2, block_delta, game);
     match direction {
@@ -109,13 +110,13 @@ fn prepare_blocks<H: Host + ?Sized>(vertical: bool, delta: u16, game: &mut H) {
 }
 
 pub fn fix_up<H: Host + ?Sized>(game: &mut H) {
-    word!(game.door_transition_frame_counter = 0);
+    game.session_mut().room.entry.frame = 0;
     prepare_blocks(true, 1, game);
     up(game);
 }
 
 pub fn horizontal<H: Host + ?Sized>(left: bool, game: &mut H) -> u8 {
-    let frame = word!(game.door_transition_frame_counter);
+    let frame = game.session().room.entry.frame;
     let speed = words!(
         game.samus_door_transition_speed,
         samus_door_transition_subspeed
@@ -132,7 +133,7 @@ pub fn horizontal<H: Host + ?Sized>(left: bool, game: &mut H) -> u8 {
     game.session_mut().room.camera.layer2[0] =
         game.session().room.camera.layer2[0].wrapping_add(delta);
     update_map(game);
-    word!(game.door_transition_frame_counter = frame.wrapping_add(1));
+    game.session_mut().room.entry.frame = frame.wrapping_add(1);
     if frame == 63 && !left {
         update_map(game);
     }
@@ -160,7 +161,7 @@ fn first_vertical_frame<H: Host + ?Sized>(offset: u16, block_delta: u16, game: &
 }
 
 pub fn down<H: Host + ?Sized>(game: &mut H) -> u8 {
-    let frame = word!(game.door_transition_frame_counter);
+    let frame = game.session().room.entry.frame;
     if frame == 0 {
         first_vertical_frame(15, u16::MAX, game);
     } else if frame < 0x39 {
@@ -183,7 +184,7 @@ pub fn down<H: Host + ?Sized>(game: &mut H) -> u8 {
             game.session().room.camera.layer2[1].wrapping_add(4);
         update_map(game);
     }
-    word!(game.door_transition_frame_counter = frame.wrapping_add(1));
+    game.session_mut().room.entry.frame = frame.wrapping_add(1);
     if frame.wrapping_add(1) < 0x39 {
         return 0;
     }
@@ -192,7 +193,7 @@ pub fn down<H: Host + ?Sized>(game: &mut H) -> u8 {
 }
 
 pub fn up<H: Host + ?Sized>(game: &mut H) -> u8 {
-    let frame = word!(game.door_transition_frame_counter);
+    let frame = game.session().room.entry.frame;
     if frame == 0 {
         first_vertical_frame(16, 1, game);
     } else {
@@ -214,12 +215,12 @@ pub fn up<H: Host + ?Sized>(game: &mut H) -> u8 {
         );
         game.session_mut().room.camera.layer2[1] =
             game.session().room.camera.layer2[1].wrapping_sub(4);
-        if word!(game.door_transition_frame_counter) >= 5 {
+        if game.session().room.entry.frame >= 5 {
             update_map(game);
         } else {
             calculate_scrolls(game);
         }
     }
-    word!(game.door_transition_frame_counter = frame.wrapping_add(1));
+    game.session_mut().room.entry.frame = frame.wrapping_add(1);
     (frame == 56) as u8
 }

@@ -9,7 +9,7 @@ use crate::room_entry::content::Axis;
 // row stride; it is added afterward, with the original word wrapping.
 fn camera_scroll_value<H: Host + ?Sized>(column: u16, row: u8, game: &H) -> u8 {
     let index =
-        (u16::from(row) * u16::from(word!(game.room_width_in_scrolls) as u8)).wrapping_add(column);
+        (u16::from(row) * u16::from(game.session().room.scroll_width as u8)).wrapping_add(column);
     game.byte(0xcd20 + usize::from(index))
 }
 
@@ -22,7 +22,10 @@ pub fn auto_x<H: Host + ?Sized>(game: &mut H) {
     if previous & 0x8000 != 0 {
         set_layer1(game, 0, 0);
     }
-    let limit = word!(game.room_width_in_scrolls)
+    let limit = game
+        .session()
+        .room
+        .scroll_width
         .wrapping_sub(1)
         .swap_bytes();
     if limit < game.session().room.camera.layer1[0] {
@@ -76,7 +79,10 @@ pub fn trigger_right<H: Host + ?Sized>(game: &mut H) {
         set_layer1(game, 0, game.session().room.camera.ideal_layer1[0]);
         game.session_mut().room.camera.layer1_fraction[0] = 0;
     }
-    let limit = word!(game.room_width_in_scrolls)
+    let limit = game
+        .session()
+        .room
+        .scroll_width
         .wrapping_sub(1)
         .swap_bytes();
     let position = game.session().room.camera.layer1[0];
@@ -142,7 +148,10 @@ pub fn auto_y<H: Host + ?Sized>(game: &mut H) {
     if previous & 0x8000 != 0 {
         set_layer1(game, 1, 0);
     }
-    let limit = word!(game.room_height_in_scrolls)
+    let limit = game
+        .session()
+        .room
+        .scroll_height
         .wrapping_sub(1)
         .swap_bytes()
         .wrapping_add(padding);
@@ -165,7 +174,7 @@ pub fn auto_y<H: Host + ?Sized>(game: &mut H) {
         };
         set_layer1(game, 1, next);
     } else if camera_scroll_value(
-        column.wrapping_add(word!(game.room_width_in_scrolls)),
+        column.wrapping_add(game.session().room.scroll_width),
         row,
         game,
     ) == 0
@@ -204,13 +213,16 @@ pub fn trigger_down<H: Host + ?Sized>(game: &mut H) {
         game.session_mut().room.camera.layer1_fraction[1] = 0;
     }
     let position = game.session().room.camera.layer1[1];
-    let mut boundary = word!(game.room_height_in_scrolls)
+    let mut boundary = game
+        .session()
+        .room
+        .scroll_height
         .wrapping_sub(1)
         .swap_bytes()
         .wrapping_add(padding);
     if boundary < position
         || camera_scroll_value(
-            column.wrapping_add(word!(game.room_width_in_scrolls)),
+            column.wrapping_add(game.session().room.scroll_width),
             row,
             game,
         ) == 0

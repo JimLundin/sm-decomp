@@ -181,7 +181,7 @@ pub fn advance_camera<H: Host + ?Sized>(game: &mut H) {
         crate::player_movement::speed::record_camera_distance(game.session_mut(), Axis::Y);
         follow_y(game);
     }
-    match word!(game.scrolling_finished_hook) {
+    match game.session().room.entry.scrolling_hook {
         0 => {}
         0x9589 => {
             if game.session().room.camera.layer1[1] <= 0x1d0 {
@@ -273,10 +273,10 @@ fn follow_y<H: Host + ?Sized>(game: &mut H) {
     } else {
         if word!(game.samus_y_dir) == 1 {
             game.session_mut().room.camera.ideal_layer1[1] =
-                (game.player_y()).wrapping_sub(word!(game.down_scroller));
+                (game.player_y()).wrapping_sub(game.session().room.entry.scroll_down);
         } else {
             game.session_mut().room.camera.ideal_layer1[1] =
-                (game.player_y()).wrapping_sub(word!(game.up_scroller));
+                (game.player_y()).wrapping_sub(game.session().room.entry.scroll_up);
         }
         chase_ideal_layer_position!(
             game,
