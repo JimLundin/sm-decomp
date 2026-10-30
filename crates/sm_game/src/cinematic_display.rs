@@ -1,10 +1,7 @@
 //! Cinematic display setup: PPU modes, layers and mirrors per scene, the Mode 7 reset and intro sprite order.
-// The original's names and assignment shapes are kept.
-#![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
 use crate::cinematic::set_fixed_color;
 use crate::cinematic_objects::draw_cinematic_sprites;
 use crate::display::control::{Brightness, Layers, MainWindowMask, SubScreen};
-#[allow(unused_imports)]
 use crate::ram::RawRam as _;
 use crate::ram::word;
 

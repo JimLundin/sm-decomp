@@ -1,8 +1,5 @@
 //! Cinematic palettes, fades, tilemap queueing and sprite resumption over RAM.
 #![forbid(unsafe_code)]
-// The original's names and assignment shapes are kept.
-#![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
-#[allow(unused_imports)]
 use crate::ram::RawRam as _;
 use crate::ram::word;
 

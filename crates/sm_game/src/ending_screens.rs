@@ -1,10 +1,7 @@
 //! Ending and post-credits screens: sprite pairs, gunship, Samus, clouds, time and zoom.
-// The original's names and assignment shapes are kept.
-#![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
 use crate::cinematic::*;
 use crate::cinematic_objects::CinematicObjects;
 use crate::menus::prelude::words;
-#[allow(unused_imports)]
 use crate::ram::RawRam as _;
 use crate::ram::{word, words as ram_words};
 use crate::visual_state::{CinematicTilemap, EndingGraphics};

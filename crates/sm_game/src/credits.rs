@@ -1,8 +1,5 @@
 //! The credits roll: script commands, text uploads and the ending handoff.
-// The original's names and assignment shapes are kept.
-#![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
 use crate::cinematic::{cinematic_native_record, queue_cinematic_tilemap};
-#[allow(unused_imports)]
 use crate::ram::RawRam as _;
 use crate::ram::word;
 use crate::visual_state::CinematicTilemap;

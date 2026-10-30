@@ -1,10 +1,7 @@
 //! HDMA objects: allocation, channel setup, the per-frame program interpreter and the room effect reset.
-// The original's names and assignment shapes are kept.
-#![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
 use crate::cinematic::cinematic_native_record;
 use crate::display::registers::{DMAP0, HDMAEN, MDMAEN};
 use crate::imported::word as table_word;
-#[allow(unused_imports)]
 use crate::ram::RawRam as _;
 use crate::ram::{checked_word, word};
 

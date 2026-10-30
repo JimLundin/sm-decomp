@@ -1,9 +1,6 @@
 //! Intro and Zebes cinematic objects: Rinkas, the baby, explosions, flights, scenes and transforms.
-// The original's names and assignment shapes are kept.
-#![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
 use crate::cinematic::*;
 use crate::cinematic_objects::CinematicObjects;
-#[allow(unused_imports)]
 use crate::ram::RawRam as _;
 use crate::ram::{word, words as ram_words};
 use crate::visual_state::{CeresExplosion, CinematicFade};

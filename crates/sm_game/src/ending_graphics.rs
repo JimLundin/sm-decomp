@@ -1,9 +1,6 @@
 //! Ending graphics: logo palette steps, icon and beam transfers, and the item percentage.
-// The original's names and assignment shapes are kept.
-#![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
 use crate::cinematic::cinematic_native_record;
 use crate::imported::{Imported, grid_word, load, word as table_word};
-#[allow(unused_imports)]
 use crate::ram::RawRam as _;
 use crate::ram::{checked_word, word};
 use crate::visual_state::EndingGraphics;
