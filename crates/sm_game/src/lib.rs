@@ -78,6 +78,7 @@ pub mod actors {
     pub mod media;
     pub mod movement;
     pub mod overlap;
+    pub mod phantoon_motion;
     pub mod population;
     pub mod queries;
     pub mod ridley_tables;
