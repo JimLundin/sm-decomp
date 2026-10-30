@@ -385,7 +385,8 @@ pub trait HdmaEffects: Host {
             };
             self.write_slice_le(phase, previous_phase.wrapping_add(delta));
             if rain {
-                self.write_slice_le(history, self.word(camera));
+                let layer1 = self.session().room.camera.layer1[camera];
+                self.write_slice_le(history, layer1);
             }
         }
     }
