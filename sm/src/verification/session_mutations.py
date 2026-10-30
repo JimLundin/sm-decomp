@@ -3,7 +3,7 @@
 Each mutant perturbs one owner's or view's mapping between RAM and Session
 fields: it shifts a field's address by 2, swaps two fields, or drops one byte
 of a word. It must make each named sm_game test fail: unit tests, and the
-state layout tests in crates/sm_game/tests/state_layout.rs. A surviving mutant, a
+integration tests in crates/sm_game/tests (state_layout.rs, collision_wrap.rs). A surviving mutant, a
 compile error or a failure in any other test is not a kill.
 
     python session_mutations.py                  run every mutant (GitHub CI only)
@@ -39,6 +39,8 @@ NO_OVERLAP = "no_two_owners_claim_the_same_byte"
 RANDOM_RAM = "session_round_trips_random_ram"
 LITTLE_ENDIAN = "projection_words_are_little_endian_byte_pairs"
 INPUTS = "inputs_read_every_observation_from_its_address"
+COLLISION_WRAP = "collision_wrap.rs:out_of_room_level_words_wrap_like_the_long_indexed_read"
+GEOMETRY = "crates/sm_game/src/player_collision/geometry.rs"
 # The shared scalar-word closures carry every table owner below.
 SCALAR_OWNERS = (LANES, CAMERA, FLOW, MENU, ROOM_ENTRY, INVENTORY, LIQUID, EPROJ, HDMA)
 
@@ -172,6 +174,16 @@ MUTATIONS = (
           "    for (lane, value) in value.to_be_bytes().into_iter().enumerate() {", LITTLE_ENDIAN),
     shift("shift_lava_observation", ENCODING,
           "        lava_y: w(0x1962),", "        lava_y: w(0x1964),", INPUTS),
+    # $94's out-of-room level word read (D387): the long indexed read carries
+    # from bank $7F into bank $80, whose start mirrors $7E.
+    shift("level_word_wraps_within_bank_7f", GEOMETRY,
+          "    [0, 1].map(|lane| (0x10002 + byte_offset + lane) & 0x1ffff)",
+          "    [0, 1].map(|lane| 0x10000 | ((0x10002 + byte_offset + lane) & 0xffff))", COLLISION_WRAP),
+    shift("level_word_runs_past_work_ram", GEOMETRY,
+          "    [0, 1].map(|lane| (0x10002 + byte_offset + lane) & 0x1ffff)",
+          "    [0, 1].map(|lane| 0x10002 + byte_offset + lane)", COLLISION_WRAP),
+    shift("level_offset_skips_the_16_bit_wrap", GEOMETRY,
+          "    usize::from(block.wrapping_mul(2))", "    usize::from(block) * 2", COLLISION_WRAP),
 )
 
 
@@ -193,9 +205,20 @@ def run(command, timeout):
                           errors="replace", timeout=timeout, check=False)
 
 
+def kind(test):
+    """None for an sm_game unit test, else the integration test file."""
+    if "::" in test:
+        return None
+    return test.split(":")[0] if ".rs:" in test else "state_layout.rs"
+
+
+def test_name(test):
+    return test.split(":", 1)[1] if ".rs:" in test else test
+
+
 def build(crates, work, name, sm_data, layout):
-    """The sm_game unit-test binary, or the state layout test binary over a
-    mutated sm_game library."""
+    """The sm_game unit-test binary, or the binary of integration test file
+    `layout` over a mutated sm_game library."""
     folder = work / name
     exe = ".exe" if os.name == "nt" else ""
     common = ["--extern", f"sm_data={sm_data}", "-L", f"dependency={work}", "-L", f"dependency={folder}", "-A", "unused"]
@@ -207,9 +230,9 @@ def build(crates, work, name, sm_data, layout):
         library = folder / "libsm_game.rlib"
         built = run(["rustc", "--edition=2024", "-O", "--crate-name", "sm_game", "--crate-type", "rlib",
                      str(crates / "sm_game" / "src" / "lib.rs"), "-o", str(library), *common], 900)
-        binary = folder / f"state_layout{exe}"
+        binary = folder / f"{layout.removesuffix('.rs')}{exe}"
         if built.returncode == 0:
-            built = run(["rustc", "--edition=2024", "-O", "--test", str(crates / "sm_game" / "tests" / "state_layout.rs"),
+            built = run(["rustc", "--edition=2024", "-O", "--test", str(crates / "sm_game" / "tests" / layout),
                          "--extern", f"sm_game={library}", "-o", str(binary), *common], 900)
     if built.returncode != 0:
         raise RuntimeError(f"{name}: COMPILE ERROR; not a killed mutant\n{built.stderr}")
@@ -218,7 +241,7 @@ def build(crates, work, name, sm_data, layout):
 
 def binaries(crates, work, name, sm_data, tests):
     """The unit and layout binaries this mutant's tests need, keyed by kind."""
-    kinds = {"::" not in test for test in tests}
+    kinds = {kind(test) for test in tests}
     (work / name).mkdir(parents=True, exist_ok=True)
     return {layout: build(crates, work, name, sm_data, layout) for layout in kinds}
 
@@ -241,8 +264,8 @@ def main():
         baseline = binaries(root / "crates", work, "baseline", sm_data, every)
         for name, relative, before, after, tests in MUTATIONS:
             for test in tests:
-                good = run([str(baseline["::" not in test]), "--exact", test], 120)
-                if good.returncode != 0 or f"test {test} ... ok" not in good.stdout:
+                good = run([str(baseline[kind(test)]), "--exact", test_name(test)], 120)
+                if good.returncode != 0 or f"test {test_name(test)} ... ok" not in good.stdout:
                     raise RuntimeError(f"{name}: selected baseline test must pass\n{good.stdout}\n{good.stderr}")
             crates = work / name / "crates"
             shutil.copytree(root / "crates", crates)
@@ -250,8 +273,8 @@ def main():
             target.write_bytes(read(target).replace(before, after, 1).encode("utf-8"))
             mutant = binaries(crates, work, name, sm_data, tests)
             for test in tests:
-                result = run([str(mutant["::" not in test]), "--exact", test], 120)
-                if result.returncode != 101 or f"test {test} ... FAILED" not in result.stdout:
+                result = run([str(mutant[kind(test)]), "--exact", test_name(test)], 120)
+                if result.returncode != 101 or f"test {test_name(test)} ... FAILED" not in result.stdout:
                     raise RuntimeError(f"{name}: SURVIVED; {test} must fail\n{result.stdout}\n{result.stderr}")
             print(f"{name}: KILLED by {', '.join(tests)}", flush=True)
     print(f"session mutation checks: {len(MUTATIONS)}/{len(MUTATIONS)} killed", flush=True)
