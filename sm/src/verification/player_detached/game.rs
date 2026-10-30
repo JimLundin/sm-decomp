@@ -28,8 +28,7 @@ pub(crate) use sm_game::visual_host;
 pub(crate) use sm_game::samus_palette;
 
 
-#[path = "../../game/session_encoding.rs"]
-pub(crate) mod session_encoding;
+pub(crate) use sm_game::session_encoding;
 
 pub(crate) use sm_game::sprite_effect_state;
 
