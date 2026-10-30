@@ -742,6 +742,18 @@ fn actor_extended_ram_round_trips_every_word() {
 }
 
 #[test]
+fn actor_speed_scratch_round_trips_every_word() {
+    check_owner("actor speed scratch", &actor_scratch_lanes());
+}
+
+fn actor_scratch_lanes() -> Vec<Lane> {
+    array(0x0e22, 2, 5, |s, index| {
+        &mut s.actors.compatibility.scratch[index]
+    })
+    .collect()
+}
+
+#[test]
 fn botwoon_death_words_round_trip() {
     check_owner(
         "Botwoon death",
@@ -906,6 +918,7 @@ fn all_owner_lanes() -> Vec<(&'static str, Vec<Lane>)> {
         ("visual fades", visual_fade_lanes()),
         ("HDMA objects", hdma_object_lanes()),
         ("actor extended RAM", actor_extended_lanes()),
+        ("actor speed scratch", actor_scratch_lanes()),
     ]
 }
 

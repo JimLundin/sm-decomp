@@ -138,6 +138,7 @@ pub struct ActorCompatibility {
     pub post_hook: [u8; 4],
     pub debug_enemy_index: u16,
     pub log_index: u16,
+    pub scratch: [u16; 5],
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct ActorDiagnostics {
