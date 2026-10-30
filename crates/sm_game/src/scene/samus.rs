@@ -143,28 +143,16 @@ pub fn draw_owned(
     position: (u16, u16),
     inputs: &mut impl Inputs,
 ) -> Result<(), DisplayError> {
-    if state.phase == DisplayPhase::Failed {
-        return Err(DisplayError::Poisoned);
-    }
-    if state.phase != DisplayPhase::Producing {
-        return Err(DisplayError::Phase);
-    }
-    let mut guard = super::delivery::FaultGuard::new(state);
-    let result = draw(
-        &mut Owned {
-            state: guard.state(),
+    super::delivery::in_phase(state, DisplayPhase::Producing, |state| {
+        let mut owned = Owned {
+            state,
             media,
             producer,
             inputs,
             active: None,
-        },
-        index,
-        position,
-    );
-    if result.is_ok() {
-        guard.disarm();
-    }
-    result
+        };
+        draw(&mut owned, index, position)
+    })
 }
 
 struct Owned<'a, I> {

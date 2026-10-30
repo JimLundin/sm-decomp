@@ -236,27 +236,16 @@ pub fn draw_owned(
     mode: Body,
     inputs: &mut impl Inputs,
 ) -> Result<(), DisplayError> {
-    if state.phase == DisplayPhase::Failed {
-        return Err(DisplayError::Poisoned);
-    }
-    if state.phase != DisplayPhase::Producing {
-        return Err(DisplayError::Phase);
-    }
-    let mut guard = super::delivery::FaultGuard::new(state);
-    let result = draw(
-        &mut Owned {
-            state: guard.state(),
+    super::delivery::in_phase(state, DisplayPhase::Producing, |state| {
+        let mut owned = Owned {
+            state,
             media,
             producer,
             marker,
             inputs,
-        },
-        mode,
-    );
-    if result.is_ok() {
-        guard.disarm();
-    }
-    result
+        };
+        draw(&mut owned, mode)
+    })
 }
 pub fn bottom_owned(
     state: &mut DisplayState,
@@ -265,24 +254,15 @@ pub fn bottom_owned(
     marker: &MarkerPublication,
     inputs: &mut impl Inputs,
 ) -> Result<bool, DisplayError> {
-    if state.phase == DisplayPhase::Failed {
-        return Err(DisplayError::Poisoned);
-    }
-    if state.phase != DisplayPhase::Producing {
-        return Err(DisplayError::Phase);
-    }
-    let mut guard = super::delivery::FaultGuard::new(state);
-    let result = bottom_is_visible(&mut Owned {
-        state: guard.state(),
-        media,
-        producer,
-        marker,
-        inputs,
-    });
-    if result.is_ok() {
-        guard.disarm();
-    }
-    result
+    super::delivery::in_phase(state, DisplayPhase::Producing, |state| {
+        bottom_is_visible(&mut Owned {
+            state,
+            media,
+            producer,
+            marker,
+            inputs,
+        })
+    })
 }
 struct Owned<'a, I> {
     state: &'a mut DisplayState,

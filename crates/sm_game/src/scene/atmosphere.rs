@@ -197,20 +197,17 @@ pub fn advance_owned(
     media: &SceneMedia,
     inputs: &mut impl Inputs,
 ) -> Result<(), DisplayError> {
-    let mut owner = super::delivery::FaultGuard::new(state);
-    let result = advance(&mut Owned {
-        state: owner.state(),
-        media,
-        inputs,
-        duration_kind: None,
-        tile_kind: None,
-        active_slot: 0,
-        pending: None,
-    });
-    if result.is_ok() {
-        owner.disarm();
-    }
-    result
+    super::delivery::poison_on_failure(state, |state| {
+        advance(&mut Owned {
+            state,
+            media,
+            inputs,
+            duration_kind: None,
+            tile_kind: None,
+            active_slot: 0,
+            pending: None,
+        })
+    })
 }
 
 fn semantic_object(

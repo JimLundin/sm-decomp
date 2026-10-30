@@ -50,27 +50,43 @@ impl Drop for FaultGuard<'_> {
     }
 }
 
+/// Run `operation` on the owner under a [`FaultGuard`]: a failure poisons it.
+pub fn poison_on_failure<T>(
+    state: &mut DisplayState,
+    operation: impl FnOnce(&mut DisplayState) -> Result<T, DisplayError>,
+) -> Result<T, DisplayError> {
+    let mut guard = FaultGuard::new(state);
+    let result = operation(guard.state());
+    if result.is_ok() {
+        guard.disarm();
+    }
+    result
+}
+
+/// [`poison_on_failure`] for an owner that must be in `phase` and not poisoned.
+pub fn in_phase<T>(
+    state: &mut DisplayState,
+    phase: DisplayPhase,
+    operation: impl FnOnce(&mut DisplayState) -> Result<T, DisplayError>,
+) -> Result<T, DisplayError> {
+    if state.phase == DisplayPhase::Failed {
+        return Err(DisplayError::Poisoned);
+    }
+    if state.phase != phase {
+        return Err(DisplayError::Phase);
+    }
+    poison_on_failure(state, operation)
+}
+
 /// Actual owned consumer; refresh has finished and the owner entered Settling.
 /// Failure preserves delivery/effect prefixes and prevents later Scene sealing.
 pub fn settle_owned(
     state: &mut DisplayState,
     effects: &mut impl Effects,
 ) -> Result<(), DisplayError> {
-    if state.phase == DisplayPhase::Failed {
-        return Err(DisplayError::Poisoned);
-    }
-    if state.phase != DisplayPhase::Settling {
-        return Err(DisplayError::Phase);
-    }
-    let mut guard = FaultGuard::new(state);
-    let result = super::settle::settle(&mut OwnedSettlement {
-        state: guard.state(),
-        effects,
-    });
-    if result.is_ok() {
-        guard.disarm();
-    }
-    result
+    in_phase(state, DisplayPhase::Settling, |state| {
+        super::settle::settle(&mut OwnedSettlement { state, effects })
+    })
 }
 
 impl<E: Effects> SettlementHost for OwnedSettlement<'_, E> {

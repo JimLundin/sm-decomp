@@ -363,22 +363,18 @@ impl OwnedDisplay {
         if self.state.phase != DisplayPhase::Producing {
             return Err(DisplayError::Phase);
         }
-        let mut owner = delivery::FaultGuard::new(&mut self.state);
-        let state = owner.state();
-        let result = match state.atmospheric.slots.get(slot) {
-            Some(effect) if effect.frame_and_kind == 0 => {
-                state.atmospheric_producers.slots[slot] = None;
-                Ok(())
+        delivery::poison_on_failure(&mut self.state, |state| {
+            match state.atmospheric.slots.get(slot) {
+                Some(effect) if effect.frame_and_kind == 0 => {
+                    state.atmospheric_producers.slots[slot] = None;
+                    Ok(())
+                }
+                Some(_) => state
+                    .atmospheric_producers
+                    .created(slot, &mut state.producer_ids),
+                None => Err(DisplayError::Geometry),
             }
-            Some(_) => state
-                .atmospheric_producers
-                .created(slot, &mut state.producer_ids),
-            None => Err(DisplayError::Geometry),
-        };
-        if result.is_ok() {
-            owner.disarm();
-        }
-        result
+        })
     }
     pub fn advance_atmosphere(
         &mut self,
@@ -594,16 +590,13 @@ impl RefreshHost for OwnedDisplay {
         Ok(())
     }
     fn samus(&mut self) -> Result<(), DisplayError> {
-        let mut guard = delivery::FaultGuard::new(&mut self.state);
-        let result = super::samus_tile_upload::upload(&mut OwnedSamusUpload {
-            state: guard.state(),
-            image: &mut self.image,
-            media: &self.media,
-        });
-        if result.is_ok() {
-            guard.disarm();
-        }
-        result
+        delivery::poison_on_failure(&mut self.state, |state| {
+            super::samus_tile_upload::upload(&mut OwnedSamusUpload {
+                state,
+                image: &mut self.image,
+                media: &self.media,
+            })
+        })
     }
     fn animations(&mut self) -> Result<(), DisplayError> {
         if self.state.visual.animated_tiles.flags & 0x8000 == 0 {
