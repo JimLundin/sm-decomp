@@ -34,7 +34,7 @@ fn build_vertical_bands<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u
     crate::word_transfers!(game, ascending, 1; native(0x9c00) <- value(31));
     crate::word_transfers!(game, ascending, 1; native(0x9c01) <- value(0));
     let mut row = 3u16;
-    let mut y = word!(game.layer1_y_pos).wrapping_add(32);
+    let mut y = crate::camera::current(game).layer1[1].wrapping_add(32);
     let mut band = 0usize;
     let mut inset = y & if y.wrapping_sub(1248) & 0x8000 != 0 {
         15
@@ -76,7 +76,8 @@ pub fn update_vertical_scroll<H: crate::menus::host::Host + ?Sized>(mut k: u16, 
 }
 #[forbid(unsafe_code)]
 pub fn update_horizontal_scroll<H: crate::menus::host::Host + ?Sized>(k: u16, game: &mut H) {
-    if word!(game.layer1_y_pos) as i32 - 1024i32 & 0x8000 != 0 {
+    let layer1_y = crate::camera::current(game).layer1[1];
+    if layer1_y as i32 - 1024i32 & 0x8000 != 0 {
         if (game.ram().read_byte(0x5b5) & 1) == 0 {
             word!(game.g_word_7E0596 = (word!(game.g_word_7E0596) as i32 + 2 & 0x1e) as u16);
         }
@@ -111,7 +112,7 @@ pub fn update_horizontal_scroll<H: crate::menus::host::Host + ?Sized>(k: u16, ga
     write_scroll_pair(2, 31, game);
     let mut r18: u16 = 31;
     write_scroll_pair(3, -25088i32 as u16, game);
-    if word!(game.layer1_y_pos) as i32 - 1024i32 & 0x8000 != 0 {
+    if layer1_y as i32 - 1024i32 & 0x8000 != 0 {
         write_sky_word(0, 2, game);
     } else {
         r18 = append_upper_band(0x105, r18, 177, 0, game);
@@ -142,15 +143,14 @@ fn append_upper_band<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) -> u16 {
     let mut v0: u16 = k;
-    let mut v1: u16 = (1216u16).wrapping_sub(word!(game.layer1_y_pos));
-    let mut r24: u16 = (1216u16).wrapping_sub(word!(game.layer1_y_pos));
-    if (1216i16).wrapping_sub((word!(game.layer1_y_pos)) as i16) >= 0
-        && word!(game.layer1_y_pos) != 1216
-    {
+    let layer1_y = crate::camera::current(game).layer1[1];
+    let mut v1: u16 = (1216u16).wrapping_sub(layer1_y);
+    let mut r24: u16 = (1216u16).wrapping_sub(layer1_y);
+    if (1216i16).wrapping_sub(layer1_y as i16) >= 0 && layer1_y != 1216 {
         if v1 as i32 - 128i32 & 0x8000 != 0 {
-            r18 = (1216u16).wrapping_sub(word!(game.layer1_y_pos));
+            r18 = (1216u16).wrapping_sub(layer1_y);
         } else {
-            r18 = (1216u16).wrapping_sub(word!(game.layer1_y_pos));
+            r18 = (1216u16).wrapping_sub(layer1_y);
             if v1 as i32 - 193i32 & 0x8000 == 0 {
                 v1 = 193;
             }
@@ -214,8 +214,9 @@ pub fn advance_parallax<H: crate::menus::host::Host + ?Sized>(_k: u16, game: &mu
     word! { game, 0; scrolling_sky_bg2_hdma_data[44], scrolling_sky_bg2_hdma_data[45] }
     write_sky_word(31, 0, game);
     write_sky_word(1438, 1, game);
-    let mut r18: u16 = (word!(game.layer1_y_pos)).wrapping_add(32);
-    let r20: u16 = (word!(game.layer1_y_pos)).wrapping_add(224);
+    let layer1_y = crate::camera::current(game).layer1[1];
+    let mut r18: u16 = layer1_y.wrapping_add(32);
+    let r20: u16 = layer1_y.wrapping_add(224);
     let mut v6: u16 = 3;
     for v5 in 0u16..23 {
         let entry = native_record(0x88aec1 + 8 * u32::from(v5), game);
@@ -268,14 +269,15 @@ fn queue_tile_rows<H: crate::menus::host::Host + ?Sized>(address: u32, game: &mu
     if word!(game.time_is_frozen_flag) != 0 {
         write_sky_word(0, 0, game);
     } else {
-        word!(game.reg_BG2VOFS = word!(game.layer1_y_pos));
+        let layer1_y = crate::camera::current(game).layer1[1];
+        word!(game.reg_BG2VOFS = layer1_y);
         let v0: u16 = word!(game.vram_write_queue_tail);
         let v1 = 0xd0 + usize::from(word!(game.vram_write_queue_tail));
         let stride = VRAM_WRITE_ENTRY_BYTES;
         for row in 0..4 {
             crate::word_transfers!(game, ascending, 1; native(v1 + row * stride) <- value(64));
         }
-        let mut tt: i32 = (word!(game.layer1_y_pos) as i32 & 0x7f8) - 16i32;
+        let mut tt: i32 = (layer1_y as i32 & 0x7f8) - 16i32;
         if tt & 0x8000 != 0 {
             tt = 0;
         }
@@ -292,10 +294,10 @@ fn queue_tile_rows<H: crate::menus::host::Host + ?Sized>(address: u32, game: &mu
             game.ram().write_byte(v1 + row * stride + 4, 0x8a);
         }
         let t: i32 = (game.ram().read_byte(0x59) as i32 & 0xfc) << 8;
-        let v6: u16 = (t + 4 * (word!(game.layer1_y_pos) as i32 - 16i32 & 0x1f8)) as u16;
+        let v6: u16 = (t + 4 * (layer1_y as i32 - 16i32 & 0x1f8)) as u16;
         crate::word_transfers!(game, ascending, 1; native(v1 + 5) <- value(v6));
         crate::word_transfers!(game, ascending, 1; native(v1 + stride + 5) <- value(v6.wrapping_add(32)));
-        let v7: u16 = (t + 4 * (word!(game.layer1_y_pos) as i32 + 240 & 0x1f8)) as u16;
+        let v7: u16 = (t + 4 * (layer1_y as i32 + 240 & 0x1f8)) as u16;
         crate::word_transfers!(game, ascending, 1; native(v1 + 2 * stride + 5) <- value(v7));
         crate::word_transfers!(game, ascending, 1; native(v1 + 3 * stride + 5) <- value(v7.wrapping_add(32)));
         word!(game.vram_write_queue_tail = (v0).wrapping_add(28));

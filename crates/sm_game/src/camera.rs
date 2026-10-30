@@ -31,7 +31,8 @@
 //! no typed copy competes with them. Each moves onto these fields when its domain does; the projection
 //! can shrink once no reader or writer names the RAM words.
 #![forbid(unsafe_code)]
-use crate::runtime_access::SessionRam;
+use crate::runtime_access::{RuntimeAccess, SessionRam};
+use crate::session_access::SessionAccess;
 
 /// The camera's words; see the module documentation for the RAM layout.
 #[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
@@ -56,6 +57,11 @@ pub struct Camera {
     pub bg2_scroll: [u16; 2],
     /// The layer 1 position the camera follows toward ($0B0A, $0B0E).
     pub ideal_layer1: [u16; 2],
+}
+
+/// The camera as the owned Session holds it, for hosts outside a lease.
+pub fn current<H: RuntimeAccess + ?Sized>(h: &mut H) -> Camera {
+    h.runtime().session().room.camera
 }
 
 /// Store layer 1's whole position on `axis` (0 = x, 1 = y). The store is

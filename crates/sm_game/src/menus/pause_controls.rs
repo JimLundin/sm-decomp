@@ -148,10 +148,11 @@ pub fn draw_unpause<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 }
 
 pub fn resume<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    word!(game.reg_BG1HOFS = word!(game.bg1_x_offset).wrapping_add(word!(game.layer1_x_pos)));
-    word!(game.reg_BG1VOFS = word!(game.bg1_y_offset).wrapping_add(word!(game.layer1_y_pos)));
-    word!(game.reg_BG2HOFS = word!(game.bg2_x_scroll).wrapping_add(word!(game.layer2_x_pos)));
-    word!(game.reg_BG2VOFS = word!(game.bg2_y_scroll).wrapping_add(word!(game.layer2_y_pos)));
+    let camera = crate::camera::current(game);
+    word!(game.reg_BG1HOFS = camera.bg1_offset[0].wrapping_add(camera.layer1[0]));
+    word!(game.reg_BG1VOFS = camera.bg1_offset[1].wrapping_add(camera.layer1[1]));
+    word!(game.reg_BG2HOFS = camera.bg2_scroll[0].wrapping_add(camera.layer2[0]));
+    word!(game.reg_BG2VOFS = camera.bg2_scroll[1].wrapping_add(camera.layer2[1]));
     game.update_beam_tiles_and_palette();
     // Palette timer/frame and pause_screen_mode survive this ordered reset.
     crate::word_transfers!(game, ascending, 10; little(fields::menu_index) <- value(0));

@@ -15,6 +15,7 @@ pub trait SpriteHost:
     + crate::ram::WorkRamAccess
     + crate::cartridge::LoadedImage
     + crate::cartridge::NativeImage
+    + crate::runtime_access::RuntimeAccess
 {
     /// Print the original "RomPtr - Invalid access" warning for `address`.
     fn warn_invalid_rom(&mut self, address: u32);
@@ -167,16 +168,15 @@ pub fn echo<H: SpriteHost + ?Sized>(slot: u16, game: &mut H, content: &mut impl 
             + usize::from(word!(game.samus_pose)) * 8
             + 4,
     );
-    let y = y
-        .wrapping_sub(u16::from(height))
-        .wrapping_sub(word!(game.layer1_y_pos));
+    let layer1 = crate::camera::current(game).layer1;
+    let y = y.wrapping_sub(u16::from(height)).wrapping_sub(layer1[1]);
     if (y as i16) >= 0 && y.wrapping_sub(248) & 0x8000 != 0 {
         let sprite = word!(game.samus_top_half_spritemap_index);
-        let x = word!(game.speed_echo_xpos[index]).wrapping_sub(word!(game.layer1_x_pos));
+        let x = word!(game.speed_echo_xpos[index]).wrapping_sub(layer1[0]);
         samus(sprite, (x, y), game, content);
         if word!(game.samus_bottom_half_spritemap_index) != 0 {
             let sprite = word!(game.samus_bottom_half_spritemap_index);
-            let x = word!(game.speed_echo_xpos[index]).wrapping_sub(word!(game.layer1_x_pos));
+            let x = word!(game.speed_echo_xpos[index]).wrapping_sub(layer1[0]);
             samus(sprite, (x, y), game, content);
         }
     }
@@ -202,12 +202,13 @@ pub fn grapple<H: SpriteHost + ?Sized>(game: &mut H, segment: Option<(u16, u16, 
         game.ram().write_byte(at + 1, y as u8);
         game.ram().copy_in(at + 2, &tile.to_ne_bytes());
     } else {
+        let layer1 = crate::camera::current(game).layer1;
         let x = word!(game.grapple_beam_end_x_pos)
-            .wrapping_sub(word!(game.layer1_x_pos))
+            .wrapping_sub(layer1[0])
             .wrapping_sub(4);
         game.ram().write_byte(at, x as u8);
         let y = word!(game.grapple_beam_end_y_pos)
-            .wrapping_sub(word!(game.layer1_y_pos))
+            .wrapping_sub(layer1[1])
             .wrapping_sub(4);
         game.ram().write_byte(at + 1, y as u8);
         game.ram().copy_in(at + 2, &14880u16.to_ne_bytes());

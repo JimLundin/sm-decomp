@@ -44,11 +44,12 @@ pub fn begin_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
         word!(game.samus_pose = if game.facing() == 4 { 0xd8 } else { 0xd7 });
         game.finish_pose_change();
         word! { game; samus_anim_frame_skip = 0; samus_anim_frame = frame; }
+        let layer1 = crate::camera::current(game).layer1;
         let x = game.player_x();
-        let x = x.wrapping_sub(word!(game.layer1_x_pos));
+        let x = x.wrapping_sub(layer1[0]);
         game.set_player_x(x);
         let y = game.player_y();
-        let y = y.wrapping_sub(word!(game.layer1_y_pos));
+        let y = y.wrapping_sub(layer1[1]);
         game.set_player_y(y);
         word!(game.game_state += 1);
     }

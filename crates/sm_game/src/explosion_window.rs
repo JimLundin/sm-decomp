@@ -14,6 +14,7 @@ pub trait Host:
     + crate::effects::SoundEffects
     + crate::cartridge::NativeDiagnostics
     + crate::menus::host::MenuRuntime
+    + crate::runtime_access::RuntimeAccess
 {
     /// Enter the Crystal Flash pose transition on the owned Session.
     fn initialize_crystal_flash(&mut self) -> bool;
@@ -342,19 +343,17 @@ fn calculate_explosion_hdma_table_pointers<H: Host + ?Sized>(
             return;
         }
         let mut v1: u16 = 0;
-        if ((word!(game.power_bomb_explosion_x_pos) as i32 - word!(game.layer1_x_pos) as i32 + 256)
-            as u16)
+        let layer1 = crate::camera::current(game).layer1;
+        if ((word!(game.power_bomb_explosion_x_pos) as i32 - layer1[0] as i32 + 256) as u16)
             >= 0x300
             || {
                 word!(
                     game.power_bomb_explosion_x_pos_plus_0x100 =
-                        (word!(game.power_bomb_explosion_x_pos) as i32
-                            - word!(game.layer1_x_pos) as i32
-                            + 256) as u16
+                        (word!(game.power_bomb_explosion_x_pos) as i32 - layer1[0] as i32 + 256)
+                            as u16
                 );
-                v1 = (word!(game.power_bomb_explosion_y_pos) as i32
-                    - word!(game.layer1_y_pos) as i32
-                    + 256) as u16;
+                v1 =
+                    (word!(game.power_bomb_explosion_y_pos) as i32 - layer1[1] as i32 + 256) as u16;
                 v1 >= 0x300
             }
         {
