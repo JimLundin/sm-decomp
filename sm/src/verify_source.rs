@@ -2985,6 +2985,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/actors/yapping_maw.rs"),
     ),
     (
+        "crates/sm_game/src/display_refresh.rs",
+        include_bytes!("../../crates/sm_game/src/display_refresh.rs"),
+    ),
+    (
         "crates/sm_game/src/gameplay_frame.rs",
         include_bytes!("../../crates/sm_game/src/gameplay_frame.rs"),
     ),
