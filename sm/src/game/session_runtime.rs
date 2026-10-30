@@ -1164,8 +1164,6 @@ crate::game::callback_dispatch! {
         10679256 => [mechanisms::react(Kind::HorizontalShutter, Event::Touch, game)];
         10679310 => [mechanisms::react(Kind::HorizontalShutter, Event::Shot, game)];
         10679322 => [mechanisms::react(Kind::HorizontalShutter, Event::PowerBomb, game)];
-        10716909 => crate::game::waver::Waver_Init;
-        10717004 => crate::game::waver::Waver_Main;
 
         10730277 => [{ let address = bang::main_ai(game); crate::cpu_infra::Call(address, game); }];
         10738716 => reflec_shot;
@@ -1280,7 +1278,6 @@ crate::game::callback_dispatch! {
         }];
 
         10651845 => [j];
-        10716899 => crate::game::waver::Waver_Instr_1;
         11056990 => [j];
         11128756 => [sm_game::actors::baby_metroid_cutscene::go_to_initial(k, j)];
         11128778 => [sm_game::actors::baby_metroid_cutscene::go_to_draining_mother_brain(k, j)];
