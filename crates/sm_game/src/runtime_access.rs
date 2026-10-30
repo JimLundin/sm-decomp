@@ -9,6 +9,7 @@
 pub trait SessionView:
     crate::session_access::SessionAccess
     + SessionRam
+    + crate::player_position::PlayerPosition
     + crate::player_projectiles::host::Host
     + crate::room_mechanisms::host::Host
     + crate::room_mechanisms::host::Effects
@@ -26,6 +27,7 @@ pub trait SessionView:
 impl<T> SessionView for T where
     T: crate::session_access::SessionAccess
         + SessionRam
+        + crate::player_position::PlayerPosition
         + crate::player_projectiles::host::Host
         + crate::room_mechanisms::host::Host
         + crate::room_mechanisms::host::Effects

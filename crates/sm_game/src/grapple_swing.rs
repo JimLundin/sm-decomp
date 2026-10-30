@@ -218,14 +218,16 @@ macro_rules! special_angle_word {
     };
 }
 macro_rules! clamp_previous_grapple_position {
-    ($game:ident, $current:ident, $previous:ident) => {
-        let delta: i16 = (word!($game.$current) as i16).wrapping_sub(word!($game.$previous) as i16);
-        if (word!($game.$current) as i16).wrapping_sub(word!($game.$previous) as i16) < 0 {
+    ($game:ident, $current:ident, $previous:ident, $set_previous:ident) => {
+        let delta: i16 = ($game.$current() as i16).wrapping_sub($game.$previous() as i16);
+        if ($game.$current() as i16).wrapping_sub($game.$previous() as i16) < 0 {
             if delta as i32 + 12 & 0x8000 != 0 {
-                word!($game.$previous = word!($game.$current).wrapping_add(12));
+                let previous = $game.$current().wrapping_add(12);
+                $game.$set_previous(previous);
             }
         } else if delta as i32 - 13 & 0x8000 == 0 {
-            word!($game.$previous = word!($game.$current).wrapping_sub(12));
+            let previous = $game.$current().wrapping_sub(12);
+            $game.$set_previous(previous);
         }
     };
 }
@@ -246,8 +248,8 @@ pub fn apply_special_angle<H: Host + ?Sized>(game: &mut H) -> u8 {
     );
     word!(game.grapple_beam_function = special_angle_word!(game, row, 8));
     word! { game, 0; samus_special_transgfx_index, slow_grabble_scrolling_flag }
-    clamp_previous_grapple_position!(game, samus_x_pos, samus_prev_x_pos);
-    clamp_previous_grapple_position!(game, samus_y_pos, samus_prev_y_pos);
+    clamp_previous_grapple_position!(game, player_x, previous_player_x, set_previous_player_x);
+    clamp_previous_grapple_position!(game, player_y, previous_player_y, set_previous_player_y);
     1
 }
 

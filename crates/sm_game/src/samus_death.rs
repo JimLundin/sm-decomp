@@ -48,8 +48,12 @@ pub fn begin_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
         );
         game.finish_pose_change();
         word! { game; samus_anim_frame_skip = 0; samus_anim_frame = frame; }
-        word!(game.samus_x_pos -= word!(game.layer1_x_pos));
-        word!(game.samus_y_pos -= word!(game.layer1_y_pos));
+        let x = game.player_x();
+        let x = x.wrapping_sub(word!(game.layer1_x_pos));
+        game.set_player_x(x);
+        let y = game.player_y();
+        let y = y.wrapping_sub(word!(game.layer1_y_pos));
+        game.set_player_y(y);
         word!(game.game_state += 1);
     }
     0
@@ -182,7 +186,7 @@ fn advance_suit_explosion<H: Host + ?Sized>(game: &mut H) -> bool {
     }) as u16;
     sprite_output::samus(
         sprite,
-        (word!(game.samus_x_pos), word!(game.samus_y_pos)),
+        (game.player_x(), game.player_y()),
         game,
         &mut sprite_output::Native,
     );

@@ -123,8 +123,8 @@ pub fn advance_ceres_elevator<H: Host + ?Sized>(game: &mut H) {
 
 pub fn advance_elevatube<H: SessionView>(h: &mut H) {
     use crate::player_collision::operations::{self, Axis, DisplacementRequest};
-    h.write_word_le(128, fields::samus_x_pos);
-    h.write_word_le(0, fields::samus_x_subpos);
+    h.set_player_x(128);
+    h.set_player_x_fraction(0);
     let amount = i32::from(h.native_word(0x7e5) as i16) << 8;
     let position = u32::from_ne_bytes([h.byte(0x7e1), h.byte(0x7e2), h.byte(0x7e3), h.byte(0x7e4)]);
     let whole = (position.wrapping_add(amount as u32) >> 16) as u16;
