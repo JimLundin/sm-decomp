@@ -98,7 +98,6 @@ pub(in crate::game) mod crocomire_attack;
 pub(crate) mod crocomire_reactions;
 pub(in crate::game) mod draygon_eye;
 pub(in crate::game) mod draygon_flight;
-pub(in crate::game) mod evir;
 pub(in crate::game) mod fune;
 pub(in crate::game) mod ki_hunter;
 pub(crate) mod magdollite;

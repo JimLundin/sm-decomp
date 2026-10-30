@@ -722,10 +722,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/actors/maridia_puffer.rs"),
     ),
     (
-        "sm/src/game/actors/evir.rs",
-        include_bytes!("game/actors/evir.rs"),
-    ),
-    (
         "sm/src/game/maridia_turtles.rs",
         include_bytes!("game/maridia_turtles.rs"),
     ),
@@ -3129,6 +3125,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/actors/etecoon.rs",
         include_bytes!("../../crates/sm_game/src/actors/etecoon.rs"),
+    ),
+    (
+        "crates/sm_game/src/actors/evir.rs",
+        include_bytes!("../../crates/sm_game/src/actors/evir.rs"),
     ),
     (
         "crates/sm_game/src/actors/fireflea.rs",

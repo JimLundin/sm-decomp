@@ -13,7 +13,7 @@ use crate::actors::{
     alcoon, atomic, bang, blue_brinstar_face_block, botwoon, boulder, brinstar_pipe_bug,
     ceres_doors, coven, crawlers, crocomire_reactions, dachora_run, draygon_death, draygon_eye,
     draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, etecoon,
-    fire_arc, fireflea, fune, kago, kraid, magdollite, mini_kraid, mochtroid, morph_ball_eye,
+    evir, fire_arc, fireflea, fune, kago, kraid, magdollite, mini_kraid, mochtroid, morph_ball_eye,
     norfair_pipe_bug, phantoon, phantoon_actions, reflec, roach, shaktool, sidehopper, skree,
     skultera, space_pirates, statues, torizo, tripper, yapping_maw, yellow_pipe_bug, zebetites,
     zoa,
@@ -539,6 +539,11 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10733255 => skree::main_ai(skree::Kind::Skree, game),
         10733557 => skree::shot(skree::Kind::Skree, game),
         // Bank $A8.
+        11044832 => evir::initialize(game),
+        11045040 => evir::initialize_projectile(game),
+        11045147 => evir::main_ai(game),
+        11045278 => evir::projectile_main_ai(game),
+        11045638 | 11045644 | 11045650 => evir::react(ea, game),
         11047000 => morph_ball_eye::initialize(game),
         11047138 => {
             if let Some(function) = morph_ball_eye::main_ai(game) {
@@ -739,6 +744,7 @@ pub fn instruction<H: InstructionHost>(
         10722411 | 10722433 => tripper::set_x_movement(false, j, game),
         10722422 | 10722444 => tripper::set_x_movement(true, j, game),
         10725992 => sidehopper::queue_sound(j, game),
+        11044751 | 11044763 | 11044790 | 11044811 => evir::instruction(ea, j, game),
         10726142 => sidehopper::ready_to_hop(j, game),
         10728489 => zoa::set_x_speed_index(4, j, game),
         10728500 => zoa::set_x_speed_index(8, j, game),

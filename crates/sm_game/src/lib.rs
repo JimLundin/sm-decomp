@@ -137,6 +137,7 @@ pub mod actors {
     pub mod elevator;
     pub mod escape_critters;
     pub mod etecoon;
+    pub mod evir;
     #[doc(hidden)] // Shared verification world for compat and detached checks.
     pub mod fire_arc;
     pub mod fireflea;

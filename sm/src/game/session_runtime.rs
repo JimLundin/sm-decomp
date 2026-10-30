@@ -1189,11 +1189,6 @@ crate::game::callback_dispatch! {
 
 
 
-        11044832 => crate::game::actors::evir::initialize;
-        11045040 => crate::game::actors::evir::initialize_projectile;
-        11045147 => crate::game::actors::evir::advance;
-        11045278 => crate::game::actors::evir::advance_projectile;
-        11045638 | 11045644 | 11045650 => [crate::game::actors::evir::damage(ea, game)];
         11051537 => [{
             if !crate::game::actors::yapping_maw::main_ai(game, |operand, game| {
                 crate::rtl::WriteReg(crate::rtl::WRMPYA as u16, operand, game);
@@ -1474,7 +1469,6 @@ crate::game::callback_dispatch! {
         }];
 
         10651845 => [j];
-        11044751 | 11044763 | 11044790 | 11044811 => [crate::game::actors::evir::instruction(ea, j, game)];
         10716899 => crate::game::waver::Waver_Instr_1;
         10734646 => [maridia_snail::instruction(k, 0, j, game)];
         10734655 => [maridia_snail::instruction(k, 1, j, game)];
