@@ -49,6 +49,17 @@ pub trait MenuRuntime:
     fn enqueue_mode7_rom(&mut self, bank: u8, cursor: u16);
     /// Retire the player projectile in `slot`.
     fn retire_projectile(&mut self, slot: u16);
+    /// Write a DMA channel register on the owned backend.
+    fn write_dma_register(&mut self, register: u16, value: u8);
+    /// Advance the music queue, as the HDMA update did first each frame.
+    fn handle_music_queue(&mut self);
+    /// Compose this frame's layer blending through the session view.
+    fn update_layer_blending(&mut self);
+    /// Run HDMA pre-instruction or call `address` for object `slot`.
+    fn hdma_pre_action(&mut self, address: u32, slot: u16);
+    fn hdma_call(&mut self, address: u32, slot: u16);
+    /// Run an HDMA effect through the session view.
+    fn hdma_effect(&mut self, effect: crate::hdma_objects::HdmaEffect, slot: u16);
     /// Gameplay event and boss flags, as the original's checks return them.
     fn event_happened(&mut self, event: u16) -> u16;
     fn set_event_happened(&mut self, event: u16);

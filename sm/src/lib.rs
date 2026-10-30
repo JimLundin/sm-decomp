@@ -456,12 +456,12 @@ pub mod game {
     pub(crate) mod explosion_window;
     pub(crate) mod gameplay;
     pub(crate) mod grapple_swing;
+    pub(crate) mod hdma_objects;
     pub(crate) mod imported;
     pub(crate) mod intro_objects;
     pub(crate) mod intro_pages;
     pub(crate) mod launch_motion;
     pub(crate) mod launch_motion_ram;
-    pub(crate) mod layer_blending;
     pub(crate) mod liquid_effects;
     pub(crate) mod map_menu;
     pub(crate) mod menu_host;

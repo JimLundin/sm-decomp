@@ -40,7 +40,7 @@ impl sm_game::gameplay_frame::Host for Game {
         }
     }
     fn update_hdma(&mut self) {
-        unsafe { crate::game::visual_runtime::update_hdma(self) }
+        crate::game::visual_runtime::update_hdma(self)
     }
     fn advance_random(&mut self) {
         self.next_random();

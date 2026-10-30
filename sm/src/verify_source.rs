@@ -326,6 +326,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/ram.rs"),
     ),
     (
+        "crates/sm_game/src/hdma_objects.rs",
+        include_bytes!("../../crates/sm_game/src/hdma_objects.rs"),
+    ),
+    (
         "crates/sm_game/src/room_visuals.rs",
         include_bytes!("../../crates/sm_game/src/room_visuals.rs"),
     ),
@@ -1640,10 +1644,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/launch_motion_ram.rs"),
     ),
     (
-        "sm/src/game/layer_blending.rs",
-        include_bytes!("game/layer_blending.rs"),
-    ),
-    (
         "sm/src/game/liquid_effects.rs",
         include_bytes!("game/liquid_effects.rs"),
     ),
@@ -2238,6 +2238,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/room_visuals.rs",
         include_bytes!("game/room_visuals.rs"),
+    ),
+    (
+        "sm/src/game/hdma_objects.rs",
+        include_bytes!("game/hdma_objects.rs"),
     ),
     (
         "sm/src/game/visual_runtime.rs",

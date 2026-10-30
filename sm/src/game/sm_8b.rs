@@ -698,7 +698,7 @@ crate::game::callback_dispatch! {
         word! {game; cinematic_var8 = -44i32 as u16; cinematic_var10 = -112i32 as u16;
             cinematic_var5 = 0; cinematic_var6 = 256; }
         set_hdma_enabled(false, game);
-        unsafe { clear_hdma(game) };
+        clear_hdma(game);
         palette_effects::clear(game);
         palette_effects::set_enabled(true, game);
         clear_cinematic_background(0x2f, game);
@@ -797,7 +797,7 @@ crate::game::callback_dispatch! {
                     hud_item_index, samus_auto_cancel_hud_item_index, samus_invincibility_timer,
                     samus_knockback_timer,
                 }
-                unsafe { clear_hdma(game) };
+                clear_hdma(game);
                 crate::game::scanline_irq::disable(game);
                 word!(game.fx_layer_blending_config_a = 0);
                 game.ram().write_byte(0x6e, 0);
@@ -829,7 +829,7 @@ crate::game::callback_dispatch! {
         word! { game, 0; cinematic_var8, cinematic_var10, cinematic_var5 }
         word!(game.cinematic_var6 = 256);
         set_hdma_enabled(false, game);
-        unsafe { clear_hdma(game) };
+        clear_hdma(game);
         palette_effects::clear(game);
         palette_effects::set_enabled(true, game);
         game.ram().write_byte(0x57, -127i32 as u8);

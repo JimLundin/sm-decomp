@@ -51,7 +51,7 @@ impl MenuRuntime for Game {
         visual_runtime::set_hdma_enabled(enabled, self)
     }
     fn clear_hdma(&mut self) {
-        unsafe { visual_runtime::clear_hdma(self) }
+        visual_runtime::clear_hdma(self)
     }
     fn queue_native_transfer(
         &mut self,
@@ -195,6 +195,34 @@ impl MenuRuntime for Game {
     }
     fn spawn_room_enemy_projectile(&mut self, definition: u16, parameter: u16) -> u16 {
         crate::game::enemy_projectiles::SpawnEprojWithRoomGfx(definition, parameter, self)
+    }
+    fn write_dma_register(&mut self, register: u16, value: u8) {
+        crate::rtl::write_dma_register(register, value, self)
+    }
+    fn update_layer_blending(&mut self) {
+        sm_game::layer_blending::update(self)
+    }
+    fn handle_music_queue(&mut self) {
+        // SAFETY: HDMA updates run from the frame loop with the backend installed.
+        unsafe { crate::game::music::HandleMusicQueue(self) }
+    }
+    fn hdma_pre_action(&mut self, address: u32, slot: u16) {
+        // SAFETY: as above; the pre-instructions reach the installed backend.
+        unsafe { visual_runtime::run_hdma_pre_action(address, slot, self) }
+    }
+    fn hdma_call(&mut self, address: u32, slot: u16) {
+        // SAFETY: as above.
+        unsafe { visual_runtime::run_hdma_call(address, slot, self) }
+    }
+    fn hdma_effect(&mut self, effect: sm_game::hdma_objects::HdmaEffect, slot: u16) {
+        use sm_game::hdma_objects::HdmaEffect::*;
+        let mut runtime = Runtime::new(self);
+        match effect {
+            AdvanceProgram => runtime.advance_hdma_program(),
+            InitializePhantoonWave => runtime.initialize_phantoon_wave(slot),
+            InitializeEyeBeam => runtime.initialize_eye_beam(slot),
+            ResetWave => runtime.reset_hdma_wave(slot),
+        }
     }
     fn retire_projectile(&mut self, slot: u16) {
         crate::game::player_projectiles::retire(slot, self)

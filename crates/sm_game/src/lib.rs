@@ -34,6 +34,7 @@ pub mod external_inputs;
 pub mod gameplay_flag_state;
 pub mod gameplay_tables;
 pub mod geometry;
+pub mod hdma_objects;
 pub mod hdma;
 pub mod hud;
 pub mod imported;
