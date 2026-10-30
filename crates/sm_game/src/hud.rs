@@ -8,6 +8,7 @@ use crate::ram::RawRam as _;
 /// native cartridge.
 pub trait HudHost:
     crate::ram::RamHost
+    + crate::player_position::PlayerFacts
     + crate::display::sequence::Registers
     + crate::effects::SoundEffects
     + crate::cartridge::NativeDiagnostics
@@ -15,6 +16,7 @@ pub trait HudHost:
 }
 impl<T> HudHost for T where
     T: crate::ram::RamHost
+        + crate::player_position::PlayerFacts
         + crate::display::sequence::Registers
         + crate::effects::SoundEffects
         + crate::cartridge::NativeDiagnostics
@@ -289,8 +291,8 @@ pub fn advance<H: HudHost + ?Sized>(game: &mut H) {
                 game,
             );
             word!(game.samus_prev_hud_item_index = word!(game.hud_item_index));
-            if game.ram().read_byte(0xa1f) != SPIN_JUMPING
-                && game.ram().read_byte(0xa1f) != WALL_JUMPING
+            if game.movement_type() != SPIN_JUMPING
+                && game.movement_type() != WALL_JUMPING
                 && word!(game.grapple_beam_function) == GRAPPLE_INACTIVE
                 && word!(game.time_is_frozen_flag) == 0
             {

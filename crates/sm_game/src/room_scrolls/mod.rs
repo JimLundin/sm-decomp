@@ -9,7 +9,10 @@ use crate::display::transfer::ScrollingLayout as ScrollingDmaLayout;
 
 /// What room scrolling needs from the runtime besides named and raw work RAM.
 pub trait Host:
-    crate::ram::CompatibilityRam + crate::ram::WorkRamAccess + crate::player_position::PlayerPosition
+    crate::ram::CompatibilityRam
+    + crate::ram::WorkRamAccess
+    + crate::player_position::PlayerPosition
+    + crate::player_position::PlayerFacts
 {
     /// The original's unreachable-state failure.
     fn unreachable(&mut self) -> bool;
@@ -210,9 +213,9 @@ fn follow_x<H: Host + ?Sized>(game: &mut H) {
         return;
     }
     let distances = if (word!(game.knockback_dir) != 0
-        || game.ram().read_byte(0xa1f) == 16
+        || game.movement_type() == 16
         || word!(game.samus_x_accel_mode) == 1) as i32
-        ^ (game.ram().read_byte(0xa1e) != 4) as i32
+        ^ (game.facing() != 4) as i32
         != 0
     {
         &kSamus_HandleScroll_X_FaceRight

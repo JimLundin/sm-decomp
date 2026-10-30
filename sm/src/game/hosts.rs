@@ -193,3 +193,19 @@ impl sm_game::player_position::PlayerPosition for crate::game::session_runtime::
         self.write_word_le(fraction, 0xb16)
     }
 }
+
+/// The raw work-RAM byte reads these facts replaced, unchanged.
+impl sm_game::player_position::PlayerFacts for Game {
+    fn facing(&self) -> u8 {
+        self.ram().read_byte(0xa1e)
+    }
+    fn movement_type(&self) -> u8 {
+        self.ram().read_byte(0xa1f)
+    }
+    fn grapple_angle(&self) -> u8 {
+        self.ram().read_byte(0xcfb)
+    }
+    fn grapple_mirrored_angle(&self) -> u8 {
+        self.ram().read_byte(0xcfd)
+    }
+}

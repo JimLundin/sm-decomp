@@ -36,18 +36,12 @@ pub fn begin_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
         const FRAMES: [u8; 28] = [
             5, 5, 5, 5, 1, 5, 5, 0, 1, 0, 5, 5, 5, 5, 5, 5, 5, 1, 1, 1, 5, 5, 5, 5, 5, 5, 5, 5,
         ];
-        let movement = game.ram().read_byte(0xa1f);
-        if game.ram().read_byte(0xa1f) == 3 {
+        let movement = game.movement_type();
+        if game.movement_type() == 3 {
             game.queue_sound(0, 0x32, 6);
         }
         let frame = u16::from(FRAMES[usize::from(movement)]);
-        word!(
-            game.samus_pose = if game.ram().read_byte(0xa1e) == 4 {
-                0xd8
-            } else {
-                0xd7
-            }
-        );
+        word!(game.samus_pose = if game.facing() == 4 { 0xd8 } else { 0xd7 });
         game.finish_pose_change();
         word! { game; samus_anim_frame_skip = 0; samus_anim_frame = frame; }
         let x = game.player_x();
@@ -180,7 +174,7 @@ fn advance_suit_explosion<H: Host + ?Sized>(game: &mut H) -> bool {
             death_palette(Some(2u16.wrapping_mul(u16::from(frame))), game);
         }
     }
-    let sprite = (if game.ram().read_byte(0xa1e) == 4 {
+    let sprite = (if game.facing() == 4 {
         word!(game.g_word_7E0DE4) as i32 + 2085
     } else {
         word!(game.g_word_7E0DE4) as i32 + 2076

@@ -191,14 +191,14 @@ fn dispatch_connection<H: Host + ?Sized>(ea: u32, game: &mut H) {
     begin_connection(pose, transition_graphics, game);
 }
 pub fn connect_beam<H: Host + ?Sized>(game: &mut H) {
-    if game.ram().read_byte(0xa1f) as i32 == kMovementType_1A_GrabbedByDraygon as i32 {
+    if game.movement_type() as i32 == kMovementType_1A_GrabbedByDraygon as i32 {
         word!(game.grapple_beam_function = (0x9bc77ei32) as u16);
         word!(game.grapple_beam_length_delta = 0);
     } else {
         let v1: i32 = 2 * word!(game.grapple_beam_direction) as i32;
         let set = if word!(game.samus_y_speed) != 0 || word!(game.samus_y_subspeed) != 0 {
             ConnectionSet::Airborne
-        } else if game.ram().read_byte(0xa1f) == 5 {
+        } else if game.movement_type() == 5 {
             ConnectionSet::Crouching
         } else {
             ConnectionSet::Standard
@@ -270,7 +270,7 @@ fn begin_connection<H: Host + ?Sized>(pose: u16, transition_graphics: u16, game:
 }
 
 pub fn place_rope_origin<H: Host + ?Sized>(game: &mut H) {
-    let angle = 2 * game.ram().read_byte(0xcfb) as u16;
+    let angle = 2 * game.grapple_angle() as u16;
     let length = word!(game.grapple_beam_length);
     place_sample(angle, length, game);
     word!(game.x_pos_of_start_of_grapple_beam = word!(game.grapple_beam_grapple_start_x));
@@ -290,7 +290,7 @@ pub fn change_length<H: Host + ?Sized>(game: &mut H) -> u8 {
         word!(game.grapple_beam_length_delta = 0);
         end = 63;
     }
-    let angle = 2 * game.ram().read_byte(0xcfb) as u16;
+    let angle = 2 * game.grapple_angle() as u16;
     let mut length = word!(game.grapple_beam_length);
     while length != end {
         let sample_length = length.wrapping_add(if shortening { 7 } else { 57 });
@@ -320,7 +320,7 @@ pub fn apply_input<H: Host + ?Sized>(game: &mut H) {
             word!(game.grapple_beam_length = 64);
         }
     }
-    let angle = u16::from(game.ram().read_byte(0xcfb)) << 8;
+    let angle = u16::from(game.grapple_angle()) << 8;
     if (0x4000..0xc000).contains(&angle) {
         let direction = if word!(game.joypad1_lastkeys) & 0x200 != 0 {
             1i16
@@ -430,7 +430,7 @@ pub fn advance_swing<H: Host + ?Sized>(game: &mut H) -> u8 {
         distance
     };
     let target = 2 * (word!(game.grapple_beam_end_angle16).wrapping_add(delta) >> 8);
-    let mut angle = 2 * game.ram().read_byte(0xcfb) as u16;
+    let mut angle = 2 * game.grapple_angle() as u16;
     while angle != target {
         let next = (if backwards {
             angle.wrapping_sub(2)
@@ -480,7 +480,7 @@ pub fn launch_from_swing<H: Host + ?Sized>(game: &mut H) {
     } else {
         2u16.wrapping_mul(word!(game.grapple_beam_unkD26))
     };
-    let sample = kSinCosTable8bit_Sext[usize::from(game.ram().read_byte(0xcfb)) + 64];
+    let sample = kSinCosTable8bit_Sext[usize::from(game.grapple_angle()) + 64];
     let vertical = game.multiply_with_scratch(sample.unsigned_abs(), magnitude);
     word_transfers!(game, ascending, 1;
         native(ram_words::samus_y_subspeed) <- value(vertical as u16),
@@ -489,8 +489,7 @@ pub fn launch_from_swing<H: Host + ?Sized>(game: &mut H) {
     word!(game.samus_x_accel_mode = 2);
     let adjustment = 64u16.wrapping_sub((3 * (i32::from(magnitude) >> 9)) as u16);
     let sample = abs16(
-        kSinCosTable8bit_Sext
-            [usize::from(game.ram().read_byte(0xcfb).wrapping_sub(adjustment as u8)) + 64]
+        kSinCosTable8bit_Sext[usize::from(game.grapple_angle().wrapping_sub(adjustment as u8)) + 64]
             as u16,
     );
     let horizontal = game.multiply_with_scratch(sample, magnitude);
@@ -589,19 +588,23 @@ pub fn position_swing<H: Host + ?Sized>(game: &mut H) {
         true
     } else {
         word!(game.slow_grabble_scrolling_flag = 0);
-        (((game.ram().read_byte(0xcfb) as i32) << 8) != 0x8000)
+        (((game.grapple_angle() as i32) << 8) != 0x8000)
             || ({
                 if word!(game.samus_anim_frame) as i32 - 64i32 & 0x8000 != 0 {
                     word! {game; samus_anim_frame_timer = 8; samus_anim_frame = 64; }
                 }
-                v1 = native_grapple_byte!(game, 0x9bc1c2, usize::from(game.ram().read_byte(0xcfd)))
-                    as u16;
+                v1 = native_grapple_byte!(
+                    game,
+                    0x9bc1c2,
+                    usize::from(game.grapple_mirrored_angle())
+                ) as u16;
                 false
             })
     };
     if start_grapple_animation {
         word!(game.samus_anim_frame_timer = 15);
-        v1 = native_grapple_byte!(game, 0x9bc1c2, usize::from(game.ram().read_byte(0xcfd))) as u16;
+        v1 =
+            native_grapple_byte!(game, 0x9bc1c2, usize::from(game.grapple_mirrored_angle())) as u16;
         word!(game.samus_anim_frame = v1);
     }
     let v2: u16 = (2u16).wrapping_mul(v1);
@@ -612,7 +615,7 @@ pub fn position_swing<H: Host + ?Sized>(game: &mut H) {
         }
         word!(game.samus_anim_frame = (v3).wrapping_add(32));
     }
-    if game.ram().read_byte(0xa1e) == 4 {
+    if game.facing() == 4 {
         place_samus_relative_to_grapple_origin!(game, 0x9bc2c2, v2);
     } else {
         place_samus_relative_to_grapple_origin!(game, 0x9bc302, v2);
@@ -652,7 +655,7 @@ pub fn restore_start_positions<H: Host + ?Sized>(game: &mut H) {
     let v0: u16 = (2u16).wrapping_mul(word!(game.grapple_beam_direction));
     if word!(game.samus_pose) as i32 == kPose_49_FaceL_Moonwalk as i32
         || word!(game.samus_pose) as i32 == kPose_4A_FaceR_Moonwalk as i32
-        || game.ram().read_byte(0xa1f) != 1
+        || game.movement_type() != 1
     {
         restore_grapple_start_positions!(v0, game, Standard, r22);
     } else {
@@ -664,7 +667,7 @@ static kIsGrappleBannedForMovementType: [u8; 28] = [
     0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1,
 ];
 pub fn cancel_incompatible_pose<H: Host + ?Sized>(game: &mut H) {
-    if kIsGrappleBannedForMovementType[game.ram().read_byte(0xa1f) as usize] == 0 {
+    if kIsGrappleBannedForMovementType[game.movement_type() as usize] == 0 {
         if word!(game.grapple_beam_function) as i32 != 0x9bc4f0 & 0xffff
             && word!(game.grapple_beam_function) as i32 + 0x3882 & 0x8000 != 0
         {
@@ -716,7 +719,7 @@ pub fn start_firing<H: Host + ?Sized>(game: &mut H) {
     }
     if word!(game.samus_pose) as i32 == kPose_49_FaceL_Moonwalk as i32
         || word!(game.samus_pose) as i32 == kPose_4A_FaceR_Moonwalk as i32
-        || game.ram().read_byte(0xa1f) != 1
+        || game.movement_type() != 1
     {
         initialize_grapple_endpoints!(game, Standard, v1, r22);
     } else {
@@ -753,7 +756,7 @@ pub fn start_firing<H: Host + ?Sized>(game: &mut H) {
 
 pub fn cancel<H: Host + ?Sized>(game: &mut H) {
     game.queue_sound(0, (7) as u8, 15);
-    if game.ram().read_byte(0xa1f) == kMovementType_16_Grappling as u8 {
+    if game.movement_type() == kMovementType_16_Grappling as u8 {
         pt::request_fallback_pose(&mut game.runtime());
     } else {
         game.player_command(0x1c);
@@ -770,7 +773,7 @@ pub fn release_stationary<H: Host + ?Sized>(game: &mut H) {
     } else {
         let crouching = (i32::from(word!(game.samus_y_radius)) - 17) & 0x8000 != 0;
         if native_pose_parameter!(game, 3) & 0xf0 != 0 {
-            match (crouching, game.ram().read_byte(0xa1e) == 4) {
+            match (crouching, game.facing() == 4) {
                 (true, true) => kPose_28_FaceL_Crouch as u16,
                 (true, false) => kPose_27_FaceR_Crouch as u16,
                 (false, true) => kPose_02_FaceL_Normal as u16,
@@ -795,7 +798,7 @@ pub fn release_stationary<H: Host + ?Sized>(game: &mut H) {
 
 pub fn release_walljump<H: Host + ?Sized>(game: &mut H) {
     game.queue_sound(0, (7) as u8, 15);
-    if game.ram().read_byte(0xa1e) == 8 {
+    if game.facing() == 8 {
         word!(game.samus_new_pose_transitional = kPose_84_FaceL_Walljump as u16);
     } else {
         word!(game.samus_new_pose_transitional = kPose_83_FaceR_Walljump as u16);
@@ -880,7 +883,7 @@ pub fn update_tiles<H: Host + ?Sized>(game: &mut H) {
         0x9a,
         &|_: &H| 0x6200,
     );
-    let index = (game.ram().read_byte(0xcfb) >> 1 & 0xfe) >> 1;
+    let index = (game.grapple_angle() >> 1 & 0xfe) >> 1;
     game.queue_native_transfer(
         cursor,
         128,

@@ -12,6 +12,7 @@ use sm_data::cartridge::RomRecord;
 /// failure reports.
 pub trait Host:
     crate::display_refresh::Host
+    + crate::player_position::PlayerFacts
     + crate::effects::SoundEffects
     + crate::cartridge::NativeDiagnostics
     + RuntimeAccess
@@ -363,7 +364,7 @@ pub fn upload_right<H: Host + ?Sized>(game: &mut H) {
         hdma_var_1, demo_input_pre_instr, demo_input_instr_timer, demo_input_instr_ptr, demo_input,
         demo_input_new,
     }
-    if game.ram().read_byte(0xa1e) == 4 {
+    if game.facing() == 4 {
         word!(game.xray_angle = 192);
     } else {
         word!(game.xray_angle = 64);
