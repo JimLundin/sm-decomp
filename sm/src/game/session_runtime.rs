@@ -1129,7 +1129,6 @@ impl Runtime<'_> {
 
 use crate::game::actors::{self, api as actor_api};
 use crate::game::moving_platforms::{self as mechanisms, Event, Kind};
-use crate::game::rippers::{self, Kind as RipperKind};
 use crate::game::sm_a9;
 use crate::types::EnemyData;
 use sm_game::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
@@ -1214,13 +1213,6 @@ crate::game::callback_dispatch! {
                 crate::rtl::Unreachable(game);
             }
         }];
-        10674643 => [rippers::initialize(RipperKind::Gripper, game)];
-        10674721 => [rippers::advance(RipperKind::Gripper, game)];
-        10674968 => [rippers::initialize(RipperKind::JetPowered, game)];
-        10675027 => [rippers::advance(RipperKind::JetPowered, game)];
-        10675113 => [rippers::jet_shot(game)];
-        10675359 => [rippers::initialize(RipperKind::Ripper, game)];
-        10675418 => [rippers::advance(RipperKind::Ripper, game)];
         10657715 => [{
             let phase = {
                 let runtime = Runtime::new(game);

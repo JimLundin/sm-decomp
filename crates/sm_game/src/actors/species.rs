@@ -14,9 +14,9 @@ use crate::actors::{
     draygon_death, draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep,
     elevator, escape_critters, etecoon, evir, fire_arc, fireflea, fune, gamet, geega, kago,
     kihunter, kraid, magdollite, metroid, mini_kraid, mochtroid, morph_ball_eye, multiviola, oum,
-    phantoon, phantoon_actions, polyp, powamp, puyo, reflec, ridley, rinka, roach, shaktool,
-    sidehopper, skree, skultera, space_pirates, statues, tatori, torizo, tripper, work_robot,
-    wrecked_ship_spark, yapping_maw, yard, zeb, zebetites, zoa,
+    phantoon, phantoon_actions, polyp, powamp, puyo, reflec, ridley, rinka, rippers, roach,
+    shaktool, sidehopper, skree, skultera, space_pirates, statues, tatori, torizo, tripper,
+    work_robot, wrecked_ship_spark, yapping_maw, yard, zeb, zebetites, zoa,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -662,6 +662,13 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10662927 => multiviola::main_ai(game),
         10663280 => polyp::initialize(game),
         10663311 => polyp::main_ai(game),
+        10674643 => rippers::initialize(rippers::Kind::Gripper, game),
+        10674721 => rippers::main_ai(rippers::Kind::Gripper, game),
+        10674968 => rippers::initialize(rippers::Kind::RipperII, game),
+        10675027 => rippers::main_ai(rippers::Kind::RipperII, game),
+        10675113 => rippers::shot(game),
+        10675359 => rippers::initialize(rippers::Kind::Ripper, game),
+        10675418 => rippers::main_ai(rippers::Kind::Ripper, game),
         _ => game.native_ai(ea),
     }
 }
