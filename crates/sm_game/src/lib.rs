@@ -119,6 +119,7 @@ pub mod animated_tiles {
     pub mod execution;
 }
 pub mod checkpoint_binding;
+pub mod cinematic;
 pub mod enemy_script;
 pub mod gameplay_flag_host;
 pub mod palette_effects {
