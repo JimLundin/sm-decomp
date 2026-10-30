@@ -1,12 +1,15 @@
 //! Enemy species dispatch tables keyed by the routine addresses the original
-//! enemy definitions name: graphics draw hooks, bank $B3 pre-instructions and
-//! pipe bug state routines.
+//! enemy definitions name: contact and shot reactions, graphics draw hooks,
+//! bank $B3 pre-instructions and pipe bug state routines.
 //!
 //! Each table is one `match` from address to routine. Moving another routine
 //! here means adding its arm; the compat dispatcher still owns the rest.
 #![forbid(unsafe_code)]
-use crate::actors::host::{ActorHost, ActorRuntime, LeaseActors};
-use crate::actors::{botwoon, draygon_flight, draygon_host, escape_critters, magdollite};
+use crate::actors::host::{ActorHost, ActorRuntime, Death, LeaseActors, Shot};
+use crate::actors::{
+    botwoon, crocomire_reactions, draygon_death, draygon_flight, draygon_host, escape_critters,
+    magdollite,
+};
 use crate::ram::word;
 
 /// The failure every table shares.
@@ -30,6 +33,117 @@ impl<T> B3Host for T where
         + escape_critters::Host
         + ?Sized
 {
+}
+
+/// Contact reactions whose routines still run in the compatibility crate.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum NativeTouch {
+    LargeSnail { damage: bool },
+    SporeSpawn,
+    CeresSteam,
+    KraidArmAndFoot,
+    KraidArm,
+    Phantoon,
+    MotherBrainBrain,
+    GoldenTorizo,
+    SpacePirate,
+}
+
+/// What the contact reactions need beyond their actors' own hosts.
+pub trait TouchHost:
+    SpeciesHost + ActorRuntime + crocomire_reactions::Host + draygon_host::Host
+{
+    fn native_touch(&mut self, touch: NativeTouch);
+}
+
+/// An enemy species' contact reaction, keyed by its address.
+pub fn touch<H: TouchHost + ?Sized>(ea: u32, game: &mut H) {
+    match ea {
+        10518563 => game.contact_reaction(Death::Finalize),
+        10670984 => game.native_touch(NativeTouch::LargeSnail { damage: true }),
+        10670988 => game.native_touch(NativeTouch::LargeSnail { damage: false }),
+        10780707 => game.contact_reaction(Death::Finalize),
+        10795325 => crocomire_reactions::touch(game),
+        10795344 => (),
+        10846284 => (),
+        10851818 => draygon_death::touch(game),
+        10874348 => game.native_touch(NativeTouch::SporeSpawn),
+        // Ridley's contact leaves the death pending.
+        10936153 => game.contact_reaction(Death::LeavePending),
+        10940479 => game.native_touch(NativeTouch::CeresSteam),
+        10977356 => (),
+        10982539 => game.native_touch(NativeTouch::KraidArmAndFoot),
+        10982544 => game.native_touch(NativeTouch::KraidArm),
+        11001237 => game.native_touch(NativeTouch::Phantoon),
+        11122117 => (),
+        11122118 => game.native_touch(NativeTouch::MotherBrainBrain),
+        11192695 => game.native_touch(NativeTouch::GoldenTorizo),
+        11700076 => game.native_touch(NativeTouch::SpacePirate),
+        _ => game.unknown_routine(),
+    }
+}
+
+/// Shot reactions whose routines still run in the compatibility crate.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum NativeShot {
+    Dud,
+    LargeSnail,
+    SporeSpawn,
+    Ridley,
+    /// Kraid's arm, with the projectile that hit it.
+    KraidArm {
+        projectile: u16,
+    },
+    Phantoon,
+    MotherBrainBody,
+    MotherBrainBrain,
+    Torizo,
+    /// The Torizo shot reaction that only runs outside Crateria.
+    TorizoOutsideCrateria,
+    SpacePirate,
+    SpacePirateCheck,
+    SpacePirateReflect,
+}
+
+/// What the shot reactions need beyond their actors' own hosts.
+pub trait ShotHost:
+    SpeciesHost + ActorRuntime + crocomire_reactions::Host + draygon_host::Host
+{
+    fn native_shot(&mut self, shot: NativeShot);
+}
+
+/// An enemy species' shot reaction, keyed by its address; `j` is the projectile.
+pub fn shot<H: ShotHost + ?Sized>(ea: u32, j: u16, game: &mut H) {
+    match ea {
+        10518573 => game.shot_reaction(Shot::Finalize),
+        10846278 => game.native_shot(NativeShot::Dud),
+        10649676 => (),
+        10671028 => game.native_shot(NativeShot::LargeSnail),
+        10780717 => game.shot_reaction(Shot::Finalize),
+        10795345 => crocomire_reactions::count_hit(game),
+        10795368 => crocomire_reactions::impact(game),
+        10795525 => crocomire_reactions::hit(game),
+        10795700 => crocomire_reactions::impact(game),
+        10846253 => game.shot_reaction(Shot::Finalize),
+        10846284 => (),
+        10851824 => draygon_death::shot(game),
+        10874202 => game.native_shot(NativeShot::SporeSpawn),
+        10911820 => (),
+        10936202 => game.native_shot(NativeShot::Ridley),
+        10977356 => (),
+        10982581 => (),
+        10982582 => game.native_shot(NativeShot::KraidArm { projectile: j }),
+        11001243 => game.native_shot(NativeShot::Phantoon),
+        11121923 => game.native_shot(NativeShot::MotherBrainBody),
+        11121927 => game.native_shot(NativeShot::MotherBrainBrain),
+        11192700 => game.native_shot(NativeShot::Torizo),
+        11192769 => (),
+        11192770 => game.native_shot(NativeShot::TorizoOutsideCrateria),
+        11700089 => game.native_shot(NativeShot::SpacePirate),
+        11700168 => game.native_shot(NativeShot::SpacePirateCheck),
+        11700286 => game.native_shot(NativeShot::SpacePirateReflect),
+        _ => game.unknown_routine(),
+    }
 }
 
 /// Graphics draw hooks whose routines still run in the compatibility crate.

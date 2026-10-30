@@ -105,6 +105,44 @@ impl sm_game::actors::species::SpeciesHost for Game {
     }
 }
 
+impl sm_game::actors::species::TouchHost for Game {
+    fn native_touch(&mut self, touch: sm_game::actors::species::NativeTouch) {
+        use sm_game::actors::species::NativeTouch::*;
+        match touch {
+            LargeSnail { damage } => crate::game::large_snail::touch(damage, self),
+            SporeSpawn => actors::spore_spawn::touch(self),
+            CeresSteam => crate::game::ceres_doors::steam_touch(self),
+            KraidArmAndFoot => sm_a7::Kraid_Touch_ArmFoot(self),
+            KraidArm => sm_a7::KraidsArm_Touch(self),
+            Phantoon => sm_a7::Phantoon_Touch(self),
+            MotherBrainBrain => sm_a9::MotherBrainsBrain_Touch(self),
+            GoldenTorizo => sm_aa::GoldTorizo_Touch(self),
+            SpacePirate => space_pirates::touch(self),
+        }
+    }
+}
+
+impl sm_game::actors::species::ShotHost for Game {
+    fn native_shot(&mut self, shot: sm_game::actors::species::NativeShot) {
+        use sm_game::actors::species::NativeShot::*;
+        match shot {
+            Dud => actor_api::create_dud(&mut Runtime::new(self)),
+            LargeSnail => crate::game::large_snail::shot(self),
+            SporeSpawn => actors::spore_spawn::shot(self),
+            Ridley => sm_a6::Ridley_Shot(self),
+            KraidArm { projectile } => sm_a7::Kraid_Arm_Shot(projectile, self),
+            Phantoon => sm_a7::Phantoon_Shot(self),
+            MotherBrainBody => sm_a9::MotherBrainsBody_Shot(self),
+            MotherBrainBrain => sm_a9::MotherBrainsBrain_Shot(self),
+            Torizo => sm_aa::Torizo_Shot(self),
+            TorizoOutsideCrateria => sm_aa::Torizo_Func_8(self),
+            SpacePirate => space_pirates::shot(self),
+            SpacePirateCheck => space_pirates::check_shot(self),
+            SpacePirateReflect => space_pirates::reflect(self),
+        }
+    }
+}
+
 impl sm_game::actors::species::DrawHookHost for Game {
     fn native_draw_hook(&mut self, hook: sm_game::actors::species::NativeDrawHook) {
         use sm_game::actors::species::NativeDrawHook::*;
@@ -1473,42 +1511,6 @@ crate::game::address_dispatch! {
         0xb30000..=0xb3ffff => [sm_game::actors::species::b3_pre_instruction(ea, k, game)];
     }
 }
-crate::game::address_dispatch! {
-    unsafe fn actor_species_touch(ea: u32, game: &mut Game) => ea;
-        call (game); default { crate::rtl::Unreachable(game); };
-    {
-        10518563 => [actor_api::contact_reaction(&mut Runtime::new(game), actor_api::DeathHandling::Finalize)]; 10670984 => [crate::game::large_snail::touch(true, game)];
-        10670988 => [crate::game::large_snail::touch(false, game)]; 10780707 => [actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize)];
-        10795325 => actors::crocomire_reactions::touch; 10795344 => [()]; 10846284 => [()];
-        10851818 => actors::draygon_death::touch; 10874348 => actors::spore_spawn::touch;
-        10936153 => sm_a6::sub_A6DF59; 10940479 => crate::game::ceres_doors::steam_touch; 10977356 => [()];
-        10982539 => sm_a7::Kraid_Touch_ArmFoot; 10982544 => sm_a7::KraidsArm_Touch;
-        11001237 => sm_a7::Phantoon_Touch; 11122117 => [()];
-        11122118 => sm_a9::MotherBrainsBrain_Touch; 11192695 => sm_aa::GoldTorizo_Touch;
-        11700076 => space_pirates::touch;
-    }
-}
-crate::game::callback_dispatch! {
-    unsafe fn actor_species_shot(ea: u32, j: u16, game: &mut Game) => ea;
-    call (game); default { crate::rtl::Unreachable(game); };
-    @external {
-        10518573 => [actor_api::shot_reaction(&mut Runtime::new(game), actor_api::ShotHandling::Finalize)];
-        10846278 => [actor_api::create_dud(&mut Runtime::new(game))];
-        10649676 => [()];
-        10671028 => crate::game::large_snail::shot; 10780717 => [actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize)];
-        10795345 => actors::crocomire_reactions::count_hit; 10795368 => actors::crocomire_reactions::impact;
-        10795525 => actors::crocomire_reactions::hit; 10795700 => actors::crocomire_reactions::impact;
-        10846253 => [actors::combat::shot_reaction(&mut Runtime::new(game), actor_api::ShotHandling::Finalize)]; 10846284 => [()];
-        10851824 => actors::draygon_death::shot; 10874202 => actors::spore_spawn::shot; 10911820 => [()];
-        10936202 => sm_a6::Ridley_Shot; 10977356 => [()]; 10982581 => [()];
-        10982582 => [sm_a7::Kraid_Arm_Shot(j, game)]; 11001243 => sm_a7::Phantoon_Shot;
-        11121923 => sm_a9::MotherBrainsBody_Shot; 11121927 => sm_a9::MotherBrainsBrain_Shot;
-        11192700 => sm_aa::Torizo_Shot; 11192769 => [()]; 11192770 => sm_aa::Torizo_Func_8;
-        11700089 => space_pirates::shot; 11700168 => space_pirates::check_shot;
-        11700286 => space_pirates::reflect;
-    }
-}
-
 crate::game::callback_dispatch! {
     unsafe fn actor_species_instruction(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
@@ -1641,10 +1643,10 @@ impl Runtime<'_> {
         self.foreign(|game| unsafe { actor_species_instruction(routine, actor, script, game) })
     }
     pub(crate) fn actor_touch_legacy(&mut self, routine: u32) {
-        self.foreign(|game| unsafe { actor_species_touch(routine, game) });
+        self.foreign(|game| sm_game::actors::species::touch(routine, game));
     }
     pub(crate) fn actor_shot_legacy(&mut self, routine: u32, argument: u16) {
-        self.foreign(|game| unsafe { actor_species_shot(routine, argument, game) });
+        self.foreign(|game| sm_game::actors::species::shot(routine, argument, game));
     }
     pub(crate) fn actor_hook_legacy(&mut self, routine: u32) {
         self.foreign(|game| sm_game::actors::species::draw_hook(routine, game));
