@@ -469,7 +469,6 @@ pub mod game {
     pub mod message_boxes;
     pub mod message_composition;
     pub(crate) mod mode7_transfers;
-    pub(crate) use sm_game::mother_brain_tables;
     pub(crate) mod moving_platforms;
     pub(crate) mod prelude;
     pub(crate) mod room_visuals;
