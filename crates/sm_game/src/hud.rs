@@ -3,6 +3,24 @@ use crate::display::registers::{MDMAEN, VMADDL, VMAIN};
 use crate::display::transfer::setup_transfer;
 use crate::menus::menu_tilemap::native_record;
 use crate::ram::RawRam as _;
+
+/// What the HUD reads and writes: RAM, registers, sound effects and the
+/// native cartridge.
+pub trait HudHost:
+    crate::ram::RamHost
+    + crate::display::sequence::Registers
+    + crate::effects::SoundEffects
+    + crate::cartridge::NativeDiagnostics
+{
+}
+impl<T> HudHost for T where
+    T: crate::ram::RamHost
+        + crate::display::sequence::Registers
+        + crate::effects::SoundEffects
+        + crate::cartridge::NativeDiagnostics
+        + ?Sized
+{
+}
 use crate::ram::{checked_word as at, word, words as fields};
 
 const WEAPON_DIGITS: u32 = 8429011;
@@ -29,7 +47,7 @@ static INITIAL_TILES: [u16; 96] = [
     0x2c0f, 0x2c0f, 0x2c0f, 0x2c0f, 0x2c0f, 0x2c0f, 0x2c12, 0x2c12, 0xa824, 0x2815, 0x2c16, 0x2c1e,
 ];
 
-fn stamp<H: crate::menus::host::Host + ?Sized>(
+fn stamp<H: HudHost + ?Sized>(
     base: usize,
     columns: usize,
     count: usize,
@@ -42,7 +60,7 @@ fn stamp<H: crate::menus::host::Host + ?Sized>(
 }
 
 /// Native icon reads retain their address-formation contract, even if already installed.
-pub fn install<H: crate::menus::host::Host + ?Sized>(item: Item, game: &mut H) {
+pub fn install<H: HudHost + ?Sized>(item: Item, game: &mut H) {
     let index = item as usize;
     let base = usize::from(ITEM_OFFSETS[index] >> 1);
     let native = (index != 0).then(|| native_record(0x8099a3 + 4 + 8 * index as u32, game));
@@ -63,7 +81,7 @@ pub fn install<H: crate::menus::host::Host + ?Sized>(item: Item, game: &mut H) {
 }
 
 /// Requires initialized display/DMA hardware and the native HUD definitions.
-pub fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn initialize<H: HudHost + ?Sized>(game: &mut H) {
     {
         crate::display::sequence::register_writes! { game;
             word(VMADDL as u16, 0x5800); word(VMAIN as u16, 0x80);
@@ -94,7 +112,7 @@ pub fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     }
 }
 
-fn ammunition<H: crate::menus::host::Host + ?Sized>(initial: bool, game: &mut H) {
+fn ammunition<H: HudHost + ?Sized>(initial: bool, game: &mut H) {
     {
         const ROWS: [(usize, usize, usize, u16); 3] = [
             (
@@ -132,7 +150,7 @@ fn ammunition<H: crate::menus::host::Host + ?Sized>(initial: bool, game: &mut H)
 }
 
 /// Native table capture retains its original diagnostic and allocation contract.
-pub fn advance<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn advance<H: HudHost + ?Sized>(game: &mut H) {
     {
         if word!(game.reserve_health_mode) == 1 {
             let reserve = native_record(0x80998b, game);
@@ -191,7 +209,7 @@ pub fn advance<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     }
 }
 
-fn highlight<H: crate::menus::host::Host + ?Sized>(selection: u16, palette: u16, game: &mut H) {
+fn highlight<H: HudHost + ?Sized>(selection: u16, palette: u16, game: &mut H) {
     word!(game.hud_item_tilemap_palette_bits = palette);
     let item = (selection as i16).wrapping_sub(1);
     if item >= 0 {
@@ -213,7 +231,7 @@ fn highlight<H: crate::menus::host::Host + ?Sized>(selection: u16, palette: u16,
     }
 }
 
-fn number<H: crate::menus::host::Host + ?Sized>(
+fn number<H: HudHost + ?Sized>(
     address: u32,
     mut value: u16,
     mut cursor: u16,
@@ -238,7 +256,7 @@ fn number<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-pub fn menu_reserve_mode<H: crate::menus::host::Host + ?Sized>(automatic: bool, game: &mut H) {
+pub fn menu_reserve_mode<H: HudHost + ?Sized>(automatic: bool, game: &mut H) {
     if automatic {
         // The equipment menu intentionally uses bank82, unlike the ordinary HUD.
         let cursor = if word!(game.samus_reserve_health) == 0 {

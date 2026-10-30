@@ -97,9 +97,6 @@ impl MenuRuntime for Game {
     fn flush_sram(&mut self) {
         unsafe { crate::rtl::RtlWriteSram(self) }
     }
-    fn native_rom_diagnostic(&mut self, address: u32) {
-        crate::game::session_runtime::native_rom_diagnostic(address, self)
-    }
     fn invalid_window(&mut self, address: u32) {
         crate::game::session_runtime::invalid_window(self, address)
     }
@@ -135,5 +132,11 @@ impl Host for Game {
     }
     fn area_select_palettes(&self) -> &Option<sm_game::menus::menu_tilemap::ImportedAreaPalettes> {
         &self.area_select_palettes
+    }
+}
+
+impl sm_game::cartridge::NativeDiagnostics for Game {
+    fn native_rom_diagnostic(&mut self, address: u32) {
+        crate::game::session_runtime::native_rom_diagnostic(address, self)
     }
 }

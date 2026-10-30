@@ -12,6 +12,12 @@ pub trait NativeImage {
     fn native_image(&self) -> RomImage;
 }
 
+/// The native image with the original's invalid-address diagnostic.
+pub trait NativeDiagnostics: NativeImage {
+    /// The original diagnostic for a native read below $8000 in its bank.
+    fn native_rom_diagnostic(&mut self, address: u32);
+}
+
 /// The word at signed word `index` from LoROM `address` in the loaded image,
 /// as the compat `rom_table_word!` reads it.
 #[macro_export]

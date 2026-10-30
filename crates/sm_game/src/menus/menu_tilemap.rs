@@ -173,7 +173,7 @@ fn paint<H: Host + ?Sized>(offset: usize, tile: u16, game: &mut H) {
 }
 
 /// Capture checked native reads after the original low-window diagnostic.
-pub fn native_record<H: Host + ?Sized>(
+pub fn native_record<H: crate::cartridge::NativeDiagnostics + ?Sized>(
     address: u32,
     game: &mut H,
 ) -> sm_data::cartridge::RomRecord {

@@ -40,7 +40,6 @@ pub trait MenuRuntime {
     fn enter_load_station(&mut self);
     fn request_reset(&mut self);
     fn flush_sram(&mut self);
-    fn native_rom_diagnostic(&mut self, address: u32);
     fn invalid_window(&mut self, address: u32);
     /// The original's failed drawing or bounds assertion.
     fn legacy_assertion(&self, drawing: bool) -> !;
@@ -59,6 +58,7 @@ pub trait Host:
     + SoundEffects
     + DisplayRefresh
     + crate::sprite_output::SpriteHost
+    + crate::cartridge::NativeDiagnostics
     + MenuRuntime
 {
     type Sram: SaveRam + ?Sized;
