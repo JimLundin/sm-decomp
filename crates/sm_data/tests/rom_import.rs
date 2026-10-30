@@ -478,6 +478,34 @@ fn records_import_from_the_original_rom() {
             2 * menu_lists::BEAM_FRAMES
         ))
     );
+    check!(
+        "gameplay_tables::SKY_SCROLL_WAVE",
+        table::words::<{ gameplay_tables::SKY_SCROLL_WAVE_WORDS }>(&at(
+            gameplay_tables::SKY_SCROLL_WAVE,
+            2 * gameplay_tables::SKY_SCROLL_WAVE_WORDS
+        ))
+    );
+    check!(
+        "gameplay_tables::LAVA_HORIZONTAL_WAVE",
+        table::words::<{ gameplay_tables::LAVA_WAVE_SAMPLES }>(&at(
+            gameplay_tables::LAVA_HORIZONTAL_WAVE,
+            2 * gameplay_tables::LAVA_WAVE_SAMPLES
+        ))
+    );
+    check!(
+        "gameplay_tables::LAVA_VERTICAL_WAVE",
+        table::words::<{ gameplay_tables::LAVA_WAVE_SAMPLES }>(&at(
+            gameplay_tables::LAVA_VERTICAL_WAVE,
+            2 * gameplay_tables::LAVA_WAVE_SAMPLES
+        ))
+    );
+    check!(
+        "gameplay_tables::GRAPPLE_POINT_TILES",
+        table::words::<{ gameplay_tables::GRAPPLE_POINT_ANGLES }>(&at(
+            gameplay_tables::GRAPPLE_POINT_TILES,
+            2 * gameplay_tables::GRAPPLE_POINT_ANGLES
+        ))
+    );
     assert!(
         failures.is_empty(),
         "rejected the original ROM: {failures:?}"

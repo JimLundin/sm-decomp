@@ -37,3 +37,16 @@ pub const SPORE_SPAWN_PALETTE_WORDS: usize = 4 * 16;
 /// $B2:F959: space pirate wall-jump instruction lists, by choice.
 pub const PIRATE_INSTRUCTION_LISTS: u32 = 0xb2_f959;
 pub const PIRATE_CHOICES: usize = 8;
+
+/// $88:A938: the scrolling sky's wave offsets, by row.
+pub const SKY_SCROLL_WAVE: u32 = 0x88_a938;
+pub const SKY_SCROLL_WAVE_WORDS: usize = 32;
+/// $88:B589: the lava's horizontal wave offsets, by sample.
+pub const LAVA_HORIZONTAL_WAVE: u32 = 0x88_b589;
+/// $88:B60A: the lava's vertical wave offsets, by sample.
+pub const LAVA_VERTICAL_WAVE: u32 = 0x88_b60a;
+pub const LAVA_WAVE_SAMPLES: usize = 16;
+
+/// $9B:C346: the grapple point's tile source, by beam angle.
+pub const GRAPPLE_POINT_TILES: u32 = 0x9b_c346;
+pub const GRAPPLE_POINT_ANGLES: usize = 64;

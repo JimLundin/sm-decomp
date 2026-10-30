@@ -21,6 +21,10 @@ pub struct ImportedGameplayTables {
     shutter_timers: ImportedWords<SHUTTER_TIMERS, SHUTTER_TIMER_WORDS>,
     spore_spawn: ImportedWords<SPORE_SPAWN_PALETTES, SPORE_SPAWN_PALETTE_WORDS>,
     pirate: ImportedWords<PIRATE_INSTRUCTION_LISTS, PIRATE_CHOICES>,
+    sky_wave: ImportedWords<SKY_SCROLL_WAVE, SKY_SCROLL_WAVE_WORDS>,
+    lava_horizontal: ImportedWords<LAVA_HORIZONTAL_WAVE, LAVA_WAVE_SAMPLES>,
+    lava_vertical: ImportedWords<LAVA_VERTICAL_WAVE, LAVA_WAVE_SAMPLES>,
+    grapple_point_tiles: ImportedWords<GRAPPLE_POINT_TILES, GRAPPLE_POINT_ANGLES>,
 }
 
 pub fn import(image: &RomImage) -> ImportedGameplayTables {
@@ -35,6 +39,10 @@ pub fn import(image: &RomImage) -> ImportedGameplayTables {
         shutter_timers: ImportedWords::import(image),
         spore_spawn: ImportedWords::import(image),
         pirate: ImportedWords::import(image),
+        sky_wave: ImportedWords::import(image),
+        lava_horizontal: ImportedWords::import(image),
+        lava_vertical: ImportedWords::import(image),
+        grapple_point_tiles: ImportedWords::import(image),
     }
 }
 
@@ -90,4 +98,26 @@ pub fn spore_spawn_colour(game: &(impl Records + ?Sized), index: isize) -> u16 {
 /// $B2:F959: the space pirate instruction list for a choice.
 pub fn pirate_instruction_list(game: &(impl Records + ?Sized), choice: isize) -> u16 {
     tables(game).pirate.word(game.loaded_image(), choice)
+}
+
+/// $88:A938: one scrolling sky wave offset.
+pub fn sky_scroll_wave(game: &(impl Records + ?Sized), row: isize) -> u16 {
+    tables(game).sky_wave.word(game.loaded_image(), row)
+}
+
+/// $88:B60A (`vertical`) or $88:B589: one lava wave offset.
+pub fn lava_wave(game: &(impl Records + ?Sized), vertical: bool, sample: isize) -> u16 {
+    let tables = tables(game);
+    if vertical {
+        tables.lava_vertical.word(game.loaded_image(), sample)
+    } else {
+        tables.lava_horizontal.word(game.loaded_image(), sample)
+    }
+}
+
+/// $9B:C346: the grapple point's tile source for a beam angle.
+pub fn grapple_point_tile(game: &(impl Records + ?Sized), angle: isize) -> u16 {
+    tables(game)
+        .grapple_point_tiles
+        .word(game.loaded_image(), angle)
 }

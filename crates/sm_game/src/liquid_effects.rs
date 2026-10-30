@@ -278,12 +278,12 @@ fn fill_wave<H: crate::menus::host::Host + ?Sized>(k: u16, wave: Wave, game: &mu
     for _ in 0..16 {
         let value = match wave {
             Wave::LavaHorizontal => {
-                (crate::cartridge::rom_table_word!(game, 0x88b589, (sample >> 1) as isize)
+                (crate::gameplay_tables::lava_wave(game, false, (sample >> 1) as isize)
                     .wrapping_add(word!(game.reg_BG2HOFS)))
                     & 0x1ff
             }
             Wave::LavaVertical => {
-                (crate::cartridge::rom_table_word!(game, 0x88b60a, (sample >> 1) as isize)
+                (crate::gameplay_tables::lava_wave(game, true, (sample >> 1) as isize)
                     .wrapping_add(word!(game.reg_BG2VOFS)))
                     & 0x1ff
             }

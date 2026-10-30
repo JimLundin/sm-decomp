@@ -884,7 +884,7 @@ pub fn update_tiles<H: Host + ?Sized>(game: &mut H) {
     game.queue_native_transfer(
         cursor,
         128,
-        &|game: &H| crate::cartridge::rom_table_word!(game, 0x9bc346, isize::from(index)),
+        &|game: &H| crate::gameplay_tables::grapple_point_tile(game, isize::from(index)),
         0x9a,
         &|_: &H| 0x6210,
     );

@@ -85,7 +85,7 @@ pub fn update_horizontal_scroll<H: crate::menus::host::Host + ?Sized>(k: u16, ga
         do_until! { ((v1) as i16).wrapping_sub(32) >= 0 ;
             word!(
                 game.g_word_7E9E80[(v2 >> 1)] =
-                    crate::cartridge::rom_table_word!(game, 0x88a938, (v1 >> 1) as isize)
+                    crate::gameplay_tables::sky_scroll_wave(game, (v1 >> 1) as isize)
             );
             v2 = (v2).wrapping_add(2);
             v1 = (v1).wrapping_add(2);
