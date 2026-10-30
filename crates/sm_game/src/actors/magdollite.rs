@@ -6,19 +6,22 @@
 //! and writes its neighbours' slot fields; the views below name those fields
 //! over the same RAM bytes.
 #![forbid(unsafe_code)]
+use crate::actors::boss_lease::BossLease;
 use crate::actors::host::{Axis, Death, Shot};
 use crate::actors::layouts::part_view;
+use crate::actors::session_slots::session_slot;
 use crate::constants::enemy_properties::{K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE};
 use crate::enemy_script::EnemyScript;
-use crate::ram::RawRam as _;
-use crate::ram::{slot, word};
+use crate::ram::{CompatibilityRam, word};
 use sm_data::enemy_speeds::SpeedTable;
 use sm_data::magdollite::{ARM_GROWTH_ADDRESS, ARM_INSTRUCTION_ADDRESS, ARM_Y_OFFSET_ADDRESS};
 
+/// A lease on a game with Magdollite's effects.
+pub trait Lease: BossLease<Game: Host> {}
+impl<T: BossLease<Game: Host> + ?Sized> Lease for T {}
+
 /// What Magdollite needs beyond the shared actor operations: its tables.
-pub trait Host:
-    crate::actors::host::ActorHost + crate::actors::host::ActorRuntime + crate::effects::SoundEffects
-{
+pub trait Host: BossLease<Game = Self> + crate::actors::host::ActorHost {
     /// Colours 9-12 of the glow palette whose colour 0 is word `source`.
     fn magdollite_glow_colors(&self, source: isize) -> [u16; 4];
     /// Arm step `index`'s field at `address` (growth, instruction list or y offset).
@@ -219,7 +222,7 @@ const _: () = {
 };
 
 /// The current enemy's slot, read afresh at each use as the original did.
-fn current<H: Host + ?Sized>(game: &H) -> i32 {
+fn current(game: &(impl CompatibilityRam + ?Sized)) -> i32 {
     word!(game.cur_enemy_index) as i32
 }
 fn is_negative(value: u16) -> bool {
@@ -229,87 +232,94 @@ fn is_negative(value: u16) -> bool {
 fn negative_16(value: i32) -> bool {
     (value as i16) < 0
 }
-fn player_left<H: Host + ?Sized>(game: &mut H) -> bool {
+fn player_left<L: Lease>(game: &mut L) -> bool {
     let k = word!(game.cur_enemy_index);
     is_negative(game.player_delta(k, Axis::X))
 }
+/// Arm step `index`'s field at `address`, from the game's table.
+fn arm_step<L: Lease>(game: &mut L, address: u32, index: isize) -> u16 {
+    game.foreign(|game| game.magdollite_arm(address, index))
+}
 /// Start the part's requested animation if it isn't the one showing.
-fn animate<H: Host + ?Sized>(game: &mut H) {
+fn animate<L: Lease>(game: &mut L) {
     let part = current(game);
-    let requested = slot!(game, Part[part].animation);
-    if requested != slot!(game, Part[part].shown_animation) {
-        slot!(game, Part[part].base.current_instruction = requested);
-        slot!(game, Part[part].shown_animation = requested);
-        slot!(game, Part[part].base; instruction_timer = 1, timer = 0);
+    let requested = session_slot!(game, Part[part].animation);
+    if requested != session_slot!(game, Part[part].shown_animation) {
+        session_slot!(game, Part[part].base.current_instruction = requested);
+        session_slot!(game, Part[part].shown_animation = requested);
+        session_slot!(game, Part[part].base; instruction_timer = 1, timer = 0);
     }
 }
-fn initialize_head<H: Host + ?Sized>(game: &mut H) {
+fn initialize_head<L: Lease>(game: &mut L) {
     let head = current(game);
-    slot!(game, Head[head]; shown_animation = 0, facing_right = 0, waiting_for_arm = 0);
-    slot!(game, Head[head].home_y = slot!(game, Head[head].base.y_pos));
+    session_slot!(game, Head[head]; shown_animation = 0, facing_right = 0, waiting_for_arm = 0);
+    let copied = session_slot!(game, Head[head].base.y_pos);
+    session_slot!(game, Head[head].home_y = copied);
     // Set from the opposite test; the first idle frame replaces it before use.
     if player_left(game) {
-        slot!(game, Head[head].facing_right = 1);
+        session_slot!(game, Head[head].facing_right = 1);
     }
-    slot!(game, Head[head].animation = animation::HEAD_IDLE_LEFT);
-    if slot!(game, Head[head].facing_right) == 0 {
-        slot!(game, Head[head].animation = animation::HEAD_IDLE_RIGHT);
+    session_slot!(game, Head[head].animation = animation::HEAD_IDLE_LEFT);
+    if session_slot!(game, Head[head].facing_right) == 0 {
+        session_slot!(game, Head[head].animation = animation::HEAD_IDLE_RIGHT);
     }
     animate(game);
-    slot!(game, Head[head].state = state::HEAD_IDLE);
+    session_slot!(game, Head[head].state = state::HEAD_IDLE);
 }
-fn initialize_arm<H: Host + ?Sized>(game: &mut H) {
+fn initialize_arm<L: Lease>(game: &mut L) {
     let arm = current(game);
-    slot!(game, Arm[arm].home_y = slot!(game, Arm[arm].base.y_pos));
-    slot!(game, Arm[arm]; shown_animation = 0, fully_grown = 0, hold_retracted = 1,
+    let copied = session_slot!(game, Arm[arm].base.y_pos);
+    session_slot!(game, Arm[arm].home_y = copied);
+    session_slot!(game, Arm[arm]; shown_animation = 0, fully_grown = 0, hold_retracted = 1,
         animation = animation::ARM_GROWTH_0);
     animate(game);
-    slot!(game, Arm[arm].base.y_pos, |old| old
+    session_slot!(game, Arm[arm].base.y_pos, |old| old
         .wrapping_add(START_DEPTH));
-    slot!(game, Arm[arm].state = state::ARM_WAIT_HEAD_SUBMERGED);
-    slot!(game, Arm[arm].base.properties, |old| old
+    session_slot!(game, Arm[arm].state = state::ARM_WAIT_HEAD_SUBMERGED);
+    session_slot!(game, Arm[arm].base.properties, |old| old
         | K_ENEMY_PROPS_INVISIBLE as u16);
 }
-fn initialize_hand<H: Host + ?Sized>(game: &mut H) {
+fn initialize_hand<L: Lease>(game: &mut L) {
     let hand = current(game);
-    slot!(game, Hand[hand].home_y = slot!(game, Hand[hand].base.y_pos));
-    slot!(game, Hand[hand].home_x = slot!(game, Hand[hand].base.x_pos));
-    slot!(game, Hand[hand]; shown_animation = 0, cooldown = 0, animation = animation::HAND_STUB);
+    let copied = session_slot!(game, Hand[hand].base.y_pos);
+    session_slot!(game, Hand[hand].home_y = copied);
+    let copied = session_slot!(game, Hand[hand].base.x_pos);
+    session_slot!(game, Hand[hand].home_x = copied);
+    session_slot!(game, Hand[hand]; shown_animation = 0, cooldown = 0, animation = animation::HAND_STUB);
     animate(game);
-    slot!(game, Hand[hand].base.y_pos, |old| old
+    session_slot!(game, Hand[hand].base.y_pos, |old| old
         .wrapping_add(START_DEPTH));
-    slot!(game, Hand[hand].state = state::HAND_IDLE);
-    slot!(game, Hand[hand].base.properties, |old| old
+    session_slot!(game, Hand[hand].state = state::HAND_IDLE);
+    session_slot!(game, Hand[hand].base.properties, |old| old
         | K_ENEMY_PROPS_INVISIBLE as u16);
 }
 /// Initialisation AI ($A8:AF8B): set up the part `kind` names, then its speeds
 /// and the shared palette cycle.
-pub fn initialize<H: Host + ?Sized>(game: &mut H) {
-    let kind = 2u16.wrapping_mul(slot!(game, Part[current(game)].kind)) >> 1;
-    let initialize: [fn(&mut H); 3] = [initialize_head, initialize_arm, initialize_hand];
+pub fn initialize<L: Lease>(game: &mut L) {
+    let kind = 2u16.wrapping_mul(session_slot!(game, Part[current(game)].kind)) >> 1;
+    let initialize: [fn(&mut L); 3] = [initialize_head, initialize_arm, initialize_hand];
     initialize[kind as usize](game);
     let part = current(game);
-    let speed = SPEED_ENTRY_WORDS * slot!(byte game, Part[part].parameters[SPEED_LANE]) as isize;
-    slot!(game, Part[part];
+    let speed =
+        SPEED_ENTRY_WORDS * session_slot!(byte game, Part[part].parameters[SPEED_LANE]) as isize;
+    session_slot!(game, Part[part];
         shrink_speed = game.enemy_speed(SpeedTable::Linear, speed),
         shrink_subspeed = game.enemy_speed(SpeedTable::Linear, speed + 1),
         grow_speed = game.enemy_speed(SpeedTable::Linear, speed + 2),
         grow_subspeed = game.enemy_speed(SpeedTable::Linear, speed + 3));
     let part = current(game);
-    game.ram()
-        .copy_in(GFX_DRAWN_HOOK, &PALETTE_CYCLE_HOOK.to_ne_bytes());
-    game.ram()
-        .copy_in(GFX_DRAWN_HOOK + 2, &AI_BANK.to_ne_bytes());
+    game.set_slot_word(GFX_DRAWN_HOOK, PALETTE_CYCLE_HOOK);
+    game.set_slot_word(GFX_DRAWN_HOOK + 2, AI_BANK);
     word!(
         game.variables_for_enemy_graphics_drawn_hook[HOOK_PALETTE] =
-            ((slot!(game, Part[part].base.palette_index) & SPRITE_PALETTE_BITS) >> 4)
+            ((session_slot!(game, Part[part].base.palette_index) & SPRITE_PALETTE_BITS) >> 4)
                 + SPRITE_PALETTES_BYTE
     );
     word!(game.variables_for_enemy_graphics_drawn_hook[HOOK_TIMER] = PALETTE_CYCLE_FRAMES);
     word!(game.variables_for_enemy_graphics_drawn_hook[HOOK_FRAME] = 0);
 }
 /// Graphics drawn hook ($A8:B0B2): every 8 frames, show the next glow palette.
-pub fn cycle_palette<H: Host + ?Sized>(game: &mut H) {
+pub fn cycle_palette<L: Lease>(game: &mut L) {
     if word!(game.door_transition_flag_enemies) != 0
         || word!(
             game.variables_for_enemy_graphics_drawn_hook[HOOK_TIMER] -= 1,
@@ -322,20 +332,20 @@ pub fn cycle_palette<H: Host + ?Sized>(game: &mut H) {
     word!(game.variables_for_enemy_graphics_drawn_hook[HOOK_FRAME] += 1);
     let frame = word!(game.variables_for_enemy_graphics_drawn_hook[HOOK_FRAME]);
     let source = COLORS_PER_PALETTE * (frame & (GLOW_PALETTES - 1)) as isize;
-    let colors: [u16; 4] = game.magdollite_glow_colors(source);
+    let colors: [u16; 4] = game.foreign(|game| game.magdollite_glow_colors(source));
     let target = word!(game.variables_for_enemy_graphics_drawn_hook[HOOK_PALETTE]) as usize >> 1;
     for (i, color) in colors.into_iter().enumerate() {
         word!(game.palette_buffer[target + FIRST_GLOW_COLOR + i] = color);
     }
 }
 /// Main AI ($A8:B10A): count down the part's cooldown and name its state function.
-pub fn main_ai<H: Host + ?Sized>(game: &mut H) -> u32 {
+pub fn main_ai<L: Lease>(game: &mut L) -> u32 {
     let part = current(game);
-    slot!(game, Part[part].cooldown, |old| old.wrapping_sub(1));
-    u32::from(AI_BANK) << 16 | u32::from(slot!(game, Part[part].state))
+    session_slot!(game, Part[part].cooldown, |old| old.wrapping_sub(1));
+    u32::from(AI_BANK) << 16 | u32::from(session_slot!(game, Part[part].state))
 }
 /// The head's reaction to a power bomb, contact or shot, shared with the arm and hand.
-pub fn damage<H: Host + ?Sized>(address: u32, game: &mut H) {
+pub fn damage<L: Lease>(address: u32, game: &mut L) {
     match address {
         reaction::POWER_BOMB => game.power_bomb_reaction(Death::Finalize),
         reaction::CONTACT => game.contact_reaction(Death::Finalize),
@@ -345,33 +355,33 @@ pub fn damage<H: Host + ?Sized>(address: u32, game: &mut H) {
     let head = current(game);
     let arm = current(game) + SLOT;
     let hand = current(game) + 2 * SLOT;
-    if slot!(game, Head[head].base.health) == 0 {
-        slot!(game, Arm[arm].base.properties, |old| old
+    if session_slot!(game, Head[head].base.health) == 0 {
+        session_slot!(game, Arm[arm].base.properties, |old| old
             | K_ENEMY_PROPS_DELETED as u16);
-        slot!(game, Hand[hand].base.properties, |old| old
+        session_slot!(game, Hand[hand].base.properties, |old| old
             | K_ENEMY_PROPS_DELETED as u16);
     }
-    let frozen = slot!(game, Head[head].base.frozen_timer);
+    let frozen = session_slot!(game, Head[head].base.frozen_timer);
     if frozen != 0 {
-        slot!(game, Arm[arm].base.frozen_timer = frozen);
-        slot!(game, Arm[arm].base.ai_handler_bits, |old| old | FROZEN_AI);
-        slot!(game, Hand[hand].base.frozen_timer = frozen);
-        slot!(game, Hand[hand].base.ai_handler_bits, |old| old | FROZEN_AI);
+        session_slot!(game, Arm[arm].base.frozen_timer = frozen);
+        session_slot!(game, Arm[arm].base.ai_handler_bits, |old| old | FROZEN_AI);
+        session_slot!(game, Hand[hand].base.frozen_timer = frozen);
+        session_slot!(game, Hand[hand].base.ai_handler_bits, |old| old | FROZEN_AI);
     }
 }
 /// Face the head towards Samus with the left or right animation.
-fn face_samus<H: Host + ?Sized>(head: i32, left: u16, right: u16, game: &mut H) {
-    slot!(game, Head[head].animation = left);
+fn face_samus<L: Lease>(head: i32, left: u16, right: u16, game: &mut L) {
+    session_slot!(game, Head[head].animation = left);
     if !player_left(game) {
-        slot!(game, Head[head].animation = right);
+        session_slot!(game, Head[head].animation = right);
     }
     animate(game);
 }
 /// Stretch the head's hitbox up to the hand, through the original RAM names.
-fn stretch_head_hitbox<H: Host + ?Sized>(hand: u16, game: &mut H) {
+fn stretch_head_hitbox<L: Lease>(hand: u16, game: &mut L) {
     let index = hand as usize >> 1;
     let height = word!(game.enemy_drawing_queue[index + HEAD_Y_POS])
-        .wrapping_sub(slot!(game, Hand[hand as i32].base.y_pos))
+        .wrapping_sub(session_slot!(game, Hand[hand as i32].base.y_pos))
         .wrapping_add(HITBOX_MARGIN);
     word!(game.enemy_drawing_queue[index + HEAD_Y_HEIGHT] = height);
     if is_negative(height.wrapping_sub(MIN_HITBOX_HEIGHT)) {
@@ -380,24 +390,24 @@ fn stretch_head_hitbox<H: Host + ?Sized>(hand: u16, game: &mut H) {
 }
 /// Growing arm ($A8:B204), part one: move up at the head's grow speed. Returns
 /// the arm and, when it has reached the warning extension, that extension.
-pub fn grow_arm<H: Host + ?Sized>(game: &mut H) -> (u16, Option<i32>) {
+pub fn grow_arm<L: Lease>(game: &mut L) -> (u16, Option<i32>) {
     let arm = current(game);
     let head = current(game) - SLOT;
-    let value = u32::from(slot!(game, Head[head].grow_subspeed))
-        + u32::from(slot!(game, Arm[arm].base.y_subpos));
-    slot!(game, Arm[arm].base.y_subpos = value as u16);
-    slot!(game, Arm[arm].base.y_pos, |old| (u32::from(old)
-        + u32::from(slot!(game, Head[head].grow_speed))
+    let value = u32::from(session_slot!(game, Head[head].grow_subspeed))
+        + u32::from(session_slot!(game, Arm[arm].base.y_subpos));
+    session_slot!(game, Arm[arm].base.y_subpos = value as u16);
+    session_slot!(game, Arm[arm].base.y_pos, |old| (u32::from(old)
+        + u32::from(session_slot!(game, Head[head].grow_speed))
         + (value >> 16))
         as u16);
-    slot!(game, Arm[arm].extension, |old| (u32::from(old)
-        + u32::from(slot!(game, Head[head].grow_speed))
+    session_slot!(game, Arm[arm].extension, |old| (u32::from(old)
+        + u32::from(session_slot!(game, Head[head].grow_speed))
         + (value >> 16))
         as u16);
     let k = word!(game.cur_enemy_index);
-    let reach = |game: &mut H| -(slot!(game, Arm[k as i32].extension) as i32);
+    let reach = |game: &mut L| -(session_slot!(game, Arm[k as i32].extension) as i32);
     let warning = if !negative_16(reach(game) - ARM_WARNING_EXTENSION) {
-        Some(-(slot!(game, Arm[k as i32].extension) as i16 as i32))
+        Some(-(session_slot!(game, Arm[k as i32].extension) as i16 as i32))
     } else {
         None
     };
@@ -405,204 +415,194 @@ pub fn grow_arm<H: Host + ?Sized>(game: &mut H) -> (u16, Option<i32>) {
 }
 /// Growing arm, part two: once at Samus's height (or the warning extension),
 /// stop and let the hand throw; otherwise add a segment at each growth level.
-pub fn finish_arm_growth<H: Host + ?Sized>(k: u16, game: &mut H) {
+pub fn finish_arm_growth<L: Lease>(k: u16, game: &mut L) {
     let arm = k as i32;
-    let level = slot!(game, Arm[arm].growth_level);
-    let reach = |game: &mut H| -(slot!(game, Arm[arm].extension) as i32);
+    let level = session_slot!(game, Arm[arm].growth_level);
+    let reach = |game: &mut L| -(session_slot!(game, Arm[arm].extension) as i32);
     let mut step = 0isize;
     let at_samus = !negative_16(reach(game) - ARM_WARNING_EXTENSION) || {
         step = (level >> 1) as isize;
-        ((slot!(game, Arm[arm].base.y_pos) as i32
-            - game.magdollite_arm(ARM_Y_OFFSET_ADDRESS, step) as i32
+        ((session_slot!(game, Arm[arm].base.y_pos) as i32
+            - arm_step(game, ARM_Y_OFFSET_ADDRESS, step) as i32
             - game.player_y() as i32) as i16)
             < 0
     };
     let next_level = if at_samus {
-        slot!(game, Arm[arm]; state = state::ARM_GROWN, fully_grown = 1);
-        if ((reach(game) - game.magdollite_arm(ARM_GROWTH_ADDRESS, (level >> 1) as isize) as i32)
-            as i16)
+        session_slot!(game, Arm[arm]; state = state::ARM_GROWN, fully_grown = 1);
+        if ((reach(game) - arm_step(game, ARM_GROWTH_ADDRESS, (level >> 1) as isize) as i32) as i16)
             < 0
         {
             return;
         }
         true
     } else {
-        (reach(game) - game.magdollite_arm(ARM_GROWTH_ADDRESS, step) as i32) as i16 >= 0
+        (reach(game) - arm_step(game, ARM_GROWTH_ADDRESS, step) as i32) as i16 >= 0
     };
     if next_level {
-        slot!(game, Arm[arm].growth_level, |old| old.wrapping_add(1));
-        slot!(game, Arm[arm].growth_level, |old| old.wrapping_add(1));
-        slot!(game, Arm[arm].base.y_pos, |old| old
+        session_slot!(game, Arm[arm].growth_level, |old| old.wrapping_add(1));
+        session_slot!(game, Arm[arm].growth_level, |old| old.wrapping_add(1));
+        session_slot!(game, Arm[arm].base.y_pos, |old| old
             .wrapping_add(SEGMENT_PIXELS));
-        slot!(
-            game,
-            Arm[arm].animation = game.magdollite_arm(
-                ARM_INSTRUCTION_ADDRESS,
-                (slot!(game, Arm[arm].growth_level) >> 1) as isize
-            )
-        );
+        let level = session_slot!(game, Arm[arm].growth_level);
+        let animation = arm_step(game, ARM_INSTRUCTION_ADDRESS, (level >> 1) as isize);
+        session_slot!(game, Arm[arm].animation = animation);
         animate(game);
     }
 }
 /// Shrinking arm ($A8:B295): move down at the head's shrink speed, removing a
 /// segment at each growth level, until retracted; then release the head.
-pub fn shrink_arm<H: Host + ?Sized>(game: &mut H) {
+pub fn shrink_arm<L: Lease>(game: &mut L) {
     let arm = current(game);
     let head = current(game) - SLOT;
-    let carry = slot!(game, Head[head].shrink_subspeed)
-        .overflowing_add(slot!(game, Arm[arm].base.y_subpos))
+    let carry = session_slot!(game, Head[head].shrink_subspeed)
+        .overflowing_add(session_slot!(game, Arm[arm].base.y_subpos))
         .1;
-    slot!(
+    session_slot!(
         game,
-        Arm[arm].base.y_subpos = slot!(game, Head[head].shrink_subspeed)
-            .wrapping_add(slot!(game, Arm[arm].base.y_subpos))
+        Arm[arm].base.y_subpos = session_slot!(game, Head[head].shrink_subspeed)
+            .wrapping_add(session_slot!(game, Arm[arm].base.y_subpos))
     );
-    slot!(game, Arm[arm].base.y_pos, |old| (old as i32
-        + slot!(game, Head[head].shrink_speed) as i32
+    session_slot!(game, Arm[arm].base.y_pos, |old| (old as i32
+        + session_slot!(game, Head[head].shrink_speed) as i32
         + i32::from(carry))
         as u16);
-    slot!(game, Arm[arm].extension, |old| (old as i32
-        + slot!(game, Head[head].shrink_speed) as i32
+    session_slot!(game, Arm[arm].extension, |old| (old as i32
+        + session_slot!(game, Head[head].shrink_speed) as i32
         + i32::from(carry))
         as u16);
     let k = word!(game.cur_enemy_index);
     let arm = k as i32;
-    let extension = slot!(game, Arm[arm].extension) as i16;
+    let extension = session_slot!(game, Arm[arm].extension) as i16;
     if extension >= 0 {
-        slot!(game, Arm[arm].hold_retracted = 1);
+        session_slot!(game, Arm[arm].hold_retracted = 1);
         let at = crate::ram_slot!(@at Head, arm - SLOT, waiting_for_arm);
-        game.ram().copy_in(at, &0u16.to_ne_bytes());
-        slot!(game, Arm[arm].state = state::ARM_WAIT_HEAD_SUBMERGED);
+        game.set_slot_word(at, 0u16);
+        session_slot!(game, Arm[arm].state = state::ARM_WAIT_HEAD_SUBMERGED);
     } else if ((-(extension as i32)
-        - game.magdollite_arm(
+        - arm_step(
+            game,
             ARM_GROWTH_ADDRESS,
-            (slot!(game, Arm[arm].growth_level).wrapping_sub(2) >> 1) as isize,
+            (session_slot!(game, Arm[arm].growth_level).wrapping_sub(2) >> 1) as isize,
         ) as i32) as i16)
         < 0
     {
-        slot!(game, Arm[arm].growth_level, |old| old.wrapping_sub(2));
-        slot!(game, Arm[arm].base.y_pos, |old| old
+        session_slot!(game, Arm[arm].growth_level, |old| old.wrapping_sub(2));
+        session_slot!(game, Arm[arm].base.y_pos, |old| old
             .wrapping_sub(SEGMENT_PIXELS));
-        slot!(
-            game,
-            Arm[arm].animation = game.magdollite_arm(
-                ARM_INSTRUCTION_ADDRESS,
-                (slot!(game, Arm[arm].growth_level) >> 1) as isize
-            )
-        );
+        let level = session_slot!(game, Arm[arm].growth_level);
+        let animation = arm_step(game, ARM_INSTRUCTION_ADDRESS, (level >> 1) as isize);
+        session_slot!(game, Arm[arm].animation = animation);
         animate(game);
     }
 }
 /// Run the current part's state function `state` (one of [`state`]).
-pub fn run_state<H: Host + ?Sized>(state: u16, game: &mut H) {
+pub fn run_state<L: Lease>(state: u16, game: &mut L) {
     let part = current(game);
     match state {
         state::HEAD_IDLE => {
             let head = part;
-            slot!(game, Head[head]; facing_right = 0, animation = animation::HEAD_IDLE_LEFT);
+            session_slot!(game, Head[head]; facing_right = 0, animation = animation::HEAD_IDLE_LEFT);
             if !player_left(game) {
-                slot!(game, Head[head]; animation = animation::HEAD_IDLE_RIGHT, facing_right = 1);
+                session_slot!(game, Head[head]; animation = animation::HEAD_IDLE_RIGHT, facing_right = 1);
             }
             animate(game);
             let hand = current(game) + 2 * SLOT;
-            if is_negative(slot!(game, Hand[hand].cooldown)) {
-                slot!(game, Hand[hand].cooldown = 0);
+            if is_negative(session_slot!(game, Hand[hand].cooldown)) {
+                session_slot!(game, Hand[hand].cooldown = 0);
                 let k = word!(game.cur_enemy_index);
-                let range = slot!(byte game, Head[head].parameters[THROW_RANGE_LANE]) as u16;
+                let range =
+                    session_slot!(byte game, Head[head].parameters[THROW_RANGE_LANE]) as u16;
                 if game.player_within(k, Axis::X, range) {
-                    slot!(game, Head[head].animation = animation::HEAD_SUBMERGE_LEFT);
-                    if slot!(game, Head[head].facing_right) != 0 {
-                        slot!(game, Head[head].animation = animation::HEAD_SUBMERGE_RIGHT);
+                    session_slot!(game, Head[head].animation = animation::HEAD_SUBMERGE_LEFT);
+                    if session_slot!(game, Head[head].facing_right) != 0 {
+                        session_slot!(game, Head[head].animation = animation::HEAD_SUBMERGE_RIGHT);
                     }
                     animate(game);
-                    slot!(game, Head[head].state = state::HEAD_WAIT_SUBMERGED);
+                    session_slot!(game, Head[head].state = state::HEAD_WAIT_SUBMERGED);
                 }
             }
         }
         state::HEAD_WAIT_SUBMERGED => {
             let head = part;
-            if slot!(game, Head[head].animation_active) == 0 {
-                slot!(game, Head[head].waiting_for_arm = 1);
-                slot!(game, Arm[current(game) + SLOT].hold_retracted = 0);
-                slot!(game, Head[head].state = state::HEAD_EMERGE_WHEN_READY);
+            if session_slot!(game, Head[head].animation_active) == 0 {
+                session_slot!(game, Head[head].waiting_for_arm = 1);
+                session_slot!(game, Arm[current(game) + SLOT].hold_retracted = 0);
+                session_slot!(game, Head[head].state = state::HEAD_EMERGE_WHEN_READY);
             }
         }
         state::HEAD_EMERGE_WHEN_READY => {
             let head = part;
-            if slot!(game, Head[head].waiting_for_arm) == 0 {
+            if session_slot!(game, Head[head].waiting_for_arm) == 0 {
                 face_samus(
                     head,
                     animation::HEAD_EMERGE_LEFT,
                     animation::HEAD_EMERGE_RIGHT,
                     game,
                 );
-                slot!(game, Head[head].state = state::HEAD_WAIT_EMERGED);
+                session_slot!(game, Head[head].state = state::HEAD_WAIT_EMERGED);
             }
         }
         state::HEAD_WAIT_EMERGED => {
             let head = part;
-            if slot!(game, Head[head].animation_active) == 0 {
+            if session_slot!(game, Head[head].animation_active) == 0 {
                 face_samus(
                     head,
                     animation::HEAD_IDLE_LEFT,
                     animation::HEAD_IDLE_RIGHT,
                     game,
                 );
-                slot!(game, Head[head].state = state::HEAD_IDLE);
+                session_slot!(game, Head[head].state = state::HEAD_IDLE);
             }
         }
         state::ARM_WAIT_HEAD_SUBMERGED => {
             let arm = part;
-            if slot!(game, Arm[arm].hold_retracted) == 0 {
-                slot!(game, Arm[arm]; state = state::ARM_GROWING, extension = 0,
+            if session_slot!(game, Arm[arm].hold_retracted) == 0 {
+                session_slot!(game, Arm[arm]; state = state::ARM_GROWING, extension = 0,
                     hold_retracted = 0, growth_level = 2);
-                slot!(game, Arm[arm].base.y_pos = slot!(game, Arm[arm].home_y));
+                let copied = session_slot!(game, Arm[arm].home_y);
+                session_slot!(game, Arm[arm].base.y_pos = copied);
             }
         }
         state::HAND_IDLE => {
             let head = current(game) - 2 * SLOT;
-            if slot!(game, Head[head].state) == state::HEAD_WAIT_SUBMERGED {
-                slot!(game, Hand[current(game)].state = state::HAND_GROW_AND_THROW);
+            if session_slot!(game, Head[head].state) == state::HEAD_WAIT_SUBMERGED {
+                session_slot!(game, Hand[current(game)].state = state::HAND_GROW_AND_THROW);
             }
         }
         state::HAND_THROW_AND_SHRINK => {
             let hand = part;
-            if slot!(game, Hand[hand].animation_active) == 0 {
-                slot!(game, Hand[hand].animation = animation::HAND_STUB);
+            if session_slot!(game, Hand[hand].animation_active) == 0 {
+                session_slot!(game, Hand[hand].animation = animation::HAND_STUB);
                 animate(game);
                 let at = crate::ram_slot!(@at Arm, current(game) - SLOT, state);
-                game.ram().copy_in(at, &state::ARM_SHRINKING.to_ne_bytes());
-                slot!(game, Hand[hand].state = state::HAND_FOLLOW_SHRINKING_ARM);
+                game.set_slot_word(at, state::ARM_SHRINKING);
+                session_slot!(game, Hand[hand].state = state::HAND_FOLLOW_SHRINKING_ARM);
                 let at = crate::ram_slot!(@at Arm, current(game) - SLOT, fully_grown);
-                game.ram().copy_in(at, &0u16.to_ne_bytes());
-                slot!(
-                    game,
-                    Hand[hand].base.x_pos = slot!(game, Hand[hand].throw_x)
-                );
-                slot!(
-                    game,
-                    Hand[hand].base.y_pos = slot!(game, Hand[hand].throw_y)
-                );
+                game.set_slot_word(at, 0u16);
+                let copied = session_slot!(game, Hand[hand].throw_x);
+                session_slot!(game, Hand[hand].base.x_pos = copied);
+                let copied = session_slot!(game, Hand[hand].throw_y);
+                session_slot!(game, Hand[hand].base.y_pos = copied);
             }
             stretch_head_hitbox(word!(game.cur_enemy_index), game);
         }
         state::HAND_GROW_AND_THROW => {
-            if slot!(game, Arm[current(game) - SLOT].fully_grown) != 0 {
+            if session_slot!(game, Arm[current(game) - SLOT].fully_grown) != 0 {
                 let hand = current(game);
-                slot!(game, Hand[hand]; animation = animation::HAND_THROW_LEFT, throw_right = 0);
+                session_slot!(game, Hand[hand]; animation = animation::HAND_THROW_LEFT, throw_right = 0);
                 if !player_left(game) {
-                    slot!(game, Hand[hand]; animation = animation::HAND_THROW_RIGHT, throw_right = 1);
+                    session_slot!(game, Hand[hand]; animation = animation::HAND_THROW_RIGHT, throw_right = 1);
                 }
                 animate(game);
-                slot!(game, Hand[hand]; state = state::HAND_THROW_AND_SHRINK,
-                    throw_x = slot!(game, Hand[hand].base.x_pos),
-                    throw_y = slot!(game, Hand[hand].base.y_pos));
+                session_slot!(game, Hand[hand]; state = state::HAND_THROW_AND_SHRINK,
+                    throw_x = session_slot!(game, Hand[hand].base.x_pos),
+                    throw_y = session_slot!(game, Hand[hand].base.y_pos));
             } else {
-                let arm_y = slot!(game, Arm[current(game) - SLOT].base.y_pos);
-                let offset = game.magdollite_arm(ARM_Y_OFFSET_ADDRESS, {
-                    (slot!(game, Arm[current(game) - SLOT].growth_level) >> 1) as isize
+                let arm_y = session_slot!(game, Arm[current(game) - SLOT].base.y_pos);
+                let offset = arm_step(game, ARM_Y_OFFSET_ADDRESS, {
+                    (session_slot!(game, Arm[current(game) - SLOT].growth_level) >> 1) as isize
                 });
-                slot!(
+                session_slot!(
                     game,
                     Hand[current(game)].base.y_pos = arm_y.wrapping_sub(offset)
                 );
@@ -614,14 +614,15 @@ pub fn run_state<H: Host + ?Sized>(state: u16, game: &mut H) {
             // original RAM names (see `HEAD_STATE`).
             let index = word!(game.cur_enemy_index) as usize >> 1;
             if word!(game.enemy_drawing_queue[index + HEAD_STATE]) == state::HEAD_IDLE {
-                slot!(game, Hand[current(game)].state = state::HAND_IDLE);
+                session_slot!(game, Hand[current(game)].state = state::HAND_IDLE);
             } else {
                 let arm_y = word!(game.enemy_drawing_queue[index + ARM_Y_POS]);
-                let offset = game.magdollite_arm(
+                let offset = arm_step(
+                    game,
                     ARM_Y_OFFSET_ADDRESS,
                     (word!(game.enemy_drawing_queue_sizes[index + ARM_GROWTH_LEVEL]) >> 1) as isize,
                 );
-                slot!(
+                session_slot!(
                     game,
                     Hand[current(game)].base.y_pos = arm_y.wrapping_sub(offset)
                 );
@@ -633,11 +634,7 @@ pub fn run_state<H: Host + ?Sized>(state: u16, game: &mut H) {
 }
 
 /// Run one of the head's or hand's script instructions (one of [`instruction`]).
-pub fn instruction<H: Host + ?Sized>(
-    address: u32,
-    script: EnemyScript,
-    game: &mut H,
-) -> EnemyScript {
+pub fn instruction<L: Lease>(address: u32, script: EnemyScript, game: &mut L) -> EnemyScript {
     use instruction::*;
     if address == QUEUE_SOUND_IF_ON_SCREEN {
         if !game.current_outside_screen() {
@@ -654,17 +651,17 @@ pub fn instruction<H: Host + ?Sized>(
                 u16::MAX
             };
             let head = part;
-            slot!(game, Head[head].base.y_pos, |old| old.wrapping_add(step));
+            session_slot!(game, Head[head].base.y_pos, |old| old.wrapping_add(step));
             // The 2px moves step the head twice; the 1px moves step the arm too.
             let second = if matches!(address, HEAD_DOWN_2PX | HEAD_UP_2PX) {
                 head
             } else {
                 current(game) + SLOT
             };
-            slot!(game, Part[second].base.y_pos, |old| old.wrapping_add(step));
+            session_slot!(game, Part[second].base.y_pos, |old| old.wrapping_add(step));
         }
         SET_ANIMATION_ACTIVE | CLEAR_ANIMATION_ACTIVE => {
-            slot!(
+            session_slot!(
                 game,
                 Part[part].animation_active = u16::from(address == SET_ANIMATION_ACTIVE)
             );
@@ -673,8 +670,8 @@ pub fn instruction<H: Host + ?Sized>(
             let head = part;
             let hide = address == EMERGED_POSITION_HIDE_ARM;
             let depth = if hide { EMERGED_DEPTH } else { SUBMERGED_DEPTH };
-            let y = slot!(game, Head[head].home_y).wrapping_add(depth);
-            slot!(game, Head[head].base.y_pos = y);
+            let y = session_slot!(game, Head[head].home_y).wrapping_add(depth);
+            session_slot!(game, Head[head].base.y_pos = y);
             let invisible = K_ENEMY_PROPS_INVISIBLE as u16;
             let show_or_hide = |old: u16| {
                 if hide {
@@ -684,21 +681,21 @@ pub fn instruction<H: Host + ?Sized>(
                 }
             };
             let arm = current(game) + SLOT;
-            slot!(game, Arm[arm].base.y_pos = y);
-            slot!(game, Arm[arm].base.properties, |old| show_or_hide(old));
+            session_slot!(game, Arm[arm].base.y_pos = y);
+            session_slot!(game, Arm[arm].base.properties, |old| show_or_hide(old));
             let hand = current(game) + 2 * SLOT;
-            slot!(game, Hand[hand].base.properties, |old| show_or_hide(old));
+            session_slot!(game, Hand[hand].base.properties, |old| show_or_hide(old));
         }
         RESET_POSITION => {
             let head = part;
-            let y = slot!(game, Head[head].home_y);
-            slot!(game, Head[head].base.y_pos = y);
-            slot!(game, Arm[current(game) + SLOT].base.y_pos = y);
+            let y = session_slot!(game, Head[head].home_y);
+            session_slot!(game, Head[head].base.y_pos = y);
+            session_slot!(game, Arm[current(game) + SLOT].base.y_pos = y);
         }
         SPAWN_LAVA => {
             let hand = part;
             game.spawn_projectile(
-                slot!(game, Hand[hand].throw_right),
+                session_slot!(game, Hand[hand].throw_right),
                 word!(game.cur_enemy_index),
                 crate::constants::bank_86::ADDR_K_EPROJ_LAVA_THROWN_BY_MAGDOLLITE as u16,
             );
@@ -711,23 +708,19 @@ pub fn instruction<H: Host + ?Sized>(
             } else {
                 HAND_REACH.wrapping_neg()
             };
-            slot!(
-                game,
-                Hand[hand].base.x_pos = slot!(game, Hand[hand].throw_x).wrapping_add(reach)
-            );
+            let copied = session_slot!(game, Hand[hand].throw_x).wrapping_add(reach);
+            session_slot!(game, Hand[hand].base.x_pos = copied);
             // Only the right closed hand rises further, as in the original.
             let raise = if address == CLOSED_HAND_RIGHT {
                 CLOSED_HAND_RAISE
             } else {
                 OPEN_HAND_RAISE
             };
-            slot!(
-                game,
-                Hand[hand].base.y_pos = slot!(game, Hand[hand].throw_y).wrapping_sub(raise)
-            );
+            let copied = session_slot!(game, Hand[hand].throw_y).wrapping_sub(raise);
+            session_slot!(game, Hand[hand].base.y_pos = copied);
         }
         RESET_COOLDOWN => {
-            slot!(game, Hand[part].cooldown = THROW_COOLDOWN);
+            session_slot!(game, Hand[part].cooldown = THROW_COOLDOWN);
         }
         _ => unreachable!("Magdollite instruction {address:06x}"),
     }
