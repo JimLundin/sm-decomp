@@ -49,10 +49,11 @@ macro_rules! part_view {
             )*
         }
         const _: () = {
-            use ::core::mem::{offset_of, size_of};
             use $crate::actors::layouts::$layout as Layout;
-            $(assert!(offset_of!($name, $array) == offset_of!(Layout, $array));)*
-            assert!(size_of::<$name>() == size_of::<Layout>());
+            $(assert!(
+                ::core::mem::offset_of!($name, $array) == ::core::mem::offset_of!(Layout, $array)
+            );)*
+            assert!(::core::mem::size_of::<$name>() == ::core::mem::size_of::<Layout>());
         };
     };
 }
