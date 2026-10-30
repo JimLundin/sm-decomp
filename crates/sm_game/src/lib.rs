@@ -158,6 +158,7 @@ pub mod actors {
     pub mod gamet;
     pub mod geega;
     pub mod geruta;
+    pub mod gunship;
     pub mod host;
     pub mod identity;
     pub mod kago;

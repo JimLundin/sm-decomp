@@ -183,8 +183,9 @@ impl sm_game::actors::species::PreInstructionHost for Game {
     fn initialize_morph_eye_beam(&mut self) {
         crate::game::visual_runtime::initialize_morph_eye_beam(self);
     }
-    fn native_pre_instruction(&mut self, ea: u32, k: u16) {
-        unsafe { native_pre_instruction(ea, k, self) }
+    fn native_pre_instruction(&mut self, _ea: u32, _k: u16) {
+        // Every pre-instruction routine is in sm_game's species table now.
+        crate::rtl::report_unreachable(self);
     }
 }
 
@@ -1181,12 +1182,6 @@ crate::game::callback_dispatch! {
                 .pre_instruction;
             actor_species_pre_instruction(u32::from(preinstruction) | 0xa20000, game);
         }];
-        10659396 => [crate::game::gunship::initialize_top(game)];
-        10659538 => [crate::game::gunship::initialize_bottom(game)];
-        10659673 => [{
-            let phase = crate::game::gunship::advance(game);
-            actor_species_pre_instruction(phase, game);
-        }];
         10657715 => [{
             let phase = {
                 let runtime = Runtime::new(game);
@@ -1209,33 +1204,6 @@ crate::game::callback_dispatch! {
         10874348 => [actors::spore_spawn::touch(game)];
         0xa90000..=0xa9ffff => [sm_a9::dispatch_enemy_ai(ea, game)];
         0xb30000..=0xb3ffff => [{ crate::rtl::report_unreachable(game); }];
-    }
-}
-crate::game::address_dispatch! {
-    unsafe fn native_pre_instruction(ea: u32, k: u16, game: &mut Game) => ea;
-        call (k, game); default { crate::rtl::report_unreachable(game); };
-    {
-
-
-        10659852 => [crate::game::gunship::phase(k, 0xa80c, game)];
-        10660048 => [crate::game::gunship::phase(k, 0xa8d0, game)];
-        10660162 => [crate::game::gunship::phase(k, 0xa942, game)];
-        10660176 => [crate::game::gunship::phase(k, 0xa950, game)];
-        10660231 => [crate::game::gunship::phase(k, 0xa987, game)];
-        10660285 => [crate::game::gunship::phase(k, 0xa9bd, game)];
-        10660431 => [crate::game::gunship::phase(k, 0xaa4f, game)];
-        10660445 => [crate::game::gunship::phase(k, 0xaa5d, game)];
-        10660500 => [crate::game::gunship::phase(k, 0xaa94, game)];
-        10660514 => [crate::game::gunship::phase(k, 0xaaa2, game)];
-        10660639 => [crate::game::gunship::phase(k, 0xab1f, game)];
-        10660704 => [crate::game::gunship::phase(k, 0xab60, game)];
-        10660718 => [crate::game::gunship::phase(k, 0xab6e, game)];
-        10660773 => [crate::game::gunship::phase(k, 0xaba5, game)];
-        10660807 => [crate::game::gunship::phase(k, 0xabc7, game)];
-        10660891 => [crate::game::gunship::phase(k, 0xac1b, game)];
-        10661079 => [crate::game::gunship::phase(k, 0xacd7, game)];
-        10661134 => [crate::game::gunship::phase(k, 0xad0e, game)];
-        10661165 => [crate::game::gunship::phase(k, 0xad2d, game)];
     }
 }
 crate::game::callback_dispatch! {

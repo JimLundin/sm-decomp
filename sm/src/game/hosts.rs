@@ -737,6 +737,39 @@ impl sm_game::actors::ceres_ridley::Host for Game {
     }
 }
 
+impl sm_game::actors::gunship::Host for Game {
+    fn spawn_palette_effect(&mut self, definition: u16) {
+        crate::game::palette_effects::spawn(definition, self);
+    }
+    fn face_player_forward(&mut self) {
+        crate::game::session_runtime::player_face_forward(self);
+    }
+    fn event_happened(&mut self, event: u16) -> bool {
+        crate::game::gameplay_flag_runtime::event_has_happened(event, self) != 0
+    }
+    fn restore(&mut self, resource: sm_game::item_pickups::Resource, amount: u16) {
+        crate::game::item_pickups_runtime::restore(resource, amount, self);
+    }
+    fn message_box_response(&mut self, kind: u16) -> i32 {
+        sm_game::message_boxes::poll(kind, self)
+    }
+    fn save_game(&mut self, slot: u16) {
+        sm_game::menus::save_slots::save(slot, self);
+    }
+}
+
+impl sm_game::display::transfer::TilemapQueue for crate::game::session_runtime::Runtime<'_> {
+    fn tilemap_queue_tail(&self) -> u16 {
+        self.word(crate::ram_map::words::VRAM_WRITE_QUEUE_TAIL)
+    }
+    fn set_tilemap_queue_tail(&mut self, tail: u16) {
+        self.write_slice_le(crate::ram_map::words::VRAM_WRITE_QUEUE_TAIL, tail);
+    }
+    fn set_tilemap_queue_byte(&mut self, at: usize, value: u8) {
+        self.set_byte(at, value);
+    }
+}
+
 impl sm_game::escape_typewriter::Host for Game {
     fn colour(&self, index: usize) -> u16 {
         crate::ram_map::word!(self.PALETTE_BUFFER[index])

@@ -391,7 +391,6 @@ pub mod game {
     pub(crate) mod boot;
     pub(crate) mod display_refresh;
     pub(crate) mod display_transfers;
-    pub(crate) mod gunship;
     pub(crate) mod hosts;
     pub use sm_game::progress as progress_flags;
     pub(crate) mod room_backgrounds;
