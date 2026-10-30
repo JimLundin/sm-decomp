@@ -70,6 +70,7 @@ pub mod actors {
     pub mod overlap;
     pub mod scene;
     pub mod shaktool;
+    pub mod shitroid;
     pub mod snapshot;
     pub mod state;
     pub mod torizo;
