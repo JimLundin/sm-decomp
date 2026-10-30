@@ -695,11 +695,6 @@ const _: () = {
 };
 
 impl sm_game::actors::ridley::Host for Game {
-    type Lease<'a> = crate::game::session_runtime::Runtime<'a>;
-    fn lease(&mut self) -> crate::game::session_runtime::Runtime<'_> {
-        crate::game::session_runtime::Runtime::new(self)
-    }
-
     fn run_function(&mut self, function: u16) {
         crate::game::sm_a6::CallRidleyFunc(0xa6_0000 | u32::from(function), self);
     }
