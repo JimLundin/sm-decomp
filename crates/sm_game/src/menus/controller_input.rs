@@ -85,18 +85,16 @@ fn debug_controls<H: Host + ?Sized>(game: &mut H) {
                     word!(game.joypad_dbg_flags ^= (0x8000u16));
                     if entering_swap {
                         word! { game;
-                            joypad_dbg_missiles_swap = word!(game.samus_missiles);
-                            joypad_dbg_super_missiles_swap = word!(game.samus_super_missiles);
-                            joypad_dbg_power_bombs_swap = word!(game.samus_power_bombs);
+                            joypad_dbg_missiles_swap = inventory!(game.Missiles);
+                            joypad_dbg_super_missiles_swap = inventory!(game.SuperMissiles);
+                            joypad_dbg_power_bombs_swap = inventory!(game.PowerBombs);
                         }
-                        word! { game, 0;
-                            samus_missiles, samus_super_missiles, samus_power_bombs,
-                        }
+                        inventory! { game, 0; Missiles, SuperMissiles, PowerBombs }
                     } else {
-                        word! { game;
-                            samus_missiles = word!(game.joypad_dbg_missiles_swap);
-                            samus_super_missiles = word!(game.joypad_dbg_super_missiles_swap);
-                            samus_power_bombs = word!(game.joypad_dbg_power_bombs_swap);
+                        inventory! { game;
+                            Missiles = word!(game.joypad_dbg_missiles_swap);
+                            SuperMissiles = word!(game.joypad_dbg_super_missiles_swap);
+                            PowerBombs = word!(game.joypad_dbg_power_bombs_swap);
                         }
                     }
                 }

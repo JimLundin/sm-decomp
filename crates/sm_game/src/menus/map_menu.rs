@@ -1355,9 +1355,9 @@ pub fn animate_pause_sprite<H: Host + ?Sized>(animation: u16, x: u16, y: u16, ga
 }
 
 pub fn draw_equipment_selector<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.samus_max_reserve_health)
-        | word!(game.collected_items)
-        | word!(game.collected_beams)
+    if inventory!(game.MaxReserveHealth)
+        | inventory!(game.CollectedItems)
+        | inventory!(game.CollectedBeams)
         == 0
     {
         return;

@@ -30,6 +30,46 @@ macro_rules! words {
 }
 pub(crate) use words;
 
+/// Typed access to Samus's inventory words through the host's projected
+/// bytes, by [`crate::inventory::Word`] variant, in the shapes the named word
+/// accesses used: read, store, a store of one value to several words,
+/// `+=`/`-=`/`&=` (reading the old value first), and those with a reread of
+/// the stored value.
+macro_rules! inventory {
+    ($game:ident.$word:ident) => {
+        $crate::inventory::get(&*$game, $crate::inventory::Word::$word)
+    };
+    ($game:ident.$word:ident = $value:expr $(,)?) => {{
+        let value: u16 = $value;
+        $crate::inventory::set($game, $crate::inventory::Word::$word, value)
+    }};
+    ($game:ident.$word:ident += $value:expr $(,)?) => {
+        $crate::menus::prelude::inventory!(@update $game.$word, |old| old.wrapping_add($value))
+    };
+    ($game:ident.$word:ident -= $value:expr $(,)?) => {
+        $crate::menus::prelude::inventory!(@update $game.$word, |old| old.wrapping_sub($value))
+    };
+    ($game:ident.$word:ident &= $value:expr $(,)?) => {
+        $crate::menus::prelude::inventory!(@update $game.$word, |old| old & $value)
+    };
+    ($game:ident.$word:ident $op:tt $value:expr, reread $(,)?) => {{
+        $crate::menus::prelude::inventory!($game.$word $op $value);
+        $crate::inventory::get(&*$game, $crate::inventory::Word::$word)
+    }};
+    ($game:ident, $value:expr; $($word:ident),+ $(,)?) => {
+        $($crate::menus::prelude::inventory!($game.$word = $value);)+
+    };
+    ($game:ident; $($word:ident = $value:expr;)+) => {
+        $($crate::menus::prelude::inventory!($game.$word = $value);)+
+    };
+    (@update $game:ident.$word:ident, |$old:ident| $value:expr) => {{
+        let $old = $crate::inventory::get(&*$game, $crate::inventory::Word::$word);
+        let value: u16 = $value;
+        $crate::inventory::set($game, $crate::inventory::Word::$word, value)
+    }};
+}
+pub(crate) use inventory;
+
 /// A word pair addressed as an enemy-slot record, as the original's `PairU16`.
 #[derive(Copy, Clone)]
 #[repr(C, packed)]

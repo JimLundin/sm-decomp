@@ -126,12 +126,14 @@ fn transfer_map<H: Host + ?Sized>(direction: Direction, game: &mut H) {
 }
 
 pub fn initialize<H: Host + ?Sized>(game: &mut H) {
-    game_word! { game, 99; samus_max_health, samus_health }
-    game_word! { game, 0;
-        samus_max_missiles, samus_missiles, samus_max_super_missiles, samus_super_missiles,
-        samus_max_power_bombs, samus_power_bombs, hud_item_index, collected_beams, equipped_beams,
-        collected_items, equipped_items, reserve_health_mode, samus_max_reserve_health,
-        samus_reserve_health, samus_reserve_missiles,
+    inventory! { game, 99; MaxHealth, Health }
+    inventory! { game, 0;
+        MaxMissiles, Missiles, MaxSuperMissiles, SuperMissiles, MaxPowerBombs, PowerBombs,
+    }
+    game_word!(game.hud_item_index = 0);
+    inventory! { game, 0;
+        CollectedBeams, EquippedBeams, CollectedItems, EquippedItems, ReserveMode,
+        MaxReserveHealth, ReserveHealth, ReserveMissiles,
     }
     game_word! {game; button_config_up = kButton_Up as u16; button_config_down = kButton_Down as u16;
     button_config_left = kButton_Left as u16; button_config_right = kButton_Right as u16;

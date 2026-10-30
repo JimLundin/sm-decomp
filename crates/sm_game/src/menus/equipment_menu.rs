@@ -57,8 +57,8 @@ pub fn update<H: Host + ?Sized>(game: &mut H) {
     match category {
         0 => menu_tilemap::update_reserve_arrow(game),
         1 => {
-            let previous = word!(game.equipped_beams);
-            if word!(game.collected_beams) != 0
+            let previous = inventory!(game.EquippedBeams);
+            if inventory!(game.CollectedBeams) != 0
                 && crate::menu!(game.pausemenu_equipment_category_item) as u8 == 1
             {
                 toggle(10, game);
@@ -100,10 +100,10 @@ fn reserves<H: Host + ?Sized>(game: &mut H) {
         }
     } else if word!(game.joypad1_newkeys) & kButton_Down as u16 != 0 {
         if crate::menu!(game.pausemenu_equipment_category_item) & 0xff00 == 256
-            || word!(game.reserve_health_mode) == 1
+            || inventory!(game.ReserveMode) == 1
             || {
                 crate::menu!(game.pausemenu_equipment_category_item += 256);
-                word!(game.samus_reserve_health) == 0
+                inventory!(game.ReserveHealth) == 0
             }
         {
             scan(1, 0, false, Some(previous), game);
@@ -122,7 +122,7 @@ fn beams<H: Host + ?Sized>(game: &mut H) {
             scan(3, 0, false, Some(previous), game);
         }
     } else if word!(game.joypad1_newkeys) & kButton_Down as u16 != 0 {
-        if word!(game.hyper_beam_flag) == 0
+        if inventory!(game.HyperBeam) == 0
             && crate::menu!(game.pausemenu_equipment_category_item) != 1025
         {
             scan(1, shift(256, game), false, Some(previous), game);
@@ -190,8 +190,8 @@ fn shift<H: Host + ?Sized>(amount: i16, game: &mut H) -> u16 {
 }
 
 fn select_reserves<H: Host + ?Sized>(game: &mut H) -> u16 {
-    let maximum = word!(game.samus_max_reserve_health);
-    if word!(game.samus_max_reserve_health) != 0 {
+    let maximum = inventory!(game.MaxReserveHealth);
+    if inventory!(game.MaxReserveHealth) != 0 {
         crate::menu!(game.pausemenu_equipment_category_item = 0);
         game.queue_sound(0, 0x37_u8, 6);
         1
@@ -214,7 +214,7 @@ fn scan<H: Host + ?Sized>(
         3 => 6,
         _ => unreachable!(),
     };
-    let mut found = category != 1 || word!(game.hyper_beam_flag) == 0;
+    let mut found = category != 1 || inventory!(game.HyperBeam) == 0;
     while found {
         let index = (offset >> 1) as isize;
         let tables = &game.equipment_screen_tables();
@@ -224,9 +224,9 @@ fn scan<H: Host + ?Sized>(
             _ => table_word(&tables.boot_bitmasks, game, BOOT_BITMASK_ADDRESS, index),
         };
         let collected = if category == 1 {
-            word!(game.collected_beams)
+            inventory!(game.CollectedBeams)
         } else {
-            word!(game.collected_items)
+            inventory!(game.CollectedItems)
         };
         if mask & collected != 0 {
             break;
@@ -261,7 +261,7 @@ fn scan<H: Host + ?Sized>(
 }
 
 fn exclude_other_beam<H: Host + ?Sized>(previous: u16, game: &mut H) {
-    let added = word!(game.equipped_beams) & !previous;
+    let added = inventory!(game.EquippedBeams) & !previous;
     let (remove, tile) = if added & 4 != 0 {
         (8, 4)
     } else if added & 8 != 0 {
@@ -269,8 +269,8 @@ fn exclude_other_beam<H: Host + ?Sized>(previous: u16, game: &mut H) {
     } else {
         return;
     };
-    if word!(game.equipped_beams) & remove != 0 {
-        word!(game.equipped_beams &= !remove);
+    if inventory!(game.EquippedBeams) & remove != 0 {
+        inventory!(game.EquippedBeams &= !remove);
         menu_tilemap::recolor_native(
             table_word(
                 &game.equipment_screen_tables().beam_tilemap_offsets,

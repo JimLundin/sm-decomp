@@ -74,7 +74,7 @@ const MENU_SPRITE_TILES: u32 = 0xb6_c000;
 const AREA_SELECT_BG3_TILES: u32 = 0x8e_d600;
 /// $8E:E400: the menu palettes.
 const MENU_PALETTES: u32 = 0x8e_e400;
-use crate::ram::{checked_word as at, word, words as fields};
+use crate::ram::word;
 use sm_data::area_select_palettes::{
     ADDRESS as AREA_PALETTES, AreaSelectPalettes, BYTES as AREA_PALETTE_BYTES, INACTIVE_OFFSET,
     RUN_OFFSETS,
@@ -324,9 +324,9 @@ pub fn health<H: Host + ?Sized>(empty: u16, offset: u16, game: &mut H) {
         return;
     }
     load(offset, ENERGY_TEXT, game);
-    let mut full = word!(game.samus_health) / 100;
-    let remainder = word!(game.samus_health) % 100;
-    let maximum = word!(game.samus_max_health) / 100;
+    let mut full = inventory!(game.Health) / 100;
+    let remainder = inventory!(game.Health) % 100;
+    let maximum = inventory!(game.MaxHealth) / 100;
     let mut position = offset.wrapping_add(72);
     let mut columns = 7;
     for _ in 0..maximum {
@@ -471,7 +471,7 @@ pub fn update_reserve_arrow<H: Host + ?Sized>(game: &mut H) {
 
 pub fn reserve_arrow<H: Host + ?Sized>(mode: ReserveArrow, game: &mut H) {
     let lit = match mode {
-        ReserveArrow::Animated => word!(game.reserve_health_mode) == 1,
+        ReserveArrow::Animated => inventory!(game.ReserveMode) == 1,
         ReserveArrow::On => true,
         ReserveArrow::Off => false,
     };
@@ -533,7 +533,7 @@ pub fn recolor_native<H: Host + ?Sized>(
 }
 
 pub fn equipment_icons<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.samus_max_reserve_health) != 0 {
+    if inventory!(game.MaxReserveHealth) != 0 {
         for index in 0..2 {
             let destination = crate::menu_lists::reserve_tank_destination(game, index) as usize;
             let source = crate::menu_lists::reserve_tank_tilemap(game, index);
@@ -547,24 +547,32 @@ pub fn equipment_icons<H: Host + ?Sized>(game: &mut H) {
     ] {
         let destinations = native_record(0x820000 | offsets, game);
         let weapons = offsets == WEAPON_OFFSETS;
-        let hyper = weapons && word!(game.hyper_beam_flag) != 0;
+        let hyper = weapons && inventory!(game.HyperBeam) != 0;
         let (collected, equipped, bytes) = if weapons {
-            (fields::collected_beams, fields::equipped_beams, 10)
+            (
+                crate::inventory::Word::CollectedBeams,
+                crate::inventory::Word::EquippedBeams,
+                10,
+            )
         } else {
-            (fields::collected_items, fields::equipped_items, 18)
+            (
+                crate::inventory::Word::CollectedItems,
+                crate::inventory::Word::EquippedItems,
+                18,
+            )
         };
         for index in 0..if hyper { 5 } else { count } {
             let destination = destinations.word(2 * index) as usize;
             if hyper {
                 let source = crate::menu_lists::hyper_beam_tilemap(game, index as isize);
                 copy_native_tiles(destination, source, 10, game);
-            } else if at!(game, collected;)
+            } else if crate::inventory::get(game, collected)
                 & crate::menu_lists::equipment_bit(game, masks, index as isize)
                 != 0
             {
                 let source = crate::menu_lists::equipment_tilemap(game, tiles, index as isize);
                 copy_native_tiles(destination, source, bytes, game);
-                if at!(game, equipped;)
+                if crate::inventory::get(game, equipped)
                     & crate::menu_lists::equipment_bit(game, masks, index as isize)
                     == 0
                 {
@@ -605,16 +613,16 @@ pub fn prepare_equipment_frame<H: Host + ?Sized>(game: &mut H) {
         game,
     );
     equipment_wireframe(game);
-    if word!(game.samus_max_reserve_health) != 0 {
-        let hundreds = word!(game.samus_reserve_health) / 100;
-        let remainder = word!(game.samus_reserve_health) % 100;
+    if inventory!(game.MaxReserveHealth) != 0 {
+        let hundreds = inventory!(game.ReserveHealth) / 100;
+        let remainder = inventory!(game.ReserveHealth) % 100;
         reserve_digits(hundreds, remainder, game);
     }
 }
 
 pub fn equipment_wireframe<H: Host + ?Sized>(game: &mut H) {
     let mut cursor = 0u16;
-    while word!(game.equipped_items) & 0x101
+    while inventory!(game.EquippedItems) & 0x101
         != crate::menu_lists::wireframe_suit(game, (cursor >> 1) as isize)
     {
         cursor = cursor.wrapping_add(2);
@@ -689,7 +697,7 @@ pub fn queue_options<H: Host + ?Sized>(game: &mut H) {
 }
 
 fn reserve_palette<H: Host + ?Sized>(game: &mut H) -> u16 {
-    if word!(game.samus_reserve_health) == 0 {
+    if inventory!(game.ReserveHealth) == 0 {
         return 1536;
     }
     let expired =
@@ -716,12 +724,12 @@ fn reserve_sprite<H: Host + ?Sized>(sprite: u16, index: usize, palette: u16, gam
 
 pub fn reserve_tanks<H: Host + ?Sized>(game: &mut H) {
     let palette = reserve_palette(game);
-    if word!(game.samus_max_reserve_health) == 0 {
+    if inventory!(game.MaxReserveHealth) == 0 {
         return;
     }
-    let maximum = word!(game.samus_max_reserve_health) / 100;
-    let remainder = word!(game.samus_reserve_health) % 100;
-    let full = word!(game.samus_reserve_health) / 100;
+    let maximum = inventory!(game.MaxReserveHealth) / 100;
+    let remainder = inventory!(game.ReserveHealth) % 100;
+    let full = inventory!(game.ReserveHealth) / 100;
     for index in 0..usize::from(full) {
         reserve_sprite(0x1b, index, palette, game);
     }
@@ -730,7 +738,7 @@ pub fn reserve_tanks<H: Host + ?Sized>(game: &mut H) {
     if remainder != 0 {
         let mut frame = 2 * (remainder / 14);
         if (i32::from(frame) - 7) & 0x8000 != 0
-            && remainder % 14 != 0
+            && !remainder.is_multiple_of(14)
             && game
                 .ram()
                 .read_byte(crate::ram::bytes::nmi_frame_counter_byte)
@@ -739,7 +747,7 @@ pub fn reserve_tanks<H: Host + ?Sized>(game: &mut H) {
         {
             frame = frame.wrapping_add(2);
         }
-        if (i32::from(word!(game.samus_reserve_health)) - 100) & 0x8000 == 0 {
+        if (i32::from(inventory!(game.ReserveHealth)) - 100) & 0x8000 == 0 {
             frame = frame.wrapping_add(16);
         }
         const PARTIAL: [u16; 16] = [
