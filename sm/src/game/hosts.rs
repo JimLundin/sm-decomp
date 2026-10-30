@@ -26,6 +26,20 @@ impl sm_game::runtime_access::RuntimeAccess for Game {
     }
 }
 
+impl sm_game::hdma_program::LeaseHdma for Game {
+    type Lease<'a> = crate::game::session_runtime::Runtime<'a>;
+    fn hdma_lease(&mut self) -> Self::Lease<'_> {
+        crate::game::session_runtime::Runtime::new(self)
+    }
+}
+
+impl sm_game::hdma_program::HdmaLease for crate::game::session_runtime::Runtime<'_> {
+    type Game = Game;
+    fn foreign<T>(&mut self, action: impl FnOnce(&mut Game) -> T) -> T {
+        crate::game::session_runtime::Runtime::foreign(self, action)
+    }
+}
+
 impl sm_game::grapple_swing::Host for Game {
     type Lease<'a> = crate::game::session_runtime::Runtime<'a>;
     fn with_lease<'s, R>(&'s mut self, action: impl FnOnce(&mut Self::Lease<'s>) -> R) -> R {

@@ -213,6 +213,13 @@ where
     }
 }
 
+/// Whether `address` names a pre-instruction that does nothing.
+pub fn pre_action_is_nothing(address: u32) -> bool {
+    HDMA_PRE_ACTIONS
+        .iter()
+        .any(|&(at, action)| at == address && matches!(action, HdmaPreAction::Nothing))
+}
+
 /// Run the pre-instruction at `address` for HDMA object `k`.
 pub fn hdma_pre_action<H>(address: u32, k: u16, game: &mut H)
 where

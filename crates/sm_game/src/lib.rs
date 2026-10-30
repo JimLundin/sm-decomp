@@ -38,6 +38,7 @@ pub mod hdma;
 pub mod hdma_dispatch;
 pub mod hdma_effects;
 pub mod hdma_objects;
+pub mod hdma_program;
 pub mod hud;
 pub mod imported;
 pub mod intro_objects;
