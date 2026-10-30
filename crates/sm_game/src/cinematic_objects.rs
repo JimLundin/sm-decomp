@@ -202,16 +202,20 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             crate::flow::set(game, crate::flow::Word::CinematicFunction, (0x8bc0c5i32) as u16);
             word! { game, 1; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
             },
+            // The instruction's own address is in A at $F51D.
             9172253 => {
-            spawn_cinematic_sprite_at(samus::SUITLESS_JUMP, 0, 0, game);
+            spawn_cinematic_sprite_at(samus::SUITLESS_JUMP, 0, 0xf51d, game);
             },
+            // A is the slot for the head, then the palette its initializer loaded.
             9172308 => {
-            if (word!(game.GAME_TIME_HOURS) as i32 - 10i32) & 0x8000 != 0 {
-                spawn_cinematic_sprite_at(samus::SUITED_JUMP_HEAD_WITHOUT_HELMET, 2, 0, game);
+            let head = if (word!(game.GAME_TIME_HOURS) as i32 - 10i32) & 0x8000 != 0 {
+                samus::SUITED_JUMP_HEAD_WITHOUT_HELMET
             } else {
-                spawn_cinematic_sprite_at(samus::SUITED_JUMP_HEAD_WITH_HELMET, 2, 0, game);
-            }
-            spawn_cinematic_sprite_at(samus::SUITED_JUMP_BODY, 0, 0, game);
+                samus::SUITED_JUMP_HEAD_WITH_HELMET
+            };
+            spawn_cinematic_sprite_at(head, 2, 2, game);
+            let parameter = crate::ending_screens::initializer_palette(head);
+            spawn_cinematic_sprite_at(samus::SUITED_JUMP_BODY, 0, parameter, game);
             },
             9158806 => {
             if word!(game.JAPANESE_TEXT_FLAG) == 0 {

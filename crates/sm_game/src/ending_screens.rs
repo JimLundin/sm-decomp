@@ -289,8 +289,18 @@ pub fn advance_postcredits_samus_reveal<H: crate::menus::host::Host + ?Sized>(
             samus::SUITED_THUMBS_UP_BODY,
         ],
     };
+    // $938A takes A as the spawn parameter, and nothing here sets it: the
+    // first spawn gets the hours just compared, or after the palette
+    // decomposition its last blue delta ($7E:2FFE); each later one the
+    // palette index the previous initializer loaded.
+    let mut parameter = if initial && under_ten {
+        word!(game.TILEMAP_STUFF[2047])
+    } else {
+        word!(game.GAME_TIME_HOURS)
+    };
     for &definition in sprites {
-        CinematicObjects::Sprites.spawn(definition, 0, game);
+        CinematicObjects::Sprites.spawn(definition, parameter, game);
+        parameter = initializer_palette(definition);
     }
     if initial {
         if !under_ten {
@@ -313,6 +323,25 @@ pub fn advance_postcredits_samus_reveal<H: crate::menus::host::Host + ?Sized>(
                 function::IDLE_SAMUS_SUIT_CROSS_FADE,
             );
         }
+    }
+}
+
+/// The palette index a post-credits Samus sprite's initializer stores last
+/// (and so leaves in A): palette 5 for suitless Samus and the head without
+/// the helmet ($8B:F143, $8B:F17C), palette 6 for the rest ($8B:F156,
+/// $8B:F169).
+pub(crate) fn initializer_palette(definition: u16) -> u16 {
+    use samus::*;
+    match definition {
+        SUITLESS_IDLE
+        | SUITLESS_IDLE_LEGS
+        | SUITLESS_LETTING_HAIR_DOWN
+        | SUITLESS_LETTING_HAIR_DOWN_LEGS
+        | SUITLESS_JUMP
+        | SUITED_IDLE_HEAD_WITHOUT_HELMET
+        | SUITED_THUMBS_UP_HEAD_WITHOUT_HELMET
+        | SUITED_JUMP_HEAD_WITHOUT_HELMET => 5 * 0x200,
+        _ => SAMUS_PALETTE,
     }
 }
 

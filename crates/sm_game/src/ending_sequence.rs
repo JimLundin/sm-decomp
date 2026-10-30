@@ -549,7 +549,10 @@ pub fn fade_from_white<H: Host + ?Sized>(game: &mut H) {
         queue_cinematic_tilemap(CinematicTilemap::FullText, game);
         word!(game.LAYER1_X_POS = 256);
         word!(game.LAYER1_Y_POS = 256);
-        crate::cinematic_objects::spawn_cinematic_burst(object::ICON_S_TOP, [0; 4], 6, game);
+        // A carries into each spawn: the layer position, then what each
+        // initializer loaded last ($8B:F18F..F1D4).
+        let parameters = [0x0100, 8, 8, 0x0e00];
+        crate::cinematic_objects::spawn_cinematic_burst(object::ICON_S_TOP, parameters, 6, game);
         crate::word_transfers!(game, descending, 16; le(PALETTE_BUFFER, 31) <- value(0));
         crate::word_transfers!(game, descending, 16; native(ICON_PALETTE_END) <- rom(ICON_PALETTE, 15));
     }
