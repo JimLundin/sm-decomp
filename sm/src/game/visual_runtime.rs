@@ -161,19 +161,7 @@ impl visual_host::Composition for Runtime<'_> {
 impl visual_host::Host for Runtime<'_> {}
 
 impl sm_game::hdma_effects::Host for Runtime<'_> {
-    fn calculate_xray_window(
-        &mut self,
-        x: u16,
-        y: u16,
-        angle: u16,
-        width: u16,
-        off_screen: bool,
-        table: usize,
-    ) {
-        self.foreign(|game| {
-            crate::game::beam_windows::calculate_xray_window(
-                x, y, angle, width, off_screen, table, game,
-            )
-        });
+    fn calculate_xray_window(&mut self, window: sm_game::beam_windows::XrayWindow) {
+        self.foreign(|game| crate::game::beam_windows::calculate_xray_window(window, game));
     }
 }

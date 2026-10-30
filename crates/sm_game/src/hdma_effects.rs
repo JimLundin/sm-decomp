@@ -12,15 +12,7 @@ use crate::visual_state::{EyeBeamPhase, HazePhase, HdmaWave, Weather};
 /// Session projection, plus the eye beam's window table outside it.
 pub trait Host: SessionRam + SessionAccess + ActorAccess + Content {
     /// Build the eye beam's window table outside the session view.
-    fn calculate_xray_window(
-        &mut self,
-        x: u16,
-        y: u16,
-        angle: u16,
-        width: u16,
-        off_screen: bool,
-        table: usize,
-    );
+    fn calculate_xray_window(&mut self, window: crate::beam_windows::XrayWindow);
 }
 
 /// Low and high bytes of an object word, as the original's byte stores.
@@ -370,7 +362,14 @@ pub trait HdmaEffects: Host {
         let width = self.session().hdma.objects[usize::from(slot >> 1)].c;
         let y = actor.y.whole.wrapping_sub(self.inputs().camera_y);
         let x = actor.x.whole.wrapping_sub(self.inputs().camera_x);
-        self.calculate_xray_window(x, y, angle, width, x >= 256, 0x9100);
+        self.calculate_xray_window(crate::beam_windows::XrayWindow {
+            x,
+            y,
+            angle,
+            width,
+            off_screen: x >= 256,
+            table: 0x9100,
+        });
         let colors = colors(self.hdma_object(slot));
         for (target, color) in (0x74..).zip(colors) {
             self.set_byte(target, color);
