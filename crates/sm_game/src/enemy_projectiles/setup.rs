@@ -24,177 +24,138 @@ fn native_setup_word(address: u16, index: isize, ctx: &mut impl Host) -> u16 {
 }
 
 pub fn dispatch(ea: u32, j: u16, ctx: &mut impl Host) {
+    use addresses::init::*;
     match ea {
-        addresses::init::AT_8AAF => Eproj_Init_0x8aaf(j, ctx),
-        addresses::init::DRAYGONS_WALL_TURRET_PROJS => EprojInit_DraygonsWallTurretProjs(j, ctx),
-        addresses::init::RIDLEYS_FIREBALL => EprojInit_9642_RidleysFireball(j, ctx),
-        addresses::init::PHANTOON_DESTROYABLE_FIREBALLS => {
-            EprojInit_PhantoonDestroyableFireballs(j, ctx)
-        }
-        addresses::init::ROCKS_KRAID_SPITS => EprojInit_RocksKraidSpits(j, ctx),
-        addresses::init::ROCKS_WHEN_KRAID_RISES => EprojInit_RocksWhenKraidRises(j, ctx),
-        addresses::init::WALKING_LAVA_SEAHORSE_FIREBALL => {
-            EprojInit_WalkingLavaSeahorseFireball(j, ctx)
-        }
-        addresses::init::PIRATE_CLAW => EprojInit_PirateClaw(j, ctx),
-        addresses::init::BOMB_TORIZO_LOW_HEALTH_DROOL => EprojInit_BombTorizoLowHealthDrool(j, ctx),
-        addresses::init::BOMB_TORIZO_EXPLOSIVE_SWIPE => EprojInit_BombTorizoExplosiveSwipe(j, ctx),
-        addresses::init::BOMB_TORIZO_STATUE_BREAKING => EprojInit_BombTorizoStatueBreaking(j, ctx),
-        addresses::init::AT_AB07 => EprojInit_AB07(j, ctx),
-        addresses::init::GOLDEN_TORIZOS_CHOZO_ORBS => EprojInit_GoldenTorizosChozoOrbs(j, ctx),
-        addresses::init::TORIZO_SONIC_BOOM => EprojInit_TorizoSonicBoom(j, ctx),
-        addresses::init::WRECKED_SHIP_CHOZO_SPIKE_FOOTSTEPS => {
-            EprojInit_WreckedShipChozoSpikeFootsteps(j, ctx)
-        }
-        addresses::init::GOLDEN_TORIZO_EGG => EprojInit_GoldenTorizoEgg(j, ctx),
-        addresses::init::GOLDEN_TORIZO_EYE_BEAM => EprojInit_GoldenTorizoEyeBeam(j, ctx),
-        addresses::init::LAVA_SEAHORSE_FIREBALL => EprojInit_LavaSeahorseFireball(j, ctx),
-        addresses::init::EYE_DOOR_PROJECTILE => EprojInit_EyeDoorProjectile(j, ctx),
-        addresses::init::EYE_DOOR_SWEAT => EprojInit_EyeDoorSweat(j, ctx),
-        addresses::init::TOURIAN_STATUE_EYE_GLOW => EprojInit_TourianStatueEyeGlow(j, ctx),
-        addresses::init::TOURIAN_STATUE_UNLOCKING_PARTICLE => {
-            EprojInit_TourianStatueUnlockingParticle(j, ctx)
-        }
-        addresses::init::TOURIAN_STATUE_SOUL => EprojInit_TourianStatueSoul(j, ctx),
-        addresses::init::NUCLEAR_WAFFLE_BODY => EprojInit_NuclearWaffleBody(j, ctx),
-        addresses::init::SHAKTOOL_ATTACK_MIDDLE_BACK_CIRCLE => {
-            EprojInit_ShaktoolAttackMiddleBackCircle(j, ctx)
-        }
-        addresses::init::MOTHER_BRAIN_BOMB => EprojInit_MotherBrainBomb(j, ctx),
-        addresses::init::MOTHER_BRAIN_ESCAPE_DOOR_PARTICLES => {
-            EprojInit_MotherBrainEscapeDoorParticles(j, ctx)
-        }
-        addresses::init::TIME_BOMB_SET_JAPANESE_TEXT => EprojInit_TimeBombSetJapaneseText(j, ctx),
-        addresses::init::MOTHER_BRAIN_GLASS_SHATTERING_SHARD => {
-            EprojInit_MotherBrainGlassShatteringShard(j, ctx)
-        }
-        addresses::init::MOTHER_BRAIN_GLASS_SHATTERING_SPARKLE => {
+        AT_8AAF => Eproj_Init_0x8aaf(j, ctx),
+        DRAYGONS_WALL_TURRET_PROJS => EprojInit_DraygonsWallTurretProjs(j, ctx),
+        RIDLEYS_FIREBALL => EprojInit_9642_RidleysFireball(j, ctx),
+        PHANTOON_DESTROYABLE_FIREBALLS => EprojInit_PhantoonDestroyableFireballs(j, ctx),
+        ROCKS_KRAID_SPITS => EprojInit_RocksKraidSpits(j, ctx),
+        ROCKS_WHEN_KRAID_RISES => EprojInit_RocksWhenKraidRises(j, ctx),
+        WALKING_LAVA_SEAHORSE_FIREBALL => EprojInit_WalkingLavaSeahorseFireball(j, ctx),
+        PIRATE_CLAW => EprojInit_PirateClaw(j, ctx),
+        BOMB_TORIZO_LOW_HEALTH_DROOL => EprojInit_BombTorizoLowHealthDrool(j, ctx),
+        BOMB_TORIZO_EXPLOSIVE_SWIPE => EprojInit_BombTorizoExplosiveSwipe(j, ctx),
+        BOMB_TORIZO_STATUE_BREAKING => EprojInit_BombTorizoStatueBreaking(j, ctx),
+        AT_AB07 => EprojInit_AB07(j, ctx),
+        GOLDEN_TORIZOS_CHOZO_ORBS => EprojInit_GoldenTorizosChozoOrbs(j, ctx),
+        TORIZO_SONIC_BOOM => EprojInit_TorizoSonicBoom(j, ctx),
+        WRECKED_SHIP_CHOZO_SPIKE_FOOTSTEPS => EprojInit_WreckedShipChozoSpikeFootsteps(j, ctx),
+        GOLDEN_TORIZO_EGG => EprojInit_GoldenTorizoEgg(j, ctx),
+        GOLDEN_TORIZO_EYE_BEAM => EprojInit_GoldenTorizoEyeBeam(j, ctx),
+        LAVA_SEAHORSE_FIREBALL => EprojInit_LavaSeahorseFireball(j, ctx),
+        EYE_DOOR_PROJECTILE => EprojInit_EyeDoorProjectile(j, ctx),
+        EYE_DOOR_SWEAT => EprojInit_EyeDoorSweat(j, ctx),
+        TOURIAN_STATUE_EYE_GLOW => EprojInit_TourianStatueEyeGlow(j, ctx),
+        TOURIAN_STATUE_UNLOCKING_PARTICLE => EprojInit_TourianStatueUnlockingParticle(j, ctx),
+        TOURIAN_STATUE_SOUL => EprojInit_TourianStatueSoul(j, ctx),
+        NUCLEAR_WAFFLE_BODY => EprojInit_NuclearWaffleBody(j, ctx),
+        SHAKTOOL_ATTACK_MIDDLE_BACK_CIRCLE => EprojInit_ShaktoolAttackMiddleBackCircle(j, ctx),
+        MOTHER_BRAIN_BOMB => EprojInit_MotherBrainBomb(j, ctx),
+        MOTHER_BRAIN_ESCAPE_DOOR_PARTICLES => EprojInit_MotherBrainEscapeDoorParticles(j, ctx),
+        TIME_BOMB_SET_JAPANESE_TEXT => EprojInit_TimeBombSetJapaneseText(j, ctx),
+        MOTHER_BRAIN_GLASS_SHATTERING_SHARD => EprojInit_MotherBrainGlassShatteringShard(j, ctx),
+        MOTHER_BRAIN_GLASS_SHATTERING_SPARKLE => {
             EprojInit_MotherBrainGlassShatteringSparkle(j, ctx)
         }
-        addresses::init::N00B_TUBE_CRACK => EprojInit_N00bTubeCrack(j, ctx),
-        addresses::init::N00B_TUBE_SHARDS => EprojInit_N00bTubeShards(j, ctx),
-        addresses::init::N00B_TUBE_RELEASED_AIR_BUBBLES => {
-            EprojInit_N00bTubeReleasedAirBubbles(j, ctx)
-        }
-        addresses::init::SAVE_STATION_ELECTRICITY => EprojInit_SaveStationElectricity(j, ctx),
-        addresses::init::BOTWOONS_SPIT => EprojInit_BotwoonsSpit(j, ctx),
-        addresses::init::SPARKS => EprojInit_Sparks(j, ctx),
-        addresses::init::FIREBALL_EXPLOSION => EprojInit_9660_FireballExplosion(j, ctx),
-        addresses::init::CERES_FALLING_DEBRIS => EprojInit_9734_CeresFallingDebris(j, ctx),
-        addresses::init::CERES_ELEVATOR_PAD => EprojInit_CeresElevatorPad(j, ctx),
-        addresses::init::CERES_ELEVATOR_PLATFORM => EprojInit_CeresElevatorPlatform(j, ctx),
-        addresses::init::PRE_PHANTOM_ROOM => EprojPreInstr_PrePhantomRoom(j, ctx),
-        addresses::init::SUB_86_BB30 => sub_86BB30(j, ctx),
-        addresses::init::MOTHER_BRAINS_BLUE_RING_LASERS => Eproj_MotherBrainsBlueRingLasers(j, ctx),
-        addresses::init::SUB_86_C605 => sub_86C605(j, ctx),
-        addresses::init::EPROJ_INI_TOURIAN_STATUE_UNLOCKING_PARTICLE_TAIL => {
+        N00B_TUBE_CRACK => EprojInit_N00bTubeCrack(j, ctx),
+        N00B_TUBE_SHARDS => EprojInit_N00bTubeShards(j, ctx),
+        N00B_TUBE_RELEASED_AIR_BUBBLES => EprojInit_N00bTubeReleasedAirBubbles(j, ctx),
+        SAVE_STATION_ELECTRICITY => EprojInit_SaveStationElectricity(j, ctx),
+        BOTWOONS_SPIT => EprojInit_BotwoonsSpit(j, ctx),
+        SPARKS => EprojInit_Sparks(j, ctx),
+        FIREBALL_EXPLOSION => EprojInit_9660_FireballExplosion(j, ctx),
+        CERES_FALLING_DEBRIS => EprojInit_9734_CeresFallingDebris(j, ctx),
+        CERES_ELEVATOR_PAD => EprojInit_CeresElevatorPad(j, ctx),
+        CERES_ELEVATOR_PLATFORM => EprojInit_CeresElevatorPlatform(j, ctx),
+        PRE_PHANTOM_ROOM => EprojPreInstr_PrePhantomRoom(j, ctx),
+        SUB_86_BB30 => sub_86BB30(j, ctx),
+        MOTHER_BRAINS_BLUE_RING_LASERS => Eproj_MotherBrainsBlueRingLasers(j, ctx),
+        SUB_86_C605 => sub_86C605(j, ctx),
+        EPROJ_INI_TOURIAN_STATUE_UNLOCKING_PARTICLE_TAIL => {
             EprojIni_TourianStatueUnlockingParticleTail(j, ctx)
         }
-        addresses::init::SUB_86_D992 => sub_86D992(j, ctx),
-        addresses::init::DUST_CLOUD_OR_EXPLOSION => EprojInit_DustCloudOrExplosion(j, ctx),
-        addresses::init::DRAYGONS_GUNK => EprojInit_DraygonsGunk(j, ctx),
-        addresses::init::CROCOMIRE_SPIKE_WALL_PIECES => EprojInit_CrocomireSpikeWallPieces(j, ctx),
-        addresses::init::CROCOMIRE_BRIDGE_CRUMBLING => EprojInit_CrocomireBridgeCrumbling(j, ctx),
-        addresses::init::AT_9634 => EprojInit_9634(j, ctx),
-        addresses::init::PHANTOON_STARTING_FIREBALLS => EprojInit_PhantoonStartingFireballs(j, ctx),
-        addresses::init::ROCKS_FALLING_KRAID_CEILING => EprojInit_RocksFallingKraidCeiling(j, ctx),
-        addresses::init::AT_A379 => EprojInit_A379(j, ctx),
-        addresses::init::BOMB_TORIZO_LOW_HEALTH_INITIAL_DROOL => {
-            EprojInit_BombTorizoLowHealthInitialDrool(j, ctx)
-        }
-        addresses::init::AT_A977 => EprojInit_A977(j, ctx),
-        addresses::init::TOURIAN_STATUE_DUST_CLOUDS => EprojInit_TourianStatueDustClouds(j, ctx),
-        addresses::init::TOURIAN_ESCAPE_SHAFT_FAKE_WALL_EXPLODE => {
+        SUB_86_D992 => sub_86D992(j, ctx),
+        DUST_CLOUD_OR_EXPLOSION => EprojInit_DustCloudOrExplosion(j, ctx),
+        DRAYGONS_GUNK => EprojInit_DraygonsGunk(j, ctx),
+        CROCOMIRE_SPIKE_WALL_PIECES => EprojInit_CrocomireSpikeWallPieces(j, ctx),
+        CROCOMIRE_BRIDGE_CRUMBLING => EprojInit_CrocomireBridgeCrumbling(j, ctx),
+        AT_9634 => EprojInit_9634(j, ctx),
+        PHANTOON_STARTING_FIREBALLS => EprojInit_PhantoonStartingFireballs(j, ctx),
+        ROCKS_FALLING_KRAID_CEILING => EprojInit_RocksFallingKraidCeiling(j, ctx),
+        AT_A379 => EprojInit_A379(j, ctx),
+        BOMB_TORIZO_LOW_HEALTH_INITIAL_DROOL => EprojInit_BombTorizoLowHealthInitialDrool(j, ctx),
+        AT_A977 => EprojInit_A977(j, ctx),
+        TOURIAN_STATUE_DUST_CLOUDS => EprojInit_TourianStatueDustClouds(j, ctx),
+        TOURIAN_ESCAPE_SHAFT_FAKE_WALL_EXPLODE => {
             EprojInit_TourianEscapeShaftFakeWallExplode(j, ctx)
         }
-        addresses::init::TOURIAN_STATUE_UNLOCKING_PARTICLE_WATER_SPLASH => {
+        TOURIAN_STATUE_UNLOCKING_PARTICLE_WATER_SPLASH => {
             EprojInit_TourianStatueUnlockingParticleWaterSplash(j, ctx)
         }
-        addresses::init::TOURIAN_STATUE_BASE_DECORATION => {
-            EprojInit_TourianStatueBaseDecoration(j, ctx)
-        }
-        addresses::init::TOURIAN_STATUE_RIDLEY => EprojInit_TourianStatueRidley(j, ctx),
-        addresses::init::TOURIAN_STATUE_PHANTOON => EprojInit_TourianStatuePhantoon(j, ctx),
-        addresses::init::NORFAIR_LAVAQUAKE_ROCKS => EprojInit_NorfairLavaquakeRocks(j, ctx),
-        addresses::init::AT_BDA2 => EprojInit_BDA2(j, ctx),
-        addresses::init::MOTHER_BRAIN_ROOM_TURRETS => EprojInit_MotherBrainRoomTurrets(j, ctx),
-        addresses::init::MOTHER_BRAIN_ROOM_TURRET_BULLETS => {
-            EprojInit_MotherBrainRoomTurretBullets(j, ctx)
-        }
-        addresses::init::MOTHER_BRAIN_DEATH_BEEM_FIRED => {
-            EprojInit_MotherBrainDeathBeemFired(j, ctx)
-        }
-        addresses::init::MOTHER_BRAIN_RAINBOW_BEAM => EprojInit_MotherBrainRainbowBeam(j, ctx),
-        addresses::init::MOTHER_BRAINS_DROOL => EprojInit_MotherBrainsDrool(j, ctx),
-        addresses::init::MOTHER_BRAINS_DEATH_EXPLOSION => {
-            EprojInit_MotherBrainsDeathExplosion(j, ctx)
-        }
-        addresses::init::MOTHER_BRAINS_RAINBOW_BEAM_EXPLOSION => {
-            EprojInit_MotherBrainsRainbowBeamExplosion(j, ctx)
-        }
-        addresses::init::MOTHER_BRAIN_PURPLE_BREATH_BIG => {
-            EprojInit_MotherBrainPurpleBreathBig(j, ctx)
-        }
-        addresses::init::MOTHER_BRAIN_PURPLE_BREATH_SMALL => {
-            EprojInit_MotherBrainPurpleBreathSmall(j, ctx)
-        }
-        addresses::init::MOTHER_BRAIN_TUBE_FALLING => EprojInit_MotherBrainTubeFalling(j, ctx),
-        addresses::init::MARIDIA_FLOATERS_SPIKES => EprojInit_MaridiaFloatersSpikes(j, ctx),
-        addresses::init::SPORE_SPAWN_STALK => EprojInit_SporeSpawnStalk(j, ctx),
-        addresses::init::SPORE_SPAWNERS => EprojInit_SporeSpawners(j, ctx),
-        addresses::init::EYE_DOOR_SMOKE => EprojInit_EyeDoorSmoke(j, ctx),
-        addresses::init::BOTWOONS_BODY => EprojInit_BotwoonsBody(j, ctx),
-        addresses::init::CROCOMIRE_PROJECTILE => EprojInit_CrocomireProjectile(j, ctx),
-        addresses::init::PIRATE_MOTHER_BRAIN_LASER => EprojInit_PirateMotherBrainLaser(j, ctx),
-        addresses::init::GOLDEN_TORIZO_SUPER_MISSILE => EprojInit_GoldenTorizoSuperMissile(j, ctx),
-        addresses::init::KI_HUNTER_ACID_SPIT_LEFT => EprojInit_KiHunterAcidSpitLeft(j, ctx),
-        addresses::init::KI_HUNTER_ACID_SPIT_RIGHT => EprojInit_KiHunterAcidSpitRight(j, ctx),
-        addresses::init::KAGOS_BUGS => EprojInit_KagosBugs(j, ctx),
-        addresses::init::WRECKED_SHIP_ROBOT_LASER_DOWN => {
-            EprojInit_WreckedShipRobotLaserDown(j, ctx)
-        }
-        addresses::init::WRECKED_SHIP_ROBOT_LASER_HORIZONTAL => {
-            EprojInit_WreckedShipRobotLaserHorizontal(j, ctx)
-        }
-        addresses::init::WRECKED_SHIP_ROBOT_LASER_UP => EprojInit_WreckedShipRobotLaserUp(j, ctx),
-        addresses::init::AT_DBF2 => EprojInit_DBF2(j, ctx),
-        addresses::init::SPORES => EprojInit_Spores(j, ctx),
-        addresses::init::NAMI_FUNE_FIREBALL => EprojInit_NamiFuneFireball(j, ctx),
-        addresses::init::LAVA_THROWN_BY_LAVAMAN => EprojInit_LavaThrownByLavaman(j, ctx),
-        addresses::init::MINI_KRAID_SPIT => EprojInit_MiniKraidSpit(j, ctx),
-        addresses::init::BOMB_TORIZO_LOW_HEALTH_EXPLODE => {
-            EprojInit_BombTorizoLowHealthExplode(j, ctx)
-        }
-        addresses::init::BOMB_TORIZO_DEATH_EXPLOSION => EprojInit_BombTorizoDeathExplosion(j, ctx),
-        addresses::init::BOMB_TORIZOS_CHOZO_ORBS => EprojInit_BombTorizosChozoOrbs(j, ctx),
-        addresses::init::TOURIAN_LANDING_DUST_CLOUDS_RIGHT_FOOT => {
+        TOURIAN_STATUE_BASE_DECORATION => EprojInit_TourianStatueBaseDecoration(j, ctx),
+        TOURIAN_STATUE_RIDLEY => EprojInit_TourianStatueRidley(j, ctx),
+        TOURIAN_STATUE_PHANTOON => EprojInit_TourianStatuePhantoon(j, ctx),
+        NORFAIR_LAVAQUAKE_ROCKS => EprojInit_NorfairLavaquakeRocks(j, ctx),
+        AT_BDA2 => EprojInit_BDA2(j, ctx),
+        MOTHER_BRAIN_ROOM_TURRETS => EprojInit_MotherBrainRoomTurrets(j, ctx),
+        MOTHER_BRAIN_ROOM_TURRET_BULLETS => EprojInit_MotherBrainRoomTurretBullets(j, ctx),
+        MOTHER_BRAIN_DEATH_BEEM_FIRED => EprojInit_MotherBrainDeathBeemFired(j, ctx),
+        MOTHER_BRAIN_RAINBOW_BEAM => EprojInit_MotherBrainRainbowBeam(j, ctx),
+        MOTHER_BRAINS_DROOL => EprojInit_MotherBrainsDrool(j, ctx),
+        MOTHER_BRAINS_DEATH_EXPLOSION => EprojInit_MotherBrainsDeathExplosion(j, ctx),
+        MOTHER_BRAINS_RAINBOW_BEAM_EXPLOSION => EprojInit_MotherBrainsRainbowBeamExplosion(j, ctx),
+        MOTHER_BRAIN_PURPLE_BREATH_BIG => EprojInit_MotherBrainPurpleBreathBig(j, ctx),
+        MOTHER_BRAIN_PURPLE_BREATH_SMALL => EprojInit_MotherBrainPurpleBreathSmall(j, ctx),
+        MOTHER_BRAIN_TUBE_FALLING => EprojInit_MotherBrainTubeFalling(j, ctx),
+        MARIDIA_FLOATERS_SPIKES => EprojInit_MaridiaFloatersSpikes(j, ctx),
+        SPORE_SPAWN_STALK => EprojInit_SporeSpawnStalk(j, ctx),
+        SPORE_SPAWNERS => EprojInit_SporeSpawners(j, ctx),
+        EYE_DOOR_SMOKE => EprojInit_EyeDoorSmoke(j, ctx),
+        BOTWOONS_BODY => EprojInit_BotwoonsBody(j, ctx),
+        CROCOMIRE_PROJECTILE => EprojInit_CrocomireProjectile(j, ctx),
+        PIRATE_MOTHER_BRAIN_LASER => EprojInit_PirateMotherBrainLaser(j, ctx),
+        GOLDEN_TORIZO_SUPER_MISSILE => EprojInit_GoldenTorizoSuperMissile(j, ctx),
+        KI_HUNTER_ACID_SPIT_LEFT => EprojInit_KiHunterAcidSpitLeft(j, ctx),
+        KI_HUNTER_ACID_SPIT_RIGHT => EprojInit_KiHunterAcidSpitRight(j, ctx),
+        KAGOS_BUGS => EprojInit_KagosBugs(j, ctx),
+        WRECKED_SHIP_ROBOT_LASER_DOWN => EprojInit_WreckedShipRobotLaserDown(j, ctx),
+        WRECKED_SHIP_ROBOT_LASER_HORIZONTAL => EprojInit_WreckedShipRobotLaserHorizontal(j, ctx),
+        WRECKED_SHIP_ROBOT_LASER_UP => EprojInit_WreckedShipRobotLaserUp(j, ctx),
+        AT_DBF2 => EprojInit_DBF2(j, ctx),
+        SPORES => EprojInit_Spores(j, ctx),
+        NAMI_FUNE_FIREBALL => EprojInit_NamiFuneFireball(j, ctx),
+        LAVA_THROWN_BY_LAVAMAN => EprojInit_LavaThrownByLavaman(j, ctx),
+        MINI_KRAID_SPIT => EprojInit_MiniKraidSpit(j, ctx),
+        BOMB_TORIZO_LOW_HEALTH_EXPLODE => EprojInit_BombTorizoLowHealthExplode(j, ctx),
+        BOMB_TORIZO_DEATH_EXPLOSION => EprojInit_BombTorizoDeathExplosion(j, ctx),
+        BOMB_TORIZOS_CHOZO_ORBS => EprojInit_BombTorizosChozoOrbs(j, ctx),
+        TOURIAN_LANDING_DUST_CLOUDS_RIGHT_FOOT => {
             EprojInit_TourianLandingDustCloudsRightFoot(j, ctx)
         }
-        addresses::init::TORIZO_LANDING_DUST_CLOUD_LEFT_FOOT => {
-            EprojInit_TorizoLandingDustCloudLeftFoot(j, ctx)
-        }
-        addresses::init::YAPPING_MAWS_BODY => EprojInit_YappingMawsBody(j, ctx),
-        addresses::init::ENEMY_DEATH_EXPLOSION => EprojInit_EnemyDeathExplosion(j, ctx),
-        addresses::init::AT_9688 => EprojInit_9688(j, ctx),
-        addresses::init::AT_9696 => EprojInit_9696(j, ctx),
-        addresses::init::AT_966C => EprojInit_966C(j, ctx),
-        addresses::init::AT_967A => EprojInit_967A(j, ctx),
-        addresses::init::MINI_KRAID_SPIKES_LEFT => EprojInit_MiniKraidSpikesLeft(j, ctx),
-        addresses::init::MINI_KRAID_SPIKES_RIGHT => EprojInit_MiniKraidSpikesRight(j, ctx),
-        addresses::init::SPAWNED_SHOT_GATE => EprojInit_SpawnedShotGate(j, ctx),
-        addresses::init::CLOSED_DOWNWARDS_SHOT_GATE => EprojInit_ClosedDownwardsShotGate(j, ctx),
-        addresses::init::CLOSED_UPWARDS_SHOT_GATE => EprojInit_ClosedUpwardsShotGate(j, ctx),
-        addresses::init::INITIALIZE => super::drops::initialize(j, ctx),
-        addresses::init::SKREE_PARTICLE_DOWN_RIGHT => {
+        TORIZO_LANDING_DUST_CLOUD_LEFT_FOOT => EprojInit_TorizoLandingDustCloudLeftFoot(j, ctx),
+        YAPPING_MAWS_BODY => EprojInit_YappingMawsBody(j, ctx),
+        ENEMY_DEATH_EXPLOSION => EprojInit_EnemyDeathExplosion(j, ctx),
+        AT_9688 => EprojInit_9688(j, ctx),
+        AT_9696 => EprojInit_9696(j, ctx),
+        AT_966C => EprojInit_966C(j, ctx),
+        AT_967A => EprojInit_967A(j, ctx),
+        MINI_KRAID_SPIKES_LEFT => EprojInit_MiniKraidSpikesLeft(j, ctx),
+        MINI_KRAID_SPIKES_RIGHT => EprojInit_MiniKraidSpikesRight(j, ctx),
+        SPAWNED_SHOT_GATE => EprojInit_SpawnedShotGate(j, ctx),
+        CLOSED_DOWNWARDS_SHOT_GATE => EprojInit_ClosedDownwardsShotGate(j, ctx),
+        CLOSED_UPWARDS_SHOT_GATE => EprojInit_ClosedUpwardsShotGate(j, ctx),
+        INITIALIZE => super::drops::initialize(j, ctx),
+        SKREE_PARTICLE_DOWN_RIGHT => {
             init_skree_particle(j, 6, 320, -769, ctx);
         }
-        addresses::init::SKREE_PARTICLE_UP_RIGHT => {
+        SKREE_PARTICLE_UP_RIGHT => {
             init_skree_particle(j, 6, 96, -1025, ctx);
         }
-        addresses::init::SKREE_PARTICLE_DOWN_LEFT => {
+        SKREE_PARTICLE_DOWN_LEFT => {
             init_skree_particle(j, -6, -320, -769, ctx);
         }
-        addresses::init::SKREE_PARTICLE_UP_LEFT => {
+        SKREE_PARTICLE_UP_LEFT => {
             init_skree_particle(j, -6, -96, -1025, ctx);
         }
         _ => {

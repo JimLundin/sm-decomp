@@ -15,224 +15,187 @@ use crate::{
 };
 
 pub fn dispatch(ea: u32, k: u16, ctx: &mut impl Host) {
+    use addresses::pre::*;
     match ea {
-        addresses::pre::SKREE_PARTICLE => Eproj_PreInstr_SkreeParticle(k, ctx),
-        addresses::pre::SPIKE_SHOOTING_PLANT_SPIKES_MOVE_Y1 => {
+        SKREE_PARTICLE => Eproj_PreInstr_SkreeParticle(k, ctx),
+        SPIKE_SHOOTING_PLANT_SPIKES_MOVE_Y1 => {
             EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(k, ctx)
         }
-        addresses::pre::SPIKE_SHOOTING_PLANT_SPIKES_MOVE_X1 => {
+        SPIKE_SHOOTING_PLANT_SPIKES_MOVE_X1 => {
             EprojPreInstr_SpikeShootingPlantSpikes_MoveX1(k, ctx)
         }
-        addresses::pre::SPIKE_SHOOTING_PLANT_SPIKES_MOVE_X2 => {
+        SPIKE_SHOOTING_PLANT_SPIKES_MOVE_X2 => {
             EprojPreInstr_SpikeShootingPlantSpikes_MoveX2(k, ctx)
         }
-        addresses::pre::SPIKE_SHOOTING_PLANT_SPIKES_6_MOVE_X1_Y1 => {
+        SPIKE_SHOOTING_PLANT_SPIKES_6_MOVE_X1_Y1 => {
             EprojPreInstr_SpikeShootingPlantSpikes_6_MoveX1Y1(k, ctx)
         }
-        addresses::pre::SPIKE_SHOOTING_PLANT_SPIKES_7_MOVE_X2_Y1 => {
+        SPIKE_SHOOTING_PLANT_SPIKES_7_MOVE_X2_Y1 => {
             EprojPreInstr_SpikeShootingPlantSpikes_7_MoveX2Y1(k, ctx)
         }
-        addresses::pre::DUST_CLOUD_OR_EXPLOSION => EprojPreInstr_DustCloudOrExplosion(k, ctx),
-        addresses::pre::AT_8DCA => EprojPreInstr_8DCA(k, ctx),
-        addresses::pre::DRAYGONS_TURRET_8_DFF => EprojPreInstr_DraygonsTurret_8DFF(k, ctx),
-        addresses::pre::DRAYGONS_GUNK_8_E0_F => EprojPreInstr_DraygonsGunk_8E0F(k, ctx),
-        addresses::pre::CROCOMIRE_PROJECTILE => EprojPreInstr_CrocomireProjectile(k, ctx),
-        addresses::pre::SUB_8690_B3 => sub_8690B3(k, ctx),
-        addresses::pre::CROCOMIRE_BRIDGE_CRUMBLING => {
-            EprojPreInstr_CrocomireBridgeCrumbling(k, ctx)
-        }
-        addresses::pre::RIDLEYS_FIREBALL => EprojPreInstr_9642_RidleysFireball(k, ctx),
-        addresses::pre::AT_966C => EprojPreInstr_966C(k, ctx),
-        addresses::pre::AT_9688 => EprojPreInstr_9688(k, ctx),
-        addresses::pre::AT_96A4 => EprojPreInstr_96A4(k, ctx),
-        addresses::pre::AT_96C0 => EprojPreInstr_96C0(k, ctx),
-        addresses::pre::CERES_FALLING_DEBRIS => EprojPreInstr_9734_CeresFallingDebris(k, ctx),
-        addresses::pre::PHANTOON_DESTROYABLE_FIREBALLS => {
-            EprojPreInstr_PhantoonDestroyableFireballs(k, ctx)
-        }
-        addresses::pre::PHANTOON_DESTROYABLE_FIREBALLS_3 => {
-            EprojPreInstr_PhantoonDestroyableFireballs_3(k, ctx)
-        }
-        addresses::pre::PHANTOON_STARTING_FIREBALLS_B => {
-            EprojPreInstr_PhantoonStartingFireballsB(k, ctx)
-        }
-        addresses::pre::KRAID_ROCKS => EprojPreInstr_KraidRocks(k, ctx),
-        addresses::pre::ROCKS_FALLING_KRAID_CEILING => {
-            EprojPreInstr_RocksFallingKraidCeiling(k, ctx)
-        }
-        addresses::pre::SUB_869_DA5 => sub_869DA5(k, ctx),
-        addresses::pre::MINI_KRAID_SPIT => EprojPreInit_MiniKraidSpit(k, ctx),
-        addresses::pre::MINI_KRAID_SPIKES => EprojPreInstr_MiniKraidSpikes(k, ctx),
-        addresses::pre::WALKING_LAVA_SEAHORSE_FIREBALL => {
-            EprojPreInstr_WalkingLavaSeahorseFireball(k, ctx)
-        }
-        addresses::pre::CERES_ELEVATOR_PAD => EprojPreInstr_CeresElevatorPad(k, ctx),
-        addresses::pre::CERES_ELEVATOR_PLATFORM => EprojPreInstr_CeresElevatorPlatform(k, ctx),
-        addresses::pre::AT_A977 => EprojPreInstr_A977(k, ctx),
-        addresses::pre::BOMB_TORIZOS_CHOZO_ORBS => EprojPreInstr_BombTorizosChozoOrbs(k, ctx),
-        addresses::pre::GOLDEN_TORIZOS_CHOZO_ORBS => EprojPreInstr_GoldenTorizosChozoOrbs(k, ctx),
-        addresses::pre::TORIZO_SONIC_BOOM => EprojPreInstr_TorizoSonicBoom(k, ctx),
-        addresses::pre::SUB_86_B0_B9 => sub_86B0B9(k, ctx),
-        addresses::pre::SUB_86_B0_DD => sub_86B0DD(k, ctx),
-        addresses::pre::AT_B237 => EprojPreInstr_B237(k, ctx),
-        addresses::pre::GOLDEN_TORIZO_EYE_BEAM => EprojPreInstr_GoldenTorizoEyeBeam(k, ctx),
-        addresses::pre::EYE_DOOR_PROJECTILE => EprojPreInstr_EyeDoorProjectile(k, ctx),
-        addresses::pre::EYE_DOOR_SWEAT => EprojPreInstr_EyeDoorSweat(k, ctx),
-        addresses::pre::TOURIAN_STATUE_UNLOCKING_PARTICLE_WATER_SPLASH => {
+        DUST_CLOUD_OR_EXPLOSION => EprojPreInstr_DustCloudOrExplosion(k, ctx),
+        AT_8DCA => EprojPreInstr_8DCA(k, ctx),
+        DRAYGONS_TURRET_8_DFF => EprojPreInstr_DraygonsTurret_8DFF(k, ctx),
+        DRAYGONS_GUNK_8_E0_F => EprojPreInstr_DraygonsGunk_8E0F(k, ctx),
+        CROCOMIRE_PROJECTILE => EprojPreInstr_CrocomireProjectile(k, ctx),
+        SUB_8690_B3 => sub_8690B3(k, ctx),
+        CROCOMIRE_BRIDGE_CRUMBLING => EprojPreInstr_CrocomireBridgeCrumbling(k, ctx),
+        RIDLEYS_FIREBALL => EprojPreInstr_9642_RidleysFireball(k, ctx),
+        AT_966C => EprojPreInstr_966C(k, ctx),
+        AT_9688 => EprojPreInstr_9688(k, ctx),
+        AT_96A4 => EprojPreInstr_96A4(k, ctx),
+        AT_96C0 => EprojPreInstr_96C0(k, ctx),
+        CERES_FALLING_DEBRIS => EprojPreInstr_9734_CeresFallingDebris(k, ctx),
+        PHANTOON_DESTROYABLE_FIREBALLS => EprojPreInstr_PhantoonDestroyableFireballs(k, ctx),
+        PHANTOON_DESTROYABLE_FIREBALLS_3 => EprojPreInstr_PhantoonDestroyableFireballs_3(k, ctx),
+        PHANTOON_STARTING_FIREBALLS_B => EprojPreInstr_PhantoonStartingFireballsB(k, ctx),
+        KRAID_ROCKS => EprojPreInstr_KraidRocks(k, ctx),
+        ROCKS_FALLING_KRAID_CEILING => EprojPreInstr_RocksFallingKraidCeiling(k, ctx),
+        SUB_869_DA5 => sub_869DA5(k, ctx),
+        MINI_KRAID_SPIT => EprojPreInit_MiniKraidSpit(k, ctx),
+        MINI_KRAID_SPIKES => EprojPreInstr_MiniKraidSpikes(k, ctx),
+        WALKING_LAVA_SEAHORSE_FIREBALL => EprojPreInstr_WalkingLavaSeahorseFireball(k, ctx),
+        CERES_ELEVATOR_PAD => EprojPreInstr_CeresElevatorPad(k, ctx),
+        CERES_ELEVATOR_PLATFORM => EprojPreInstr_CeresElevatorPlatform(k, ctx),
+        AT_A977 => EprojPreInstr_A977(k, ctx),
+        BOMB_TORIZOS_CHOZO_ORBS => EprojPreInstr_BombTorizosChozoOrbs(k, ctx),
+        GOLDEN_TORIZOS_CHOZO_ORBS => EprojPreInstr_GoldenTorizosChozoOrbs(k, ctx),
+        TORIZO_SONIC_BOOM => EprojPreInstr_TorizoSonicBoom(k, ctx),
+        SUB_86_B0_B9 => sub_86B0B9(k, ctx),
+        SUB_86_B0_DD => sub_86B0DD(k, ctx),
+        AT_B237 => EprojPreInstr_B237(k, ctx),
+        GOLDEN_TORIZO_EYE_BEAM => EprojPreInstr_GoldenTorizoEyeBeam(k, ctx),
+        EYE_DOOR_PROJECTILE => EprojPreInstr_EyeDoorProjectile(k, ctx),
+        EYE_DOOR_SWEAT => EprojPreInstr_EyeDoorSweat(k, ctx),
+        TOURIAN_STATUE_UNLOCKING_PARTICLE_WATER_SPLASH => {
             EprojPreInstr_TourianStatueUnlockingParticleWaterSplash(k, ctx)
         }
-        addresses::pre::TOURIAN_STATUE_STUFF => EprojPreInstr_TourianStatueStuff(k, ctx),
-        addresses::pre::DESPAWN_OFF_SCREEN_BD1E => despawn_off_screen(k, ctx),
-        addresses::pre::NORFAIR_LAVAQUAKE_ROCKS => EprojPreInstr_NorfairLavaquakeRocks(k, ctx),
-        addresses::pre::MOTHER_BRAIN_ROOM_TURRETS => EprojPreInstr_MotherBrainRoomTurrets(k, ctx),
-        addresses::pre::MOTHER_BRAIN_BOMB => EprojPreInstr_MotherBrainBomb(k, ctx),
-        addresses::pre::MOTHER_BRAIN_RAINBOW_BEAM => EprojPreInstr_MotherBrainRainbowBeam(k, ctx),
-        addresses::pre::MOTHER_BRAINS_DEATH_EXPLOSION_0 => {
-            EprojPreInit_MotherBrainsDeathExplosion_0(k, ctx)
-        }
-        addresses::pre::MOTHER_BRAIN_TUBE_FALLING => EprojPreInstr_MotherBrainTubeFalling(k, ctx),
-        addresses::pre::MOTHER_BRAIN_GLASS_SHATTERING_SHARD => {
+        TOURIAN_STATUE_STUFF => EprojPreInstr_TourianStatueStuff(k, ctx),
+        DESPAWN_OFF_SCREEN_BD1E => despawn_off_screen(k, ctx),
+        NORFAIR_LAVAQUAKE_ROCKS => EprojPreInstr_NorfairLavaquakeRocks(k, ctx),
+        MOTHER_BRAIN_ROOM_TURRETS => EprojPreInstr_MotherBrainRoomTurrets(k, ctx),
+        MOTHER_BRAIN_BOMB => EprojPreInstr_MotherBrainBomb(k, ctx),
+        MOTHER_BRAIN_RAINBOW_BEAM => EprojPreInstr_MotherBrainRainbowBeam(k, ctx),
+        MOTHER_BRAINS_DEATH_EXPLOSION_0 => EprojPreInit_MotherBrainsDeathExplosion_0(k, ctx),
+        MOTHER_BRAIN_TUBE_FALLING => EprojPreInstr_MotherBrainTubeFalling(k, ctx),
+        MOTHER_BRAIN_GLASS_SHATTERING_SHARD => {
             EprojPreInstr_MotherBrainGlassShatteringShard(k, ctx)
         }
-        addresses::pre::KAGOS_BUGS => EprojPreInstr_KagosBugs(k, ctx),
-        addresses::pre::AT_D0EC => EprojPreInstr_D0EC(k, ctx),
-        addresses::pre::N00B_TUBE_SHARDS => EprojPreInstr_N00bTubeShards(k, ctx),
-        addresses::pre::SUB_86_D83_D => sub_86D83D(k, ctx),
-        addresses::pre::SUB_86_D89_F => sub_86D89F(k, ctx),
-        addresses::pre::SUB_86_D8_DF => sub_86D8DF(k, ctx),
-        addresses::pre::SPIKE_SHOOTING_PLANT_SPIKES_4_MOVE_Y2 => {
+        KAGOS_BUGS => EprojPreInstr_KagosBugs(k, ctx),
+        AT_D0EC => EprojPreInstr_D0EC(k, ctx),
+        N00B_TUBE_SHARDS => EprojPreInstr_N00bTubeShards(k, ctx),
+        SUB_86_D83_D => sub_86D83D(k, ctx),
+        SUB_86_D89_F => sub_86D89F(k, ctx),
+        SUB_86_D8_DF => sub_86D8DF(k, ctx),
+        SPIKE_SHOOTING_PLANT_SPIKES_4_MOVE_Y2 => {
             EprojPreInstr_SpikeShootingPlantSpikes_4_MoveY2(k, ctx)
         }
-        addresses::pre::SPIKE_SHOOTING_PLANT_SPIKES_8_MOVE_X1_Y2 => {
+        SPIKE_SHOOTING_PLANT_SPIKES_8_MOVE_X1_Y2 => {
             EprojPreInstr_SpikeShootingPlantSpikes_8_MoveX1Y2(k, ctx)
         }
-        addresses::pre::SPIKE_SHOOTING_PLANT_SPIKES_9_MOVE_X2_Y2 => {
+        SPIKE_SHOOTING_PLANT_SPIKES_9_MOVE_X2_Y2 => {
             EprojPreInstr_SpikeShootingPlantSpikes_9_MoveX2Y2(k, ctx)
         }
-        addresses::pre::SPIKE_SHOOTING_PLANT_SPIKES => {
-            EprojPreInstr_SpikeShootingPlantSpikes(k, ctx)
-        }
-        addresses::pre::DESPAWN_OFF_SCREEN_DBB6 => despawn_off_screen(k, ctx),
-        addresses::pre::AT_DBF2 => EprojPreInstr_DBF2(k, ctx),
-        addresses::pre::SPORE_SPAWNERS => EprojPreInstr_SporeSpawners(k, ctx),
-        addresses::pre::BOTWOONS_BODY => EprojPreInstr_BotwoonsBody(k, ctx),
-        addresses::pre::BOTWOONS_SPIT => EprojPreInstr_BotwoonsSpit(k, ctx),
-        addresses::pre::SUB_86_A887 => sub_86A887(k, ctx),
-        addresses::pre::AT_D128 => EprojPreInstr_D128(k, ctx),
-        addresses::pre::NAMI_FUNE_FIREBALL => EprojPreInstr_NamiFuneFireball(k, ctx),
-        addresses::pre::SUB_86_E049 => sub_86E049(k, ctx),
-        addresses::pre::AT_BA42 => EprojPreInstr_BA42(k, ctx),
-        addresses::pre::MOTHER_BRAINS_DROOL_FALLING => EprojInit_MotherBrainsDrool_Falling(k, ctx),
-        addresses::pre::SHAKTOOL_ATTACK_FRONT_CIRCLE => EprojInit_ShaktoolAttackFrontCircle(k, ctx),
-        addresses::pre::PRE_INIT_0X8AAF => Eproj_PreInit_0x8aaf(k, ctx),
-        addresses::pre::CROCOMIRE_SPIKE_WALL_PIECES => {
-            EprojPreInstr_CrocomireSpikeWallPieces(k, ctx)
-        }
-        addresses::pre::AT_9634 => EprojPreInstr_9634(k, ctx),
-        addresses::pre::PHANTOON_STARTING_FIREBALLS => {
-            EprojPreInstr_PhantoonStartingFireballs(k, ctx)
-        }
-        addresses::pre::PHANTOON_STARTING_FIREBALLS2 => {
-            EprojPreInstr_PhantoonStartingFireballs2(k, ctx)
-        }
-        addresses::pre::PHANTOON_STARTING_FIREBALLS3 => {
-            EprojPreInstr_PhantoonStartingFireballs3(k, ctx)
-        }
-        addresses::pre::PHANTOON_DESTROYABLE_FIREBALLS_2 => {
-            EprojPreInstr_PhantoonDestroyableFireballs_2(k, ctx)
-        }
-        addresses::pre::PHANTOON_STARTING_FIREBALLS_B_2 => {
-            EprojPreInstr_PhantoonStartingFireballsB_2(k, ctx)
-        }
-        addresses::pre::PIRATE_MOTHER_BRAIN_LASER_MOVE_LEFT => {
+        SPIKE_SHOOTING_PLANT_SPIKES => EprojPreInstr_SpikeShootingPlantSpikes(k, ctx),
+        DESPAWN_OFF_SCREEN_DBB6 => despawn_off_screen(k, ctx),
+        AT_DBF2 => EprojPreInstr_DBF2(k, ctx),
+        SPORE_SPAWNERS => EprojPreInstr_SporeSpawners(k, ctx),
+        BOTWOONS_BODY => EprojPreInstr_BotwoonsBody(k, ctx),
+        BOTWOONS_SPIT => EprojPreInstr_BotwoonsSpit(k, ctx),
+        SUB_86_A887 => sub_86A887(k, ctx),
+        AT_D128 => EprojPreInstr_D128(k, ctx),
+        NAMI_FUNE_FIREBALL => EprojPreInstr_NamiFuneFireball(k, ctx),
+        SUB_86_E049 => sub_86E049(k, ctx),
+        AT_BA42 => EprojPreInstr_BA42(k, ctx),
+        MOTHER_BRAINS_DROOL_FALLING => EprojInit_MotherBrainsDrool_Falling(k, ctx),
+        SHAKTOOL_ATTACK_FRONT_CIRCLE => EprojInit_ShaktoolAttackFrontCircle(k, ctx),
+        PRE_INIT_0X8AAF => Eproj_PreInit_0x8aaf(k, ctx),
+        CROCOMIRE_SPIKE_WALL_PIECES => EprojPreInstr_CrocomireSpikeWallPieces(k, ctx),
+        AT_9634 => EprojPreInstr_9634(k, ctx),
+        PHANTOON_STARTING_FIREBALLS => EprojPreInstr_PhantoonStartingFireballs(k, ctx),
+        PHANTOON_STARTING_FIREBALLS2 => EprojPreInstr_PhantoonStartingFireballs2(k, ctx),
+        PHANTOON_STARTING_FIREBALLS3 => EprojPreInstr_PhantoonStartingFireballs3(k, ctx),
+        PHANTOON_DESTROYABLE_FIREBALLS_2 => EprojPreInstr_PhantoonDestroyableFireballs_2(k, ctx),
+        PHANTOON_STARTING_FIREBALLS_B_2 => EprojPreInstr_PhantoonStartingFireballsB_2(k, ctx),
+        PIRATE_MOTHER_BRAIN_LASER_MOVE_LEFT => {
             EprojPreInstr_PirateMotherBrainLaser_MoveLeft(k, ctx)
         }
-        addresses::pre::PIRATE_MOTHER_BRAIN_LASER_MOVE_RIGHT => {
+        PIRATE_MOTHER_BRAIN_LASER_MOVE_RIGHT => {
             EprojPreInstr_PirateMotherBrainLaser_MoveRight(k, ctx)
         }
-        addresses::pre::PIRATE_CLAW_THROWN_LEFT => EprojPreInstr_PirateClawThrownLeft(k, ctx),
-        addresses::pre::PIRATE_CLAW_THROWN_RIGHT => EprojPreInstr_PirateClawThrownRight(k, ctx),
-        addresses::pre::AT_AB07 => EprojPreInstr_AB07(k, ctx),
-        addresses::pre::GOLDEN_TORIZO_EGG => EprojPreInstr_GoldenTorizoEgg(k, ctx),
-        addresses::pre::GOLDEN_TORIZO_SUPER_MISSILE => {
-            EprojPreInstr_GoldenTorizoSuperMissile(k, ctx)
-        }
-        addresses::pre::SUB_86_B535 => sub_86B535(k, ctx),
-        addresses::pre::TOURIAN_STATUE_UNLOCKING_PARTICLE => {
-            EprojPreInstr_TourianStatueUnlockingParticle(k, ctx)
-        }
-        addresses::pre::TOURIAN_STATUE_SOUL => EprojPreInstr_TourianStatueSoul(k, ctx),
-        addresses::pre::AT_BE12 => EprojPreInstr_BE12(k, ctx),
-        addresses::pre::MOTHER_BRAIN_ROOM_TURRET_BULLETS => {
-            EprojPreInstr_MotherBrainRoomTurretBullets(k, ctx)
-        }
-        addresses::pre::MOVE_TO_BLUE_RING_SPAWN_POSITION => {
-            Eproj_MoveToBlueRingSpawnPosition(k, ctx)
-        }
-        addresses::pre::AT_C84D => EprojPreInstr_C84D(k, ctx),
-        addresses::pre::MOTHER_BRAINS_RAINBOW_BEAM_EXPLOSION => {
+        PIRATE_CLAW_THROWN_LEFT => EprojPreInstr_PirateClawThrownLeft(k, ctx),
+        PIRATE_CLAW_THROWN_RIGHT => EprojPreInstr_PirateClawThrownRight(k, ctx),
+        AT_AB07 => EprojPreInstr_AB07(k, ctx),
+        GOLDEN_TORIZO_EGG => EprojPreInstr_GoldenTorizoEgg(k, ctx),
+        GOLDEN_TORIZO_SUPER_MISSILE => EprojPreInstr_GoldenTorizoSuperMissile(k, ctx),
+        SUB_86_B535 => sub_86B535(k, ctx),
+        TOURIAN_STATUE_UNLOCKING_PARTICLE => EprojPreInstr_TourianStatueUnlockingParticle(k, ctx),
+        TOURIAN_STATUE_SOUL => EprojPreInstr_TourianStatueSoul(k, ctx),
+        AT_BE12 => EprojPreInstr_BE12(k, ctx),
+        MOTHER_BRAIN_ROOM_TURRET_BULLETS => EprojPreInstr_MotherBrainRoomTurretBullets(k, ctx),
+        MOVE_TO_BLUE_RING_SPAWN_POSITION => Eproj_MoveToBlueRingSpawnPosition(k, ctx),
+        AT_C84D => EprojPreInstr_C84D(k, ctx),
+        MOTHER_BRAINS_RAINBOW_BEAM_EXPLOSION => {
             EprojPreInstr_MotherBrainsRainbowBeamExplosion(k, ctx)
         }
-        addresses::pre::MOTHER_BRAINS_EXPLODED_DOOR_PARTICLES => {
+        MOTHER_BRAINS_EXPLODED_DOOR_PARTICLES => {
             EprojPreInstr_MotherBrainsExplodedDoorParticles(k, ctx)
         }
-        addresses::pre::TIME_BOMB_SET_JAPANESE_TEXT => {
-            EprojPreInstr_TimeBombSetJapaneseText(k, ctx)
-        }
-        addresses::pre::SUB_86_CFD5 => sub_86CFD5(k, ctx),
-        addresses::pre::SUB_86_CFE6 => sub_86CFE6(k, ctx),
-        addresses::pre::SUB_86_CFF8 => sub_86CFF8(k, ctx),
-        addresses::pre::KAGO_BUG_CRY_COUNTDOWN => kago_bug_cry_countdown(k, ctx),
-        addresses::pre::KAGO_BUG_FLAG_WHEN_FAR => kago_bug_flag_when_far(k, ctx),
-        addresses::pre::MARIDIA_FLOATERS_SPIKES => EprojPreInstr_MaridiaFloatersSpikes(k, ctx),
-        addresses::pre::WRECKED_SHIP_ROBOT_LASER => EprojPreInstr_WreckedShipRobotLaser(k, ctx),
-        addresses::pre::SUB_86_D7_BF => sub_86D7BF(k, ctx),
-        addresses::pre::SUB_86_D7_DE => sub_86D7DE(k, ctx),
-        addresses::pre::SPIKE_SHOOTING_PLANT_SPIKES_MOVE_Y2 => {
+        TIME_BOMB_SET_JAPANESE_TEXT => EprojPreInstr_TimeBombSetJapaneseText(k, ctx),
+        SUB_86_CFD5 => sub_86CFD5(k, ctx),
+        SUB_86_CFE6 => sub_86CFE6(k, ctx),
+        SUB_86_CFF8 => sub_86CFF8(k, ctx),
+        KAGO_BUG_CRY_COUNTDOWN => kago_bug_cry_countdown(k, ctx),
+        KAGO_BUG_FLAG_WHEN_FAR => kago_bug_flag_when_far(k, ctx),
+        MARIDIA_FLOATERS_SPIKES => EprojPreInstr_MaridiaFloatersSpikes(k, ctx),
+        WRECKED_SHIP_ROBOT_LASER => EprojPreInstr_WreckedShipRobotLaser(k, ctx),
+        SUB_86_D7_BF => sub_86D7BF(k, ctx),
+        SUB_86_D7_DE => sub_86D7DE(k, ctx),
+        SPIKE_SHOOTING_PLANT_SPIKES_MOVE_Y2 => {
             EprojPreInstr_SpikeShootingPlantSpikes_MoveY2(k, ctx)
         }
-        addresses::pre::MOVE_X1 => EprojPreInstr_DBF2_MoveX1(k, ctx),
-        addresses::pre::SPORES => EprojPreInstr_Spores(k, ctx),
-        addresses::pre::AT_E605 => EprojPreInstr_E605(k, ctx),
-        addresses::pre::SPARKS => EprojPreInstr_Sparks(k, ctx),
-        addresses::pre::SPIKE_SHOOTING_PLANT_SPIKES_0_MOVE_X1 => {
+        MOVE_X1 => EprojPreInstr_DBF2_MoveX1(k, ctx),
+        SPORES => EprojPreInstr_Spores(k, ctx),
+        AT_E605 => EprojPreInstr_E605(k, ctx),
+        SPARKS => EprojPreInstr_Sparks(k, ctx),
+        SPIKE_SHOOTING_PLANT_SPIKES_0_MOVE_X1 => {
             EprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1(k, ctx)
         }
-        addresses::pre::SPIKE_SHOOTING_PLANT_SPIKES_2_MOVE_X2 => {
+        SPIKE_SHOOTING_PLANT_SPIKES_2_MOVE_X2 => {
             EprojPreInstr_SpikeShootingPlantSpikes_2_MoveX2(k, ctx)
         }
-        addresses::pre::SPIKE_SHOOTING_PLANT_SPIKES_1_MOVE_Y1 => {
+        SPIKE_SHOOTING_PLANT_SPIKES_1_MOVE_Y1 => {
             EprojPreInstr_SpikeShootingPlantSpikes_1_MoveY1(k, ctx)
         }
-        addresses::pre::COLLECT_DROP => collect_drop(k, ctx),
-        addresses::pre::NONE_A918 => (),
-        addresses::pre::NONE_8170 => (),
-        addresses::pre::NONE_84FB => (),
-        addresses::pre::NONE_8D54 => (),
-        addresses::pre::NONE_950C => (),
-        addresses::pre::AT_96CE => EprojPreInstr_96CE(k, ctx),
-        addresses::pre::NONE_9A44 => (),
-        addresses::pre::NONE_A05B => (),
-        addresses::pre::NONE_A327 => (),
-        addresses::pre::PRE_PHANTOM_ROOM => EprojPreInstr_PrePhantomRoom(k, ctx),
-        addresses::pre::NONE_A919 => (),
-        addresses::pre::NONE_B4B0 => (),
-        addresses::pre::NONE_BB4F => (),
-        addresses::pre::NONE_BBC6 => (),
-        addresses::pre::OUTSIDE_CAMERA_VIEW_CHECK => {
+        COLLECT_DROP => collect_drop(k, ctx),
+        NONE_A918 => (),
+        NONE_8170 => (),
+        NONE_84FB => (),
+        NONE_8D54 => (),
+        NONE_950C => (),
+        AT_96CE => EprojPreInstr_96CE(k, ctx),
+        NONE_9A44 => (),
+        NONE_A05B => (),
+        NONE_A327 => (),
+        PRE_PHANTOM_ROOM => EprojPreInstr_PrePhantomRoom(k, ctx),
+        NONE_A919 => (),
+        NONE_B4B0 => (),
+        NONE_BB4F => (),
+        NONE_BBC6 => (),
+        OUTSIDE_CAMERA_VIEW_CHECK => {
             outside_camera_view(k, ctx);
         }
-        addresses::pre::NONE_CAA3 => (),
-        addresses::pre::NONE_CFF7 => (),
-        addresses::pre::NONE_D0EB => (),
-        addresses::pre::MOVE_X2 => EprojPreInstr_DBF2_MoveX2(k, ctx),
-        addresses::pre::NONE_DD44 => (),
-        addresses::pre::NONE_E508 => (),
-        addresses::pre::NONE_E604 => (),
-        addresses::pre::NONE_E6D1 => (),
-        addresses::pre::NONE_EC94 => (),
-        addresses::pre::NONE_EFDF => (),
-        addresses::pre::NONE_C76D => (),
+        NONE_CAA3 => (),
+        NONE_CFF7 => (),
+        NONE_D0EB => (),
+        MOVE_X2 => EprojPreInstr_DBF2_MoveX2(k, ctx),
+        NONE_DD44 => (),
+        NONE_E508 => (),
+        NONE_E604 => (),
+        NONE_E6D1 => (),
+        NONE_EC94 => (),
+        NONE_EFDF => (),
+        NONE_C76D => (),
         _ => ctx.unreachable(),
     }
 }

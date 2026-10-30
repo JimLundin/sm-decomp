@@ -87,13 +87,14 @@ fn set_velocity_toward(h: &mut impl Host, k: u16, angle: u16) {
     );
 }
 pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> EnemyScript {
+    use addresses::instructions::*;
     let slot = (k >> 1) as isize;
     let result = match ea {
-        addresses::instructions::DELETE => {
+        DELETE => {
             enemy!(h, slot, definition = 0);
             EnemyScript::Stop
         }
-        addresses::instructions::SLEEP => {
+        SLEEP => {
             enemy!(
                 h,
                 slot,
@@ -101,38 +102,31 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
             );
             EnemyScript::Stop
         }
-        addresses::instructions::SET_PRE_INSTRUCTION
-        | addresses::instructions::SET_AND_RUN_PRE_INSTRUCTION => {
+        SET_PRE_INSTRUCTION | SET_AND_RUN_PRE_INSTRUCTION => {
             enemy!(h, slot, pre_action = script.word(0));
-            script.advance(if ea == addresses::instructions::SET_PRE_INSTRUCTION {
-                2
-            } else {
-                0
-            })
+            script.advance(if ea == SET_PRE_INSTRUCTION { 2 } else { 0 })
         }
-        addresses::instructions::CLEAR_PRE_INSTRUCTION => {
+        CLEAR_PRE_INSTRUCTION => {
             enemy!(h, slot, pre_action = 0x8170);
             script.advance(0)
         }
-        addresses::instructions::MOVE_UP_4 => {
+        MOVE_UP_4 => {
             enemy!(h, slot, y = enemy!(h, slot, y).wrapping_sub(4));
             script.advance(0)
         }
-        addresses::instructions::CALL_EXTERNAL_FUNCTION => {
+        CALL_EXTERNAL_FUNCTION => {
             // This operand reads three bytes; Load24 also reads the fourth byte.
             match u32::from(script.word(0)) | (u32::from(script.byte(2)) << 16) {
-                addresses::instructions::AT_C7FB => {
-                    super::shared_pre::SpawnMotherBrainDeathBeam(k, h)
-                }
+                AT_C7FB => super::shared_pre::SpawnMotherBrainDeathBeam(k, h),
                 _ => h.unreachable(),
             }
             script.advance(3)
         }
-        addresses::instructions::SET_TIMER => {
+        SET_TIMER => {
             enemy!(h, slot, counter = script.word(0));
             script.advance(2)
         }
-        addresses::instructions::DRAYGON_GOOP_SAMUS_COLLISION => {
+        DRAYGON_GOOP_SAMUS_COLLISION => {
             super::collision::power_bomb(k, h);
             let divisor = h.session().player.speed_divisor.wrapping_add(1);
             if (i32::from(h.session().player.speed_divisor) - 5) & 0x8000 != 0 {
@@ -151,30 +145,28 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
             }
             script.advance(0)
         }
-        addresses::instructions::SPAWN_CROCOMIRE_DROPS
-        | addresses::instructions::SPAWN_PHANTOON_DROP
-        | addresses::instructions::AT_DFEA
-        | addresses::instructions::SPAWN_DRAYGON_EYE_DROPS
-        | addresses::instructions::AT_D1CE
-        | addresses::instructions::AT_DC61 => {
+        SPAWN_CROCOMIRE_DROPS
+        | SPAWN_PHANTOON_DROP
+        | AT_DFEA
+        | SPAWN_DRAYGON_EYE_DROPS
+        | AT_D1CE
+        | AT_DC61 => {
             let definition = match ea {
-                addresses::instructions::SPAWN_CROCOMIRE_DROPS => addr_kEnemyDef_DDBF,
-                addresses::instructions::SPAWN_PHANTOON_DROP => addr_kEnemyDef_E4FF,
-                addresses::instructions::AT_DFEA => addr_kEnemyDef_E83F,
-                addresses::instructions::SPAWN_DRAYGON_EYE_DROPS => addr_kEnemyDef_DE7F,
-                addresses::instructions::AT_D1CE => addr_kEnemyDef_E7FF,
+                SPAWN_CROCOMIRE_DROPS => addr_kEnemyDef_DDBF,
+                SPAWN_PHANTOON_DROP => addr_kEnemyDef_E4FF,
+                AT_DFEA => addr_kEnemyDef_E83F,
+                SPAWN_DRAYGON_EYE_DROPS => addr_kEnemyDef_DE7F,
+                AT_D1CE => addr_kEnemyDef_E7FF,
                 _ => addr_kEnemyDef_DF7F,
             } as u16;
             drop_at_projectile(h, k, definition);
             script.advance(0)
         }
-        addresses::instructions::RESET_POSITION
-        | addresses::instructions::AT_AF36
-        | addresses::instructions::AT_B436 => {
+        RESET_POSITION | AT_AF36 | AT_B436 => {
             reset_position(h, slot);
             script.advance(0)
         }
-        addresses::instructions::SPAWN_AREA_DROP => {
+        SPAWN_AREA_DROP => {
             h.session_mut().enemy_projectiles.spawn.point = Point {
                 x: enemy!(h, slot, x),
                 y: enemy!(h, slot, y),
@@ -183,20 +175,18 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
             super::drops::spawn(definition, k, h);
             script.advance(4)
         }
-        addresses::instructions::GO_TO_BY_DIRECTION => {
-            EnemyScript::jump(if enemy!(h, slot, behavior_a) & 0x8000 != 0 {
-                addr_off_86B166 as u16
-            } else {
-                addr_off_86B14B as u16
-            })
-        }
-        addresses::instructions::START_EARTHQUAKE => {
+        GO_TO_BY_DIRECTION => EnemyScript::jump(if enemy!(h, slot, behavior_a) & 0x8000 != 0 {
+            addr_off_86B166 as u16
+        } else {
+            addr_off_86B14B as u16
+        }),
+        START_EARTHQUAKE => {
             h.session_mut().feedback.earthquake_kind = 1;
             h.session_mut().feedback.earthquake_timer =
                 h.session().feedback.earthquake_timer | 0x20;
             script.advance(0)
         }
-        addresses::instructions::MOVE_Y_BY => {
+        MOVE_Y_BY => {
             let old = enemy!(h, slot, y);
             enemy!(
                 h,
@@ -205,15 +195,15 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
             );
             script.advance(2)
         }
-        addresses::instructions::MOVE_DOWN_12 => {
+        MOVE_DOWN_12 => {
             enemy!(h, slot, y = enemy!(h, slot, y).wrapping_add(12));
             script.advance(0)
         }
-        addresses::instructions::SET_Y_VELOCITY => {
+        SET_Y_VELOCITY => {
             enemy!(h, slot, velocity_y = script.word(0));
             script.advance(2)
         }
-        addresses::instructions::DECREMENT_TIMER_AND_GO_TO => {
+        DECREMENT_TIMER_AND_GO_TO => {
             let old = enemy!(h, slot, counter);
             enemy!(h, slot, counter = old.wrapping_sub(1));
             if old == 1 {
@@ -222,7 +212,7 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
                 EnemyScript::jump(script.word(0))
             }
         }
-        addresses::instructions::DECREMENT_TIMER_AND_GO_TO_RELATIVE => {
+        DECREMENT_TIMER_AND_GO_TO_RELATIVE => {
             let old = enemy!(h, slot, counter);
             enemy!(h, slot, counter = old.wrapping_sub(1));
             if old == 1 {
@@ -231,17 +221,17 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
                 script.advance(script.byte(0) as i8 as isize)
             }
         }
-        addresses::instructions::MOVE_RANDOMLY => {
+        MOVE_RANDOMLY => {
             random_move(h, slot, script);
             script.advance(4)
         }
-        addresses::instructions::SET_PROPERTIES | addresses::instructions::CLEAR_PROPERTIES => {
+        SET_PROPERTIES | CLEAR_PROPERTIES => {
             let old = enemy!(h, slot, properties);
             let mask = script.word(0);
             enemy!(
                 h,
                 slot,
-                properties = if ea == addresses::instructions::SET_PROPERTIES {
+                properties = if ea == SET_PROPERTIES {
                     old | mask
                 } else {
                     old & mask
@@ -249,24 +239,23 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
             );
             script.advance(2)
         }
-        addresses::instructions::ENABLE_SAMUS_PROJECTILE_COLLISION
-        | addresses::instructions::DISABLE_SAMUS_PROJECTILE_COLLISION
-        | addresses::instructions::DISABLE_SAMUS_COLLISION
-        | addresses::instructions::ENABLE_SAMUS_COLLISION
-        | addresses::instructions::SET_NOT_DIE_ON_CONTACT
-        | addresses::instructions::SET_DIE_ON_CONTACT
-        | addresses::instructions::SET_HIGH_PRIORITY
-        | addresses::instructions::SET_LOW_PRIORITY
-        | addresses::instructions::AT_9475 => {
+        ENABLE_SAMUS_PROJECTILE_COLLISION
+        | DISABLE_SAMUS_PROJECTILE_COLLISION
+        | DISABLE_SAMUS_COLLISION
+        | ENABLE_SAMUS_COLLISION
+        | SET_NOT_DIE_ON_CONTACT
+        | SET_DIE_ON_CONTACT
+        | SET_HIGH_PRIORITY
+        | SET_LOW_PRIORITY
+        | AT_9475 => {
             let (mask, set) = match ea {
-                addresses::instructions::ENABLE_SAMUS_PROJECTILE_COLLISION => (0x8000, true),
-                addresses::instructions::DISABLE_SAMUS_PROJECTILE_COLLISION => (0x8000, false),
-                addresses::instructions::DISABLE_SAMUS_COLLISION
-                | addresses::instructions::AT_9475 => (0x2000, true),
-                addresses::instructions::ENABLE_SAMUS_COLLISION => (0x2000, false),
-                addresses::instructions::SET_NOT_DIE_ON_CONTACT => (0x4000, true),
-                addresses::instructions::SET_DIE_ON_CONTACT => (0x4000, false),
-                addresses::instructions::SET_HIGH_PRIORITY => (0x1000, true),
+                ENABLE_SAMUS_PROJECTILE_COLLISION => (0x8000, true),
+                DISABLE_SAMUS_PROJECTILE_COLLISION => (0x8000, false),
+                DISABLE_SAMUS_COLLISION | AT_9475 => (0x2000, true),
+                ENABLE_SAMUS_COLLISION => (0x2000, false),
+                SET_NOT_DIE_ON_CONTACT => (0x4000, true),
+                SET_DIE_ON_CONTACT => (0x4000, false),
+                SET_HIGH_PRIORITY => (0x1000, true),
                 _ => (0x1000, false),
             };
             let old = enemy!(h, slot, properties);
@@ -277,15 +266,15 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
             );
             script.advance(0)
         }
-        addresses::instructions::SET_RADII => {
+        SET_RADII => {
             enemy!(h, slot, radius = script.word(0));
             script.advance(2)
         }
-        addresses::instructions::CLEAR_RADII => {
+        CLEAR_RADII => {
             enemy!(h, slot, radius = 0);
             script.advance(0)
         }
-        addresses::instructions::AIM_AT_SAMUS => {
+        AIM_AT_SAMUS => {
             let x = h.session().player.x.wrapping_sub(enemy!(h, slot, x));
             let y = h.session().player.y.wrapping_sub(enemy!(h, slot, y));
             let angle = h.calculate_angle_from_xy(x, y).wrapping_mul(2);
@@ -304,7 +293,7 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
             );
             script.advance(0)
         }
-        addresses::instructions::WRITE_COLOURS => {
+        WRITE_COLOURS => {
             let mut color = script.word(2);
             let mut remaining = i32::from(script.byte(4));
             let mut source = script.word(0);
@@ -320,14 +309,12 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
             }
             script.advance(5)
         }
-        addresses::instructions::QUEUE_MUSIC => {
+        QUEUE_MUSIC => {
             h.queue_music(u16::from(script.byte(0)));
             script.advance(1)
         }
-        addresses::instructions::QUEUE_SOUND_FIRST..=addresses::instructions::QUEUE_SOUND_LAST
-            if (ea - addresses::instructions::QUEUE_SOUND_FIRST).is_multiple_of(9) =>
-        {
-            let command = (ea - addresses::instructions::QUEUE_SOUND_FIRST) / 9;
+        QUEUE_SOUND_FIRST..=QUEUE_SOUND_LAST if (ea - QUEUE_SOUND_FIRST).is_multiple_of(9) => {
+            let command = (ea - QUEUE_SOUND_FIRST) / 9;
             h.queue_sound(
                 (command % 3 + 1) as u8,
                 [6, 15, 3, 9, 1][(command / 3) as usize],
@@ -335,14 +322,14 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
             );
             script.advance(1)
         }
-        addresses::instructions::GO_TO_WITH_QUARTER_CHANCE => {
+        GO_TO_WITH_QUARTER_CHANCE => {
             if h.next_random() & 0xc000 == 0xc000 {
                 EnemyScript::jump(script.word(0))
             } else {
                 script.advance(2)
             }
         }
-        addresses::instructions::MOVE_X_AND_GO_TO_BY_DIRECTION => {
+        MOVE_X_AND_GO_TO_BY_DIRECTION => {
             let amount = (i32::from(enemy!(h, slot, velocity_x) as i16) << 8) as u32;
             super::pre_helpers::add_split(F::X, F::XFraction, slot, amount, h);
             EnemyScript::jump(script.word(if enemy!(h, slot, velocity_x) & 0x8000 == 0 {
@@ -351,8 +338,8 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
                 0
             }))
         }
-        addresses::instructions::AT_B7EA | addresses::instructions::AT_B818 => {
-            let definition = if ea == addresses::instructions::AT_B7EA {
+        AT_B7EA | AT_B818 => {
+            let definition = if ea == AT_B7EA {
                 addr_kEproj_TourianStatueUnlockingParticle
             } else {
                 addr_kEproj_TourianStatueUnlockingParticleTail
@@ -360,11 +347,11 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
             super::lifecycle::spawn_room(h, definition, k);
             script.advance(0)
         }
-        addresses::instructions::STOP_MOTHER_BRAIN_PURPLE_BREATH => {
+        STOP_MOTHER_BRAIN_PURPLE_BREATH => {
             h.set_mother_brain_purple_breath_active(0);
             script.advance(0)
         }
-        addresses::instructions::AT_D5E1 | addresses::instructions::AT_D69A => {
+        AT_D5E1 | AT_D69A => {
             h.next_random();
             enemy!(
                 h,
@@ -372,16 +359,16 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
                 velocity_x =
                     (h.inputs().random >> 8) | (h.session().flag_compatibility.bitmask << 8)
             );
-            if ea == addresses::instructions::AT_D5E1 {
+            if ea == AT_D5E1 {
                 enemy!(h, slot, velocity_y = 192);
             }
             script.advance(0)
         }
-        addresses::instructions::ARM_DRAYGON_WALL_TURRET | addresses::instructions::AT_8CFD => {
+        ARM_DRAYGON_WALL_TURRET | AT_8CFD => {
             enemy!(
                 h,
                 slot,
-                pre_action = if ea == addresses::instructions::ARM_DRAYGON_WALL_TURRET {
+                pre_action = if ea == ARM_DRAYGON_WALL_TURRET {
                     0x8dff
                 } else {
                     0x8dca
@@ -389,9 +376,8 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
             );
             script.advance(0)
         }
-        addresses::instructions::SPAWN_HORIZONTAL_AFTERBURN
-        | addresses::instructions::SPAWN_VERTICAL_AFTERBURN => {
-            let definitions = if ea == addresses::instructions::SPAWN_HORIZONTAL_AFTERBURN {
+        SPAWN_HORIZONTAL_AFTERBURN | SPAWN_VERTICAL_AFTERBURN => {
+            let definitions = if ea == SPAWN_HORIZONTAL_AFTERBURN {
                 [addr_stru_86966C, addr_stru_86967A]
             } else {
                 [addr_stru_869688, addr_stru_869696]
@@ -402,7 +388,7 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
             }
             script.advance(0)
         }
-        addresses::instructions::SPAWN_NEXT_AFTERBURN => {
+        SPAWN_NEXT_AFTERBURN => {
             let count = enemy_byte!(h, k as isize, behavior_a).wrapping_sub(1);
             enemy_byte!(h, k as isize, behavior_a = count);
             if count as i8 >= 0 {
@@ -411,12 +397,12 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
             }
             script.advance(0)
         }
-        addresses::instructions::AT_B269 | addresses::instructions::AT_B272 => {
+        AT_B269 | AT_B272 => {
             let angle = super::pre_helpers::angle_to_player(k, h);
             set_velocity_toward(
                 h,
                 k,
-                if ea == addresses::instructions::AT_B269 {
+                if ea == AT_B269 {
                     angle & 0x7f
                 } else {
                     angle | 0x80
@@ -424,21 +410,19 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
             );
             script.advance(0)
         }
-        addresses::instructions::GO_TO_IF_KRAID_HEALTHY => {
+        GO_TO_IF_KRAID_HEALTHY => {
             if h.kraid_health_eighth(enemy!(h, slot, behavior_b)) & 0x8000 == 0 {
                 EnemyScript::jump(script.word(0))
             } else {
                 script.advance(2)
             }
         }
-        addresses::instructions::GO_TO_INDEXED => {
-            EnemyScript::jump(script.word(enemy!(h, slot, behavior_a) as isize))
-        }
-        addresses::instructions::AT_C1B4 | addresses::instructions::AT_D1C7 => {
+        GO_TO_INDEXED => EnemyScript::jump(script.word(enemy!(h, slot, behavior_a) as isize)),
+        AT_C1B4 | AT_D1C7 => {
             enemy!(h, slot, graphics = 0);
             script.advance(0)
         }
-        addresses::instructions::KAGO_BUG_HOP => {
+        KAGO_BUG_HOP => {
             super::pre_actions::kago_bug_cry_countdown(k, h);
             super::pre_actions::kago_bug_flag_when_far(k, h);
             let mut direction = (h.inputs().random & 0x300).wrapping_add(2048);
@@ -469,7 +453,7 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
             enemy!(h, slot, pre_action = 0xd0ec);
             script.advance(0)
         }
-        addresses::instructions::KAGO_BUG_REST => {
+        KAGO_BUG_REST => {
             enemy!(
                 h,
                 slot,
@@ -478,7 +462,7 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
             enemy!(h, slot, pre_action = 0xd0ca);
             script.advance(0)
         }
-        addresses::instructions::ALTERNATE_X_BY_FRAME => {
+        ALTERNATE_X_BY_FRAME => {
             let odd = h.inputs().frame & 1 != 0;
             enemy!(
                 h,
@@ -498,7 +482,7 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
             enemy!(h, slot, delay = 1);
             EnemyScript::Stop
         }
-        addresses::instructions::ALTERNATE_X_OFFSCREEN_BY_FRAME => {
+        ALTERNATE_X_OFFSCREEN_BY_FRAME => {
             enemy!(
                 h,
                 slot,
@@ -517,11 +501,11 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
             enemy!(h, slot, delay = 1);
             EnemyScript::Stop
         }
-        addresses::instructions::SET_PROPERTIES_3000 => {
+        SET_PROPERTIES_3000 => {
             enemy!(h, slot, properties = 12288);
             script.advance(0)
         }
-        addresses::instructions::SPAWN_AT_POSITION => {
+        SPAWN_AT_POSITION => {
             h.session_mut().enemy_projectiles.spawn.point = Point {
                 x: enemy!(h, slot, x),
                 y: enemy!(h, slot, y),
@@ -530,8 +514,8 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
             super::lifecycle::spawn_room(h, addr_kEproj_Spores as u16, parameter);
             script.advance(0)
         }
-        addresses::instructions::AT_ECE3 | addresses::instructions::AT_ED17 => {
-            let (mask, half) = if ea == addresses::instructions::AT_ECE3 {
+        AT_ECE3 | AT_ED17 => {
+            let (mask, half) = if ea == AT_ECE3 {
                 (0x3f, 32)
             } else {
                 (0x1f, 16)
@@ -539,38 +523,34 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
             random_sprite(h, k, script, mask, half);
             script.advance(2)
         }
-        addresses::instructions::AT_EE8B
-        | addresses::instructions::AT_EE97
-        | addresses::instructions::AT_EEA3 => {
+        AT_EE8B | AT_EE97 | AT_EEA3 => {
             h.queue_sound(
                 2,
                 1,
                 match ea {
-                    addresses::instructions::AT_EE8B => 9,
-                    addresses::instructions::AT_EE97 => 0x24,
+                    AT_EE8B => 9,
+                    AT_EE97 => 0x24,
                     _ => 0xb,
                 },
             );
             script.advance(0)
         }
-        addresses::instructions::GO_TO_CONVERTED_DROP => {
-            EnemyScript::jump(super::drops::convert(k, h))
-        }
-        addresses::instructions::RESPAWN_DROP => {
+        GO_TO_CONVERTED_DROP => EnemyScript::jump(super::drops::convert(k, h)),
+        RESPAWN_DROP => {
             super::drops::respawn(k, h);
             script.advance(0)
         }
-        addresses::instructions::GO_TO => EnemyScript::jump(script.word(0)),
-        addresses::instructions::GO_TO_RELATIVE => script.advance(script.byte(0) as i8 as isize),
-        addresses::instructions::PIRATE_LASER_MOVE_RIGHT => {
+        GO_TO => EnemyScript::jump(script.word(0)),
+        GO_TO_RELATIVE => script.advance(script.byte(0) as i8 as isize),
+        PIRATE_LASER_MOVE_RIGHT => {
             super::pre_actions::EprojPreInstr_PirateMotherBrainLaser_MoveRight(k, h);
             script.advance(0)
         }
-        addresses::instructions::PIRATE_LASER_MOVE_LEFT => {
+        PIRATE_LASER_MOVE_LEFT => {
             super::pre_actions::EprojPreInstr_PirateMotherBrainLaser_MoveLeft(k, h);
             script.advance(0)
         }
-        addresses::instructions::NOP => script.advance(0),
+        NOP => script.advance(0),
         _ => {
             h.unreachable();
             EnemyScript::Stop
