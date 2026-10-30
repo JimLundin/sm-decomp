@@ -58,6 +58,7 @@ pub mod sprite_output;
 pub mod title_screen;
 pub mod visual_state;
 pub mod word_transfers;
+pub mod xray_background;
 
 pub mod display {
     pub mod control;

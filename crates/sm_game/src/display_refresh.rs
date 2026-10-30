@@ -19,7 +19,7 @@ use crate::display::registers::{
 };
 use crate::display::sequence::{Registers, register_writes, write_register_and_mirror};
 use crate::display::transfer::{ScrollingLayout, setup_transfer};
-use crate::ram::{CompatibilityRam, checked_word as at, word, word_arrays};
+use crate::ram::{CompatibilityRam, RawRam, checked_word, checked_word as at, word, word_arrays};
 use crate::scene::state::DisplayError;
 use crate::word_transfers;
 
@@ -694,4 +694,36 @@ pub fn queue_fx_clear<H: Host + ?Sized>(game: &mut H) {
     set_native_word(entry + 4, 126, game);
     set_native_word(entry + 5, addr_unk_605880 as u16, game);
     word!(game.vram_write_queue_tail = tail.wrapping_add(7));
+}
+
+fn write_readback_word<H: Host + ?Sized>(game: &mut H, offset: usize, value: u16) {
+    let bytes = value.to_ne_bytes();
+    game.ram().write_byte(offset, bytes[0]);
+    game.ram().write_byte(offset + 1, bytes[1]);
+}
+
+/// Queue a VRAM readback of `size` bytes into WRAM at `destination`, from
+/// the screen base in the register mirror at `register` plus `vram_offset`.
+pub fn enqueue_readback<H: Host + ?Sized>(
+    register: usize,
+    vram_offset: u16,
+    destination: u16,
+    size: u16,
+    retain_mode: bool,
+    game: &mut H,
+) {
+    let tail = checked_word!(game.vram_read_queue_tail);
+    let entry = 0x340 + usize::from(tail);
+    let target =
+        ((u16::from(game.ram().read_byte(register)) & 0xfc) << 8).wrapping_add(vram_offset);
+    write_readback_word(game, entry, target);
+    if !retain_mode {
+        write_readback_word(game, entry + 2, 129);
+    }
+    // These stores overlap. Stage five of X-ray retains the preceding mode byte.
+    write_readback_word(game, entry + 3, 57);
+    write_readback_word(game, entry + 4, destination);
+    write_readback_word(game, entry + 6, 126);
+    write_readback_word(game, entry + 7, size);
+    checked_word!(game.vram_read_queue_tail = tail.wrapping_add(9));
 }
