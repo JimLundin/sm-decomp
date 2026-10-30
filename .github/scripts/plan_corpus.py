@@ -21,6 +21,8 @@ def seed_bundle(row):
                      'mother-brain-baby-metroid-drain', 'mother-brain-baby-metroid-sacrifice',
                      'mother-brain-escape-door'):
         return ('seeds-v1-mb-phases-13dd32bb039004ab.tar.gz.enc', '13dd32bb039004abe6a8a3225cc1dfe14421dab64bea27e8931b987603042caf')
+    if row['id'] in ('volcano-room-lavaquake', 'boss-draygon-tail-whip', 'boss-draygon-later-swoop'):
+        return ('seeds-v1-offroute-4b5962a5bc7f6aaa.tar.gz.enc', '4b5962a5bc7f6aaa5050bd5f7d6abfb046e1b078c26b4242d82489300c7f044a')
     if row['id'] in ('pause-menu-tour', 'options-menu-tour', 'boss-draygon-grab', 'credits-ending'):
         return ('seeds-v1-coverage-54f838bfd8146bf7.tar.gz.enc', '54f838bfd8146bf76d631d567299b0721adbc1c4065584e9de5f3e19632ccb21')
     if row['id'] in ('pickup-reserve', 'save-death-reload', 'save-memory', 'music-fir-selector10'):
