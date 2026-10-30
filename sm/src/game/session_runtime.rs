@@ -1228,8 +1228,6 @@ crate::game::callback_dispatch! {
             };
             actor_species_pre_instruction(0xa20000 | u32::from(phase), game);
         }];
-        10662880 => [crate::game::erratic_fireball::update(true, game)];
-        10662927 => [crate::game::erratic_fireball::update(false, game)];
         10665625 => [crate::game::lava_jumper::initialize(game)];
         10661995 => [crate::game::flies::initialize(game)];
         10666562 => [crate::game::norfair_rio::initialize(false, game)];
