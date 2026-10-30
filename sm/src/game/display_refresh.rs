@@ -52,13 +52,13 @@ impl refresh::Host for Game {
     }
 }
 
-/// Requires live, exclusively accessed hardware for the ordered CPU I/O and OAM reset.
-pub(crate) unsafe fn initialize_io_and_oam(brightness: Option<u8>, game: &mut Game) {
+/// The ordered CPU I/O and OAM reset.
+pub(crate) fn initialize_io_and_oam(brightness: Option<u8>, game: &mut Game) {
     refresh::initialize_io_and_oam(brightness, game);
 }
 
-/// Requires a live, exclusively accessed SNES backend.
-pub(crate) unsafe fn enable(enabled: bool, game: &mut Game) {
+/// Enable or disable the NMI.
+pub(crate) fn enable(enabled: bool, game: &mut Game) {
     refresh::enable(enabled, game);
 }
 
@@ -97,13 +97,13 @@ pub(crate) unsafe fn flush_tilemaps(game: &mut Game) {
     }
 }
 
-/// Requires a live, exclusively accessed SNES backend for every upload.
-pub(crate) unsafe fn run(game: &mut Game) {
+/// The ordered display refresh uploads.
+pub(crate) fn run(game: &mut Game) {
     refresh::run(game);
 }
 
-/// Requires a live, exclusively accessed SNES backend for ordered channel-1 setup.
-pub(crate) unsafe fn setup_transfer(mode: u16, source: u32, bytes: u16, game: &mut Game) {
+/// Ordered channel-1 DMA setup.
+pub(crate) fn setup_transfer(mode: u16, source: u32, bytes: u16, game: &mut Game) {
     sm_game::display::transfer::setup_transfer(mode, source, bytes, game)
 }
 
@@ -139,13 +139,11 @@ impl GraphicsAsset {
         }
     }
 
-    /// Requires a live, exclusively accessed SNES backend.
-    pub(crate) unsafe fn load_planes(self, fill: u8, word_reset: bool, game: &mut Game) {
+    pub(crate) fn load_planes(self, fill: u8, word_reset: bool, game: &mut Game) {
         self.shared().load_planes(fill, word_reset, game);
     }
 
-    /// Requires a live, exclusively accessed SNES backend.
-    pub(crate) unsafe fn load(self, game: &mut Game) {
+    pub(crate) fn load(self, game: &mut Game) {
         self.shared().load(game);
     }
 }
@@ -195,11 +193,11 @@ pub(crate) unsafe fn copy_to_vram_with_source(
     }
 }
 
-/// Requires a live, exclusively accessed SNES backend for the PPU readback.
-pub unsafe fn DecompressToVRAM(src: u32, dst_addr: u16, game: &mut Game) {
+/// Decompress `src` into VRAM at `dst_addr`, with its PPU readback.
+pub fn DecompressToVRAM(src: u32, dst_addr: u16, game: &mut Game) {
     refresh::decompress_to_vram(src, dst_addr, game);
 }
-/// Requires a live, exclusively accessed SNES backend for the PPU readback.
-pub(crate) unsafe fn decompress_prepared_vram(stream: &[u8], destination: u16, game: &mut Game) {
+/// Decompress a prepared stream into VRAM, with its PPU readback.
+pub(crate) fn decompress_prepared_vram(stream: &[u8], destination: u16, game: &mut Game) {
     refresh::decompress_prepared_vram(stream, destination, game);
 }
