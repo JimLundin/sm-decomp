@@ -1,5 +1,4 @@
-//! Moved to `sm_game::session_checkpoint`; verification cases stay with the compat crate.
-pub use sm_game::session_checkpoint::*;
+//! The checkpoint codec lives in `sm_game::session_checkpoint`; verification cases stay with the compat crate.
 #[cfg(sm_verify_dll)]
 use sm_game::{scene::component::DisplayStartMetadata, session::Session};
 
