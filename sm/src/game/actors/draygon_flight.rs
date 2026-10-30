@@ -17,6 +17,7 @@ use core::mem::offset_of;
 pub(crate) use sm_game::actors::draygon_flight::*;
 use sm_game::actors::draygon_grab::{ENEMY_DEF_DAMAGE, ENEMY_DEF_HURT_AI_TIME};
 use sm_game::actors::draygon_host::Host;
+use sm_game::actors::host::BossEffects;
 use sm_game::enemy_projectiles::drops::DropSource;
 use sm_game::gameplay_flag_host::BossWordOrder;
 use sm_game::geometry::Vector32;
@@ -27,10 +28,6 @@ const _: () = assert!(
 );
 
 impl Host for Game {
-    fn create_sprite(&mut self, x: u16, y: u16, kind: u16, appearance: u16) -> u16 {
-        sprites::create_sprite(x, y, kind, appearance, self)
-    }
-
     fn draygon_body_bubble(&mut self) {
         sprites::draygon_body_bubble(self);
     }
@@ -41,6 +38,36 @@ impl Host for Game {
 
     fn draygon_trajectory(&mut self) {
         sprites::draygon_trajectory(self);
+    }
+
+    fn grab_samus(&mut self, direction: u16) {
+        forced::grab_by_draygon(direction, &mut Runtime::new(self));
+    }
+
+    fn release_samus(&mut self) {
+        forced::release_from_draygon(&mut Runtime::new(self));
+    }
+
+    fn draygon_spawn_ring(&mut self) {
+        sprites::draygon_spawn_ring(self);
+    }
+
+    fn draygon_death_bubble(&mut self) {
+        sprites::draygon_death_bubble(self);
+    }
+
+    fn draygon_motion(&mut self, horizontal_bias: u16) {
+        sprites::draygon_motion(horizontal_bias, self);
+    }
+
+    fn scatter_draygon_drop(&mut self, area: u16) {
+        scatter_drop(DropSource::Draygon, area, self);
+    }
+}
+
+impl BossEffects for Game {
+    fn create_sprite(&mut self, x: u16, y: u16, kind: u16, appearance: u16) -> u16 {
+        sprites::create_sprite(x, y, kind, appearance, self)
     }
 
     fn set_projectile_spawn_point(&mut self, x: u16, y: u16) {
@@ -94,32 +121,12 @@ impl Host for Game {
         correct_previous_position(self);
     }
 
-    fn grab_samus(&mut self, direction: u16) {
-        forced::grab_by_draygon(direction, &mut Runtime::new(self));
-    }
-
-    fn release_samus(&mut self) {
-        forced::release_from_draygon(&mut Runtime::new(self));
-    }
-
     fn suit_damage(&mut self, amount: u16) -> u16 {
         combat::suit_damage(&mut Runtime::new(self), amount)
     }
 
     fn damage_player(&mut self, amount: u16) {
         damage_player(amount, self);
-    }
-
-    fn draygon_spawn_ring(&mut self) {
-        sprites::draygon_spawn_ring(self);
-    }
-
-    fn draygon_death_bubble(&mut self) {
-        sprites::draygon_death_bubble(self);
-    }
-
-    fn draygon_motion(&mut self, horizontal_bias: u16) {
-        sprites::draygon_motion(horizontal_bias, self);
     }
 
     fn retire_all_sprites(&mut self) {
@@ -138,11 +145,18 @@ impl Host for Game {
         gameplay_flag_runtime::set_boss_word_le(area, value, self);
     }
 
-    fn scatter_draygon_drop(&mut self, area: u16) {
-        scatter_drop(DropSource::Draygon, area, self);
-    }
-
     fn unreachable(&mut self) {
         crate::game::animated_tiles::native::unreachable(self);
+    }
+
+    fn spawn_plm(&mut self, block_x: u8, block_y: u8, header: u16) {
+        crate::game::room_mechanisms::spawn_hardcoded(
+            crate::types::SpawnHardcodedPlmArgs::new(
+                block_x,
+                block_y,
+                header as crate::types::VoidP,
+            ),
+            self,
+        );
     }
 }
