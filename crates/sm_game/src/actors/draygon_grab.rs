@@ -68,6 +68,7 @@ fn pursue<S: BossState>(dx: u16, dy: u16, game: &mut S) {
     let angle = QUARTER_TURN.wrapping_sub(angle_from_delta(dx, dy) as u8) as u16;
     game.set_step_scratch(angle);
     let vector = game.direction_step(angle, 2);
+    word!(game.REMOVED_VAR_E26 = vector.x as u16);
     game.step_along(angle, vector);
 }
 /// While the grapple is connected to a block, flash and run the hurt AI.

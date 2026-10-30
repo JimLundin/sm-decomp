@@ -164,9 +164,6 @@ impl sm_game::actors::species::AiHost for Game {
     fn install_draygon_layers(&mut self) {
         crate::game::visual_runtime::initialize_draygon_layer(self);
     }
-    fn warn_draygon_swoop(&mut self) {
-        unsafe { crate::c_library::printf(c"Wtf is varE26?\n".as_ptr()) };
-    }
     fn native_draygon_function(&mut self, ea: u32, k: u16) {
         spore_spawn_function(ea, k, self);
     }

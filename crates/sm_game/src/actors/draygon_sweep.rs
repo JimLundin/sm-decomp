@@ -54,6 +54,7 @@ fn calculate_swoop_y_positions<L: Lease>(game: &mut L) {
     session_slot!(game, Draygon[BODY](x_speed, x_subspeed) = speed);
     write_y_position(index, session_slot!(game, Draygon[BODY].base.y_pos), game);
     session_slot!(game, Draygon[BODY]; function_timer = index, swoop_duration = index);
+    word!(game.REMOVED_VAR_E26 = index);
 }
 /// Draygon body function - swoop right ($A5:87F4) or left ($A5:89B3) - setup.
 /// Was `begin`.
@@ -62,10 +63,13 @@ pub fn swoop_setup<L: Lease>(right: bool, game: &mut L) {
         fire_wall_turret(game);
         calculate_swoop_y_positions(game);
     } else {
-        // The bank retains the original diagnostic before this zero-divisor setup.
+        // The duration is $0E26's quarter: the last swoop Y position index or
+        // chase X subspeed stored there, not the swoop duration meant.
         let distance =
             abs16(session_slot!(game, Draygon[BODY].right_reset_x).wrapping_sub(game.player_x()));
-        let speed = (u32::from(distance) << 16).checked_div(0).unwrap_or(0);
+        let speed = (u32::from(distance) << 16)
+            .checked_div(u32::from(word!(game.REMOVED_VAR_E26) >> 2))
+            .unwrap_or(0);
         session_slot!(game, Draygon[BODY](x_speed, x_subspeed) = speed);
     }
     session_slot!(

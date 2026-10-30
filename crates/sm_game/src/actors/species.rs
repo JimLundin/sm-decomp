@@ -281,8 +281,6 @@ pub trait AiHost:
     fn grapple_kill(&mut self);
     /// Install Draygon's BG layers as its initialisation does.
     fn install_draygon_layers(&mut self);
-    /// The original diagnostic Draygon's left swoop setup prints.
-    fn warn_draygon_swoop(&mut self);
     /// A bank $A5 function Draygon's dispatch shares with Spore Spawn, whose
     /// routines still run in the compatibility crate.
     fn native_draygon_function(&mut self, ea: u32, k: u16);
@@ -293,7 +291,6 @@ pub fn draygon_function<H: AiHost>(ea: u32, k: u16, game: &mut H) {
     match ea {
         10848691 => {
             draygon_flight::fire_wall_turret(game);
-            game.warn_draygon_swoop();
             draygon_sweep::swoop_setup(false, game);
         }
         10848027 => draygon_flight::fight_intro(true, game),
