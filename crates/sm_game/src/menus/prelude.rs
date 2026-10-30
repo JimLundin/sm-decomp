@@ -41,6 +41,21 @@ pub struct PairU16 {
 /// Bytes in one VRAM write queue record: size, 24-bit source, destination.
 pub const VRAM_WRITE_ENTRY_BYTES: usize = 7;
 
+/// The full enemy record at $7E:0F78 + slot, as the original's `EnemyData`.
+#[derive(Copy, Clone)]
+#[repr(C, packed)]
+pub struct EnemyData {
+    pub base: crate::actors::layouts::EnemyBase,
+    pub ai_var_A: u16,
+    pub ai_var_B: u16,
+    pub ai_var_C: u16,
+    pub ai_var_D: u16,
+    pub ai_var_E: u16,
+    pub ai_preinstr: u16,
+    pub parameter_1: u16,
+    pub parameter_2: u16,
+}
+
 /// The original coroutine result: nonzero yields to the frame loop.
 pub type CoroutineRet = u8;
 

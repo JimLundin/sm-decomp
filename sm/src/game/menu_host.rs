@@ -118,6 +118,15 @@ impl MenuRuntime for Game {
     fn shake_room_with_sound(&mut self, kind: u16) {
         visual_runtime::shake_room_with_sound(kind, self)
     }
+    fn display_wait(&mut self, update: bool) -> u8 {
+        crate::game::display_refresh::wait(update, self)
+    }
+    fn set_boss_byte(&mut self, area: u16, value: u8) {
+        crate::game::gameplay_flag_runtime::set_boss_byte_at(area, value, self)
+    }
+    fn native_image_binding(&self) -> Option<crate::rom::RomImage> {
+        self.capture_native_rom_binding()
+    }
     fn request_reset(&mut self) {
         Game::request_reset(self)
     }
@@ -161,6 +170,12 @@ impl Host for Game {
     fn save_slot_offsets(&self) -> &Option<sm_game::menus::save_slots::ImportedSlots> {
         &self.save_slots
     }
+    fn demo_sets(&self) -> &Option<sm_game::demo_rooms::ImportedSets> {
+        &self.demo_sets
+    }
+    fn demo_scenes(&self) -> &Option<sm_game::demo_rooms::ImportedScenes> {
+        &self.demo_scenes
+    }
     fn area_select_palettes(&self) -> &Option<sm_game::menus::menu_tilemap::ImportedAreaPalettes> {
         &self.area_select_palettes
     }
@@ -190,3 +205,7 @@ impl sm_game::decompression::DecompressionHost for Game {
 // The moved menus and screens address these records by layout.
 const _: () = assert!(core::mem::size_of::<crate::types::VramWriteEntry>() == 7);
 const _: () = assert!(core::mem::offset_of!(crate::types::PairU16, j) == 2);
+const _: () = assert!(
+    core::mem::offset_of!(crate::types::EnemyData, ai_preinstr)
+        == core::mem::offset_of!(sm_game::menus::prelude::EnemyData, ai_preinstr)
+);

@@ -15,6 +15,7 @@ pub mod combat_rules;
 pub mod constants;
 pub mod contact_rules;
 pub mod decompression;
+pub mod demo_rooms;
 pub mod dialogue;
 pub mod dialogue_ram;
 pub mod drop_rules;

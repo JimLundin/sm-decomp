@@ -38,6 +38,11 @@ pub trait MenuRuntime {
     /// Begin entering the room at the current load station.
     fn enter_load_station(&mut self);
     fn request_reset(&mut self);
+    /// Wait for the next display refresh; nonzero yields to the frame loop.
+    fn display_wait(&mut self, update: bool) -> u8;
+    fn set_boss_byte(&mut self, area: u16, value: u8);
+    /// The registered native image, if any, without the missing-image panic.
+    fn native_image_binding(&self) -> Option<sm_data::cartridge::RomImage>;
     fn spawn_bg3_scroll(&mut self);
     fn spawn_animated_tiles(&mut self, definition: u16);
     fn shake_room_with_sound(&mut self, kind: u16);
@@ -84,5 +89,7 @@ pub trait Host:
     fn pause_menu_tables(&self) -> &super::map_menu::ImportedTables;
     fn equipment_screen_tables(&self) -> &super::equipment_menu::ImportedTables;
     fn save_slot_offsets(&self) -> &Option<super::save_slots::ImportedSlots>;
+    fn demo_sets(&self) -> &Option<crate::demo_rooms::ImportedSets>;
+    fn demo_scenes(&self) -> &Option<crate::demo_rooms::ImportedScenes>;
     fn area_select_palettes(&self) -> &Option<super::menu_tilemap::ImportedAreaPalettes>;
 }
