@@ -641,7 +641,7 @@ pub fn explosion_spawner<H: Host + ?Sized>(k: u16, game: &mut H) {
         let pattern = word!(game.cinematic_var13);
         sprites(game, object::CERES_EXPLOSION_2, pattern);
         word!(game.cinematic_var4 = 12);
-        word!(game.cinematic_var13 = (word!(game.cinematic_var13) as i32 + 1 & 7) as u16);
+        word!(game.cinematic_var13 = (word!(game.cinematic_var13).wrapping_add(1)) & 7);
     }
 }
 

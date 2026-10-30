@@ -2171,10 +2171,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/visual_host.rs"),
     ),
     (
-        "sm/src/game/cinematic.rs",
-        include_bytes!("game/cinematic.rs"),
-    ),
-    (
         "sm/src/game/title_screen.rs",
         include_bytes!("game/title_screen.rs"),
     ),
@@ -2182,22 +2178,13 @@ pub static FILES: &[(&str, &[u8])] = &[
         "sm/src/game/ending_screens.rs",
         include_bytes!("game/ending_screens.rs"),
     ),
-    ("sm/src/game/credits.rs", include_bytes!("game/credits.rs")),
     (
         "sm/src/game/intro_objects.rs",
         include_bytes!("game/intro_objects.rs"),
     ),
     (
-        "sm/src/game/shooting_star_motion.rs",
-        include_bytes!("game/shooting_star_motion.rs"),
-    ),
-    (
         "sm/src/game/cinematic_objects.rs",
         include_bytes!("game/cinematic_objects.rs"),
-    ),
-    (
-        "sm/src/game/cinematic_display.rs",
-        include_bytes!("game/cinematic_display.rs"),
     ),
     (
         "sm/src/game/room_visuals.rs",
@@ -3132,6 +3119,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/actors/elevator.rs",
         include_bytes!("../../crates/sm_game/src/actors/elevator.rs"),
+    ),
+    (
+        "crates/sm_game/src/cinematic_states.rs",
+        include_bytes!("../../crates/sm_game/src/cinematic_states.rs"),
     ),
     (
         "crates/sm_game/src/cinematic_host.rs",

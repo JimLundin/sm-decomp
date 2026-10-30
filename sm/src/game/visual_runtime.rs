@@ -1,11 +1,5 @@
 //! Visual adapters on the one aggregate Session, with explicit legacy effects.
-pub(crate) use crate::game::cinematic::advance_cinematic_fade;
-pub(crate) use crate::game::cinematic_display::draw_intro_sprites;
-pub(crate) use crate::game::cinematic_objects::{
-    CinematicObjects, advance_intro_mother_brain, draw_cinematic_sprites,
-    execute_cinematic_sprite_instruction,
-};
-pub(crate) use crate::game::credits::advance_credits;
+pub(crate) use crate::game::cinematic_objects::advance_intro_mother_brain;
 pub(crate) use crate::game::ending_screens::{
     advance_ending_gunship_spin, advance_ending_samus_jump, advance_ending_sprite_pair,
     advance_postcredits_samus_message, advance_postcredits_samus_reveal, advance_postcredits_zoom,
@@ -18,7 +12,7 @@ pub(crate) use crate::game::hdma_objects::{
 pub(crate) use crate::game::intro_objects::{
     advance_ceres_station, advance_intro_baby_pursuit, advance_intro_landing_mosaic,
     advance_intro_rinka, advance_zebes_destruction_zoom, advance_zebes_flight, advance_zebes_stars,
-    launch_cinematic_sprite, update_cinematic_transform, wait_cinematic_scene,
+    launch_cinematic_sprite, wait_cinematic_scene,
 };
 use crate::game::projectile_presentation_ram as sprite_output;
 pub(crate) use crate::game::room_visuals::{
@@ -28,13 +22,8 @@ pub(crate) use crate::game::room_visuals::{
     initialize_phantoon_motion, initialize_room_haze, initialize_tourian_statue,
     initialize_weather, shake_room_with_sound,
 };
-pub(crate) use crate::game::shooting_star_motion::advance_shooting_stars;
-pub(crate) use crate::game::title_screen::{
-    advance_title_pan, advance_title_wait, request_title_skip,
-};
-pub(crate) use sm_game::cinematic::{
-    advance_cinematic_coordinate, drift_cinematic_sprite, set_fixed_color,
-};
+pub(crate) use crate::game::title_screen::{advance_title_pan, advance_title_wait};
+pub(crate) use sm_game::cinematic::drift_cinematic_sprite;
 
 pub(crate) use crate::game::hosts::{draw_player_frame, update_beam_tiles_and_palette};
 pub(crate) use crate::game::visual_checks::{

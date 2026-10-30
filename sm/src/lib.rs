@@ -353,10 +353,8 @@ pub mod game {
     pub(crate) use callback_dispatch;
 
     pub(crate) mod beam_windows;
-    pub(crate) mod cinematic_display;
     pub(crate) mod cinematic_objects;
     pub mod constants;
-    pub(crate) mod credits;
     pub(crate) mod decompression;
     pub(crate) mod demo_rooms;
     pub(crate) mod ending_screens;
@@ -384,7 +382,6 @@ pub mod game {
     pub(crate) mod room_visuals;
     pub mod scene;
     pub(crate) mod scrolling_sky;
-    pub(crate) mod shooting_star_motion;
     pub(crate) mod title_screen;
     pub(crate) use sm_game::shaktool_tables;
     pub(crate) mod visual_checks;
@@ -457,7 +454,6 @@ pub mod game {
     pub(crate) use sm_game::visual_state;
 
     pub(crate) mod ceres_doors;
-    pub(crate) mod cinematic;
     pub use sm_game::combat_rules;
     pub use sm_game::contact_rules;
     pub use sm_game::drop_rules;

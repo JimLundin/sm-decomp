@@ -198,6 +198,7 @@ pub mod cinematic;
 pub mod cinematic_display;
 pub mod cinematic_host;
 pub mod cinematic_objects;
+pub mod cinematic_states;
 pub mod enemy_script;
 pub mod gameplay_flag_host;
 pub mod palette_effects {

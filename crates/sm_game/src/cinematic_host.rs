@@ -15,4 +15,16 @@ pub trait Host: crate::menus::host::Host + crate::display_refresh::Host {
     fn initialize_player(&mut self);
     fn use_cinematic_bindings(&mut self);
     fn disable_scanline_irq(&mut self);
+    /// Run the bank $8B cinematic function at `address`.
+    fn run_cinematic_function(&mut self, address: u32);
+    fn advance_palette_effects(&mut self);
+    /// Prepare Samus's projectiles and run her frame.
+    fn advance_intro_player(&mut self);
+    /// The original's failed native assertion `expression` in `function`.
+    fn native_assertion(
+        &mut self,
+        expression: &'static [u8],
+        line: u32,
+        function: &'static [u8],
+    ) -> !;
 }
