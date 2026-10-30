@@ -422,6 +422,29 @@ pub mod bank_a9 {
     }
 }
 
+pub mod bank_aa {
+    use super::Consts_AA;
+
+    crate::constants::typed_constants! { Consts_AA;
+        addr_kShaktool_Ilist_E461 = 58465, addr_kShaktool_Ilist_E3A7 = 58279,
+        addr_kTorizo_Ilist_D2BF = 53951, addr_kTorizo_Ilist_D2AD = 53933,
+        addr_kTorizo_Ilist_D203 = 53763, addr_kTorizo_Ilist_D1F1 = 53745,
+        addr_kTorizo_Ilist_CEFF = 52991, addr_kTorizo_Ilist_CEA5 = 52901,
+        addr_kTorizo_Ilist_CE43 = 52803, addr_kTorizo_Ilist_CDE1 = 52705,
+        addr_locret_AAC95E = 51550, addr_kTorizo_Ilist_C188 = 49544,
+        addr_off_AAC0F2 = 49394, addr_kTorizo_Ilist_BDD8 = 48600,
+        addr_kTorizo_Ilist_BD0E = 48398, addr_off_AABC78 = 48248,
+        addr_kTorizo_Ilist_B962 = 47458, addr_kTorizo_Ilist_B1C8 = 45512,
+        addr_kTorizo_Ilist_B155 = 45397, addr_kTorizo_Ilist_B0E5 = 45285,
+        addr_kTorizo_ExtSprmap_87D0 = 34768, addr_kSpritemap_Nothing_AA = 32845,
+    }
+
+    crate::constants::typed_constants! { i32;
+        fnnullsub_171_AA = 0xaa807b,
+        fnnullsub_274 = 0xaadcaa, fnnullsub_276 = 0xaae7a6,
+    }
+}
+
 pub mod bank_b4 {
     use super::Consts_B4;
 

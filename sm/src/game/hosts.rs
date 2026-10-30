@@ -894,7 +894,7 @@ impl sm_game::actors::ceres_doors::Host for Game {
 
 // The named bank $AA functions and instruction lists are the decompilation's.
 const _: () = {
-    use crate::game::sm_aa::*;
+    use crate::game::constants::bank_aa::*;
     use sm_game::actors::statues::{function as f, instruction_list as l};
     const fn at(word: u16) -> i32 {
         0xaa_0000 | word as i32
@@ -908,7 +908,7 @@ const _: () = {
 
 impl sm_game::actors::statues::Host for Game {
     fn run_function(&mut self, address: u32) {
-        crate::game::sm_aa::run_aa_function(address, self);
+        crate::game::session_runtime::run_aa_function(address, self);
     }
 
     fn boss_word_native(&mut self, area: u16) -> u16 {
@@ -938,7 +938,7 @@ impl sm_game::actors::statues::Host for Game {
     }
 
     fn spawn_collision_plm(&mut self, header: u16) {
-        crate::game::sm_aa::spawn_collision_plm(header, self);
+        crate::game::session_runtime::spawn_collision_plm(header, self);
     }
 }
 

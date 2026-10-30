@@ -16,7 +16,7 @@ impl Host for Game {
 
 impl Ai for Game {
     fn run_function(&mut self, address: u32) {
-        crate::game::sm_aa::run_aa_function(address, self);
+        crate::game::session_runtime::run_aa_function(address, self);
     }
 
     fn angle_between(&mut self, from: u16, to: u16) -> u16 {
@@ -30,7 +30,7 @@ impl Ai for Game {
 
 // The named bank $AA functions are the ones `DispatchEnemyPreInstr` dispatches on.
 const _: () = {
-    use crate::game::sm_aa::fnnullsub_274;
+    use crate::game::constants::bank_aa::fnnullsub_274;
     const fn at(word: u16) -> u32 {
         0xaa_0000 | word as u32
     }

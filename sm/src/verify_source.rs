@@ -2115,7 +2115,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     ("sm/src/game/sm_a6.rs", include_bytes!("game/sm_a6.rs")),
     ("sm/src/game/sm_a7.rs", include_bytes!("game/sm_a7.rs")),
     ("sm/src/game/sm_a9.rs", include_bytes!("game/sm_a9.rs")),
-    ("sm/src/game/sm_aa.rs", include_bytes!("game/sm_aa.rs")),
     (
         "crates/sm_game/src/special_geometry.rs",
         include_bytes!("../../crates/sm_game/src/special_geometry.rs"),

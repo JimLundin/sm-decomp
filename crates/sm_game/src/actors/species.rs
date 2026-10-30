@@ -11,8 +11,8 @@
 use crate::actors::host::{ActorHost, ActorRuntime, Death, LeaseActors, Shot};
 use crate::actors::{
     botwoon, brinstar_pipe_bug, crocomire_reactions, draygon_death, draygon_eye, draygon_flight,
-    draygon_grab, draygon_host, escape_critters, magdollite, norfair_pipe_bug, space_pirates,
-    yapping_maw, yellow_pipe_bug,
+    draygon_grab, draygon_host, escape_critters, magdollite, norfair_pipe_bug, shaktool,
+    space_pirates, statues, torizo, yapping_maw, yellow_pipe_bug,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -57,18 +57,24 @@ pub enum NativeTouch {
     KraidArm,
     Phantoon,
     MotherBrainBrain,
-    GoldenTorizo,
 }
 
 /// What the contact reactions need beyond their actors' own hosts.
 pub trait TouchHost:
-    SpeciesHost + ActorRuntime + crocomire_reactions::Host + draygon_host::Host + space_pirates::Pirates
+    SpeciesHost
+    + ActorRuntime
+    + crocomire_reactions::Host
+    + draygon_host::Host
+    + space_pirates::Pirates
+    + torizo::Ai
+    + shaktool::Ai
+    + statues::Host
 {
     fn native_touch(&mut self, touch: NativeTouch);
 }
 
 /// An enemy species' contact reaction, keyed by its address.
-pub fn touch<H: TouchHost + ?Sized>(ea: u32, game: &mut H) {
+pub fn touch<H: TouchHost>(ea: u32, game: &mut H) {
     match ea {
         10518563 => game.contact_reaction(Death::Finalize),
         10670984 => game.native_touch(NativeTouch::LargeSnail { damage: true }),
@@ -88,7 +94,7 @@ pub fn touch<H: TouchHost + ?Sized>(ea: u32, game: &mut H) {
         11001237 => game.native_touch(NativeTouch::Phantoon),
         11122117 => (),
         11122118 => game.native_touch(NativeTouch::MotherBrainBrain),
-        11192695 => game.native_touch(NativeTouch::GoldenTorizo),
+        11192695 => torizo::touch(game),
         11700076 => space_pirates::touch(game),
         _ => game.unknown_routine(),
     }
@@ -108,20 +114,24 @@ pub enum NativeShot {
     Phantoon,
     MotherBrainBody,
     MotherBrainBrain,
-    Torizo,
-    /// The Torizo shot reaction that only runs outside Crateria.
-    TorizoOutsideCrateria,
 }
 
 /// What the shot reactions need beyond their actors' own hosts.
 pub trait ShotHost:
-    SpeciesHost + ActorRuntime + crocomire_reactions::Host + draygon_host::Host + space_pirates::Pirates
+    SpeciesHost
+    + ActorRuntime
+    + crocomire_reactions::Host
+    + draygon_host::Host
+    + space_pirates::Pirates
+    + torizo::Ai
+    + shaktool::Ai
+    + statues::Host
 {
     fn native_shot(&mut self, shot: NativeShot);
 }
 
 /// An enemy species' shot reaction, keyed by its address; `j` is the projectile.
-pub fn shot<H: ShotHost + ?Sized>(ea: u32, j: u16, game: &mut H) {
+pub fn shot<H: ShotHost>(ea: u32, j: u16, game: &mut H) {
     match ea {
         10518573 => game.shot_reaction(Shot::Finalize),
         10846278 => game.native_shot(NativeShot::Dud),
@@ -144,9 +154,9 @@ pub fn shot<H: ShotHost + ?Sized>(ea: u32, j: u16, game: &mut H) {
         11001243 => game.native_shot(NativeShot::Phantoon),
         11121923 => game.native_shot(NativeShot::MotherBrainBody),
         11121927 => game.native_shot(NativeShot::MotherBrainBrain),
-        11192700 => game.native_shot(NativeShot::Torizo),
+        11192700 => torizo::shot(game),
         11192769 => (),
-        11192770 => game.native_shot(NativeShot::TorizoOutsideCrateria),
+        11192770 => torizo::standing_shot(game),
         11700089 => space_pirates::shot(game),
         11700168 => space_pirates::check_shot(game),
         11700286 => space_pirates::reflect(game),
@@ -172,7 +182,7 @@ pub trait DrawHookHost: SpeciesHost + magdollite::Host + draygon_host::Host {
 }
 
 /// An enemy species' graphics draw hook, keyed by its address.
-pub fn draw_hook<H: DrawHookHost + ?Sized>(ea: u32, game: &mut H) {
+pub fn draw_hook<H: DrawHookHost>(ea: u32, game: &mut H) {
     match ea {
         10518604 => (),
         10738444 => game.native_draw_hook(NativeDrawHook::ReflecPalette),
@@ -191,7 +201,7 @@ pub fn draw_hook<H: DrawHookHost + ?Sized>(ea: u32, game: &mut H) {
 }
 
 /// A pipe bug's state routine, keyed by its bank $B3 address.
-pub fn pipe_bug_state<H: B3Host + ?Sized>(ea: u32, _k: u16, game: &mut H) {
+pub fn pipe_bug_state<H: B3Host>(ea: u32, _k: u16, game: &mut H) {
     match ea {
         11766733 => crate::actors::norfair_pipe_bug::await_group(game),
         11766783 => crate::actors::norfair_pipe_bug::await_player(game),
@@ -216,7 +226,7 @@ pub fn pipe_bug_state<H: B3Host + ?Sized>(ea: u32, _k: u16, game: &mut H) {
     }
 }
 /// A bank $B3 enemy pre-instruction, keyed by its address.
-pub fn b3_pre_instruction<H: B3Host + ?Sized>(ea: u32, k: u16, game: &mut H) {
+pub fn b3_pre_instruction<H: B3Host>(ea: u32, k: u16, game: &mut H) {
     match ea {
         11763835 => (),
         11765888 => crate::actors::brinstar_pipe_bug::await_view(k, game),
@@ -244,7 +254,14 @@ pub fn b3_pre_instruction<H: B3Host + ?Sized>(ea: u32, k: u16, game: &mut H) {
 
 /// What the AI table needs beyond its actors' own hosts.
 pub trait AiHost:
-    B3Host + DrawHookHost + yapping_maw::Host + crocomire_reactions::Host + space_pirates::Pirates
+    B3Host
+    + DrawHookHost
+    + yapping_maw::Host
+    + crocomire_reactions::Host
+    + space_pirates::Pirates
+    + torizo::Ai
+    + shaktool::Ai
+    + statues::Host
 {
     /// An AI routine whose arm is still in the compatibility table.
     fn native_ai(&mut self, ea: u32);
@@ -254,7 +271,7 @@ pub trait AiHost:
 
 /// An enemy species' AI routine, keyed by its address. Arms not here are in
 /// the compatibility table until their routines move.
-pub fn ai<H: AiHost + ?Sized>(ea: u32, game: &mut H) {
+pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
     match ea {
         11763747 => game.contact_reaction(Death::Finalize),
         11763757 => game.shot_reaction(Shot::Finalize),
@@ -321,6 +338,25 @@ pub fn ai<H: AiHost + ?Sized>(ea: u32, game: &mut H) {
         11042851 => game.contact_reaction(Death::Finalize),
         11042861 => game.shot_reaction(Shot::Finalize),
         11042881 => crate::actors::scheduling::update_frozen_enemy(&mut LeaseActors::lease(game)),
+        // Bank $AA: the Torizos, Shaktool and the statues.
+        11191934 => torizo::hurt(game),
+        11192695 => torizo::touch(game),
+        11192700 => torizo::shot(game),
+        11195322 => torizo::golden_hurt(game),
+        11196360 => statues::initialize_tourian_statue(game),
+        11197603 => shaktool::main_ai(game),
+        11198019 => shaktool::initialize(game),
+        11198255 => shaktool::touch(game),
+        11198260 => shaktool::shot(game),
+        11200278 => statues::initialize_tube_cracks(game),
+        11200293 => statues::initialize_chozo_statue(game),
+        11200423 => statues::main_ai(game),
+        11191972 => torizo::main_ai(game),
+        11192447 => torizo::initialize(game),
+        11195241 => torizo::golden_main_ai(game),
+        11196007 => torizo::golden_shot(game),
+        11173903 => crate::actors::combat::select_frozen_ai(&mut LeaseActors::lease(game)),
+        11173953 => crate::actors::scheduling::update_frozen_enemy(&mut LeaseActors::lease(game)),
         // Bank $B2: the space pirates.
         0xb20000..=0xb2ffff => space_pirates::dispatch_ai(ea, game),
         // Bank $A5.
@@ -339,7 +375,9 @@ pub fn ai<H: AiHost + ?Sized>(ea: u32, game: &mut H) {
 }
 
 /// What the pre-instruction table needs beyond its actors' own hosts.
-pub trait PreInstructionHost: B3Host + magdollite::Host {
+pub trait PreInstructionHost:
+    B3Host + magdollite::Host + torizo::Ai + shaktool::Ai + statues::Host
+{
     /// A pre-instruction whose arm is still in the compatibility table, for
     /// the current enemy `k` read before dispatch.
     fn native_pre_instruction(&mut self, ea: u32, k: u16);
@@ -347,7 +385,7 @@ pub trait PreInstructionHost: B3Host + magdollite::Host {
 
 /// An enemy species' pre-instruction, keyed by its address. The current
 /// enemy index is read once, before dispatch, as the original did.
-pub fn pre_instruction<H: PreInstructionHost + ?Sized>(ea: u32, game: &mut H) {
+pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
     let k: u16 = word!(game.cur_enemy_index);
     match ea {
         10518651 => (),
@@ -373,6 +411,16 @@ pub fn pre_instruction<H: PreInstructionHost + ?Sized>(ea: u32, game: &mut H) {
         11200474 => (),
         11197611 => (),
         0xb30000..=0xb3ffff => crate::actors::species::b3_pre_instruction(ea, k, game),
+        // Bank $AA: the Torizos, Shaktool and the statues.
+        11192146 => torizo::walking(k, game),
+        11192364 => torizo::jumping_or_falling(k, game),
+        11195889 => torizo::golden_walking(k, game),
+        11192360 | 11195885 => torizo::attacking(k, game),
+        11199557 => statues::lower_norfair(game, k),
+        11200430 => statues::wrecked_ship(game, k),
+        11197612 => shaktool::arm_piece(k, game),
+        11197655 => shaktool::head(k, game),
+        11197733 => shaktool::final_piece(k, game),
         _ => game.native_pre_instruction(ea, k),
     }
 }
@@ -386,6 +434,9 @@ pub trait InstructionHost:
     + space_pirates::Pirates
     + draygon_host::Host
     + LeaseActors
+    + torizo::Ai
+    + shaktool::Ai
+    + statues::Host
 {
     /// An instruction whose arm is still in the compatibility table.
     fn native_instruction(&mut self, ea: u32, k: u16, j: EnemyScript) -> EnemyScript;
@@ -393,7 +444,7 @@ pub trait InstructionHost:
 
 /// An enemy species' instruction, keyed by its address; `k` is the enemy and
 /// `j` the script position.
-pub fn instruction<H: InstructionHost + ?Sized>(
+pub fn instruction<H: InstructionHost>(
     ea: u32,
     k: u16,
     j: EnemyScript,
@@ -413,6 +464,222 @@ pub fn instruction<H: InstructionHost + ?Sized>(
         11789840 => escape_critters::move_x(k, j, game),
         11791049 => escape_critters::shift_dachora(0xfffa, j, game),
         11791063 => escape_critters::shift_dachora(6, j, game),
+        // Bank $AA: the Torizos, Shaktool and the statues; the two identity
+        // instructions return the script unchanged.
+        11190984 | 11196831 => j,
+        11186332 => torizo::set_function(k, j, game),
+        11186461 => {
+            torizo::blow_up_gut(k, game);
+            j
+        }
+        11186622 => {
+            torizo::blow_up_face(k, game);
+            j
+        }
+        11186724 => {
+            torizo::set_visible(k, game);
+            j
+        }
+        11186734 => {
+            torizo::set_invisible(k, game);
+            j
+        }
+        11186765 => {
+            torizo::defeated(k, game);
+            j
+        }
+        11190985 => {
+            torizo::lock_animation(k, game);
+            j
+        }
+        11190993 => {
+            torizo::unlock_animation(k, game);
+            j
+        }
+        11191001 => torizo::branch_if_faceless(k, j, game),
+        11191021 => torizo::set_link(k, j, game),
+        11191043 => torizo::low_health_explosions(k, j, game),
+        11191087 => torizo::death_explosion(k, j, game),
+        11191131 => {
+            torizo::drool_if_low_health(k, game);
+            j
+        }
+        11191149 => {
+            torizo::start_turning(k, game);
+            j
+        }
+        11191159 => {
+            torizo::stepped(k, game, 0);
+            j
+        }
+        11191178 => {
+            torizo::stepped(k, game, 0x8000);
+            j
+        }
+        11191200 => {
+            torizo::stepped(k, game, 0x2000);
+            j
+        }
+        11191222 => {
+            torizo::stepped(k, game, 0xa000);
+            j
+        }
+        11191244 => torizo::stand_up(k, j, game),
+        11191326 => torizo::sit_down(k, j, game),
+        11191408 => torizo::walk(
+            k,
+            j,
+            torizo::list::TURNING_LEFT,
+            torizo::list::TURNING_RIGHT,
+            72,
+            game,
+        ),
+        11191525 => torizo::walk(
+            k,
+            j,
+            torizo::list::FACELESS_TURNING_LEFT,
+            torizo::list::FACELESS_TURNING_RIGHT,
+            72,
+            game,
+        ),
+        11191642 => torizo::branch_if_rising(k, j, game),
+        11191655 => torizo::call_if_samus_close_in_front(k, j, game),
+        11191691 => torizo::jump_back_if_samus_close(k, j, game),
+        11191716 => torizo::bomb_attack(k, j, game),
+        11191755 => {
+            torizo::bomb_chozo_orbs(k, game);
+            j
+        }
+        11191779 => torizo::bomb_sonic_boom(k, j, game),
+        11191794 => torizo::golden_sonic_boom(k, j, game),
+        11193038 => torizo::branch_if_airborne(k, j, game),
+        11193058 => {
+            torizo::start_golden_fight(k, game);
+            j
+        }
+        11193815 => {
+            torizo::clear_caught_super_missile(k, game);
+            j
+        }
+        11194747 => {
+            torizo::disable_eye_beam_explosions(k, game);
+            j
+        }
+        11194759 => {
+            torizo::enable_eye_beam_explosions(k, game);
+            j
+        }
+        11194855 => {
+            torizo::clear_stunned(k, game);
+            j
+        }
+        11195370 => torizo::branch_if_samus_rolling_behind(k, j, game),
+        11195461 => torizo::call_sometimes_if_samus_in_front(k, j, game),
+        11195508 => torizo::call_sometimes_at_low_health(k, j, game),
+        11195547 => torizo::call_if_stunned_at_high_health(k, j, game),
+        11195578 => torizo::jump_forwards_if_samus_far(k, j, game),
+        11195635 => {
+            torizo::golden_chozo_orbs(k, game);
+            j
+        }
+        11195645 => torizo::golden_jump_back(k, j, game),
+        11195686 => torizo::golden_attack(k, j, game),
+        11195725 => torizo::walk(
+            k,
+            j,
+            torizo::list::GOLDEN_TURNING_LEFT,
+            torizo::list::GOLDEN_TURNING_RIGHT,
+            16,
+            game,
+        ),
+        11191031 => torizo::return_to_link(k, game),
+        11191037 => torizo::return_from_gut_explosion(k, game),
+        11186744 => {
+            torizo::fade_to_black(game);
+            j
+        }
+        11186801 => {
+            torizo::advance_colour_change(game);
+            j
+        }
+        11188557 => {
+            torizo::fade_to_active(game);
+            j
+        }
+        11188561 => {
+            torizo::start_fight(game);
+            j
+        }
+        11191114 => {
+            torizo::landing_dust(game);
+            j
+        }
+        11191809 => torizo::explosive_swipe(j, game),
+        11191824 => {
+            torizo::shot_sound(game);
+            j
+        }
+        11191832 => {
+            torizo::footstep_sound(game);
+            j
+        }
+        11193054 => {
+            torizo::golden_palettes(game);
+            j
+        }
+        11194601 => {
+            torizo::spawn_egg(game);
+            j
+        }
+        11194611 => torizo::branch_if_egg_active(j, game),
+        11195279 => {
+            torizo::egg_released_sound(game);
+            j
+        }
+        11195287 => {
+            torizo::laser_sound(game);
+            j
+        }
+        11195295 => {
+            torizo::sonic_boom_sound(game);
+            j
+        }
+        11195360 => {
+            torizo::golden_super_missile(game);
+            j
+        }
+        11195446 => torizo::eye_beam(j, game),
+        11196721 => shaktool::lower_away_from_projectile(k, j, game),
+        11196735 => shaktool::raise_towards_projectile(k, j, game),
+        11196746 => shaktool::lower(k, j, game),
+        11196755 => shaktool::raise(k, j, game),
+        11196858 => shaktool::reset_functions(k, j, game),
+        11199529 => {
+            statues::start_lowering_acid(game);
+            j
+        }
+        11199542 => {
+            statues::set_lowered_acid(game);
+            j
+        }
+        11199549 => {
+            statues::unlock_samus(game);
+            j
+        }
+        11199871 => {
+            statues::grab_sound(game);
+            j
+        }
+        11199879 => {
+            statues::footstep_sound(game);
+            j
+        }
+        11200240 => {
+            statues::release_samus(game);
+            j
+        }
+        11199887 => statues::spike_clearing_footstep(game, k, j),
+        11199960 => statues::movement(game, k, j),
         0xb20000..=0xb2ffff => space_pirates::dispatch_instruction(ea, k, j, game),
         // Bank $A5.
         10851549 => draygon_flight::set_instruction_lists(j, game),
