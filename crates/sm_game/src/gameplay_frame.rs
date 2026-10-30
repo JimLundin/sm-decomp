@@ -705,8 +705,12 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
             debug_position(&mut game.runtime());
         }
         actors::drawing::draw_scene(&mut game.runtime());
-        actors::staging::queue_actor_tiles(&mut game.runtime());
-        hud::advance(game);
+        {
+            // The HUD reads Samus's owned values on the actor-tile lease.
+            let mut lease = game.runtime();
+            actors::staging::queue_actor_tiles(&mut lease);
+            hud::advance(&mut lease);
+        }
         update_scrolls(&mut game.runtime());
         game.advance_room();
         finish_health_and_time(game);

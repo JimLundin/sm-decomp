@@ -1084,3 +1084,48 @@ impl sm_game::hud::HudFrameHost for Game {
             .read_byte(sm_game::ram::bytes::nmi_frame_counter_byte)
     }
 }
+
+/// On a lease the HUD reads Samus's values from the owned Session.
+impl sm_game::hud::HudPlayer for crate::game::session_runtime::Runtime<'_> {
+    fn health(&self) -> u16 {
+        self.owned_session(|s| s.inventory.health.current, 0x9c2)
+    }
+    fn max_health(&self) -> u16 {
+        self.owned_session(|s| s.inventory.health.maximum, 0x9c4)
+    }
+    fn ammunition(&self, index: usize) -> u16 {
+        let at = [0x9c6, 0x9ca, 0x9ce][index];
+        self.owned_session(|s| s.inventory.ammunition[index].current, at)
+    }
+    fn max_ammunition(&self, index: usize) -> u16 {
+        let at = [0x9c8, 0x9cc, 0x9d0][index];
+        self.owned_session(|s| s.inventory.ammunition[index].maximum, at)
+    }
+    fn reserve_health(&self) -> u16 {
+        self.owned_session(|s| s.inventory.reserve_health, 0x9d6)
+    }
+    fn reserve_mode(&self) -> u16 {
+        self.owned_session(|s| s.inventory.reserve_mode, 0x9c0)
+    }
+    fn equipped_items(&self) -> u16 {
+        self.owned_session(|s| s.inventory.equipment.active, 0x9a2)
+    }
+    fn selected_item(&self) -> u16 {
+        self.owned_session(|s| s.projectiles.controls.selected_weapon, 0x9d2)
+    }
+    fn automatic_item(&self) -> u16 {
+        self.owned_session(|s| s.projectiles.controls.automatic_weapon, 0xa04)
+    }
+    fn grapple_function(&self) -> u16 {
+        self.owned_session(|s| s.player.grapple, 0xd32)
+    }
+}
+
+impl sm_game::hud::HudFrameHost for crate::game::session_runtime::Runtime<'_> {
+    fn raw_frame_counter_byte(&self) -> u8 {
+        // As on the game: the raw work-RAM byte, not the Display projection.
+        self.samus_game()
+            .ram()
+            .read_byte(sm_game::ram::bytes::nmi_frame_counter_byte)
+    }
+}
