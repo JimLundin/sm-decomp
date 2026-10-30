@@ -322,7 +322,7 @@ fn begin_connection<H: Host + ?Sized>(pose: u16, transition_graphics: u16, game:
         (game.player_y()).wrapping_sub(game.session().player.grapple_endpoint.y),
     ));
     game.session_mut().player.grapple_angle = angle;
-    word!(game.grapple_beam_end_angles_mirror = angle);
+    game.session_mut().player.swing.mirrored_angle = angle;
     game.session_mut().player.swing.length_delta = 0;
     if game.session().player.grapple_length as i32 - 64i32 & 0x8000 == 0 {
         game.session_mut().player.grapple_length =
@@ -524,7 +524,7 @@ pub fn advance_swing<H: Host + ?Sized>(game: &mut H) -> u8 {
         if check_clearance(next, game) & 1 != 0 {
             let stopped = ((angle >> 1) << 8) | 0x80;
             game.session_mut().player.grapple_angle = stopped;
-            word!(game.grapple_beam_end_angles_mirror = stopped);
+            game.session_mut().player.swing.mirrored_angle = stopped;
             if (word!(game.g_word_7E0D98) == 6 || word!(game.g_word_7E0D98) == 5)
                 && game.session().player.grapple_length == 8
             {
@@ -544,7 +544,7 @@ pub fn advance_swing<H: Host + ?Sized>(game: &mut H) -> u8 {
     }
     game.session_mut().player.grapple_angle =
         game.session().player.grapple_angle.wrapping_add(delta);
-    word!(game.grapple_beam_end_angles_mirror = game.session().player.grapple_angle);
+    game.session_mut().player.swing.mirrored_angle = game.session().player.grapple_angle;
     word!(game.grapple_beam_unkD36 &= !0x8000);
     if {
         game.session_mut().player.swing.kick_cooldown =
@@ -805,7 +805,7 @@ pub fn start_firing<H: Host + ?Sized>(game: &mut H) {
     word!(game.grapple_beam_extension_x_velocity = extension.x_velocity);
     word!(game.grapple_beam_extension_y_velocity = extension.y_velocity);
     game.session_mut().player.grapple_angle = extension.angle;
-    word!(game.grapple_beam_end_angles_mirror = game.session().player.grapple_angle);
+    game.session_mut().player.swing.mirrored_angle = game.session().player.grapple_angle;
     word!(game.grapple_varCF6 = 10);
     if game.session().player.pose as i32 == kPose_49_FaceL_Moonwalk as i32
         || game.session().player.pose as i32 == kPose_4A_FaceR_Moonwalk as i32
@@ -834,8 +834,9 @@ pub fn start_firing<H: Host + ?Sized>(game: &mut H) {
     word!(game.grapple_beam_unkD20 = 0);
     game.session_mut().player.swing.start_marks[0] = 2;
     game.session_mut().player.swing.start_marks[1] = 0;
-    word!(game.grapple_point_anim_timer = 5);
-    word!(game.grapple_point_anim_ptr = grapple_aim::point_animation(game).first);
+    game.session_mut().player.swing.start_animation_timer = 5;
+    game.session_mut().player.swing.start_animation_tiles =
+        grapple_aim::point_animation(game).first;
     game.session_mut().player.swing.probe.x = 0;
     game.session_mut().player.swing.failed_movement_counter = 0;
     word!(game.grapple_beam_unkD36 = 0);
