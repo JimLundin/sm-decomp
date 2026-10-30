@@ -97,6 +97,26 @@ impl MenuRuntime for Game {
     fn update_beam_tiles_and_palette(&mut self) {
         crate::game::visual_runtime::update_beam_tiles_and_palette(self)
     }
+    fn has_queued_music(&mut self) -> u8 {
+        crate::game::music::HasQueuedMusic(self)
+    }
+    fn queue_music_delayed8(&mut self, track: u16) {
+        crate::game::music::QueueMusic_Delayed8(track, self)
+    }
+    fn spawn_hdma(
+        &mut self,
+        bank: u8,
+        dma_control: u8,
+        target_register: u8,
+        instruction_list: u16,
+    ) -> u16 {
+        let args =
+            crate::types::SpawnHdmaObject_Args::new(dma_control, target_register, instruction_list);
+        visual_runtime::spawn_hdma(bank, &args, self)
+    }
+    fn rtl_unreachable(&mut self) -> bool {
+        crate::rtl::Unreachable(self)
+    }
     fn request_reset(&mut self) {
         Game::request_reset(self)
     }
@@ -119,6 +139,10 @@ impl MenuRuntime for Game {
     #[cfg(sm_verify_dll)]
     fn observe_flags_save(&mut self, stage: u8) {
         crate::flags_save_observer::observe(stage, self)
+    }
+    #[cfg(sm_verify_dll)]
+    fn observe_selected_continue(&mut self, load_result: u8) {
+        crate::flags_save_observer::selected_continue(load_result)
     }
 }
 

@@ -4,6 +4,7 @@
 pub mod controller_input;
 pub mod equipment_menu;
 pub mod file_menu;
+pub mod game_over;
 pub mod host;
 pub mod map_menu;
 pub mod menu_tilemap;

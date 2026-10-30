@@ -38,6 +38,18 @@ pub trait MenuRuntime {
     /// Begin entering the room at the current load station.
     fn enter_load_station(&mut self);
     fn request_reset(&mut self);
+    fn has_queued_music(&mut self) -> u8;
+    fn queue_music_delayed8(&mut self, track: u16);
+    /// Spawn an HDMA object from bank `bank`; returns its slot.
+    fn spawn_hdma(
+        &mut self,
+        bank: u8,
+        dma_control: u8,
+        target_register: u8,
+        instruction_list: u16,
+    ) -> u16;
+    /// The original's unreachable-state failure.
+    fn rtl_unreachable(&mut self) -> bool;
     fn queue_fx_clear(&mut self);
     /// Run Samus's pose command `command`; returns the original's result.
     fn player_command(&mut self, command: u16) -> u16;
@@ -51,6 +63,7 @@ pub trait MenuRuntime {
     /// Verification observers; the defaults observe nothing.
     fn observe_map_write(&self, _byte: usize, _index: usize, _stage: u8) {}
     fn observe_flags_save(&mut self, _stage: u8) {}
+    fn observe_selected_continue(&mut self, _load_result: u8) {}
 }
 
 pub trait Host:
