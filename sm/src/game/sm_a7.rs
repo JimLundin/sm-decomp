@@ -159,7 +159,7 @@ crate::game::callback_dispatch! {
     @functions [pub fn (game: &mut Game)];
     [10997485] Phantoon_Func_1 [] {
         QueueSfx2_Max6(
-            crate::rtl::rom_table_word!(game, 0xa7cded, word!(game.g_word_7E9032) as isize),
+            sm_game::boss_lists::phantoon_materialisation_sound(game, word!(game.g_word_7E9032) as isize),
             game,
         );
         let mut v0: u16 = (word!(game.g_word_7E9032)).wrapping_add(1);
@@ -1254,7 +1254,7 @@ crate::game::callback_dispatch! {
             ((kraid_var_F) as i16).wrapping_sub(18) >= 0
         }) {
             SpawnEprojWithGfx(
-                crate::rtl::rom_table_word!(game, 0xa7acb3, (kraid_var_F >> 1) as isize),
+                sm_game::boss_lists::kraid_rock_x(game, (kraid_var_F >> 1) as isize),
                 word!(game.cur_enemy_index),
                 addr_kEproj_RocksFallingKraidCeiling as u16,
                 game,
@@ -1421,16 +1421,16 @@ crate::game::callback_dispatch! {
             kraid_var_E = slot!(game, Enemy_Kraid[0x1c0i32].kraid_var_E);
         }
         let mut v2: u16 = if kraid_var_E & 0x8000 != 0 {
-            crate::rtl::rom_table_word!(
+            sm_game::boss_lists::kraid_nail_velocity(
                 game,
-                0xa7be3e,
-                ((word!(game.random_number) as i32 & 6) >> 1) as isize
+                true,
+                ((word!(game.random_number) as i32 & 6) >> 1) as isize,
             )
         } else {
-            crate::rtl::rom_table_word!(
+            sm_game::boss_lists::kraid_nail_velocity(
                 game,
-                0xa7be46,
-                ((word!(game.random_number) as i32 & 6) >> 1) as isize
+                false,
+                ((word!(game.random_number) as i32 & 6) >> 1) as isize,
             )
         };
         let v3 = crate::game::session_runtime::native_record(0xa7, v2, game);
@@ -1954,10 +1954,9 @@ crate::game::callback_dispatch! {
             && (slot!(game, Enemy_Kraid[E].kraid_var_C) & 0xf) == 0
         {
             SpawnEprojWithGfx(
-                crate::rtl::rom_table_word!(
+                sm_game::boss_lists::kraid_rock_spit_x_velocity(
                     game,
-                    0xa7bc65,
-                    ((word!(game.random_number) as i32 & 0xe) >> 1) as isize
+                    ((word!(game.random_number) as i32 & 0xe) >> 1) as isize,
                 ),
                 (word!(game.random_number)) & (0xeu16),
                 addr_kEproj_RocksKraidSpits as u16,
@@ -2195,7 +2194,7 @@ pub fn Phantoon_ChangeEyeSpriteBasedOnSamusDist(game: &mut Game) {
         }
     });
     let E = (0x40) as i32;
-    slot!(game, Enemy_Phantoon[E].base; instruction_timer = 1, current_instruction = crate::rtl::rom_table_word!(game, 0xa7d40d, (v0 >> 1) as isize));
+    slot!(game, Enemy_Phantoon[E].base; instruction_timer = 1, current_instruction = sm_game::boss_lists::phantoon_instruction_list(game, (v0 >> 1) as isize));
 }
 pub fn Phantoon_StartDeathSequence(k: u16, game: &mut Game) {
     {
@@ -2274,7 +2273,7 @@ pub fn Phantoon_Func_8(game: &mut Game) -> u8 {
                                     game.ram().read_byte(at + 1),
                                 ])
                             },
-                            crate::rtl::rom_table_word!(game, 0xa7ca41, (i >> 1) as isize),
+                            sm_game::boss_lists::fade_out_target_colour(game, (i >> 1) as isize),
                             game,
                         )
                 );
@@ -2346,7 +2345,10 @@ pub fn Phantoon_Func_9(game: &mut Game) -> u8 {
                         Phantoon_Func_10_CalculateNthTransitionColorFromXtoY(
                             slot!(game, Enemy_Phantoon[E].var_E),
                             word!(game.palette_buffer[(i >> 1)]),
-                            crate::rtl::rom_table_word!(game, 0xa7ca61, (i >> 1) as isize),
+                            sm_game::boss_lists::wrecked_ship_powered_on_colour(
+                                game,
+                                (i >> 1) as isize
+                            ),
                             game,
                         )
                 );
@@ -2514,10 +2516,10 @@ pub fn Dachora_Func_6(k: u16, game: &mut Game) -> i32 {
         slot!(game, Enemy_Dachora[E].var_E = v2);
         if v2 as u8 == 0 {
             load_dachora_palette(
-                crate::rtl::rom_table_word!(
+                sm_game::boss_lists::dachora_palette(
                     game,
-                    0xa7f787,
-                    slot!(byte game, Enemy_Dachora[E].var_E[1]) as isize
+                    false,
+                    slot!(byte game, Enemy_Dachora[E].var_E[1]) as isize,
                 ),
                 k,
                 game,
@@ -2627,10 +2629,10 @@ pub fn Dachora_Func_9(k: u16, game: &mut Game) {
 pub fn Dachora_Func_10(k: u16, game: &mut Game) {
     let E = (k as i32) as i32;
     load_dachora_palette(
-        crate::rtl::rom_table_word!(
+        sm_game::boss_lists::dachora_palette(
             game,
-            0xa7f92d,
-            slot!(byte game, Enemy_Dachora[E].var_E[1]) as isize
+            true,
+            slot!(byte game, Enemy_Dachora[E].var_E[1]) as isize,
         ),
         k,
         game,
@@ -2881,7 +2883,7 @@ slot!(game, EnemyData[fresh4].properties = (slot!(game, EnemyData[fresh4].proper
         let v7 = (0) as i32;
         slot!(game, EnemyData[v6].palette_index = slot!(game, EnemyData[v7].palette_index));
         slot!(game, EnemyData[v6].vram_tiles_index = slot!(game, EnemyData[v7].vram_tiles_index));
-        slot!(game, EnemyData[v6].current_instruction = crate::rtl::rom_table_word!(game, 0xa7ce8e, slot!(game, EnemyData[v6].parameter_2) as isize));
+        slot!(game, EnemyData[v6].current_instruction = sm_game::boss_lists::phantoon_flame_instruction_list(game, slot!(game, EnemyData[v6].parameter_2) as isize));
         slot!(game, EnemyData[v6].ai_preinstr = (0xa7d4a9i32) as u16);
         slot!(game, EnemyData[v7 + (3) * 64].parameter_1 = 0);
         slot!(game, EnemyData[v7 + (3) * 64].ai_var_C = -1i32 as u16);
@@ -3962,10 +3964,10 @@ crate::game::callback_dispatch! {
         let E1 = (0x40) as i32;
         slot!(game, Enemy_Phantoon[E1].parameter_1 = 0);
         slot!(game, Enemy_Phantoon[EK].var_F = (0xa7d5e7i32) as u16);
-        slot!(game, Enemy_Phantoon[E1].var_A = crate::rtl::rom_table_word!(
+        slot!(game, Enemy_Phantoon[E1].var_A = sm_game::phantoon_tables::timer(
             game,
-            0xa7cd53,
-            (word!(game.nmi_frame_counter_word) as i32 >> 1 & 3) as isize
+            sm_data::phantoon::Timer::EyeClosed,
+            (word!(game.nmi_frame_counter_word) as i32 >> 1 & 3) as usize,
         ));
         if (game.next_random() & 1) != 0 {
             let E = (0) as i32;

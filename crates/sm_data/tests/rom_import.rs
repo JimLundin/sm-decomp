@@ -268,6 +268,83 @@ fn records_import_from_the_original_rom() {
             2 * gameplay_tables::PIRATE_CHOICES
         ))
     );
+    check!(
+        "boss_lists::KRAID_ROCK_X_POSITIONS",
+        table::words::<{ boss_lists::KRAID_ROCKS }>(&at(
+            boss_lists::KRAID_ROCK_X_POSITIONS,
+            2 * boss_lists::KRAID_ROCKS
+        ))
+    );
+    check!(
+        "boss_lists::KRAID_ROCK_SPIT_X_VELOCITIES",
+        table::words::<{ boss_lists::KRAID_ROCK_SPITS }>(&at(
+            boss_lists::KRAID_ROCK_SPIT_X_VELOCITIES,
+            2 * boss_lists::KRAID_ROCK_SPITS
+        ))
+    );
+    check!(
+        "boss_lists::KRAID_NAIL_UPWARD_VELOCITIES",
+        table::words::<{ boss_lists::KRAID_NAIL_CHOICES }>(&at(
+            boss_lists::KRAID_NAIL_UPWARD_VELOCITIES,
+            2 * boss_lists::KRAID_NAIL_CHOICES
+        ))
+    );
+    check!(
+        "boss_lists::KRAID_NAIL_DOWNWARD_VELOCITIES",
+        table::words::<{ boss_lists::KRAID_NAIL_CHOICES }>(&at(
+            boss_lists::KRAID_NAIL_DOWNWARD_VELOCITIES,
+            2 * boss_lists::KRAID_NAIL_CHOICES
+        ))
+    );
+    check!(
+        "boss_lists::FADE_OUT_TARGET_PALETTE",
+        table::words::<{ boss_lists::FADE_OUT_TARGET_COLOURS }>(&at(
+            boss_lists::FADE_OUT_TARGET_PALETTE,
+            2 * boss_lists::FADE_OUT_TARGET_COLOURS
+        ))
+    );
+    check!(
+        "boss_lists::WRECKED_SHIP_POWERED_ON_PALETTES",
+        table::words::<{ boss_lists::WRECKED_SHIP_POWERED_ON_COLOURS }>(&at(
+            boss_lists::WRECKED_SHIP_POWERED_ON_PALETTES,
+            2 * boss_lists::WRECKED_SHIP_POWERED_ON_COLOURS
+        ))
+    );
+    check!(
+        "boss_lists::PHANTOON_MATERIALISATION_SOUNDS",
+        table::words::<{ boss_lists::PHANTOON_MATERIALISATION_STEPS }>(&at(
+            boss_lists::PHANTOON_MATERIALISATION_SOUNDS,
+            2 * boss_lists::PHANTOON_MATERIALISATION_STEPS
+        ))
+    );
+    check!(
+        "boss_lists::PHANTOON_FLAME_INSTRUCTION_LISTS",
+        table::words::<{ boss_lists::PHANTOON_FLAME_KINDS }>(&at(
+            boss_lists::PHANTOON_FLAME_INSTRUCTION_LISTS,
+            2 * boss_lists::PHANTOON_FLAME_KINDS
+        ))
+    );
+    check!(
+        "boss_lists::PHANTOON_INSTRUCTION_LISTS",
+        table::words::<{ boss_lists::PHANTOON_PATTERNS }>(&at(
+            boss_lists::PHANTOON_INSTRUCTION_LISTS,
+            2 * boss_lists::PHANTOON_PATTERNS
+        ))
+    );
+    check!(
+        "boss_lists::DACHORA_CHARGE_PALETTES",
+        table::words::<{ boss_lists::DACHORA_PALETTE_STEPS }>(&at(
+            boss_lists::DACHORA_CHARGE_PALETTES,
+            2 * boss_lists::DACHORA_PALETTE_STEPS
+        ))
+    );
+    check!(
+        "boss_lists::DACHORA_SHINE_PALETTES",
+        table::words::<{ boss_lists::DACHORA_PALETTE_STEPS }>(&at(
+            boss_lists::DACHORA_SHINE_PALETTES,
+            2 * boss_lists::DACHORA_PALETTE_STEPS
+        ))
+    );
     assert!(
         failures.is_empty(),
         "rejected the original ROM: {failures:?}"

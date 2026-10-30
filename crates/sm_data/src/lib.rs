@@ -7,6 +7,7 @@
 
 pub mod area_select_palettes;
 pub mod beam_gradients;
+pub mod boss_lists;
 pub mod botwoon_holes;
 pub mod botwoon_speeds;
 pub mod cartridge;
