@@ -328,6 +328,7 @@ after_hits = 120
 
 [[segment]]
 id = "mother-brain-baby-metroid-sacrifice"
+pending = "form-4 never fires in 2830 frames (fatal blow at 2426); oracle drifts from the capture between steps 5910 and 8582"
 seed = "100-mb-phases:328"
 seed_sha256 = "f29c6e9e32db7e70db7f816ccd14b26059b664fcc316e1aa41c76719ff54ad93"
 inputs = "seed-mother-brain-baby-metroid-sacrifice.inputs"
