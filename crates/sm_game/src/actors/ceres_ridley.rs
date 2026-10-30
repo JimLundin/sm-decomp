@@ -20,6 +20,7 @@ use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_BLOCK_PLASMA_BEAM, K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE,
     K_ENEMY_PROPS_TANGIBLE,
 };
+use crate::menus::prelude::{owned, scroll};
 use crate::palette_copies::{copy_rom_colors_to_palette, copy_rom_colors_to_target_palette};
 use crate::projectile_geometry::SINE_COSINE;
 use crate::ram::word;
@@ -770,9 +771,9 @@ pub fn set_up_mode7<L: Lease + ?Sized>(game: &mut L) {
     session_slot!(game, Ridley[RIDLEY]; getaway_finished = 0, getaway_index = 0);
     session_slot!(game, Ridley[RIDLEY].swoop_angle = 1);
     session_slot!(game, Ridley[RIDLEY].mode7_x = -128i32 as u16);
-    word!(game.REG_BG1HOFS = -128i32 as u16);
+    scroll!(game.Bg1H = -128i32 as u16);
     session_slot!(game, Ridley[RIDLEY].mode7_y = 32);
-    word!(game.REG_BG1VOFS = 32);
+    scroll!(game.Bg1V = 32);
     session_slot!(game, Ridley[RIDLEY].mode7_zoom = 2048);
     session_slot!(game, Ridley[RIDLEY].unread_8022 = 1024);
 }
@@ -825,10 +826,10 @@ pub fn handle_getaway<L: Lease + ?Sized>(game: &mut L) {
             .y
             .wrapping_add(session_slot!(game, Ridley[RIDLEY].mode7_y));
         session_slot!(game, Ridley[RIDLEY].mode7_y = y);
-        word!(game.REG_BG1VOFS = y);
+        scroll!(game.Bg1V = y);
         let x = session_slot!(game, Ridley[RIDLEY].mode7_x).wrapping_sub(velocity.x);
         session_slot!(game, Ridley[RIDLEY].mode7_x = x);
-        word!(game.REG_BG1HOFS = x);
+        scroll!(game.Bg1H = x);
         palette_by_zoom(session_slot!(game, Ridley[RIDLEY].mode7_zoom), game);
         session_slot!(
             game,

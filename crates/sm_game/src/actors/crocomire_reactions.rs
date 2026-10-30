@@ -16,7 +16,7 @@ use crate::constants::{
     enemy_properties::K_ENEMY_PROPS_TANGIBLE,
 };
 use crate::enemy_script::EnemyScript;
-use crate::menus::prelude::do_until;
+use crate::menus::prelude::{do_until, owned, scroll};
 use crate::ram::RawRam as _;
 use crate::ram::{checked_word, slot, word, words as ram};
 use sm_data::crocomire::{
@@ -155,7 +155,7 @@ fn cap_byte(value: u8, limit: u8) -> u8 {
     }
 }
 pub fn fill_scroll<L: Lease + ?Sized>(game: &mut L) {
-    let scroll = word!(game.REG_BG2VOFS);
+    let scroll = scroll!(game.Bg2V);
     crate::word_transfers!(game, descending, 256; le(CROCOMIRE_BG2_SCROLL_HDMA_DATA, 255) <- value(scroll));
 }
 pub fn melt_down<L: Lease + ?Sized>(game: &mut L) {
@@ -164,7 +164,7 @@ pub fn melt_down<L: Lease + ?Sized>(game: &mut L) {
     update_background(game.current_enemy(), game);
     let key = game.current_enemy() as i32;
     if (session_slot!(game, Crocomire[key].base.y_pos) as i32 - 280) & 0x8000 != 0 {
-        let mut cursor = (8 * ((word!(game.REG_BG2VOFS) as i32 + 288) & 0xfff8)) as u16;
+        let mut cursor = (8 * ((scroll!(game.Bg2V) as i32 + 288) & 0xfff8)) as u16;
         for _ in 0..32 {
             word!(game.TILEMAP_STUFF[cursor >> 1] = 824);
             cursor = cursor.wrapping_add(2);
@@ -240,9 +240,7 @@ pub fn melt_up<L: Lease + ?Sized>(game: &mut L) {
     }
 }
 pub fn update_background<L: Lease + ?Sized>(k: u16, game: &mut L) {
-    word!(
-        game.REG_BG2VOFS = 67u16.wrapping_sub(session_slot!(game, Crocomire[k as i32].base.y_pos))
-    );
+    scroll!(game.Bg2V = 67u16.wrapping_sub(session_slot!(game, Crocomire[k as i32].base.y_pos)));
     let mut index = 32u16;
     let spritemap = loop {
         let candidate = session_slot!(game, Crocomire[0].base.spritemap_pointer);
@@ -261,7 +259,7 @@ pub fn update_background<L: Lease + ?Sized>(k: u16, game: &mut L) {
     let offset = game
         .foreign(|game| crate::cartridge::native_record(0xa4, spritemap, game))
         .table_word(14);
-    word!(game.REG_BG2VOFS += offset);
+    scroll!(game.Bg2V += offset);
     game.foreign(|game| game.align_crocomire_background());
 }
 pub fn update_palette<L: Lease + ?Sized>(game: &mut L) {
@@ -927,7 +925,7 @@ pub fn melting<L: Lease + ?Sized>(game: &mut L) {
             do_until! { ((v7) as i16).wrapping_sub((word!(game.CROCO_MELT_MAX_Y)) as i16) >= 0 ;
                 word!(
                     game.CROCOMIRE_BG2_SCROLL_HDMA_DATA[(v6 >> 1)] =
-                        (word!(game.REG_BG2VOFS) as i32 + v7 as i32
+                        (scroll!(game.Bg2V) as i32 + v7 as i32
                             - word!(game.MESSAGE_BOX_ANIMATION_Y1) as i32)
                             as u16
                 );
@@ -940,7 +938,7 @@ pub fn melting<L: Lease + ?Sized>(game: &mut L) {
                 v6 = (v6).wrapping_add(2);
             }
             if ((v6) as i16).wrapping_sub(512) < 0 {
-                let v9: u16 = word!(game.REG_BG2VOFS);
+                let v9: u16 = scroll!(game.Bg2V);
                 do_until! { ((v6) as i16).wrapping_sub(512) >= 0 ;
                     word!(game.CROCOMIRE_BG2_SCROLL_HDMA_DATA[(v6 >> 1)] = v9);
                     v6 = (v6).wrapping_add(2);
@@ -1307,7 +1305,7 @@ pub fn unlock_camera<H: Host + ?Sized>(game: &mut H) {
 pub fn prepare_scroll_hdma<L: Lease + ?Sized>(game: &mut L) {
     let mut v1: u16 =
         (2 * (session_slot!(game, Crocomire[0x40i32].base.y_pos) as i32 - 72i32)) as u16;
-    let v2: u16 = word!(game.REG_BG2VOFS);
+    let v2: u16 = scroll!(game.Bg2V);
     do_until! { (v1 & 0x8000) != 0 ;
         word!(game.CROCOMIRE_BG2_SCROLL_HDMA_DATA[(v1 >> 1)] = v2);
         v1 = (v1).wrapping_sub(2);
@@ -1416,7 +1414,7 @@ fn clear_tilemap<L: Lease + ?Sized>(game: &mut L) {
 /// Crocomire main AI - death sequence index 56h - dead due to room entry ($A4:8C90). Was
 /// `reset_scroll`.
 fn dead_from_room_entry<L: Lease + ?Sized>(game: &mut L) {
-    word! { game, 0; REG_BG2HOFS, REG_BG2VOFS }
+    scroll!(game, 0; Bg2H, Bg2V);
 }
 fn spawn_random_dust<L: Lease + ?Sized>(game: &mut L) {
     let random = word!(game.RANDOM_NUMBER);
