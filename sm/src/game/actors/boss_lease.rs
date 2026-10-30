@@ -51,6 +51,9 @@ impl BossState for Game {
     fn camera(&mut self) -> sm_game::camera::Camera {
         sm_game::camera::current(self)
     }
+    fn current_enemy(&self) -> u16 {
+        Game::cur_enemy_index(self)
+    }
     fn scaled_cosine(&mut self, phase: u16, amplitude: u16) -> u16 {
         BossEffects::actor_cosine(self, phase, amplitude)
     }
@@ -106,6 +109,9 @@ impl BossState for Runtime<'_> {
     }
     fn camera(&mut self) -> sm_game::camera::Camera {
         self.session().room.camera
+    }
+    fn current_enemy(&self) -> u16 {
+        self.inputs().current_enemy
     }
     fn scaled_cosine(&mut self, phase: u16, amplitude: u16) -> u16 {
         (queries::sine_product(self, amplitude, phase.wrapping_add(64) as u8 as u16) >> 16) as u16

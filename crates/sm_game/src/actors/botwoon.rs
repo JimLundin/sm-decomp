@@ -252,7 +252,7 @@ pub trait RuntimeHost:
 fn initialize_living<L: Lease + ?Sized>(e: i32, game: &mut L) {
     session_slot!(game, Botwoon[e].body_projectile_index = BODY_PROJECTILES);
     loop {
-        let k = word!(game.CUR_ENEMY_INDEX);
+        let k = game.current_enemy();
         game.spawn_projectile(BODY_PROJECTILES, k, ADDR_K_EPROJ_BOTWOONS_BODY as u16);
         session_slot!(game, Botwoon[e].body_projectile_index, |old| old
             .wrapping_sub(1));
@@ -335,12 +335,12 @@ pub fn leave_hole<L: Lease + ?Sized>(e: i32, game: &mut L) -> bool {
     };
     session_slot!(game, Botwoon[e].initial_leave_hole_action = 0);
     // Masking above admits exactly 0,2,4,6,8,10,12,14.
-    let current = i32::from(word!(game.CUR_ENEMY_INDEX));
+    let current = i32::from(game.current_enemy());
     if choice <= LAST_MOVING_ACTION {
         session_slot!(game, Botwoon[current]; function = function::MOVING_AROUND,
             movement_function = movement_function::START_MOVING_BY_MOVEMENT_DATA, spit_timer = 0,
             head_function = head_function::MOVING_AROUND, unused_8816 = 0);
-        choose_movement_path(word!(game.CUR_ENEMY_INDEX), game);
+        choose_movement_path(game.current_enemy(), game);
     } else {
         session_slot!(game, Botwoon[current]; function = function::SPITTING,
             head_function = head_function::SPITTING_SET_ANGLE_AND_SHOW, spit_timer = SPIT_DELAY);
@@ -400,7 +400,7 @@ fn pre_death_delay<R: RuntimeHost>(game: &mut R) {
 }
 /// Botwoon function - death sequence - falling to ground ($B3:9A5E). Was `fall`.
 pub fn fall_to_ground<L: Lease + ?Sized>(game: &mut L) {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+    let e = i32::from(game.current_enemy());
     let index = ((8 * i32::from(session_slot!(byte game, Botwoon[e].falling_y_speed_index[1])))
         >> 1) as isize;
     let high = game.enemy_speed(SpeedTable::Quadratic, index + 1);
@@ -553,7 +553,7 @@ fn clamp_delta(value: u16) -> u16 {
 /// Botwoon movement function - move directly toward target hole ($B3:9BB7),
 /// from the offsets to it ($B3:9BF8). Was `seek_hole`.
 pub fn move_toward_target_hole<L: Lease + ?Sized>(game: &mut L) {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+    let e = i32::from(game.current_enemy());
     let target = game.foreign(|game| {
         game.botwoon_hole((session_slot!(game, Botwoon[e].target_hole) >> 1) as isize)
     });
@@ -564,7 +564,7 @@ pub fn move_toward_target_hole<L: Lease + ?Sized>(game: &mut L) {
         (i32::from(target.top) + 4 - i32::from(session_slot!(game, Botwoon[e].base.y_pos))) as u16,
     );
     let angle = queries::angle_from_delta(x, y);
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+    let e = i32::from(game.current_enemy());
     session_slot!(game, Botwoon[e]; unread_hole_angle = angle,
         target_hole_angle = u16::from(QUARTER_TURN.wrapping_sub(angle as u8)));
     if session_slot!(game, Botwoon[e].head_hidden)
@@ -577,7 +577,7 @@ pub fn move_toward_target_hole<L: Lease + ?Sized>(game: &mut L) {
 }
 /// Move Botwoon according to speed and angle to target hole ($B3:9C48).
 fn move_by_angle<L: Lease + ?Sized>(game: &mut L) {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+    let e = i32::from(game.current_enemy());
     let phase = session_slot!(game, Botwoon[e].target_hole_angle);
     let amplitude = session_slot!(game, Botwoon[e].speed);
     let vector = game.direction_step(phase, amplitude);
@@ -589,7 +589,7 @@ fn move_by_angle<L: Lease + ?Sized>(game: &mut L) {
 /// Botwoon movement function - start moving Botwoon according to movement data
 /// ($B3:E250). Was `load_path`.
 pub fn start_moving_by_movement_data<L: Lease + ?Sized>(game: &mut L) {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+    let e = i32::from(game.current_enemy());
     session_slot!(game, Botwoon[e]; movement_function = movement_function::MOVE_BY_MOVEMENT_DATA,
         going_through_hole = 0);
     let record = crate::cartridge::native_record(
@@ -610,7 +610,7 @@ pub fn start_moving_by_movement_data<L: Lease + ?Sized>(game: &mut L) {
 /// ($B3:E28C), one step per pixel of speed, until the data ends. Was
 /// `advance_path`.
 pub fn move_by_movement_data<L: Lease + ?Sized>(game: &mut L) {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+    let e = i32::from(game.current_enemy());
     let mut delta = [0u16; 2];
     let mut remaining = i32::from(session_slot!(game, Botwoon[e].speed));
     let step = if session_slot!(game, Botwoon[e].movement_direction) as i32 & SIGN == 0 {
@@ -660,7 +660,7 @@ fn set_instruction_list<L: Lease + ?Sized>(e: i32, instruction: u16, game: &mut 
 /// head's motion over the last 4 frames, then shift the position history. Was
 /// `animate_motion`.
 pub fn head_moving_around<L: Lease + ?Sized>(game: &mut L) {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+    let e = i32::from(game.current_enemy());
     let x = session_slot!(game, Botwoon[e].base.x_pos)
         .wrapping_sub(session_slot!(game, Botwoon[e].x_4_frames_ago));
     let y = session_slot!(game, Botwoon[e].base.y_pos)
@@ -702,9 +702,9 @@ pub fn head_moving_around<L: Lease + ?Sized>(game: &mut L) {
 /// Botwoon head function - spitting - set angle and show ($B3:9E7D): aim at
 /// Samus, then spit 5 or 3; returns that head function. Was `aim_spit`.
 pub fn head_set_spit_angle<L: Lease + ?Sized>(game: &mut L) -> u32 {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+    let e = i32::from(game.current_enemy());
     session_slot!(game, Botwoon[e].base.layer = SHOWN_LAYER);
-    let actor = word!(game.CUR_ENEMY_INDEX);
+    let actor = game.current_enemy();
     let angle = game.foreign(|game| game.angle_to_player(actor));
     session_slot!(game, Botwoon[e].spit_angle = angle);
     let instruction = rom_table_word!(
@@ -727,7 +727,7 @@ pub fn head_set_spit_angle<L: Lease + ?Sized>(game: &mut L) -> u32 {
 /// Botwoon head function - spitting - spawn 5 ($B3:9EE0, `wide`, once the
 /// spitting flag is set) or 3 ($B3:9F34) spit projectiles. Was `spit`.
 pub fn head_spit<L: Lease + ?Sized>(wide: bool, game: &mut L) {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+    let e = i32::from(game.current_enemy());
     if wide && session_slot!(game, Botwoon[e].spitting) == 0 {
         return;
     }
@@ -741,7 +741,7 @@ pub fn head_spit<L: Lease + ?Sized>(wide: bool, game: &mut L) {
     );
     let speed = SPIT_SPEEDS[session_slot!(game, Botwoon[e].speed_table_index) as usize];
     for _ in 0..if wide { 5 } else { 3 } {
-        let k = word!(game.CUR_ENEMY_INDEX);
+        let k = game.current_enemy();
         game.spawn_projectile(speed, k, ADDR_K_EPROJ_BOTWOONS_SPIT as u16);
         game.set_slot_byte(
             SPIT_PROJECTILE_ANGLE,
@@ -753,7 +753,7 @@ pub fn head_spit<L: Lease + ?Sized>(wide: bool, game: &mut L) {
         session_slot!(game, Botwoon[e].spitting = 0);
         e
     } else {
-        i32::from(word!(game.CUR_ENEMY_INDEX))
+        i32::from(game.current_enemy())
     };
     session_slot!(
         game,
@@ -772,7 +772,7 @@ pub fn head_cooldown<L: Lease + ?Sized>(k: u16, game: &mut L) {
 /// Botwoon / hole collision detection ($B3:9F93): entering a hole toggles the
 /// head between hidden and shown. Was `detect_portal`.
 pub fn hole_collision<L: Lease + ?Sized>(k: u16, game: &mut L) {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+    let e = i32::from(game.current_enemy());
     if session_slot!(game, Botwoon[i32::from(k)].hole_collision_disabled) != 0 {
         return;
     }
@@ -802,18 +802,18 @@ pub fn hole_collision<L: Lease + ?Sized>(k: u16, game: &mut L) {
 }
 /// Instruction - enemy radius = `x` x `y` ($B3:94C7, $B3:94D7, $B3:94E7).
 pub fn set_hitbox<L: Lease + ?Sized>(x: u16, y: u16, game: &mut L) {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+    let e = i32::from(game.current_enemy());
     session_slot!(game, Botwoon[e].base; x_width = x, y_height = y);
 }
 /// Instruction - set Botwoon spitting flag ($B3:9567).
 pub fn set_spitting<L: Lease + ?Sized>(game: &mut L) {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+    let e = i32::from(game.current_enemy());
     session_slot!(game, Botwoon[e].spitting = 1);
 }
 
 /// Initialisation AI - Botwoon ($B3:9583): once dead, clear its wall.
 pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
-    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+    let e = i32::from(game.current_enemy());
     if u16::from(game.foreign(|game| game.boss_byte(MARIDIA))) & BOTWOON_DEAD != 0 {
         game.foreign(|game| {
             game.spawn_plm(WALL_BLOCK.0, WALL_BLOCK.1, CLEAR_WALL);

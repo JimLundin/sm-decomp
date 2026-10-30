@@ -132,7 +132,7 @@ pub fn swoop<L: Lease>(right: bool, ascending: bool, game: &mut L) {
     let height = u16::from_ne_bytes([game.slot_byte(at), game.slot_byte(at + 1)]);
     session_slot!(
         game,
-        Draygon[word!(game.CUR_ENEMY_INDEX) as i32].base.y_pos = height
+        Draygon[game.current_enemy() as i32].base.y_pos = height
     );
     // A broad selected slot can alias the body's index: reread after its Y store.
     let index = session_slot!(game, Draygon[BODY].function_timer);

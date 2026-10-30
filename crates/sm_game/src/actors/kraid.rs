@@ -360,7 +360,7 @@ const ROCKS_SOUND: u8 = 0x1e;
 const STOMP_SOUND: u8 = 0x76;
 
 fn current<S: BossState + ?Sized>(game: &S) -> i32 {
-    word!(game.CUR_ENEMY_INDEX) as i32
+    game.current_enemy() as i32
 }
 
 fn kraid_record<S: BossState + ?Sized>(address: u16, game: &mut S) -> RomRecord {
@@ -950,7 +950,7 @@ fn fire_fingernail<L: Lease + ?Sized>(game: &mut L, k: u16) {
 
 /// Spawns a ceiling rock from bank $A7 `crumble`'s column and its PLM.
 fn crumble<L: Lease + ?Sized>(game: &mut L, rock: u16, block_x: u8, plm: u16) {
-    let k = word!(game.CUR_ENEMY_INDEX);
+    let k = game.current_enemy();
     game.spawn_projectile(rock, k, CEILING_ROCKS);
     game.foreign(|game| game.spawn_plm(block_x, 0x12, plm));
 }
@@ -1011,7 +1011,7 @@ fn quake_rocks<L: Lease + ?Sized>(game: &mut L) {
         RISING_ROCKS_LEFT
     };
     let parameter = (word!(game.RANDOM_NUMBER)) & 0x3f0;
-    let k = word!(game.CUR_ENEMY_INDEX);
+    let k = game.current_enemy();
     game.spawn_projectile(parameter, k, rocks);
 }
 
@@ -1041,7 +1041,7 @@ fn quake_until_timer<L: Lease + ?Sized>(game: &mut L, interval: u16, next: u16, 
 
 /// Runs a Kraid part's bank $A7 function. Was `CallKraidFunc`.
 pub fn run_function<L: Lease + ?Sized>(game: &mut L, function: u16) {
-    let k: u16 = word!(game.CUR_ENEMY_INDEX);
+    let k: u16 = game.current_enemy();
     match function {
         function::GETS_BIG_BREAK_CEILING => break_ceiling(game),
         function::GETS_BIG_SET_BG2_PRIORITY => set_bg2_priority(game),
@@ -1217,7 +1217,7 @@ fn break_ceiling<L: Lease + ?Sized>(game: &mut L) {
         let platform: u16 = session_slot!(game, Body[BODY].timer);
         if (platform as i16).wrapping_sub(18) < 0 {
             let rock = crate::boss_lists::kraid_rock_x(game, (platform >> 1) as isize);
-            let k = word!(game.CUR_ENEMY_INDEX);
+            let k = game.current_enemy();
             game.spawn_projectile(rock, k, CEILING_ROCKS);
             let broken = (session_slot!(game, Body[BODY].timer) >> 1) as usize;
             if let Some(&(block_x, plm)) = CEILING_PLATFORMS.get(broken) {
@@ -1384,7 +1384,7 @@ fn foot_second_phase_thinking<L: Lease + ?Sized>(game: &mut L) {
 /// screen. Was `KraidsFingernail_Init`.
 fn initialize_fingernail_attack<L: Lease + ?Sized>(game: &mut L) {
     let mut direction: u16 = session_slot!(game, Fingernail[GOOD_FINGERNAIL].y_speed);
-    if word!(game.CUR_ENEMY_INDEX) == 384 {
+    if game.current_enemy() == 384 {
         direction = session_slot!(game, Fingernail[BAD_FINGERNAIL].y_speed);
     }
     let pattern: u16 = if direction & 0x8000 != 0 {
@@ -1415,7 +1415,7 @@ fn initialize_fingernail_attack<L: Lease + ?Sized>(game: &mut L) {
     let at_kraid: bool = ((word!(game.RANDOM_NUMBER) & 1) == 0)
         || ({
             let mut other: u16 = health_eighth(game, GOOD_FINGERNAIL, 1);
-            if word!(game.CUR_ENEMY_INDEX) != 448 {
+            if game.current_enemy() != 448 {
                 other = health_eighth(game, BAD_FINGERNAIL, 1);
             }
             (other == 1)
@@ -2034,8 +2034,8 @@ fn death_init<L: Lease + ?Sized>(game: &mut L) {
             game,
             Body[BODY].script_delay = kraid_record(animation::SCRIPT_DYING, game).word(0)
         );
-        let _actor: u16 = word!(game.CUR_ENEMY_INDEX);
-        let saved: u16 = word!(game.CUR_ENEMY_INDEX);
+        let _actor: u16 = game.current_enemy();
+        let saved: u16 = game.current_enemy();
         session_slot!(
             game,
             Part[GOOD_FINGERNAIL].base.properties =
@@ -2263,7 +2263,7 @@ pub fn foot_main<L: Lease + ?Sized>(game: &mut L) {
 pub fn fingernail_touch<L: Lease + ?Sized>(game: &mut L) {
     game.foreign(|game| game.print_x_undefined());
     game.contact_reaction(Death::Finalize);
-    let _actor = word!(game.CUR_ENEMY_INDEX);
+    let _actor = game.current_enemy();
     game.foreign(|game| game.normal_death(0));
 }
 
@@ -2284,7 +2284,7 @@ pub fn fingernail_main<L: Lease + ?Sized>(game: &mut L, nail: i32) {
 
 /// Was `KraidsGoodFingernail_Init` and `KraidsBadFingernail_Init`.
 pub fn initialize_fingernail<L: Lease + ?Sized>(game: &mut L) {
-    game.foreign(|game| kraid_fingernails::initialize(word!(game.CUR_ENEMY_INDEX), game));
+    game.foreign(|game| kraid_fingernails::initialize(game.current_enemy(), game));
 }
 
 /// Instruction: below five eighths of health the arm swipes. Was `Kraid_Instr_9`.

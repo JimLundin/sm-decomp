@@ -170,7 +170,7 @@ fn move_vertically<L: Lease>(game: &mut L, k: u16) -> bool {
 
 /// Initialisation AI. Was `Etecoon_Init`.
 pub fn initialize<L: Lease>(game: &mut L) {
-    let me = word!(game.CUR_ENEMY_INDEX) as i32;
+    let me = game.current_enemy() as i32;
     session_slot!(
         game,
         Etecoon[me].base.properties = (session_slot!(game, Etecoon[me].base.properties))
@@ -190,7 +190,7 @@ pub fn initialize<L: Lease>(game: &mut L) {
 /// Main AI: count down a quake freeze, else run the function. Was
 /// `Etecoon_Main`.
 pub fn main_ai<L: Lease>(game: &mut L) {
-    let me = word!(game.CUR_ENEMY_INDEX) as i32;
+    let me = game.current_enemy() as i32;
     if session_slot!(byte game, Etecoon[me].route[1]) != 0 {
         session_slot!(game, Etecoon[me].route, |old| old.wrapping_sub(256));
     } else {

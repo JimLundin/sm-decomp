@@ -118,7 +118,7 @@ fn gravity<L: Lease>(game: &L) -> u32 {
 
 /// Initialisation AI: a dachora idles, an echo waits. Was `Dachora_Init`.
 pub fn initialize<L: Lease>(game: &mut L) {
-    let me = word!(game.CUR_ENEMY_INDEX) as i32;
+    let me = game.current_enemy() as i32;
     session_slot!(
         game,
         Dachora[me].base.properties = (session_slot!(game, Dachora[me].base.properties))
@@ -162,7 +162,7 @@ pub fn initialize<L: Lease>(game: &mut L) {
 
 /// Main AI: the function. Was `Dachora_Main`.
 pub fn main_ai<L: Lease>(game: &mut L) {
-    let me = word!(game.CUR_ENEMY_INDEX) as i32;
+    let me = game.current_enemy() as i32;
     let address = (BANK << 16) | session_slot!(game, Dachora[me].function) as u32;
     game.foreign(|game| game.run_function(address));
 }

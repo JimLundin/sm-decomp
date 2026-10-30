@@ -142,10 +142,8 @@ pub fn spawn_flame_rain(k: u16, pattern: u16, game: &mut (impl BossState + ?Size
 /// Was `Phantoon_SetColorBasedOnHp_FindEntry`.
 pub fn health_palette_colour(base: u16, game: &mut (impl BossState + ?Sized)) -> (u16, u16) {
     let (mut bound, mut step) = (HEALTH_STEP, 0u16);
-    while (bound as i16).wrapping_sub(session_slot!(
-        game,
-        Part[i32::from(word!(game.CUR_ENEMY_INDEX))].base.health
-    ) as i16)
+    while (bound as i16)
+        .wrapping_sub(session_slot!(game, Part[i32::from(game.current_enemy())].base.health) as i16)
         < 0
     {
         bound = bound.wrapping_add(HEALTH_STEP);

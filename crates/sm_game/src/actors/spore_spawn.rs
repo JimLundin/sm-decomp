@@ -149,7 +149,7 @@ pub fn harden<L: Lease + ?Sized>(game: &mut L) {
 
 /// Instruction - enemy function = [[Y]] ($A5:E8BA), given [[Y]].
 pub fn set_function<L: Lease + ?Sized>(function: u16, game: &mut L) {
-    let k = word!(game.CUR_ENEMY_INDEX) as i32;
+    let k = game.current_enemy() as i32;
     session_slot!(game, Spore[k].function = function);
 }
 
@@ -158,10 +158,10 @@ pub fn set_function<L: Lease + ?Sized>(function: u16, game: &mut L) {
 pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
     crate::word_transfers!(game, ascending, 16; le(TARGET_PALETTES, 240) <- rom(0xa5e359, 0));
     for part in 0..4 {
-        let k = word!(game.CUR_ENEMY_INDEX);
+        let k = game.current_enemy();
         game.spawn_actor_eproj(part, k, STEM);
     }
-    let k = word!(game.CUR_ENEMY_INDEX) as i32;
+    let k = game.current_enemy() as i32;
     let (x, y) = (
         session_slot!(game, Spore[k].base.x_pos),
         session_slot!(game, Spore[k].base.y_pos),
@@ -181,7 +181,7 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
     } else {
         session_slot!(game, Spore[0].base.current_instruction = list::FIGHT_INTRO);
         word!(game.FLAG_PROCESS_ALL_ENEMIES = 0xffff);
-        let spawn_key = word!(game.CUR_ENEMY_INDEX);
+        let spawn_key = game.current_enemy();
         session_slot!(game, Spore[k].function = function::NOTHING);
         word!(game.SCROLLING_FINISHED_HOOK = 0x9589);
         session_slot!(game, Spore[k].base.y_pos, |old| old.wrapping_sub(128));
@@ -194,7 +194,7 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
 
 /// Main AI ($A5:EB13): its function.
 pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
-    let k = word!(game.CUR_ENEMY_INDEX);
+    let k = game.current_enemy();
     match session_slot!(game, Spore[k as i32].function) {
         function::NOTHING => {}
         function::DESCEND => descend(game),
@@ -209,7 +209,7 @@ pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
 /// start swinging.
 pub fn descend<L: Lease + ?Sized>(game: &mut L) {
     game.foreign(|game| game.update_spore_stem());
-    let k = word!(game.CUR_ENEMY_INDEX) as i32;
+    let k = game.current_enemy() as i32;
     let y = session_slot!(game, Spore[k].base.y_pos).wrapping_add(1);
     session_slot!(game, Spore[k].base.y_pos = y);
     if !below(y, MIDDLE_Y) {
@@ -245,7 +245,7 @@ pub fn begin_return<L: Lease + ?Sized>(game: &mut L) {
     let dy = MIDDLE_Y.wrapping_sub(session_slot!(game, Spore[0].base.y_pos));
     let angle = 64u8.wrapping_sub(angle_from_delta(dx, dy) as u8);
     session_slot!(game, Spore[0].return_angle = u16::from(angle));
-    let k = word!(game.CUR_ENEMY_INDEX) as i32;
+    let k = game.current_enemy() as i32;
     let angle = u16::from(session_slot!(byte game, Spore[0].return_angle[0]));
     let v = game.direction_step(angle, 1);
     session_slot!(game, Spore[k]; return_x_speed = (v.x >> 16) as u16, return_x_subspeed = v.x as u16,
@@ -255,7 +255,7 @@ pub fn begin_return<L: Lease + ?Sized>(game: &mut L) {
 /// Function - finish return ($A5:EBEE): move back to the middle, then hang
 /// still, bubbling.
 pub fn finish_return<L: Lease + ?Sized>(game: &mut L) {
-    let k = word!(game.CUR_ENEMY_INDEX) as i32;
+    let k = game.current_enemy() as i32;
     let phase = u16::from(session_slot!(byte game, Spore[0].return_angle[0]));
     let joined = |high: u16, low: u16| (u32::from(high) << 16) | u32::from(low);
     let x = joined(
@@ -285,12 +285,12 @@ pub fn finish_return<L: Lease + ?Sized>(game: &mut L) {
 /// After contact or a shot: once dead, start the death sequence, mark it dead
 /// and open the ceiling.
 pub fn after_damage<L: Lease + ?Sized>(game: &mut L) {
-    let k = word!(game.CUR_ENEMY_INDEX) as i32;
+    let k = game.current_enemy() as i32;
     if session_slot!(game, Spore[k].base.health) != 0 {
         return;
     }
     // The original reselects after its health query, before clearing actor timers.
-    let k = word!(game.CUR_ENEMY_INDEX) as i32;
+    let k = game.current_enemy() as i32;
     session_slot!(game, Spore[0].unread_781c = 0);
     session_slot!(game, Spore[k].base; invincibility_timer = 0, flash_timer = 0, ai_handler_bits = 0);
     session_slot!(game, Spore[k].base.properties, |old| old | 0x400);
@@ -320,7 +320,7 @@ pub fn shot<L: Lease + ?Sized>(game: &mut L) {
         return;
     }
     game.react_to_shot(Shot::Flash);
-    let k = word!(game.CUR_ENEMY_INDEX) as i32;
+    let k = game.current_enemy() as i32;
     if session_slot!(game, Spore[k].base.flash_timer) == 0 {
         return after_damage(game);
     }

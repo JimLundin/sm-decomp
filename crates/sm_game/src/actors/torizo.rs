@@ -145,7 +145,7 @@ pub fn facing_against_samus<L: Lease>(k: u16, game: &mut L) -> u16 {
 /// sequence. Was `Torizo_D6A6`.
 pub fn golden_damaged_shot_reaction<L: Lease>(game: &mut L) {
     game.shot_reaction(Shot::ReactionOnly);
-    let e = word!(game.CUR_ENEMY_INDEX) as i32;
+    let e = game.current_enemy() as i32;
     if session_slot!(game, TorizoSlot[e].base.health) == 0 {
         session_slot!(
             game,
@@ -183,7 +183,7 @@ pub fn golden_missile_reaction<L: Lease>(k: u16, j: u16, game: &mut L) {
 /// Golden Torizo shot reaction - normal - super missile ($AA:D6F7): catch it
 /// when facing Samus, otherwise take damage. Was `Torizo_D6F7`.
 pub fn golden_super_missile_reaction<L: Lease>(k: u16, j: u16, game: &mut L) {
-    let e = word!(game.CUR_ENEMY_INDEX) as i32;
+    let e = game.current_enemy() as i32;
     if facing_against_samus(k, game) & SIGN as u16 == 0 {
         session_slot!(game, TorizoSlot[e].damage, |old| old | CAUGHT_SUPER_MISSILE);
         session_slot!(game, TorizoSlot[e].function = NO_FUNCTION);
@@ -450,7 +450,7 @@ fn normal_movement<L: Lease>(k: u16, game: &mut L) {
 /// Torizo function - Golden Torizo - wake enemy if Samus is below and right
 /// of target position ($AA:D5C2). Was `Torizo_Func_9`.
 fn golden_wake<L: Lease>(game: &mut L) {
-    let e = word!(game.CUR_ENEMY_INDEX) as i32;
+    let e = game.current_enemy() as i32;
     if game.player_y() > GOLDEN_WAKE_Y && game.player_x() > GOLDEN_WAKE_X {
         session_slot!(
             game,
@@ -617,13 +617,11 @@ pub fn jumping_or_falling<L: Lease>(k: u16, game: &mut L) {
 
 /// Hurt AI - Bomb Torizo ($AA:C67E). Was `Torizo_Hurt`.
 pub fn hurt<L: Lease>(game: &mut L) {
-    let k = word!(game.CUR_ENEMY_INDEX);
+    let k = game.current_enemy();
     drool_at_low_health(k, game);
     if session_slot!(
         game,
-        TorizoSlot[word!(game.CUR_ENEMY_INDEX) as i32]
-            .base
-            .flash_timer
+        TorizoSlot[game.current_enemy() as i32].base.flash_timer
     ) & 1
         != 0
     {
@@ -635,19 +633,17 @@ pub fn hurt<L: Lease>(game: &mut L) {
 
 /// Hurt AI - Golden Torizo ($AA:D3BA). Was `GoldTorizo_Hurt`.
 pub fn golden_hurt<L: Lease>(game: &mut L) {
-    let k = word!(game.CUR_ENEMY_INDEX);
+    let k = game.current_enemy();
     drool_at_low_health(k, game);
     if session_slot!(
         game,
-        TorizoSlot[word!(game.CUR_ENEMY_INDEX) as i32]
-            .base
-            .flash_timer
+        TorizoSlot[game.current_enemy() as i32].base.flash_timer
     ) & 1
         != 0
     {
         game.foreign(|game| game.flash_palette());
     } else {
-        health_palette(word!(game.CUR_ENEMY_INDEX), game);
+        health_palette(game.current_enemy(), game);
     }
 }
 
@@ -670,7 +666,7 @@ pub fn shot<L: Lease>(game: &mut L) {
     if word!(game.AREA_INDEX) != 0 {
         golden_shot(game);
     } else {
-        let e = word!(game.CUR_ENEMY_INDEX) as i32;
+        let e = game.current_enemy() as i32;
         if session_slot!(game, TorizoSlot[e].animation_lock)
             | session_slot!(game, TorizoSlot[e].base.flash_timer)
             == 0
@@ -709,7 +705,7 @@ pub fn standing_shot<L: Lease>(game: &mut L) {
 /// Golden Torizo shot reaction - stand up / sit down ($AA:D658). Was
 /// `Torizo_D658`.
 fn golden_standing_shot<L: Lease>(game: &mut L) {
-    let e = word!(game.CUR_ENEMY_INDEX) as i32;
+    let e = game.current_enemy() as i32;
     if session_slot!(game, TorizoSlot[e].base.flash_timer) == 0
         && session_slot!(game, TorizoSlot[e].animation_lock) == 0
     {
@@ -721,7 +717,7 @@ fn golden_standing_shot<L: Lease>(game: &mut L) {
 /// super missiles caught; other shots stun and hurt it. Was
 /// `GoldTorizo_Shot`.
 pub fn golden_shot<L: Lease>(game: &mut L) {
-    let e = word!(game.CUR_ENEMY_INDEX) as i32;
+    let e = game.current_enemy() as i32;
     if session_slot!(game, TorizoSlot[e].base.flash_timer) == 0 {
         if session_slot!(game, TorizoSlot[e].animation_lock) != 0 {
             golden_damaged_shot_reaction(game);
@@ -734,11 +730,11 @@ pub fn golden_shot<L: Lease>(game: &mut L) {
                     (word!(game.PROJECTILE_TYPE[word!(game.COLLISION_DETECTION_INDEX)])) & 0xf00;
                 session_slot!(game, TorizoSlot[e].shot_kind = kind);
                 if kind == 0x100 {
-                    golden_missile_reaction(word!(game.CUR_ENEMY_INDEX), j, game);
+                    golden_missile_reaction(game.current_enemy(), j, game);
                     return;
                 }
                 kind != 0x200 || {
-                    golden_super_missile_reaction(word!(game.CUR_ENEMY_INDEX), j, game);
+                    golden_super_missile_reaction(game.current_enemy(), j, game);
                     false
                 }
             };
@@ -751,15 +747,15 @@ pub fn golden_shot<L: Lease>(game: &mut L) {
 
 /// Main AI - Bomb Torizo ($AA:C6A4). Was `Torizo_Main`.
 pub fn main_ai<L: Lease>(game: &mut L) {
-    let e = word!(game.CUR_ENEMY_INDEX) as i32;
+    let e = game.current_enemy() as i32;
     let function = session_slot!(game, TorizoSlot[e].function);
-    run_torizo_function(game, function, word!(game.CUR_ENEMY_INDEX));
+    run_torizo_function(game, function, game.current_enemy());
 }
 
 /// Main AI - Golden Torizo ($AA:D369): counts Samus's space jump frames. Was
 /// `GoldTorizo_Main`.
 pub fn golden_main_ai<L: Lease>(game: &mut L) {
-    let e = word!(game.CUR_ENEMY_INDEX) as i32;
+    let e = game.current_enemy() as i32;
     if SPACE_JUMP_POSES.contains(&word!(game.SAMUS_POSE)) {
         session_slot!(game, TorizoSlot[e].space_jump_frames, |old| old
             .wrapping_add(1));
@@ -767,14 +763,14 @@ pub fn golden_main_ai<L: Lease>(game: &mut L) {
         session_slot!(game, TorizoSlot[e].space_jump_frames = 0);
     }
     let function = session_slot!(game, TorizoSlot[e].function);
-    run_torizo_function(game, function, word!(game.CUR_ENEMY_INDEX));
+    run_torizo_function(game, function, game.current_enemy());
 }
 
 /// Initialisation AI - torizos ($AA:C87F): gone once dead; else placed for
 /// its area with its palettes, the Golden Torizo's debug equipment, or the
 /// Bomb Torizo's haze. Was `Torizo_Init`.
 pub fn initialize<L: Lease>(game: &mut L) {
-    let e = word!(game.CUR_ENEMY_INDEX) as i32;
+    let e = game.current_enemy() as i32;
     if game.foreign(|game| game.boss_bit(TORIZO_DEAD)) & 1 != 0 {
         session_slot!(
             game,

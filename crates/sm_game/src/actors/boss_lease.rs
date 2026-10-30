@@ -46,6 +46,8 @@ pub trait BossState:
     fn player_direction(&mut self) -> crate::actors::api::PlayerDirection;
     /// The room camera.
     fn camera(&mut self) -> crate::camera::Camera;
+    /// The current actor's slot offset, as the scheduler selected it.
+    fn current_enemy(&self) -> u16;
     /// The high word of `amplitude` times the cosine of `phase`.
     fn scaled_cosine(&mut self, phase: u16, amplitude: u16) -> u16;
     /// The high word of `amplitude` times the sine of `phase`.

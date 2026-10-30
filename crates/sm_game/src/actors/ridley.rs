@@ -473,7 +473,7 @@ pub(crate) fn separated_from_rect<L: Lease + ?Sized>(k: u16, rect: Rect, game: &
 }
 
 fn current<L: Lease + ?Sized>(game: &L) -> i32 {
-    word!(game.CUR_ENEMY_INDEX) as i32
+    game.current_enemy() as i32
 }
 
 /// Count down Ridley's function timer; true once it is negative.
@@ -591,7 +591,7 @@ pub fn homing_velocity(
 /// Move the current enemy by its X and Y velocities: subpixels in the low
 /// bytes, pixels in the signed high bytes. Was `MoveEnemyWithVelocity`.
 fn move_with_velocity<L: Lease + ?Sized>(game: &mut L) {
-    let e = word!(game.CUR_ENEMY_INDEX) as i32;
+    let e = game.current_enemy() as i32;
     let x_velocity = session_slot!(game, Explosion[e].x_velocity);
     let carry = session_slot!(byte game, Explosion[e].base.x_subpos[1]) as i32
         + x_velocity.to_ne_bytes()[0] as i32;
@@ -2105,7 +2105,7 @@ fn place_explosion<L: Lease + ?Sized>(game: &mut L, e: i32, part: u32, y_offset:
 /// drift, fall, and die when the lifetime runs out. Was
 /// `RidleysExplosion_Main`.
 pub fn explosion_main<L: Lease + ?Sized>(game: &mut L) {
-    explosion_flicker(word!(game.CUR_ENEMY_INDEX), game);
+    explosion_flicker(game.current_enemy(), game);
     let e = current(game);
     let mut speed = (abs16(session_slot!(game, Explosion[e].x_velocity)) as i16).wrapping_sub(4);
     if speed < 0 {

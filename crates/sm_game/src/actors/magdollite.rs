@@ -232,7 +232,7 @@ fn negative_16(value: i32) -> bool {
     (value as i16) < 0
 }
 fn player_left<L: Lease>(game: &mut L) -> bool {
-    let k = word!(game.CUR_ENEMY_INDEX);
+    let k = game.current_enemy();
     is_negative(game.player_delta(k, Axis::X))
 }
 /// Arm step `index`'s field at `address`, from the game's table.
@@ -403,7 +403,7 @@ pub fn grow_arm<L: Lease>(game: &mut L) -> (u16, Option<i32>) {
         + u32::from(session_slot!(game, Head[head].grow_speed))
         + (value >> 16))
         as u16);
-    let k = word!(game.CUR_ENEMY_INDEX);
+    let k = game.current_enemy();
     let reach = |game: &mut L| -(session_slot!(game, Arm[k as i32].extension) as i32);
     let warning = if !negative_16(reach(game) - ARM_WARNING_EXTENSION) {
         Some(-(session_slot!(game, Arm[k as i32].extension) as i16 as i32))
@@ -469,7 +469,7 @@ pub fn shrink_arm<L: Lease>(game: &mut L) {
         + session_slot!(game, Head[head].shrink_speed) as i32
         + i32::from(carry))
         as u16);
-    let k = word!(game.CUR_ENEMY_INDEX);
+    let k = game.current_enemy();
     let arm = k as i32;
     let extension = session_slot!(game, Arm[arm].extension) as i16;
     if extension >= 0 {
@@ -508,7 +508,7 @@ pub fn run_state<L: Lease>(state: u16, game: &mut L) {
             let hand = current(game) + 2 * SLOT;
             if is_negative(session_slot!(game, Hand[hand].cooldown)) {
                 session_slot!(game, Hand[hand].cooldown = 0);
-                let k = word!(game.CUR_ENEMY_INDEX);
+                let k = game.current_enemy();
                 let range =
                     session_slot!(byte game, Head[head].parameters[THROW_RANGE_LANE]) as u16;
                 if game.player_within(k, Axis::X, range) {
@@ -583,7 +583,7 @@ pub fn run_state<L: Lease>(state: u16, game: &mut L) {
                 let copied = session_slot!(game, Hand[hand].throw_y);
                 session_slot!(game, Hand[hand].base.y_pos = copied);
             }
-            stretch_head_hitbox(word!(game.CUR_ENEMY_INDEX), game);
+            stretch_head_hitbox(game.current_enemy(), game);
         }
         state::HAND_GROW_AND_THROW => {
             if session_slot!(game, Arm[current(game) - SLOT].fully_grown) != 0 {
@@ -606,12 +606,12 @@ pub fn run_state<L: Lease>(state: u16, game: &mut L) {
                     Hand[current(game)].base.y_pos = arm_y.wrapping_sub(offset)
                 );
             }
-            stretch_head_hitbox(word!(game.CUR_ENEMY_INDEX), game);
+            stretch_head_hitbox(game.current_enemy(), game);
         }
         state::HAND_FOLLOW_SHRINKING_ARM => {
             // The head's state, the arm's y and its growth level, by their
             // original RAM names (see `HEAD_STATE`).
-            let index = word!(game.CUR_ENEMY_INDEX) as usize >> 1;
+            let index = game.current_enemy() as usize >> 1;
             if word!(game.ENEMY_DRAWING_QUEUE[index + HEAD_STATE]) == state::HEAD_IDLE {
                 session_slot!(game, Hand[current(game)].state = state::HAND_IDLE);
             } else {
@@ -626,7 +626,7 @@ pub fn run_state<L: Lease>(state: u16, game: &mut L) {
                     Hand[current(game)].base.y_pos = arm_y.wrapping_sub(offset)
                 );
             }
-            stretch_head_hitbox(word!(game.CUR_ENEMY_INDEX), game);
+            stretch_head_hitbox(game.current_enemy(), game);
         }
         _ => unreachable!("Magdollite state {state:04x}"),
     }
@@ -695,7 +695,7 @@ pub fn instruction<L: Lease>(address: u32, script: EnemyScript, game: &mut L) ->
             let hand = part;
             game.spawn_projectile(
                 session_slot!(game, Hand[hand].throw_right),
-                word!(game.CUR_ENEMY_INDEX),
+                game.current_enemy(),
                 crate::constants::bank_86::ADDR_K_EPROJ_LAVA_THROWN_BY_MAGDOLLITE as u16,
             );
         }

@@ -240,7 +240,7 @@ const FIGHT_START_PLM: u16 = 0xb781;
 const DEFEAT_PLM: u16 = 0xb78b;
 
 fn current<S: BossState + ?Sized>(game: &S) -> i32 {
-    word!(game.CUR_ENEMY_INDEX) as i32
+    game.current_enemy() as i32
 }
 
 fn native_word<S: BossState + ?Sized>(game: &S, at: isize) -> u16 {
@@ -708,11 +708,11 @@ pub fn initialize_part<S: BossState + ?Sized>(game: &mut S) {
 pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
     // The bank $A7 function runs on the lease, the effects that need the
     // game in grouped foreign calls.
-    phantoon_actions::broken_nothingness(word!(game.CUR_ENEMY_INDEX), game);
+    phantoon_actions::broken_nothingness(game.current_enemy(), game);
     let me = current(game);
     let function = session_slot!(game, Body[me].function);
     run_function_on(game, function);
-    if word!(game.CUR_ENEMY_INDEX) == 0 {
+    if game.current_enemy() == 0 {
         let x: u16 = session_slot!(game, Body[BODY].base.x_pos);
         session_slot!(game, Eye[EYE].base.x_pos = x);
         session_slot!(game, Tentacles[TENTACLES].base.x_pos = x);
@@ -740,7 +740,7 @@ pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
 /// pre-instruction dispatch does: Phantoon's on this lease, any other on the
 /// game.
 fn run_function_on<L: Lease + ?Sized>(game: &mut L, function: u16) {
-    let k = word!(game.CUR_ENEMY_INDEX);
+    let k = game.current_enemy();
     match function {
         function::WAVY_FADE_IN => wavy_fade_in(game, k),
         function::FIGURE_EIGHT => figure_eight(game, k),
@@ -825,7 +825,7 @@ pub fn shot<S: BossState + ?Sized>(game: &mut S) {
     if (session_slot!(game, Body[BODY].function) as i32 + 0x26b8) & 0x8000 == 0 {
         return;
     }
-    let k: u16 = word!(game.CUR_ENEMY_INDEX);
+    let k: u16 = game.current_enemy();
     let me = current(game);
     let mut health: u16 = session_slot!(game, Body[me].base.health);
     game.react_to_shot(Shot::ReactionOnly);

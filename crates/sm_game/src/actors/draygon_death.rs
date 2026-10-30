@@ -69,7 +69,7 @@ pub fn write_health_palette<L: Lease>(native: bool, game: &mut L) {
     }
 }
 fn copy_hurt_palette<L: Lease>(default: u16, target: usize, game: &mut L) {
-    let k = word!(game.CUR_ENEMY_INDEX) as i32;
+    let k = game.current_enemy() as i32;
     let palette = if session_slot!(game, Draygon[k].base.flash_timer) & FLASHING != 0 {
         FLASH_PALETTE
     } else {
@@ -85,7 +85,7 @@ fn copy_hurt_palette<L: Lease>(default: u16, target: usize, game: &mut L) {
 /// drain health. Was `hurt`.
 pub fn hurt_ai<L: Lease>(game: &mut L) {
     copy_hurt_palette(BG_PALETTE_5, BG_PALETTE_5_RAM, game);
-    let k = word!(game.CUR_ENEMY_INDEX) as i32;
+    let k = game.current_enemy() as i32;
     if session_slot!(game, Draygon[k].base.flash_timer) & FLASHING == 0 {
         write_health_palette(false, game);
     }
@@ -138,7 +138,7 @@ pub fn power_bomb<L: Lease>(game: &mut L) {
 /// Draygon reaction ($A5:960D): update the health palette, or on death drop
 /// the grapple, let go of Samus and drift to the death spot. Was `after_damage`.
 pub fn reaction<L: Lease>(game: &mut L) {
-    let k = word!(game.CUR_ENEMY_INDEX) as i32;
+    let k = game.current_enemy() as i32;
     if session_slot!(game, Draygon[k].base.health) != 0 {
         update_health_palette(game);
         return;
@@ -181,7 +181,7 @@ pub fn reaction<L: Lease>(game: &mut L) {
 /// Draygon body function - death sequence - drift to death spot ($A5:9185).
 /// Was `approach`.
 pub fn drift_to_death_spot<L: Lease>(game: &mut L) {
-    let k = word!(game.CUR_ENEMY_INDEX) as i32;
+    let k = game.current_enemy() as i32;
     foam_at_mouth(k as u16, FOAM_FRAMES, game);
     // The angle is from the position rounded to its 4x4 pixel block.
     let dx = (i32::from(DEATH_X >> 2)

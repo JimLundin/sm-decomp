@@ -164,9 +164,7 @@ pub fn initialize<L: Lease>(install_layers: impl FnOnce(&mut L), game: &mut L) {
     crate::word_transfers!(game, descending, 2048; le(TILEMAP_STUFF, 2047) <- value(824));
     session_slot!(
         game,
-        Draygon[word!(game.CUR_ENEMY_INDEX) as i32]
-            .base
-            .palette_index = PALETTE_7
+        Draygon[game.current_enemy() as i32].base.palette_index = PALETTE_7
     );
     // The native bank word also clears byte178F before the address word is stored.
     crate::word_transfers!(game, ascending, 1;
@@ -184,7 +182,7 @@ pub fn initialize<L: Lease>(install_layers: impl FnOnce(&mut L), game: &mut L) {
     word!(game.ENEMY_BG2_TILEMAP_SIZE = BG2_TILEMAP_SIZE);
     session_slot!(
         game,
-        Draygon[word!(game.CUR_ENEMY_INDEX) as i32].function = function::FIGHT_INTRO_INITIAL_DELAY
+        Draygon[game.current_enemy() as i32].function = function::FIGHT_INTRO_INITIAL_DELAY
     );
     install_layers(game);
     session_slot!(game, Draygon[BODY].turret_5_destroyed = 1);
@@ -193,7 +191,7 @@ pub fn initialize<L: Lease>(install_layers: impl FnOnce(&mut L), game: &mut L) {
 /// Initialisation AI - Draygon tail ($A5:C599) or, with `arms`, arms ($A5:C5AD).
 /// Was `initialize_part`.
 pub fn initialize_tail_or_arms<S: BossState>(arms: bool, game: &mut S) {
-    let k = word!(game.CUR_ENEMY_INDEX) as i32;
+    let k = game.current_enemy() as i32;
     let instruction = if arms {
         list::ARMS_LEFT_IDLE
     } else {
@@ -209,15 +207,15 @@ pub fn initialize_tail_or_arms<S: BossState>(arms: bool, game: &mut S) {
 pub fn main_ai<L: Lease>(body: bool, dispatch: impl FnOnce(u32, u16, &mut L::Game), game: &mut L) {
     if !body {
         return game.foreign(|game| {
-            let k = word!(game.CUR_ENEMY_INDEX) as i32;
+            let k = game.current_enemy() as i32;
             let state =
                 (u32::from(BANK) << 16) | u32::from(session_slot!(game, Draygon[k].function));
-            dispatch(state, word!(game.CUR_ENEMY_INDEX), game)
+            dispatch(state, game.current_enemy(), game)
         });
     }
     // The body's function runs on the lease, the effects that need the game
     // in foreign calls.
-    let k = word!(game.CUR_ENEMY_INDEX);
+    let k = game.current_enemy();
     let function = session_slot!(game, Draygon[k as i32].function);
     run_function_on(game, function, k, |game| {
         dispatch(u32::from(BANK) << 16 | u32::from(function), k, game)
@@ -350,7 +348,7 @@ pub fn goop_setup<S: BossState>(right: bool, game: &mut S) {
 /// Every 128 frames of the current part, a bubble (sprite object 18h) 10h px
 /// left of and above the body.
 pub fn body_bubble<L: Lease>(game: &mut L) {
-    let k = word!(game.CUR_ENEMY_INDEX) as i32;
+    let k = game.current_enemy() as i32;
     if session_slot!(game, Draygon[k].base.frame_counter) & 0x7f == 0 {
         let x = session_slot!(game, Draygon[BODY].base.x_pos).wrapping_sub(BUBBLE_OFFSET);
         let y = session_slot!(game, Draygon[BODY].base.y_pos).wrapping_sub(BUBBLE_OFFSET);
