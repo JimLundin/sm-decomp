@@ -998,15 +998,10 @@ crate::dispatch::callback_dispatch! {
         MotherBrain_HandleFakeDeathExplosions(game);
     };
     [11110729] MotherBrainBody_0_Wait [] {
-        let mut v1: i16 = 0;
-        for v0 in (0u16..36).step_by(2) {
-            if { let at: usize = crate::ram::word_arrays::eproj_id + (v0 as i32 as isize ) as usize; u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]) }
-                == 0
-            {
-                v1 += 1;
-            }
-        }
-        if (v1).wrapping_sub(4) >= 0 {
+        let free = crate::enemy_projectiles::table::with_slots(game, |slots| {
+            slots.iter().filter(|slot| slot.definition == 0).count()
+        });
+        if free >= 4 {
             game.spawn_legacy_population(BANK, addr_stru_A98AE5 as u16);
             session_slot!(game, MotherBrainBrain[BRAIN].subfunction = function::TUBES_CLEAR_BOTTOM_LEFT_TUBE);
         }

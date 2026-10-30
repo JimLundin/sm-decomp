@@ -343,7 +343,6 @@ const EGG_RELEASED_SOUND: u8 = 0x34;
 const LASER_SOUND: u8 = 0x67;
 const SONIC_BOOM_SOUND: u8 = 0x48;
 /// $7E:1997: enemy projectile ids, 18 words.
-const PROJECTILE_IDS: usize = 0x1997;
 /// The Bomb Torizo's death explosion and landing dust, and the chozo orbs,
 /// spawn with the instruction's own address as their parameter.
 const DEATH_EXPLOSION_INSTRUCTION: u16 = 0xc32f;
@@ -1253,19 +1252,16 @@ pub fn spawn_egg<H: Ai>(game: &mut H) {
 /// Instruction - go to [[Y]] if Golden Torizo egg is active ($AA:D0F3). Was
 /// `Torizo_Instr_58`.
 pub fn branch_if_egg_active<H: Ai>(jp: EnemyScript, game: &mut H) -> EnemyScript {
-    let mut slot: i16 = 34;
-    while {
-        let at = usize::try_from(PROJECTILE_IDS as isize + slot as u16 as i32 as isize)
-            .expect("enemy projectile word outside RAM");
-        u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])
-    } != projectile::GOLDEN_EGG
-    {
-        slot = slot.wrapping_sub(2);
-        if slot < 0 {
-            return jp.offset(1);
-        }
+    let active = crate::enemy_projectiles::table::with_slots(game, |slots| {
+        slots
+            .iter()
+            .any(|slot| slot.definition == projectile::GOLDEN_EGG)
+    });
+    if active {
+        EnemyScript::jump(jp.word(0))
+    } else {
+        jp.offset(1)
     }
-    EnemyScript::jump(jp.word(0))
 }
 
 /// Instruction - disable eye beam explosions ($AA:D17B). Was

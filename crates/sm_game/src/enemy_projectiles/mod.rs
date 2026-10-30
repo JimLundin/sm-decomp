@@ -91,6 +91,7 @@ pub mod shared;
     unused_mut
 )]
 pub mod shared_pre;
+pub mod table;
 pub mod tables;
 
 // Names the projectile modules share from this scope, as in the compat module.
