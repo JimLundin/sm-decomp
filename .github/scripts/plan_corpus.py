@@ -17,6 +17,10 @@ def seed_bundle(row):
         return ('CONNECT-e5c5a415-9.tar.gz.enc', 'fefac98ed43a3f3529349fa7d40dd469c353bd68dc1e697bba7f2f967ca06501')
     if row['id'] == 'xray-activate-release':
         return ('seeds-v1-xray-activation-9c5ad92da3d5d2dc.tar.gz.enc', '9c5ad92da3d5d2dc13cfae2e2a0906ca915b2329767f121183190d2ab96c25bc')
+    if row['id'] in ('mother-brain-glass', 'mother-brain-fake-death', 'mother-brain-phase2',
+                     'mother-brain-baby-metroid-drain', 'mother-brain-baby-metroid-sacrifice',
+                     'mother-brain-escape-door'):
+        return ('seeds-v1-mb-phases-13dd32bb039004ab.tar.gz.enc', '13dd32bb039004abe6a8a3225cc1dfe14421dab64bea27e8931b987603042caf')
     if row['id'] in ('pickup-reserve', 'save-death-reload', 'save-memory', 'music-fir-selector10'):
         return ('layout150-checkpoints-147-93986acd14dc9d66.tar.gz.enc', '8c8f84e903917a06d996624358a1783e80920e9fa2084c438eaa950843d68517')
     if 'checkpoint' in row:
