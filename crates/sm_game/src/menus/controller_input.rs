@@ -147,7 +147,7 @@ const BINDING_BUTTONS: [u16; 9] = [
 
 pub fn load_binding_choices<H: Host + ?Sized>(game: &mut H) {
     for index in 0..7 {
-        let address = crate::cartridge::rom_table_word!(game, 0x82f54a, index) as usize;
+        let address = crate::menu_lists::binding_address(game, index) as usize;
         let binding = u16::from_ne_bytes([
             game.ram().read_byte(address),
             game.ram().read_byte(address + 1),
@@ -171,7 +171,7 @@ pub fn reset_binding_choices<H: Host + ?Sized>(game: &mut H) {
 pub fn store_binding_choices<H: Host + ?Sized>(game: &mut H) -> u8 {
     for index in 0..7 {
         let binding = BINDING_BUTTONS[word!(game.eproj_F[index + 13]) as usize];
-        let address = crate::cartridge::rom_table_word!(game, 0x82f54a, index);
+        let address = crate::menu_lists::binding_address(game, index);
         crate::word_transfers!(game, ascending, 1; native(address) <- value(binding));
     }
     0

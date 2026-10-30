@@ -11,6 +11,7 @@ use sm_data::cartridge::RomImage;
 /// the original's invalid-ROM warning and its failure flag.
 pub trait SpriteHost:
     crate::ram::CompatibilityRam
+    + crate::records::Records
     + crate::ram::WorkRamAccess
     + crate::cartridge::LoadedImage
     + crate::cartridge::NativeImage
@@ -235,7 +236,7 @@ pub fn paletted<H: SpriteHost + ?Sized>(
 }
 #[forbid(unsafe_code)]
 pub fn menu<H: SpriteHost + ?Sized>(index: u16, x: u16, y: u16, palette: u16, game: &mut H) {
-    let address = crate::cartridge::rom_table_word!(game, 0x82c569, index as isize);
+    let address = crate::menu_lists::menu_spritemap(game, index as isize);
     paletted(0x82, address, (x, y), palette, Clip::None, game);
 }
 /// Advance each file helmet immediately before drawing it; idle menus clear each timer first.
@@ -293,7 +294,7 @@ pub fn file_slot_cursor<H: SpriteHost + ?Sized>(exit_y: u16, game: &mut H) {
 
 #[forbid(unsafe_code)]
 pub fn beam<H: SpriteHost + ?Sized>(index: u16, position: (u16, u16), game: &mut H) {
-    let address = crate::cartridge::rom_table_word!(game, 0x93a1a1, index as isize);
+    let address = crate::menu_lists::beam_spritemap(game, index as isize);
     sprite_map(0x93, address, game, &mut Native).draw(position, |tile| tile, Clip::None, game);
 }
 #[forbid(unsafe_code)]

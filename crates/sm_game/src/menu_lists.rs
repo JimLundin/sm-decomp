@@ -22,6 +22,15 @@ pub struct ImportedMenuLists {
     hyper_beam_tilemaps: ImportedWords<HYPER_BEAM_TILEMAPS, HYPER_BEAM_WEAPONS>,
     wireframe_suits: ImportedWords<WIREFRAME_SUITS, WIREFRAMES>,
     wireframe_tilemaps: ImportedWords<WIREFRAME_TILEMAPS, WIREFRAMES>,
+    timer_digits: ImportedWords<TIMER_DIGIT_SPRITEMAPS, DIGITS>,
+    elevator_doors: ImportedWords<ELEVATOR_DOOR_TABLES, ELEVATOR_AREAS>,
+    area_maps: ImportedWords<AREA_MAP_RECORDS, MAP_AREAS>,
+    area_map_bits: ImportedWords<AREA_MAP_BIT_OFFSETS, MAP_AREAS>,
+    menu_spritemaps: ImportedWords<MENU_SPRITEMAPS, MENU_SPRITES>,
+    option_settings: ImportedWords<OPTION_SETTING_ADDRESSES, OPTION_SETTING_ROWS>,
+    options_objects: ImportedWords<OPTIONS_SCREEN_OBJECTS, OPTIONS_SCREENS>,
+    binding_addresses: ImportedWords<BINDING_ADDRESSES, BINDING_ROWS>,
+    beam_spritemaps: ImportedWords<BEAM_SPRITEMAPS, BEAM_FRAMES>,
 }
 
 pub fn import(image: &RomImage) -> ImportedMenuLists {
@@ -36,6 +45,15 @@ pub fn import(image: &RomImage) -> ImportedMenuLists {
         hyper_beam_tilemaps: ImportedWords::import(image),
         wireframe_suits: ImportedWords::import(image),
         wireframe_tilemaps: ImportedWords::import(image),
+        timer_digits: ImportedWords::import(image),
+        elevator_doors: ImportedWords::import(image),
+        area_maps: ImportedWords::import(image),
+        area_map_bits: ImportedWords::import(image),
+        menu_spritemaps: ImportedWords::import(image),
+        option_settings: ImportedWords::import(image),
+        options_objects: ImportedWords::import(image),
+        binding_addresses: ImportedWords::import(image),
+        beam_spritemaps: ImportedWords::import(image),
     }
 }
 
@@ -131,4 +149,55 @@ pub fn wireframe_tilemap(game: &(impl Records + ?Sized), wireframe: isize) -> u1
     lists(game)
         .wireframe_tilemaps
         .word(game.loaded_image(), wireframe)
+}
+
+/// $80:9FD4: the escape timer spritemap for a digit.
+pub fn timer_digit_spritemap(game: &(impl Records + ?Sized), digit: isize) -> u16 {
+    lists(game).timer_digits.word(game.loaded_image(), digit)
+}
+
+/// $80:CD46: the map's elevator door table for an area.
+pub fn elevator_door_table(game: &(impl Records + ?Sized), area: isize) -> u16 {
+    lists(game).elevator_doors.word(game.loaded_image(), area)
+}
+
+/// $81:82D6: an area's map tilemap record.
+pub fn area_map_record(game: &(impl Records + ?Sized), area: isize) -> u16 {
+    lists(game).area_maps.word(game.loaded_image(), area)
+}
+
+/// $81:8138: an area's explored-map bit offset.
+pub fn area_map_bit_offset(game: &(impl Records + ?Sized), area: isize) -> u16 {
+    lists(game).area_map_bits.word(game.loaded_image(), area)
+}
+
+/// $82:C569: a menu spritemap.
+pub fn menu_spritemap(game: &(impl Records + ?Sized), sprite: isize) -> u16 {
+    lists(game)
+        .menu_spritemaps
+        .word(game.loaded_image(), sprite)
+}
+
+/// $82:F0AE: an option row's setting address.
+pub fn option_setting_address(game: &(impl Records + ?Sized), row: isize) -> u16 {
+    lists(game).option_settings.word(game.loaded_image(), row)
+}
+
+/// $82:F2ED: an options screen's object table.
+pub fn options_screen_objects(game: &(impl Records + ?Sized), screen: isize) -> u16 {
+    lists(game)
+        .options_objects
+        .word(game.loaded_image(), screen)
+}
+
+/// $82:F54A: a controller binding's RAM address.
+pub fn binding_address(game: &(impl Records + ?Sized), binding: isize) -> u16 {
+    lists(game)
+        .binding_addresses
+        .word(game.loaded_image(), binding)
+}
+
+/// $93:A1A1: a beam icon spritemap.
+pub fn beam_spritemap(game: &(impl Records + ?Sized), frame: isize) -> u16 {
+    lists(game).beam_spritemaps.word(game.loaded_image(), frame)
 }

@@ -112,11 +112,8 @@ pub fn draw<H: crate::sprite_output::SpriteHost + ?Sized>(game: &mut H) {
         // The overlapping native word is read after the preceding sprite output.
         let value = u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]);
         for (shift, x) in [(4, offset), (0, offset.wrapping_add(8))] {
-            let map = crate::cartridge::rom_table_word!(
-                game,
-                0x809fd4,
-                ((value >> shift) & 0xf) as isize
-            );
+            let map =
+                crate::menu_lists::timer_digit_spritemap(game, ((value >> shift) & 0xf) as isize);
             draw_sprite(x, map, game);
         }
     }

@@ -87,7 +87,7 @@ fn before_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
         0xf2a9 => {
             if word!(game.game_state) == 2 {
                 let screen = word!(game.game_options_screen_index);
-                let table = crate::cartridge::rom_table_word!(game, 0x82f2ed, screen as isize);
+                let table = crate::menu_lists::options_screen_objects(game, screen as isize);
                 if table != 0 {
                     let address = table.wrapping_add(word!(game.menu_option_index).wrapping_mul(4));
                     let record = native_record(0x820000 | u32::from(address), game);

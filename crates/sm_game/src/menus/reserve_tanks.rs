@@ -37,8 +37,7 @@ pub fn prepare_menu<H: Host + ?Sized>(game: &mut H) {
                 continue;
             }
             for index in 0..count {
-                if crate::cartridge::rom_table_word!(game, masks, index) & at!(game, collected;)
-                    != 0
+                if crate::menu_lists::equipment_bit(game, masks, index) & at!(game, collected;) != 0
                 {
                     word!(
                         game.pausemenu_equipment_category_item =

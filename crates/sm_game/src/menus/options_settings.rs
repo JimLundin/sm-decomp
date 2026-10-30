@@ -138,7 +138,7 @@ pub fn special<H: Host + ?Sized>(game: &mut H) {
 
 fn setting_address<H: Host + ?Sized>(game: &mut H) -> usize {
     let address =
-        crate::cartridge::rom_table_word!(game, 0x82f0ae, word!(game.menu_option_index) as isize);
+        crate::menu_lists::option_setting_address(game, word!(game.menu_option_index) as isize);
     if address >= 0x2000 {
         game.legacy_assertion(true);
     }

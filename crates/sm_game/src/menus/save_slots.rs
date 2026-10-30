@@ -1,6 +1,5 @@
 //! Save-slot serialization over the original SRAM format and ordered RAM projections.
 use super::prelude::*;
-use crate::cartridge::rom_table_word;
 use crate::imported::Imported;
 use crate::ram::checked_word as word;
 use crate::ram::word as game_word;
@@ -102,10 +101,10 @@ fn transfer_map<H: Host + ?Sized>(direction: Direction, game: &mut H) {
             game.native_image()
                 .read(sm_data::cartridge::lorom_offset(0x818131) as usize + area),
         );
-        let cursor = rom_table_word!(game, 0x8182d6, area as isize);
+        let cursor = crate::menu_lists::area_map_record(game, area as isize);
         // Preserve the original diagnostic before capturing its native allocation.
         let map = super::menu_tilemap::native_record(0x810000 | u32::from(cursor), game);
-        let mut packed = usize::from(rom_table_word!(game, 0x818138, area as isize));
+        let mut packed = usize::from(crate::menu_lists::area_map_bit_offset(game, area as isize));
         let mut record = 0;
         loop {
             let unpacked = 0xcd52 + area * 256 + usize::from(map.byte(record));
@@ -211,7 +210,7 @@ pub fn save_area_map<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn mark_elevator<H: Host + ?Sized>(game: &mut H) {
-    let table = rom_table_word!(game, 0x80cd46, word!(game.area_index) as isize);
+    let table = crate::menu_lists::elevator_door_table(game, word!(game.area_index) as isize);
     let displacement = 4 * ((word!(game.elevator_door_properties_orientation) & 15) as i32 - 1);
     let cursor = (i32::from(table) + displacement) as u16;
     // Retain the diagnostic before capturing its native allocation.

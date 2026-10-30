@@ -415,6 +415,69 @@ fn records_import_from_the_original_rom() {
             2 * menu_lists::WIREFRAMES
         ))
     );
+    check!(
+        "menu_lists::TIMER_DIGIT_SPRITEMAPS",
+        table::words::<{ menu_lists::DIGITS }>(&at(
+            menu_lists::TIMER_DIGIT_SPRITEMAPS,
+            2 * menu_lists::DIGITS
+        ))
+    );
+    check!(
+        "menu_lists::ELEVATOR_DOOR_TABLES",
+        table::words::<{ menu_lists::ELEVATOR_AREAS }>(&at(
+            menu_lists::ELEVATOR_DOOR_TABLES,
+            2 * menu_lists::ELEVATOR_AREAS
+        ))
+    );
+    check!(
+        "menu_lists::AREA_MAP_RECORDS",
+        table::words::<{ menu_lists::MAP_AREAS }>(&at(
+            menu_lists::AREA_MAP_RECORDS,
+            2 * menu_lists::MAP_AREAS
+        ))
+    );
+    check!(
+        "menu_lists::AREA_MAP_BIT_OFFSETS",
+        table::words::<{ menu_lists::MAP_AREAS }>(&at(
+            menu_lists::AREA_MAP_BIT_OFFSETS,
+            2 * menu_lists::MAP_AREAS
+        ))
+    );
+    check!(
+        "menu_lists::MENU_SPRITEMAPS",
+        table::words::<{ menu_lists::MENU_SPRITES }>(&at(
+            menu_lists::MENU_SPRITEMAPS,
+            2 * menu_lists::MENU_SPRITES
+        ))
+    );
+    check!(
+        "menu_lists::OPTION_SETTING_ADDRESSES",
+        table::words::<{ menu_lists::OPTION_SETTING_ROWS }>(&at(
+            menu_lists::OPTION_SETTING_ADDRESSES,
+            2 * menu_lists::OPTION_SETTING_ROWS
+        ))
+    );
+    check!(
+        "menu_lists::OPTIONS_SCREEN_OBJECTS",
+        table::words::<{ menu_lists::OPTIONS_SCREENS }>(&at(
+            menu_lists::OPTIONS_SCREEN_OBJECTS,
+            2 * menu_lists::OPTIONS_SCREENS
+        ))
+    );
+    check!(
+        "menu_lists::BINDING_ADDRESSES",
+        table::words::<{ menu_lists::BINDING_ROWS }>(&at(
+            menu_lists::BINDING_ADDRESSES,
+            2 * menu_lists::BINDING_ROWS
+        ))
+    );
+    check!(
+        "menu_lists::BEAM_SPRITEMAPS",
+        table::words::<{ menu_lists::BEAM_FRAMES }>(&at(
+            menu_lists::BEAM_SPRITEMAPS,
+            2 * menu_lists::BEAM_FRAMES
+        ))
+    );
     assert!(
         failures.is_empty(),
         "rejected the original ROM: {failures:?}"
