@@ -1138,7 +1138,7 @@ crate::game::callback_dispatch! {
         11045638 | 11045644 | 11045650 => [crate::game::actors::evir::damage(ea, game)];
         11047000 => crate::game::actors::morph_ball_eye::initialize;
         11047138 => [{
-            if let Some(address) = crate::game::actors::morph_ball_eye::state_address(game) {
+            if let Some(address) = crate::game::actors::morph_ball_eye::main_ai(game) {
                 actor_species_pre_instruction(address, game);
             }
         }];
@@ -1365,9 +1365,9 @@ crate::game::address_dispatch! {
         10741637 => [wall_crawlers::falling(k, game)];
 
         11047153 | 11047214 | 11047264 | 11047374 => [{
-            if crate::game::actors::morph_ball_eye::prepare_update(ea as u16, k, game) {
+            if crate::game::actors::morph_ball_eye::run_function(ea as u16, k, game) {
                 crate::game::visual_runtime::initialize_morph_eye_beam(game);
-                crate::game::actors::morph_ball_eye::finish_beam(k, game);
+                crate::game::actors::morph_ball_eye::start_tracking(k, game);
             }
         }];
 

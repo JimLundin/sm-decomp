@@ -3,6 +3,7 @@
 pub(in crate::game) use sm_game::actors::access;
 pub(in crate::game) use sm_game::actors::api;
 pub(in crate::game) use sm_game::actors::blue_brinstar_face_block;
+pub(in crate::game) use sm_game::actors::morph_ball_eye;
 pub(in crate::game) mod bang;
 pub(in crate::game) mod beetom;
 pub(in crate::game) mod boss_lease;
@@ -116,7 +117,6 @@ pub(crate) mod lava_seahorse;
 pub(crate) mod magdollite;
 pub(in crate::game) mod maridia_floater;
 pub(in crate::game) mod maridia_puffer;
-pub(in crate::game) mod morph_ball_eye;
 pub(in crate::game) mod norfair_pipe_bug;
 pub(crate) mod spore_spawn;
 pub(in crate::game) mod wrecked_ship_ghost;
