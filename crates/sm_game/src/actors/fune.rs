@@ -60,7 +60,7 @@ const FUNE_FIREBALL: u16 = 0xdfca;
 const SPIT_SOUND: u16 = 0x1f;
 
 fn selected(runtime: &impl ActorLease) -> Key {
-    Key::from_legacy(runtime.word(words::cur_enemy_index))
+    Key::from_legacy(runtime.word(words::CUR_ENEMY_INDEX))
 }
 /// Set fune / namihe instruction list ($A8:979B).
 fn set_instruction_list(runtime: &mut impl ActorLease) {
@@ -164,7 +164,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(
             let key = selected(&runtime);
             let parameter = runtime.resolve_actor(key, Native).parameters[1].to_ne_bytes()[0];
             runtime.write_slice_le(PROJECTILE_PARAMETER, u16::from(parameter));
-            let actor = runtime.word(words::cur_enemy_index);
+            let actor = runtime.word(words::CUR_ENEMY_INDEX);
             let right = u16::from(matches!(
                 address,
                 SPAWN_RIGHTWARDS_NAMIHE_FIREBALL | SPAWN_RIGHTWARDS_FUNE_FIREBALL

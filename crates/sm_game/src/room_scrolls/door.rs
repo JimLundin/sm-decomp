@@ -53,14 +53,14 @@ pub fn begin<H: Host + ?Sized>(game: &mut H) {
     set_bg1_offset(
         game,
         0,
-        word!(game.reg_BG1HOFS).wrapping_sub(game.session().room.camera.layer1[0]),
+        word!(game.REG_BG1HOFS).wrapping_sub(game.session().room.camera.layer1[0]),
     );
     game.session_mut().room.camera.bg1_offset[1] =
-        word!(game.reg_BG1VOFS).wrapping_sub(game.session().room.camera.layer1[1]);
+        word!(game.REG_BG1VOFS).wrapping_sub(game.session().room.camera.layer1[1]);
     game.session_mut().room.camera.bg2_scroll[0] =
-        word!(game.reg_BG2HOFS).wrapping_sub(game.session().room.camera.layer1[0]);
+        word!(game.REG_BG2HOFS).wrapping_sub(game.session().room.camera.layer1[0]);
     game.session_mut().room.camera.bg2_scroll[1] =
-        word!(game.reg_BG2VOFS).wrapping_sub(game.session().room.camera.layer1[1]);
+        word!(game.REG_BG2VOFS).wrapping_sub(game.session().room.camera.layer1[1]);
     if direction == 3 {
         game.session_mut().room.entry.arrival_y =
             game.session().room.entry.arrival_y.wrapping_add(32);
@@ -118,11 +118,11 @@ pub fn fix_up<H: Host + ?Sized>(game: &mut H) {
 pub fn horizontal<H: Host + ?Sized>(left: bool, game: &mut H) -> u8 {
     let frame = game.session().room.entry.frame;
     let speed = words!(
-        game.samus_door_transition_speed,
-        samus_door_transition_subspeed
+        game.SAMUS_DOOR_TRANSITION_SPEED,
+        SAMUS_DOOR_TRANSITION_SUBSPEED
     );
     let speed = if left { -(speed as i32) as u32 } else { speed };
-    add_native_motion(fields::samus_x_pos, fields::samus_x_subpos, speed, game);
+    add_native_motion(fields::SAMUS_X_POS, fields::SAMUS_X_SUBPOS, speed, game);
     game.set_previous_player_x(game.player_x());
     let delta = if left { 0xfffc } else { 4 };
     set_layer1(
@@ -141,8 +141,8 @@ pub fn horizontal<H: Host + ?Sized>(left: bool, game: &mut H) -> u8 {
 }
 
 fn first_vertical_frame<H: Host + ?Sized>(offset: u16, block_delta: u16, game: &mut H) {
-    let bg1 = word!(game.reg_BG1VOFS);
-    let bg2 = word!(game.reg_BG2VOFS);
+    let bg1 = word!(game.REG_BG1VOFS);
+    let bg2 = word!(game.REG_BG2VOFS);
     let layer1 = game.session().room.camera.layer1[1];
     set_layer1(
         game,
@@ -156,8 +156,8 @@ fn first_vertical_frame<H: Host + ?Sized>(offset: u16, block_delta: u16, game: &
     update_map(game);
     game.session_mut().room.camera.layer2[1] = layer2;
     set_layer1(game, 1, layer1);
-    word!(game.reg_BG2VOFS = bg2);
-    word!(game.reg_BG1VOFS = bg1);
+    word!(game.REG_BG2VOFS = bg2);
+    word!(game.REG_BG1VOFS = bg1);
 }
 
 pub fn down<H: Host + ?Sized>(game: &mut H) -> u8 {
@@ -166,11 +166,11 @@ pub fn down<H: Host + ?Sized>(game: &mut H) -> u8 {
         first_vertical_frame(15, u16::MAX, game);
     } else if frame < 0x39 {
         add_native_motion(
-            fields::samus_y_pos,
-            fields::samus_y_subpos,
+            fields::SAMUS_Y_POS,
+            fields::SAMUS_Y_SUBPOS,
             words!(
-                game.samus_door_transition_speed,
-                samus_door_transition_subspeed
+                game.SAMUS_DOOR_TRANSITION_SPEED,
+                SAMUS_DOOR_TRANSITION_SUBSPEED
             ),
             game,
         );
@@ -198,12 +198,12 @@ pub fn up<H: Host + ?Sized>(game: &mut H) -> u8 {
         first_vertical_frame(16, 1, game);
     } else {
         add_native_motion(
-            fields::samus_y_pos,
-            fields::samus_y_subpos,
+            fields::SAMUS_Y_POS,
+            fields::SAMUS_Y_SUBPOS,
             -(words!(
                 i32,
-                game.samus_door_transition_speed,
-                samus_door_transition_subspeed
+                game.SAMUS_DOOR_TRANSITION_SPEED,
+                SAMUS_DOOR_TRANSITION_SUBSPEED
             )) as u32,
             game,
         );

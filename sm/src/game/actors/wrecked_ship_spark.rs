@@ -20,17 +20,17 @@ fn reload_delay(k: u16, bias: u16, game: &mut Game) {
     slot!(game, Spark[E].var_f = bias.wrapping_add(delay));
 }
 pub(crate) fn initialize(game: &mut Game) {
-    let E = word!(game.cur_enemy_index) as i32;
+    let E = word!(game.CUR_ENEMY_INDEX) as i32;
     let kind = (slot!(game, Spark[E].parameter_1) & 3) as isize;
     slot!(
         game,
         Spark[E].var_b = sm_game::enemy_lists::spark_function(game, kind)
     );
     slot!(game, Spark[E].var_e = slot!(game, Spark[E].parameter_2));
-    reload_delay(word!(game.cur_enemy_index), 0, game);
+    reload_delay(word!(game.CUR_ENEMY_INDEX), 0, game);
     slot!(game, Spark[E].base; instruction_timer = 1,
         current_instruction = sm_game::enemy_lists::spark_instruction_list(game, kind), timer = 0, instruction_timer = 1);
-    if gameplay_flag_runtime::boss_byte_at(word!(game.area_index), game) & 1 == 0 {
+    if gameplay_flag_runtime::boss_byte_at(word!(game.AREA_INDEX), game) & 1 == 0 {
         // Seventh packed VRAM entry's destination high byte and the next byte.
         slot!(game, Spark[E].base.properties, |old| old
             | u16::from_ne_bytes([
@@ -40,9 +40,9 @@ pub(crate) fn initialize(game: &mut Game) {
     }
 }
 pub(crate) fn advance(game: &mut Game) {
-    let E = word!(game.cur_enemy_index) as i32;
+    let E = word!(game.CUR_ENEMY_INDEX) as i32;
     let state = slot!(game, Spark[E].var_b);
-    let k = word!(game.cur_enemy_index);
+    let k = word!(game.CUR_ENEMY_INDEX);
     let E = k as i32;
     match state {
         0xe694 => return,
@@ -57,8 +57,8 @@ pub(crate) fn advance(game: &mut Game) {
         return;
     }
     if state == 0xe6dc {
-        let target = word!(game.cur_enemy_index);
-        spawn_with_enemy_gfx(0, word!(game.cur_enemy_index), 0xf498, game);
+        let target = word!(game.CUR_ENEMY_INDEX);
+        spawn_with_enemy_gfx(0, word!(game.CUR_ENEMY_INDEX), 0xf498, game);
         reload_delay(target, 0, game);
     } else {
         let active = state == 0xe695;
@@ -68,7 +68,7 @@ pub(crate) fn advance(game: &mut Game) {
     }
 }
 pub(crate) fn instruction(tangible: bool, script: EnemyScript, game: &mut Game) -> EnemyScript {
-    let E = word!(game.cur_enemy_index) as i32;
+    let E = word!(game.CUR_ENEMY_INDEX) as i32;
     slot!(game, Spark[E].base.properties, |old| if tangible {
         old | 0x400
     } else {

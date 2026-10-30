@@ -117,7 +117,7 @@ const UNLOCK_SAMUS: u16 = 1;
 /// instruction list; the base also spawns the decoration, Ridley and
 /// Phantoon. Was `TourianEntranceStatue_Init`.
 pub fn initialize_tourian_statue<H: Host + ?Sized>(game: &mut H) {
-    let me = word!(game.cur_enemy_index) as i32;
+    let me = word!(game.CUR_ENEMY_INDEX) as i32;
     slot!(game, Decoration[me].base.palette_index = 0);
     slot!(game, Decoration[me].base.instruction_timer = 1);
     slot!(game, Decoration[me].base.timer = 0);
@@ -131,21 +131,21 @@ pub fn initialize_tourian_statue<H: Host + ?Sized>(game: &mut H) {
         game.spawn_room_projectile(PHANTOON, 0);
     }
     crate::word_transfers!(game, descending, 16;
-        le(target_palettes, 255) <- rom(TOURIAN_STATUE_BASE_PALETTE, 15),
-        le(target_palettes, 175) <- rom(TOURIAN_STATUE_PHANTOON_PALETTE, 15),
+        le(TARGET_PALETTES, 255) <- rom(TOURIAN_STATUE_BASE_PALETTE, 15),
+        le(TARGET_PALETTES, 175) <- rom(TOURIAN_STATUE_PHANTOON_PALETTE, 15),
     );
 }
 
 /// Initialisation AI - n00b tube cracks ($AA:E716): their palette. Was
 /// `N00bTubeCracks_Init`.
 pub fn initialize_tube_cracks<H: Host + ?Sized>(game: &mut H) {
-    crate::word_transfers!(game, descending, 32; le(target_palettes, 175) <- rom(TUBE_CRACKS_PALETTE, 31));
+    crate::word_transfers!(game, descending, 32; le(TARGET_PALETTES, 175) <- rom(TUBE_CRACKS_PALETTE, 31));
 }
 
 /// Initialisation AI - chozo statue ($AA:E725): waits, with its variant's
 /// palettes and slope and spike blocks. Was `ChozoStatue_Init`.
 pub fn initialize_chozo_statue<H: Host + ?Sized>(game: &mut H) {
-    let me = word!(game.cur_enemy_index) as i32;
+    let me = word!(game.CUR_ENEMY_INDEX) as i32;
     slot!(
         game,
         Statue[me].base.properties = (slot!(game, Statue[me].base.properties) as i32
@@ -172,14 +172,14 @@ pub fn initialize_chozo_statue<H: Host + ?Sized>(game: &mut H) {
     );
     if variant != 0 {
         crate::word_transfers!(game, descending, 16;
-            le(target_palettes, 175) <- table(LOWER_NORFAIR_PALETTE_2, 15),
-            le(target_palettes, 159) <- table(LOWER_NORFAIR_PALETTE_1, 15),
+            le(TARGET_PALETTES, 175) <- table(LOWER_NORFAIR_PALETTE_2, 15),
+            le(TARGET_PALETTES, 159) <- table(LOWER_NORFAIR_PALETTE_1, 15),
         );
         game.spawn_plm(0xc, 0x1d, LOWER_NORFAIR_SLOPE_PLM);
     } else {
         crate::word_transfers!(game, descending, 16;
-            le(target_palettes, 175) <- table(WRECKED_SHIP_PALETTE_2, 15),
-            le(target_palettes, 159) <- table(WRECKED_SHIP_PALETTE_1, 15),
+            le(TARGET_PALETTES, 175) <- table(WRECKED_SHIP_PALETTE_2, 15),
+            le(TARGET_PALETTES, 159) <- table(WRECKED_SHIP_PALETTE_1, 15),
         );
         game.spawn_plm(0x4a, 0x17, WRECKED_SHIP_SPIKES_PLM);
         game.spawn_plm(0x17, 0x1d, WRECKED_SHIP_SLOPE_PLM);
@@ -188,7 +188,7 @@ pub fn initialize_chozo_statue<H: Host + ?Sized>(game: &mut H) {
 
 /// Main AI - chozo statue ($AA:E7A7): the function. Was `ChozoStatue_Main`.
 pub fn main_ai<H: Host + ?Sized>(game: &mut H) {
-    let me = word!(game.cur_enemy_index) as i32;
+    let me = word!(game.CUR_ENEMY_INDEX) as i32;
     let address = (BANK << 16) | slot!(game, Statue[me].function) as u32;
     game.run_function(address);
 }
@@ -209,7 +209,7 @@ pub fn lower_norfair<H: Host + ?Sized>(game: &mut H, k: u16) {
 /// Chozo statue function - Wrecked Ship ($AA:E7AE): once Phantoon is dead and
 /// it is activated, it carries Samus across. Was `Shaktool_PreInstr_0`.
 pub fn wrecked_ship<H: Host + ?Sized>(game: &mut H, k: u16) {
-    let area = word!(game.area_index);
+    let area = word!(game.AREA_INDEX);
     if (game.boss_word_native(area) & 1) != 0 {
         let me = k as i32;
         if slot!(game, Statue[me].activated) != 0 {
@@ -266,7 +266,7 @@ pub fn spike_clearing_footstep<H: Host + ?Sized>(
     let y = (slot!(game, Statue[me].base.y_pos)).wrapping_add(28);
     game.select_block_at(x, y);
     // The block below the selected one.
-    let index = word!(game.room_width_in_blocks) as i32 + word!(game.cur_block_index) as i32;
+    let index = word!(game.ROOM_WIDTH_IN_BLOCKS) as i32 + word!(game.CUR_BLOCK_INDEX) as i32;
     let at = LEVEL_DATA + 2 * index as usize;
     let block = u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]);
     if (block & 0xf000) == SPIKE_BLOCK {

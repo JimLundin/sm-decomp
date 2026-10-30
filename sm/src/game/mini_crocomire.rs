@@ -9,7 +9,7 @@ use sm_game::enemy_projectiles::host::Effects;
 use sm_game::enemy_script::EnemyScript;
 
 fn selected(runtime: &Runtime<'_>) -> Key {
-    Key::from_legacy(runtime.word(fields::cur_enemy_index))
+    Key::from_legacy(runtime.word(fields::CUR_ENEMY_INDEX))
 }
 
 fn animate(runtime: &mut Runtime<'_>, instruction: u16) {
@@ -62,7 +62,7 @@ pub(crate) fn patrol(right: bool, game: &mut Game) {
     runtime.next_random();
     let key = selected(&runtime);
     let frame = runtime.resolve_actor(key, Le).frame as u8;
-    if frame.wrapping_add(runtime.word(fields::random_number) as u8) < 2 {
+    if frame.wrapping_add(runtime.word(fields::RANDOM_NUMBER) as u8) < 2 {
         runtime.edit_actor(key, Le, |actor| actor.pre_instruction = 0x8a75);
         animate(&mut runtime, if right { 0x896e } else { 0x8948 });
     }

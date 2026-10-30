@@ -31,17 +31,17 @@ const SIGN: u16 = 0x8000;
 /// its row and the X velocity, keeping its sign, from the other, each through
 /// its own native fetch. Was `Ridley_Func_29`.
 pub fn set_pogo_speeds(game: &mut (impl ActorHost + ?Sized)) {
-    let pick = (word!(game.random_number) & ROW_CHOICES) as isize;
+    let pick = (word!(game.RANDOM_NUMBER) & ROW_CHOICES) as isize;
     let x_row = rom_table_word!(game, X_VELOCITY_ROWS, pick);
     let y_row = rom_table_word!(game, Y_VELOCITY_ROWS, pick);
     let offset = (2 * (i32::from(slot!(game, Ridley[RIDLEY].acceleration_index)) + 2)) as u16;
     let step = (offset >> 1) as isize;
     word!(
-        game.tilemap_stuff[UPWARDS_ACCELERATION] =
+        game.TILEMAP_STUFF[UPWARDS_ACCELERATION] =
             rom_table_word!(game, UPWARDS_ACCELERATIONS, step)
     );
     word!(
-        game.tilemap_stuff[DOWNWARDS_ACCELERATION] =
+        game.TILEMAP_STUFF[DOWNWARDS_ACCELERATION] =
             rom_table_word!(game, DOWNWARDS_ACCELERATIONS, step)
     );
     slot!(

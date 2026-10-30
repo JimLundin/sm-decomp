@@ -54,28 +54,28 @@ const CLAMPED: [Boundary; 8] = [
 const BOUNDARIES: u32 = 46;
 pub(crate) const CASES: u32 = BOUNDARIES + 12;
 const AMMO: [usize; 3] = [
-    w::samus_missiles,
-    w::samus_super_missiles,
-    w::samus_power_bombs,
+    w::SAMUS_MISSILES,
+    w::SAMUS_SUPER_MISSILES,
+    w::SAMUS_POWER_BOMBS,
 ];
 const SHIP_STATE: usize = 0xf78 + core::mem::offset_of!(crate::types::EnemyData, ai_preinstr);
 const OBSERVED: [usize; 16] = [
-    w::samus_health,
-    w::samus_max_health,
-    w::samus_reserve_health,
-    w::samus_max_reserve_health,
-    w::reserve_health_mode,
-    w::samus_missiles,
-    w::samus_max_missiles,
-    w::samus_reserve_missiles,
-    w::samus_super_missiles,
-    w::samus_max_super_missiles,
-    w::samus_power_bombs,
-    w::samus_max_power_bombs,
-    w::substate,
-    w::which_item_to_pickup,
+    w::SAMUS_HEALTH,
+    w::SAMUS_MAX_HEALTH,
+    w::SAMUS_RESERVE_HEALTH,
+    w::SAMUS_MAX_RESERVE_HEALTH,
+    w::RESERVE_HEALTH_MODE,
+    w::SAMUS_MISSILES,
+    w::SAMUS_MAX_MISSILES,
+    w::SAMUS_RESERVE_MISSILES,
+    w::SAMUS_SUPER_MISSILES,
+    w::SAMUS_MAX_SUPER_MISSILES,
+    w::SAMUS_POWER_BOMBS,
+    w::SAMUS_MAX_POWER_BOMBS,
+    w::SUBSTATE,
+    w::WHICH_ITEM_TO_PICKUP,
     SHIP_STATE,
-    w::bitmask,
+    w::BITMASK,
 ];
 thread_local! {
     static TRACE: RefCell<Option<Vec<u8>>> = const { RefCell::new(None) };
@@ -148,23 +148,23 @@ fn boundary(id: u32, game: &mut Game) {
         _ => (3, CLAMPED[id as usize - 38]),
     };
     let (current_at, maximum_at) = match resource {
-        0 => (w::samus_health, w::samus_max_health),
-        1 => (w::samus_missiles, w::samus_max_missiles),
-        2 => (w::samus_super_missiles, w::samus_max_super_missiles),
-        _ => (w::samus_power_bombs, w::samus_max_power_bombs),
+        0 => (w::SAMUS_HEALTH, w::SAMUS_MAX_HEALTH),
+        1 => (w::SAMUS_MISSILES, w::SAMUS_MAX_MISSILES),
+        2 => (w::SAMUS_SUPER_MISSILES, w::SAMUS_MAX_SUPER_MISSILES),
+        _ => (w::SAMUS_POWER_BOMBS, w::SAMUS_MAX_POWER_BOMBS),
     };
     let reserve_at = if resource == 1 {
-        w::samus_reserve_missiles
+        w::SAMUS_RESERVE_MISSILES
     } else {
-        w::samus_reserve_health
+        w::SAMUS_RESERVE_HEALTH
     };
     let ([amount, current, maximum, reserve, capacity, mode], expected) = row;
     for (at, value) in [
         (current_at, current),
         (maximum_at, maximum),
         (reserve_at, reserve),
-        (w::samus_max_reserve_health, capacity),
-        (w::reserve_health_mode, mode),
+        (w::SAMUS_MAX_RESERVE_HEALTH, capacity),
+        (w::RESERVE_HEALTH_MODE, mode),
     ] {
         game.ram().copy_in(at, &(value as u16).to_le_bytes());
     }
@@ -173,10 +173,10 @@ fn boundary(id: u32, game: &mut Game) {
         .collect::<Vec<u8>>();
     put(&mut expected_ram, current_at, expected[0]);
     put(&mut expected_ram, reserve_at, expected[1]);
-    put(&mut expected_ram, w::reserve_health_mode, expected[2]);
+    put(&mut expected_ram, w::RESERVE_HEALTH_MODE, expected[2]);
     restore(resource, amount, game);
     let resource_name = ["health", "missile", "super-missile", "power-bomb"][resource as usize];
-    let actual = [current_at, reserve_at, w::reserve_health_mode]
+    let actual = [current_at, reserve_at, w::RESERVE_HEALTH_MODE]
         .map(|at| u16::from_le_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]));
     assert_eq!(actual, expected, "{resource_name} restore boundary {id}");
     assert_eq!(
@@ -192,17 +192,17 @@ unsafe fn crystal_flash(id: u32, game: &mut Game) -> Vec<u8> {
     let lane = id as usize / 3;
     let variant = id % 3;
     for (at, value) in [
-        (w::samus_health, 90),
-        (w::samus_max_health, 100),
-        (w::samus_reserve_health, 10),
-        (w::samus_max_reserve_health, 50),
-        (w::reserve_health_mode, 0),
-        (w::samus_missiles, 10),
-        (w::samus_super_missiles, 10),
-        (w::samus_power_bombs, 10),
-        (w::substate, if variant == 0 { 2 } else { 1 }),
-        (w::which_item_to_pickup, lane as u16),
-        (w::nmi_frame_counter_word, if variant == 2 { 1 } else { 8 }),
+        (w::SAMUS_HEALTH, 90),
+        (w::SAMUS_MAX_HEALTH, 100),
+        (w::SAMUS_RESERVE_HEALTH, 10),
+        (w::SAMUS_MAX_RESERVE_HEALTH, 50),
+        (w::RESERVE_HEALTH_MODE, 0),
+        (w::SAMUS_MISSILES, 10),
+        (w::SAMUS_SUPER_MISSILES, 10),
+        (w::SAMUS_POWER_BOMBS, 10),
+        (w::SUBSTATE, if variant == 0 { 2 } else { 1 }),
+        (w::WHICH_ITEM_TO_PICKUP, lane as u16),
+        (w::NMI_FRAME_COUNTER_WORD, if variant == 2 { 1 } else { 8 }),
     ] {
         game.ram().copy_in(at, &(value as u16).to_le_bytes());
     }
@@ -212,24 +212,24 @@ unsafe fn crystal_flash(id: u32, game: &mut Game) -> Vec<u8> {
     if variant != 2 {
         put(&mut expected_ram, AMMO[lane], 9);
         for (at, value) in [
-            (w::samus_health, 100),
-            (w::samus_reserve_health, 50),
-            (w::reserve_health_mode, 1),
+            (w::SAMUS_HEALTH, 100),
+            (w::SAMUS_RESERVE_HEALTH, 50),
+            (w::RESERVE_HEALTH_MODE, 1),
         ] {
             put(&mut expected_ram, at, value);
         }
         if variant == 0 {
-            put(&mut expected_ram, w::substate, 1);
+            put(&mut expected_ram, w::SUBSTATE, 1);
         } else if lane < 2 {
-            put(&mut expected_ram, w::substate, 10);
-            put(&mut expected_ram, w::which_item_to_pickup, lane as u16 + 1);
+            put(&mut expected_ram, w::SUBSTATE, 10);
+            put(&mut expected_ram, w::WHICH_ITEM_TO_PICKUP, lane as u16 + 1);
         } else {
             for (at, value) in [
-                (w::substate, 0),
-                (w::samus_movement_handler, 0xd75b),
-                (w::samus_draw_handler, 0xeb52),
-                (w::samus_anim_frame_timer, 3),
-                (w::samus_anim_frame, 12),
+                (w::SUBSTATE, 0),
+                (w::SAMUS_MOVEMENT_HANDLER, 0xd75b),
+                (w::SAMUS_DRAW_HANDLER, 0xeb52),
+                (w::SAMUS_ANIM_FRAME_TIMER, 3),
+                (w::SAMUS_ANIM_FRAME, 12),
             ] {
                 put(&mut expected_ram, at, value);
             }
@@ -238,8 +238,8 @@ unsafe fn crystal_flash(id: u32, game: &mut Game) -> Vec<u8> {
     unsafe {
         crate::game::session_runtime::advance_special_movement(0x90d6ce, game);
     }
-    put(&mut expected_ram, w::samus_invincibility_timer, 0);
-    put(&mut expected_ram, w::samus_knockback_timer, 0);
+    put(&mut expected_ram, w::SAMUS_INVINCIBILITY_TIMER, 0);
+    put(&mut expected_ram, w::SAMUS_KNOCKBACK_TIMER, 0);
     assert_eq!(
         &(0..game.ram().len())
             .map(|at| game.ram().read_byte(at))
@@ -252,10 +252,10 @@ unsafe fn crystal_flash(id: u32, game: &mut Game) -> Vec<u8> {
 
 unsafe fn gunship(id: u32, game: &mut Game) -> Vec<u8> {
     for (at, value) in [
-        (w::samus_health, if id == 0 { 96 } else { 100 }),
-        (w::samus_max_health, 100),
+        (w::SAMUS_HEALTH, if id == 0 { 96 } else { 100 }),
+        (w::SAMUS_MAX_HEALTH, 100),
         (
-            w::samus_reserve_health,
+            w::SAMUS_RESERVE_HEALTH,
             if id == 1 {
                 8
             } else if id == 2 {
@@ -264,15 +264,15 @@ unsafe fn gunship(id: u32, game: &mut Game) -> Vec<u8> {
                 0
             },
         ),
-        (w::samus_max_reserve_health, 10),
-        (w::reserve_health_mode, 0),
-        (w::samus_missiles, 3),
-        (w::samus_max_missiles, 5),
-        (w::samus_reserve_missiles, 0),
-        (w::samus_super_missiles, if id == 0 { 1 } else { 3 }),
-        (w::samus_max_super_missiles, 5),
-        (w::samus_power_bombs, if id == 0 { 1 } else { 3 }),
-        (w::samus_max_power_bombs, 5),
+        (w::SAMUS_MAX_RESERVE_HEALTH, 10),
+        (w::RESERVE_HEALTH_MODE, 0),
+        (w::SAMUS_MISSILES, 3),
+        (w::SAMUS_MAX_MISSILES, 5),
+        (w::SAMUS_RESERVE_MISSILES, 0),
+        (w::SAMUS_SUPER_MISSILES, if id == 0 { 1 } else { 3 }),
+        (w::SAMUS_MAX_SUPER_MISSILES, 5),
+        (w::SAMUS_POWER_BOMBS, if id == 0 { 1 } else { 3 }),
+        (w::SAMUS_MAX_POWER_BOMBS, 5),
         (SHIP_STATE, 0xcafe),
     ] {
         game.ram().copy_in(at, &(value as u16).to_le_bytes());
@@ -281,7 +281,7 @@ unsafe fn gunship(id: u32, game: &mut Game) -> Vec<u8> {
     let mut expected_ram = (0..game.ram().len())
         .map(|at| game.ram().read_byte(at))
         .collect::<Vec<u8>>();
-    put(&mut expected_ram, w::bitmask, 0x40); // Actual CheckEventHappened precedes refill.
+    put(&mut expected_ram, w::BITMASK, 0x40); // Actual CheckEventHappened precedes refill.
     let mut expected_trace = Vec::new();
     for resource in 0..4 {
         record(
@@ -292,24 +292,24 @@ unsafe fn gunship(id: u32, game: &mut Game) -> Vec<u8> {
             &mut expected_trace,
         );
         match resource {
-            0 if id == 0 => put(&mut expected_ram, w::samus_health, 98),
+            0 if id == 0 => put(&mut expected_ram, w::SAMUS_HEALTH, 98),
             0 => {
                 put(
                     &mut expected_ram,
-                    w::samus_reserve_health,
+                    w::SAMUS_RESERVE_HEALTH,
                     if id == 1 { 10 } else { 8 },
                 );
-                put(&mut expected_ram, w::reserve_health_mode, 1);
+                put(&mut expected_ram, w::RESERVE_HEALTH_MODE, 1);
             }
-            1 => put(&mut expected_ram, w::samus_missiles, 5),
+            1 => put(&mut expected_ram, w::SAMUS_MISSILES, 5),
             2 => put(
                 &mut expected_ram,
-                w::samus_super_missiles,
+                w::SAMUS_SUPER_MISSILES,
                 if id == 0 { 3 } else { 5 },
             ),
             _ => put(
                 &mut expected_ram,
-                w::samus_power_bombs,
+                w::SAMUS_POWER_BOMBS,
                 if id == 0 { 3 } else { 5 },
             ),
         }

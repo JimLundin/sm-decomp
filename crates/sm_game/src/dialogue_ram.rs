@@ -27,7 +27,7 @@ pub fn import<H: crate::ram::RamHost + ?Sized>(game: &H) -> Dialogue<u16> {
     use Continuation::*;
     use Phase::*;
     Dialogue {
-        message: message(read(game, ram::message_box_index)),
+        message: message(read(game, ram::MESSAGE_BOX_INDEX)),
         continuation: match game.ram().read_byte(0x614) {
             0 => Start,
             2 => Waiting(Opening(Cycle::Message)),
@@ -39,7 +39,7 @@ pub fn import<H: crate::ram::RamHost + ?Sized>(game: &H) -> Dialogue<u16> {
             8 => Waiting(FeedbackDelay),
             value => Invalid(value),
         },
-        delay_remaining: read(game, ram::my_counter),
+        delay_remaining: read(game, ram::MY_COUNTER),
         child: match game.ram().read_byte(0x615) {
             0 => ChildContinuation::Start,
             1 => ChildContinuation::Waiting,
@@ -47,8 +47,8 @@ pub fn import<H: crate::ram::RamHost + ?Sized>(game: &H) -> Dialogue<u16> {
             3 => ChildContinuation::Dismissing,
             value => ChildContinuation::Invalid(value),
         },
-        radius: read(game, ram::message_box_animation_y_radius),
-        selection: match read(game, ram::save_confirmation_selection) {
+        radius: read(game, ram::MESSAGE_BOX_ANIMATION_Y_RADIUS),
+        selection: match read(game, ram::SAVE_CONFIRMATION_SELECTION) {
             0 => Selection::Accept,
             2 => Selection::Decline,
             value => Selection::Other(value),
@@ -60,7 +60,7 @@ pub fn publish<H: crate::ram::RamHost + ?Sized>(state: Dialogue<u16>, game: &mut
     use Phase::*;
     write(
         game,
-        ram::message_box_index,
+        ram::MESSAGE_BOX_INDEX,
         match state.message {
             Message::MapAcquired => 20,
             Message::EnergyRestored => 21,
@@ -71,11 +71,11 @@ pub fn publish<H: crate::ram::RamHost + ?Sized>(state: Dialogue<u16>, game: &mut
             Message::Content(id) => id,
         },
     );
-    write(game, ram::my_counter, state.delay_remaining);
-    write(game, ram::message_box_animation_y_radius, state.radius);
+    write(game, ram::MY_COUNTER, state.delay_remaining);
+    write(game, ram::MESSAGE_BOX_ANIMATION_Y_RADIUS, state.radius);
     write(
         game,
-        ram::save_confirmation_selection,
+        ram::SAVE_CONFIRMATION_SELECTION,
         match state.selection {
             Selection::Accept => 0,
             Selection::Decline => 2,
@@ -109,11 +109,11 @@ pub fn publish<H: crate::ram::RamHost + ?Sized>(state: Dialogue<u16>, game: &mut
 }
 pub fn input<H: crate::ram::RamHost + ?Sized>(game: &H) -> Input {
     use crate::constants::buttons::*;
-    let keys = read(game, ram::joypad1_newkeys);
-    let dismiss = if read(game, ram::bug_fix_counter) == 0 {
+    let keys = read(game, ram::JOYPAD1_NEWKEYS);
+    let dismiss = if read(game, ram::BUG_FIX_COUNTER) == 0 {
         keys != 0
     } else {
-        read(game, ram::joypad1_lastkeys) != 0
+        read(game, ram::JOYPAD1_LASTKEYS) != 0
     };
     Input {
         confirm: keys & K_BUTTON_A as u16 != 0,
@@ -123,5 +123,5 @@ pub fn input<H: crate::ram::RamHost + ?Sized>(game: &H) -> Input {
     }
 }
 pub fn select_pause<H: crate::ram::RamHost + ?Sized>(game: &mut H) {
-    write(game, ram::game_state, 12);
+    write(game, ram::GAME_STATE, 12);
 }

@@ -222,10 +222,10 @@ impl Effects for Runtime<'_> {
         }
         // The legacy failed search uses byte index -2; retain its exceptional alias.
         let index = -2isize;
-        let timer = arrays::eproj_instr_timers
+        let timer = arrays::EPROJ_INSTR_TIMERS
             .checked_add_signed(index)
             .unwrap();
-        let program = arrays::eproj_instr_list_ptr
+        let program = arrays::EPROJ_INSTR_LIST_PTR
             .checked_add_signed(index)
             .unwrap();
         self.write_slice_le(timer, 1);
@@ -243,8 +243,8 @@ impl Effects for Runtime<'_> {
         self.foreign(|game| game.set_has_area_map(value));
     }
     fn mark_save_station(&mut self, station: u16) {
-        self.write_slice_le(ram::load_station_index, station);
-        let station = self.word(ram::load_station_index);
+        self.write_slice_le(ram::LOAD_STATION_INDEX, station);
+        let station = self.word(ram::LOAD_STATION_INDEX);
         crate::game::progress_flags::prepare_flag_mask(
             &mut self.session_mut().flag_compatibility,
             station,
@@ -254,7 +254,7 @@ impl Effects for Runtime<'_> {
         self.set_byte(address, value);
     }
     fn selected_save_slot(&self) -> u16 {
-        self.word(ram::selected_save_slot)
+        self.word(ram::SELECTED_SAVE_SLOT)
     }
     fn statue_signal(&mut self) {
         self.write_slice_native(0xf78 + offset_of!(EnemyData, parameter_1), 1);

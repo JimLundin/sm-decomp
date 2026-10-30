@@ -81,7 +81,7 @@ fn pose(ea: u32) -> Option<Pose> {
 }
 
 fn footstep(game: &mut Game) {
-    word! {game; earthquake_type = 1; earthquake_timer = 4; }
+    word! {game; EARTHQUAKE_TYPE = 1; EARTHQUAKE_TIMER = 4; }
     if Runtime::new(game).native_word(PHASE) == 3 {
         // The original routine stores into ROM here; the port only reports it.
         print!("Write to rom!\n");
@@ -97,8 +97,8 @@ fn move_body(step: Step, game: &mut Game) {
         body.y.whole = body.y.whole.wrapping_add(step.dy);
         body.x.whole
     });
-    word!(game.reg_BG2VOFS -= step.dy);
-    word!(game.reg_BG2HOFS = step.scroll_x.wrapping_add(34).wrapping_sub(x));
+    word!(game.REG_BG2VOFS -= step.dy);
+    word!(game.REG_BG2HOFS = step.scroll_x.wrapping_add(34).wrapping_sub(x));
 }
 
 /// Runs a body script step, or returns `None` for an address this module does not own.

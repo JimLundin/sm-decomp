@@ -32,19 +32,17 @@
 use crate::ram::CompatibilityRam;
 
 macro_rules! menu_state {
-    ($($field:ident),+ $(,)?) => {
+    ($($field:ident: $variant:ident = $ram:ident),+ $(,)?) => {
         /// The menu words, in RAM order from $0727.
-        #[allow(non_snake_case)]
         #[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
         pub struct MenuState {
             $(pub $field: u16,)+
         }
 
         /// A menu word, by its RAM name.
-        #[allow(non_camel_case_types)]
         #[derive(Clone, Copy, Debug, PartialEq, Eq)]
         pub enum Word {
-            $($field,)+
+            $($variant,)+
         }
 
         impl MenuState {
@@ -54,7 +52,7 @@ macro_rules! menu_state {
         }
 
         const _: () = {
-            let names = [$(crate::ram::words::$field),+];
+            let names = [$(crate::ram::words::$ram),+];
             let mut index = 0;
             while index < names.len() {
                 assert!(names[index] == MENU + 2 * index);
@@ -65,37 +63,37 @@ macro_rules! menu_state {
 }
 
 menu_state!(
-    menu_index,
-    pausemenu_start_lr_pressed_highlight_timer,
-    pausemenu_lr_animation_timer,
-    pausemenu_item_selector_animation_timer,
-    pausemenu_reserve_tank_animation_timer,
-    unused_word_7e0731,
-    pausemenu_uparrow_animation_timer,
-    pausemenu_downarrow_animation_timer,
-    pausemenu_rightarrow_animation_timer,
-    pausemenu_leftarrow_animation_timer,
-    pausemenu_palette_animation_timer,
-    unused_word_7e073d,
-    pausemenu_lr_animation_frame,
-    pausemenu_item_selector_animation_frame,
-    pausemenu_reserve_tank_animation_frame,
-    unused_word_7e0745,
-    pausemenu_uparrow_animation_frame,
-    pausemenu_downarrow_animation_frame,
-    pausemenu_rightarrow_animation_frame,
-    pausemenu_leftarrow_animation_frame,
-    pausemenu_palette_animation_frame,
-    pausemenu_shoulder_button_highlight,
-    pausemenu_button_label_mode,
-    pausemenu_equipment_category_item,
-    pausemenu_reserve_tank_delay_ctr,
-    unused_word_7e0759,
-    unused_word_7e075b,
-    unused_word_7e075d,
-    unused_word_7e075f,
-    unused_word_7e0761,
-    pause_screen_mode,
+    menu_index: MenuIndex = MENU_INDEX,
+    pausemenu_start_lr_pressed_highlight_timer: PausemenuStartLrPressedHighlightTimer = PAUSEMENU_START_LR_PRESSED_HIGHLIGHT_TIMER,
+    pausemenu_lr_animation_timer: PausemenuLrAnimationTimer = PAUSEMENU_LR_ANIMATION_TIMER,
+    pausemenu_item_selector_animation_timer: PausemenuItemSelectorAnimationTimer = PAUSEMENU_ITEM_SELECTOR_ANIMATION_TIMER,
+    pausemenu_reserve_tank_animation_timer: PausemenuReserveTankAnimationTimer = PAUSEMENU_RESERVE_TANK_ANIMATION_TIMER,
+    unused_word_7e0731: UnusedWord7e0731 = UNUSED_WORD_7E0731,
+    pausemenu_uparrow_animation_timer: PausemenuUparrowAnimationTimer = PAUSEMENU_UPARROW_ANIMATION_TIMER,
+    pausemenu_downarrow_animation_timer: PausemenuDownarrowAnimationTimer = PAUSEMENU_DOWNARROW_ANIMATION_TIMER,
+    pausemenu_rightarrow_animation_timer: PausemenuRightarrowAnimationTimer = PAUSEMENU_RIGHTARROW_ANIMATION_TIMER,
+    pausemenu_leftarrow_animation_timer: PausemenuLeftarrowAnimationTimer = PAUSEMENU_LEFTARROW_ANIMATION_TIMER,
+    pausemenu_palette_animation_timer: PausemenuPaletteAnimationTimer = PAUSEMENU_PALETTE_ANIMATION_TIMER,
+    unused_word_7e073d: UnusedWord7e073d = UNUSED_WORD_7E073D,
+    pausemenu_lr_animation_frame: PausemenuLrAnimationFrame = PAUSEMENU_LR_ANIMATION_FRAME,
+    pausemenu_item_selector_animation_frame: PausemenuItemSelectorAnimationFrame = PAUSEMENU_ITEM_SELECTOR_ANIMATION_FRAME,
+    pausemenu_reserve_tank_animation_frame: PausemenuReserveTankAnimationFrame = PAUSEMENU_RESERVE_TANK_ANIMATION_FRAME,
+    unused_word_7e0745: UnusedWord7e0745 = UNUSED_WORD_7E0745,
+    pausemenu_uparrow_animation_frame: PausemenuUparrowAnimationFrame = PAUSEMENU_UPARROW_ANIMATION_FRAME,
+    pausemenu_downarrow_animation_frame: PausemenuDownarrowAnimationFrame = PAUSEMENU_DOWNARROW_ANIMATION_FRAME,
+    pausemenu_rightarrow_animation_frame: PausemenuRightarrowAnimationFrame = PAUSEMENU_RIGHTARROW_ANIMATION_FRAME,
+    pausemenu_leftarrow_animation_frame: PausemenuLeftarrowAnimationFrame = PAUSEMENU_LEFTARROW_ANIMATION_FRAME,
+    pausemenu_palette_animation_frame: PausemenuPaletteAnimationFrame = PAUSEMENU_PALETTE_ANIMATION_FRAME,
+    pausemenu_shoulder_button_highlight: PausemenuShoulderButtonHighlight = PAUSEMENU_SHOULDER_BUTTON_HIGHLIGHT,
+    pausemenu_button_label_mode: PausemenuButtonLabelMode = PAUSEMENU_BUTTON_LABEL_MODE,
+    pausemenu_equipment_category_item: PausemenuEquipmentCategoryItem = PAUSEMENU_EQUIPMENT_CATEGORY_ITEM,
+    pausemenu_reserve_tank_delay_ctr: PausemenuReserveTankDelayCtr = PAUSEMENU_RESERVE_TANK_DELAY_CTR,
+    unused_word_7e0759: UnusedWord7e0759 = UNUSED_WORD_7E0759,
+    unused_word_7e075b: UnusedWord7e075b = UNUSED_WORD_7E075B,
+    unused_word_7e075d: UnusedWord7e075d = UNUSED_WORD_7E075D,
+    unused_word_7e075f: UnusedWord7e075f = UNUSED_WORD_7E075F,
+    unused_word_7e0761: UnusedWord7e0761 = UNUSED_WORD_7E0761,
+    pause_screen_mode: PauseScreenMode = PAUSE_SCREEN_MODE,
 );
 
 /// RAM address of the first menu word, `menu_index`.

@@ -18,9 +18,9 @@ pub(crate) fn observe_cancel(g: &Game) {
     if CANCEL_ARMED.with(|v| v.get()) {
         CANCEL_VALUES.with_borrow_mut(|v| {
             v.push([
-                get(g, w::samus_x_base_speed),
-                get(g, w::samus_x_extra_run_speed),
-                get(g, w::samus_x_accel_mode),
+                get(g, w::SAMUS_X_BASE_SPEED),
+                get(g, w::SAMUS_X_EXTRA_RUN_SPEED),
+                get(g, w::SAMUS_X_ACCEL_MODE),
             ])
         });
     }
@@ -81,18 +81,18 @@ fn seed(g: &mut Game) -> (RomImage, RomImage) {
     g.g_fail = false;
     g.VERIFY_ACTIVE = true;
     for (at, v) in [
-        (w::room_width_in_blocks, 32),
-        (w::samus_x_pos, 136),
-        (w::samus_y_pos, 136),
-        (w::samus_x_radius, 3),
-        (w::samus_y_radius, 3),
-        (w::samus_y_subpos, 0x2222),
-        (w::samus_prev_x_pos, 136),
-        (w::samus_prev_y_pos, 136),
-        (w::equipped_items, 0x20),
-        (w::speed_echoes_index, 0xffff),
-        (w::samus_x_speed_table_pointer, 0xe000),
-        (w::button_config_jump_a, 0x80),
+        (w::ROOM_WIDTH_IN_BLOCKS, 32),
+        (w::SAMUS_X_POS, 136),
+        (w::SAMUS_Y_POS, 136),
+        (w::SAMUS_X_RADIUS, 3),
+        (w::SAMUS_Y_RADIUS, 3),
+        (w::SAMUS_Y_SUBPOS, 0x2222),
+        (w::SAMUS_PREV_X_POS, 136),
+        (w::SAMUS_PREV_Y_POS, 136),
+        (w::EQUIPPED_ITEMS, 0x20),
+        (w::SPEED_ECHOES_INDEX, 0xffff),
+        (w::SAMUS_X_SPEED_TABLE_POINTER, 0xe000),
+        (w::BUTTON_CONFIG_JUMP_A, 0x80),
     ] {
         put(g, at, v);
     }
@@ -118,7 +118,7 @@ fn seed(g: &mut Game) -> (RomImage, RomImage) {
     (loaded, native)
 }
 unsafe fn motion(direction: u32, amount: i32, g: &mut Game) {
-    put(g, w::samus_collision_direction, direction as u16);
+    put(g, w::SAMUS_COLLISION_DIRECTION, direction as u16);
     {
         match direction {
             0 => crate::game::player_collision_adapters::move_left(-amount, g),
@@ -156,22 +156,22 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             0..=3 => {
                 motion(id, 0x10001, g);
                 let (axis, fraction, whole, frac) = match id {
-                    0 => (w::samus_x_pos, w::samus_x_subpos, 134, 0xffff),
-                    1 => (w::samus_x_pos, w::samus_x_subpos, 137, 1),
-                    2 => (w::samus_y_pos, w::samus_y_subpos, 135, 0x2221),
-                    _ => (w::samus_y_pos, w::samus_y_subpos, 137, 0x2223),
+                    0 => (w::SAMUS_X_POS, w::SAMUS_X_SUBPOS, 134, 0xffff),
+                    1 => (w::SAMUS_X_POS, w::SAMUS_X_SUBPOS, 137, 1),
+                    2 => (w::SAMUS_Y_POS, w::SAMUS_Y_SUBPOS, 135, 0x2221),
+                    _ => (w::SAMUS_Y_POS, w::SAMUS_Y_SUBPOS, 137, 0x2223),
                 };
                 expect(g, axis, whole, "clear directional whole");
                 expect(g, fraction, frac, "clear directional fraction");
-                expect(g, w::samus_collision_flag, 0, "clear");
+                expect(g, w::SAMUS_COLLISION_FLAG, 0, "clear");
                 publication(g, id, if id & 1 == 0 { -0x10001 } else { 0x10001 });
             }
             4..=7 => {
                 let d = id - 4;
                 let axis = if d < 2 {
-                    w::samus_x_pos
+                    w::SAMUS_X_POS
                 } else {
-                    w::samus_y_pos
+                    w::SAMUS_Y_POS
                 };
                 put(g, axis, if d & 1 == 0 { 0 } else { 0xffff });
                 put(g, axis + 2, if d & 1 == 0 { 0 } else { 0xffff });
@@ -215,21 +215,21 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                         136
                     },
                 );
-                put(g, w::interactive_enemy_indexes_write_ptr, 2);
-                put(g, a::interactive_enemy_indexes, 0);
-                put(g, a::interactive_enemy_indexes + 2, 0xffff);
+                put(g, w::INTERACTIVE_ENEMY_INDEXES_WRITE_PTR, 2);
+                put(g, a::INTERACTIVE_ENEMY_INDEXES, 0);
+                put(g, a::INTERACTIVE_ENEMY_INDEXES + 2, 0xffff);
                 motion(d, 0x10000, g);
-                expect(g, w::samus_x_pos, 136, "exact actor keeps X");
-                expect(g, w::samus_y_pos, 136, "exact actor keeps Y");
+                expect(g, w::SAMUS_X_POS, 136, "exact actor keeps X");
+                expect(g, w::SAMUS_Y_POS, 136, "exact actor keeps Y");
                 expect(
                     g,
-                    w::samus_y_subpos,
+                    w::SAMUS_Y_SUBPOS,
                     0,
                     "exact contact clears Y fraction even for X",
                 );
                 expect(
                     g,
-                    w::samus_collision_flag,
+                    w::SAMUS_COLLISION_FLAG,
                     0xffff,
                     "actor collision representation",
                 );
@@ -237,23 +237,23 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 if id == 8 {
                     checkpoint(&mut checkpoints, g, 0, None);
                     actor(g, 0, 128, 136);
-                    put(g, w::samus_y_subpos, 0x2222);
+                    put(g, w::SAMUS_Y_SUBPOS, 0x2222);
                     motion(0, 0x10001, g);
                     expect(
                         g,
-                        w::samus_x_pos,
+                        w::SAMUS_X_POS,
                         134,
                         "negative actor probe fractional borrow",
                     );
                     expect(
                         g,
-                        w::samus_x_subpos,
+                        w::SAMUS_X_SUBPOS,
                         0,
                         "blocked actor commits integer clearance",
                     );
                     expect(
                         g,
-                        w::samus_collision_flag,
+                        w::SAMUS_COLLISION_FLAG,
                         0xffff,
                         "fractional borrow enters strict actor edge",
                     );
@@ -262,54 +262,54 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             12 | 13 => {
                 actor(g, 0, 146, 136);
                 actor(g, 64, 144, 136);
-                put(g, w::interactive_enemy_indexes_write_ptr, 4);
+                put(g, w::INTERACTIVE_ENEMY_INDEXES_WRITE_PTR, 4);
                 put(
                     g,
-                    a::interactive_enemy_indexes,
+                    a::INTERACTIVE_ENEMY_INDEXES,
                     if id == 12 { 0 } else { 64 },
                 );
                 put(
                     g,
-                    a::interactive_enemy_indexes + 2,
+                    a::INTERACTIVE_ENEMY_INDEXES + 2,
                     if id == 12 { 64 } else { 0 },
                 );
-                put(g, a::interactive_enemy_indexes + 4, 0xffff);
+                put(g, a::INTERACTIVE_ENEMY_INDEXES + 4, 0xffff);
                 motion(1, 0x50000, g);
                 expect(
                     g,
-                    w::samus_x_pos,
+                    w::SAMUS_X_POS,
                     if id == 12 { 140 } else { 138 },
                     "first encountered actor, not nearest",
                 );
-                expect(g, w::samus_collision_flag, 0xffff, "actor order collision");
+                expect(g, w::SAMUS_COLLISION_FLAG, 0xffff, "actor order collision");
                 expect(
                     g,
-                    a::enemy_index_colliding_dirs + 2,
+                    a::ENEMY_INDEX_COLLIDING_DIRS + 2,
                     if id == 12 { 0 } else { 64 },
                     "encounter identity",
                 );
             }
             14 => {
                 actor(g, 0, 142, 136);
-                put(g, w::interactive_enemy_indexes_write_ptr, 2);
-                put(g, a::interactive_enemy_indexes + 2, 0xffff);
+                put(g, w::INTERACTIVE_ENEMY_INDEXES_WRITE_PTR, 2);
+                put(g, a::INTERACTIVE_ENEMY_INDEXES + 2, 0xffff);
                 block(g, 264, 9, 0);
                 put(g, 0x7b5, 0x9000);
-                put(g, w::samus_pose, 8);
+                put(g, w::SAMUS_POSE, 8);
                 put(g, 0x998, 8);
                 rom_word(&_loaded, 0x8f9000, 0xa000);
                 rom_word(&_loaded, 0x83a000, 0x9234);
-                put(g, w::cur_block_index, 0xbeef);
-                put(g, w::samus_has_momentum_flag, 1);
-                put(g, w::speed_boost_counter, 0x401);
-                put(g, w::samus_x_base_speed, 7);
-                put(g, w::samus_x_extra_run_speed, 5);
-                put(g, w::speed_echoes_index, 0);
-                put(g, w::samus_x_accel_mode, 2);
+                put(g, w::CUR_BLOCK_INDEX, 0xbeef);
+                put(g, w::SAMUS_HAS_MOMENTUM_FLAG, 1);
+                put(g, w::SPEED_BOOST_COUNTER, 0x401);
+                put(g, w::SAMUS_X_BASE_SPEED, 7);
+                put(g, w::SAMUS_X_EXTRA_RUN_SPEED, 5);
+                put(g, w::SPEED_ECHOES_INDEX, 0);
+                put(g, w::SAMUS_X_ACCEL_MODE, 2);
                 motion(1, 0x10000, g);
                 expect(
                     g,
-                    w::cur_block_index,
+                    w::CUR_BLOCK_INDEX,
                     0xbeef,
                     "actor precedes effectful door terrain",
                 );
@@ -320,10 +320,10 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                         "PC10 cancellation observes speed before clears"
                     )
                 });
-                expect(g, w::samus_has_momentum_flag, 0, "boost cancelled");
-                expect(g, w::samus_x_base_speed, 0, "base reset");
-                expect(g, w::samus_x_extra_run_speed, 0, "extra reset");
-                expect(g, w::speed_echoes_index, 0xffff, "echo cancellation");
+                expect(g, w::SAMUS_HAS_MOMENTUM_FLAG, 0, "boost cancelled");
+                expect(g, w::SAMUS_X_BASE_SPEED, 0, "base reset");
+                expect(g, w::SAMUS_X_EXTRA_RUN_SPEED, 0, "extra reset");
+                expect(g, w::SPEED_ECHOES_INDEX, 0xffff, "echo cancellation");
                 for i in 0..16 {
                     expect(
                         g,
@@ -336,50 +336,50 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             15 => {
                 block(g, 264, 1, 4);
                 motion(3, 0x10001, g);
-                expect(g, w::samus_collision_flag, 1, "square full quadrant");
-                expect(g, w::samus_y_subpos, 0xffff, "square floor fraction");
+                expect(g, w::SAMUS_COLLISION_FLAG, 1, "square full quadrant");
+                expect(g, w::SAMUS_Y_SUBPOS, 0xffff, "square floor fraction");
                 expect(g, 0xdba, 1, "square floor adjustment flag");
             }
             16 => {
                 block(g, 264, 1, 7);
                 motion(3, 0x10001, g);
-                expect(g, w::samus_collision_flag, 1, "nonsquare floor");
-                expect(g, w::samus_y_pos, 136, "nonsquare integer-only correction");
-                expect(g, w::samus_y_subpos, 0x2222, "nonsquare retains fraction");
+                expect(g, w::SAMUS_COLLISION_FLAG, 1, "nonsquare floor");
+                expect(g, w::SAMUS_Y_POS, 136, "nonsquare integer-only correction");
+                expect(g, w::SAMUS_Y_SUBPOS, 0x2222, "nonsquare retains fraction");
             }
             17 => {
-                put(g, w::samus_y_pos, 139);
+                put(g, w::SAMUS_Y_POS, 139);
                 put(g, 0xa46, 2);
                 block(g, 264, 1, 0x87);
                 crate::game::player_collision_adapters::align_slopes(g);
-                expect(g, w::samus_y_pos, 139, "top equality does not displace");
+                expect(g, w::SAMUS_Y_POS, 139, "top equality does not displace");
                 expect(g, 0xdba, 1, "top equality still marks slope adjusted");
             }
             18 | 19 => {
-                put(g, w::samus_x_pos, 144);
-                put(g, w::samus_x_radius, 9);
+                put(g, w::SAMUS_X_POS, 144);
+                put(g, w::SAMUS_X_RADIUS, 9);
                 put(g, 0x5b6, (id - 18) as u16);
                 block(g, 264, 8, 0);
                 block(g, 265, 8, 0);
                 motion(3, 0x10000, g);
                 expect(
                     g,
-                    w::cur_block_index,
+                    w::CUR_BLOCK_INDEX,
                     if id == 18 { 264 } else { 265 },
                     "frame parity selects first terrain column",
                 );
-                expect(g, w::samus_collision_flag, 1, "solid floor");
+                expect(g, w::SAMUS_COLLISION_FLAG, 1, "solid floor");
             }
             20 | 21 => {
                 block(g, 264, 3, 0);
                 if id == 21 {
-                    put(g, w::samus_contact_damage_index, 1);
+                    put(g, w::SAMUS_CONTACT_DAMAGE_INDEX, 1);
                 }
                 motion(3, 0x10001, g);
-                expect(g, w::samus_y_pos, 136, "surface whole");
+                expect(g, w::SAMUS_Y_POS, 136, "surface whole");
                 expect(
                     g,
-                    w::samus_y_subpos,
+                    w::SAMUS_Y_SUBPOS,
                     if id == 20 { 0x5223 } else { 0x2222 },
                     "real CollisionSurface displacement",
                 );
@@ -391,17 +391,17 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 );
                 expect(
                     g,
-                    w::samus_collision_flag,
+                    w::SAMUS_COLLISION_FLAG,
                     if id == 20 { 1 } else { 0 },
                     "special-air callback low bit ignored for local BTS",
                 );
                 crate::game::session_runtime::collision_mechanism_checks::run(g, id);
             }
             22 | 23 => {
-                put(g, w::samus_x_base_speed, 5);
-                put(g, w::samus_x_base_subspeed, 7);
-                put(g, w::samus_collision_flag, 0xffff);
-                put(g, w::extra_samus_x_displacement, 1);
+                put(g, w::SAMUS_X_BASE_SPEED, 5);
+                put(g, w::SAMUS_X_BASE_SUBSPEED, 7);
+                put(g, w::SAMUS_COLLISION_FLAG, 0xffff);
+                put(g, w::EXTRA_SAMUS_X_DISPLACEMENT, 1);
                 {
                     use crate::game::{
                         player_collision::operations as collision, player_movement::speed,
@@ -415,54 +415,54 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                     };
                     collision::horizontal_control(&mut runtime, request);
                 }
-                expect(g, w::samus_x_base_speed, 0, "at-rest base reset");
-                expect(g, w::samus_x_base_subspeed, 0, "at-rest fraction reset");
+                expect(g, w::SAMUS_X_BASE_SPEED, 0, "at-rest base reset");
+                expect(g, w::SAMUS_X_BASE_SUBSPEED, 0, "at-rest fraction reset");
                 expect(
                     g,
-                    w::samus_x_pos,
+                    w::SAMUS_X_POS,
                     if id == 22 { 136 } else { 137 },
                     "MOVE_AT_REST controls actual external displacement",
                 );
-                expect(g, w::samus_collision_flag, 0, "reset collision");
+                expect(g, w::SAMUS_COLLISION_FLAG, 0, "reset collision");
             }
             24 => {
-                put(g, w::samus_x_extra_run_subspeed, 0xffff);
-                put(g, w::samus_x_speed_divisor, 5);
+                put(g, w::SAMUS_X_EXTRA_RUN_SUBSPEED, 0xffff);
+                put(g, w::SAMUS_X_SPEED_DIVISOR, 5);
                 crate::game::player_collision_adapters::move_x(0x10001, g);
                 expect(
                     g,
-                    w::samus_x_subpos,
+                    w::SAMUS_X_SUBPOS,
                     0x2000,
                     "actual MoveX divisor capped at4 after carry",
                 );
-                expect(g, w::samus_total_x_subspeed, 0x2000, "total published");
+                expect(g, w::SAMUS_TOTAL_X_SUBSPEED, 0x2000, "total published");
                 checkpoint(&mut checkpoints, g, 0, None);
-                put(g, w::samus_x_extra_run_subspeed, 0);
-                put(g, w::samus_x_speed_divisor, 0);
-                put(g, w::samus_x_subpos, 0);
+                put(g, w::SAMUS_X_EXTRA_RUN_SUBSPEED, 0);
+                put(g, w::SAMUS_X_SPEED_DIVISOR, 0);
+                put(g, w::SAMUS_X_SUBPOS, 0);
                 crate::game::player_collision_adapters::move_x(0x200123, g);
                 expect(
                     g,
-                    w::samus_x_pos,
+                    w::SAMUS_X_POS,
                     151,
                     "actual MoveX positive integer clamp",
                 );
-                expect(g, w::samus_x_subpos, 0x123, "positive clamp fraction");
+                expect(g, w::SAMUS_X_SUBPOS, 0x123, "positive clamp fraction");
                 checkpoint(&mut checkpoints, g, 1, None);
                 g.ram().write_byte(0xa1e, 4);
-                put(g, w::samus_x_subpos, 0);
+                put(g, w::SAMUS_X_SUBPOS, 0);
                 crate::game::player_collision_adapters::move_x(0x200123, g);
                 expect(
                     g,
-                    w::samus_x_pos,
+                    w::SAMUS_X_POS,
                     136,
                     "actual MoveX negative integer clamp",
                 );
-                expect(g, w::samus_x_subpos, 0xfedd, "negative clamp fraction");
+                expect(g, w::SAMUS_X_SUBPOS, 0xfedd, "negative clamp fraction");
             }
             25 | 26 | 31 => {
-                put(g, w::samus_y_pos, 133);
-                put(g, w::samus_y_subpos, 0);
+                put(g, w::SAMUS_Y_POS, 133);
+                put(g, w::SAMUS_Y_SUBPOS, 0);
                 let amount = if id == 25 {
                     7
                 } else if id == 26 {
@@ -479,7 +479,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                     if id == 25 { 7 << 16 } else { 0 },
                     "abs7/8/9 snapped first probe"
                 );
-                expect(g, w::cur_block_index, 264, "first probe block");
+                expect(g, w::CUR_BLOCK_INDEX, 264, "first probe block");
                 if id == 31 {
                     checkpoint(&mut checkpoints, g, 0, Some(value as u32));
                     block(g, 264, 0, 0);
@@ -490,12 +490,12 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                         8 << 16,
                         "clear snapped probe proceeds to full9 contact"
                     );
-                    expect(g, w::cur_block_index, 296, "second probe reaches next row");
+                    expect(g, w::CUR_BLOCK_INDEX, 296, "second probe reaches next row");
                     value = second;
                 }
                 expect(
                     g,
-                    w::samus_y_pos,
+                    w::SAMUS_Y_POS,
                     133,
                     "pose probe does not commit position",
                 );
@@ -503,57 +503,57 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             }
             27 => {
                 g.ram().write_byte(0xa1e, 4);
-                put(g, w::extra_samus_x_displacement, 3);
+                put(g, w::EXTRA_SAMUS_X_DISPLACEMENT, 3);
                 crate::game::player_collision_adapters::move_x(0x10000, g);
                 expect(
                     g,
-                    w::samus_x_pos,
+                    w::SAMUS_X_POS,
                     138,
                     "left intention, positive final displacement",
                 );
                 expect(
                     g,
-                    w::samus_collision_direction,
+                    w::SAMUS_COLLISION_DIRECTION,
                     0,
                     "requested direction retained",
                 );
                 publication(g, 1, 0x20000);
             }
             28 => {
-                put(g, w::samus_x_extra_run_speed, 14);
-                put(g, w::samus_x_extra_run_subspeed, 0xffff);
-                put(g, w::samus_y_subaccel, 1);
+                put(g, w::SAMUS_X_EXTRA_RUN_SPEED, 14);
+                put(g, w::SAMUS_X_EXTRA_RUN_SUBSPEED, 0xffff);
+                put(g, w::SAMUS_Y_SUBACCEL, 1);
                 crate::game::player_collision_adapters::shinespark_x(g);
-                expect(g, w::samus_x_pos, 151, "shinespark clamps at15");
+                expect(g, w::SAMUS_X_POS, 151, "shinespark clamps at15");
                 expect(
                     g,
-                    w::samus_x_extra_run_subspeed,
+                    w::SAMUS_X_EXTRA_RUN_SUBSPEED,
                     0,
                     "run clamp clears fraction",
                 );
-                expect(g, w::samus_shine_timer, 15, "shine timer");
+                expect(g, w::SAMUS_SHINE_TIMER, 15, "shine timer");
                 checkpoint(&mut checkpoints, g, 0, None);
                 actor(g, 0, 169, 136);
-                put(g, w::interactive_enemy_indexes_write_ptr, 2);
-                put(g, a::interactive_enemy_indexes + 2, 0xffff);
+                put(g, w::INTERACTIVE_ENEMY_INDEXES_WRITE_PTR, 2);
+                put(g, a::INTERACTIVE_ENEMY_INDEXES + 2, 0xffff);
                 crate::game::player_collision_adapters::shinespark_x(g);
                 expect(
                     g,
-                    w::samus_x_pos,
+                    w::SAMUS_X_POS,
                     151,
                     "shinespark actor block does not commit clearance",
                 );
                 expect(
                     g,
-                    w::samus_collision_flag,
+                    w::SAMUS_COLLISION_FLAG,
                     0xffff,
                     "shinespark X actor block",
                 );
             }
             29 => {
-                put(g, w::samus_y_speed, 13);
-                put(g, w::samus_y_subspeed, 0xffff);
-                put(g, w::samus_y_subaccel, 1);
+                put(g, w::SAMUS_Y_SPEED, 13);
+                put(g, w::SAMUS_Y_SUBSPEED, 0xffff);
+                put(g, w::SAMUS_Y_SUBACCEL, 1);
                 put(g, 0xdec, 0);
                 put(g, 0xdee, 0xffff);
                 crate::game::player_collision_adapters::shinespark_y(g);
@@ -561,26 +561,26 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 expect(g, 0xdec, 1, "shared sequence whole carry");
                 expect(
                     g,
-                    w::samus_y_pos,
+                    w::SAMUS_Y_POS,
                     121,
                     "14.ffff upward displacement borrows",
                 );
-                expect(g, w::samus_y_subpos, 0x2223, "shinespark fraction");
-                expect(g, w::samus_prev_y_pos, 135, "previous Y bounded to14");
+                expect(g, w::SAMUS_Y_SUBPOS, 0x2223, "shinespark fraction");
+                expect(g, w::SAMUS_PREV_Y_POS, 135, "previous Y bounded to14");
                 checkpoint(&mut checkpoints, g, 0, None);
                 actor(g, 0, 136, 105);
-                put(g, w::interactive_enemy_indexes_write_ptr, 2);
-                put(g, a::interactive_enemy_indexes + 2, 0xffff);
+                put(g, w::INTERACTIVE_ENEMY_INDEXES_WRITE_PTR, 2);
+                put(g, a::INTERACTIVE_ENEMY_INDEXES + 2, 0xffff);
                 crate::game::player_collision_adapters::shinespark_y(g);
                 expect(
                     g,
-                    w::samus_y_pos,
+                    w::SAMUS_Y_POS,
                     121,
                     "shinespark Y actor block does not commit clearance",
                 );
                 expect(
                     g,
-                    w::samus_collision_flag,
+                    w::SAMUS_COLLISION_FLAG,
                     0xffff,
                     "shinespark Y actor block",
                 );
@@ -588,16 +588,16 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             30 => {
                 put(g, 0x1e71, 9);
                 put(g, 0xdba, 7);
-                put(g, w::samus_collision_flag, 0xffff);
+                put(g, w::SAMUS_COLLISION_FLAG, 0xffff);
                 motion(1, 0, g);
-                expect(g, w::samus_collision_flag, 0, "zero X clears collision");
+                expect(g, w::SAMUS_COLLISION_FLAG, 0, "zero X clears collision");
                 expect(g, 0x1e71, 9, "zero X retains quicksand");
                 expect(g, 0xdba, 7, "zero X retains slope marker");
                 checkpoint(&mut checkpoints, g, 0, None);
                 motion(3, 0, g);
                 expect(
                     g,
-                    w::samus_collision_flag,
+                    w::SAMUS_COLLISION_FLAG,
                     1,
                     "zero Y publishes retained sand",
                 );
@@ -605,17 +605,17 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 expect(g, 0xdba, 7, "zero Y retains slope marker");
             }
             32..=35 => {
-                put(g, w::samus_x_base_speed, 1);
-                put(g, w::samus_x_base_subspeed, 0x1234);
-                put(g, w::extra_samus_x_displacement, 2);
-                put(g, w::samus_y_dir, 2);
+                put(g, w::SAMUS_X_BASE_SPEED, 1);
+                put(g, w::SAMUS_X_BASE_SUBSPEED, 0x1234);
+                put(g, w::EXTRA_SAMUS_X_DISPLACEMENT, 2);
+                put(g, w::SAMUS_Y_DIR, 2);
                 g.ram().write_byte(0xa1f, if id == 33 { 20 } else { 3 });
                 match id {
                     32 | 33 => crate::game::player_movement::speed::jumping(
                         &mut crate::game::session_runtime::Runtime::new(g),
                     ),
                     34 => {
-                        put(g, w::joypad1_lastkeys, 0x200);
+                        put(g, w::JOYPAD1_LASTKEYS, 0x200);
                         crate::game::player_movement::speed::spin_jumping(
                             &mut crate::game::session_runtime::Runtime::new(g),
                         );
@@ -624,7 +624,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 }
                 expect(
                     g,
-                    w::samus_x_pos,
+                    w::SAMUS_X_POS,
                     match id {
                         33 => 139,
                         34 => 138,
@@ -634,13 +634,13 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 );
                 expect(
                     g,
-                    w::samus_x_base_speed,
+                    w::SAMUS_X_BASE_SPEED,
                     if id == 33 { 1 } else { 0 },
                     "controller base speed",
                 );
                 expect(
                     g,
-                    w::samus_x_accel_mode,
+                    w::SAMUS_X_ACCEL_MODE,
                     if id == 33 { 2 } else { 0 },
                     "controller acceleration result",
                 );

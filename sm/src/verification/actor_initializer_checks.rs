@@ -260,7 +260,7 @@ fn game() -> Box<Game> {
     game.register_rom(image.clone());
     game.register_native_rom(image.clone());
     game.ram().copy_in(
-        crate::ram_map::words::cur_enemy_index,
+        crate::ram_map::words::CUR_ENEMY_INDEX,
         &0x140u16.to_le_bytes(),
     );
     {

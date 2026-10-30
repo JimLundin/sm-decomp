@@ -133,7 +133,7 @@ fn set_run<L: Lease>(game: &mut L, me: i32, speed: u16) {
 /// Freezes the etecoon for 128 frames while a quake shakes the room. Was
 /// `Etecoon_Func_1`.
 fn freeze_if_quake<L: Lease>(game: &mut L, k: u16) {
-    if word!(game.earthquake_timer) != 0 {
+    if word!(game.EARTHQUAKE_TIMER) != 0 {
         let me = k as i32;
         session_slot!(
             game,
@@ -163,7 +163,7 @@ fn move_vertically<L: Lease>(game: &mut L, k: u16) -> bool {
         | session_slot!(game, Etecoon[me].y_subspeed) as u32) as i32;
     if below(session_slot!(game, Etecoon[me].y_speed), 5) {
         let gravity =
-            ((word!(game.samus_y_accel) as u32) << 16) | word!(game.samus_y_subaccel) as u32;
+            ((word!(game.SAMUS_Y_ACCEL) as u32) << 16) | word!(game.SAMUS_Y_SUBACCEL) as u32;
         session_slot!(game, Etecoon[me](y_speed, y_subspeed) += gravity);
     }
     game.move_vertical(k, amount)
@@ -171,7 +171,7 @@ fn move_vertically<L: Lease>(game: &mut L, k: u16) -> bool {
 
 /// Initialisation AI. Was `Etecoon_Init`.
 pub fn initialize<L: Lease>(game: &mut L) {
-    let me = word!(game.cur_enemy_index) as i32;
+    let me = word!(game.CUR_ENEMY_INDEX) as i32;
     session_slot!(
         game,
         Etecoon[me].base.properties = (session_slot!(game, Etecoon[me].base.properties))
@@ -191,7 +191,7 @@ pub fn initialize<L: Lease>(game: &mut L) {
 /// Main AI: count down a quake freeze, else run the function. Was
 /// `Etecoon_Main`.
 pub fn main_ai<L: Lease>(game: &mut L) {
-    let me = word!(game.cur_enemy_index) as i32;
+    let me = word!(game.CUR_ENEMY_INDEX) as i32;
     if session_slot!(byte game, Etecoon[me].route[1]) != 0 {
         session_slot!(game, Etecoon[me].route, |old| old.wrapping_sub(256));
     } else {
@@ -203,7 +203,7 @@ pub fn main_ai<L: Lease>(game: &mut L) {
 /// Waits, flexing when Samus comes near, then starts hopping. Was
 /// `Etecoon_Func_4`.
 pub fn initial<L: Lease>(game: &mut L, k: u16) {
-    if word!(game.door_transition_flag_enemies) == 0 {
+    if word!(game.DOOR_TRANSITION_FLAG_ENEMIES) == 0 {
         let me = k as i32;
         if (session_slot!(game, Etecoon[me].timer) & 0x8000) == 0 {
             if timer_expired(game, k) {

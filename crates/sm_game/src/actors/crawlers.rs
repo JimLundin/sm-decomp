@@ -266,7 +266,7 @@ fn slope_x_velocity(runtime: &mut impl ActorLease) -> i32 {
     };
     api::select_block_at(runtime, point);
     let index = usize::from(runtime.session().room.collision_cursor);
-    if runtime.word(word_arrays::level_data + 2 * index) & BLOCK_TYPE == SLOPE_BLOCK
+    if runtime.word(word_arrays::LEVEL_DATA + 2 * index) & BLOCK_TYPE == SLOPE_BLOCK
         && runtime.lease_byte(BTS + usize::from(runtime.session().room.collision_cursor))
             & SLOPE_BTS_BITS
             >= FIRST_STEEP_SLOPE

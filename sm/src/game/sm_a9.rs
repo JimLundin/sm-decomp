@@ -37,7 +37,7 @@ pub(crate) fn move_samus_vertically_towards_ceiling_floor(mut a: u16, game: &mut
             game.ram().write_byte(at, value);
         };
         let v4: u16 =
-            (word!(game.samus_y_pos) as i32 + (a >> 8) as i8 as i32 + (carry >> 8)) as u16;
+            (word!(game.SAMUS_Y_POS) as i32 + (a >> 8) as i8 as i32 + (carry >> 8)) as u16;
         let mut v6: u16 = if v4 as i32 - 48i32 & 0x8000 != 0 {
             48
         } else {
@@ -49,7 +49,7 @@ pub(crate) fn move_samus_vertically_towards_ceiling_floor(mut a: u16, game: &mut
                     game.ram().write_byte(at + 1, bytes[1]);
                 }
                 word!(
-                    game.samus_prev_y_pos = u16::from_le_bytes([
+                    game.SAMUS_PREV_Y_POS = u16::from_le_bytes([
                         game.ram().read_byte(0xafa),
                         game.ram().read_byte(0xafb)
                     ])
@@ -65,10 +65,10 @@ pub(crate) fn move_samus_vertically_towards_ceiling_floor(mut a: u16, game: &mut
             game.ram().write_byte(at + 1, bytes[1]);
         }
         word!(
-            game.samus_prev_y_pos =
+            game.SAMUS_PREV_Y_POS =
                 u16::from_le_bytes([game.ram().read_byte(0xafa), game.ram().read_byte(0xafb)])
         );
-        word! { game, 0; samus_y_subpos, samus_prev_y_subpos }
+        word! { game, 0; SAMUS_Y_SUBPOS, SAMUS_PREV_Y_SUBPOS }
         1
     }
 }
@@ -90,13 +90,13 @@ pub(crate) fn move_samus_horizontally_towards_wall(mut a: u16, game: &mut Game) 
             game.ram().write_byte(at, value);
         };
         let v4: u16 =
-            (word!(game.samus_x_pos) as i32 + (a >> 8) as i8 as i32 + (carry >> 8)) as u16;
+            (word!(game.SAMUS_X_POS) as i32 + (a >> 8) as i8 as i32 + (carry >> 8)) as u16;
         if v4 as i32 - 235i32 & 0x8000 != 0 {
-            word! {game; samus_x_pos = v4; samus_prev_x_pos = v4; }
+            word! {game; SAMUS_X_POS = v4; SAMUS_PREV_X_POS = v4; }
             0
         } else {
-            word! { game, 235; samus_x_pos, samus_prev_x_pos }
-            word! { game, 0; samus_x_subpos, samus_prev_x_subpos }
+            word! { game, 235; SAMUS_X_POS, SAMUS_PREV_X_POS }
+            word! { game, 0; SAMUS_X_SUBPOS, SAMUS_PREV_X_SUBPOS }
             1
         }
     }
@@ -128,38 +128,38 @@ crate::game::callback_dispatch! {
     @external {
         11110023 => mother_brain_fight::initialize_body;
         11110149 => mother_brain_fight::initialize_brain;
-        11110206 => mother_brain_fight::main_ai_body;
+        11110206 => mother_brain_fight::body_main_ai;
         11110279 => mother_brain_fight::power_bomb_reaction;
-        11110283 => mother_brain_fight::main_ai_brain;
+        11110283 => mother_brain_fight::brain_main_ai;
         11111221 => sm_game::actors::mother_brain_tubes::initialize;
-        11121923 => mother_brain_fight::shot_body;
-        11122118 => mother_brain_fight::touch_brain;
+        11121923 => mother_brain_fight::body_shot;
+        11122118 => mother_brain_fight::brain_touch;
         11129608 => corpses::initialize_torizo_corpse;
-        11129704 => corpses::main_ai_torizo_corpse;
-        11129898 => corpses::power_bomb_reaction_torizo_corpse;
-        11129907 => corpses::touch_or_shot_torizo_corpse;
+        11129704 => corpses::torizo_corpse_main_ai;
+        11129898 => corpses::torizo_corpse_power_bomb_reaction;
+        11129907 => corpses::torizo_corpse_touch_or_shot;
         11130806 => corpses::initialize_sidehopper_corpse;
         11130953 => corpses::initialize_geemer_corpse;
         11130998 => corpses::initialize_ripper_corpse;
         11131039 => corpses::initialize_skree_corpse;
-        11131084 => corpses::power_bomb_reaction_sidehopper_corpse;
-        11131099 => corpses::main_ai_dead_monsters;
+        11131084 => corpses::sidehopper_corpse_power_bomb_reaction;
+        11131099 => corpses::corpse_main_ai;
         11132141 => corpses::power_bomb_reaction_geemer_corpse;
         11132152 => corpses::touch_or_shot_geemer_corpse;
-        11132157 => corpses::power_bomb_reaction_ripper_corpse;
-        11132168 => corpses::touch_or_shot_ripper_corpse;
-        11132173 => corpses::power_bomb_reaction_skree_corpse;
-        11132184 => corpses::touch_or_shot_skree_corpse;
-        11132189 => corpses::shot_sidehopper_corpse;
-        11132228 => corpses::touch_sidehopper_corpse;
-        11126544 => baby_metroid_cutscene::initialize_baby_metroid_in_cutscene;
-        11126649 => baby_metroid_cutscene::main_ai_baby_metroid_in_cutscene;
-        11128579 => baby_metroid_cutscene::touch_baby_metroid_in_cutscene;
-        11136823 => baby_metroid_encounter::initialize_baby_metroid;
-        11136954 => baby_metroid_encounter::power_bomb_reaction_baby_metroid;
-        11136965 => baby_metroid_encounter::main_ai_baby_metroid;
-        11138953 => baby_metroid_encounter::touch_baby_metroid;
-        11139138 => baby_metroid_encounter::shot_baby_metroid;
+        11132157 => corpses::ripper_corpse_power_bomb_reaction;
+        11132168 => corpses::ripper_corpse_touch_or_shot;
+        11132173 => corpses::skree_corpse_power_bomb_reaction;
+        11132184 => corpses::skree_corpse_touch_or_shot;
+        11132189 => corpses::sidehopper_corpse_shot;
+        11132228 => corpses::sidehopper_corpse_touch;
+        11126544 => baby_metroid_cutscene::initialize;
+        11126649 => baby_metroid_cutscene::main_ai;
+        11128579 => baby_metroid_cutscene::touch;
+        11136823 => baby_metroid_encounter::initialize;
+        11136954 => baby_metroid_encounter::power_bomb_reaction;
+        11136965 => baby_metroid_encounter::main_ai;
+        11138953 => baby_metroid_encounter::touch;
+        11139138 => baby_metroid_encounter::shot;
     }
 }
 
@@ -167,11 +167,11 @@ crate::game::callback_dispatch! {
     pub(crate) fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { match crate::game::mother_brain_body::dispatch_instruction(ea, j, game) { Some(script) => script, None => { crate::rtl::Unreachable(game); EnemyScript::Stop } } };
     @external {
-        11115208 => mother_brain_fight::instruction_spawn_dust_cloud_at_offset;
-        11115247 => mother_brain_fight::instruction_spawn_hand_beam_projectile;
-        11115269 => mother_brain_fight::instruction_increment_hand_beam_attack_phase;
-        11136208 => corpses::instruction_end_hop;
-        11139476 => baby_metroid_encounter::instruction_go_to_or_queue_remorse_sound;
+        11115208 => mother_brain_fight::spawn_dust_cloud_at_offset;
+        11115247 => mother_brain_fight::spawn_hand_beam_projectile;
+        11115269 => mother_brain_fight::increment_hand_beam_attack_phase;
+        11136208 => corpses::sidehopper_corpse_end_hop;
+        11139476 => baby_metroid_encounter::branch_or_queue_remorse_sound;
     }
 }
 

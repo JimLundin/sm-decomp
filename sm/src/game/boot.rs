@@ -15,11 +15,11 @@ use sm_game::menus::save_slots;
 use sm_game::sprite_drawing::{clear_high_table, finish_frame};
 
 fn clear_work_ram(bytes: usize, game: &mut Game) {
-    let bug_fix_counter = word!(game.bug_fix_counter);
+    let bug_fix_counter = word!(game.BUG_FIX_COUNTER);
     for offset in 0..bytes {
         game.ram().write_byte(offset, 0);
     }
-    word!(game.bug_fix_counter = bug_fix_counter);
+    word!(game.BUG_FIX_COUNTER = bug_fix_counter);
 }
 
 /// Requires live, exclusively accessed display/audio hardware and native boot content.
@@ -61,22 +61,22 @@ pub(crate) unsafe fn resume(game: &mut Game) -> u8 {
             for address in [0x656, 0x666, 0x676] {
                 game.ram().write_byte(address, 0);
             }
-            word! { game, 0; oam_next_ptr, reg_OAMaddr_UNUSED }
+            word! { game, 0; OAM_NEXT_PTR, REG_OA_MADDR_UNUSED }
             clear_high_table(game);
             finish_frame(game);
             word! { game, 0;
-                nmi_copy_samus_halves, nmi_copy_samus_top_half_src, nmi_copy_samus_bottom_half_src,
+                NMI_COPY_SAMUS_HALVES, NMI_COPY_SAMUS_TOP_HALF_SRC, NMI_COPY_SAMUS_BOTTOM_HALF_SRC,
             }
             crate::game::display_refresh::enable(true, game);
             RtlApuWrite(APUI00, 0, game);
             RtlApuWrite(APUI01, 0, game);
             RtlApuWrite(APUI02, 0, game);
             RtlApuWrite(APUI03, 0, game);
-            word!(game.random_number = 97);
+            word!(game.RANDOM_NUMBER = 97);
             crate::game::music::reset_delays(game);
-            word!(game.enable_debug = 0);
+            word!(game.ENABLE_DEBUG = 0);
             save_slots::verify_boot(game);
-            word! { game, 0; debug_disable_sounds, sound_handler_downtime }
+            word! { game, 0; DEBUG_DISABLE_SOUNDS, SOUND_HANDLER_DOWNTIME }
         }
         game.ram().write_byte(0x611, 2);
         0

@@ -20,11 +20,11 @@ fn expected(id: u32) -> [u16; 2] {
     }
 }
 const WRITABLE_WORDS: [usize; 5] = [
-    w::samus_y_speed,
-    w::samus_y_subspeed,
-    w::grapple_walljump_timer,
-    w::reached_ceres_elevator_fade_timer,
-    w::samus_y_dir,
+    w::SAMUS_Y_SPEED,
+    w::SAMUS_Y_SUBSPEED,
+    w::GRAPPLE_WALLJUMP_TIMER,
+    w::REACHED_CERES_ELEVATOR_FADE_TIMER,
+    w::SAMUS_Y_DIR,
 ];
 fn put(g: &mut Game, at: usize, value: u16) {
     g.ram().copy_in(at, &value.to_le_bytes());
@@ -54,20 +54,20 @@ fn seed(g: &mut Game) -> (RomImage, RomImage) {
     g.register_rom(loaded.clone());
     g.register_native_rom(native.clone());
     for (at, v) in [
-        (w::samus_pose, 2),
-        (w::samus_x_pos, 100),
-        (w::samus_y_pos, 100),
-        (w::samus_x_radius, 2),
-        (w::samus_y_radius, 2),
-        (w::samus_anim_frame_timer, 2),
-        (w::fx_y_pos, 0x8000),
-        (w::lava_acid_y_pos, 0x8000),
-        (w::samus_health, 71),
-        (w::speed_echoes_index, 0xffff),
-        (w::room_width_in_blocks, 16),
-        (w::room_height_in_blocks, 16),
-        (w::samus_prev_pose, 0x81),
-        (w::samus_y_speed, 5),
+        (w::SAMUS_POSE, 2),
+        (w::SAMUS_X_POS, 100),
+        (w::SAMUS_Y_POS, 100),
+        (w::SAMUS_X_RADIUS, 2),
+        (w::SAMUS_Y_RADIUS, 2),
+        (w::SAMUS_ANIM_FRAME_TIMER, 2),
+        (w::FX_Y_POS, 0x8000),
+        (w::LAVA_ACID_Y_POS, 0x8000),
+        (w::SAMUS_HEALTH, 71),
+        (w::SPEED_ECHOES_INDEX, 0xffff),
+        (w::ROOM_WIDTH_IN_BLOCKS, 16),
+        (w::ROOM_HEIGHT_IN_BLOCKS, 16),
+        (w::SAMUS_PREV_POSE, 0x81),
+        (w::SAMUS_Y_SPEED, 5),
     ] {
         put(g, at, v);
     }
@@ -77,14 +77,14 @@ fn seed(g: &mut Game) -> (RomImage, RomImage) {
     for slot in 0..4 {
         put(
             g,
-            a::atmospheric_gfx_anim_timer + slot * 2,
+            a::ATMOSPHERIC_GFX_ANIM_TIMER + slot * 2,
             0x1111 + slot as u16,
         );
-        put(g, a::atmospheric_gfx_x_pos + slot * 2, 0x2222 + slot as u16);
-        put(g, a::atmospheric_gfx_y_pos + slot * 2, 0x3333 + slot as u16);
+        put(g, a::ATMOSPHERIC_GFX_X_POS + slot * 2, 0x2222 + slot as u16);
+        put(g, a::ATMOSPHERIC_GFX_Y_POS + slot * 2, 0x3333 + slot as u16);
         put(
             g,
-            a::atmospheric_gfx_frame_and_type + slot * 2,
+            a::ATMOSPHERIC_GFX_FRAME_AND_TYPE + slot * 2,
             0x6600 + slot as u16,
         );
     }
@@ -96,17 +96,17 @@ fn setup_jump(sub: u32, g: &mut Game) {
     let equipment = if bits & 1 != 0 { 0x20 } else { 0 }
         | if bits & 2 != 0 { 0x100 } else { 0 }
         | if bits & 4 != 0 { 0x2000 } else { 0 };
-    put(g, w::equipped_items, equipment);
+    put(g, w::EQUIPPED_ITEMS, equipment);
     if environment == 1 {
-        put(g, w::fx_y_pos, 90);
+        put(g, w::FX_Y_POS, 90);
     } else if environment == 2 {
-        put(g, w::lava_acid_y_pos, 90);
+        put(g, w::LAVA_ACID_Y_POS, 90);
     }
     for (at, v) in [
-        (w::samus_x_extra_run_speed, 5),
-        (w::samus_x_extra_run_subspeed, 0xffff),
-        (w::grapple_walljump_timer, 0xa55a),
-        (w::reached_ceres_elevator_fade_timer, 0x5aa5),
+        (w::SAMUS_X_EXTRA_RUN_SPEED, 5),
+        (w::SAMUS_X_EXTRA_RUN_SUBSPEED, 0xffff),
+        (w::GRAPPLE_WALLJUMP_TIMER, 0xa55a),
+        (w::REACHED_CERES_ELEVATOR_FADE_TIMER, 0x5aa5),
     ] {
         put(g, at, v);
     }
@@ -174,19 +174,19 @@ unsafe fn invoke(id: u32, g: &mut Game) {
 }
 fn check_outcome(id: u32, before: &[u8], g: &Game, loaded: &RomImage, native: &RomImage) {
     let expected = expected(id);
-    assert_eq!(word(g, w::samus_y_speed), expected[0], "PT30 whole speed");
+    assert_eq!(word(g, w::SAMUS_Y_SPEED), expected[0], "PT30 whole speed");
     assert_eq!(
-        word(g, w::samus_y_subspeed),
+        word(g, w::SAMUS_Y_SUBSPEED),
         expected[1],
         "PT30 fractional speed"
     );
-    assert_eq!(word(g, w::grapple_walljump_timer), 0, "PT30 grapple timer");
+    assert_eq!(word(g, w::GRAPPLE_WALLJUMP_TIMER), 0, "PT30 grapple timer");
     assert_eq!(
-        word(g, w::reached_ceres_elevator_fade_timer),
+        word(g, w::REACHED_CERES_ELEVATOR_FADE_TIMER),
         0,
         "PT30 Ceres timer"
     );
-    assert_eq!(word(g, w::samus_y_dir), 1, "PT30 upward direction");
+    assert_eq!(word(g, w::SAMUS_Y_DIR), 1, "PT30 upward direction");
     for (at, &old) in before.iter().take(g.ram().len()).enumerate() {
         let new = g.ram().read_byte(at);
         if !WRITABLE_WORDS

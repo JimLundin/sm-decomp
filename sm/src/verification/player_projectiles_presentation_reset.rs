@@ -42,22 +42,22 @@ pub(crate) fn capture(id: u32) -> Option<Vec<u8>> {
             0 => {}
             1 => put(&mut g, 0xa1e, 0x0104),
             2 | 3 => {
-                put(&mut g, crate::ram_map::words::ceres_status, 0x8000);
-                put(&mut g, crate::ram_map::words::reg_M7X, 80);
-                put(&mut g, crate::ram_map::words::reg_M7Y, 120);
+                put(&mut g, crate::ram_map::words::CERES_STATUS, 0x8000);
+                put(&mut g, crate::ram_map::words::REG_M7X, 80);
+                put(&mut g, crate::ram_map::words::REG_M7Y, 120);
                 put(
                     &mut g,
-                    crate::ram_map::words::reg_M7A,
+                    crate::ram_map::words::REG_M7A,
                     if id == 2 { 0x100 } else { 0xc0 },
                 );
                 put(
                     &mut g,
-                    crate::ram_map::words::reg_M7B,
+                    crate::ram_map::words::REG_M7B,
                     if id == 2 { 0 } else { 0x80 },
                 );
                 put(
                     &mut g,
-                    crate::ram_map::words::reg_M7C,
+                    crate::ram_map::words::REG_M7C,
                     if id == 2 { 0 } else { 0xff80 },
                 );
             }
@@ -85,17 +85,17 @@ pub(crate) fn capture(id: u32) -> Option<Vec<u8>> {
         }
         put(
             &mut g,
-            crate::ram_map::words::samus_special_super_palette_flags,
+            crate::ram_map::words::SAMUS_SPECIAL_SUPER_PALETTE_FLAGS,
             if id == 8 { 0 } else { 1 },
         );
         put(
             &mut g,
-            crate::ram_map::words::hyper_beam_flag,
+            crate::ram_map::words::HYPER_BEAM_FLAG,
             if id >= 10 { 1 } else { 0 },
         );
         put(
             &mut g,
-            crate::ram_map::words::hud_auto_cancel_flag,
+            crate::ram_map::words::HUD_AUTO_CANCEL_FLAG,
             if id == 11 { 1 } else { 0 },
         );
         put(&mut g, 0x9d2, 3);

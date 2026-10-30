@@ -72,8 +72,8 @@ pub(crate) unsafe fn run(local: u32, g: &mut Game) -> Vec<u8> {
     let left = local >= 6;
     let initial_x = if left { 132 } else { 140 };
     for (at, value) in [
-        (w::samus_pose, 2),
-        (w::samus_new_pose, if local == 4 { 0xffff } else { 3 }),
+        (w::SAMUS_POSE, 2),
+        (w::SAMUS_NEW_POSE, if local == 4 { 0xffff } else { 3 }),
         (
             0xa1e,
             if local == 0 {
@@ -85,20 +85,20 @@ pub(crate) unsafe fn run(local: u32, g: &mut Game) -> Vec<u8> {
             },
         ),
         (
-            w::samus_collides_with_solid_enemy,
+            w::SAMUS_COLLIDES_WITH_SOLID_ENEMY,
             if local == 0 { 1 } else { 0x7777 },
         ),
-        (w::samus_x_pos, initial_x),
-        (w::samus_x_subpos, 0),
-        (w::samus_y_pos, 136),
-        (w::samus_y_subpos, 0x2222),
-        (w::samus_x_radius, 4),
-        (w::samus_y_radius, 6),
-        (w::room_width_in_blocks, 32),
-        (w::samus_collision_direction, 0x9999),
-        (w::samus_collision_flag, 0x1234),
-        (w::collision_detection_index, 0x5555),
-        (w::input_to_pose_calc, 0x6666),
+        (w::SAMUS_X_POS, initial_x),
+        (w::SAMUS_X_SUBPOS, 0),
+        (w::SAMUS_Y_POS, 136),
+        (w::SAMUS_Y_SUBPOS, 0x2222),
+        (w::SAMUS_X_RADIUS, 4),
+        (w::SAMUS_Y_RADIUS, 6),
+        (w::ROOM_WIDTH_IN_BLOCKS, 32),
+        (w::SAMUS_COLLISION_DIRECTION, 0x9999),
+        (w::SAMUS_COLLISION_FLAG, 0x1234),
+        (w::COLLISION_DETECTION_INDEX, 0x5555),
+        (w::INPUT_TO_POSE_CALC, 0x6666),
     ] {
         put(g, at, value);
     }
@@ -124,28 +124,28 @@ pub(crate) unsafe fn run(local: u32, g: &mut Game) -> Vec<u8> {
         4 => 0xffff,
         _ => 3,
     };
-    check(g, w::samus_pose, 2, "player.walked.current_unchanged");
+    check(g, w::SAMUS_POSE, 2, "player.walked.current_unchanged");
     check(
         g,
-        w::samus_new_pose,
+        w::SAMUS_NEW_POSE,
         expected_pose,
         "player.walked.current_pending_and_sources",
     );
     check(
         g,
-        w::samus_collides_with_solid_enemy,
+        w::SAMUS_COLLIDES_WITH_SOLID_ENEMY,
         0,
         "player.walked.marker_clear",
     );
     check(
         g,
-        w::samus_collision_direction,
+        w::SAMUS_COLLISION_DIRECTION,
         if early { 0x9999 } else { u16::from(!left) },
         "player.walked.direction",
     );
     check(
         g,
-        w::samus_collision_flag,
+        w::SAMUS_COLLISION_FLAG,
         if early || blocked_actor {
             0x1234
         } else {
@@ -155,13 +155,13 @@ pub(crate) unsafe fn run(local: u32, g: &mut Game) -> Vec<u8> {
     );
     check(
         g,
-        w::collision_detection_index,
+        w::COLLISION_DETECTION_INDEX,
         if blocked_actor { 0 } else { 0x5555 },
         "player.walked.actor_selection",
     );
     check(
         g,
-        w::samus_x_pos,
+        w::SAMUS_X_POS,
         if clear {
             if left { 131 } else { 141 }
         } else {
@@ -171,20 +171,20 @@ pub(crate) unsafe fn run(local: u32, g: &mut Game) -> Vec<u8> {
     );
     check(
         g,
-        w::samus_x_subpos,
+        w::SAMUS_X_SUBPOS,
         if local == 2 { 0xffff } else { 0 },
         "player.walked.fraction",
     );
-    check(g, w::samus_y_pos, 136, "player.walked.y_unchanged");
+    check(g, w::SAMUS_Y_POS, 136, "player.walked.y_unchanged");
     check(
         g,
-        w::samus_y_subpos,
+        w::SAMUS_Y_SUBPOS,
         if blocked_actor { 0 } else { 0x2222 },
         "player.walked.exact_actor_fraction",
     );
     check(
         g,
-        w::input_to_pose_calc,
+        w::INPUT_TO_POSE_CALC,
         0x6666,
         "player.walked.input_unchanged",
     );

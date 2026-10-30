@@ -82,7 +82,7 @@ pub fn unpause_sinking<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
                 {
                     break 'done;
                 }
-                word! {game; my_counter = 0; my_counter2 = word!(game.vram_write_queue_tail); }
+                word! {game; MY_COUNTER = 0; MY_COUNTER2 = word!(game.VRAM_WRITE_QUEUE_TAIL); }
                 true
             }
             1 => false,
@@ -90,7 +90,7 @@ pub fn unpause_sinking<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
         };
         loop {
             if queue_transfer {
-                let row = kraid_sinking::sinking_row(usize::from(word!(game.my_counter)), game);
+                let row = kraid_sinking::sinking_row(usize::from(word!(game.MY_COUNTER)), game);
                 if !(row.word(0) != 0xffff
                     && (slot!(game, KraidLayout[0].base.y_pos) as i16)
                         .wrapping_sub(row.word(0) as i16)
@@ -98,14 +98,14 @@ pub fn unpause_sinking<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
                 {
                     break 'done;
                 }
-                kraid_sinking::queue_row_clear(word!(game.my_counter2), row.word(2), game);
+                kraid_sinking::queue_row_clear(word!(game.MY_COUNTER2), row.word(2), game);
             }
             let yielded = wait(true, game);
             if yielded != 0 {
                 game.ram().write_byte(SINKING_STATE, 1);
                 return yielded;
             }
-            word!(game.my_counter += 1);
+            word!(game.MY_COUNTER += 1);
             queue_transfer = true;
         }
     }

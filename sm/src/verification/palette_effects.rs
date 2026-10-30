@@ -36,18 +36,18 @@ fn seed(g: &mut Game, image: &RomImage) {
     }
     for k in (0..16).step_by(2) {
         for (column, value) in [
-            (a::palettefx_ids, 0),
-            (a::palettefx_pre_instr, 0xc526),
-            (a::palettefx_instr_list_ptrs, 0x9000),
-            (a::palettefx_instr_timers, 1),
+            (a::PALETTEFX_IDS, 0),
+            (a::PALETTEFX_PRE_INSTR, 0xc526),
+            (a::PALETTEFX_INSTR_LIST_PTRS, 0x9000),
+            (a::PALETTEFX_INSTR_TIMERS, 1),
         ] {
             slot(g, k, column, value);
         }
     }
-    put(g, w::flag_for_palette_fx_objects, 0x9234);
-    put(g, w::palettefx_index, 0);
-    put(g, w::samus_in_heat_palfx_index, 0);
-    put(g, w::samus_in_heat_palettefx_prev_index, 0);
+    put(g, w::FLAG_FOR_PALETTE_FX_OBJECTS, 0x9234);
+    put(g, w::PALETTEFX_INDEX, 0);
+    put(g, w::SAMUS_IN_HEAT_PALFX_INDEX, 0);
+    put(g, w::SAMUS_IN_HEAT_PALETTEFX_PREV_INDEX, 0);
     rw(image, 0x8000, SETUPS[0] as u16);
     rw(image, 0x8002, 0x9000);
     rw(image, 0x9000, 0x9234);
@@ -60,14 +60,14 @@ fn seed(g: &mut Game, image: &RomImage) {
 fn branches(g: &mut Game, variant: u32) {
     put(
         g,
-        w::equipped_items,
+        w::EQUIPPED_ITEMS,
         [0, 1, 0x20, 0x21, 0, 0][variant as usize],
     );
-    put(g, w::area_index, 0);
+    put(g, w::AREA_INDEX, 0);
     put(g, 0xd828, if variant & 1 == 0 { 0 } else { 2 });
     put(
         g,
-        w::cinematic_function,
+        w::CINEMATIC_FUNCTION,
         if variant & 1 == 0 { 0 } else { 0xb35f },
     );
     put(
@@ -77,21 +77,21 @@ fn branches(g: &mut Game, variant: u32) {
     );
     put(
         g,
-        w::samus_y_pos,
+        w::SAMUS_Y_POS,
         if variant & 1 == 0 { 0x37f } else { 0x380 },
     );
-    put(g, w::samus_periodic_subdamage, 0xf000);
-    put(g, w::samus_periodic_damage, 0xffff);
-    put(g, w::samus_health, if variant == 4 { 0x46 } else { 0x47 });
+    put(g, w::SAMUS_PERIODIC_SUBDAMAGE, 0xf000);
+    put(g, w::SAMUS_PERIODIC_DAMAGE, 0xffff);
+    put(g, w::SAMUS_HEALTH, if variant == 4 { 0x46 } else { 0x47 });
     put(
         g,
-        w::nmi_frame_counter_word,
+        w::NMI_FRAME_COUNTER_WORD,
         if variant == 5 { 1 } else { 0 },
     );
-    put(g, w::samus_in_heat_palfx_index, (variant % 3 + 1) as u16);
+    put(g, w::SAMUS_IN_HEAT_PALFX_INDEX, (variant % 3 + 1) as u16);
     put(
         g,
-        w::samus_in_heat_palettefx_prev_index,
+        w::SAMUS_IN_HEAT_PALETTEFX_PREV_INDEX,
         if variant == 0 { 1 } else { 0 },
     );
 }
@@ -99,7 +99,7 @@ fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u16, u16) {
     match id {
         0..=7 => {
             for k in (0..16).step_by(2) {
-                slot(g, k, a::palettefx_ids, 0x8000 + k);
+                slot(g, k, a::PALETTEFX_IDS, 0x8000 + k);
             }
             match id {
                 0 => palette::clear(g),
@@ -119,16 +119,16 @@ fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u16, u16) {
                 }
                 3..=6 => {
                     let k = [14, 0, 8, 6][(id - 3) as usize];
-                    slot(g, k, a::palettefx_ids, 0);
+                    slot(g, k, a::PALETTEFX_IDS, 0);
                     if id == 6 {
-                        slot(g, 2, a::palettefx_ids, 0);
+                        slot(g, 2, a::PALETTEFX_IDS, 0);
                     }
                     rw(image, 0x8000, SETUPS[(id - 3) as usize] as u16);
                     branches(g, id - 3);
                     palette::spawn(0x8000, g);
                 }
                 _ => {
-                    slot(g, 14, a::palettefx_ids, 0);
+                    slot(g, 14, a::PALETTEFX_IDS, 0);
                     g.loaded_rom = None;
                     palette::spawn(0x8000, g);
                 }
@@ -138,7 +138,7 @@ fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u16, u16) {
             let n = id - 8;
             let k = [0, 1, 14][(n % 3) as usize];
             branches(g, n / 3 % 6);
-            slot(g, k, a::palettefx_ids, 0x8123);
+            slot(g, k, a::PALETTEFX_IDS, 0x8123);
             palette::checks::setup(SETUPS[(n / 18) as usize], 0xffff, k, g);
         }
         80..=223 => {
@@ -146,11 +146,11 @@ fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u16, u16) {
             let k = [0, 1, 14][(n % 3) as usize];
             let variant = n / 3 % 6;
             branches(g, variant);
-            slot(g, k, a::palettefx_ids, 0x8123);
+            slot(g, k, a::PALETTEFX_IDS, 0x8123);
             if n / 18 == 7 {
                 put(
                     g,
-                    w::flag_for_palette_fx_objects + usize::from(k),
+                    w::FLAG_FOR_PALETTE_FX_OBJECTS + usize::from(k),
                     (variant & 1) as u16,
                 );
             }
@@ -159,10 +159,10 @@ fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u16, u16) {
         224..=451 => {
             let n = id - 224;
             let k = [0, 1, 14, 15, 16, 0x8000][(n / 2 % 6) as usize];
-            slot(g, k, a::palettefx_timers, if n & 1 == 0 { 1 } else { 0 });
-            put(g, w::palettefx_index, 3);
+            slot(g, k, a::PALETTEFX_TIMERS, if n & 1 == 0 { 1 } else { 0 });
+            put(g, w::PALETTEFX_INDEX, 3);
             if n & 1 != 0 {
-                put(g, w::game_state, 40);
+                put(g, w::GAME_STATE, 40);
             }
             let result = palette::checks::command(COMMANDS[(n / 12) as usize], k, 0x9000, g);
             return (result.k, result.j);
@@ -170,10 +170,10 @@ fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u16, u16) {
         452..=471 => {
             let n = id - 452;
             let k = if n & 1 == 0 { 0 } else { 14 };
-            put(g, w::palettefx_index, k);
-            slot(g, k, a::palettefx_ids, 0x8000);
+            put(g, w::PALETTEFX_INDEX, k);
+            slot(g, k, a::PALETTEFX_IDS, 0x8000);
             let color = [0, 1, 0x6c8, 0x1e1c, 0x4002, 0xa402][(n % 6) as usize];
-            slot(g, k, a::palettefx_color_indexes, color);
+            slot(g, k, a::PALETTEFX_COLOR_INDEXES, color);
             // Slot phase sets the color; color phase skips two colors, then
             // saves the continuation for Selected rather than the color index.
             for (at, value) in [
@@ -194,16 +194,16 @@ fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u16, u16) {
                 palette::set_enabled(false, g);
             }
             if n == 13 {
-                slot(g, k, a::palettefx_instr_timers, 0);
+                slot(g, k, a::PALETTEFX_INSTR_TIMERS, 0);
             }
             if n == 14 {
-                slot(g, k, a::palettefx_instr_timers, 2);
+                slot(g, k, a::PALETTEFX_INSTR_TIMERS, 2);
             }
             if n == 15 {
-                slot(g, k, a::palettefx_pre_instr, PRE[2] as u16);
+                slot(g, k, a::PALETTEFX_PRE_INSTR, PRE[2] as u16);
             }
             if n >= 16 {
-                slot(g, k, a::palettefx_pre_instr, PRE[3] as u16);
+                slot(g, k, a::PALETTEFX_PRE_INSTR, PRE[3] as u16);
                 branches(g, n - 16);
                 // Selected heat table entries point to the same finite stream.
                 for table in [0xe3e0u16, 0xe400, 0xe420] {
@@ -219,9 +219,9 @@ fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u16, u16) {
                     rw(&replacement, at, value);
                 }
                 g.loaded_rom = Some(replacement);
-                put(g, w::palettefx_index, k);
-                slot(g, k, a::palettefx_instr_timers, 1);
-                slot(g, k, a::palettefx_instr_list_ptrs, 0x9100);
+                put(g, w::PALETTEFX_INDEX, k);
+                slot(g, k, a::PALETTEFX_INSTR_TIMERS, 1);
+                slot(g, k, a::PALETTEFX_INSTR_LIST_PTRS, 0x9100);
                 palette::checks::process_one(k, g);
             }
         }
@@ -236,7 +236,7 @@ fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u16, u16) {
                 short.write(short.len() - 1, 0x92);
             }
             g.loaded_rom = Some(short);
-            slot(g, 1, a::palettefx_timers, if n / 3 == 0 { 1 } else { 0 });
+            slot(g, 1, a::PALETTEFX_TIMERS, if n / 3 == 0 { 1 } else { 0 });
             let ea = [COMMANDS[11], COMMANDS[11], COMMANDS[12], COMMANDS[15]][(n / 3) as usize];
             let result = palette::checks::command(ea, 1, 0x9000, g);
             return (result.k, result.j);
@@ -244,15 +244,15 @@ fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u16, u16) {
         484..=487 => {
             // Low-window records diagnose but continue; lazy completed countdown
             // must skip even that diagnostic. Returned records mirror the high window.
-            slot(g, 1, a::palettefx_timers, if id == 484 { 1 } else { 0 });
+            slot(g, 1, a::PALETTEFX_TIMERS, if id == 484 { 1 } else { 0 });
             let ea = [COMMANDS[11], COMMANDS[11], COMMANDS[12], COMMANDS[15]][(id - 484) as usize];
             let result = palette::checks::command(ea, 1, 0x1000, g);
             return (result.k, result.j);
         }
         488..=506 => {
-            slot(g, 0xffff, a::palettefx_timers, 2);
+            slot(g, 0xffff, a::PALETTEFX_TIMERS, 2);
             rw(image, 0xfffe, 0x9234);
-            put(g, w::palettefx_index, 0xffff);
+            put(g, w::PALETTEFX_INDEX, 0xffff);
             let result = palette::checks::command(COMMANDS[(id - 488) as usize], 0xffff, 0xfffe, g);
             return (result.k, result.j);
         }
@@ -260,18 +260,18 @@ fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u16, u16) {
             // The real music callback can alias this owner's fields through
             // an oversized queue index. Its paired delay write is also observable.
             let target = [0x1e79, 0x1e7b, 0x1e9d, 0x1eed][(id - 507) as usize];
-            put(g, w::music_queue_write_pos, target - 0x619);
-            put(g, w::music_queue_read_pos, 1);
+            put(g, w::MUSIC_QUEUE_WRITE_POS, target - 0x619);
+            put(g, w::MUSIC_QUEUE_READ_POS, 1);
             let result = palette::checks::command(COMMANDS[14], 1, 0x9000, g);
             return (result.k, result.j);
         }
         511 => {
             // Music changes Selected14 to0, while the current slot stays14.
             // Save-next uses the returned live Selected and the outer scan ends.
-            put(g, w::palettefx_index, 14);
-            put(g, w::music_queue_write_pos, 0x1862);
-            slot(g, 14, a::palettefx_ids, 0x8000);
-            slot(g, 14, a::palettefx_color_indexes, 0);
+            put(g, w::PALETTEFX_INDEX, 14);
+            put(g, w::MUSIC_QUEUE_WRITE_POS, 0x1862);
+            slot(g, 14, a::PALETTEFX_IDS, 0x8000);
+            slot(g, 14, a::PALETTEFX_COLOR_INDEXES, 0);
             for (at, value) in [
                 (0x9000, COMMANDS[14] as u16),
                 (0x9002, 0),

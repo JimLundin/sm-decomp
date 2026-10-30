@@ -86,27 +86,27 @@ fn save(rt: &mut Runtime<'_>) {
     // The legacy unaligned-word helper reads and writes this save flag LE.
     let flags = rt.word(0xd8f8) | 1;
     rt.write_slice_le(0xd8f8, flags);
-    rt.write_slice_le(ram::load_station_index, 0);
-    let slot = rt.word(ram::selected_save_slot);
+    rt.write_slice_le(ram::LOAD_STATION_INDEX, 0);
+    let slot = rt.word(ram::SELECTED_SAVE_SLOT);
     rt.foreign(|game| save_slots::save(slot, game));
 }
 
 fn resume_player(rt: &mut Runtime<'_>) {
-    rt.write_slice_le(ram::frame_handler_alfa, 0xe695);
-    rt.write_slice_le(ram::frame_handler_beta, 0xe725);
+    rt.write_slice_le(ram::FRAME_HANDLER_ALFA, 0xe695);
+    rt.write_slice_le(ram::FRAME_HANDLER_BETA, 0xe725);
 }
 
 pub(crate) fn initialize_top(game: &mut Game) {
     let mut rt = Runtime::new(game);
-    let top = Part::new(rt.word(ram::cur_enemy_index), 0);
+    let top = Part::new(rt.word(ram::CUR_ENEMY_INDEX), 0);
     top.write(PROPERTIES, top.read(&rt, PROPERTIES) | 0x2400, &mut rt);
     top.write(DELAY, 1, &mut rt);
     top.write(TIMER, 0, &mut rt);
     top.write(INSTRUCTION, 0xa616, &mut rt);
     top.write(PALETTE, 3584, &mut rt);
-    if rt.word(ram::game_state) != 40 || rt.word(ram::demo_set) != 0 {
-        if rt.word(ram::loading_game_state) == 34 {
-            top.write(Y, rt.word(ram::samus_y_pos).wrapping_sub(17), &mut rt);
+    if rt.word(ram::GAME_STATE) != 40 || rt.word(ram::DEMO_SET) != 0 {
+        if rt.word(ram::LOADING_GAME_STATE) == 34 {
+            top.write(Y, rt.word(ram::SAMUS_Y_POS).wrapping_sub(17), &mut rt);
             top.write(PHASE, 0xa80c, &mut rt);
         } else {
             let y = top.read(&rt, Y).wrapping_sub(25);
@@ -115,7 +115,7 @@ pub(crate) fn initialize_top(game: &mut Game) {
             top.write(PHASE, 0xa9bd, &mut rt);
         }
     } else {
-        rt.write_slice_le(ram::samus_y_pos, 1138);
+        rt.write_slice_le(ram::SAMUS_Y_POS, 1138);
         let y = top.read(&rt, Y).wrapping_sub(25);
         top.write(Y, y, &mut rt);
         top.write(REST_Y, y, &mut rt);
@@ -123,13 +123,13 @@ pub(crate) fn initialize_top(game: &mut Game) {
         Part::new(0, 0).write(WAIT, 144, &mut rt);
     }
     rt.foreign(|game| palette_effects::spawn(0xe1c0, game));
-    Part::new(rt.word(ram::cur_enemy_index), 0).write(BOB_TIMER, 1, &mut rt);
+    Part::new(rt.word(ram::CUR_ENEMY_INDEX), 0).write(BOB_TIMER, 1, &mut rt);
     Part::new(0, 0).write(BOB_FRAME, 0, &mut rt);
 }
 
 pub(crate) fn initialize_bottom(game: &mut Game) {
     let mut rt = Runtime::new(game);
-    let bottom = Part::new(rt.word(ram::cur_enemy_index), 0);
+    let bottom = Part::new(rt.word(ram::CUR_ENEMY_INDEX), 0);
     bottom.write(PROPERTIES, bottom.read(&rt, PROPERTIES) | 0x2400, &mut rt);
     bottom.write(DELAY, 1, &mut rt);
     bottom.write(TIMER, 0, &mut rt);
@@ -139,17 +139,17 @@ pub(crate) fn initialize_bottom(game: &mut Game) {
         0xa61c
     };
     bottom.write(INSTRUCTION, instruction, &mut rt);
-    let drawing = (usize::from(rt.word(ram::cur_enemy_index)) >> 1) * 2
-        + crate::ram_map::word_arrays::enemy_drawing_queue;
+    let drawing = (usize::from(rt.word(ram::CUR_ENEMY_INDEX)) >> 1) * 2
+        + crate::ram_map::word_arrays::ENEMY_DRAWING_QUEUE;
     bottom.write(TILE, rt.word(drawing + 212), &mut rt);
     bottom.write(PALETTE, 3584, &mut rt);
     if bottom.read(&rt, PARAMETER_2) != 0 {
         bottom.write(Y, rt.word(drawing + 122).wrapping_sub(1), &mut rt);
-        if rt.word(ram::game_state) == 40 && rt.word(ram::demo_set) == 0 {
+        if rt.word(ram::GAME_STATE) == 40 && rt.word(ram::DEMO_SET) == 0 {
             bottom.instruction(&mut rt, 0xa5be);
         }
-    } else if rt.word(ram::loading_game_state) == 34 {
-        bottom.write(Y, rt.word(ram::samus_y_pos).wrapping_add(23), &mut rt);
+    } else if rt.word(ram::LOADING_GAME_STATE) == 34 {
+        bottom.write(Y, rt.word(ram::SAMUS_Y_POS).wrapping_add(23), &mut rt);
     } else {
         bottom.add(&mut rt, Y, 15);
         bottom.write(BOB_TIMER, 71, &mut rt);
@@ -174,16 +174,16 @@ fn bob(rt: &mut Runtime<'_>, index: u16) {
 
 pub(crate) fn advance(game: &mut Game) -> u32 {
     let mut rt = Runtime::new(game);
-    let bottom = Part::new(rt.word(ram::cur_enemy_index), 1);
+    let bottom = Part::new(rt.word(ram::CUR_ENEMY_INDEX), 1);
     if expired(&mut rt, bottom, BOB_TIMER) {
         rt.queue_sound(2, 6, 0x4d);
         bottom.write(BOB_TIMER, 70, &mut rt);
     }
-    let top = Part::new(rt.word(ram::cur_enemy_index), 0);
+    let top = Part::new(rt.word(ram::CUR_ENEMY_INDEX), 0);
     if top.read(&rt, PHASE).wrapping_add(0x56be) & 0x8000 == 0
         && top.read(&rt, PHASE).wrapping_add(0x53e5) & 0x8000 != 0
     {
-        let index = rt.word(ram::cur_enemy_index);
+        let index = rt.word(ram::CUR_ENEMY_INDEX);
         bob(&mut rt, index);
     }
     0xa20000 | u32::from(top.read(&rt, PHASE))
@@ -193,7 +193,7 @@ fn descend(rt: &mut Runtime<'_>, index: u16) {
     let top = Part::new(index, 0);
     let slow = top.read(rt, Y).wrapping_sub(768) & 0x8000 == 0;
     let amount = if slow { 0x28000 } else { 0x48000 };
-    advance_native(rt, ram::samus_y_pos, ram::samus_y_subpos, amount);
+    advance_native(rt, ram::SAMUS_Y_POS, ram::SAMUS_Y_SUBPOS, amount);
     for part in [2, 1, 0] {
         let at = Part::new(index, part).0 + Y;
         advance_native(rt, at, at + 2, amount);
@@ -211,9 +211,9 @@ fn settle(rt: &mut Runtime<'_>, index: u16) {
     let top = Part::new(index, 0);
     let row = usize::from(top.read(rt, REST_Y));
     let y = rt
-        .word(ram::samus_y_pos)
+        .word(ram::SAMUS_Y_POS)
         .wrapping_add(table(rt, 0xa2a622, row));
-    rt.write_slice_le(ram::samus_y_pos, y);
+    rt.write_slice_le(ram::SAMUS_Y_POS, y);
     for part in [2, 1, 0] {
         let part = Part::new(index, part);
         // Read the live position before each separate fallible table lookup.
@@ -225,44 +225,44 @@ fn settle(rt: &mut Runtime<'_>, index: u16) {
         top.write(REST_Y, top.read(rt, Y), rt);
         top.write(BOB_TIMER, 1, rt);
         Part::new(0, 0).write(BOB_FRAME, 0, rt);
-        rt.write_slice_le(ram::samus_x_pos, top.read(rt, X).wrapping_add(1));
-        rt.write_slice_le(ram::samus_prev_x_pos, rt.word(ram::samus_x_pos));
+        rt.write_slice_le(ram::SAMUS_X_POS, top.read(rt, X).wrapping_add(1));
+        rt.write_slice_le(ram::SAMUS_PREV_X_POS, rt.word(ram::SAMUS_X_POS));
         hatch(rt, index, true);
     }
 }
 
 fn await_boarding(rt: &mut Runtime<'_>, index: u16) {
-    if rt.word(ram::game_state) != 8 || rt.word(ram::frame_handler_alfa) != 0xe695 {
+    if rt.word(ram::GAME_STATE) != 8 || rt.word(ram::FRAME_HANDLER_ALFA) != 0xe695 {
         return;
     }
     let top = Part::new(index, 0);
     if (top
         .read(rt, X)
         .wrapping_sub(8)
-        .wrapping_sub(rt.word(ram::samus_x_pos)) as i16)
+        .wrapping_sub(rt.word(ram::SAMUS_X_POS)) as i16)
         < 0
         && (top
             .read(rt, X)
             .wrapping_add(8)
-            .wrapping_sub(rt.word(ram::samus_x_pos)) as i16)
+            .wrapping_sub(rt.word(ram::SAMUS_X_POS)) as i16)
             >= 0
         && (top
             .read(rt, Y)
             .wrapping_sub(64)
-            .wrapping_sub(rt.word(ram::samus_y_pos)) as i16)
+            .wrapping_sub(rt.word(ram::SAMUS_Y_POS)) as i16)
             < 0
-        && (top.read(rt, Y).wrapping_sub(rt.word(ram::samus_y_pos)) as i16) >= 0
+        && (top.read(rt, Y).wrapping_sub(rt.word(ram::SAMUS_Y_POS)) as i16) >= 0
         && rt.byte(0xa1f) == 0
-        && rt.word(ram::joypad1_newkeys) & 0x400 != 0
+        && rt.word(ram::JOYPAD1_NEWKEYS) & 0x400 != 0
     {
         top.write(PHASE, 0xaa4f, rt);
-        if rt.word(ram::samus_x_pos) != 1152 {
-            rt.write_slice_le(ram::samus_x_pos, top.read(rt, X));
-            rt.write_slice_le(ram::samus_prev_x_pos, rt.word(ram::samus_x_pos));
+        if rt.word(ram::SAMUS_X_POS) != 1152 {
+            rt.write_slice_le(ram::SAMUS_X_POS, top.read(rt, X));
+            rt.write_slice_le(ram::SAMUS_PREV_X_POS, rt.word(ram::SAMUS_X_POS));
         }
         rt.foreign(player_face_forward);
         rt.foreign(|game| player_command(0x1a, game));
-        rt.write_slice_le(ram::elevator_status, 0);
+        rt.write_slice_le(ram::ELEVATOR_STATUS, 0);
         Part::new(index, 2).write(Y, top.read(rt, Y).wrapping_sub(1), rt);
         hatch(rt, index, true);
     }
@@ -282,10 +282,10 @@ fn move_player(rt: &mut Runtime<'_>, index: u16, phase: u16) {
         -2i16 as u16
     };
     rt.write_slice_le(
-        ram::samus_y_pos,
-        rt.word(ram::samus_y_pos).wrapping_add(delta),
+        ram::SAMUS_Y_POS,
+        rt.word(ram::SAMUS_Y_POS).wrapping_add(delta),
     );
-    if (rt.word(ram::samus_y_pos).wrapping_sub(target) & 0x8000 == 0) == entering {
+    if (rt.word(ram::SAMUS_Y_POS).wrapping_sub(target) & 0x8000 == 0) == entering {
         top.write(
             PHASE,
             match phase {
@@ -305,8 +305,8 @@ fn replenish(rt: &mut Runtime<'_>, index: u16) {
         top.write(PHASE, 0xabc7, rt);
         Part::new(index, 1).write(PHASE, 0, rt);
         Part::new(index, 1).write(REST_Y, 0, rt);
-        rt.write_slice_le(ram::substate, 0);
-        rt.write_slice_le(ram::suit_pickup_light_beam_pos, 0);
+        rt.write_slice_le(ram::SUBSTATE, 0);
+        rt.write_slice_le(ram::SUIT_PICKUP_LIGHT_BEAM_POS, 0);
         rt.write_slice_native(0xdf0, 0);
         rt.write_slice_native(0xdf2, 0);
         rt.foreign(|game| player_command(0xa, game));
@@ -320,11 +320,11 @@ fn replenish(rt: &mut Runtime<'_>, index: u16) {
             rt.foreign(|game| item_pickups_runtime::restore(resource, 2, game));
         }
         let full = [
-            (ram::samus_reserve_health, ram::samus_max_reserve_health),
-            (ram::samus_health, ram::samus_max_health),
-            (ram::samus_missiles, ram::samus_max_missiles),
-            (ram::samus_super_missiles, ram::samus_max_super_missiles),
-            (ram::samus_power_bombs, ram::samus_max_power_bombs),
+            (ram::SAMUS_RESERVE_HEALTH, ram::SAMUS_MAX_RESERVE_HEALTH),
+            (ram::SAMUS_HEALTH, ram::SAMUS_MAX_HEALTH),
+            (ram::SAMUS_MISSILES, ram::SAMUS_MAX_MISSILES),
+            (ram::SAMUS_SUPER_MISSILES, ram::SAMUS_MAX_SUPER_MISSILES),
+            (ram::SAMUS_POWER_BOMBS, ram::SAMUS_MAX_POWER_BOMBS),
         ]
         .into_iter()
         .all(|(current, maximum)| (rt.word(current).wrapping_sub(rt.word(maximum)) as i16) >= 0);
@@ -335,8 +335,8 @@ fn replenish(rt: &mut Runtime<'_>, index: u16) {
 }
 
 fn upload_escape(rt: &mut Runtime<'_>, index: u16) {
-    let row = usize::from(rt.word(ram::substate)) >> 1;
-    let mut tail = rt.word(ram::vram_write_queue_tail);
+    let row = usize::from(rt.word(ram::SUBSTATE)) >> 1;
+    let mut tail = rt.word(ram::VRAM_WRITE_QUEUE_TAIL);
     rt.write_slice_native(0xd0 + usize::from(tail), 1024);
     tail = tail.wrapping_add(2);
     let source = table(rt, 0xa2ac07, row);
@@ -346,19 +346,19 @@ fn upload_escape(rt: &mut Runtime<'_>, index: u16) {
     tail = tail.wrapping_add(1);
     let destination = table(rt, 0xa2ac11, row);
     rt.write_slice_native(0xd0 + usize::from(tail), destination);
-    rt.write_slice_le(ram::vram_write_queue_tail, tail.wrapping_add(2));
-    rt.write_slice_le(ram::substate, rt.word(ram::substate).wrapping_add(2));
-    if rt.word(ram::substate).wrapping_sub(10) & 0x8000 == 0 {
+    rt.write_slice_le(ram::VRAM_WRITE_QUEUE_TAIL, tail.wrapping_add(2));
+    rt.write_slice_le(ram::SUBSTATE, rt.word(ram::SUBSTATE).wrapping_add(2));
+    if rt.word(ram::SUBSTATE).wrapping_sub(10) & 0x8000 == 0 {
         Part::new(index, 0).write(PHASE, 0xac1b, rt);
-        rt.write_slice_le(ram::substate, 0);
+        rt.write_slice_le(ram::SUBSTATE, 0);
     }
 }
 
 fn follow_player(rt: &mut Runtime<'_>, index: u16) {
-    let y = rt.word(ram::samus_y_pos).wrapping_sub(17);
-    Part::new(index, 0).write(Y, rt.word(ram::samus_y_pos).wrapping_sub(17), rt);
+    let y = rt.word(ram::SAMUS_Y_POS).wrapping_sub(17);
+    Part::new(index, 0).write(Y, rt.word(ram::SAMUS_Y_POS).wrapping_sub(17), rt);
     Part::new(index, 2).write(Y, y.wrapping_sub(1), rt);
-    Part::new(index, 1).write(Y, rt.word(ram::samus_y_pos).wrapping_add(23), rt);
+    Part::new(index, 1).write(Y, rt.word(ram::SAMUS_Y_POS).wrapping_add(23), rt);
 }
 
 fn shake(rt: &mut Runtime<'_>, index: u16) {
@@ -369,13 +369,13 @@ fn shake(rt: &mut Runtime<'_>, index: u16) {
     } else {
         2
     };
-    let y = rt.word(ram::samus_y_pos).wrapping_add(if timer & 1 != 0 {
+    let y = rt.word(ram::SAMUS_Y_POS).wrapping_add(if timer & 1 != 0 {
         amount
     } else {
         amount.wrapping_neg()
     });
-    rt.write_slice_le(ram::samus_y_pos, y);
-    rt.write_slice_le(ram::samus_prev_y_pos, y);
+    rt.write_slice_le(ram::SAMUS_Y_POS, y);
+    rt.write_slice_le(ram::SAMUS_PREV_Y_POS, y);
     follow_player(rt, index);
     let timer = bottom.add(rt, REST_Y, 1);
     if timer.wrapping_sub(128) & 0x8000 != 0 {
@@ -397,12 +397,12 @@ fn accelerate(rt: &mut Runtime<'_>, index: u16) {
         bottom.write(PHASE, 2304, rt);
     }
     let mut position = Position {
-        whole: rt.word(ram::samus_y_pos),
-        fraction: rt.word(ram::samus_y_subpos),
+        whole: rt.word(ram::SAMUS_Y_POS),
+        fraction: rt.word(ram::SAMUS_Y_SUBPOS),
     };
     position.advance(-(i32::from(bottom.read(rt, PHASE)) << 8));
-    rt.write_slice_le(ram::samus_y_subpos, position.fraction);
-    rt.write_slice_le(ram::samus_y_pos, position.whole);
+    rt.write_slice_le(ram::SAMUS_Y_SUBPOS, position.fraction);
+    rt.write_slice_le(ram::SAMUS_Y_POS, position.whole);
     follow_player(rt, index);
 }
 
@@ -424,9 +424,9 @@ pub(crate) fn phase(index: u16, phase: u16, game: &mut Game) {
                 top.write(PHASE, next, &mut rt);
                 if phase == 0xa987 {
                     resume_player(&mut rt);
-                    rt.write_slice_le(ram::loading_game_state, 5);
+                    rt.write_slice_le(ram::LOADING_GAME_STATE, 5);
                     save(&mut rt);
-                } else if phase == 0xaba5 && rt.word(ram::game_state).wrapping_sub(40) & 0x8000 != 0
+                } else if phase == 0xaba5 && rt.word(ram::GAME_STATE).wrapping_sub(40) & 0x8000 != 0
                 {
                     resume_player(&mut rt);
                 }
@@ -449,7 +449,7 @@ pub(crate) fn phase(index: u16, phase: u16, game: &mut Game) {
         0xabc7 => upload_escape(&mut rt, index),
         0xac1b => shake(&mut rt, index),
         0xacd7 => {
-            rt.write_slice_le(ram::samus_y_pos, rt.word(ram::samus_y_pos).wrapping_sub(2));
+            rt.write_slice_le(ram::SAMUS_Y_POS, rt.word(ram::SAMUS_Y_POS).wrapping_sub(2));
             follow_player(&mut rt, index);
             if top.read(&rt, Y).wrapping_sub(896) & 0x8000 != 0 {
                 top.write(PHASE, 0xad0e, &mut rt);
@@ -460,9 +460,9 @@ pub(crate) fn phase(index: u16, phase: u16, game: &mut Game) {
             accelerate(&mut rt, index);
             if phase == 0xad0e && top.read(&rt, Y).wrapping_sub(256) & 0x8000 != 0 {
                 top.write(PHASE, 0xad2d, &mut rt);
-                rt.write_slice_le(ram::game_state, 38);
-                rt.write_slice_le(ram::screen_fade_delay, 0);
-                rt.write_slice_le(ram::screen_fade_counter, 0);
+                rt.write_slice_le(ram::GAME_STATE, 38);
+                rt.write_slice_le(ram::SCREEN_FADE_DELAY, 0);
+                rt.write_slice_le(ram::SCREEN_FADE_COUNTER, 0);
             }
         }
         _ => unreachable!("only registered gunship phases enter this module"),

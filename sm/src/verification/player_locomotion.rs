@@ -95,123 +95,123 @@ fn seed(id: u32, g: &mut Game) -> (RomImage, RomImage, Vec<u8>, Vec<u8>) {
         _ => 1,
     };
     for (at, v) in [
-        (w::room_width_in_blocks, 32),
-        (w::room_height_in_blocks, 32),
-        (w::samus_x_pos, 136),
-        (w::samus_y_pos, 136),
-        (w::samus_x_radius, 3),
-        (w::samus_y_radius, 3),
-        (w::samus_x_subpos, 0x1111),
-        (w::samus_y_subpos, 0x2222),
-        (w::samus_prev_x_pos, 136),
-        (w::samus_prev_y_pos, 136),
-        (w::equipped_items, 0x20),
-        (w::speed_echoes_index, 0xffff),
-        (w::samus_x_speed_table_pointer, 0xe000),
-        (w::button_config_jump_a, 0x80),
-        (w::button_config_run_b, 0x40),
-        (w::joypad1_lastkeys, 0x180),
-        (w::samus_pose, pose),
+        (w::ROOM_WIDTH_IN_BLOCKS, 32),
+        (w::ROOM_HEIGHT_IN_BLOCKS, 32),
+        (w::SAMUS_X_POS, 136),
+        (w::SAMUS_Y_POS, 136),
+        (w::SAMUS_X_RADIUS, 3),
+        (w::SAMUS_Y_RADIUS, 3),
+        (w::SAMUS_X_SUBPOS, 0x1111),
+        (w::SAMUS_Y_SUBPOS, 0x2222),
+        (w::SAMUS_PREV_X_POS, 136),
+        (w::SAMUS_PREV_Y_POS, 136),
+        (w::EQUIPPED_ITEMS, 0x20),
+        (w::SPEED_ECHOES_INDEX, 0xffff),
+        (w::SAMUS_X_SPEED_TABLE_POINTER, 0xe000),
+        (w::BUTTON_CONFIG_JUMP_A, 0x80),
+        (w::BUTTON_CONFIG_RUN_B, 0x40),
+        (w::JOYPAD1_LASTKEYS, 0x180),
+        (w::SAMUS_POSE, pose),
         (0xa1e, (selector << 8) | 8),
-        (w::samus_anim_frame_timer, 2),
-        (w::samus_y_dir, 2),
-        (w::samus_y_speed, 1),
-        (w::samus_y_subspeed, 0x2000),
-        (w::samus_y_subaccel, 0x1c00),
-        (w::samus_x_base_speed, 1),
-        (w::samus_x_base_subspeed, 0x1234),
-        (w::input_to_pose_calc, 0x7777),
-        (w::fx_y_pos, 0xffff),
-        (w::lava_acid_y_pos, 0xffff),
-        (w::samus_suit_palette_index, 4),
+        (w::SAMUS_ANIM_FRAME_TIMER, 2),
+        (w::SAMUS_Y_DIR, 2),
+        (w::SAMUS_Y_SPEED, 1),
+        (w::SAMUS_Y_SUBSPEED, 0x2000),
+        (w::SAMUS_Y_SUBACCEL, 0x1c00),
+        (w::SAMUS_X_BASE_SPEED, 1),
+        (w::SAMUS_X_BASE_SUBSPEED, 0x1234),
+        (w::INPUT_TO_POSE_CALC, 0x7777),
+        (w::FX_Y_POS, 0xffff),
+        (w::LAVA_ACID_Y_POS, 0xffff),
+        (w::SAMUS_SUIT_PALETTE_INDEX, 4),
     ] {
         put(g, at, v);
     }
     match local {
         28 => {
-            put(g, w::time_is_frozen_flag, 1);
-            put(g, w::speed_boost_counter, 0x400);
-            put(g, w::speed_echoes_index, 2);
+            put(g, w::TIME_IS_FROZEN_FLAG, 1);
+            put(g, w::SPEED_BOOST_COUNTER, 0x400);
+            put(g, w::SPEED_ECHOES_INDEX, 2);
         }
         29 => {
-            put(g, w::samus_pose, 0);
-            put(g, w::elevator_status, 1);
+            put(g, w::SAMUS_POSE, 0);
+            put(g, w::ELEVATOR_STATUS, 1);
         }
         30 | 31 => {
-            put(g, w::samus_anim_frame_timer, 1);
-            put(g, w::samus_anim_frame, if local == 30 { 2 } else { 7 });
-            put(g, w::area_index, if local == 30 { 4 } else { 1 });
+            put(g, w::SAMUS_ANIM_FRAME_TIMER, 1);
+            put(g, w::SAMUS_ANIM_FRAME, if local == 30 { 2 } else { 7 });
+            put(g, w::AREA_INDEX, if local == 30 { 4 } else { 1 });
             if local == 31 {
-                put(g, w::speed_boost_counter, 0x400);
-                put(g, w::speed_echoes_index, 2);
-                put(g, w::game_time_frames, 4);
+                put(g, w::SPEED_BOOST_COUNTER, 0x400);
+                put(g, w::SPEED_ECHOES_INDEX, 2);
+                put(g, w::GAME_TIME_FRAMES, 4);
             }
         }
         32..=35 => {
-            put(g, w::equipped_items, if local == 35 { 0x20 } else { 0 });
-            put(g, w::fx_y_pos, if local == 33 { 0xffff } else { 100 });
-            put(g, w::lava_acid_y_pos, 100);
+            put(g, w::EQUIPPED_ITEMS, if local == 35 { 0x20 } else { 0 });
+            put(g, w::FX_Y_POS, if local == 33 { 0xffff } else { 100 });
+            put(g, w::LAVA_ACID_Y_POS, 100);
             if local == 34 {
-                put(g, w::fx_liquid_options, 4);
+                put(g, w::FX_LIQUID_OPTIONS, 4);
             }
         }
         36 | 37 => {
-            put(g, w::samus_x_base_speed, 8);
+            put(g, w::SAMUS_X_BASE_SPEED, 8);
             put(
                 g,
-                w::samus_x_base_subspeed,
+                w::SAMUS_X_BASE_SUBSPEED,
                 if local == 36 { 0x8000 } else { 1 },
             );
         }
         38 => {
-            put(g, w::samus_x_accel_mode, 1);
-            put(g, w::samus_x_base_speed, 1);
-            put(g, w::samus_x_base_subspeed, 0);
+            put(g, w::SAMUS_X_ACCEL_MODE, 1);
+            put(g, w::SAMUS_X_BASE_SPEED, 1);
+            put(g, w::SAMUS_X_BASE_SUBSPEED, 0);
         }
         39 => {
-            put(g, w::equipped_items, 0x220);
-            put(g, w::samus_y_speed, 3);
-            put(g, w::samus_y_subspeed, 0);
-            put(g, w::joypad1_newkeys, 0x80);
+            put(g, w::EQUIPPED_ITEMS, 0x220);
+            put(g, w::SAMUS_Y_SPEED, 3);
+            put(g, w::SAMUS_Y_SUBSPEED, 0);
+            put(g, w::JOYPAD1_NEWKEYS, 0x80);
         }
         40 => {
-            put(g, w::samus_suit_palette_index, 0);
-            put(g, w::equipped_items, 0);
-            put(g, w::fx_y_pos, 100);
-            put(g, w::samus_anim_frame_timer, 1);
+            put(g, w::SAMUS_SUIT_PALETTE_INDEX, 0);
+            put(g, w::EQUIPPED_ITEMS, 0);
+            put(g, w::FX_Y_POS, 100);
+            put(g, w::SAMUS_ANIM_FRAME_TIMER, 1);
         }
         41 => {
-            put(g, w::samus_y_dir, 1);
-            put(g, w::samus_y_speed, 2);
-            put(g, w::joypad1_lastkeys, 0x100);
+            put(g, w::SAMUS_Y_DIR, 1);
+            put(g, w::SAMUS_Y_SPEED, 2);
+            put(g, w::JOYPAD1_LASTKEYS, 0x100);
         }
         42 | 43 => {
-            put(g, w::used_for_ball_bounce_on_landing, 1);
-            put(g, w::extra_samus_y_displacement, 2);
+            put(g, w::USED_FOR_BALL_BOUNCE_ON_LANDING, 1);
+            put(g, w::EXTRA_SAMUS_Y_DISPLACEMENT, 2);
             if local == 43 {
-                put(g, w::knockback_dir, 1);
+                put(g, w::KNOCKBACK_DIR, 1);
             }
         }
         44 => {
-            put(g, w::samus_y_dir, 1);
-            put(g, w::samus_y_speed, 0xffff);
+            put(g, w::SAMUS_Y_DIR, 1);
+            put(g, w::SAMUS_Y_SPEED, 0xffff);
         }
         45 => {
-            put(g, w::samus_pose, 0x39);
-            put(g, w::input_to_pose_calc, 1025);
-            put(g, w::used_for_ball_bounce_on_landing, 2);
-            put(g, w::samus_y_pos, 140);
-            put(g, w::samus_y_speed, 2);
+            put(g, w::SAMUS_POSE, 0x39);
+            put(g, w::INPUT_TO_POSE_CALC, 1025);
+            put(g, w::USED_FOR_BALL_BOUNCE_ON_LANDING, 2);
+            put(g, w::SAMUS_Y_POS, 140);
+            put(g, w::SAMUS_Y_SPEED, 2);
             put(g, 0xaa4, 0x5678);
             put(g, 0x10002 + 2 * 296, 0x8000);
             put(g, 0x10002 + 2 * 297, 0x8000);
         }
-        46 => put(g, w::samus_anim_frame, 23),
-        47 => put(g, w::input_to_pose_calc, 5),
+        46 => put(g, w::SAMUS_ANIM_FRAME, 23),
+        47 => put(g, w::INPUT_TO_POSE_CALC, 5),
         48 => {
-            put(g, w::samus_x_accel_mode, 1);
-            put(g, w::samus_x_base_speed, 3);
-            put(g, w::samus_x_base_subspeed, 0);
+            put(g, w::SAMUS_X_ACCEL_MODE, 1);
+            put(g, w::SAMUS_X_BASE_SPEED, 3);
+            put(g, w::SAMUS_X_BASE_SUBSPEED, 0);
             put(g, 0xb4c, 0x80);
         }
         _ => {}
@@ -235,7 +235,7 @@ fn check(id: u32, g: &Game, before: &[u8]) {
     }
     if matches!(local, 7 | 11 | 12 | 26 | 27) {
         let mut expected = before.to_vec();
-        expected[w::input_to_pose_calc..w::input_to_pose_calc + 2].fill(0);
+        expected[w::INPUT_TO_POSE_CALC..w::INPUT_TO_POSE_CALC + 2].fill(0);
         assert_eq!(
             (0..g.ram().len())
                 .map(|at| g.ram().read_byte(at))
@@ -248,73 +248,73 @@ fn check(id: u32, g: &Game, before: &[u8]) {
     match local {
         22 => expect(
             g,
-            w::input_to_pose_calc,
+            w::INPUT_TO_POSE_CALC,
             0,
             "grapple clears ordinary input result",
         ),
         29 => expect(
             g,
-            w::input_to_pose_calc,
+            w::INPUT_TO_POSE_CALC,
             0,
             "front-facing elevator clears input result",
         ),
         30 => {
             expect(
                 g,
-                a::atmospheric_gfx_frame_and_type,
+                a::ATMOSPHERIC_GFX_FRAME_AND_TYPE,
                 0x100,
                 "Maridia ordinary dust",
             );
-            expect(g, a::atmospheric_gfx_anim_timer, 0x8002, "dust first timer");
+            expect(g, a::ATMOSPHERIC_GFX_ANIM_TIMER, 0x8002, "dust first timer");
         }
         31 => {
             expect(
                 g,
-                a::atmospheric_gfx_frame_and_type,
+                a::ATMOSPHERIC_GFX_FRAME_AND_TYPE,
                 0x700,
                 "default speed dust",
             );
-            expect(g, w::speed_echoes_index, 0, "echo wraps after slot1");
+            expect(g, w::SPEED_ECHOES_INDEX, 0, "echo wraps after slot1");
             expect(
                 g,
-                a::speed_echo_xpos + 2,
-                get(g, w::samus_x_pos),
+                a::SPEED_ECHO_XPOS + 2,
+                get(g, w::SAMUS_X_POS),
                 "echo samples final X",
             );
             expect(
                 g,
-                a::speed_echo_ypos + 2,
-                get(g, w::samus_y_pos),
+                a::SPEED_ECHO_YPOS + 2,
+                get(g, w::SAMUS_Y_POS),
                 "echo samples final Y",
             );
         }
-        32 => expect(g, w::samus_x_speed_table_pointer, 0xa08d, "water table"),
-        33 => expect(g, w::samus_x_speed_table_pointer, 0xa1dd, "lava table"),
+        32 => expect(g, w::SAMUS_X_SPEED_TABLE_POINTER, 0xa08d, "water table"),
+        33 => expect(g, w::SAMUS_X_SPEED_TABLE_POINTER, 0xa1dd, "lava table"),
         34 | 35 => expect(
             g,
-            w::samus_x_speed_table_pointer,
+            w::SAMUS_X_SPEED_TABLE_POINTER,
             0xe000,
             "disabled water/gravity keeps table",
         ),
         36 => {
             expect(
                 g,
-                w::samus_x_base_speed,
+                w::SAMUS_X_BASE_SPEED,
                 8,
                 "quirked signed fraction avoids clamp",
             );
             expect(
                 g,
-                w::samus_x_base_subspeed,
+                w::SAMUS_X_BASE_SUBSPEED,
                 0x8000,
                 "quirked signed fraction retained",
             );
         }
         37 => {
-            expect(g, w::samus_x_base_speed, 8, "Native speed table clamp");
+            expect(g, w::SAMUS_X_BASE_SPEED, 8, "Native speed table clamp");
             expect(
                 g,
-                w::samus_x_base_subspeed,
+                w::SAMUS_X_BASE_SUBSPEED,
                 0,
                 "positive excess fraction clamps",
             );
@@ -322,41 +322,41 @@ fn check(id: u32, g: &Game, before: &[u8]) {
         38 => {
             expect(
                 g,
-                w::samus_x_base_speed,
+                w::SAMUS_X_BASE_SPEED,
                 0,
                 "deceleration underflow clears whole",
             );
             expect(
                 g,
-                w::samus_x_accel_mode,
+                w::SAMUS_X_ACCEL_MODE,
                 0,
                 "deceleration underflow clears mode",
             );
         }
         39 => {
-            expect(g, w::samus_y_dir, 1, "space jump restarts upward");
+            expect(g, w::SAMUS_Y_DIR, 1, "space jump restarts upward");
             expect(g, 0xdfa, 1, "space jump flag low byte");
         }
-        41 | 44 => expect(g, w::samus_y_dir, 2, "release/sign starts falling"),
+        41 | 44 => expect(g, w::SAMUS_Y_DIR, 2, "release/sign starts falling"),
         42 => {
-            expect(g, w::samus_y_pos, 139, "positive bounce extra adds one");
-            expect(g, w::samus_y_speed, 0, "bounce extra clears speed");
+            expect(g, w::SAMUS_Y_POS, 139, "positive bounce extra adds one");
+            expect(g, w::SAMUS_Y_SPEED, 0, "bounce extra clears speed");
         }
         43 => expect(
             g,
-            w::samus_y_pos,
+            w::SAMUS_Y_POS,
             136,
             "knockback skips bounce vertical movement",
         ),
         45 => {
-            expect(g, w::input_to_pose_calc, 0, "crouch input result consumed");
-            expect(g, w::samus_y_dir, 0, "crouch landing clears direction");
-            expect(g, w::samus_y_pos, 141, "crouch lands on authored floor");
-            expect(g, w::samus_y_speed, 0, "crouch landing clears speed");
-            expect(g, w::samus_y_subspeed, 0, "crouch landing clears fraction");
+            expect(g, w::INPUT_TO_POSE_CALC, 0, "crouch input result consumed");
+            expect(g, w::SAMUS_Y_DIR, 0, "crouch landing clears direction");
+            expect(g, w::SAMUS_Y_POS, 141, "crouch lands on authored floor");
+            expect(g, w::SAMUS_Y_SPEED, 0, "crouch landing clears speed");
+            expect(g, w::SAMUS_Y_SUBSPEED, 0, "crouch landing clears fraction");
             expect(
                 g,
-                w::used_for_ball_bounce_on_landing,
+                w::USED_FOR_BALL_BOUNCE_ON_LANDING,
                 0,
                 "crouch landing clears bounce",
             );
@@ -364,19 +364,19 @@ fn check(id: u32, g: &Game, before: &[u8]) {
         }
         46 => expect(
             g,
-            w::samus_contact_damage_index,
+            w::SAMUS_CONTACT_DAMAGE_INDEX,
             3,
             "late wall jump contact damage",
         ),
         47 => expect(
             g,
-            w::input_to_pose_calc,
+            w::INPUT_TO_POSE_CALC,
             5,
             "grapple preserves special input result",
         ),
         48 => expect(
             g,
-            w::samus_x_base_speed,
+            w::SAMUS_X_BASE_SPEED,
             2,
             "scaled deceleration uses high product byte",
         ),
@@ -449,23 +449,23 @@ fn atmosphere_seed(
         return;
     }
     if matches!(id, 4051..=4053) {
-        put(g, w::fx_type, if id == 4053 { 2 } else { 6 });
-        put(g, w::fx_y_pos, 100);
-        put(g, w::lava_acid_y_pos, 135);
-        put(g, w::equipped_items, 0);
-        put(g, w::nmi_frame_counter_word, u16::from(id == 4051));
+        put(g, w::FX_TYPE, if id == 4053 { 2 } else { 6 });
+        put(g, w::FX_Y_POS, 100);
+        put(g, w::LAVA_ACID_Y_POS, 135);
+        put(g, w::EQUIPPED_ITEMS, 0);
+        put(g, w::NMI_FRAME_COUNTER_WORD, u16::from(id == 4051));
         return;
     }
     if id == 4054 {
-        put(g, w::area_index, 2);
-        put(g, w::input_to_pose_calc, 0x401);
+        put(g, w::AREA_INDEX, 2);
+        put(g, w::INPUT_TO_POSE_CALC, 0x401);
         return;
     }
     let kind = if id <= 4061 { (id - 4054) as u16 } else { 1 };
-    put(g, a::atmospheric_gfx_frame_and_type, kind << 8);
+    put(g, a::ATMOSPHERIC_GFX_FRAME_AND_TYPE, kind << 8);
     put(
         g,
-        a::atmospheric_gfx_anim_timer,
+        a::ATMOSPHERIC_GFX_ANIM_TIMER,
         match id {
             4062 => 0,
             4063 | 4067 | 4068 => 1,
@@ -475,43 +475,43 @@ fn atmosphere_seed(
             _ => 2,
         },
     );
-    put(g, a::atmospheric_gfx_x_pos, 136);
-    put(g, a::atmospheric_gfx_y_pos, 100);
+    put(g, a::ATMOSPHERIC_GFX_X_POS, 136);
+    put(g, a::ATMOSPHERIC_GFX_Y_POS, 100);
     match id {
-        4067 => put(g, a::atmospheric_gfx_frame_and_type, 0x102),
-        4068 => put(g, a::atmospheric_gfx_frame_and_type, 0x1ff),
+        4067 => put(g, a::ATMOSPHERIC_GFX_FRAME_AND_TYPE, 0x102),
+        4068 => put(g, a::ATMOSPHERIC_GFX_FRAME_AND_TYPE, 0x1ff),
         4069..=4072 => put(
             g,
-            a::atmospheric_gfx_x_pos,
+            a::ATMOSPHERIC_GFX_X_POS,
             [3, 4, 259, 260][(id - 4069) as usize],
         ),
         4073..=4076 => put(
             g,
-            a::atmospheric_gfx_y_pos,
+            a::ATMOSPHERIC_GFX_Y_POS,
             [3, 4, 259, 260][(id - 4073) as usize],
         ),
-        4077 => put(g, w::oam_next_ptr, 0x220), // Output overwrites its live cursor.
-        4078 => put(g, w::oam_next_ptr, 0x774), // X store changes the following Y read.
-        4079 => put(g, w::oam_next_ptr, 0x786), // Output aliases owned Samus X/fraction.
+        4077 => put(g, w::OAM_NEXT_PTR, 0x220), // Output overwrites its live cursor.
+        4078 => put(g, w::OAM_NEXT_PTR, 0x774), // X store changes the following Y read.
+        4079 => put(g, w::OAM_NEXT_PTR, 0x786), // Output aliases owned Samus X/fraction.
         4080 => {
             for slot in 0..4 {
-                put(g, a::atmospheric_gfx_frame_and_type + slot * 2, 0x100);
-                put(g, a::atmospheric_gfx_anim_timer + slot * 2, 2);
+                put(g, a::ATMOSPHERIC_GFX_FRAME_AND_TYPE + slot * 2, 0x100);
+                put(g, a::ATMOSPHERIC_GFX_ANIM_TIMER + slot * 2, 2);
                 put(
                     g,
-                    a::atmospheric_gfx_x_pos + slot * 2,
+                    a::ATMOSPHERIC_GFX_X_POS + slot * 2,
                     10 + slot as u16 * 10,
                 );
-                put(g, a::atmospheric_gfx_y_pos + slot * 2, 100);
+                put(g, a::ATMOSPHERIC_GFX_Y_POS + slot * 2, 100);
             }
         }
         4081 => {
-            put(g, w::oam_next_ptr, 0x77c);
-            put(g, a::atmospheric_gfx_y_pos, 5);
+            put(g, w::OAM_NEXT_PTR, 0x77c);
+            put(g, a::ATMOSPHERIC_GFX_Y_POS, 5);
         }
         4082 => {
-            put(g, a::atmospheric_gfx_x_pos, 1);
-            put(g, w::layer1_x_pos, 0xfffd);
+            put(g, a::ATMOSPHERIC_GFX_X_POS, 1);
+            put(g, w::LAYER1_X_POS, 0xfffd);
         }
         _ => {}
     }
@@ -523,7 +523,7 @@ unsafe fn atmosphere_invoke(id: u32, g: &mut Game) {
             crate::game::session_runtime::advance_special_movement(0x90a337, g);
         }
         assert_ne!(
-            get(g, a::atmospheric_gfx_frame_and_type),
+            get(g, a::ATMOSPHERIC_GFX_FRAME_AND_TYPE),
             0,
             "atmosphere.lifecycle.footstep_producer"
         );
@@ -533,7 +533,7 @@ unsafe fn atmosphere_invoke(id: u32, g: &mut Game) {
             transitions::state::AnimationStep::Gameplay,
         );
         assert_ne!(
-            get(g, a::atmospheric_gfx_frame_and_type),
+            get(g, a::ATMOSPHERIC_GFX_FRAME_AND_TYPE),
             0,
             "atmosphere.lifecycle.liquid_producer"
         );
@@ -543,7 +543,7 @@ unsafe fn atmosphere_invoke(id: u32, g: &mut Game) {
             transitions::state::MomentumAction::from_raw(5),
         );
         assert_eq!(
-            get(g, a::atmospheric_gfx_frame_and_type + 4),
+            get(g, a::ATMOSPHERIC_GFX_FRAME_AND_TYPE + 4),
             0x600,
             "atmosphere.lifecycle.landing_producer"
         );
@@ -555,58 +555,58 @@ unsafe fn atmosphere_invoke(id: u32, g: &mut Game) {
     match id {
         4062 => expect(
             g,
-            a::atmospheric_gfx_anim_timer,
+            a::ATMOSPHERIC_GFX_ANIM_TIMER,
             0xffff,
             "zero timer wraps and waits",
         ),
         4063 => expect(
             g,
-            a::atmospheric_gfx_frame_and_type,
+            a::ATMOSPHERIC_GFX_FRAME_AND_TYPE,
             0x101,
             "timer expiry advances frame",
         ),
         4064 => expect(
             g,
-            a::atmospheric_gfx_anim_timer,
+            a::ATMOSPHERIC_GFX_ANIM_TIMER,
             0x7fff,
             "signed timer boundary draws",
         ),
         4065 => expect(
             g,
-            a::atmospheric_gfx_frame_and_type,
+            a::ATMOSPHERIC_GFX_FRAME_AND_TYPE,
             0x100,
             "delayed activation retains frame",
         ),
         4067 => expect(
             g,
-            a::atmospheric_gfx_frame_and_type,
+            a::ATMOSPHERIC_GFX_FRAME_AND_TYPE,
             0,
             "terminal frame retires",
         ),
         4068 => expect(
             g,
-            a::atmospheric_gfx_frame_and_type,
+            a::ATMOSPHERIC_GFX_FRAME_AND_TYPE,
             0x200,
             "frame carry retains captured dispatch",
         ),
         4073 | 4076 => {
             assert_eq!(g.ram().read_byte(0x370), 132, "Y clipping retains X write");
             assert_eq!(g.ram().read_byte(0x371), 0xcc);
-            expect(g, w::oam_next_ptr, 0, "Y clipping leaves cursor");
+            expect(g, w::OAM_NEXT_PTR, 0, "Y clipping leaves cursor");
         }
         4077 => expect(
             g,
-            w::oam_next_ptr,
+            w::OAM_NEXT_PTR,
             0x224,
             "captured cursor survives its own alias",
         ),
         4078 => expect(
             g,
-            a::atmospheric_gfx_y_pos,
+            a::ATMOSPHERIC_GFX_Y_POS,
             0x8084,
             "X output precedes live Y reread",
         ),
-        4079 => expect(g, w::samus_x_pos, 0x6084, "OAM writes publish into Session"),
+        4079 => expect(g, w::SAMUS_X_POS, 0x6084, "OAM writes publish into Session"),
         4080 => assert_eq!(
             [
                 g.ram().read_byte(0x370),
@@ -619,7 +619,7 @@ unsafe fn atmosphere_invoke(id: u32, g: &mut Game) {
         ),
         4081 => expect(
             g,
-            a::atmospheric_gfx_frame_and_type,
+            a::ATMOSPHERIC_GFX_FRAME_AND_TYPE,
             0x184,
             "frame sampled before OAM alias",
         ),

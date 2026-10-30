@@ -26,7 +26,7 @@ fn speed_word(runtime: &Runtime<'_>, index: u16) -> u16 {
 
 pub(crate) fn initialize(game: &mut Game) {
     let mut runtime = Runtime::new(game);
-    let index = runtime.word(fields::cur_enemy_index);
+    let index = runtime.word(fields::CUR_ENEMY_INDEX);
     let (key, at) = (Key::from_legacy(index), usize::from(index));
     runtime.edit_actor(key, Native, |actor| {
         actor.instruction = 0x8b29;
@@ -51,7 +51,7 @@ pub(crate) fn initialize(game: &mut Game) {
 
 pub(crate) fn run(game: &mut Game) {
     let mut runtime = Runtime::new(game);
-    let index = runtime.word(fields::cur_enemy_index);
+    let index = runtime.word(fields::CUR_ENEMY_INDEX);
     let (key, at) = (Key::from_legacy(index), usize::from(index));
     let start = runtime.resolve_actor(key, Native).y.whole;
     match runtime.resolve_actor(key, Native).variables[0] {
@@ -116,18 +116,18 @@ pub(crate) fn run(game: &mut Game) {
 fn carry_samus(runtime: &mut Runtime<'_>, key: Key, start: u16) {
     let actor = runtime.resolve_actor(key, Native);
     let (x, y, width, height) = (actor.x.whole, actor.y.whole, actor.radius.x, actor.radius.y);
-    let dx = crate::rtl::abs16(runtime.word(fields::samus_x_pos).wrapping_sub(x));
-    let samus_width = runtime.word(fields::samus_x_radius);
-    let feet = runtime.word(fields::samus_y_pos).wrapping_add(5);
+    let dx = crate::rtl::abs16(runtime.word(fields::SAMUS_X_POS).wrapping_sub(x));
+    let samus_width = runtime.word(fields::SAMUS_X_RADIUS);
+    let feet = runtime.word(fields::SAMUS_Y_POS).wrapping_add(5);
     if dx >= samus_width && dx - samus_width >= width || feet.wrapping_sub(y) as i16 >= 0 {
         return;
     }
-    let (gap, samus_height) = (y.wrapping_sub(feet), runtime.word(fields::samus_y_radius));
+    let (gap, samus_height) = (y.wrapping_sub(feet), runtime.word(fields::SAMUS_Y_RADIUS));
     if gap < samus_height || gap - samus_height <= height {
-        let moved = runtime.word(fields::extra_samus_y_displacement);
+        let moved = runtime.word(fields::EXTRA_SAMUS_Y_DISPLACEMENT);
         runtime.write_word_le(
             moved.wrapping_add(y.wrapping_sub(start)),
-            fields::extra_samus_y_displacement,
+            fields::EXTRA_SAMUS_Y_DISPLACEMENT,
         );
     }
 }

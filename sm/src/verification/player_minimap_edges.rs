@@ -26,13 +26,13 @@ fn seed(g: &mut Game, x: u16, map_x: u16, native_length: usize) -> RomImage {
             .copy_in(0xc608 + 2 * index, &(0x5000 + index as u16).to_le_bytes());
     }
     for (at, value) in [
-        (w::samus_x_pos, x),
-        (w::samus_y_pos, 256),
-        (w::room_width_in_blocks, 64),
-        (w::room_height_in_blocks, 32),
-        (w::room_x_coordinate_on_map, map_x),
-        (w::room_y_coordinate_on_map, 0),
-        (w::has_area_map, 1),
+        (w::SAMUS_X_POS, x),
+        (w::SAMUS_Y_POS, 256),
+        (w::ROOM_WIDTH_IN_BLOCKS, 64),
+        (w::ROOM_HEIGHT_IN_BLOCKS, 32),
+        (w::ROOM_X_COORDINATE_ON_MAP, map_x),
+        (w::ROOM_Y_COORDINATE_ON_MAP, 0),
+        (w::HAS_AREA_MAP, 1),
     ] {
         g.ram().copy_in(at, &(value as u16).to_le_bytes());
     }

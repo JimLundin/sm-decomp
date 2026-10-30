@@ -119,9 +119,9 @@ fn seed(id: u32, g: &mut Game) -> Operation {
             put(
                 g,
                 if id < 14 {
-                    w::time_is_frozen_flag
+                    w::TIME_IS_FROZEN_FLAG
                 } else {
-                    w::debug_time_frozen_for_enemies
+                    w::DEBUG_TIME_FROZEN_FOR_ENEMIES
                 },
                 if id & 1 == 0 { 1 } else { 0x8000 },
             );

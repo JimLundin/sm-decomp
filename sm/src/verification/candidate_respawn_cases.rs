@@ -13,8 +13,8 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
     assert!(id < CASES);
     let marker = [0u16, 1, 0x7fff, 0xffff, 0x8000, 0x8040, 0x8001, 0xfffe][id as usize];
     let projectile = if id & 1 == 0 { 0 } else { 34 };
-    slot(game, a::eproj_killed_enemy_index, projectile, marker);
-    put(game, w::room_enemy_population_ptr, 0x8000);
+    slot(game, a::EPROJ_KILLED_ENEMY_INDEX, projectile, marker);
+    put(game, w::ROOM_ENEMY_POPULATION_PTR, 0x8000);
     let index = marker & 0x7fff;
     let population =
         crate::rtl::lorom_offset(0xa10000 | u32::from(0x8000u16.wrapping_add(index >> 2))) as usize;

@@ -62,27 +62,27 @@ fn copy(palettes: Pair, starts: [usize; 2], base: usize, game: &mut Game) {
 }
 
 pub(crate) fn set_targets(palettes: Pair, game: &mut Game) {
-    copy(palettes, [160, 144], word_arrays::target_palettes, game);
+    copy(palettes, [160, 144], word_arrays::TARGET_PALETTES, game);
 }
 
 pub(crate) fn initialize_targets(game: &mut Game) {
-    copy(COMMON, [240, 176], word_arrays::target_palettes, game);
+    copy(COMMON, [240, 176], word_arrays::TARGET_PALETTES, game);
 }
 
 pub(crate) fn restore_current(game: &mut Game) {
-    copy(BOMB_ACTIVE, [160, 144], word_arrays::palette_buffer, game);
+    copy(BOMB_ACTIVE, [160, 144], word_arrays::PALETTE_BUFFER, game);
 }
 
 pub(crate) fn flash_current(game: &mut Game) {
-    copy([&WHITE; 2], [160, 144], word_arrays::palette_buffer, game);
+    copy([&WHITE; 2], [160, 144], word_arrays::PALETTE_BUFFER, game);
 }
 
 pub(crate) fn health_current(health: u16, game: &mut Game) {
     let band = isize::from((health.to_ne_bytes()[1] & 0x78).min(0x38)) * 2;
     for index in (0isize..16).rev() {
         word! { game;
-            palette_buffer[index + 160] = sm_game::gameplay_tables::torizo_palette_colour(game, true, band + index);
-            palette_buffer[index + 144] = sm_game::gameplay_tables::torizo_palette_colour(game, false, band + index);
+            PALETTE_BUFFER[index + 160] = sm_game::gameplay_tables::torizo_palette_colour(game, true, band + index);
+            PALETTE_BUFFER[index + 144] = sm_game::gameplay_tables::torizo_palette_colour(game, false, band + index);
         }
     }
 }

@@ -34,8 +34,8 @@ const LAST_SCANLINE: u8 = 0xe0;
 
 /// Requires a live, exclusively accessed SNES backend.
 pub fn initialize<H: Host + ?Sized>(game: &mut H) {
-    word!(game.expand_sq_topbottom_margin_right_pos = 0);
-    word!(game.expand_sq_topbottom_margin_left_pos = u16::MAX);
+    word!(game.EXPAND_SQ_TOPBOTTOM_MARGIN_RIGHT_POS = 0);
+    word!(game.EXPAND_SQ_TOPBOTTOM_MARGIN_LEFT_POS = u16::MAX);
     game.ram().write_byte(usize::from(ram::LEFT_EDGE), 127);
     game.ram().write_byte(usize::from(ram::RIGHT_EDGE), 129);
     for (table, margin, middle, channel, window) in [
@@ -79,11 +79,11 @@ pub fn open_from_center<H: Host + ?Sized>(game: &mut H) -> bool {
     }
     game.ram().write_byte(
         usize::from(ram::LEFT_EDGE),
-        (word!(game.expand_sq_left_pos) as u8).wrapping_sub(4),
+        (word!(game.EXPAND_SQ_LEFT_POS) as u8).wrapping_sub(4),
     );
     game.ram().write_byte(
         usize::from(ram::RIGHT_EDGE),
-        (word!(game.expand_sq_right_pos) as u8).wrapping_add(4),
+        (word!(game.EXPAND_SQ_RIGHT_POS) as u8).wrapping_add(4),
     );
     false
 }
@@ -116,19 +116,19 @@ fn append<H: Host + ?Sized>(
 }
 
 pub fn project<H: Host + ?Sized>(game: &mut H) {
-    let top = word!(game.expand_sq_top_pos);
+    let top = word!(game.EXPAND_SQ_TOP_POS);
     let (one, two) = (ram::WINDOW_1_TABLE, ram::WINDOW_2_TABLE);
     append(one, 0, top, ram::CLOSED_1, game);
     let mut cursor = append(two, 0, top, ram::CLOSED_2, game);
-    let mut middle = word!(game.expand_sq_bottom_pos).wrapping_sub(word!(game.expand_sq_top_pos));
-    if word!(game.expand_sq_bottom_pos) as u8 == word!(game.expand_sq_top_pos) as u8 {
+    let mut middle = word!(game.EXPAND_SQ_BOTTOM_POS).wrapping_sub(word!(game.EXPAND_SQ_TOP_POS));
+    if word!(game.EXPAND_SQ_BOTTOM_POS) as u8 == word!(game.EXPAND_SQ_TOP_POS) as u8 {
         middle = 1;
     }
     append(one, cursor, middle, ram::LEFT_EDGE, game);
     cursor = append(two, cursor, middle, ram::RIGHT_EDGE, game);
     let mut bottom =
-        (0xff00 | u16::from(LAST_SCANLINE)).wrapping_sub(word!(game.expand_sq_bottom_pos));
-    if word!(game.expand_sq_bottom_pos) as u8 == LAST_SCANLINE {
+        (0xff00 | u16::from(LAST_SCANLINE)).wrapping_sub(word!(game.EXPAND_SQ_BOTTOM_POS));
+    if word!(game.EXPAND_SQ_BOTTOM_POS) as u8 == LAST_SCANLINE {
         bottom = 1;
     }
     append(one, cursor, bottom, ram::CLOSED_1, game);

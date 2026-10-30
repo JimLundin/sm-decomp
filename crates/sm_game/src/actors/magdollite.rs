@@ -204,26 +204,26 @@ const HEAD_STATE: usize = 87;
 const ARM_Y_POS: usize = 93;
 const ARM_GROWTH_LEVEL: usize = 1;
 const _: () = {
-    use crate::ram::word_arrays::{enemy_drawing_queue, enemy_drawing_queue_sizes};
+    use crate::ram::word_arrays::{ENEMY_DRAWING_QUEUE, ENEMY_DRAWING_QUEUE_SIZES};
     use core::mem::offset_of;
     const fn from_hand(neighbour: i32, field: usize) -> usize {
         (0x0f78 + neighbour * SLOT) as usize + field
     }
-    assert!(enemy_drawing_queue + 2 * HEAD_Y_POS == from_hand(-2, offset_of!(Head, base.y_pos)));
+    assert!(ENEMY_DRAWING_QUEUE + 2 * HEAD_Y_POS == from_hand(-2, offset_of!(Head, base.y_pos)));
     assert!(
-        enemy_drawing_queue + 2 * HEAD_Y_HEIGHT == from_hand(-2, offset_of!(Head, base.y_height))
+        ENEMY_DRAWING_QUEUE + 2 * HEAD_Y_HEIGHT == from_hand(-2, offset_of!(Head, base.y_height))
     );
-    assert!(enemy_drawing_queue + 2 * HEAD_STATE == from_hand(-2, offset_of!(Head, state)));
-    assert!(enemy_drawing_queue + 2 * ARM_Y_POS == from_hand(-1, offset_of!(Arm, base.y_pos)));
+    assert!(ENEMY_DRAWING_QUEUE + 2 * HEAD_STATE == from_hand(-2, offset_of!(Head, state)));
+    assert!(ENEMY_DRAWING_QUEUE + 2 * ARM_Y_POS == from_hand(-1, offset_of!(Arm, base.y_pos)));
     assert!(
-        enemy_drawing_queue_sizes + 2 * ARM_GROWTH_LEVEL
+        ENEMY_DRAWING_QUEUE_SIZES + 2 * ARM_GROWTH_LEVEL
             == from_hand(-1, offset_of!(Arm, growth_level))
     );
 };
 
 /// The current enemy's slot, read afresh at each use as the original did.
 fn current(game: &(impl CompatibilityRam + ?Sized)) -> i32 {
-    word!(game.cur_enemy_index) as i32
+    word!(game.CUR_ENEMY_INDEX) as i32
 }
 fn is_negative(value: u16) -> bool {
     (value as i16) < 0
@@ -233,7 +233,7 @@ fn negative_16(value: i32) -> bool {
     (value as i16) < 0
 }
 fn player_left<L: Lease>(game: &mut L) -> bool {
-    let k = word!(game.cur_enemy_index);
+    let k = word!(game.CUR_ENEMY_INDEX);
     is_negative(game.player_delta(k, Axis::X))
 }
 /// Arm step `index`'s field at `address`, from the game's table.
@@ -311,31 +311,31 @@ pub fn initialize<L: Lease>(game: &mut L) {
     game.set_slot_word(GFX_DRAWN_HOOK, PALETTE_CYCLE_HOOK);
     game.set_slot_word(GFX_DRAWN_HOOK + 2, AI_BANK);
     word!(
-        game.variables_for_enemy_graphics_drawn_hook[HOOK_PALETTE] =
+        game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_PALETTE] =
             ((session_slot!(game, Part[part].base.palette_index) & SPRITE_PALETTE_BITS) >> 4)
                 + SPRITE_PALETTES_BYTE
     );
-    word!(game.variables_for_enemy_graphics_drawn_hook[HOOK_TIMER] = PALETTE_CYCLE_FRAMES);
-    word!(game.variables_for_enemy_graphics_drawn_hook[HOOK_FRAME] = 0);
+    word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_TIMER] = PALETTE_CYCLE_FRAMES);
+    word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_FRAME] = 0);
 }
 /// Graphics drawn hook ($A8:B0B2): every 8 frames, show the next glow palette.
 pub fn cycle_palette<L: Lease>(game: &mut L) {
-    if word!(game.door_transition_flag_enemies) != 0
+    if word!(game.DOOR_TRANSITION_FLAG_ENEMIES) != 0
         || word!(
-            game.variables_for_enemy_graphics_drawn_hook[HOOK_TIMER] -= 1,
+            game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_TIMER] -= 1,
             reread
         ) != 0
     {
         return;
     }
-    word!(game.variables_for_enemy_graphics_drawn_hook[HOOK_TIMER] = PALETTE_CYCLE_FRAMES);
-    word!(game.variables_for_enemy_graphics_drawn_hook[HOOK_FRAME] += 1);
-    let frame = word!(game.variables_for_enemy_graphics_drawn_hook[HOOK_FRAME]);
+    word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_TIMER] = PALETTE_CYCLE_FRAMES);
+    word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_FRAME] += 1);
+    let frame = word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_FRAME]);
     let source = COLORS_PER_PALETTE * (frame & (GLOW_PALETTES - 1)) as isize;
     let colors: [u16; 4] = game.foreign(|game| game.magdollite_glow_colors(source));
-    let target = word!(game.variables_for_enemy_graphics_drawn_hook[HOOK_PALETTE]) as usize >> 1;
+    let target = word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_PALETTE]) as usize >> 1;
     for (i, color) in colors.into_iter().enumerate() {
-        word!(game.palette_buffer[target + FIRST_GLOW_COLOR + i] = color);
+        word!(game.PALETTE_BUFFER[target + FIRST_GLOW_COLOR + i] = color);
     }
 }
 /// Main AI ($A8:B10A): count down the part's cooldown and name its state function.
@@ -380,12 +380,12 @@ fn face_samus<L: Lease>(head: i32, left: u16, right: u16, game: &mut L) {
 /// Stretch the head's hitbox up to the hand, through the original RAM names.
 fn stretch_head_hitbox<L: Lease>(hand: u16, game: &mut L) {
     let index = hand as usize >> 1;
-    let height = word!(game.enemy_drawing_queue[index + HEAD_Y_POS])
+    let height = word!(game.ENEMY_DRAWING_QUEUE[index + HEAD_Y_POS])
         .wrapping_sub(session_slot!(game, Hand[hand as i32].base.y_pos))
         .wrapping_add(HITBOX_MARGIN);
-    word!(game.enemy_drawing_queue[index + HEAD_Y_HEIGHT] = height);
+    word!(game.ENEMY_DRAWING_QUEUE[index + HEAD_Y_HEIGHT] = height);
     if is_negative(height.wrapping_sub(MIN_HITBOX_HEIGHT)) {
-        word!(game.enemy_drawing_queue[index + HEAD_Y_HEIGHT] = MIN_HITBOX_HEIGHT);
+        word!(game.ENEMY_DRAWING_QUEUE[index + HEAD_Y_HEIGHT] = MIN_HITBOX_HEIGHT);
     }
 }
 /// Growing arm ($A8:B204), part one: move up at the head's grow speed. Returns
@@ -404,7 +404,7 @@ pub fn grow_arm<L: Lease>(game: &mut L) -> (u16, Option<i32>) {
         + u32::from(session_slot!(game, Head[head].grow_speed))
         + (value >> 16))
         as u16);
-    let k = word!(game.cur_enemy_index);
+    let k = word!(game.CUR_ENEMY_INDEX);
     let reach = |game: &mut L| -(session_slot!(game, Arm[k as i32].extension) as i32);
     let warning = if !negative_16(reach(game) - ARM_WARNING_EXTENSION) {
         Some(-(session_slot!(game, Arm[k as i32].extension) as i16 as i32))
@@ -470,7 +470,7 @@ pub fn shrink_arm<L: Lease>(game: &mut L) {
         + session_slot!(game, Head[head].shrink_speed) as i32
         + i32::from(carry))
         as u16);
-    let k = word!(game.cur_enemy_index);
+    let k = word!(game.CUR_ENEMY_INDEX);
     let arm = k as i32;
     let extension = session_slot!(game, Arm[arm].extension) as i16;
     if extension >= 0 {
@@ -509,7 +509,7 @@ pub fn run_state<L: Lease>(state: u16, game: &mut L) {
             let hand = current(game) + 2 * SLOT;
             if is_negative(session_slot!(game, Hand[hand].cooldown)) {
                 session_slot!(game, Hand[hand].cooldown = 0);
-                let k = word!(game.cur_enemy_index);
+                let k = word!(game.CUR_ENEMY_INDEX);
                 let range =
                     session_slot!(byte game, Head[head].parameters[THROW_RANGE_LANE]) as u16;
                 if game.player_within(k, Axis::X, range) {
@@ -584,7 +584,7 @@ pub fn run_state<L: Lease>(state: u16, game: &mut L) {
                 let copied = session_slot!(game, Hand[hand].throw_y);
                 session_slot!(game, Hand[hand].base.y_pos = copied);
             }
-            stretch_head_hitbox(word!(game.cur_enemy_index), game);
+            stretch_head_hitbox(word!(game.CUR_ENEMY_INDEX), game);
         }
         state::HAND_GROW_AND_THROW => {
             if session_slot!(game, Arm[current(game) - SLOT].fully_grown) != 0 {
@@ -607,27 +607,27 @@ pub fn run_state<L: Lease>(state: u16, game: &mut L) {
                     Hand[current(game)].base.y_pos = arm_y.wrapping_sub(offset)
                 );
             }
-            stretch_head_hitbox(word!(game.cur_enemy_index), game);
+            stretch_head_hitbox(word!(game.CUR_ENEMY_INDEX), game);
         }
         state::HAND_FOLLOW_SHRINKING_ARM => {
             // The head's state, the arm's y and its growth level, by their
             // original RAM names (see `HEAD_STATE`).
-            let index = word!(game.cur_enemy_index) as usize >> 1;
-            if word!(game.enemy_drawing_queue[index + HEAD_STATE]) == state::HEAD_IDLE {
+            let index = word!(game.CUR_ENEMY_INDEX) as usize >> 1;
+            if word!(game.ENEMY_DRAWING_QUEUE[index + HEAD_STATE]) == state::HEAD_IDLE {
                 session_slot!(game, Hand[current(game)].state = state::HAND_IDLE);
             } else {
-                let arm_y = word!(game.enemy_drawing_queue[index + ARM_Y_POS]);
+                let arm_y = word!(game.ENEMY_DRAWING_QUEUE[index + ARM_Y_POS]);
                 let offset = arm_step(
                     game,
                     ARM_Y_OFFSET_ADDRESS,
-                    (word!(game.enemy_drawing_queue_sizes[index + ARM_GROWTH_LEVEL]) >> 1) as isize,
+                    (word!(game.ENEMY_DRAWING_QUEUE_SIZES[index + ARM_GROWTH_LEVEL]) >> 1) as isize,
                 );
                 session_slot!(
                     game,
                     Hand[current(game)].base.y_pos = arm_y.wrapping_sub(offset)
                 );
             }
-            stretch_head_hitbox(word!(game.cur_enemy_index), game);
+            stretch_head_hitbox(word!(game.CUR_ENEMY_INDEX), game);
         }
         _ => unreachable!("Magdollite state {state:04x}"),
     }
@@ -696,7 +696,7 @@ pub fn instruction<L: Lease>(address: u32, script: EnemyScript, game: &mut L) ->
             let hand = part;
             game.spawn_projectile(
                 session_slot!(game, Hand[hand].throw_right),
-                word!(game.cur_enemy_index),
+                word!(game.CUR_ENEMY_INDEX),
                 crate::constants::bank_86::ADDR_K_EPROJ_LAVA_THROWN_BY_MAGDOLLITE as u16,
             );
         }

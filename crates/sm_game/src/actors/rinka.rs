@@ -45,8 +45,8 @@ fn mother_brains(runtime: &impl ActorLease, key: Key) -> bool {
 /// Check if position is on screen ($A2:B8FF), as the source does: the Y sign twice.
 fn outside_spawn_view(runtime: &impl ActorLease, x: u16, y: u16) -> bool {
     let (left, top) = (
-        runtime.word(words::layer1_x_pos),
-        runtime.word(words::layer1_y_pos),
+        runtime.word(words::LAYER1_X_POS),
+        runtime.word(words::LAYER1_Y_POS),
     );
     y & 0x8000 != 0
         || (y.wrapping_sub(top) as i16) < 0
@@ -163,10 +163,10 @@ fn off_screen(runtime: &impl ActorLease, key: Key) -> bool {
     let (x, y) = (actor.x.whole, actor.y.whole);
     let top = y
         .wrapping_add(16)
-        .wrapping_sub(runtime.word(words::layer1_y_pos));
+        .wrapping_sub(runtime.word(words::LAYER1_Y_POS));
     let left = x
         .wrapping_add(16)
-        .wrapping_sub(runtime.word(words::layer1_x_pos));
+        .wrapping_sub(runtime.word(words::LAYER1_X_POS));
     let on_screen = y & 0x8000 == 0
         && top & 0x8000 == 0
         && top.wrapping_sub(256) & 0x8000 != 0
@@ -292,10 +292,10 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) -> bool {
                     };
                 });
                 let x = runtime
-                    .word(words::samus_x_pos)
+                    .word(words::SAMUS_X_POS)
                     .wrapping_sub(runtime.resolve_actor(key, Native).x.whole);
                 let y = runtime
-                    .word(words::samus_y_pos)
+                    .word(words::SAMUS_Y_POS)
                     .wrapping_sub(runtime.resolve_actor(key, Native).y.whole);
                 let angle = (-(i32::from(angle_from_delta(x, y)) + 0x80)) as u8 as u16;
                 runtime.edit_actor(key, Native, |actor| {

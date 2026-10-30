@@ -8,56 +8,56 @@ use crate::ram_map::checked_word as word;
 use sm_game::contact_rules::axis;
 
 fn mark(index: u16, game: &mut Game) {
-    word!(game.projectile_dir[index] = word!(game.projectile_dir[index]) | 0x10);
+    word!(game.PROJECTILE_DIR[index] = word!(game.PROJECTILE_DIR[index]) | 0x10);
 }
 pub unsafe fn player_projectiles_hit_samus(game: &mut Game) {
-    word!(game.enemy_processing_stage = 10);
-    if word!(game.flag_disable_projectile_interaction) != 0 {
+    word!(game.ENEMY_PROCESSING_STAGE = 10);
+    if word!(game.FLAG_DISABLE_PROJECTILE_INTERACTION) != 0 {
         return;
     }
-    let count = if word!(game.bomb_counter) != 0 {
+    let count = if word!(game.BOMB_COUNTER) != 0 {
         10
     } else {
-        if word!(game.projectile_counter) == 0 {
+        if word!(game.PROJECTILE_COUNTER) == 0 {
             return;
         }
         5
     };
-    if word!(game.projectile_invincibility_timer) != 0
-        || word!(game.samus_contact_damage_index) != 0
+    if word!(game.PROJECTILE_INVINCIBILITY_TIMER) != 0
+        || word!(game.SAMUS_CONTACT_DAMAGE_INDEX) != 0
     {
         return;
     }
     for index in 0..count {
-        word!(game.collision_detection_index = index);
-        let kind = word!(game.projectile_type[index]);
-        if word!(game.projectile_damage[index]) == 0
+        word!(game.COLLISION_DETECTION_INDEX = index);
+        let kind = word!(game.PROJECTILE_TYPE[index]);
+        if word!(game.PROJECTILE_DAMAGE[index]) == 0
             || kind & 0x8000 != 0
             || kind & 0xf00 >= 0x700
-            || word!(game.projectile_dir[index]) & 0x10 != 0
+            || word!(game.PROJECTILE_DIR[index]) & 0x10 != 0
         {
             continue;
         }
         if !axis(
-            word!(game.projectile_x_pos[index]),
-            word!(game.samus_x_pos),
-            word!(game.projectile_x_radius[index]),
-            word!(game.samus_x_radius),
+            word!(game.PROJECTILE_X_POS[index]),
+            word!(game.SAMUS_X_POS),
+            word!(game.PROJECTILE_X_RADIUS[index]),
+            word!(game.SAMUS_X_RADIUS),
         ) || !axis(
-            word!(game.projectile_y_pos[index]),
-            word!(game.samus_y_pos),
-            word!(game.projectile_y_radius[index]),
-            word!(game.samus_y_radius),
+            word!(game.PROJECTILE_Y_POS[index]),
+            word!(game.SAMUS_Y_POS),
+            word!(game.PROJECTILE_Y_RADIUS[index]),
+            word!(game.SAMUS_Y_RADIUS),
         ) {
             continue;
         }
         if kind & 0xff00 != 0x300 && kind & 0xff00 != 0x500 {
             mark(index, game);
-            let amount = word!(game.projectile_damage[index]);
+            let amount = word!(game.PROJECTILE_DAMAGE[index]);
             let damage = actors::combat::suit_damage(&mut Runtime::new(game), amount);
             damage_player(damage, game);
-            word!(game.samus_invincibility_timer = 96);
-            word!(game.samus_knockback_timer = 5);
+            word!(game.SAMUS_INVINCIBILITY_TIMER = 96);
+            word!(game.SAMUS_KNOCKBACK_TIMER = 5);
             unsafe {
                 crate::c_library::__assert_fail(
                     c"0".as_ptr(),
@@ -67,11 +67,11 @@ pub unsafe fn player_projectiles_hit_samus(game: &mut Game) {
                 );
             }
         }
-        if word!(game.projectile_variables[index]) == 8 {
-            let x = word!(game.samus_x_pos);
-            let bomb_x = word!(game.projectile_x_pos[index]);
+        if word!(game.PROJECTILE_VARIABLES[index]) == 8 {
+            let x = word!(game.SAMUS_X_POS);
+            let bomb_x = word!(game.PROJECTILE_X_POS[index]);
             word!(
-                game.bomb_jump_dir = if x == bomb_x {
+                game.BOMB_JUMP_DIR = if x == bomb_x {
                     2
                 } else if (x.wrapping_sub(bomb_x) as i16) < 0 {
                     1

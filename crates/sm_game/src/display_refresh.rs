@@ -129,7 +129,7 @@ pub fn initialize_gameplay<H: Host + ?Sized>(game: &mut H) {
         mirror(CGADSUB as u16, 0, 0x71, false); show(FixedColor::all(0));
         show_mirror(ScreenSettings::STANDARD, 0x77, false);
     }
-    word!(game.oam_next_ptr = 0);
+    word!(game.OAM_NEXT_PTR = 0);
     word_transfers!(game, ascending, 1023; native(0x3000) <- value(0));
     word_transfers!(game, ascending, 1023; native(0x4000) <- value(0x6f));
     word_transfers!(game, ascending, 127; native(0x4000) <- value(0x2c0f));
@@ -137,7 +137,7 @@ pub fn initialize_gameplay<H: Host + ?Sized>(game: &mut H) {
     GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x2e00).load(game);
     GraphicsAsset::VramWords(0x7e4000, 0x5000, 0x1000).load(game);
     GraphicsAsset::VramWords(0x7e4000, 0x5800, 0x800).load(game);
-    word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x9a8000, 0));
+    word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- rom(0x9a8000, 0));
 }
 
 /// Read the room's BG2 tilemap back into RAM for the pause screen.
@@ -169,7 +169,7 @@ pub fn upload_pause_map<
 >(
     game: &mut H,
 ) {
-    word! {game; reg_BG1HOFS = word!(game.reg_BG4HOFS); reg_BG1VOFS = word!(game.reg_BG4VOFS); }
+    word! {game; REG_BG1HOFS = word!(game.REG_BG4HOFS); REG_BG1VOFS = word!(game.REG_BG4VOFS); }
     register_writes! { game;
         byte(VMADDL as u16, 0); byte(VMADDH as u16, 0x30);
         byte(VMAIN as u16, 0x80);
@@ -199,9 +199,9 @@ fn room_area<H: crate::runtime_access::RuntimeAccess + ?Sized>(game: &mut H) -> 
 }
 
 pub fn reset_gameplay_layers<H: Host + ?Sized>(clear_current_irq: bool, game: &mut H) {
-    word!(game.fx_layer_blending_config_a = 0);
+    word!(game.FX_LAYER_BLENDING_CONFIG_A = 0);
     if clear_current_irq {
-        word!(game.cur_irq_handler = 0);
+        word!(game.CUR_IRQ_HANDLER = 0);
     }
     reset_layer_mirrors(game);
     game.write_owned_byte(0x55, 9);
@@ -215,11 +215,11 @@ pub fn reset_layer_mirrors<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn fade<H: Host + ?Sized>(fade_in: bool, game: &mut H) {
-    let remaining = word!(game.screen_fade_counter).wrapping_sub(1);
+    let remaining = word!(game.SCREEN_FADE_COUNTER).wrapping_sub(1);
     let due = (remaining as i16) < 0;
     word!(
-        game.screen_fade_counter = if due {
-            word!(game.screen_fade_delay)
+        game.SCREEN_FADE_COUNTER = if due {
+            word!(game.SCREEN_FADE_DELAY)
         } else {
             remaining
         }
@@ -408,19 +408,19 @@ impl<H: Host + ?Sized> crate::scene::commit::RefreshHost for Refresh<'_, H> {
     }
     fn frame_word(&self) -> u16 {
         let game = &*self.0;
-        word!(game.nmi_frame_counter_word)
+        word!(game.NMI_FRAME_COUNTER_WORD)
     }
     fn set_frame_word(&mut self, value: u16) {
         let game = &mut *self.0;
-        word!(game.nmi_frame_counter_word = value);
+        word!(game.NMI_FRAME_COUNTER_WORD = value);
     }
     fn including_lag(&self) -> u16 {
         let game = &*self.0;
-        word!(game.nmi_frame_counter_including_lag)
+        word!(game.NMI_FRAME_COUNTER_INCLUDING_LAG)
     }
     fn set_including_lag(&mut self, value: u16) {
         let game = &mut *self.0;
-        word!(game.nmi_frame_counter_including_lag = value);
+        word!(game.NMI_FRAME_COUNTER_INCLUDING_LAG = value);
     }
 }
 
@@ -552,7 +552,7 @@ fn mult8x8(a: u8, b: u8) -> u16 {
 }
 
 pub fn queue_scrolling_tiles<H: Host + ?Sized>(k: u16, layout: ScrollingLayout, game: &mut H) {
-    if word!(game.irq_enable_mode7) != 0 {
+    if word!(game.IRQ_ENABLE_MODE7) != 0 {
         return;
     }
     let row = matches!(layout, ScrollingLayout::Row);
@@ -563,11 +563,11 @@ pub fn queue_scrolling_tiles<H: Host + ?Sized>(k: u16, layout: ScrollingLayout, 
         (true, true) => "scroll_tiles.row.bg2",
     });
     let product = mult8x8(
-        word!(game.blocks_to_update_y_block) as u8,
+        word!(game.BLOCKS_TO_UPDATE_Y_BLOCK) as u8,
         crate::room_view::current(game).width as u8,
     );
     let mut source_offset = product
-        .wrapping_add(word!(game.blocks_to_update_x_block))
+        .wrapping_add(word!(game.BLOCKS_TO_UPDATE_X_BLOCK))
         .wrapping_mul(2)
         .wrapping_add(2);
     if k != 0 {
@@ -577,16 +577,16 @@ pub fn queue_scrolling_tiles<H: Host + ?Sized>(k: u16, layout: ScrollingLayout, 
     let parameters = (if row { 0x964 } else { 0x956 }) + usize::from(k);
     // Columns store the wrapped size first; rows store the unwrapped size first.
     if row {
-        let within_screen = word!(game.vram_blocks_to_update_x_block) & 15;
+        let within_screen = word!(game.VRAM_BLOCKS_TO_UPDATE_X_BLOCK) & 15;
         set_native_word(parameters, 4 * (16 - within_screen), game);
         set_native_word(parameters + 2, 4 * (within_screen + 1), game);
     } else {
-        let wrapped = 4 * (word!(game.vram_blocks_to_update_y_block) & 15);
+        let wrapped = 4 * (word!(game.VRAM_BLOCKS_TO_UPDATE_Y_BLOCK) & 15);
         set_native_word(parameters + 2, wrapped, game);
         set_native_word(parameters, (wrapped ^ 0x3f) + 1, game);
     }
-    let tile_row = mult8x8(word!(game.vram_blocks_to_update_y_block) as u8 & 15, 0x40);
-    let tile_column = word!(game.vram_blocks_to_update_x_block) & 31;
+    let tile_row = mult8x8(word!(game.VRAM_BLOCKS_TO_UPDATE_Y_BLOCK) as u8 & 15, 0x40);
+    let tile_column = word!(game.VRAM_BLOCKS_TO_UPDATE_X_BLOCK) & 31;
     let origin = tile_row.wrapping_add(2 * tile_column);
     let mut screen = if tile_column >= 16 {
         ADDR_UNK_6053E0 as u16
@@ -594,7 +594,7 @@ pub fn queue_scrolling_tiles<H: Host + ?Sized>(k: u16, layout: ScrollingLayout, 
         ADDR_UNK_605000 as u16
     };
     if k != 0 {
-        screen = screen.wrapping_sub(word!(game.size_of_bg2));
+        screen = screen.wrapping_sub(word!(game.SIZE_OF_BG2));
     }
     set_native_word(parameters + 4, origin.wrapping_add(screen), game);
     let wrapped_destination = if row {
@@ -604,7 +604,7 @@ pub fn queue_scrolling_tiles<H: Host + ?Sized>(k: u16, layout: ScrollingLayout, 
             ADDR_UNK_605400 as u16
         };
         if k != 0 {
-            wrapped_screen = wrapped_screen.wrapping_sub(word!(game.size_of_bg2));
+            wrapped_screen = wrapped_screen.wrapping_sub(word!(game.SIZE_OF_BG2));
         }
         tile_row.wrapping_add(wrapped_screen)
     } else {
@@ -612,9 +612,9 @@ pub fn queue_scrolling_tiles<H: Host + ?Sized>(k: u16, layout: ScrollingLayout, 
     };
     set_native_word(parameters + 6, wrapped_destination, game);
     let buffer_base = if row {
-        word_arrays::bg1_column_update_tilemap_top_halves
+        word_arrays::BG1_COLUMN_UPDATE_TILEMAP_TOP_HALVES
     } else {
-        word_arrays::bg1_column_update_tilemap_left_halves
+        word_arrays::BG1_COLUMN_UPDATE_TILEMAP_LEFT_HALVES
     };
     let buffer = buffer_base + if k != 0 { 264 } else { 0 };
     let half_bytes = if row { 68 } else { 64 };
@@ -690,20 +690,20 @@ pub fn queue_native_transfer<H: Host + ?Sized>(
     let destination = destination(game);
     set_native_word(0xd0 + usize::from(cursor), destination, game);
     cursor = cursor.wrapping_add(2);
-    word!(game.vram_write_queue_tail = cursor);
+    word!(game.VRAM_WRITE_QUEUE_TAIL = cursor);
     cursor
 }
 
 pub fn queue_fx_clear<H: Host + ?Sized>(game: &mut H) {
     word_transfers!(game, descending, 1920; native(0x4efe) <- value(6222));
-    let tail = word!(game.vram_write_queue_tail);
-    let entry = 0xd0 + usize::from(word!(game.vram_write_queue_tail));
+    let tail = word!(game.VRAM_WRITE_QUEUE_TAIL);
+    let entry = 0xd0 + usize::from(word!(game.VRAM_WRITE_QUEUE_TAIL));
     set_native_word(entry, 3840, game);
     set_native_word(entry + 2, 0x4000, game);
     // The bank store is deliberately a native word, overlapping the destination low byte.
     set_native_word(entry + 4, 126, game);
     set_native_word(entry + 5, ADDR_UNK_605880 as u16, game);
-    word!(game.vram_write_queue_tail = tail.wrapping_add(7));
+    word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(7));
 }
 
 fn write_readback_word<H: Host + ?Sized>(game: &mut H, offset: usize, value: u16) {
@@ -722,7 +722,7 @@ pub fn enqueue_readback<H: Host + ?Sized>(
     retain_mode: bool,
     game: &mut H,
 ) {
-    let tail = checked_word!(game.vram_read_queue_tail);
+    let tail = checked_word!(game.VRAM_READ_QUEUE_TAIL);
     let entry = 0x340 + usize::from(tail);
     let target =
         ((u16::from(game.ram().read_byte(register)) & 0xfc) << 8).wrapping_add(vram_offset);
@@ -735,5 +735,5 @@ pub fn enqueue_readback<H: Host + ?Sized>(
     write_readback_word(game, entry + 4, destination);
     write_readback_word(game, entry + 6, 126);
     write_readback_word(game, entry + 7, size);
-    checked_word!(game.vram_read_queue_tail = tail.wrapping_add(9));
+    checked_word!(game.VRAM_READ_QUEUE_TAIL = tail.wrapping_add(9));
 }

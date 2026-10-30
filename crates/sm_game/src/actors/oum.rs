@@ -173,7 +173,7 @@ fn finish(runtime: &mut impl ActorLease, oum: i32) {
     if api::touches_player_from_above(runtime, combat::current(runtime)) {
         let y = session_slot!(runtime, Oum[oum].base.y_pos);
         let moved = y.wrapping_sub(session_slot!(runtime, Oum[oum].previous_y));
-        runtime.write_slice_le(words::extra_samus_y_displacement, moved);
+        runtime.write_slice_le(words::EXTRA_SAMUS_Y_DISPLACEMENT, moved);
     }
     if session_slot!(runtime, Oum[oum].touching) == 0 {
         return;
@@ -183,9 +183,9 @@ fn finish(runtime: &mut impl ActorLease, oum: i32) {
     let side = session_slot!(runtime, Oum[oum].samus_left) != 0;
     if (moved < 0) == side {
         let carried = runtime
-            .word(words::extra_samus_x_displacement)
+            .word(words::EXTRA_SAMUS_X_DISPLACEMENT)
             .wrapping_add(moved as u16);
-        runtime.write_slice_le(words::extra_samus_x_displacement, carried);
+        runtime.write_slice_le(words::EXTRA_SAMUS_X_DISPLACEMENT, carried);
     }
     if moved == 0 && (session_slot!(runtime, Oum[oum].direction) != 0) != side {
         return;
@@ -195,7 +195,7 @@ fn finish(runtime: &mut impl ActorLease, oum: i32) {
     } else {
         0x200
     }; // Right, left.
-    if runtime.word(words::joypad1_lastkeys) & towards != 0 {
+    if runtime.word(words::JOYPAD1_LASTKEYS) & towards != 0 {
         let x = session_slot!(runtime, Oum[oum].previous_x);
         session_slot!(runtime, Oum[oum]; stop = 1);
         session_slot!(runtime, Oum[oum].base.x_pos = x);
@@ -264,12 +264,12 @@ pub fn touch<H: LeaseActors + ?Sized>(hurts: bool, game: &mut H) {
     }
     if !api::touches_player_from_above(runtime, combat::current(runtime)) {
         let x = session_slot!(runtime, Oum[current_slot(runtime)].base.x_pos);
-        let left = (runtime.word(words::samus_x_pos).wrapping_sub(x) as i16) < 0;
+        let left = (runtime.word(words::SAMUS_X_POS).wrapping_sub(x) as i16) < 0;
         let push = if left { 0xfffc } else { 4 };
         let displacement = runtime
-            .word(words::extra_samus_x_displacement)
+            .word(words::EXTRA_SAMUS_X_DISPLACEMENT)
             .wrapping_add(push);
-        runtime.write_slice_le(words::extra_samus_x_displacement, displacement);
+        runtime.write_slice_le(words::EXTRA_SAMUS_X_DISPLACEMENT, displacement);
     }
 }
 /// Enemy shot - oum ($A2:D3B4).

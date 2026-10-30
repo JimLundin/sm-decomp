@@ -54,18 +54,18 @@ const PREVIOUS_X_SUBPOS: usize = 92;
 const PREVIOUS_Y_POS: usize = 93;
 const PREVIOUS_Y_SUBPOS: usize = 94;
 const _: () = {
-    use crate::ram::word_arrays::enemy_drawing_queue;
+    use crate::ram::word_arrays::ENEMY_DRAWING_QUEUE;
     use core::mem::offset_of;
     const fn previous(field: usize) -> usize {
         (0x0f78 - PIECE) as usize + field
     }
-    assert!(enemy_drawing_queue + 2 * PREVIOUS_X_POS == previous(offset_of!(Piece, base.x_pos)));
+    assert!(ENEMY_DRAWING_QUEUE + 2 * PREVIOUS_X_POS == previous(offset_of!(Piece, base.x_pos)));
     assert!(
-        enemy_drawing_queue + 2 * PREVIOUS_X_SUBPOS == previous(offset_of!(Piece, base.x_subpos))
+        ENEMY_DRAWING_QUEUE + 2 * PREVIOUS_X_SUBPOS == previous(offset_of!(Piece, base.x_subpos))
     );
-    assert!(enemy_drawing_queue + 2 * PREVIOUS_Y_POS == previous(offset_of!(Piece, base.y_pos)));
+    assert!(ENEMY_DRAWING_QUEUE + 2 * PREVIOUS_Y_POS == previous(offset_of!(Piece, base.y_pos)));
     assert!(
-        enemy_drawing_queue + 2 * PREVIOUS_Y_SUBPOS == previous(offset_of!(Piece, base.y_subpos))
+        ENEMY_DRAWING_QUEUE + 2 * PREVIOUS_Y_SUBPOS == previous(offset_of!(Piece, base.y_subpos))
     );
 };
 
@@ -183,8 +183,8 @@ pub fn set_collision_angle_delta<L: Lease>(k: u16, game: &mut L) {
 
 /// The previous piece's whole and subpixel position words, high word first.
 fn previous_position<L: Lease>(queue: usize, high: usize, low: usize, game: &mut L) -> u32 {
-    let high = word!(game.enemy_drawing_queue[queue + high]);
-    let low = word!(game.enemy_drawing_queue[queue + low]);
+    let high = word!(game.ENEMY_DRAWING_QUEUE[queue + high]);
+    let low = word!(game.ENEMY_DRAWING_QUEUE[queue + low]);
     (u32::from(high) << 16) | u32::from(low)
 }
 
@@ -268,7 +268,7 @@ pub trait Ai: BossLease<Game = Self> + WorkRamAccess {
 
 /// Main AI and hurt AI ($AA:DCA3): the piece's function. Was `Shaktool_Hurt`.
 pub fn main_ai<L: Lease>(game: &mut L) {
-    let piece = i32::from(word!(game.cur_enemy_index));
+    let piece = i32::from(word!(game.CUR_ENEMY_INDEX));
     let address = (u32::from(BANK) << 16) | u32::from(session_slot!(game, Piece[piece].function));
     game.foreign(|game| game.run_function(address));
 }
@@ -276,7 +276,7 @@ pub fn main_ai<L: Lease>(game: &mut L) {
 /// Initialisation AI ($AA:DE43): piece `piece_index` from the piece table,
 /// placed from the previous piece. Was `Shaktool_Init`.
 pub fn initialize<L: Lease>(game: &mut L) {
-    let piece = i32::from(word!(game.cur_enemy_index));
+    let piece = i32::from(word!(game.CUR_ENEMY_INDEX));
     session_slot!(game, Piece[piece].base.instruction_timer = 1);
     session_slot!(game, Piece[piece].base.timer = 0);
     session_slot!(game, Piece[piece].facing_angle = 0);
@@ -290,7 +290,7 @@ pub fn initialize<L: Lease>(game: &mut L) {
     );
     session_slot!(
         game,
-        Piece[piece].primary_piece = (word!(game.cur_enemy_index)).wrapping_sub(data.ram_offset)
+        Piece[piece].primary_piece = (word!(game.CUR_ENEMY_INDEX)).wrapping_sub(data.ram_offset)
     );
     session_slot!(
         game,
@@ -314,7 +314,7 @@ pub fn initialize<L: Lease>(game: &mut L) {
     );
     session_slot!(game, Piece[piece].base.layer = data.layer);
     if offset != 0 {
-        position_relative_to_previous(word!(game.cur_enemy_index), game);
+        position_relative_to_previous(word!(game.CUR_ENEMY_INDEX), game);
     }
 }
 
@@ -327,7 +327,7 @@ pub fn touch<L: Lease>(game: &mut L) {
 /// `Shaktool_Shot`.
 pub fn shot<L: Lease>(game: &mut L) {
     game.shot_reaction(crate::actors::host::Shot::Finalize);
-    let piece = i32::from(word!(game.cur_enemy_index));
+    let piece = i32::from(word!(game.CUR_ENEMY_INDEX));
     if session_slot!(game, Piece[piece].base.health) == 0 {
         let primary: u16 = session_slot!(game, Piece[piece].primary_piece);
         for segment in segments(primary) {
@@ -473,12 +473,12 @@ pub fn final_piece<L: Lease>(mut k: u16, game: &mut L) {
             session_slot!(game, Piece[piece].base.y_pos = y);
             flip(k, game);
             set_movement_options(
-                word!(game.cur_enemy_index),
+                word!(game.CUR_ENEMY_INDEX),
                 (session_slot!(game, Piece[piece].movement_options)) | FLIPPED_AT_BLOCK,
                 game,
             );
             set_movement_options(
-                word!(game.cur_enemy_index),
+                word!(game.CUR_ENEMY_INDEX),
                 (session_slot!(game, Piece[piece].movement_options)) & !CURLED,
                 game,
             );

@@ -45,7 +45,7 @@ const POSITIVE: u16 = 1;
 const NEGATE: u16 = 4;
 
 fn current(game: &(impl Host + ?Sized)) -> i32 {
-    i32::from(word!(game.cur_enemy_index))
+    i32::from(word!(game.CUR_ENEMY_INDEX))
 }
 fn angle<const INITIAL: bool>(flea: i32, game: &(impl Host + ?Sized)) -> u16 {
     if INITIAL {

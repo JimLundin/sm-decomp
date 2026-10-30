@@ -24,14 +24,14 @@ fn seed(g: &mut Game, local: u32) {
     g.register_rom(RomImage::zeroed(0x200000));
     g.register_native_rom(RomImage::zeroed(0x200000));
     for (at, value) in [
-        (ram::room_width_in_blocks, 16),
-        (ram::room_height_in_blocks, 16),
-        (ram::samus_x_pos, 100),
-        (ram::samus_y_pos, 100),
-        (ram::samus_x_radius, 2),
-        (ram::samus_y_radius, 2),
-        (ram::speed_echoes_index, 0xffff),
-        (ram::equipped_items, 0x20),
+        (ram::ROOM_WIDTH_IN_BLOCKS, 16),
+        (ram::ROOM_HEIGHT_IN_BLOCKS, 16),
+        (ram::SAMUS_X_POS, 100),
+        (ram::SAMUS_Y_POS, 100),
+        (ram::SAMUS_X_RADIUS, 2),
+        (ram::SAMUS_Y_RADIUS, 2),
+        (ram::SPEED_ECHOES_INDEX, 0xffff),
+        (ram::EQUIPPED_ITEMS, 0x20),
     ] {
         put(g, at, value);
     }

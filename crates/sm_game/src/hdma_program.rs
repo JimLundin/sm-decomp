@@ -270,9 +270,9 @@ fn execute<I: Interpreter>(opcode: u32, index: usize, script: Script, it: &mut I
         }
         8955500 | 8959182 | 8963175 | 8963458 => it.objects().objects[index].b = 1,
         8958889 => it.objects().objects[index].c = 112,
-        8968470 | 8968521 => it.set_word(crate::ram::words::hdma_data_table_in_ceres, 9),
+        8968470 | 8968521 => it.set_word(crate::ram::words::HDMA_DATA_TABLE_IN_CERES, 9),
         8968577 => {
-            let random = it.word(crate::ram::words::random_number);
+            let random = it.word(crate::ram::words::RANDOM_NUMBER);
             let velocity = it.foreign(|game| {
                 crate::imported::word(
                     &game.visual_tables().bg3_x_velocities,
@@ -345,26 +345,26 @@ mod tests {
             };
         }
         let fields = [
-            arrays::hdma_object_channels_bitmask,
-            arrays::hdma_object_bank_slot,
-            arrays::hdma_object_instruction_list_pointers,
-            arrays::hdma_object_table_pointers,
-            arrays::hdma_object_instruction_timers,
-            arrays::hdma_object_pre_instructions,
-            arrays::hdma_object_pre_instruction_bank,
-            arrays::hdma_object_timers,
-            arrays::hdma_object_A,
-            arrays::hdma_object_B,
-            arrays::hdma_object_C,
-            arrays::hdma_object_D,
-            arrays::hdma_object_E,
-            arrays::hdma_object_F,
+            arrays::HDMA_OBJECT_CHANNELS_BITMASK,
+            arrays::HDMA_OBJECT_BANK_SLOT,
+            arrays::HDMA_OBJECT_INSTRUCTION_LIST_POINTERS,
+            arrays::HDMA_OBJECT_TABLE_POINTERS,
+            arrays::HDMA_OBJECT_INSTRUCTION_TIMERS,
+            arrays::HDMA_OBJECT_PRE_INSTRUCTIONS,
+            arrays::HDMA_OBJECT_PRE_INSTRUCTION_BANK,
+            arrays::HDMA_OBJECT_TIMERS,
+            arrays::HDMA_OBJECT_A,
+            arrays::HDMA_OBJECT_B,
+            arrays::HDMA_OBJECT_C,
+            arrays::HDMA_OBJECT_D,
+            arrays::HDMA_OBJECT_E,
+            arrays::HDMA_OBJECT_F,
         ];
         let mut seen = Vec::new();
         table_words(&mut objects, |at, word| {
             let expected = match *word {
-                1 => words::hdma_objects_enable_flag,
-                2 => words::hdma_object_index,
+                1 => words::HDMA_OBJECTS_ENABLE_FLAG,
+                2 => words::HDMA_OBJECT_INDEX,
                 code => {
                     let index = usize::from(code >> 8) - 1;
                     fields[usize::from(code & 0xff)] + 2 * index

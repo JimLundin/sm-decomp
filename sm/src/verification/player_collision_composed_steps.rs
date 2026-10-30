@@ -42,10 +42,10 @@ fn cell(g: &mut Game, x: u16, y: u16, level: u16, bts: u8) {
 fn position(g: &mut Game, x: u16, y: u16) {
     // Authored geometry/fraction input, not a collision/continuation result.
     for (at, value) in [
-        (ram::samus_x_pos, x),
-        (ram::samus_y_pos, y),
-        (ram::samus_x_subpos, 0),
-        (ram::samus_y_subpos, 0),
+        (ram::SAMUS_X_POS, x),
+        (ram::SAMUS_Y_POS, y),
+        (ram::SAMUS_X_SUBPOS, 0),
+        (ram::SAMUS_Y_SUBPOS, 0),
     ] {
         put(g, at, value);
     }
@@ -65,21 +65,21 @@ pub(crate) unsafe fn run(g: &mut Game, reversed: bool, out: &mut Vec<u8>) {
         // Source room contains full 96x96 geometry; small player radii make each
         // authored probe touch exactly the documented cells.
         for (at, value) in [
-            (ram::samus_x_radius, 1),
-            (ram::samus_y_radius, 1),
-            (ram::room_width_in_blocks, 96),
-            (ram::room_height_in_blocks, 96),
-            (ram::samus_x_accel_mode, 0),
-            (ram::samus_x_speed_divisor, 0),
-            (ram::samus_x_extra_run_speed, 0),
-            (ram::samus_x_extra_run_subspeed, 0),
-            (ram::extra_samus_x_displacement, 0),
-            (ram::extra_samus_x_subdisplacement, 0),
-            (ram::samus_x_base_speed, 0),
-            (ram::samus_x_base_subspeed, 0),
-            (ram::samus_y_speed, 0),
-            (ram::samus_y_subspeed, 0),
-            (ram::enable_horiz_slope_coll, 0),
+            (ram::SAMUS_X_RADIUS, 1),
+            (ram::SAMUS_Y_RADIUS, 1),
+            (ram::ROOM_WIDTH_IN_BLOCKS, 96),
+            (ram::ROOM_HEIGHT_IN_BLOCKS, 96),
+            (ram::SAMUS_X_ACCEL_MODE, 0),
+            (ram::SAMUS_X_SPEED_DIVISOR, 0),
+            (ram::SAMUS_X_EXTRA_RUN_SPEED, 0),
+            (ram::SAMUS_X_EXTRA_RUN_SUBSPEED, 0),
+            (ram::EXTRA_SAMUS_X_DISPLACEMENT, 0),
+            (ram::EXTRA_SAMUS_X_SUBDISPLACEMENT, 0),
+            (ram::SAMUS_X_BASE_SPEED, 0),
+            (ram::SAMUS_X_BASE_SUBSPEED, 0),
+            (ram::SAMUS_Y_SPEED, 0),
+            (ram::SAMUS_Y_SUBSPEED, 0),
+            (ram::ENABLE_HORIZ_SLOPE_COLL, 0),
             (0xa1e, 8),
         ] {
             put(g, at, value);
@@ -87,40 +87,40 @@ pub(crate) unsafe fn run(g: &mut Game, reversed: bool, out: &mut Vec<u8>) {
         position(g, 0x136, 0x240);
         crate::game::player_collision_adapters::move_x(2 << 16, g);
         assert_eq!(
-            word(g, ram::samus_x_pos),
+            word(g, ram::SAMUS_X_POS),
             0x137,
             "collision.composed.solid-permitted-one-pixel"
         );
         assert_eq!(
-            word(g, ram::samus_collision_flag),
+            word(g, ram::SAMUS_COLLISION_FLAG),
             0xffff,
             "collision.composed.actual-solid-contact"
         );
         assert_eq!(
-            word(g, ram::collision_detection_index),
+            word(g, ram::COLLISION_DETECTION_INDEX),
             actor_index,
             "collision.composed.reordered-solid-identity"
         );
-        assert_eq!(word(g, ram::samus_collides_with_solid_enemy), 8);
+        assert_eq!(word(g, ram::SAMUS_COLLIDES_WITH_SOLID_ENEMY), 8);
         trace(out, 10, g);
 
         // Move to a slope tile away from every source actor. Horizontal movement
         // traverses the nonsquare slope, then performs actual bottom alignment.
         position(g, 0x88, 0x8f);
         cell(g, 0x89, 0x8f, 0x1000, 5);
-        put(g, ram::enable_horiz_slope_coll, 2);
+        put(g, ram::ENABLE_HORIZ_SLOPE_COLL, 2);
         crate::game::player_collision_adapters::move_x(1 << 16, g);
         assert_eq!(
-            word(g, ram::samus_x_pos),
+            word(g, ram::SAMUS_X_POS),
             0x89,
             "collision.composed.slope-horizontal-commit"
         );
         assert_eq!(
-            word(g, ram::samus_y_pos),
+            word(g, ram::SAMUS_Y_POS),
             0x89,
             "collision.composed.actual-slope-alignment"
         );
-        assert_eq!(word(g, ram::samus_pos_adjusted_by_slope_flag), 1);
+        assert_eq!(word(g, ram::SAMUS_POS_ADJUSTED_BY_SLOPE_FLAG), 1);
         trace(out, 11, g);
 
         // Vertical outer entry reaches a real collision-spawned mechanism. The
@@ -128,16 +128,16 @@ pub(crate) unsafe fn run(g: &mut Game, reversed: bool, out: &mut Vec<u8>) {
         // committing that changed local proves caller/setup displacement sharing.
         position(g, 0xa8, 0xaf);
         cell(g, 0xa8, 0xc1, 0x3000, 0);
-        put(g, ram::samus_y_dir, 0);
-        put(g, ram::samus_contact_damage_index, 0);
+        put(g, ram::SAMUS_Y_DIR, 0);
+        put(g, ram::SAMUS_CONTACT_DAMAGE_INDEX, 0);
         crate::game::player_collision_adapters::move_down(0x123478, g);
         assert_eq!(
-            word(g, ram::samus_y_pos),
+            word(g, ram::SAMUS_Y_POS),
             0xaf,
             "collision.composed.surface-local-whole"
         );
         assert_eq!(
-            word(g, ram::samus_y_subpos),
+            word(g, ram::SAMUS_Y_SUBPOS),
             0x3078,
             "collision.composed.surface-local-fraction"
         );
@@ -165,35 +165,35 @@ pub(crate) unsafe fn run(g: &mut Game, reversed: bool, out: &mut Vec<u8>) {
         // must produce input_to_pose_calc and actor shake identity itself.
         position(g, 0x137, 0x240);
         for (at, value) in [
-            (ram::enable_horiz_slope_coll, 0),
-            (ram::samus_pose, 0x1b),
+            (ram::ENABLE_HORIZ_SLOPE_COLL, 0),
+            (ram::SAMUS_POSE, 0x1b),
             (0xa1e, 0x0308),
             (0xa26, 0x0308),
-            (ram::samus_anim_frame, 11),
-            (ram::button_config_jump_a, 0x8000),
-            (ram::joypad1_lastkeys, 0x8200),
-            (ram::joypad1_newkeys, 0x8000),
-            (ram::samus_x_speed_table_pointer, 0x9f49),
-            (ram::samus_x_accel_mode, 0),
-            (ram::samus_x_base_speed, 0),
-            (ram::samus_x_base_subspeed, 0),
+            (ram::SAMUS_ANIM_FRAME, 11),
+            (ram::BUTTON_CONFIG_JUMP_A, 0x8000),
+            (ram::JOYPAD1_LASTKEYS, 0x8200),
+            (ram::JOYPAD1_NEWKEYS, 0x8000),
+            (ram::SAMUS_X_SPEED_TABLE_POINTER, 0x9f49),
+            (ram::SAMUS_X_ACCEL_MODE, 0),
+            (ram::SAMUS_X_BASE_SPEED, 0),
+            (ram::SAMUS_X_BASE_SUBSPEED, 0),
         ] {
             put(g, at, value);
         }
         crate::game::player_movement::speed::spin_jumping(&mut Runtime::new(g));
         assert_eq!(
-            word(g, ram::input_to_pose_calc),
+            word(g, ram::INPUT_TO_POSE_CALC),
             5,
             "collision.composed.actual-wall-admission"
         );
         assert_eq!(
-            word(g, ram::enemy_index_to_shake),
+            word(g, ram::ENEMY_INDEX_TO_SHAKE),
             actor_index,
             "collision.composed.wall-same-live-identity"
         );
-        assert_eq!(word(g, ram::samus_x_pos), 0x137);
+        assert_eq!(word(g, ram::SAMUS_X_POS), 0x137);
         assert_eq!(
-            word(g, ram::samus_y_pos),
+            word(g, ram::SAMUS_Y_POS),
             0x240,
             "collision.composed.wall-skips-vertical-movement"
         );

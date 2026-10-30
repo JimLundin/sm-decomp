@@ -143,8 +143,8 @@ pub trait Host:
 
 /// Initialisation AI - Yapping Maw ($A8:A148).
 pub fn initialize<L: Lease>(game: &mut L) {
-    let maw = word!(game.cur_enemy_index) as i32;
-    let sprite_owner = word!(game.cur_enemy_index) as i32;
+    let maw = word!(game.CUR_ENEMY_INDEX) as i32;
+    let sprite_owner = word!(game.CUR_ENEMY_INDEX) as i32;
     let copied = session_slot!(game, Maw[maw].base.x_pos);
     session_slot!(game, Maw[maw].base_x = copied);
     let copied = session_slot!(game, Maw[maw].base.y_pos);
@@ -172,7 +172,7 @@ pub fn initialize<L: Lease>(game: &mut L) {
     let mut part = LAST_SEGMENT as i16;
     session_slot!(game, Maw[maw].segment_index = LAST_SEGMENT);
     loop {
-        game.spawn_projectile(part as u16, word!(game.cur_enemy_index), BODY_PROJECTILE);
+        game.spawn_projectile(part as u16, word!(game.CUR_ENEMY_INDEX), BODY_PROJECTILE);
         part = (session_slot!(game, Maw[maw].segment_index) as i16).wrapping_sub(1);
         session_slot!(game, Maw[maw].segment_index = part as u16);
         if part < 0 {
@@ -189,7 +189,7 @@ pub fn initialize<L: Lease>(game: &mut L) {
 }
 /// Yapping maw function - neutral ($A8:A235): wait for Samus in reach.
 fn neutral<L: Lease>(game: &mut L) {
-    let maw = word!(game.cur_enemy_index) as i32;
+    let maw = word!(game.CUR_ENEMY_INDEX) as i32;
     let origin = Point {
         x: session_slot!(game, Maw[maw].base.x_pos),
         y: session_slot!(game, Maw[maw].base.y_pos),
@@ -239,7 +239,7 @@ fn project<L: Lease>(
 /// Yapping maw function - attack ($A8:A28C), calculating the origin
 /// ($A8:A310). Was `start_reach`.
 fn attack<L: Lease>(write_operand: &mut impl FnMut(u8, &mut L), game: &mut L) {
-    let maw = word!(game.cur_enemy_index) as i32;
+    let maw = word!(game.CUR_ENEMY_INDEX) as i32;
     session_slot!(game, Maw[maw]; angle = 0, subangle = 0, angular_speed_index = 0);
     session_slot!(
         game,
@@ -248,7 +248,7 @@ fn attack<L: Lease>(write_operand: &mut impl FnMut(u8, &mut L), game: &mut L) {
     let direction =
         QUARTER_TURN.wrapping_sub(session_slot!(game, Maw[maw].target_angle) as u8) as u16;
     session_slot!(game, Maw[maw]; maths_target_angle = direction, aiming_down = u16::from(direction >= STRAIGHT));
-    let origin = word!(game.cur_enemy_index) as i32;
+    let origin = word!(game.CUR_ENEMY_INDEX) as i32;
     let length = session_slot!(game, Maw[origin].length);
     let x = project(64, length, write_operand, game);
     session_slot!(game, Maw[origin].origin_x = x);
@@ -273,7 +273,7 @@ fn attack<L: Lease>(write_operand: &mut impl FnMut(u8, &mut L), game: &mut L) {
     session_slot!(game, Maw[maw].function = function::ATTACKING);
 }
 fn reorient_segment<L: Lease>(part: i32, write_operand: &mut impl FnMut(u8, &mut L), game: &mut L) {
-    let maw = word!(game.cur_enemy_index) as i32;
+    let maw = word!(game.CUR_ENEMY_INDEX) as i32;
     let distance = session_slot!(game, Maw[maw + 4 * part].segment_x_offset);
     let x = project(0u16.wrapping_sub(64), distance, write_operand, game);
     session_slot!(game, Maw[maw].scratch_x = x);
@@ -297,7 +297,7 @@ fn reorient_segment<L: Lease>(part: i32, write_operand: &mut impl FnMut(u8, &mut
 /// Move Samus with yapping maw pincers ($A8:A665). Was `carry_player`.
 fn move_samus_with_pincers<L: Lease>(game: &mut L) {
     game.foreign(|game| game.command_player(LOCK_SAMUS));
-    let maw = word!(game.cur_enemy_index) as i32;
+    let maw = word!(game.CUR_ENEMY_INDEX) as i32;
     game.set_player_x(
         session_slot!(game, Maw[maw].samus_x_offset)
             .wrapping_add(session_slot!(game, Maw[maw].base.x_pos)),
@@ -311,7 +311,7 @@ fn move_samus_with_pincers<L: Lease>(game: &mut L) {
 /// Yapping maw function - attacking ($A8:A445), updating the angular speed
 /// ($A8:A63E). Was `stretch`.
 fn attacking<L: Lease>(write_operand: &mut impl FnMut(u8, &mut L), game: &mut L) {
-    let maw = word!(game.cur_enemy_index) as i32;
+    let maw = word!(game.CUR_ENEMY_INDEX) as i32;
     let step = session_slot!(game, Maw[maw].angle) >> 2;
     let positive = session_slot!(game, Maw[maw].aiming_down) != 0;
     for part in 0..4 {
@@ -362,7 +362,7 @@ fn attacking<L: Lease>(write_operand: &mut impl FnMut(u8, &mut L), game: &mut L)
         Maw[maw].base.y_pos = session_slot!(game, Maw[maw].head_y_offset)
             .wrapping_add(session_slot!(game, Maw[maw].base_y))
     );
-    let velocity_owner = word!(game.cur_enemy_index) as i32;
+    let velocity_owner = word!(game.CUR_ENEMY_INDEX) as i32;
     let speed = session_slot!(game, Maw[velocity_owner].angular_speed_index) as isize >> 1;
     session_slot!(
         game,
@@ -420,15 +420,15 @@ fn attacking<L: Lease>(write_operand: &mut impl FnMut(u8, &mut L), game: &mut L)
 }
 /// Yapping maw function - cooldown ($A8:A68A). Was `release_player`.
 fn cooldown<L: Lease>(game: &mut L) {
-    let maw = word!(game.cur_enemy_index) as i32;
+    let maw = word!(game.CUR_ENEMY_INDEX) as i32;
     if session_slot!(game, Maw[maw].grabbing_samus) != 0 {
         move_samus_with_pincers(game);
     }
     session_slot!(game, Maw[maw].cooldown_timer, |old| old.wrapping_sub(1));
     if session_slot!(game, Maw[maw].cooldown_timer) & SIGN != 0
-        && word!(game.samus_input_handler) != DEMO_INPUT
+        && word!(game.SAMUS_INPUT_HANDLER) != DEMO_INPUT
     {
-        word!(game.samus_input_handler = NORMAL_INPUT);
+        word!(game.SAMUS_INPUT_HANDLER = NORMAL_INPUT);
         session_slot!(game, Maw[maw]; grabbing_samus = 0, intangibility_timer = INTANGIBLE_FRAMES,
             cooldown_timer = COOLDOWN_FRAMES, function = function::NEUTRAL);
     }
@@ -437,7 +437,7 @@ fn cooldown<L: Lease>(game: &mut L) {
 /// existing runtime's unknown-address failure before attachments update. Was
 /// `advance`.
 pub fn main_ai<L: Lease>(game: &mut L, mut write_operand: impl FnMut(u8, &mut L)) -> bool {
-    let maw = word!(game.cur_enemy_index) as i32;
+    let maw = word!(game.CUR_ENEMY_INDEX) as i32;
     session_slot!(game, Maw[maw].intangibility_timer, |old| old
         .wrapping_sub(1));
     game.foreign(|game| game.update_maw_visibility(maw));
@@ -457,17 +457,17 @@ pub fn update_segments<L: Lease>(game: &mut L) {
 }
 /// Enemy touch - Yapping Maw ($A8:A799): grab Samus.
 pub fn touch<L: Lease>(game: &mut L) {
-    let maw = word!(game.cur_enemy_index) as i32;
+    let maw = word!(game.CUR_ENEMY_INDEX) as i32;
     if session_slot!(game, Maw[maw].intangibility_timer) & SIGN != 0
         && session_slot!(game, Maw[maw].grabbing_samus) == 0
     {
         session_slot!(game, Maw[maw]; intangibility_timer = 0, grabbing_samus = 1);
-        word!(game.samus_input_handler = GRABBED_INPUT);
+        word!(game.SAMUS_INPUT_HANDLER = GRABBED_INPUT);
     }
 }
 pub fn appearance<L: Lease>(game: &mut L) {
-    let maw = word!(game.cur_enemy_index) as i32;
-    let enemy = word!(game.cur_enemy_index);
+    let maw = word!(game.CUR_ENEMY_INDEX) as i32;
+    let enemy = word!(game.CUR_ENEMY_INDEX);
     let appearance = session_slot!(game, Maw[maw].initial_palette);
     let handle = session_slot!(game, Maw[maw].sprite_object);
     game.foreign(|game| game.maw_appearance(handle, appearance, enemy));
@@ -475,11 +475,11 @@ pub fn appearance<L: Lease>(game: &mut L) {
 /// Enemy shot - Yapping Maw ($A8:A7BD).
 pub fn shot<L: Lease>(game: &mut L) {
     game.shot_reaction(Shot::Finalize);
-    let maw = word!(game.cur_enemy_index) as i32;
+    let maw = word!(game.CUR_ENEMY_INDEX) as i32;
     if session_slot!(game, Maw[maw].base.health) != 0 {
         if session_slot!(game, Maw[maw].base.frozen_timer) != 0 {
-            if word!(game.samus_input_handler) != DEMO_INPUT {
-                word!(game.samus_input_handler = NORMAL_INPUT);
+            if word!(game.SAMUS_INPUT_HANDLER) != DEMO_INPUT {
+                word!(game.SAMUS_INPUT_HANDLER = NORMAL_INPUT);
             }
             session_slot!(game, Maw[maw].grabbing_samus = 0);
         }
@@ -490,19 +490,19 @@ pub fn shot<L: Lease>(game: &mut L) {
         }
         let handle = session_slot!(game, Maw[maw].sprite_object);
         game.foreign(|game| game.retire_sprite(handle));
-        if word!(game.samus_input_handler) != DEMO_INPUT {
-            word!(game.samus_input_handler = NORMAL_INPUT);
+        if word!(game.SAMUS_INPUT_HANDLER) != DEMO_INPUT {
+            word!(game.SAMUS_INPUT_HANDLER = NORMAL_INPUT);
         }
         session_slot!(
             game,
-            Maw[word!(game.cur_enemy_index) as i32].grabbing_samus = 0
+            Maw[word!(game.CUR_ENEMY_INDEX) as i32].grabbing_samus = 0
         );
     }
 }
 /// Frozen AI - Yapping Maw ($A8:A835).
 pub fn frozen<L: Lease>(game: &mut L) {
     game.foreign(|game| game.update_frozen_enemy());
-    let maw = word!(game.cur_enemy_index) as i32;
+    let maw = word!(game.CUR_ENEMY_INDEX) as i32;
     for part in 0..4 {
         let handle = session_slot!(game, Maw[maw + 2 * part].segment_projectile);
         game.foreign(|game| game.update_maw_palette(handle));
@@ -513,11 +513,11 @@ pub fn frozen<L: Lease>(game: &mut L) {
 pub fn instruction<L: Lease>(address: u32, script: EnemyScript, game: &mut L) -> EnemyScript {
     use instruction::*;
     if address == QUEUE_SOUND_IF_ON_SCREEN {
-        if session_slot!(game, Maw[word!(game.cur_enemy_index) as i32].off_screen) == 0 {
+        if session_slot!(game, Maw[word!(game.CUR_ENEMY_INDEX) as i32].off_screen) == 0 {
             game.queue_sound(1, BITE_SOUND, 6);
         }
     } else {
-        let maw = word!(game.cur_enemy_index) as i32;
+        let maw = word!(game.CUR_ENEMY_INDEX) as i32;
         let table = match address {
             OFFSET_SAMUS_UP_RIGHT => SAMUS_X_OFFSETS + 4,
             OFFSET_SAMUS_UP_LEFT => SAMUS_X_OFFSETS + 28,

@@ -80,7 +80,6 @@ pub const VRAM_WRITE_ENTRY_BYTES: usize = 7;
 
 /// The full enemy record at $7E:0F78 + slot, as the original's `EnemyData`.
 // Field names follow the original's RAM map.
-#[allow(non_snake_case)]
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct EnemyData {

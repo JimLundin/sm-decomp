@@ -47,13 +47,13 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
     let index = [0, 1, 2, 3, 32, 33, 34, 35][variant];
     let enemy = if variant & 1 == 0 { 0 } else { 64 };
     let mode = variant % 4;
-    put(game, w::cur_enemy_index, enemy);
-    put(game, w::random_number, [0, 1, 0x1234, 0xffff][mode]);
-    put(game, w::samus_x_pos, [0, 0xffff, 128, 0x8000][mode]);
-    put(game, w::samus_y_pos, [0xffff, 0, 160, 0x8000][mode]);
-    put(game, w::layer1_x_pos, [0, 128, 0xff00, 0x8000][mode]);
-    put(game, w::layer1_y_pos, [0, 128, 0xff00, 0x8000][mode]);
-    put(game, w::eproj_init_param_2, [0, 63, 128, 255][mode]);
+    put(game, w::CUR_ENEMY_INDEX, enemy);
+    put(game, w::RANDOM_NUMBER, [0, 1, 0x1234, 0xffff][mode]);
+    put(game, w::SAMUS_X_POS, [0, 0xffff, 128, 0x8000][mode]);
+    put(game, w::SAMUS_Y_POS, [0xffff, 0, 160, 0x8000][mode]);
+    put(game, w::LAYER1_X_POS, [0, 128, 0xff00, 0x8000][mode]);
+    put(game, w::LAYER1_Y_POS, [0, 128, 0xff00, 0x8000][mode]);
+    put(game, w::EPROJ_INIT_PARAM_2, [0, 63, 128, 255][mode]);
     game.eproj_spawn_pt = Point16U {
         x: [0, 0xffff, 1, 0x8000][mode],
         y: [0xffff, 0, 0x8000, 1][mode],
@@ -101,9 +101,9 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
     } else {
         34 - (index & !1)
     };
-    slot(game, a::eproj_x_pos, source, 0xfff0);
-    slot(game, a::eproj_y_pos, source, 0x1234);
-    slot(game, a::eproj_y_subpos, source, mode as u16);
+    slot(game, a::EPROJ_X_POS, source, 0xfff0);
+    slot(game, a::EPROJ_Y_POS, source, 0x1234);
+    slot(game, a::EPROJ_Y_SUBPOS, source, mode as u16);
     let parameter = match setup {
         8820772 => [0x0000, 0x020f, 0x0408, 0x0607][mode],
         8822450 => [0, 2, 4, 0][mode],
@@ -112,7 +112,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         8824859 => [0, 2, 4, 6][mode], // post-increments keep index <=5
         _ => (mode as u16) * 2,
     };
-    put(game, w::eproj_init_param_1, parameter);
+    put(game, w::EPROJ_INIT_PARAM_1, parameter);
     if setup == 8819533 {
         // Four-entry table uses parameter_1 directly.
         put(

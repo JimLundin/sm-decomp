@@ -37,19 +37,19 @@ pub(crate) fn check_case(id: u32) -> bool {
     let offset = usize::from(handle & !1);
     let x = if id == 10 { 300 } else { 128 };
     let y = if id == 11 { 255 } else { 128 };
-    put(&mut game, w::layer1_x_pos, 0);
-    put(&mut game, w::layer1_y_pos, 0);
+    put(&mut game, w::LAYER1_X_POS, 0);
+    put(&mut game, w::LAYER1_Y_POS, 0);
     for (field, value) in [
-        (a::eproj_id, 0x8000),
-        (a::eproj_x_pos, x),
-        (a::eproj_y_pos, y),
-        (a::eproj_x_subpos, 0xffff),
-        (a::eproj_y_subpos, 0xffff),
-        (a::eproj_x_vel, 0x0100),
-        (a::eproj_y_vel, before),
-        (a::eproj_E, function as u16),
-        (a::eproj_F, 0x9876),
-        (a::eproj_instr_timers, 7),
+        (a::EPROJ_ID, 0x8000),
+        (a::EPROJ_X_POS, x),
+        (a::EPROJ_Y_POS, y),
+        (a::EPROJ_X_SUBPOS, 0xffff),
+        (a::EPROJ_Y_SUBPOS, 0xffff),
+        (a::EPROJ_X_VEL, 0x0100),
+        (a::EPROJ_Y_VEL, before),
+        (a::EPROJ_E, function as u16),
+        (a::EPROJ_F, 0x9876),
+        (a::EPROJ_INSTR_TIMERS, 7),
     ] {
         slot(&mut game, field, handle, value);
     }
@@ -68,17 +68,17 @@ pub(crate) fn check_case(id: u32) -> bool {
     let mut expected = (0..game.ram().len())
         .map(|at| game.ram().read_byte(at))
         .collect::<Vec<_>>();
-    write(&mut expected, a::eproj_y_vel + offset, after);
+    write(&mut expected, a::EPROJ_Y_VEL + offset, after);
     if positions.is_some() {
-        write(&mut expected, a::eproj_y_subpos + offset, 3);
-        write(&mut expected, a::eproj_y_pos + offset, y + 3);
-        write(&mut expected, a::eproj_F + offset, 0x1234);
-        write(&mut expected, a::eproj_x_pos + offset, x + 1);
+        write(&mut expected, a::EPROJ_Y_SUBPOS + offset, 3);
+        write(&mut expected, a::EPROJ_Y_POS + offset, y + 3);
+        write(&mut expected, a::EPROJ_F + offset, 0x1234);
+        write(&mut expected, a::EPROJ_X_POS + offset, x + 1);
     } else {
-        write(&mut expected, a::eproj_E + offset, 0xbc8f);
+        write(&mut expected, a::EPROJ_E + offset, 0xbc8f);
     }
     if id == 10 || id == 11 {
-        write(&mut expected, a::eproj_id + offset, 0);
+        write(&mut expected, a::EPROJ_ID + offset, 0);
     }
     super::super::with_execution(&mut game, |ctx| {
         if id >= 10 {

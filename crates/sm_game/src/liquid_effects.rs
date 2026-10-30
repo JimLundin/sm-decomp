@@ -116,12 +116,12 @@ pub fn lava_surface<H>(object: &mut HdmaObject, game: &mut H)
 where
     H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
 {
-    word!(game.fx_layer_blending_config_c = word!(game.fx_layer_blending_config_b));
-    if word!(game.time_is_frozen_flag) == 0 {
+    word!(game.FX_LAYER_BLENDING_CONFIG_C = word!(game.FX_LAYER_BLENDING_CONFIG_B));
+    if word!(game.TIME_IS_FROZEN_FLAG) == 0 {
         step_liquid(game, crate::liquid::Surface::LavaAcid);
-        word!(game.bg3_xpos = word!(game.reg_BG1HOFS));
+        word!(game.BG3_XPOS = word!(game.REG_BG1HOFS));
         crate::word_transfers!(game, ascending, 1; native(0x9c00) <- value(0));
-        word!(game.bg3_ypos = 0);
+        word!(game.BG3_YPOS = 0);
         let scroll = surface_scroll(
             crate::liquid::LiquidWords::read(game)
                 .liquid
@@ -144,13 +144,13 @@ where
                 object.c = 112;
                 game.queue_sound(
                     1,
-                    (LAVA_SOUND_EFFECTS[(word!(game.random_number) as i32 & 7) as usize] as u16)
+                    (LAVA_SOUND_EFFECTS[(word!(game.RANDOM_NUMBER) as i32 & 7) as usize] as u16)
                         as u8,
                     6,
                 );
             }
         }
-        word!(game.random_number = u16::swap_bytes(word!(game.random_number)));
+        word!(game.RANDOM_NUMBER = u16::swap_bytes(word!(game.RANDOM_NUMBER)));
         let v8 = table_height(
             crate::liquid::LiquidWords::read(game)
                 .liquid
@@ -167,14 +167,14 @@ pub fn water_surface<H>(object: &mut HdmaObject, game: &mut H)
 where
     H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
 {
-    word!(game.fx_layer_blending_config_c = word!(game.fx_layer_blending_config_b));
-    if word!(game.time_is_frozen_flag) != 0 {
+    word!(game.FX_LAYER_BLENDING_CONFIG_C = word!(game.FX_LAYER_BLENDING_CONFIG_B));
+    if word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         return;
     }
     step_liquid(game, crate::liquid::Surface::Water);
     let layer1 = crate::camera::current(game).layer1;
     word!(
-        game.bg3_ypos = surface_scroll(
+        game.BG3_YPOS = surface_scroll(
             crate::liquid::LiquidWords::read(game).liquid.surface.whole,
             layer1[1]
         )
@@ -229,7 +229,7 @@ fn fill_wave<H: crate::menus::host::Host + ?Sized>(
     let scroll_phase = if horizontal {
         0
     } else {
-        2 * (word!(game.reg_BG2VOFS) & 0xf)
+        2 * (word!(game.REG_BG2VOFS) & 0xf)
     };
     let mut sample = object.a as u8;
     if !horizontal {
@@ -240,21 +240,21 @@ fn fill_wave<H: crate::menus::host::Host + ?Sized>(
         let value = match wave {
             Wave::LavaHorizontal => {
                 (crate::gameplay_tables::lava_wave(game, false, (sample >> 1) as isize)
-                    .wrapping_add(word!(game.reg_BG2HOFS)))
+                    .wrapping_add(word!(game.REG_BG2HOFS)))
                     & 0x1ff
             }
             Wave::LavaVertical => {
                 (crate::gameplay_tables::lava_wave(game, true, (sample >> 1) as isize)
-                    .wrapping_add(word!(game.reg_BG2VOFS)))
+                    .wrapping_add(word!(game.REG_BG2VOFS)))
                     & 0x1ff
             }
             Wave::Water => {
-                (WATER_WAVE[(sample >> 1) as usize] as u16).wrapping_add(word!(game.reg_BG2HOFS))
+                (WATER_WAVE[(sample >> 1) as usize] as u16).wrapping_add(word!(game.REG_BG2HOFS))
             }
         };
         // Water's table starts one word later than lava/acid's.
         word!(
-            game.liquid_bg2_y_scroll_table
+            game.LIQUID_BG2_Y_SCROLL_TABLE
                 [(row >> 1) as usize + matches!(wave, Wave::Water) as usize] = value
         );
         row = row.wrapping_sub(2) & 0x1e;
@@ -266,8 +266,8 @@ pub fn lava_background<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     {
-        word!(game.bg2_y_scroll_spare_entry = word!(game.reg_BG2VOFS));
-        let active = word!(game.time_is_frozen_flag) == 0
+        word!(game.BG2_Y_SCROLL_SPARE_ENTRY = word!(game.REG_BG2VOFS));
+        let active = word!(game.TIME_IS_FROZEN_FLAG) == 0
             && crate::liquid::LiquidWords::read(game).options & 6 != 0;
         let horizontal = active && crate::liquid::LiquidWords::read(game).options & 2 == 0;
         game.write_register(
@@ -285,10 +285,10 @@ pub fn lava_background<H: crate::menus::host::Host + ?Sized>(
                 game,
             );
         } else {
-            let value = word!(game.reg_BG2VOFS) & 0x1ff;
-            crate::word_transfers!(game, descending, 16; le(liquid_bg2_y_scroll_table, 15) <- value(value));
+            let value = word!(game.REG_BG2VOFS) & 0x1ff;
+            crate::word_transfers!(game, descending, 16; le(LIQUID_BG2_Y_SCROLL_TABLE, 15) <- value(value));
         }
-        object.table = 3 * (word!(game.reg_BG2VOFS) & 0xf) + 0xc0b1;
+        object.table = 3 * (word!(game.REG_BG2VOFS) & 0xf) + 0xc0b1;
     }
 }
 #[forbid(unsafe_code)]
@@ -296,8 +296,8 @@ pub fn water_background<H: crate::menus::host::Host + ?Sized>(
     object: &mut HdmaObject,
     game: &mut H,
 ) {
-    word!(game.bg2_y_scroll_spare_entry = word!(game.reg_BG2HOFS));
-    if word!(game.time_is_frozen_flag) != 0 {
+    word!(game.BG2_Y_SCROLL_SPARE_ENTRY = word!(game.REG_BG2HOFS));
+    if word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         water_flat(game);
     } else if crate::liquid::LiquidWords::read(game).options & 2 == 0 {
         object.channels = 0;
@@ -319,7 +319,7 @@ pub fn water_wave<H: crate::menus::host::Host + ?Sized>(object: &mut HdmaObject,
 #[forbid(unsafe_code)]
 pub fn water_flat<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     {
-        let value = word!(game.reg_BG2HOFS);
+        let value = word!(game.REG_BG2HOFS);
         crate::word_transfers!(game, descending, 16; native(0x9c66) <- value(value));
     }
 }

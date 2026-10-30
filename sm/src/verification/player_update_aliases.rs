@@ -37,17 +37,17 @@ fn seed(game: &mut Game, map_x: u16, map_y: u16) {
     game.register_rom(loaded);
     game.register_native_rom(native);
     for (at, value) in [
-        (w::room_x_coordinate_on_map, map_x),
-        (w::room_y_coordinate_on_map, map_y),
-        (w::room_width_in_blocks, 0xffff),
-        (w::room_height_in_blocks, 0xffff),
-        (w::samus_new_pose, 0xffff),
-        (w::samus_new_pose_interrupted, 0xffff),
-        (w::samus_new_pose_transitional, 0xffff),
-        (w::timer_for_shine_timer, 10),
-        (w::samus_visor_palette_timer_index, 1537),
-        (w::samus_anim_frame_timer, 2),
-        (w::samus_health, 99),
+        (w::ROOM_X_COORDINATE_ON_MAP, map_x),
+        (w::ROOM_Y_COORDINATE_ON_MAP, map_y),
+        (w::ROOM_WIDTH_IN_BLOCKS, 0xffff),
+        (w::ROOM_HEIGHT_IN_BLOCKS, 0xffff),
+        (w::SAMUS_NEW_POSE, 0xffff),
+        (w::SAMUS_NEW_POSE_INTERRUPTED, 0xffff),
+        (w::SAMUS_NEW_POSE_TRANSITIONAL, 0xffff),
+        (w::TIMER_FOR_SHINE_TIMER, 10),
+        (w::SAMUS_VISOR_PALETTE_TIMER_INDEX, 1537),
+        (w::SAMUS_ANIM_FRAME_TIMER, 2),
+        (w::SAMUS_HEALTH, 99),
     ] {
         game.ram().copy_in(at, &(value as u16).to_le_bytes());
     }
@@ -71,12 +71,12 @@ fn late_gamma(game: &mut Game) {
     // E419 is deliberately not dispatched; no invalid legacy path is executed.
     seed(game, 30, 151);
     for (at, value) in [
-        (w::frame_handler_gamma, 0xe419),
-        (w::samus_pose, 0x29),
-        (w::samus_prev_pose, 0x29),
-        (w::samus_y_speed, 4),
-        (w::samus_y_subspeed, 0xf800),
-        (w::samus_y_subaccel, 0x1000),
+        (w::FRAME_HANDLER_GAMMA, 0xe419),
+        (w::SAMUS_POSE, 0x29),
+        (w::SAMUS_PREV_POSE, 0x29),
+        (w::SAMUS_Y_SPEED, 4),
+        (w::SAMUS_Y_SUBSPEED, 0xf800),
+        (w::SAMUS_Y_SUBACCEL, 0x1000),
     ] {
         game.ram().copy_in(at, &(value as u16).to_le_bytes());
     }
@@ -88,17 +88,17 @@ fn late_gamma(game: &mut Game) {
     // map half (exploration byte224, zero), so the five bits are10110.
     hud(&mut expected, [0x2800, 0x2c1f, 0x2800, 0x2800, 0x2c1f]);
     for (at, value) in [
-        (w::frame_handler_gamma, 0xe41b),
-        (w::samus_y_speed, 5),
-        (w::samus_y_subspeed, 0x0800),
-        (w::samus_anim_frame_timer, 15),
-        (w::samus_anim_frame, 4),
+        (w::FRAME_HANDLER_GAMMA, 0xe41b),
+        (w::SAMUS_Y_SPEED, 5),
+        (w::SAMUS_Y_SUBSPEED, 0x0800),
+        (w::SAMUS_ANIM_FRAME_TIMER, 15),
+        (w::SAMUS_ANIM_FRAME, 4),
     ] {
         put(&mut expected, at, value);
     }
     {
         let mut runtime = Runtime::new(game);
-        assert_eq!(runtime.word(w::frame_handler_gamma), 0xe419);
+        assert_eq!(runtime.word(w::FRAME_HANDLER_GAMMA), 0xe419);
         assert_eq!(
             player_update::advance(
                 &mut runtime,
@@ -108,7 +108,7 @@ fn late_gamma(game: &mut Game) {
             Ok(())
         );
         assert_eq!(
-            runtime.word(w::frame_handler_gamma),
+            runtime.word(w::FRAME_HANDLER_GAMMA),
             0xe41b,
             "map exploration changes gamma before selection"
         );
@@ -142,7 +142,7 @@ fn owned_position(game: &mut Game) {
         .map(|at| game.ram().read_byte(at))
         .collect::<Vec<u8>>();
     let mut expected = before.clone();
-    put(&mut expected, w::samus_x_pos, 1);
+    put(&mut expected, w::SAMUS_X_POS, 1);
     hud(&mut expected, [0x2c1f, 0x2c1f, 0x2800, 0x2c1f, 0x2c1f]);
     {
         let mut runtime = Runtime::new(game);

@@ -11,7 +11,7 @@ use {
 };
 
 fn animate(runtime: &mut Runtime<'_>, child: bool) {
-    let raw = usize::from(runtime.word(W::cur_enemy_index)) + if child { 64 } else { 0 };
+    let raw = usize::from(runtime.word(W::CUR_ENEMY_INDEX)) + if child { 64 } else { 0 };
     crate::game::actors::restart_from_native_cache(runtime, raw, 0xa2e5ef);
 }
 fn tick(runtime: &mut Runtime<'_>, key: Key) -> u16 {
@@ -23,7 +23,7 @@ fn tick(runtime: &mut Runtime<'_>, key: Key) -> u16 {
 }
 pub(crate) fn initialize(game: &mut Game) {
     let mut runtime = Runtime::new(game);
-    let raw = runtime.word(W::cur_enemy_index);
+    let raw = runtime.word(W::CUR_ENEMY_INDEX);
     let key = Key::from_legacy(raw);
     let extra = 0x7800 + usize::from(raw);
     runtime.write_slice_native(extra + 4, 0);
@@ -41,18 +41,18 @@ pub(crate) fn initialize(game: &mut Game) {
 }
 pub(crate) fn pre_instruction(game: &mut Game) -> u32 {
     let runtime = Runtime::new(game);
-    let key = Key::from_legacy(runtime.word(W::cur_enemy_index));
+    let key = Key::from_legacy(runtime.word(W::CUR_ENEMY_INDEX));
     0xa20000 | u32::from(runtime.resolve_actor(key, Native).pre_instruction)
 }
 pub(crate) fn fire_ready(cursor: EnemyScript, game: &mut Game) -> EnemyScript {
     let mut runtime = Runtime::new(game);
-    let at = 0x7804 + usize::from(runtime.word(W::cur_enemy_index));
+    let at = 0x7804 + usize::from(runtime.word(W::CUR_ENEMY_INDEX));
     runtime.write_slice_native(at, 1);
     cursor
 }
 pub(crate) fn synchronize(game: &mut Game) {
     let mut runtime = Runtime::new(game);
-    let base = 0xf78 + usize::from(runtime.word(W::cur_enemy_index));
+    let base = 0xf78 + usize::from(runtime.word(W::CUR_ENEMY_INDEX));
     // Child offsets stay wide; copy shake, invincibility, flash, frozen, then handlers.
     if runtime.native_word(base + 0x14) != 0 {
         for field in [0x2a, 0x28, 0x24, 0x26, 0x12] {

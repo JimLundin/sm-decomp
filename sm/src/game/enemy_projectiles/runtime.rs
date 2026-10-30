@@ -88,24 +88,24 @@ impl ImportedAliases for Runtime<'_> {
     }
     fn shot_word(&self, member: ShotMember, signed_slot: isize) -> u16 {
         let base = match member {
-            ShotMember::Kind => A::projectile_type,
-            ShotMember::Damage => A::projectile_damage,
-            ShotMember::Direction => A::projectile_dir,
-            ShotMember::Variable => A::projectile_variables,
-            ShotMember::X => A::projectile_x_pos,
-            ShotMember::Y => A::projectile_y_pos,
-            ShotMember::XRadius => A::projectile_x_radius,
-            ShotMember::YRadius => A::projectile_y_radius,
+            ShotMember::Kind => A::PROJECTILE_TYPE,
+            ShotMember::Damage => A::PROJECTILE_DAMAGE,
+            ShotMember::Direction => A::PROJECTILE_DIR,
+            ShotMember::Variable => A::PROJECTILE_VARIABLES,
+            ShotMember::X => A::PROJECTILE_X_POS,
+            ShotMember::Y => A::PROJECTILE_Y_POS,
+            ShotMember::XRadius => A::PROJECTILE_X_RADIUS,
+            ShotMember::YRadius => A::PROJECTILE_Y_RADIUS,
         };
         self.word(indexed(base, signed_slot))
     }
     fn set_shot_direction(&mut self, signed_slot: isize, value: u16) {
-        self.write_slice_le(indexed(A::projectile_dir, signed_slot), value);
+        self.write_slice_le(indexed(A::PROJECTILE_DIR, signed_slot), value);
     }
     fn mechanism_word(&self, member: MechanismMember, signed_slot: isize) -> u16 {
         let base = match member {
-            MechanismMember::Block => A::plm_block_indices,
-            MechanismMember::RoomArgument => A::plm_room_arguments,
+            MechanismMember::Block => A::PLM_BLOCK_INDICES,
+            MechanismMember::RoomArgument => A::PLM_ROOM_ARGUMENTS,
         };
         self.word(indexed(base, signed_slot))
     }

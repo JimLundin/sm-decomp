@@ -23,33 +23,33 @@ fn push_out(boxes: u16, x: u16, y: u16, game: &mut Game) -> bool {
     let abs = |value: u16| i32::from((value as i16).unsigned_abs());
     for part in 0..usize::from(table.word(0)) {
         let at = 2 + 8 * part;
-        let samus_y = word!(game.samus_y_pos);
+        let samus_y = word!(game.SAMUS_Y_POS);
         let (distance, extent) = if (samus_y as i16).wrapping_sub(y as i16) >= 0 {
             (samus_y.wrapping_sub(y), table.word(at + 6))
         } else {
             (y.wrapping_sub(samus_y), table.word(at + 2))
         };
-        if ((i32::from(word!(game.samus_y_radius)) + abs(extent) - i32::from(distance)) as i16) < 0
+        if ((i32::from(word!(game.SAMUS_Y_RADIUS)) + abs(extent) - i32::from(distance)) as i16) < 0
         {
             continue;
         }
-        let samus_x = word!(game.samus_x_pos);
+        let samus_x = word!(game.SAMUS_X_POS);
         let (distance, extent) = if (samus_x as i16).wrapping_sub(x as i16) >= 0 {
             (samus_x.wrapping_sub(x), table.word(at + 4))
         } else {
             (x.wrapping_sub(samus_x), table.word(at))
         };
         let mut overlap =
-            (i32::from(word!(game.samus_x_radius)) + abs(extent) - i32::from(distance)) as i16;
+            (i32::from(word!(game.SAMUS_X_RADIUS)) + abs(extent) - i32::from(distance)) as i16;
         if overlap < 0 {
             continue;
         }
         if (i32::from(overlap) - 4) & 0x8000 != 0 {
             overlap = 4;
         }
-        word!(game.extra_samus_x_displacement = overlap as u16);
-        word!(game.extra_samus_y_displacement = 4);
-        word! { game, 0; extra_samus_x_subdisplacement, extra_samus_y_subdisplacement }
+        word!(game.EXTRA_SAMUS_X_DISPLACEMENT = overlap as u16);
+        word!(game.EXTRA_SAMUS_Y_DISPLACEMENT = 4);
+        word! { game, 0; EXTRA_SAMUS_X_SUBDISPLACEMENT, EXTRA_SAMUS_Y_SUBDISPLACEMENT }
         return true;
     }
     false
@@ -60,12 +60,12 @@ pub(crate) fn samus_contact(boxes: u16, x: u16, y: u16, game: &mut Game) -> Cont
     if !push_out(boxes, x, y, game) {
         return Contact::None;
     }
-    word! { game; samus_invincibility_timer = 96; samus_knockback_timer = 5; knockback_x_dir = 1; }
-    if (i32::from(word!(game.samus_y_pos)) - 192) & 0x8000 != 0 {
-        word!(game.samus_y_dir = 2);
+    word! { game; SAMUS_INVINCIBILITY_TIMER = 96; SAMUS_KNOCKBACK_TIMER = 5; KNOCKBACK_X_DIR = 1; }
+    if (i32::from(word!(game.SAMUS_Y_POS)) - 192) & 0x8000 != 0 {
+        word!(game.SAMUS_Y_DIR = 2);
     }
     let body = i32::from(slot!(game, MotherBrain[0].base.x_pos)) + 24;
-    if ((body - i32::from(word!(game.samus_x_pos))) as i16) < 0 {
+    if ((body - i32::from(word!(game.SAMUS_X_POS))) as i16) < 0 {
         Contact::Hurt
     } else {
         Contact::Pushed

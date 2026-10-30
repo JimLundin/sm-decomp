@@ -8,16 +8,16 @@ use crate::{
 };
 fn external_address(field: ExternalField) -> usize {
     match field {
-        ExternalField::GameMode => W::game_state,
-        ExternalField::DebugMinimap => W::debug_disable_minimap,
-        ExternalField::TimerStatus => W::timer_status,
-        ExternalField::PreviousPlayerX => W::samus_prev_x_pos,
-        ExternalField::PreviousPlayerY => W::samus_prev_y_pos,
-        ExternalField::MusicDataIndex => W::music_data_index,
-        ExternalField::MusicTrackIndex => W::music_track_index,
-        ExternalField::HdmaEnabled => W::hdma_objects_enable_flag,
-        ExternalField::NextIrqHandler => W::irqhandler_next_handler,
-        ExternalField::FxTilemap => W::fx_tilemap_ptr,
+        ExternalField::GameMode => W::GAME_STATE,
+        ExternalField::DebugMinimap => W::DEBUG_DISABLE_MINIMAP,
+        ExternalField::TimerStatus => W::TIMER_STATUS,
+        ExternalField::PreviousPlayerX => W::SAMUS_PREV_X_POS,
+        ExternalField::PreviousPlayerY => W::SAMUS_PREV_Y_POS,
+        ExternalField::MusicDataIndex => W::MUSIC_DATA_INDEX,
+        ExternalField::MusicTrackIndex => W::MUSIC_TRACK_INDEX,
+        ExternalField::HdmaEnabled => W::HDMA_OBJECTS_ENABLE_FLAG,
+        ExternalField::NextIrqHandler => W::IRQHANDLER_NEXT_HANDLER,
+        ExternalField::FxTilemap => W::FX_TILEMAP_PTR,
         ExternalField::BackgroundCopyByte => 0x5e,
         ExternalField::DisplayAndObjectSelect => 0x51,
         ExternalField::LoadingLowByte => 0x5f7,
@@ -42,10 +42,10 @@ fn camera_word(field: CameraField) -> CameraWord {
         CameraField::Bg1YOffset => CameraWord::Bg1Offset(1),
         CameraField::Bg2XScroll => CameraWord::Bg2Scroll(0),
         CameraField::Bg2YScroll => CameraWord::Bg2Scroll(1),
-        CameraField::Bg1Hofs => CameraWord::Mirror(W::reg_BG1HOFS),
-        CameraField::Bg1Vofs => CameraWord::Mirror(W::reg_BG1VOFS),
-        CameraField::Bg2Hofs => CameraWord::Mirror(W::reg_BG2HOFS),
-        CameraField::Bg2Vofs => CameraWord::Mirror(W::reg_BG2VOFS),
+        CameraField::Bg1Hofs => CameraWord::Mirror(W::REG_BG1HOFS),
+        CameraField::Bg1Vofs => CameraWord::Mirror(W::REG_BG1VOFS),
+        CameraField::Bg2Hofs => CameraWord::Mirror(W::REG_BG2HOFS),
+        CameraField::Bg2Vofs => CameraWord::Mirror(W::REG_BG2VOFS),
     }
 }
 impl EntryHost for Runtime<'_> {}
@@ -111,7 +111,7 @@ impl EntryEffects for Runtime<'_> {
                     actors::drawing::draw_scene(&mut Runtime::new(game));
                 }
                 LeafEffect::EnsureSamusDrawn => {
-                    if crate::ram_map::word!(game.elevator_flags) == 0 {
+                    if crate::ram_map::word!(game.ELEVATOR_FLAGS) == 0 {
                         game::samus_animation::Samus_DrawWhenNotAnimatingOrDying(game);
                     }
                 }
@@ -309,11 +309,11 @@ impl EntryEffects for Runtime<'_> {
             match operation {
                 BufferClear::InitialLevel => {
                     word_transfers!(game, descending, 12800;
-                    le(level_data, 12799) <- value(0x8000));
+                    le(LEVEL_DATA, 12799) <- value(0x8000));
                 }
                 BufferClear::DoorLevel => {
                     word_transfers!(game, descending, 3200;
-                    le(level_data, 3199) <- value(0x8000),
+                    le(LEVEL_DATA, 3199) <- value(0x8000),
                     native(0x13200) <- value(0x8000),
                     native(0x14b00) <- value(0x8000),
                     native(0x16400) <- value(0x8000));

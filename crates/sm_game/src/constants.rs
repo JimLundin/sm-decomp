@@ -1,6 +1,5 @@
 //! Shared gameplay values and bank-local addresses.
 //! Bank modules re-export their original definition sets for existing callers.
-#![allow(non_upper_case_globals, non_camel_case_types)]
 /// Value types for the constant groups below; each is `u32`.
 pub type Buttons = u32;
 pub type EnemyProps = u32;

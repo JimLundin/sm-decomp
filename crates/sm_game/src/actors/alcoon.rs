@@ -98,7 +98,7 @@ const Y_POSITION: usize = 0xf7e;
 const Y_VELOCITY: usize = 0xfaa;
 
 fn selected(runtime: &impl ActorLease) -> Key {
-    Key::from_legacy(runtime.word(W::cur_enemy_index))
+    Key::from_legacy(runtime.word(W::CUR_ENEMY_INDEX))
 }
 fn face(runtime: &mut impl ActorLease, key: Key, left: u16, right: u16) {
     runtime.edit_actor(key, Native, |actor| {
@@ -350,7 +350,7 @@ pub fn instruction<H: LeaseActors + ?Sized>(
             runtime.edit_actor(key, Native, |actor| {
                 actor.variables[lane::FUNCTION] = function::EMERGED
             });
-            let count = runtime.word(W::random_number) & 3;
+            let count = runtime.word(W::RANDOM_NUMBER) & 3;
             session_slot!(
                 runtime,
                 Alcoon[alcoon].step_counter = if count == 0 { 2 } else { count }

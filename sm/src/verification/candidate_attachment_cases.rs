@@ -46,13 +46,13 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game) -> Option<usize> {
         field(game, 0, offset_of!(Layout, var_04), 0xfff0);
         field(game, 0, offset_of!(Layout, var_05), 0x7ff0);
         // Spore intentionally ignores the current-enemy selector.
-        put(game, w::cur_enemy_index, 64);
+        put(game, w::CUR_ENEMY_INDEX, 64);
         {
             sm_a5::SporeSpawn_Func_5(game)
         };
     } else if id < 32 {
         let enemy = if variant & 1 == 0 { 0 } else { 64 };
-        put(game, w::cur_enemy_index, enemy);
+        put(game, w::CUR_ENEMY_INDEX, enemy);
         for (offset, value) in [
             (offset_of!(Layout, var_0c), 0xfff0),
             (offset_of!(Layout, var_0d), 0x7fff),
@@ -85,7 +85,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game) -> Option<usize> {
         .zip(handles)
         {
             field(game, enemy, offset, handle);
-            slot(game, a::eproj_gfx_idx, handle, 0xf135);
+            slot(game, a::EPROJ_GFX_IDX, handle, 0xf135);
         }
         {
             // Actual caller order, including collisions between repeated handles.
@@ -101,7 +101,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game) -> Option<usize> {
         let enemy = if variant & 1 == 0 { 0 } else { 64 };
         let cursor: u16 = [0, 4, 0x3fc, 0x3fe][variant % 4];
         let spacing: u16 = [4, 0, 0x3fe, 0x400][variant / 4];
-        put(game, w::cur_enemy_index, enemy);
+        put(game, w::CUR_ENEMY_INDEX, enemy);
         for at in (0..0x404).step_by(2) {
             put(
                 game,

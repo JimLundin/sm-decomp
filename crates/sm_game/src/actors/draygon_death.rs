@@ -64,13 +64,13 @@ pub fn write_health_palette<L: Lease>(native: bool, game: &mut L) {
             game.set_slot_byte(at, bytes[0]);
             game.set_slot_byte(at + 1, bytes[1]);
         } else {
-            word!(game.palette_buffer[index] = value);
+            word!(game.PALETTE_BUFFER[index] = value);
         }
         cursor = cursor.wrapping_add(2);
     }
 }
 fn copy_hurt_palette<L: Lease>(default: u16, target: usize, game: &mut L) {
-    let k = word!(game.cur_enemy_index) as i32;
+    let k = word!(game.CUR_ENEMY_INDEX) as i32;
     let palette = if session_slot!(game, Draygon[k].base.flash_timer) & FLASHING != 0 {
         FLASH_PALETTE
     } else {
@@ -86,12 +86,12 @@ fn copy_hurt_palette<L: Lease>(default: u16, target: usize, game: &mut L) {
 /// drain health. Was `hurt`.
 pub fn hurt_ai<L: Lease>(game: &mut L) {
     copy_hurt_palette(BG_PALETTE_5, BG_PALETTE_5_RAM, game);
-    let k = word!(game.cur_enemy_index) as i32;
+    let k = word!(game.CUR_ENEMY_INDEX) as i32;
     if session_slot!(game, Draygon[k].base.flash_timer) & FLASHING == 0 {
         write_health_palette(false, game);
     }
     copy_hurt_palette(SPRITE_PALETTE_7, SPRITE_PALETTE_7_RAM, game);
-    if word!(game.samus_grapple_flags) & GRAPPLE_FLAG != 0
+    if word!(game.SAMUS_GRAPPLE_FLAGS) & GRAPPLE_FLAG != 0
         && session_slot!(game, Draygon[BODY].base.frame_counter) & GRAPPLE_FRAMES == 0
     {
         let health = (session_slot!(game, Draygon[BODY].base.health) as i16)
@@ -139,12 +139,12 @@ pub fn power_bomb<L: Lease>(game: &mut L) {
 /// Draygon reaction ($A5:960D): update the health palette, or on death drop
 /// the grapple, let go of Samus and drift to the death spot. Was `after_damage`.
 pub fn reaction<L: Lease>(game: &mut L) {
-    let k = word!(game.cur_enemy_index) as i32;
+    let k = word!(game.CUR_ENEMY_INDEX) as i32;
     if session_slot!(game, Draygon[k].base.health) != 0 {
         update_health_palette(game);
         return;
     }
-    word!(game.grapple_beam_function = GRAPPLE_DROPPED);
+    word!(game.GRAPPLE_BEAM_FUNCTION = GRAPPLE_DROPPED);
     facing_animation(
         BODY,
         BODY,
@@ -163,7 +163,7 @@ pub fn reaction<L: Lease>(game: &mut L) {
         Draygon[BODY].function = function::DEATH_DRIFT_TO_DEATH_SPOT
     );
     game.foreign(|game| game.release_samus());
-    word!(game.samus_grapple_flags = 0);
+    word!(game.SAMUS_GRAPPLE_FLAGS = 0);
     let dx = DEATH_X.wrapping_sub(session_slot!(game, Draygon[BODY].base.x_pos));
     let dy = DEATH_Y.wrapping_sub(session_slot!(game, Draygon[BODY].base.y_pos));
     session_slot!(
@@ -182,7 +182,7 @@ pub fn reaction<L: Lease>(game: &mut L) {
 /// Draygon body function - death sequence - drift to death spot ($A5:9185).
 /// Was `approach`.
 pub fn drift_to_death_spot<L: Lease>(game: &mut L) {
-    let k = word!(game.cur_enemy_index) as i32;
+    let k = word!(game.CUR_ENEMY_INDEX) as i32;
     foam_at_mouth(k as u16, FOAM_FRAMES, game);
     // The angle is from the position rounded to its 4x4 pixel block.
     let dx = (i32::from(DEATH_X >> 2)
@@ -259,8 +259,8 @@ pub fn buried_by_evirs<L: Lease>(game: &mut L) {
         let properties = session_slot!(game, Draygon[BODY].base.properties) | DELETE;
         session_slot!(game, Draygon[BODY].base.properties = properties);
         session_slot!(game, Draygon[EYE].base.properties = properties);
-        let drop_index = word!(game.area_index);
-        let area = word!(game.area_index);
+        let drop_index = word!(game.AREA_INDEX);
+        let area = word!(game.AREA_INDEX);
         let bits = game.foreign(|game| game.boss_word(area));
         game.foreign(|game| {
             game.set_boss_word(area, bits | DRAYGON_DEAD);

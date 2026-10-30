@@ -22,22 +22,22 @@ pub(crate) fn check_case(id: u32) -> bool {
     game.register_native_rom(raw.clone());
     let handle = if id == 3 { 10 } else { 34 };
     let offset = usize::from(handle);
-    put(&mut game, w::game_state, 40);
+    put(&mut game, w::GAME_STATE, 40);
     put(
         &mut game,
-        w::random_enemy_counter,
+        w::RANDOM_ENEMY_COUNTER,
         if id == 1 { 2 } else { 0 },
     );
     put(&mut game, 0xf78 + offset_of!(EnemyData, flash_timer), 1);
     slot(
         &mut game,
-        a::eproj_y_pos,
+        a::EPROJ_Y_POS,
         handle,
         if id < 2 { 100 } else { 199 },
     );
-    slot(&mut game, a::eproj_y_subpos, handle, 0xffff);
-    slot(&mut game, a::eproj_y_vel, handle, 0x1234);
-    slot(&mut game, a::eproj_gfx_idx, handle, 0x8135);
+    slot(&mut game, a::EPROJ_Y_SUBPOS, handle, 0xffff);
+    slot(&mut game, a::EPROJ_Y_VEL, handle, 0x1234);
+    slot(&mut game, a::EPROJ_GFX_IDX, handle, 0x8135);
     // High velocity byte 0x12 selects record 36, i.e. CBC7 + 144 bytes.
     // 0001:FFFF + 0000:0002 has a fraction carry; here the position starts
     // at 100:FFFF or 199:FFFF, hence the expected 102:0001 / 201:0001.
@@ -49,22 +49,22 @@ pub(crate) fn check_case(id: u32) -> bool {
     let mut expected = (0..game.ram().len())
         .map(|at| game.ram().read_byte(at))
         .collect::<Vec<_>>();
-    write(&mut expected, a::eproj_y_subpos + offset, 1);
+    write(&mut expected, a::EPROJ_Y_SUBPOS + offset, 1);
     if id < 2 {
-        write(&mut expected, a::eproj_y_pos + offset, 102);
-        write(&mut expected, a::eproj_y_vel + offset, 0x12f4);
-        write(&mut expected, a::eproj_instr_timers + offset, 0);
+        write(&mut expected, a::EPROJ_Y_POS + offset, 102);
+        write(&mut expected, a::EPROJ_Y_VEL + offset, 0x12f4);
+        write(&mut expected, a::EPROJ_INSTR_TIMERS + offset, 0);
         write(
             &mut expected,
-            a::eproj_gfx_idx + offset,
+            a::EPROJ_GFX_IDX + offset,
             if id == 1 { 0x8135 } else { 0x8f35 },
         );
     } else {
-        write(&mut expected, a::eproj_y_pos + offset, 200);
-        write(&mut expected, a::eproj_x_vel + offset, 0xeb93);
-        write(&mut expected, a::eproj_instr_list_ptr + offset, 0xe208);
-        write(&mut expected, a::eproj_gfx_idx + offset, 2560);
-        write(&mut expected, a::eproj_instr_timers + offset, 1);
+        write(&mut expected, a::EPROJ_Y_POS + offset, 200);
+        write(&mut expected, a::EPROJ_X_VEL + offset, 0xeb93);
+        write(&mut expected, a::EPROJ_INSTR_LIST_PTR + offset, 0xe208);
+        write(&mut expected, a::EPROJ_GFX_IDX + offset, 2560);
+        write(&mut expected, a::EPROJ_INSTR_TIMERS + offset, 1);
         expected[0x654] = 6; // Queue capacity is published even with sound gated.
         if id == 3 {
             write(&mut expected, 0x883e, 1);

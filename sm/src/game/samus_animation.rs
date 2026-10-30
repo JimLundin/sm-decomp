@@ -30,28 +30,28 @@ impl samus_body::BottomHost for NativeBottom<'_> {
     }
     fn clear_bottom(&mut self) -> Result<(), Self::Error> {
         let game = &mut *self.0;
-        word!(game.samus_bottom_half_spritemap_index = 0);
+        word!(game.SAMUS_BOTTOM_HALF_SPRITEMAP_INDEX = 0);
         Ok(())
     }
     fn cursor(&mut self) -> Result<u16, Self::Error> {
         let game = &mut *self.0;
-        Ok(word!(game.oam_next_ptr))
+        Ok(word!(game.OAM_NEXT_PTR))
     }
     fn player_x(&mut self) -> Result<u16, Self::Error> {
         let game = &mut *self.0;
-        Ok(word!(game.samus_x_pos))
+        Ok(word!(game.SAMUS_X_POS))
     }
     fn player_y(&mut self) -> Result<u16, Self::Error> {
         let game = &mut *self.0;
-        Ok(word!(game.samus_y_pos))
+        Ok(word!(game.SAMUS_Y_POS))
     }
     fn camera_x(&mut self) -> Result<u16, Self::Error> {
         let game = &mut *self.0;
-        Ok(word!(game.layer1_x_pos))
+        Ok(word!(game.LAYER1_X_POS))
     }
     fn camera_y(&mut self) -> Result<u16, Self::Error> {
         let game = &mut *self.0;
-        Ok(word!(game.layer1_y_pos))
+        Ok(word!(game.LAYER1_Y_POS))
     }
     fn marker_word(&mut self, entry: usize, value: u16) -> Result<(), Self::Error> {
         let game = &mut *self.0;
@@ -60,7 +60,7 @@ impl samus_body::BottomHost for NativeBottom<'_> {
     }
     fn publish_cursor(&mut self, value: u16) -> Result<(), Self::Error> {
         let game = &mut *self.0;
-        word!(game.oam_next_ptr = value);
+        word!(game.OAM_NEXT_PTR = value);
         Ok(())
     }
     fn marker_written(&mut self, _: usize, _: u16, _: u16) -> Result<(), Self::Error> {
@@ -268,24 +268,24 @@ impl samus_position_tiles::PositionHost for NativePosition<'_> {
     type Error = std::convert::Infallible;
     fn ceres(&mut self) -> Result<u16, Self::Error> {
         let game = &mut *self.0;
-        Ok(word!(game.ceres_status))
+        Ok(word!(game.CERES_STATUS))
     }
     fn player_x(&mut self) -> Result<u16, Self::Error> {
         let game = &mut *self.0;
-        Ok(word!(game.samus_x_pos))
+        Ok(word!(game.SAMUS_X_POS))
     }
     fn player_y(&mut self) -> Result<u16, Self::Error> {
         let game = &mut *self.0;
-        Ok(word!(game.samus_y_pos))
+        Ok(word!(game.SAMUS_Y_POS))
     }
     fn set_player_x(&mut self, value: u16) -> Result<(), Self::Error> {
         let game = &mut *self.0;
-        word!(game.samus_x_pos = value);
+        word!(game.SAMUS_X_POS = value);
         Ok(())
     }
     fn set_player_y(&mut self, value: u16) -> Result<(), Self::Error> {
         let game = &mut *self.0;
-        word!(game.samus_y_pos = value);
+        word!(game.SAMUS_Y_POS = value);
         Ok(())
     }
     fn project(&mut self, x: u16, y: u16) -> Result<(u16, u16), Self::Error> {
@@ -350,29 +350,29 @@ impl samus_position_tiles::PositionHost for NativePosition<'_> {
     }
     fn camera_x(&mut self) -> Result<u16, Self::Error> {
         let game = &mut *self.0;
-        Ok(word!(game.layer1_x_pos))
+        Ok(word!(game.LAYER1_X_POS))
     }
     fn camera_y(&mut self) -> Result<u16, Self::Error> {
         let game = &mut *self.0;
-        Ok(word!(game.layer1_y_pos))
+        Ok(word!(game.LAYER1_Y_POS))
     }
     fn set_body_x(&mut self, value: u16) -> Result<(), Self::Error> {
         let game = &mut *self.0;
-        word!(game.samus_spritemap_x_pos = value);
+        word!(game.SAMUS_SPRITEMAP_X_POS = value);
         Ok(())
     }
     fn set_body_y(&mut self, value: u16) -> Result<(), Self::Error> {
         let game = &mut *self.0;
-        word!(game.samus_spritemap_y_pos = value);
+        word!(game.SAMUS_SPRITEMAP_Y_POS = value);
         Ok(())
     }
     fn body_x(&mut self) -> Result<u16, Self::Error> {
         let game = &mut *self.0;
-        Ok(word!(game.samus_spritemap_x_pos))
+        Ok(word!(game.SAMUS_SPRITEMAP_X_POS))
     }
     fn body_y(&mut self) -> Result<u16, Self::Error> {
         let game = &mut *self.0;
-        Ok(word!(game.samus_spritemap_y_pos))
+        Ok(word!(game.SAMUS_SPRITEMAP_Y_POS))
     }
 }
 impl samus_position_tiles::Table for NativeTable {

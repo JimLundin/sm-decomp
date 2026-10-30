@@ -284,10 +284,10 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
             game.advance_random();
             sprite_drawing::clear_high_table(game);
             word! { game, 0;
-                oam_next_ptr, nmi_copy_samus_halves, nmi_copy_samus_top_half_src,
-                nmi_copy_samus_bottom_half_src,
+                OAM_NEXT_PTR, NMI_COPY_SAMUS_HALVES, NMI_COPY_SAMUS_TOP_HALF_SRC,
+                NMI_COPY_SAMUS_BOTTOM_HALF_SRC,
             }
-            st = word!(game.game_state) as i32 + 10;
+            st = word!(game.GAME_STATE) as i32 + 10;
             game.ram().write_byte(0x611, st as u8);
         }
         let returned = match GAME_STATE_ENTRIES[usize::from((st - 10i32) as u16)] {
@@ -322,7 +322,7 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
         }
         game.advance_sound_effects();
         sprite_drawing::finish_frame(game);
-        word!(game.joypad1_input_samusfilter = word!(game.joypad1_lastkeys));
+        word!(game.JOYPAD1_INPUT_SAMUSFILTER = word!(game.JOYPAD1_LASTKEYS));
         let state = [0x612, 0x613, 0x614, 0x615].map(|at| game.ram().read_byte(at));
         if state.iter().fold(0, |bits, byte| bits | byte) != 0 {
             game.report_broken_coroutine(state);
@@ -343,16 +343,16 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
     let mut stage = game.ram().read_byte(0x612);
     let mut waiting = stage >= 2;
     if stage == 0 {
-        let demo = u32::from(word!(game.game_state)) == K_GAME_STATE_40_TRANSITION_TO_DEMO;
+        let demo = u32::from(word!(game.GAME_STATE)) == K_GAME_STATE_40_TRANSITION_TO_DEMO;
         if !demo {
-            let loading = u32::from(word!(game.loading_game_state));
+            let loading = u32::from(word!(game.LOADING_GAME_STATE));
             if loading == K_LOADING_GAME_STATE_1F_STARTING_AT_CERES {
                 game.runtime().session_mut().room.area = 6;
-                word!(game.load_station_index = 0);
+                word!(game.LOAD_STATION_INDEX = 0);
                 escape_timer::clear(game);
             } else if loading == K_LOADING_GAME_STATE_22_ESCAPING_CERES {
                 game.runtime().session_mut().room.area = 0;
-                word!(game.load_station_index = 18);
+                word!(game.LOAD_STATION_INDEX = 18);
                 save_slots::load_area_map(game);
             }
         }
@@ -375,7 +375,7 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
         }
         hud::initialize(game);
         word_transfers!(game, ascending, 16; native(0xc380) <- native(0xc180));
-        word! { game, 1; screen_fade_delay, screen_fade_counter }
+        word! { game, 1; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
         game.enable_display_nmi(true);
         enemy_projectiles::lifecycle::set_enabled(&mut game.runtime(), true);
         set_mechanisms_enabled(game, true);
@@ -383,9 +383,9 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
         game.set_hdma_enabled(true);
         animated_tiles::set_enabled(game.runtime().session_mut(), true);
         crate::player_movement::speed::set_liquid_physics(&mut game.runtime());
-        stage = if u32::from(word!(game.game_state)) == K_GAME_STATE_40_TRANSITION_TO_DEMO {
+        stage = if u32::from(word!(game.GAME_STATE)) == K_GAME_STATE_40_TRANSITION_TO_DEMO {
             2
-        } else if u32::from(word!(game.loading_game_state))
+        } else if u32::from(word!(game.LOADING_GAME_STATE))
             == K_LOADING_GAME_STATE_22_ESCAPING_CERES
         {
             game.queue_music_delayed8(5);
@@ -393,7 +393,7 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
         } else {
             4
         };
-        word!(game.loop_counter_transfer_enemies_to_vram = if stage == 3 { 15 } else { 6 });
+        word!(game.LOOP_COUNTER_TRANSFER_ENEMIES_TO_VRAM = if stage == 3 { 15 } else { 6 });
     }
     if matches!(stage, 2..=4) {
         crate::probe::hit(match stage {
@@ -410,8 +410,8 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
                 game.ram().write_byte(0x612, stage);
                 return yielded;
             }
-            word!(game.loop_counter_transfer_enemies_to_vram -= 1);
-            if (word!(game.loop_counter_transfer_enemies_to_vram) & 0x8000) != 0 {
+            word!(game.LOOP_COUNTER_TRANSFER_ENEMIES_TO_VRAM -= 1);
+            if (word!(game.LOOP_COUNTER_TRANSFER_ENEMIES_TO_VRAM) & 0x8000) != 0 {
                 break;
             }
             waiting = false;
@@ -420,16 +420,16 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
             demo_rooms::finish_setup(game);
         }
         if stage == 4 {
-            word!(game.game_state = K_GAME_STATE_7_MAIN_GAMEPLAY_FADE_IN as u16);
+            word!(game.GAME_STATE = K_GAME_STATE_7_MAIN_GAMEPLAY_FADE_IN as u16);
         } else {
-            word!(game.game_state += 1);
+            word!(game.GAME_STATE += 1);
         }
-        word_transfers!(game, ascending, 256; native(0xc000) <- le(target_palettes, 0));
+        word_transfers!(game, ascending, 256; native(0xc000) <- le(TARGET_PALETTES, 0));
         if stage == 4 {
-            if u32::from(word!(game.loading_game_state))
+            if u32::from(word!(game.LOADING_GAME_STATE))
                 == K_LOADING_GAME_STATE_1F_STARTING_AT_CERES
             {
-                word!(game.palette_buffer[223] = 0);
+                word!(game.PALETTE_BUFFER[223] = 0);
                 game.player_command(8);
             } else {
                 game.player_command(9);
@@ -442,16 +442,16 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
 
 /// Demo phase: leave a finished demo.
 fn stop_demo<H: Host>(game: &mut H) -> CoroutineRet {
-    if word!(game.substate) != 1 {
+    if word!(game.SUBSTATE) != 1 {
         demo_rooms::advance_set(game);
     }
     game.enable_display_nmi(true);
-    word!(game.game_state += 1);
-    word! { game, 0; screen_fade_delay, screen_fade_counter }
+    word!(game.GAME_STATE += 1);
+    word! { game, 0; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
     game.clear_hdma();
     game.disable_scanline_irq();
     word! { game, 0;
-        fx_layer_blending_config_a, cur_irq_handler, irqhandler_next_handler,
+        FX_LAYER_BLENDING_CONFIG_A, CUR_IRQ_HANDLER, IRQHANDLER_NEXT_HANDLER,
     }
     palette_effects::set_enabled(game.runtime().session_mut(), false);
     palette_effects::clear(game.runtime().session_mut());
@@ -463,12 +463,12 @@ fn stop_demo<H: Host>(game: &mut H) -> CoroutineRet {
 
 /// Demo phase: choose the next demo or title step.
 fn next_demo<H: Host>(game: &mut H) -> CoroutineRet {
-    word!(game.game_state = K_GAME_STATE_1_OPENING_CINEMATIC as u16);
-    if (word!(game.substate) & 0x8000) != 0 {
-        word!(game.game_state = K_GAME_STATE_40_TRANSITION_TO_DEMO as u16);
-    } else if word!(game.substate) != 0 {
+    word!(game.GAME_STATE = K_GAME_STATE_1_OPENING_CINEMATIC as u16);
+    if (word!(game.SUBSTATE) & 0x8000) != 0 {
+        word!(game.GAME_STATE = K_GAME_STATE_40_TRANSITION_TO_DEMO as u16);
+    } else if word!(game.SUBSTATE) != 0 {
         game.load_title_sequence_graphics();
-        word!(game.eproj_x_pos[4] = 2);
+        word!(game.EPROJ_X_POS[4] = 2);
         crate::flow::set(
             game,
             crate::flow::Word::CinematicFunction,
@@ -476,7 +476,7 @@ fn next_demo<H: Host>(game: &mut H) -> CoroutineRet {
         );
     } else {
         game.queue_music_delayed8(0);
-        word!(game.debug_disable_sounds = 0);
+        word!(game.DEBUG_DISABLE_SOUNDS = 0);
         crate::flow::set(
             game,
             crate::flow::Word::CinematicFunction,
@@ -504,8 +504,8 @@ fn setup_pause<H: Host>(game: &mut H) -> CoroutineRet {
     pause_controls::save_graphics(game);
     display_refresh::load_pause_assets(game);
     display_refresh::upload_pause_map(game);
-    word_transfers!(game, ascending, 256; pause_map(384) <- le(palette_buffer, 0));
-    word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0xb6f000, 0));
+    word_transfers!(game, ascending, 256; pause_map(384) <- le(PALETTE_BUFFER, 0));
+    word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- rom(0xb6f000, 0));
     display_refresh::pause_graphics(true, game);
     pause_controls::initialize(game);
     0
@@ -515,7 +515,7 @@ fn setup_pause<H: Host>(game: &mut H) -> CoroutineRet {
 fn advance_pause<H: Host>(game: &mut H) -> CoroutineRet {
     controller_input::filter(3, game);
     // Preserve the eight-entry bounds failure before any tab work.
-    let tab = [0, 1, 2, 3, 4, 5, 6, 7][usize::from(crate::menu!(game.menu_index))];
+    let tab = [0, 1, 2, 3, 4, 5, 6, 7][usize::from(crate::menu!(game.MenuIndex))];
     match tab {
         0 => pause_controls::update_map(game),
         1 => pause_controls::update_equipment(game),
@@ -542,7 +542,7 @@ fn setup_unpause<H: Host>(game: &mut H) -> CoroutineRet {
     let resume = game.ram().read_byte(0x612);
     if resume == 0 {
         game.load_vram_words(0x9ad200, 0x6000, 0x1000);
-        word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- pause_map(384));
+        word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- pause_map(384));
         display_refresh::pause_graphics(false, game);
         pause_controls::resume(game);
         game.write_register_word(MDMAEN as u16, 0);
@@ -560,7 +560,7 @@ fn setup_unpause<H: Host>(game: &mut H) -> CoroutineRet {
             u16::from(game.ram().read_byte(0x59) & 0xfc) << 8,
             0x1000,
         );
-        word! { game, 1; screen_fade_delay, screen_fade_counter }
+        word! { game, 1; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
     }
     if resume <= 1 {
         let yielded = match pause_controls::hook_address(false, game) {
@@ -582,7 +582,7 @@ fn setup_unpause<H: Host>(game: &mut H) -> CoroutineRet {
         game.set_hdma_enabled(true);
         animated_tiles::set_enabled(game.runtime().session_mut(), true);
         game.restore_movement_sound();
-        word!(game.game_state += 1);
+        word!(game.GAME_STATE += 1);
     }
     game.ram().write_byte(0x612, 0);
     0
@@ -596,12 +596,12 @@ fn fade_out<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
     game.fade(false);
     if game.ram().read_byte(0x51) == 0x80 {
         game.enable_display_nmi(true);
-        word! { game, 0; screen_fade_delay, screen_fade_counter }
-        word!(game.game_state += 1);
+        word! { game, 0; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+        word!(game.GAME_STATE += 1);
         if matches!(entry, Entry::GameOverFadeOut) {
             {
-                crate::menu!(game.menu_index = 0);
-                word!(game.debug_disable_sounds = 0);
+                crate::menu!(game.MenuIndex = 0);
+                word!(game.DEBUG_DISABLE_SOUNDS = 0);
             }
         }
     }
@@ -615,18 +615,18 @@ fn exit_time_up<H: Host>(game: &mut H) -> CoroutineRet {
         game.enable_display_nmi(true);
         finish_gameplay(true, game);
         word! { game, 0;
-            screen_fade_delay, screen_fade_counter, ceres_status, timer_status,
+            SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER, CERES_STATUS, TIMER_STATUS,
         }
         cancel_sound_effects(game, 15);
         if crate::progress::event_happened(&mut game.runtime(), 0xe) {
             {
-                word!(game.game_options_screen_index = 0);
-                crate::menu!(game.menu_index = 0);
+                word!(game.GAME_OPTIONS_SCREEN_INDEX = 0);
+                crate::menu!(game.MenuIndex = 0);
             }
-            word_transfers!(game, descending, 128; le(eproj_y_subpos, 142) <- value(0));
-            word!(game.game_state = K_GAME_STATE_25_SAMUS_NO_HEALTH as u16);
+            word_transfers!(game, descending, 128; le(EPROJ_Y_SUBPOS, 142) <- value(0));
+            word!(game.GAME_STATE = K_GAME_STATE_25_SAMUS_NO_HEALTH as u16);
         } else {
-            word!(game.game_state = K_GAME_STATE_37_CERES_GOES_BOOM_WITH_SAMUS as u16);
+            word!(game.GAME_STATE = K_GAME_STATE_37_CERES_GOES_BOOM_WITH_SAMUS as u16);
             crate::flow::set(
                 game,
                 crate::flow::Word::CinematicFunction,
@@ -640,7 +640,7 @@ fn exit_time_up<H: Host>(game: &mut H) -> CoroutineRet {
 /// States that run the gameplay pass: their pre-pass work, the pass and,
 /// once it completes, their per-state finish.
 fn pass<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
-    if matches!(entry, Entry::CeresElevator | Entry::CeresBlackout) && word!(game.timer_status) != 0
+    if matches!(entry, Entry::CeresElevator | Entry::CeresBlackout) && word!(game.TIMER_STATUS) != 0
     {
         escape_timer::draw(game);
     }
@@ -648,7 +648,7 @@ fn pass<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
         && game.ram().read_byte(0x612) == 0
         && reserve_tanks::refill_auto(game) != 0
     {
-        word! {game; time_is_frozen_flag = 0; game_state = K_GAME_STATE_8_MAIN_GAMEPLAY as u16; }
+        word! {game; TIME_IS_FROZEN_FLAG = 0; GAME_STATE = K_GAME_STATE_8_MAIN_GAMEPLAY as u16; }
         game.player_command(0x10);
     }
     let yielded = advance_gameplay(game);
@@ -667,21 +667,21 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
         actors::scheduling::select(&mut game.runtime());
         palette_effects::advance(&mut game.runtime());
         prepare_player_projectiles(game);
-        if word!(game.debug_disable_sprite_interact) == 0 {
+        if word!(game.DEBUG_DISABLE_SPRITE_INTERACT) == 0 {
             game.player_projectiles_hit_samus();
         }
         actors::scheduling::advance_selected(&mut game.runtime());
     }
     // Read the queue after enemy callbacks, even when they changed it this pass.
     if resume == ResumePoint::EnemyMessage
-        || (resume == ResumePoint::Start && word!(game.queued_message_box_index) != 0)
+        || (resume == ResumePoint::Start && word!(game.QUEUED_MESSAGE_BOX_INDEX) != 0)
     {
-        let yielded = message_boxes::display(word!(game.queued_message_box_index), game);
+        let yielded = message_boxes::display(word!(game.QUEUED_MESSAGE_BOX_INDEX), game);
         if yielded != 0 {
             game.set_resume_point(ResumePoint::EnemyMessage as u8);
             return yielded;
         }
-        word!(game.queued_message_box_index = 0);
+        word!(game.QUEUED_MESSAGE_BOX_INDEX = 0);
     }
     if matches!(resume, ResumePoint::Start | ResumePoint::EnemyMessage) {
         game.advance_player();
@@ -695,7 +695,7 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
         }
         animated_tiles::advance(&mut game.runtime());
         // This is a new read: earlier callbacks may change interaction policy.
-        if word!(game.debug_disable_sprite_interact) == 0 {
+        if word!(game.DEBUG_DISABLE_SPRITE_INTERACT) == 0 {
             enemy_projectiles::contact::enemy_projectiles_hit_samus(&mut game.runtime());
             enemy_projectiles::contact::shoot_enemy_projectiles(&mut game.runtime());
             actors::contacts::apply_power_bomb_to_enemies(&mut game.runtime());
@@ -725,7 +725,7 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
 /// demo, projectiles only or inactive.
 fn prepare_player_projectiles<H: Host>(game: &mut H) {
     use crate::session::PrepareEntry;
-    let at = crate::ram::words::frame_handler_alfa;
+    let at = crate::ram::words::FRAME_HANDLER_ALFA;
     let handler = u16::from_le_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]);
     let entry = match 0x900000 | u32::from(handler) {
         0x90e695 => PrepareEntry::Normal,
@@ -780,20 +780,20 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
         Entry::FadeIn | Entry::Unpause => {
             game.fade(true);
             if game.ram().read_byte(0x51) == 15 {
-                word! { game, 0; screen_fade_delay, screen_fade_counter }
+                word! { game, 0; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
                 if matches!(entry, Entry::FadeIn) {
-                    word!(game.game_state += 1);
+                    word!(game.GAME_STATE += 1);
                 } else {
-                    word!(game.game_state = K_GAME_STATE_8_MAIN_GAMEPLAY as u16);
+                    word!(game.GAME_STATE = K_GAME_STATE_8_MAIN_GAMEPLAY as u16);
                 }
             }
         }
         Entry::CeresElevator => {
             let negative =
-                (word!(game.reached_ceres_elevator_fade_timer -= 1, reread) & 0x8000) != 0;
-            if word!(game.reached_ceres_elevator_fade_timer) == 0 || negative {
-                word!(game.game_state += 1);
-                word! { game, 0; screen_fade_delay, screen_fade_counter }
+                (word!(game.REACHED_CERES_ELEVATOR_FADE_TIMER -= 1, reread) & 0x8000) != 0;
+            if word!(game.REACHED_CERES_ELEVATOR_FADE_TIMER) == 0 || negative {
+                word!(game.GAME_STATE += 1);
+                word! { game, 0; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
             }
         }
         Entry::TimeUp | Entry::DeathBlackout => {
@@ -802,20 +802,20 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                 if death {
                     finish_gameplay(true, game);
                     word! { game, 0;
-                        game_options_screen_index, screen_fade_delay, screen_fade_counter,
+                        GAME_OPTIONS_SCREEN_INDEX, SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER,
                     }
-                    word_transfers!(game, descending, 128; le(eproj_y_subpos, 142) <- value(0));
-                    word! {game; death_flash_timer = 16; game_options_screen_index = 3; }
-                    word! { game, 0; death_index, death_counter }
-                    word!(game.game_state += 1);
-                    word!(game.power_bomb_explosion_status = 0);
+                    word_transfers!(game, descending, 128; le(EPROJ_Y_SUBPOS, 142) <- value(0));
+                    word! {game; DEATH_FLASH_TIMER = 16; GAME_OPTIONS_SCREEN_INDEX = 3; }
+                    word! { game, 0; DEATH_INDEX, DEATH_COUNTER }
+                    word!(game.GAME_STATE += 1);
+                    word!(game.POWER_BOMB_EXPLOSION_STATUS = 0);
                     cancel_sound_effects(game, 15);
                     game.queue_music_delayed8(0);
                     game.queue_music_delayed8(0xff39);
                     game.queue_music_delayed(5, 0xe);
                 } else {
-                    word!(game.game_state = K_GAME_STATE_36_WHITING_OUT_FROM_TIME_UP as u16);
-                    word! { game, 0; screen_fade_delay, screen_fade_counter }
+                    word!(game.GAME_STATE = K_GAME_STATE_36_WHITING_OUT_FROM_TIME_UP as u16);
+                    word! { game, 0; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
                 }
             }
         }
@@ -823,16 +823,16 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
             game.advance_low_health_warning();
         }
         Entry::PrepareDeath => {
-            word_transfers!(game, descending, 256; pause_map(639) <- le(palette_buffer, 255));
-            word_transfers!(game, descending, 192; le(target_palettes, 191) <- value(0));
-            word_transfers!(game, descending, 48; le(target_palettes, 255) <- value(0));
-            word_transfers!(game, descending, 16; le(target_palettes, 207) <- le(palette_buffer, 207));
-            word!(game.game_options_screen_index = 3);
+            word_transfers!(game, descending, 256; pause_map(639) <- le(PALETTE_BUFFER, 255));
+            word_transfers!(game, descending, 192; le(TARGET_PALETTES, 191) <- value(0));
+            word_transfers!(game, descending, 48; le(TARGET_PALETTES, 255) <- value(0));
+            word_transfers!(game, descending, 16; le(TARGET_PALETTES, 207) <- le(PALETTE_BUFFER, 207));
+            word!(game.GAME_OPTIONS_SCREEN_INDEX = 3);
             word! { game, 0;
-                death_index, death_counter, death_flash_timer, hud_item_index,
-                samus_auto_cancel_hud_item_index, samus_invincibility_timer, samus_knockback_timer,
+                DEATH_INDEX, DEATH_COUNTER, DEATH_FLASH_TIMER, HUD_ITEM_INDEX,
+                SAMUS_AUTO_CANCEL_HUD_ITEM_INDEX, SAMUS_INVINCIBILITY_TIMER, SAMUS_KNOCKBACK_TIMER,
             }
-            word!(game.game_state += 1);
+            word!(game.GAME_STATE += 1);
         }
         Entry::CeresBlackout | Entry::ZebesEscape => {
             game.fade(false);
@@ -840,25 +840,25 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                 let ceres = matches!(entry, Entry::CeresBlackout);
                 game.enable_display_nmi(true);
                 finish_gameplay(ceres, game);
-                word! { game, 0; screen_fade_delay, screen_fade_counter }
+                word! { game, 0; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
                 if ceres {
-                    word!(game.loading_game_state = K_LOADING_GAME_STATE_22_ESCAPING_CERES as u16);
-                    word!(game.game_state = 34);
-                    save_slots::save(word!(game.selected_save_slot), game);
+                    word!(game.LOADING_GAME_STATE = K_LOADING_GAME_STATE_22_ESCAPING_CERES as u16);
+                    word!(game.GAME_STATE = 34);
+                    save_slots::save(word!(game.SELECTED_SAVE_SLOT), game);
                     crate::flow::set(
                         game,
                         crate::flow::Word::CinematicFunction,
                         (0x8bc11bi32) as u16,
                     );
-                    word! { game, 0; ceres_status, timer_status }
+                    word! { game, 0; CERES_STATUS, TIMER_STATUS }
                 } else {
-                    word!(game.game_state = K_GAME_STATE_39_ENDING_AND_CREDITS as u16);
+                    word!(game.GAME_STATE = K_GAME_STATE_39_ENDING_AND_CREDITS as u16);
                     crate::flow::set(
                         game,
                         crate::flow::Word::CinematicFunction,
                         (0x8bd480i32) as u16,
                     );
-                    word!(game.timer_status = 0);
+                    word!(game.TIMER_STATUS = 0);
                 }
                 game.queue_music_delayed8(0);
                 cancel_sound_effects(game, 15);
@@ -868,13 +868,13 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
             game.fade(false);
             if game.ram().read_byte(0x51) & 0xf == 0 {
                 game.enable_display_nmi(true);
-                word! { game, 0; screen_fade_delay, screen_fade_counter }
-                word!(game.game_state += 1);
+                word! { game, 0; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+                word!(game.GAME_STATE += 1);
             }
         }
         Entry::DemoStart => {
             game.update_hdma();
-            word!(game.game_state += 1);
+            word!(game.GAME_STATE += 1);
             game.ram().write_byte(0x51, 15);
         }
         Entry::Frame

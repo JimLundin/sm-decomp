@@ -37,37 +37,37 @@ const FIREFLEA_FLASH: [u16; 12] = [
 const FIREFLEA_DARKNESS: [u16; 6] = [0, 0x600, 0xc00, 0x1200, 0x1800, 0x1900];
 
 pub fn darken_fireflea_room<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    if word!(game.fireflea_darkness_level).wrapping_sub(12) & 0x8000 != 0 {
-        word!(game.fireflea_darkness_level += 2);
+    if word!(game.FIREFLEA_DARKNESS_LEVEL).wrapping_sub(12) & 0x8000 != 0 {
+        word!(game.FIREFLEA_DARKNESS_LEVEL += 2);
     }
 }
 
 pub fn initialize_fireflea_lighting<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    word! {game; fireflea_flashing_timer = 6; fireflea_flashing_index = 0; }
+    word! {game; FIREFLEA_FLASHING_TIMER = 6; FIREFLEA_FLASHING_INDEX = 0; }
     game.spawn_hdma(0x88, &HdmaObjectDefinition::new(0x42, 0x11, 0xb0ac));
     crate::word_transfers!(game, ascending, 1; native(0x9e00) <- value(0));
-    word! { game, 0; UNUSED_word_7E177C, fireflea_darkness_level }
-    word!(game.UNUSED_word_7E1780 = 24);
-    word!(game.UNUSED_word_7E1782 = FIREFLEA_FLASH[0]);
+    word! { game, 0; UNUSED_WORD_7E177C, FIREFLEA_DARKNESS_LEVEL }
+    word!(game.UNUSED_WORD_7E1780 = 24);
+    word!(game.UNUSED_WORD_7E1782 = FIREFLEA_FLASH[0]);
 }
 
 pub fn advance_fireflea_lighting<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    word!(game.fx_layer_blending_config_c = word!(game.fx_layer_blending_config_c) & 0xff00 | 0xc);
-    if word!(game.time_is_frozen_flag) != 0 {
+    word!(game.FX_LAYER_BLENDING_CONFIG_C = word!(game.FX_LAYER_BLENDING_CONFIG_C) & 0xff00 | 0xc);
+    if word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         return;
     }
-    if word!(game.fireflea_flashing_timer -= 1, reread) == 0 {
-        word!(game.fireflea_flashing_timer = 6);
-        let next = if word!(game.fireflea_darkness_level).wrapping_sub(10) & 0x8000 != 0 {
-            let next = word!(game.fireflea_flashing_index).wrapping_add(1);
+    if word!(game.FIREFLEA_FLASHING_TIMER -= 1, reread) == 0 {
+        word!(game.FIREFLEA_FLASHING_TIMER = 6);
+        let next = if word!(game.FIREFLEA_DARKNESS_LEVEL).wrapping_sub(10) & 0x8000 != 0 {
+            let next = word!(game.FIREFLEA_FLASHING_INDEX).wrapping_add(1);
             if next >= 12 { 0 } else { next }
         } else {
             6
         };
-        word!(game.fireflea_flashing_index = next);
+        word!(game.FIREFLEA_FLASHING_INDEX = next);
     }
-    let shade = (FIREFLEA_DARKNESS[usize::from(word!(game.fireflea_darkness_level) >> 1)]
-        .wrapping_add(FIREFLEA_FLASH[usize::from(word!(game.fireflea_flashing_index))])
+    let shade = (FIREFLEA_DARKNESS[usize::from(word!(game.FIREFLEA_DARKNESS_LEVEL) >> 1)]
+        .wrapping_add(FIREFLEA_FLASH[usize::from(word!(game.FIREFLEA_FLASHING_INDEX))])
         >> 8) as u8;
     game.ram().write_byte(0x75, shade | 0x80);
     game.ram().write_byte(0x76, shade | 0x40);
@@ -78,10 +78,10 @@ pub fn shake_room_with_sound<H: crate::menus::host::Host + ?Sized>(kind: u16, ga
     static SOUNDS: [u16; 17] = [
         0x46, 1, 0x46, 3, 0x46, 2, 0x46, 1, 0x46, 1, 0x46, 2, 0x46, 2, 0x46, 1, 0x8000,
     ];
-    if word!(game.earthquake_sfx_timer) & 0x8000 == 0
-        && word!(game.earthquake_sfx_timer -= 1, reread) & 0x8000 != 0
+    if word!(game.EARTHQUAKE_SFX_TIMER) & 0x8000 == 0
+        && word!(game.EARTHQUAKE_SFX_TIMER -= 1, reread) & 0x8000 != 0
     {
-        let mut index = word!(game.earthquake_sfx_index);
+        let mut index = word!(game.EARTHQUAKE_SFX_INDEX);
         let mut sound = SOUNDS[usize::from(index >> 1)];
         if sound & 0x8000 != 0 {
             index = 0;
@@ -89,11 +89,11 @@ pub fn shake_room_with_sound<H: crate::menus::host::Host + ?Sized>(kind: u16, ga
         }
         game.queue_sound(1, (sound) as u8, 6);
         word!(
-            game.earthquake_sfx_timer = SOUNDS[usize::from(index >> 1) + 1]
+            game.EARTHQUAKE_SFX_TIMER = SOUNDS[usize::from(index >> 1) + 1]
                 .wrapping_add(index & 1)
-                .wrapping_add(word!(game.random_number) & 3)
+                .wrapping_add(word!(game.RANDOM_NUMBER) & 3)
         );
-        word!(game.earthquake_sfx_index = index.wrapping_add(4));
+        word!(game.EARTHQUAKE_SFX_INDEX = index.wrapping_add(4));
     }
     crate::room_view::set_effect(game, crate::room_view::EffectWord::EarthquakeKind, kind);
     crate::room_view::set_effect(
@@ -156,7 +156,7 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + ?Sized>(
             }
         }
         Sinking => {
-            if word!(game.time_is_frozen_flag) != 0 {
+            if word!(game.TIME_IS_FROZEN_FLAG) != 0 {
                 return;
             }
             // A is the fraction and B the whole of the statue's scroll offset.
@@ -210,7 +210,7 @@ pub fn initialize_ceres_elevator<H: crate::menus::host::Host + ?Sized>(game: &mu
 
 pub fn initialize_draygon_layer<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     spawn_hdma(0x88, &HdmaObjectDefinition::new(0, 0x2c, 0xdf4f), game);
-    word!(game.room_loading_irq_handler = 12);
+    word!(game.ROOM_LOADING_IRQ_HANDLER = 12);
     spawn_bg3_scroll(game);
 }
 
@@ -228,9 +228,9 @@ pub fn initialize_phantoon_motion<H: crate::menus::host::Host + ?Sized>(
 }
 
 pub fn initialize_intro_wave<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    word!(game.wavy_samus_enabled = 1);
+    word!(game.WAVY_SAMUS_ENABLED = 1);
     crate::word_transfers!(game, ascending, 1; native(0xd9e) <- value(0x4000));
-    word!(game.loop_counter_transfer_enemies_to_vram = 8);
+    word!(game.LOOP_COUNTER_TRANSFER_ENEMIES_TO_VRAM = 8);
     game.hdma_effect(
         HdmaEffect::InitializeWavePair {
             base: 0xd82,
@@ -248,8 +248,8 @@ pub fn scroll_weather<H: crate::menus::host::Host + ?Sized>(
 ) {
     use crate::ram::checked_word;
     game.ram().write_byte(0x5b, 92);
-    checked_word!(game.fx_layer_blending_config_c = checked_word!(game.fx_layer_blending_config_b));
-    if checked_word!(game.time_is_frozen_flag) != 0 {
+    checked_word!(game.FX_LAYER_BLENDING_CONFIG_C = checked_word!(game.FX_LAYER_BLENDING_CONFIG_B));
+    if checked_word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         return;
     }
     game.hdma_effect(HdmaEffect::ScrollWeather(weather), slot);
@@ -280,8 +280,8 @@ where
 pub fn align_crocomire_background<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     use crate::actors::layouts::EnemyLayout72 as Crocomire;
     use crate::ram::slot;
-    let primary = i32::from(word!(game.cur_enemy_index));
-    let secondary = i32::from(word!(game.cur_enemy_index)) + 64;
+    let primary = i32::from(word!(game.CUR_ENEMY_INDEX));
+    let secondary = i32::from(word!(game.CUR_ENEMY_INDEX)) + 64;
     slot!(
         game,
         Crocomire[secondary].base.x_pos = slot!(game, Crocomire[secondary].var_a)
@@ -295,7 +295,7 @@ pub fn align_crocomire_background<H: crate::menus::host::Host + ?Sized>(game: &m
         .wrapping_sub(crate::camera::current(game).layer1[0]) as i16;
     let offset = 51u16.wrapping_sub(relative as u16);
     word!(
-        game.reg_BG2HOFS =
+        game.REG_BG2HOFS =
             if (-128..384).contains(&relative) && (offset as i16).unsigned_abs() < 284 {
                 offset
             } else {

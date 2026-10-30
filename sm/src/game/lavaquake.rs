@@ -11,25 +11,25 @@ use {
 
 pub(crate) fn update(initialize: bool, game: &mut Game) {
     let mut runtime = Runtime::new(game);
-    let key = Key::from_legacy(runtime.word(W::cur_enemy_index));
+    let key = Key::from_legacy(runtime.word(W::CUR_ENEMY_INDEX));
     if initialize {
         runtime.edit_actor(key, Native, |actor| {
             actor.restart_animation(0xb51a);
             actor.variables[0] = 0xb596;
         });
-        runtime.write_word_le(17, W::random_number);
+        runtime.write_word_le(17, W::RANDOM_NUMBER);
         return;
     }
     let phase = runtime.resolve_actor(key, Native).variables[0];
     match phase {
         0xb596 => {
             for axis in [Axis::X, Axis::Y] {
-                let live = Key::from_legacy(runtime.word(W::cur_enemy_index));
+                let live = Key::from_legacy(runtime.word(W::CUR_ENEMY_INDEX));
                 if !api::player_within(&mut runtime, live, axis, 0x40) {
                     return;
                 }
             }
-            let live = Key::from_legacy(runtime.word(W::cur_enemy_index));
+            let live = Key::from_legacy(runtime.word(W::CUR_ENEMY_INDEX));
             runtime.edit_actor(live, Native, |actor| actor.variables[0] = 0xb5b2);
         }
         0xb5b2 => {
@@ -37,13 +37,13 @@ pub(crate) fn update(initialize: bool, game: &mut Game) {
             let image = runtime.loaded_image().expect("ROM must be loaded");
             let index = (runtime.next_random() & 0x1e) >> 1;
             let position = image.table_word(0x113550, index as isize);
-            runtime.write_word_le(position, W::cinematic_y_sub);
+            runtime.write_word_le(position, W::CINEMATIC_Y_SUB);
             let index = (runtime.next_random() & 0x1e) >> 1;
             let image = runtime.loaded_image().expect("ROM must be loaded");
             let parameter = image.table_word(0x113530, index as isize);
-            let live = runtime.word(W::cur_enemy_index);
+            let live = runtime.word(W::CUR_ENEMY_INDEX);
             runtime.foreign(|game| spawn_with_enemy_gfx(parameter, live, 0xbd5a, game));
-            let live = Key::from_legacy(runtime.word(W::cur_enemy_index));
+            let live = Key::from_legacy(runtime.word(W::CUR_ENEMY_INDEX));
             runtime.edit_actor(live, Native, |actor| actor.variables[0] = 0xb5ea);
             let image = runtime.loaded_image().expect("ROM must be loaded");
             let index = (runtime.next_random() & 0xe) >> 1;

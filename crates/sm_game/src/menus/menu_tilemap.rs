@@ -113,7 +113,7 @@ pub fn file_rows<H: Host + ?Sized>(emphasis: FileRowEmphasis, game: &mut H) {
     for slot in 0..3u16 {
         save_slots::load(slot, game);
         let dim = match emphasis {
-            FileRowEmphasis::Occupied => word!(game.nonempty_save_slots) & (1 << slot) == 0,
+            FileRowEmphasis::Occupied => word!(game.NONEMPTY_SAVE_SLOTS) & (1 << slot) == 0,
             FileRowEmphasis::Destination => {
                 with_file_select(game, |menu| *menu.file_copy_source_slot() == slot)
             }
@@ -124,8 +124,8 @@ pub fn file_rows<H: Host + ?Sized>(emphasis: FileRowEmphasis, game: &mut H) {
         set_palette(if dim { 1024 } else { 0 }, game);
         let mask = 1 << slot;
         let base = (slot + 2) << 8;
-        health(!word!(game.nonempty_save_slots) & mask, base + 0x18, game);
-        time(!word!(game.nonempty_save_slots) & mask, base + 0x72, game);
+        health(!word!(game.NONEMPTY_SAVE_SLOTS) & mask, base + 0x18, game);
+        time(!word!(game.NONEMPTY_SAVE_SLOTS) & mask, base + 0x72, game);
         load(base + 0x34, ADDR_K_MENU_TILEMAP_TIME as u16, game);
         load(base + 8, FILE_LABELS[usize::from(slot)], game);
     }
@@ -135,7 +135,7 @@ pub fn file_rows<H: Host + ?Sized>(emphasis: FileRowEmphasis, game: &mut H) {
 /// Requires the native file-menu definitions for its text and tile reads.
 pub fn main_menu<H: Host + ?Sized>(game: &mut H) {
     clear(game);
-    word!(game.nonempty_save_slots = u16::MAX);
+    word!(game.NONEMPTY_SAVE_SLOTS = u16::MAX);
     set_palette(0, game);
     load(0x56, ADDR_K_MENU_TILEMAP_SAMUS_DATA as u16, game);
     for (slot, label) in FILE_LABELS.into_iter().enumerate() {
@@ -147,15 +147,15 @@ pub fn main_menu<H: Host + ?Sized>(game: &mut H) {
         load(top, label, game);
         let empty = save_slots::load(slot as u16, game);
         word!(
-            game.nonempty_save_slots =
-                (word!(game.nonempty_save_slots) >> 1) | (u16::from(empty) << 15)
+            game.NONEMPTY_SAVE_SLOTS =
+                (word!(game.NONEMPTY_SAVE_SLOTS) >> 1) | (u16::from(empty) << 15)
         );
-        health(word!(game.nonempty_save_slots) & 0x8000, top + 0x16, game);
-        time(word!(game.nonempty_save_slots) & 0x8000, top + 0x6e, game);
+        health(word!(game.NONEMPTY_SAVE_SLOTS) & 0x8000, top + 0x16, game);
+        time(word!(game.NONEMPTY_SAVE_SLOTS) & 0x8000, top + 0x6e, game);
         load(top + 0x30, ADDR_K_MENU_TILEMAP_TIME as u16, game);
     }
-    word!(game.nonempty_save_slots = (!word!(game.nonempty_save_slots)).swap_bytes() >> 5);
-    if word!(game.nonempty_save_slots) != 0 {
+    word!(game.NONEMPTY_SAVE_SLOTS = (!word!(game.NONEMPTY_SAVE_SLOTS)).swap_bytes() >> 5);
+    if word!(game.NONEMPTY_SAVE_SLOTS) != 0 {
         set_palette(0, game);
         load(0x508, ADDR_K_MENU_TILEMAP_DATA_COPY as u16, game);
         set_palette(0, game);
@@ -165,7 +165,7 @@ pub fn main_menu<H: Host + ?Sized>(game: &mut H) {
     load(0x688, ADDR_K_MENU_TILEMAP_EXIT as u16, game);
     upload(MENU_TILEMAP_BYTES, MENU_TILEMAP_SOURCE, 0, true, game);
     // The copy arrow's palette timer is outside the Session-owned table.
-    word!(game.file_copy_arrow_palette_timer = 0);
+    word!(game.FILE_COPY_ARROW_PALETTE_TIMER = 0);
     with_file_select(game, |menu| {
         *menu.missile_animation_timer() = 1;
         *menu.missile_animation_frame() = 0;
@@ -179,9 +179,9 @@ pub fn main_menu<H: Host + ?Sized>(game: &mut H) {
             *menu.helmet_y(helmet) = y;
         }
     });
-    word! { game, 1; screen_fade_delay, screen_fade_counter }
+    word! { game, 1; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
     game.set_blank(false);
-    crate::menu!(game.menu_index += 1);
+    crate::menu!(game.MenuIndex += 1);
     with_file_select(game, |menu| {
         *menu.file_copy_selection() = 0;
         *menu.file_copy_source_slot() = 0;
@@ -220,8 +220,8 @@ pub fn prepare_graphics<H: Host + ?Sized>(game: &mut H) {
 
 pub fn load_palette<H: Host + ?Sized>(game: &mut H) {
     crate::word_transfers!(game, (4), 128;
-        le(palette_buffer, 0) <- rom(MENU_PALETTES, 0),
-        le(palette_buffer, 1) <- rom(MENU_PALETTES, 1),
+        le(PALETTE_BUFFER, 0) <- rom(MENU_PALETTES, 0),
+        le(PALETTE_BUFFER, 1) <- rom(MENU_PALETTES, 1),
     );
 }
 
@@ -232,7 +232,7 @@ pub fn upload<H: Host + ?Sized>(
     bank_word: bool,
     game: &mut H,
 ) {
-    let tail = word!(game.vram_write_queue_tail);
+    let tail = word!(game.VRAM_WRITE_QUEUE_TAIL);
     let entry = 0xd0 + usize::from(tail);
     game.ram().copy_in(entry, &size.to_ne_bytes());
     game.ram()
@@ -247,7 +247,7 @@ pub fn upload<H: Host + ?Sized>(
     let destination =
         u16::from(game.ram().read_byte(crate::ram::mirror::BG1SC + screen) & 0xfc) << 8;
     game.ram().copy_in(entry + 5, &destination.to_ne_bytes());
-    word!(game.vram_write_queue_tail = tail.wrapping_add(7));
+    word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(7));
 }
 
 fn paint<H: Host + ?Sized>(offset: usize, tile: u16, game: &mut H) {
@@ -353,9 +353,9 @@ pub fn time<H: Host + ?Sized>(empty: u16, offset: u16, game: &mut H) {
     if empty != 0 {
         return;
     }
-    number(usize::from(offset), word!(game.game_time_hours), game);
+    number(usize::from(offset), word!(game.GAME_TIME_HOURS), game);
     load(offset.wrapping_add(4), COLON_TEXT, game);
-    number(usize::from(offset) + 6, word!(game.game_time_minutes), game);
+    number(usize::from(offset) + 6, word!(game.GAME_TIME_MINUTES), game);
 }
 
 #[forbid(unsafe_code)]
@@ -391,7 +391,7 @@ pub fn area_palette<H: Host + ?Sized>(area: u16, active: bool, game: &mut H) {
 fn copy_area_colors<H: Host + ?Sized>(mut source: u16, mut destination: u16, game: &mut H) {
     for _ in 0..5 {
         word!(
-            game.palette_buffer[destination >> 1] =
+            game.PALETTE_BUFFER[destination >> 1] =
                 crate::menu_lists::area_select_colour(game, (source >> 1) as isize)
         );
         destination = destination.wrapping_add(2);
@@ -410,7 +410,7 @@ pub fn controller_bindings<H: Host + ?Sized>(game: &mut H) {
         let address = 0x820000
             | u32::from(crate::menu_lists::binding_button_tilemap(
                 game,
-                word!(game.options_controller_bindings[index]) as isize,
+                word!(game.OPTIONS_CONTROLLER_BINDINGS[index]) as isize,
             ));
         if address & 0x8000 == 0 {
             game.invalid_window(address);
@@ -428,8 +428,8 @@ pub fn controller_bindings<H: Host + ?Sized>(game: &mut H) {
     let cleared_hint = [0, 0xe, 0xe, 0x10, 0x1f, 0x1f];
     let hints = [cell(20, 23), cell(23, 23)].map(|at| OPTIONS_TILEMAP + at);
     for (index, destination) in hints.into_iter().enumerate() {
-        if word!(game.options_controller_bindings[index + 5]) != 5
-            && word!(game.options_controller_bindings[index + 5]) != 6
+        if word!(game.OPTIONS_CONTROLLER_BINDINGS[index + 5]) != 5
+            && word!(game.OPTIONS_CONTROLLER_BINDINGS[index + 5]) != 6
         {
             crate::word_transfers!(game, ascending, 3;
                 native(destination) <- table(cleared_hint, 0));
@@ -458,12 +458,12 @@ pub enum ReserveArrow {
 }
 
 pub fn update_reserve_arrow<H: Host + ?Sized>(game: &mut H) {
-    let mode = if crate::menu!(game.pausemenu_equipment_category_item) as u8 != 0 {
+    let mode = if crate::menu!(game.PausemenuEquipmentCategoryItem) as u8 != 0 {
         ReserveArrow::Off
     } else {
         [ReserveArrow::Animated, ReserveArrow::On][usize::from(crate::menu_state::get_byte(
             &*game,
-            crate::menu_state::Word::pausemenu_equipment_category_item,
+            crate::menu_state::Word::PausemenuEquipmentCategoryItem,
             1,
         ))]
     };
@@ -479,15 +479,15 @@ pub fn reserve_arrow<H: Host + ?Sized>(mode: ReserveArrow, game: &mut H) {
     if matches!(mode, ReserveArrow::Animated) && lit {
         let index = usize::from(
             game.ram()
-                .read_byte(crate::ram::bytes::nmi_frame_counter_byte)
+                .read_byte(crate::ram::bytes::NMI_FRAME_COUNTER_BYTE)
                 & 0x1f,
         );
-        word!(game.palette_buffer[102] = RESERVE_ARROW_COLORS[index]);
-        word!(game.palette_buffer[107] = RESERVE_ARROW_SHADOWS[index]);
+        word!(game.PALETTE_BUFFER[102] = RESERVE_ARROW_COLORS[index]);
+        word!(game.PALETTE_BUFFER[107] = RESERVE_ARROW_SHADOWS[index]);
     } else {
         // The idle arrow holds the cycle's first entries, in the opposite slots.
-        word! {game; palette_buffer[107] = RESERVE_ARROW_COLORS[0];
-        palette_buffer[102] = RESERVE_ARROW_SHADOWS[0]; }
+        word! {game; PALETTE_BUFFER[107] = RESERVE_ARROW_COLORS[0];
+        PALETTE_BUFFER[102] = RESERVE_ARROW_SHADOWS[0]; }
     }
     reserve_arrow_tiles(lit, game);
 }
@@ -669,7 +669,7 @@ fn reserve_digits<H: Host + ?Sized>(hundreds: u16, remainder: u16, game: &mut H)
 pub fn queue_equipment_wireframe<H: Host + ?Sized>(game: &mut H) {
     equipment_wireframe(game);
     game.queue_native_transfer(
-        word!(game.vram_write_queue_tail),
+        word!(game.VRAM_WRITE_QUEUE_TAIL),
         1280,
         &|_| (EQUIPMENT_TILEMAP + cell(4, 0)) as u16,
         126,
@@ -679,7 +679,7 @@ pub fn queue_equipment_wireframe<H: Host + ?Sized>(game: &mut H) {
 
 pub fn queue_pause_labels<H: Host + ?Sized>(game: &mut H) {
     game.queue_native_transfer(
-        word!(game.vram_write_queue_tail),
+        word!(game.VRAM_WRITE_QUEUE_TAIL),
         128,
         &|_| (PAUSE_TILEMAP + cell(25, 0)) as u16,
         126,
@@ -689,7 +689,7 @@ pub fn queue_pause_labels<H: Host + ?Sized>(game: &mut H) {
 
 pub fn queue_options<H: Host + ?Sized>(game: &mut H) {
     game.queue_native_transfer(
-        word!(game.vram_write_queue_tail),
+        word!(game.VRAM_WRITE_QUEUE_TAIL),
         2048,
         &|_| OPTIONS_TILEMAP as u16,
         126,
@@ -701,19 +701,18 @@ fn reserve_palette<H: Host + ?Sized>(game: &mut H) -> u16 {
     if inventory!(game.ReserveHealth) == 0 {
         return 1536;
     }
-    let expired =
-        crate::menu!(game.pausemenu_reserve_tank_animation_timer -= 1, reread) & 0x8000 != 0;
-    if crate::menu!(game.pausemenu_reserve_tank_animation_timer) == 0 || expired {
-        crate::menu!(game.pausemenu_reserve_tank_animation_frame += 1);
+    let expired = crate::menu!(game.PausemenuReserveTankAnimationTimer -= 1, reread) & 0x8000 != 0;
+    if crate::menu!(game.PausemenuReserveTankAnimationTimer) == 0 || expired {
+        crate::menu!(game.PausemenuReserveTankAnimationFrame += 1);
         let mut timer = u16::from(
             native_record(RESERVE_TANK_ANIMATION, game)
-                .byte(2 * usize::from(crate::menu!(game.pausemenu_reserve_tank_animation_frame))),
+                .byte(2 * usize::from(crate::menu!(game.PausemenuReserveTankAnimationFrame))),
         );
         if timer == 255 {
-            crate::menu!(game.pausemenu_reserve_tank_animation_frame = 0);
+            crate::menu!(game.PausemenuReserveTankAnimationFrame = 0);
             timer = u16::from(native_record(RESERVE_TANK_ANIMATION, game).byte(0));
         }
-        crate::menu!(game.pausemenu_reserve_tank_animation_timer = timer);
+        crate::menu!(game.PausemenuReserveTankAnimationTimer = timer);
     }
     super::map_menu::animation_palette(game, 3)
 }
@@ -742,7 +741,7 @@ pub fn reserve_tanks<H: Host + ?Sized>(game: &mut H) {
             && !remainder.is_multiple_of(14)
             && game
                 .ram()
-                .read_byte(crate::ram::bytes::nmi_frame_counter_byte)
+                .read_byte(crate::ram::bytes::NMI_FRAME_COUNTER_BYTE)
                 & 4
                 == 0
         {

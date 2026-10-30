@@ -109,8 +109,8 @@ pub trait HdmaEffects: Host {
     fn select_phantoon_layer(&mut self) {
         use crate::actors::access::AccessMode::Native;
         use crate::ram::words as ram;
-        if self.word(ram::phantom_related_layer_flag) & 0x4000 != 0 {
-            self.write_slice_le(ram::fx_layer_blending_config_c, 26);
+        if self.word(ram::PHANTOM_RELATED_LAYER_FLAG) & 0x4000 != 0 {
+            self.write_slice_le(ram::FX_LAYER_BLENDING_CONFIG_C, 26);
         } else {
             // The native first byte belongs to EnemyData record 3, parameter 1.
             let alpha = self
@@ -118,9 +118,9 @@ pub trait HdmaEffects: Host {
                 .parameters[0]
                 .to_ne_bytes()[0];
             match alpha {
-                0 => self.write_slice_le(ram::fx_layer_blending_config_c, 4),
+                0 => self.write_slice_le(ram::FX_LAYER_BLENDING_CONFIG_C, 4),
                 0xff => {
-                    self.write_slice_le(ram::fx_layer_blending_config_c, 4);
+                    self.write_slice_le(ram::FX_LAYER_BLENDING_CONFIG_C, 4);
                     advance_program(self.current_hdma_object());
                 }
                 _ => {}
@@ -185,7 +185,7 @@ pub trait HdmaEffects: Host {
             let speed = if phantoon {
                 self.resolve_actor(motion, Native).pre_instruction
             } else {
-                self.word(ram::loop_counter_transfer_enemies_to_vram)
+                self.word(ram::LOOP_COUNTER_TRANSFER_ENEMIES_TO_VRAM)
             };
             let object = self.hdma_object(slot);
             object.a = speed.wrapping_mul(2).wrapping_add(object.a) & 0x1ff;
@@ -193,9 +193,9 @@ pub trait HdmaEffects: Host {
         let mut phase = self.hdma_object(slot).a;
         // Cinematic BG3 data is separate from Phantoon's BG2 table.
         let (scroll, store, table) = if phantoon {
-            (ram::reg_BG2HOFS, Store::SliceNative, ram::phantoon_waves)
+            (ram::REG_BG2HOFS, Store::SliceNative, ram::PHANTOON_WAVES)
         } else {
-            (ram::reg_BG3HOFS, Store::SliceLe, arrays::hdma_table_1)
+            (ram::REG_BG3HOFS, Store::SliceLe, arrays::HDMA_TABLE_1)
         };
         for row in 0..256 / step {
             let sample = SINE_COSINE[usize::from(phase >> 1) + 64];
@@ -384,7 +384,7 @@ pub trait HdmaEffects: Host {
         // Each axis has a phase word (A and B, or C and D for spores) and
         // rain's camera history (E and F). Finish each axis, including the
         // history, before reading the next.
-        for (vertical, camera, output) in [(true, 1, ram::bg3_ypos), (false, 0, ram::bg3_xpos)] {
+        for (vertical, camera, output) in [(true, 1, ram::BG3_YPOS), (false, 0, ram::BG3_XPOS)] {
             let object = *self.hdma_object(slot);
             let (phase, history) = match (spores, vertical) {
                 (false, true) => (object.a, object.e),

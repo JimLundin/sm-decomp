@@ -24,7 +24,7 @@ const QUARTER_TURN: usize = 0x40;
 /// Initialisation AI - Draygon eye ($A5:C46B).
 pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
     let mut runtime = game.lease();
-    let key = Key::from_legacy(runtime.word(words::cur_enemy_index));
+    let key = Key::from_legacy(runtime.word(words::CUR_ENEMY_INDEX));
     runtime.edit_actor(key, Native, |actor| {
         actor.instruction = list::EYE_LEFT_IDLE;
         actor.variables[0] = function::NONE;
@@ -81,7 +81,7 @@ pub fn look_at_samus<H: LeaseActors + ?Sized>(k: u16, right: bool, game: &mut H)
     let angle = angle_from_delta(x, y);
     // The caller's k selects the emission timer; the post-callback live selector
     // chooses the eye animation and its previous-angle cache.
-    let key = Key::from_legacy(runtime.word(words::cur_enemy_index));
+    let key = Key::from_legacy(runtime.word(words::CUR_ENEMY_INDEX));
     if angle != runtime.resolve_actor(key, Native).pre_instruction {
         let instructions = if right {
             [

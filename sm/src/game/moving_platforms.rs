@@ -82,7 +82,7 @@ impl Kind {
 // A slot is an address, never a borrow or pointer retained across callbacks.
 #[forbid(unsafe_code)]
 fn slot(game: &Game) -> usize {
-    0xf78 + usize::from(word!(game.cur_enemy_index))
+    0xf78 + usize::from(word!(game.CUR_ENEMY_INDEX))
 }
 macro_rules! field {
     ($game:ident, $slot:ident, $($field:ident).+ $(= $value:expr)?) => {
@@ -204,7 +204,7 @@ pub(crate) fn initialize(kind: Kind, game: &mut Game) {
     }
     field!(game, e, var_a = p.state(WaitForTrigger));
     if p.horizontal {
-        field!(game, e, var_15 = word!(game.samus_x_pos));
+        field!(game, e, var_15 = word!(game.SAMUS_X_POS));
     }
     field!(game, e, base.extra_properties = 0);
     field!(game, e, var_0a = 0);
@@ -257,7 +257,7 @@ pub(crate) unsafe fn update(kind: Kind, game: &mut Game) {
                 1 => {
                     ({
                         let (actor, distance) =
-                            (word!(game.cur_enemy_index), field!(game, e, var_06));
+                            (word!(game.CUR_ENEMY_INDEX), field!(game, e, var_06));
                         u16::from(actor_api::player_within(
                             &mut Runtime::new(game),
                             Key::from_legacy(actor),
@@ -317,21 +317,21 @@ pub(crate) unsafe fn update(kind: Kind, game: &mut Game) {
         _ => {}
     }
     let p = kind.motion();
-    let collision = word!(game.enemy_index_colliding_dirs[3])
-        & word!(game.enemy_index_colliding_dirs[2])
-        & word!(game.enemy_index_colliding_dirs[1])
-        & word!(game.enemy_index_colliding_dirs[0]);
+    let collision = word!(game.ENEMY_INDEX_COLLIDING_DIRS[3])
+        & word!(game.ENEMY_INDEX_COLLIDING_DIRS[2])
+        & word!(game.ENEMY_INDEX_COLLIDING_DIRS[1])
+        & word!(game.ENEMY_INDEX_COLLIDING_DIRS[0]);
     if field!(game, e, var_a) != p.state(MovingNegative)
         && field!(game, e, var_a) != p.state(MovingPositive)
         && collision != 0xffff
-        && collision == word!(game.cur_enemy_index)
-        && word!(game.samus_contact_damage_index) != 0
+        && collision == word!(game.CUR_ENEMY_INDEX)
+        && word!(game.SAMUS_CONTACT_DAMAGE_INDEX) != 0
     {
         activate(p, game);
     }
     if p.horizontal {
-        field!(game, e, var_15 = word!(game.samus_x_pos));
-        field!(game, e, var_16 = word!(game.samus_x_subpos));
+        field!(game, e, var_15 = word!(game.SAMUS_X_POS));
+        field!(game, e, var_16 = word!(game.SAMUS_X_SUBPOS));
     }
 }
 
@@ -347,13 +347,13 @@ fn travel(p: &Motion, positive: bool, game: &mut Game) {
         field!(game, e, var_0d = field!(game, e, base.x_pos));
         field!(game, e, var_13 = 0);
         if ({
-            let actor = word!(game.cur_enemy_index);
+            let actor = word!(game.CUR_ENEMY_INDEX);
             0u16.wrapping_sub(u16::from(actor_api::overlaps_player_with_padding(
                 &Runtime::new(game),
                 Key::from_legacy(actor),
             )))
         }) != 0
-            && (((word!(game.samus_x_pos) as i16).wrapping_sub(field!(game, e, base.x_pos) as i16)
+            && (((word!(game.SAMUS_X_POS) as i16).wrapping_sub(field!(game, e, base.x_pos) as i16)
                 >= 0)
                 == positive)
         {
@@ -365,8 +365,8 @@ fn travel(p: &Motion, positive: bool, game: &mut Game) {
         field!(game, e, base.x_subpos = next as u16);
         field!(game, e, base.x_pos = (next >> 16) as u16);
         if field!(game, e, var_13) != 0 {
-            word!(game.extra_samus_x_subdisplacement = speed as u16);
-            word!(game.extra_samus_x_displacement = (speed >> 16) as u16);
+            word!(game.EXTRA_SAMUS_X_SUBDISPLACEMENT = speed as u16);
+            word!(game.EXTRA_SAMUS_X_DISPLACEMENT = (speed >> 16) as u16);
             push_samus(positive, game);
         }
         (
@@ -381,7 +381,7 @@ fn travel(p: &Motion, positive: bool, game: &mut Game) {
         field!(game, e, var_0e = field!(game, e, base.y_pos));
         field!(game, e, var_0a = 0);
         if ({
-            let actor = word!(game.cur_enemy_index);
+            let actor = word!(game.CUR_ENEMY_INDEX);
             0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(
                 &Runtime::new(game),
                 Key::from_legacy(actor),
@@ -397,7 +397,7 @@ fn travel(p: &Motion, positive: bool, game: &mut Game) {
         field!(game, e, base.y_pos = (next >> 16) as u16);
         if field!(game, e, var_0a) != 0 {
             word!(
-                game.extra_samus_y_displacement =
+                game.EXTRA_SAMUS_Y_DISPLACEMENT =
                     field!(game, e, base.y_pos).wrapping_sub(field!(game, e, var_0e))
             );
         }
@@ -441,9 +441,9 @@ fn travel(p: &Motion, positive: bool, game: &mut Game) {
 #[forbid(unsafe_code)]
 fn push_samus(positive: bool, game: &mut Game) {
     let key = if positive { 0x200 } else { 0x100 };
-    if word!(game.joypad1_lastkeys) & key != 0 {
-        word!(game.extra_samus_x_displacement += if positive { 4 } else { -4i16 as u16 });
-        word!(game.extra_samus_y_subdisplacement = 0);
+    if word!(game.JOYPAD1_LASTKEYS) & key != 0 {
+        word!(game.EXTRA_SAMUS_X_DISPLACEMENT += if positive { 4 } else { -4i16 as u16 });
+        word!(game.EXTRA_SAMUS_Y_SUBDISPLACEMENT = 0);
     }
 }
 
@@ -500,13 +500,13 @@ pub(crate) unsafe fn react(kind: Kind, event: Event, game: &mut Game) {
     if kind == Kind::HorizontalShutter && matches!(event, Event::Touch) {
         let e = slot(game);
         if field!(game, e, var_a) == HORIZONTAL.state(Stopped) {
-            let positive = (word!(game.samus_x_pos) as i16)
+            let positive = (word!(game.SAMUS_X_POS) as i16)
                 .wrapping_sub(field!(game, e, base.x_pos) as i16)
                 >= 0;
             let key = if positive { 0x200 } else { 0x100 };
-            if word!(game.joypad1_lastkeys) & key != 0 {
-                word!(game.extra_samus_x_displacement = if positive { 4 } else { -4i16 as u16 });
-                word!(game.extra_samus_y_subdisplacement = 0);
+            if word!(game.JOYPAD1_LASTKEYS) & key != 0 {
+                word!(game.EXTRA_SAMUS_X_DISPLACEMENT = if positive { 4 } else { -4i16 as u16 });
+                word!(game.EXTRA_SAMUS_Y_SUBDISPLACEMENT = 0);
             }
         }
     } else {
@@ -522,7 +522,7 @@ unsafe fn update_timed(game: &mut Game) {
             let ready = if proximity {
                 ({
                     let (actor, distance) =
-                        (word!(game.cur_enemy_index), field!(game, e, parameter_1));
+                        (word!(game.CUR_ENEMY_INDEX), field!(game, e, parameter_1));
                     u16::from(actor_api::player_within(
                         &mut Runtime::new(game),
                         Key::from_legacy(actor),
@@ -608,7 +608,7 @@ unsafe fn update_timed(game: &mut Game) {
             }
             if opening
                 && ({
-                    let actor = word!(game.cur_enemy_index);
+                    let actor = word!(game.CUR_ENEMY_INDEX);
                     0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(
                         &Runtime::new(game),
                         Key::from_legacy(actor),
@@ -618,7 +618,7 @@ unsafe fn update_timed(game: &mut Game) {
                 let displacement =
                     field!(game, e, base.y_pos).wrapping_sub(field!(game, e, var_40));
                 if (displacement as i16) < 0 {
-                    word!(game.extra_samus_y_displacement += displacement);
+                    word!(game.EXTRA_SAMUS_Y_DISPLACEMENT += displacement);
                 }
             }
         }

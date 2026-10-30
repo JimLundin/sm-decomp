@@ -141,19 +141,19 @@ fn check() {
                 expected[at..at + 2].copy_from_slice(&value.to_ne_bytes());
             }
             g.ram().copy_in(
-                crate::ram_map::words::debug_time_frozen_for_enemies,
+                crate::ram_map::words::DEBUG_TIME_FROZEN_FOR_ENEMIES,
                 &(7u16).to_le_bytes(),
             );
             put(
                 &mut expected,
-                crate::ram_map::words::debug_time_frozen_for_enemies,
+                crate::ram_map::words::DEBUG_TIME_FROZEN_FOR_ENEMIES,
                 7,
             );
             g.ram().copy_in(
-                crate::ram_map::words::cur_enemy_index,
+                crate::ram_map::words::CUR_ENEMY_INDEX,
                 &(0x80u16).to_le_bytes(),
             );
-            put(&mut expected, crate::ram_map::words::cur_enemy_index, 0x80);
+            put(&mut expected, crate::ram_map::words::CUR_ENEMY_INDEX, 0x80);
         });
         projection(&h, &expected);
         assert_eq!(

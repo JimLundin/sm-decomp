@@ -473,7 +473,7 @@ pub(crate) fn separated_from_rect<L: Lease + ?Sized>(k: u16, rect: Rect, game: &
 }
 
 fn current<L: Lease + ?Sized>(game: &L) -> i32 {
-    word!(game.cur_enemy_index) as i32
+    word!(game.CUR_ENEMY_INDEX) as i32
 }
 
 /// Count down Ridley's function timer; true once it is negative.
@@ -529,7 +529,7 @@ fn queue_tile_pair<L: Lease + ?Sized>(
     destinations: [u16; 2],
     size: u16,
 ) {
-    let tail = word!(game.vram_write_queue_tail);
+    let tail = word!(game.VRAM_WRITE_QUEUE_TAIL);
     let entry = |n: usize| VRAM_WRITE_QUEUE + usize::from(tail) + n * usize::from(VRAM_WRITE_ENTRY);
     let store = |game: &mut L, at: usize, value: u16| {
         let bytes = value.to_ne_bytes();
@@ -548,7 +548,7 @@ fn queue_tile_pair<L: Lease + ?Sized>(
     for n in 0..2 {
         store(game, entry(n), size);
     }
-    word!(game.vram_write_queue_tail = tail.wrapping_add(2 * VRAM_WRITE_ENTRY));
+    word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(2 * VRAM_WRITE_ENTRY));
     store(game, entry(2), 0);
 }
 
@@ -595,7 +595,7 @@ pub fn homing_velocity(
 /// Move the current enemy by its X and Y velocities: subpixels in the low
 /// bytes, pixels in the signed high bytes. Was `MoveEnemyWithVelocity`.
 fn move_with_velocity<L: Lease + ?Sized>(game: &mut L) {
-    let e = word!(game.cur_enemy_index) as i32;
+    let e = word!(game.CUR_ENEMY_INDEX) as i32;
     let x_velocity = session_slot!(game, Explosion[e].x_velocity);
     let carry = session_slot!(byte game, Explosion[e].base.x_subpos[1]) as i32
         + x_velocity.to_ne_bytes()[0] as i32;
@@ -638,11 +638,11 @@ pub fn handle_baby_metroid<L: Lease + ?Sized>(game: &mut L) {
 pub fn draw_baby_metroid_and_door<L: Lease + ?Sized>(game: &mut L) {
     /// Ceres Ridley door X offsets during earthquake ($A6:A321).
     const EARTHQUAKE_X_OFFSETS: [i16; 4] = [0, -1024, -4, -1];
-    if word!(game.ceres_status) == 0 {
+    if word!(game.CERES_STATUS) == 0 {
         draw_baby_metroid(game);
     }
     if session_slot!(game, CeresDoor[CERES_DOOR].drawn_by_ridley) != 0 {
-        let offset = EARTHQUAKE_X_OFFSETS[(word!(game.earthquake_timer) & 3) as usize];
+        let offset = EARTHQUAKE_X_OFFSETS[(word!(game.EARTHQUAKE_TIMER) & 3) as usize];
         let x = session_slot!(game, CeresDoor[CERES_DOOR].base.x_pos).wrapping_add(offset as u16);
         let y = session_slot!(game, CeresDoor[CERES_DOOR].base.y_pos);
         game.foreign(|game| {
@@ -957,7 +957,7 @@ pub fn swoop_aiming_horizontal<L: Lease + ?Sized>(game: &mut L) {
     if swoop_stage(game, 320, 0x4000, 1280) {
         session_slot!(game, Ridley[RIDLEY].function = function::SWOOP_AIMING_UP);
         session_slot!(game, Ridley[RIDLEY].timer = 16);
-        word!(game.tilemap_stuff[tail::WHIP_REQUEST] = 1);
+        word!(game.TILEMAP_STUFF[tail::WHIP_REQUEST] = 1);
     }
 }
 
@@ -1002,14 +1002,14 @@ pub fn swoop_decelerate<L: Lease + ?Sized>(game: &mut L) {
 
 /// Ridley action - hover ($A6:B5C4). Was `Ridley_Func_14`.
 pub fn hover<L: Lease + ?Sized>(game: &mut L) {
-    word! {game; tilemap_stuff[tail::IDEAL_SEGMENT_ANGLE] = 11; tilemap_stuff[tail::EXTENSION_SPEED] = 384; }
+    word! {game; TILEMAP_STUFF[tail::IDEAL_SEGMENT_ANGLE] = 11; TILEMAP_STUFF[tail::EXTENSION_SPEED] = 384; }
     session_slot!(
         game,
         Ridley[RIDLEY].function = function::HOVER_TO_WALL_BEHIND
     );
     session_slot!(
         game,
-        Ridley[RIDLEY].function_timer = ((word!(game.random_number) & 0x1f) + 32)
+        Ridley[RIDLEY].function_timer = ((word!(game.RANDOM_NUMBER) & 0x1f) + 32)
     );
     hover_to_wall_behind(game);
 }
@@ -1050,11 +1050,11 @@ pub fn hover_towards<L: Lease + ?Sized>(x: u16, game: &mut L) -> bool {
         y = 352;
     }
     accelerate(0, acceleration_factor(game), x, y, game);
-    word!(game.tilemap_stuff[tail::WHIP_REQUEST] = 1);
+    word!(game.TILEMAP_STUFF[tail::WHIP_REQUEST] = 1);
     if game.slot_byte(SAMUS_MOVEMENT_TYPE) != SPIN_JUMPING {
         return true;
     }
-    if (word!(game.random_number) as u8) >= 0x80
+    if (word!(game.RANDOM_NUMBER) as u8) >= 0x80
         && session_slot!(game, Ridley[RIDLEY].roaring) == 0
         && session_slot!(game, Ridley[RIDLEY].facing) != FACING_FORWARD
     {
@@ -1065,7 +1065,7 @@ pub fn hover_towards<L: Lease + ?Sized>(x: u16, game: &mut L) -> bool {
 
 /// Set up Ridley pogo from hover ($A6:B68B). Was `Ridley_Func_18`.
 pub fn set_up_pogo_from_hover<L: Lease + ?Sized>(game: &mut L) {
-    word! {game; tilemap_stuff[tail::EXTENSION_SPEED] = 240; tilemap_stuff[tail::IDEAL_SEGMENT_ANGLE] = 16; tilemap_stuff[tail::FUNCTION] = 1; }
+    word! {game; TILEMAP_STUFF[tail::EXTENSION_SPEED] = 240; TILEMAP_STUFF[tail::IDEAL_SEGMENT_ANGLE] = 16; TILEMAP_STUFF[tail::FUNCTION] = 1; }
     session_slot!(
         game,
         Ridley[RIDLEY].function = function::POGO_FLY_TO_POSITION
@@ -1104,7 +1104,7 @@ pub fn pogo_wait_at_position<L: Lease + ?Sized>(game: &mut L) {
         session_slot!(game, Ridley[RIDLEY].function = function::POGO_DESCENDING);
         session_slot!(
             game,
-            Ridley[RIDLEY].function_timer = ((word!(game.random_number) & 0x3f) + 128)
+            Ridley[RIDLEY].function_timer = ((word!(game.RANDOM_NUMBER) & 0x3f) + 128)
         );
     }
 }
@@ -1118,19 +1118,19 @@ pub fn pogo_descending<L: Lease + ?Sized>(game: &mut L) {
         grab_samus_from_pogo(game);
         return;
     }
-    let mut y_velocity = (word!(game.tilemap_stuff[tail::POGO_DOWN_ACCELERATION]) as i16)
+    let mut y_velocity = (word!(game.TILEMAP_STUFF[tail::POGO_DOWN_ACCELERATION]) as i16)
         .wrapping_add(session_slot!(game, Ridley[RIDLEY].y_velocity) as i16);
     if !below(y_velocity as u16, 1536) {
         y_velocity = 1536;
     }
     session_slot!(game, Ridley[RIDLEY].y_velocity = y_velocity as u16);
     if tail_hits_floor(game) {
-        let x = word!(game.tilemap_stuff[tail::x(6)]);
-        let y = word!(game.tilemap_stuff[tail::y(6)]).wrapping_add(12);
+        let x = word!(game.TILEMAP_STUFF[tail::x(6)]);
+        let y = word!(game.TILEMAP_STUFF[tail::y(6)]).wrapping_add(12);
         game.place_projectile_spawn(x, y);
         game.spawn_room_projectile(DUST_CLOUD, 9);
         game.queue_sound(1, 0x76, 6);
-        word! {game; earthquake_type = 13; earthquake_timer = 4; }
+        word! {game; EARTHQUAKE_TYPE = 13; EARTHQUAKE_TIMER = 4; }
         set_pogo_x_direction(game);
         game.foreign(|game| {
             set_pogo_speeds(game);
@@ -1141,9 +1141,9 @@ pub fn pogo_descending<L: Lease + ?Sized>(game: &mut L) {
             );
         });
         for segment in 0..7 {
-            word!(game.tilemap_stuff[tail::target_distance(segment)] = 3072);
+            word!(game.TILEMAP_STUFF[tail::target_distance(segment)] = 3072);
         }
-        word!(game.tilemap_stuff[tail::FUNCTION] = 4);
+        word!(game.TILEMAP_STUFF[tail::FUNCTION] = 4);
         let mut bounces = session_slot!(game, Ridley[RIDLEY].pogo_bounces).wrapping_add(1);
         if !below(session_slot!(game, Ridley[RIDLEY].pogo_bounces), 1) {
             if session_slot!(game, Ridley[RIDLEY].facing) != FACING_FORWARD {
@@ -1172,13 +1172,13 @@ pub fn pogo_ascending<L: Lease + ?Sized>(game: &mut L) {
         session_slot!(game, Ridley[RIDLEY].function = function::DECIDE_ACTION);
     } else {
         let y_velocity = session_slot!(game, Ridley[RIDLEY].y_velocity);
-        let rising = (word!(game.tilemap_stuff[tail::POGO_UP_ACCELERATION]) as i16)
+        let rising = (word!(game.TILEMAP_STUFF[tail::POGO_UP_ACCELERATION]) as i16)
             .wrapping_add(y_velocity as i16)
             < 0;
         session_slot!(
             game,
             Ridley[RIDLEY].y_velocity =
-                word!(game.tilemap_stuff[tail::POGO_UP_ACCELERATION]).wrapping_add(y_velocity)
+                word!(game.TILEMAP_STUFF[tail::POGO_UP_ACCELERATION]).wrapping_add(y_velocity)
         );
         if !rising {
             session_slot!(game, Ridley[RIDLEY].y_velocity = 0);
@@ -1193,15 +1193,15 @@ pub fn tail_hits_floor<L: Lease + ?Sized>(game: &mut L) -> bool {
     [(6, 16), (5, 18), (4, 18), (3, 18), (2, 18)]
         .into_iter()
         .any(|(segment, below)| {
-            let x = word!(game.tilemap_stuff[tail::x(segment)]);
-            let y = word!(game.tilemap_stuff[tail::y(segment)]).wrapping_add(below);
+            let x = word!(game.TILEMAP_STUFF[tail::x(segment)]);
+            let y = word!(game.TILEMAP_STUFF[tail::y(segment)]).wrapping_add(below);
             game.foreign(|game| solid_block_at(x, y, game))
         })
 }
 
 /// Set neutral Ridley tail ($A6:B84D). Was `Ridley_Func_24`.
 pub fn set_neutral_tail<S: State + ?Sized>(game: &mut S) {
-    word! { game, 1; tilemap_stuff[tail::FUNCTION], tilemap_stuff[tail::ANGLE_DELTA] }
+    word! { game, 1; TILEMAP_STUFF[tail::FUNCTION], TILEMAP_STUFF[tail::ANGLE_DELTA] }
 }
 
 /// Check if Samus is grabbable ($A6:B859). Was `Ridley_Func_25`.
@@ -1267,7 +1267,7 @@ pub fn set_pogo_x_direction<L: Lease + ?Sized>(game: &mut L) {
         if (session_slot!(game, Ridley[RIDLEY].x_velocity) & 0x8000) != 0 {
             return;
         }
-    } else if facing_away == (word!(game.random_number) < 0x555) {
+    } else if facing_away == (word!(game.RANDOM_NUMBER) < 0x555) {
         return;
     }
     session_slot!(
@@ -1286,11 +1286,11 @@ pub fn move_samus_with_feet<L: Lease + ?Sized>(game: &mut L) {
         session_slot!(game, Ridley[RIDLEY].grabbed_y_offset = offset);
     }
     word! { game;
-        samus_x_pos = (session_slot!(game, Ridley[RIDLEY].grabbed_x_offset) as i32
+        SAMUS_X_POS = (session_slot!(game, Ridley[RIDLEY].grabbed_x_offset) as i32
             + session_slot!(game, Ridley[RIDLEY].base.x_pos) as i32
             + ridley_data::feet_x(game, session_slot!(game, Ridley[RIDLEY].facing) as isize) as i32)
             as u16;
-        samus_y_pos = (session_slot!(game, Ridley[RIDLEY].grabbed_y_offset) as i32
+        SAMUS_Y_POS = (session_slot!(game, Ridley[RIDLEY].grabbed_y_offset) as i32
             + session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32
             + ridley_data::feet_y(game, (session_slot!(game, Ridley[RIDLEY].feet_distance_index) >> 1) as isize) as i32)
             as u16;
@@ -1337,12 +1337,12 @@ pub fn set_grabbed_samus_offset<L: Lease + ?Sized>(game: &mut L) {
 /// ten lunges at no health, die. Was `Ridley_Func_32`.
 pub fn lunge_missed_samus<L: Lease + ?Sized>(game: &mut L) {
     if below(session_slot!(game, Ridley[RIDLEY].death_lunges), 10) {
-        if word!(game.power_bomb_flag) != 0 {
+        if word!(game.POWER_BOMB_FLAG) != 0 {
             session_slot!(game, Ridley[RIDLEY].function = function::DODGE_POWER_BOMB);
             dodge_power_bomb(game);
         } else {
             session_slot!(game, Ridley[RIDLEY].function = function::LUNGE_MISSED);
-            word!(game.tilemap_stuff[tail::WHIP_REQUEST] = 1);
+            word!(game.TILEMAP_STUFF[tail::WHIP_REQUEST] = 1);
         }
     } else {
         start_death_sequence(game);
@@ -1401,7 +1401,7 @@ pub fn lunge<L: Lease + ?Sized>(game: &mut L) {
                 -(session_slot!(game, Ridley[RIDLEY].y_velocity) as i32) as u16
         );
         if session_slot!(game, Ridley[RIDLEY].base.health) != 0 {
-            if word!(game.power_bomb_flag) != 0 {
+            if word!(game.POWER_BOMB_FLAG) != 0 {
                 grab_samus(game);
                 session_slot!(game, Ridley[RIDLEY].function = function::DODGE_POWER_BOMB);
                 dodge_power_bomb(game);
@@ -1465,7 +1465,7 @@ pub fn grabbed_samus_rising<L: Lease + ?Sized>(game: &mut L) {
 /// `Ridley_Func_35`.
 pub fn grabbed_samus_rising_to_middle<L: Lease + ?Sized>(game: &mut L) {
     if timer_expired(game) {
-        word! {game; tilemap_stuff[tail::IDEAL_SEGMENT_ANGLE] = 8; tilemap_stuff[tail::EXTENSION_SPEED] = 240; }
+        word! {game; TILEMAP_STUFF[tail::IDEAL_SEGMENT_ANGLE] = 8; TILEMAP_STUFF[tail::EXTENSION_SPEED] = 240; }
         release_samus(game);
         session_slot!(
             game,
@@ -1490,7 +1490,7 @@ pub fn grabbed_samus_release<L: Lease + ?Sized>(game: &mut L) {
     /// facing direction.
     const TARGET_X: [u16; 3] = [0xb0, 0, 0x50];
     if timer_expired(game) {
-        word! {game; tilemap_stuff[tail::IDEAL_SEGMENT_ANGLE] = 16; tilemap_stuff[tail::EXTENSION_SPEED] = 240; }
+        word! {game; TILEMAP_STUFF[tail::IDEAL_SEGMENT_ANGLE] = 16; TILEMAP_STUFF[tail::EXTENSION_SPEED] = 240; }
         session_slot!(game, Ridley[RIDLEY].function = function::DECIDE_ACTION);
     } else {
         let x = TARGET_X[session_slot!(game, Ridley[RIDLEY].facing) as usize];
@@ -1513,7 +1513,7 @@ pub fn grab_samus<L: Lease + ?Sized>(game: &mut L) {
 
 /// Release Samus ($A6:BC84). Was `Ridley_Func_38`.
 pub fn release_samus<L: Lease + ?Sized>(game: &mut L) {
-    word! { game, 1; tilemap_stuff[tail::WHIP_REQUEST], tilemap_stuff[tail::FUNCTION] }
+    word! { game, 1; TILEMAP_STUFF[tail::WHIP_REQUEST], TILEMAP_STUFF[tail::FUNCTION] }
     if (session_slot!(game, Ridley[RIDLEY].fight_mode) & 0x8000) == 0 {
         let timer = if samus_morphed(game) { 6 } else { 10 };
         session_slot!(game, Ridley[RIDLEY].intangibility_timer = timer);
@@ -1590,7 +1590,7 @@ pub fn lunge_if_power_bomb<S: State + ?Sized>(game: &mut S) {
     let mode = session_slot!(game, Ridley[RIDLEY].fight_mode) as i16;
     if mode > 0
         && mode != 2
-        && word!(game.power_bomb_flag) != 0
+        && word!(game.POWER_BOMB_FLAG) != 0
         && session_slot!(game, Ridley[RIDLEY].holding_samus) == 0
     {
         set_neutral_tail(game);
@@ -1601,14 +1601,14 @@ pub fn lunge_if_power_bomb<S: State + ?Sized>(game: &mut S) {
 /// Ridley function - dodging power bomb ($A6:BD4E): to the corner away from
 /// the explosion, then back to the fight. Was `Ridley_Func_43`.
 pub fn dodge_power_bomb<L: Lease + ?Sized>(game: &mut L) {
-    if word!(game.power_bomb_flag) != 0 {
+    if word!(game.POWER_BOMB_FLAG) != 0 {
         session_slot!(game, Ridley[RIDLEY].fight_mode = 2);
-        let x = if below(word!(game.power_bomb_explosion_x_pos), 128) {
+        let x = if below(word!(game.POWER_BOMB_EXPLOSION_X_POS), 128) {
             192
         } else {
             80
         };
-        let y = if below(word!(game.power_bomb_explosion_y_pos), 256) {
+        let y = if below(word!(game.POWER_BOMB_EXPLOSION_Y_POS), 256) {
             384
         } else {
             192
@@ -1844,7 +1844,7 @@ pub fn draw_baby_metroid<L: Lease + ?Sized>(game: &mut L) {
 /// ($A6:BFC9), else the flapping sound. Was `BabyMetroid_Instr_2`.
 pub fn baby_metroid_goto_if_still<L: Lease + ?Sized>(k: u16, game: &mut L) -> u16 {
     if session_slot!(game, Ridley[RIDLEY].baby_metroid_y_velocity) == 0
-        && (word!(game.random_number) & 1) != 0
+        && (word!(game.RANDOM_NUMBER) & 1) != 0
     {
         return baby_metroid_goto(k, game);
     }
@@ -2045,11 +2045,11 @@ pub fn explosion_init<L: Lease + ?Sized>(game: &mut L) {
             ];
             session_slot!(
                 game,
-                Explosion[e].base.x_pos = word!(game.tilemap_stuff[tail::x(segment)])
+                Explosion[e].base.x_pos = word!(game.TILEMAP_STUFF[tail::x(segment)])
             );
             session_slot!(
                 game,
-                Explosion[e].base.y_pos = word!(game.tilemap_stuff[tail::y(segment)])
+                Explosion[e].base.y_pos = word!(game.TILEMAP_STUFF[tail::y(segment)])
             );
             session_slot!(
                 game,
@@ -2060,11 +2060,11 @@ pub fn explosion_init<L: Lease + ?Sized>(game: &mut L) {
             // Ridley explosion initialisation - index = Ch (tail tip).
             session_slot!(
                 game,
-                Explosion[e].base.x_pos = word!(game.tilemap_stuff[tail::x(6)])
+                Explosion[e].base.x_pos = word!(game.TILEMAP_STUFF[tail::x(6)])
             );
             session_slot!(
                 game,
-                Explosion[e].base.y_pos = word!(game.tilemap_stuff[tail::y(6)])
+                Explosion[e].base.y_pos = word!(game.TILEMAP_STUFF[tail::y(6)])
             );
             let list = game.native_image().table_word(
                 lorom_offset(TAIL_TIP_EXPLOSION_LISTS) as usize,
@@ -2109,7 +2109,7 @@ fn place_explosion<L: Lease + ?Sized>(game: &mut L, e: i32, part: u32, y_offset:
 /// drift, fall, and die when the lifetime runs out. Was
 /// `RidleysExplosion_Main`.
 pub fn explosion_main<L: Lease + ?Sized>(game: &mut L) {
-    explosion_flicker(word!(game.cur_enemy_index), game);
+    explosion_flicker(word!(game.CUR_ENEMY_INDEX), game);
     let e = current(game);
     let mut speed = (abs16(session_slot!(game, Explosion[e].x_velocity)) as i16).wrapping_sub(4);
     if speed < 0 {
@@ -2160,8 +2160,8 @@ pub fn spawn_explosions<L: Lease + ?Sized>(game: &mut L) {
 /// without a palette change or door transition, the next of 16 glow steps.
 /// Was `Ridley_Func_61`.
 pub fn emergency_text_glow<L: Lease + ?Sized>(game: &mut L) {
-    if word!(game.door_transition_flag_enemies) | word!(game.palette_change_num) == 0
-        && (word!(game.nmi_frame_counter_word) & 3) == 0
+    if word!(game.DOOR_TRANSITION_FLAG_ENEMIES) | word!(game.PALETTE_CHANGE_NUM) == 0
+        && (word!(game.NMI_FRAME_COUNTER_WORD) & 3) == 0
     {
         let mut step = session_slot!(game, Ridley[RIDLEY].emergency_glow_index).wrapping_add(1);
         if step >= 0x10 {
@@ -2171,9 +2171,9 @@ pub fn emergency_text_glow<L: Lease + ?Sized>(game: &mut L) {
         let colour =
             session_slot!(game, Ridley[RIDLEY].emergency_glow_index) as isize + 2 * step as isize;
         word! { game;
-            palette_buffer[97] = ridley_data::emergency_glow(game, colour);
-            palette_buffer[98] = ridley_data::emergency_glow(game, colour + 1);
-            palette_buffer[99] = ridley_data::emergency_glow(game, colour + 2);
+            PALETTE_BUFFER[97] = ridley_data::emergency_glow(game, colour);
+            PALETTE_BUFFER[98] = ridley_data::emergency_glow(game, colour + 1);
+            PALETTE_BUFFER[99] = ridley_data::emergency_glow(game, colour + 2);
         }
     }
 }
@@ -2195,11 +2195,11 @@ pub fn handle_tail<L: Lease + ?Sized>(game: &mut L) {
         unused_pogo_descending_stab,
         spinny_tail_whips,
     ];
-    functions[word!(game.tilemap_stuff[tail::FUNCTION]) as usize](&mut *game);
+    functions[word!(game.TILEMAP_STUFF[tail::FUNCTION]) as usize](&mut *game);
     calculate_tail_segment_positions(game);
     update_tail_segment_distances(game);
     if session_slot!(game, Ridley[RIDLEY].holding_samus)
-        | (word!(game.samus_invincibility_timer)
+        | (word!(game.SAMUS_INVINCIBILITY_TIMER)
             | session_slot!(game, Ridley[RIDLEY].base.properties) & K_ENEMY_PROPS_TANGIBLE as u16)
         == 0
     {
@@ -2214,32 +2214,32 @@ fn tail_inactive<L: Lease + ?Sized>(_game: &mut L) {}
 /// Set up Ridley pogo tail ($A6:CB33), tail function index 2. Was
 /// `Ridley_Func_71`.
 pub fn set_up_pogo_tail<L: Lease + ?Sized>(game: &mut L) {
-    word!(game.tilemap_stuff[tail::ANGLE_DELTA] = 8);
+    word!(game.TILEMAP_STUFF[tail::ANGLE_DELTA] = 8);
     pogo_tail_pointed_down(game);
-    word!(game.tilemap_stuff[tail::FUNCTION] = 3);
+    word!(game.TILEMAP_STUFF[tail::FUNCTION] = 3);
 }
 
 /// Ridley tail function index 3 - pogo - point tail down ($A6:CB45). Was
 /// `Ridley_Func_72`.
 pub fn point_tail_down<L: Lease + ?Sized>(game: &mut L) {
-    word!(game.tilemap_stuff[tail::ANGLE_DELTA] = 8);
+    word!(game.TILEMAP_STUFF[tail::ANGLE_DELTA] = 8);
     pogo_tail_pointed_down(game);
 }
 
 /// Ridley tail function index 6 - pogo - descending - stab ($A6:CB4E). Was
 /// `Ridley_Func_73`.
 pub fn pogo_descending_stab<L: Lease + ?Sized>(game: &mut L) {
-    word!(game.tilemap_stuff[tail::ANGLE_DELTA] = 3);
+    word!(game.TILEMAP_STUFF[tail::ANGLE_DELTA] = 3);
     pogo_tail_pointed_down(game);
-    word!(game.tilemap_stuff[tail::FUNCTION] = 6);
+    word!(game.TILEMAP_STUFF[tail::FUNCTION] = 6);
 }
 
 /// Ridley tail function index 7 - unused - pogo descending - stab ($A6:CB60).
 /// Was `Ridley_Func_74`.
 pub fn unused_pogo_descending_stab<L: Lease + ?Sized>(game: &mut L) {
-    word!(game.tilemap_stuff[tail::ANGLE_DELTA] = 2);
+    word!(game.TILEMAP_STUFF[tail::ANGLE_DELTA] = 2);
     pogo_tail_pointed_down(game);
-    word!(game.tilemap_stuff[tail::FUNCTION] = 7);
+    word!(game.TILEMAP_STUFF[tail::FUNCTION] = 7);
 }
 
 /// Ridley pogo tail movement with tail pointed down ($A6:CB72): whip towards
@@ -2247,13 +2247,13 @@ pub fn unused_pogo_descending_stab<L: Lease + ?Sized>(game: &mut L) {
 /// `Ridley_Func_75`.
 pub fn pogo_tail_pointed_down<L: Lease + ?Sized>(game: &mut L) {
     if session_slot!(game, Ridley[RIDLEY].facing) != 0 {
-        word! {game; tilemap_stuff[tail::WHIP_TARGET_CLOCKWISE] = 0x4000; tilemap_stuff[tail::WHIP_TARGET_ANTICLOCKWISE] = NO_WHIP_TARGET; }
+        word! {game; TILEMAP_STUFF[tail::WHIP_TARGET_CLOCKWISE] = 0x4000; TILEMAP_STUFF[tail::WHIP_TARGET_ANTICLOCKWISE] = NO_WHIP_TARGET; }
     } else {
-        word! {game; tilemap_stuff[tail::WHIP_TARGET_ANTICLOCKWISE] = 0x4000; tilemap_stuff[tail::WHIP_TARGET_CLOCKWISE] = NO_WHIP_TARGET; }
+        word! {game; TILEMAP_STUFF[tail::WHIP_TARGET_ANTICLOCKWISE] = 0x4000; TILEMAP_STUFF[tail::WHIP_TARGET_CLOCKWISE] = NO_WHIP_TARGET; }
     }
     pogo_tail(game);
     if !any_tail_segment_active(game) {
-        word!(game.tilemap_stuff[tail::FUNCTION] = 4);
+        word!(game.TILEMAP_STUFF[tail::FUNCTION] = 4);
     }
 }
 
@@ -2297,25 +2297,25 @@ pub fn update_tail_segment_angles<L: Lease + ?Sized>(game: &mut L) {
 pub fn set_tail_angle_extrema<L: Lease + ?Sized>(game: &mut L) {
     let limits =
         ridley_data::tail_angles(game, session_slot!(game, Ridley[RIDLEY].facing) as isize);
-    word!(game.tilemap_stuff[tail::MIN_CLOCKWISE_ANGLE] = limits.min_clockwise);
-    word!(game.tilemap_stuff[tail::MAX_ANTICLOCKWISE_ANGLE] = limits.max_anticlockwise);
+    word!(game.TILEMAP_STUFF[tail::MIN_CLOCKWISE_ANGLE] = limits.min_clockwise);
+    word!(game.TILEMAP_STUFF[tail::MAX_ANTICLOCKWISE_ANGLE] = limits.max_anticlockwise);
 }
 
 /// Check if all Ridley tail segments are active ($A6:CC1E), tip first. Was
 /// `Ridley_Func_78`.
 pub fn all_tail_segments_active<L: Lease + ?Sized>(game: &mut L) -> bool {
-    let mut flags = word!(game.tilemap_stuff[tail::active(6)]);
+    let mut flags = word!(game.TILEMAP_STUFF[tail::active(6)]);
     for segment in (0..6).rev() {
-        flags &= word!(game.tilemap_stuff[tail::active(segment)]);
+        flags &= word!(game.TILEMAP_STUFF[tail::active(segment)]);
     }
     flags != 0
 }
 
 /// Whether any tail segment is active, tip first.
 fn any_tail_segment_active<L: Lease + ?Sized>(game: &mut L) -> bool {
-    let mut flags = word!(game.tilemap_stuff[tail::active(6)]);
+    let mut flags = word!(game.TILEMAP_STUFF[tail::active(6)]);
     for segment in (0..6).rev() {
-        flags |= word!(game.tilemap_stuff[tail::active(segment)]);
+        flags |= word!(game.TILEMAP_STUFF[tail::active(segment)]);
     }
     flags != 0
 }
@@ -2334,11 +2334,11 @@ pub fn handle_tail_whip<L: Lease + ?Sized>(game: &mut L) {
 /// `start_ridley_tile_effect_when_idle`.
 fn swing_idle_tail<L: Lease + ?Sized>(game: &mut L) {
     if !any_tail_segment_active(game) {
-        word!(game.tilemap_stuff[tail::active(0)] = 0x8000);
-        word!(game.tilemap_stuff[tail::WHIP_TARGET_CLOCKWISE] = NO_WHIP_TARGET);
-        word!(game.tilemap_stuff[tail::WHIP_TARGET_ANTICLOCKWISE] = NO_WHIP_TARGET);
+        word!(game.TILEMAP_STUFF[tail::active(0)] = 0x8000);
+        word!(game.TILEMAP_STUFF[tail::WHIP_TARGET_CLOCKWISE] = NO_WHIP_TARGET);
+        word!(game.TILEMAP_STUFF[tail::WHIP_TARGET_ANTICLOCKWISE] = NO_WHIP_TARGET);
         let delta = if game.player_x() < 0x70 { 1 } else { 2 };
-        word!(game.tilemap_stuff[tail::ANGLE_DELTA] = delta);
+        word!(game.TILEMAP_STUFF[tail::ANGLE_DELTA] = delta);
     }
 }
 
@@ -2346,17 +2346,17 @@ fn swing_idle_tail<L: Lease + ?Sized>(game: &mut L) {
 /// idle whips are enabled, or when Samus is near; true when a whip started.
 /// Was `Ridley_Func_80_DoubleRet`.
 pub fn configure_tail_whip<L: Lease + ?Sized>(game: &mut L) -> bool {
-    let attack = if word!(game.tilemap_stuff[tail::WHIP_REQUEST]) != 0
-        && (word!(game.tilemap_stuff[tail::WHIP_TARGET_CLOCKWISE])
-            & word!(game.tilemap_stuff[tail::WHIP_TARGET_ANTICLOCKWISE])
+    let attack = if word!(game.TILEMAP_STUFF[tail::WHIP_REQUEST]) != 0
+        && (word!(game.TILEMAP_STUFF[tail::WHIP_TARGET_CLOCKWISE])
+            & word!(game.TILEMAP_STUFF[tail::WHIP_TARGET_ANTICLOCKWISE])
             & 0x8000)
             != 0
     {
-        Some(word!(game.tilemap_stuff[tail::WHIP_REQUEST]).wrapping_sub(1))
-    } else if word!(game.tilemap_stuff[tail::IDLE_WHIP]) == 0 {
+        Some(word!(game.TILEMAP_STUFF[tail::WHIP_REQUEST]).wrapping_sub(1))
+    } else if word!(game.TILEMAP_STUFF[tail::IDLE_WHIP]) == 0 {
         None
-    } else if (word!(game.random_number) as u8) >= 0xf0 {
-        Some(word!(game.tilemap_stuff[tail::WHIP_REQUEST]).wrapping_sub(1))
+    } else if (word!(game.RANDOM_NUMBER) as u8) >= 0xf0 {
+        Some(word!(game.TILEMAP_STUFF[tail::WHIP_REQUEST]).wrapping_sub(1))
     } else if abs16(
         game.player_x()
             .wrapping_sub(session_slot!(game, Ridley[RIDLEY].base.x_pos)),
@@ -2372,7 +2372,7 @@ pub fn configure_tail_whip<L: Lease + ?Sized>(game: &mut L) -> bool {
     } else {
         false
     };
-    word!(game.tilemap_stuff[tail::WHIP_REQUEST] = 0);
+    word!(game.TILEMAP_STUFF[tail::WHIP_REQUEST] = 0);
     started
 }
 
@@ -2389,14 +2389,14 @@ pub fn handle_spinning_tail_whip<L: Lease + ?Sized>(game: &mut L) {
 /// Unused. Configure Ridley tail whip with extra spinning ($A6:CD0C); true
 /// when a whip started. Was `Ridley_Func_82_DoubleRet`.
 pub fn configure_spinning_tail_whip<L: Lease + ?Sized>(game: &mut L) -> bool {
-    if word!(game.tilemap_stuff[tail::WHIP_REQUEST]) != 0
-        && (word!(game.tilemap_stuff[tail::WHIP_TARGET_CLOCKWISE])
-            & word!(game.tilemap_stuff[tail::WHIP_TARGET_ANTICLOCKWISE])
+    if word!(game.TILEMAP_STUFF[tail::WHIP_REQUEST]) != 0
+        && (word!(game.TILEMAP_STUFF[tail::WHIP_TARGET_CLOCKWISE])
+            & word!(game.TILEMAP_STUFF[tail::WHIP_TARGET_ANTICLOCKWISE])
             & 0x8000)
             != 0
     {
         set_tail_whip_target(1, game);
-        word!(game.tilemap_stuff[tail::WHIP_REQUEST] = 0);
+        word!(game.TILEMAP_STUFF[tail::WHIP_REQUEST] = 0);
         return true;
     }
     false
@@ -2407,17 +2407,17 @@ pub fn configure_spinning_tail_whip<L: Lease + ?Sized>(game: &mut L) -> bool {
 fn pogo_tail_whips<L: Lease + ?Sized>(game: &mut L) -> bool {
     set_tail_angle_extrema(game);
     if all_tail_segments_active(game)
-        && ((word!(game.random_number) as u8) >= 0xf0
+        && ((word!(game.RANDOM_NUMBER) as u8) >= 0xf0
             || abs16(
                 game.player_x()
                     .wrapping_sub(session_slot!(game, Ridley[RIDLEY].base.x_pos)),
             ) < 0x80)
-        && (word!(game.tilemap_stuff[tail::WHIP_TARGET_CLOCKWISE])
-            & word!(game.tilemap_stuff[tail::WHIP_TARGET_ANTICLOCKWISE])
+        && (word!(game.TILEMAP_STUFF[tail::WHIP_TARGET_CLOCKWISE])
+            & word!(game.TILEMAP_STUFF[tail::WHIP_TARGET_ANTICLOCKWISE])
             & 0x8000)
             != 0
     {
-        word! {game; tilemap_stuff[tail::WHIP_TARGET_CLOCKWISE] = 16128; tilemap_stuff[tail::ANGLE_DELTA] = 8; }
+        word! {game; TILEMAP_STUFF[tail::WHIP_TARGET_CLOCKWISE] = 16128; TILEMAP_STUFF[tail::ANGLE_DELTA] = 8; }
         return true;
     }
     false
@@ -2431,20 +2431,20 @@ pub fn handle_normal_pogo_tail<L: Lease + ?Sized>(game: &mut L) {
         return;
     }
     if (session_slot!(game, Ridley[RIDLEY].y_velocity) & 0x8000) == 0 {
-        word!(game.tilemap_stuff[tail::FUNCTION] = 5);
+        word!(game.TILEMAP_STUFF[tail::FUNCTION] = 5);
     }
-    word! {game; tilemap_stuff[tail::WHIP_TARGET_CLOCKWISE] = NO_WHIP_TARGET; tilemap_stuff[tail::WHIP_TARGET_ANTICLOCKWISE] = NO_WHIP_TARGET; }
-    let mut timer = word!(game.tilemap_stuff[tail::POGO_TAIL_TIMER]);
-    if word!(game.tilemap_stuff[tail::POGO_TAIL_TIMER]) == 0 || {
-        timer = word!(game.tilemap_stuff[tail::POGO_TAIL_TIMER]).wrapping_sub(1);
-        word!(game.tilemap_stuff[tail::POGO_TAIL_TIMER] = timer);
-        word!(game.tilemap_stuff[tail::POGO_TAIL_TIMER]) != 0
+    word! {game; TILEMAP_STUFF[tail::WHIP_TARGET_CLOCKWISE] = NO_WHIP_TARGET; TILEMAP_STUFF[tail::WHIP_TARGET_ANTICLOCKWISE] = NO_WHIP_TARGET; }
+    let mut timer = word!(game.TILEMAP_STUFF[tail::POGO_TAIL_TIMER]);
+    if word!(game.TILEMAP_STUFF[tail::POGO_TAIL_TIMER]) == 0 || {
+        timer = word!(game.TILEMAP_STUFF[tail::POGO_TAIL_TIMER]).wrapping_sub(1);
+        word!(game.TILEMAP_STUFF[tail::POGO_TAIL_TIMER] = timer);
+        word!(game.TILEMAP_STUFF[tail::POGO_TAIL_TIMER]) != 0
     } {
-        word!(game.tilemap_stuff[tail::ANGLE_DELTA] = timer);
+        word!(game.TILEMAP_STUFF[tail::ANGLE_DELTA] = timer);
     } else {
-        word!(game.tilemap_stuff[tail::active(0)] = 0x8000);
+        word!(game.TILEMAP_STUFF[tail::active(0)] = 0x8000);
         set_tail_angle_high_bytes(game);
-        word!(game.tilemap_stuff[tail::ANGLE_DELTA] = 8);
+        word!(game.TILEMAP_STUFF[tail::ANGLE_DELTA] = 8);
     }
 }
 
@@ -2456,27 +2456,27 @@ pub fn handle_pogo_tail_stab<L: Lease + ?Sized>(game: &mut L) {
         return;
     }
     if (session_slot!(game, Ridley[RIDLEY].y_velocity) & 0x8000) == 0 {
-        word!(game.tilemap_stuff[tail::FUNCTION] = 6);
+        word!(game.TILEMAP_STUFF[tail::FUNCTION] = 6);
         for segment in 0..7 {
-            word!(game.tilemap_stuff[tail::target_distance(segment)] = 2560);
+            word!(game.TILEMAP_STUFF[tail::target_distance(segment)] = 2560);
         }
         for segment in 0..7 {
-            word!(game.tilemap_stuff[tail::angle(segment)] = 0x4000);
+            word!(game.TILEMAP_STUFF[tail::angle(segment)] = 0x4000);
         }
-        word!(game.tilemap_stuff[tail::active(0)] = 0x8000);
+        word!(game.TILEMAP_STUFF[tail::active(0)] = 0x8000);
     }
-    word! {game; tilemap_stuff[tail::WHIP_TARGET_CLOCKWISE] = NO_WHIP_TARGET; tilemap_stuff[tail::WHIP_TARGET_ANTICLOCKWISE] = NO_WHIP_TARGET; }
-    let mut timer = word!(game.tilemap_stuff[tail::POGO_TAIL_TIMER]);
-    if word!(game.tilemap_stuff[tail::POGO_TAIL_TIMER]) != 0 {
-        timer = word!(game.tilemap_stuff[tail::POGO_TAIL_TIMER]).wrapping_sub(1);
-        word!(game.tilemap_stuff[tail::POGO_TAIL_TIMER] = timer);
+    word! {game; TILEMAP_STUFF[tail::WHIP_TARGET_CLOCKWISE] = NO_WHIP_TARGET; TILEMAP_STUFF[tail::WHIP_TARGET_ANTICLOCKWISE] = NO_WHIP_TARGET; }
+    let mut timer = word!(game.TILEMAP_STUFF[tail::POGO_TAIL_TIMER]);
+    if word!(game.TILEMAP_STUFF[tail::POGO_TAIL_TIMER]) != 0 {
+        timer = word!(game.TILEMAP_STUFF[tail::POGO_TAIL_TIMER]).wrapping_sub(1);
+        word!(game.TILEMAP_STUFF[tail::POGO_TAIL_TIMER] = timer);
         if timer == 0 {
-            word!(game.tilemap_stuff[tail::active(0)] = 0x8000);
+            word!(game.TILEMAP_STUFF[tail::active(0)] = 0x8000);
             set_tail_angle_high_bytes(game);
             timer = 8;
         }
     }
-    word!(game.tilemap_stuff[tail::ANGLE_DELTA] = timer);
+    word!(game.TILEMAP_STUFF[tail::ANGLE_DELTA] = timer);
 }
 
 /// Set tail angle high bytes to 40h ($A6:CE65), through raw work RAM. Was
@@ -2502,22 +2502,22 @@ pub fn calculate_tail_segment_positions<L: Lease + ?Sized>(game: &mut L) {
     /// The tail base X offsets ($A6:CF54), by facing direction.
     const BASE_X_OFFSETS: [i16; 3] = [0x20, 0, -0x20];
     word!(
-        game.tilemap_stuff[tail::y(0)] = (word!(game.tilemap_stuff[tail::y_offset(0)]) as i32
+        game.TILEMAP_STUFF[tail::y(0)] = (word!(game.TILEMAP_STUFF[tail::y_offset(0)]) as i32
             + session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32
             + 16) as u16
     );
     chain_tail_positions(game, tail::y(0));
     let mut x_offset = (session_slot!(game, Ridley[RIDLEY].facing) as i16).wrapping_sub(1);
     if session_slot!(game, Ridley[RIDLEY].facing) != FACING_FORWARD {
-        x_offset = (word!(game.tilemap_stuff[tail::x_offset(0)]) as i16)
+        x_offset = (word!(game.TILEMAP_STUFF[tail::x_offset(0)]) as i16)
             .wrapping_add(BASE_X_OFFSETS[session_slot!(game, Ridley[RIDLEY].facing) as usize]);
     }
     word!(
-        game.tilemap_stuff[tail::x(0)] =
+        game.TILEMAP_STUFF[tail::x(0)] =
             session_slot!(game, Ridley[RIDLEY].base.x_pos).wrapping_add(x_offset as u16)
     );
     if session_slot!(game, Ridley[RIDLEY].facing) == FACING_FORWARD {
-        word!(game.tilemap_stuff[tail::x(1)] = session_slot!(game, Ridley[RIDLEY].base.x_pos));
+        word!(game.TILEMAP_STUFF[tail::x(1)] = session_slot!(game, Ridley[RIDLEY].base.x_pos));
         for segment in 2..7 {
             let x = tail_word(game, tail::x(1));
             set_tail_word(game, tail::x(segment), x);
@@ -2583,42 +2583,42 @@ fn update_tail_segment_distance<L: Lease + ?Sized>(
 /// at a target once the segment before it has; every segment then takes its
 /// offset from its angle and distance. Was `Ridley_Func_88`.
 pub fn update_tail_segment_angle<L: Lease + ?Sized>(segment: usize, game: &mut L) {
-    let angle = if (word!(game.tilemap_stuff[tail::active(segment)]) & 0x8000) != 0 {
-        let stagger = word!(game.tilemap_stuff[tail::stagger_angle(segment)]);
-        if stagger < word!(game.tilemap_stuff[tail::IDEAL_SEGMENT_ANGLE]) {
+    let angle = if (word!(game.TILEMAP_STUFF[tail::active(segment)]) & 0x8000) != 0 {
+        let stagger = word!(game.TILEMAP_STUFF[tail::stagger_angle(segment)]);
+        if stagger < word!(game.TILEMAP_STUFF[tail::IDEAL_SEGMENT_ANGLE]) {
             word!(
-                game.tilemap_stuff[tail::stagger_angle(segment)] +=
-                    word!(game.tilemap_stuff[tail::ANGLE_DELTA])
+                game.TILEMAP_STUFF[tail::stagger_angle(segment)] +=
+                    word!(game.TILEMAP_STUFF[tail::ANGLE_DELTA])
             );
             return;
         }
         if stagger != 0xffff {
             // The next segment starts moving the same way.
-            word!(game.tilemap_stuff[tail::stagger_angle(segment)] = 0xffff);
-            word!(game.tilemap_stuff[tail::active(segment + 1)] = 0x8000);
+            word!(game.TILEMAP_STUFF[tail::stagger_angle(segment)] = 0xffff);
+            word!(game.TILEMAP_STUFF[tail::active(segment + 1)] = 0x8000);
             word!(
-                game.tilemap_stuff[tail::direction(segment + 1)] =
-                    word!(game.tilemap_stuff[tail::direction(segment)])
+                game.TILEMAP_STUFF[tail::direction(segment + 1)] =
+                    word!(game.TILEMAP_STUFF[tail::direction(segment)])
             );
         }
         let next = 'advance: {
-            if (word!(game.tilemap_stuff[tail::direction(segment)]) & 0x8000) == 0 {
+            if (word!(game.TILEMAP_STUFF[tail::direction(segment)]) & 0x8000) == 0 {
                 let (turn, angle) =
-                    if (word!(game.tilemap_stuff[tail::WHIP_TARGET_ANTICLOCKWISE]) & 0x8000) != 0 {
-                        let angle = word!(game.tilemap_stuff[tail::ANGLE_DELTA])
-                            .wrapping_add(word!(game.tilemap_stuff[tail::angle(segment)]));
-                        let limit = word!(game.tilemap_stuff[tail::MAX_ANTICLOCKWISE_ANGLE]);
+                    if (word!(game.TILEMAP_STUFF[tail::WHIP_TARGET_ANTICLOCKWISE]) & 0x8000) != 0 {
+                        let angle = word!(game.TILEMAP_STUFF[tail::ANGLE_DELTA])
+                            .wrapping_add(word!(game.TILEMAP_STUFF[tail::angle(segment)]));
+                        let limit = word!(game.TILEMAP_STUFF[tail::MAX_ANTICLOCKWISE_ANGLE]);
                         ((angle as i16).wrapping_sub(limit as i16) >= 0, angle)
                     } else {
-                        word!(game.tilemap_stuff[tail::target_distance(segment)] = 3072);
-                        let angle = word!(game.tilemap_stuff[tail::ANGLE_DELTA])
-                            .wrapping_add(word!(game.tilemap_stuff[tail::angle(segment)]));
-                        let target = word!(game.tilemap_stuff[tail::WHIP_TARGET_ANTICLOCKWISE]);
+                        word!(game.TILEMAP_STUFF[tail::target_distance(segment)] = 3072);
+                        let angle = word!(game.TILEMAP_STUFF[tail::ANGLE_DELTA])
+                            .wrapping_add(word!(game.TILEMAP_STUFF[tail::angle(segment)]));
+                        let target = word!(game.TILEMAP_STUFF[tail::WHIP_TARGET_ANTICLOCKWISE]);
                         if (angle as i16).wrapping_sub(target as i16) >= 0 {
                             if stops_at_whip_target(game, segment) {
                                 word!(
-                                    game.tilemap_stuff[tail::angle(segment)] =
-                                        word!(game.tilemap_stuff[tail::WHIP_TARGET_ANTICLOCKWISE])
+                                    game.TILEMAP_STUFF[tail::angle(segment)] =
+                                        word!(game.TILEMAP_STUFF[tail::WHIP_TARGET_ANTICLOCKWISE])
                                 );
                                 break 'advance None;
                             }
@@ -2628,30 +2628,30 @@ pub fn update_tail_segment_angle<L: Lease + ?Sized>(segment: usize, game: &mut L
                         }
                     };
                 if turn {
-                    word!(game.tilemap_stuff[tail::direction(segment)] = 0x8000);
-                    Some(word!(game.tilemap_stuff[tail::MAX_ANTICLOCKWISE_ANGLE]))
+                    word!(game.TILEMAP_STUFF[tail::direction(segment)] = 0x8000);
+                    Some(word!(game.TILEMAP_STUFF[tail::MAX_ANTICLOCKWISE_ANGLE]))
                 } else {
                     Some(angle)
                 }
             } else {
                 let (turn, decreased) =
-                    if (word!(game.tilemap_stuff[tail::WHIP_TARGET_CLOCKWISE]) & 0x8000) != 0 {
-                        let decreased = (word!(game.tilemap_stuff[tail::angle(segment)]) as i32
-                            - word!(game.tilemap_stuff[tail::ANGLE_DELTA]) as i32
+                    if (word!(game.TILEMAP_STUFF[tail::WHIP_TARGET_CLOCKWISE]) & 0x8000) != 0 {
+                        let decreased = (word!(game.TILEMAP_STUFF[tail::angle(segment)]) as i32
+                            - word!(game.TILEMAP_STUFF[tail::ANGLE_DELTA]) as i32
                             - 1) as i16;
-                        let limit = word!(game.tilemap_stuff[tail::MIN_CLOCKWISE_ANGLE]);
+                        let limit = word!(game.TILEMAP_STUFF[tail::MIN_CLOCKWISE_ANGLE]);
                         (decreased.wrapping_sub(limit as i16) < 0, decreased)
                     } else {
-                        word!(game.tilemap_stuff[tail::target_distance(segment)] = 3072);
-                        let decreased = (word!(game.tilemap_stuff[tail::angle(segment)]) as i32
-                            - word!(game.tilemap_stuff[tail::ANGLE_DELTA]) as i32
+                        word!(game.TILEMAP_STUFF[tail::target_distance(segment)] = 3072);
+                        let decreased = (word!(game.TILEMAP_STUFF[tail::angle(segment)]) as i32
+                            - word!(game.TILEMAP_STUFF[tail::ANGLE_DELTA]) as i32
                             - 1) as i16;
-                        let target = word!(game.tilemap_stuff[tail::WHIP_TARGET_CLOCKWISE]);
+                        let target = word!(game.TILEMAP_STUFF[tail::WHIP_TARGET_CLOCKWISE]);
                         if decreased.wrapping_sub(target as i16) < 0 {
                             if stops_at_whip_target(game, segment) {
                                 word!(
-                                    game.tilemap_stuff[tail::angle(segment)] =
-                                        word!(game.tilemap_stuff[tail::WHIP_TARGET_CLOCKWISE])
+                                    game.TILEMAP_STUFF[tail::angle(segment)] =
+                                        word!(game.TILEMAP_STUFF[tail::WHIP_TARGET_CLOCKWISE])
                                 );
                                 break 'advance None;
                             }
@@ -2661,22 +2661,22 @@ pub fn update_tail_segment_angle<L: Lease + ?Sized>(segment: usize, game: &mut L
                         }
                     };
                 if turn {
-                    word!(game.tilemap_stuff[tail::direction(segment)] = 0);
-                    Some(word!(game.tilemap_stuff[tail::MIN_CLOCKWISE_ANGLE]))
+                    word!(game.TILEMAP_STUFF[tail::direction(segment)] = 0);
+                    Some(word!(game.TILEMAP_STUFF[tail::MIN_CLOCKWISE_ANGLE]))
                 } else {
                     Some((decreased as u16).wrapping_add(1))
                 }
             }
         };
         let Some(angle) = next else {
-            word! { game, 0; tilemap_stuff[tail::active(segment)], tilemap_stuff[tail::stagger_angle(segment)], }
-            word!(game.tilemap_stuff[tail::direction(segment)] ^= 0x8000u16);
+            word! { game, 0; TILEMAP_STUFF[tail::active(segment)], TILEMAP_STUFF[tail::stagger_angle(segment)], }
+            word!(game.TILEMAP_STUFF[tail::direction(segment)] ^= 0x8000u16);
             return;
         };
-        word!(game.tilemap_stuff[tail::angle(segment)] = angle);
+        word!(game.TILEMAP_STUFF[tail::angle(segment)] = angle);
         angle
     } else {
-        word!(game.tilemap_stuff[tail::angle(segment)])
+        word!(game.TILEMAP_STUFF[tail::angle(segment)])
     };
     // Segment angles add up along the tail, in their low bytes.
     let mut total = angle as u8 as u16;
@@ -2687,16 +2687,16 @@ pub fn update_tail_segment_angle<L: Lease + ?Sized>(segment: usize, game: &mut L
     }
     let length_at = TAIL_RAM + 2 * tail::distance(segment) + 1;
     word! { game;
-        tilemap_stuff[tail::x_offset(segment)] =
+        TILEMAP_STUFF[tail::x_offset(segment)] =
             game.foreign(|game| game.hardware_sine(game.slot_byte(length_at) as u16, total));
-        tilemap_stuff[tail::y_offset(segment)] =
+        TILEMAP_STUFF[tail::y_offset(segment)] =
             game.foreign(|game| game.hardware_cosine(game.slot_byte(length_at) as u16, total));
     }
 }
 
 /// At a whip target a segment stops once the one before it has.
 fn stops_at_whip_target<L: Lease + ?Sized>(game: &L, segment: usize) -> bool {
-    segment == 0 || word!(game.tilemap_stuff[tail::active(segment - 1)]) == 0
+    segment == 0 || word!(game.TILEMAP_STUFF[tail::active(segment - 1)]) == 0
 }
 
 /// Set Ridley tail whip target ($A6:D19D): aim the whip at a missile near the
@@ -2704,7 +2704,7 @@ fn stops_at_whip_target<L: Lease + ?Sized>(game: &L, segment: usize) -> bool {
 /// `Ridley_Func_89`.
 pub fn set_tail_whip_target<L: Lease + ?Sized>(attack: u16, game: &mut L) {
     // The attack's low byte becomes the target angle's high byte.
-    word!(game.tilemap_stuff[tail::WHIP_ANGLE_OFFSET] = u16::from(attack as u8) << 8);
+    word!(game.TILEMAP_STUFF[tail::WHIP_ANGLE_OFFSET] = u16::from(attack as u8) << 8);
     if session_slot!(game, Ridley[RIDLEY].facing) != FACING_FORWARD
         && session_slot!(game, Ridley[RIDLEY].fight_mode) != 0
     {
@@ -2712,16 +2712,16 @@ pub fn set_tail_whip_target<L: Lease + ?Sized>(attack: u16, game: &mut L) {
             (
                 missile
                     .x
-                    .wrapping_sub(word!(game.tilemap_stuff[tail::x(0)])),
+                    .wrapping_sub(word!(game.TILEMAP_STUFF[tail::x(0)])),
                 missile
                     .y
-                    .wrapping_sub(word!(game.tilemap_stuff[tail::y(0)])),
+                    .wrapping_sub(word!(game.TILEMAP_STUFF[tail::y(0)])),
             )
         } else {
             (
                 game.player_x()
-                    .wrapping_sub(word!(game.tilemap_stuff[tail::x(0)])),
-                (game.player_y() as i32 + 24 - word!(game.tilemap_stuff[tail::y(0)]) as i32) as u16,
+                    .wrapping_sub(word!(game.TILEMAP_STUFF[tail::x(0)])),
+                (game.player_y() as i32 + 24 - word!(game.TILEMAP_STUFF[tail::y(0)]) as i32) as u16,
             )
         };
         let direction = -(angle_from_delta(dx, dy) as i32 + 0x80) as u8 as u16;
@@ -2730,11 +2730,11 @@ pub fn set_tail_whip_target<L: Lease + ?Sized>(attack: u16, game: &mut L) {
             if (0x18..0xe8).contains(&direction) {
                 reach = 24;
             }
-            let target = (word!(game.tilemap_stuff[tail::WHIP_ANGLE_OFFSET]) as i32
+            let target = (word!(game.TILEMAP_STUFF[tail::WHIP_ANGLE_OFFSET]) as i32
                 + reach as i32
                 + 0x4000) as u16;
-            if target >= word!(game.tilemap_stuff[tail::angle(0)]) {
-                word! {game; tilemap_stuff[tail::WHIP_TARGET_ANTICLOCKWISE] = target; tilemap_stuff[tail::ANGLE_DELTA] = 8; }
+            if target >= word!(game.TILEMAP_STUFF[tail::angle(0)]) {
+                word! {game; TILEMAP_STUFF[tail::WHIP_TARGET_ANTICLOCKWISE] = target; TILEMAP_STUFF[tail::ANGLE_DELTA] = 8; }
             }
         } else {
             let mut reach = direction;
@@ -2742,10 +2742,10 @@ pub fn set_tail_whip_target<L: Lease + ?Sized>(attack: u16, game: &mut L) {
                 reach = 232;
             }
             let target = (reach as i32 + 16128
-                - word!(game.tilemap_stuff[tail::WHIP_ANGLE_OFFSET]) as i32)
+                - word!(game.TILEMAP_STUFF[tail::WHIP_ANGLE_OFFSET]) as i32)
                 as u16;
-            if target < word!(game.tilemap_stuff[tail::angle(0)]) {
-                word! {game; tilemap_stuff[tail::WHIP_TARGET_CLOCKWISE] = target; tilemap_stuff[tail::ANGLE_DELTA] = 8; }
+            if target < word!(game.TILEMAP_STUFF[tail::angle(0)]) {
+                word! {game; TILEMAP_STUFF[tail::WHIP_TARGET_CLOCKWISE] = target; TILEMAP_STUFF[tail::ANGLE_DELTA] = 8; }
             }
         }
     }
@@ -2755,12 +2755,12 @@ pub fn set_tail_whip_target<L: Lease + ?Sized>(attack: u16, game: &mut L) {
 /// super missile within 64px of the tip. Was `Ridley_Func_90`.
 pub fn missile_near_tail<L: Lease + ?Sized>(game: &mut L) -> Option<Point> {
     let rect = Rect {
-        x: word!(game.tilemap_stuff[tail::x(6)]),
-        y: word!(game.tilemap_stuff[tail::y(6)]),
+        x: word!(game.TILEMAP_STUFF[tail::x(6)]),
+        y: word!(game.TILEMAP_STUFF[tail::y(6)]),
         w: 64,
         h: 64,
     };
-    if word!(game.projectile_counter) == 0 {
+    if word!(game.PROJECTILE_COUNTER) == 0 {
         return None;
     }
     let found = (0..5).find(|&n| {
@@ -2768,8 +2768,8 @@ pub fn missile_near_tail<L: Lease + ?Sized>(game: &mut L) -> Option<Point> {
         (kind == MISSILE || kind == SUPER_MISSILE) && projectile_overlaps(game, n, rect)
     })?;
     Some(Point {
-        x: word!(game.projectile_x_pos[found]),
-        y: word!(game.projectile_y_pos[found]),
+        x: word!(game.PROJECTILE_X_POS[found]),
+        y: word!(game.PROJECTILE_Y_POS[found]),
     })
 }
 
@@ -2780,13 +2780,13 @@ fn projectile_kind<L: Lease + ?Sized>(game: &L, n: usize) -> u8 {
 
 /// Whether projectile `n`'s hitbox overlaps `rect`.
 fn projectile_overlaps<L: Lease + ?Sized>(game: &L, n: usize, rect: Rect) -> bool {
-    let dx = abs16(word!(game.projectile_x_pos[n]).wrapping_sub(rect.x));
-    if dx < word!(game.projectile_x_radius[n])
-        || dx.wrapping_sub(word!(game.projectile_x_radius[n])) < rect.w
+    let dx = abs16(word!(game.PROJECTILE_X_POS[n]).wrapping_sub(rect.x));
+    if dx < word!(game.PROJECTILE_X_RADIUS[n])
+        || dx.wrapping_sub(word!(game.PROJECTILE_X_RADIUS[n])) < rect.w
     {
-        let dy = abs16(word!(game.projectile_y_pos[n]).wrapping_sub(rect.y));
-        if dy < word!(game.projectile_y_radius[n])
-            || dy.wrapping_sub(word!(game.projectile_y_radius[n])) < rect.h
+        let dy = abs16(word!(game.PROJECTILE_Y_POS[n]).wrapping_sub(rect.y));
+        if dy < word!(game.PROJECTILE_Y_RADIUS[n])
+            || dy.wrapping_sub(word!(game.PROJECTILE_Y_RADIUS[n])) < rect.h
         {
             return true;
         }
@@ -2797,7 +2797,7 @@ fn projectile_overlaps<L: Lease + ?Sized>(game: &L, n: usize, rect: Rect) -> boo
 /// Handle Ridley tail whip sound effect ($A6:D2AA): every 16 frames of a fast
 /// tail, unless roaring. Was `Ridley_Func_91`.
 pub fn tail_whip_sound<L: Lease + ?Sized>(game: &mut L) {
-    if !below(word!(game.tilemap_stuff[tail::ANGLE_DELTA]), 8) {
+    if !below(word!(game.TILEMAP_STUFF[tail::ANGLE_DELTA]), 8) {
         let counter = session_slot!(game, Ridley[RIDLEY].whip_sound_counter).wrapping_add(1);
         session_slot!(game, Ridley[RIDLEY].whip_sound_counter = counter);
         if below(counter, 16) {
@@ -2812,11 +2812,11 @@ pub fn tail_whip_sound<L: Lease + ?Sized>(game: &mut L) {
 
 /// Initialise Ridley tail RAM ($A6:D2D6). Was `Ridley_Func_92`.
 pub fn initialise_tail<L: Lease + ?Sized>(game: &mut L) {
-    word! {game; tilemap_stuff[tail::ANGLE_DELTA] = 1; tilemap_stuff[tail::MIN_CLOCKWISE_ANGLE] = 16368; tilemap_stuff[tail::MAX_ANTICLOCKWISE_ANGLE] = 16448;
-    tilemap_stuff[tail::WHIP_TARGET_CLOCKWISE] = NO_WHIP_TARGET; tilemap_stuff[tail::WHIP_TARGET_ANTICLOCKWISE] = NO_WHIP_TARGET;
-    tilemap_stuff[tail::EXTENSION_SPEED] = 240; tilemap_stuff[tail::IDEAL_SEGMENT_ANGLE] = 16; }
+    word! {game; TILEMAP_STUFF[tail::ANGLE_DELTA] = 1; TILEMAP_STUFF[tail::MIN_CLOCKWISE_ANGLE] = 16368; TILEMAP_STUFF[tail::MAX_ANTICLOCKWISE_ANGLE] = 16448;
+    TILEMAP_STUFF[tail::WHIP_TARGET_CLOCKWISE] = NO_WHIP_TARGET; TILEMAP_STUFF[tail::WHIP_TARGET_ANTICLOCKWISE] = NO_WHIP_TARGET;
+    TILEMAP_STUFF[tail::EXTENSION_SPEED] = 240; TILEMAP_STUFF[tail::IDEAL_SEGMENT_ANGLE] = 16; }
     for segment in 0..7 {
-        word!(game.tilemap_stuff[tail::stagger_angle(segment)] = 17);
+        word!(game.TILEMAP_STUFF[tail::stagger_angle(segment)] = 17);
     }
     game.foreign(|game| {
         set_tail_segments_from_list(
@@ -2842,7 +2842,7 @@ pub fn activate_tail_segments<L: Lease + ?Sized>(game: &mut L) {
 /// Ridley tail segment active flags = [A] ($A6:D3DC). Was `Ridley_Func_D3DC`.
 pub fn set_tail_segment_flags<L: Lease + ?Sized>(flags: u16, game: &mut L) {
     for segment in 0..7 {
-        word!(game.tilemap_stuff[tail::active(segment)] = flags);
+        word!(game.TILEMAP_STUFF[tail::active(segment)] = flags);
     }
 }
 
@@ -2854,10 +2854,10 @@ pub fn flip_tail<L: Lease + ?Sized>(game: &mut L) {
     });
     for segment in 0..7 {
         word!(
-            game.tilemap_stuff[tail::angle(segment)] =
-                0x8000u16.wrapping_sub(word!(game.tilemap_stuff[tail::angle(segment)]))
+            game.TILEMAP_STUFF[tail::angle(segment)] =
+                0x8000u16.wrapping_sub(word!(game.TILEMAP_STUFF[tail::angle(segment)]))
         );
-        word!(game.tilemap_stuff[tail::direction(segment)] |= 0x8000u16);
+        word!(game.TILEMAP_STUFF[tail::direction(segment)] |= 0x8000u16);
     }
 }
 
@@ -2904,7 +2904,7 @@ pub fn health_palette<L: Lease + ?Sized>(game: &mut L) {
 pub fn load_health_palette<L: Lease + ?Sized>(index: u16, game: &mut L) {
     /// Ridley health-based palettes ($A6:E46A), 14 colours each.
     const HEALTH_PALETTES: u16 = 0xe46a;
-    if word!(game.palette_change_num) == 0 {
+    if word!(game.PALETTE_CHANGE_NUM) == 0 {
         let colours = HEALTH_PALETTES.wrapping_add(index.wrapping_mul(28));
         game.foreign(|game| copy_rom_colors_to_palette(0x1e2, 0xa6, colours, 0xe, game));
     }
@@ -2930,7 +2930,7 @@ pub fn ceres_health_palette<L: Lease + ?Sized>(game: &mut L) {
 pub fn hurt_flash<S: State + ?Sized>(game: &mut S) {
     let mut palette = 3584;
     if session_slot!(game, Ridley[RIDLEY].base.flash_timer) >= 2
-        && ((word!(game.random_enemy_counter) as i32 + 1) & 2) != 0
+        && ((word!(game.RANDOM_ENEMY_COUNTER) as i32 + 1) & 2) != 0
     {
         palette = 0;
     }
@@ -2940,7 +2940,7 @@ pub fn hurt_flash<S: State + ?Sized>(game: &mut S) {
 /// Check for collision with non-air block ($A6:D4F9): whether the level data
 /// block at (`x`, `y`) has a type. Was `ridley_offscreen`.
 pub fn solid_block_at<H: crate::ram::RamHost + ?Sized>(x: u16, y: u16, game: &mut H) -> bool {
-    let row = mult8x8((y >> 4) as u8, word!(game.room_width_in_blocks) as u8);
+    let row = mult8x8((y >> 4) as u8, word!(game.ROOM_WIDTH_IN_BLOCKS) as u8);
     let at = usize::try_from(LEVEL_DATA + 2 * (row as i32 + (x as i32 >> 4)) as isize)
         .expect("RAM address outside allocation");
     let block = u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]);
@@ -3104,8 +3104,8 @@ pub fn calculate_swoop_velocities<L: Lease + ?Sized>(
 /// top, 8 bottom). Was `Ridley_Func_112`.
 pub fn move_ridley<S: State + ?Sized>(game: &mut S) {
     session_slot!(game, Ridley[RIDLEY].hit_boundary = 0);
-    let k = word!(game.cur_enemy_index);
-    let e = word!(game.cur_enemy_index) as i32;
+    let k = word!(game.CUR_ENEMY_INDEX);
+    let e = word!(game.CUR_ENEMY_INDEX) as i32;
     let carry = session_slot!(byte game, Ridley[e].base.x_subpos[1]) as i32
         + session_slot!(byte game, Ridley[e].x_velocity[0]) as i32;
     session_slot!(byte game, Ridley[e].base.x_subpos[1] = carry as u8);
@@ -3151,17 +3151,17 @@ pub fn move_ridley<S: State + ?Sized>(game: &mut S) {
 /// hitting the left wall at 280h or more, outside Norfair. Was
 /// `Ridley_Func_113`.
 pub fn ceres_earthquake<S: State + ?Sized>(k: u16, game: &mut S) {
-    if word!(game.area_index) != NORFAIR {
+    if word!(game.AREA_INDEX) != NORFAIR {
         let e = i32::from(k);
         let speed = abs16(session_slot!(game, Ridley[e].x_velocity))
             .max(abs16(session_slot!(game, Ridley[e].y_velocity)));
         if speed >= 0x280 {
-            let kind = if word!(game.area_index) == NORFAIR {
+            let kind = if word!(game.AREA_INDEX) == NORFAIR {
                 24
             } else {
                 33
             };
-            word! {game; earthquake_type = kind; earthquake_timer = 12; }
+            word! {game; EARTHQUAKE_TYPE = kind; EARTHQUAKE_TIMER = 12; }
         }
     }
 }
@@ -3292,16 +3292,16 @@ pub fn draw_tail<L: Lease + ?Sized>(game: &mut L) {
     let tip = ridley_data::tail_tip_spritemap(game, tail_tip_sector(game));
     add_ridley_spritemap(
         tip,
-        word!(game.tilemap_stuff[tail::x(6)]),
-        word!(game.tilemap_stuff[tail::y(6)]),
+        word!(game.TILEMAP_STUFF[tail::x(6)]),
+        word!(game.TILEMAP_STUFF[tail::y(6)]),
         game,
     );
     for segment in (0..6).rev() {
         let spritemap = TAIL_SEGMENT_SPRITEMAPS[segment / 2];
         add_ridley_spritemap(
             spritemap,
-            word!(game.tilemap_stuff[tail::x(segment)]),
-            word!(game.tilemap_stuff[tail::y(segment)]),
+            word!(game.TILEMAP_STUFF[tail::x(segment)]),
+            word!(game.TILEMAP_STUFF[tail::y(segment)]),
             game,
         );
     }
@@ -3377,7 +3377,7 @@ pub fn add_spritemap<L: Lease + ?Sized>(
     let map = crate::cartridge::native_record(0xa6, spritemap, game);
     let mut count = map.word(0) as i32;
     let mut entry = 2;
-    let mut index = word!(game.oam_next_ptr) as i32;
+    let mut index = word!(game.OAM_NEXT_PTR) as i32;
     let layer1 = game.camera().layer1;
     loop {
         let screen_y = (y as i32 + map.byte(entry + 2) as i8 as i32 - layer1[1] as i32) as i16;
@@ -3391,7 +3391,7 @@ pub fn add_spritemap<L: Lease + ?Sized>(
             game.set_slot_byte(at + 3, tile[1]);
             word!(
                 bits_i32,
-                game.oam_ext[(index >> 5)] |= (((screen_x as i32 & 0x100) >> 8)
+                game.OAM_EXT[(index >> 5)] |= (((screen_x as i32 & 0x100) >> 8)
                     | (((map.word(entry) as i16) < 0) as i32 * 2))
                     << (2 * (index >> 2 & 7))
             );
@@ -3403,7 +3403,7 @@ pub fn add_spritemap<L: Lease + ?Sized>(
             break;
         }
     }
-    word!(game.oam_next_ptr = index as u16);
+    word!(game.OAM_NEXT_PTR = index as u16);
 }
 
 /// Check if Ridley is on screen ($A6:DE7A): true when he is off it, with a
@@ -3430,26 +3430,26 @@ pub fn off_screen<S: State + ?Sized>(game: &mut S) -> bool {
 /// Samus's beams (types below 3) in `rect`, which moves to its centre and
 /// is marked deflected. Was `Ridley_Func_122`.
 pub fn projectile_in_rect<L: Lease + ?Sized>(rect: Rect, game: &mut L) -> Option<usize> {
-    if word!(game.projectile_counter) == 0 {
+    if word!(game.PROJECTILE_COUNTER) == 0 {
         return None;
     }
     let n = (0..5).find(|&n| {
-        let kind = word!(game.projectile_type[n]) as i16;
+        let kind = word!(game.PROJECTILE_TYPE[n]) as i16;
         kind < 0
             && ((kind.to_ne_bytes()[1] as i32 & 0xf) - 3) & 0x8000 != 0
             && projectile_overlaps(game, n, rect)
     })?;
-    word! {game; projectile_x_pos[n] = rect.x; projectile_y_pos[n] = rect.y; }
-    word!(game.projectile_dir[n] |= 0x10u16);
+    word! {game; PROJECTILE_X_POS[n] = rect.x; PROJECTILE_Y_POS[n] = rect.y; }
+    word!(game.PROJECTILE_DIR[n] |= 0x10u16);
     Some(n)
 }
 
 /// Check for Samus collision with rectangle ($A6:DF29). Was `Ridley_Func_124`.
 pub fn samus_in_rect<L: Lease + ?Sized>(rect: Rect, game: &mut L) -> bool {
     let dx = abs16(game.player_x().wrapping_sub(rect.x));
-    if dx < word!(game.samus_x_radius) || dx.wrapping_sub(word!(game.samus_x_radius)) < rect.w {
+    if dx < word!(game.SAMUS_X_RADIUS) || dx.wrapping_sub(word!(game.SAMUS_X_RADIUS)) < rect.w {
         let dy = abs16(game.player_y().wrapping_sub(rect.y));
-        if dy < word!(game.samus_y_radius) || dy.wrapping_sub(word!(game.samus_y_radius)) < rect.h {
+        if dy < word!(game.SAMUS_Y_RADIUS) || dy.wrapping_sub(word!(game.SAMUS_Y_RADIUS)) < rect.h {
             return true;
         }
     }
@@ -3464,7 +3464,7 @@ pub fn touch<L: Lease + ?Sized>(game: &mut L) {
 /// Enemy shot - enemy $E13F/$E17F (Ridley) ($A6:DF8A): Norfair Ridley reacts
 /// normally; Ceres Ridley flashes and counts the hit. Was `Ridley_Shot`.
 pub fn shot<L: Lease + ?Sized>(game: &mut L) {
-    if word!(game.area_index) == NORFAIR {
+    if word!(game.AREA_INDEX) == NORFAIR {
         game.shot_reaction(Shot::ReactionOnly);
         return;
     }
@@ -3507,8 +3507,8 @@ pub fn start_death_sequence<L: Lease + ?Sized>(game: &mut L) {
 /// Samus back. Was `Ridley_Func_127`.
 pub fn tail_samus_collision<L: Lease + ?Sized>(game: &mut L) {
     let rect = Rect {
-        x: word!(game.tilemap_stuff[tail::x(6)]),
-        y: word!(game.tilemap_stuff[tail::y(6)]),
+        x: word!(game.TILEMAP_STUFF[tail::x(6)]),
+        y: word!(game.TILEMAP_STUFF[tail::y(6)]),
         w: 14,
         h: 14,
     };
@@ -3517,11 +3517,11 @@ pub fn tail_samus_collision<L: Lease + ?Sized>(game: &mut L) {
             let amount = game.suit_damage(session_slot!(game, Ridley[RIDLEY].tail_damage));
             game.damage_player(amount);
         });
-        word!(game.samus_invincibility_timer = 96);
-        word!(game.samus_knockback_timer = 5);
+        word!(game.SAMUS_INVINCIBILITY_TIMER = 96);
+        word!(game.SAMUS_KNOCKBACK_TIMER = 5);
         word!(
-            game.knockback_x_dir = ((word!(game.samus_x_pos) as i16)
-                .wrapping_sub(word!(game.tilemap_stuff[tail::x(6)]) as i16)
+            game.KNOCKBACK_X_DIR = ((word!(game.SAMUS_X_POS) as i16)
+                .wrapping_sub(word!(game.TILEMAP_STUFF[tail::x(6)]) as i16)
                 >= 0) as u16
         );
     }
@@ -3535,15 +3535,15 @@ pub fn tail_projectile_collision<L: Lease + ?Sized>(game: &mut L) {
         return;
     }
     let tip = Rect {
-        x: word!(game.tilemap_stuff[tail::x(6)]),
-        y: word!(game.tilemap_stuff[tail::y(6)]),
+        x: word!(game.TILEMAP_STUFF[tail::x(6)]),
+        y: word!(game.TILEMAP_STUFF[tail::y(6)]),
         w: 14,
         h: 14,
     };
     let Some(n) = projectile_in_rect(tip, game).or_else(|| {
         let segment = Rect {
-            x: word!(game.tilemap_stuff[tail::x(5)]),
-            y: word!(game.tilemap_stuff[tail::y(5)]),
+            x: word!(game.TILEMAP_STUFF[tail::x(5)]),
+            y: word!(game.TILEMAP_STUFF[tail::y(5)]),
             w: 10,
             h: 10,
         };
@@ -3551,8 +3551,8 @@ pub fn tail_projectile_collision<L: Lease + ?Sized>(game: &mut L) {
     }) else {
         return;
     };
-    let x = word!(game.projectile_x_pos[n]);
-    let y = word!(game.projectile_y_pos[n]);
+    let x = word!(game.PROJECTILE_X_POS[n]);
+    let y = word!(game.PROJECTILE_Y_POS[n]);
     game.place_projectile_spawn(x, y);
     let mut kind = 12;
     if projectile_kind(game, n) == MISSILE {
@@ -3581,7 +3581,7 @@ pub fn goto_if_samus_health_low<L: Lease + ?Sized>(
     script: EnemyScript,
     game: &mut L,
 ) -> EnemyScript {
-    if word!(game.area_index) == NORFAIR || !below(word!(game.samus_health), 30) {
+    if word!(game.AREA_INDEX) == NORFAIR || !below(word!(game.SAMUS_HEALTH), 30) {
         return script.offset(1);
     }
     session_slot!(game, Ridley[RIDLEY].timer = 8);
@@ -3614,8 +3614,8 @@ pub fn goto_if_not_holding_samus<L: Lease + ?Sized>(
 /// Instruction - Ridley feet distance index = [[Y]] ($A6:E501); Samus's
 /// previous position catches up. Was `Ridley_Instr_2`.
 pub fn set_feet_distance<L: Lease + ?Sized>(script: EnemyScript, game: &mut L) -> EnemyScript {
-    game.set_previous_player_x(word!(game.samus_x_pos));
-    game.set_previous_player_y(word!(game.samus_y_pos));
+    game.set_previous_player_x(word!(game.SAMUS_X_POS));
+    game.set_previous_player_y(word!(game.SAMUS_Y_POS));
     session_slot!(game, Ridley[RIDLEY].feet_distance_index = script.word(0));
     script.offset(1)
 }
@@ -3737,7 +3737,7 @@ pub fn spawn_fireball<L: Lease + ?Sized>(
     afterburn: u16,
     game: &mut L,
 ) -> EnemyScript {
-    word!(game.eproj_init_param_2 = afterburn);
+    word!(game.EPROJ_INIT_PARAM_2 = afterburn);
     game.spawn_room_projectile(FIREBALL, session_slot!(game, Ridley[RIDLEY].facing));
     script
 }

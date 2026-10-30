@@ -23,9 +23,9 @@ pub trait Host:
 pub fn advance_death_pose<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
     pt::animation::advance_animation(&mut game.runtime(), pt::state::AnimationStep::Death);
     game.draw_samus(Body::Death);
-    let expired = word!(game.death_flash_timer -= 1, reread) & 0x8000 != 0;
-    if word!(game.death_flash_timer) == 0 || expired {
-        word!(game.game_state += 1);
+    let expired = word!(game.DEATH_FLASH_TIMER -= 1, reread) & 0x8000 != 0;
+    if word!(game.DEATH_FLASH_TIMER) == 0 || expired {
+        word!(game.GAME_STATE += 1);
     }
     0
 }
@@ -58,39 +58,39 @@ pub fn begin_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
         game.set_player_x(x);
         let y = game.player_y().wrapping_sub(layer1[1]);
         game.set_player_y(y);
-        word!(game.game_state += 1);
+        word!(game.GAME_STATE += 1);
     }
     0
 }
 
 pub fn flash_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
-    if (word!(game.death_counter) as i32 - 4i32) & 0x8000 != 0 {
-        queue_death_tiles((2u16).wrapping_mul(word!(game.death_counter)), game);
+    if (word!(game.DEATH_COUNTER) as i32 - 4i32) & 0x8000 != 0 {
+        queue_death_tiles((2u16).wrapping_mul(word!(game.DEATH_COUNTER)), game);
     }
-    if (word!(game.death_counter += 1, reread) as i32 - 60i32) & 0x8000 != 0 {
-        let expired = word!(game.game_options_screen_index -= 1, reread) & 0x8000 != 0;
-        if word!(game.game_options_screen_index) == 0 || expired {
-            if word!(game.death_index) != 0 {
-                word! { game; death_index = 0; game_options_screen_index = 3; }
+    if (word!(game.DEATH_COUNTER += 1, reread) as i32 - 60i32) & 0x8000 != 0 {
+        let expired = word!(game.GAME_OPTIONS_SCREEN_INDEX -= 1, reread) & 0x8000 != 0;
+        if word!(game.GAME_OPTIONS_SCREEN_INDEX) == 0 || expired {
+            if word!(game.DEATH_INDEX) != 0 {
+                word! { game; DEATH_INDEX = 0; GAME_OPTIONS_SCREEN_INDEX = 3; }
             } else {
-                word! { game, 1; death_index, game_options_screen_index }
+                word! { game, 1; DEATH_INDEX, GAME_OPTIONS_SCREEN_INDEX }
             }
-            death_palette(Some(word!(game.death_index).wrapping_mul(2)), game);
+            death_palette(Some(word!(game.DEATH_INDEX).wrapping_mul(2)), game);
         }
         game.draw_samus(Body::Death);
     } else {
         death_palette(None, game);
         queue_death_tiles(8, game);
         let delay = game.runtime().table(Source::Native, 0x9bb823).byte(0);
-        word!(game.game_options_screen_index = u16::from(delay));
-        word! { game, 0; death_index, death_counter }
+        word!(game.GAME_OPTIONS_SCREEN_INDEX = u16::from(delay));
+        word! { game, 0; DEATH_INDEX, DEATH_COUNTER }
         advance_suit_explosion(game);
         word!(
-            game.substate = (word!(game.joypad2_last) as i32 & 0xb0
+            game.SUBSTATE = (word!(game.JOYPAD2_LAST) as i32 & 0xb0
                 == K_BUTTON_A as i32 | K_BUTTON_L as i32 | K_BUTTON_R as i32)
                 as u16
         );
-        word!(game.game_state += 1);
+        word!(game.GAME_STATE += 1);
     }
     0
 }
@@ -99,7 +99,7 @@ fn death_palette<H: Host + ?Sized>(frame: Option<u16>, game: &mut H) {
     let pointer = crate::gameplay_tables::death_palette(
         game,
         frame.is_some(),
-        (word!(game.samus_suit_palette_index) >> 1) as isize,
+        (word!(game.SAMUS_SUIT_PALETTE_INDEX) >> 1) as isize,
     )
     .wrapping_add(frame.unwrap_or(0));
     let address = game
@@ -127,7 +127,7 @@ fn queue_death_tiles<H: Host + ?Sized>(frame: u16, game: &mut H) {
     const SOURCES: [u16; 5] = [0x8400, 0x8800, 0x8c00, 0x9000, 0x8000];
     const DESTINATIONS: [u16; 5] = [0x6200, 0x6400, 0x6600, 0x6800, 0x6000];
     crate::display_refresh::queue_native_transfer(
-        word!(game.vram_write_queue_tail),
+        word!(game.VRAM_WRITE_QUEUE_TAIL),
         1024,
         |_| SOURCES[usize::from(frame >> 1)],
         0x9b,
@@ -137,16 +137,16 @@ fn queue_death_tiles<H: Host + ?Sized>(frame: u16, game: &mut H) {
 }
 
 fn whiten_death_palette<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.substate) == 0 && word!(game.death_index) != 0 {
+    if word!(game.SUBSTATE) == 0 && word!(game.DEATH_INDEX) != 0 {
         const SHADES: [u16; 22] = [
             0x421, 0xc63, 0x14a5, 0x1ce7, 0x2529, 0x2d6b, 0x35ad, 0x4210, 0x4a52, 0x4e73, 0x5294,
             0x56b5, 0x5ad6, 0x5ef7, 0x6318, 0x6739, 0x6b5a, 0x6f7b, 0x739c, 0x77bd, 0x7bde, 0x7fff,
         ];
-        let shade = SHADES[usize::from(word!(game.death_counter))];
+        let shade = SHADES[usize::from(word!(game.DEATH_COUNTER))];
         word_transfers!(game, ascending, 192; native(0xc000) <- value(shade));
         word_transfers!(game, ascending, 32; native(0xc1a0) <- value(shade));
-        if (word!(game.death_counter) as i32 - 20i32) & 0x8000 != 0 {
-            word!(game.death_counter += 1);
+        if (word!(game.DEATH_COUNTER) as i32 - 20i32) & 0x8000 != 0 {
+            word!(game.DEATH_COUNTER += 1);
         }
     }
 }
@@ -154,38 +154,38 @@ fn whiten_death_palette<H: Host + ?Sized>(game: &mut H) {
 pub fn explode_suit<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
     whiten_death_palette(game);
     if advance_suit_explosion(game) {
-        word! { game, 1; screen_fade_delay, screen_fade_counter }
-        word!(game.game_state += 1);
+        word! { game, 1; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+        word!(game.GAME_STATE += 1);
     }
     0
 }
 
 fn advance_suit_explosion<H: Host + ?Sized>(game: &mut H) -> bool {
-    let expired = word!(game.game_options_screen_index -= 1, reread) & 0x8000 != 0;
-    if word!(game.game_options_screen_index) == 0 || expired {
-        if (word!(game.death_index += 1, reread) as i32 - 9i32) & 0x8000 == 0 {
-            word!(game.death_counter = 21);
+    let expired = word!(game.GAME_OPTIONS_SCREEN_INDEX -= 1, reread) & 0x8000 != 0;
+    if word!(game.GAME_OPTIONS_SCREEN_INDEX) == 0 || expired {
+        if (word!(game.DEATH_INDEX += 1, reread) as i32 - 9i32) & 0x8000 == 0 {
+            word!(game.DEATH_COUNTER = 21);
             whiten_death_palette(game);
-            word!(game.substate = 0);
+            word!(game.SUBSTATE = 0);
             return true;
         }
         let recolor =
-            word!(game.substate) == 0 || (word!(game.death_index) as i32 - 2i32) & 0x8000 != 0;
+            word!(game.SUBSTATE) == 0 || (word!(game.DEATH_INDEX) as i32 - 2i32) & 0x8000 != 0;
         // Each read captures the native table afresh; the frame index is a RAM
         // read, so taking it first leaves the captured bytes unchanged.
-        let index = 2 * usize::from(word!(game.death_index));
+        let index = 2 * usize::from(word!(game.DEATH_INDEX));
         let delay = game.runtime().table(Source::Native, 0x9bb823).byte(index);
-        word!(game.game_options_screen_index = u16::from(delay));
+        word!(game.GAME_OPTIONS_SCREEN_INDEX = u16::from(delay));
         if recolor {
-            let index = 2 * usize::from(word!(game.death_index)) + 1;
+            let index = 2 * usize::from(word!(game.DEATH_INDEX)) + 1;
             let frame = game.runtime().table(Source::Native, 0x9bb823).byte(index);
             death_palette(Some(2u16.wrapping_mul(u16::from(frame))), game);
         }
     }
     let sprite = (if game.facing() == 4 {
-        word!(game.death_index) as i32 + 2085
+        word!(game.DEATH_INDEX) as i32 + 2085
     } else {
-        word!(game.death_index) as i32 + 2076
+        word!(game.DEATH_INDEX) as i32 + 2076
     }) as u16;
     sprite_output::samus(
         sprite,

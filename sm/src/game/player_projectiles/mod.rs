@@ -22,7 +22,7 @@ pub(crate) fn prepare(game: &mut Game) {
     let address = 0x900000
         | u32::from(encoding::read(
             &|at| game.ram().read_byte(at),
-            crate::ram_map::words::frame_handler_alfa,
+            crate::ram_map::words::FRAME_HANDLER_ALFA,
         ));
     prepare_entry(address, game);
 }

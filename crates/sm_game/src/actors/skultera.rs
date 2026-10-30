@@ -56,7 +56,7 @@ pub mod instruction {
 }
 
 fn current(game: &(impl Host + ?Sized)) -> i32 {
-    i32::from(word!(game.cur_enemy_index))
+    i32::from(word!(game.CUR_ENEMY_INDEX))
 }
 /// The wave's Y offset at the fish's angle.
 fn y_offset(fish: i32, game: &mut (impl Host + ?Sized)) -> u16 {
@@ -114,7 +114,7 @@ fn turn(fish: i32, left: bool, game: &mut (impl Host + ?Sized)) {
 /// Skultera function - swimming left ($A3:9132) or right ($A3:91AB): swim on
 /// the wave, turning at walls and blocks.
 fn swim(fish: i32, left: bool, game: &mut (impl Host + ?Sized)) {
-    let k = word!(game.cur_enemy_index);
+    let k = word!(game.CUR_ENEMY_INDEX);
     let amount = if left {
         (u32::from(slot!(game, Skultera[fish].left_velocity)) << 16)
             | u32::from(slot!(game, Skultera[fish].left_subvelocity))
@@ -127,7 +127,7 @@ fn swim(fish: i32, left: bool, game: &mut (impl Host + ?Sized)) {
     } else {
         let offset = y_offset(fish, game);
         slot!(game, Skultera[fish].y_offset = offset);
-        let k = word!(game.cur_enemy_index);
+        let k = word!(game.CUR_ENEMY_INDEX);
         let amount = i32::from(
             (offset as i16).wrapping_sub(slot!(game, Skultera[fish].previous_y_offset) as i16),
         ) << 16;

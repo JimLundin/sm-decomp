@@ -65,7 +65,7 @@ fn set_backdrop_color<H: Host + ?Sized>(color: u16, game: &mut H) {
     runtime.session_mut().presentation.visual_mut().colors[0] = color;
 }
 fn upload_screen<H: Host + ?Sized>(source: u16, screen: u16, game: &mut H) {
-    let tail = word!(game.vram_write_queue_tail);
+    let tail = word!(game.VRAM_WRITE_QUEUE_TAIL);
     let entry = 0xd0 + usize::from(tail);
     word_transfers!(game, ascending, 1;
         native(entry) <- value(2048),
@@ -73,7 +73,7 @@ fn upload_screen<H: Host + ?Sized>(source: u16, screen: u16, game: &mut H) {
         native(entry + 4) <- value(126));
     let target = ((game.ram().read_byte(0x59) as u16 & 0xfc) << 8).wrapping_add(screen * 1024);
     word_transfers!(game, ascending, 1; native(entry + 5) <- value(target));
-    word!(game.vram_write_queue_tail = tail.wrapping_add(7));
+    word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(7));
 }
 
 // Capture all four source tiles before the reverse-order writes, even when RAM aliases.
@@ -121,8 +121,8 @@ fn copy_background<H: Host + ?Sized>(game: &mut H) {
 /// byte; `restore_left` puts them back.
 pub fn freeze_and_backup<H: Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
     game.ram().write_byte(0xa78, 1);
-    object.a = u16::from_le_bytes([word!(game.reg_BG2HOFS) as u8, game.ram().read_byte(0xb6)]);
-    object.b = u16::from_le_bytes([word!(game.reg_BG2VOFS) as u8, game.ram().read_byte(0xb8)]);
+    object.a = u16::from_le_bytes([word!(game.REG_BG2HOFS) as u8, game.ram().read_byte(0xb6)]);
+    object.b = u16::from_le_bytes([word!(game.REG_BG2VOFS) as u8, game.ram().read_byte(0xb8)]);
     object.c = (object.c & 0xff00) | u16::from(game.ram().read_byte(0x59));
 }
 pub fn capture_bg1_right<H: Host + ?Sized>(game: &mut H) {
@@ -367,12 +367,12 @@ pub fn capture_bg2_right<H: Host + ?Sized>(game: &mut H) {
         if crate::room_view::effects(game).earthquake_timer != 0 {
             let camera = camera(game);
             word! { game;
-                reg_BG1HOFS = camera.layer1[0].wrapping_add(camera.bg1_offset[0]);
-                reg_BG1VOFS = camera.layer1[1].wrapping_add(camera.bg1_offset[1]);
+                REG_BG1HOFS = camera.layer1[0].wrapping_add(camera.bg1_offset[0]);
+                REG_BG1VOFS = camera.layer1[1].wrapping_add(camera.bg1_offset[1]);
             }
         }
-        word!(game.reg_BG2HOFS = (word!(game.reg_BG1HOFS)) & (0xfu16));
-        word!(game.reg_BG2VOFS = (word!(game.reg_BG1VOFS)) & (0xfu16));
+        word!(game.REG_BG2HOFS = (word!(game.REG_BG1HOFS)) & (0xfu16));
+        word!(game.REG_BG2VOFS = (word!(game.REG_BG1VOFS)) & (0xfu16));
         game.ram().write_byte(0x59, 73);
     }
     enqueue_readback(0x59, 1024, 0x5800, 2048, true, game);
@@ -393,7 +393,7 @@ pub fn upload_right<H: Host + ?Sized>(game: &mut H) {
         word_transfers!(game, ascending, 1; native(at) <- value(value as u16));
         game.ram().write_byte(at + 2, (value >> 16) as u8);
     }
-    word!(game.xray_hdma_table_end = 0);
+    word!(game.XRAY_HDMA_TABLE_END = 0);
     let angle = if game.facing() == 4 { 192 } else { 64 };
     stop_demo(angle, game);
 }
@@ -408,13 +408,13 @@ pub fn restore_left<H: Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
     game.ram().write_byte(0xa8a, 0x98);
     word_transfers!(game, ascending, 1; native(0xa8b) <- value(0));
     clear_previous_demo_input(game);
-    word!(game.hdma_table_1[0] = 255);
+    word!(game.HDMA_TABLE_1[0] = 255);
     game.apply_xray_blending(BlendPhase::Restore);
     set_backdrop_color(0, game);
-    word!(game.reg_BG2HOFS = object.a);
-    word!(game.reg_BG2VOFS = object.b);
+    word!(game.REG_BG2HOFS = object.a);
+    word!(game.REG_BG2VOFS = object.b);
     game.ram().write_byte(0x59, object.c as u8);
-    if (word!(game.vram_write_queue_tail) as i16).wrapping_sub(240) < 0 {
+    if (word!(game.VRAM_WRITE_QUEUE_TAIL) as i16).wrapping_sub(240) < 0 {
         upload_screen(0x5000, 0, game);
         advance_stage(game);
     }
@@ -427,22 +427,22 @@ fn advance_stage<H: Host + ?Sized>(game: &mut H) {
 }
 /// Clear the demo's previous input and the controller backup after it.
 fn clear_previous_demo_input<H: Host + ?Sized>(game: &mut H) {
-    word!(game.demo_backup_prev_controller_input = 0);
+    word!(game.DEMO_BACKUP_PREV_CONTROLLER_INPUT = 0);
     let mut runtime = game.runtime();
     let demo = &mut runtime.session_mut().player.demo;
     (demo.previous_held, demo.previous_pressed) = (0, 0);
 }
 pub fn restore_right<H: Host + ?Sized>(game: &mut H) {
     game.apply_xray_blending(BlendPhase::Restore);
-    if (word!(game.vram_write_queue_tail) as i16).wrapping_sub(240) < 0 {
+    if (word!(game.VRAM_WRITE_QUEUE_TAIL) as i16).wrapping_sub(240) < 0 {
         upload_screen(0x5800, 1, game);
         advance_stage(game);
     }
 }
 pub fn finish_restore<H: Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
     game.apply_xray_blending(BlendPhase::Restore);
-    if word!(game.time_is_frozen_flag) != 0 {
-        word!(game.time_is_frozen_flag = 0);
+    if word!(game.TIME_IS_FROZEN_FLAG) != 0 {
+        word!(game.TIME_IS_FROZEN_FLAG = 0);
         stop_demo(0, game);
         word_transfers!(game, ascending, 1; native(0xa88) <- value(1));
         game.ram().write_byte(0xa8a, 0x98);
@@ -456,7 +456,7 @@ pub fn finish_restore<H: Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
             game.ram().write_byte(0x75, 64);
             game.ram().write_byte(0x74, 32);
         }
-        word_transfers!(game, descending, 256; le(hdma_table_1, 255) <- value(0xff));
+        word_transfers!(game, descending, 256; le(HDMA_TABLE_1, 255) <- value(0xff));
         let mut runtime = game.runtime();
         let controls = &mut runtime.session_mut().projectiles.controls;
         if controls.automatic_weapon != 0 {

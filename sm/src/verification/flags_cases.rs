@@ -132,8 +132,8 @@ pub(crate) fn seed_load(id: u32, g: &mut Game, image: &RomImage) -> u16 {
     slot
 }
 fn seed_demo(g: &mut Game, image: &RomImage) {
-    put(g, crate::ram_map::words::demo_set, 0);
-    put(g, crate::ram_map::words::demo_scene, 0);
+    put(g, crate::ram_map::words::DEMO_SET, 0);
+    put(g, crate::ram_map::words::DEMO_SCENE, 0);
     rom_word(image, 0x82876c, 0x9000);
     for (i, v) in [0x9100, 0x9200, 0, 0x100, 0x200, 0x30, 0x40, 0x500, 0]
         .into_iter()

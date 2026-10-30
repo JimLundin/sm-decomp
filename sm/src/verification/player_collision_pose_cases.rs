@@ -87,10 +87,10 @@ fn seed(id: u32, g: &mut Game, loaded: &RomImage, native: &RomImage) {
         (SOLID, 0x6666),
         (BLOCK, 0x7777),
         (DIFFERENCE, 0x8888),
-        (w::enemy_index_to_shake, 0x5555),
-        (w::button_config_jump_a, 0x0080),
-        (w::joypad1_newkeys, 0x0080),
-        (w::joypad1_lastkeys, 0x0300),
+        (w::ENEMY_INDEX_TO_SHAKE, 0x5555),
+        (w::BUTTON_CONFIG_JUMP_A, 0x0080),
+        (w::JOYPAD1_NEWKEYS, 0x0080),
+        (w::JOYPAD1_LASTKEYS, 0x0300),
     ] {
         put(g, at, value);
     }
@@ -104,7 +104,7 @@ fn seed(id: u32, g: &mut Game, loaded: &RomImage, native: &RomImage) {
     }
     match id {
         0 => put(g, 0xa26, 0x0108),
-        1 => put(g, w::joypad1_lastkeys, 0),
+        1 => put(g, w::JOYPAD1_LASTKEYS, 0),
         2..=7 => {
             actor(
                 g,
@@ -124,14 +124,14 @@ fn seed(id: u32, g: &mut Game, loaded: &RomImage, native: &RomImage) {
                 put(g, 0xa96, 26);
             }
             if id == 7 {
-                put(g, w::joypad1_newkeys, 0);
+                put(g, w::JOYPAD1_NEWKEYS, 0);
             }
         }
         8 | 9 => {
             put(g, 0xa1e, 4);
             actor(g, 0, 128, 136);
             if id == 9 {
-                put(g, w::joypad1_newkeys, 0);
+                put(g, w::JOYPAD1_NEWKEYS, 0);
             }
         }
         10 => put(g, 0xa1e, 0),
@@ -200,7 +200,7 @@ fn assert_jump(id: u32, returned: u8, g: &Game) {
     check(
         g,
         &[
-            (w::enemy_index_to_shake, shake),
+            (w::ENEMY_INDEX_TO_SHAKE, shake),
             (DIRECTION, direction),
             (INPUT, if matches!(id, 4 | 5 | 20) { 5 } else { 0x4444 }),
             (X, 136),
@@ -419,7 +419,7 @@ pub(crate) unsafe fn run(local_id: u32, g: &mut Game) -> Vec<u8> {
                 (0xa96, 27),
                 (0xa94, 1),
                 (INPUT, 5),
-                (w::enemy_index_to_shake, 0),
+                (w::ENEMY_INDEX_TO_SHAKE, 0),
                 (DIRECTION, 1),
             ],
             "player.pose.screw_ready_state",

@@ -153,17 +153,17 @@ pub(crate) fn draygon_spawn_trails(game: &mut Game) {
 #[forbid(unsafe_code)]
 pub(crate) fn draygon_random_sprite(definition: u16, game: &mut Game) {
     game.next_random();
-    let dx = (word!(game.random_number) & 0x7f).wrapping_sub(64);
-    let dy = ((word!(game.random_number) >> 8) & 0x7f).wrapping_sub(64);
+    let dx = (word!(game.RANDOM_NUMBER) & 0x7f).wrapping_sub(64);
+    let dy = ((word!(game.RANDOM_NUMBER) >> 8) & 0x7f).wrapping_sub(64);
     let x = slot!(game, Draygon[0].base.x_pos).wrapping_add(dx);
     let y = slot!(game, Draygon[0].base.y_pos).wrapping_add(dy);
     create_sprite(x, y, definition, 0, game);
 }
 #[forbid(unsafe_code)]
 pub(crate) fn draygon_death_bubble(game: &mut Game) {
-    if word!(game.nmi_frame_counter_word) & 7 == 0 {
+    if word!(game.NMI_FRAME_COUNTER_WORD) & 7 == 0 {
         let x = (game.next_random() & 0x7f) + 192;
-        let y = ((word!(game.random_number) >> 8) & 0x3f) + 400;
+        let y = ((word!(game.RANDOM_NUMBER) >> 8) & 0x3f) + 400;
         create_sprite(x, y, 21, 0, game);
     }
 }
@@ -175,6 +175,6 @@ pub(crate) fn draygon_spit(right: bool, game: &mut Game) {
         y: slot!(game, Draygon[0].base.y_pos).wrapping_sub(16),
     };
     let direction = if right { 192 } else { 128 };
-    word!(game.cinematic_y_sub = (game.next_random() & 0x3f) + direction);
-    spawn_with_enemy_gfx(2, word!(game.cur_enemy_index), 0x8e50, game);
+    word!(game.CINEMATIC_Y_SUB = (game.next_random() & 0x3f) + direction);
+    spawn_with_enemy_gfx(2, word!(game.CUR_ENEMY_INDEX), 0x8e50, game);
 }

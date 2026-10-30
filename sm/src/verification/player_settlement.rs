@@ -102,14 +102,14 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             game.register_rom(loaded.clone());
             game.register_native_rom(native.clone());
             for (at, value) in [
-                (ram::samus_pose, 1),
+                (ram::SAMUS_POSE, 1),
                 (0xa1e, 8),
-                (ram::samus_prev_pose, 1),
-                (ram::samus_movement_handler, 0xe90e),
-                (ram::frame_handler_gamma, 0xe90e),
-                (ram::frame_handler_alfa, 0xe8cd),
+                (ram::SAMUS_PREV_POSE, 1),
+                (ram::SAMUS_MOVEMENT_HANDLER, 0xe90e),
+                (ram::FRAME_HANDLER_GAMMA, 0xe90e),
+                (ram::FRAME_HANDLER_ALFA, 0xe8cd),
                 (
-                    ram::frame_handler_beta,
+                    ram::FRAME_HANDLER_BETA,
                     if id == 3906 {
                         0xe7f5
                     } else if id == 3907 {
@@ -118,35 +118,35 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                         0xe725
                     },
                 ),
-                (ram::debug_disable_minimap, 1),
-                (ram::time_is_frozen_flag, if id == 3903 { 1 } else { 0 }),
-                (ram::samus_anim_frame_timer, 2),
-                (ram::samus_anim_frame, 0),
-                (ram::samus_x_speed_divisor, 0),
-                (ram::timer_for_shine_timer, 10),
-                (ram::samus_health, 99),
-                (ram::samus_new_pose, 0xffff),
-                (ram::samus_new_pose_interrupted, 0xffff),
-                (ram::samus_new_pose_transitional, 0xffff),
-                (ram::samus_y_pos, 100),
-                (ram::samus_y_radius, 2),
-                (ram::samus_invincibility_timer, 0),
-                (ram::samus_knockback_timer, 0),
-                (ram::joypad1_lastkeys, 0x10),
-                (ram::joypad1_newkeys, 0x20),
-                (ram::joypad1_input_samusfilter, 0x40),
-                (ram::joypad1_newinput_samusfilter, 0x80),
-                (ram::controller1_input_for_demo, 0x100),
-                (ram::controller1_new_input_for_demo, 0x200),
-                (ram::demo_backup_prev_controller_input, 0x400),
-                (ram::demo_backup_prev_controller_input_new, 0x800),
-                (ram::intro_samus_display, 0),
+                (ram::DEBUG_DISABLE_MINIMAP, 1),
+                (ram::TIME_IS_FROZEN_FLAG, if id == 3903 { 1 } else { 0 }),
+                (ram::SAMUS_ANIM_FRAME_TIMER, 2),
+                (ram::SAMUS_ANIM_FRAME, 0),
+                (ram::SAMUS_X_SPEED_DIVISOR, 0),
+                (ram::TIMER_FOR_SHINE_TIMER, 10),
+                (ram::SAMUS_HEALTH, 99),
+                (ram::SAMUS_NEW_POSE, 0xffff),
+                (ram::SAMUS_NEW_POSE_INTERRUPTED, 0xffff),
+                (ram::SAMUS_NEW_POSE_TRANSITIONAL, 0xffff),
+                (ram::SAMUS_Y_POS, 100),
+                (ram::SAMUS_Y_RADIUS, 2),
+                (ram::SAMUS_INVINCIBILITY_TIMER, 0),
+                (ram::SAMUS_KNOCKBACK_TIMER, 0),
+                (ram::JOYPAD1_LASTKEYS, 0x10),
+                (ram::JOYPAD1_NEWKEYS, 0x20),
+                (ram::JOYPAD1_INPUT_SAMUSFILTER, 0x40),
+                (ram::JOYPAD1_NEWINPUT_SAMUSFILTER, 0x80),
+                (ram::CONTROLLER1_INPUT_FOR_DEMO, 0x100),
+                (ram::CONTROLLER1_NEW_INPUT_FOR_DEMO, 0x200),
+                (ram::DEMO_BACKUP_PREV_CONTROLLER_INPUT, 0x400),
+                (ram::DEMO_BACKUP_PREV_CONTROLLER_INPUT_NEW, 0x800),
+                (ram::INTRO_SAMUS_DISPLAY, 0),
             ] {
                 put(game, at, value);
             }
             put(
                 game,
-                ram::equipped_items,
+                ram::EQUIPPED_ITEMS,
                 if id == 3901 {
                     1
                 } else if id == 3902 {
@@ -157,17 +157,17 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             );
             put(
                 game,
-                ram::samus_subunit_health,
+                ram::SAMUS_SUBUNIT_HEALTH,
                 if id == 3905 { 0x10 } else { 0x2000 },
             );
             put(
                 game,
-                ram::samus_periodic_subdamage,
+                ram::SAMUS_PERIODIC_SUBDAMAGE,
                 if id == 3905 { 0x20 } else { 1 },
             );
             put(
                 game,
-                ram::samus_periodic_damage,
+                ram::SAMUS_PERIODIC_DAMAGE,
                 if id == 3904 {
                     0x8000
                 } else if id == 3905 {
@@ -177,14 +177,14 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                 },
             );
             if id == 3905 {
-                put(game, ram::samus_health, 3);
+                put(game, ram::SAMUS_HEALTH, 3);
             } else {
-                put(game, ram::fx_type, 4);
-                put(game, ram::lava_acid_y_pos, 99);
-                put(game, ram::game_time_frames, 1);
+                put(game, ram::FX_TYPE, 4);
+                put(game, ram::LAVA_ACID_Y_POS, 99);
+                put(game, ram::GAME_TIME_FRAMES, 1);
                 put(
                     game,
-                    crate::ram_map::word_arrays::atmospheric_gfx_frame_and_type,
+                    crate::ram_map::word_arrays::ATMOSPHERIC_GFX_FRAME_AND_TYPE,
                     0x400,
                 );
             }
@@ -194,14 +194,14 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             fn set(bytes: &mut [u8], at: usize, value: u16) {
                 bytes[at..at + 2].copy_from_slice(&value.to_le_bytes());
             }
-            set(&mut expected, ram::samus_anim_frame_timer, 1);
+            set(&mut expected, ram::SAMUS_ANIM_FRAME_TIMER, 1);
             set(&mut expected, 0xa72, 0x601);
             expected[0xc180..0xc1a0].copy_from_slice(&palette);
             if id != 3905 {
-                set(&mut expected, ram::liquid_physics_type, 2);
+                set(&mut expected, ram::LIQUID_PHYSICS_TYPE, 2);
                 set(
                     &mut expected,
-                    ram::samus_anim_frame_buffer,
+                    ram::SAMUS_ANIM_FRAME_BUFFER,
                     if id == 3902 { 0 } else { 2 },
                 );
             }
@@ -212,8 +212,8 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                 3905 => (0, 0),
                 _ => (99, 0x2000),
             };
-            set(&mut expected, ram::samus_health, whole);
-            set(&mut expected, ram::samus_subunit_health, fraction);
+            set(&mut expected, ram::SAMUS_HEALTH, whole);
+            set(&mut expected, ram::SAMUS_SUBUNIT_HEALTH, fraction);
             let (pending, subpending) = if id == 3904 {
                 (0x8001, 0x8001)
             } else if id >= 3906 {
@@ -221,14 +221,14 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             } else {
                 (0, 0)
             };
-            set(&mut expected, ram::samus_periodic_damage, pending);
-            set(&mut expected, ram::samus_periodic_subdamage, subpending);
+            set(&mut expected, ram::SAMUS_PERIODIC_DAMAGE, pending);
+            set(&mut expected, ram::SAMUS_PERIODIC_SUBDAMAGE, subpending);
             if id >= 3906 {
                 for (at, value) in [
-                    (ram::joypad1_lastkeys, 0x100),
-                    (ram::joypad1_newkeys, 0x200),
-                    (ram::joypad1_input_samusfilter, 0x400),
-                    (ram::joypad1_newinput_samusfilter, 0x800),
+                    (ram::JOYPAD1_LASTKEYS, 0x100),
+                    (ram::JOYPAD1_NEWKEYS, 0x200),
+                    (ram::JOYPAD1_INPUT_SAMUSFILTER, 0x400),
+                    (ram::JOYPAD1_NEWINPUT_SAMUSFILTER, 0x800),
                 ] {
                     set(&mut expected, at, value);
                 }

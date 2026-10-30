@@ -26,7 +26,7 @@ impl<T> Host for T where
 }
 
 pub fn copy_level_planes<H: Host + ?Sized>(game: &mut H) {
-    let size = usize::from(checked_word!(game.ram7F_start));
+    let size = usize::from(checked_word!(game.RAM7_F_START));
     for (source, destination, count) in [
         (0x10002 + size + size / 2, 0x19602, size),
         (0x10002 + size, 0x16402, size / 2),
@@ -54,7 +54,7 @@ pub fn copy_level_planes<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn load_sprite_palettes<H: Host + ?Sized>(game: &mut H) {
-    word_transfers!(game, descending, 16; le(target_palettes, 223) <- rom(0x9a8000, 223));
+    word_transfers!(game, descending, 16; le(TARGET_PALETTES, 223) <- rom(0x9a8000, 223));
     word_transfers!(game, descending, 16; native(0xc3de) <- native(0xc1de));
     word_transfers!(game, descending, 16; native(0xc31e) <- rom(0x9afc00, 15));
 }
@@ -67,19 +67,19 @@ pub trait MainCodeHost: SessionView {
 }
 
 pub fn advance_ceres_elevator<H: MainCodeHost + ?Sized>(h: &mut H) {
-    if (h.word(fields::ceres_status) & 0x8000) != 0 {
+    if (h.word(fields::CERES_STATUS) & 0x8000) != 0 {
         if (112i16).wrapping_sub(h.session().player.x as i16) < 0
             && (144i16).wrapping_sub(h.session().player.x as i16) >= 0
             && (h.session().player.y as i32 - 128i32) & 0x8000 != 0
             && (h.session().player.y as i32 - 75i32) & 0x8000 == 0
-            && h.word(fields::samus_y_speed) == 0
-            && h.word(fields::samus_y_subspeed) == 0
-            && h.word(fields::game_state) as i32 == 8
+            && h.word(fields::SAMUS_Y_SPEED) == 0
+            && h.word(fields::SAMUS_Y_SUBSPEED) == 0
+            && h.word(fields::GAME_STATE) as i32 == 8
         {
             h.command_player(2);
-            h.write_word_le(0, fields::screen_fade_delay);
-            h.write_word_le(0, fields::screen_fade_counter);
-            h.write_word_le(32, fields::game_state);
+            h.write_word_le(0, fields::SCREEN_FADE_DELAY);
+            h.write_word_le(0, fields::SCREEN_FADE_COUNTER);
+            h.write_word_le(32, fields::GAME_STATE);
         }
         // Variable 1 counts frames to the next rotation step; variable 0 is
         // the signed step index, negative while rotating back.
@@ -90,10 +90,10 @@ pub fn advance_ceres_elevator<H: MainCodeHost + ?Sized>(h: &mut H) {
             let step_word = 6u16.wrapping_mul(room.main_native(0)) >> 1;
             let step = h.ceres_rotation_step(step_word as isize);
             h.session_mut().room.set_main_native(1, step.frames);
-            h.write_word_le(step.mode7_b, fields::reg_M7B);
-            h.write_word_le(-(h.word(fields::reg_M7B) as i32) as u16, fields::reg_M7C);
-            h.write_word_le(step.mode7_a, fields::reg_M7A);
-            h.write_word_le(h.word(fields::reg_M7A), fields::reg_M7D);
+            h.write_word_le(step.mode7_b, fields::REG_M7B);
+            h.write_word_le(-(h.word(fields::REG_M7B) as i32) as u16, fields::REG_M7C);
+            h.write_word_le(step.mode7_a, fields::REG_M7A);
+            h.write_word_le(h.word(fields::REG_M7A), fields::REG_M7D);
             let index = h.session().room.main_native(0);
             let next = if (index as i16) < 0 {
                 if index == 0x8001 {
@@ -151,7 +151,7 @@ pub fn shake_crocomire<H: SessionView + ?Sized>(h: &mut H) {
             shift
                 .wrapping_add(h.session().room.camera.bg1_offset[1])
                 .wrapping_add(h.session().room.camera.layer1[1]),
-            fields::reg_BG1VOFS,
+            fields::REG_BG1VOFS,
         );
     } else if h.resolve_actor(body, Native).variables[1] & 0x400 != 0 {
         let timer = h.edit_actor(legs, Native, |actor| {
@@ -164,10 +164,10 @@ pub fn shake_crocomire<H: SessionView + ?Sized>(h: &mut H) {
             timer
         };
         h.write_word_le(
-            h.word(fields::reg_BG1VOFS).wrapping_add(shift),
-            fields::reg_BG1VOFS,
+            h.word(fields::REG_BG1VOFS).wrapping_add(shift),
+            fields::REG_BG1VOFS,
         );
-        h.write_word_le(shift.wrapping_sub(48), fields::reg_BG2VOFS);
+        h.write_word_le(shift.wrapping_sub(48), fields::REG_BG2VOFS);
     } else if h.resolve_actor(body, Native).variables[2] == 34
         && h.resolve_actor(body, Native).variables[3] != 0
     {
@@ -200,11 +200,11 @@ pub fn shake_ridley<H: SessionView + ?Sized>(h: &mut H) {
     for (table, registers) in [
         (
             [0, 2, 2, 2, 0, -2, -2, -2],
-            [fields::reg_BG1HOFS, fields::reg_BG2HOFS],
+            [fields::REG_BG1HOFS, fields::REG_BG2HOFS],
         ),
         (
             [-2, -2, 0, 2, 2, 2, 0, -2],
-            [fields::reg_BG1VOFS, fields::reg_BG2VOFS],
+            [fields::REG_BG1VOFS, fields::REG_BG2VOFS],
         ),
     ] {
         let shift = table[index] as u16;

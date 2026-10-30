@@ -8,7 +8,7 @@ use crate::ram::{slot, word};
 use sm_data::enemy_speeds::SpeedTable;
 
 pub fn initialize<H: ActorHost + ActorRuntime + ?Sized>(game: &mut H) {
-    let e = i32::from(word!(game.cur_enemy_index));
+    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
     slot!(game, Bug[e].var_07 = slot!(game, Bug[e].base.x_pos));
     slot!(game, Bug[e].var_08 = slot!(game, Bug[e].base.y_pos));
     slot!(game, Bug[e].base; x_subpos = 0, y_subpos = 0, instruction_timer = 1, timer = 0, current_instruction = 0x8efc);
@@ -20,7 +20,7 @@ pub fn initialize<H: ActorHost + ActorRuntime + ?Sized>(game: &mut H) {
         var_03 = game.enemy_speed(SpeedTable::Linear, index + 2), var_02 = game.enemy_speed(SpeedTable::Linear, index + 3), var_a = 0x8fb5, var_06 = 0);
 }
 pub fn state_address<H: ActorHost + ActorRuntime + ?Sized>(game: &H) -> u32 {
-    let e = i32::from(word!(game.cur_enemy_index));
+    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
     0xb30000 | u32::from(slot!(game, Bug[e].var_a))
 }
 fn reset_home<H: ActorHost + ActorRuntime + ?Sized>(e: i32, game: &mut H) {
@@ -60,9 +60,9 @@ fn vertical<H: ActorHost + ActorRuntime + ?Sized>(counting_down: bool, k: u16, g
     );
 }
 pub fn detect_player<H: ActorHost + ActorRuntime + ?Sized>(game: &mut H) {
-    let e = i32::from(word!(game.cur_enemy_index));
+    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
     let left = slot!(game, Bug[e].parameter_1) != 0;
-    let actor = word!(game.cur_enemy_index);
+    let actor = word!(game.CUR_ENEMY_INDEX);
     let dx = game.player_delta(actor, Axis::X) as i16;
     let in_x_range = if left {
         dx < 0 && (i32::from(dx) + 192) & 0x8000 == 0
@@ -72,7 +72,7 @@ pub fn detect_player<H: ActorHost + ActorRuntime + ?Sized>(game: &mut H) {
     if !in_x_range {
         return;
     }
-    let actor = word!(game.cur_enemy_index);
+    let actor = word!(game.CUR_ENEMY_INDEX);
     let in_y_range = game.player_within(actor, Axis::Y, 0x30);
     if in_y_range {
         slot!(game, Bug[e].base.properties, |old| old & !0x100);
@@ -93,8 +93,8 @@ pub fn launch_delay<H: ActorHost + ActorRuntime + ?Sized>(k: u16, game: &mut H) 
     }
 }
 pub fn fly<H: ActorHost + ActorRuntime + ?Sized>(left: bool, game: &mut H) {
-    let e = i32::from(word!(game.cur_enemy_index));
-    horizontal(left, word!(game.cur_enemy_index), game);
+    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
+    horizontal(left, word!(game.CUR_ENEMY_INDEX), game);
     if game.current_outside_screen() {
         reset_home(e, game);
         slot!(game, Bug[e].base.properties, |old| old | 0x100);
@@ -117,16 +117,16 @@ pub fn fly<H: ActorHost + ActorRuntime + ?Sized>(left: bool, game: &mut H) {
     }
 }
 pub fn turn<H: ActorHost + ActorRuntime + ?Sized>(left: bool, game: &mut H) {
-    let e = i32::from(word!(game.cur_enemy_index));
+    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
     let instruction = if left { 0x8efc } else { 0x8f24 };
     if game.current_outside_screen() {
         reset_home(e, game);
         slot!(game, Bug[e].base; instruction_timer = 1, timer = 0, current_instruction = instruction);
         slot!(game, Bug[e].base.properties, |old| old | 0x100);
     } else {
-        horizontal(left, word!(game.cur_enemy_index), game);
+        horizontal(left, word!(game.CUR_ENEMY_INDEX), game);
         let counting_down = slot!(game, Bug[e].var_f) != 0;
-        vertical(counting_down, word!(game.cur_enemy_index), game);
+        vertical(counting_down, word!(game.CUR_ENEMY_INDEX), game);
         if !counting_down {
             let finished = if left {
                 (slot!(game, Bug[e].base.y_pos) as i16)

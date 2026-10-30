@@ -22,9 +22,9 @@ fn copy(entry: &RomRecord, tail: usize, game: &mut Game) {
 }
 
 fn push(entry: &RomRecord, game: &mut Game) {
-    let tail = word!(game.vram_write_queue_tail);
+    let tail = word!(game.VRAM_WRITE_QUEUE_TAIL);
     copy(entry, usize::from(tail), game);
-    word!(game.vram_write_queue_tail = tail.wrapping_add(ENTRY));
+    word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(ENTRY));
 }
 
 /// Ceres Ridley's single getaway tile entry.
@@ -39,7 +39,7 @@ pub(crate) fn queue_getaway_tiles(game: &mut Game) {
 pub(crate) fn queue_escape_tile_table(game: &mut Game) {
     let (mut cursor, mut tail) = (
         ADDR_STRU_A6C3B8 as u16,
-        usize::from(word!(game.vram_write_queue_tail)),
+        usize::from(word!(game.VRAM_WRITE_QUEUE_TAIL)),
     );
     loop {
         let entry = read(0xa6, cursor, game);
@@ -50,7 +50,7 @@ pub(crate) fn queue_escape_tile_table(game: &mut Game) {
         cursor = cursor.wrapping_add(ENTRY);
         tail += usize::from(ENTRY);
     }
-    word!(game.vram_write_queue_tail = tail as u16);
+    word!(game.VRAM_WRITE_QUEUE_TAIL = tail as u16);
 }
 
 /// One escape-timer entry per call; 1 once the table at enemy 0's cursor is exhausted.

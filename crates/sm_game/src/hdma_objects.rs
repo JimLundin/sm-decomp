@@ -179,7 +179,7 @@ where
     if index < crate::hdma::OBJECTS {
         with_table(game, |table| table.objects[index].channels = 0);
     } else {
-        checked_word!(game.hdma_object_channels_bitmask[index] = 0);
+        checked_word!(game.HDMA_OBJECT_CHANNELS_BITMASK[index] = 0);
     }
 }
 
@@ -217,14 +217,14 @@ where
 pub fn initialize_room_effects<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     use crate::display::registers::{WMADDH, WMADDL, WMADDM};
     use crate::ram::word;
-    word! { game, 0; earthquake_sfx_index, earthquake_sfx_timer }
+    word! { game, 0; EARTHQUAKE_SFX_INDEX, EARTHQUAKE_SFX_TIMER }
     if matches!(
-        word!(game.room_ptr),
+        word!(game.ROOM_PTR),
         0x9804 | 0x96ba | 0xb32e | 0xb457 | 0xdd58 | 0xdede
     ) {
-        word!(game.earthquake_sfx_timer = 0xffff);
+        word!(game.EARTHQUAKE_SFX_TIMER = 0xffff);
     }
-    word!(game.debug_disable_minimap = 0);
+    word!(game.DEBUG_DISABLE_MINIMAP = 0);
     for channel in (0x20..0x80u16).step_by(0x10) {
         for register in [0, 1, 2, 3, 4, 5, 6, 8, 9] {
             let value = if register == 1 { 0x13 } else { 0 };
@@ -239,19 +239,19 @@ pub fn initialize_room_effects<H: crate::menus::host::Host + ?Sized>(game: &mut 
         |words| &mut words.liquid.lava_acid.whole,
         -1i32 as u16,
     );
-    word!(game.hud_bg3_xpos = 0);
-    word!(game.hud_bg3_ypos = 0);
-    word!(game.bg3_xpos = 0);
-    word!(game.bg3_ypos = 0);
-    word!(game.irq_enable_mode7 = 0);
-    word!(game.camera_distance_index = 0);
+    word!(game.HUD_BG3_XPOS = 0);
+    word!(game.HUD_BG3_YPOS = 0);
+    word!(game.BG3_XPOS = 0);
+    word!(game.BG3_YPOS = 0);
+    word!(game.IRQ_ENABLE_MODE7 = 0);
+    word!(game.CAMERA_DISTANCE_INDEX = 0);
     crate::room_view::set_effect(game, crate::room_view::EffectWord::StatueAnimation, 0);
     crate::room_view::set_effect(game, crate::room_view::EffectWord::StatueFinished, 0);
     crate::room_view::set_effect(game, crate::room_view::EffectWord::EarthquakeTimer, 0);
-    word!(game.phantom_related_layer_flag = 0);
-    word!(game.power_bomb_explosion_status = 0);
-    word!(game.power_bomb_flag = 0);
-    word!(game.power_bomb_explosion_radius = 0);
+    word!(game.PHANTOM_RELATED_LAYER_FLAG = 0);
+    word!(game.POWER_BOMB_EXPLOSION_STATUS = 0);
+    word!(game.POWER_BOMB_FLAG = 0);
+    word!(game.POWER_BOMB_EXPLOSION_RADIUS = 0);
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.tilemap, 0);
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.kind, 0);
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.base_fraction, 0x8000);
@@ -263,15 +263,15 @@ pub fn initialize_room_effects<H: crate::menus::host::Host + ?Sized>(game: &mut 
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.tide_phase, 0);
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.offset.fraction, 0);
     crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.offset.whole, 0);
-    word!(game.fx_layer_blending_config_a = 2);
+    word!(game.FX_LAYER_BLENDING_CONFIG_A = 2);
     word! { game, 0;
-        reg_BG3HOFS, reg_BG3VOFS,
+        REG_BG3HOFS, REG_BG3VOFS,
     }
     crate::session_access::SessionAccess::session_mut(&mut game.runtime())
         .room
         .camera
         .layer2 = [0, 0];
-    word!(game.room_loading_irq_handler = 0);
+    word!(game.ROOM_LOADING_IRQ_HANDLER = 0);
     crate::word_transfers! { game, ascending, 1;
         native(0x602) <- value(0x8800), native(0x605) <- value(0x8800),
         native(0x601) <- value(0x83e1), native(0x604) <- value(0x83e1),
@@ -298,15 +298,15 @@ where
     H: crate::hdma_dispatch::DispatchHost + crate::hdma_program::LeaseHdma + ?Sized,
 {
     game.handle_music_queue();
-    if checked_word!(game.time_is_frozen_flag) == 0
-        && checked_word!(game.power_bomb_explosion_status) & 0x4000 != 0
+    if checked_word!(game.TIME_IS_FROZEN_FLAG) == 0
+        && checked_word!(game.POWER_BOMB_EXPLOSION_STATUS) & 0x4000 != 0
     {
-        checked_word!(game.power_bomb_explosion_status = 0x8000);
+        checked_word!(game.POWER_BOMB_EXPLOSION_STATUS = 0x8000);
         spawn_hdma(0x88, &HdmaObjectDefinition::new(0x40, 0x28, 0x8ace), game);
         spawn_hdma(0x88, &HdmaObjectDefinition::new(0x40, 0x29, 0x8b80), game);
     }
-    checked_word!(game.fx_layer_blending_config_c = checked_word!(game.fx_layer_blending_config_a));
-    if checked_word!(game.hdma_objects_enable_flag) & 0x8000 != 0 {
+    checked_word!(game.FX_LAYER_BLENDING_CONFIG_C = checked_word!(game.FX_LAYER_BLENDING_CONFIG_A));
+    if checked_word!(game.HDMA_OBJECTS_ENABLE_FLAG) & 0x8000 != 0 {
         crate::hdma_program::run_objects(game);
         game.update_layer_blending();
     }
@@ -317,11 +317,11 @@ pub(crate) fn refresh_title_gradient<H: crate::menus::host::Host + ?Sized>(game:
         &game.visual_tables().title_gradients,
         game,
         GRADIENT_ADDRESS,
-        ((word!(game.mode7_zoom) & 0xf0) >> 4) as isize,
+        ((word!(game.MODE7_ZOOM) & 0xf0) >> 4) as isize,
     );
     for slot in 0usize.. {
         let value = cinematic_native_record::<0x8c>(cursor, game).word(0);
-        word!(game.hdma_table_1[slot] = value);
+        word!(game.HDMA_TABLE_1[slot] = value);
         if value == 0 {
             break;
         }
@@ -339,7 +339,7 @@ pub fn advance_title_gradient<H: crate::menus::host::Host + ?Sized>(backdrop: bo
 }
 
 pub fn advance_intro_crossfade<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    if checked_word!(game.eproj_x_pos[0]) == 1 {
+    if checked_word!(game.EPROJ_X_POS[0]) == 1 {
         game.hdma_effect(HdmaEffect::AdvanceProgram, 0);
     }
 }

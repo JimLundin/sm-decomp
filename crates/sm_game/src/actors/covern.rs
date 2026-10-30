@@ -86,7 +86,7 @@ const SAMUS_X_INDEXED: usize = 0xaf6;
 const SAMUS_Y_INDEXED: usize = 0xafa;
 
 fn selected(runtime: &impl ActorLease) -> Key {
-    Key::from_legacy(runtime.word(W::cur_enemy_index))
+    Key::from_legacy(runtime.word(W::CUR_ENEMY_INDEX))
 }
 fn palette_start(runtime: &impl ActorLease, key: Key) -> u16 {
     runtime
@@ -99,7 +99,7 @@ fn palette_start(runtime: &impl ActorLease, key: Key) -> u16 {
 fn set_target(runtime: &mut impl ActorLease, key: Key, colours: impl IntoIterator<Item = u16>) {
     let mut at = palette_start(runtime, key);
     for colour in colours {
-        runtime.write_slice_le(A::target_palettes + usize::from(at), colour);
+        runtime.write_slice_le(A::TARGET_PALETTES + usize::from(at), colour);
         at = at.wrapping_add(2);
     }
 }
@@ -148,14 +148,14 @@ fn process_palette_delay(runtime: &mut impl ActorLease, key: Key) {
 /// Advance Covern palette transition ($A8:9E88): step each colour channel one
 /// towards its target; the number of channels changed.
 fn advance_palette_transition(runtime: &mut impl ActorLease) -> u16 {
-    if runtime.word(W::door_transition_flag_enemies) != 0 {
+    if runtime.word(W::DOOR_TRANSITION_FLAG_ENEMIES) != 0 {
         return 0;
     }
     let mut at = palette_start(runtime, selected(runtime));
     let mut changed = 0u16;
     for _ in 0..COLOURS {
-        let source = A::palette_buffer + usize::from(at);
-        let target = A::target_palettes + usize::from(at);
+        let source = A::PALETTE_BUFFER + usize::from(at);
+        let target = A::TARGET_PALETTES + usize::from(at);
         if runtime.word(target) != runtime.word(source) {
             for shift in [0, 5, 10] {
                 let mask = FULL << shift;
@@ -183,7 +183,7 @@ fn fade_to_white(runtime: &mut impl ActorLease, key: Key) {
     let mut at = palette_start(runtime, key);
     let mut complete = true;
     for _ in 0..COLOURS {
-        let source = A::palette_buffer + usize::from(at);
+        let source = A::PALETTE_BUFFER + usize::from(at);
         if runtime.word(source) & FULL != FULL {
             runtime.write_slice_le(source, runtime.word(source).wrapping_add(ONE_EACH));
             complete = false;
@@ -234,7 +234,7 @@ fn fade_from_white(runtime: &mut impl ActorLease) {
         Covern[covern].previous_y_direction = Y_DIRECTION_STEP
     );
     let y =
-        runtime.lease_native_word(SAMUS_Y_INDEXED + usize::from(runtime.word(W::cur_enemy_index)));
+        runtime.lease_native_word(SAMUS_Y_INDEXED + usize::from(runtime.word(W::CUR_ENEMY_INDEX)));
     session_slot!(runtime, Covern[covern]; previous_samus_y = y, zone_top = y, zone_bottom = y,
         lock_on_timer = STATIONARY_FRAMES, directed_movement_timer = DIRECTED_MOVES);
 }
@@ -307,9 +307,9 @@ fn ready_to_materialise(runtime: &mut impl ActorLease, key: Key) -> bool {
     // Only inspect vertical movement if the horizontal direction still matches.
     for vertical in [false, true] {
         let (position, step) = if vertical {
-            (W::samus_y_pos, Y_DIRECTION_STEP)
+            (W::SAMUS_Y_POS, Y_DIRECTION_STEP)
         } else {
-            (W::samus_x_pos, X_DIRECTION_STEP)
+            (W::SAMUS_X_POS, X_DIRECTION_STEP)
         };
         let previous = if vertical {
             session_slot!(runtime, Covern[covern].previous_samus_y)
@@ -372,9 +372,9 @@ fn awake(runtime: &mut impl ActorLease, key: Key) {
     } else {
         for vertical in [false, true] {
             let position = if vertical {
-                W::samus_y_pos
+                W::SAMUS_Y_POS
             } else {
-                W::samus_x_pos
+                W::SAMUS_X_POS
             };
             let value = runtime.word(position);
             let next = runtime.word(position).wrapping_add(1);

@@ -11,7 +11,7 @@ use sm_data::credits::{
 };
 
 pub fn advance_ending_logo_palette<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> bool {
-    let pair = (word!(game.cinematic_function_timer).wrapping_mul(4) >> 1) as isize;
+    let pair = (word!(game.CINEMATIC_FUNCTION_TIMER).wrapping_mul(4) >> 1) as isize;
     let step = Imported::read(
         &game.visual_tables().icon_palettes,
         game,
@@ -27,11 +27,11 @@ pub fn advance_ending_logo_palette<H: crate::menus::host::Host + ?Sized>(game: &
             let color = cinematic_native_record::<0x8c>(source, game).word(0);
             // The second band originally wrote native RAM words.
             let color = if offset == 16 { color } else { color.to_le() };
-            word!(game.palette_buffer[offset + index] = color);
+            word!(game.PALETTE_BUFFER[offset + index] = color);
             source = source.wrapping_sub(2);
         }
     }
-    (word!(game.cinematic_function_timer += 1, reread) as i32 - 16) & 0x8000 == 0
+    (word!(game.CINEMATIC_FUNCTION_TIMER += 1, reread) as i32 - 16) & 0x8000 == 0
 }
 
 pub fn advance_ending_graphics<H: crate::menus::host::Host + ?Sized>(
@@ -40,17 +40,17 @@ pub fn advance_ending_graphics<H: crate::menus::host::Host + ?Sized>(
 ) {
     use EndingGraphics::*;
     let limit = if matches!(graphics, Samus) { 16 } else { 6 };
-    if (matches!(graphics, Background) && word!(game.cinematic_var17) != 0)
-        || (i32::from(word!(game.cinematic_var14)) - limit) & 0x8000 == 0
+    if (matches!(graphics, Background) && word!(game.CINEMATIC_VAR17) != 0)
+        || (i32::from(word!(game.CINEMATIC_VAR14)) - limit) & 0x8000 == 0
     {
         return;
     }
-    let frame = word!(game.cinematic_var14);
+    let frame = word!(game.CINEMATIC_VAR14);
     let index = match graphics {
         Background => 4 * i32::from(frame),
         Samus => i32::from(frame.wrapping_mul(2) >> 1),
     };
-    let tail = word!(game.vram_write_queue_tail);
+    let tail = word!(game.VRAM_WRITE_QUEUE_TAIL);
     // Each ROM word stays between the preceding queue stores; bank indices wrap separately.
     for field in [0u16, 2, 4, 5] {
         let value = match (graphics, field) {
@@ -98,8 +98,8 @@ pub fn advance_ending_graphics<H: crate::menus::host::Host + ?Sized>(
             crate::word_transfers!(game, ascending, 1; native(destination) <- value(value));
         }
     }
-    word!(game.vram_write_queue_tail = tail.wrapping_add(7));
-    word!(game.cinematic_var14 += 1);
+    word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(7));
+    word!(game.CINEMATIC_VAR14 += 1);
 }
 
 pub fn draw_cinematic_item_percentage<H: crate::menus::host::Host + ?Sized>(game: &mut H) {

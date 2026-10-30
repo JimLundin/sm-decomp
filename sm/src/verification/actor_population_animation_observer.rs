@@ -92,7 +92,7 @@ pub(crate) fn stage(event: u16, key: u16, g: &mut Game) -> bool {
                 "initializer sees published definition"
             );
             assert_eq!(
-                get(g, crate::ram_map::words::cur_enemy_index),
+                get(g, crate::ram_map::words::CUR_ENEMY_INDEX),
                 key,
                 "initializer live selector"
             );
@@ -120,7 +120,7 @@ pub(crate) fn dispatch_noop(g: &mut Game) -> bool {
         if c.id != 13 {
             return false;
         }
-        let key = get(g, crate::ram_map::words::cur_enemy_index);
+        let key = get(g, crate::ram_map::words::CUR_ENEMY_INDEX);
         append(c, 20, key, 0xa2804c, g);
         if c.nested {
             false
@@ -141,7 +141,7 @@ pub(crate) fn opcode(event: u16, address: u32, key: u16, g: &mut Game) {
             c.opcodes += 1;
             if c.id == 32 && c.opcodes == 1 {
                 // Explicit callback-boundary perturbation; actual opcode already completed.
-                put(g, crate::ram_map::words::cur_enemy_index, 64);
+                put(g, crate::ram_map::words::CUR_ENEMY_INDEX, 64);
                 g.loaded_rom = Some(RomImage::zeroed(0x200000));
                 append(c, 17, 64, address, g);
             }
@@ -182,7 +182,7 @@ pub(crate) fn diagnostic_parts(
         append_parts(
             c,
             18,
-            get_parts(ram, crate::ram_map::words::cur_enemy_index),
+            get_parts(ram, crate::ram_map::words::CUR_ENEMY_INDEX),
             address,
             ram,
             loaded_rom,
@@ -211,7 +211,7 @@ pub(crate) fn diagnostic_parts(
             append_parts(
                 c,
                 19,
-                get_parts(ram, crate::ram_map::words::cur_enemy_index),
+                get_parts(ram, crate::ram_map::words::CUR_ENEMY_INDEX),
                 address,
                 ram,
                 loaded_rom,

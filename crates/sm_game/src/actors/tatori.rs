@@ -46,9 +46,9 @@ const CRAWLING_CARRYING: u16 = 0x925e;
 const CRAWLING_LEFT: u16 = 0x8b80;
 const CRAWLING_RIGHT: u16 = 0x8c72;
 /// $7E:05B5: the NMI frame counter's low byte; $7E:0A1E: Samus's pose X direction.
-const SAMUS_DX: usize = words::extra_samus_x_displacement;
-const SAMUS_SUB_DX: usize = words::extra_samus_x_subdisplacement;
-const SAMUS_DY: usize = words::extra_samus_y_displacement;
+const SAMUS_DX: usize = words::EXTRA_SAMUS_X_DISPLACEMENT;
+const SAMUS_SUB_DX: usize = words::EXTRA_SAMUS_X_SUBDISPLACEMENT;
+const SAMUS_DY: usize = words::EXTRA_SAMUS_Y_DISPLACEMENT;
 const NMI_FRAME_COUNTER: usize = 0x5b5;
 const SAMUS_POSE_X_DIRECTION: usize = 0xa1e;
 /// $A2:8E80: the sleeping tatori shell's height either side of its centre, right then left.
@@ -72,7 +72,7 @@ fn forward(runtime: &impl ActorLease, key: Key) -> bool {
 }
 fn samus_right(runtime: &impl ActorLease, key: Key) -> bool {
     let x = runtime.resolve_actor(key, Native).x.whole;
-    (x.wrapping_sub(runtime.word(words::samus_x_pos)) as i16) < 0
+    (x.wrapping_sub(runtime.word(words::SAMUS_X_POS)) as i16) < 0
 }
 fn crawl_again(runtime: &mut impl ActorLease, key: Key) {
     let list = [CRAWLING_LEFT, CRAWLING_RIGHT][usize::from(forward(runtime, key))];
@@ -113,15 +113,15 @@ fn collide(runtime: &mut impl ActorLease) {
             actor.y.whole.wrapping_add(actor.radius.y).wrapping_sub(4),
         )
     };
-    let x = i32::from(runtime.word(words::samus_x_pos));
-    let width = i32::from(runtime.word(words::samus_x_radius));
-    let y = i32::from(runtime.word(words::samus_y_pos));
-    let height = i32::from(runtime.word(words::samus_y_radius));
+    let x = i32::from(runtime.word(words::SAMUS_X_POS));
+    let width = i32::from(runtime.word(words::SAMUS_X_RADIUS));
+    let y = i32::from(runtime.word(words::SAMUS_Y_POS));
+    let height = i32::from(runtime.word(words::SAMUS_Y_RADIUS));
     if (x - width - 1 - i32::from(right)) & 0x8000 != 0
         && (width + x - i32::from(left)) & 0x8000 == 0
         && (y - height + 1 - i32::from(bottom)) & 0x8000 != 0
         && (height + y - i32::from(top)) & 0x8000 == 0
-        && runtime.word(words::samus_invincibility_timer) == 0
+        && runtime.word(words::SAMUS_INVINCIBILITY_TIMER) == 0
     {
         combat::contact_reaction(runtime, DeathHandling::Finalize);
     }
@@ -206,7 +206,7 @@ fn run_function(runtime: &mut impl ActorLease, raw: u16, function: u16) -> bool 
         ASLEEP => {
             runtime.edit_actor(key, Le, |actor| actor.radius.y = 0);
             let x = runtime.resolve_actor(key, Le).x.whole;
-            let delta = x.wrapping_sub(runtime.word(words::samus_x_pos));
+            let delta = x.wrapping_sub(runtime.word(words::SAMUS_X_POS));
             let magnitude = abs16(delta);
             if magnitude < 24 {
                 let index = magnitude + if delta & 0x8000 != 0 { 24 } else { 0 };
@@ -219,8 +219,8 @@ fn run_function(runtime: &mut impl ActorLease, raw: u16, function: u16) -> bool 
                 if api::touches_player_from_above(runtime, live) {
                     let actor = runtime.resolve_actor(key, Le);
                     let top = actor.y.whole.wrapping_sub(actor.radius.y);
-                    let feet = runtime.word(words::samus_y_radius);
-                    let feet = feet.wrapping_add(runtime.word(words::samus_y_pos));
+                    let feet = runtime.word(words::SAMUS_Y_RADIUS);
+                    let feet = feet.wrapping_add(runtime.word(words::SAMUS_Y_POS));
                     if feet.wrapping_sub(top) as i16 >= 0 {
                         displace(runtime, SAMUS_DY, top.wrapping_sub(feet));
                     }
@@ -280,8 +280,8 @@ fn run_function(runtime: &mut impl ActorLease, raw: u16, function: u16) -> bool 
                 let accel = session_slot!(runtime, Tatori[slot](acceleration, acceleration_sub));
                 let accel = (-(accel as i32)) as u32;
                 session_slot!(runtime, Tatori[slot]; acceleration_sub = accel as u16, acceleration = (accel >> 16) as u16);
-                runtime.write_slice_le(words::earthquake_type, 0);
-                runtime.write_slice_le(words::earthquake_timer, 16);
+                runtime.write_slice_le(words::EARTHQUAKE_TYPE, 0);
+                runtime.write_slice_le(words::EARTHQUAKE_TIMER, 16);
                 runtime.queue_sound(2, 6, 0x1b);
             } else {
                 // Handle Samus landing on hovering tatori ($A2:8F5F): carry her along.
@@ -447,8 +447,8 @@ pub fn touch<H: LeaseActors + ?Sized>(child: bool, game: &mut H) {
         actor.instruction_delay = 1;
     });
     let (samus, radius) = (
-        runtime.word(words::samus_x_pos),
-        runtime.word(words::samus_x_radius),
+        runtime.word(words::SAMUS_X_POS),
+        runtime.word(words::SAMUS_X_RADIUS),
     );
     let x = if !samus_right(runtime, key) {
         runtime

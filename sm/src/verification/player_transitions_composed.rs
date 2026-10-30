@@ -145,8 +145,8 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             ] {
                 put(game, at, value);
             }
-            put(game, crate::ram_map::words::room_width_in_blocks, 16);
-            put(game, crate::ram_map::words::room_height_in_blocks, 16);
+            put(game, crate::ram_map::words::ROOM_WIDTH_IN_BLOCKS, 16);
+            put(game, crate::ram_map::words::ROOM_HEIGHT_IN_BLOCKS, 16);
             put(game, 0xa94, 2);
             put(game, 0xdc6, 0);
             if id == 3700 {
@@ -158,11 +158,11 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                 put(game, 0xa2e, 0xffff);
             } else {
                 use crate::ram_map::words as w;
-                put(game, w::fx_type, 6);
-                put(game, w::fx_y_pos, 70);
-                put(game, w::liquid_physics_type, 1);
-                put(game, w::nmi_frame_counter_word, 0);
-                put(game, w::samus_x_pos, 0x120);
+                put(game, w::FX_TYPE, 6);
+                put(game, w::FX_Y_POS, 70);
+                put(game, w::LIQUID_PHYSICS_TYPE, 1);
+                put(game, w::NMI_FRAME_COUNTER_WORD, 0);
+                put(game, w::SAMUS_X_POS, 0x120);
             }
             let mut expected = (0..game.ram().len())
                 .map(|at| game.ram().read_byte(at))

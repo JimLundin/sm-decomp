@@ -286,7 +286,7 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
                     actor.variables[lane::REVERSE_TIMER] = REVERSE_FRAMES
                 });
             }
-            runtime.write_slice_le(crate::ram::words::random_number, RANDOM_SEED);
+            runtime.write_slice_le(crate::ram::words::RANDOM_NUMBER, RANDOM_SEED);
             let current = combat::current(runtime);
             runtime.edit_actor(current, Native, |actor| {
                 actor.variables[lane::FUNCTION] = if function == function::ACTIVATE_RANDOM {

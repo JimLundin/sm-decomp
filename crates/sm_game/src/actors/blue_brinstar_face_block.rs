@@ -52,14 +52,14 @@ const SIGN: u16 = 0x8000;
 
 fn publish_palette(block: i32, game: &mut (impl Host + ?Sized)) {
     let palette = slot!(game, FaceBlock[block].base.palette_index);
-    word!(game.variables_for_enemy_graphics_drawn_hook[HOOK_PALETTE] = (palette >> 4) & 0xff);
+    word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_PALETTE] = (palette >> 4) & 0xff);
 }
 fn within_range(block: i32, delta: u16, game: &mut (impl Host + ?Sized)) -> bool {
     (abs16(delta) as i16).wrapping_sub(slot!(game, FaceBlock[block].range) as i16) < 0
 }
 /// Initialisation AI - blue Brinstar face block ($A8:E82E).
 pub fn initialize(game: &mut (impl Host + ?Sized)) {
-    let block = word!(game.cur_enemy_index) as i32;
+    let block = word!(game.CUR_ENEMY_INDEX) as i32;
     slot!(
         game,
         FaceBlock[block].base.current_instruction = instruction_list::FACING_FORWARD
@@ -72,7 +72,7 @@ pub fn initialize(game: &mut (impl Host + ?Sized)) {
     game.ram().copy_in(GFX_DRAWN_HOOK, &hook.to_ne_bytes());
     game.ram().copy_in(GFX_DRAWN_HOOK_BANK, &BANK.to_ne_bytes());
     publish_palette(block, game);
-    word!(game.variables_for_enemy_graphics_drawn_hook[HOOK_TIMER] = CYCLE_FRAMES);
+    word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_TIMER] = CYCLE_FRAMES);
     slot!(game, FaceBlock[block].direction_to_not_turn, |old| (old
         & 1)
         << 15);
@@ -85,17 +85,17 @@ pub fn main_ai(game: &mut (impl Host + ?Sized)) {
     }
     game.ram()
         .copy_in(GFX_DRAWN_HOOK, &PALETTE_CYCLE_HOOK.to_ne_bytes());
-    let block = word!(game.cur_enemy_index) as i32;
+    let block = word!(game.CUR_ENEMY_INDEX) as i32;
     publish_palette(block, game);
     if slot!(game, FaceBlock[block].activated) != 0 {
         return;
     }
-    let k = word!(game.cur_enemy_index);
+    let k = word!(game.CUR_ENEMY_INDEX);
     let dy = game.player_delta(k, Axis::Y);
     if !within_range(block, dy, game) {
         return;
     }
-    let k = word!(game.cur_enemy_index);
+    let k = word!(game.CUR_ENEMY_INDEX);
     let dx = game.player_delta(k, Axis::X);
     slot!(game, FaceBlock[block].direction_to_samus = dx);
     if within_range(block, dx, game)
@@ -109,25 +109,25 @@ pub fn main_ai(game: &mut (impl Host + ?Sized)) {
         };
         slot!(game, FaceBlock[block].base; current_instruction = instruction, instruction_timer = 1);
         slot!(game, FaceBlock[block].activated = 1);
-        word!(game.variables_for_enemy_graphics_drawn_hook[HOOK_TIMER] = CYCLE_FRAMES);
+        word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_TIMER] = CYCLE_FRAMES);
     }
 }
 /// Enemy graphics drawn hook - blue Brinstar face block - periodically cycle
 /// between palettes ($A8:E86E): every 16 frames, show the next glow colours.
 /// Was `palette`.
 pub fn cycle_palette(game: &mut (impl Host + ?Sized)) {
-    if word!(game.door_transition_flag_enemies) != 0
+    if word!(game.DOOR_TRANSITION_FLAG_ENEMIES) != 0
         || word!(
-            game.variables_for_enemy_graphics_drawn_hook[HOOK_TIMER] -= 1,
+            game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_TIMER] -= 1,
             reread
         ) != 0
     {
         return;
     }
-    word!(game.variables_for_enemy_graphics_drawn_hook[HOOK_TIMER] = CYCLE_FRAMES);
-    let mut destination = word!(game.variables_for_enemy_graphics_drawn_hook[HOOK_PALETTE]);
+    word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_TIMER] = CYCLE_FRAMES);
+    let mut destination = word!(game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_PALETTE]);
     let mut source = 8u16.wrapping_mul(word!(
-        game.variables_for_enemy_graphics_drawn_hook[HOOK_COLOUR_SET]
+        game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_COLOUR_SET]
     ));
     for _ in 0..COLOURS {
         let color = crate::enemy_lists::face_block_glow_colour(game, (source >> 1) as isize);
@@ -138,7 +138,7 @@ pub fn cycle_palette(game: &mut (impl Host + ?Sized)) {
     }
     // The legacy phase increment reads physical byte zero, even on a big-endian host.
     word!(
-        game.variables_for_enemy_graphics_drawn_hook[HOOK_COLOUR_SET] =
+        game.VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK[HOOK_COLOUR_SET] =
             (u16::from(game.ram().read_byte(HOOK_COLOUR_SET_LOW)) + 1) & COLOUR_SETS
     );
 }

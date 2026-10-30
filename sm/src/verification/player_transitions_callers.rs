@@ -102,40 +102,40 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             game.register_rom(loaded.clone());
             game.register_native_rom(native.clone());
             for (at, value) in [
-                (ram::samus_pose, 1),
+                (ram::SAMUS_POSE, 1),
                 (0xa1e, 8),
-                (ram::samus_prev_pose, 1),
-                (ram::samus_movement_handler, 0xe90e),
-                (ram::frame_handler_gamma, 0xe90e),
-                (ram::frame_handler_alfa, 0xe8cd),
+                (ram::SAMUS_PREV_POSE, 1),
+                (ram::SAMUS_MOVEMENT_HANDLER, 0xe90e),
+                (ram::FRAME_HANDLER_GAMMA, 0xe90e),
+                (ram::FRAME_HANDLER_ALFA, 0xe8cd),
                 (
-                    ram::frame_handler_beta,
+                    ram::FRAME_HANDLER_BETA,
                     if id == 3800 { 0xe7f5 } else { 0xe833 },
                 ),
-                (ram::debug_disable_minimap, 1),
-                (ram::time_is_frozen_flag, 1),
-                (ram::samus_anim_frame_timer, 2),
-                (ram::samus_anim_frame, 0),
-                (ram::samus_x_speed_divisor, 0),
-                (ram::timer_for_shine_timer, 10),
-                (ram::samus_health, 99),
-                (ram::samus_new_pose, 0xffff),
-                (ram::samus_new_pose_interrupted, 0xffff),
-                (ram::samus_new_pose_transitional, 0xffff),
-                (ram::samus_y_pos, 100),
-                (ram::samus_y_radius, 2),
-                (ram::samus_invincibility_timer, 3),
-                (ram::samus_knockback_timer, 4),
-                (ram::joypad1_lastkeys, 0x10),
-                (ram::joypad1_newkeys, 0x20),
-                (ram::joypad1_input_samusfilter, 0x40),
-                (ram::joypad1_newinput_samusfilter, 0x80),
-                (ram::controller1_input_for_demo, 0x100),
-                (ram::controller1_new_input_for_demo, 0x200),
-                (ram::demo_backup_prev_controller_input, 0x400),
-                (ram::demo_backup_prev_controller_input_new, 0x800),
+                (ram::DEBUG_DISABLE_MINIMAP, 1),
+                (ram::TIME_IS_FROZEN_FLAG, 1),
+                (ram::SAMUS_ANIM_FRAME_TIMER, 2),
+                (ram::SAMUS_ANIM_FRAME, 0),
+                (ram::SAMUS_X_SPEED_DIVISOR, 0),
+                (ram::TIMER_FOR_SHINE_TIMER, 10),
+                (ram::SAMUS_HEALTH, 99),
+                (ram::SAMUS_NEW_POSE, 0xffff),
+                (ram::SAMUS_NEW_POSE_INTERRUPTED, 0xffff),
+                (ram::SAMUS_NEW_POSE_TRANSITIONAL, 0xffff),
+                (ram::SAMUS_Y_POS, 100),
+                (ram::SAMUS_Y_RADIUS, 2),
+                (ram::SAMUS_INVINCIBILITY_TIMER, 3),
+                (ram::SAMUS_KNOCKBACK_TIMER, 4),
+                (ram::JOYPAD1_LASTKEYS, 0x10),
+                (ram::JOYPAD1_NEWKEYS, 0x20),
+                (ram::JOYPAD1_INPUT_SAMUSFILTER, 0x40),
+                (ram::JOYPAD1_NEWINPUT_SAMUSFILTER, 0x80),
+                (ram::CONTROLLER1_INPUT_FOR_DEMO, 0x100),
+                (ram::CONTROLLER1_NEW_INPUT_FOR_DEMO, 0x200),
+                (ram::DEMO_BACKUP_PREV_CONTROLLER_INPUT, 0x400),
+                (ram::DEMO_BACKUP_PREV_CONTROLLER_INPUT_NEW, 0x800),
                 (
-                    ram::intro_samus_display,
+                    ram::INTRO_SAMUS_DISPLAY,
                     match id {
                         3803 => 1,
                         3804 => 0x8000,
@@ -146,7 +146,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                 put(game, at, value);
             }
             if id == 3801 {
-                put(game, ram::xray_hdma_table_end, 0xa55a);
+                put(game, ram::XRAY_HDMA_TABLE_END, 0xa55a);
             }
             let original_ram = (0..game.ram().len())
                 .map(|at| game.ram().read_byte(at))
@@ -179,10 +179,10 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                 }
             } else {
                 let restored = [
-                    ram::joypad1_lastkeys,
-                    ram::joypad1_newkeys,
-                    ram::joypad1_input_samusfilter,
-                    ram::joypad1_newinput_samusfilter,
+                    ram::JOYPAD1_LASTKEYS,
+                    ram::JOYPAD1_NEWKEYS,
+                    ram::JOYPAD1_INPUT_SAMUSFILTER,
+                    ram::JOYPAD1_NEWINPUT_SAMUSFILTER,
                 ]
                 .map(|at| word(game, at));
                 let expected = if id == 3801 {
@@ -191,9 +191,9 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                     [0x100, 0x200, 0x400, 0x800]
                 };
                 if restored != expected
-                    || word(game, ram::samus_anim_frame_timer) != 1
-                    || word(game, ram::samus_anim_frame) != 0
-                    || word(game, ram::input_to_pose_calc) != 0
+                    || word(game, ram::SAMUS_ANIM_FRAME_TIMER) != 1
+                    || word(game, ram::SAMUS_ANIM_FRAME) != 0
+                    || word(game, ram::INPUT_TO_POSE_CALC) != 0
                     || {
                         let mut bytes = [0; 0xc1a0 - (0xc180)];
                         game.ram().copy_out(0xc180, &mut bytes);
@@ -203,8 +203,8 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                     return Err("actual beta failed control/animation/palette completion".into());
                 }
                 let (invincibility, knockback) = if id >= 3803 { (2, 3) } else { (3, 4) };
-                if word(game, ram::samus_invincibility_timer) != invincibility
-                    || word(game, ram::samus_knockback_timer) != knockback
+                if word(game, ram::SAMUS_INVINCIBILITY_TIMER) != invincibility
+                    || word(game, ram::SAMUS_KNOCKBACK_TIMER) != knockback
                 {
                     return Err("actual intro timer tail mismatch".into());
                 }

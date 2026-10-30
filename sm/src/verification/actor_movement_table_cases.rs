@@ -33,11 +33,11 @@ pub(super) fn checks(id: u32, g: &Game, before: &[u8], native: &RomImage) {
     let mut expected = before.to_vec();
     if id != 3 {
         // All three seeded scans select row8,column8 before their first table read.
-        expected[w::cur_block_index..w::cur_block_index + 2].copy_from_slice(&264u16.to_le_bytes());
+        expected[w::CUR_BLOCK_INDEX..w::CUR_BLOCK_INDEX + 2].copy_from_slice(&264u16.to_le_bytes());
     }
     if id == 1 {
         // Nonsquare horizontal dispatch publishes BTS before multiplier acquisition.
-        expected[w::current_slope_bts..w::current_slope_bts + 2]
+        expected[w::CURRENT_SLOPE_BTS..w::CURRENT_SLOPE_BTS + 2]
             .copy_from_slice(&5u16.to_le_bytes());
     }
     assert_eq!(

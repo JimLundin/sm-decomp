@@ -49,7 +49,7 @@ pub(super) fn run(game: &mut Game) -> bool {
 
         game.ram().fill(0..game.ram().len(), 0);
         expected.fill(0);
-        put(&mut expected, ram::flag_for_palette_fx_objects, 0x8000);
+        put(&mut expected, ram::FLAG_FOR_PALETTE_FX_OBJECTS, 0x8000);
         let failed = catch_unwind(AssertUnwindSafe(|| {
             let mut runtime = Runtime::new(game);
             execution::set_enabled(runtime.session_mut(), true);
@@ -67,10 +67,10 @@ pub(super) fn run(game: &mut Game) -> bool {
         // These newly owned damage/color fields must also survive core failure.
         game.ram().fill(0..game.ram().len(), 0);
         expected.fill(0);
-        put(&mut expected, ram::samus_in_heat_palfx_index, 1);
-        put(&mut expected, ram::samus_in_heat_palettefx_prev_index, 1);
+        put(&mut expected, ram::SAMUS_IN_HEAT_PALFX_INDEX, 1);
+        put(&mut expected, ram::SAMUS_IN_HEAT_PALETTEFX_PREV_INDEX, 1);
         put(&mut expected, 0x1ecd, 1);
-        expected[ram::samus_periodic_damage..ram::samus_periodic_damage + 2]
+        expected[ram::SAMUS_PERIODIC_DAMAGE..ram::SAMUS_PERIODIC_DAMAGE + 2]
             .copy_from_slice(&2u16.to_ne_bytes());
         let failed = catch_unwind(AssertUnwindSafe(|| {
             let mut runtime = Runtime::new(game);
@@ -98,17 +98,17 @@ pub(super) fn run(game: &mut Game) -> bool {
         // Drop restore the old model over those callback writes.
         game.ram().fill(0..game.ram().len(), 0);
         game.ram()
-            .copy_in(ram::music_queue_write_pos, &(0x1862u16).to_le_bytes());
+            .copy_in(ram::MUSIC_QUEUE_WRITE_POS, &(0x1862u16).to_le_bytes());
         game.ram()
-            .copy_in(ram::music_queue_read_pos, &(1u16).to_le_bytes());
+            .copy_in(ram::MUSIC_QUEUE_READ_POS, &(1u16).to_le_bytes());
         expected = (0..game.ram().len())
             .map(|at| game.ram().read_byte(at))
             .collect::<Vec<_>>();
-        put(&mut expected, ram::flag_for_palette_fx_objects, 0x8123);
+        put(&mut expected, ram::FLAG_FOR_PALETTE_FX_OBJECTS, 0x8123);
         put(&mut expected, 0xc00a, 0x4567);
-        put(&mut expected, ram::palettefx_index, 0x2345);
+        put(&mut expected, ram::PALETTEFX_INDEX, 0x2345);
         put(&mut expected, 0x1e8b, 8);
-        put(&mut expected, ram::music_queue_write_pos, 4);
+        put(&mut expected, ram::MUSIC_QUEUE_WRITE_POS, 4);
         {
             let mut runtime = Runtime::new(game);
             runtime
@@ -127,7 +127,7 @@ pub(super) fn run(game: &mut Game) -> bool {
             let failed = catch_unwind(AssertUnwindSafe(|| {
                 runtime.foreign(|game| {
                     assert_eq!(
-                        word(&|at| game.ram().read_byte(at), ram::palettefx_index),
+                        word(&|at| game.ram().read_byte(at), ram::PALETTEFX_INDEX),
                         14
                     );
                     assert_eq!(word(&|at| game.ram().read_byte(at), 0xc00a), 0x4567);

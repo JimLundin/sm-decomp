@@ -13,7 +13,7 @@ use crate::ram::{slot, word};
 pub fn initialize<H: ActorHost + ActorRuntime + LeaseActors + crate::records::Records + ?Sized>(
     game: &mut H,
 ) {
-    let e = i32::from(word!(game.cur_enemy_index));
+    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
     slot!(game, Bug[e].var_b = slot!(game, Bug[e].base.x_pos));
     let y = slot!(game, Bug[e].base.y_pos);
     slot!(game, Bug[e]; var_c = y, var_00 = y.wrapping_sub(16), var_f = 0x8880, var_d = 48, var_e = 0, var_01 = 0);
@@ -27,7 +27,7 @@ pub fn state_address<
 >(
     game: &H,
 ) -> u32 {
-    let e = i32::from(word!(game.cur_enemy_index));
+    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
     0xb30000 | u32::from(slot!(game, Bug[e].var_f))
 }
 fn update_animation<
@@ -35,7 +35,7 @@ fn update_animation<
 >(
     game: &mut H,
 ) {
-    let e = i32::from(word!(game.cur_enemy_index));
+    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
     let phase = slot!(game, Bug[e].var_e);
     if phase != slot!(game, Bug[e].var_01) {
         slot!(game, Bug[e].var_01 = phase);
@@ -48,7 +48,7 @@ pub fn await_view<H: ActorHost + ActorRuntime + LeaseActors + crate::records::Re
     game: &mut H,
 ) {
     if !game.current_outside_screen() {
-        let current = i32::from(word!(game.cur_enemy_index));
+        let current = i32::from(word!(game.CUR_ENEMY_INDEX));
         slot!(game, Bug[current].var_f = 0x8890);
     }
 }

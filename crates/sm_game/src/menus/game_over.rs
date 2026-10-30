@@ -26,7 +26,7 @@ pub fn advance<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> CoroutineR
         load_map::<H>,
         fade_to_title::<H>,
     ];
-    states[crate::menu!(game.menu_index) as usize](game);
+    states[crate::menu!(game.MenuIndex) as usize](game);
     0
 }
 
@@ -39,12 +39,12 @@ fn prepare<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     game.queue_sound(2, 1_u8, 6);
     game.set_hdma_enabled(false);
     game.clear_hdma();
-    crate::word_transfers!(game, ascending, 256; pause_map(384) <- le(palette_buffer, 0));
+    crate::word_transfers!(game, ascending, 256; pause_map(384) <- le(PALETTE_BUFFER, 0));
     crate::word_transfers!(game, ascending, 27; pause_map(640) <- native(0x51));
     menu_tilemap::prepare_graphics(game);
     scroll! { game, 0; Bg1H, Bg2H, Bg3H, Bg1V, Bg2V, Bg3V }
     menu_tilemap::load_palette(game);
-    crate::menu!(game.menu_index += 1);
+    crate::menu!(game.MenuIndex += 1);
 }
 
 fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
@@ -79,7 +79,7 @@ fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     animate_baby(game, |game| {
         game.rtl_unreachable();
     });
-    let color = u16::from(game.ram().read_byte(crate::ram::bytes::gameplay_CGWSEL)) << 8;
+    let color = u16::from(game.ram().read_byte(crate::ram::bytes::GAMEPLAY_CGWSEL)) << 8;
     game.ram()
         .copy_in(crate::ram::mirror::CGWSEL, &color.to_ne_bytes());
     game.set_hdma_enabled(false);
@@ -89,14 +89,14 @@ fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         game.spawn_hdma(0x81, &HdmaObjectDefinition::new(0, register, script));
     }
     game.set_blank(false);
-    crate::menu!(game.menu_index += 1);
-    word! { game, 0; screen_fade_delay, screen_fade_counter, file_select_map_area_index }
+    crate::menu!(game.MenuIndex += 1);
+    word! { game, 0; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER, FILE_SELECT_MAP_AREA_INDEX }
     place_missile(FIRST_CHOICE_ROW, game);
 }
 
 fn wait_for_music<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     if game.has_queued_music() == 0 {
-        crate::menu!(game.menu_index += 1);
+        crate::menu!(game.MenuIndex += 1);
         game.queue_music_delayed8(4);
     }
 }
@@ -114,7 +114,7 @@ fn fade<H: crate::menus::host::Host + ?Sized>(fade_in: bool, brightness: u8, gam
     crate::sprite_output::menu_selection(game);
     game.fade(fade_in);
     if game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf == brightness {
-        crate::menu!(game.menu_index += 1);
+        crate::menu!(game.MenuIndex += 1);
     }
 }
 
@@ -126,23 +126,23 @@ fn choose<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     if game.observed_inputs().pressed & (K_BUTTON_SELECT | K_BUTTON_UP | K_BUTTON_DOWN) as u16 != 0
     {
         game.queue_sound(0, 0x37_u8, 6);
-        word!(game.file_select_map_area_index ^= 1);
+        word!(game.FILE_SELECT_MAP_AREA_INDEX ^= 1);
     } else if game.observed_inputs().pressed & K_BUTTON_A as u16 != 0 {
         slot!(game, EnemyBase[0].instruction_timer = 180);
-        if word!(game.file_select_map_area_index) != 0 {
-            crate::menu!(game.menu_index = 7);
+        if word!(game.FILE_SELECT_MAP_AREA_INDEX) != 0 {
+            crate::menu!(game.MenuIndex = 7);
         } else {
-            if word!(game.loading_game_state) == K_GAME_STATE_31_SET_UP_NEW_GAME as u16 {
-                word!(game.game_state = word!(game.loading_game_state));
+            if word!(game.LOADING_GAME_STATE) == K_GAME_STATE_31_SET_UP_NEW_GAME as u16 {
+                word!(game.GAME_STATE = word!(game.LOADING_GAME_STATE));
             } else {
-                crate::menu!(game.menu_index += 1);
+                crate::menu!(game.MenuIndex += 1);
             }
-            let _load_result = save_slots::load(word!(game.selected_save_slot), game);
+            let _load_result = save_slots::load(word!(game.SELECTED_SAVE_SLOT), game);
             game.observe_selected_continue(_load_result);
         }
         return;
     }
-    let row = if word!(game.file_select_map_area_index) != 0 {
+    let row = if word!(game.FILE_SELECT_MAP_AREA_INDEX) != 0 {
         SECOND_CHOICE_ROW
     } else {
         FIRST_CHOICE_ROW
@@ -165,8 +165,8 @@ fn place_missile<H: Host + ?Sized>(y: u16, game: &mut H) {
 fn load_map<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     game.set_hdma_enabled(false);
     game.clear_hdma();
-    word!(game.game_state = K_GAME_STATE_5_FILE_SELECT_MAP as u16);
-    crate::menu!(game.menu_index = 0);
+    word!(game.GAME_STATE = K_GAME_STATE_5_FILE_SELECT_MAP as u16);
+    crate::menu!(game.MenuIndex = 0);
 }
 
 fn fade_to_title<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
@@ -254,7 +254,7 @@ fn draw_baby<H: crate::menus::host::Host + ?Sized>(cursor: u16, game: &mut H) {
     let palette = baby_record(cursor, game).word(4);
     for index in 0..16 {
         let color = baby_record(palette.wrapping_add(2 * index), game).word(0);
-        word!(game.palette_buffer[192 + usize::from(index)] = color);
+        word!(game.PALETTE_BUFFER[192 + usize::from(index)] = color);
     }
     let sprite = baby_record(cursor, game).word(2);
     crate::sprite_output::menu(sprite, 0x7c, 0x50, 2048, game);

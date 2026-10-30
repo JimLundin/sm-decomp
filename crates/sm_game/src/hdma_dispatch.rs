@@ -339,7 +339,7 @@ fn host_pre_action<H: DispatchHost + ?Sized>(target: HdmaPreAction, k: u16, game
         Rain => room_visuals::scroll_weather(k, Weather::Rain, game),
         Spores => room_visuals::scroll_weather(k, Weather::Spores, game),
         Fog => room_visuals::scroll_weather(k, Weather::Fog, game),
-        StatueBlending => word!(game.fx_layer_blending_config_c = 44),
+        StatueBlending => word!(game.FX_LAYER_BLENDING_CONFIG_C = 44),
         BeginBrightHaze => game.hdma_effect(HdmaEffect::BeginHaze { color: 0x80 }, k),
         BeginDimHaze => game.hdma_effect(HdmaEffect::BeginHaze { color: 0x20 }, k),
         HazeFadingIn => game.hdma_effect(HdmaEffect::AdvanceHaze(HazePhase::FadingIn), k),

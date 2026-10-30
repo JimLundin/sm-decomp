@@ -70,7 +70,7 @@ const SIGN: i32 = 0x8000;
 /// Broken nothingness ($A7:CF0C): newly pressing Y toggles a ROM word nothing
 /// reads; the original forgot its $7E bank. Was `debug_toggle_sprite_map`.
 pub fn broken_nothingness(k: u16, game: &mut (impl BossState + ?Sized)) {
-    if k == 0 && word!(game.joypad1_newkeys) & BUTTON_Y != 0 {
+    if k == 0 && word!(game.JOYPAD1_NEWKEYS) & BUTTON_Y != 0 {
         let map = native_record(BANK, UNREAD_WORD, game);
         map.set_word(
             UNREAD_WORD_OFFSET,
@@ -145,7 +145,7 @@ pub fn health_palette_colour(base: u16, game: &mut (impl BossState + ?Sized)) ->
     let (mut bound, mut step) = (HEALTH_STEP, 0u16);
     while (bound as i16).wrapping_sub(session_slot!(
         game,
-        Part[i32::from(word!(game.cur_enemy_index))].base.health
+        Part[i32::from(word!(game.CUR_ENEMY_INDEX))].base.health
     ) as i16)
         < 0
     {

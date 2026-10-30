@@ -6,7 +6,7 @@ use crate::rtl::WriteReg;
 use crate::snes::registers::*;
 
 pub(super) unsafe fn process(game: &mut Game) {
-    let tail = word!(game.vram_read_queue_tail) as u8;
+    let tail = word!(game.VRAM_READ_QUEUE_TAIL) as u8;
     if tail != 0 {
         // Only the low sentinel byte is cleared; the high byte remains live.
         game.ram().write_byte(0x340 + usize::from(tail), 0);

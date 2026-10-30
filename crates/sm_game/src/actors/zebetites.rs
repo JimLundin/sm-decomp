@@ -78,7 +78,7 @@ const GLOW_PALETTE_WORD: u16 = 0x158;
 const HIT_SOUND: u8 = 9;
 
 fn current<H: Host + ?Sized>(game: &H) -> i32 {
-    word!(game.cur_enemy_index) as i32
+    word!(game.CUR_ENEMY_INDEX) as i32
 }
 
 /// Places the next zebetite from the destroyed count. Was `Zebetites_Init`.
@@ -123,12 +123,12 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
 
 /// Stills the earthquake shake and runs the current state. Was `Zebetites_Main`.
 pub fn main_ai<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.earthquake_timer) == 0 {
+    if word!(game.EARTHQUAKE_TIMER) == 0 {
         slot!(game, Zebetite[current(game)].base.shake_timer = 0);
     }
     let me = current(game);
     let state = slot!(game, Zebetite[me].state);
-    let k = word!(game.cur_enemy_index);
+    let k = word!(game.CUR_ENEMY_INDEX);
     match state {
         state::SPAWN_PARTNER => spawn_partner(game, k),
         state::WAIT_FOR_DOOR => wait_for_door(game, k),
@@ -151,7 +151,7 @@ fn spawn_partner<H: Host + ?Sized>(game: &mut H, k: u16) {
 
 /// Waits for the door transition to finish. Was `Zebetites_Func_2`.
 fn wait_for_door<H: Host + ?Sized>(game: &mut H, k: u16) {
-    if word!(game.door_transition_flag_elevator_zebetites) == 0 {
+    if word!(game.DOOR_TRANSITION_FLAG_ELEVATOR_ZEBETITES) == 0 {
         slot!(game, Zebetite[k as i32].state = state::ACTIVE);
         run(game);
     }
@@ -182,7 +182,7 @@ fn run<H: Host + ?Sized>(game: &mut H) {
 }
 
 fn die<H: Host + ?Sized>(game: &mut H) {
-    let _actor = word!(game.cur_enemy_index);
+    let _actor = word!(game.CUR_ENEMY_INDEX);
     game.normal_death(0);
 }
 
@@ -226,10 +226,10 @@ fn show_health_stage<H: Host + ?Sized>(game: &mut H) {
 /// Advances the shared glow one frame, when no palette change is pending and
 /// this is a pair's first zebetite. Was `Zebetites_Func_4`.
 fn glow<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.palette_change_num) == 0
+    if word!(game.PALETTE_CHANGE_NUM) == 0
         && slot!(
             game,
-            Zebetite[word!(game.cur_enemy_index) as i32].second_of_pair
+            Zebetite[word!(game.CUR_ENEMY_INDEX) as i32].second_of_pair
         ) == 0
     {
         let first: i32 = 0;

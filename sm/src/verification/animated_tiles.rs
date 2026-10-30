@@ -51,19 +51,19 @@ fn seed(g: &mut Game, image: &RomImage) {
     }
     for k in (0..12).step_by(2) {
         for (column, value) in [
-            (a::animtiles_ids, 0),
-            (a::animtiles_timers, 2),
-            (a::animtiles_instr_list_ptrs, 0x9000),
-            (a::animtiles_instr_timers, 1),
-            (a::animtiles_src_ptr, 0),
-            (a::animtiles_sizes, 4),
-            (a::animtiles_vram_ptr, 0x100),
+            (a::ANIMTILES_IDS, 0),
+            (a::ANIMTILES_TIMERS, 2),
+            (a::ANIMTILES_INSTR_LIST_PTRS, 0x9000),
+            (a::ANIMTILES_INSTR_TIMERS, 1),
+            (a::ANIMTILES_SRC_PTR, 0),
+            (a::ANIMTILES_SIZES, 4),
+            (a::ANIMTILES_VRAM_PTR, 0x100),
         ] {
             slot(g, column, k, value);
         }
     }
-    put(g, w::animtiles_enable_flag, 0x9234);
-    put(g, w::animtiles_object_index, 0);
+    put(g, w::ANIMTILES_ENABLE_FLAG, 0x9234);
+    put(g, w::ANIMTILES_OBJECT_INDEX, 0);
     for (off, value) in [(0, 0x9000), (2, 4), (4, 0x123)] {
         rw(image, 0x87, 0x8000, off, value);
     }
@@ -97,7 +97,7 @@ fn execute(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
     match id {
         0..=15 => {
             for k in (0..12).step_by(2) {
-                slot(g, a::animtiles_ids, k, 0x8123 + k);
+                slot(g, a::ANIMTILES_IDS, k, 0x8123 + k);
             }
             match id {
                 0 => clear(g),
@@ -111,12 +111,12 @@ fn execute(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
                     spawn(0xffff, g);
                 }
                 3..=8 => {
-                    slot(g, a::animtiles_ids, (id - 3) as u16 * 2, 0);
+                    slot(g, a::ANIMTILES_IDS, (id - 3) as u16 * 2, 0);
                     spawn(0x8000, g);
                 }
                 9 => {
-                    slot(g, a::animtiles_ids, 2, 0);
-                    slot(g, a::animtiles_ids, 8, 0);
+                    slot(g, a::ANIMTILES_IDS, 2, 0);
+                    slot(g, a::ANIMTILES_IDS, 8, 0);
                     spawn(0x8000, g);
                 }
                 10 => {
@@ -144,17 +144,17 @@ fn execute(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
             let v = n % 12;
             let k = [0, 1, 10, 0xffff][(v % 4) as usize];
             let cursor = if v >= 8 { 0xfffe } else { 0x9000 };
-            slot(g, a::animtiles_ids, k, 0x8123);
+            slot(g, a::ANIMTILES_IDS, k, 0x8123);
             slot(
                 g,
-                a::animtiles_timers,
+                a::ANIMTILES_TIMERS,
                 k,
                 [0, 1, 2, 0xffff][(v % 4) as usize],
             );
-            put(g, w::animtiles_object_index, k);
+            put(g, w::ANIMTILES_OBJECT_INDEX, k);
             put(
                 g,
-                w::tourian_entrance_statue_animstate,
+                w::TOURIAN_ENTRANCE_STATUE_ANIMSTATE,
                 if v & 1 != 0 { 0x8000 } else { 0 },
             );
             put(g, 0xd828, if v & 1 != 0 { 0xffff } else { 0 });
@@ -165,12 +165,12 @@ fn execute(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
         304..=327 => {
             let n = id - 304;
             let k = [0, 1, 10, 0xffff][(n % 4) as usize];
-            put(g, w::animtiles_object_index, k);
-            slot(g, a::animtiles_ids, k, 0x8000);
-            slot(g, a::animtiles_instr_list_ptrs, k, 0x9000);
+            put(g, w::ANIMTILES_OBJECT_INDEX, k);
+            slot(g, a::ANIMTILES_IDS, k, 0x8000);
+            slot(g, a::ANIMTILES_INSTR_LIST_PTRS, k, 0x9000);
             slot(
                 g,
-                a::animtiles_instr_timers,
+                a::ANIMTILES_INSTR_TIMERS,
                 k,
                 [0, 1, 2, 0xffff][(n / 4 % 4) as usize],
             );
@@ -190,7 +190,7 @@ fn execute(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
                 }
             }
             if n >= 16 {
-                slot(g, a::animtiles_instr_timers, k, 1);
+                slot(g, a::ANIMTILES_INSTR_TIMERS, k, 1);
                 rw(
                     image,
                     0x87,
@@ -207,29 +207,29 @@ fn execute(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
         328..=351 => {
             let n = id - 328;
             let target = [
-                w::animtiles_enable_flag,
-                w::animtiles_object_index,
-                a::animtiles_ids,
-                a::animtiles_timers,
-                a::animtiles_instr_list_ptrs,
-                a::animtiles_instr_timers,
-                a::animtiles_src_ptr,
-                a::animtiles_sizes,
-                a::animtiles_vram_ptr,
-                w::animtiles_instruction,
+                w::ANIMTILES_ENABLE_FLAG,
+                w::ANIMTILES_OBJECT_INDEX,
+                a::ANIMTILES_IDS,
+                a::ANIMTILES_TIMERS,
+                a::ANIMTILES_INSTR_LIST_PTRS,
+                a::ANIMTILES_INSTR_TIMERS,
+                a::ANIMTILES_SRC_PTR,
+                a::ANIMTILES_SIZES,
+                a::ANIMTILES_VRAM_PTR,
+                w::ANIMTILES_INSTRUCTION,
                 0x1f4b,
                 0x1ef0,
             ][(n % 12) as usize];
             put(
                 g,
-                w::music_queue_write_pos,
-                (target - a::music_queue_track) as u16,
+                w::MUSIC_QUEUE_WRITE_POS,
+                (target - a::MUSIC_QUEUE_TRACK) as u16,
             );
-            put(g, w::music_queue_read_pos, 1);
+            put(g, w::MUSIC_QUEUE_READ_POS, 1);
             if n < 12 {
                 return command(COMMANDS[6], 1, 0x9000, g);
             }
-            slot(g, a::animtiles_ids, 10, 0x8000);
+            slot(g, a::ANIMTILES_IDS, 10, 0x8000);
             rw(image, 0x87, 0x9000, 0, COMMANDS[6] as u16);
             rw(image, 0x87, 0x9000, 2, 0x0300);
             rw(image, 0x87, 0x9000, 4, 0x3400);
@@ -246,7 +246,7 @@ fn execute(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
                 short.write(at + i, 1);
             }
             g.loaded_rom = Some(short);
-            slot(g, a::animtiles_timers, 1, if n < 6 { 1 } else { 2 });
+            slot(g, a::ANIMTILES_TIMERS, 1, if n < 6 { 1 } else { 2 });
             return command(COMMANDS[cmd], 1, 0x9000, g);
         }
         376..=399 => return dma_case(id - 376, g, image, trace),
@@ -257,21 +257,21 @@ fn execute(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
                 0..=3 => {
                     slot(
                         g,
-                        a::animtiles_instr_timers,
+                        a::ANIMTILES_INSTR_TIMERS,
                         1,
                         [0, 1, 2, 0xffff][n as usize],
                     );
-                    put(g, w::animtiles_object_index, 1);
+                    put(g, w::ANIMTILES_OBJECT_INDEX, 1);
                     process(g);
                 }
                 4..=7 => {
-                    slot(g, a::animtiles_timers, 1, if n & 1 == 0 { 1 } else { 2 });
+                    slot(g, a::ANIMTILES_TIMERS, 1, if n & 1 == 0 { 1 } else { 2 });
                     return command(COMMANDS[if n < 6 { 3 } else { 4 }], 1, 0xffff, g);
                 }
                 8..=11 => {
                     put(
                         g,
-                        w::animtiles_enable_flag,
+                        w::ANIMTILES_ENABLE_FLAG,
                         [0, 0x80, 0x7fff, 0x8000][(n - 8) as usize],
                     );
                     advance(g);
@@ -286,7 +286,7 @@ fn execute(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
             let cmd = [1, 2, 3, 3, 4, 4, 5, 19][n as usize];
             slot(
                 g,
-                a::animtiles_timers,
+                a::ANIMTILES_TIMERS,
                 1,
                 if n == 2 || n == 4 { 1 } else { 2 },
             );
@@ -306,9 +306,9 @@ fn execute(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
         }
         437 => {
             // Selected12 maps Program to Delay0, Delay to Source0, Source to Size0.
-            put(g, w::animtiles_object_index, 12);
-            slot(g, a::animtiles_instr_list_ptrs, 12, 0x9000);
-            slot(g, a::animtiles_instr_timers, 12, 1);
+            put(g, w::ANIMTILES_OBJECT_INDEX, 12);
+            slot(g, a::ANIMTILES_INSTR_LIST_PTRS, 12, 0x9000);
+            slot(g, a::ANIMTILES_INSTR_TIMERS, 12, 1);
             process(g);
         }
         _ => unreachable!(),
@@ -340,20 +340,20 @@ fn dma_case(n: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
             );
         }
         for k in (0..12).step_by(2) {
-            slot(g, a::animtiles_ids, k, 0x8000 + k);
-            slot(g, a::animtiles_src_ptr, k, 0x8000 + k * 8);
+            slot(g, a::ANIMTILES_IDS, k, 0x8000 + k);
+            slot(g, a::ANIMTILES_SRC_PTR, k, 0x8000 + k * 8);
             slot(
                 g,
-                a::animtiles_sizes,
+                a::ANIMTILES_SIZES,
                 k,
                 [1, 2, 3, 4, 7, 8][usize::from(k / 2)],
             );
-            slot(g, a::animtiles_vram_ptr, k, 0x123);
+            slot(g, a::ANIMTILES_VRAM_PTR, k, 0x123);
         }
         if n < 4 {
             put(
                 g,
-                w::animtiles_enable_flag,
+                w::ANIMTILES_ENABLE_FLAG,
                 [0, 0x80, 0x7fff, 0x8000][n as usize],
             );
         }
@@ -362,26 +362,26 @@ fn dma_case(n: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
         }
         if n == 5 {
             for k in (0..12).step_by(2) {
-                slot(g, a::animtiles_src_ptr, k, 0);
+                slot(g, a::ANIMTILES_SRC_PTR, k, 0);
             }
         }
         if n == 6 {
-            slot(g, a::animtiles_ids, 10, 0);
+            slot(g, a::ANIMTILES_IDS, 10, 0);
         }
         if n == 7 {
-            slot(g, a::animtiles_src_ptr, 10, 0);
+            slot(g, a::ANIMTILES_SRC_PTR, 10, 0);
         }
         if (8..16).contains(&n) {
             clear(g);
-            slot(g, a::animtiles_ids, 10, 0x8000);
+            slot(g, a::ANIMTILES_IDS, 10, 0x8000);
             slot(
                 g,
-                a::animtiles_src_ptr,
+                a::ANIMTILES_SRC_PTR,
                 10,
                 if n < 12 { 0x1ef1 } else { 0xffff },
             );
-            slot(g, a::animtiles_sizes, 10, if n < 12 { 90 } else { 2 });
-            slot(g, a::animtiles_vram_ptr, 10, 0x7fff);
+            slot(g, a::ANIMTILES_SIZES, 10, if n < 12 { 90 } else { 2 });
+            slot(g, a::ANIMTILES_VRAM_PTR, 10, 0x7fff);
         }
         if n == 15 {
             // Actual lifecycle producer feeds the actual NMI consumer.
@@ -402,13 +402,13 @@ fn dma_case(n: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> u16 
             // Short cart allocation forces a Rust panic during real DMA after
             // zero, one, or two completed bytes. Size zero must still start DMA.
             clear(g);
-            slot(g, a::animtiles_ids, 10, 0x8000);
+            slot(g, a::ANIMTILES_IDS, 10, 0x8000);
             let at = crate::rtl::lorom_offset(0x878000) as usize;
             unsafe {
                 (*cart).rom = RomImage::zeroed(at + (n % 3) as usize);
             }
-            slot(g, a::animtiles_sizes, 10, if n >= 20 { 0 } else { 8 });
-            slot(g, a::animtiles_src_ptr, 10, 0x8000);
+            slot(g, a::ANIMTILES_SIZES, 10, if n >= 20 { 0 } else { 8 });
+            slot(g, a::ANIMTILES_SRC_PTR, 10, 0x8000);
         }
         let result = catch_unwind(AssertUnwindSafe(|| upload(g)));
         let mut hardware = crate::recording::RecordingBytes::default();

@@ -19,7 +19,7 @@ impl sm_game::actors::species::TouchHost for Game {
         match touch {
             SporeSpawn => actors::spore_spawn::touch(self),
             CeresSteam => crate::game::ceres_doors::steam_touch(self),
-            MotherBrainBrain => sm_a9::touch_brain(self),
+            MotherBrainBrain => sm_a9::brain_touch(self),
         }
     }
 }
@@ -31,7 +31,7 @@ impl sm_game::actors::species::ShotHost for Game {
             Dud => api::create_dud(&mut Runtime::new(self)),
             SporeSpawn => actors::spore_spawn::shot(self),
             Ridley => sm_game::actors::ridley::shot(self),
-            MotherBrainBody => sm_a9::shot_body(self),
+            MotherBrainBody => sm_a9::body_shot(self),
             MotherBrainBrain => sm_a9::brain_shot(self),
         }
     }
@@ -47,9 +47,9 @@ impl sm_game::actors::species::DrawHookHost for Game {
             }
             WorkRobotPalette => crate::game::actors::wrecked_ship_robots::palette(self),
             BlueFaceBlockPalette => sm_game::actors::blue_brinstar_face_block::cycle_palette(self),
-            MotherBrainBrainAndNeck => sm_a9::draw_brain_neck_enemy_graphics_draw_hook(self),
-            MotherBrainBrain => sm_a9::brain_graphics_draw_hook(self),
-            DeadTorizo => sm_game::actors::corpses::torizo_main_graphics_hook(self),
+            MotherBrainBrainAndNeck => sm_a9::draw_brain_and_neck_hook(self),
+            MotherBrainBrain => sm_a9::draw_brain_hook(self),
+            DeadTorizo => sm_game::actors::corpses::torizo_corpse_graphics_drawn_hook(self),
         }
     }
 }

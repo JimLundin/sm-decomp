@@ -65,26 +65,26 @@ pub(crate) fn run(g: &mut Game) -> usize {
                         g.ram().fill(0..g.ram().len(), 0);
                         g.g_fail = false;
                         for (at, value) in [
-                            (w::room_width_in_blocks, 32),
-                            (w::room_height_in_blocks, 32),
-                            (w::samus_x_pos, 136),
-                            (w::samus_y_pos, 136),
-                            (w::samus_x_subpos, 0x1111),
-                            (w::samus_y_subpos, 0x2222),
-                            (w::samus_prev_x_pos, 136),
-                            (w::samus_prev_y_pos, 136),
-                            (w::samus_x_radius, 3),
-                            (w::samus_y_radius, 3),
-                            (w::equipped_items, 0x220),
-                            (w::samus_suit_palette_index, 4),
-                            (w::samus_pose, 1),
+                            (w::ROOM_WIDTH_IN_BLOCKS, 32),
+                            (w::ROOM_HEIGHT_IN_BLOCKS, 32),
+                            (w::SAMUS_X_POS, 136),
+                            (w::SAMUS_Y_POS, 136),
+                            (w::SAMUS_X_SUBPOS, 0x1111),
+                            (w::SAMUS_Y_SUBPOS, 0x2222),
+                            (w::SAMUS_PREV_X_POS, 136),
+                            (w::SAMUS_PREV_Y_POS, 136),
+                            (w::SAMUS_X_RADIUS, 3),
+                            (w::SAMUS_Y_RADIUS, 3),
+                            (w::EQUIPPED_ITEMS, 0x220),
+                            (w::SAMUS_SUIT_PALETTE_INDEX, 4),
+                            (w::SAMUS_POSE, 1),
                             (0xa1e, 0x0308),
-                            (w::samus_x_speed_table_pointer, 0xe000),
-                            (w::speed_echoes_index, 0xffff),
-                            (w::samus_y_dir, 2),
-                            (w::samus_anim_frame_timer, 2),
-                            (w::button_config_jump_a, 0x80),
-                            (w::liquid_physics_type, liquid_physics),
+                            (w::SAMUS_X_SPEED_TABLE_POINTER, 0xe000),
+                            (w::SPEED_ECHOES_INDEX, 0xffff),
+                            (w::SAMUS_Y_DIR, 2),
+                            (w::SAMUS_ANIM_FRAME_TIMER, 2),
+                            (w::BUTTON_CONFIG_JUMP_A, 0x80),
+                            (w::LIQUID_PHYSICS_TYPE, liquid_physics),
                             (0xdfa, 0xa55a),
                         ] {
                             put(g, at, value);
@@ -99,8 +99,8 @@ pub(crate) fn run(g: &mut Game) -> usize {
                         // bytes cannot cause an unrelated long terrain traversal.
                         // Acceleration remains zero; this does not bypass movement.
                         let opposite = 0u32.wrapping_sub(u32::from_le_bytes(bytes));
-                        put(g, w::extra_samus_y_subdisplacement, opposite as u16);
-                        put(g, w::extra_samus_y_displacement, (opposite >> 16) as u16);
+                        put(g, w::EXTRA_SAMUS_Y_SUBDISPLACEMENT, opposite as u16);
+                        put(g, w::EXTRA_SAMUS_Y_DISPLACEMENT, (opposite >> 16) as u16);
                         {
                             let mut runtime = Runtime::new(g);
                             player_movement::advance_normal(&mut runtime);
@@ -120,9 +120,9 @@ pub(crate) fn run(g: &mut Game) -> usize {
                             &bytes,
                             "no jump request changes speed bytes"
                         );
-                        assert_eq!(word(g, w::samus_y_dir), 2);
-                        assert_eq!(word(g, w::samus_y_pos), 136);
-                        assert_eq!(word(g, w::samus_y_subpos), 0x2222);
+                        assert_eq!(word(g, w::SAMUS_Y_DIR), 2);
+                        assert_eq!(word(g, w::SAMUS_Y_POS), 136);
+                        assert_eq!(word(g, w::SAMUS_Y_SUBPOS), 0x2222);
                         assert!(!g.g_fail && !g.actor_identity_is_with_session());
                         checked += 1;
                     }

@@ -54,7 +54,7 @@ pub fn queue_row_clear(tail: u16, tilemap_offset: u16, game: &mut (impl ActorHos
     game.ram().write_byte(at + 4, BLANK_TILEMAP_BANK);
     let base = (i32::from(game.ram().read_byte(BG2_TILEMAP_BASE)) & BASE_BITS) << 8;
     store_word(at + 5, (i32::from(tilemap_offset) + base) as u16, game);
-    word!(game.vram_write_queue_tail = tail.wrapping_add(QUEUE_ENTRY_BYTES));
+    word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(QUEUE_ENTRY_BYTES));
 }
 
 /// Handle Kraid sinking ($A7:C59F): find the row for Kraid's y, queue its
@@ -69,7 +69,7 @@ pub fn handle_sinking(game: &mut (impl ActorHost + ?Sized)) -> Option<u32> {
         }
         if i32::from(y) == i32::from(slot!(game, Kraid[0].base.y_pos)) {
             if row.word(ROW_TILEMAP) & NO_CLEAR == 0 {
-                let tail = word!(game.vram_write_queue_tail);
+                let tail = word!(game.VRAM_WRITE_QUEUE_TAIL);
                 queue_row_clear(tail, row.word(ROW_TILEMAP), game);
             }
             return Some(u32::from(BANK) << 16 | u32::from(row.word(ROW_ROUTINE)));

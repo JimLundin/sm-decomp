@@ -18,7 +18,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
     let n = id as usize;
     let reverse = n / 6 % 2 != 0;
     let enemy = if n & 1 == 0 { 0 } else { 64 };
-    put(game, w::cur_enemy_index, enemy as u16);
+    put(game, w::CUR_ENEMY_INDEX, enemy as u16);
     let base = crate::rtl::lorom_offset(0xa0b143) as usize;
     for phase in 0..256 {
         bytes(image, base + phase, &[(phase * 37 + 11) as u8]);
@@ -35,7 +35,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
     for slot in 0..32 {
         put(
             game,
-            a::sprite_instr_list_ptrs + slot * 2,
+            a::SPRITE_INSTR_LIST_PTRS + slot * 2,
             if n < 12 { 0 } else { 0x9100 },
         );
     }

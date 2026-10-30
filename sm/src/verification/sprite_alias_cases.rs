@@ -27,7 +27,7 @@ pub(crate) fn capture_case(id: u32, run: fn(Operation, &mut Game) -> u16) -> Opt
         assert_eq!(base + offset_of!(EnemyBase, frozen_timer), 0xf078);
         assert_eq!(base + offset_of!(Maw, var_45), 0x168e4);
         assert_eq!(base + offset_of!(Maw, var_46), 0x168e6);
-        put(&mut game, w::cur_enemy_index, enemy as u16);
+        put(&mut game, w::CUR_ENEMY_INDEX, enemy as u16);
         put(&mut game, base + offset_of!(Maw, var_45), 0);
         put(&mut game, base + offset_of!(Maw, var_46), 0); // sprite byte handle0
         put(&mut game, 0xf078, if id == 117 { 0xa00 } else { 1 });
@@ -40,9 +40,9 @@ pub(crate) fn capture_case(id: u32, run: fn(Operation, &mut Game) -> u16) -> Opt
         assert_eq!(base + offset_of!(EnemyBase, y_pos), 0xf0f8);
         assert_eq!(base + offset_of!(Metroid, var_00), 0x1597a);
         assert_eq!(base + offset_of!(Metroid, var_01), 0x1597c);
-        put(&mut game, w::cur_enemy_index, enemy as u16);
-        put(&mut game, w::samus_x_pos, 0x112);
-        put(&mut game, w::samus_y_pos, 0x220);
+        put(&mut game, w::CUR_ENEMY_INDEX, enemy as u16);
+        put(&mut game, w::SAMUS_X_POS, 0x112);
+        put(&mut game, w::SAMUS_Y_POS, 0x220);
         put(&mut game, base + offset_of!(Metroid, var_f), 2); // actual Func3, then both attachments
         put(
             &mut game,

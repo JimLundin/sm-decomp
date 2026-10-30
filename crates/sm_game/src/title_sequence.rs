@@ -74,8 +74,8 @@ fn run_transition<H: Host + ?Sized>(state: u16, game: &mut H) {
 /// Steps the current transition between the title and the demos. Was
 /// `HandleCinematicsTransitions`.
 pub fn handle_transitions<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.skip_to_title_index) != 0 {
-        let state = word!(game.skip_to_title_index);
+    if word!(game.SKIP_TO_TITLE_INDEX) != 0 {
+        let state = word!(game.SKIP_TO_TITLE_INDEX);
         run_transition(state, game);
     }
 }
@@ -83,8 +83,8 @@ pub fn handle_transitions<H: Host + ?Sized>(game: &mut H) {
 /// Was `HandleCinematicsTransitions_1`.
 fn fade_out_to_demo<H: Host + ?Sized>(game: &mut H) {
     if advance_cinematic_fade(CinematicFade::FastOut, game) {
-        word!(game.skip_to_title_index = 2);
-        word!(game.cinematic_function = function::WAITING);
+        word!(game.SKIP_TO_TITLE_INDEX = 2);
+        word!(game.CINEMATIC_FUNCTION = function::WAITING);
         game.queue_music_delayed8(DEMO_MUSIC);
     }
 }
@@ -95,21 +95,21 @@ fn start_demo_logo<H: Host + ?Sized>(game: &mut H) {
     spawn(game, CinematicObjects::Sprites, object::COPYRIGHT, 0);
     // The palette the first sprite initializer leaves in A.
     spawn(game, CinematicObjects::Sprites, object::DEMO_LOGO, 0x0400);
-    word!(game.screen_fade_delay = 0);
-    word!(game.screen_fade_counter = 2);
-    word!(game.mode7_zoom = 256);
-    word!(game.cinematic_x = 0);
-    word!(game.cinematic_x_sub = 0);
-    word!(game.cinematic_y = 0);
-    word!(game.cinematic_y_sub = 0);
-    word!(game.cinematic_x_speed = 0);
-    word!(game.cinematic_x_subspeed = 0);
-    word!(game.cinematic_y_speed = 0);
-    word!(game.cinematic_y_subspeed = 0);
-    word!(game.skip_to_title_index = 3);
-    crate::word_transfers!(game, ascending, 128; le(palette_buffer, 128) <- rom(TITLE_PALETTES, 128));
-    word!(game.palette_buffer[201] = 0x7fff);
-    word!(game.palette_buffer[202] = 32128);
+    word!(game.SCREEN_FADE_DELAY = 0);
+    word!(game.SCREEN_FADE_COUNTER = 2);
+    word!(game.MODE7_ZOOM = 256);
+    word!(game.CINEMATIC_X = 0);
+    word!(game.CINEMATIC_X_SUB = 0);
+    word!(game.CINEMATIC_Y = 0);
+    word!(game.CINEMATIC_Y_SUB = 0);
+    word!(game.CINEMATIC_X_SPEED = 0);
+    word!(game.CINEMATIC_X_SUBSPEED = 0);
+    word!(game.CINEMATIC_Y_SPEED = 0);
+    word!(game.CINEMATIC_Y_SUBSPEED = 0);
+    word!(game.SKIP_TO_TITLE_INDEX = 3);
+    crate::word_transfers!(game, ascending, 128; le(PALETTE_BUFFER, 128) <- rom(TITLE_PALETTES, 128));
+    word!(game.PALETTE_BUFFER[201] = 0x7fff);
+    word!(game.PALETTE_BUFFER[202] = 32128);
     game.clear_palette_effects();
     game.spawn_palette_effect(TITLE_GLOW_1);
     game.spawn_palette_effect(TITLE_GLOW_2);
@@ -121,18 +121,18 @@ fn start_demo_logo<H: Host + ?Sized>(game: &mut H) {
 /// Was `HandleCinematicsTransitions_3`.
 fn fade_in_title<H: Host + ?Sized>(game: &mut H) {
     if advance_cinematic_fade(CinematicFade::FastIn, game) {
-        word!(game.skip_to_title_index = 0);
-        word!(game.demo_timer = DEMO_DELAY);
-        word!(game.cinematic_function = function::TITLE_SCREEN);
+        word!(game.SKIP_TO_TITLE_INDEX = 0);
+        word!(game.DEMO_TIMER = DEMO_DELAY);
+        word!(game.CINEMATIC_FUNCTION = function::TITLE_SCREEN);
     }
 }
 
 /// Load title sequence graphics ($8B:9B87). Was `LoadTitleSequenceGraphics`.
 pub fn load_graphics<H: Host + ?Sized>(game: &mut H) {
     crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Title, game);
-    word!(game.cur_irq_handler = 0);
-    word!(game.irqhandler_next_handler = 0);
-    crate::word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(TITLE_PALETTES, 0));
+    word!(game.CUR_IRQ_HANDLER = 0);
+    word!(game.IRQHANDLER_NEXT_HANDLER = 0);
+    crate::word_transfers!(game, ascending, 256; le(PALETTE_BUFFER, 0) <- rom(TITLE_PALETTES, 0));
     GraphicsAsset::Decompress(0x94e000, 0x10000).load(game);
     GraphicsAsset::Decompress(0x96fc04, 0x14000).load(game);
     GraphicsAsset::Decompress(0x9580d8, 0x15000).load(game);
@@ -140,11 +140,11 @@ pub fn load_graphics<H: Host + ?Sized>(game: &mut H) {
     GraphicsAsset::VramLowBytes(0x7f4000, 0x0000, 0x1000).load_planes(0xff, false, game);
     crate::cinematic_display::reset_cinematic_transform(128, 128, game);
     game.enable_display_nmi(true);
-    word!(game.screen_fade_delay = 1);
-    word!(game.screen_fade_counter = 1);
+    word!(game.SCREEN_FADE_DELAY = 1);
+    word!(game.SCREEN_FADE_COUNTER = 1);
     game.set_hdma_enabled(true);
     game.set_palette_effects_enabled(true);
-    word!(game.fx_layer_blending_config_a = 0);
+    word!(game.FX_LAYER_BLENDING_CONFIG_A = 0);
     game.spawn_palette_effect(TITLE_GLOW_1);
     game.spawn_palette_effect(TITLE_GLOW_2);
     // The second title palette allocation leaves its slot offset in A.
@@ -156,7 +156,7 @@ pub fn load_graphics<H: Host + ?Sized>(game: &mut H) {
 pub fn setup<H: Host + ?Sized>(game: &mut H) {
     load_graphics(game);
     game.queue_music_delayed8(TITLE_MUSIC_DATA);
-    word!(game.cinematic_function = function::NOTHING);
+    word!(game.CINEMATIC_FUNCTION = function::NOTHING);
     spawn(
         game,
         CinematicObjects::Sprites,
@@ -170,12 +170,12 @@ pub fn setup<H: Host + ?Sized>(game: &mut H) {
 /// every other frame, zoom out to full size, then show the title logo. Was
 /// `CinematicFunc_Func7`.
 pub fn zooming_out<H: Host + ?Sized>(game: &mut H) {
-    if (word!(game.nmi_frame_counter_word) & 1) == 0 {
-        if ((word!(game.mode7_zoom)).wrapping_sub(256) as i16) < 0 {
-            word!(game.mode7_zoom = word!(game.mode7_zoom).wrapping_add(1));
+    if (word!(game.NMI_FRAME_COUNTER_WORD) & 1) == 0 {
+        if ((word!(game.MODE7_ZOOM)).wrapping_sub(256) as i16) < 0 {
+            word!(game.MODE7_ZOOM = word!(game.MODE7_ZOOM).wrapping_add(1));
         } else {
-            word!(game.mode7_zoom = 256);
-            word!(game.cinematic_function = function::WAITING);
+            word!(game.MODE7_ZOOM = 256);
+            word!(game.CINEMATIC_FUNCTION = function::WAITING);
             spawn(
                 game,
                 CinematicObjects::Sprites,
@@ -191,19 +191,19 @@ pub fn zooming_out<H: Host + ?Sized>(game: &mut H) {
 fn finish<H: Host + ?Sized>(next: u16, game: &mut H, clear_index: impl FnOnce(&mut H)) {
     game.enable_display_nmi(true);
     game.ram().write_byte(crate::ram::mirror::BGMODE, 1);
-    word!(game.screen_fade_delay = 0);
-    word!(game.screen_fade_counter = 0);
-    word!(game.reg_BG2HOFS = 0);
-    word!(game.reg_BG3HOFS = 0);
-    word!(game.reg_BG2VOFS = 0);
-    word!(game.reg_BG3VOFS = 0);
-    word!(game.mode7_angle = 0);
-    word!(game.cinematic_function = function::SETUP);
+    word!(game.SCREEN_FADE_DELAY = 0);
+    word!(game.SCREEN_FADE_COUNTER = 0);
+    word!(game.REG_BG2HOFS = 0);
+    word!(game.REG_BG3HOFS = 0);
+    word!(game.REG_BG2VOFS = 0);
+    word!(game.REG_BG3VOFS = 0);
+    word!(game.MODE7_ANGLE = 0);
+    word!(game.CINEMATIC_FUNCTION = function::SETUP);
     game.set_palette_effects_enabled(false);
     game.clear_palette_effects();
     crate::word_transfers!(game, descending, 329; native(CINEMATIC_OBJECTS) <- value(0));
-    crate::word_transfers!(game, descending, 256; le(hdma_table_1, 255) <- value(0));
-    word!(game.game_state = next);
+    crate::word_transfers!(game, descending, 256; le(HDMA_TABLE_1, 255) <- value(0));
+    word!(game.GAME_STATE = next);
     clear_index(game);
 }
 
@@ -212,7 +212,7 @@ fn finish<H: Host + ?Sized>(next: u16, game: &mut H, clear_index: impl FnOnce(&m
 pub fn to_file_select<H: Host + ?Sized>(game: &mut H) {
     if advance_cinematic_fade(CinematicFade::SlowOut, game) {
         finish(FILE_SELECT_MENUS, game, |game| {
-            word!(game.game_options_screen_index = 0)
+            word!(game.GAME_OPTIONS_SCREEN_INDEX = 0)
         });
     }
 }
@@ -221,7 +221,7 @@ pub fn to_file_select<H: Host + ?Sized>(game: &mut H) {
 /// `CinematicFunc_Func9`.
 pub fn to_demos<H: Host + ?Sized>(game: &mut H) {
     if advance_cinematic_fade(CinematicFade::SlowOut, game) {
-        finish(TRANSITION_TO_DEMO, game, |game| word!(game.demo_scene = 0));
+        finish(TRANSITION_TO_DEMO, game, |game| word!(game.DEMO_SCENE = 0));
     }
 }
 
@@ -229,7 +229,7 @@ pub fn to_demos<H: Host + ?Sized>(game: &mut H) {
 /// ($8B:9CCF): full brightness, once. Was `sub_8B9CCF`.
 pub fn scrolling_1994<H: Host + ?Sized>(k: u16, game: &mut H) {
     game.ram().write_byte(crate::ram::mirror::INIDISP, 15);
-    word!(game.cinematicspr_preinstr_func[(k >> 1)] = NO_PRE_INSTRUCTION);
+    word!(game.CINEMATICSPR_PREINSTR_FUNC[(k >> 1)] = NO_PRE_INSTRUCTION);
 }
 
 /// Instruction - start the title's scene 3 pan ($8B:9E58), with its

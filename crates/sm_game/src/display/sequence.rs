@@ -85,8 +85,8 @@ pub mod scroll {
         Bg4H,
         Bg4V,
     }
-    const _: () = assert!(crate::ram::words::reg_BG1HOFS == 0xb1);
-    const _: () = assert!(crate::ram::words::reg_BG4VOFS == 0xb1 + 2 * Word::Bg4V as usize);
+    const _: () = assert!(crate::ram::words::REG_BG1HOFS == 0xb1);
+    const _: () = assert!(crate::ram::words::REG_BG4VOFS == 0xb1 + 2 * Word::Bg4V as usize);
     /// `word` as the host's projection holds it, low byte then high.
     pub fn get<H: CompatibilityRam + ?Sized>(h: &H, word: Word) -> u16 {
         let at = 0xb1 + 2 * word as usize;

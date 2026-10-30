@@ -58,12 +58,12 @@ pub(crate) fn run_room_setup(game: &mut Game) {
 }
 
 pub(crate) fn pause_draygon(game: &mut Game) {
-    word!(game.irqhandler_next_handler = 4);
+    word!(game.IRQHANDLER_NEXT_HANDLER = 4);
 }
 
 pub(crate) fn unpause_draygon(game: &mut Game) -> crate::types::CoroutineRet {
-    if word!(game.hdma_object_channels_bitmask[1]) == 8 {
-        word!(game.irqhandler_next_handler = 12);
+    if word!(game.HDMA_OBJECT_CHANNELS_BITMASK[1]) == 8 {
+        word!(game.IRQHANDLER_NEXT_HANDLER = 12);
     }
     0
 }
@@ -77,12 +77,12 @@ pub(crate) fn setup_script(address: u32, game: &mut Game) {
     match address {
         9408916 => {
             spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x3d, 0xb, 0xbb30), game);
-            word! {game; earthquake_type = 24; earthquake_timer = u16::MAX; }
+            word! {game; EARTHQUAKE_TYPE = 24; EARTHQUAKE_TIMER = u16::MAX; }
         }
         9408937 => spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x10, 0x87, 0xb964), game),
         9408946 => spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0xa, 0xb9ed), game),
         9408957 => {
-            word! {game; earthquake_type = 6; earthquake_timer = u16::MAX; }
+            word! {game; EARTHQUAKE_TYPE = 6; EARTHQUAKE_TIMER = u16::MAX; }
             scrolling_sky::initialize_land(game);
         }
         9408969 => scrolling_sky::initialize_land(game),
@@ -113,15 +113,15 @@ pub(crate) fn setup_script(address: u32, game: &mut Game) {
             }
         }
         9423114 => {
-            let at = 0xd908 + usize::from(word!(game.area_index));
+            let at = 0xd908 + usize::from(word!(game.AREA_INDEX));
             let collected =
                 u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]) | 1;
             word_transfers!(game, ascending, 1; native(at) <- value(collected));
-            word!(game.has_area_map = collected);
+            word!(game.HAS_AREA_MAP = collected);
         }
         9423135 => {
             crate::game::gameplay_flag_runtime::mark_event(0xe, game);
-            word! {game; earthquake_type = 18; earthquake_timer = u16::MAX; }
+            word! {game; EARTHQUAKE_TYPE = 18; EARTHQUAKE_TIMER = u16::MAX; }
         }
         9423155 | 9423187 => {
             let kind = if address == 9423187 {
@@ -130,17 +130,17 @@ pub(crate) fn setup_script(address: u32, game: &mut Game) {
             } else {
                 18
             };
-            word!(game.earthquake_type = kind);
+            word!(game.EARTHQUAKE_TYPE = kind);
             {
                 let mut runtime = Runtime::new(game);
                 let room = &mut runtime.session_mut().room;
                 room.set_main_native(1, kind);
                 room.set_main_native(0, 0);
             }
-            word!(game.earthquake_timer = u16::MAX);
+            word!(game.EARTHQUAKE_TIMER = u16::MAX);
         }
         9423174 => {
-            word! {game; earthquake_type = 21; earthquake_timer = u16::MAX; }
+            word! {game; EARTHQUAKE_TYPE = 21; EARTHQUAKE_TIMER = u16::MAX; }
         }
         9423214 => {
             spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x26, 0xba48), game);
@@ -150,7 +150,7 @@ pub(crate) fn setup_script(address: u32, game: &mut Game) {
         9423227 => {
             game.ram().write_byte(0x5d, 102);
             initialize_room_haze(game);
-            word!(game.hdma_data_table_in_ceres = 9);
+            word!(game.HDMA_DATA_TABLE_IN_CERES = 9);
         }
         9408955 | 9408956 | 9408979 | 9408980 | 9408981 | 9408982 | 9409012 | 9409013 | 9409014
         | 9409015 | 9423047 | 9423056 | 9423057 | 9423058 | 9423068 | 9423134 => {}
@@ -208,9 +208,9 @@ pub(crate) unsafe fn door_script(address: u32, game: &mut Game) {
                     true,
                     game,
                 );
-                word! { game, 256; reg_M7A, reg_M7D }
-                word! { game, 0; reg_M7B, reg_M7C }
-                word! {game; reg_M7X = 128; reg_M7Y = 1008; irq_enable_mode7 = 1; }
+                word! { game, 256; REG_M7A, REG_M7D }
+                word! { game, 0; REG_M7B, REG_M7C }
+                word! {game; REG_M7X = 128; REG_M7Y = 1008; IRQ_ENABLE_MODE7 = 1; }
                 {
                     let mut runtime = Runtime::new(game);
                     let room = &mut runtime.session_mut().room;
@@ -220,7 +220,7 @@ pub(crate) unsafe fn door_script(address: u32, game: &mut Game) {
             }
             9430291 => {
                 game.ram().write_byte(0x56, 9);
-                word!(game.irq_enable_mode7 = 0);
+                word!(game.IRQ_ENABLE_MODE7 = 0);
             }
             _ => {
                 if !crate::game::room_scrolls::apply(address, &mut Runtime::new(game)) {
@@ -252,7 +252,7 @@ pub(crate) fn decompress_level(source: u32, game: &mut Game) {
 
 pub(crate) unsafe fn load_enemy_graphics(game: &mut Game) {
     unsafe {
-        let mut cursor = i32::from(checked_word!(game.room_enemy_tilesets_ptr));
+        let mut cursor = i32::from(checked_word!(game.ROOM_ENEMY_TILESETS_PTR));
         if cursor == 0 {
             return;
         }
@@ -313,11 +313,11 @@ fn apply_fx(h: &mut Runtime<'_>, definition: &FxRecord, palette: PaletteBuffer) 
     h.session_mut().room.liquid_delay = u16::from(definition.byte(8));
     h.write_word_le(
         u16::from(definition.byte(10)),
-        ram::fx_layer_blending_config_a,
+        ram::FX_LAYER_BLENDING_CONFIG_A,
     );
     h.write_word_le(
         u16::from(definition.byte(11)),
-        ram::fx_layer_blending_config_b,
+        ram::FX_LAYER_BLENDING_CONFIG_B,
     );
     h.session_mut().room.liquid_options = u16::from(definition.byte(12));
     let blend = definition.byte(15);
@@ -379,7 +379,7 @@ fn fx_table(h: &Runtime<'_>, address: u32) -> FxRecord {
 }
 
 pub(crate) fn load_fx_entry(index: u16, game: &mut Game) {
-    let address = checked_word!(game.room_layer3_asm_ptr).wrapping_add(16 * (index & 7));
+    let address = checked_word!(game.ROOM_LAYER3_ASM_PTR).wrapping_add(16 * (index & 7));
     let definition = fx_definition(address, game);
     let mut h = Runtime::new(game);
     apply_fx(&mut h, &definition, PaletteBuffer::Current);
@@ -388,7 +388,7 @@ pub(crate) fn load_fx_entry(index: u16, game: &mut Game) {
 pub(crate) fn load_fx_header(game: &mut Game) {
     use crate::game::{animated_tiles, palette_effects, visual_runtime};
     use sm_game::{liquid_effects, scrolling_sky};
-    let mut address = checked_word!(game.room_layer3_asm_ptr);
+    let mut address = checked_word!(game.ROOM_LAYER3_ASM_PTR);
     if address == 0 {
         return;
     }
@@ -397,7 +397,7 @@ pub(crate) fn load_fx_header(game: &mut Game) {
         if door == 0xffff {
             return;
         }
-        if door == 0 || door == checked_word!(game.door_def_ptr) {
+        if door == 0 || door == checked_word!(game.DOOR_DEF_PTR) {
             break;
         }
         address = address.wrapping_add(16);
@@ -470,7 +470,7 @@ pub(crate) fn load_fx_header(game: &mut Game) {
 }
 
 pub(crate) unsafe fn advance_room(game: &mut Game) {
-    let script = word!(game.room_main_code_ptr);
+    let script = word!(game.ROOM_MAIN_CODE_PTR);
     if script != 0 {
         unsafe { advance_script(0x8f0000 | u32::from(script), &mut Runtime::new(game)) };
     }
@@ -478,7 +478,7 @@ pub(crate) unsafe fn advance_room(game: &mut Game) {
 
 unsafe fn random_explosions(mask: u16, check_tile: bool, h: &mut Runtime<'_>) {
     {
-        if h.word(ram::time_is_frozen_flag) != 0 || h.word(ram::nmi_frame_counter_word) & mask != 0
+        if h.word(ram::TIME_IS_FROZEN_FLAG) != 0 || h.word(ram::NMI_FRAME_COUNTER_WORD) & mask != 0
         {
             return;
         }
@@ -488,7 +488,7 @@ unsafe fn random_explosions(mask: u16, check_tile: bool, h: &mut Runtime<'_>) {
         let y = layer1[1].wrapping_add(u16::from(random.to_ne_bytes()[1]));
         if check_tile {
             let row =
-                u16::from((y >> 4) as u8) * u16::from(h.word(ram::room_width_in_blocks) as u8);
+                u16::from((y >> 4) as u8) * u16::from(h.word(ram::ROOM_WIDTH_IN_BLOCKS) as u8);
             if h.native_word(0x10002 + 2 * (usize::from(row) + usize::from(x >> 4))) & 0x3ff == 255
             {
                 return;
@@ -538,8 +538,8 @@ unsafe fn advance_script(address: u32, h: &mut Runtime<'_>) {
                 }
                 random_explosions(1, true, h);
                 h.write_word_le(
-                    h.word(ram::earthquake_timer) | 0x8000,
-                    ram::earthquake_timer,
+                    h.word(ram::EARTHQUAKE_TIMER) | 0x8000,
+                    ram::EARTHQUAKE_TIMER,
                 );
             }
             9421286 => {
@@ -555,12 +555,12 @@ unsafe fn advance_script(address: u32, h: &mut Runtime<'_>) {
             9430303 => advance_ceres_elevator(h),
             9430308 => {}
             9430309 => {
-                if h.word(ram::ceres_status) != 0 {
+                if h.word(ram::CERES_STATUS) != 0 {
                     let room = &mut h.session_mut().room;
                     room.main_variables[0] = room.main_variables[0].wrapping_sub(1);
                     if (room.main_native(0) as i16) < 0 {
                         room.main_variables[0] = 8;
-                        let definition = if h.word(ram::random_number) & 0x8000 != 0 {
+                        let definition = if h.word(ram::RANDOM_NUMBER) & 0x8000 != 0 {
                             ADDR_STRU_869742
                         } else {
                             ADDR_STRU_869734
@@ -568,7 +568,7 @@ unsafe fn advance_script(address: u32, h: &mut Runtime<'_>) {
                         let x = [
                             0x50, 0x60, 0x70, 0x80, 0x90, 0xa0, 0xb0, 0xc0, 0xd0, 0xe0, 0xf0,
                             0x110, 0x130, 0x150, 0x170, 0x190,
-                        ][usize::from(h.word(ram::random_number) & 15)];
+                        ][usize::from(h.word(ram::RANDOM_NUMBER) & 15)];
                         h.foreign(|game| {
                             crate::game::enemy_projectiles::spawn_with_room_gfx(definition, x, game)
                         });
@@ -576,13 +576,13 @@ unsafe fn advance_script(address: u32, h: &mut Runtime<'_>) {
                 }
             }
             9430385 => {
-                if h.word(ram::ceres_status) & 1 != 0 {
+                if h.word(ram::CERES_STATUS) & 1 != 0 {
                     h.foreign(sm_game::actors::ceres_ridley::handle_getaway_if_active);
                 }
             }
             9430396 => {
                 if let Some(kind) = select_earthquake(18, 0x200, 23, h) {
-                    h.write_word_le(kind, ram::earthquake_type);
+                    h.write_word_le(kind, ram::EARTHQUAKE_TYPE);
                 }
                 random_explosions(3, false, h);
             }
@@ -591,7 +591,7 @@ unsafe fn advance_script(address: u32, h: &mut Runtime<'_>) {
                 if let Some(kind) = select_earthquake(21, 0x180, 26, h) {
                     h.session_mut().room.set_main_native(1, kind);
                 }
-                h.write_word_le(h.session().room.main_native(1), ram::earthquake_type);
+                h.write_word_le(h.session().room.main_native(1), ram::EARTHQUAKE_TYPE);
                 random_explosions(3, false, h);
             }
             9431245 => shake_crocomire(h),

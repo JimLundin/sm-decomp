@@ -76,7 +76,7 @@ const SIGN: i32 = 0x8000;
 /// Initialisation AI (escape etecoon $B3:E6CB, escape dachora $B3:EAE5):
 /// once the critters have escaped, delete the critter; otherwise start it.
 pub fn initialize(dachora: bool, game: &mut (impl Host + ?Sized)) {
-    let e = i32::from(word!(game.cur_enemy_index));
+    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
     if game.event_happened(CRITTERS_ESCAPED) {
         slot!(game, Critter[e].base.properties, |old| old
             | K_ENEMY_PROPS_DELETED as u16);
@@ -109,7 +109,7 @@ pub fn initialize(dachora: bool, game: &mut (impl Host + ?Sized)) {
 /// Main AI - escape etecoon ($B3:E655): the etecoon's function in bank $B3.
 /// Was `state_address`.
 pub fn main_ai(game: &mut (impl Host + ?Sized)) -> u32 {
-    let e = i32::from(word!(game.cur_enemy_index));
+    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
     BANK << 16 | u32::from(slot!(game, Critter[e].function))
 }
 
@@ -169,7 +169,7 @@ pub fn go_to_if(
     let jump = if critters_escaped {
         game.event_happened(CRITTERS_ESCAPED)
     } else {
-        word!(game.lava_acid_y_pos) < LOW_TIDE_ACID_Y
+        word!(game.LAVA_ACID_Y_POS) < LOW_TIDE_ACID_Y
     };
     if jump {
         EnemyScript::jump(script.word(0))
@@ -193,7 +193,7 @@ pub fn shift_dachora(
     script: EnemyScript,
     game: &mut (impl Host + ?Sized),
 ) -> EnemyScript {
-    let e = i32::from(word!(game.cur_enemy_index));
+    let e = i32::from(word!(game.CUR_ENEMY_INDEX));
     slot!(game, Critter[e].base.x_pos, |old| old.wrapping_add(amount));
     script
 }

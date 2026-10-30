@@ -2,7 +2,7 @@
 #![forbid(unsafe_code)]
 use crate::imported::word as table_word;
 use crate::menus::host::Host;
-use crate::ram::words::{oam_next_ptr, shooting_stars_enabled};
+use crate::ram::words::{OAM_NEXT_PTR, SHOOTING_STARS_ENABLED};
 use sm_data::shooting_stars::TILE_ADDRESS as STAR_TILE_ADDRESS;
 
 /// The 40 16-byte star records: state (index, frame high, bit 15 waiting), X
@@ -51,7 +51,7 @@ pub fn initialize_shooting_stars<H: Host + ?Sized>(game: &mut H) {
 
 /// Move every star, then draw the visible ones into OAM.
 pub fn advance_shooting_stars<H: Host + ?Sized>(game: &mut H) {
-    if game.word(shooting_stars_enabled) == 0 {
+    if game.word(SHOOTING_STARS_ENABLED) == 0 {
         return;
     }
     for at in RECORDS.step_by(16) {
@@ -83,7 +83,7 @@ pub fn advance_shooting_stars<H: Host + ?Sized>(game: &mut H) {
             game.write_word_le(moved, at + position);
         }
     }
-    let mut output = game.word(oam_next_ptr);
+    let mut output = game.word(OAM_NEXT_PTR);
     for at in RECORDS.step_by(16) {
         if (game.word(at + STATE) as i16) < 0 {
             continue;
@@ -129,5 +129,5 @@ pub fn advance_shooting_stars<H: Host + ?Sized>(game: &mut H) {
             output = output.wrapping_add(4);
         }
     }
-    game.write_word_le(output, oam_next_ptr);
+    game.write_word_le(output, OAM_NEXT_PTR);
 }

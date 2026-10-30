@@ -23,14 +23,14 @@ impl SpriteMember {
     pub fn address(self, index: LegacySpriteWordIndex) -> usize {
         use crate::ram::word_arrays as ram;
         let base = match self {
-            SpriteMember::Instruction => ram::sprite_instr_list_ptrs,
-            SpriteMember::Timer => ram::sprite_instr_timer,
-            SpriteMember::Appearance => ram::sprite_palettes,
-            SpriteMember::X => ram::sprite_x_pos,
-            SpriteMember::XFraction => ram::sprite_x_subpos,
-            SpriteMember::Y => ram::sprite_y_pos,
-            SpriteMember::YFraction => ram::sprite_y_subpos,
-            SpriteMember::DisableFlags => ram::sprite_disable_flag,
+            SpriteMember::Instruction => ram::SPRITE_INSTR_LIST_PTRS,
+            SpriteMember::Timer => ram::SPRITE_INSTR_TIMER,
+            SpriteMember::Appearance => ram::SPRITE_PALETTES,
+            SpriteMember::X => ram::SPRITE_X_POS,
+            SpriteMember::XFraction => ram::SPRITE_X_SUBPOS,
+            SpriteMember::Y => ram::SPRITE_Y_POS,
+            SpriteMember::YFraction => ram::SPRITE_Y_SUBPOS,
+            SpriteMember::DisableFlags => ram::SPRITE_DISABLE_FLAG,
         };
         base + usize::from(index.0) * 2
     }

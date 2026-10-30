@@ -12,19 +12,19 @@ pub(super) const CASES: u32 = 196;
 
 fn projectile(game: &mut Game, handle: u16, radius: u16, negative: bool) {
     for (field, value) in [
-        (a::eproj_x_pos, 136),
-        (a::eproj_y_pos, 136),
-        (a::eproj_x_subpos, 0xffff),
-        (a::eproj_y_subpos, 1),
-        (a::eproj_x_vel, if negative { 0xfeff } else { 0x101 }),
-        (a::eproj_y_vel, if negative { 0xfeff } else { 0x101 }),
-        (a::eproj_radius, radius),
+        (a::EPROJ_X_POS, 136),
+        (a::EPROJ_Y_POS, 136),
+        (a::EPROJ_X_SUBPOS, 0xffff),
+        (a::EPROJ_Y_SUBPOS, 1),
+        (a::EPROJ_X_VEL, if negative { 0xfeff } else { 0x101 }),
+        (a::EPROJ_Y_VEL, if negative { 0xfeff } else { 0x101 }),
+        (a::EPROJ_RADIUS, radius),
     ] {
         slot(game, field, handle, value);
     }
 }
 fn room(game: &mut Game, kind: u16, bts: u8) {
-    put(game, w::room_width_in_blocks, 32);
+    put(game, w::ROOM_WIDTH_IN_BLOCKS, 32);
     for block in 0..1024 {
         put(game, 0x10002 + block * 2, kind << 12);
         game.ram().write_byte(0x16402 + block, bts);
@@ -51,7 +51,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         let negative = n & 8 != 0;
         room(game, if n & 16 == 0 { 0 } else { 8 }, 0);
         projectile(game, handle, 0x0303, negative);
-        put(game, w::eproj_index, handle);
+        put(game, w::EPROJ_INDEX, handle);
         return unsafe { move_one(horizontal, handle, game) };
     }
     if n < 112 {
@@ -68,7 +68,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         room(game, 1, kind | ((orientation as u8) << 6));
         projectile(game, handle, radius, orientation & 1 != 0);
         projectile(game, selected, radius, orientation & 1 != 0);
-        put(game, w::eproj_index, selected);
+        put(game, w::EPROJ_INDEX, selected);
         return unsafe { move_one(horizontal, handle, game) };
     }
     if n < 160 {
@@ -83,7 +83,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         room(game, 1, 5 | ((orientation as u8) << 6));
         projectile(game, handle, radius, orientation & 2 != 0);
         projectile(game, selected, radius, orientation & 2 != 0);
-        put(game, w::eproj_index, selected);
+        put(game, w::EPROJ_INDEX, selected);
         let raw = RomImage::zeroed(image.len());
         let table = crate::rtl::lorom_offset(0x948b2b) as usize;
         for index in 0..512 {
@@ -103,13 +103,13 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         let variant = n / 2;
         room(game, 8, 0);
         projectile(game, 0, 0x0303, false);
-        put(game, w::eproj_index, 0);
+        put(game, w::EPROJ_INDEX, 0);
         let width = match variant {
             4 => 0,
             5 => 256,
             _ => 32,
         };
-        put(game, w::room_width_in_blocks, width);
+        put(game, w::ROOM_WIDTH_IN_BLOCKS, width);
         let first = if width == 32 { 264 } else { 8 };
         let kind = if variant == 1 || variant >= 4 { 13 } else { 5 };
         put(game, 0x10002 + first * 2, kind << 12);
@@ -135,9 +135,9 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         let orientation = n / 2;
         let horizontal = n % 2 == 0;
         room(game, 1, 5 | ((orientation as u8) << 6));
-        put(game, w::room_width_in_blocks, 0);
+        put(game, w::ROOM_WIDTH_IN_BLOCKS, 0);
         projectile(game, 0, 0x0303, orientation & 2 == 0);
-        put(game, w::eproj_index, 0);
+        put(game, w::EPROJ_INDEX, 0);
         return unsafe { move_one(horizontal, 0, game) };
     }
     // Power-bomb: zero/odd/high radii, exact X/Y boundaries, signed 0x8000 distance.
@@ -147,17 +147,17 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
     let horizontal_radius = radius >> 8;
     let vertical_radius = (horizontal_radius + (horizontal_radius & 1) + (radius >> 9)) >> 1;
     projectile(game, handle, 0x0303, false);
-    slot(game, a::eproj_id, handle, 0xa135);
-    put(game, w::samus_x_speed_divisor, 7);
-    put(game, w::power_bomb_explosion_radius, radius);
+    slot(game, a::EPROJ_ID, handle, 0xa135);
+    put(game, w::SAMUS_X_SPEED_DIVISOR, 7);
+    put(game, w::POWER_BOMB_EXPLOSION_RADIUS, radius);
     let (dx, dy) = match n % 4 {
         0 => (0, 0),
         1 => (horizontal_radius, 0),
         2 => (0, vertical_radius),
         _ => (0x8000, 0),
     };
-    put(game, w::power_bomb_explosion_x_pos, 136u16.wrapping_add(dx));
-    put(game, w::power_bomb_explosion_y_pos, 136u16.wrapping_add(dy));
+    put(game, w::POWER_BOMB_EXPLOSION_X_POS, 136u16.wrapping_add(dx));
+    put(game, w::POWER_BOMB_EXPLOSION_Y_POS, 136u16.wrapping_add(dy));
     super::super::with_execution(game, |ctx| EprojPowerBombCollision(handle, ctx));
     None
 }

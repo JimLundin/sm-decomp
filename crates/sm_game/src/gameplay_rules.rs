@@ -19,31 +19,31 @@ pub fn finish_health_and_time<H: Host + ?Sized>(game: &mut H) {
     let inventory = crate::inventory::current(game);
     if (inventory.health.current as i16) <= 0 {
         if (inventory.reserve_mode & 1) != 0 && inventory.reserve_health != 0 {
-            word!(game.time_is_frozen_flag = 0x8000);
-            word!(game.game_state = K_GAME_STATE_27_RESERVE_TANKS_AUTO as u16);
+            word!(game.TIME_IS_FROZEN_FLAG = 0x8000);
+            word!(game.GAME_STATE = K_GAME_STATE_27_RESERVE_TANKS_AUTO as u16);
             game.player_command(0x1b);
-        } else if word!(game.game_state) as i32 != K_GAME_STATE_8_MAIN_GAMEPLAY as i32 {
+        } else if word!(game.GAME_STATE) as i32 != K_GAME_STATE_8_MAIN_GAMEPLAY as i32 {
             return;
         } else {
-            word!(game.time_is_frozen_flag = 0x8000);
+            word!(game.TIME_IS_FROZEN_FLAG = 0x8000);
             game.player_command(0x11);
-            word!(game.game_state = K_GAME_STATE_19_SAMUS_NO_HEALTH as u16);
+            word!(game.GAME_STATE = K_GAME_STATE_19_SAMUS_NO_HEALTH as u16);
         }
     }
     // Clock words are frames, seconds, minutes, then hours in ascending RAM order.
     'carry: {
-        for timer in (fields::game_time_frames..fields::game_time_hours).step_by(2) {
+        for timer in (fields::GAME_TIME_FRAMES..fields::GAME_TIME_HOURS).step_by(2) {
             checked_word!(game, timer; += 1);
             if (checked_word!(game, timer;).wrapping_sub(60) as i16) < 0 {
                 break 'carry;
             }
             checked_word!(game, timer; = 0);
         }
-        word!(game.game_time_hours += 1);
+        word!(game.GAME_TIME_HOURS += 1);
     }
-    if (word!(game.game_time_hours).wrapping_sub(100) as i16) >= 0 {
-        word! { game, 59; game_time_frames, game_time_seconds, game_time_minutes }
-        word!(game.game_time_hours = 99);
+    if (word!(game.GAME_TIME_HOURS).wrapping_sub(100) as i16) >= 0 {
+        word! { game, 59; GAME_TIME_FRAMES, GAME_TIME_SECONDS, GAME_TIME_MINUTES }
+        word!(game.GAME_TIME_HOURS = 99);
     }
 }
 
@@ -59,7 +59,7 @@ const ROOM_SHAKES: [u16; 144] = [
 pub fn finish_frame<H: Host + ?Sized>(game: &mut H) {
     let quake = crate::room_view::effects(game);
     if quake.earthquake_timer != 0
-        && word!(game.time_is_frozen_flag) == 0
+        && word!(game.TIME_IS_FROZEN_FLAG) == 0
         && (quake.earthquake_kind as i16).wrapping_sub(36) < 0
     {
         let index = usize::from(quake.earthquake_kind) * 4;
@@ -70,10 +70,10 @@ pub fn finish_frame<H: Host + ?Sized>(game: &mut H) {
             1
         };
         for (offset, register) in [
-            fields::reg_BG1HOFS,
-            fields::reg_BG1VOFS,
-            fields::reg_BG2HOFS,
-            fields::reg_BG2VOFS,
+            fields::REG_BG1HOFS,
+            fields::REG_BG1VOFS,
+            fields::REG_BG2HOFS,
+            fields::REG_BG2VOFS,
         ]
         .into_iter()
         .enumerate()
@@ -90,17 +90,17 @@ pub fn finish_frame<H: Host + ?Sized>(game: &mut H) {
             crate::actors::scheduling::shake_active_enemies(&mut game.runtime());
         }
     }
-    word!(game.frame_counter_every_frame += 1);
+    word!(game.FRAME_COUNTER_EVERY_FRAME += 1);
     for timer in [
-        fields::samus_invincibility_timer,
-        fields::samus_knockback_timer,
-        fields::projectile_invincibility_timer,
+        fields::SAMUS_INVINCIBILITY_TIMER,
+        fields::SAMUS_KNOCKBACK_TIMER,
+        fields::PROJECTILE_INVINCIBILITY_TIMER,
     ] {
         let remaining = checked_word!(game, timer;);
         if remaining != 0 {
             checked_word!(game, timer; = remaining - 1);
         }
     }
-    word!(game.interactive_enemy_indexes[0] = u16::MAX);
-    word!(game.active_enemy_indexes[0] = u16::MAX);
+    word!(game.INTERACTIVE_ENEMY_INDEXES[0] = u16::MAX);
+    word!(game.ACTIVE_ENEMY_INDEXES[0] = u16::MAX);
 }

@@ -50,7 +50,7 @@ impl Pirates for Game {
             w: width,
             h: height,
         };
-        spawn_with_enemy_gfx(parameter, word!(self.cur_enemy_index), 0xa189, self);
+        spawn_with_enemy_gfx(parameter, word!(self.CUR_ENEMY_INDEX), 0xa189, self);
     }
 
     fn scatter_pirate_drop(&mut self, index: u16) {

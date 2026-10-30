@@ -5,10 +5,10 @@ use crate::game::session_runtime::Runtime;
 use crate::ram_map::{word_arrays as A, words as W};
 impl Graphics for Runtime<'_> {
     fn vram_write_queue_tail(&self) -> u16 {
-        self.word(W::vram_write_queue_tail)
+        self.word(W::VRAM_WRITE_QUEUE_TAIL)
     }
     fn set_vram_write_queue_tail(&mut self, value: u16) {
-        self.write_slice_le(W::vram_write_queue_tail, value);
+        self.write_slice_le(W::VRAM_WRITE_QUEUE_TAIL, value);
     }
     fn set_vram_queue_size(&mut self, cursor: u16, value: u16) {
         self.write_slice_le(0xd0 + usize::from(cursor) + 0, value);
@@ -39,7 +39,7 @@ impl Graphics for Runtime<'_> {
             }
         }
         self.write_slice_le(
-            A::palette_buffer
+            A::PALETTE_BUFFER
                 .checked_add_signed(index.checked_mul(2).unwrap())
                 .unwrap(),
             value,

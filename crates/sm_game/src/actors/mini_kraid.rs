@@ -117,7 +117,7 @@ const ROAR_SOUND: u8 = 0x16;
 const DEATH_ANIMATION: u16 = 3;
 
 fn current<H: Host + ?Sized>(game: &H) -> i32 {
-    word!(game.cur_enemy_index) as i32
+    word!(game.CUR_ENEMY_INDEX) as i32
 }
 
 /// Face Samus.
@@ -130,7 +130,7 @@ fn face_samus<H: Host + ?Sized>(game: &mut H, me: i32) {
 
 /// Sets up Mini Kraid with random timers, facing Samus. Was `FakeKraid_Init`.
 pub fn initialize<H: Host + ?Sized>(game: &mut H) {
-    let mut steps: u16 = ((word!(game.random_number) as i32 & 3) + 2) as u16;
+    let mut steps: u16 = ((word!(game.RANDOM_NUMBER) as i32 & 3) + 2) as u16;
     let me = current(game);
     slot!(game, MiniKraid[me].steps_until_turn = steps);
     slot!(game, MiniKraid[me].cycles_until_spit = steps);
@@ -166,7 +166,7 @@ pub fn main_ai<H: Host + ?Sized>(game: &mut H) {
         next = 0;
     }
     slot!(game, MiniKraid[me].spike_cycle = next);
-    fire_spikes_when_ready(game, word!(game.cur_enemy_index), spike);
+    fire_spikes_when_ready(game, word!(game.CUR_ENEMY_INDEX), spike);
 }
 
 /// Counts down belly spike timer `spike` (a byte offset) of Mini Kraid `k`;
@@ -180,7 +180,7 @@ fn fire_spikes_when_ready<H: Host + ?Sized>(game: &mut H, k: u16, spike: u16) {
     } else {
         slot!(
             game,
-            MiniKraid[timer].spike_timer = ((word!(game.random_number) as i32 & 0x3f) + 16) as u16
+            MiniKraid[timer].spike_timer = ((word!(game.RANDOM_NUMBER) as i32 & 0x3f) + 16) as u16
         );
         let me = k as i32;
         slot!(game, MiniKraid[me].last_spike = spike);
@@ -200,7 +200,7 @@ fn fire_spikes_when_ready<H: Host + ?Sized>(game: &mut H, k: u16, spike: u16) {
 /// [`SPIT_VELOCITIES`]), `offset` pixels from the mouth. Was
 /// `FakeKraid_InstrHelper_45`.
 fn spit<H: Host + ?Sized>(game: &mut H, row: u16, offset: u16) {
-    let k: u16 = word!(game.cur_enemy_index);
+    let k: u16 = word!(game.CUR_ENEMY_INDEX);
     let me = current(game);
     slot!(game, MiniKraid[me].spit_x_offset = offset);
     let index: i32 = row as i32 >> 1;
@@ -210,7 +210,7 @@ fn spit<H: Host + ?Sized>(game: &mut H, row: u16, offset: u16) {
     );
     let y_velocity: u16 = SPIT_VELOCITIES[(index + 1) as usize];
     slot!(game, MiniKraid[me].spit_y_velocity = y_velocity);
-    game.spawn_projectile(y_velocity, word!(game.cur_enemy_index), projectile::SPIT);
+    game.spawn_projectile(y_velocity, word!(game.CUR_ENEMY_INDEX), projectile::SPIT);
     slot!(
         game,
         MiniKraid[me].spit_x_velocity = SPIT_VELOCITIES[(index + 2) as usize]
@@ -240,11 +240,11 @@ pub fn step<H: Host + ?Sized>(game: &mut H) {
     let turn_around: bool = if steps == 1 {
         slot!(
             game,
-            MiniKraid[me].steps_until_turn = ((word!(game.random_number) as i32 & 3) + 7) as u16
+            MiniKraid[me].steps_until_turn = ((word!(game.RANDOM_NUMBER) as i32 & 3) + 7) as u16
         );
         true
     } else {
-        let actor = word!(game.cur_enemy_index);
+        let actor = word!(game.CUR_ENEMY_INDEX);
         let amount = (slot!(game, MiniKraid[me].walk_speed) as i16 as i32) << 16;
         game.move_horizontal(actor, amount, Slopes::Ignore)
     };
@@ -276,7 +276,7 @@ pub fn choose_animation<H: Host + ?Sized>(game: &mut H) -> EnemyScript {
     } else {
         slot!(
             game,
-            MiniKraid[me].cycles_until_spit = ((word!(game.random_number) as i32 & 3) + 3) as u16
+            MiniKraid[me].cycles_until_spit = ((word!(game.RANDOM_NUMBER) as i32 & 3) + 3) as u16
         );
         if (slot!(game, MiniKraid[me].facing) & 0x8000) != 0 {
             return EnemyScript::jump(animation::SPIT_LEFT);
@@ -305,8 +305,8 @@ pub fn spit_right<H: Host + ?Sized>(game: &mut H) {
 /// Where a death's drops start.
 fn mark_drop_origin<H: Host + ?Sized>(game: &mut H) {
     let me = current(game);
-    word!(game.special_death_item_drop_x_origin_pos = slot!(game, MiniKraid[me].base.x_pos));
-    word!(game.special_death_item_drop_y_origin_pos = slot!(game, MiniKraid[me].base.y_pos));
+    word!(game.SPECIAL_DEATH_ITEM_DROP_X_ORIGIN_POS = slot!(game, MiniKraid[me].base.x_pos));
+    word!(game.SPECIAL_DEATH_ITEM_DROP_Y_ORIGIN_POS = slot!(game, MiniKraid[me].base.y_pos));
 }
 
 /// Touched by Samus. Was `FakeKraid_Touch`.
@@ -327,12 +327,12 @@ pub fn shot<H: Host + ?Sized>(game: &mut H) {
 fn die_when_out_of_health<H: Host + ?Sized>(game: &mut H) {
     if slot!(
         game,
-        MiniKraid[word!(game.cur_enemy_index) as i32].base.health
+        MiniKraid[word!(game.CUR_ENEMY_INDEX) as i32].base.health
     ) == 0
     {
-        let _actor = word!(game.cur_enemy_index);
+        let _actor = word!(game.CUR_ENEMY_INDEX);
         game.normal_death(DEATH_ANIMATION);
-        let index = word!(game.cur_enemy_index);
+        let index = word!(game.CUR_ENEMY_INDEX);
         game.scatter_enemy_drop(DropSource::MiniKraid, index);
     }
 }

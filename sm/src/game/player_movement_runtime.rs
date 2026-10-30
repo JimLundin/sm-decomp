@@ -91,7 +91,7 @@ pub(crate) fn ceres_movement(game: &mut crate::game_state::Game, action: fn(&mut
     action(&mut runtime);
     runtime.foreign(|game| {
         sm_game::escape_timer::advance(game);
-        if crate::ram_map::word!(game.timer_status) != 0 {
+        if crate::ram_map::word!(game.TIMER_STATUS) != 0 {
             sm_game::escape_timer::draw(game);
         }
     });
@@ -112,8 +112,8 @@ use {
     sm_game::projectile_initialization::Initialization,
 };
 pub fn Samus_EndSuperJump(game: &mut Game) -> u8 {
-    if word!(game.samus_health).wrapping_sub(30) & 0x8000 == 0
-        && word!(game.samus_collision_flag) == 0
+    if word!(game.SAMUS_HEALTH).wrapping_sub(30) & 0x8000 == 0
+        && word!(game.SAMUS_COLLISION_FLAG) == 0
     {
         return 0;
     }
@@ -141,11 +141,11 @@ crate::game::callback_dispatch! {
     call (game); default { Unreachable(game); };
     @functions [pub unsafe fn (game: &mut Game)];
     [9475182] Samus_MoveHandler_ReleaseFromGrapple [] {
-        if word!(game.samus_y_dir) == 1 && (word!(game.samus_y_speed) & 0x8000) != 0 {
-            word! { game, 0; samus_y_subspeed, samus_y_speed }
-            word! {game; samus_y_dir = 2; samus_movement_handler = ((0x90a337i32) as u16); }
+        if word!(game.SAMUS_Y_DIR) == 1 && (word!(game.SAMUS_Y_SPEED) & 0x8000) != 0 {
+            word! { game, 0; SAMUS_Y_SUBSPEED, SAMUS_Y_SPEED }
+            word! {game; SAMUS_Y_DIR = 2; SAMUS_MOVEMENT_HANDLER = ((0x90a337i32) as u16); }
         }
-        word!(game.samus_x_accel_mode = 2);
+        word!(game.SAMUS_X_ACCEL_MODE = 2);
         {
             let mut runtime = Runtime::new(game);
             let profile = player_movement::speed::grapple_speed_profile(&mut runtime);
@@ -154,16 +154,16 @@ crate::game::callback_dispatch! {
             player_collision::horizontal_control(&mut runtime, request);
             player_movement::speed::move_y_with_speed(&mut runtime);
         }
-        if word!(game.input_to_pose_calc) != 0 {
-            word!(game.samus_movement_handler = (0x90a337i32) as u16);
+        if word!(game.INPUT_TO_POSE_CALC) != 0 {
+            word!(game.SAMUS_MOVEMENT_HANDLER = (0x90a337i32) as u16);
         }
     };
     [9475275] Samus_HandleMovement_DrainedCrouching [] {
         player_movement::speed::move_y_with_speed(&mut Runtime::new(game));
-        if word!(game.samus_collision_flag) != 0 {
-            word! {game; samus_movement_handler = ((0x90a337i32) as u16);
-                samus_anim_frame_timer = 8; samus_anim_frame = 7; }
-            word! { game, 0; samus_y_subspeed, samus_y_speed }
+        if word!(game.SAMUS_COLLISION_FLAG) != 0 {
+            word! {game; SAMUS_MOVEMENT_HANDLER = ((0x90a337i32) as u16);
+                SAMUS_ANIM_FRAME_TIMER = 8; SAMUS_ANIM_FRAME = 7; }
+            word! { game, 0; SAMUS_Y_SUBSPEED, SAMUS_Y_SPEED }
         }
     };
     [9478967] Samus_MovementHandler_Normal [] {
@@ -171,65 +171,65 @@ crate::game::callback_dispatch! {
     };
     @functions [pub fn (game: &mut Game)];
     [9492088] SamusMoveHandler_CrystalFlashStart [] {
-        word!(game.samus_y_pos -= 2);
-        if (word!(game.timer_for_shinesparks_startstop -= 1, reread) & 0x8000)
+        word!(game.SAMUS_Y_POS -= 2);
+        if (word!(game.TIMER_FOR_SHINESPARKS_STARTSTOP -= 1, reread) & 0x8000)
             != 0
         {
-            word! {game; samus_anim_frame_timer = 3; samus_anim_frame = 6; }
-            word_transfers!(game, ascending, 1; native(0xdf0) <- value(word!(game.samus_y_pos)));
-            word!(game.samus_movement_handler = (0x90d6cei32) as u16);
-            word! { game, 0; samus_invincibility_timer, samus_knockback_timer }
+            word! {game; SAMUS_ANIM_FRAME_TIMER = 3; SAMUS_ANIM_FRAME = 6; }
+            word_transfers!(game, ascending, 1; native(0xdf0) <- value(word!(game.SAMUS_Y_POS)));
+            word!(game.SAMUS_MOVEMENT_HANDLER = (0x90d6cei32) as u16);
+            word! { game, 0; SAMUS_INVINCIBILITY_TIMER, SAMUS_KNOCKBACK_TIMER }
             QueueSfx3_Max15(1, game);
-            word!(game.power_bomb_flag = 0);
-            word!(game.power_bomb_explosion_x_pos = word!(game.samus_x_pos));
-            word!(game.power_bomb_explosion_y_pos = word!(game.samus_y_pos));
+            word!(game.POWER_BOMB_FLAG = 0);
+            word!(game.POWER_BOMB_EXPLOSION_X_POS = word!(game.SAMUS_X_POS));
+            word!(game.POWER_BOMB_EXPLOSION_Y_POS = word!(game.SAMUS_Y_POS));
             set_hdma_enabled(true, game);
             spawn_crystal_flash(game);
         }
     };
     @functions [pub unsafe fn (game: &mut Game)];
     [9494328] Samus_MoveHandler_Knockback [] {
-        match KNOCKBACK_MOTION[usize::from(word!(game.knockback_dir))] {
+        match KNOCKBACK_MOTION[usize::from(word!(game.KNOCKBACK_DIR))] {
             Some(motion) => motion(&mut Runtime::new(game)),
             None => crate::rtl::invalid_interrupt(game),
         }
-        word!(game.input_to_pose_calc = 0);
+        word!(game.INPUT_TO_POSE_CALC = 0);
     };
     @functions [pub fn (game: &mut Game)];
     [9492315] kSamusMoveHandler_CrystalFlashFinish [] {
-        if word!(game.samus_y_pos) != u16::from_ne_bytes([game.ram().read_byte(0xdf0), game.ram().read_byte(0xdf1)]) {
-            word!(game.samus_y_pos += 1);
+        if word!(game.SAMUS_Y_POS) != u16::from_ne_bytes([game.ram().read_byte(0xdf0), game.ram().read_byte(0xdf1)]) {
+            word!(game.SAMUS_Y_POS += 1);
         }
         if game.ram().read_byte(0xa1f) == 0 {
-            word! {game; power_bomb_flag = 0; samus_shine_timer = -1i32 as u16;
-                samus_movement_handler = ((0x90a337i32) as u16); }
-            if word!(game.samus_input_handler) as i32 != 0x90e91d & 0xffff {
-                word!(game.samus_input_handler = (0x90e913i32) as u16);
-                word! { game, 0; samus_invincibility_timer, samus_knockback_timer }
+            word! {game; POWER_BOMB_FLAG = 0; SAMUS_SHINE_TIMER = -1i32 as u16;
+                SAMUS_MOVEMENT_HANDLER = ((0x90a337i32) as u16); }
+            if word!(game.SAMUS_INPUT_HANDLER) as i32 != 0x90e91d & 0xffff {
+                word!(game.SAMUS_INPUT_HANDLER = (0x90e913i32) as u16);
+                word! { game, 0; SAMUS_INVINCIBILITY_TIMER, SAMUS_KNOCKBACK_TIMER }
             }
         }
     };
     [9496911] SamusMovementType_Xray [] {
         if game.ram().read_byte(0xa1f) as i32 != K_MOVEMENT_TYPE_0E_TURNING_AROUND_ON_GROUND as i32 {
-            word!(game.samus_anim_frame_timer = 15);
+            word!(game.SAMUS_ANIM_FRAME_TIMER = 15);
             let frame = player_movement::xray_animation_frame(game.ram().read_byte(0xa1e), || {
-                word!(game.xray_angle)
+                word!(game.XRAY_ANGLE)
             });
-            word!(game.samus_anim_frame = frame);
+            word!(game.SAMUS_ANIM_FRAME = frame);
         }
     };
     [9498699] Samus_Func25_ShineSpark [] {
-        if word!(game.samus_shine_timer) == 0 {
-            word!(game.special_samus_palette_frame = 6);
-            word! { game, 1; special_samus_palette_timer, demo_timer_counter }
-            word! {game; timer_for_shine_timer = 10; samus_shine_timer = 120;
-                samus_movement_handler = ((0x90f072i32) as u16); }
+        if word!(game.SAMUS_SHINE_TIMER) == 0 {
+            word!(game.SPECIAL_SAMUS_PALETTE_FRAME = 6);
+            word! { game, 1; SPECIAL_SAMUS_PALETTE_TIMER, DEMO_TIMER_COUNTER }
+            word! {game; TIMER_FOR_SHINE_TIMER = 10; SAMUS_SHINE_TIMER = 120;
+                SAMUS_MOVEMENT_HANDLER = ((0x90f072i32) as u16); }
         }
     };
     [9498738] Samus_MoveHandler_F072 [] {
-        if word!(game.samus_shine_timer) == 0 {
-            word!(game.frame_handler_alfa = (0x90e695i32) as u16);
-            word!(game.samus_movement_handler = (0x90a337i32) as u16);
+        if word!(game.SAMUS_SHINE_TIMER) == 0 {
+            word!(game.FRAME_HANDLER_ALFA = (0x90e695i32) as u16);
+            word!(game.SAMUS_MOVEMENT_HANDLER = (0x90a337i32) as u16);
         }
     };
     @external {
@@ -260,24 +260,24 @@ crate::game::callback_dispatch! {
 }
 
 unsafe fn advance_shinespark(axes: &[player_collision::Axis], game: &mut Game) {
-    word! {game; samus_contact_damage_index = 2; samus_hurt_flash_counter = 8; }
+    word! {game; SAMUS_CONTACT_DAMAGE_INDEX = 2; SAMUS_HURT_FLASH_COUNTER = 8; }
     player_movement::record_echo(&mut Runtime::new(game));
     for &axis in axes {
         player_collision::shinespark(&mut CollisionRuntime::new(game), axis);
     }
     Samus_EndSuperJump(game);
-    if word!(game.samus_health) as i32 - 30i32 & 0x8000 == 0 && {
-        (word!(game.samus_health -= 1, reread) & 0x8000) != 0
+    if word!(game.SAMUS_HEALTH) as i32 - 30i32 & 0x8000 == 0 && {
+        (word!(game.SAMUS_HEALTH -= 1, reread) & 0x8000) != 0
     } {
-        word!(game.samus_health = 0);
+        word!(game.SAMUS_HEALTH = 0);
     }
 }
 
 pub(crate) fn correct_previous_position(game: &mut Game) {
     use crate::ram_map::{checked_word, words as ram};
     for (current, previous) in [
-        (ram::samus_y_pos, ram::samus_prev_y_pos),
-        (ram::samus_x_pos, ram::samus_prev_x_pos),
+        (ram::SAMUS_Y_POS, ram::SAMUS_PREV_Y_POS),
+        (ram::SAMUS_X_POS, ram::SAMUS_PREV_X_POS),
     ] {
         let position = checked_word!(game, current;);
         let delta = position.wrapping_sub(checked_word!(game, previous;));

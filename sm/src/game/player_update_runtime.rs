@@ -97,8 +97,8 @@ fn advance_beta(
     mode: FrameBetaMode,
     game: &mut Game,
 ) -> Result<(), sm_game::samus_periodic_damage::InvalidDamage> {
-    word!(game.samus_contact_damage_index = 0);
-    let handler = word!(game.samus_movement_handler);
+    word!(game.SAMUS_CONTACT_DAMAGE_INDEX = 0);
+    let handler = word!(game.SAMUS_MOVEMENT_HANDLER);
     let movement = if handler == 0xa337 {
         MovementStep::Normal
     } else {
@@ -115,7 +115,7 @@ fn advance_beta(
 
 pub(crate) fn advance_frame(game: &mut Game) {
     use FrameBetaMode::*;
-    let mode = FrameBetaMode::from_raw(word!(game.frame_handler_beta));
+    let mode = FrameBetaMode::from_raw(word!(game.FRAME_HANDLER_BETA));
     match mode {
         Gameplay | Escape => {
             if advance_beta(Gameplay, game).is_err() {
@@ -123,42 +123,42 @@ pub(crate) fn advance_frame(game: &mut Game) {
                     crate::rtl::invalid_interrupt(game);
                 }
             }
-            if word!(game.power_bomb_flag) == 0
-                && word!(game.time_is_frozen_flag) == 0
-                && word!(game.door_transition_flag_enemies) == 0
-                && word!(game.area_index) != 6
-                && word!(game.game_state) == 8
-                && word!(game.joypad1_newkeys) & 0x1000 != 0
+            if word!(game.POWER_BOMB_FLAG) == 0
+                && word!(game.TIME_IS_FROZEN_FLAG) == 0
+                && word!(game.DOOR_TRANSITION_FLAG_ENEMIES) == 0
+                && word!(game.AREA_INDEX) != 6
+                && word!(game.GAME_STATE) == 8
+                && word!(game.JOYPAD1_NEWKEYS) & 0x1000 != 0
             {
-                word!(game.screen_fade_delay = 1);
-                word!(game.screen_fade_counter = 1);
-                word!(game.game_state = 12);
+                word!(game.SCREEN_FADE_DELAY = 1);
+                word!(game.SCREEN_FADE_COUNTER = 1);
+                word!(game.GAME_STATE = 12);
             }
             low_health(game);
             if mode == Escape
-                && FrameGammaMode::from_raw(word!(game.frame_handler_gamma))
+                && FrameGammaMode::from_raw(word!(game.FRAME_HANDLER_GAMMA))
                     == FrameGammaMode::DrawEscapeTimer
-                && word!(game.game_state) != 35
+                && word!(game.GAME_STATE) != 35
             {
-                word!(game.game_state = 35);
+                word!(game.GAME_STATE = 35);
             }
         }
         DemoMapped | DemoUnmapped => {
             let _ = advance_beta(mode, game);
             // Read each backup after callbacks and after the preceding publication.
-            word!(game.joypad1_lastkeys = word!(game.controller1_input_for_demo));
-            word!(game.joypad1_newkeys = word!(game.controller1_new_input_for_demo));
-            word!(game.joypad1_input_samusfilter = word!(game.demo_backup_prev_controller_input));
+            word!(game.JOYPAD1_LASTKEYS = word!(game.CONTROLLER1_INPUT_FOR_DEMO));
+            word!(game.JOYPAD1_NEWKEYS = word!(game.CONTROLLER1_NEW_INPUT_FOR_DEMO));
+            word!(game.JOYPAD1_INPUT_SAMUSFILTER = word!(game.DEMO_BACKUP_PREV_CONTROLLER_INPUT));
             word!(
-                game.joypad1_newinput_samusfilter =
-                    word!(game.demo_backup_prev_controller_input_new)
+                game.JOYPAD1_NEWINPUT_SAMUSFILTER =
+                    word!(game.DEMO_BACKUP_PREV_CONTROLLER_INPUT_NEW)
             );
         }
-        ResumeRecorder if word!(game.joypad2_new_keys) & 0x80 != 0 => {
-            word!(game.frame_handler_alfa = 0xe695);
+        ResumeRecorder if word!(game.JOYPAD2_NEW_KEYS) & 0x80 != 0 => {
+            word!(game.FRAME_HANDLER_ALFA = 0xe695);
             game.set_frame_handler_beta(Gameplay.to_raw());
             crate::game::enemy_projectiles::EnableEprojs(game);
-            word!(game.time_is_frozen_flag = 0);
+            word!(game.TIME_IS_FROZEN_FLAG = 0);
         }
         Fanfare => {
             crate::game::session_runtime::set_player_radius(game);
@@ -167,29 +167,29 @@ pub(crate) fn advance_frame(game: &mut Game) {
                 player_update::minimap::update(h);
                 transitions::advance_animation(h, transitions::state::AnimationStep::Gameplay);
             }
-            word!(game.elevator_status = 0);
-            word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
-            match word!(game.substate) {
+            word!(game.ELEVATOR_STATUS = 0);
+            word!(game.SAMUS_PREV_Y_POS = word!(game.SAMUS_Y_POS));
+            match word!(game.SUBSTATE) {
                 0 => crate::game::music::QueueMusic_DelayedY(1, 0xe, game),
                 5 => crate::game::music::PlayRoomMusicTrackAfterAFrames(0x168, game),
                 _ => {}
             }
-            if (word!(game.substate).wrapping_sub(359) as i16) < 0 {
-                word!(game.substate += 1);
+            if (word!(game.SUBSTATE).wrapping_sub(359) as i16) < 0 {
+                word!(game.SUBSTATE += 1);
                 return;
             }
             transitions::record_pose_history(Runtime::new(game).session_mut());
-            word!(game.substate = 0);
-            if (word!(game.debug_invincibility).wrapping_sub(7) as i16) < 0
-                || word!(game.joypad2_last) & 0x8000 == 0
+            word!(game.SUBSTATE = 0);
+            if (word!(game.DEBUG_INVINCIBILITY).wrapping_sub(7) as i16) < 0
+                || word!(game.JOYPAD2_LAST) & 0x8000 == 0
             {
-                word!(game.debug_invincibility = 0);
+                word!(game.DEBUG_INVINCIBILITY = 0);
             }
-            word!(game.frame_handler_alfa = 0xe695);
+            word!(game.FRAME_HANDLER_ALFA = 0xe695);
             game.set_frame_handler_beta(Gameplay.to_raw());
         }
         Minimap => {
-            word!(game.samus_contact_damage_index = 0);
+            word!(game.SAMUS_CONTACT_DAMAGE_INDEX = 0);
             player_update::minimap::update(&mut Runtime::new(game));
         }
         AnimationOnly => {
@@ -229,30 +229,30 @@ crate::game::callback_dispatch! {
     call (game); default { crate::rtl::Unreachable(game); };
     @functions [pub fn (game: &mut Game)];
     [9494683] Samus_Func1 [] {
-        if legacy_word!(game.samus_pose) as i32 == K_POSE_E9_FACE_L_DRAINED_CROUCH_FALLING as i32
-            && legacy_word!(game.samus_anim_frame) as i32 - 8i32 & 0x8000 == 0
-            && (legacy_word!(game.joypad1_newkeys) as i32 & K_BUTTON_UP as i32) != 0
+        if legacy_word!(game.SAMUS_POSE) as i32 == K_POSE_E9_FACE_L_DRAINED_CROUCH_FALLING as i32
+            && legacy_word!(game.SAMUS_ANIM_FRAME) as i32 - 8i32 & 0x8000 == 0
+            && (legacy_word!(game.JOYPAD1_NEWKEYS) as i32 & K_BUTTON_UP as i32) != 0
         {
-            legacy_word! {game; samus_anim_frame_timer = 1; samus_anim_frame = 13;
-                frame_handler_gamma = ((0x90e90ei32) as u16); }
+            legacy_word! {game; SAMUS_ANIM_FRAME_TIMER = 1; SAMUS_ANIM_FRAME = 13;
+                FRAME_HANDLER_GAMMA = ((0x90e90ei32) as u16); }
         }
     };
     [9494725] Samus_Func2 [] {
-        if legacy_word!(game.samus_anim_frame) as i32 - 8i32 & 0x8000 == 0
-            && legacy_word!(game.samus_anim_frame) as i32 - 12i32 & 0x8000 != 0
-            && (legacy_word!(game.joypad1_newkeys) as i32 & K_BUTTON_UP as i32) != 0
+        if legacy_word!(game.SAMUS_ANIM_FRAME) as i32 - 8i32 & 0x8000 == 0
+            && legacy_word!(game.SAMUS_ANIM_FRAME) as i32 - 12i32 & 0x8000 != 0
+            && (legacy_word!(game.JOYPAD1_NEWKEYS) as i32 & K_BUTTON_UP as i32) != 0
         {
-            legacy_word! {game; samus_anim_frame_timer = 1; samus_anim_frame = 18; }
+            legacy_word! {game; SAMUS_ANIM_FRAME_TIMER = 1; SAMUS_ANIM_FRAME = 18; }
         }
     };
     [9494758] Samus_Func3 [] {
         if escape_timer::advance(game) & 1 != 0 {
-            legacy_word!(game.game_state = K_GAME_STATE_35_TIME_UP as u16);
-            word_transfers!(game, descending, 256; le(target_palettes, 255) <- value(0x7fff));
-            legacy_word!(game.frame_handler_gamma = (0x90e114i32) as u16);
+            legacy_word!(game.GAME_STATE = K_GAME_STATE_35_TIME_UP as u16);
+            word_transfers!(game, descending, 256; le(TARGET_PALETTES, 255) <- value(0x7fff));
+            legacy_word!(game.FRAME_HANDLER_GAMMA = (0x90e114i32) as u16);
             palette_effects::set_enabled(false, game);
         }
-        if legacy_word!(game.timer_status) != 0 {
+        if legacy_word!(game.TIMER_STATUS) != 0 {
             escape_timer::draw(game);
         }
     };

@@ -367,17 +367,17 @@ fn dispatch_seed(g: &mut Game, image: &RomImage, variant: usize) {
     }
     let on = variant & 1 != 0;
     for (a, v) in [
-        (ram::samus_pose, 1),
-        (ram::samus_y_radius, 8),
-        (ram::samus_x_pos, if on { 1024 } else { 24 }),
-        (ram::samus_y_pos, if on { 2200 } else { 552 }),
-        (ram::collected_items, if on { 0xffff } else { 0 }),
-        (ram::equipped_items, 0),
-        (ram::equipped_beams, 0),
-        (ram::joypad1_newkeys, if on { 0xffff } else { 0 }),
-        (ram::power_bomb_explosion_status, if on { 1 } else { 0 }),
+        (ram::SAMUS_POSE, 1),
+        (ram::SAMUS_Y_RADIUS, 8),
+        (ram::SAMUS_X_POS, if on { 1024 } else { 24 }),
+        (ram::SAMUS_Y_POS, if on { 2200 } else { 552 }),
+        (ram::COLLECTED_ITEMS, if on { 0xffff } else { 0 }),
+        (ram::EQUIPPED_ITEMS, 0),
+        (ram::EQUIPPED_BEAMS, 0),
+        (ram::JOYPAD1_NEWKEYS, if on { 0xffff } else { 0 }),
+        (ram::POWER_BOMB_EXPLOSION_STATUS, if on { 1 } else { 0 }),
         (
-            ram::tourian_entrance_statue_finished,
+            ram::TOURIAN_ENTRANCE_STATUE_FINISHED,
             if on { 0x8000 } else { 0 },
         ),
         (0xe50, if on { 4 } else { 0 }),
@@ -590,13 +590,13 @@ unsafe fn message_case(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<
         rom_word(image, 0x849004, 0xb407);
         rom_word(image, 0x849006, 0x0086);
         assert_eq!(
-            crate::ram_map::checked_word!(g.music_queue_read_pos),
-            crate::ram_map::checked_word!(g.music_queue_write_pos)
+            crate::ram_map::checked_word!(g.MUSIC_QUEUE_READ_POS),
+            crate::ram_map::checked_word!(g.MUSIC_QUEUE_WRITE_POS)
         );
         if door {
             g.ram().write_byte(0x612, 2);
-            put(g, crate::ram_map::words::door_direction, (id - 1009) as u16);
-            put(g, crate::ram_map::words::door_transition_function, 0xe4a9);
+            put(g, crate::ram_map::words::DOOR_DIRECTION, (id - 1009) as u16);
+            put(g, crate::ram_map::words::DOOR_TRANSITION_FUNCTION, 0xe4a9);
         }
         if variant == 7 {
             callback_edges::begin_message();
@@ -712,11 +712,11 @@ unsafe fn message_case(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<
                 "door continuation retained after completion"
             );
             assert_eq!(
-                crate::ram_map::checked_word!(g.door_transition_function),
+                crate::ram_map::checked_word!(g.DOOR_TRANSITION_FUNCTION),
                 0xe659
             );
             assert_eq!(
-                crate::ram_map::checked_word!(g.samus_x_pos),
+                crate::ram_map::checked_word!(g.SAMUS_X_POS),
                 if id == 1009 { 31 } else { 24 }
             );
         }
@@ -739,8 +739,8 @@ unsafe fn consumer_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
             slot(g, i, if n == 4 { 0x8000 } else { 0 });
             put(g, 0x1c87 + 2 * i, 0);
         }
-        put(g, ram::door_def_ptr, 0xa000);
-        put(g, ram::door_direction, 0);
+        put(g, ram::DOOR_DEF_PTR, 0xa000);
+        put(g, ram::DOOR_DIRECTION, 0);
         rom_word(image, 0x83a004, 0x0203);
         rom_word(image, 0x8fe68a, if n == 5 { 0 } else { 0x8000 });
         rom_word(image, 0x848004, 0x9300);
@@ -780,7 +780,7 @@ unsafe fn consumer_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
         mechanisms::add_glass_hits(slot, [0, 1, 0xffff, 0x8000][(n - 10) as usize], g);
     } else if n < 22 {
         let v = n - 14;
-        put(g, ram::area_index, if v & 2 == 0 { 0 } else { 3 });
+        put(g, ram::AREA_INDEX, if v & 2 == 0 { 0 } else { 3 });
         g.ram()
             .write_byte(0xd828 + 3, if v & 4 == 0 { 0 } else { 1 });
         put(g, 0xb2e, if v == 7 { 1 } else { 0 });
@@ -804,7 +804,7 @@ unsafe fn consumer_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
         );
         put(g, 0xdf0c + 78, 0);
         put(g, 0x1dc7 + 78, 0);
-        put(g, ram::roomdefroomstate_ptr, 0xa100);
+        put(g, ram::ROOMDEFROOMSTATE_PTR, 0xa100);
         if v == 4 {
             g.ram().write_byte(0xd870, 1);
         }
@@ -854,7 +854,7 @@ unsafe fn nonreturn_case(id: u32, g: &mut Game) -> (u8, u16) {
         put(g, 0x1c87 + 2 * i, 0x444);
     }
     put(g, 0x1c87, 0x442);
-    put(g, crate::ram_map::words::samus_collision_direction, 3);
+    put(g, crate::ram_map::words::SAMUS_COLLISION_DIRECTION, 3);
     let address = match id {
         1012 => 8696803,
         1013 => 8697028,
@@ -877,8 +877,8 @@ unsafe fn nonreturn_case(id: u32, g: &mut Game) -> (u8, u16) {
 unsafe fn displacement_alias_case(id: u32, g: &mut Game) -> (u8, u16) {
     let at = [0x1c25, 0x1d75, 0x1e65][(id - 1015) as usize];
     g.ram().copy_in(at, &0x12345678i32.to_ne_bytes());
-    put(g, crate::ram_map::words::samus_collision_direction, 3);
-    put(g, crate::ram_map::words::samus_y_dir, 0);
+    put(g, crate::ram_map::words::SAMUS_COLLISION_DIRECTION, 3);
+    put(g, crate::ram_map::words::SAMUS_Y_DIR, 0);
     put(g, 0xa6e, 0);
     let value = {
         mechanisms::checks::setup_entry(

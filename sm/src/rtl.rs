@@ -760,16 +760,16 @@ pub unsafe fn RtlRunFrame(mut inputs: i32, native_game: &mut Game) -> bool {
             if game.state_recorder.snapshot_flags & 1 != 0 {
                 game.state_recorder.snapshot_flags &= !(1i32) as u32;
                 inputs = game.state_recorder.last_inputs as i32;
-            } else if word!(game.bug_fix_counter) as i32 != kCurrentBugFixCounter as i32 {
+            } else if word!(game.BUG_FIX_COUNTER) as i32 != kCurrentBugFixCounter as i32 {
                 if game.g_debug_flag {
                     printf(
                         c"bug_fix_counter %d => %d\n".as_ptr(),
-                        word!(game.bug_fix_counter) as i32,
+                        word!(game.BUG_FIX_COUNTER) as i32,
                         kCurrentBugFixCounter as i32,
                     );
                 }
-                if (word!(game.bug_fix_counter) as i32) < kCurrentBugFixCounter as i32 {
-                    word!(game.bug_fix_counter = kCurrentBugFixCounter as i32 as u16);
+                if (word!(game.BUG_FIX_COUNTER) as i32) < kCurrentBugFixCounter as i32 {
+                    word!(game.BUG_FIX_COUNTER = kCurrentBugFixCounter as i32 as u16);
                     {
                         let (ram, recorder) = game.ram_and_recorder();
                         recording_allocation(
@@ -783,7 +783,7 @@ pub unsafe fn RtlRunFrame(mut inputs: i32, native_game: &mut Game) -> bool {
             }
             recording_allocation(game.state_recorder.record(inputs as u16));
         }
-        if word!(game.bug_fix_counter) as i32 != game.currently_installed_bug_fix_counter as i32 {
+        if word!(game.BUG_FIX_COUNTER) as i32 != game.currently_installed_bug_fix_counter as i32 {
             RtlUpdateSnesPatchForBugfix(game);
         }
         let admitted_input = if is_replay {
@@ -936,10 +936,10 @@ pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, native_game: &mut Game) {
             }
             if game.ram().read_byte(0x611) as i32 == 4 {
                 game.ram()
-                    .write_byte(0x611, (10 + word!(game.game_state) as i32) as u8);
+                    .write_byte(0x611, (10 + word!(game.GAME_STATE) as i32) as u8);
             }
-            if word!(game.bug_fix_counter) as i32 == 0 {
-                word!(game.bug_fix_counter = word!(game.bug_fix_counter_BAD));
+            if word!(game.BUG_FIX_COUNTER) as i32 == 0 {
+                word!(game.BUG_FIX_COUNTER = word!(game.BUG_FIX_COUNTER_BAD));
             }
             if complete_load {
                 mutation
@@ -1454,7 +1454,7 @@ pub unsafe fn RtlRenderAudio(audio_buffer: &mut [[i16; 2]], game: &mut Game) -> 
 pub unsafe fn RtlCheat(c: c_char, game: &mut Game) {
     unsafe {
         if c as i32 == 'w' as i32 {
-            word!(game.samus_health = word!(game.samus_max_health));
+            word!(game.SAMUS_HEALTH = word!(game.SAMUS_MAX_HEALTH));
             {
                 let (ram, recorder) = game.ram_and_recorder();
                 recording_allocation(
@@ -1462,8 +1462,8 @@ pub unsafe fn RtlCheat(c: c_char, game: &mut Game) {
                 );
             }
         } else if c as i32 == 'q' as i32 {
-            word!(checked_i32, game.samus_y_pos -= 4i32);
-            word!(game.samus_y_speed = -8i32 as u16);
+            word!(checked_i32, game.SAMUS_Y_POS -= 4i32);
+            word!(game.SAMUS_Y_SPEED = -8i32 as u16);
             {
                 let (ram, recorder) = game.ram_and_recorder();
                 recording_allocation(
@@ -1476,9 +1476,9 @@ pub unsafe fn RtlCheat(c: c_char, game: &mut Game) {
                     recorder.record_patch(0xb2e, &[ram.read_byte(0xb2e), ram.read_byte(0xb2e + 1)]),
                 );
             }
-            word!(game.menu_index = 0);
+            word!(game.MENU_INDEX = 0);
         } else if c as i32 == 'q' as i32 {
-            word!(game.japanese_text_flag = (word!(game.japanese_text_flag) == 0) as i32 as u16);
+            word!(game.JAPANESE_TEXT_FLAG = (word!(game.JAPANESE_TEXT_FLAG) == 0) as i32 as u16);
             {
                 let (ram, recorder) = game.ram_and_recorder();
                 recording_allocation(

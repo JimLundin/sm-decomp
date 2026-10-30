@@ -53,12 +53,12 @@ fn seed(id: u32, g: &mut Game) -> (RomImage, RomImage, Vec<u8>, Vec<u8>, Vec<u8>
         _ => 0xe725,
     };
     for (at, value) in [
-        (w::samus_pose, if id == 4105 { 0x29 } else { 1 }),
+        (w::SAMUS_POSE, if id == 4105 { 0x29 } else { 1 }),
         (0xa1e, 0x0908),
-        (w::samus_prev_pose, 1),
-        (w::samus_movement_handler, 0xa337),
+        (w::SAMUS_PREV_POSE, 1),
+        (w::SAMUS_MOVEMENT_HANDLER, 0xa337),
         (
-            w::frame_handler_gamma,
+            w::FRAME_HANDLER_GAMMA,
             if id == 4104 {
                 0xe37e
             } else if id == 4105 {
@@ -67,38 +67,38 @@ fn seed(id: u32, g: &mut Game) -> (RomImage, RomImage, Vec<u8>, Vec<u8>, Vec<u8>
                 0xe90e
             },
         ),
-        (w::frame_handler_alfa, 0xe8cd),
-        (w::frame_handler_beta, beta),
-        (w::debug_disable_minimap, 1),
-        (w::samus_contact_damage_index, 7),
-        (w::samus_anim_frame_timer, 2),
-        (w::samus_anim_frame, 0),
-        (w::speed_echoes_index, 0xffff),
-        (w::timer_for_shine_timer, 10),
-        (w::samus_health, 99),
-        (w::samus_subunit_health, 0x2000),
-        (w::samus_periodic_damage, 1),
-        (w::samus_periodic_subdamage, 0x8001),
-        (w::samus_new_pose, 0xffff),
-        (w::samus_new_pose_interrupted, 0xffff),
-        (w::samus_new_pose_transitional, 0xffff),
-        (w::samus_y_pos, 100),
-        (w::samus_y_radius, 2),
-        (w::joypad1_lastkeys, 0x10),
-        (w::joypad1_newkeys, 0x20),
-        (w::joypad1_input_samusfilter, 0x40),
-        (w::joypad1_newinput_samusfilter, 0x80),
-        (w::controller1_input_for_demo, 0x100),
-        (w::controller1_new_input_for_demo, 0x200),
-        (w::demo_backup_prev_controller_input, 0x400),
-        (w::demo_backup_prev_controller_input_new, 0x800),
+        (w::FRAME_HANDLER_ALFA, 0xe8cd),
+        (w::FRAME_HANDLER_BETA, beta),
+        (w::DEBUG_DISABLE_MINIMAP, 1),
+        (w::SAMUS_CONTACT_DAMAGE_INDEX, 7),
+        (w::SAMUS_ANIM_FRAME_TIMER, 2),
+        (w::SAMUS_ANIM_FRAME, 0),
+        (w::SPEED_ECHOES_INDEX, 0xffff),
+        (w::TIMER_FOR_SHINE_TIMER, 10),
+        (w::SAMUS_HEALTH, 99),
+        (w::SAMUS_SUBUNIT_HEALTH, 0x2000),
+        (w::SAMUS_PERIODIC_DAMAGE, 1),
+        (w::SAMUS_PERIODIC_SUBDAMAGE, 0x8001),
+        (w::SAMUS_NEW_POSE, 0xffff),
+        (w::SAMUS_NEW_POSE_INTERRUPTED, 0xffff),
+        (w::SAMUS_NEW_POSE_TRANSITIONAL, 0xffff),
+        (w::SAMUS_Y_POS, 100),
+        (w::SAMUS_Y_RADIUS, 2),
+        (w::JOYPAD1_LASTKEYS, 0x10),
+        (w::JOYPAD1_NEWKEYS, 0x20),
+        (w::JOYPAD1_INPUT_SAMUSFILTER, 0x40),
+        (w::JOYPAD1_NEWINPUT_SAMUSFILTER, 0x80),
+        (w::CONTROLLER1_INPUT_FOR_DEMO, 0x100),
+        (w::CONTROLLER1_NEW_INPUT_FOR_DEMO, 0x200),
+        (w::DEMO_BACKUP_PREV_CONTROLLER_INPUT, 0x400),
+        (w::DEMO_BACKUP_PREV_CONTROLLER_INPUT_NEW, 0x800),
     ] {
         put(g, at, value);
     }
     if id == 4105 {
-        put(g, w::samus_y_speed, 4);
-        put(g, w::samus_y_subspeed, 0xf800);
-        put(g, w::samus_y_subaccel, 0x1000);
+        put(g, w::SAMUS_Y_SPEED, 4);
+        put(g, w::SAMUS_Y_SUBSPEED, 0xf800);
+        put(g, w::SAMUS_Y_SUBACCEL, 0x1000);
     }
     let mut expected = (0..g.ram().len())
         .map(|at| g.ram().read_byte(at))
@@ -106,33 +106,33 @@ fn seed(id: u32, g: &mut Game) -> (RomImage, RomImage, Vec<u8>, Vec<u8>, Vec<u8>
     fn set(bytes: &mut [u8], at: usize, value: u16) {
         bytes[at..at + 2].copy_from_slice(&value.to_le_bytes());
     }
-    set(&mut expected, w::samus_contact_damage_index, 0);
+    set(&mut expected, w::SAMUS_CONTACT_DAMAGE_INDEX, 0);
     set(
         &mut expected,
-        w::samus_anim_frame_timer,
+        w::SAMUS_ANIM_FRAME_TIMER,
         if id == 4105 { 15 } else { 1 },
     );
     if id == 4105 {
-        set(&mut expected, w::samus_y_speed, 5);
-        set(&mut expected, w::samus_y_subspeed, 0x800);
-        set(&mut expected, w::samus_anim_frame, 4);
+        set(&mut expected, w::SAMUS_Y_SPEED, 5);
+        set(&mut expected, w::SAMUS_Y_SUBSPEED, 0x800);
+        set(&mut expected, w::SAMUS_ANIM_FRAME, 4);
     }
     if id != 4103 {
         set(&mut expected, 0xa72, 0x601);
         expected[0xc180..0xc1a0].copy_from_slice(&palette);
     }
     if matches!(id, 4100 | 4104 | 4105) {
-        set(&mut expected, w::samus_health, 97);
-        set(&mut expected, w::samus_subunit_health, 0x9fff);
-        set(&mut expected, w::samus_periodic_damage, 0);
-        set(&mut expected, w::samus_periodic_subdamage, 0);
+        set(&mut expected, w::SAMUS_HEALTH, 97);
+        set(&mut expected, w::SAMUS_SUBUNIT_HEALTH, 0x9fff);
+        set(&mut expected, w::SAMUS_PERIODIC_DAMAGE, 0);
+        set(&mut expected, w::SAMUS_PERIODIC_SUBDAMAGE, 0);
     }
     if matches!(id, 4101 | 4102) {
         for (at, value) in [
-            (w::joypad1_lastkeys, 0x100),
-            (w::joypad1_newkeys, 0x200),
-            (w::joypad1_input_samusfilter, 0x400),
-            (w::joypad1_newinput_samusfilter, 0x800),
+            (w::JOYPAD1_LASTKEYS, 0x100),
+            (w::JOYPAD1_NEWKEYS, 0x200),
+            (w::JOYPAD1_INPUT_SAMUSFILTER, 0x400),
+            (w::JOYPAD1_NEWINPUT_SAMUSFILTER, 0x800),
         ] {
             set(&mut expected, at, value);
         }

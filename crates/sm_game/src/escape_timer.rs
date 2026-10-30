@@ -15,7 +15,7 @@ pub fn advance<H: crate::sprite_output::SpriteHost + ?Sized>(game: &mut H) -> u8
         move_into_place,
         tick,
     ];
-    states[word!(game.timer_status) as u8 as usize](game)
+    states[word!(game.TIMER_STATUS) as u8 as usize](game)
 }
 
 fn set_digits<H: crate::sprite_output::SpriteHost + ?Sized>(minutes: u16, game: &mut H) {
@@ -25,15 +25,15 @@ fn set_digits<H: crate::sprite_output::SpriteHost + ?Sized>(minutes: u16, game: 
 }
 
 pub fn clear<H: crate::sprite_output::SpriteHost + ?Sized>(game: &mut H) {
-    word! { game, 0x8000; timer_x_pos, timer_y_pos }
+    word! { game, 0x8000; TIMER_X_POS, TIMER_Y_POS }
     set_digits(0, game);
-    word!(game.timer_status = 0);
+    word!(game.TIMER_STATUS = 0);
 }
 
 fn start<H: crate::sprite_output::SpriteHost + ?Sized>(minutes: u16, game: &mut H) -> u8 {
     clear(game);
     set_digits(minutes, game);
-    word!(game.timer_status = 0x8003);
+    word!(game.TIMER_STATUS = 0x8003);
     0
 }
 
@@ -43,26 +43,26 @@ fn delay<H: crate::sprite_output::SpriteHost + ?Sized>(
     game: &mut H,
 ) -> u8 {
     game.ram()
-        .write_byte(0x948, (word!(game.timer_x_pos) as u8).wrapping_add(1));
-    if word!(game.timer_x_pos) as u8 >= limit {
+        .write_byte(0x948, (word!(game.TIMER_X_POS) as u8).wrapping_add(1));
+    if word!(game.TIMER_X_POS) as u8 >= limit {
         if count_down {
             game.ram().write_byte(0x948, 0);
         }
         game.ram()
-            .write_byte(0x943, (word!(game.timer_status) as u8).wrapping_add(1));
+            .write_byte(0x943, (word!(game.TIMER_STATUS) as u8).wrapping_add(1));
     }
     if count_down { tick(game) } else { 0 }
 }
 
 fn move_into_place<H: crate::sprite_output::SpriteHost + ?Sized>(game: &mut H) -> u8 {
-    let x = word!(game.timer_x_pos).wrapping_add(224);
+    let x = word!(game.TIMER_X_POS).wrapping_add(224);
     let x_ready = x >= 0xdc00;
-    word!(game.timer_x_pos = if x_ready { 0xdc00 } else { x });
-    let y = word!(game.timer_y_pos).wrapping_sub(193);
+    word!(game.TIMER_X_POS = if x_ready { 0xdc00 } else { x });
+    let y = word!(game.TIMER_Y_POS).wrapping_sub(193);
     let y_ready = y < 0x3000;
-    word!(game.timer_y_pos = if y_ready { 0x3000 } else { y });
+    word!(game.TIMER_Y_POS = if y_ready { 0x3000 } else { y });
     if x_ready && y_ready {
-        word!(game.timer_status += 1);
+        word!(game.TIMER_STATUS += 1);
     }
     tick(game)
 }
@@ -92,7 +92,7 @@ fn tick<H: crate::sprite_output::SpriteHost + ?Sized>(game: &mut H) -> u8 {
         2, 1, 2, 2, 1, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2, 2, 1, 2,
         2, 1, 2, 2, 2, 1, 2, 2,
     ];
-    let amount = CENTISECOND_DECREMENTS[usize::from(word!(game.nmi_frame_counter_word) & 0x7f)];
+    let amount = CENTISECOND_DECREMENTS[usize::from(word!(game.NMI_FRAME_COUNTER_WORD) & 0x7f)];
     if decrement_decimal(game, 0x945, amount) && decrement_decimal(game, 0x946, 1) {
         if decrement_decimal(game, 0x947, 1) {
             game.ram().write_byte(0x945, 0);

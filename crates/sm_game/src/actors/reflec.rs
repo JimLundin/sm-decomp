@@ -53,8 +53,8 @@ const SIGN: u16 = 0x8000;
 pub fn cycle_palette<H: LeaseActors + ?Sized>(game: &mut H) {
     let mut lease = game.lease();
     let runtime = &mut lease;
-    let hook = word_arrays::variables_for_enemy_graphics_drawn_hook;
-    if runtime.word(words::door_transition_flag_enemies) != 0 {
+    let hook = word_arrays::VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK;
+    if runtime.word(words::DOOR_TRANSITION_FLAG_ENEMIES) != 0 {
         return;
     }
     runtime.write_slice_le(
@@ -71,7 +71,7 @@ pub fn cycle_palette<H: LeaseActors + ?Sized>(game: &mut H) {
     for _ in 0..COLOURS {
         let colour = image.table_word(content::offset(CYCLE_COLOURS), (source >> 1) as isize);
         runtime.write_slice_native(
-            word_arrays::palette_buffer + 2 * (usize::from(destination >> 1) + FIRST_GLOW_COLOUR),
+            word_arrays::PALETTE_BUFFER + 2 * (usize::from(destination >> 1) + FIRST_GLOW_COLOUR),
             colour,
         );
         source = source.wrapping_add(2);
@@ -97,11 +97,11 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
     let palette =
         (((16 * u32::from(runtime.resolve_actor(key, Native).palette)) & 0xff00) >> 8) as u16;
     runtime.write_slice_le(
-        word_arrays::variables_for_enemy_graphics_drawn_hook + HOOK_PALETTE,
+        word_arrays::VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK + HOOK_PALETTE,
         palette,
     );
     runtime.write_slice_le(
-        word_arrays::variables_for_enemy_graphics_drawn_hook + HOOK_TIMER,
+        word_arrays::VARIABLES_FOR_ENEMY_GRAPHICS_DRAWN_HOOK + HOOK_TIMER,
         CYCLE_FRAMES,
     );
 }
@@ -113,7 +113,7 @@ pub fn reflect_shot<H: LeaseActors + ?Sized>(game: &mut H) -> Option<u16> {
     let mut lease = game.lease();
     let runtime = &mut lease;
     let raw = runtime
-        .word(words::collision_detection_index)
+        .word(words::COLLISION_DETECTION_INDEX)
         .wrapping_mul(2);
     let key = combat::current(runtime);
     runtime.edit_actor(key, Native, |actor| actor.invincibility = INVINCIBLE_FRAMES);

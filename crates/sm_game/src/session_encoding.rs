@@ -9,29 +9,29 @@ use std::sync::Arc;
 macro_rules! camera_words {
     (($c:expr), $f:ident, ($($borrow:tt)*)) => {
         for axis in 0..2 {
-            $f(ram::layer1_x_block+axis*2,$($borrow)* $c.layer1_block[axis]);
-            $f(ram::layer2_x_block+axis*2,$($borrow)* $c.layer2_block[axis]);
-            $f(ram::previous_layer1_x_block+axis*2,$($borrow)* $c.previous_layer1_block[axis]);
-            $f(ram::previous_layer2_x_block+axis*2,$($borrow)* $c.previous_layer2_block[axis]);
-            $f(ram::bg1_x_block+axis*2,$($borrow)* $c.bg1_block[axis]);
-            $f(ram::bg2_x_block+axis*2,$($borrow)* $c.bg2_block[axis]);
-            $f(ram::layer1_x_subpos+axis*4,$($borrow)* $c.layer1_fraction[axis]);
-            $f(ram::layer1_x_pos+axis*4,$($borrow)* $c.layer1[axis]);
-            $f(ram::layer2_x_pos+axis*2,$($borrow)* $c.layer2[axis]);
-            $f(ram::bg1_x_offset+axis*2,$($borrow)* $c.bg1_offset[axis]);
-            $f(ram::bg2_x_scroll+axis*2,$($borrow)* $c.bg2_scroll[axis]);
-            $f(ram::ideal_layer1_xpos+axis*4,$($borrow)* $c.ideal_layer1[axis]);
+            $f(ram::LAYER1_X_BLOCK+axis*2,$($borrow)* $c.layer1_block[axis]);
+            $f(ram::LAYER2_X_BLOCK+axis*2,$($borrow)* $c.layer2_block[axis]);
+            $f(ram::PREVIOUS_LAYER1_X_BLOCK+axis*2,$($borrow)* $c.previous_layer1_block[axis]);
+            $f(ram::PREVIOUS_LAYER2_X_BLOCK+axis*2,$($borrow)* $c.previous_layer2_block[axis]);
+            $f(ram::BG1_X_BLOCK+axis*2,$($borrow)* $c.bg1_block[axis]);
+            $f(ram::BG2_X_BLOCK+axis*2,$($borrow)* $c.bg2_block[axis]);
+            $f(ram::LAYER1_X_SUBPOS+axis*4,$($borrow)* $c.layer1_fraction[axis]);
+            $f(ram::LAYER1_X_POS+axis*4,$($borrow)* $c.layer1[axis]);
+            $f(ram::LAYER2_X_POS+axis*2,$($borrow)* $c.layer2[axis]);
+            $f(ram::BG1_X_OFFSET+axis*2,$($borrow)* $c.bg1_offset[axis]);
+            $f(ram::BG2_X_SCROLL+axis*2,$($borrow)* $c.bg2_scroll[axis]);
+            $f(ram::IDEAL_LAYER1_XPOS+axis*4,$($borrow)* $c.ideal_layer1[axis]);
         }
     };
 }
 // The room's area and geometry (`crate::room_view`), in `room_view::Word` order.
 macro_rules! room_geometry_words {
     (($c:expr), $f:ident, ($($borrow:tt)*)) => {
-        $f(ram::area_index,$($borrow)* $c.area);
-        $f(ram::room_width_in_blocks,$($borrow)* $c.width);
-        $f(ram::room_height_in_blocks,$($borrow)* $c.height);
-        $f(ram::room_width_in_scrolls,$($borrow)* $c.scroll_width);
-        $f(ram::room_height_in_scrolls,$($borrow)* $c.scroll_height);
+        $f(ram::AREA_INDEX,$($borrow)* $c.area);
+        $f(ram::ROOM_WIDTH_IN_BLOCKS,$($borrow)* $c.width);
+        $f(ram::ROOM_HEIGHT_IN_BLOCKS,$($borrow)* $c.height);
+        $f(ram::ROOM_WIDTH_IN_SCROLLS,$($borrow)* $c.scroll_width);
+        $f(ram::ROOM_HEIGHT_IN_SCROLLS,$($borrow)* $c.scroll_height);
     };
 }
 /// The room's area and geometry as `bytes` encode them.
@@ -57,13 +57,13 @@ pub fn room_geometry_addresses() -> [usize; 5] {
 // in `room_view::EffectWord` order. scalar_words projects each from the
 // Session field named in its `EffectWord` documentation.
 const ROOM_EFFECT_WORDS: [usize; 7] = [
-    ram::earthquake_type,
-    ram::earthquake_timer,
-    ram::tourian_entrance_statue_animstate,
-    ram::tourian_entrance_statue_finished,
-    ram::room_x_coordinate_on_map,
-    ram::room_y_coordinate_on_map,
-    ram::elevator_door_properties_orientation,
+    ram::EARTHQUAKE_TYPE,
+    ram::EARTHQUAKE_TIMER,
+    ram::TOURIAN_ENTRANCE_STATUE_ANIMSTATE,
+    ram::TOURIAN_ENTRANCE_STATUE_FINISHED,
+    ram::ROOM_X_COORDINATE_ON_MAP,
+    ram::ROOM_Y_COORDINATE_ON_MAP,
+    ram::ELEVATOR_DOOR_PROPERTIES_ORIENTATION,
 ];
 /// The room's effect and placement words as `bytes` encode them.
 pub fn room_effects(bytes: &impl Fn(usize) -> u8) -> crate::room_view::RoomEffects {
@@ -85,47 +85,47 @@ pub fn room_effect_address(word: crate::room_view::EffectWord) -> usize {
 // The game flow (`crate::flow`), in RAM order.
 macro_rules! flow_words {
     (($c:expr), $f:ident, ($($borrow:tt)*)) => {
-        $f(ram::cinematic_function,$($borrow)* $c.cinematic_function);
-        $f(ram::demo_timer,$($borrow)* $c.demo_timer);
-        $f(ram::demo_set,$($borrow)* $c.demo_set);
-        $f(ram::demo_scene,$($borrow)* $c.demo_scene);
-        $f(ram::num_demo_sets,$($borrow)* $c.num_demo_sets);
+        $f(ram::CINEMATIC_FUNCTION,$($borrow)* $c.cinematic_function);
+        $f(ram::DEMO_TIMER,$($borrow)* $c.demo_timer);
+        $f(ram::DEMO_SET,$($borrow)* $c.demo_set);
+        $f(ram::DEMO_SCENE,$($borrow)* $c.demo_scene);
+        $f(ram::NUM_DEMO_SETS,$($borrow)* $c.num_demo_sets);
     };
 }
 // The menu state (`crate::menu_state`), in RAM order from $0727.
 macro_rules! menu_words {
     (($c:expr), $f:ident, ($($borrow:tt)*)) => {
-        $f(ram::menu_index,$($borrow)* $c.menu_index);
-        $f(ram::pausemenu_start_lr_pressed_highlight_timer,$($borrow)* $c.pausemenu_start_lr_pressed_highlight_timer);
-        $f(ram::pausemenu_lr_animation_timer,$($borrow)* $c.pausemenu_lr_animation_timer);
-        $f(ram::pausemenu_item_selector_animation_timer,$($borrow)* $c.pausemenu_item_selector_animation_timer);
-        $f(ram::pausemenu_reserve_tank_animation_timer,$($borrow)* $c.pausemenu_reserve_tank_animation_timer);
-        $f(ram::unused_word_7e0731,$($borrow)* $c.unused_word_7e0731);
-        $f(ram::pausemenu_uparrow_animation_timer,$($borrow)* $c.pausemenu_uparrow_animation_timer);
-        $f(ram::pausemenu_downarrow_animation_timer,$($borrow)* $c.pausemenu_downarrow_animation_timer);
-        $f(ram::pausemenu_rightarrow_animation_timer,$($borrow)* $c.pausemenu_rightarrow_animation_timer);
-        $f(ram::pausemenu_leftarrow_animation_timer,$($borrow)* $c.pausemenu_leftarrow_animation_timer);
-        $f(ram::pausemenu_palette_animation_timer,$($borrow)* $c.pausemenu_palette_animation_timer);
-        $f(ram::unused_word_7e073d,$($borrow)* $c.unused_word_7e073d);
-        $f(ram::pausemenu_lr_animation_frame,$($borrow)* $c.pausemenu_lr_animation_frame);
-        $f(ram::pausemenu_item_selector_animation_frame,$($borrow)* $c.pausemenu_item_selector_animation_frame);
-        $f(ram::pausemenu_reserve_tank_animation_frame,$($borrow)* $c.pausemenu_reserve_tank_animation_frame);
-        $f(ram::unused_word_7e0745,$($borrow)* $c.unused_word_7e0745);
-        $f(ram::pausemenu_uparrow_animation_frame,$($borrow)* $c.pausemenu_uparrow_animation_frame);
-        $f(ram::pausemenu_downarrow_animation_frame,$($borrow)* $c.pausemenu_downarrow_animation_frame);
-        $f(ram::pausemenu_rightarrow_animation_frame,$($borrow)* $c.pausemenu_rightarrow_animation_frame);
-        $f(ram::pausemenu_leftarrow_animation_frame,$($borrow)* $c.pausemenu_leftarrow_animation_frame);
-        $f(ram::pausemenu_palette_animation_frame,$($borrow)* $c.pausemenu_palette_animation_frame);
-        $f(ram::pausemenu_shoulder_button_highlight,$($borrow)* $c.pausemenu_shoulder_button_highlight);
-        $f(ram::pausemenu_button_label_mode,$($borrow)* $c.pausemenu_button_label_mode);
-        $f(ram::pausemenu_equipment_category_item,$($borrow)* $c.pausemenu_equipment_category_item);
-        $f(ram::pausemenu_reserve_tank_delay_ctr,$($borrow)* $c.pausemenu_reserve_tank_delay_ctr);
-        $f(ram::unused_word_7e0759,$($borrow)* $c.unused_word_7e0759);
-        $f(ram::unused_word_7e075b,$($borrow)* $c.unused_word_7e075b);
-        $f(ram::unused_word_7e075d,$($borrow)* $c.unused_word_7e075d);
-        $f(ram::unused_word_7e075f,$($borrow)* $c.unused_word_7e075f);
-        $f(ram::unused_word_7e0761,$($borrow)* $c.unused_word_7e0761);
-        $f(ram::pause_screen_mode,$($borrow)* $c.pause_screen_mode);
+        $f(ram::MENU_INDEX,$($borrow)* $c.menu_index);
+        $f(ram::PAUSEMENU_START_LR_PRESSED_HIGHLIGHT_TIMER,$($borrow)* $c.pausemenu_start_lr_pressed_highlight_timer);
+        $f(ram::PAUSEMENU_LR_ANIMATION_TIMER,$($borrow)* $c.pausemenu_lr_animation_timer);
+        $f(ram::PAUSEMENU_ITEM_SELECTOR_ANIMATION_TIMER,$($borrow)* $c.pausemenu_item_selector_animation_timer);
+        $f(ram::PAUSEMENU_RESERVE_TANK_ANIMATION_TIMER,$($borrow)* $c.pausemenu_reserve_tank_animation_timer);
+        $f(ram::UNUSED_WORD_7E0731,$($borrow)* $c.unused_word_7e0731);
+        $f(ram::PAUSEMENU_UPARROW_ANIMATION_TIMER,$($borrow)* $c.pausemenu_uparrow_animation_timer);
+        $f(ram::PAUSEMENU_DOWNARROW_ANIMATION_TIMER,$($borrow)* $c.pausemenu_downarrow_animation_timer);
+        $f(ram::PAUSEMENU_RIGHTARROW_ANIMATION_TIMER,$($borrow)* $c.pausemenu_rightarrow_animation_timer);
+        $f(ram::PAUSEMENU_LEFTARROW_ANIMATION_TIMER,$($borrow)* $c.pausemenu_leftarrow_animation_timer);
+        $f(ram::PAUSEMENU_PALETTE_ANIMATION_TIMER,$($borrow)* $c.pausemenu_palette_animation_timer);
+        $f(ram::UNUSED_WORD_7E073D,$($borrow)* $c.unused_word_7e073d);
+        $f(ram::PAUSEMENU_LR_ANIMATION_FRAME,$($borrow)* $c.pausemenu_lr_animation_frame);
+        $f(ram::PAUSEMENU_ITEM_SELECTOR_ANIMATION_FRAME,$($borrow)* $c.pausemenu_item_selector_animation_frame);
+        $f(ram::PAUSEMENU_RESERVE_TANK_ANIMATION_FRAME,$($borrow)* $c.pausemenu_reserve_tank_animation_frame);
+        $f(ram::UNUSED_WORD_7E0745,$($borrow)* $c.unused_word_7e0745);
+        $f(ram::PAUSEMENU_UPARROW_ANIMATION_FRAME,$($borrow)* $c.pausemenu_uparrow_animation_frame);
+        $f(ram::PAUSEMENU_DOWNARROW_ANIMATION_FRAME,$($borrow)* $c.pausemenu_downarrow_animation_frame);
+        $f(ram::PAUSEMENU_RIGHTARROW_ANIMATION_FRAME,$($borrow)* $c.pausemenu_rightarrow_animation_frame);
+        $f(ram::PAUSEMENU_LEFTARROW_ANIMATION_FRAME,$($borrow)* $c.pausemenu_leftarrow_animation_frame);
+        $f(ram::PAUSEMENU_PALETTE_ANIMATION_FRAME,$($borrow)* $c.pausemenu_palette_animation_frame);
+        $f(ram::PAUSEMENU_SHOULDER_BUTTON_HIGHLIGHT,$($borrow)* $c.pausemenu_shoulder_button_highlight);
+        $f(ram::PAUSEMENU_BUTTON_LABEL_MODE,$($borrow)* $c.pausemenu_button_label_mode);
+        $f(ram::PAUSEMENU_EQUIPMENT_CATEGORY_ITEM,$($borrow)* $c.pausemenu_equipment_category_item);
+        $f(ram::PAUSEMENU_RESERVE_TANK_DELAY_CTR,$($borrow)* $c.pausemenu_reserve_tank_delay_ctr);
+        $f(ram::UNUSED_WORD_7E0759,$($borrow)* $c.unused_word_7e0759);
+        $f(ram::UNUSED_WORD_7E075B,$($borrow)* $c.unused_word_7e075b);
+        $f(ram::UNUSED_WORD_7E075D,$($borrow)* $c.unused_word_7e075d);
+        $f(ram::UNUSED_WORD_7E075F,$($borrow)* $c.unused_word_7e075f);
+        $f(ram::UNUSED_WORD_7E0761,$($borrow)* $c.unused_word_7e0761);
+        $f(ram::PAUSE_SCREEN_MODE,$($borrow)* $c.pause_screen_mode);
     };
 }
 /// The menu state as `bytes` encode it.
@@ -136,7 +136,7 @@ pub fn menu(bytes: &impl Fn(usize) -> u8) -> crate::menu_state::MenuState {
     menu
 }
 /// RAM address of the first flow word, `cinematic_function`.
-pub const FLOW: usize = ram::cinematic_function;
+pub const FLOW: usize = ram::CINEMATIC_FUNCTION;
 /// The camera as `bytes` encode it.
 pub fn camera(bytes: &impl Fn(usize) -> u8) -> crate::camera::Camera {
     let mut camera = crate::camera::Camera::default();
@@ -406,13 +406,13 @@ macro_rules! scalar_words {
         }
         $f(0x0d0c,$($borrow)* $s.player.grapple_endpoint.y);
         $f(0x0791,$($borrow)* $s.room.entry.direction);
-        $f(ram::elevator_door_properties_orientation,$($borrow)* $s.room.entry.elevator_properties);
+        $f(ram::ELEVATOR_DOOR_PROPERTIES_ORIENTATION,$($borrow)* $s.room.entry.elevator_properties);
         $f(0x0795,$($borrow)* $s.room.entry.elevator_interlock);
         $f(0x0797,$($borrow)* $s.room.entry.enemy_interlock);
         $f(0x0799,$($borrow)* $s.room.entry.elevator_direction);
         $f(0x079d,$($borrow)* $s.room.entry.room_index);
-        $f(ram::room_x_coordinate_on_map,$($borrow)* $s.room.entry.map_x);
-        $f(ram::room_y_coordinate_on_map,$($borrow)* $s.room.entry.map_y);
+        $f(ram::ROOM_X_COORDINATE_ON_MAP,$($borrow)* $s.room.entry.map_x);
+        $f(ram::ROOM_Y_COORDINATE_ON_MAP,$($borrow)* $s.room.entry.map_y);
         $f(0x07ad,$($borrow)* $s.room.entry.scroll_up);
         $f(0x07af,$($borrow)* $s.room.entry.scroll_down);
         $f(0x07b1,$($borrow)* $s.room.entry.previous_cre);
@@ -478,7 +478,7 @@ macro_rules! scalar_words {
         $f(0xdf0,$($borrow)* presentation_ref!($s, palette, ($($borrow)*)).suit_red_green);
         $f(0xdf2,$($borrow)* presentation_ref!($s, palette, ($($borrow)*)).crystal_flash_delay);
         $f(0xa4e,$($borrow)* $s.player.periodic_damage_fraction);
-        $f(ram::tourian_entrance_statue_animstate,$($borrow)* $s.mechanisms.statue_animation);
+        $f(ram::TOURIAN_ENTRANCE_STATUE_ANIMSTATE,$($borrow)* $s.mechanisms.statue_animation);
         for index in 0..256 {
             $f(0xc000+index*2,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).colors[index]);
         }
@@ -533,59 +533,59 @@ macro_rules! scalar_words {
             $f(0x0ae4+index*2,$($borrow)* presentation_ref!($s, atmospheric, ($($borrow)*)).slots[index].y);
             $f(0x0aec+index*2,$($borrow)* presentation_ref!($s, atmospheric, ($($borrow)*)).slots[index].frame_and_kind);
         }
-        $f(ram::projectile_counter,$($borrow)* $s.projectiles.count);
-        $f(ram::bomb_counter,$($borrow)* $s.projectiles.bomb_count);
-        $f(ram::projectile_index,$($borrow)* $s.projectiles.selected);
-        $f(ram::cooldown_timer,$($borrow)* $s.projectiles.controls.cooldown);
-        $f(ram::bomb_spread_charge_timeout_counter,$($borrow)* $s.projectiles.controls.spread_charge);
-        $f(ram::used_for_sba_attacksB60,$($borrow)* $s.projectiles.controls.orbit_step);
-        $f(ram::flare_counter,$($borrow)* $s.projectiles.controls.charge);
-        $f(ram::prev_beam_charge_counter,$($borrow)* $s.projectiles.controls.previous_charge);
-        $f(ram::charged_shot_glow_timer,$($borrow)* $s.projectiles.controls.glow);
-        $f(ram::samus_charge_palette_index,$($borrow)* $s.projectiles.controls.charge_palette);
-        $f(ram::play_resume_charging_beam_sfx,$($borrow)* $s.projectiles.controls.resume_sound);
-        $f(ram::samus_echoes_sound_flag,$($borrow)* $s.projectiles.controls.echo_sound);
-        $f(ram::new_projectile_direction_changed_pose,$($borrow)* $s.projectiles.controls.pending_aim);
-        $f(ram::projectile_invincibility_timer,$($borrow)* $s.projectiles.controls.protection);
-        $f(ram::hud_item_index,$($borrow)* $s.projectiles.controls.selected_weapon);
-        $f(ram::samus_auto_cancel_hud_item_index,$($borrow)* $s.projectiles.controls.automatic_weapon);
-        $f(ram::hud_item_changed_this_frame,$($borrow)* $s.projectiles.controls.weapon_changed);
+        $f(ram::PROJECTILE_COUNTER,$($borrow)* $s.projectiles.count);
+        $f(ram::BOMB_COUNTER,$($borrow)* $s.projectiles.bomb_count);
+        $f(ram::PROJECTILE_INDEX,$($borrow)* $s.projectiles.selected);
+        $f(ram::COOLDOWN_TIMER,$($borrow)* $s.projectiles.controls.cooldown);
+        $f(ram::BOMB_SPREAD_CHARGE_TIMEOUT_COUNTER,$($borrow)* $s.projectiles.controls.spread_charge);
+        $f(ram::USED_FOR_SBA_ATTACKS_B60,$($borrow)* $s.projectiles.controls.orbit_step);
+        $f(ram::FLARE_COUNTER,$($borrow)* $s.projectiles.controls.charge);
+        $f(ram::PREV_BEAM_CHARGE_COUNTER,$($borrow)* $s.projectiles.controls.previous_charge);
+        $f(ram::CHARGED_SHOT_GLOW_TIMER,$($borrow)* $s.projectiles.controls.glow);
+        $f(ram::SAMUS_CHARGE_PALETTE_INDEX,$($borrow)* $s.projectiles.controls.charge_palette);
+        $f(ram::PLAY_RESUME_CHARGING_BEAM_SFX,$($borrow)* $s.projectiles.controls.resume_sound);
+        $f(ram::SAMUS_ECHOES_SOUND_FLAG,$($borrow)* $s.projectiles.controls.echo_sound);
+        $f(ram::NEW_PROJECTILE_DIRECTION_CHANGED_POSE,$($borrow)* $s.projectiles.controls.pending_aim);
+        $f(ram::PROJECTILE_INVINCIBILITY_TIMER,$($borrow)* $s.projectiles.controls.protection);
+        $f(ram::HUD_ITEM_INDEX,$($borrow)* $s.projectiles.controls.selected_weapon);
+        $f(ram::SAMUS_AUTO_CANCEL_HUD_ITEM_INDEX,$($borrow)* $s.projectiles.controls.automatic_weapon);
+        $f(ram::HUD_ITEM_CHANGED_THIS_FRAME,$($borrow)* $s.projectiles.controls.weapon_changed);
         $f(0xaa6,$($borrow)* $s.projectiles.controls.cannon_flags);
-        $f(ram::arm_cannon_frame,$($borrow)* $s.projectiles.controls.cannon_frame);
-        $f(ram::arm_cannon_drawing_mode,$($borrow)* $s.projectiles.controls.cannon_drawing_mode);
-        $f(ram::samus_x_pos,$($borrow)* $s.player.x);
-        $f(ram::samus_x_subpos,$($borrow)* $s.player.x_fraction);
-        $f(ram::samus_y_pos,$($borrow)* $s.player.y);
-        $f(ram::samus_y_subpos,$($borrow)* $s.player.y_fraction);
-        $f(ram::samus_missiles,$($borrow)* $s.inventory.ammunition[0].current);
-        $f(ram::samus_super_missiles,$($borrow)* $s.inventory.ammunition[1].current);
-        $f(ram::samus_power_bombs,$($borrow)* $s.inventory.ammunition[2].current);
-        $f(ram::grapple_beam_function,$($borrow)* $s.player.grapple);
-        $f(ram::samus_shine_timer,$($borrow)* $s.player.shine_timer);
-        $f(ram::timer_for_shine_timer,$($borrow)* $s.player.shine_tick);
-        $f(ram::special_samus_palette_frame,$($borrow)* $s.player.palette_frame);
-        $f(ram::samus_special_super_palette_flags,$($borrow)* $s.player.special_palette_flags);
-        $f(ram::controller1_input_for_demo,$($borrow)* $s.projectiles.preparation.demo_held);
-        $f(ram::controller1_new_input_for_demo,$($borrow)* $s.projectiles.preparation.demo_pressed);
-        $f(ram::demo_backup_prev_controller_input,$($borrow)* $s.projectiles.preparation.demo_filtered_held);
-        $f(ram::demo_backup_prev_controller_input_new,$($borrow)* $s.projectiles.preparation.demo_filtered_pressed);
-        $f(ram::UNUSED_word_7E0DFA,$($borrow)* $s.projectiles.preparation.aim_history);
+        $f(ram::ARM_CANNON_FRAME,$($borrow)* $s.projectiles.controls.cannon_frame);
+        $f(ram::ARM_CANNON_DRAWING_MODE,$($borrow)* $s.projectiles.controls.cannon_drawing_mode);
+        $f(ram::SAMUS_X_POS,$($borrow)* $s.player.x);
+        $f(ram::SAMUS_X_SUBPOS,$($borrow)* $s.player.x_fraction);
+        $f(ram::SAMUS_Y_POS,$($borrow)* $s.player.y);
+        $f(ram::SAMUS_Y_SUBPOS,$($borrow)* $s.player.y_fraction);
+        $f(ram::SAMUS_MISSILES,$($borrow)* $s.inventory.ammunition[0].current);
+        $f(ram::SAMUS_SUPER_MISSILES,$($borrow)* $s.inventory.ammunition[1].current);
+        $f(ram::SAMUS_POWER_BOMBS,$($borrow)* $s.inventory.ammunition[2].current);
+        $f(ram::GRAPPLE_BEAM_FUNCTION,$($borrow)* $s.player.grapple);
+        $f(ram::SAMUS_SHINE_TIMER,$($borrow)* $s.player.shine_timer);
+        $f(ram::TIMER_FOR_SHINE_TIMER,$($borrow)* $s.player.shine_tick);
+        $f(ram::SPECIAL_SAMUS_PALETTE_FRAME,$($borrow)* $s.player.palette_frame);
+        $f(ram::SAMUS_SPECIAL_SUPER_PALETTE_FLAGS,$($borrow)* $s.player.special_palette_flags);
+        $f(ram::CONTROLLER1_INPUT_FOR_DEMO,$($borrow)* $s.projectiles.preparation.demo_held);
+        $f(ram::CONTROLLER1_NEW_INPUT_FOR_DEMO,$($borrow)* $s.projectiles.preparation.demo_pressed);
+        $f(ram::DEMO_BACKUP_PREV_CONTROLLER_INPUT,$($borrow)* $s.projectiles.preparation.demo_filtered_held);
+        $f(ram::DEMO_BACKUP_PREV_CONTROLLER_INPUT_NEW,$($borrow)* $s.projectiles.preparation.demo_filtered_pressed);
+        $f(ram::UNUSED_WORD_7E0DFA,$($borrow)* $s.projectiles.preparation.aim_history);
         $f(0xa10,$($borrow)* $s.projectiles.preparation.previous_movement_and_facing);
-        $f(ram::power_bomb_flag,$($borrow)* $s.projectiles.power_bomb.flag);
-        $f(ram::power_bomb_explosion_x_pos,$($borrow)* $s.projectiles.power_bomb.x);
-        $f(ram::power_bomb_explosion_y_pos,$($borrow)* $s.projectiles.power_bomb.y);
-        $f(ram::cur_block_index,$($borrow)* $s.room.collision_cursor);
-        $f(ram::earthquake_type,$($borrow)* $s.feedback.earthquake_kind);
-        $f(ram::earthquake_timer,$($borrow)* $s.feedback.earthquake_timer);
-        $f(ram::speed_echoes_index,$($borrow)* $s.projectiles.echoes.index);
+        $f(ram::POWER_BOMB_FLAG,$($borrow)* $s.projectiles.power_bomb.flag);
+        $f(ram::POWER_BOMB_EXPLOSION_X_POS,$($borrow)* $s.projectiles.power_bomb.x);
+        $f(ram::POWER_BOMB_EXPLOSION_Y_POS,$($borrow)* $s.projectiles.power_bomb.y);
+        $f(ram::CUR_BLOCK_INDEX,$($borrow)* $s.room.collision_cursor);
+        $f(ram::EARTHQUAKE_TYPE,$($borrow)* $s.feedback.earthquake_kind);
+        $f(ram::EARTHQUAKE_TIMER,$($borrow)* $s.feedback.earthquake_timer);
+        $f(ram::SPEED_ECHOES_INDEX,$($borrow)* $s.projectiles.echoes.index);
         for index in 0..3 {
-            $f(ram::flare_animation_frame+index*2,$($borrow)* $s.projectiles.controls.flare_frames[index]);
-            $f(ram::flare_animation_timer+index*2,$($borrow)* $s.projectiles.controls.flare_timers[index]);
+            $f(ram::FLARE_ANIMATION_FRAME+index*2,$($borrow)* $s.projectiles.controls.flare_frames[index]);
+            $f(ram::FLARE_ANIMATION_TIMER+index*2,$($borrow)* $s.projectiles.controls.flare_timers[index]);
         }
         for index in 0..4 {
-            $f(arrays::speed_echo_xpos+index*2,$($borrow)* $s.projectiles.echoes.x[index]);
-            $f(arrays::speed_echo_ypos+index*2,$($borrow)* $s.projectiles.echoes.y[index]);
-            $f(arrays::speed_echo_xspeed+index*2,$($borrow)* $s.projectiles.echoes.x_speed[index]);
+            $f(arrays::SPEED_ECHO_XPOS+index*2,$($borrow)* $s.projectiles.echoes.x[index]);
+            $f(arrays::SPEED_ECHO_YPOS+index*2,$($borrow)* $s.projectiles.echoes.y[index]);
+            $f(arrays::SPEED_ECHO_XSPEED+index*2,$($borrow)* $s.projectiles.echoes.x_speed[index]);
         }
         for index in 0..10 {
             $f(0xb64+index*2,$($borrow)* $s.projectiles.shots[index].x);
@@ -776,16 +776,16 @@ macro_rules! scalar_words {
         $f(0x1991,$($borrow)* $s.enemy_projectiles.selected);
         $f(0x1993,$($borrow)* $s.enemy_projectiles.spawn.primary);
         $f(0x1995,$($borrow)* $s.enemy_projectiles.spawn.secondary);
-        $f(ram::health_drop_bias_flag,$($borrow)* $s.enemy_projectiles.drop_bias);
-        $f(ram::samus_reserve_health,$($borrow)* $s.inventory.reserve_health);
-        $f(ram::samus_reserve_missiles,$($borrow)* $s.inventory.reserve_missiles);
-        $f(ram::samus_x_speed_divisor,$($borrow)* $s.player.speed_divisor);
-        $f(ram::samus_knockback_timer,$($borrow)* $s.player.knockback_timer);
-        $f(ram::knockback_x_dir,$($borrow)* $s.player.knockback_x_direction);
-        $f(ram::enemy_processing_stage,$($borrow)* $s.room.enemy_processing_stage);
-        $f(ram::collision_detection_index,$($borrow)* $s.room.collision_detection_index);
-        $f(ram::current_slope_bts,$($borrow)* $s.room.slope_behavior);
-        $f(ram::tourian_entrance_statue_finished,$($borrow)* $s.mechanisms.statue_finished);
+        $f(ram::HEALTH_DROP_BIAS_FLAG,$($borrow)* $s.enemy_projectiles.drop_bias);
+        $f(ram::SAMUS_RESERVE_HEALTH,$($borrow)* $s.inventory.reserve_health);
+        $f(ram::SAMUS_RESERVE_MISSILES,$($borrow)* $s.inventory.reserve_missiles);
+        $f(ram::SAMUS_X_SPEED_DIVISOR,$($borrow)* $s.player.speed_divisor);
+        $f(ram::SAMUS_KNOCKBACK_TIMER,$($borrow)* $s.player.knockback_timer);
+        $f(ram::KNOCKBACK_X_DIR,$($borrow)* $s.player.knockback_x_direction);
+        $f(ram::ENEMY_PROCESSING_STAGE,$($borrow)* $s.room.enemy_processing_stage);
+        $f(ram::COLLISION_DETECTION_INDEX,$($borrow)* $s.room.collision_detection_index);
+        $f(ram::CURRENT_SLOPE_BTS,$($borrow)* $s.room.slope_behavior);
+        $f(ram::TOURIAN_ENTRANCE_STATUE_FINISHED,$($borrow)* $s.mechanisms.statue_finished);
         for index in 0..18 {
             $f(0x1997+index*2,$($borrow)* $s.enemy_projectiles.slots[index].definition);
             $f(0x19bb+index*2,$($borrow)* $s.enemy_projectiles.slots[index].graphics);
@@ -1204,45 +1204,45 @@ pub fn inputs(bytes: &impl Fn(usize) -> u8) -> ExternalInputs {
             game_time_frames: w(0x9da),
             fx_kind: w(0x196e),
         },
-        debug_enemy_freeze: w(ram::debug_time_frozen_for_enemies),
+        debug_enemy_freeze: w(ram::DEBUG_TIME_FROZEN_FOR_ENEMIES),
         enemy_zero_health: u16::from_ne_bytes([bytes(0xf8c), bytes(0xf8d)]),
         blending_config: w(0x1982),
         lava_y: w(0x1962),
-        current_enemy: w(ram::cur_enemy_index),
-        random: w(ram::random_number),
-        random_enemy_counter: w(ram::random_enemy_counter),
-        fx_y: w(ram::fx_y_pos),
-        drop_origin_x: w(ram::special_death_item_drop_x_origin_pos),
-        drop_origin_y: w(ram::special_death_item_drop_y_origin_pos),
+        current_enemy: w(ram::CUR_ENEMY_INDEX),
+        random: w(ram::RANDOM_NUMBER),
+        random_enemy_counter: w(ram::RANDOM_ENEMY_COUNTER),
+        fx_y: w(ram::FX_Y_POS),
+        drop_origin_x: w(ram::SPECIAL_DEATH_ITEM_DROP_X_ORIGIN_POS),
+        drop_origin_y: w(ram::SPECIAL_DEATH_ITEM_DROP_Y_ORIGIN_POS),
         nmi_counter_low: bytes(0x5b5),
 
-        shoot_button: w(ram::button_config_shoot_x),
-        jump_button: w(ram::button_config_jump_a),
-        cancel_button: w(ram::button_config_itemcancel_y),
-        switch_button: w(ram::button_config_itemswitch),
-        run_button: w(ram::button_config_run_b),
-        aim_up_button: w(ram::button_config_aim_up_R),
-        aim_down_button: w(ram::button_config_aim_down_L),
-        held: w(ram::joypad1_lastkeys),
-        pressed: w(ram::joypad1_newkeys),
-        filtered_held: w(ram::joypad1_input_samusfilter),
-        filtered_pressed: w(ram::joypad1_newinput_samusfilter),
-        frozen: w(ram::time_is_frozen_flag),
-        cinematic: w(ram::cinematic_function),
-        hud_auto_cancel: w(ram::hud_auto_cancel_flag),
+        shoot_button: w(ram::BUTTON_CONFIG_SHOOT_X),
+        jump_button: w(ram::BUTTON_CONFIG_JUMP_A),
+        cancel_button: w(ram::BUTTON_CONFIG_ITEMCANCEL_Y),
+        switch_button: w(ram::BUTTON_CONFIG_ITEMSWITCH),
+        run_button: w(ram::BUTTON_CONFIG_RUN_B),
+        aim_up_button: w(ram::BUTTON_CONFIG_AIM_UP_R),
+        aim_down_button: w(ram::BUTTON_CONFIG_AIM_DOWN_L),
+        held: w(ram::JOYPAD1_LASTKEYS),
+        pressed: w(ram::JOYPAD1_NEWKEYS),
+        filtered_held: w(ram::JOYPAD1_INPUT_SAMUSFILTER),
+        filtered_pressed: w(ram::JOYPAD1_NEWINPUT_SAMUSFILTER),
+        frozen: w(ram::TIME_IS_FROZEN_FLAG),
+        cinematic: w(ram::CINEMATIC_FUNCTION),
+        hud_auto_cancel: w(ram::HUD_AUTO_CANCEL_FLAG),
         background_page_x: w(0x91d),
         power_bomb_active: w(0x592),
-        camera_x: w(ram::layer1_x_pos),
-        camera_y: w(ram::layer1_y_pos),
-        frame: w(ram::nmi_frame_counter_word),
-        ceres: w(ram::ceres_status),
-        m7_x: w(ram::reg_M7X),
-        m7_y: w(ram::reg_M7Y),
-        m7_a: w(ram::reg_M7A),
-        m7_b: w(ram::reg_M7B),
-        m7_c: w(ram::reg_M7C),
-        grapple_x: w(ram::x_pos_of_start_of_grapple_beam_prevframe),
-        grapple_y: w(ram::y_pos_of_start_of_grapple_beam_prevframe),
+        camera_x: w(ram::LAYER1_X_POS),
+        camera_y: w(ram::LAYER1_Y_POS),
+        frame: w(ram::NMI_FRAME_COUNTER_WORD),
+        ceres: w(ram::CERES_STATUS),
+        m7_x: w(ram::REG_M7X),
+        m7_y: w(ram::REG_M7Y),
+        m7_a: w(ram::REG_M7A),
+        m7_b: w(ram::REG_M7B),
+        m7_c: w(ram::REG_M7C),
+        grapple_x: w(ram::X_POS_OF_START_OF_GRAPPLE_BEAM_PREVFRAME),
+        grapple_y: w(ram::Y_POS_OF_START_OF_GRAPPLE_BEAM_PREVFRAME),
     }
 }
 

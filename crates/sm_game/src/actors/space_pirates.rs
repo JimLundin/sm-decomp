@@ -780,12 +780,12 @@ fn ready_to_divekick<G: Pirates + ?Sized>(game: &mut G) {
 fn damage<R: PirateLease>(runtime: &mut R) {
     let key = current(runtime);
     let x = runtime.resolve_actor(key, Native).x.whole;
-    runtime.write_word_le(x, fields::special_death_item_drop_x_origin_pos);
+    runtime.write_word_le(x, fields::SPECIAL_DEATH_ITEM_DROP_X_ORIGIN_POS);
     let y = runtime.resolve_actor(key, Native).y.whole;
-    runtime.write_word_le(y, fields::special_death_item_drop_y_origin_pos);
+    runtime.write_word_le(y, fields::SPECIAL_DEATH_ITEM_DROP_Y_ORIGIN_POS);
     combat::shot_reaction(runtime, api::ShotHandling::ReactionOnly);
     if runtime.resolve_actor(key, Native).health == 0 {
-        let index = runtime.word(fields::cur_enemy_index);
+        let index = runtime.word(fields::CUR_ENEMY_INDEX);
         let drop_items = runtime.resolve_actor(key, Native).definition == GOLD_NINJA;
         runtime.edit_actor(key, Native, |actor| {
             actor.variables[NINJA_INITIAL_SPEED] = 0
@@ -816,8 +816,8 @@ pub fn shot<G: Pirates + ?Sized>(game: &mut G) {
 pub fn check_shot<G: Pirates + ?Sized>(game: &mut G) {
     let mut runtime = game.lease();
     if runtime.resolve_actor(current(&runtime), Native).definition == GOLD_NINJA {
-        let index = usize::from(runtime.word(fields::collision_detection_index));
-        let kind = runtime.word(arrays::projectile_type + 2 * index);
+        let index = usize::from(runtime.word(fields::COLLISION_DETECTION_INDEX));
+        let kind = runtime.word(arrays::PROJECTILE_TYPE + 2 * index);
         let class = kind & 0xf00;
         if class >= 0x300 {
             return;
@@ -858,13 +858,13 @@ fn reflect_shot<R: PirateLease>(runtime: &mut R) {
         return;
     }
     let reflection_index = runtime
-        .word(fields::collision_detection_index)
+        .word(fields::COLLISION_DETECTION_INDEX)
         .wrapping_mul(2);
     // Array reads keep the unwrapped element index; the reflection argument wraps.
-    let index = 2 * usize::from(runtime.word(fields::collision_detection_index));
-    let class = runtime.word(arrays::projectile_type + index) & 0xf00;
+    let index = 2 * usize::from(runtime.word(fields::COLLISION_DETECTION_INDEX));
+    let class = runtime.word(arrays::PROJECTILE_TYPE + index) & 0xf00;
     if class == 0x200 {
-        if runtime.word(arrays::projectile_variables + index) == 0 {
+        if runtime.word(arrays::PROJECTILE_VARIABLES + index) == 0 {
             return;
         }
     } else if class >= 0x300 {
@@ -872,7 +872,7 @@ fn reflect_shot<R: PirateLease>(runtime: &mut R) {
     }
     let key = current(runtime);
     runtime.edit_actor(key, Native, |actor| actor.invincibility = 10);
-    let direction_at = arrays::projectile_dir + index;
+    let direction_at = arrays::PROJECTILE_DIR + index;
     let direction = match runtime.word(direction_at) & 15 {
         7 => 1,
         2 => 8,
@@ -911,7 +911,7 @@ fn walking_instruction<R: PirateLease>(runtime: &R, key: Key, attack: bool) -> u
 
 fn walk<G: Pirates + ?Sized>(right: bool, game: &mut G) {
     let mut runtime = game.lease();
-    let index = runtime.word(fields::cur_enemy_index);
+    let index = runtime.word(fields::CUR_ENEMY_INDEX);
     let key = Key::from_legacy(index);
     if api::player_within(&mut runtime, key, Axis::Y, 16) {
         let instruction = walking_instruction(&runtime, key, true);
@@ -972,7 +972,7 @@ fn advance<G: Pirates + ?Sized>(walking: bool, game: &mut G) {
     let mut runtime = game.lease();
     let key = current(&runtime);
     let state = u32::from(runtime.resolve_actor(key, Native).variables[FUNCTION]) | 0xb20000;
-    let index = runtime.word(fields::cur_enemy_index);
+    let index = runtime.word(fields::CUR_ENEMY_INDEX);
     runtime.foreign(|game| dispatch_state(state, index, game));
     if walking && runtime.resolve_actor(key, Native).parameters[0] & PARAMETER_ALTERNATE != 0 {
         runtime.foreign(|game| flinch_from_projectile(true, game));
@@ -1006,18 +1006,18 @@ pub fn dispatch_instruction<G: Pirates + ?Sized>(
     match ea {
         instruction::FIRE_LASER_LEFT => {
             let mut runtime = game.lease();
-            let index = runtime.word(fields::cur_enemy_index);
+            let index = runtime.word(fields::CUR_ENEMY_INDEX);
             let definition = runtime
                 .resolve_actor(Key::from_legacy(index), Native)
                 .definition;
             let value = runtime.legacy_native_record(0xa0, definition).word(6);
-            runtime.write_word_le(value, fields::cinematic_x);
+            runtime.write_word_le(value, fields::CINEMATIC_X);
             drop(runtime);
             fire_laser(index, false, 16, game);
             script
         }
         instruction::FIRE_LASER_RIGHT => {
-            fire_laser(word!(game.cur_enemy_index), true, 16, game);
+            fire_laser(word!(game.CUR_ENEMY_INDEX), true, 16, game);
             script
         }
         instruction::WALL_SET_FUNCTION
@@ -1072,7 +1072,7 @@ pub fn dispatch_instruction<G: Pirates + ?Sized>(
         instruction::FIRE_LASER_LEFT_WITH_Y_OFFSET
         | instruction::FIRE_LASER_RIGHT_WITH_Y_OFFSET => {
             fire_laser(
-                word!(game.cur_enemy_index),
+                word!(game.CUR_ENEMY_INDEX),
                 ea == instruction::FIRE_LASER_RIGHT_WITH_Y_OFFSET,
                 script.word(0),
                 game,

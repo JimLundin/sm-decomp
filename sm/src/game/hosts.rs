@@ -99,23 +99,23 @@ impl sm_game::actors::zebetites::Host for Game {
 macro_rules! compatibility_player_position {
     ($($ty:ty),+ $(,)?) => {$(
         impl sm_game::player_position::PlayerPosition for $ty {
-            fn player_x(&self) -> u16 { let game = self; sm_game::ram_word!(game.samus_x_pos) }
-            fn player_y(&self) -> u16 { let game = self; sm_game::ram_word!(game.samus_y_pos) }
-            fn player_x_fraction(&self) -> u16 { let game = self; sm_game::ram_word!(game.samus_x_subpos) }
-            fn player_y_fraction(&self) -> u16 { let game = self; sm_game::ram_word!(game.samus_y_subpos) }
-            fn previous_player_x(&self) -> u16 { let game = self; sm_game::ram_word!(game.samus_prev_x_pos) }
-            fn previous_player_y(&self) -> u16 { let game = self; sm_game::ram_word!(game.samus_prev_y_pos) }
-            fn set_player_x(&mut self, x: u16) { let game = self; sm_game::ram_word!(game.samus_x_pos = x) }
-            fn set_player_y(&mut self, y: u16) { let game = self; sm_game::ram_word!(game.samus_y_pos = y) }
-            fn set_player_x_fraction(&mut self, fraction: u16) { let game = self; sm_game::ram_word!(game.samus_x_subpos = fraction) }
-            fn set_previous_player_x(&mut self, x: u16) { let game = self; sm_game::ram_word!(game.samus_prev_x_pos = x) }
-            fn set_previous_player_y(&mut self, y: u16) { let game = self; sm_game::ram_word!(game.samus_prev_y_pos = y) }
-            fn set_previous_player_x_fraction(&mut self, fraction: u16) { let game = self; sm_game::ram_word!(game.samus_prev_x_subpos = fraction) }
-            fn set_previous_player_y_fraction(&mut self, fraction: u16) { let game = self; sm_game::ram_word!(game.samus_prev_y_subpos = fraction) }
-            fn invincibility_timer(&self) -> u16 { let game = self; sm_game::ram_word!(game.samus_invincibility_timer) }
-            fn knockback_timer(&self) -> u16 { let game = self; sm_game::ram_word!(game.samus_knockback_timer) }
-            fn set_invincibility_timer(&mut self, frames: u16) { let game = self; sm_game::ram_word!(game.samus_invincibility_timer = frames) }
-            fn set_knockback_timer(&mut self, frames: u16) { let game = self; sm_game::ram_word!(game.samus_knockback_timer = frames) }
+            fn player_x(&self) -> u16 { let game = self; sm_game::ram_word!(game.SAMUS_X_POS) }
+            fn player_y(&self) -> u16 { let game = self; sm_game::ram_word!(game.SAMUS_Y_POS) }
+            fn player_x_fraction(&self) -> u16 { let game = self; sm_game::ram_word!(game.SAMUS_X_SUBPOS) }
+            fn player_y_fraction(&self) -> u16 { let game = self; sm_game::ram_word!(game.SAMUS_Y_SUBPOS) }
+            fn previous_player_x(&self) -> u16 { let game = self; sm_game::ram_word!(game.SAMUS_PREV_X_POS) }
+            fn previous_player_y(&self) -> u16 { let game = self; sm_game::ram_word!(game.SAMUS_PREV_Y_POS) }
+            fn set_player_x(&mut self, x: u16) { let game = self; sm_game::ram_word!(game.SAMUS_X_POS = x) }
+            fn set_player_y(&mut self, y: u16) { let game = self; sm_game::ram_word!(game.SAMUS_Y_POS = y) }
+            fn set_player_x_fraction(&mut self, fraction: u16) { let game = self; sm_game::ram_word!(game.SAMUS_X_SUBPOS = fraction) }
+            fn set_previous_player_x(&mut self, x: u16) { let game = self; sm_game::ram_word!(game.SAMUS_PREV_X_POS = x) }
+            fn set_previous_player_y(&mut self, y: u16) { let game = self; sm_game::ram_word!(game.SAMUS_PREV_Y_POS = y) }
+            fn set_previous_player_x_fraction(&mut self, fraction: u16) { let game = self; sm_game::ram_word!(game.SAMUS_PREV_X_SUBPOS = fraction) }
+            fn set_previous_player_y_fraction(&mut self, fraction: u16) { let game = self; sm_game::ram_word!(game.SAMUS_PREV_Y_SUBPOS = fraction) }
+            fn invincibility_timer(&self) -> u16 { let game = self; sm_game::ram_word!(game.SAMUS_INVINCIBILITY_TIMER) }
+            fn knockback_timer(&self) -> u16 { let game = self; sm_game::ram_word!(game.SAMUS_KNOCKBACK_TIMER) }
+            fn set_invincibility_timer(&mut self, frames: u16) { let game = self; sm_game::ram_word!(game.SAMUS_INVINCIBILITY_TIMER = frames) }
+            fn set_knockback_timer(&mut self, frames: u16) { let game = self; sm_game::ram_word!(game.SAMUS_KNOCKBACK_TIMER = frames) }
         }
     )+};
 }
@@ -129,21 +129,21 @@ compatibility_player_position!(Game);
 /// and semantic-counterpart handling are unchanged.
 impl sm_game::player_position::PlayerPosition for crate::game::session_runtime::Runtime<'_> {
     fn player_x(&self) -> u16 {
-        self.owned_player(|player| player.x, sm_game::ram::words::samus_x_pos)
+        self.owned_player(|player| player.x, sm_game::ram::words::SAMUS_X_POS)
     }
     fn player_y(&self) -> u16 {
-        self.owned_player(|player| player.y, sm_game::ram::words::samus_y_pos)
+        self.owned_player(|player| player.y, sm_game::ram::words::SAMUS_Y_POS)
     }
     fn player_x_fraction(&self) -> u16 {
         self.owned_player(
             |player| player.x_fraction,
-            sm_game::ram::words::samus_x_subpos,
+            sm_game::ram::words::SAMUS_X_SUBPOS,
         )
     }
     fn player_y_fraction(&self) -> u16 {
         self.owned_player(
             |player| player.y_fraction,
-            sm_game::ram::words::samus_y_subpos,
+            sm_game::ram::words::SAMUS_Y_SUBPOS,
         )
     }
     fn previous_player_x(&self) -> u16 {
@@ -153,13 +153,13 @@ impl sm_game::player_position::PlayerPosition for crate::game::session_runtime::
         self.owned_player(|player| player.previous_position.y.whole, 0xb14)
     }
     fn set_player_x(&mut self, x: u16) {
-        self.write_word_le(x, sm_game::ram::words::samus_x_pos)
+        self.write_word_le(x, sm_game::ram::words::SAMUS_X_POS)
     }
     fn set_player_y(&mut self, y: u16) {
-        self.write_word_le(y, sm_game::ram::words::samus_y_pos)
+        self.write_word_le(y, sm_game::ram::words::SAMUS_Y_POS)
     }
     fn set_player_x_fraction(&mut self, fraction: u16) {
-        self.write_word_le(fraction, sm_game::ram::words::samus_x_subpos)
+        self.write_word_le(fraction, sm_game::ram::words::SAMUS_X_SUBPOS)
     }
     fn set_previous_player_x(&mut self, x: u16) {
         self.write_word_le(x, 0xb10)
@@ -220,7 +220,7 @@ const _: () = {
 
 impl sm_game::actors::mother_brain_tubes::Host for Game {
     fn end_screen_flash(&mut self) {
-        crate::game::sm_a9::palette_end_screen_flash(self);
+        crate::game::sm_a9::end_screen_flashing(self);
     }
 
     fn start_earthquake(&mut self, kind: u16) {
@@ -1035,22 +1035,22 @@ impl sm_game::hud::HudPlayer for Game {
     }
     fn selected_item(&self) -> u16 {
         let game = self;
-        sm_game::ram_word!(game.hud_item_index)
+        sm_game::ram_word!(game.HUD_ITEM_INDEX)
     }
     fn automatic_item(&self) -> u16 {
         let game = self;
-        sm_game::ram_word!(game.samus_auto_cancel_hud_item_index)
+        sm_game::ram_word!(game.SAMUS_AUTO_CANCEL_HUD_ITEM_INDEX)
     }
     fn grapple_function(&self) -> u16 {
         let game = self;
-        sm_game::ram_word!(game.grapple_beam_function)
+        sm_game::ram_word!(game.GRAPPLE_BEAM_FUNCTION)
     }
 }
 
 impl sm_game::hud::HudFrameHost for Game {
     fn raw_frame_counter_byte(&self) -> u8 {
         self.ram()
-            .read_byte(sm_game::ram::bytes::nmi_frame_counter_byte)
+            .read_byte(sm_game::ram::bytes::NMI_FRAME_COUNTER_BYTE)
     }
 }
 
@@ -1095,6 +1095,6 @@ impl sm_game::hud::HudFrameHost for crate::game::session_runtime::Runtime<'_> {
         // As on the game: the raw work-RAM byte, not the Display projection.
         self.samus_game()
             .ram()
-            .read_byte(sm_game::ram::bytes::nmi_frame_counter_byte)
+            .read_byte(sm_game::ram::bytes::NMI_FRAME_COUNTER_BYTE)
     }
 }

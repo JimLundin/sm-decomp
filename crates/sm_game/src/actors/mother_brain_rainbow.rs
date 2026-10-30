@@ -16,9 +16,9 @@ use sm_data::beam_gradients::{ADDRESS as GRADIENTS, BeamGradients};
 use sm_data::mother_brain::{RAINBOW_ADDRESS, RainbowColors};
 
 /// $7E:9C00: the indirect HDMA header.
-const HEADER: isize = crate::ram::bytes::mother_brain_indirect_hdma as isize;
+const HEADER: isize = crate::ram::bytes::MOTHER_BRAIN_INDIRECT_HDMA as isize;
 /// $7E:9D00: the window table the header points into.
-const WINDOWS: isize = crate::ram::word_arrays::hdma_table_2 as isize;
+const WINDOWS: isize = crate::ram::word_arrays::HDMA_TABLE_2 as isize;
 /// The beam is drawn between rows 20h and E8h.
 const TOP_ROW: u16 = 32;
 const BOTTOM_ROW: u16 = 232;
@@ -45,8 +45,8 @@ pub trait Host: State + LoadedImage + crate::session_access::SessionAccess {}
 impl<T: State + LoadedImage + crate::session_access::SessionAccess + ?Sized> Host for T {}
 
 /// $7E:0998 and $7E:186E: the game state and the beam's layer blending.
-const GAME_STATE: usize = crate::ram::words::game_state;
-const LAYER_BLENDING: usize = crate::ram::words::fx_layer_blending_config_c;
+const GAME_STATE: usize = crate::ram::words::GAME_STATE;
+const LAYER_BLENDING: usize = crate::ram::words::FX_LAYER_BLENDING_CONFIG_C;
 
 /// The edge gradient for `angle`: |tan(angle * pi / 80h)| * 100h ($91:C9D4).
 fn gradient(game: &mut impl Host, angle: isize) -> u16 {

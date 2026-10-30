@@ -59,9 +59,9 @@ fn require_panic(result: Result<(), Box<dyn Any + Send>>, message: &str) {
 fn seed(g: &mut Game) {
     g.ram().fill(0..g.ram().len(), 0);
     g.g_fail = false;
-    ram_word(g.ram(), crate::ram_map::words::room_width_in_blocks, 1);
-    ram_word(g.ram(), crate::ram_map::words::room_height_in_blocks, 1);
-    ram_word(g.ram(), crate::ram_map::words::samus_x_pos, 0x120);
+    ram_word(g.ram(), crate::ram_map::words::ROOM_WIDTH_IN_BLOCKS, 1);
+    ram_word(g.ram(), crate::ram_map::words::ROOM_HEIGHT_IN_BLOCKS, 1);
+    ram_word(g.ram(), crate::ram_map::words::SAMUS_X_POS, 0x120);
     g.ram().write_byte(0x16403, 0x7b);
     let loaded = RomImage::zeroed(0x200000);
     rom_word(&loaded, 0x84f100, 0xc6dc);
@@ -274,7 +274,7 @@ fn acceleration_step(runtime: &mut Runtime<'_>) {
 }
 fn acceleration_stale(g: &mut Game) {
     seed(g);
-    ram_word(g.ram(), crate::ram_map::words::equipped_items, 0x20);
+    ram_word(g.ram(), crate::ram_map::words::EQUIPPED_ITEMS, 0x20);
     g.loaded_rom = None; // Gravity must need no pose content, but still preflight.
     let before = ram_bytes(&g);
     let mut expected = before.clone();
@@ -305,8 +305,8 @@ fn acceleration_stale(g: &mut Game) {
 fn acceleration_loaded_failure(g: &mut Game) {
     seed(g);
     g.loaded_rom = None;
-    ram_word(g.ram(), crate::ram_map::words::samus_y_accel, 0x5678);
-    ram_word(g.ram(), crate::ram_map::words::samus_y_subaccel, 0x9abc);
+    ram_word(g.ram(), crate::ram_map::words::SAMUS_Y_ACCEL, 0x5678);
+    ram_word(g.ram(), crate::ram_map::words::SAMUS_Y_SUBACCEL, 0x9abc);
     let mut expected = ram_bytes(&g);
     put(&mut expected, 0xaf6, 0x3456);
     let (result, held, prefix, identity_returned) = {
@@ -335,16 +335,16 @@ fn acceleration_loaded_failure(g: &mut Game) {
 }
 fn acceleration_success(g: &mut Game) {
     seed(g);
-    ram_word(g.ram(), crate::ram_map::words::equipped_items, 0x20);
-    ram_word(g.ram(), crate::ram_map::words::samus_y_accel, 0x5678);
-    ram_word(g.ram(), crate::ram_map::words::samus_y_subaccel, 0x9abc);
+    ram_word(g.ram(), crate::ram_map::words::EQUIPPED_ITEMS, 0x20);
+    ram_word(g.ram(), crate::ram_map::words::SAMUS_Y_ACCEL, 0x5678);
+    ram_word(g.ram(), crate::ram_map::words::SAMUS_Y_SUBACCEL, 0x9abc);
     g.loaded_rom = None;
     let mut expected = ram_bytes(&g);
     put(&mut expected, 0xaf6, 0x3456);
-    put(&mut expected, crate::ram_map::words::samus_y_accel, 0);
+    put(&mut expected, crate::ram_map::words::SAMUS_Y_ACCEL, 0);
     put(
         &mut expected,
-        crate::ram_map::words::samus_y_subaccel,
+        crate::ram_map::words::SAMUS_Y_SUBACCEL,
         0x1c00,
     );
     for (at, value) in [

@@ -42,7 +42,7 @@ pub fn lint_touch_samus(k: u16, game: &mut (impl Host + ?Sized)) {
     }
     let (samus_x, x_radius) = (
         i32::from(game.player_x()),
-        i32::from(word!(game.samus_x_radius)),
+        i32::from(word!(game.SAMUS_X_RADIUS)),
     );
     let left =
         (hitbox(LEFT, game) + i32::from(slot!(game, Kraid[e].base.x_pos)) - INSET) as u16 as i32;
@@ -53,7 +53,7 @@ pub fn lint_touch_samus(k: u16, game: &mut (impl Host + ?Sized)) {
         (hitbox(TOP, game) + i32::from(slot!(game, Kraid[e].base.y_pos)) + INSET) as u16 as i32;
     let (samus_y, y_radius) = (
         i32::from(game.player_y()),
-        i32::from(word!(game.samus_y_radius)),
+        i32::from(word!(game.SAMUS_Y_RADIUS)),
     );
     if (y_radius + samus_y - top) & SIGN != 0 {
         return;
@@ -63,12 +63,12 @@ pub fn lint_touch_samus(k: u16, game: &mut (impl Host + ?Sized)) {
     if (samus_y - y_radius - bottom) & SIGN == 0 {
         return;
     }
-    let mut push = (i32::from(word!(game.extra_samus_x_displacement))
+    let mut push = (i32::from(word!(game.EXTRA_SAMUS_X_DISPLACEMENT))
         + !(x_radius + i32::from(MAX_PUSH))) as u16;
     if (push as i32 - i32::from(MAX_PUSH)) & SIGN == 0 {
         push = MAX_PUSH;
     }
-    word!(game.extra_samus_x_displacement = push);
+    word!(game.EXTRA_SAMUS_X_DISPLACEMENT = push);
     game.contact_reaction_finalizing_death();
     slot!(
         game,

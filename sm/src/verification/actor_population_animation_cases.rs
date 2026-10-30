@@ -113,7 +113,7 @@ pub(crate) fn run(op: Operation, g: &mut Game) -> Option<u16> {
                 population(image, 0xa18000, 0x9100, 0x2468);
                 rw(image, 0xa18010, 0xffff);
                 image.write(offset(0xa18012), 9);
-                put(g, w::enemy_tile_vram_src, 0xfffe);
+                put(g, w::ENEMY_TILE_VRAM_SRC, 0xfffe);
                 crate::game::actors::reference_population_animation::transfer(g);
             }
             Operation::Spawn => {
@@ -178,17 +178,17 @@ fn fixture(id: u32, g: &mut Game, loaded: &RomImage, native: &RomImage) -> Opera
     }
     // Distinguish allocations without changing harmless native callback identity.
     rw(native, 0xa09000 + offset_of!(D, health) as u32, 4321);
-    put(g, w::room_enemy_population_ptr, 0x8000);
-    put(g, w::room_enemy_tilesets_ptr, 0x8000);
-    put(g, w::cur_enemy_index, 0x140);
-    put(g, w::enemy_tile_vram_src, 0xfffe);
+    put(g, w::ROOM_ENEMY_POPULATION_PTR, 0x8000);
+    put(g, w::ROOM_ENEMY_TILESETS_PTR, 0x8000);
+    put(g, w::CUR_ENEMY_INDEX, 0x140);
+    put(g, w::ENEMY_TILE_VRAM_SRC, 0xfffe);
     for i in 0..32 {
         ew(g, i * 64, offset_of!(E, enemy_ptr), 0);
     }
     for (i, v) in [0x9000, 0x9100, 0, 0].into_iter().enumerate() {
-        put(g, a::enemy_def_ptr + 2 * i, v);
-        put(g, a::enemy_gfxdata_tiles_index + 2 * i, 0x20 + i as u16);
-        put(g, a::enemy_gfxdata_vram_ptr + 2 * i, 0x300 + i as u16);
+        put(g, a::ENEMY_DEF_PTR + 2 * i, v);
+        put(g, a::ENEMY_GFXDATA_TILES_INDEX + 2 * i, 0x20 + i as u16);
+        put(g, a::ENEMY_GFXDATA_VRAM_PTR + 2 * i, 0x300 + i as u16);
     }
     match id {
         0 => {
@@ -198,7 +198,7 @@ fn fixture(id: u32, g: &mut Game, loaded: &RomImage, native: &RomImage) -> Opera
         1 => Operation::Install,
         2 => {
             rw(loaded, 0xb48000, 0xffff);
-            put(g, w::enemy_tile_load_data_write_pos, 0);
+            put(g, w::ENEMY_TILE_LOAD_DATA_WRITE_POS, 0);
             Operation::PrepareInstall
         }
         3 => {
@@ -277,7 +277,7 @@ fn fixture(id: u32, g: &mut Game, loaded: &RomImage, native: &RomImage) -> Opera
             Operation::Respawn
         }
         22..=34 => {
-            put(g, w::cur_enemy_index, 0);
+            put(g, w::CUR_ENEMY_INDEX, 0);
             ew(g, 0, 0, 0x9000);
             ew(g, 0, offset_of!(E, bank), 0x00a2);
             ew(g, 0, offset_of!(E, ai_handler_bits), 0);
@@ -300,7 +300,7 @@ fn fixture(id: u32, g: &mut Game, loaded: &RomImage, native: &RomImage) -> Opera
                 }
                 29 | 31 => {
                     ew(g, 0, offset_of!(E, bank), 0xaa);
-                    put(g, w::vram_write_queue_tail, 3);
+                    put(g, w::VRAM_WRITE_QUEUE_TAIL, 3);
                     // AA814B + seven packed operand bytes, then ordinary frame header.
                     let bytes = [
                         0x4b, 0x81, 0x34, 0x12, 0x78, 0x56, 0xa9, 0xbc, 0x9a, 7, 0, 0x68, 0x24,
@@ -315,12 +315,12 @@ fn fixture(id: u32, g: &mut Game, loaded: &RomImage, native: &RomImage) -> Opera
                     ew(g, 64, offset_of!(E, timer), 0x7777);
                 }
                 33 => {
-                    put(g, w::first_free_enemy_index, 64);
-                    put(g, w::enemy_index_to_shake, 0xffff);
-                    put(g, a::active_enemy_indexes, 0);
-                    put(g, a::active_enemy_indexes + 2, 0xffff);
-                    put(g, w::debug_time_frozen_for_enemies, 0);
-                    put(g, w::time_is_frozen_flag, 0);
+                    put(g, w::FIRST_FREE_ENEMY_INDEX, 64);
+                    put(g, w::ENEMY_INDEX_TO_SHAKE, 0xffff);
+                    put(g, a::ACTIVE_ENEMY_INDEXES, 0);
+                    put(g, a::ACTIVE_ENEMY_INDEXES + 2, 0xffff);
+                    put(g, w::DEBUG_TIME_FROZEN_FOR_ENEMIES, 0);
+                    put(g, w::TIME_IS_FROZEN_FLAG, 0);
                     ew(g, 0, offset_of!(E, properties), 0x2500);
                     ew(g, 0, offset_of!(E, extra_properties), 0);
                     ew(g, 0, offset_of!(E, flash_timer), 0);

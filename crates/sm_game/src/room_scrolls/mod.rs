@@ -143,7 +143,7 @@ fn add_native_motion<H: Host + ?Sized>(high: usize, low: usize, amount: u32, gam
 const SLOW_SCROLL_WINDOW: [(u16, u16); 2] = [(0x60, 0xa0), (0x70, 0x90)];
 
 pub fn advance_camera<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.slow_grabble_scrolling_flag) != 0 {
+    if word!(game.SLOW_GRABBLE_SCROLLING_FLAG) != 0 {
         // Slow grapple scrolling steps the camera 3 px toward Samus.
         let player = [game.player_x(), game.player_y()];
         for axis in 0..2 {
@@ -239,21 +239,21 @@ fn follow_x<H: Host + ?Sized>(game: &mut H) {
         auto_x(game);
         return;
     }
-    let pushed = word!(game.knockback_dir) != 0
+    let pushed = word!(game.KNOCKBACK_DIR) != 0
         || game.movement_type() == 16
-        || word!(game.samus_x_accel_mode) == 1;
+        || word!(game.SAMUS_X_ACCEL_MODE) == 1;
     let distances = if pushed != (game.facing() != 4) {
         &FACE_RIGHT_DISTANCES
     } else {
         &FACE_LEFT_DISTANCES
     };
-    let distance = distances[usize::from(word!(game.camera_distance_index) >> 1)];
+    let distance = distances[usize::from(word!(game.CAMERA_DISTANCE_INDEX) >> 1)];
     game.session_mut().room.camera.ideal_layer1[0] = game.player_x().wrapping_sub(distance);
     chase_ideal_layer_position!(
         game,
         0,
-        absolute_moved_last_frame_x,
-        absolute_moved_last_frame_x_fract,
+        ABSOLUTE_MOVED_LAST_FRAME_X,
+        ABSOLUTE_MOVED_LAST_FRAME_X_FRACT,
         trigger_left,
         trigger_right
     );
@@ -263,7 +263,7 @@ fn follow_y<H: Host + ?Sized>(game: &mut H) {
         auto_y(game);
         return;
     }
-    let scroller = if word!(game.samus_y_dir) == 1 {
+    let scroller = if word!(game.SAMUS_Y_DIR) == 1 {
         game.session().room.entry.scroll_down
     } else {
         game.session().room.entry.scroll_up
@@ -272,8 +272,8 @@ fn follow_y<H: Host + ?Sized>(game: &mut H) {
     chase_ideal_layer_position!(
         game,
         1,
-        absolute_moved_last_frame_y,
-        absolute_moved_last_frame_y_fract,
+        ABSOLUTE_MOVED_LAST_FRAME_Y,
+        ABSOLUTE_MOVED_LAST_FRAME_Y_FRACT,
         trigger_up,
         trigger_down
     );
@@ -289,24 +289,24 @@ pub(crate) fn layer2_policy<H: Host + ?Sized>(game: &H, axis: usize) -> u8 {
 /// Queue the whole visible room: 17 columns from the camera's left edge,
 /// flushing each, layer 2 too unless it is fixed.
 pub fn fill_viewport<H: Host + ?Sized>(game: &mut H) {
-    let screens = (i32::from(game.byte(fields_bytes::reg_BG1SC))
-        - i32::from(game.byte(fields_bytes::reg_BG2SC)))
+    let screens = (i32::from(game.byte(fields_bytes::REG_BG1SC))
+        - i32::from(game.byte(fields_bytes::REG_BG2SC)))
         << 8;
-    word!(game.size_of_bg2 = (screens & 0xf800) as u16);
+    word!(game.SIZE_OF_BG2 = (screens & 0xf800) as u16);
     calculate_blocks(game);
     for _ in 0..17 {
         let camera = game.session().room.camera;
-        word!(game.blocks_to_update_x_block = camera.layer1_block[0]);
-        word!(game.blocks_to_update_y_block = camera.layer1_block[1]);
-        word!(game.vram_blocks_to_update_x_block = camera.bg1_block[0]);
-        word!(game.vram_blocks_to_update_y_block = camera.bg1_block[1]);
+        word!(game.BLOCKS_TO_UPDATE_X_BLOCK = camera.layer1_block[0]);
+        word!(game.BLOCKS_TO_UPDATE_Y_BLOCK = camera.layer1_block[1]);
+        word!(game.VRAM_BLOCKS_TO_UPDATE_X_BLOCK = camera.bg1_block[0]);
+        word!(game.VRAM_BLOCKS_TO_UPDATE_Y_BLOCK = camera.bg1_block[1]);
         game.queue_scrolling_tiles(0x0, ScrollingDmaLayout::Column);
         if layer2_policy(game, 0) & 1 == 0 {
             let camera = game.session().room.camera;
-            word!(game.blocks_to_update_x_block = camera.layer2_block[0]);
-            word!(game.blocks_to_update_y_block = camera.layer2_block[1]);
-            word!(game.vram_blocks_to_update_x_block = camera.bg2_block[0]);
-            word!(game.vram_blocks_to_update_y_block = camera.bg2_block[1]);
+            word!(game.BLOCKS_TO_UPDATE_X_BLOCK = camera.layer2_block[0]);
+            word!(game.BLOCKS_TO_UPDATE_Y_BLOCK = camera.layer2_block[1]);
+            word!(game.VRAM_BLOCKS_TO_UPDATE_X_BLOCK = camera.bg2_block[0]);
+            word!(game.VRAM_BLOCKS_TO_UPDATE_Y_BLOCK = camera.bg2_block[1]);
             game.queue_scrolling_tiles(0x1c, ScrollingDmaLayout::Column);
         }
         game.flush_tilemaps();
@@ -328,19 +328,19 @@ pub fn update_map<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn update_scrolls<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.time_is_frozen_flag) != 0 {
+    if word!(game.TIME_IS_FROZEN_FLAG) != 0 {
         return;
     }
     let camera = game.session().room.camera;
-    word!(game.reg_BG1HOFS = camera.bg1_offset[0].wrapping_add(camera.layer1[0]));
-    word!(game.reg_BG1VOFS = camera.bg1_offset[1].wrapping_add(camera.layer1[1]));
+    word!(game.REG_BG1HOFS = camera.bg1_offset[0].wrapping_add(camera.layer1[0]));
+    word!(game.REG_BG1VOFS = camera.bg1_offset[1].wrapping_add(camera.layer1[1]));
     if layer2_position(CameraAxis::X, game) == 0 {
         let camera = game.session().room.camera;
-        word!(game.reg_BG2HOFS = camera.bg2_scroll[0].wrapping_add(camera.layer2[0]));
+        word!(game.REG_BG2HOFS = camera.bg2_scroll[0].wrapping_add(camera.layer2[0]));
     }
     if layer2_position(CameraAxis::Y, game) == 0 {
         let camera = game.session().room.camera;
-        word!(game.reg_BG2VOFS = camera.bg2_scroll[1].wrapping_add(camera.layer2[1]));
+        word!(game.REG_BG2VOFS = camera.bg2_scroll[1].wrapping_add(camera.layer2[1]));
     }
     update_backgrounds(game);
 }
@@ -389,9 +389,9 @@ pub fn update_backgrounds<H: Host + ?Sized>(game: &mut H) {
                 } else {
                     (camera.layer1_block, camera.bg1_block)
                 };
-                word!(@write game, fields::blocks_to_update_x_block + 2 * coordinate,
+                word!(@write game, fields::BLOCKS_TO_UPDATE_X_BLOCK + 2 * coordinate,
                     (i32::from(block[coordinate]) + edge) as u16);
-                word!(@write game, fields::vram_blocks_to_update_x_block + 2 * coordinate,
+                word!(@write game, fields::VRAM_BLOCKS_TO_UPDATE_X_BLOCK + 2 * coordinate,
                     (i32::from(bg[coordinate]) + edge) as u16);
             }
             game.queue_scrolling_tiles(parameter, layout);

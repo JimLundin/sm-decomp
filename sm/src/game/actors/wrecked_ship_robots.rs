@@ -16,7 +16,7 @@ const PALETTE: [i16; 31] = [
     0xf, 0x40, 0xf, 8, 0x1f, 0x18, 0x10, 0x18, 0xf, 8, 0x1f, 0x10, -1,
 ];
 fn selected(runtime: &Runtime<'_>) -> Key {
-    Key::from_legacy(runtime.word(W::cur_enemy_index))
+    Key::from_legacy(runtime.word(W::CUR_ENEMY_INDEX))
 }
 fn powered(game: &mut Game) -> bool {
     gameplay_flag_runtime::boss_word_at(game.area_index(), BossWordOrder::Native, game) & 1 != 0
@@ -30,14 +30,14 @@ fn cooldown(runtime: &mut Runtime<'_>, key: Key) {
 }
 pub(crate) fn palette(game: &mut Game) {
     let mut runtime = Runtime::new(game);
-    if runtime.word(W::door_transition_flag_enemies) != 0
-        || runtime.word(W::work_robot_palanim_timer) == 0
+    if runtime.word(W::DOOR_TRANSITION_FLAG_ENEMIES) != 0
+        || runtime.word(W::WORK_ROBOT_PALANIM_TIMER) == 0
     {
         return;
     }
-    let remaining = runtime.word(W::work_robot_palanim_timer).wrapping_sub(1);
-    runtime.write_slice_le(W::work_robot_palanim_timer, remaining);
-    if runtime.word(W::work_robot_palanim_timer) != 0 {
+    let remaining = runtime.word(W::WORK_ROBOT_PALANIM_TIMER).wrapping_sub(1);
+    runtime.write_slice_le(W::WORK_ROBOT_PALANIM_TIMER, remaining);
+    if runtime.word(W::WORK_ROBOT_PALANIM_TIMER) != 0 {
         return;
     }
     let mut cursor = runtime.native_word(0xd656);
@@ -45,14 +45,14 @@ pub(crate) fn palette(game: &mut Game) {
         cursor = 0;
     }
     let index = usize::from(cursor >> 1);
-    let palette = usize::from(runtime.word(W::work_robot_palanim_palindex) >> 8) * 8;
+    let palette = usize::from(runtime.word(W::WORK_ROBOT_PALANIM_PALINDEX) >> 8) * 8;
     for i in 0..4 {
         runtime.write_slice_le(
-            A::palette_buffer + 2 * (palette + 137 + i),
+            A::PALETTE_BUFFER + 2 * (palette + 137 + i),
             PALETTE[index + i] as u16,
         );
     }
-    runtime.write_slice_le(W::work_robot_palanim_timer, PALETTE[index + 4] as u16);
+    runtime.write_slice_le(W::WORK_ROBOT_PALANIM_TIMER, PALETTE[index + 4] as u16);
     runtime.write_slice_native(0xd656, cursor.wrapping_add(10));
 }
 pub(crate) fn initialize(game: &mut Game) {
@@ -71,11 +71,11 @@ pub(crate) fn initialize(game: &mut Game) {
         actor.instruction = 0xc6e5;
         actor.variables[0] = 0xfe00;
     });
-    runtime.write_slice_le(W::work_robot_palanim_timer, 1);
+    runtime.write_slice_le(W::WORK_ROBOT_PALANIM_TIMER, 1);
     runtime.write_slice_native(0xd656, 0);
     runtime.edit_actor(key, Native, |actor| actor.variables[1] = 0);
     let palette = runtime.resolve_actor(key, Native).palette;
-    runtime.write_slice_le(W::work_robot_palanim_palindex, palette);
+    runtime.write_slice_le(W::WORK_ROBOT_PALANIM_PALINDEX, palette);
 }
 pub(crate) fn initialize_dormant(game: &mut Game) {
     let mut runtime = Runtime::new(game);
@@ -99,14 +99,14 @@ pub(crate) fn initialize_dormant(game: &mut Game) {
         actor.instruction_delay = 1;
         actor.timer = 0;
     });
-    runtime.write_slice_le(W::work_robot_palanim_timer, 0);
+    runtime.write_slice_le(W::WORK_ROBOT_PALANIM_TIMER, 0);
     runtime.edit_actor(key, Native, |actor| {
         actor.variables[4] = 0;
         actor.pre_instruction = 1;
     });
-    let palette = usize::from(runtime.word(W::work_robot_palanim_palindex) >> 8) * 8;
+    let palette = usize::from(runtime.word(W::WORK_ROBOT_PALANIM_PALINDEX) >> 8) * 8;
     for i in 137..=140 {
-        runtime.write_slice_le(A::palette_buffer + 2 * (palette + i), 10);
+        runtime.write_slice_le(A::PALETTE_BUFFER + 2 * (palette + i), 10);
     }
 }
 pub(crate) fn advance(game: &mut Game) {
@@ -127,8 +127,8 @@ pub(crate) fn advance(game: &mut Game) {
 pub(crate) fn touch_dormant(game: &mut Game) {
     let mut runtime = Runtime::new(game);
     let x = runtime.resolve_actor(selected(&runtime), Native).x.whole;
-    let left = (x as i16).wrapping_sub(runtime.word(W::samus_x_pos) as i16) < 0;
-    runtime.write_slice_le(W::extra_samus_x_displacement, if left { 4 } else { 0xfffc });
+    let left = (x as i16).wrapping_sub(runtime.word(W::SAMUS_X_POS) as i16) < 0;
+    runtime.write_slice_le(W::EXTRA_SAMUS_X_DISPLACEMENT, if left { 4 } else { 0xfffc });
 }
 pub(crate) fn shot_dormant(game: &mut Game) {
     combat::shot_reaction(&mut Runtime::new(game), api::ShotHandling::Finalize);
@@ -144,7 +144,7 @@ pub(crate) fn shot(game: &mut Game) {
     if actor.health == 0 {
         return;
     }
-    let left = (runtime.word(W::samus_x_pos) as i16).wrapping_sub(actor.x.whole as i16) < 0;
+    let left = (runtime.word(W::SAMUS_X_POS) as i16).wrapping_sub(actor.x.whole as i16) < 0;
     let instruction = match (actor.variables[0] & 0x8000 != 0, left) {
         (true, false) => 0xc833,
         (true, true) => 0xc7bb,
@@ -168,9 +168,9 @@ fn fire(
         cooldown(runtime, key);
         return script;
     }
-    let delay = (runtime.word(W::random_number) & 0x1f) + 16;
+    let delay = (runtime.word(W::RANDOM_NUMBER) & 0x1f) + 16;
     runtime.edit_actor(key, Native, |actor| actor.variables[1] = delay);
-    let current = runtime.word(W::cur_enemy_index);
+    let current = runtime.word(W::CUR_ENEMY_INDEX);
     runtime.foreign(|game| spawn_with_enemy_gfx(delay, current, definition, game));
     EnemyScript::jump(next)
 }
@@ -201,8 +201,8 @@ fn walk(
         return EnemyScript::jump(wall);
     }
     if api::touches_player_from_above(runtime, selected(runtime)) {
-        runtime.write_slice_le(W::extra_samus_x_subdisplacement, 0);
-        runtime.write_slice_le(W::extra_samus_x_displacement, step as u16);
+        runtime.write_slice_le(W::EXTRA_SAMUS_X_SUBDISPLACEMENT, 0);
+        runtime.write_slice_le(W::EXTRA_SAMUS_X_DISPLACEMENT, step as u16);
     }
     let Some(edge) = edge else {
         return script;

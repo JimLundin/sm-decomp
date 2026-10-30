@@ -94,7 +94,7 @@ fn aim(eye: i32, game: &mut (impl Host + ?Sized)) -> u16 {
 /// Initialisation AI - morph ball eye ($A8:9058): an eye, or a mount facing
 /// the way its parameter says.
 pub fn initialize(game: &mut (impl Host + ?Sized)) {
-    let eye = word!(game.cur_enemy_index) as i32;
+    let eye = word!(game.CUR_ENEMY_INDEX) as i32;
     slot!(game, Eye[eye].base.properties, |old| old
         | PROCESS_INSTRUCTIONS);
     slot!(game, Eye[eye].base; spritemap_pointer = NO_SPRITEMAP, instruction_timer = 1, timer = 0);
@@ -127,7 +127,7 @@ pub fn main_ai(game: &mut (impl Host + ?Sized)) -> Option<u32> {
     if crate::inventory::get(game, crate::inventory::Word::CollectedItems) & MORPH_BALL == 0 {
         return None;
     }
-    let eye = word!(game.cur_enemy_index) as i32;
+    let eye = word!(game.CUR_ENEMY_INDEX) as i32;
     Some(BANK << 16 | u32::from(slot!(game, Eye[eye].function)))
 }
 /// Morph ball eye functions ($A8:90F1, $A8:912E, $A8:9160, $A8:91CE): true

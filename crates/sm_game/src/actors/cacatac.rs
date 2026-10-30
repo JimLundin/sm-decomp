@@ -87,7 +87,7 @@ pub(crate) fn patrol(runtime: &mut impl ActorLease, owtch: bool, right: bool) {
     // Maybe make cacatac attack ($A2:A01C) or owtch sink ($A2:A553).
     runtime.next_random();
     let frame = session_slot!(runtime, Cacatac[slot].base.frame_counter) as u8;
-    let random = runtime.word(crate::ram::words::random_number) as u8;
+    let random = runtime.word(crate::ram::words::RANDOM_NUMBER) as u8;
     if frame.wrapping_add(random) < if owtch { 6 } else { 3 } {
         if owtch {
             session_slot!(runtime, Cacatac[slot].direction = 3);
@@ -188,7 +188,7 @@ pub mod owtch {
                     reload_underground_timer(runtime, owtch);
                 } else if !sinking && previous == 1 {
                     let direction =
-                        u16::from(runtime.lease_byte(crate::ram::words::random_number + 1)) & 1;
+                        u16::from(runtime.lease_byte(crate::ram::words::RANDOM_NUMBER + 1)) & 1;
                     session_slot!(runtime, Owtch[owtch].function_index = direction);
                 }
             }

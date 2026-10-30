@@ -64,16 +64,16 @@ pub(super) fn run(game: &mut Game) -> bool {
         assert_eq!(word(&|at| game.ram().read_byte(at), 0x1f01), 0);
         game.ram().fill(0..game.ram().len(), 0);
         game.ram()
-            .copy_in(ram::music_queue_write_pos, &(0x18dau16).to_le_bytes());
+            .copy_in(ram::MUSIC_QUEUE_WRITE_POS, &(0x18dau16).to_le_bytes());
         game.ram()
-            .copy_in(ram::music_queue_read_pos, &(1u16).to_le_bytes());
+            .copy_in(ram::MUSIC_QUEUE_READ_POS, &(1u16).to_le_bytes());
         expected = (0..game.ram().len())
             .map(|at| game.ram().read_byte(at))
             .collect::<Vec<_>>();
         put(&mut expected, 0x1ef1, 0x8123);
         put(&mut expected, 0x1ef3, 0x3456);
         put(&mut expected, 0x1f03, 8);
-        put(&mut expected, ram::music_queue_write_pos, 12);
+        put(&mut expected, ram::MUSIC_QUEUE_WRITE_POS, 12);
         {
             let mut runtime = Runtime::new(game);
             runtime

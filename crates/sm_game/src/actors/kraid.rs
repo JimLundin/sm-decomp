@@ -361,7 +361,7 @@ const ROCKS_SOUND: u8 = 0x1e;
 const STOMP_SOUND: u8 = 0x76;
 
 fn current<S: BossState + ?Sized>(game: &S) -> i32 {
-    word!(game.cur_enemy_index) as i32
+    word!(game.CUR_ENEMY_INDEX) as i32
 }
 
 fn kraid_record<S: BossState + ?Sized>(address: u16, game: &mut S) -> RomRecord {
@@ -404,8 +404,8 @@ fn queue_vram<L: Lease + ?Sized>(
     bank: QueueBank,
     destination: impl FnOnce(&L) -> u16,
 ) {
-    let tail: u16 = word!(game.vram_write_queue_tail);
-    let entry = VRAM_QUEUE + word!(game.vram_write_queue_tail) as i32;
+    let tail: u16 = word!(game.VRAM_WRITE_QUEUE_TAIL);
+    let entry = VRAM_QUEUE + word!(game.VRAM_WRITE_QUEUE_TAIL) as i32;
     let at =
         |offset: isize| usize::try_from(entry as isize + offset).expect("VRAM entry outside RAM");
     set_native_word(game, at(0), size);
@@ -416,7 +416,7 @@ fn queue_vram<L: Lease + ?Sized>(
     }
     let destination = destination(game);
     set_native_word(game, at(5), destination);
-    word!(game.vram_write_queue_tail = tail.wrapping_add(7));
+    word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(7));
 }
 
 /// The room BG through the BG3 tilemap: Kraid's room background.
@@ -437,19 +437,19 @@ pub fn touch_arm_or_foot<L: Lease + ?Sized>(game: &mut L) {
 
 /// Pushes Samus up and away after a contact. Was `Kraid_Func_1`.
 fn push_samus<S: BossState + ?Sized>(game: &mut S) {
-    word!(game.extra_samus_x_displacement = PUSH_RIGHT);
-    word!(game.extra_samus_y_displacement = -8i32 as u16);
+    word!(game.EXTRA_SAMUS_X_DISPLACEMENT = PUSH_RIGHT);
+    word!(game.EXTRA_SAMUS_Y_DISPLACEMENT = -8i32 as u16);
 }
 
 /// The arm is shot: the projectile explodes. Was `Kraid_Arm_Shot`.
 pub fn arm_shot<L: Lease + ?Sized>(game: &mut L, j: u16) {
     projectile_explosion(game, j);
-    word!(game.projectile_dir[(j >> 1)] |= 0x10);
+    word!(game.PROJECTILE_DIR[(j >> 1)] |= 0x10);
 }
 
 /// Whether Kraid's boss bit is set for this area. Was `Kraid_CheckIfDead`.
 pub fn is_dead<L: Lease + ?Sized>(game: &mut L) -> u16 {
-    let area = word!(game.area_index);
+    let area = word!(game.AREA_INDEX);
     ((game.foreign(|game| game.boss_word_native(area)) & 1) != 0) as u16
 }
 
@@ -466,13 +466,13 @@ fn load_bg2<S: BossState + ?Sized>(game: &mut S, priority: u16) {
     game.decompress_into_ram(BG2_TILEMAP, 0x2000);
     session_slot!(game, Body[BODY]; hurt_frame = 0, hurt_frame_timer = 0);
     for v1 in (0u16..1536).step_by(2) {
-        let value = (word!(game.tilemap_stuff[(v1 >> 1)])) & 0xdfff;
+        let value = (word!(game.TILEMAP_STUFF[(v1 >> 1)])) & 0xdfff;
         let at = usize::try_from(0x2000 + (((v1 as i32 >> 1) + 1024) as isize) * 2)
             .expect("native word outside RAM");
         set_native_word(game, at, value);
     }
     for v2 in 0u16..1024 {
-        word!(game.tilemap_stuff[v2] = priority & native_word(game, 0x4000 + v2 as usize * 2));
+        word!(game.TILEMAP_STUFF[v2] = priority & native_word(game, 0x4000 + v2 as usize * 2));
     }
 }
 
@@ -480,9 +480,9 @@ fn load_bg2<S: BossState + ?Sized>(game: &mut S, priority: u16) {
 /// `Kraid_DrawRoomBg`.
 fn draw_room_bg<L: Lease + ?Sized>(game: &mut L) {
     game.foreign(|game| {
-        crate::word_transfers!(game, ascending, 16; le(target_palettes, 96) <- rom(ROOM_BG_PALETTE, 0));
+        crate::word_transfers!(game, ascending, 16; le(TARGET_PALETTES, 96) <- rom(ROOM_BG_PALETTE, 0));
     });
-    word!(game.palette_change_num = 0);
+    word!(game.PALETTE_CHANGE_NUM = 0);
     queue_room_bg(game);
 }
 
@@ -577,8 +577,8 @@ fn execute_script<L: Lease + ?Sized>(game: &mut L) -> u16 {
                 session_slot!(game, Body[BODY].script_delay = result);
                 session_slot!(game, Body[BODY].script = script.wrapping_add(8));
                 let tilemap: u16 = record.word(2);
-                let tail: u16 = word!(game.vram_write_queue_tail);
-                let _size_tail: u16 = word!(game.vram_write_queue_tail);
+                let tail: u16 = word!(game.VRAM_WRITE_QUEUE_TAIL);
+                let _size_tail: u16 = word!(game.VRAM_WRITE_QUEUE_TAIL);
                 game.foreign(|game| game.queue_kraid_tilemap(tail, tilemap));
                 return 1;
             }
@@ -610,28 +610,28 @@ fn mouth_shots<S: BossState + ?Sized>(game: &mut S) {
         let right: u16 = (session_slot!(game, Body[BODY].base.x_pos)).wrapping_add(hitbox.word(0));
         let top: u16 = (session_slot!(game, Body[BODY].base.y_pos)).wrapping_add(hitbox.word(2));
         let bottom: u16 = (session_slot!(game, Body[BODY].base.y_pos)).wrapping_add(hitbox.word(6));
-        if word!(game.projectile_counter) != 0 {
-            let mut index: u16 = 2u16.wrapping_mul(word!(game.projectile_counter));
+        if word!(game.PROJECTILE_COUNTER) != 0 {
+            let mut index: u16 = 2u16.wrapping_mul(word!(game.PROJECTILE_COUNTER));
             loop {
                 let p: i32 = index as i32 >> 1;
-                if !((word!(game.projectile_y_pos[p]) as i32
-                    - word!(game.projectile_y_radius[p]) as i32
+                if !((word!(game.PROJECTILE_Y_POS[p]) as i32
+                    - word!(game.PROJECTILE_Y_RADIUS[p]) as i32
                     - 1i32
                     - bottom as i32)
                     & 0x8000
                     == 0
-                    || (word!(game.projectile_y_radius[p]) as i32
-                        + word!(game.projectile_y_pos[p]) as i32
+                    || (word!(game.PROJECTILE_Y_RADIUS[p]) as i32
+                        + word!(game.PROJECTILE_Y_POS[p]) as i32
                         - top as i32)
                         & 0x8000
                         != 0
-                    || (word!(game.projectile_x_radius[p]) as i32
-                        + word!(game.projectile_x_pos[p]) as i32
+                    || (word!(game.PROJECTILE_X_RADIUS[p]) as i32
+                        + word!(game.PROJECTILE_X_POS[p]) as i32
                         - right as i32)
                         & 0x8000
                         != 0)
                 {
-                    let kind: u16 = word!(game.projectile_type[p]);
+                    let kind: u16 = word!(game.PROJECTILE_TYPE[p]);
                     let skip = (kind & 0xf00) == 0
                         && ((kind & 0x10) == 0 || {
                             session_slot!(
@@ -642,9 +642,9 @@ fn mouth_shots<S: BossState + ?Sized>(game: &mut S) {
                             false
                         });
                     if !skip {
-                        word!(game.collision_detection_index = index >> 1);
+                        word!(game.COLLISION_DETECTION_INDEX = index >> 1);
                         game.react_to_shot(Shot::ReactionOnly);
-                        word!(game.projectile_dir[(index >> 1)] |= 0x10);
+                        word!(game.PROJECTILE_DIR[(index >> 1)] |= 0x10);
                         hit = true;
                         index = 0;
                     }
@@ -700,11 +700,11 @@ fn mouth_shots<S: BossState + ?Sized>(game: &mut S) {
 fn projectile_explosion<S: BossState + ?Sized>(game: &mut S, k: u16) {
     let p: i32 = k as i32 >> 1;
     let (x, y) = (
-        word!(game.projectile_x_pos[p]),
-        word!(game.projectile_y_pos[p]),
+        word!(game.PROJECTILE_X_POS[p]),
+        word!(game.PROJECTILE_Y_POS[p]),
     );
     game.place_projectile_spawn(x, y);
-    let kind: u16 = (if (word!(game.projectile_type[p]) & 0x200) == 0 {
+    let kind: u16 = (if (word!(game.PROJECTILE_TYPE[p]) & 0x200) == 0 {
         6
     } else {
         29
@@ -751,8 +751,8 @@ fn health_palette<S: BossState + ?Sized>(game: &mut S) {
     for colour in (0u16..32).step_by(2) {
         let s: i32 = source as i32 >> 1;
         let c: i32 = colour as i32 >> 1;
-        word!(game.palette_buffer[(c + 112)] = kraid_tables::bg_color(game, s as usize));
-        word!(game.palette_buffer[(c + 240)] = kraid_tables::sprite_color(game, s as usize));
+        word!(game.PALETTE_BUFFER[(c + 112)] = kraid_tables::bg_color(game, s as usize));
+        word!(game.PALETTE_BUFFER[(c + 240)] = kraid_tables::sprite_color(game, s as usize));
         source = source.wrapping_add(2);
     }
 }
@@ -830,13 +830,13 @@ fn fire_lint<L: Lease + ?Sized>(game: &mut L, k: u16) {
         game.foreign(|game| game.touches_player_from_above(k)),
     )) != 0
     {
-        let low = word!(game.extra_samus_x_subdisplacement) as u32;
-        let high = word!(game.extra_samus_x_displacement) as u32;
+        let low = word!(game.EXTRA_SAMUS_X_SUBDISPLACEMENT) as u32;
+        let high = word!(game.EXTRA_SAMUS_X_DISPLACEMENT) as u32;
         let sum = (low | (high << 16)).wrapping_add(-LINT_SPEED as u32);
-        word!(game.extra_samus_x_subdisplacement = sum as u16);
-        word!(game.extra_samus_x_displacement = (sum >> 16) as u16);
-        if (word!(game.extra_samus_x_displacement) as i32 + 16) & 0x8000 != 0 {
-            word!(game.extra_samus_x_displacement = -16i32 as u16);
+        word!(game.EXTRA_SAMUS_X_SUBDISPLACEMENT = sum as u16);
+        word!(game.EXTRA_SAMUS_X_DISPLACEMENT = (sum >> 16) as u16);
+        if (word!(game.EXTRA_SAMUS_X_DISPLACEMENT) as i32 + 16) & 0x8000 != 0 {
+            word!(game.EXTRA_SAMUS_X_DISPLACEMENT = -16i32 as u16);
         }
     }
 }
@@ -951,19 +951,19 @@ fn fire_fingernail<L: Lease + ?Sized>(game: &mut L, k: u16) {
 
 /// Spawns a ceiling rock from bank $A7 `crumble`'s column and its PLM.
 fn crumble<L: Lease + ?Sized>(game: &mut L, rock: u16, block_x: u8, plm: u16) {
-    let k = word!(game.cur_enemy_index);
+    let k = word!(game.CUR_ENEMY_INDEX);
     game.spawn_projectile(rock, k, CEILING_ROCKS);
     game.foreign(|game| game.spawn_plm(block_x, 0x12, plm));
 }
 
 fn sound_every_half_second<L: Lease + ?Sized>(game: &mut L) {
     word!(
-        game.boss_death_quake_sound_timer =
-            word!(game.boss_death_quake_sound_timer).wrapping_sub(1)
+        game.BOSS_DEATH_QUAKE_SOUND_TIMER =
+            word!(game.BOSS_DEATH_QUAKE_SOUND_TIMER).wrapping_sub(1)
     );
-    if word!(game.boss_death_quake_sound_timer) == 0 {
+    if word!(game.BOSS_DEATH_QUAKE_SOUND_TIMER) == 0 {
         game.queue_sound(2, ROCKS_SOUND, 6);
-        word!(game.boss_death_quake_sound_timer = 30);
+        word!(game.BOSS_DEATH_QUAKE_SOUND_TIMER = 30);
     }
 }
 
@@ -999,20 +999,20 @@ fn queue_bg2_bottom<L: Lease + ?Sized>(game: &mut L) {
 
 /// Rocks and dust while Kraid rises. Was `Kraid_SpawnRandomQuakeProjs`.
 fn quake_rocks<L: Lease + ?Sized>(game: &mut L) {
-    let mut offset: u16 = (word!(game.random_number)) & 0x3f;
-    if (word!(game.random_number) & 2) == 0 {
+    let mut offset: u16 = (word!(game.RANDOM_NUMBER)) & 0x3f;
+    if (word!(game.RANDOM_NUMBER) & 2) == 0 {
         offset = !(offset as i32) as u16;
     }
     let x: u16 = (session_slot!(game, Body[BODY].base.x_pos)).wrapping_add(offset);
-    let y: u16 = (448 - ((word!(game.random_number) & 0x3f00) as i32 >> 8)) as u16;
+    let y: u16 = (448 - ((word!(game.RANDOM_NUMBER) & 0x3f00) as i32 >> 8)) as u16;
     game.foreign(|game| game.create_sprite(x, y, 21, 0));
-    let rocks: u16 = if (word!(game.random_number) & 0x10) != 0 {
+    let rocks: u16 = if (word!(game.RANDOM_NUMBER) & 0x10) != 0 {
         RISING_ROCKS_RIGHT
     } else {
         RISING_ROCKS_LEFT
     };
-    let parameter = (word!(game.random_number)) & 0x3f0;
-    let k = word!(game.cur_enemy_index);
+    let parameter = (word!(game.RANDOM_NUMBER)) & 0x3f0;
+    let k = word!(game.CUR_ENEMY_INDEX);
     game.spawn_projectile(parameter, k, rocks);
 }
 
@@ -1042,7 +1042,7 @@ fn quake_until_timer<L: Lease + ?Sized>(game: &mut L, interval: u16, next: u16, 
 
 /// Runs a Kraid part's bank $A7 function. Was `CallKraidFunc`.
 pub fn run_function<L: Lease + ?Sized>(game: &mut L, function: u16) {
-    let k: u16 = word!(game.cur_enemy_index);
+    let k: u16 = word!(game.CUR_ENEMY_INDEX);
     match function {
         function::GETS_BIG_BREAK_CEILING => break_ceiling(game),
         function::GETS_BIG_SET_BG2_PRIORITY => set_bg2_priority(game),
@@ -1116,7 +1116,7 @@ pub fn run_function<L: Lease + ?Sized>(game: &mut L, function: u16) {
             restrict_samus_x(game);
             session_slot!(game, Body[BODY].function = function::RAISE_QUAKE_EVERY_16);
             session_slot!(game, Body[BODY].timer = 120);
-            word!(game.earthquake_timer = 496);
+            word!(game.EARTHQUAKE_TIMER = 496);
             game.foreign(|game| game.queue_music_delayed(5));
             queue_bg2_bottom(game);
         }
@@ -1204,7 +1204,7 @@ pub fn run_function<L: Lease + ?Sized>(game: &mut L, function: u16) {
 /// Kraid grows, shaking, and breaks the ceiling platforms. Was
 /// `Kraid_GetsBig_BreakCeilingPlatforms`.
 fn break_ceiling<L: Lease + ?Sized>(game: &mut L) {
-    if (word!(game.nmi_frame_counter_word) & 7) == 0 {
+    if (word!(game.NMI_FRAME_COUNTER_WORD) & 7) == 0 {
         quake_rocks(game);
     }
     let mut step: u16 = 1;
@@ -1218,7 +1218,7 @@ fn break_ceiling<L: Lease + ?Sized>(game: &mut L) {
         let platform: u16 = session_slot!(game, Body[BODY].timer);
         if (platform as i16).wrapping_sub(18) < 0 {
             let rock = crate::boss_lists::kraid_rock_x(game, (platform >> 1) as isize);
-            let k = word!(game.cur_enemy_index);
+            let k = word!(game.CUR_ENEMY_INDEX);
             game.spawn_projectile(rock, k, CEILING_ROCKS);
             let broken = (session_slot!(game, Body[BODY].timer) >> 1) as usize;
             if let Some(&(block_x, plm)) = CEILING_PLATFORMS.get(broken) {
@@ -1238,7 +1238,7 @@ fn break_ceiling<L: Lease + ?Sized>(game: &mut L) {
 /// Was `Kraid_GetsBig_SetBG2TilemapPrioBits`.
 fn set_bg2_priority<L: Lease + ?Sized>(game: &mut L) {
     for v0 in (0u16..4096).step_by(2) {
-        word!(game.tilemap_stuff[(v0 >> 1)] |= 0x2000);
+        word!(game.TILEMAP_STUFF[(v0 >> 1)] |= 0x2000);
     }
     session_slot!(game, Part[ARM].base.properties, |old| old & !(0x400));
     session_slot!(
@@ -1312,17 +1312,17 @@ fn glow_eye<L: Lease + ?Sized>(game: &mut L) {
     let mut lit: i16 = 0;
     for v0 in (226u16..232).step_by(2) {
         let c: i32 = v0 as i32 >> 1;
-        let mut red: u16 = ((word!(game.palette_buffer[c]) as i32 & 0x1f) + 1) as u16;
-        if ((word!(game.palette_buffer[c]) as i32 & 0x1f) - 30i32) & 0x8000 == 0 {
+        let mut red: u16 = ((word!(game.PALETTE_BUFFER[c]) as i32 & 0x1f) + 1) as u16;
+        if ((word!(game.PALETTE_BUFFER[c]) as i32 & 0x1f) - 30i32) & 0x8000 == 0 {
             lit += 1;
             red = 31;
         }
-        let mut green: u16 = ((word!(game.palette_buffer[c]) as i32 & 0x3e0) + 32) as u16;
-        if ((word!(game.palette_buffer[c]) as i32 & 0x3e0) - 960i32) & 0x8000 == 0 {
+        let mut green: u16 = ((word!(game.PALETTE_BUFFER[c]) as i32 & 0x3e0) + 32) as u16;
+        if ((word!(game.PALETTE_BUFFER[c]) as i32 & 0x3e0) - 960i32) & 0x8000 == 0 {
             lit += 1;
             green = 992;
         }
-        word!(game.palette_buffer[c] = green | red | word!(game.palette_buffer[c]) & 0xfc00);
+        word!(game.PALETTE_BUFFER[c] = green | red | word!(game.PALETTE_BUFFER[c]) & 0xfc00);
     }
     if lit.wrapping_sub(6) >= 0 {
         session_slot!(game, Body[BODY].function = function::UNGLOW_EYE);
@@ -1363,7 +1363,7 @@ fn foot_second_phase_thinking<L: Lease + ?Sized>(game: &mut L) {
             row = 4;
             break;
         }
-        let mut choice: i16 = (word!(game.random_number) as i16) & 0x1c;
+        let mut choice: i16 = (word!(game.RANDOM_NUMBER) as i16) & 0x1c;
         if !below(choice as u16, 16) {
             choice = 16;
         }
@@ -1385,20 +1385,20 @@ fn foot_second_phase_thinking<L: Lease + ?Sized>(game: &mut L) {
 /// screen. Was `KraidsFingernail_Init`.
 fn initialize_fingernail_attack<L: Lease + ?Sized>(game: &mut L) {
     let mut direction: u16 = session_slot!(game, Fingernail[GOOD_FINGERNAIL].y_speed);
-    if word!(game.cur_enemy_index) == 384 {
+    if word!(game.CUR_ENEMY_INDEX) == 384 {
         direction = session_slot!(game, Fingernail[BAD_FINGERNAIL].y_speed);
     }
     let pattern: u16 = if direction & 0x8000 != 0 {
         crate::boss_lists::kraid_nail_velocity(
             game,
             true,
-            ((word!(game.random_number) as i32 & 6) >> 1) as isize,
+            ((word!(game.RANDOM_NUMBER) as i32 & 6) >> 1) as isize,
         )
     } else {
         crate::boss_lists::kraid_nail_velocity(
             game,
             false,
-            ((word!(game.random_number) as i32 & 6) >> 1) as isize,
+            ((word!(game.RANDOM_NUMBER) as i32 & 6) >> 1) as isize,
         )
     };
     let speeds = native_record(BANK, pattern, game);
@@ -1413,10 +1413,10 @@ fn initialize_fingernail_attack<L: Lease + ?Sized>(game: &mut L) {
     );
     session_slot!(game, Fingernail[me].base; instruction_timer = 1, current_instruction = animation::FINGERNAIL);
     session_slot!(game, Fingernail[me].function = function::FINGERNAIL_FIRE);
-    let at_kraid: bool = ((word!(game.random_number) & 1) == 0)
+    let at_kraid: bool = ((word!(game.RANDOM_NUMBER) & 1) == 0)
         || ({
             let mut other: u16 = health_eighth(game, GOOD_FINGERNAIL, 1);
-            if word!(game.cur_enemy_index) != 448 {
+            if word!(game.CUR_ENEMY_INDEX) != 448 {
                 other = health_eighth(game, BAD_FINGERNAIL, 1);
             }
             (other == 1)
@@ -1559,10 +1559,10 @@ fn death_bg2_bottom_half<L: Lease + ?Sized>(game: &mut L) {
         game,
         Body[BODY].function = function::DEATH_SINK_THROUGH_FLOOR
     );
-    word!(game.boss_death_quake_sound_timer = 43);
+    word!(game.BOSS_DEATH_QUAKE_SOUND_TIMER = 43);
     session_slot!(game, Body[BODY].base.properties, |old| old | 0x8000);
-    word!(game.earthquake_type = 1);
-    word!(game.earthquake_timer = 256);
+    word!(game.EARTHQUAKE_TYPE = 1);
+    word!(game.EARTHQUAKE_TIMER = 256);
     session_slot!(game, Part[ARM].base; current_instruction = animation::ARM_RAISED, instruction_timer = 1);
     session_slot!(game, Part[FOOT].base; current_instruction = animation::FOOT_IDLE, instruction_timer = 1);
     session_slot!(game, Part[FOOT].function = function::FOOT_IDLE);
@@ -1582,7 +1582,7 @@ pub fn sink_through_floor<L: Lease + ?Sized>(game: &mut L) {
             Body[BODY].base.properties = (session_slot!(game, Body[BODY].base.properties) as i32
                 & !(K_ENEMY_PROPS_TANGIBLE as i32)) as u16
         );
-        word!(game.enemy_bg2_tilemap_size = 2);
+        word!(game.ENEMY_BG2_TILEMAP_SIZE = 2);
         let enemy_ptr: u16 = session_slot!(game, Body[current(game)].base.enemy_ptr);
         game.foreign(|game| game.set_shot_ai(enemy_ptr, NO_SHOT_AI));
         let deleted: u16 = (session_slot!(game, Part[ARM].base.properties) as i32
@@ -1595,7 +1595,7 @@ pub fn sink_through_floor<L: Lease + ?Sized>(game: &mut L) {
         session_slot!(game, Part[BOTTOM_LINT].base.properties = hidden);
         session_slot!(game, Part[FOOT].base.properties = hidden);
         session_slot!(game, Body[BODY].function = function::FADE_IN_CLEAR_BG2_TOP);
-        word!(game.camera_distance_index = 0);
+        word!(game.CAMERA_DISTANCE_INDEX = 0);
         game.foreign(|game| game.scatter_enemy_drop(DropSource::Kraid, enemy_ptr));
         draw_room_bg(game);
     }
@@ -1605,7 +1605,7 @@ pub fn sink_through_floor<L: Lease + ?Sized>(game: &mut L) {
 fn fade_in_clear_bg2_top<L: Lease + ?Sized>(game: &mut L) {
     game.set_slot_byte(BG2_TILEMAP_BASE, 72);
     game.foreign(|game| {
-        crate::word_transfers!(game, descending, 1024; le(tilemap_stuff, 1023) <- value(BLANK_BG2_TILE));
+        crate::word_transfers!(game, descending, 1024; le(TILEMAP_STUFF, 1023) <- value(BLANK_BG2_TILE));
     });
     queue_vram(game, 1024, 0x2000, QueueBank::Word(126), |_| 18432);
     session_slot!(
@@ -1622,12 +1622,12 @@ pub fn fade_in_bg6<L: Lease + ?Sized>(game: &mut L) {
         game.foreign(|game| game.observe_kraid_flags(1));
         game.foreign(|game| game.queue_music_delayed(3));
         game.foreign(|game| game.observe_kraid_flags(2));
-        let area = word!(game.area_index);
+        let area = word!(game.AREA_INDEX);
         let bits: i16 = game.foreign(|game| game.boss_word_native(area)) as i16;
         if (bits as u16 & 1) != 0 {
             session_slot!(game, Body[BODY].function = function::FADE_IN_DEAD_WAS_DEAD);
         } else {
-            let area = word!(game.area_index);
+            let area = word!(game.AREA_INDEX);
             game.foreign(|game| game.set_boss_word_native(area, (bits as u16) | 1));
             session_slot!(game, Body[BODY].function = function::FADE_IN_DEAD_WAS_ALIVE);
         }
@@ -1638,7 +1638,7 @@ pub fn fade_in_bg6<L: Lease + ?Sized>(game: &mut L) {
 /// Kraid rises the rest of the way. Was `Kraid_Raise_Handler`.
 fn raise<L: Lease + ?Sized>(game: &mut L) {
     restrict_samus_x(game);
-    if (word!(game.earthquake_timer) & 5) == 0 {
+    if (word!(game.EARTHQUAKE_TIMER) & 5) == 0 {
         quake_rocks(game);
     }
     session_slot!(
@@ -1682,8 +1682,8 @@ fn place_lint_and_think<L: Lease + ?Sized>(game: &mut L) {
         Part[BOTTOM_LINT].base.y_pos =
             (session_slot!(game, Body[BODY].base.y_pos)).wrapping_add(112)
     );
-    let mut think: i16 = (word!(game.random_number) as i16) & 7;
-    if (word!(game.random_number) & 7) == 0 {
+    let mut think: i16 = (word!(game.RANDOM_NUMBER) as i16) & 7;
+    if (word!(game.RANDOM_NUMBER) & 7) == 0 {
         think = 2;
     }
     session_slot!(
@@ -1698,7 +1698,7 @@ fn body_touch<S: BossState + ?Sized>(game: &mut S) {
         session_slot!(game, Body[BODY].function),
         function::DEATH_INIT,
     ) {
-        let right: u16 = (word!(game.samus_x_radius)).wrapping_add(game.player_x());
+        let right: u16 = (word!(game.SAMUS_X_RADIUS)).wrapping_add(game.player_x());
         let depth: i16 = ((game.player_y()) as i16)
             .wrapping_sub((session_slot!(game, Body[BODY].base.y_pos)) as i16);
         let mut row: i32 = 0;
@@ -1717,8 +1717,8 @@ fn body_touch<S: BossState + ?Sized>(game: &mut S) {
             < 0
         {
             if !below(game.player_x(), 40) {
-                game.set_player_x(word!(game.samus_x_pos).wrapping_sub(8));
-                game.set_previous_player_x(word!(game.samus_x_pos));
+                game.set_player_x(word!(game.SAMUS_X_POS).wrapping_sub(8));
+                game.set_previous_player_x(word!(game.SAMUS_X_POS));
             }
             let mut eject: u16 = (game.player_y()).wrapping_sub(8);
             if ((game.player_y() as i32 - 8i32 - session_slot!(game, Body[BODY].min_eject_y) as i32)
@@ -1730,7 +1730,7 @@ fn body_touch<S: BossState + ?Sized>(game: &mut S) {
             game.set_player_y(eject);
             game.set_previous_player_y(eject);
             push_samus(game);
-            if word!(game.samus_invincibility_timer) == 0 {
+            if word!(game.SAMUS_INVINCIBILITY_TIMER) == 0 {
                 game.react_to_contact(Death::Finalize);
             }
         }
@@ -1756,32 +1756,32 @@ fn body_shots<S: BossState + ?Sized>(game: &mut S) {
         let top: u16 = (session_slot!(game, Body[BODY].base.y_pos)).wrapping_add(hitbox.word(2));
         let mut bottom: u16 =
             (session_slot!(game, Body[BODY].base.y_pos)).wrapping_add(hitbox.word(6));
-        if word!(game.projectile_counter) != 0 {
-            let mut i: i32 = 2 * word!(game.projectile_counter) as i32;
+        if word!(game.PROJECTILE_COUNTER) != 0 {
+            let mut i: i32 = 2 * word!(game.PROJECTILE_COUNTER) as i32;
             while i >= 0 {
                 let p: i32 = i >> 1;
-                let hit_body: bool = if (word!(game.projectile_y_pos[p]) as i32
-                    - word!(game.projectile_y_radius[p]) as i32
+                let hit_body: bool = if (word!(game.PROJECTILE_Y_POS[p]) as i32
+                    - word!(game.PROJECTILE_Y_RADIUS[p]) as i32
                     - 1i32
                     - bottom as i32)
                     & 0x8000
                     != 0
                 {
-                    (word!(game.projectile_y_radius[p]) as i32
-                        + word!(game.projectile_y_pos[p]) as i32
+                    (word!(game.PROJECTILE_Y_RADIUS[p]) as i32
+                        + word!(game.PROJECTILE_Y_POS[p]) as i32
                         - top as i32)
                         & 0x8000
                         == 0
-                        && (word!(game.projectile_x_radius[p]) as i32
-                            + word!(game.projectile_x_pos[p]) as i32
+                        && (word!(game.PROJECTILE_X_RADIUS[p]) as i32
+                            + word!(game.PROJECTILE_X_POS[p]) as i32
                             - right as i32)
                             & 0x8000
                             == 0
                 } else {
                     let q: i32 = i >> 1;
-                    bottom = (word!(game.projectile_x_radius[q]))
-                        .wrapping_add(word!(game.projectile_x_pos[q]));
-                    let depth: i16 = ((word!(game.projectile_y_pos[q])) as i16)
+                    bottom = (word!(game.PROJECTILE_X_RADIUS[q]))
+                        .wrapping_add(word!(game.PROJECTILE_X_POS[q]));
+                    let depth: i16 = ((word!(game.PROJECTILE_Y_POS[q])) as i16)
                         .wrapping_sub((session_slot!(game, Body[BODY].base.y_pos)) as i16);
                     let mut j: u16 = 0;
                     loop {
@@ -1804,8 +1804,8 @@ fn body_shots<S: BossState + ?Sized>(game: &mut S) {
                 if hit_body {
                     projectile_explosion(game, i as u16);
                     let p: i32 = i >> 1;
-                    word!(game.projectile_dir[p] |= 0x10);
-                    if (word!(game.projectile_type[p]) & 0x10) != 0 {
+                    word!(game.PROJECTILE_DIR[p] |= 0x10);
+                    if (word!(game.PROJECTILE_TYPE[p]) & 0x10) != 0 {
                         session_slot!(
                             game,
                             Body[BODY].mouth_flags =
@@ -1871,16 +1871,16 @@ fn unglow_eye<L: Lease + ?Sized>(game: &mut L) {
     let mut fading: u16 = 0;
     loop {
         let c: i32 = colour as i32 >> 1;
-        let mut part: u16 = (word!(game.palette_buffer[c])) & 0x1f;
+        let mut part: u16 = (word!(game.PALETTE_BUFFER[c])) & 0x1f;
         let s: i32 = source as i32 >> 1;
         if kraid_tables::bg_color(game, (s + 1) as usize) & 0x1f != part {
             fading = fading.wrapping_add(1);
-            word!(game.palette_buffer[c] = word!(game.palette_buffer[c]).wrapping_sub(1));
+            word!(game.PALETTE_BUFFER[c] = word!(game.PALETTE_BUFFER[c]).wrapping_sub(1));
         }
-        part = (word!(game.palette_buffer[c])) & 0x3e0;
+        part = (word!(game.PALETTE_BUFFER[c])) & 0x3e0;
         if kraid_tables::bg_color(game, (s + 1) as usize) & 0x3e0 != part {
             fading = fading.wrapping_add(1);
-            word!(game.palette_buffer[c] = word!(game.palette_buffer[c]).wrapping_sub(32));
+            word!(game.PALETTE_BUFFER[c] = word!(game.PALETTE_BUFFER[c]).wrapping_sub(32));
         }
         colour = colour.wrapping_add(2);
         source = source.wrapping_add(2);
@@ -1914,9 +1914,9 @@ fn attack_with_mouth_open<L: Lease + ?Sized>(game: &mut L) {
     {
         let parameter = crate::boss_lists::kraid_rock_spit_x_velocity(
             game,
-            ((word!(game.random_number) as i32 & 0xe) >> 1) as isize,
+            ((word!(game.RANDOM_NUMBER) as i32 & 0xe) >> 1) as isize,
         );
-        let k = (word!(game.random_number)) & 0xe;
+        let k = (word!(game.RANDOM_NUMBER)) & 0xe;
         game.spawn_projectile(parameter, k, SPIT_ROCKS);
         game.queue_sound(2, ROCKS_SOUND, 6);
     }
@@ -2002,8 +2002,8 @@ fn first_phase<L: Lease + ?Sized>(game: &mut L) {
             Body[BODY].script_delay =
                 kraid_record(animation::SCRIPT_IDLE_FIRST, game).word(usize::from(frame))
         );
-        word!(game.earthquake_type = 4);
-        word!(game.earthquake_timer = 340);
+        word!(game.EARTHQUAKE_TYPE = 4);
+        word!(game.EARTHQUAKE_TIMER = 340);
         session_slot!(game, Part[FOOT].base; current_instruction = animation::FOOT_IDLE, instruction_timer = 1);
         session_slot!(game, Part[FOOT].function = function::FOOT_IDLE);
         session_slot!(game, Part[ARM].base; current_instruction = animation::ARM_IDLE, instruction_timer = 1);
@@ -2023,10 +2023,10 @@ fn first_phase<L: Lease + ?Sized>(game: &mut L) {
 fn death_init<L: Lease + ?Sized>(game: &mut L) {
     if session_slot!(game, Body[BODY].hurt_frame) == 0 {
         game.foreign(|game| {
-            crate::word_transfers!(game, ascending, 16; le(target_palettes, 96) <- value(0));
+            crate::word_transfers!(game, ascending, 16; le(TARGET_PALETTES, 96) <- value(0));
         });
         game.foreign(|game| {
-            crate::word_transfers!(game, descending, 16; le(palette_buffer, 127) <- rom(DEATH_PALETTE, 15));
+            crate::word_transfers!(game, descending, 16; le(PALETTE_BUFFER, 127) <- rom(DEATH_PALETTE, 15));
         });
         session_slot!(game, Part[ARM].base; current_instruction = animation::ARM_DYING, instruction_timer = 1);
         session_slot!(game, Body[BODY].function = function::DEATH_FADE_OUT);
@@ -2035,29 +2035,29 @@ fn death_init<L: Lease + ?Sized>(game: &mut L) {
             game,
             Body[BODY].script_delay = kraid_record(animation::SCRIPT_DYING, game).word(0)
         );
-        let _actor: u16 = word!(game.cur_enemy_index);
-        let saved: u16 = word!(game.cur_enemy_index);
+        let _actor: u16 = word!(game.CUR_ENEMY_INDEX);
+        let saved: u16 = word!(game.CUR_ENEMY_INDEX);
         session_slot!(
             game,
             Part[GOOD_FINGERNAIL].base.properties =
                 session_slot!(game, Part[GOOD_FINGERNAIL].base.properties) & !(0x4000)
         );
-        word!(game.cur_enemy_index = 384);
+        word!(game.CUR_ENEMY_INDEX = 384);
         game.foreign(|game| game.normal_death(0x180));
         session_slot!(
             game,
             Part[BAD_FINGERNAIL].base.properties =
                 session_slot!(game, Part[BAD_FINGERNAIL].base.properties) & !(0x4000)
         );
-        word!(game.cur_enemy_index = 448);
+        word!(game.CUR_ENEMY_INDEX = 448);
         game.foreign(|game| game.normal_death(0x1c0));
-        word!(game.cur_enemy_index = 128);
+        word!(game.CUR_ENEMY_INDEX = 128);
         game.foreign(|game| game.normal_death(0x80));
-        word!(game.cur_enemy_index = 192);
+        word!(game.CUR_ENEMY_INDEX = 192);
         game.foreign(|game| game.normal_death(0xc0));
-        word!(game.cur_enemy_index = 256);
+        word!(game.CUR_ENEMY_INDEX = 256);
         game.foreign(|game| game.normal_death(0x100));
-        word!(game.cur_enemy_index = saved);
+        word!(game.CUR_ENEMY_INDEX = saved);
         game.foreign(|game| game.spawn_plm(0x5, 0x1b, DEATH_SPIKES_PLM));
     }
 }
@@ -2065,7 +2065,7 @@ fn death_init<L: Lease + ?Sized>(game: &mut L) {
 /// Arm contact: Samus is pushed back and the bottom lint fires. Was
 /// `KraidsArm_Touch`.
 pub fn arm_touch<L: Lease + ?Sized>(game: &mut L) {
-    if word!(game.samus_invincibility_timer) == 0 {
+    if word!(game.SAMUS_INVINCIBILITY_TIMER) == 0 {
         push_samus(game);
         session_slot!(game, Part[BOTTOM_LINT].function = function::LINT_FIRE);
         touch(game);
@@ -2091,10 +2091,10 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
     set_native_word(game, PAUSE_HOOK, PAUSE);
     if is_dead(game) != 0 {
         game.foreign(|game| {
-            crate::word_transfers!(game, ascending, 16; le(target_palettes, 96) <- rom(ROOM_BG_PALETTE, 0));
+            crate::word_transfers!(game, ascending, 16; le(TARGET_PALETTES, 96) <- rom(ROOM_BG_PALETTE, 0));
         });
         game.foreign(|game| {
-            crate::word_transfers!(game, descending, 1024; le(tilemap_stuff, 1023) <- value(BLANK_BG2_TILE));
+            crate::word_transfers!(game, descending, 1024; le(TILEMAP_STUFF, 1023) <- value(BLANK_BG2_TILE));
         });
         session_slot!(game, Body[BODY].unread_7804 = 0);
         queue_room_bg(game);
@@ -2103,7 +2103,7 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
         session_slot!(game, Body[BODY].function = function::FADE_IN_CLEAR_BG2_TOP);
     } else {
         game.set_slot_byte(BG2_TILEMAP_BASE, 67);
-        word!(game.camera_distance_index = 2);
+        word!(game.CAMERA_DISTANCE_INDEX = 2);
         set_native_word(game, SCROLL_LIMITS, 0);
         set_native_word(game, SCROLL_LIMITS + 2, 1);
         session_slot!(game, Body[BODY].min_eject_y = 324);
@@ -2130,7 +2130,7 @@ pub fn initialize<L: Lease + ?Sized>(game: &mut L) {
         game.foreign(|game| {
             crate::word_transfers!(game, descending, 32; native(0x2ffe) <- value(BLANK_BG2_TILE));
         });
-        word!(game.earthquake_type = 5);
+        word!(game.EARTHQUAKE_TYPE = 5);
         game.foreign(|game| {
             crate::word_transfers!(game, ascending, 16; native(0xc360) <- rom(RISING_PALETTE, 0));
         });
@@ -2195,13 +2195,13 @@ pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
     body_shots(game);
     body_touch(game);
     word!(
-        game.reg_BG2HOFS = (session_slot!(game, Body[BODY].base.x_width) as i32
-            + word!(game.reg_BG1HOFS) as i32
+        game.REG_BG2HOFS = (session_slot!(game, Body[BODY].base.x_width) as i32
+            + word!(game.REG_BG1HOFS) as i32
             - game.camera().bg1_offset[0] as i32
             - session_slot!(game, Body[BODY].base.x_pos) as i32) as u16
     );
     word!(
-        game.reg_BG2VOFS = (game.camera().layer1[1] as i32
+        game.REG_BG2VOFS = (game.camera().layer1[1] as i32
             - session_slot!(game, Body[BODY].base.y_pos) as i32
             + 152) as u16
     );
@@ -2264,7 +2264,7 @@ pub fn foot_main<L: Lease + ?Sized>(game: &mut L) {
 pub fn fingernail_touch<L: Lease + ?Sized>(game: &mut L) {
     game.foreign(|game| game.print_x_undefined());
     game.contact_reaction(Death::Finalize);
-    let _actor = word!(game.cur_enemy_index);
+    let _actor = word!(game.CUR_ENEMY_INDEX);
     game.foreign(|game| game.normal_death(0));
 }
 
@@ -2285,7 +2285,7 @@ pub fn fingernail_main<L: Lease + ?Sized>(game: &mut L, nail: i32) {
 
 /// Was `KraidsGoodFingernail_Init` and `KraidsBadFingernail_Init`.
 pub fn initialize_fingernail<L: Lease + ?Sized>(game: &mut L) {
-    game.foreign(|game| kraid_fingernails::initialize(word!(game.cur_enemy_index), game));
+    game.foreign(|game| kraid_fingernails::initialize(word!(game.CUR_ENEMY_INDEX), game));
 }
 
 /// Instruction: below five eighths of health the arm swipes. Was `Kraid_Instr_9`.
@@ -2312,8 +2312,8 @@ pub fn step_up<L: Lease + ?Sized>(game: &mut L) {
 /// `Kraid_Instr_IncrYpos_Shake`.
 pub fn step_down_and_shake<L: Lease + ?Sized>(game: &mut L) {
     session_slot!(game, Body[BODY].base.y_pos, |old| old.wrapping_add(1));
-    word!(game.earthquake_type = 1);
-    word!(game.earthquake_timer = 10);
+    word!(game.EARTHQUAKE_TYPE = 1);
+    word!(game.EARTHQUAKE_TIMER = 10);
 }
 
 /// Instruction: the stomp. Was `Kraid_Instr_PlaySound_0x76`.
@@ -2348,8 +2348,8 @@ pub fn lunge_right<L: Lease + ?Sized>(game: &mut L) {
         session_slot!(game, Body[BODY].target_x) == 0
     }) && game.move_horizontal(0, (PUSH_RIGHT as i16 as i32) << 16, Slopes::Ignore)
     {
-        word!(game.earthquake_type = 0);
-        word!(game.earthquake_timer = 7);
+        word!(game.EARTHQUAKE_TYPE = 0);
+        word!(game.EARTHQUAKE_TIMER = 7);
         let x: u16 = session_slot!(game, Body[BODY].base.x_pos);
         session_slot!(game, Part[FOOT].base.x_pos = x);
     }

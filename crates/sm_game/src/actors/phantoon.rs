@@ -241,7 +241,7 @@ const FIGHT_START_PLM: u16 = 0xb781;
 const DEFEAT_PLM: u16 = 0xb78b;
 
 fn current<S: BossState + ?Sized>(game: &S) -> i32 {
-    word!(game.cur_enemy_index) as i32
+    word!(game.CUR_ENEMY_INDEX) as i32
 }
 
 fn native_word<S: BossState + ?Sized>(game: &S, at: isize) -> u16 {
@@ -299,14 +299,14 @@ fn close_eye<S: BossState + ?Sized>(game: &mut S, eye_list: u16) {
 pub fn materialisation_sound<S: BossState + ?Sized>(game: &mut S) {
     let sound = crate::boss_lists::phantoon_materialisation_sound(
         game,
-        word!(game.phantoon_materialisation_sound_index) as isize,
+        word!(game.PHANTOON_MATERIALISATION_SOUND_INDEX) as isize,
     );
     game.queue_sound(1, sound as u8, 6);
-    let mut next: u16 = (word!(game.phantoon_materialisation_sound_index)).wrapping_add(1);
-    if !below(word!(game.phantoon_materialisation_sound_index), 2) {
+    let mut next: u16 = (word!(game.PHANTOON_MATERIALISATION_SOUND_INDEX)).wrapping_add(1);
+    if !below(word!(game.PHANTOON_MATERIALISATION_SOUND_INDEX), 2) {
         next = 0;
     }
-    word!(game.phantoon_materialisation_sound_index = next);
+    word!(game.PHANTOON_MATERIALISATION_SOUND_INDEX = next);
 }
 
 /// Instruction: opens the eye for the figure-8's vulnerable window. Was
@@ -335,7 +335,7 @@ pub fn pick_pattern<S: BossState + ?Sized>(game: &mut S) {
     let roll = (game.roll_random() as i32 & 7) as usize;
     let closed: u16 = phantoon_tables::timer(game, Timer::EyeClosed, roll);
     session_slot!(game, Eye[EYE].timer = closed);
-    if (word!(game.nmi_frame_counter_word) & 1) != 0 {
+    if (word!(game.NMI_FRAME_COUNTER_WORD) & 1) != 0 {
         if session_slot!(game, Eye[EYE].movement_reversed) == 0 {
             let index: i16 =
                 ((session_slot!(game, Body[BODY].movement_index)) as i16).wrapping_sub(1);
@@ -496,7 +496,7 @@ fn start_dying<S: BossState + ?Sized>(game: &mut S, k: u16) {
     }
     session_slot!(game, Eye[EYE]; movement_reversed = 0, fade_complete = 0);
     look_at_samus(game);
-    let scroll: u16 = word!(game.reg_BG2HOFS);
+    let scroll: u16 = word!(game.REG_BG2HOFS);
     for offset in (0i16..=510).rev().step_by(2) {
         set_native_word(
             game,
@@ -504,14 +504,14 @@ fn start_dying<S: BossState + ?Sized>(game: &mut S, k: u16) {
             scroll,
         );
     }
-    word!(game.phantom_related_layer_flag |= HIDE_BG2);
+    word!(game.PHANTOM_RELATED_LAYER_FLAG |= HIDE_BG2);
     session_slot!(game, Mouth[MOUTH].shot_roll = 1);
 }
 
 /// Fades the body palette one step toward black, every other frame, until
 /// `steps` steps. Was `Phantoon_FadeOut`.
 fn fade_out<S: BossState + ?Sized>(game: &mut S, steps: u16) {
-    if (word!(game.nmi_frame_counter_word) & 1) == 0
+    if (word!(game.NMI_FRAME_COUNTER_WORD) & 1) == 0
         && session_slot!(game, Eye[EYE].fade_complete) == 0
     {
         session_slot!(game, Eye[EYE].fade_steps = steps);
@@ -524,7 +524,7 @@ fn fade_out<S: BossState + ?Sized>(game: &mut S, steps: u16) {
 /// Fades the body palette one step toward its health colours, every other
 /// frame, until `steps` steps. Was `Phantoon_FadeIn`.
 fn fade_in<S: BossState + ?Sized>(game: &mut S, steps: u16) {
-    if (word!(game.nmi_frame_counter_word) & 1) == 0
+    if (word!(game.NMI_FRAME_COUNTER_WORD) & 1) == 0
         && session_slot!(game, Eye[EYE].fade_complete) == 0
     {
         session_slot!(game, Eye[EYE].fade_steps = steps);
@@ -542,7 +542,7 @@ fn fade_step_toward_target<S: BossState + ?Sized>(game: &mut S) -> u8 {
     {
         for i in (0i32..32).step_by(2) {
             word!(
-                game.palette_buffer[((i >> 1) + 112)] = transition_color(
+                game.PALETTE_BUFFER[((i >> 1) + 112)] = transition_color(
                     session_slot!(game, Eye[EYE].fade_step),
                     native_word(game, palette_source((i >> 1) + 112)),
                     crate::boss_lists::fade_out_target_colour(game, (i >> 1) as isize),
@@ -587,9 +587,9 @@ fn fade_step_toward_powered_on<S: BossState + ?Sized>(game: &mut S) -> u8 {
     {
         for i in (0i32..224).step_by(2) {
             word!(
-                game.palette_buffer[(i >> 1)] = transition_color(
+                game.PALETTE_BUFFER[(i >> 1)] = transition_color(
                     session_slot!(game, Eye[EYE].fade_step),
-                    word!(game.palette_buffer[(i >> 1)]),
+                    word!(game.PALETTE_BUFFER[(i >> 1)]),
                     crate::boss_lists::wrecked_ship_powered_on_colour(game, (i >> 1) as isize),
                     game,
                 )
@@ -659,15 +659,15 @@ fn divide(dividend: i32, divisor: u8) -> u16 {
 /// Sets up the fight: blank BG2, the semi-transparency HDMA and the parts.
 /// Was `Phantoon_Init`.
 pub fn initialize<H: Host + ?Sized>(game: &mut H) {
-    crate::word_transfers!(game, descending, 2048; le(tilemap_stuff, 2047) <- value(BLANK_BG2_TILE));
+    crate::word_transfers!(game, descending, 2048; le(TILEMAP_STUFF, 2047) <- value(BLANK_BG2_TILE));
     crate::word_transfers!(game, descending, 1024; native(BG2_HDMA_DATA_END) <- value(0));
     crate::word_transfers!(game, descending, 16; native(SPRITE_PALETTE_7_END) <- value(0));
-    word!(game.enemy_bg2_tilemap_size = BG2_TILEMAP_SIZE);
+    word!(game.ENEMY_BG2_TILEMAP_SIZE = BG2_TILEMAP_SIZE);
     game.disable_minimap_for_boss();
     let me = current(game);
     slot!(game, Body[me].timer = 120);
     slot!(game, Body[me]; movement_index = 0, speed_subpixel = 0);
-    word!(game.phantoon_materialisation_sound_index = 0);
+    word!(game.PHANTOON_MATERIALISATION_SOUND_INDEX = 0);
     slot!(game, Eye[EYE]; background_held = 0, parameter_2 = 0);
     slot!(
         game,
@@ -709,11 +709,11 @@ pub fn initialize_part<S: BossState + ?Sized>(game: &mut S) {
 pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
     // The bank $A7 function runs on the lease, the effects that need the
     // game in grouped foreign calls.
-    phantoon_actions::broken_nothingness(word!(game.cur_enemy_index), game);
+    phantoon_actions::broken_nothingness(word!(game.CUR_ENEMY_INDEX), game);
     let me = current(game);
     let function = session_slot!(game, Body[me].function);
     run_function_on(game, function);
-    if word!(game.cur_enemy_index) == 0 {
+    if word!(game.CUR_ENEMY_INDEX) == 0 {
         let x: u16 = session_slot!(game, Body[BODY].base.x_pos);
         session_slot!(game, Eye[EYE].base.x_pos = x);
         session_slot!(game, Tentacles[TENTACLES].base.x_pos = x);
@@ -724,12 +724,12 @@ pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
         session_slot!(game, Mouth[MOUTH].base.y_pos = y);
         if session_slot!(game, Eye[EYE].background_held) == 0 {
             word!(
-                game.reg_BG2HOFS = (game.camera().layer1[0] as i32
+                game.REG_BG2HOFS = (game.camera().layer1[0] as i32
                     - session_slot!(game, Body[BODY].base.x_pos) as i32
                     + 40) as u16
             );
             word!(
-                game.reg_BG2VOFS = (game.camera().layer1[1] as i32
+                game.REG_BG2VOFS = (game.camera().layer1[1] as i32
                     - session_slot!(game, Body[BODY].base.y_pos) as i32
                     + 40) as u16
             );
@@ -741,7 +741,7 @@ pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
 /// pre-instruction dispatch does: Phantoon's on this lease, any other on the
 /// game.
 fn run_function_on<L: Lease + ?Sized>(game: &mut L, function: u16) {
-    let k = word!(game.cur_enemy_index);
+    let k = word!(game.CUR_ENEMY_INDEX);
     match function {
         function::WAVY_FADE_IN => wavy_fade_in(game, k),
         function::FIGURE_EIGHT => figure_eight(game, k),
@@ -826,7 +826,7 @@ pub fn shot<S: BossState + ?Sized>(game: &mut S) {
     if (session_slot!(game, Body[BODY].function) as i32 + 0x26b8) & 0x8000 == 0 {
         return;
     }
-    let k: u16 = word!(game.cur_enemy_index);
+    let k: u16 = word!(game.CUR_ENEMY_INDEX);
     let me = current(game);
     let mut health: u16 = session_slot!(game, Body[me].base.health);
     game.react_to_shot(Shot::ReactionOnly);
@@ -852,7 +852,7 @@ pub fn shot<S: BossState + ?Sized>(game: &mut S) {
             }
             health = health.wrapping_sub(session_slot!(game, Body[me].base.health));
             if below(health, ENRAGE_DAMAGE)
-                || (word!(game.projectile_type[word!(game.collision_detection_index)]) & 0xf00)
+                || (word!(game.PROJECTILE_TYPE[word!(game.COLLISION_DETECTION_INDEX)]) & 0xf00)
                     != SUPER_MISSILE
             {
                 let tentacles = k as i32 + TENTACLES;
@@ -889,7 +889,7 @@ pub fn shot<S: BossState + ?Sized>(game: &mut S) {
             session_slot!(game, Body[me].timer = 0);
             session_slot!(game, Tentacles[TENTACLES].swooping = 0);
             session_slot!(game, Tentacles[k as i32 + TENTACLES].damage_taken = 0);
-            word!(game.phantom_related_layer_flag |= HIDE_BG2);
+            word!(game.PHANTOM_RELATED_LAYER_FLAG |= HIDE_BG2);
             session_slot!(game, Body[BODY].base.instruction_timer = 1);
             session_slot!(game, Eye[EYE].base.instruction_timer = 1);
             session_slot!(
@@ -990,7 +990,7 @@ pub fn swooping<S: BossState + ?Sized>(game: &mut S, k: u16) {
             game,
             Body[k as i32].function = function::FADE_OUT_WITH_SWOOP
         );
-        word!(game.phantom_related_layer_flag |= HIDE_BG2);
+        word!(game.PHANTOM_RELATED_LAYER_FLAG |= HIDE_BG2);
         close_eye(game, animation::EYE_CLOSE);
         session_slot!(game, Eye[EYE].fade_complete = 0);
         session_slot!(game, Tentacles[k as i32 + TENTACLES].damage_taken = 0);
@@ -1043,7 +1043,7 @@ pub fn fade_in_before_figure_eight<S: BossState + ?Sized>(game: &mut S) {
 /// Was `Phantoon_BecomeSolidAfterRainingFireballs`.
 pub fn become_solid_after_flame_rain<S: BossState + ?Sized>(game: &mut S, k: u16) {
     session_slot!(game, Eye[EYE].fade_complete = 0);
-    word!(game.phantom_related_layer_flag &= !HIDE_BG2);
+    word!(game.PHANTOM_RELATED_LAYER_FLAG &= !HIDE_BG2);
     session_slot!(game, Body[BODY].base.instruction_timer = 1);
     session_slot!(game, Eye[EYE].base.instruction_timer = 1);
     session_slot!(
@@ -1231,7 +1231,7 @@ pub fn dying_fade_out<S: BossState + ?Sized>(game: &mut S, k: u16) {
         if session_slot!(game, Eye[EYE].fade_complete) != 0 {
             session_slot!(game, Body[k as i32].function = function::ALMOST_DEAD);
         }
-    } else if (word!(game.nmi_frame_counter_word) & 0xf) == 0 {
+    } else if (word!(game.NMI_FRAME_COUNTER_WORD) & 0xf) == 0 {
         if session_slot!(byte game, Eye[EYE].movement_reversed[0]) == 0xf2 {
             session_slot!(game, Eye[EYE].movement_reversed = -1i32 as u16);
             session_slot!(game, Eye[EYE].fade_complete = 0);
@@ -1248,20 +1248,20 @@ pub fn dying_fade_out<S: BossState + ?Sized>(game: &mut S, k: u16) {
 pub fn almost_dead<S: BossState + ?Sized>(game: &mut S, k: u16) {
     game.set_slot_byte(MOSAIC, 0);
     session_slot!(game, Eye[EYE].background_held = 0);
-    word!(game.phantom_related_layer_flag &= !HIDE_BG2);
+    word!(game.PHANTOM_RELATED_LAYER_FLAG &= !HIDE_BG2);
     session_slot!(game, Mouth[MOUTH].semi_transparency = -1i32 as u16);
     session_slot!(game, Body[k as i32].function = function::DEAD);
     session_slot!(game, Body[k as i32].timer = 60);
     session_slot!(game, Eye[EYE].fade_complete = 0);
     session_slot!(game, Body[BODY].base.x_pos = 384);
     session_slot!(game, Body[BODY].base.y_pos = 128);
-    crate::word_transfers!(game, descending, 512; le(tilemap_stuff, 511) <- value(BLANK_BG2_TILE));
+    crate::word_transfers!(game, descending, 512; le(TILEMAP_STUFF, 511) <- value(BLANK_BG2_TILE));
     // A VRAM write queue entry: 400h bytes from $7E:2000 to VRAM $4800.
     let queue = 0xd0;
-    let mut tail: u16 = word!(game.vram_write_queue_tail);
+    let mut tail: u16 = word!(game.VRAM_WRITE_QUEUE_TAIL);
     set_native_word(
         game,
-        queue + word!(game.vram_write_queue_tail) as isize,
+        queue + word!(game.VRAM_WRITE_QUEUE_TAIL) as isize,
         1024,
     );
     tail = tail.wrapping_add(2);
@@ -1272,7 +1272,7 @@ pub fn almost_dead<S: BossState + ?Sized>(game: &mut S, k: u16) {
     let at = usize::try_from(queue + bank_at as isize).expect("VRAM entry outside RAM");
     game.set_slot_byte(at, 126);
     set_native_word(game, queue + tail as isize, 18432);
-    word!(game.vram_write_queue_tail = tail.wrapping_add(2));
+    word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(2));
 }
 
 /// Fades the room to its powered-on colours, then dies: the drop, the boss
@@ -1281,7 +1281,7 @@ pub fn dead<L: Lease + ?Sized>(game: &mut L, k: u16) {
     let me = k as i32;
     if session_slot!(game, Body[me].timer) != 0 {
         session_slot!(game, Body[me].timer, |old| old.wrapping_sub(1));
-    } else if (word!(game.nmi_frame_counter_word) & 3) == 0 {
+    } else if (word!(game.NMI_FRAME_COUNTER_WORD) & 3) == 0 {
         session_slot!(game, Eye[EYE].fade_steps = 12);
         if fade_step_toward_powered_on(game) & 1 != 0 {
             let value = game.slot_byte(MAIN_SCREEN_LAYERS) | BG2_ENABLED;
@@ -1294,7 +1294,7 @@ pub fn dead<L: Lease + ?Sized>(game: &mut L, k: u16) {
             session_slot!(game, Tentacles[TENTACLES].base.properties = deleted);
             session_slot!(game, Mouth[MOUTH].base.properties = deleted);
             game.foreign(|game| {
-                let area = word!(game.area_index);
+                let area = word!(game.AREA_INDEX);
                 let bits = game.boss_word(area);
                 game.set_boss_word(area, bits | 1);
                 game.spawn_plm(0, 0x6, DEFEAT_PLM);
@@ -1307,7 +1307,7 @@ pub fn dead<L: Lease + ?Sized>(game: &mut L, k: u16) {
 /// Looks at Samus and starts the swoop. Was `Phantoon_BecomesSolidAndBodyVuln`.
 pub fn become_solid_and_swoop<S: BossState + ?Sized>(game: &mut S, k: u16) {
     look_at_samus(game);
-    word!(game.phantom_related_layer_flag &= !HIDE_BG2);
+    word!(game.PHANTOM_RELATED_LAYER_FLAG &= !HIDE_BG2);
     begin_swoop(game, k);
     session_slot!(game, Body[BODY].base; instruction_timer = 1, current_instruction = animation::BODY_FULL_HITBOX);
 }
@@ -1373,7 +1373,7 @@ fn spawn_starting_flame<L: Lease + ?Sized>(game: &mut L, k: u16) {
 /// `Phantoon_SpawnFireballsBeforeFight`.
 fn start_fight<L: Lease + ?Sized>(game: &mut L, k: u16) {
     session_slot!(game, Body[k as i32].speed_subpixel = 0);
-    word!(game.phantom_related_layer_flag |= HIDE_BG2);
+    word!(game.PHANTOM_RELATED_LAYER_FLAG |= HIDE_BG2);
     session_slot!(game, Body[k as i32].function = function::WAVY_FADE_IN);
     session_slot!(game, Mouth[MOUTH].semi_transparency = -32767i32 as u16);
     session_slot!(game, Body[k as i32].timer = 120);
@@ -1392,7 +1392,7 @@ fn pick_first_pattern<S: BossState + ?Sized>(game: &mut S, k: u16) {
         Eye[EYE].timer = phantoon_tables::timer(
             game,
             Timer::EyeClosed,
-            (word!(game.nmi_frame_counter_word) as i32 >> 1 & 3) as usize
+            (word!(game.NMI_FRAME_COUNTER_WORD) as i32 >> 1 & 3) as usize
         )
     );
     if (game.roll_random() & 1) != 0 {
@@ -1422,7 +1422,7 @@ fn end_flame_rain_window<S: BossState + ?Sized>(game: &mut S, k: u16) {
         );
         session_slot!(game, Eye[EYE].fade_complete = 0);
         close_eye(game, animation::EYE_CLOSE);
-        word!(game.phantom_related_layer_flag |= HIDE_BG2);
+        word!(game.PHANTOM_RELATED_LAYER_FLAG |= HIDE_BG2);
     }
 }
 

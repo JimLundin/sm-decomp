@@ -80,12 +80,12 @@ fn one(g: &mut Game, case: usize) {
     }
     g.ram().fill(0x7f7..0x8f7, 0x20);
     g.ram()
-        .copy_in(w::debug_disable_minimap, &0x8000u16.to_le_bytes());
+        .copy_in(w::DEBUG_DISABLE_MINIMAP, &0x8000u16.to_le_bytes());
     g.ram()
-        .copy_in(w::room_x_coordinate_on_map, &7u16.to_le_bytes());
+        .copy_in(w::ROOM_X_COORDINATE_ON_MAP, &7u16.to_le_bytes());
     g.ram()
-        .copy_in(w::room_y_coordinate_on_map, &2u16.to_le_bytes());
-    g.ram().copy_in(w::boss_id, &7u16.to_le_bytes());
+        .copy_in(w::ROOM_Y_COORDINATE_ON_MAP, &2u16.to_le_bytes());
+    g.ram().copy_in(w::BOSS_ID, &7u16.to_le_bytes());
     let descriptors = crate::rom::lorom_offset(0x90a83a) as usize;
     // Deliberately odd coordinate address: only checked Native word reads run.
     let coordinates = crate::rom::lorom_offset(0x90a901) as usize;
@@ -143,7 +143,7 @@ fn one(g: &mut Game, case: usize) {
         .map(|at| g.ram().read_byte(at))
         .collect::<Vec<u8>>();
     let mut expected = before.clone();
-    put(&mut expected, w::debug_disable_minimap, 1);
+    put(&mut expected, w::DEBUG_DISABLE_MINIMAP, 1);
     // Independent literal HUD offsets, including all three rows and neighbors.
     for at in [
         0xc63c, 0xc63e, 0xc640, 0xc642, 0xc644, 0xc67c, 0xc67e, 0xc680, 0xc682, 0xc684, 0xc6bc,

@@ -136,7 +136,7 @@ pub fn wait_for_camera(game: &mut impl Host) {
         for (block_x, block_y) in INVISIBLE_WALLS {
             game.spawn_hardcoded_plm(block_x, block_y, INVISIBLE_WALL);
         }
-        let e = word!(game.cur_enemy_index) as i32;
+        let e = word!(game.CUR_ENEMY_INDEX) as i32;
         session_slot!(game, BabyMetroid[e].function = LET_SIDEHOPPER_LIVE);
         session_slot!(game, BabyMetroid[e].cry_enabled = 1);
     }

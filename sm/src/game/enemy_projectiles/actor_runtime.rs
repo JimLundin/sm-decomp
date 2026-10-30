@@ -55,7 +55,7 @@ impl SpeciesActors for Runtime<'_> {
         self.word(0x7804 + usize::from(index))
     }
     fn boss_death_quake_sound_timer(&self) -> u16 {
-        self.word(W::boss_death_quake_sound_timer)
+        self.word(W::BOSS_DEATH_QUAKE_SOUND_TIMER)
     }
     fn fire_arc_part_offset(&self, index: u16) -> u16 {
         self.word(0x8000 + usize::from(index) + 20)

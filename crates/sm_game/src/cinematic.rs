@@ -20,7 +20,7 @@ pub fn advance_cinematic_fade<H: crate::menus::host::Host + ?Sized>(
     if slow {
         // Only the low delay byte decrements, with the signed-byte wrap retained.
         game.ram()
-            .write_byte(0x723, (word!(game.screen_fade_delay) as u8).wrapping_sub(1));
+            .write_byte(0x723, (word!(game.SCREEN_FADE_DELAY) as u8).wrapping_sub(1));
         if (game.ram().read_byte(0x723) as i8) > 0 {
             return false;
         }
@@ -33,7 +33,7 @@ pub fn advance_cinematic_fade<H: crate::menus::host::Host + ?Sized>(
     let step = if slow {
         1
     } else {
-        word!(game.screen_fade_counter) as u8
+        word!(game.SCREEN_FADE_COUNTER) as u8
     };
     let (next, complete) = if increasing {
         let next = brightness.wrapping_add(step) & 31;
@@ -50,7 +50,7 @@ pub fn advance_cinematic_fade<H: crate::menus::host::Host + ?Sized>(
             if complete {
                 0
             } else {
-                word!(game.screen_fade_counter) as u8
+                word!(game.SCREEN_FADE_COUNTER) as u8
             },
         );
         if complete {
@@ -67,7 +67,7 @@ pub fn clear_cinematic_colors<H: crate::menus::host::Host + ?Sized>(
 ) {
     for index in cinematic_color_indices(offset, count) {
         for plane in [256, 512, 768, 1024] {
-            word!(game.tilemap_stuff[index + plane] = 0);
+            word!(game.TILEMAP_STUFF[index + plane] = 0);
         }
     }
 }
@@ -76,11 +76,11 @@ pub fn compose_cinematic_palette<H: crate::menus::host::Host + ?Sized>(game: &mu
     for index in 0..256 {
         // Red uses the physical high byte, independently of native word endianness.
         let red = u16::from(game.ram().read_byte(0x2401 + 2 * index) & 31);
-        let green = (word!(game.tilemap_stuff[index + 768]) >> 3) & 0x3e0;
-        let blue = (word!(game.tilemap_stuff[index + 1024]) << 2) & 0x7c00;
+        let green = (word!(game.TILEMAP_STUFF[index + 768]) >> 3) & 0x3e0;
+        let blue = (word!(game.TILEMAP_STUFF[index + 1024]) << 2) & 0x7c00;
         let color = red | green | blue;
-        word!(game.tilemap_stuff[index] = color);
-        word!(game.palette_buffer[index] = color);
+        word!(game.TILEMAP_STUFF[index] = color);
+        word!(game.PALETTE_BUFFER[index] = color);
     }
 }
 
@@ -94,13 +94,13 @@ pub fn fade_cinematic_colors<H: crate::menus::host::Host + ?Sized>(
         for plane in [512, 768, 1024] {
             let current = index + plane;
             if increasing {
-                let step = word!(game.tilemap_stuff[current + 768]);
+                let step = word!(game.TILEMAP_STUFF[current + 768]);
                 word!(
-                    game.tilemap_stuff[current] =
-                        step.wrapping_add(word!(game.tilemap_stuff[current])) & 0x1fff
+                    game.TILEMAP_STUFF[current] =
+                        step.wrapping_add(word!(game.TILEMAP_STUFF[current])) & 0x1fff
                 );
             } else {
-                word!(game.tilemap_stuff[current] -= word!(game.tilemap_stuff[current + 768]));
+                word!(game.TILEMAP_STUFF[current] -= word!(game.TILEMAP_STUFF[current + 768]));
             }
         }
     }
@@ -108,12 +108,12 @@ pub fn fade_cinematic_colors<H: crate::menus::host::Host + ?Sized>(
 
 pub fn prepare_cinematic_palette_fade<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     for index in 0..256 {
-        let color = word!(game.tilemap_stuff[index + 256]);
+        let color = word!(game.TILEMAP_STUFF[index + 256]);
         for channel in 0..3 {
             let component = (color >> (5 * channel)) & 31;
             let current = index + 512 + 256 * channel;
-            word!(game.tilemap_stuff[current] = component << 8);
-            word!(game.tilemap_stuff[current + 768] = component << 3);
+            word!(game.TILEMAP_STUFF[current] = component << 8);
+            word!(game.TILEMAP_STUFF[current + 768] = component << 3);
         }
     }
 }
@@ -134,7 +134,7 @@ pub fn queue_cinematic_tilemap<H: crate::menus::host::Host + ?Sized>(
         JapaneseIntro => (256, 0x3000),
     };
     game.queue_native_transfer(
-        word!(game.vram_write_queue_tail),
+        word!(game.VRAM_WRITE_QUEUE_TAIL),
         size,
         &|_| source,
         126,
@@ -143,7 +143,7 @@ pub fn queue_cinematic_tilemap<H: crate::menus::host::Host + ?Sized>(
             Eyes => 18848,
             Japanese => 16768,
             JapaneseIntro => 20192,
-            _ => word!(game.cinematic_bg_vram_address),
+            _ => word!(game.CINEMATIC_BG_VRAM_ADDRESS),
         },
     );
 }
@@ -165,7 +165,7 @@ pub fn set_cinematic_tilemap_updates<H: crate::menus::host::Host + ?Sized>(
     enabled: bool,
     game: &mut H,
 ) {
-    word!(game.cinematic_enable_bg_tilemap, |old| (old & 0x7fff)
+    word!(game.CINEMATIC_ENABLE_BG_TILEMAP, |old| (old & 0x7fff)
         | (u16::from(enabled) << 15));
 }
 
@@ -175,8 +175,8 @@ pub fn resume_cinematic_sprite<H: crate::menus::host::Host + ?Sized>(
     instruction: u16,
     game: &mut H,
 ) {
-    word!(game.cinematicspr_instr_timer[slot] = 1);
-    word!(game.cinematicspr_instr_ptr[slot] = instruction);
+    word!(game.CINEMATICSPR_INSTR_TIMER[slot] = 1);
+    word!(game.CINEMATICSPR_INSTR_PTR[slot] = instruction);
 }
 
 pub fn cinematic_color_indices(mut offset: u16, count: u16) -> impl Iterator<Item = usize> {
@@ -234,9 +234,9 @@ pub fn place_cinematic_sprite<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     let slot = usize::from(object >> 1);
-    word!(game.cinematicbg_arr7[slot] = position.0);
-    word!(game.cinematicbg_arr8[slot] = position.1);
-    word!(game.cinematicbg_arr9[slot] = palette);
+    word!(game.CINEMATICBG_ARR7[slot] = position.0);
+    word!(game.CINEMATICBG_ARR8[slot] = position.1);
+    word!(game.CINEMATICBG_ARR9[slot] = palette);
 }
 
 pub fn drift_cinematic_sprite<H: crate::menus::host::Host + ?Sized>(
@@ -251,12 +251,12 @@ pub fn drift_cinematic_sprite<H: crate::menus::host::Host + ?Sized>(
     }
     advance_cinematic_coordinate(object, false, horizontal, game);
     if wrap_horizontal {
-        word!(game.cinematicbg_arr7[(object >> 1)] &= 0x1ff);
+        word!(game.CINEMATICBG_ARR7[(object >> 1)] &= 0x1ff);
     }
 }
 
 pub fn capture_cinematic_palette<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    crate::word_transfers!(game, ascending, 256; native(0x2200) <- le(palette_buffer, 0));
+    crate::word_transfers!(game, ascending, 256; native(0x2200) <- le(PALETTE_BUFFER, 0));
 }
 
 pub fn fade_cinematic_fixed_color<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
@@ -272,23 +272,23 @@ pub fn fade_cinematic_fixed_color<H: crate::menus::host::Host + ?Sized>(game: &m
 }
 
 pub fn enable_cinematic_background<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    word!(game.cinematic_enable_objs |= 0x8000);
+    word!(game.CINEMATIC_ENABLE_OBJS |= 0x8000);
 }
 
 pub fn clear_cinematic_sprites<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     crate::word_transfers!(game, descending, 16;
-        le(cinematicspr_instr_ptr, 15) <- value(0),
-        le(cinematicspr_whattodraw, 15) <- value(0),
+        le(CINEMATICSPR_INSTR_PTR, 15) <- value(0),
+        le(CINEMATICSPR_WHATTODRAW, 15) <- value(0),
     );
 }
 
 pub fn clear_cinematic_background<H: crate::menus::host::Host + ?Sized>(fill: u16, game: &mut H) {
     crate::word_transfers!(game, descending, 1024; native(0x37fe) <- value(fill));
     crate::word_transfers!(game, descending, 4;
-        le(cinematicbg_arr1, 3) <- value(0),
-        le(cinematicbg_instr_ptr, 3) <- value(0),
+        le(CINEMATICBG_ARR1, 3) <- value(0),
+        le(CINEMATICBG_INSTR_PTR, 3) <- value(0),
     );
-    word!(game.intro_text_click_flag = 0);
+    word!(game.INTRO_TEXT_CLICK_FLAG = 0);
 }
 
 pub fn scaled_cinematic_value(value: u16, scale: u16) -> u16 {

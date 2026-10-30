@@ -83,6 +83,6 @@ pub fn harden<H: ActorHost + ?Sized>(game: &mut H) {
 
 /// Instruction - enemy function = [[Y]] ($A5:E8BA), given [[Y]]. Was `set_state`.
 pub fn set_function<H: ActorHost + ?Sized>(function: u16, game: &mut H) {
-    let k = word!(game.cur_enemy_index) as i32;
+    let k = word!(game.CUR_ENEMY_INDEX) as i32;
     slot!(game, SporeSpawn[k].function = function);
 }

@@ -116,7 +116,7 @@ const SPAWN_GRAPHICAL_X_OFFSET: usize = 0x10;
 const SPAWN_GRAPHICAL_Y_OFFSET: usize = 0x12;
 
 fn current<H: Host + ?Sized>(game: &H) -> i32 {
-    word!(game.cur_enemy_index) as i32
+    word!(game.CUR_ENEMY_INDEX) as i32
 }
 
 fn store_word<H: Host + ?Sized>(game: &H, at: usize, value: u16) {
@@ -151,7 +151,7 @@ pub fn initialize_steam<H: Host + ?Sized>(game: &mut H) {
 pub fn steam_main<H: Host + ?Sized>(game: &mut H) {
     let e = current(game);
     slot!(game, Steam[e].base.health = 0x7fff);
-    let k = word!(game.cur_enemy_index);
+    let k = word!(game.CUR_ENEMY_INDEX);
     match slot!(game, Steam[e].function) {
         steam_function::NONE => (),
         steam_function::CALCULATE_ROTATING_ELEVATOR_OFFSET => steam_rotating_offset(k, game),
@@ -167,7 +167,7 @@ pub fn steam_rotating_offset<H: Host + ?Sized>(k: u16, game: &mut H) {
         slot!(game, Steam[e].base.x_pos),
         slot!(game, Steam[e].base.y_pos),
     );
-    let record = ENEMY_SPAWN_DATA + usize::from(word!(game.cur_enemy_index));
+    let record = ENEMY_SPAWN_DATA + usize::from(word!(game.CUR_ENEMY_INDEX));
     let x_offset = x.wrapping_sub(slot!(game, Steam[e].base.x_pos));
     store_word(game, record + SPAWN_GRAPHICAL_X_OFFSET, x_offset);
     let y_offset = y.wrapping_sub(slot!(game, Steam[e].base.y_pos));
@@ -211,8 +211,8 @@ pub fn initialize_door<H: Host + ?Sized>(game: &mut H) {
         Door[e].base.current_instruction = crate::ceres_door_data::door_instructions(game, kind)
     );
     slot!(game, Door[e].drawn_by_ridley = 0);
-    load_overlay_tiles(word!(game.cur_enemy_index), game);
-    let palette = if word!(game.ceres_status) != 0 {
+    load_overlay_tiles(word!(game.CUR_ENEMY_INDEX), game);
+    let palette = if word!(game.CERES_STATUS) != 0 {
         ESCAPE_DOOR_PALETTE.wrapping_add(2)
     } else {
         if slot!(game, Door[e].kind) == RIDLEYS_ROOM_FACING_RIGHT {
@@ -231,19 +231,19 @@ pub fn load_overlay_tiles<H: Host + ?Sized>(k: u16, game: &mut H) {
     if slot!(game, Door[i32::from(k)].kind) != ELEVATOR_DOOR_OVERLAY {
         return;
     }
-    let tail = word!(game.vram_write_queue_tail);
-    let entry = VRAM_WRITE_QUEUE + usize::from(word!(game.vram_write_queue_tail));
+    let tail = word!(game.VRAM_WRITE_QUEUE_TAIL);
+    let entry = VRAM_WRITE_QUEUE + usize::from(word!(game.VRAM_WRITE_QUEUE_TAIL));
     store_word(game, entry, OVERLAY_SIZE);
     store_word(game, entry + 3, OVERLAY_TILES_BANK);
     store_word(game, entry + 2, OVERLAY_TILES);
     store_word(game, entry + 5, OVERLAY_VRAM);
-    word!(game.vram_write_queue_tail = tail.wrapping_add(7));
+    word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(7));
 }
 
 /// Main AI - enemy $E23F (Ceres door) ($A6:F765). Was `CeresDoor_Main`.
 pub fn door_main<H: Host + ?Sized>(game: &mut H) {
     let e = current(game);
-    let k = word!(game.cur_enemy_index);
+    let k = word!(game.CUR_ENEMY_INDEX);
     match slot!(game, Door[e].function) {
         door_function::HANDLE_ESCAPE_EARTHQUAKE => escape_rumble(0x14, game),
         door_function::HANDLE_RIDLEYS_ROOM_ESCAPE_EARTHQUAKE => escape_rumble(0x1d, game),
@@ -258,11 +258,11 @@ pub fn door_main<H: Host + ?Sized>(game: &mut H) {
 /// Handle Ceres door earthquake during escape ($A6:F773): a rare stronger
 /// earthquake type replaces `earthquake`. Was `escape_rumble`.
 pub fn escape_rumble<H: Host + ?Sized>(earthquake: u16, game: &mut H) {
-    if word!(game.ceres_status) >= ESCAPE_STARTED && word!(game.earthquake_timer) == 0 {
-        if (word!(game.random_number) & 0xfff) < 0x80 {
-            word! {game; earthquake_timer = 4; earthquake_type = earthquake.wrapping_add(6); }
+    if word!(game.CERES_STATUS) >= ESCAPE_STARTED && word!(game.EARTHQUAKE_TIMER) == 0 {
+        if (word!(game.RANDOM_NUMBER) & 0xfff) < 0x80 {
+            word! {game; EARTHQUAKE_TIMER = 4; EARTHQUAKE_TYPE = earthquake.wrapping_add(6); }
         } else {
-            word! {game; earthquake_timer = 2; earthquake_type = earthquake; }
+            word! {game; EARTHQUAKE_TIMER = 2; EARTHQUAKE_TYPE = earthquake; }
         }
     }
 }
@@ -271,14 +271,14 @@ pub fn escape_rumble<H: Host + ?Sized>(earthquake: u16, game: &mut H) {
 /// during the getaway cutscene. Was `CeresDoor_Func_4`.
 pub fn mode7_wall<H: Host + ?Sized>(game: &mut H) {
     game.change_properties(
-        word!(game.cur_enemy_index),
+        word!(game.CUR_ENEMY_INDEX),
         K_ENEMY_PROPS_INVISIBLE as u16,
         0,
     );
-    if word!(game.ceres_status) & RIDLEY_ESCAPING != 0 {
+    if word!(game.CERES_STATUS) & RIDLEY_ESCAPING != 0 {
         slot!(game, Door[current(game)].base.palette_index = 3584);
         game.change_properties(
-            word!(game.cur_enemy_index),
+            word!(game.CUR_ENEMY_INDEX),
             0,
             K_ENEMY_PROPS_INVISIBLE as u16,
         );
@@ -290,7 +290,7 @@ pub fn mode7_wall<H: Host + ?Sized>(game: &mut H) {
 /// `CeresDoor_Func_5`.
 pub fn elevator_default<H: Host + ?Sized>(k: u16, game: &mut H) {
     elevator_animations(game);
-    if word!(game.ceres_status) >= ESCAPE_STARTED {
+    if word!(game.CERES_STATUS) >= ESCAPE_STARTED {
         let e = i32::from(k);
         slot!(
             game,
@@ -353,8 +353,8 @@ pub fn rumbling_and_explosions<H: Host + ?Sized>(k: u16, game: &mut H) {
 /// Set Ceres elevator room to rotate if Ridley has escaped ($A6:F67F). Was
 /// `finish_door_explosion`.
 pub fn start_elevator_rotation<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.ceres_status) != 0 {
-        word!(game.ceres_status = ELEVATOR_ROTATING);
+    if word!(game.CERES_STATUS) != 0 {
+        word!(game.CERES_STATUS = ELEVATOR_ROTATING);
     }
 }
 
@@ -363,8 +363,8 @@ pub fn start_elevator_rotation<H: Host + ?Sized>(game: &mut H) {
 /// frame. Was `CeresDoor_Func_7`.
 pub fn elevator_animations<H: Host + ?Sized>(game: &mut H) {
     animate_elevator_platform(game);
-    if word!(game.palette_change_num) == 0 {
-        let frame = 2 * (word!(game.nmi_frame_counter_word) & 0x38);
+    if word!(game.PALETTE_CHANGE_NUM) == 0 {
+        let frame = 2 * (word!(game.NMI_FRAME_COUNTER_WORD) & 0x38);
         copy_rom_colors_to_palette(0x52, 0xa6, BEACON_PALETTES.wrapping_add(frame), 6, game);
     }
 }
@@ -372,7 +372,7 @@ pub fn elevator_animations<H: Host + ?Sized>(game: &mut H) {
 /// Animate Ceres elevator platform ($A6:F8F1): light and dark frames, two
 /// frames each. Was `CeresDoor_Func_8`.
 pub fn animate_elevator_platform<H: Host + ?Sized>(game: &mut H) {
-    let frame = ((word!(game.nmi_frame_counter_word) & 2) >> 1) as isize;
+    let frame = ((word!(game.NMI_FRAME_COUNTER_WORD) & 2) >> 1) as isize;
     let list = crate::ceres_door_data::platform_frame(game, frame);
     game.queue_mode7_transfer(0xa6, list);
 }

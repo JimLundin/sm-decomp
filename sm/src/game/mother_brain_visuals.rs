@@ -13,7 +13,7 @@ impl VisualsHost for Game {
 #[forbid(unsafe_code)]
 pub fn start_earthquake(a: u16, game: &mut Game) {
     {
-        word! {game; earthquake_type = a; earthquake_timer = 20; }
+        word! {game; EARTHQUAKE_TYPE = a; EARTHQUAKE_TIMER = 20; }
         queue_sfx2_max6(0x25, game);
     }
 }

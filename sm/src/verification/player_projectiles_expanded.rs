@@ -159,8 +159,8 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
         ] {
             put(&mut g, at, value);
         }
-        put(&mut g, crate::ram_map::words::projectile_index, 0);
-        put(&mut g, crate::ram_map::words::cur_block_index, 0x7777);
+        put(&mut g, crate::ram_map::words::PROJECTILE_INDEX, 0);
+        put(&mut g, crate::ram_map::words::CUR_BLOCK_INDEX, 0x7777);
         match id {
             82..=84 => {
                 // Parent raw0 links child raw2; child actually moves into terrain.
@@ -253,7 +253,7 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
         // Synthetic animation/trail definitions, deliberately distinct by frame,
         // style, direction and side. These are inputs, never expected algorithms.
         g.ram().fill(0xd658..0xd7c0, 0);
-        put(&mut g, crate::ram_map::words::projectile_index, 0);
+        put(&mut g, crate::ram_map::words::PROJECTILE_INDEX, 0);
         put(&mut g, 0xb64, 200); // Both signed-offset trail halves remain visible.
         rw(0x9393f8, 3);
         rw(0x9393fe, 1);
@@ -303,11 +303,11 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
             45 | 79 => rw(0x939400, 0),
             46..=48 => limit = Some(lorom(0x939400) + [2, 4, 5][(id - 46) as usize]),
             49 => {
-                put(&mut g, crate::ram_map::words::projectile_index, 0xffff);
+                put(&mut g, crate::ram_map::words::PROJECTILE_INDEX, 0xffff);
                 put(&mut g, 0xc40 + 0xfffe, 0x9400);
                 put(&mut g, 0xc54 + 0xfffe, 1);
             }
-            50 => put(&mut g, crate::ram_map::words::projectile_index, 1),
+            50 => put(&mut g, crate::ram_map::words::PROJECTILE_INDEX, 1),
             51 => {}
             52 => put(&mut g, 0xc54, 2),
             53 => rw(0x939400, 0x8239),
@@ -320,7 +320,7 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
             56 => put(&mut g, 0xd67c + 34, 7),
             57 => put(&mut g, 0xd658 + 34, 2),
             58 => {
-                put(&mut g, crate::ram_map::words::projectile_index, 2);
+                put(&mut g, crate::ram_map::words::PROJECTILE_INDEX, 2);
                 for (at, value) in [
                     (0xb66, 200),
                     (0xb7a, 150),
@@ -348,8 +348,8 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
             }
             60 | 61 => {
                 put(&mut g, 0xc90, 1);
-                put(&mut g, crate::ram_map::words::room_width_in_blocks, 32);
-                put(&mut g, crate::ram_map::words::room_height_in_blocks, 32);
+                put(&mut g, crate::ram_map::words::ROOM_WIDTH_IN_BLOCKS, 32);
+                put(&mut g, crate::ram_map::words::ROOM_HEIGHT_IN_BLOCKS, 32);
             }
             62 => limit = Some(lorom(0x9bb820) + 2),
             63 => limit = Some(lorom(0x90b609)),
@@ -390,7 +390,7 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
                 [0x100, 0x200, 0x20, 0x10][(id - 75) as usize],
             ),
             80 | 81 => {
-                put(&mut g, crate::ram_map::words::projectile_index, 20);
+                put(&mut g, crate::ram_map::words::PROJECTILE_INDEX, 20);
                 put(&mut g, 0xc40 + 20, 0x9400);
                 put(&mut g, 0xc54 + 20, 1);
                 if id == 81 {
@@ -469,7 +469,7 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
             native.write(lorom(0x909000), 3);
         }
         24..=27 => {
-            put(&mut g, crate::ram_map::words::hyper_beam_flag, 1);
+            put(&mut g, crate::ram_map::words::HYPER_BEAM_FLAG, 1);
             for part in 0..3 {
                 put(&mut g, 0xcd6 + part * 2, 1);
                 put(
@@ -485,7 +485,7 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
             native.write(lorom(0x90c489), 1);
             native.write(lorom(0x90c487), 5);
         }
-        30 => put(&mut g, crate::ram_map::words::time_is_frozen_flag, 1),
+        30 => put(&mut g, crate::ram_map::words::TIME_IS_FROZEN_FLAG, 1),
         31 => {
             put(&mut g, 0xd658, 0);
             put(&mut g, 0xd67c, 0);
@@ -497,13 +497,13 @@ pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<
             put(&mut g, 0xd730, 0xff00);
         }
         34 => {
-            put(&mut g, crate::ram_map::words::oam_next_ptr, 512);
+            put(&mut g, crate::ram_map::words::OAM_NEXT_PTR, 512);
         }
         35 => {
             put(&mut g, 0xd658, 2);
             put(&mut g, 0xd67c, 1);
         }
-        36 => put(&mut g, crate::ram_map::words::time_is_frozen_flag, 1),
+        36 => put(&mut g, crate::ram_map::words::TIME_IS_FROZEN_FLAG, 1),
         37..=39 => {
             put(&mut g, 0xdfa, 0x1234);
             put(&mut g, 0xa10, 0xabcd);

@@ -123,7 +123,7 @@ const BOUNCE_ROLL_CAP: u16 = 0x5000;
 const ROLL_SPEED_CAP: u16 = 0x4000;
 
 fn current<H: Host + ?Sized>(game: &H) -> i32 {
-    word!(game.cur_enemy_index) as i32
+    word!(game.CUR_ENEMY_INDEX) as i32
 }
 
 /// Sets up a boulder from its parameters. Was `Boulder_Init`.
@@ -212,7 +212,7 @@ fn release<H: Host + ?Sized>(game: &mut H, me: i32) {
 /// Was `Boulder_Func_1`.
 fn wait_for_samus<H: Host + ?Sized>(game: &mut H) {
     let below: i16 = {
-        let actor = word!(game.cur_enemy_index);
+        let actor = word!(game.CUR_ENEMY_INDEX);
         game.player_delta(actor, Axis::Y)
     } as i16;
     if below >= 0 {
@@ -220,7 +220,7 @@ fn wait_for_samus<H: Host + ?Sized>(game: &mut H) {
         if below.wrapping_sub(slot!(game, Boulder[me].trigger_height) as i16) < 0 {
             if slot!(game, Boulder[me].kind) != kind::ROLL_RIGHT {
                 let beside: i16 = {
-                    let actor = word!(game.cur_enemy_index);
+                    let actor = word!(game.CUR_ENEMY_INDEX);
                     game.player_delta(actor, Axis::X)
                 } as i16;
                 if beside < 0
@@ -230,7 +230,7 @@ fn wait_for_samus<H: Host + ?Sized>(game: &mut H) {
                 }
             } else {
                 let beside: i16 = {
-                    let actor = word!(game.cur_enemy_index);
+                    let actor = word!(game.CUR_ENEMY_INDEX);
                     game.player_delta(actor, Axis::X)
                 } as i16;
                 if beside >= 0
@@ -328,7 +328,7 @@ fn bounce_fall<H: Host + ?Sized>(game: &mut H) {
     let me = current(game);
     let row: i32 = (8 * slot!(byte game, Boulder[me].fall_speed[1]) as i32) >> 1;
     let landed = {
-        let actor = word!(game.cur_enemy_index);
+        let actor = word!(game.CUR_ENEMY_INDEX);
         let amount = game.enemy_speed32(4 * (row >> 1) as usize) as i32;
         game.move_vertical(actor, amount)
     };
@@ -379,7 +379,7 @@ fn roll<H: Host + ?Sized>(game: &mut H) {
     let mut row = row(game, me, true);
     let index: i32 = row as i32 >> 1;
     {
-        let actor = word!(game.cur_enemy_index);
+        let actor = word!(game.CUR_ENEMY_INDEX);
         let amount = game
             .enemy_speed32(4 * (index >> 1) as usize)
             .wrapping_add(((slot!(game, Boulder[me].roll_lift) as i32) << 16) as u32)
@@ -396,7 +396,7 @@ fn roll<H: Host + ?Sized>(game: &mut H) {
     }
     let index: i32 = row as i32 >> 1;
     let blocked = {
-        let actor = word!(game.cur_enemy_index);
+        let actor = word!(game.CUR_ENEMY_INDEX);
         let amount = game.enemy_speed32(4 * (index >> 1) as usize) as i32;
         game.move_horizontal(actor, amount, Slopes::Ignore)
     };

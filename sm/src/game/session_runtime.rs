@@ -1197,20 +1197,20 @@ crate::game::callback_dispatch! {
         11065611 => crate::game::actors::maridia_puffer::advance; 11066132 => crate::game::actors::maridia_puffer::shot;
         11068983 => crate::game::actors::wrecked_ship_spark::initialize;
         11069070 => crate::game::actors::wrecked_ship_spark::advance;
-        11069198 | 11069725 => [crate::ram_map::word!(game.projectile_dir[crate::ram_map::word!(game.collision_detection_index)] &= !(0x10))];
+        11069198 | 11069725 => [crate::ram_map::word!(game.PROJECTILE_DIR[crate::ram_map::word!(game.COLLISION_DETECTION_INDEX)] &= !(0x10))];
         11071880 => crate::game::actors::ki_hunter::initialize;
         11072020 => crate::game::actors::ki_hunter::initialize_wings; 11072092 => crate::game::actors::ki_hunter::advance;
         11072098 => crate::game::actors::ki_hunter::advance;
         11073281 => crate::game::actors::ki_hunter::shot;
         11111301 => [{
-                    sm_a9::tubes_falling_main(crate::ram_map::word!(game.cur_enemy_index), game);
+                    sm_a9::tubes_falling_main_ai(crate::ram_map::word!(game.CUR_ENEMY_INDEX), game);
                 }];
         11121927 => sm_a9::brain_shot;
 
 
 
         11765499 => [{
-            let e = i32::from(crate::ram_map::word!(game.cur_enemy_index));
+            let e = i32::from(crate::ram_map::word!(game.CUR_ENEMY_INDEX));
             crate::ram_map::slot!(game, EnemyData[e].properties, |old| old | crate::game::constants::enemy_properties::K_ENEMY_PROPS_DISABLE_SAMUS_COLL as u16);
             crate::ram_map::slot!(game, EnemyData[e].current_instruction = 0x86a7);
         }];
@@ -1218,12 +1218,12 @@ crate::game::callback_dispatch! {
         11765882 => [{ let address = sm_game::actors::zeb::state_address(game); actor_species_pre_instruction(address, game); }];
         11766686 => [{
             let address = sm_game::actors::gamet::state_address(game);
-            sm_game::actors::species::pipe_bug_state(address, crate::ram_map::word!(game.cur_enemy_index), game);
+            sm_game::actors::species::pipe_bug_state(address, crate::ram_map::word!(game.CUR_ENEMY_INDEX), game);
             sm_game::actors::gamet::reset_offscreen(game);
         }];
         11767726 => [{
             let address = sm_game::actors::geega::state_address(game);
-            sm_game::actors::species::pipe_bug_state(address, crate::ram_map::word!(game.cur_enemy_index), game);
+            sm_game::actors::species::pipe_bug_state(address, crate::ram_map::word!(game.CUR_ENEMY_INDEX), game);
         }];
         11769448 => [actors::botwoon::main_ai(&mut Runtime::new(game))];
         11771903 => [actors::botwoon::contact(false, &mut Runtime::new(game))];
@@ -1407,10 +1407,10 @@ crate::game::callback_dispatch! {
         11068957 | 11068970 => [crate::game::actors::wrecked_ship_spark::instruction(ea == 11068957, j, game)];
         11062537 | 11062692 | 11062762 | 11062917 | 11062987 | 11062991 | 11063146 | 11063216 | 11063371 | 11063441 | 11063490 | 11063494 | 11063506 | 11063552 | 11063559 | 11063601 | 11063613 | 11063659 => [crate::game::actors::wrecked_ship_robots::instruction(ea, k, j, game)];
         11072806 | 11072996 | 11073151 | 11073234 | 11073240 => [crate::game::actors::ki_hunter::instruction(ea, k, j, game)];
-        11128756 => [sm_game::actors::baby_metroid_cutscene::instruction_go_to_cfa2(k, j)];
-        11128778 => [sm_game::actors::baby_metroid_cutscene::instruction_go_to_cfb8(k, j)];
-        11139360 => [sm_game::actors::baby_metroid_encounter::instruction_go_to_f90e(k, j)]; 11139382 => [sm_game::actors::baby_metroid_encounter::instruction_go_to_f924(k, j)];
-        11139472 => [sm_game::actors::baby_metroid_encounter::instruction_go_to_f93a(k, j)];
+        11128756 => [sm_game::actors::baby_metroid_cutscene::go_to_initial(k, j)];
+        11128778 => [sm_game::actors::baby_metroid_cutscene::go_to_draining_mother_brain(k, j)];
+        11139360 => [sm_game::actors::baby_metroid_encounter::go_to_normal(k, j)]; 11139382 => [sm_game::actors::baby_metroid_encounter::go_to_latched_on(k, j)];
+        11139472 => [sm_game::actors::baby_metroid_encounter::go_to_remorse(k, j)];
         10664899 => [{
             crate::game::rio::instruction_finished(game);
             j
@@ -1435,7 +1435,7 @@ crate::game::callback_dispatch! {
         10872671 => [{ actors::spore_spawn::increase_max_x_radius(game); j }];
         10872689 => [{ actors::spore_spawn::clear_damaged_flag(game); j }];
         10872877 => [actors::spore_spawn::set_max_x_radius_and_angle_delta(j, game)];
-        10872946 => [{ crate::ram_map::word!(game.boss_death_quake_sound_timer = j.word(0)); j.offset(1) }];
+        10872946 => [{ crate::ram_map::word!(game.BOSS_DEATH_QUAKE_SOUND_TIMER = j.word(0)); j.offset(1) }];
         10872956 => [{ actors::spore_spawn::harden(game); j }];
         10872981 => [{ crate::game::music::queue_sfx2_max6(j.word(0), game); j.offset(1) }];
         10873018 => [{ actors::spore_spawn::set_function(j.word(0), game); j.offset(1) }];
@@ -1444,8 +1444,8 @@ crate::game::callback_dispatch! {
         10873198 => [actors::spore_spawn::emit_spore(j, game)];
         10873265 => [actors::spore_spawn::emit_hurt(j, game)];
         10873009 => [{ crate::game::enemy_projectiles::scatter_drop(sm_game::enemy_projectiles::drops::DropSource::SporeSpawn, k, game); j }];
-        10852501 => [{ crate::ram_map::word!(game.room_loading_irq_handler = 12); j }];
-        10853514 => [{ crate::ram_map::word!(game.room_loading_irq_handler = 12); j }];
+        10852501 => [{ crate::ram_map::word!(game.ROOM_LOADING_IRQ_HANDLER = 12); j }];
+        10853514 => [{ crate::ram_map::word!(game.ROOM_LOADING_IRQ_HANDLER = 12); j }];
         10854240 => [{ crate::game::music::queue_sfx2_max6(j.word(0), game); j.offset(1) }];
         10854254 => [{ crate::game::music::queue_sfx3_max6(j.word(0), game); j.offset(1) }];
         10852159 => [{ crate::game::sprite_effect_runtime::draygon_random_sprite(21, game); j }];

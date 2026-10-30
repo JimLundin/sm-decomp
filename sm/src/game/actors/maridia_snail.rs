@@ -105,7 +105,7 @@ fn face_player(runtime: &mut Runtime<'_>, key: Key) {
 }
 fn input_matches(runtime: &Runtime<'_>, key: Key) -> bool {
     let facing = runtime.resolve_actor(key, Native).variables[2] & 1;
-    if (runtime.word(words::joypad1_lastkeys) & 0x300) >> 8 == 1 {
+    if (runtime.word(words::JOYPAD1_LASTKEYS) & 0x300) >> 8 == 1 {
         facing == 0
     } else {
         facing != 0
@@ -269,10 +269,10 @@ fn contact_properties(runtime: &mut Runtime<'_>, key: Key) {
     let mut solid = false;
     if runtime.resolve_actor(key, Native).pre_instruction != 0xd1b3 {
         solid = if runtime.native_word(extra(key) + 16) == 1 {
-            runtime.word(words::samus_has_momentum_flag) == 0
+            runtime.word(words::SAMUS_HAS_MOMENTUM_FLAG) == 0
                 && runtime.resolve_actor(key, Native).pre_instruction == 0xcf5f
         } else {
-            runtime.word(words::samus_has_momentum_flag) == 0 && {
+            runtime.word(words::SAMUS_HAS_MOMENTUM_FLAG) == 0 && {
                 let phase = runtime.native_word(extra(key) + 16);
                 phase == 2 || phase != 3 && phase != 5
             }
@@ -398,10 +398,10 @@ fn pushed(runtime: &mut Runtime<'_>, key: Key) {
     let at = extra(key);
     runtime.write_slice_native(
         at + 4,
-        runtime.word(words::absolute_moved_last_frame_x_fract),
+        runtime.word(words::ABSOLUTE_MOVED_LAST_FRAME_X_FRACT),
     );
-    let distance = runtime.word(words::absolute_moved_last_frame_x);
-    runtime.write_slice_native(at + 6, runtime.word(words::absolute_moved_last_frame_x));
+    let distance = runtime.word(words::ABSOLUTE_MOVED_LAST_FRAME_X);
+    runtime.write_slice_native(at + 6, runtime.word(words::ABSOLUTE_MOVED_LAST_FRAME_X));
     let index = (distance.min(15).wrapping_mul(4) >> 1) as isize;
     runtime.write_slice_native(at, table(runtime, 0xa3d517, index));
     runtime.write_slice_native(at + 2, table(runtime, 0xa3d517, index + 1));
@@ -417,7 +417,7 @@ pub(crate) fn touch(game: &mut Game) {
         || runtime.resolve_actor(key, Native).pre_instruction == 0xcf5f
         || !input_matches(&runtime, combat::current(&runtime)))
         && (runtime.resolve_actor(key, Native).pre_instruction == 0xd1b3
-            || runtime.word(words::samus_has_momentum_flag) != 0)
+            || runtime.word(words::SAMUS_HAS_MOMENTUM_FLAG) != 0)
     {
         let current = combat::current(&runtime);
         pushed(&mut runtime, current);
@@ -440,8 +440,8 @@ pub(crate) fn touch(game: &mut Game) {
 }
 pub(crate) fn shot(game: &mut Game) {
     let mut runtime = Runtime::new(game);
-    let index = usize::from(runtime.word(words::collision_detection_index));
-    let kind = runtime.word(word_arrays::projectile_type + 2 * index) & 0xff00;
+    let index = usize::from(runtime.word(words::COLLISION_DETECTION_INDEX));
+    let kind = runtime.word(word_arrays::PROJECTILE_TYPE + 2 * index) & 0xff00;
     if kind == 0x300 || kind == 0x500 {
         combat::shot_reaction(&mut runtime, api::ShotHandling::Finalize);
     } else {

@@ -118,12 +118,12 @@ fn below(value: u16, limit: u16) -> bool {
 }
 
 fn gravity<L: Lease>(game: &L) -> u32 {
-    ((word!(game.samus_y_accel) as u32) << 16) | word!(game.samus_y_subaccel) as u32
+    ((word!(game.SAMUS_Y_ACCEL) as u32) << 16) | word!(game.SAMUS_Y_SUBACCEL) as u32
 }
 
 /// Initialisation AI: a dachora idles, an echo waits. Was `Dachora_Init`.
 pub fn initialize<L: Lease>(game: &mut L) {
-    let me = word!(game.cur_enemy_index) as i32;
+    let me = word!(game.CUR_ENEMY_INDEX) as i32;
     session_slot!(
         game,
         Dachora[me].base.properties = (session_slot!(game, Dachora[me].base.properties))
@@ -167,7 +167,7 @@ pub fn initialize<L: Lease>(game: &mut L) {
 
 /// Main AI: the function. Was `Dachora_Main`.
 pub fn main_ai<L: Lease>(game: &mut L) {
-    let me = word!(game.cur_enemy_index) as i32;
+    let me = word!(game.CUR_ENEMY_INDEX) as i32;
     let address = (BANK << 16) | session_slot!(game, Dachora[me].function) as u32;
     game.foreign(|game| game.run_function(address));
 }
@@ -385,7 +385,7 @@ pub fn echo<L: Lease>(game: &mut L, k: u16) {
     let lifetime: u16 = session_slot!(game, Echo[me].lifetime);
     if lifetime != 0 {
         session_slot!(game, Echo[me].lifetime = lifetime.wrapping_sub(1));
-        let odd_frame = (word!(game.nmi_frame_counter_word) & 1) != 0;
+        let odd_frame = (word!(game.NMI_FRAME_COUNTER_WORD) & 1) != 0;
         // Odd echo slots show on odd frames, the others on even frames.
         let keep_hidden = if (k & 0x40) != 0 {
             !odd_frame

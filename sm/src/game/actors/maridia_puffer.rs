@@ -17,7 +17,7 @@ const RATES: [u16; 26] = [
 ];
 
 pub(crate) fn initialize(game: &mut Game) {
-    let E = word!(game.cur_enemy_index) as i32;
+    let E = word!(game.CUR_ENEMY_INDEX) as i32;
     slot!(game, Puffer[E].base; instruction_timer = 1, timer = 0, current_instruction = 0xd841);
     let rate = 4u16.wrapping_mul(slot!(game, Puffer[E].parameter_1)) as usize >> 1;
     let delay = RATES[rate];
@@ -25,15 +25,15 @@ pub(crate) fn initialize(game: &mut Game) {
         var_00 = SPEED_LIMITS[slot!(game, Puffer[E].parameter_2) as usize]);
 }
 fn aim(game: &mut Game) -> (i32, u16) {
-    let key = Key::from_legacy(word!(game.cur_enemy_index));
+    let key = Key::from_legacy(word!(game.CUR_ENEMY_INDEX));
     let angle = (api::angle_to_player(&Runtime::new(game), key) as u8).wrapping_sub(64) as u16;
-    let E = word!(game.cur_enemy_index) as i32;
+    let E = word!(game.CUR_ENEMY_INDEX) as i32;
     slot!(game, Puffer[E].var_01 = angle);
     (E, angle)
 }
 fn drift(game: &mut Game) {
     for horizontal in [true, false] {
-        let E = word!(game.cur_enemy_index) as i32;
+        let E = word!(game.CUR_ENEMY_INDEX) as i32;
         let component = sm_game::gameplay_tables::enemy_sine(
             game,
             (slot!(game, Puffer[E].var_02) as u8).wrapping_add(if horizontal { 64 } else { 0 })
@@ -51,7 +51,7 @@ fn drift(game: &mut Game) {
     }
 }
 fn change_speed(accelerating: bool, game: &mut Game) {
-    let E = word!(game.cur_enemy_index) as i32;
+    let E = word!(game.CUR_ENEMY_INDEX) as i32;
     let previous = slot!(game, Puffer[E].var_f);
     slot!(game, Puffer[E].var_f, |old| old.wrapping_sub(1));
     if previous == 1 {
@@ -72,14 +72,14 @@ fn change_speed(accelerating: bool, game: &mut Game) {
 }
 
 pub(crate) fn advance(game: &mut Game) {
-    let E = word!(game.cur_enemy_index) as i32;
+    let E = word!(game.CUR_ENEMY_INDEX) as i32;
     let cooldown = slot!(game, Puffer[E].var_07).wrapping_sub(1);
     slot!(game, Puffer[E].var_07 = cooldown);
     if cooldown == 0 {
         slot!(game, Puffer[E]; var_07 = 1, var_03 = 0);
     }
     let state = slot!(game, Puffer[E].var_a);
-    let E = word!(game.cur_enemy_index) as i32;
+    let E = word!(game.CUR_ENEMY_INDEX) as i32;
     match state {
         0xd92b => {
             let previous = slot!(game, Puffer[E].var_e);
@@ -123,14 +123,14 @@ pub(crate) fn advance(game: &mut Game) {
 }
 
 pub(crate) fn shot(game: &mut Game) {
-    let E = word!(game.cur_enemy_index) as i32;
+    let E = word!(game.CUR_ENEMY_INDEX) as i32;
     slot!(game, Puffer[E].var_40 = slot!(game, Puffer[E].base.health));
     combat::shot_reaction(&mut Runtime::new(game), api::ShotHandling::Finalize);
     if slot!(game, Puffer[E].base.health) == slot!(game, Puffer[E].var_40)
         && slot!(game, Puffer[E].var_03) == 0
     {
         slot!(game, Puffer[E].base; instruction_timer = 1, timer = 0, current_instruction = 0xd855);
-        let direction = word!(game.projectile_dir[word!(game.collision_detection_index)]) & 0xf;
+        let direction = word!(game.PROJECTILE_DIR[word!(game.COLLISION_DETECTION_INDEX)]) & 0xf;
         slot!(game, Puffer[E].var_02 = RECOIL_ANGLES[direction as usize]);
         slot!(game, Puffer[E]; var_b = 256, var_d = 1536, var_a = 0xd97c, var_07 = 48, var_03 = 1);
     }

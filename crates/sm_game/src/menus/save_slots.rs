@@ -58,16 +58,16 @@ enum Direction {
 
 pub fn save<H: Host + ?Sized>(slot: u16, game: &mut H) {
     game.observe_flags_save(0);
-    crate::word_transfers!(game, descending, 48; le(player_data_saved, 47) <- native(0xa00));
+    crate::word_transfers!(game, descending, 48; le(PLAYER_DATA_SAVED, 47) <- native(0xa00));
     game.observe_flags_save(1);
     crate::word_transfers!(game, ascending, 128;
-        le(explored_map_tiles_saved, crate::room_view::current(game).area.wrapping_mul(256) >> 1)
+        le(EXPLORED_MAP_TILES_SAVED, crate::room_view::current(game).area.wrapping_mul(256) >> 1)
             <- native(0x7f7));
     game.observe_flags_save(2);
     transfer_map(Direction::Save, game);
     game.observe_flags_save(3);
-    word!(game.sram_save_station_index = word!(game.load_station_index));
-    word!(game.sram_area_index = crate::room_view::current(game).area);
+    word!(game.SRAM_SAVE_STATION_INDEX = word!(game.LOAD_STATION_INDEX));
+    word!(game.SRAM_AREA_INDEX = crate::room_view::current(game).area);
     game.observe_flags_save(4);
     let checksum = save_file::save(&mut SaveFile(game), slot);
     game.observe_flags_save(5);
@@ -79,18 +79,18 @@ pub fn save<H: Host + ?Sized>(slot: u16, game: &mut H) {
 pub fn load<H: Host + ?Sized>(slot: u16, game: &mut H) -> u8 {
     let checksum = save_file::load(&mut SaveFile(game), slot);
     if save_file::checksum_matches(&SaveFile(game), slot, checksum) {
-        crate::word_transfers!(game, descending, 48; native(0xa00) <- le(player_data_saved, 47));
+        crate::word_transfers!(game, descending, 48; native(0xa00) <- le(PLAYER_DATA_SAVED, 47));
         transfer_map(Direction::Load, game);
-        word!(game.load_station_index = word!(game.sram_save_station_index));
+        word!(game.LOAD_STATION_INDEX = word!(game.SRAM_SAVE_STATION_INDEX));
         crate::room_view::set(
             game,
             crate::room_view::Word::Area,
-            word!(game.sram_area_index),
+            word!(game.SRAM_AREA_INDEX),
         );
         0
     } else {
         save_file::clear(&mut SaveFile(game), slot);
-        word!(game.load_station_index = 0);
+        word!(game.LOAD_STATION_INDEX = 0);
         crate::room_view::set(game, crate::room_view::Word::Area, 0);
         1
     }
@@ -98,7 +98,7 @@ pub fn load<H: Host + ?Sized>(slot: u16, game: &mut H) -> u8 {
 
 fn transfer_map<H: Host + ?Sized>(direction: Direction, game: &mut H) {
     if matches!(direction, Direction::Load) {
-        crate::word_transfers!(game, descending, 897; le(explored_map_tiles_saved, 896) <- value(0));
+        crate::word_transfers!(game, descending, 897; le(EXPLORED_MAP_TILES_SAVED, 896) <- value(0));
     }
     for area in 0..6 {
         let mut remaining = i32::from(
@@ -134,28 +134,28 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
     inventory! { game, 0;
         MaxMissiles, Missiles, MaxSuperMissiles, SuperMissiles, MaxPowerBombs, PowerBombs,
     }
-    game_word!(game.hud_item_index = 0);
+    game_word!(game.HUD_ITEM_INDEX = 0);
     inventory! { game, 0;
         CollectedBeams, EquippedBeams, CollectedItems, EquippedItems, ReserveMode,
         MaxReserveHealth, ReserveHealth, ReserveMissiles,
     }
-    game_word! {game; button_config_up = K_BUTTON_UP as u16; button_config_down = K_BUTTON_DOWN as u16;
-    button_config_left = K_BUTTON_LEFT as u16; button_config_right = K_BUTTON_RIGHT as u16;
-    button_config_jump_a = K_BUTTON_A as u16; button_config_run_b = K_BUTTON_B as u16;
-    button_config_shoot_x = K_BUTTON_X as u16; button_config_itemcancel_y = K_BUTTON_Y as u16;
-    button_config_itemswitch = K_BUTTON_SELECT as u16;
-    button_config_aim_up_R = K_BUTTON_R as u16; button_config_aim_down_L = K_BUTTON_L as u16; }
+    game_word! {game; BUTTON_CONFIG_UP = K_BUTTON_UP as u16; BUTTON_CONFIG_DOWN = K_BUTTON_DOWN as u16;
+    BUTTON_CONFIG_LEFT = K_BUTTON_LEFT as u16; BUTTON_CONFIG_RIGHT = K_BUTTON_RIGHT as u16;
+    BUTTON_CONFIG_JUMP_A = K_BUTTON_A as u16; BUTTON_CONFIG_RUN_B = K_BUTTON_B as u16;
+    BUTTON_CONFIG_SHOOT_X = K_BUTTON_X as u16; BUTTON_CONFIG_ITEMCANCEL_Y = K_BUTTON_Y as u16;
+    BUTTON_CONFIG_ITEMSWITCH = K_BUTTON_SELECT as u16;
+    BUTTON_CONFIG_AIM_UP_R = K_BUTTON_R as u16; BUTTON_CONFIG_AIM_DOWN_L = K_BUTTON_L as u16; }
     game_word! { game, 0;
-        game_time_frames, game_time_seconds, game_time_minutes, game_time_hours, japanese_text_flag,
-        moonwalk_flag, hud_auto_cancel_flag,
+        GAME_TIME_FRAMES, GAME_TIME_SECONDS, GAME_TIME_MINUTES, GAME_TIME_HOURS, JAPANESE_TEXT_FLAG,
+        MOONWALK_FLAG, HUD_AUTO_CANCEL_FLAG,
     }
-    game_word! { game, 1; debug_flag, UNUSED_word_7E09E8 }
+    game_word! { game, 1; DEBUG_FLAG, UNUSED_WORD_7E09E8 }
     crate::word_transfers!(game, ascending, 4;
         native(0xd830) <- value(0),
         native(0xd870) <- value(0),
         native(0xd870) <- value(0),
         native(0xd8b0) <- value(0),
-        le(UNUSED_word_7ED8F0, 0) <- value(0),
+        le(UNUSED_WORD_7ED8F0, 0) <- value(0),
         native(0xd908) <- value(0),
         native(0xd8f8) <- value(0),
         native(0xd900) <- value(0),
@@ -166,7 +166,7 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
         native(0xd878) <- value(0),
         native(0xd8b8) <- value(0),
     );
-    crate::word_transfers!(game, ascending, 896; le(explored_map_tiles_saved, 0) <- value(0));
+    crate::word_transfers!(game, ascending, 896; le(EXPLORED_MAP_TILES_SAVED, 0) <- value(0));
 }
 
 pub fn record_completion<H: Host + ?Sized>(game: &mut H) {
@@ -192,11 +192,11 @@ fn area_map_words(area: u16) -> impl Iterator<Item = (usize, u16)> {
 
 pub fn load_area_map<H: Host + ?Sized>(game: &mut H) {
     for (active, saved) in area_map_words(crate::room_view::current(game).area) {
-        crate::word_transfers!(game, ascending, 1; native(0x7f7 + active * 2) <- le(explored_map_tiles_saved, saved));
+        crate::word_transfers!(game, ascending, 1; native(0x7f7 + active * 2) <- le(EXPLORED_MAP_TILES_SAVED, saved));
     }
     word!(
-        game.has_area_map = game.ram().read_byte(
-            crate::ram::bytes::map_station_byte_array
+        game.HAS_AREA_MAP = game.ram().read_byte(
+            crate::ram::bytes::MAP_STATION_BYTE_ARRAY
                 + usize::from(crate::room_view::current(game).area)
         ) as u16
     );
@@ -204,9 +204,9 @@ pub fn load_area_map<H: Host + ?Sized>(game: &mut H) {
 
 pub fn save_area_map<H: Host + ?Sized>(game: &mut H) {
     for (active, saved) in area_map_words(crate::room_view::current(game).area) {
-        crate::word_transfers!(game, ascending, 1; le(explored_map_tiles_saved, saved) <- native(0x7f7 + active * 2));
+        crate::word_transfers!(game, ascending, 1; le(EXPLORED_MAP_TILES_SAVED, saved) <- native(0x7f7 + active * 2));
     }
-    if word!(game.has_area_map) != 0 {
+    if word!(game.HAS_AREA_MAP) != 0 {
         let flag = 0xd908 + usize::from(crate::room_view::current(game).area);
         word!(game, flag; = word!(game, flag;) | 0xff);
     }

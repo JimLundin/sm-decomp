@@ -75,11 +75,11 @@ pub(crate) fn seed(g: &mut Game, image: &RomImage) {
     g.register_rom(image.clone());
     g.g_fail = false;
     g.ram()
-        .copy_in(ram::boss_death_quake_sound_timer, &2u16.to_ne_bytes());
+        .copy_in(ram::BOSS_DEATH_QUAKE_SOUND_TIMER, &2u16.to_ne_bytes());
     g.ram()
-        .copy_in(ram::camera_distance_index, &0x4567u16.to_ne_bytes());
+        .copy_in(ram::CAMERA_DISTANCE_INDEX, &0x4567u16.to_ne_bytes());
     g.ram()
-        .copy_in(ram::palette_change_num, &9u16.to_ne_bytes());
+        .copy_in(ram::PALETTE_CHANGE_NUM, &9u16.to_ne_bytes());
     g.eproj_spawn_rect.x = 1;
     g.eproj_spawn_rect.y = 2;
     g.eproj_spawn_rect.w = 3;
@@ -156,13 +156,13 @@ pub(crate) fn write_checked(g: &mut Game, image: &RomImage) {
         put(&mut expected, 0xf78 + slot * 64 + 0xe, 0x600);
     }
     put(&mut expected, 0xf78 + 0x30, 0xc715);
-    put(&mut expected, ram::boss_death_quake_sound_timer, 1);
-    put(&mut expected, ram::enemy_bg2_tilemap_size, 2);
-    put(&mut expected, ram::camera_distance_index, 0);
-    put(&mut expected, ram::palette_change_num, 0);
-    put(&mut expected, ram::random_number, 0x7c1d); // Exact sixteenth RNG result from seed0.
+    put(&mut expected, ram::BOSS_DEATH_QUAKE_SOUND_TIMER, 1);
+    put(&mut expected, ram::ENEMY_BG2_TILEMAP_SIZE, 2);
+    put(&mut expected, ram::CAMERA_DISTANCE_INDEX, 0);
+    put(&mut expected, ram::PALETTE_CHANGE_NUM, 0);
+    put(&mut expected, ram::RANDOM_NUMBER, 0x7c1d); // Exact sixteenth RNG result from seed0.
     put(&mut expected, 0x1993, 0);
-    put(&mut expected, ram::vram_write_queue_tail, 7);
+    put(&mut expected, ram::VRAM_WRITE_QUEUE_TAIL, 7);
     expected[0xd0..0xd7].copy_from_slice(&[0, 2, 0x16, 0xa7, 0xa7, 0, 0x3f]);
     for i in 0..32 {
         expected[0xc200 + 96 * 2 + i] = 0x40 + i as u8;
@@ -211,7 +211,7 @@ pub(crate) fn write_checked(g: &mut Game, image: &RomImage) {
         assert_eq!(
             &{
                 let mut bytes = [0; 2];
-                g.ram().copy_out(arrays::eproj_id + slot * 2, &mut bytes);
+                g.ram().copy_out(arrays::EPROJ_ID + slot * 2, &mut bytes);
                 bytes
             },
             &1u16.to_ne_bytes(),
@@ -245,10 +245,10 @@ pub(crate) fn consume_checked(g: &mut Game, ignored: bool, label: &str) {
     let mut expected = (0..g.ram().len())
         .map(|at| g.ram().read_byte(at))
         .collect::<Vec<_>>();
-    put(&mut expected, ram::enemy_processing_stage, 6); // Actual final extended touch stage.
+    put(&mut expected, ram::ENEMY_PROCESSING_STAGE, 6); // Actual final extended touch stage.
     if !ignored {
-        put(&mut expected, arrays::projectile_dir, 0x10);
-        put(&mut expected, ram::collision_detection_index, 0);
+        put(&mut expected, arrays::PROJECTILE_DIR, 0x10);
+        put(&mut expected, ram::COLLISION_DETECTION_INDEX, 0);
     }
     let identity = g.actor_identity().clone();
     let before_native = native(g);

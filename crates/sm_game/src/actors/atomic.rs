@@ -42,7 +42,7 @@ pub mod function {
 const SIGN: u16 = 0x8000;
 
 fn current(game: &(impl Host + ?Sized)) -> i32 {
-    word!(game.cur_enemy_index) as i32
+    word!(game.CUR_ENEMY_INDEX) as i32
 }
 /// Initialisation AI - Atomic ($A8:E388).
 pub fn initialize(game: &mut (impl Host + ?Sized)) {
@@ -90,7 +90,7 @@ fn move_atomic(horizontal: bool, function: u16, game: &mut (impl Host + ?Sized))
 pub fn main_ai(game: &mut (impl Host + ?Sized)) {
     let atomic = current(game);
     slot!(game, Atomic[atomic].y_movement_function = function::MOVE_UP);
-    let k = word!(game.cur_enemy_index);
+    let k = word!(game.CUR_ENEMY_INDEX);
     if game.player_delta(k, Axis::Y) & SIGN == 0 {
         slot!(
             game,
@@ -102,7 +102,7 @@ pub fn main_ai(game: &mut (impl Host + ?Sized)) {
         game,
         Atomic[atomic].x_movement_function = function::MOVE_LEFT
     );
-    let k = word!(game.cur_enemy_index);
+    let k = word!(game.CUR_ENEMY_INDEX);
     if game.player_delta(k, Axis::X) & SIGN == 0 {
         slot!(
             game,

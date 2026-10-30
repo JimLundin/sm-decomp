@@ -29,7 +29,7 @@ pub unsafe fn HandleMusicQueue(game: &mut Game) {
             match effect {
                 requests::MusicEffect::UploadBank => {
                     let selector =
-                        sm_data::OriginalMusicBank(checked_word!(game.music_entry) as u8);
+                        sm_data::OriginalMusicBank(checked_word!(game.MUSIC_ENTRY) as u8);
                     crate::native_audio::emit(
                         crate::native_audio::music_bank_cue(selector, meaning),
                         sm_data::CuePhase::MusicBank,
@@ -60,42 +60,42 @@ pub(crate) fn clear_queue(game: &mut Game) {
 
 #[forbid(unsafe_code)]
 fn room_track_changed(game: &Game) -> bool {
-    checked_word!(game.game_state) < 40 && checked_word!(game.room_music_track_index) != 0
+    checked_word!(game.GAME_STATE) < 40 && checked_word!(game.ROOM_MUSIC_TRACK_INDEX) != 0
         // The original packed comparison deliberately lets track bits overlap data bits.
-        && (checked_word!(game.room_music_data_index) << 8 | checked_word!(game.room_music_track_index))
-            != (checked_word!(game.music_data_index) << 8 | checked_word!(game.music_track_index))
+        && (checked_word!(game.ROOM_MUSIC_DATA_INDEX) << 8 | checked_word!(game.ROOM_MUSIC_TRACK_INDEX))
+            != (checked_word!(game.MUSIC_DATA_INDEX) << 8 | checked_word!(game.MUSIC_TRACK_INDEX))
 }
 
 #[forbid(unsafe_code)]
 pub fn LoadRoomMusic(game: &mut Game) {
-    if checked_word!(game.game_state) < 40
-        && checked_word!(game.room_music_data_index) != 0
-        && checked_word!(game.room_music_data_index) != checked_word!(game.music_data_index)
+    if checked_word!(game.GAME_STATE) < 40
+        && checked_word!(game.ROOM_MUSIC_DATA_INDEX) != 0
+        && checked_word!(game.ROOM_MUSIC_DATA_INDEX) != checked_word!(game.MUSIC_DATA_INDEX)
     {
         queue_music_delayed_8(0, game);
-        queue_music_delayed_8(checked_word!(game.room_music_data_index) | 0xff00, game);
+        queue_music_delayed_8(checked_word!(game.ROOM_MUSIC_DATA_INDEX) | 0xff00, game);
     }
 }
 
 #[forbid(unsafe_code)]
 pub fn UpdateMusicTrackIndex(game: &mut Game) {
     if room_track_changed(game) {
-        checked_word!(game.music_track_index = checked_word!(game.room_music_track_index));
+        checked_word!(game.MUSIC_TRACK_INDEX = checked_word!(game.ROOM_MUSIC_TRACK_INDEX));
     }
 }
 
 #[forbid(unsafe_code)]
 pub fn LoadNewMusicTrackIfChanged(game: &mut Game) {
     if room_track_changed(game) {
-        QueueMusic_DelayedY(checked_word!(game.room_music_track_index), 6, game);
+        QueueMusic_DelayedY(checked_word!(game.ROOM_MUSIC_TRACK_INDEX), 6, game);
     }
 }
 
 #[forbid(unsafe_code)]
 pub fn PlayRoomMusicTrackAfterAFrames(delay: u16, game: &mut Game) {
-    if checked_word!(game.game_state) < 40 {
+    if checked_word!(game.GAME_STATE) < 40 {
         QueueMusic_DelayedY(0, delay, game);
-        queue_music_delayed_8(checked_word!(game.music_track_index), game);
+        queue_music_delayed_8(checked_word!(game.MUSIC_TRACK_INDEX), game);
     }
 }
 
@@ -112,13 +112,13 @@ pub(crate) fn wait_for_music(
     let resume = game.ram().read_byte(0x614);
     if resume == 0 {
         effect(MusicWaitEffect::EnableNmi(true), game);
-        checked_word!(game.my_counter = 0);
+        checked_word!(game.MY_COUNTER = 0);
     }
     if resume <= 1 {
         let mut waiting = resume == 1;
         loop {
             if !waiting {
-                if checked_word!(game.my_counter) == 20 {
+                if checked_word!(game.MY_COUNTER) == 20 {
                     effect(MusicWaitEffect::EnableNmi(false), game);
                     break;
                 }
@@ -129,7 +129,7 @@ pub(crate) fn wait_for_music(
                 game.ram().write_byte(0x614, 1);
                 return yielded;
             }
-            checked_word!(game.my_counter += 1);
+            checked_word!(game.MY_COUNTER += 1);
             waiting = false;
         }
     }

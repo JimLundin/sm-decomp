@@ -496,7 +496,7 @@ pub fn samus_driver_cannon_failure_preserves_prefix() {
         let ram = runtime.samus_game().ram();
         let word = |at| u16::from_le_bytes([ram.read_byte(at), ram.read_byte(at + 1)]);
         assert_eq!((word(0xaa6), word(0xaa8), word(0xaac)), (1, 3, 0xe1d2));
-        assert_eq!(word(crate::ram_map::words::projectile_index), 0x6a5b);
+        assert_eq!(word(crate::ram_map::words::PROJECTILE_INDEX), 0x6a5b);
         assert_eq!((word(0xd658), word(0xd67c)), (7, 9));
         assert_eq!(
             (word(0xaf4), word(0xdfe), word(0xe00)),

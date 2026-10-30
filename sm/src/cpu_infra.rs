@@ -213,13 +213,13 @@ unsafe fn patch_bugs_parts(mode: u32, addr: u32, game: &mut HookContext<'_, '_>)
         } else if fix_bug_hook(0xa794ba, &mut game.host) {
             (*game.cpu()).y = (*game.cpu()).x;
         } else if fix_bug_hook(0xa7b968, &mut game.host) {
-            (*game.cpu()).x = word!(game.cur_enemy_index);
+            (*game.cpu()).x = word!(game.CUR_ENEMY_INDEX);
         } else if fix_bug_hook(0xa7b963, &mut game.host) {
-            (*game.cpu()).x = word!(game.cur_enemy_index);
+            (*game.cpu()).x = word!(game.CUR_ENEMY_INDEX);
         } else if fix_bug_hook(0xa496c8, &mut game.host) {
             (*game.cpu()).a = 0;
         } else if fix_bug_hook(0x9085aa, &mut game.host) {
-            (*game.cpu()).a = word!(game.speed_boost_counter);
+            (*game.cpu()).a = word!(game.SPEED_BOOST_COUNTER);
         } else if fix_bug_hook(0xa29044, &mut game.host) as i32 != 0
             || fix_bug_hook(0xa2905d, &mut game.host) as i32 != 0
         {
@@ -227,19 +227,19 @@ unsafe fn patch_bugs_parts(mode: u32, addr: u32, game: &mut HookContext<'_, '_>)
         } else if fix_bug_hook(0xa29051, &mut game.host) {
             (*game.cpu()).a = (*game.cpu()).a.wrapping_sub(1);
         } else if fix_bug_hook(0xa5931c, &mut game.host) {
-            (*game.cpu()).x = word!(game.cur_enemy_index);
+            (*game.cpu()).x = word!(game.CUR_ENEMY_INDEX);
         } else if fix_bug_hook(0x80ada4, &mut game.host) {
-            (*game.cpu()).a = word!(game.layer2_y_pos);
+            (*game.cpu()).a = word!(game.LAYER2_Y_POS);
         } else if fix_bug_hook(0x80add9, &mut game.host) {
-            (*game.cpu()).a = word!(game.layer2_y_pos);
+            (*game.cpu()).a = word!(game.LAYER2_Y_POS);
         } else if fix_bug_hook(0x80ad4d, &mut game.host) {
-            (*game.cpu()).a = word!(game.layer2_x_pos);
+            (*game.cpu()).a = word!(game.LAYER2_X_POS);
         } else if fix_bug_hook(0x80ad77, &mut game.host) {
-            (*game.cpu()).a = word!(game.layer2_x_pos);
+            (*game.cpu()).a = word!(game.LAYER2_X_POS);
         } else if fix_bug_hook(0x9381db, &mut game.host) {
             let k: i32 = (*game.cpu()).x as i32;
-            let ip: i32 = word!(game.projectile_bomb_instruction_ptr[(k >> 1)]) as i32;
-            let delta: i32 = if word!(game.projectile_bomb_instruction_timers[(k >> 1)]) as i32 == 1
+            let ip: i32 = word!(game.PROJECTILE_BOMB_INSTRUCTION_PTR[(k >> 1)]) as i32;
+            let delta: i32 = if word!(game.PROJECTILE_BOMB_INSTRUCTION_TIMERS[(k >> 1)]) as i32 == 1
                 && (*get_ProjectileInstr(ip as u16, game)).timer & 0x8000 == 0
             {
                 0
@@ -257,37 +257,37 @@ unsafe fn patch_bugs_parts(mode: u32, addr: u32, game: &mut HookContext<'_, '_>)
             } else if fix_bug_hook(0x848acd, &mut game.host) {
                 (*game.cpu()).a = 0;
             } else if fix_bug_hook(0xa7ceb2, &mut game.host) {
-                (*game.cpu()).x = word!(game.cur_enemy_index);
+                (*game.cpu()).x = word!(game.CUR_ENEMY_INDEX);
             } else if fix_bug_hook(0x91cd44, &mut game.host) {
                 if (*game.cpu()).x as i32 == 0 {
                     (*game.cpu()).pc = 0xcd52;
                 }
             } else if fix_bug_hook(0x82afd3, &mut game.host) {
-                if word!(game.pausemenu_equipment_category_item) as u8 as i32 != 1 {
+                if word!(game.PAUSEMENU_EQUIPMENT_CATEGORY_ITEM) as u8 as i32 != 1 {
                     return 0x82afd9;
                 }
             } else if fix_bug_hook(0x82b0cd, &mut game.host) {
-                if word!(game.pausemenu_equipment_category_item) as u8 as i32 != 2 {
+                if word!(game.PAUSEMENU_EQUIPMENT_CATEGORY_ITEM) as u8 as i32 != 2 {
                     return 0x82afd9;
                 }
             } else if fix_bug_hook(0x82b15b, &mut game.host) {
-                if word!(game.pausemenu_equipment_category_item) as u8 as i32 != 3 {
+                if word!(game.PAUSEMENU_EQUIPMENT_CATEGORY_ITEM) as u8 as i32 != 3 {
                     return 0x82afd9;
                 }
             } else if fix_bug_hook(0xa2d38c, &mut game.host) {
-                (*game.cpu()).x = word!(game.cur_enemy_index);
+                (*game.cpu()).x = word!(game.CUR_ENEMY_INDEX);
             } else if fix_bug_hook(0xa4970f, &mut game.host) {
                 (*game.cpu()).a = (*game.cpu()).a & 0xff;
                 (*game.cpu()).y = (*game.cpu()).x & 0x7;
             } else if fix_bug_hook(0xa496e0, &mut game.host) {
                 if (*game.cpu()).x as i32 > 48 {
-                    word!(game.croco_cur_vline_idx = (*game.cpu()).x);
+                    word!(game.CROCO_CUR_VLINE_IDX = (*game.cpu()).x);
                     (*game.cpu()).mf = 0 != 0;
                     return 0xa497ce;
                 }
             } else if fix_bug_hook(0x91da89, &mut game.host) {
-                if word!(game.special_samus_palette_frame) as i32 > 6 {
-                    word!(game.special_samus_palette_frame = 6);
+                if word!(game.SPECIAL_SAMUS_PALETTE_FRAME) as i32 > 6 {
+                    word!(game.SPECIAL_SAMUS_PALETTE_FRAME = 6);
                 }
             } else if fix_bug_hook(0x828d56, &mut game.host) {
                 game.write_reg(VMAIN as i32 as u16, 0x80);
@@ -323,9 +323,9 @@ unsafe fn patch_bugs_parts(mode: u32, addr: u32, game: &mut HookContext<'_, '_>)
             } else if fix_bug_hook(0xa7b049, &mut game.host) {
                 (*game.cpu()).x = 0;
             } else if fix_bug_hook(0xa5a018, &mut game.host) {
-                word!(game.REMOVED_varE24 = 0);
+                word!(game.REMOVED_VAR_E24 = 0);
             } else if fix_bug_hook(0xb39ddb, &mut game.host) {
-                let E = word!(game.cur_enemy_index) as i32;
+                let E = word!(game.CUR_ENEMY_INDEX) as i32;
                 word!(
                     game.REMOVED_R18 = (slot!(game, Enemy_Botwoon[E].base.x_pos) as i32
                         - slot!(game, Enemy_Botwoon[E].var_56) as i32)
@@ -337,7 +337,7 @@ unsafe fn patch_bugs_parts(mode: u32, addr: u32, game: &mut HookContext<'_, '_>)
                         as u16
                 );
             } else if fix_bug_hook(0xb39e13, &mut game.host) {
-                let E_0 = word!(game.cur_enemy_index) as i32;
+                let E_0 = word!(game.CUR_ENEMY_INDEX) as i32;
                 slot!(
                     game,
                     Enemy_Botwoon[E_0].var_45 = (slot!(game, Enemy_Botwoon[E_0].var_45) as i32
@@ -1155,7 +1155,7 @@ pub unsafe fn RunOneFrameOfGame_Emulated(native_game: &mut Game) {
             .begin_samus_mutation()
             .expect("Samus mutation rejected");
         let game = mutation.game();
-        let bug_fix_bak: u16 = word!(game.bug_fix_counter);
+        let bug_fix_bak: u16 = word!(game.BUG_FIX_COUNTER);
         let cpu = (*game.g_snes).cpu;
         if (*cpu).k == 0x80 && (*cpu).pc == 0x8459 {
             RunCpuUntilPC(0x808460, 0x808460, game);
@@ -1164,7 +1164,7 @@ pub unsafe fn RunOneFrameOfGame_Emulated(native_game: &mut Game) {
         RunCpuUntilPC(0x808343, 0x85813c, game);
         (*(*game.g_snes).cpu).nmiWanted = true_0 != 0;
         RunCpuUntilPC(0x80834a, 0x858142, game);
-        word!(game.bug_fix_counter = bug_fix_bak);
+        word!(game.BUG_FIX_COUNTER = bug_fix_bak);
         game.commit_actor_canonical(actor_transition);
         mutation
             .finish_current()
@@ -1553,7 +1553,7 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
             (*game.g_snes).snes_ppu
         };
         (*game.g_snes).runningWhichVersion = 0;
-        if word!(game.game_state) as i32 == 0xffff {
+        if word!(game.GAME_STATE) as i32 == 0xffff {
             (*(*game.g_snes).cpu).k = 0x80;
             (*(*game.g_snes).cpu).pc = 0x8459;
             game.ram().write_byte(0x611, 3);
@@ -1561,10 +1561,10 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
                 .final_continuation(0x611, 3)
                 .expect("Session final continuation rejected");
         }
-        if word!(game.menu_index) & 0xff00 != 0 {
+        if word!(game.MENU_INDEX) & 0xff00 != 0 {
             printf(c"MENU INDEX TOO BIG!\n".as_ptr());
             SaveBugSnapshot(game);
-            word!(game.menu_index &= 0xff);
+            word!(game.MENU_INDEX &= 0xff);
         }
         if game.g_got_mismatch_count != 0 {
             game.g_got_mismatch_count -= 1;

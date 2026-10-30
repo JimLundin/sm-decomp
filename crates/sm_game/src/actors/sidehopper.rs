@@ -97,7 +97,7 @@ pub fn initial_hop_phase(height: u16, step: u16, image: RomImage) -> u16 {
 pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
     let mut lease = game.lease();
     let runtime = &mut lease;
-    runtime.write_slice_le(crate::ram::words::random_number, RANDOM_SEED);
+    runtime.write_slice_le(crate::ram::words::RANDOM_NUMBER, RANDOM_SEED);
     runtime.next_random();
     let hopper = current_slot(runtime);
     session_slot!(runtime, Sidehopper[hopper]; falling = 0, ready_to_hop = 0, hop_table_index = 0);

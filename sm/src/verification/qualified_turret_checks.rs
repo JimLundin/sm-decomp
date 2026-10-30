@@ -23,12 +23,12 @@ pub(crate) fn check_case(id: u32) -> bool {
     let handles = [0u16, 1, 34, 0xffff];
     let handle = handles[id as usize % 4];
     let offset = usize::from(handle & !1);
-    put(&mut game, w::layer1_x_pos, 0);
-    put(&mut game, w::layer1_y_pos, 0);
+    put(&mut game, w::LAYER1_X_POS, 0);
+    put(&mut game, w::LAYER1_Y_POS, 0);
     if id < 8 {
         // Negative Y rejects before countdown or dust spawning. The clear starts
         // at 0x1997 + k, including odd k, and leaves both neighboring bytes alone.
-        slot(&mut game, a::eproj_y_pos, handle, 0xffff);
+        slot(&mut game, a::EPROJ_Y_POS, handle, 0xffff);
         put(&mut game, 0x783a, if id < 4 { 1 } else { 0 });
         let at = 0x1997 + usize::from(handle);
         game.ram().copy_in(at - 1, &[0x12, 0x34, 0x56, 0x78]);
@@ -55,15 +55,15 @@ pub(crate) fn check_case(id: u32) -> bool {
         // Ridley reads terrain at 0x10002 + 2*(2*16+2). Both velocities are zero
         // so all motion bytes must remain unchanged, including odd handles.
         let selected = [35u16, 0xffff, 1, 0][id as usize % 4];
-        put(&mut game, w::eproj_index, selected);
-        put(&mut game, w::room_width_in_blocks, 16);
+        put(&mut game, w::EPROJ_INDEX, selected);
+        put(&mut game, w::ROOM_WIDTH_IN_BLOCKS, 16);
         put(&mut game, 0x10046, if id < 12 { 0x1000 } else { 0x0fff });
         for (field, value) in [
-            (a::eproj_x_pos, 32),
-            (a::eproj_y_pos, 32),
-            (a::eproj_x_vel, 0),
-            (a::eproj_y_vel, 0),
-            (a::eproj_properties, 0x1234),
+            (a::EPROJ_X_POS, 32),
+            (a::EPROJ_Y_POS, 32),
+            (a::EPROJ_X_VEL, 0),
+            (a::EPROJ_Y_VEL, 0),
+            (a::EPROJ_PROPERTIES, 0x1234),
         ] {
             slot(&mut game, field, handle, value);
         }
@@ -72,7 +72,7 @@ pub(crate) fn check_case(id: u32) -> bool {
         let mut expected = (0..game.ram().len())
             .map(|at| game.ram().read_byte(at))
             .collect::<Vec<_>>();
-        write(&mut expected, a::eproj_properties + offset, 0x9234);
+        write(&mut expected, a::EPROJ_PROPERTIES + offset, 0x9234);
         if id < 12 {
             expected[at] = 0;
             expected[at + 1] = 0;

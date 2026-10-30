@@ -96,15 +96,15 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
             }
             if display == Credits {
                 set_fixed_color([32, 64, 0x80], game);
-                word!(game.oam_next_ptr = 0);
+                word!(game.OAM_NEXT_PTR = 0);
                 reset_cinematic_transform(128, 128, game);
-                word! { game; mode7_angle = 0; mode7_zoom = 1; }
+                word! { game; MODE7_ANGLE = 0; MODE7_ZOOM = 1; }
                 word! { game, 0;
-                    reg_BG1HOFS, reg_BG1VOFS, reg_BG2HOFS, reg_BG2VOFS,
-                    cinematic_x_sub, cinematic_x, cinematic_y_sub, cinematic_y,
+                    REG_BG1HOFS, REG_BG1VOFS, REG_BG2HOFS, REG_BG2VOFS,
+                    CINEMATIC_X_SUB, CINEMATIC_X, CINEMATIC_Y_SUB, CINEMATIC_Y,
                 }
             } else {
-                word! { game, 0; reg_BG1HOFS, reg_BG1VOFS }
+                word! { game, 0; REG_BG1HOFS, REG_BG1VOFS }
             }
             return;
         }
@@ -146,49 +146,49 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
     }
     match display {
         Title => {
-            word!(game.oam_next_ptr = 0);
-            word!(game.menu_option_index = 0);
-            word!(game.screen_fade_delay = 0);
-            word!(game.screen_fade_counter = 0);
-            crate::menu!(game.pausemenu_start_lr_pressed_highlight_timer = 0);
-            crate::menu!(game.pausemenu_lr_animation_timer = 0);
-            crate::menu!(game.pausemenu_item_selector_animation_timer = 0);
-            crate::menu!(game.pausemenu_reserve_tank_animation_timer = 0);
-            crate::menu!(game.unused_word_7e0731 = 0);
-            crate::menu!(game.unused_word_7e073d = 0);
-            crate::menu!(game.pausemenu_lr_animation_frame = 0);
-            crate::menu!(game.pausemenu_item_selector_animation_frame = 0);
-            crate::menu!(game.pausemenu_reserve_tank_animation_frame = 0);
-            crate::menu!(game.unused_word_7e0745 = 0);
-            crate::menu!(game.pausemenu_shoulder_button_highlight = 0);
-            crate::menu!(game.pausemenu_button_label_mode = 0);
-            crate::menu!(game.pausemenu_equipment_category_item = 0);
-            crate::menu!(game.pausemenu_reserve_tank_delay_ctr = 0);
-            crate::menu!(game.unused_word_7e0759 = 0);
+            word!(game.OAM_NEXT_PTR = 0);
+            word!(game.MENU_OPTION_INDEX = 0);
+            word!(game.SCREEN_FADE_DELAY = 0);
+            word!(game.SCREEN_FADE_COUNTER = 0);
+            crate::menu!(game.PausemenuStartLrPressedHighlightTimer = 0);
+            crate::menu!(game.PausemenuLrAnimationTimer = 0);
+            crate::menu!(game.PausemenuItemSelectorAnimationTimer = 0);
+            crate::menu!(game.PausemenuReserveTankAnimationTimer = 0);
+            crate::menu!(game.UnusedWord7e0731 = 0);
+            crate::menu!(game.UnusedWord7e073d = 0);
+            crate::menu!(game.PausemenuLrAnimationFrame = 0);
+            crate::menu!(game.PausemenuItemSelectorAnimationFrame = 0);
+            crate::menu!(game.PausemenuReserveTankAnimationFrame = 0);
+            crate::menu!(game.UnusedWord7e0745 = 0);
+            crate::menu!(game.PausemenuShoulderButtonHighlight = 0);
+            crate::menu!(game.PausemenuButtonLabelMode = 0);
+            crate::menu!(game.PausemenuEquipmentCategoryItem = 0);
+            crate::menu!(game.PausemenuReserveTankDelayCtr = 0);
+            crate::menu!(game.UnusedWord7e0759 = 0);
             crate::inventory::set(game, crate::inventory::Word::ReserveHealth, 0);
             crate::inventory::set(game, crate::inventory::Word::ReserveMissiles, 0);
-            word!(game.mode7_angle = 0);
+            word!(game.MODE7_ANGLE = 0);
         }
         Intro => {
-            word! { game, 0; oam_next_ptr, mode7_angle }
+            word! { game, 0; OAM_NEXT_PTR, MODE7_ANGLE }
         }
         Escape => {
-            word! { game, 0; oam_next_ptr, screen_fade_delay, screen_fade_counter, mode7_angle }
+            word! { game, 0; OAM_NEXT_PTR, SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER, MODE7_ANGLE }
         }
         _ => {}
     }
     if display != Station {
-        word!(game.mode7_zoom = 256);
+        word!(game.MODE7_ZOOM = 256);
     }
     word! { game, 0;
-        cinematic_x_sub, cinematic_x, cinematic_y_sub, cinematic_y, cinematic_x_subspeed,
-        cinematic_x_speed, cinematic_y_subspeed, cinematic_y_speed,
+        CINEMATIC_X_SUB, CINEMATIC_X, CINEMATIC_Y_SUB, CINEMATIC_Y, CINEMATIC_X_SUBSPEED,
+        CINEMATIC_X_SPEED, CINEMATIC_Y_SUBSPEED, CINEMATIC_Y_SPEED,
     }
     if matches!(display, Intro | Station) {
-        word!(game.fx_layer_blending_config_a = 0);
+        word!(game.FX_LAYER_BLENDING_CONFIG_A = 0);
     }
     if intro {
-        word! { game, 0; reg_BG2HOFS, reg_BG2VOFS, reg_BG3HOFS, reg_BG3VOFS }
+        word! { game, 0; REG_BG2HOFS, REG_BG2VOFS, REG_BG3HOFS, REG_BG3VOFS }
     }
 }
 
@@ -211,12 +211,12 @@ fn set_mode7_transform<H: crate::menus::host::Host + ?Sized>(
     use crate::ram::words;
     let registers = [M7A, M7B, M7C, M7D, M7X, M7Y];
     let mirrors = [
-        words::reg_M7A,
-        words::reg_M7B,
-        words::reg_M7C,
-        words::reg_M7D,
-        words::reg_M7X,
-        words::reg_M7Y,
+        words::REG_M7A,
+        words::REG_M7B,
+        words::REG_M7C,
+        words::REG_M7D,
+        words::REG_M7X,
+        words::REG_M7Y,
     ];
     for ((register, mirror), value) in registers.into_iter().zip(mirrors).zip(transform.words()) {
         game.write_register_word(register as u16, value);
@@ -225,7 +225,7 @@ fn set_mode7_transform<H: crate::menus::host::Host + ?Sized>(
 }
 
 pub fn draw_intro_sprites<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    let samus = word!(game.intro_samus_display);
+    let samus = word!(game.INTRO_SAMUS_DISPLAY);
     if samus & 0x8000 != 0 {
         game.draw_player_frame();
         game.draw_projectiles();

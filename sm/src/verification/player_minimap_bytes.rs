@@ -27,13 +27,13 @@ fn one(g: &mut Game, case: usize) {
             .copy_in(0xc608 + 2 * word, &(0x5000 + word as u16).to_le_bytes());
     }
     for (at, value) in [
-        (w::samus_x_pos, 512),
-        (w::samus_y_pos, 256),
-        (w::room_width_in_blocks, 64),
-        (w::room_height_in_blocks, 32),
-        (w::room_x_coordinate_on_map, 0),
-        (w::room_y_coordinate_on_map, 0),
-        (w::has_area_map, if case == 3 { 0 } else { 1 }),
+        (w::SAMUS_X_POS, 512),
+        (w::SAMUS_Y_POS, 256),
+        (w::ROOM_WIDTH_IN_BLOCKS, 64),
+        (w::ROOM_HEIGHT_IN_BLOCKS, 32),
+        (w::ROOM_X_COORDINATE_ON_MAP, 0),
+        (w::ROOM_Y_COORDINATE_ON_MAP, 0),
+        (w::HAS_AREA_MAP, if case == 3 { 0 } else { 1 }),
     ] {
         g.ram().copy_in(at, &(value as u16).to_le_bytes());
     }
@@ -43,13 +43,13 @@ fn one(g: &mut Game, case: usize) {
     match case {
         0 => g
             .ram()
-            .copy_in(w::debug_disable_minimap, &0x8000u16.to_le_bytes()),
+            .copy_in(w::DEBUG_DISABLE_MINIMAP, &0x8000u16.to_le_bytes()),
         1 => g
             .ram()
-            .copy_in(w::room_width_in_blocks, &32u16.to_le_bytes()),
+            .copy_in(w::ROOM_WIDTH_IN_BLOCKS, &32u16.to_le_bytes()),
         2 => g
             .ram()
-            .copy_in(w::room_height_in_blocks, &16u16.to_le_bytes()),
+            .copy_in(w::ROOM_HEIGHT_IN_BLOCKS, &16u16.to_le_bytes()),
         _ => {
             let loaded = RomImage::zeroed(0x200000);
             let native = RomImage::zeroed(0x200000);

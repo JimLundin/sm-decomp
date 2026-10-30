@@ -158,31 +158,31 @@ impl<H: SpriteHost + ?Sized, C: Content<H>> crate::scene::samus::Host for Native
 #[forbid(unsafe_code)]
 pub fn echo<H: SpriteHost + ?Sized>(slot: u16, game: &mut H, content: &mut impl Content<H>) {
     let index = usize::from(slot >> 1);
-    let y = word!(game.speed_echo_ypos[index]);
+    let y = word!(game.SPEED_ECHO_YPOS[index]);
     let image = content.image(game);
     let height = image.read(
         sm_data::cartridge::lorom_offset(0x91b629) as usize
-            + usize::from(word!(game.samus_pose)) * 8
+            + usize::from(word!(game.SAMUS_POSE)) * 8
             + 4,
     );
     let layer1 = crate::camera::current(game).layer1;
     let y = y.wrapping_sub(u16::from(height)).wrapping_sub(layer1[1]);
     if (y as i16) >= 0 && y.wrapping_sub(248) & 0x8000 != 0 {
-        let sprite = word!(game.samus_top_half_spritemap_index);
-        let x = word!(game.speed_echo_xpos[index]).wrapping_sub(layer1[0]);
+        let sprite = word!(game.SAMUS_TOP_HALF_SPRITEMAP_INDEX);
+        let x = word!(game.SPEED_ECHO_XPOS[index]).wrapping_sub(layer1[0]);
         samus(sprite, (x, y), game, content);
-        if word!(game.samus_bottom_half_spritemap_index) != 0 {
-            let sprite = word!(game.samus_bottom_half_spritemap_index);
-            let x = word!(game.speed_echo_xpos[index]).wrapping_sub(layer1[0]);
+        if word!(game.SAMUS_BOTTOM_HALF_SPRITEMAP_INDEX) != 0 {
+            let sprite = word!(game.SAMUS_BOTTOM_HALF_SPRITEMAP_INDEX);
+            let x = word!(game.SPEED_ECHO_XPOS[index]).wrapping_sub(layer1[0]);
             samus(sprite, (x, y), game, content);
         }
     }
 }
 #[forbid(unsafe_code)]
 pub fn crash_echoes<H: SpriteHost + ?Sized>(game: &mut H, content: &mut impl Content<H>) {
-    if word!(game.nmi_frame_counter_word) & 1 != 0 {
+    if word!(game.NMI_FRAME_COUNTER_WORD) & 1 != 0 {
         for index in [3, 2] {
-            if word!(game.speed_echo_xspeed[index]) != 0 {
+            if word!(game.SPEED_ECHO_XSPEED[index]) != 0 {
                 echo((index * 2) as u16, game, content);
             }
         }
@@ -192,7 +192,7 @@ pub fn crash_echoes<H: SpriteHost + ?Sized>(game: &mut H, content: &mut impl Con
 /// Ordered native OAM stores; end coordinates and extension bits remain live aliases.
 #[forbid(unsafe_code)]
 pub fn grapple<H: SpriteHost + ?Sized>(game: &mut H, segment: Option<(u16, u16, u16)>) {
-    let idx = word!(game.oam_next_ptr);
+    let idx = word!(game.OAM_NEXT_PTR);
     let at = 0x370 + usize::from(idx);
     if let Some((x, y, tile)) = segment {
         game.ram().write_byte(at, x as u8);
@@ -200,20 +200,20 @@ pub fn grapple<H: SpriteHost + ?Sized>(game: &mut H, segment: Option<(u16, u16, 
         game.ram().copy_in(at + 2, &tile.to_ne_bytes());
     } else {
         let layer1 = crate::camera::current(game).layer1;
-        let x = word!(game.grapple_beam_end_x_pos)
+        let x = word!(game.GRAPPLE_BEAM_END_X_POS)
             .wrapping_sub(layer1[0])
             .wrapping_sub(4);
         game.ram().write_byte(at, x as u8);
-        let y = word!(game.grapple_beam_end_y_pos)
+        let y = word!(game.GRAPPLE_BEAM_END_Y_POS)
             .wrapping_sub(layer1[1])
             .wrapping_sub(4);
         game.ram().write_byte(at + 1, y as u8);
         game.ram().copy_in(at + 2, &14880u16.to_ne_bytes());
-        let extension = word!(game.oam_ext[(idx >> 5)]);
+        let extension = word!(game.OAM_EXT[(idx >> 5)]);
         let bit = (((i32::from(x) & 0x100) >> 8) << (2 * (i32::from(idx) >> 2 & 7))) as u16;
-        word!(game.oam_ext[(idx >> 5)] = extension | bit);
+        word!(game.OAM_EXT[(idx >> 5)] = extension | bit);
     }
-    word!(game.oam_next_ptr = idx.wrapping_add(4));
+    word!(game.OAM_NEXT_PTR = idx.wrapping_add(4));
 }
 
 #[forbid(unsafe_code)]
@@ -302,7 +302,7 @@ const FILE_MENU_MISSILE_POSITIONS: [(u16, u16); 6] = [
 /// Place the selection missile beside the selected save slot's row.
 pub fn file_menu_cursor<H: SpriteHost + ?Sized>(game: &mut H) {
     // The original doubles the row into a pair offset, dropping bit 14.
-    let row = usize::from(word!(game.selected_save_slot) & 0x3fff);
+    let row = usize::from(word!(game.SELECTED_SAVE_SLOT) & 0x3fff);
     let (y, x) = FILE_MENU_MISSILE_POSITIONS[row];
     crate::enemy_projectiles::table::with_file_select(game, |menu| {
         *menu.missile_y() = y;

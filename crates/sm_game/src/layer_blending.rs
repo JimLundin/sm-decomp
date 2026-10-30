@@ -63,7 +63,7 @@ pub fn update<H: crate::ram::RamHost + crate::runtime_access::RuntimeAccess + ?S
     game: &mut H,
 ) {
     {
-        let configuration = word!(game.fx_layer_blending_config_c);
+        let configuration = word!(game.FX_LAYER_BLENDING_CONFIG_C);
         let mut bomb_mode = 0;
         if configuration as u8 != 0 {
             apply([0, 0, 0, 19, 4, 0, 0, 2, 51], game);

@@ -213,7 +213,7 @@ pub fn pipe_bug_state<H: B3Host>(ea: u32, _k: u16, game: &mut H) {
         11767349 => crate::actors::gamet::fly(0, game),
         11767386 => crate::actors::gamet::start_flight(game),
         11767733 => crate::actors::geega::detect_player(game),
-        11767797 => crate::actors::geega::launch_delay(word!(game.cur_enemy_index), game),
+        11767797 => crate::actors::geega::launch_delay(word!(game.CUR_ENEMY_INDEX), game),
         11767848 => crate::actors::geega::fly(true, game),
         11767997 => crate::actors::geega::fly(false, game),
         11768154 => crate::actors::geega::turn(true, game),
@@ -239,7 +239,7 @@ pub fn b3_pre_instruction<H: B3Host>(ea: u32, k: u16, game: &mut H) {
         11771328 => crate::actors::botwoon::head_moving_around(game),
         11771517 => {
             let address = crate::actors::botwoon::head_set_spit_angle(game);
-            b3_pre_instruction(address, word!(game.cur_enemy_index), game);
+            b3_pre_instruction(address, word!(game.CUR_ENEMY_INDEX), game);
         }
         11771616 => crate::actors::botwoon::head_spit(true, game),
         11771700 => crate::actors::botwoon::head_spit(false, game),
@@ -639,7 +639,7 @@ pub trait PreInstructionHost:
 /// An enemy species' pre-instruction, keyed by its address. The current
 /// enemy index is read once, before dispatch, as the original did.
 pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
-    let k: u16 = word!(game.cur_enemy_index);
+    let k: u16 = word!(game.CUR_ENEMY_INDEX);
     match ea {
         10730661 => bang::movement_delay(game),
         10730693 => bang::target_samus(game),

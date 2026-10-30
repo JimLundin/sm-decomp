@@ -123,16 +123,16 @@ fn seed(game: &mut Game, image: &RomImage) {
     };
     game.eproj_spawn_varE24 = 0xcdef;
     for (at, value) in [
-        (w::cur_enemy_index, 0),
-        (w::eproj_enable_flag, 0x9234),
-        (w::eproj_index, 34),
-        (w::eproj_init_param_1, 0x5678),
-        (w::eproj_init_param_2, 0x9876),
-        (w::game_state, 8),
-        (w::debug_disable_sounds, 0),
-        (w::power_bomb_explosion_status, 0),
-        (w::music_queue_write_pos, 0),
-        (w::music_queue_read_pos, 0),
+        (w::CUR_ENEMY_INDEX, 0),
+        (w::EPROJ_ENABLE_FLAG, 0x9234),
+        (w::EPROJ_INDEX, 34),
+        (w::EPROJ_INIT_PARAM_1, 0x5678),
+        (w::EPROJ_INIT_PARAM_2, 0x9876),
+        (w::GAME_STATE, 8),
+        (w::DEBUG_DISABLE_SOUNDS, 0),
+        (w::POWER_BOMB_EXPLOSION_STATUS, 0),
+        (w::MUSIC_QUEUE_WRITE_POS, 0),
+        (w::MUSIC_QUEUE_READ_POS, 0),
     ] {
         put(game, at, value);
     }
@@ -149,10 +149,10 @@ fn seed(game: &mut Game, image: &RomImage) {
         put(game, 0xf78 + field, value);
     }
     for index in (0..36).step_by(2) {
-        slot(game, a::eproj_id, index, 0x8100 + index);
-        slot(game, a::eproj_pre_instr, index, 0x8170);
-        slot(game, a::eproj_instr_list_ptr, index, 0x9000);
-        slot(game, a::eproj_instr_timers, index, 1);
+        slot(game, a::EPROJ_ID, index, 0x8100 + index);
+        slot(game, a::EPROJ_PRE_INSTR, index, 0x8170);
+        slot(game, a::EPROJ_INSTR_LIST_PTR, index, 0x9000);
+        slot(game, a::EPROJ_INSTR_TIMERS, index, 1);
     }
     definition(image, 0x8000, 8826704u32 as u16);
     definition(image, 0x2000, 8826704u32 as u16);
@@ -170,12 +170,12 @@ unsafe fn core_case(id: u32, game: &mut Game, image: &RomImage) -> Option<usize>
             4 => return Some(spawn_with_enemy_gfx(0x4321, 0, 0xffff, game) as usize),
             5..=12 | 23 => {
                 if id != 9 {
-                    slot(game, a::eproj_id, if id == 6 { 0 } else { 34 }, 0);
+                    slot(game, a::EPROJ_ID, if id == 6 { 0 } else { 34 }, 0);
                 }
                 if id == 7 {
-                    slot(game, a::eproj_id, 34, 0x8122);
-                    slot(game, a::eproj_id, 4, 0);
-                    slot(game, a::eproj_id, 28, 0);
+                    slot(game, a::EPROJ_ID, 34, 0x8122);
+                    slot(game, a::EPROJ_ID, 4, 0);
+                    slot(game, a::EPROJ_ID, 28, 0);
                 }
                 if id == 9 || id == 10 {
                     game.loaded_rom = None;
@@ -191,19 +191,19 @@ unsafe fn core_case(id: u32, game: &mut Game, image: &RomImage) -> Option<usize>
             }
             13..=22 => {
                 for index in (0..36).step_by(2) {
-                    slot(game, a::eproj_id, index, 0);
+                    slot(game, a::EPROJ_ID, index, 0);
                 }
                 if id != 14 {
-                    slot(game, a::eproj_id, 34, 0x8000);
+                    slot(game, a::EPROJ_ID, 34, 0x8000);
                 }
                 if id <= 16 {
                     game.loaded_rom = None;
                 }
                 if id == 13 {
-                    put(game, w::eproj_enable_flag, 0x1234);
+                    put(game, w::EPROJ_ENABLE_FLAG, 0x1234);
                 }
                 if id == 15 {
-                    slot(game, a::eproj_instr_timers, 34, 0);
+                    slot(game, a::EPROJ_INSTR_TIMERS, 34, 0);
                 }
                 if id == 18 {
                     script_word(image, 0x9000, 8814932u32 as u16);
@@ -220,8 +220,8 @@ unsafe fn core_case(id: u32, game: &mut Game, image: &RomImage) -> Option<usize>
                 if id == 21 {
                     put(
                         game,
-                        w::music_queue_write_pos,
-                        (w::eproj_index - a::music_queue_track) as u16,
+                        w::MUSIC_QUEUE_WRITE_POS,
+                        (w::EPROJ_INDEX - a::MUSIC_QUEUE_TRACK) as u16,
                     );
                     script_word(image, 0x9000, 8815357u32 as u16);
                     bytes(image, 0x31002, &[0]);
@@ -298,13 +298,13 @@ unsafe fn original_execute(id: u32, game: &mut Game, image: &RomImage) -> Option
             }
             slot(
                 game,
-                a::eproj_timers,
+                a::EPROJ_TIMERS,
                 index,
                 [0, 1, 0xffff, 2, 1, 2][variant],
             );
-            slot(game, a::eproj_E, index, (variant * 2) as u16);
-            put(game, w::eproj_index, if variant == 4 { 34 } else { 0 });
-            put(game, w::nmi_frame_counter_word, (variant & 1) as u16);
+            slot(game, a::EPROJ_E, index, (variant * 2) as u16);
+            put(game, w::EPROJ_INDEX, if variant == 4 { 34 } else { 0 });
+            put(game, w::NMI_FRAME_COUNTER_WORD, (variant & 1) as u16);
             return CallEprojInstr(
                 COMMANDS[(n / 6) as usize],
                 index,
@@ -318,7 +318,7 @@ unsafe fn original_execute(id: u32, game: &mut Game, image: &RomImage) -> Option
             let cursor: u16 = if variant == 3 { 0xffff } else { 0x9000 };
             bytes(image, 0x28000 + usize::from(cursor), &[0x23]);
             if variant == 1 {
-                put(game, w::game_state, 40);
+                put(game, w::GAME_STATE, 40);
             }
             if variant == 2 {
                 for channel in 0..3 {
@@ -326,12 +326,12 @@ unsafe fn original_execute(id: u32, game: &mut Game, image: &RomImage) -> Option
                 }
                 put(
                     game,
-                    w::music_queue_write_pos,
-                    (w::eproj_index - a::music_queue_track) as u16,
+                    w::MUSIC_QUEUE_WRITE_POS,
+                    (w::EPROJ_INDEX - a::MUSIC_QUEUE_TRACK) as u16,
                 );
             }
             if variant == 3 {
-                put(game, w::power_bomb_explosion_status, 0x8000);
+                put(game, w::POWER_BOMB_EXPLOSION_STATUS, 0x8000);
             }
             return CallEprojInstr(
                 QUEUES[(n / 4) as usize],
@@ -344,14 +344,14 @@ unsafe fn original_execute(id: u32, game: &mut Game, image: &RomImage) -> Option
             let n = id - MOTION_START;
             let index = [0, 1, 34, 0xffff][(n / 9) as usize];
             let velocity: u16 = [0x017f, 0x80ff, 0xffff][((n / 3) % 3) as usize];
-            slot(game, a::eproj_x_vel, index, velocity);
-            slot(game, a::eproj_y_vel, index, velocity.wrapping_neg());
-            slot(game, a::eproj_x_pos, index, 0xffff);
-            slot(game, a::eproj_y_pos, index, 0);
+            slot(game, a::EPROJ_X_VEL, index, velocity);
+            slot(game, a::EPROJ_Y_VEL, index, velocity.wrapping_neg());
+            slot(game, a::EPROJ_X_POS, index, 0xffff);
+            slot(game, a::EPROJ_Y_POS, index, 0);
             game.ram()
-                .write_byte(a::eproj_x_subpos + usize::from(index) + 1, 0xf0);
+                .write_byte(a::EPROJ_X_SUBPOS + usize::from(index) + 1, 0xf0);
             game.ram()
-                .write_byte(a::eproj_y_subpos + usize::from(index) + 1, 0x80);
+                .write_byte(a::EPROJ_Y_SUBPOS + usize::from(index) + 1, 0x80);
             return Some(match n % 3 {
                 0 => move_with_velocity(index, game),
                 1 => move_with_x_velocity(index, game),
@@ -362,7 +362,7 @@ unsafe fn original_execute(id: u32, game: &mut Game, image: &RomImage) -> Option
         let command = [
             8815046, 8815046, 8815061, 8815019, 8815024, 8814932, 8814937, 8815357,
         ][n as usize];
-        slot(game, a::eproj_timers, 1, if n == 0 { 1 } else { 0 });
+        slot(game, a::EPROJ_TIMERS, 1, if n == 0 { 1 } else { 0 });
         let short = RomImage::zeroed(0x31000 + if n == 4 || n == 7 { 1 } else { 0 });
         if short.len() > 0x31000 {
             short.write(0x31000, 0xff);

@@ -23,7 +23,7 @@ fn begin_wing(forward: bool, k: u16, game: &mut Game) {
 }
 
 fn wing_arc(forward: bool, game: &mut Game) {
-    let E = word!(game.cur_enemy_index) as i32;
+    let E = word!(game.CUR_ENEMY_INDEX) as i32;
     let record = Runtime::new(game).legacy_native_record(0xa2, 0x838f);
     let speed = record
         .word(8 * usize::from(slot!(byte game, Hunter[E].var_b[1])) + if forward { 5 } else { 1 });
@@ -33,7 +33,7 @@ fn wing_arc(forward: bool, game: &mut Game) {
         slot!(game, Hunter[E].base.y_pos = y);
     } else {
         let amount = (y.wrapping_sub(slot!(game, Hunter[E].base.y_pos)) as i16 as i32) << 16;
-        let key = Key::from_legacy(word!(game.cur_enemy_index));
+        let key = Key::from_legacy(word!(game.CUR_ENEMY_INDEX));
         if actor_api::move_vertical(&mut Runtime::new(game), key, amount)
             == actor_api::MovementResult::Blocked
         {
@@ -41,7 +41,7 @@ fn wing_arc(forward: bool, game: &mut Game) {
             slot!(game, Hunter[E].base.x_pos = slot!(game, Hunter[E].var_08));
             let y = slot!(game, Hunter[E].var_07);
             slot!(game, Hunter[E].base.y_pos = y);
-            slot!(game, Hunter[word!(game.cur_enemy_index) as i32].var_b = y);
+            slot!(game, Hunter[word!(game.CUR_ENEMY_INDEX) as i32].var_b = y);
             return;
         }
     }
@@ -50,13 +50,13 @@ fn wing_arc(forward: bool, game: &mut Game) {
         Hunter[E].base.x_pos = wing_coordinate(E, true, forward, game)
     );
     if ((slot!(game, Hunter[E].var_f).wrapping_add(0x4000) & 0x8000) != 0) == forward {
-        begin_wing(!forward, word!(game.cur_enemy_index), game);
+        begin_wing(!forward, word!(game.CUR_ENEMY_INDEX), game);
     } else {
         let speed = (slot!(game, Hunter[E].var_b) as i16).wrapping_sub(384);
         let target = if forward {
             E
         } else {
-            word!(game.cur_enemy_index) as i32
+            word!(game.CUR_ENEMY_INDEX) as i32
         };
         slot!(
             game,
@@ -66,7 +66,7 @@ fn wing_arc(forward: bool, game: &mut Game) {
 }
 
 pub(crate) fn initialize(game: &mut Game) {
-    let E: i32 = word!(game.cur_enemy_index) as i32;
+    let E: i32 = word!(game.CUR_ENEMY_INDEX) as i32;
     slot!(game, Hunter[E].base.properties, |old| (old)
         | ((0x2000) as u16));
     slot!(game, Hunter[E].var_14 = 0);
@@ -86,24 +86,24 @@ pub(crate) fn initialize(game: &mut Game) {
 }
 
 pub(crate) fn initialize_wings(game: &mut Game) {
-    let E: i32 = word!(game.cur_enemy_index) as i32;
+    let E: i32 = word!(game.CUR_ENEMY_INDEX) as i32;
     slot!(game, Hunter[E].base.properties, |old| (old)
         | ((0x2000) as u16));
     slot!(game, Hunter[E].base.instruction_timer = 1);
     slot!(game, Hunter[E].base.timer = 0);
     slot!(game, Hunter[E].base.current_instruction = 0xea4e as u16);
-    let v2: i32 = word!(game.cur_enemy_index) as i32 >> 1;
+    let v2: i32 = word!(game.CUR_ENEMY_INDEX) as i32 >> 1;
     copy_drawing(E as u16, &[(6, 93), (2, 91)], game);
     slot!(game, Hunter[E].var_a = 0xf6f3);
     copy_drawing(E as u16, &[(0x1e, 105), (0x20, 106)], game);
-    if (word!(game.enemy_drawing_queue_sizes[(v2 + 6)]) & 0x8000) != 0 {
+    if (word!(game.ENEMY_DRAWING_QUEUE_SIZES[(v2 + 6)]) & 0x8000) != 0 {
         slot!(game, Hunter[E].base.properties, |old| (old)
             | ((0x200) as u16));
     }
 }
 
 fn prepare_wing_acceleration(game: &mut Game) {
-    let E = word!(game.cur_enemy_index) as i32;
+    let E = word!(game.CUR_ENEMY_INDEX) as i32;
     slot!(game, Hunter[E]; var_0a = 0, var_b = 0);
     loop {
         let speed = slot!(game, Hunter[E].var_0a).wrapping_add(384);
@@ -121,9 +121,9 @@ fn prepare_wing_acceleration(game: &mut Game) {
 
 pub(crate) fn shot(game: &mut Game) {
     combat::shot_reaction(&mut Runtime::new(game), actor_api::ShotHandling::Finalize);
-    let old_cur_enemy_index: u16 = word!(game.cur_enemy_index);
-    let EK: i32 = word!(game.cur_enemy_index) as i32;
-    let E1: i32 = word!(game.cur_enemy_index) as i32 + 64;
+    let old_cur_enemy_index: u16 = word!(game.CUR_ENEMY_INDEX);
+    let EK: i32 = word!(game.CUR_ENEMY_INDEX) as i32;
+    let E1: i32 = word!(game.CUR_ENEMY_INDEX) as i32 + 64;
     let health: u16 = slot!(game, Hunter[EK].base.health);
     if health != 0 {
         if health == slot!(game, Hunter[E1].parameter_1)
@@ -131,7 +131,7 @@ pub(crate) fn shot(game: &mut Game) {
         {
             if slot!(game, Hunter[EK].var_14) == 0 {
                 slot!(game, Hunter[EK]; var_14 = 1, var_a = 0xf55a, var_08 = 0, var_09 = 1);
-                word!(game.cur_enemy_index = (old_cur_enemy_index).wrapping_add(64));
+                word!(game.CUR_ENEMY_INDEX = (old_cur_enemy_index).wrapping_add(64));
                 if slot!(game, Hunter[E1].var_a) as i32 != 0xa8f7cf & 0xffff {
                     slot!(game, Hunter[E1].var_07 = slot!(game, Hunter[E1].base.y_pos));
                     slot!(game, Hunter[E1].var_08 = slot!(game, Hunter[E1].base.x_pos));
@@ -145,7 +145,7 @@ pub(crate) fn shot(game: &mut Game) {
                     slot!(game, Hunter[E1].base.properties, |old| (old)
                         | ((0x800) as u16));
                 }
-                word!(game.cur_enemy_index = old_cur_enemy_index);
+                word!(game.CUR_ENEMY_INDEX = old_cur_enemy_index);
             }
         } else {
             for field in [0x12, 0x26, 0x28, 0x24] {
@@ -161,14 +161,14 @@ pub(crate) fn shot(game: &mut Game) {
 
 fn spit(j: u16, game: &mut Game) {
     queue_sfx2_max6(0x4c, game);
-    spawn_with_enemy_gfx(0, word!(game.cur_enemy_index), j, game);
-    slot!(game, Hunter[word!(game.cur_enemy_index) as i32].var_0f = 24);
+    spawn_with_enemy_gfx(0, word!(game.CUR_ENEMY_INDEX), j, game);
+    slot!(game, Hunter[word!(game.CUR_ENEMY_INDEX) as i32].var_0f = 24);
 }
 
 fn wing_origins(game: &mut Game) {
     for (phase, x_field, y_field) in [(0xe0, 3, 4), (0xa0, 1, 2)] {
         let x = actor_cosine(phase, 0x30, game);
-        let at = 0x7800 + usize::from(word!(game.cur_enemy_index));
+        let at = 0x7800 + usize::from(word!(game.CUR_ENEMY_INDEX));
         Runtime::new(game).write_slice_native(at + x_field * 2, x);
         let y = actor_sine(phase, 0x30, game);
         Runtime::new(game).write_slice_native(at + y_field * 2, y);
@@ -185,7 +185,7 @@ fn paired_animation(k: u16, index: u16, game: &mut Game) {
     }
 }
 pub(crate) fn advance(game: &mut Game) {
-    let k = word!(game.cur_enemy_index);
+    let k = word!(game.CUR_ENEMY_INDEX);
     let E = k as i32;
     let state = slot!(game, Hunter[E].var_a);
     match state {
@@ -212,15 +212,15 @@ pub(crate) fn advance(game: &mut Game) {
             }
             snap(k, game);
             let r18: u16 =
-                (word!(game.samus_x_pos)).wrapping_sub(slot!(game, Hunter[E].base.x_pos));
+                (word!(game.SAMUS_X_POS)).wrapping_sub(slot!(game, Hunter[E].base.x_pos));
             let r20: u16 = abs16(r18);
             if ((r20) as i16).wrapping_sub((0x60) as i16) < 0
-                && word!(game.samus_y_pos) as i32 - slot!(game, Hunter[E].base.y_pos) as i32 - 32i32
+                && word!(game.SAMUS_Y_POS) as i32 - slot!(game, Hunter[E].base.y_pos) as i32 - 32i32
                     & 0x8000
                     == 0
             {
                 let r24: u16 =
-                    (word!(game.samus_y_pos)).wrapping_sub(slot!(game, Hunter[E].base.y_pos));
+                    (word!(game.SAMUS_Y_POS)).wrapping_sub(slot!(game, Hunter[E].base.y_pos));
                 let mut v9: u16 = if (r18 & 0x8000) != 0 {
                     slot!(game, Hunter[E].var_00 = -2i32 as u16);
                     slot!(game, Hunter[E]; var_02 = 0, var_03 = 0);
@@ -337,10 +337,10 @@ pub(crate) fn advance(game: &mut Game) {
             slot!(game, Hunter[E].var_08 = 0);
             slot!(
                 game,
-                Hunter[E].var_09 = ((word!(game.random_number) as i32 & 1) - 8i32) as u16
+                Hunter[E].var_09 = ((word!(game.RANDOM_NUMBER) as i32 & 1) - 8i32) as u16
             );
             let left = (slot!(game, Hunter[E].base.x_pos) as i16)
-                .wrapping_sub(word!(game.samus_x_pos) as i16)
+                .wrapping_sub(word!(game.SAMUS_X_POS) as i16)
                 >= 0;
             slot!(game, Hunter[E].var_06 = 0);
             slot!(
@@ -385,7 +385,7 @@ pub(crate) fn advance(game: &mut Game) {
             if v2 == 0 {
                 let mut v3: u16 = 0xf58b;
                 let v4: u16 = abs16(
-                    (slot!(game, Hunter[E].base.x_pos)).wrapping_sub(word!(game.samus_x_pos)),
+                    (slot!(game, Hunter[E].base.x_pos)).wrapping_sub(word!(game.SAMUS_X_POS)),
                 );
                 if v4 as i32 - 96i32 & 0x8000 != 0 {
                     v3 = 0xf6b3;
@@ -396,7 +396,7 @@ pub(crate) fn advance(game: &mut Game) {
         0xf6b3 => {
             let mut v1: u16 = 0xeaf2 as u16;
             if ((slot!(game, Hunter[E].base.x_pos)) as i16)
-                .wrapping_sub((word!(game.samus_x_pos)) as i16)
+                .wrapping_sub((word!(game.SAMUS_X_POS)) as i16)
                 < 0
             {
                 v1 = 0xeb10 as u16;
@@ -406,7 +406,7 @@ pub(crate) fn advance(game: &mut Game) {
         }
         0xf6f3 => copy_drawing(k, &[(2, 91), (6, 93)], game),
         0xf7cf => {
-            let wing_state = slot!(game, Hunter[word!(game.cur_enemy_index) as i32].var_00);
+            let wing_state = slot!(game, Hunter[word!(game.CUR_ENEMY_INDEX) as i32].var_00);
             match wing_state {
                 0xf7db => wing_arc(true, game),
                 0xf8ad => wing_arc(false, game),
@@ -442,7 +442,7 @@ pub(crate) fn instruction(
         11072996 | 11073151 => {
             slot!(
                 game,
-                Hunter[word!(game.cur_enemy_index) as i32].var_a =
+                Hunter[word!(game.CUR_ENEMY_INDEX) as i32].var_a =
                     if address == 11072996 { 0xf5f0 } else { 0xf68b }
             );
         }
@@ -478,7 +478,7 @@ fn snap(k: u16, game: &mut Game) {
 
 fn copy_drawing(k: u16, fields: &[(usize, i32)], game: &mut Game) {
     for &(field, queue) in fields {
-        let value = word!(game.enemy_drawing_queue[(i32::from(k >> 1) + queue)]);
+        let value = word!(game.ENEMY_DRAWING_QUEUE[(i32::from(k >> 1) + queue)]);
         Runtime::new(game).write_slice_native(0xf78 + usize::from(k) + field, value);
     }
 }

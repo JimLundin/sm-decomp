@@ -13,19 +13,19 @@ impl irq::Controls for NativeControls<'_> {
     fn read_control(&mut self, field: irq::Control) -> u16 {
         let game = &mut *self.0;
         match field {
-            irq::Control::Current => word!(game.cur_irq_handler),
-            irq::Control::Pending => word!(game.irqhandler_next_handler),
+            irq::Control::Current => word!(game.CUR_IRQ_HANDLER),
+            irq::Control::Pending => word!(game.IRQHANDLER_NEXT_HANDLER),
             irq::Control::Enable => at!(game, 0x84;),
-            irq::Control::PreviousCre => word!(game.previous_cre_bitset),
-            irq::Control::CurrentCre => word!(game.cre_bitset),
-            irq::Control::TransitionFlag => word!(game.door_transition_flag),
+            irq::Control::PreviousCre => word!(game.PREVIOUS_CRE_BITSET),
+            irq::Control::CurrentCre => word!(game.CRE_BITSET),
+            irq::Control::TransitionFlag => word!(game.DOOR_TRANSITION_FLAG),
         }
     }
     fn write_control(&mut self, field: irq::Store, value: u16) {
         let game = &mut *self.0;
         match field {
-            irq::Store::Current => word!(game.cur_irq_handler = value),
-            irq::Store::Pending => word!(game.irqhandler_next_handler = value),
+            irq::Store::Current => word!(game.CUR_IRQ_HANDLER = value),
+            irq::Store::Pending => word!(game.IRQHANDLER_NEXT_HANDLER = value),
             irq::Store::Enable => at!(game, 0x84; = value),
         }
     }

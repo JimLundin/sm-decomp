@@ -713,7 +713,7 @@ impl Game {
             u16::from(product[1]) + u16::from(self.compatibility_byte(0x5e6).wrapping_mul(5)) + 1;
         product[1] = carry as u8;
         let result = u16::from_ne_bytes(product).wrapping_add(17 + (carry >> 8));
-        crate::ram_map::checked_word!(self.random_number = result);
+        crate::ram_map::checked_word!(self.RANDOM_NUMBER = result);
         #[cfg(sm_verify_dll)]
         crate::cpu_infra::player_transitions_composed::random_after(self);
         result
@@ -727,7 +727,7 @@ impl Game {
     }
 
     pub(crate) fn request_reset(&mut self) {
-        crate::ram_map::word!(self.game_state = u16::MAX);
+        crate::ram_map::word!(self.GAME_STATE = u16::MAX);
     }
 
     pub(crate) fn world(&self) -> &Arc<WorldBinding> {

@@ -53,7 +53,7 @@ const KAGO_BUG: u16 = 0xd02e;
 pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
     let mut lease = game.lease();
     let runtime = &mut lease;
-    let index = runtime.word(words::cur_enemy_index);
+    let index = runtime.word(words::CUR_ENEMY_INDEX);
     let key = Key::from_legacy(index);
     runtime.edit_actor(key, Native, |actor| {
         actor.properties |= PROCESS_INSTRUCTIONS;
@@ -71,7 +71,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
 /// RTL. Was `advance`.
 pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
     let mut runtime = game.lease();
-    let key = Key::from_legacy(runtime.word(words::cur_enemy_index));
+    let key = Key::from_legacy(runtime.word(words::CUR_ENEMY_INDEX));
     match runtime.resolve_actor(key, Native).variables[0] {
         function::NOTHING => {
             runtime.edit_actor(key, Native, |actor| actor.variables[0] = function::RTL)
@@ -90,7 +90,7 @@ pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
     runtime.write_slice_le(EARTHQUAKE_TIMER, SHAKE_FRAMES);
     // Damage may select another actor. Retain that identity through death,
     // then use the live selection only for the projectile's graphics source.
-    let index = runtime.word(words::cur_enemy_index);
+    let index = runtime.word(words::CUR_ENEMY_INDEX);
     let key = Key::from_legacy(index);
     if runtime.resolve_actor(key, Native).variables[1] == 0 {
         runtime.edit_actor(key, Native, |actor| {
@@ -112,7 +112,7 @@ pub fn shot<H: LeaseActors + ?Sized>(game: &mut H) {
         runtime.edit_actor(key, Native, |actor| actor.pre_instruction = 1);
     }
     let y = runtime.resolve_actor(key, Native).y.whole;
-    let current = runtime.word(words::cur_enemy_index);
+    let current = runtime.word(words::CUR_ENEMY_INDEX);
     runtime.foreign(|game| {
         game.spawn_projectile(y, current, KAGO_BUG);
     });

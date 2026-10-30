@@ -423,7 +423,7 @@ fn check_fx_assets(world: &WorldDefinition, keys: &CompatibilityKeys, assets: &P
     let mut game = Game::with_world(binding);
     game.decompress_src = 0xdeadbeef;
     game.ram().copy_in(
-        crate::ram_map::words::room_layer3_asm_ptr,
+        crate::ram_map::words::ROOM_LAYER3_ASM_PTR,
         &base.to_le_bytes(),
     );
     for index in 0..16u16 {
@@ -441,7 +441,7 @@ fn check_fx_assets(world: &WorldDefinition, keys: &CompatibilityKeys, assets: &P
     }
     game.g_fail = false;
     game.ram().copy_in(
-        crate::ram_map::words::door_def_ptr,
+        crate::ram_map::words::DOOR_DEF_PTR,
         &0x1003u16.to_le_bytes(),
     );
     crate::game::room_state::load_fx_header(&mut game);

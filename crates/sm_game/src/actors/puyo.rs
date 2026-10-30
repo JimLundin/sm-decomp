@@ -61,7 +61,7 @@ pub fn initialize<H: LeaseActors + ?Sized>(game: &mut H) {
 fn random_eighth(runtime: &mut impl ActorLease, puyo: i32) -> u16 {
     runtime.next_random();
     let frame = session_slot!(runtime, Puyo[puyo].base.frame_counter);
-    frame.wrapping_add(runtime.word(crate::ram::words::random_number)) & 7
+    frame.wrapping_add(runtime.word(crate::ram::words::RANDOM_NUMBER)) & 7
 }
 /// Puyo function - grounded ($A2:9B65): once the cooldown runs out, initiate hop ($A2:9A84).
 fn grounded(runtime: &mut impl ActorLease, puyo: i32) {

@@ -202,13 +202,13 @@ fn echo_alias(g: &mut Game) {
     use crate::ram_map::words as w;
     for (at, value) in [
         (0xa1e, 0x0908),
-        (w::samus_x_pos, 0x1234),
-        (w::samus_y_pos, 0x5678),
-        (w::input_to_pose_calc, 0x7777),
-        (w::speed_boost_counter, 0x0400),
-        (w::game_time_frames, 4),
-        (w::speed_echoes_index, 74),
-        (w::samus_collision_direction, 0x9abc),
+        (w::SAMUS_X_POS, 0x1234),
+        (w::SAMUS_Y_POS, 0x5678),
+        (w::INPUT_TO_POSE_CALC, 0x7777),
+        (w::SPEED_BOOST_COUNTER, 0x0400),
+        (w::GAME_TIME_FRAMES, 4),
+        (w::SPEED_ECHOES_INDEX, 74),
+        (w::SAMUS_COLLISION_DIRECTION, 0x9abc),
     ] {
         put(g, at, value);
     }
@@ -221,7 +221,7 @@ fn echo_alias(g: &mut Game) {
     for (at, value) in [
         (0xafa, 0x1234u16),
         (0xb02, 0x1234),
-        (w::speed_echoes_index, 0),
+        (w::SPEED_ECHOES_INDEX, 0),
     ] {
         expected[at..at + 2].copy_from_slice(&value.to_le_bytes());
     }
@@ -248,7 +248,7 @@ fn echo_alias(g: &mut Game) {
         "exceptional echo writes freshly reread Y"
     );
     assert_eq!(
-        word(g, w::speed_echoes_index),
+        word(g, w::SPEED_ECHOES_INDEX),
         0,
         "exceptional echo index wraps after publication"
     );

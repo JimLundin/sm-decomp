@@ -34,7 +34,7 @@ pub fn copy_rom_colors_to_palette(
     game: &mut (impl crate::ram::CompatibilityRam + NativeDiagnostics + ?Sized),
 ) {
     copy(k, bank, source, count, game, |game, i, value| {
-        word!(game.palette_buffer[i] = value)
+        word!(game.PALETTE_BUFFER[i] = value)
     });
 }
 /// Was WriteColorsToTargetPalette.
@@ -46,6 +46,6 @@ pub fn copy_rom_colors_to_target_palette(
     game: &mut (impl crate::ram::CompatibilityRam + NativeDiagnostics + ?Sized),
 ) {
     copy(k, bank, source, count, game, |game, i, value| {
-        word!(game.target_palettes[i] = value)
+        word!(game.TARGET_PALETTES[i] = value)
     });
 }

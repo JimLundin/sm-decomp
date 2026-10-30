@@ -170,7 +170,7 @@ impl Runtime<'_> {
             self.write_slice_native(address, value as u16);
             self.set_byte(address + 2, (value >> 16) as u8);
         }
-        self.write_slice_le(crate::ram_map::words::xray_hdma_table_end, 0);
+        self.write_slice_le(crate::ram_map::words::XRAY_HDMA_TABLE_END, 0);
     }
 
     fn publish_suit_colors(&mut self) {
@@ -183,7 +183,7 @@ impl Runtime<'_> {
         use crate::ram_map::{word_arrays as arrays, words as ram};
         if crate::game::player_transitions::suit::advance(self, gravity, Self::suit_window_word) {
             self.publish_suit_colors();
-            self.write_slice_le(ram::fx_layer_blending_config_c, 18);
+            self.write_slice_le(ram::FX_LAYER_BLENDING_CONFIG_C, 18);
             return;
         }
         if !gravity {
@@ -196,9 +196,9 @@ impl Runtime<'_> {
         self.set_byte(0xa8a, 0x98);
         self.write_slice_native(0xa8b, 0);
         for address in [
-            ram::demo_input_prev,
-            ram::demo_input_prev_new,
-            ram::demo_backup_prev_controller_input,
+            ram::DEMO_INPUT_PREV,
+            ram::DEMO_INPUT_PREV_NEW,
+            ram::DEMO_BACKUP_PREV_CONTROLLER_INPUT,
         ] {
             self.write_slice_le(address, 0);
         }
@@ -210,20 +210,20 @@ impl Runtime<'_> {
             .presentation
             .palette_mut()
             .crystal_flash_delay = 0;
-        let offset = usize::from(self.word(ram::hdma_object_index) >> 1) * 2;
-        let program = arrays::hdma_object_instruction_list_pointers + offset;
+        let offset = usize::from(self.word(ram::HDMA_OBJECT_INDEX) >> 1) * 2;
+        let program = arrays::HDMA_OBJECT_INSTRUCTION_LIST_POINTERS + offset;
         self.write_slice_le(program, self.word(program).wrapping_add(2));
-        self.write_slice_le(arrays::hdma_object_instruction_timers + offset, 1);
+        self.write_slice_le(arrays::HDMA_OBJECT_INSTRUCTION_TIMERS + offset, 1);
         self.foreign(|game| crate::game::session_runtime::player_command(0xb, game));
     }
 
     pub(crate) fn load_demo_data(&mut self) {
         use crate::{game::player_transitions::demo, ram_map::words as ram};
-        let scene = self.word(ram::demo_scene);
-        let set = self.word(ram::demo_set);
+        let scene = self.word(ram::DEMO_SCENE);
+        let set = self.word(ram::DEMO_SET);
         demo::load_data(self, set, scene);
-        let set = self.word(ram::demo_set);
-        let scene = self.word(ram::demo_scene);
+        let set = self.word(ram::DEMO_SET);
+        let scene = self.word(ram::DEMO_SCENE);
         if demo::initialize_scene(self, set, scene) {
             self.owned_call(crate::game::player_transitions::equipment::face_forward);
             self.session_mut().player.transitions.draw_handler = DrawMode::Normal;
@@ -231,23 +231,23 @@ impl Runtime<'_> {
         demo::finish_setup(self);
         self.foreign(crate::game::visual_runtime::update_beam_tiles_and_palette);
         for (field, value) in [
-            (ram::button_config_up, 0x0800),
-            (ram::button_config_down, 0x0400),
-            (ram::button_config_left, 0x0200),
-            (ram::button_config_right, 0x0100),
-            (ram::button_config_shoot_x, 0x0040),
-            (ram::button_config_jump_a, 0x0080),
-            (ram::button_config_run_b, 0x8000),
-            (ram::button_config_itemcancel_y, 0x4000),
-            (ram::button_config_itemswitch, 0x2000),
-            (ram::button_config_aim_up_R, 0x0010),
-            (ram::button_config_aim_down_L, 0x0020),
-            (ram::UNUSED_word_7E09E8, 1),
-            (ram::debug_flag, 1),
-            (ram::moonwalk_flag, 0),
-            (ram::UNUSED_word_7E0DF8, 0),
-            (ram::UNUSED_word_7E0DFA, 0),
-            (ram::UNUSED_word_7E0DFC, 0),
+            (ram::BUTTON_CONFIG_UP, 0x0800),
+            (ram::BUTTON_CONFIG_DOWN, 0x0400),
+            (ram::BUTTON_CONFIG_LEFT, 0x0200),
+            (ram::BUTTON_CONFIG_RIGHT, 0x0100),
+            (ram::BUTTON_CONFIG_SHOOT_X, 0x0040),
+            (ram::BUTTON_CONFIG_JUMP_A, 0x0080),
+            (ram::BUTTON_CONFIG_RUN_B, 0x8000),
+            (ram::BUTTON_CONFIG_ITEMCANCEL_Y, 0x4000),
+            (ram::BUTTON_CONFIG_ITEMSWITCH, 0x2000),
+            (ram::BUTTON_CONFIG_AIM_UP_R, 0x0010),
+            (ram::BUTTON_CONFIG_AIM_DOWN_L, 0x0020),
+            (ram::UNUSED_WORD_7E09E8, 1),
+            (ram::DEBUG_FLAG, 1),
+            (ram::MOONWALK_FLAG, 0),
+            (ram::UNUSED_WORD_7E0DF8, 0),
+            (ram::UNUSED_WORD_7E0DFA, 0),
+            (ram::UNUSED_WORD_7E0DFC, 0),
         ] {
             self.write_slice_le(field, value);
         }
@@ -257,16 +257,16 @@ impl Runtime<'_> {
         use crate::{game::player_transitions::demo, ram_map::words as ram};
         if demo::advance(self) {
             self.write_slice_le(
-                ram::joypad1_input_samusfilter,
+                ram::JOYPAD1_INPUT_SAMUSFILTER,
                 self.session().player.demo.previous_held,
             );
             self.write_slice_le(
-                ram::joypad1_newinput_samusfilter,
+                ram::JOYPAD1_NEWINPUT_SAMUSFILTER,
                 self.session().player.demo.previous_pressed,
             );
-            self.write_slice_le(ram::joypad1_lastkeys, self.session().player.demo.held);
+            self.write_slice_le(ram::JOYPAD1_LASTKEYS, self.session().player.demo.held);
             self.session_mut().player.demo.previous_held = self.session().player.demo.held;
-            self.write_slice_le(ram::joypad1_newkeys, self.session().player.demo.pressed);
+            self.write_slice_le(ram::JOYPAD1_NEWKEYS, self.session().player.demo.pressed);
             self.session_mut().player.demo.previous_pressed = self.session().player.demo.pressed;
         }
         self.handle_input();
@@ -298,13 +298,13 @@ pub(crate) fn initialize(game: &mut crate::game_state::Game) {
         ram_map::words as ram,
     };
     let mut rt = Runtime::new(game);
-    let debug_invincibility = rt.word(ram::debug_invincibility);
+    let debug_invincibility = rt.word(ram::DEBUG_INVINCIBILITY);
     // This compatibility workspace is only part of Session, including byte aliases.
     for address in (0xa02..=0xe0b).rev() {
         rt.set_byte(address, 0);
     }
-    if rt.word(ram::game_state) != 40 {
-        let ceres = rt.word(ram::loading_game_state) == 34;
+    if rt.word(ram::GAME_STATE) != 40 {
+        let ceres = rt.word(ram::LOADING_GAME_STATE) == 34;
         let t = &mut rt.session_mut().player.transitions;
         t.frame_alpha = FrameAlphaMode::Empty;
         t.frame_beta = if ceres {
@@ -321,7 +321,7 @@ pub(crate) fn initialize(game: &mut crate::game_state::Game) {
         }
         rt.session_mut().player.transitions.input_mode = InputMode::Normal;
         if !ceres {
-            rt.write_slice_le(ram::debug_invincibility, debug_invincibility);
+            rt.write_slice_le(ram::DEBUG_INVINCIBILITY, debug_invincibility);
         }
     }
     rt.session_mut()
@@ -334,8 +334,8 @@ pub(crate) fn initialize(game: &mut crate::game_state::Game) {
         FrameGammaMode::Disabled
     };
     rt.session_mut().player.movement_handler = MovementMode::Normal;
-    rt.write_slice_le(ram::UNUSED_word_7E0A5E, (-2764i16) as u16);
-    rt.write_slice_le(ram::samus_prev_health_for_flash, 50);
+    rt.write_slice_le(ram::UNUSED_WORD_7E0A5E, (-2764i16) as u16);
+    rt.write_slice_le(ram::SAMUS_PREV_HEALTH_FOR_FLASH, 50);
     rt.session_mut().presentation.palette_mut().visor_timer = 1537;
     for shot in &mut rt.session_mut().projectiles.shots {
         shot.motion = 0xb169;
@@ -358,13 +358,13 @@ pub(crate) fn initialize(game: &mut crate::game_state::Game) {
     rt.session_mut().room.liquid.surface.whole = u16::MAX;
     rt.session_mut().room.liquid.lava_acid.whole = u16::MAX;
     rt.foreign(crate::game::visual_runtime::update_beam_tiles_and_palette);
-    rt.write_slice_le(ram::cinematic_function, 0);
+    rt.write_slice_le(ram::CINEMATIC_FUNCTION, 0);
     let state = rt.session_mut();
     let p = &mut state.player;
     p.pose = 0;
     p.movement_and_facing = 0;
     p.history = Default::default();
-    rt.write_slice_le(ram::enemy_index_to_shake, u16::MAX);
+    rt.write_slice_le(ram::ENEMY_INDEX_TO_SHAKE, u16::MAX);
     rt.session_mut().projectiles.controls.selected_weapon = 0;
     rt.session_mut().projectiles.controls.automatic_weapon = 0;
     let state = rt.session_mut();
@@ -372,12 +372,12 @@ pub(crate) fn initialize(game: &mut crate::game_state::Game) {
     p.invincibility = 0;
     p.knockback_timer = 0;
     state.presentation.palette_mut().hurt_flash = 0;
-    rt.write_slice_le(ram::debug_invincibility, 0);
-    if rt.word(ram::game_state) == 40 {
+    rt.write_slice_le(ram::DEBUG_INVINCIBILITY, 0);
+    if rt.word(ram::GAME_STATE) == 40 {
         rt.load_demo_data();
     }
     rt.write_slice_le(
-        ram::samus_prev_health_for_flash,
+        ram::SAMUS_PREV_HEALTH_FOR_FLASH,
         rt.session().inventory.health.current,
     );
 }
@@ -393,11 +393,11 @@ pub(super) fn dispatch_input(h: &mut Runtime<'_>) {
             let pressed = h.inputs().pressed;
             let timer = h.session().player.contact.auto_jump;
             if timer != 0 && (timer.wrapping_sub(9) as i16) < 0 {
-                h.write_slice_le(ram::joypad1_newkeys, pressed | h.inputs().jump_button);
+                h.write_slice_le(ram::JOYPAD1_NEWKEYS, pressed | h.inputs().jump_button);
                 h.session_mut().player.contact.auto_jump = 0;
             }
             h.handle_input();
-            h.write_slice_le(ram::joypad1_newkeys, pressed);
+            h.write_slice_le(ram::JOYPAD1_NEWKEYS, pressed);
             h.session_mut().player.transitions.input_mode = InputMode::Normal;
         }
         InputMode::Disabled => {}
@@ -450,10 +450,10 @@ impl Runtime<'_> {
 
     pub(crate) fn xray_blend_mask(&self) -> u16 {
         use crate::ram_map::words as ram;
-        if self.word(ram::fx_type) == 0x24 {
+        if self.word(ram::FX_TYPE) == 0x24 {
             0x1000
-        } else if matches!(self.word(ram::room_ptr), 0xa66a | 0xcefb)
-            || matches!(self.word(ram::boss_id), 3 | 6 | 7 | 8 | 10)
+        } else if matches!(self.word(ram::ROOM_PTR), 0xa66a | 0xcefb)
+            || matches!(self.word(ram::BOSS_ID), 3 | 6 | 7 | 8 | 10)
         {
             0x2000
         } else {
@@ -476,8 +476,8 @@ impl Runtime<'_> {
             }
         }
         self.write_slice_le(
-            ram::fx_layer_blending_config_c,
-            self.word(ram::fx_layer_blending_config_c) | mask,
+            ram::FX_LAYER_BLENDING_CONFIG_C,
+            self.word(ram::FX_LAYER_BLENDING_CONFIG_C) | mask,
         );
     }
 
@@ -511,8 +511,8 @@ impl Runtime<'_> {
         if phase == BeamPhase::Widening {
             xray::widen(&mut self.session_mut().player.demo);
         } else if phase == BeamPhase::Full {
-            let up = self.word(ram::button_config_up) & self.inputs().held != 0;
-            if up || self.word(ram::button_config_down) & self.inputs().held != 0 {
+            let up = self.word(ram::BUTTON_CONFIG_UP) & self.inputs().held != 0;
+            if up || self.word(ram::BUTTON_CONFIG_DOWN) & self.inputs().held != 0 {
                 let player = &mut self.session_mut().player;
                 xray::steer(&mut player.transitions.xray_angle, player.demo.held, up);
             }
@@ -527,9 +527,9 @@ impl Runtime<'_> {
     fn handle_xray_input(&mut self) {
         use crate::ram_map::words as ram;
         let binding = if self.session().player.movement_and_facing as u8 == 4 {
-            ram::button_config_right
+            ram::BUTTON_CONFIG_RIGHT
         } else {
-            ram::button_config_left
+            ram::BUTTON_CONFIG_LEFT
         };
         let turn = self.word(binding) & self.inputs().held != 0;
         crate::game::player_transitions::xray::turn(self, turn);
@@ -565,7 +565,7 @@ impl Runtime<'_> {
         if !xray::request(self) {
             return false;
         }
-        self.write_slice_le(ram::time_is_frozen_flag, 1);
+        self.write_slice_le(ram::TIME_IS_FROZEN_FLAG, 1);
         self.session_mut().player.transitions.interruption = InterruptionAction::from_raw(5);
         for index in (0..256).rev() {
             self.suit_window_word(index, 255);
@@ -577,7 +577,7 @@ impl Runtime<'_> {
         self.session_mut().player.demo.previous_held = 0x98c8;
         self.write_slice_native(0xa8e, 0x9098);
         self.set_byte(0xa90, 0x99);
-        self.write_slice_le(ram::xray_hdma_table_end, 0);
+        self.write_slice_le(ram::XRAY_HDMA_TABLE_END, 0);
         let demo = &mut self.session_mut().player.demo;
         demo.pre_action = 0;
         demo.delay = 0;
@@ -614,27 +614,27 @@ pub(crate) fn finish_player_frame(h: &mut Runtime<'_>) {
     };
     let inputs = h.inputs().clone();
     player_transitions::finish_input(h.session_mut(), &inputs);
-    h.write_slice_le(ram::joypad1_input_samusfilter, inputs.held);
-    h.write_slice_le(ram::joypad1_newinput_samusfilter, inputs.pressed);
+    h.write_slice_le(ram::JOYPAD1_INPUT_SAMUSFILTER, inputs.held);
+    h.write_slice_le(ram::JOYPAD1_NEWINPUT_SAMUSFILTER, inputs.pressed);
     h.owned_call(sm_game::player_projectiles::feedback::movement_sound);
-    if h.word(ram::enable_debug) != 0 {
+    if h.word(ram::ENABLE_DEBUG) != 0 {
         if matches!(h.session().player.pose, 0 | 0x9b) {
-            if h.word(ram::joypad2_last) & 0x30 == 0x30 && h.word(ram::joypad2_new_keys) & 0x80 != 0
+            if h.word(ram::JOYPAD2_LAST) & 0x30 == 0x30 && h.word(ram::JOYPAD2_NEW_KEYS) & 0x80 != 0
             {
-                h.write_slice_le(ram::debug_invincibility, 7);
+                h.write_slice_le(ram::DEBUG_INVINCIBILITY, 7);
             }
         } else {
-            if (h.word(ram::debug_invincibility).wrapping_sub(7) as i16) >= 0 {
+            if (h.word(ram::DEBUG_INVINCIBILITY).wrapping_sub(7) as i16) >= 0 {
                 return;
             }
-            h.write_slice_le(ram::debug_invincibility, 0);
+            h.write_slice_le(ram::DEBUG_INVINCIBILITY, 0);
         }
     }
     if h.owned_call(|h| progress_flags::event_happened(h, 0xe))
         && h.session().player.transitions.frame_gamma
             == player_transitions::state::FrameGammaMode::DrawEscapeTimer
-        && h.word(ram::game_state) != 35
+        && h.word(ram::GAME_STATE) != 35
     {
-        h.write_slice_le(ram::game_state, 35);
+        h.write_slice_le(ram::GAME_STATE, 35);
     }
 }

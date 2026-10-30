@@ -70,7 +70,7 @@ pub fn title_metroid_palette<H: crate::menus::host::Host + ?Sized>(
     cursor: u16,
     game: &mut H,
 ) -> u16 {
-    crate::word_transfers!(game, descending, 16; le(palette_buffer, 63) <- table(palette, 15));
+    crate::word_transfers!(game, descending, 16; le(PALETTE_BUFFER, 63) <- table(palette, 15));
     cursor
 }
 
@@ -87,16 +87,16 @@ pub fn start_title_pan<H: crate::menus::host::Host + ?Sized>(
     ][stage];
     game.ram().write_byte(crate::ram::mirror::TM, 17);
     crate::flow::set(game, crate::flow::Word::CinematicFunction, next);
-    word!(game.mode7_zoom = zoom);
-    word!(game.cinematic_x = x);
-    word!(game.cinematic_x_sub = 0);
-    word!(game.cinematic_y = y);
-    word!(game.cinematic_y_sub = 0);
-    word!(game.cinematic_x_speed = if stage < 2 { -2i16 as u16 } else { 0 });
-    word!(game.cinematic_x_subspeed = if stage < 2 { 0x8000 } else { 0 });
+    word!(game.MODE7_ZOOM = zoom);
+    word!(game.CINEMATIC_X = x);
+    word!(game.CINEMATIC_X_SUB = 0);
+    word!(game.CINEMATIC_Y = y);
+    word!(game.CINEMATIC_Y_SUB = 0);
+    word!(game.CINEMATIC_X_SPEED = if stage < 2 { -2i16 as u16 } else { 0 });
+    word!(game.CINEMATIC_X_SUBSPEED = if stage < 2 { 0x8000 } else { 0 });
     if stage >= 2 {
-        word! {game; cinematic_y_speed = u16::from(stage == 2);
-        cinematic_y_subspeed = if stage == 2 { 0x8000 } else { 0 }; }
+        word! {game; CINEMATIC_Y_SPEED = u16::from(stage == 2);
+        CINEMATIC_Y_SUBSPEED = if stage == 2 { 0x8000 } else { 0 }; }
     }
     if matches!(stage, 0 | 2) {
         set_cinematic_backdrop(true, game);
@@ -107,11 +107,11 @@ pub fn start_title_pan<H: crate::menus::host::Host + ?Sized>(
 pub fn advance_title_pan<H: crate::menus::host::Host + ?Sized>(stage: usize, game: &mut H) {
     let (offset, cutoff) = [(0, 7), (0, 176), (4, -163)][stage];
     let velocity = words!((
-        word!(@read game, ram_words::cinematic_x_speed + offset),
-        word!(@read game, ram_words::cinematic_x_subspeed + offset),
+        word!(@read game, ram_words::CINEMATIC_X_SPEED + offset),
+        word!(@read game, ram_words::CINEMATIC_X_SUBSPEED + offset),
     ));
-    let whole = ram_words::cinematic_x + offset;
-    let fraction = ram_words::cinematic_x_sub + offset;
+    let whole = ram_words::CINEMATIC_X + offset;
+    let fraction = ram_words::CINEMATIC_X_SUB + offset;
     add_native_pair(whole, fraction, velocity, game);
     let negative = (word!(@read game, whole) as i32 + cutoff) & 0x8000 != 0;
     // The vertical pan ends on the opposite side of its cutoff.
@@ -135,10 +135,10 @@ pub fn request_title_skip<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         + (function::TITLE_SCREEN.wrapping_neg() as i32 + 1))
         & 0x8000
         != 0
-        && word!(game.joypad1_newkeys) & CONFIRM_BUTTONS != 0
-        && word!(game.skip_to_title_index) == 0
+        && word!(game.JOYPAD1_NEWKEYS) & CONFIRM_BUTTONS != 0
+        && word!(game.SKIP_TO_TITLE_INDEX) == 0
     {
-        word! {game; skip_to_title_index = 1; screen_fade_delay = 0; screen_fade_counter = 2; }
+        word! {game; SKIP_TO_TITLE_INDEX = 1; SCREEN_FADE_DELAY = 0; SCREEN_FADE_COUNTER = 2; }
     }
 }
 
@@ -156,7 +156,7 @@ pub fn advance_title_wait<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
             function::TO_DEMOS,
         );
     } else {
-        if word!(game.joypad1_newkeys) & CONFIRM_BUTTONS == 0 {
+        if word!(game.JOYPAD1_NEWKEYS) & CONFIRM_BUTTONS == 0 {
             return;
         }
         crate::flow::set(
@@ -165,7 +165,7 @@ pub fn advance_title_wait<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
             function::TO_FILE_SELECT,
         );
     }
-    word! { game, 2; screen_fade_delay, screen_fade_counter }
+    word! { game, 2; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
 }
 
 pub fn initialize_title_sprite<H: crate::menus::host::Host + ?Sized>(

@@ -21,10 +21,10 @@ impl Runtime<'_> {
             ] {
                 self.write_slice_le(0xf78 + field, value);
             }
-            self.write_slice_le(w::cur_enemy_index, 64);
+            self.write_slice_le(w::CUR_ENEMY_INDEX, 64);
             self.write_slice_le(0x10002 + 264 * 2, 0);
             self.set_byte(0x16402 + 264, 0x55);
-            self.write_slice_le(w::room_width_in_blocks, 64);
+            self.write_slice_le(w::ROOM_WIDTH_IN_BLOCKS, 64);
         }
         // No export/import is added just to inspect state. After the actual
         // checked foreign failure, state is None and Game RAM is authoritative.

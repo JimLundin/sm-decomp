@@ -49,7 +49,7 @@ fn scene<H: crate::menus::host::Host + ?Sized>(game: &H, address: u16) -> Option
 }
 
 pub fn reset<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u8 {
-    word! { game, 0; UNUSED_word_7E0DF8, UNUSED_word_7E0DFA, UNUSED_word_7E0DFC }
+    word! { game, 0; UNUSED_WORD_7E0DF8, UNUSED_WORD_7E0DFA, UNUSED_WORD_7E0DFC }
     crate::flow::set(
         game,
         crate::flow::Word::CinematicFunction,
@@ -59,7 +59,7 @@ pub fn reset<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u8 {
     if crate::flow::current(game).num_demo_sets == 4 {
         crate::flow::set(game, crate::flow::Word::DemoSet, 3);
     }
-    word!(game.game_state += 1);
+    word!(game.GAME_STATE += 1);
     0
 }
 
@@ -80,8 +80,8 @@ pub fn play<H: crate::menus::host::Host + ?Sized>(
                     game.ram().write_byte(0x614, 2);
                     return yielded;
                 }
-                if word!(game.joypad1_newkeys) != 0 {
-                    word!(game.substate = 1);
+                if word!(game.JOYPAD1_NEWKEYS) != 0 {
+                    word!(game.SUBSTATE = 1);
                     break 'finish_demo;
                 }
                 crate::flow::set(
@@ -94,24 +94,24 @@ pub fn play<H: crate::menus::host::Host + ?Sized>(
                 {
                     break 'done;
                 }
-                word! {game; substate = 0; my_counter = 90; }
+                word! {game; SUBSTATE = 0; MY_COUNTER = 90; }
             }
-            do_until! { word!(game.my_counter -= 1, reread) == 0;
+            do_until! { word!(game.MY_COUNTER -= 1, reread) == 0;
                 let yielded: u8 = game.display_wait(true);
                 if yielded != 0 {
                     game.ram().write_byte(0x614, 1);
                     return yielded;
                 }
-                if word!(game.joypad1_newkeys) != 0 {
-                    word!(game.substate = 1);
+                if word!(game.JOYPAD1_NEWKEYS) != 0 {
+                    word!(game.SUBSTATE = 1);
                     break;
                 }
             }
         }
-        word!(game.game_state += 1);
-        word!(game.debug_disable_sounds = 0);
+        word!(game.GAME_STATE += 1);
+        word!(game.DEBUG_DISABLE_SOUNDS = 0);
         game.ram().write_byte(0x51, 0x80);
-        word! { game, 1; screen_fade_delay, screen_fade_counter }
+        word! { game, 1; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
     }
     game.ram().write_byte(0x614, 0);
     0
@@ -125,7 +125,7 @@ pub fn advance_set<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         None => native_record(0x820000 | u32::from(address), game).word(0) == 0xffff,
     };
     if ended {
-        word!(game.substate = 0);
+        word!(game.SUBSTATE = 0);
         let next = crate::flow::current(game).demo_set.wrapping_add(1);
         crate::flow::set(
             game,
@@ -138,7 +138,7 @@ pub fn advance_set<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         );
         crate::flow::set(game, crate::flow::Word::DemoScene, 0);
     } else {
-        word!(game.substate = 0x8000);
+        word!(game.SUBSTATE = 0x8000);
     }
 }
 
@@ -197,7 +197,7 @@ pub fn load<H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess +
     let area = &mut runtime.session_mut().room.area;
     *area = *area & 0xff00 | u16::from(value);
     drop(runtime);
-    word! { game, 0; reg_BG1HOFS, reg_BG1VOFS }
+    word! { game, 0; REG_BG1HOFS, REG_BG1VOFS }
     crate::flow::set(
         game,
         crate::flow::Word::DemoScene,
@@ -206,7 +206,7 @@ pub fn load<H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess +
     crate::word_transfers!(game, ascending, 4;
         native(0xd830) <- value(u16::MAX),
         native(0xd870) <- value(u16::MAX),
-        le(UNUSED_word_7ED8F0, 0) <- value(u16::MAX),
+        le(UNUSED_WORD_7ED8F0, 0) <- value(u16::MAX),
         native(0xd908) <- value(u16::MAX),
         native(0xd8f8) <- value(u16::MAX),
         native(0xd900) <- value(u16::MAX),
@@ -219,10 +219,10 @@ pub fn load<H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess +
         native(0xd878) <- value(u16::MAX),
         native(0xd8b8) <- value(0),
     );
-    crate::word_transfers!(game, ascending, 768; le(explored_map_tiles_saved, 0) <- value(0));
+    crate::word_transfers!(game, ascending, 768; le(EXPLORED_MAP_TILES_SAVED, 0) <- value(0));
     word! { game, 0;
-        samus_max_reserve_health, samus_reserve_health, reserve_health_mode,
-        loading_game_state, debug_disable_minimap,
+        SAMUS_MAX_RESERVE_HEALTH, SAMUS_RESERVE_HEALTH, RESERVE_HEALTH_MODE,
+        LOADING_GAME_STATE, DEBUG_DISABLE_MINIMAP,
     }
 }
 

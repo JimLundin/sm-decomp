@@ -97,7 +97,7 @@ const PART_ANGLES: [u16; 4] = [0xffe8, 0xfff4, 0x18, 0xc];
 const EXPLOSION_ANGLES: [u16; 4] = [0x180, 0x100, 0x100, 0x180];
 
 fn current<H: Host + ?Sized>(game: &H) -> i32 {
-    word!(game.cur_enemy_index) as i32
+    word!(game.CUR_ENEMY_INDEX) as i32
 }
 
 /// Initialisation AI - enemy $E0BF (fire arc) ($A6:94C4): the parameters'
@@ -167,7 +167,7 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
     let mut index = 8;
     slot!(game, FireArc[e].body_index = 8);
     loop {
-        game.spawn_projectile(index, word!(game.cur_enemy_index), BODY_PROJECTILE);
+        game.spawn_projectile(index, word!(game.CUR_ENEMY_INDEX), BODY_PROJECTILE);
         index = slot!(game, FireArc[e].body_index).wrapping_sub(2);
         slot!(game, FireArc[e].body_index = index);
         if index == 0 {
@@ -183,7 +183,7 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
         let y = slot!(game, FireArc[e].base.y_pos);
         let sprite = game.create_sprite(x, y, BODY_SPRITE, graphics);
         // The sprite object words are indexed by the body index's bytes.
-        let part = word!(game.cur_enemy_index) as i32 + slot!(game, FireArc[e].body_index) as i32;
+        let part = word!(game.CUR_ENEMY_INDEX) as i32 + slot!(game, FireArc[e].body_index) as i32;
         slot!(game, FireArc[part].sprite_object = sprite);
         let index = slot!(game, FireArc[e].body_index).wrapping_sub(2);
         slot!(game, FireArc[e].body_index = index);

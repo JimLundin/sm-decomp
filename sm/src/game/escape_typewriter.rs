@@ -24,14 +24,14 @@ fn store_word(at: usize, value: u16, game: &mut Game) {
 
 /// Was SetupZebesEscapeTypewriter.
 pub(crate) fn start_zebes_escape_typewriter(game: &mut Game) {
-    word!(game.palette_buffer[157] = word!(game.palette_buffer[125]));
-    word!(game.palette_buffer[158] = word!(game.palette_buffer[126]));
+    word!(game.PALETTE_BUFFER[157] = word!(game.PALETTE_BUFFER[125]));
+    word!(game.PALETTE_BUFFER[158] = word!(game.PALETTE_BUFFER[126]));
     slot!(
         game,
         MotherBrainBody[0].beam_left_edge = ADDR_LOC_A9C49C as u16
     );
     slot!(game, MotherBrainBody[0]; beam_left_origin_x = 0, beam_left_origin_y = 0, beam_right_origin_x = 0, beam_right_origin_y = 0);
-    word! { game, 0; reg_BG2HOFS, reg_BG2VOFS }
+    word! { game, 0; REG_BG2HOFS, REG_BG2VOFS }
 }
 
 /// Type one character per elapsed delay; 1 once the text's end word is read.
@@ -98,7 +98,7 @@ pub(crate) fn type_escape_text(tiles: u16, game: &mut Game) -> u8 {
         MotherBrainBody[0].beam_left_edge = (cursor + 1) as u16
     );
     // One two-byte tile from $7E:8034; the source word overlaps the bank word.
-    let tail = word!(game.vram_write_queue_tail);
+    let tail = word!(game.VRAM_WRITE_QUEUE_TAIL);
     let at = QUEUE + usize::from(tail);
     store_word(at, 2, game);
     store_word(at + 3, 0x7e00, game);
@@ -113,12 +113,12 @@ pub(crate) fn type_escape_text(tiles: u16, game: &mut Game) -> u8 {
         game,
         MotherBrainBody[0].beam_left_origin_x = position.wrapping_add(1)
     );
-    word!(game.vram_write_queue_tail = tail.wrapping_add(7));
+    word!(game.VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(7));
     let ticks = slot!(game, MotherBrainBody[0].beam_right_origin_y).wrapping_add(1);
     slot!(game, MotherBrainBody[0].beam_right_origin_y = ticks);
     if (ticks as i32 - 2) & 0x8000 == 0 {
         slot!(game, MotherBrainBody[0].beam_right_origin_y = 0);
-        if word!(game.area_index) == 6 {
+        if word!(game.AREA_INDEX) == 6 {
             queue_sfx2_max3(0x45, game);
         } else {
             queue_sfx3_max3(0xd, game);

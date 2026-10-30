@@ -65,20 +65,20 @@ pub(crate) fn branch_unless_samus_near(
         actor
             .x
             .whole
-            .wrapping_sub(runtime.word(fields::samus_x_pos)),
+            .wrapping_sub(runtime.word(fields::SAMUS_X_POS)),
     ) >= 0x30
         || abs16(
             actor
                 .y
                 .whole
-                .wrapping_sub(runtime.word(fields::samus_y_pos)),
+                .wrapping_sub(runtime.word(fields::SAMUS_Y_POS)),
         ) >= 0x30;
     branch(far, script)
 }
 
 /// Branches until the area boss (Ceres Ridley) is marked defeated.
 pub(crate) fn branch_unless_boss_defeated(script: EnemyScript, game: &mut Game) -> EnemyScript {
-    let area = word!(game.area_index);
+    let area = word!(game.AREA_INDEX);
     branch(
         boss_word_at(area, BossWordOrder::Native, game) & 1 == 0,
         script,
@@ -87,13 +87,13 @@ pub(crate) fn branch_unless_boss_defeated(script: EnemyScript, game: &mut Game) 
 
 /// Branches until the Ceres escape has started.
 pub(crate) fn branch_unless_escape(script: EnemyScript, game: &mut Game) -> EnemyScript {
-    branch(word!(game.ceres_status) == 0, script)
+    branch(word!(game.CERES_STATUS) == 0, script)
 }
 
 /// Steam contact keeps the vent at full health before the shared reaction.
 pub(crate) fn steam_touch(game: &mut Game) {
     let mut runtime = Runtime::new(game);
-    let key = Key::from_legacy(runtime.word(fields::cur_enemy_index));
+    let key = Key::from_legacy(runtime.word(fields::CUR_ENEMY_INDEX));
     runtime.edit_actor(key, Native, |actor| actor.health = 0x7fff);
     combat::contact_reaction(&mut runtime, api::DeathHandling::Finalize);
 }

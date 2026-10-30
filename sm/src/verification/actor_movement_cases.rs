@@ -57,7 +57,7 @@ fn actor(g: &mut Game, k: u16, x: u16, y: u16, radius: u16) {
 // Same explicit32x32 terrain fixture shape as candidate_collision_cases::room.
 // Helpers there are private to the eproj carrier; no production rule duplicated.
 fn room(g: &mut Game, kind: u16, bts: u8) {
-    put(g, w::room_width_in_blocks, 32);
+    put(g, w::ROOM_WIDTH_IN_BLOCKS, 32);
     for block in 0..1024 {
         put(g, 0x10002 + block * 2, kind << 12);
         g.ram().write_byte(0x16402 + block, bts);
@@ -88,23 +88,23 @@ fn seed(g: &mut Game, loaded: &RomImage, native: &RomImage) {
     actor(g, 0, 136, 136, 3);
     actor(g, 64, 136, 136, 3);
     for (at, value) in [
-        (w::cur_enemy_index, 0),
-        (w::cur_block_index, 0),
-        (w::samus_x_pos, 136),
-        (w::samus_y_pos, 136),
-        (w::samus_x_radius, 3),
-        (w::samus_y_radius, 3),
-        (w::samus_x_subpos, 0),
-        (w::samus_y_subpos, 0x2222),
-        (w::samus_contact_damage_index, 0),
-        (w::samus_invincibility_timer, 0),
-        (w::projectile_counter, 0),
-        (w::bomb_counter, 0),
+        (w::CUR_ENEMY_INDEX, 0),
+        (w::CUR_BLOCK_INDEX, 0),
+        (w::SAMUS_X_POS, 136),
+        (w::SAMUS_Y_POS, 136),
+        (w::SAMUS_X_RADIUS, 3),
+        (w::SAMUS_Y_RADIUS, 3),
+        (w::SAMUS_X_SUBPOS, 0),
+        (w::SAMUS_Y_SUBPOS, 0x2222),
+        (w::SAMUS_CONTACT_DAMAGE_INDEX, 0),
+        (w::SAMUS_INVINCIBILITY_TIMER, 0),
+        (w::PROJECTILE_COUNTER, 0),
+        (w::BOMB_COUNTER, 0),
     ] {
         put(g, at, value);
     }
     for i in 0..40 {
-        put(g, a::plm_header_ptr + i * 2, 0);
+        put(g, a::PLM_HEADER_PTR + i * 2, 0);
     }
     // Distinct immutable contents make accidental native/loaded selection visible.
     for i in 0..512 {
@@ -156,7 +156,7 @@ fn fixture(id: u32, g: &mut Game, loaded: &RomImage) -> Operation {
             actor(g, k, x, y, 3);
             set_actor_word(g, k, offset_of!(EnemyData, x_subpos), xf);
             set_actor_word(g, k, offset_of!(EnemyData, y_subpos), yf);
-            put(g, w::cur_enemy_index, k);
+            put(g, w::CUR_ENEMY_INDEX, k);
             Operation::Vector {
                 phase,
                 value: Vector32 { x: vx, y: vy },
@@ -192,7 +192,7 @@ fn fixture(id: u32, g: &mut Game, loaded: &RomImage) -> Operation {
         }
         7 | 8 => {
             actor(g, 0, 16392, 2056, 1);
-            put(g, w::room_width_in_blocks, 255);
+            put(g, w::ROOM_WIDTH_IN_BLOCKS, 255);
             // Horizontal wraps byte offset0x10700 to0700; vertical retains10700.
             put(g, 0x10702, 0x8000);
             if id == 7 {
@@ -290,14 +290,14 @@ fn fixture(id: u32, g: &mut Game, loaded: &RomImage) -> Operation {
             let direction = if id == 39 { 0 } else { (id - 29) as u16 };
             actor(g, 0, 136, 136, 3);
             set_actor_word(g, 0, offset_of!(EnemyData, frozen_timer), 1);
-            put(g, w::interactive_enemy_indexes_write_ptr, 2);
-            put(g, a::interactive_enemy_indexes, 0);
-            put(g, a::interactive_enemy_indexes + 2, 0xffff);
-            put(g, w::samus_collision_direction, direction);
+            put(g, w::INTERACTIVE_ENEMY_INDEXES_WRITE_PTR, 2);
+            put(g, a::INTERACTIVE_ENEMY_INDEXES, 0);
+            put(g, a::INTERACTIVE_ENEMY_INDEXES + 2, 0xffff);
+            put(g, w::SAMUS_COLLISION_DIRECTION, direction);
             let axis = if direction < 2 {
-                w::samus_x_pos
+                w::SAMUS_X_POS
             } else {
-                w::samus_y_pos
+                w::SAMUS_Y_POS
             };
             put(g, axis, if direction & 1 == 0 { 142 } else { 144 });
             if direction & 1 != 0 {
@@ -315,28 +315,28 @@ fn fixture(id: u32, g: &mut Game, loaded: &RomImage) -> Operation {
             if id == 39 {
                 set_actor_word(g, 0, offset_of!(EnemyData, x_pos), 0xfffe);
                 set_actor_word(g, 0, offset_of!(EnemyData, x_width), 1);
-                put(g, w::samus_x_pos, 0);
-                put(g, w::samus_x_radius, 1);
+                put(g, w::SAMUS_X_POS, 0);
+                put(g, w::SAMUS_X_RADIUS, 1);
             }
             // This entry takes magnitude; its direction applies subtraction.
             Operation::Solid(0x10000)
         }
         33 => {
-            put(g, w::samus_y_pos, 130);
+            put(g, w::SAMUS_Y_POS, 130);
             Operation::Touch(0)
         }
         34 => {
-            put(g, w::samus_x_pos, 145);
+            put(g, w::SAMUS_X_POS, 145);
             Operation::Padding(0)
         }
         35 => Operation::Distance(Point16U { x: 136, y: 136 }, Point16U { x: 145, y: 143 }),
         36 => Operation::Distance(Point16U { x: 100, y: 100 }, Point16U { x: 356, y: 100 }),
         37 | 38 => {
             actor(g, 0xe3ea, 136, 136, 3);
-            put(g, w::cur_enemy_index, 0xe3ea);
-            put(g, w::enemy_processing_stage, 0); // physically Map of E3EA
-            put(g, w::samus_contact_damage_index, 1);
-            put(g, w::samus_invincibility_timer, 77);
+            put(g, w::CUR_ENEMY_INDEX, 0xe3ea);
+            put(g, w::ENEMY_PROCESSING_STAGE, 0); // physically Map of E3EA
+            put(g, w::SAMUS_CONTACT_DAMAGE_INDEX, 1);
+            put(g, w::SAMUS_INVINCIBILITY_TIMER, 77);
             rw(
                 loaded,
                 0xa09000 + offset_of!(EnemyDef, touch_ai) as u32,
@@ -407,17 +407,17 @@ fn checks(id: u32, g: &Game, returned: Option<u64>) {
     }
     if id == 28 {
         assert_eq!(
-            read(g, a::plm_header_ptr + 78),
+            read(g, a::PLM_HEADER_PTR + 78),
             0x9000,
             "header prefix before failing program read"
         );
         assert_eq!(
-            read(g, a::plm_block_indices + 78),
+            read(g, a::PLM_BLOCK_INDICES + 78),
             528,
             "block prefix before failing program read"
         );
         assert_eq!(
-            read(g, a::plm_pre_instrs + 78),
+            read(g, a::PLM_PRE_INSTRS + 78),
             0x853d,
             "preaction prefix before failing program read"
         );
@@ -447,7 +447,7 @@ fn checks(id: u32, g: &Game, returned: Option<u64>) {
     }
     if id == 37 || id == 38 {
         assert_eq!(
-            read(g, w::samus_invincibility_timer),
+            read(g, w::SAMUS_INVINCIBILITY_TIMER),
             0,
             "stage-before-Map gate executes contact prefix"
         );

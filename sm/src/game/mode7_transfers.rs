@@ -16,9 +16,9 @@ pub(super) fn write_word(tail: u16, field: usize, value: u16, game: &mut Game) {
 #[forbid(unsafe_code)]
 pub(crate) fn advance_ending_tile_upload(game: &mut Game) {
     use crate::ram_map::word;
-    let page = word!(game.cinematic_function_timer);
-    let tail = word!(game.mode7_vram_write_queue_tail);
-    let high_plane = word!(game.cinematic_function_timer) as i32 - 8 & 0x8000 != 0;
+    let page = word!(game.CINEMATIC_FUNCTION_TIMER);
+    let tail = word!(game.MODE7_VRAM_WRITE_QUEUE_TAIL);
+    let high_plane = word!(game.CINEMATIC_FUNCTION_TIMER) as i32 - 8 & 0x8000 != 0;
     write_word(tail, 0, if high_plane { 192 } else { 128 }, game);
     // Both original tables have 16 pages; bounds failure follows the first store.
     assert!(page < 16);
@@ -28,10 +28,10 @@ pub(crate) fn advance_ending_tile_upload(game: &mut Game) {
     write_word(tail, 4, 2048, game);
     write_word(tail, 6, source & 0x3fff, game);
     write_word(tail, 8, if high_plane { 128 } else { 0 }, game);
-    word!(game.mode7_vram_write_queue_tail = tail.wrapping_add(9));
-    if word!(game.cinematic_function_timer += 1, reread) as i32 - 16 & 0x8000 == 0 {
+    word!(game.MODE7_VRAM_WRITE_QUEUE_TAIL = tail.wrapping_add(9));
+    if word!(game.CINEMATIC_FUNCTION_TIMER += 1, reread) as i32 - 16 & 0x8000 == 0 {
         game.ram().write_byte(0x55, 1);
-        word! {game; cinematic_function_timer = 0; cinematic_function = 0xdb9d; }
+        word! {game; CINEMATIC_FUNCTION_TIMER = 0; CINEMATIC_FUNCTION = 0xdb9d; }
     }
 }
 
@@ -43,7 +43,7 @@ pub(super) fn enqueue_rom(bank: u8, cursor: u16, game: &mut Game) {
     }
     let address = address | 0x8000;
     let mut source = 0;
-    let mut destination = QUEUE + usize::from(word!(game.mode7_vram_write_queue_tail));
+    let mut destination = QUEUE + usize::from(word!(game.MODE7_VRAM_WRITE_QUEUE_TAIL));
     loop {
         let tag = game.read_rom_byte(address, source);
         let length = if tag & 0x80 != 0 {
@@ -63,16 +63,16 @@ pub(super) fn enqueue_rom(bank: u8, cursor: u16, game: &mut Game) {
         source += length;
         destination += length;
     }
-    word!(game.mode7_vram_write_queue_tail = (destination - QUEUE) as u16);
+    word!(game.MODE7_VRAM_WRITE_QUEUE_TAIL = (destination - QUEUE) as u16);
 }
 
 pub(super) unsafe fn process(game: &mut Game) {
-    if word!(game.mode7_vram_write_queue_tail) == 0 {
+    if word!(game.MODE7_VRAM_WRITE_QUEUE_TAIL) == 0 {
         return;
     }
     sm_game::display::transfer::drain_mode7(&mut unsafe {
         crate::game::display_transfers::RawQueue::new(game)
     });
     game.ram().fill(QUEUE..QUEUE + 2, 0);
-    word!(game.mode7_vram_write_queue_tail = 0);
+    word!(game.MODE7_VRAM_WRITE_QUEUE_TAIL = 0);
 }
