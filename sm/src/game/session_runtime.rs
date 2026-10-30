@@ -1112,10 +1112,10 @@ impl Runtime<'_> {
 }
 
 use crate::game::actors::{self, api as actor_api};
+use crate::game::large_snail;
 use crate::game::moving_platforms::{self as mechanisms, Event, Kind};
 use crate::game::rippers::{self, Kind as RipperKind};
 use crate::game::sm_a9;
-use crate::game::{ground_patrol, large_snail};
 use crate::types::EnemyData;
 use sm_game::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
 use sm_game::combat_rules::LatchMode;
@@ -1318,9 +1318,6 @@ crate::game::callback_dispatch! {
 
         10670988 => [large_snail::touch(false, game)];
         10671028 => large_snail::shot;
-        10658809 => ground_patrol::initialize_shell;
-        10658942 => ground_patrol::advance_shell;
-        10659193 => ground_patrol::shot_shell;
         10675718 => crate::game::lava_seahorse_pair::initialize;
         10675790 => [actor_species_pre_instruction(crate::game::lava_seahorse_pair::pre_instruction(game), game)];
         10676168 => [{ actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize); crate::game::lava_seahorse_pair::synchronize(game); }];
@@ -1333,7 +1330,6 @@ crate::game::callback_dispatch! {
         10654337 => [crate::game::maridia_turtles::touch(false, game)];
         10654367 => [crate::game::maridia_turtles::touch(true, game)];
         10654479 => crate::game::maridia_turtles::shot;
-        10657608 => ground_patrol::initialize_plant;
         10652077 => crate::game::mini_crocomire::initialize;
         10651420 => crate::game::goofball::initialize;
         10651548 => crate::game::goofball::advance;
@@ -1416,8 +1412,6 @@ crate::game::address_dispatch! {
         10669993 => [large_snail::bounce(true, k, game)];
         10675796 | 10675885 | 10675953 | 10676020 | 10676041
             => [crate::game::lava_seahorse_pair::phase(k, ea as u16, game)];
-        10657722 => [ground_patrol::advance_plant(false, game)];
-        10657772 => [ground_patrol::advance_plant(true, game)];
         10652227 => [crate::game::mini_crocomire::patrol(false, game)];
         10652252 => [crate::game::mini_crocomire::patrol(true, game)];
         10659852 => [crate::game::gunship::phase(k, 0xa80c, game)];
@@ -1505,9 +1499,6 @@ crate::game::callback_dispatch! {
         10654919 => [crate::game::maridia_turtles::instruction(0x94c7, j, game)];
         10654929 => [{ crate::game::music::queue_sfx2_max6(0x3a, game); j }];
         10657578 => [{ crate::game::music::queue_sfx2_max6(0x34, game); j }];
-        10659181 => [{ ground_patrol::direct_shell(k, 0, game); j }];
-        10659185 => [{ ground_patrol::direct_shell(k, 1, game); j }];
-        10657941 => [{ ground_patrol::resume_plant(k, game); j }];
         10657959 => [crate::game::enemy_projectiles::spawn_scripted(0xdafe, j, game)];
         10652030 => [crate::game::enemy_projectiles::spawn_scripted(0xdbf2, j, game)];
         10652048 => [crate::game::mini_crocomire::resume(false, j, game)];

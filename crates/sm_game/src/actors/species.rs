@@ -10,7 +10,7 @@
 #![forbid(unsafe_code)]
 use crate::actors::host::{ActorHost, ActorRuntime, Death, LeaseActors, Shot};
 use crate::actors::{
-    alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, ceres_doors,
+    alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, cacatac, ceres_doors,
     ceres_ridley, choot, covern, crawlers, crocomire_reactions, dachora_run, draygon_death,
     draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator,
     escape_critters, etecoon, evir, fire_arc, fireflea, fune, gamet, geega, kago, kraid,
@@ -532,6 +532,10 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10738643 => reflec::initialize(game),
         10723661 => roach::initialize(game),
         10724048 => roach::main_ai(game),
+        10657608 => cacatac::initialize(game),
+        10658809 => cacatac::owtch::initialize(game),
+        10658942 => cacatac::owtch::main_ai(game),
+        10659193 => cacatac::owtch::shot(game),
         10674038 => choot::initialize(game),
         10674222 => choot::main_ai(game),
         10742351 => metroid::initialize(game),
@@ -622,6 +626,8 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
         10741746 => crawlers::crawl(k, crate::actors::api::Axis::Y, false, game),
         10741637 => crawlers::falling(k, game),
         10518651 => (),
+        10657722 => cacatac::moving(false, game),
+        10657772 => cacatac::moving(true, game),
         10649723 => (),
         10652277 => (),
         10657819 => (),
@@ -769,6 +775,8 @@ pub fn instruction<H: InstructionHost>(
         10722411 | 10722433 => tripper::set_x_movement(false, j, game),
         10722422 | 10722444 => tripper::set_x_movement(true, j, game),
         10725992 => sidehopper::queue_sound(j, game),
+        10657941 => cacatac::resume_moving(k, j, game),
+        10659181 | 10659185 => cacatac::owtch::set_function_index(ea, k, j, game),
         10742437 => metroid::draining_sound(j, game),
         10742449 => metroid::random_cry(j, game),
         11044751 | 11044763 | 11044790 | 11044811 => evir::instruction(ea, j, game),
