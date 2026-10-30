@@ -44,11 +44,9 @@ pub fn setup(c: &mut impl Host, slot: usize, kind: Setup) -> u8 {
                 Tile::Extension(_) => mechanism!(c, slot, header = 0),
                 Tile::Scroll(_) => {
                     mechanism!(c, slot, work0 = 0);
-                    {
-                        let index = slot;
-                        let value = mechanism!(c, index, program).wrapping_add(4);
-                        mechanism!(c, index, program = value);
-                    };
+                    let index = slot;
+                    let value = mechanism!(c, index, program).wrapping_add(4);
+                    mechanism!(c, index, program = value);
                 }
             }
         }
@@ -72,11 +70,9 @@ pub fn setup(c: &mut impl Host, slot: usize, kind: Setup) -> u8 {
                     let value = mechanism!(c, index, program).wrapping_add(1);
                     mechanism!(c, index, program = value);
                 };
-                {
-                    let index = found;
-                    let value = mechanism!(c, index, program).wrapping_add(1);
-                    mechanism!(c, index, program = value);
-                };
+                let index = found;
+                let value = mechanism!(c, index, program).wrapping_add(1);
+                mechanism!(c, index, program = value);
                 mechanism!(c, found, instruction_delay = 1);
             }
         }

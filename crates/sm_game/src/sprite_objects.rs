@@ -74,16 +74,14 @@ pub fn spawn(host: &mut impl Host, request: SpriteSpawn) -> SpawnResult {
         host.probe("sprite.spawn.full");
         return SpawnResult::Full;
     };
-    {
-        let slot = &mut host.session_mut().sprite_effects.active[index];
-        slot.appearance = 0;
-        slot.x.fraction = 0;
-        slot.y.fraction = 0;
-        slot.disable_flags = 0;
-        slot.x.whole = request.position.x;
-        slot.y.whole = request.position.y;
-        slot.appearance = request.appearance;
-    }
+    let slot = &mut host.session_mut().sprite_effects.active[index];
+    slot.appearance = 0;
+    slot.x.fraction = 0;
+    slot.y.fraction = 0;
+    slot.disable_flags = 0;
+    slot.x.whole = request.position.x;
+    slot.y.whole = request.position.y;
+    slot.appearance = request.appearance;
     let table = host.table(Source::Loaded, 0xb4bda8);
     let instruction = table.native_word(usize::from(request.definition.0) * 2);
     host.session_mut().sprite_effects.active[index].instruction = instruction;

@@ -38,10 +38,8 @@ pub fn command<H: Host>(
             if hits >= position.word(0) {
                 Some(position.advance(4))
             } else {
-                {
-                    let target = position.word(2);
-                    position.jump(target)
-                }
+                let target = position.word(2);
+                position.jump(target)
             }
         }
         Command::Shatter => {

@@ -2353,25 +2353,23 @@ pub fn draw_brain_and_neck_hook(game: &mut impl Lease) {
     draw_neck(game);
 }
 pub fn body_phase1(game: &mut impl Lease) {
-    {
-        if check_event_happened(event::MOTHER_BRAINS_GLASS_DESTROYED, game) != 0 {
-            let e1: i32 = BRAIN;
-            session_slot!(
-                game,
-                MotherBrainBrain[e1].shake_timer = word!(game.EARTHQUAKE_TIMER)
-            );
-            if (game.player_x() as i32 - 236i32) & 0x8000 != 0
-                && session_slot!(game, MotherBrainBrain[e1].base.health) == 0
-            {
-                let e: i32 = 0;
-                session_slot! { game, MotherBrainBody[e]; delete_turrets = 1, form = 1 }
-                game.foreign(|game| game.disable_minimap_for_boss());
-                queue_music(music::SONG_1, game);
-                game.foreign(|game| game.seal_wall());
-            }
+    if check_event_happened(event::MOTHER_BRAINS_GLASS_DESTROYED, game) != 0 {
+        let e1: i32 = BRAIN;
+        session_slot!(
+            game,
+            MotherBrainBrain[e1].shake_timer = word!(game.EARTHQUAKE_TIMER)
+        );
+        if (game.player_x() as i32 - 236i32) & 0x8000 != 0
+            && session_slot!(game, MotherBrainBrain[e1].base.health) == 0
+        {
+            let e: i32 = 0;
+            session_slot! { game, MotherBrainBody[e]; delete_turrets = 1, form = 1 }
+            game.foreign(|game| game.disable_minimap_for_boss());
+            queue_music(music::SONG_1, game);
+            game.foreign(|game| game.seal_wall());
         }
-        samus_collision_detection(game);
     }
+    samus_collision_detection(game);
 }
 /// The falling tubes run in `crate::actors::mother_brain_tubes`.
 pub fn tubes_falling_main_ai(k: u16, game: &mut impl Host) {
@@ -2502,86 +2500,82 @@ crate::dispatch::callback_dispatch! {
     }
 }
 pub fn process_brain_instruction_list(game: &mut impl Lease) -> i32 {
-    {
-        let e: i32 = 0;
-        let mut pc: u16 = session_slot!(game, MotherBrainBody[e].brain_instructions);
-        if pc & 0x8000 == 0 {
-            return -1i32;
-        }
-        let mut p = native_record(BANK_BASE | u32::from(pc), game);
-        if word!(game.TIME_IS_FROZEN_FLAG) != 0 {
-            return p.word(2) as i32;
-        }
-        let mut v5: u16 = p.word(0);
-        let mut execute_instruction: bool = (v5 & 0x8000 != 0)
-            || ({
-                if ((v5) as i16).wrapping_sub(
-                    (session_slot!(game, MotherBrainBody[e].brain_instruction_timer)) as i16,
-                ) >= 0
-                {
-                    session_slot!(
-                        game,
-                        MotherBrainBody[e].brain_instruction_timer =
-                            session_slot!(game, MotherBrainBody[e].brain_instruction_timer)
-                                .wrapping_add(1)
-                    );
-                    return p.word(2) as i32;
-                }
-                pc = (pc).wrapping_add(4);
-                false
-            });
-        loop {
-            if execute_instruction {
-                pc = dispatch_instruction(((v5) as u32) | (BANK_BASE), (pc).wrapping_add(2), game);
-                execute_instruction = false;
+    let e: i32 = 0;
+    let mut pc: u16 = session_slot!(game, MotherBrainBody[e].brain_instructions);
+    if pc & 0x8000 == 0 {
+        return -1i32;
+    }
+    let mut p = native_record(BANK_BASE | u32::from(pc), game);
+    if word!(game.TIME_IS_FROZEN_FLAG) != 0 {
+        return p.word(2) as i32;
+    }
+    let mut v5: u16 = p.word(0);
+    let mut execute_instruction: bool = (v5 & 0x8000 != 0)
+        || ({
+            if ((v5) as i16).wrapping_sub(
+                (session_slot!(game, MotherBrainBody[e].brain_instruction_timer)) as i16,
+            ) >= 0
+            {
+                session_slot!(
+                    game,
+                    MotherBrainBody[e].brain_instruction_timer =
+                        session_slot!(game, MotherBrainBody[e].brain_instruction_timer)
+                            .wrapping_add(1)
+                );
+                return p.word(2) as i32;
+            }
+            pc = (pc).wrapping_add(4);
+            false
+        });
+    loop {
+        if execute_instruction {
+            pc = dispatch_instruction(((v5) as u32) | (BANK_BASE), (pc).wrapping_add(2), game);
+            execute_instruction = false;
+        } else {
+            p = native_record(BANK_BASE | u32::from(pc), game);
+            v5 = p.word(0);
+            if v5 & 0x8000 == 0 {
+                break;
             } else {
-                p = native_record(BANK_BASE | u32::from(pc), game);
-                v5 = p.word(0);
-                if v5 & 0x8000 == 0 {
-                    break;
-                } else {
-                    execute_instruction = true;
-                }
+                execute_instruction = true;
             }
         }
-        session_slot!(game, MotherBrainBody[e].brain_instruction_timer = 1);
-        session_slot!(game, MotherBrainBody[e].brain_instructions = pc);
-        p.word(2) as i32
     }
+    session_slot!(game, MotherBrainBody[e].brain_instruction_timer = 1);
+    session_slot!(game, MotherBrainBody[e].brain_instructions = pc);
+    p.word(2) as i32
 }
 pub fn draw_neck(game: &mut impl Lease) {
+    if (session_slot!(game, MotherBrainBody[0i32].base.properties) as i32
+        & K_ENEMY_PROPS_INVISIBLE as i32)
+        == 0
     {
-        if (session_slot!(game, MotherBrainBody[0i32].base.properties) as i32
-            & K_ENEMY_PROPS_INVISIBLE as i32)
-            == 0
-        {
-            let e: i32 = BRAIN;
-            draw_neck_segment(
-                session_slot!(game, MotherBrainBrain[e].segment_5_x),
-                session_slot!(game, MotherBrainBrain[e].segment_5_y),
-                game,
-            );
-            draw_neck_segment(
-                session_slot!(game, MotherBrainBrain[e].segment_4_x),
-                session_slot!(game, MotherBrainBrain[e].segment_4_y),
-                game,
-            );
-            draw_neck_segment(
-                session_slot!(game, MotherBrainBrain[e].segment_3_x),
-                session_slot!(game, MotherBrainBrain[e].segment_3_y),
-                game,
-            );
-            draw_neck_segment(
-                session_slot!(game, MotherBrainBrain[e].segment_2_x),
-                session_slot!(game, MotherBrainBrain[e].segment_2_y),
-                game,
-            );
-            draw_neck_segment(
-                session_slot!(game, MotherBrainBrain[e].segment_1_x),
-                session_slot!(game, MotherBrainBrain[e].segment_1_y),
-                game,
-            );
-        }
+        let e: i32 = BRAIN;
+        draw_neck_segment(
+            session_slot!(game, MotherBrainBrain[e].segment_5_x),
+            session_slot!(game, MotherBrainBrain[e].segment_5_y),
+            game,
+        );
+        draw_neck_segment(
+            session_slot!(game, MotherBrainBrain[e].segment_4_x),
+            session_slot!(game, MotherBrainBrain[e].segment_4_y),
+            game,
+        );
+        draw_neck_segment(
+            session_slot!(game, MotherBrainBrain[e].segment_3_x),
+            session_slot!(game, MotherBrainBrain[e].segment_3_y),
+            game,
+        );
+        draw_neck_segment(
+            session_slot!(game, MotherBrainBrain[e].segment_2_x),
+            session_slot!(game, MotherBrainBrain[e].segment_2_y),
+            game,
+        );
+        draw_neck_segment(
+            session_slot!(game, MotherBrainBrain[e].segment_1_x),
+            session_slot!(game, MotherBrainBrain[e].segment_1_y),
+            game,
+        );
     }
 }
 pub fn draw_neck_segment(x: u16, y: u16, game: &mut impl Lease) {
@@ -2658,56 +2652,54 @@ pub fn explode_escape_door(game: &mut impl Lease) {
     }
 }
 pub fn samus_collision_detection(game: &mut impl Lease) {
+    let e0: i32 = 0;
+    let mut r26: u16 = session_slot!(game, MotherBrainBody[e0].hitboxes);
+    let mut v1: i8 = ((r26) as i8) & (1i8);
+    r26 >>= 1;
+    if v1 == 0
+        || part_samus_collision_detection(
+            ADDR_WORD_A9B427 as u16,
+            session_slot!(game, MotherBrainBody[e0].base.x_pos),
+            session_slot!(game, MotherBrainBody[e0].base.y_pos),
+            game,
+        ) & 1
+            == 0
     {
-        let e0: i32 = 0;
-        let mut r26: u16 = session_slot!(game, MotherBrainBody[e0].hitboxes);
-        let mut v1: i8 = ((r26) as i8) & (1i8);
+        let e: i32 = BRAIN;
+        v1 = ((r26) as i8) & (1i8);
         r26 >>= 1;
         if v1 == 0
             || part_samus_collision_detection(
-                ADDR_WORD_A9B427 as u16,
-                session_slot!(game, MotherBrainBody[e0].base.x_pos),
-                session_slot!(game, MotherBrainBody[e0].base.y_pos),
+                BRAIN_HITBOX,
+                session_slot!(game, MotherBrainBrain[e].base.x_pos),
+                session_slot!(game, MotherBrainBrain[e].base.y_pos),
                 game,
             ) & 1
                 == 0
         {
-            let e: i32 = BRAIN;
             v1 = ((r26) as i8) & (1i8);
-            r26 >>= 1;
-            if v1 == 0
-                || part_samus_collision_detection(
-                    BRAIN_HITBOX,
-                    session_slot!(game, MotherBrainBrain[e].base.x_pos),
-                    session_slot!(game, MotherBrainBrain[e].base.y_pos),
+            if v1 != 0
+                && part_samus_collision_detection(
+                    NECK_HITBOX,
+                    session_slot!(game, MotherBrainBrain[e].segment_2_x),
+                    session_slot!(game, MotherBrainBrain[e].segment_2_y),
+                    game,
+                ) & 1
+                    == 0
+                && part_samus_collision_detection(
+                    NECK_HITBOX,
+                    session_slot!(game, MotherBrainBrain[e].segment_3_x),
+                    session_slot!(game, MotherBrainBrain[e].segment_3_y),
                     game,
                 ) & 1
                     == 0
             {
-                v1 = ((r26) as i8) & (1i8);
-                if v1 != 0
-                    && part_samus_collision_detection(
-                        NECK_HITBOX,
-                        session_slot!(game, MotherBrainBrain[e].segment_2_x),
-                        session_slot!(game, MotherBrainBrain[e].segment_2_y),
-                        game,
-                    ) & 1
-                        == 0
-                    && part_samus_collision_detection(
-                        NECK_HITBOX,
-                        session_slot!(game, MotherBrainBrain[e].segment_3_x),
-                        session_slot!(game, MotherBrainBrain[e].segment_3_y),
-                        game,
-                    ) & 1
-                        == 0
-                {
-                    part_samus_collision_detection(
-                        NECK_HITBOX,
-                        session_slot!(game, MotherBrainBrain[e].segment_4_x),
-                        session_slot!(game, MotherBrainBrain[e].segment_4_y),
-                        game,
-                    );
-                }
+                part_samus_collision_detection(
+                    NECK_HITBOX,
+                    session_slot!(game, MotherBrainBrain[e].segment_4_x),
+                    session_slot!(game, MotherBrainBrain[e].segment_4_y),
+                    game,
+                );
             }
         }
     }
@@ -2768,38 +2760,36 @@ pub fn hurt_samus(game: &mut impl Lease) {
     );
 }
 pub fn decide_phase2_attack_strategy(game: &mut impl Lease) -> u8 {
+    if ATTACK_STRATEGY_BY_SAMUS_MOVEMENT
+        [SessionRam::byte(game, crate::ram::bytes::SAMUS_MOVEMENT_TYPE) as usize]
+        != 0
     {
-        if ATTACK_STRATEGY_BY_SAMUS_MOVEMENT
-            [SessionRam::byte(game, crate::ram::bytes::SAMUS_MOVEMENT_TYPE) as usize]
-            != 0
-        {
-            if (word!(game.RANDOM_NUMBER) as u8 as i32 - 128i32) & 0x8000 != 0 {
-                0
-            } else {
-                let e1: i32 = BRAIN;
-                if (session_slot!(game, MotherBrainBrain[e1].bombs) as i32 - 1i32) & 0x8000 != 0 {
-                    session_slot!(
-                        game,
-                        MotherBrainBody[0i32].function = function::FIRING_BOMB_DECIDE_ON_WALKING
-                    );
-                    firing_bomb_decide_on_walking(game);
-                    return 1;
-                }
-                0
-            }
+        if (word!(game.RANDOM_NUMBER) as u8 as i32 - 128i32) & 0x8000 != 0 {
+            0
         } else {
-            if (word!(game.RANDOM_NUMBER) as u8 as i32 - 128i32) & 0x8000 != 0 {
+            let e1: i32 = BRAIN;
+            if (session_slot!(game, MotherBrainBrain[e1].bombs) as i32 - 1i32) & 0x8000 != 0 {
                 session_slot!(
                     game,
-                    MotherBrainBody[0i32].function =
-                        function::PHASE_2_FIRING_LASER_POSITION_HEAD_QUICKLY
+                    MotherBrainBody[0i32].function = function::FIRING_BOMB_DECIDE_ON_WALKING
                 );
-                phase2_firing_laser_position_head_quickly(game);
-            } else {
-                set_brain_instruction_list(animation::BRAIN_FOUR_BLUE_RINGS_PHASE_2, game);
+                firing_bomb_decide_on_walking(game);
+                return 1;
             }
-            1
+            0
         }
+    } else {
+        if (word!(game.RANDOM_NUMBER) as u8 as i32 - 128i32) & 0x8000 != 0 {
+            session_slot!(
+                game,
+                MotherBrainBody[0i32].function =
+                    function::PHASE_2_FIRING_LASER_POSITION_HEAD_QUICKLY
+            );
+            phase2_firing_laser_position_head_quickly(game);
+        } else {
+            set_brain_instruction_list(animation::BRAIN_FOUR_BLUE_RINGS_PHASE_2, game);
+        }
+        1
     }
 }
 pub fn firing_bomb_decide_on_crouching(game: &mut impl Lease) {
@@ -2835,31 +2825,27 @@ pub fn firing_bomb_finish(game: &mut impl State) {
     session_slot!(game, MotherBrainBody[e].function = v0);
 }
 pub fn phase2_firing_hand_beam_back_up(game: &mut impl State) {
-    {
-        if make_walk_backwards(0x28, 8, game) & 1 != 0 {
-            let e1: i32 = BRAIN;
-            session_slot!(game, MotherBrainBrain[e1].lower_motion = 8);
-            session_slot!(game, MotherBrainBrain[e1].upper_motion = 6);
-            let e: i32 = 0;
-            session_slot!(
-                game,
-                MotherBrainBody[e].hand_beam_phase =
-                    session_slot!(game, MotherBrainBody[e].hand_beam_phase).wrapping_add(1)
-            );
-        }
+    if make_walk_backwards(0x28, 8, game) & 1 != 0 {
+        let e1: i32 = BRAIN;
+        session_slot!(game, MotherBrainBrain[e1].lower_motion = 8);
+        session_slot!(game, MotherBrainBrain[e1].upper_motion = 6);
+        let e: i32 = 0;
+        session_slot!(
+            game,
+            MotherBrainBody[e].hand_beam_phase =
+                session_slot!(game, MotherBrainBody[e].hand_beam_phase).wrapping_add(1)
+        );
     }
 }
 pub fn phase2_firing_hand_beam_wait_for_any_active_bombs(game: &mut impl State) {
-    {
-        if session_slot!(game, MotherBrainBrain[BRAIN].bombs) == 0 {
-            set_body_instruction_list(animation::BODY_HAND_BEAM_MODE, game);
-            let e: i32 = 0;
-            session_slot!(
-                game,
-                MotherBrainBody[e].hand_beam_phase =
-                    session_slot!(game, MotherBrainBody[e].hand_beam_phase).wrapping_add(1)
-            );
-        }
+    if session_slot!(game, MotherBrainBrain[BRAIN].bombs) == 0 {
+        set_body_instruction_list(animation::BODY_HAND_BEAM_MODE, game);
+        let e: i32 = 0;
+        session_slot!(
+            game,
+            MotherBrainBody[e].hand_beam_phase =
+                session_slot!(game, MotherBrainBody[e].hand_beam_phase).wrapping_add(1)
+        );
     }
 }
 pub fn phase2_firing_hand_beam_idle(_game: &mut impl State) {}
@@ -2883,17 +2869,15 @@ pub fn walk_backwards_slowly_and_retract_head(a: u16, game: &mut impl Lease) -> 
     rv
 }
 pub fn move_samus_towards_wall_due_to_rainbow_beam(game: &mut impl Lease) -> u8 {
-    {
-        let v0: u8 = move_samus_horizontally_towards_wall(0x1000, game);
-        if v0 == 0 {
-            let v1: u16 = y_velocity_at_angle(
-                0x1000,
-                session_slot!(game, MotherBrainBody[0i32].beam_angle),
-            );
-            move_samus_vertically_towards_ceiling_floor(v1, game);
-        }
-        v0
+    let v0: u8 = move_samus_horizontally_towards_wall(0x1000, game);
+    if v0 == 0 {
+        let v1: u16 = y_velocity_at_angle(
+            0x1000,
+            session_slot!(game, MotherBrainBody[0i32].beam_angle),
+        );
+        move_samus_vertically_towards_ceiling_floor(v1, game);
     }
+    v0
 }
 pub fn move_samus_towards_middle_of_wall(game: &mut impl Lease) {
     let mut v0: u16 = 64;
@@ -3222,21 +3206,19 @@ pub fn make_walk_backwards(a: u16, j: u16, game: &mut impl State) -> u8 {
     1
 }
 pub fn make_stand_up(game: &mut impl State) -> u8 {
-    {
-        let mbn_var_02: u16 = session_slot!(game, MotherBrainBody[0i32].pose);
-        if mbn_var_02 != 0 {
-            let mut v1: u16 = animation::BODY_STAND_UP_FROM_CROUCH_FAST;
-            if mbn_var_02 != 3 {
-                if mbn_var_02 != 6 {
-                    return 0;
-                }
-                v1 = animation::BODY_STAND_UP_FROM_LEANING_DOWN;
+    let mbn_var_02: u16 = session_slot!(game, MotherBrainBody[0i32].pose);
+    if mbn_var_02 != 0 {
+        let mut v1: u16 = animation::BODY_STAND_UP_FROM_CROUCH_FAST;
+        if mbn_var_02 != 3 {
+            if mbn_var_02 != 6 {
+                return 0;
             }
-            set_body_instruction_list(v1, game);
-            return 0;
+            v1 = animation::BODY_STAND_UP_FROM_LEANING_DOWN;
         }
-        1
+        set_body_instruction_list(v1, game);
+        return 0;
     }
+    1
 }
 pub fn make_crouch(game: &mut impl State) -> u8 {
     let mbn_var_02: u16 = session_slot!(game, MotherBrainBody[0i32].pose);
@@ -3297,48 +3279,42 @@ pub fn write_room_palette(j: u16, game: &mut impl State) {
     );
 }
 pub fn handle_room_palette_instruction_list(a: u16, game: &mut impl Lease) -> u16 {
-    {
-        let st: usize = a as usize;
-        if native_word(st, game) & 0x8000 == 0 {
-            return 0;
-        }
-        let mut v2: u16 = native_word(st, game);
-        let mut v3 = native_record(BANK_BASE | u32::from(v2), game);
-        let mut execute_instruction: bool = (v3.word(0) & 0x8000 != 0)
-            || ({
-                if native_word(st + 2, game) != v3.word(0) {
-                    set_native_word(st + 2, native_word(st + 2, game).wrapping_add(1), game);
-                    return v3.word(2);
-                }
-                v2 = v2.wrapping_add(4);
-                false
-            });
-        loop {
-            if execute_instruction {
-                v2 = dispatch_instruction(
-                    u32::from(v3.word(0)) | BANK_BASE,
-                    v2.wrapping_add(2),
-                    game,
-                );
-                execute_instruction = false;
+    let st: usize = a as usize;
+    if native_word(st, game) & 0x8000 == 0 {
+        return 0;
+    }
+    let mut v2: u16 = native_word(st, game);
+    let mut v3 = native_record(BANK_BASE | u32::from(v2), game);
+    let mut execute_instruction: bool = (v3.word(0) & 0x8000 != 0)
+        || ({
+            if native_word(st + 2, game) != v3.word(0) {
+                set_native_word(st + 2, native_word(st + 2, game).wrapping_add(1), game);
+                return v3.word(2);
+            }
+            v2 = v2.wrapping_add(4);
+            false
+        });
+    loop {
+        if execute_instruction {
+            v2 = dispatch_instruction(u32::from(v3.word(0)) | BANK_BASE, v2.wrapping_add(2), game);
+            execute_instruction = false;
+        } else {
+            v3 = native_record(BANK_BASE | u32::from(v2), game);
+            if v3.word(0) & 0x8000 == 0 {
+                break;
             } else {
-                v3 = native_record(BANK_BASE | u32::from(v2), game);
-                if v3.word(0) & 0x8000 == 0 {
-                    break;
-                } else {
-                    execute_instruction = true;
-                }
+                execute_instruction = true;
             }
         }
-        if v3.word(0) == 0 {
-            set_native_word(st, 0, game);
-            set_native_word(st + 2, 0, game);
-            0
-        } else {
-            set_native_word(st + 2, 1, game);
-            set_native_word(st, v2, game);
-            v3.word(2)
-        }
+    }
+    if v3.word(0) == 0 {
+        set_native_word(st, 0, game);
+        set_native_word(st + 2, 0, game);
+        0
+    } else {
+        set_native_word(st + 2, 1, game);
+        set_native_word(st, v2, game);
+        v3.word(2)
     }
 }
 pub fn set_up_brain_normal_palette(game: &mut impl State) {

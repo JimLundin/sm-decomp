@@ -525,109 +525,105 @@ fn advance_cinematic_object<const BANK: u8>(
     use CinematicObjects::*;
     let layout = objects.layout();
     let stride = 2 * usize::from(layout.slots);
-    {
-        let pre = u32::from(checked_word!(game,
-            layout.instructions + stride + usize::from(object & !1);))
-            | 0x8b0000;
-        match objects {
-            Sprites => game.cinematic_sprite_pre_instruction(pre, object),
-            Mode7 => cinematic_mode7_pre(pre, object, game),
-            Background => advance_cinematic_background_pre(pre, object, game),
+    let pre = u32::from(checked_word!(game,
+        layout.instructions + stride + usize::from(object & !1);))
+        | 0x8b0000;
+    match objects {
+        Sprites => game.cinematic_sprite_pre_instruction(pre, object),
+        Mode7 => cinematic_mode7_pre(pre, object, game),
+        Background => advance_cinematic_background_pre(pre, object, game),
+    }
+    let selected = checked_word!(game, layout.current;);
+    let offset = usize::from(selected & !1);
+    let timer_at = layout.instructions + 2 * stride + offset;
+    let timer = checked_word!(game, timer_at;);
+    checked_word!(game, timer_at; = timer.wrapping_sub(1));
+    if timer != 1 {
+        return;
+    }
+    let mut address = checked_word!(game, layout.instructions + offset;);
+    let duration = loop {
+        let instruction = cinematic_native_record::<BANK>(address, game).word(0);
+        if instruction & 0x8000 == 0 {
+            break instruction;
         }
-        let selected = checked_word!(game, layout.current;);
-        let offset = usize::from(selected & !1);
-        let timer_at = layout.instructions + 2 * stride + offset;
-        let timer = checked_word!(game, timer_at;);
-        checked_word!(game, timer_at; = timer.wrapping_sub(1));
-        if timer != 1 {
-            return;
-        }
-        let mut address = checked_word!(game, layout.instructions + offset;);
-        let duration = loop {
-            let instruction = cinematic_native_record::<BANK>(address, game).word(0);
-            if instruction & 0x8000 == 0 {
-                break instruction;
+        let operand = address.wrapping_add(2);
+        address = match (objects, instruction) {
+            (Sprites, 0x9438) | (Mode7, 0x956b) | (Background, 0x9698) => {
+                if !matches!(objects, Mode7) {
+                    checked_word!(game, layout.cleared[0] + offset; = 0);
+                }
+                checked_word!(game, layout.instructions + offset; = 0);
+                0
             }
-            let operand = address.wrapping_add(2);
-            address = match (objects, instruction) {
-                (Sprites, 0x9438) | (Mode7, 0x956b) | (Background, 0x9698) => {
-                    if !matches!(objects, Mode7) {
-                        checked_word!(game, layout.cleared[0] + offset; = 0);
-                    }
-                    checked_word!(game, layout.instructions + offset; = 0);
-                    0
-                }
-                (Sprites, 0x9442) => {
-                    checked_word!(game, layout.instructions + offset; = operand.wrapping_sub(2));
-                    0
-                }
-                (Sprites, 0x944c | 0x94d6) | (Mode7, 0x9572 | 0x9597) => {
-                    let plane = if matches!(instruction, 0x94d6 | 0x9597) {
-                        3
+            (Sprites, 0x9442) => {
+                checked_word!(game, layout.instructions + offset; = operand.wrapping_sub(2));
+                0
+            }
+            (Sprites, 0x944c | 0x94d6) | (Mode7, 0x9572 | 0x9597) => {
+                let plane = if matches!(instruction, 0x94d6 | 0x9597) {
+                    3
+                } else {
+                    1
+                };
+                checked_word!(game, layout.instructions + plane * stride + offset;
+                    = cinematic_native_record::<0x8b>(operand, game).word(0));
+                operand.wrapping_add(2)
+            }
+            (Sprites, 0x9457) | (Mode7, 0x957d) => {
+                checked_word!(game, layout.instructions + stride + offset;
+                    = if matches!(objects, Sprites) { 0x945f } else { 0x9585 });
+                operand
+            }
+            (Sprites, 0x94a2 | 0x94bc | 0x94c3 | 0x94cd)
+            | (Mode7, 0x9586 | 0x958d)
+            | (Background, 0x971e) => {
+                let relative = matches!(instruction, 0x94a2 | 0x94cd);
+                let skip = matches!(instruction, 0x94c3 | 0x94cd | 0x958d) && {
+                    let counter_at = layout.instructions + 3 * stride + offset;
+                    let counter = checked_word!(game, counter_at;);
+                    checked_word!(game, counter_at; = counter.wrapping_sub(1));
+                    counter == 1
+                };
+                if skip {
+                    // Skipping a jump must not read its ROM operand.
+                    operand.wrapping_add(if relative { 1 } else { 2 })
+                } else {
+                    let target = cinematic_native_record::<BANK>(operand, game);
+                    if relative {
+                        operand.wrapping_add((target.byte(0) as i8) as u16)
                     } else {
-                        1
-                    };
-                    checked_word!(game, layout.instructions + plane * stride + offset;
-                        = cinematic_native_record::<0x8b>(operand, game).word(0));
-                    operand.wrapping_add(2)
-                }
-                (Sprites, 0x9457) | (Mode7, 0x957d) => {
-                    checked_word!(game, layout.instructions + stride + offset;
-                        = if matches!(objects, Sprites) { 0x945f } else { 0x9585 });
-                    operand
-                }
-                (Sprites, 0x94a2 | 0x94bc | 0x94c3 | 0x94cd)
-                | (Mode7, 0x9586 | 0x958d)
-                | (Background, 0x971e) => {
-                    let relative = matches!(instruction, 0x94a2 | 0x94cd);
-                    let skip = matches!(instruction, 0x94c3 | 0x94cd | 0x958d) && {
-                        let counter_at = layout.instructions + 3 * stride + offset;
-                        let counter = checked_word!(game, counter_at;);
-                        checked_word!(game, counter_at; = counter.wrapping_sub(1));
-                        counter == 1
-                    };
-                    if skip {
-                        // Skipping a jump must not read its ROM operand.
-                        operand.wrapping_add(if relative { 1 } else { 2 })
-                    } else {
-                        let target = cinematic_native_record::<BANK>(operand, game);
-                        if relative {
-                            operand.wrapping_add((target.byte(0) as i8) as u16)
-                        } else {
-                            target.word(0)
-                        }
+                        target.word(0)
                     }
                 }
-                _ => {
-                    let command = u32::from(instruction) | 0x8b0000;
-                    match objects {
-                        Sprites => game.cinematic_sprite_instruction(command, selected, operand),
-                        Mode7 => cinematic_mode7_command(command, operand, game),
-                        Background => {
-                            cinematic_background_command(command, selected, operand, game)
-                        }
-                    }
+            }
+            _ => {
+                let command = u32::from(instruction) | 0x8b0000;
+                match objects {
+                    Sprites => game.cinematic_sprite_instruction(command, selected, operand),
+                    Mode7 => cinematic_mode7_command(command, operand, game),
+                    Background => cinematic_background_command(command, selected, operand, game),
                 }
-            };
-            if address == 0 {
-                return;
             }
         };
-        checked_word!(game, timer_at; = duration);
-        let payload = cinematic_native_record::<BANK>(address, game);
-        if matches!(objects, Background) {
-            word!(game.CINEMATICBG_ARR1[(selected >> 1)] = payload.word(4));
+        if address == 0 {
+            return;
         }
-        let value = payload.word(2);
-        drop(payload);
-        match objects {
-            Sprites => word!(game.CINEMATICSPR_WHATTODRAW[(selected >> 1)] = value),
-            Mode7 => game.enqueue_mode7_rom(0x8b, value),
-            Background => draw_cinematic_background(selected, value, game),
-        }
-        let size = if matches!(objects, Background) { 6 } else { 4 };
-        checked_word!(game, layout.instructions + offset; = address.wrapping_add(size));
+    };
+    checked_word!(game, timer_at; = duration);
+    let payload = cinematic_native_record::<BANK>(address, game);
+    if matches!(objects, Background) {
+        word!(game.CINEMATICBG_ARR1[(selected >> 1)] = payload.word(4));
     }
+    let value = payload.word(2);
+    drop(payload);
+    match objects {
+        Sprites => word!(game.CINEMATICSPR_WHATTODRAW[(selected >> 1)] = value),
+        Mode7 => game.enqueue_mode7_rom(0x8b, value),
+        Background => draw_cinematic_background(selected, value, game),
+    }
+    let size = if matches!(objects, Background) { 6 } else { 4 };
+    checked_word!(game, layout.instructions + offset; = address.wrapping_add(size));
 }
 
 pub fn advance_cinematic_background_pre<H: crate::menus::host::Host + ?Sized>(
@@ -739,47 +735,45 @@ fn cinematic_background_command<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) -> u16 {
     use crate::intro_pages;
-    {
-        match command {
-            9154004 => intro_pages::reset_text_marker(game),
-            9168423 => draw_cinematic_item_percentage(game),
-            9168745 => {
-                if word!(game.JAPANESE_TEXT_FLAG) != 0 {
-                    crate::word_transfers!(game, descending, 64; pause_map(799) <- rom(0x8cdf5b, 63));
-                }
+    match command {
+        9154004 => intro_pages::reset_text_marker(game),
+        9168423 => draw_cinematic_item_percentage(game),
+        9168745 => {
+            if word!(game.JAPANESE_TEXT_FLAG) != 0 {
+                crate::word_transfers!(game, descending, 64; pause_map(799) <- rom(0x8cdf5b, 63));
             }
-            9168768 => {
-                crate::word_transfers!(game, descending, 64; native(0x363e) <- value(127));
-                crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xe797);
-            }
-            9154115 | 9154169 | 9154676 | 9154739 | 9154971 | 9155112 => {
-                let definition = match command {
-                    9154115 => intro_mode7::JAPANESE_TEXT_PAGE_1,
-                    9154169 => intro_mode7::JAPANESE_TEXT_PAGE_2,
-                    9154676 => intro_mode7::JAPANESE_TEXT_PAGE_3,
-                    9154739 => intro_mode7::JAPANESE_TEXT_PAGE_4,
-                    9154971 => intro_mode7::JAPANESE_TEXT_PAGE_5,
-                    _ => intro_mode7::JAPANESE_TEXT_PAGE_6,
-                };
-                return intro_pages::create_japanese_text(definition, operand, game);
-            }
-            9154139 | 9154193 | 9154700 | 9154763 | 9154995 => {
-                let (next, continuation) = match command {
-                    9154139 => (0xaeb8, None),
-                    9154193 => (0xaf6c, Some(0xd40d)),
-                    9154700 => (0xb0f2, Some(0xd419)),
-                    9154763 => (0xb123, Some(0xd425)),
-                    _ => (0xb1da, Some(0xd431)),
-                };
-                return intro_pages::spawn_marker(next, continuation, operand, game);
-            }
-            9155136 => return intro_pages::finish_pages(operand, game),
-            9158806 | 9158818 => {
-                return execute_cinematic_sprite_instruction(command, object, operand, game)
-                    .expect("known cinematic instruction");
-            }
-            _ => return game.rtl_unreachable() as u16,
         }
+        9168768 => {
+            crate::word_transfers!(game, descending, 64; native(0x363e) <- value(127));
+            crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xe797);
+        }
+        9154115 | 9154169 | 9154676 | 9154739 | 9154971 | 9155112 => {
+            let definition = match command {
+                9154115 => intro_mode7::JAPANESE_TEXT_PAGE_1,
+                9154169 => intro_mode7::JAPANESE_TEXT_PAGE_2,
+                9154676 => intro_mode7::JAPANESE_TEXT_PAGE_3,
+                9154739 => intro_mode7::JAPANESE_TEXT_PAGE_4,
+                9154971 => intro_mode7::JAPANESE_TEXT_PAGE_5,
+                _ => intro_mode7::JAPANESE_TEXT_PAGE_6,
+            };
+            return intro_pages::create_japanese_text(definition, operand, game);
+        }
+        9154139 | 9154193 | 9154700 | 9154763 | 9154995 => {
+            let (next, continuation) = match command {
+                9154139 => (0xaeb8, None),
+                9154193 => (0xaf6c, Some(0xd40d)),
+                9154700 => (0xb0f2, Some(0xd419)),
+                9154763 => (0xb123, Some(0xd425)),
+                _ => (0xb1da, Some(0xd431)),
+            };
+            return intro_pages::spawn_marker(next, continuation, operand, game);
+        }
+        9155136 => return intro_pages::finish_pages(operand, game),
+        9158806 | 9158818 => {
+            return execute_cinematic_sprite_instruction(command, object, operand, game)
+                .expect("known cinematic instruction");
+        }
+        _ => return game.rtl_unreachable() as u16,
     }
     operand
 }

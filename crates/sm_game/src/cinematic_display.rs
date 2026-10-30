@@ -33,102 +33,94 @@ pub fn configure_cinematic_display<H: crate::menus::host::Host + ?Sized>(
     } else {
         0
     };
-    {
-        crate::display::sequence::register_writes! { game;
-            show_mirror(Brightness::BLANK_DARK, 0x51, false); mirror(OBSEL as u16, sprites, 0x52, false);
-            mirror(BGMODE as u16, mode, 0x55, false); mirror(M7SEL as u16, selection, 0x5f, false);
-        }
-        match display {
-            Title | Station | Escape => {
-                game.ram().write_byte(0x58, 0);
-                crate::display::sequence::register_writes! { game;
-                    mirror(BG1SC as u16, 0, 0x59, false); mirror(BG2SC as u16, 0, 0x5a, false);
-                    mirror(BG3SC as u16, 0, 0x5c, false); mirror(BG4SC as u16, 0, 0x5d, false);
-                    mirror(BG12NBA as u16, 0, 0x5e, false); byte(BG34NBA as u16, 0);
-                }
-            }
-            Intro => {
-                crate::display::sequence::register_writes! { game;
-                    mirror(BG1SC as u16, 0x50, 0x58, true); mirror(BG2SC as u16, 0x48, 0x59, true);
-                    mirror(BG3SC as u16, 0x4c, 0x5a, true);
-                }
-                game.ram().write_byte(0x5c, 0);
-                crate::display::sequence::register_writes! { game;
-                    mirror(BG4SC as u16, 0, 0x5d, false); byte(BG12NBA as u16, 0);
-                    mirror(BG34NBA as u16, 4, 0x5e, true);
-                }
-            }
-            Landing => {
-                crate::display::sequence::write_register_and_mirror(
-                    game,
-                    BG1SC as u16,
-                    0x5c,
-                    0x58,
-                    true,
-                );
-                game.ram().write_byte(0x59, 0);
-                crate::display::sequence::register_writes! { game;
-                    mirror(BG2SC as u16, 0, 0x5a, false); mirror(BG3SC as u16, 0, 0x5c, false);
-                    byte(BG4SC as u16, 0); mirror(BG12NBA as u16, 6, 0x5d, true);
-                    mirror(BG34NBA as u16, 0, 0x5e, true);
-                }
-            }
-            Credits => {
-                crate::display::sequence::register_writes! { game;
-                    mirror(BG1SC as u16, 0x48, 0x58, true); mirror(BG2SC as u16, 0x4c, 0x59, true);
-                    mirror(BG3SC as u16, 0x24, 0x5a, true); mirror(BG4SC as u16, 0, 0x5c, true);
-                    mirror(BG12NBA as u16, 0x54, 0x5d, true); mirror(BG34NBA as u16, 2, 0x5e, true);
-                }
+    crate::display::sequence::register_writes! { game;
+        show_mirror(Brightness::BLANK_DARK, 0x51, false); mirror(OBSEL as u16, sprites, 0x52, false);
+        mirror(BGMODE as u16, mode, 0x55, false); mirror(M7SEL as u16, selection, 0x5f, false);
+    }
+    match display {
+        Title | Station | Escape => {
+            game.ram().write_byte(0x58, 0);
+            crate::display::sequence::register_writes! { game;
+                mirror(BG1SC as u16, 0, 0x59, false); mirror(BG2SC as u16, 0, 0x5a, false);
+                mirror(BG3SC as u16, 0, 0x5c, false); mirror(BG4SC as u16, 0, 0x5d, false);
+                mirror(BG12NBA as u16, 0, 0x5e, false); byte(BG34NBA as u16, 0);
             }
         }
-        let layers = match display {
-            Title => 0x10,
-            Intro => 4,
-            Credits => 1,
-            _ => 0x11,
-        };
-        crate::display::sequence::register_writes! { game;
-            mirror(TM as u16, layers, 0x69, false); show_mirror(SubScreen(Layers::NONE), 0x6b, false);
-        }
-        if tiled {
-            for at in [0x60, 0x61, 0x62, 0x6c, 0x6d, 0x6f, 0x72] {
-                game.ram().write_byte(at, 0);
+        Intro => {
+            crate::display::sequence::register_writes! { game;
+                mirror(BG1SC as u16, 0x50, 0x58, true); mirror(BG2SC as u16, 0x48, 0x59, true);
+                mirror(BG3SC as u16, 0x4c, 0x5a, true);
             }
-            if display == Credits {
-                set_fixed_color([32, 64, 0x80], game);
-                word!(game.OAM_NEXT_PTR = 0);
-                reset_cinematic_transform(128, 128, game);
-                word! { game; MODE7_ANGLE = 0; MODE7_ZOOM = 1; }
-                word! { game, 0;
-                    REG_BG1HOFS, REG_BG1VOFS, REG_BG2HOFS, REG_BG2VOFS,
-                    CINEMATIC_X_SUB, CINEMATIC_X, CINEMATIC_Y_SUB, CINEMATIC_Y,
-                }
-            } else {
-                word! { game, 0; REG_BG1HOFS, REG_BG1VOFS }
+            game.ram().write_byte(0x5c, 0);
+            crate::display::sequence::register_writes! { game;
+                mirror(BG4SC as u16, 0, 0x5d, false); byte(BG12NBA as u16, 0);
+                mirror(BG34NBA as u16, 4, 0x5e, true);
             }
-            return;
         }
-        crate::display::sequence::register_writes! { game;
-            show_mirror(MainWindowMask(Layers::NONE), 0x6c, false); byte(VMAIN as u16, 0);
-            mirror(CGWSEL as u16, 0, 0x6e, false); mirror(CGADSUB as u16, 0, 0x71, false);
-        }
-        if escape {
-            game.ram().write_byte(0x6f, 0);
-            game.ram().write_byte(0x72, 0);
-        }
-        // One COLDATA write, as the compat sink did.
-        crate::display::sequence::register_writes! { game;
-            show(crate::display::control::FixedColor::all(0));
-        }
-        if display != Station {
+        Landing => {
             crate::display::sequence::write_register_and_mirror(
                 game,
-                SETINI as u16,
-                0,
-                0x77,
-                false,
+                BG1SC as u16,
+                0x5c,
+                0x58,
+                true,
             );
+            game.ram().write_byte(0x59, 0);
+            crate::display::sequence::register_writes! { game;
+                mirror(BG2SC as u16, 0, 0x5a, false); mirror(BG3SC as u16, 0, 0x5c, false);
+                byte(BG4SC as u16, 0); mirror(BG12NBA as u16, 6, 0x5d, true);
+                mirror(BG34NBA as u16, 0, 0x5e, true);
+            }
         }
+        Credits => {
+            crate::display::sequence::register_writes! { game;
+                mirror(BG1SC as u16, 0x48, 0x58, true); mirror(BG2SC as u16, 0x4c, 0x59, true);
+                mirror(BG3SC as u16, 0x24, 0x5a, true); mirror(BG4SC as u16, 0, 0x5c, true);
+                mirror(BG12NBA as u16, 0x54, 0x5d, true); mirror(BG34NBA as u16, 2, 0x5e, true);
+            }
+        }
+    }
+    let layers = match display {
+        Title => 0x10,
+        Intro => 4,
+        Credits => 1,
+        _ => 0x11,
+    };
+    crate::display::sequence::register_writes! { game;
+        mirror(TM as u16, layers, 0x69, false); show_mirror(SubScreen(Layers::NONE), 0x6b, false);
+    }
+    if tiled {
+        for at in [0x60, 0x61, 0x62, 0x6c, 0x6d, 0x6f, 0x72] {
+            game.ram().write_byte(at, 0);
+        }
+        if display == Credits {
+            set_fixed_color([32, 64, 0x80], game);
+            word!(game.OAM_NEXT_PTR = 0);
+            reset_cinematic_transform(128, 128, game);
+            word! { game; MODE7_ANGLE = 0; MODE7_ZOOM = 1; }
+            word! { game, 0;
+                REG_BG1HOFS, REG_BG1VOFS, REG_BG2HOFS, REG_BG2VOFS,
+                CINEMATIC_X_SUB, CINEMATIC_X, CINEMATIC_Y_SUB, CINEMATIC_Y,
+            }
+        } else {
+            word! { game, 0; REG_BG1HOFS, REG_BG1VOFS }
+        }
+        return;
+    }
+    crate::display::sequence::register_writes! { game;
+        show_mirror(MainWindowMask(Layers::NONE), 0x6c, false); byte(VMAIN as u16, 0);
+        mirror(CGWSEL as u16, 0, 0x6e, false); mirror(CGADSUB as u16, 0, 0x71, false);
+    }
+    if escape {
+        game.ram().write_byte(0x6f, 0);
+        game.ram().write_byte(0x72, 0);
+    }
+    // One COLDATA write, as the compat sink did.
+    crate::display::sequence::register_writes! { game;
+        show(crate::display::control::FixedColor::all(0));
+    }
+    if display != Station {
+        crate::display::sequence::write_register_and_mirror(game, SETINI as u16, 0, 0x77, false);
     }
     if !title {
         if !escape {

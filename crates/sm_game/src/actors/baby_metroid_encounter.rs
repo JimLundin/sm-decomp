@@ -428,29 +428,21 @@ pub fn go_right_guiltily(game: &mut impl Lease) {
     }
 }
 pub fn fleeing(game: &mut impl Lease) {
+    let rect = (-128i32 as u16, 64, 8, 8);
+    gradually_accelerate_towards_point_400h(word!(game.CUR_ENEMY_INDEX), 0, rect.0, rect.1, game);
+    if crate::actors::baby_metroid::separated_from_rect(word!(game.CUR_ENEMY_INDEX), rect, game)
+        == 0
     {
-        let rect = (-128i32 as u16, 64, 8, 8);
-        gradually_accelerate_towards_point_400h(
-            word!(game.CUR_ENEMY_INDEX),
-            0,
-            rect.0,
-            rect.1,
+        let e: i32 = word!(game.CUR_ENEMY_INDEX) as i32;
+        session_slot! { game, BabyMetroid[e]; x_velocity = 0, y_velocity = 0 }
+        session_slot!(
             game,
+            BabyMetroid[e].base.properties = (session_slot!(game, BabyMetroid[e].base.properties)
+                as i32
+                & !(K_ENEMY_PROPS_DISABLE_SAMUS_COLL as i32 | K_ENEMY_PROPS_INVISIBLE as i32))
+                as u16
         );
-        if crate::actors::baby_metroid::separated_from_rect(word!(game.CUR_ENEMY_INDEX), rect, game)
-            == 0
-        {
-            let e: i32 = word!(game.CUR_ENEMY_INDEX) as i32;
-            session_slot! { game, BabyMetroid[e]; x_velocity = 0, y_velocity = 0 }
-            session_slot!(
-                game,
-                BabyMetroid[e].base.properties =
-                    (session_slot!(game, BabyMetroid[e].base.properties) as i32
-                        & !(K_ENEMY_PROPS_DISABLE_SAMUS_COLL as i32
-                            | K_ENEMY_PROPS_INVISIBLE as i32)) as u16
-            );
-            session_slot!(game, BabyMetroid[e].function = function::DISAPPEARED);
-        }
+        session_slot!(game, BabyMetroid[e].function = function::DISAPPEARED);
     }
 }
 pub fn make_flee(k: u16, game: &mut impl State) {
@@ -587,25 +579,19 @@ pub fn accelerate_towards_point(k: u16, a: u16, r18: u16, r20: u16, game: &mut i
     ((r28) as u8) & (1u8)
 }
 pub fn handle_palette(r22: u16, r18: u16, game: &mut impl State) {
-    {
-        let e: i32 = word!(game.CUR_ENEMY_INDEX) as i32;
-        let palette_timer: i8 = session_slot!(byte game, BabyMetroid[e].palette_animation[1]) as i8;
-        if palette_timer != 0 {
-            session_slot!(byte game, BabyMetroid[e].palette_animation[1] = ((palette_timer) as u8).wrapping_sub(1));
-        } else {
-            session_slot!(byte game, BabyMetroid[e].palette_animation[1] = session_slot!(game, BabyMetroid[e].palette_handler_delay) as u8);
-            let v3: u8 = ((session_slot!(byte game, BabyMetroid[e].palette_animation[0]) as i32
-                + 1)
-                & 7) as u8;
-            session_slot!(byte game, BabyMetroid[e].palette_animation[0] = v3);
-            let v4: u16 = crate::actors::baby_metroid::handle_cry(
-                word!(game.CUR_ENEMY_INDEX),
-                v3 as u16,
-                game,
-            );
-            copy_rom_colors_to_palette(r18, BANK, (r22 as i32 + 8 * v4 as i32) as u16, 4, game);
-        };
-    }
+    let e: i32 = word!(game.CUR_ENEMY_INDEX) as i32;
+    let palette_timer: i8 = session_slot!(byte game, BabyMetroid[e].palette_animation[1]) as i8;
+    if palette_timer != 0 {
+        session_slot!(byte game, BabyMetroid[e].palette_animation[1] = ((palette_timer) as u8).wrapping_sub(1));
+    } else {
+        session_slot!(byte game, BabyMetroid[e].palette_animation[1] = session_slot!(game, BabyMetroid[e].palette_handler_delay) as u8);
+        let v3: u8 =
+            ((session_slot!(byte game, BabyMetroid[e].palette_animation[0]) as i32 + 1) & 7) as u8;
+        session_slot!(byte game, BabyMetroid[e].palette_animation[0] = v3);
+        let v4: u16 =
+            crate::actors::baby_metroid::handle_cry(word!(game.CUR_ENEMY_INDEX), v3 as u16, game);
+        copy_rom_colors_to_palette(r18, BANK, (r22 as i32 + 8 * v4 as i32) as u16, 4, game);
+    };
 }
 crate::dispatch::instruction_callbacks! { pub fn (_k: u16, _jp: EnemyScript) -> EnemyScript;
     go_to_normal [EnemyScript::jump(ADDR_K_BABY_METROID_ILIST_F90E as u16)] { };

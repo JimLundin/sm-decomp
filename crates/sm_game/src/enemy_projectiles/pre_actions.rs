@@ -760,10 +760,8 @@ pub fn mother_brain_bomb_pre_instruction(k: u16, ctx: &mut impl Host) {
         if v5 == 0 {
             enemy!(ctx, 0 => (v4) as isize, velocity_x);
             enemy!(ctx, 0 => (v4) as isize, velocity_y);
-            {
-                let value = ctx.mother_brain_active_bombs().wrapping_sub(1);
-                ctx.set_mother_brain_active_bombs(value);
-            }
+            let value = ctx.mother_brain_active_bombs().wrapping_sub(1);
+            ctx.set_mother_brain_active_bombs(value);
             enemy!(ctx, 0 => (v4) as isize, definition);
             ctx.session_mut().enemy_projectiles.spawn.point = Point {
                 x: enemy!(ctx, (v4) as isize, x),
@@ -1129,12 +1127,10 @@ pub fn crocomire_spike_wall_pieces_pre_instruction(k: u16, ctx: &mut impl Host) 
         let value = (old as i32 + v8 as i32) as u8;
         enemy_byte!(ctx, index, x = value);
     }
-    {
-        let index = k as isize + 1;
-        let old = enemy_byte!(ctx, index, x);
-        let value = (old as i32 + v4 as i32) as u8;
-        enemy_byte!(ctx, index, x = value);
-    }
+    let index = k as isize + 1;
+    let old = enemy_byte!(ctx, index, x);
+    let value = (old as i32 + v4 as i32) as u8;
+    enemy_byte!(ctx, index, x = value);
     add_split(
         SlotField::VelocityY,
         SlotField::BehaviorB,
@@ -1508,10 +1504,8 @@ pub fn mother_brain_turret_bullets_pre_instruction(k: u16, ctx: &mut impl Host) 
     enemy_update!(ctx, (v1) as isize, properties, |old| old ^ (0x8000));
     move_with_velocity(k, ctx);
     if ctx.ridley_offscreen(enemy!(ctx, (v1) as isize, x), enemy!(ctx, (v1) as isize, y)) & 1 != 0 {
-        {
-            let index = (ctx.session().enemy_projectiles.selected >> 1) as isize;
-            enemy!(ctx, index, definition = 0);
-        }
+        let index = (ctx.session().enemy_projectiles.selected >> 1) as isize;
+        enemy!(ctx, index, definition = 0);
     }
 }
 
@@ -1533,16 +1527,12 @@ pub fn mother_brain_blue_ring_lasers_pre_instruction(k: u16, ctx: &mut impl Host
             return;
         }
         if t != 0 {
-            {
-                let value = ctx.mother_brain_blue_ring_contacts().wrapping_add(1);
-                ctx.set_mother_brain_blue_ring_contacts(value);
-            }
+            let value = ctx.mother_brain_blue_ring_contacts().wrapping_add(1);
+            ctx.set_mother_brain_blue_ring_contacts(value);
             blue_ring_contact_explosion(k, ctx);
             let v3: u16 = ctx.mother_brain_target_enemy();
-            {
-                let target = ctx.mother_brain_target_enemy();
-                ctx.set_enemy_extra_health_fraction(target, 0, 16);
-            }
+            let target = ctx.mother_brain_target_enemy();
+            ctx.set_enemy_extra_health_fraction(target, 0, 16);
             let v4 = v3;
             ctx.edit_actor(Key::from_legacy(v4), Le, |actor| {
                 let health = (i32::from(actor.health) - 80) as i16;
@@ -1550,13 +1540,9 @@ pub fn mother_brain_blue_ring_lasers_pre_instruction(k: u16, ctx: &mut impl Host
             });
         } else if check_for_collision_with_samus(k, ctx) & 1 != 0 {
             blue_ring_contact_explosion(k, ctx);
-            {
-                let damage = crate::combat_rules::suit_damage(
-                    0x50,
-                    ctx.session().inventory.equipment.active,
-                );
-                ctx.damage_player(damage);
-            }
+            let damage =
+                crate::combat_rules::suit_damage(0x50, ctx.session().inventory.equipment.active);
+            ctx.damage_player(damage);
             ctx.session_mut().player.invincibility = 96;
             ctx.session_mut().player.knockback_timer = 5;
             ctx.session_mut().player.knockback_x_direction = (((ctx.session().player.x as i32

@@ -188,18 +188,14 @@ fn draw_special_button_and_setup_ppu_for_large_message_box<H: crate::menus::host
 fn draw_shoot_button_and_setup_ppu_for_large_message_box<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
-    {
-        let button = u16::from_le_bytes([game.ram().read_byte(0x9b2), game.ram().read_byte(0x9b3)]);
-        draw_special_button_and_setup_ppu_for_large_message_box(button, game);
-    }
+    let button = u16::from_le_bytes([game.ram().read_byte(0x9b2), game.ram().read_byte(0x9b3)]);
+    draw_special_button_and_setup_ppu_for_large_message_box(button, game);
 }
 fn draw_run_button_and_setup_ppu_for_large_message_box<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
-    {
-        let button = u16::from_le_bytes([game.ram().read_byte(0x9b6), game.ram().read_byte(0x9b7)]);
-        draw_special_button_and_setup_ppu_for_large_message_box(button, game);
-    }
+    let button = u16::from_le_bytes([game.ram().read_byte(0x9b6), game.ram().read_byte(0x9b7)]);
+    draw_special_button_and_setup_ppu_for_large_message_box(button, game);
 }
 fn setup_ppu_for_small_message_box<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     setup_ppu_for_active_message_box(composition::map_offset(composition::BoxSize::Small), game);
@@ -220,19 +216,17 @@ fn call_msg_box_modify<H: crate::menus::host::Host + ?Sized>(ea: u32, game: &mut
     }
 }
 fn initialize_message_box<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    {
-        let index = u16::from_le_bytes([game.ram().read_byte(0x1c1f), game.ram().read_byte(0x1c20)])
-            as isize
-            - 1;
-        let draw = game
-            .native_image()
-            .table_word(MESSAGE_CONFIG_BASE, 3 * index + 1);
-        call_msg_box_draw(0x850000 | u32::from(draw), game);
-        let modify = game
-            .native_image()
-            .table_word(MESSAGE_CONFIG_BASE, 3 * index);
-        call_msg_box_modify(0x850000 | u32::from(modify), game);
-    }
+    let index = u16::from_le_bytes([game.ram().read_byte(0x1c1f), game.ram().read_byte(0x1c20)])
+        as isize
+        - 1;
+    let draw = game
+        .native_image()
+        .table_word(MESSAGE_CONFIG_BASE, 3 * index + 1);
+    call_msg_box_draw(0x850000 | u32::from(draw), game);
+    let modify = game
+        .native_image()
+        .table_word(MESSAGE_CONFIG_BASE, 3 * index);
+    call_msg_box_modify(0x850000 | u32::from(modify), game);
 }
 fn draw_save_confirmation_selection<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     {

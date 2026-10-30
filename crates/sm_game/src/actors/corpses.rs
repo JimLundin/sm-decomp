@@ -560,13 +560,11 @@ macro_rules! queue_dead_torizo_tile_transfers {
                 SessionRam::set_byte($game, at, bytes[0]);
                 SessionRam::set_byte($game, at + 1, bytes[1]);
             };
-            {
-                let value: u16 = transfer.vram_address;
-                let at: usize = entry + 5;
-                let bytes = value.to_ne_bytes();
-                SessionRam::set_byte($game, at, bytes[0]);
-                SessionRam::set_byte($game, at + 1, bytes[1]);
-            };
+            let value: u16 = transfer.vram_address;
+            let at: usize = entry + 5;
+            let bytes = value.to_ne_bytes();
+            SessionRam::set_byte($game, at, bytes[0]);
+            SessionRam::set_byte($game, at + 1, bytes[1]);
             $tail = ($tail).wrapping_add(7);
             v8 = (v8).wrapping_add(8);
             v9 = torizo_corpse_tables::transfer_size($game, $frame, (v8 >> 3) as isize);
@@ -777,52 +775,47 @@ crate::dispatch::callback_dispatch! {
     }
 }
 pub fn sidehopper_corpse_movement(k: u16, game: &mut impl Lease) -> u8 {
-    {
-        let e: i32 = k as i32;
-        sidehopper_corpse_horizontal_movement(k, session_slot!(game, Corpse[e].x_velocity), game);
-        let mut v2: u16 = 32;
-        if (session_slot!(game, Corpse[e].y_velocity) & 0x8000) == 0 {
-            v2 = 128;
-        }
-        let v3: u16 = (session_slot!(game, Corpse[e].y_velocity)).wrapping_add(v2);
-        session_slot!(game, Corpse[e].y_velocity = v3);
-        if (session_slot!(game, Corpse[e].base.x_pos) as i32 - 544i32) & 0x8000 != 0 {
-            let full: i32 = session_slot!(byte game, Corpse[e].base.y_subpos[1]) as i32
-                + v3.to_ne_bytes()[0] as i32;
-            session_slot!(byte game, Corpse[e].base.y_subpos[1] = full as u8);
-            let v12: u16 = (session_slot!(game, Corpse[e].base.y_pos) as i32
-                + (v3 >> 8) as i8 as i32
-                + (full >> 8)) as u16;
-            session_slot!(game, Corpse[e].base.y_pos = v12);
-            (((v12 as i32 - 184i32) & 0x8000) == 0) as u8
-        } else {
-            {
-                let (actor, amount) = (k, (v3 as i16 as i32) << 8);
-                game.foreign(|game| game.move_vertical(actor, amount)) as u8
-            }
+    let e: i32 = k as i32;
+    sidehopper_corpse_horizontal_movement(k, session_slot!(game, Corpse[e].x_velocity), game);
+    let mut v2: u16 = 32;
+    if (session_slot!(game, Corpse[e].y_velocity) & 0x8000) == 0 {
+        v2 = 128;
+    }
+    let v3: u16 = (session_slot!(game, Corpse[e].y_velocity)).wrapping_add(v2);
+    session_slot!(game, Corpse[e].y_velocity = v3);
+    if (session_slot!(game, Corpse[e].base.x_pos) as i32 - 544i32) & 0x8000 != 0 {
+        let full: i32 = session_slot!(byte game, Corpse[e].base.y_subpos[1]) as i32
+            + v3.to_ne_bytes()[0] as i32;
+        session_slot!(byte game, Corpse[e].base.y_subpos[1] = full as u8);
+        let v12: u16 = (session_slot!(game, Corpse[e].base.y_pos) as i32
+            + (v3 >> 8) as i8 as i32
+            + (full >> 8)) as u16;
+        session_slot!(game, Corpse[e].base.y_pos = v12);
+        (((v12 as i32 - 184i32) & 0x8000) == 0) as u8
+    } else {
+        {
+            let (actor, amount) = (k, (v3 as i16 as i32) << 8);
+            game.foreign(|game| game.move_vertical(actor, amount)) as u8
         }
     }
 }
 pub fn sidehopper_corpse_horizontal_movement(k: u16, a: u16, game: &mut impl Lease) {
-    {
-        let e: i32 = k as i32;
-        if (session_slot!(game, Corpse[e].base.x_pos) as i32 - 544i32) & 0x8000 != 0 {
-            let full: i32 = session_slot!(byte game, Corpse[e].base.x_subpos[1]) as i32
-                + a.to_ne_bytes()[0] as i32;
-            session_slot!(byte game, Corpse[e].base.x_subpos[1] = full as u8);
-            session_slot!(
-                game,
-                Corpse[e].base.x_pos = (session_slot!(game, Corpse[e].base.x_pos) as i32
-                    + ((a >> 8) as i8 as i32 + (full >> 8)))
-                    as u16
-            );
-        } else {
-            {
-                let (actor, amount) = (k, (a as i16 as i32) << 8);
-                game.foreign(|game| game.move_horizontal(actor, amount, Slopes::Ignore)) as u8
-            };
+    let e: i32 = k as i32;
+    if (session_slot!(game, Corpse[e].base.x_pos) as i32 - 544i32) & 0x8000 != 0 {
+        let full: i32 =
+            session_slot!(byte game, Corpse[e].base.x_subpos[1]) as i32 + a.to_ne_bytes()[0] as i32;
+        session_slot!(byte game, Corpse[e].base.x_subpos[1] = full as u8);
+        session_slot!(
+            game,
+            Corpse[e].base.x_pos = (session_slot!(game, Corpse[e].base.x_pos) as i32
+                + ((a >> 8) as i8 as i32 + (full >> 8))) as u16
+        );
+    } else {
+        {
+            let (actor, amount) = (k, (a as i16 as i32) << 8);
+            game.foreign(|game| game.move_horizontal(actor, amount, Slopes::Ignore)) as u8
         };
-    }
+    };
 }
 pub fn corpse_wait_for_samus_collision(k: u16, j: u16, game: &mut impl State) {
     if k == word!(game.ENEMY_INDEX_COLLIDING_DIRS[0])

@@ -523,14 +523,12 @@ crate::dispatch::callback_dispatch! {
             }
             session_slot!(game, BabyMetroidInCutscene[e].death_explosion_index = v3);
             let v4: i32 = ((4u16).wrapping_mul(v3)) as i32 >> 1;
-            {
-                let offsets = native_record(DEATH_EXPLOSION_OFFSETS, game);
-                let x = (session_slot!(game, BabyMetroidInCutscene[e].base.x_pos))
-                    .wrapping_add(offsets.table_word(v4 as isize));
-                let y = (session_slot!(game, BabyMetroidInCutscene[e].base.y_pos))
-                    .wrapping_add(offsets.table_word((v4 + 1) as isize));
-                game.foreign(|game| crate::actors::host::BossEffects::set_projectile_spawn_point(game, x, y));
-            }
+            let offsets = native_record(DEATH_EXPLOSION_OFFSETS, game);
+            let x = (session_slot!(game, BabyMetroidInCutscene[e].base.x_pos))
+                .wrapping_add(offsets.table_word(v4 as isize));
+            let y = (session_slot!(game, BabyMetroidInCutscene[e].base.y_pos))
+                .wrapping_add(offsets.table_word((v4 + 1) as isize));
+            game.foreign(|game| crate::actors::host::BossEffects::set_projectile_spawn_point(game, x, y));
             spawn_room_projectile(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 3, game);
             queue_sfx3_max3(sound::EXPLODING, game);
         } else {

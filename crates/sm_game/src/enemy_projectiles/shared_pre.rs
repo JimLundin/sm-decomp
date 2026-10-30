@@ -116,14 +116,12 @@ pub fn turret_bullet_step_direction(v0: u16, ctx: &mut impl Host) {
     } else {
         let v1: i8 = -(enemy_byte!(ctx, v0 as isize + 1, y_fraction) as i32) as i8;
         enemy_byte!(ctx, v0 as isize + 1, y_fraction = v1 as u8);
-        {
-            let old = enemy_byte!(ctx, v0 as isize, y_fraction);
-            enemy_byte!(
-                ctx,
-                v0 as isize,
-                y_fraction = (old as i32 + v1 as i32) as u8
-            );
-        }
+        let old = enemy_byte!(ctx, v0 as isize, y_fraction);
+        enemy_byte!(
+            ctx,
+            v0 as isize,
+            y_fraction = (old as i32 + v1 as i32) as u8
+        );
     };
 }
 
@@ -401,11 +399,9 @@ pub fn botwoon_body_dying_waiting(v0: u16, ctx: &mut impl Host) {
 pub fn botwoon_body_dying_falling(v0: u16, ctx: &mut impl Host) {
     let v1: i32 = v0 as i32 >> 1;
     let v3: i32 = (8 * ((enemy!(ctx, (v1) as isize, velocity_y) as i32 & 0xff00) >> 8)) >> 1;
-    {
-        let index = v1 as isize;
-        let amount = polyp_rock_delta((v3 >> 1) as isize, ctx);
-        add_split(SlotField::Y, SlotField::YFraction, index, amount, ctx);
-    };
+    let index = v1 as isize;
+    let amount = polyp_rock_delta((v3 >> 1) as isize, ctx);
+    add_split(SlotField::Y, SlotField::YFraction, index, amount, ctx);
     if (enemy!(ctx, (v1) as isize, y) as i32 - 200i32) & 0x8000 != 0 {
         let v7: i32 = v0 as i32 >> 1;
         enemy_add!(ctx, (v7) as isize, velocity_y, 192);

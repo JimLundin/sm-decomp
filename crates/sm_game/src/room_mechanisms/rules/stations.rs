@@ -104,11 +104,9 @@ fn save_trigger(c: &mut impl Host, slot: usize) {
                     let value = mechanism!(c, index, program).wrapping_add(1);
                     mechanism!(c, index, program = value);
                 };
-                {
-                    let index = found;
-                    let value = mechanism!(c, index, program).wrapping_add(1);
-                    mechanism!(c, index, program = value);
-                };
+                let index = found;
+                let value = mechanism!(c, index, program).wrapping_add(1);
+                mechanism!(c, index, program = value);
                 mechanism!(c, found, instruction_delay = 1);
             }
         }

@@ -262,31 +262,29 @@ pub fn lava_background<H: crate::menus::host::Host + ?Sized>(
     object: &mut HdmaObject,
     game: &mut H,
 ) {
-    {
-        word!(game.BG2_Y_SCROLL_SPARE_ENTRY = word!(game.REG_BG2VOFS));
-        let active = word!(game.TIME_IS_FROZEN_FLAG) == 0
-            && crate::liquid::LiquidWords::read(game).options & 6 != 0;
-        let horizontal = active && crate::liquid::LiquidWords::read(game).options & 2 == 0;
-        game.write_register(
-            (object.bank_slot & 0xff).wrapping_add(BBAD0 as u16),
-            if horizontal { 0xf } else { 0x10 },
+    word!(game.BG2_Y_SCROLL_SPARE_ENTRY = word!(game.REG_BG2VOFS));
+    let active = word!(game.TIME_IS_FROZEN_FLAG) == 0
+        && crate::liquid::LiquidWords::read(game).options & 6 != 0;
+    let horizontal = active && crate::liquid::LiquidWords::read(game).options & 2 == 0;
+    game.write_register(
+        (object.bank_slot & 0xff).wrapping_add(BBAD0 as u16),
+        if horizontal { 0xf } else { 0x10 },
+    );
+    if active {
+        fill_wave(
+            object,
+            if horizontal {
+                Wave::LavaHorizontal
+            } else {
+                Wave::LavaVertical
+            },
+            game,
         );
-        if active {
-            fill_wave(
-                object,
-                if horizontal {
-                    Wave::LavaHorizontal
-                } else {
-                    Wave::LavaVertical
-                },
-                game,
-            );
-        } else {
-            let value = word!(game.REG_BG2VOFS) & 0x1ff;
-            crate::word_transfers!(game, descending, 16; le(LIQUID_BG2_Y_SCROLL_TABLE, 15) <- value(value));
-        }
-        object.table = 3 * (word!(game.REG_BG2VOFS) & 0xf) + 0xc0b1;
+    } else {
+        let value = word!(game.REG_BG2VOFS) & 0x1ff;
+        crate::word_transfers!(game, descending, 16; le(LIQUID_BG2_Y_SCROLL_TABLE, 15) <- value(value));
     }
+    object.table = 3 * (word!(game.REG_BG2VOFS) & 0xf) + 0xc0b1;
 }
 pub fn water_background<H: crate::menus::host::Host + ?Sized>(
     object: &mut HdmaObject,
@@ -312,8 +310,6 @@ pub fn water_wave<H: crate::menus::host::Host + ?Sized>(object: &mut HdmaObject,
     fill_wave(object, Wave::Water, game);
 }
 pub fn water_flat<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    {
-        let value = word!(game.REG_BG2HOFS);
-        crate::word_transfers!(game, descending, 16; native(0x9c66) <- value(value));
-    }
+    let value = word!(game.REG_BG2HOFS);
+    crate::word_transfers!(game, descending, 16; native(0x9c66) <- value(value));
 }

@@ -22,11 +22,9 @@ fn wake(c: &mut impl Host, slot: usize) {
         let value = mechanism!(c, index, program).wrapping_add(1);
         mechanism!(c, index, program = value);
     };
-    {
-        let index = slot;
-        let value = mechanism!(c, index, program).wrapping_add(1);
-        mechanism!(c, index, program = value);
-    };
+    let index = slot;
+    let value = mechanism!(c, index, program).wrapping_add(1);
+    mechanism!(c, index, program = value);
     mechanism!(c, slot, counter = 0);
 }
 pub fn poll(c: &mut impl Host, stage: Stage, slot: usize) {

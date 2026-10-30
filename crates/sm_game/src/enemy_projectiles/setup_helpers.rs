@@ -60,30 +60,26 @@ pub fn init_skree_particle(
 }
 
 pub fn init_fireball_child(j: u16, x: u16, y: u16, handler: u16, ctx: &mut impl Host) {
-    {
-        let parent = ctx.session().enemy_projectiles.spawn.primary;
-        let slot = usize::from(j >> 1);
-        enemy!(ctx, slot as isize, velocity_x = x);
-        enemy!(ctx, slot as isize, velocity_y = y);
-        init_afterburn(j, parent, handler, ctx);
-    }
+    let parent = ctx.session().enemy_projectiles.spawn.primary;
+    let slot = usize::from(j >> 1);
+    enemy!(ctx, slot as isize, velocity_x = x);
+    enemy!(ctx, slot as isize, velocity_y = y);
+    init_afterburn(j, parent, handler, ctx);
 }
 
 pub fn init_mini_kraid_spikes(j: u16, a: u16, ctx: &mut impl Host) {
-    {
-        let v2: i32 = j as i32 >> 1;
-        enemy!(ctx, a => (v2) as isize, velocity_x);
-        let r18: u16 = MINI_KRAID_SPIKE_INIT_TABLE
-            [(ctx.mini_kraid_spike_variant(ctx.inputs().current_enemy) >> 1) as usize]
-            as u16;
-        let enemy_index = ctx.inputs().current_enemy;
-        enemy!(ctx, ctx.resolve_actor(Key::from_legacy(enemy_index), Le).x.whole => (v2) as isize, x);
-        enemy!(ctx, (r18).wrapping_add(ctx.resolve_actor(Key::from_legacy(enemy_index), Le).y.whole) => (v2) as isize, y);
+    let v2: i32 = j as i32 >> 1;
+    enemy!(ctx, a => (v2) as isize, velocity_x);
+    let r18: u16 = MINI_KRAID_SPIKE_INIT_TABLE
+        [(ctx.mini_kraid_spike_variant(ctx.inputs().current_enemy) >> 1) as usize]
+        as u16;
+    let enemy_index = ctx.inputs().current_enemy;
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(enemy_index), Le).x.whole => (v2) as isize, x);
+    enemy!(ctx, (r18).wrapping_add(ctx.resolve_actor(Key::from_legacy(enemy_index), Le).y.whole) => (v2) as isize, y);
 
-        enemy!(ctx, 0 => (v2) as isize, y_fraction);
-        enemy!(ctx, 0 => (v2) as isize, x_fraction);
-        enemy!(ctx, 0 => (v2) as isize, velocity_y);
-    }
+    enemy!(ctx, 0 => (v2) as isize, y_fraction);
+    enemy!(ctx, 0 => (v2) as isize, x_fraction);
+    enemy!(ctx, 0 => (v2) as isize, velocity_y);
 }
 
 pub fn init_kihunter_acid_spit(k: u16, j: u16, ctx: &mut impl Host) {
@@ -96,43 +92,39 @@ pub fn init_kihunter_acid_spit(k: u16, j: u16, ctx: &mut impl Host) {
 }
 
 pub fn init_work_robot_laser(k: u16, j: u16, ctx: &mut impl Host) {
-    {
-        let v2 = k;
-        let v3: i32 = j as i32 >> 1;
-        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v2), Le).y.whole as i32 - 16i32) as u16 => (v3) as isize, y);
-        {
-            let value = (ctx.resolve_actor(Key::from_legacy(v2), Le).x.whole as i32
-                + (if enemy!(ctx, (v3) as isize, velocity_x) & 0x8000 != 0 {
-                    -4i32
-                } else {
-                    4
-                })) as u16;
-            enemy!(ctx, value => (v3) as isize, x);
-        };
+    let v2 = k;
+    let v3: i32 = j as i32 >> 1;
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v2), Le).y.whole as i32 - 16i32) as u16 => (v3) as isize, y);
+    let value = (ctx.resolve_actor(Key::from_legacy(v2), Le).x.whole as i32
+        + (if enemy!(ctx, (v3) as isize, velocity_x) & 0x8000 != 0 {
+            -4i32
+        } else {
+            4
+        })) as u16;
+    enemy!(ctx, value => (v3) as isize, x);
 
-        enemy!(ctx, 0 => (v3) as isize, y_fraction);
-        enemy!(ctx, 0 => (v3) as isize, x_fraction);
+    enemy!(ctx, 0 => (v3) as isize, y_fraction);
+    enemy!(ctx, 0 => (v3) as isize, x_fraction);
 
-        if ((ctx.resolve_actor(Key::from_legacy(v2), Le).radius.x as i32
-            + ctx.resolve_actor(Key::from_legacy(v2), Le).x.whole as i32
+    if ((ctx.resolve_actor(Key::from_legacy(v2), Le).radius.x as i32
+        + ctx.resolve_actor(Key::from_legacy(v2), Le).x.whole as i32
+        - ctx.inputs().camera_x as i32) as i16)
+        >= 0
+        && ((ctx.resolve_actor(Key::from_legacy(v2), Le).x.whole as i32
+            - ctx.resolve_actor(Key::from_legacy(v2), Le).radius.x as i32
+            - 257i32
             - ctx.inputs().camera_x as i32) as i16)
+            < 0
+        && ((ctx.resolve_actor(Key::from_legacy(v2), Le).radius.y as i32
+            + ctx.resolve_actor(Key::from_legacy(v2), Le).y.whole as i32
+            - ctx.inputs().camera_y as i32) as i16)
             >= 0
-            && ((ctx.resolve_actor(Key::from_legacy(v2), Le).x.whole as i32
-                - ctx.resolve_actor(Key::from_legacy(v2), Le).radius.x as i32
-                - 257i32
-                - ctx.inputs().camera_x as i32) as i16)
-                < 0
-            && ((ctx.resolve_actor(Key::from_legacy(v2), Le).radius.y as i32
-                + ctx.resolve_actor(Key::from_legacy(v2), Le).y.whole as i32
-                - ctx.inputs().camera_y as i32) as i16)
-                >= 0
-            && ((ctx.resolve_actor(Key::from_legacy(v2), Le).y.whole as i32
-                - ctx.resolve_actor(Key::from_legacy(v2), Le).radius.y as i32
-                - 224i32) as i16)
-                < 0
-        {
-            ctx.queue_sound(2, 6, 0x67);
-        }
+        && ((ctx.resolve_actor(Key::from_legacy(v2), Le).y.whole as i32
+            - ctx.resolve_actor(Key::from_legacy(v2), Le).radius.y as i32
+            - 224i32) as i16)
+            < 0
+    {
+        ctx.queue_sound(2, 6, 0x67);
     }
 }
 

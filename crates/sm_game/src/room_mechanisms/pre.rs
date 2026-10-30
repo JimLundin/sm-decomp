@@ -23,11 +23,9 @@ fn wake(c: &mut impl Host, slot: usize, pre: u16) {
         let value = mechanism!(c, index, program).wrapping_add(1);
         mechanism!(c, index, program = value);
     };
-    {
-        let index = slot;
-        let value = mechanism!(c, index, program).wrapping_add(1);
-        mechanism!(c, index, program = value);
-    };
+    let index = slot;
+    let value = mechanism!(c, index, program).wrapping_add(1);
+    mechanism!(c, index, program = value);
     mechanism!(c, slot, instruction_delay = 1);
     mechanism!(c, slot, pre_action = pre);
 }
@@ -41,11 +39,9 @@ pub fn run(c: &mut impl Host, ea: u32, k: u16) {
                 1344
             };
             if 240 < c.session().player.x && target < c.session().player.y {
-                {
-                    let index = slot;
-                    let value = mechanism!(c, index, program).wrapping_add(2);
-                    mechanism!(c, index, program = value);
-                };
+                let index = slot;
+                let value = mechanism!(c, index, program).wrapping_add(2);
+                mechanism!(c, index, program = value);
                 mechanism!(c, slot, instruction_delay = 1);
                 if ea == addresses::pre::TOURIAN_SHAFT_WALL_EXPLODE {
                     // The spawn's initialisation parameter is A, still the 1
@@ -181,11 +177,9 @@ pub fn run(c: &mut impl Host, ea: u32, k: u16) {
                     let value = mechanism!(c, index, program).wrapping_add(1);
                     mechanism!(c, index, program = value);
                 };
-                {
-                    let index = slot;
-                    let value = mechanism!(c, index, program).wrapping_add(1);
-                    mechanism!(c, index, program = value);
-                };
+                let index = slot;
+                let value = mechanism!(c, index, program).wrapping_add(1);
+                mechanism!(c, index, program = value);
                 mechanism!(c, slot, instruction_delay = 1);
             }
         }

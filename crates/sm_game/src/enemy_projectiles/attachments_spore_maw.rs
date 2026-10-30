@@ -98,12 +98,10 @@ pub fn update_maw_segment(part: u8, ctx: &mut impl Host) {
                 .wrapping_add(ctx.maw_anchor_x(enemy));
             enemy!(ctx, value => segment, x);
         };
-        {
-            let value = ctx
-                .maw_segment_offset_y(enemy, part)
-                .wrapping_add(ctx.maw_anchor_y(enemy));
-            enemy!(ctx, value => segment, y);
-        };
+        let value = ctx
+            .maw_segment_offset_y(enemy, part)
+            .wrapping_add(ctx.maw_anchor_y(enemy));
+        enemy!(ctx, value => segment, y);
     }
 }
 pub fn update_maw_palette(handle: u16, ctx: &mut impl Host) {

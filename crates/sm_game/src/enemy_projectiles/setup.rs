@@ -294,14 +294,12 @@ pub fn init_rocks_when_kraid_rises(j: u16, ctx: &mut impl Host) {
         v1 = !(v1 as i32) as i16;
     }
     let v2: i32 = j as i32 >> 1;
-    {
-        let value = ({
-            let enemy_index = ctx.inputs().current_enemy;
-            ctx.resolve_actor(Key::from_legacy(enemy_index), Le).x.whole
-        })
-        .wrapping_add((v1) as u16);
-        enemy!(ctx, value => (v2) as isize, x);
-    };
+    let value = ({
+        let enemy_index = ctx.inputs().current_enemy;
+        ctx.resolve_actor(Key::from_legacy(enemy_index), Le).x.whole
+    })
+    .wrapping_add((v1) as u16);
+    enemy!(ctx, value => (v2) as isize, x);
     enemy!(ctx, 432 => (v2) as isize, y);
 
     enemy!(ctx, 0 => (v2) as isize, y_fraction);
@@ -336,14 +334,12 @@ pub fn init_pirate_claw(j: u16, ctx: &mut impl Host) {
     let v1: i32 = j as i32 >> 1;
     enemy!(ctx, (r.origin.y as i32 + r.extent.y as i32) as u16 => (v1) as isize, y);
     enemy!(ctx, (r.origin.x as i32 + r.extent.x as i32) as u16 => (v1) as isize, x);
-    {
-        let value = (if ctx.session().enemy_projectiles.spawn.primary != 0 {
-            ADDR_OFF_869FE1 as i32
-        } else {
-            ADDR_OFF_869FB9 as i32
-        }) as u16;
-        enemy!(ctx, value => (v1) as isize, program);
-    };
+    let value = (if ctx.session().enemy_projectiles.spawn.primary != 0 {
+        ADDR_OFF_869FE1 as i32
+    } else {
+        ADDR_OFF_869FB9 as i32
+    }) as u16;
+    enemy!(ctx, value => (v1) as isize, program);
     enemy!(ctx, (0x86a05b & 0xffff) as u16 => (v1) as isize, pre_action);
     enemy!(ctx, 2048 => (v1) as isize, behavior_a);
     enemy!(ctx, 1 => (v1) as isize, behavior_b);
@@ -435,10 +431,8 @@ pub fn init_projectile_ab07(j: u16, ctx: &mut impl Host) {
     ctx.set_vram_queue_source(v3, ADDR_K_EPROJ_INIT_AB07_TILE1 as u16);
     ctx.set_vram_queue_bank_word(v3, 134);
     ctx.set_vram_queue_destination(v3, 28416);
-    {
-        let value = (v1 as i32 + 7) as u16;
-        ctx.set_vram_write_queue_tail(value);
-    };
+    let value = (v1 as i32 + 7) as u16;
+    ctx.set_vram_write_queue_tail(value);
     let v4: i32 = j as i32 >> 1;
     enemy!(ctx, ctx.session().player.x => (v4) as isize, x);
     enemy!(ctx, (ctx.session().player.y as i32 - 36i32) as u16 => (v4) as isize, y);
@@ -488,12 +482,9 @@ pub fn init_torizo_sonic_boom(j: u16, ctx: &mut impl Host) {
 pub fn init_wrecked_ship_chozo_spike_footsteps(j: u16, ctx: &mut impl Host) {
     let v1 = ctx.inputs().current_enemy as i32 as u16;
     let v2: i32 = j as i32 >> 1;
-    {
-        let value = (ctx.session().enemy_projectiles.spawn.primary as i32
-            + ctx.resolve_actor(Key::from_legacy(v1), Le).x.whole as i32)
-            as u16;
-        enemy!(ctx, value => (v2) as isize, x);
-    };
+    let value = (ctx.session().enemy_projectiles.spawn.primary as i32
+        + ctx.resolve_actor(Key::from_legacy(v1), Le).x.whole as i32) as u16;
+    enemy!(ctx, value => (v2) as isize, x);
     enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v1), Le).y.whole as i32 + 28) as u16 => (v2) as isize, y);
 }
 
@@ -599,10 +590,8 @@ pub fn init_tourian_statue_eye_glow(j: u16, ctx: &mut impl Host) {
     enemy!(ctx, K_EPROJ_INIT_TOURIAN_STATUE_EYE_GLOW_Y[v2 as usize] => (v3) as isize, y);
     let mut v4: u16 = (4 * v1 as i32) as u16;
     for i in (498i32..506).step_by(2) {
-        {
-            let value = K_EPROJ_INIT_TOURIAN_STATUE_EYE_GLOW_COLORS[(v4 >> 1) as usize];
-            ctx.set_palette_buffer((i >> 1) as isize, value);
-        };
+        let value = K_EPROJ_INIT_TOURIAN_STATUE_EYE_GLOW_COLORS[(v4 >> 1) as usize];
+        ctx.set_palette_buffer((i >> 1) as isize, value);
         v4 = (v4 as i32 + 2) as u16;
     }
 }
@@ -865,10 +854,8 @@ pub fn init_ceres_elevator_pad_concealer(j: u16, ctx: &mut impl Host) {
 }
 
 pub fn pre_phantoon_room_pre_instruction(_j: u16, ctx: &mut impl Host) {
-    {
-        let value = 0;
-        ctx.set_bg2_y_scroll(value);
-    };
+    let value = 0;
+    ctx.set_bg2_y_scroll(value);
 }
 
 pub fn init_projectile_bb50(j: u16, ctx: &mut impl Host) {
@@ -1094,12 +1081,10 @@ pub fn init_bomb_torizo_initial_drool(j: u16, ctx: &mut impl Host) {
     ctx.next_random();
     let v2 = ctx.inputs().current_enemy as i32 as u16;
 
-    {
-        let value = ((ctx.resolve_actor(Key::from_legacy(v2), Le).y.whole as i32
-            + (ctx.inputs().random as i32 & 3)) as u16)
-            .wrapping_sub(5);
-        enemy!(ctx, value => (v1) as isize, y);
-    };
+    let value = ((ctx.resolve_actor(Key::from_legacy(v2), Le).y.whole as i32
+        + (ctx.inputs().random as i32 & 3)) as u16)
+        .wrapping_sub(5);
+    enemy!(ctx, value => (v1) as isize, y);
     enemy!(ctx, (ctx.inputs().random & 0x1f).wrapping_add(48) => (v1) as isize, velocity_y);
 
     ctx.next_random();
@@ -1333,11 +1318,9 @@ pub fn init_mother_brain_rainbow_beam_explosion(j: u16, ctx: &mut impl Host) {
         enemy!(ctx, value => (v1) as isize, x);
     };
     enemy!(ctx, ctx.session().enemy_projectiles.spawn.point.y => (v1) as isize, velocity_y);
-    {
-        let value = (ctx.session().player.y as i32
-            + ctx.session().enemy_projectiles.spawn.point.y as i32) as u16;
-        enemy!(ctx, value => (v1) as isize, y);
-    };
+    let value = (ctx.session().player.y as i32
+        + ctx.session().enemy_projectiles.spawn.point.y as i32) as u16;
+    enemy!(ctx, value => (v1) as isize, y);
 }
 
 pub fn init_mother_brain_purple_breath_big(j: u16, ctx: &mut impl Host) {
@@ -1384,12 +1367,10 @@ pub fn init_powamp_spike(j: u16, ctx: &mut impl Host) {
 pub fn init_spore_spawn_stalk(j: u16, ctx: &mut impl Host) {
     let v1: i32 = j as i32 >> 1;
 
-    {
-        let value = (ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32
-            + WORD_86_DCB9[ctx.session().enemy_projectiles.spawn.primary as usize] as i32)
-            as u16;
-        enemy!(ctx, value => (v1) as isize, y);
-    };
+    let value = (ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32
+        + WORD_86_DCB9[ctx.session().enemy_projectiles.spawn.primary as usize] as i32)
+        as u16;
+    enemy!(ctx, value => (v1) as isize, y);
     enemy!(ctx, ctx.resolve_actor(Key::from_legacy(0), Le).x.whole => (v1) as isize, x);
 }
 
@@ -1471,14 +1452,12 @@ pub fn init_crocomire_projectile(j: u16, ctx: &mut impl Host) {
 pub fn init_pirate_laser(j: u16, ctx: &mut impl Host) {
     let v2: i32 = j as i32 >> 1;
 
-    {
-        let value = (if ctx.session().enemy_projectiles.spawn.variant != 0 {
-            ADDR_WORD_869F7D as i32
-        } else {
-            ADDR_WORD_869F41 as i32
-        }) as u16;
-        enemy!(ctx, value => (v2) as isize, program);
-    };
+    let value = (if ctx.session().enemy_projectiles.spawn.variant != 0 {
+        ADDR_WORD_869F7D as i32
+    } else {
+        ADDR_WORD_869F41 as i32
+    }) as u16;
+    enemy!(ctx, value => (v2) as isize, program);
     enemy!(ctx, (0x86a05b & 0xffff) as u16 => (v2) as isize, pre_action);
     enemy!(ctx, ctx.session().enemy_projectiles.spawn.point.x => (v2) as isize, x);
     enemy!(ctx, ctx.session().enemy_projectiles.spawn.point.y => (v2) as isize, y);
@@ -1621,12 +1600,10 @@ pub fn init_mini_kraid_spit(j: u16, ctx: &mut impl Host) {
 
     let extra_index = ctx.inputs().current_enemy;
     let v3: i32 = j as i32 >> 1;
-    {
-        let value = (ctx.mini_kraid_spit_x_offset(extra_index) as i32
-            + ctx.resolve_actor(Key::from_legacy(enemy_index), Le).x.whole as i32)
-            as u16;
-        enemy!(ctx, value => (v3) as isize, x);
-    };
+    let value = (ctx.mini_kraid_spit_x_offset(extra_index) as i32
+        + ctx.resolve_actor(Key::from_legacy(enemy_index), Le).x.whole as i32)
+        as u16;
+    enemy!(ctx, value => (v3) as isize, x);
     enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(enemy_index), Le).y.whole as i32 - 16i32) as u16 => (v3) as isize, y);
 
     enemy!(ctx, 0 => (v3) as isize, y_fraction);
@@ -1750,18 +1727,14 @@ pub fn init_enemy_death_explosion(j: u16, ctx: &mut impl Host) {
     }
     enemy!(ctx, ctx.resolve_actor(Key::from_legacy(enemy_index), Le).definition => (v2) as isize, drop_definition);
     enemy!(ctx, 0 => (v2) as isize, graphics);
-    {
-        let instruction: u16 = native_setup_word(
-            0xefd5,
-            ctx.session().enemy_projectiles.spawn.primary as isize,
-            ctx,
-        );
-        {
-            let index = (v2 as usize) as isize;
-            enemy!(ctx, index, program = instruction);
-            enemy!(ctx, index, delay = 1);
-        };
-    }
+    let instruction: u16 = native_setup_word(
+        0xefd5,
+        ctx.session().enemy_projectiles.spawn.primary as isize,
+        ctx,
+    );
+    let index = (v2 as usize) as isize;
+    enemy!(ctx, index, program = instruction);
+    enemy!(ctx, index, delay = 1);
 }
 
 pub fn init_vertical_afterburn_up(j: u16, ctx: &mut impl Host) {

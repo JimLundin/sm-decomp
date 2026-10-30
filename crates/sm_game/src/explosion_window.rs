@@ -183,12 +183,10 @@ fn explosion_window_side<H: Host + ?Sized>(byte_read: bool, game: &mut H) -> Exp
 
 macro_rules! write_explosion_window_row {
     ($k:expr, $left:expr, $right:expr, $game:ident) => {{
-        {
-            let left = $left;
-            $game.ram().write_byte((0xc406isize + $k) as usize, left);
-            let right = $right;
-            $game.ram().write_byte((0xc506isize + $k) as usize, right);
-        }
+        let left = $left;
+        $game.ram().write_byte((0xc406isize + $k) as usize, left);
+        let right = $right;
+        $game.ram().write_byte((0xc506isize + $k) as usize, right);
     }};
 }
 
@@ -325,45 +323,39 @@ fn calculate_explosion_hdma_table_pointers<H: Host + ?Sized>(
     pre_explosion: bool,
     game: &mut H,
 ) {
+    if pre_explosion && (word!(game.POWER_BOMB_EXPLOSION_STATUS) & 0x8000) == 0 {
+        return;
+    }
+    let layer1 = crate::camera::current(game).layer1;
+    let y_offset = if ((word!(game.POWER_BOMB_EXPLOSION_X_POS) as i32 - layer1[0] as i32 + 256)
+        as u16)
+        >= 0x300
     {
-        if pre_explosion && (word!(game.POWER_BOMB_EXPLOSION_STATUS) & 0x8000) == 0 {
-            return;
-        }
-        let layer1 = crate::camera::current(game).layer1;
-        let y_offset = if ((word!(game.POWER_BOMB_EXPLOSION_X_POS) as i32 - layer1[0] as i32 + 256)
-            as u16)
-            >= 0x300
-        {
-            0
-        } else {
-            word!(
-                game.POWER_BOMB_EXPLOSION_X_POS_PLUS_0X100 =
-                    (word!(game.POWER_BOMB_EXPLOSION_X_POS) as i32 - layer1[0] as i32 + 256) as u16
-            );
-            let y = (word!(game.POWER_BOMB_EXPLOSION_Y_POS) as i32 - layer1[1] as i32 + 256) as u16;
-            if y >= 0x300 { 0 } else { y }
-        };
+        0
+    } else {
         word!(
-            game.POWER_BOMB_EXPLOSION_Y_POS_RSUB_0X1FF =
-                ((y_offset as i32 ^ 0x3ff) - 256i32) as u16
+            game.POWER_BOMB_EXPLOSION_X_POS_PLUS_0X100 =
+                (word!(game.POWER_BOMB_EXPLOSION_X_POS) as i32 - layer1[0] as i32 + 256) as u16
         );
-        let radius = if pre_explosion {
-            word!(game.POWER_BOMB_PRE_EXPLOSION_FLASH_RADIUS)
-        } else {
-            word!(game.POWER_BOMB_EXPLOSION_RADIUS)
-        };
-        if (radius & 0xff00) == 0 {
-            word!(game.POWER_BOMB_EXPLOSION_Y_POS_RSUB_0X1FF = 0);
-        }
-        object.table = (3 * word!(game.POWER_BOMB_EXPLOSION_Y_POS_RSUB_0X1FF) as i32
-            + ADDR_INDIRECT_HDMA_TABLE_POWER_BOMB_EXPLODE_LEFT as i32)
-            as u16;
-        // The right half is the next object, which stays on the host.
-        word! { game;
-            HDMA_OBJECT_TABLE_POINTERS[((k as i32 >> 1) + 1)] =
-                (3 * word!(game.POWER_BOMB_EXPLOSION_Y_POS_RSUB_0X1FF) as i32
-                    + ADDR_INDIRECT_HDMA_TABLE_POWER_BOMB_EXPLODE_RIGHT as i32) as u16;
-        }
+        let y = (word!(game.POWER_BOMB_EXPLOSION_Y_POS) as i32 - layer1[1] as i32 + 256) as u16;
+        if y >= 0x300 { 0 } else { y }
+    };
+    word!(game.POWER_BOMB_EXPLOSION_Y_POS_RSUB_0X1FF = ((y_offset as i32 ^ 0x3ff) - 256i32) as u16);
+    let radius = if pre_explosion {
+        word!(game.POWER_BOMB_PRE_EXPLOSION_FLASH_RADIUS)
+    } else {
+        word!(game.POWER_BOMB_EXPLOSION_RADIUS)
+    };
+    if (radius & 0xff00) == 0 {
+        word!(game.POWER_BOMB_EXPLOSION_Y_POS_RSUB_0X1FF = 0);
+    }
+    object.table = (3 * word!(game.POWER_BOMB_EXPLOSION_Y_POS_RSUB_0X1FF) as i32
+        + ADDR_INDIRECT_HDMA_TABLE_POWER_BOMB_EXPLODE_LEFT as i32) as u16;
+    // The right half is the next object, which stays on the host.
+    word! { game;
+        HDMA_OBJECT_TABLE_POINTERS[((k as i32 >> 1) + 1)] =
+            (3 * word!(game.POWER_BOMB_EXPLOSION_Y_POS_RSUB_0X1FF) as i32
+                + ADDR_INDIRECT_HDMA_TABLE_POWER_BOMB_EXPLODE_RIGHT as i32) as u16;
     }
 }
 
