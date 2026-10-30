@@ -22,6 +22,5 @@ unsafe_code = "forbid"
 unexpected_cfgs = { level = "warn", check-cfg = ["cfg(sm_verify_dll)"] }
 
 [lints.clippy]
-# Signatures still mirror routines that take many RAM-backed arguments.
-too_many_arguments = "allow"
+# Complex types still mirror the original routines.
 type_complexity = "allow"

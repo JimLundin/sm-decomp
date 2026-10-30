@@ -218,13 +218,11 @@ fn semantic_object(
     media: &SceneMedia,
     producer: ProducerObjectId,
     variants: Arc<ObjectVariants>,
-    entry: usize,
-    x: u16,
-    y: u16,
+    native: NativeObject,
     native_word: u16,
     context: ObjectContext,
-    size: ObjectSize,
 ) -> Result<ProducedObject, DisplayError> {
+    let NativeObject { entry, x, y, size } = native;
     if producer.0 == 0 {
         return Err(DisplayError::Identity);
     }
@@ -295,12 +293,19 @@ fn record(
     objects.produced.sort_by_key(|record| record.object.order);
     Ok(())
 }
+/// A native object entry with its completed staging geometry.
+struct NativeObject {
+    entry: usize,
+    x: u16,
+    y: u16,
+    size: ObjectSize,
+}
 fn object_geometry(
     objects: &super::state::ObjectStaging,
     entry: usize,
     x: u16,
     y: u16,
-) -> Result<(u16, u16, ObjectSize), DisplayError> {
+) -> Result<NativeObject, DisplayError> {
     let bits = objects.byte(512 + entry / 16)? >> (2 * ((entry / 4) & 3));
     // Native high-table stores OR their bits, so use the completed staging
     // geometry rather than clearing retained X-high or size bits in Scene.
@@ -311,7 +316,7 @@ fn object_geometry(
     } else {
         ObjectSize::Small
     };
-    Ok((x, y, size))
+    Ok(NativeObject { entry, x, y, size })
 }
 
 struct PendingTile {
@@ -415,18 +420,14 @@ impl<I: Inputs> Host for Owned<'_, I> {
         let context = self
             .inputs
             .object_context(&self.state.controls, &self.state.effective)?;
-        let (x, y, size) =
-            object_geometry(&self.state.objects, pending.entry, pending.x, pending.y)?;
+        let native = object_geometry(&self.state.objects, pending.entry, pending.x, pending.y)?;
         let object = semantic_object(
             self.media,
             producer,
             tile.variants,
-            pending.entry,
-            x,
-            y,
+            native,
             pending.native_word,
             context,
-            size,
         )?;
         record(&mut self.state.objects, &self.state.producer_ids, object)?;
         Ok(())
@@ -533,17 +534,14 @@ impl<I: Inputs> AdvanceHost for Owned<'_, I> {
                 let piece = sprite.parts.get(index).ok_or(DisplayError::Source)?;
                 let producer = producers.slots[slot].ok_or(DisplayError::Incomplete)?;
                 let context = inputs.object_context(controls, effective)?;
-                let (x, y, size) = object_geometry(objects, entry, x, y)?;
+                let native = object_geometry(objects, entry, x, y)?;
                 let object = semantic_object(
                     media,
                     producer,
                     piece.variants.clone(),
-                    entry,
-                    x,
-                    y,
+                    native,
                     tile,
                     context,
-                    size,
                 )?;
                 record(objects, producer_ids, object)?;
                 Ok(())
