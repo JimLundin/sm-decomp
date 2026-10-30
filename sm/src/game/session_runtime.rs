@@ -1027,7 +1027,7 @@ crate::game::address_dispatch! {
     unsafe fn actor_species_draw_hook(ea: u32, game: &mut Game) => ea;
         call (game); default { crate::rtl::Unreachable(game); };
     {
-        10518604 => [()]; 10738444 => reflec::palette; 10851138 => actors::draygon_flight::scroll_layer;
+        10518604 => [()]; 10738444 => reflec::palette; 10851138 => actors::draygon_flight::set_bg2_scroll;
         10920690 => sm_a6::Ridley_A2F2; 11042892 => [()]; 11055282 => crate::game::actors::magdollite::cycle_palette;
         11062375 => crate::game::actors::wrecked_ship_robots::palette; 11069550 => crate::game::actors::blue_face_block::palette;
         11110278 => [()]; 11110345 => sm_a9::MotherBrain_DrawBrainNeck_EnemyGfxDrawHook;

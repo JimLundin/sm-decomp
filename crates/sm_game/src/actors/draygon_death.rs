@@ -1,21 +1,65 @@
-//! Draygon damage, death approach, ring, sinking and rewards.
+//! Draygon's hurt palettes, reactions and death sequence (bank
+//! $A5:9185-$A5:9701).
 //! Boss words remain native compatibility state; player and sprites use their owners.
 #![forbid(unsafe_code)]
-use crate::actors::draygon_flight::facing_animation;
-use crate::actors::draygon_host::{Host, abs16};
+use crate::actors::draygon_flight::{facing_animation, foam_at_mouth};
+use crate::actors::draygon_host::{
+    ARMS, BANK, BODY, DELETE, Draygon, EYE, GRAPPLE_DROPPED, Host, SIGN, TAIL, abs16, function,
+    instruction_list as list,
+};
 use crate::actors::host::{Death, Shot};
-use crate::actors::layouts::EnemyLayout104 as Draygon;
 use crate::actors::queries::angle_from_delta;
 use crate::ram::RawRam as _;
 use crate::ram::{slot, word};
 
-pub fn damage_palette<H: Host + ?Sized>(native: bool, game: &mut H) {
-    let mut cursor = slot!(game, Draygon[0].var_0E).wrapping_mul(4);
-    for index in 89..93 {
-        let value = crate::cartridge::rom_table_word!(game, 0xa596af, (cursor >> 1) as isize);
+/// $A5:96AF: four colours of BG1/2 palette 5 for each health step, and
+/// $A5:96EF: the health below which each step starts.
+const HEALTH_PALETTES: u32 = 0xa5_96af;
+const HEALTH_THRESHOLDS: u32 = 0xa5_96ef;
+/// Colours 9-12 of BG1/2 palette 5, as palette words and in RAM at $7E:C000.
+const HEALTH_COLOURS: core::ops::Range<usize> = 89..93;
+const PALETTE_RAM: usize = 0xc000;
+/// The hurt AI's palettes: BG1/2 palette 5 and sprite palette 7, which flash
+/// to $A5:A297.
+const BG_PALETTE_5: u16 = 0xa277;
+const SPRITE_PALETTE_7: u16 = 0xa1f7;
+const FLASH_PALETTE: u16 = 0xa297;
+const BG_PALETTE_5_RAM: usize = 0xc0a0;
+const SPRITE_PALETTE_7_RAM: usize = 0xc1e0;
+const PALETTE_BYTES: usize = 32;
+/// Flash timer bit 1 flashes.
+const FLASHING: u16 = 2;
+/// The grapple beam drains 100h health every 8 frames.
+const GRAPPLE_FLAG: u16 = 1;
+const GRAPPLE_DRAIN: i16 = 0x100;
+const GRAPPLE_FRAMES: u16 = 7;
+/// Shots raise the swoop Y acceleration by 8, up to 98h.
+const ACCELERATION_STEP: u16 = 8;
+const MAX_ACCELERATION: u16 = 0x98;
+/// The death spot, (100h, 1E0h), reached within 4 px; the evirs bury Draygon
+/// for 1A0h frames, until Y 240h.
+const DEATH_X: u16 = 0x100;
+const DEATH_Y: u16 = 0x1e0;
+const DEATH_SPOT_RANGE: u16 = 4;
+const EVIR_FRAMES: u16 = 0x1a0;
+const BURIED_Y: u16 = 0x240;
+const FOAM_FRAMES: u16 = 0xf;
+/// The elevator music track, and boss bit 0: Draygon is dead.
+const ELEVATOR_MUSIC: u16 = 3;
+const DRAYGON_DEAD: u16 = 1;
+/// Angles are measured from the top, clockwise; 40h less is the maths angle.
+const QUARTER_TURN: u8 = 0x40;
+
+/// Write the health-based colours: natively into palette RAM, or into the
+/// palette buffer. Was `damage_palette`.
+pub fn write_health_palette<H: Host + ?Sized>(native: bool, game: &mut H) {
+    let mut cursor = slot!(game, Draygon[BODY].health_palette).wrapping_mul(4);
+    for index in HEALTH_COLOURS {
+        let value =
+            crate::cartridge::rom_table_word!(game, HEALTH_PALETTES, (cursor >> 1) as isize);
         if native {
             let bytes = value.to_ne_bytes();
-            let at = 0xc000 + index * 2;
+            let at = PALETTE_RAM + index * 2;
             game.ram().write_byte(at, bytes[0]);
             game.ram().write_byte(at + 1, bytes[1]);
         } else {
@@ -26,143 +70,194 @@ pub fn damage_palette<H: Host + ?Sized>(native: bool, game: &mut H) {
 }
 fn copy_hurt_palette<H: Host + ?Sized>(default: u16, target: usize, game: &mut H) {
     let k = word!(game.cur_enemy_index) as i32;
-    let palette = if slot!(game, Draygon[k].base.flash_timer) & 2 != 0 {
-        0xa297
+    let palette = if slot!(game, Draygon[k].base.flash_timer) & FLASHING != 0 {
+        FLASH_PALETTE
     } else {
         default
     };
-    let record = crate::cartridge::native_record(0xa5, palette, game);
-    for offset in 0..32 {
+    let record = crate::cartridge::native_record(BANK, palette, game);
+    for offset in 0..PALETTE_BYTES {
         let byte = record.byte(offset);
         game.ram().write_byte(target + offset, byte);
     }
 }
-pub fn hurt<H: Host + ?Sized>(game: &mut H) {
-    copy_hurt_palette(0xa277, 0xc0a0, game);
+/// Hurt AI - Draygon ($A5:954D): flash the palettes and, while grappled,
+/// drain health. Was `hurt`.
+pub fn hurt_ai<H: Host + ?Sized>(game: &mut H) {
+    copy_hurt_palette(BG_PALETTE_5, BG_PALETTE_5_RAM, game);
     let k = word!(game.cur_enemy_index) as i32;
-    if slot!(game, Draygon[k].base.flash_timer) & 2 == 0 {
-        damage_palette(false, game);
+    if slot!(game, Draygon[k].base.flash_timer) & FLASHING == 0 {
+        write_health_palette(false, game);
     }
-    copy_hurt_palette(0xa1f7, 0xc1e0, game);
-    if word!(game.samus_grapple_flags) & 1 != 0
-        && slot!(game, Draygon[0].base.frame_counter) & 7 == 0
+    copy_hurt_palette(SPRITE_PALETTE_7, SPRITE_PALETTE_7_RAM, game);
+    if word!(game.samus_grapple_flags) & GRAPPLE_FLAG != 0
+        && slot!(game, Draygon[BODY].base.frame_counter) & GRAPPLE_FRAMES == 0
     {
-        let health = (slot!(game, Draygon[0].base.health) as i16)
-            .wrapping_sub(256)
+        let health = (slot!(game, Draygon[BODY].base.health) as i16)
+            .wrapping_sub(GRAPPLE_DRAIN)
             .max(0);
-        slot!(game, Draygon[0].base.health = health as u16);
-        after_damage(game);
+        slot!(game, Draygon[BODY].base.health = health as u16);
+        reaction(game);
     }
 }
-fn update_damage_palette<H: Host + ?Sized>(game: &mut H) {
+/// Draygon health-based palette handling ($A5:9701).
+fn update_health_palette<H: Host + ?Sized>(game: &mut H) {
     let mut cursor: i32 = 0;
-    while (slot!(game, Draygon[0].base.health) as i16).wrapping_sub(
-        crate::cartridge::rom_table_word!(game, 0xa596ef, (cursor >> 1) as isize) as i16,
+    while (slot!(game, Draygon[BODY].base.health) as i16).wrapping_sub(
+        crate::cartridge::rom_table_word!(game, HEALTH_THRESHOLDS, (cursor >> 1) as isize) as i16,
     ) < 0
     {
         cursor += 2;
     }
-    if cursor != i32::from(slot!(game, Draygon[0].var_0E)) {
-        slot!(game, Draygon[0].var_0E = cursor as u16);
-        damage_palette(true, game);
+    if cursor != i32::from(slot!(game, Draygon[BODY].health_palette)) {
+        slot!(game, Draygon[BODY].health_palette = cursor as u16);
+        write_health_palette(true, game);
     }
 }
+/// Enemy shot - Draygon ($A5:95F0).
 pub fn shot<H: Host + ?Sized>(game: &mut H) {
-    if slot!(game, Draygon[0].var_0F).wrapping_sub(152) & 0x8000 != 0 {
-        slot!(game, Draygon[0].var_0F, |old| old.wrapping_add(8));
+    if slot!(game, Draygon[BODY].swoop_y_acceleration).wrapping_sub(MAX_ACCELERATION) & SIGN != 0 {
+        slot!(game, Draygon[BODY].swoop_y_acceleration, |old| old
+            .wrapping_add(ACCELERATION_STEP));
     }
     game.shot_reaction(Shot::ReactionOnly);
-    after_damage(game);
+    reaction(game);
 }
+/// Enemy touch - Draygon ($A5:95EA).
 pub fn touch<H: Host + ?Sized>(game: &mut H) {
     game.contact_reaction(Death::LeavePending);
-    after_damage(game);
+    reaction(game);
 }
+/// Power bomb reaction - Draygon ($A5:9607).
 pub fn power_bomb<H: Host + ?Sized>(game: &mut H) {
     game.power_bomb_reaction(Death::LeavePending);
-    after_damage(game);
+    reaction(game);
 }
-pub fn after_damage<H: Host + ?Sized>(game: &mut H) {
+/// Draygon reaction ($A5:960D): update the health palette, or on death drop
+/// the grapple, let go of Samus and drift to the death spot. Was `after_damage`.
+pub fn reaction<H: Host + ?Sized>(game: &mut H) {
     let k = word!(game.cur_enemy_index) as i32;
     if slot!(game, Draygon[k].base.health) != 0 {
-        update_damage_palette(game);
+        update_health_palette(game);
         return;
     }
-    word!(game.grapple_beam_function = 0xc8c5);
-    facing_animation(0, 0, [0x9867, 0x9c5a], game);
-    facing_animation(0, 0x40, [0x997a, 0x9d1c], game);
-    slot!(game, Draygon[0x40].var_A = 0x804b);
-    slot!(game, Draygon[0].var_A = 0x9185);
+    word!(game.grapple_beam_function = GRAPPLE_DROPPED);
+    facing_animation(
+        BODY,
+        BODY,
+        [list::BODY_LEFT_DYING, list::BODY_RIGHT_DYING],
+        game,
+    );
+    facing_animation(
+        BODY,
+        EYE,
+        [list::EYE_LEFT_DYING, list::EYE_RIGHT_DYING],
+        game,
+    );
+    slot!(game, Draygon[EYE].function = function::NONE);
+    slot!(
+        game,
+        Draygon[BODY].function = function::DEATH_DRIFT_TO_DEATH_SPOT
+    );
     game.release_samus();
     word!(game.samus_grapple_flags = 0);
-    let dx = 256u16.wrapping_sub(slot!(game, Draygon[0].base.x_pos));
-    let dy = 480u16.wrapping_sub(slot!(game, Draygon[0].base.y_pos));
+    let dx = DEATH_X.wrapping_sub(slot!(game, Draygon[BODY].base.x_pos));
+    let dy = DEATH_Y.wrapping_sub(slot!(game, Draygon[BODY].base.y_pos));
     slot!(
         game,
-        Draygon[0].var_43 = u16::from(64u8.wrapping_sub(angle_from_delta(dx, dy) as u8))
+        Draygon[BODY].death_angle =
+            u16::from(QUARTER_TURN.wrapping_sub(angle_from_delta(dx, dy) as u8))
     );
     let vector = {
-        let phase = u16::from(slot!(byte game, Draygon[0].var_43[0]));
-        game.actor_direction_vector(phase, 1)
+        let angle = u16::from(slot!(byte game, Draygon[BODY].death_angle[0]));
+        game.actor_direction_vector(angle, 1)
     };
-    slot!(game, Draygon[0]; var_28 = (vector.x >> 16) as u16, var_29 = vector.x as u16, var_2A = (vector.y >> 16) as u16, var_2B = vector.y as u16);
+    slot!(game, Draygon[BODY]; death_x_speed = (vector.x >> 16) as u16,
+        death_x_subspeed = vector.x as u16, death_y_speed = (vector.y >> 16) as u16,
+        death_y_subspeed = vector.y as u16);
 }
-pub fn approach<H: Host + ?Sized>(game: &mut H) {
+/// Draygon body function - death sequence - drift to death spot ($A5:9185).
+/// Was `approach`.
+pub fn drift_to_death_spot<H: Host + ?Sized>(game: &mut H) {
     let k = word!(game.cur_enemy_index) as i32;
-    crate::actors::draygon_flight::shed_particle(k as u16, 0xf, game);
-    let dx = (64 - (i32::from(slot!(game, Draygon[0].base.x_pos)) >> 2)) as u16;
-    let dy = (120 - (i32::from(slot!(game, Draygon[0].base.y_pos)) >> 2)) as u16;
+    foam_at_mouth(k as u16, FOAM_FRAMES, game);
+    // The angle is from the position rounded to its 4x4 pixel block.
+    let dx =
+        (i32::from(DEATH_X >> 2) - (i32::from(slot!(game, Draygon[BODY].base.x_pos)) >> 2)) as u16;
+    let dy =
+        (i32::from(DEATH_Y >> 2) - (i32::from(slot!(game, Draygon[BODY].base.y_pos)) >> 2)) as u16;
     slot!(
         game,
-        Draygon[0].var_43 = u16::from(64u8.wrapping_sub(angle_from_delta(dx, dy) as u8))
+        Draygon[BODY].death_angle =
+            u16::from(QUARTER_TURN.wrapping_sub(angle_from_delta(dx, dy) as u8))
     );
     let vector = {
-        let phase = u16::from(slot!(byte game, Draygon[0].var_43[0]));
-        game.actor_direction_vector(phase, 1)
+        let angle = u16::from(slot!(byte game, Draygon[BODY].death_angle[0]));
+        game.actor_direction_vector(angle, 1)
     };
-    let scratch = u16::from(slot!(byte game, Draygon[0].var_43[0]));
+    let scratch = u16::from(slot!(byte game, Draygon[BODY].death_angle[0]));
     game.set_enemy_scratch(scratch);
-    let phase = u16::from(slot!(byte game, Draygon[0].var_43[0]));
-    game.apply_vector(phase, vector);
-    if abs16(slot!(game, Draygon[0].base.x_pos).wrapping_sub(256)).wrapping_sub(4) & 0x8000 == 0 {
+    let angle = u16::from(slot!(byte game, Draygon[BODY].death_angle[0]));
+    game.apply_vector(angle, vector);
+    if abs16(slot!(game, Draygon[BODY].base.x_pos).wrapping_sub(DEATH_X))
+        .wrapping_sub(DEATH_SPOT_RANGE)
+        & SIGN
+        == 0
+    {
         return;
     }
-    if abs16(slot!(game, Draygon[0].base.y_pos).wrapping_sub(480)).wrapping_sub(4) & 0x8000 == 0 {
+    if abs16(slot!(game, Draygon[BODY].base.y_pos).wrapping_sub(DEATH_Y))
+        .wrapping_sub(DEATH_SPOT_RANGE)
+        & SIGN
+        == 0
+    {
         return;
     }
     game.draygon_spawn_ring();
-    slot!(game, Draygon[0].var_A = 0x9294);
-    game.queue_music_delayed(3);
-    slot!(game, Draygon[0].var_B = 416);
-    slot!(game, Draygon[0].base; current_instruction = 0x97b9, instruction_timer = 1);
-    let properties = slot!(game, Draygon[0].base.properties) | 0x200;
-    slot!(game, Draygon[0x80].base.properties = properties);
-    slot!(game, Draygon[0xc0].base.properties = properties);
-    facing_animation(0, 0x40, [0x999c, 0x9d3e], game);
-    slot!(game, Draygon[0x40].var_A = 0x804b);
+    slot!(
+        game,
+        Draygon[BODY].function = function::DEATH_WAIT_FOR_EVIRS
+    );
+    game.queue_music_delayed(ELEVATOR_MUSIC);
+    slot!(game, Draygon[BODY].function_timer = EVIR_FRAMES);
+    slot!(game, Draygon[BODY].base; current_instruction = list::SLEEP, instruction_timer = 1);
+    let properties = slot!(game, Draygon[BODY].base.properties) | DELETE;
+    slot!(game, Draygon[TAIL].base.properties = properties);
+    slot!(game, Draygon[ARMS].base.properties = properties);
+    facing_animation(BODY, EYE, [list::EYE_LEFT_DEAD, list::EYE_RIGHT_DEAD], game);
+    slot!(game, Draygon[EYE].function = function::NONE);
 }
-pub fn ring<H: Host + ?Sized>(game: &mut H) {
+/// Draygon body function - death sequence - wait for evirs ($A5:9294). Was
+/// `ring`.
+pub fn wait_for_evirs<H: Host + ?Sized>(game: &mut H) {
     game.draygon_death_bubble();
-    slot!(game, Draygon[0].var_B, |old| old.wrapping_sub(1));
-    if slot!(game, Draygon[0].var_B) != 0 {
+    slot!(game, Draygon[BODY].function_timer, |old| old
+        .wrapping_sub(1));
+    if slot!(game, Draygon[BODY].function_timer) != 0 {
         game.draygon_motion(0);
     } else {
-        slot!(game, Draygon[0].var_A = 0x92ab);
+        slot!(
+            game,
+            Draygon[BODY].function = function::DEATH_BURIED_BY_EVIRS
+        );
     }
 }
-pub fn sink<H: Host + ?Sized>(game: &mut H) {
+/// Draygon body function - death sequence - buried by evirs ($A5:92AB): sink
+/// until buried, then delete Draygon, set its boss bit and drop its rewards.
+/// Was `sink`.
+pub fn buried_by_evirs<H: Host + ?Sized>(game: &mut H) {
     game.draygon_death_bubble();
     game.draygon_motion(0);
-    slot!(game, Draygon[0].base.y_pos, |old| old.wrapping_add(1));
-    if slot!(game, Draygon[0].base.y_pos).wrapping_sub(576) & 0x8000 == 0 {
-        slot!(game, Draygon[0].base; current_instruction = 0x98ed, instruction_timer = 1);
-        let properties = slot!(game, Draygon[0].base.properties) | 0x200;
-        slot!(game, Draygon[0].base.properties = properties);
-        slot!(game, Draygon[0x40].base.properties = properties);
+    slot!(game, Draygon[BODY].base.y_pos, |old| old.wrapping_add(1));
+    if slot!(game, Draygon[BODY].base.y_pos).wrapping_sub(BURIED_Y) & SIGN == 0 {
+        slot!(game, Draygon[BODY].base; current_instruction = list::DELETE, instruction_timer = 1);
+        let properties = slot!(game, Draygon[BODY].base.properties) | DELETE;
+        slot!(game, Draygon[BODY].base.properties = properties);
+        slot!(game, Draygon[EYE].base.properties = properties);
         let drop_index = word!(game.area_index);
         let area = word!(game.area_index);
         let bits = game.boss_word(area);
-        game.set_boss_word(area, bits | 1);
+        game.set_boss_word(area, bits | DRAYGON_DEAD);
         game.scatter_draygon_drop(drop_index);
         game.retire_all_sprites();
     }

@@ -1,128 +1,180 @@
-//! Draygon's mirrored sweep shares its path builder and every table consumer.
+//! Draygon's swoops: the swoop Y positions, setups, descents, apexes and
+//! ascents, mirrored for each side (bank $A5:87F4-$A5:8B09).
 //! The native table remains authoritative and may alias other compatibility state.
 #![forbid(unsafe_code)]
-use crate::actors::draygon_flight::{displace, turret};
-use crate::actors::draygon_host::{Host, abs16};
-use crate::actors::layouts::EnemyLayout104 as Draygon;
+use crate::actors::draygon_flight::{fire_wall_turret, move_horizontally};
+use crate::actors::draygon_host::{
+    ARMS, BODY, Draygon, Host, SIGN, abs16, function, instruction_list as list,
+};
 use crate::ram::RawRam as _;
 use crate::ram::{slot, word};
 
-fn write_height<H: Host + ?Sized>(cursor: u16, value: u16, game: &mut H) {
-    let at = 0x9002 + usize::from(cursor);
+/// $7E:9002: the swoop Y positions, one every 4 bytes, up to 800h bytes.
+const SWOOP_Y_POSITIONS: usize = 0x9002;
+const SWOOP_STEP: u16 = 4;
+const SWOOP_TABLE_BYTES: u16 = 0x800;
+/// Swoops start descending from Y 180h.
+const SWOOP_START_Y: u16 = 0x180;
+/// The arms reach out at swoop index 68h.
+const ARMS_OUT_INDEX: u16 = 0x68;
+/// The right swoop ends at X 2A0h.
+const RIGHT_END_X: i32 = 0x2a0;
+
+fn write_y_position<H: Host + ?Sized>(index: u16, value: u16, game: &mut H) {
+    let at = SWOOP_Y_POSITIONS + usize::from(index);
     let bytes = value.to_ne_bytes();
     game.ram().write_byte(at, bytes[0]);
     game.ram().write_byte(at + 1, bytes[1]);
 }
-fn build_path<H: Host + ?Sized>(game: &mut H) {
-    let (mut height, mut velocity, mut cursor) = (384u16, 0u16, 0u16);
+/// Calculate Draygon swoop Y positions ($A5:8817): fall with the swoop Y
+/// acceleration to the reset Y, then set the X speed that reaches Samus.
+fn calculate_swoop_y_positions<H: Host + ?Sized>(game: &mut H) {
+    let (mut height, mut velocity, mut index) = (SWOOP_START_Y, 0u16, 0u16);
     loop {
-        velocity = velocity.wrapping_add(slot!(game, Draygon[0].var_0F));
+        velocity = velocity.wrapping_add(slot!(game, Draygon[BODY].swoop_y_acceleration));
         let next = height.wrapping_sub(u16::from(velocity.to_ne_bytes()[1]));
-        if (next as i16).wrapping_sub(slot!(game, Draygon[0].var_01) as i16) < 0 {
+        if (next as i16).wrapping_sub(slot!(game, Draygon[BODY].reset_y) as i16) < 0 {
             break;
         }
         height = next;
-        write_height(cursor, next, game);
-        cursor = cursor.wrapping_add(4);
-        if cursor.wrapping_sub(2048) & 0x8000 == 0 {
+        write_y_position(index, next, game);
+        index = index.wrapping_add(SWOOP_STEP);
+        if index.wrapping_sub(SWOOP_TABLE_BYTES) & SIGN == 0 {
             game.unreachable();
         }
     }
-    let distance = abs16(slot!(game, Draygon[0].var_00).wrapping_sub(word!(game.samus_x_pos)));
+    let distance =
+        abs16(slot!(game, Draygon[BODY].left_reset_x).wrapping_sub(word!(game.samus_x_pos)));
     let speed = (u32::from(distance) << 16)
-        .checked_div(u32::from(cursor >> 2))
+        .checked_div(u32::from(index >> 2))
         .unwrap_or(0);
-    slot!(game, Draygon[0](var_D, var_E) = speed);
-    write_height(cursor, slot!(game, Draygon[0].base.y_pos), game);
-    slot!(game, Draygon[0]; var_B = cursor, var_C = cursor);
+    slot!(game, Draygon[BODY](x_speed, x_subspeed) = speed);
+    write_y_position(index, slot!(game, Draygon[BODY].base.y_pos), game);
+    slot!(game, Draygon[BODY]; function_timer = index, swoop_duration = index);
 }
-pub fn begin<H: Host + ?Sized>(right: bool, game: &mut H) {
+/// Draygon body function - swoop right ($A5:87F4) or left ($A5:89B3) - setup.
+/// Was `begin`.
+pub fn swoop_setup<H: Host + ?Sized>(right: bool, game: &mut H) {
     if right {
-        turret(game);
-        build_path(game);
+        fire_wall_turret(game);
+        calculate_swoop_y_positions(game);
     } else {
         // The bank retains the original diagnostic before this zero-divisor setup.
-        let distance = abs16(slot!(game, Draygon[0].var_02).wrapping_sub(word!(game.samus_x_pos)));
+        let distance =
+            abs16(slot!(game, Draygon[BODY].right_reset_x).wrapping_sub(word!(game.samus_x_pos)));
         let speed = (u32::from(distance) << 16).checked_div(0).unwrap_or(0);
-        slot!(game, Draygon[0](var_D, var_E) = speed);
+        slot!(game, Draygon[BODY](x_speed, x_subspeed) = speed);
     }
-    slot!(game, Draygon[0].var_A = if right { 0x88b1 } else { 0x8a00 });
-    slot!(game, Draygon[0].base; current_instruction = if right { 0x97d1 } else { 0x97bb }, instruction_timer = 1);
-    slot!(game, Draygon[0].var_20 = u16::from(right));
+    slot!(
+        game,
+        Draygon[BODY].function = if right {
+            function::SWOOP_RIGHT_DESCENDING
+        } else {
+            function::SWOOP_LEFT_DESCENDING
+        }
+    );
+    slot!(game, Draygon[BODY].base; current_instruction = if right { list::BODY_RIGHT_RESET } else { list::BODY_LEFT_RESET }, instruction_timer = 1);
+    slot!(game, Draygon[BODY].facing_right = u16::from(right));
     if !right {
-        slot!(game, Draygon[0].var_B = slot!(game, Draygon[0].var_C));
+        slot!(
+            game,
+            Draygon[BODY].function_timer = slot!(game, Draygon[BODY].swoop_duration)
+        );
     }
 }
-pub fn turn<H: Host + ?Sized>(right: bool, game: &mut H) {
-    turret(game);
-    let count = u32::from(slot!(game, Draygon[0].var_C) >> 2);
-    let x = slot!(game, Draygon[0].base.x_pos) as i32;
+/// Draygon body function - swoop right ($A5:8922) or left ($A5:8A50) - apex:
+/// set the X speed that reaches the far side in the swoop's duration. Was `turn`.
+pub fn swoop_apex<H: Host + ?Sized>(right: bool, game: &mut H) {
+    fire_wall_turret(game);
+    let count = u32::from(slot!(game, Draygon[BODY].swoop_duration) >> 2);
+    let x = slot!(game, Draygon[BODY].base.x_pos) as i32;
     let distance = if right {
-        672 - x
+        RIGHT_END_X - x
     } else {
-        x - slot!(game, Draygon[0].var_00) as i32
+        x - slot!(game, Draygon[BODY].left_reset_x) as i32
     };
     let speed = ((distance << 16) as u32).checked_div(count).unwrap_or(0);
     if right {
-        slot!(game, Draygon[0](var_D, var_E) = speed);
+        slot!(game, Draygon[BODY](x_speed, x_subspeed) = speed);
     } else {
-        // The left turn writes high then low; other speed setters write low first.
-        slot!(game, Draygon[0]; var_D = (speed >> 16) as u16, var_E = speed as u16);
+        // The left apex writes high then low; other speed setters write low first.
+        slot!(game, Draygon[BODY]; x_speed = (speed >> 16) as u16, x_subspeed = speed as u16);
     }
-    slot!(game, Draygon[0].var_A = if right { 0x8951 } else { 0x8a90 });
+    slot!(
+        game,
+        Draygon[BODY].function = if right {
+            function::SWOOP_RIGHT_ASCENDING
+        } else {
+            function::SWOOP_LEFT_ASCENDING
+        }
+    );
 }
-pub fn advance<H: Host + ?Sized>(right: bool, returning: bool, game: &mut H) {
-    turret(game);
-    if !right || !returning {
+/// Draygon body function - swoop right or left - descending ($A5:88B1,
+/// $A5:8A00) or, with `ascending`, ascending ($A5:8951, $A5:8A90): follow the
+/// swoop Y positions, then pick the next attack. Was `advance`.
+pub fn swoop<H: Host + ?Sized>(right: bool, ascending: bool, game: &mut H) {
+    fire_wall_turret(game);
+    if !right || !ascending {
         game.draygon_body_bubble();
     }
-    let cursor = slot!(game, Draygon[0].var_B);
-    if cursor == 104 {
-        let instruction = match (right, returning) {
-            (true, false) => 0x9c06,
-            (true, true) => 0x9bda,
-            (false, false) => 0x9813,
-            (false, true) => 0x97e7,
+    let index = slot!(game, Draygon[BODY].function_timer);
+    if index == ARMS_OUT_INDEX {
+        let instruction = match (right, ascending) {
+            (true, false) => list::ARMS_RIGHT_NEAR_SWOOP_APEX,
+            (true, true) => list::ARMS_RIGHT_IDLE,
+            (false, false) => list::ARMS_LEFT_NEAR_SWOOP_APEX,
+            (false, true) => list::ARMS_LEFT_IDLE,
         };
-        slot!(game, Draygon[0xc0].base; current_instruction = instruction, instruction_timer = 1);
+        slot!(game, Draygon[ARMS].base; current_instruction = instruction, instruction_timer = 1);
     }
-    let at = 0x9002 + usize::from(cursor);
+    let at = SWOOP_Y_POSITIONS + usize::from(index);
     let height = u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]);
     slot!(
         game,
         Draygon[word!(game.cur_enemy_index) as i32].base.y_pos = height
     );
-    // A broad selected slot can alias the body's cursor: reread after its Y store.
-    let cursor = slot!(game, Draygon[0].var_B);
-    let next = if returning {
-        cursor.wrapping_add(4)
+    // A broad selected slot can alias the body's index: reread after its Y store.
+    let index = slot!(game, Draygon[BODY].function_timer);
+    let next = if ascending {
+        index.wrapping_add(SWOOP_STEP)
     } else {
-        cursor.wrapping_sub(4)
+        index.wrapping_sub(SWOOP_STEP)
     };
-    slot!(game, Draygon[0].var_B = next);
-    if !returning {
+    slot!(game, Draygon[BODY].function_timer = next);
+    if !ascending {
         if next == 0 {
-            slot!(game, Draygon[0].var_A = if right { 0x8922 } else { 0x8a50 });
+            slot!(
+                game,
+                Draygon[BODY].function = if right {
+                    function::SWOOP_RIGHT_APEX
+                } else {
+                    function::SWOOP_LEFT_APEX
+                }
+            );
         } else {
-            displace(right, game);
+            move_horizontally(right, game);
         }
-    } else if next != slot!(game, Draygon[0].var_C) {
-        displace(right, game);
+    } else if next != slot!(game, Draygon[BODY].swoop_duration) {
+        move_horizontally(right, game);
     } else if right {
-        slot!(game, Draygon[0].var_B = 0);
+        slot!(game, Draygon[BODY].function_timer = 0);
         slot!(
             game,
-            Draygon[0].var_A = if word!(game.random_number) & 1 != 0 {
-                0x89b3
+            Draygon[BODY].function = if word!(game.random_number) & 1 != 0 {
+                function::SWOOP_LEFT_SETUP
             } else {
-                0x8c8e
+                function::GOOP_LEFT_SETUP
             }
         );
     } else if word!(game.random_number) & 1 != 0 {
-        slot!(game, Draygon[0]; var_A = 0x87f4, var_B = 0);
-        slot!(game, Draygon[0].base; x_pos = slot!(game, Draygon[0].var_00), y_pos = slot!(game, Draygon[0].var_01));
+        slot!(game, Draygon[BODY]; function = function::SWOOP_RIGHT_SETUP, function_timer = 0);
+        slot!(game, Draygon[BODY].base; x_pos = slot!(game, Draygon[BODY].left_reset_x),
+            y_pos = slot!(game, Draygon[BODY].reset_y));
     } else {
-        slot!(game, Draygon[0].var_A = 0x8b0a);
-        slot!(game, Draygon[0].base.x_pos = slot!(game, Draygon[0].var_00));
+        slot!(game, Draygon[BODY].function = function::GOOP_RIGHT_SETUP);
+        slot!(
+            game,
+            Draygon[BODY].base.x_pos = slot!(game, Draygon[BODY].left_reset_x)
+        );
     }
 }
