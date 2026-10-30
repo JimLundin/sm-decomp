@@ -25,6 +25,39 @@ macro_rules! enemy_layout {
     };
 }
 
+/// A role's typed view of an enemy slot: the bytes of `$layout`, with the words
+/// that role uses named and the others keeping their `var_` names. The size and
+/// every array's offset are checked against the layout at compile time.
+macro_rules! part_view {
+    ($(#[$doc:meta])* $name:ident: $layout:ident {
+        words: [$($head:ident),* $(,)?],
+        $(
+            $array:ident: [$element:ty; $length:expr],
+            words: [$($word:ident),* $(,)?],
+        )*
+    }) => {
+        $(#[$doc])*
+        #[derive(Clone, Copy)]
+        #[repr(C)]
+        #[allow(non_snake_case)]
+        pub struct $name {
+            pub base: $crate::actors::layouts::EnemyBase,
+            $(pub $head: ::core::primitive::u16,)*
+            $(
+                pub $array: [$element; $length],
+                $(pub $word: ::core::primitive::u16,)*
+            )*
+        }
+        const _: () = {
+            use ::core::mem::{offset_of, size_of};
+            use $crate::actors::layouts::$layout as Layout;
+            $(assert!(offset_of!($name, $array) == offset_of!(Layout, $array));)*
+            assert!(size_of::<$name>() == size_of::<Layout>());
+        };
+    };
+}
+pub(crate) use part_view;
+
 /// The common enemy slot fields at $7E:0F78 + slot; every layout starts with it.
 #[derive(Copy, Clone)]
 #[repr(C, packed)]

@@ -7,7 +7,7 @@
 //! over the same RAM bytes.
 #![forbid(unsafe_code)]
 use crate::actors::host::{Axis, Death, Shot};
-use crate::actors::layouts::{EnemyBase, EnemyLayout40};
+use crate::actors::layouts::part_view;
 use crate::constants::enemy_properties::{kEnemyProps_Deleted, kEnemyProps_Invisible};
 use crate::enemy_script::EnemyScript;
 use crate::ram::RawRam as _;
@@ -31,66 +31,62 @@ pub const SPAWN_DATA_BYTES: usize = 64;
 /// Bytes between consecutive enemy slots: head, arm, hand.
 const SLOT: i32 = 64;
 
-// A part's view of its enemy slot: the bytes of `EnemyLayout40`, with the words
-// that part uses named and the others keeping their original `var_` names.
-macro_rules! part_view {
-    ($(#[$doc:meta])* $name:ident [$($head:ident),+ $(,)?] [$($tail:ident),+ $(,)?]) => {
-        $(#[$doc])*
-        #[derive(Clone, Copy)]
-        #[repr(C)]
-        #[allow(non_snake_case)]
-        pub struct $name {
-            pub base: EnemyBase,
-            $(pub $head: u16,)+
-            pub pad: [u8; 26696],
-            $(pub $tail: u16,)+
-        }
-        const _: () = {
-            use core::mem::{offset_of, size_of};
-            assert!(offset_of!($name, pad) == offset_of!(EnemyLayout40, pad1));
-            assert!(size_of::<$name>() == size_of::<EnemyLayout40>());
-        };
-    };
-}
-
 part_view! {
     /// The words every part uses.
-    Part
-    [var_A, var_B, shown_animation, animation, var_E, state, kind, parameters]
-    [var_00, animation_active, var_02, home_y, cooldown, var_05, var_06,
-     shrink_subspeed, shrink_speed, grow_subspeed, grow_speed, var_0B, var_0C, var_0D, var_0E,
-     var_0F, var_10, var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19,
-     var_1A, var_1B, var_1C, var_1D, var_1E, var_1F]
+    Part: EnemyLayout40 {
+        words: [var_A, var_B, shown_animation, animation, var_E, state, kind, parameters],
+        pad1: [u8; 26696],
+        words: [
+            var_00, animation_active, var_02, home_y, cooldown, var_05, var_06, shrink_subspeed,
+            shrink_speed, grow_subspeed, grow_speed, var_0B, var_0C, var_0D, var_0E, var_0F, var_10,
+            var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19, var_1A, var_1B,
+            var_1C, var_1D, var_1E, var_1F,
+        ],
+    }
 }
 
 part_view! {
     /// The head, which surfaces, idles facing Samus and submerges.
-    Head
-    [var_A, var_B, shown_animation, animation, var_E, state, kind, parameters]
-    [facing_right, animation_active, waiting_for_arm, home_y, cooldown, var_05, var_06,
-     shrink_subspeed, shrink_speed, grow_subspeed, grow_speed, var_0B, var_0C, var_0D, var_0E,
-     var_0F, var_10, var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19,
-     var_1A, var_1B, var_1C, var_1D, var_1E, var_1F]
+    Head: EnemyLayout40 {
+        words: [var_A, var_B, shown_animation, animation, var_E, state, kind, parameters],
+        pad1: [u8; 26696],
+        words: [
+            facing_right, animation_active, waiting_for_arm, home_y, cooldown, var_05, var_06,
+            shrink_subspeed, shrink_speed, grow_subspeed, grow_speed, var_0B, var_0C, var_0D,
+            var_0E, var_0F, var_10, var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18,
+            var_19, var_1A, var_1B, var_1C, var_1D, var_1E, var_1F,
+        ],
+    }
 }
 
 part_view! {
     /// The arm, which grows one segment at a time up to Samus's height.
-    Arm
-    [var_A, growth_level, shown_animation, animation, extension, state, kind, parameters]
-    [var_00, animation_active, var_02, home_y, cooldown, var_05, var_06,
-     shrink_subspeed, shrink_speed, grow_subspeed, grow_speed, var_0B, fully_grown,
-     hold_retracted, var_0E, var_0F, var_10, var_11, var_12, var_13, var_14, var_15, var_16,
-     var_17, var_18, var_19, var_1A, var_1B, var_1C, var_1D, var_1E, var_1F]
+    Arm: EnemyLayout40 {
+        words: [
+            var_A, growth_level, shown_animation, animation, extension, state, kind, parameters,
+        ],
+        pad1: [u8; 26696],
+        words: [
+            var_00, animation_active, var_02, home_y, cooldown, var_05, var_06, shrink_subspeed,
+            shrink_speed, grow_subspeed, grow_speed, var_0B, fully_grown, hold_retracted, var_0E,
+            var_0F, var_10, var_11, var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19,
+            var_1A, var_1B, var_1C, var_1D, var_1E, var_1F,
+        ],
+    }
 }
 
 part_view! {
     /// The hand, which rides the arm's tip and throws lava.
-    Hand
-    [var_A, throw_right, shown_animation, animation, var_E, state, kind, parameters]
-    [var_00, animation_active, var_02, home_y, cooldown, var_05, var_06,
-     shrink_subspeed, shrink_speed, grow_subspeed, grow_speed, var_0B, var_0C, var_0D, var_0E,
-     var_0F, var_10, home_x, throw_x, throw_y, var_14, var_15, var_16, var_17, var_18, var_19,
-     var_1A, var_1B, var_1C, var_1D, var_1E, var_1F]
+    Hand: EnemyLayout40 {
+        words: [var_A, throw_right, shown_animation, animation, var_E, state, kind, parameters],
+        pad1: [u8; 26696],
+        words: [
+            var_00, animation_active, var_02, home_y, cooldown, var_05, var_06, shrink_subspeed,
+            shrink_speed, grow_subspeed, grow_speed, var_0B, var_0C, var_0D, var_0E, var_0F, var_10,
+            home_x, throw_x, throw_y, var_14, var_15, var_16, var_17, var_18, var_19, var_1A,
+            var_1B, var_1C, var_1D, var_1E, var_1F,
+        ],
+    }
 }
 
 /// Bank $A8 instruction lists.
