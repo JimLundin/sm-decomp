@@ -107,46 +107,7 @@ pub(crate) fn setup_transfer(mode: u16, source: u32, bytes: u16, game: &mut Game
     sm_game::display::transfer::setup_transfer(mode, source, bytes, game)
 }
 
-// Graphics loads keep source, destination, then transfer size together.
-// Decompression uses RAM offsets; VRAM uses word addresses. WRAM transfers
-// retain all three destination-register bytes, including ignored bank bits.
-pub(crate) enum GraphicsAsset {
-    Decompress(u32, usize),
-    VramWords(u32, u16, u16),
-    VramLowBytes(u32, u16, u16),
-    VramHighBytes(u32, u16, u16),
-    WramBytes(u32, u32, u16),
-}
-
-impl GraphicsAsset {
-    fn shared(self) -> refresh::GraphicsAsset {
-        match self {
-            Self::Decompress(source, destination) => {
-                refresh::GraphicsAsset::Decompress(source, destination)
-            }
-            Self::VramWords(source, destination, size) => {
-                refresh::GraphicsAsset::VramWords(source, destination, size)
-            }
-            Self::VramLowBytes(source, destination, size) => {
-                refresh::GraphicsAsset::VramLowBytes(source, destination, size)
-            }
-            Self::VramHighBytes(source, destination, size) => {
-                refresh::GraphicsAsset::VramHighBytes(source, destination, size)
-            }
-            Self::WramBytes(source, destination, size) => {
-                refresh::GraphicsAsset::WramBytes(source, destination, size)
-            }
-        }
-    }
-
-    pub(crate) fn load_planes(self, fill: u8, word_reset: bool, game: &mut Game) {
-        self.shared().load_planes(fill, word_reset, game);
-    }
-
-    pub(crate) fn load(self, game: &mut Game) {
-        self.shared().load(game);
-    }
-}
+pub(crate) use sm_game::display_refresh::GraphicsAsset;
 
 pub(crate) unsafe fn start_room_dma(
     mask: u8,

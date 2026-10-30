@@ -10,6 +10,7 @@ use crate::game_state::{
     },
 };
 use crate::{samus_content_binding_cases as content, samus_game_binding_cases as binding};
+use sm_game::scene::owned_samus::SamusSources as _;
 use std::sync::Arc;
 use {
     crate::game::scene::records as sc,

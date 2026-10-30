@@ -10,6 +10,7 @@ use sm_game::player_projectiles::{
     content,
     host::{Drawing, Host, PaletteEffect, PlayerStep},
 };
+use sm_game::scene::owned_samus::SamusSources as _;
 use sm_game::session_access::SessionAccess;
 use {
     crate::game::session_encoding as encoding,
@@ -406,9 +407,11 @@ impl<'g> Runtime<'g> {
             &mut state.player,
             &self.inputs,
             samus_publications.clone(),
-            producer,
-            index,
-            position,
+            sm_game::scene::owned_samus::Sprite {
+                producer,
+                index,
+                position,
+            },
         )
         .expect("owned Samus publication");
     }

@@ -3,6 +3,7 @@
 use crate::game::scene::samus_position_tiles;
 use crate::game::session_runtime::Runtime;
 use sm_game::samus_drawing;
+use sm_game::scene::owned_samus::SamusSources as _;
 use sm_game::scene::samus_body::{self, Body};
 use sm_game::scene::samus_content::{PreparedBytes, Registration, Role, RoleLease};
 use sm_game::scene::samus_native_content::CapturedRom;

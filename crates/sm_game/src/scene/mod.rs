@@ -18,6 +18,7 @@ pub mod irq;
 pub mod objects;
 pub mod owned_hdma;
 pub use sm_data::scene as records;
+pub mod owned_samus;
 pub mod resident_media;
 pub mod samus;
 pub mod samus_body;

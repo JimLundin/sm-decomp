@@ -9,6 +9,7 @@ use crate::game_state::{
     SamusExecution::{self, Prepared, RetainedNative},
 };
 use crate::{rom::RomImage, samus_content_binding_cases as fixture};
+use sm_game::scene::owned_samus::SamusSources as _;
 use std::sync::Arc;
 use {
     crate::game::scene::records as sc,

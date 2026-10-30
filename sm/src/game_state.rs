@@ -2281,31 +2281,6 @@ impl Game {
         }
         Ok(Some(binding.execution))
     }
-    pub(crate) fn prepared_samus_role(
-        &self,
-        role: content::Role,
-        registration: content::Registration,
-        displacement: usize,
-    ) -> Result<Option<content::RoleLease<content::PreparedBytes>>, DisplayError> {
-        let Some(execution) = self.samus_execution()? else {
-            return Ok(None);
-        };
-        if execution == SamusExecution::RetainedNative
-            && !(registration == content::Registration::Native
-                && matches!(
-                    role,
-                    content::Role::Landing | content::Role::Crouching | content::Role::Drained
-                ))
-        {
-            return Err(DisplayError::Phase);
-        }
-        self.samus_binding
-            .as_ref()
-            .unwrap()
-            .roles
-            .acquire_prepared(role, registration, displacement)
-            .map(Some)
-    }
     /// The caller performs this observation's original width/diagnostic preflight first.
     /// Displacement is linear from the sealed role base; no consumer supplies an identity.
     pub(crate) fn capture_samus_role(
@@ -2352,47 +2327,6 @@ impl Game {
             }
         }
         .map(Some)
-    }
-    pub(crate) fn samus_role_base(
-        &self,
-        role: content::Role,
-        registration: content::Registration,
-    ) -> Result<Option<usize>, DisplayError> {
-        if self.samus_execution()?.is_none() {
-            return Ok(None);
-        }
-        self.samus_binding
-            .as_ref()
-            .unwrap()
-            .roles
-            .description()
-            .roles
-            .get(&(role, registration))
-            .map(|declaration| Some(declaration.mapped_base))
-            .ok_or(DisplayError::Incomplete)
-    }
-    pub(crate) fn samus_request(
-        &self,
-        half: sm_game::scene::samus_body::Half,
-        pointer: u16,
-    ) -> Result<Option<TileRequest>, DisplayError> {
-        if self.samus_execution()?.is_none() {
-            return Ok(None);
-        }
-        self.samus_binding
-            .as_ref()
-            .unwrap()
-            .roles
-            .request(half, pointer)
-            .map(Some)
-    }
-    pub(crate) fn samus_spritemaps(&self) -> Result<Option<Arc<SamusCatalog>>, DisplayError> {
-        if self.samus_execution()?.is_none() {
-            return Ok(None);
-        }
-        Ok(Some(
-            self.samus_binding.as_ref().unwrap().spritemaps.clone(),
-        ))
     }
     pub(crate) fn samus_request_media(&self) -> Result<Option<Arc<SceneMedia>>, DisplayError> {
         if self.samus_execution()?.is_none() {
@@ -2458,6 +2392,75 @@ impl sm_game::effects::DisplayRefresh for Game {
     }
     fn set_blank(&mut self, blank: bool) {
         crate::game::display_refresh::set_blank(blank, self);
+    }
+}
+
+impl sm_game::scene::owned_samus::SamusSources for Game {
+    fn prepared_samus_role(
+        &self,
+        role: content::Role,
+        registration: content::Registration,
+        displacement: usize,
+    ) -> Result<Option<content::RoleLease<content::PreparedBytes>>, DisplayError> {
+        let Some(execution) = self.samus_execution()? else {
+            return Ok(None);
+        };
+        if execution == SamusExecution::RetainedNative
+            && !(registration == content::Registration::Native
+                && matches!(
+                    role,
+                    content::Role::Landing | content::Role::Crouching | content::Role::Drained
+                ))
+        {
+            return Err(DisplayError::Phase);
+        }
+        self.samus_binding
+            .as_ref()
+            .unwrap()
+            .roles
+            .acquire_prepared(role, registration, displacement)
+            .map(Some)
+    }
+    fn samus_role_base(
+        &self,
+        role: content::Role,
+        registration: content::Registration,
+    ) -> Result<Option<usize>, DisplayError> {
+        if self.samus_execution()?.is_none() {
+            return Ok(None);
+        }
+        self.samus_binding
+            .as_ref()
+            .unwrap()
+            .roles
+            .description()
+            .roles
+            .get(&(role, registration))
+            .map(|declaration| Some(declaration.mapped_base))
+            .ok_or(DisplayError::Incomplete)
+    }
+    fn samus_request(
+        &self,
+        half: sm_game::scene::samus_body::Half,
+        pointer: u16,
+    ) -> Result<Option<TileRequest>, DisplayError> {
+        if self.samus_execution()?.is_none() {
+            return Ok(None);
+        }
+        self.samus_binding
+            .as_ref()
+            .unwrap()
+            .roles
+            .request(half, pointer)
+            .map(Some)
+    }
+    fn samus_spritemaps(&self) -> Result<Option<Arc<SamusCatalog>>, DisplayError> {
+        if self.samus_execution()?.is_none() {
+            return Ok(None);
+        }
+        Ok(Some(
+            self.samus_binding.as_ref().unwrap().spritemaps.clone(),
+        ))
     }
 }
 

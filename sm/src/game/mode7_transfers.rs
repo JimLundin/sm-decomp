@@ -36,11 +36,6 @@ pub(crate) fn advance_ending_tile_upload(game: &mut Game) {
 }
 
 #[forbid(unsafe_code)]
-fn read_word(game: &Game, at: usize) -> u16 {
-    u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])
-}
-
-#[forbid(unsafe_code)]
 pub(super) fn enqueue_rom(bank: u8, cursor: u16, game: &mut Game) {
     let address = (u32::from(bank) << 16) | u32::from(cursor);
     if address & 0x8000 == 0 {
