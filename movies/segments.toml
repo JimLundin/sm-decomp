@@ -1150,3 +1150,42 @@ input_sha256 = "5b6ffc5db37ecd8f79aafbac3351af1ecda182a585df97634ee6a75b1980386c
 start_frame = 0
 frames = 15900
 expect = ["credits-complete"]
+
+# The Volcano Room (AE32) is on no movie's route; its lavaquake runs only there.
+# Low% seed85's latched word, then the volcano-room recipe.
+[[segment]]
+id = "volcano-room-lavaquake"
+pending = "awaiting the seeds-v1-offroute-4b5962a5bc7f6aaa ci-data upload"
+seed = "low-input-phase:85"
+seed_sha256 = "0f9feb22036939dfedd5048f1fc7d3d2d6ebd5ca8760e6e0719ad3739c48842d"
+inputs = "authored-volcano-room.inputs"
+input_sha256 = "32d9f08bdfd0b2bac2f6f56b45f27867d30287a2b0a0ae3f9938892971ffc550"
+start_frame = 0
+frames = 841
+expect = ["room:AE74", "room:AE32"]
+
+# The low% movie's first 1,902 Draygon words, then the release recipe: Samus
+# stays caught, so Draygon spirals up and tail-whips her until the reserve refills.
+[[segment]]
+id = "boss-draygon-tail-whip"
+pending = "awaiting the seeds-v1-offroute-4b5962a5bc7f6aaa ci-data upload"
+seed = "low-input-phase:129"
+seed_sha256 = "987fcffbe5a3c0e86996b029eaf95b6b2341edec5927dd979faaa4c8c83777cf"
+inputs = "authored-draygon-held.inputs"
+input_sha256 = "04a5cdab779fb74c0ca5d93603eb9365f3d5ed88ec9ced18ec60c717400d18d5"
+start_frame = 0
+frames = 3500
+expect = ["room:DA60", "state:27"]
+
+# The first 1,880 words, then the release recipe: Draygon misses Samus and
+# begins a later swoop.
+[[segment]]
+id = "boss-draygon-later-swoop"
+pending = "Draygon enemy_data+$38 ($7E0FB0) is 0000, not 024A, at input frame 2530 (swoop setup)"
+seed = "low-input-phase:129"
+seed_sha256 = "987fcffbe5a3c0e86996b029eaf95b6b2341edec5927dd979faaa4c8c83777cf"
+inputs = "authored-draygon-left-swoop.inputs"
+input_sha256 = "0d92ae6888f4a47a6ece72977903d19e0353ed9f7c2d327be1d305259d6e6a3c"
+start_frame = 0
+frames = 2650
+expect = ["room:DA60"]

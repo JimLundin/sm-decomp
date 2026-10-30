@@ -70,7 +70,16 @@ OPTIONS_TOUR = [
     *press("B", 200), *press("A", 200), *press("A", 300),
 ]
 
-RECIPES = {"pause-menu-tour": PAUSE_MENU_TOUR, "options-tour": OPTIONS_TOUR}
+# Low% seed 85 (Kronic Boost Room, entered at its top): run and jump right
+# through the door to the Volcano Room, then stand while its lavaquake runs.
+VOLCANO_ROOM = [*[("Right", 10), ("Right+A", 20)] * 8, ("", 600)]
+
+# Release the controller after the movie prefix (--prefix-frames). From the
+# low% Draygon fight, Samus then stays caught instead of grappling a turret.
+RELEASE = [("", 1600)]
+
+RECIPES = {"pause-menu-tour": PAUSE_MENU_TOUR, "options-tour": OPTIONS_TOUR,
+           "volcano-room": VOLCANO_ROOM, "release": RELEASE}
 
 
 def words(steps):
