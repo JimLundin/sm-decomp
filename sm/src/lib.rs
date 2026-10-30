@@ -352,7 +352,7 @@ pub mod game {
     }
     pub(crate) use callback_dispatch;
 
-    pub mod constants;
+    pub use sm_game::constants;
     pub(crate) mod ending_screens;
     pub(crate) mod enemy_speeds;
 
@@ -391,9 +391,9 @@ pub mod game {
     #[cfg(any(test, sm_verify_dll))]
     #[path = "../verification/player_collision_owned_checks.rs"]
     pub(crate) mod player_collision_owned_checks;
-    pub(crate) mod player_movement;
-    pub(crate) mod player_transitions;
-    pub(crate) mod player_update;
+    pub(crate) use sm_game::player_movement;
+    pub(crate) use sm_game::player_transitions;
+    pub(crate) use sm_game::player_update;
     pub(crate) mod rom_vram_entries;
 
     pub(crate) mod boot;
@@ -404,7 +404,7 @@ pub mod game {
     pub(crate) mod hosts;
     pub(crate) mod maridia_turtles;
     pub(crate) mod mini_crocomire;
-    pub mod progress_flags;
+    pub use sm_game::progress as progress_flags;
     pub(crate) mod rinka;
     pub(crate) mod room_backgrounds;
     pub mod room_entry;
@@ -416,7 +416,7 @@ pub mod game {
     pub(crate) mod scanline_irq;
     pub(crate) use sm_game::session;
     pub(crate) mod session_checkpoint;
-    pub(crate) mod session_encoding;
+    pub(crate) use sm_game::session_encoding;
     pub(crate) mod session_runtime;
     pub(crate) use sm_game::sprite_effect_host;
     pub(crate) mod sprite_effect_runtime;

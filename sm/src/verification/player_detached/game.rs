@@ -41,8 +41,7 @@ pub(crate) use sm_game::sprite_effect_controllers;
 
 pub(crate) use sm_game::gameplay_flag_host;
 
-#[path = "../../game/progress_flags.rs"]
-pub(crate) mod progress_flags;
+pub(crate) use sm_game::progress as progress_flags;
 
 #[allow(
     unused_imports,
@@ -55,21 +54,10 @@ pub(crate) mod player_collision_host;
 #[cfg(test)]
 #[path = "../player_collision_owned_checks.rs"]
 pub(crate) mod player_collision_owned_checks;
-#[allow(
-    unused_imports,
-    reason = "Detached transition subset omits runtime facade reexport consumers."
-)]
-#[path = "../../game/player_transitions/mod.rs"]
-pub(crate) mod player_transitions;
+pub(crate) use sm_game::player_transitions;
 #[path = "player_transitions_host.rs"]
 pub(crate) mod player_transitions_host;
 
-#[allow(
-    unused_imports,
-    reason = "Detached movement subset omits runtime facade reexport consumers."
-)]
-#[path = "../../game/player_movement/mod.rs"]
-pub(crate) mod player_movement;
 
 
 

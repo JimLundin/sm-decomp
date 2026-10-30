@@ -944,10 +944,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/player_transitions/mod.rs"),
     ),
     (
-        "sm/src/game/player_transitions/mod.rs",
-        include_bytes!("game/player_transitions/mod.rs"),
-    ),
-    (
         "sm/src/game/transition_representation_tests.rs",
         include_bytes!("game/transition_representation_tests.rs"),
     ),
@@ -1080,10 +1076,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/player_update/mod.rs"),
     ),
     (
-        "sm/src/game/player_update/mod.rs",
-        include_bytes!("game/player_update/mod.rs"),
-    ),
-    (
         "crates/sm_game/src/player_update/state.rs",
         include_bytes!("../../crates/sm_game/src/player_update/state.rs"),
     ),
@@ -1110,10 +1102,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/player_movement/mod.rs",
         include_bytes!("../../crates/sm_game/src/player_movement/mod.rs"),
-    ),
-    (
-        "sm/src/game/player_movement/mod.rs",
-        include_bytes!("game/player_movement/mod.rs"),
     ),
     (
         "crates/sm_game/src/player_movement/presentation.rs",
@@ -1202,10 +1190,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/actors/effects.rs",
         include_bytes!("../../crates/sm_game/src/actors/effects.rs"),
-    ),
-    (
-        "sm/src/game/actors/identity.rs",
-        include_bytes!("game/actors/identity.rs"),
     ),
     (
         "crates/sm_game/src/actors/media.rs",
@@ -1305,10 +1289,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/combat_rules.rs",
         include_bytes!("../../crates/sm_game/src/combat_rules.rs"),
-    ),
-    (
-        "sm/src/game/constants.rs",
-        include_bytes!("game/constants.rs"),
     ),
     (
         "crates/sm_game/src/constants.rs",
@@ -1741,10 +1721,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     ),
     ("sm/src/game/prelude.rs", include_bytes!("game/prelude.rs")),
     (
-        "sm/src/game/progress_flags.rs",
-        include_bytes!("game/progress_flags.rs"),
-    ),
-    (
         "crates/sm_game/src/projectile_block_reactions.rs",
         include_bytes!("../../crates/sm_game/src/projectile_block_reactions.rs"),
     ),
@@ -1960,10 +1936,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/session_access.rs",
         include_bytes!("../../crates/sm_game/src/session_access.rs"),
-    ),
-    (
-        "sm/src/game/session_encoding.rs",
-        include_bytes!("game/session_encoding.rs"),
     ),
     (
         "crates/sm_game/src/session_owners.rs",
