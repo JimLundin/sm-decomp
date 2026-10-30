@@ -234,7 +234,7 @@ fn shoulder_input<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         crate::menu!(game.pausemenu_button_label_mode = mode);
     }
     menu_tilemap::pause_labels(crate::menu!(game.pausemenu_button_label_mode), game);
-    game.queue_sound(0, (0x38) as u8, 6);
+    game.queue_sound(0, 0x38_u8, 6);
 }
 
 fn tick_highlight<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> bool {

@@ -460,7 +460,7 @@ fn begin_room_window<H: Host + ?Sized>(game: &mut H) {
         super::menu_window::project(game);
         crate::display::sequence::write_register_and_mirror(game, HDMAEN as u16, 0xc, 0x85, true);
         crate::menu!(game.menu_index += 1);
-        game.queue_sound(0, (0x3b) as u8, 6);
+        game.queue_sound(0, 0x3b_u8, 6);
     }
 }
 fn open_room_window<H: Host + ?Sized>(game: &mut H) {
@@ -624,7 +624,7 @@ fn choose_room<H: Host + ?Sized>(game: &mut H) {
             != 0
         {
             crate::menu!(game.menu_index += 1);
-            game.queue_sound(0, (0x38) as u8, 6);
+            game.queue_sound(0, 0x38_u8, 6);
         }
     }
 }

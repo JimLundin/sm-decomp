@@ -99,7 +99,7 @@ pub fn transfer_manual<H: Host + ?Sized>(game: &mut H) {
         );
     }
     if crate::menu!(game.pausemenu_reserve_tank_delay_ctr -= 1, reread) & 7 == 7 {
-        game.queue_sound(2, (0x2d) as u8, 6);
+        game.queue_sound(2, 0x2d_u8, 6);
     }
     if transfer_one(true, game) {
         return;

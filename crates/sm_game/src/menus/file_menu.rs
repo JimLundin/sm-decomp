@@ -219,7 +219,7 @@ fn choose_source<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
     } else if (word!(game.joypad1_newkeys) & 0x8000) != 0 {
         if COPY {
             crate::menu!(game.menu_index += 7);
-            game.queue_sound(0, (0x37) as u8, 6);
+            game.queue_sound(0, 0x37_u8, 6);
             return;
         }
     } else {
@@ -238,7 +238,7 @@ fn choose_source<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
         crate::sprite_output::file_slot_cursor(211, game);
         return;
     }
-    game.queue_sound(0, (0x37) as u8, 6);
+    game.queue_sound(0, 0x37_u8, 6);
     crate::menu!(game.menu_index += 5);
 }
 fn begin_destination<H: Host + ?Sized>(game: &mut H) {
@@ -478,7 +478,7 @@ fn copy_slot<H: Host + ?Sized>(game: &mut H) {
 fn complete_operation<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
     border(if COPY { 0x49 } else { 0x4a }, game);
     if word!(game.joypad1_newkeys) != 0 {
-        game.queue_sound(0, (0x37) as u8, 6);
+        game.queue_sound(0, 0x37_u8, 6);
         crate::menu!(game.menu_index += 1);
         if COPY {
             word!(game.selected_save_slot = save_slots::last_selected(game));
@@ -603,9 +603,9 @@ fn choose_main<H: Host + ?Sized>(game: &mut H) {
                     false
                 } else if (word!(game.joypad1_newkeys) as i32 & kButton_Down as i32) == 0 {
                     if (word!(game.joypad1_newkeys) as i32 & kButton_B as i32) != 0 {
-                        game.queue_sound(0, (0x37) as u8, 6);
+                        game.queue_sound(0, 0x37_u8, 6);
                         crate::menu!(game.menu_index = 33);
-                        game.queue_sound(0, (0x37) as u8, 6);
+                        game.queue_sound(0, 0x37_u8, 6);
                     }
                     true
                 } else {
@@ -632,7 +632,7 @@ fn choose_main<H: Host + ?Sized>(game: &mut H) {
         } else {
             let mut selection: i16 = word!(game.selected_save_slot) as i16;
             if word!(game.selected_save_slot) as i32 - 3i32 & 0x8000 != 0 {
-                game.queue_sound(0, (0x2a) as u8, 6);
+                game.queue_sound(0, 0x2a_u8, 6);
                 crate::menu!(game.menu_index += 27);
                 // Start the selected slot's helmet animation.
                 set_native_word(
@@ -656,12 +656,12 @@ fn choose_main<H: Host + ?Sized>(game: &mut H) {
                 }
             } else {
                 if word!(game.selected_save_slot) == 3 {
-                    game.queue_sound(0, (0x37) as u8, 6);
+                    game.queue_sound(0, 0x37_u8, 6);
                     crate::menu!(game.menu_index += 1);
                     set_native_word(MOSAIC, native_word(MOSAIC, game) & 0xff0c | 3, game);
                 } else {
                     if word!(game.selected_save_slot) == 4 {
-                        game.queue_sound(0, (0x37) as u8, 6);
+                        game.queue_sound(0, 0x37_u8, 6);
                         crate::menu!(game.menu_index += 15);
                         selection = (i32::from(native_word(MOSAIC, game)) & 0xff0c | 3) as i16;
                         set_native_word(MOSAIC, selection as u16, game);
