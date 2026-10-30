@@ -1233,7 +1233,7 @@ crate::game::callback_dispatch! {
             actor_pipe_bug_state(address, crate::ram_map::word!(game.cur_enemy_index), game);
         }];
         11769219 => actors::botwoon::initialize;
-        11769448 => [actors::botwoon::update(&mut Runtime::new(game))];
+        11769448 => [actors::botwoon::main_ai(&mut Runtime::new(game))];
         11771903 => [actors::botwoon::contact(false, &mut Runtime::new(game))];
         11771969 => [actors::botwoon::contact(true, &mut Runtime::new(game))];
         11771926 => [actors::botwoon::shot(&mut Runtime::new(game))];
@@ -1409,14 +1409,14 @@ pub(crate) fn actor_b3_pre_instruction(ea: u32, k: u16, game: &mut Game) {
         11789916 => actors::escape_critters::run_for_escape(k, game),
         11789936 => actors::escape_critters::wait_to_express_gratitude(k, game),
         11789952 => actors::escape_critters::run_around_aimlessly(k, game),
-        11771328 => actors::botwoon::animate_motion(game),
+        11771328 => actors::botwoon::head_moving_around(game),
         11771517 => {
-            let address = actors::botwoon::aim_spit(game);
+            let address = actors::botwoon::head_set_spit_angle(game);
             actor_b3_pre_instruction(address, crate::ram_map::word!(game.cur_enemy_index), game);
         }
-        11771616 => actors::botwoon::spit(true, game),
-        11771700 => actors::botwoon::spit(false, game),
-        11771770 => actors::botwoon::wait_spit(k, game),
+        11771616 => actors::botwoon::head_spit(true, game),
+        11771700 => actors::botwoon::head_spit(false, game),
+        11771770 => actors::botwoon::head_cooldown(k, game),
         _ => {
             crate::rtl::Unreachable(game);
         }
@@ -1675,7 +1675,7 @@ crate::game::callback_dispatch! {
 impl Runtime<'_> {
     pub(crate) fn actor_ai_legacy(&mut self, routine: u32) {
         match routine {
-            11769448 => self.owned_call(actors::botwoon::update),
+            11769448 => self.owned_call(actors::botwoon::main_ai),
             11771926 => self.owned_call(actors::botwoon::shot),
             11771903 | 11771969 => {
                 self.owned_call(|runtime| actors::botwoon::contact(routine == 11771969, runtime))

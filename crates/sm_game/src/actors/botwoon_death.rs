@@ -1,7 +1,12 @@
-//! Botwoon's hit, tail and body landing handshake words held by the Session.
+//! Botwoon's death check ($B3:96C6): the hit, tail and body landing handshake
+//! words held by the Session.
 //! Unknown words are retained; a nonzero signal has the original meaning.
 use super::access::{AccessMode::Native, ActorAccess};
+use crate::actors::botwoon::function;
 use crate::enemy_projectiles::host::{BotwoonField as B, Host as EprojHost};
+
+/// The pre-death counter starts at F0h and the delay ends at 100h.
+const PRE_DEATH_START: u16 = 0xf0;
 
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct DeathProtocol {
@@ -40,8 +45,10 @@ pub fn arm(h: &mut impl Host) {
     let enemy = actor.byte_index();
     if pending(h, enemy) && h.native_death_signal(enemy, Signal::TailReady) != 0 {
         h.set_native_death_signal(enemy, Signal::Active, 1);
-        h.edit_actor(actor, Native, |actor| actor.variables[3] = 0x9a46);
-        h.set_collapse_delay(enemy, 240);
+        h.edit_actor(actor, Native, |actor| {
+            actor.variables[3] = function::DEATH_PRE_DEATH_DELAY
+        });
+        h.set_collapse_delay(enemy, PRE_DEATH_START);
         h.set_native_death_signal(enemy, Signal::PendingHit, 0);
         h.set_native_death_signal(enemy, Signal::TailReady, 0);
     }
@@ -50,7 +57,7 @@ pub fn arm(h: &mut impl Host) {
 pub fn confirm_tail(h: &mut impl EprojHost, enemy: usize) {
     h.set_botwoon_field(enemy, B::TransitionPending, 0);
     h.set_botwoon_field(enemy, B::TailState, 0);
-    h.set_botwoon_field(enemy, B::TransitionCursor, 0xffff);
+    h.set_botwoon_field(enemy, B::TransitionCursor, u16::MAX);
     if h.botwoon_field(enemy, B::Pattern) == 0 {
         h.set_botwoon_field(enemy, B::TailState, 1);
     }
