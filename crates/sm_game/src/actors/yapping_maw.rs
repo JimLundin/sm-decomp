@@ -111,7 +111,6 @@ const DEMO_INPUT: u16 = 0xe91d;
 /// Samus command 3: locked in place.
 const LOCK_SAMUS: u16 = 3;
 /// $7E:1997: the enemy projectile IDs.
-const PROJECTILE_IDS: usize = 0x1997;
 /// The yapping maw's bite, sound 2Fh, library 2.
 const BITE_SOUND: u8 = 0x2f;
 const QUARTER_TURN: u8 = 0x40;
@@ -119,7 +118,10 @@ const SIGN: u16 = 0x8000;
 
 /// What Yapping Maw needs beyond the shared actor operations.
 pub trait Host:
-    crate::actors::host::ActorHost + crate::actors::host::ActorRuntime + crate::effects::SoundEffects
+    crate::actors::host::ActorHost
+    + crate::actors::host::ActorRuntime
+    + crate::effects::SoundEffects
+    + crate::runtime_access::RuntimeAccess
 {
     /// Create a sprite object of `kind` at (`x`, `y`); its handle.
     fn create_sprite(&mut self, x: u16, y: u16, kind: u16, appearance: u16) -> u16;
@@ -480,9 +482,8 @@ pub fn shot<H: Host + ?Sized>(game: &mut H) {
         }
     } else {
         for part in 0..4 {
-            let at =
-                PROJECTILE_IDS + usize::from(slot!(game, Maw[maw + 2 * part].segment_projectile));
-            game.ram().copy_in(at, &0u16.to_ne_bytes());
+            let projectile = slot!(game, Maw[maw + 2 * part].segment_projectile);
+            crate::enemy_projectiles::table::free(projectile, game);
         }
         let handle = slot!(game, Maw[maw].sprite_object);
         game.retire_sprite(handle);
