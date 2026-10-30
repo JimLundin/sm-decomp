@@ -175,7 +175,7 @@ pub fn verify_boot<H: Host + ?Sized>(game: &mut H) {
         if (0..3).all(|slot| load(slot, game) != 0) {
             game.sram().write_bytes(0x1fe0, b"madadameyohn");
             game.flush_sram();
-        } else if game.sram().bytes(0x1fe0..0x1fec) == b"supermetroid" {
+        } else if game.sram().bytes(crate::save_file::header::SIGNATURE) == b"supermetroid" {
             game_word!(game.num_demo_sets = 4);
         }
     }

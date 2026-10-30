@@ -11,6 +11,7 @@ use crate::constants::bank_81::{
     addr_kMenuTilemap_Exit, addr_kMenuTilemap_IsThisOk, addr_kMenuTilemap_No,
     addr_kMenuTilemap_Yes,
 };
+use crate::save_file::header;
 
 static kBitShl: [u8; 3] = [1, 2, 4];
 
@@ -235,14 +236,14 @@ fn begin_destination<H: Host + ?Sized>(game: &mut H) {
     border(0x49, game);
     draw_destination(game);
     word!(game.menu_index += 1);
-    let mut v0: u16 = 0;
-    while v0 == word!(game.file_copy_source_slot) {
-        v0 = v0.wrapping_add(1);
-        if v0 as i32 - 3i32 & 0x8000 == 0 {
+    let mut selection: u16 = 0;
+    while selection == word!(game.file_copy_source_slot) {
+        selection = selection.wrapping_add(1);
+        if selection as i32 - 3i32 & 0x8000 == 0 {
             break;
         }
     }
-    word!(game.file_copy_selection = v0);
+    word!(game.file_copy_selection = selection);
     crate::sprite_output::file_slot_cursor(211, game);
 }
 fn draw_destination<H: Host + ?Sized>(game: &mut H) {
@@ -421,18 +422,30 @@ fn copy_slot<H: Host + ?Sized>(game: &mut H) {
             src_addr as usize..src_addr as usize + 1628,
             dst_addr as usize,
         );
-        let v2: i32 = word!(game.file_copy_source_slot) as i32;
-        let v10: i32 = game.sram().word((2 * v2 + 0x1ff0) as usize) as i32;
-        let v9: i32 = game.sram().word((2 * v2 + 0x1ff8) as usize) as i32;
-        let v8: i32 = game.sram().word((2 * v2) as usize) as i32;
-        let v4: i32 = word!(game.file_copy_destination_slot) as i32;
+        // Copy the source's header words; the reads precede every header write.
+        let source = usize::from(word!(game.file_copy_source_slot));
+        let mirrored_checksum = game
+            .sram()
+            .word(header::slot(header::MIRRORED_CHECKSUMS, source));
+        let mirrored_complement = game
+            .sram()
+            .word(header::slot(header::MIRRORED_COMPLEMENTS, source));
+        let checksum = game.sram().word(header::slot(header::CHECKSUMS, source));
+        let destination = usize::from(word!(game.file_copy_destination_slot));
         game.sram().set_word(
-            (2 * v4 + 8) as usize,
-            game.sram().word((2 * v2 + 8) as usize),
+            header::slot(header::COMPLEMENTS, destination),
+            game.sram().word(header::slot(header::COMPLEMENTS, source)),
         );
-        game.sram().set_word((2 * v4) as usize, v8 as u16);
-        game.sram().set_word((2 * v4 + 0x1ff8) as usize, v9 as u16);
-        game.sram().set_word((2 * v4 + 0x1ff0) as usize, v10 as u16);
+        game.sram()
+            .set_word(header::slot(header::CHECKSUMS, destination), checksum);
+        game.sram().set_word(
+            header::slot(header::MIRRORED_COMPLEMENTS, destination),
+            mirrored_complement,
+        );
+        game.sram().set_word(
+            header::slot(header::MIRRORED_CHECKSUMS, destination),
+            mirrored_checksum,
+        );
         word!(game.menu_index += 1);
         crate::word_transfers!(game, ascending, 288; native(0x3b00) <- value(15));
         word!(
@@ -492,11 +505,15 @@ fn clear_slot<H: Host + ?Sized>(game: &mut H) {
         game.sram()
             .fill(sram_addr as usize..sram_addr as usize + 1628, 0);
         let _v1: u16 = (2u16).wrapping_mul(word!(game.file_copy_source_slot));
-        let v2: i32 = word!(game.file_copy_source_slot) as i32;
-        game.sram().set_word((2 * v2) as usize, 0);
-        game.sram().set_word((2 * v2 + 8) as usize, 0);
-        game.sram().set_word((2 * v2 + 0x1ff0) as usize, 0);
-        game.sram().set_word((2 * v2 + 0x1ff8) as usize, 0);
+        let slot = usize::from(word!(game.file_copy_source_slot));
+        for table in [
+            header::CHECKSUMS,
+            header::COMPLEMENTS,
+            header::MIRRORED_CHECKSUMS,
+            header::MIRRORED_COMPLEMENTS,
+        ] {
+            game.sram().set_word(header::slot(table, slot), 0);
+        }
         word!(game.menu_index += 1);
         save_slots::initialize(game);
         save_slots::load(word!(game.file_copy_source_slot), game);
@@ -606,15 +623,19 @@ fn choose_main<H: Host + ?Sized>(game: &mut H) {
             if word!(game.selected_save_slot) as i32 - 3i32 & 0x8000 != 0 {
                 game.queue_sound(0, (0x2a) as u8, 6);
                 word!(game.menu_index += 27);
+                // Start the selected slot's helmet animation.
                 set_native_word(
-                    0x198d
-                        + usize::from((2 * (i32::from(word!(game.selected_save_slot)) + 2)) as u16),
+                    crate::ram::words::slot_a_helmet_animation_timer
+                        + 2 * usize::from(word!(game.selected_save_slot)),
                     1,
                     game,
                 );
-                game.sram().set_word(0x1fec, word!(game.selected_save_slot));
                 game.sram()
-                    .set_word(0x1fee, !(word!(game.selected_save_slot) as i32) as u16);
+                    .set_word(header::LAST_SLOT, word!(game.selected_save_slot));
+                game.sram().set_word(
+                    header::LAST_SLOT_COMPLEMENT,
+                    !(word!(game.selected_save_slot) as i32) as u16,
+                );
                 game.flush_sram();
                 if save_slots::load(word!(game.selected_save_slot), game) != 0 {
                     save_slots::initialize(game);

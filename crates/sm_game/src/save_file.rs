@@ -5,6 +5,24 @@
 /// The work RAM a save file holds: $7E:D7C0 up to $7E:DE1C.
 pub const PLAYER_BLOCK: core::ops::Range<usize> = 0xd7c0..0xde1c;
 
+/// The SRAM header (SRAM map): per-slot checksums and their complements,
+/// mirrored near the end of SRAM, and the last selected slot.
+pub mod header {
+    pub const CHECKSUMS: usize = 0;
+    pub const COMPLEMENTS: usize = 8;
+    pub const MIRRORED_CHECKSUMS: usize = 0x1ff0;
+    pub const MIRRORED_COMPLEMENTS: usize = 0x1ff8;
+    /// The signature "supermetroid" that marks formatted SRAM.
+    pub const SIGNATURE: core::ops::Range<usize> = 0x1fe0..0x1fec;
+    pub const LAST_SLOT: usize = 0x1fec;
+    pub const LAST_SLOT_COMPLEMENT: usize = 0x1fee;
+
+    /// The byte offset of `slot`'s word in a per-slot header table.
+    pub const fn slot(table: usize, slot: usize) -> usize {
+        table + 2 * slot
+    }
+}
+
 /// Work RAM and SRAM as the save format reads and writes them.
 pub trait SaveHost {
     /// A native-order word of work RAM.
@@ -55,19 +73,20 @@ pub fn load(host: &mut (impl SaveHost + ?Sized), slot: u16) -> u16 {
 
 /// Store `checksum` and its inverse in both header copies, in the original order.
 pub fn write_checksum(host: &mut (impl SaveHost + ?Sized), slot: u16, checksum: u16) {
-    let header = 2 * usize::from(slot & 3);
-    host.set_sram_word(header, checksum);
-    host.set_sram_word(header + 0x1ff0, checksum);
-    host.set_sram_word(header + 8, !checksum);
-    host.set_sram_word(header + 0x1ff8, !checksum);
+    let slot = usize::from(slot & 3);
+    host.set_sram_word(header::slot(header::CHECKSUMS, slot), checksum);
+    host.set_sram_word(header::slot(header::MIRRORED_CHECKSUMS, slot), checksum);
+    host.set_sram_word(header::slot(header::COMPLEMENTS, slot), !checksum);
+    host.set_sram_word(header::slot(header::MIRRORED_COMPLEMENTS, slot), !checksum);
 }
 
 /// Whether either header copy holds `checksum` and its inverse.
 pub fn checksum_matches(host: &(impl SaveHost + ?Sized), slot: u16, checksum: u16) -> bool {
-    let header = 2 * usize::from(slot & 3);
-    checksum == host.sram_word(header) && !checksum == host.sram_word(header + 8)
-        || checksum == host.sram_word(header + 0x1ff0)
-            && !checksum == host.sram_word(header + 0x1ff8)
+    let slot = usize::from(slot & 3);
+    let word = |table| host.sram_word(header::slot(table, slot));
+    checksum == word(header::CHECKSUMS) && !checksum == word(header::COMPLEMENTS)
+        || checksum == word(header::MIRRORED_CHECKSUMS)
+            && !checksum == word(header::MIRRORED_COMPLEMENTS)
 }
 
 /// Zero file `slot`'s words.
@@ -81,8 +100,8 @@ pub fn clear(host: &mut (impl SaveHost + ?Sized), slot: u16) {
 
 /// The stored menu selection, when its range and inverse-bit check agree.
 pub fn last_selected(host: &(impl SaveHost + ?Sized)) -> u16 {
-    let slot = host.sram_word(0x1fec);
-    if slot < 3 && slot & host.sram_word(0x1fee) == 0 {
+    let slot = host.sram_word(header::LAST_SLOT);
+    if slot < 3 && slot & host.sram_word(header::LAST_SLOT_COMPLEMENT) == 0 {
         slot
     } else {
         0
