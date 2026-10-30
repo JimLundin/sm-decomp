@@ -5,7 +5,7 @@
 //! mouth. The mouth's slot holds the wavy fade's amplitude.
 #![forbid(unsafe_code)]
 use crate::actors::boss_lease::BossState;
-use crate::actors::layouts::{EnemyLayout8 as Part, part_view};
+use crate::actors::layouts::{EnemyBase, EnemyLayout8 as Part, same_words};
 use crate::actors::session_slots::session_slot;
 use crate::cartridge::native_record;
 use crate::cartridge::rom_table_word;
@@ -18,15 +18,23 @@ impl<T: crate::actors::host::ActorHost + crate::effects::SoundEffects + ?Sized> 
 /// The Phantoon destroyable flames enemy projectile ($86:9C29).
 pub const DESTROYABLE_FLAMES: u16 = 0x9c29;
 
-part_view! {
-    /// The mouth's view of its slot.
-    Mouth: EnemyLayout8 {
-        words: [
-            casual_flame_pattern, casual_flame_timer, casual_flame_pattern_index, wave_amplitude,
-            wave_shrinking, var_F, parameter_1, parameter_2,
-        ],
-    }
+/// The mouth's view of its slot.
+#[derive(Clone, Copy)]
+#[repr(C)]
+pub struct Mouth {
+    pub base: EnemyBase,
+    pub casual_flame_pattern: u16,
+    pub casual_flame_timer: u16,
+    pub casual_flame_pattern_index: u16,
+    pub wave_amplitude: u16,
+    pub wave_shrinking: u16,
+    pad_0fb2: [u16; 3],
 }
+
+same_words!(Mouth: EnemyLayout8 {
+    casual_flame_pattern = var_A, casual_flame_timer = var_B, casual_flame_pattern_index = var_C,
+    wave_amplitude = var_D, wave_shrinking = var_E,
+});
 
 const BANK: u8 = 0xa7;
 /// The mouth's slot.

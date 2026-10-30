@@ -147,6 +147,12 @@ pub fn abs16(value: u16) -> u16 {
     (value as i16).unsigned_abs()
 }
 
+/// Whether `value` is below `limit` as the original compares them: bit 15 of
+/// the 16-bit difference, which a CMP or SBC leaves for a BMI.
+pub fn below(value: u16, limit: u16) -> bool {
+    (value.wrapping_sub(limit) as i16) < 0
+}
+
 /// A session lease over the actors: what a compat `Runtime` gives code that
 /// edits actors directly, plus the session-aware RAM word read and `foreign`
 /// onto the leased game.

@@ -2,46 +2,44 @@
 //! functions, by index (bank $A4:86A6-$A4:8A10).
 #![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode, ActorKey as Key};
-use crate::actors::layouts::part_view;
+use crate::actors::layouts::{EnemyBase, same_words};
 use crate::constants::bank_86::addr_stru_868F8F;
 use crate::enemy_projectiles::host::Host;
 use crate::enemy_script::{EnemyScript, bank_base};
 use core::ffi::c_long;
 
-part_view! {
-    /// Crocomire's view of its slot.
-    Crocomire: EnemyLayout72 {
-        words: [
-            // The death sequence index, also the melting tiles' table subindex.
-            death_sequence_index,
-            fight_flags,
-            fight_function,
-            // The step and hop counter; in the death sequence its high byte is
-            // the Y acceleration.
-            step_counter,
-            // The death sequence's Y velocity.
-            y_velocity,
-            // The projectile counter; in the death sequence its high byte is
-            // the Y subposition.
-            projectile_counter,
-            parameter_1, parameter_2,
-        ],
-        pad1: [u8; 26696],
-        words: [
-            unread_7800, unread_7802, var_02, var_03, var_04, var_05, var_06, var_07, var_08,
-            var_09, var_0A, var_0B, var_0C, var_0D, var_0E, var_0F, var_10, var_11, var_12, var_13, var_14,
-            var_15, var_16, var_17, var_18, var_19, var_1A, var_1B, var_1C, var_1D, var_1E,
-            melting_hdma_object,
-        ],
-        pad2: [u8; 1984],
-        words: [
-            acid_damage_sound_timer, var_21, var_22, var_23, var_24, var_25, var_26, var_27,
-            var_28, var_29, var_2A, var_2B, var_2C, var_2D, var_2E, var_2F, var_30, var_31, var_32,
-            var_33, var_34, var_35, var_36, var_37, var_38, var_39, var_3A, var_3B, var_3C, var_3D,
-            var_3E, var_3F,
-        ],
-    }
+/// Crocomire's view of its slot.
+#[derive(Clone, Copy)]
+#[repr(C)]
+pub struct Crocomire {
+    pub base: EnemyBase,
+    /// The death sequence index, also the melting tiles' table subindex.
+    pub death_sequence_index: u16,
+    pub fight_flags: u16,
+    pub fight_function: u16,
+    /// The step and hop counter; in the death sequence its high byte is
+    /// the Y acceleration.
+    pub step_counter: u16,
+    /// The death sequence's Y velocity.
+    pub y_velocity: u16,
+    /// The projectile counter; in the death sequence its high byte is
+    /// the Y subposition.
+    pub projectile_counter: u16,
+    pad_0fb4: [u8; 26700],
+    pub unread_7800: u16,
+    pub unread_7802: u16,
+    pad_7804: [u16; 29],
+    pub melting_hdma_object: u16,
+    pad_7840: [u8; 1984],
+    pub acid_damage_sound_timer: u16,
+    pad_8002: [u16; 31],
 }
+
+same_words!(Crocomire: EnemyLayout72 {
+    death_sequence_index = var_A, fight_flags = var_B, fight_function = var_C,
+    step_counter = var_D, y_velocity = var_E, projectile_counter = var_F, unread_7800 = var_00,
+    unread_7802 = var_01, melting_hdma_object = var_1F, acid_damage_sound_timer = var_20,
+});
 
 /// The actor words Crocomire's fight uses, by `variables` lane.
 pub mod lane {

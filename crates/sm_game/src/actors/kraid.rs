@@ -13,8 +13,8 @@
 use crate::actors::boss_lease::{BossLease, BossState, LeaseBoss};
 use crate::actors::deaths::Deaths as _;
 use crate::actors::host::BossEffects as _;
-use crate::actors::host::{Death, Shot, Slopes};
-use crate::actors::layouts::part_view;
+use crate::actors::host::{Death, Shot, Slopes, below};
+use crate::actors::layouts::{EnemyBase, same_words};
 use crate::actors::session_slots::session_slot;
 use crate::actors::{kraid_fingernails, kraid_lint, kraid_sinking};
 use crate::cartridge::native_record;
@@ -55,58 +55,120 @@ pub trait Host:
     fn observe_kraid_flags(&mut self, _step: u8) {}
 }
 
-part_view! {
-    /// The body's view of its slot. `timer` also counts the ceiling platforms
-    /// broken while Kraid grows.
-    Body: KraidLayout {
-        words: [
-            function, script, script_delay, var_D, mouth_hit_ready, timer, parameter_1,
-            parameter_2,
-        ],
-        pad1: [u8; 26696],
-        words: [next, field_2, field_4, thinking_timer, min_eject_y, mouth_flags],
-        kraid_healths_8ths: [u16; 8],
-        words: [field_1C, target_x],
-        kraid_healths_4ths: [u16; 4],
-        words: [field_28, hurt_frame, hurt_frame_timer],
-        field_2E: [u16; 9],
-        words: [],
-    }
+/// The body's view of its slot. `timer` also counts the ceiling platforms
+/// broken while Kraid grows.
+#[derive(Clone, Copy)]
+#[repr(C)]
+pub struct Body {
+    pub base: EnemyBase,
+    pub function: u16,
+    pub script: u16,
+    pub script_delay: u16,
+    pad_0fae: [u16; 1],
+    pub mouth_hit_ready: u16,
+    pub timer: u16,
+    pad_0fb4: [u8; 26700],
+    pub next: u16,
+    pub unread_7802: u16,
+    pub unread_7804: u16,
+    pub thinking_timer: u16,
+    pub min_eject_y: u16,
+    pub mouth_flags: u16,
+    pub health_eighths: [u16; 8],
+    pad_781c: [u16; 1],
+    pub target_x: u16,
+    pub health_quarters: [u16; 4],
+    pad_7828: [u16; 1],
+    pub hurt_frame: u16,
+    pub hurt_frame_timer: u16,
+    pub unread_782e: [u16; 9],
 }
 
-part_view! {
-    /// A lint's, the arm's or the foot's view of its slot. The foot's `next`
-    /// also counts down its walk.
-    Part: KraidLayout {
-        words: [function, progress, x_offset, var_D, var_E, timer, parameter_1, parameter_2],
-        pad1: [u8; 26696],
-        words: [next, field_2, field_4, thinking_timer, min_eject_y, mouth_flags],
-        kraid_healths_8ths: [u16; 8],
-        words: [field_1C, target_x],
-        kraid_healths_4ths: [u16; 4],
-        words: [field_28, hurt_frame, hurt_frame_timer],
-        field_2E: [u16; 9],
-        words: [],
-    }
+same_words!(Body: KraidLayout {
+    function = kraid_var_A, script = kraid_var_B, script_delay = kraid_var_C,
+    mouth_hit_ready = kraid_var_E, timer = kraid_var_F, next = kraid_next, unread_7802 = field_2,
+    unread_7804 = field_4, thinking_timer = kraid_thinking, min_eject_y = kraid_min_y_pos_eject,
+    mouth_flags = kraid_mouth_flags, health_eighths = kraid_healths_8ths,
+    target_x = kraid_target_x, health_quarters = kraid_healths_4ths,
+    hurt_frame = kraid_hurt_frame, hurt_frame_timer = kraid_hurt_frame_timer, unread_782e = field_2E,
+});
+
+/// A lint's, the arm's or the foot's view of its slot. The foot's `next`
+/// also counts down its walk.
+#[derive(Clone, Copy)]
+#[repr(C)]
+pub struct Part {
+    pub base: EnemyBase,
+    pub function: u16,
+    pub progress: u16,
+    pub x_offset: u16,
+    pad_0fae: [u16; 2],
+    pub timer: u16,
+    pad_0fb4: [u8; 26700],
+    pub next: u16,
+    pub unread_7802: u16,
+    pub unread_7804: u16,
+    pub thinking_timer: u16,
+    pub min_eject_y: u16,
+    pub mouth_flags: u16,
+    pub health_eighths: [u16; 8],
+    pad_781c: [u16; 1],
+    pub target_x: u16,
+    pub health_quarters: [u16; 4],
+    pad_7828: [u16; 1],
+    pub hurt_frame: u16,
+    pub hurt_frame_timer: u16,
+    pub unread_782e: [u16; 9],
 }
 
-part_view! {
-    /// A fingernail's view of its slot: its 16.16 velocity. Word 1 of
-    /// `kraid_healths_8ths` marks a fingernail held back off screen.
-    Fingernail: KraidLayout {
-        words: [
-            function, x_subspeed, x_speed, y_subspeed, y_speed, timer, launched, parameter_2,
-        ],
-        pad1: [u8; 26696],
-        words: [next, field_2, field_4, thinking_timer, min_eject_y, mouth_flags],
-        kraid_healths_8ths: [u16; 8],
-        words: [field_1C, target_x],
-        kraid_healths_4ths: [u16; 4],
-        words: [field_28, hurt_frame, hurt_frame_timer],
-        field_2E: [u16; 9],
-        words: [],
-    }
+same_words!(Part: KraidLayout {
+    function = kraid_var_A, progress = kraid_var_B, x_offset = kraid_var_C, timer = kraid_var_F,
+    next = kraid_next, unread_7802 = field_2, unread_7804 = field_4, thinking_timer = kraid_thinking,
+    min_eject_y = kraid_min_y_pos_eject, mouth_flags = kraid_mouth_flags,
+    health_eighths = kraid_healths_8ths, target_x = kraid_target_x,
+    health_quarters = kraid_healths_4ths, hurt_frame = kraid_hurt_frame,
+    hurt_frame_timer = kraid_hurt_frame_timer, unread_782e = field_2E,
+});
+
+/// A fingernail's view of its slot: its 16.16 velocity. Word 1 of
+/// `health_eighths` marks a fingernail held back off screen.
+#[derive(Clone, Copy)]
+#[repr(C)]
+pub struct Fingernail {
+    pub base: EnemyBase,
+    pub function: u16,
+    pub x_subspeed: u16,
+    pub x_speed: u16,
+    pub y_subspeed: u16,
+    pub y_speed: u16,
+    pub timer: u16,
+    pub launched: u16,
+    pad_0fb6: [u8; 26698],
+    pub next: u16,
+    pub unread_7802: u16,
+    pub unread_7804: u16,
+    pub thinking_timer: u16,
+    pub min_eject_y: u16,
+    pub mouth_flags: u16,
+    pub health_eighths: [u16; 8],
+    pad_781c: [u16; 1],
+    pub target_x: u16,
+    pub health_quarters: [u16; 4],
+    pad_7828: [u16; 1],
+    pub hurt_frame: u16,
+    pub hurt_frame_timer: u16,
+    pub unread_782e: [u16; 9],
 }
+
+same_words!(Fingernail: KraidLayout {
+    function = kraid_var_A, x_subspeed = kraid_var_B, x_speed = kraid_var_C,
+    y_subspeed = kraid_var_D, y_speed = kraid_var_E, timer = kraid_var_F,
+    launched = kraid_parameter_1, next = kraid_next, unread_7802 = field_2, unread_7804 = field_4,
+    thinking_timer = kraid_thinking, min_eject_y = kraid_min_y_pos_eject,
+    mouth_flags = kraid_mouth_flags, health_eighths = kraid_healths_8ths,
+    target_x = kraid_target_x, health_quarters = kraid_healths_4ths,
+    hurt_frame = kraid_hurt_frame, hurt_frame_timer = kraid_hurt_frame_timer, unread_782e = field_2E,
+});
 
 const BODY: i32 = 0;
 const ARM: i32 = 0x40;
@@ -295,11 +357,6 @@ const LINT_SOUND: u8 = 0x1f;
 const ROCKS_SOUND: u8 = 0x1e;
 const STOMP_SOUND: u8 = 0x76;
 
-/// Whether `value` is below `limit`, as the original's signed 16-bit difference.
-fn below(value: u16, limit: u16) -> bool {
-    (value.wrapping_sub(limit) as i16) < 0
-}
-
 fn current<S: BossState + ?Sized>(game: &S) -> i32 {
     word!(game.cur_enemy_index) as i32
 }
@@ -320,11 +377,11 @@ fn native_word<S: BossState + ?Sized>(game: &S, at: usize) -> u16 {
 
 /// Health word `index` of the body's eighths, at byte `slot` past the body.
 fn health_eighth<S: BossState + ?Sized>(game: &S, slot: i32, index: usize) -> u16 {
-    native_word(game, slot!(@at Body, slot, kraid_healths_8ths) + index * 2)
+    native_word(game, slot!(@at Body, slot, health_eighths) + index * 2)
 }
 
 fn set_health_eighth<S: BossState + ?Sized>(game: &mut S, slot: i32, index: usize, value: u16) {
-    let at = slot!(@at Body, slot, kraid_healths_8ths) + index * 2;
+    let at = slot!(@at Body, slot, health_eighths) + index * 2;
     set_native_word(game, at, value);
 }
 
@@ -516,7 +573,7 @@ where
         session_slot!(game, Body[BODY].function = function::HANDLE_FUNCTION_TIMER);
         session_slot!(game, Body[BODY].timer = 64);
         session_slot!(game, Body[BODY].next = function::INIT_EYE_GLOW);
-        session_slot!(game, Body[BODY].field_2 = 2);
+        session_slot!(game, Body[BODY].unread_7802 = 2);
     } else {
         session_slot!(game, Body[BODY].mouth_flags = 0);
     }
@@ -2271,7 +2328,7 @@ where
         game.foreign(|game| {
             crate::word_transfers!(game, descending, 1024; le(tilemap_stuff, 1023) <- value(BLANK_BG2_TILE));
         });
-        session_slot!(game, Body[BODY].field_4 = 0);
+        session_slot!(game, Body[BODY].unread_7804 = 0);
         queue_room_bg(game);
         game.foreign(|game| game.spawn_plm(0x2, 0x12, CLEAR_CEILING_PLM));
         game.foreign(|game| game.spawn_plm(0x5, 0x1b, CLEAR_SPIKES_PLM));
@@ -2289,7 +2346,7 @@ where
             eighth = eighth.wrapping_add(step);
         }
         load_bg2(game, 0xdfff);
-        let quarter_at = |index: usize| slot!(@at Body, BODY, kraid_healths_4ths) + index * 2;
+        let quarter_at = |index: usize| slot!(@at Body, BODY, health_quarters) + index * 2;
         let quarter: u16 = session_slot!(game, Body[BODY].base.health) >> 2;
         set_native_word(game, quarter_at(0), quarter);
         let half: u16 = native_word(game, quarter_at(0)).wrapping_add(quarter);
@@ -2298,7 +2355,7 @@ where
         set_native_word(game, quarter_at(2), three);
         let all = native_word(game, quarter_at(0)).wrapping_add(three);
         set_native_word(game, quarter_at(3), all);
-        set_native_word(game, slot!(@at Body, BODY, field_2E) + 8 * 2, 0);
+        set_native_word(game, slot!(@at Body, BODY, unread_782e) + 8 * 2, 0);
         session_slot!(game, Body[BODY].base; x_pos = 176, y_pos = 592, properties = (session_slot!(game, Body[BODY].base.properties)) | (kEnemyProps_Tangible as u16));
         session_slot!(game, Body[BODY]; function = function::RESTRICT_SAMUS_X, timer = 300, next = function::RAISE_THROUGH_FLOOR, script_delay = 64);
         game.foreign(|game| game.disable_minimap_for_boss());

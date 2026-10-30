@@ -1,28 +1,41 @@
 //! Phantoon's figure-8 flight and its casual flames (bank $A7:CFCA-$A7:D2D0).
 #![forbid(unsafe_code)]
 use crate::actors::boss_lease::BossState;
-use crate::actors::layouts::part_view;
+use crate::actors::layouts::{EnemyBase, same_words};
 use crate::actors::phantoon_actions::Mouth;
 use crate::actors::session_slots::session_slot;
 use crate::cartridge::rom_table_word;
 use sm_data::cartridge::RomRecord;
 
-part_view! {
-    /// The body's view of its slot.
-    Body: EnemyLayout8 {
-        words: [
-            movement_index, speed_subpixel, speed, movement_stage, var_E, var_F, parameter_1,
-            parameter_2,
-        ],
-    }
+/// The body's view of its slot.
+#[derive(Clone, Copy)]
+#[repr(C)]
+pub struct Body {
+    pub base: EnemyBase,
+    pub movement_index: u16,
+    pub speed_subpixel: u16,
+    pub speed: u16,
+    pub movement_stage: u16,
+    pad_0fb0: [u16; 4],
 }
 
-part_view! {
-    /// The eye's view of its slot.
-    Eye: EnemyLayout8 {
-        words: [var_A, var_B, movement_reversed, var_D, var_E, var_F, parameter_1, parameter_2],
-    }
+same_words!(Body: EnemyLayout8 {
+    movement_index = var_A, speed_subpixel = var_B, speed = var_C, movement_stage = var_D,
+});
+
+/// The eye's view of its slot.
+#[derive(Clone, Copy)]
+#[repr(C)]
+pub struct Eye {
+    pub base: EnemyBase,
+    pad_0fa8: [u16; 2],
+    pub movement_reversed: u16,
+    pad_0fae: [u16; 5],
 }
+
+same_words!(Eye: EnemyLayout8 {
+    movement_reversed = var_C,
+});
 
 const BANK: u8 = 0xa7;
 const BODY: i32 = 0;

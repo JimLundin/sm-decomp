@@ -6,7 +6,7 @@ use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::{DeathHandling, ShotHandling};
 use crate::actors::botwoon_death;
 use crate::actors::host::{BossEffects as _, Random as _};
-use crate::actors::layouts::part_view;
+use crate::actors::layouts::{EnemyBase, same_words};
 use crate::actors::session_slots::session_slot;
 use crate::actors::{combat, queries};
 use crate::cartridge::rom_table_word;
@@ -18,39 +18,89 @@ use sm_data::botwoon_holes::Hole;
 use sm_data::botwoon_speeds::BotwoonSpeed;
 use sm_data::enemy_speeds::SpeedTable;
 
-part_view! {
-    /// Botwoon's view of its slot.
-    Botwoon: EnemyLayout104 {
-        words: [
-            body_projectile_index, position_history_index, body_travel_time, function,
-            movement_function, head_function, parameter_1, parameter_2,
-        ],
-        pad1: [u8; 26696],
-        words: [
-            var_00, var_01, var_02, var_03, var_04, var_05, var_06, var_07, var_08, var_09, var_0A,
-            var_0B, var_0C, var_0D, var_0E, var_0F, var_10, var_11, var_12, var_13, var_14, var_15,
-            var_16, var_17, var_18, var_19, var_1A, var_1B, var_1C, var_1D, var_1E, var_1F,
-        ],
-        pad2: [u8; 1984],
-        words: [
-            initial_delay, spit_timer, pre_death_counter, death_counter, large_wall_explosion_timer,
-            wall_smoke_timer, unread_counter, var_27, falling_y_speed_index, var_29, var_2A, var_2B,
-            var_2C, var_2D, var_2E, var_2F, var_30, var_31, var_32, head_hidden,
-            previous_head_hidden, hole_collision_disabled, target_history_index, target_hole, speed,
-            unread_hole_angle, target_hole_angle, instruction_list, going_through_hole, spit_angle,
-            var_3E, speed_table_index,
-        ],
-        pad3: [u8; 1984],
-        words: [
-            movement_table_index, unused_8802, movement_data_pointer, var_43, movement_direction,
-            smoothed_angle, var_46, var_47, var_48, var_49, var_4A, unused_8816, var_4C, var_4D,
-            palette_data_offset, health_palette_index, x_1_frame_ago, y_1_frame_ago, x_2_frames_ago,
-            y_2_frames_ago, x_3_frames_ago, y_3_frames_ago, x_4_frames_ago, y_4_frames_ago, var_58,
-            initial_leave_hole_action, spitting, max_health, half_health, quarter_health, var_5E,
-            var_5F,
-        ],
-    }
+/// Botwoon's view of its slot.
+#[derive(Clone, Copy)]
+#[repr(C)]
+pub struct Botwoon {
+    pub base: EnemyBase,
+    pub body_projectile_index: u16,
+    pub position_history_index: u16,
+    pub body_travel_time: u16,
+    pub function: u16,
+    pub movement_function: u16,
+    pub head_function: u16,
+    pad_0fb4: [u8; 28748],
+    pub initial_delay: u16,
+    pub spit_timer: u16,
+    pub pre_death_counter: u16,
+    pub death_counter: u16,
+    pub large_wall_explosion_timer: u16,
+    pub wall_smoke_timer: u16,
+    pub unread_counter: u16,
+    pad_800e: [u16; 1],
+    pub falling_y_speed_index: u16,
+    pad_8012: [u16; 5],
+    pub unread_801c: u16,
+    pad_801e: [u16; 4],
+    pub head_hidden: u16,
+    pub previous_head_hidden: u16,
+    pub hole_collision_disabled: u16,
+    pub target_history_index: u16,
+    pub target_hole: u16,
+    pub speed: u16,
+    pub unread_hole_angle: u16,
+    pub target_hole_angle: u16,
+    pub instruction_list: u16,
+    pub going_through_hole: u16,
+    pub spit_angle: u16,
+    pad_803c: [u16; 1],
+    pub speed_table_index: u16,
+    pad_8040: [u8; 1984],
+    pub movement_table_index: u16,
+    pub unused_8802: u16,
+    pub movement_data_pointer: u16,
+    pad_8806: [u16; 1],
+    pub movement_direction: u16,
+    pub smoothed_angle: u16,
+    pad_880c: [u16; 5],
+    pub unused_8816: u16,
+    pad_8818: [u16; 2],
+    pub palette_data_offset: u16,
+    pub health_palette_index: u16,
+    pub x_1_frame_ago: u16,
+    pub y_1_frame_ago: u16,
+    pub x_2_frames_ago: u16,
+    pub y_2_frames_ago: u16,
+    pub x_3_frames_ago: u16,
+    pub y_3_frames_ago: u16,
+    pub x_4_frames_ago: u16,
+    pub y_4_frames_ago: u16,
+    pad_8830: [u16; 1],
+    pub initial_leave_hole_action: u16,
+    pub spitting: u16,
+    pub max_health: u16,
+    pub half_health: u16,
+    pub quarter_health: u16,
+    pad_883c: [u16; 2],
 }
+
+same_words!(Botwoon: EnemyLayout104 {
+    body_projectile_index = var_A, position_history_index = var_B, body_travel_time = var_C,
+    function = var_D, movement_function = var_E, head_function = var_F, initial_delay = var_20,
+    spit_timer = var_21, pre_death_counter = var_22, death_counter = var_23,
+    large_wall_explosion_timer = var_24, wall_smoke_timer = var_25, unread_counter = var_26,
+    falling_y_speed_index = var_28, unread_801c = var_2E, head_hidden = var_33,
+    previous_head_hidden = var_34, hole_collision_disabled = var_35, target_history_index = var_36,
+    target_hole = var_37, speed = var_38, unread_hole_angle = var_39, target_hole_angle = var_3A,
+    instruction_list = var_3B, going_through_hole = var_3C, spit_angle = var_3D,
+    speed_table_index = var_3F, movement_table_index = var_40, unused_8802 = var_41,
+    movement_data_pointer = var_42, movement_direction = var_44, smoothed_angle = var_45,
+    unused_8816 = var_4B, palette_data_offset = var_4E, health_palette_index = var_4F,
+    x_1_frame_ago = var_50, y_1_frame_ago = var_51, x_2_frames_ago = var_52,
+    y_2_frames_ago = var_53, x_3_frames_ago = var_54, y_3_frames_ago = var_55,
+    x_4_frames_ago = var_56, y_4_frames_ago = var_57, initial_leave_hole_action = var_59,
+    spitting = var_5A, max_health = var_5B, half_health = var_5C, quarter_health = var_5D,
+});
 
 /// Bank $B3 Botwoon functions, stored in `function`.
 pub mod function {
@@ -309,7 +359,7 @@ pub fn moving_around<H: Host + ?Sized>(e: i32, game: &mut H) -> bool {
 /// move around again. Was `await_spit`.
 fn spitting<R: RuntimeHost>(e: i32, runtime: &mut R) -> bool {
     if session_slot!(runtime, Botwoon[e].spit_timer) != 0 {
-        session_slot!(runtime, Botwoon[e].var_2E = 0);
+        session_slot!(runtime, Botwoon[e].unread_801c = 0);
         return true;
     }
     session_slot!(runtime, Botwoon[e]; going_through_hole = 0, function = function::MOVING_AROUND,

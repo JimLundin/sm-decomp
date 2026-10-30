@@ -11,8 +11,8 @@ use crate::actors::api::PlayerDirection;
 use crate::actors::boss_lease::{BossLease, BossState, LeaseBoss};
 use crate::actors::deaths::Deaths as _;
 use crate::actors::host::BossEffects as _;
-use crate::actors::host::{Death, Shot};
-use crate::actors::layouts::part_view;
+use crate::actors::host::{Death, Shot, below};
+use crate::actors::layouts::{EnemyBase, same_words};
 use crate::actors::session_slots::session_slot;
 use crate::actors::{phantoon_actions, phantoon_motion};
 use crate::constants::enemy_properties::{
@@ -45,48 +45,91 @@ pub trait Host:
     fn start_wave(&mut self, direction: u16, speed: u16);
 }
 
-part_view! {
-    /// The body's view of its slot. `movement_index` also counts the opening
-    /// flames and the death explosion rounds.
-    Body: EnemyLayout8 {
-        words: [
-            movement_index, speed_subpixel, speed, movement_stage, timer, function,
-            parameter_1, flame_rain_next,
-        ],
-    }
+/// The body's view of its slot. `movement_index` also counts the opening
+/// flames and the death explosion rounds.
+#[derive(Clone, Copy)]
+#[repr(C)]
+pub struct Body {
+    pub base: EnemyBase,
+    pub movement_index: u16,
+    pub speed_subpixel: u16,
+    pub speed: u16,
+    pub movement_stage: u16,
+    pub timer: u16,
+    pub function: u16,
+    pad_0fb4: [u16; 1],
+    pub flame_rain_next: u16,
 }
 
-part_view! {
-    /// The eye's view of its slot. In the death sequence `movement_reversed`
-    /// counts fades and then holds the fade brightness; while enraged
-    /// `fade_complete` counts the flame volleys.
-    Eye: EnemyLayout8 {
-        words: [
-            timer, unread_shot_value, movement_reversed, fade_steps, fade_step, fade_complete,
-            background_held, parameter_2,
-        ],
-    }
+same_words!(Body: EnemyLayout8 {
+    movement_index = var_A, speed_subpixel = var_B, speed = var_C, movement_stage = var_D,
+    timer = var_E, function = var_F, flame_rain_next = parameter_2,
+});
+
+/// The eye's view of its slot. In the death sequence `movement_reversed`
+/// counts fades and then holds the fade brightness; while enraged
+/// `fade_complete` counts the flame volleys.
+#[derive(Clone, Copy)]
+#[repr(C)]
+pub struct Eye {
+    pub base: EnemyBase,
+    pub timer: u16,
+    pub unread_shot_value: u16,
+    pub movement_reversed: u16,
+    pub fade_steps: u16,
+    pub fade_step: u16,
+    pub fade_complete: u16,
+    pub background_held: u16,
+    pub parameter_2: u16,
 }
 
-part_view! {
-    /// The tentacles' view of their slot: the swoop and the hurt flash.
-    Tentacles: EnemyLayout8 {
-        words: [
-            swooping, damage_taken, swoop_x_speed, swoop_y_speed, swoop_target_x, explosion,
-            wave_direction, hurt_flash,
-        ],
-    }
+same_words!(Eye: EnemyLayout8 {
+    timer = var_A, unread_shot_value = var_B, movement_reversed = var_C, fade_steps = var_D,
+    fade_step = var_E, fade_complete = var_F, background_held = parameter_1,
+    parameter_2 = parameter_2,
+});
+
+/// The tentacles' view of their slot: the swoop and the hurt flash.
+#[derive(Clone, Copy)]
+#[repr(C)]
+pub struct Tentacles {
+    pub base: EnemyBase,
+    pub swooping: u16,
+    pub damage_taken: u16,
+    pub swoop_x_speed: u16,
+    pub swoop_y_speed: u16,
+    pub swoop_target_x: u16,
+    pub explosion: u16,
+    pub wave_direction: u16,
+    pub hurt_flash: u16,
 }
 
-part_view! {
-    /// The mouth's view of its slot: casual flames and the wavy effect.
-    Mouth: EnemyLayout8 {
-        words: [
-            casual_flame_pattern, casual_flame_timer, casual_flame_pattern_index, wave_amplitude,
-            wave_shrinking, var_F, semi_transparency, shot_roll,
-        ],
-    }
+same_words!(Tentacles: EnemyLayout8 {
+    swooping = var_A, damage_taken = var_B, swoop_x_speed = var_C, swoop_y_speed = var_D,
+    swoop_target_x = var_E, explosion = var_F, wave_direction = parameter_1,
+    hurt_flash = parameter_2,
+});
+
+/// The mouth's view of its slot: casual flames and the wavy effect.
+#[derive(Clone, Copy)]
+#[repr(C)]
+pub struct Mouth {
+    pub base: EnemyBase,
+    pub casual_flame_pattern: u16,
+    pub casual_flame_timer: u16,
+    pub casual_flame_pattern_index: u16,
+    pub wave_amplitude: u16,
+    pub wave_shrinking: u16,
+    pad_0fb2: [u16; 1],
+    pub semi_transparency: u16,
+    pub shot_roll: u16,
 }
+
+same_words!(Mouth: EnemyLayout8 {
+    casual_flame_pattern = var_A, casual_flame_timer = var_B, casual_flame_pattern_index = var_C,
+    wave_amplitude = var_D, wave_shrinking = var_E, semi_transparency = parameter_1,
+    shot_roll = parameter_2,
+});
 
 const BODY: i32 = 0;
 const EYE: i32 = 0x40;
@@ -163,7 +206,7 @@ const BLANK_BG2_TILE: u16 = 824;
 const BG2_TILEMAP_SIZE: u16 = 864;
 const SEMI_TRANSPARENCY_HDMA: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x1, 0x14, 0xce96);
 /// Health lost in one swoop or volley that makes Phantoon flee or enrage.
-const ENRAGE_DAMAGE: i32 = 300;
+const ENRAGE_DAMAGE: u16 = 300;
 /// The super missile projectile type bits.
 const SUPER_MISSILE: u16 = 512;
 /// Library 2 and 3 sounds.
@@ -260,7 +303,7 @@ pub fn materialisation_sound<S: BossState + ?Sized>(game: &mut S) {
         crate::boss_lists::phantoon_materialisation_sound(game, word!(game.g_word_7E9032) as isize);
     game.queue_sound(1, sound as u8, 6);
     let mut next: u16 = (word!(game.g_word_7E9032)).wrapping_add(1);
-    if (word!(game.g_word_7E9032) as i32 - 2i32) & 0x8000 == 0 {
+    if !below(word!(game.g_word_7E9032), 2) {
         next = 0;
     }
     word!(game.g_word_7E9032 = next);
@@ -307,7 +350,7 @@ pub fn pick_pattern<S: BossState + ?Sized>(game: &mut S) {
         if session_slot!(game, Eye[EYE].movement_reversed) != 0 {
             let index: u16 = (session_slot!(game, Body[BODY].movement_index)).wrapping_add(1);
             session_slot!(game, Body[BODY].movement_index = index);
-            if (index as i32 - 534i32) & 0x8000 == 0 {
+            if !below(index, 534) {
                 session_slot!(game, Body[BODY].movement_index = 0);
             }
         }
@@ -342,7 +385,7 @@ fn swoop<S: BossState + ?Sized>(game: &mut S, k: u16) {
     } else {
         target_x = (previous as u16).wrapping_add(2);
         session_slot!(game, Tentacles[TENTACLES].swoop_target_x = target_x);
-        if (target_x as i32 - 256i32) & 0x8000 == 0 {
+        if !below(target_x, 256) {
             let next: u16 = target_x | 0x8000;
             session_slot!(game, Tentacles[TENTACLES].swoop_target_x = next);
             target_x = next & 0x7fff;
@@ -356,9 +399,10 @@ fn swoop<S: BossState + ?Sized>(game: &mut S, k: u16) {
                     (session_slot!(game, Tentacles[TENTACLES].swoop_x_speed)).wrapping_sub(32)
             );
         }
-    } else if (session_slot!(game, Tentacles[TENTACLES].swoop_x_speed) as i32 - 2048i32) & 0x8000
-        != 0
-    {
+    } else if below(
+        session_slot!(game, Tentacles[TENTACLES].swoop_x_speed),
+        2048,
+    ) {
         session_slot!(
             game,
             Tentacles[TENTACLES].swoop_x_speed =
@@ -372,7 +416,7 @@ fn swoop<S: BossState + ?Sized>(game: &mut S, k: u16) {
     );
     if (session_slot!(game, Body[BODY].base.x_pos) as i32 + 64) & 0x8000 != 0 {
         session_slot!(game, Body[BODY].base.x_pos = -64i32 as u16);
-    } else if (session_slot!(game, Body[BODY].base.x_pos) as i32 - 448i32) & 0x8000 == 0 {
+    } else if !below(session_slot!(game, Body[BODY].base.x_pos), 448) {
         session_slot!(game, Body[BODY].base.x_pos = 448);
     }
     let target_y: i16 = if session_slot!(game, Body[k as i32].function)
@@ -390,9 +434,10 @@ fn swoop<S: BossState + ?Sized>(game: &mut S, k: u16) {
                     (session_slot!(game, Tentacles[TENTACLES].swoop_y_speed)).wrapping_sub(64)
             );
         }
-    } else if (session_slot!(game, Tentacles[TENTACLES].swoop_y_speed) as i32 - 1536i32) & 0x8000
-        != 0
-    {
+    } else if below(
+        session_slot!(game, Tentacles[TENTACLES].swoop_y_speed),
+        1536,
+    ) {
         session_slot!(
             game,
             Tentacles[TENTACLES].swoop_y_speed =
@@ -404,9 +449,9 @@ fn swoop<S: BossState + ?Sized>(game: &mut S, k: u16) {
         Body[BODY].base(y_pos, y_subpos) +=
             ((session_slot!(game, Tentacles[TENTACLES].swoop_y_speed) as i16 as i32) << 8) as u32
     );
-    if (session_slot!(game, Body[BODY].base.y_pos) as i32 - 64i32) & 0x8000 != 0 {
+    if below(session_slot!(game, Body[BODY].base.y_pos), 64) {
         session_slot!(game, Body[BODY].base.y_pos = 64);
-    } else if (session_slot!(game, Body[BODY].base.y_pos) as i32 - 216i32) & 0x8000 == 0 {
+    } else if !below(session_slot!(game, Body[BODY].base.y_pos), 216) {
         session_slot!(game, Body[BODY].base.y_pos = 216);
     }
 }
@@ -824,7 +869,7 @@ pub fn shot<S: BossState + ?Sized>(game: &mut S) {
                 break 'react_to_hit;
             }
             health = health.wrapping_sub(session_slot!(game, Body[me].base.health));
-            if (health as i32 - ENRAGE_DAMAGE) & 0x8000 != 0
+            if below(health, ENRAGE_DAMAGE)
                 || (word!(game.projectile_type[word!(game.collision_detection_index)]) & 0xf00)
                     != SUPER_MISSILE
             {
@@ -833,12 +878,12 @@ pub fn shot<S: BossState + ?Sized>(game: &mut S) {
                     health.wrapping_add(session_slot!(game, Tentacles[tentacles].damage_taken));
                 session_slot!(game, Tentacles[tentacles].damage_taken = damage);
                 if !initial_hit {
-                    if (damage as i32 - ENRAGE_DAMAGE) & 0x8000 == 0 {
+                    if !below(damage, ENRAGE_DAMAGE) {
                         session_slot!(game, Body[me].timer = 1);
                     }
                     break 'react_to_hit;
                 }
-                if (damage as i32 - ENRAGE_DAMAGE) & 0x8000 == 0 {
+                if !below(damage, ENRAGE_DAMAGE) {
                     session_slot!(game, Body[me].function = function::FADE_OUT_WITH_SWOOP);
                 } else {
                     let roll: u16 = game.roll_random() & 7;
@@ -850,7 +895,7 @@ pub fn shot<S: BossState + ?Sized>(game: &mut S) {
                     session_slot!(game, Tentacles[TENTACLES].hurt_flash = 1);
                     if session_slot!(game, Tentacles[TENTACLES].swooping) == 0 {
                         session_slot!(game, Tentacles[TENTACLES].swooping = 1);
-                        if (session_slot!(game, Body[me].timer) as i32 - 16i32) & 0x8000 == 0 {
+                        if !below(session_slot!(game, Body[me].timer), 16) {
                             session_slot!(game, Body[me].timer = 16);
                         }
                     }
@@ -1077,7 +1122,7 @@ pub fn fade_out_before_first_flame_rain<S: BossState + ?Sized>(game: &mut S, k: 
             game,
             Body[k as i32].function = function::BECOME_SOLID_AFTER_FLAME_RAIN
         );
-        if (session_slot!(game, Body[BODY].base.x_pos) as i32 - 128i32) & 0x8000 != 0 {
+        if below(session_slot!(game, Body[BODY].base.x_pos), 128) {
             phantoon_actions::spawn_flame_rain(k, 0, game);
         } else {
             phantoon_actions::spawn_flame_rain(k, 2, game);
@@ -1119,7 +1164,7 @@ pub fn enraged<S: BossState + ?Sized>(game: &mut S, k: u16) {
         game.queue_sound(2, ENRAGED_FLAMES_SOUND, 6);
         let volleys: u16 = (session_slot!(game, Eye[EYE].fade_complete)).wrapping_add(1);
         session_slot!(game, Eye[EYE].fade_complete = volleys);
-        if (volleys as i32 - 8i32) & 0x8000 != 0 {
+        if below(volleys, 8) {
             session_slot!(game, Body[k as i32].timer = 128);
         } else {
             session_slot!(game, Eye[EYE].base; instruction_timer = 1, current_instruction = animation::EYE_CLOSE);
@@ -1150,7 +1195,7 @@ pub fn finish_swoop_after_fatal_shot<S: BossState + ?Sized>(game: &mut S, k: u16
     look_at_samus(game);
     swoop(game, k);
     let x: u16 = session_slot!(game, Body[BODY].base.x_pos);
-    if (x as i32 - 96i32) & 0x8000 == 0 && (x as i32 - 160i32) & 0x8000 != 0 {
+    if !below(x, 96) && below(x, 160) {
         session_slot!(game, Body[k as i32].function = function::DYING_FADE_IN_OUT);
     }
 }
@@ -1172,7 +1217,7 @@ pub fn dying_fade_in_out<S: BossState + ?Sized>(game: &mut S, k: u16) {
     session_slot!(game, Eye[EYE].fade_complete = 0);
     let fades: u16 = (session_slot!(game, Eye[EYE].movement_reversed)).wrapping_add(1);
     session_slot!(game, Eye[EYE].movement_reversed = fades);
-    if (fades as i32 - 10i32) & 0x8000 == 0 {
+    if !below(fades, 10) {
         session_slot!(game, Body[k as i32].function = function::DYING_EXPLOSIONS);
         session_slot!(game, Body[k as i32].timer = 15);
         session_slot!(game, Tentacles[TENTACLES].explosion = 0);
@@ -1348,7 +1393,7 @@ where
     session_slot!(game, Body[k as i32].timer = 30);
     let flames: u16 = (session_slot!(game, Body[BODY].movement_index)).wrapping_add(1);
     session_slot!(game, Body[BODY].movement_index = flames);
-    if (flames as i32 - 8i32) & 0x8000 == 0 {
+    if !below(flames, 8) {
         session_slot!(game, Body[BODY].movement_index = 0);
         session_slot!(game, Tentacles[k as i32 + TENTACLES].damage_taken = 0);
         session_slot!(
@@ -1466,11 +1511,11 @@ fn death_explosion<S: BossState + ?Sized>(game: &mut S, k: u16) {
     session_slot!(game, Body[k as i32].timer = explosion(game, 3) as u16);
     let next: u16 = (session_slot!(game, Tentacles[TENTACLES].explosion)).wrapping_add(1);
     session_slot!(game, Tentacles[TENTACLES].explosion = next);
-    if (next as i32 - 13i32) & 0x8000 == 0 {
+    if !below(next, 13) {
         session_slot!(game, Tentacles[TENTACLES].explosion = 5);
         let rounds: u16 = (session_slot!(game, Body[BODY].movement_index)).wrapping_add(1);
         session_slot!(game, Body[BODY].movement_index = rounds);
-        if (rounds as i32 - 3i32) & 0x8000 == 0 {
+        if !below(rounds, 3) {
             session_slot!(game, Body[k as i32].function = function::WAVY_DYING_CRY);
         }
     }

@@ -2,32 +2,47 @@
 //! (bank $A7:BCEF-$A7:BE8E): the initialisation they share.
 #![forbid(unsafe_code)]
 use crate::actors::host::ActorHost;
-use crate::actors::layouts::{KraidLayout as Kraid, part_view};
+use crate::actors::layouts::{EnemyBase, KraidLayout as Kraid, same_words};
 use crate::cartridge::native_record;
 use crate::constants::enemy_properties::kEnemyProps_Invisible;
 use crate::ram::RawRam as _;
 use crate::ram::slot;
 
-part_view! {
-    /// A fingernail's view of its slot.
-    Fingernail: KraidLayout {
-        words: [
-            function, x_subvelocity, kraid_var_C, kraid_var_D, kraid_var_E, function_timer,
-            kraid_parameter_1, kraid_parameter_2,
-        ],
-        pad1: [u8; 26696],
-        words: [
-            next_function, field_2, field_4, kraid_thinking, kraid_min_y_pos_eject,
-            kraid_mouth_flags,
-        ],
-        kraid_healths_8ths: [u16; 8],
-        words: [field_1C, kraid_target_x],
-        kraid_healths_4ths: [u16; 4],
-        words: [field_28, kraid_hurt_frame, kraid_hurt_frame_timer],
-        field_2E: [u16; 9],
-        words: [],
-    }
+/// A fingernail's view of its slot.
+#[derive(Clone, Copy)]
+#[repr(C)]
+pub struct Fingernail {
+    pub base: EnemyBase,
+    pub function: u16,
+    pub x_subvelocity: u16,
+    pad_0fac: [u16; 3],
+    pub function_timer: u16,
+    pad_0fb4: [u8; 26700],
+    pub next_function: u16,
+    pub unread_7802: u16,
+    pub unread_7804: u16,
+    pub kraid_thinking: u16,
+    pub kraid_min_y_pos_eject: u16,
+    pub kraid_mouth_flags: u16,
+    pub health_eighths: [u16; 8],
+    pad_781c: [u16; 1],
+    pub kraid_target_x: u16,
+    pub health_quarters: [u16; 4],
+    pad_7828: [u16; 1],
+    pub kraid_hurt_frame: u16,
+    pub kraid_hurt_frame_timer: u16,
+    pub unread_782e: [u16; 9],
 }
+
+same_words!(Fingernail: KraidLayout {
+    function = kraid_var_A, x_subvelocity = kraid_var_B, function_timer = kraid_var_F,
+    next_function = kraid_next, unread_7802 = field_2, unread_7804 = field_4,
+    kraid_thinking = kraid_thinking, kraid_min_y_pos_eject = kraid_min_y_pos_eject,
+    kraid_mouth_flags = kraid_mouth_flags, health_eighths = kraid_healths_8ths,
+    kraid_target_x = kraid_target_x, health_quarters = kraid_healths_4ths,
+    kraid_hurt_frame = kraid_hurt_frame, kraid_hurt_frame_timer = kraid_hurt_frame_timer,
+    unread_782e = field_2E,
+});
 
 /// Bank $A7 instruction lists.
 pub mod instruction_list {

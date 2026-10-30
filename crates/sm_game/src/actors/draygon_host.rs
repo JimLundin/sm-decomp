@@ -7,7 +7,7 @@
 use crate::actors::boss_lease::{BossLease, LeaseBoss};
 use crate::actors::host::BossEffects;
 pub use crate::actors::host::abs16;
-use crate::actors::layouts::part_view;
+use crate::actors::layouts::{EnemyBase, same_words};
 
 pub trait Host: BossEffects + BossLease<Game = Self> + LeaseBoss {
     fn draygon_spawn_trails(&mut self);
@@ -23,44 +23,67 @@ pub trait Host: BossEffects + BossLease<Game = Self> + LeaseBoss {
     fn scatter_draygon_drop(&mut self, area: u16);
 }
 
-part_view! {
-    /// A Draygon part's view of its slot; the named words are the body's.
-    Draygon: EnemyLayout104 {
-        words: [
-            function,
-            // The function timer, which the swoop uses as its Y position index.
-            function_timer,
-            // The swoop's duration, times 4.
-            swoop_duration,
-            x_speed, x_subspeed, var_F, parameter_1, parameter_2,
-        ],
-        pad1: [u8; 26696],
-        words: [
-            left_reset_x, reset_y, right_reset_x, goop_counter, var_04, spiral_x_radius, spiral_x,
-            spiral_y, spiral_angle, spiral_x_subradius, spiral_y_subpixel, spiral_angle_delta,
-            tail_whip_timer, goop_y_angle, health_palette, swoop_y_acceleration, var_10, var_11,
-            var_12, var_13, var_14, var_15, var_16, var_17, var_18, var_19, var_1A, var_1B, var_1C,
-            var_1D, var_1E, var_1F,
-        ],
-        pad2: [u8; 1984],
-        words: [
-            facing_right, var_21, var_22, var_23, var_24, var_25, var_26, var_27,
-            // The death drift's speeds, which nothing reads.
-            death_x_speed, death_x_subspeed, death_y_speed, death_y_subspeed,
-            var_2C, var_2D, var_2E, var_2F, var_30, var_31, var_32, var_33, var_34, var_35, var_36,
-            var_37, var_38, var_39, var_3A, var_3B, var_3C, var_3D, var_3E, var_3F,
-        ],
-        pad3: [u8; 1984],
-        words: [
-            // Indexed by the turret's byte offset, as a slot.
-            turret_destroyed,
-            var_41, var_42, death_angle, var_44, turret_5_destroyed, var_46, var_47, var_48, var_49,
-            var_4A, var_4B, var_4C, var_4D, var_4E, var_4F, var_50, var_51, var_52, var_53, var_54,
-            var_55, var_56, var_57, var_58, var_59, var_5A, var_5B, var_5C, var_5D,
-            graphics_x_displacement, graphics_y_displacement,
-        ],
-    }
+/// A Draygon part's view of its slot; the named words are the body's.
+#[derive(Clone, Copy)]
+#[repr(C)]
+pub struct Draygon {
+    pub base: EnemyBase,
+    pub function: u16,
+    /// The function timer, which the swoop uses as its Y position index.
+    pub function_timer: u16,
+    /// The swoop's duration, times 4.
+    pub swoop_duration: u16,
+    pub x_speed: u16,
+    pub x_subspeed: u16,
+    pad_0fb2: [u8; 26702],
+    pub left_reset_x: u16,
+    pub reset_y: u16,
+    pub right_reset_x: u16,
+    pub goop_counter: u16,
+    pad_7808: [u16; 1],
+    pub spiral_x_radius: u16,
+    pub spiral_x: u16,
+    pub spiral_y: u16,
+    pub spiral_angle: u16,
+    pub spiral_x_subradius: u16,
+    pub spiral_y_subpixel: u16,
+    pub spiral_angle_delta: u16,
+    pub tail_whip_timer: u16,
+    pub goop_y_angle: u16,
+    pub health_palette: u16,
+    pub swoop_y_acceleration: u16,
+    pad_7820: [u8; 2016],
+    pub facing_right: u16,
+    pad_8002: [u16; 7],
+    /// The death drift's speeds, which nothing reads.
+    pub death_x_speed: u16,
+    pub death_x_subspeed: u16,
+    pub death_y_speed: u16,
+    pub death_y_subspeed: u16,
+    pad_8018: [u8; 2024],
+    /// Indexed by the turret's byte offset, as a slot.
+    pub turret_destroyed: u16,
+    pad_8802: [u16; 2],
+    pub death_angle: u16,
+    pad_8808: [u16; 1],
+    pub turret_5_destroyed: u16,
+    pad_880c: [u16; 24],
+    pub graphics_x_displacement: u16,
+    pub graphics_y_displacement: u16,
 }
+
+same_words!(Draygon: EnemyLayout104 {
+    function = var_A, function_timer = var_B, swoop_duration = var_C, x_speed = var_D,
+    x_subspeed = var_E, left_reset_x = var_00, reset_y = var_01, right_reset_x = var_02,
+    goop_counter = var_03, spiral_x_radius = var_05, spiral_x = var_06, spiral_y = var_07,
+    spiral_angle = var_08, spiral_x_subradius = var_09, spiral_y_subpixel = var_0A,
+    spiral_angle_delta = var_0B, tail_whip_timer = var_0C, goop_y_angle = var_0D,
+    health_palette = var_0E, swoop_y_acceleration = var_0F, facing_right = var_20,
+    death_x_speed = var_28, death_x_subspeed = var_29, death_y_speed = var_2A,
+    death_y_subspeed = var_2B, turret_destroyed = var_40, death_angle = var_43,
+    turret_5_destroyed = var_45, graphics_x_displacement = var_5E,
+    graphics_y_displacement = var_5F,
+});
 
 /// The parts' slots.
 pub const BODY: i32 = 0;

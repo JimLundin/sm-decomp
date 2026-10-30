@@ -10,7 +10,7 @@
 #![forbid(unsafe_code)]
 use crate::actors::boss_lease::BossLease;
 use crate::actors::host::BossEffects as _;
-use crate::actors::host::abs16;
+use crate::actors::host::{abs16, below};
 use crate::actors::ridley::Host as _;
 use crate::actors::ridley::{
     self, FACING_RIGHT, NORFAIR, RIDLEY, Rect, Ridley, function, instruction_list, tail,
@@ -493,7 +493,7 @@ where
         game,
         Ridley[RIDLEY].y_velocity = session_slot!(game, Ridley[RIDLEY].y_velocity).wrapping_sub(16)
     );
-    if (session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 112) & 0x8000 != 0 {
+    if below(session_slot!(game, Ridley[RIDLEY].base.y_pos), 112) {
         session_slot!(
             game,
             Ridley[RIDLEY].function = ceres_function::LIFTOFF_DECELERATING
@@ -512,7 +512,7 @@ where
         game,
         Ridley[RIDLEY].y_velocity = session_slot!(game, Ridley[RIDLEY].y_velocity).wrapping_add(20)
     );
-    if (session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 80) & 0x8000 != 0 {
+    if below(session_slot!(game, Ridley[RIDLEY].base.y_pos), 80) {
         session_slot!(game, Ridley[RIDLEY].function = ceres_function::HOVERING);
         session_slot!(game, Ridley[RIDLEY].fight_mode = 1);
     }
@@ -532,7 +532,7 @@ where
             Ridley[RIDLEY].function = function::FAKE_RETREAT_MOVE_TO_POSITION
         );
         ridley::fake_retreat_move_to_position(game);
-    } else if (word!(game.samus_health) as i32 - 30) & 0x8000 != 0 {
+    } else if below(word!(game.samus_health), 30) {
         session_slot!(game, Ridley[RIDLEY].fight_mode = 0);
         session_slot!(
             game,
@@ -590,13 +590,13 @@ where
         88,
         game,
     );
-    if (session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 80) & 0x8000 != 0 {
+    if below(session_slot!(game, Ridley[RIDLEY].base.y_pos), 80) {
         let timer = session_slot!(game, Ridley[RIDLEY].timer).wrapping_add(1);
         session_slot!(game, Ridley[RIDLEY].timer = timer);
         if timer >= 0x30 {
             session_slot!(game, Ridley[RIDLEY].function = ceres_function::SWOOP_SETUP);
         }
-    } else if (session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 128) & 0x8000 != 0 {
+    } else if below(session_slot!(game, Ridley[RIDLEY].base.y_pos), 128) {
         session_slot!(
             game,
             Ridley[RIDLEY].target_x = session_slot!(game, Ridley[RIDLEY].base.x_pos)
@@ -657,7 +657,7 @@ where
 {
     let x = word!(game.samus_x_pos);
     let mut y = word!(game.samus_y_pos).wrapping_sub(68);
-    if (word!(game.samus_y_pos) as i32 - 132) & 0x8000 != 0 {
+    if below(word!(game.samus_y_pos), 132) {
         y = 64;
     }
     ridley::ceres_accelerate(0, 0xd, x, y, game);
@@ -700,7 +700,7 @@ where
     L::Game: Host,
 {
     ridley::ceres_accelerate(0, 1, 192, 80, game);
-    if (session_slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 96) & 0x8000 != 0 {
+    if below(session_slot!(game, Ridley[RIDLEY].base.y_pos), 96) {
         session_slot!(
             game,
             Ridley[RIDLEY].function = ceres_function::SWOOP_AIMING_DOWN
