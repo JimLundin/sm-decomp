@@ -102,6 +102,29 @@ macro_rules! session_slot {
         $crate::actors::session_slots::SlotAccess::slot_byte(
             &*$h, $crate::ram_slot!(@at $layout, $slot, $($field).+) + ($lane) as usize)
     };
+    // Split-word pairs, as `slot!`'s: the value first, then low is read before
+    // high and written before high.
+    ($h:ident, $layout:ident[$slot:expr] $(.$prefix:ident)* ($hi:ident, $lo:ident) += $value:expr) => {
+        match $value {
+            value => {
+                let value: ::core::primitive::u32 = value;
+                let low = ::core::primitive::u32::from($crate::session_slot!($h, $layout[$slot] $(.$prefix)* .$lo));
+                let high = ::core::primitive::u32::from($crate::session_slot!($h, $layout[$slot] $(.$prefix)* .$hi));
+                let sum = (low | (high << 16)).wrapping_add(value);
+                $crate::session_slot!($h, $layout[$slot] $(.$prefix)* .$lo = sum as ::core::primitive::u16);
+                $crate::session_slot!($h, $layout[$slot] $(.$prefix)* .$hi = (sum >> 16) as ::core::primitive::u16);
+            }
+        }
+    };
+    ($h:ident, $layout:ident[$slot:expr] $(.$prefix:ident)* ($hi:ident, $lo:ident) = $value:expr) => {
+        match $value {
+            value => {
+                let value: ::core::primitive::u32 = value;
+                $crate::session_slot!($h, $layout[$slot] $(.$prefix)* .$lo = value as ::core::primitive::u16);
+                $crate::session_slot!($h, $layout[$slot] $(.$prefix)* .$hi = (value >> 16) as ::core::primitive::u16);
+            }
+        }
+    };
     // Ordered word stores to several fields; the slot is re-evaluated per store.
     ($h:ident, $layout:ident[$slot:expr] $(.$prefix:ident)*; $($stores:tt)+) => {
         $crate::session_slot!(@stores $h, $layout[$slot] ($($prefix)*); $($stores)+)

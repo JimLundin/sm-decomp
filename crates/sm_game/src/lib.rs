@@ -94,6 +94,7 @@ pub mod actors {
     pub mod baby_metroid;
     pub mod baby_metroid_cutscene;
     pub mod baby_metroid_encounter;
+    pub mod boss_lease;
     pub mod botwoon;
     pub mod botwoon_death;
     pub mod boulder;
