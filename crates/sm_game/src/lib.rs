@@ -36,6 +36,7 @@ pub mod geometry;
 pub mod hdma;
 pub mod hud;
 pub mod imported;
+pub mod intro_objects;
 pub mod intro_pages;
 pub mod item_pickups;
 pub mod launch_motion;

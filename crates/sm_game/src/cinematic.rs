@@ -300,3 +300,7 @@ pub fn clear_cinematic_background<H: crate::menus::host::Host + ?Sized>(fill: u1
     );
     word!(game.cinematicbg_var1 = 0);
 }
+
+pub fn scaled_cinematic_value(value: u16, scale: u16) -> u16 {
+    ((i32::from(value as i16) * i32::from(scale as i16)) >> 8) as u16
+}

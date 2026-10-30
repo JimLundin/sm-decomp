@@ -454,6 +454,7 @@ pub mod game {
     pub(crate) mod gameplay;
     pub(crate) mod grapple_swing;
     pub(crate) mod imported;
+    pub(crate) mod intro_objects;
     pub(crate) mod intro_pages;
     pub(crate) mod launch_motion;
     pub(crate) mod launch_motion_ram;

@@ -326,6 +326,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/ram.rs"),
     ),
     (
+        "crates/sm_game/src/intro_objects.rs",
+        include_bytes!("../../crates/sm_game/src/intro_objects.rs"),
+    ),
+    (
         "crates/sm_game/src/credits.rs",
         include_bytes!("../../crates/sm_game/src/credits.rs"),
     ),
@@ -2187,6 +2191,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/ending_screens.rs"),
     ),
     ("sm/src/game/credits.rs", include_bytes!("game/credits.rs")),
+    (
+        "sm/src/game/intro_objects.rs",
+        include_bytes!("game/intro_objects.rs"),
+    ),
     (
         "sm/src/game/visual_runtime.rs",
         include_bytes!("game/visual_runtime.rs"),
