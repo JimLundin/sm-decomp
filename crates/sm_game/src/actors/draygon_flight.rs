@@ -301,8 +301,7 @@ pub fn goop_setup<H: Host + ?Sized>(right: bool, game: &mut H) {
 pub fn goop_move_until_in_range<H: Host + ?Sized>(right: bool, game: &mut H) {
     fire_wall_turret(game);
     game.draygon_body_bubble();
-    let distance =
-        abs16(slot!(game, Draygon[BODY].base.x_pos).wrapping_sub(word!(game.samus_x_pos)));
+    let distance = abs16(slot!(game, Draygon[BODY].base.x_pos).wrapping_sub(game.player_x()));
     if distance.wrapping_sub(GOOP_RANGE) & SIGN != 0 {
         slot!(game, Draygon[BODY]; function = if right { function::GOOP_RIGHT_FIRING } else { function::GOOP_LEFT_FIRING }, goop_counter = GOOPS);
     } else {

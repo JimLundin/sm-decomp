@@ -62,10 +62,10 @@ pub fn load_sprite_palettes<H: Host + ?Sized>(game: &mut H) {
 pub fn advance_ceres_elevator<H: Host + ?Sized>(game: &mut H) {
     let mut v1: i16 = 0;
     if (word!(game.ceres_status) & 0x8000) != 0 {
-        if (112i16).wrapping_sub((word!(game.samus_x_pos)) as i16) < 0
-            && (144i16).wrapping_sub((word!(game.samus_x_pos)) as i16) >= 0
-            && word!(game.samus_y_pos) as i32 - 128i32 & 0x8000 != 0
-            && word!(game.samus_y_pos) as i32 - 75i32 & 0x8000 == 0
+        if (112i16).wrapping_sub((game.player_x()) as i16) < 0
+            && (144i16).wrapping_sub((game.player_x()) as i16) >= 0
+            && game.player_y() as i32 - 128i32 & 0x8000 != 0
+            && game.player_y() as i32 - 75i32 & 0x8000 == 0
             && word!(game.samus_y_speed) == 0
             && word!(game.samus_y_subspeed) == 0
             && word!(game.game_state) as i32 == 8

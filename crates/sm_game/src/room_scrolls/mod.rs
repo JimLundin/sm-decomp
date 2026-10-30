@@ -8,7 +8,9 @@ pub mod door;
 use crate::display::transfer::ScrollingLayout as ScrollingDmaLayout;
 
 /// What room scrolling needs from the runtime besides named and raw work RAM.
-pub trait Host: crate::ram::CompatibilityRam + crate::ram::WorkRamAccess {
+pub trait Host:
+    crate::ram::CompatibilityRam + crate::ram::WorkRamAccess + crate::player_position::PlayerPosition
+{
     /// The original's unreachable-state failure.
     fn unreachable(&mut self) -> bool;
     /// Record Samus's camera distance on `axis` in the owned Session.
@@ -135,16 +137,16 @@ fn add_native_motion<H: Host + ?Sized>(high: usize, low: usize, amount: u32, gam
 
 pub fn advance_camera<H: Host + ?Sized>(game: &mut H) {
     if word!(game.slow_grabble_scrolling_flag) != 0 {
-        if (word!(game.samus_x_pos) & 0x8000) == 0 {
-            let mut v0: u16 = (word!(game.samus_x_pos)).wrapping_sub(word!(game.layer1_x_pos));
-            if word!(game.samus_x_pos) < word!(game.layer1_x_pos) || v0 < 0x60 {
+        if (game.player_x() & 0x8000) == 0 {
+            let mut v0: u16 = (game.player_x()).wrapping_sub(word!(game.layer1_x_pos));
+            if game.player_x() < word!(game.layer1_x_pos) || v0 < 0x60 {
                 word!(game.layer1_x_pos -= 3);
             } else if v0 >= 0xa0 {
                 word!(game.layer1_x_pos += 3);
             }
-            if (word!(game.samus_y_pos) & 0x8000) == 0 {
-                let v1: u16 = (word!(game.samus_y_pos)).wrapping_sub(word!(game.layer1_y_pos));
-                if word!(game.samus_y_pos) < word!(game.layer1_y_pos) || v1 < 0x70 {
+            if (game.player_y() & 0x8000) == 0 {
+                let v1: u16 = (game.player_y()).wrapping_sub(word!(game.layer1_y_pos));
+                if game.player_y() < word!(game.layer1_y_pos) || v1 < 0x70 {
                     word!(game.layer1_y_pos -= 3);
                 } else if v1 >= 0x90 {
                     word!(game.layer1_y_pos += 3);
@@ -170,10 +172,10 @@ pub fn advance_camera<H: Host + ?Sized>(game: &mut H) {
             game.unreachable();
         }
     }
-    word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
-    word!(game.samus_prev_x_subpos = word!(game.samus_x_subpos));
-    word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
-    word!(game.samus_prev_y_subpos = word!(game.samus_y_subpos));
+    game.set_previous_player_x(game.player_x());
+    game.set_previous_player_x_fraction(game.player_x_fraction());
+    game.set_previous_player_y(game.player_y());
+    game.set_previous_player_y_fraction(game.player_y_fraction());
 }
 macro_rules! chase_ideal_layer_position {
     (
@@ -203,7 +205,7 @@ macro_rules! chase_ideal_layer_position {
 fn follow_x<H: Host + ?Sized>(game: &mut H) {
     static kSamus_HandleScroll_X_FaceLeft: [u16; 4] = [0xa0, 0x50, 0x20, 0xe0];
     static kSamus_HandleScroll_X_FaceRight: [u16; 4] = [0x60, 0x40, 0x20, 0xe0];
-    if word!(game.samus_prev_x_pos) == word!(game.samus_x_pos) {
+    if game.previous_player_x() == game.player_x() {
         auto_x(game);
         return;
     }
@@ -233,7 +235,7 @@ fn follow_x<H: Host + ?Sized>(game: &mut H) {
     );
 }
 fn follow_y<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.samus_prev_y_pos) == word!(game.samus_y_pos) {
+    if game.previous_player_y() == game.player_y() {
         auto_y(game);
     } else {
         if word!(game.samus_y_dir) == 1 {

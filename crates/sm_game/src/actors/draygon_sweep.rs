@@ -43,8 +43,7 @@ fn calculate_swoop_y_positions<H: Host + ?Sized>(game: &mut H) {
             game.unreachable();
         }
     }
-    let distance =
-        abs16(slot!(game, Draygon[BODY].left_reset_x).wrapping_sub(word!(game.samus_x_pos)));
+    let distance = abs16(slot!(game, Draygon[BODY].left_reset_x).wrapping_sub(game.player_x()));
     let speed = (u32::from(distance) << 16)
         .checked_div(u32::from(index >> 2))
         .unwrap_or(0);
@@ -61,7 +60,7 @@ pub fn swoop_setup<H: Host + ?Sized>(right: bool, game: &mut H) {
     } else {
         // The bank retains the original diagnostic before this zero-divisor setup.
         let distance =
-            abs16(slot!(game, Draygon[BODY].right_reset_x).wrapping_sub(word!(game.samus_x_pos)));
+            abs16(slot!(game, Draygon[BODY].right_reset_x).wrapping_sub(game.player_x()));
         let speed = (u32::from(distance) << 16).checked_div(0).unwrap_or(0);
         slot!(game, Draygon[BODY](x_speed, x_subspeed) = speed);
     }

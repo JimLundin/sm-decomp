@@ -63,7 +63,7 @@ pub fn advance_scene_sprite<H: crate::menus::host::Host + ?Sized>(
 ) {
     let slot = usize::from(object >> 1);
     if scene == 0 {
-        if word!(game.samus_x_pos) as i32 - 169 & 0x8000 != 0 {
+        if game.player_x() as i32 - 169 & 0x8000 != 0 {
             crate::cinematic::resume_cinematic_sprite(slot, 0xcb3b, game);
             word!(game.cinematicspr_preinstr_func[slot] = 0x93d9);
         }

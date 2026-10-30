@@ -77,8 +77,8 @@ fn detect_player<H: Host + ?Sized>(game: &mut H) {
         y: slot!(game, Maw[E].base.y_pos),
     };
     let target = Point {
-        x: word!(game.samus_x_pos),
-        y: word!(game.samus_y_pos),
+        x: game.player_x(),
+        y: game.player_y(),
     };
     let (pair_distance, pair_direction) = game.distance_and_direction(origin, target);
     let distance = abs16(pair_distance);
@@ -176,12 +176,8 @@ fn reorient_segment<H: Host + ?Sized>(
 fn carry_player<H: Host + ?Sized>(game: &mut H) {
     game.command_player(3);
     let E = word!(game.cur_enemy_index) as i32;
-    word!(
-        game.samus_x_pos = slot!(game, Maw[E].var_32).wrapping_add(slot!(game, Maw[E].base.x_pos))
-    );
-    word!(
-        game.samus_y_pos = slot!(game, Maw[E].var_33).wrapping_add(slot!(game, Maw[E].base.y_pos))
-    );
+    game.set_player_x(slot!(game, Maw[E].var_32).wrapping_add(slot!(game, Maw[E].base.x_pos)));
+    game.set_player_y(slot!(game, Maw[E].var_33).wrapping_add(slot!(game, Maw[E].base.y_pos)));
     game.correct_previous_position();
 }
 fn stretch<H: Host + ?Sized>(write_operand: &mut impl FnMut(u8, &mut H), game: &mut H) {

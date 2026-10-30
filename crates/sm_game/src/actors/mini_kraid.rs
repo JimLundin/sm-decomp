@@ -124,10 +124,7 @@ fn current<H: Host + ?Sized>(game: &H) -> i32 {
 /// Face Samus.
 fn face_samus<H: Host + ?Sized>(game: &mut H, me: i32) {
     slot!(game, MiniKraid[me].facing = FACING_LEFT);
-    if ((slot!(game, MiniKraid[me].base.x_pos)) as i16)
-        .wrapping_sub((word!(game.samus_x_pos)) as i16)
-        < 0
-    {
+    if ((slot!(game, MiniKraid[me].base.x_pos)) as i16).wrapping_sub((game.player_x()) as i16) < 0 {
         slot!(game, MiniKraid[me].facing = FACING_RIGHT);
     }
 }
@@ -154,10 +151,7 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
     slot!(game, MiniKraid[me].walk_speed = FACING_LEFT);
     slot!(game, MiniKraid[me].facing = FACING_LEFT);
     let mut walk = animation::WALK_FORWARD_LEFT;
-    if ((slot!(game, MiniKraid[me].base.x_pos)) as i16)
-        .wrapping_sub((word!(game.samus_x_pos)) as i16)
-        < 0
-    {
+    if ((slot!(game, MiniKraid[me].base.x_pos)) as i16).wrapping_sub((game.player_x()) as i16) < 0 {
         slot!(game, MiniKraid[me]; walk_speed = FACING_RIGHT, facing = FACING_RIGHT);
         walk = animation::WALK_FORWARD_RIGHT;
     }

@@ -107,8 +107,8 @@ pub fn try_crystal_flash<H: Host + ?Sized>(game: &mut H) -> bool {
 }
 pub fn finish_power_bomb<H: Host + ?Sized>(v0: u16, game: &mut H) {
     {
-        if word!(game.samus_x_pos) != word!(game.power_bomb_explosion_x_pos)
-            || word!(game.samus_y_pos) != word!(game.power_bomb_explosion_y_pos)
+        if game.player_x() != word!(game.power_bomb_explosion_x_pos)
+            || game.player_y() != word!(game.power_bomb_explosion_y_pos)
             || !try_crystal_flash(game)
         {
             word!(game.power_bomb_flag = 0);

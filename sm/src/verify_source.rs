@@ -1141,6 +1141,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/player_movement/speed.rs"),
     ),
     (
+        "crates/sm_game/src/player_position.rs",
+        include_bytes!("../../crates/sm_game/src/player_position.rs"),
+    ),
+    (
         "sm/src/game/player_movement_runtime.rs",
         include_bytes!("game/player_movement_runtime.rs"),
     ),

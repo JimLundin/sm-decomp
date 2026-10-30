@@ -104,3 +104,30 @@ impl sm_game::actors::zebetites::Host for Game {
         )
     }
 }
+
+/// Implements `PlayerPosition` over a compatibility-RAM receiver with the
+/// original named-word reads and stores.
+macro_rules! compatibility_player_position {
+    ($($ty:ty),+ $(,)?) => {$(
+        impl sm_game::player_position::PlayerPosition for $ty {
+            fn player_x(&self) -> u16 { let game = self; sm_game::ram_word!(game.samus_x_pos) }
+            fn player_y(&self) -> u16 { let game = self; sm_game::ram_word!(game.samus_y_pos) }
+            fn player_x_fraction(&self) -> u16 { let game = self; sm_game::ram_word!(game.samus_x_subpos) }
+            fn player_y_fraction(&self) -> u16 { let game = self; sm_game::ram_word!(game.samus_y_subpos) }
+            fn previous_player_x(&self) -> u16 { let game = self; sm_game::ram_word!(game.samus_prev_x_pos) }
+            fn previous_player_y(&self) -> u16 { let game = self; sm_game::ram_word!(game.samus_prev_y_pos) }
+            fn previous_player_x_fraction(&self) -> u16 { let game = self; sm_game::ram_word!(game.samus_prev_x_subpos) }
+            fn previous_player_y_fraction(&self) -> u16 { let game = self; sm_game::ram_word!(game.samus_prev_y_subpos) }
+            fn set_player_x(&mut self, x: u16) { let game = self; sm_game::ram_word!(game.samus_x_pos = x) }
+            fn set_player_y(&mut self, y: u16) { let game = self; sm_game::ram_word!(game.samus_y_pos = y) }
+            fn set_player_x_fraction(&mut self, fraction: u16) { let game = self; sm_game::ram_word!(game.samus_x_subpos = fraction) }
+            fn set_player_y_fraction(&mut self, fraction: u16) { let game = self; sm_game::ram_word!(game.samus_y_subpos = fraction) }
+            fn set_previous_player_x(&mut self, x: u16) { let game = self; sm_game::ram_word!(game.samus_prev_x_pos = x) }
+            fn set_previous_player_y(&mut self, y: u16) { let game = self; sm_game::ram_word!(game.samus_prev_y_pos = y) }
+            fn set_previous_player_x_fraction(&mut self, fraction: u16) { let game = self; sm_game::ram_word!(game.samus_prev_x_subpos = fraction) }
+            fn set_previous_player_y_fraction(&mut self, fraction: u16) { let game = self; sm_game::ram_word!(game.samus_prev_y_subpos = fraction) }
+        }
+    )+};
+}
+
+compatibility_player_position!(Game);

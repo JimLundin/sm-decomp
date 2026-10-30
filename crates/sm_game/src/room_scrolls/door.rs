@@ -87,7 +87,7 @@ pub fn horizontal<H: Host + ?Sized>(left: bool, game: &mut H) -> u8 {
     );
     let speed = if left { -(speed as i32) as u32 } else { speed };
     add_native_motion(fields::samus_x_pos, fields::samus_x_subpos, speed, game);
-    word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
+    game.set_previous_player_x(game.player_x());
     let delta = if left { 0xfffc } else { 4 };
     word!(game.layer1_x_pos += delta);
     word!(game.layer2_x_pos += delta);
@@ -126,7 +126,7 @@ pub fn down<H: Host + ?Sized>(game: &mut H) -> u8 {
             ),
             game,
         );
-        word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
+        game.set_previous_player_y(game.player_y());
         word!(game.layer1_y_pos += 4);
         word!(game.layer2_y_pos += 4);
         update_map(game);
@@ -154,7 +154,7 @@ pub fn up<H: Host + ?Sized>(game: &mut H) -> u8 {
             )) as u32,
             game,
         );
-        word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
+        game.set_previous_player_y(game.player_y());
         word!(game.layer1_y_pos -= 4);
         word!(game.layer2_y_pos -= 4);
         if word!(game.door_transition_frame_counter) >= 5 {

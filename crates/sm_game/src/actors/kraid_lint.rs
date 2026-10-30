@@ -41,7 +41,7 @@ pub fn lint_touch_samus(k: u16, game: &mut (impl Host + ?Sized)) {
         return;
     }
     let (samus_x, x_radius) = (
-        i32::from(word!(game.samus_x_pos)),
+        i32::from(game.player_x()),
         i32::from(word!(game.samus_x_radius)),
     );
     let left =
@@ -52,7 +52,7 @@ pub fn lint_touch_samus(k: u16, game: &mut (impl Host + ?Sized)) {
     let top =
         (hitbox(TOP, game) + i32::from(slot!(game, Kraid[e].base.y_pos)) + INSET) as u16 as i32;
     let (samus_y, y_radius) = (
-        i32::from(word!(game.samus_y_pos)),
+        i32::from(game.player_y()),
         i32::from(word!(game.samus_y_radius)),
     );
     if (y_radius + samus_y - top) & SIGN != 0 {

@@ -104,10 +104,10 @@ pub fn chase_samus<H: Host + ?Sized>(game: &mut H) {
     let distance = abs16(
         slot!(game, Draygon[BODY].base.x_pos)
             .wrapping_add(dx)
-            .wrapping_sub(word!(game.samus_x_pos)),
+            .wrapping_sub(game.player_x()),
     );
     if distance.wrapping_sub(GRAB_RANGE) & SIGN != 0
-        && abs16(slot!(game, Draygon[BODY].base.y_pos).wrapping_sub(word!(game.samus_y_pos)))
+        && abs16(slot!(game, Draygon[BODY].base.y_pos).wrapping_sub(game.player_y()))
             .wrapping_sub(GRAB_RANGE)
             & SIGN
             != 0
@@ -129,8 +129,12 @@ pub fn chase_samus<H: Host + ?Sized>(game: &mut H) {
                 function = function::GRABBED_MOVING_TO_TARGET);
         }
     } else {
-        let dx = word!(game.samus_x_pos).wrapping_sub(slot!(game, Draygon[BODY].base.x_pos));
-        let dy = word!(game.samus_y_pos).wrapping_sub(slot!(game, Draygon[BODY].base.y_pos));
+        let dx = game
+            .player_x()
+            .wrapping_sub(slot!(game, Draygon[BODY].base.x_pos));
+        let dy = game
+            .player_y()
+            .wrapping_sub(slot!(game, Draygon[BODY].base.y_pos));
         pursue(dx, dy, game);
     }
 }
@@ -278,8 +282,8 @@ pub fn final_tail_whips<H: Host + ?Sized>(k: u16, game: &mut H) {
 /// Was `attach`.
 pub fn move_samus_with_draygon<H: Host + ?Sized>(k: u16, game: &mut H) {
     let dx = hold_offset(k as i32, game);
-    word!(game.samus_x_pos = slot!(game, Draygon[BODY].base.x_pos).wrapping_add(dx));
-    word!(game.samus_y_pos = slot!(game, Draygon[BODY].base.y_pos).wrapping_add(HOLD_Y));
+    game.set_player_x(slot!(game, Draygon[BODY].base.x_pos).wrapping_add(dx));
+    game.set_player_y(slot!(game, Draygon[BODY].base.y_pos).wrapping_add(HOLD_Y));
     game.correct_previous_position();
     if word!(game.samus_grapple_flags) & SAMUS_RELEASED != 0 {
         word!(game.samus_grapple_flags = 0);
@@ -328,8 +332,8 @@ pub fn tail_whip_hit<H: Host + ?Sized>(script: EnemyScript, game: &mut H) -> Ene
     let amount = game.suit_damage(amount);
     game.damage_player(amount);
     word! {game; earthquake_timer = EARTHQUAKE_FRAMES; earthquake_type = EARTHQUAKE_BG1_VERTICAL_3PX; }
-    let x = word!(game.samus_x_pos);
-    let y = word!(game.samus_y_pos).wrapping_add(DUST_CLOUD_Y);
+    let x = game.player_x();
+    let y = game.player_y().wrapping_add(DUST_CLOUD_Y);
     game.create_sprite(x, y, DUST_CLOUD, 0);
     script
 }

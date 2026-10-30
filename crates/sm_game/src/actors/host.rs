@@ -10,12 +10,23 @@ pub trait Random {
 }
 
 pub trait ActorHost:
-    WorkRamAccess + CompatibilityRam + NativeDiagnostics + LoadedImage + Random
+    WorkRamAccess
+    + CompatibilityRam
+    + NativeDiagnostics
+    + LoadedImage
+    + Random
+    + crate::player_position::PlayerPosition
 {
 }
 
 impl<T> ActorHost for T where
-    T: WorkRamAccess + CompatibilityRam + NativeDiagnostics + LoadedImage + Random + ?Sized
+    T: WorkRamAccess
+        + CompatibilityRam
+        + NativeDiagnostics
+        + LoadedImage
+        + Random
+        + crate::player_position::PlayerPosition
+        + ?Sized
 {
 }
 

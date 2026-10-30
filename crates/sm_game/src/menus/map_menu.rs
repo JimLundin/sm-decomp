@@ -972,7 +972,7 @@ pub fn center_map<H: Host + ?Sized>(vertical_center: u16, game: &mut H) {
     );
     let x = (8
         * (i32::from(word!(game.room_x_coordinate_on_map))
-            + i32::from((word!(game.samus_x_pos) & 0xff00) >> 8))
+            + i32::from((game.player_x() & 0xff00) >> 8))
         - i32::from(word!(game.reg_BG1HOFS))) as u16;
     let right = 224i16.wrapping_sub(x as i16);
     if right >= 0 {

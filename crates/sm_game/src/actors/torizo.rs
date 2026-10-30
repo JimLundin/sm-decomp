@@ -8,7 +8,7 @@ use crate::ram::{CompatibilityRam, RawRam as _, WorkRamAccess, slot, word};
 
 /// What the Torizos need beyond work RAM: actor movement, projectiles and the
 /// shared shot reaction, which the compatibility runtime still implements.
-pub trait Host: WorkRamAccess + CompatibilityRam {
+pub trait Host: WorkRamAccess + CompatibilityRam + crate::player_position::PlayerPosition {
     /// Move actor `k` by `amount` (16.16) horizontally, ignoring slopes; true when blocked.
     fn move_horizontal_ignoring_slopes(&mut self, k: u16, amount: i32) -> bool;
     fn snap_to_slopes(&mut self, k: u16);
@@ -102,7 +102,7 @@ pub fn walk(
     } else {
         game.snap_to_slopes(k);
         if (slot!(game, TorizoSlot[e].direction) as i32
-            ^ word!(game.samus_x_pos) as i32 - slot!(game, TorizoSlot[e].base.x_pos) as i32)
+            ^ game.player_x() as i32 - slot!(game, TorizoSlot[e].base.x_pos) as i32)
             & SIGN
             == 0
             && slot!(game, TorizoSlot[e].turn_around_timer) == 0
@@ -130,7 +130,7 @@ pub fn drool_at_low_health(k: u16, game: &mut impl Host) {
 pub fn facing_against_samus(k: u16, game: &mut impl Host) -> u16 {
     let e = i32::from(k);
     (slot!(game, TorizoSlot[e].direction) as i32
-        ^ slot!(game, TorizoSlot[e].base.x_pos) as i32 - word!(game.samus_x_pos) as i32) as u16
+        ^ slot!(game, TorizoSlot[e].base.x_pos) as i32 - game.player_x() as i32) as u16
 }
 
 /// Golden Torizo shot reaction - damaged ($AA:D6A6): on death, start the death

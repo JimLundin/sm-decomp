@@ -301,11 +301,12 @@ pub fn touch<H: Host + ?Sized>(game: &mut H) {
 /// Crocomire / Samus collision handling ($A4:8C95). Was `push_player`.
 pub fn samus_collision<H: Host + ?Sized>(game: &mut H) {
     if slot!(game, Crocomire[0].death_sequence_index) == 0
-        && ((contact_edge(game) - word!(game.samus_x_pos) as i32) as i16) < 0
+        && ((contact_edge(game) - game.player_x() as i32) as i16) < 0
     {
         contact(game);
-        word!(game.samus_x_pos = contact_edge(game) as u16);
-        word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
+        let edge = contact_edge(game) as u16;
+        game.set_player_x(edge);
+        game.set_previous_player_x(game.player_x());
         word!(game.extra_samus_x_displacement = -4i32 as u16);
         word!(game.extra_samus_y_displacement = -1i32 as u16);
     }
@@ -651,7 +652,7 @@ pub fn power_bomb<H: Host + ?Sized>(game: &mut H) {
 pub fn not_started<H: Host + ?Sized>(game: &mut H) {
     update_wall(game);
     crate::word_transfers!(game, ascending, 1; native(0xcd24) <- value(257));
-    if word!(game.samus_x_pos) as i32 - 1312i32 & 0x8000 == 0 {
+    if game.player_x() as i32 - 1312i32 & 0x8000 == 0 {
         crate::word_transfers!(game, ascending, 1; native(0xcd24) <- value(256));
     }
     update_background(word!(game.cur_enemy_index), game);
@@ -1033,7 +1034,7 @@ pub fn falling<H: Host + ?Sized>(game: &mut H) {
 /// Crocomire main AI - death sequence index 3Eh - behind wall - wait for Samus ($A4:97D3). Was
 /// `release_skeleton_room`.
 pub fn behind_wall_wait_for_samus<H: Host + ?Sized>(game: &mut H) {
-    if (word!(game.samus_x_pos) as i16).wrapping_sub(640) >= 0 {
+    if (game.player_x() as i16).wrapping_sub(640) >= 0 {
         return;
     }
     game.queue_music_delayed(5);

@@ -18,7 +18,7 @@ pub trait SaveRam {
 }
 
 /// The runtime operations the menus call.
-pub trait MenuRuntime {
+pub trait MenuRuntime: crate::player_position::PlayerPosition {
     fn set_hdma_enabled(&mut self, enabled: bool);
     fn clear_hdma(&mut self);
     /// Queue a tilemap transfer whose source and destination are read from
@@ -97,6 +97,7 @@ pub trait MenuRuntime {
 
 pub trait Host:
     CompatibilityRam
+    + crate::player_position::PlayerPosition
     + WorkRamAccess
     + LoadedRom
     + Registers

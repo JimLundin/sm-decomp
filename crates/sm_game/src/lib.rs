@@ -142,6 +142,7 @@ pub mod palette_effects {
     pub mod fading;
 }
 pub mod player_movement;
+pub mod player_position;
 pub mod player_projectiles {
     pub mod access;
     pub mod animation;

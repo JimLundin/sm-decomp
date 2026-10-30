@@ -255,8 +255,8 @@ fn begin_connection<H: Host + ?Sized>(pose: u16, transition_graphics: u16, game:
     word!(game.samus_new_pose_interrupted = pose);
     word!(game.samus_special_transgfx_index = transition_graphics);
     let angle = u16::swap_bytes(actor_api::angle_from_delta(
-        (word!(game.samus_x_pos)).wrapping_sub(word!(game.grapple_beam_end_x_pos)),
-        (word!(game.samus_y_pos)).wrapping_sub(word!(game.grapple_beam_end_y_pos)),
+        (game.player_x()).wrapping_sub(word!(game.grapple_beam_end_x_pos)),
+        (game.player_y()).wrapping_sub(word!(game.grapple_beam_end_y_pos)),
     ));
     word!(game.grapple_beam_end_angle16 = angle);
     word!(game.grapple_beam_end_angles_mirror = angle);
@@ -503,15 +503,15 @@ macro_rules! initialize_grapple_endpoints {
         word! { $game;
             grapple_beam_origin_x_offset = origin.x;
             grapple_beam_origin_y_offset = origin.y.wrapping_sub($y_adjustment);
-            grapple_beam_end_x_pos = origin.x.wrapping_add(word!($game.samus_x_pos));
+            grapple_beam_end_x_pos = origin.x.wrapping_add($game.player_x());
             x_pos_of_start_of_grapple_beam = word!($game.grapple_beam_end_x_pos);
             x_pos_of_start_of_grapple_beam_prevframe =
-                origin.previous_x.wrapping_add(word!($game.samus_x_pos));
-            grapple_beam_end_y_pos = (origin.y as i32 + word!($game.samus_y_pos) as i32
+                origin.previous_x.wrapping_add($game.player_x());
+            grapple_beam_end_y_pos = (origin.y as i32 + $game.player_y() as i32
                 - $y_adjustment as i32) as u16;
             y_pos_of_start_of_grapple_beam = word!($game.grapple_beam_end_y_pos);
             y_pos_of_start_of_grapple_beam_prevframe = (origin.previous_y as i32
-                + word!($game.samus_y_pos) as i32
+                + $game.player_y() as i32
                 - $y_adjustment as i32) as u16;
         }
     };
@@ -569,13 +569,13 @@ macro_rules! restore_grapple_start_positions {
         let v1: i32 = $pose_offset as i32 >> 1;
         let origin = grapple_origins::origin($game, OriginSet::$set, v1 as isize);
         word! { $game;
-            x_pos_of_start_of_grapple_beam = origin.x.wrapping_add(word!($game.samus_x_pos));
+            x_pos_of_start_of_grapple_beam = origin.x.wrapping_add($game.player_x());
             x_pos_of_start_of_grapple_beam_prevframe =
-                origin.previous_x.wrapping_add(word!($game.samus_x_pos));
-            y_pos_of_start_of_grapple_beam = (origin.y as i32 + word!($game.samus_y_pos) as i32
+                origin.previous_x.wrapping_add($game.player_x());
+            y_pos_of_start_of_grapple_beam = (origin.y as i32 + $game.player_y() as i32
                 - $y_adjustment as i32) as u16;
             y_pos_of_start_of_grapple_beam_prevframe = (origin.previous_y as i32
-                + word!($game.samus_y_pos) as i32
+                + $game.player_y() as i32
                 - $y_adjustment as i32) as u16;
         }
     };
@@ -625,8 +625,7 @@ pub fn position_swing<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn clamp_swing_position<H: Host + ?Sized>(game: &mut H) {
-    let mut v0: i16 =
-        ((word!(game.samus_x_pos)) as i16).wrapping_sub((word!(game.samus_prev_x_pos)) as i16);
+    let mut v0: i16 = ((game.player_x()) as i16).wrapping_sub((game.previous_player_x()) as i16);
     pt::clamp_previous_position(
         crate::session_access::SessionAccess::session_mut(&mut game.runtime()),
         v0,
@@ -639,10 +638,10 @@ pub fn position_anchored<H: Host + ?Sized>(game: &mut H) {
     word! { game;
         samus_x_pos = (word!(game.x_pos_of_start_of_grapple_beam)).wrapping_sub(origin.x);
         x_pos_of_start_of_grapple_beam_prevframe =
-            origin.previous_x.wrapping_add(word!(game.samus_x_pos));
+            origin.previous_x.wrapping_add(game.player_x());
         samus_y_pos = (word!(game.y_pos_of_start_of_grapple_beam)).wrapping_sub(origin.y);
         y_pos_of_start_of_grapple_beam_prevframe =
-            origin.previous_y.wrapping_add(word!(game.samus_y_pos));
+            origin.previous_y.wrapping_add(game.player_y());
     }
 }
 

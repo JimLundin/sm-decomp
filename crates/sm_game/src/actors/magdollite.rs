@@ -414,7 +414,7 @@ pub fn finish_arm_growth<H: Host + ?Sized>(k: u16, game: &mut H) {
         step = (level >> 1) as isize;
         ((slot!(game, Arm[arm].base.y_pos) as i32
             - game.magdollite_arm(ARM_Y_OFFSET_ADDRESS, step) as i32
-            - word!(game.samus_y_pos) as i32) as i16)
+            - game.player_y() as i32) as i16)
             < 0
     };
     let next_level = if at_samus {
