@@ -20,9 +20,8 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H, upload: fn(&mut H)) {
         game.ram().write_byte(mirror, 0);
     }
     upload(game);
-    word! { game, 0;
-        reg_BG1HOFS, reg_BG1VOFS, reg_BG2HOFS, reg_BG2VOFS, debug_invincibility,
-    }
+    scroll! { game, 0; Bg1H, Bg1V, Bg2H, Bg2V }
+    word!(game.debug_invincibility = 0);
     crate::word_transfers!(game, descending, 256; le(palette_buffer, 255) <- rom(0x8ee400, 255));
     for (index, source) in [0x978df4, 0x978fcd, 0x9791c4, 0x97938d, 0x97953a]
         .into_iter()
@@ -262,11 +261,11 @@ fn reset_bindings<H: Host + ?Sized>(game: &mut H) {
 
 pub fn scroll<const DOWN: bool, H: Host + ?Sized>(game: &mut H) {
     if DOWN {
-        word!(game.reg_BG1VOFS += 2);
+        scroll!(game.Bg1V += 2);
     } else {
-        word!(game.reg_BG1VOFS -= 2);
+        scroll!(game.Bg1V -= 2);
     }
-    if word!(game.reg_BG1VOFS) == if DOWN { 32 } else { 0 } {
+    if scroll!(game.Bg1V) == if DOWN { 32 } else { 0 } {
         word!(game.game_options_screen_index = 7);
     }
 }
@@ -295,16 +294,14 @@ pub fn fade_out<H: Host + ?Sized>(game: &mut H, screen: u16, enable: fn(&mut H))
     match screen {
         0 => word!(game.game_options_screen_index += 1),
         5 => {
-            word!(game.reg_BG1VOFS = 0);
+            scroll!(game.Bg1V = 0);
             word!(game.game_options_screen_index += 1);
             replace_screen(game);
         }
         11 => {
             word!(game.game_state = 4);
-            {
-                crate::menu!(game.menu_index = 0);
-                word!(game.game_options_screen_index = 0);
-            }
+            crate::menu!(game.menu_index = 0);
+            word!(game.game_options_screen_index = 0);
         }
         _ => word!(game.game_options_screen_index = 4),
     }

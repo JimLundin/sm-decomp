@@ -166,20 +166,16 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn record_completion<H: Host + ?Sized>(game: &mut H) {
-    {
-        game.sram().write_bytes(0x1fe0, b"supermetroid");
-        game.flush_sram();
-    }
+    game.sram().write_bytes(0x1fe0, b"supermetroid");
+    game.flush_sram();
 }
 pub fn verify_boot<H: Host + ?Sized>(game: &mut H) {
-    {
-        crate::flow::set(game, crate::flow::Word::NumDemoSets, 3);
-        if (0..3).all(|slot| load(slot, game) != 0) {
-            game.sram().write_bytes(0x1fe0, b"madadameyohn");
-            game.flush_sram();
-        } else if game.sram().bytes(crate::save_file::header::SIGNATURE) == b"supermetroid" {
-            crate::flow::set(game, crate::flow::Word::NumDemoSets, 4);
-        }
+    crate::flow::set(game, crate::flow::Word::NumDemoSets, 3);
+    if (0..3).all(|slot| load(slot, game) != 0) {
+        game.sram().write_bytes(0x1fe0, b"madadameyohn");
+        game.flush_sram();
+    } else if game.sram().bytes(crate::save_file::header::SIGNATURE) == b"supermetroid" {
+        crate::flow::set(game, crate::flow::Word::NumDemoSets, 4);
     }
 }
 

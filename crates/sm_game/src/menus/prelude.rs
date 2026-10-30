@@ -30,45 +30,42 @@ macro_rules! words {
 }
 pub(crate) use words;
 
-/// Typed access to Samus's inventory words through the host's projected
-/// bytes, by [`crate::inventory::Word`] variant, in the shapes the named word
-/// accesses used: read, store, a store of one value to several words,
-/// `+=`/`-=`/`&=` (reading the old value first), and those with a reread of
-/// the stored value.
-macro_rules! inventory {
-    ($game:ident.$word:ident) => {
-        $crate::inventory::get(&*$game, $crate::inventory::Word::$word)
-    };
-    ($game:ident.$word:ident = $value:expr $(,)?) => {{
+/// Typed access to Session-owned words through a view's projected-byte `get`
+/// and `set`, by its `Word` variant, in the shapes the named word accesses
+/// used: read, store, a store of one value to several words, `+=`/`-=`/`&=`
+/// (reading the old value first), and those with a reread.
+macro_rules! owned {
+    ([$($v:tt)*] $game:ident.$word:ident) => { $($v)*::get(&*$game, $($v)*::Word::$word) };
+    ([$($v:tt)*] $game:ident.$word:ident = $value:expr $(,)?) => {{
         let value: u16 = $value;
-        $crate::inventory::set($game, $crate::inventory::Word::$word, value)
+        $($v)*::set($game, $($v)*::Word::$word, value)
     }};
-    ($game:ident.$word:ident += $value:expr $(,)?) => {
-        $crate::menus::prelude::inventory!(@update $game.$word, |old| old.wrapping_add($value))
-    };
-    ($game:ident.$word:ident -= $value:expr $(,)?) => {
-        $crate::menus::prelude::inventory!(@update $game.$word, |old| old.wrapping_sub($value))
-    };
-    ($game:ident.$word:ident &= $value:expr $(,)?) => {
-        $crate::menus::prelude::inventory!(@update $game.$word, |old| old & $value)
-    };
-    ($game:ident.$word:ident $op:tt $value:expr, reread $(,)?) => {{
-        $crate::menus::prelude::inventory!($game.$word $op $value);
-        $crate::inventory::get(&*$game, $crate::inventory::Word::$word)
+    ([$($v:tt)*] $game:ident.$word:ident $op:tt $value:expr, reread $(,)?) => {{
+        owned!([$($v)*] $game.$word $op $value);
+        $($v)*::get(&*$game, $($v)*::Word::$word)
     }};
-    ($game:ident, $value:expr; $($word:ident),+ $(,)?) => {
-        $($crate::menus::prelude::inventory!($game.$word = $value);)+
-    };
-    ($game:ident; $($word:ident = $value:expr;)+) => {
-        $($crate::menus::prelude::inventory!($game.$word = $value);)+
-    };
-    (@update $game:ident.$word:ident, |$old:ident| $value:expr) => {{
-        let $old = $crate::inventory::get(&*$game, $crate::inventory::Word::$word);
-        let value: u16 = $value;
-        $crate::inventory::set($game, $crate::inventory::Word::$word, value)
+    ([$($v:tt)*] $game:ident.$word:ident $op:tt $value:expr $(,)?) => {{
+        let old = $($v)*::get(&*$game, $($v)*::Word::$word);
+        let value: u16 = owned!(@op old $op $value);
+        $($v)*::set($game, $($v)*::Word::$word, value)
     }};
+    (@op $old:ident += $value:expr) => { $old.wrapping_add($value) };
+    (@op $old:ident -= $value:expr) => { $old.wrapping_sub($value) };
+    (@op $old:ident &= $value:expr) => { $old & $value };
+    ($view:tt $game:ident, $value:expr; $($word:ident),+ $(,)?) => {
+        $(owned!($view $game.$word = $value);)+
+    };
+    ($view:tt $game:ident; $($word:ident = $value:expr;)+) => {
+        $(owned!($view $game.$word = $value);)+
+    };
 }
+pub(crate) use owned;
+/// Samus's inventory words ([`crate::inventory::Word`]).
+macro_rules! inventory { ($($t:tt)*) => { owned!([$crate::inventory] $($t)*) }; }
 pub(crate) use inventory;
+/// The BG scroll mirrors ([`crate::display::sequence::scroll::Word`]).
+macro_rules! scroll { ($($t:tt)*) => { owned!([$crate::display::sequence::scroll] $($t)*) }; }
+pub(crate) use scroll;
 
 /// A word pair addressed as an enemy-slot record, as the original's `PairU16`.
 #[derive(Copy, Clone)]

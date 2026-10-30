@@ -109,9 +109,7 @@ fn prepare<H: Host + ?Sized>(game: &mut H) {
         game.clear_hdma();
         crate::menu!(game.menu_index += 1);
         menu_tilemap::prepare_graphics(game);
-        word! { game, 0;
-            reg_BG1HOFS, reg_BG2HOFS, reg_BG3HOFS, reg_BG1VOFS, reg_BG2VOFS, reg_BG3VOFS,
-        }
+        scroll! { game, 0; Bg1H, Bg2H, Bg3H, Bg1V, Bg2V, Bg3V }
         menu_tilemap::load_palette(game);
     }
 }

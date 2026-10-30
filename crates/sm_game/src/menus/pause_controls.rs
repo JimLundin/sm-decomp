@@ -53,7 +53,7 @@ pub fn update_map<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 }
 
 pub fn update_equipment<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    word! { game, 0; reg_BG1HOFS, reg_BG1VOFS }
+    scroll! { game, 0; Bg1H, Bg1V }
     equipment_menu::update(game);
     advance(game);
     crate::menu!(game.pause_screen_mode = 1);
@@ -113,7 +113,7 @@ pub fn load_tab<H: crate::menus::host::Host + ?Sized>(
     }
     upload(game);
     if equipment {
-        word!(game.reg_BG1VOFS = 0);
+        scroll!(game.Bg1V = 0);
         crate::menu!(game.pause_screen_mode = 1);
     }
     menu_tilemap::pause_labels(crate::menu!(game.pausemenu_button_label_mode), game);
@@ -154,10 +154,10 @@ pub fn draw_unpause<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 
 pub fn resume<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     let camera = crate::camera::current(game);
-    word!(game.reg_BG1HOFS = camera.bg1_offset[0].wrapping_add(camera.layer1[0]));
-    word!(game.reg_BG1VOFS = camera.bg1_offset[1].wrapping_add(camera.layer1[1]));
-    word!(game.reg_BG2HOFS = camera.bg2_scroll[0].wrapping_add(camera.layer2[0]));
-    word!(game.reg_BG2VOFS = camera.bg2_scroll[1].wrapping_add(camera.layer2[1]));
+    scroll!(game.Bg1H = camera.bg1_offset[0].wrapping_add(camera.layer1[0]));
+    scroll!(game.Bg1V = camera.bg1_offset[1].wrapping_add(camera.layer1[1]));
+    scroll!(game.Bg2H = camera.bg2_scroll[0].wrapping_add(camera.layer2[0]));
+    scroll!(game.Bg2V = camera.bg2_scroll[1].wrapping_add(camera.layer2[1]));
     game.update_beam_tiles_and_palette();
     // Palette timer/frame and pause_screen_mode survive this ordered reset.
     crate::word_transfers!(game, ascending, 10; little(fields::menu_index) <- value(0));
@@ -228,11 +228,9 @@ fn shoulder_input<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
             return;
         };
     crate::menu!(game.pausemenu_start_lr_pressed_highlight_timer = 5);
-    {
-        crate::menu!(game.menu_index = menu);
-        crate::menu!(game.pausemenu_shoulder_button_highlight = highlight);
-        crate::menu!(game.pausemenu_button_label_mode = mode);
-    }
+    crate::menu!(game.menu_index = menu);
+    crate::menu!(game.pausemenu_shoulder_button_highlight = highlight);
+    crate::menu!(game.pausemenu_button_label_mode = mode);
     menu_tilemap::pause_labels(crate::menu!(game.pausemenu_button_label_mode), game);
     game.queue_sound(0, 0x38_u8, 6);
 }

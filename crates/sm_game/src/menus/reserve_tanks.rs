@@ -5,8 +5,8 @@ use super::prelude::*;
 use crate::ram::word;
 
 pub fn prepare_menu<H: Host + ?Sized>(game: &mut H) {
-    word! {game; reg_BG4HOFS = word!(game.reg_BG1HOFS); reg_BG4VOFS = word!(game.reg_BG1VOFS); }
-    word! { game, 0; reg_BG1HOFS, reg_BG1VOFS }
+    scroll! {game; Bg4H = scroll!(game.Bg1H); Bg4V = scroll!(game.Bg1V); }
+    scroll! { game, 0; Bg1H, Bg1V }
     if inventory!(game.MaxReserveHealth) != 0 && inventory!(game.ReserveMode) != 0 {
         let address = if inventory!(game.ReserveMode) == 1 {
             0x82bf2a
@@ -104,10 +104,8 @@ pub fn transfer_manual<H: Host + ?Sized>(game: &mut H) {
     if transfer_one(true, game) {
         return;
     }
-    {
-        inventory!(game.ReserveHealth = 0);
-        crate::menu!(game.pausemenu_reserve_tank_delay_ctr = 0);
-    }
+    inventory!(game.ReserveHealth = 0);
+    crate::menu!(game.pausemenu_reserve_tank_delay_ctr = 0);
     menu_tilemap::reserve_arrow_tiles(false, game);
     crate::menu!(game.pausemenu_equipment_category_item = 0);
 }

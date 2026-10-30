@@ -30,73 +30,67 @@ pub fn advance<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> CoroutineR
 }
 
 fn prepare<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    {
-        game.fade(false);
-        if game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf != 0 {
-            return;
-        }
-        game.set_blank(true);
-        game.queue_sound(2, 1_u8, 6);
-        game.set_hdma_enabled(false);
-        game.clear_hdma();
-        crate::word_transfers!(game, ascending, 256; pause_map(384) <- le(palette_buffer, 0));
-        crate::word_transfers!(game, ascending, 27; pause_map(640) <- native(0x51));
-        menu_tilemap::prepare_graphics(game);
-        word! { game, 0;
-            reg_BG1HOFS, reg_BG2HOFS, reg_BG3HOFS, reg_BG1VOFS, reg_BG2VOFS, reg_BG3VOFS,
-        }
-        menu_tilemap::load_palette(game);
-        crate::menu!(game.menu_index += 1);
+    game.fade(false);
+    if game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf != 0 {
+        return;
     }
+    game.set_blank(true);
+    game.queue_sound(2, 1_u8, 6);
+    game.set_hdma_enabled(false);
+    game.clear_hdma();
+    crate::word_transfers!(game, ascending, 256; pause_map(384) <- le(palette_buffer, 0));
+    crate::word_transfers!(game, ascending, 27; pause_map(640) <- native(0x51));
+    menu_tilemap::prepare_graphics(game);
+    scroll! { game, 0; Bg1H, Bg2H, Bg3H, Bg1V, Bg2V, Bg3V }
+    menu_tilemap::load_palette(game);
+    crate::menu!(game.menu_index += 1);
 }
 
 fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    {
-        for (at, value) in [(0x69, 17), (0x74, 32), (0x75, 64), (0x76, 0x80)] {
-            game.ram().write_byte(at, value);
-        }
-        game.queue_music_delayed8(0);
-        game.queue_music_delayed8(0xff03);
-        with_file_select(game, |menu| {
-            *menu.missile_animation_timer() = 1;
-            *menu.missile_animation_frame() = 0;
-        });
-        crate::word_transfers!(game, ascending, 1024; native(menu_tilemap::MENU_TILEMAP) <- value(menu_tilemap::BLANK_TILE));
-        menu_tilemap::upload(
-            menu_tilemap::MENU_TILEMAP_BYTES,
-            menu_tilemap::MENU_TILEMAP_SOURCE,
-            0,
-            true,
-            game,
-        );
-        menu_tilemap::set_palette(0, game);
-        for (destination, text) in [
-            (0x156, addr_kMenuTilemap_GameOver),
-            (0x38a, addr_kMenuTilemap_FindMetroidLarva),
-            (0x414, addr_kMenuTilemap_TryAgain),
-            (0x4ce, addr_kMenuTilemap_YesReturnToGame),
-            (0x5ce, addr_kMenuTilemap_NoGoToTitle),
-        ] {
-            menu_tilemap::load(destination, text as u16, game);
-        }
-        start_baby(0, 0, game);
-        animate_baby(game, |game| {
-            game.rtl_unreachable();
-        });
-        let color = u16::from(game.ram().read_byte(crate::ram::bytes::gameplay_CGWSEL)) << 8;
-        game.ram()
-            .copy_in(crate::ram::mirror::CGWSEL, &color.to_ne_bytes());
-        game.set_hdma_enabled(false);
-        game.clear_hdma();
-        game.set_hdma_enabled(true);
-        for (register, script) in [(0x32, 0x927d), (0x31, 0x928d)] {
-            game.spawn_hdma(0x81, &SpawnHdmaObject_Args::new(0, register, script));
-        }
-        game.set_blank(false);
-        crate::menu!(game.menu_index += 1);
-        word! { game, 0; screen_fade_delay, screen_fade_counter, file_select_map_area_index }
-        place_missile(FIRST_CHOICE_ROW, game);
+    for (at, value) in [(0x69, 17), (0x74, 32), (0x75, 64), (0x76, 0x80)] {
+        game.ram().write_byte(at, value);
     }
+    game.queue_music_delayed8(0);
+    game.queue_music_delayed8(0xff03);
+    with_file_select(game, |menu| {
+        *menu.missile_animation_timer() = 1;
+        *menu.missile_animation_frame() = 0;
+    });
+    crate::word_transfers!(game, ascending, 1024; native(menu_tilemap::MENU_TILEMAP) <- value(menu_tilemap::BLANK_TILE));
+    menu_tilemap::upload(
+        menu_tilemap::MENU_TILEMAP_BYTES,
+        menu_tilemap::MENU_TILEMAP_SOURCE,
+        0,
+        true,
+        game,
+    );
+    menu_tilemap::set_palette(0, game);
+    for (destination, text) in [
+        (0x156, addr_kMenuTilemap_GameOver),
+        (0x38a, addr_kMenuTilemap_FindMetroidLarva),
+        (0x414, addr_kMenuTilemap_TryAgain),
+        (0x4ce, addr_kMenuTilemap_YesReturnToGame),
+        (0x5ce, addr_kMenuTilemap_NoGoToTitle),
+    ] {
+        menu_tilemap::load(destination, text as u16, game);
+    }
+    start_baby(0, 0, game);
+    animate_baby(game, |game| {
+        game.rtl_unreachable();
+    });
+    let color = u16::from(game.ram().read_byte(crate::ram::bytes::gameplay_CGWSEL)) << 8;
+    game.ram()
+        .copy_in(crate::ram::mirror::CGWSEL, &color.to_ne_bytes());
+    game.set_hdma_enabled(false);
+    game.clear_hdma();
+    game.set_hdma_enabled(true);
+    for (register, script) in [(0x32, 0x927d), (0x31, 0x928d)] {
+        game.spawn_hdma(0x81, &SpawnHdmaObject_Args::new(0, register, script));
+    }
+    game.set_blank(false);
+    crate::menu!(game.menu_index += 1);
+    word! { game, 0; screen_fade_delay, screen_fade_counter, file_select_map_area_index }
+    place_missile(FIRST_CHOICE_ROW, game);
 }
 
 fn wait_for_music<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
