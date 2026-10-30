@@ -538,33 +538,16 @@ macro_rules! queue_dead_torizo_tile_transfers {
         let mut v9: u16 = torizo_corpse_tables::transfer_size($game, $frame, 0);
         loop {
             let entry = usize::try_from(0xd0i32 + $tail as i32).expect("VRAM entry outside RAM");
-            {
-                let value: u16 = v9;
-                let at: usize = entry;
-                let bytes = value.to_ne_bytes();
-                SessionRam::set_byte($game, at, bytes[0]);
-                SessionRam::set_byte($game, at + 1, bytes[1]);
-            };
+            SessionRam::write_word_native($game, v9, entry);
             let transfer = torizo_corpse_tables::transfer($game, $frame, (v8 >> 3) as isize);
-            {
-                let value: u16 = transfer.source_bank;
-                let at: usize = entry + 3;
-                let bytes = value.to_ne_bytes();
-                SessionRam::set_byte($game, at, bytes[0]);
-                SessionRam::set_byte($game, at + 1, bytes[1]);
-            };
-            {
-                let value: u16 = transfer.source_address;
-                let at: usize = entry + 2;
-                let bytes = value.to_ne_bytes();
-                SessionRam::set_byte($game, at, bytes[0]);
-                SessionRam::set_byte($game, at + 1, bytes[1]);
-            };
-            let value: u16 = transfer.vram_address;
-            let at: usize = entry + 5;
-            let bytes = value.to_ne_bytes();
-            SessionRam::set_byte($game, at, bytes[0]);
-            SessionRam::set_byte($game, at + 1, bytes[1]);
+            // The source address overwrites the bank word's low byte, as in the original.
+            for (offset, value) in [
+                (3, transfer.source_bank),
+                (2, transfer.source_address),
+                (5, transfer.vram_address),
+            ] {
+                SessionRam::write_word_native($game, value, entry + offset);
+            }
             $tail = ($tail).wrapping_add(7);
             v8 = (v8).wrapping_add(8);
             v9 = torizo_corpse_tables::transfer_size($game, $frame, (v8 >> 3) as isize);
@@ -596,9 +579,7 @@ pub fn copy_line_of_sand_heap_tile_data(a: u16, game: &mut impl State) {
     for step in 0..18 {
         let value = crate::sand_heap::word(game, (v2 + 8 * step) as usize);
         let at = 0x9500 + 0x10 * step as usize + usize::from(v1);
-        let bytes = value.to_ne_bytes();
-        SessionRam::set_byte(game, at, bytes[0]);
-        SessionRam::set_byte(game, at + 1, bytes[1]);
+        SessionRam::write_word_native(game, value, at);
     }
 }
 pub fn initialize_alive_sidehopper_corpse(game: &mut impl Lease) {

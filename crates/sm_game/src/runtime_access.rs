@@ -65,6 +65,12 @@ pub trait SessionRam {
         self.set_byte(at, low);
         self.set_byte(at + 1, high);
     }
+    /// Store `value` in native byte order, a byte at a time.
+    fn write_word_native(&mut self, value: u16, at: usize) {
+        let [first, second] = value.to_ne_bytes();
+        self.set_byte(at, first);
+        self.set_byte(at + 1, second);
+    }
     fn write_slice_le(&mut self, at: usize, value: u16) {
         self.write_slice(at, &value.to_le_bytes());
     }
