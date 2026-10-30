@@ -12,6 +12,10 @@ use crate::game_state::Game;
 use crate::ram_map::{slot, word, word_arrays};
 use crate::rtl::{abs16, words};
 use crate::types::Point16U;
+pub(crate) use sm_game::actors::spore_spawn::{
+    clear_damaged_flag, harden, increase_max_x_radius, set_function,
+    set_max_x_radius_and_angle_delta,
+};
 use sm_game::enemy_script::EnemyScript;
 use sm_game::gameplay_flag_host::BossWordOrder;
 use sm_game::geometry::Vector32;
@@ -259,3 +263,11 @@ pub(crate) fn emit_hurt(script: EnemyScript, game: &mut Game) -> EnemyScript {
     QueueSfx2_Max6(0x25, game);
     script
 }
+
+// The named bank $A5 instructions are the ones `sm_a5` dispatches on.
+const _: () = {
+    use sm_game::actors::spore_spawn::instruction as i;
+    assert!(i::INCREASE_MAX_X_RADIUS == 10872671 && i::CLEAR_DAMAGED_FLAG == 10872689);
+    assert!(i::SET_MAX_X_RADIUS_AND_ANGLE_DELTA == 10872877 && i::HARDEN == 10872956);
+    assert!(i::SET_FUNCTION == 10873018);
+};

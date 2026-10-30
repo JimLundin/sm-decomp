@@ -264,24 +264,3 @@ pub fn tangible<H: Host + ?Sized>(script: EnemyScript, game: &mut H) -> EnemyScr
     slot!(game, Draygon[0].base.properties, |old| old | 0x400);
     script
 }
-
-pub fn increase_grab_speed<H: Host + ?Sized>(game: &mut H) {
-    if slot!(game, Draygon[0].var_0B) as i32 - 40 & 0x8000 != 0 {
-        slot!(game, Draygon[0].var_0B, |old| old.wrapping_add(8));
-    }
-}
-pub fn clear_grab_rotation<H: Host + ?Sized>(game: &mut H) {
-    slot!(game, Draygon[0].var_2F = 0);
-}
-pub fn grab_timers<H: Host + ?Sized>(script: EnemyScript, game: &mut H) -> EnemyScript {
-    slot!(game, Draygon[0]; var_0B = script.word(0), var_0C = script.word(2));
-    script.offset(2)
-}
-pub fn place_grab_start<H: Host + ?Sized>(game: &mut H) {
-    slot!(game, Draygon[0].base; x_pos = 128, y_pos = 624,
-        properties = slot!(game, Draygon[0].base.properties) & 0x5bff | 0xa000);
-}
-pub fn set_state<H: Host + ?Sized>(state: u16, game: &mut H) {
-    let k = word!(game.cur_enemy_index) as i32;
-    slot!(game, Draygon[k].var_A = state);
-}

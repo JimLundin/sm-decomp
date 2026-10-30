@@ -86,13 +86,13 @@ crate::game::callback_dispatch! {
     call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
     @body checked;
     @external {
-        10872671 => [{ actors::draygon_flight::increase_grab_speed(game); j }];
-        10872689 => [{ actors::draygon_flight::clear_grab_rotation(game); j }];
-        10872877 => [actors::draygon_flight::grab_timers(j, game)];
+        10872671 => [{ actors::spore_spawn::increase_max_x_radius(game); j }];
+        10872689 => [{ actors::spore_spawn::clear_damaged_flag(game); j }];
+        10872877 => [actors::spore_spawn::set_max_x_radius_and_angle_delta(j, game)];
         10872946 => [{ word!(game.kraid_unk9000 = j.word(0)); j.offset(1) }];
-        10872956 => [{ actors::draygon_flight::place_grab_start(game); j }];
+        10872956 => [{ actors::spore_spawn::harden(game); j }];
         10872981 => [{ QueueSfx2_Max6(j.word(0), game); j.offset(1) }];
-        10873018 => [{ actors::draygon_flight::set_state(j.word(0), game); j.offset(1) }];
+        10873018 => [{ actors::spore_spawn::set_function(j.word(0), game); j.offset(1) }];
         10873034 => [actors::spore_spawn::fade(false, j, game)];
         10873116 => [actors::spore_spawn::fade(true, j, game)];
         10873198 => [actors::spore_spawn::emit_spore(j, game)];
