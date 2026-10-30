@@ -63,7 +63,7 @@ pub fn advance_and_draw<H: Host + ?Sized>(game: &mut H) {
     }
     for slot in (0..8).rev() {
         if word!(game.cinematicbg_arr8[slot]) != 0 {
-            game.paletted_sprite(
+            crate::sprite_output::paletted(
                 0x82,
                 word!(game.cinematicbg_arr8[slot]),
                 (
@@ -71,7 +71,8 @@ pub fn advance_and_draw<H: Host + ?Sized>(game: &mut H) {
                     word!(game.cinematicbg_arr9[slot]),
                 ),
                 word!(game.optionsmenu_arr10[slot]),
-                true,
+                crate::sprite_drawing::Clip::Bounded,
+                game,
             );
         }
     }

@@ -1,10 +1,10 @@
 //! The compatibility runtime as the `sm_game::menus` host.
 use crate::game::room_entry::{ArrivalRequest, StartSite};
 use crate::game::session_runtime::Runtime;
-use crate::game::{projectile_presentation_ram as sprites, sprite_drawing::Clip, visual_runtime};
+use crate::game::visual_runtime;
 use crate::game_state::Game;
 use crate::save_ram::SaveRam;
-use sm_game::menus::host::{Host, MenuRuntime, MenuSprites};
+use sm_game::menus::host::{Host, MenuRuntime};
 
 impl sm_game::menus::host::SaveRam for SaveRam {
     fn word(&self, at: usize) -> u16 {
@@ -27,35 +27,20 @@ impl sm_game::menus::host::SaveRam for SaveRam {
     }
 }
 
-impl MenuSprites for Game {
-    fn menu_sprite(&mut self, index: u16, x: u16, y: u16, palette: u16) {
-        sprites::menu(index, x, y, palette, self)
+impl sm_game::sprite_output::SpriteHost for Game {
+    fn warn_invalid_rom(&mut self, address: u32) {
+        // SAFETY: a C-string literal and one integer argument, as the format expects.
+        unsafe {
+            crate::c_library::printf(
+                c"RomPtr - Invalid access 0x%x!
+"
+                .as_ptr(),
+                address,
+            );
+        }
     }
-    fn menu_selection_sprite(&mut self) {
-        sprites::menu_selection(self)
-    }
-    fn file_slot_cursor(&mut self, exit_y: u16) {
-        sprites::file_slot_cursor(exit_y, self)
-    }
-    fn file_helmets(&mut self, animate: bool) {
-        sprites::file_helmets(animate, self)
-    }
-    fn file_menu_cursor(&mut self) {
-        sprites::file_menu_cursor(self)
-    }
-    fn file_copy_arrow(&mut self) {
-        sprites::file_copy_arrow(self)
-    }
-    fn paletted_sprite(
-        &mut self,
-        bank: u8,
-        address: u16,
-        position: (u16, u16),
-        palette: u16,
-        bounded: bool,
-    ) {
-        assert!(bounded, "menus draw only bounded sprites");
-        sprites::paletted(bank, address, position, palette, Clip::Bounded, self)
+    fn set_failure(&mut self) {
+        self.g_fail = true;
     }
 }
 

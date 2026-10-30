@@ -2,7 +2,6 @@
 //! cartridge, register writes, sound and brightness, plus the sprite,
 //! HDMA, display-refresh and room-entry operations still
 //! implemented by the compatibility runtime.
-use crate::cartridge::{LoadedImage, NativeImage};
 use crate::display::sequence::Registers;
 use crate::effects::{DisplayRefresh, SoundEffects};
 use crate::ram::{CompatibilityRam, WorkRamAccess};
@@ -16,26 +15,6 @@ pub trait SaveRam {
     fn write_bytes(&self, at: usize, input: &[u8]);
     fn copy_within(&self, source: core::ops::Range<usize>, destination: usize);
     fn fill(&self, range: core::ops::Range<usize>, value: u8);
-}
-
-/// Menu sprite output into the OAM buffer.
-pub trait MenuSprites {
-    fn menu_sprite(&mut self, index: u16, x: u16, y: u16, palette: u16);
-    fn menu_selection_sprite(&mut self);
-    fn file_slot_cursor(&mut self, exit_y: u16);
-    fn file_helmets(&mut self, animate: bool);
-    fn file_menu_cursor(&mut self);
-    fn file_copy_arrow(&mut self);
-    /// A bank `bank` spritemap at `address`, recoloured with `palette`;
-    /// `bounded` clips it to the screen.
-    fn paletted_sprite(
-        &mut self,
-        bank: u8,
-        address: u16,
-        position: (u16, u16),
-        palette: u16,
-        bounded: bool,
-    );
 }
 
 /// The runtime operations the menus call.
@@ -78,12 +57,10 @@ pub trait Host:
     CompatibilityRam
     + WorkRamAccess
     + LoadedRom
-    + LoadedImage
-    + NativeImage
     + Registers
     + SoundEffects
     + DisplayRefresh
-    + MenuSprites
+    + crate::sprite_output::SpriteHost
     + MenuRuntime
 {
     type Sram: SaveRam + ?Sized;

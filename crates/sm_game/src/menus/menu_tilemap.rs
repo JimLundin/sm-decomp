@@ -606,7 +606,7 @@ fn reserve_palette<H: Host + ?Sized>(game: &mut H) -> u16 {
 
 fn reserve_sprite<H: Host + ?Sized>(sprite: u16, index: usize, palette: u16, game: &mut H) {
     const X: [u16; 6] = [0x18, 0x20, 0x28, 0x30, 0x38, 0x40];
-    game.menu_sprite(sprite, X[index], 0x5f, palette);
+    crate::sprite_output::menu(sprite, X[index], 0x5f, palette, game);
 }
 
 pub fn reserve_tanks<H: Host + ?Sized>(game: &mut H) {

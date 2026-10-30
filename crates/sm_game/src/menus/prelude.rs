@@ -1,6 +1,6 @@
 //! Names every menu module uses: the named-RAM macros, the shared constants,
 //! the register addresses and the host traits.
-pub use super::host::{Host, MenuRuntime as _, MenuSprites as _, SaveRam as _};
+pub use super::host::{Host, MenuRuntime as _, SaveRam as _};
 pub use crate::cartridge::{LoadedImage as _, NativeImage as _};
 pub use crate::constants::buttons::*;
 pub use crate::constants::game_states::*;

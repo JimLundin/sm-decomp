@@ -38,7 +38,9 @@ pub mod ram;
 pub mod room_entry;
 pub mod save_file;
 pub mod special_geometry;
+pub mod sprite_drawing;
 pub mod sprite_effect_state;
+pub mod sprite_output;
 pub mod visual_state;
 pub mod word_transfers;
 

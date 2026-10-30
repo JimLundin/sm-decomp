@@ -326,7 +326,7 @@ static LABEL_POSITIONS: [u16; 12] = [
 ];
 fn draw_area_labels<H: Host + ?Sized>(game: &mut H) {
     let mut r3: u16 = 0;
-    game.menu_sprite(
+    crate::sprite_output::menu(
         table_word(
             &game.pause_menu_tables().label_spritemaps,
             game,
@@ -336,6 +336,7 @@ fn draw_area_labels<H: Host + ?Sized>(game: &mut H) {
         0x80,
         0x10,
         r3,
+        game,
     );
     for i in 0i32..6 {
         r3 = (if i == word!(game.file_select_map_area_index) as i32 {
@@ -361,7 +362,7 @@ fn draw_area_labels<H: Host + ?Sized>(game: &mut H) {
                 }
             }
             let j: i32 = 4 * AREAS[i as usize] as i32 >> 1;
-            game.menu_sprite(
+            crate::sprite_output::menu(
                 (table_word(
                     &game.pause_menu_tables().label_spritemaps,
                     game,
@@ -373,6 +374,7 @@ fn draw_area_labels<H: Host + ?Sized>(game: &mut H) {
                 LABEL_POSITIONS[j as usize],
                 LABEL_POSITIONS[(j + 1) as usize],
                 r3,
+                game,
             );
             break;
         }
@@ -705,11 +707,12 @@ fn draw_record<H: Host + ?Sized>(
     palette: u16,
     game: &mut H,
 ) {
-    game.menu_sprite(
+    crate::sprite_output::menu(
         sprite,
         record.word(0).wrapping_sub(word!(game.reg_BG1HOFS)),
         record.word(2).wrapping_sub(word!(game.reg_BG1VOFS)),
         palette,
+        game,
     );
 }
 
@@ -754,9 +757,9 @@ pub fn draw_icons<H: Host + ?Sized>(mode: IconMode, game: &mut H) {
                 .word(offset + 2)
                 .wrapping_sub(word!(game.reg_BG1VOFS));
             if word!(game.samus_position_indicator_animation_loop_counter) & 1 == 0 {
-                game.menu_sprite(0x12, x, y, 3584);
+                crate::sprite_output::menu(0x12, x, y, 3584, game);
             }
-            game.menu_sprite(sprite, x, y, 3584);
+            crate::sprite_output::menu(sprite, x, y, 3584, game);
             if word!(game.enable_debug) != 0 {
                 let saves = station_bits(0, game);
                 icon_group(0xc, 0xc80b, saves, 1536, game);
@@ -767,11 +770,12 @@ pub fn draw_icons<H: Host + ?Sized>(mode: IconMode, game: &mut H) {
         }
     }
     if word!(game.area_index) == 0 {
-        game.menu_sprite(
+        crate::sprite_output::menu(
             0x63,
             0xd8u16.wrapping_sub(word!(game.reg_BG1HOFS)),
             0x28u16.wrapping_sub(word!(game.reg_BG1VOFS)),
             3584,
+            game,
         );
     }
 }
@@ -910,7 +914,7 @@ fn advance_marker<H: Host + ?Sized>(game: &mut H) -> u16 {
 
 pub fn draw_player_marker<H: Host + ?Sized>(game: &mut H) {
     let sprite = advance_marker(game);
-    game.menu_sprite(
+    crate::sprite_output::menu(
         sprite,
         (8 * (i32::from(word!(game.room_x_coordinate_on_map))
             + i32::from(game.ram().read_byte(0xaf7)))
@@ -920,6 +924,7 @@ pub fn draw_player_marker<H: Host + ?Sized>(game: &mut H) {
             + 1)
             - i32::from(word!(game.reg_BG1VOFS))) as u16,
         3584,
+        game,
     );
 }
 
@@ -1209,7 +1214,13 @@ pub fn animate_pause_sprite<H: Host + ?Sized>(animation: u16, x: u16, y: u16, ga
         game,
     )
     .word(0);
-    game.menu_sprite(delta.wrapping_add(sprite), x, y.wrapping_sub(1), palette);
+    crate::sprite_output::menu(
+        delta.wrapping_add(sprite),
+        x,
+        y.wrapping_sub(1),
+        palette,
+        game,
+    );
 }
 
 pub fn draw_equipment_selector<H: Host + ?Sized>(game: &mut H) {

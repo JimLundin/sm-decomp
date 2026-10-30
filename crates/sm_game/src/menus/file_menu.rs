@@ -59,7 +59,7 @@ pub fn advance<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
 }
 fn border<H: Host + ?Sized>(sprite: u16, game: &mut H) {
     let x = if sprite == 0x4a { 0x7c } else { 0x80 };
-    game.menu_sprite(sprite, x, 0x10, 3584);
+    crate::sprite_output::menu(sprite, x, 0x10, 3584, game);
 }
 fn prepare<H: Host + ?Sized>(game: &mut H) {
     {
@@ -80,9 +80,9 @@ fn prepare<H: Host + ?Sized>(game: &mut H) {
     }
 }
 fn fade_to_options<H: Host + ?Sized>(game: &mut H) {
-    game.menu_selection_sprite();
+    crate::sprite_output::menu_selection(game);
     border(0x48, game);
-    game.file_helmets(false);
+    crate::sprite_output::file_helmets(false, game);
     game.fade(false);
     if (game.ram().read_byte(0x51) & 0xf) == 0 {
         word! {game; game_state = kGameState_2_GameOptionsMenu as u16; menu_index = 0; }
@@ -91,14 +91,14 @@ fn fade_to_options<H: Host + ?Sized>(game: &mut H) {
 }
 fn fade_to_title<H: Host + ?Sized>(game: &mut H) {
     border(0x48, game);
-    game.file_helmets(false);
+    crate::sprite_output::file_helmets(false, game);
     game.fade(false);
     if (game.ram().read_byte(0x51) & 0xf) == 0 {
         game.request_reset();
     }
 }
 fn fade_from_main<H: Host + ?Sized>(game: &mut H) {
-    game.menu_selection_sprite();
+    crate::sprite_output::menu_selection(game);
     fade_to_main(game);
 }
 fn fade_to_main<H: Host + ?Sized>(game: &mut H) {
@@ -114,11 +114,11 @@ fn fade_to_main<H: Host + ?Sized>(game: &mut H) {
     }
 }
 fn restore_cursor<H: Host + ?Sized>(game: &mut H) {
-    game.file_menu_cursor();
+    crate::sprite_output::file_menu_cursor(game);
     fade_in(game);
 }
 fn fade_in<H: Host + ?Sized>(game: &mut H) {
-    game.menu_selection_sprite();
+    crate::sprite_output::menu_selection(game);
     game.fade(true);
     game.ram().write_byte(
         0x57,
@@ -149,7 +149,7 @@ fn reset_copy<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::load(0x688, addr_kMenuTilemap_Exit as u16, game);
     menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Occupied, game);
     select_first_slot(game);
-    game.file_slot_cursor(211);
+    crate::sprite_output::file_slot_cursor(211, game);
     word! { game, 0; eproj_id[16], eproj_id[17] }
 }
 fn select_first_slot<H: Host + ?Sized>(game: &mut H) {
@@ -187,7 +187,7 @@ fn next_occupied_slot<H: Host + ?Sized>(game: &mut H) -> Option<u8> {
 #[forbid(unsafe_code)]
 fn choose_source<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
     border(if COPY { 0x49 } else { 0x4a }, game);
-    game.menu_selection_sprite();
+    crate::sprite_output::menu_selection(game);
     let movement_high = if COPY { 0 } else { game.ram().read_byte(0x90) };
     if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
         game.queue_sound(0, (0x37) as u8, 6);
@@ -215,10 +215,10 @@ fn choose_source<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
                 u16::from_ne_bytes([55, movement_high])
             };
             game.queue_sound(0, (sound) as u8, 6);
-            game.file_slot_cursor(211);
+            crate::sprite_output::file_slot_cursor(211, game);
             return;
         }
-        game.file_slot_cursor(211);
+        crate::sprite_output::file_slot_cursor(211, game);
         return;
     }
     game.queue_sound(0, (0x37) as u8, 6);
@@ -236,7 +236,7 @@ fn begin_destination<H: Host + ?Sized>(game: &mut H) {
         }
     }
     word!(game.eproj_id[15] = v0);
-    game.file_slot_cursor(211);
+    crate::sprite_output::file_slot_cursor(211, game);
 }
 fn draw_destination<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::clear(game);
@@ -255,7 +255,7 @@ fn draw_destination<H: Host + ?Sized>(game: &mut H) {
 #[forbid(unsafe_code)]
 fn choose_destination<H: Host + ?Sized>(game: &mut H) {
     border(0x49, game);
-    game.menu_selection_sprite();
+    crate::sprite_output::menu_selection(game);
     if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
         game.queue_sound(0, (0x37) as u8, 6);
         if word!(game.eproj_id[15]) != 3 {
@@ -292,7 +292,7 @@ fn choose_destination<H: Host + ?Sized>(game: &mut H) {
         reset_copy(game);
         return;
     }
-    game.file_slot_cursor(212);
+    crate::sprite_output::file_slot_cursor(212, game);
 }
 #[forbid(unsafe_code)]
 fn begin_confirmation<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
@@ -339,10 +339,10 @@ fn draw_confirmation<H: Host + ?Sized>(game: &mut H) {
 #[forbid(unsafe_code)]
 fn confirm_choice<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
     border(if COPY { 0x49 } else { 0x4a }, game);
-    game.menu_selection_sprite();
+    crate::sprite_output::menu_selection(game);
     if COPY {
         animate_copy_arrow(game);
-        game.file_copy_arrow();
+        crate::sprite_output::file_copy_arrow(game);
     }
     if word!(game.joypad1_newkeys) as i32 & (kButton_Up as i32 | kButton_Down as i32) != 0 {
         word!(game.eproj_id[15] ^= (1u16));
@@ -403,9 +403,9 @@ fn copy_slot<H: Host + ?Sized>(game: &mut H) {
     {
         static kBitShl_16bit: [u16; 3] = [1, 2, 4];
         border(0x49, game);
-        game.menu_selection_sprite();
+        crate::sprite_output::menu_selection(game);
         animate_copy_arrow(game);
-        game.file_copy_arrow();
+        crate::sprite_output::file_copy_arrow(game);
         let src_addr: u16 = save_slots::sram_offset(game, word!(game.eproj_id[16]) as isize);
         let dst_addr: u16 = save_slots::sram_offset(game, word!(game.eproj_id[17]) as isize);
         game.sram().copy_within(
@@ -469,7 +469,7 @@ fn reset_clear<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Occupied, game);
     word!(game.eproj_id[16] = 0);
     select_first_slot(game);
-    game.file_slot_cursor(211);
+    crate::sprite_output::file_slot_cursor(211, game);
 }
 fn clear_slot<H: Host + ?Sized>(game: &mut H) {
     {
@@ -503,9 +503,9 @@ fn return_main<H: Host + ?Sized>(game: &mut H) {
     word!(game.menu_index -= 26);
 }
 fn turn_helmet<H: Host + ?Sized>(game: &mut H) {
-    game.menu_selection_sprite();
+    crate::sprite_output::menu_selection(game);
     border(0x48, game);
-    game.file_helmets(true);
+    crate::sprite_output::file_helmets(true, game);
     if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0
         || word!(game.eproj_id[2]) == 7 && word!(game.cinematic_var7) == 0
         || word!(game.eproj_id[3]) == 7 && word!(game.cinematic_var8) == 0
@@ -528,9 +528,9 @@ fn initialize<H: Host + ?Sized>(game: &mut H) {
     }
 }
 fn fade_in_main<H: Host + ?Sized>(game: &mut H) {
-    game.file_helmets(false);
-    game.file_menu_cursor();
-    game.menu_selection_sprite();
+    crate::sprite_output::file_helmets(false, game);
+    crate::sprite_output::file_menu_cursor(game);
+    crate::sprite_output::menu_selection(game);
     border(0x48, game);
     game.fade(true);
     if (game.ram().read_byte(0x51) & 0xf) == 15 {
@@ -540,8 +540,8 @@ fn fade_in_main<H: Host + ?Sized>(game: &mut H) {
 fn choose_main<H: Host + ?Sized>(game: &mut H) {
     {
         border(0x48, game);
-        game.menu_selection_sprite();
-        game.file_helmets(true);
+        crate::sprite_output::menu_selection(game);
+        crate::sprite_output::file_helmets(true, game);
         if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) == 0 {
             let selection_unchanged: bool =
                 if (word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0 {
@@ -624,7 +624,7 @@ fn choose_main<H: Host + ?Sized>(game: &mut H) {
                 return;
             }
         }
-        game.file_menu_cursor();
+        crate::sprite_output::file_menu_cursor(game);
     }
 }
 
