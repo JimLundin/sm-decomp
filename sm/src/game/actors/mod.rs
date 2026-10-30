@@ -1,6 +1,7 @@
 //! Common actor state, gameplay rules and explicit compatibility boundaries.
 #![forbid(unsafe_code)]
 pub(in crate::game) use sm_game::actors::access;
+pub(in crate::game) use sm_game::actors::alcoon;
 pub(in crate::game) use sm_game::actors::api;
 pub(in crate::game) use sm_game::actors::bang;
 pub(in crate::game) use sm_game::actors::blue_brinstar_face_block;
@@ -115,7 +116,6 @@ pub(in crate::game) mod draygon_sweep;
 pub(in crate::game) mod evir;
 pub(in crate::game) mod fune;
 pub(in crate::game) mod ki_hunter;
-pub(crate) mod lava_seahorse;
 pub(crate) mod magdollite;
 pub(in crate::game) mod maridia_floater;
 pub(in crate::game) mod maridia_puffer;

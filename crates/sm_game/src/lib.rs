@@ -93,6 +93,7 @@ pub mod display {
 
 pub mod actors {
     pub mod access;
+    pub mod alcoon;
     pub mod animation;
     pub mod api;
     pub mod atomic;

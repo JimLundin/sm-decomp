@@ -1174,8 +1174,8 @@ crate::game::callback_dispatch! {
         11063698 => crate::game::actors::wrecked_ship_robots::shot;
         11065545 => crate::game::actors::maridia_puffer::initialize;
         11065611 => crate::game::actors::maridia_puffer::advance; 11066132 => crate::game::actors::maridia_puffer::shot;
-        11066573 => crate::game::actors::lava_seahorse::initialize;
-        11066731 => crate::game::actors::lava_seahorse::advance;
+        11066573 => crate::game::actors::alcoon::initialize;
+        11066731 => crate::game::actors::alcoon::main_ai;
         11068296 => crate::game::actors::atomic::initialize;
         11068355 => crate::game::actors::atomic::main_ai;
         11068983 => crate::game::actors::wrecked_ship_spark::initialize;
@@ -1467,7 +1467,7 @@ crate::game::callback_dispatch! {
         11056990 => [j];
         11068957 | 11068970 => [crate::game::actors::wrecked_ship_spark::instruction(ea == 11068957, j, game)];
         11062537 | 11062692 | 11062762 | 11062917 | 11062987 | 11062991 | 11063146 | 11063216 | 11063371 | 11063441 | 11063490 | 11063494 | 11063506 | 11063552 | 11063559 | 11063601 | 11063613 | 11063659 => [crate::game::actors::wrecked_ship_robots::instruction(ea, k, j, game)];
-        11067164 | 11067187 | 11067193 | 11067199 | 11067235 | 11067249 => [crate::game::actors::lava_seahorse::instruction(ea, j, game)];
+        11067164 | 11067187 | 11067193 | 11067199 | 11067235 | 11067249 => [crate::game::actors::alcoon::instruction(ea, j, game)];
         11072806 | 11072996 | 11073151 | 11073234 | 11073240 => [crate::game::actors::ki_hunter::instruction(ea, k, j, game)];
         11128756 => [sm_game::actors::baby_metroid_cutscene::BabyMetroid_Instr_1(k, j)];
         11128778 => [sm_game::actors::baby_metroid_cutscene::BabyMetroid_Instr_2(k, j)];
