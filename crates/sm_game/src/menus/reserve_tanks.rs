@@ -65,7 +65,7 @@ pub fn toggle_mode<H: Host + ?Sized>(game: &mut H) {
     game.queue_sound(0, (0x37) as u8, 6);
     let automatic = word!(game.reserve_health_mode) != 1;
     word!(game.reserve_health_mode = if automatic { 1 } else { 2 });
-    game.hud_reserve_mode(automatic);
+    crate::hud::menu_reserve_mode(automatic, game);
     let first = if automatic { 0x3d56 } else { 0x3d46 };
     menu_tilemap::reserve_label(|index| first + index as u16, game);
 }

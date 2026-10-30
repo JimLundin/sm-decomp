@@ -91,9 +91,6 @@ impl MenuRuntime for Game {
             ArrivalRequest::Start(StartSite::CurrentLoadStation),
         );
     }
-    fn hud_reserve_mode(&mut self, automatic: bool) {
-        crate::game::hud::menu_reserve_mode(automatic, self)
-    }
     fn request_reset(&mut self) {
         Game::request_reset(self)
     }

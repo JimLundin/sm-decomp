@@ -187,7 +187,7 @@ impl Effects for Runtime<'_> {
         });
     }
     fn pickup_visual(&mut self, visual: VisualUpdate) {
-        self.foreign(|game| unsafe {
+        self.foreign(|game| {
             use crate::game::hud::{self, Item};
             match visual {
                 VisualUpdate::None => {}

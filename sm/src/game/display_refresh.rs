@@ -468,12 +468,7 @@ pub(crate) unsafe fn run(game: &mut Game) {
 
 /// Requires a live, exclusively accessed SNES backend for ordered channel-1 setup.
 pub(crate) unsafe fn setup_transfer(mode: u16, source: u32, bytes: u16, game: &mut Game) {
-    unsafe {
-        crate::rtl::register_writes! { game;
-            word(DMAP1 as u16, mode); word(A1T1L as u16, source as u16);
-            byte(A1B1 as u16, (source >> 16) as u8); word(DAS1L as u16, bytes);
-        }
-    }
+    sm_game::display::transfer::setup_transfer(mode, source, bytes, game)
 }
 // Graphics loads keep source, destination, then transfer size together.
 // Decompression uses RAM offsets; VRAM uses word addresses. WRAM transfers

@@ -171,3 +171,18 @@ impl ScrollingLayout {
         }
     }
 }
+
+/// Program DMA channel 1's mode, 24-bit source and byte count, in the
+/// original register order.
+pub fn setup_transfer<H: crate::display::sequence::Registers + ?Sized>(
+    mode: u16,
+    source: u32,
+    bytes: u16,
+    game: &mut H,
+) {
+    use crate::display::registers::{A1B1, A1T1L, DAS1L, DMAP1};
+    game.write_register_word(DMAP1 as u16, mode);
+    game.write_register_word(A1T1L as u16, source as u16);
+    game.write_register(A1B1 as u16, (source >> 16) as u8);
+    game.write_register_word(DAS1L as u16, bytes);
+}

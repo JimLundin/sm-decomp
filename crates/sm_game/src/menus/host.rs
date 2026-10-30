@@ -39,8 +39,6 @@ pub trait MenuRuntime {
     /// Begin entering the room at the current load station.
     fn enter_load_station(&mut self);
     fn request_reset(&mut self);
-    /// Redraw the HUD's reserve-mode indicator for the equipment menu.
-    fn hud_reserve_mode(&mut self, automatic: bool);
     fn flush_sram(&mut self);
     fn native_rom_diagnostic(&mut self, address: u32);
     fn invalid_window(&mut self, address: u32);
