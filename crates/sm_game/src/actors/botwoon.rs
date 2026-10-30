@@ -7,6 +7,7 @@ use crate::actors::api::{DeathHandling, ShotHandling};
 use crate::actors::botwoon_death;
 use crate::actors::host::{BossEffects as _, Random as _};
 use crate::actors::layouts::part_view;
+use crate::actors::session_slots::session_slot;
 use crate::actors::{combat, queries};
 use crate::cartridge::rom_table_word;
 use crate::constants::{bank_86::*, enemy_properties::*};
@@ -184,6 +185,9 @@ pub trait RuntimeHost:
     + crate::enemy_projectiles::host::Host
     + crate::room_mechanisms::host::Effects
     + botwoon_death::Host
+    + crate::actors::session_slots::SessionSlots
+    + crate::ram::CompatibilityRam
+    + crate::cartridge::LoadedImage
 {
     type Game: Host + ?Sized;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
@@ -220,18 +224,18 @@ fn initialize_living<H: Host + ?Sized>(e: i32, game: &mut H) {
         palette_data_offset = ((i32::from(slot!(game, Botwoon[e].base.palette_index)) >> 4) + 0x100) as u16);
 }
 /// Botwoon health-based palette handling ($B3:982B).
-pub fn health_palette<H: Host + ?Sized>(game: &mut H) {
+fn health_palette<R: RuntimeHost>(game: &mut R) {
     let e = i32::from(word!(game.cur_enemy_index));
-    if slot!(game, Botwoon[e].health_palette_index) != LAST_HEALTH_PALETTE
-        && (slot!(game, Botwoon[e].base.health) as i16).wrapping_sub(rom_table_word!(
+    if session_slot!(game, Botwoon[e].health_palette_index) != LAST_HEALTH_PALETTE
+        && (session_slot!(game, Botwoon[e].base.health) as i16).wrapping_sub(rom_table_word!(
             game,
             HEALTH_THRESHOLDS,
-            (slot!(game, Botwoon[e].health_palette_index) >> 1) as isize
+            (session_slot!(game, Botwoon[e].health_palette_index) >> 1) as isize
         ) as i16)
             < 0
     {
-        let mut source = 16u16.wrapping_mul(slot!(game, Botwoon[e].health_palette_index));
-        let mut target = slot!(game, Botwoon[e].palette_data_offset);
+        let mut source = 16u16.wrapping_mul(session_slot!(game, Botwoon[e].health_palette_index));
+        let mut target = session_slot!(game, Botwoon[e].palette_data_offset);
         loop {
             word!(
                 game.palette_buffer[target >> 1] =
@@ -243,18 +247,18 @@ pub fn health_palette<H: Host + ?Sized>(game: &mut H) {
                 break;
             }
         }
-        slot!(game, Botwoon[e].health_palette_index, |old| old
+        session_slot!(game, Botwoon[e].health_palette_index, |old| old
             .wrapping_add(2));
     }
 }
 /// Botwoon function - initial ($B3:9878): wait, then go through a hole. Was
 /// `wait_entry`.
-pub fn initial<H: Host + ?Sized>(game: &mut H) {
+fn initial<R: RuntimeHost>(game: &mut R) {
     let e = i32::from(word!(game.cur_enemy_index));
-    let delay = slot!(game, Botwoon[e].initial_delay).wrapping_sub(1);
-    slot!(game, Botwoon[e].initial_delay = delay);
+    let delay = session_slot!(game, Botwoon[e].initial_delay).wrapping_sub(1);
+    session_slot!(game, Botwoon[e].initial_delay = delay);
     if delay == 0 {
-        slot!(game, Botwoon[e].function = function::GO_THROUGH_HOLE);
+        session_slot!(game, Botwoon[e].function = function::GO_THROUGH_HOLE);
     }
 }
 /// Botwoon function - go through hole ($B3:989D), leaving it: set up moving
@@ -304,43 +308,34 @@ pub fn moving_around<H: Host + ?Sized>(e: i32, game: &mut H) -> bool {
 /// Botwoon function - spitting ($B3:99E4): until the spit timer runs out, then
 /// move around again. Was `await_spit`.
 fn spitting<R: RuntimeHost>(e: i32, runtime: &mut R) -> bool {
-    if runtime.foreign(|game| {
-        if slot!(game, Botwoon[e].spit_timer) != 0 {
-            slot!(game, Botwoon[e].var_2E = 0);
-            true
-        } else {
-            slot!(game, Botwoon[e]; going_through_hole = 0, function = function::MOVING_AROUND,
-                movement_function = movement_function::START_MOVING_BY_MOVEMENT_DATA,
-                head_function = head_function::MOVING_AROUND);
-            false
-        }
-    }) {
+    if session_slot!(runtime, Botwoon[e].spit_timer) != 0 {
+        session_slot!(runtime, Botwoon[e].var_2E = 0);
         return true;
     }
-    let direct = botwoon_death::pending(runtime, e as u16)
-        || runtime.foreign(|game| {
-            let choice = game.next_random() & 1;
-            slot!(game, Botwoon[e]; head_hidden = choice, previous_head_hidden = choice);
-            slot!(game, Botwoon[e].previous_head_hidden) == 0
-        });
-    runtime.foreign(|game| {
-        if direct {
-            slot!(game, Botwoon[e].unused_8816 = 0);
-        } else {
-            slot!(game, Botwoon[e]; hole_collision_disabled = 0, target_history_index = u16::MAX);
-        }
-        choose_movement_path(word!(game.cur_enemy_index), game);
-    });
+    session_slot!(runtime, Botwoon[e]; going_through_hole = 0, function = function::MOVING_AROUND,
+        movement_function = movement_function::START_MOVING_BY_MOVEMENT_DATA,
+        head_function = head_function::MOVING_AROUND);
+    let direct = botwoon_death::pending(runtime, e as u16) || {
+        let choice = runtime.foreign(|game| game.next_random()) & 1;
+        session_slot!(runtime, Botwoon[e]; head_hidden = choice, previous_head_hidden = choice);
+        session_slot!(runtime, Botwoon[e].previous_head_hidden) == 0
+    };
+    if direct {
+        session_slot!(runtime, Botwoon[e].unused_8816 = 0);
+    } else {
+        session_slot!(runtime, Botwoon[e]; hole_collision_disabled = 0, target_history_index = u16::MAX);
+    }
+    runtime.foreign(|game| choose_movement_path(word!(game.cur_enemy_index), game));
     false
 }
 /// Botwoon function - death sequence - pre-death delay ($B3:9A46). Was
 /// `wait_collapse`.
-pub fn pre_death_delay<H: Host + ?Sized>(game: &mut H) {
+fn pre_death_delay<R: RuntimeHost>(game: &mut R) {
     let e = i32::from(word!(game.cur_enemy_index));
-    let delay = slot!(game, Botwoon[e].pre_death_counter).wrapping_add(1);
-    slot!(game, Botwoon[e].pre_death_counter = delay);
+    let delay = session_slot!(game, Botwoon[e].pre_death_counter).wrapping_add(1);
+    session_slot!(game, Botwoon[e].pre_death_counter = delay);
     if (i32::from(delay) - PRE_DEATH_FRAMES) & SIGN == 0 {
-        slot!(
+        session_slot!(
             game,
             Botwoon[e].function = function::DEATH_FALLING_TO_GROUND
         );
@@ -764,7 +759,7 @@ pub fn main_ai<R: RuntimeHost>(runtime: &mut R) {
     let state = runtime.resolve_actor(actor, Native).variables[3];
     let k = runtime.selected_actor().byte_index();
     match state {
-        function::INITIAL => runtime.foreign(|game| initial(game)),
+        function::INITIAL => initial(runtime),
         function::GO_THROUGH_HOLE | function::MOVING_AROUND => runtime.foreign(|game| {
             let e = i32::from(word!(game.cur_enemy_index));
             let changed = if state == function::GO_THROUGH_HOLE {
@@ -789,7 +784,7 @@ pub fn main_ai<R: RuntimeHost>(runtime: &mut R) {
                 });
             }
         }
-        function::DEATH_PRE_DEATH_DELAY => runtime.foreign(|game| pre_death_delay(game)),
+        function::DEATH_PRE_DEATH_DELAY => pre_death_delay(runtime),
         function::DEATH_FALLING_TO_GROUND => runtime.foreign(|game| fall_to_ground(game)),
         function::DEATH_WAIT_FOR_BODY_TO_FALL => {
             let actor = runtime.selected_actor();
@@ -802,8 +797,8 @@ pub fn main_ai<R: RuntimeHost>(runtime: &mut R) {
                     // Spawn Botwoon item drops and start crumbling wall ($B3:9ADD).
                     game.spawn_plm(WALL_BLOCK.0, WALL_BLOCK.1, CRUMBLE_WALL);
                     game.scatter_botwoon_drop(k);
-                    slot!(game, Botwoon[i32::from(k)]; death_counter = 0, large_wall_explosion_timer = 0, wall_smoke_timer = 0);
                 });
+                session_slot!(runtime, Botwoon[i32::from(k)]; death_counter = 0, large_wall_explosion_timer = 0, wall_smoke_timer = 0);
             }
         }
         function::DEATH_CRUMBLING_WALL => runtime.foreign(|game| crumbling_wall(k, game)),
@@ -811,7 +806,7 @@ pub fn main_ai<R: RuntimeHost>(runtime: &mut R) {
             runtime.foreign(|game| game.unreachable());
         }
     }
-    runtime.foreign(|game| health_palette(game));
+    health_palette(runtime);
 }
 /// Run the movement function, then the head's, carrying the body along the
 /// position history.

@@ -180,6 +180,14 @@ impl ActorEffects for Runtime<'_> {
     }
 }
 impl ActorHost for Runtime<'_> {}
+impl sm_game::actors::session_slots::SessionSlots for Runtime<'_> {
+    fn projected_slot_byte(&self, at: usize) -> u8 {
+        self.byte(at)
+    }
+    fn store_projected_slot_byte(&mut self, at: usize, value: u8) {
+        self.set_byte(at, value);
+    }
+}
 
 /// Native overlay variants shared by Snail and both A2 Seahorse bodies.
 /// The wide offset retains children past u16::MAX; the cache commits before ROM reads.

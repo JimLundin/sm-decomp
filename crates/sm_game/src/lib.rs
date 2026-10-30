@@ -151,6 +151,7 @@ pub mod actors {
     pub mod ridley_tables;
     pub mod scene;
     pub mod scheduling;
+    pub mod session_slots;
     pub mod shaktool;
     pub mod snapshot;
     pub mod species;
