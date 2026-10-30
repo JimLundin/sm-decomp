@@ -36,6 +36,8 @@ pub trait Host:
 {
     /// Store `value` at `at` through the owned display state.
     fn write_owned_byte(&mut self, at: usize, value: u8);
+    /// The HDMA object table as the compatibility projection reads it.
+    fn hdma_objects(&self) -> crate::hdma::HdmaObjects;
     /// Start the channel-1 graphics DMA for a load from `source`, reading the
     /// prepared room image when it holds that source.
     fn start_graphics_dma(&mut self, source: u32);
@@ -346,15 +348,13 @@ impl<H: Host + ?Sized> crate::scene::commit::RefreshHost for Refresh<'_, H> {
         Ok(())
     }
     fn hdma_mask(&self, slot: usize) -> u16 {
-        let game = &*self.0;
-        word!(game.hdma_object_channels_bitmask[slot])
+        self.0.hdma_objects().objects[slot].channels
     }
     fn hdma_bank_slot(&self, slot: usize) -> u8 {
-        self.0.compatibility_byte(0x18c0 + slot * 2)
+        self.0.hdma_objects().objects[slot].bank_slot as u8
     }
     fn hdma_table(&self, slot: usize) -> u16 {
-        let game = &*self.0;
-        word!(game.hdma_object_table_pointers[slot])
+        self.0.hdma_objects().objects[slot].table
     }
     fn bind_hdma(&mut self, bank_slot: u16, table: u16) -> Result<(), DisplayError> {
         self.0.write_register_word(A1T0L as u16 + bank_slot, table);

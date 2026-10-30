@@ -318,6 +318,16 @@ pub fn advance_intro_crossfade<H: crate::menus::host::Host + ?Sized>(game: &mut 
     }
 }
 
+/// The table's RAM words, decoded.
+pub fn read_table<H: crate::ram::WorkRamAccess + ?Sized>(game: &H) -> crate::hdma::HdmaObjects {
+    let ram = game.ram();
+    let mut objects = crate::hdma::HdmaObjects::default();
+    crate::hdma_program::table_words(&mut objects, |at, word| {
+        *word = u16::from_le_bytes([ram.read_byte(at), ram.read_byte(at + 1)]);
+    });
+    objects
+}
+
 /// The table decoded from RAM, for hosts that cannot open a lease now.
 pub(crate) struct Bridged<'a, H: ?Sized> {
     game: &'a mut H,
@@ -334,10 +344,7 @@ impl<'a, H: crate::menus::host::Host + ?Sized> Bridged<'a, H> {
         bridge
     }
     fn reload(&mut self) {
-        let ram = self.game.ram();
-        crate::hdma_program::table_words(&mut self.objects, |at, word| {
-            *word = u16::from_le_bytes([ram.read_byte(at), ram.read_byte(at + 1)]);
-        });
+        self.objects = read_table(self.game);
     }
     pub(crate) fn store(&mut self) {
         let ram = self.game.ram();
