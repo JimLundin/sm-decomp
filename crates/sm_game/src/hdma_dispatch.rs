@@ -240,6 +240,17 @@ where
         WaterWave => it.with_object(index, liquid_effects::water_wave),
         WaterFlat => it.foreign(liquid_effects::water_flat),
         SkyHorizontalScroll => it.with_object(index, scrolling_sky::update_horizontal_scroll),
+        StatueWaiting | StatueShaking | StatueSinking | StatueFinished => {
+            let phase = match target {
+                StatueWaiting => TourianStatuePhase::Waiting,
+                StatueShaking => TourianStatuePhase::Shaking,
+                StatueSinking => TourianStatuePhase::Sinking,
+                _ => TourianStatuePhase::Finished,
+            };
+            it.with_object(index, |object, game| {
+                room_visuals::advance_tourian_statue(object, phase, game)
+            })
+        }
         _ => it.foreign(|game| host_pre_action(target, slot, game)),
     }
 }
@@ -249,7 +260,8 @@ fn host_pre_action<H: DispatchHost + ?Sized>(target: HdmaPreAction, k: u16, game
     use HdmaPreAction::*;
     match target {
         Nothing | LavaSurface | LavaBackground | WaterSurface | WaterBackground | WaterWave
-        | WaterFlat | SkyHorizontalScroll => unreachable!("run_pre_action runs {target:?}"),
+        | WaterFlat | SkyHorizontalScroll | StatueWaiting | StatueShaking | StatueSinking
+        | StatueFinished => unreachable!("run_pre_action runs {target:?}"),
         SetupXrayBlending => xray_background::setup_blending(k, game),
         AdvanceXrayBackground => game.hdma_effect(HdmaEffect::AdvanceXrayBackground, k),
         XrayBeamInitial => game.hdma_effect(HdmaEffect::AdvanceXrayBeam(BeamPhase::Initial), k),
@@ -274,12 +286,6 @@ fn host_pre_action<H: DispatchHost + ?Sized>(target: HdmaPreAction, k: u16, game
         Rain => room_visuals::scroll_weather(k, Weather::Rain, game),
         Spores => room_visuals::scroll_weather(k, Weather::Spores, game),
         Fog => room_visuals::scroll_weather(k, Weather::Fog, game),
-        StatueWaiting => room_visuals::advance_tourian_statue(k, TourianStatuePhase::Waiting, game),
-        StatueShaking => room_visuals::advance_tourian_statue(k, TourianStatuePhase::Shaking, game),
-        StatueSinking => room_visuals::advance_tourian_statue(k, TourianStatuePhase::Sinking, game),
-        StatueFinished => {
-            room_visuals::advance_tourian_statue(k, TourianStatuePhase::Finished, game)
-        }
         StatueBlending => word!(game.fx_layer_blending_config_c = 44),
         BeginBrightHaze => game.hdma_effect(HdmaEffect::BeginHaze { color: 0x80 }, k),
         BeginDimHaze => game.hdma_effect(HdmaEffect::BeginHaze { color: 0x20 }, k),

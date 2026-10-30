@@ -116,7 +116,7 @@ pub fn initialize_tourian_statue<H: crate::menus::host::Host + ?Sized>(game: &mu
 }
 
 pub fn advance_tourian_statue<H: crate::menus::host::Host + ?Sized>(
-    mut slot: u16,
+    object: &mut crate::hdma::HdmaObject,
     phase: TourianStatuePhase,
     game: &mut H,
 ) {
@@ -129,42 +129,34 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + ?Sized>(
             if (6..=9).all(|event| game.event_happened(event) & 1 != 0) {
                 word!(game.tourian_entrance_statue_animstate |= 0x10);
                 if word!(game.tourian_entrance_statue_animstate) & 0x8000 == 0 {
-                    word!(game.hdma_object_C[(slot >> 1)] = 300);
-                    slot = word!(game.hdma_object_index);
-                    advance_statue_program(word!(game.hdma_object_index), game);
+                    object.c = 300;
+                    advance_statue_program(object);
                 }
             }
         }
         Shaking => {
-            let counter_slot = slot as u8;
-            if word!(game.hdma_object_C[(counter_slot >> 1)] -= 1, reread) & 0x8000 != 0 {
+            object.c = object.c.wrapping_sub(1);
+            if object.c & 0x8000 != 0 {
                 for _ in 0..4 {
                     game.spawn_room_enemy_projectile(addr_kEproj_TourianStatueDustClouds as u16, 0);
                 }
-                advance_statue_program(u16::from(counter_slot), game);
+                advance_statue_program(object);
             }
         }
         Sinking => {
             if word!(game.time_is_frozen_flag) != 0 {
                 return;
             }
-            let low = 0x1914 + usize::from(slot & !1);
-            let high = 0x1920 + usize::from(slot & !1);
-            let fraction =
-                u16::from_ne_bytes([game.ram().read_byte(low), game.ram().read_byte(low + 1)]);
-            let whole =
-                u16::from_ne_bytes([game.ram().read_byte(high), game.ram().read_byte(high + 1)]);
-            let position = (u32::from(fraction) | u32::from(whole) << 16).wrapping_sub(0x4000);
-            crate::word_transfers!(game, ascending, 1;
-                native(low) <- value(position as u16),
-                native(high) <- value((position >> 16) as u16),
-            );
-            if word!(game.hdma_object_B[(slot >> 1)]) == 0xff10 {
+            // A is the fraction and B the whole of the statue's scroll offset.
+            let position = (u32::from(object.a) | u32::from(object.b) << 16).wrapping_sub(0x4000);
+            object.a = position as u16;
+            object.b = (position >> 16) as u16;
+            if object.b == 0xff10 {
                 {
                     game.spawn_hardcoded_plm(6, 12, 0xb773);
                 }
                 game.set_event_happened(0xa);
-                advance_statue_program(slot, game);
+                advance_statue_program(object);
             }
         }
         Finished => {
@@ -172,14 +164,13 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + ?Sized>(
             crate::word_transfers!(game, ascending, 1; native(0xcd20) <- value(514));
         }
     }
-    let scroll =
-        crate::camera::current(game).layer1[1].wrapping_add(word!(game.hdma_object_B[(slot >> 1)]));
+    let scroll = crate::camera::current(game).layer1[1].wrapping_add(object.b);
     crate::word_transfers!(game, ascending, 1; native(0x9e00) <- value(scroll));
 }
 
-fn advance_statue_program<H: crate::menus::host::Host + ?Sized>(slot: u16, game: &mut H) {
-    word!(game.hdma_object_instruction_timers[(slot >> 1)] = 1);
-    word!(game.hdma_object_instruction_list_pointers[(slot >> 1)] += 2);
+fn advance_statue_program(object: &mut crate::hdma::HdmaObject) {
+    object.instruction_timer = 1;
+    object.instruction_list = object.instruction_list.wrapping_add(2);
 }
 
 pub fn initialize_weather<H: crate::menus::host::Host + ?Sized>(weather: Weather, game: &mut H) {
