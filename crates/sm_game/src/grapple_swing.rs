@@ -335,20 +335,7 @@ pub fn change_length<H: Host + ?Sized>(game: &mut H) -> u8 {
     if game.session().player.swing.length_delta == 0 {
         return 0;
     }
-    let mut end = game
-        .session()
-        .player
-        .swing
-        .length_delta
-        .wrapping_add(game.session().player.grapple_length);
-    let shortening = game.session().player.swing.length_delta & 0x8000 != 0;
-    if shortening && end < 8 {
-        game.session_mut().player.swing.length_delta = 0;
-        end = 8;
-    } else if !shortening && end >= 63 {
-        game.session_mut().player.swing.length_delta = 0;
-        end = 63;
-    }
+    let (end, shortening) = length_target(&mut game.session_mut().player);
     let angle = 2 * game.grapple_angle() as u16;
     let mut length = game.session().player.grapple_length;
     while length != end {
@@ -406,13 +393,34 @@ pub fn apply_input<H: Host + ?Sized>(game: &mut H) {
     game.session_mut().player.swing.input_acceleration = 0;
 }
 
-pub fn apply_gravity<H: Host + ?Sized>(game: &mut H) {
-    let angle = game.session().player.grapple_angle;
+/// The length a beam length change heads for, and whether it shortens: the
+/// change stops at 8 when shortening and 63 ($3F) when lengthening.
+pub fn length_target(player: &mut crate::session::Player) -> (u16, bool) {
+    let end = player
+        .swing
+        .length_delta
+        .wrapping_add(player.grapple_length);
+    let shortening = player.swing.length_delta & 0x8000 != 0;
+    if shortening && end < 8 {
+        player.swing.length_delta = 0;
+        (8, true)
+    } else if !shortening && end >= 63 {
+        player.swing.length_delta = 0;
+        (63, false)
+    } else {
+        (end, shortening)
+    }
+}
+/// The swing's angular acceleration and rising deceleration for its angle.
+pub fn apply_gravity(player: &mut crate::session::Player) {
+    let angle = player.grapple_angle;
+    let liquid = player.grapple_flags != 0 && player.grapple_flags & 1 != 0;
+    let swing = &mut player.swing;
     if angle & 0xff00 == 0x8000 {
-        game.session_mut().player.swing.angle_acceleration = 0;
-        game.session_mut().player.swing.rising_deceleration = 0;
-        if abs16(game.session().player.swing.angular_velocity).to_ne_bytes()[1] == 0 {
-            game.session_mut().player.swing.angular_velocity = 0;
+        swing.angle_acceleration = 0;
+        swing.rising_deceleration = 0;
+        if abs16(swing.angular_velocity).to_ne_bytes()[1] == 0 {
+            swing.angular_velocity = 0;
         }
         return;
     }
@@ -422,34 +430,26 @@ pub fn apply_gravity<H: Host + ?Sized>(game: &mut H) {
     } else {
         0
     };
-    game.session_mut().player.swing.rising_deceleration = (direction * (5 >> shift)) as u16;
-    let shift = shift
-        + u32::from(
-            game.session().player.grapple_flags != 0
-                && game.session().player.grapple_flags & 1 != 0,
-        );
-    game.session_mut().player.swing.angle_acceleration = (direction * (24 >> shift)) as u16;
+    swing.rising_deceleration = (direction * (5 >> shift)) as u16;
+    swing.angle_acceleration = (direction * (24 >> (shift + u32::from(liquid)))) as u16;
 }
 
-pub fn accelerate<H: Host + ?Sized>(game: &mut H) {
+/// Accelerate the swing, decelerate it while rising, and cap it at $480.
+pub fn accelerate(player: &mut crate::session::Player) {
+    let angle = player.grapple_angle;
+    let swing = &mut player.swing;
     // As the checked_i32 word update: old load, then the operand, in i32.
-    game.session_mut().player.swing.angular_velocity =
-        (game.session().player.swing.angular_velocity as i32
-            + (game.session().player.swing.input_acceleration as i32
-                + game.session().player.swing.angle_acceleration as i32)) as u16;
-    if (game.session().player.swing.angular_velocity ^ game.session().player.grapple_angle) & 0x8000
-        != 0
-    {
-        game.session_mut().player.swing.angular_velocity = game
-            .session()
-            .player
-            .swing
+    swing.angular_velocity = (swing.angular_velocity as i32
+        + (swing.input_acceleration as i32 + swing.angle_acceleration as i32))
+        as u16;
+    if (swing.angular_velocity ^ angle) & 0x8000 != 0 {
+        swing.angular_velocity = swing
             .angular_velocity
-            .wrapping_add(game.session().player.swing.rising_deceleration);
+            .wrapping_add(swing.rising_deceleration);
     }
-    let velocity = game.session().player.swing.angular_velocity as i16;
+    let velocity = swing.angular_velocity as i16;
     if velocity.unsigned_abs() >= 0x480 {
-        game.session_mut().player.swing.angular_velocity = velocity.clamp(-0x480, 0x480) as u16;
+        swing.angular_velocity = velocity.clamp(-0x480, 0x480) as u16;
     }
 }
 
@@ -1137,8 +1137,8 @@ fn dispatch<H: Host + ?Sized>(ea: u32, game: &mut H) {
                 if game.session().player.swing.length_delta != 0 {
                     change_length(game);
                 }
-                apply_gravity(game);
-                accelerate(game);
+                apply_gravity(&mut game.session_mut().player);
+                accelerate(&mut game.session_mut().player);
                 rebound_jump(game);
                 advance_swing(game);
                 if (word!(game.GRAPPLE_SPECIAL_ANGLE_FLAG) & 0x8000) != 0
@@ -1205,8 +1205,8 @@ fn dispatch<H: Host + ?Sized>(ea: u32, game: &mut H) {
         0x9bc9ce => release_walljump(game),
         0x9bcb8b => release_swing(game),
         0x9bbb64 => apply_input(game),
-        0x9bbc1f => apply_gravity(game),
-        0x9bbcff => accelerate(game),
+        0x9bbc1f => apply_gravity(&mut game.session_mut().player),
+        0x9bbcff => accelerate(&mut game.session_mut().player),
         0x9bbd44 => rebound_jump(game),
         _ => {
             game.grapple_unreachable();
