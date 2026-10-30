@@ -1300,7 +1300,7 @@ crate::game::callback_dispatch! {
         10780737 => [actors::scheduling::update_frozen_enemy(&mut Runtime::new(game))];
 
         10873386 => [actors::spore_spawn::initialize(game)];
-        10873619 => [actors::spore_spawn::update(game)];
+        10873619 => [actors::spore_spawn::main_ai(game)];
         10874202 => [actors::spore_spawn::shot(game)];
         10874348 => [actors::spore_spawn::touch(game)];
         10915836 => [crate::game::fire_geysers::initialize(game)];
