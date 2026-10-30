@@ -72,7 +72,5 @@ pub(crate) mod player_transitions_host;
 #[path = "../../game/player_movement/mod.rs"]
 pub(crate) mod player_movement;
 
-#[path = "../../game/player_update/mod.rs"]
-pub(crate) mod player_update;
 
 

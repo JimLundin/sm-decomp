@@ -1,7 +1,7 @@
 //! Common actor state, gameplay rules and explicit compatibility boundaries.
 #![forbid(unsafe_code)]
 pub(in crate::game) use sm_game::actors::access;
-pub(in crate::game) mod api;
+pub(in crate::game) use sm_game::actors::api;
 pub(in crate::game) mod bang;
 pub(in crate::game) mod beetom;
 pub(crate) mod botwoon;
@@ -37,25 +37,27 @@ pub(crate) use runtime::restart_from_native_cache;
 
 mod content_runtime;
 
-pub(in crate::game) mod animation;
-pub(in crate::game) mod combat;
-pub(in crate::game) mod contacts;
+#[cfg(sm_verify_dll)]
+pub(in crate::game) use sm_game::actors::animation;
+pub(in crate::game) use sm_game::actors::combat;
+pub(in crate::game) use sm_game::actors::contacts;
 pub(in crate::game) mod dachora;
-pub(in crate::game) mod drawing;
+pub(in crate::game) use sm_game::actors::drawing;
 pub(in crate::game) mod kraid_fingernails;
 pub(in crate::game) mod kraid_lint;
 pub(in crate::game) mod kraid_sinking;
 pub(in crate::game) mod media_runtime;
 pub(in crate::game) mod mother_brain_effects;
-pub(in crate::game) mod movement;
+#[cfg(sm_verify_dll)]
+pub(in crate::game) use sm_game::actors::movement;
 pub(in crate::game) mod part_hitboxes;
 pub(in crate::game) mod phantoon_actions;
 pub(in crate::game) mod phantoon_motion;
-pub(in crate::game) mod population;
-pub(in crate::game) mod queries;
+pub(in crate::game) use sm_game::actors::population;
+pub(in crate::game) use sm_game::actors::queries;
 pub(in crate::game) mod ridley_tables;
-pub(in crate::game) mod scheduling;
-pub(in crate::game) mod staging;
+pub(in crate::game) use sm_game::actors::scheduling;
+pub(in crate::game) use sm_game::actors::staging;
 
 pub(crate) fn prepare_room_assets(h: &mut crate::game::session_runtime::Runtime<'_>) {
     staging::prepare_room_assets(h);

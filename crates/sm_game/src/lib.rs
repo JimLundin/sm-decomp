@@ -58,41 +58,37 @@ pub mod display {
 
 pub mod actors {
     pub mod access;
+    pub mod animation;
+    pub mod api;
     pub mod botwoon_death;
     pub mod codec;
+    pub mod combat;
+    pub mod contacts;
     pub mod content;
+    pub mod drawing;
     pub mod effects;
     #[doc(hidden)] // Shared verification world for compat and detached checks.
     pub mod fixture;
     pub mod identity;
     pub mod layouts;
     pub mod media;
+    pub mod movement;
     pub mod overlap;
+    pub mod population;
+    pub mod queries;
     pub mod scene;
+    pub mod scheduling;
     pub mod shaktool;
     pub mod shitroid;
     pub mod snapshot;
+    pub mod staging;
     pub mod state;
     pub mod torizo;
 }
 pub mod enemy_projectiles;
-pub mod player_collision {
-    pub mod effects;
-    pub mod state;
-}
-pub mod player_transitions {
-    pub mod content;
-    pub mod demo;
-    pub mod effects;
-    pub mod requests;
-    pub mod state;
-}
-pub mod player_update {
-    pub mod content;
-    pub mod effects;
-    pub mod minimap;
-    pub mod state;
-}
+pub mod player_collision;
+pub mod player_transitions;
+pub mod player_update;
 
 pub mod animated_tiles {
     pub mod execution;
@@ -104,10 +100,7 @@ pub mod palette_effects {
     pub mod execution;
     pub mod fading;
 }
-pub mod player_movement {
-    pub mod content;
-    pub mod effects;
-}
+pub mod player_movement;
 pub mod player_projectiles {
     pub mod access;
     pub mod animation;
@@ -167,6 +160,7 @@ pub mod room_mechanisms {
     }
     pub mod setup;
 }
+pub mod grapple_rope;
 pub mod samus_palette;
 pub mod samus_periodic_damage;
 pub mod scene;
@@ -177,4 +171,6 @@ pub mod session_owners;
 pub mod sprite_effect_controllers;
 pub mod sprite_effect_host;
 pub mod sprite_objects;
+#[cfg(sm_verify_dll)]
+pub mod transition_trace;
 pub mod visual_host;

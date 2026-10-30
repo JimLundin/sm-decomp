@@ -128,6 +128,10 @@ impl ImportedCollisionReads for Composed {
     }
 }
 impl Effects for Composed {
+    #[cfg(any(test, sm_verify_dll))]
+    fn record_launch(&mut self, direction: sm_game::launch_motion::MovementDirection, displacement: i32) {
+        crate::game::player_collision_owned_checks::record_launch(direction, displacement);
+    }
     fn apply_mechanism(&mut self, header: MechanismHeader, displacement: &mut i32) -> u8 {
         let p = &self.world.player.player;
         self.collision_contract

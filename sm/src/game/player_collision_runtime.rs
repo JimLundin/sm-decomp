@@ -71,6 +71,14 @@ impl ImportedCollisionReads for Runtime<'_> {
 }
 
 impl Effects for Runtime<'_> {
+    #[cfg(any(test, sm_verify_dll))]
+    fn record_launch(
+        &mut self,
+        direction: sm_game::launch_motion::MovementDirection,
+        displacement: i32,
+    ) {
+        crate::game::player_collision_owned_checks::record_launch(direction, displacement);
+    }
     fn apply_mechanism(&mut self, header: MechanismHeader, displacement: &mut i32) -> u8 {
         self.owned_call(|runtime| {
             creation::spawn(

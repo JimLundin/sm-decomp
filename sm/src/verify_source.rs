@@ -793,28 +793,28 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/rising_falling.rs"),
     ),
     (
-        "sm/src/game/player_transitions/mother_brain.rs",
-        include_bytes!("game/player_transitions/mother_brain.rs"),
+        "crates/sm_game/src/player_transitions/mother_brain.rs",
+        include_bytes!("../../crates/sm_game/src/player_transitions/mother_brain.rs"),
     ),
     (
-        "sm/src/game/player_transitions/equipment.rs",
-        include_bytes!("game/player_transitions/equipment.rs"),
+        "crates/sm_game/src/player_transitions/equipment.rs",
+        include_bytes!("../../crates/sm_game/src/player_transitions/equipment.rs"),
     ),
     (
-        "sm/src/game/player_transitions/xray.rs",
-        include_bytes!("game/player_transitions/xray.rs"),
+        "crates/sm_game/src/player_transitions/xray.rs",
+        include_bytes!("../../crates/sm_game/src/player_transitions/xray.rs"),
     ),
     (
-        "sm/src/game/player_transitions/suit.rs",
-        include_bytes!("game/player_transitions/suit.rs"),
+        "crates/sm_game/src/player_transitions/suit.rs",
+        include_bytes!("../../crates/sm_game/src/player_transitions/suit.rs"),
     ),
     (
-        "sm/src/game/player_transitions/commands.rs",
-        include_bytes!("game/player_transitions/commands.rs"),
+        "crates/sm_game/src/player_transitions/commands.rs",
+        include_bytes!("../../crates/sm_game/src/player_transitions/commands.rs"),
     ),
     (
-        "sm/src/game/player_transitions/input.rs",
-        include_bytes!("game/player_transitions/input.rs"),
+        "crates/sm_game/src/player_transitions/input.rs",
+        include_bytes!("../../crates/sm_game/src/player_transitions/input.rs"),
     ),
     (
         "sm/src/verification/player_normal_transfers.rs",
@@ -877,44 +877,44 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/player_transitions/requests.rs"),
     ),
     (
-        "sm/src/game/player_transitions/actions.rs",
-        include_bytes!("game/player_transitions/actions.rs"),
+        "crates/sm_game/src/player_transitions/actions.rs",
+        include_bytes!("../../crates/sm_game/src/player_transitions/actions.rs"),
     ),
     (
-        "sm/src/game/player_transitions/resolver.rs",
-        include_bytes!("game/player_transitions/resolver.rs"),
+        "crates/sm_game/src/player_transitions/resolver.rs",
+        include_bytes!("../../crates/sm_game/src/player_transitions/resolver.rs"),
     ),
     (
-        "sm/src/game/player_transitions/pose.rs",
-        include_bytes!("game/player_transitions/pose.rs"),
+        "crates/sm_game/src/player_transitions/pose.rs",
+        include_bytes!("../../crates/sm_game/src/player_transitions/pose.rs"),
     ),
     (
-        "sm/src/game/player_transitions/normalization.rs",
-        include_bytes!("game/player_transitions/normalization.rs"),
+        "crates/sm_game/src/player_transitions/normalization.rs",
+        include_bytes!("../../crates/sm_game/src/player_transitions/normalization.rs"),
     ),
     (
-        "sm/src/game/player_transitions/jump.rs",
-        include_bytes!("game/player_transitions/jump.rs"),
+        "crates/sm_game/src/player_transitions/jump.rs",
+        include_bytes!("../../crates/sm_game/src/player_transitions/jump.rs"),
     ),
     (
-        "sm/src/game/player_transitions/animation.rs",
-        include_bytes!("game/player_transitions/animation.rs"),
+        "crates/sm_game/src/player_transitions/animation.rs",
+        include_bytes!("../../crates/sm_game/src/player_transitions/animation.rs"),
     ),
     (
-        "sm/src/game/player_transitions/atmosphere.rs",
-        include_bytes!("game/player_transitions/atmosphere.rs"),
+        "crates/sm_game/src/player_transitions/atmosphere.rs",
+        include_bytes!("../../crates/sm_game/src/player_transitions/atmosphere.rs"),
     ),
     (
-        "sm/src/game/player_transitions/landing.rs",
-        include_bytes!("game/player_transitions/landing.rs"),
+        "crates/sm_game/src/player_transitions/landing.rs",
+        include_bytes!("../../crates/sm_game/src/player_transitions/landing.rs"),
+    ),
+    (
+        "crates/sm_game/src/player_transitions/mod.rs",
+        include_bytes!("../../crates/sm_game/src/player_transitions/mod.rs"),
     ),
     (
         "sm/src/game/player_transitions/mod.rs",
         include_bytes!("game/player_transitions/mod.rs"),
-    ),
-    (
-        "sm/src/game/player_transitions/state.rs",
-        include_bytes!("game/player_transitions/state.rs"),
     ),
     (
         "sm/src/game/transition_representation_tests.rs",
@@ -923,10 +923,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/player_transitions/content.rs",
         include_bytes!("../../crates/sm_game/src/player_transitions/content.rs"),
-    ),
-    (
-        "sm/src/game/player_transitions/demo.rs",
-        include_bytes!("game/player_transitions/demo.rs"),
     ),
     (
         "crates/sm_game/src/player_transitions/effects.rs",
@@ -1013,32 +1009,32 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("verification/player_collision_entry_adapters.rs"),
     ),
     (
-        "sm/src/game/player_collision/geometry.rs",
-        include_bytes!("game/player_collision/geometry.rs"),
+        "crates/sm_game/src/player_collision/geometry.rs",
+        include_bytes!("../../crates/sm_game/src/player_collision/geometry.rs"),
     ),
     (
-        "sm/src/game/player_collision/motion.rs",
-        include_bytes!("game/player_collision/motion.rs"),
+        "crates/sm_game/src/player_collision/motion.rs",
+        include_bytes!("../../crates/sm_game/src/player_collision/motion.rs"),
     ),
     (
-        "sm/src/game/player_collision/control.rs",
-        include_bytes!("game/player_collision/control.rs"),
+        "crates/sm_game/src/player_collision/control.rs",
+        include_bytes!("../../crates/sm_game/src/player_collision/control.rs"),
     ),
     (
-        "sm/src/game/player_collision/grapple.rs",
-        include_bytes!("game/player_collision/grapple.rs"),
+        "crates/sm_game/src/player_collision/grapple.rs",
+        include_bytes!("../../crates/sm_game/src/player_collision/grapple.rs"),
     ),
     (
-        "sm/src/game/player_collision/inside.rs",
-        include_bytes!("game/player_collision/inside.rs"),
+        "crates/sm_game/src/player_collision/inside.rs",
+        include_bytes!("../../crates/sm_game/src/player_collision/inside.rs"),
     ),
     (
-        "sm/src/game/player_collision/jump.rs",
-        include_bytes!("game/player_collision/jump.rs"),
+        "crates/sm_game/src/player_collision/jump.rs",
+        include_bytes!("../../crates/sm_game/src/player_collision/jump.rs"),
     ),
     (
-        "sm/src/game/player_collision/pose.rs",
-        include_bytes!("game/player_collision/pose.rs"),
+        "crates/sm_game/src/player_collision/pose.rs",
+        include_bytes!("../../crates/sm_game/src/player_collision/pose.rs"),
     ),
     (
         "crates/sm_game/src/player_movement/content.rs",
@@ -1047,6 +1043,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/player_movement/effects.rs",
         include_bytes!("../../crates/sm_game/src/player_movement/effects.rs"),
+    ),
+    (
+        "crates/sm_game/src/player_update/mod.rs",
+        include_bytes!("../../crates/sm_game/src/player_update/mod.rs"),
     ),
     (
         "sm/src/game/player_update/mod.rs",
@@ -1073,24 +1073,28 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/player_update_runtime.rs"),
     ),
     (
-        "sm/src/game/player_movement/forced.rs",
-        include_bytes!("game/player_movement/forced.rs"),
+        "crates/sm_game/src/player_movement/forced.rs",
+        include_bytes!("../../crates/sm_game/src/player_movement/forced.rs"),
+    ),
+    (
+        "crates/sm_game/src/player_movement/mod.rs",
+        include_bytes!("../../crates/sm_game/src/player_movement/mod.rs"),
     ),
     (
         "sm/src/game/player_movement/mod.rs",
         include_bytes!("game/player_movement/mod.rs"),
     ),
     (
-        "sm/src/game/player_movement/presentation.rs",
-        include_bytes!("game/player_movement/presentation.rs"),
+        "crates/sm_game/src/player_movement/presentation.rs",
+        include_bytes!("../../crates/sm_game/src/player_movement/presentation.rs"),
     ),
     (
-        "sm/src/game/player_movement/selectors.rs",
-        include_bytes!("game/player_movement/selectors.rs"),
+        "crates/sm_game/src/player_movement/selectors.rs",
+        include_bytes!("../../crates/sm_game/src/player_movement/selectors.rs"),
     ),
     (
-        "sm/src/game/player_movement/speed.rs",
-        include_bytes!("game/player_movement/speed.rs"),
+        "crates/sm_game/src/player_movement/speed.rs",
+        include_bytes!("../../crates/sm_game/src/player_movement/speed.rs"),
     ),
     (
         "sm/src/game/player_movement_runtime.rs",
@@ -1105,6 +1109,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/actors/overlap.rs"),
     ),
     (
+        "crates/sm_game/src/player_collision/mod.rs",
+        include_bytes!("../../crates/sm_game/src/player_collision/mod.rs"),
+    ),
+    (
         "sm/src/game/player_collision/mod.rs",
         include_bytes!("game/player_collision/mod.rs"),
     ),
@@ -1117,8 +1125,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/player_collision/effects.rs"),
     ),
     (
-        "sm/src/game/player_collision/operations.rs",
-        include_bytes!("game/player_collision/operations.rs"),
+        "crates/sm_game/src/player_collision/operations.rs",
+        include_bytes!("../../crates/sm_game/src/player_collision/operations.rs"),
     ),
     (
         "sm/src/verification/actor_population_animation_cases.rs",
@@ -1141,8 +1149,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/actors/access.rs"),
     ),
     (
-        "sm/src/game/actors/api.rs",
-        include_bytes!("game/actors/api.rs"),
+        "crates/sm_game/src/actors/api.rs",
+        include_bytes!("../../crates/sm_game/src/actors/api.rs"),
     ),
     (
         "crates/sm_game/src/actors/codec.rs",
@@ -1193,40 +1201,40 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/actors/state.rs"),
     ),
     (
-        "sm/src/game/actors/population.rs",
-        include_bytes!("game/actors/population.rs"),
+        "crates/sm_game/src/actors/population.rs",
+        include_bytes!("../../crates/sm_game/src/actors/population.rs"),
     ),
     (
-        "sm/src/game/actors/animation.rs",
-        include_bytes!("game/actors/animation.rs"),
+        "crates/sm_game/src/actors/animation.rs",
+        include_bytes!("../../crates/sm_game/src/actors/animation.rs"),
     ),
     (
-        "sm/src/game/actors/staging.rs",
-        include_bytes!("game/actors/staging.rs"),
+        "crates/sm_game/src/actors/staging.rs",
+        include_bytes!("../../crates/sm_game/src/actors/staging.rs"),
     ),
     (
-        "sm/src/game/actors/movement.rs",
-        include_bytes!("game/actors/movement.rs"),
+        "crates/sm_game/src/actors/movement.rs",
+        include_bytes!("../../crates/sm_game/src/actors/movement.rs"),
     ),
     (
-        "sm/src/game/actors/queries.rs",
-        include_bytes!("game/actors/queries.rs"),
+        "crates/sm_game/src/actors/queries.rs",
+        include_bytes!("../../crates/sm_game/src/actors/queries.rs"),
     ),
     (
-        "sm/src/game/actors/scheduling.rs",
-        include_bytes!("game/actors/scheduling.rs"),
+        "crates/sm_game/src/actors/scheduling.rs",
+        include_bytes!("../../crates/sm_game/src/actors/scheduling.rs"),
     ),
     (
-        "sm/src/game/actors/contacts.rs",
-        include_bytes!("game/actors/contacts.rs"),
+        "crates/sm_game/src/actors/contacts.rs",
+        include_bytes!("../../crates/sm_game/src/actors/contacts.rs"),
     ),
     (
-        "sm/src/game/actors/combat.rs",
-        include_bytes!("game/actors/combat.rs"),
+        "crates/sm_game/src/actors/combat.rs",
+        include_bytes!("../../crates/sm_game/src/actors/combat.rs"),
     ),
     (
-        "sm/src/game/actors/drawing.rs",
-        include_bytes!("game/actors/drawing.rs"),
+        "crates/sm_game/src/actors/drawing.rs",
+        include_bytes!("../../crates/sm_game/src/actors/drawing.rs"),
     ),
     ("sm/src/apu_queue.rs", include_bytes!("apu_queue.rs")),
     ("sm/src/apu_ram.rs", include_bytes!("apu_ram.rs")),
@@ -1444,8 +1452,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/grapple_swing.rs"),
     ),
     (
-        "sm/src/game/grapple_rope.rs",
-        include_bytes!("game/grapple_rope.rs"),
+        "crates/sm_game/src/grapple_rope.rs",
+        include_bytes!("../../crates/sm_game/src/grapple_rope.rs"),
     ),
     (
         "sm/src/game/imported.rs",
@@ -2028,6 +2036,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/sprite_objects.rs",
         include_bytes!("../../crates/sm_game/src/sprite_objects.rs"),
+    ),
+    (
+        "crates/sm_game/src/transition_trace.rs",
+        include_bytes!("../../crates/sm_game/src/transition_trace.rs"),
     ),
     (
         "crates/sm_game/src/visual_host.rs",

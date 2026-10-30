@@ -455,7 +455,7 @@ pub mod game {
     pub(crate) mod gameplay;
     pub(crate) mod grapple_aim;
     pub(crate) mod grapple_origins;
-    pub(crate) mod grapple_rope;
+    pub(crate) use sm_game::grapple_rope;
     pub(crate) mod grapple_swing;
     pub(crate) mod imported;
     pub(crate) mod intro_pages;

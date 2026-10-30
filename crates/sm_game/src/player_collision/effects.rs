@@ -42,6 +42,14 @@ pub trait ImportedCollisionReads {
 }
 
 pub trait Effects {
+    /// Verifier and unit-test observer of each launch-motion record, called
+    /// before the record is stored; production is inert.
+    fn record_launch(
+        &mut self,
+        _direction: crate::launch_motion::MovementDirection,
+        _displacement: i32,
+    ) {
+    }
     /// Execute existing mechanism creation/setup synchronously with the SAME
     /// local displacement. Preserve all live Session mutations and the full
     /// result byte; the operation masks bits only where the original did so.
