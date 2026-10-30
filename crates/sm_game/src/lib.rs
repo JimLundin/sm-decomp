@@ -148,6 +148,7 @@ pub mod actors {
     pub mod fire_arc;
     pub mod fireflea;
     pub mod fixture;
+    pub mod flies;
     pub mod fune;
     pub mod gamet;
     pub mod geega;

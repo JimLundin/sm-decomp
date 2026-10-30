@@ -12,11 +12,11 @@ use crate::actors::{
     alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, bull, cacatac,
     ceres_doors, ceres_ridley, choot, covern, crawlers, crocomire_reactions, dachora_run,
     draygon_death, draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep,
-    elevator, escape_critters, etecoon, evir, fire_arc, fireflea, fune, gamet, geega, geruta, kago,
-    kihunter, kraid, magdollite, metroid, mini_kraid, mochtroid, morph_ball_eye, multiviola, oum,
-    phantoon, phantoon_actions, polyp, powamp, puyo, reflec, ridley, rinka, rio, rippers, roach,
-    shaktool, sidehopper, skree, skultera, space_pirates, squeept, statues, tatori, torizo,
-    tripper, work_robot, wrecked_ship_spark, yapping_maw, yard, zeb, zebetites, zoa,
+    elevator, escape_critters, etecoon, evir, fire_arc, fireflea, flies, fune, gamet, geega,
+    geruta, kago, kihunter, kraid, magdollite, metroid, mini_kraid, mochtroid, morph_ball_eye,
+    multiviola, oum, phantoon, phantoon_actions, polyp, powamp, puyo, reflec, ridley, rinka, rio,
+    rippers, roach, shaktool, sidehopper, skree, skultera, space_pirates, squeept, statues, tatori,
+    torizo, tripper, work_robot, wrecked_ship_spark, yapping_maw, yard, zeb, zebetites, zoa,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -678,6 +678,7 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
             game.next_random();
             pre_instruction(geruta::function(game), game);
         }
+        10661995 => flies::initialize(game),
         _ => game.native_ai(ea),
     }
 }
@@ -858,6 +859,10 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
         10665790 => squeept::fly(k, squeept::Flight::Rising, game),
         10665852 => squeept::fly(k, squeept::Flight::Flipping, game),
         10665916 => squeept::fly(k, squeept::Flight::Falling, game),
+        10662222 => flies::circle(k, false, game),
+        10662268 => flies::circle(k, true, game),
+        10662314 => flies::dive(k, false, game),
+        10662354 => flies::dive(k, true, game),
         _ => game.native_pre_instruction(ea, k),
     }
 }
