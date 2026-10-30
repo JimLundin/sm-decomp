@@ -1241,8 +1241,6 @@ crate::game::callback_dispatch! {
         10676168 => [{ actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize); crate::game::lava_seahorse_pair::synchronize(game); }];
         10676174 => [{ actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize); crate::game::lava_seahorse_pair::synchronize(game); }];
         10676180 => [{ actors::combat::power_bomb_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize); crate::game::lava_seahorse_pair::synchronize(game); }];
-        10663280 => [crate::game::lavaquake::update(true, game)];
-        10663311 => [crate::game::lavaquake::update(false, game)];
         10652077 => crate::game::mini_crocomire::initialize;
         10651420 => crate::game::goofball::initialize;
         10651548 => crate::game::goofball::advance;
