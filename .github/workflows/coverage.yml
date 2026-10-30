@@ -125,8 +125,10 @@ jobs:
           python -B tools/profiler_runtime.py --zig $env:SM_ZIG --out "$env:RUNNER_TEMP/profiler"
           if ($LASTEXITCODE -ne 0) { throw 'Profiler runtime build failed' }
       - name: Build the verifier DLL (direct, as the local Fast loop does)
+        # Without link-dead-code the linker drops the per-function coverage records
+        # (.lcovfun), and llvm-cov then reports no files.
         env:
-          RUSTFLAGS: -C instrument-coverage -L ${{ runner.temp }}/profiler
+          RUSTFLAGS: -C instrument-coverage -C link-dead-code -L ${{ runner.temp }}/profiler
         run: |
           python tools/verify_dll.py --build-only --direct
           if ($LASTEXITCODE -ne 0) { throw 'Verifier DLL build failed' }
