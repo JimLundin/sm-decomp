@@ -1,6 +1,6 @@
 use crate::game::actors;
 use crate::game::actors::api as actor_api;
-use crate::game::actors::dachora::Dachora_Func_1;
+use crate::game::actors::dachora::load_palette as load_dachora_palette;
 use crate::game::actors::kraid_fingernails::KraidFingernailInit;
 use crate::game::actors::phantoon_actions::Phantoon_SetColorBasedOnHp_FindEntry;
 use crate::game::decompression::decompress_to_ram;
@@ -2511,7 +2511,7 @@ pub fn Dachora_Func_6(k: u16, game: &mut Game) -> i32 {
         let v2: u16 = (slot!(game, Enemy_Dachora[E].var_E)).wrapping_sub(1);
         slot!(game, Enemy_Dachora[E].var_E = v2);
         if v2 as u8 == 0 {
-            Dachora_Func_1(
+            load_dachora_palette(
                 crate::rtl::rom_table_word!(
                     game,
                     0xa7f787,
@@ -2624,7 +2624,7 @@ pub fn Dachora_Func_9(k: u16, game: &mut Game) {
 }
 pub fn Dachora_Func_10(k: u16, game: &mut Game) {
     let E = (k as i32) as i32;
-    Dachora_Func_1(
+    load_dachora_palette(
         crate::rtl::rom_table_word!(
             game,
             0xa7f92d,
@@ -3786,7 +3786,7 @@ crate::game::callback_dispatch! {
             slot!(game, Enemy_Dachora[E]; var_E = 1, parameter_1 = 1);
             slot!(game, Enemy_Dachora[E].base.instruction_timer = 1);
             slot!(game, Enemy_Dachora[E]; var_A = 0, var_B = 0);
-            Dachora_Func_1(addr_kDachora_Palette as u16, k, game);
+            load_dachora_palette(addr_kDachora_Palette as u16, k, game);
         }
     };
     [11007582] Dachora_Func_5 [] {
@@ -3797,7 +3797,7 @@ crate::game::callback_dispatch! {
             slot!(game, Enemy_Dachora[E].base.current_instruction = addr_kDachora_Ilist_F345 as u16);
             slot!(game, Enemy_Dachora[E].var_F = (0xa7f5edi32) as u16);
             slot!(game, Enemy_Dachora[E]; parameter_1 = 0, var_A = 0);
-            Dachora_Func_1(addr_kDachora_Palette as u16, k, game);
+            load_dachora_palette(addr_kDachora_Palette as u16, k, game);
         } else {
             ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
             if slot!(game, Enemy_Dachora[E].base.x_pos) as i32 - 1152i32 & 0x8000 == 0 {
@@ -3867,7 +3867,7 @@ crate::game::callback_dispatch! {
             slot!(game, Enemy_Dachora[E].var_F = (0xa7f935i32) as u16);
             slot!(game, Enemy_Dachora[E].base.instruction_timer = 1);
             slot!(game, Enemy_Dachora[E]; var_A = 0, var_B = 0, var_E = 0);
-            Dachora_Func_1(addr_kDachora_Palette as u16, k, game);
+            load_dachora_palette(addr_kDachora_Palette as u16, k, game);
             QueueSfx2_Max6(0x3c, game);
         }
     };
