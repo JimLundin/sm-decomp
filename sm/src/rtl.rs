@@ -110,9 +110,7 @@ macro_rules! rom_table_word {
 }
 pub(crate) use rom_table_word;
 
-use crate::c_library::{
-    fclose, fopen, fprintf, fread, fseek, fwrite, memcpy, printf, rename, sprintf, stderr,
-};
+use crate::c_library::{fprintf, memcpy, printf, sprintf, stderr};
 use crate::cpu_infra::RtlUpdateSnesPatchForBugfix;
 use crate::game_state::Game;
 use crate::host::{Die, RtlApuLock, RtlApuUnlock};
@@ -126,9 +124,11 @@ use crate::spc_player::SpcPlayer_Upload;
 pub use crate::types::Dsp;
 pub use crate::types::{Cpu, FILE, LongPtr, PairU16, Snes, VoidP, size_t};
 pub use crate::types::{RunFrameFunc, SyncAllFunc};
-use ::core::ffi::{c_char, c_long, c_void};
+use ::core::ffi::{c_char, c_void};
 use ::core::mem::size_of;
 use ::core::ptr::null_mut;
+use std::fs::File;
+use std::io::{BufWriter, Seek, SeekFrom, Write};
 
 pub use crate::types::SaveLoadOperation as C2RustUnnamed_0;
 pub const kSaveLoad_Replay: C2RustUnnamed_0 = 3;
@@ -142,8 +142,6 @@ crate::type_aliases! {
 pub const NULL: *mut c_void = null_mut::<c_void>();
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
-pub const SEEK_SET: i32 = 0;
-pub const SEEK_END: i32 = 2;
 
 pub unsafe fn RtlSetupEmuCallbacks(
     emu_ram: *mut u8,
@@ -266,19 +264,21 @@ unsafe fn finish_load_snes_state(native_game: &mut Game, complete_load: bool) {
     }
 }
 
-pub unsafe fn ReadFromFile(f: *mut FILE, data: *mut c_void, n: size_t) {
-    unsafe {
-        let _ = read_file_block(f, data, n);
+/// Read `n` bytes into `data`, reporting a short read through `Die` as the
+/// original did. Returns whether all `n` bytes arrived.
+///
+/// # Safety
+/// `data` must be valid for writing `n` bytes.
+unsafe fn read_file_block(f: &mut File, data: *mut c_void, n: size_t) -> bool {
+    if n == 0 {
+        return true;
     }
-}
-unsafe fn read_file_block(f: *mut FILE, data: *mut c_void, n: size_t) -> bool {
-    unsafe {
-        let complete = fread(data, 1 as size_t, n, f) == n;
-        if !complete {
-            Die(c"fread failed\n".as_ptr());
-        }
-        complete
+    let buffer = unsafe { core::slice::from_raw_parts_mut(data.cast::<u8>(), n) };
+    let complete = crate::util::read_up_to(f, buffer) == n;
+    if !complete {
+        unsafe { Die(c"fread failed\n".as_ptr()) };
     }
+    complete
 }
 pub unsafe fn RtlReset(mode: i32, game: &mut Game) {
     unsafe {
@@ -322,13 +322,13 @@ unsafe fn reset(mode: i32, native_game: &mut Game, complete_load: bool) {
         }
     }
 }
-pub unsafe fn StateRecorder_Load(f: *mut FILE, replay_mode: bool, game: &mut Game) {
+pub unsafe fn StateRecorder_Load(f: &mut File, replay_mode: bool, game: &mut Game) {
     unsafe {
         let _ = state_recorder_load(f, replay_mode, game, false);
     }
 }
 unsafe fn state_recorder_load(
-    f: *mut FILE,
+    f: &mut File,
     replay_mode: bool,
     native_game: &mut Game,
     outer_load: bool,
@@ -480,11 +480,9 @@ unsafe fn state_recorder_load(
                 } else {
                     0
                 };
-                let skip = c_long::try_from(hdr[6])
-                    .unwrap()
-                    .checked_add(final_queue_size)
-                    .unwrap();
-                assert_eq!(fseek(f, skip, 1), 0);
+                let skip = i64::from(hdr[6]) + final_queue_size;
+                f.seek(SeekFrom::Current(skip))
+                    .expect("seek past the final snapshot");
             }
             read_complete &= read_file_block(
                 f,
@@ -517,7 +515,11 @@ unsafe fn state_recorder_load(
         read_complete
     }
 }
-pub unsafe fn StateRecorder_Save(f: *mut FILE, saving_with_bug: bool, native_game: &mut Game) {
+pub unsafe fn StateRecorder_Save(
+    f: &mut impl Write,
+    saving_with_bug: bool,
+    native_game: &mut Game,
+) {
     let game = &mut *native_game;
     unsafe {
         if !game.supports_legacy_persistence() {
@@ -569,30 +571,17 @@ pub unsafe fn StateRecorder_Save(f: *mut FILE, saving_with_bug: bool, native_gam
             hdr[12] = u32::from_le_bytes(*b"ABQ1");
             hdr[13] = 71;
         }
-        fwrite(
-            &raw mut hdr as *mut u32 as *const c_void,
-            1 as size_t,
-            size_of::<[u32; 16]>() as size_t,
-            f,
-        );
-        fwrite(
-            sr.log.as_ptr() as *const c_void,
-            1 as size_t,
-            sr.log.size,
-            f,
-        );
-        fwrite(
-            sr.base_snapshot.as_ptr() as *const c_void,
-            1 as size_t,
-            sr.base_snapshot.size,
-            f,
-        );
-        fwrite(arr.as_ptr() as *const c_void, 1 as size_t, arr.size, f);
+        // Like the original's unchecked fwrite calls, a failed write is not reported.
+        let header: Vec<u8> = hdr.iter().flat_map(|word| word.to_ne_bytes()).collect();
+        let _ = f.write_all(&header);
+        let _ = f.write_all(sr.log.as_slice());
+        let _ = f.write_all(sr.base_snapshot.as_slice());
+        let _ = f.write_all(arr.as_slice());
         if let Some(bytes) = audio_queue {
-            fwrite(bytes.as_ptr().cast(), 1, bytes.len(), f);
+            let _ = f.write_all(&bytes);
         }
         if sr.has_base_audio_queue {
-            fwrite(sr.base_audio_queue.as_ptr().cast(), 1, 71, f);
+            let _ = f.write_all(&sr.base_audio_queue);
         }
         drop(arr);
         mutation
@@ -842,18 +831,24 @@ pub unsafe fn RtlSaveSnapshot(
             eprintln!("RtlSaveSnapshot: {error}");
             return;
         }
+        let Some(file) = crate::util::host_path(filename).and_then(|path| File::create(path).ok())
+        else {
+            eprintln!("RtlSaveSnapshot: unable to create the snapshot file");
+            return;
+        };
+        let mut f = BufWriter::new(file);
         game.preflight_samus_runtime()
             .expect("Samus save entry rejected");
         let mut mutation = game
             .begin_samus_mutation()
             .expect("Samus mutation rejected");
         let game = mutation.game();
-        let f = fopen(filename, c"wb".as_ptr()) as *mut FILE;
         RtlApuLock();
         RtlSaveMusicStateToRam_Locked(game, true);
-        StateRecorder_Save(f, saving_with_bug, game);
+        StateRecorder_Save(&mut f, saving_with_bug, game);
         RtlApuUnlock();
-        fclose(f);
+        let _ = f.flush();
+        drop(f);
         mutation
             .finish_current()
             .expect("Samus save adoption rejected");
@@ -913,11 +908,12 @@ pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, native_game: &mut Game) {
             slot,
         );
         if cmd != kSaveLoad_Save as i32 {
-            let f = fopen(&raw mut name as *mut c_char, c"rb".as_ptr()) as *mut FILE;
-            if f.is_null() {
+            let Some(mut f) =
+                crate::util::host_path(name.as_ptr()).and_then(|path| File::open(path).ok())
+            else {
                 printf(c"Failed fopen: %s\n".as_ptr(), &raw mut name as *mut c_char);
                 return;
-            }
+            };
             game.preflight_samus_runtime()
                 .expect("Samus load entry rejected");
             let mut mutation = game
@@ -925,11 +921,12 @@ pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, native_game: &mut Game) {
                 .expect("Samus mutation rejected");
             let game = mutation.game();
             RtlApuLock();
-            let complete_load = state_recorder_load(f, cmd == kSaveLoad_Replay as i32, game, true);
+            let complete_load =
+                state_recorder_load(&mut f, cmd == kSaveLoad_Replay as i32, game, true);
             ppu_copy((*game.g_snes).my_ppu, (*game.g_snes).ppu);
             RtlApuUnlock();
             synchronize_whole_state(game, complete_load);
-            fclose(f);
+            drop(f);
             if game.ram().read_byte(0x611)
                 | game.ram().read_byte(0x612)
                 | game.ram().read_byte(0x613)
@@ -1531,8 +1528,7 @@ pub unsafe fn RtlReadSram(game: &mut Game) {
             eprintln!("RtlReadSram: legacy persistence is unavailable for a prepared world");
             return;
         }
-        let f = fopen(c"saves/sm.srm".as_ptr(), c"rb".as_ptr()) as *mut FILE;
-        if !f.is_null() {
+        if let Ok(mut f) = File::open("saves/sm.srm") {
             game.preflight_samus_runtime()
                 .expect("Samus SRAM entry rejected");
             let mut mutation = game
@@ -1540,17 +1536,12 @@ pub unsafe fn RtlReadSram(game: &mut Game) {
                 .expect("Samus mutation rejected");
             let game = mutation.game();
             let mut bytes = game.g_sram.bytes(0..crate::recording::BASE_SRAM_SIZE);
-            let count = fread(
-                bytes.as_mut_ptr().cast(),
-                1,
-                crate::recording::BASE_SRAM_SIZE,
-                f,
-            );
+            let count = crate::util::read_up_to(&mut f, &mut bytes[..]);
             game.g_sram.write_bytes(0, &bytes);
             if count != crate::recording::BASE_SRAM_SIZE {
                 fprintf(stderr, c"Error reading saves/sm.srm\n".as_ptr());
             }
-            fclose(f);
+            drop(f);
             synchronize_whole_state(game, count == crate::recording::BASE_SRAM_SIZE);
             recording_allocation(
                 game.state_recorder
@@ -1577,17 +1568,10 @@ pub unsafe fn RtlWriteSram(game: &mut Game) {
             eprintln!("RtlWriteSram: legacy persistence is unavailable for a prepared world");
             return;
         }
-        rename(c"saves/sm.srm".as_ptr(), c"saves/sm.srm.bak".as_ptr());
-        let f = fopen(c"saves/sm.srm".as_ptr(), c"wb".as_ptr()) as *mut FILE;
-        if !f.is_null() {
+        let _ = std::fs::rename("saves/sm.srm", "saves/sm.srm.bak");
+        if let Ok(mut f) = File::create("saves/sm.srm") {
             let bytes = game.g_sram.bytes(0..crate::recording::BASE_SRAM_SIZE);
-            fwrite(
-                bytes.as_ptr().cast(),
-                1,
-                crate::recording::BASE_SRAM_SIZE,
-                f,
-            );
-            fclose(f);
+            let _ = f.write_all(&bytes);
         } else {
             fprintf(stderr, c"Unable to write saves/sm.srm\n".as_ptr());
         };

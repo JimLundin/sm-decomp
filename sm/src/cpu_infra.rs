@@ -6,12 +6,10 @@ use crate::rom_patches::RomPatches;
 use crate::rtl::words;
 pub use crate::snes::registers::*;
 use ::core::ffi::{c_char, c_void};
-use ::core::mem::{MaybeUninit, size_of};
+use ::core::mem::size_of;
 use ::core::ptr::null_mut;
 
-use crate::c_library::{
-    fopen, fprintf, fread, fseek, ftell, memcmp, printf, puts, rewind, snprintf, stderr, time,
-};
+use crate::c_library::{fprintf, memcmp, printf, puts, snprintf, stderr, time};
 use crate::rtl::{RtlSaveSnapshot, RtlSetupEmuCallbacks};
 
 #[path = "game/session_native_adoption.rs"]
@@ -1034,27 +1032,20 @@ pub unsafe fn RunAsmCode(
 }
 unsafe fn loadRom(name: *const c_char, game: &mut Game) -> bool {
     unsafe {
-        let file = fopen(name, c"rb".as_ptr());
-        if file.is_null() {
-            puts(c"Failed to read file".as_ptr());
-            return false_0 != 0;
-        }
-        let file = crate::util::InputFile(file);
-        fseek(file.0, 0, crate::util::SEEK_END);
-        let length: size_t = ftell(file.0) as size_t;
-        rewind(file.0);
-        // A returning Die may leave unread bytes; only spare capacity is promised.
-        let mut bytes = Vec::<MaybeUninit<u8>>::new();
-        if bytes.try_reserve_exact(length.wrapping_add(1)).is_err() {
-            crate::host::Die(c"malloc failed".as_ptr());
-        }
-        bytes.spare_capacity_mut()[length].write(MaybeUninit::new(0));
-        let data = bytes.as_mut_ptr().cast::<u8>();
-        if fread(data.cast(), 1, length, file.0) != length {
-            crate::host::Die(c"fread failed".as_ptr());
-        }
-        drop(file);
-        snes_loadRom(data, length as i32, game)
+        let bytes = match crate::util::read_whole_file(name) {
+            Ok(bytes) => bytes,
+            Err(crate::util::ReadFailure::Open) => {
+                puts(c"Failed to read file".as_ptr());
+                return false;
+            }
+            Err(crate::util::ReadFailure::Read) => {
+                crate::host::Die(c"fread failed".as_ptr());
+                return false;
+            }
+        };
+        // The trailing NUL stays outside the ROM length.
+        let length = bytes.len() - 1;
+        snes_loadRom(bytes.as_ptr(), length as i32, game)
     }
 }
 pub unsafe fn PatchBytes(addr: u32, bytes: &[u8], game: &mut Game) {

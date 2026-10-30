@@ -200,28 +200,15 @@ unsafe extern "C-unwind" fn sm_config_read_file(
     name: *const c_char,
 ) -> *mut c_char {
     unsafe {
-        use sm::c_library::{fopen, fread, fseek, ftell, rewind};
-        let file = fopen(name, c"rb".as_ptr());
-        if file.is_null() {
-            return null_mut();
-        }
-        let file = sm::util::InputFile(file);
-        fseek(file.0, 0, sm::util::SEEK_END);
-        let length = ftell(file.0) as size_t;
-        rewind(file.0);
-        let extent = length.checked_add(1).expect("config input size overflow");
-        let mut buffer = Vec::new();
-        if buffer.try_reserve_exact(extent).is_err() {
-            sm::host::Die(c"malloc failed".as_ptr());
-            panic!("config allocation failed");
-        }
-        buffer.resize(extent, 0);
-        buffer[length] = 0;
+        let mut buffer = match sm::util::read_whole_file(name) {
+            Ok(buffer) => buffer,
+            Err(sm::util::ReadFailure::Open) => return null_mut(),
+            Err(sm::util::ReadFailure::Read) => {
+                sm::host::Die(c"fread failed".as_ptr());
+                return null_mut();
+            }
+        };
         let data = buffer.as_mut_ptr();
-        if fread(data.cast(), 1, length, file.0) != length {
-            sm::host::Die(c"fread failed".as_ptr());
-        }
-        drop(file);
         (*owner.cast::<ConfigOwner>()).inputs.push(buffer);
         data.cast()
     }

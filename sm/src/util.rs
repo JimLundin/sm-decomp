@@ -16,7 +16,6 @@ pub type __gnuc_va_list = __builtin_va_list;
 pub const NULL: *mut c_void = core::ptr::null_mut::<c_void>();
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
-pub const SEEK_END: i32 = 2;
 
 // Preserve the native lexical policy: directory bytes plus the full new name.
 // Absolute names, dots and slash styles are copied without normalization.
@@ -34,14 +33,51 @@ pub fn include_path(base: &core::ffi::CStr, name: &core::ffi::CStr) -> std::ffi:
     std::ffi::CString::from_vec_with_nul(path).expect("include path contains a nul byte")
 }
 
-// ROM and configuration readers close the actual CRT stream on return or unwind.
-pub struct InputFile(pub *mut FILE);
-impl Drop for InputFile {
-    fn drop(&mut self) {
-        unsafe {
-            crate::c_library::fclose(self.0);
+/// Why a whole file could not be read.
+pub enum ReadFailure {
+    Open,
+    Read,
+}
+
+/// The path a host C string names. Names that are not UTF-8 cannot be opened.
+///
+/// # Safety
+/// `name` must point to a NUL-terminated string.
+pub unsafe fn host_path(name: *const c_char) -> Option<std::path::PathBuf> {
+    unsafe { core::ffi::CStr::from_ptr(name) }
+        .to_str()
+        .ok()
+        .map(std::path::PathBuf::from)
+}
+
+/// Read a whole file, followed by one NUL byte for the C parsers that scan it.
+///
+/// # Safety
+/// `name` must point to a NUL-terminated string.
+pub unsafe fn read_whole_file(name: *const c_char) -> Result<Vec<u8>, ReadFailure> {
+    use std::io::Read as _;
+    let path = unsafe { host_path(name) }.ok_or(ReadFailure::Open)?;
+    let mut file = std::fs::File::open(path).map_err(|_| ReadFailure::Open)?;
+    let mut bytes = Vec::new();
+    file.read_to_end(&mut bytes)
+        .map_err(|_| ReadFailure::Read)?;
+    bytes.push(0);
+    Ok(bytes)
+}
+
+/// Fill `buffer` from `source` as `fread` did, stopping early only at the end
+/// of the file or on an error. Returns how many bytes arrived.
+pub fn read_up_to(source: &mut impl std::io::Read, buffer: &mut [u8]) -> usize {
+    let mut filled = 0;
+    while filled < buffer.len() {
+        match source.read(&mut buffer[filled..]) {
+            Ok(0) => break,
+            Ok(read) => filled += read,
+            Err(error) if error.kind() == std::io::ErrorKind::Interrupted => {}
+            Err(_) => break,
         }
     }
+    filled
 }
 
 #[link(name = "sm_config", kind = "static", modifiers = "-bundle")]
