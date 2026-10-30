@@ -168,6 +168,8 @@ pub trait ActorLease:
     /// The native record at `address` in `bank`, after the original
     /// low-window diagnostic.
     fn lease_native_record(&mut self, bank: u8, address: u16) -> sm_data::cartridge::RomRecord;
+    /// The common enemy speed table word at signed word `index`.
+    fn lease_enemy_speed(&self, table: sm_data::enemy_speeds::SpeedTable, index: isize) -> u16;
 }
 
 /// A host that can lease its actors; each `lease` is one original `Runtime`.

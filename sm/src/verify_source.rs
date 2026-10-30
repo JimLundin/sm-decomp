@@ -678,10 +678,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/actors/norfair_pipe_bug.rs"),
     ),
     (
-        "sm/src/game/actors/falling_platforms.rs",
-        include_bytes!("game/actors/falling_platforms.rs"),
-    ),
-    (
         "sm/src/game/actors/magdollite.rs",
         include_bytes!("game/actors/magdollite.rs"),
     ),
@@ -3212,6 +3208,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/actors/spore_spawn.rs",
         include_bytes!("../../crates/sm_game/src/actors/spore_spawn.rs"),
+    ),
+    (
+        "crates/sm_game/src/actors/tripper.rs",
+        include_bytes!("../../crates/sm_game/src/actors/tripper.rs"),
     ),
     (
         "crates/sm_game/src/actors/yapping_maw.rs",

@@ -175,6 +175,7 @@ pub mod actors {
     pub mod state;
     pub mod statues;
     pub mod torizo;
+    pub mod tripper;
     pub mod yapping_maw;
     pub mod yellow_pipe_bug;
     pub mod zebetites;

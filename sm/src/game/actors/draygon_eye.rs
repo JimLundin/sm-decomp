@@ -36,6 +36,10 @@ impl ActorLease for Runtime<'_> {
     fn lease_native_record(&mut self, bank: u8, address: u16) -> crate::rom::RomRecord {
         Runtime::legacy_native_record(self, bank, address)
     }
+
+    fn lease_enemy_speed(&self, table: sm_data::enemy_speeds::SpeedTable, index: isize) -> u16 {
+        Runtime::enemy_speed(self, table, index)
+    }
 }
 
 impl LeaseActors for Game {

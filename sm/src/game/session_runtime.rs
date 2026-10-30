@@ -1,8 +1,8 @@
 //! One aggregate authority for player, projectiles, mechanisms and their room.
 use crate::game::actors::diving_enemies::{self, Kind as DivingKind};
 use crate::game::actors::{
-    bang, elevator, falling_platforms, maridia_snail, metroid, mochtroid, reflec, roach,
-    sidehopper, wall_crawlers, zoa,
+    bang, elevator, maridia_snail, metroid, mochtroid, reflec, roach, sidehopper, tripper,
+    wall_crawlers, zoa,
 };
 use crate::game::enemy_speeds::SpeedTable;
 use crate::{
@@ -1088,8 +1088,8 @@ crate::game::callback_dispatch! {
         10718857 => actors::fireflea::shot;
         10719413 => actors::skultera::initialize; 10719531 => actors::skultera::main_ai;
         10720486 => elevator::initialize; 10720554 => elevator::main_ai;
-        10722463 => [falling_platforms::initialize(true, game)]; 10722490 => [falling_platforms::initialize(false, game)];
-        10722582 => falling_platforms::advance; 10723080 => falling_platforms::shot;
+        10722463 => [tripper::initialize(true, game)]; 10722490 => [tripper::initialize(false, game)];
+        10722582 => tripper::main_ai; 10723080 => tripper::shot;
         10725245 => mochtroid::initialize; 10725264 => mochtroid::main_ai; 10725715 => mochtroid::touch;
 
         10720995 => [wall_crawlers::initialize(wall_crawlers::Kind::Crab, game)];
@@ -1448,8 +1448,8 @@ crate::game::callback_dispatch! {
         11044751 | 11044763 | 11044790 | 11044811 => [crate::game::actors::evir::instruction(ea, j, game)];
         10716899 => crate::game::waver::Waver_Instr_1;
         10717526 | 10733220 => [diving_enemies::ready(j, game)];
-        10722411 | 10722433 => [falling_platforms::direction(false, j, game)];
-        10722422 | 10722444 => [falling_platforms::direction(true, j, game)];
+        10722411 | 10722433 => [tripper::set_x_movement(false, j, game)];
+        10722422 | 10722444 => [tripper::set_x_movement(true, j, game)];
         10725992 => [sidehopper::instruction(true, j, game)]; 10726142 => [sidehopper::instruction(false, j, game)];
         10728489 => [zoa::set_x_speed_index(4, j, game)]; 10728500 => [zoa::set_x_speed_index(8, j, game)];
         10728511 => [zoa::set_x_speed_index(12, j, game)];
