@@ -65,6 +65,7 @@ pub mod actors {
     #[doc(hidden)] // Shared verification world for compat and detached checks.
     pub mod fixture;
     pub mod identity;
+    pub mod layouts;
     pub mod media;
     pub mod overlap;
     pub mod scene;

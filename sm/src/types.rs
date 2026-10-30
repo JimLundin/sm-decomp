@@ -2,6 +2,7 @@
 
 use crate::game_state::Game;
 use ::core::ffi::{c_char, c_double, c_float, c_long, c_schar, c_short, c_uchar, c_ushort, c_void};
+pub use sm_game::actors::layouts::EnemyBase;
 
 crate::type_aliases! {
     pub VoidP, PpuZbufType, Uint16, stbi__uint16 = u16;
@@ -28,14 +29,6 @@ crate::typed_struct! {
         pub door_bitflags, door_orientation, x_pos_plm, y_pos_plm, x_pos_in_room, y_pos_in_room: u8;
         pub samus_distance_from_door: u16;
         pub door_setup_code: VoidP;
-    }
-
-    pub struct EnemyBase {
-        pub enemy_ptr, x_pos, x_subpos, y_pos, y_subpos, x_width, y_height, properties,
-            extra_properties, ai_handler_bits, health, spritemap_pointer, timer,
-            current_instruction, instruction_timer, palette_index, vram_tiles_index, layer,
-            flash_timer, frozen_timer, invincibility_timer, shake_timer, frame_counter: u16;
-        pub bank, field_2F: u8;
     }
 
     pub struct EnemyData {
@@ -915,3 +908,40 @@ pub struct Dsp {
     pub(crate) apu_memory: crate::apu_ram::ApuRam,
 }
 const _: () = assert!(core::mem::offset_of!(Dsp, state) == 0);
+
+// EnemyBase, now in sm_game, must remain the prefix of EnemyData.
+macro_rules! assert_enemy_base_prefix {
+    ($($field:ident),+) => {
+        $(const _: () = assert!(
+            ::core::mem::offset_of!(EnemyBase, $field) == ::core::mem::offset_of!(EnemyData, $field)
+        );)+
+        const _: () = assert!(::core::mem::size_of::<EnemyBase>() == ::core::mem::offset_of!(EnemyData, ai_var_A));
+    };
+}
+assert_enemy_base_prefix!(
+    enemy_ptr,
+    x_pos,
+    x_subpos,
+    y_pos,
+    y_subpos,
+    x_width,
+    y_height,
+    properties,
+    extra_properties,
+    ai_handler_bits,
+    health,
+    spritemap_pointer,
+    timer,
+    current_instruction,
+    instruction_timer,
+    palette_index,
+    vram_tiles_index,
+    layer,
+    flash_timer,
+    frozen_timer,
+    invincibility_timer,
+    shake_timer,
+    frame_counter,
+    bank,
+    field_2F
+);
