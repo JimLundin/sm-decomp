@@ -85,7 +85,7 @@ macro_rules! torizo_fall_until_timer {
     (
         $enemy:ident, $enemy_index:ident, $game:ident, $facing_left_instruction:ident,
         $facing_right_instruction:ident $(,)?
-    ) => {
+    ) => {{
         let torizo_var_03: u16 = slot!($game, Enemy_Torizo[$enemy].var_03);
         if torizo_var_03 == 0 || {
             let mut v8: u16 = (torizo_var_03).wrapping_sub(1);
@@ -126,13 +126,13 @@ macro_rules! torizo_fall_until_timer {
             slot!($game, Enemy_Torizo[$enemy].base.current_instruction = v9);
             slot!($game, Enemy_Torizo[$enemy].base.instruction_timer = 1);
         }
-    };
+    }};
 }
 
 crate::game::callback_dispatch! {
-    pub unsafe fn CallTorizoFunc(ea: u32, k: u16, game: &mut Game) => ea;
+    pub fn CallTorizoFunc(ea: u32, k: u16, game: &mut Game) => ea;
     call (k, game); default { Unreachable(game); };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
+    @functions [pub fn (k: u16, game: &mut Game)];
     [11191999] Torizo_Func_3 [] {
         actors::torizo::drool_at_low_health(k, game);
         Torizo_C643(k, game);
@@ -142,7 +142,7 @@ crate::game::callback_dispatch! {
         let E: i32 = k as i32;
         if (slot!(game, Enemy_Torizo[E].parameter_2) & 0x8000) != 0 || slot!(game, Enemy_Torizo[E].base.health) >= 0x15e {
             if (slot!(game, Enemy_Torizo[E].parameter_2) & 0x4000) != 0 || slot!(game, Enemy_Torizo[E].base.health) >= 0x64 {
-                actor_species_pre_instruction(((slot!(game, Enemy_Torizo[E].var_F)) as u32) | (0xaa0000u32), game);
+                unsafe { actor_species_pre_instruction(((slot!(game, Enemy_Torizo[E].var_F)) as u32) | (0xaa0000u32), game) };
             } else {
                 let mut v2: u16 = if (slot!(game, Enemy_Torizo[E].parameter_1) & 0x8000) != 0 {
                     addr_kTorizo_Ilist_BD0E as u16
@@ -159,7 +159,7 @@ crate::game::callback_dispatch! {
             slot!(game, Enemy_Torizo[E].base.instruction_timer = 1);
         };
     };
-    @functions [pub unsafe fn (_k: u16, game: &mut Game)];
+    @functions [pub fn (_k: u16, game: &mut Game)];
     [11195842] Torizo_Func_9 [] {
         let E: i32 = word!(game.cur_enemy_index) as i32;
         if word!(game.samus_y_pos) > 0x140 && word!(game.samus_x_pos) > 0x170 {
@@ -168,13 +168,13 @@ crate::game::callback_dispatch! {
             slot!(game, Enemy_Torizo[E].base.instruction_timer = 1);
         }
     };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
+    @functions [pub fn (k: u16, game: &mut Game)];
     [11195878] Torizo_D5E6 [] {
         actors::torizo::drool_at_low_health(k, game);
         let E: i32 = k as i32;
-        actor_species_pre_instruction(((slot!(game, Enemy_Torizo[E].var_F)) as u32) | (0xaa0000u32), game);
+        unsafe { actor_species_pre_instruction(((slot!(game, Enemy_Torizo[E].var_F)) as u32) | (0xaa0000u32), game) };
     };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
+    @functions [pub fn (k: u16, game: &mut Game)];
     @prefix { let E: i32 = k as i32; };
     Torizo_C20A [] {
         let mut v2: i16 = if (slot!(game, Enemy_Torizo[E].parameter_1) & 0x8000) != 0 {
@@ -240,8 +240,8 @@ crate::game::callback_dispatch! {
         11195871 => Torizo_Func_10;
     }
 }
-pub unsafe fn Torizo_Func_8(game: &mut Game) {
-    unsafe {
+pub fn Torizo_Func_8(game: &mut Game) {
+    {
         if word!(game.area_index) != 0 {
             Torizo_D658(game);
         }
@@ -249,7 +249,7 @@ pub unsafe fn Torizo_Func_8(game: &mut Game) {
 }
 pub use self::Torizo_Func_3 as Torizo_Func_10;
 pub use self::Torizo_Instr_7 as Shaktool_Instr_6;
-pub unsafe fn sub_AAE784(game: &mut Game) {
+pub fn sub_AAE784(game: &mut Game) {
     {
         word_transfers!(game, descending, 16;
             le(target_palettes, 175) <- table(kChozoStatue_Palettes3, 15),
@@ -260,9 +260,9 @@ pub unsafe fn sub_AAE784(game: &mut Game) {
 }
 
 crate::game::callback_dispatch! {
-    pub(crate) unsafe fn DispatchEnemyAi(ea: u32, game: &mut Game) => ea;
+    pub(crate) fn DispatchEnemyAi(ea: u32, game: &mut Game) => ea;
     call (game); default { crate::rtl::Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
+    @functions [pub fn (game: &mut Game)];
     [11191934] Torizo_Hurt [] {
         actors::torizo::drool_at_low_health(word!(game.cur_enemy_index), game);
         if slot!(game, Enemy_Torizo[word!(game.cur_enemy_index) as i32].base.flash_timer)
@@ -325,7 +325,7 @@ crate::game::callback_dispatch! {
     };
     [11197603] Shaktool_Hurt [] {
         let E: i32 = word!(game.cur_enemy_index) as i32;
-        actor_species_pre_instruction(((slot!(game, Enemy_Shaktool[E].var_F)) as u32) | (0xaa0000u32), game);
+        unsafe { actor_species_pre_instruction(((slot!(game, Enemy_Shaktool[E].var_F)) as u32) | (0xaa0000u32), game) };
     };
     [11198019] Shaktool_Init [] {
         let E: i32 = word!(game.cur_enemy_index) as i32;
@@ -406,9 +406,9 @@ crate::game::callback_dispatch! {
     };
     [11200423] ChozoStatue_Main [] {
         let v0: i32 = word!(game.cur_enemy_index) as i32;
-        actor_species_pre_instruction(((slot!(game, EnemyData[v0].ai_preinstr)) as u32) | (0xaa0000u32), game);
+        unsafe { actor_species_pre_instruction(((slot!(game, EnemyData[v0].ai_preinstr)) as u32) | (0xaa0000u32), game) };
     };
-    @functions [pub unsafe fn (game: &mut Game)];
+    @functions [pub fn (game: &mut Game)];
     @prefix { let E: i32 = word!(game.cur_enemy_index) as i32; };
     [11191972] Torizo_Main [] {
         CallTorizoFunc(
@@ -506,15 +506,15 @@ crate::game::callback_dispatch! {
             }
         }
     };
-    @forward [pub unsafe fn (game: &mut Game)];
+    @forward [pub fn (game: &mut Game)];
     [11173903] Enemy_GrappleReact_CancelBeam_AA => actors::combat::select_frozen_ai(&mut Runtime::new(game));
     [11173953] Enemy_NormalFrozenAI_AA => actors::scheduling::update_frozen_enemy(&mut Runtime::new(game));
 }
 
 crate::game::callback_dispatch! {
-    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
+    pub(crate) fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11174004] Enemy_ClearAiPreInstr_AA [jp] {
         slot!(game, EnemyData[k as i32].ai_preinstr = (0xaa807bi32) as u16);
     };
@@ -544,14 +544,14 @@ crate::game::callback_dispatch! {
         let E: i32 = k as i32;
         slot!(game, Enemy_Torizo[E].base.properties = (slot!(game, Enemy_Torizo[E].base.properties)) | ((kEnemyProps_Invisible) as u16));
     };
-    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11186744] Torizo_Instr_35 [jp] {
         word_transfers!(game, descending, 16;
             le(target_palettes, 175) <- value(0),
             le(target_palettes, 159) <- value(0),
         );
     };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11186765] Torizo_Instr_38 [jp] {
         SetBossBitForCurArea(4, game);
         QueueMusic_Delayed8(g_word_AAB09A, game);
@@ -561,14 +561,14 @@ crate::game::callback_dispatch! {
             scatter(DropSource::BombTorizo, k, game);
         }
     };
-    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11186801] Torizo_Instr_6 [jp] { selected(0x600, game); };
     [11188557] Torizo_Instr_5 [jp] { torizo::set_targets(torizo::BOMB_ACTIVE, game); };
     [11188561] Torizo_Instr_9 [jp] {
         QueueMusic_Delayed8(g_word_AAB098, game);
         palette_effects::spawn(addr_stru_8DF759 as u16, game);
     };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11190985] Torizo_Instr_2 [jp] { slot!(game, Enemy_Torizo[k as i32].var_04 = 30583); };
     [11190993] Torizo_Instr_8 [jp] { slot!(game, Enemy_Torizo[k as i32].var_04 = 0); };
     [11191001] Torizo_Instr_25 [] {
@@ -582,10 +582,10 @@ crate::game::callback_dispatch! {
         }
     };
     [11191021] Torizo_Instr_22 [jp.offset(1)] { slot!(game, Enemy_Torizo[k as i32].var_00 = jp.word(0)); };
-    @functions [pub unsafe fn (k: u16, _jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (k: u16, _jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11191031] Torizo_Instr_19 [EnemyScript::jump(slot!(game, Enemy_Torizo[k as i32].var_00))] { };
     [11191037] Torizo_Instr_32 [EnemyScript::jump(slot!(game, Enemy_Torizo[k as i32].var_01))] { };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11191043] Torizo_Instr_30 [EnemyScript::Stop] {
         let a: u16 = jp.word(0);
         for _ in 0..=5 {
@@ -608,7 +608,7 @@ crate::game::callback_dispatch! {
         slot!(game, Enemy_Torizo[E].base.flash_timer = 1);
         slot!(game, Enemy_Torizo[E].base.instruction_timer = 1);
     };
-    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11191114] Torizo_Instr_24 [jp] {
         let left_foot_parameter = SpawnEprojWithRoomGfx(
             addr_kEproj_TourianLandingDustCloudsRightFoot as u16,
@@ -617,7 +617,7 @@ crate::game::callback_dispatch! {
         );
         SpawnEprojWithRoomGfx(addr_stru_86AFF3 as u16, left_foot_parameter, game);
     };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11191131] Torizo_Instr_12 [jp] {
         let health: u16 = slot!(game, Enemy_Torizo[k as i32].base.health);
         if health < 0x15e {
@@ -754,7 +754,7 @@ crate::game::callback_dispatch! {
             game,
         );
     };
-    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11191809] Torizo_Instr_21 [jp.offset(1)] {
         SpawnEprojWithRoomGfx(
             addr_kEproj_BombTorizoExplosiveSwipe as u16,
@@ -764,7 +764,7 @@ crate::game::callback_dispatch! {
     };
     [11191824] Torizo_Instr_17 [jp] { QueueSfx2_Max6(0x27, game); };
     [11191832] Torizo_Instr_13 [jp] { QueueSfx2_Max6(0x4b, game); };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11193038] Torizo_Instr_39 [] {
         if slot!(game, Enemy_Torizo[k as i32].base.y_pos) == 375 {
             jp.offset(1)
@@ -772,9 +772,9 @@ crate::game::callback_dispatch! {
             EnemyScript::jump(jp.word(0))
         }
     };
-    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11193054] Torizo_Instr_41 [jp] { torizo::set_targets(torizo::GOLDEN_ACTIVE, game); };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11193058] Torizo_Instr_42 [jp] {
         QueueMusic_Delayed8(5, game);
         let E: i32 = k as i32;
@@ -786,7 +786,7 @@ crate::game::callback_dispatch! {
         let E: i32 = k as i32;
         slot!(game, Enemy_Torizo[E].parameter_2 = slot!(game, Enemy_Torizo[E].parameter_2) & !(0x1000));
     };
-    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11194601] Torizo_Instr_57 [jp] { SpawnEprojWithRoomGfx(addr_stru_86B1C0 as u16, 0, game); };
     [11194611] Torizo_Instr_58 [EnemyScript::jump(jp.word(0))] {
         let mut v2: i16 = 34;
@@ -802,20 +802,20 @@ crate::game::callback_dispatch! {
             }
         }
     };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     @prefix { let E: i32 = k as i32; };
     [11194747] Torizo_Instr_59 [jp] {  slot!(game, Enemy_Torizo[E].var_06 = slot!(game, Enemy_Torizo[E].var_06) & !(0x8000)); };
     [11194759] Torizo_Instr_62 [jp] {  slot!(game, Enemy_Torizo[E].var_06 = (slot!(game, Enemy_Torizo[E].var_06)) | (0x8000u16)); };
     [11194855] Torizo_Instr_63 [jp] {  slot!(game, Enemy_Torizo[E].parameter_2 = slot!(game, Enemy_Torizo[E].parameter_2) & !(0x2000)); };
-    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11195279] Torizo_Instr_56 [jp] { QueueSfx2_Max6(0x34, game); };
     [11195287] Torizo_Instr_60 [jp] { QueueSfx2_Max6(0x67, game); };
     [11195295] Torizo_Instr_46 [jp] { QueueSfx2_Max6(0x48, game); };
-    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11195360] Torizo_Instr_47 [jp] {
         SpawnEprojWithRoomGfx(addr_kEproj_GoldenTorizoSuperMissile as u16, 0, game);
     };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11195370] Torizo_Instr_49 [EnemyScript::jump(jp.word(0))] {
         if (actors::torizo::facing_against_samus(k, game) & 0x8000) == 0
             || ({ let (actor, threshold) = (k, 4); let delta = actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X); u8::from((delta as i16).wrapping_abs() as u16 >= threshold) }) & 1 == 0
@@ -832,11 +832,11 @@ crate::game::callback_dispatch! {
         }
         slot!(game, Enemy_Torizo[k as i32].var_09 = 0);
     };
-    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11195446] Torizo_Instr_61 [jp.offset(1)] {
         SpawnEprojWithRoomGfx(addr_kEproj_GoldenTorizoEyeBeam as u16, jp.word(0), game);
     };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11195461] Torizo_Instr_53 [EnemyScript::jump(jp.word(0))] {
         if (actors::torizo::facing_against_samus(k, game) & 0x8000) != 0
             || ({ let (actor, threshold) = (k, 0x20); let delta = actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X); u8::from((delta as i16).wrapping_abs() as u16 >= threshold) }) & 1 == 0
@@ -925,7 +925,7 @@ crate::game::callback_dispatch! {
             game,
         )
     };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     @prefix { let E: i32 = k as i32; };
     [11196721] Shaktool_Instr_2 [actors::shaktool::move_piece_one_pixel(k, jp, (slot!(game, Enemy_Shaktool[EX].var_D)) ^ (0x80u16), game)] {
 
@@ -955,7 +955,7 @@ crate::game::callback_dispatch! {
             game,
         )] {
     };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11196858] Shaktool_Instr_1 [] {
         let shakt_var_E: u16 = slot!(game, Enemy_Shaktool[k as i32].var_E);
         for (index, segment) in actors::shaktool::segments(shakt_var_E).enumerate() {
@@ -964,17 +964,17 @@ crate::game::callback_dispatch! {
         }
         jp
     };
-    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11199529] Shaktool_Instr_9 [jp] {
         word! {game; fx_timer = 32; fx_y_vel = 64; }
     };
     @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11199542] Shaktool_Instr_11 [jp] { crate::game::room_mechanisms::lower_acid(game); };
     [11199549] Shaktool_Instr_10 [jp] { CallSomeSamusCode(1, game); };
-    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11199871] Shaktool_Instr_8 [jp] { QueueSfx2_Max6(0x1c, game); };
     [11199879] Shaktool_Instr_13 [jp] { QueueSfx2_Max6(0x4b, game); };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11199887] Shaktool_Instr_12 [jp.offset(1)] {
         let e: i32 = k as i32;
         let arg: u16 = jp.word(0);
@@ -986,7 +986,7 @@ crate::game::callback_dispatch! {
         } & 0xf000)
             == 0xa000
         {
-            spawn_collision(addr_kPlmHeader_D113 as u16, game);
+            unsafe { spawn_collision(addr_kPlmHeader_D113 as u16, game) };
             SpawnEprojWithRoomGfx(
                 addr_kEproj_WreckedShipChozoSpikeFootsteps_1 as u16,
                 arg,
@@ -1014,7 +1014,7 @@ crate::game::callback_dispatch! {
                 .wrapping_add(slot!(game, Enemy_Shaktool[E].base.y_pos));
         }
     };
-    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11200240] Shaktool_Instr_14 [jp] {
         CallSomeSamusCode(1, game);
         game.ram().copy_in(0xcd26, &0u16.to_ne_bytes());
@@ -1029,9 +1029,9 @@ crate::game::callback_dispatch! {
 }
 
 crate::game::callback_dispatch! {
-    pub(crate) unsafe fn DispatchEnemyPreInstr(ea: u32, k: u16, game: &mut Game) => ea;
+    pub(crate) fn DispatchEnemyPreInstr(ea: u32, k: u16, game: &mut Game) => ea;
     call (k, game); default { crate::rtl::Unreachable(game); };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
+    @functions [pub fn (k: u16, game: &mut Game)];
     [11192360 | 11195885] Torizo_Func_6 [] {
         Torizo_C643(k, game);
     };
@@ -1088,7 +1088,7 @@ crate::game::callback_dispatch! {
         slot!(game, Enemy_Shaktool[E].base.current_instruction = shaktool_tables::head_direction(game, ((v3 >> 4) >> 1) as isize).instruction_list);
         slot!(game, Enemy_Shaktool[E].base.instruction_timer = 1);
     };
-    @functions [pub unsafe fn (mut k: u16, game: &mut Game)];
+    @functions [pub fn (mut k: u16, game: &mut Game)];
     [11197733] Shaktool_DD25 [] {
         let E: i32 = k as i32;
         let y_pos: u16 = slot!(game, Enemy_Shaktool[E].base.y_pos);

@@ -435,7 +435,7 @@ pub mod game {
                 })
             }
         };
-        (@body [] {$($body:tt)*}) => { unsafe { $($body)* } };
+        (@body [] {$($body:tt)*}) => { #[allow(unused_unsafe)] unsafe { $($body)* } };
         (@body [checked] {$($body:tt)*}) => { { $($body)* } };
     }
     pub(crate) use callback_dispatch;

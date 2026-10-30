@@ -9,12 +9,12 @@ use crate::game::sprite_effect_runtime as sprite_effects;
 use crate::game::visual_runtime::initialize_draygon_layer;
 
 crate::game::callback_dispatch! {
-    pub unsafe fn CallDraygonFunc(ea: u32, k: u16, game: &mut Game) => ea;
+    pub fn CallDraygonFunc(ea: u32, k: u16, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
+    @functions [pub fn (game: &mut Game)];
     [10848691] Draygon_Func_10 [] {
         actors::draygon_flight::turret(game);
-        printf(b"Wtf is varE26?\n\0" as *const u8 as *const c_char);
+        unsafe { printf(b"Wtf is varE26?\n\0" as *const u8 as *const c_char) };
         actors::draygon_sweep::begin(false, game);
     };
     @external {
@@ -55,9 +55,9 @@ crate::game::callback_dispatch! {
     }
 }
 crate::game::callback_dispatch! {
-    pub(crate) unsafe fn DispatchEnemyAi(ea: u32, game: &mut Game) => ea;
+    pub(crate) fn DispatchEnemyAi(ea: u32, game: &mut Game) => ea;
     call (game); default { crate::rtl::Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
+    @functions [pub fn (game: &mut Game)];
     @external {
         10847879 => [actors::draygon_flight::initialize(|game| initialize_draygon_layer(game), game)];
         10851661 => [actors::draygon_death::hurt(game)];
@@ -79,7 +79,7 @@ crate::game::callback_dispatch! {
 }
 
 crate::game::callback_dispatch! {
-    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
+    pub(crate) fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
     @body checked;
     @external {
