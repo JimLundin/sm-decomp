@@ -259,8 +259,7 @@ impl Effects for Composed {
         offscreen: bool,
         bank: u8,
         map: u16,
-        x: u16,
-        y: u16,
+        position: sm_game::geometry::Point,
         tile: u16,
         graphics: u16,
     ) {

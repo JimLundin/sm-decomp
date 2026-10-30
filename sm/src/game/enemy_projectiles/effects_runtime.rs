@@ -45,13 +45,14 @@ impl Effects for Runtime<'_> {
         offscreen: bool,
         bank: u8,
         map: u16,
-        x: u16,
-        y: u16,
+        position: sm_game::geometry::Point,
         tile: u16,
         graphics: u16,
     ) {
         self.foreign(|game| {
-            super::legacy::draw_spritemap(offscreen, bank, map, x, y, tile, graphics, game)
+            super::legacy::draw_spritemap(
+                offscreen, bank, map, position.x, position.y, tile, graphics, game,
+            )
         });
         crate::verify_probe::hit("eproj.drawn");
     }

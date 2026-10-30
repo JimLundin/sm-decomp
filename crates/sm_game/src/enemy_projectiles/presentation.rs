@@ -33,10 +33,10 @@ pub fn draw_one(handle: u16, shake: Point, h: &mut impl Host) {
             .wrapping_sub(h.inputs().camera_y);
         if y & 0xff00 != 0 {
             if (i32::from(y) + 128) & 0xfe00 == 0 {
-                h.draw_spritemap(true, 0x8d, map, x, y, tile, graphics);
+                h.draw_spritemap(true, 0x8d, map, Point { x, y }, tile, graphics);
             }
         } else {
-            h.draw_spritemap(false, 0x8d, map, x, y, tile, graphics);
+            h.draw_spritemap(false, 0x8d, map, Point { x, y }, tile, graphics);
         }
     }
 }
