@@ -10,8 +10,9 @@
 #![forbid(unsafe_code)]
 use crate::actors::host::{ActorHost, ActorRuntime, Death, LeaseActors, Shot};
 use crate::actors::{
-    botwoon, brinstar_pipe_bug, crocomire_reactions, draygon_death, draygon_flight, draygon_host,
-    escape_critters, magdollite, norfair_pipe_bug, space_pirates, yapping_maw, yellow_pipe_bug,
+    botwoon, brinstar_pipe_bug, crocomire_reactions, draygon_death, draygon_eye, draygon_flight,
+    draygon_grab, draygon_host, escape_critters, magdollite, norfair_pipe_bug, space_pirates,
+    yapping_maw, yellow_pipe_bug,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -312,6 +313,17 @@ pub fn ai<H: AiHost + ?Sized>(ea: u32, game: &mut H) {
         10795410 => crocomire_reactions::power_bomb(game),
         // Bank $B2: the space pirates.
         0xb20000..=0xb2ffff => space_pirates::dispatch_ai(ea, game),
+        // Bank $A5.
+        10851661 => draygon_death::hurt_ai(game),
+        10864025 => draygon_flight::initialize_tail_or_arms(false, game),
+        10864045 => draygon_flight::initialize_tail_or_arms(true, game),
+        10846223 => crate::actors::combat::select_frozen_ai(&mut LeaseActors::lease(game)),
+        10846243 => game.contact_reaction(Death::Finalize),
+        10846253 => game.shot_reaction(Shot::Finalize),
+        10846273 => crate::actors::scheduling::update_frozen_enemy(&mut LeaseActors::lease(game)),
+        10851818 => draygon_death::touch(game),
+        10851847 => draygon_death::power_bomb(game),
+        10863723 => draygon_eye::initialize(game),
         _ => game.native_ai(ea),
     }
 }
@@ -362,6 +374,8 @@ pub trait InstructionHost:
     + magdollite::Host
     + escape_critters::Host
     + space_pirates::Pirates
+    + draygon_host::Host
+    + LeaseActors
 {
     /// An instruction whose arm is still in the compatibility table.
     fn native_instruction(&mut self, ea: u32, k: u16, j: EnemyScript) -> EnemyScript;
@@ -390,6 +404,15 @@ pub fn instruction<H: InstructionHost + ?Sized>(
         11791049 => escape_critters::shift_dachora(0xfffa, j, game),
         11791063 => escape_critters::shift_dachora(6, j, game),
         0xb20000..=0xb2ffff => space_pirates::dispatch_instruction(ea, k, j, game),
+        // Bank $A5.
+        10851549 => draygon_flight::set_instruction_lists(j, game),
+        10852150 => draygon_eye::set_function(k, j, game),
+        10852563 => draygon_flight::paralyse_tail_and_arms(j, game),
+        10852591 => draygon_flight::set_intangible(j, game),
+        10853274 => draygon_grab::tail_whip_hit(j, game),
+        10853898 => draygon_flight::displace_graphics(j, game),
+        10854231 => draygon_eye::set_function(0, j, game),
+        10863739 => draygon_eye::set_function(0x40, j, game),
         _ => game.native_instruction(ea, k, j),
     }
 }

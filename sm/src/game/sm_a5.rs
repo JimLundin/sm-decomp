@@ -1,6 +1,5 @@
 use crate::game::actors;
 pub use crate::game::prelude::*;
-use crate::game::session_runtime::Runtime;
 use sm_game::enemy_script::EnemyScript;
 use {
     crate::game::enemy_projectiles::scatter_drop as scatter,
@@ -63,22 +62,17 @@ crate::game::callback_dispatch! {
     @functions [pub fn (game: &mut Game)];
     @external {
         10847879 => [actors::draygon_flight::initialize(|game| initialize_draygon_layer(game), game)];
-        10851661 => [actors::draygon_death::hurt_ai(game)];
         10847996 => [actors::draygon_flight::main_ai(true, |state, k, game| CallDraygonFunc(state, k, game), game)];
         10863750 => [actors::draygon_flight::main_ai(false, |state, k, game| CallDraygonFunc(state, k, game), game)];
-        10864025 => [actors::draygon_flight::initialize_tail_or_arms(false, game)];
-        10864045 => [actors::draygon_flight::initialize_tail_or_arms(true, game)];
-        10846223 => [actors::combat::select_frozen_ai(&mut Runtime::new(game))];
-        10846243 => [actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize)];
-        10846253 => [actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize)];
-        10846273 => [actors::scheduling::update_frozen_enemy(&mut Runtime::new(game))];
+
+
+
         10873386 => [actors::spore_spawn::initialize(game)];
         10873619 => [actors::spore_spawn::update(game)];
         10874202 => [actors::spore_spawn::shot(game)];
         10874348 => [actors::spore_spawn::touch(game)];
-        10851818 => [actors::draygon_death::touch(game)];
-        10851847 => [actors::draygon_death::power_bomb(game)];
-        10863723 => [actors::draygon_eye::initialize(game)]; }
+
+        }
 }
 
 crate::game::callback_dispatch! {
@@ -98,18 +92,13 @@ crate::game::callback_dispatch! {
         10873198 => [actors::spore_spawn::emit_spore(j, game)];
         10873265 => [actors::spore_spawn::emit_hurt(j, game)];
         10873009 => [{ scatter(DropSource::SporeSpawn, k, game); j }];
-        10851549 => [actors::draygon_flight::set_instruction_lists(j, game)];
-        10852150 => [actors::draygon_eye::set_function(k, j, game)];
+
         10852501 => [{ word!(game.room_loading_irq_handler = 12); j }];
-        10852563 => [actors::draygon_flight::paralyse_tail_and_arms(j, game)];
-        10852591 => [actors::draygon_flight::set_intangible(j, game)];
-        10853274 => [actors::draygon_grab::tail_whip_hit(j, game)];
+
         10853514 => [{ word!(game.room_loading_irq_handler = 12); j }];
-        10853898 => [actors::draygon_flight::displace_graphics(j, game)];
-        10854231 => [actors::draygon_eye::set_function(0, j, game)];
+
         10854240 => [{ QueueSfx2_Max6(j.word(0), game); j.offset(1) }];
         10854254 => [{ QueueSfx3_Max6(j.word(0), game); j.offset(1) }];
-        10863739 => [actors::draygon_eye::set_function(0x40, j, game)];
         10852159 => [{ sprite_effects::draygon_random_sprite(21, game); j }];
         10852178 => [{ sprite_effects::draygon_random_sprite(3, game); j }];
         10852197 => [{ sprite_effects::draygon_random_sprite(29, game); j }];
