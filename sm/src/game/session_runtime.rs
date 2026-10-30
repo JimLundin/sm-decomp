@@ -1185,7 +1185,7 @@ crate::game::callback_dispatch! {
         10742579 => metroid::hurt; 10742680 => metroid::advance;
         10743275 => metroid::touch; 10743559 => metroid::shot;
         10723661 => roach::initialize;
-        10724048 => roach::advance;
+        10724048 => roach::main_ai;
         10726153 => sidehopper::initialize; 10726351 => sidehopper::advance;
         10728522 => zoa::initialize; 10728572 => zoa::main_ai;
         10733230 => [skree::initialize(DivingKind::Skree, game)]; 10733255 => [skree::main_ai(DivingKind::Skree, game)];

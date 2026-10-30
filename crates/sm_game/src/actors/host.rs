@@ -107,6 +107,10 @@ pub trait BossEffects:
     fn actor_cosine(&mut self, phase: u16, amplitude: u16) -> u16;
     /// The high word of `amplitude` times the sine of `phase`.
     fn actor_sine(&mut self, phase: u16, amplitude: u16) -> u16;
+    /// `amplitude` times the cosine of `phase`, as 16.16.
+    fn actor_cosine_full(&mut self, phase: u16, amplitude: u16) -> u32;
+    /// `amplitude` times the sine of `phase`, as 16.16.
+    fn actor_sine_full(&mut self, phase: u16, amplitude: u16) -> u32;
     /// The (x, y) step of `amplitude` along direction `phase`.
     fn actor_direction_vector(&mut self, phase: u16, amplitude: u16) -> crate::geometry::Vector32;
     /// Move the current actor by `vector` along `phase`.
