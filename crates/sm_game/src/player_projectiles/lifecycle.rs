@@ -15,7 +15,7 @@ const DIRECTIONS: [(i8, i8); 10] = [
     (0, -1),
 ];
 pub fn impact(h: &mut impl Host, raw: u16) {
-    let ballistic = shot!(h, raw, kind) & 0xf00 != 0;
+    let ballistic = shot!(h, raw, kind) & super::kinds::TYPE_MASK != 0;
     if ballistic && h.inputs().cinematic == 0 {
         h.sound(2, 6, 7);
     }
@@ -24,9 +24,14 @@ pub fn impact(h: &mut impl Host, raw: u16) {
     shot!(
         h,
         raw,
-        kind = kind & 0xf0ff | if ballistic { 0x800 } else { 0x700 }
+        kind = kind & !super::kinds::TYPE_MASK
+            | if ballistic {
+                super::kinds::MISSILE_EXPLOSION
+            } else {
+                super::kinds::BEAM_EXPLOSION
+            }
     );
-    let heavy = ballistic && kind & 0x200 != 0;
+    let heavy = ballistic && kind & super::kinds::SUPER_MISSILE_BIT != 0;
     let address = if !ballistic {
         0x93867b
     } else if heavy {
@@ -51,7 +56,7 @@ pub fn impact(h: &mut impl Host, raw: u16) {
     shot!(h, raw, damage = 8);
 }
 pub fn retire(h: &mut impl Host, raw: u16) {
-    match shot!(h, raw, kind) & 0xf00 {
+    match shot!(h, raw, kind) & super::kinds::TYPE_MASK {
         0 => {
             let (dx, dy) = DIRECTIONS[usize::from(shot!(h, raw, direction) & 15)];
             if dx != 0 {
@@ -65,7 +70,7 @@ pub fn retire(h: &mut impl Host, raw: u16) {
                 shot!(h,raw,y = if dy>0 {position.wrapping_add(radius)} else {position.wrapping_sub(radius)}; SliceLe);
             }
         }
-        0x100 | 0x200 => {}
+        super::kinds::MISSILE | super::kinds::SUPER_MISSILE => {}
         _ => {
             motion::clear(h, raw);
             return;

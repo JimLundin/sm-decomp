@@ -89,7 +89,7 @@ pub fn fire(h: &mut impl Host) {
         shot!(h, raw, kind = kind);
         kind.to_ne_bytes()[1] & 15
     } else {
-        shot!(h, raw, kind = 0x500);
+        shot!(h, raw, kind = super::kinds::BOMB);
         5
     };
     shot!(h, raw, direction = 0);
@@ -124,7 +124,11 @@ pub fn spread(h: &mut impl Host) {
         return;
     }
     for (pattern, raw) in (10..20).step_by(2).enumerate() {
-        shot!(h, raw, kind = 0x8500);
+        shot!(
+            h,
+            raw,
+            kind = super::kinds::NO_SAMUS_CONTACT | super::kinds::BOMB
+        );
         shot!(h, raw, direction = 0);
         shot!(h, raw, motion = handlers::SPREAD_BOMB);
         super::animation::initialize(h, raw, Initialization::Bomb);

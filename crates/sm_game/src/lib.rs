@@ -146,6 +146,7 @@ pub mod player_projectiles {
     pub mod feedback;
     pub mod handlers;
     pub mod host;
+    pub mod kinds;
     pub mod lifecycle;
     pub mod missiles;
     pub mod motion;

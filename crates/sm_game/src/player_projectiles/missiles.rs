@@ -60,7 +60,7 @@ pub fn fire(h: &mut impl Host) {
         .controls
         .selected_weapon
         .swap_bytes();
-    let kind = shot!(h, raw, kind) | kind | 0x8000;
+    let kind = shot!(h, raw, kind) | kind | super::kinds::NO_SAMUS_CONTACT;
     shot!(h, raw, kind = kind);
     if h.inputs().cinematic == 0 {
         h.sound(1, 6, definitions::SOUNDS[usize::from(key & 15)]);
@@ -71,7 +71,7 @@ pub fn fire(h: &mut impl Host) {
     shot!(
         h,
         raw,
-        motion = if kind & 0x200 != 0 {
+        motion = if kind & super::kinds::SUPER_MISSILE_BIT != 0 {
             super::handlers::SUPER_MISSILE
         } else {
             super::handlers::MISSILE

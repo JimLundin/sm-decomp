@@ -17,7 +17,7 @@ fn side_mut(h: &mut impl Host, pair: usize, right: bool) -> &mut Trail {
 }
 pub fn emit(h: &mut impl Host, slot: u16) {
     let kind = shot!(h, slot, kind);
-    let style = if kind & 0xf00 == 0 {
+    let style = if kind & super::kinds::TYPE_MASK == 0 {
         kind & 63
     } else {
         let class = kind.to_ne_bytes()[1] & 15;
@@ -189,9 +189,11 @@ fn present(h: &mut impl Host, explosions: bool) {
         if shot!(h, index, cursor) != 0 {
             let kind = shot!(h, index, kind);
             let visible = if explosions {
-                kind & 0xf00 >= 0x300 && (kind & 0xf00 != 0x300 || shot!(h, index, variable) != 0)
+                kind & super::kinds::TYPE_MASK >= super::kinds::POWER_BOMB
+                    && (kind & super::kinds::TYPE_MASK != super::kinds::POWER_BOMB
+                        || shot!(h, index, variable) != 0)
             } else if kind & 0xf10 != 0 {
-                kind & 0xf00 < 0x300
+                kind & super::kinds::TYPE_MASK < super::kinds::POWER_BOMB
             } else if kind & 0xc != 0 {
                 (index & 2 != 0) == (h.inputs().frame & 2 != 0)
             } else {
@@ -200,7 +202,9 @@ fn present(h: &mut impl Host, explosions: bool) {
             if visible {
                 'draw: {
                     let clip_y = if h.inputs().ceres & 0x8000 != 0
-                        && (!explosions || kind & 0xf00 != 0x300 && kind & 0xf00 != 0x500)
+                        && (!explosions
+                            || kind & super::kinds::TYPE_MASK != super::kinds::POWER_BOMB
+                                && kind & super::kinds::TYPE_MASK != super::kinds::BOMB)
                     {
                         let point = project(h, index);
                         // Preserve carried-Y/projected-clipping behavior exactly.
@@ -223,11 +227,15 @@ fn present(h: &mut impl Host, explosions: bool) {
                     };
                     if clip_y & 0xff00 == 0 && (explosions || shot!(h, index, sprite) & 0x8000 != 0)
                     {
-                        h.probe(if shot!(h, index, kind) & 0xf00 >= 0x300 {
-                            "player_projectiles.draw.explosion"
-                        } else {
-                            "player_projectiles.draw.projectile"
-                        });
+                        h.probe(
+                            if shot!(h, index, kind) & super::kinds::TYPE_MASK
+                                >= super::kinds::POWER_BOMB
+                            {
+                                "player_projectiles.draw.explosion"
+                            } else {
+                                "player_projectiles.draw.projectile"
+                            },
+                        );
                         h.draw(Drawing::Projectile { slot: index, x, y });
                     }
                     index = h.session().projectiles.selected;

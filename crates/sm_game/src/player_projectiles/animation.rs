@@ -10,7 +10,7 @@ pub fn table(kind: Initialization, flags: u16) -> (u32, isize) {
         Initialization::Bomb => (0x9383f1, ((flags >> 8) & 15) as isize),
         Initialization::SpecialAttack => (0x938413, (flags & 15) as isize),
         Initialization::Echo => (0x938403, isize::from(flags.to_le_bytes()[0]) - 34),
-        Initialization::Projectile if flags & 0xf00 != 0 => {
+        Initialization::Projectile if flags & super::kinds::TYPE_MASK != 0 => {
             (0x9383f1, isize::from(flags.to_ne_bytes()[1] & 15))
         }
         Initialization::Projectile => (

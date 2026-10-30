@@ -154,7 +154,7 @@ const BEAM_CLASS: [u8; 12] = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1];
 const SHOT_CLASS: [i8; 9] = [0, 0, 0, 3, -1, 2, -1, -1, -1];
 pub fn explode(h: &mut impl Host, raw: u16) {
     let kind = shot_native!(h, raw, kind);
-    let class = if kind & 0xf00 != 0 {
+    let class = if kind & super::kinds::TYPE_MASK != 0 {
         let index = usize::from((shot_native!(h, raw, kind) >> 8) & 15);
         let Some(&value) = SHOT_CLASS.get(index) else {
             let index = 2 * index + 1;

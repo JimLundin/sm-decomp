@@ -180,7 +180,11 @@ fn accelerate_missile(h: &mut impl Host, raw: u16) {
     if variable & 0xff00 != 0 {
         let kind = shot!(h, raw, kind);
         let direction = shot!(h, raw, direction);
-        let address = if kind & 0x200 != 0 { 0xc32b } else { 0xc303 } + 4 * (direction & 15);
+        let address = if kind & super::kinds::SUPER_MISSILE_BIT != 0 {
+            0xc32b
+        } else {
+            0xc303
+        } + 4 * (direction & 15);
         let record = h.record(0x90, address);
         let old = shot!(h, raw, x_speed);
         shot!(h, raw, x_speed = old.wrapping_add(record.word(0)));
@@ -190,14 +194,17 @@ fn accelerate_missile(h: &mut impl Host, raw: u16) {
         let speed = variable + 0x100;
         shot!(h, raw, variable = speed);
         initialize_speed(h, raw, speed);
-        if shot!(h, raw, kind) & 0x200 != 0 {
+        if shot!(h, raw, kind) & super::kinds::SUPER_MISSILE_BIT != 0 {
             spawn_extension(h);
         }
     }
 }
 fn extension_collision(h: &mut impl Host, axis: Axis) {
     let parent = h.session().projectiles.selected;
-    if !matches!(shot!(h, parent, kind) & 0xf00, 0x200 | 0x800) {
+    if !matches!(
+        shot!(h, parent, kind) & super::kinds::TYPE_MASK,
+        super::kinds::SUPER_MISSILE | super::kinds::MISSILE_EXPLOSION
+    ) {
         return;
     }
     let child = u16::from(shot!(h, parent, variable) as u8);
@@ -233,7 +240,7 @@ fn contact_extension(h: &mut impl Host, parent: u16, child: u16, axis: Axis) {
     }) as i16;
     let magnitude = speed.unsigned_abs() & 0xff00;
     if magnitude.wrapping_sub(0xb00) & 0x8000 != 0 {
-        if shot!(h, parent, kind) & 0xf00 == 0x800 {
+        if shot!(h, parent, kind) & super::kinds::TYPE_MASK == super::kinds::MISSILE_EXPLOSION {
             clear(h, child);
             return;
         }
@@ -246,7 +253,7 @@ fn contact_extension(h: &mut impl Host, parent: u16, child: u16, axis: Axis) {
         super::collision::scan(h, child, Flight::Missile, axis);
         // Restore only after the child collision returns successfully.
         h.session_mut().projectiles.selected = parent;
-        if shot!(h, parent, kind) & 0xf00 == 0x800 {
+        if shot!(h, parent, kind) & super::kinds::TYPE_MASK == super::kinds::MISSILE_EXPLOSION {
             clear(h, child);
         }
     }
@@ -264,7 +271,11 @@ fn spawn_extension(h: &mut impl Host) {
         return;
     };
     let kind = shot!(h, child, kind);
-    shot!(h, child, kind = kind | 0x8200);
+    shot!(
+        h,
+        child,
+        kind = kind | super::kinds::NO_SAMUS_CONTACT | super::kinds::SUPER_MISSILE
+    );
     let parent = h.session().projectiles.selected;
     shot!(h, child, x = shot!(h, parent, x));
     shot!(h, child, y = shot!(h, parent, y));
@@ -352,11 +363,11 @@ fn suit_pickup_shot(h: &mut impl Host, raw: u16) {
 }
 pub fn reflect(h: &mut impl Host, raw: u16) {
     let kind = shot!(h, raw, kind);
-    if kind & 0x100 != 0 {
+    if kind & super::kinds::MISSILE_BIT != 0 {
         animation::initialize(h, raw, Initialization::Projectile);
         shot!(h, raw, motion = handlers::MISSILE);
         shot!(h, raw, variable = 240);
-    } else if kind & 0x200 != 0 {
+    } else if kind & super::kinds::SUPER_MISSILE_BIT != 0 {
         let child = u16::from(shot!(h, raw, variable) as u8);
         clear(h, child);
         animation::initialize(h, raw, Initialization::Projectile);

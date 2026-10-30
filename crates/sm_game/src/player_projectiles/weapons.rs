@@ -133,7 +133,7 @@ fn fire(h: &mut impl Host, charged: bool) {
                 } else {
                     h.session().projectiles.selected
                 };
-                if wave || shot_native!(h, selected, kind) & 0xf00 == 0 {
+                if wave || shot_native!(h, selected, kind) & super::kinds::TYPE_MASK == 0 {
                     let index = usize::from(shot!(h, selected, kind) & 15);
                     let motion =
                         definitions::motion(mode == Mode::Charged, index).unwrap_or_else(|| {
