@@ -1213,7 +1213,6 @@ crate::game::callback_dispatch! {
             };
             actor_species_pre_instruction(0xa20000 | u32::from(phase), game);
         }];
-        10661995 => [crate::game::flies::initialize(game)];
         10649615 => [actors::combat::select_frozen_ai(&mut Runtime::new(game))];
         10649610 => [actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Grapple)];
         10649665 => [actors::scheduling::update_frozen_enemy(&mut Runtime::new(game))];
@@ -1247,10 +1246,6 @@ crate::game::address_dispatch! {
     {
 
 
-        10662222 => [crate::game::flies::circle(k, false, game)];
-        10662268 => [crate::game::flies::circle(k, true, game)];
-        10662314 => [crate::game::flies::dive(k, false, game)];
-        10662354 => [crate::game::flies::dive(k, true, game)];
         10675796 | 10675885 | 10675953 | 10676020 | 10676041
             => [crate::game::lava_seahorse_pair::phase(k, ea as u16, game)];
         10652227 => [crate::game::mini_crocomire::patrol(false, game)];

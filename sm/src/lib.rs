@@ -432,7 +432,6 @@ pub mod game {
     pub use sm_game::enemy_population;
     pub use sm_game::enemy_script;
     pub(crate) mod fire_geysers;
-    pub(crate) mod flies;
     pub(crate) mod lava_seahorse_pair;
     pub(crate) mod mother_brain_body;
     pub(crate) mod mother_brain_samus_vitals;
