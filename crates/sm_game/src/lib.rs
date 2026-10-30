@@ -302,6 +302,7 @@ pub mod ridley_data;
 pub mod ridley_explosion_data;
 pub mod room_scrolls;
 pub mod room_state;
+pub mod room_view;
 pub mod room_visuals;
 pub mod runtime_access;
 pub mod samus_death;

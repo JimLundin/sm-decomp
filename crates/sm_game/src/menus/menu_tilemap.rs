@@ -279,7 +279,8 @@ fn text_word<H: Host + ?Sized>(address: u16, game: &mut H) -> u16 {
 }
 
 pub fn area_label<H: Host + ?Sized>(game: &mut H) {
-    let address = crate::gameplay_tables::area_label(game, word!(game.area_index) as isize);
+    let address =
+        crate::gameplay_tables::area_label(game, crate::room_view::current(game).area as isize);
     let label = native_record(0x820000 | u32::from(address), game);
     for index in 0..12 {
         let tile = label.word(2 * index) & 0xefff;

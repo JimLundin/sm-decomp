@@ -232,7 +232,8 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(scene: Scene, game: 
             game.ram()
                 .write_byte(0x58, if mother_brain { 80 } else { 84 });
             if !mother_brain {
-                word! {game; room_width_in_blocks = 32; room_height_in_blocks = 16; }
+                crate::room_view::set(game, crate::room_view::Word::Width, 32);
+                crate::room_view::set(game, crate::room_view::Word::Height, 16);
             }
             word!(game.samus_pose = kPose_02_FaceL_Normal as u16);
             game.finish_pose_change();

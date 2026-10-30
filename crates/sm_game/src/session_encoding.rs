@@ -24,6 +24,35 @@ macro_rules! camera_words {
         }
     };
 }
+// The room's area and geometry (`crate::room_view`), in `room_view::Word` order.
+macro_rules! room_geometry_words {
+    (($c:expr), $f:ident, ($($borrow:tt)*)) => {
+        $f(ram::area_index,$($borrow)* $c.area);
+        $f(ram::room_width_in_blocks,$($borrow)* $c.width);
+        $f(ram::room_height_in_blocks,$($borrow)* $c.height);
+        $f(ram::room_width_in_scrolls,$($borrow)* $c.scroll_width);
+        $f(ram::room_height_in_scrolls,$($borrow)* $c.scroll_height);
+    };
+}
+/// The room's area and geometry as `bytes` encode them.
+pub fn room_geometry(bytes: &impl Fn(usize) -> u8) -> crate::room_view::RoomGeometry {
+    let mut room = crate::room_view::RoomGeometry::default();
+    let load = |at: usize, value: &mut u16| *value = read(bytes, at);
+    room_geometry_words!((room), load, (&mut));
+    room
+}
+/// Each room geometry word's address, in `room_view::Word` order.
+pub fn room_geometry_addresses() -> [usize; 5] {
+    let mut addresses = [0; 5];
+    let mut index = 0;
+    let room = crate::room_view::RoomGeometry::default();
+    let mut visit = |at: usize, _: &u16| {
+        addresses[index] = at;
+        index += 1;
+    };
+    room_geometry_words!((room), visit, (&));
+    addresses
+}
 // The game flow (`crate::flow`), in RAM order.
 macro_rules! flow_words {
     (($c:expr), $f:ident, ($($borrow:tt)*)) => {
@@ -634,11 +663,7 @@ macro_rules! scalar_words {
         $f(0x1e73,$($borrow)* $s.player.contact.reaction_point);
         $f(0x1e71,$($borrow)* $s.player.contact.sand_visits);
         $f(0xa6c,$($borrow)* $s.player.contact.movement_speed_table);
-        $f(0x79f,$($borrow)* $s.room.area);
-        $f(0x7a5,$($borrow)* $s.room.width);
-        $f(0x7a7,$($borrow)* $s.room.height);
-        $f(0x7a9,$($borrow)* $s.room.scroll_width);
-        $f(0x7ab,$($borrow)* $s.room.scroll_height);
+        room_geometry_words!(($s.room), $f, ($($borrow)*));
         $f(0x7b9,$($borrow)* $s.room.size_bytes);
         $f(0x197e,$($borrow)* $s.room.liquid_options);
         $f(0x1978,$($borrow)* $s.room.liquid_height);

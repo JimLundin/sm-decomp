@@ -3238,6 +3238,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/projection.rs"),
     ),
     (
+        "crates/sm_game/src/room_view.rs",
+        include_bytes!("../../crates/sm_game/src/room_view.rs"),
+    ),
+    (
         "crates/sm_game/src/samus_death.rs",
         include_bytes!("../../crates/sm_game/src/samus_death.rs"),
     ),

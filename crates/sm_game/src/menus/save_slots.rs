@@ -61,13 +61,13 @@ pub fn save<H: Host + ?Sized>(slot: u16, game: &mut H) {
     crate::word_transfers!(game, descending, 48; le(player_data_saved, 47) <- native(0xa00));
     game.observe_flags_save(1);
     crate::word_transfers!(game, ascending, 128;
-        le(explored_map_tiles_saved, word!(game.area_index).wrapping_mul(256) >> 1)
+        le(explored_map_tiles_saved, crate::room_view::current(game).area.wrapping_mul(256) >> 1)
             <- native(0x7f7));
     game.observe_flags_save(2);
     transfer_map(Direction::Save, game);
     game.observe_flags_save(3);
     word!(game.sram_save_station_index = word!(game.load_station_index));
-    word!(game.sram_area_index = word!(game.area_index));
+    word!(game.sram_area_index = crate::room_view::current(game).area);
     game.observe_flags_save(4);
     let checksum = save_file::save(&mut SaveFile(game), slot);
     game.observe_flags_save(5);
@@ -82,12 +82,16 @@ pub fn load<H: Host + ?Sized>(slot: u16, game: &mut H) -> u8 {
         crate::word_transfers!(game, descending, 48; native(0xa00) <- le(player_data_saved, 47));
         transfer_map(Direction::Load, game);
         word!(game.load_station_index = word!(game.sram_save_station_index));
-        word!(game.area_index = word!(game.sram_area_index));
+        crate::room_view::set(
+            game,
+            crate::room_view::Word::Area,
+            word!(game.sram_area_index),
+        );
         0
     } else {
         save_file::clear(&mut SaveFile(game), slot);
         word!(game.load_station_index = 0);
-        word!(game.area_index = 0);
+        crate::room_view::set(game, crate::room_view::Word::Area, 0);
         1
     }
 }
@@ -187,28 +191,30 @@ fn area_map_words(area: u16) -> impl Iterator<Item = (usize, u16)> {
 }
 
 pub fn load_area_map<H: Host + ?Sized>(game: &mut H) {
-    for (active, saved) in area_map_words(word!(game.area_index)) {
+    for (active, saved) in area_map_words(crate::room_view::current(game).area) {
         crate::word_transfers!(game, ascending, 1; native(0x7f7 + active * 2) <- le(explored_map_tiles_saved, saved));
     }
     word!(
         game.has_area_map = game.ram().read_byte(
-            crate::ram::bytes::map_station_byte_array + usize::from(word!(game.area_index))
+            crate::ram::bytes::map_station_byte_array
+                + usize::from(crate::room_view::current(game).area)
         ) as u16
     );
 }
 
 pub fn save_area_map<H: Host + ?Sized>(game: &mut H) {
-    for (active, saved) in area_map_words(word!(game.area_index)) {
+    for (active, saved) in area_map_words(crate::room_view::current(game).area) {
         crate::word_transfers!(game, ascending, 1; le(explored_map_tiles_saved, saved) <- native(0x7f7 + active * 2));
     }
     if word!(game.has_area_map) != 0 {
-        let flag = 0xd908 + usize::from(word!(game.area_index));
+        let flag = 0xd908 + usize::from(crate::room_view::current(game).area);
         word!(game, flag; = word!(game, flag;) | 0xff);
     }
 }
 
 pub fn mark_elevator<H: Host + ?Sized>(game: &mut H) {
-    let table = crate::menu_lists::elevator_door_table(game, word!(game.area_index) as isize);
+    let table =
+        crate::menu_lists::elevator_door_table(game, crate::room_view::current(game).area as isize);
     let displacement = 4 * ((word!(game.elevator_door_properties_orientation) & 15) as i32 - 1);
     let cursor = (i32::from(table) + displacement) as u16;
     // Retain the diagnostic before capturing its native allocation.

@@ -564,7 +564,7 @@ pub fn queue_scrolling_tiles<H: Host + ?Sized>(k: u16, layout: ScrollingLayout, 
     });
     let product = mult8x8(
         word!(game.blocks_to_update_y_block) as u8,
-        word!(game.room_width_in_blocks) as u8,
+        crate::room_view::current(game).width as u8,
     );
     let mut source_offset = product
         .wrapping_add(word!(game.blocks_to_update_x_block))
@@ -648,7 +648,7 @@ pub fn queue_scrolling_tiles<H: Host + ?Sized>(k: u16, layout: ScrollingLayout, 
         source_delta = source_delta.wrapping_add(if row {
             2
         } else {
-            word!(game.room_width_in_blocks).wrapping_mul(2)
+            crate::room_view::current(game).width.wrapping_mul(2)
         });
     }
     set_native_word(

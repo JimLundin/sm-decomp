@@ -552,7 +552,8 @@ fn clear_slot<H: Host + ?Sized>(game: &mut H) {
         crate::menu!(game.menu_index += 1);
         save_slots::initialize(game);
         save_slots::load(copy_source(game), game);
-        word!(game.area_index = copy_source(game));
+        let source = copy_source(game);
+        crate::room_view::set(game, crate::room_view::Word::Area, source);
         load_area_map(game);
         crate::word_transfers!(game, ascending, 288; native(0x3b00) <- value(15));
         word!(game.nonempty_save_slots &= (BIT_SHL_NOT[copy_source(game) as usize]));
