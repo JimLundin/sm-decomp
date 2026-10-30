@@ -3,7 +3,6 @@
 #![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
 use crate::constants::bank_87::{addr_kAnimtiles_Acid, addr_kAnimtiles_Lava};
 use crate::menus::prelude::*;
-use crate::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 #[allow(unused_imports)]
 use crate::ram::RawRam as _;
 
@@ -37,100 +36,25 @@ pub fn initialize_water<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     game.spawn_bg3_scroll();
 }
 
-fn move_toward_target<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u8 {
-    {
-        if word!(game.fx_target_y_pos) & 0x8000 != 0 {
-            return 1;
-        }
-        let rising = word!(game.fx_y_vel) & 0x8000 != 0;
-        let velocity = ((word!(game.fx_y_vel) as i16 as i32) << 8) as u32;
-        let mut position =
-            (velocity.wrapping_add(words!(game.fx_base_y_pos, fx_base_y_subpos)) >> 16) as u16;
-        word!(wrapping_u32, game.fx_base_y_subpos += velocity);
-        if position & 0x8000 != 0 {
-            position = if rising { 0 } else { 0xffff };
-        }
-        word!(game.fx_base_y_pos = position);
-        let reached = if rising {
-            word!(game.fx_target_y_pos) >= position
-        } else {
-            word!(game.fx_target_y_pos) < position
-        };
-        if reached {
-            word! { game; fx_base_y_pos = word!(game.fx_target_y_pos); fx_base_y_subpos = 0; }
-        }
-        reached as u8
-    }
-}
-#[forbid(unsafe_code)]
-fn advance_motion<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    let state = word!(game.fx_rising_function_bank_88);
-    if matches!(state, 0xb367 | 0xb382) {
+/// One frame of the liquid's motion, tide and surface under one Session lease;
+/// the room shake and an unknown handler's report follow once it is published.
+/// Neither touches liquid state, so their order relative to it is unchanged.
+fn step_liquid<H>(game: &mut H, surface: crate::liquid::Surface)
+where
+    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
+{
+    use crate::session_access::SessionAccess;
+    let effects = crate::liquid::step(&mut game.runtime().session_mut().room, surface);
+    if effects.shake {
         game.shake_room_with_sound(21);
     }
-    match state {
-        0xb343 | 0xc428 => {
-            let velocity = word!(game.fx_y_vel);
-            let target = word!(game.fx_target_y_pos);
-            let base = word!(game.fx_base_y_pos);
-            if velocity != 0
-                && if velocity & 0x8000 == 0 {
-                    target > base
-                } else {
-                    target < base
-                }
-            {
-                word!(
-                    game.fx_rising_function_bank_88 = if state == 0xb343 { 0xb367 } else { 0xc44c }
-                );
-            }
-        }
-        0xb367 | 0xc44c => {
-            if word!(game.fx_timer -= 1, reread) == 0 {
-                word!(
-                    game.fx_rising_function_bank_88 = if state == 0xb367 { 0xb382 } else { 0xc458 }
-                );
-            }
-        }
-        0xb382 | 0xc458 => {
-            if move_toward_target(game) & 1 != 0 {
-                if state == 0xb382 {
-                    word! { game; fx_y_vel = 0; fx_rising_function_bank_88 = 0xb343; }
-                } else {
-                    word! { game; fx_rising_function_bank_88 = 0xc428; fx_y_vel = 0; }
-                }
-            }
-        }
-        _ => {
-            game.rtl_unreachable();
-        }
+    if effects.unknown_handler {
+        game.rtl_unreachable();
+        let mut runtime = game.runtime();
+        let room = &mut runtime.session_mut().room;
+        crate::liquid::advance_tide(room);
+        crate::liquid::place_surface(room, surface);
     }
-}
-#[forbid(unsafe_code)]
-fn advance_tide<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    // The control word and product store deliberately straddle named RAM words.
-    let control = u16::from_ne_bytes([game.ram().read_byte(0x197d), game.ram().read_byte(0x197e)]);
-    let (amplitude, sign_mask, positive_step, negative_step) = if control & 0x8000 != 0 {
-        (8u16, 0x1000, 288, 192)
-    } else if control & 0x4000 != 0 {
-        (32u16, 0x400, 224, 128)
-    } else {
-        return;
-    };
-    word! { game, 0; fx_y_suboffset, fx_y_offset }
-    let sine = kSinCosTable8bit_Sext[(word!(game.tide_phase) >> 8) as usize] as u16;
-    let product = amplitude.wrapping_mul(sine);
-    if sine & sign_mask != 0 {
-        word!(game.fx_y_offset, wrapping_sub(1));
-    }
-    crate::word_transfers!(game, ascending, 1; native(0x1971) <- value(product));
-    word!(
-        game.tide_phase += if sine & 0x8000 == 0 {
-            positive_step
-        } else {
-            negative_step
-        }
-    );
 }
 fn surface_scroll(position: u16, camera: u16) -> u16 {
     let relative = (position as i16).wrapping_sub(camera as i16);
@@ -161,16 +85,13 @@ fn table_height(position: u16, camera: u16, water: bool) -> u16 {
 
 static kLavaSoundEffects: [u8; 8] = [0x12, 0x13, 0x14, 0x12, 0x13, 0x14, 0x12, 0x13];
 #[forbid(unsafe_code)]
-pub fn lava_surface<H: crate::menus::host::Host + ?Sized>(_k: u16, game: &mut H) {
+pub fn lava_surface<H>(_k: u16, game: &mut H)
+where
+    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
+{
     word!(game.fx_layer_blending_config_c = word!(game.fx_layer_blending_config_b));
     if word!(game.time_is_frozen_flag) == 0 {
-        advance_motion(game);
-        advance_tide(game);
-        let position = words!(game.fx_y_offset, fx_y_suboffset)
-            .wrapping_add(words!(game.fx_base_y_pos, fx_base_y_subpos));
-        crate::word_transfers!(game, ascending, 1;
-            native(0x1960) <- value(position as u16),
-            native(0x1962) <- value((position >> 16) as u16));
+        step_liquid(game, crate::liquid::Surface::LavaAcid);
         word!(game.bg3_xpos = word!(game.reg_BG1HOFS));
         crate::word_transfers!(game, ascending, 1; native(0x9c00) <- value(0));
         word!(game.bg3_ypos = 0);
@@ -199,18 +120,15 @@ pub fn lava_surface<H: crate::menus::host::Host + ?Sized>(_k: u16, game: &mut H)
     }
 }
 #[forbid(unsafe_code)]
-pub fn water_surface<H: crate::menus::host::Host + ?Sized>(k: u16, game: &mut H) {
+pub fn water_surface<H>(k: u16, game: &mut H)
+where
+    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
+{
     word!(game.fx_layer_blending_config_c = word!(game.fx_layer_blending_config_b));
     if word!(game.time_is_frozen_flag) != 0 {
         return;
     }
-    advance_motion(game);
-    advance_tide(game);
-    let position = words!(game.fx_y_offset, fx_y_suboffset)
-        .wrapping_add(words!(game.fx_base_y_pos, fx_base_y_subpos));
-    crate::word_transfers!(game, ascending, 1;
-        native(0x195c) <- value(position as u16),
-        native(0x195e) <- value((position >> 16) as u16));
+    step_liquid(game, crate::liquid::Surface::Water);
     word!(game.bg3_ypos = surface_scroll(word!(game.fx_y_pos), word!(game.layer1_y_pos)));
     let v5: i32 = k as i32 >> 1;
     let r20: u16 = (word!(game.layer1_x_pos))
