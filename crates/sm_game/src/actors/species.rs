@@ -16,8 +16,8 @@ use crate::actors::{
     geruta, kago, kihunter, kraid, magdollite, metroid, mini_crocomire, mini_kraid, mochtroid,
     morph_ball_eye, multiviola, oum, phantoon, phantoon_actions, polyp, powamp, puyo, reflec,
     ridley, rinka, rio, rippers, roach, shaktool, sidehopper, skree, skultera, space_pirates,
-    squeept, statues, tatori, torizo, tripper, work_robot, wrecked_ship_spark, yapping_maw, yard,
-    zeb, zebetites, zoa,
+    squeept, statues, tatori, torizo, tripper, waver, work_robot, wrecked_ship_spark, yapping_maw,
+    yard, zeb, zebetites, zoa,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -681,6 +681,8 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         }
         10661995 => flies::initialize(game),
         10652077 => mini_crocomire::initialize(game),
+        10716909 => waver::initialize(game),
+        10717004 => waver::main_ai(game),
         _ => game.native_ai(ea),
     }
 }
@@ -1278,6 +1280,7 @@ pub fn instruction<H: InstructionHost>(
         }
         10652048 => mini_crocomire::set_moving(false, j, game),
         10652061 => mini_crocomire::set_moving(true, j, game),
+        10716899 => waver::set_spin_finished(j, game),
         _ => game.native_instruction(ea, k, j),
     }
 }

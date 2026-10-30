@@ -213,6 +213,7 @@ pub mod actors {
     pub mod tatori;
     pub mod torizo;
     pub mod tripper;
+    pub mod waver;
     pub mod work_robot;
     pub mod wrecked_ship_spark;
     pub mod yapping_maw;

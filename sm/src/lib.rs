@@ -440,7 +440,6 @@ pub mod game {
     pub(crate) mod space_pirates;
     pub(crate) mod spikey_platforms;
     pub use sm_game::sprite_objects;
-    pub mod waver;
 }
 
 /// Emulated SNES hardware. Also runs the original ROM as the differential
