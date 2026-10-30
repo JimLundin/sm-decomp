@@ -1,5 +1,5 @@
 //! One aggregate authority for player, projectiles, mechanisms and their room.
-use crate::game::actors::diving_enemies::{self, Kind as DivingKind};
+use crate::game::actors::skree::{self, Kind as DivingKind};
 use crate::game::actors::{
     bang, elevator, maridia_snail, metroid, mochtroid, reflec, roach, sidehopper, tripper,
     wall_crawlers, zoa,
@@ -1079,8 +1079,8 @@ crate::game::callback_dispatch! {
         10679310 => [mechanisms::react(Kind::HorizontalShutter, Event::Shot, game)];
         10679322 => [mechanisms::react(Kind::HorizontalShutter, Event::PowerBomb, game)];
         10716909 => crate::game::waver::Waver_Init;
-        10717004 => crate::game::waver::Waver_Main; 10717536 => [diving_enemies::initialize(DivingKind::Metalee, game)];
-        10717561 => [diving_enemies::advance(DivingKind::Metalee, game)]; 10717967 => [diving_enemies::shot(DivingKind::Metalee, game)];
+        10717004 => crate::game::waver::Waver_Main; 10717536 => [skree::initialize(DivingKind::Metaree, game)];
+        10717561 => [skree::main_ai(DivingKind::Metaree, game)]; 10717967 => [skree::shot(DivingKind::Metaree, game)];
         10718509 => actors::fireflea::initialize;
         10718702 => actors::fireflea::main_ai;
         10718827 => actors::fireflea::touch;
@@ -1116,8 +1116,8 @@ crate::game::callback_dispatch! {
         10724048 => roach::advance;
         10726153 => sidehopper::initialize; 10726351 => sidehopper::advance;
         10728522 => zoa::initialize; 10728572 => zoa::main_ai;
-        10733230 => [diving_enemies::initialize(DivingKind::Skree, game)]; 10733255 => [diving_enemies::advance(DivingKind::Skree, game)];
-        10733557 => [diving_enemies::shot(DivingKind::Skree, game)];
+        10733230 => [skree::initialize(DivingKind::Skree, game)]; 10733255 => [skree::main_ai(DivingKind::Skree, game)];
+        10733557 => [skree::shot(DivingKind::Skree, game)];
         10743874 => metroid::power_bomb;
 
 
@@ -1447,7 +1447,7 @@ crate::game::callback_dispatch! {
         10651845 => [j];
         11044751 | 11044763 | 11044790 | 11044811 => [crate::game::actors::evir::instruction(ea, j, game)];
         10716899 => crate::game::waver::Waver_Instr_1;
-        10717526 | 10733220 => [diving_enemies::ready(j, game)];
+        10717526 | 10733220 => [skree::set_attack_ready(j, game)];
         10722411 | 10722433 => [tripper::set_x_movement(false, j, game)];
         10722422 | 10722444 => [tripper::set_x_movement(true, j, game)];
         10725992 => [sidehopper::instruction(true, j, game)]; 10726142 => [sidehopper::instruction(false, j, game)];
