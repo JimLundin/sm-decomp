@@ -71,6 +71,7 @@ pub mod actors {
     pub mod access;
     pub mod animation;
     pub mod api;
+    pub mod botwoon;
     pub mod botwoon_death;
     pub mod codec;
     pub mod combat;

@@ -1,310 +1,26 @@
-//! Botwoon motion, path programs, attack animation and combat over native fields.
-//! Native-field compatibility retains independent body and callback epochs.
+//! Botwoon runs in `sm_game::actors::botwoon`; its tables, flags, PLMs and
+//! history hooks come from here, and its death signals run in the Runtime lease.
 #![forbid(unsafe_code)]
-use crate::game::constants::{bank_86::*, enemy_properties::*};
-use crate::game::enemy_layouts::EnemyLayout104 as Boss;
-use crate::game::enemy_speeds::enemy_speed;
+use crate::game::actors::api;
+use crate::game::enemy_projectiles::{self, scatter_drop};
 use crate::game::gameplay_flag_runtime::{SetBossBitForCurArea, boss_byte_at};
 use crate::game::imported::Imported;
-use crate::game::music::{QueueMusic_Delayed8, QueueSfx2_Max6};
-use crate::game::room_mechanisms::{open_passage, spawn_hardcoded};
-use crate::game::session_runtime::{
-    Runtime, actor_b3_pre_instruction, actor_direction_vector, native_rom_diagnostic,
-};
-use crate::game::sprite_effect_runtime::create_sprite;
+use crate::game::session_runtime::{Runtime, actor_b3_pre_instruction};
 use crate::game_state::Game;
-use crate::ram_map::{slot, word};
-use crate::rom::{RomImage, RomRecord, lorom_offset};
+use crate::rom::RomImage;
 use crate::rtl::rom_table_word;
-use crate::types::{Point16U, SpawnHardcodedPlmArgs};
 use sm_data::botwoon_holes::{ADDRESS as HOLES, BYTES as HOLE_BYTES, BotwoonHoles, Hole};
 use sm_data::botwoon_speeds::{
     ADDRESS as SPEEDS, BYTES as SPEED_BYTES, BotwoonSpeed, BotwoonSpeeds,
 };
-use sm_game::actors::botwoon_death::Host as DeathHost;
-use {
-    crate::game::actors::{api, combat},
-    sm_game::actors::{
-        access::{AccessMode::Native, ActorAccess, ActorKey as Key},
-        botwoon_death,
-    },
-};
-use {
-    crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx, scatter_drop},
-    sm_game::enemy_projectiles::drops::DropSource,
-};
+use sm_game::actors::access::ActorKey as Key;
+pub(crate) use sm_game::actors::botwoon::*;
+use sm_game::enemy_projectiles::drops::DropSource;
 
-fn initialize_living(e: i32, game: &mut Game) {
-    slot!(game, Boss[e].var_A = 24);
-    loop {
-        SpawnEprojWithGfx(
-            24,
-            word!(game.cur_enemy_index),
-            addr_kEproj_BotwoonsBody as u16,
-            game,
-        );
-        slot!(game, Boss[e].var_A, |old| old.wrapping_sub(1));
-        let finished = (slot!(game, Boss[e].var_A) as i16).wrapping_sub(1) < 0;
-        slot!(game, Boss[e].var_A, |old| old.wrapping_sub(1));
-        if finished {
-            break;
-        }
-    }
-    slot!(game, Boss[e].base.current_instruction = 0x9389);
-    let initial = speed_level(game, 0);
-    slot!(game, Boss[e]; var_3B = 0x9389, var_D = 0x9878, var_E = 0x9bb7, var_F = 0x9dc0, var_20 = 256,
-        var_38 = initial.speed, var_C = initial.body_travel_time,
-        var_33 = 1, var_34 = 1, var_59 = 1, var_36 = 0xffff, var_37 = 0);
-    slot!(game, Boss[e].base.properties, |old| old
-        | kEnemyProps_Tangible as u16);
-    let health = slot!(game, Boss[e].base.health);
-    slot!(game, Boss[e]; var_5B = health, var_5C = health >> 1, var_5D = (health >> 1) >> 1);
-    let x = slot!(game, Boss[e].base.x_pos);
-    slot!(game, Boss[e]; var_50 = x, var_52 = x, var_54 = x, var_56 = x);
-    let y = slot!(game, Boss[e].base.y_pos);
-    slot!(game, Boss[e]; var_51 = y, var_53 = y, var_55 = y, var_57 = y,
-        var_4E = ((i32::from(slot!(game, Boss[e].base.palette_index)) >> 4) + 256) as u16);
-}
-pub(crate) fn health_palette(game: &mut Game) {
-    let e = i32::from(word!(game.cur_enemy_index));
-    if slot!(game, Boss[e].var_4F) != 16
-        && (slot!(game, Boss[e].base.health) as i16).wrapping_sub(rom_table_word!(
-            game,
-            0xb3981b,
-            (slot!(game, Boss[e].var_4F) >> 1) as isize
-        ) as i16)
-            < 0
-    {
-        let mut source = 16u16.wrapping_mul(slot!(game, Boss[e].var_4F));
-        let mut target = slot!(game, Boss[e].var_4E);
-        loop {
-            word!(
-                game.palette_buffer[target >> 1] =
-                    rom_table_word!(game, 0xb3971b, (source >> 1) as isize)
-            );
-            source = source.wrapping_add(2);
-            target = target.wrapping_add(2);
-            if target == 512 {
-                break;
-            }
-        }
-        slot!(game, Boss[e].var_4F, |old| old.wrapping_add(2));
-    }
-}
-pub(crate) fn wait_entry(game: &mut Game) {
-    let e = i32::from(word!(game.cur_enemy_index));
-    let delay = slot!(game, Boss[e].var_20).wrapping_sub(1);
-    slot!(game, Boss[e].var_20 = delay);
-    if delay == 0 {
-        slot!(game, Boss[e].var_D = 0x989d);
-    }
-}
-pub(crate) fn select_attack(e: i32, game: &mut Game) -> bool {
-    if slot!(game, Boss[e].var_3C) == 0 {
-        return false;
-    }
-    slot!(game, Boss[e].var_3C = 0);
-    let choice = if slot!(game, Boss[e].var_33) == 0
-        && slot!(game, Boss[e].var_59) == 0
-        && slot!(game, Boss[e].var_3F) == 0
-    {
-        game.next_random() as u8 & 0xe
-    } else {
-        0
-    };
-    slot!(game, Boss[e].var_59 = 0);
-    // Masking above admits exactly 0,2,4,6,8,10,12,14.
-    let current = i32::from(word!(game.cur_enemy_index));
-    if choice <= 4 {
-        slot!(game, Boss[current]; var_D = 0x99a4, var_E = 0xe250, var_21 = 0, var_F = 0x9dc0, var_4B = 0);
-        select_path(word!(game.cur_enemy_index), game);
-    } else {
-        slot!(game, Boss[current]; var_D = 0x99e4, var_F = 0x9e7d, var_21 = 48);
-        slot!(game, Boss[current].base.properties, |old| old
-            & !(kEnemyProps_Tangible as u16));
-    }
-    true
-}
-pub(crate) fn resume_chase(e: i32, game: &mut Game) -> bool {
-    if slot!(game, Boss[e].var_3C) == 0 {
-        return false;
-    }
-    slot!(game, Boss[e]; var_3C = 0, var_D = 0x989d, var_E = 0x9bb7);
-    if slot!(game, Boss[e].var_33) != 0 {
-        slot!(game, Boss[e].var_35 = 0);
-    }
-    true
-}
-fn await_spit(e: i32, runtime: &mut Runtime<'_>) -> bool {
-    if runtime.foreign(|game| {
-        if slot!(game, Boss[e].var_21) != 0 {
-            slot!(game, Boss[e].var_2E = 0);
-            true
-        } else {
-            slot!(game, Boss[e]; var_3C = 0, var_D = 0x99a4, var_E = 0xe250, var_F = 0x9dc0);
-            false
-        }
-    }) {
-        return true;
-    }
-    let direct = botwoon_death::pending(runtime, e as u16)
-        || runtime.foreign(|game| {
-            let choice = game.next_random() & 1;
-            slot!(game, Boss[e]; var_33 = choice, var_34 = choice);
-            slot!(game, Boss[e].var_34) == 0
-        });
-    runtime.foreign(|game| {
-        if direct {
-            slot!(game, Boss[e].var_4B = 0);
-        } else {
-            slot!(game, Boss[e]; var_35 = 0, var_36 = 0xffff);
-        }
-        select_path(word!(game.cur_enemy_index), game);
-    });
-    false
-}
-pub(crate) fn wait_collapse(game: &mut Game) {
-    let e = i32::from(word!(game.cur_enemy_index));
-    let delay = slot!(game, Boss[e].var_22).wrapping_add(1);
-    slot!(game, Boss[e].var_22 = delay);
-    if (i32::from(delay) - 256) & 0x8000 == 0 {
-        slot!(game, Boss[e].var_D = 0x9a5e);
-    }
-}
-pub(crate) fn fall(game: &mut Game) {
-    let e = i32::from(word!(game.cur_enemy_index));
-    let index = (8 * i32::from(slot!(byte game, Boss[e].var_28[1])) >> 1) as isize;
-    let high = enemy_speed!(game, Quadratic, index + 1);
-    let low = enemy_speed!(game, Quadratic, index);
-    slot!(
-        game,
-        Boss[e].base(y_pos, y_subpos) += (u32::from(high) << 16) | u32::from(low)
-    );
-    if (i32::from(slot!(game, Boss[e].base.y_pos)) - 200) & 0x8000 != 0 {
-        slot!(game, Boss[e].var_28, |old| old.wrapping_add(192));
-    } else {
-        slot!(game, Boss[e].base.y_pos = 200);
-        slot!(game, Boss[e].var_D = 0x9aca);
-        game.eproj_spawn_pt = Point16U {
-            x: slot!(game, Boss[e].base.x_pos),
-            y: slot!(game, Boss[e].base.y_pos),
-        };
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x1d, game);
-        QueueSfx2_Max6(0x24, game);
-        slot!(game, Boss[e].base.properties, |old| old | 0x500);
-    }
-}
-pub(crate) fn rubble(k: u16, game: &mut Game) {
-    let e = i32::from(k);
-    if (i32::from(slot!(game, Boss[e].var_23)) - 192) & 0x8000 != 0 {
-        if (i32::from(slot!(game, Boss[e].var_23)) - 64) & 0x8000 == 0 {
-            let explosion = (slot!(game, Boss[e].var_24) as i16).wrapping_sub(1);
-            slot!(game, Boss[e].var_24 = explosion as u16);
-            if explosion < 0 {
-                slot!(game, Boss[e].var_24 = 12);
-                let x = ((game.next_random() & 0x1f) + 232) as u16;
-                let y = (i32::from(slot!(game, Boss[e].var_23))
-                    + i32::from(game.next_random() & 0x1f)
-                    - 8) as u16;
-                create_sprite(x, y, 29, 2560, game);
-                QueueSfx2_Max6(0x24, game);
-            }
-            let dust = (slot!(game, Boss[e].var_25) as i16).wrapping_sub(1);
-            slot!(game, Boss[e].var_25 = dust as u16);
-            if dust < 0 {
-                slot!(game, Boss[e].var_25 = 4);
-                for _ in 0..2 {
-                    let x = ((game.next_random() & 0x3f) + 224) as u16;
-                    let y = (i32::from(slot!(game, Boss[e].var_23))
-                        + (i32::from(game.next_random() & 0x1f) - 8))
-                        as u16;
-                    create_sprite(x, y, 9, 2560, game);
-                }
-            }
-        }
-        slot!(game, Boss[e].var_23, |old| old.wrapping_add(1));
-    } else {
-        slot!(game, Boss[e].base.properties, |old| old
-            | kEnemyProps_Deleted as u16);
-        SetBossBitForCurArea(2, game);
-        QueueMusic_Delayed8(3, game);
-    }
-}
-fn mark_hit(h: &mut Runtime<'_>, actor: Key) {
-    if h.resolve_actor(actor, Native).health == 0 {
-        h.set_native_death_signal(actor.byte_index(), botwoon_death::Signal::PendingHit, 1);
-        h.edit_actor(Key::from_legacy(0), Native, |actor| {
-            actor.properties |= kEnemyProps_Tangible as u16;
-        });
-    }
-}
-pub(crate) fn shot(h: &mut Runtime<'_>) {
-    let actor = h.selected_actor();
-    let health = h.resolve_actor(actor, Native).health;
-    h.set_native_death_signal(
-        actor.byte_index(),
-        botwoon_death::Signal::PreviousHealth,
-        health,
-    );
-    combat::shot_reaction(h, api::ShotHandling::ReactionOnly);
-    mark_hit(h, actor);
-}
-pub(crate) fn contact(power_bomb: bool, h: &mut Runtime<'_>) {
-    if power_bomb {
-        combat::power_bomb_reaction(h, api::DeathHandling::LeavePending);
-    } else {
-        combat::contact_reaction(h, api::DeathHandling::LeavePending);
-    }
-    let actor = h.selected_actor();
-    mark_hit(h, actor);
-}
-fn select_path(k: u16, game: &mut Game) {
-    let e = i32::from(k);
-    if slot!(game, Boss[e].var_33) == 0 {
-        slot!(game, Boss[e].var_3F = 0);
-        let health = slot!(game, Boss[e].base.health) as i16;
-        if health > 0 && health.wrapping_sub(slot!(game, Boss[e].var_5C) as i16) < 0 {
-            let speed = if health.wrapping_sub(slot!(game, Boss[e].var_5D) as i16) < 0 {
-                2
-            } else {
-                1
-            };
-            slot!(game, Boss[e].var_3F = speed);
-            let index = (4u16.wrapping_mul(slot!(game, Boss[e].var_3F)) >> 1) as isize;
-            let level = speed_level(game, index);
-            slot!(game, Boss[e]; var_38 = level.speed, var_C = level.body_travel_time);
-        }
-    }
-    let bias = if slot!(game, Boss[e].var_33) != 0 {
-        128
-    } else {
-        0
-    };
-    slot!(
-        game,
-        Boss[e].var_40 = (i32::from(game.next_random() & 0x18)
-            + bias
-            + 4 * i32::from(slot!(game, Boss[e].var_37))) as u16
-    );
-}
 pub(crate) type ImportedSpeeds = Imported<BotwoonSpeeds>;
 
 pub(crate) fn import_speeds(image: &RomImage) -> Option<ImportedSpeeds> {
     Imported::import(image, SPEEDS, SPEED_BYTES, BotwoonSpeeds::import)
-}
-
-/// The speed level whose two words start at word `index` of $B3:94BB. The
-/// record serves it while the loaded image is the imported allocation; any
-/// other image or index runs the original indexed loads.
-fn speed_level(game: &Game, index: isize) -> BotwoonSpeed {
-    let rom = game.loaded_rom.as_ref().expect("ROM must be loaded");
-    Imported::from(&game.botwoon_speeds, rom)
-        .filter(|_| index % 2 == 0)
-        .and_then(|speeds| speeds.level(usize::try_from(index / 2).ok()?))
-        .unwrap_or_else(|| BotwoonSpeed {
-            speed: rom_table_word!(game, 0xb394bb, index),
-            body_travel_time: rom_table_word!(game, 0xb394bb, index + 1),
-        })
 }
 
 pub(crate) type ImportedHoles = Imported<BotwoonHoles>;
@@ -313,323 +29,82 @@ pub(crate) fn import_holes(image: &RomImage) -> Option<ImportedHoles> {
     Imported::import(image, HOLES, HOLE_BYTES, BotwoonHoles::import)
 }
 
-/// The hole whose four words start at word `index` of $B3:949B. The record
-/// serves a hole while the loaded image is the imported allocation; any other
-/// image or index runs the original indexed loads.
-fn hole(game: &Game, index: isize) -> Hole {
-    let rom = game.loaded_rom.as_ref().expect("ROM must be loaded");
-    Imported::from(&game.botwoon_holes, rom)
-        .filter(|_| index % 4 == 0)
-        .and_then(|holes| holes.hole(usize::try_from(index / 4).ok()?))
-        .unwrap_or_else(|| Hole {
-            left: rom_table_word!(game, 0xb3949b, index),
-            right: rom_table_word!(game, 0xb3949b, index + 1),
-            top: rom_table_word!(game, 0xb3949b, index + 2),
-            bottom: rom_table_word!(game, 0xb3949b, index + 3),
-        })
+impl Host for Game {
+    /// The speed level whose two words start at word `index` of $B3:94BB. The
+    /// record serves it while the loaded image is the imported allocation; any
+    /// other image or index runs the original indexed loads.
+    fn botwoon_speed_level(&self, index: isize) -> BotwoonSpeed {
+        let rom = self.loaded_rom.as_ref().expect("ROM must be loaded");
+        Imported::from(&self.botwoon_speeds, rom)
+            .filter(|_| index % 2 == 0)
+            .and_then(|speeds| speeds.level(usize::try_from(index / 2).ok()?))
+            .unwrap_or_else(|| BotwoonSpeed {
+                speed: rom_table_word!(self, 0xb394bb, index),
+                body_travel_time: rom_table_word!(self, 0xb394bb, index + 1),
+            })
+    }
+
+    /// The hole whose four words start at word `index` of $B3:949B. The record
+    /// serves a hole while the loaded image is the imported allocation; any other
+    /// image or index runs the original indexed loads.
+    fn botwoon_hole(&self, index: isize) -> Hole {
+        let rom = self.loaded_rom.as_ref().expect("ROM must be loaded");
+        Imported::from(&self.botwoon_holes, rom)
+            .filter(|_| index % 4 == 0)
+            .and_then(|holes| holes.hole(usize::try_from(index / 4).ok()?))
+            .unwrap_or_else(|| Hole {
+                left: rom_table_word!(self, 0xb3949b, index),
+                right: rom_table_word!(self, 0xb3949b, index + 1),
+                top: rom_table_word!(self, 0xb3949b, index + 2),
+                bottom: rom_table_word!(self, 0xb3949b, index + 3),
+            })
+    }
+
+    fn angle_to_player(&mut self, actor: u16) -> u16 {
+        api::angle_to_player(&Runtime::new(self), Key::from_legacy(actor))
+    }
+
+    fn set_boss_bit(&mut self, mask: u16) {
+        SetBossBitForCurArea(mask, self);
+    }
+
+    fn boss_byte(&mut self, area: u16) -> u8 {
+        boss_byte_at(area, self)
+    }
+
+    fn open_passage(&mut self) {
+        crate::game::room_mechanisms::open_passage(self);
+    }
+
+    fn scatter_botwoon_drop(&mut self, area: u16) {
+        scatter_drop(DropSource::Botwoon, area, self);
+    }
+
+    fn b3_pre_instruction(&mut self, address: u32, k: u16) {
+        actor_b3_pre_instruction(address, k, self);
+    }
+
+    fn record_botwoon_head(&mut self) {
+        enemy_projectiles::record_botwoon_head(self);
+    }
+
+    fn follow_botwoon_history(&mut self) {
+        enemy_projectiles::follow_botwoon_history(self);
+    }
+
+    fn orient_botwoon_body(&mut self) {
+        enemy_projectiles::orient_botwoon_body(self);
+    }
+
+    fn advance_botwoon_history(&mut self) {
+        enemy_projectiles::advance_botwoon_history(self);
+    }
 }
 
-fn clamp_delta(value: u16) -> u16 {
-    if (i32::from(value) - 256) & 0x8000 == 0 {
-        255
-    } else if (i32::from(value) + 256) & 0x8000 != 0 {
-        (-255i32) as u16
-    } else {
-        value
-    }
-}
-pub(crate) fn seek_hole(game: &mut Game) {
-    let e = i32::from(word!(game.cur_enemy_index));
-    let target = hole(game, (slot!(game, Boss[e].var_37) >> 1) as isize);
-    let x = clamp_delta(
-        (i32::from(target.left) + 4 - i32::from(slot!(game, Boss[e].base.x_pos))) as u16,
-    );
-    let y = clamp_delta(
-        (i32::from(target.top) + 4 - i32::from(slot!(game, Boss[e].base.y_pos))) as u16,
-    );
-    let angle = api::angle_from_delta(x, y);
-    let e = i32::from(word!(game.cur_enemy_index));
-    slot!(game, Boss[e]; var_39 = angle, var_3A = u16::from(64u8.wrapping_sub(angle as u8)));
-    if slot!(game, Boss[e].var_33) == slot!(game, Boss[e].var_34) {
-        apply_direction(game);
-    } else {
-        slot!(game, Boss[e]; var_34 = slot!(game, Boss[e].var_33), var_3C = 1);
-    }
-}
-fn apply_direction(game: &mut Game) {
-    let e = i32::from(word!(game.cur_enemy_index));
-    let vector = actor_direction_vector(
-        slot!(game, Boss[e].var_3A),
-        slot!(game, Boss[e].var_38),
-        game,
-    );
-    Runtime::new(game).session_mut().compatibility_enemy_scratch = slot!(game, Boss[e].var_3A);
-    let phase = slot!(game, Boss[e].var_3A);
-    api::apply_vector(&mut Runtime::new(game), phase, vector);
-}
-fn native_path(cursor: u16, game: &mut Game) -> RomRecord {
-    let address = 0xb30000 | u32::from(cursor);
-    if cursor & 0x8000 == 0 {
-        native_rom_diagnostic(address, game);
-    }
-    RomRecord {
-        image: game.capture_native_rom(),
-        base: lorom_offset(address) as usize,
-    }
-}
-pub(crate) fn load_path(game: &mut Game) {
-    let e = i32::from(word!(game.cur_enemy_index));
-    slot!(game, Boss[e]; var_E = 0xe28c, var_3C = 0);
-    let record = native_path(slot!(game, Boss[e].var_40).wrapping_add(0xe150), game);
-    slot!(game, Boss[e]; var_42 = record.word(0), var_37 = record.word(4));
-    let direction = record.word(2) as i16;
-    slot!(game, Boss[e].var_44 = direction as u16);
-    if direction < 0 {
-        slot!(game, Boss[e].var_42, |old| old.wrapping_sub(4));
-    }
-    advance_path(game);
-}
-pub(crate) fn advance_path(game: &mut Game) {
-    let e = i32::from(word!(game.cur_enemy_index));
-    let mut delta = [0u16; 2];
-    let mut remaining = i32::from(slot!(game, Boss[e].var_38));
-    let step = if slot!(game, Boss[e].var_44) & 0x8000 == 0 {
-        2
-    } else {
-        -2
-    };
-    loop {
-        let record = native_path(slot!(game, Boss[e].var_42), game);
-        for (axis, total) in delta.iter_mut().enumerate() {
-            let amount = (record.byte(axis) as i8) as i16 as u16;
-            if amount == 0xff80 {
-                slot!(game, Boss[e]; var_41 = 0, var_3C = 1);
-                return;
-            }
-            *total = total.wrapping_add(amount);
-        }
-        slot!(
-            game,
-            Boss[e].var_42 = (i32::from(slot!(game, Boss[e].var_42)) + step) as u16
-        );
-        remaining -= 1;
-        if remaining == 0 {
-            break;
-        }
-    }
-    if slot!(game, Boss[e].var_44) & 0x8000 != 0 {
-        delta = delta.map(u16::wrapping_neg);
-    }
-    slot!(game, Boss[e].base.x_pos, |old| old.wrapping_add(delta[0]));
-    slot!(game, Boss[e].base.y_pos, |old| old.wrapping_add(delta[1]));
-}
-fn animation(e: i32, instruction: u16, game: &mut Game) {
-    slot!(game, Boss[e].base.current_instruction = instruction);
-    slot!(game, Boss[e].var_3B = instruction);
-    slot!(game, Boss[e].base; instruction_timer = 1, timer = 0);
-}
-pub(crate) fn animate_motion(game: &mut Game) {
-    let e = i32::from(word!(game.cur_enemy_index));
-    let x = slot!(game, Boss[e].base.x_pos).wrapping_sub(slot!(game, Boss[e].var_56));
-    let y = slot!(game, Boss[e].base.y_pos).wrapping_sub(slot!(game, Boss[e].var_57));
-    let angle = api::angle_from_delta(x, y);
-    if x != 0 || y != 0 {
-        let instruction = if slot!(game, Boss[e].var_33) != 0 {
-            slot!(game, Boss[e].base.layer = 7);
-            slot!(game, Boss[e].base.properties, |old| old
-                | kEnemyProps_Tangible as u16);
-            0x9389
-        } else {
-            slot!(game, Boss[e].base.layer = 2);
-            slot!(game, Boss[e].base.properties, |old| old
-                & !(kEnemyProps_Tangible as u16));
-            slot!(
-                game,
-                Boss[e].var_45 = (i32::from(slot!(game, Boss[e].var_45))
-                    + i32::from((angle as i8).wrapping_sub(slot!(game, Boss[e].var_45) as i8)) * 3
-                        / 4) as u8 as u16
-            );
-            rom_table_word!(game, 0xb3946b, (slot!(game, Boss[e].var_45) >> 5) as isize)
-        };
-        if instruction != slot!(game, Boss[e].var_3B) {
-            animation(e, instruction, game);
-        }
-    }
-    slot!(game, Boss[e]; var_56 = slot!(game, Boss[e].var_54), var_57 = slot!(game, Boss[e].var_55),
-        var_54 = slot!(game, Boss[e].var_52), var_55 = slot!(game, Boss[e].var_53),
-        var_52 = slot!(game, Boss[e].var_50), var_53 = slot!(game, Boss[e].var_51),
-        var_50 = slot!(game, Boss[e].base.x_pos), var_51 = slot!(game, Boss[e].base.y_pos));
-}
-pub(crate) fn aim_spit(game: &mut Game) -> u32 {
-    let e = i32::from(word!(game.cur_enemy_index));
-    slot!(game, Boss[e].base.layer = 2);
-    let actor = word!(game.cur_enemy_index);
-    let angle = api::angle_to_player(&Runtime::new(game), Key::from_legacy(actor));
-    slot!(game, Boss[e].var_3D = angle);
-    let instruction = rom_table_word!(
-        game,
-        0xb3948b,
-        ((angle as u8).wrapping_add(16) >> 5) as isize
-    );
-    animation(e, instruction, game);
-    slot!(game, Boss[e]; var_3D = u16::from(64u8.wrapping_sub(slot!(game, Boss[e].var_3D) as u8)), var_F = 0x9ee0);
-    if slot!(game, Boss[e].var_D) != 0x99e4 {
-        slot!(game, Boss[e].var_F = 0x9f34);
-    }
-    0xb30000 | u32::from(slot!(game, Boss[e].var_F))
-}
-pub(crate) fn spit(wide: bool, game: &mut Game) {
-    let e = i32::from(word!(game.cur_enemy_index));
-    if wide && slot!(game, Boss[e].var_5A) == 0 {
-        return;
-    }
-    game.ram().write_byte(
-        0x60b,
-        (slot!(game, Boss[e].var_3D) as u8).wrapping_sub(if wide { 32 } else { 16 }),
-    );
-    let speed = [2u16, 3, 4][slot!(game, Boss[e].var_3F) as usize];
-    for _ in 0..if wide { 5 } else { 3 } {
-        SpawnEprojWithGfx(
-            speed,
-            word!(game.cur_enemy_index),
-            addr_kEproj_BotwoonsSpit as u16,
-            game,
-        );
-        game.ram()
-            .write_byte(0x60b, game.ram().read_byte(0x60b).wrapping_add(16));
-    }
-    let target = if wide {
-        slot!(game, Boss[e].var_5A = 0);
-        e
-    } else {
-        i32::from(word!(game.cur_enemy_index))
-    };
-    slot!(game, Boss[target].var_F = 0x9f7a);
-}
-pub(crate) fn wait_spit(k: u16, game: &mut Game) {
-    let e = i32::from(k);
-    let delay = (slot!(game, Boss[e].var_21) as i16).wrapping_sub(1);
-    slot!(game, Boss[e].var_21 = delay as u16);
-    if delay < 0 {
-        slot!(game, Boss[e]; var_21 = 0, var_F = 0x9dc0);
-    }
-}
-pub(crate) fn detect_portal(k: u16, game: &mut Game) {
-    let e = i32::from(word!(game.cur_enemy_index));
-    if slot!(game, Boss[i32::from(k)].var_35) != 0 {
-        return;
-    }
-    for index in [12, 8, 4, 0] {
-        let hole = hole(game, index);
-        let bounds = [hole.left, hole.right, hole.top, hole.bottom];
-        if (0..4).all(|offset| {
-            let coordinate = if offset < 2 {
-                slot!(game, Boss[e].base.x_pos)
-            } else {
-                slot!(game, Boss[e].base.y_pos)
-            };
-            ((coordinate as i16).wrapping_sub(bounds[offset] as i16) >= 0) == (offset % 2 == 0)
-        }) {
-            slot!(game, Boss[e].var_35 = 1);
-            slot!(game, Boss[e].var_33, |old| old ^ 1);
-            slot!(game, Boss[e].var_36 = slot!(game, Boss[e].var_B));
-            slot!(game, Boss[e].var_26, |old| old.wrapping_sub(1));
-            return;
-        }
-        slot!(game, Boss[e].var_35 = 0);
-    }
-}
-pub(crate) fn set_hitbox(x: u16, y: u16, game: &mut Game) {
-    let e = i32::from(word!(game.cur_enemy_index));
-    slot!(game, Boss[e].base; x_width = x, y_height = y);
-}
-pub(crate) fn set_spitting(game: &mut Game) {
-    let e = i32::from(word!(game.cur_enemy_index));
-    slot!(game, Boss[e].var_5A = 1);
-}
+impl RuntimeHost for Runtime<'_> {
+    type Game = Game;
 
-pub(crate) fn initialize(game: &mut Game) {
-    let e = i32::from(word!(game.cur_enemy_index));
-    if boss_byte_at(4, game) & 2 != 0 {
-        spawn_hardcoded(SpawnHardcodedPlmArgs::new(15, 4, 0xb797), game);
-        open_passage(game);
-        slot!(game, Boss[e].base.current_instruction = 0x9389);
-        slot!(game, Boss[e].base.properties, |old| old
-            | kEnemyProps_Deleted as u16);
-    } else {
-        initialize_living(e, game);
+    fn foreign<T>(&mut self, action: impl FnOnce(&mut Game) -> T) -> T {
+        Runtime::foreign(self, action)
     }
-}
-pub(crate) fn update(runtime: &mut Runtime<'_>) {
-    botwoon_death::arm(runtime);
-    let actor = runtime.selected_actor();
-    let state = 0xb30000 | u32::from(runtime.resolve_actor(actor, Native).variables[3]);
-    let k = runtime.selected_actor().byte_index();
-    match state {
-        11769976 => runtime.foreign(wait_entry),
-        11770013 | 11770276 => runtime.foreign(|game| {
-            let e = i32::from(word!(game.cur_enemy_index));
-            let changed = if state == 11770013 {
-                select_attack(e, game)
-            } else {
-                resume_chase(e, game)
-            };
-            if !changed {
-                step_body(e, game);
-                if state == 11770013 {
-                    detect_portal(word!(game.cur_enemy_index), game);
-                }
-            }
-        }),
-        11770340 => {
-            let e = i32::from(runtime.selected_actor().byte_index());
-            if await_spit(e, runtime) {
-                runtime.foreign(|game| {
-                    actor_b3_pre_instruction(
-                        0xb30000 | u32::from(slot!(game, Boss[e].var_F)),
-                        word!(game.cur_enemy_index),
-                        game,
-                    );
-                });
-            }
-        }
-        11770438 => runtime.foreign(wait_collapse),
-        11770462 => runtime.foreign(fall),
-        11770570 => {
-            let actor = runtime.selected_actor();
-            if botwoon_death::landed(runtime, actor.byte_index()) {
-                runtime.edit_actor(actor, Native, |actor| actor.variables[3] = 0x9af9);
-                let k = runtime.selected_actor().byte_index();
-                runtime.foreign(|game| {
-                    spawn_hardcoded(SpawnHardcodedPlmArgs::new(15, 4, 0xb79b), game);
-                    scatter_drop(DropSource::Botwoon, k, game);
-                    slot!(game, Boss[i32::from(k)]; var_23 = 0, var_24 = 0, var_25 = 0);
-                });
-            }
-        }
-        11770617 => runtime.foreign(|game| rubble(k, game)),
-        _ => {
-            runtime.foreign(crate::rtl::Unreachable);
-        }
-    }
-    runtime.foreign(health_palette);
-}
-fn step_body(e: i32, game: &mut Game) {
-    match 0xb30000 | u32::from(slot!(game, Boss[e].var_E)) {
-        11770807 => seek_hole(game),
-        11788940 => advance_path(game),
-        11788880 => load_path(game),
-        _ => {
-            crate::rtl::Unreachable(game);
-        }
-    }
-    crate::game::enemy_projectiles::record_botwoon_head(game);
-    crate::game::enemy_projectiles::follow_botwoon_history(game);
-    actor_b3_pre_instruction(
-        0xb30000 | u32::from(slot!(game, Boss[e].var_F)),
-        word!(game.cur_enemy_index),
-        game,
-    );
-    crate::game::enemy_projectiles::orient_botwoon_body(game);
-    crate::game::enemy_projectiles::advance_botwoon_history(game);
 }
