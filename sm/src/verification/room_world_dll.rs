@@ -121,10 +121,19 @@ unsafe fn returning_die_short_load_case(rom: &CStr, fixture: &CStr) -> Result<()
         verify::initialize_checkpoint_machine(&mut game, &rom.to_owned())?;
         initialize_verify_audio(&mut game)?;
         verify::begin_verifier_drawing(&mut game);
-        let file = sm::c_library::fopen(fixture.as_ptr(), c"w+b".as_ptr());
-        if file.is_null() {
+        use std::io::{Seek as _, Write as _};
+        let Ok(path) = fixture.to_str() else {
+            return Err("returning-Die load fixture path is not UTF-8".into());
+        };
+        let Ok(mut file) = std::fs::File::options()
+            .read(true)
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(path)
+        else {
             return Err("unable to create returning-Die load fixture".into());
-        }
+        };
         let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             let header: [u32; 16] = [
                 2,
@@ -144,34 +153,25 @@ unsafe fn returning_die_short_load_case(rom: &CStr, fixture: &CStr) -> Result<()
                 0,
                 0,
             ];
-            assert_eq!(
-                sm::c_library::fwrite(header.as_ptr().cast(), 1, 64, file),
-                64
-            );
-            let log = [0x31u8, 0x42];
-            assert_eq!(
-                sm::c_library::fwrite(log.as_ptr().cast(), 1, log.len(), file),
-                2
-            );
-            assert_eq!(sm::c_library::ftell(file), 66);
-            assert_eq!(sm::c_library::fseek(file, 0, 0), 0);
+            let header: Vec<u8> = header.iter().flat_map(|word| word.to_ne_bytes()).collect();
+            file.write_all(&header).unwrap();
+            file.write_all(&[0x31u8, 0x42]).unwrap();
+            assert_eq!(file.stream_position().unwrap(), 66);
+            file.rewind().unwrap();
             sm::samus_game_returning_die_load_witness(&mut game, |game| {
                 let _scope = ReturningDieReadScope;
                 RETURNING_DIE_READ_CALLS.store(0, Ordering::SeqCst);
                 assert!(!RETURNING_DIE_READ_ACTIVE.swap(true, Ordering::SeqCst));
-                sm::rtl::StateRecorder_Load(file, true, game);
+                sm::rtl::StateRecorder_Load(&mut file, true, game);
                 assert_eq!(RETURNING_DIE_READ_CALLS.load(Ordering::SeqCst), 1);
             });
             assert!(!RETURNING_DIE_READ_ACTIVE.load(Ordering::SeqCst));
             assert_eq!(RETURNING_DIE_READ_CALLS.load(Ordering::SeqCst), 1);
         }));
-        let closed = sm::c_library::fclose(file);
+        drop(file);
         assert!(!RETURNING_DIE_READ_ACTIVE.load(Ordering::SeqCst));
         if result.is_err() {
             return Err("returning-Die short-load assertions failed".into());
-        }
-        if closed != 0 {
-            return Err("unable to close returning-Die load fixture".into());
         }
         Ok(())
     }
