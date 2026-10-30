@@ -2,7 +2,7 @@
 
 The frontend's PNG decoder links a static build of unmodified **stb_image v2.26**.
 `sm/native/stb_image.c` is the implementation bridge;
-`sm/src/platform/texture_png.rs` owns the Rust interface and copies decoded pixels
+`crates/sm_app/src/platform/texture_png.rs` owns the Rust interface and copies decoded pixels
 into a Vec before freeing the upstream allocation. File loading uses the C
 runtime. The native archive is `libsm_stb_image.a`.
 
@@ -92,11 +92,14 @@ The adapter uses
 This leaves the archive for the final linker to resolve from the configured
 native directory. The Windows production build passed with this attribute and
 the existing `LIBRARY_PATH`, without a new build script or global Rust flags.
+The `build` job in [ci.yml](../.github/workflows/ci.yml) runs the same steps.
 
 ## Host Unix installation
 
-These commands compile for the current Unix host. **Linux and other Unix builds
-were not exercised in this experiment.** They require SDL2 development libraries,
+These commands compile the archive for the current Unix host. **Linux and other
+Unix builds were not exercised.** The final `sm_app` build also needs the
+desktop archive, which builds only for Windows GNU x64, so it does not link on
+Linux today. They require SDL2 development libraries,
 Rust, `curl`, `tar`, `shasum`, `ar`, and Clang with
 `-ftrivial-auto-var-init=zero` support, such as Clang 16 or newer. Run them from
 the repository root after installing the [native dependencies](NATIVE_DEPENDENCIES.md).

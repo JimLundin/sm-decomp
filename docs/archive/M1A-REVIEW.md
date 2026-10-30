@@ -1,5 +1,7 @@
 # M1a safe-signature review
 
+> Archived 2026-10-30. Historical review record; it assigns no current work.
+
 **Current requalification (2026-10-26, Core30/Core34):**
 `GameState_22_SamusNoHealth_Dying`, `EnsureSamusDrawnEachFrame` and
 `GameOptionsMenu_4_StartGame` are retired into existing checked owners/callers.

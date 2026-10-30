@@ -14,7 +14,7 @@
 # (e) Transitive: the fn's name must not reach, through any same-named item in
 # the macro-expanded crate, an item holding an `unsafe {}` block. A safe wrapper
 # around unchecked hardware/ROM/RAM access must not gain new safe callers
-# (docs/M1A-REVIEW.md). Name collisions only exclude more.
+# (docs/archive/M1A-REVIEW.md). Name collisions only exclude more.
 # Imported aliases are conservatively tainted regardless of scope or target;
 # mentions in signatures and module prefixes count, including alias chains.
 # Line counts never change before the final fmt, so (file, line) keys are stable.

@@ -45,7 +45,7 @@ and the condition that permits its removal.
   predecode, broader validation or sorted/batched traversal can change behavior.
 - Keep entry contracts unsafe while reachable unchecked backend or ROM operations
   remain. Checked RAM, passing replays and a safe-looking wrapper do not prove
-  transitive safety. See the concrete [M1 audit](M1A-REVIEW.md).
+  transitive safety. See the archived [M1 audit](archive/M1A-REVIEW.md).
 
 ## Reset, import and external writers
 
@@ -61,7 +61,9 @@ boundaries, not proof that every generic native access is disjoint:
 | Scanline, HDMA and IRQ activity after gameplay; native off-table accesses | Do not assume the Rust gameplay return is the final writer of the frame. |
 
 Follow the current code in `game_state.rs`, `cpu_infra.rs`, `rtl.rs`,
-`snapshot_io.rs`, `verify/checkpoint.rs` and `ram_map.rs` under `sm/src`.
+`snapshot_io.rs`, `verify/checkpoint.rs`, `ram_map.rs` and
+`game/session_runtime.rs` under `sm/src`, and in `session.rs`,
+`persistent_session.rs` and `session_encoding.rs` under `crates/sm_game/src`.
 Audit current callers; historical bank filenames are not an ownership map.
 
 ## Oracle rewind and adoption
