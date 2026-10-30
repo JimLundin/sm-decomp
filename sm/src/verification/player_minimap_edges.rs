@@ -155,6 +155,7 @@ fn check_lazy_tiles(g: &mut Game, fail_visited: bool) {
         put(&mut expected, 0xc608 + 2 * 60, 0x6806);
     }
     let expected_failure =
+        // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
         format!("index out of bounds: the len is {length} but the index is {length}");
     let matched_source = Arc::new(AtomicBool::new(false));
     let previous_hook = if fail_visited {
@@ -167,6 +168,7 @@ fn check_lazy_tiles(g: &mut Game, fail_visited: bool) {
                 .payload()
                 .downcast_ref::<String>()
                 .map(String::as_str)
+                // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
                 .or_else(|| info.payload().downcast_ref::<&str>().copied());
             if text == Some(wanted.as_str())
                 && info

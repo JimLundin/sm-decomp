@@ -463,6 +463,7 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 failure
                     .downcast_ref::<String>()
                     .unwrap()
+                    // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
                     .contains("index out of bounds")
             );
             let failed = g.dma_state();

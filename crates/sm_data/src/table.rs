@@ -67,9 +67,11 @@ pub fn grid<const WORDS: usize, const ROWS: usize>(
     Rows::import(bytes, |row| row)
 }
 
-/// Panics when `index` selects no entry of a `len`-entry table, with the same
-/// message as an out-of-range slice index. Jump tables use it to reject an
-/// invalid selector before dispatching, as the original's checked tables did.
+/// Panics when `index` selects no entry of a `len`-entry table. Jump tables use
+/// it to reject an invalid selector before dispatching, as the original's
+/// checked tables did.
+// LEGACY(message-text): the slice-index wording is kept only because verifier
+// cases compare panic text (player_movement_edges.rs).
 #[track_caller]
 pub fn check_index(index: usize, len: usize) {
     if index >= len {

@@ -1636,6 +1636,7 @@ fn sfx_native_reset_rejection_keeps_history_and_reset_prefix() {
         let fault = catch_unwind(AssertUnwindSafe(|| Sfx1_Process(p)))
             .expect_err("native reset rejects DSP selector255");
         let text = fault.downcast_ref::<String>().expect("bounds failure text");
+        // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
         assert!(text.contains("len is 128") && text.contains("index is 244"));
         assert_eq!(
             (history.count, history.addr[0], history.val[0]),
@@ -1735,6 +1736,7 @@ fn sfx_native_pan_origin_failure_keeps_programmed_instrument_prefix() {
             if pan == 21 {
                 let fault = result.expect_err("native pan reaches the checked tail-origin read");
                 let text = fault.downcast_ref::<String>().expect("bounds failure text");
+                // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
                 assert!(text.contains("len is 65536") && text.contains("index is 73265"));
             }
             let count = history.count as usize;

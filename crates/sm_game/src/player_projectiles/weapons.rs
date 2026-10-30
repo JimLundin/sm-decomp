@@ -137,6 +137,7 @@ fn fire(h: &mut impl Host, charged: bool) {
                     let index = usize::from(shot!(h, selected, kind) & 15);
                     let motion =
                         definitions::motion(mode == Mode::Charged, index).unwrap_or_else(|| {
+                            // LEGACY(message-text): hand-written slice-index panic text, kept because verifier cases compare panic text.
                             panic!("index out of bounds: the len is 12 but the index is {index}")
                         });
                     shot!(h, selected, motion = definitions::instruction(motion); SliceLe);
@@ -165,6 +166,7 @@ fn fire(h: &mut impl Host, charged: bool) {
 pub fn initial_collision(h: &mut impl Host, caller: u16, wave: bool) {
     let direction = shot!(h, caller, direction) & 15;
     if direction >= 10 {
+        // LEGACY(message-text): hand-written slice-index panic text, kept because verifier cases compare panic text.
         panic!("index out of bounds: the len is 10 but the index is {direction}");
     }
     let selected = h.session().projectiles.selected;
@@ -190,9 +192,8 @@ pub fn initial_collision(h: &mut impl Host, caller: u16, wave: bool) {
     h.probe("player_projectiles.initial_collision.checked");
 }
 pub fn charged_instruction(index: usize) -> u16 {
-    definitions::instruction(
-        definitions::motion(true, index).unwrap_or_else(|| {
-            panic!("index out of bounds: the len is 12 but the index is {index}")
-        }),
-    )
+    definitions::instruction(definitions::motion(true, index).unwrap_or_else(|| {
+        // LEGACY(message-text): hand-written slice-index panic text, kept because verifier cases compare panic text.
+        panic!("index out of bounds: the len is 12 but the index is {index}")
+    }))
 }

@@ -34,6 +34,7 @@ fn payload_text(payload: &(dyn std::any::Any + Send)) -> Option<&str> {
 /// Suppress only the exact expected bounded-ROM failure. Other panics retain
 /// their normal diagnostic and cannot satisfy this contract.
 fn bounded_rom_failure(length: usize, action: impl FnOnce()) {
+    // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
     let message = format!("index out of bounds: the len is {length} but the index is {length}");
     let wanted = message.clone();
     let matched_source = Arc::new(AtomicBool::new(false));

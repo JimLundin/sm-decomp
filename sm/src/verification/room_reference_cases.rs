@@ -421,6 +421,7 @@ pub(crate) fn capture_case(
                 let expected_message = if id == 26 {
                     "ROM read outside loaded allocation".to_owned()
                 } else {
+                    // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
                     format!("index out of bounds: the len is {length} but the index is {length}")
                 };
                 assert_eq!(

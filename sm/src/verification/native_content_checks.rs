@@ -50,6 +50,7 @@ fn check_record_boundary(id: u32) {
             || {
                 let _ = record.byte(6);
             },
+            // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
             "index out of bounds",
         ),
         10 => {
@@ -58,6 +59,7 @@ fn check_record_boundary(id: u32) {
                 || {
                     let _ = record.word_le(0);
                 },
+                // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
                 "index out of bounds",
             );
         }
@@ -67,6 +69,7 @@ fn check_record_boundary(id: u32) {
                 || {
                     let _ = record.word_le(0);
                 },
+                // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
                 "index out of bounds",
             );
         }
@@ -78,6 +81,7 @@ fn check_record_boundary(id: u32) {
                 || {
                     let _ = record.long_le(0);
                 },
+                // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
                 "index out of bounds",
             );
         }
@@ -87,6 +91,7 @@ fn check_record_boundary(id: u32) {
                 || {
                     let _ = record.byte(0);
                 },
+                // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
                 "index out of bounds",
             );
         }
@@ -142,6 +147,7 @@ fn check_record_boundary(id: u32) {
                 || {
                     let _ = record.long_le(isize::MAX);
                 },
+                // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
                 "index out of bounds",
             );
         }
@@ -161,6 +167,7 @@ fn check_record_boundary(id: u32) {
             || {
                 let _ = record.word_le(isize::MAX / 2);
             },
+            // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
             "index out of bounds",
         ),
         27 => panics_with(

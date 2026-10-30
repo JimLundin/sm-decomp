@@ -56,5 +56,10 @@ original's behavior, not its C shapes:
 `cargo clippy -p sm_data -p sm_game -p sm_runtime --all-targets` must pass in
 CI. Fix findings; do not add `allow`s for these patterns.
 
+Checks assert behavior, not wording: never match on panic or `Die` text. The
+verifier does not decide engine behavior; where an existing check forces us to
+keep something it alone needs, tag it `LEGACY(<kind>)` and list it in
+[docs/LEGACY.md](docs/LEGACY.md), then retire it when the check is fixed.
+
 Pre-2026-10-17 workflows, `.scratch/`, readiness gates, acceptance pointers and
 translation scopes are inactive in `archive/pre-transpile-2026-10-17`.
