@@ -1,6 +1,5 @@
 //! Kraid sinking through the floor after his death: the sinking Kraid table
 //! at $A7:C5E7 and the row clears it queues (bank $A7:C537-$A7:C6FF).
-#![forbid(unsafe_code)]
 use crate::actors::host::ActorHost;
 use crate::actors::layouts::KraidLayout as Kraid;
 use crate::cartridge::native_record;

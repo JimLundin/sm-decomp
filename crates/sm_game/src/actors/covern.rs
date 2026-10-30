@@ -1,7 +1,6 @@
 //! Covern, the Wrecked Ship ghost, which materialises near Samus once she has
 //! moved one way or stood still long enough, hovers, and fades away again
 //! (bank $A8:99AC-$A8:9F4F). Was `wrecked_ship_ghost`.
-#![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::host::{ActorLease, LeaseActors};
 use crate::actors::layouts::part_view;

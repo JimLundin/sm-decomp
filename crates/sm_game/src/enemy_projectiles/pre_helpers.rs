@@ -1,5 +1,4 @@
 //! Pure pre-action operations. All indexes retain the caller's byte/word units.
-#![forbid(unsafe_code)]
 use super::access::{enemy, enemy_byte, read_member, write_member};
 use super::host::{EnemyMember as SlotField, Host, NativeRecord};
 use crate::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};

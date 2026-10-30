@@ -1,7 +1,6 @@
 //! Botwoon, Maridia's serpent boss, which weaves between four holes in its
 //! room's walls (bank $B3:9319-$B3:E2FF).
 //! Native-field compatibility retains independent body and callback epochs.
-#![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorKey as Key};
 use crate::actors::api::{DeathHandling, ShotHandling};
 use crate::actors::botwoon_death;

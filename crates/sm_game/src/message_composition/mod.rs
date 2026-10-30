@@ -1,5 +1,4 @@
 //! Message state and native layout share one implementation.
-#![forbid(unsafe_code)]
 mod native;
 pub use native::*;
 pub use sm_data::message::{

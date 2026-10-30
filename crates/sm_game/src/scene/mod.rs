@@ -3,7 +3,6 @@
 //! Construction supplies complete typed starting fields. Committed Scenes retain
 //! their media lease and line history; presentation observes them without running
 //! gameplay, refresh, transfer or interrupt work.
-#![forbid(unsafe_code)]
 
 pub mod atmosphere;
 pub mod atmosphere_protocol;

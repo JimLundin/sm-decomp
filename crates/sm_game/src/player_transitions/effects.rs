@@ -1,5 +1,4 @@
 //! Declaration-only finite effects for the proposed player transition owner.
-#![forbid(unsafe_code)]
 use super::content::Content;
 use crate::{player_collision::effects::Host as CollisionHost, visual_host::Host as VisualHost};
 

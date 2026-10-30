@@ -1,5 +1,4 @@
 //! Complete attached stem/segment interactions over owned projectile state.
-#![forbid(unsafe_code)]
 use super::access::enemy;
 use super::host::*;
 use crate::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};

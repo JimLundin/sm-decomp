@@ -1,6 +1,5 @@
 //! Evir, Maridia's shrimp: a body bobbing towards Samus, its arms in the next slot and its
 //! projectile in the one after, spat at Samus and regrown (bank $A8:8687-$A8:8F8B).
-#![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorKey};
 use crate::actors::api::{self, Axis, DeathHandling::Finalize, ShotHandling};
 use crate::actors::combat::{self, current_slot};

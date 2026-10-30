@@ -1,6 +1,5 @@
 //! Rinka, the ring that drifts out of its spawn point at Samus, respawning off screen; in
 //! Mother Brain's room they share spawn points and a counter (bank $A2:B602-$A2:BA5A).
-#![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorAccess as _, ActorKey as Key};
 use crate::actors::api::{DeathHandling, DeathKind, ShotHandling, angle_from_delta};
 use crate::actors::combat;

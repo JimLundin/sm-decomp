@@ -1,5 +1,4 @@
 //! Immutable committed game-facing image descriptions and resident authored media.
-#![forbid(unsafe_code)]
 
 use crate::raster as r;
 use std::{collections::BTreeMap, sync::Arc};

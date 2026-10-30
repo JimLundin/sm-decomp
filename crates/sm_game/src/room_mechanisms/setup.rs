@@ -1,5 +1,4 @@
 //! Semantic setup actions and exact encoded dispatch identity.
-#![forbid(unsafe_code)]
 use super::addresses;
 use super::rules::gates::{Color, Direction, Side};
 #[derive(Clone, Copy, Debug, PartialEq)]

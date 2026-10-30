@@ -67,7 +67,6 @@ macro_rules! word_transfers {
                  $crate::word_transfers!(@endpoint $game, $source($($src)*)))),+],
         ) { (count, step, lanes) => {
         let (count, step, lanes): (usize, isize, &[_]) = (count, step, lanes);
-        #[forbid(unsafe_code)]
         {
             use $crate::word_transfers::{address, WordEndpoint};
             for index in 0..count {

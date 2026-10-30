@@ -1,6 +1,5 @@
 //! Mother Brain's body effects: its rainbow beam palette cycle and the
 //! explosions around it as it dies (bank $A9:B03E-$A9:BD44).
-#![forbid(unsafe_code)]
 use crate::actors::layouts::{EnemyLayout72 as Body, part_view};
 use crate::actors::mother_brain_fight::{Lease, State};
 use crate::actors::session_slots::session_slot;

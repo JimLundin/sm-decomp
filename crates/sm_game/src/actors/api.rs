@@ -1,5 +1,4 @@
 //! Semantic operation signatures. Bodies are intentionally declaration-only.
-#![forbid(unsafe_code)]
 use crate::actors::{
     content::{ActorDefinitionKey, ActorTemplateId},
     media::AppearanceId,

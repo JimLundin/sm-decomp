@@ -1,5 +1,4 @@
 //! Attached sprite effects and Draygon motion on the single gameplay Session.
-#![forbid(unsafe_code)]
 use crate::geometry::Point;
 use crate::{
     sprite_effect_host::{Host, SpriteMember},

@@ -1,5 +1,4 @@
 //! Complete orbiting-part and body-history producer operations.
-#![forbid(unsafe_code)]
 use super::access::enemy;
 use super::host::*;
 use crate::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};

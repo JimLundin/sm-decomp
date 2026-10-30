@@ -1,5 +1,4 @@
 //! The 28 normal movement selectors, sharing complete motion operations.
-#![forbid(unsafe_code)]
 use super::{content::Content, effects::Host, presentation, speed};
 use crate::visual_host::Record;
 use {

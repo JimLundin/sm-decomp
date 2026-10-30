@@ -1,5 +1,4 @@
 //! Compatibility encoding only; effects consume the model before touching RAM.
-#![forbid(unsafe_code)]
 use crate::dialogue::{
     ChildContinuation, Continuation, Cycle, Dialogue, Input, Message, Phase, Selection,
 };

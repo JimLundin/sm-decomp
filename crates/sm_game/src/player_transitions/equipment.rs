@@ -1,5 +1,4 @@
 //! Reconcile the current pose and feedback after equipment changes.
-#![forbid(unsafe_code)]
 use super::{content::AnimationTable, effects::Host, state::FrameAlphaMode};
 use crate::player_transitions::state::FrameBetaMode;
 use crate::{

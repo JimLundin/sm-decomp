@@ -1,5 +1,4 @@
 //! Content for normal locomotion; compatibility locations stay in the provider.
-#![forbid(unsafe_code)]
 use crate::{
     liquid_surface::LiquidAtHeight, player_collision::effects::Content as CollisionContent,
 };

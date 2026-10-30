@@ -1,5 +1,4 @@
 //! HDMA execution over the current display channels and declared source owners.
-#![forbid(unsafe_code)]
 
 use super::{
     commit::DisplayImage,

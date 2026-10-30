@@ -1,6 +1,5 @@
 //! Atomic, the Wrecked Ship's spinning orb, which drifts towards Samus (bank
 //! $A8:E230-$A8:E489). Was `wrecked_ship_orbs`.
-#![forbid(unsafe_code)]
 use crate::actors::host::{ActorHost, ActorRuntime, Axis};
 use crate::actors::layouts::part_view;
 use crate::ram::RawRam as _;

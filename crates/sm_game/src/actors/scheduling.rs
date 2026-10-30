@@ -1,5 +1,4 @@
 //! Selection and update retain captured actor keys across ordered foreign effects.
-#![forbid(unsafe_code)]
 use crate::player_projectiles::access::Store;
 use crate::{
     enemy_projectiles::host::Host as EprojHost, room_mechanisms::host::Effects as MechanismEffects,

@@ -1,5 +1,4 @@
 //! Ceres and Tourian escape countdowns, movement and sprite output.
-#![forbid(unsafe_code)]
 use crate::ram::RawRam as _;
 use crate::ram::word;
 use crate::sprite_drawing::Clip;

@@ -1,5 +1,4 @@
 //! Shared liquid-surface precedence and SNES sign-bit comparisons.
-#![forbid(unsafe_code)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum LiquidAtHeight {
     None,

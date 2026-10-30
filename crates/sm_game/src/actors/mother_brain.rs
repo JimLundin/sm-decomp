@@ -5,7 +5,6 @@
 //! Mother Brain notes in the bank logs. The body's extra words are the
 //! fight-wide state at $7E:7800 and $7E:8000; the brain's are at $7E:7840 and
 //! $7E:8040. Unnamed words keep their layout names.
-#![forbid(unsafe_code)]
 use crate::actors::layouts::part_view;
 
 part_view! {

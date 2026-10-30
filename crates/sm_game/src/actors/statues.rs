@@ -7,7 +7,6 @@
 //! `sub_AAE445`/`sub_AAE784` in the original decompilation. A chozo statue
 //! runs the bank $AA function in its `function` word; the compat host
 //! dispatches it, so the function ids are unchanged.
-#![forbid(unsafe_code)]
 use crate::actors::host::{Slopes, abs16};
 use crate::actors::layouts::part_view;
 use crate::constants::enemy_properties::{

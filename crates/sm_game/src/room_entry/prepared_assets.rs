@@ -1,5 +1,4 @@
 //! Immutable encoded room assets and exact mapped ROM windows for synchronous DMA.
-#![forbid(unsafe_code)]
 use super::{
     content::{AssetRef, AssetSource, SharedAsset},
     prepared_tables::{self, Output, PreparedTableError, PreparedTileTables},

@@ -1,5 +1,4 @@
 //! Source geometry shared by projectile simulation and remaining bank callers.
-#![forbid(unsafe_code)]
 pub static SLOPE_HEIGHTS: [u8; 512] = [
     8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 16, 16, 16, 16, 16, 16, 16, 16, 0, 0, 0, 0, 0,
     0, 0, 0, 16, 16, 16, 16, 16, 16, 16, 16, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 0, 0,

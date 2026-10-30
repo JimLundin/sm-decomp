@@ -178,7 +178,6 @@ pub fn advance_intro_mother_brain<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-#[forbid(unsafe_code)]
 pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized>(
     address: u32,
     k: u16,
@@ -477,7 +476,6 @@ fn initialize_cinematic_sprite<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-#[forbid(unsafe_code)]
 pub fn cinematic_mode7_command<H: crate::menus::host::Host + ?Sized>(
     address: u32,
     operand: u16,
@@ -505,7 +503,6 @@ pub fn cinematic_mode7_command<H: crate::menus::host::Host + ?Sized>(
     })
 }
 
-#[forbid(unsafe_code)]
 pub fn cinematic_mode7_pre<H: crate::menus::host::Host + ?Sized>(
     address: u32,
     object: u16,
@@ -635,7 +632,6 @@ fn advance_cinematic_object<const BANK: u8>(
     }
 }
 
-#[forbid(unsafe_code)]
 pub fn advance_cinematic_background_pre<H: crate::menus::host::Host + ?Sized>(
     command: u32,
     object: u16,
@@ -658,7 +654,6 @@ pub fn advance_cinematic_background_pre<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-#[forbid(unsafe_code)]
 fn draw_cinematic_background<H: crate::menus::host::Host + ?Sized>(
     object: u16,
     position: u16,

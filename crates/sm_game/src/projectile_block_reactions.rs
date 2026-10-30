@@ -1,5 +1,4 @@
 //! Synchronous terrain responses over the full projectile owner.
-#![forbid(unsafe_code)]
 use crate::projectile_room::{Axis, Scan};
 
 /// Writes remain visible to a synchronous mechanism callback, including failure.

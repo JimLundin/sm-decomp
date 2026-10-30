@@ -1,5 +1,4 @@
 //! Captured instruction positions independent of content storage and backend.
-#![forbid(unsafe_code)]
 use super::host::InstructionRecord;
 
 pub struct Script<R> {

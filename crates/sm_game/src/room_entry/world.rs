@@ -1,6 +1,5 @@
 //! Immutable authored topology and validated compatibility bindings.
 //! Construction validates every reference before an owned Game is opened.
-#![forbid(unsafe_code)]
 use super::content::{AssetRef, AssetSource, DoorList};
 use crate::room_entry::AssetSlot;
 pub use sm_data::world::*;

@@ -7,7 +7,6 @@
 //! still run in the compatibility crate go to its host: a named native enum
 //! for the small tables, the same address for the large ones. Moving a
 //! routine here means moving its arm.
-#![forbid(unsafe_code)]
 use crate::actors::host::{ActorHost, ActorRuntime, Death, LeaseActors, Shot};
 use crate::actors::{
     alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, cacatac, ceres_doors,

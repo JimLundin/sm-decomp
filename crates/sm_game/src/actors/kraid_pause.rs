@@ -6,7 +6,6 @@
 //! Was `UnpauseHook_Kraid_*`, `Kraid_UnpauseHook_IsSinking`,
 //! `Kraid_TransferTopHalfToVram` and `PauseHook_Kraid` in the original
 //! decompilation.
-#![forbid(unsafe_code)]
 use crate::actors::kraid_sinking;
 use crate::actors::layouts::KraidLayout;
 use crate::display_refresh::{GraphicsAsset, enqueue_readback, set_blank, wait};

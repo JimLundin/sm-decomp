@@ -1,5 +1,4 @@
 //! Mechanism commands commit owned state before synchronous effects.
-#![forbid(unsafe_code)]
 use super::addresses;
 use super::rules::terrain_setup::{below, install, level, set_level};
 use super::{

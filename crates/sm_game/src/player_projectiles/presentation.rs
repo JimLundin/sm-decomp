@@ -1,5 +1,4 @@
 //! Projectile visibility and trail lifecycle; drawing is the synchronous edge.
-#![forbid(unsafe_code)]
 use super::{Host, content, host::Drawing, state::Trail};
 use crate::shot;
 

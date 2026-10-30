@@ -1,5 +1,4 @@
 //! Encoded beam definitions shared by firing, reflection and special attacks.
-#![forbid(unsafe_code)]
 #[derive(Clone, Copy)]
 pub enum Motion {
     NonWave,

@@ -1,6 +1,5 @@
 //! Owned-Display Samus drawing: the body, position and sprite inputs a
 //! persistent Session's Display draws Samus from, over its prepared content.
-#![forbid(unsafe_code)]
 use crate::external_inputs::ExternalInputs;
 use crate::scene::records::{MediaRef, ObjectContext, ObjectSelection, ProducerObjectId};
 use crate::scene::samus_body::MarkerPublication;

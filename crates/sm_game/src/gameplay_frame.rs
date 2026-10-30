@@ -3,7 +3,6 @@
 //! Samus preparation includes projectile work; enemy processing and a possible
 //! message suspension separate it from movement/pose completion. Callbacks
 //! observe live RAM. Only the entry resume point is held across those callbacks.
-#![forbid(unsafe_code)]
 use crate::actors;
 use crate::animated_tiles::execution as animated_tiles;
 use crate::constants::game_states::*;

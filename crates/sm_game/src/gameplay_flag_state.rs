@@ -1,5 +1,4 @@
 //! Proposed owned flag data only; no gameplay/reset implementation.
-#![forbid(unsafe_code)]
 #[derive(Clone, Debug, PartialEq)]
 pub struct GameplayFlags {
     pub events: [u8; 8],

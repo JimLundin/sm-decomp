@@ -1,5 +1,4 @@
 //! Read-only consumer of complete committed semantic Scene history.
-#![forbid(unsafe_code)]
 
 use crate::rendering as r;
 use sm_data::scene::*;

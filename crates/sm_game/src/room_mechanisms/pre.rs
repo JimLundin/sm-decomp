@@ -1,5 +1,4 @@
 //! Exact pre-instruction identities over shared Session state.
-#![forbid(unsafe_code)]
 use super::access::*;
 use super::addresses;
 use super::creation;

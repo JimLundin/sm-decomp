@@ -5,7 +5,6 @@
 //! Was `Torizo_*` and `GoldTorizo_*` in the original decompilation. The
 //! movement functions are dispatched by the compat host, so their ids are
 //! unchanged.
-#![forbid(unsafe_code)]
 use crate::actors::boss_lease::BossLease;
 use crate::actors::deaths::Deaths;
 use crate::actors::host::{BossEffects, Shot, Slopes};

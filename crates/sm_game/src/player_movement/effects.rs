@@ -1,5 +1,4 @@
 //! Finite observations and exceptional projection for normal locomotion.
-#![forbid(unsafe_code)]
 use super::content::Content;
 use crate::player_transitions::effects::Host as TransitionHost;
 

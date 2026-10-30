@@ -1,5 +1,4 @@
 //! Common actor/player spatial queries over borrowed actor state.
-#![forbid(unsafe_code)]
 use crate::actors::overlap::axis_overlaps;
 use crate::geometry::Point;
 use {

@@ -1,5 +1,4 @@
 //! Enemy projectile presentation selection; rendering stays an explicit edge.
-#![forbid(unsafe_code)]
 use super::access::enemy;
 use super::host::Host;
 use crate::geometry::Point;

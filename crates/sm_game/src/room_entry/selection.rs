@@ -1,5 +1,4 @@
 //! Arrival decisions and ordered selectors over the shared room owner.
-#![forbid(unsafe_code)]
 use super::{
     api::{ArrivalRequest, ContactSite, EntryPoll, StartSite},
     content::{HeaderScalar, SelectorCursor, SelectorKind, SelectorLayout, StationScalar},

@@ -1,5 +1,4 @@
 //! Projectile terrain traversal on the existing session owner and reaction context.
-#![forbid(unsafe_code)]
 use super::{Host, motion::Flight};
 use crate::projectile_block_reactions::{
     self as reactions, Definitions, Material, Progress, SlopeInputs,

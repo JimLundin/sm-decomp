@@ -1,5 +1,4 @@
 //! Gameplay liquid effects over the Session's four atmospheric slots.
-#![forbid(unsafe_code)]
 use super::{effects::Host, pose};
 use crate::samus_palette;
 

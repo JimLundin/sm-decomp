@@ -1,5 +1,4 @@
 //! Resident incarnation publication and post-raster immutable object history.
-#![forbid(unsafe_code)]
 
 use super::{
     records::{

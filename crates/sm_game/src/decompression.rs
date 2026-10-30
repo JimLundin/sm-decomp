@@ -1,5 +1,4 @@
 //! Shared byte decoder for room, graphics and tilemap assets.
-#![forbid(unsafe_code)]
 use crate::ram::RawRam as _;
 
 pub use crate::room_entry::prepared_tables::{Output, decode};

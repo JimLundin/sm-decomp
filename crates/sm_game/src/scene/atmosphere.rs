@@ -1,5 +1,4 @@
 //! Complete atmospheric tile output with live queries and ordered staging effects.
-#![forbid(unsafe_code)]
 
 use super::records::{
     DisplayProducerIds, ObjectContext, ObjectSize, ObjectVariants, ProducedObject,

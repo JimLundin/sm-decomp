@@ -1,6 +1,5 @@
 //! The player projectile kind word: bits 8-11 hold what the shot is, the low
 //! bits hold beam flags, and bit 15 keeps the shot from touching Samus.
-#![forbid(unsafe_code)]
 use crate::constants::projectile_types::*;
 
 /// Bits 8-11; zero for beams.

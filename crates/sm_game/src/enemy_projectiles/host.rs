@@ -1,5 +1,4 @@
 //! Enemy gameplay interfaces over the shared Session and explicit external effects.
-#![forbid(unsafe_code)]
 use crate::geometry::Vector32;
 use crate::session_access::SessionAccess;
 use sm_data::cartridge::RomImage;

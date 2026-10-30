@@ -3,7 +3,6 @@
 //!
 //! Was `Boulder` in the original decompilation (bank $A6:86F5-$A6:89FC). Its
 //! state words name the slot fields over the same RAM bytes as `EnemyLayout40`.
-#![forbid(unsafe_code)]
 use crate::actors::host::{Axis, Slopes};
 use crate::actors::layouts::{EnemyBase, EnemyLayout40};
 use crate::constants::enemy_properties::{K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE};

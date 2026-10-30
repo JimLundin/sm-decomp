@@ -4,7 +4,6 @@
 //! They lived with Draygon as `increase_grab_speed`, `clear_grab_rotation`,
 //! `grab_timers`, `place_grab_start` and `set_state`; Spore Spawn's slot
 //! reuses the words Draygon calls its spiral.
-#![forbid(unsafe_code)]
 use crate::actors::host::ActorHost;
 use crate::actors::layouts::{EnemyBase, same_words};
 use crate::enemy_script::EnemyScript;

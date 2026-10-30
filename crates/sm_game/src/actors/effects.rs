@@ -1,5 +1,4 @@
 //! Finite retained actor effects. Existing sound/damage/player-control ports are reused.
-#![forbid(unsafe_code)]
 use super::{
     access::{ActorAccess, ActorCollections, ActorKey, SpawnAccess},
     content::{ActorCaptureReads, ActorContent, ActorRoutine},

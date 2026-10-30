@@ -3,7 +3,6 @@
 //! needs beyond the shared boss effects.
 //!
 //! Draygon is four enemies: the body in slot 0, then the eye, tail and arms.
-#![forbid(unsafe_code)]
 use crate::actors::boss_lease::BossLease;
 use crate::actors::host::BossEffects;
 pub use crate::actors::host::abs16;

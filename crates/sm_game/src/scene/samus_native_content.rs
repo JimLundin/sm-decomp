@@ -1,5 +1,4 @@
 //! Explicit admission of the actual mutable cartridge allocation for Samus roles.
-#![forbid(unsafe_code)]
 
 use super::{
     samus_content::{AllocationDeclaration, AllocationId, CapturedBytes, Registration},

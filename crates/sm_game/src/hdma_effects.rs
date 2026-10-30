@@ -1,5 +1,4 @@
 //! HDMA wave, layer, haze and eye-beam effects over the host's session view.
-#![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
 use crate::hdma::HdmaObject;
 use crate::player_projectiles::access::Store;

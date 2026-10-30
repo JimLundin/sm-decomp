@@ -1,5 +1,4 @@
 //! Room arrival requests and explicit suspension outcomes.
-#![forbid(unsafe_code)]
 use super::world::{ExitId, StartId};
 
 use std::num::NonZeroU8;

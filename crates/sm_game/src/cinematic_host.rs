@@ -1,7 +1,6 @@
 //! What the bank $8B cinematic functions need beyond the menu host and the
 //! display refresh: palette effects, delayed music, Mode 7 transfers and the
 //! session operations the compatibility runtime still implements.
-#![forbid(unsafe_code)]
 
 pub trait Host: crate::menus::host::Host + crate::display_refresh::Host {
     fn clear_palette_effects(&mut self);

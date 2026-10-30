@@ -1,7 +1,6 @@
 //! Space pirates in bank $B2: wall-jumping pirates, ninja pirates and walking
 //! pirates. They share checked actor state and movement; the extended species
 //! words stay authoritative in RAM.
-#![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{self, Axis, MovementResult};
 use crate::actors::combat;

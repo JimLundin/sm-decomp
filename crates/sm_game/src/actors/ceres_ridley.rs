@@ -7,7 +7,6 @@
 //! and RAM, so it shares the `Ridley` view and his tail, baby metroid,
 //! movement and drawing in `ridley`; the intro (`initial` to
 //! `roar_before_flying`) and `init` serve both fights.
-#![forbid(unsafe_code)]
 use crate::actors::boss_lease::BossLease;
 use crate::actors::host::BossEffects as _;
 use crate::actors::host::{abs16, below};

@@ -1,5 +1,4 @@
 //! Bomb Torizo statue release and the actor waiting for its removal.
-#![forbid(unsafe_code)]
 use super::super::access::*;
 use super::super::host::*;
 use crate::progress as flags;

@@ -1,7 +1,6 @@
 //! The blue Brinstar face block, which turns to look at Samus once she has the
 //! morph ball, and glows (bank $A8:E7AC-$A8:E99A). Was `blue_face_block`.
 //! Native hook words, actor words and little-endian hook variables stay authoritative.
-#![forbid(unsafe_code)]
 use crate::actors::host::{ActorHost, ActorRuntime, Axis, abs16};
 use crate::actors::layouts::part_view;
 use crate::inventory::{self, Word};

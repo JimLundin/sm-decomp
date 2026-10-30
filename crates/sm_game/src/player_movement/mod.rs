@@ -1,5 +1,4 @@
 //! Normal locomotion and shinespark crash transitions share the owned player state.
-#![forbid(unsafe_code)]
 pub mod content;
 pub mod effects;
 pub mod forced;

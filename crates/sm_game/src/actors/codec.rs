@@ -1,5 +1,4 @@
 //! Single actor/common projection and changed-field codec.
-#![forbid(unsafe_code)]
 use super::access::{AccessMode, ActorKey};
 use crate::actors::state::{Actor, SpawnRecord};
 use crate::session::Session;

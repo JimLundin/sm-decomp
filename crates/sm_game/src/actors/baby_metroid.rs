@@ -1,7 +1,6 @@
 //! The baby Metroid, hatched from the last Metroid (bank
 //! $A9:EED1-$A9:FB6F): its hitbox tests, camera wait, screen test, steering
 //! and cry.
-#![forbid(unsafe_code)]
 use crate::actors::layouts::part_view;
 use crate::actors::session_slots::{SlotAccess, session_slot};
 use crate::effects::SoundEffects;

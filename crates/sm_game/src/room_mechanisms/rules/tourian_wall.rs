@@ -1,5 +1,4 @@
 //! Open or close the two invisible ten-row barriers around the Tourian Metroid.
-#![forbid(unsafe_code)]
 use super::super::access::*;
 use super::super::host::*;
 use super::terrain_setup as terrain;

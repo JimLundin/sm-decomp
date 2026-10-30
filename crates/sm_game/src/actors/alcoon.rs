@@ -1,7 +1,6 @@
 //! Alcoon, Norfair's lava seahorse, which leaps out of the lava near Samus,
 //! walks and spits fireballs, then dives back in (bank $A8:DBC7-$A8:DFA2).
 //! Was `lava_seahorse`.
-#![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{self, MovementResult::Blocked, SlopePolicy};
 use crate::actors::host::{ActorLease, ActorRuntime as _, LeaseActors, abs16};

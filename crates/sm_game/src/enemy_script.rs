@@ -1,5 +1,4 @@
 //! Owned enemy-script positions and explicit interpreter control results.
-#![forbid(unsafe_code)]
 use sm_data::cartridge::RomImage;
 
 #[derive(Clone)]

@@ -6,7 +6,6 @@
 //! Was `CeresSteam_*` and `CeresDoor_*` in the original decompilation. The
 //! doors' and steam's shared script steps stay with the compatibility actor
 //! records in the host.
-#![forbid(unsafe_code)]
 use crate::actors::layouts::{EnemyBase, same_words};
 use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_DISABLE_SAMUS_COLL, K_ENEMY_PROPS_INVISIBLE,

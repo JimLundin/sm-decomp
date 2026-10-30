@@ -1,5 +1,4 @@
 //! Supplied nonrender Samus content and allocation-bound, lazy observations.
-#![forbid(unsafe_code)]
 
 use super::{
     records::Revision,

@@ -1,5 +1,4 @@
 //! Player collision requests and complete owned operations.
-#![forbid(unsafe_code)]
 
 use crate::actors::access::ActorKey;
 

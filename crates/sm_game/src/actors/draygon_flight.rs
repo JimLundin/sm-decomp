@@ -1,7 +1,6 @@
 //! Draygon's fight intro, wall turrets, setup, goop passes and the
 //! instructions its body scripts call (bank $A5:8687-$A5:9E0A).
 //! Extended motion words stay native compatibility state until the whole boss migrates.
-#![forbid(unsafe_code)]
 use crate::actors::boss_lease::BossState;
 use crate::actors::draygon_host::Lease;
 use crate::actors::draygon_host::{

@@ -1,5 +1,4 @@
 //! Background command execution over retained live captures.
-#![forbid(unsafe_code)]
 use super::{
     content::{
         AssetSource, BackgroundCursor, BackgroundWidth, BackgroundWord, LoadMode, VramDestination,

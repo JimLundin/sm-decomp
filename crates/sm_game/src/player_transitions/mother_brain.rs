@@ -1,5 +1,4 @@
 //! Player reactions during Mother Brain's drain and Hyper Beam sequence.
-#![forbid(unsafe_code)]
 use super::{
     effects::Host,
     state::{AnimationSkip, FrameGammaMode},

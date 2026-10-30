@@ -3,7 +3,6 @@
 //! Each accessor serves the record while the loaded image is the imported
 //! allocation; any other image, and indices outside a table, keep the original
 //! indexed loads with their failures.
-#![forbid(unsafe_code)]
 use crate::imported::{Imported, load, rom, row};
 use crate::records::Records;
 use sm_data::baby_metroid::*;

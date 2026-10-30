@@ -1,5 +1,4 @@
 //! Pose clearance and walking obstruction over the one live player owner.
-#![forbid(unsafe_code)]
 use super::{
     effects::Host,
     geometry,

@@ -13,7 +13,6 @@
 //! lease (they were leases of their own on the game). So a step behaves the same
 //! called from either, and a main AI that opens one lease per frame keeps its
 //! steps there, grouping what still needs the game into `foreign` calls.
-#![forbid(unsafe_code)]
 use crate::actors::host::{Death, Shot};
 use crate::actors::session_slots::SlotAccess;
 

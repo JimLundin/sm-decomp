@@ -1,5 +1,4 @@
 //! Ordered player and shot contact with owned enemy projectiles.
-#![forbid(unsafe_code)]
 use super::access::{enemy, enemy_byte, set_shot_direction, shot_word};
 use super::host::{DefinitionField, Host, LoadedRecord, ShotMember};
 use crate::contact_rules::{axis, is_shot};

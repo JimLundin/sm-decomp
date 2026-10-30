@@ -1,5 +1,4 @@
 //! Proposed ordinary visual state, declarations only; no gameplay implementation.
-#![forbid(unsafe_code)]
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct PaletteSlot {
     pub definition: u16,

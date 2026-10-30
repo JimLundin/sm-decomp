@@ -1,5 +1,4 @@
 //! Population graphics staging and ordered transfer transitions.
-#![forbid(unsafe_code)]
 use crate::actors::effects::ActorHost;
 use crate::enemy_projectiles::host::Host;
 

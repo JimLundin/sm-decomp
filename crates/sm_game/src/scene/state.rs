@@ -1,5 +1,4 @@
 //! Owned display construction and staging; the semantic Scene is committed later.
-#![forbid(unsafe_code)]
 use std::sync::Arc;
 
 pub use super::atmosphere::{AtmosphericEffects, AtmosphericSlot};

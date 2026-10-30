@@ -1,5 +1,4 @@
 //! Phantoon's figure-8 flight and its casual flames (bank $A7:CFCA-$A7:D2D0).
-#![forbid(unsafe_code)]
 use crate::actors::boss_lease::BossState;
 use crate::actors::layouts::{EnemyBase, same_words};
 use crate::actors::phantoon_actions::Mouth;

@@ -1,5 +1,4 @@
 //! Immutable, validated room tile-table streams and their portable native pack.
-#![forbid(unsafe_code)]
 use super::{
     content::{AssetRef, AssetSource, SharedAsset},
     world::*,

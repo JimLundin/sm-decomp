@@ -1,5 +1,4 @@
 //! Paired timeline/presentation snapshots; live handle epochs never rewind.
-#![forbid(unsafe_code)]
 use super::{
     content::GameplayRevision,
     identity::{ActorIdentityError, ActorIdentityState, ActorTimeline},

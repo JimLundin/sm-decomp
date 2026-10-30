@@ -1,6 +1,5 @@
 //! Samus's frame drawing on a session lease: the cannon tiles, body, echoes,
 //! grapple and projectiles in the original layer order.
-#![forbid(unsafe_code)]
 use crate::player_projectiles::cannon::{self, Tiles};
 use crate::player_transitions::state::DrawMode;
 use crate::runtime_access::SessionRam;

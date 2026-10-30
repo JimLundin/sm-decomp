@@ -1,5 +1,4 @@
 //! Sole actor identity, lifecycle and room presentation provenance.
-#![forbid(unsafe_code)]
 use super::snapshot::checkpoint_layout;
 use super::{
     access::ActorKey,

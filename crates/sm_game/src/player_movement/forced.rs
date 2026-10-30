@@ -1,5 +1,4 @@
 //! Scripted push, fall and collision recovery share the owned movement state.
-#![forbid(unsafe_code)]
 use super::{effects::Host, presentation, speed};
 use {
     crate::session::Session,

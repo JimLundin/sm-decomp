@@ -1,6 +1,5 @@
 //! Pure exclusive Session control and presentation owners and their projections.
 //! Backend adapters stay in persistent_session; no native Game is required here.
-#![forbid(unsafe_code)]
 use crate::scene::{
     component::{DisplayComponent, DisplayStartMetadata},
     samus_body::MarkerPublication,

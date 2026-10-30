@@ -1,5 +1,4 @@
 //! Shared atmospheric slots and ordered protocol, independent of display content.
-#![forbid(unsafe_code)]
 
 /// The existing four mutable slots have one owner throughout gameplay and drawing.
 #[derive(Clone, Default, Debug, PartialEq)]

@@ -1,5 +1,4 @@
 //! Background tilemap entries: tile number, palette, priority and flips.
-#![forbid(unsafe_code)]
 
 pub const H_FLIP: u16 = 0x4000;
 pub const V_FLIP: u16 = 0x8000;

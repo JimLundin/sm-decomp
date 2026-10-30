@@ -1,5 +1,4 @@
 //! Portable message definitions and immutable prepared display input.
-#![forbid(unsafe_code)]
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BoxSize {

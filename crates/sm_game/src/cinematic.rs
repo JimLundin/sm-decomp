@@ -1,5 +1,4 @@
 //! Cinematic palettes, fades, tilemap queueing and sprite resumption over RAM.
-#![forbid(unsafe_code)]
 use crate::ram::RawRam as _;
 use crate::ram::word;
 
@@ -169,7 +168,6 @@ pub fn set_cinematic_tilemap_updates<H: crate::menus::host::Host + ?Sized>(
         | (u16::from(enabled) << 15));
 }
 
-#[forbid(unsafe_code)]
 pub fn resume_cinematic_sprite<H: crate::menus::host::Host + ?Sized>(
     slot: usize,
     instruction: u16,

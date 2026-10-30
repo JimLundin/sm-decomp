@@ -1,7 +1,6 @@
 //! Yapping Maw, the pincer worm that snaps Samus out of the air (bank
 //! $A8:9F4F-$A8:A8EE): reach, articulated body, grip and attachments.
 //! RAM words remain authoritative; operand writes run immediately through the caller.
-#![forbid(unsafe_code)]
 use crate::actors::boss_lease::BossLease;
 use crate::actors::host::{Shot, abs16};
 use crate::actors::layouts::part_view;

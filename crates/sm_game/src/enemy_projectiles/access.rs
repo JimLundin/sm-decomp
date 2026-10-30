@@ -1,5 +1,4 @@
 //! Direct shared-slot access; imported aliases handle exceptional selectors only.
-#![forbid(unsafe_code)]
 #[macro_export]
 macro_rules! enemy_member {
     (definition) => {

@@ -1,5 +1,4 @@
 //! Shared player solid contact, terrain traversal and slope alignment over owned state.
-#![forbid(unsafe_code)]
 use super::{
     effects::Host,
     motion::commit_position,

@@ -8,7 +8,6 @@
 //! bank log's corpse rotting notes. The bank's dispatch ids are unchanged; the
 //! functions and their reads and writes keep the original order. Mother
 //! Brain's shared helpers come from `mother_brain_fight`.
-#![forbid(unsafe_code)]
 use crate::actors::host::{Death, Slopes};
 use crate::actors::layouts::part_view;
 use crate::actors::mother_brain_fight::{

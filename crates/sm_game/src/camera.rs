@@ -30,7 +30,6 @@
 //! inside a lease's foreign call, which exports first and imports after, so
 //! no typed copy competes with them. Each moves onto these fields when its domain does; the projection
 //! can shrink once no reader or writer names the RAM words.
-#![forbid(unsafe_code)]
 use crate::runtime_access::SessionRam;
 
 /// The camera's words; see the module documentation for the RAM layout.

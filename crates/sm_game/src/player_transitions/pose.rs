@@ -1,5 +1,4 @@
 //! Pose metadata, animation reset, and shared geometry over owned player state.
-#![forbid(unsafe_code)]
 use super::{
     content::{AnimationProgram, AnimationTable},
     effects::Host,

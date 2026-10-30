@@ -16,7 +16,6 @@
 //!    Brain, Crocomire, Ceres, haze, menus) one at a time.
 //!
 //! Every word keeps its full stored `u16`.
-#![forbid(unsafe_code)]
 
 /// Objects the original runs at once.
 pub const OBJECTS: usize = 6;

@@ -1,5 +1,4 @@
 //! Shaktool room: open the camera path during a Power Bomb and mark its exit.
-#![forbid(unsafe_code)]
 use super::super::access::*;
 use super::super::host::*;
 use crate::progress as flags;

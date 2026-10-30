@@ -1,5 +1,4 @@
 //! Aim consumption and muzzle placement with one captured optional image.
-#![forbid(unsafe_code)]
 use super::host::Host;
 use crate::shot;
 pub fn place(h: &mut impl Host, raw: u16) -> bool {

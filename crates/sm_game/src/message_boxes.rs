@@ -55,7 +55,6 @@ fn clear_message_box_bg3_tilemap<H: crate::menus::host::Host + ?Sized>(game: &mu
         }
     }
 }
-#[forbid(unsafe_code)]
 fn message_tile<H: crate::menus::host::Host + ?Sized>(
     start: u16,
     byte_offset: u16,
@@ -72,7 +71,6 @@ fn message_tile<H: crate::menus::host::Host + ?Sized>(
     .word(usize::from(byte_offset))
 }
 
-#[forbid(unsafe_code)]
 fn write_message_tilemap<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u16 {
     game.ram().copy_in(0x5a6, &112u16.to_le_bytes());
     game.ram().copy_in(0x5a4, &124u16.to_le_bytes());

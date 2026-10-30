@@ -6,7 +6,6 @@
 //! Was `MotherBrainsTubesFalling_*` in the original decompilation (bank
 //! $A9:8B35-$A9:8C69). Its state words name the slot fields over the same RAM
 //! bytes as `EnemyLayout8`.
-#![forbid(unsafe_code)]
 use crate::actors::layouts::part_view;
 use crate::actors::mother_brain_fight::Lease;
 use crate::actors::session_slots::session_slot;

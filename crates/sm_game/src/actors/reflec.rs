@@ -1,6 +1,5 @@
 //! Reflec, the mirror enemy that bounces Samus's beams off at an angle and
 //! glows (bank $A3:DA9C-$A3:DF1A).
-#![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::ShotHandling;
 use crate::actors::combat;

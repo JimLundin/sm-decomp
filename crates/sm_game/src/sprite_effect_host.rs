@@ -1,5 +1,4 @@
 //! Bounded dependencies for the actual shared sprite core; no Game/RAM owner.
-#![forbid(unsafe_code)]
 use crate::actors::layouts::EnemyBase;
 use crate::{
     session_access::SessionAccess,

@@ -28,7 +28,6 @@
 //! a snapshot load is followed by a checked Session adoption, and a seed load
 //! runs under a reference import. No `word_transfers!`, WRAM DMA, decompression,
 //! message box clear or save file transfer reaches the range.
-#![forbid(unsafe_code)]
 use crate::ram::CompatibilityRam;
 
 macro_rules! menu_state {

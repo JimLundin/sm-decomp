@@ -1,5 +1,4 @@
 //! Borrowed actor reads and exclusive edits across the single compatibility codec.
-#![forbid(unsafe_code)]
 use crate::actors::state::{Actor, SpawnRecord};
 use crate::session_access::SessionAccess;
 use core::ops::Deref;

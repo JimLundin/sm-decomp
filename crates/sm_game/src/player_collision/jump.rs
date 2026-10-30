@@ -1,5 +1,4 @@
 //! Wall and grapple admission retain their different input and publication rules.
-#![forbid(unsafe_code)]
 use super::{
     effects::Host,
     geometry,

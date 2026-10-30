@@ -17,7 +17,6 @@
 //! is installed, the byte image otherwise, with the same bytes and order as
 //! the named word accesses they replace. No lease is opened. A consumer that
 //! runs on a lease uses `session().inventory` directly.
-#![forbid(unsafe_code)]
 use crate::ram::CompatibilityRam;
 
 pub use crate::item_pickups::{Inventory, Loadout, Supply};

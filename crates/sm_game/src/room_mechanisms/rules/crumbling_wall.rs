@@ -1,5 +1,4 @@
 //! Botwoon's delayed wall opening and the shared crumbling-row movement.
-#![forbid(unsafe_code)]
 use super::super::access::*;
 use super::super::host::*;
 

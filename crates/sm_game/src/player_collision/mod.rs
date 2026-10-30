@@ -1,5 +1,4 @@
 //! Owned player collision, displacement and pose clearance.
-#![forbid(unsafe_code)]
 pub mod control;
 pub mod effects;
 pub mod geometry;

@@ -1,5 +1,4 @@
 //! Ordered Samus body position and tile-request protocol, shared by both hosts.
-#![forbid(unsafe_code)]
 
 use super::{
     records::SceneMedia,

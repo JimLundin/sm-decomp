@@ -1,6 +1,5 @@
 //! Zeb emergence, horizontal flight, reset and animation selection.
 //! Native actor words remain authoritative across the existing query boundaries.
-#![forbid(unsafe_code)]
 use crate::actors::access::ActorKey as Key;
 use crate::actors::host::LeaseActors;
 use crate::actors::host::abs16;

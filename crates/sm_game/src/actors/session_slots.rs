@@ -20,7 +20,6 @@
 //!
 //! Words are native order in the RAM image and little-endian in the Session;
 //! the two agree on the little-endian hosts the actor codec borrows directly.
-#![forbid(unsafe_code)]
 use crate::session_access::SessionAccess;
 
 /// The extended RAM's span, less the Botwoon death words its own cohort keeps.

@@ -1,6 +1,5 @@
 //! The session lease: owned calls that keep the Session leased, and the
 //! compatibility effects that leave it, export the Session and resume.
-#![forbid(unsafe_code)]
 use crate::session_access::SessionAccess;
 use crate::session_owners::AudioHost;
 use crate::visual_state::Upload;

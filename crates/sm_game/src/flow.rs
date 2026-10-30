@@ -19,7 +19,6 @@
 //! the byte image otherwise, with the same bytes and order as the named
 //! words they replace. A consumer that moves onto a lease uses
 //! `session().flow` directly.
-#![forbid(unsafe_code)]
 use crate::ram::CompatibilityRam;
 
 /// The flow words; see the module documentation for the RAM layout.

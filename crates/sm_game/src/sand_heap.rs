@@ -1,5 +1,4 @@
 //! Dead Torizo's sand heap tiles through the imported `sm_data` record.
-#![forbid(unsafe_code)]
 use crate::imported::Imported;
 use crate::records::Records;
 use sm_data::cartridge::{RomImage, lorom_offset};

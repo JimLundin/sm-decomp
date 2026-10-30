@@ -1,5 +1,4 @@
 //! Pose request production over the live player owner.
-#![forbid(unsafe_code)]
 use super::{
     content::{Content, TransitionTable},
     effects::{BounceFault, Host},

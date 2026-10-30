@@ -1,5 +1,4 @@
 //! Item awards commit before their visual, music and message effects.
-#![forbid(unsafe_code)]
 
 #[derive(Clone, Copy)]
 pub enum PickupKind {

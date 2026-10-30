@@ -1,5 +1,4 @@
 //! Brinstar plants capture and hold the player through damage and recovery.
-#![forbid(unsafe_code)]
 use super::super::access::*;
 use super::super::host::*;
 use super::terrain_setup as terrain;

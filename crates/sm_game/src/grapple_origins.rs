@@ -1,5 +1,4 @@
 //! Grapple beam origins through the imported `sm_data` table.
-#![forbid(unsafe_code)]
 use crate::imported::Imported;
 use crate::records::Records;
 use sm_data::cartridge::{RomImage, lorom_offset};

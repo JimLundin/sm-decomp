@@ -1,5 +1,4 @@
 //! Additional state for player collision; Session remains the only owner.
-#![forbid(unsafe_code)]
 use crate::geometry::Position;
 
 #[derive(Clone, Debug, Default, PartialEq)]

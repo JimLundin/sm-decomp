@@ -1,5 +1,4 @@
 //! Original refresh order shared by the native bridge and the owned display.
-#![forbid(unsafe_code)]
 use std::sync::Arc;
 
 use super::hdma_sources::HdmaCatalog;

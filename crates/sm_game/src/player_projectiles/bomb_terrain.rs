@@ -1,5 +1,4 @@
 //! Bomb cross/perimeter scans and spread contact with live host observations.
-#![forbid(unsafe_code)]
 use super::{Host, collision::Room};
 use crate::projectile_block_reactions::{self as reactions};
 use crate::projectile_room::{Axis, Scan};

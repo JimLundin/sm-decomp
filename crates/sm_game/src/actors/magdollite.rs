@@ -5,7 +5,6 @@
 //! The three parts occupy consecutive enemy slots, head first. Each part reads
 //! and writes its neighbours' slot fields; the views below name those fields
 //! over the same RAM bytes.
-#![forbid(unsafe_code)]
 use crate::actors::boss_lease::BossLease;
 use crate::actors::host::{Axis, Death, Shot};
 use crate::actors::layouts::part_view;

@@ -1,5 +1,4 @@
 //! Decisions between combat observation points; no RAM or runtime dependencies.
-#![forbid(unsafe_code)]
 
 pub enum ShotResponse {
     Dud,

@@ -1,5 +1,4 @@
 //! `sm_data` records imported from a cartridge image.
-#![forbid(unsafe_code)]
 use crate::cartridge::LoadedImage;
 use sm_data::cartridge::{RomImage, lorom_offset};
 use sm_data::table::{Rows, grid, words};

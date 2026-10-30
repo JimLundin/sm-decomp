@@ -1,5 +1,4 @@
 //! Descending allocation and ordered creation over the owned Session.
-#![forbid(unsafe_code)]
 use super::access::*;
 use super::host::*;
 use crate::progress as flags;

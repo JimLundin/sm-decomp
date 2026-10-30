@@ -1,5 +1,4 @@
 //! Lossless committed display fields; decoding never executes producers or delivery.
-#![forbid(unsafe_code)]
 
 use super::commit::ResidentDisplayDescription;
 use super::component::DisplayStartMetadata;

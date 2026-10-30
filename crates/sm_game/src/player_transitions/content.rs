@@ -1,5 +1,4 @@
 //! Declaration-only design; no implementation or gameplay stubs.
-#![forbid(unsafe_code)]
 use crate::player_collision::effects::Content as CollisionContent;
 
 /// Fixed tables only; compatibility locations live exclusively in the adapter.

@@ -1,6 +1,5 @@
 //! Mochtroid, the fake Metroid of Maridia, which drifts after Samus and
 //! drains her a little at a time (bank $A3:A725-$A3:A97B).
-#![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{self, Axis, DeathHandling, MovementResult, SlopePolicy};
 use crate::actors::combat;

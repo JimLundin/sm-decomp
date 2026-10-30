@@ -1,6 +1,5 @@
 //! Geega detection, straight flight, curved turns and home reset.
 //! Native actor fields retain authority and original query/ROM failure ordering.
-#![forbid(unsafe_code)]
 use crate::actors::host::{ActorHost, ActorRuntime, Axis};
 use crate::actors::layouts::EnemyLayout72 as Bug;
 use crate::ram::RawRam as _;

@@ -11,7 +11,6 @@
 //! (`CompatibilityRam`). The `image_*` helpers address the work RAM image
 //! directly, for a view that must not admit the owned Session (the enemy
 //! projectile table when no lease can open).
-#![forbid(unsafe_code)]
 use crate::ram::{CompatibilityRam, RawRam as _, WorkRamAccess};
 
 /// Byte `at` as the host's projection holds it.

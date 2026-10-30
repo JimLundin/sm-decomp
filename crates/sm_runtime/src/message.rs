@@ -1,5 +1,4 @@
 //! Rendering of an extracted prepared message display.
-#![forbid(unsafe_code)]
 use crate::rendering as r;
 use r::{IndexedSource, prepared::IndexedImage};
 use sm_data::message::{Display, Fault, Revision, scanline_scroll};

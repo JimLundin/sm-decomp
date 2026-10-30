@@ -7,7 +7,6 @@
 //! `CinematicFunctionBlackoutFromCeres` in the original decompilation; the
 //! names now come from the bank log. The functions run from
 //! `cinematic_function`; the compat dispatch keeps their ids.
-#![forbid(unsafe_code)]
 use crate::cinematic::{
     clear_cinematic_background, clear_cinematic_sprites, enable_cinematic_background,
     fade_cinematic_fixed_color, set_cinematic_tilemap_updates, set_fixed_color,

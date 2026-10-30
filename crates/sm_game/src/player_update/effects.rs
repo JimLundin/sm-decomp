@@ -1,5 +1,4 @@
 //! Finite live observations and retained gamma effects for player update.
-#![forbid(unsafe_code)]
 use super::content::Content;
 use crate::player_movement::effects::Host as MovementHost;
 

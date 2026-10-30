@@ -358,7 +358,6 @@ pub fn time<H: Host + ?Sized>(empty: u16, offset: u16, game: &mut H) {
     number(usize::from(offset) + 6, word!(game.GAME_TIME_MINUTES), game);
 }
 
-#[forbid(unsafe_code)]
 pub fn area_palette<H: Host + ?Sized>(area: u16, active: bool, game: &mut H) {
     let mut entry =
         RUN_OFFSETS[usize::from(area)] as u16 + if active { 0 } else { INACTIVE_OFFSET as u16 };

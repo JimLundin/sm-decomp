@@ -1,5 +1,4 @@
 //! Ordered ice, sand and quicksand contact reactions.
-#![forbid(unsafe_code)]
 use super::super::host::{Contact as Displacement, Diagnostic, Host};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

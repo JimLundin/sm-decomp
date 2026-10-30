@@ -1,7 +1,6 @@
 //! The morph ball eye, which opens and shines its ray on Samus once she has
 //! the morph ball (bank $A8:8F8C-$A8:91DF): proximity, opening, tracking and
 //! closing. The runtime owns beam hardware startup.
-#![forbid(unsafe_code)]
 use crate::actors::api::angle_from_delta;
 use crate::actors::host::{ActorHost, ActorRuntime, Axis};
 use crate::actors::layouts::part_view;

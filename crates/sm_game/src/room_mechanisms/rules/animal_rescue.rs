@@ -1,5 +1,4 @@
 //! Animal rescue wall, escape passage and the rescued-event door gate.
-#![forbid(unsafe_code)]
 use super::super::access::*;
 use super::super::host::*;
 use super::terrain_setup as terrain;

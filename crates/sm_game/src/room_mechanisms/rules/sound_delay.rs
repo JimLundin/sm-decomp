@@ -1,5 +1,4 @@
 //! Delay sound effects after room entry, then retire the gate's mechanism.
-#![forbid(unsafe_code)]
 use super::super::access::*;
 use super::super::host::*;
 

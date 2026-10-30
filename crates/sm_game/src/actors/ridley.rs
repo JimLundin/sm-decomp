@@ -10,7 +10,6 @@
 //! `tilemap_stuff` ($7E:2000), named in `tail`. Ceres Ridley's own functions
 //! and its escape sequence are in `ceres_ridley`; `Host::run_function`
 //! dispatches both through the bank's function table.
-#![forbid(unsafe_code)]
 use crate::actors::api::angle_from_delta;
 use crate::actors::boss_lease::BossLease;
 use crate::actors::deaths::Deaths as _;

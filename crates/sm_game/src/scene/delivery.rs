@@ -1,5 +1,4 @@
 //! Beam and status consumers over the actual owned delivery authority.
-#![forbid(unsafe_code)]
 
 use super::{
     irq,

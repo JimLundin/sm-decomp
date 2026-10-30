@@ -1,5 +1,4 @@
 //! Draygon cannon damage linkage and initial collision shape.
-#![forbid(unsafe_code)]
 use super::super::access::*;
 use super::super::host::*;
 use super::terrain_setup as terrain;

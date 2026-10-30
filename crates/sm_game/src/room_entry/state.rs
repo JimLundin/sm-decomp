@@ -1,5 +1,4 @@
 //! Room-entry state; compatibility projection owns 82 bytes, not a packed image.
-#![forbid(unsafe_code)]
 use super::content::{AssetRef, DoorList};
 use super::world::{ExitId, Identity, RoomId, StateId};
 

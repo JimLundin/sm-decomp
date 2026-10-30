@@ -1,6 +1,5 @@
 //! Per-frame gameplay bookkeeping: health and game time, screen shakes and
 //! frame timers, on named RAM.
-#![forbid(unsafe_code)]
 use crate::constants::game_states::*;
 use crate::ram::{checked_word, word, words as fields};
 use crate::runtime_access::RuntimeAccess;

@@ -6,7 +6,6 @@
 //!
 //! The beam window runs as one of Mother Brain's state steps: its slot words
 //! are the Session's inside a lease, and the tables are named RAM.
-#![forbid(unsafe_code)]
 use crate::actors::mother_brain::{BODY, BRAIN, MotherBrainBody, MotherBrainBrain};
 use crate::actors::mother_brain_fight::State;
 use crate::actors::session_slots::session_slot;

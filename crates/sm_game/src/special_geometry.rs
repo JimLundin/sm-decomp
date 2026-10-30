@@ -1,5 +1,4 @@
 //! Checked even-offset orbit arithmetic with explicit sample observations.
-#![forbid(unsafe_code)]
 #[derive(Debug)]
 pub struct InvalidSample {
     pub index: usize,

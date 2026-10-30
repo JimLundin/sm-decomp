@@ -1,5 +1,4 @@
 //! Shared finite layout calculations; callers retain acquisition and write phases.
-#![forbid(unsafe_code)]
 
 pub use sm_data::message::{
     BoxSize, HDMA_DESCRIPTOR, RadiusValues, border, map_offset, scanline_scroll, selection_row,

@@ -52,7 +52,6 @@ fn load_japanese_line<H: crate::menus::host::Host + ?Sized>(address: u16, game: 
     }
 }
 
-#[forbid(unsafe_code)]
 pub fn advance_scene_sprite<H: crate::menus::host::Host + ?Sized>(
     object: u16,
     scene: u8,
@@ -592,7 +591,6 @@ pub fn spawn_text_glow<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
-#[forbid(unsafe_code)]
 pub fn advance_text_glow<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     let mut object = 14i32;
     while object >= 0 {
@@ -605,7 +603,6 @@ pub fn advance_text_glow<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     }
 }
 
-#[forbid(unsafe_code)]
 fn advance_text_glow_object<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     let object = usize::from(word!(game.TEXT_GLOW_OBJECT_INDEX));
     let timer_at = GLOW_TIMERS + (object & !1);

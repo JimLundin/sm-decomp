@@ -1,7 +1,6 @@
 //! Draygon's swoops: the swoop Y positions, setups, descents, apexes and
 //! ascents, mirrored for each side (bank $A5:87F4-$A5:8B09).
 //! The native table remains authoritative and may alias other compatibility state.
-#![forbid(unsafe_code)]
 use crate::actors::boss_lease::BossState;
 use crate::actors::draygon_host::Lease;
 use crate::actors::host::BossEffects as _;

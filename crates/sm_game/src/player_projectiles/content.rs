@@ -1,5 +1,4 @@
 //! Captured cartridge records and named projectile table selection.
-#![forbid(unsafe_code)]
 use super::host::Host;
 use sm_data::cartridge::{RomImage, RomRecord};
 pub fn offset(address: u32) -> usize {

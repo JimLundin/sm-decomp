@@ -1,5 +1,4 @@
 //! Shared access implemented once by the aggregate runtime and composed harness.
-#![forbid(unsafe_code)]
 use crate::{external_inputs::ExternalInputs, session::Session};
 pub trait SessionAccess {
     fn session(&self) -> &Session;

@@ -1,5 +1,4 @@
 //! External observations refreshed at foreign and imported-alias boundaries.
-#![forbid(unsafe_code)]
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct ExternalInputs {
     pub transitions: super::player_transitions::state::TransitionObservations,

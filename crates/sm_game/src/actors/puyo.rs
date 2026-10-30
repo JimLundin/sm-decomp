@@ -1,6 +1,5 @@
 //! Puyo, the blob that hops at Samus and drops back down off walls and ceilings
 //! (bank $A2:998D-$A2:9E69). Was `hopping_blobs`.
-#![forbid(unsafe_code)]
 use crate::actors::access::AccessMode::Native;
 use crate::actors::api::{self, Axis, MovementResult::Blocked, SlopePolicy};
 use crate::actors::combat::{self, current_slot};

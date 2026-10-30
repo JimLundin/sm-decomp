@@ -5,7 +5,6 @@
 //! Was `Dachora_*` in the original decompilation. The dachora and its echoes
 //! run the bank $A7 function in their `function` word; the compat host
 //! dispatches it, so the function ids are unchanged.
-#![forbid(unsafe_code)]
 use crate::actors::boss_lease::BossLease;
 use crate::actors::dachora::load_palette;
 use crate::actors::host::{Axis, Slopes};

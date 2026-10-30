@@ -1,5 +1,4 @@
 //! Synchronous enemy drop generation and checked definition access.
-#![forbid(unsafe_code)]
 use super::access::{enemy, enemy_byte};
 use super::host::{DefinitionField, Host, LoadedRecord};
 pub use crate::drop_rules::DropSource;

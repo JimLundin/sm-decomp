@@ -1,5 +1,4 @@
 //! Chozo hand contact guards, activation and nested mechanism creation.
-#![forbid(unsafe_code)]
 use super::super::access::*;
 use super::super::creation;
 use super::super::host::Contact as Displacement;

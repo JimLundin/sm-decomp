@@ -1,7 +1,6 @@
 //! The tripper and the suspensor platform, the floating platforms that sink
 //! under Samus and rise again (bank $A3:9B7B-$A3:9F2F). Was
 //! `falling_platforms`.
-#![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{self, MovementResult, ShotHandling, SlopePolicy};
 use crate::actors::combat::{self, current_slot};

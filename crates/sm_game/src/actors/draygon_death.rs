@@ -1,7 +1,6 @@
 //! Draygon's hurt palettes, reactions and death sequence (bank
 //! $A5:9185-$A5:9701).
 //! Boss words remain native compatibility state; player and sprites use their owners.
-#![forbid(unsafe_code)]
 use crate::actors::draygon_flight::{facing_animation, foam_at_mouth};
 use crate::actors::draygon_host::Lease;
 use crate::actors::draygon_host::{

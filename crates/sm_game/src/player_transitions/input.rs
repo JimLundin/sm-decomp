@@ -1,5 +1,4 @@
 //! Button-driven pose requests on the existing player transition owner.
-#![forbid(unsafe_code)]
 use super::{
     content::TransitionTable,
     effects::Host,

@@ -1,5 +1,4 @@
 //! Room mechanism behavior over the shared Session and explicit effects.
-#![forbid(unsafe_code)]
 use crate::session_access::SessionAccess;
 use core::num::NonZeroU8;
 

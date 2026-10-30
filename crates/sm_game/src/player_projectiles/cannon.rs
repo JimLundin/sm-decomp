@@ -1,5 +1,4 @@
 //! Arm-cannon opening, animation and pose-selected graphics.
-#![forbid(unsafe_code)]
 use crate::{
     session::Controls,
     visual_host::{Host, Record, Source},

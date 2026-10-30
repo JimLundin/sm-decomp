@@ -1,5 +1,4 @@
 //! Ordered impacts and retirement over the live projectile session.
-#![forbid(unsafe_code)]
 use super::{Host, content, motion};
 use crate::shot;
 const DIRECTIONS: [(i8, i8); 10] = [

@@ -3,7 +3,6 @@
 //!
 //! Phantoon is four enemies: the body in slot 0, then the eye, tentacles and
 //! mouth. The mouth's slot holds the wavy fade's amplitude.
-#![forbid(unsafe_code)]
 use crate::actors::boss_lease::BossState;
 use crate::actors::layouts::{EnemyBase, EnemyLayout8 as Part, same_words};
 use crate::actors::session_slots::session_slot;

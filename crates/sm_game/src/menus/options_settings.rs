@@ -1,5 +1,4 @@
 //! Options selection, screen transitions and their tilemap projection.
-#![forbid(unsafe_code)]
 use super::menu_tilemap;
 use super::options_objects::definition;
 use super::prelude::*;

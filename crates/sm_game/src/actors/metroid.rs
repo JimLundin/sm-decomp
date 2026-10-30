@@ -1,5 +1,4 @@
 //! The metroid, with its electricity and shell sprite objects (bank $A3:E9AF-$A3:F310).
-#![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorAccess as _};
 use crate::actors::api::{self, DeathHandling, DeathKind, ShotHandling, SlopePolicy};
 use crate::actors::combat::{self, current_slot};

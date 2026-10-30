@@ -1,5 +1,4 @@
 //! Speed Booster escape: arm the lavaquake, start motion, then follow the player.
-#![forbid(unsafe_code)]
 use super::super::access::*;
 use super::super::host::*;
 use crate::progress as flags;

@@ -1,5 +1,4 @@
 //! Enemy-projectile command identities, ordered state changes and captured operands.
-#![forbid(unsafe_code)]
 use super::access::{enemy, enemy_byte};
 use super::addresses;
 use super::host::{EnemyMember as F, Host, NativeRecord};

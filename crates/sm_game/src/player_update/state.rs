@@ -1,5 +1,4 @@
 //! Current area's exploration and the fifteen minimap HUD cells.
-#![forbid(unsafe_code)]
 #[derive(Clone, Debug, PartialEq)]
 pub struct State {
     pub explored: [u8; 256],

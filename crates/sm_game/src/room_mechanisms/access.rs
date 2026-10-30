@@ -1,5 +1,4 @@
 //! Direct ordinary aggregate access with finite imported-selector fallbacks.
-#![forbid(unsafe_code)]
 use super::host::{ByteOrder, Host};
 #[macro_export]
 macro_rules! mechanism_member {

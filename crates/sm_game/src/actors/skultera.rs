@@ -1,6 +1,5 @@
 //! Skultera, Maridia's bony fish, which swims a wave left and right and turns
 //! at walls (bank $A3:900A-$A3:94AA). Was `maridia_fish`.
-#![forbid(unsafe_code)]
 use crate::actors::host::{ActorHost, ActorRuntime, Slopes};
 use crate::actors::layouts::part_view;
 use crate::enemy_script::EnemyScript;

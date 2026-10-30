@@ -1,6 +1,5 @@
 //! Room scroll definitions, camera following and their shared executors.
 //! Dispatch identities retain the full address; cell writes retain their order.
-#![forbid(unsafe_code)]
 mod camera;
 pub use camera::{calculate_blocks, calculate_scrolls, debug_position, layer2_position};
 pub mod door;

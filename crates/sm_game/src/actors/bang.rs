@@ -1,6 +1,5 @@
 //! Bang, the electric orb that grows as it is shot and flies at Samus (bank
 //! $A3:B702-$A3:BF2F): its movement functions and shot reaction.
-#![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorAccess};
 use crate::actors::api;
 use crate::actors::combat::{self, current_slot};

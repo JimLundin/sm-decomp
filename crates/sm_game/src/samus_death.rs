@@ -1,6 +1,5 @@
 //! Samus's death sequence: the frozen pose, the death pose, the suit flash
 //! and the suit explosion, with their palettes and tile uploads.
-#![forbid(unsafe_code)]
 use crate::constants::buttons::{K_BUTTON_A, K_BUTTON_L, K_BUTTON_R};
 use crate::menus::prelude::CoroutineRet;
 use crate::player_transitions as pt;

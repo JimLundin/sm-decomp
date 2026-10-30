@@ -1,5 +1,4 @@
 //! Breakable terrain setup, including reveal, retained blocks and grapple flags.
-#![forbid(unsafe_code)]
 
 use super::super::access::*;
 use super::super::host::*;

@@ -1,5 +1,4 @@
 //! Logical minimap sources; native locations belong only to the provider.
-#![forbid(unsafe_code)]
 use crate::player_collision::effects::Content as CollisionContent;
 
 pub trait Content: CollisionContent {

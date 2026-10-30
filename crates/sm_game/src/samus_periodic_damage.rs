@@ -1,5 +1,4 @@
 //! Direct and periodic health loss settle into the sole inventory owner.
-#![forbid(unsafe_code)]
 use crate::{combat_rules::contact_health, session::Session};
 
 #[derive(Debug, PartialEq, Eq)]

@@ -1,7 +1,6 @@
 //! Zoa, Maridia's refill creatures, which rise towards Samus from the sand,
 //! shoot off sideways and return off screen (bank $A3:B3A1-$A3:B52F). Was
 //! `refill_candy`.
-#![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorAccess};
 use crate::actors::api::{self, Axis};
 use crate::actors::combat;

@@ -1,5 +1,4 @@
 //! Detached Session checkpoint components; registered by the production Session.
-#![forbid(unsafe_code)]
 use crate::actors::snapshot::ActorsCheckpoint;
 use crate::actors::snapshot::CheckpointImages;
 use crate::actors::snapshot::CheckpointReader;

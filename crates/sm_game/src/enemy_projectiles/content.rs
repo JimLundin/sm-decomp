@@ -1,5 +1,4 @@
 //! Owned native and loaded records; source selection remains an adapter decision.
-#![forbid(unsafe_code)]
 use super::host;
 use sm_data::cartridge::RomImage;
 pub struct LoadedRecord {

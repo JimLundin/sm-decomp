@@ -1,5 +1,4 @@
 //! Shared pre-action behavior and numeric dispatch. No legacy projectile callbacks.
-#![forbid(unsafe_code)]
 use super::access::{enemy, enemy_add, enemy_byte, shot_word};
 use super::addresses;
 use super::host::{EnemyMember as SlotField, Host};

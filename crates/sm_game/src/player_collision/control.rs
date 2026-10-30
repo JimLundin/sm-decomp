@@ -1,5 +1,4 @@
 //! Controller-selected horizontal transitions share the complete motion operation.
-#![forbid(unsafe_code)]
 use super::{
     effects::Host,
     operations::{

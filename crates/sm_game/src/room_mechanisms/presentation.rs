@@ -1,5 +1,4 @@
 //! Terrain programs and clipped emission over the composed owned room state.
-#![forbid(unsafe_code)]
 use super::host::{
     ByteOrder, Diagnostic, DrawCursor, DrawLayout, DrawProgramId, DrawTarget, Host, SlotMember,
     TileDefinitionCorner, TilemapDestination,

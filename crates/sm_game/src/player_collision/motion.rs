@@ -1,5 +1,4 @@
 //! Player displacement, speed publication and shinespark orchestration.
-#![forbid(unsafe_code)]
 use super::{
     effects::Host,
     geometry,

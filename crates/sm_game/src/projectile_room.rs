@@ -1,5 +1,4 @@
 //! Axis and scan state shared by projectile terrain reactions.
-#![forbid(unsafe_code)]
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Axis {

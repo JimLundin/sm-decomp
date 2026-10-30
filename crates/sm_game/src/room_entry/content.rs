@@ -1,5 +1,4 @@
 //! Retained live content captures and typed room descriptors.
-#![forbid(unsafe_code)]
 use super::{
     api::StartSite,
     effects::{AssetRead, AssetSlot, StagingSource, VramSlot},

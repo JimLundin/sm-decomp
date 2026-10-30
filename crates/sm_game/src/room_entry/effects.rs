@@ -1,5 +1,4 @@
 //! Closed room-entry effects supplied by the compatibility runtime.
-#![forbid(unsafe_code)]
 use super::{
     api::EntryWait,
     content::{

@@ -1,5 +1,4 @@
 //! Owned post-movement player rules and finite compatibility interfaces.
-#![forbid(unsafe_code)]
 
 pub mod actions;
 pub mod animation;

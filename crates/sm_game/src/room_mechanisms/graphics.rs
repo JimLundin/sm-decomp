@@ -1,5 +1,4 @@
 //! Item graphics and reveal algorithms over shared owned room state.
-#![forbid(unsafe_code)]
 use super::{
     content::Script,
     host::{

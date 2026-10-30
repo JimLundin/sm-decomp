@@ -1,5 +1,4 @@
 //! Attract-mode playback, room selection, placement and delayed setup.
-#![forbid(unsafe_code)]
 use crate::imported::Imported;
 use crate::menus::menu_tilemap::native_record;
 use crate::menus::prelude::{EnemyData, do_until};

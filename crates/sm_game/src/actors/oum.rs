@@ -1,6 +1,5 @@
 //! Oum, Maridia's rolling snail, which bounces into place, rolls and attacks, and carries
 //! or holds back Samus as she rides or pushes it (bank $A2:CA2B-$A2:D80B). Was `large_snail`.
-#![forbid(unsafe_code)]
 use crate::actors::access::ActorKey;
 use crate::actors::api::{
     self, Axis, DeathHandling, MovementResult::Blocked, ShotHandling, SlopePolicy,

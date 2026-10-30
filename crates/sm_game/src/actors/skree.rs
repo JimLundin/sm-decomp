@@ -1,7 +1,6 @@
 //! The skree and the metaree, the ceiling divers that drop on Samus and burst
 //! into particles on the ground (bank $A3:88F0-$A3:8B65, $A3:C63E-$A3:C82F).
 //! Was `diving_enemies`.
-#![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key, SpawnAccess};
 use crate::actors::api::{self, DeathKind, MovementResult, ShotHandling, VerticalProbeEdge};
 use crate::actors::combat;

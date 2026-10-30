@@ -1,5 +1,4 @@
 //! Enemy-projectile terrain movement and slope response.
-#![forbid(unsafe_code)]
 use super::access::{enemy, enemy_byte, read_member, write_member};
 use super::host::{EnemyMember as F, Host, NativeRecord};
 use crate::projectile_geometry::{square_slope_occupied, square_slope_single_block};

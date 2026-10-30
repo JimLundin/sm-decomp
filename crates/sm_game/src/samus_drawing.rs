@@ -1,7 +1,6 @@
 //! Samus body, echo and shinespark-echo drawing and body tile requests over
 //! the Samus authority: the owned display when it draws, otherwise the
 //! native body tables captured through the compatibility runtime.
-#![forbid(unsafe_code)]
 use crate::runtime_access::SessionRam;
 use crate::scene::samus_body::{self, Body, Half};
 use crate::scene::samus_content::{Registration, Role};

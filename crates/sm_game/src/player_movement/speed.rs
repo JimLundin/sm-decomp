@@ -1,5 +1,4 @@
 //! Owned horizontal speed and vertical movement shared by player movement modes.
-#![forbid(unsafe_code)]
 use super::{content::SpeedRecord, effects::Host};
 use {
     crate::{

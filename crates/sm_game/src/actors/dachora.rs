@@ -1,6 +1,5 @@
 //! Dachora, the Brinstar creature that teaches the shinespark: its palette
 //! loader, the part of bank $A7:F225-$A7:FF81 that runs here.
-#![forbid(unsafe_code)]
 use crate::actors::boss_lease::BossState;
 use crate::actors::layouts::EnemyLayout8 as Dachora;
 use crate::actors::session_slots::session_slot;

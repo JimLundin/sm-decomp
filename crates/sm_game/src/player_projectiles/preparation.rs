@@ -1,5 +1,4 @@
 //! Player preparation, weapon selection and launch history over ordinary state.
-#![forbid(unsafe_code)]
 use super::{
     host::{Host, PaletteEffect, PlayerStep},
     state::PrepareEntry,

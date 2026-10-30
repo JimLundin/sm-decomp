@@ -1,5 +1,4 @@
 //! Population creation, shared slot initialization and semantic birth boundaries.
-#![forbid(unsafe_code)]
 use crate::enemy_population::{Creation, EnemyShape, PopulationEntry};
 use {
     crate::actors::identity::{InstanceHandle, PendingActorBirth},

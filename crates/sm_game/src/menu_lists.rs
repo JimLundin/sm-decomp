@@ -4,7 +4,6 @@
 //! Each accessor serves the record while the loaded image is the imported
 //! allocation; any other image, and indices past a table, keep the original
 //! indexed load with its failures.
-#![forbid(unsafe_code)]
 use crate::imported::{ImportedWords, load};
 use crate::records::Records;
 use sm_data::cartridge::RomImage;

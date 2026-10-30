@@ -1,5 +1,4 @@
 //! Rope animation and placement on the shared player state and existing drawing edge.
-#![forbid(unsafe_code)]
 use {
     crate::actors::api::angle_from_delta,
     crate::{

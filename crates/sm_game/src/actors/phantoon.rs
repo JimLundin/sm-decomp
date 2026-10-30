@@ -6,7 +6,6 @@
 //! and the mouth. Each part's view names its slot words over the same RAM
 //! bytes as `EnemyLayout8`; the figure-8 flight and the flames stay in
 //! `phantoon_motion` and `phantoon_actions`.
-#![forbid(unsafe_code)]
 use crate::actors::api::PlayerDirection;
 use crate::actors::boss_lease::{BossLease, BossState};
 use crate::actors::deaths::Deaths as _;

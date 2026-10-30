@@ -4,7 +4,6 @@
 //! Was `NuclearWaffle_*` and `SpikeyPlatform2ndEnemy_Init` in the original
 //! decompilation. The arc's body is five enemy projectiles and three sprite
 //! objects; the active swing runs with them in the enemy projectile code.
-#![forbid(unsafe_code)]
 use crate::actors::layouts::{EnemyBase, EnemyLayout8, same_words};
 use crate::constants::enemy_properties::K_ENEMY_PROPS_PROCESSED_OFFSCREEN;
 use crate::ram::RawRam as _;

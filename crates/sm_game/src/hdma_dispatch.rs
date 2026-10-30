@@ -1,7 +1,6 @@
 //! The HDMA objects' indirect calls and pre-instructions, as data: each bank
 //! address the original dispatch matched maps to a named target, and an
 //! unknown address keeps the original unreachable failure.
-#![forbid(unsafe_code)]
 use crate::explosion_window::{self, Phase};
 use crate::hdma_objects::{self, HdmaEffect};
 use crate::menus::host::Host;

@@ -5,7 +5,6 @@
 //! compatibility RAM words. `sm` implements it over the projected words, with
 //! the same reads and stores in the same order. A host that runs inside the
 //! owned Session can implement it over `Session::player` instead.
-#![forbid(unsafe_code)]
 
 pub trait PlayerPosition {
     fn player_x(&self) -> u16;

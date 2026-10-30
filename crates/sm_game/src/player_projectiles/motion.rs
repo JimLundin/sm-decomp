@@ -1,5 +1,4 @@
 //! Flight, release, reflection and numeric motion dispatch on ordinary session state.
-#![forbid(unsafe_code)]
 use super::{Host, animation, handlers, presentation};
 use crate::projectile_initialization::Initialization;
 use crate::projectile_room::Axis;

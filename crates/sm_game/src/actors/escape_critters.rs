@@ -3,7 +3,6 @@
 //!
 //! Was `escape_animals`. Each critter waits or runs around the escape room
 //! until the critters-escaped event, then runs for the exit.
-#![forbid(unsafe_code)]
 use crate::actors::layouts::part_view;
 use crate::constants::enemy_properties::*;
 use crate::enemy_script::EnemyScript;

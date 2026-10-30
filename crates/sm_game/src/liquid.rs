@@ -67,7 +67,6 @@
 //!
 //! - Step 1 is a complete closure only for the liquid words; it lands as one
 //!   commit, step 2 as another, each behind a full corpus.
-#![forbid(unsafe_code)]
 use crate::geometry::Position;
 use crate::session::Room;
 

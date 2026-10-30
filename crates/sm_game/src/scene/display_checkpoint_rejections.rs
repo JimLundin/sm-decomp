@@ -1,5 +1,4 @@
 //! Movies cannot author malformed Display checkpoint tags, counts or map order.
-#![forbid(unsafe_code)]
 
 use super::{CheckpointReader, DisplayStartMetadata, Field, d, r, t};
 use std::{collections::BTreeMap, sync::Arc};

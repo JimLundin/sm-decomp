@@ -181,7 +181,6 @@ fn fade_to_title<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 }
 
 /// The menu reuses the first enemy record; it remains the only animation state.
-#[forbid(unsafe_code)]
 fn animate_baby<H: crate::menus::host::Host + ?Sized>(game: &mut H, invalid: impl FnOnce(&mut H)) {
     let mut timer = slot!(game, EnemyBase[0].instruction_timer);
     if timer == 0 {

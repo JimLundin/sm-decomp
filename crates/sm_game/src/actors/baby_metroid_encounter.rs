@@ -6,7 +6,6 @@
 //! baby Metroid notes. The bank's dispatch ids are unchanged; the functions and
 //! their reads and writes keep the original order. Mother Brain's shared
 //! helpers come from `mother_brain_fight`.
-#![forbid(unsafe_code)]
 use crate::actors::baby_metroid::BabyMetroid;
 use crate::actors::corpses::Corpse;
 use crate::actors::host::abs16;

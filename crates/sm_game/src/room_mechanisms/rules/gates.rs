@@ -1,5 +1,4 @@
 //! Gate triggering, placement and shootblock selection.
-#![forbid(unsafe_code)]
 use super::super::access::*;
 use super::super::host::*;
 use super::terrain_setup as terrain;

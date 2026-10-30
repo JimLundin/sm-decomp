@@ -1,5 +1,4 @@
 //! Shared room coordinates and direct mechanism observations for enemy producers.
-#![forbid(unsafe_code)]
 use super::host::{Host, MechanismMember};
 pub fn block_index(handle: u16, h: &impl Host) -> u16 {
     let slot = usize::from(handle >> 1);

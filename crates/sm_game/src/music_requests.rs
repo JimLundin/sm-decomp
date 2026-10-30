@@ -1,5 +1,4 @@
 //! Ordered request algorithms over the actual audio state owner.
-#![forbid(unsafe_code)]
 
 use crate::scene::state::DisplayError;
 use crate::session_owners::{AudioHost, QueuedMusicMeaning, QueuedSoundMeaning};

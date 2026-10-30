@@ -1,5 +1,4 @@
 //! Pure checkpoint provenance shared by numeric owners and detached consumers.
-#![forbid(unsafe_code)]
 use crate::scene::{component::DisplayStartMetadata, start::ReferenceProfile};
 
 pub fn audio_reference_bytes(value: &ReferenceProfile) -> Vec<u8> {

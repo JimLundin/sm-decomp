@@ -1,5 +1,4 @@
 //! ROM spritemap decoding and the native host for shared object staging.
-#![forbid(unsafe_code)]
 use crate::ram::RawRam as _;
 use crate::{scene::objects, sprite_output::SpriteHost};
 use sm_data::cartridge::RomImage;

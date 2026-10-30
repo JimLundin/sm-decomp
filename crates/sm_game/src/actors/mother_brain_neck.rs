@@ -6,7 +6,6 @@
 //! `MotherBrain_RetractHead` and `MotherBrain_Phase3_Neck_*` in the original
 //! decompilation (bank $A9). The body's and the brain's views name their slot
 //! words through `mother_brain`'s views.
-#![forbid(unsafe_code)]
 use crate::actors::mother_brain_fight::Lease;
 use crate::actors::session_slots::session_slot;
 // The game's traits, for the calls made on it through `foreign`.

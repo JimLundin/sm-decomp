@@ -1,6 +1,5 @@
 //! The elevator platform, which carries Samus between rooms (bank
 //! $A3:94D6-$A3:95F5); its status lives with the room entry state.
-#![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorAccess};
 use crate::actors::combat;
 use crate::actors::host::{ActorLease, BossEffects as _, LeaseActors};

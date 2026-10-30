@@ -1,5 +1,4 @@
 //! Owned enemy-projectile pre-actions; compatibility and effects stay at the execution edge.
-#![forbid(unsafe_code)]
 use super::access::{enemy, enemy_add, enemy_byte, enemy_decrement, enemy_update, read_member};
 use super::addresses;
 use super::host::{EnemyMember as SlotField, Host, LoadedRecord};

@@ -1,6 +1,5 @@
 //! Gamet's ordered five-part emergence and flight.
 //! Native actor words remain authoritative across the existing query boundaries.
-#![forbid(unsafe_code)]
 use crate::actors::host::{ActorHost, ActorRuntime, Axis};
 use crate::actors::layouts::EnemyLayout72 as Bug;
 use crate::ram::RawRam as _;

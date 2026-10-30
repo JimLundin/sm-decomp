@@ -1,5 +1,4 @@
 //! Shared dialogue, animation and input transitions; external operations consume the owner.
-#![forbid(unsafe_code)]
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Message<Id> {

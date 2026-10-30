@@ -2,7 +2,6 @@
 //! and skeleton, its reactions and its script instructions (bank $A4).
 //! Native actor words and captured script images are retained.
 //! Hardware effects remain in the visual owner; RAM remains authoritative.
-#![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
 use crate::actors::boss_lease::BossLease;
 use crate::actors::crocomire_attack::{Crocomire, flag, lane};

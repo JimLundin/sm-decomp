@@ -1,6 +1,5 @@
 //! Declaration-only finite dependencies for player collision.
 //! State is the existing Session owner, not a second body/terrain or field port.
-#![forbid(unsafe_code)]
 
 use crate::{actors::access::ActorAccess, room_entry::api::EntryPoll, visual_host::Record};
 

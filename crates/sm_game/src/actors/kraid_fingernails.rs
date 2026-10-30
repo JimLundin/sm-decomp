@@ -1,6 +1,5 @@
 //! Kraid's fingernails, the good and bad claws Kraid flicks across the room
 //! (bank $A7:BCEF-$A7:BE8E): the initialisation they share.
-#![forbid(unsafe_code)]
 use crate::actors::host::ActorHost;
 use crate::actors::layouts::{EnemyBase, KraidLayout as Kraid, same_words};
 use crate::cartridge::native_record;

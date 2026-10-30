@@ -1,5 +1,4 @@
 //! Ordered HDMA execution over the actual eight-channel and timer authority.
-#![forbid(unsafe_code)]
 
 const DESTINATION_OFFSETS: [[u8; 4]; 8] = [
     [0, 0, 0, 0],

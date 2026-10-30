@@ -1,5 +1,4 @@
 //! Population creation and multipart search state, independent of RAM and effects.
-#![forbid(unsafe_code)]
 
 pub struct PopulationEntry {
     pub definition: u16,

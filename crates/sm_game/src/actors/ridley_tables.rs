@@ -1,5 +1,4 @@
 //! Ridley's pogo speeds and tail data copies from bank $A6 ($A6:B90F, $A6:D3B4).
-#![forbid(unsafe_code)]
 use crate::actors::host::ActorHost;
 use crate::actors::ridley::Ridley;
 use crate::cartridge::native_record;

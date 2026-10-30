@@ -1,5 +1,4 @@
 //! Common animation rules. Captured slots and script allocations survive callbacks.
-#![forbid(unsafe_code)]
 use crate::actors::{
     access::{AccessMode::LittleEndian as LE, ActorKey},
     content::ActorRoutine,

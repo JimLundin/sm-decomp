@@ -1,5 +1,4 @@
 //! Bomb fuses, spread motion and contact over ordinary session fields.
-#![forbid(unsafe_code)]
 use super::{Host, bomb_terrain, content, motion};
 use crate::{shot, shot_native};
 #[derive(Clone, Copy, Debug, PartialEq)]

@@ -1,5 +1,4 @@
 //! Door camera setup and stepping; RAM remains authoritative between callbacks.
-#![forbid(unsafe_code)]
 use super::Host;
 use super::{add_native_motion, calculate_blocks, calculate_scrolls, layer2_position, update_map};
 use crate::camera::{set_bg1_offset, set_layer1};

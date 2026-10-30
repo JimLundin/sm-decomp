@@ -111,7 +111,6 @@ fn table_height(position: u16, camera: u16, water: bool) -> u16 {
 }
 
 static LAVA_SOUND_EFFECTS: [u8; 8] = [0x12, 0x13, 0x14, 0x12, 0x13, 0x14, 0x12, 0x13];
-#[forbid(unsafe_code)]
 pub fn lava_surface<H>(object: &mut HdmaObject, game: &mut H)
 where
     H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
@@ -162,7 +161,6 @@ where
         object.table = (3 * (((v8 as i32 ^ 0x1ff) + 1) & 0x3ff) + 0xb62a) as u16;
     }
 }
-#[forbid(unsafe_code)]
 pub fn water_surface<H>(object: &mut HdmaObject, game: &mut H)
 where
     H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
@@ -209,7 +207,6 @@ enum Wave {
     LavaVertical,
     Water,
 }
-#[forbid(unsafe_code)]
 fn fill_wave<H: crate::menus::host::Host + ?Sized>(
     object: &mut HdmaObject,
     wave: Wave,
@@ -291,7 +288,6 @@ pub fn lava_background<H: crate::menus::host::Host + ?Sized>(
         object.table = 3 * (word!(game.REG_BG2VOFS) & 0xf) + 0xc0b1;
     }
 }
-#[forbid(unsafe_code)]
 pub fn water_background<H: crate::menus::host::Host + ?Sized>(
     object: &mut HdmaObject,
     game: &mut H,
@@ -312,11 +308,9 @@ pub fn water_background<H: crate::menus::host::Host + ?Sized>(
     );
     object.table = 3 * ((height ^ 0x1ff) & 0x3ff) + 0xcf46;
 }
-#[forbid(unsafe_code)]
 pub fn water_wave<H: crate::menus::host::Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
     fill_wave(object, Wave::Water, game);
 }
-#[forbid(unsafe_code)]
 pub fn water_flat<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     {
         let value = word!(game.REG_BG2HOFS);

@@ -1,5 +1,4 @@
 //! Actor movement, terrain reactions and ordered fixed-point commits.
-#![forbid(unsafe_code)]
 use crate::geometry::{Point, Position, Vector32};
 use crate::room_mechanisms::{
     creation,

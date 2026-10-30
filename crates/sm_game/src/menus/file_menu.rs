@@ -166,7 +166,6 @@ fn fade_in<H: Host + ?Sized>(game: &mut H) {
         crate::menu!(game.MenuIndex += 1);
     }
 }
-#[forbid(unsafe_code)]
 fn begin_operation<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
     if !COPY {
         border(0x4a, game);
@@ -227,7 +226,6 @@ fn next_occupied_slot<H: Host + ?Sized>(game: &mut H) -> Option<u8> {
         }
     }
 }
-#[forbid(unsafe_code)]
 fn choose_source<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
     border(if COPY { 0x49 } else { 0x4a }, game);
     crate::sprite_output::menu_selection(game);
@@ -301,7 +299,6 @@ fn draw_destination<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::load(0x688, ADDR_K_MENU_TILEMAP_EXIT as u16, game);
     menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Destination, game);
 }
-#[forbid(unsafe_code)]
 fn choose_destination<H: Host + ?Sized>(game: &mut H) {
     border(0x49, game);
     crate::sprite_output::menu_selection(game);
@@ -344,7 +341,6 @@ fn choose_destination<H: Host + ?Sized>(game: &mut H) {
     }
     crate::sprite_output::file_slot_cursor(212, game);
 }
-#[forbid(unsafe_code)]
 fn begin_confirmation<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
     border(if COPY { 0x49 } else { 0x4a }, game);
     menu_tilemap::set_palette(0, game);
@@ -378,7 +374,6 @@ fn draw_confirmation<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::load(0x65c, ADDR_K_MENU_TILEMAP_NO as u16, game);
     menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Confirmation, game);
 }
-#[forbid(unsafe_code)]
 fn confirm_choice<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
     border(if COPY { 0x49 } else { 0x4a }, game);
     crate::sprite_output::menu_selection(game);
@@ -493,7 +488,6 @@ fn copy_slot<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Confirmation, game);
     game.flush_sram();
 }
-#[forbid(unsafe_code)]
 fn complete_operation<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
     border(if COPY { 0x49 } else { 0x4a }, game);
     if game.observed_inputs().pressed != 0 {

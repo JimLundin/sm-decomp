@@ -8,7 +8,6 @@
 //! the lease publishes the Session around each one and imports it after, and
 //! the RAM copy is stored before each one and reloaded after. No table value
 //! is held across a callback.
-#![forbid(unsafe_code)]
 
 use crate::enemy_script::{EnemyScript as Script, bank_base};
 use crate::hdma::{HdmaObject, HdmaObjects, OBJECTS};

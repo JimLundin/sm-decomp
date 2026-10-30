@@ -1,5 +1,4 @@
 //! Shared enemy-projectile rules, with ordered writes and explicit effects.
-#![forbid(unsafe_code)]
 use super::access::{enemy, read_member, read_member_byte, write_member, write_member_byte};
 use super::host::{EnemyMember as F, Host, NativeRecord};
 use crate::geometry::{Point as Point16U, Vector32 as Point32};

@@ -3,7 +3,6 @@
 //!
 //! Was `CallCinematicFunction` and `CallCinematicSprPreInstr` in the original
 //! decompilation; the addresses stay the dispatch keys.
-#![forbid(unsafe_code)]
 use crate::cinematic_host::Host;
 use crate::intro_pages::{self, Palette, Scene};
 use crate::visual_state::CinematicFade;

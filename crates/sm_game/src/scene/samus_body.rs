@@ -1,5 +1,4 @@
 //! Shared Samus body selection, ordered drawing and direct front-facing marker.
-#![forbid(unsafe_code)]
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Body {

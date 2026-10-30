@@ -1,5 +1,4 @@
 //! Validated actor catalogs and source-ordered live capture contracts.
-#![forbid(unsafe_code)]
 use super::{
     access::ActorKey,
     media::{AppearanceId, FrameId, VisualResourceId},

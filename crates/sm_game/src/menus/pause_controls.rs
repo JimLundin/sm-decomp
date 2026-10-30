@@ -1,5 +1,4 @@
 //! Pause-screen lifecycle, input and saved graphics; RAM remains authoritative.
-#![forbid(unsafe_code)]
 use super::prelude::*;
 use super::{equipment_menu, map_menu, menu_tilemap};
 use crate::ram::RawRam as _;

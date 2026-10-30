@@ -10,7 +10,6 @@
 //! order. What still lives in the compatibility runtime is reached through
 //! [`Host`], with the original names kept on the forwarding helpers at the end
 //! of this module.
-#![forbid(unsafe_code)]
 use crate::actors::corpses::Corpse;
 use crate::actors::host::abs16;
 use crate::actors::mother_brain::{BRAIN, MotherBrainBody, MotherBrainBrain};

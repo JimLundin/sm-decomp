@@ -1,5 +1,4 @@
 //! Landing sounds and region policy over the same owned atmospheric slots.
-#![forbid(unsafe_code)]
 use super::{
     content::{Content, LandingRegion, LandingRule},
     effects::Host,

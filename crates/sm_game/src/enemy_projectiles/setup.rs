@@ -1,5 +1,4 @@
 //! Complete enemy-projectile setup dispatch, using owned fields and explicit effects.
-#![forbid(unsafe_code)]
 use super::access::{enemy, enemy_byte, enemy_update};
 use super::addresses;
 use super::coordinates::{calculate_coordinates, projectile_argument};

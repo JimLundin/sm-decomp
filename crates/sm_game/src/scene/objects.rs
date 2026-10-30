@@ -1,5 +1,4 @@
 //! Ordered object staging shared by owned storage and the native compatibility host.
-#![forbid(unsafe_code)]
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Clip {

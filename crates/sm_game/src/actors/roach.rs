@@ -1,6 +1,5 @@
 //! The roach, the Brinstar bug that scuttles at Samus in one of seven ways
 //! (bank $A3:A051-$A3:A611).
-#![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorAccess};
 use crate::actors::api::{self, Axis, MovementResult, SlopePolicy};
 use crate::actors::combat::{self, current_slot};

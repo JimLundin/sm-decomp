@@ -1,5 +1,4 @@
 //! Mother Brain glass hit counting, threshold progression and ordered shard bursts.
-#![forbid(unsafe_code)]
 use super::super::access::*;
 use super::super::content::Script;
 use super::super::host::*;

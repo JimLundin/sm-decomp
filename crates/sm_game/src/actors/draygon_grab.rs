@@ -1,7 +1,6 @@
 //! Draygon chasing and grabbing Samus, its rising spiral and tail whips, and
 //! letting her go (bank $A5:8E19-$A5:94DC, $A5:9B9A).
 //! Boss-specific words retain their native compatibility layout; no player copy exists.
-#![forbid(unsafe_code)]
 use crate::actors::boss_lease::BossState;
 use crate::actors::draygon_flight::{facing_animation, fire_wall_turret, foam_at_mouth};
 use crate::actors::draygon_host::Lease;

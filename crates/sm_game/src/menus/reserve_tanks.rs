@@ -1,5 +1,4 @@
 //! Reserve refill and equipment-menu controls; RAM remains authoritative.
-#![forbid(unsafe_code)]
 use super::menu_tilemap;
 use super::prelude::*;
 

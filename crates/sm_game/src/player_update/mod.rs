@@ -1,5 +1,4 @@
 //! Ordered player beta work over the same owned Session.
-#![forbid(unsafe_code)]
 
 pub mod content;
 pub mod effects;

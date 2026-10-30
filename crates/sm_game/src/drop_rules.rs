@@ -1,5 +1,4 @@
 //! Drop patterns and weighted selection, independent of RAM and native effects.
-#![forbid(unsafe_code)]
 
 pub enum DropSource {
     MiniKraid,

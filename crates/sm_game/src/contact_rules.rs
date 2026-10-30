@@ -1,5 +1,4 @@
 //! Shared geometry and projectile eligibility for contact scans.
-#![forbid(unsafe_code)]
 #[derive(Clone, Copy)]
 pub enum HitboxEdge {
     Left,

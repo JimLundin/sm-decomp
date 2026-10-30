@@ -5,7 +5,6 @@
 //! Was `Etecoon_*` in the original decompilation. Each etecoon runs the bank
 //! $A7 function in its `function` word; the compat host dispatches it, so the
 //! function ids are unchanged.
-#![forbid(unsafe_code)]
 use crate::actors::api::PlayerDirection;
 use crate::actors::boss_lease::BossLease;
 use crate::actors::host::{Axis, Slopes, below};

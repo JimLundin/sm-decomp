@@ -1,6 +1,5 @@
 //! How an actor dies and leaves its item drop, as the compatibility runtime
 //! still implements it.
-#![forbid(unsafe_code)]
 use crate::enemy_projectiles::drops::DropSource;
 
 pub trait Deaths {

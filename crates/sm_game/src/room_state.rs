@@ -1,5 +1,4 @@
 //! Room state rules that run on named RAM and the owned-Session view.
-#![forbid(unsafe_code)]
 use crate::ram::RawRam as _;
 use crate::ram::{checked_word, words as fields};
 use crate::runtime_access::SessionView;

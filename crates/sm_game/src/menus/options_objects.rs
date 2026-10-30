@@ -1,5 +1,4 @@
 //! Options sprites: allocation, script execution and drawing in their original order.
-#![forbid(unsafe_code)]
 use super::menu_tilemap::native_record;
 use super::prelude::*;
 use crate::ram::word;

@@ -1,5 +1,4 @@
 //! Sprite-effect declarations only. Active effects and compatibility tails are distinct.
-#![forbid(unsafe_code)]
 use crate::geometry::{Point, Position};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]

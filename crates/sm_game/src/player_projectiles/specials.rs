@@ -1,5 +1,4 @@
 //! Complete special-beam creation, orbit and retirement over ordinary state.
-#![forbid(unsafe_code)]
 use super::host::Host;
 use crate::projectile_initialization::Initialization;
 use crate::{shot, shot_native};

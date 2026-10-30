@@ -1,5 +1,4 @@
 //! Shared owned scanline computation; acquisition and publication belong to callers.
-#![forbid(unsafe_code)]
 
 pub mod prepared;
 

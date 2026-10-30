@@ -1,5 +1,4 @@
 //! Common actor state; one codec defines its byte-compatible projection.
-#![forbid(unsafe_code)]
 use crate::geometry::{Point, Position};
 
 #[derive(Debug, Default, PartialEq)]

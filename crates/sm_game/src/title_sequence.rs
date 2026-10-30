@@ -7,7 +7,6 @@
 //! `HandleCinematicsTransitions*` and `LoadTitleSequenceGraphics` in the
 //! original decompilation. The functions run from `cinematic_function`; the
 //! compat dispatch keeps their ids.
-#![forbid(unsafe_code)]
 use crate::cinematic::{advance_cinematic_fade, clear_cinematic_sprites, set_cinematic_backdrop};
 use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;

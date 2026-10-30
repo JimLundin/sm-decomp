@@ -1,5 +1,4 @@
 //! Complete allocation and script scheduling over the owned projectile pool.
-#![forbid(unsafe_code)]
 use super::access::enemy;
 use super::host::{DefinitionField, Host, LoadedRecord};
 use crate::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};

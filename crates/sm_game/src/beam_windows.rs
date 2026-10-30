@@ -1,6 +1,5 @@
 //! HDMA window tables for the X-ray beam (Mother Brain's rainbow beam is in
 //! `actors::mother_brain_rainbow`, which shares the edge stepper).
-#![forbid(unsafe_code)]
 use crate::actors::session_slots::SlotAccess;
 use crate::menus::host::Host;
 use crate::menus::prelude::do_until;

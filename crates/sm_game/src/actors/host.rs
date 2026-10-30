@@ -1,6 +1,5 @@
 //! What bank-derived actor code needs from every host: named and raw work
 //! RAM, enemy slots, native and loaded cartridge reads, and the RNG.
-#![forbid(unsafe_code)]
 use crate::cartridge::{LoadedImage, NativeDiagnostics};
 use crate::ram::{CompatibilityRam, WorkRamAccess};
 

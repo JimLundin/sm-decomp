@@ -1,5 +1,4 @@
 //! Owned player animation clock, commands and running-speed timing.
-#![forbid(unsafe_code)]
 use super::{
     atmosphere,
     content::{AnimationProgram, AnimationTable, Content},

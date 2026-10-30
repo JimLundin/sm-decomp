@@ -1,5 +1,4 @@
 //! Owned exploration marking, HUD map tiles and boss-room suppression.
-#![forbid(unsafe_code)]
 use super::effects::Host;
 use crate::visual_host::Record;
 

@@ -1,6 +1,5 @@
 //! Kago, the bug hive of Norfair, which shakes the screen and releases a bug
 //! each time it is shot (bank $A8:AB1E-$A8:ABCF).
-#![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{DeathKind, ShotHandling};
 use crate::actors::combat;

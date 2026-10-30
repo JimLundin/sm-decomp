@@ -1,5 +1,4 @@
 //! Ordinary gameplay state shared by player, room mechanisms and enemy projectiles.
-#![forbid(unsafe_code)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum PrepareEntry {
     Normal,

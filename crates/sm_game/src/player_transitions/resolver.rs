@@ -1,5 +1,4 @@
 //! Priority and observation order for the three pose-request channels.
-#![forbid(unsafe_code)]
 use super::{actions, effects::Host, pose};
 use crate::player_collision::operations;
 

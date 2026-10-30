@@ -1,5 +1,4 @@
 //! Ordered Samus spritemap publication over shared native/owned object staging.
-#![forbid(unsafe_code)]
 
 use super::{
     objects,

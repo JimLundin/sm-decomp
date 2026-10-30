@@ -1,7 +1,6 @@
 //! The enemy projectile slots as Session-owned fields, for code outside the
 //! projectile host: the owned Session's under one lease when one can open,
 //! otherwise a copy decoded from RAM and stored back if it changed.
-#![forbid(unsafe_code)]
 
 use crate::ram::WorkRamAccess;
 use crate::runtime_access::RuntimeAccess;

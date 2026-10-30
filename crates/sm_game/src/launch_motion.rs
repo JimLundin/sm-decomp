@@ -1,7 +1,6 @@
 //! Motion retained between Samus movement and projectile processing.
 //! Recording replaces one direction; firing observes without consuming; the
 //! end of projectile processing clears all four directions for later movement.
-#![forbid(unsafe_code)]
 
 #[derive(Clone, Copy)]
 pub enum MovementDirection {

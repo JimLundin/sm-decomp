@@ -1,5 +1,4 @@
 //! Camera limits and scroll-cell rules; live callers retain RAM authority.
-#![forbid(unsafe_code)]
 use super::Host;
 use crate::camera::set_layer1;
 use crate::ram::word;

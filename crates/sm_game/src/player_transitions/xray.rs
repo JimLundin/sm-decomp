@@ -1,5 +1,4 @@
 //! X-ray entry gates, turning and the original stand-up exit adjustment.
-#![forbid(unsafe_code)]
 use super::{
     effects::Host,
     state::{InputMode, MovementMode, PoseRequestWord},

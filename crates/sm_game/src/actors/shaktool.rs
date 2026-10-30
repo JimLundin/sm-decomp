@@ -4,7 +4,6 @@
 //! Piece 0, the primary piece, is initially the right saw hand; piece 6, the
 //! final piece, the left one. The pieces occupy consecutive enemy slots, and
 //! every piece names its primary piece's slot.
-#![forbid(unsafe_code)]
 use crate::actors::boss_lease::BossLease;
 use crate::actors::layouts::part_view;
 use crate::actors::session_slots::session_slot;

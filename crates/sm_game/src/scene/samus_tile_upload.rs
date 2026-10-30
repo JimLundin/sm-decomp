@@ -1,5 +1,4 @@
 //! Samus NMI upload order shared by native registers and the owned tile sampler.
-#![forbid(unsafe_code)]
 
 use super::samus_body::Half;
 

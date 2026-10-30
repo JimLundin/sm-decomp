@@ -1,6 +1,5 @@
 //! Sidehoppers, desgeegas and their super variants hop small or big about
 //! Samus, on the floor or upside down on the ceiling (bank $A3:AA48-$A3:B3A0).
-#![forbid(unsafe_code)]
 use crate::actors::access::AccessMode::Native;
 use crate::actors::api::{self, Axis, MovementResult::Blocked, SlopePolicy::Ignore};
 use crate::actors::combat::{self, current_slot};

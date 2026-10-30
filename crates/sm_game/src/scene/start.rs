@@ -1,5 +1,4 @@
 //! Supplied, validated display starts. Construction never advances simulation.
-#![forbid(unsafe_code)]
 
 use super::{
     commit::ResidentDisplayDescription,

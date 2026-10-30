@@ -1,5 +1,4 @@
 //! Shared footstep particles and ordered speed-echo publication.
-#![forbid(unsafe_code)]
 use super::{
     content::{Content, FootstepRegion, FootstepRule},
     effects::{EchoAxis, Host},

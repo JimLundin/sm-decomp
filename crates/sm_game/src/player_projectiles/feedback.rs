@@ -1,5 +1,4 @@
 //! Charge feedback and flare placement over the same retained gameplay state.
-#![forbid(unsafe_code)]
 use super::{
     Host, content,
     host::{Drawing, PlayerStep},

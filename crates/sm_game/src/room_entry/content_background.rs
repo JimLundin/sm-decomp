@@ -1,5 +1,4 @@
 //! Pure retained background reads and compatibility resource resolution.
-#![forbid(unsafe_code)]
 use super::{
     content::*,
     effects::{StagingSource, VramSlot},

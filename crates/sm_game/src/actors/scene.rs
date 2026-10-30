@@ -1,5 +1,4 @@
 //! Actor visual selection and compatible resources, separate from gameplay collision.
-#![forbid(unsafe_code)]
 use super::{
     content::{ActorLiveRecord, PoseId},
     media::{AppearanceId, FrameId, MaterialId, VisualResourceId},

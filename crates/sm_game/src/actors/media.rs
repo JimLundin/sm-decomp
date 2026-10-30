@@ -1,5 +1,4 @@
 //! Stable actor media definitions; no gameplay timing or collision ownership.
-#![forbid(unsafe_code)]
 use super::content::{PartRoleId, PoseId};
 use crate::geometry::Point;
 use std::collections::BTreeMap;

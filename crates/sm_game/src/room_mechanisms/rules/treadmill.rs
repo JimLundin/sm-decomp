@@ -1,5 +1,4 @@
 //! Entrance conveyor installation and its conditional push on Samus.
-#![forbid(unsafe_code)]
 use super::super::access::*;
 use super::super::host::*;
 use crate::progress as flags;

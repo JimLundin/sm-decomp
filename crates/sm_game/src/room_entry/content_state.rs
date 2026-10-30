@@ -1,5 +1,4 @@
 //! State and tileset reads occur at each call on the retained capture.
-#![forbid(unsafe_code)]
 use super::content::{
     AssetRef, Capture, LoadMode, ObjectCursor, ScrollCursor, ScrollDefinition, SetupAction,
     SetupKind, StateScalar, TilesetAsset, TilesetSelection,

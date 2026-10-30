@@ -3,7 +3,6 @@
 //! Ship's orange Geemer, which turns towards Samus (bank $A3:DFA2-$A3:E9AF).
 //! The bank log calls the family "creepy crawlies" and the Geemer "zoomer"
 //! (with a "stone zoomer" palette variant). Was `wall_crawlers`.
-#![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{self, Axis, MovementResult, SlopePolicy};
 use crate::actors::combat;

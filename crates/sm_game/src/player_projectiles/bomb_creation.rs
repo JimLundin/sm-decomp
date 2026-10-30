@@ -1,5 +1,4 @@
 //! Ordinary, power and spread bomb production with live initialization boundaries.
-#![forbid(unsafe_code)]
 use super::handlers;
 use super::host::{Host, PaletteEffect};
 use crate::shot;

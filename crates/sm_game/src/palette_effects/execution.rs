@@ -1,5 +1,4 @@
 //! Palette instructions on the sole shared gameplay Session.
-#![forbid(unsafe_code)]
 use crate::{
     gameplay_flag_host::BossWordOrder,
     progress_flags,

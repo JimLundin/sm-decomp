@@ -1,5 +1,4 @@
 //! Station placement, access alignment and save-trigger activation.
-#![forbid(unsafe_code)]
 use super::super::access::*;
 use super::super::creation;
 use super::super::host::*;

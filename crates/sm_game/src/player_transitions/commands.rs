@@ -1,5 +1,4 @@
 //! Scripted player control, pose and presentation transitions.
-#![forbid(unsafe_code)]
 use super::{
     effects::Host, finish_pose_change, record_pose_history, refresh_pose, refresh_pose_rules,
     state::*,

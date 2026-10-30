@@ -1,5 +1,4 @@
 //! Palette copies from cartridge words, read through the native ROM image.
-#![forbid(unsafe_code)]
 use crate::cartridge::NativeDiagnostics;
 use crate::cartridge::native_record;
 use crate::ram::word;

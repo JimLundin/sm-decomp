@@ -1,5 +1,4 @@
 //! Direct ordinary shot access, with a typed exceptional-selector edge.
-#![forbid(unsafe_code)]
 #[derive(Clone, Copy)]
 pub enum ShotLane {
     X,

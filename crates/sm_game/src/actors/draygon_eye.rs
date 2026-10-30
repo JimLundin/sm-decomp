@@ -1,7 +1,6 @@
 //! Draygon's eye, which looks at Samus and puffs breath bubbles (bank
 //! $A5:C46B-$A5:C598), and the function-setting instructions.
 //! Common actor fields use the existing owner; outer boss dispatch stays in bank A5.
-#![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::draygon_host::{BODY, EYE, function, instruction_list as list};
 use crate::actors::host::{ActorLease, ActorRuntime as _, BossEffects as _, LeaseActors};

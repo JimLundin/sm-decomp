@@ -35,7 +35,6 @@ impl<H: SpriteHost + ?Sized> Content<H> for Native {
     }
 }
 
-#[forbid(unsafe_code)]
 pub fn sprite_map<H: SpriteHost + ?Sized>(
     bank: u8,
     cursor: u16,
@@ -52,7 +51,6 @@ pub fn sprite_map<H: SpriteHost + ?Sized>(
         offset: sm_data::cartridge::lorom_offset(address) as usize,
     }
 }
-#[forbid(unsafe_code)]
 pub fn projectile<H: SpriteHost + ?Sized>(
     slot: u16,
     position: (u16, u16),
@@ -63,7 +61,6 @@ pub fn projectile<H: SpriteHost + ?Sized>(
     let cursor = u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]);
     sprite_map(0x93, cursor, game, content).draw(position, |tile| tile, Clip::None, game);
 }
-#[forbid(unsafe_code)]
 pub fn samus<H: SpriteHost + ?Sized>(
     index: u16,
     position: (u16, u16),
@@ -155,7 +152,6 @@ impl<H: SpriteHost + ?Sized, C: Content<H>> crate::scene::samus::Host for Native
         Ok(())
     }
 }
-#[forbid(unsafe_code)]
 pub fn echo<H: SpriteHost + ?Sized>(slot: u16, game: &mut H, content: &mut impl Content<H>) {
     let index = usize::from(slot >> 1);
     let y = word!(game.SPEED_ECHO_YPOS[index]);
@@ -178,7 +174,6 @@ pub fn echo<H: SpriteHost + ?Sized>(slot: u16, game: &mut H, content: &mut impl 
         }
     }
 }
-#[forbid(unsafe_code)]
 pub fn crash_echoes<H: SpriteHost + ?Sized>(game: &mut H, content: &mut impl Content<H>) {
     if word!(game.NMI_FRAME_COUNTER_WORD) & 1 != 0 {
         for index in [3, 2] {
@@ -190,7 +185,6 @@ pub fn crash_echoes<H: SpriteHost + ?Sized>(game: &mut H, content: &mut impl Con
 }
 
 /// Ordered native OAM stores; end coordinates and extension bits remain live aliases.
-#[forbid(unsafe_code)]
 pub fn grapple<H: SpriteHost + ?Sized>(game: &mut H, segment: Option<(u16, u16, u16)>) {
     let idx = word!(game.OAM_NEXT_PTR);
     let at = 0x370 + usize::from(idx);
@@ -216,7 +210,6 @@ pub fn grapple<H: SpriteHost + ?Sized>(game: &mut H, segment: Option<(u16, u16, 
     word!(game.OAM_NEXT_PTR = idx.wrapping_add(4));
 }
 
-#[forbid(unsafe_code)]
 pub fn paletted<H: SpriteHost + ?Sized>(
     bank: u8,
     address: u16,
@@ -232,7 +225,6 @@ pub fn paletted<H: SpriteHost + ?Sized>(
         game,
     );
 }
-#[forbid(unsafe_code)]
 pub fn menu<H: SpriteHost + ?Sized>(index: u16, x: u16, y: u16, palette: u16, game: &mut H) {
     let address = crate::menu_lists::menu_spritemap(game, index as isize);
     paletted(0x82, address, (x, y), palette, Clip::None, game);
@@ -323,12 +315,10 @@ pub fn file_slot_cursor<H: SpriteHost + ?Sized>(exit_y: u16, game: &mut H) {
     });
 }
 
-#[forbid(unsafe_code)]
 pub fn beam<H: SpriteHost + ?Sized>(index: u16, position: (u16, u16), game: &mut H) {
     let address = crate::menu_lists::beam_spritemap(game, index as isize);
     sprite_map(0x93, address, game, &mut Native).draw(position, |tile| tile, Clip::None, game);
 }
-#[forbid(unsafe_code)]
 pub fn with_base_tile<H: SpriteHost + ?Sized>(
     bank: u8,
     address: u16,

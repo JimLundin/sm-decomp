@@ -1,5 +1,4 @@
 //! Descending live-slot scheduler with caller-owned message suspension.
-#![forbid(unsafe_code)]
 use super::{
     access::mechanism,
     commands,

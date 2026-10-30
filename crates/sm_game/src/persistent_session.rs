@@ -1,6 +1,5 @@
 //! The exclusive gameplay owner: Session start descriptions, the persistent
 //! owner and its intervals, semantic checkpoints and snapshot payloads.
-#![forbid(unsafe_code)]
 
 use crate::actors::snapshot::CheckpointImages;
 use std::sync::Arc;

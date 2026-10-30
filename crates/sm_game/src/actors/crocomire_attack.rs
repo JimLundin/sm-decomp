@@ -1,6 +1,5 @@
 //! Crocomire's fight AI: the instruction that runs its fight function, and the
 //! functions, by index (bank $A4:86A6-$A4:8A10).
-#![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode, ActorKey as Key};
 use crate::actors::layouts::{EnemyBase, same_words};
 use crate::constants::bank_86::ADDR_STRU_868F8F;

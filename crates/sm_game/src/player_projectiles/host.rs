@@ -1,5 +1,4 @@
 //! Player-projectile effects and finite aliases over the shared Session.
-#![forbid(unsafe_code)]
 use super::access::{ShotLane, Store};
 use crate::session_access::SessionAccess;
 use sm_data::cartridge::{RomImage, RomRecord};

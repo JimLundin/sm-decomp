@@ -1,6 +1,5 @@
 //! What a player projectile runs each frame: its bank $90 handler address,
 //! stored in the shot's `motion` word and dispatched by `motion::run`.
-#![forbid(unsafe_code)]
 
 /// Does nothing; an empty slot or a shot waiting to be retired.
 pub const IDLE: u16 = 0xb169;

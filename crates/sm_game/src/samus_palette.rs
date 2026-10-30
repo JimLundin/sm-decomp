@@ -1,5 +1,4 @@
 //! Samus palette phases share the actual visual, player and inventory owner.
-#![forbid(unsafe_code)]
 use crate::player_transitions::state::FrameBetaMode;
 use crate::{
     liquid_surface::{self, LiquidAtHeight},

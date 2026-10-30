@@ -1,5 +1,4 @@
 //! Jump and shinespark initialization share the owned motion state.
-#![forbid(unsafe_code)]
 use super::{
     effects::Host,
     pose,

@@ -1,5 +1,4 @@
 //! Mother Brain encounter palettes, fades, wall sealing, body flicker and HDMA spawns.
-#![forbid(unsafe_code)]
 use crate::actors::host::BossEffects;
 use crate::actors::layouts::EnemyBase;
 use crate::actors::mother_brain::{MotherBrainBody, MotherBrainBrain};

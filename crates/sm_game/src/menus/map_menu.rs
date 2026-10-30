@@ -226,7 +226,6 @@ fn open_area_window<H: Host + ?Sized>(game: &mut H) {
         menu_tilemap::upload(2048, 0x7e4000, 1, false, game);
     }
 }
-#[forbid(unsafe_code)]
 fn choose_area<H: Host + ?Sized>(game: &mut H) {
     let mut keys = game.observed_inputs().pressed as i16;
     'handle_action: {
@@ -291,7 +290,6 @@ fn next_area(a: u16) -> u16 {
     }
     result
 }
-#[forbid(unsafe_code)]
 fn select_area<H: Host + ?Sized>(game: &mut H) {
     crate::menu!(game.MenuIndex += 1);
     if word!(game.ENABLE_DEBUG) == 0 {
@@ -751,7 +749,6 @@ const SCROLL_SPEEDS: [u16; 32] = [
 ];
 
 /// Advance the shared file-select/pause-map scroll, with RAM as its only state.
-#[forbid(unsafe_code)]
 pub fn scroll<H: Host + ?Sized>(game: &mut H) {
     // Preserve the dispatch table's bounds failure before touching scroll state.
     let direction = [0, 1, 2, 3, 4][usize::from(word!(game.MAP_SCROLLING_DIRECTION))];

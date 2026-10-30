@@ -7,7 +7,6 @@
 //! -`179` in the original decompilation; the names now come from the bank
 //! log. The functions run from `cinematic_function`; the compat dispatch keeps
 //! their ids.
-#![forbid(unsafe_code)]
 use crate::cinematic::{
     capture_cinematic_palette, clear_cinematic_background, clear_cinematic_colors,
     clear_cinematic_sprites, compose_cinematic_palette, fade_cinematic_colors,

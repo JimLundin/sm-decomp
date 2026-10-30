@@ -1,5 +1,4 @@
 //! Gameplay sprite allocation, animation and ordered drawing on the shared Session.
-#![forbid(unsafe_code)]
 use crate::{
     session::{Point, Session},
     sprite_effect_host::{Host, SpriteMember},

@@ -9,7 +9,6 @@
 //! function in its `function` word; the views below name the slot words over
 //! the same RAM bytes as `KraidLayout`. The pause and unpause hooks are in
 //! `kraid_pause`.
-#![forbid(unsafe_code)]
 use crate::actors::boss_lease::{BossLease, BossState};
 use crate::actors::deaths::Deaths as _;
 use crate::actors::host::BossEffects as _;

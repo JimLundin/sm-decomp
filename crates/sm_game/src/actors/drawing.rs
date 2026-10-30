@@ -1,5 +1,4 @@
 //! Layer-ordered actor scene contribution; presentation changes do not own collision.
-#![forbid(unsafe_code)]
 use crate::geometry::Point;
 use crate::player_projectiles::access::Store;
 use crate::{

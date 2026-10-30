@@ -1,7 +1,6 @@
 //! Fune and namihe, the wall-mounted fire spitters (bank $A8:959D-$A8:97B3):
 //! a fune spits on a timer, a namihe when Samus comes into its vertical range.
 //! The saved instruction list pointers word remains RAM-authoritative.
-#![forbid(unsafe_code)]
 use crate::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::actors::api::{Axis, player_within};
 use crate::actors::host::{ActorLease, ActorRuntime as _, LeaseActors};

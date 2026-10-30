@@ -1,5 +1,4 @@
 //! Projectile launch records, animation and trail markers on the owned Session.
-#![forbid(unsafe_code)]
 use super::{Host, content};
 use crate::projectile_initialization::Initialization;
 use crate::shot;

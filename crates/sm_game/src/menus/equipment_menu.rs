@@ -1,5 +1,4 @@
 //! Equipment selection, item toggling and mutually exclusive beam controls.
-#![forbid(unsafe_code)]
 use super::menu_tilemap;
 use super::prelude::*;
 use crate::imported::{Imported, load, word as table_word};

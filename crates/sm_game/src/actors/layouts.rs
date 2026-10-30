@@ -1,5 +1,4 @@
 //! Byte-compatible enemy slot layouts over $7E:0F78.
-#![forbid(unsafe_code)]
 // Enemy overlays share byte-compatible layouts; named aliases identify their users.
 // Field numbers and explicit padding retain their original SNES RAM offsets.
 macro_rules! enemy_layout {

@@ -1,5 +1,4 @@
 //! X-ray background capture, hidden-block overlay and restoration.
-#![forbid(unsafe_code)]
 use crate::display_refresh::enqueue_readback;
 use crate::hdma::HdmaObject;
 use crate::player_transitions::xray::BlendPhase;

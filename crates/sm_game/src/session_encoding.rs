@@ -1,5 +1,4 @@
 //! Sole byte-compatible projection of the migrated aggregate and shared continuations.
-#![forbid(unsafe_code)]
 use crate::player_transitions::state as transition_state;
 use crate::ram::{word_arrays as arrays, words as ram};
 use crate::room_entry::{effects::AssetSlot, world::WorldBinding};

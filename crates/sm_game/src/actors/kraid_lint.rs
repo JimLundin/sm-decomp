@@ -1,6 +1,5 @@
 //! Kraid's lint, the belly spikes Kraid fires at Samus: its collision with
 //! Samus against the lint hitbox (bank $A7:B96A).
-#![forbid(unsafe_code)]
 use crate::actors::layouts::KraidLayout as Kraid;
 use crate::cartridge::native_record;
 use crate::constants::enemy_properties::K_ENEMY_PROPS_TANGIBLE;

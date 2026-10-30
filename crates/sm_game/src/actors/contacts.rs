@@ -1,5 +1,4 @@
 //! Ordered contact scans with owned actors and separately captured live content.
-#![forbid(unsafe_code)]
 use {
     crate::actors::{
         access::{AccessMode, ActorAccess, ActorKey},

@@ -1,5 +1,4 @@
 //! Movement-specific pose normalization without legacy memory access.
-#![forbid(unsafe_code)]
 use super::{
     content::TransitionTable,
     effects::Host,

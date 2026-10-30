@@ -1,5 +1,4 @@
 //! Transition actions share collision, jump and palette algorithms.
-#![forbid(unsafe_code)]
 use super::{
     effects::{BounceFault, GrappleTransition, Host},
     jump, landing, pose,

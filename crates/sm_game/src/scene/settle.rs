@@ -1,5 +1,4 @@
 //! Source beam event order for the late display interval.
-#![forbid(unsafe_code)]
 
 /// The retained native adapter owns its backend. The portable G adapter owns
 /// mutable display/IRQ/room state; neither adapter is a presentation consumer.

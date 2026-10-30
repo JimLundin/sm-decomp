@@ -1,6 +1,5 @@
 //! Palette transitions over the Session-owned current and target colours and
 //! fade cursor (`Visuals::palette_fade`), read and stored through the projection.
-#![forbid(unsafe_code)]
 use crate::projection;
 use crate::ram::RamHost;
 use crate::visual_state::PaletteFade;

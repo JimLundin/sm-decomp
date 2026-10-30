@@ -1,5 +1,4 @@
 //! Common actor combat over the owned Session; compatibility calls end every borrow.
-#![forbid(unsafe_code)]
 use crate::actors::state::Actor;
 use crate::geometry::Point;
 use {

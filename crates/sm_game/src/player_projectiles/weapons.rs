@@ -1,5 +1,4 @@
 //! Beam input, creation and initial collision over ordinary projectile state.
-#![forbid(unsafe_code)]
 use super::host::{Host, PaletteEffect};
 use super::motion::Flight;
 use crate::{

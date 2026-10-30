@@ -1,5 +1,4 @@
 //! Animated-tile execution over the shared visual Session.
-#![forbid(unsafe_code)]
 use crate::{
     progress_flags,
     session::Session,

@@ -1,5 +1,4 @@
 //! Prepared HDMA definitions and exact bindings to their current source owner.
-#![forbid(unsafe_code)]
 
 use super::{
     records::AssetId,

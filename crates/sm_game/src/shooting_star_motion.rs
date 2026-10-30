@@ -1,5 +1,4 @@
 //! Shooting-star motion and drawing for the ending's star field.
-#![forbid(unsafe_code)]
 use crate::imported::word as table_word;
 use crate::menus::host::Host;
 use crate::ram::words::{OAM_NEXT_PTR, SHOOTING_STARS_ENABLED};

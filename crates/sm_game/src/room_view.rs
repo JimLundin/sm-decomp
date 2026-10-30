@@ -9,7 +9,6 @@
 //! projection while one is installed, the byte image otherwise, with the same
 //! bytes and order as the named words they replace. Lease code uses
 //! `session().room` directly.
-#![forbid(unsafe_code)]
 use crate::ram::CompatibilityRam;
 
 /// The owned room words this view covers.

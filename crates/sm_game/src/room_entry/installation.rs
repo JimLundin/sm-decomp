@@ -1,5 +1,4 @@
 //! Ordered room installation with live captures and shared state.
-#![forbid(unsafe_code)]
 use super::{
     content::{
         AssetSource, DoorScalar, HeaderScalar, LoadMode, ScrollDefinition, SharedAsset,

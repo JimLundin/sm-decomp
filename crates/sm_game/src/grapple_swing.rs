@@ -1,5 +1,4 @@
 //! Grapple controller, swing placement, rope-length changes and swept block contact.
-#![forbid(unsafe_code)]
 use crate::actors::{self, api as actor_api};
 use crate::combat_rules::GrappleOutcome;
 use crate::constants::{buttons::*, samus_movement::*, samus_poses::*};

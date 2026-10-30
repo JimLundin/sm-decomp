@@ -7,7 +7,6 @@
 //! `GameState_37_CeresGoesBoomWithSamus_`, `GameState_39_EndingAndCredits_`,
 //! `MaybeHandleCinematicBgObjects`, `CallCinematicSprInstr` and
 //! `SetSomeStuffForSpriteObject_7`/`9` in the original decompilation.
-#![forbid(unsafe_code)]
 use crate::cinematic::{advance_cinematic_coordinate, advance_cinematic_fade, set_fixed_color};
 use crate::cinematic_host::Host;
 use crate::cinematic_objects::CinematicObjects;

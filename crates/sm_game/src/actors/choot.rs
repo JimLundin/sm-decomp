@@ -1,6 +1,5 @@
 //! Choot, which waits for Samus, jumps and drifts down in a falling pattern
 //! (bank $A2:D80C-$A2:E17A). Was `rising_falling`.
-#![forbid(unsafe_code)]
 use crate::actors::access::AccessMode::Native;
 use crate::actors::api::{self, Axis};
 use crate::actors::combat::{self, current_slot};

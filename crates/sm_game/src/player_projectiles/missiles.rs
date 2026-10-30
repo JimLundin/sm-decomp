@@ -1,5 +1,4 @@
 //! Missile creation and live weapon selection over ordinary state.
-#![forbid(unsafe_code)]
 use super::host::Host;
 use crate::shot;
 use crate::{

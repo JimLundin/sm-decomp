@@ -92,7 +92,6 @@ pub fn advance_credit_roll<H: crate::menus::host::Host + ?Sized>(game: &mut H) -
 }
 
 // Credits retain native pre-instruction and failure order before their tilemap.
-#[forbid(unsafe_code)]
 pub fn advance_credits<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     if word!(game.CREDITS_ENABLED) & 0x8000 != 0 {
         if word!(game.CREDITS_INSTR_LIST) != 0 {

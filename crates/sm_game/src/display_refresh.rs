@@ -1,6 +1,5 @@
 //! Ordered display refresh and the NMI request/completion handshake, plus the
 //! gameplay and pause display setup, graphics loads and tilemap queues.
-#![forbid(unsafe_code)]
 use crate::constants::bank_60::{
     ADDR_UNK_6053E0, ADDR_UNK_605000, ADDR_UNK_605400, ADDR_UNK_605880,
 };

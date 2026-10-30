@@ -1,5 +1,4 @@
 //! Select and publish a Metroid room's persistent population-clear event.
-#![forbid(unsafe_code)]
 use super::super::access::*;
 use super::super::host::*;
 use crate::progress as flags;

@@ -1,4 +1,3 @@
-#![forbid(unsafe_code)]
 use super::access::enemy;
 use super::coordinates::{block_index, calculate_coordinates};
 use super::host::*;

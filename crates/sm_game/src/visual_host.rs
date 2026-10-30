@@ -1,5 +1,4 @@
 //! Proposed visual integration seams; no fake implementation or gameplay stubs.
-#![forbid(unsafe_code)]
 use crate::{
     session_access::SessionAccess,
     visual_state::{PaletteBuffer, Upload},

@@ -3,7 +3,6 @@
 //!
 //! Was `FakeKraid` in the original decompilation (bank $A6:9A58-$A6:9C50). Its
 //! view names the slot words over the same RAM bytes as `EnemyLayout40`.
-#![forbid(unsafe_code)]
 use crate::actors::host::{Death, Shot, Slopes};
 use crate::actors::layouts::{EnemyBase, EnemyLayout40};
 use crate::constants::enemy_properties::K_ENEMY_PROPS_DISABLE_SAMUS_COLL;

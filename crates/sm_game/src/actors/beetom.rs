@@ -1,5 +1,4 @@
 //! Beetom crawls, hops and lunges at Samus, then drains her until shaken off ($A8:B65E-$A8:C142).
-#![forbid(unsafe_code)]
 use crate::actors::access::AccessMode::Native;
 use crate::actors::api::{self, Axis, DeathHandling, MovementResult::Blocked, ShotHandling};
 use crate::actors::combat::{self, current_slot};

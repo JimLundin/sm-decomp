@@ -1,5 +1,4 @@
 //! Encapsulated display construction and committed component persistence.
-#![forbid(unsafe_code)]
 
 use std::sync::Arc;
 

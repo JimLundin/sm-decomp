@@ -1,5 +1,4 @@
 //! Ordered scanline interrupt decisions over the actual owned display authority.
-#![forbid(unsafe_code)]
 
 use super::state::{DisplayError, DisplayState};
 

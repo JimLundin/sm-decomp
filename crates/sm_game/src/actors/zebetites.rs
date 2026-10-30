@@ -4,7 +4,6 @@
 //!
 //! Was `Zebetites` in the original decompilation (bank $A6:FB72-$A6:FD54). Its
 //! view names the slot words over the same RAM bytes as `EnemyLayout8`.
-#![forbid(unsafe_code)]
 use crate::actors::host::{Death, Shot};
 use crate::actors::layouts::{EnemyBase, EnemyLayout8};
 use crate::constants::enemy_properties::K_ENEMY_PROPS_DELETED;

@@ -1,6 +1,5 @@
 //! Fireflea, the glowing bug of Norfair's dark rooms, which flies a circle or
 //! a vertical line; killing one darkens the room (bank $A3:8C0F-$A3:8EA5).
-#![forbid(unsafe_code)]
 use crate::actors::host::{ActorHost, ActorRuntime, Death, Shot};
 use crate::actors::layouts::part_view;
 use crate::ram::RawRam as _;
