@@ -104,13 +104,13 @@ impl MenuRuntime for Game {
         crate::game::music::QueueMusic_Delayed8(track, self)
     }
     fn spawn_hdma(&mut self, bank: u8, args: &crate::types::SpawnHdmaObject_Args) -> u16 {
-        visual_runtime::spawn_hdma(bank, args, self)
+        sm_game::hdma_objects::spawn_hdma_owned(bank, args, self)
     }
     fn rtl_unreachable(&mut self) -> bool {
         crate::rtl::Unreachable(self)
     }
     fn spawn_bg3_scroll(&mut self) {
-        visual_runtime::spawn_bg3_scroll(self)
+        sm_game::hdma_objects::spawn_bg3_scroll_owned(self)
     }
     fn spawn_animated_tiles(&mut self, definition: u16) {
         crate::game::animated_tiles::spawn(definition, self)

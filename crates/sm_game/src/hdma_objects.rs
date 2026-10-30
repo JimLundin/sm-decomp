@@ -47,8 +47,18 @@ use crate::cinematic::set_fixed_color;
 use crate::menus::prelude::SpawnHdmaObject_Args;
 use sm_data::title_screen::GRADIENT_ADDRESS;
 
+/// Spawn the BG3 scroll object in the last slot, through the host.
 pub fn spawn_bg3_scroll<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    spawn_hdma_last(0x88, &SpawnHdmaObject_Args::new(0x43, 0x11, 0xd8d0), game)
+    crate::menus::host::MenuRuntime::spawn_bg3_scroll(game)
+}
+
+/// The host's BG3 scroll spawn on the owned table.
+pub fn spawn_bg3_scroll_owned<H>(game: &mut H)
+where
+    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
+{
+    let words = hdma_definition(&SpawnHdmaObject_Args::new(0x43, 0x11, 0xd8d0));
+    place_hdma(Some(5), 0x88, |index| words[index], game);
 }
 
 fn hdma_definition(args: &SpawnHdmaObject_Args) -> [u16; 2] {
@@ -58,58 +68,94 @@ fn hdma_definition(args: &SpawnHdmaObject_Args) -> [u16; 2] {
     ]
 }
 
-// Allocation publishes RAM first and checks the owned backend at each register byte.
+/// Spawn an HDMA object through the host; returns its slot.
 pub fn spawn_hdma<H: crate::menus::host::Host + ?Sized>(
     bank: u8,
     args: &SpawnHdmaObject_Args,
     game: &mut H,
 ) -> u16 {
+    crate::menus::host::MenuRuntime::spawn_hdma(game, bank, args)
+}
+
+/// The host's HDMA spawn on the owned table.
+pub fn spawn_hdma_owned<H>(bank: u8, args: &SpawnHdmaObject_Args, game: &mut H) -> u16
+where
+    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
+{
     let words = hdma_definition(args);
     spawn_hdma_words(bank, |index| words[index], game)
 }
 
-pub fn spawn_hdma_last<H: crate::menus::host::Host + ?Sized>(
-    bank: u8,
-    args: &SpawnHdmaObject_Args,
-    game: &mut H,
-) {
-    let words = hdma_definition(args);
-    initialize_hdma(5, bank, |index| words[index], game);
+pub fn spawn_hdma_words<H>(bank: u8, read_word: impl Fn(usize) -> u16, game: &mut H) -> u16
+where
+    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
+{
+    place_hdma(None, bank, read_word, game)
 }
 
-pub fn spawn_hdma_words<H: crate::menus::host::Host + ?Sized>(
-    bank: u8,
-    read_word: impl Fn(usize) -> u16,
-    game: &mut H,
-) -> u16 {
-    match (0..6).find(|&slot| checked_word!(game.hdma_object_channels_bitmask[slot]) == 0) {
-        Some(slot) => initialize_hdma(slot, bank, read_word, game),
-        None => u16::MAX,
+/// Run `action` on the HDMA table: the owned Session's under one lease when
+/// one can open, otherwise a copy decoded from RAM and stored back if
+/// `action` changed it.
+fn with_table<H, T>(game: &mut H, action: impl FnOnce(&mut crate::hdma::HdmaObjects) -> T) -> T
+where
+    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
+{
+    use crate::session_access::SessionAccess;
+    if game.runtime_admissible() {
+        action(&mut game.runtime().session_mut().hdma)
+    } else {
+        let mut bridge = Bridged::load(game);
+        let before = bridge.objects;
+        let result = action(&mut bridge.objects);
+        if bridge.objects != before {
+            bridge.store();
+        }
+        result
     }
 }
 
-fn initialize_hdma<H: crate::menus::host::Host + ?Sized>(
-    slot: usize,
+/// Initialize object `slot`, or the first free one, from bank `bank`'s
+/// definition, then its channel's DMA control and target registers once
+/// the table is published. Returns the byte slot, or `u16::MAX` when every
+/// object is busy.
+fn place_hdma<H>(
+    slot: Option<usize>,
     bank: u8,
     read_word: impl Fn(usize) -> u16,
     game: &mut H,
-) -> u16 {
-    checked_word!(game.hdma_object_pre_instructions[slot] = 0x84b8);
-    checked_word!(game.hdma_object_pre_instruction_bank[slot] = 0x88);
-    // A native definition reads its program here, and control only after publication.
-    checked_word!(game.hdma_object_instruction_list_pointers[slot] = read_word(1));
-    checked_word!(game.hdma_object_instruction_timers[slot] = 1);
-    for field in [0x1908, 0x1914, 0x1920, 0x192c, 0x1938] {
-        checked_word!(game, field + 2 * slot; = 0);
-    }
-    checked_word!(game.hdma_object_channels_bitmask[slot] = 4 << slot);
-    let channel = 0x20 + 0x10 * slot as u16;
-    checked_word!(game.hdma_object_bank_slot[slot] = (u16::from(bank) << 8) | channel);
+) -> u16
+where
+    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
+{
+    let placed = with_table(game, |table| {
+        let slot = slot.or_else(|| (0..6).find(|&slot| table.objects[slot].channels == 0))?;
+        let object = &mut table.objects[slot];
+        object.pre_instruction = 0x84b8;
+        object.pre_instruction_bank = 0x88;
+        object.instruction_list = read_word(1);
+        object.instruction_timer = 1;
+        object.timer = 0;
+        object.a = 0;
+        object.b = 0;
+        object.c = 0;
+        object.d = 0;
+        object.channels = 4 << slot;
+        object.bank_slot = (u16::from(bank) << 8) | channel(slot);
+        Some(slot)
+    });
+    let Some(slot) = placed else {
+        return u16::MAX;
+    };
     let control = read_word(0);
-    let register = DMAP0 as u16 + channel;
+    let register = DMAP0 as u16 + channel(slot);
     game.write_dma_register(register, control as u8);
     game.write_dma_register(register + 1, (control >> 8) as u8);
     2 * slot as u16
+}
+
+/// Object `slot`'s DMA channel register offset.
+fn channel(slot: usize) -> u16 {
+    0x20 + 0x10 * slot as u16
 }
 
 pub fn set_hdma_enabled<H: crate::menus::host::Host + ?Sized>(enabled: bool, game: &mut H) {
