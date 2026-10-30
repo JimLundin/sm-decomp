@@ -21,7 +21,8 @@
 //! door camera steps and the viewport fill) runs on the owned-Session view
 //! and reads and writes these fields directly. Layer 1's whole position is
 //! also the external camera observation (`ExternalInputs::camera_x/_y`), so
-//! its stores go through [`set_layer1`], which publishes through the view's
+//! its stores go through [`set_layer1`] (and BG1's x offset, another
+//! observation, through [`set_bg1_offset`]), which publish through the view's
 //! byte path and refreshes that observation in the original order.
 //! The remaining writers are compatibility code that still names the RAM
 //! words: bank code (cinematics, boss shakes, the demo loader, Ceres) and
@@ -63,5 +64,11 @@ pub fn set_layer1(h: &mut (impl SessionRam + ?Sized), axis: usize, value: u16) {
     h.write_word_le(value, LAYER1 + 4 * axis);
 }
 
-/// RAM address of layer 1's whole x position.
+/// Store BG1's offset on `axis`. The x offset is also an observation.
+pub fn set_bg1_offset(h: &mut (impl SessionRam + ?Sized), axis: usize, value: u16) {
+    h.write_word_le(value, BG1_OFFSET + 2 * axis);
+}
+
+/// RAM addresses of layer 1's whole x position and BG1's x offset.
 pub const LAYER1: usize = 0x911;
+pub const BG1_OFFSET: usize = 0x91d;

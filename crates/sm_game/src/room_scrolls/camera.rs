@@ -1,7 +1,8 @@
 //! Camera limits and scroll-cell rules; live callers retain RAM authority.
 #![forbid(unsafe_code)]
 use super::Host;
-use crate::ram::{word, words as W};
+use crate::camera::set_layer1;
+use crate::ram::word;
 use crate::room_entry::content::Axis;
 
 // Multiplication uses the width's low byte. A column may include a full-word
@@ -17,18 +18,18 @@ pub fn auto_x<H: Host + ?Sized>(game: &mut H) {
     if word!(game.time_is_frozen_flag) != 0 {
         return;
     }
-    let previous = word!(game.layer1_x_pos);
+    let previous = game.session().room.camera.layer1[0];
     if previous & 0x8000 != 0 {
-        word!(game.layer1_x_pos = 0);
+        set_layer1(game, 0, 0);
     }
     let limit = word!(game.room_width_in_scrolls)
         .wrapping_sub(1)
         .swap_bytes();
-    if limit < word!(game.layer1_x_pos) {
-        word!(game.layer1_x_pos = limit);
+    if limit < game.session().room.camera.layer1[0] {
+        set_layer1(game, 0, limit);
     }
-    let position = word!(game.layer1_x_pos);
-    let row = (word!(game.layer1_y_pos).wrapping_add(128) >> 8) as u8;
+    let position = game.session().room.camera.layer1[0];
+    let row = (game.session().room.camera.layer1[1].wrapping_add(128) >> 8) as u8;
     let column = position >> 8;
     let next = if camera_scroll_value(column, row, game) != 0 {
         if camera_scroll_value(column + 1, row, game) != 0 {
@@ -63,45 +64,54 @@ pub fn auto_x<H: Host + ?Sized>(game: &mut H) {
             next & 0xff00
         }
     };
-    word!(game.layer1_x_pos = next);
+    set_layer1(game, 0, next);
 }
 pub fn trigger_right<H: Host + ?Sized>(game: &mut H) {
     crate::probe::hit("camera.trigger_right");
-    let previous = word!(game.layer1_x_pos);
-    if (word!(game.ideal_layer1_xpos).wrapping_sub(word!(game.layer1_x_pos)) as i16) < 0 {
-        word! {game; layer1_x_pos = word!(game.ideal_layer1_xpos); layer1_x_subpos = 0; }
+    let previous = game.session().room.camera.layer1[0];
+    if (game.session().room.camera.ideal_layer1[0]
+        .wrapping_sub(game.session().room.camera.layer1[0]) as i16)
+        < 0
+    {
+        set_layer1(game, 0, game.session().room.camera.ideal_layer1[0]);
+        game.session_mut().room.camera.layer1_fraction[0] = 0;
     }
     let limit = word!(game.room_width_in_scrolls)
         .wrapping_sub(1)
         .swap_bytes();
-    let position = word!(game.layer1_x_pos);
+    let position = game.session().room.camera.layer1[0];
     if limit < position {
-        word!(game.layer1_x_pos = limit);
+        set_layer1(game, 0, limit);
     } else if camera_scroll_value(
         (position >> 8) + 1,
-        (word!(game.layer1_y_pos).wrapping_add(128) >> 8) as u8,
+        (game.session().room.camera.layer1[1].wrapping_add(128) >> 8) as u8,
         game,
     ) == 0
     {
         let boundary = position & 0xff00;
-        word!(
-            game.layer1_x_pos =
-                retreat_to_boundary(previous, word!(game.absolute_moved_last_frame_x), boundary)
+        set_layer1(
+            game,
+            0,
+            retreat_to_boundary(previous, word!(game.absolute_moved_last_frame_x), boundary),
         );
     }
 }
 pub fn trigger_left<H: Host + ?Sized>(game: &mut H) {
     crate::probe::hit("camera.trigger_left");
-    let previous = word!(game.layer1_x_pos);
-    if (word!(game.layer1_x_pos).wrapping_sub(word!(game.ideal_layer1_xpos)) as i16) < 0 {
-        word! {game; layer1_x_pos = word!(game.ideal_layer1_xpos); layer1_x_subpos = 0; }
+    let previous = game.session().room.camera.layer1[0];
+    if (game.session().room.camera.layer1[0]
+        .wrapping_sub(game.session().room.camera.ideal_layer1[0]) as i16)
+        < 0
+    {
+        set_layer1(game, 0, game.session().room.camera.ideal_layer1[0]);
+        game.session_mut().room.camera.layer1_fraction[0] = 0;
     }
-    let position = word!(game.layer1_x_pos);
+    let position = game.session().room.camera.layer1[0];
     if position & 0x8000 != 0 {
-        word!(game.layer1_x_pos = 0);
+        set_layer1(game, 0, 0);
     } else if camera_scroll_value(
         position >> 8,
-        (word!(game.layer1_y_pos).wrapping_add(128) >> 8) as u8,
+        (game.session().room.camera.layer1[1].wrapping_add(128) >> 8) as u8,
         game,
     ) == 0
     {
@@ -109,7 +119,7 @@ pub fn trigger_left<H: Host + ?Sized>(game: &mut H) {
         let next = previous
             .wrapping_add(word!(game.absolute_moved_last_frame_x))
             .wrapping_add(2);
-        word!(game.layer1_x_pos = next.min(boundary));
+        set_layer1(game, 0, next.min(boundary));
     }
 }
 pub fn auto_y<H: Host + ?Sized>(game: &mut H) {
@@ -117,24 +127,29 @@ pub fn auto_y<H: Host + ?Sized>(game: &mut H) {
     if word!(game.time_is_frozen_flag) != 0 {
         return;
     }
-    let column = word!(game.layer1_x_pos).wrapping_add(128) >> 8;
-    let padding = if camera_scroll_value(column, (word!(game.layer1_y_pos) >> 8) as u8, game) == 1 {
+    let column = game.session().room.camera.layer1[0].wrapping_add(128) >> 8;
+    let padding = if camera_scroll_value(
+        column,
+        (game.session().room.camera.layer1[1] >> 8) as u8,
+        game,
+    ) == 1
+    {
         0u16
     } else {
         31
     };
-    let previous = word!(game.layer1_y_pos);
+    let previous = game.session().room.camera.layer1[1];
     if previous & 0x8000 != 0 {
-        word!(game.layer1_y_pos = 0);
+        set_layer1(game, 1, 0);
     }
     let limit = word!(game.room_height_in_scrolls)
         .wrapping_sub(1)
         .swap_bytes()
         .wrapping_add(padding);
-    if limit < word!(game.layer1_y_pos) {
-        word!(game.layer1_y_pos = limit);
+    if limit < game.session().room.camera.layer1[1] {
+        set_layer1(game, 1, limit);
     }
-    let position = word!(game.layer1_y_pos);
+    let position = game.session().room.camera.layer1[1];
     let row = (position >> 8) as u8;
     if camera_scroll_value(column, row, game) == 0 {
         let boundary = (position & 0xff00).wrapping_add(256);
@@ -148,7 +163,7 @@ pub fn auto_y<H: Host + ?Sized>(game: &mut H) {
         } else {
             next & 0xff00
         };
-        word!(game.layer1_y_pos = next);
+        set_layer1(game, 1, next);
     } else if camera_scroll_value(
         column.wrapping_add(word!(game.room_width_in_scrolls)),
         row,
@@ -167,24 +182,28 @@ pub fn auto_y<H: Host + ?Sized>(game: &mut H) {
             } else {
                 (next & 0xff00).wrapping_add(256)
             };
-            word!(game.layer1_y_pos = next);
+            set_layer1(game, 1, next);
         }
     }
 }
 pub fn trigger_down<H: Host + ?Sized>(game: &mut H) {
     crate::probe::hit("camera.trigger_down");
-    let previous = word!(game.layer1_y_pos);
-    let column = word!(game.layer1_x_pos).wrapping_add(128) >> 8;
-    let row = (word!(game.layer1_y_pos) >> 8) as u8;
+    let previous = game.session().room.camera.layer1[1];
+    let column = game.session().room.camera.layer1[0].wrapping_add(128) >> 8;
+    let row = (game.session().room.camera.layer1[1] >> 8) as u8;
     let padding = if camera_scroll_value(column, row, game) == 1 {
         0u16
     } else {
         31
     };
-    if (word!(game.ideal_layer1_ypos).wrapping_sub(word!(game.layer1_y_pos)) as i16) < 0 {
-        word! {game; layer1_y_pos = word!(game.ideal_layer1_ypos); layer1_y_subpos = 0; }
+    if (game.session().room.camera.ideal_layer1[1]
+        .wrapping_sub(game.session().room.camera.layer1[1]) as i16)
+        < 0
+    {
+        set_layer1(game, 1, game.session().room.camera.ideal_layer1[1]);
+        game.session_mut().room.camera.layer1_fraction[1] = 0;
     }
-    let position = word!(game.layer1_y_pos);
+    let position = game.session().room.camera.layer1[1];
     let mut boundary = word!(game.room_height_in_scrolls)
         .wrapping_sub(1)
         .swap_bytes()
@@ -200,23 +219,28 @@ pub fn trigger_down<H: Host + ?Sized>(game: &mut H) {
                 boundary < position
             }
     {
-        word!(
-            game.layer1_y_pos =
-                retreat_to_boundary(previous, word!(game.absolute_moved_last_frame_y), boundary)
+        set_layer1(
+            game,
+            1,
+            retreat_to_boundary(previous, word!(game.absolute_moved_last_frame_y), boundary),
         );
     }
 }
 pub fn trigger_up<H: Host + ?Sized>(game: &mut H) {
     crate::probe::hit("camera.trigger_up");
-    let previous = word!(game.layer1_y_pos);
-    if (word!(game.layer1_y_pos).wrapping_sub(word!(game.ideal_layer1_ypos)) as i16) < 0 {
-        word! {game; layer1_y_pos = word!(game.ideal_layer1_ypos); layer1_y_subpos = 0; }
+    let previous = game.session().room.camera.layer1[1];
+    if (game.session().room.camera.layer1[1]
+        .wrapping_sub(game.session().room.camera.ideal_layer1[1]) as i16)
+        < 0
+    {
+        set_layer1(game, 1, game.session().room.camera.ideal_layer1[1]);
+        game.session_mut().room.camera.layer1_fraction[1] = 0;
     }
-    let position = word!(game.layer1_y_pos);
+    let position = game.session().room.camera.layer1[1];
     if position & 0x8000 != 0 {
-        word!(game.layer1_y_pos = 0);
+        set_layer1(game, 1, 0);
     } else if camera_scroll_value(
-        word!(game.layer1_x_pos).wrapping_add(128) >> 8,
+        game.session().room.camera.layer1[0].wrapping_add(128) >> 8,
         (position >> 8) as u8,
         game,
     ) == 0
@@ -225,7 +249,7 @@ pub fn trigger_up<H: Host + ?Sized>(game: &mut H) {
         let next = previous
             .wrapping_add(word!(game.absolute_moved_last_frame_y))
             .wrapping_add(2);
-        word!(game.layer1_y_pos = next.min(boundary));
+        set_layer1(game, 1, next.min(boundary));
     }
 }
 fn retreat_to_boundary(previous: u16, distance: u16, boundary: u16) -> u16 {
@@ -238,43 +262,60 @@ fn retreat_to_boundary(previous: u16, distance: u16, boundary: u16) -> u16 {
 }
 
 pub fn layer2_position<H: Host + ?Sized>(axis: Axis, game: &mut H) -> u8 {
-    let (control, source, destination) = match axis {
-        Axis::X => (0x91b, W::layer1_x_pos, W::layer2_x_pos),
-        Axis::Y => (0x91c, W::layer1_y_pos, W::layer2_y_pos),
+    let (control, index) = match axis {
+        Axis::X => (0x91b, 0),
+        Axis::Y => (0x91c, 1),
     };
     let scale = game.byte(control);
     if scale == 1 {
         return 1;
     }
-    let position = word!(@read game, source);
+    let position = game.session().room.camera.layer1[index];
     let position = if scale == 0 {
         position
     } else {
         (u32::from(position) * u32::from(scale & 0xfe) >> 8) as u16
     };
-    word!(@write game, destination, position);
+    game.session_mut().room.camera.layer2[index] = position;
     0
 }
 
 pub fn calculate_scrolls<H: Host + ?Sized>(game: &mut H) {
     {
-        word!(game.reg_BG1HOFS = (word!(game.bg1_x_offset)).wrapping_add(word!(game.layer1_x_pos)));
-        word!(game.reg_BG1VOFS = (word!(game.bg1_y_offset)).wrapping_add(word!(game.layer1_y_pos)));
-        word!(game.reg_BG2HOFS = (word!(game.bg2_x_scroll)).wrapping_add(word!(game.layer2_x_pos)));
-        word!(game.reg_BG2VOFS = (word!(game.bg2_y_scroll)).wrapping_add(word!(game.layer2_y_pos)));
+        word!(
+            game.reg_BG1HOFS = (game.session().room.camera.bg1_offset[0])
+                .wrapping_add(game.session().room.camera.layer1[0])
+        );
+        word!(
+            game.reg_BG1VOFS = (game.session().room.camera.bg1_offset[1])
+                .wrapping_add(game.session().room.camera.layer1[1])
+        );
+        word!(
+            game.reg_BG2HOFS = (game.session().room.camera.bg2_scroll[0])
+                .wrapping_add(game.session().room.camera.layer2[0])
+        );
+        word!(
+            game.reg_BG2VOFS = (game.session().room.camera.bg2_scroll[1])
+                .wrapping_add(game.session().room.camera.layer2[1])
+        );
     }
 }
 
 pub fn calculate_blocks<H: Host + ?Sized>(game: &mut H) {
     {
         crate::probe::hit("camera.blocks");
-        word! {game; bg1_x_block = word!(game.reg_BG1HOFS) >> 4;
-        bg2_x_block = word!(game.reg_BG2HOFS) >> 4;
-        layer1_x_block = ((word!(game.layer1_x_pos) as i16) >> 4) as u16;
-        layer2_x_block = ((word!(game.layer2_x_pos) as i16) >> 4) as u16;
-        bg1_y_block = word!(game.reg_BG1VOFS) >> 4; bg2_y_block = word!(game.reg_BG2VOFS) >> 4;
-        layer1_y_block = ((word!(game.layer1_y_pos) as i16) >> 4) as u16;
-        layer2_y_block = ((word!(game.layer2_y_pos) as i16) >> 4) as u16; }
+        game.session_mut().room.camera.bg1_block[0] = word!(game.reg_BG1HOFS) >> 4;
+        game.session_mut().room.camera.bg2_block[0] = word!(game.reg_BG2HOFS) >> 4;
+        game.session_mut().room.camera.layer1_block[0] =
+            ((game.session().room.camera.layer1[0] as i16) >> 4) as u16;
+        game.session_mut().room.camera.layer2_block[0] =
+            ((game.session().room.camera.layer2[0] as i16) >> 4) as u16;
+        game.session_mut().room.camera.bg1_block[1] = word!(game.reg_BG1VOFS) >> 4;
+        game.session_mut().room.camera.bg2_block[1] = word!(game.reg_BG2VOFS) >> 4;
+        game.session_mut().room.camera.layer1_block[1] =
+            ((game.session().room.camera.layer1[1] as i16) >> 4) as u16;
+        game.session_mut().room.camera.layer2_block[1] =
+            ((game.session().room.camera.layer2[1] as i16) >> 4) as u16;
     }
 }
 
@@ -284,11 +325,11 @@ pub fn debug_position<H: Host + ?Sized>(game: &mut H) {
             word!(game.debug_saveload_scrollpos_toggle += 1);
         }
         if word!(game.debug_saveload_scrollpos_toggle) & 1 != 0 {
-            word!(game.layer1_x_pos = word!(game.debug_saved_xscroll));
-            word!(game.layer1_y_pos = word!(game.debug_saved_yscroll));
+            set_layer1(game, 0, word!(game.debug_saved_xscroll));
+            set_layer1(game, 1, word!(game.debug_saved_yscroll));
         } else {
-            word!(game.debug_saved_xscroll = word!(game.layer1_x_pos));
-            word!(game.debug_saved_yscroll = word!(game.layer1_y_pos));
+            word!(game.debug_saved_xscroll = game.session().room.camera.layer1[0]);
+            word!(game.debug_saved_yscroll = game.session().room.camera.layer1[1]);
         };
     }
 }

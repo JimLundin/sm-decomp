@@ -120,6 +120,7 @@ pub fn apply<H: Host + ?Sized>(address: u32, game: &mut H) -> bool {
 }
 
 // Camera effects keep their legacy publication order until layer state is owned.
+use crate::camera::set_layer1;
 use crate::menus::prelude::do_until;
 use crate::player_collision::operations::Axis;
 use crate::ram::{word, words as fields};
@@ -141,18 +142,34 @@ fn add_native_motion<H: Host + ?Sized>(high: usize, low: usize, amount: u32, gam
 pub fn advance_camera<H: Host + ?Sized>(game: &mut H) {
     if word!(game.slow_grabble_scrolling_flag) != 0 {
         if (game.player_x() & 0x8000) == 0 {
-            let mut v0: u16 = (game.player_x()).wrapping_sub(word!(game.layer1_x_pos));
-            if game.player_x() < word!(game.layer1_x_pos) || v0 < 0x60 {
-                word!(game.layer1_x_pos -= 3);
+            let mut v0: u16 = (game.player_x()).wrapping_sub(game.session().room.camera.layer1[0]);
+            if game.player_x() < game.session().room.camera.layer1[0] || v0 < 0x60 {
+                set_layer1(
+                    game,
+                    0,
+                    game.session().room.camera.layer1[0].wrapping_sub(3),
+                );
             } else if v0 >= 0xa0 {
-                word!(game.layer1_x_pos += 3);
+                set_layer1(
+                    game,
+                    0,
+                    game.session().room.camera.layer1[0].wrapping_add(3),
+                );
             }
             if (game.player_y() & 0x8000) == 0 {
-                let v1: u16 = (game.player_y()).wrapping_sub(word!(game.layer1_y_pos));
-                if game.player_y() < word!(game.layer1_y_pos) || v1 < 0x70 {
-                    word!(game.layer1_y_pos -= 3);
+                let v1: u16 = (game.player_y()).wrapping_sub(game.session().room.camera.layer1[1]);
+                if game.player_y() < game.session().room.camera.layer1[1] || v1 < 0x70 {
+                    set_layer1(
+                        game,
+                        1,
+                        game.session().room.camera.layer1[1].wrapping_sub(3),
+                    );
                 } else if v1 >= 0x90 {
-                    word!(game.layer1_y_pos += 3);
+                    set_layer1(
+                        game,
+                        1,
+                        game.session().room.camera.layer1[1].wrapping_add(3),
+                    );
                 }
             }
         }
@@ -167,8 +184,8 @@ pub fn advance_camera<H: Host + ?Sized>(game: &mut H) {
     match word!(game.scrolling_finished_hook) {
         0 => {}
         0x9589 => {
-            if word!(game.layer1_y_pos) <= 0x1d0 {
-                word!(game.layer1_y_pos = 464);
+            if game.session().room.camera.layer1[1] <= 0x1d0 {
+                set_layer1(game, 1, 464);
             }
         }
         _ => {
@@ -180,22 +197,38 @@ pub fn advance_camera<H: Host + ?Sized>(game: &mut H) {
     game.set_previous_player_y(game.player_y());
     game.set_previous_player_y_fraction(game.player_y_fraction());
 }
+// Layer 1's fraction and whole position form one native split motion, as
+// add_native_motion: native loads of fraction then whole, stores likewise.
+fn add_layer1_motion<H: Host + ?Sized>(axis: usize, amount: u32, game: &mut H) {
+    let camera = game.session().room.camera;
+    let low = u16::from_ne_bytes(camera.layer1_fraction[axis].to_le_bytes());
+    let high = u16::from_ne_bytes(camera.layer1[axis].to_le_bytes());
+    let next = (u32::from(low) | (u32::from(high) << 16)).wrapping_add(amount);
+    game.session_mut().room.camera.layer1_fraction[axis] =
+        u16::from_le_bytes((next as u16).to_ne_bytes());
+    set_layer1(
+        game,
+        axis,
+        u16::from_le_bytes(((next >> 16) as u16).to_ne_bytes()),
+    );
+}
+
 macro_rules! chase_ideal_layer_position {
     (
-        $game:ident, $ideal_position:ident, $position:ident, $subposition:ident,
+        $game:ident, $axis:expr,
         $movement:ident, $movement_fraction:ident, $scroll_negative:path,
         $scroll_positive:path $(,)?
     ) => {
-        if word!($game.$ideal_position) != word!($game.$position) {
-            let negative = (word!($game.$ideal_position) as i16)
-                .wrapping_sub(word!($game.$position) as i16)
-                < 0;
+        let camera = $game.session().room.camera;
+        if camera.ideal_layer1[$axis] != camera.layer1[$axis] {
+            let negative =
+                (camera.ideal_layer1[$axis] as i16).wrapping_sub(camera.layer1[$axis] as i16) < 0;
             let amount = if negative {
                 -(words!(i32, $game.$movement, $movement_fraction)) as u32
             } else {
                 words!($game.$movement, $movement_fraction)
             };
-            add_native_motion(fields::$position, fields::$subposition, amount, $game);
+            add_layer1_motion($axis, amount, $game);
             if negative {
                 $scroll_negative($game);
             } else {
@@ -222,16 +255,12 @@ fn follow_x<H: Host + ?Sized>(game: &mut H) {
     } else {
         &kSamus_HandleScroll_X_FaceLeft
     };
-    word!(
-        game.ideal_layer1_xpos = game
-            .player_x()
-            .wrapping_sub(distances[(word!(game.camera_distance_index) >> 1) as usize])
-    );
+    game.session_mut().room.camera.ideal_layer1[0] = game
+        .player_x()
+        .wrapping_sub(distances[(word!(game.camera_distance_index) >> 1) as usize]);
     chase_ideal_layer_position!(
         game,
-        ideal_layer1_xpos,
-        layer1_x_pos,
-        layer1_x_subpos,
+        0,
         absolute_moved_last_frame_x,
         absolute_moved_last_frame_x_fract,
         trigger_left,
@@ -243,17 +272,15 @@ fn follow_y<H: Host + ?Sized>(game: &mut H) {
         auto_y(game);
     } else {
         if word!(game.samus_y_dir) == 1 {
-            word!(
-                game.ideal_layer1_ypos = (game.player_y()).wrapping_sub(word!(game.down_scroller))
-            );
+            game.session_mut().room.camera.ideal_layer1[1] =
+                (game.player_y()).wrapping_sub(word!(game.down_scroller));
         } else {
-            word!(game.ideal_layer1_ypos = (game.player_y()).wrapping_sub(word!(game.up_scroller)));
+            game.session_mut().room.camera.ideal_layer1[1] =
+                (game.player_y()).wrapping_sub(word!(game.up_scroller));
         }
         chase_ideal_layer_position!(
             game,
-            ideal_layer1_ypos,
-            layer1_y_pos,
-            layer1_y_subpos,
+            1,
             absolute_moved_last_frame_y,
             absolute_moved_last_frame_y_fract,
             trigger_up,
@@ -269,23 +296,23 @@ pub fn fill_viewport<H: Host + ?Sized>(game: &mut H) {
     let mut v2: i32 = 0;
     do_until! { v3 == 16 ;
         let mut v3: i32 = v2;
-        word!(game.blocks_to_update_x_block = word!(game.layer1_x_block));
-        word!(game.blocks_to_update_y_block = word!(game.layer1_y_block));
-        word!(game.vram_blocks_to_update_x_block = word!(game.bg1_x_block));
-        word!(game.vram_blocks_to_update_y_block = word!(game.bg1_y_block));
+        word!(game.blocks_to_update_x_block = game.session().room.camera.layer1_block[0]);
+        word!(game.blocks_to_update_y_block = game.session().room.camera.layer1_block[1]);
+        word!(game.vram_blocks_to_update_x_block = game.session().room.camera.bg1_block[0]);
+        word!(game.vram_blocks_to_update_y_block = game.session().room.camera.bg1_block[1]);
         game.queue_scrolling_tiles(0x0, ScrollingDmaLayout::Column);
         if game.byte(0x91b) & 1 == 0 {
-            word!(game.blocks_to_update_x_block = word!(game.layer2_x_block));
-            word!(game.blocks_to_update_y_block = word!(game.layer2_y_block));
-            word!(game.vram_blocks_to_update_x_block = word!(game.bg2_x_block));
-            word!(game.vram_blocks_to_update_y_block = word!(game.bg2_y_block));
+            word!(game.blocks_to_update_x_block = game.session().room.camera.layer2_block[0]);
+            word!(game.blocks_to_update_y_block = game.session().room.camera.layer2_block[1]);
+            word!(game.vram_blocks_to_update_x_block = game.session().room.camera.bg2_block[0]);
+            word!(game.vram_blocks_to_update_y_block = game.session().room.camera.bg2_block[1]);
             game.queue_scrolling_tiles(0x1c, ScrollingDmaLayout::Column);
         }
         game.flush_tilemaps();
-        word!(game.layer1_x_block += 1);
-        word!(game.bg1_x_block += 1);
-        word!(game.layer2_x_block += 1);
-        word!(game.bg2_x_block += 1);
+        game.session_mut().room.camera.layer1_block[0] = game.session().room.camera.layer1_block[0].wrapping_add(1);
+        game.session_mut().room.camera.bg1_block[0] = game.session().room.camera.bg1_block[0].wrapping_add(1);
+        game.session_mut().room.camera.layer2_block[0] = game.session().room.camera.layer2_block[0].wrapping_add(1);
+        game.session_mut().room.camera.bg2_block[0] = game.session().room.camera.bg2_block[0].wrapping_add(1);
         v2 += 1;
     }
 }
@@ -297,18 +324,24 @@ pub fn update_map<H: Host + ?Sized>(game: &mut H) {
 
 pub fn update_scrolls<H: Host + ?Sized>(game: &mut H) {
     if word!(game.time_is_frozen_flag) == 0 {
-        word!(game.reg_BG1HOFS = (word!(game.bg1_x_offset)).wrapping_add(word!(game.layer1_x_pos)));
-        word!(game.reg_BG1VOFS = (word!(game.bg1_y_offset)).wrapping_add(word!(game.layer1_y_pos)));
+        word!(
+            game.reg_BG1HOFS = (game.session().room.camera.bg1_offset[0])
+                .wrapping_add(game.session().room.camera.layer1[0])
+        );
+        word!(
+            game.reg_BG1VOFS = (game.session().room.camera.bg1_offset[1])
+                .wrapping_add(game.session().room.camera.layer1[1])
+        );
         if layer2_position(CameraAxis::X, game) == 0 {
             word!(
-                game.reg_BG2HOFS =
-                    (word!(game.bg2_x_scroll)).wrapping_add(word!(game.layer2_x_pos))
+                game.reg_BG2HOFS = (game.session().room.camera.bg2_scroll[0])
+                    .wrapping_add(game.session().room.camera.layer2[0])
             );
         }
         if layer2_position(CameraAxis::Y, game) == 0 {
             word!(
-                game.reg_BG2VOFS =
-                    (word!(game.bg2_y_scroll)).wrapping_add(word!(game.layer2_y_pos))
+                game.reg_BG2VOFS = (game.session().room.camera.bg2_scroll[1])
+                    .wrapping_add(game.session().room.camera.layer2[1])
             );
         }
         update_backgrounds(game);
@@ -326,21 +359,36 @@ pub fn update_backgrounds<H: Host + ?Sized>(game: &mut H) {
             if layer != 0 && game.byte(0x91b + axis / 2) & 1 != 0 {
                 continue;
             }
-            let current = fields::layer1_x_block + layer + axis;
-            let previous = fields::previous_layer1_x_block + layer + axis;
-            let negative = (word!(@read game, current) as i16)
-                .wrapping_sub(word!(@read game, previous) as i16)
-                < 0;
-            if word!(@read game, current) != word!(@read game, previous) {
-                word!(@write game, previous, word!(@read game, current));
+            // Layer 0 is layer 1, layer 4 is layer 2; axis 0 is x, 2 is y.
+            let (index, second) = (axis / 2, layer != 0);
+            let camera = game.session().room.camera;
+            let (current, previous) = if second {
+                (camera.layer2_block, camera.previous_layer2_block)
+            } else {
+                (camera.layer1_block, camera.previous_layer1_block)
+            };
+            let negative = (current[index] as i16).wrapping_sub(previous[index] as i16) < 0;
+            if current[index] != previous[index] {
+                let camera = &mut game.session_mut().room.camera;
+                if second {
+                    camera.previous_layer2_block[index] = current[index];
+                } else {
+                    camera.previous_layer1_block[index] = current[index];
+                }
                 // Columns retain edges 0/16; rows retain edges 1/15.
                 let row = axis as i32 / 2;
                 let edge = if negative { row } else { 16 - row };
                 for (coordinate, edge) in [(axis, edge), (axis ^ 2, 0)] {
+                    let camera = game.session().room.camera;
+                    let (block, bg) = if second {
+                        (camera.layer2_block, camera.bg2_block)
+                    } else {
+                        (camera.layer1_block, camera.bg1_block)
+                    };
                     word!(@write game, fields::blocks_to_update_x_block + coordinate,
-                        (word!(@read game, fields::layer1_x_block + layer + coordinate) as i32 + edge) as u16);
+                        (block[coordinate / 2] as i32 + edge) as u16);
                     word!(@write game, fields::vram_blocks_to_update_x_block + coordinate,
-                        (word!(@read game, fields::bg1_x_block + layer + coordinate) as i32 + edge) as u16);
+                        (bg[coordinate / 2] as i32 + edge) as u16);
                 }
                 game.queue_scrolling_tiles(parameter, layout);
             }
