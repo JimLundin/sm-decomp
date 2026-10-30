@@ -1135,12 +1135,6 @@ crate::game::callback_dispatch! {
             #[cfg(sm_verify_dll)]
             crate::game::actors::reference_population_animation::dispatch_noop(game);
         }];
-        10664233 => [{
-                    crate::game::rinka::frozen(crate::ram_map::word!(game.cur_enemy_index), game);
-                }];
-        10664275 => [{
-                    crate::game::rinka::power_bomb(crate::ram_map::word!(game.cur_enemy_index), game);
-                }];
         10676698 => [mechanisms::initialize(Kind::TimedShutter, game)];
         10676918 => [mechanisms::update(Kind::TimedShutter, game)];
         10677765 => [mechanisms::initialize(Kind::Platform, game)];
@@ -1253,14 +1247,6 @@ crate::game::callback_dispatch! {
             let phase = crate::game::gunship::advance(game);
             actor_species_pre_instruction(phase, game);
         }];
-        10663426 => [crate::game::rinka::initialize(game)];
-        10663876 => [{
-            if !crate::game::rinka::advance(game) {
-                crate::rtl::Unreachable(game);
-            }
-        }];
-        10664263 => [crate::game::rinka::contact(game)];
-        10664269 => [crate::game::rinka::shot(game)];
         10664909 => [crate::game::rio::initialize(game)];
         10664931 => [{
             game.next_random();
@@ -1433,18 +1419,6 @@ crate::game::callback_dispatch! {
         11128778 => [sm_game::actors::baby_metroid_cutscene::instruction_go_to_cfb8(k, j)];
         11139360 => [sm_game::actors::baby_metroid_encounter::instruction_go_to_f90e(k, j)]; 11139382 => [sm_game::actors::baby_metroid_encounter::instruction_go_to_f924(k, j)];
         11139472 => [sm_game::actors::baby_metroid_encounter::instruction_go_to_f93a(k, j)];
-        10664371 => [{
-            crate::game::rinka::hide(k, false, game);
-            j
-        }];
-        10664381 => [{
-            crate::game::rinka::hide(k, true, game);
-            j
-        }];
-        10664391 => [{
-            crate::game::rinka::launch(k, game);
-            j
-        }];
         10664899 => [{
             crate::game::rio::instruction_finished(game);
             j

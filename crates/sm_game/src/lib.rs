@@ -181,6 +181,7 @@ pub mod actors {
     pub mod reflec;
     pub mod ridley;
     pub mod ridley_tables;
+    pub mod rinka;
     pub mod roach;
     pub mod scene;
     pub mod scheduling;

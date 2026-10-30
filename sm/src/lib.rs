@@ -405,7 +405,6 @@ pub mod game {
     pub(crate) mod maridia_turtles;
     pub(crate) mod mini_crocomire;
     pub use sm_game::progress as progress_flags;
-    pub(crate) mod rinka;
     pub(crate) mod room_backgrounds;
     pub mod room_entry;
     pub(crate) mod room_mechanisms;

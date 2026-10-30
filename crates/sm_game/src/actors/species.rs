@@ -15,8 +15,8 @@ use crate::actors::{
     draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator,
     escape_critters, etecoon, evir, fire_arc, fireflea, fune, gamet, geega, kago, kraid,
     magdollite, metroid, mini_kraid, mochtroid, morph_ball_eye, oum, phantoon, phantoon_actions,
-    puyo, reflec, ridley, roach, shaktool, sidehopper, skree, skultera, space_pirates, statues,
-    torizo, tripper, yapping_maw, zeb, zebetites, zoa,
+    puyo, reflec, ridley, rinka, roach, shaktool, sidehopper, skree, skultera, space_pirates,
+    statues, torizo, tripper, yapping_maw, zeb, zebetites, zoa,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -536,6 +536,15 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
                 game.unknown_routine();
             }
         }
+        10663426 => rinka::initialize(game),
+        10663876 => {
+            if !rinka::main_ai(game) {
+                game.unknown_routine();
+            }
+        }
+        10664233 => rinka::frozen(game),
+        10664263 | 10664269 => rinka::react(ea == 10664269, game),
+        10664275 => rinka::power_bomb(game),
         10669268 => oum::initialize(game),
         10669331 => oum::main_ai(game),
         10670988 => oum::touch(false, game),
@@ -786,6 +795,7 @@ pub fn instruction<H: InstructionHost>(
         10722422 | 10722444 => tripper::set_x_movement(true, j, game),
         10725992 => sidehopper::queue_sound(j, game),
         10657941 => cacatac::resume_moving(k, j, game),
+        10664371 | 10664381 | 10664391 => rinka::instruction(ea, k, j, game),
         10669235 | 10669246 | 10669257 => oum::instruction(ea, j, game),
         10659181 | 10659185 => cacatac::owtch::set_function_index(ea, k, j, game),
         10742437 => metroid::draining_sound(j, game),
