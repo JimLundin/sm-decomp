@@ -56,12 +56,12 @@ static ROOM_SHAKES: [u16; 144] = [
 ];
 
 pub fn finish_frame<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.earthquake_timer) != 0
+    if crate::room_view::effects(game).earthquake_timer != 0
         && word!(game.time_is_frozen_flag) == 0
-        && (word!(game.earthquake_type) as i16).wrapping_sub(36) < 0
+        && (crate::room_view::effects(game).earthquake_kind as i16).wrapping_sub(36) < 0
     {
-        let index = usize::from(word!(game.earthquake_type)) * 4;
-        let direction = if word!(game.earthquake_timer) & 2 != 0 {
+        let index = usize::from(crate::room_view::effects(game).earthquake_kind) * 4;
+        let direction = if crate::room_view::effects(game).earthquake_timer & 2 != 0 {
             u16::MAX
         } else {
             1
@@ -77,8 +77,14 @@ pub fn finish_frame<H: Host + ?Sized>(game: &mut H) {
         {
             checked_word!(game, register; += ROOM_SHAKES[index + offset].wrapping_mul(direction));
         }
-        word!(game.earthquake_timer -= 1);
-        if (word!(game.earthquake_type) as i16).wrapping_sub(18) >= 0 {
+        crate::room_view::set_effect(
+            game,
+            crate::room_view::EffectWord::EarthquakeTimer,
+            crate::room_view::effects(game)
+                .earthquake_timer
+                .wrapping_sub(1),
+        );
+        if (crate::room_view::effects(game).earthquake_kind as i16).wrapping_sub(18) >= 0 {
             crate::actors::scheduling::shake_active_enemies(&mut game.runtime());
         }
     }

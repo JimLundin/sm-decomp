@@ -1,4 +1,5 @@
-//! The room's area and geometry for code on the compatibility host.
+//! The room's area, geometry, effect and placement words for code on the
+//! compatibility host.
 //!
 //! `Session::room` owns these words (`area`, `width`, `height`,
 //! `scroll_width`, `scroll_height`); `session_encoding` projects them and
@@ -21,6 +22,48 @@ pub struct RoomGeometry {
     pub height: u16,
     pub scroll_width: u16,
     pub scroll_height: u16,
+}
+
+/// The room's effect and placement words: the earthquake, the Tourian
+/// entrance statue and the room's map position and elevator door.
+#[derive(Clone, Copy, Default, Debug, PartialEq, Eq)]
+pub struct RoomEffects {
+    pub earthquake_kind: u16,
+    pub earthquake_timer: u16,
+    pub statue_animation: u16,
+    pub statue_finished: u16,
+    pub map_x: u16,
+    pub map_y: u16,
+    pub elevator_properties: u16,
+}
+
+/// An effect or placement word, by its Session field.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum EffectWord {
+    /// `feedback.earthquake_kind` (`earthquake_type`).
+    EarthquakeKind,
+    /// `feedback.earthquake_timer`.
+    EarthquakeTimer,
+    /// `mechanisms.statue_animation` (`tourian_entrance_statue_animstate`).
+    StatueAnimation,
+    /// `mechanisms.statue_finished` (`tourian_entrance_statue_finished`).
+    StatueFinished,
+    /// `room.entry.map_x` (`room_x_coordinate_on_map`).
+    MapX,
+    /// `room.entry.map_y` (`room_y_coordinate_on_map`).
+    MapY,
+    /// `room.entry.elevator_properties` (`elevator_door_properties_orientation`).
+    ElevatorProperties,
+}
+
+/// The effect and placement words as the host's projection holds them.
+pub fn effects<H: CompatibilityRam + ?Sized>(h: &H) -> RoomEffects {
+    crate::session_encoding::room_effects(&crate::projection::reader(h))
+}
+
+/// Store `value` to `word`, low byte then high, as the named word store did.
+pub fn set_effect<H: CompatibilityRam + ?Sized>(h: &mut H, word: EffectWord, value: u16) {
+    crate::projection::set_word(h, crate::session_encoding::room_effect_address(word), value);
 }
 
 /// A room word, by its Session field.

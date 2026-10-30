@@ -95,8 +95,12 @@ pub fn shake_room_with_sound<H: crate::menus::host::Host + ?Sized>(kind: u16, ga
         );
         word!(game.earthquake_sfx_index = index.wrapping_add(4));
     }
-    word!(game.earthquake_type = kind);
-    word!(game.earthquake_timer |= 0x20);
+    crate::room_view::set_effect(game, crate::room_view::EffectWord::EarthquakeKind, kind);
+    crate::room_view::set_effect(
+        game,
+        crate::room_view::EffectWord::EarthquakeTimer,
+        crate::room_view::effects(game).earthquake_timer | (0x20),
+    );
 }
 
 pub fn initialize_tourian_statue<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
@@ -128,8 +132,12 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + ?Sized>(
     match phase {
         Waiting => {
             if (6..=9).all(|event| game.event_happened(event) & 1 != 0) {
-                word!(game.tourian_entrance_statue_animstate |= 0x10);
-                if word!(game.tourian_entrance_statue_animstate) & 0x8000 == 0 {
+                crate::room_view::set_effect(
+                    game,
+                    crate::room_view::EffectWord::StatueAnimation,
+                    crate::room_view::effects(game).statue_animation | (0x10),
+                );
+                if crate::room_view::effects(game).statue_animation & 0x8000 == 0 {
                     object.c = 300;
                     advance_statue_program(object);
                 }
@@ -161,7 +169,11 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + ?Sized>(
             }
         }
         Finished => {
-            word!(game.tourian_entrance_statue_finished = 0x8000);
+            crate::room_view::set_effect(
+                game,
+                crate::room_view::EffectWord::StatueFinished,
+                0x8000,
+            );
             crate::word_transfers!(game, ascending, 1; native(0xcd20) <- value(514));
         }
     }

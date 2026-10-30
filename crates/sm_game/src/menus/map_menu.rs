@@ -1028,10 +1028,10 @@ pub fn draw_player_marker<H: Host + ?Sized>(game: &mut H) {
     let sprite = advance_marker(game);
     crate::sprite_output::menu(
         sprite,
-        (8 * (i32::from(word!(game.room_x_coordinate_on_map))
+        (8 * (i32::from(crate::room_view::effects(game).map_x)
             + i32::from(game.ram().read_byte(crate::ram::words::samus_x_pos + 1)))
             - i32::from(scroll!(game.Bg1H))) as u16,
-        (8 * (i32::from(word!(game.room_y_coordinate_on_map))
+        (8 * (i32::from(crate::room_view::effects(game).map_y)
             + i32::from(game.ram().read_byte(crate::ram::words::samus_y_pos + 1))
             + 1)
             - i32::from(scroll!(game.Bg1V))) as u16,
@@ -1094,7 +1094,7 @@ pub fn center_map<H: Host + ?Sized>(vertical_center: u16, game: &mut H) {
             - 128) as u16
     );
     let x = (8
-        * (i32::from(word!(game.room_x_coordinate_on_map))
+        * (i32::from(crate::room_view::effects(game).map_x)
             + i32::from((game.player_x() & 0xff00) >> 8))
         - i32::from(scroll!(game.Bg1H))) as u16;
     let right = 224i16.wrapping_sub(x as i16);
@@ -1112,7 +1112,7 @@ pub fn center_map<H: Host + ?Sized>(vertical_center: u16, game: &mut H) {
     let aligned = (i32::from(vertical_center) - i32::from(middle)) & 0xfff8;
     scroll!(game.Bg1V = (-aligned) as u16);
     let y = (8
-        * (i32::from(word!(game.room_y_coordinate_on_map))
+        * (i32::from(crate::room_view::effects(game).map_y)
             + i32::from(game.ram().read_byte(crate::ram::words::samus_y_pos + 1))
             + 1)
         + aligned) as u16;

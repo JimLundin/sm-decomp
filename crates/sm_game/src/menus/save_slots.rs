@@ -215,7 +215,7 @@ pub fn save_area_map<H: Host + ?Sized>(game: &mut H) {
 pub fn mark_elevator<H: Host + ?Sized>(game: &mut H) {
     let table =
         crate::menu_lists::elevator_door_table(game, crate::room_view::current(game).area as isize);
-    let displacement = 4 * ((word!(game.elevator_door_properties_orientation) & 15) as i32 - 1);
+    let displacement = 4 * ((crate::room_view::effects(game).elevator_properties & 15) as i32 - 1);
     let cursor = (i32::from(table) + displacement) as u16;
     // Retain the diagnostic before capturing its native allocation.
     if cursor & 0x8000 == 0 {

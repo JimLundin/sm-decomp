@@ -53,6 +53,35 @@ pub fn room_geometry_addresses() -> [usize; 5] {
     room_geometry_words!((room), visit, (&));
     addresses
 }
+// The room's effect and placement words (`crate::room_view::RoomEffects`),
+// in `room_view::EffectWord` order. scalar_words projects each from the
+// Session field named in its `EffectWord` documentation.
+const ROOM_EFFECT_WORDS: [usize; 7] = [
+    ram::earthquake_type,
+    ram::earthquake_timer,
+    ram::tourian_entrance_statue_animstate,
+    ram::tourian_entrance_statue_finished,
+    ram::room_x_coordinate_on_map,
+    ram::room_y_coordinate_on_map,
+    ram::elevator_door_properties_orientation,
+];
+/// The room's effect and placement words as `bytes` encode them.
+pub fn room_effects(bytes: &impl Fn(usize) -> u8) -> crate::room_view::RoomEffects {
+    let [w0, w1, w2, w3, w4, w5, w6] = ROOM_EFFECT_WORDS.map(|at| read(bytes, at));
+    crate::room_view::RoomEffects {
+        earthquake_kind: w0,
+        earthquake_timer: w1,
+        statue_animation: w2,
+        statue_finished: w3,
+        map_x: w4,
+        map_y: w5,
+        elevator_properties: w6,
+    }
+}
+/// The address of `word`.
+pub fn room_effect_address(word: crate::room_view::EffectWord) -> usize {
+    ROOM_EFFECT_WORDS[word as usize]
+}
 // The game flow (`crate::flow`), in RAM order.
 macro_rules! flow_words {
     (($c:expr), $f:ident, ($($borrow:tt)*)) => {
@@ -377,13 +406,13 @@ macro_rules! scalar_words {
         }
         $f(0x0d0c,$($borrow)* $s.player.grapple_endpoint.y);
         $f(0x0791,$($borrow)* $s.room.entry.direction);
-        $f(0x0793,$($borrow)* $s.room.entry.elevator_properties);
+        $f(ram::elevator_door_properties_orientation,$($borrow)* $s.room.entry.elevator_properties);
         $f(0x0795,$($borrow)* $s.room.entry.elevator_interlock);
         $f(0x0797,$($borrow)* $s.room.entry.enemy_interlock);
         $f(0x0799,$($borrow)* $s.room.entry.elevator_direction);
         $f(0x079d,$($borrow)* $s.room.entry.room_index);
-        $f(0x07a1,$($borrow)* $s.room.entry.map_x);
-        $f(0x07a3,$($borrow)* $s.room.entry.map_y);
+        $f(ram::room_x_coordinate_on_map,$($borrow)* $s.room.entry.map_x);
+        $f(ram::room_y_coordinate_on_map,$($borrow)* $s.room.entry.map_y);
         $f(0x07ad,$($borrow)* $s.room.entry.scroll_up);
         $f(0x07af,$($borrow)* $s.room.entry.scroll_down);
         $f(0x07b1,$($borrow)* $s.room.entry.previous_cre);
@@ -449,7 +478,7 @@ macro_rules! scalar_words {
         $f(0xdf0,$($borrow)* presentation_ref!($s, palette, ($($borrow)*)).suit_red_green);
         $f(0xdf2,$($borrow)* presentation_ref!($s, palette, ($($borrow)*)).crystal_flash_delay);
         $f(0xa4e,$($borrow)* $s.player.periodic_damage_fraction);
-        $f(0x1e6f,$($borrow)* $s.mechanisms.statue_animation);
+        $f(ram::tourian_entrance_statue_animstate,$($borrow)* $s.mechanisms.statue_animation);
         for index in 0..256 {
             $f(0xc000+index*2,$($borrow)* presentation_ref!($s, visual, ($($borrow)*)).colors[index]);
         }

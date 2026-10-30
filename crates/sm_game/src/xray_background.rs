@@ -349,7 +349,7 @@ pub fn reveal_room_block<R: SessionView>(a: u16, k: u16, j: u16, game: &mut R) {
 }
 pub fn capture_bg2_right<H: Host + ?Sized>(game: &mut H) {
     if can_reveal_blocks(game) {
-        if game.runtime().session().feedback.earthquake_timer != 0 {
+        if crate::room_view::effects(game).earthquake_timer != 0 {
             let camera = camera(game);
             word! { game;
                 reg_BG1HOFS = camera.layer1[0].wrapping_add(camera.bg1_offset[0]);
