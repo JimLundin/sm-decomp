@@ -157,6 +157,11 @@ pub trait ActorLease:
     fn write_slice_le(&mut self, at: usize, value: u16);
     /// The loaded cartridge image, when one is loaded.
     fn leased_image(&self) -> Option<sm_data::cartridge::RomImage>;
+    /// The native word at `at`, through the session projection.
+    fn lease_native_word(&self, at: usize) -> u16;
+    /// The native record at `address` in `bank`, after the original
+    /// low-window diagnostic.
+    fn lease_native_record(&mut self, bank: u8, address: u16) -> sm_data::cartridge::RomRecord;
 }
 
 /// A host that can lease its actors; each `lease` is one original `Runtime`.

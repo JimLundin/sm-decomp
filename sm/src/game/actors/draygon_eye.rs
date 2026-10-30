@@ -28,6 +28,14 @@ impl ActorLease for Runtime<'_> {
     fn leased_image(&self) -> Option<crate::rom::RomImage> {
         Runtime::loaded_image(self)
     }
+
+    fn lease_native_word(&self, at: usize) -> u16 {
+        Runtime::native_word(self, at)
+    }
+
+    fn lease_native_record(&mut self, bank: u8, address: u16) -> crate::rom::RomRecord {
+        Runtime::legacy_native_record(self, bank, address)
+    }
 }
 
 impl LeaseActors for Game {

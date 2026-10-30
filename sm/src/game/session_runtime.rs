@@ -1143,7 +1143,7 @@ crate::game::callback_dispatch! {
             }
         }];
         11048675 => crate::game::actors::fune::initialize;
-        11048752 => crate::game::actors::fune::advance;
+        11048752 => crate::game::actors::fune::main_ai;
         11049710 => crate::game::actors::wrecked_ship_ghost::initialize;
         11049788 => crate::game::actors::wrecked_ship_ghost::advance;
         11051537 => [{

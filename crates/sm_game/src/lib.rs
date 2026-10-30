@@ -125,6 +125,7 @@ pub mod actors {
     #[doc(hidden)] // Shared verification world for compat and detached checks.
     pub mod fire_arc;
     pub mod fixture;
+    pub mod fune;
     pub mod host;
     pub mod identity;
     pub mod kraid;
