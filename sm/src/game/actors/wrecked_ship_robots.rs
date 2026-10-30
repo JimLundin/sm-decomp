@@ -263,8 +263,7 @@ pub(crate) fn instruction(
         11063441 => {
             let actor = runtime.resolve_actor(selected(&runtime), Native);
             let (x, y) = (actor.x.whole, actor.y.whole);
-            let (camera_x, camera_y) =
-                (runtime.word(W::layer1_x_pos), runtime.word(W::layer1_y_pos));
+            let [camera_x, camera_y] = runtime.session().room.camera.layer1;
             if (camera_x.wrapping_sub(x) as i16) < 0
                 && (camera_x.wrapping_add(256).wrapping_sub(x) as i16) >= 0
                 && (camera_y.wrapping_sub(y) as i16) < 0

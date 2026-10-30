@@ -495,10 +495,9 @@ unsafe fn random_explosions(mask: u16, check_tile: bool, h: &mut Runtime<'_>) {
             return;
         }
         let random = h.foreign(|game| game.next_random());
-        let x = h.word(ram::layer1_x_pos).wrapping_add(random as u8 as u16);
-        let y = h
-            .word(ram::layer1_y_pos)
-            .wrapping_add(u16::from(random.to_ne_bytes()[1]));
+        let layer1 = h.session().room.camera.layer1;
+        let x = layer1[0].wrapping_add(random as u8 as u16);
+        let y = layer1[1].wrapping_add(u16::from(random.to_ne_bytes()[1]));
         if check_tile {
             let row =
                 u16::from((y >> 4) as u8) * u16::from(h.word(ram::room_width_in_blocks) as u8);
@@ -556,10 +555,11 @@ unsafe fn advance_script(address: u32, h: &mut Runtime<'_>) {
             }
             9421286 => {
                 if h.byte(0xcd2b) == 2
-                    && h.word(ram::layer1_y_pos) < 0x500
-                    && h.word(ram::layer1_x_pos) < 0x380
+                    && h.session().room.camera.layer1[1] < 0x500
+                    && h.session().room.camera.layer1[0] < 0x380
                 {
-                    h.write_word_le(h.word(ram::layer1_x_pos) + 3, ram::layer1_x_pos);
+                    let x = h.session().room.camera.layer1[0] + 3;
+                    sm_game::camera::set_layer1(h, 0, x);
                 }
             }
             9429686 => advance_elevatube(h),

@@ -23,7 +23,7 @@ impl Graphics for Runtime<'_> {
         self.write_slice_le(0xd0 + usize::from(cursor) + 5, value);
     }
     fn set_bg2_y_scroll(&mut self, value: u16) {
-        self.write_slice_le(W::bg2_y_scroll, value);
+        self.session_mut().room.camera.bg2_scroll[1] = value;
     }
     fn set_palette_buffer(&mut self, index: isize, value: u16) {
         if let Ok(slot) = usize::try_from(index) {

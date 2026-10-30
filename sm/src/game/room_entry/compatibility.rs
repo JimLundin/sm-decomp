@@ -23,20 +23,29 @@ fn external_address(field: ExternalField) -> usize {
         ExternalField::LoadingLowByte => 0x5f7,
     }
 }
-fn camera_address(field: CameraField) -> usize {
+/// The owned camera word a room-entry camera field names, or the BG scroll
+/// register mirror it names.
+enum CameraWord {
+    Layer1(usize),
+    Layer2(usize),
+    Bg1Offset(usize),
+    Bg2Scroll(usize),
+    Mirror(usize),
+}
+fn camera_word(field: CameraField) -> CameraWord {
     match field {
-        CameraField::Layer1X => W::layer1_x_pos,
-        CameraField::Layer1Y => W::layer1_y_pos,
-        CameraField::Layer2X => W::layer2_x_pos,
-        CameraField::Layer2Y => W::layer2_y_pos,
-        CameraField::Bg1XOffset => W::bg1_x_offset,
-        CameraField::Bg1YOffset => W::bg1_y_offset,
-        CameraField::Bg2XScroll => W::bg2_x_scroll,
-        CameraField::Bg2YScroll => W::bg2_y_scroll,
-        CameraField::Bg1Hofs => W::reg_BG1HOFS,
-        CameraField::Bg1Vofs => W::reg_BG1VOFS,
-        CameraField::Bg2Hofs => W::reg_BG2HOFS,
-        CameraField::Bg2Vofs => W::reg_BG2VOFS,
+        CameraField::Layer1X => CameraWord::Layer1(0),
+        CameraField::Layer1Y => CameraWord::Layer1(1),
+        CameraField::Layer2X => CameraWord::Layer2(0),
+        CameraField::Layer2Y => CameraWord::Layer2(1),
+        CameraField::Bg1XOffset => CameraWord::Bg1Offset(0),
+        CameraField::Bg1YOffset => CameraWord::Bg1Offset(1),
+        CameraField::Bg2XScroll => CameraWord::Bg2Scroll(0),
+        CameraField::Bg2YScroll => CameraWord::Bg2Scroll(1),
+        CameraField::Bg1Hofs => CameraWord::Mirror(W::reg_BG1HOFS),
+        CameraField::Bg1Vofs => CameraWord::Mirror(W::reg_BG1VOFS),
+        CameraField::Bg2Hofs => CameraWord::Mirror(W::reg_BG2HOFS),
+        CameraField::Bg2Vofs => CameraWord::Mirror(W::reg_BG2VOFS),
     }
 }
 impl EntryHost for Runtime<'_> {}
@@ -60,10 +69,25 @@ impl EntryEffects for Runtime<'_> {
         }
     }
     fn read_camera(&mut self, field: CameraField) -> u16 {
-        self.word(camera_address(field))
+        let camera = &self.session().room.camera;
+        match camera_word(field) {
+            CameraWord::Layer1(axis) => camera.layer1[axis],
+            CameraWord::Layer2(axis) => camera.layer2[axis],
+            CameraWord::Bg1Offset(axis) => camera.bg1_offset[axis],
+            CameraWord::Bg2Scroll(axis) => camera.bg2_scroll[axis],
+            CameraWord::Mirror(at) => self.word(at),
+        }
     }
     fn write_camera(&mut self, field: CameraField, value: u16) {
-        self.write_slice_le(camera_address(field), value);
+        // Layer 1 and BG1's offsets publish through the bytes: they are
+        // also the lease's camera observations.
+        match camera_word(field) {
+            CameraWord::Layer1(axis) => sm_game::camera::set_layer1(self, axis, value),
+            CameraWord::Bg1Offset(axis) => sm_game::camera::set_bg1_offset(self, axis, value),
+            CameraWord::Layer2(axis) => self.session_mut().room.camera.layer2[axis] = value,
+            CameraWord::Bg2Scroll(axis) => self.session_mut().room.camera.bg2_scroll[axis] = value,
+            CameraWord::Mirror(at) => self.write_slice_le(at, value),
+        }
     }
     fn call(&mut self, effect: LeafEffect) {
         self.foreign(|game| unsafe {
