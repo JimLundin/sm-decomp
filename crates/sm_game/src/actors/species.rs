@@ -242,7 +242,9 @@ pub fn b3_pre_instruction<H: B3Host + ?Sized>(ea: u32, k: u16, game: &mut H) {
 }
 
 /// What the AI table needs beyond its actors' own hosts.
-pub trait AiHost: B3Host + DrawHookHost + yapping_maw::Host + crocomire_reactions::Host {
+pub trait AiHost:
+    B3Host + DrawHookHost + yapping_maw::Host + crocomire_reactions::Host + space_pirates::Pirates
+{
     /// An AI routine whose arm is still in the compatibility table.
     fn native_ai(&mut self, ea: u32);
 }
@@ -308,6 +310,8 @@ pub fn ai<H: AiHost + ?Sized>(ea: u32, game: &mut H) {
         10780717 => game.shot_reaction(Shot::Finalize),
         10783322 => crocomire_reactions::initialize(game),
         10795410 => crocomire_reactions::power_bomb(game),
+        // Bank $B2: the space pirates.
+        0xb20000..=0xb2ffff => space_pirates::dispatch_ai(ea, game),
         _ => game.native_ai(ea),
     }
 }
@@ -353,7 +357,11 @@ pub fn pre_instruction<H: PreInstructionHost + ?Sized>(ea: u32, game: &mut H) {
 
 /// What the instruction table needs beyond its actors' own hosts.
 pub trait InstructionHost:
-    crocomire_reactions::Host + yapping_maw::Host + magdollite::Host + escape_critters::Host
+    crocomire_reactions::Host
+    + yapping_maw::Host
+    + magdollite::Host
+    + escape_critters::Host
+    + space_pirates::Pirates
 {
     /// An instruction whose arm is still in the compatibility table.
     fn native_instruction(&mut self, ea: u32, k: u16, j: EnemyScript) -> EnemyScript;
@@ -381,6 +389,7 @@ pub fn instruction<H: InstructionHost + ?Sized>(
         11789840 => escape_critters::move_x(k, j, game),
         11791049 => escape_critters::shift_dachora(0xfffa, j, game),
         11791063 => escape_critters::shift_dachora(6, j, game),
+        0xb20000..=0xb2ffff => space_pirates::dispatch_instruction(ea, k, j, game),
         _ => game.native_instruction(ea, k, j),
     }
 }
