@@ -454,6 +454,6 @@ const _: () = {
 
 // The beam window's local scratch layout must match the decompilation's.
 const _: () = assert!(
-    core::mem::offset_of!(sm_game::beam_windows::Ram8000_Default, var_3F)
+    core::mem::offset_of!(sm_game::beam_windows::BeamScratch, row)
         == core::mem::offset_of!(crate::types::Ram8000_Default, var_3F)
 );

@@ -436,9 +436,15 @@ impl Runtime<'_> {
         let angle = player.transitions.xray_angle;
         let width = player.demo.held;
         self.foreign(|game| {
-            crate::game::beam_windows::calculate_xray_window(
-                x, y, angle, width, offscreen, 0x9800, game,
-            )
+            let window = sm_game::beam_windows::XrayWindow {
+                x,
+                y,
+                angle,
+                width,
+                off_screen: offscreen,
+                table: 0x9800,
+            };
+            crate::game::beam_windows::calculate_xray_window(window, game)
         });
     }
 
