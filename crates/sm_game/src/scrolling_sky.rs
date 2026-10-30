@@ -5,7 +5,8 @@ use crate::menus::prelude::*;
 use crate::ram::slot;
 
 pub fn initialize_banded_sky<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    word! {game; fx_y_pos = 1248; fx_type = 6; }
+    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.surface.whole, 1248);
+    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.kind, 6);
     static UNK_88A62E: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x2, 0x12, 0xad63 as VoidP);
     static UNK_88A636: SpawnHdmaObject_Args =
         SpawnHdmaObject_Args::new(0x42, 0x11, 0xad4e as VoidP);

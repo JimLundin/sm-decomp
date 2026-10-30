@@ -436,7 +436,7 @@ pub fn finish_restore<H: Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
         game.finish_xray();
         object.channels = 0;
         game.queue_sound(0, 0xa, 6);
-        if (word!(game.fx_type) as u8) != 36 {
+        if (crate::liquid::LiquidWords::read(game).liquid.kind as u8) != 36 {
             game.ram().write_byte(0x76, 0x80);
             game.ram().write_byte(0x75, 64);
             game.ram().write_byte(0x74, 32);

@@ -159,6 +159,23 @@ impl LiquidWords {
         }
         words
     }
+    /// Store `value` to the one word `field` selects, low byte then high,
+    /// as a named word store does.
+    pub fn set(
+        ram: &mut (impl crate::ram::CompatibilityRam + ?Sized),
+        field: impl FnOnce(&mut Self) -> &mut u16,
+        value: u16,
+    ) {
+        let mut words = Self::default();
+        let target: *const u16 = field(&mut words);
+        let at = words
+            .slots()
+            .into_iter()
+            .find(|(_, word)| core::ptr::eq(&**word, target))
+            .map(|(at, _)| at)
+            .expect("liquid word");
+        crate::projection::set_word(ram, at, value);
+    }
     pub fn write(mut self, ram: &mut (impl crate::ram::CompatibilityRam + ?Sized)) {
         for (at, word) in self.slots() {
             crate::projection::set_word(ram, at, *word);

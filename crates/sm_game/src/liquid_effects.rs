@@ -12,8 +12,12 @@ pub fn initialize_acid<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     initialize_hot(addr_kAnimtiles_Acid as u16, game);
 }
 fn initialize_hot<H: crate::menus::host::Host + ?Sized>(tiles: u16, game: &mut H) {
-    word!(game.fx_rising_function_bank_88 = 0xb343);
-    word!(game.lava_acid_y_pos = word!(game.fx_base_y_pos));
+    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.rising, 0xb343);
+    crate::liquid::LiquidWords::set(
+        game,
+        |words| &mut words.liquid.lava_acid.whole,
+        crate::liquid::LiquidWords::read(game).height,
+    );
     static SURFACE: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x12, 0xc3e1);
     static BACKGROUND: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x10, 0xc3f0);
     game.spawn_hdma(0x88, &SURFACE);
@@ -22,12 +26,16 @@ fn initialize_hot<H: crate::menus::host::Host + ?Sized>(tiles: u16, game: &mut H
     game.spawn_animated_tiles(tiles);
 }
 pub fn initialize_water<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    word!(game.fx_rising_function_bank_88 = 0xc428);
-    word!(game.fx_y_pos = word!(game.fx_base_y_pos));
+    crate::liquid::LiquidWords::set(game, |words| &mut words.liquid.rising, 0xc428);
+    crate::liquid::LiquidWords::set(
+        game,
+        |words| &mut words.liquid.surface.whole,
+        crate::liquid::LiquidWords::read(game).height,
+    );
     static SURFACE: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x11, 0xd856);
     static BACKGROUND: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0xf, 0xd847);
     game.spawn_hdma(0x88, &SURFACE);
-    if word!(game.fx_liquid_options) & 2 != 0 {
+    if crate::liquid::LiquidWords::read(game).options & 2 != 0 {
         game.spawn_hdma(0x88, &BACKGROUND);
     }
     game.spawn_bg3_scroll();
@@ -115,11 +123,21 @@ where
         crate::word_transfers!(game, ascending, 1; native(0x9c00) <- value(0));
         word!(game.bg3_ypos = 0);
         let scroll = surface_scroll(
-            word!(game.lava_acid_y_pos),
+            crate::liquid::LiquidWords::read(game)
+                .liquid
+                .lava_acid
+                .whole,
             crate::camera::current(game).layer1[1],
         );
         crate::word_transfers!(game, ascending, 1; native(0x9c02) <- value(scroll));
-        if word!(game.fx_type) == 2 && (word!(game.lava_acid_y_pos) & 0x8000) == 0 {
+        if crate::liquid::LiquidWords::read(game).liquid.kind == 2
+            && (crate::liquid::LiquidWords::read(game)
+                .liquid
+                .lava_acid
+                .whole
+                & 0x8000)
+                == 0
+        {
             let remaining = object.c;
             object.c = remaining.wrapping_sub(1);
             if remaining == 1 {
@@ -134,7 +152,10 @@ where
         }
         word!(game.random_number = u16::swap_bytes(word!(game.random_number)));
         let v8 = table_height(
-            word!(game.lava_acid_y_pos),
+            crate::liquid::LiquidWords::read(game)
+                .liquid
+                .lava_acid
+                .whole,
             crate::camera::current(game).layer1[1],
             false,
         );
@@ -152,7 +173,12 @@ where
     }
     step_liquid(game, crate::liquid::Surface::Water);
     let layer1 = crate::camera::current(game).layer1;
-    word!(game.bg3_ypos = surface_scroll(word!(game.fx_y_pos), layer1[1]));
+    word!(
+        game.bg3_ypos = surface_scroll(
+            crate::liquid::LiquidWords::read(game).liquid.surface.whole,
+            layer1[1]
+        )
+    );
     let r20: u16 = layer1[0].wrapping_add(((object.c >> 8) as u8 as i8) as u16);
     let remaining = object.b;
     object.b = remaining.wrapping_sub(1);
@@ -166,11 +192,11 @@ where
         crate::word_transfers!(game, ascending, 1; native(0x9c04 + usize::from(v7)) <- value(value));
         v7 = ((v7 as i32 - 2i32) & 0x1e) as u8;
     }
-    if (word!(game.fx_liquid_options) & 1) != 0 {
+    if (crate::liquid::LiquidWords::read(game).options & 1) != 0 {
         object.c = object.c.wrapping_add(64);
     }
     let v9 = table_height(
-        word!(game.fx_y_pos),
+        crate::liquid::LiquidWords::read(game).liquid.surface.whole,
         crate::camera::current(game).layer1[1],
         true,
     );
@@ -240,8 +266,9 @@ pub fn lava_background<H: crate::menus::host::Host + ?Sized>(
 ) {
     {
         word!(game.g_word_7E9C44 = word!(game.reg_BG2VOFS));
-        let active = word!(game.time_is_frozen_flag) == 0 && word!(game.fx_liquid_options) & 6 != 0;
-        let horizontal = active && word!(game.fx_liquid_options) & 2 == 0;
+        let active = word!(game.time_is_frozen_flag) == 0
+            && crate::liquid::LiquidWords::read(game).options & 6 != 0;
+        let horizontal = active && crate::liquid::LiquidWords::read(game).options & 2 == 0;
         game.write_register(
             (object.bank_slot & 0xff).wrapping_add(BBAD0 as u16),
             if horizontal { 0xf } else { 0x10 },
@@ -271,14 +298,14 @@ pub fn water_background<H: crate::menus::host::Host + ?Sized>(
     word!(game.g_word_7E9C44 = word!(game.reg_BG2HOFS));
     if word!(game.time_is_frozen_flag) != 0 {
         water_flat(game);
-    } else if word!(game.fx_liquid_options) & 2 == 0 {
+    } else if crate::liquid::LiquidWords::read(game).options & 2 == 0 {
         object.channels = 0;
         water_flat(game);
     } else {
         water_wave(object, game);
     }
     let height = table_height(
-        word!(game.fx_y_pos),
+        crate::liquid::LiquidWords::read(game).liquid.surface.whole,
         crate::camera::current(game).layer1[1],
         true,
     );
