@@ -37,6 +37,8 @@ jobs:
           python3 tools/cycle_report.py
       - name: Hold the Phase 2 ratchets (RAM coupling and production lines)
         run: python3 tools/ram_ratchet.py
+      - name: Keep the oracle patch policy in step with its inventory
+        run: python3 tools/oracle_patch_policy.py --check
       - name: Keep every mutation anchor present (the mutants run nightly)
         run: |
           python3 sm/src/verification/player_detached/mutations.py --check-anchors

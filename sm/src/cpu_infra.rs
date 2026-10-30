@@ -123,7 +123,9 @@ unsafe fn fix_bug_hook(addr: u32, host: &mut HostContext<'_>) -> bool {
                 let image = patch_image(addr, host);
                 crate::update_place! { previous fresh0 = *host.hookcnt => (*host.hookcnt).wrapping_add(1); }
                 host.hook_fixbug_orgbyte[fresh0 as usize] = image.byte(addr);
-                image.write(addr, 0, 0);
+                if crate::oracle_mode::installs(crate::oracle_mode::PatchKind::BugHook, addr) {
+                    image.write(addr, 0, 0);
+                }
                 return false_0 != 0;
             }
             2 => {
@@ -1094,14 +1096,16 @@ pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
         )
         .install_startup(game.g_use_my_apu_code);
         RtlUpdateSnesPatchForBugfix(game);
-        // The faithful oracle keeps the original instructions and their hardware carry.
-        let carry_sites = if crate::oracle_mode::faithful() {
-            0
-        } else {
-            kPatchedCarrys.len()
-        };
         let mut i: size_t = 0 as size_t;
-        while i != carry_sites {
+        while i != kPatchedCarrys.len() {
+            // A site the oracle does not install keeps its hardware carry.
+            if !crate::oracle_mode::installs(
+                crate::oracle_mode::PatchKind::Carry,
+                kPatchedCarrys[i as usize],
+            ) {
+                i = i.wrapping_add(1);
+                continue;
+            }
             let t_84: u8 = patch_image(kPatchedCarrys[i as usize], &mut game.execution_parts().1)
                 .byte(kPatchedCarrys[i as usize]);
             if t_84 != 0 {
@@ -1115,9 +1119,7 @@ pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
             }
             i = i.wrapping_add(1);
         }
-        if !crate::oracle_mode::faithful() {
-            install_startup_bug_hooks(&mut game.execution_parts().1);
-        }
+        install_startup_bug_hooks(&mut game.execution_parts().1);
         game.refresh_rom_records();
         game.g_snes
     }

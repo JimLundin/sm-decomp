@@ -500,6 +500,7 @@ pub use game_state::persistent_session::{
 pub(crate) mod native_rom;
 /// Selects whether the oracle keeps snesrev's compatibility patches.
 pub mod oracle_mode;
+mod oracle_patch_policy;
 pub mod recording;
 pub use sm_runtime::rendering;
 pub mod rom;
