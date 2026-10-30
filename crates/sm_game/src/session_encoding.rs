@@ -553,6 +553,7 @@ macro_rules! scalar_words {
         $f(0xe52,$($borrow)* $s.room.enemy_quota);
         $f(0xd91a,$($borrow)* $s.room.loaded_items);
         $f(0xcea,$($borrow)* $s.room.power_bomb_radius);
+        for index in 0..4 { $f(0x7e1+index*2,$($borrow)* $s.room.main_variables[index]); }
         $f(0x5f5,$($borrow)* $s.feedback.sound_disabled);
         $f(0x5f7,$($borrow)* $s.minimap.disabled);
         for row in 0..3 {

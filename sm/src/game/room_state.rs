@@ -138,8 +138,12 @@ pub(crate) fn setup_script(address: u32, game: &mut Game) {
                 18
             };
             word!(game.earthquake_type = kind);
-            word_transfers!(game, ascending, 1;
-                    native(0x7e3) <- value(kind), native(0x7e1) <- value(0));
+            {
+                let mut runtime = Runtime::new(game);
+                let room = &mut runtime.session_mut().room;
+                room.set_main_native(1, kind);
+                room.set_main_native(0, 0);
+            }
             word!(game.earthquake_timer = u16::MAX);
         }
         9423174 => {
@@ -180,16 +184,19 @@ pub(crate) unsafe fn door_script(address: u32, game: &mut Game) {
                 spawn_hardcoded(SpawnHardcodedPlmArgs::new(4, 9, mechanism), game);
             }
             9429612 | 9429649 => {
-                if address == 9429612 {
-                    word_transfers!(game, ascending, 1;
-                        native(0x7e5) <- value((-256i16) as u16),
-                        native(0x7e3) <- value(2496),
-                        native(0x7e7) <- value((-32i16) as u16));
-                } else {
-                    // The original strings write little-endian bytes on every host.
-                    word_transfers!(game, ascending, 1;
-                        native(0x7e5) <- value(256),
-                        little(0x7e3) <- value(64), little(0x7e7) <- value(32));
+                {
+                    let mut runtime = Runtime::new(game);
+                    let room = &mut runtime.session_mut().room;
+                    if address == 9429612 {
+                        room.set_main_native(2, (-256i16) as u16);
+                        room.set_main_native(1, 2496);
+                        room.set_main_native(3, (-32i16) as u16);
+                    } else {
+                        // The original strings write little-endian bytes on every host.
+                        room.set_main_native(2, 256);
+                        room.main_variables[1] = 64;
+                        room.main_variables[3] = 32;
+                    }
                 }
                 player_command(0, game);
                 spawn_hardcoded(SpawnHardcodedPlmArgs::new(1, 0, 0xb8f9), game);
@@ -211,8 +218,12 @@ pub(crate) unsafe fn door_script(address: u32, game: &mut Game) {
                 word! { game, 256; reg_M7A, reg_M7D }
                 word! { game, 0; reg_M7B, reg_M7C }
                 word! {game; reg_M7X = 128; reg_M7Y = 1008; irq_enable_mode7 = 1; }
-                word_transfers!(game, ascending, 1;
-                    little(0x7e1) <- value(34), little(0x7e3) <- value(60));
+                {
+                    let mut runtime = Runtime::new(game);
+                    let room = &mut runtime.session_mut().room;
+                    room.main_variables[0] = 34;
+                    room.main_variables[1] = 60;
+                }
             }
             9430291 => {
                 game.ram().write_byte(0x56, 9);
@@ -285,9 +296,17 @@ pub(crate) unsafe fn load_enemy_graphics(game: &mut Game) {
     }
 }
 
-pub(crate) use sm_game::room_state::{
-    advance_ceres_elevator, copy_level_planes, load_sprite_palettes,
-};
+use sm_game::room_state::advance_ceres_elevator;
+pub(crate) use sm_game::room_state::{copy_level_planes, load_sprite_palettes};
+
+impl sm_game::room_state::MainCodeHost for Runtime<'_> {
+    fn command_player(&mut self, command: u16) {
+        self.foreign(|game| crate::game::session_runtime::player_command(command, game));
+    }
+    fn ceres_rotation_step(&mut self, word: isize) -> sm_data::ceres_elevator::RotationStep {
+        self.foreign(|game| sm_game::ceres_elevator::step(game, word))
+    }
+}
 use sm_game::room_state::{advance_elevatube, shake_crocomire, shake_ridley};
 
 #[path = "../verification/room_level_copy.rs"]
@@ -506,13 +525,13 @@ unsafe fn select_earthquake(
     starting: u16,
     h: &mut Runtime<'_>,
 ) -> Option<u16> {
-    let timer = h.native_word(0x7e1);
+    let timer = h.session().room.main_native(0);
     if timer != 0 {
         let remaining = timer.wrapping_sub(1);
-        h.write_slice_native(0x7e1, remaining);
+        h.session_mut().room.set_main_native(0, remaining);
         (remaining == 0).then_some(ending)
     } else if h.foreign(|game| game.next_random()) < threshold {
-        h.write_slice_le(0x7e1, 42);
+        h.session_mut().room.main_variables[0] = 42;
         Some(starting)
     } else {
         None
@@ -544,13 +563,14 @@ unsafe fn advance_script(address: u32, h: &mut Runtime<'_>) {
                 }
             }
             9429686 => advance_elevatube(h),
-            9430303 => h.foreign(|game| advance_ceres_elevator(game)),
+            9430303 => advance_ceres_elevator(h),
             9430308 => {}
             9430309 => {
                 if h.word(ram::ceres_status) != 0 {
-                    h.write_slice_le(0x7e1, h.word(0x7e1).wrapping_sub(1));
-                    if (h.native_word(0x7e1) as i16) < 0 {
-                        h.write_slice_le(0x7e1, 8);
+                    let room = &mut h.session_mut().room;
+                    room.main_variables[0] = room.main_variables[0].wrapping_sub(1);
+                    if (room.main_native(0) as i16) < 0 {
+                        room.main_variables[0] = 8;
                         let definition = if h.word(ram::random_number) & 0x8000 != 0 {
                             addr_stru_869742
                         } else {
@@ -582,9 +602,9 @@ unsafe fn advance_script(address: u32, h: &mut Runtime<'_>) {
             9430432 => random_explosions(3, false, h),
             9430436 => {
                 if let Some(kind) = select_earthquake(21, 0x180, 26, h) {
-                    h.write_slice_native(0x7e3, kind);
+                    h.session_mut().room.set_main_native(1, kind);
                 }
-                h.write_word_le(h.native_word(0x7e3), ram::earthquake_type);
+                h.write_word_le(h.session().room.main_native(1), ram::earthquake_type);
                 random_explosions(3, false, h);
             }
             9431245 => shake_crocomire(h),

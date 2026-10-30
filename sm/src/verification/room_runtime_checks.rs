@@ -19,14 +19,13 @@ use std::{
     sync::Arc,
 };
 
-const RANGES: [(usize, usize); 13] = [
+const RANGES: [(usize, usize); 12] = [
     (0x78d, 0x78f),
     (0x791, 0x79f),
     (0x7a1, 0x7a5),
     (0x7ad, 0x7b7),
     (0x7bb, 0x7d3),
-    (0x7df, 0x7e1),
-    (0x7e9, 0x7eb),
+    (0x7df, 0x7eb),
     (0x91b, 0x91d),
     (0x925, 0x933),
     (0x99c, 0x99e),
@@ -82,7 +81,7 @@ fn projection(h: &Runtime<'_>, expected: &[u8], world: &Arc<WorldBinding>) {
         bytes[at..at + span.len()].copy_from_slice(span)
     });
     assert_eq!(bytes, expected, "room.guard.whole-union");
-    assert_eq!(RANGES.iter().map(|(a, b)| b - a).sum::<usize>(), 84);
+    assert_eq!(RANGES.iter().map(|(a, b)| b - a).sum::<usize>(), 92);
     for (begin, end) in RANGES {
         for at in begin..end {
             assert_eq!(h.byte(at), expected[at], "room.guard.projected-byte-{at:x}");

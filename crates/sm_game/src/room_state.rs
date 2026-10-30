@@ -1,7 +1,7 @@
 //! Room state rules that run on named RAM and the owned-Session view.
 #![forbid(unsafe_code)]
 use crate::ram::RawRam as _;
-use crate::ram::{checked_word, word, words as fields};
+use crate::ram::{checked_word, words as fields};
 use crate::runtime_access::SessionView;
 use crate::word_transfers;
 
@@ -59,64 +59,53 @@ pub fn load_sprite_palettes<H: Host + ?Sized>(game: &mut H) {
     word_transfers!(game, descending, 16; native(0xc31e) <- rom(0x9afc00, 15));
 }
 
-pub fn advance_ceres_elevator<H: Host + ?Sized>(game: &mut H) {
-    let mut v1: i16 = 0;
-    if (word!(game.ceres_status) & 0x8000) != 0 {
-        if (112i16).wrapping_sub((game.player_x()) as i16) < 0
-            && (144i16).wrapping_sub((game.player_x()) as i16) >= 0
-            && game.player_y() as i32 - 128i32 & 0x8000 != 0
-            && game.player_y() as i32 - 75i32 & 0x8000 == 0
-            && word!(game.samus_y_speed) == 0
-            && word!(game.samus_y_subspeed) == 0
-            && word!(game.game_state) as i32 == 8
+/// What the room main code needs beyond the owned-Session view: the Samus
+/// pose command and the imported Ceres rotation table.
+pub trait MainCodeHost: SessionView {
+    fn command_player(&mut self, command: u16);
+    fn ceres_rotation_step(&mut self, word: isize) -> sm_data::ceres_elevator::RotationStep;
+}
+
+pub fn advance_ceres_elevator<H: MainCodeHost + ?Sized>(h: &mut H) {
+    if (h.word(fields::ceres_status) & 0x8000) != 0 {
+        if (112i16).wrapping_sub(h.session().player.x as i16) < 0
+            && (144i16).wrapping_sub(h.session().player.x as i16) >= 0
+            && h.session().player.y as i32 - 128i32 & 0x8000 != 0
+            && h.session().player.y as i32 - 75i32 & 0x8000 == 0
+            && h.word(fields::samus_y_speed) == 0
+            && h.word(fields::samus_y_subspeed) == 0
+            && h.word(fields::game_state) as i32 == 8
         {
-            game.player_command(2);
-            word! { game, 0; screen_fade_delay, screen_fade_counter }
-            word!(game.game_state = 32);
+            h.command_player(2);
+            h.write_word_le(0, fields::screen_fade_delay);
+            h.write_word_le(0, fields::screen_fade_counter);
+            h.write_word_le(32, fields::game_state);
         }
-        let countdown = word!(@read game, 0x7e3);
-        word!(@write game, 0x7e3, countdown.wrapping_sub(1));
-        if (u16::from_ne_bytes([game.ram().read_byte(0x7e3), game.ram().read_byte(0x7e4)]) as i16)
-            < 0
-        {
-            let v0: i32 = ((6u16).wrapping_mul(u16::from_ne_bytes([
-                game.ram().read_byte(0x7e1),
-                game.ram().read_byte(0x7e2),
-            ]))) as i32
-                >> 1;
-            let step = crate::ceres_elevator::step(game, v0 as isize);
-            word_transfers!(game, ascending, 1; native(0x7e3) <- value(step.frames));
-            word!(game.reg_M7B = step.mode7_b);
-            word!(game.reg_M7C = -(word!(game.reg_M7B) as i32) as u16);
-            word!(game.reg_M7A = step.mode7_a);
-            word!(game.reg_M7D = word!(game.reg_M7A));
-            if (u16::from_ne_bytes([game.ram().read_byte(0x7e1), game.ram().read_byte(0x7e2)])
-                as i16)
-                < 0
-            {
-                v1 = ((u16::from_ne_bytes([
-                    game.ram().read_byte(0x7e1),
-                    game.ram().read_byte(0x7e2),
-                ])) as i16)
-                    .wrapping_sub(1);
-                if u16::from_ne_bytes([game.ram().read_byte(0x7e1), game.ram().read_byte(0x7e2)])
-                    == 0x8001
-                {
-                    v1 = 0;
+        // Variable 1 counts frames to the next rotation step; variable 0 is
+        // the signed step index, negative while rotating back.
+        let room = &mut h.session_mut().room;
+        room.main_variables[1] = room.main_variables[1].wrapping_sub(1);
+        if (room.main_native(1) as i16) < 0 {
+            let v0: i32 = ((6u16).wrapping_mul(room.main_native(0))) as i32 >> 1;
+            let step = h.ceres_rotation_step(v0 as isize);
+            h.session_mut().room.set_main_native(1, step.frames);
+            h.write_word_le(step.mode7_b, fields::reg_M7B);
+            h.write_word_le(-(h.word(fields::reg_M7B) as i32) as u16, fields::reg_M7C);
+            h.write_word_le(step.mode7_a, fields::reg_M7A);
+            h.write_word_le(h.word(fields::reg_M7A), fields::reg_M7D);
+            let index = h.session().room.main_native(0);
+            let next = if (index as i16) < 0 {
+                if index == 0x8001 {
+                    0
+                } else {
+                    (index as i16).wrapping_sub(1)
                 }
+            } else if index == 67 {
+                -32700i16
             } else {
-                v1 = ((u16::from_ne_bytes([
-                    game.ram().read_byte(0x7e1),
-                    game.ram().read_byte(0x7e2),
-                ])) as i16)
-                    .wrapping_add(1);
-                if u16::from_ne_bytes([game.ram().read_byte(0x7e1), game.ram().read_byte(0x7e2)])
-                    == 67
-                {
-                    v1 = -32700i16;
-                }
-            }
-            word_transfers!(game, ascending, 1; native(0x7e1) <- value(v1 as u16));
+                (index as i16).wrapping_add(1)
+            };
+            h.session_mut().room.set_main_native(0, next as u16);
         }
     }
 }
@@ -125,11 +114,16 @@ pub fn advance_elevatube<H: SessionView>(h: &mut H) {
     use crate::player_collision::operations::{self, Axis, DisplacementRequest};
     h.set_player_x(128);
     h.set_player_x_fraction(0);
-    let amount = i32::from(h.native_word(0x7e5) as i16) << 8;
-    let position = u32::from_ne_bytes([h.byte(0x7e1), h.byte(0x7e2), h.byte(0x7e3), h.byte(0x7e4)]);
+    // Variables 0 and 1 are the 16.16 position, 2 the velocity and 3 the
+    // acceleration, as the original loads them.
+    let room = &h.session().room;
+    let amount = i32::from(room.main_native(2) as i16) << 8;
+    let [low, high] = [room.main_variables[0], room.main_variables[1]].map(u16::to_le_bytes);
+    let position = u32::from_ne_bytes([low[0], low[1], high[0], high[1]]);
     let whole = (position.wrapping_add(amount as u32) >> 16) as u16;
-    h.write_slice_le(0x7e1, (i32::from(h.word(0x7e1)) + amount) as u16);
-    h.write_slice_native(0x7e3, whole);
+    let room = &mut h.session_mut().room;
+    room.main_variables[0] = (i32::from(room.main_variables[0]) + amount) as u16;
+    room.set_main_native(1, whole);
     operations::displace(
         h,
         DisplacementRequest::TerrainOnly {
@@ -137,9 +131,9 @@ pub fn advance_elevatube<H: SessionView>(h: &mut H) {
             amount,
         },
     );
-    if ((i32::from(h.native_word(0x7e7)) + i32::from(h.native_word(0x7e5)) + 3616) as u16) < 0x1c41
-    {
-        h.write_slice_le(0x7e5, h.word(0x7e5).wrapping_add(h.native_word(0x7e7)));
+    let room = &mut h.session_mut().room;
+    if ((i32::from(room.main_native(3)) + i32::from(room.main_native(2)) + 3616) as u16) < 0x1c41 {
+        room.main_variables[2] = room.main_variables[2].wrapping_add(room.main_native(3));
     }
 }
 

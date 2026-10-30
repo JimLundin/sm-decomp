@@ -351,8 +351,19 @@ pub struct Room {
     pub enemy_processing_stage: u16,
     pub collision_detection_index: u16,
     pub slope_behavior: u16,
+    /// The room main code's variables at $07E1..$07E9, as the little-endian
+    /// words of the byte image. Rooms give them their own meanings.
+    pub main_variables: [u16; 4],
 }
 impl Room {
+    /// Main-code variable `index` as the original's native-order load reads it.
+    pub fn main_native(&self, index: usize) -> u16 {
+        u16::from_ne_bytes(self.main_variables[index].to_le_bytes())
+    }
+    /// Store main-code variable `index` as the original's native-order store.
+    pub fn set_main_native(&mut self, index: usize, value: u16) {
+        self.main_variables[index] = u16::from_le_bytes(value.to_ne_bytes());
+    }
     fn with_world(world: &crate::room_entry::world::WorldBinding) -> Self {
         use crate::room_entry::AssetSlot;
         use crate::room_entry::state::RoomEntry;
@@ -420,6 +431,7 @@ impl Room {
             enemy_processing_stage: 0,
             collision_detection_index: 0,
             slope_behavior: 0,
+            main_variables: [0; 4],
         }
     }
 }
