@@ -119,6 +119,8 @@ pub trait BossEffects:
     fn legacy_native_record(&mut self, bank: u8, address: u16) -> sm_data::cartridge::RomRecord;
     /// Run Samus command `command`; its result.
     fn command_player(&mut self, command: u16) -> u16;
+    /// Reset projectile data.
+    fn reset_player_projectiles(&mut self);
     fn correct_previous_position(&mut self);
     /// Contact damage `amount` after Samus's suit.
     fn suit_damage(&mut self, amount: u16) -> u16;

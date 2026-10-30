@@ -124,6 +124,7 @@ pub mod actors {
     pub mod draygon_host;
     pub mod draygon_sweep;
     pub mod effects;
+    pub mod elevator;
     pub mod escape_critters;
     pub mod etecoon;
     #[doc(hidden)] // Shared verification world for compat and detached checks.

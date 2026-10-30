@@ -686,10 +686,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/actors/falling_platforms.rs"),
     ),
     (
-        "sm/src/game/actors/elevator.rs",
-        include_bytes!("game/actors/elevator.rs"),
-    ),
-    (
         "sm/src/game/actors/magdollite.rs",
         include_bytes!("game/actors/magdollite.rs"),
     ),
@@ -3140,6 +3136,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/actors/dachora_run.rs",
         include_bytes!("../../crates/sm_game/src/actors/dachora_run.rs"),
+    ),
+    (
+        "crates/sm_game/src/actors/elevator.rs",
+        include_bytes!("../../crates/sm_game/src/actors/elevator.rs"),
     ),
     (
         "crates/sm_game/src/cinematic_host.rs",

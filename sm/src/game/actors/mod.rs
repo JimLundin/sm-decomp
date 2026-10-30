@@ -3,6 +3,7 @@
 pub(in crate::game) use sm_game::actors::access;
 pub(in crate::game) use sm_game::actors::api;
 pub(in crate::game) use sm_game::actors::blue_brinstar_face_block;
+pub(in crate::game) use sm_game::actors::elevator;
 pub(in crate::game) use sm_game::actors::mochtroid;
 pub(in crate::game) use sm_game::actors::morph_ball_eye;
 pub(in crate::game) use sm_game::actors::zoa;
@@ -13,7 +14,6 @@ pub(crate) mod botwoon;
 pub(in crate::game) use sm_game::actors::botwoon_death;
 pub(crate) mod baby_metroid;
 pub(in crate::game) mod diving_enemies;
-pub(in crate::game) mod elevator;
 pub(crate) mod escape_critters;
 pub(in crate::game) mod falling_platforms;
 pub(in crate::game) mod fireflea;

@@ -1087,7 +1087,7 @@ crate::game::callback_dispatch! {
         10718851 => actors::fireflea::power_bomb;
         10718857 => actors::fireflea::shot;
         10719413 => actors::skultera::initialize; 10719531 => actors::skultera::main_ai;
-        10720486 => elevator::initialize; 10720554 => elevator::advance;
+        10720486 => elevator::initialize; 10720554 => elevator::main_ai;
         10722463 => [falling_platforms::initialize(true, game)]; 10722490 => [falling_platforms::initialize(false, game)];
         10722582 => falling_platforms::advance; 10723080 => falling_platforms::shot;
         10725245 => mochtroid::initialize; 10725264 => mochtroid::main_ai; 10725715 => mochtroid::touch;

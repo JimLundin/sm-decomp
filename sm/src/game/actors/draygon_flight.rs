@@ -146,6 +146,10 @@ impl BossEffects for Game {
         player_command(command, self)
     }
 
+    fn reset_player_projectiles(&mut self) {
+        crate::game::player_projectiles::reset(self);
+    }
+
     fn correct_previous_position(&mut self) {
         correct_previous_position(self);
     }
