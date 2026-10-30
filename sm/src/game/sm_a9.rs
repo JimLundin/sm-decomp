@@ -187,7 +187,7 @@ impl baby_metroid_encounter::Host for Game {
 
 impl baby_metroid_cutscene::Host for Game {
     fn lights_off(&mut self) {
-        unsafe { mother_brain_visuals::lights_off(self) };
+        mother_brain_visuals::lights_off(self);
     }
 
     fn heal_by_baby_metroid(&mut self) -> bool {
@@ -239,26 +239,15 @@ impl sm_game::actors::mother_brain_fight::Host for Game {
     }
 
     fn fade(&mut self, kind: sm_game::actors::mother_brain_fight::Fade, frame: u16) -> u8 {
-        use crate::game::mother_brain_visuals::Fade as Visual;
-        use sm_game::actors::mother_brain_fight::Fade;
-        let kind = match kind {
-            Fade::ToBlack => Visual::ToBlack,
-            Fade::FakeDeathToGray => Visual::FakeDeathToGray,
-            Fade::FakeDeathFromGray => Visual::FakeDeathFromGray,
-            Fade::DrainedFromGray => Visual::DrainedFromGray,
-            Fade::DrainedToGray => Visual::DrainedToGray,
-            Fade::RealDeathToGray => Visual::RealDeathToGray,
-            Fade::LightsOn => Visual::LightsOn,
-        };
-        unsafe { crate::game::mother_brain_visuals::fade(kind, frame, self) }
+        crate::game::mother_brain_visuals::fade(kind, frame, self)
     }
 
     fn update_health_palette(&mut self) {
-        unsafe { crate::game::mother_brain_visuals::update_health_palette(self) };
+        crate::game::mother_brain_visuals::update_health_palette(self);
     }
 
     fn seal_wall(&mut self) {
-        unsafe { crate::game::mother_brain_visuals::seal_wall(self) };
+        crate::game::mother_brain_visuals::seal_wall(self);
     }
 
     fn flicker_body(&mut self) {

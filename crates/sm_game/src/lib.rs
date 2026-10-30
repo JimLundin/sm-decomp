@@ -60,6 +60,7 @@ pub mod menu_state;
 pub mod menus;
 pub mod message_boxes;
 pub mod message_composition;
+pub mod mother_brain_visuals;
 pub mod music_requests;
 pub mod palette_copies;
 pub mod persistent_session;
