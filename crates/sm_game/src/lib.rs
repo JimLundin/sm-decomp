@@ -178,18 +178,38 @@ pub mod room_mechanisms {
     }
     pub mod setup;
 }
+pub mod ceres_door_data;
+pub mod ceres_elevator;
+pub mod ceres_ridley_tables;
+pub mod corpse_tables;
+pub mod grapple_aim;
+pub mod grapple_origins;
 pub mod grapple_rope;
+pub mod kraid_tables;
+pub mod mother_brain_tables;
+pub mod phantoon_tables;
+pub mod records;
+pub mod ridley_data;
+pub mod ridley_explosion_data;
 pub mod samus_palette;
 pub mod samus_periodic_damage;
+pub mod sand_heap;
 pub mod scene;
 pub mod scrolling_sky;
 pub mod session;
 pub mod session_access;
 pub mod session_checkpoint;
 pub mod session_owners;
+pub mod shaktool_tables;
+pub mod shitroid_tables;
+pub mod shooting_stars;
 pub mod sprite_effect_controllers;
 pub mod sprite_effect_host;
 pub mod sprite_objects;
+pub mod statue_tables;
+pub mod torizo_corpse_tables;
+pub mod torizo_tables;
 #[cfg(sm_verify_dll)]
 pub mod transition_trace;
 pub mod visual_host;
+pub mod zebetite_data;

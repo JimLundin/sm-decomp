@@ -4,20 +4,20 @@
 //! allocation; any other image, and indices outside a table, keep the original
 //! indexed loads with their failures.
 #![forbid(unsafe_code)]
-use crate::game::imported::{Imported, load, rom, row};
-use crate::game_state::Game;
-use crate::rom::RomImage;
+use crate::imported::{Imported, load, rom, row};
+use crate::records::Records;
+use sm_data::cartridge::RomImage;
 use sm_data::corpses::*;
 
 #[derive(Default)]
-pub(crate) struct ImportedCorpses {
+pub struct ImportedCorpses {
     hops: Option<Imported<Hops>>,
     zoomer: Option<Imported<Variants<ZOOMER_ROWS>>>,
     ripper: Option<Imported<Variants<RIPPER_ROWS>>>,
     skree: Option<Imported<Variants<SKREE_ROWS>>>,
 }
 
-pub(crate) fn import(image: &RomImage) -> ImportedCorpses {
+pub fn import(image: &RomImage) -> ImportedCorpses {
     ImportedCorpses {
         hops: Imported::import(image, HOP_ADDRESS, HOP_BYTES, import_hops),
         zoomer: Imported::import(image, ZOOMER_ADDRESS, ZOOMER_ROWS * 4, import_variants),
@@ -27,9 +27,9 @@ pub(crate) fn import(image: &RomImage) -> ImportedCorpses {
 }
 
 /// Sidehopper corpse hop `index` at $A9:D951/$A9:D959.
-pub(crate) fn hop(game: &Game, index: isize) -> Hop {
+pub fn hop(game: &(impl Records + ?Sized), index: isize) -> Hop {
     let rom = rom(game);
-    row(&game.corpse_tables.hops, rom, index).unwrap_or_else(|| Hop {
+    row(&game.records().corpse_tables.hops, rom, index).unwrap_or_else(|| Hop {
         y_velocity: load(rom, HOP_ADDRESS, index),
         x_velocity: load(rom, HOP_X_VELOCITY_ADDRESS, index),
     })
@@ -37,16 +37,16 @@ pub(crate) fn hop(game: &Game, index: isize) -> Hop {
 
 /// A corpse whose variants the tables above choose between.
 #[derive(Clone, Copy)]
-pub(crate) enum Corpse {
+pub enum Corpse {
     Zoomer,
     Ripper,
     Skree,
 }
 
 /// Variant `index` of `corpse`.
-pub(crate) fn variant(game: &Game, corpse: Corpse, index: isize) -> CorpseVariant {
+pub fn variant(game: &(impl Records + ?Sized), corpse: Corpse, index: isize) -> CorpseVariant {
     let rom = rom(game);
-    let tables = &game.corpse_tables;
+    let tables = &game.records().corpse_tables;
     let (variant, address, rotting) = match corpse {
         Corpse::Zoomer => (
             row(&tables.zoomer, rom, index),

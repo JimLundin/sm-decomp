@@ -4,13 +4,13 @@
 //! allocation; any other image, and indices outside a table, keep the original
 //! indexed loads with their failures.
 #![forbid(unsafe_code)]
-use crate::game::imported::{Imported, load, rom, row};
-use crate::game_state::Game;
-use crate::rom::RomImage;
+use crate::imported::{Imported, load, rom, row};
+use crate::records::Records;
+use sm_data::cartridge::RomImage;
 use sm_data::mother_brain::*;
 
 #[derive(Default)]
-pub(crate) struct ImportedMotherBrain {
+pub struct ImportedMotherBrain {
     fake_death_explosions: Option<Imported<FakeDeathExplosions>>,
     brain_attacks: Option<Imported<BrainAttacks>>,
     brain_palette_sets: Option<Imported<BrainPaletteSets>>,
@@ -20,7 +20,7 @@ pub(crate) struct ImportedMotherBrain {
     rainbow_beam_palettes: Option<Imported<RainbowBeamPalettes>>,
 }
 
-pub(crate) fn import(image: &RomImage) -> ImportedMotherBrain {
+pub fn import(image: &RomImage) -> ImportedMotherBrain {
     ImportedMotherBrain {
         fake_death_explosions: Imported::import(
             image,
@@ -58,64 +58,93 @@ pub(crate) fn import(image: &RomImage) -> ImportedMotherBrain {
 }
 
 /// Explosion `index` of the fake death at $A9:8929.
-pub(crate) fn fake_death_explosion(game: &Game, index: isize) -> ExplosionPosition {
+pub fn fake_death_explosion(game: &(impl Records + ?Sized), index: isize) -> ExplosionPosition {
     let rom = rom(game);
-    row(&game.mother_brain_tables.fake_death_explosions, rom, index).unwrap_or_else(|| {
-        ExplosionPosition {
-            x: load(rom, FAKE_DEATH_EXPLOSION_ADDRESS, 2 * index),
-            y: load(rom, FAKE_DEATH_EXPLOSION_ADDRESS, 2 * index + 1),
-        }
+    row(
+        &game.records().mother_brain_tables.fake_death_explosions,
+        rom,
+        index,
+    )
+    .unwrap_or_else(|| ExplosionPosition {
+        x: load(rom, FAKE_DEATH_EXPLOSION_ADDRESS, 2 * index),
+        y: load(rom, FAKE_DEATH_EXPLOSION_ADDRESS, 2 * index + 1),
     })
 }
 
 /// Brain attack `index` at $A9:B6D4.
-pub(crate) fn brain_attack(game: &Game, index: isize) -> BrainAttack {
+pub fn brain_attack(game: &(impl Records + ?Sized), index: isize) -> BrainAttack {
     let rom = rom(game);
-    row(&game.mother_brain_tables.brain_attacks, rom, index).unwrap_or_else(|| BrainAttack {
+    row(
+        &game.records().mother_brain_tables.brain_attacks,
+        rom,
+        index,
+    )
+    .unwrap_or_else(|| BrainAttack {
         instruction_list: load(rom, BRAIN_ATTACK_ADDRESS, index),
     })
 }
 
 /// Brain palette set `index` at $A9:D260.
-pub(crate) fn brain_palette_set(game: &Game, index: isize) -> BrainPaletteSet {
+pub fn brain_palette_set(game: &(impl Records + ?Sized), index: isize) -> BrainPaletteSet {
     let rom = rom(game);
-    row(&game.mother_brain_tables.brain_palette_sets, rom, index).unwrap_or_else(|| {
-        BrainPaletteSet {
-            colors: load(rom, BRAIN_PALETTE_SET_ADDRESS, index),
-        }
+    row(
+        &game.records().mother_brain_tables.brain_palette_sets,
+        rom,
+        index,
+    )
+    .unwrap_or_else(|| BrainPaletteSet {
+        colors: load(rom, BRAIN_PALETTE_SET_ADDRESS, index),
     })
 }
 
 /// Forwards walk `index` at $A9:C61E.
-pub(crate) fn walk_forwards(game: &Game, index: isize) -> Walk {
+pub fn walk_forwards(game: &(impl Records + ?Sized), index: isize) -> Walk {
     let rom = rom(game);
-    row(&game.mother_brain_tables.walk_forwards, rom, index).unwrap_or_else(|| Walk {
+    row(
+        &game.records().mother_brain_tables.walk_forwards,
+        rom,
+        index,
+    )
+    .unwrap_or_else(|| Walk {
         instruction_list: load(rom, WALK_FORWARDS_ADDRESS, index),
     })
 }
 
 /// Backwards walk `index` at $A9:C664.
-pub(crate) fn walk_backwards(game: &Game, index: isize) -> Walk {
+pub fn walk_backwards(game: &(impl Records + ?Sized), index: isize) -> Walk {
     let rom = rom(game);
-    row(&game.mother_brain_tables.walk_backwards, rom, index).unwrap_or_else(|| Walk {
+    row(
+        &game.records().mother_brain_tables.walk_backwards,
+        rom,
+        index,
+    )
+    .unwrap_or_else(|| Walk {
         instruction_list: load(rom, WALK_BACKWARDS_ADDRESS, index),
     })
 }
 
 /// Falling tube `index` at $A9:8B7B.
-pub(crate) fn falling_tube(game: &Game, index: isize) -> FallingTube {
+pub fn falling_tube(game: &(impl Records + ?Sized), index: isize) -> FallingTube {
     let rom = rom(game);
-    row(&game.mother_brain_tables.falling_tubes, rom, index).unwrap_or_else(|| FallingTube {
+    row(
+        &game.records().mother_brain_tables.falling_tubes,
+        rom,
+        index,
+    )
+    .unwrap_or_else(|| FallingTube {
         function: load(rom, FALLING_TUBE_ADDRESS, index),
     })
 }
 
 /// Rainbow beam palette `index` at $AD:E434.
-pub(crate) fn rainbow_beam_palette(game: &Game, index: isize) -> RainbowBeamPalette {
+pub fn rainbow_beam_palette(game: &(impl Records + ?Sized), index: isize) -> RainbowBeamPalette {
     let rom = rom(game);
-    row(&game.mother_brain_tables.rainbow_beam_palettes, rom, index).unwrap_or_else(|| {
-        RainbowBeamPalette {
-            colors: load(rom, RAINBOW_BEAM_PALETTE_ADDRESS, index),
-        }
+    row(
+        &game.records().mother_brain_tables.rainbow_beam_palettes,
+        rom,
+        index,
+    )
+    .unwrap_or_else(|| RainbowBeamPalette {
+        colors: load(rom, RAINBOW_BEAM_PALETTE_ADDRESS, index),
     })
 }

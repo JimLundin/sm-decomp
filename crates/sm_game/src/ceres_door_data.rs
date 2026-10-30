@@ -4,9 +4,9 @@
 //! allocation; any other image, and indices past a table, keep the original
 //! indexed loads with their failures.
 #![forbid(unsafe_code)]
-use crate::game::imported::{Imported, ImportedGrid, ImportedWords};
-use crate::game_state::Game;
-use crate::rom::{RomImage, lorom_offset};
+use crate::imported::{Imported, ImportedGrid, ImportedWords};
+use crate::records::Records;
+use sm_data::cartridge::{RomImage, lorom_offset};
 use sm_data::ceres_doors::{
     DOOR_FUNCTION_ADDRESS, DOOR_INSTRUCTION_ADDRESS, DOOR_KINDS, EXPLOSION_OFFSET_ADDRESS,
     EXPLOSION_OFFSETS, PLATFORM_FRAME_ADDRESS, PLATFORM_FRAMES, STEAM_ADDRESS, STEAM_BYTES,
@@ -14,7 +14,7 @@ use sm_data::ceres_doors::{
 };
 
 #[derive(Default)]
-pub(crate) struct ImportedCeresDoors {
+pub struct ImportedCeresDoors {
     steam: Option<Imported<Steam>>,
     door_instructions: ImportedWords<DOOR_INSTRUCTION_ADDRESS, DOOR_KINDS>,
     door_functions: ImportedWords<DOOR_FUNCTION_ADDRESS, DOOR_KINDS>,
@@ -22,7 +22,7 @@ pub(crate) struct ImportedCeresDoors {
     platform_frames: ImportedWords<PLATFORM_FRAME_ADDRESS, PLATFORM_FRAMES>,
 }
 
-pub(crate) fn import(image: &RomImage) -> ImportedCeresDoors {
+pub fn import(image: &RomImage) -> ImportedCeresDoors {
     ImportedCeresDoors {
         steam: Imported::import(image, STEAM_ADDRESS, STEAM_BYTES, import_steam),
         door_instructions: ImportedWords::import(image),
@@ -32,16 +32,16 @@ pub(crate) fn import(image: &RomImage) -> ImportedCeresDoors {
     }
 }
 
-fn rom(game: &Game) -> &RomImage {
-    game.loaded_rom.as_ref().expect("ROM must be loaded")
+fn rom(game: &(impl Records + ?Sized)) -> &RomImage {
+    game.loaded_image()
 }
 
 /// $A6:EFF5 and $A6:F001: steam kind `index`'s instruction list and function.
-pub(crate) fn steam(game: &Game, index: isize) -> SteamKind {
+pub fn steam(game: &(impl Records + ?Sized), index: isize) -> SteamKind {
     let rom = rom(game);
     usize::try_from(index)
         .ok()
-        .and_then(|row| Imported::from(&game.ceres_door_tables.steam, rom)?.row(row))
+        .and_then(|row| Imported::from(&game.records().ceres_door_tables.steam, rom)?.row(row))
         .unwrap_or_else(|| {
             let list = |column: u32| {
                 rom.table_word(
@@ -57,27 +57,33 @@ pub(crate) fn steam(game: &Game, index: isize) -> SteamKind {
 }
 
 /// $A6:F52C: door kind `index`'s instruction list.
-pub(crate) fn door_instructions(game: &Game, index: isize) -> u16 {
-    game.ceres_door_tables
+pub fn door_instructions(game: &(impl Records + ?Sized), index: isize) -> u16 {
+    game.records()
+        .ceres_door_tables
         .door_instructions
         .word(rom(game), index)
 }
 
 /// $A6:F72B: door kind `index`'s function.
-pub(crate) fn door_function(game: &Game, index: isize) -> u16 {
-    game.ceres_door_tables.door_functions.word(rom(game), index)
+pub fn door_function(game: &(impl Records + ?Sized), index: isize) -> u16 {
+    game.records()
+        .ceres_door_tables
+        .door_functions
+        .word(rom(game), index)
 }
 
 /// $A6:F840: the explosion spawn offset at word `index`, X then Y per row.
-pub(crate) fn explosion_offset(game: &Game, index: isize) -> u16 {
-    game.ceres_door_tables
+pub fn explosion_offset(game: &(impl Records + ?Sized), index: isize) -> u16 {
+    game.records()
+        .ceres_door_tables
         .explosion_offsets
         .word(rom(game), index)
 }
 
 /// $A6:F900: the elevator platform's tile transfers for animation `frame`.
-pub(crate) fn platform_frame(game: &Game, frame: isize) -> u16 {
-    game.ceres_door_tables
+pub fn platform_frame(game: &(impl Records + ?Sized), frame: isize) -> u16 {
+    game.records()
+        .ceres_door_tables
         .platform_frames
         .word(rom(game), frame)
 }

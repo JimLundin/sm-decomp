@@ -442,7 +442,7 @@ pub mod game {
 
     pub(crate) mod beam_windows;
     pub mod constants;
-    pub(crate) mod corpse_tables;
+    pub(crate) use sm_game::corpse_tables;
     pub(crate) mod decompression;
     pub(crate) mod demo_rooms;
     pub(crate) mod dialogue_ram;
@@ -453,13 +453,13 @@ pub mod game {
     pub(crate) mod file_menu;
     pub(crate) mod game_over;
     pub(crate) mod gameplay;
-    pub(crate) mod grapple_aim;
-    pub(crate) mod grapple_origins;
+    pub(crate) use sm_game::grapple_aim;
+    pub(crate) use sm_game::grapple_origins;
     pub(crate) use sm_game::grapple_rope;
     pub(crate) mod grapple_swing;
     pub(crate) mod imported;
     pub(crate) mod intro_pages;
-    pub(crate) mod kraid_tables;
+    pub(crate) use sm_game::kraid_tables;
     pub(crate) mod launch_motion;
     pub(crate) mod launch_motion_ram;
     pub(crate) mod layer_blending;
@@ -470,19 +470,19 @@ pub mod game {
     pub mod message_boxes;
     pub mod message_composition;
     pub(crate) mod mode7_transfers;
-    pub(crate) mod mother_brain_tables;
+    pub(crate) use sm_game::mother_brain_tables;
     pub(crate) mod moving_platforms;
     pub(crate) mod prelude;
     pub mod scene;
     pub(crate) mod scrolling_sky;
-    pub(crate) mod shaktool_tables;
-    pub(crate) mod shitroid_tables;
-    pub(crate) mod statue_tables;
-    pub(crate) mod torizo_corpse_tables;
-    pub(crate) mod torizo_tables;
+    pub(crate) use sm_game::shaktool_tables;
+    pub(crate) use sm_game::shitroid_tables;
+    pub(crate) use sm_game::statue_tables;
+    pub(crate) use sm_game::torizo_corpse_tables;
+    pub(crate) use sm_game::torizo_tables;
     pub(crate) mod vram_read_queue;
     pub(crate) mod xray_background;
-    pub(crate) mod zebetite_data;
+    pub(crate) use sm_game::zebetite_data;
 
     pub(crate) mod player_projectiles;
     #[path = "../verification/room_mechanisms.rs"]
@@ -503,7 +503,7 @@ pub mod game {
     pub mod music;
     pub(crate) mod palette_copies;
     pub(crate) mod palette_effects;
-    pub(crate) mod phantoon_tables;
+    pub(crate) use sm_game::phantoon_tables;
     pub(crate) mod player_collision;
     #[cfg(any(test, sm_verify_dll))]
     #[path = "../verification/player_collision_owned_checks.rs"]
@@ -511,8 +511,8 @@ pub mod game {
     pub(crate) mod player_movement;
     pub(crate) mod player_transitions;
     pub(crate) mod player_update;
-    pub(crate) mod ridley_data;
-    pub(crate) mod ridley_explosion_data;
+    pub(crate) use sm_game::ridley_data;
+    pub(crate) use sm_game::ridley_explosion_data;
     pub(crate) mod rom_vram_entries;
 
     pub(crate) mod boot;
@@ -537,14 +537,14 @@ pub mod game {
     pub mod room_state;
     pub mod samus_animation;
     pub(crate) use sm_game::samus_palette;
-    pub(crate) mod sand_heap;
+    pub(crate) use sm_game::sand_heap;
     pub mod save_slots;
     pub(crate) mod scanline_irq;
     pub(crate) use sm_game::session;
     pub(crate) mod session_checkpoint;
     pub(crate) mod session_encoding;
     pub(crate) mod session_runtime;
-    pub(crate) mod shooting_stars;
+    pub(crate) use sm_game::shooting_stars;
     pub mod sm_8b;
     pub(crate) mod sprite_drawing;
     pub(crate) use sm_game::sprite_effect_host;
@@ -556,10 +556,10 @@ pub mod game {
     pub(crate) mod visual_runtime;
     pub(crate) use sm_game::visual_state;
 
-    pub(crate) mod ceres_door_data;
+    pub(crate) use sm_game::ceres_door_data;
     pub(crate) mod ceres_doors;
-    pub(crate) mod ceres_elevator;
-    pub(crate) mod ceres_ridley_tables;
+    pub(crate) use sm_game::ceres_elevator;
+    pub(crate) use sm_game::ceres_ridley_tables;
     pub use sm_game::combat_rules;
     pub use sm_game::contact_rules;
     pub use sm_game::drop_rules;

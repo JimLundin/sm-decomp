@@ -602,16 +602,16 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/pause_controls.rs"),
     ),
     (
-        "sm/src/game/phantoon_tables.rs",
-        include_bytes!("game/phantoon_tables.rs"),
+        "crates/sm_game/src/phantoon_tables.rs",
+        include_bytes!("../../crates/sm_game/src/phantoon_tables.rs"),
     ),
     (
-        "sm/src/game/ridley_data.rs",
-        include_bytes!("game/ridley_data.rs"),
+        "crates/sm_game/src/ridley_data.rs",
+        include_bytes!("../../crates/sm_game/src/ridley_data.rs"),
     ),
     (
-        "sm/src/game/ridley_explosion_data.rs",
-        include_bytes!("game/ridley_explosion_data.rs"),
+        "crates/sm_game/src/ridley_explosion_data.rs",
+        include_bytes!("../../crates/sm_game/src/ridley_explosion_data.rs"),
     ),
     (
         "sm/src/game/actors/morph_ball_eye.rs",
@@ -718,20 +718,20 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/space_pirates.rs"),
     ),
     (
-        "sm/src/game/ceres_door_data.rs",
-        include_bytes!("game/ceres_door_data.rs"),
+        "crates/sm_game/src/ceres_door_data.rs",
+        include_bytes!("../../crates/sm_game/src/ceres_door_data.rs"),
     ),
     (
         "sm/src/game/ceres_doors.rs",
         include_bytes!("game/ceres_doors.rs"),
     ),
     (
-        "sm/src/game/ceres_elevator.rs",
-        include_bytes!("game/ceres_elevator.rs"),
+        "crates/sm_game/src/ceres_elevator.rs",
+        include_bytes!("../../crates/sm_game/src/ceres_elevator.rs"),
     ),
     (
-        "sm/src/game/ceres_ridley_tables.rs",
-        include_bytes!("game/ceres_ridley_tables.rs"),
+        "crates/sm_game/src/ceres_ridley_tables.rs",
+        include_bytes!("../../crates/sm_game/src/ceres_ridley_tables.rs"),
     ),
     (
         "sm/src/game/spikey_platforms.rs",
@@ -1468,12 +1468,12 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/gameplay.rs"),
     ),
     (
-        "sm/src/game/grapple_aim.rs",
-        include_bytes!("game/grapple_aim.rs"),
+        "crates/sm_game/src/grapple_aim.rs",
+        include_bytes!("../../crates/sm_game/src/grapple_aim.rs"),
     ),
     (
-        "sm/src/game/grapple_origins.rs",
-        include_bytes!("game/grapple_origins.rs"),
+        "crates/sm_game/src/grapple_origins.rs",
+        include_bytes!("../../crates/sm_game/src/grapple_origins.rs"),
     ),
     (
         "sm/src/game/grapple_swing.rs",
@@ -1492,36 +1492,36 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/intro_pages.rs"),
     ),
     (
-        "sm/src/game/kraid_tables.rs",
-        include_bytes!("game/kraid_tables.rs"),
+        "crates/sm_game/src/kraid_tables.rs",
+        include_bytes!("../../crates/sm_game/src/kraid_tables.rs"),
     ),
     (
-        "sm/src/game/shaktool_tables.rs",
-        include_bytes!("game/shaktool_tables.rs"),
+        "crates/sm_game/src/shaktool_tables.rs",
+        include_bytes!("../../crates/sm_game/src/shaktool_tables.rs"),
     ),
     (
-        "sm/src/game/statue_tables.rs",
-        include_bytes!("game/statue_tables.rs"),
+        "crates/sm_game/src/statue_tables.rs",
+        include_bytes!("../../crates/sm_game/src/statue_tables.rs"),
     ),
     (
-        "sm/src/game/torizo_tables.rs",
-        include_bytes!("game/torizo_tables.rs"),
+        "crates/sm_game/src/torizo_tables.rs",
+        include_bytes!("../../crates/sm_game/src/torizo_tables.rs"),
     ),
     (
-        "sm/src/game/corpse_tables.rs",
-        include_bytes!("game/corpse_tables.rs"),
+        "crates/sm_game/src/corpse_tables.rs",
+        include_bytes!("../../crates/sm_game/src/corpse_tables.rs"),
     ),
     (
-        "sm/src/game/torizo_corpse_tables.rs",
-        include_bytes!("game/torizo_corpse_tables.rs"),
+        "crates/sm_game/src/torizo_corpse_tables.rs",
+        include_bytes!("../../crates/sm_game/src/torizo_corpse_tables.rs"),
     ),
     (
-        "sm/src/game/shitroid_tables.rs",
-        include_bytes!("game/shitroid_tables.rs"),
+        "crates/sm_game/src/shitroid_tables.rs",
+        include_bytes!("../../crates/sm_game/src/shitroid_tables.rs"),
     ),
     (
-        "sm/src/game/mother_brain_tables.rs",
-        include_bytes!("game/mother_brain_tables.rs"),
+        "crates/sm_game/src/mother_brain_tables.rs",
+        include_bytes!("../../crates/sm_game/src/mother_brain_tables.rs"),
     ),
     (
         "crates/sm_game/src/item_pickups.rs",
@@ -1962,8 +1962,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/samus_periodic_damage.rs"),
     ),
     (
-        "sm/src/game/sand_heap.rs",
-        include_bytes!("game/sand_heap.rs"),
+        "crates/sm_game/src/sand_heap.rs",
+        include_bytes!("../../crates/sm_game/src/sand_heap.rs"),
     ),
     (
         "sm/src/game/scrolling_sky.rs",
@@ -1994,8 +1994,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/session_runtime.rs"),
     ),
     (
-        "sm/src/game/shooting_stars.rs",
-        include_bytes!("game/shooting_stars.rs"),
+        "crates/sm_game/src/shooting_stars.rs",
+        include_bytes!("../../crates/sm_game/src/shooting_stars.rs"),
     ),
     (
         "sm/src/game/file_menu.rs",
@@ -2068,6 +2068,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/transition_trace.rs",
         include_bytes!("../../crates/sm_game/src/transition_trace.rs"),
+    ),
+    (
+        "crates/sm_game/src/records.rs",
+        include_bytes!("../../crates/sm_game/src/records.rs"),
     ),
     (
         "crates/sm_game/src/visual_host.rs",
@@ -2171,8 +2175,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/xray_background.rs"),
     ),
     (
-        "sm/src/game/zebetite_data.rs",
-        include_bytes!("game/zebetite_data.rs"),
+        "crates/sm_game/src/zebetite_data.rs",
+        include_bytes!("../../crates/sm_game/src/zebetite_data.rs"),
     ),
     ("sm/src/game_state.rs", include_bytes!("game_state.rs")),
     ("sm/src/host.rs", include_bytes!("host.rs")),

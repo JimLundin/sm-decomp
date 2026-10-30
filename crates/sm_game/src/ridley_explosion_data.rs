@@ -4,21 +4,21 @@
 //! allocation; any other image, and indices past a table, keep the original
 //! indexed loads with their failures.
 #![forbid(unsafe_code)]
-use crate::game::imported::{Imported, ImportedWords};
-use crate::game_state::Game;
-use crate::rom::{RomImage, lorom_offset};
+use crate::imported::{Imported, ImportedWords};
+use crate::records::Records;
+use sm_data::cartridge::{RomImage, lorom_offset};
 use sm_data::ridley_explosion::{
     LIFETIME_ADDRESS, LIFETIMES, PART_ADDRESSES, PART_BYTES, PART_SIDES, Part, PartPlacement,
     import_part,
 };
 
 #[derive(Default)]
-pub(crate) struct ImportedRidleyExplosion {
+pub struct ImportedRidleyExplosion {
     lifetimes: ImportedWords<LIFETIME_ADDRESS, LIFETIMES>,
     parts: [Option<Imported<Part>>; PART_ADDRESSES.len()],
 }
 
-pub(crate) fn import(image: &RomImage) -> ImportedRidleyExplosion {
+pub fn import(image: &RomImage) -> ImportedRidleyExplosion {
     ImportedRidleyExplosion {
         lifetimes: ImportedWords::import(image),
         parts: PART_ADDRESSES
@@ -26,25 +26,26 @@ pub(crate) fn import(image: &RomImage) -> ImportedRidleyExplosion {
     }
 }
 
-fn rom(game: &Game) -> &RomImage {
-    game.loaded_rom.as_ref().expect("ROM must be loaded")
+fn rom(game: &(impl Records + ?Sized)) -> &RomImage {
+    game.loaded_image()
 }
 
 /// $A6:C6CE: the lifetime at word `index`.
-pub(crate) fn lifetime(game: &Game, index: isize) -> u16 {
-    game.ridley_explosion_tables
+pub fn lifetime(game: &(impl Records + ?Sized), index: isize) -> u16 {
+    game.records()
+        .ridley_explosion_tables
         .lifetimes
         .word(rom(game), index)
 }
 
 /// The placement on `side` for the part whose table starts at `part`, one of
 /// `PART_ADDRESSES`.
-pub(crate) fn placement(game: &Game, part: u32, side: isize) -> PartPlacement {
+pub fn placement(game: &(impl Records + ?Sized), part: u32, side: isize) -> PartPlacement {
     let rom = rom(game);
     let imported = PART_ADDRESSES
         .iter()
         .position(|&address| address == part)
-        .and_then(|at| Imported::from(&game.ridley_explosion_tables.parts[at], rom));
+        .and_then(|at| Imported::from(&game.records().ridley_explosion_tables.parts[at], rom));
     usize::try_from(side)
         .ok()
         .and_then(|row| imported?.row(row))

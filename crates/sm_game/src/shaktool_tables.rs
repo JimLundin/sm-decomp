@@ -4,20 +4,20 @@
 //! allocation; any other image, and indices outside a table, keep the original
 //! indexed loads with their failures.
 #![forbid(unsafe_code)]
-use crate::game::imported::{Imported, load, rom, row};
-use crate::game_state::Game;
-use crate::rom::RomImage;
+use crate::imported::{Imported, load, rom, row};
+use crate::records::Records;
+use sm_data::cartridge::RomImage;
 use sm_data::shaktool::*;
 
 #[derive(Default)]
-pub(crate) struct ImportedShaktool {
+pub struct ImportedShaktool {
     pieces: Option<Imported<Pieces>>,
     head_directions: Option<Imported<HeadDirections>>,
     sine: Option<Imported<TrigTable>>,
     negative_cosine: Option<Imported<TrigTable>>,
 }
 
-pub(crate) fn import(image: &RomImage) -> ImportedShaktool {
+pub fn import(image: &RomImage) -> ImportedShaktool {
     ImportedShaktool {
         pieces: Imported::import(image, PIECE_ADDRESS, PIECE_BYTES, import_pieces),
         head_directions: Imported::import(
@@ -32,9 +32,9 @@ pub(crate) fn import(image: &RomImage) -> ImportedShaktool {
 }
 
 /// Piece `index` at $AA:DE95.
-pub(crate) fn piece(game: &Game, index: isize) -> Piece {
+pub fn piece(game: &(impl Records + ?Sized), index: isize) -> Piece {
     let rom = rom(game);
-    row(&game.shaktool_tables.pieces, rom, index).unwrap_or_else(|| Piece {
+    row(&game.records().shaktool_tables.pieces, rom, index).unwrap_or_else(|| Piece {
         properties: load(rom, PIECE_ADDRESS, index),
         ram_offset: load(rom, RAM_OFFSET_ADDRESS, index),
         neighbour_angle: load(rom, NEIGHBOUR_ANGLE_ADDRESS, index),
@@ -49,24 +49,26 @@ pub(crate) fn piece(game: &Game, index: isize) -> Piece {
 }
 
 /// Head direction `index` at $AA:DD15.
-pub(crate) fn head_direction(game: &Game, index: isize) -> HeadDirection {
+pub fn head_direction(game: &(impl Records + ?Sized), index: isize) -> HeadDirection {
     let rom = rom(game);
-    row(&game.shaktool_tables.head_directions, rom, index).unwrap_or_else(|| HeadDirection {
-        instruction_list: load(rom, HEAD_DIRECTION_ADDRESS, index),
+    row(&game.records().shaktool_tables.head_directions, rom, index).unwrap_or_else(|| {
+        HeadDirection {
+            instruction_list: load(rom, HEAD_DIRECTION_ADDRESS, index),
+        }
     })
 }
 
 /// The sine of `angle` at $AA:E0BD.
-pub(crate) fn sine(game: &Game, angle: isize) -> u16 {
+pub fn sine(game: &(impl Records + ?Sized), angle: isize) -> u16 {
     let rom = rom(game);
-    row(&game.shaktool_tables.sine, rom, angle)
+    row(&game.records().shaktool_tables.sine, rom, angle)
         .map_or_else(|| load(rom, SINE_ADDRESS, angle), |trig| trig.value)
 }
 
 /// The negative cosine of `angle` at $AA:E03D.
-pub(crate) fn negative_cosine(game: &Game, angle: isize) -> u16 {
+pub fn negative_cosine(game: &(impl Records + ?Sized), angle: isize) -> u16 {
     let rom = rom(game);
-    row(&game.shaktool_tables.negative_cosine, rom, angle).map_or_else(
+    row(&game.records().shaktool_tables.negative_cosine, rom, angle).map_or_else(
         || load(rom, NEGATIVE_COSINE_ADDRESS, angle),
         |trig| trig.value,
     )

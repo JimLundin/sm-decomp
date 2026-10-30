@@ -4,9 +4,9 @@
 //! allocation; any other image, and indices past a table, keep the original
 //! indexed loads with their failures.
 #![forbid(unsafe_code)]
-use crate::game::imported::{Imported, ImportedGrid, ImportedWords};
-use crate::game_state::Game;
-use crate::rom::{RomImage, lorom_offset};
+use crate::imported::{Imported, ImportedGrid, ImportedWords};
+use crate::records::Records;
+use sm_data::cartridge::{RomImage, lorom_offset};
 use sm_data::ridley::{
     EMERGENCY_GLOW_ADDRESS, EMERGENCY_GLOW_COLOURS, EMERGENCY_GLOW_STEPS, FACINGS, FEET_DISTANCES,
     FEET_X_ADDRESS, FEET_Y_ADDRESS, HOVER_BEHIND_ADDRESS, HOVER_IN_FRONT_ADDRESS,
@@ -16,7 +16,7 @@ use sm_data::ridley::{
 };
 
 #[derive(Default)]
-pub(crate) struct ImportedRidley {
+pub struct ImportedRidley {
     hover_behind: ImportedWords<HOVER_BEHIND_ADDRESS, FACINGS>,
     hover_in_front: ImportedWords<HOVER_IN_FRONT_ADDRESS, FACINGS>,
     pogo_target: ImportedWords<POGO_TARGET_ADDRESS, FACINGS>,
@@ -31,7 +31,7 @@ pub(crate) struct ImportedRidley {
         ImportedGrid<EMERGENCY_GLOW_ADDRESS, EMERGENCY_GLOW_COLOURS, EMERGENCY_GLOW_STEPS>,
 }
 
-pub(crate) fn import(image: &RomImage) -> ImportedRidley {
+pub fn import(image: &RomImage) -> ImportedRidley {
     ImportedRidley {
         hover_behind: ImportedWords::import(image),
         hover_in_front: ImportedWords::import(image),
@@ -52,51 +52,66 @@ pub(crate) fn import(image: &RomImage) -> ImportedRidley {
     }
 }
 
-fn rom(game: &Game) -> &RomImage {
-    game.loaded_rom.as_ref().expect("ROM must be loaded")
+fn rom(game: &(impl Records + ?Sized)) -> &RomImage {
+    game.loaded_image()
 }
 
 /// $A6:B60D: the hover target X behind Ridley for `facing`.
-pub(crate) fn hover_behind(game: &Game, facing: isize) -> u16 {
-    game.ridley_tables.hover_behind.word(rom(game), facing)
+pub fn hover_behind(game: &(impl Records + ?Sized), facing: isize) -> u16 {
+    game.records()
+        .ridley_tables
+        .hover_behind
+        .word(rom(game), facing)
 }
 
 /// $A6:B63B: the hover target X in front of Ridley for `facing`.
-pub(crate) fn hover_in_front(game: &Game, facing: isize) -> u16 {
-    game.ridley_tables.hover_in_front.word(rom(game), facing)
+pub fn hover_in_front(game: &(impl Records + ?Sized), facing: isize) -> u16 {
+    game.records()
+        .ridley_tables
+        .hover_in_front
+        .word(rom(game), facing)
 }
 
 /// $A6:B6C8: the pogo's target X for `facing`.
-pub(crate) fn pogo_target(game: &Game, facing: isize) -> u16 {
-    game.ridley_tables.pogo_target.word(rom(game), facing)
+pub fn pogo_target(game: &(impl Records + ?Sized), facing: isize) -> u16 {
+    game.records()
+        .ridley_tables
+        .pogo_target
+        .word(rom(game), facing)
 }
 
 /// $A6:B9D5: the feet's X offset for `facing`.
-pub(crate) fn feet_x(game: &Game, facing: isize) -> u16 {
-    game.ridley_tables.feet_x.word(rom(game), facing)
+pub fn feet_x(game: &(impl Records + ?Sized), facing: isize) -> u16 {
+    game.records().ridley_tables.feet_x.word(rom(game), facing)
 }
 
 /// $A6:B9DB: the feet's Y offset at word `index`.
-pub(crate) fn feet_y(game: &Game, index: isize) -> u16 {
-    game.ridley_tables.feet_y.word(rom(game), index)
+pub fn feet_y(game: &(impl Records + ?Sized), index: isize) -> u16 {
+    game.records().ridley_tables.feet_y.word(rom(game), index)
 }
 
 /// $A6:BB48: the lunge's facing sign for `facing`.
-pub(crate) fn lunge_side(game: &Game, facing: isize) -> u16 {
-    game.ridley_tables.lunge_side.word(rom(game), facing)
+pub fn lunge_side(game: &(impl Records + ?Sized), facing: isize) -> u16 {
+    game.records()
+        .ridley_tables
+        .lunge_side
+        .word(rom(game), facing)
 }
 
 /// $A6:BB4E: the lunge's acceleration factor for acceleration `index`.
-pub(crate) fn lunge_acceleration(game: &Game, index: isize) -> u16 {
-    game.ridley_tables.lunge_acceleration.word(rom(game), index)
+pub fn lunge_acceleration(game: &(impl Records + ?Sized), index: isize) -> u16 {
+    game.records()
+        .ridley_tables
+        .lunge_acceleration
+        .word(rom(game), index)
 }
 
 /// $A6:CC12 and $A6:CC18: the tail's angle limits for `facing`.
-pub(crate) fn tail_angles(game: &Game, facing: isize) -> TailAngleLimits {
+pub fn tail_angles(game: &(impl Records + ?Sized), facing: isize) -> TailAngleLimits {
     let rom = rom(game);
     usize::try_from(facing)
         .ok()
-        .and_then(|row| Imported::from(&game.ridley_tables.tail_angles, rom)?.row(row))
+        .and_then(|row| Imported::from(&game.records().ridley_tables.tail_angles, rom)?.row(row))
         .unwrap_or_else(|| {
             let list = |column: u32| {
                 rom.table_word(
@@ -112,18 +127,25 @@ pub(crate) fn tail_angles(game: &Game, facing: isize) -> TailAngleLimits {
 }
 
 /// $A6:DB02: the wing spritemap at word `index`.
-pub(crate) fn wing_spritemap(game: &Game, index: isize) -> u16 {
-    game.ridley_tables.wing_spritemaps.word(rom(game), index)
+pub fn wing_spritemap(game: &(impl Records + ?Sized), index: isize) -> u16 {
+    game.records()
+        .ridley_tables
+        .wing_spritemaps
+        .word(rom(game), index)
 }
 
 /// $A6:DCBA: the tail tip spritemap for angle `sector`.
-pub(crate) fn tail_tip_spritemap(game: &Game, sector: isize) -> u16 {
-    game.ridley_tables
+pub fn tail_tip_spritemap(game: &(impl Records + ?Sized), sector: isize) -> u16 {
+    game.records()
+        .ridley_tables
         .tail_tip_spritemaps
         .word(rom(game), sector)
 }
 
 /// $A6:C1DF: the emergency text glow colour at word `index`.
-pub(crate) fn emergency_glow(game: &Game, index: isize) -> u16 {
-    game.ridley_tables.emergency_glow.word(rom(game), index)
+pub fn emergency_glow(game: &(impl Records + ?Sized), index: isize) -> u16 {
+    game.records()
+        .ridley_tables
+        .emergency_glow
+        .word(rom(game), index)
 }

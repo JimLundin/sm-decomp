@@ -221,38 +221,12 @@ pub struct Game {
     pub(crate) enemy_speeds: Option<crate::game::enemy_speeds::ImportedSpeeds>,
     /// Imported from `native_rom` by `register_native_rom`; see game::enemy_speeds.
     pub(crate) enemy_speeds32: Option<crate::game::enemy_speeds::ImportedSpeeds32>,
-    /// Imported from `loaded_rom` by `register_rom`; see game::sand_heap.
-    pub(crate) sand_heap: Option<crate::game::sand_heap::ImportedSandHeap>,
     /// Imported from `loaded_rom` by `register_rom`; see game::save_slots.
     pub(crate) save_slots: Option<crate::game::save_slots::ImportedSlots>,
-    /// Imported from `loaded_rom` by `register_rom`; see game::ceres_elevator.
-    pub(crate) ceres_rotation: Option<crate::game::ceres_elevator::ImportedRotation>,
     /// Imported from `loaded_rom` by `register_rom`; see game::demo_rooms.
     pub(crate) demo_sets: Option<crate::game::demo_rooms::ImportedSets>,
     /// Imported from `native_rom` by `register_native_rom`; see game::demo_rooms.
     pub(crate) demo_scenes: Option<crate::game::demo_rooms::ImportedScenes>,
-    /// Imported from `loaded_rom` by `register_rom`; see game::shooting_stars.
-    pub(crate) shooting_stars: Option<crate::game::shooting_stars::ImportedShootingStars>,
-    /// Imported from `loaded_rom` by `register_rom`; see game::grapple_origins.
-    pub(crate) grapple_origins: Option<crate::game::grapple_origins::ImportedOrigins>,
-    /// Imported from `loaded_rom` by `register_rom`; see game::grapple_aim.
-    pub(crate) grapple_aim: crate::game::grapple_aim::ImportedAim,
-    /// Imported from `loaded_rom` by `register_rom`; see game::kraid_tables.
-    pub(crate) kraid_tables: crate::game::kraid_tables::ImportedKraid,
-    /// Imported from `loaded_rom` by `register_rom`; see game::shaktool_tables.
-    pub(crate) shaktool_tables: crate::game::shaktool_tables::ImportedShaktool,
-    /// Imported from `loaded_rom` by `register_rom`; see game::statue_tables.
-    pub(crate) statue_tables: crate::game::statue_tables::ImportedStatues,
-    /// Imported from `loaded_rom` by `register_rom`; see game::torizo_tables.
-    pub(crate) torizo_tables: crate::game::torizo_tables::ImportedTorizos,
-    /// Imported from `loaded_rom` by `register_rom`; see game::corpse_tables.
-    pub(crate) corpse_tables: crate::game::corpse_tables::ImportedCorpses,
-    /// Imported from `loaded_rom` by `register_rom`; see game::torizo_corpse_tables.
-    pub(crate) torizo_corpse_tables: crate::game::torizo_corpse_tables::ImportedTorizoCorpse,
-    /// Imported from `loaded_rom` by `register_rom`; see game::shitroid_tables.
-    pub(crate) shitroid_tables: crate::game::shitroid_tables::ImportedShitroid,
-    /// Imported from `loaded_rom` by `register_rom`; see game::mother_brain_tables.
-    pub(crate) mother_brain_tables: crate::game::mother_brain_tables::ImportedMotherBrain,
     /// Imported from `loaded_rom` by `register_rom`; see game::visual_runtime.
     pub(crate) visual_tables: crate::game::visual_runtime::ImportedTables,
     /// Imported from `loaded_rom` by `register_rom`; see game::map_menu.
@@ -269,10 +243,6 @@ pub struct Game {
     pub(crate) beam_gradients: crate::game::beam_windows::ImportedTables,
     /// Imported from `loaded_rom` by `register_rom`; see game::actors::escape_animals.
     pub(crate) escape_etecoons: crate::game::actors::escape_animals::ImportedTables,
-    /// Imported from `loaded_rom` by `register_rom`; see game::phantoon_tables.
-    pub(crate) flame_rain: Option<crate::game::phantoon_tables::ImportedFlameRain>,
-    /// Imported from `loaded_rom` by `register_rom`; see game::phantoon_tables.
-    pub(crate) phantoon_timers: Option<crate::game::phantoon_tables::ImportedTimers>,
     /// Imported from `loaded_rom` by `register_rom`; see game::actors::botwoon.
     pub(crate) botwoon_speeds: Option<crate::game::actors::botwoon::ImportedSpeeds>,
     /// Imported from `loaded_rom` by `register_rom`; see game::actors::botwoon.
@@ -281,16 +251,8 @@ pub struct Game {
     pub(crate) intro_palette: Option<crate::game::intro_pages::ImportedIntroPalette>,
     /// Imported from `loaded_rom` by `register_rom`; see game::menu_tilemap.
     pub(crate) area_select_palettes: Option<crate::game::menu_tilemap::ImportedAreaPalettes>,
-    /// Imported from `loaded_rom` by `register_rom`; see game::ceres_ridley_tables.
-    pub(crate) ceres_ridley_tables: crate::game::ceres_ridley_tables::ImportedCeresRidley,
-    /// Imported from `loaded_rom` by `register_rom`; see game::ridley_data.
-    pub(crate) ridley_tables: crate::game::ridley_data::ImportedRidley,
-    /// Imported from `loaded_rom` by `register_rom`; see game::ridley_explosion_data.
-    pub(crate) ridley_explosion_tables: crate::game::ridley_explosion_data::ImportedRidleyExplosion,
-    /// Imported from `loaded_rom` by `register_rom`; see game::ceres_door_data.
-    pub(crate) ceres_door_tables: crate::game::ceres_door_data::ImportedCeresDoors,
-    /// Imported from `loaded_rom` by `register_rom`; see game::zebetite_data.
-    pub(crate) zebetite_tables: crate::game::zebetite_data::ImportedZebetites,
+    /// Imported from `loaded_rom` by `register_rom`; see sm_game::records.
+    pub(crate) records: sm_game::records::RomRecords,
     samus_binding: Option<Arc<SamusBinding>>,
     samus_authority: SamusAuthority,
     samus_mutation_depth: usize,
@@ -1256,21 +1218,21 @@ impl Game {
     /// Import the `sm_data` records read from the loaded image.
     fn import_loaded_records(&mut self, image: &crate::rom::RomImage) {
         self.enemy_speeds = crate::game::enemy_speeds::import(image);
-        self.sand_heap = crate::game::sand_heap::import(image);
+        self.records.sand_heap = sm_game::sand_heap::import(image);
         self.save_slots = crate::game::save_slots::import(image);
-        self.ceres_rotation = crate::game::ceres_elevator::import(image);
+        self.records.ceres_rotation = sm_game::ceres_elevator::import(image);
         self.demo_sets = crate::game::demo_rooms::import_sets(image);
-        self.shooting_stars = crate::game::shooting_stars::import(image);
-        self.grapple_origins = crate::game::grapple_origins::import(image);
-        self.grapple_aim = crate::game::grapple_aim::import(image);
-        self.kraid_tables = crate::game::kraid_tables::import(image);
-        self.shaktool_tables = crate::game::shaktool_tables::import(image);
-        self.statue_tables = crate::game::statue_tables::import(image);
-        self.torizo_tables = crate::game::torizo_tables::import(image);
-        self.corpse_tables = crate::game::corpse_tables::import(image);
-        self.torizo_corpse_tables = crate::game::torizo_corpse_tables::import(image);
-        self.shitroid_tables = crate::game::shitroid_tables::import(image);
-        self.mother_brain_tables = crate::game::mother_brain_tables::import(image);
+        self.records.shooting_stars = sm_game::shooting_stars::import(image);
+        self.records.grapple_origins = sm_game::grapple_origins::import(image);
+        self.records.grapple_aim = sm_game::grapple_aim::import(image);
+        self.records.kraid_tables = sm_game::kraid_tables::import(image);
+        self.records.shaktool_tables = sm_game::shaktool_tables::import(image);
+        self.records.statue_tables = sm_game::statue_tables::import(image);
+        self.records.torizo_tables = sm_game::torizo_tables::import(image);
+        self.records.corpse_tables = sm_game::corpse_tables::import(image);
+        self.records.torizo_corpse_tables = sm_game::torizo_corpse_tables::import(image);
+        self.records.shitroid_tables = sm_game::shitroid_tables::import(image);
+        self.records.mother_brain_tables = sm_game::mother_brain_tables::import(image);
         self.visual_tables = crate::game::visual_runtime::import(image);
         self.pause_menu = crate::game::map_menu::import(image);
         self.crocomire = crate::game::actors::crocomire_reactions::import(image);
@@ -1279,17 +1241,17 @@ impl Game {
         self.mother_brain_visuals = crate::game::mother_brain_visuals::import(image);
         self.beam_gradients = crate::game::beam_windows::import(image);
         self.escape_etecoons = crate::game::actors::escape_animals::import(image);
-        self.flame_rain = crate::game::phantoon_tables::import(image);
-        self.phantoon_timers = crate::game::phantoon_tables::import_timers(image);
+        self.records.flame_rain = sm_game::phantoon_tables::import(image);
+        self.records.phantoon_timers = sm_game::phantoon_tables::import_timers(image);
         self.botwoon_speeds = crate::game::actors::botwoon::import_speeds(image);
         self.botwoon_holes = crate::game::actors::botwoon::import_holes(image);
         self.intro_palette = crate::game::intro_pages::import_intro_palette(image);
         self.area_select_palettes = crate::game::menu_tilemap::import_area_palettes(image);
-        self.ceres_ridley_tables = crate::game::ceres_ridley_tables::import(image);
-        self.ridley_tables = crate::game::ridley_data::import(image);
-        self.ridley_explosion_tables = crate::game::ridley_explosion_data::import(image);
-        self.ceres_door_tables = crate::game::ceres_door_data::import(image);
-        self.zebetite_tables = crate::game::zebetite_data::import(image);
+        self.records.ceres_ridley_tables = sm_game::ceres_ridley_tables::import(image);
+        self.records.ridley_tables = sm_game::ridley_data::import(image);
+        self.records.ridley_explosion_tables = sm_game::ridley_explosion_data::import(image);
+        self.records.ceres_door_tables = sm_game::ceres_door_data::import(image);
+        self.records.zebetite_tables = sm_game::zebetite_data::import(image);
     }
 
     /// Import every record again after the images were patched in place;
@@ -1549,41 +1511,22 @@ impl Game {
             native_rom: None,
             enemy_speeds: None,
             enemy_speeds32: None,
-            sand_heap: None,
             save_slots: None,
-            ceres_rotation: None,
             demo_sets: None,
             demo_scenes: None,
-            grapple_origins: None,
-            grapple_aim: Default::default(),
             botwoon_speeds: None,
             botwoon_holes: None,
             intro_palette: None,
             area_select_palettes: None,
-            shooting_stars: None,
-            kraid_tables: Default::default(),
-            shaktool_tables: Default::default(),
-            statue_tables: Default::default(),
-            torizo_tables: Default::default(),
-            corpse_tables: Default::default(),
-            torizo_corpse_tables: Default::default(),
-            shitroid_tables: Default::default(),
             visual_tables: Default::default(),
             pause_menu: Default::default(),
             crocomire: Default::default(),
             magdollite: Default::default(),
             equipment_screen: Default::default(),
-            mother_brain_tables: Default::default(),
             mother_brain_visuals: Default::default(),
             beam_gradients: Default::default(),
             escape_etecoons: Default::default(),
-            flame_rain: None,
-            phantoon_timers: None,
-            ceres_ridley_tables: Default::default(),
-            ridley_tables: Default::default(),
-            ridley_explosion_tables: Default::default(),
-            ceres_door_tables: Default::default(),
-            zebetite_tables: Default::default(),
+            records: Default::default(),
             samus_binding: None,
             samus_authority: SamusAuthority::LegacyUnrouted,
             samus_mutation_depth: 0,
@@ -2644,6 +2587,12 @@ impl sm_game::effects::DisplayRefresh for Game {
     }
     fn set_blank(&mut self, blank: bool) {
         crate::game::display_refresh::set_blank(blank, self);
+    }
+}
+
+impl sm_game::records::Records for Game {
+    fn records(&self) -> &sm_game::records::RomRecords {
+        &self.records
     }
 }
 

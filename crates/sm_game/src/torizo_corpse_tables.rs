@@ -4,19 +4,19 @@
 //! allocation; any other image, and indices outside a table, keep the original
 //! indexed loads with their failures.
 #![forbid(unsafe_code)]
-use crate::game::imported::{Imported, load, rom, row};
-use crate::game_state::Game;
-use crate::rom::RomImage;
+use crate::imported::{Imported, load, rom, row};
+use crate::records::Records;
+use sm_data::cartridge::RomImage;
 use sm_data::torizo_corpse::*;
 
 #[derive(Default)]
-pub(crate) struct ImportedTorizoCorpse {
+pub struct ImportedTorizoCorpse {
     even_transfers: Option<Imported<TileTransfers>>,
     odd_transfers: Option<Imported<TileTransfers>>,
     sand_heap_lines: Option<Imported<SandHeapLines>>,
 }
 
-pub(crate) fn import(image: &RomImage) -> ImportedTorizoCorpse {
+pub fn import(image: &RomImage) -> ImportedTorizoCorpse {
     ImportedTorizoCorpse {
         even_transfers: Imported::import(
             image,
@@ -41,26 +41,29 @@ pub(crate) fn import(image: &RomImage) -> ImportedTorizoCorpse {
 
 /// Which frame's rotting transfers to queue.
 #[derive(Clone, Copy)]
-pub(crate) enum Frame {
+pub enum Frame {
     Even,
     Odd,
 }
 
-fn transfers(game: &Game, frame: Frame) -> (&Option<Imported<TileTransfers>>, u32) {
+fn transfers(
+    game: &(impl Records + ?Sized),
+    frame: Frame,
+) -> (&Option<Imported<TileTransfers>>, u32) {
     match frame {
         Frame::Even => (
-            &game.torizo_corpse_tables.even_transfers,
+            &game.records().torizo_corpse_tables.even_transfers,
             EVEN_TRANSFER_ADDRESS,
         ),
         Frame::Odd => (
-            &game.torizo_corpse_tables.odd_transfers,
+            &game.records().torizo_corpse_tables.odd_transfers,
             ODD_TRANSFER_ADDRESS,
         ),
     }
 }
 
 /// Rotting transfer `index` for `frame`.
-pub(crate) fn transfer(game: &Game, frame: Frame, index: isize) -> TileTransfer {
+pub fn transfer(game: &(impl Records + ?Sized), frame: Frame, index: isize) -> TileTransfer {
     let rom = rom(game);
     let (table, address) = transfers(game, frame);
     row(table, rom, index).unwrap_or_else(|| TileTransfer {
@@ -72,16 +75,21 @@ pub(crate) fn transfer(game: &Game, frame: Frame, index: isize) -> TileTransfer 
 }
 
 /// The size of rotting transfer `index` for `frame`; zero past the last.
-pub(crate) fn transfer_size(game: &Game, frame: Frame, index: isize) -> u16 {
+pub fn transfer_size(game: &(impl Records + ?Sized), frame: Frame, index: isize) -> u16 {
     let rom = rom(game);
     let (table, address) = transfers(game, frame);
     row(table, rom, index).map_or_else(|| load(rom, address, 4 * index), |row| row.size)
 }
 
 /// Sand heap line `index` at $A9:D67C/$A9:D69C.
-pub(crate) fn sand_heap_line(game: &Game, index: isize) -> SandHeapLine {
+pub fn sand_heap_line(game: &(impl Records + ?Sized), index: isize) -> SandHeapLine {
     let rom = rom(game);
-    row(&game.torizo_corpse_tables.sand_heap_lines, rom, index).unwrap_or_else(|| SandHeapLine {
+    row(
+        &game.records().torizo_corpse_tables.sand_heap_lines,
+        rom,
+        index,
+    )
+    .unwrap_or_else(|| SandHeapLine {
         destination: load(rom, SAND_HEAP_LINE_ADDRESS, index),
         source: load(rom, SAND_HEAP_SOURCE_ADDRESS, index),
     })

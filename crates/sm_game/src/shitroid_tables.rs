@@ -4,19 +4,19 @@
 //! allocation; any other image, and indices outside a table, keep the original
 //! indexed loads with their failures.
 #![forbid(unsafe_code)]
-use crate::game::imported::{Imported, load, rom, row};
-use crate::game_state::Game;
-use crate::rom::RomImage;
+use crate::imported::{Imported, load, rom, row};
+use crate::records::Records;
+use sm_data::cartridge::RomImage;
 use sm_data::shitroid::*;
 
 #[derive(Default)]
-pub(crate) struct ImportedShitroid {
+pub struct ImportedShitroid {
     shell_palettes: Option<Imported<HealthPalettes>>,
     innards_palettes: Option<Imported<HealthPalettes>>,
     fade_palettes: Option<Imported<FadePalettes>>,
 }
 
-pub(crate) fn import(image: &RomImage) -> ImportedShitroid {
+pub fn import(image: &RomImage) -> ImportedShitroid {
     ImportedShitroid {
         shell_palettes: Imported::import(
             image,
@@ -40,25 +40,25 @@ pub(crate) fn import(image: &RomImage) -> ImportedShitroid {
 }
 
 /// Health-based shell palette `index` at $AD:E7E2.
-pub(crate) fn shell_palette(game: &Game, index: isize) -> Palette {
+pub fn shell_palette(game: &(impl Records + ?Sized), index: isize) -> Palette {
     let rom = rom(game);
-    row(&game.shitroid_tables.shell_palettes, rom, index).unwrap_or_else(|| Palette {
+    row(&game.records().shitroid_tables.shell_palettes, rom, index).unwrap_or_else(|| Palette {
         colors: load(rom, SHELL_PALETTE_ADDRESS, index),
     })
 }
 
 /// Health-based innards palette `index` at $AD:E882.
-pub(crate) fn innards_palette(game: &Game, index: isize) -> Palette {
+pub fn innards_palette(game: &(impl Records + ?Sized), index: isize) -> Palette {
     let rom = rom(game);
-    row(&game.shitroid_tables.innards_palettes, rom, index).unwrap_or_else(|| Palette {
+    row(&game.records().shitroid_tables.innards_palettes, rom, index).unwrap_or_else(|| Palette {
         colors: load(rom, INNARDS_PALETTE_ADDRESS, index),
     })
 }
 
 /// Fade-to-black palette `index` at $AD:E8E2.
-pub(crate) fn fade_palette(game: &Game, index: isize) -> Palette {
+pub fn fade_palette(game: &(impl Records + ?Sized), index: isize) -> Palette {
     let rom = rom(game);
-    row(&game.shitroid_tables.fade_palettes, rom, index).unwrap_or_else(|| Palette {
+    row(&game.records().shitroid_tables.fade_palettes, rom, index).unwrap_or_else(|| Palette {
         colors: load(rom, FADE_PALETTE_ADDRESS, index),
     })
 }
