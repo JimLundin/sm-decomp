@@ -154,7 +154,7 @@ copyright and license notices are retained in
 | --- | --- |
 | [snesrev/sm](https://github.com/snesrev/sm/tree/578f90b3cc49557bb70060ad033bb90b8cf8ac50) | One-time Rust translation of gameplay, runtime and SNES emulation; [translation record](tools/transpile/README.md). |
 | LakeSnes: [CPU](https://github.com/dinkc64/LakeSnes/tree/048a0d72568668f74e0cdf371dcd9e8efd614965), [PPU](https://github.com/angelo-wf/LakeSnes/tree/28b8fbc15ad15afff003165ff4f2a8adb1c93d18), [SPC700](https://github.com/elzo-d/LakeSnes/tree/1da16a22db4d0f2e7f6960a9846ef4e1f3acbd29) | The CPU and PPU are pinned native C, fetched by [the installer](tools/install_lakesnes.py) and linked into builds. The SPC700 and DSP now run as Rust in `sm/src/snes/`. |
-| [snesrev/zelda3](https://github.com/snesrev/zelda3/tree/45a149d8b4bb8098f53d1009f76e76e7d8b79bbf) | Selected configuration, utility, shader and desktop routines (`sm/src/native_*.c`) with maintained Super Metroid compatibility changes. |
+| [snesrev/zelda3](https://github.com/snesrev/zelda3/tree/45a149d8b4bb8098f53d1009f76e76e7d8b79bbf) | Selected configuration, utility, shader and desktop routines, fetched and patched by the native installers, with bridges in `sm/src/native_*.c`. |
 | [stb_image 2.26](https://crates.io/crates/stb-sys/0.6.0) | PNG decoder implementation; [source pins and build instructions](docs/PNG_DEPENDENCY.md). |
 
 Tools and reference material: [c2rust](https://github.com/immunant/c2rust)

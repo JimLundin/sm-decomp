@@ -16,7 +16,7 @@ It only shrinks and gets no new features.
 | `src/cpu_infra.rs` | Paired-frame execution of ROM and Rust, and the per-frame comparison |
 | `src/verify.rs`, `src/verify_dll.rs`, `src/verify/` | The headless verifier DLL loaded by `tools/verify_dll.py`, and checkpoints |
 | `src/verification/` | Verification-only checks registered with the verifier, and the detached `player_detached` example run in CI |
-| `src/native_*.c`, `native/stb_image.c` | Native configuration, utility, shader and desktop code from snesrev/zelda3, and the PNG decoder bridge |
+| `src/native_*.c`, `native/stb_image.c` | C bridges for the zelda3 configuration, utility, shader and desktop routines, and for the PNG decoder |
 | `src/room_pack.rs` | Room-pack bytes and command-line selection |
 
 `tools/cycle_report.py` measures how much of `src/game/` is still tied to
