@@ -1,6 +1,7 @@
 //! Power Bomb and Crystal Flash window geometry, expansion and afterglow.
 use crate::constants::{Consts_88, Consts_89};
 use crate::display::hdma_spawn::SpawnHdmaObject_Args;
+use crate::hdma::HdmaObject;
 use crate::menus::menu_tilemap::native_record;
 use crate::menus::prelude::do_until;
 use crate::player_movement::forced;
@@ -140,24 +141,30 @@ fn fade_explosion_afterglow_color<H: Host + ?Sized>(game: &mut H) {
 }
 
 #[forbid(unsafe_code)]
-pub fn power_bomb_afterglow<H: Host + ?Sized>(k: u16, game: &mut H) {
+pub fn power_bomb_afterglow<H: Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
     if (word!(game.power_bomb_explosion_status) & 0x8000) != 0 {
-        let v1: i32 = k as u8 as i32 >> 1;
-        if (word!(game.hdma_object_timers[v1] -= 1, reread) & 0x8000) != 0 {
-            let at = 0x1938 + usize::from(k as u8);
-            let fresh127 = game.ram().read_byte(at);
-            let value = game.ram().read_byte(at).wrapping_sub(1);
-            game.ram().write_byte(at, value);
+        object.timer = object.timer.wrapping_sub(1);
+        if (object.timer & 0x8000) != 0 {
+            // D's low byte counts the afterglow's fades.
+            let fresh127 = object.d as u8;
+            set_low_byte(&mut object.d, fresh127.wrapping_sub(1));
             if fresh127 == 1 {
-                word!(game.hdma_object_instruction_timers[v1] = 1);
-                word!(game.hdma_object_instruction_list_pointers[v1] += 2);
+                advance_program(object);
             } else {
                 fade_explosion_afterglow_color(game);
-                game.ram()
-                    .write_byte(0x1908 + usize::from(k as u8), g_word_888B96 as u8);
+                set_low_byte(&mut object.timer, g_word_888B96 as u8);
             }
         }
     }
+}
+
+fn set_low_byte(word: &mut u16, value: u8) {
+    *word = (*word & 0xff00) | u16::from(value);
+}
+
+fn advance_program(object: &mut HdmaObject) {
+    object.instruction_timer = 1;
+    object.instruction_list = object.instruction_list.wrapping_add(2);
 }
 #[derive(Clone, Copy)]
 enum ExplosionWindowSide {
@@ -334,6 +341,7 @@ fn calculate_explosion_hdma_scaled<H: Host + ?Sized>(
 }
 
 fn calculate_explosion_hdma_table_pointers<H: Host + ?Sized>(
+    object: &mut HdmaObject,
     k: u16,
     pre_explosion: bool,
     game: &mut H,
@@ -368,10 +376,10 @@ fn calculate_explosion_hdma_table_pointers<H: Host + ?Sized>(
         if (radius & 0xff00) == 0 {
             word!(game.power_bomb_explosion_y_pos_rsub_0x1ff = 0);
         }
+        object.table = (3 * word!(game.power_bomb_explosion_y_pos_rsub_0x1ff) as i32
+            + addr_kIndirectHdmaTable_PowerBombExplodeLeft as i32) as u16;
+        // The right half is the next object, which stays on the host.
         word! { game;
-            hdma_object_table_pointers[(k >> 1)] =
-                (3 * word!(game.power_bomb_explosion_y_pos_rsub_0x1ff) as i32
-                    + addr_kIndirectHdmaTable_PowerBombExplodeLeft as i32) as u16;
             hdma_object_table_pointers[((k as i32 >> 1) + 1)] =
                 (3 * word!(game.power_bomb_explosion_y_pos_rsub_0x1ff) as i32
                     + addr_kIndirectHdmaTable_PowerBombExplodeRight as i32) as u16;
@@ -413,10 +421,10 @@ pub fn set_crystal_flash_blending<H: Host + ?Sized>(_k: u16, game: &mut H) {
     game.ram().write_byte(0x6d, 4);
 }
 #[forbid(unsafe_code)]
-pub fn crystal_flash_afterglow<H: Host + ?Sized>(k: u16, game: &mut H) {
+pub fn crystal_flash_afterglow<H: Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
     if (word!(game.power_bomb_explosion_status) & 0x8000) != 0 {
-        let v1: i32 = k as i32 >> 1;
-        if (word!(game.hdma_object_timers[v1] -= 1, reread) & 0x8000) != 0 {
+        object.timer = object.timer.wrapping_sub(1);
+        if (object.timer & 0x8000) != 0 {
             if (game.ram().read_byte(0x76)
                 | game.ram().read_byte(0x75)
                 | game.ram().read_byte(0x74))
@@ -424,11 +432,9 @@ pub fn crystal_flash_afterglow<H: Host + ?Sized>(k: u16, game: &mut H) {
                 != 0
             {
                 fade_explosion_afterglow_color(game);
-                game.ram()
-                    .write_byte(0x1908 + usize::from(k), g_word_888B96 as u8);
+                set_low_byte(&mut object.timer, g_word_888B96 as u8);
             } else {
-                word!(game.hdma_object_instruction_timers[v1] = 1);
-                word!(game.hdma_object_instruction_list_pointers[v1] += 2);
+                advance_program(object);
             }
         }
     }
@@ -492,20 +498,22 @@ impl Phase {
     }
 }
 
-fn advance_instruction<H: Host + ?Sized>(k: u16, game: &mut H) {
-    {
-        word!(game.hdma_object_instruction_timers[(k >> 1)] = 1);
-        word!(game.hdma_object_instruction_list_pointers[(k >> 1)] += 2);
-        word!(game.hdma_object_timers[(k >> 1)] = 0);
-    }
+fn advance_instruction(object: &mut HdmaObject) {
+    advance_program(object);
+    object.timer = 0;
 }
 
 #[forbid(unsafe_code)]
-pub fn update_scaled<H: Host + ?Sized>(k: u16, phase: Phase, game: &mut H) {
+pub fn update_scaled<H: Host + ?Sized>(
+    object: &mut HdmaObject,
+    k: u16,
+    phase: Phase,
+    game: &mut H,
+) {
     if word!(game.power_bomb_explosion_status) & 0x8000 == 0 {
         return;
     }
-    calculate_explosion_hdma_table_pointers(k, phase == Phase::PreFlash, game);
+    calculate_explosion_hdma_table_pointers(object, k, phase == Phase::PreFlash, game);
     let bottom = (Mult8x8(
         (phase.radius(game) >> 8) as u8,
         native_record(0x88a286, game).byte(0),
@@ -547,15 +555,20 @@ pub fn update_scaled<H: Host + ?Sized>(k: u16, phase: Phase, game: &mut H) {
     if phase.radius(game) < threshold {
         phase.accelerate(game);
     } else {
-        advance_instruction(k, game);
+        advance_instruction(object);
     }
 }
 
-pub fn update_prescaled<H: Host + ?Sized>(k: u16, phase: Phase, game: &mut H) {
+pub fn update_prescaled<H: Host + ?Sized>(
+    object: &mut HdmaObject,
+    k: u16,
+    phase: Phase,
+    game: &mut H,
+) {
     if word!(game.power_bomb_explosion_status) & 0x8000 == 0 {
         return;
     }
-    calculate_explosion_hdma_table_pointers(k, phase == Phase::PreFlash, game);
+    calculate_explosion_hdma_table_pointers(object, k, phase == Phase::PreFlash, game);
     let shape = native_record(
         0x880000 | u32::from(word!(game.pre_scaled_power_bomb_explosion_shape_def_ptr)),
         game,
@@ -570,9 +583,9 @@ pub fn update_prescaled<H: Host + ?Sized>(k: u16, phase: Phase, game: &mut H) {
         addr_byte_889F06 as u16
     };
     if word!(game.pre_scaled_power_bomb_explosion_shape_def_ptr) == end {
-        advance_instruction(k, game);
+        advance_instruction(object);
         if phase == Phase::PowerBomb {
-            word!(game.hdma_object_D[(k >> 1)] = 32);
+            object.d = 32;
         }
     }
     if word!(game.power_bomb_pre_explosion_radius_speed) as i32 + (phase.radius(game) as i32)

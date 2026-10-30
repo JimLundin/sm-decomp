@@ -240,6 +240,27 @@ where
         WaterWave => it.with_object(index, liquid_effects::water_wave),
         WaterFlat => it.foreign(liquid_effects::water_flat),
         SkyHorizontalScroll => it.with_object(index, scrolling_sky::update_horizontal_scroll),
+        PowerBombAfterglow => it.with_object(index, explosion_window::power_bomb_afterglow),
+        CrystalFlashAfterglow => it.with_object(index, explosion_window::crystal_flash_afterglow),
+        PowerBombScaled | PreFlashScaled | CrystalFlashScaled => {
+            let phase = match target {
+                PowerBombScaled => Phase::PowerBomb,
+                PreFlashScaled => Phase::PreFlash,
+                _ => Phase::CrystalFlash,
+            };
+            it.with_object(index, |object, game| {
+                explosion_window::update_scaled(object, slot, phase, game)
+            })
+        }
+        PowerBombPrescaled | PreFlashPrescaled => {
+            let phase = match target {
+                PowerBombPrescaled => Phase::PowerBomb,
+                _ => Phase::PreFlash,
+            };
+            it.with_object(index, |object, game| {
+                explosion_window::update_prescaled(object, slot, phase, game)
+            })
+        }
         StatueWaiting | StatueShaking | StatueSinking | StatueFinished => {
             let phase = match target {
                 StatueWaiting => TourianStatuePhase::Waiting,
@@ -259,9 +280,25 @@ where
 fn host_pre_action<H: DispatchHost + ?Sized>(target: HdmaPreAction, k: u16, game: &mut H) {
     use HdmaPreAction::*;
     match target {
-        Nothing | LavaSurface | LavaBackground | WaterSurface | WaterBackground | WaterWave
-        | WaterFlat | SkyHorizontalScroll | StatueWaiting | StatueShaking | StatueSinking
-        | StatueFinished => unreachable!("run_pre_action runs {target:?}"),
+        Nothing
+        | LavaSurface
+        | LavaBackground
+        | WaterSurface
+        | WaterBackground
+        | WaterWave
+        | WaterFlat
+        | SkyHorizontalScroll
+        | StatueWaiting
+        | StatueShaking
+        | StatueSinking
+        | StatueFinished
+        | PowerBombAfterglow
+        | CrystalFlashAfterglow
+        | PowerBombScaled
+        | PreFlashScaled
+        | CrystalFlashScaled
+        | PowerBombPrescaled
+        | PreFlashPrescaled => unreachable!("run_pre_action runs {target:?}"),
         SetupXrayBlending => xray_background::setup_blending(k, game),
         AdvanceXrayBackground => game.hdma_effect(HdmaEffect::AdvanceXrayBackground, k),
         XrayBeamInitial => game.hdma_effect(HdmaEffect::AdvanceXrayBeam(BeamPhase::Initial), k),
@@ -271,14 +308,7 @@ fn host_pre_action<H: DispatchHost + ?Sized>(target: HdmaPreAction, k: u16, game
         RestoreRight => xray_background::restore_right(k, game),
         FinishRestore => xray_background::finish_restore(k, game),
         PowerBombBlending => explosion_window::set_power_bomb_blending(k, game),
-        PowerBombAfterglow => explosion_window::power_bomb_afterglow(k, game),
-        PowerBombScaled => explosion_window::update_scaled(k, Phase::PowerBomb, game),
-        PowerBombPrescaled => explosion_window::update_prescaled(k, Phase::PowerBomb, game),
-        PreFlashScaled => explosion_window::update_scaled(k, Phase::PreFlash, game),
-        PreFlashPrescaled => explosion_window::update_prescaled(k, Phase::PreFlash, game),
         CrystalFlashBlending => explosion_window::set_crystal_flash_blending(k, game),
-        CrystalFlashAfterglow => explosion_window::crystal_flash_afterglow(k, game),
-        CrystalFlashScaled => explosion_window::update_scaled(k, Phase::CrystalFlash, game),
         SkyVerticalScroll => scrolling_sky::update_vertical_scroll(k, game),
         SkyParallax => scrolling_sky::update_parallax(k, game),
         AdvanceSkyParallax => scrolling_sky::advance_parallax(k, game),
