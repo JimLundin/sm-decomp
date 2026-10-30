@@ -7,6 +7,7 @@
 //! `CinematicFunctionBlackoutFromCeres` in the original decompilation; the
 //! names now come from the bank log. The functions run from
 //! `cinematic_function`; the compat dispatch keeps their ids.
+use crate::actors::host::below;
 use crate::cinematic::{
     clear_cinematic_background, clear_cinematic_sprites, enable_cinematic_background,
     fade_cinematic_fixed_color, set_cinematic_tilemap_updates, set_fixed_color,
@@ -144,11 +145,6 @@ macro_rules! add_pair {
         word!($game.$low = sum as u16);
         word!($game.$high = (sum >> 16) as u16);
     }};
-}
-
-/// Whether `value` is below `limit`, as the original's signed 16-bit difference.
-fn below(value: u16, limit: u16) -> bool {
-    (value.wrapping_sub(limit) as i16) < 0
 }
 
 /// Counts down `cinematic_function_timer`; true when it reaches zero or below.

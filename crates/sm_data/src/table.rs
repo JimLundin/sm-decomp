@@ -78,3 +78,8 @@ pub fn check_index(index: usize, len: usize) {
         panic!("index out of bounds: the len is {len} but the index is {index}");
     }
 }
+
+/// One word per entry, for any single-word list.
+pub fn import_words<const N: usize>(bytes: &[u8]) -> Result<Rows<u16, N>, LengthError> {
+    Rows::import(bytes, |[word]| word)
+}

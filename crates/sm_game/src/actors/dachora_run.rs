@@ -77,6 +77,7 @@ pub mod instruction_list {
     pub const PALETTE: u16 = 0xf225;
 }
 
+use crate::actors::host::below;
 use instruction_list as list;
 
 /// A lease on a game with the dachora's effects.
@@ -110,11 +111,6 @@ const BUMP_SOUND: u8 = 0x71;
 const CHARGE_SOUND: u8 = 0x3d;
 const SHINESPARK_SOUND: u8 = 0x3b;
 const LAND_SOUND: u8 = 0x3c;
-
-/// Whether `value` is below `limit`, as the original's signed 16-bit difference.
-fn below(value: u16, limit: u16) -> bool {
-    (value.wrapping_sub(limit) as i16) < 0
-}
 
 fn gravity<L: Lease>(game: &L) -> u32 {
     ((word!(game.SAMUS_Y_ACCEL) as u32) << 16) | word!(game.SAMUS_Y_SUBACCEL) as u32

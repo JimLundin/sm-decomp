@@ -546,7 +546,7 @@ pub fn decompress_prepared_vram<H: Host + ?Sized>(stream: &[u8], destination: u1
     );
 }
 
-fn mult8x8(a: u8, b: u8) -> u16 {
+pub(crate) fn mult8x8(a: u8, b: u8) -> u16 {
     (a as i32 * b as i32) as u16
 }
 

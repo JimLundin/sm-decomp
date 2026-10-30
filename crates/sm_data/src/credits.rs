@@ -2,6 +2,7 @@
 //! VRAM transfers, the icon's grey-out palettes and the item percentage.
 pub use crate::table::LengthError;
 use crate::table::Rows;
+pub use crate::table::import_words;
 
 /// One VRAM transfer queue entry's ROM fields.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -72,11 +73,6 @@ pub const BEAM_SOURCE_ADDRESS: u32 = 0x8b_f6b8;
 pub const BEAM_DESTINATION_ADDRESS: u32 = 0x8b_f6d8;
 pub const BEAM_FRAMES: usize = 16;
 pub type BeamTransfers = Rows<u16, BEAM_FRAMES>;
-
-/// One word per entry, for any of the single-word lists above.
-pub fn import_words<const N: usize>(bytes: &[u8]) -> Result<Rows<u16, N>, LengthError> {
-    Rows::import(bytes, |[word]| word)
-}
 
 pub fn import_digit_tiles(bytes: &[u8]) -> Result<DigitTiles, LengthError> {
     Rows::import(bytes, |tiles| tiles)

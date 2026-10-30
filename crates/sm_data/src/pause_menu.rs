@@ -1,6 +1,7 @@
 //! Pause menu map screen tables in bank $82.
 pub use crate::table::LengthError;
 use crate::table::Rows;
+pub use crate::table::import_words;
 
 /// $82:C749: two spritemap IDs; the area labels draw from the first.
 pub const LABEL_SPRITEMAP_ADDRESS: u32 = 0x82_c749;
@@ -19,11 +20,6 @@ pub const ANIMATIONS: usize = 9;
 /// $82:C18E: each equipment category's bank $82 list of selector positions.
 pub const SELECTOR_POSITION_ADDRESS: u32 = 0x82_c18e;
 pub const SELECTOR_CATEGORIES: usize = 4;
-
-/// One word per entry, for any of the lists above.
-pub fn import_words<const N: usize>(bytes: &[u8]) -> Result<Rows<u16, N>, LengthError> {
-    Rows::import(bytes, |[word]| word)
-}
 
 /// $82:A987: the map screen's palette animation, one sixteen-colour palette
 /// per animation frame.

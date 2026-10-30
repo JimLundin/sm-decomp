@@ -1,6 +1,7 @@
 //! Power Bomb and Crystal Flash window geometry, expansion and afterglow.
 use crate::constants::{Consts88, Consts89};
 use crate::display::hdma_spawn::HdmaObjectDefinition;
+use crate::display_refresh::mult8x8;
 use crate::hdma::HdmaObject;
 use crate::menus::menu_tilemap::native_record;
 use crate::menus::prelude::do_until;
@@ -24,9 +25,6 @@ pub trait Host:
     fn set_window_row(&mut self, row: u16);
 }
 
-fn mult8x8(a: u8, b: u8) -> u16 {
-    (a as i32 * b as i32) as u16
-}
 crate::typed_constants! { Consts88;
     ADDR_BYTE_889F06 = 40710, ADDR_POWER_BOMB_EXPLOSION_SHAPE_DEF0 = 37446,
 }

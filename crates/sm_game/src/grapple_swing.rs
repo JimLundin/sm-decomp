@@ -12,6 +12,7 @@ use crate::player_transitions::state::{
 
 /// Samus's movement handler after a grapple launch ($90:946E).
 const GRAPPLE_LAUNCH_MOVEMENT: MovementMode = MovementMode::from_raw(0x946e);
+use crate::actors::host::abs16;
 use crate::projectile_geometry::SINE_COSINE;
 use crate::projectile_room::Axis;
 use crate::ram::{word, words as ram_words};
@@ -90,10 +91,6 @@ pub struct SwingState {
     pub start_animation_timer: u16,
     /// $0D40: the beam start animation's tile pointer (bank $9A).
     pub start_animation_tiles: u16,
-}
-
-fn abs16(value: u16) -> u16 {
-    (value as i16).unsigned_abs()
 }
 
 /// The 8-bit by 8-bit hardware product.

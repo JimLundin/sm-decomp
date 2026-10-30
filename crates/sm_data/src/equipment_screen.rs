@@ -3,6 +3,7 @@
 //! The screen lists four categories: tanks, beams, suits/misc and boots.
 pub use crate::table::LengthError;
 use crate::table::Rows;
+pub use crate::table::import_words;
 
 /// $82:C02C: four parallel per-category tables, ending at $82:C04C.
 pub const CATEGORY_ADDRESS: u32 = 0x82_c02c;
@@ -67,8 +68,3 @@ pub type BootBitmasks = Rows<u16, BOOTS>;
 /// $82:C06C: the beams' tilemap offsets, in bitmask order.
 pub const BEAM_TILEMAP_OFFSET_ADDRESS: u32 = 0x82_c06c;
 pub type BeamTilemapOffsets = Rows<u16, BEAMS>;
-
-/// One word per entry, for any of the single-word lists above.
-pub fn import_words<const N: usize>(bytes: &[u8]) -> Result<Rows<u16, N>, LengthError> {
-    Rows::import(bytes, |[word]| word)
-}

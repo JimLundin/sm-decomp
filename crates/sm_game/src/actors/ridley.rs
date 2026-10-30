@@ -21,6 +21,7 @@ use crate::actors::session_slots::{SlotAccess, session_slot};
 use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE, K_ENEMY_PROPS_TANGIBLE,
 };
+use crate::display_refresh::mult8x8;
 use crate::enemy_projectiles::drops::DropSource;
 use crate::enemy_projectiles::shared_pre::{x_velocity_at_angle, y_velocity_at_angle};
 use crate::enemy_script::EnemyScript;
@@ -492,10 +493,6 @@ const fn tail_address(index: usize) -> u16 {
 
 fn tail_low_byte<L: Lease + ?Sized>(game: &L, index: usize) -> u16 {
     u16::from(game.slot_byte(TAIL_RAM + index * 2))
-}
-
-fn mult8x8(a: u8, b: u8) -> u16 {
-    (a as i32 * b as i32) as u16
 }
 
 fn snes_divide(a: u16, b: u8) -> u16 {

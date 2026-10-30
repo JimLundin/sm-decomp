@@ -1,6 +1,7 @@
 //! Crocomire's tables in bank $A4.
 pub use crate::table::LengthError;
 use crate::table::Rows;
+pub use crate::table::import_words;
 
 /// $A4:8B79: the charge forward / step back and moving claws spritemaps,
 /// which keep BG2 scrolled with Crocomire.
@@ -21,11 +22,6 @@ pub const SPIKE_WALL_COLUMNS: usize = 6;
 /// The tile words with their end marker.
 pub type SpikeWallTiles = Rows<u16, { SPIKE_WALL_COLUMNS + 1 }>;
 pub type SpikeWallDestinations = Rows<u16, SPIKE_WALL_COLUMNS>;
-
-/// One word per entry, for any of the lists above.
-pub fn import_words<const N: usize>(bytes: &[u8]) -> Result<Rows<u16, N>, LengthError> {
-    Rows::import(bytes, |[word]| word)
-}
 
 /// $A4:9C79 and $A4:9E7B: the melting flesh and skeleton BG2 tilemaps, each
 /// 256 tiles ended by $FFFF.

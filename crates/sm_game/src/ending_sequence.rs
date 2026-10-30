@@ -7,6 +7,7 @@
 //! -`179` in the original decompilation; the names now come from the bank
 //! log. The functions run from `cinematic_function`; the compat dispatch keeps
 //! their ids.
+use crate::actors::host::below;
 use crate::cinematic::{
     capture_cinematic_palette, clear_cinematic_background, clear_cinematic_colors,
     clear_cinematic_sprites, compose_cinematic_palette, fade_cinematic_colors,
@@ -136,11 +137,6 @@ macro_rules! add_pair {
         word!($game.$low = sum as u16);
         word!($game.$high = (sum >> 16) as u16);
     }};
-}
-
-/// Whether `value` is below `limit`, as the original's signed 16-bit difference.
-fn below(value: u16, limit: u16) -> bool {
-    (value.wrapping_sub(limit) as i16) < 0
 }
 
 fn sprites<H: Host + ?Sized>(game: &mut H, definition: u16, parameter: u16) {

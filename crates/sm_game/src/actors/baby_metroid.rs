@@ -1,6 +1,7 @@
 //! The baby Metroid, hatched from the last Metroid (bank
 //! $A9:EED1-$A9:FB6F): its hitbox tests, camera wait, screen test, steering
 //! and cry.
+use crate::actors::host::abs16;
 use crate::actors::layouts::part_view;
 use crate::actors::session_slots::{SlotAccess, session_slot};
 use crate::effects::SoundEffects;
@@ -64,10 +65,6 @@ const CRY_CYCLES: u16 = 4;
 const DRAINING_DELAY: u16 = 0xa;
 const CRY: u8 = 0x72;
 const DRAINING: u8 = 0x78;
-
-fn abs16(value: u16) -> u16 {
-    (value as i16).unsigned_abs()
-}
 
 /// Check for enemy collision with enemy ($A9:EED1): 1 when actor `k`'s and
 /// actor `j`'s hitboxes do not overlap. Was `BabyMetroid_Func_1`.
