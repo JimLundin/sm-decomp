@@ -2675,6 +2675,11 @@ impl sm_game::display::sequence::Registers for Game {
         // SAFETY: as for `write_register`.
         unsafe { crate::rtl::WriteRegWord(register, value, self) }
     }
+    fn read_register_word(&mut self, register: u16) -> u16 {
+        assert!(!self.g_snes.is_null(), "SNES backend must be installed");
+        // SAFETY: as for `write_register`.
+        unsafe { crate::rtl::ReadRegWord(register, self) }
+    }
 }
 
 impl sm_game::ram::RawRam for WorkRam {

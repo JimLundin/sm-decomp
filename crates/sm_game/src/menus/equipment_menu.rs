@@ -78,8 +78,8 @@ pub fn update<H: Host + ?Sized>(game: &mut H) {
 
 fn reserves<H: Host + ?Sized>(game: &mut H) {
     let ACTIONS: [fn(&mut H); 2] = [
-        |game| game.reserve_toggle_mode(),
-        |game| game.reserve_transfer_manual(),
+        |game| super::reserve_tanks::toggle_mode(game),
+        |game| super::reserve_tanks::transfer_manual(game),
     ];
     ACTIONS[usize::from(game.ram().read_byte(0x756))](game);
     let previous = word!(game.pausemenu_equipment_category_item);

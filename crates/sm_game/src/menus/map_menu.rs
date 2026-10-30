@@ -156,7 +156,7 @@ fn begin_area_window<H: Host + ?Sized>(game: &mut H) {
         game.ram().write_byte(0x74 + 2, 0x80);
         game.ram().write_byte(0x74 + 1, 64);
         game.ram().write_byte(0x74 + 0, 32);
-        game.window_initialize();
+        super::menu_window::initialize(game);
         crate::display::sequence::write_register_and_mirror(game, HDMAEN as u16, 0xc, 0x85, true);
         configure_area_window(game);
         word!(game.hdma_objects_enable_flag = 0);
@@ -176,7 +176,7 @@ fn configure_area_window<H: Host + ?Sized>(game: &mut H) {
 }
 fn open_area_window<H: Host + ?Sized>(game: &mut H) {
     draw_area_labels(game);
-    if game.window_open_from_center() {
+    if super::menu_window::open_from_center(game) {
         game.ram()
             .write_byte(0x727, ((word!(game.menu_index)) as u8).wrapping_add(1));
         game.ram().write_byte(0x69, game.ram().read_byte(0x69) & !2);
@@ -382,7 +382,7 @@ static WINDOW_TIMERS: [u16; 6] = [0x33, 0x35, 0x2d, 0x33, 0x33, 0x22];
 fn begin_room_window<H: Host + ?Sized>(game: &mut H) {
     {
         draw_area_labels(game);
-        game.window_initialize();
+        super::menu_window::initialize(game);
         game.ram().write_byte(0x69, 19);
         game.ram().write_byte(0x6c, 19);
         crate::display::sequence::register_writes! { game;
@@ -404,15 +404,15 @@ fn begin_room_window<H: Host + ?Sized>(game: &mut H) {
             expand_sq_left_subpos, expand_sq_right_subpos, expand_sq_top_subpos,
             expand_sq_bottom_subpos,
         }
-        game.window_load_velocities(word!(game.area_index));
-        game.window_project();
+        super::menu_window::load_velocities(word!(game.area_index), game);
+        super::menu_window::project(game);
         crate::display::sequence::write_register_and_mirror(game, HDMAEN as u16, 0xc, 0x85, true);
         word!(game.menu_index += 1);
         game.queue_sound(0, (0x3b) as u8, 6);
     }
 }
 fn open_room_window<H: Host + ?Sized>(game: &mut H) {
-    game.window_advance(WindowMotion::Expand);
+    super::menu_window::advance(super::menu_window::Motion::Expand, game);
     if (word!(game.expand_sq_timer -= 1, reread) & 0x8000) != 0 {
         word!(game.menu_index += 1);
         game.ram().write_byte(0x69, 2);
@@ -600,7 +600,7 @@ fn begin_return_window<H: Host + ?Sized>(game: &mut H) {
             expand_sq_timer =
                 (WINDOW_TIMERS[word!(game.area_index) as usize]).wrapping_sub(12);
         }
-        game.window_load_velocities(word!(game.area_index));
+        super::menu_window::load_velocities(word!(game.area_index), game);
         word! { game;
             expand_sq_left_pos = 8;
             expand_sq_right_pos = 248;
@@ -611,7 +611,7 @@ fn begin_return_window<H: Host + ?Sized>(game: &mut H) {
             expand_sq_left_subpos, expand_sq_right_subpos, expand_sq_top_subpos,
             expand_sq_bottom_subpos,
         }
-        game.window_project();
+        super::menu_window::project(game);
         word!(game.menu_index += 1);
         crate::display::sequence::register_writes! { game;
             mirror(HDMAEN as u16, 0xc, 0x85, true); mirror(W12SEL as u16, 0x32, 0x60, true);
@@ -625,7 +625,7 @@ fn begin_return_window<H: Host + ?Sized>(game: &mut H) {
     }
 }
 fn close_room_window<H: Host + ?Sized>(game: &mut H) {
-    game.window_advance(WindowMotion::Contract);
+    super::menu_window::advance(super::menu_window::Motion::Contract, game);
     draw_area_labels(game);
     if (word!(game.expand_sq_timer -= 1, reread) & 0x8000) != 0 {
         word!(game.menu_index -= 15);

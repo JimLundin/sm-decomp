@@ -1,13 +1,10 @@
 //! The compatibility runtime as the `sm_game::menus` host.
 use crate::game::room_entry::{ArrivalRequest, StartSite};
 use crate::game::session_runtime::Runtime;
-use crate::game::{
-    controller_input, menu_window, projectile_presentation_ram as sprites, reserve_tanks,
-    sprite_drawing::Clip, visual_runtime,
-};
+use crate::game::{projectile_presentation_ram as sprites, sprite_drawing::Clip, visual_runtime};
 use crate::game_state::Game;
 use crate::save_ram::SaveRam;
-use sm_game::menus::host::{Host, MenuRuntime, MenuSprites, WindowMotion};
+use sm_game::menus::host::{Host, MenuRuntime, MenuSprites};
 
 impl sm_game::menus::host::SaveRam for SaveRam {
     fn word(&self, at: usize) -> u16 {
@@ -65,43 +62,6 @@ impl MenuSprites for Game {
 // SAFETY (all `unsafe` calls below): the menus run from the frame loop with
 // the SNES backend installed, and `&mut self` excludes any other access.
 impl MenuRuntime for Game {
-    fn window_initialize(&mut self) {
-        unsafe { menu_window::initialize(self) }
-    }
-    fn window_open_from_center(&mut self) -> bool {
-        menu_window::open_from_center(self)
-    }
-    fn window_project(&mut self) {
-        menu_window::project(self)
-    }
-    fn window_load_velocities(&mut self, area: u16) {
-        menu_window::load_velocities(area, self)
-    }
-    fn window_advance(&mut self, motion: WindowMotion) {
-        let motion = match motion {
-            WindowMotion::Expand => menu_window::Motion::Expand,
-            WindowMotion::Contract => menu_window::Motion::Contract,
-        };
-        menu_window::advance(motion, self)
-    }
-    fn reserve_toggle_mode(&mut self) {
-        reserve_tanks::toggle_mode(self)
-    }
-    fn reserve_transfer_manual(&mut self) {
-        reserve_tanks::transfer_manual(self)
-    }
-    fn load_binding_choices(&mut self) {
-        controller_input::load_binding_choices(self)
-    }
-    fn reset_binding_choices(&mut self) {
-        controller_input::reset_binding_choices(self)
-    }
-    fn store_binding_choices(&mut self) -> u8 {
-        controller_input::store_binding_choices(self)
-    }
-    fn remap_binding(&mut self) {
-        controller_input::remap_binding(self)
-    }
     fn set_hdma_enabled(&mut self, enabled: bool) {
         visual_runtime::set_hdma_enabled(enabled, self)
     }
@@ -145,6 +105,9 @@ impl MenuRuntime for Game {
             &mut Runtime::new(self),
             ArrivalRequest::Start(StartSite::CurrentLoadStation),
         );
+    }
+    fn hud_reserve_mode(&mut self, automatic: bool) {
+        crate::game::hud::menu_reserve_mode(automatic, self)
     }
     fn request_reset(&mut self) {
         Game::request_reset(self)

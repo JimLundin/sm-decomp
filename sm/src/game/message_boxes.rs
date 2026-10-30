@@ -321,7 +321,7 @@ impl crate::game::dialogue::Context for LegacyDialogue<'_> {
     ) {
         use crate::game::dialogue_ram;
         dialogue_ram::publish(state, self.0);
-        unsafe { crate::game::controller_input::sample(self.0) };
+        crate::game::controller_input::sample(self.0);
         (dialogue_ram::import(self.0), dialogue_ram::input(self.0))
     }
 }

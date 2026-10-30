@@ -1,6 +1,6 @@
 //! What the menus need from the runtime: named and raw work RAM, SRAM, the
 //! cartridge, register writes, sound and brightness, plus the sprite,
-//! window, HDMA, binding, reserve-tank and room-entry operations still
+//! HDMA, display-refresh and room-entry operations still
 //! implemented by the compatibility runtime.
 use crate::cartridge::{LoadedImage, NativeImage};
 use crate::display::sequence::Registers;
@@ -16,13 +16,6 @@ pub trait SaveRam {
     fn write_bytes(&self, at: usize, input: &[u8]);
     fn copy_within(&self, source: core::ops::Range<usize>, destination: usize);
     fn fill(&self, range: core::ops::Range<usize>, value: u8);
-}
-
-/// How the menu window's square moves this frame.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum WindowMotion {
-    Expand,
-    Contract,
 }
 
 /// Menu sprite output into the OAM buffer.
@@ -47,17 +40,6 @@ pub trait MenuSprites {
 
 /// The runtime operations the menus call.
 pub trait MenuRuntime {
-    fn window_initialize(&mut self);
-    fn window_open_from_center(&mut self) -> bool;
-    fn window_project(&mut self);
-    fn window_load_velocities(&mut self, area: u16);
-    fn window_advance(&mut self, motion: WindowMotion);
-    fn reserve_toggle_mode(&mut self);
-    fn reserve_transfer_manual(&mut self);
-    fn load_binding_choices(&mut self);
-    fn reset_binding_choices(&mut self);
-    fn store_binding_choices(&mut self) -> u8;
-    fn remap_binding(&mut self);
     fn set_hdma_enabled(&mut self, enabled: bool);
     fn clear_hdma(&mut self);
     /// Queue a tilemap transfer whose source and destination are read from
@@ -78,6 +60,8 @@ pub trait MenuRuntime {
     /// Begin entering the room at the current load station.
     fn enter_load_station(&mut self);
     fn request_reset(&mut self);
+    /// Redraw the HUD's reserve-mode indicator for the equipment menu.
+    fn hud_reserve_mode(&mut self, automatic: bool);
     fn flush_sram(&mut self);
     fn native_rom_diagnostic(&mut self, address: u32);
     fn invalid_window(&mut self, address: u32);

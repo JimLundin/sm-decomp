@@ -214,6 +214,18 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/imported.rs"),
     ),
     (
+        "crates/sm_game/src/menus/controller_input.rs",
+        include_bytes!("../../crates/sm_game/src/menus/controller_input.rs"),
+    ),
+    (
+        "crates/sm_game/src/menus/menu_window.rs",
+        include_bytes!("../../crates/sm_game/src/menus/menu_window.rs"),
+    ),
+    (
+        "crates/sm_game/src/menus/reserve_tanks.rs",
+        include_bytes!("../../crates/sm_game/src/menus/reserve_tanks.rs"),
+    ),
+    (
         "crates/sm_game/src/menus/equipment_menu.rs",
         include_bytes!("../../crates/sm_game/src/menus/equipment_menu.rs"),
     ),
@@ -1531,10 +1543,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/menu_tilemap.rs",
         include_bytes!("game/menu_tilemap.rs"),
-    ),
-    (
-        "sm/src/game/menu_window.rs",
-        include_bytes!("game/menu_window.rs"),
     ),
     (
         "sm/src/game/mode7_transfers.rs",

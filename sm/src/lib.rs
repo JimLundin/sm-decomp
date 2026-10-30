@@ -472,7 +472,6 @@ pub mod game {
     pub(crate) mod map_menu;
     pub(crate) mod menu_host;
     pub mod menu_tilemap;
-    pub mod menu_window;
     pub mod message_boxes;
     pub mod message_composition;
     pub(crate) mod mode7_transfers;

@@ -1,9 +1,9 @@
 //! Map-menu window animation and its ordered indirect-HDMA projection.
-use crate::game_state::Game;
-use crate::ram_map::checked_word as word;
+use super::prelude::*;
+use crate::ram::checked_word as word;
 
 /// Requires a live, exclusively accessed SNES backend.
-pub(crate) unsafe fn initialize(game: &mut Game) {
+pub fn initialize<H: Host + ?Sized>(game: &mut H) {
     word!(game.expand_sq_topbottom_margin_right_pos = 0);
     word!(game.expand_sq_topbottom_margin_left_pos = u16::MAX);
     game.ram().write_byte(0x9e32, 127);
@@ -19,8 +19,8 @@ pub(crate) unsafe fn initialize(game: &mut Game) {
             ],
         );
         // Each table is visible before its channel is configured.
-        unsafe {
-            crate::rtl::register_writes! { game;
+        {
+            crate::display::sequence::register_writes! { game;
                 byte(channel, 0x40); byte(channel + 1, window);
                 byte(channel + 2, table as u8); byte(channel + 3, 0x9e);
                 byte(channel + 4, 0x7e); byte(channel + 7, 0x7e);
@@ -32,7 +32,7 @@ pub(crate) unsafe fn initialize(game: &mut Game) {
 }
 
 /// Return true once the first opening reaches the screen edges.
-pub(crate) fn open_from_center(game: &mut Game) -> bool {
+pub fn open_from_center<H: Host + ?Sized>(game: &mut H) -> bool {
     let outside = game.ram().read_byte(0x9e00).wrapping_sub(4);
     if (outside as i8) < 0 {
         return true;
@@ -55,7 +55,13 @@ pub(crate) fn open_from_center(game: &mut Game) -> bool {
     false
 }
 
-fn append(table: usize, cursor: u16, count: u16, address: u16, game: &mut Game) -> u16 {
+fn append<H: Host + ?Sized>(
+    table: usize,
+    cursor: u16,
+    count: u16,
+    address: u16,
+    game: &mut H,
+) -> u16 {
     let at = table + usize::from(cursor);
     let split = count & 0x80 != 0;
     game.ram().write_byte(
@@ -76,7 +82,7 @@ fn append(table: usize, cursor: u16, count: u16, address: u16, game: &mut Game) 
     cursor.wrapping_add(if split { 6 } else { 3 })
 }
 
-pub(crate) fn project(game: &mut Game) {
+pub fn project<H: Host + ?Sized>(game: &mut H) {
     let top = word!(game.expand_sq_top_pos);
     append(0x9e00, 0, top, 0x9e22, game);
     let mut cursor = append(0x9e10, 0, top, 0x9e20, game);
@@ -97,20 +103,20 @@ pub(crate) fn project(game: &mut Game) {
 }
 
 /// Load native ROM words into the eight little-endian window velocity fields.
-pub(crate) fn load_velocities(area: u16, game: &mut Game) {
-    let image = game.capture_native_rom();
-    let base = crate::rtl::lorom_offset(0x81aa34) as usize + 16 * usize::from(area);
+pub fn load_velocities<H: Host + ?Sized>(area: u16, game: &mut H) {
+    let image = game.native_image();
+    let base = sm_data::cartridge::lorom_offset(0x81aa34) as usize + 16 * usize::from(area);
     for component in 0..8 {
         word!(game, 0x9e40 + 2 * component; = image.table_word(base, component as isize));
     }
 }
 
-pub(crate) enum Motion {
+pub enum Motion {
     Expand,
     Contract,
 }
 
-pub(crate) fn advance(motion: Motion, game: &mut Game) {
+pub fn advance<H: Host + ?Sized>(motion: Motion, game: &mut H) {
     for (edge, boundary, limit, minimum) in [
         (0, 1, 1, true),
         (4, 256, 255, false),

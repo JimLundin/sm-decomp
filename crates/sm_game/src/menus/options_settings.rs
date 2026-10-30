@@ -203,7 +203,7 @@ pub fn controller<H: Host + ?Sized>(game: &mut H) {
         }
     } else if word!(game.joypad1_newkeys) != 0 {
         game.queue_sound(0, (0x38) as u8, 6);
-        let remap: fn(&mut H) = |game| game.remap_binding();
+        let remap: fn(&mut H) = |game| super::controller_input::remap_binding(game);
         let ACTIONS: [fn(&mut H); 9] = [
             remap,
             remap,
@@ -236,7 +236,7 @@ pub fn controller<H: Host + ?Sized>(game: &mut H) {
 
 fn accept_bindings<H: Host + ?Sized>(game: &mut H) {
     if word!(game.joypad1_newkeys) & (kButton_Start | kButton_A) as u16 != 0
-        && game.store_binding_choices() == 0
+        && super::controller_input::store_binding_choices(game) == 0
     {
         back(game);
     }
@@ -244,7 +244,7 @@ fn accept_bindings<H: Host + ?Sized>(game: &mut H) {
 
 fn reset_bindings<H: Host + ?Sized>(game: &mut H) {
     if word!(game.joypad1_newkeys) & (kButton_Start | kButton_A) as u16 != 0 {
-        game.reset_binding_choices();
+        super::controller_input::reset_binding_choices(game);
         menu_tilemap::controller_bindings(game);
     }
 }
@@ -336,7 +336,7 @@ pub fn replace_screen<H: Host + ?Sized>(game: &mut H) {
             let tile =
                 u16::from_ne_bytes([game.ram().read_byte(0x3000), game.ram().read_byte(0x3001)]);
             spawn(tile, 0xf4ca, game);
-            game.load_binding_choices();
+            super::controller_input::load_binding_choices(game);
             menu_tilemap::controller_bindings(game);
         }
     } else {
