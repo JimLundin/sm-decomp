@@ -9,7 +9,6 @@ use crate::player_collision::operations as player_collision;
 use crate::player_transitions as pt;
 use crate::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::projectile_room::Axis;
-use crate::ram::RawRam as _;
 use crate::ram::{word, words as ram_words};
 use crate::runtime_access::RuntimeAccess;
 use crate::word_transfers;
@@ -32,6 +31,12 @@ pub trait Host:
     fn player_bottom(&self) -> u16;
     /// Settle the owned grapple state after the beam connects or releases.
     fn settle_grapple(&mut self);
+    /// The native word spanning the block behaviour bytes at `index` and the
+    /// next block ($7F:6402), as the original read it.
+    fn block_behavior_word(&self, index: usize) -> i16;
+    /// The periodic damage accumulator ($0A4E fraction, $0A50 whole), as two
+    /// native words read in that order.
+    fn periodic_damage(&self) -> (u16, u16);
 }
 
 fn abs16(value: u16) -> u16 {
@@ -130,8 +135,7 @@ static SOLID_DAMAGE: [u16; 16] = [60, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 fn spike_contact<H: Host + ?Sized>(solid: bool, game: &mut H) -> u8 {
     if word!(game.samus_invincibility_timer) == 0 {
         // The original reads a word spanning adjacent BTS bytes, not just one byte.
-        let at = 0x16402 + usize::from(word!(game.cur_block_index));
-        let kind = i16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]);
+        let kind = game.block_behavior_word(usize::from(word!(game.cur_block_index)));
         if kind >= 0 {
             let damage = if solid {
                 SOLID_DAMAGE[kind as usize]
@@ -140,12 +144,8 @@ fn spike_contact<H: Host + ?Sized>(solid: bool, game: &mut H) -> u8 {
             };
             let amount = ((damage as i16 as i32) << 16) as u32;
             if amount != 0 {
-                let low =
-                    u16::from_ne_bytes([game.ram().read_byte(0xa4e), game.ram().read_byte(0xa4f)])
-                        as u32;
-                let high =
-                    u16::from_ne_bytes([game.ram().read_byte(0xa50), game.ram().read_byte(0xa51)])
-                        as u32;
+                let (low, high) = game.periodic_damage();
+                let (low, high) = (low as u32, high as u32);
                 let sum = (low | (high << 16)).wrapping_add(amount);
                 word_transfers!(game, ascending, 1;
                     native(0xa4e) <- value(sum as u16),

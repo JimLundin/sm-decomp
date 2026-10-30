@@ -53,6 +53,15 @@ impl sm_game::grapple_swing::Host for Game {
     fn settle_grapple(&mut self) {
         crate::game::session_runtime::settle_grapple(self)
     }
+    fn block_behavior_word(&self, index: usize) -> i16 {
+        let at = 0x16402 + index;
+        i16::from_ne_bytes([self.ram().read_byte(at), self.ram().read_byte(at + 1)])
+    }
+    fn periodic_damage(&self) -> (u16, u16) {
+        let low = u16::from_ne_bytes([self.ram().read_byte(0xa4e), self.ram().read_byte(0xa4f)]);
+        let high = u16::from_ne_bytes([self.ram().read_byte(0xa50), self.ram().read_byte(0xa51)]);
+        (low, high)
+    }
 }
 
 impl sm_game::runtime_access::SessionRam for crate::game::session_runtime::Runtime<'_> {
