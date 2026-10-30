@@ -1388,9 +1388,9 @@ impl Runtime<'_> {
             let clip = if base {
                 Clip::None
             } else if offscreen {
-                Clip::Outside
+                Clip::EnemyOutside
             } else {
-                Clip::Inside
+                Clip::EnemyInside
             };
             sm_game::sprite_output::with_base_tile(
                 bank,
@@ -1464,9 +1464,9 @@ impl Runtime<'_> {
             let clip = if base {
                 Clip::None
             } else if offscreen {
-                Clip::Outside
+                Clip::EnemyOutside
             } else {
-                Clip::Inside
+                Clip::EnemyInside
             };
             map.draw(
                 (x, y),

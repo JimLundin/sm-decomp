@@ -169,8 +169,13 @@ fn draw_actor<H: ActorHost + EprojHost>(h: &mut H) {
         let bank = h.resolve_actor(key, AccessMode::Native).bank;
         let map = h.actor_part_word(&part, ActorPartWord::Map);
         let tilemap = h.actor_visual_header(bank, map) == 0xfffe;
-        let part_x = x.wrapping_add(h.actor_part_word(&part, ActorPartWord::X));
-        let part_y = y.wrapping_add(h.actor_part_word(&part, ActorPartWord::Y));
+        // The on-screen tests at $A0:9541/$9552 add 80h with the carry of the
+        // position add, so a wrapping entry is tested one further right/down.
+        let (part_x, x_carry) = x.overflowing_add(h.actor_part_word(&part, ActorPartWord::X));
+        let (part_y, y_carry) = y.overflowing_add(h.actor_part_word(&part, ActorPartWord::Y));
+        let on_screen = |position: u16, carry: bool| {
+            position.wrapping_add(0x80 + u16::from(carry)) & 0xfe00 == 0
+        };
         if tilemap {
             if h.resolve_actor(key, AccessMode::Native).extra_properties & 0x8000 != 0 {
                 let bank = h.resolve_actor(key, AccessMode::Native).bank;
@@ -186,8 +191,7 @@ fn draw_actor<H: ActorHost + EprojHost>(h: &mut H) {
                 h.copy_actor_tilemap(source);
                 h.probe("actors.scene.tilemap.copied");
             }
-        } else if (u32::from(part_x) + 128) & 0xfe00 == 0 && (u32::from(part_y) + 128) & 0xfe00 == 0
-        {
+        } else if on_screen(part_x, x_carry) && on_screen(part_y, y_carry) {
             let mode = if part_y.to_ne_bytes()[1] != 0 {
                 ActorDrawMode::ExtendedOffscreen
             } else {
