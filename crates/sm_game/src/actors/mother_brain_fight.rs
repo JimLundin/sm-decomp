@@ -2564,11 +2564,13 @@ pub fn add_spritemap_to_oam(j: u16, r18: u16, r20: u16, r22: u16, game: &mut imp
     let mut idx: i32 = word!(game.OAM_NEXT_PTR) as i32;
     let layer1 = crate::camera::current(game).layer1;
     do_until! { n == 0 ;
-        let y: i16 = (r20 as i32 + source.byte(offset + 2) as i8 as i32 - layer1[1] as i32) as i16;
+        let row = r20.wrapping_add(source.byte(offset + 2) as i8 as u16);
+        let y: i16 = row.wrapping_sub(layer1[1]) as i16;
         if y >= 0 {
             let oam: usize = usize::try_from(0x370i32 + idx).expect("OAM entry outside RAM");
-            let x: u16 =
-                (r18 as i32 + source.word(offset) as i32 - layer1[0] as i32) as u16;
+            // The Y subtract ($A9:9409) leaves its no-borrow carry for the X add.
+            let carry = u16::from(row >= layer1[1]);
+            let x: u16 = r18.wrapping_add(source.word(offset)).wrapping_add(carry).wrapping_sub(layer1[0]);
             SessionRam::set_byte(game, oam, x as u8);
             SessionRam::set_byte(game, oam + 1, y as u8);
             set_native_word(oam + 2, r22 | source.word(offset + 3), game);
