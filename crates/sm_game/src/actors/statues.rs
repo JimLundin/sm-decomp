@@ -288,12 +288,8 @@ pub fn movement<H: Host + ?Sized>(game: &mut H, k: u16, jp: EnemyScript) -> Enem
     game.snap_to_slopes(k);
     let index = slot!(game, Statue[me].movement) as i32 >> 1;
     let step = statue_tables::movement(game, index as isize);
-    word!(
-        game.samus_x_pos = (step.samus_x_offset).wrapping_add(slot!(game, Statue[me].base.x_pos))
-    );
-    word!(
-        game.samus_y_pos = (step.samus_y_offset).wrapping_add(slot!(game, Statue[me].base.y_pos))
-    );
+    game.set_player_x((step.samus_x_offset).wrapping_add(slot!(game, Statue[me].base.x_pos)));
+    game.set_player_y((step.samus_y_offset).wrapping_add(slot!(game, Statue[me].base.y_pos)));
     jp.offset(1)
 }
 

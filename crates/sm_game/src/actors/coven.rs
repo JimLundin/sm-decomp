@@ -227,7 +227,7 @@ fn fade_from_white(runtime: &mut impl ActorLease) {
         runtime,
         Coven[coven].previous_x_direction = X_DIRECTION_STEP
     );
-    let x = runtime.word(W::samus_x_pos);
+    let x = runtime.player_x();
     session_slot!(runtime, Coven[coven]; previous_samus_x = x, zone_left = x, zone_right = x);
     session_slot!(
         runtime,
@@ -274,10 +274,10 @@ fn materialised(runtime: &mut impl ActorLease, key: Key) {
 /// long enough, for the coven to materialise.
 fn ready_to_materialise(runtime: &mut impl ActorLease, key: Key) -> bool {
     let coven = i32::from(key.byte_index());
-    let outside = (runtime.word(W::samus_x_pos) as i16)
+    let outside = (runtime.player_x() as i16)
         .wrapping_sub(session_slot!(runtime, Coven[coven].zone_left) as i16)
         < 0
-        || (runtime.word(W::samus_x_pos) as i16)
+        || (runtime.player_x() as i16)
             .wrapping_sub(session_slot!(runtime, Coven[coven].zone_right) as i16)
             >= 0
         || {

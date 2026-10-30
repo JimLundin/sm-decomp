@@ -8,7 +8,7 @@
 //! words through `mother_brain`'s views.
 #![forbid(unsafe_code)]
 use crate::ram::RawRam as _;
-use crate::ram::{slot, word};
+use crate::ram::slot;
 
 /// What the neck needs beyond the shared boss effects: the PPU's hardware
 /// multiply, which the original drives through the Mode 7 registers.
@@ -246,7 +246,7 @@ fn move_upper_joint<H: Host + ?Sized>(game: &mut H) {
         motion::STILL => {}
         motion::BOB_DOWN => {
             if ((slot!(game, Brain[BRAIN].base.y_pos) as i32 + BRAIN_SAMUS_MARGIN
-                - word!(game.samus_y_pos) as i32) as i16)
+                - game.player_y() as i32) as i16)
                 < 0
             {
                 let mut angle: i16 = (slot!(game, Brain[BRAIN].upper_angle) as i16)

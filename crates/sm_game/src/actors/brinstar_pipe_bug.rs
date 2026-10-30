@@ -64,7 +64,7 @@ pub fn await_player<
         let dx = game.player_delta(k, Axis::X);
         slot!(game, Bug[e].var_A, |direction| direction & 0x7fff
             | dx & 0x8000);
-        if abs16(slot!(game, Bug[e].base.x_pos).wrapping_sub(word!(game.samus_x_pos))) < 0x40 {
+        if abs16(slot!(game, Bug[e].base.x_pos).wrapping_sub(game.player_x())) < 0x40 {
             slot!(game, Bug[e].var_F = 0x88e3);
             slot!(game, Bug[e].base.properties, |properties| properties
                 & !0x100);
@@ -97,7 +97,7 @@ pub fn rise<H: ActorHost + ActorRuntime + LeaseActors + crate::records::Records 
             (i32::from(slot!(game, Bug[e].base.y_pos)) + i32::from(previous != 0) - 2) as u16
     );
     if (slot!(game, Bug[e].var_00) as i16).wrapping_sub(slot!(game, Bug[e].base.y_pos) as i16) >= 0
-        && slot!(game, Bug[e].base.y_pos) < word!(game.samus_y_pos)
+        && slot!(game, Bug[e].base.y_pos) < game.player_y()
     {
         slot!(game, Bug[e].var_E, |phase| phase | 1);
         update_animation(game);

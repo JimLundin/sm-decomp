@@ -83,8 +83,10 @@ fn samus_near(k: u16, columns: u16, game: &mut (impl Host + ?Sized)) -> bool {
 }
 fn aim(eye: i32, game: &mut (impl Host + ?Sized)) -> u16 {
     let angle = angle_from_delta(
-        word!(game.samus_x_pos).wrapping_sub(slot!(game, Eye[eye].base.x_pos)),
-        word!(game.samus_y_pos).wrapping_sub(slot!(game, Eye[eye].base.y_pos)),
+        game.player_x()
+            .wrapping_sub(slot!(game, Eye[eye].base.x_pos)),
+        game.player_y()
+            .wrapping_sub(slot!(game, Eye[eye].base.y_pos)),
     );
     slot!(game, Eye[eye].angle = angle);
     angle

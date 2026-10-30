@@ -37,9 +37,7 @@ pub fn chase_intro_baby_y<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     let slot = usize::from(object >> 1);
-    if ((word!(game.samus_y_pos) as i32 - y_offset - word!(game.cinematicbg_arr8[slot]) as i32)
-        as i16)
-        < 0
+    if ((game.player_y() as i32 - y_offset - word!(game.cinematicbg_arr8[slot]) as i32) as i16) < 0
     {
         if (word!(game.cinematic_var17) as i32 + 543) & 0x8000 == 0 {
             word!(game.cinematic_var17, wrapping_sub(32));
@@ -65,8 +63,7 @@ pub fn advance_intro_baby_pursuit<H: crate::menus::host::Host + ?Sized>(object: 
             game.queue_sound(2, 0x23_u8, 6);
         }
     }
-    if (word!(game.samus_x_pos) as i16).wrapping_sub(word!(game.cinematicbg_arr7[slot]) as i16) < 0
-    {
+    if (game.player_x() as i16).wrapping_sub(word!(game.cinematicbg_arr7[slot]) as i16) < 0 {
         if (word!(game.cinematic_var14) as i32 + 639) & 0x8000 == 0 {
             word!(game.cinematic_var14 -= 32);
         }
@@ -105,7 +102,7 @@ pub fn advance_intro_rinka<H: crate::menus::host::Host + ?Sized>(
         {
             return;
         }
-    } else if (word!(game.cinematicbg_arr7[slot]) as i32 + 8 - (word!(game.samus_x_pos) as i32 - 5))
+    } else if (word!(game.cinematicbg_arr7[slot]) as i32 + 8 - (game.player_x() as i32 - 5))
         & 0x8000
         != 0
     {

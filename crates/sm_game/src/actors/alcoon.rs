@@ -8,6 +8,7 @@ use crate::actors::host::{ActorLease, ActorRuntime as _, LeaseActors, abs16};
 use crate::actors::layouts::part_view;
 use crate::enemy_projectiles::host::Effects as _;
 use crate::enemy_script::EnemyScript;
+use crate::player_position::PlayerPosition as _;
 use crate::ram::words as W;
 use crate::session_slot;
 
@@ -147,7 +148,7 @@ fn drift(runtime: &mut impl ActorLease, key: Key) {
 }
 fn samus_offset(runtime: &impl ActorLease, key: Key) -> u16 {
     runtime
-        .word(W::samus_x_pos)
+        .player_x()
         .wrapping_sub(runtime.resolve_actor(key, Native).x.whole)
 }
 fn direction(left: bool) -> u16 {
@@ -205,8 +206,8 @@ pub fn main_ai<H: LeaseActors + ?Sized>(game: &mut H) {
     match function {
         // Alcoon function - wait for Samus to get near ($A8:DD71).
         function::WAIT_FOR_SAMUS => {
-            let dy = session_slot!(runtime, Alcoon[alcoon].landing_y)
-                .wrapping_sub(runtime.word(W::samus_y_pos));
+            let dy =
+                session_slot!(runtime, Alcoon[alcoon].landing_y).wrapping_sub(runtime.player_y());
             if abs16(dy).wrapping_sub(EMERGE_Y) & SIGN == 0 {
                 return;
             }

@@ -100,12 +100,10 @@ pub fn fly<H: ActorHost + ActorRuntime + ?Sized>(left: bool, game: &mut H) {
         slot!(game, Bug[e].base.properties, |old| old | 0x100);
     } else if slot!(game, Bug[e].var_06) == 0
         && if left {
-            (i32::from(slot!(game, Bug[e].base.x_pos)) - i32::from(word!(game.samus_x_pos)) - 48)
-                & 0x8000
+            (i32::from(slot!(game, Bug[e].base.x_pos)) - i32::from(game.player_x()) - 48) & 0x8000
                 != 0
         } else {
-            (i32::from(word!(game.samus_x_pos)) - i32::from(slot!(game, Bug[e].base.x_pos)) - 48)
-                & 0x8000
+            (i32::from(game.player_x()) - i32::from(slot!(game, Bug[e].base.x_pos)) - 48) & 0x8000
                 != 0
         }
     {

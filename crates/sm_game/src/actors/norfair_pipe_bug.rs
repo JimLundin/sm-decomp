@@ -77,8 +77,7 @@ pub fn await_player<H: ActorHost + ActorRuntime + ?Sized>(game: &mut H) {
     let actor = word!(game.cur_enemy_index);
     let distance = u16::from(slot!(byte game, Bug[e].parameter_2[0]));
     let in_range = game.player_within(actor, Axis::X, distance);
-    if in_range
-        && (slot!(game, Bug[e].base.y_pos) as i16).wrapping_sub(word!(game.samus_y_pos) as i16) >= 0
+    if in_range && (slot!(game, Bug[e].base.y_pos) as i16).wrapping_sub(game.player_y() as i16) >= 0
     {
         slot!(game, Bug[e].var_C, |old| old.wrapping_add(1));
         slot!(game, Bug[e].base; instruction_timer = 1, timer = 0);
@@ -96,7 +95,7 @@ pub fn rise<H: ActorHost + ActorRuntime + ?Sized>(game: &mut H) {
     let e = i32::from(word!(game.cur_enemy_index));
     slot!(game, Bug[e].base.properties, |old| old & !0x100);
     slot!(game, Bug[e].base(y_pos, y_subpos) += speed(66, game));
-    if (slot!(game, Bug[e].base.y_pos) as i16).wrapping_sub(word!(game.samus_y_pos) as i16) < 0 {
+    if (slot!(game, Bug[e].base.y_pos) as i16).wrapping_sub(game.player_y() as i16) < 0 {
         slot!(game, Bug[e].var_A = slot!(game, Bug[e].var_F));
         slot!(game, Bug[e].var_01 = slot!(game, Bug[e].base.y_pos));
         slot!(game, Bug[e].base; instruction_timer = 1, timer = 0);
