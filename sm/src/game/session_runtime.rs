@@ -442,6 +442,20 @@ impl<'g> Runtime<'g> {
     pub(crate) fn word(&self, at: usize) -> u16 {
         u16::from_le_bytes([self.byte(at), self.byte(at + 1)])
     }
+    /// A Samus field from the owned Session while this lease is current; the
+    /// projected word at `at` otherwise. Both read the same value whenever the
+    /// projection would serve the Session, so callers observe no difference.
+    pub(crate) fn owned_player(
+        &self,
+        field: impl Fn(&sm_game::session::Player) -> u16,
+        at: usize,
+    ) -> u16 {
+        if self.persistent_is_current() {
+            field(&self.session().player)
+        } else {
+            self.word(at)
+        }
+    }
     pub(crate) fn store(&mut self, at: usize, value: u16, store: Store) {
         match store {
             Store::PrefixLe => self.write_word_le(value, at),

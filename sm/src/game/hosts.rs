@@ -131,3 +131,65 @@ macro_rules! compatibility_player_position {
 }
 
 compatibility_player_position!(Game);
+
+/// Inside a lease, Samus's position is Session-owned: while the lease is current
+/// the reads come straight from `Session::player`, exactly as the projection
+/// would serve them. A dirty lease falls back to the projected word reads, and
+/// stores go through the lease's own byte path so observation refresh, epoch
+/// and semantic-counterpart handling are unchanged.
+impl sm_game::player_position::PlayerPosition for crate::game::session_runtime::Runtime<'_> {
+    fn player_x(&self) -> u16 {
+        self.owned_player(|player| player.x, sm_game::ram::words::samus_x_pos)
+    }
+    fn player_y(&self) -> u16 {
+        self.owned_player(|player| player.y, sm_game::ram::words::samus_y_pos)
+    }
+    fn player_x_fraction(&self) -> u16 {
+        self.owned_player(
+            |player| player.x_fraction,
+            sm_game::ram::words::samus_x_subpos,
+        )
+    }
+    fn player_y_fraction(&self) -> u16 {
+        self.owned_player(
+            |player| player.y_fraction,
+            sm_game::ram::words::samus_y_subpos,
+        )
+    }
+    fn previous_player_x(&self) -> u16 {
+        self.owned_player(|player| player.previous_position.x.whole, 0xb10)
+    }
+    fn previous_player_y(&self) -> u16 {
+        self.owned_player(|player| player.previous_position.y.whole, 0xb14)
+    }
+    fn previous_player_x_fraction(&self) -> u16 {
+        self.owned_player(|player| player.previous_position.x.fraction, 0xb12)
+    }
+    fn previous_player_y_fraction(&self) -> u16 {
+        self.owned_player(|player| player.previous_position.y.fraction, 0xb16)
+    }
+    fn set_player_x(&mut self, x: u16) {
+        self.write_word_le(x, sm_game::ram::words::samus_x_pos)
+    }
+    fn set_player_y(&mut self, y: u16) {
+        self.write_word_le(y, sm_game::ram::words::samus_y_pos)
+    }
+    fn set_player_x_fraction(&mut self, fraction: u16) {
+        self.write_word_le(fraction, sm_game::ram::words::samus_x_subpos)
+    }
+    fn set_player_y_fraction(&mut self, fraction: u16) {
+        self.write_word_le(fraction, sm_game::ram::words::samus_y_subpos)
+    }
+    fn set_previous_player_x(&mut self, x: u16) {
+        self.write_word_le(x, 0xb10)
+    }
+    fn set_previous_player_y(&mut self, y: u16) {
+        self.write_word_le(y, 0xb14)
+    }
+    fn set_previous_player_x_fraction(&mut self, fraction: u16) {
+        self.write_word_le(fraction, 0xb12)
+    }
+    fn set_previous_player_y_fraction(&mut self, fraction: u16) {
+        self.write_word_le(fraction, 0xb16)
+    }
+}

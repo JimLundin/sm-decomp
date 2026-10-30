@@ -7,6 +7,7 @@ use crate::actors::draygon_host::{BODY, EYE, function, instruction_list as list}
 use crate::actors::host::{ActorLease, ActorRuntime as _, BossEffects as _, LeaseActors};
 use crate::actors::queries::angle_from_delta;
 use crate::enemy_script::EnemyScript;
+use crate::player_position::PlayerPosition as _;
 use crate::ram::words;
 
 /// Every 80h frames the eye puffs long breath bubbles (dust cloud / explosion
@@ -73,8 +74,8 @@ pub fn look_at_samus<H: LeaseActors + ?Sized>(k: u16, right: bool, game: &mut H)
     }
     let (x, y) = {
         let body = runtime.resolve_actor(Key::from_legacy(BODY as u16), Native);
-        let x = runtime.word(words::samus_x_pos).wrapping_sub(body.x.whole);
-        let y = runtime.word(words::samus_y_pos).wrapping_sub(body.y.whole);
+        let x = runtime.player_x().wrapping_sub(body.x.whole);
+        let y = runtime.player_y().wrapping_sub(body.y.whole);
         (x.wrapping_sub(x_offset), y.wrapping_add(BUBBLE_Y))
     };
     let angle = angle_from_delta(x, y);

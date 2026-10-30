@@ -139,7 +139,9 @@ pub fn abs16(value: u16) -> u16 {
 /// edits actors directly, plus the session-aware RAM word read and `foreign`
 /// onto the leased game.
 pub trait ActorLease:
-    crate::actors::access::ActorAccess + crate::enemy_projectiles::host::Host
+    crate::actors::access::ActorAccess
+    + crate::enemy_projectiles::host::Host
+    + crate::player_position::PlayerPosition
 {
     type Game: BossEffects + ?Sized;
     /// The compatibility word at `at`, through the session projection.
