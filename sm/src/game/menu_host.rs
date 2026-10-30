@@ -364,37 +364,39 @@ const _: () = {
     use crate::game::constants::bank_8b as bank;
     use sm_game::intro_pages as intro;
     assert!(
-        intro::addr_kCinematicBgObjectDef_8BCF3F == bank::addr_kCinematicBgObjectDef_8BCF3F as u32
+        intro::ADDR_CINEMATIC_BG_OBJECT_DEF_8BCF3F
+            == bank::addr_kCinematicBgObjectDef_8BCF3F as u32
     );
     assert!(
-        intro::addr_kCinematicBgObjectDef_8BCF5D == bank::addr_kCinematicBgObjectDef_8BCF5D as u32
+        intro::ADDR_CINEMATIC_BG_OBJECT_DEF_8BCF5D
+            == bank::addr_kCinematicBgObjectDef_8BCF5D as u32
     );
     assert!(
-        intro::addr_kCinematicSpriteObjectDef_8BCE5B
+        intro::ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCE5B
             == bank::addr_kCinematicSpriteObjectDef_8BCE5B as u32
     );
     assert!(
-        intro::addr_kCinematicSpriteObjectDef_8BCE55
+        intro::ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCE55
             == bank::addr_kCinematicSpriteObjectDef_8BCE55 as u32
     );
     assert!(
-        intro::addr_kCinematicSpriteObjectDef_8BCE61
+        intro::ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCE61
             == bank::addr_kCinematicSpriteObjectDef_8BCE61 as u32
     );
     assert!(
-        intro::addr_kCinematicSpriteObjectDef_8BCE67
+        intro::ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCE67
             == bank::addr_kCinematicSpriteObjectDef_8BCE67 as u32
     );
     assert!(
-        intro::addr_kCinematicSpriteObjectDef_8BCE73
+        intro::ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCE73
             == bank::addr_kCinematicSpriteObjectDef_8BCE73 as u32
     );
     assert!(
-        intro::addr_kCinematicSpriteObjectDef_8BCE79
+        intro::ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCE79
             == bank::addr_kCinematicSpriteObjectDef_8BCE79 as u32
     );
     assert!(
-        intro::addr_kCinematicSpriteObjectDef_8BCF27
+        intro::ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCF27
             == bank::addr_kCinematicSpriteObjectDef_8BCF27 as u32
     );
 };

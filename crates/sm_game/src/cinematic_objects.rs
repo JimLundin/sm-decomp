@@ -1,8 +1,5 @@
 //! The cinematic object engine: sprite, Mode 7 and background objects, their scripts and drawing.
-// The original's names and assignment shapes are kept.
-#![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
 use crate::ending_graphics::draw_cinematic_item_percentage;
-#[allow(unused_imports)]
 use crate::ram::RawRam as _;
 use crate::ram::{checked_word, word};
 use crate::visual_state::CeresExplosion;

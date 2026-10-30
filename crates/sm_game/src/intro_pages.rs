@@ -1,10 +1,7 @@
 //! Intro narrative pages, scene entry, crossfades and Japanese text continuations.
 //! Numeric callbacks select these operations; Game retains the cinematic state.
-// The original's names and assignment shapes are kept.
-#![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
 use crate::cinematic_objects::CinematicObjects;
 use crate::imported::Imported;
-#[allow(unused_imports)]
 use crate::ram::RawRam as _;
 
 use crate::cinematic::{
@@ -23,15 +20,15 @@ use sm_data::intro_palette::{
 };
 
 // Bank $8B cinematic object definitions (sm checks them against the decompilation's bank $8B constants).
-pub const addr_kCinematicBgObjectDef_8BCF3F: u32 = 0xcf3f;
-pub const addr_kCinematicBgObjectDef_8BCF5D: u32 = 0xcf5d;
-pub const addr_kCinematicSpriteObjectDef_8BCE5B: u32 = 0xce5b;
-pub const addr_kCinematicSpriteObjectDef_8BCE55: u32 = 0xce55;
-pub const addr_kCinematicSpriteObjectDef_8BCE61: u32 = 0xce61;
-pub const addr_kCinematicSpriteObjectDef_8BCE67: u32 = 0xce67;
-pub const addr_kCinematicSpriteObjectDef_8BCE73: u32 = 0xce73;
-pub const addr_kCinematicSpriteObjectDef_8BCE79: u32 = 0xce79;
-pub const addr_kCinematicSpriteObjectDef_8BCF27: u32 = 0xcf27;
+pub const ADDR_CINEMATIC_BG_OBJECT_DEF_8BCF3F: u32 = 0xcf3f;
+pub const ADDR_CINEMATIC_BG_OBJECT_DEF_8BCF5D: u32 = 0xcf5d;
+pub const ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCE5B: u32 = 0xce5b;
+pub const ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCE55: u32 = 0xce55;
+pub const ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCE61: u32 = 0xce61;
+pub const ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCE67: u32 = 0xce67;
+pub const ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCE73: u32 = 0xce73;
+pub const ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCE79: u32 = 0xce79;
+pub const ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCF27: u32 = 0xcf27;
 
 fn load_japanese_line<H: crate::menus::host::Host + ?Sized>(address: u16, game: &mut H) {
     let record =
@@ -162,7 +159,7 @@ pub fn spawn_marker<H: crate::menus::host::Host + ?Sized>(
     reset_text_marker(game);
     if word!(game.japanese_text_flag) != 0 {
         let failed = CinematicObjects::Sprites.spawn(
-            addr_kCinematicSpriteObjectDef_8BCE73 as u16,
+            ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCE73 as u16,
             word!(game.japanese_text_flag),
             game,
         ) != 0;
@@ -249,14 +246,14 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(scene: Scene, game: 
             if mother_brain {
                 // The preceding $1A4B store leaves $007F in the ROM accumulator.
                 crate::cinematic_objects::spawn_cinematic_sprite_at(
-                    addr_kCinematicSpriteObjectDef_8BCE55 as u16,
+                    ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCE55 as u16,
                     0,
                     0x7f,
                     game,
                 );
                 // Palette left in A by the first sprite initializer.
                 CinematicObjects::Sprites.spawn(
-                    addr_kCinematicSpriteObjectDef_8BCF27 as u16,
+                    ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCF27 as u16,
                     0x0e00,
                     game,
                 );
@@ -265,12 +262,12 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(scene: Scene, game: 
                 word!(game.hud_item_index = 1);
             } else {
                 CinematicObjects::Sprites.spawn(
-                    addr_kCinematicSpriteObjectDef_8BCE5B as u16,
+                    ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCE5B as u16,
                     0x7f,
                     game,
                 );
                 CinematicObjects::Sprites.spawn(
-                    addr_kCinematicSpriteObjectDef_8BCE79 as u16,
+                    ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCE79 as u16,
                     0x0e00,
                     game,
                 );
@@ -298,9 +295,9 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(scene: Scene, game: 
             word!(game.cinematic_var10 = if scientist { 8 } else { -24i16 as u16 });
             word!(game.cinematic_var13 = 127);
             let object = if scientist {
-                addr_kCinematicSpriteObjectDef_8BCE61
+                ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCE61
             } else {
-                addr_kCinematicSpriteObjectDef_8BCE67
+                ADDR_CINEMATIC_SPRITE_OBJECT_DEF_8BCE67
             };
             CinematicObjects::Sprites.spawn(object as u16, 0x7f, game);
             Palette::Scientist
@@ -355,7 +352,7 @@ pub fn wait_for_music<H: crate::menus::host::Host + ?Sized>(next: u16, game: &mu
             word! { game, 2; screen_fade_delay, screen_fade_counter }
             if next == 0xa84a {
                 CinematicObjects::Background.spawn(
-                    addr_kCinematicBgObjectDef_8BCF3F as u16,
+                    ADDR_CINEMATIC_BG_OBJECT_DEF_8BCF3F as u16,
                     0x4c00,
                     game,
                 );
@@ -488,7 +485,7 @@ pub fn wait_after_japanese_text<H: crate::menus::host::Host + ?Sized>(
 pub fn show_final_page<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     set_cinematic_tilemap_updates(true, game);
     clear_english_text(game);
-    CinematicObjects::Background.spawn(addr_kCinematicBgObjectDef_8BCF5D as u16, 0x4c00, game);
+    CinematicObjects::Background.spawn(ADDR_CINEMATIC_BG_OBJECT_DEF_8BCF5D as u16, 0x4c00, game);
     crate::flow::set(
         game,
         crate::flow::Word::CinematicFunction,
