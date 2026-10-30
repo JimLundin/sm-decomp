@@ -249,9 +249,9 @@ pub fn initialize_room_effects<H: crate::menus::host::Host + ?Sized>(game: &mut 
     word!(game.bg3_ypos = 0);
     word!(game.irq_enable_mode7 = 0);
     word!(game.camera_distance_index = 0);
-    word!(game.tourian_entrance_statue_animstate = 0);
-    word!(game.tourian_entrance_statue_finished = 0);
-    word!(game.earthquake_timer = 0);
+    crate::room_view::set_effect(game, crate::room_view::EffectWord::StatueAnimation, 0);
+    crate::room_view::set_effect(game, crate::room_view::EffectWord::StatueFinished, 0);
+    crate::room_view::set_effect(game, crate::room_view::EffectWord::EarthquakeTimer, 0);
     word!(game.phantom_related_layer_flag = 0);
     word!(game.power_bomb_explosion_status = 0);
     word!(game.power_bomb_flag = 0);

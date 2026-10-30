@@ -180,9 +180,9 @@ pub fn initial<H: Host + ?Sized>(game: &mut H) {
     crate::cinematic_display::configure_cinematic_display(CinematicDisplay::Intro, game);
     word!(game.cur_irq_handler = 0);
     word!(game.irqhandler_next_handler = 0);
-    word!(game.area_index = 0);
-    word!(game.room_width_in_blocks = 16);
-    word!(game.room_height_in_blocks = 16);
+    crate::room_view::set(game, crate::room_view::Word::Area, 0);
+    crate::room_view::set(game, crate::room_view::Word::Width, 16);
+    crate::room_view::set(game, crate::room_view::Word::Height, 16);
     game.initialize_player();
     game.update_beam_tiles_and_palette();
     inventory::set(game, Word::MaxMissiles, INTRO_MISSILES);
@@ -395,7 +395,7 @@ pub fn ceres_flying_into_ceres<H: Host + ?Sized>(game: &mut H) {
 pub fn start_game_at_ceres<H: Host + ?Sized>(game: &mut H) {
     word!(game.loading_game_state = SET_UP_NEW_GAME);
     word!(game.game_state = SET_UP_NEW_GAME);
-    word!(game.area_index = CERES);
+    crate::room_view::set(game, crate::room_view::Word::Area, CERES);
     word!(game.load_station_index = 0);
     crate::menus::save_slots::save(word!(game.selected_save_slot), game);
 }
