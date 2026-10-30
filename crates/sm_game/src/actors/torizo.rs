@@ -161,7 +161,7 @@ pub fn golden_damaged_shot_reaction<L: Lease>(game: &mut L) {
         session_slot!(
             game,
             TorizoSlot[e].base.properties =
-                session_slot!(game, TorizoSlot[e].base.properties) | kEnemyProps_Tangible as u16
+                session_slot!(game, TorizoSlot[e].base.properties) | K_ENEMY_PROPS_TANGIBLE as u16
         );
     }
 }
@@ -694,7 +694,7 @@ pub fn shot<L: Lease>(game: &mut L) {
                     game,
                     TorizoSlot[e].base.properties =
                         (session_slot!(game, TorizoSlot[e].base.properties))
-                            | (kEnemyProps_Tangible as u16)
+                            | (K_ENEMY_PROPS_TANGIBLE as u16)
                 );
             }
         }
@@ -786,8 +786,8 @@ pub fn initialize<L: Lease>(game: &mut L) {
     if game.foreign(|game| game.boss_bit(TORIZO_DEAD)) & 1 != 0 {
         session_slot!(
             game,
-            TorizoSlot[e].base.properties =
-                (session_slot!(game, TorizoSlot[e].base.properties)) | (kEnemyProps_Deleted as u16)
+            TorizoSlot[e].base.properties = (session_slot!(game, TorizoSlot[e].base.properties))
+                | (K_ENEMY_PROPS_DELETED as u16)
         );
         return;
     }
@@ -890,7 +890,7 @@ pub fn set_visible<L: Lease>(k: u16, game: &mut L) {
     session_slot!(
         game,
         TorizoSlot[e].base.properties = (session_slot!(game, TorizoSlot[e].base.properties) as i32
-            & !(kEnemyProps_Invisible as i32)) as u16
+            & !(K_ENEMY_PROPS_INVISIBLE as i32)) as u16
     );
 }
 
@@ -900,7 +900,7 @@ pub fn set_invisible<L: Lease>(k: u16, game: &mut L) {
     session_slot!(
         game,
         TorizoSlot[e].base.properties =
-            (session_slot!(game, TorizoSlot[e].base.properties)) | (kEnemyProps_Invisible as u16)
+            (session_slot!(game, TorizoSlot[e].base.properties)) | (K_ENEMY_PROPS_INVISIBLE as u16)
     );
 }
 

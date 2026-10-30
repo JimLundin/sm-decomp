@@ -1,7 +1,7 @@
 //! The Torizos run in `sm_game::actors::torizo`; movement, projectiles and the
 //! shot reaction come from here.
 #![forbid(unsafe_code)]
-use crate::game::constants::bank_86::addr_kEproj_BombTorizoLowHealthInitialDrool;
+use crate::game::constants::bank_86::ADDR_K_EPROJ_BOMB_TORIZO_LOW_HEALTH_INITIAL_DROOL;
 use crate::game::constants::bank_aa::{
     ADDR_K_TORIZO_ILIST_B1C8, ADDR_K_TORIZO_ILIST_CDE1, ADDR_K_TORIZO_ILIST_CE43,
     ADDR_K_TORIZO_ILIST_CEA5, ADDR_K_TORIZO_ILIST_CEFF, ADDR_K_TORIZO_ILIST_D1F1,

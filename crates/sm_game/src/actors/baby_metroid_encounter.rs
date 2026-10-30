@@ -7,7 +7,7 @@
 //! their reads and writes keep the original order. Mother Brain's shared
 //! helpers come from `mother_brain_fight`.
 #![forbid(unsafe_code)]
-#![allow(non_snake_case, non_upper_case_globals, unused_parens)]
+#![allow(unused_parens)]
 #![allow(unused_mut, unused_assignments, clippy::all)]
 use crate::actors::baby_metroid::BabyMetroid;
 use crate::actors::corpses::Corpse;

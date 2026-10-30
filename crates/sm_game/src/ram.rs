@@ -591,9 +591,9 @@ ram_vars! {
     0x01991, uint16 Scalar => [eproj_index];
     0x01993, uint16 Scalar => [cinematic_x];
     0x01993, uint16 Scalar => [eproj_init_param_1];
-    0x01995, uint16 Scalar => [cinematic_var9];
+    0x01995, uint16 Scalar => [cinematic_y_sub];
     0x01995, uint16 Scalar => [eproj_init_param_2];
-    0x01997, uint16 Scalar => [cinematic_var10];
+    0x01997, uint16 Scalar => [cinematic_y];
     0x01997, uint16 Array => [eproj_id];
     0x01997 stride 2, uint16 Scalar => [
         menu_selection_missile_animation_frame, UNUSED_menu_word_7E1999,

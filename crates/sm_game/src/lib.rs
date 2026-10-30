@@ -289,7 +289,6 @@ pub mod ceres_elevator;
 pub mod ceres_ridley_tables;
 pub mod corpse_tables;
 pub mod explosion_window;
-#[allow(non_upper_case_globals)]
 pub mod gameplay_frame;
 pub mod gameplay_rules;
 pub mod grapple_aim;
