@@ -92,6 +92,7 @@ pub mod actors {
     pub mod access;
     pub mod animation;
     pub mod api;
+    pub mod blue_brinstar_face_block;
     pub mod baby_metroid;
     pub mod baby_metroid_cutscene;
     pub mod baby_metroid_encounter;

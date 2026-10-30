@@ -58,7 +58,7 @@ impl sm_game::actors::species::DrawHookHost for Game {
             ReflecPalette => reflec::palette(self),
             CeresRidleyBabyMetroidAndWings => sm_a6::Ridley_A2F2(self),
             WreckedShipRobotPalette => crate::game::actors::wrecked_ship_robots::palette(self),
-            BlueFaceBlockPalette => crate::game::actors::blue_face_block::palette(self),
+            BlueFaceBlockPalette => sm_game::actors::blue_brinstar_face_block::cycle_palette(self),
             MotherBrainBrainAndNeck => sm_a9::MotherBrain_DrawBrainNeck_EnemyGfxDrawHook(self),
             MotherBrainBrain => sm_a9::MotherBrainsBrain_GfxDrawHook(self),
             DeadTorizo => sm_game::actors::corpses::DeadTorizo_MainGfxHook(self),

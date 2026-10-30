@@ -1181,8 +1181,8 @@ crate::game::callback_dispatch! {
         11068983 => crate::game::actors::wrecked_ship_spark::initialize;
         11069070 => crate::game::actors::wrecked_ship_spark::advance;
         11069198 | 11069725 => [crate::ram_map::word!(game.projectile_dir[crate::ram_map::word!(game.collision_detection_index)] &= !(0x10))];
-        11069486 => crate::game::actors::blue_face_block::initialize;
-        11069614 => crate::game::actors::blue_face_block::advance;
+        11069486 => crate::game::actors::blue_brinstar_face_block::initialize;
+        11069614 => crate::game::actors::blue_brinstar_face_block::main_ai;
         11071880 => crate::game::actors::ki_hunter::initialize;
         11072020 => crate::game::actors::ki_hunter::initialize_wings; 11072092 => crate::game::actors::ki_hunter::advance;
         11072098 => crate::game::actors::ki_hunter::advance;

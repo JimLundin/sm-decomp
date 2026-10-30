@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 pub(in crate::game) use sm_game::actors::access;
 pub(in crate::game) use sm_game::actors::api;
+pub(in crate::game) use sm_game::actors::blue_brinstar_face_block;
 pub(in crate::game) mod bang;
 pub(in crate::game) mod beetom;
 pub(in crate::game) mod boss_lease;
@@ -100,7 +101,6 @@ pub(crate) mod collision_composed_actor;
 #[path = "../../verification/actor_composed_checks.rs"]
 pub(crate) mod composed_checks;
 
-pub(in crate::game) mod blue_face_block;
 pub(in crate::game) mod brinstar_pipe_bug;
 pub(in crate::game) mod crocomire_attack;
 pub(crate) mod crocomire_reactions;
