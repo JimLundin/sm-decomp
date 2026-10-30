@@ -1130,6 +1130,38 @@ pub unsafe fn DebugGameOverMenu() {
         };
     }
 }
+/// `$80:8028` Upload to APU; native audio installs an RTS there.
+const UPLOAD_TO_APU: u32 = 0x808028;
+
+/// The faithful oracle's music data reaches the native player as on hardware.
+/// The patched oracle leaves every upload to the Rust frame. The startup engine
+/// upload stays with the native boot cue in both modes.
+unsafe fn upload_faithful_music_data(game: &mut Game) {
+    unsafe {
+        if !(game.g_use_my_apu_code && crate::oracle_mode::faithful()) {
+            return;
+        }
+        let ram = game.ram();
+        let source = u32::from_le_bytes([ram.read_byte(0), ram.read_byte(1), ram.read_byte(2), 0]);
+        if source != 0xcf8000 {
+            crate::rtl::RtlApuUpload(source, game);
+        }
+    }
+}
+
+/// After a failed comparison the oracle frame is adopted. Its audio follows
+/// unless only the oracle uploaded music data this frame, which the Rust
+/// player would otherwise never receive.
+fn recovery_player(game: &Game) -> PlayerSnapshotSource<'static> {
+    let oracle_only_upload =
+        game.g_snapshot_theirs.apu_upload_count != 0 && game.g_snapshot_mine.apu_upload_count == 0;
+    if game.g_use_my_apu_code && !oracle_only_upload {
+        PlayerSnapshotSource::Mine
+    } else {
+        PlayerSnapshotSource::Theirs
+    }
+}
+
 pub unsafe fn RunCpuUntilPC(pc1: u32, pc2: u32, game: &mut Game) -> u32 {
     unsafe {
         game.note_samus_external_mutation();
@@ -1141,6 +1173,9 @@ pub unsafe fn RunCpuUntilPC(pc1: u32, pc2: u32, game: &mut Game) -> u32 {
             }
             game.execution().step_cpu();
             let addr: u32 = (words!(i32, (*(*game.g_snes).cpu), k, pc)) as u32;
+            if addr == UPLOAD_TO_APU {
+                upload_faithful_music_data(game);
+            }
             if addr == pc1 || addr == pc2 {
                 return addr;
             }
@@ -1484,11 +1519,8 @@ pub unsafe fn RunOneFrameOfGame_Both(native_game: &mut Game) {
                 }
                 session_native_adoption::adopt(game, &session_before)
                     .expect("Session recovery before restore rejected");
-                if game.g_use_my_apu_code {
-                    game.restore_native_player_snapshot(PlayerSnapshotSource::Mine);
-                } else {
-                    game.restore_native_player_snapshot(PlayerSnapshotSource::Theirs);
-                }
+                let player = recovery_player(game);
+                game.restore_native_player_snapshot(player);
                 if game.g_debug_flag {
                     continue;
                 }
