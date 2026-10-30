@@ -46,7 +46,7 @@ pub(crate) use crate::game::title_screen::{
 pub(crate) use sm_game::cinematic::{
     advance_cinematic_coordinate, capture_cinematic_palette, clear_cinematic_background,
     clear_cinematic_sprites, drift_cinematic_sprite, enable_cinematic_background,
-    fade_cinematic_fixed_color, scaled_cinematic_value, set_cinematic_backdrop, set_fixed_color,
+    fade_cinematic_fixed_color, set_cinematic_backdrop, set_fixed_color,
 };
 
 use crate::{
@@ -450,28 +450,4 @@ pub(crate) fn draw_player_frame_owned(h: &mut Runtime<'_>) {
     }
     h.foreign(player_projectiles::draw_projectiles);
     h.owned_call(crate::game::session_runtime::finish_player_frame);
-}
-
-pub(crate) fn project_cinematic_point(
-    point: crate::types::Point16U,
-    game: &mut Game,
-) -> crate::types::Point16U {
-    project_cinematic_point_reads(point, |at| {
-        crate::game::session_encoding::read(&|at| game.ram().read_byte(at), at)
-    })
-}
-pub(crate) fn project_cinematic_point_reads(
-    point: crate::types::Point16U,
-    mut read: impl FnMut(usize) -> u16,
-) -> crate::types::Point16U {
-    let x = point.x.wrapping_sub(read(0x80));
-    let y = read(0x82).wrapping_sub(point.y);
-    let projected_x =
-        scaled_cinematic_value(x, read(0x78)).wrapping_add(scaled_cinematic_value(read(0x7a), y));
-    let projected_y =
-        scaled_cinematic_value(read(0x7c), x).wrapping_add(scaled_cinematic_value(read(0x78), y));
-    crate::types::Point16U {
-        x: projected_x.wrapping_add(read(0x80)),
-        y: read(0x82).wrapping_sub(projected_y),
-    }
 }

@@ -9,7 +9,7 @@ use sm_game::scene::samus_native_content::CapturedRom;
 use sm_game::visual_host::Record;
 
 pub use crate::game::prelude::*;
-use crate::game::visual_runtime::project_cinematic_point;
+use sm_game::cinematic::project_cinematic_point;
 
 fn bottom_is_visible(game: &mut Game) -> u8 {
     u8::from(samus_body::bottom_is_visible(&mut NativeBottom(game)).unwrap())
@@ -304,7 +304,7 @@ impl samus_position_tiles::PositionHost for NativePosition<'_> {
         Ok(())
     }
     fn project(&mut self, x: u16, y: u16) -> Result<(u16, u16), Self::Error> {
-        let point = project_cinematic_point(Point16U { x, y }, self.0);
+        let point = project_cinematic_point(sm_game::geometry::Point { x, y }, self.0);
         Ok((point.x, point.y))
     }
     fn frame(&mut self) -> Result<u16, Self::Error> {

@@ -407,8 +407,8 @@ impl positions::Inputs for BodyInputs<'_> {
         x: u16,
         y: u16,
     ) -> Result<(u16, u16), DisplayError> {
-        let point = crate::game::visual_runtime::project_cinematic_point_reads(
-            crate::types::Point16U { x, y },
+        let point = sm_game::cinematic::project_cinematic_point_reads(
+            sm_game::geometry::Point { x, y },
             |at| state.controls.affine_words[(at - 0x78) / 2],
         );
         Ok((point.x, point.y))

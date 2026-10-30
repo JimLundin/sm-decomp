@@ -310,3 +310,31 @@ pub fn write_mode7_word<H: crate::menus::host::Host + ?Sized>(
     game.ram().write_byte(at, bytes[0]);
     game.ram().write_byte(at + 1, bytes[1]);
 }
+
+/// Project `point` through the cinematic Mode 7 matrix and centre in RAM.
+pub fn project_cinematic_point<H: crate::ram::WorkRamAccess + ?Sized>(
+    point: crate::geometry::Point,
+    game: &H,
+) -> crate::geometry::Point {
+    use crate::ram::RawRam as _;
+    project_cinematic_point_reads(point, |at| {
+        u16::from_le_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])
+    })
+}
+
+/// Project `point` with the matrix and centre words `read` returns by RAM address.
+pub fn project_cinematic_point_reads(
+    point: crate::geometry::Point,
+    mut read: impl FnMut(usize) -> u16,
+) -> crate::geometry::Point {
+    let x = point.x.wrapping_sub(read(0x80));
+    let y = read(0x82).wrapping_sub(point.y);
+    let projected_x =
+        scaled_cinematic_value(x, read(0x78)).wrapping_add(scaled_cinematic_value(read(0x7a), y));
+    let projected_y =
+        scaled_cinematic_value(read(0x7c), x).wrapping_add(scaled_cinematic_value(read(0x78), y));
+    crate::geometry::Point {
+        x: projected_x.wrapping_add(read(0x80)),
+        y: read(0x82).wrapping_sub(projected_y),
+    }
+}
