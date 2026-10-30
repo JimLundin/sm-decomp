@@ -13,7 +13,7 @@ use crate::player_transitions::state::{
 
 /// Samus's movement handler after a grapple launch ($90:946E).
 const GRAPPLE_LAUNCH_MOVEMENT: MovementMode = MovementMode::from_raw(0x946e);
-use crate::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
+use crate::projectile_geometry::SINE_COSINE;
 use crate::projectile_room::Axis;
 use crate::ram::{word, words as ram_words};
 use crate::word_transfers;
@@ -97,9 +97,9 @@ fn abs16(value: u16) -> u16 {
     (value as i16).unsigned_abs()
 }
 
-#[allow(non_snake_case)]
-fn Mult8x8(a: u8, b: u8) -> u16 {
-    (a as i32 * b as i32) as u16
+/// The 8-bit by 8-bit hardware product.
+fn multiply_8x8(a: u8, b: u8) -> u16 {
+    u16::from(a) * u16::from(b)
 }
 
 /// Follow extension blocks until the selected reaction finishes; callbacks can
@@ -134,31 +134,23 @@ fn place_sample<H: Host + ?Sized>(angle: u16, length: u16, game: &mut H) {
     {
         let index = (angle >> 1) as usize;
         if game.session().player.grapple_flags & 0x8000 == 0 {
-            let offset = if kSinCosTable8bit_Sext[index + 64] < 0 {
-                7
-            } else {
-                8
-            };
+            let offset = if SINE_COSINE[index + 64] < 0 { 7 } else { 8 };
             game.session_mut().player.grapple_endpoint.x =
                 game.session().player.grapple_endpoint.x & 0xfff0 | offset;
-            let offset = if kSinCosTable8bit_Sext[index] < 0 {
-                7
-            } else {
-                8
-            };
+            let offset = if SINE_COSINE[index] < 0 { 7 } else { 8 };
             game.session_mut().player.grapple_endpoint.y =
                 game.session().player.grapple_endpoint.y & 0xfff0 | offset;
         }
         let x = project_axis(
             game.session().player.grapple_endpoint.x,
-            kSinCosTable8bit_Sext[index + 64],
+            SINE_COSINE[index + 64],
             length,
         );
         game.session_mut().player.swing.probe.x = x;
         game.session_mut().player.swing.probe_block.x = (x >> 4) as u8 as u16;
         let y = project_axis(
             game.session().player.grapple_endpoint.y,
-            kSinCosTable8bit_Sext[index],
+            SINE_COSINE[index],
             length,
         );
         game.session_mut().player.swing.probe.y = y;
@@ -167,7 +159,7 @@ fn place_sample<H: Host + ?Sized>(angle: u16, length: u16, game: &mut H) {
 }
 fn contact<H: Host + ?Sized>(game: &mut H) -> u8 {
     let x = game.session().player.swing.probe_block.x;
-    let row = Mult8x8(
+    let row = multiply_8x8(
         game.session().player.swing.probe_block.y as u8,
         word!(game.room_width_in_blocks) as u8,
     );
@@ -577,7 +569,7 @@ pub fn launch_from_swing<H: Host + ?Sized>(game: &mut H) {
     } else {
         2u16.wrapping_mul(game.session().player.swing.angular_velocity)
     };
-    let sample = kSinCosTable8bit_Sext[usize::from(game.grapple_angle()) + 64];
+    let sample = SINE_COSINE[usize::from(game.grapple_angle()) + 64];
     let vertical = game.multiply_with_scratch(sample.unsigned_abs(), magnitude);
     word_transfers!(game, ascending, 1;
         native(ram_words::samus_y_subspeed) <- value(vertical as u16),
@@ -586,8 +578,7 @@ pub fn launch_from_swing<H: Host + ?Sized>(game: &mut H) {
     game.session_mut().player.contact.acceleration_mode = 2;
     let adjustment = 64u16.wrapping_sub((3 * (i32::from(magnitude) >> 9)) as u16);
     let sample = abs16(
-        kSinCosTable8bit_Sext[usize::from(game.grapple_angle().wrapping_sub(adjustment as u8)) + 64]
-            as u16,
+        SINE_COSINE[usize::from(game.grapple_angle().wrapping_sub(adjustment as u8)) + 64] as u16,
     );
     let horizontal = game.multiply_with_scratch(sample, magnitude);
     word_transfers!(game, ascending, 1;
@@ -760,11 +751,11 @@ pub fn restore_start_positions<H: Host + ?Sized>(game: &mut H) {
     };
 }
 
-static kIsGrappleBannedForMovementType: [u8; 28] = [
+static GRAPPLE_BANNED_FOR_MOVEMENT_TYPE: [u8; 28] = [
     0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1,
 ];
 pub fn cancel_incompatible_pose<H: Host + ?Sized>(game: &mut H) {
-    if kIsGrappleBannedForMovementType[game.movement_type() as usize] == 0 {
+    if GRAPPLE_BANNED_FOR_MOVEMENT_TYPE[game.movement_type() as usize] == 0 {
         if game.session().player.grapple as i32 != 0x9bc4f0 & 0xffff
             && game.session().player.grapple as i32 + 0x3882 & 0x8000 != 0
         {
