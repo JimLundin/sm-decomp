@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 use crate::game_state::Game;
 use sm_game::inventory::{self, Word};
+use sm_game::player_position::{PlayerPosition, PlayerWord};
 
 impl sm_game::explosion_window::Host for Game {
     fn initialize_crystal_flash(&mut self) -> bool {
@@ -94,96 +95,25 @@ impl sm_game::actors::zebetites::Host for Game {
     }
 }
 
-/// Implements `PlayerPosition` over a compatibility-RAM receiver with the
-/// original named-word reads and stores.
-macro_rules! compatibility_player_position {
-    ($($ty:ty),+ $(,)?) => {$(
-        impl sm_game::player_position::PlayerPosition for $ty {
-            fn player_x(&self) -> u16 { let game = self; sm_game::ram_word!(game.SAMUS_X_POS) }
-            fn player_y(&self) -> u16 { let game = self; sm_game::ram_word!(game.SAMUS_Y_POS) }
-            fn player_x_fraction(&self) -> u16 { let game = self; sm_game::ram_word!(game.SAMUS_X_SUBPOS) }
-            fn player_y_fraction(&self) -> u16 { let game = self; sm_game::ram_word!(game.SAMUS_Y_SUBPOS) }
-            fn previous_player_x(&self) -> u16 { let game = self; sm_game::ram_word!(game.SAMUS_PREV_X_POS) }
-            fn previous_player_y(&self) -> u16 { let game = self; sm_game::ram_word!(game.SAMUS_PREV_Y_POS) }
-            fn set_player_x(&mut self, x: u16) { let game = self; sm_game::ram_word!(game.SAMUS_X_POS = x) }
-            fn set_player_y(&mut self, y: u16) { let game = self; sm_game::ram_word!(game.SAMUS_Y_POS = y) }
-            fn set_player_x_fraction(&mut self, fraction: u16) { let game = self; sm_game::ram_word!(game.SAMUS_X_SUBPOS = fraction) }
-            fn set_previous_player_x(&mut self, x: u16) { let game = self; sm_game::ram_word!(game.SAMUS_PREV_X_POS = x) }
-            fn set_previous_player_y(&mut self, y: u16) { let game = self; sm_game::ram_word!(game.SAMUS_PREV_Y_POS = y) }
-            fn set_previous_player_x_fraction(&mut self, fraction: u16) { let game = self; sm_game::ram_word!(game.SAMUS_PREV_X_SUBPOS = fraction) }
-            fn set_previous_player_y_fraction(&mut self, fraction: u16) { let game = self; sm_game::ram_word!(game.SAMUS_PREV_Y_SUBPOS = fraction) }
-            fn invincibility_timer(&self) -> u16 { let game = self; sm_game::ram_word!(game.SAMUS_INVINCIBILITY_TIMER) }
-            fn knockback_timer(&self) -> u16 { let game = self; sm_game::ram_word!(game.SAMUS_KNOCKBACK_TIMER) }
-            fn set_invincibility_timer(&mut self, frames: u16) { let game = self; sm_game::ram_word!(game.SAMUS_INVINCIBILITY_TIMER = frames) }
-            fn set_knockback_timer(&mut self, frames: u16) { let game = self; sm_game::ram_word!(game.SAMUS_KNOCKBACK_TIMER = frames) }
-        }
-    )+};
+/// The compat game reads and stores Samus's words as the named word accesses
+/// did: through the projected bytes, low then high.
+impl PlayerPosition for Game {
+    fn player_word(&self, word: PlayerWord) -> u16 {
+        sm_game::projection::word(self, word.address())
+    }
+    fn set_player_word(&mut self, word: PlayerWord, value: u16) {
+        sm_game::projection::set_word(self, word.address(), value)
+    }
 }
 
-compatibility_player_position!(Game);
-
-/// Inside a lease, Samus's position is Session-owned: while the lease is current
-/// the reads come straight from `Session::player`, exactly as the projection
-/// would serve them. A dirty lease falls back to the projected word reads, and
-/// stores go through the lease's own byte path so observation refresh, epoch
-/// and semantic-counterpart handling are unchanged.
-impl sm_game::player_position::PlayerPosition for crate::game::session_runtime::Runtime<'_> {
-    fn player_x(&self) -> u16 {
-        self.owned_player(|player| player.x, sm_game::ram::words::SAMUS_X_POS)
+/// A current lease reads Samus's words from `Session::player`, a dirty one the
+/// projected word; stores take the lease's byte path (refresh, epoch, alias).
+impl PlayerPosition for crate::game::session_runtime::Runtime<'_> {
+    fn player_word(&self, word: PlayerWord) -> u16 {
+        self.owned_player(|player| word.get(player), word.address())
     }
-    fn player_y(&self) -> u16 {
-        self.owned_player(|player| player.y, sm_game::ram::words::SAMUS_Y_POS)
-    }
-    fn player_x_fraction(&self) -> u16 {
-        self.owned_player(
-            |player| player.x_fraction,
-            sm_game::ram::words::SAMUS_X_SUBPOS,
-        )
-    }
-    fn player_y_fraction(&self) -> u16 {
-        self.owned_player(
-            |player| player.y_fraction,
-            sm_game::ram::words::SAMUS_Y_SUBPOS,
-        )
-    }
-    fn previous_player_x(&self) -> u16 {
-        self.owned_player(|player| player.previous_position.x.whole, 0xb10)
-    }
-    fn previous_player_y(&self) -> u16 {
-        self.owned_player(|player| player.previous_position.y.whole, 0xb14)
-    }
-    fn set_player_x(&mut self, x: u16) {
-        self.write_word_le(x, sm_game::ram::words::SAMUS_X_POS)
-    }
-    fn set_player_y(&mut self, y: u16) {
-        self.write_word_le(y, sm_game::ram::words::SAMUS_Y_POS)
-    }
-    fn set_player_x_fraction(&mut self, fraction: u16) {
-        self.write_word_le(fraction, sm_game::ram::words::SAMUS_X_SUBPOS)
-    }
-    fn set_previous_player_x(&mut self, x: u16) {
-        self.write_word_le(x, 0xb10)
-    }
-    fn set_previous_player_y(&mut self, y: u16) {
-        self.write_word_le(y, 0xb14)
-    }
-    fn set_previous_player_x_fraction(&mut self, fraction: u16) {
-        self.write_word_le(fraction, 0xb12)
-    }
-    fn set_previous_player_y_fraction(&mut self, fraction: u16) {
-        self.write_word_le(fraction, 0xb16)
-    }
-    fn invincibility_timer(&self) -> u16 {
-        self.owned_player(|player| player.invincibility, 0x18a8)
-    }
-    fn knockback_timer(&self) -> u16 {
-        self.owned_player(|player| player.knockback_timer, 0x18aa)
-    }
-    fn set_invincibility_timer(&mut self, frames: u16) {
-        self.write_word_le(frames, 0x18a8)
-    }
-    fn set_knockback_timer(&mut self, frames: u16) {
-        self.write_word_le(frames, 0x18aa)
+    fn set_player_word(&mut self, word: PlayerWord, value: u16) {
+        self.write_word_le(value, word.address())
     }
 }
 

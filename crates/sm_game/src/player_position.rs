@@ -2,29 +2,98 @@
 //!
 //! Code outside the player modules (rooms, scrolling, actors, cinematics, the
 //! grapple) reads and moves Samus through this trait instead of naming the
-//! compatibility RAM words. `sm` implements it over the projected words, with
-//! the same reads and stores in the same order. A host that runs inside the
-//! owned Session can implement it over `Session::player` instead.
+//! compatibility RAM words. A host implements one word read and one word store:
+//! the compat game over the projected words, a lease over `Session::player`
+//! through `PlayerWord::get`, with stores through its own byte path.
 
+/// Samus's words in `Session::player`, each with the RAM word it projects to.
+macro_rules! player_words {
+    ($($word:ident => $at:literal, $($field:ident).+;)+) => {
+        /// A Samus word that `PlayerPosition` reads or stores.
+        #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+        pub enum PlayerWord { $($word,)+ }
+        impl PlayerWord {
+            /// Every word, in RAM order.
+            pub const ALL: [Self; 10] = [$(Self::$word,)+];
+            /// The RAM word this field projects to.
+            pub const fn address(self) -> usize { match self { $(Self::$word => $at,)+ } }
+            /// The owned `Session::player` field.
+            pub fn get(self, player: &crate::session::Player) -> u16 {
+                match self { $(Self::$word => player.$($field).+,)+ }
+            }
+        }
+    };
+}
+player_words! {
+    X => 0xaf6, x;
+    XFraction => 0xaf8, x_fraction;
+    Y => 0xafa, y;
+    YFraction => 0xafc, y_fraction;
+    PreviousX => 0xb10, previous_position.x.whole;
+    PreviousXFraction => 0xb12, previous_position.x.fraction;
+    PreviousY => 0xb14, previous_position.y.whole;
+    PreviousYFraction => 0xb16, previous_position.y.fraction;
+    Invincibility => 0x18a8, invincibility;
+    Knockback => 0x18aa, knockback_timer;
+}
+
+/// Samus's position and damage timers ($18A8 invincibility, $18AA knockback),
+/// read and stored a word at a time.
 pub trait PlayerPosition {
-    fn player_x(&self) -> u16;
-    fn player_y(&self) -> u16;
-    fn player_x_fraction(&self) -> u16;
-    fn player_y_fraction(&self) -> u16;
-    fn previous_player_x(&self) -> u16;
-    fn previous_player_y(&self) -> u16;
-    fn set_player_x(&mut self, x: u16);
-    fn set_player_y(&mut self, y: u16);
-    fn set_player_x_fraction(&mut self, fraction: u16);
-    fn set_previous_player_x(&mut self, x: u16);
-    fn set_previous_player_y(&mut self, y: u16);
-    fn set_previous_player_x_fraction(&mut self, fraction: u16);
-    fn set_previous_player_y_fraction(&mut self, fraction: u16);
-    /// $18A8 and $18AA: invincibility and knockback frames left.
-    fn invincibility_timer(&self) -> u16;
-    fn knockback_timer(&self) -> u16;
-    fn set_invincibility_timer(&mut self, frames: u16);
-    fn set_knockback_timer(&mut self, frames: u16);
+    fn player_word(&self, word: PlayerWord) -> u16;
+    fn set_player_word(&mut self, word: PlayerWord, value: u16);
+
+    fn player_x(&self) -> u16 {
+        self.player_word(PlayerWord::X)
+    }
+    fn player_y(&self) -> u16 {
+        self.player_word(PlayerWord::Y)
+    }
+    fn player_x_fraction(&self) -> u16 {
+        self.player_word(PlayerWord::XFraction)
+    }
+    fn player_y_fraction(&self) -> u16 {
+        self.player_word(PlayerWord::YFraction)
+    }
+    fn previous_player_x(&self) -> u16 {
+        self.player_word(PlayerWord::PreviousX)
+    }
+    fn previous_player_y(&self) -> u16 {
+        self.player_word(PlayerWord::PreviousY)
+    }
+    fn invincibility_timer(&self) -> u16 {
+        self.player_word(PlayerWord::Invincibility)
+    }
+    fn knockback_timer(&self) -> u16 {
+        self.player_word(PlayerWord::Knockback)
+    }
+    fn set_player_x(&mut self, x: u16) {
+        self.set_player_word(PlayerWord::X, x)
+    }
+    fn set_player_y(&mut self, y: u16) {
+        self.set_player_word(PlayerWord::Y, y)
+    }
+    fn set_player_x_fraction(&mut self, fraction: u16) {
+        self.set_player_word(PlayerWord::XFraction, fraction)
+    }
+    fn set_previous_player_x(&mut self, x: u16) {
+        self.set_player_word(PlayerWord::PreviousX, x)
+    }
+    fn set_previous_player_y(&mut self, y: u16) {
+        self.set_player_word(PlayerWord::PreviousY, y)
+    }
+    fn set_previous_player_x_fraction(&mut self, fraction: u16) {
+        self.set_player_word(PlayerWord::PreviousXFraction, fraction)
+    }
+    fn set_previous_player_y_fraction(&mut self, fraction: u16) {
+        self.set_player_word(PlayerWord::PreviousYFraction, fraction)
+    }
+    fn set_invincibility_timer(&mut self, frames: u16) {
+        self.set_player_word(PlayerWord::Invincibility, frames)
+    }
+    fn set_knockback_timer(&mut self, frames: u16) {
+        self.set_player_word(PlayerWord::Knockback, frames)
+    }
 }
 
 /// Samus's facing and movement type, and the grapple angle bytes, as the
