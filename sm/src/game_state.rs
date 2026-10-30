@@ -240,7 +240,7 @@ pub struct Game {
     /// Imported from `loaded_rom` by `register_rom`; see game::mother_brain_visuals.
     pub(crate) mother_brain_visuals: crate::game::mother_brain_visuals::ImportedTables,
     /// Imported from `loaded_rom` by `register_rom`; see game::beam_windows.
-    pub(crate) beam_gradients: crate::game::beam_windows::ImportedTables,
+    pub(crate) beam_gradients: sm_game::beam_windows::ImportedTables,
     /// Imported from `loaded_rom` by `register_rom`; see game::actors::escape_critters.
     pub(crate) escape_etecoons: crate::game::actors::escape_critters::ImportedTables,
     /// Imported from `loaded_rom` by `register_rom`; see game::actors::botwoon.
@@ -1239,7 +1239,7 @@ impl Game {
         self.magdollite = crate::game::actors::magdollite::import(image);
         self.equipment_screen = crate::game::equipment_menu::import(image);
         self.mother_brain_visuals = crate::game::mother_brain_visuals::import(image);
-        self.beam_gradients = crate::game::beam_windows::import(image);
+        self.beam_gradients = sm_game::beam_windows::import(image);
         self.escape_etecoons = crate::game::actors::escape_critters::import(image);
         self.records.flame_rain = sm_game::phantoon_tables::import(image);
         self.records.phantoon_timers = sm_game::phantoon_tables::import_timers(image);
