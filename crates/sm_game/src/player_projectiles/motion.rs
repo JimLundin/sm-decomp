@@ -1,6 +1,6 @@
 //! Flight, release, reflection and numeric motion dispatch on ordinary session state.
 #![forbid(unsafe_code)]
-use super::{Host, animation, presentation};
+use super::{Host, animation, handlers, presentation};
 use crate::projectile_initialization::Initialization;
 use crate::projectile_room::Axis;
 use crate::{shot, shot_native};
@@ -30,7 +30,7 @@ pub fn clear(h: &mut impl Host, raw: u16) {
     shot!(h, raw, remaining = 0);
     shot!(h, raw, variable = 0);
     shot!(h, raw, sprite = 0);
-    shot!(h, raw, motion = 0xb169);
+    shot!(h, raw, motion = handlers::IDLE);
     let count = if (raw as i16).wrapping_sub(10) >= 0 {
         &mut h.session_mut().projectiles.bomb_count
     } else {
@@ -101,7 +101,7 @@ pub fn collide(h: &mut impl Host, axes: u8, kind: Flight) {
     } else {
         kind
     };
-    if axes & 1 != 0 {
+    if axes & handlers::axes::X != 0 {
         let value = super::collision::scan(h, raw, collision, Axis::X);
         let hit = if matches!(kind, Flight::NonWave | Flight::Wave) {
             value & 1 != 0
@@ -111,7 +111,7 @@ pub fn collide(h: &mut impl Host, axes: u8, kind: Flight) {
         if kind == Flight::SuperMissile {
             extension_collision(h, Axis::X);
         }
-        if hit || axes & 2 == 0 {
+        if hit || axes & handlers::axes::Y == 0 {
             return;
         }
     }
@@ -272,7 +272,7 @@ fn spawn_extension(h: &mut impl Host) {
     // Rejected placement still initializes, arms, links and counts this child.
     super::placement::place(h, child);
     animation::initialize(h, child, Initialization::SuperMissile);
-    shot!(h, child, motion = 0xb075);
+    shot!(h, child, motion = handlers::SUPER_MISSILE_EXTENSION);
     link_extension(h, child);
     h.session_mut().projectiles.count = h.session().projectiles.count.wrapping_add(1);
 }
@@ -354,13 +354,13 @@ pub fn reflect(h: &mut impl Host, raw: u16) {
     let kind = shot!(h, raw, kind);
     if kind & 0x100 != 0 {
         animation::initialize(h, raw, Initialization::Projectile);
-        shot!(h, raw, motion = 0xaf68);
+        shot!(h, raw, motion = handlers::MISSILE);
         shot!(h, raw, variable = 240);
     } else if kind & 0x200 != 0 {
         let child = u16::from(shot!(h, raw, variable) as u8);
         clear(h, child);
         animation::initialize(h, raw, Initialization::Projectile);
-        shot!(h, raw, motion = 0xafe5);
+        shot!(h, raw, motion = handlers::SUPER_MISSILE);
         shot!(h, raw, variable = 240);
     } else {
         initialize_beam_speed(h, raw);
@@ -390,41 +390,45 @@ pub fn advance_all(h: &mut impl Host) {
 pub fn run(h: &mut impl Host, code: u16, raw: u16) {
     use super::{bombs::Kind as Bomb, specials::Kind as Special};
     match code {
-        0xd4d2 => speed_echo(h, raw),
-        0xefd3 => suit_pickup_shot(h, raw),
-        0xd793 => super::specials::update(h, raw, Special::Plasma),
-        0xcf09 => super::specials::update(h, raw, Special::Ice),
-        0xcf7a => super::specials::update(h, raw, Special::IceReleased),
-        0xda08 => super::specials::update(h, raw, Special::Wave),
-        0xdb06 => super::specials::update(h, raw, Special::Spazer),
-        0xdc9c => super::specials::update(h, raw, Special::SpazerReleased),
-        0xd7e1 => super::specials::plasma_radius(h, raw, false),
-        0xd7fa => super::specials::plasma_radius(h, raw, true),
-        0xd813 => super::specials::depart_plasma(h, raw),
-        0xb099 => super::bombs::bomb_update(h, raw, Bomb::Bomb),
-        0xb0ae => super::bombs::bomb_update(h, raw, Bomb::PowerBomb),
-        0xd8f7 => super::bombs::bomb_update(h, raw, Bomb::Spread),
-        0xb169 => (),
-        0xaef3 => update(h, raw, Flight::NonWave, 4),
-        0xaf4a => collide(h, 2, Flight::NonWave),
-        0xaf52 => collide(h, 3, Flight::NonWave),
-        0xaf60 => collide(h, 1, Flight::NonWave),
-        0xaf68 => update(h, raw, Flight::Missile, 4),
-        0xafc7 => collide(h, 2, Flight::Missile),
-        0xafcf => collide(h, 3, Flight::Missile),
-        0xafdd => collide(h, 1, Flight::Missile),
-        0xafe5 => update(h, raw, Flight::SuperMissile, 2),
-        0xb047 => collide(h, 2, Flight::SuperMissile),
-        0xb052 => collide(h, 3, Flight::SuperMissile),
-        0xb06a => collide(h, 1, Flight::SuperMissile),
-        0xb075 => update_extension(h, raw),
-        0xb0c3 => update(h, raw, Flight::Wave, 4),
-        0xb0e4 => update(h, raw, Flight::Wave, 3),
-        0xb103 => advance(h, raw, Flight::Wave),
-        0xb13b => collide(h, 2, Flight::Wave),
-        0xb143 => collide(h, 3, Flight::Wave),
-        0xb151 => collide(h, 1, Flight::Wave),
-        0xb159 => update(h, raw, Flight::Wave, 0),
+        handlers::SPEED_ECHO => speed_echo(h, raw),
+        handlers::SUIT_PICKUP_SHOT => suit_pickup_shot(h, raw),
+        handlers::PLASMA_SPECIAL => super::specials::update(h, raw, Special::Plasma),
+        handlers::ICE_SPECIAL => super::specials::update(h, raw, Special::Ice),
+        handlers::ICE_SPECIAL_RELEASED => super::specials::update(h, raw, Special::IceReleased),
+        handlers::WAVE_SPECIAL => super::specials::update(h, raw, Special::Wave),
+        handlers::SPAZER_SPECIAL => super::specials::update(h, raw, Special::Spazer),
+        handlers::SPAZER_SPECIAL_RELEASED => {
+            super::specials::update(h, raw, Special::SpazerReleased)
+        }
+        handlers::PLASMA_RADIUS_GROWING => super::specials::plasma_radius(h, raw, false),
+        handlers::PLASMA_RADIUS_CONTRACTING => super::specials::plasma_radius(h, raw, true),
+        handlers::PLASMA_DEPARTING => super::specials::depart_plasma(h, raw),
+        handlers::BOMB => super::bombs::bomb_update(h, raw, Bomb::Bomb),
+        handlers::POWER_BOMB => super::bombs::bomb_update(h, raw, Bomb::PowerBomb),
+        handlers::SPREAD_BOMB => super::bombs::bomb_update(h, raw, Bomb::Spread),
+        handlers::IDLE => (),
+        handlers::BEAM => update(h, raw, Flight::NonWave, 4),
+        handlers::collide::BEAM_Y => collide(h, handlers::axes::Y, Flight::NonWave),
+        handlers::collide::BEAM_XY => collide(h, handlers::axes::BOTH, Flight::NonWave),
+        handlers::collide::BEAM_X => collide(h, handlers::axes::X, Flight::NonWave),
+        handlers::MISSILE => update(h, raw, Flight::Missile, 4),
+        handlers::collide::MISSILE_Y => collide(h, handlers::axes::Y, Flight::Missile),
+        handlers::collide::MISSILE_XY => collide(h, handlers::axes::BOTH, Flight::Missile),
+        handlers::collide::MISSILE_X => collide(h, handlers::axes::X, Flight::Missile),
+        handlers::SUPER_MISSILE => update(h, raw, Flight::SuperMissile, 2),
+        handlers::collide::SUPER_MISSILE_Y => collide(h, handlers::axes::Y, Flight::SuperMissile),
+        handlers::collide::SUPER_MISSILE_XY => {
+            collide(h, handlers::axes::BOTH, Flight::SuperMissile)
+        }
+        handlers::collide::SUPER_MISSILE_X => collide(h, handlers::axes::X, Flight::SuperMissile),
+        handlers::SUPER_MISSILE_EXTENSION => update_extension(h, raw),
+        handlers::WAVE_BEAM => update(h, raw, Flight::Wave, 4),
+        handlers::ICE_WAVE_BEAM => update(h, raw, Flight::Wave, 3),
+        handlers::WAVE_ADVANCE => advance(h, raw, Flight::Wave),
+        handlers::collide::WAVE_BEAM_Y => collide(h, handlers::axes::Y, Flight::Wave),
+        handlers::collide::WAVE_BEAM_XY => collide(h, handlers::axes::BOTH, Flight::Wave),
+        handlers::collide::WAVE_BEAM_X => collide(h, handlers::axes::X, Flight::Wave),
+        handlers::HYPER_BEAM => update(h, raw, Flight::Wave, 0),
         _ => {
             h.unknown();
         }
@@ -446,7 +450,7 @@ pub fn reset(h: &mut impl Host) {
         shot.remaining = 0;
         shot.variable = 0;
         shot.sprite = 0;
-        shot.motion = 0xb169;
+        shot.motion = handlers::IDLE;
     }
     h.session_mut().projectiles.bomb_count = 0;
     h.session_mut().projectiles.controls.cooldown = 0;

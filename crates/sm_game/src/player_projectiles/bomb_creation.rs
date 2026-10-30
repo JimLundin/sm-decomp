@@ -1,5 +1,6 @@
 //! Ordinary, power and spread bomb production with live initialization boundaries.
 #![forbid(unsafe_code)]
+use super::handlers;
 use super::host::{Host, PaletteEffect};
 use crate::shot;
 use crate::{
@@ -96,7 +97,15 @@ pub fn fire(h: &mut impl Host) {
     shot!(h, raw, y = h.session().player.y);
     shot!(h, raw, variable = 60);
     super::animation::initialize(h, raw, Initialization::Bomb);
-    shot!(h, raw, motion = if power { 0xb0ae } else { 0xb099 });
+    shot!(
+        h,
+        raw,
+        motion = if power {
+            handlers::POWER_BOMB
+        } else {
+            handlers::BOMB
+        }
+    );
     h.session_mut().projectiles.controls.cooldown =
         u16::from(definitions::COOLDOWNS[usize::from(key)]);
     if power {
@@ -111,13 +120,13 @@ pub fn fire(h: &mut impl Host) {
     }
 }
 pub fn spread(h: &mut impl Host) {
-    if shot!(h, 10, motion) == 0xd8f7 {
+    if shot!(h, 10, motion) == handlers::SPREAD_BOMB {
         return;
     }
     for (pattern, raw) in (10..20).step_by(2).enumerate() {
         shot!(h, raw, kind = 0x8500);
         shot!(h, raw, direction = 0);
-        shot!(h, raw, motion = 0xd8f7);
+        shot!(h, raw, motion = handlers::SPREAD_BOMB);
         super::animation::initialize(h, raw, Initialization::Bomb);
         shot!(h, raw, x = h.session().player.x);
         shot!(h, raw, x_fraction = 0);

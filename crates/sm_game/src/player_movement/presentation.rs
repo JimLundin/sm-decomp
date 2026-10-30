@@ -119,7 +119,8 @@ pub fn create_shinespark_echoes(h: &mut impl Host) {
         s.projectiles.shots[slot].kind = 0x8029;
         // Captured slots 6 then 8 retain separate initializer publication intervals.
         h.initialize_shinespark_echo((slot * 2) as u16);
-        h.session_mut().projectiles.shots[slot].motion = 0xd4d2;
+        h.session_mut().projectiles.shots[slot].motion =
+            crate::player_projectiles::handlers::SPEED_ECHO;
         // Reacquire pose, wrap its base to u16, then widen before adding lane 1.
         let index =
             usize::from(h.session().player.pose.wrapping_sub(201).wrapping_mul(2)) + (slot - 3);

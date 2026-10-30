@@ -31,9 +31,9 @@ pub fn motion(charged: bool, index: usize) -> Option<Motion> {
 }
 pub fn instruction(motion: Motion) -> u16 {
     match motion {
-        Motion::NonWave => 0xaef3,
-        Motion::IceWave => 0xb0e4,
-        Motion::WavePlasma => 0xb0c3,
-        Motion::Hyper => 0xb159,
+        Motion::NonWave => crate::player_projectiles::handlers::BEAM,
+        Motion::IceWave => crate::player_projectiles::handlers::ICE_WAVE_BEAM,
+        Motion::WavePlasma => crate::player_projectiles::handlers::WAVE_BEAM,
+        Motion::Hyper => crate::player_projectiles::handlers::HYPER_BEAM,
     }
 }

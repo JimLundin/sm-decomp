@@ -71,7 +71,11 @@ pub fn fire(h: &mut impl Host) {
     shot!(
         h,
         raw,
-        motion = if kind & 0x200 != 0 { 0xafe5 } else { 0xaf68 }
+        motion = if kind & 0x200 != 0 {
+            super::handlers::SUPER_MISSILE
+        } else {
+            super::handlers::MISSILE
+        }
     );
     h.session_mut().projectiles.controls.cooldown =
         u16::from(definitions::COOLDOWNS[usize::from(kind.to_ne_bytes()[1] & 15)]);

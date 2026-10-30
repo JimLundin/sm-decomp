@@ -21,12 +21,12 @@ pub enum Attack {
 }
 fn instruction(kind: Kind) -> u16 {
     match kind {
-        Kind::Wave => 0xda08,
-        Kind::Ice => 0xcf09,
-        Kind::IceReleased => 0xcf7a,
-        Kind::Plasma => 0xd793,
-        Kind::Spazer => 0xdb06,
-        Kind::SpazerReleased => 0xdc9c,
+        Kind::Wave => super::handlers::WAVE_SPECIAL,
+        Kind::Ice => super::handlers::ICE_SPECIAL,
+        Kind::IceReleased => super::handlers::ICE_SPECIAL_RELEASED,
+        Kind::Plasma => super::handlers::PLASMA_SPECIAL,
+        Kind::Spazer => super::handlers::SPAZER_SPECIAL,
+        Kind::SpazerReleased => super::handlers::SPAZER_SPECIAL_RELEASED,
     }
 }
 fn invalid_plasma_phase(h: &mut impl Host) -> ! {

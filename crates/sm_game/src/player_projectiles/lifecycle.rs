@@ -72,5 +72,5 @@ pub fn retire(h: &mut impl Host, raw: u16) {
         }
     }
     impact(h, raw);
-    shot!(h, raw, motion = 0xb169);
+    shot!(h, raw, motion = super::handlers::IDLE);
 }
