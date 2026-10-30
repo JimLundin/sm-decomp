@@ -86,7 +86,7 @@ const WALL_JUMPING: u8 = 20;
 const GRAPPLE_INACTIVE: u16 = 0xc4f0;
 
 const _: () = {
-    assert!(BLANK_TILE == 0x2c0f && BLANK_TILE == 11279);
+    assert!(BLANK_TILE == 0x2c0f);
     assert!(FULL_TANK_TILE == 10289 && EMPTY_TANK_TILE == 13360);
     assert!(SELECTED_PALETTE == 0x1000 && UNSELECTED_PALETTE == 0x1400);
     assert!(!PALETTE_BITS == 0xe3ff);
@@ -296,7 +296,7 @@ pub fn advance<H: HudHost + ?Sized>(game: &mut H) {
                 && word!(game.grapple_beam_function) == GRAPPLE_INACTIVE
                 && word!(game.time_is_frozen_flag) == 0
             {
-                game.queue_sound(0, (0x39) as u8, 6);
+                game.queue_sound(0, 0x39_u8, 6);
             }
         }
         let palette = if game

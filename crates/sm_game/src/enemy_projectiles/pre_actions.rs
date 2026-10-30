@@ -349,12 +349,12 @@ pub fn EprojPreInstr_DraygonsGunk_8E0F(k: u16, ctx: &mut impl Host) {
 
 pub fn EprojPreInstr_CrocomireProjectile(k: u16, ctx: &mut impl Host) {
     EprojBlockCollisition_Horiz(k, ctx);
-    enemy!(ctx, 2560 => (0) as isize, graphics);
+    enemy!(ctx, 2560 => 0_isize, graphics);
     {
         let index = (k >> 1) as isize;
-        let old = enemy!(ctx, (index) as isize, counter);
+        let old = enemy!(ctx, index, counter);
         let value = ((old as i32) + (enemy!(ctx, (k >> 1) as isize, velocity_x) as i32)) as u16;
-        enemy!(ctx, (index) as isize, counter = value);
+        enemy!(ctx, index, counter = value);
     };
     let x: u16 = -64i32 as u16;
     let y: u16 = {
@@ -587,11 +587,8 @@ pub fn EprojPreInstr_A977(k: u16, ctx: &mut impl Host) {
     let carry: u8 = EprojBlockCollisition_Vertical(k, ctx);
     let v1: i32 = k as i32 >> 1;
     if (enemy!(ctx, (v1) as isize, velocity_y) & 0x8000) != 0 || carry == 0 {
-        let v2: u16 = (enemy!(ctx, (0) as isize, behavior_b)).wrapping_add(enemy!(
-            ctx,
-            (v1) as isize,
-            velocity_y
-        ));
+        let v2: u16 =
+            (enemy!(ctx, 0_isize, behavior_b)).wrapping_add(enemy!(ctx, (v1) as isize, velocity_y));
         enemy!(ctx, v2 => (v1) as isize, velocity_y);
         if (v2 & 0xf000) == 4096 {
             enemy!(ctx, 4096 => (v1) as isize, velocity_y);
@@ -669,14 +666,14 @@ pub fn EprojPreInstr_TorizoSonicBoom(k: u16, ctx: &mut impl Host) {
         let v1: i32 = k as i32 >> 1;
         {
             let index = (v1) as isize;
-            let old = enemy!(ctx, (index) as isize, velocity_x);
+            let old = enemy!(ctx, index, velocity_x);
             let value = ((old as i32)
                 + (if enemy!(ctx, (v1) as isize, velocity_x) & 0x8000 != 0 {
                     -16i32
                 } else {
                     16
                 })) as u16;
-            enemy!(ctx, (index) as isize, velocity_x = value);
+            enemy!(ctx, index, velocity_x = value);
         };
         if (enemy!(ctx, (v1) as isize, velocity_x) & 0xf000) == 4096 {
             enemy!(ctx, 0 => (v1) as isize, definition);
@@ -760,15 +757,15 @@ pub fn EprojPreInstr_EyeDoorProjectile(k: u16, ctx: &mut impl Host) {
         let v1: i32 = enemy!(ctx, (k >> 1) as isize, behavior_a) as i32 >> 1;
         {
             let index = (v3) as isize;
-            let old = enemy!(ctx, (index) as isize, velocity_x);
+            let old = enemy!(ctx, index, velocity_x);
             let value = old.wrapping_add((kSinCosTable8bit_Sext[(v1 + 64) as usize] >> 4) as u16);
-            enemy!(ctx, (index) as isize, velocity_x = value);
+            enemy!(ctx, index, velocity_x = value);
         };
         {
             let index = (v3) as isize;
-            let old = enemy!(ctx, (index) as isize, velocity_y);
+            let old = enemy!(ctx, index, velocity_y);
             let value = ((old as i32) + (kSinCosTable8bit_Sext[v1 as usize] as i32 >> 4)) as u16;
-            enemy!(ctx, (index) as isize, velocity_y = value);
+            enemy!(ctx, index, velocity_y = value);
         };
         let door = enemy!(ctx, (v3) as isize, behavior_b);
         if !crate::progress_flags::door_opened(ctx, door) {
@@ -1150,7 +1147,7 @@ pub fn EprojPreInstr_D128(v0: u16, ctx: &mut impl Host) {
         enemy!(ctx, (0x86d0ebi32) as u16 => (v1) as isize, pre_action);
         start_instruction((v1 as usize) as isize, addr_word_86D03C as u16, ctx);
     } else {
-        enemy_add!(ctx, (v0 >> 1) as isize, velocity_y, (WORD_86_D082) as u16);
+        enemy_add!(ctx, (v0 >> 1) as isize, velocity_y, WORD_86_D082);
     };
 }
 
@@ -1483,9 +1480,9 @@ pub fn EprojPreInstr_GoldenTorizoEgg(k: u16, ctx: &mut impl Host) {
             enemy!(ctx, -(enemy!(ctx, (v1) as isize, velocity_x) as i32) as u16 => (v1) as isize, velocity_x);
             {
                 let index = (v1) as isize;
-                let old = enemy!(ctx, (index) as isize, behavior_a);
+                let old = enemy!(ctx, index, behavior_a);
                 let value = old ^ (0x8000);
-                enemy!(ctx, (index) as isize, behavior_a = value);
+                enemy!(ctx, index, behavior_a = value);
             };
         }
         if EprojBlockCollisition_Vertical(k, ctx) & 1 != 0
@@ -1493,14 +1490,14 @@ pub fn EprojPreInstr_GoldenTorizoEgg(k: u16, ctx: &mut impl Host) {
         {
             {
                 let index = (v1) as isize;
-                let old = enemy!(ctx, (index) as isize, velocity_x);
+                let old = enemy!(ctx, index, velocity_x);
                 let value = ((old as i32)
                     + (if enemy!(ctx, (v1) as isize, velocity_x) & 0x8000 != 0 {
                         32
                     } else {
                         -32i32
                     })) as u16;
-                enemy!(ctx, (index) as isize, velocity_x = value);
+                enemy!(ctx, index, velocity_x = value);
             };
             enemy!(ctx, -(enemy!(ctx, (v1) as isize, velocity_y) as i32) as u16 => (v1) as isize, velocity_y);
         }
@@ -1649,9 +1646,9 @@ pub fn EprojPreInstr_MotherBrainRoomTurretBullets(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     {
         let index = (v1) as isize;
-        let old = enemy!(ctx, (index) as isize, properties);
+        let old = enemy!(ctx, index, properties);
         let value = old ^ (0x8000);
-        enemy!(ctx, (index) as isize, properties = value);
+        enemy!(ctx, index, properties = value);
     };
     MoveEprojWithVelocity(k, ctx);
     if ctx.ridley_offscreen(enemy!(ctx, (v1) as isize, x), enemy!(ctx, (v1) as isize, y)) & 1 != 0 {
@@ -1882,20 +1879,20 @@ pub fn EprojPreInstr_MaridiaFloatersSpikes(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     {
         let index = (v1) as isize;
-        let old = enemy!(ctx, (index) as isize, velocity_x);
+        let old = enemy!(ctx, index, velocity_x);
         let value = ((old as i32)
             + (WORD_86_D21_A[enemy!(ctx, (v1) as isize, behavior_a) as usize] as i32))
             as u16;
-        enemy!(ctx, (index) as isize, velocity_x = value);
+        enemy!(ctx, index, velocity_x = value);
     };
     if EprojBlockCollisition_Horiz(k, ctx) & 1 != 0 || {
         {
             let index = (v1) as isize;
-            let old = enemy!(ctx, (index) as isize, velocity_y);
+            let old = enemy!(ctx, index, velocity_y);
             let value = ((old as i32)
                 + (WORD_86_D22_A[enemy!(ctx, (v1) as isize, behavior_a) as usize] as i32))
                 as u16;
-            enemy!(ctx, (index) as isize, velocity_y = value);
+            enemy!(ctx, index, velocity_y = value);
         };
         EprojBlockCollisition_Vertical(k, ctx) & 1 != 0
     } {
@@ -1975,17 +1972,17 @@ pub fn EprojPreInstr_E605(k: u16, ctx: &mut impl Host) {
     enemy!(ctx, v2 => (v1) as isize, counter);
     {
         let index = (v1) as isize;
-        let old = enemy!(ctx, (index) as isize, y_fraction);
+        let old = enemy!(ctx, index, y_fraction);
         let value =
             ((old as i32) + ((enemy_byte!(ctx, v1 as isize * 2, velocity_y) as i32) << 8)) as u16;
-        enemy!(ctx, (index) as isize, y_fraction = value);
+        enemy!(ctx, index, y_fraction = value);
     };
     {
         let index = (v1) as isize;
-        let old = enemy!(ctx, (index) as isize, y);
+        let old = enemy!(ctx, index, y);
         let value =
             old.wrapping_add((enemy_byte!(ctx, v1 as isize * 2 + 1, velocity_y) as i8) as u16);
-        enemy!(ctx, (index) as isize, y = value);
+        enemy!(ctx, index, y = value);
     };
 }
 
@@ -2036,18 +2033,18 @@ pub fn Eproj_BotwoonsBodyHurtFlashHandling1(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     {
         let index = (v1) as isize;
-        let old = enemy!(ctx, (index) as isize, graphics);
+        let old = enemy!(ctx, index, graphics);
         let value = old | (0xe00);
-        enemy!(ctx, (index) as isize, graphics = value);
+        enemy!(ctx, index, graphics = value);
     };
     if ctx.resolve_actor(Key::from_legacy(0), Le).flash != 0
         && (ctx.inputs().random_enemy_counter & 2) != 0
     {
         {
             let index = (v1) as isize;
-            let old = enemy!(ctx, (index) as isize, graphics);
+            let old = enemy!(ctx, index, graphics);
             let value = old & (0xf1ff);
-            enemy!(ctx, (index) as isize, graphics = value);
+            enemy!(ctx, index, graphics = value);
         };
     }
 }

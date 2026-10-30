@@ -94,7 +94,7 @@ fn reserves<H: Host + ?Sized>(game: &mut H) {
         }
     } else if word!(game.joypad1_newkeys) & kButton_Up as u16 != 0 {
         if word!(game.pausemenu_equipment_category_item) & 0xff00 != 0 {
-            game.queue_sound(0, (0x37) as u8, 6);
+            game.queue_sound(0, 0x37_u8, 6);
             word!(game.pausemenu_equipment_category_item -= 256);
         }
     } else if word!(game.joypad1_newkeys) & kButton_Down as u16 != 0 {
@@ -107,7 +107,7 @@ fn reserves<H: Host + ?Sized>(game: &mut H) {
         {
             scan(1, 0, false, Some(previous), game);
         } else {
-            game.queue_sound(0, (0x37) as u8, 6);
+            game.queue_sound(0, 0x37_u8, 6);
         }
     }
 }
@@ -190,7 +190,7 @@ fn select_reserves<H: Host + ?Sized>(game: &mut H) -> u16 {
     let maximum = word!(game.samus_max_reserve_health);
     if word!(game.samus_max_reserve_health) != 0 {
         word!(game.pausemenu_equipment_category_item = 0);
-        game.queue_sound(0, (0x37) as u8, 6);
+        game.queue_sound(0, 0x37_u8, 6);
         1
     } else {
         maximum
@@ -245,9 +245,9 @@ fn scan<H: Host + ?Sized>(
     // Downward beam selection stores before sound; all other paths store after it.
     if category == 1 && !upward {
         word!(game.pausemenu_equipment_category_item = selection);
-        game.queue_sound(0, (0x37) as u8, 6);
+        game.queue_sound(0, 0x37_u8, 6);
     } else {
-        game.queue_sound(0, (0x37) as u8, 6);
+        game.queue_sound(0, 0x37_u8, 6);
         word!(game.pausemenu_equipment_category_item = selection);
     }
     if category == 2 && !upward {
@@ -286,7 +286,7 @@ fn toggle<H: Host + ?Sized>(bytes: u16, game: &mut H) {
     if word!(game.joypad1_newkeys) & kButton_A as u16 == 0 {
         return;
     }
-    game.queue_sound(0, (0x38) as u8, 6);
+    game.queue_sound(0, 0x38_u8, 6);
     let item = u16::from(
         game.ram()
             .read_byte(crate::ram::words::pausemenu_equipment_category_item + 1),

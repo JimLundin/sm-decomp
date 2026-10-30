@@ -132,7 +132,7 @@ pub fn advance(h: &mut impl Host) {
                 }
                 10 => PaletteCarry::Clear,
                 index => {
-                    let _ = [(); 11][usize::from(index)];
+                    [(); 11][usize::from(index)];
                     unreachable!()
                 }
             };

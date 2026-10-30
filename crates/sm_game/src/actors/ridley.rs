@@ -3500,7 +3500,7 @@ pub fn calculate_fireball_velocities<H: Host + ?Sized>(
         let dy = (word!(game.samus_y_pos) as i32
             - (slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 43)) as u16;
         let mut angle = -(angle_from_delta(dx, dy) as i32 + 0x80) as u8 as u16;
-        if angle < 0x15 || angle >= 0xc0 {
+        if !(0x15..0xc0).contains(&angle) {
             angle = 0x15;
         } else if angle >= 0x50 {
             angle = 0x50;
@@ -3512,7 +3512,7 @@ pub fn calculate_fireball_velocities<H: Host + ?Sized>(
         let dy = (word!(game.samus_y_pos) as i32
             - (slot!(game, Ridley[RIDLEY].base.y_pos) as i32 - 43)) as u16;
         let mut angle = -(angle_from_delta(dx, dy) as i32 + 0x80) as u8 as u16;
-        if angle < 0x40 || angle >= 0xeb {
+        if !(0x40..0xeb).contains(&angle) {
             angle = 0xeb;
         } else if angle < 0xb0 {
             angle = 0xb0;

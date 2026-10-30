@@ -275,10 +275,10 @@ pub fn validate(world: &WorldDefinition) -> Result<(), WorldDefinitionError> {
         optional_resource(world, state.fx, ResourceKind::Fx)?;
         optional_resource(world, state.main_code, ResourceKind::RoomMain)?;
         optional_resource(world, state.setup, ResourceKind::RoomSetup)?;
-        if let ScrollDefinition::Cells(cells) = &state.scrolls {
-            if cells.len() != 50 {
-                return Err(InvalidDefinition);
-            }
+        if let ScrollDefinition::Cells(cells) = &state.scrolls
+            && cells.len() != 50
+        {
+            return Err(InvalidDefinition);
         }
         for object in &state.objects {
             resource(world, object.definition, ResourceKind::RoomObject)?;

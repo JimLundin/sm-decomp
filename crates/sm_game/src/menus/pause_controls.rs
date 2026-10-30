@@ -196,7 +196,7 @@ fn advance<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     map_menu::animate_pause_sprite(2, 0x18, 0xd0, game);
     map_menu::animate_pause_sprite(2, 0xe8, 0xd0, game);
     if word!(game.newly_held_down_timed_held_input) & kButton_Start as u16 != 0 {
-        game.queue_sound(0, (0x38) as u8, 6);
+        game.queue_sound(0, 0x38_u8, 6);
         word! { game, 1; screen_fade_delay, screen_fade_counter }
         let previous = word!(game.pausemenu_button_label_mode);
         word!(game.pausemenu_button_label_mode = 1);
@@ -225,7 +225,7 @@ fn shoulder_input<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     word!(game.pausemenu_start_lr_pressed_highlight_timer = 5);
     word! {game; menu_index = menu; pausemenu_shoulder_button_highlight = highlight; pausemenu_button_label_mode = mode; }
     menu_tilemap::pause_labels(word!(game.pausemenu_button_label_mode), game);
-    game.queue_sound(0, (0x38) as u8, 6);
+    game.queue_sound(0, 0x38_u8, 6);
 }
 
 fn tick_highlight<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> bool {

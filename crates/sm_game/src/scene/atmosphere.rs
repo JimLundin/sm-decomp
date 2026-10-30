@@ -528,7 +528,7 @@ impl<I: Inputs> AdvanceHost for Owned<'_, I> {
             &mut SpriteGeometry(&sprite),
             (x, y),
             super::objects::Clip::None,
-            |tile| Ok(tile),
+            Ok,
             |objects, index, entry, x, y, tile| {
                 let piece = sprite.parts.get(index).ok_or(DisplayError::Source)?;
                 let producer = producers.slots[slot].ok_or(DisplayError::Incomplete)?;

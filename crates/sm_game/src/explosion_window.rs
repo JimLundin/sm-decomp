@@ -39,12 +39,10 @@ pub fn spawn_power_bomb<H: Host + ?Sized>(game: &mut H) {
     if word!(game.time_is_frozen_flag) != 0 {
         word!(game.power_bomb_explosion_status = 0x4000);
     } else {
-        game.queue_sound(0, (1) as u8, 15);
+        game.queue_sound(0, 1_u8, 15);
         word!(game.power_bomb_explosion_status = 0x8000);
-        static unk_888ABA: SpawnHdmaObject_Args =
-            SpawnHdmaObject_Args::new(0x40, 0x28, 0x8ace as u16);
-        static unk_888AC2: SpawnHdmaObject_Args =
-            SpawnHdmaObject_Args::new(0x40, 0x29, 0x8b80 as u16);
+        static unk_888ABA: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x40, 0x28, 0x8ace_u16);
+        static unk_888AC2: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x40, 0x29, 0x8b80_u16);
         game.spawn_hdma(0x88, &unk_888ABA);
         game.spawn_hdma(0x88, &unk_888AC2);
     };
@@ -391,15 +389,15 @@ fn calculate_explosion_hdma_table_pointers<H: Host + ?Sized>(
 
 pub fn spawn_crystal_flash<H: Host + ?Sized>(game: &mut H) {
     word!(game.power_bomb_explosion_status = (0x888000i32) as u16);
-    static unk_88A2B0: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x40, 0x28, 0xa2bd as u16);
-    static unk_88A2B8: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x40, 0x29, 0xa32a as u16);
+    static unk_88A2B0: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x40, 0x28, 0xa2bd_u16);
+    static unk_88A2B8: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x40, 0x29, 0xa32a_u16);
     game.spawn_hdma(0x88, &unk_88A2B0);
     game.spawn_hdma(0x88, &unk_88A2B8);
 }
 #[forbid(unsafe_code)]
 pub fn begin_crystal_flash<H: Host + ?Sized>(game: &mut H) {
     begin_pre_flash(game);
-    game.queue_sound(0, (1) as u8, 6);
+    game.queue_sound(0, 1_u8, 6);
 }
 pub fn finish_crystal_flash<H: Host + ?Sized>(object: &mut HdmaObject, k: u16, game: &mut H) {
     word! { game, 0; power_bomb_flag, power_bomb_explosion_status }

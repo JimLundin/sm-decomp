@@ -77,7 +77,7 @@ fn place(c: &mut impl Host, slot: usize, service: Service) {
     } else {
         let displacement = if service == Service::Map { -4 } else { -2 };
         install(
-            (mechanism!(c, slot, block)).wrapping_add((2) as u16),
+            (mechanism!(c, slot, block)).wrapping_add(2_u16),
             StationBlock::Access(service, Side::Right),
             c,
         );

@@ -154,7 +154,7 @@ pub fn spawn(c: &mut impl Host, source: SpawnSource, displacement: &mut Contact<
 }
 pub fn close_door(c: &mut (impl Host + crate::room_entry::content::EntryContent)) {
     use crate::room_entry::content::Axis;
-    let exit = c.session().room.entry.exit.clone();
+    let exit = c.session().room.entry.exit;
     let door = c.capture_closing_door(&exit);
     let row = u16::from(door.closing_position(Axis::Y)) * u16::from(c.session().room.width as u8);
     let block = row
@@ -163,20 +163,19 @@ pub fn close_door(c: &mut (impl Host + crate::room_entry::content::EntryContent)
     if let Some(slot) = (0..40)
         .rev()
         .find(|&slot| c.session().mechanisms.slots[slot].block == block)
+        && c.session().mechanisms.slots[slot].header != 0
     {
-        if c.session().mechanisms.slots[slot].header != 0 {
-            let argument = c.session().mechanisms.slots[slot].room_argument;
-            if argument & 0x8000 != 0 || !flags::door_opened(c, argument) {
-                c.session_mut().mechanisms.slots[slot].instruction_delay = 1;
-                let header = c.session().mechanisms.slots[slot].header;
-                if header != 0 {
-                    let record = c.loaded_record(ContentAddress {
-                        bank: 0x84,
-                        offset: header,
-                    });
-                    c.session_mut().mechanisms.slots[slot].program = record.word(4);
-                    return;
-                }
+        let argument = c.session().mechanisms.slots[slot].room_argument;
+        if argument & 0x8000 != 0 || !flags::door_opened(c, argument) {
+            c.session_mut().mechanisms.slots[slot].instruction_delay = 1;
+            let header = c.session().mechanisms.slots[slot].header;
+            if header != 0 {
+                let record = c.loaded_record(ContentAddress {
+                    bank: 0x84,
+                    offset: header,
+                });
+                c.session_mut().mechanisms.slots[slot].program = record.word(4);
+                return;
             }
         }
     }
@@ -184,7 +183,7 @@ pub fn close_door(c: &mut (impl Host + crate::room_entry::content::EntryContent)
     let header = c.capture_closing_header(direction);
     if header.word() != 0 {
         c.session_mut().spawn_scratch.header = u16::from_le_bytes(header.word().to_ne_bytes());
-        let exit = c.session().room.entry.exit.clone();
+        let exit = c.session().room.entry.exit;
         let door = c.capture_closing_door(&exit);
         c.session_mut().spawn_scratch.coordinates =
             u16::from_le_bytes(door.closing_coordinates_native().to_ne_bytes());
@@ -206,7 +205,7 @@ pub fn coordinates(c: &mut impl Host, slot: usize) {
 pub fn coordinates_from_block(session: &mut crate::session::Session, byte_block: u16) {
     let block = byte_block >> 1;
     let width = u16::from(session.room.width as u8);
-    session.mechanisms.block_y = if width == 0 { 0xffff } else { block / width };
+    session.mechanisms.block_y = block.checked_div(width).unwrap_or(0xffff);
     let width = u16::from(session.room.width as u8);
     session.mechanisms.block_x = if width == 0 { block } else { block % width };
 }

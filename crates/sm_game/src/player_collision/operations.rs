@@ -111,38 +111,38 @@ pub enum ControlResult {
 }
 
 /// 1. Complete speed -> actor -> terrain -> commit/launch -> slope operation.
-/// Read mutable player fields through the single Session owner. Capture the
-/// caller's base/direction before borrowing its Runtime. Release every ActorRead
-/// and Player borrow before an effect; reacquire at the source's observation point.
-/// Preserve boost cancellation before subsequent speed clears and flag encodings.
+///    Read mutable player fields through the single Session owner. Capture the
+///    caller's base/direction before borrowing its Runtime. Release every ActorRead
+///    and Player borrow before an effect; reacquire at the source's observation point.
+///    Preserve boost cancellation before subsequent speed clears and flag encodings.
 pub use super::motion::horizontal;
 
 /// 2. Apply one already-selected controller transition. Skip, zero-base motion
-/// and acceleration-clear-plus-zero-base motion are observably different.
+///    and acceleration-clear-plus-zero-base motion are observably different.
 pub use super::control::horizontal_control;
 
 /// 3. Execute the requested vertical/terrain/unchecked policy. Preserve fraction
-/// store order, original argument polarity, parity-dependent scan direction,
-/// and permitted displacement across a synchronous mechanism call.
+///    store order, original argument polarity, parity-dependent scan direction,
+///    and permitted displacement across a synchronous mechanism call.
 pub use super::motion::displace;
 
 /// 4. Actual wall/grapple admission, including the not-ready animation writes,
-/// first solid-actor identity and input-to-pose/shake publication. Read refreshed
-/// jump binding and pressed keys AFTER effects; reread pose before animation hold.
+///    first solid-actor identity and input-to-pose/shake publication. Read refreshed
+///    jump binding and pressed keys AFTER effects; reread pose before animation hold.
 pub use super::jump::jump_admission;
 
 /// 5. Resolve pending walking pose against actor/terrain obstruction and publish
-/// the next pose/solid-contact marker. Pending/current pose remain live Session data.
+///    the next pose/solid-contact marker. Pending/current pose remain live Session data.
 pub use super::pose::walked_obstacle;
 
 /// 6. Fit the current pose using the true previous pose, both actor/terrain sides,
-/// temporary radius and the second probe. Publish rejection/adjustment before the
-/// retained caller refreshes pose and executes jump-transition logic.
+///    temporary radius and the second probe. Publish rejection/adjustment before the
+///    retained caller refreshes pose and executes jump-transition logic.
 pub use super::pose::fit_pose;
 
 /// 7. One complete shinespark axis, including acceleration, the shared sequence
-/// words, speed clamps and previous-position correction. Diagonal callers invoke
-/// X then Y; each call publishes its state before the next one begins.
+///    words, speed clamps and previous-position correction. Diagonal callers invoke
+///    X then Y; each call publishes its state before the next one begins.
 pub use super::motion::shinespark;
 
 /// Resolve terrain penetration after a grapple release.

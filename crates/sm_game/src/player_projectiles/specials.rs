@@ -385,7 +385,7 @@ pub fn advance_spazer(h: &mut impl Host, selected: u16, y: u16) {
         let radius = shot!(h, selected, x_speed).wrapping_add(5);
         shot!(h, selected, x_speed = radius; SliceLe);
         if radius.wrapping_sub(96) & 0x8000 == 0 {
-            return finish_spazer(h, selected);
+            finish_spazer(h, selected)
         }
     }
 }

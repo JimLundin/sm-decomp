@@ -195,20 +195,20 @@ pub fn solid_contact<H: Host>(h: &mut H, amount: i32) -> MotionResult {
                 None
             }
         };
-        if let Some((distance, exact)) = contact {
-            if exact || distance >= 0 {
-                if exact {
-                    h.session_mut().player.y_fraction = 0;
-                }
-                let index = h.session().room.collision_detection_index;
-                let direction = h.session().player.contact.collision_direction;
-                // The actual Game setter masks direction before its slice write.
-                h.session_mut().actors.schedule.colliding[usize::from(direction & 3)] = index;
-                return MotionResult {
-                    displacement: if exact { 0 } else { i32::from(distance) << 16 },
-                    obstruction: Obstruction::SolidActor(ActorKey::from_legacy(index)),
-                };
+        if let Some((distance, exact)) = contact
+            && (exact || distance >= 0)
+        {
+            if exact {
+                h.session_mut().player.y_fraction = 0;
             }
+            let index = h.session().room.collision_detection_index;
+            let direction = h.session().player.contact.collision_direction;
+            // The actual Game setter masks direction before its slice write.
+            h.session_mut().actors.schedule.colliding[usize::from(direction & 3)] = index;
+            return MotionResult {
+                displacement: if exact { 0 } else { i32::from(distance) << 16 },
+                obstruction: Obstruction::SolidActor(ActorKey::from_legacy(index)),
+            };
         }
         list_index += 1;
     }

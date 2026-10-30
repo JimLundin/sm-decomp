@@ -295,7 +295,7 @@ pub fn initialize(game: &mut impl Ai) {
     let at = offset as usize;
     let curl = u16::from_ne_bytes([
         CURL_ANGLE_DELTAS[at / 2].to_ne_bytes()[at % 2],
-        CURL_ANGLE_DELTAS[(at + 1) / 2].to_ne_bytes()[(at + 1) % 2],
+        CURL_ANGLE_DELTAS[at.div_ceil(2)].to_ne_bytes()[(at + 1) % 2],
     ]);
     slot!(
         game,

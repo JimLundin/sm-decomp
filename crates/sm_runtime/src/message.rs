@@ -94,10 +94,10 @@ struct ComposedMedia<'a> {
 }
 impl IndexedSource for ComposedMedia<'_> {
     fn word(&self, index: usize) -> Result<u16, r::RasterFault> {
-        if let Some(map) = self.map {
-            if (MAP_BASE..MAP_BASE + MAP_WORDS).contains(&index) {
-                return Ok(map[index - MAP_BASE]);
-            }
+        if let Some(map) = self.map
+            && (MAP_BASE..MAP_BASE + MAP_WORDS).contains(&index)
+        {
+            return Ok(map[index - MAP_BASE]);
         }
         self.base.word(index)
     }

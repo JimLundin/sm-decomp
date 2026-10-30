@@ -47,12 +47,12 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H, upload: fn(&mut H)) {
 
 fn navigate<H: Host + ?Sized>(last: u16, game: &mut H) {
     if word!(game.joypad1_newkeys) & kButton_Up as u16 != 0 {
-        game.queue_sound(0, (0x37) as u8, 6);
+        game.queue_sound(0, 0x37_u8, 6);
         if word!(game.menu_option_index -= 1, reread) & 0x8000 != 0 {
             word!(game.menu_option_index = last);
         }
     } else if word!(game.joypad1_newkeys) & kButton_Down as u16 != 0 {
-        game.queue_sound(0, (0x37) as u8, 6);
+        game.queue_sound(0, 0x37_u8, 6);
         if word!(game.menu_option_index += 1, reread) == last + 1 {
             word!(game.menu_option_index = 0);
         }
@@ -64,7 +64,7 @@ pub fn main_menu<H: Host + ?Sized>(game: &mut H) {
     if word!(game.joypad1_newkeys) & kButton_B as u16 != 0 {
         word!(game.game_options_screen_index = 11);
     } else if word!(game.joypad1_newkeys) & (kButton_A | kButton_Start) as u16 != 0 {
-        game.queue_sound(0, (0x38) as u8, 6);
+        game.queue_sound(0, 0x38_u8, 6);
         let ACTIONS: [fn(&mut H); 5] =
             [start, toggle_language, toggle_language, dissolve, dissolve];
         ACTIONS[usize::from(word!(game.menu_option_index))](game);
@@ -135,13 +135,13 @@ pub fn highlight_language<H: Host + ?Sized>(game: &mut H) {
 pub fn special<H: Host + ?Sized>(game: &mut H) {
     navigate(2, game);
     if word!(game.joypad1_newkeys) & kButton_B as u16 != 0 {
-        game.queue_sound(0, (0x38) as u8, 6);
+        game.queue_sound(0, 0x38_u8, 6);
         back(game);
     } else if word!(game.joypad1_newkeys)
         & (kButton_Start | kButton_Left | kButton_Right | kButton_A) as u16
         != 0
     {
-        game.queue_sound(0, (0x38) as u8, 6);
+        game.queue_sound(0, 0x38_u8, 6);
         let ACTIONS: [fn(&mut H); 3] = [toggle_special, toggle_special, back];
         ACTIONS[usize::from(word!(game.menu_option_index))](game);
     }
@@ -192,7 +192,7 @@ pub fn highlight_special<H: Host + ?Sized>(game: &mut H) {
 
 pub fn controller<H: Host + ?Sized>(game: &mut H) {
     if word!(game.joypad1_newkeys) & kButton_Up as u16 != 0 {
-        game.queue_sound(0, (0x37) as u8, 6);
+        game.queue_sound(0, 0x37_u8, 6);
         let selected = word!(game.menu_option_index -= 1, reread);
         if word!(game.menu_option_index) & 0x8000 != 0 {
             word! { game; menu_option_index = 8; game_options_screen_index = 9; }
@@ -202,7 +202,7 @@ pub fn controller<H: Host + ?Sized>(game: &mut H) {
         return;
     }
     if word!(game.joypad1_newkeys) & kButton_Down as u16 != 0 {
-        game.queue_sound(0, (0x37) as u8, 6);
+        game.queue_sound(0, 0x37_u8, 6);
         let selected = word!(game.menu_option_index).wrapping_add(1);
         word!(game.menu_option_index = selected);
         if selected == 7 {
@@ -213,7 +213,7 @@ pub fn controller<H: Host + ?Sized>(game: &mut H) {
             word! { game; menu_option_index = 0; game_options_screen_index = 10; }
         }
     } else if word!(game.joypad1_newkeys) != 0 {
-        game.queue_sound(0, (0x38) as u8, 6);
+        game.queue_sound(0, 0x38_u8, 6);
         let remap: fn(&mut H) = |game| super::controller_input::remap_binding(game);
         let ACTIONS: [fn(&mut H); 9] = [
             remap,

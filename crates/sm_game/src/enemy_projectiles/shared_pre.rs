@@ -163,43 +163,25 @@ pub fn Eproj_CheckForBombCollisionWithRect(rect: CollisionRect, ctx: &mut impl H
     for v1 in (10i32..20).step_by(2) {
         let v2: i32 = v1 >> 1;
         if (shot_word(ctx, super::host::ShotMember::Kind, (v2 as u16) as isize) & 0xf00) == 1280
-            && shot_word(
-                ctx,
-                super::host::ShotMember::Variable,
-                ((v2) as isize) as isize,
-            ) == 0
+            && shot_word(ctx, super::host::ShotMember::Variable, (v2) as isize) == 0
         {
-            let x: u16 = (((shot_word(ctx, super::host::ShotMember::X, ((v2) as isize) as isize)
-                as i32
+            let x: u16 = (((shot_word(ctx, super::host::ShotMember::X, (v2) as isize) as i32
                 - rect.x as i32) as u16) as i16)
                 .unsigned_abs();
-            if x < shot_word(
-                ctx,
-                super::host::ShotMember::XRadius,
-                ((v2) as isize) as isize,
-            ) || ((x as i32
-                - shot_word(
-                    ctx,
-                    super::host::ShotMember::XRadius,
-                    ((v2) as isize) as isize,
-                ) as i32) as u16)
-                < rect.w
+            if x < shot_word(ctx, super::host::ShotMember::XRadius, (v2) as isize)
+                || ((x as i32
+                    - shot_word(ctx, super::host::ShotMember::XRadius, (v2) as isize) as i32)
+                    as u16)
+                    < rect.w
             {
-                let y: u16 =
-                    (((shot_word(ctx, super::host::ShotMember::Y, ((v2) as isize) as isize) as i32
-                        - rect.y as i32) as u16) as i16)
-                        .unsigned_abs();
-                if y < shot_word(
-                    ctx,
-                    super::host::ShotMember::YRadius,
-                    ((v2) as isize) as isize,
-                ) || ((y as i32
-                    - shot_word(
-                        ctx,
-                        super::host::ShotMember::YRadius,
-                        ((v2) as isize) as isize,
-                    ) as i32) as u16)
-                    < rect.h
+                let y: u16 = (((shot_word(ctx, super::host::ShotMember::Y, (v2) as isize) as i32
+                    - rect.y as i32) as u16) as i16)
+                    .unsigned_abs();
+                if y < shot_word(ctx, super::host::ShotMember::YRadius, (v2) as isize)
+                    || ((y as i32
+                        - shot_word(ctx, super::host::ShotMember::YRadius, (v2) as isize) as i32)
+                        as u16)
+                        < rect.h
                 {
                     return 1;
                 }

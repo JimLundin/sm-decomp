@@ -92,14 +92,13 @@ pub trait Definitions {
     fn spawn(&mut self, header: u16);
 }
 pub fn mechanism(bombable: bool, solid: bool, content: &mut impl Definitions) -> Option<Mechanism> {
-    let header;
-    if bombable {
+    let header = if bombable {
         let table = content.resolve(0x94a012);
         let bts = content.bts();
         if bts & 128 != 0 {
             return None;
         }
-        header = table.word(usize::from(bts));
+        table.word(usize::from(bts))
     } else {
         let bts = content.bts();
         if bts & 128 != 0 {
@@ -116,8 +115,8 @@ pub fn mechanism(bombable: bool, solid: bool, content: &mut impl Definitions) ->
             });
         }
         let table = content.resolve(0x949ea6);
-        header = table.word(usize::from(bts));
-    }
+        table.word(usize::from(bts))
+    };
     Some(Mechanism {
         header,
         end_scan: !bombable && header == 0xb974,
@@ -264,7 +263,7 @@ pub fn surface(axis: Axis, scan: &mut impl Progress, input: &impl SlopeInputs) -
     let dividend = input.block();
     let width = u16::from(input.width() as u8);
     let cell = if axis == Axis::X {
-        if width == 0 { 0xffff } else { dividend / width }
+        dividend.checked_div(width).unwrap_or(0xffff)
     } else if width == 0 {
         dividend
     } else {

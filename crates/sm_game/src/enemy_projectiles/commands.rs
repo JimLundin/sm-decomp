@@ -325,7 +325,7 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
             script.advance(1)
         }
         addresses::instructions::QUEUE_SOUND_FIRST..=addresses::instructions::QUEUE_SOUND_LAST
-            if (ea - addresses::instructions::QUEUE_SOUND_FIRST) % 9 == 0 =>
+            if (ea - addresses::instructions::QUEUE_SOUND_FIRST).is_multiple_of(9) =>
         {
             let command = (ea - addresses::instructions::QUEUE_SOUND_FIRST) / 9;
             h.queue_sound(

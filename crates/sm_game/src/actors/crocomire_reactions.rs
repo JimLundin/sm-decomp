@@ -164,7 +164,7 @@ pub fn melt_down<H: Host + ?Sized>(game: &mut H) {
         let carry = slot!(byte game, Crocomire[key].y_velocity[0])
             .overflowing_add(high)
             .1;
-        slot!(byte game, Crocomire[key].y_velocity[0] = match slot!(byte game, Crocomire[key].y_velocity[0]) { old => old.wrapping_add(high) });
+        slot!(byte game, Crocomire[key].y_velocity[0] = slot!(byte game, Crocomire[key].y_velocity[0]).wrapping_add(high));
         let high = cap_byte(
             (carry as u8).wrapping_add(slot!(byte game, Crocomire[key].y_velocity[1])),
             3,
@@ -174,15 +174,15 @@ pub fn melt_down<H: Host + ?Sized>(game: &mut H) {
         let carry = slot!(byte game, Crocomire[key].projectile_counter[1])
             .overflowing_add(velocity)
             .1;
-        slot!(byte game, Crocomire[key].projectile_counter[1] = match slot!(byte game, Crocomire[key].projectile_counter[1]) { old => old.wrapping_add(velocity) });
+        slot!(byte game, Crocomire[key].projectile_counter[1] = slot!(byte game, Crocomire[key].projectile_counter[1]).wrapping_add(velocity));
         let (step, carry) =
             (carry as u8).overflowing_add(slot!(byte game, Crocomire[key].y_velocity[1]));
         let carry = carry
             | slot!(byte game, Crocomire[key].base.y_pos[0])
                 .overflowing_add(step)
                 .1;
-        slot!(byte game, Crocomire[key].base.y_pos[0] = match slot!(byte game, Crocomire[key].base.y_pos[0]) { old => old.wrapping_add(step) });
-        slot!(byte game, Crocomire[key].base.y_pos[1] = match slot!(byte game, Crocomire[key].base.y_pos[1]) { old => old.wrapping_add(carry as u8) });
+        slot!(byte game, Crocomire[key].base.y_pos[0] = slot!(byte game, Crocomire[key].base.y_pos[0]).wrapping_add(step));
+        slot!(byte game, Crocomire[key].base.y_pos[1] = slot!(byte game, Crocomire[key].base.y_pos[1]).wrapping_add(carry as u8));
     } else {
         slot!(game, Crocomire[key].death_sequence_index, |old| old
             .wrapping_add(1));
@@ -222,7 +222,7 @@ pub fn melt_up<H: Host + ?Sized>(game: &mut H) {
         let y = slot!(game, Crocomire[0].base.y_pos) as u8;
         let step = (borrow as u8).wrapping_add(slot!(byte game, Crocomire[0].y_velocity[1]));
         slot!(byte game, Crocomire[0].base.y_pos[0] = y.wrapping_sub(step));
-        slot!(byte game, Crocomire[0].base.y_pos[1] = match slot!(byte game, Crocomire[0].base.y_pos[1]) { old => old.wrapping_sub((y < step) as u8) });
+        slot!(byte game, Crocomire[0].base.y_pos[1] = slot!(byte game, Crocomire[0].base.y_pos[1]).wrapping_sub((y < step) as u8));
     }
 }
 pub fn update_background<H: Host + ?Sized>(k: u16, game: &mut H) {
@@ -1559,7 +1559,7 @@ pub fn instruction<H: Host + ?Sized>(
         MOVE_RIGHT_4PX | MOVE_RIGHT_4PX_AND_SPAWN_DUST => {
             walk(k, 4, game);
         }
-        SPAWN_DUST_FIRST..=SPAWN_DUST_LAST if (ea - SPAWN_DUST_FIRST) % 5 == 0 => {
+        SPAWN_DUST_FIRST..=SPAWN_DUST_LAST if (ea - SPAWN_DUST_FIRST).is_multiple_of(5) => {
             return spawn_dust(
                 jp,
                 DUST_OFFSETS[((ea - SPAWN_DUST_FIRST) / 5) as usize],

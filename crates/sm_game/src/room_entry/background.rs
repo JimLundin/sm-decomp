@@ -78,7 +78,7 @@ pub fn load(h: &mut impl EntryHost, mode: LoadMode) {
             }
         }
     }
-    let state = h.session().room.entry.state.clone();
+    let state = h.session().room.entry.state;
     let mut next = h.selected_background(&state, mode.clone());
     while let Some(cursor) = next {
         if cursor.is_end() {

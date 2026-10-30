@@ -25,6 +25,8 @@ jobs:
         run: rustup show
       - name: Format
         run: cargo fmt --check
+      - name: Lint target packages
+        run: cargo clippy --locked -p sm_data -p sm_game -p sm_runtime --all-targets --no-deps
       - name: Progress
         run: |
           sh tools/progress.sh

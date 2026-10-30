@@ -304,7 +304,7 @@ fn execute<I: Interpreter>(opcode: u32, index: usize, script: Script, it: &mut I
         8971453 => it.foreign(|game| game.hdma_effect(HdmaEffect::InitializePhantoonWave, slot)),
         0x88e917 => it.foreign(|game| game.hdma_effect(HdmaEffect::InitializeEyeBeam, slot)),
         8973471 => it.foreign(|game| game.hdma_effect(HdmaEffect::ResetWave, slot)),
-        8973215 => it.foreign(|game| crate::hdma_objects::restart_title_gradient(game)),
+        8973215 => it.foreign(crate::hdma_objects::restart_title_gradient),
         _ => {
             it.foreign(|game| game.rtl_unreachable());
             return Script::Stop;
@@ -320,9 +320,11 @@ mod tests {
 
     #[test]
     fn table_words_follow_the_ram_names() {
-        let mut objects = HdmaObjects::default();
-        objects.enabled = 1;
-        objects.selected = 2;
+        let mut objects = HdmaObjects {
+            enabled: 1,
+            selected: 2,
+            ..HdmaObjects::default()
+        };
         for (index, object) in objects.objects.iter_mut().enumerate() {
             let code = |field: u16| 0x100 * (index as u16 + 1) + field;
             *object = crate::hdma::HdmaObject {

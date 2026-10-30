@@ -192,10 +192,10 @@ struct SceneObjectPixels<'a> {
 }
 impl r::SpritePixels for SceneObjectPixels<'_> {
     fn pixel(&self, x: i32) -> Result<u16, r::RasterFault> {
-        if let Ok(index) = usize::try_from(x) {
-            if let Some(value) = self.line.pixels.get(index) {
-                return Ok(*value);
-            }
+        if let Ok(index) = usize::try_from(x)
+            && let Some(value) = self.line.pixels.get(index)
+        {
+            return Ok(*value);
         }
         self.aliases
             .iter()

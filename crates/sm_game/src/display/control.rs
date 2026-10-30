@@ -270,6 +270,12 @@ macro_rules! layer_register {
                 self.0.byte()
             }
         }
+
+const _: () = {
+    assert!(Layers::BG2.byte() == 2 && Layers::BG3.byte() == 4);
+    assert!(Layers::BG1_SPRITES.byte() == 17 && Layers::BG2_SPRITES.byte() == 18);
+    assert!(Layers::BG1_BG2_SPRITES.byte() == 19);
+};
     )+};
 }
 layer_register! {
@@ -306,9 +312,3 @@ mod tests {
         );
     }
 }
-
-const _: () = {
-    assert!(Layers::BG2.byte() == 2 && Layers::BG3.byte() == 4);
-    assert!(Layers::BG1_SPRITES.byte() == 17 && Layers::BG2_SPRITES.byte() == 18);
-    assert!(Layers::BG1_BG2_SPRITES.byte() == 19);
-};

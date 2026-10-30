@@ -602,10 +602,10 @@ impl ActorMediaCatalog {
                 .ok_or(Error::MissingResource(definition.palette))?
                 .binding()
                 .0;
-            if let Some(previous) = rows.insert(definition.cgram_row, resource) {
-                if previous != resource {
-                    return Err(Error::ConflictingPaletteRow(definition.cgram_row));
-                }
+            if let Some(previous) = rows.insert(definition.cgram_row, resource)
+                && previous != resource
+            {
+                return Err(Error::ConflictingPaletteRow(definition.cgram_row));
             }
         }
         for material in materials {

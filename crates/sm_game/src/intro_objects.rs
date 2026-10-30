@@ -62,7 +62,7 @@ pub fn advance_intro_baby_pursuit<H: crate::menus::host::Host + ?Sized>(object: 
         let timer = word!(game.cinematicspr_goto_timer[slot]).wrapping_add(1);
         word!(game.cinematicspr_goto_timer[slot] = timer);
         if timer & 0x3f == 0 {
-            game.queue_sound(2, (0x23) as u8, 6);
+            game.queue_sound(2, 0x23_u8, 6);
         }
     }
     if (word!(game.samus_x_pos) as i16).wrapping_sub(word!(game.cinematicbg_arr7[slot]) as i16) < 0

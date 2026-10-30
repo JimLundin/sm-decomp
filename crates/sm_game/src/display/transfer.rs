@@ -1,7 +1,7 @@
 //! Display uploads and readbacks queued in RAM, decoded one record at a time.
 //!
-//! Each queue holds packed records that the original drained into DMA channel
-//! 1. Records are decoded lazily: a readback's DMA can overwrite the records
+//! Each queue holds packed records that the original drained into DMA
+//! channel 1. Records are decoded lazily: a readback's DMA can overwrite the records
 //! after it, so the next record is read only after the previous transfer ran.
 //! Within one record no register write reaches RAM before the transfer, so a
 //! record's fields are read together before its first register write.
