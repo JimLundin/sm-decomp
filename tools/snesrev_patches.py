@@ -546,7 +546,7 @@ BUG_HOOKS = [
     (0xA496C8, 'b', 'state', 'removed', 'patched',
      'Erase melting Crocomire pixel column',
      "The caller passes A = Crocomire X+4 on alternate 2-frame windows; hardware puts that low byte into Y's high byte, so the column search and mask reads come from arbitrary memory, erasing wrong pixels and possibly ending the melt early; the hook forces A=0"),
-    (0x9085AA, 'b', 'state', 'removed', 'patched',
+    (0x9085AA, 'b', 'state', 'removed', 'follows',
      'Handle speed booster animation delay',
      'On the frame the speed boost counter reaches 4, A is whatever the sound-queue JSL left, so X indexes $91:B61F/$91:B5DE with garbage and the speed boost and animation frame timers get table garbage; the hook reloads A from $0B3E'),
     (0xA29044, 'b', 'state', 'removed', 'patched',

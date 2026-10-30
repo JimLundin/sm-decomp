@@ -36,7 +36,9 @@ pub trait Host: SessionAccess {
     // Native low-window diagnostic likewise precedes acquisition; the same
     // record value can retain either independently selected allocation.
     fn native_record(&mut self, bank: u8, cursor: u16) -> RomRecord;
-    fn sound(&mut self, bank: u8, limit: u8, sound: u16);
+    /// Queue `sound`. Returns the accumulator the queue routine leaves: the
+    /// sound in one byte and the count already queued in the other.
+    fn sound(&mut self, bank: u8, limit: u8, sound: u16) -> u16;
     fn player_step(&mut self, step: PlayerStep);
     fn palette(&mut self, effect: PaletteEffect) -> u8;
     fn enable_hdma(&mut self);

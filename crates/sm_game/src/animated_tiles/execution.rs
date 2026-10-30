@@ -228,9 +228,9 @@ pub fn command(host: &mut impl Host, address: u32, index: u16, cursor: u16) -> u
             let sound = u16::from(data.byte(0));
             match address {
                 8880368 => host.music_delayed8(sound),
-                8880380 => host.sound(1, 6, sound),
-                8880392 => host.sound(2, 6, sound),
-                _ => host.sound(3, 6, sound),
+                8880380 => _ = host.sound(1, 6, sound),
+                8880392 => _ = host.sound(2, 6, sound),
+                _ => _ = host.sound(3, 6, sound),
             }
             cursor.wrapping_add(1)
         }

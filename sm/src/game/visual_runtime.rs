@@ -107,8 +107,8 @@ impl visual_host::Effects for Runtime<'_> {
         .unwrap();
     }
 
-    fn sound(&mut self, channel: u8, limit: u8, sound: u16) {
-        player_projectiles::host::Host::sound(self, channel, limit, sound);
+    fn sound(&mut self, channel: u8, limit: u8, sound: u16) -> u16 {
+        player_projectiles::host::Host::sound(self, channel, limit, sound)
     }
     fn music_delayed8(&mut self, track: u16) {
         sm_game::lease::music_delayed8(self, track);
