@@ -215,6 +215,7 @@ impl MenuRuntime for Game {
         unsafe { visual_runtime::run_hdma_call(address, slot, self) }
     }
     fn hdma_effect(&mut self, effect: sm_game::hdma_objects::HdmaEffect, slot: u16) {
+        use sm_game::hdma_effects::HdmaEffects;
         use sm_game::hdma_objects::HdmaEffect::*;
         let mut runtime = Runtime::new(self);
         match effect {
