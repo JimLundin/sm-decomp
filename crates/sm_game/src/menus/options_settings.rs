@@ -6,7 +6,10 @@ use crate::ram::word;
 
 pub fn initialize<H: Host + ?Sized>(game: &mut H, upload: fn(&mut H)) {
     game.ram().write_byte(crate::ram::mirror::BG12NBA, 0);
-    game.ram().write_byte(crate::ram::mirror::TM, 19);
+    game.ram().write_byte(
+        crate::ram::mirror::TM,
+        crate::display::control::Layers::BG1_BG2_SPRITES.byte(),
+    );
     for mirror in [0x6b, 0x6c, 0x6d, 0x6e, 0x71, 0x6f] {
         game.ram().write_byte(mirror, 0);
     }

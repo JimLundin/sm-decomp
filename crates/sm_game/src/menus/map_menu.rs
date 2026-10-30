@@ -114,7 +114,10 @@ fn fade_palette<H: Host + ?Sized>(game: &mut H) {
         }
         word!(game.menu_index += 1);
         word!(game.g_word_7E0787 = 0);
-        game.ram().write_byte(crate::ram::mirror::TM, 2);
+        game.ram().write_byte(
+            crate::ram::mirror::TM,
+            crate::display::control::Layers::BG2.byte(),
+        );
     }
 }
 fn load_foreground<H: Host + ?Sized>(game: &mut H) {
@@ -148,7 +151,10 @@ fn load_background<H: Host + ?Sized>(j: u16, game: &mut H) {
 }
 fn begin_area_window<H: Host + ?Sized>(game: &mut H) {
     {
-        game.ram().write_byte(crate::ram::mirror::TS, 4);
+        game.ram().write_byte(
+            crate::ram::mirror::TS,
+            crate::display::control::Layers::BG3.byte(),
+        );
         crate::display::sequence::register_writes! { game;
             show_mirror(SubScreen(Layers::of(false, false, true, false, false)), 0x6d, false); show(SubWindowMask(Layers::of(false, false, true, false, false)));
             mirror(CGWSEL as u16, 2, 0x6f, true); mirror(CGADSUB as u16, 0x25, 0x72, true);
@@ -166,7 +172,10 @@ fn begin_area_window<H: Host + ?Sized>(game: &mut H) {
 }
 fn configure_area_window<H: Host + ?Sized>(game: &mut H) {
     {
-        game.ram().write_byte(crate::ram::mirror::TM, 19);
+        game.ram().write_byte(
+            crate::ram::mirror::TM,
+            crate::display::control::Layers::BG1_BG2_SPRITES.byte(),
+        );
         crate::display::sequence::register_writes! { game;
             show_mirror(MainScreen(Layers::of(true, true, false, false, true)), 0x6c, false); show(MainWindowMask(Layers::of(true, true, false, false, true)));
             mirror(W12SEL as u16, 0x23, 0x60, true); mirror(W34SEL as u16, 3, 0x61, true);
@@ -179,10 +188,19 @@ fn open_area_window<H: Host + ?Sized>(game: &mut H) {
     if super::menu_window::open_from_center(game) {
         game.ram()
             .write_byte(0x727, ((word!(game.menu_index)) as u8).wrapping_add(1));
-        game.ram()
-            .write_byte(crate::ram::mirror::TM, game.ram().read_byte(0x69) & !2);
-        game.ram().write_byte(crate::ram::mirror::TMW, 0);
-        game.ram().write_byte(crate::ram::mirror::TSW, 0);
+        game.ram().write_byte(
+            crate::ram::mirror::TM,
+            game.ram().read_byte(crate::ram::mirror::TM)
+                & !crate::display::control::Layers::BG2.byte(),
+        );
+        game.ram().write_byte(
+            crate::ram::mirror::TMW,
+            crate::display::control::Layers::NONE.byte(),
+        );
+        game.ram().write_byte(
+            crate::ram::mirror::TSW,
+            crate::display::control::Layers::NONE.byte(),
+        );
         word! {game; reg_BG2VOFS = 24; pausemenu_palette_animation_timer = 1; }
         let mut _v1: u16 = 0;
         crate::word_transfers!(game, ascending, 800; xray(0) <- rom(0xb6e000, 0));
@@ -386,8 +404,14 @@ fn begin_room_window<H: Host + ?Sized>(game: &mut H) {
     {
         draw_area_labels(game);
         super::menu_window::initialize(game);
-        game.ram().write_byte(crate::ram::mirror::TM, 19);
-        game.ram().write_byte(crate::ram::mirror::TMW, 19);
+        game.ram().write_byte(
+            crate::ram::mirror::TM,
+            crate::display::control::Layers::BG1_BG2_SPRITES.byte(),
+        );
+        game.ram().write_byte(
+            crate::ram::mirror::TMW,
+            crate::display::control::Layers::BG1_BG2_SPRITES.byte(),
+        );
         crate::display::sequence::register_writes! { game;
             mirror(W12SEL as u16, 0x32, 0x60, true); mirror(W34SEL as u16, 2, 0x61, true);
             mirror(CGADSUB as u16, 5, 0x72, true); mirror(WOBJSEL as u16, 0x22, 0x62, true);
@@ -418,10 +442,22 @@ fn open_room_window<H: Host + ?Sized>(game: &mut H) {
     super::menu_window::advance(super::menu_window::Motion::Expand, game);
     if (word!(game.expand_sq_timer -= 1, reread) & 0x8000) != 0 {
         word!(game.menu_index += 1);
-        game.ram().write_byte(crate::ram::mirror::TM, 2);
-        game.ram().write_byte(crate::ram::mirror::TMW, 0);
-        game.ram().write_byte(crate::ram::mirror::TSW, 0);
-        game.ram().write_byte(crate::ram::mirror::TS, 0);
+        game.ram().write_byte(
+            crate::ram::mirror::TM,
+            crate::display::control::Layers::BG2.byte(),
+        );
+        game.ram().write_byte(
+            crate::ram::mirror::TMW,
+            crate::display::control::Layers::NONE.byte(),
+        );
+        game.ram().write_byte(
+            crate::ram::mirror::TSW,
+            crate::display::control::Layers::NONE.byte(),
+        );
+        game.ram().write_byte(
+            crate::ram::mirror::TS,
+            crate::display::control::Layers::NONE.byte(),
+        );
     }
     draw_area_labels(game);
 }
@@ -584,7 +620,10 @@ fn start_game<H: Host + ?Sized>(game: &mut H) {
     }
 }
 fn clear_room<H: Host + ?Sized>(game: &mut H) {
-    game.ram().write_byte(crate::ram::mirror::TM, 18);
+    game.ram().write_byte(
+        crate::ram::mirror::TM,
+        crate::display::control::Layers::BG2_SPRITES.byte(),
+    );
     crate::word_transfers!(game, descending, 1024; native(0x37fe) <- value(15));
     menu_tilemap::upload(2048, 0x7e3000, 0, true, game);
     word!(game.menu_index += 1);
@@ -635,9 +674,18 @@ fn close_room_window<H: Host + ?Sized>(game: &mut H) {
     draw_area_labels(game);
     if (word!(game.expand_sq_timer -= 1, reread) & 0x8000) != 0 {
         word!(game.menu_index -= 15);
-        game.ram().write_byte(crate::ram::mirror::TM, 17);
-        game.ram().write_byte(crate::ram::mirror::TMW, 0);
-        game.ram().write_byte(crate::ram::mirror::TSW, 0);
+        game.ram().write_byte(
+            crate::ram::mirror::TM,
+            crate::display::control::Layers::BG1_SPRITES.byte(),
+        );
+        game.ram().write_byte(
+            crate::ram::mirror::TMW,
+            crate::display::control::Layers::NONE.byte(),
+        );
+        game.ram().write_byte(
+            crate::ram::mirror::TSW,
+            crate::display::control::Layers::NONE.byte(),
+        );
     }
 }
 
@@ -1167,7 +1215,10 @@ pub fn render_map<H: Host + ?Sized>(screen: MapScreen, game: &mut H) {
 
 fn draw_room_map<H: Host + ?Sized>(game: &mut H) {
     game.ram().write_byte(crate::ram::mirror::BG12NBA, 51);
-    game.ram().write_byte(crate::ram::mirror::TM, 19);
+    game.ram().write_byte(
+        crate::ram::mirror::TM,
+        crate::display::control::Layers::BG1_BG2_SPRITES.byte(),
+    );
     word!(game.reg_BG1VOFS = -40i16 as u16);
     render_map(MapScreen::FileSelect, game);
     menu_tilemap::upload(4096, 0x7e3000, 0, false, game);

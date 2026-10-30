@@ -83,6 +83,11 @@ pub struct Layers {
 
 impl Layers {
     pub const NONE: Self = Self::of(false, false, false, false, false);
+    pub const BG2: Self = Self::of(false, true, false, false, false);
+    pub const BG3: Self = Self::of(false, false, true, false, false);
+    pub const BG1_SPRITES: Self = Self::of(true, false, false, false, true);
+    pub const BG2_SPRITES: Self = Self::of(false, true, false, false, true);
+    pub const BG1_BG2_SPRITES: Self = Self::of(true, true, false, false, true);
 
     pub const fn of(bg1: bool, bg2: bool, bg3: bool, bg4: bool, sprites: bool) -> Self {
         Self {
@@ -301,3 +306,9 @@ mod tests {
         );
     }
 }
+
+const _: () = {
+    assert!(Layers::BG2.byte() == 2 && Layers::BG3.byte() == 4);
+    assert!(Layers::BG1_SPRITES.byte() == 17 && Layers::BG2_SPRITES.byte() == 18);
+    assert!(Layers::BG1_BG2_SPRITES.byte() == 19);
+};
