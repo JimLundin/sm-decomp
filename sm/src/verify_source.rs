@@ -2820,6 +2820,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/actors/draygon_flight.rs"),
     ),
     (
+        "crates/sm_game/src/actors/draygon_grab.rs",
+        include_bytes!("../../crates/sm_game/src/actors/draygon_grab.rs"),
+    ),
+    (
         "crates/sm_game/src/actors/draygon_host.rs",
         include_bytes!("../../crates/sm_game/src/actors/draygon_host.rs"),
     ),

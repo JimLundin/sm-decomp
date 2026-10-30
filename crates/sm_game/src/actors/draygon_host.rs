@@ -18,6 +18,27 @@ pub trait Host: ActorHost + ActorRuntime + SoundEffects + LoadedRom {
     fn disable_minimap_for_boss(&mut self);
     /// The high word of `amplitude` times the cosine of `phase`.
     fn actor_cosine(&mut self, phase: u16, amplitude: u16) -> u16;
+    /// The high word of `amplitude` times the sine of `phase`.
+    fn actor_sine(&mut self, phase: u16, amplitude: u16) -> u16;
+    /// The (x, y) step of `amplitude` along direction `phase`.
+    fn actor_direction_vector(&mut self, phase: u16, amplitude: u16) -> crate::geometry::Vector32;
+    /// Move the current actor by `vector` along `phase`.
+    fn apply_vector(&mut self, phase: u16, vector: crate::geometry::Vector32);
+    /// The enemy scratch word the vector movement reads.
+    fn set_enemy_scratch(&mut self, value: u16);
+    /// The actor content record at `bank:address`, as the original actor read.
+    fn actor_legacy_record(&mut self, bank: u8, address: u16) -> sm_data::cartridge::RomRecord;
+    /// The native record at `bank:address`, with the original diagnostic.
+    fn legacy_native_record(&mut self, bank: u8, address: u16) -> sm_data::cartridge::RomRecord;
+    /// Run Samus command `command`; its result.
+    fn command_player(&mut self, command: u16) -> u16;
+    fn correct_previous_position(&mut self);
+    /// Draygon grabs Samus, facing `direction`.
+    fn grab_samus(&mut self, direction: u16);
+    fn release_samus(&mut self);
+    /// Contact damage `amount` after Samus's suit.
+    fn suit_damage(&mut self, amount: u16) -> u16;
+    fn damage_player(&mut self, amount: u16);
     /// The original unknown-address failure.
     fn unreachable(&mut self);
 }
