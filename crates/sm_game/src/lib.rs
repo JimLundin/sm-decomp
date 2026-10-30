@@ -97,10 +97,10 @@ pub mod actors {
     pub mod kraid_lint;
     pub mod kraid_sinking;
     pub mod layouts;
+    pub mod magdollite;
     pub mod media;
     pub mod mother_brain_effects;
     pub mod movement;
-    pub mod norfair_lava_man;
     pub mod overlap;
     pub mod phantoon_actions;
     pub mod phantoon_motion;

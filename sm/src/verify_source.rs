@@ -602,8 +602,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/actors/elevator.rs"),
     ),
     (
-        "sm/src/game/actors/norfair_lava_man.rs",
-        include_bytes!("game/actors/norfair_lava_man.rs"),
+        "sm/src/game/actors/magdollite.rs",
+        include_bytes!("game/actors/magdollite.rs"),
     ),
     (
         "sm/src/game/actors/yellow_pipe_bug.rs",
@@ -2933,8 +2933,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/actors/mother_brain_effects.rs"),
     ),
     (
-        "crates/sm_game/src/actors/norfair_lava_man.rs",
-        include_bytes!("../../crates/sm_game/src/actors/norfair_lava_man.rs"),
+        "crates/sm_game/src/actors/magdollite.rs",
+        include_bytes!("../../crates/sm_game/src/actors/magdollite.rs"),
     ),
     (
         "crates/sm_game/src/actors/phantoon_actions.rs",

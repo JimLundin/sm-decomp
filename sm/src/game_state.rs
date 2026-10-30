@@ -233,8 +233,8 @@ pub struct Game {
     pub(crate) pause_menu: crate::game::map_menu::ImportedTables,
     /// Imported from `loaded_rom` by `register_rom`; see game::actors::crocomire_reactions.
     pub(crate) crocomire: crate::game::actors::crocomire_reactions::ImportedTables,
-    /// Imported from `loaded_rom` by `register_rom`; see game::actors::norfair_lava_man.
-    pub(crate) magdollite: crate::game::actors::norfair_lava_man::ImportedTables,
+    /// Imported from `loaded_rom` by `register_rom`; see game::actors::magdollite.
+    pub(crate) magdollite: crate::game::actors::magdollite::ImportedTables,
     /// Imported from `loaded_rom` by `register_rom`; see game::equipment_menu.
     pub(crate) equipment_screen: crate::game::equipment_menu::ImportedTables,
     /// Imported from `loaded_rom` by `register_rom`; see game::mother_brain_visuals.
@@ -1236,7 +1236,7 @@ impl Game {
         self.visual_tables = crate::game::visual_runtime::import(image);
         self.pause_menu = crate::game::map_menu::import(image);
         self.crocomire = crate::game::actors::crocomire_reactions::import(image);
-        self.magdollite = crate::game::actors::norfair_lava_man::import(image);
+        self.magdollite = crate::game::actors::magdollite::import(image);
         self.equipment_screen = crate::game::equipment_menu::import(image);
         self.mother_brain_visuals = crate::game::mother_brain_visuals::import(image);
         self.beam_gradients = crate::game::beam_windows::import(image);
