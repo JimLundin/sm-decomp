@@ -165,7 +165,7 @@ fn begin_area_window<H: Host + ?Sized>(game: &mut H) {
         super::menu_window::initialize(game);
         crate::display::sequence::write_register_and_mirror(game, HDMAEN as u16, 0xc, 0x85, true);
         configure_area_window(game);
-        word!(game.hdma_objects_enable_flag = 0);
+        game.clear_hdma_flags();
         game.ram().write_byte(
             crate::ram::words::menu_index,
             ((word!(game.menu_index)) as u8).wrapping_add(1),

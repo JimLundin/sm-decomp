@@ -22,6 +22,8 @@ pub trait MenuRuntime:
     crate::player_position::PlayerPosition + crate::player_position::PlayerFacts
 {
     fn set_hdma_enabled(&mut self, enabled: bool);
+    /// Clear the whole HDMA objects flag word, stopping the objects.
+    fn clear_hdma_flags(&mut self);
     fn clear_hdma(&mut self);
     /// Queue a tilemap transfer whose source and destination are read from
     /// the host after the size word is written.

@@ -53,6 +53,9 @@ impl MenuRuntime for Game {
     fn clear_hdma(&mut self) {
         visual_runtime::clear_hdma(self)
     }
+    fn clear_hdma_flags(&mut self) {
+        sm_game::hdma_objects::clear_hdma_flags(self)
+    }
     fn queue_native_transfer(
         &mut self,
         cursor: u16,

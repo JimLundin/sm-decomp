@@ -168,6 +168,14 @@ where
     });
 }
 
+/// Clear the whole flag word, as the map screen does on entry.
+pub fn clear_hdma_flags<H>(game: &mut H)
+where
+    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
+{
+    with_table(game, |table| table.enabled = 0);
+}
+
 /// Free every object and clear the HDMA channel enable mirror.
 pub fn clear_hdma_channels<H>(game: &mut H)
 where
