@@ -7,7 +7,6 @@ pub(crate) use sm_game::room_entry::api;
     reason = "Detached room carrier omits the SpawnObject runtime facade consumer."
 )]
 pub(crate) use sm_game::room_entry::content;
-pub(crate) use sm_game::room_entry::effects;
 #[allow(
     unused_imports,
     reason = "Detached room carrier retains world schema reexports but omits runtime facade consumers."

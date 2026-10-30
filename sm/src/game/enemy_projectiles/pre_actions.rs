@@ -5,13 +5,13 @@ use super::host::{EnemyMember as SlotField, Host, LoadedRecord};
 use super::pre_helpers::*;
 use super::shared::SpawnEprojWithRoomGfx;
 use super::*;
-use crate::game::{
-    sprite_effect_state::{LegacySpriteDefinition, SpriteSpawn},
-    sprite_objects,
-};
 use sm_game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
 use sm_game::geometry::Point;
 use sm_game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
+use sm_game::{
+    sprite_effect_state::{LegacySpriteDefinition, SpriteSpawn},
+    sprite_objects,
+};
 
 pub(super) fn dispatch(ea: u32, k: u16, ctx: &mut impl Host) {
     match ea {

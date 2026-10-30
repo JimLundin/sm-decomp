@@ -1,15 +1,9 @@
 //! Carrier-only authored provider over the existing detached Composed owner.
 //! No replacement gameplay is implemented or executed by this file.
 #![forbid(unsafe_code)]
-use crate::game::{
-    player_transitions::{
-        content::{
+use sm_game::{player_transitions::{content::{
             AnimationProgram, AnimationTable, Content, LandingRegion, LandingRule, TransitionTable,
-        },
-        effects::{BounceFault, Effects, GrappleTransition, Host},
-    },
-    visual_host::Source,
-};
+        }, effects::{BounceFault, Effects, GrappleTransition, Host}}, visual_host::Source};
 use crate::{
     Composed,
     rom::{RomImage, RomRecord},

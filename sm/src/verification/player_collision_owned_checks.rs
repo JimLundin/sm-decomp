@@ -1,17 +1,17 @@
 //! Candidate-owned invariants. Register under crate::game for real owner access.
 //! No Game, RAM facade or copied collision algorithm is used by generic checks.
 #![forbid(unsafe_code)]
-use crate::game::{
-    actors::access::ActorKey,
-    launch_motion::MovementDirection,
-    player_collision::{
-        effects::Host,
-        operations::{self, Direction, DisplacementRequest, Obstruction},
-    },
-    visual_host,
-    visual_state::PaletteCarry,
-};
 use std::cell::RefCell;
+use {
+    crate::game::{
+        launch_motion::MovementDirection,
+        player_collision::operations::{self, Direction, DisplacementRequest, Obstruction},
+    },
+    sm_game::{
+        actors::access::ActorKey, player_collision::effects::Host, visual_host,
+        visual_state::PaletteCarry,
+    },
+};
 
 std::thread_local! {
     static LAUNCHES: RefCell<Option<Vec<(u8, i32)>>> = const { RefCell::new(None) };

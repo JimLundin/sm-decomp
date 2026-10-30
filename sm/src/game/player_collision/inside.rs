@@ -4,9 +4,12 @@ use super::{
     geometry::{behavior as room_bts, level as room_level, redirect},
     operations::Axis,
 };
-use crate::game::{
-    player_projectiles::{content, host::Host as Projectiles},
-    room_mechanisms::{self, Direction, host::Host as Mechanisms},
+use {
+    crate::game::room_mechanisms::{self, Direction},
+    sm_game::{
+        player_projectiles::{content, host::Host as Projectiles},
+        room_mechanisms::host::Host as Mechanisms,
+    },
 };
 
 fn normal_speed(h: &mut impl Host) {

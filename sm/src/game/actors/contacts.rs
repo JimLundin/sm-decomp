@@ -10,11 +10,15 @@ use super::{
     },
     effects::ActorHost,
 };
-use crate::game::{
-    constants::bank_a0::{addr_kExtendedSpritemap_Nothing_A0, addr_kSpritemap_Nothing_A0},
-    contact_rules::{Bounds, HitboxEdge, axis, is_shot},
-    enemy_projectiles::host::Host as EprojHost,
-    room_mechanisms::host::Effects as MechanismEffects,
+use {
+    crate::game::constants::bank_a0::{
+        addr_kExtendedSpritemap_Nothing_A0, addr_kSpritemap_Nothing_A0,
+    },
+    sm_game::{
+        contact_rules::{Bounds, HitboxEdge, axis, is_shot},
+        enemy_projectiles::host::Host as EprojHost,
+        room_mechanisms::host::Effects as MechanismEffects,
+    },
 };
 fn ignored(ai: u16) -> bool {
     ai == 0x804b || ai == 0x804c

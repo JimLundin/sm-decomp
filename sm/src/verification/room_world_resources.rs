@@ -1,12 +1,12 @@
 //! Synthetic resource backing for the authored fixture on actual hardware.
 //! Install only after real SnesInit in an isolated child. No cartridge data emitted.
 #![forbid(unsafe_code)]
-use crate::game::room_entry::{
+use crate::{game_state::Game, rom::RomImage};
+use sm_game::room_entry::{
     content::{AssetRef, AssetSource, SharedAsset},
     effects::{EntryEffects, InstallBuffer},
     world::*,
 };
-use crate::{game_state::Game, rom::RomImage};
 use std::sync::Arc;
 
 fn write(image: &RomImage, address: u32, bytes: &[u8]) {

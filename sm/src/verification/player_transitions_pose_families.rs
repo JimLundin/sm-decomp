@@ -151,8 +151,9 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             observer::begin(output, game, Vec::new());
             observer::observe(1, game);
             {
-                use crate::game::{
-                    player_transitions, session_access::SessionAccess, session_runtime::Runtime,
+                use {
+                    crate::game::{player_transitions, session_runtime::Runtime},
+                    sm_game::session_access::SessionAccess,
                 };
                 let mut host = Runtime::new(game);
                 if id < 2200 {

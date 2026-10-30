@@ -8,8 +8,8 @@ use super::{
     media::AppearanceId,
     scene::{ActorDrawRequest, ActorVisualSelection},
 };
-use crate::game::{room_entry::world::Identity, session_runtime::Runtime};
 use std::cell::RefCell;
+use {crate::game::session_runtime::Runtime, sm_game::room_entry::world::Identity};
 // Keep checkpoint operations beside the private actor lifecycle they exercise.
 pub(crate) fn checkpoint_stage_tilesets(h: &mut Runtime<'_>, tilesets: u16) {
     h.session_mut().room.entry.enemy_tilesets_key = tilesets;

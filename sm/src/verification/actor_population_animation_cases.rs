@@ -498,7 +498,7 @@ pub(crate) fn capture_case(
 
 // No movie uses full-width child indices; assert every changed byte through live entrypoints.
 fn fire_geyser_widened() -> Vec<u8> {
-    use crate::game::{enemy_script::EnemyScript, fire_geysers};
+    use {crate::game::fire_geysers, sm_game::enemy_script::EnemyScript};
     let mut out = b"B6FG1".to_vec();
     for index in [0u16, 0x7c0, 0xffc0, 0xfffe] {
         let mut g = Game::new();

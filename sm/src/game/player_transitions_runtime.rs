@@ -125,7 +125,9 @@ impl Host for Runtime<'_> {}
 impl Runtime<'_> {
     fn finish_ceres_arrival(&mut self) {
         self.owned_call(|runtime| {
-            use crate::game::{enemy_projectiles::lifecycle, room_mechanisms::host::Effects};
+            use {
+                crate::game::enemy_projectiles::lifecycle, sm_game::room_mechanisms::host::Effects,
+            };
             let parameter = lifecycle::spawn_from_enemy(runtime, 0, 0, 0xa387);
             lifecycle::spawn_from_enemy(runtime, parameter, 0, 0xa395);
             runtime.session_mut().minimap.disabled = 0;

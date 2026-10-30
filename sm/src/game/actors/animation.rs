@@ -6,7 +6,7 @@ use super::{
     effects::{ActorAssertion, ActorHost},
 };
 use crate::game::session_runtime::Runtime;
-use crate::game::{
+use sm_game::{
     enemy_projectiles::host::Host,
     enemy_script::{EnemyScript, bank_base},
 };

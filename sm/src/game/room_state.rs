@@ -1,16 +1,16 @@
 //! Compatibility entry adapters and retained level/graphics backend leaves.
 use crate::game::decompression::decompress_to_ram;
 use crate::game::display_refresh::CopyToVramNow;
-use crate::game::room_entry::{
-    content::{LoadMode, SelectorCursor, SelectorKind},
-    installation, selection,
-};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::{checked_word, word, words as ram};
 use crate::rtl::rom_bank_record;
 use crate::types::{EnemyDef, EnemyTileset};
 use core::mem::offset_of;
+use sm_game::room_entry::{
+    content::{LoadMode, SelectorCursor, SelectorKind},
+    installation, selection,
+};
 
 pub(crate) fn select_entry(address: u32, cursor: u16, game: &mut Game) -> u16 {
     let mut runtime = Runtime::new(game);

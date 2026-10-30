@@ -3,10 +3,12 @@
 #![forbid(unsafe_code)]
 use super::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use super::api::{self, Axis};
-use crate::game::enemy_projectiles::{SpawnEprojWithGfx, host::Effects};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use sm_game::enemy_script::EnemyScript;
+use {
+    crate::game::enemy_projectiles::SpawnEprojWithGfx, sm_game::enemy_projectiles::host::Effects,
+};
 
 fn selected(runtime: &Runtime<'_>) -> Key {
     Key::from_legacy(runtime.word(0xe54))

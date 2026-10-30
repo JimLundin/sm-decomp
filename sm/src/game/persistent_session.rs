@@ -3,19 +3,21 @@
 
 use std::sync::Arc;
 
-use crate::game::scene::{
-    component::{DisplayComponent, DisplayStartMetadata},
-    records::SceneMedia,
-    samus_body::MarkerPublication,
-    samus_content::ContentDescription,
-    start::{DisplayStartDescription, StartError, ValidatedDisplayStart},
-    state::DisplayError,
-};
 pub(crate) use crate::game::session_checkpoint::AuxiliaryGameplayCheckpoint;
 use crate::game_state::{Game, PreparedSamusBinding, SamusBindingDescription, SamusExecution};
 use sm_game::external_inputs::ExternalInputs;
 use sm_game::session::Session;
 pub(crate) use sm_game::session_owners::*;
+use {
+    crate::game::scene::records::SceneMedia,
+    sm_game::scene::{
+        component::{DisplayComponent, DisplayStartMetadata},
+        samus_body::MarkerPublication,
+        samus_content::ContentDescription,
+        start::{DisplayStartDescription, StartError, ValidatedDisplayStart},
+        state::DisplayError,
+    },
+};
 
 pub(crate) struct SessionStartDescription {
     pub gameplay: Option<Session>,
@@ -927,9 +929,9 @@ impl SessionSnapshotPayload {
     }
 }
 
-use crate::game::scene::{samus, samus_body, samus_position_tiles as positions};
 use sm_game::scene::samus_content::{PreparedBytes, Registration, Role, RoleLease};
 use sm_game::scene::state::{DisplayState, WordOrder};
+use sm_game::scene::{samus, samus_body, samus_position_tiles as positions};
 
 struct PreparedTable(RoleLease<PreparedBytes>);
 impl positions::Table for PreparedTable {

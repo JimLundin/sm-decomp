@@ -152,7 +152,7 @@ pub(crate) fn ram_word(ram: &crate::game_state::WorkRam, at: usize, value: u16) 
     ram.copy_in(at, &value.to_le_bytes());
 }
 
-use crate::game::room_entry::{
+use sm_game::room_entry::{
     content::{AssetRef, AssetSource},
     effects::EntryEffects,
     world::*,
@@ -164,7 +164,7 @@ pub(crate) unsafe fn check_prepared_vram(
     assets: &PreparedRoomAssets,
 ) {
     unsafe {
-        use crate::game::room_entry::{
+        use sm_game::room_entry::{
             content::VramDestination,
             effects::{VramDecodeTarget, VramSlot},
         };
@@ -206,7 +206,7 @@ pub(crate) unsafe fn check_prepared_dma(
     assets: &PreparedRoomAssets,
 ) {
     unsafe {
-        use crate::game::room_entry::{content::VramDestination, effects::VramSlot};
+        use sm_game::room_entry::{content::VramDestination, effects::VramSlot};
         let mut world = world.clone();
         let mut keys = keys.clone();
         let id = ResourceId(0x6200_000a);

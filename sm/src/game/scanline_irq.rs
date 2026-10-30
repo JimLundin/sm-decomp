@@ -1,9 +1,12 @@
 //! Native access for the shared scanline interrupt decisions and effects.
-use crate::game::{room_entry, scene::irq, session_runtime};
 use crate::game_state::Game;
 use crate::ram_map::{checked_word as at, word};
 use crate::rtl::{BG3SC, CGADSUB, CGWSEL, HTIMEL, NMITIMEN, TM, VTIMEL, WriteReg};
 use std::convert::Infallible;
+use {
+    crate::game::{room_entry, session_runtime},
+    sm_game::scene::irq,
+};
 
 struct NativeControls<'a>(&'a mut Game);
 impl irq::Controls for NativeControls<'_> {

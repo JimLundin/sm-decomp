@@ -1,10 +1,13 @@
 //! Explicit per-game ownership; RAM bytes retain their exact SNES layout.
 use crate::cpu_infra::Snapshot;
-use crate::game::scene::{
-    records::SceneMedia, samus::SamusCatalog, samus_content as content,
-    samus_native_content as native_content, samus_position_tiles::TileRequest, state::DisplayError,
-};
 use sm_game::room_entry::world::WorldBinding;
+use {
+    crate::game::scene::records::SceneMedia,
+    sm_game::scene::{
+        samus::SamusCatalog, samus_content as content, samus_native_content as native_content,
+        samus_position_tiles::TileRequest, state::DisplayError,
+    },
+};
 #[path = "game/persistent_session.rs"]
 pub mod persistent_session;
 use crate::initial_state::InitialState;

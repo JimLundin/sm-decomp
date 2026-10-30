@@ -2,12 +2,15 @@
 #![forbid(unsafe_code)]
 use super::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use super::{api, combat};
-use crate::game::enemy_projectiles::{host::ShotMember, set_shot_direction, shot_word};
-use crate::game::player_projectiles::{access::shot, content::table, host::Host, motion};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::{word_arrays, words};
 use sm_game::enemy_script::EnemyScript;
+use sm_game::player_projectiles::{access::shot, content::table, host::Host, motion};
+use {
+    crate::game::enemy_projectiles::{set_shot_direction, shot_word},
+    sm_game::enemy_projectiles::host::ShotMember,
+};
 
 pub(crate) fn palette(game: &mut Game) {
     let mut runtime = Runtime::new(game);

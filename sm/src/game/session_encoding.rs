@@ -1,9 +1,9 @@
 //! Sole byte-compatible projection of the migrated aggregate and shared continuations.
 #![forbid(unsafe_code)]
 use crate::game::player_transitions::state as transition_state;
-use crate::game::room_entry::{effects::AssetSlot, world::WorldBinding};
-use crate::game::{external_inputs::ExternalInputs, session::Session};
 use crate::ram_map::{word_arrays as arrays, words as ram};
+use sm_game::room_entry::{effects::AssetSlot, world::WorldBinding};
+use sm_game::{external_inputs::ExternalInputs, session::Session};
 use std::sync::Arc;
 // Head0 owns only these ten bytes; full/odd accesses still project each lane.
 macro_rules! botwoon_death_words {

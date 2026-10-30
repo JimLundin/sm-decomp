@@ -2,24 +2,26 @@
 #![cfg(sm_verify_dll)]
 #![forbid(unsafe_code)]
 
-use crate::game::scene::{
-    records as sc,
-    samus_body::Half::{self, Bottom, Top},
-    samus_content::{
-        AllocationDeclaration, AllocationId, ContentDescription,
-        Registration::{self, *},
-        RequestBinding,
-        Role::{self, *},
-        RoleDeclaration, ValidatedContent,
-    },
-    samus_position_tiles::TileRequest,
-    state::{
-        ByteLanes, DisplayError, SamusHalf, SourceSpan, TileDestination, TileTransfer,
-        TransferSource,
-        WordOrder::{self, Big, Little},
+use std::sync::Arc;
+use {
+    crate::game::scene::records as sc,
+    sm_game::scene::{
+        samus_body::Half::{self, Bottom, Top},
+        samus_content::{
+            AllocationDeclaration, AllocationId, ContentDescription,
+            Registration::{self, *},
+            RequestBinding,
+            Role::{self, *},
+            RoleDeclaration, ValidatedContent,
+        },
+        samus_position_tiles::TileRequest,
+        state::{
+            ByteLanes, DisplayError, SamusHalf, SourceSpan, TileDestination, TileTransfer,
+            TransferSource,
+            WordOrder::{self, Big, Little},
+        },
     },
 };
-use std::sync::Arc;
 
 type RoleInput = (Role, Registration, u8, usize, WordOrder);
 type TransferInput = (u16, u32, [u8; 2], usize, usize);

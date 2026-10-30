@@ -1,9 +1,9 @@
 //! Actual aggregate Runtime native-spawn authority checks; no transport model.
 //! New composed-owner invariants, not old/new predecessor observations.
 #![forbid(unsafe_code)]
-use crate::game::{session::Session, session_runtime::Runtime};
 use crate::{game_state::Game, rom::RomImage};
 use std::panic::{AssertUnwindSafe, catch_unwind};
+use {crate::game::session_runtime::Runtime, sm_game::session::Session};
 
 pub(crate) const CASES: u32 = 3;
 // Independent physical map: no use of the production codec's visitor or helpers.

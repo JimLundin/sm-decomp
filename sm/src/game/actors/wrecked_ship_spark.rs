@@ -2,12 +2,14 @@
 //! Native actor words and the inherited VRAM-queue alias remain authoritative.
 #![forbid(unsafe_code)]
 use crate::game::enemy_layouts::EnemyLayout8 as Spark;
-use crate::game::enemy_projectiles::{SpawnEprojWithGfx, host::Effects};
 use crate::game::gameplay_flag_runtime;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use sm_game::enemy_script::EnemyScript;
+use {
+    crate::game::enemy_projectiles::SpawnEprojWithGfx, sm_game::enemy_projectiles::host::Effects,
+};
 
 fn reload_delay(k: u16, bias: u16, game: &mut Game) {
     let E = k as i32;

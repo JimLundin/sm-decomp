@@ -8,16 +8,16 @@ use super::{
     api::{MoveScan, MovementResult, SlopePolicy, VerticalProbeEdge},
     effects::ActorHost,
 };
+use sm_game::geometry::{Point, Position, Vector32};
 #[cfg(not(sm_verify_dll))]
-use crate::game::room_mechanisms::{
+use sm_game::room_mechanisms::{
     creation,
     host::{Contact, SpawnSource},
 };
-use crate::game::{
+use sm_game::{
     projectile_geometry::square_slope_occupied,
     room_mechanisms::host::{ByteOrder, Host as MechanismHost, ImportedAliases},
 };
-use sm_game::geometry::{Point, Position, Vector32};
 fn current(h: &impl ActorAccess) -> ActorKey {
     ActorKey::from_legacy(h.session().actors.controls.selected)
 }

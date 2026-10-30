@@ -4,7 +4,6 @@
 )]
 pub(crate) use sm_game::player_projectiles::access;
 pub(crate) use sm_game::player_projectiles::animation;
-pub(crate) use sm_game::player_projectiles::content;
 pub(crate) use sm_game::player_projectiles::host;
 pub(crate) use sm_game::player_projectiles::missiles;
 pub(crate) use sm_game::player_projectiles::motion;

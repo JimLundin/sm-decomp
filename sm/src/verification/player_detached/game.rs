@@ -4,12 +4,8 @@ pub(crate) mod actors;
 pub(crate) mod launch_motion;
 #[path = "player_projectiles.rs"]
 pub(crate) mod player_projectiles;
-pub(crate) use sm_game::projectile_block_reactions;
-pub(crate) use sm_game::projectile_geometry;
-pub(crate) use sm_game::projectile_room;
 
 pub(crate) use sm_game::external_inputs;
-pub(crate) use sm_game::item_pickups;
 pub(crate) use sm_game::session;
 
 #[path = "room_entry.rs"]
@@ -21,7 +17,6 @@ pub(crate) mod room_mechanisms;
 #[path = "../../game/constants.rs"]
 pub(crate) mod constants;
 
-pub(crate) use sm_game::contact_rules;
 #[path = "enemy_projectiles.rs"]
 pub(crate) mod enemy_projectiles;
 #[path = "scene.rs"]
@@ -34,7 +29,6 @@ pub(crate) use sm_game::visual_host;
 
 pub(crate) use sm_game::samus_palette;
 
-pub(crate) use sm_game::liquid_surface;
 
 #[path = "../../game/session_encoding.rs"]
 pub(crate) mod session_encoding;
@@ -83,5 +77,4 @@ pub(crate) mod player_movement;
 #[path = "../../game/player_update/mod.rs"]
 pub(crate) mod player_update;
 
-pub(crate) use sm_game::samus_periodic_damage;
 

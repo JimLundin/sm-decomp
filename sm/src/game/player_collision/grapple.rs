@@ -3,7 +3,7 @@ use super::{
     effects::Host,
     geometry::{behavior as room_bts, level as room_level},
 };
-use crate::game::{
+use sm_game::{
     contact_rules::collision_span,
     projectile_geometry::{SLOPE_HEIGHTS, square_slope_occupied},
 };
@@ -184,7 +184,7 @@ pub(crate) fn react_beam(
              + sm_game::projectile_block_reactions::Definitions
          ),
 ) -> u8 {
-    use crate::game::{
+    use sm_game::{
         player_projectiles::access::{room_bts, room_level},
         projectile_block_reactions as reactions,
         projectile_room::Axis,

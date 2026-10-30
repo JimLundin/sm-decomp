@@ -2,17 +2,6 @@
 #![cfg(sm_verify_dll)]
 #![forbid(unsafe_code)]
 
-use crate::game::{
-    external_inputs::ExternalInputs,
-    scene::{
-        records as sc,
-        samus_body::MarkerPublication,
-        samus_content::ContentDescription,
-        start as ss,
-        state::{DisplayError, TransferSource},
-    },
-    session::Session,
-};
 use crate::game_state::{
     GameOwner, PreparedSamusBinding, SamusAuthority, SamusBindingDescription, SamusExecution,
     persistent_session::{
@@ -22,6 +11,19 @@ use crate::game_state::{
 };
 use crate::{samus_content_binding_cases as content, samus_game_binding_cases as binding};
 use std::sync::Arc;
+use {
+    crate::game::scene::records as sc,
+    sm_game::{
+        external_inputs::ExternalInputs,
+        scene::{
+            samus_body::MarkerPublication,
+            samus_content::ContentDescription,
+            start as ss,
+            state::{DisplayError, TransferSource},
+        },
+        session::Session,
+    },
+};
 
 #[path = "session_audio_checkpoint_cases.rs"]
 mod session_audio_checkpoint_cases;
@@ -385,8 +387,8 @@ fn assert_binary_restore_after_failed_interval(
 
 /// No movie covers malformed Projectiles checkpoints or an independently valid binding mismatch.
 fn assert_projectiles_checkpoint(owner: &GameOwner, required: &ss::DisplayStartRequirements) {
-    use crate::game::{launch_motion::MovementDirection, session::Projectiles};
     use sm_game::scene::component::DisplayStartMetadata;
+    use {crate::game::launch_motion::MovementDirection, sm_game::session::Projectiles};
 
     let (start, _) = owner.checkpoint_session().unwrap().into_start().unwrap();
     let display = start.display;

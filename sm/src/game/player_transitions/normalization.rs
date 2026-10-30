@@ -6,7 +6,7 @@ use super::{
     jump, pose,
     state::{AnimationSkip, InputMode, MomentumAction, MovementMode},
 };
-use crate::game::{liquid_surface::LiquidAtHeight, session::Session, visual_host::Record};
+use sm_game::{liquid_surface::LiquidAtHeight, session::Session, visual_host::Record};
 
 fn previous_movement(h: &impl Host) -> u16 {
     h.session().player.history.previous.movement_and_facing >> 8

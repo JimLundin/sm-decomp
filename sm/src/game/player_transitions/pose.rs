@@ -5,7 +5,7 @@ use super::{
     effects::Host,
     state::AnimationSkip,
 };
-use crate::game::{
+use sm_game::{
     liquid_surface::{self, LiquidAtHeight},
     session::Session,
     visual_host::Record,

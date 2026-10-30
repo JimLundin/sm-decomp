@@ -7,9 +7,9 @@ use super::{
     pose,
     state::{AnimationStep, HurtAction, InputMode, MovementMode, PoseRequestWord},
 };
-use crate::game::{player_collision::effects::Content as CollisionContent, visual_host::Record};
 #[cfg(sm_verify_dll)]
 use crate::player_transitions_rust_observer as observer;
+use sm_game::{player_collision::effects::Content as CollisionContent, visual_host::Record};
 
 pub(crate) fn advance_animation(h: &mut impl Host, step: AnimationStep) {
     if step == AnimationStep::Gameplay {

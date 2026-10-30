@@ -3,20 +3,22 @@ use crate::game::enemy_layouts::EnemyLayout104 as Draygon;
 use crate::game::enemy_projectiles::SpawnEprojWithGfx;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::sprite_drawing::Clip;
-use crate::game::{
-    session_runtime::Runtime,
-    sprite_effect_controllers as controllers,
-    sprite_effect_host::{self, SpriteMember},
-    sprite_effect_state::{
-        LegacySpriteDefinition, LegacySpriteHandle, LegacySpriteProgram, LegacySpriteWordIndex,
-        SpriteDraw, SpriteSpawn,
-    },
-    sprite_objects,
-};
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::types::Point16U;
 use sm_game::geometry::Point;
+use {
+    crate::game::session_runtime::Runtime,
+    sm_game::{
+        sprite_effect_controllers as controllers,
+        sprite_effect_host::{self, SpriteMember},
+        sprite_effect_state::{
+            LegacySpriteDefinition, LegacySpriteHandle, LegacySpriteProgram, LegacySpriteWordIndex,
+            SpriteDraw, SpriteSpawn,
+        },
+        sprite_objects,
+    },
+};
 
 fn address(member: SpriteMember, index: LegacySpriteWordIndex) -> usize {
     let base = match member {

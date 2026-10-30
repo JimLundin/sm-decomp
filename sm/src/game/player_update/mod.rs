@@ -9,9 +9,12 @@ pub(crate) use sm_game::player_update::content;
 pub(crate) use sm_game::player_update::effects;
 pub(crate) use sm_game::player_update::minimap;
 
-use crate::game::{player_movement, player_transitions as transitions, samus_periodic_damage};
 use effects::Host;
 use transitions::state::{FrameBetaMode, FrameGammaMode};
+use {
+    crate::game::{player_movement, player_transitions as transitions},
+    sm_game::samus_periodic_damage,
+};
 
 /// Chosen before entering Session ownership. Special movement has already run
 /// at its legacy boundary; do not redispatch a handler changed by that movement.

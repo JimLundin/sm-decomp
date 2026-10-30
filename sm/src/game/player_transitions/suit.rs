@@ -1,7 +1,7 @@
 //! Shared Varia/Gravity acquisition and light-beam sequence.
 #![forbid(unsafe_code)]
 use super::{effects::Host, state::LandingBounce};
-use crate::game::{
+use sm_game::{
     samus_palette,
     session::Session,
     visual_host::{Record, Source},

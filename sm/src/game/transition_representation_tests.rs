@@ -1,7 +1,8 @@
 //! Representation tests prepared for the isolated carrier; NOT EXECUTED.
 use crate::game::player_transitions::state::*;
-use crate::game::{
-    room_entry::world::WorldBinding, session::Session, session_encoding as encoding,
+use {
+    crate::game::session_encoding as encoding,
+    sm_game::{room_entry::world::WorldBinding, session::Session},
 };
 
 #[test]

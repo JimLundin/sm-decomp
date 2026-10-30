@@ -4,7 +4,7 @@ use super::{
     effects::Host,
     state::{AnimationSkip, FrameGammaMode},
 };
-use crate::game::{
+use sm_game::{
     item_pickups::VisualUpdate, room_mechanisms::host::Effects as RoomEffects, samus_palette,
     visual_host::Record, visual_state::PaletteBuffer,
 };

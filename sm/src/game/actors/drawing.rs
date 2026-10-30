@@ -8,13 +8,13 @@ use super::{
     media::AppearanceId,
     scene::{self, ActorDrawMode, ActorDrawRequest, ActorPaletteMode},
 };
-use crate::game::{
+use sm_game::geometry::Point;
+use sm_game::player_projectiles::access::Store;
+use sm_game::{
     enemy_projectiles::{host::Host as EprojHost, presentation as eproj_presentation},
     player_projectiles::{host::Host as ShotHost, presentation as shot_presentation},
     sprite_objects,
 };
-use sm_game::geometry::Point;
-use sm_game::player_projectiles::access::Store;
 
 fn appearance(h: &impl ActorAccess, key: ActorKey) -> Option<AppearanceId> {
     let index = key.byte_index();

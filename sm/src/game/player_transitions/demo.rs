@@ -4,7 +4,7 @@ use super::{
     effects::Host,
     state::{DrawMode, FrameAlphaMode, FrameBetaMode, InputMode},
 };
-use crate::game::{
+use sm_game::{
     session::Session,
     visual_host::{Content, Record, Source},
 };
@@ -100,7 +100,7 @@ pub(crate) fn initialize_scene(h: &mut impl Host, set: u16, scene: u16) -> bool 
 
 pub(crate) fn finish_setup(h: &mut impl Host) {
     use super::state::{HurtAction, InterruptionAction, MomentumAction};
-    use crate::game::{samus_palette, visual_state::PaletteBuffer};
+    use sm_game::{samus_palette, visual_state::PaletteBuffer};
     let transitions = &mut h.session_mut().player.transitions;
     transitions.frame_alpha = FrameAlphaMode::from_raw(0xe6c9);
     transitions.frame_beta = FrameBetaMode::DemoMapped;

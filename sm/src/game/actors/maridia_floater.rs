@@ -4,10 +4,12 @@
 use super::access::ActorKey as Key;
 use super::{api, combat};
 use crate::game::enemy_layouts::EnemyLayout8 as Floater;
-use crate::game::enemy_projectiles::{SpawnEprojWithGfx, host::Effects};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
+use {
+    crate::game::enemy_projectiles::SpawnEprojWithGfx, sm_game::enemy_projectiles::host::Effects,
+};
 
 const BOB: [u16; 12] = [0, 1, 2, 3, 2, 1, 0, 0xffff, 0xfffe, 0xfffd, 0xfffe, 0xffff];
 

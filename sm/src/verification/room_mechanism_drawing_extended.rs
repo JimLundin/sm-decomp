@@ -1,9 +1,9 @@
 //! Additional actual-old rendering observations. Expectations describe emitted
 //! tiles and packed transfers independently of the production renderer.
 use super::{put, rom_word};
-use crate::game::{enemy_script::EnemyScript, room_mechanisms as mechanisms};
 use crate::room_background_support::ram_span;
 use crate::{game_state::Game, rom::RomImage};
+use {crate::game::room_mechanisms as mechanisms, sm_game::enemy_script::EnemyScript};
 
 fn word(game: &Game, at: usize) -> u16 {
     u16::from_le_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])

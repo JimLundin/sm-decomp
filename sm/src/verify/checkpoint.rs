@@ -850,7 +850,7 @@ pub(crate) unsafe fn restore_capture_with_sources(
 // Movies cannot supply a populated Prepared palette receipt with a corrupted catalog tag.
 #[cfg(sm_verify_dll)]
 pub(crate) unsafe fn check_prepared_palette_checkpoint(game: &mut Game) {
-    use crate::game::room_entry::{
+    use sm_game::room_entry::{
         content::{AssetRef, AssetSource},
         effects::{EntryEffects, InstallBuffer},
     };

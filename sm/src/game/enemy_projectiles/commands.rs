@@ -3,14 +3,14 @@
 use super::access::{enemy, enemy_byte};
 use super::host::{EnemyMember as F, Host, NativeRecord};
 use crate::game::constants::{bank_86::*, bank_a0::*};
-use crate::game::{
-    sprite_effect_state::{LegacySpriteDefinition, SpriteSpawn},
-    sprite_objects,
-};
 use sm_game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
 use sm_game::enemy_script::EnemyScript;
 use sm_game::geometry::Point;
 use sm_game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
+use sm_game::{
+    sprite_effect_state::{LegacySpriteDefinition, SpriteSpawn},
+    sprite_objects,
+};
 
 fn reset_position(h: &mut impl Host, slot: isize) {
     enemy!(h, slot, x = enemy!(h, slot, behavior_a));

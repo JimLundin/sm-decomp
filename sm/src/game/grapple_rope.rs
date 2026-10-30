@@ -1,11 +1,13 @@
 //! Rope animation and placement on the shared player state and existing drawing edge.
 #![forbid(unsafe_code)]
-use crate::game::{
-    actors::api::angle_from_delta,
-    player_projectiles::host::{Drawing, Host},
-    projectile_geometry::SINE_COSINE,
-    session_access::SessionAccess,
-    visual_host::{Content, Record},
+use {
+    crate::game::actors::api::angle_from_delta,
+    sm_game::{
+        player_projectiles::host::{Drawing, Host},
+        projectile_geometry::SINE_COSINE,
+        session_access::SessionAccess,
+        visual_host::{Content, Record},
+    },
 };
 pub(crate) fn start(h: &mut impl SessionAccess) {
     for group in (0..4).rev() {

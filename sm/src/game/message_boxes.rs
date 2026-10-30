@@ -278,7 +278,7 @@ impl sm_game::dialogue::Context for LegacyDialogue<'_> {
         state: sm_game::dialogue::Dialogue<u16>,
         effect: sm_game::dialogue::Effect,
     ) -> sm_game::dialogue::Dialogue<u16> {
-        use crate::game::{dialogue::Effect::*, dialogue_ram};
+        use {crate::game::dialogue_ram, sm_game::dialogue::Effect::*};
         dialogue_ram::publish(state, self.0);
         unsafe {
             match effect {
@@ -302,7 +302,7 @@ impl sm_game::dialogue::Context for LegacyDialogue<'_> {
         &mut self,
         state: sm_game::dialogue::Dialogue<u16>,
     ) -> (sm_game::dialogue::Dialogue<u16>, sm_game::dialogue::Outcome) {
-        use crate::game::{dialogue::Outcome, dialogue_ram};
+        use {crate::game::dialogue_ram, sm_game::dialogue::Outcome};
         dialogue_ram::publish(state, self.0);
         let result = crate::game::display_refresh::wait(false, self.0);
         let outcome =
@@ -320,7 +320,7 @@ impl sm_game::dialogue::Context for LegacyDialogue<'_> {
     }
 }
 pub unsafe fn display(message: u16, game: &mut Game) -> CoroutineRet {
-    use crate::game::{dialogue, dialogue_ram};
+    use {crate::game::dialogue_ram, sm_game::dialogue};
     let state = dialogue_ram::import(game);
     let (state, outcome) = dialogue::run(
         state,

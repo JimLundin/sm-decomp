@@ -898,11 +898,15 @@ pub fn verify_owned_atmosphere_prefix(
     ),
     sm_game::scene::start::StartError,
 > {
-    use crate::game::scene::{
-        atmosphere::Inputs,
-        component::DisplayComponent,
-        records::ObjectContext,
-        state::{DisplayControls, DisplayDescription, DisplayError, EffectiveDisplayDescription},
+    use {
+        crate::game::scene::records::ObjectContext,
+        sm_game::scene::{
+            atmosphere::Inputs,
+            component::DisplayComponent,
+            state::{
+                DisplayControls, DisplayDescription, DisplayError, EffectiveDisplayDescription,
+            },
+        },
     };
     struct SuppliedInputs {
         camera: [u16; 2],
@@ -950,10 +954,14 @@ fn verification_settlement_produce(
     supplied: ([u16; 2], u16, crate::game::scene::records::ObjectContext),
     created_slot: Option<usize>,
 ) -> Result<(), sm_game::scene::state::DisplayError> {
-    use crate::game::scene::{
-        atmosphere::Inputs,
-        records::ObjectContext,
-        state::{DisplayControls, DisplayDescription, DisplayError, EffectiveDisplayDescription},
+    use {
+        crate::game::scene::records::ObjectContext,
+        sm_game::scene::{
+            atmosphere::Inputs,
+            state::{
+                DisplayControls, DisplayDescription, DisplayError, EffectiveDisplayDescription,
+            },
+        },
     };
     struct Supplied {
         camera: [u16; 2],
@@ -1182,9 +1190,9 @@ impl sm_game::scene::commit::SettlementEffects for VerificationSettlement {
         row: u16,
     ) -> Result<crate::game::scene::records::ObjectContext, sm_game::scene::state::DisplayError>
     {
-        use crate::game::scene::{
-            records::{ObjectContext, ObjectSelection},
-            state::DisplayError,
+        use {
+            crate::game::scene::records::{ObjectContext, ObjectSelection},
+            sm_game::scene::state::DisplayError,
         };
         let mut context = ObjectContext {
             selection: ObjectSelection {
@@ -1229,7 +1237,7 @@ fn verification_settlement_run(
     created_slot: Option<usize>,
     effects: &mut VerificationSettlement,
 ) -> Result<(), sm_game::scene::state::DisplayError> {
-    use crate::game::scene::{records::DisplayStatus, state::DisplayError};
+    use {crate::game::scene::records::DisplayStatus, sm_game::scene::state::DisplayError};
     let (_, resident, scene, media, _) = owner.checkpoint_parts()?;
     let bindings = media
         .image(resident.image)
@@ -1290,7 +1298,7 @@ pub fn verify_owned_atmosphere_settlement(
     Vec<crate::rendering::prepared::RenderedLine>,
     Result<(), sm_game::scene::state::DisplayError>,
 ) {
-    use crate::game::scene::{ResidentDisplayDescription, state::DisplayError};
+    use {crate::game::scene::ResidentDisplayDescription, sm_game::scene::state::DisplayError};
     let mut effects = VerificationSettlement {
         template: display.committed_scene().lines()[223].clone(),
         lines: Vec::new(),
@@ -1529,7 +1537,7 @@ pub fn verify_owned_samus_id_prefix(
 
 // Movies cannot author this prepared marker; these aliases serve only its constructed verification inputs.
 #[cfg(sm_verify_dll)]
-use crate::game::scene::{
+use sm_game::scene::{
     samus_body as vm_body, samus_position_tiles as vm_tiles,
     state::{
         DisplayControls as MarkerControls, DisplayDescription as MarkerState,
@@ -1902,8 +1910,9 @@ pub fn verify_samus_ceres_position(
 
 // Movies cannot author these independent Samus/resident observations inside the actual owned consumer.
 #[cfg(sm_verify_dll)]
-use crate::game::scene::{
-    commit as witness_commit, records as witness_records, state as witness_state,
+use {
+    crate::game::scene::records as witness_records,
+    sm_game::scene::{commit as witness_commit, state as witness_state},
 };
 
 // Movies cannot inspect an owned failed upload's completed resident prefix through a committed checkpoint.

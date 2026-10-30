@@ -9,18 +9,20 @@ use super::{
     },
     effects::ActorHost,
 };
-use crate::game::{
-    combat_rules::{self as rules, GrappleOutcome, HealthResponse, LatchMode, Shot, ShotResponse},
-    enemy_projectiles::{
-        host::{Host as EprojHost, ShotMember},
-        lifecycle, set_shot_direction, shot_word,
-    },
-    room_mechanisms::host::Effects as MechanismEffects,
-    sprite_effect_state::{LegacySpriteDefinition, SpriteSpawn},
-    sprite_objects,
-};
 use sm_game::actors::state::Actor;
 use sm_game::geometry::Point;
+use {
+    crate::game::enemy_projectiles::{lifecycle, set_shot_direction, shot_word},
+    sm_game::{
+        combat_rules::{
+            self as rules, GrappleOutcome, HealthResponse, LatchMode, Shot, ShotResponse,
+        },
+        enemy_projectiles::host::{Host as EprojHost, ShotMember},
+        room_mechanisms::host::Effects as MechanismEffects,
+        sprite_effect_state::{LegacySpriteDefinition, SpriteSpawn},
+        sprite_objects,
+    },
+};
 
 pub(super) fn current(h: &impl ActorAccess) -> ActorKey {
     ActorKey::from_legacy(h.session().actors.controls.selected)

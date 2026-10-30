@@ -5,19 +5,20 @@ use crate::game::actors::{
     roach, sidehopper, wall_crawlers,
 };
 use crate::game::enemy_speeds::SpeedTable;
-use crate::game::player_projectiles::{
-    access::{ShotLane, Store},
-    content,
-    host::{Drawing, Host, PaletteEffect, PlayerStep},
-};
-use crate::game::{
-    external_inputs::ExternalInputs, session::Session, session_encoding as encoding,
-};
 use crate::{
     game_state::Game,
     rom::{RomImage, RomRecord},
 };
+use sm_game::player_projectiles::{
+    access::{ShotLane, Store},
+    content,
+    host::{Drawing, Host, PaletteEffect, PlayerStep},
+};
 use sm_game::session_access::SessionAccess;
+use {
+    crate::game::session_encoding as encoding,
+    sm_game::{external_inputs::ExternalInputs, session::Session},
+};
 
 pub(crate) fn invalid_window(game: &mut Game, address: u32) {
     unsafe {
@@ -763,7 +764,7 @@ impl Host for Runtime<'_> {
         });
     }
     fn palette(&mut self, effect: PaletteEffect) -> u8 {
-        use crate::game::{samus_palette, visual_state::PaletteBuffer};
+        use sm_game::{samus_palette, visual_state::PaletteBuffer};
         match effect {
             PaletteEffect::Suit => {
                 samus_palette::load_suit(self, PaletteBuffer::Current);

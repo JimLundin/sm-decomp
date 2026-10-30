@@ -2,7 +2,7 @@
 #![forbid(unsafe_code)]
 use super::{content::AnimationTable, effects::Host, state::FrameAlphaMode};
 use crate::game::player_transitions::state::FrameBetaMode;
-use crate::game::{
+use sm_game::{
     samus_palette,
     session::Session,
     visual_host::{Effects as VisualEffects, Record},

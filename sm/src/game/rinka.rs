@@ -2,14 +2,14 @@
 //! Boss counters and spawn occupancy remain RAM-authoritative during migration.
 #![forbid(unsafe_code)]
 use crate::game::actors::api::{DeathHandling, DeathKind, ShotHandling, angle_from_delta};
-use crate::game::actors::{
-    self,
-    access::{AccessMode::Native, ActorAccess, ActorKey as Key},
-};
 use crate::game::enemy_projectiles::{Math_MultByCos, Math_MultBySin, SpawnEprojWithRoomGfx};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use sm_game::geometry::Position;
+use {
+    crate::game::actors::{self},
+    sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key},
+};
 
 const INVISIBLE: u16 = 0x100;
 const TANGIBLE: u16 = 0x400;

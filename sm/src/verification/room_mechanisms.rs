@@ -2,14 +2,14 @@
 //! Synthetic dispatch, creation, drawing, real effects, consumers and suspension.
 //! Eight command identities retain qualified native intervals with inherently
 //! unaligned original loads (grey door, custom draw, turret, item frames and pose).
-use crate::game::{
-    enemy_script::{EnemyScript, bank_base},
-    room_mechanisms as mechanisms,
-};
 use crate::native_rom::NativeRomPointer;
 use crate::room_background_support::{ram_bytes, ram_span};
 use crate::{game_state::Game, rom::RomImage};
 use std::panic::{AssertUnwindSafe, catch_unwind};
+use {
+    crate::game::room_mechanisms as mechanisms,
+    sm_game::enemy_script::{EnemyScript, bank_base},
+};
 const COMMANDS: [u32; 14] = [
     8685236, 8685244, 8685249, 8685258, 8685390, 8685375, 8686138, 8686116, 8686126, 8686194,
     8685412, 8685541, 8686608, 8686913,

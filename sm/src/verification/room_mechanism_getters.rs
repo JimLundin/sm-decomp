@@ -1,9 +1,12 @@
 //! Shared Session scalar imports and actual enemy setup coordinate helpers.
 #![forbid(unsafe_code)]
-use crate::game::{enemy_projectiles::coordinates, session::Session, session_runtime::Runtime};
 use crate::game_state::Game;
 use crate::room_background_support::ram_bytes;
 use std::panic::{AssertUnwindSafe, catch_unwind, resume_unwind};
+use {
+    crate::game::session_runtime::Runtime,
+    sm_game::{enemy_projectiles::coordinates, session::Session},
+};
 
 /// Captures deterministic observations while checking fresh reads and read-only
 /// behavior. No native ROM is needed for these shared-state observations.

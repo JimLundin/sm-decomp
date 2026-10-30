@@ -1,10 +1,7 @@
 //! Verification-only finite collision host over the actual Composed Session.
 //! Prepared backend callbacks are contract witnesses, not vanilla backend proof.
 #![forbid(unsafe_code)]
-use crate::game::{
-    player_collision::effects::{Content, Effects, ImportedCollisionReads, MechanismHeader},
-    room_entry::EntryPoll,
-};
+use {crate::game::{room_entry::EntryPoll}, sm_game::{player_collision::effects::{Content, Effects, ImportedCollisionReads, MechanismHeader}}};
 use crate::{Composed, rom::RomRecord};
 use std::collections::BTreeMap;
 
@@ -188,10 +185,7 @@ impl Effects for Composed {
 #[cfg(test)]
 mod checks {
     use super::*;
-    use crate::game::{
-        actors::access::{AccessMode, ActorAccess, ActorKey},
-        player_collision_owned_checks as owned,
-    };
+    use {crate::game::{player_collision_owned_checks as owned}, sm_game::{actors::access::{AccessMode, ActorAccess, ActorKey}}};
     pub(super) fn empty_room() -> Composed {
         let mut h = Composed::new();
         let s = &mut h.world.player;

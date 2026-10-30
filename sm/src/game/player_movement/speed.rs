@@ -1,12 +1,17 @@
 //! Owned horizontal speed and vertical movement shared by player movement modes.
 #![forbid(unsafe_code)]
 use super::{content::SpeedRecord, effects::Host};
-use crate::game::{
-    liquid_surface::LiquidAtHeight,
-    player_collision::operations as collision,
-    player_transitions::{self as transitions, content::AnimationTable},
-    session::{FixedMotion, Session},
-    visual_host::Record,
+use {
+    crate::game::{
+        player_collision::operations as collision,
+        player_transitions::{self as transitions},
+    },
+    sm_game::{
+        liquid_surface::LiquidAtHeight,
+        player_transitions::content::AnimationTable,
+        session::{FixedMotion, Session},
+        visual_host::Record,
+    },
 };
 
 pub(super) fn value(motion: &FixedMotion) -> u32 {

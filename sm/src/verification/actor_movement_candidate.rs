@@ -7,16 +7,18 @@ use super::{
     effects::ActorHost,
     movement, queries,
 };
-use crate::game::{
-    room_mechanisms::{
-        creation,
-        host::{Contact, Host as MechanismHost, SpawnSource},
-    },
-    session::{Point, Vector32},
-    session_runtime::Runtime,
-};
 use crate::{actor_movement_cases::Operation, game_state::Game};
 use std::panic::{AssertUnwindSafe, catch_unwind, resume_unwind};
+use {
+    crate::game::session_runtime::Runtime,
+    sm_game::{
+        room_mechanisms::{
+            creation,
+            host::{Contact, Host as MechanismHost, SpawnSource},
+        },
+        session::{Point, Vector32},
+    },
+};
 
 fn result(value: MovementResult) -> u64 {
     match value {

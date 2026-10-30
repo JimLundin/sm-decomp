@@ -1,7 +1,6 @@
 //! Gunship landing, boarding, refilling, saving and escape.
 //! Part addresses stay widened; Runtime projects their bytes through the existing owners.
 #![forbid(unsafe_code)]
-use crate::game::enemy_projectiles::{SpawnEprojWithRoomGfx, host::Effects};
 use crate::game::session_runtime::{Runtime, player_command, player_face_forward};
 use crate::game::{
     gameplay_flag_runtime, item_pickups_runtime, message_boxes, palette_effects, save_slots,
@@ -10,6 +9,10 @@ use crate::game_state::Game;
 use crate::ram_map::words as ram;
 use sm_game::geometry::Position;
 use sm_game::item_pickups::Resource;
+use {
+    crate::game::enemy_projectiles::SpawnEprojWithRoomGfx,
+    sm_game::enemy_projectiles::host::Effects,
+};
 
 const X: usize = 2;
 const Y: usize = 6;

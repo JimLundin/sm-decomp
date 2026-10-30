@@ -4,7 +4,7 @@ use super::{
     effects::Host,
     state::{InputMode, MovementMode, PoseRequestWord},
 };
-use crate::game::{session::Session, visual_host::Record};
+use sm_game::{session::Session, visual_host::Record};
 
 pub(crate) fn request(h: &mut impl Host) -> bool {
     const POSTURES: [u8; 28] = [

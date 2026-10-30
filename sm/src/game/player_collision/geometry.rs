@@ -5,16 +5,15 @@ use super::{
     motion::commit_position,
     operations::{Axis, MotionResult, Obstruction},
 };
-use crate::game::{
-    actors::{
-        access::{AccessMode::LittleEndian, ActorKey},
-        axis_overlaps,
-    },
-    room_entry::EntryPoll,
-    session::{Player, Point},
-};
 use sm_game::contact_rules::collision_span as span;
 use sm_game::projectile_geometry::{SLOPE_FACTORS, SLOPE_HEIGHTS, square_slope_occupied};
+use {
+    crate::game::{actors::axis_overlaps, room_entry::EntryPoll},
+    sm_game::{
+        actors::access::{AccessMode::LittleEndian, ActorKey},
+        session::{Player, Point},
+    },
+};
 
 // Only source-local geometry survives a synchronous effect. Player and terrain
 // are always reacquired from the host after it returns.

@@ -1,7 +1,6 @@
 //! Includes the actual candidate room command and plant modules.
 pub(crate) use sm_game::room_mechanisms::commands;
 pub(crate) use sm_game::room_mechanisms::content;
-pub(crate) use sm_game::room_mechanisms::creation;
 pub(crate) use sm_game::room_mechanisms::host;
 #[path = "room_rules.rs"]
 pub(crate) mod rules;

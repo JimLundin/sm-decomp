@@ -5,19 +5,19 @@ use super::{
     content::*,
     media::VisualResourceId,
 };
-use crate::game::{
-    room_entry::{
-        content::Capture,
-        world::{ResourceKey, WorldBinding},
-    },
-    session_runtime::Runtime,
-};
 use crate::{
     rom::{RomImage, RomRecord, lorom_offset},
     types::{EnemyDef, ExtendedSpriteMap, Hitbox},
 };
 use core::mem::{offset_of, size_of};
 use std::sync::Arc;
+use {
+    crate::game::session_runtime::Runtime,
+    sm_game::room_entry::{
+        content::Capture,
+        world::{ResourceKey, WorldBinding},
+    },
+};
 
 fn live(record: RomRecord) -> ActorLiveRecord {
     ActorLiveRecord {

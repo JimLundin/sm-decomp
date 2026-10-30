@@ -6,7 +6,7 @@ use super::{
     jump::initialize_jump,
     state::{BombJump, JumpKind, MomentumAction, PoseRequestWord},
 };
-use crate::game::{
+use sm_game::{
     external_inputs::ExternalInputs,
     visual_host::{Content, Record},
 };

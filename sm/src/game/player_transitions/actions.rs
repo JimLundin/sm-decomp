@@ -5,10 +5,12 @@ use super::{
     jump, landing, pose,
     state::*,
 };
-use crate::game::{
-    player_collision::operations::{self as collision, DisplacementRequest},
-    session::{FixedMotion, Session},
-    visual_host::Record,
+use {
+    crate::game::player_collision::operations::{self as collision, DisplacementRequest},
+    sm_game::{
+        session::{FixedMotion, Session},
+        visual_host::Record,
+    },
 };
 
 fn clear_vertical(s: &mut Session) {

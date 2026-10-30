@@ -445,7 +445,6 @@ pub mod game {
     pub(crate) mod corpse_tables;
     pub(crate) mod decompression;
     pub(crate) mod demo_rooms;
-    pub(crate) use sm_game::dialogue;
     pub(crate) mod dialogue_ram;
     pub(crate) mod enemy_layouts;
     pub(crate) mod enemy_speeds;
@@ -489,20 +488,13 @@ pub mod game {
     #[path = "../verification/room_mechanisms.rs"]
     pub(crate) mod room_mechanism_checks;
 
-    pub(crate) use sm_game::projectile_geometry;
-    pub(crate) use sm_game::projectile_initialization;
-
-    pub(crate) use sm_game::projectile_block_reactions;
     pub(crate) mod projectile_block_reactions_ram;
     pub(crate) mod projectile_presentation_ram;
-    pub(crate) use sm_game::projectile_room;
 
     pub mod animated_tiles;
     pub mod enemy_projectiles;
     pub(crate) mod equipment_menu;
     pub(crate) mod escape_typewriter;
-    pub(crate) use sm_game::external_inputs;
-    pub(crate) use sm_game::gameplay_flag_host;
     pub(crate) mod gameplay_flag_runtime;
     pub use sm_game::item_pickups;
     pub(crate) mod item_pickups_runtime;
@@ -545,19 +537,16 @@ pub mod game {
     pub mod room_state;
     pub mod samus_animation;
     pub(crate) use sm_game::samus_palette;
-    pub(crate) use sm_game::samus_periodic_damage;
     pub(crate) mod sand_heap;
     pub mod save_slots;
     pub(crate) mod scanline_irq;
     pub(crate) use sm_game::session;
-    pub(crate) use sm_game::session_access;
     pub(crate) mod session_checkpoint;
     pub(crate) mod session_encoding;
     pub(crate) mod session_runtime;
     pub(crate) mod shooting_stars;
     pub mod sm_8b;
     pub(crate) mod sprite_drawing;
-    pub(crate) use sm_game::sprite_effect_controllers;
     pub(crate) use sm_game::sprite_effect_host;
     pub(crate) mod sprite_effect_runtime;
     #[cfg(test)]

@@ -1,10 +1,11 @@
 //! Actual compatibility-guard checks; no replacement guard or fake RAM owner.
 #![forbid(unsafe_code)]
-use crate::game::{
-    music::QueueMusic_Delayed8, palette_effects::execution, session_runtime::Runtime,
-};
 use crate::{game_state::Game, ram_map::words as ram, rom::RomImage};
 use std::panic::{AssertUnwindSafe, catch_unwind};
+use {
+    crate::game::{music::QueueMusic_Delayed8, session_runtime::Runtime},
+    sm_game::palette_effects::execution,
+};
 
 fn word(bytes: &impl Fn(usize) -> u8, at: usize) -> u16 {
     u16::from_le_bytes([bytes(at), bytes(at + 1)])

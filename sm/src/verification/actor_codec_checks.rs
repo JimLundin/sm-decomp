@@ -1,9 +1,6 @@
 //! Actor-private tests of actual aggregate routing and actual access guards.
 use super::access::*;
-use crate::game::{
-    external_inputs::ExternalInputs, room_entry::world::WorldBinding, session::Session,
-    session_access::SessionAccess, session_encoding as encoding,
-};
+use {crate::game::{session_encoding as encoding}, sm_game::{external_inputs::ExternalInputs, room_entry::world::WorldBinding, session::Session, session_access::SessionAccess}};
 use sm_game::actors::state::Actor;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 

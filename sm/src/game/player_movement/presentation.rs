@@ -4,9 +4,9 @@ use super::{
     content::{Content, FootstepRegion, FootstepRule},
     effects::{EchoAxis, Host},
 };
-use crate::game::{
-    liquid_surface::LiquidAtHeight, player_transitions as transitions,
-    projectile_geometry::sine_offset, session::Session,
+use {
+    crate::game::player_transitions as transitions,
+    sm_game::{liquid_surface::LiquidAtHeight, projectile_geometry::sine_offset, session::Session},
 };
 
 // Query each full-width angle lazily in the original threshold order.

@@ -1,15 +1,5 @@
 //! Portable room-pack bytes and application selection, before Game construction.
 #![forbid(unsafe_code)]
-use crate::game::room_entry::{
-    PreparedRoomAssets,
-    world::{
-        ArrivalDefinition, BackgroundCommand, BackgroundTarget, CompatibilityKeys, DoorListId,
-        ExitDefinition, ExitId, LegacyAddress24, LegacyStartSite, ResourceId, ResourceKey,
-        ResourceKind, RoomDefinition, RoomId, RoomObject, ScrollDefinition, StartDefinition,
-        StartId, StateCondition, StateDefinition, StateId, StateSelector, TilesetDefinition,
-        TilesetId, WorldBinding, WorldDefinition,
-    },
-};
 use std::{
     collections::BTreeMap,
     fmt,
@@ -17,6 +7,16 @@ use std::{
     io::Read,
     path::{Path, PathBuf},
     sync::Arc,
+};
+use {
+    crate::game::room_entry::PreparedRoomAssets,
+    sm_game::room_entry::world::{
+        ArrivalDefinition, BackgroundCommand, BackgroundTarget, CompatibilityKeys, DoorListId,
+        ExitDefinition, ExitId, LegacyAddress24, LegacyStartSite, ResourceId, ResourceKey,
+        ResourceKind, RoomDefinition, RoomId, RoomObject, ScrollDefinition, StartDefinition,
+        StartId, StateCondition, StateDefinition, StateId, StateSelector, TilesetDefinition,
+        TilesetId, WorldBinding, WorldDefinition,
+    },
 };
 
 pub const MAX_PACK_BYTES: usize = 64 * 1024 * 1024;

@@ -8,11 +8,11 @@ use super::{
         ActorVisualSelection,
     },
 };
-use crate::game::{
-    room_entry::world::{LegacyAddress24, ResourceKey, ResourceKind, WorldBinding},
-    session_runtime::Runtime,
-};
 use sm_game::geometry::Point;
+use {
+    crate::game::session_runtime::Runtime,
+    sm_game::room_entry::world::{LegacyAddress24, ResourceKey, ResourceKind, WorldBinding},
+};
 
 pub(super) fn draw(
     runtime: &mut Runtime<'_>,

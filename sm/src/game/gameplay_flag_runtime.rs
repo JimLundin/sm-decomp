@@ -1,12 +1,11 @@
 //! Legacy flag entry adapters over the single aggregate Runtime.
 #![forbid(unsafe_code)]
 #![allow(non_snake_case)]
-use crate::game::{
-    gameplay_flag_host::{self, BossWordOrder, LegacyFlagColumn as Column},
-    progress_flags as flags,
-    session_runtime::Runtime,
-};
 use crate::game_state::Game;
+use {
+    crate::game::{progress_flags as flags, session_runtime::Runtime},
+    sm_game::gameplay_flag_host::{self, BossWordOrder, LegacyFlagColumn as Column},
+};
 fn address(column: Column, index: isize) -> usize {
     let base: usize = match column {
         Column::Events => 0xd820,

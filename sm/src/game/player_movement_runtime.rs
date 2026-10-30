@@ -98,16 +98,18 @@ pub(crate) fn ceres_movement(game: &mut crate::game_state::Game, action: fn(&mut
 }
 
 // Raw movement identities and uncovered callbacks remain at the compatibility boundary.
-use crate::game::{
-    explosion_window::spawn_crystal_flash,
-    music::QueueSfx3_Max15,
-    player_collision::operations as player_collision,
-    player_movement::{self, forced, speed},
-    player_projectiles::initialize,
-    prelude::*,
-    projectile_initialization::Initialization,
-    session_runtime::Runtime as CollisionRuntime,
-    visual_runtime::set_hdma_enabled,
+use {
+    crate::game::{
+        explosion_window::spawn_crystal_flash,
+        music::QueueSfx3_Max15,
+        player_collision::operations as player_collision,
+        player_movement::{self, forced, speed},
+        player_projectiles::initialize,
+        prelude::*,
+        session_runtime::Runtime as CollisionRuntime,
+        visual_runtime::set_hdma_enabled,
+    },
+    sm_game::projectile_initialization::Initialization,
 };
 pub fn Samus_EndSuperJump(game: &mut Game) -> u8 {
     if word!(game.samus_health).wrapping_sub(30) & 0x8000 == 0

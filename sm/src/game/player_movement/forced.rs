@@ -1,16 +1,18 @@
 //! Scripted push, fall and collision recovery share the owned movement state.
 #![forbid(unsafe_code)]
 use super::{effects::Host, presentation, speed};
-use crate::game::{
-    player_collision::operations as collision,
-    player_transitions::{
-        self as transitions,
-        state::{
-            BombJump, DrawMode, FrameGammaMode, HurtAction, InputMode, InterruptionAction,
-            JumpKind, LandingBounce, MomentumAction, MovementMode, PoseRequestWord,
+use {
+    crate::game::{
+        player_collision::operations as collision,
+        player_transitions::{
+            self as transitions,
+            state::{
+                BombJump, DrawMode, FrameGammaMode, HurtAction, InputMode, InterruptionAction,
+                JumpKind, LandingBounce, MomentumAction, MovementMode, PoseRequestWord,
+            },
         },
     },
-    session::Session,
+    sm_game::session::Session,
 };
 
 pub(crate) fn begin_ceres_push(s: &mut Session) {

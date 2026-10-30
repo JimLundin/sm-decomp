@@ -3,9 +3,11 @@
 #![forbid(unsafe_code)]
 use super::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use super::{api, combat};
-use crate::game::enemy_projectiles::{SpawnEprojWithGfx, host::Effects};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+use {
+    crate::game::enemy_projectiles::SpawnEprojWithGfx, sm_game::enemy_projectiles::host::Effects,
+};
 
 pub(crate) fn initialize(game: &mut Game) {
     let mut runtime = Runtime::new(game);

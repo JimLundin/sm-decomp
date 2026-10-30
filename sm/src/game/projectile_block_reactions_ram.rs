@@ -1,12 +1,14 @@
 //! Definition lookup over the existing aggregate, with Loaded provenance.
 #![forbid(unsafe_code)]
-use crate::game::{
-    player_projectiles::{access::room_bts, host::Host},
-    projectile_block_reactions::Definitions,
-    room_mechanisms::host::{Content, ContentAddress},
-    session_runtime::Runtime,
-};
 use crate::rom::RomRecord;
+use {
+    crate::game::session_runtime::Runtime,
+    sm_game::{
+        player_projectiles::{access::room_bts, host::Host},
+        projectile_block_reactions::Definitions,
+        room_mechanisms::host::{Content, ContentAddress},
+    },
+};
 impl Definitions for Runtime<'_> {
     type Table = RomRecord;
     fn resolve(&mut self, address: u32) -> RomRecord {

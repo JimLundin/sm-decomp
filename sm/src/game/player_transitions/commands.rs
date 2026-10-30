@@ -4,9 +4,12 @@ use super::{
     effects::Host, finish_pose_change, record_pose_history, refresh_pose, refresh_pose_rules,
     state::*,
 };
-use crate::game::{
-    player_projectiles, samus_palette, session::Session, visual_host::Effects as VisualEffects,
-    visual_state::PaletteBuffer,
+use {
+    crate::game::player_projectiles,
+    sm_game::{
+        samus_palette, session::Session, visual_host::Effects as VisualEffects,
+        visual_state::PaletteBuffer,
+    },
 };
 
 fn handlers(s: &mut Session, alpha: u16, beta: FrameBetaMode) {

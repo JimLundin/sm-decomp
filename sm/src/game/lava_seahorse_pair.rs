@@ -1,12 +1,14 @@
 //! Paired lava seahorses share emergence, firing, retreat and hit synchronization.
 #![forbid(unsafe_code)]
 use crate::game::actors::{animation, api};
-use crate::game::enemy_projectiles::{SpawnEprojWithGfx, host::Effects};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::ram_map::words as W;
 use sm_game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use sm_game::enemy_script::EnemyScript;
+use {
+    crate::game::enemy_projectiles::SpawnEprojWithGfx, sm_game::enemy_projectiles::host::Effects,
+};
 
 fn animate(runtime: &mut Runtime<'_>, child: bool) {
     let raw = usize::from(runtime.word(W::cur_enemy_index)) + if child { 64 } else { 0 };

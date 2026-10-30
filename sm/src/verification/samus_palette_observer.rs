@@ -1,8 +1,11 @@
 //! Verification-only observations of actual Samus gameplay and aggregate Runtime.
 #![forbid(unsafe_code)]
-use crate::game::{samus_palette, session::Session, session_encoding, session_runtime::Runtime};
 use crate::game_state::Game;
 use std::cell::{Cell, RefCell};
+use {
+    crate::game::{session_encoding, session_runtime::Runtime},
+    sm_game::{samus_palette, session::Session},
+};
 thread_local! { static TRACE: RefCell<Option<Vec<u8>>> = const { RefCell::new(None) }; }
 thread_local! {
     static ACTIVE_CASE: Cell<Option<u32>> = const { Cell::new(None) };

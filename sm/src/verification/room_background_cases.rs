@@ -13,9 +13,9 @@ pub(crate) enum Operation {
 pub(crate) fn run(op: Operation, g: &mut Game) -> Option<u8> {
     match op {
         Operation::Background(initial) => {
-            use crate::game::{
-                room_entry::{background, content::LoadMode},
-                session_runtime::Runtime,
+            use {
+                crate::game::session_runtime::Runtime,
+                sm_game::room_entry::{background, content::LoadMode},
             };
             background::load(
                 &mut Runtime::new(g),

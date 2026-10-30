@@ -2,16 +2,6 @@
 #![cfg(sm_verify_dll)]
 #![forbid(unsafe_code)]
 
-use crate::game::scene::{
-    records as sc,
-    samus::SamusCatalog,
-    samus_content::{
-        ContentDescription,
-        Registration::{Loaded, Native},
-        Role::{BodyTop, PositionFallback},
-    },
-    state::DisplayError,
-};
 use crate::game_state::{
     Game,
     SamusAuthority::{Available, Revoked},
@@ -20,6 +10,18 @@ use crate::game_state::{
 };
 use crate::{rom::RomImage, samus_content_binding_cases as fixture};
 use std::sync::Arc;
+use {
+    crate::game::scene::records as sc,
+    sm_game::scene::{
+        samus::SamusCatalog,
+        samus_content::{
+            ContentDescription,
+            Registration::{Loaded, Native},
+            Role::{BodyTop, PositionFallback},
+        },
+        state::DisplayError,
+    },
+};
 
 pub(crate) fn image() -> RomImage {
     let image = RomImage::zeroed(8);
@@ -360,7 +362,7 @@ pub fn samus_game_adoption_uses_captured_target() {
 }
 // Movies cannot independently supply every body-coordinate lane or an overlapping odd word.
 pub fn samus_driver_body_projection_preserves_odd_lanes() {
-    use crate::game::{player_projectiles::access::Store, session_runtime::Runtime};
+    use {crate::game::session_runtime::Runtime, sm_game::player_projectiles::access::Store};
     let (mut game, _, _) = installed(Prepared);
     game.ram().copy_in(0xb04, &[0x7d, 0xf1, 0x68, 0xe2]);
     game.ram().copy_in(0xaf6, &0xc123u16.to_le_bytes());

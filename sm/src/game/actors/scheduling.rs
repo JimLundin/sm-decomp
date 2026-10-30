@@ -8,11 +8,11 @@ use super::{
     drawing,
     effects::ActorHost,
 };
-use crate::game::{
+use sm_game::player_projectiles::access::Store;
+use sm_game::{
     enemy_projectiles::host::Host as EprojHost, room_mechanisms::host::Effects as MechanismEffects,
     sprite_objects,
 };
-use sm_game::player_projectiles::access::Store;
 
 fn frozen(h: &impl ActorAccess) -> bool {
     h.session().actors.diagnostics.freeze | h.inputs().frozen != 0
