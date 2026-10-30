@@ -42,7 +42,8 @@ Johnston's bank logs, https://patrickjohnston.org/bank/<bank>#f<address>.
 Verdicts are static readings of those logs. Replay evidence so far: the room
 E0B5 (Ceres Ridley) capture shows the CARRY sites at $A6:D694/$A6:D698
 change Ridley's real-retreat rise, which starts the getaway 4 frames earlier
-on hardware.
+on hardware, and the faithful oracle's E0B5 to E06B door transition matches
+the capture frame for frame.
 """
 
 # kPatchedCarrys (sm/src/cpu_infra.rs): forced carry before ADC/SBC.
@@ -776,9 +777,9 @@ ROM_PATCHES = [
     (0x80D004, 'a', 'none', 'kept',
      'Free space (new code: JSL wait NMI; LDA $0931; BPL loop; RTL)',
      'Frame-paced poll of the door-scroll-finished flag in place of the IRQ-driven spin'),
-    (0x82E540, 'c', 'timing', 'kept',
+    (0x82E540, 'a', 'none', 'kept',
      'Door transition - after PLM handler',
-     'Removes the wait-for-NMI after the PLM handler; with the wait moved to the start of the $D004 loop the door transition may be one frame shorter than hardware. Kept until a capture replay of a door transition settles the frame count'),
+     'Removes the wait-for-NMI after the PLM handler; the wait at the start of the $80:D004 scroll poll replaces it. The faithful oracle reproduces the captured door from E0B5 to E06B frame for frame (1 frame of state 9, 17 of state 11 in E0B5, 87 in E06B)'),
     (0x8BC11E, 'b', 'timing', 'removed',
      'Cinematic function - Ceres goes boom - initial',
      'Removes the JSL from the 9-iteration wait loop; the Ceres cutscene setup starts 9 frames earlier than on hardware'),
