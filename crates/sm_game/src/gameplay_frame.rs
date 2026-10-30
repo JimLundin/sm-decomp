@@ -9,8 +9,9 @@ use crate::animated_tiles::execution as animated_tiles;
 use crate::constants::game_states::*;
 use crate::constants::loading_game_states::*;
 use crate::demo_rooms;
-use crate::display::registers::{HDMAEN, MDMAEN};
-use crate::display::sequence::write_register_and_mirror;
+use crate::display::registers::{HDMAEN, MDMAEN, VMADDH, VMADDL, VMAIN};
+use crate::display::sequence::{register_writes, write_register_and_mirror};
+use crate::display_refresh;
 use crate::enemy_projectiles;
 use crate::gameplay_rules::{finish_frame, finish_health_and_time};
 use crate::menus::prelude::CoroutineRet;
@@ -64,6 +65,7 @@ pub trait Host:
     + crate::hud::HudHost
     + crate::room_scrolls::Host
     + crate::gameplay_rules::Host
+    + crate::display_refresh::Host
     + RuntimeAccess
 {
     /// Admit the owned Session for this frame; `fresh` when no pass is resuming.
@@ -83,33 +85,22 @@ pub trait Host:
     fn advance_native_state(&mut self, state: NativeState) -> u8;
     fn resume_room_entry(&mut self, signal: EntrySignal) -> u8;
     fn debug_game_over_menu(&mut self);
-    /// Upload the options screen tiles.
-    fn upload_options_tiles(&mut self);
     /// Emit this frame's queued gameplay sound effects.
     fn advance_sound_effects(&mut self);
-    fn refresh_display(&mut self);
 
     // Room transition phase.
-    fn initialize_gameplay_display(&mut self);
     fn initialize_player(&mut self);
-    fn flush_tilemaps(&mut self);
 
     // Demo phase.
     fn load_title_sequence_graphics(&mut self);
     fn disable_scanline_irq(&mut self);
     fn enable_scanline_irq(&mut self, immediate: bool);
-    fn reset_layer_mirrors(&mut self);
 
     // Pause phase.
-    fn capture_pause_background(&mut self);
     fn pause_hook(&mut self, hook: PauseHook);
     fn unpause_hook(&mut self, hook: UnpauseHook) -> u8;
-    fn load_pause_assets(&mut self);
-    fn upload_pause_map(&mut self);
-    fn pause_graphics(&mut self, paused: bool);
 
     // Death phase.
-    fn finish_gameplay_display(&mut self, clear_current_irq: bool);
     fn queue_music_delayed(&mut self, track: u16, delay: u16);
     fn advance_low_health_warning(&mut self);
 
@@ -318,7 +309,7 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
                 game.debug_game_over_menu();
                 0
             }
-            Options => options_settings::advance(game, H::upload_options_tiles, |game| {
+            Options => options_settings::advance(game, upload_options_tiles, |game| {
                 game.enable_display_nmi(true)
             }),
         };
@@ -338,7 +329,7 @@ fn frame<H: Host>(game: &mut H) -> CoroutineRet {
     if returned == 0 {
         game.ram().write_byte(0x5b4, 1);
     }
-    game.refresh_display();
+    display_refresh::run(game);
     returned
 }
 
@@ -362,7 +353,7 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
                 _ => {}
             }
         }
-        game.initialize_gameplay_display();
+        display_refresh::initialize_gameplay(game);
         game.initialize_player();
         if demo {
             demo_rooms::load(game);
@@ -459,7 +450,7 @@ fn stop_demo<H: Host>(game: &mut H) -> CoroutineRet {
     palette_effects::clear(game.runtime().session_mut());
     word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
     word_transfers!(game, descending, 270; native(0x996) <- value(0));
-    game.reset_layer_mirrors();
+    display_refresh::reset_layer_mirrors(game);
     0
 }
 
@@ -483,7 +474,7 @@ fn setup_pause<H: Host>(game: &mut H) -> CoroutineRet {
     game.set_hdma_enabled(false);
     write_register_and_mirror(game, HDMAEN as u16, 0, 0x85, true);
     animated_tiles::set_enabled(game.runtime().session_mut(), false);
-    game.capture_pause_background();
+    display_refresh::capture_pause_background(game);
     match pause_controls::hook_address(true, game) {
         8946657 => {}
         9423094 => game.pause_hook(PauseHook::Draygon),
@@ -494,11 +485,11 @@ fn setup_pause<H: Host>(game: &mut H) -> CoroutineRet {
     }
     cancel_sound_effects(game, 6);
     pause_controls::save_graphics(game);
-    game.load_pause_assets();
-    game.upload_pause_map();
+    display_refresh::load_pause_assets(game);
+    display_refresh::upload_pause_map(game);
     word_transfers!(game, ascending, 256; pause_map(384) <- le(palette_buffer, 0));
     word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0xb6f000, 0));
-    game.pause_graphics(true);
+    display_refresh::pause_graphics(true, game);
     pause_controls::initialize(game);
     0
 }
@@ -518,7 +509,7 @@ fn advance_pause<H: Host>(game: &mut H) -> CoroutineRet {
             if tab == 3 {
                 game.load_vram_words(0x7e3800, 0x3000, 0x800);
             } else {
-                game.upload_pause_map();
+                display_refresh::upload_pause_map(game);
             }
         }),
         4 => pause_controls::fade_tab::<true, _>(game),
@@ -535,7 +526,7 @@ fn setup_unpause<H: Host>(game: &mut H) -> CoroutineRet {
     if resume == 0 {
         game.load_vram_words(0x9ad200, 0x6000, 0x1000);
         word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- pause_map(384));
-        game.pause_graphics(false);
+        display_refresh::pause_graphics(false, game);
         pause_controls::resume(game);
         game.write_register_word(MDMAEN as u16, 0);
         game.enable_display_nmi(false);
@@ -602,7 +593,7 @@ fn exit_time_up<H: Host>(game: &mut H) -> CoroutineRet {
     game.fade(false);
     if game.ram().read_byte(0x51) == 0x80 {
         game.enable_display_nmi(true);
-        game.finish_gameplay_display(true);
+        finish_gameplay(true, game);
         word! { game, 0;
             screen_fade_delay, screen_fade_counter, ceres_status, timer_status,
         }
@@ -699,6 +690,23 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
     0
 }
 
+/// Upload the options screen tiles.
+fn upload_options_tiles<H: Host>(game: &mut H) {
+    register_writes! { game;
+        mirror(VMADDL as u16, 0, 0x72, true); byte(VMADDH as u16, 0x58);
+        byte(VMAIN as u16, 0x80);
+    }
+    crate::display::transfer::setup_transfer(u16::from_ne_bytes([1, 0x18]), 0x8edc00, 0x800, game);
+    game.write_register(MDMAEN as u16, 2);
+}
+
+/// Clear HDMA and the scanline IRQ, then reset the gameplay layers.
+fn finish_gameplay<H: Host>(clear_current_irq: bool, game: &mut H) {
+    game.clear_hdma();
+    game.disable_scanline_irq();
+    display_refresh::reset_gameplay_layers(clear_current_irq, game);
+}
+
 /// Cancel the three sound channels, keeping at most `max_queued` queued.
 fn cancel_sound_effects<H: Host>(game: &mut H, max_queued: u8) {
     for (channel, sound) in [2, 0x71, 1].into_iter().enumerate() {
@@ -742,7 +750,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
             let death = matches!(entry, Entry::DeathBlackout);
             if fading::all(if death { 6 } else { 8 }, game) != 0 {
                 if death {
-                    game.finish_gameplay_display(true);
+                    finish_gameplay(true, game);
                     word! { game, 0;
                         game_options_screen_index, screen_fade_delay, screen_fade_counter,
                     }
@@ -781,7 +789,7 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
             if game.ram().read_byte(0x51) == 0x80 {
                 let ceres = matches!(entry, Entry::CeresBlackout);
                 game.enable_display_nmi(true);
-                game.finish_gameplay_display(ceres);
+                finish_gameplay(ceres, game);
                 word! { game, 0; screen_fade_delay, screen_fade_counter }
                 if ceres {
                     word!(game.loading_game_state = kLoadingGameState_22_EscapingCeres as u16);

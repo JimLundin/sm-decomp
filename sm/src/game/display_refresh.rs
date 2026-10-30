@@ -7,8 +7,8 @@ use sm_game::display::control::Brightness;
 pub(crate) use sm_game::display::transfer::ScrollingLayout as ScrollingDmaLayout;
 use sm_game::display_refresh as refresh;
 pub(crate) use sm_game::display_refresh::{
-    fade, native_word, queue_fx_clear, queue_native_transfer, queue_scrolling_tiles,
-    reset_gameplay_layers, reset_layer_mirrors, set_blank, set_native_word, wait,
+    fade, native_word, queue_fx_clear, queue_native_transfer, queue_scrolling_tiles, set_blank,
+    set_native_word, wait,
 };
 
 impl refresh::Host for Game {
@@ -49,43 +49,9 @@ impl refresh::Host for Game {
     }
 }
 
-/// Requires a live, exclusively accessed SNES backend for ordered PPU writes.
-pub(crate) unsafe fn pause_graphics(paused: bool, game: &mut Game) {
-    refresh::pause_graphics(paused, game);
-}
-
 /// Requires live, exclusively accessed hardware for the ordered CPU I/O and OAM reset.
 pub(crate) unsafe fn initialize_io_and_oam(brightness: Option<u8>, game: &mut Game) {
     refresh::initialize_io_and_oam(brightness, game);
-}
-
-/// Requires a live, exclusively accessed SNES backend and prepared cartridge graphics.
-pub(crate) unsafe fn initialize_gameplay(game: &mut Game) {
-    refresh::initialize_gameplay(game);
-}
-
-/// Requires a live, exclusively accessed SNES backend for VRAM readback.
-pub(crate) unsafe fn capture_pause_background(game: &mut Game) {
-    refresh::capture_pause_background(game);
-}
-
-/// Requires a live, exclusively accessed SNES backend and pause graphics assets.
-pub(crate) unsafe fn load_pause_assets(game: &mut Game) {
-    refresh::load_pause_assets(game);
-}
-
-/// Requires a live, exclusively accessed SNES backend throughout map and label upload.
-pub(crate) unsafe fn upload_pause_map(game: &mut Game) {
-    refresh::upload_pause_map(game);
-}
-
-/// Requires a live, exclusively accessed backend for DMA register writes.
-pub(crate) unsafe fn finish_gameplay(clear_current_irq: bool, game: &mut Game) {
-    unsafe {
-        crate::game::visual_runtime::clear_hdma(game);
-    }
-    crate::game::scanline_irq::disable(game);
-    reset_gameplay_layers(clear_current_irq, game);
 }
 
 /// Requires a live, exclusively accessed SNES backend.
