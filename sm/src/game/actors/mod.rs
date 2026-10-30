@@ -15,7 +15,6 @@ pub(in crate::game) mod falling_platforms;
 pub(in crate::game) mod fireflea;
 pub(crate) mod identity;
 pub(in crate::game) mod kago;
-pub(in crate::game) mod maridia_fish;
 pub(in crate::game) mod maridia_snail;
 pub(crate) mod metroid;
 pub(in crate::game) mod mochtroid;
@@ -30,6 +29,7 @@ pub(in crate::game) mod reflec;
 pub(in crate::game) mod roach;
 pub(crate) mod shaktool;
 pub(in crate::game) mod sidehopper;
+pub(in crate::game) mod skultera;
 pub(crate) mod torizo;
 pub(in crate::game) mod wall_crawlers;
 

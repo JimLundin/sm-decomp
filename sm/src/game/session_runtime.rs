@@ -1086,7 +1086,7 @@ crate::game::callback_dispatch! {
         10718827 => actors::fireflea::touch;
         10718851 => actors::fireflea::power_bomb;
         10718857 => actors::fireflea::shot;
-        10719413 => actors::maridia_fish::initialize; 10719531 => actors::maridia_fish::advance;
+        10719413 => actors::skultera::initialize; 10719531 => actors::skultera::main_ai;
         10720486 => elevator::initialize; 10720554 => elevator::advance;
         10722463 => [falling_platforms::initialize(true, game)]; 10722490 => [falling_platforms::initialize(false, game)];
         10722582 => falling_platforms::advance; 10723080 => falling_platforms::shot;
@@ -1521,7 +1521,7 @@ crate::game::callback_dispatch! {
         10652048 => [crate::game::mini_crocomire::resume(false, j, game)];
         10652061 => [crate::game::mini_crocomire::resume(true, j, game)];
         10651846 => [crate::game::goofball::landed(j, game)];
-        10719382 | 10719392 | 10719402 => [actors::maridia_fish::instruction(ea, j, game)];
+        10719382 | 10719392 | 10719402 => [actors::skultera::instruction(ea, j, game)];
         0xa30000..=0xa3ffff => [{ crate::rtl::Unreachable(game); EnemyScript::Stop }];
         0xa50000..=0xa5ffff => [sm_a5::DispatchEnemyInstr(ea, k, j, game)];
         0xa60000..=0xa6ffff => [sm_a6::DispatchEnemyInstr(ea, k, j, game)];
