@@ -4,13 +4,13 @@
 use crate::game::actors::access::ActorKey as Key;
 use crate::game::actors::{self, api as actor_api};
 use crate::game::constants::bank_86::addr_kEproj_BombTorizoLowHealthInitialDrool;
-use crate::game::enemy_projectiles::SpawnEprojWithGfx;
-use crate::game::session_runtime::Runtime;
-use crate::game::sm_aa::{
+use crate::game::constants::bank_aa::{
     addr_kTorizo_Ilist_B1C8, addr_kTorizo_Ilist_CDE1, addr_kTorizo_Ilist_CE43,
     addr_kTorizo_Ilist_CEA5, addr_kTorizo_Ilist_CEFF, addr_kTorizo_Ilist_D1F1,
     addr_kTorizo_Ilist_D2AD,
 };
+use crate::game::enemy_projectiles::SpawnEprojWithGfx;
+use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 pub(crate) use sm_game::actors::torizo::*;
 
@@ -56,7 +56,7 @@ impl Host for Game {
 
 impl Ai for Game {
     fn run_function(&mut self, address: u32) {
-        crate::game::sm_aa::run_aa_function(address, self);
+        crate::game::session_runtime::run_aa_function(address, self);
     }
 
     fn wake_when_statue_crumbles(&mut self, k: u16) {
@@ -110,7 +110,7 @@ impl Ai for Game {
 // The named functions, lists and projectiles are the decompilation's.
 const _: () = {
     use crate::game::constants::bank_86 as eproj;
-    use crate::game::sm_aa as aa;
+    use crate::game::constants::bank_aa as aa;
     use sm_game::actors::torizo::{function as f, list as l, movement as m, projectile as p};
     const fn at(word: u16) -> u32 {
         0xaa_0000 | word as u32

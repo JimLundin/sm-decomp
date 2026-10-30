@@ -99,6 +99,16 @@ pub struct Runtime<'g> {
         std::sync::Arc<crate::game_state::persistent_session::SessionStartRequirements>,
     )>,
 }
+/// Spawns the collision PLM with `header` at the selected block. Was in bank $AA.
+pub(crate) fn spawn_collision_plm(header: u16, game: &mut Game) {
+    unsafe { crate::game::room_mechanisms::spawn_collision(header, game) };
+}
+
+/// Runs the bank $AA function at `address` for the current enemy. Was in bank $AA.
+pub(crate) fn run_aa_function(address: u32, game: &mut Game) {
+    unsafe { actor_species_pre_instruction(address, game) };
+}
+
 /// Reflec's shot reaction, with the original diagnostic when it cannot tell
 /// which projectile hit it. Was `Reflec_Shot` in bank $A3.
 fn reflec_shot(game: &mut Game) {
@@ -1051,7 +1061,7 @@ use crate::game::actors::{self, api as actor_api};
 use crate::game::moving_platforms::{self as mechanisms, Event, Kind};
 use crate::game::rippers::{self, Kind as RipperKind};
 use crate::game::{ground_patrol, large_snail};
-use crate::game::{sm_a5, sm_a6, sm_a7, sm_a9, sm_aa};
+use crate::game::{sm_a5, sm_a6, sm_a7, sm_a9};
 use crate::types::EnemyData;
 use sm_game::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
 use sm_game::combat_rules::LatchMode;
@@ -1352,7 +1362,6 @@ crate::game::callback_dispatch! {
         0xa60000..=0xa6ffff => [sm_a6::DispatchEnemyAi(ea, game)];
         0xa70000..=0xa7ffff => [sm_a7::DispatchEnemyAi(ea, game)];
         0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyAi(ea, game)];
-        0xaa0000..=0xaaffff => [sm_aa::DispatchEnemyAi(ea, game)];
         0xb30000..=0xb3ffff => [{ crate::rtl::Unreachable(game); }];
     }
 }
@@ -1392,9 +1401,6 @@ crate::game::address_dispatch! {
             crate::game::actors::magdollite::finish_arm_growth(actor, game);
         }];
         11059843 | 11059878 | 11059919 | 11060075 | 11060193 | 11060329 | 11060444 | 11060480 | 11060509 | 11060584 | 11060585 | 11060639 => [crate::game::actors::maridia_floater::advance(ea as u16, k, game)];
-        11192146 => sm_aa::Torizo_Func_5;
-        11192364 => sm_aa::Torizo_Func_7;
-        11195889 => sm_aa::Torizo_D5F1;
 
         10665692 => [crate::game::lava_jumper::follow_parent(k, game)];
         10665754 => [crate::game::lava_jumper::launch(k, game)];
@@ -1445,7 +1451,6 @@ crate::game::address_dispatch! {
         10661134 => [crate::game::gunship::phase(k, 0xad0e, game)];
         10661165 => [crate::game::gunship::phase(k, 0xad2d, game)];
         0xa70000..=0xa7ffff => [sm_a7::DispatchEnemyPreInstr(ea, k, game)];
-        0xaa0000..=0xaaffff => [sm_aa::DispatchEnemyPreInstr(ea, k, game)];
     }
 }
 crate::game::callback_dispatch! {
@@ -1488,8 +1493,6 @@ crate::game::callback_dispatch! {
         11128778 => [sm_game::actors::baby_metroid_cutscene::BabyMetroid_Instr_2(k, j)];
         11139360 => [sm_game::actors::baby_metroid_encounter::BabyMetroid_Instr_3(k, j)]; 11139382 => [sm_game::actors::baby_metroid_encounter::BabyMetroid_Instr_4(k, j)];
         11139472 => [sm_game::actors::baby_metroid_encounter::BabyMetroid_Instr_6(k, j)];
-        11190984 => [sm_aa::Torizo_Instr_7(k, j)];
-        11196831 => [sm_aa::Shaktool_Instr_6(k, j)];
         10664371 => [{
             crate::game::rinka::hide(k, false, game);
             j
@@ -1543,7 +1546,8 @@ crate::game::callback_dispatch! {
         0xa70000..=0xa7ffff => [sm_a7::DispatchEnemyInstr(ea, k, j, game)];
 
         0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyInstr(ea, k, j, game)];
-        0xaa0000..=0xaaffff => [sm_aa::DispatchEnemyInstr(ea, k, j, game)];
+        11174004 => [{ crate::ram_map::slot!(game, EnemyData[k as i32].ai_preinstr = (0xaa807bi32) as u16); j }];
+        11173995 => [{ crate::ram_map::slot!(game, EnemyData[k as i32].ai_preinstr = j.word(0)); j.offset(1) }];
 
 
         11769031 | 11769095 | 11769111 | 11769175 => [{ actors::botwoon::set_hitbox(8, 16, game); j }];

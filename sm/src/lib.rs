@@ -480,7 +480,6 @@ pub mod game {
     pub mod sm_a6;
     pub mod sm_a7;
     pub mod sm_a9;
-    pub mod sm_aa;
     pub(crate) mod space_pirates;
     pub(crate) mod spikey_platforms;
     pub use sm_game::sprite_objects;
