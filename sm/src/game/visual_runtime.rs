@@ -214,7 +214,7 @@ pub(crate) fn advance_crocomire(game: &mut Game) {
             Crocomire[0].var_1F = spawn_hdma(0xa4, &DEFINITION, game)
         );
     }
-    crocomire::push_player(game);
+    crocomire::samus_collision(game);
     crocomire::update_palette(game);
 }
 

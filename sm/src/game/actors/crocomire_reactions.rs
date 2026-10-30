@@ -12,6 +12,21 @@ use sm_data::crocomire::{
     SpikeWallDestinations, SpikeWallTiles, import_words,
 };
 pub(crate) use sm_game::actors::crocomire_reactions::*;
+
+// The named bank $A4 instructions are the ones `session_runtime` dispatches on.
+const _: () = {
+    use sm_game::actors::crocomire_reactions::instruction as i;
+    assert!(i::FIGHT_AI == 10782374 && i::MAYBE_START_PROJECTILE_ATTACK == 10782546);
+    assert!(i::QUEUE_CRY == 10783995 && i::QUEUE_BIG_EXPLOSION == 10784007);
+    assert!(i::QUEUE_SKELETON_COLLAPSES == 10784019 && i::SHAKE_SCREEN == 10784711);
+    assert!(i::MOVE_LEFT_4PX == 10784735 && i::MOVE_LEFT_4PX_AND_SPAWN_DUST == 10784762);
+    assert!(i::MOVE_LEFT_4PX_AND_SPAWN_DUST_2 == 10784767);
+    assert!(i::MOVE_LEFT_4PX_SPAWN_DUST_AND_HANDLE_SPIKE_WALL == 10784797);
+    assert!(i::MOVE_RIGHT_4PX_IF_ON_SCREEN == 10784859 && i::MOVE_RIGHT_4PX == 10784895);
+    assert!(i::MOVE_RIGHT_4PX_IF_ON_SCREEN_AND_SPAWN_DUST == 10784911);
+    assert!(i::MOVE_RIGHT_4PX_AND_SPAWN_DUST == 10784916);
+    assert!(i::SPAWN_DUST_FIRST == 10787483 && i::SPAWN_DUST_LAST == 10787543);
+};
 use sm_game::enemy_projectiles::drops::DropSource;
 use sm_game::gameplay_flag_host::BossWordOrder;
 
