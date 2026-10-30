@@ -1167,7 +1167,7 @@ crate::game::callback_dispatch! {
         if word!(game.cinematic_var10) as i32 + 79 & 0x8000 != 0 {
             CinematicBackground.spawn(addr_kCinematicBgObjectDef_8BF748 as u16, 0x4c00, game);
             word!(game.cinematic_function = (0x8be7bai32) as u16);
-            unsafe { crate::game::save_slots::record_completion(game) };
+            crate::game::save_slots::record_completion(game);
         }
     };
     @countdown [pub fn (game: &mut Game)];
