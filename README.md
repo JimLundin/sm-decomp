@@ -22,15 +22,16 @@ Rust game can be compared with the original.
 
 Engine code is being moved, module by module, out of the compatibility crate
 `sm` into target crates that the compiler keeps free of the emulator. Nothing
-yet runs without the emulated hardware: `sm_runtime` does not yet render or
-play the game, and the target-engine [validation gates](docs/target-architecture/VALIDATION.md)
+yet runs without the emulated hardware: the emulated PPU draws through
+`sm_runtime`'s scanline renderer, but the game still runs on the emulated
+machine, and the target-engine [validation gates](docs/target-architecture/VALIDATION.md)
 have not been run.
 
 ## Crate layout
 
 | Crate | Role |
 | --- | --- |
-| [`crates/sm_game`](crates/sm_game/README.md) | Gameplay rules and the deterministic `Session` with typed state; about 102,000 lines. No access to the emulator, ROM layout or devices; `unsafe` is forbidden. |
+| [`crates/sm_game`](crates/sm_game/README.md) | Gameplay rules and the deterministic `Session` with typed state; about 102,000 lines. No dependency on the emulator or devices, though some moved code still reaches the RAM image through host traits; `unsafe` is forbidden. |
 | [`crates/sm_data`](crates/sm_data/README.md) | Content records built from bytes and validated when imported (tables, palettes, boss and enemy data). No dependencies; `unsafe` is forbidden. |
 | [`crates/sm_runtime`](crates/sm_runtime/README.md) | Shared scanline renderer for prepared media, plus Scene and message consumers. The destination for the renderer, audio and devices. |
 | [`crates/sm_app`](crates/sm_app/README.md) | The desktop binary `sm`: SDL2 window, input, configuration, OpenGL presentation and the run loop. Still built on `sm`. |

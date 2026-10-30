@@ -1,8 +1,8 @@
 # sm_game
 
 Gameplay rules and the deterministic `Session`: the package that becomes the
-engine. It depends only on `sm_data`, forbids `unsafe`, and has no access to
-the emulator, ROM layout or devices. CI checks the dependency tree and runs
+engine. It depends only on `sm_data`, forbids `unsafe`, and cannot reach the
+emulator or devices except through host traits that `sm` implements. CI checks the dependency tree and runs
 `cargo test -p sm_game`.
 
 Modules arrive here from `sm/src/game/` once they compile without `sm`. A
