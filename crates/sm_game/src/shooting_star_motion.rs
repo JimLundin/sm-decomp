@@ -1,119 +1,133 @@
 //! Shooting-star motion and drawing for the ending's star field.
+#![forbid(unsafe_code)]
 use crate::imported::word as table_word;
-use crate::ram::RawRam as _;
-use crate::ram::{checked_word, word};
+use crate::menus::host::Host;
+use crate::ram::words::{oam_next_ptr, shooting_stars_enabled};
 use sm_data::shooting_stars::TILE_ADDRESS as STAR_TILE_ADDRESS;
 
-// Shooting-star scratch records stay in RAM. Native scalar loads use from_le
-// on checked LE reads; only the original compound updates use LE arithmetic.
-pub fn initialize_shooting_stars<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    for index in 0..40 {
-        let at = 0xe0c + 16 * index;
-        crate::word_transfers!(game, ascending, 1;
-            native(at) <- value(index as u16),
-            native(at + 12) <- value(0),
-            native(at + 14) <- value(0),
-        );
-        let delay = crate::shooting_stars::star(game, index).start_delay;
-        crate::word_transfers!(game, ascending, 1; native(at + 10) <- value(if delay == 0 { 32 } else { delay }));
-        if delay != 0 {
-            checked_word!(game, at; = checked_word!(game, at;) | 0x8000);
-        }
-        for (offset, value) in [(2, 128), (6, 128), (4, 0), (8, 0)] {
-            crate::word_transfers!(game, ascending, 1; native(at + offset) <- value(value));
-        }
+/// The 40 16-byte star records: state (index, frame high, bit 15 waiting), X
+/// and Y positions with fractions, timer, and speeds; OAM and reset values.
+const RECORDS: core::ops::Range<usize> = 0xe0c..0x108c;
+const STATE: usize = 0;
+const X: usize = 2;
+const X_FRACTION: usize = 4;
+const Y: usize = 6;
+const Y_FRACTION: usize = 8;
+const TIMER: usize = 10;
+const X_SPEED: usize = 12;
+const Y_SPEED: usize = 14;
+const OAM: usize = 0x370;
+const CENTRE: u16 = 128;
+const RESET_WAIT: u16 = 32;
+const CENTRED: [(usize, u16); 4] = [(X, CENTRE), (Y, CENTRE), (X_FRACTION, 0), (Y_FRACTION, 0)];
+const STILL: [(usize, u16); 2] = [(X_SPEED, 0), (Y_SPEED, 0)];
+
+/// Store each (field, value) word of the record at `at`, in order.
+fn store_fields<H: Host + ?Sized>(game: &mut H, at: usize, fields: &[(usize, u16)]) {
+    for &(field, value) in fields {
+        game.write_slice_native(at + field, value);
     }
 }
 
-pub fn advance_shooting_stars<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    if word!(game.shooting_stars_enabled) == 0 {
+/// Clear a star's frame and wait bit, keeping its index.
+fn rewind<H: Host + ?Sized>(game: &mut H, at: usize) {
+    game.write_slice_native(at + STATE, u16::from(game.byte(at + STATE)));
+}
+
+/// Reset every star record to the centre with its start delay.
+pub fn initialize_shooting_stars<H: Host + ?Sized>(game: &mut H) {
+    for index in 0..40 {
+        let at = RECORDS.start + 16 * index;
+        game.write_slice_native(at + STATE, index as u16);
+        store_fields(game, at, &STILL);
+        let delay = crate::shooting_stars::star(game, index).start_delay;
+        game.write_slice_native(at + TIMER, if delay == 0 { RESET_WAIT } else { delay });
+        if delay != 0 {
+            game.write_word_le(game.word(at + STATE) | 0x8000, at + STATE);
+        }
+        store_fields(game, at, &CENTRED);
+    }
+}
+
+/// Move every star, then draw the visible ones into OAM.
+pub fn advance_shooting_stars<H: Host + ?Sized>(game: &mut H) {
+    if game.word(shooting_stars_enabled) == 0 {
         return;
     }
-    for at in (0xe0c..0x108c).step_by(16) {
-        let identity = u16::from_le(checked_word!(game, at;));
+    for at in RECORDS.step_by(16) {
+        let identity = game.word(at + STATE);
         if (identity as i16) < 0 {
-            let timer = u16::from_le(checked_word!(game, at + 10;)).wrapping_sub(1);
-            crate::word_transfers!(game, ascending, 1; native(at + 10) <- value(timer));
+            let timer = game.word(at + TIMER).wrapping_sub(1);
+            game.write_slice_native(at + TIMER, timer);
             if (timer as i16) < 0 {
-                crate::word_transfers!(game, ascending, 1; native(at + 10) <- value(32));
-                crate::word_transfers!(game, ascending, 1; native(at) <- value(u16::from(game.ram().read_byte(at))));
+                game.write_slice_native(at + TIMER, RESET_WAIT);
+                rewind(game, at);
             }
             continue;
         }
         let star = crate::shooting_stars::star(game, usize::from(identity as u8));
         let fast = ((i32::from(identity & 0xff00) - 1024) & 0x8000) == 0;
-        checked_word!(game, at + 12; += if fast {
-            star.x_acceleration.wrapping_add(star.x_acceleration)
-        } else {
-            star.x_acceleration
-        });
-        let y_speed = if fast {
-            star.y_acceleration
-                .wrapping_add(u16::from_le(checked_word!(game, at + 14;)))
-        } else {
-            u16::from_le(checked_word!(game, at + 14;))
-        };
-        crate::word_transfers!(game, ascending, 1; native(at + 14) <- value(
-            star.y_acceleration.wrapping_add(y_speed)
-        ));
-        for (position, fraction, velocity) in [(2, 4, 12), (6, 8, 14)] {
-            let speed = u16::from_le(checked_word!(game, at + velocity;));
+        let x_step = star.x_acceleration.wrapping_mul(1 + u16::from(fast));
+        let x_speed = game.word(at + X_SPEED).wrapping_add(x_step);
+        game.write_word_le(x_speed, at + X_SPEED);
+        let boost = if fast { star.y_acceleration } else { 0 };
+        let y_speed = game.word(at + Y_SPEED).wrapping_add(boost);
+        game.write_slice_native(at + Y_SPEED, star.y_acceleration.wrapping_add(y_speed));
+        for (position, fraction, velocity) in [(X, X_FRACTION, X_SPEED), (Y, Y_FRACTION, Y_SPEED)] {
+            let speed = game.word(at + velocity);
             let whole = speed.to_ne_bytes()[1] as i8 as u16;
-            let (fractional, carry) =
-                (speed << 8).overflowing_add(u16::from_le(checked_word!(game, at + fraction;)));
-            crate::word_transfers!(game, ascending, 1; native(at + fraction) <- value(fractional));
-            checked_word!(game, at + position; += whole.wrapping_add(u16::from(carry)));
+            let (fractional, carry) = (speed << 8).overflowing_add(game.word(at + fraction));
+            game.write_slice_native(at + fraction, fractional);
+            let step = whole.wrapping_add(u16::from(carry));
+            let moved = game.word(at + position).wrapping_add(step);
+            game.write_word_le(moved, at + position);
         }
     }
-    let mut output = word!(game.oam_next_ptr);
-    for at in (0xe0c..0x108c).step_by(16) {
-        if (u16::from_le(checked_word!(game, at;)) as i16) < 0 {
+    let mut output = game.word(oam_next_ptr);
+    for at in RECORDS.step_by(16) {
+        if (game.word(at + STATE) as i16) < 0 {
             continue;
         }
-        let x = u16::from_le(checked_word!(game, at + 2;)) as i16;
-        let oam = 0x370 + usize::from(output);
+        let x = game.word(at + X) as i16;
+        let oam = OAM + usize::from(output);
         let y: i16;
-        if game.ram().read_byte(at + 3) != 0
-            || (i32::from(x) - 4) & 0xff00 != 0
+        if game.byte(at + X + 1) != 0
+            || ((i32::from(x) - 4) & 0xff00) != 0
             || {
                 // This overlapping word write precedes even the Y rejection.
-                crate::word_transfers!(game, ascending, 1; native(oam) <- value((x as u16).wrapping_sub(4)));
-                y = u16::from_le(checked_word!(game, at + 6;)) as i16;
-                game.ram().read_byte(at + 7) != 0
+                game.write_slice_native(oam, (x as u16).wrapping_sub(4));
+                y = game.word(at + Y) as i16;
+                game.byte(at + Y + 1) != 0
             }
-            || (i32::from(y) - 4) & 0xff00 != 0
+            || ((i32::from(y) - 4) & 0xff00) != 0
         {
-            for (offset, value) in [
-                (10, 32),
-                (2, 128),
-                (6, 128),
-                (4, 0),
-                (8, 0),
-                (12, 0),
-                (14, 0),
-            ] {
-                crate::word_transfers!(game, ascending, 1; native(at + offset) <- value(value));
-            }
-            crate::word_transfers!(game, ascending, 1; native(at) <- value(u16::from(game.ram().read_byte(at))));
+            game.write_slice_native(at + TIMER, RESET_WAIT);
+            store_fields(game, at, &CENTRED);
+            store_fields(game, at, &STILL);
+            rewind(game, at);
             continue;
         }
-        crate::word_transfers!(game, ascending, 1; native(oam + 1) <- value((y as u16).wrapping_sub(4)));
-        let timer = u16::from_le(checked_word!(game, at + 10;)).wrapping_sub(1);
-        crate::word_transfers!(game, ascending, 1; native(at + 10) <- value(timer));
+        game.write_slice_native(oam + 1, (y as u16).wrapping_sub(4));
+        let timer = game.word(at + TIMER).wrapping_sub(1);
+        game.write_slice_native(at + TIMER, timer);
         if timer as i16 <= 0 {
-            let identity = u16::from_le(checked_word!(game, at;));
-            let star = usize::from(u16::from_le(checked_word!(game, at;)) as u8);
+            let identity = game.word(at + STATE);
+            let star = usize::from(identity as u8);
             let frame_delay = crate::shooting_stars::star(game, star).frame_delay;
-            crate::word_transfers!(game, ascending, 1; native(at + 10) <- value(frame_delay));
-            crate::word_transfers!(game, ascending, 1; native(at) <- value(identity.wrapping_add(512)));
+            game.write_slice_native(at + TIMER, frame_delay);
+            game.write_slice_native(at + STATE, identity.wrapping_add(512));
         }
-        if game.ram().read_byte(at + 1) != 0 {
-            crate::word_transfers!(game, ascending, 1; native(oam + 2) <- value(
-                table_word(&game.visual_tables().star_tiles, game, STAR_TILE_ADDRESS,
-                    ((u16::from_le(checked_word!(game, at;)) & 0xff00) >> 9) as isize)
-            ));
+        if game.byte(at + STATE + 1) != 0 {
+            let frame = ((game.word(at + STATE) & 0xff00) >> 9) as isize;
+            let tile = table_word(
+                &game.visual_tables().star_tiles,
+                game,
+                STAR_TILE_ADDRESS,
+                frame,
+            );
+            game.write_slice_native(oam + 2, tile);
             output = output.wrapping_add(4);
         }
     }
-    word!(game.oam_next_ptr = output);
+    game.write_word_le(output, oam_next_ptr);
 }

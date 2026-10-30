@@ -2532,10 +2532,10 @@ impl sm_game::ram::RawRam for WorkRam {
     }
 }
 
-/// The RAM image as its own projection, for code shared with session leases.
+/// Game's projection: compatibility reads and RAM-image stores, as named RAM words use.
 impl sm_game::runtime_access::SessionRam for Game {
     fn byte(&self, at: usize) -> u8 {
-        self.ram().read_byte(at)
+        Game::compatibility_byte(self, at)
     }
     fn set_byte(&mut self, at: usize, value: u8) {
         self.ram().write_byte(at, value);

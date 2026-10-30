@@ -713,7 +713,8 @@ fn draw_cinematic_background<H: crate::menus::host::Host + ?Sized>(
                     (6, destination),
                     (8, if columns { 2 } else { 0 }),
                 ] {
-                    crate::cinematic::write_mode7_word(tail, field, value, game);
+                    let at = crate::display::transfer::MODE7_QUEUE + usize::from(tail) + field;
+                    game.write_slice_native(at, value);
                 }
                 tail = tail.wrapping_add(9);
                 source = source.wrapping_add(length);

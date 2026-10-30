@@ -295,19 +295,6 @@ pub fn scaled_cinematic_value(value: u16, scale: u16) -> u16 {
     ((i32::from(value as i16) * i32::from(scale as i16)) >> 8) as u16
 }
 
-/// Store one word of a Mode 7 queue entry at `tail + field`, in native byte order.
-pub fn write_mode7_word<H: crate::menus::host::Host + ?Sized>(
-    tail: u16,
-    field: usize,
-    value: u16,
-    game: &mut H,
-) {
-    let at = crate::display::transfer::MODE7_QUEUE + usize::from(tail) + field;
-    let bytes = value.to_ne_bytes();
-    game.ram().write_byte(at, bytes[0]);
-    game.ram().write_byte(at + 1, bytes[1]);
-}
-
 /// Project `point` through the cinematic Mode 7 matrix and centre in RAM.
 pub fn project_cinematic_point<H: crate::ram::WorkRamAccess + ?Sized>(
     point: crate::geometry::Point,

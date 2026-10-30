@@ -29,8 +29,8 @@ pub struct BeamScratch {
 
 /// The beam windows' host: tables through the RAM projection, Mother Brain's
 /// beam words through the slot view, and the cartridge reads.
-pub trait BeamHost: Host + SessionRam + SlotAccess {}
-impl<T: Host + SessionRam + SlotAccess + ?Sized> BeamHost for T {}
+pub trait BeamHost: Host + SlotAccess {}
+impl<T: Host + SlotAccess + ?Sized> BeamHost for T {}
 
 pub type ImportedTables = Option<Imported<BeamGradients>>;
 
