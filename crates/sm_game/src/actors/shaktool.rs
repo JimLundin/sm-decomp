@@ -221,3 +221,320 @@ pub fn set_curling_angles(k: u16, game: &mut impl Host) {
         );
     }
 }
+
+/// Bank $AA Shaktool functions, stored in `function`.
+pub mod function {
+    pub const NOTHING: u16 = 0xdcaa;
+    pub const ARM_PIECE: u16 = 0xdcac;
+    pub const HEAD: u16 = 0xdcd7;
+    pub const FINAL_PIECE: u16 = 0xdd25;
+}
+
+const BANK: u8 = 0xaa;
+/// $AA:DEDB: each piece's function.
+const PIECE_FUNCTIONS: u16 = 0xdedb;
+/// `movement_options` bit 14: the chain has curled and turns as one; bit 13:
+/// it flipped at the last block, so the next block reverses it instead.
+const CURLED: u16 = 0x4000;
+const FLIPPED_AT_BLOCK: u16 = 0x2000;
+/// A curl ends when the curl angle passes F000h.
+const CURL_END: u16 = 0xf000;
+/// A curl restarts its angle at 78h whole steps.
+const CURL_RESTART: u16 = 0x7800;
+/// A quarter turn, between the final piece's facing and the primary piece.
+const QUARTER_TURN: u16 = 0x4000;
+/// Shot dead, every piece's properties become just bit 9, deleted.
+const DEAD_PROPERTIES: u16 = 0x200;
+
+/// What the Shaktool pieces' AI needs beyond the tables: the common actor
+/// operations and its function dispatch.
+pub trait Ai:
+    Host
+    + crate::actors::host::ActorRuntime
+    + crate::cartridge::NativeDiagnostics
+    + crate::records::Records
+{
+    /// Run the bank $AA function at `address` for the current piece.
+    fn run_function(&mut self, address: u32);
+    /// The angle from actor `from` to actor `to`.
+    fn angle_between(&mut self, from: u16, to: u16) -> u16;
+}
+
+/// Main AI and hurt AI ($AA:DCA3): the piece's function. Was `Shaktool_Hurt`.
+pub fn main_ai(game: &mut impl Ai) {
+    let piece = i32::from(word!(game.cur_enemy_index));
+    let address = (u32::from(BANK) << 16) | u32::from(slot!(game, Piece[piece].function));
+    game.run_function(address);
+}
+
+/// Initialisation AI ($AA:DE43): piece `piece_index` from the piece table,
+/// placed from the previous piece. Was `Shaktool_Init`.
+pub fn initialize(game: &mut impl Ai) {
+    let piece = i32::from(word!(game.cur_enemy_index));
+    slot!(game, Piece[piece].base.instruction_timer = 1);
+    slot!(game, Piece[piece].base.timer = 0);
+    slot!(game, Piece[piece].facing_angle = 0);
+    slot!(game, Piece[piece].direction = 0);
+    let offset: u16 = slot!(game, Piece[piece].piece_index);
+    let data = crate::shaktool_tables::piece(game, (offset as i32 >> 1) as isize);
+    slot!(
+        game,
+        Piece[piece].base.properties =
+            (slot!(game, Piece[piece].base.properties)) | data.properties
+    );
+    slot!(
+        game,
+        Piece[piece].primary_piece = (word!(game.cur_enemy_index)).wrapping_sub(data.ram_offset)
+    );
+    slot!(
+        game,
+        Piece[piece].function =
+            crate::cartridge::native_record(BANK, PIECE_FUNCTIONS, game).word(offset as usize)
+    );
+    // The curl angle deltas are read at the byte offset, as the original did.
+    let at = offset as usize;
+    let curl = u16::from_ne_bytes([
+        CURL_ANGLE_DELTAS[at / 2].to_ne_bytes()[at % 2],
+        CURL_ANGLE_DELTAS[(at + 1) / 2].to_ne_bytes()[(at + 1) % 2],
+    ]);
+    slot!(
+        game,
+        Piece[piece].neighbour_angle_delta = curl.wrapping_sub(data.zero)
+    );
+    slot!(game, Piece[piece].neighbour_angle = data.neighbour_angle);
+    slot!(
+        game,
+        Piece[piece].base.current_instruction = data.instruction_list
+    );
+    slot!(game, Piece[piece].base.layer = data.layer);
+    if offset != 0 {
+        position_relative_to_previous(word!(game.cur_enemy_index), game);
+    }
+}
+
+/// Enemy touch ($AA:DF2F). Was `Shaktool_Touch`.
+pub fn touch(game: &mut impl Ai) {
+    game.contact_reaction(crate::actors::host::Death::Finalize);
+}
+
+/// Enemy shot ($AA:DF34): shot dead, every piece is deleted. Was
+/// `Shaktool_Shot`.
+pub fn shot(game: &mut impl Ai) {
+    game.shot_reaction(crate::actors::host::Shot::Finalize);
+    let piece = i32::from(word!(game.cur_enemy_index));
+    if slot!(game, Piece[piece].base.health) == 0 {
+        let primary: u16 = slot!(game, Piece[piece].primary_piece);
+        for segment in segments(primary) {
+            slot!(game, Piece[segment].base.properties = DEAD_PROPERTIES);
+        }
+    }
+}
+
+/// Instruction - reset Shaktool functions ($AA:D9BA). Was `Shaktool_Instr_1`.
+pub fn reset_functions(k: u16, jp: EnemyScript, game: &mut impl Ai) -> EnemyScript {
+    let primary: u16 = slot!(game, Piece[k as i32].primary_piece);
+    for (index, segment) in segments(primary).enumerate() {
+        let function = crate::shaktool_tables::piece(game, index as isize).function;
+        slot!(game, Piece[segment].function = function);
+    }
+    jp
+}
+
+/// The head's direction, which the unused projectile-relative moves follow.
+fn head_direction(k: u16, game: &mut impl Ai) -> u16 {
+    let head = slot!(game, Piece[k as i32].primary_piece) as i32 + HEAD;
+    slot!(game, Piece[head].direction)
+}
+
+/// The facing angle's whole byte over the neighbour angle's low byte.
+fn facing_whole_angle(k: u16, game: &mut impl Ai) -> u16 {
+    let piece = k as i32;
+    u16::from_ne_bytes([
+        slot!(byte game, Piece[piece].facing_angle[1]),
+        slot!(byte game, Piece[piece].facing_angle[2]),
+    ])
+}
+
+/// Unused. Instruction - lower enemy 1px away from enemy projectile
+/// ($AA:D931). Was `Shaktool_Instr_2`.
+pub fn lower_away_from_projectile(k: u16, jp: EnemyScript, game: &mut impl Ai) -> EnemyScript {
+    let angle = head_direction(k, game) ^ 0x80;
+    move_piece_one_pixel(k, jp, angle, game)
+}
+
+/// Unused. Instruction - raise enemy 1px towards enemy projectile ($AA:D93F).
+/// Was `Shaktool_Instr_3`.
+pub fn raise_towards_projectile(k: u16, jp: EnemyScript, game: &mut impl Ai) -> EnemyScript {
+    let angle = head_direction(k, game);
+    move_piece_one_pixel(k, jp, angle, game)
+}
+
+/// Instruction - lower enemy 1px ($AA:D94A). Was `Shaktool_Instr_4`.
+pub fn lower(k: u16, jp: EnemyScript, game: &mut impl Ai) -> EnemyScript {
+    let angle = facing_whole_angle(k, game) ^ 0x80;
+    move_piece_one_pixel(k, jp, angle, game)
+}
+
+/// Instruction - raise enemy 1px ($AA:D953). Was `Shaktool_Instr_5`.
+pub fn raise(k: u16, jp: EnemyScript, game: &mut impl Ai) -> EnemyScript {
+    let angle = facing_whole_angle(k, game);
+    move_piece_one_pixel(k, jp, angle, game)
+}
+
+/// Shaktool function - arm piece ($AA:DCAC): follow the previous piece and
+/// turn the neighbour angle, by a whole step once curled. Was `Shaktool_DCAC`.
+pub fn arm_piece(k: u16, game: &mut impl Ai) {
+    position_relative_to_previous(k, game);
+    let piece = i32::from(k);
+    let delta: u16 = if (slot!(game, Piece[piece].movement_options) & CURLED) != 0 {
+        slot!(
+            game,
+            Piece[piece].facing_angle = (slot!(game, Piece[piece].facing_angle)).wrapping_add(256)
+        );
+        256
+    } else {
+        slot!(game, Piece[piece].neighbour_angle_delta)
+    };
+    slot!(
+        game,
+        Piece[piece].neighbour_angle = (slot!(game, Piece[piece].neighbour_angle) as i32
+            + if slot!(game, Piece[piece].movement_options) & ANTICLOCKWISE != 0 {
+                -(delta as i32)
+            } else {
+                delta as i32
+            }) as u16
+    );
+}
+
+/// Shaktool function - head ($AA:DCD7): an arm piece that aims between its
+/// neighbours. Was `Shaktool_DCD7`.
+pub fn head(k: u16, game: &mut impl Ai) {
+    arm_piece(k, game);
+    let piece = i32::from(k);
+    let behind: u16 = (slot!(game, Piece[piece].neighbour_angle)) ^ HALF_TURN;
+    let mut aim: i16 = (behind as i32
+        + (((slot!(game, Piece[piece + PIECE].neighbour_angle)).wrapping_sub(behind)) as i32 >> 1))
+        as i16;
+    if (slot!(game, Piece[piece].direction) & FLIPPED) != 0 {
+        aim = {
+            let mut bytes = aim.to_ne_bytes();
+            bytes[1] ^= 0x80;
+            i16::from_ne_bytes(bytes)
+        };
+    }
+    // The aim rounded to one of eight directions.
+    let direction: u16 = (aim.to_ne_bytes()[1] as i32 + 8 & 0xe0) as u16;
+    slot!(byte game, Piece[piece].direction[0] = direction as u8);
+    slot!(
+        game,
+        Piece[piece].base.current_instruction =
+            crate::shaktool_tables::head_direction(game, ((direction >> 4) >> 1) as isize)
+                .instruction_list
+    );
+    slot!(game, Piece[piece].base.instruction_timer = 1);
+}
+
+/// Shaktool function - final piece ($AA:DD25): moves as an arm piece; on a
+/// block it flips once, then reverses, and head-bobs; else it curls. Was
+/// `Shaktool_DD25`.
+pub fn final_piece(mut k: u16, game: &mut impl Ai) {
+    let piece = i32::from(k);
+    let y: u16 = slot!(game, Piece[piece].base.y_pos);
+    let x: u16 = slot!(game, Piece[piece].base.x_pos);
+    arm_piece(k, game);
+    let target_y: u16 = slot!(game, Piece[piece].base.y_pos);
+    let target_x: u16 = slot!(game, Piece[piece].base.x_pos);
+    slot!(game, Piece[piece].base.x_pos = x);
+    slot!(game, Piece[piece].base.y_pos = y);
+    if game.move_horizontal(
+        k,
+        (((target_x as i16).wrapping_sub(x as i16)) as i32) << 16,
+        crate::actors::host::Slopes::Ignore,
+    ) || {
+        slot!(game, Piece[piece].base.y_pos = y);
+        game.move_vertical(k, (((target_y as i16).wrapping_sub(y as i16)) as i32) << 16)
+    } {
+        if (slot!(game, Piece[piece].movement_options) & FLIPPED_AT_BLOCK) != 0 {
+            set_movement_options(
+                k,
+                (slot!(game, Piece[piece].movement_options) ^ ANTICLOCKWISE) & 0x8fff,
+                game,
+            );
+        } else {
+            slot!(game, Piece[piece].base.x_pos = x);
+            slot!(game, Piece[piece].base.y_pos = y);
+            flip(k, game);
+            set_movement_options(
+                word!(game.cur_enemy_index),
+                (slot!(game, Piece[piece].movement_options)) | FLIPPED_AT_BLOCK,
+                game,
+            );
+            set_movement_options(
+                word!(game.cur_enemy_index),
+                (slot!(game, Piece[piece].movement_options)) & !CURLED,
+                game,
+            );
+        }
+        slot!(game, Piece[piece].direction = 0);
+        let primary: u16 = slot!(game, Piece[piece].primary_piece);
+        let angle: u16 = game.angle_between(k, primary);
+        let whole = ((angle as i32) << 8) as i16 as u16;
+        let facing: u16 = if (slot!(game, Piece[piece].movement_options) & ANTICLOCKWISE) != 0 {
+            whole.wrapping_sub(QUARTER_TURN)
+        } else {
+            whole.wrapping_add(QUARTER_TURN)
+        };
+        set_facing_angles(k, facing, game);
+        for index in (0..PIECES).rev() {
+            set_collision_angle_delta(k, game);
+            let bobbing = i32::from(k);
+            slot!(game, Piece[bobbing].function = function::NOTHING);
+            slot!(
+                game,
+                Piece[bobbing].base.current_instruction =
+                    crate::shaktool_tables::piece(game, index as isize).head_bob
+            );
+            slot!(game, Piece[bobbing].base.instruction_timer = 1);
+            k = k.wrapping_sub(PIECE as u16);
+        }
+    } else {
+        slot!(game, Piece[piece].base.x_pos = target_x);
+        slot!(game, Piece[piece].base.y_pos = target_y);
+        if (slot!(game, Piece[piece].movement_options) & CURLED) != 0 {
+            slot!(
+                game,
+                Piece[piece].facing_angle =
+                    (slot!(game, Piece[piece].facing_angle)).wrapping_add(256)
+            );
+        } else {
+            if ((slot!(game, Piece[piece].facing_angle)
+                ^ slot!(game, Piece[piece].neighbour_angle))
+                & WHOLE_ANGLE)
+                == 0
+            {
+                set_curling_angles(k, game);
+                slot!(game, Piece[piece].direction = CURL_RESTART);
+                set_movement_options(
+                    k,
+                    (slot!(game, Piece[piece].movement_options)) & !FLIPPED_AT_BLOCK,
+                    game,
+                );
+                slot!(
+                    game,
+                    Piece[piece].direction =
+                        ((slot!(byte game, Piece[piece].direction[1]) as i32) << 8) as u16
+                );
+            }
+            let curl: u16 = (slot!(game, Piece[piece].direction))
+                .wrapping_add(slot!(game, Piece[piece].neighbour_angle_delta));
+            slot!(game, Piece[piece].direction = curl);
+            if curl >= CURL_END {
+                set_movement_options(
+                    k,
+                    (slot!(game, Piece[piece].movement_options)) | CURLED,
+                    game,
+                );
+            }
+        }
+    }
+}
