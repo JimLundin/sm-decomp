@@ -1149,7 +1149,9 @@ mod player_lane_tests {
     //! lease, so the projection must serve each word from exactly that field: no
     //! earlier owner may claim the address, and writing it touches no other lane.
     use super::{projected_byte, write_projected_byte};
-    use crate::player_transitions::state::{HurtAction, InterruptionAction, PoseRequestWord};
+    use crate::player_transitions::state::{
+        DrawMode, HurtAction, InterruptionAction, MovementMode, PoseRequestWord,
+    };
     use crate::room_entry::world::WorldBinding;
     use crate::session::Session;
 
@@ -1229,6 +1231,16 @@ mod player_lane_tests {
             0xa32,
             |s| s.player.transitions.hurt.to_raw(),
             |s, v| s.player.transitions.hurt = HurtAction::from_raw(v),
+        ),
+        (
+            0xa58,
+            |s| s.player.movement_handler.to_raw(),
+            |s, v| s.player.movement_handler = MovementMode::from_raw(v),
+        ),
+        (
+            0xa5c,
+            |s| s.player.transitions.draw_handler.to_raw(),
+            |s, v| s.player.transitions.draw_handler = DrawMode::from_raw(v),
         ),
     ];
 

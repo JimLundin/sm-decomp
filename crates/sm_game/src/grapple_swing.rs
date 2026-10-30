@@ -7,7 +7,12 @@ use crate::grapple_aim::{self, ConnectionSet};
 use crate::grapple_origins::{self, OriginSet};
 use crate::player_collision::operations as player_collision;
 use crate::player_transitions as pt;
-use crate::player_transitions::state::{HurtAction, InterruptionAction, PoseRequestWord};
+use crate::player_transitions::state::{
+    DrawMode, HurtAction, InterruptionAction, MovementMode, PoseRequestWord,
+};
+
+/// Samus's movement handler after a grapple launch ($90:946E).
+const GRAPPLE_LAUNCH_MOVEMENT: MovementMode = MovementMode::from_raw(0x946e);
 use crate::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::projectile_room::Axis;
 use crate::ram::{word, words as ram_words};
@@ -842,7 +847,7 @@ pub fn start_firing<H: Host + ?Sized>(game: &mut H) {
     word!(game.grapple_beam_unkD36 = 0);
     game.session_mut().player.grapple_slow_scrolling = 0;
     start_rope_animation(game);
-    word!(game.samus_draw_handler = ((0x90eb86i32) as u16));
+    game.session_mut().player.transitions.draw_handler = DrawMode::Grapple;
     game.session_mut().player.transitions.grapple_walljump_timer = 0;
     game.with_lease(|lease| crate::samus_palette::write_beam_palette(lease, 2));
     word!(game.palette_buffer[223] = 32657);
@@ -850,8 +855,8 @@ pub fn start_firing<H: Host + ?Sized>(game: &mut H) {
     game.queue_sound(0, (5) as u8, 1);
     game.session_mut().projectiles.controls.charge = 1;
     word!(game.play_resume_charging_beam_sfx = 0);
-    if word!(game.samus_movement_handler) as i32 == 0x90946e & 0xffff {
-        word!(game.samus_movement_handler = (0x90a337i32) as u16);
+    if game.session().player.movement_handler == GRAPPLE_LAUNCH_MOVEMENT {
+        game.session_mut().player.movement_handler = MovementMode::Normal;
     }
 }
 
@@ -954,7 +959,7 @@ fn finish_release<H: Host + ?Sized>(game: &mut H) {
     let beams = word!(game.equipped_beams) & 0xfff;
     game.with_lease(|lease| crate::samus_palette::write_beam_palette(lease, beams));
     game.session_mut().player.grapple = (0x9bc4f0i32) as u16;
-    word!(game.samus_draw_handler = ((0x90eb52i32) as u16));
+    game.session_mut().player.transitions.draw_handler = DrawMode::Normal;
     game.settle_grapple();
     if word!(game.samus_auto_cancel_hud_item_index) != 0 {
         word! { game, 0; hud_item_index, samus_auto_cancel_hud_item_index }
@@ -1175,7 +1180,7 @@ fn dispatch<H: Host + ?Sized>(ea: u32, game: &mut H) {
             {
                 launch_from_swing(game);
                 game.session_mut().player.grapple = (0x9bcb8bi32) as u16;
-                word!(game.samus_movement_handler = (0x90946ei32) as u16);
+                game.session_mut().player.movement_handler = GRAPPLE_LAUNCH_MOVEMENT;
             } else {
                 game.session_mut().player.grapple = (0x9bc8c5i32) as u16;
             };
