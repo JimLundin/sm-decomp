@@ -59,7 +59,6 @@ pub enum UnpauseHook {
 pub trait Host:
     crate::menus::host::Host
     + crate::hud::HudHost
-    + crate::room_scrolls::Host
     + crate::gameplay_rules::Host
     + crate::display_refresh::Host
     + crate::samus_death::Host
@@ -540,7 +539,7 @@ fn setup_unpause<H: Host>(game: &mut H) -> CoroutineRet {
         game.disable_scanline_irq();
         crate::room_entry::installation::load_tiles_and_palette(&mut game.runtime());
         crate::room_entry::background::load(&mut game.runtime(), LoadMode::Initial);
-        fill_viewport(game, |game| game.flush_tilemaps());
+        fill_viewport(&mut game.runtime());
         crate::room_mechanisms::graphics::reload_graphics(&mut game.runtime());
         game.enable_display_nmi(true);
         game.enable_scanline_irq(false);
@@ -680,15 +679,15 @@ fn advance_gameplay<H: Host>(game: &mut H) -> CoroutineRet {
             enemy_projectiles::contact::shoot_enemy_projectiles(&mut game.runtime());
             actors::contacts::apply_power_bomb_to_enemies(&mut game.runtime());
         }
-        advance_camera(game);
+        advance_camera(&mut game.runtime());
         let debug_scrolling_enabled: i32 = 0;
         if debug_scrolling_enabled != 0 {
-            debug_position(game);
+            debug_position(&mut game.runtime());
         }
         actors::drawing::draw_scene(&mut game.runtime());
         actors::staging::queue_actor_tiles(&mut game.runtime());
         hud::advance(game);
-        update_scrolls(game);
+        update_scrolls(&mut game.runtime());
         game.advance_room();
         finish_health_and_time(game);
         finish_frame(game);

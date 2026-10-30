@@ -1,21 +1,30 @@
 //! Game's implementations of the sm_game host traits whose modules moved.
 #![forbid(unsafe_code)]
 use crate::game_state::Game;
-use sm_game::display::transfer::ScrollingLayout;
-use sm_game::player_collision::operations::Axis;
 
-impl sm_game::room_scrolls::Host for Game {
-    fn unreachable(&mut self) -> bool {
-        crate::rtl::Unreachable(self)
+/// The owned-Session view's projected bytes, for code that names RAM words.
+impl sm_game::ram::CompatibilityRam for crate::game::session_runtime::Runtime<'_> {
+    fn compatibility_byte(&self, at: usize) -> u8 {
+        crate::game::session_runtime::Runtime::byte(self, at)
     }
-    fn record_camera_distance(&mut self, axis: Axis) {
-        sm_game::player_movement::speed::record_camera_distance(
-            crate::game::session_runtime::Runtime::new(self).session_mut(),
-            axis,
-        );
+    fn compatibility_write_byte(&mut self, at: usize, value: u8) {
+        crate::game::session_runtime::Runtime::set_byte(self, at, value)
     }
-    fn queue_scrolling_tiles(&mut self, k: u16, layout: ScrollingLayout) {
-        crate::game::display_refresh::queue_scrolling_tiles(k, layout, self);
+}
+
+/// The facts' projected bytes, as the Game reads them from work RAM.
+impl sm_game::player_position::PlayerFacts for crate::game::session_runtime::Runtime<'_> {
+    fn facing(&self) -> u8 {
+        self.byte(0xa1e)
+    }
+    fn movement_type(&self) -> u8 {
+        self.byte(0xa1f)
+    }
+    fn grapple_angle(&self) -> u8 {
+        self.byte(0xcfb)
+    }
+    fn grapple_mirrored_angle(&self) -> u8 {
+        self.byte(0xcfd)
     }
 }
 

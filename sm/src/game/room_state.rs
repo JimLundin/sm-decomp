@@ -230,7 +230,7 @@ pub(crate) unsafe fn door_script(address: u32, game: &mut Game) {
                 word!(game.irq_enable_mode7 = 0);
             }
             _ => {
-                if !crate::game::room_scrolls::apply(address, game) {
+                if !crate::game::room_scrolls::apply(address, &mut Runtime::new(game)) {
                     crate::rtl::Unreachable(game);
                 }
             }

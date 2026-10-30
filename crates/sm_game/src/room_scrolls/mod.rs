@@ -7,19 +7,22 @@ pub mod door;
 
 use crate::display::transfer::ScrollingLayout as ScrollingDmaLayout;
 
-/// What room scrolling needs from the runtime besides named and raw work RAM.
+/// Room scrolling runs on the owned-Session view: the camera is
+/// `Session::room.camera`, other words are read and written through the
+/// view's projected bytes, and the display work is the runtime's.
 pub trait Host:
-    crate::ram::CompatibilityRam
-    + crate::ram::WorkRamAccess
+    crate::session_access::SessionAccess
+    + crate::runtime_access::SessionRam
+    + crate::ram::CompatibilityRam
     + crate::player_position::PlayerPosition
     + crate::player_position::PlayerFacts
 {
     /// The original's unreachable-state failure.
     fn unreachable(&mut self) -> bool;
-    /// Record Samus's camera distance on `axis` in the owned Session.
-    fn record_camera_distance(&mut self, axis: Axis);
     /// Queue the scrolling tile transfer for layer offset `k`.
     fn queue_scrolling_tiles(&mut self, k: u16, layout: ScrollingDmaLayout);
+    /// Flush the queued tilemap transfers.
+    fn flush_tilemaps(&mut self);
 }
 use crate::room_entry::content::Axis as CameraAxis;
 
@@ -111,8 +114,7 @@ pub fn apply<H: Host + ?Sized>(address: u32, game: &mut H) -> bool {
         _ => return false,
     };
     for &(cell, color) in cells {
-        game.ram()
-            .write_byte(0xcd20 + usize::from(cell), color as u8);
+        game.set_byte(0xcd20 + usize::from(cell), color as u8);
     }
     true
 }
@@ -120,16 +122,14 @@ pub fn apply<H: Host + ?Sized>(address: u32, game: &mut H) -> bool {
 // Camera effects keep their legacy publication order until layer state is owned.
 use crate::menus::prelude::do_until;
 use crate::player_collision::operations::Axis;
-use crate::ram::RawRam as _;
 use crate::ram::{word, words as fields};
 use crate::ram_words as words;
 use crate::word_transfers;
 use camera::{auto_x, auto_y, trigger_down, trigger_left, trigger_right, trigger_up};
 // Native split motion reads low then high and writes low then high.
 fn add_native_motion<H: Host + ?Sized>(high: usize, low: usize, amount: u32, game: &mut H) {
-    let low_word = u16::from_ne_bytes([game.ram().read_byte(low), game.ram().read_byte(low + 1)]);
-    let high_word =
-        u16::from_ne_bytes([game.ram().read_byte(high), game.ram().read_byte(high + 1)]);
+    let low_word = u16::from_ne_bytes([game.byte(low), game.byte(low + 1)]);
+    let high_word = u16::from_ne_bytes([game.byte(high), game.byte(high + 1)]);
     let position = u32::from(low_word) | (u32::from(high_word) << 16);
     let next = position.wrapping_add(amount);
     word_transfers!(game, ascending, 1;
@@ -159,9 +159,9 @@ pub fn advance_camera<H: Host + ?Sized>(game: &mut H) {
         auto_x(game);
         auto_y(game);
     } else {
-        game.record_camera_distance(Axis::X);
+        crate::player_movement::speed::record_camera_distance(game.session_mut(), Axis::X);
         follow_x(game);
-        game.record_camera_distance(Axis::Y);
+        crate::player_movement::speed::record_camera_distance(game.session_mut(), Axis::Y);
         follow_y(game);
     }
     match word!(game.scrolling_finished_hook) {
@@ -262,8 +262,8 @@ fn follow_y<H: Host + ?Sized>(game: &mut H) {
     };
 }
 
-pub fn fill_viewport<H: Host + ?Sized>(game: &mut H, mut flush: impl FnMut(&mut H)) {
-    let mut v1: i32 = (game.ram().read_byte(0x58) as i32 - game.ram().read_byte(0x59) as i32) << 8;
+pub fn fill_viewport<H: Host + ?Sized>(game: &mut H) {
+    let mut v1: i32 = (game.byte(0x58) as i32 - game.byte(0x59) as i32) << 8;
     word!(game.size_of_bg2 = (v1 & 0xf800) as u16);
     calculate_blocks(game);
     let mut v2: i32 = 0;
@@ -274,14 +274,14 @@ pub fn fill_viewport<H: Host + ?Sized>(game: &mut H, mut flush: impl FnMut(&mut 
         word!(game.vram_blocks_to_update_x_block = word!(game.bg1_x_block));
         word!(game.vram_blocks_to_update_y_block = word!(game.bg1_y_block));
         game.queue_scrolling_tiles(0x0, ScrollingDmaLayout::Column);
-        if game.ram().read_byte(0x91b) & 1 == 0 {
+        if game.byte(0x91b) & 1 == 0 {
             word!(game.blocks_to_update_x_block = word!(game.layer2_x_block));
             word!(game.blocks_to_update_y_block = word!(game.layer2_y_block));
             word!(game.vram_blocks_to_update_x_block = word!(game.bg2_x_block));
             word!(game.vram_blocks_to_update_y_block = word!(game.bg2_y_block));
             game.queue_scrolling_tiles(0x1c, ScrollingDmaLayout::Column);
         }
-        flush(game);
+        game.flush_tilemaps();
         word!(game.layer1_x_block += 1);
         word!(game.bg1_x_block += 1);
         word!(game.layer2_x_block += 1);
@@ -323,7 +323,7 @@ pub fn update_backgrounds<H: Host + ?Sized>(game: &mut H) {
         (2, ScrollingDmaLayout::Row),
     ] {
         for (layer, parameter) in [(0, 0), (4, 0x1c)] {
-            if layer != 0 && game.ram().read_byte(0x91b + axis / 2) & 1 != 0 {
+            if layer != 0 && game.byte(0x91b + axis / 2) & 1 != 0 {
                 continue;
             }
             let current = fields::layer1_x_block + layer + axis;

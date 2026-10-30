@@ -1,7 +1,6 @@
 //! Camera limits and scroll-cell rules; live callers retain RAM authority.
 #![forbid(unsafe_code)]
 use super::Host;
-use crate::ram::RawRam as _;
 use crate::ram::{word, words as W};
 use crate::room_entry::content::Axis;
 
@@ -10,7 +9,7 @@ use crate::room_entry::content::Axis;
 fn camera_scroll_value<H: Host + ?Sized>(column: u16, row: u8, game: &H) -> u8 {
     let index =
         (u16::from(row) * u16::from(word!(game.room_width_in_scrolls) as u8)).wrapping_add(column);
-    game.ram().read_byte(0xcd20 + usize::from(index))
+    game.byte(0xcd20 + usize::from(index))
 }
 
 pub fn auto_x<H: Host + ?Sized>(game: &mut H) {
@@ -243,7 +242,7 @@ pub fn layer2_position<H: Host + ?Sized>(axis: Axis, game: &mut H) -> u8 {
         Axis::X => (0x91b, W::layer1_x_pos, W::layer2_x_pos),
         Axis::Y => (0x91c, W::layer1_y_pos, W::layer2_y_pos),
     };
-    let scale = game.ram().read_byte(control);
+    let scale = game.byte(control);
     if scale == 1 {
         return 1;
     }

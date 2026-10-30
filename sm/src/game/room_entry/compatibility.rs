@@ -176,46 +176,35 @@ impl EntryEffects for Runtime<'_> {
         });
     }
     fn camera_call(&mut self, effect: CameraEffect) -> u8 {
-        self.foreign(|game| unsafe {
-            match effect {
-                CameraEffect::CalculateLayer2X => {
-                    game::room_scrolls::layer2_position(Axis::X, game)
-                }
-                CameraEffect::CalculateLayer2Y => {
-                    game::room_scrolls::layer2_position(Axis::Y, game)
-                }
-                CameraEffect::CalculateLayer2AndScrolls => {
-                    game::room_scrolls::update_scrolls(game);
-                    0
-                }
-                CameraEffect::CalculateBgScrolls => {
-                    game::room_scrolls::calculate_scrolls(game);
-                    0
-                }
-                CameraEffect::DisplayVisibleRoom => {
-                    game::room_scrolls::fill_viewport(game, |game| {
-                        game::display_refresh::flush_tilemaps(game)
-                    });
-                    0
-                }
-                CameraEffect::FixDoorMovingUp => {
-                    game::room_scrolls::door::fix_up(game);
-                    0
-                }
-                CameraEffect::SetupDoorScroll => {
-                    game::room_scrolls::door::begin(game);
-                    0
-                }
-                CameraEffect::StepDoorScrollRight => {
-                    game::room_scrolls::door::horizontal(false, game)
-                }
-                CameraEffect::StepDoorScrollLeft => {
-                    game::room_scrolls::door::horizontal(true, game)
-                }
-                CameraEffect::StepDoorScrollDown => game::room_scrolls::door::down(game),
-                CameraEffect::StepDoorScrollUp => game::room_scrolls::door::up(game),
+        use game::room_scrolls::{self, door};
+        match effect {
+            CameraEffect::CalculateLayer2X => room_scrolls::layer2_position(Axis::X, self),
+            CameraEffect::CalculateLayer2Y => room_scrolls::layer2_position(Axis::Y, self),
+            CameraEffect::CalculateLayer2AndScrolls => {
+                room_scrolls::update_scrolls(self);
+                0
             }
-        })
+            CameraEffect::CalculateBgScrolls => {
+                room_scrolls::calculate_scrolls(self);
+                0
+            }
+            CameraEffect::DisplayVisibleRoom => {
+                room_scrolls::fill_viewport(self);
+                0
+            }
+            CameraEffect::FixDoorMovingUp => {
+                door::fix_up(self);
+                0
+            }
+            CameraEffect::SetupDoorScroll => {
+                door::begin(self);
+                0
+            }
+            CameraEffect::StepDoorScrollRight => door::horizontal(false, self),
+            CameraEffect::StepDoorScrollLeft => door::horizontal(true, self),
+            CameraEffect::StepDoorScrollDown => door::down(self),
+            CameraEffect::StepDoorScrollUp => door::up(self),
+        }
     }
     fn palette_fade(&mut self) -> u8 {
         self.foreign(|game| game::palette_effects::fading::all(12, game))

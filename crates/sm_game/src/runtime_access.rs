@@ -22,6 +22,7 @@ pub trait SessionView:
     + crate::room_entry::effects::EntryHost
     + crate::player_movement::effects::Host
     + crate::progress::FlagHost
+    + crate::room_scrolls::Host
 {
 }
 impl<T> SessionView for T where
@@ -40,6 +41,7 @@ impl<T> SessionView for T where
         + crate::room_entry::effects::EntryHost
         + crate::player_movement::effects::Host
         + crate::progress::FlagHost
+        + crate::room_scrolls::Host
 {
 }
 
