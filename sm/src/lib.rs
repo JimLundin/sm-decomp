@@ -479,7 +479,6 @@ pub mod game {
     pub(crate) use sm_game::shaktool_tables;
     pub(crate) use sm_game::shitroid_tables;
     pub(crate) use sm_game::torizo_corpse_tables;
-    pub(crate) use sm_game::torizo_tables;
     pub(crate) mod vram_read_queue;
     pub(crate) mod xray_background;
 

@@ -22,4 +22,4 @@ pub use crate::types::{
     SamusPose, SamusPoseParams, SnesRegs, SpawnHardcodedPlmArgs, SpawnHdmaObject_Args, TileTable,
     TileTables, VoidP, VramWriteEntry, Vulnerability, size_t,
 };
-pub(crate) use ::core::ffi::{c_char, c_long};
+pub(crate) use ::core::ffi::c_char;
