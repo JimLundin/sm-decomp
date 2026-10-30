@@ -98,6 +98,7 @@ pub mod actors {
     pub mod crocomire_attack;
     pub mod crocomire_reactions;
     pub mod dachora;
+    pub mod dachora_run;
     pub mod deaths;
     pub mod drawing;
     pub mod draygon_death;

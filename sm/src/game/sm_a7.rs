@@ -1,19 +1,15 @@
 use crate::game::actors;
-use crate::game::actors::api as actor_api;
-use crate::game::actors::dachora::load_palette as load_dachora_palette;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
 use crate::ram_map::slot;
 use crate::rtl::rom_record;
 use core::mem::offset_of;
-use sm_game::actors::access::ActorKey as Key;
 use sm_game::enemy_script::EnemyScript;
 
 pub use crate::game::constants::bank_86::*;
 
 use crate::game::display_refresh::GraphicsAsset;
 use crate::game::enemy_layouts::KraidLayout as Enemy_Kraid;
-use crate::game::music::{QueueSfx2_Max6, QueueSfx2_Max15};
 
 crate::typed_struct! {
     [
@@ -101,15 +97,6 @@ crate::game::constants::typed_constants! { i32;
     fnDachora_Func_7 = 0xa7f78f, fnDachora_Func_8 = 0xa7f806,
     fnDachora_Func_11 = 0xa7f935, fnDachora_Func_12 = 0xa7f98c,
 }
-static g_word_A7F4C9: u16 = 0x60;
-static g_word_A7F4CD: u16 = 0x78;
-static g_word_A7F4CF: u16 = 0x3c;
-static g_word_A7F4D1: u16 = 1;
-static g_word_A7F4D3: u16 = 8;
-static g_word_A7F4D5: u16 = 8;
-static g_word_A7F4D7: u16 = 0;
-static g_word_A7F4D9: u16 = 0;
-static g_word_A7F4DB: u16 = 0x1000;
 crate::game::callback_dispatch! {
     pub fn CallEnemyInstrExtFunc(ea: u32, k: u16, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
@@ -256,144 +243,6 @@ pub fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
 pub fn PauseHook_Kraid(game: &mut Game) {
     crate::game::vram_read_queue::enqueue(0x5d, 15872, 0x5000, 1024, false, game);
 }
-pub fn Dachora_Func_6(k: u16, game: &mut Game) -> i32 {
-    let E = (k as i32) as i32;
-    if ((slot!(game, Enemy_Dachora[E].var_A)) as i16).wrapping_sub((g_word_A7F4D5) as i16) >= 0 {
-        if slot!(game, Enemy_Dachora[E].var_E) == 1 {
-            QueueSfx2_Max6(0x39, game);
-        }
-        let v2: u16 = (slot!(game, Enemy_Dachora[E].var_E)).wrapping_sub(1);
-        slot!(game, Enemy_Dachora[E].var_E = v2);
-        if v2 as u8 == 0 {
-            load_dachora_palette(
-                sm_game::boss_lists::dachora_palette(
-                    game,
-                    false,
-                    slot!(byte game, Enemy_Dachora[E].var_E[1]) as isize,
-                ),
-                k,
-                game,
-            );
-            let v3: u16 = (slot!(game, Enemy_Dachora[E].var_E)).wrapping_add(272);
-            slot!(game, Enemy_Dachora[E].var_E = v3);
-            if v3 as i32 - 1040i32 & 0x8000 == 0 {
-                slot!(game, Enemy_Dachora[E].var_E = 784);
-            }
-        }
-    }
-    {
-        let (actor, amount) = (k, (1i16 as i32) << 16);
-        (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount)
-            == actor_api::MovementResult::Blocked) as u8
-    };
-    if ((slot!(game, Enemy_Dachora[E].var_A)) as i16).wrapping_sub((g_word_A7F4D5) as i16) >= 0
-        && ((slot!(game, Enemy_Dachora[E].var_B)) as i16).wrapping_sub((g_word_A7F4D7) as i16) >= 0
-    {
-        slot!(game, Enemy_Dachora[E].var_A = g_word_A7F4D5);
-        slot!(game, Enemy_Dachora[E].var_B = g_word_A7F4D7);
-        return (words!((g_word_A7F4D5, g_word_A7F4D7))) as i32;
-    }
-    slot!(
-        game,
-        Enemy_Dachora[E](var_A, var_B) += words!((g_word_A7F4D9, g_word_A7F4DB))
-    );
-    if (slot!(game, Enemy_Dachora[E].var_A) == 4 || slot!(game, Enemy_Dachora[E].var_A) == 8)
-        && slot!(game, Enemy_Dachora[E].var_B) == 0
-    {
-        slot!(
-            game,
-            Enemy_Dachora[E].base.current_instruction =
-                (slot!(game, Enemy_Dachora[E].base.current_instruction)).wrapping_add(28)
-        );
-    }
-    (words!((
-        slot!(game, Enemy_Dachora[E].var_A),
-        slot!(game, Enemy_Dachora[E].var_B)
-    ))) as i32
-}
-pub fn Dachora_Func_9(k: u16, game: &mut Game) {
-    let EK = (k as i32) as i32;
-    let E1 = (k as i32 + 64) as i32;
-    let dachor_var_A: u16 = slot!(game, Enemy_Dachora[E1].var_A);
-    if dachor_var_A != 0 {
-        slot!(
-            game,
-            Enemy_Dachora[E1].var_A = (dachor_var_A).wrapping_sub(1)
-        );
-    } else {
-        slot!(game, Enemy_Dachora[E1].var_A = g_word_A7F4D1);
-        if slot!(game, Enemy_Dachora[E1].var_D) != 0 {
-            let E2 = (k as i32 + 128) as i32;
-            if slot!(game, Enemy_Dachora[E2].var_D) != 0 {
-                let E3 = (k as i32 + 192) as i32;
-                if slot!(game, Enemy_Dachora[E3].var_D) != 0 {
-                    let E4 = (k as i32 + 256) as i32;
-                    if slot!(game, Enemy_Dachora[E4].var_D) == 0 {
-                        slot!(
-                            game,
-                            Enemy_Dachora[E4].base.x_pos =
-                                slot!(game, Enemy_Dachora[EK].base.x_pos)
-                        );
-                        slot!(
-                            game,
-                            Enemy_Dachora[E4].base.y_pos =
-                                slot!(game, Enemy_Dachora[EK].base.y_pos)
-                        );
-                        slot!(game, Enemy_Dachora[E4].var_D = g_word_A7F4D3);
-                    }
-                } else {
-                    slot!(
-                        game,
-                        Enemy_Dachora[E3].base.x_pos = slot!(game, Enemy_Dachora[EK].base.x_pos)
-                    );
-                    slot!(
-                        game,
-                        Enemy_Dachora[E3].base.y_pos = slot!(game, Enemy_Dachora[EK].base.y_pos)
-                    );
-                    slot!(game, Enemy_Dachora[E3].var_D = g_word_A7F4D3);
-                }
-            } else {
-                slot!(
-                    game,
-                    Enemy_Dachora[E2].base.x_pos = slot!(game, Enemy_Dachora[EK].base.x_pos)
-                );
-                slot!(
-                    game,
-                    Enemy_Dachora[E2].base.y_pos = slot!(game, Enemy_Dachora[EK].base.y_pos)
-                );
-                slot!(game, Enemy_Dachora[E2].var_D = g_word_A7F4D3);
-            }
-        } else {
-            slot!(
-                game,
-                Enemy_Dachora[E1].base.x_pos = slot!(game, Enemy_Dachora[EK].base.x_pos)
-            );
-            slot!(
-                game,
-                Enemy_Dachora[E1].base.y_pos = slot!(game, Enemy_Dachora[EK].base.y_pos)
-            );
-            slot!(game, Enemy_Dachora[E1].var_D = g_word_A7F4D3);
-        }
-    };
-}
-pub fn Dachora_Func_10(k: u16, game: &mut Game) {
-    let E = (k as i32) as i32;
-    load_dachora_palette(
-        sm_game::boss_lists::dachora_palette(
-            game,
-            true,
-            slot!(byte game, Enemy_Dachora[E].var_E[1]) as isize,
-        ),
-        k,
-        game,
-    );
-    let v2: u16 = (slot!(game, Enemy_Dachora[E].var_E)).wrapping_add(256);
-    slot!(game, Enemy_Dachora[E].var_E = v2);
-    if v2 as i32 - 1024i32 & 0x8000 == 0 {
-        slot!(game, Enemy_Dachora[E].var_E = 0);
-    }
-}
-
 crate::game::callback_dispatch! {
     pub(crate) fn DispatchEnemyAi(ea: u32, game: &mut Game) => ea;
     call (game); default { crate::rtl::Unreachable(game); };
@@ -422,33 +271,8 @@ crate::game::callback_dispatch! {
     [11001243] Phantoon_Shot [] { sm_game::actors::phantoon::shot(game); };
     [11004178] Etecoon_Init [] { sm_game::actors::etecoon::initialize(game); };
     [11004224] Etecoon_Main [] { sm_game::actors::etecoon::main_ai(game); };
-    [11007197] Dachora_Init [] {
-        let E = (word!(game.cur_enemy_index) as i32) as i32;
-        slot!(game, Enemy_Dachora[E].base.properties = (slot!(game, Enemy_Dachora[E].base.properties)) | ((kEnemyProps_DisableSamusColl) as u16));
-        slot!(game, Enemy_Dachora[E].base.spritemap_pointer = addr_kSpritemap_Nothing_A7 as u16);
-        slot!(game, Enemy_Dachora[E].base.instruction_timer = 1);
-        slot!(game, Enemy_Dachora[E].base.timer = 0);
-        let mut dachor_parameter_1: i16 = slot!(game, Enemy_Dachora[E].parameter_1) as i16;
-        if dachor_parameter_1 < 0 {
-            if (dachor_parameter_1 as u16 & 1) != 0 {
-                slot!(game, Enemy_Dachora[E].base.current_instruction = addr_kDachora_Ilist_F4B9 as u16);
-            } else {
-                slot!(game, Enemy_Dachora[E].base.current_instruction = addr_kDachora_Ilist_F3F7 as u16);
-            }
-            slot!(game, Enemy_Dachora[E].var_F = (0xa7f98ci32) as u16);
-        } else {
-            if dachor_parameter_1 != 0 {
-                slot!(game, Enemy_Dachora[E].base.current_instruction = addr_kDachora_Ilist_F45B as u16);
-            } else {
-                slot!(game, Enemy_Dachora[E].base.current_instruction = addr_kDachora_Ilist_F399 as u16);
-            }
-            slot!(game, Enemy_Dachora[E].var_F = (0xa7f570i32) as u16);
-        };
-    };
-    [11007278] Dachora_Main [] {
-        let E = (word!(game.cur_enemy_index) as i32) as i32;
-        unsafe { actor_species_pre_instruction(((slot!(game, Enemy_Dachora[E].var_F)) as u32) | (0xa70000u32), game) };
-    };
+    [11007197] Dachora_Init [] { sm_game::actors::dachora_run::initialize(game); };
+    [11007278] Dachora_Main [] { sm_game::actors::dachora_run::main_ai(game); };
     @forward [pub fn (game: &mut Game)];
     [10977295] Enemy_GrappleReact_CancelBeam_A7 => actors::combat::select_frozen_ai(&mut Runtime::new(game));
     [10977325] Enemy_NormalShotAI_A7 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
@@ -532,172 +356,14 @@ crate::game::callback_dispatch! {
     [11005502] Etecoon_Func_24 [] { sm_game::actors::etecoon::hop_until_samus_near(game, k); };
     [11005594] Etecoon_Func_25 [] { sm_game::actors::etecoon::running_for_failed_tunnel_jump(game, k); };
     [11005624] Etecoon_Func_26 [] { sm_game::actors::etecoon::failed_tunnel_jump(game, k); };
-    [11007344] Dachora_Func_2 [] {
-        ({ let (actor, amount) = (k, ((1u32) << 16 | 0u16 as u32) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
-        if ({ let (actor, distance) = (k, 0x40); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
-            && ({ let (actor, distance) = (k, g_word_A7F4C9); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
-        {
-            let E = (k as i32) as i32;
-            if slot!(game, Enemy_Dachora[E].parameter_1) != 0 {
-                slot!(game, Enemy_Dachora[E].base.current_instruction = addr_kDachora_Ilist_F48B as u16);
-            } else {
-                slot!(game, Enemy_Dachora[E].base.current_instruction = addr_kDachora_Ilist_F3C9 as u16);
-            }
-            slot!(game, Enemy_Dachora[E].base.instruction_timer = 1);
-            slot!(game, Enemy_Dachora[E].var_F = (0xa7f5bci32) as u16);
-            slot!(game, Enemy_Dachora[E].var_A = g_word_A7F4CD);
-            QueueSfx2_Max15(0x1d, game);
-        }
-    };
-    [11007420] Dachora_Func_3 [] {
-        let E = (k as i32) as i32;
-        let fresh2 = slot!(game, Enemy_Dachora[E].var_A); slot!(game, Enemy_Dachora[E].var_A = slot!(game, Enemy_Dachora[E].var_A).wrapping_sub(1));
-        if fresh2 == 1 {
-            if slot!(game, Enemy_Dachora[E].parameter_1) != 0 {
-                slot!(game, Enemy_Dachora[E].base.current_instruction = addr_kDachora_Ilist_F407 as u16);
-                slot!(game, Enemy_Dachora[E].var_F = (0xa7f65ei32) as u16);
-            } else {
-                slot!(game, Enemy_Dachora[E].base.current_instruction = addr_kDachora_Ilist_F345 as u16);
-                slot!(game, Enemy_Dachora[E].var_F = (0xa7f5edi32) as u16);
-            }
-            slot!(game, Enemy_Dachora[E].base.instruction_timer = 1);
-            slot!(game, Enemy_Dachora[E].var_E = 1);
-        }
-    };
-    [11007469] Dachora_Func_4 [] {
-        let amt: i32 = -Dachora_Func_6(k, game);
-        let E = (k as i32) as i32;
-        if ({ let (actor, amount) = (k, amt); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 || {
-            ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
-            slot!(game, Enemy_Dachora[E].base.x_pos) as i32 - 96i32 & 0x8000 != 0
-        } {
-            slot!(game, Enemy_Dachora[E].base.current_instruction = addr_kDachora_Ilist_F407 as u16);
-            slot!(game, Enemy_Dachora[E].var_F = (0xa7f65ei32) as u16);
-            slot!(game, Enemy_Dachora[E]; var_E = 1, parameter_1 = 1);
-            slot!(game, Enemy_Dachora[E].base.instruction_timer = 1);
-            slot!(game, Enemy_Dachora[E]; var_A = 0, var_B = 0);
-            load_dachora_palette(addr_kDachora_Palette as u16, k, game);
-        }
-    };
-    [11007582] Dachora_Func_5 [] {
-        let amt: i32 = Dachora_Func_6(k, game);
-        let E = (k as i32) as i32;
-        if ({ let (actor, amount) = (k, amt); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            QueueSfx2_Max15(0x71, game);
-            slot!(game, Enemy_Dachora[E].base.current_instruction = addr_kDachora_Ilist_F345 as u16);
-            slot!(game, Enemy_Dachora[E].var_F = (0xa7f5edi32) as u16);
-            slot!(game, Enemy_Dachora[E]; parameter_1 = 0, var_A = 0);
-            load_dachora_palette(addr_kDachora_Palette as u16, k, game);
-        } else {
-            ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
-            if slot!(game, Enemy_Dachora[E].base.x_pos) as i32 - 1152i32 & 0x8000 == 0 {
-                slot!(game, Enemy_Dachora[E].base.current_instruction = addr_kDachora_Ilist_F4B3 as u16);
-                slot!(game, Enemy_Dachora[E].var_F = (0xa7f78fi32) as u16);
-                slot!(game, Enemy_Dachora[E].var_A = g_word_A7F4CF);
-                slot!(game, Enemy_Dachora[E].base.y_pos = (slot!(game, Enemy_Dachora[E].base.y_pos)).wrapping_add(8));
-                QueueSfx2_Max6(0x3d, game);
-            } else {
-                return;
-            }
-        }
-        slot!(game, Enemy_Dachora[E]; var_E = 0, var_B = 0);
-        slot!(game, Enemy_Dachora[E].base.instruction_timer = 1);
-    };
-    [11007887] Dachora_Func_7 [] {
-        Dachora_Func_10(k, game);
-        let E = (k as i32) as i32;
-        let fresh3 = slot!(game, Enemy_Dachora[E].var_A); slot!(game, Enemy_Dachora[E].var_A = slot!(game, Enemy_Dachora[E].var_A).wrapping_sub(1));
-        if fresh3 == 1 {
-            slot!(game, Enemy_Dachora[E].base; current_instruction = (slot!(game, Enemy_Dachora[E].base.current_instruction)).wrapping_add(2), instruction_timer = 1);
-            slot!(game, Enemy_Dachora[E].var_F = (0xa7f806i32) as u16);
-            let E1 = (k as i32 + 64) as i32;
-            slot!(game, Enemy_Dachora[E1]; var_A = 0, var_D = 0);
-            slot!(game, Enemy_Dachora[k as i32 + 128i32].var_D = 0);
-            slot!(game, Enemy_Dachora[k as i32 + 192i32].var_D = 0);
-            slot!(game, Enemy_Dachora[k as i32 + 256i32].var_D = 0);
-            slot!(game, Enemy_Dachora[E]; var_C = 0, var_D = 0);
-            slot!(game, Enemy_Dachora[E].base.y_pos = (slot!(game, Enemy_Dachora[E].base.y_pos)).wrapping_sub(8));
-            QueueSfx2_Max6(0x3b, game);
-            if slot!(game, Enemy_Dachora[E].parameter_1) != 0 {
-                slot!(game, Enemy_Dachora[k as i32 + 64i32].base.current_instruction = addr_kDachora_Ilist_F4B9 as u16);
-                slot!(game, Enemy_Dachora[k as i32 + 128i32].base.current_instruction = addr_kDachora_Ilist_F4B9 as u16);
-                slot!(game, Enemy_Dachora[k as i32 + 192i32].base.current_instruction = addr_kDachora_Ilist_F4B9 as u16);
-                slot!(game, Enemy_Dachora[k as i32 + 256i32].base.current_instruction = addr_kDachora_Ilist_F4B9 as u16);
-            } else {
-                slot!(game, Enemy_Dachora[k as i32 + 64i32].base.current_instruction = addr_kDachora_Ilist_F3F7 as u16);
-                slot!(game, Enemy_Dachora[k as i32 + 128i32].base.current_instruction = addr_kDachora_Ilist_F3F7 as u16);
-                slot!(game, Enemy_Dachora[k as i32 + 192i32].base.current_instruction = addr_kDachora_Ilist_F3F7 as u16);
-                slot!(game, Enemy_Dachora[k as i32 + 256i32].base.current_instruction = addr_kDachora_Ilist_F3F7 as u16);
-            }
-            slot!(game, Enemy_Dachora[k as i32 + 64i32].base.instruction_timer = 1);
-            slot!(game, Enemy_Dachora[k as i32 + 128i32].base.instruction_timer = 1);
-            slot!(game, Enemy_Dachora[k as i32 + 192i32].base.instruction_timer = 1);
-            slot!(game, Enemy_Dachora[k as i32 + 256i32].base.instruction_timer = 1);
-        }
-    };
-    [11008006] Dachora_Func_8 [] {
-        Dachora_Func_10(k, game);
-        Dachora_Func_9(k, game);
-        let E = (k as i32) as i32;
-        slot!(game, Enemy_Dachora[E](var_C, var_D) += words!(game.samus_y_accel, samus_y_subaccel));
-        slot!(game, Enemy_Dachora[E](var_A, var_B) += words!((slot!(game, Enemy_Dachora[E].var_C), slot!(game, Enemy_Dachora[E].var_D))));
-        let mut v6: u16 = slot!(game, Enemy_Dachora[E].var_A);
-        if v6 as i32 - 15i32 & 0x8000 == 0 {
-            v6 = 15;
-        }
-        let amt: i32 = (words!((v6, slot!(game, Enemy_Dachora[E].var_B)))) as i32;
-        if ({ let (actor, amount) = (k, -amt); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            if slot!(game, Enemy_Dachora[E].parameter_1) != 0 {
-                slot!(game, Enemy_Dachora[E].base.current_instruction = addr_kDachora_Ilist_F3FF as u16);
-                slot!(game, Enemy_Dachora[E].parameter_1 = 0);
-            } else {
-                slot!(game, Enemy_Dachora[E].base.current_instruction = addr_kDachora_Ilist_F4C1 as u16);
-                slot!(game, Enemy_Dachora[E].parameter_1 = 1);
-            }
-            slot!(game, Enemy_Dachora[E].var_F = (0xa7f935i32) as u16);
-            slot!(game, Enemy_Dachora[E].base.instruction_timer = 1);
-            slot!(game, Enemy_Dachora[E]; var_A = 0, var_B = 0, var_E = 0);
-            load_dachora_palette(addr_kDachora_Palette as u16, k, game);
-            QueueSfx2_Max6(0x3c, game);
-        }
-    };
-    [11008309] Dachora_Func_11 [] {
-        let E = (k as i32) as i32;
-        slot!(game, Enemy_Dachora[E](var_A, var_B) += words!(game.samus_y_accel, samus_y_subaccel));
-        let mut amt: i32 = (words!((slot!(game, Enemy_Dachora[E].var_A), slot!(game, Enemy_Dachora[E].var_B)))) as i32;
-        if (amt >> 16) - 10i32 & 0x8000 == 0 {
-            amt = (10i16 as i32) << 16;
-        }
-        if ({ let (actor, amount) = (k, amt); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            if slot!(game, Enemy_Dachora[E].parameter_1) != 0 {
-                slot!(game, Enemy_Dachora[E].base.current_instruction = addr_kDachora_Ilist_F407 as u16);
-                slot!(game, Enemy_Dachora[E].var_F = (0xa7f65ei32) as u16);
-            } else {
-                slot!(game, Enemy_Dachora[E].base.current_instruction = addr_kDachora_Ilist_F345 as u16);
-                slot!(game, Enemy_Dachora[E].var_F = (0xa7f5edi32) as u16);
-            }
-            slot!(game, Enemy_Dachora[E].base.instruction_timer = 1);
-            slot!(game, Enemy_Dachora[E]; var_A = 0, var_B = 0);
-        }
-    };
-    [11008396] Dachora_Func_12 [] {
-        let E = (k as i32) as i32;
-        let dachor_var_D: u16 = slot!(game, Enemy_Dachora[E].var_D);
-        if dachor_var_D != 0 {
-            slot!(game, Enemy_Dachora[E].var_D = (dachor_var_D).wrapping_sub(1));
-            let keep_hidden: bool = if (k & 0x40) != 0 {
-                (word!(game.nmi_frame_counter_word) & 1) == 0
-            } else {
-                (word!(game.nmi_frame_counter_word) & 1) != 0
-            };
-            if keep_hidden {
-            } else {
-                slot!(game, Enemy_Dachora[E].base.properties = (slot!(game, Enemy_Dachora[E].base.properties) as i32 & !(kEnemyProps_Invisible as i32)) as u16);
-                return;
-            }
-        }
-        slot!(game, Enemy_Dachora[E].base.properties = (slot!(game, Enemy_Dachora[E].base.properties)) | ((kEnemyProps_Invisible) as u16));
-    };
+    [11007344] Dachora_Func_2 [] { sm_game::actors::dachora_run::wait_for_samus(game, k); };
+    [11007420] Dachora_Func_3 [] { sm_game::actors::dachora_run::start_running(game, k); };
+    [11007469] Dachora_Func_4 [] { sm_game::actors::dachora_run::running_left(game, k); };
+    [11007582] Dachora_Func_5 [] { sm_game::actors::dachora_run::running_right(game, k); };
+    [11007887] Dachora_Func_7 [] { sm_game::actors::dachora_run::activate_shinespark(game, k); };
+    [11008006] Dachora_Func_8 [] { sm_game::actors::dachora_run::shinesparking(game, k); };
+    [11008309] Dachora_Func_11 [] { sm_game::actors::dachora_run::falling(game, k); };
+    [11008396] Dachora_Func_12 [] { sm_game::actors::dachora_run::echo(game, k); };
     @functions [pub fn (v0: u16, game: &mut Game)];
     [10999388] Phantoon_BecomesSolidAndBodyVuln [] { sm_game::actors::phantoon::become_solid_and_swoop(game, v0); };
     @functions [pub fn (k: u16, game: &mut Game)];

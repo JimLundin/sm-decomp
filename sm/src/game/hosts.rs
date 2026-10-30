@@ -587,3 +587,55 @@ impl sm_game::actors::etecoon::Host for Game {
         )
     }
 }
+
+// The named bank $A7 functions are the ones `DispatchEnemyPreInstr` dispatches on.
+const _: () = {
+    use crate::game::sm_a7::*;
+    use sm_game::actors::dachora_run::function as f;
+    const fn at(word: u16) -> i32 {
+        0xa7_0000 | word as i32
+    }
+    assert!(at(f::WAIT_FOR_SAMUS) == fnDachora_Func_2 && at(f::START_RUNNING) == fnDachora_Func_3);
+    assert!(at(f::RUNNING_LEFT) == fnDachora_Func_4 && at(f::RUNNING_RIGHT) == fnDachora_Func_5);
+    assert!(
+        at(f::ACTIVATE_SHINESPARK) == fnDachora_Func_7 && at(f::SHINESPARKING) == fnDachora_Func_8
+    );
+    assert!(at(f::FALLING) == fnDachora_Func_11 && at(f::ECHO) == fnDachora_Func_12);
+};
+
+// The named instruction lists are the decompilation's addresses.
+const _: () = {
+    use crate::game::sm_a7::*;
+    use sm_game::actors::dachora_run::instruction_list as l;
+    assert!(
+        l::RUNNING_LEFT == addr_kDachora_Ilist_F345 as u16
+            && l::IDLING_FACING_LEFT == addr_kDachora_Ilist_F399 as u16
+    );
+    assert!(
+        l::BLINKING_FACING_LEFT == addr_kDachora_Ilist_F3C9 as u16
+            && l::ECHO_FACING_LEFT == addr_kDachora_Ilist_F3F7 as u16
+    );
+    assert!(
+        l::FALLING_FACING_LEFT == addr_kDachora_Ilist_F3FF as u16
+            && l::RUNNING_RIGHT == addr_kDachora_Ilist_F407 as u16
+    );
+    assert!(
+        l::IDLING_FACING_RIGHT == addr_kDachora_Ilist_F45B as u16
+            && l::BLINKING_FACING_RIGHT == addr_kDachora_Ilist_F48B as u16
+    );
+    assert!(
+        l::CHARGE_SHINESPARK_FACING_RIGHT == addr_kDachora_Ilist_F4B3 as u16
+            && l::ECHO_FACING_RIGHT == addr_kDachora_Ilist_F4B9 as u16
+    );
+    assert!(
+        l::FALLING_FACING_RIGHT == addr_kDachora_Ilist_F4C1 as u16
+            && l::PALETTE == addr_kDachora_Palette as u16
+    );
+    assert!(l::NOTHING_SPRITEMAP == addr_kSpritemap_Nothing_A7 as u16);
+};
+
+impl sm_game::actors::dachora_run::Host for Game {
+    fn run_function(&mut self, address: u32) {
+        crate::game::sm_a7::run_a7_function(address, self);
+    }
+}
