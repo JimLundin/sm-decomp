@@ -3,7 +3,6 @@
 #![forbid(unsafe_code)]
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
-pub(crate) use sm_game::actors::draygon_eye::*;
 use sm_game::actors::host::{ActorLease, LeaseActors};
 
 impl ActorLease for Runtime<'_> {

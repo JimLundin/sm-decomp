@@ -249,8 +249,8 @@ pub fn main_ai<H: Host + ?Sized>(
     }
 }
 
-/// Run the bank $A5 body function `function` for part `k`, as `sm_a5`'s
-/// dispatch does: the flight, swoop and grab functions on this lease, the rest
+/// Run the bank $A5 body function `function` for part `k`, as the species
+/// table's dispatch does: the flight, swoop and grab functions on this lease, the rest
 /// through `fallback` on the game.
 fn run_function_on<L: BossLease + ?Sized>(
     game: &mut L,

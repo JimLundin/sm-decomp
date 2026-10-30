@@ -157,6 +157,30 @@ impl sm_game::actors::species::AiHost for Game {
     fn grapple_kill(&mut self) {
         actors::combat::die(&mut Runtime::new(self), actors::api::DeathKind::Grapple);
     }
+    fn install_draygon_layers(&mut self) {
+        crate::game::visual_runtime::initialize_draygon_layer(self);
+    }
+    fn warn_draygon_swoop(&mut self) {
+        unsafe { crate::c_library::printf(c"Wtf is varE26?\n".as_ptr()) };
+    }
+    fn native_draygon_function(&mut self, ea: u32, k: u16) {
+        spore_spawn_function(ea, k, self);
+    }
+}
+
+/// Spore Spawn's functions, which Draygon's function dispatch shared. Was
+/// `CallDraygonFunc` in bank $A5.
+fn spore_spawn_function(ea: u32, k: u16, game: &mut Game) {
+    match ea {
+        10873627 => actors::spore_spawn::descend(game),
+        10873755 => actors::spore_spawn::begin_return(game),
+        10873838 => actors::spore_spawn::finish_return(game),
+        10873626 => (),
+        10873682 => actors::spore_spawn::orbit(k, game),
+        _ => {
+            crate::rtl::Unreachable(game);
+        }
+    }
 }
 
 impl sm_game::actors::species::PreInstructionHost for Game {
@@ -1082,7 +1106,7 @@ use crate::game::actors::{self, api as actor_api};
 use crate::game::moving_platforms::{self as mechanisms, Event, Kind};
 use crate::game::rippers::{self, Kind as RipperKind};
 use crate::game::{ground_patrol, large_snail};
-use crate::game::{sm_a5, sm_a6, sm_a9};
+use crate::game::{sm_a6, sm_a9};
 use crate::types::EnemyData;
 use sm_game::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
 use sm_game::combat_rules::LatchMode;
@@ -1379,7 +1403,10 @@ crate::game::callback_dispatch! {
 
         10780737 => [actors::scheduling::update_frozen_enemy(&mut Runtime::new(game))];
 
-        0xa50000..=0xa5ffff => [sm_a5::DispatchEnemyAi(ea, game)];
+        10873386 => [actors::spore_spawn::initialize(game)];
+        10873619 => [actors::spore_spawn::update(game)];
+        10874202 => [actors::spore_spawn::shot(game)];
+        10874348 => [actors::spore_spawn::touch(game)];
         0xa60000..=0xa6ffff => [sm_a6::DispatchEnemyAi(ea, game)];
         0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyAi(ea, game)];
         0xb30000..=0xb3ffff => [{ crate::rtl::Unreachable(game); }];
@@ -1559,7 +1586,28 @@ crate::game::callback_dispatch! {
         10651846 => [crate::game::goofball::landed(j, game)];
         10719382 | 10719392 | 10719402 => [actors::skultera::instruction(ea, j, game)];
         0xa30000..=0xa3ffff => [{ crate::rtl::Unreachable(game); EnemyScript::Stop }];
-        0xa50000..=0xa5ffff => [sm_a5::DispatchEnemyInstr(ea, k, j, game)];
+        10872671 => [{ actors::spore_spawn::increase_max_x_radius(game); j }];
+        10872689 => [{ actors::spore_spawn::clear_damaged_flag(game); j }];
+        10872877 => [actors::spore_spawn::set_max_x_radius_and_angle_delta(j, game)];
+        10872946 => [{ crate::ram_map::word!(game.kraid_unk9000 = j.word(0)); j.offset(1) }];
+        10872956 => [{ actors::spore_spawn::harden(game); j }];
+        10872981 => [{ crate::game::music::QueueSfx2_Max6(j.word(0), game); j.offset(1) }];
+        10873018 => [{ actors::spore_spawn::set_function(j.word(0), game); j.offset(1) }];
+        10873034 => [actors::spore_spawn::fade(false, j, game)];
+        10873116 => [actors::spore_spawn::fade(true, j, game)];
+        10873198 => [actors::spore_spawn::emit_spore(j, game)];
+        10873265 => [actors::spore_spawn::emit_hurt(j, game)];
+        10873009 => [{ crate::game::enemy_projectiles::scatter_drop(sm_game::enemy_projectiles::drops::DropSource::SporeSpawn, k, game); j }];
+        10852501 => [{ crate::ram_map::word!(game.room_loading_irq_handler = 12); j }];
+        10853514 => [{ crate::ram_map::word!(game.room_loading_irq_handler = 12); j }];
+        10854240 => [{ crate::game::music::QueueSfx2_Max6(j.word(0), game); j.offset(1) }];
+        10854254 => [{ crate::game::music::QueueSfx3_Max6(j.word(0), game); j.offset(1) }];
+        10852159 => [{ crate::game::sprite_effect_runtime::draygon_random_sprite(21, game); j }];
+        10852178 => [{ crate::game::sprite_effect_runtime::draygon_random_sprite(3, game); j }];
+        10852197 => [{ crate::game::sprite_effect_runtime::draygon_random_sprite(29, game); j }];
+        10852216 => [{ crate::game::sprite_effect_runtime::draygon_random_sprite(24, game); j }];
+        10854268 => [{ crate::game::sprite_effect_runtime::draygon_spit(false, game); j }];
+        10854318 => [{ crate::game::sprite_effect_runtime::draygon_spit(true, game); j }];
         0xa60000..=0xa6ffff => [sm_a6::DispatchEnemyInstr(ea, k, j, game)];
 
         0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyInstr(ea, k, j, game)];
