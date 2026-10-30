@@ -67,7 +67,11 @@ pub(crate) fn run_checked() {
     crate::game::actors::media_checks::run_checked();
     crate::game::actors::contact_checks::run_checked();
     botwoon_maw_publication_preserves_owned_aliases_and_capture_epoch();
+    player_lease::run_checked();
 }
+
+#[path = "player_lease_checks.rs"]
+mod player_lease;
 
 fn occupied_game_export_rejected_before_effects() {
     let mut game = Game::new();
