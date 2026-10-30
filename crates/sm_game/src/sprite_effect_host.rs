@@ -1,10 +1,12 @@
 //! Bounded dependencies for the actual shared sprite core; no Game/RAM owner.
 #![forbid(unsafe_code)]
+use crate::actors::layouts::EnemyBase;
 use crate::{
     session_access::SessionAccess,
     sprite_effect_state::{LegacySpriteWordIndex, SpriteDraw},
     visual_host::Content,
 };
+use core::mem::offset_of;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SpriteMember {
     Instruction,
@@ -15,6 +17,23 @@ pub enum SpriteMember {
     Y,
     YFraction,
     DisableFlags,
+}
+impl SpriteMember {
+    /// Word `index` of this member's table in the sprite objects' block ($7E:EF78).
+    pub fn address(self, index: LegacySpriteWordIndex) -> usize {
+        use crate::ram::word_arrays as ram;
+        let base = match self {
+            SpriteMember::Instruction => ram::sprite_instr_list_ptrs,
+            SpriteMember::Timer => ram::sprite_instr_timer,
+            SpriteMember::Appearance => ram::sprite_palettes,
+            SpriteMember::X => ram::sprite_x_pos,
+            SpriteMember::XFraction => ram::sprite_x_subpos,
+            SpriteMember::Y => ram::sprite_y_pos,
+            SpriteMember::YFraction => ram::sprite_y_subpos,
+            SpriteMember::DisableFlags => ram::sprite_disable_flag,
+        };
+        base + usize::from(index.0) * 2
+    }
 }
 /// Compatibility indices are widened words, already shifted by the caller.
 /// Projection must dispatch to the sole active, tail or other aggregate owner.
@@ -45,9 +64,17 @@ pub trait Effects {
 /// Live native actor observations. Captured actor index survives sprite writes;
 /// individual reads occur where the old controller reread its actor pointer.
 pub trait ControllerInputs {
-    fn attachment_x(&self, enemy: u16) -> u16;
-    fn attachment_y(&self, enemy: u16) -> u16;
-    fn attachment_frozen_timer(&self, enemy: u16) -> u16;
+    /// The native word at RAM `at`, in an attached enemy's record.
+    fn attachment_word(&self, at: usize) -> u16;
+    fn attachment_x(&self, enemy: u16) -> u16 {
+        self.attachment_word(0xf78 + usize::from(enemy) + offset_of!(EnemyBase, x_pos))
+    }
+    fn attachment_y(&self, enemy: u16) -> u16 {
+        self.attachment_word(0xf78 + usize::from(enemy) + offset_of!(EnemyBase, y_pos))
+    }
+    fn attachment_frozen_timer(&self, enemy: u16) -> u16 {
+        self.attachment_word(0xf78 + usize::from(enemy) + offset_of!(EnemyBase, frozen_timer))
+    }
 }
 pub trait Host: SessionAccess + Content + Aliases + Effects + ControllerInputs {
     #[cfg(sm_verify_dll)]

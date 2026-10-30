@@ -20,23 +20,10 @@ use {
     },
 };
 
-fn address(member: SpriteMember, index: LegacySpriteWordIndex) -> usize {
-    let base = match member {
-        SpriteMember::Instruction => 0xef78,
-        SpriteMember::Timer => 0xeff8,
-        SpriteMember::Appearance => 0xf078,
-        SpriteMember::X => 0xf0f8,
-        SpriteMember::XFraction => 0xf178,
-        SpriteMember::Y => 0xf1f8,
-        SpriteMember::YFraction => 0xf278,
-        SpriteMember::DisableFlags => 0xf2f8,
-    };
-    base + usize::from(index.0) * 2
-}
 #[forbid(unsafe_code)]
 impl sprite_effect_host::Aliases for Runtime<'_> {
     fn sprite_word(&self, member: SpriteMember, index: LegacySpriteWordIndex) -> u16 {
-        self.word(address(member, index))
+        self.word(member.address(index))
     }
     fn set_sprite_word_le_slice(
         &mut self,
@@ -44,10 +31,10 @@ impl sprite_effect_host::Aliases for Runtime<'_> {
         index: LegacySpriteWordIndex,
         value: u16,
     ) {
-        self.write_slice_le(address(member, index), value);
+        self.write_slice_le(member.address(index), value);
     }
     fn sprite_word_native(&self, member: SpriteMember, index: LegacySpriteWordIndex) -> u16 {
-        self.native_word(address(member, index))
+        self.native_word(member.address(index))
     }
     fn set_sprite_word_native_slice(
         &mut self,
@@ -55,7 +42,7 @@ impl sprite_effect_host::Aliases for Runtime<'_> {
         index: LegacySpriteWordIndex,
         value: u16,
     ) {
-        self.write_slice_native(address(member, index), value);
+        self.write_slice_native(member.address(index), value);
     }
 }
 impl sprite_effect_host::Effects for Runtime<'_> {
@@ -87,22 +74,8 @@ impl sprite_effect_host::Effects for Runtime<'_> {
 }
 #[forbid(unsafe_code)]
 impl sprite_effect_host::ControllerInputs for Runtime<'_> {
-    fn attachment_x(&self, enemy: u16) -> u16 {
-        self.native_word(
-            0xf78 + usize::from(enemy) + core::mem::offset_of!(crate::types::EnemyBase, x_pos),
-        )
-    }
-    fn attachment_y(&self, enemy: u16) -> u16 {
-        self.native_word(
-            0xf78 + usize::from(enemy) + core::mem::offset_of!(crate::types::EnemyBase, y_pos),
-        )
-    }
-    fn attachment_frozen_timer(&self, enemy: u16) -> u16 {
-        self.native_word(
-            0xf78
-                + usize::from(enemy)
-                + core::mem::offset_of!(crate::types::EnemyBase, frozen_timer),
-        )
+    fn attachment_word(&self, at: usize) -> u16 {
+        self.native_word(at)
     }
 }
 impl sprite_effect_host::Host for Runtime<'_> {
