@@ -33,6 +33,7 @@ fn caught(message: &'static str, action: impl FnOnce()) -> Result<(), Box<dyn An
             .payload()
             .downcast_ref::<&str>()
             .copied()
+            // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
             .or_else(|| info.payload().downcast_ref::<String>().map(String::as_str));
         if actual != Some(message) {
             forward(info);
@@ -178,6 +179,7 @@ fn failed_setup(g: &mut Game) {
     put(&mut expected, 0x1c27, 78);
     expected[0x16402] = 0x10;
     let mut delta = 0x12345678;
+    // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
     const MESSAGE: &str = "index out of bounds: the len is 131072 but the index is 156674";
     let (result, held, prefix, identity_returned) = {
         let mut runtime = Runtime::new(g);

@@ -1319,6 +1319,7 @@ crate::dispatch::callback_dispatch! {
             1 => MotherBomb_FiringDeathBeam_1(game),
             2 => MotherBomb_FiringDeathBeam_2(game),
             3 => MotherBomb_FiringDeathBeam_3(game),
+            // LEGACY(message-text): hand-written slice-index panic text, kept because verifier cases compare panic text.
             _ => panic!("index out of bounds: the len is 4 but the index is {}", v0),
         }
     };

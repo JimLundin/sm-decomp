@@ -487,6 +487,7 @@ pub fn samus_driver_cannon_failure_preserves_prefix() {
             .map(String::as_str)
             .or_else(|| failure.downcast_ref::<&str>().copied())
             .unwrap();
+        // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
         assert!(message.contains("index out of bounds: the len is 8 but the index is 542687"));
         assert!(!runtime.has_session_for_verification());
         assert!(!runtime.samus_game().actor_identity_is_with_session());

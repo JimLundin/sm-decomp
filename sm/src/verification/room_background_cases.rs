@@ -230,6 +230,7 @@ pub(crate) fn capture_case(
                 bytes(&a, 0x8ffff6, &[0x44]);
                 panic_kind = 1;
                 panic_text = Some(format!(
+                    // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
                     "index out of bounds: the len is {len} but the index is {len}"
                 ));
             }

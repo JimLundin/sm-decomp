@@ -497,6 +497,7 @@ fn capture_prepared_case(
     let _observer_guard = ObserverGuard;
     let result = catch_unwind(AssertUnwindSafe(|| dispatch(op, &mut g)));
     let expectation = match id {
+        // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
         8 => Some("index out of bounds: the len is 131072 but the index is 132866"),
         28 | 40..=43 => Some("ROM read outside loaded allocation"),
         _ => None,

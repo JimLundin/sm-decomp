@@ -420,6 +420,7 @@ pub(crate) fn capture_case(
                             31 => offset(0xaa9000) + 7,
                             _ => unreachable!(),
                         };
+                        // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
                         format!("index out of bounds: the len is {len} but the index is {len}")
                     }
                 };
@@ -636,6 +637,7 @@ fn spikey_initialization_prefix() -> Vec<u8> {
                 assert_eq!(
                     message,
                     format!(
+                        // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
                         "index out of bounds: the len is {} but the index is {}",
                         table + 27,
                         table + 27

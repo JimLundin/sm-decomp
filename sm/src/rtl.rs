@@ -266,6 +266,8 @@ unsafe fn finish_load_snes_state(native_game: &mut Game, complete_load: bool) {
 
 /// Read `n` bytes into `data`, reporting a short read through `Die` as the
 /// original did. Returns whether all `n` bytes arrived.
+// LEGACY(message-text): "fread failed\n" names a C call that no longer exists;
+// it is kept only because room_world_dll.rs matches the exact Die text.
 ///
 /// # Safety
 /// `data` must be valid for writing `n` bytes.
@@ -911,7 +913,10 @@ pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, native_game: &mut Game) {
             let Some(mut f) =
                 crate::util::host_path(name.as_ptr()).and_then(|path| File::open(path).ok())
             else {
-                printf(c"Failed fopen: %s\n".as_ptr(), &raw mut name as *mut c_char);
+                printf(
+                    c"Unable to open %s\n".as_ptr(),
+                    &raw mut name as *mut c_char,
+                );
                 return;
             };
             game.preflight_samus_runtime()

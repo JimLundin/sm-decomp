@@ -42,6 +42,7 @@ fn caught(message: &'static str, action: impl FnOnce()) -> Result<(), Box<dyn An
             .payload()
             .downcast_ref::<&str>()
             .copied()
+            // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
             .or_else(|| info.payload().downcast_ref::<String>().map(String::as_str));
         if actual != Some(message) {
             forward(info);
@@ -102,6 +103,7 @@ fn partial_speed(g: &mut Game) {
         .collect::<Vec<u8>>();
     expected[0xb46..0xb4a].copy_from_slice(&[2, 0, 0, 0]);
     expected[0xaf6..0xaf8].copy_from_slice(&0x3456u16.to_le_bytes());
+    // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
     const MESSAGE: &str = "index out of bounds: the len is 548868 but the index is 548868";
     let result = caught(MESSAGE, || {
         // Match the real bank caller's temporary Runtime: Drop occurs during
@@ -129,6 +131,7 @@ fn invalid_normal(g: &mut Game) {
         .map(|at| g.ram().read_byte(at))
         .collect::<Vec<u8>>();
     expected[0xaf6..0xaf8].copy_from_slice(&0x3456u16.to_le_bytes());
+    // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
     const MESSAGE: &str = "index out of bounds: the len is 28 but the index is 28";
     let result = caught(MESSAGE, || {
         let mut runtime = Runtime::new(g);
@@ -176,6 +179,7 @@ fn invalid_crouch(g: &mut Game) {
     let expected = (0..g.ram().len())
         .map(|at| g.ram().read_byte(at))
         .collect::<Vec<u8>>();
+    // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
     const MESSAGE: &str = "index out of bounds: the len is 12 but the index is 12";
     let result = caught(MESSAGE, || {
         let mut runtime = Runtime::new(g);

@@ -1039,7 +1039,7 @@ unsafe fn loadRom(name: *const c_char, game: &mut Game) -> bool {
                 return false;
             }
             Err(crate::util::ReadFailure::Read) => {
-                crate::host::Die(c"fread failed".as_ptr());
+                crate::host::Die(c"unable to read the ROM file".as_ptr());
                 return false;
             }
         };

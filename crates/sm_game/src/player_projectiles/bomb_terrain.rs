@@ -158,6 +158,7 @@ pub fn explode(h: &mut impl Host, raw: u16) {
         let index = usize::from((shot_native!(h, raw, kind) >> 8) & 15);
         let Some(&value) = SHOT_CLASS.get(index) else {
             let index = 2 * index + 1;
+            // LEGACY(message-text): hand-written slice-index panic text, kept because verifier cases compare panic text.
             panic!("index out of bounds: the len is 18 but the index is {index}");
         };
         value as u16
@@ -165,6 +166,7 @@ pub fn explode(h: &mut impl Host, raw: u16) {
         let index = usize::from(shot_native!(h, raw, kind) & 15);
         let Some(&value) = BEAM_CLASS.get(index) else {
             let index = 3 * index + 2;
+            // LEGACY(message-text): hand-written slice-index panic text, kept because verifier cases compare panic text.
             panic!("index out of bounds: the len is 36 but the index is {index}");
         };
         u16::from(value)

@@ -345,6 +345,7 @@ pub(crate) fn capture_case(
                     9 | 10 => "ROM read outside loaded allocation".to_owned(),
                     17 => {
                         let len = offset(0x80c4b5) + 1;
+                        // LEGACY(message-text): asserts on panic or Die text; should assert the failure kind instead.
                         format!("index out of bounds: the len is {len} but the index is {len}")
                     }
                     _ => unreachable!(),

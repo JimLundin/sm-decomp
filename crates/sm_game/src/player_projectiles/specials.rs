@@ -59,6 +59,7 @@ pub fn fire(h: &mut impl Host) -> u8 {
     let selector = usize::from(h.session().inventory.beams.active & 15);
     let costs = [0i16, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0];
     let Some(&cost) = costs.get(selector) else {
+        // LEGACY(message-text): hand-written slice-index panic text, kept because verifier cases compare panic text.
         panic!(
             "index out of bounds: the len is {} but the index is {}",
             costs.len(),
@@ -203,6 +204,7 @@ pub fn update(h: &mut impl Host, mut selected: u16, kind: Kind) {
             let paired = [4, 6, 0, 2].get(usize::from(slot >> 1)).copied();
             let paired = match paired {
                 Some(v) => v,
+                // LEGACY(message-text): hand-written slice-index panic text, kept because verifier cases compare panic text.
                 None => panic!(
                     "index out of bounds: the len is {} but the index is {}",
                     4,
@@ -335,6 +337,7 @@ pub fn advance_spazer(h: &mut impl Host, selected: u16, y: u16) {
     let index = usize::from(selected >> 1);
     let phase = usize::from(shot!(h, selected, auxiliary) >> 1);
     if phase >= 3 {
+        // LEGACY(message-text): hand-written slice-index panic text, kept because verifier cases compare panic text.
         panic!(
             "index out of bounds: the len is {} but the index is {}",
             3, phase
@@ -354,6 +357,7 @@ pub fn advance_spazer(h: &mut impl Host, selected: u16, y: u16) {
         if angle == 128 {
             shot!(h, selected, x_speed = 160; SliceLe);
             let Some(&speed) = [2, 0xfffe, 2, 0xfffe].get(index) else {
+                // LEGACY(message-text): hand-written slice-index panic text, kept because verifier cases compare panic text.
                 panic!(
                     "index out of bounds: the len is {} but the index is {}",
                     4, index
@@ -368,6 +372,7 @@ pub fn advance_spazer(h: &mut impl Host, selected: u16, y: u16) {
         shot!(h, selected, x_speed = radius; SliceLe);
         if radius == 0 {
             let Some(&speed) = [0xfffe, 2, 0xfffe, 2].get(index) else {
+                // LEGACY(message-text): hand-written slice-index panic text, kept because verifier cases compare panic text.
                 panic!(
                     "index out of bounds: the len is {} but the index is {}",
                     4, index
@@ -394,6 +399,7 @@ pub fn finish_spazer(h: &mut impl Host, selected: u16) {
     // The compound assignment reads X before demanding the table entry.
     let x = shot!(h, selected, x);
     let Some(&offset) = [16, 16, 0xfff0, 0xfff0].get(index) else {
+        // LEGACY(message-text): hand-written slice-index panic text, kept because verifier cases compare panic text.
         panic!(
             "index out of bounds: the len is {} but the index is {}",
             4, index
