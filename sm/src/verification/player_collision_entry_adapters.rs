@@ -1,18 +1,18 @@
 //! Verification-only access to the actual private collision helper.
-use super::{effects::Host, operations::MotionResult};
+use sm_game::player_collision::{effects::Host, operations::MotionResult};
 pub(in crate::game) fn solid_contact(h: &mut impl Host, amount: i32) -> MotionResult {
-    super::geometry::solid_contact(h, amount)
+    sm_game::player_collision::geometry::solid_contact(h, amount)
 }
 // Verification-only forwarding of preserved predecessor entry semantics.
 // This file is appended inside player_collision::verification under sm_verify_dll.
-use super::operations as collision;
 use crate::{game::session_runtime::Runtime, game_state::Game};
+use sm_game::player_collision::operations as collision;
 
 pub(crate) fn move_left(amount: i32, g: &mut Game) {
-    super::motion::horizontal_contact(&mut Runtime::new(g), amount, true);
+    sm_game::player_collision::motion::horizontal_contact(&mut Runtime::new(g), amount, true);
 }
 pub(crate) fn move_right(amount: i32, g: &mut Game) {
-    super::motion::horizontal_contact(&mut Runtime::new(g), amount, false);
+    sm_game::player_collision::motion::horizontal_contact(&mut Runtime::new(g), amount, false);
 }
 pub(crate) fn move_x(base: i32, g: &mut Game) {
     let request = collision::HorizontalRequest {
@@ -70,5 +70,5 @@ pub(crate) fn shinespark_y(g: &mut Game) {
     collision::shinespark(&mut Runtime::new(g), collision::Axis::Y);
 }
 pub(crate) fn align_slopes(g: &mut Game) {
-    super::geometry::align_slopes(&mut Runtime::new(g));
+    sm_game::player_collision::geometry::align_slopes(&mut Runtime::new(g));
 }

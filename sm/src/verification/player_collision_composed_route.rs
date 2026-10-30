@@ -131,7 +131,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         }
         put(g, 0x10002, 0x9000);
         g.ram().write_byte(0x16402, 0);
-        crate::game::player_collision::verification::move_x(65536, g);
+        crate::game::player_collision_adapters::move_x(65536, g);
         assert_eq!(
             word(g, 0xaf6),
             9,

@@ -390,11 +390,11 @@ pub(crate) unsafe fn run(local_id: u32, g: &mut Game) -> Vec<u8> {
     snapshot(&mut out, g);
     let returned = {
         match local_id {
-            0..=7 | 20 => crate::game::player_collision::verification::wall_jump(9 << 16, g),
-            8..=10 => crate::game::player_collision::verification::grapple_jump(9 << 16, g),
-            21 => crate::game::player_collision::verification::grapple_jump(-(9 << 16), g),
+            0..=7 | 20 => crate::game::player_collision_adapters::wall_jump(9 << 16, g),
+            8..=10 => crate::game::player_collision_adapters::grapple_jump(9 << 16, g),
+            21 => crate::game::player_collision_adapters::grapple_jump(-(9 << 16), g),
             _ => {
-                crate::game::player_collision::verification::fit_pose(g);
+                crate::game::player_collision_adapters::fit_pose(g);
                 0
             }
         }
@@ -411,7 +411,7 @@ pub(crate) unsafe fn run(local_id: u32, g: &mut Game) -> Vec<u8> {
         // Same actual screw-contact route on both sides of readiness26/27.
         put(g, 0xa96, 27);
         out.extend_from_slice(&27u16.to_le_bytes());
-        let ready = { crate::game::player_collision::verification::wall_jump(9 << 16, g) };
+        let ready = { crate::game::player_collision_adapters::wall_jump(9 << 16, g) };
         assert_eq!(ready, 1, "player.pose.screw_ready_at27");
         check(
             g,

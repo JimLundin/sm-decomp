@@ -121,10 +121,10 @@ unsafe fn motion(direction: u32, amount: i32, g: &mut Game) {
     put(g, w::samus_collision_direction, direction as u16);
     {
         match direction {
-            0 => crate::game::player_collision::verification::move_left(-amount, g),
-            1 => crate::game::player_collision::verification::move_right(amount, g),
-            2 => crate::game::player_collision::verification::move_up(-amount, g),
-            3 => crate::game::player_collision::verification::move_down(amount, g),
+            0 => crate::game::player_collision_adapters::move_left(-amount, g),
+            1 => crate::game::player_collision_adapters::move_right(amount, g),
+            2 => crate::game::player_collision_adapters::move_up(-amount, g),
+            3 => crate::game::player_collision_adapters::move_down(amount, g),
             _ => unreachable!(),
         }
     }
@@ -176,10 +176,10 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 put(g, axis, if d & 1 == 0 { 0 } else { 0xffff });
                 put(g, axis + 2, if d & 1 == 0 { 0 } else { 0xffff });
                 match d {
-                    0 => crate::game::player_collision::verification::unchecked_left(1, g),
-                    1 => crate::game::player_collision::verification::unchecked_right(1, g),
-                    2 => crate::game::player_collision::verification::unchecked_up(1, g),
-                    _ => crate::game::player_collision::verification::unchecked_down(1, g),
+                    0 => crate::game::player_collision_adapters::unchecked_left(1, g),
+                    1 => crate::game::player_collision_adapters::unchecked_right(1, g),
+                    2 => crate::game::player_collision_adapters::unchecked_up(1, g),
+                    _ => crate::game::player_collision_adapters::unchecked_down(1, g),
                 }
                 expect(
                     g,
@@ -351,7 +351,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 put(g, w::samus_y_pos, 139);
                 put(g, 0xa46, 2);
                 block(g, 264, 1, 0x87);
-                crate::game::player_collision::verification::align_slopes(g);
+                crate::game::player_collision_adapters::align_slopes(g);
                 expect(g, w::samus_y_pos, 139, "top equality does not displace");
                 expect(g, 0xdba, 1, "top equality still marks slope adjusted");
             }
@@ -428,7 +428,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             24 => {
                 put(g, w::samus_x_extra_run_subspeed, 0xffff);
                 put(g, w::samus_x_speed_divisor, 5);
-                crate::game::player_collision::verification::move_x(0x10001, g);
+                crate::game::player_collision_adapters::move_x(0x10001, g);
                 expect(
                     g,
                     w::samus_x_subpos,
@@ -440,7 +440,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 put(g, w::samus_x_extra_run_subspeed, 0);
                 put(g, w::samus_x_speed_divisor, 0);
                 put(g, w::samus_x_subpos, 0);
-                crate::game::player_collision::verification::move_x(0x200123, g);
+                crate::game::player_collision_adapters::move_x(0x200123, g);
                 expect(
                     g,
                     w::samus_x_pos,
@@ -451,7 +451,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 checkpoint(&mut checkpoints, g, 1, None);
                 g.ram().write_byte(0xa1e, 4);
                 put(g, w::samus_x_subpos, 0);
-                crate::game::player_collision::verification::move_x(0x200123, g);
+                crate::game::player_collision_adapters::move_x(0x200123, g);
                 expect(
                     g,
                     w::samus_x_pos,
@@ -473,7 +473,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 block(g, 264, if id == 25 { 0 } else { 8 }, 0);
                 block(g, 296, if id == 25 { 8 } else { 0 }, 0);
                 let mut value =
-                    crate::game::player_collision::verification::pose_clearance(amount << 16, g);
+                    crate::game::player_collision_adapters::pose_clearance(amount << 16, g);
                 assert_eq!(
                     value,
                     if id == 25 { 7 << 16 } else { 0 },
@@ -484,8 +484,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                     checkpoint(&mut checkpoints, g, 0, Some(value as u32));
                     block(g, 264, 0, 0);
                     block(g, 296, 8, 0);
-                    let second =
-                        crate::game::player_collision::verification::pose_clearance(9 << 16, g);
+                    let second = crate::game::player_collision_adapters::pose_clearance(9 << 16, g);
                     assert_eq!(
                         second,
                         8 << 16,
@@ -505,7 +504,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             27 => {
                 g.ram().write_byte(0xa1e, 4);
                 put(g, w::extra_samus_x_displacement, 3);
-                crate::game::player_collision::verification::move_x(0x10000, g);
+                crate::game::player_collision_adapters::move_x(0x10000, g);
                 expect(
                     g,
                     w::samus_x_pos,
@@ -524,7 +523,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 put(g, w::samus_x_extra_run_speed, 14);
                 put(g, w::samus_x_extra_run_subspeed, 0xffff);
                 put(g, w::samus_y_subaccel, 1);
-                crate::game::player_collision::verification::shinespark_x(g);
+                crate::game::player_collision_adapters::shinespark_x(g);
                 expect(g, w::samus_x_pos, 151, "shinespark clamps at15");
                 expect(
                     g,
@@ -537,7 +536,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 actor(g, 0, 169, 136);
                 put(g, w::interactive_enemy_indexes_write_ptr, 2);
                 put(g, a::interactive_enemy_indexes + 2, 0xffff);
-                crate::game::player_collision::verification::shinespark_x(g);
+                crate::game::player_collision_adapters::shinespark_x(g);
                 expect(
                     g,
                     w::samus_x_pos,
@@ -557,7 +556,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 put(g, w::samus_y_subaccel, 1);
                 put(g, 0xdec, 0);
                 put(g, 0xdee, 0xffff);
-                crate::game::player_collision::verification::shinespark_y(g);
+                crate::game::player_collision_adapters::shinespark_y(g);
                 expect(g, 0xdee, 0, "shared sequence fraction carry");
                 expect(g, 0xdec, 1, "shared sequence whole carry");
                 expect(
@@ -572,7 +571,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 actor(g, 0, 136, 105);
                 put(g, w::interactive_enemy_indexes_write_ptr, 2);
                 put(g, a::interactive_enemy_indexes + 2, 0xffff);
-                crate::game::player_collision::verification::shinespark_y(g);
+                crate::game::player_collision_adapters::shinespark_y(g);
                 expect(
                     g,
                     w::samus_y_pos,

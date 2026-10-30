@@ -75,8 +75,7 @@ pub(crate) fn run(op: Operation, game: &mut Game) -> Option<u64> {
             amount,
         ))),
         Operation::Solid(amount) => {
-            let contact =
-                crate::game::player_collision::verification::solid_contact(&mut h, amount);
+            let contact = crate::game::player_collision_adapters::solid_contact(&mut h, amount);
             Some(
                 (u64::from(contact.displacement as u32) << 16)
                     | if matches!(

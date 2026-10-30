@@ -388,7 +388,7 @@ fn assert_binary_restore_after_failed_interval(
 /// No movie covers malformed Projectiles checkpoints or an independently valid binding mismatch.
 fn assert_projectiles_checkpoint(owner: &GameOwner, required: &ss::DisplayStartRequirements) {
     use sm_game::scene::component::DisplayStartMetadata;
-    use {crate::game::launch_motion::MovementDirection, sm_game::session::Projectiles};
+    use {sm_game::launch_motion::MovementDirection, sm_game::session::Projectiles};
 
     let (start, _) = owner.checkpoint_session().unwrap().into_start().unwrap();
     let display = start.display;
@@ -418,12 +418,12 @@ fn assert_projectiles_checkpoint(owner: &GameOwner, required: &ss::DisplayStartR
     expected.trails[17].right.remaining = 0xbcdf;
     expected.controls.cooldown = 0x1357;
     expected.controls.flare_timers[2] = 0x2468;
-    crate::game::launch_motion::record_movement(
+    crate::game::launch_motion_ram::record_observed(
         &mut expected.launch,
         MovementDirection::Left,
         -0x12345,
     );
-    crate::game::launch_motion::record_movement(
+    crate::game::launch_motion_ram::record_observed(
         &mut expected.launch,
         MovementDirection::Down,
         0x23456,

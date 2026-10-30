@@ -85,7 +85,7 @@ pub(crate) unsafe fn run(g: &mut Game, reversed: bool, out: &mut Vec<u8>) {
             put(g, at, value);
         }
         position(g, 0x136, 0x240);
-        crate::game::player_collision::verification::move_x(2 << 16, g);
+        crate::game::player_collision_adapters::move_x(2 << 16, g);
         assert_eq!(
             word(g, ram::samus_x_pos),
             0x137,
@@ -109,7 +109,7 @@ pub(crate) unsafe fn run(g: &mut Game, reversed: bool, out: &mut Vec<u8>) {
         position(g, 0x88, 0x8f);
         cell(g, 0x89, 0x8f, 0x1000, 5);
         put(g, ram::enable_horiz_slope_coll, 2);
-        crate::game::player_collision::verification::move_x(1 << 16, g);
+        crate::game::player_collision_adapters::move_x(1 << 16, g);
         assert_eq!(
             word(g, ram::samus_x_pos),
             0x89,
@@ -130,7 +130,7 @@ pub(crate) unsafe fn run(g: &mut Game, reversed: bool, out: &mut Vec<u8>) {
         cell(g, 0xa8, 0xc1, 0x3000, 0);
         put(g, ram::samus_y_dir, 0);
         put(g, ram::samus_contact_damage_index, 0);
-        crate::game::player_collision::verification::move_down(0x123478, g);
+        crate::game::player_collision_adapters::move_down(0x123478, g);
         assert_eq!(
             word(g, ram::samus_y_pos),
             0xaf,

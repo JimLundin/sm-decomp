@@ -3,10 +3,10 @@
 #![forbid(unsafe_code)]
 use std::cell::RefCell;
 use {
-    crate::game::{
-        launch_motion::MovementDirection,
-        player_collision::operations::{self, Direction, DisplacementRequest, Obstruction},
+    crate::game::player_collision::operations::{
+        self, Direction, DisplacementRequest, Obstruction,
     },
+    sm_game::launch_motion::MovementDirection,
     sm_game::{
         actors::access::ActorKey, player_collision::effects::Host, visual_host,
         visual_state::PaletteCarry,
