@@ -379,6 +379,8 @@ impl crate::execution::Execution<'_> {
                     (*snes).ramAdr &= 0x1ffff;
                     value
                 }
+                // $2181-$21FF are unmapped on the B bus: the CPU data bus value remains.
+                _ if crate::oracle_mode::models_open_bus() => (*snes).openBus,
                 _ => crate::native_assertion! {
                     @failure
                     b"0\0", b"src/snes/snes.c\0", 197, b"uint8_t snes_readBBus(Snes *, uint8_t)\0"
@@ -568,7 +570,11 @@ impl crate::execution::Execution<'_> {
             let snes = self.snes();
             (*snes).cpuMemOps = (*snes).cpuMemOps.wrapping_add(1);
             (*snes).cpuCyclesLeft = (*snes).cpuCyclesLeft.wrapping_add(8);
-            self.read(address)
+            let value = self.read(address);
+            if crate::oracle_mode::models_open_bus() {
+                (*self.snes()).openBus = value;
+            }
+            value
         }
     }
 
@@ -577,6 +583,9 @@ impl crate::execution::Execution<'_> {
             let snes = self.snes();
             (*snes).cpuMemOps = (*snes).cpuMemOps.wrapping_add(1);
             (*snes).cpuCyclesLeft = (*snes).cpuCyclesLeft.wrapping_add(8);
+            if crate::oracle_mode::models_open_bus() {
+                (*snes).openBus = value;
+            }
             self.write(address, value);
         }
     }

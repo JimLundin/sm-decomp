@@ -83,3 +83,10 @@ pub(crate) fn clears_y_on_enemy_instruction_end() -> bool {
     static CLEARS: OnceLock<bool> = OnceLock::new();
     *CLEARS.get_or_init(|| installs(PatchKind::OtherHook, 0xa08086))
 }
+
+/// Whether the oracle keeps the CPU data bus value (MDR) and returns it for
+/// unmapped reads, as bsnes and hardware do. Only the faithful oracle reaches
+/// such reads; the patched one keeps its zero open bus and stops on them.
+pub(crate) fn models_open_bus() -> bool {
+    faithful()
+}

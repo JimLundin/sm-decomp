@@ -193,6 +193,10 @@ impl Execution<'_> {
 
     unsafe fn invalid_lorom_read(&mut self, original_bank: u8, adr: u16) -> u8 {
         unsafe {
+            // Unmapped addresses return the last value on the CPU data bus.
+            if crate::oracle_mode::models_open_bus() {
+                return (*self.snes()).openBus;
+            }
             let bank = original_bank & 0x7f;
             printf(
                 c"While trying to read from 0x%x\n".as_ptr(),
