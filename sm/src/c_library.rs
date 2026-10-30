@@ -20,11 +20,11 @@ unsafe extern "C" {
     pub fn fgetc(__stream: *mut FILE) -> i32;
     pub fn fopen(__filename: *const c_char, __modes: *const c_char) -> *mut FILE;
     pub fn fprintf(__stream: *mut FILE, __format: *const c_char, ...) -> i32;
-    pub fn fread(__ptr: *mut c_void, __size: size_t, __n: size_t, __stream: *mut FILE) -> c_ulong;
+    pub fn fread(__ptr: *mut c_void, __size: size_t, __n: size_t, __stream: *mut FILE) -> size_t;
     pub fn free(__ptr: *mut c_void);
     pub fn fseek(__stream: *mut FILE, __off: c_long, __whence: i32) -> i32;
     pub fn ftell(__stream: *mut FILE) -> c_long;
-    pub fn fwrite(__ptr: *const c_void, __size: size_t, __n: size_t, __s: *mut FILE) -> c_ulong;
+    pub fn fwrite(__ptr: *const c_void, __size: size_t, __n: size_t, __s: *mut FILE) -> size_t;
     pub fn getcwd(__buf: *mut c_char, __size: size_t) -> *mut c_char;
     pub fn malloc(__size: size_t) -> *mut c_void;
     pub fn memchr(__s: *const c_void, __c: i32, __n: size_t) -> *mut c_void;
