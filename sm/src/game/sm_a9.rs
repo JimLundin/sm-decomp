@@ -4580,7 +4580,7 @@ crate::game::callback_dispatch! {
         Shitroid_Func_19(k, game);
     };
     @external {
-        11136998 => [actors::shitroid::pin_camera_at_512(game)];
+        11136998 => [actors::shitroid::wait_for_camera(game)];
         11137787 => [Shitroid_Func_20(game)]; 11137828 => [Shitroid_Func_21(game)];
         11137901 => [Shitroid_Func_23(game)];
     }
@@ -4789,7 +4789,7 @@ pub fn Shitroid_HandleCutscenePalette_Common(r22: u16, r18: u16, game: &mut Game
             let v3: u8 = (slot!(byte game, Enemy_Shitroid[E].var_D[0]) as i32 + 1 & 7) as u8;
             slot!(byte game, Enemy_Shitroid[E].var_D[0] = v3);
             let v4: u16 =
-                actors::shitroid::cry_sound_effect(word!(game.cur_enemy_index), v3 as u16, game);
+                actors::shitroid::handle_cry(word!(game.cur_enemy_index), v3 as u16, game);
             copy_rom_colors_to_palette(r18, 0xa9, (r22 as i32 + 8 * v4 as i32) as u16, 4, game);
         };
     }
