@@ -29,9 +29,6 @@ impl sm_game::xray_background::Host for Game {
     }
 }
 
-pub unsafe fn build_overlay(game: &mut Game) {
-    sm_game::xray_background::build_overlay(game);
-}
 pub unsafe fn reveal_room_items(game: &mut Game) {
     sm_game::xray_background::reveal_room_items(&mut Runtime::new(game));
 }

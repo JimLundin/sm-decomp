@@ -49,16 +49,8 @@ pub(crate) fn load_door(game: &mut Game) {
     installation::load_door(&mut Runtime::new(game));
 }
 
-pub(crate) fn save_departing_map(game: &mut Game) {
-    installation::save_departing_map(&mut Runtime::new(game));
-}
-
 pub(crate) fn load_destination_map(game: &mut Game) {
     installation::load_destination_map(&mut Runtime::new(game));
-}
-
-pub(crate) fn run_door_setup(game: &mut Game) {
-    installation::run_door_setup(&mut Runtime::new(game));
 }
 
 pub(crate) fn run_room_setup(game: &mut Game) {
@@ -237,10 +229,6 @@ pub(crate) unsafe fn door_script(address: u32, game: &mut Game) {
             }
         }
     }
-}
-
-pub(crate) fn initialize_door_objects(game: &mut Game) {
-    installation::initialize_door_objects(&mut Runtime::new(game));
 }
 
 pub(crate) fn load_tiles_and_palette(game: &mut Game) {
