@@ -14,9 +14,9 @@ use crate::actors::{
     ceres_ridley, choot, covern, crawlers, crocomire_reactions, dachora_run, draygon_death,
     draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator,
     escape_critters, etecoon, evir, fire_arc, fireflea, fune, gamet, geega, kago, kraid,
-    magdollite, metroid, mini_kraid, mochtroid, morph_ball_eye, phantoon, phantoon_actions, puyo,
-    reflec, ridley, roach, shaktool, sidehopper, skree, skultera, space_pirates, statues, torizo,
-    tripper, yapping_maw, zeb, zebetites, zoa,
+    magdollite, metroid, mini_kraid, mochtroid, morph_ball_eye, oum, phantoon, phantoon_actions,
+    puyo, reflec, ridley, roach, shaktool, sidehopper, skree, skultera, space_pirates, statues,
+    torizo, tripper, yapping_maw, zeb, zebetites, zoa,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -54,7 +54,6 @@ impl<T> B3Host for T where
 /// Contact reactions whose routines still run in the compatibility crate.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NativeTouch {
-    Oum { damage: bool },
     SporeSpawn,
     CeresSteam,
     MotherBrainBrain,
@@ -80,8 +79,8 @@ pub trait TouchHost:
 pub fn touch<H: TouchHost>(ea: u32, game: &mut H) {
     match ea {
         10518563 => game.contact_reaction(Death::Finalize),
-        10670984 => game.native_touch(NativeTouch::Oum { damage: true }),
-        10670988 => game.native_touch(NativeTouch::Oum { damage: false }),
+        10670984 => oum::touch(true, game),
+        10670988 => oum::touch(false, game),
         10780707 => game.contact_reaction(Death::Finalize),
         10795325 => crocomire_reactions::touch(game),
         10795344 => (),
@@ -107,7 +106,6 @@ pub fn touch<H: TouchHost>(ea: u32, game: &mut H) {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NativeShot {
     Dud,
-    Oum,
     SporeSpawn,
     Ridley,
     MotherBrainBody,
@@ -136,7 +134,7 @@ pub fn shot<H: ShotHost>(ea: u32, j: u16, game: &mut H) {
         10518573 => game.shot_reaction(Shot::Finalize),
         10846278 => game.native_shot(NativeShot::Dud),
         10649676 => (),
-        10671028 => game.native_shot(NativeShot::Oum),
+        10671028 => oum::shot(game),
         10780717 => game.shot_reaction(Shot::Finalize),
         10795345 => crocomire_reactions::count_hit(game),
         10795368 => crocomire_reactions::impact(game),
@@ -538,6 +536,10 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
                 game.unknown_routine();
             }
         }
+        10669268 => oum::initialize(game),
+        10669331 => oum::main_ai(game),
+        10670988 => oum::touch(false, game),
+        10671028 => oum::shot(game),
         10657608 => cacatac::initialize(game),
         10658809 => cacatac::owtch::initialize(game),
         10658942 => cacatac::owtch::main_ai(game),
@@ -632,6 +634,8 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
         10741746 => crawlers::crawl(k, crate::actors::api::Axis::Y, false, game),
         10741637 => crawlers::falling(k, game),
         10518651 => (),
+        10669926 => oum::bounce(false, k, game),
+        10669993 => oum::bounce(true, k, game),
         10657722 => cacatac::moving(false, game),
         10657772 => cacatac::moving(true, game),
         10649723 => (),
@@ -782,6 +786,7 @@ pub fn instruction<H: InstructionHost>(
         10722422 | 10722444 => tripper::set_x_movement(true, j, game),
         10725992 => sidehopper::queue_sound(j, game),
         10657941 => cacatac::resume_moving(k, j, game),
+        10669235 | 10669246 | 10669257 => oum::instruction(ea, j, game),
         10659181 | 10659185 => cacatac::owtch::set_function_index(ea, k, j, game),
         10742437 => metroid::draining_sound(j, game),
         10742449 => metroid::random_cry(j, game),

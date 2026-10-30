@@ -1112,7 +1112,6 @@ impl Runtime<'_> {
 }
 
 use crate::game::actors::{self, api as actor_api};
-use crate::game::large_snail;
 use crate::game::moving_platforms::{self as mechanisms, Event, Kind};
 use crate::game::rippers::{self, Kind as RipperKind};
 use crate::game::sm_a9;
@@ -1142,7 +1141,6 @@ crate::game::callback_dispatch! {
         10664275 => [{
                     crate::game::rinka::power_bomb(crate::ram_map::word!(game.cur_enemy_index), game);
                 }];
-        10669268 => crate::game::large_snail::initialize;
         10676698 => [mechanisms::initialize(Kind::TimedShutter, game)];
         10676918 => [mechanisms::update(Kind::TimedShutter, game)];
         10677765 => [mechanisms::initialize(Kind::Platform, game)];
@@ -1270,26 +1268,6 @@ crate::game::callback_dispatch! {
                 crate::rtl::Unreachable(game);
             }
         }];
-        10669331 => [{
-            let action = large_snail::prepare(game);
-            match action {
-                0xcde6 | 0xce2b => {
-                    let walking = action == 0xce2b;
-                    let (raw, phase) = large_snail::begin_action(walking, game);
-                    if let Some(phase) = phase {
-                        actor_species_pre_instruction(0xa20000 | u32::from(phase), game);
-                    }
-                    if walking {
-                        large_snail::walk(raw, game);
-                    }
-                }
-                0xcf40 => large_snail::end_action(game),
-                _ => {
-                    crate::rtl::Unreachable(game);
-                }
-            }
-            large_snail::finish(game);
-        }];
         10674643 => [rippers::initialize(RipperKind::Gripper, game)];
         10674721 => [rippers::advance(RipperKind::Gripper, game)];
         10674968 => [rippers::initialize(RipperKind::JetPowered, game)];
@@ -1314,8 +1292,6 @@ crate::game::callback_dispatch! {
         10649610 => [actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Grapple)];
         10649665 => [actors::scheduling::update_frozen_enemy(&mut Runtime::new(game))];
 
-        10670988 => [large_snail::touch(false, game)];
-        10671028 => large_snail::shot;
         10675718 => crate::game::lava_seahorse_pair::initialize;
         10675790 => [actor_species_pre_instruction(crate::game::lava_seahorse_pair::pre_instruction(game), game)];
         10676168 => [{ actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize); crate::game::lava_seahorse_pair::synchronize(game); }];
@@ -1406,8 +1382,6 @@ crate::game::address_dispatch! {
         10666929 => [crate::game::norfair_rio::dive(k, false, false, game)];
         10667990 => [crate::game::norfair_rio::dive(k, true, true, game)];
         10668077 => [crate::game::norfair_rio::dive(k, true, false, game)];
-        10669926 => [large_snail::bounce(false, k, game)];
-        10669993 => [large_snail::bounce(true, k, game)];
         10675796 | 10675885 | 10675953 | 10676020 | 10676041
             => [crate::game::lava_seahorse_pair::phase(k, ea as u16, game)];
         10652227 => [crate::game::mini_crocomire::patrol(false, game)];
@@ -1480,9 +1454,6 @@ crate::game::callback_dispatch! {
             j
         }];
         10668907 => [{ crate::game::music::queue_sfx2_max6(0xe, game); j }];
-        10669235 => [{ large_snail::script_flag(4, 1, game); j }];
-        10669246 => [{ large_snail::script_flag(6, 1, game); j }];
-        10669257 => [{ large_snail::script_flag(6, 0, game); j }];
         10675707 => [crate::game::lava_seahorse_pair::fire_ready(j, game)];
         10666441 | 10666452 | 10666463 | 10666474 | 10666485 | 10666496 | 10666507
         | 10666518 | 10666529 | 10666540 | 10666551 | 10667730 | 10667741 | 10667752

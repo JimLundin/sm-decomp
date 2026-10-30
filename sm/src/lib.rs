@@ -436,7 +436,6 @@ pub mod game {
     pub(crate) mod erratic_fireball;
     pub(crate) mod fire_geysers;
     pub(crate) mod flies;
-    pub(crate) mod large_snail;
     pub(crate) mod lava_jumper;
     pub(crate) mod lava_seahorse_pair;
     pub(crate) mod lavaquake;
