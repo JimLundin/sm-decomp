@@ -6,6 +6,7 @@ pub(in crate::game) use sm_game::actors::api;
 pub(in crate::game) use sm_game::actors::bang;
 pub(in crate::game) use sm_game::actors::blue_brinstar_face_block;
 pub(in crate::game) use sm_game::actors::coven;
+pub(in crate::game) use sm_game::actors::crawlers;
 pub(in crate::game) use sm_game::actors::elevator;
 pub(in crate::game) use sm_game::actors::kago;
 pub(in crate::game) use sm_game::actors::mochtroid;
@@ -35,7 +36,6 @@ pub(crate) mod shaktool;
 pub(in crate::game) mod sidehopper;
 pub(in crate::game) mod skultera;
 pub(crate) mod torizo;
-pub(in crate::game) mod wall_crawlers;
 
 mod runtime;
 pub(crate) use runtime::restart_from_native_cache;

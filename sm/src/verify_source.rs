@@ -654,10 +654,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/actors/metroid.rs"),
     ),
     (
-        "sm/src/game/actors/wall_crawlers.rs",
-        include_bytes!("game/actors/wall_crawlers.rs"),
-    ),
-    (
         "sm/src/game/actors/shaktool.rs",
         include_bytes!("game/actors/shaktool.rs"),
     ),
@@ -3074,6 +3070,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/actors/coven.rs",
         include_bytes!("../../crates/sm_game/src/actors/coven.rs"),
+    ),
+    (
+        "crates/sm_game/src/actors/crawlers.rs",
+        include_bytes!("../../crates/sm_game/src/actors/crawlers.rs"),
     ),
     (
         "crates/sm_game/src/actors/mother_brain_effects.rs",

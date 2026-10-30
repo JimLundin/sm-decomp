@@ -125,6 +125,8 @@ pub trait BossEffects:
     fn command_player(&mut self, command: u16) -> u16;
     /// Reset projectile data.
     fn reset_player_projectiles(&mut self);
+    /// `a` times `b` through the hardware multiplier's scratch words.
+    fn scratch_multiply(&mut self, a: u16, b: u16) -> u32;
     fn correct_previous_position(&mut self);
     /// Contact damage `amount` after Samus's suit.
     fn suit_damage(&mut self, amount: u16) -> u16;
@@ -174,6 +176,8 @@ pub trait ActorLease:
     fn lease_native_record(&mut self, bank: u8, address: u16) -> sm_data::cartridge::RomRecord;
     /// The common enemy speed table word at signed word `index`.
     fn lease_enemy_speed(&self, table: sm_data::enemy_speeds::SpeedTable, index: isize) -> u16;
+    /// The byte at `at`, through the session projection.
+    fn lease_byte(&self, at: usize) -> u8;
 }
 
 /// A host that can lease its actors; each `lease` is one original `Runtime`.
