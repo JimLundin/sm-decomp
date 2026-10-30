@@ -17,7 +17,7 @@ FILES = {
     "LICENSE.txt": "78b243fa858f4bcb49f8ccca14fec262f62fcee4e44a1ce7565840bdb4ca2217",
 }
 NATIVE_INPUTS = ("crates/sm_app/src/main.rs", "sm/src/native_desktop.c", "sm/src/native_desktop.h",
-                 "sm/src/types.rs", "sm/src/platform/opengl.rs", "tools/install_native_desktop.py",
+                 "sm/src/types.rs", "crates/sm_app/src/platform/opengl.rs", "tools/install_native_desktop.py",
                  "tools/install_native_config.py")
 
 

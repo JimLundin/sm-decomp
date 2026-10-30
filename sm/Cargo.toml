@@ -27,12 +27,11 @@ test = false
 sm_data = { path = "../crates/sm_data" }
 sm_runtime = { path = "../crates/sm_runtime" }
 sm_game = { path = "../crates/sm_game" }
-gl = { version = "0.14.0", optional = true }
 sdl2-sys = { version = "0.38.0", optional = true }
 
 [features]
 default = ["frontend"]
-frontend = ["dep:sdl2-sys", "dep:gl", "sm_game/frontend"]
+frontend = ["dep:sdl2-sys", "sm_game/frontend"]
 
 [lints.rust]
 warnings = { level = "deny", priority = -1 }

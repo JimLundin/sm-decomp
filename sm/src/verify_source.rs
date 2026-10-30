@@ -1237,7 +1237,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     ),
     ("sm/src/audio_upload.rs", include_bytes!("audio_upload.rs")),
     ("sm/src/c_library.rs", include_bytes!("c_library.rs")),
-    ("sm/src/config.rs", include_bytes!("config.rs")),
     ("sm/src/cpu_infra.rs", include_bytes!("cpu_infra.rs")),
     ("sm/src/execution.rs", include_bytes!("execution.rs")),
     (
@@ -2157,22 +2156,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     ("sm/src/native_shader.h", include_bytes!("native_shader.h")),
     ("sm/src/native_util.c", include_bytes!("native_util.c")),
     ("sm/src/native_util.h", include_bytes!("native_util.h")),
-    (
-        "sm/src/platform/glsl_shader.rs",
-        include_bytes!("platform/glsl_shader.rs"),
-    ),
-    (
-        "sm/src/platform/opengl.rs",
-        include_bytes!("platform/opengl.rs"),
-    ),
-    (
-        "sm/src/platform/sdl_constants.rs",
-        include_bytes!("platform/sdl_constants.rs"),
-    ),
-    (
-        "sm/src/platform/texture_png.rs",
-        include_bytes!("platform/texture_png.rs"),
-    ),
     ("sm/src/ram_map.rs", include_bytes!("ram_map.rs")),
     ("sm/src/recording.rs", include_bytes!("recording.rs")),
     ("sm/src/native_rom.rs", include_bytes!("native_rom.rs")),

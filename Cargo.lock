@@ -61,7 +61,6 @@ dependencies = [
 name = "sm"
 version = "0.1.0"
 dependencies = [
- "gl",
  "sdl2-sys",
  "sm_data",
  "sm_game",
@@ -72,6 +71,7 @@ dependencies = [
 name = "sm_app"
 version = "0.1.0"
 dependencies = [
+ "gl",
  "sdl2-sys",
  "sm",
 ]

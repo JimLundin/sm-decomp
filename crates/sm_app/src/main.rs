@@ -1,5 +1,11 @@
 #![deny(unsafe_op_in_unsafe_fn)]
-#![allow(dead_code, non_snake_case, non_upper_case_globals, unused_imports)]
+#![allow(
+    dead_code,
+    non_camel_case_types,
+    non_snake_case,
+    non_upper_case_globals,
+    unused_imports
+)]
 use core::ffi::{c_char, c_long, c_void};
 use core::ptr::{null, null_mut};
 use sdl2_sys::SDL_MessageBoxFlags::{SDL_MESSAGEBOX_ERROR, SDL_MESSAGEBOX_WARNING};
@@ -14,6 +20,39 @@ use sm::game_state::{Game, GameOwner};
 use sm::host::Die;
 use sm::rtl::*;
 use sm::types::{FILE, RendererFuncs, Snes, size_t};
+/// Config file parsing.
+mod config;
+/// Window, renderer and OpenGL output.
+mod platform {
+    pub mod glsl_shader;
+    pub mod opengl;
+    mod sdl_constants;
+    mod texture_png;
+}
+
+macro_rules! type_aliases {
+    ($visibility:vis $($name:ident),+ = $target:ty;) => {
+        $($visibility type $name = $target;)+
+    };
+}
+pub(crate) use type_aliases;
+
+// Declare consecutive record fields of one type without changing layout.
+macro_rules! typed_struct {
+    ($attributes:tt; $($visibility:vis $kind:ident $name:ident $fields:tt)+) => {
+        $($crate::typed_struct!(@attributes $attributes $visibility $kind $name $fields);)+
+    };
+    (@attributes [$(#[$metadata:meta])*] $visibility:vis $kind:ident $name:ident {
+        $($field_visibility:vis $($field:ident),+ : $field_type:ty;)*
+    }) => {
+        $(#[$metadata])*
+        $visibility $kind $name {
+            $($($field_visibility $field: $field_type,)*)*
+        }
+    };
+}
+pub(crate) use typed_struct;
+
 // The replay runner is shared with the sm_verify host.
 #[path = "../../../sm/src/verify.rs"]
 mod verify;
@@ -49,7 +88,7 @@ fn check_dependency() {
         include_bytes!("../../../sm/src/native_desktop.c").as_slice(),
         include_bytes!("../../../sm/src/native_desktop.h").as_slice(),
         include_bytes!("../../../sm/src/types.rs").as_slice(),
-        include_bytes!("../../../sm/src/platform/opengl.rs").as_slice(),
+        include_bytes!("platform/opengl.rs").as_slice(),
         include_bytes!("../../../tools/install_native_desktop.py").as_slice(),
         include_bytes!("../../../tools/install_native_config.py").as_slice(),
     ]
@@ -146,16 +185,16 @@ unsafe extern "C-unwind" fn sm_host_stderr() -> *mut FILE {
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_parse_config(config: *mut c_void, name: *const c_char) {
     unsafe {
-        sm::config::ParseConfigFile(name, &mut *config.cast::<sm::config::ConfigOwner>());
+        crate::config::ParseConfigFile(name, &mut *config.cast::<crate::config::ConfigOwner>());
     }
 }
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_find_key(key: i32, modifiers: i32) -> i32 {
-    unsafe { sm::config::FindCmdForSdlKey(key, modifiers as _) }
+    unsafe { crate::config::FindCmdForSdlKey(key, modifiers as _) }
 }
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_find_button(button: i32, modifiers: u32) -> i32 {
-    unsafe { sm::config::FindCmdForGamepadButton(button, modifiers) }
+    unsafe { crate::config::FindCmdForGamepadButton(button, modifiers) }
 }
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_debug(owner: *const GameOwner) {
@@ -444,7 +483,7 @@ pub fn main() {
             std::process::exit(2);
         }
     };
-    let mut config = sm::config::ConfigOwner::new();
+    let mut config = crate::config::ConfigOwner::new();
     let owner = match selection.world {
         Some(world) => GameOwner::with_world(world),
         None => GameOwner::new(),
@@ -497,7 +536,7 @@ pub fn main() {
             (args_ptrs.len() - 1) as i32,
             args_ptrs.as_mut_ptr(),
             (&*owner as *const GameOwner).cast(),
-            (&mut config as *mut sm::config::ConfigOwner).cast(),
+            (&mut config as *mut crate::config::ConfigOwner).cast(),
             (&audio as *const DesktopAudio<'_>).cast_mut().cast(),
         )
     };

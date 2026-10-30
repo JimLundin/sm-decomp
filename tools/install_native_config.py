@@ -17,7 +17,7 @@ FILES = {
     "src/types.h": "af3bbac047a9a6db0707f9241aa9e19767147ab3783b523cb22cfd55b0409e23",
     "LICENSE.txt": "78b243fa858f4bcb49f8ccca14fec262f62fcee4e44a1ce7565840bdb4ca2217",
 }
-NATIVE_INPUTS = ("sm/src/config.rs", "sm/src/native_config.c", "sm/src/native_config.h",
+NATIVE_INPUTS = ("crates/sm_app/src/config.rs", "sm/src/native_config.c", "sm/src/native_config.h",
                  "sm/src/native_util.h", "sm/src/types.rs", "tools/install_native_config.py")
 UTILITY_INPUTS = ("sm/src/util.rs", "sm/src/native_util.c", "sm/src/native_util.h",
                   "sm/src/types.rs", "tools/install_native_config.py")
@@ -133,9 +133,9 @@ def write_stamp(root, path, prefix, inputs):
     path.write_text("\n".join(declarations) + "\n", encoding="ascii")
 
 
-SHADER_INPUTS = ("sm/src/platform/glsl_shader.rs", "sm/src/native_shader.c",
-                 "sm/src/native_shader.h", "sm/src/platform/texture_png.rs",
-                 "sm/src/platform/opengl.rs", "sm/src/types.rs", "tools/install_native_config.py")
+SHADER_INPUTS = ("crates/sm_app/src/platform/glsl_shader.rs", "sm/src/native_shader.c",
+                 "sm/src/native_shader.h", "crates/sm_app/src/platform/texture_png.rs",
+                 "crates/sm_app/src/platform/opengl.rs", "sm/src/types.rs", "tools/install_native_config.py")
 
 
 def shader_source(source):

@@ -21,7 +21,7 @@ pub const SEEK_END: i32 = 2;
 // Preserve the native lexical policy: directory bytes plus the full new name.
 // Absolute names, dots and slash styles are copied without normalization.
 #[cfg(all(not(sm_verify_dll), feature = "frontend"))]
-pub(crate) fn include_path(base: &core::ffi::CStr, name: &core::ffi::CStr) -> std::ffi::CString {
+pub fn include_path(base: &core::ffi::CStr, name: &core::ffi::CStr) -> std::ffi::CString {
     let base = base.to_bytes();
     let name = name.to_bytes_with_nul();
     let prefix = base
@@ -35,7 +35,7 @@ pub(crate) fn include_path(base: &core::ffi::CStr, name: &core::ffi::CStr) -> st
 }
 
 // ROM and configuration readers close the actual CRT stream on return or unwind.
-pub(crate) struct InputFile(pub(crate) *mut FILE);
+pub struct InputFile(pub *mut FILE);
 impl Drop for InputFile {
     fn drop(&mut self) {
         unsafe {

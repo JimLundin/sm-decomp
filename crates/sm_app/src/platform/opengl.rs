@@ -1,8 +1,5 @@
-use crate::c_library::printf;
 use crate::config::g_config;
-use crate::host::Die;
 use crate::platform::glsl_shader::{GlslShader, GlslShader_CreateFromFile, GlslShader_Render};
-use crate::types::{GlTextureWithSize, RendererFuncs, SDL_GLContext, SDL_Window};
 use sdl2_sys::SDL_GLattr::{
     SDL_GL_CONTEXT_MAJOR_VERSION, SDL_GL_CONTEXT_MINOR_VERSION, SDL_GL_CONTEXT_PROFILE_MASK,
 };
@@ -10,6 +7,9 @@ use sdl2_sys::{
     SDL_GL_CreateContext, SDL_GL_GetDrawableSize, SDL_GL_SetAttribute, SDL_GL_SetSwapInterval,
     SDL_GL_SwapWindow,
 };
+use sm::c_library::printf;
+use sm::host::Die;
+use sm::types::{GlTextureWithSize, RendererFuncs, SDL_GLContext, SDL_Window};
 use std::cell::RefCell;
 use std::ffi::{CStr, c_void};
 use std::ptr::{null, null_mut};

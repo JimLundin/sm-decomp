@@ -627,24 +627,12 @@ pub mod snes {
     pub mod spc;
 }
 
-/// Window, renderer and OpenGL output.
-#[cfg(all(not(sm_verify_dll), feature = "frontend"))]
-pub mod platform {
-    pub mod glsl_shader;
-    pub mod opengl;
-    mod sdl_constants;
-    mod texture_png;
-}
-
 pub mod apu_queue;
 pub mod apu_ram;
 pub(crate) mod audio_snapshot;
 pub mod audio_upload;
 #[doc(hidden)]
 pub mod c_library;
-/// Config file parsing.
-#[cfg(all(not(sm_verify_dll), feature = "frontend"))]
-pub mod config;
 /// Frame runner and the per-frame comparison against the original ROM.
 pub mod cpu_infra;
 mod initial_state;

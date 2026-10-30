@@ -1,9 +1,9 @@
-use crate::c_library::strtol;
 use crate::sdl_constants;
-pub use crate::types::{SDL_Keycode, size_t};
 use ::core::ffi::{c_char, c_void};
 use ::core::ptr::null_mut;
 pub use sdl2_sys::SDL_GetKeyFromName;
+use sm::c_library::strtol;
+pub use sm::types::{SDL_Keycode, size_t};
 use std::ffi::CStr;
 crate::type_aliases! {
     pub C2RustUnnamed, C2RustUnnamed_2, C2RustUnnamed_4 = u32;
@@ -17,13 +17,13 @@ sdl_constants! {
     SDLK_8, SDLK_7, SDLK_6, SDLK_5, SDLK_4, SDLK_3, SDLK_2, SDLK_1, SDLK_0, SDLK_MINUS,
     SDLK_TAB, SDLK_BACKSPACE, SDLK_RETURN, SDLK_UNKNOWN,
 }
-pub use crate::types::SDL_Keymod;
+pub use sm::types::SDL_Keymod;
 
 sdl_constants! {
     SDL_Keymod as SDL_Keymod;
     KMOD_ALT, KMOD_SHIFT, KMOD_CTRL,
 }
-pub use crate::types::KeyAction as C2RustUnnamed_0;
+pub use sm::types::KeyAction as C2RustUnnamed_0;
 pub const kKeys_Total: C2RustUnnamed_0 = 130;
 pub const kKeys_VolumeDown: C2RustUnnamed_0 = 129;
 pub const kKeys_VolumeUp: C2RustUnnamed_0 = 128;
@@ -55,15 +55,15 @@ pub const kKeys_Load: C2RustUnnamed_0 = 13;
 pub const kKeys_Controls_Last: C2RustUnnamed_0 = 12;
 pub const kKeys_Controls: C2RustUnnamed_0 = 1;
 pub const kKeys_Null: C2RustUnnamed_0 = 0;
-pub use crate::types::OutputMethod as C2RustUnnamed_1;
+pub use sm::types::OutputMethod as C2RustUnnamed_1;
 pub const kOutputMethod_OpenGL: C2RustUnnamed_1 = 2;
 pub const kOutputMethod_SDLSoftware: C2RustUnnamed_1 = 1;
 pub const kOutputMethod_SDL: C2RustUnnamed_1 = 0;
-pub use crate::types::Config;
+pub use sm::types::Config;
 pub const kMsuEnabled_Opuz: C2RustUnnamed_2 = 4;
 pub const kMsuEnabled_MsuDeluxe: C2RustUnnamed_2 = 2;
 pub const kMsuEnabled_Msu: C2RustUnnamed_2 = 1;
-pub use crate::types::GamepadButton as C2RustUnnamed_3;
+pub use sm::types::GamepadButton as C2RustUnnamed_3;
 pub const kGamepadBtn_Count: C2RustUnnamed_3 = 17;
 pub const kGamepadBtn_R2: C2RustUnnamed_3 = 16;
 pub const kGamepadBtn_L2: C2RustUnnamed_3 = 15;
@@ -133,16 +133,16 @@ pub(crate) fn check_dependency() {
     static CHECKED: std::sync::OnceLock<()> = std::sync::OnceLock::new();
     CHECKED.get_or_init(|| {
         assert!(
-            crate::util::native_source_matches(),
+            sm::util::native_source_matches(),
             "stale native utilities; rerun tools/install_native_config.py and rebuild"
         );
         for (index, source) in [
             include_bytes!("config.rs").as_slice(),
-            include_bytes!("native_config.c").as_slice(),
-            include_bytes!("native_config.h").as_slice(),
-            include_bytes!("native_util.h").as_slice(),
-            include_bytes!("types.rs").as_slice(),
-            include_bytes!("../../tools/install_native_config.py").as_slice(),
+            include_bytes!("../../../sm/src/native_config.c").as_slice(),
+            include_bytes!("../../../sm/src/native_config.h").as_slice(),
+            include_bytes!("../../../sm/src/native_util.h").as_slice(),
+            include_bytes!("../../../sm/src/types.rs").as_slice(),
+            include_bytes!("../../../tools/install_native_config.py").as_slice(),
         ]
         .into_iter()
         .enumerate()
@@ -200,26 +200,26 @@ unsafe extern "C-unwind" fn sm_config_read_file(
     name: *const c_char,
 ) -> *mut c_char {
     unsafe {
-        use crate::c_library::{fopen, fread, fseek, ftell, rewind};
+        use sm::c_library::{fopen, fread, fseek, ftell, rewind};
         let file = fopen(name, c"rb".as_ptr());
         if file.is_null() {
             return null_mut();
         }
-        let file = crate::util::InputFile(file);
-        fseek(file.0, 0, crate::util::SEEK_END);
+        let file = sm::util::InputFile(file);
+        fseek(file.0, 0, sm::util::SEEK_END);
         let length = ftell(file.0) as size_t;
         rewind(file.0);
         let extent = length.checked_add(1).expect("config input size overflow");
         let mut buffer = Vec::new();
         if buffer.try_reserve_exact(extent).is_err() {
-            crate::host::Die(c"malloc failed".as_ptr());
+            sm::host::Die(c"malloc failed".as_ptr());
             panic!("config allocation failed");
         }
         buffer.resize(extent, 0);
         buffer[length] = 0;
         let data = buffer.as_mut_ptr();
         if fread(data.cast(), 1, length, file.0) as u32 as size_t != length {
-            crate::host::Die(c"fread failed".as_ptr());
+            sm::host::Die(c"fread failed".as_ptr());
         }
         drop(file);
         (*owner.cast::<ConfigOwner>()).inputs.push(buffer);
@@ -237,10 +237,10 @@ unsafe extern "C-unwind" fn sm_config_include(
     depth: i32,
 ) {
     unsafe {
-        let path = crate::util::include_path(CStr::from_ptr(filename), CStr::from_ptr(name));
+        let path = sm::util::include_path(CStr::from_ptr(filename), CStr::from_ptr(name));
         if depth > 10 || !sm_config_parse_one_file(owner, path.as_ptr(), depth + 1) {
-            crate::c_library::fprintf(
-                crate::c_library::stderr,
+            sm::c_library::fprintf(
+                sm::c_library::stderr,
                 c"Warning: Unable to read %s\n".as_ptr(),
                 path.as_ptr(),
             );
@@ -278,6 +278,6 @@ unsafe extern "C-unwind" fn sm_config_atoi(value: *const c_char) -> i32 {
 }
 
 #[unsafe(no_mangle)]
-unsafe extern "C-unwind" fn sm_config_stderr() -> *mut crate::types::FILE {
-    unsafe { crate::c_library::stderr }
+unsafe extern "C-unwind" fn sm_config_stderr() -> *mut sm::types::FILE {
+    unsafe { sm::c_library::stderr }
 }

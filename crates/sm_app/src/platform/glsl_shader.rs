@@ -1,5 +1,5 @@
-use crate::c_library::strtod;
-use crate::types::GlTextureWithSize;
+use sm::c_library::strtod;
+use sm::types::GlTextureWithSize;
 use std::alloc::{Layout, alloc_zeroed, dealloc, handle_alloc_error};
 use std::ffi::{CStr, CString, c_char, c_void};
 use std::mem::{align_of, size_of};
@@ -7,16 +7,6 @@ use std::ptr::null_mut;
 use std::sync::atomic::{AtomicPtr, Ordering};
 
 pub enum GlslShader {}
-
-impl Default for GlTextureWithSize {
-    fn default() -> Self {
-        Self {
-            gl_texture: 0,
-            width: 0,
-            height: 0,
-        }
-    }
-}
 
 #[link(name = "sm_config", kind = "static", modifiers = "-bundle")]
 unsafe extern "C-unwind" {
@@ -45,12 +35,12 @@ fn check_dependency() {
         crate::config::check_dependency();
         for (index, source) in [
             include_bytes!("glsl_shader.rs").as_slice(),
-            include_bytes!("../native_shader.c").as_slice(),
-            include_bytes!("../native_shader.h").as_slice(),
+            include_bytes!("../../../../sm/src/native_shader.c").as_slice(),
+            include_bytes!("../../../../sm/src/native_shader.h").as_slice(),
             include_bytes!("texture_png.rs").as_slice(),
             include_bytes!("opengl.rs").as_slice(),
-            include_bytes!("../types.rs").as_slice(),
-            include_bytes!("../../../tools/install_native_config.py").as_slice(),
+            include_bytes!("../../../../sm/src/types.rs").as_slice(),
+            include_bytes!("../../../../tools/install_native_config.py").as_slice(),
         ]
         .into_iter()
         .enumerate()
@@ -146,7 +136,7 @@ unsafe extern "C-unwind" fn sm_shader_append_line(
     unsafe {
         let output = &mut *source.cast::<Vec<u8>>();
         if output.try_reserve(length + 1).is_err() {
-            crate::host::Die(c"memory allocation failed".as_ptr());
+            sm::host::Die(c"memory allocation failed".as_ptr());
         }
         output.extend_from_slice(std::slice::from_raw_parts(line, length));
         output.push(b'\n');
@@ -212,7 +202,7 @@ unsafe extern "C-unwind" fn sm_shader_relative_path(
     base: *const c_char,
     name: *const c_char,
 ) -> *mut c_char {
-    unsafe { crate::util::include_path(CStr::from_ptr(base), CStr::from_ptr(name)).into_raw() }
+    unsafe { sm::util::include_path(CStr::from_ptr(base), CStr::from_ptr(name)).into_raw() }
 }
 
 #[unsafe(no_mangle)]
@@ -237,8 +227,8 @@ unsafe extern "C-unwind" fn sm_shader_upload_png(base: *const c_char, name: *con
                 image.pixels.as_ptr().cast(),
             );
         } else {
-            crate::c_library::fprintf(
-                crate::c_library::stderr,
+            sm::c_library::fprintf(
+                sm::c_library::stderr,
                 c"Unable to read PNG '%s'\n".as_ptr(),
                 path.as_ptr(),
             );
@@ -300,7 +290,7 @@ unsafe extern "C-unwind" fn sm_shader_assert(condition: bool, site: u32) {
         ];
         if !condition {
             let (expression, line, function) = SITES[site as usize];
-            crate::c_library::__assert_fail(
+            sm::c_library::__assert_fail(
                 expression.as_ptr(),
                 c"src/glsl_shader.c".as_ptr(),
                 line,
