@@ -499,7 +499,7 @@ pub(crate) fn capture_case(
 
 // No movie uses full-width child indices; assert every changed byte through live entrypoints.
 fn fire_geyser_widened() -> Vec<u8> {
-    use {crate::game::fire_geysers, sm_game::enemy_script::EnemyScript};
+    use {sm_game::actors::fire_pillar as fire_geysers, sm_game::enemy_script::EnemyScript};
     let mut out = b"B6FG1".to_vec();
     for index in [0u16, 0x7c0, 0xffc0, 0xfffe] {
         let mut g = Game::new();
@@ -530,7 +530,7 @@ fn fire_geyser_widened() -> Vec<u8> {
         ] {
             expected[at..at + 2].copy_from_slice(&value.to_ne_bytes());
         }
-        fire_geysers::run(&mut g);
+        fire_geysers::main_ai(&mut *g);
         assert_eq!(
             (0..g.ram().len())
                 .map(|at| g.ram().read_byte(at))
@@ -554,7 +554,7 @@ fn fire_geyser_widened() -> Vec<u8> {
             expected[child + 6..child + 8].copy_from_slice(&y.to_ne_bytes());
             expected[child + 12..child + 14].copy_from_slice(&height.to_ne_bytes());
             expected[child + 10..child + 12].copy_from_slice(&8u16.to_ne_bytes());
-            let result = fire_geysers::instruction(ea, EnemyScript::Jump(0x1234), &mut g);
+            let result = fire_geysers::instruction(ea, EnemyScript::Jump(0x1234), &mut *g);
             assert!(matches!(result, EnemyScript::Jump(0x1234)));
             assert_eq!(
                 (0..g.ram().len())
@@ -575,7 +575,7 @@ fn fire_geyser_widened() -> Vec<u8> {
         ] {
             expected[at..at + 2].copy_from_slice(&value.to_ne_bytes());
         }
-        let result = fire_geysers::instruction(0xa68fd1, EnemyScript::Jump(0x1234), &mut g);
+        let result = fire_geysers::instruction(0xa68fd1, EnemyScript::Jump(0x1234), &mut *g);
         assert!(matches!(result, EnemyScript::Jump(0x1234)));
         assert_eq!(
             (0..g.ram().len())

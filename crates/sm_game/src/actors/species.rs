@@ -12,12 +12,12 @@ use crate::actors::{
     alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, boyon, bull, cacatac,
     ceres_doors, ceres_ridley, choot, covern, crawlers, crocomire_reactions, dachora_run, dragon,
     draygon_death, draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep,
-    elevator, escape_critters, etecoon, evir, fire_arc, fireflea, flies, fune, gamet, geega,
-    geruta, kago, kihunter, kraid, magdollite, metroid, mini_crocomire, mini_kraid, mochtroid,
-    morph_ball_eye, multiviola, oum, phantoon, phantoon_actions, polyp, powamp, puyo, reflec,
-    ridley, rinka, rio, rippers, roach, shaktool, sidehopper, skree, skultera, space_pirates,
-    squeept, statues, tatori, torizo, tripper, waver, work_robot, wrecked_ship_spark, yapping_maw,
-    yard, zeb, zebetites, zoa,
+    elevator, escape_critters, etecoon, evir, fire_arc, fire_pillar, fireflea, flies, fune, gamet,
+    geega, geruta, kago, kihunter, kraid, magdollite, metroid, mini_crocomire, mini_kraid,
+    mochtroid, morph_ball_eye, multiviola, oum, phantoon, phantoon_actions, polyp, powamp, puyo,
+    reflec, ridley, rinka, rio, rippers, roach, shaktool, sidehopper, skree, skultera,
+    space_pirates, squeept, statues, tatori, torizo, tripper, waver, work_robot,
+    wrecked_ship_spark, yapping_maw, yard, zeb, zebetites, zoa,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -688,6 +688,8 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10675718 => dragon::initialize(game),
         10675790 => pre_instruction(geruta::function(game), game),
         10676168 | 10676174 | 10676180 => dragon::react(ea, game),
+        10915836 => fire_pillar::initialize(game),
+        10915875 => fire_pillar::main_ai(game),
         _ => game.native_ai(ea),
     }
 }
@@ -1264,6 +1266,7 @@ pub fn instruction<H: InstructionHost>(
         10853898 => draygon_flight::displace_graphics(j, game),
         10854231 => draygon_eye::set_function(0, j, game),
         10863739 => draygon_eye::set_function(0x40, j, game),
+        10915247 | 10915347..=10915793 => fire_pillar::instruction(ea, j, game),
         0xa60000..=0xa6ffff => match ridley::instruction(ea, j, game) {
             Ok(next) => next,
             Err(j) => game.native_instruction(ea, k, j),
