@@ -1184,11 +1184,6 @@ crate::game::callback_dispatch! {
         }];
 
         11055370 => [{ let address = crate::game::actors::magdollite::main_ai(game); actor_species_pre_instruction(address, game); }];
-        11059657 => crate::game::actors::maridia_floater::initialize;
-        11059740 => [{ let address = crate::game::actors::maridia_floater::state_address(game); actor_species_pre_instruction(address, game); }];
-        11060670 => crate::game::actors::maridia_floater::touch;
-        11060719 => crate::game::actors::maridia_floater::shot;
-        11060799 => crate::game::actors::maridia_floater::power_bomb;
         11069198 | 11069725 => [crate::ram_map::word!(game.PROJECTILE_DIR[crate::ram_map::word!(game.COLLISION_DETECTION_INDEX)] &= !(0x10))];
         11111301 => [{
                     sm_a9::tubes_falling_main_ai(crate::ram_map::word!(game.CUR_ENEMY_INDEX), game);
@@ -1316,7 +1311,6 @@ crate::game::address_dispatch! {
             if let Some(value) = diagnostic { warn_lava_height(value); }
             crate::game::actors::magdollite::finish_arm_growth(actor, game);
         }];
-        11059843 | 11059878 | 11059919 | 11060075 | 11060193 | 11060329 | 11060444 | 11060480 | 11060509 | 11060584 | 11060585 | 11060639 => [crate::game::actors::maridia_floater::advance(ea as u16, k, game)];
 
         10665692 => [crate::game::lava_jumper::follow_parent(k, game)];
         10665754 => [crate::game::lava_jumper::launch(k, game)];

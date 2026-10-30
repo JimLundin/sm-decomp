@@ -95,6 +95,5 @@ pub(in crate::game) mod draygon_eye;
 pub(in crate::game) mod draygon_flight;
 pub(in crate::game) mod fune;
 pub(crate) mod magdollite;
-pub(in crate::game) mod maridia_floater;
 pub(crate) mod spore_spawn;
 pub(crate) mod yapping_maw;

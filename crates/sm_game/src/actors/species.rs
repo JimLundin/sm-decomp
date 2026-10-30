@@ -14,9 +14,9 @@ use crate::actors::{
     draygon_death, draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep,
     elevator, escape_critters, etecoon, evir, fire_arc, fireflea, fune, gamet, geega, kago,
     kihunter, kraid, magdollite, metroid, mini_kraid, mochtroid, morph_ball_eye, oum, phantoon,
-    phantoon_actions, puyo, reflec, ridley, rinka, roach, shaktool, sidehopper, skree, skultera,
-    space_pirates, statues, tatori, torizo, tripper, work_robot, wrecked_ship_spark, yapping_maw,
-    yard, zeb, zebetites, zoa,
+    phantoon_actions, powamp, puyo, reflec, ridley, rinka, roach, shaktool, sidehopper, skree,
+    skultera, space_pirates, statues, tatori, torizo, tripper, work_robot, wrecked_ship_spark,
+    yapping_maw, yard, zeb, zebetites, zoa,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -560,6 +560,14 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         }
         10736560 => yard::touch(game),
         10736745 => yard::shot(game),
+        11059657 => powamp::initialize(game),
+        11059740 => {
+            let function = powamp::function(game);
+            pre_instruction(function, game);
+        }
+        11060670 => powamp::touch(game),
+        11060719 => powamp::shot(game),
+        11060799 => powamp::power_bomb(game),
         11071880 => kihunter::initialize(game),
         11072020 => kihunter::initialize_wings(game),
         11072092 | 11072098 => kihunter::main_ai(game),
@@ -651,6 +659,7 @@ pub trait PreInstructionHost:
     + phantoon::Host
     + etecoon::Host
     + dachora_run::Host
+    + crate::actors::host::EnemyHost
 {
     /// A pre-instruction whose arm is still in the compatibility table, for
     /// the current enemy `k` read before dispatch.
@@ -685,6 +694,8 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
         10735612 => yard::crawl(k, crate::actors::api::Axis::X, 0xa3cd1a, game),
         10735456 => yard::hiding(k, game),
         10736051 => yard::airborne(k, game),
+        11059843 | 11059878 | 11059919 | 11060075 | 11060193 | 11060329 | 11060444 | 11060480
+        | 11060509 | 11060584 | 11060585 | 11060639 => powamp::run(game, ea as u16, k),
         10657772 => cacatac::moving(true, game),
         10649723 => (),
         10652277 => (),
