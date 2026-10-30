@@ -345,7 +345,7 @@ fn pre_death_delay<R: RuntimeHost>(game: &mut R) {
 pub fn fall_to_ground<H: Host + ?Sized>(game: &mut H) {
     let e = i32::from(word!(game.cur_enemy_index));
     let index =
-        (8 * i32::from(slot!(byte game, Botwoon[e].falling_y_speed_index[1])) >> 1) as isize;
+        ((8 * i32::from(slot!(byte game, Botwoon[e].falling_y_speed_index[1]))) >> 1) as isize;
     let high = game.enemy_speed(SpeedTable::Quadratic, index + 1);
     let low = game.enemy_speed(SpeedTable::Quadratic, index);
     slot!(

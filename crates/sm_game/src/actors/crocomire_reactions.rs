@@ -145,8 +145,8 @@ pub fn melt_down<H: Host + ?Sized>(game: &mut H) {
     slot!(game, Crocomire[0].fight_flags, |old| old & !flag::DAMAGED);
     update_background(word!(game.cur_enemy_index), game);
     let key = word!(game.cur_enemy_index) as i32;
-    if slot!(game, Crocomire[key].base.y_pos) as i32 - 280 & 0x8000 != 0 {
-        let mut cursor = (8 * (word!(game.reg_BG2VOFS) as i32 + 288 & 0xfff8)) as u16;
+    if (slot!(game, Crocomire[key].base.y_pos) as i32 - 280) & 0x8000 != 0 {
+        let mut cursor = (8 * ((word!(game.reg_BG2VOFS) as i32 + 288) & 0xfff8)) as u16;
         for _ in 0..32 {
             word!(game.tilemap_stuff[cursor >> 1] = 824);
             cursor = cursor.wrapping_add(2);
@@ -194,7 +194,7 @@ pub fn melt_down<H: Host + ?Sized>(game: &mut H) {
 pub fn melt_up<H: Host + ?Sized>(game: &mut H) {
     fill_scroll(game);
     let key = word!(game.cur_enemy_index) as i32;
-    if slot!(game, Crocomire[key].base.y_pos) as i32 - 218 & 0x8000 != 0 {
+    if (slot!(game, Crocomire[key].base.y_pos) as i32 - 218) & 0x8000 != 0 {
         slot!(game, Crocomire[key].death_sequence_index, |old| old
             .wrapping_add(1));
         slot!(game, Crocomire[key].death_sequence_index, |old| old
@@ -202,7 +202,7 @@ pub fn melt_up<H: Host + ?Sized>(game: &mut H) {
     } else {
         update_background(word!(game.cur_enemy_index), game);
         let mut acceleration = (slot!(game, Crocomire[0].step_counter) as i16).wrapping_add(256);
-        if slot!(game, Crocomire[0].step_counter) as i32 - 7680 & 0x8000 == 0 {
+        if (slot!(game, Crocomire[0].step_counter) as i32 - 7680) & 0x8000 == 0 {
             acceleration = 7936;
         }
         slot!(game, Crocomire[0].step_counter = acceleration as u16);
@@ -707,7 +707,7 @@ pub fn power_bomb<H: Host + ?Sized>(game: &mut H) {
 pub fn not_started<H: Host + ?Sized>(game: &mut H) {
     update_wall(game);
     crate::word_transfers!(game, ascending, 1; native(SCROLLS_4_5) <- value(257));
-    if game.player_x() as i32 - 1312i32 & 0x8000 == 0 {
+    if (game.player_x() as i32 - 1312i32) & 0x8000 == 0 {
         crate::word_transfers!(game, ascending, 1; native(SCROLLS_4_5) <- value(256));
     }
     update_background(word!(game.cur_enemy_index), game);
@@ -715,17 +715,17 @@ pub fn not_started<H: Host + ?Sized>(game: &mut H) {
 
 fn update_wall<H: Host + ?Sized>(game: &mut H) {
     let E0: i32 = 0;
-    if slot!(game, Crocomire[E0].base.x_pos) as i32 - 1536i32 & 0x8000 != 0 {
+    if (slot!(game, Crocomire[E0].base.x_pos) as i32 - 1536i32) & 0x8000 != 0 {
         word! { game, 0; kraid_unk9000, g_word_7E9002, g_word_7E9006, g_word_7E900A }
-    } else if slot!(game, Crocomire[E0].base.x_pos) as i32 - 1552i32 & 0x8000 != 0 {
+    } else if (slot!(game, Crocomire[E0].base.x_pos) as i32 - 1552i32) & 0x8000 != 0 {
         if word!(game.kraid_unk9000) == 0 {
             word!(game.kraid_unk9000 = 1);
             game.set_projectile_spawn_point(1536, 176);
             game.spawn_room_projectile(addr_kEproj_DustCloudExplosion as u16, 0x15);
         }
-    } else if slot!(game, Crocomire[E0].base.x_pos) as i32 - 1552i32 & 0x8000 != 0 {
+    } else if (slot!(game, Crocomire[E0].base.x_pos) as i32 - 1552i32) & 0x8000 != 0 {
         word! { game, 0; g_word_7E9002, g_word_7E9006, g_word_7E900A }
-    } else if slot!(game, Crocomire[E0].base.x_pos) as i32 - 1568i32 & 0x8000 != 0 {
+    } else if (slot!(game, Crocomire[E0].base.x_pos) as i32 - 1568i32) & 0x8000 != 0 {
         if word!(game.g_word_7E9002) == 0 {
             word!(game.g_word_7E9002 = 1);
             game.spawn_plm(0x61, BRIDGE_ROW, CRUMBLE_BRIDGE_BLOCK);
@@ -734,9 +734,9 @@ fn update_wall<H: Host + ?Sized>(game: &mut H) {
         }
     } else {
         let x_pos: u16 = slot!(game, Crocomire[E0].base.x_pos);
-        if x_pos as i32 - 1568i32 & 0x8000 != 0 {
+        if (x_pos as i32 - 1568i32) & 0x8000 != 0 {
             word! { game, 0; g_word_7E9006, g_word_7E900A }
-        } else if x_pos as i32 - 1584i32 & 0x8000 != 0 {
+        } else if (x_pos as i32 - 1584i32) & 0x8000 != 0 {
             if word!(game.g_word_7E9006) == 0 {
                 word!(game.g_word_7E9006 = 1);
                 game.spawn_plm(0x62, BRIDGE_ROW, CRUMBLE_BRIDGE_BLOCK);
@@ -888,7 +888,7 @@ pub fn melting<H: Host + ?Sized>(game: &mut H) {
     if erase_melt_columns(game) != 0 {
         update_background(word!(game.cur_enemy_index), game);
         let mut v4: u16 = (word!(game.g_word_7E0694)).wrapping_sub(3);
-        let skip_tilemap_update: bool = (word!(game.g_word_7E0694) as i32 - 19i32 & 0x8000 != 0)
+        let skip_tilemap_update: bool = ((word!(game.g_word_7E0694) as i32 - 19i32) & 0x8000 != 0)
             && ((((word!(game.g_word_7E0692)) as i16).wrapping_sub(20480) >= 0)
                 || ({
                     v4 = 16;
@@ -898,7 +898,7 @@ pub fn melting<H: Host + ?Sized>(game: &mut H) {
         } else {
             word!(game.g_word_7E0694 = v4);
             let mut v5: u16 = (word!(game.g_word_7E0692)).wrapping_add(384);
-            if word!(game.g_word_7E0692) as i32 - 20096i32 & 0x8000 == 0 {
+            if (word!(game.g_word_7E0692) as i32 - 20096i32) & 0x8000 == 0 {
                 v5 = 20480;
             }
             word!(game.g_word_7E0692 = v5);
@@ -1078,11 +1078,11 @@ pub fn falling<H: Host + ?Sized>(game: &mut H) {
         game.ram().read_byte(CRUMBLING_BRIDGE_INDEX),
         game.ram().read_byte(CRUMBLING_BRIDGE_INDEX + 1),
     ]);
-    if u16::from_ne_bytes([
+    if (u16::from_ne_bytes([
         game.ram().read_byte(CRUMBLING_BRIDGE_INDEX),
         game.ram().read_byte(CRUMBLING_BRIDGE_INDEX + 1),
     ]) as i32
-        - 22i32
+        - 22i32)
         & 0x8000
         != 0
     {

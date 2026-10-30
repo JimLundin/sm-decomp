@@ -97,7 +97,7 @@ pub fn advance_ending_sprite_pair<H: crate::menus::host::Host + ?Sized>(
     word!(game.cinematicbg_arr8[slot] += step);
     let x = word!(game.cinematicbg_arr7[slot]).wrapping_sub(step);
     word!(game.cinematicbg_arr7[slot] = x);
-    let arrived = (i32::from(x) - threshold & 0x8000 != 0) == leftward;
+    let arrived = ((i32::from(x) - threshold) & 0x8000 != 0) == leftward;
     if arrived {
         word! {game; cinematicbg_arr7[slot] = stop_x; cinematicbg_arr8[slot] = stop_y;
         cinematicspr_preinstr_func[slot] = sprite::NO_PREINSTRUCTION; }
@@ -166,7 +166,7 @@ pub fn advance_ending_gunship_spin<H: crate::menus::host::Host + ?Sized>(
     add_native_pair(fraction + 2, fraction, velocity as u32, game);
     word!(game.cinematic_var14 = word!(game.cinematic_var14).wrapping_add(1) & mask);
     word!(game.cinematic_var6 -= if slow { 2 } else { 8 });
-    if word!(game.cinematic_var6) as i32 - (if slow { 1184 } else { 1456 }) & 0x8000 == 0 {
+    if (word!(game.cinematic_var6) as i32 - (if slow { 1184 } else { 1456 })) & 0x8000 == 0 {
         return false;
     }
     if slow {
@@ -203,11 +203,11 @@ pub fn advance_ending_samus_jump<H: crate::menus::host::Host + ?Sized>(
     advance_cinematic_coordinate(object, true, velocity, game);
     let slot = usize::from(object >> 1);
     if phase == 2 {
-        if word!(game.cinematicbg_arr8[slot]) as i32 - 136 & 0x8000 == 0 {
+        if (word!(game.cinematicbg_arr8[slot]) as i32 - 136) & 0x8000 == 0 {
             word! {game; cinematicbg_arr8[slot] = 136; cinematicspr_instr_timer[slot] = 1;
             cinematicspr_instr_ptr[slot] = sprite::JUMP_LANDED; cinematicspr_preinstr_func[slot] = sprite::NO_PREINSTRUCTION; }
         }
-    } else if word!(game.cinematicbg_arr8[slot]) as i32 + 80 & 0x8000 != 0 {
+    } else if (word!(game.cinematicbg_arr8[slot]) as i32 + 80) & 0x8000 != 0 {
         if phase == 0 {
             game.ram().write_byte(crate::ram::mirror::OBSEL, 3);
         }
@@ -226,7 +226,7 @@ pub fn position_ending_samus_head<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) -> u16 {
     let slot = usize::from(object >> 1) + 1;
-    let under_ten = word!(game.game_time_hours) as i32 - 10 & 0x8000 != 0;
+    let under_ten = (word!(game.game_time_hours) as i32 - 10) & 0x8000 != 0;
     let (x, y) = [[(118, 120), (120, 120)], [(120, 114), (121, 116)]][usize::from(jumping)]
         [usize::from(under_ten)];
     word! {game; cinematicbg_arr7[slot] = x; cinematicbg_arr8[slot] = y; }
@@ -236,7 +236,7 @@ pub fn position_ending_samus_head<H: crate::menus::host::Host + ?Sized>(
 pub fn fade_postcredits_samus_suit<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     if word!(game.cinematic_var4) & 3 == 0 {
         fade_cinematic_colors(0x40, 0x10, false, game);
-        if word!(game.game_time_hours) as i32 - 3 & 0x8000 == 0 {
+        if (word!(game.game_time_hours) as i32 - 3) & 0x8000 == 0 {
             fade_cinematic_colors(0x1c0, 0x10, true, game);
         }
         fade_cinematic_colors(0x1a0, 0x10, true, game);
@@ -267,8 +267,8 @@ pub fn advance_postcredits_samus_reveal<H: crate::menus::host::Host + ?Sized>(
         crate::flow::set(game, crate::flow::Word::CinematicFunction, function::IDLE);
         word!(game.cinematic_var14 = 0);
     }
-    let under_three = word!(game.game_time_hours) as i32 - 3 & 0x8000 != 0;
-    let under_ten = under_three || word!(game.game_time_hours) as i32 - 10 & 0x8000 != 0;
+    let under_three = (word!(game.game_time_hours) as i32 - 3) & 0x8000 != 0;
+    let under_ten = under_three || (word!(game.game_time_hours) as i32 - 10) & 0x8000 != 0;
     if initial && under_ten {
         capture_cinematic_palette(game);
         prepare_cinematic_palette_fade(game);
@@ -329,7 +329,7 @@ pub fn advance_postcredits_samus_message<H: crate::menus::host::Host + ?Sized>(
     if fade_suit {
         fade_postcredits_samus_suit(game);
     }
-    if word!(game.cinematic_var4 -= 1, reread) as i32 - 65 & 0x8000 != 0 {
+    if (word!(game.cinematic_var4 -= 1, reread) as i32 - 65) & 0x8000 != 0 {
         crate::word_transfers!(game, descending, 288; native(0x347e) <- value(127));
         crate::word_transfers!(game, ascending, 64; pause_map(384) <- rom(0x8cdedb, 0));
         queue_cinematic_tilemap(CinematicTilemap::FullText, game);
@@ -449,7 +449,7 @@ pub fn advance_postcredits_zoom<H: crate::menus::host::Host + ?Sized>(zooming: b
     if zooming {
         word!(game.cinematic_var5 = u16::from((word!(game.cinematic_var5) as u8).wrapping_sub(8)));
         word!(game.cinematic_var6 -= 64);
-        if word!(game.cinematic_var6) as i32 - 24 & 0x8000 != 0 {
+        if (word!(game.cinematic_var6) as i32 - 24) & 0x8000 != 0 {
             word!(game.cinematic_var6 = 24);
             crate::flow::set(
                 game,

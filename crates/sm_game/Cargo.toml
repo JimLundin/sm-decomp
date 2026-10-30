@@ -22,12 +22,6 @@ unsafe_code = "forbid"
 unexpected_cfgs = { level = "warn", check-cfg = ["cfg(sm_verify_dll)"] }
 
 [lints.clippy]
-# Expression and signature shapes kept from the original C routines.
-precedence = "allow"
+# Signatures still mirror routines that take many RAM-backed arguments.
 too_many_arguments = "allow"
 type_complexity = "allow"
-# `[(); N][index];` deliberately reproduces the original's bounds-failure order.
-no_effect = "allow"
-unnecessary_operation = "allow"
-# Fixed-size tables indexed alongside RAM offsets read more plainly as index loops.
-needless_range_loop = "allow"

@@ -66,3 +66,13 @@ pub fn grid<const WORDS: usize, const ROWS: usize>(
 ) -> Result<Rows<[u16; WORDS], ROWS>, LengthError> {
     Rows::import(bytes, |row| row)
 }
+
+/// Panics when `index` selects no entry of a `len`-entry table, with the same
+/// message as an out-of-range slice index. Jump tables use it to reject an
+/// invalid selector before dispatching, as the original's checked tables did.
+#[track_caller]
+pub fn check_index(index: usize, len: usize) {
+    if index >= len {
+        panic!("index out of bounds: the len is {len} but the index is {index}");
+    }
+}

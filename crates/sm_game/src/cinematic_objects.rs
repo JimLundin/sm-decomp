@@ -153,7 +153,7 @@ pub fn advance_intro_mother_brain<H: crate::menus::host::Host + ?Sized>(
         else {
             return;
         };
-        if word!(game.projectile_x_pos[projectile]) as i32 - 84 & 0x8000 == 0 {
+        if (word!(game.projectile_x_pos[projectile]) as i32 - 84) & 0x8000 == 0 {
             return;
         }
         game.retire_projectile(2 * projectile as u16);
@@ -176,7 +176,7 @@ pub fn advance_intro_mother_brain<H: crate::menus::host::Host + ?Sized>(
         spawn_cinematic_burst(0xcf1b, 0..3, 0, game);
         spawn_cinematic_burst(0xcf15, 0..5, 0, game);
     }
-    if stage == 1 && count as i32 - 128 & 0x8000 == 0 {
+    if stage == 1 && (count as i32 - 128) & 0x8000 == 0 {
         resume_cinematic_sprite(slot, 0xcb19, game);
     }
 }

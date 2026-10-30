@@ -292,7 +292,7 @@ fn previous_area(a: u16) -> u16 {
 }
 fn next_area(a: u16) -> u16 {
     let result: u16 = (a).wrapping_add(1);
-    if result as i32 - 6i32 & 0x8000 == 0 {
+    if (result as i32 - 6i32) & 0x8000 == 0 {
         return 0;
     }
     result
@@ -408,7 +408,7 @@ fn draw_area_labels<H: Host + ?Sized>(game: &mut H) {
                     break;
                 }
             }
-            let position: i32 = 4 * AREAS[i as usize] as i32 >> 1;
+            let position: i32 = (4 * AREAS[i as usize] as i32) >> 1;
             crate::sprite_output::menu(
                 (table_word(
                     &game.pause_menu_tables().label_spritemaps,
@@ -546,10 +546,10 @@ fn choose_room<H: Host + ?Sized>(game: &mut H) {
             let station_y: u16 = stations
                 .image
                 .table_word(stations.base, ((station_offset as i32 >> 1) + 1) as isize);
-            let mut check_unlocked = word!(game.load_station_index) as i32 - 16i32 & 0x8000 != 0;
+            let mut check_unlocked = (word!(game.load_station_index) as i32 - 16i32) & 0x8000 != 0;
             loop {
                 let inspect_terminal = if check_unlocked {
-                    word!(game.load_station_index += 1, reread) as i32 - 16i32 & 0x8000 == 0
+                    (word!(game.load_station_index += 1, reread) as i32 - 16i32) & 0x8000 == 0
                 } else {
                     word!(game.load_station_index += 1);
                     true
@@ -590,8 +590,8 @@ fn choose_room<H: Host + ?Sized>(game: &mut H) {
                 stations.base,
                 (2 * word!(game.load_station_index) as i32) as isize,
             );
-            if next_x as i32 - word!(game.reg_BG1HOFS) as i32 & 0x8000 != 0
-                || next_x as i32 - 256i32 - word!(game.reg_BG1HOFS) as i32 & 0x8000 == 0
+            if (next_x as i32 - word!(game.reg_BG1HOFS) as i32) & 0x8000 != 0
+                || (next_x as i32 - 256i32 - word!(game.reg_BG1HOFS) as i32) & 0x8000 == 0
             {
                 let mut scroll_x: i16 = (word!(game.reg_BG1HOFS) as i32
                     + stations.table_word((next_offset >> 1) as isize) as i32
@@ -607,8 +607,8 @@ fn choose_room<H: Host + ?Sized>(game: &mut H) {
             }
             let next_y_offset: u16 = (next_offset).wrapping_add(2);
             let next_y: u16 = stations.table_word((next_y_offset >> 1) as isize);
-            if next_y as i32 - word!(game.reg_BG1VOFS) as i32 & 0x8000 != 0
-                || next_y as i32 - 161i32 - word!(game.reg_BG1VOFS) as i32 & 0x8000 == 0
+            if (next_y as i32 - word!(game.reg_BG1VOFS) as i32) & 0x8000 != 0
+                || (next_y as i32 - 161i32 - word!(game.reg_BG1VOFS) as i32) & 0x8000 == 0
             {
                 let mut scroll_y: u16 = (word!(game.reg_BG1VOFS) as i32
                     + stations.table_word((next_y_offset >> 1) as isize) as i32

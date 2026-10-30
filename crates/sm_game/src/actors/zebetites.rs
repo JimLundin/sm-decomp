@@ -98,7 +98,7 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
         destroyed = ((destroyed as i32) << 1 | game.event_happened(event) as i32) as u16;
     }
     slot!(game, Zebetite[me].destroyed = destroyed);
-    if destroyed as i32 - ZEBETITES as i32 & 0x8000 != 0 {
+    if (destroyed as i32 - ZEBETITES as i32) & 0x8000 != 0 {
         let placement = zebetite_data::placement(game, destroyed as isize);
         slot!(game, Zebetite[me].pair = placement.multi_part);
         slot!(game, Zebetite[me].base.y_height = placement.height);
@@ -167,13 +167,13 @@ fn run<H: Host + ?Sized>(game: &mut H) {
     let health: u16 = slot!(game, Zebetite[me].base.health);
     if health != 0 {
         let mut health: i16 = (health as i16).wrapping_add(1);
-        if health as i32 - MAX_HEALTH as i32 & 0x8000 == 0 {
+        if (health as i32 - MAX_HEALTH as i32) & 0x8000 == 0 {
             health = MAX_HEALTH;
         }
         slot!(game, Zebetite[me].base.health = health as u16);
     } else if slot!(game, Zebetite[me].second_of_pair) != 0 || {
         count_destroyed(game);
-        slot!(game, Zebetite[me].destroyed) as i32 - ZEBETITES as i32 & 0x8000 == 0
+        (slot!(game, Zebetite[me].destroyed) as i32 - ZEBETITES as i32) & 0x8000 == 0
     } {
         die(game);
     } else {
@@ -209,7 +209,7 @@ fn show_health_stage<H: Host + ?Sized>(game: &mut H) {
     let me = current(game);
     let health: u16 = slot!(game, Zebetite[me].base.health);
     for threshold in [800, 600, 400, 200] {
-        if health as i32 - threshold & 0x8000 != 0 {
+        if (health as i32 - threshold) & 0x8000 != 0 {
             stage += 2;
         } else {
             break;
@@ -234,7 +234,7 @@ fn glow<H: Host + ?Sized>(game: &mut H) {
         ) == 0
     {
         let first: i32 = 0;
-        let frame: u16 = (slot!(game, Zebetite[first].glow_frame) as i32 + 1 & 7) as u16;
+        let frame: u16 = ((slot!(game, Zebetite[first].glow_frame) as i32 + 1) & 7) as u16;
         slot!(game, Zebetite[first].glow_frame = frame);
         copy_rom_colors_to_palette(
             GLOW_PALETTE_WORD,

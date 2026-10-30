@@ -527,11 +527,11 @@ fn queue_tile_pair<L: BossLease + ?Sized>(
     for n in 0..2 {
         store(game, entry(n) + 3, TILE_BANK);
     }
-    for n in 0..2 {
-        store(game, entry(n) + 2, sources[n]);
+    for (n, &source) in sources.iter().enumerate() {
+        store(game, entry(n) + 2, source);
     }
-    for n in 0..2 {
-        store(game, entry(n) + 5, destinations[n]);
+    for (n, &destination) in destinations.iter().enumerate() {
+        store(game, entry(n) + 5, destination);
     }
     for n in 0..2 {
         store(game, entry(n), size);
@@ -842,7 +842,7 @@ where
                 session_slot!(game, Ridley[RIDLEY].death_lunges).wrapping_add(1)
         );
         actions::LUNGE
-    } else if health as i32 - 14400 & 0x8000 != 0 {
+    } else if (health as i32 - 14400) & 0x8000 != 0 {
         actions::POGO_OR_SWOOP
     } else if samus_in_pogo_zone(game) {
         actions::POGO
@@ -1108,7 +1108,7 @@ where
     L::Game: Host,
 {
     let mut y = word!(game.samus_y_pos);
-    if word!(game.samus_y_pos) as i32 - 352 & 0x8000 == 0 {
+    if (word!(game.samus_y_pos) as i32 - 352) & 0x8000 == 0 {
         y = 352;
     }
     accelerate(0, acceleration_factor(game), x, y, game);
@@ -1323,7 +1323,7 @@ where
     if y_velocity >= 0 {
         y_velocity = -(y_velocity as i32) as i16;
     }
-    if y_velocity as i32 + 512 & 0x8000 == 0 {
+    if (y_velocity as i32 + 512) & 0x8000 == 0 {
         y_velocity = -512;
     }
     session_slot!(game, Ridley[RIDLEY].y_velocity = y_velocity as u16);
@@ -1743,7 +1743,7 @@ where
         } else {
             80
         };
-        let y = if word!(game.power_bomb_explosion_y_pos) as i32 - 256 & 0x8000 != 0 {
+        let y = if (word!(game.power_bomb_explosion_y_pos) as i32 - 256) & 0x8000 != 0 {
             384
         } else {
             192
@@ -3237,7 +3237,7 @@ where
 pub fn hurt_flash<S: State + ?Sized>(game: &mut S) {
     let mut palette = 3584;
     if session_slot!(game, Ridley[RIDLEY].base.flash_timer) >= 2
-        && (word!(game.random_enemy_counter) as i32 + 1 & 2) != 0
+        && ((word!(game.random_enemy_counter) as i32 + 1) & 2) != 0
     {
         palette = 0;
     }
@@ -3401,9 +3401,9 @@ pub fn calculate_swoop_velocities<L: BossLease + ?Sized>(
     }
     let mut angle = session_slot!(game, Ridley[RIDLEY].swoop_angle).wrapping_add(angle_step);
     let past_target = if (angle_step & 0x8000) != 0 {
-        angle as i32 - target_angle as i32 & 0x8000 != 0
+        (angle as i32 - target_angle as i32) & 0x8000 != 0
     } else {
-        angle as i32 - target_angle as i32 & 0x8000 == 0
+        (angle as i32 - target_angle as i32) & 0x8000 == 0
     };
     if past_target {
         angle = target_angle;
@@ -3547,10 +3547,10 @@ pub fn wings_animation_timer<S: State + ?Sized>(game: &mut S) {
         return;
     }
     let mut speed = sum.wrapping_sub(x_speed);
-    if speed as i32 - x_speed as i32 & 0x8000 != 0 {
+    if (speed as i32 - x_speed as i32) & 0x8000 != 0 {
         speed = x_speed;
     }
-    let index = ((4 * speed as i32 & 0xf00) >> 8).min(7);
+    let index = (((4 * speed as i32) & 0xf00) >> 8).min(7);
     let mut delta = DELTAS[index as usize];
     if (session_slot!(game, Ridley[RIDLEY].y_velocity) & 0x8000) == 0 {
         delta >>= 1;
@@ -3742,7 +3742,7 @@ pub fn add_spritemap<L: BossLease + ?Sized>(
     let layer1 = game.camera().layer1;
     loop {
         let screen_y = (y as i32 + map.byte(entry + 2) as i8 as i32 - layer1[1] as i32) as i16;
-        if screen_y >= 0 && screen_y as i32 - 224 & 0x8000 != 0 {
+        if screen_y >= 0 && (screen_y as i32 - 224) & 0x8000 != 0 {
             let screen_x = (x as i32 + map.word(entry) as i32 - layer1[0] as i32) as u16;
             let at = OAM + index as usize;
             game.set_slot_byte(at, screen_x as u8);
@@ -3752,11 +3752,11 @@ pub fn add_spritemap<L: BossLease + ?Sized>(
             game.set_slot_byte(at + 3, tile[1]);
             word!(
                 bits_i32,
-                game.oam_ext[(index >> 5)] |= ((screen_x as i32 & 0x100) >> 8
-                    | ((map.word(entry) as i16) < 0) as i32 * 2)
-                    << 2 * (index >> 2 & 7)
+                game.oam_ext[(index >> 5)] |= (((screen_x as i32 & 0x100) >> 8)
+                    | (((map.word(entry) as i16) < 0) as i32 * 2))
+                    << (2 * (index >> 2 & 7))
             );
-            index = index + 4 & 0x1ff;
+            index = (index + 4) & 0x1ff;
         }
         entry += 5;
         count -= 1;
@@ -3773,11 +3773,11 @@ pub fn off_screen<S: State + ?Sized>(game: &mut S) -> bool {
     let y = session_slot!(game, Ridley[RIDLEY].base.y_pos) as i16;
     if y >= 0 {
         let screen_y = (y as i32 + 32 - word!(game.layer1_y_pos) as i32) as i16;
-        if screen_y >= 0 && screen_y as i32 - 288 & 0x8000 != 0 {
+        if screen_y >= 0 && (screen_y as i32 - 288) & 0x8000 != 0 {
             let x = session_slot!(game, Ridley[RIDLEY].base.x_pos) as i16;
             if x >= 0 {
                 let screen_x = (x as i32 + 32 - word!(game.layer1_x_pos) as i32) as i16;
-                if screen_x >= 0 && screen_x as i32 - 320 & 0x8000 != 0 {
+                if screen_x >= 0 && (screen_x as i32 - 320) & 0x8000 != 0 {
                     return false;
                 }
             }
@@ -3799,7 +3799,7 @@ where
     let n = (0..5).find(|&n| {
         let kind = word!(game.projectile_type[n]) as i16;
         kind < 0
-            && (kind.to_ne_bytes()[1] as i32 & 0xf) - 3 & 0x8000 != 0
+            && ((kind.to_ne_bytes()[1] as i32 & 0xf) - 3) & 0x8000 != 0
             && projectile_overlaps(game, n, rect)
     })?;
     word! {game; projectile_x_pos[n] = rect.x; projectile_y_pos[n] = rect.y; }

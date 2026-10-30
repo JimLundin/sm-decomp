@@ -113,7 +113,7 @@ pub fn walk(
     } else {
         game.snap_to_slopes(k);
         if (slot!(game, TorizoSlot[e].direction) as i32
-            ^ game.player_x() as i32 - slot!(game, TorizoSlot[e].base.x_pos) as i32)
+            ^ (game.player_x() as i32 - slot!(game, TorizoSlot[e].base.x_pos) as i32))
             & SIGN
             == 0
             && slot!(game, TorizoSlot[e].turn_around_timer) == 0
@@ -141,7 +141,7 @@ pub fn drool_at_low_health(k: u16, game: &mut impl Host) {
 pub fn facing_against_samus(k: u16, game: &mut impl Host) -> u16 {
     let e = i32::from(k);
     (slot!(game, TorizoSlot[e].direction) as i32
-        ^ slot!(game, TorizoSlot[e].base.x_pos) as i32 - game.player_x() as i32) as u16
+        ^ (slot!(game, TorizoSlot[e].base.x_pos) as i32 - game.player_x() as i32)) as u16
 }
 
 /// Golden Torizo shot reaction - damaged ($AA:D6A6): on death, start the death
@@ -1112,7 +1112,7 @@ pub fn call_if_samus_close_in_front<H: Ai>(k: u16, jp: EnemyScript, game: &mut H
     }
     let e = i32::from(k);
     if ((slot!(game, TorizoSlot[e].direction) as i32
-        ^ word!(game.samus_x_pos) as i32 - slot!(game, TorizoSlot[e].base.x_pos) as i32)
+        ^ (word!(game.samus_x_pos) as i32 - slot!(game, TorizoSlot[e].base.x_pos) as i32))
         & SIGN)
         == 0
     {
@@ -1143,9 +1143,9 @@ fn choose_attack<H: Ai>(k: u16, jp: EnemyScript, game: &mut H, missiles: u16) ->
         TorizoSlot[k as i32].link = list_address(game, k, jp.offset(2))
     );
     if word!(game.samus_missiles) < missiles
-        || (word!(game.nmi_frame_counter_word) as i32
+        || ((word!(game.nmi_frame_counter_word) as i32
             + (word!(game.samus_x_pos) as i32 & 1)
-            + (word!(game.samus_x_pos) as i32 >> 1)
+            + (word!(game.samus_x_pos) as i32 >> 1))
             & 8)
             != 0
     {

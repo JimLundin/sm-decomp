@@ -120,7 +120,7 @@ pub fn spawn_flame_rain(k: u16, pattern: u16, game: &mut (impl BossState + ?Size
         let current = position;
         position += 1;
         game.spawn_actor_eproj(
-            (16 * flame | current as i32 | RAIN) as u16,
+            ((16 * flame) | current as i32 | RAIN) as u16,
             k,
             DESTROYABLE_FLAMES,
         );

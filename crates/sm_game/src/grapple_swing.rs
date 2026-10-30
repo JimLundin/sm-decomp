@@ -321,7 +321,7 @@ fn begin_connection<H: Host + ?Sized>(pose: u16, transition_graphics: u16, game:
     game.session_mut().player.grapple_angle = angle;
     game.session_mut().player.swing.mirrored_angle = angle;
     game.session_mut().player.swing.length_delta = 0;
-    if game.session().player.grapple_length as i32 - 64i32 & 0x8000 == 0 {
+    if (game.session().player.grapple_length as i32 - 64i32) & 0x8000 == 0 {
         game.session_mut().player.grapple_length =
             game.session().player.grapple_length.wrapping_sub(24);
     }
@@ -673,14 +673,14 @@ macro_rules! restore_grapple_start_positions {
 pub fn position_swing<H: Host + ?Sized>(game: &mut H) {
     let v0: u16 = abs16(game.session().player.swing.angular_velocity);
     let mut v1: u16 = 0;
-    let start_grapple_animation: bool = if v0 as i32 - 64i32 & 0x8000 == 0 {
+    let start_grapple_animation: bool = if (v0 as i32 - 64i32) & 0x8000 == 0 {
         game.session_mut().player.grapple_slow_scrolling = 1;
         true
     } else {
         game.session_mut().player.grapple_slow_scrolling = 0;
         (((game.grapple_angle() as i32) << 8) != 0x8000)
             || ({
-                if game.session().player.animation_clock.frame as i32 - 64i32 & 0x8000 != 0 {
+                if (game.session().player.animation_clock.frame as i32 - 64i32) & 0x8000 != 0 {
                     game.session_mut().player.animation_clock.remaining = 8;
                     game.session_mut().player.animation_clock.frame = 64;
                 }
@@ -701,7 +701,7 @@ pub fn position_swing<H: Host + ?Sized>(game: &mut H) {
     let v2: u16 = (2u16).wrapping_mul(v1);
     if (abs16(game.session().player.swing.extra_angular_velocity) & 0xff00) == 256 {
         let mut v3: u16 = game.session().player.animation_clock.frame;
-        if game.session().player.animation_clock.frame as i32 - 64i32 & 0x8000 == 0 {
+        if (game.session().player.animation_clock.frame as i32 - 64i32) & 0x8000 == 0 {
             v3 = 16;
         }
         game.session_mut().player.animation_clock.frame = (v3).wrapping_add(32);
@@ -757,7 +757,7 @@ static GRAPPLE_BANNED_FOR_MOVEMENT_TYPE: [u8; 28] = [
 pub fn cancel_incompatible_pose<H: Host + ?Sized>(game: &mut H) {
     if GRAPPLE_BANNED_FOR_MOVEMENT_TYPE[game.movement_type() as usize] == 0 {
         if game.session().player.grapple as i32 != 0x9bc4f0 & 0xffff
-            && game.session().player.grapple as i32 + 0x3882 & 0x8000 != 0
+            && (game.session().player.grapple as i32 + 0x3882) & 0x8000 != 0
         {
             let mut v0: i16 = native_pose_parameter!(game, 3) as i16;
             if (v0 as u16 & 0xf0) == 0 {
@@ -1017,7 +1017,7 @@ pub fn update_tiles<
         0x9a,
         &|_: &H| 0x6210,
     );
-    if word!(game.flare_counter) as i32 - 120i32 & 0x8000 != 0 {
+    if (word!(game.flare_counter) as i32 - 120i32) & 0x8000 != 0 {
         word!(game.flare_counter += 1);
     }
 }
@@ -1035,14 +1035,14 @@ pub fn update<H: Host + ?Sized>(game: &mut H) {
         game,
     );
     if game.session().player.grapple as i32 != 0x9bc4f0 & 0xffff
-        && game.session().player.grapple as i32 - (0x9bc856 & 0xffff) & 0x8000 != 0
+        && (game.session().player.grapple as i32 - (0x9bc856 & 0xffff)) & 0x8000 != 0
         && (word!(game.samus_suit_palette_index) & 4) == 0
         && word!(game.fx_type) != 0
         && {
             r18 = game.player_bottom();
             (word!(game.fx_y_pos) & 0x8000) == 0
         }
-        && word!(game.fx_y_pos) as i32 - r18 as i32 & 0x8000 != 0
+        && (word!(game.fx_y_pos) as i32 - r18 as i32) & 0x8000 != 0
     {
         game.session_mut().player.grapple_flags = game.session().player.grapple_flags | (1u16);
     } else {
@@ -1087,7 +1087,7 @@ fn dispatch<H: Host + ?Sized>(ea: u32, game: &mut H) {
                     .grapple_length
                     .wrapping_add(game.session().player.swing.length_delta);
             }
-            if !shooting || game.session().player.grapple_length as i32 - 128 & 0x8000 == 0 {
+            if !shooting || (game.session().player.grapple_length as i32 - 128) & 0x8000 == 0 {
                 game.session_mut().player.grapple = 0xc856;
                 return;
             }

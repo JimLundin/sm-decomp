@@ -91,7 +91,7 @@ fn bomb(h: &mut impl Host) {
         return;
     }
     let movement = usize::from(h.session().player.movement_and_facing >> 8);
-    [(); 28][movement];
+    sm_data::table::check_index(movement, 28);
     let selected = match movement {
         0 | 5 if h.inputs().frozen != 0 => {
             h.session_mut().player.transitions.bomb_jump = BombJump::from_raw(0);

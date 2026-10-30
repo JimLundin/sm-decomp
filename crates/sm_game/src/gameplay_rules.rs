@@ -33,14 +33,14 @@ pub fn finish_health_and_time<H: Host + ?Sized>(game: &mut H) {
     'carry: {
         for timer in (fields::game_time_frames..fields::game_time_hours).step_by(2) {
             checked_word!(game, timer; += 1);
-            if checked_word!(game, timer;) as i32 - 60i32 & 0x8000 != 0 {
+            if (checked_word!(game, timer;) as i32 - 60i32) & 0x8000 != 0 {
                 break 'carry;
             }
             checked_word!(game, timer; = 0);
         }
         word!(game.game_time_hours += 1);
     }
-    if word!(game.game_time_hours) as i32 - 100i32 & 0x8000 == 0 {
+    if (word!(game.game_time_hours) as i32 - 100i32) & 0x8000 == 0 {
         word! { game, 59; game_time_frames, game_time_seconds, game_time_minutes }
         word!(game.game_time_hours = 99);
     }

@@ -34,7 +34,7 @@ pub fn draw(h: &mut (impl Host + Content)) {
     let dy = (i32::from(SINE_COSINE[angle]) << 11) as u32;
     let high = h.session().player.grapple_angle >> 8;
     let mut tile = (high & 0x80) >> 1;
-    tile = (tile | 2 * ((high ^ tile) & 0x40 ^ 0x40)) << 8;
+    tile = (tile | (2 * ((high ^ tile) & 0x40 ^ 0x40))) << 8;
     let mut x =
         ((i32::from(h.inputs().grapple_x) - i32::from(h.inputs().camera_x) - 4) << 16) as u32;
     let mut y =
@@ -43,7 +43,7 @@ pub fn draw(h: &mut (impl Host + Content)) {
     if length & 0x8000 != 0 {
         return;
     }
-    let mut remaining = i32::from(length / 8 & 15) - 1;
+    let mut remaining = i32::from((length / 8) & 15) - 1;
     let mut slot = 15;
     loop {
         let delay = h.session().player.grapple_animation_delay[slot];

@@ -63,7 +63,7 @@ pub fn advance_scene_sprite<H: crate::menus::host::Host + ?Sized>(
 ) {
     let slot = usize::from(object >> 1);
     if scene == 0 {
-        if game.player_x() as i32 - 169 & 0x8000 != 0 {
+        if (game.player_x() as i32 - 169) & 0x8000 != 0 {
             crate::cinematic::resume_cinematic_sprite(slot, 0xcb3b, game);
             word!(game.cinematicspr_preinstr_func[slot] = 0x93d9);
         }
@@ -102,7 +102,7 @@ pub fn advance_laboratory_baby<H: crate::menus::host::Host + ?Sized>(
         crate::cinematic::resume_cinematic_sprite(slot, 0xce53, game);
     } else if word!(game.cinematic_var4) & 3 == 0 {
         if examined {
-            if word!(game.cinematic_var10) as i32 - 8 & 0x8000 != 0 {
+            if (word!(game.cinematic_var10) as i32 - 8) & 0x8000 != 0 {
                 word!(game.cinematic_var10 += 1);
                 word!(game.cinematicbg_arr8[slot] -= 1);
             }

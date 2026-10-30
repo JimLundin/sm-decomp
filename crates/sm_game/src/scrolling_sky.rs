@@ -80,9 +80,9 @@ pub fn update_horizontal_scroll<H: crate::menus::host::Host + ?Sized>(
     game: &mut H,
 ) {
     let layer1_y = crate::camera::current(game).layer1[1];
-    if layer1_y as i32 - 1024i32 & 0x8000 != 0 {
+    if (layer1_y as i32 - 1024i32) & 0x8000 != 0 {
         if (game.ram().read_byte(0x5b5) & 1) == 0 {
-            word!(game.g_word_7E0596 = (word!(game.g_word_7E0596) as i32 + 2 & 0x1e) as u16);
+            word!(game.g_word_7E0596 = ((word!(game.g_word_7E0596) as i32 + 2) & 0x1e) as u16);
         }
         let mut v1: u16 = word!(game.g_word_7E0596);
         let mut v2: u16 = 0;
@@ -99,7 +99,7 @@ pub fn update_horizontal_scroll<H: crate::menus::host::Host + ?Sized>(
         object.b = timer.wrapping_sub(1);
         if timer == 1 {
             object.b = 6;
-            object.a = (object.a as i32 + 2 & 0x1f) as u16;
+            object.a = ((object.a as i32 + 2) & 0x1f) as u16;
         }
         let mut v5: u16 = object.a;
         for i in (0i32..=30).rev().step_by(2) {
@@ -107,14 +107,14 @@ pub fn update_horizontal_scroll<H: crate::menus::host::Host + ?Sized>(
                 game.g_word_7E9E80[(v5 >> 1)] =
                     ((WATER_WAVE[(i >> 1) as usize]) as u16).wrapping_add(word!(game.reg_BG1HOFS))
             );
-            v5 = (v5 as i32 - 2i32 & 0x1f) as u16;
+            v5 = ((v5 as i32 - 2i32) & 0x1f) as u16;
         }
     }
     write_scroll_pair(0, 0, game);
     write_scroll_pair(2, 31, game);
     let mut r18: u16 = 31;
     write_scroll_pair(3, -25088i32 as u16, game);
-    if layer1_y as i32 - 1024i32 & 0x8000 != 0 {
+    if (layer1_y as i32 - 1024i32) & 0x8000 != 0 {
         write_sky_word(0, 2, game);
     } else {
         r18 = append_upper_band(0x105, r18, 177, 0, game);
@@ -149,11 +149,11 @@ fn append_upper_band<H: crate::menus::host::Host + ?Sized>(
     let mut v1: u16 = (1216u16).wrapping_sub(layer1_y);
     let mut r24: u16 = (1216u16).wrapping_sub(layer1_y);
     if (1216i16).wrapping_sub(layer1_y as i16) >= 0 && layer1_y != 1216 {
-        if v1 as i32 - 128i32 & 0x8000 != 0 {
+        if (v1 as i32 - 128i32) & 0x8000 != 0 {
             r18 = (1216u16).wrapping_sub(layer1_y);
         } else {
             r18 = (1216u16).wrapping_sub(layer1_y);
-            if v1 as i32 - 193i32 & 0x8000 == 0 {
+            if (v1 as i32 - 193i32) & 0x8000 == 0 {
                 v1 = 193;
             }
             r18 = v1;
@@ -193,7 +193,7 @@ pub fn initialize_ocean<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 fn damage_above_screen<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     {
         if ((game.player_y()) as i16).wrapping_sub((word!(game.samus_y_radius)) as i16) < 0
-            || game.player_y() as i32 - word!(game.samus_y_radius) as i32 - 17i32 & 0x8000 != 0
+            || (game.player_y() as i32 - word!(game.samus_y_radius) as i32 - 17i32) & 0x8000 != 0
         {
             word!(game.samus_periodic_damage = 8);
         }
@@ -227,7 +227,7 @@ pub fn advance_parallax<H: crate::menus::host::Host + ?Sized>(_k: u16, game: &mu
         {
             let height = entry.word(8).wrapping_sub(r18);
             let mut v8 = height;
-            if v8 as i32 - 128i32 & 0x8000 == 0 {
+            if (v8 as i32 - 128i32) & 0x8000 == 0 {
                 write_sky_word(127, v6 as isize, game);
                 write_sky_word(entry.word(6).wrapping_add(2), v6 as isize + 1, game);
                 v6 = (v6).wrapping_add(3);
@@ -237,7 +237,7 @@ pub fn advance_parallax<H: crate::menus::host::Host + ?Sized>(_k: u16, game: &mu
             write_sky_word(entry.word(6).wrapping_add(2), v6 as isize + 1, game);
             r18 = (r18).wrapping_add(height);
             v6 = (v6).wrapping_add(3);
-            if r18 as i32 - r20 as i32 & 0x8000 == 0 {
+            if (r18 as i32 - r20 as i32) & 0x8000 == 0 {
                 write_sky_word(0, v6 as isize + 3, game);
                 return;
             }
@@ -245,7 +245,7 @@ pub fn advance_parallax<H: crate::menus::host::Host + ?Sized>(_k: u16, game: &mu
     }
     let mut i: u16 = (1535u16).wrapping_sub(r18);
     loop {
-        if i as i32 - 128i32 & 0x8000 != 0 {
+        if (i as i32 - 128i32) & 0x8000 != 0 {
             break;
         }
         write_sky_word(127, v6 as isize, game);
@@ -296,10 +296,10 @@ fn queue_tile_rows<H: crate::menus::host::Host + ?Sized>(address: u32, game: &mu
             game.ram().write_byte(v1 + row * stride + 4, 0x8a);
         }
         let t: i32 = (game.ram().read_byte(0x59) as i32 & 0xfc) << 8;
-        let v6: u16 = (t + 4 * (layer1_y as i32 - 16i32 & 0x1f8)) as u16;
+        let v6: u16 = (t + 4 * ((layer1_y as i32 - 16i32) & 0x1f8)) as u16;
         crate::word_transfers!(game, ascending, 1; native(v1 + 5) <- value(v6));
         crate::word_transfers!(game, ascending, 1; native(v1 + stride + 5) <- value(v6.wrapping_add(32)));
-        let v7: u16 = (t + 4 * (layer1_y as i32 + 240 & 0x1f8)) as u16;
+        let v7: u16 = (t + 4 * ((layer1_y as i32 + 240) & 0x1f8)) as u16;
         crate::word_transfers!(game, ascending, 1; native(v1 + 2 * stride + 5) <- value(v7));
         crate::word_transfers!(game, ascending, 1; native(v1 + 3 * stride + 5) <- value(v7.wrapping_add(32)));
         word!(game.vram_write_queue_tail = (v0).wrapping_add(28));

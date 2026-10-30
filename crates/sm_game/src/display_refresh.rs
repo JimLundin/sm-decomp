@@ -183,7 +183,7 @@ pub fn upload_pause_map<
         byte(DAS1L as u16, 0x18); byte(DAS1H as u16, 0);
     }
     let mut area: u16 = room_area(game);
-    if room_area(game) as i32 - 7i32 & 0x8000 == 0 {
+    if (room_area(game) as i32 - 7i32) & 0x8000 == 0 {
         area = 0;
     }
     register_writes! { game;

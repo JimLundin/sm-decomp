@@ -737,7 +737,7 @@ pub fn EprojInit_MotherBrainEscapeDoorParticles(j: u16, ctx: &mut impl Host) {
     ];
     let v1: i32 = j as i32 >> 1;
     enemy!(ctx, 0 => (v1) as isize, graphics);
-    let v2: i32 = 4 * ctx.session().enemy_projectiles.spawn.primary as i32 >> 1;
+    let v2: i32 = (4 * ctx.session().enemy_projectiles.spawn.primary as i32) >> 1;
 
     enemy!(ctx, (kEprojInit_MotherBrainEscapeDoorParticles_X[v2 as usize] as i32 + 16) as u16 => (v1) as isize, x);
     enemy!(ctx, (kEprojInit_MotherBrainEscapeDoorParticles_X[(v2 + 1) as usize] as i32 + 128) as u16 => (v1) as isize, y);
@@ -752,7 +752,7 @@ pub fn EprojInit_TimeBombSetJapaneseText(j: u16, ctx: &mut impl Host) {
 }
 
 pub fn EprojInit_MotherBrainGlassShatteringShard(j: u16, ctx: &mut impl Host) {
-    let v1: u16 = (2 * ctx.next_random() as i32 & 0x1fe) as u16;
+    let v1: u16 = ((2 * ctx.next_random() as i32) & 0x1fe) as u16;
     let v2: i32 = j as i32 >> 1;
     enemy!(ctx, v1 => (v2) as isize, behavior_a);
     let v3: i32 = v1 as i32 >> 1;
@@ -1040,7 +1040,7 @@ pub fn sub_86D992(v0: u16, ctx: &mut impl Host) {
     enemy!(ctx, -512i32 as u16 => (v2) as isize, velocity_y);
     enemy!(ctx, 512 => (v2) as isize, velocity_x);
 
-    if ctx.session().enemy_projectiles.spawn.primary as i32 - 12i32 & 0x8000 == 0 {
+    if (ctx.session().enemy_projectiles.spawn.primary as i32 - 12i32) & 0x8000 == 0 {
         enemy!(ctx, -384i32 as u16 => (v2) as isize, velocity_y);
         enemy!(ctx, 384 => (v2) as isize, velocity_x);
     }
@@ -1372,10 +1372,10 @@ pub fn EprojInit_MotherBrainDeathBeemFired(j: u16, ctx: &mut impl Host) {
     enemy!(ctx, Math_MultBySin(rv & 0x700, r18) => (v1) as isize, velocity_x);
     enemy!(ctx, Math_MultByCos(ctx.inputs().random & 0x700, r18) => (v1) as isize, velocity_y);
     MoveEprojWithVelocity(j, ctx);
-    if enemy!(ctx, (v1) as isize, y) as i32 - 34i32 & 0x8000 != 0
-        || enemy!(ctx, (v1) as isize, y) as i32 - 206i32 & 0x8000 == 0
-        || enemy!(ctx, (v1) as isize, x) as i32 - 2i32 & 0x8000 != 0
-        || enemy!(ctx, (v1) as isize, x) as i32 - 238i32 & 0x8000 == 0
+    if (enemy!(ctx, (v1) as isize, y) as i32 - 34i32) & 0x8000 != 0
+        || (enemy!(ctx, (v1) as isize, y) as i32 - 206i32) & 0x8000 == 0
+        || (enemy!(ctx, (v1) as isize, x) as i32 - 2i32) & 0x8000 != 0
+        || (enemy!(ctx, (v1) as isize, x) as i32 - 238i32) & 0x8000 == 0
     {
         enemy!(ctx, 0 => (v1) as isize, definition);
         ctx.session_mut().enemy_projectiles.spawn.point = Point {
@@ -1395,7 +1395,7 @@ pub fn EprojInit_MotherBrainDeathBeemFired(j: u16, ctx: &mut impl Host) {
             };
         }
     } else {
-        enemy!(ctx, (enemy!(ctx, (v1) as isize, behavior_a) as i32 + 1 & 3) as u16 => (v1) as isize, behavior_a);
+        enemy!(ctx, ((enemy!(ctx, (v1) as isize, behavior_a) as i32 + 1) & 3) as u16 => (v1) as isize, behavior_a);
 
         enemy!(ctx, 0 => (v1) as isize, behavior_b);
         enemy!(ctx, 0 => (v1) as isize, velocity_x);
@@ -1529,7 +1529,7 @@ pub fn EprojInit_EyeDoorSmoke(j: u16, ctx: &mut impl Host) {
         };
         enemy!(ctx, value => (v1) as isize, program);
     };
-    let v2: i32 = 8 * (ctx.session().enemy_projectiles.spawn.primary >> 8) as u8 as i32 >> 1;
+    let v2: i32 = (8 * (ctx.session().enemy_projectiles.spawn.primary >> 8) as u8 as i32) >> 1;
     let x: u16 = ({
         let record = ctx.loaded_record(0x86, 0xe47e);
         let index: isize = (v2 + 2) as isize;

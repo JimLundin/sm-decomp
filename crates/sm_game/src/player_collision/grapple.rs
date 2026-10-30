@@ -253,10 +253,10 @@ pub fn extend_beam(
     ];
     let mut result = 0;
     for _ in 0..4 {
-        for axis in 0..2 {
+        for (axis, &speed) in velocity.iter().enumerate() {
             let offset = &mut h.session_mut().player.grapple_offset[axis];
             let sum = ((u32::from(offset.whole) << 16) | u32::from(offset.fraction))
-                .wrapping_add(velocity[axis] as u32);
+                .wrapping_add(speed as u32);
             offset.fraction = sum as u16;
             offset.whole = (sum >> 16) as u16;
         }

@@ -657,7 +657,7 @@ where
 {
     let x = word!(game.samus_x_pos);
     let mut y = word!(game.samus_y_pos).wrapping_sub(68);
-    if word!(game.samus_y_pos) as i32 - 132 & 0x8000 != 0 {
+    if (word!(game.samus_y_pos) as i32 - 132) & 0x8000 != 0 {
         y = 64;
     }
     ridley::ceres_accelerate(0, 0xd, x, y, game);
@@ -983,13 +983,13 @@ fn sine_256(angle: u16) -> u16 {
 /// 8-bit sine multiplication ($A6:AC30): `amplitude` times the sine of
 /// `angle`, over 100h. Was `CeresRidley_AC30`.
 pub fn sine_multiply(angle: u16, amplitude: i16) -> i16 {
-    (SINE_COSINE[((angle as i32 & 0xff) + 64) as usize] as i32 * amplitude as i32 >> 8) as i16
+    ((SINE_COSINE[((angle as i32 & 0xff) + 64) as usize] as i32 * amplitude as i32) >> 8) as i16
 }
 
 /// Signed `a` times unsigned `b` over 100h (16-bit multiplication, $A6:AC58).
 /// Was `CeresMult`.
 fn signed_scale(a: u16, b: u16) -> u16 {
-    let product = (abs16(a) as i32 * b as i32 >> 8) as u16;
+    let product = ((abs16(a) as i32 * b as i32) >> 8) as u16;
     (if a & 0x8000 != 0 {
         -(product as i32)
     } else {

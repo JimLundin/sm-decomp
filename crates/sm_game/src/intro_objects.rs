@@ -41,10 +41,10 @@ pub fn chase_intro_baby_y<H: crate::menus::host::Host + ?Sized>(
         as i16)
         < 0
     {
-        if word!(game.cinematic_var17) as i32 + 543 & 0x8000 == 0 {
+        if (word!(game.cinematic_var17) as i32 + 543) & 0x8000 == 0 {
             word!(game.cinematic_var17, wrapping_sub(32));
         }
-    } else if word!(game.cinematic_var17) as i32 - 544 & 0x8000 != 0 {
+    } else if (word!(game.cinematic_var17) as i32 - 544) & 0x8000 != 0 {
         word!(game.cinematic_var17, wrapping_add(32));
     }
     let velocity = ((word!(game.cinematic_var17) as i16 as i32) << 8) as u32;
@@ -58,7 +58,7 @@ pub fn advance_intro_baby_pursuit<H: crate::menus::host::Host + ?Sized>(object: 
         word!(game.cinematic_var15 = 0);
         return;
     }
-    if word!(game.cinematicspr_goto_timer[slot]) as i32 - 128 & 0x8000 != 0 {
+    if (word!(game.cinematicspr_goto_timer[slot]) as i32 - 128) & 0x8000 != 0 {
         let timer = word!(game.cinematicspr_goto_timer[slot]).wrapping_add(1);
         word!(game.cinematicspr_goto_timer[slot] = timer);
         if timer & 0x3f == 0 {
@@ -67,10 +67,10 @@ pub fn advance_intro_baby_pursuit<H: crate::menus::host::Host + ?Sized>(object: 
     }
     if (word!(game.samus_x_pos) as i16).wrapping_sub(word!(game.cinematicbg_arr7[slot]) as i16) < 0
     {
-        if word!(game.cinematic_var14) as i32 + 639 & 0x8000 == 0 {
+        if (word!(game.cinematic_var14) as i32 + 639) & 0x8000 == 0 {
             word!(game.cinematic_var14 -= 32);
         }
-    } else if word!(game.cinematic_var14) as i32 - 640 & 0x8000 != 0 {
+    } else if (word!(game.cinematic_var14) as i32 - 640) & 0x8000 != 0 {
         word!(game.cinematic_var14 += 32);
     }
     word!(
@@ -99,8 +99,8 @@ pub fn advance_intro_rinka<H: crate::menus::host::Host + ?Sized>(
     advance_cinematic_coordinate(object, false, horizontal, game);
     advance_cinematic_coordinate(object, true, 0x8000, game);
     if misses_samus {
-        if !(word!(game.cinematicbg_arr8[slot]) as i32 - 16 & 0x8000 != 0
-            || word!(game.cinematicbg_arr8[slot]) as i32 - 208 & 0x8000 == 0
+        if !((word!(game.cinematicbg_arr8[slot]) as i32 - 16) & 0x8000 != 0
+            || (word!(game.cinematicbg_arr8[slot]) as i32 - 208) & 0x8000 == 0
             || word!(game.cinematicspr_preinstr_func[0]) == 0xb80f)
         {
             return;
@@ -279,7 +279,7 @@ pub fn advance_zebes_destruction_zoom<H: crate::menus::host::Host + ?Sized>(
         word!(game.cinematic_var5 = (word!(game.cinematic_var5) as u8).wrapping_sub(1) as u16);
     }
     word!(game.cinematic_var6 += speed);
-    if word!(game.cinematic_var6) as i32 - 384 & 0x8000 == 0
+    if (word!(game.cinematic_var6) as i32 - 384) & 0x8000 == 0
         && advance_cinematic_fade(CinematicFade::FastOut, game)
     {
         crate::flow::set(game, crate::flow::Word::CinematicFunction, next_scene);

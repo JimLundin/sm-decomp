@@ -147,7 +147,7 @@ fn fade_to_main<H: Host + ?Sized>(game: &mut H) {
     game.ram().write_byte(
         crate::ram::mirror::MOSAIC,
         (game.ram().read_byte(crate::ram::mirror::MOSAIC) as i32 & 0xf
-            | 16 * (game.ram().read_byte(crate::ram::mirror::INIDISP) as i32 & 0xf) ^ 0xf0)
+            | (16 * (game.ram().read_byte(crate::ram::mirror::INIDISP) as i32 & 0xf)) ^ 0xf0)
             as u8,
     );
     if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 0 {
@@ -165,7 +165,7 @@ fn fade_in<H: Host + ?Sized>(game: &mut H) {
     game.ram().write_byte(
         crate::ram::mirror::MOSAIC,
         (game.ram().read_byte(crate::ram::mirror::MOSAIC) as i32 & 0xf
-            | 16 * (game.ram().read_byte(crate::ram::mirror::INIDISP) as i32 & 0xf) ^ 0xf0)
+            | (16 * (game.ram().read_byte(crate::ram::mirror::INIDISP) as i32 & 0xf)) ^ 0xf0)
             as u8,
     );
     if (game.ram().read_byte(crate::ram::mirror::INIDISP) & 0xf) == 15 {
@@ -286,7 +286,7 @@ fn begin_destination<H: Host + ?Sized>(game: &mut H) {
     let source = copy_source(game);
     while selection == source {
         selection = selection.wrapping_add(1);
-        if selection as i32 - 3i32 & 0x8000 == 0 {
+        if (selection as i32 - 3i32) & 0x8000 == 0 {
             break;
         }
     }
@@ -624,7 +624,7 @@ fn choose_main<H: Host + ?Sized>(game: &mut H) {
                     let selected = word!(game.selected_save_slot);
                     let previous = if (selected as i16).wrapping_sub(1) < 0 {
                         5
-                    } else if !occupied && i32::from(selected) - 5 & 0x8000 == 0 {
+                    } else if !occupied && (i32::from(selected) - 5) & 0x8000 == 0 {
                         2
                     } else {
                         selected.wrapping_sub(1)
@@ -641,12 +641,12 @@ fn choose_main<H: Host + ?Sized>(game: &mut H) {
                 } else {
                     let occupied = word!(game.nonempty_save_slots) != 0;
                     let mut next = word!(game.selected_save_slot).wrapping_add(1);
-                    if i32::from(word!(game.selected_save_slot)) - (if occupied { 5 } else { 2 })
+                    if (i32::from(word!(game.selected_save_slot)) - (if occupied { 5 } else { 2 }))
                         & 0x8000
                         == 0
                     {
                         next = if !occupied
-                            && i32::from(word!(game.selected_save_slot)) - 5 & 0x8000 != 0
+                            && (i32::from(word!(game.selected_save_slot)) - 5) & 0x8000 != 0
                         {
                             5
                         } else {

@@ -345,7 +345,7 @@ pub fn with_base_tile<H: SpriteHost + ?Sized>(
     }
     sprite_map(bank, address, game, &mut Native).draw(
         position,
-        |tile| (i32::from(palette) | i32::from(base_tile) + i32::from(tile)) as u16,
+        |tile| (i32::from(palette) | (i32::from(base_tile) + i32::from(tile))) as u16,
         clip,
         game,
     );

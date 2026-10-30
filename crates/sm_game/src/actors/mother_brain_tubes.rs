@@ -182,7 +182,7 @@ fn fall_with_brain<H: Host + ?Sized>(game: &mut H, k: u16) {
     slot!(game, Tube[me].fall_speed = speed);
     move_down(game, me, speed);
     let y = slot!(game, Tube[me].base.y_pos);
-    if y as i32 - HIDE_Y as i32 & 0x8000 == 0 {
+    if (y as i32 - HIDE_Y as i32) & 0x8000 == 0 {
         slot!(
             game,
             Tube[me].base.properties =
@@ -190,7 +190,7 @@ fn fall_with_brain<H: Host + ?Sized>(game: &mut H, k: u16) {
         );
     }
     slot!(game, Tube[BRAIN].base.y_pos = y.wrapping_sub(BRAIN_OFFSET));
-    if slot!(game, Tube[BRAIN].base.y_pos) as i32 - BRAIN_LANDING_Y as i32 & 0x8000 != 0 {
+    if (slot!(game, Tube[BRAIN].base.y_pos) as i32 - BRAIN_LANDING_Y as i32) & 0x8000 != 0 {
         trail_smoke(game, k);
     } else {
         game.end_screen_flash();
@@ -212,7 +212,7 @@ fn fall_with_brain<H: Host + ?Sized>(game: &mut H, k: u16) {
 fn puff_smoke<H: Host + ?Sized>(game: &mut H, k: u16) {
     let me = k as i32;
     slot!(game, Tube[me].smoke_timer = SMOKE_DELAY);
-    let index = (slot!(game, Tube[me].smoke_index) as i32 + 1 & 3) as u16;
+    let index = ((slot!(game, Tube[me].smoke_index) as i32 + 1) & 3) as u16;
     slot!(game, Tube[me].smoke_index = index);
     let x = slot!(game, Tube[me].base.x_pos).wrapping_add(SMOKE_OFFSETS[index as usize]);
     game.set_projectile_spawn_point(x, SMOKE_Y);

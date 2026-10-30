@@ -33,16 +33,16 @@ enum Table {
 fn invalid(table: Table, index: usize) -> ! {
     match table {
         Table::Selection => {
-            [(); 6][index];
+            sm_data::table::check_index(index, 6);
         }
         Table::Movement => {
-            [(); 28][index];
+            sm_data::table::check_index(index, 28);
         }
         Table::Normal => {
-            [(); 7][index];
+            sm_data::table::check_index(index, 7);
         }
         Table::Crouch => {
-            [(); 12][index];
+            sm_data::table::check_index(index, 12);
         }
     }
     unreachable!()

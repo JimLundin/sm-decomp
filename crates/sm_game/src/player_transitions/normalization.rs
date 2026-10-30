@@ -39,7 +39,7 @@ fn reload(h: &mut impl Host, #[cfg(sm_verify_dll)] publication: u16) {
 }
 pub fn normalize(h: &mut impl Host) {
     let movement = usize::from(h.session().player.movement_and_facing >> 8);
-    [(); 28][movement];
+    sm_data::table::check_index(movement, 28);
     let changed = match movement {
         0 => standing(h),
         1 => running(h),
@@ -230,7 +230,7 @@ fn crouch_transition(h: &mut impl Host) -> bool {
             (2 * (i32::from(pose) - 0x35)) as u16
         } else {
             let index = (i32::from(pose) - 0xdb) as usize;
-            [(); 4][index];
+            sm_data::table::check_index(index, 4);
             return if index < 2 { morph(h) } else { false };
         }
     } else if pose.wrapping_sub(0xf7) & 0x8000 != 0 {
@@ -241,7 +241,7 @@ fn crouch_transition(h: &mut impl Host) -> bool {
     };
     h.session_mut().player.transitions.momentum = MomentumAction::from_raw(7);
     let index = usize::from(selector >> 1);
-    [(); 12][index];
+    sm_data::table::check_index(index, 12);
     match index {
         0 | 1 => crouch(h),
         2 | 3 => morph(h),

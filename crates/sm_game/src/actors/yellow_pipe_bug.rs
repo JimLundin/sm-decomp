@@ -15,7 +15,7 @@ pub fn initialize<H: ActorHost + ActorRuntime + ?Sized>(game: &mut H) {
     if slot!(game, Bug[e].parameter_1) == 0 {
         slot!(game, Bug[e].base.current_instruction = 0x8f24);
     }
-    let index = (8 * i32::from(slot!(game, Bug[e].parameter_2)) >> 1) as isize;
+    let index = ((8 * i32::from(slot!(game, Bug[e].parameter_2))) >> 1) as isize;
     slot!(game, Bug[e]; var_01 = game.enemy_speed(SpeedTable::Linear, index), var_00 = game.enemy_speed(SpeedTable::Linear, index + 1),
         var_03 = game.enemy_speed(SpeedTable::Linear, index + 2), var_02 = game.enemy_speed(SpeedTable::Linear, index + 3), var_A = 0x8fb5, var_06 = 0);
 }
@@ -50,7 +50,7 @@ fn vertical<H: ActorHost + ActorRuntime + ?Sized>(counting_down: bool, k: u16, g
     } else {
         slot!(game, Bug[e].var_E, |old| old.wrapping_add(1));
     }
-    let index = (8 * i32::from(slot!(game, Bug[e].var_E)) >> 1) as isize;
+    let index = ((8 * i32::from(slot!(game, Bug[e].var_E))) >> 1) as isize;
     let offset = if counting_down { 0 } else { 2 };
     let high = game.enemy_speed(SpeedTable::Quadratic, index + offset + 1);
     let low = game.enemy_speed(SpeedTable::Quadratic, index + offset);

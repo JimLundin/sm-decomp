@@ -257,7 +257,7 @@ fn accelerate<H: Host + ?Sized>(game: &mut H, me: i32, roll: bool, step: u16, ca
     } else {
         slot!(game, Boulder[me].fall_speed = speed);
     }
-    if speed as i32 - cap as i32 & 0x8000 == 0 {
+    if (speed as i32 - cap as i32) & 0x8000 == 0 {
         if roll {
             slot!(game, Boulder[me].roll_speed = cap);
         } else {
@@ -327,7 +327,7 @@ fn bounce_rise<H: Host + ?Sized>(game: &mut H) {
 /// final roll, or shatters. Was `Boulder_Func_4`.
 fn bounce_fall<H: Host + ?Sized>(game: &mut H) {
     let me = current(game);
-    let row: i32 = 8 * slot!(byte game, Boulder[me].fall_speed[1]) as i32 >> 1;
+    let row: i32 = (8 * slot!(byte game, Boulder[me].fall_speed[1]) as i32) >> 1;
     let landed = {
         let actor = word!(game.cur_enemy_index);
         let amount = game.enemy_speed32(4 * (row >> 1) as usize) as i32;

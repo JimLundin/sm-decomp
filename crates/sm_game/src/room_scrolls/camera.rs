@@ -274,7 +274,7 @@ pub fn layer2_position<H: Host + ?Sized>(axis: Axis, game: &mut H) -> u8 {
     let position = if scale == 0 {
         position
     } else {
-        (u32::from(position) * u32::from(scale & 0xfe) >> 8) as u16
+        ((u32::from(position) * u32::from(scale & 0xfe)) >> 8) as u16
     };
     game.session_mut().room.camera.layer2[index] = position;
     0
