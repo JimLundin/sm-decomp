@@ -88,6 +88,7 @@ fn draw_trail(game: &mut Game, pair: usize, right: bool, frozen: bool) {
 #[path = "../verification/actor_movement_runtime_observer.rs"]
 mod actor_movement_runtime_observer;
 
+/// `pub` inside the crate-private module, so `LeaseActors` can name it.
 pub struct Runtime<'g> {
     game: &'g mut Game,
     state: Option<Session>,

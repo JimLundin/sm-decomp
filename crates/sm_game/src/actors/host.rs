@@ -123,3 +123,21 @@ pub trait BossEffects:
 pub fn abs16(value: u16) -> u16 {
     (value as i16).unsigned_abs()
 }
+
+/// A session lease over the actors: what a compat `Runtime` gives code that
+/// edits actors directly, plus the session-aware RAM word read and `foreign`
+/// onto the leased game.
+pub trait ActorLease: crate::actors::access::ActorAccess {
+    type Game: BossEffects + ?Sized;
+    /// The compatibility word at `at`, through the session projection.
+    fn word(&self, at: usize) -> u16;
+    fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
+}
+
+/// A host that can lease its actors; each `lease` is one original `Runtime`.
+pub trait LeaseActors {
+    type Lease<'a>: ActorLease
+    where
+        Self: 'a;
+    fn lease(&mut self) -> Self::Lease<'_>;
+}

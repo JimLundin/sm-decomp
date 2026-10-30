@@ -81,6 +81,7 @@ pub mod actors {
     pub mod dachora;
     pub mod drawing;
     pub mod draygon_death;
+    pub mod draygon_eye;
     pub mod draygon_flight;
     pub mod draygon_grab;
     pub mod draygon_host;
