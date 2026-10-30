@@ -263,7 +263,12 @@ def aligned_work_prefix(video, events, count, after_event=0, previous=None, fram
                 raise ValueError('unsupported vblank wait timing')
             lag, vblank = event, None
             result.append(event['joypad'])
-        elif kind == 'joypad_begin' and read is None and (wait is not None or door):
+        # A lag NMI can read the controller while the game is still working on its
+        # previous update (outside any wait or door phase); it is still one native
+        # controller read, so it consumes the next input like a waiting read.
+        elif kind == 'joypad_begin' and read is None and (
+                wait is not None or door
+                or all(value is None for value in (lag, vblank, irq, no_update))):
             continuous = previous is None and event['nmi'] == 0 and event['state'] == 0
             if previous is not None:
                 continuous = event['nmi'] == (previous['nmi'] + 1) % 65536
