@@ -1,20 +1,14 @@
 name: Full 100% route
 
-# Replays the whole 100% TAS (222,788 frames) in lockstep against the original:
-# WRAM, VRAM, CGRAM, OAM, PPU state and pixels every frame, like corpus rows.
-# Chunks of 20,000 frames run in parallel from boundary checkpoints. Each
-# checkpoint is produced by replaying the original from boot (the `boundaries`
-# job) and cached per source; the verifier also rejects any checkpoint whose
-# runtime, ROM or input prefix differs. Nothing ROM-derived is committed.
+# Verifies the whole 100% TAS route against the original as a chain of room
+# segments: each of the 331 rooms starts from its original-emulator seed with
+# lag-aligned inputs and must reach the next room. WRAM, VRAM, CGRAM, OAM, PPU
+# state and pixels are compared every frame. Seeds and inputs come from an
+# encrypted ci-data release asset (see .github/scripts/full_route.py).
 on:
   schedule:
     - cron: '41 2 * * *'
   workflow_dispatch:
-    inputs:
-      regenerate:
-        description: Rebuild the boundary checkpoints even if cached
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -28,6 +22,7 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}
+      asset: ${{ steps.plan.outputs.asset }}
     steps:
       - uses: actions/checkout@v4
       - id: plan
@@ -113,107 +108,9 @@ jobs:
           path: verifier
           retention-days: 1
 
-  boundaries:
-    needs: [plan, build]
-    runs-on: windows-2022
-    timeout-minutes: 240
-    defaults:
-      run:
-        shell: pwsh
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-      - name: Look for cached boundary checkpoints
-        id: cached
-        uses: actions/cache/restore@v4
-        with:
-          path: target/full-route
-          key: ${{ runner.os }}-full-route-${{ hashFiles('sm/src/verify/checkpoint.rs', 'sm/src/verify/seed.rs', 'sm/src/**/*.rs', 'crates/**/*.rs') }}
-          lookup-only: true
-      - if: steps.cached.outputs.cache-hit != 'true' || inputs.regenerate
-        uses: actions/download-artifact@v4
-        with:
-          name: verifier
-          path: verifier
-      - name: Place the verifier
-        if: steps.cached.outputs.cache-hit != 'true' || inputs.regenerate
-        run: |
-          New-Item -ItemType Directory -Force -Path target/verify-dll | Out-Null
-          Copy-Item verifier/sm_verify.dll target/verify-dll/
-          "LIBRARY_PATH=$((Resolve-Path verifier/sdk/lib).Path)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-      - name: Cache the pinned 100% movie
-        if: steps.cached.outputs.cache-hit != 'true' || inputs.regenerate
-        uses: actions/cache@v4
-        with:
-          path: movies/super-metroid-100-4010.lsmv
-          key: ${{ runner.os }}-movie-100-4010
-      - name: Prepare the ROM and the 100% inputs
-        if: steps.cached.outputs.cache-hit != 'true' || inputs.regenerate
-        env:
-          ROM_00: ${{ secrets.SM_ROM_00 }}
-          ROM_01: ${{ secrets.SM_ROM_01 }}
-          ROM_02: ${{ secrets.SM_ROM_02 }}
-          ROM_03: ${{ secrets.SM_ROM_03 }}
-          ROM_04: ${{ secrets.SM_ROM_04 }}
-          ROM_05: ${{ secrets.SM_ROM_05 }}
-          ROM_06: ${{ secrets.SM_ROM_06 }}
-          ROM_07: ${{ secrets.SM_ROM_07 }}
-          ROM_08: ${{ secrets.SM_ROM_08 }}
-          ROM_09: ${{ secrets.SM_ROM_09 }}
-          ROM_10: ${{ secrets.SM_ROM_10 }}
-          ROM_11: ${{ secrets.SM_ROM_11 }}
-          ROM_12: ${{ secrets.SM_ROM_12 }}
-          ROM_13: ${{ secrets.SM_ROM_13 }}
-          ROM_14: ${{ secrets.SM_ROM_14 }}
-          ROM_15: ${{ secrets.SM_ROM_15 }}
-          ROM_16: ${{ secrets.SM_ROM_16 }}
-          ROM_17: ${{ secrets.SM_ROM_17 }}
-          ROM_18: ${{ secrets.SM_ROM_18 }}
-          ROM_19: ${{ secrets.SM_ROM_19 }}
-          ROM_20: ${{ secrets.SM_ROM_20 }}
-          ROM_21: ${{ secrets.SM_ROM_21 }}
-          ROM_22: ${{ secrets.SM_ROM_22 }}
-          ROM_23: ${{ secrets.SM_ROM_23 }}
-          ROM_24: ${{ secrets.SM_ROM_24 }}
-          ROM_25: ${{ secrets.SM_ROM_25 }}
-          ROM_26: ${{ secrets.SM_ROM_26 }}
-          ROM_27: ${{ secrets.SM_ROM_27 }}
-          ROM_28: ${{ secrets.SM_ROM_28 }}
-          ROM_29: ${{ secrets.SM_ROM_29 }}
-          ROM_30: ${{ secrets.SM_ROM_30 }}
-          ROM_31: ${{ secrets.SM_ROM_31 }}
-          ROM_32: ${{ secrets.SM_ROM_32 }}
-          ROM_33: ${{ secrets.SM_ROM_33 }}
-          ROM_34: ${{ secrets.SM_ROM_34 }}
-          ROM_35: ${{ secrets.SM_ROM_35 }}
-          ROM_36: ${{ secrets.SM_ROM_36 }}
-          ROM_37: ${{ secrets.SM_ROM_37 }}
-          ROM_38: ${{ secrets.SM_ROM_38 }}
-          ROM_39: ${{ secrets.SM_ROM_39 }}
-          ROM_40: ${{ secrets.SM_ROM_40 }}
-          ROM_41: ${{ secrets.SM_ROM_41 }}
-          ROM_42: ${{ secrets.SM_ROM_42 }}
-          ROM_43: ${{ secrets.SM_ROM_43 }}
-          ROM_44: ${{ secrets.SM_ROM_44 }}
-        run: |
-          python -B .github/scripts/full_route.py prepare
-          if ($LASTEXITCODE -ne 0) { throw 'Input preparation failed' }
-      - name: Replay the original from boot, saving each chunk boundary
-        if: steps.cached.outputs.cache-hit != 'true' || inputs.regenerate
-        run: |
-          python -B .github/scripts/full_route.py checkpoints target/full-route
-          if ($LASTEXITCODE -ne 0) { throw 'Boundary replay failed' }
-      - name: Store the boundary checkpoints
-        if: steps.cached.outputs.cache-hit != 'true' || inputs.regenerate
-        uses: actions/cache/save@v4
-        with:
-          path: target/full-route
-          key: ${{ runner.os }}-full-route-${{ hashFiles('sm/src/verify/checkpoint.rs', 'sm/src/verify/seed.rs', 'sm/src/**/*.rs', 'crates/**/*.rs') }}
 
-  chunks:
-    needs: [plan, build, boundaries]
+  rooms:
+    needs: [plan, build]
     runs-on: windows-2022
     timeout-minutes: 60
     strategy:
@@ -238,13 +135,9 @@ jobs:
           New-Item -ItemType Directory -Force -Path target/verify-dll | Out-Null
           Copy-Item verifier/sm_verify.dll target/verify-dll/
           "LIBRARY_PATH=$((Resolve-Path verifier/sdk/lib).Path)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-      - name: Cache the pinned 100% movie
-        uses: actions/cache@v4
-        with:
-          path: movies/super-metroid-100-4010.lsmv
-          key: ${{ runner.os }}-movie-100-4010
-      - name: Prepare the ROM and the 100% inputs
+      - name: Restore the ROM and the encrypted room seeds and inputs
         env:
+          ASSET: ${{ needs.plan.outputs.asset }}
           ROM_00: ${{ secrets.SM_ROM_00 }}
           ROM_01: ${{ secrets.SM_ROM_01 }}
           ROM_02: ${{ secrets.SM_ROM_02 }}
@@ -291,19 +184,19 @@ jobs:
           ROM_43: ${{ secrets.SM_ROM_43 }}
           ROM_44: ${{ secrets.SM_ROM_44 }}
         run: |
-          python -B .github/scripts/full_route.py prepare
-          if ($LASTEXITCODE -ne 0) { throw 'Input preparation failed' }
-      - name: Restore the boundary checkpoints
-        uses: actions/cache/restore@v4
-        with:
-          path: target/full-route
-          key: ${{ runner.os }}-full-route-${{ hashFiles('sm/src/verify/checkpoint.rs', 'sm/src/verify/seed.rs', 'sm/src/**/*.rs', 'crates/**/*.rs') }}
-          fail-on-cache-miss: true
-      - name: Replay the chunk in lockstep
+          python -B .github/scripts/prepare_rom.py
+          if ($LASTEXITCODE -ne 0) { throw 'ROM preparation failed' }
+          $bundle = Join-Path $env:RUNNER_TEMP 'chain.tar.gz.enc'
+          Invoke-WebRequest "https://github.com/JimLundin/sm-decomp/releases/download/ci-data/$env:ASSET" -OutFile $bundle
+          python -B .github/scripts/full_route.py restore $bundle
+          if ($LASTEXITCODE -ne 0) { throw 'Chain restore failed' }
+      - name: Replay the rooms in lockstep
         timeout-minutes: 55
         run: |
-          python -B .github/scripts/full_route.py chunk ${{ matrix.index }} target/full-route 2>&1 | Tee-Object -FilePath chunk.log
+          python -B .github/scripts/full_route.py run ${{ matrix.index }} 2>&1 | Tee-Object -FilePath rooms.log
           $code = $LASTEXITCODE
           "### ${{ matrix.name }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
-          Select-String -Path chunk.log -Pattern '^(chunk|Verified|FAIL|Progress)' | Select-Object -Last 3 | ForEach-Object { $_.Line } | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
-          if ($code -ne 0) { throw "Chunk failed ($code)" }
+          '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          Select-String -Path rooms.log -Pattern '^(job|PASS|FAIL|Corpus)' | ForEach-Object { $_.Line } | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          if ($code -ne 0) { throw "Rooms failed ($code)" }

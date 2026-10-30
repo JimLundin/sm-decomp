@@ -3,9 +3,8 @@ name: Corpus coverage
 # Runs movies/segments.toml rows with an LLVM-instrumented verifier DLL and
 # reports which engine sources (crates/sm_game, sm/src/game) the corpus never
 # executes. Manual only; landings use the uninstrumented corpus replay.
-# With full_route, the 100% route chunks also run instrumented (from the
-# boundary checkpoints full-route.yml cached for the same sources) and the
-# report lists what the route executes that the corpus never does.
+# With full_route, the 100% room chain (full-route.yml) also runs instrumented
+# and the report lists what the route executes that the corpus never does.
 # The ROM comes from repository secrets; ROM-derived files (inputs, checkpoints)
 # stay private; the seed release asset is encrypted with a ROM-derived key.
 on:
@@ -257,6 +256,7 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}
+      asset: ${{ steps.plan.outputs.asset }}
     steps:
       - uses: actions/checkout@v4
       - id: plan
@@ -288,13 +288,9 @@ jobs:
           New-Item -ItemType Directory -Force -Path target/verify-dll | Out-Null
           Copy-Item verifier/sm_verify.dll target/verify-dll/
           "LIBRARY_PATH=$((Resolve-Path verifier/sdk/lib).Path)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-      - name: Cache the pinned 100% movie
-        uses: actions/cache@v4
-        with:
-          path: movies/super-metroid-100-4010.lsmv
-          key: ${{ runner.os }}-movie-100-4010
-      - name: Prepare the ROM and the 100% inputs
+      - name: Restore the ROM and the encrypted room seeds and inputs
         env:
+          ASSET: ${{ needs.route-plan.outputs.asset }}
           ROM_00: ${{ secrets.SM_ROM_00 }}
           ROM_01: ${{ secrets.SM_ROM_01 }}
           ROM_02: ${{ secrets.SM_ROM_02 }}
@@ -341,24 +337,24 @@ jobs:
           ROM_43: ${{ secrets.SM_ROM_43 }}
           ROM_44: ${{ secrets.SM_ROM_44 }}
         run: |
-          python -B .github/scripts/full_route.py prepare
-          if ($LASTEXITCODE -ne 0) { throw 'Input preparation failed' }
-      - name: Restore the boundary checkpoints
-        uses: actions/cache/restore@v4
-        with:
-          path: target/full-route
-          key: ${{ runner.os }}-full-route-${{ hashFiles('sm/src/verify/checkpoint.rs', 'sm/src/verify/seed.rs', 'sm/src/**/*.rs', 'crates/**/*.rs') }}
-          fail-on-cache-miss: true
-      - name: Replay the chunk in lockstep
+          python -B .github/scripts/prepare_rom.py
+          if ($LASTEXITCODE -ne 0) { throw 'ROM preparation failed' }
+          $bundle = Join-Path $env:RUNNER_TEMP 'chain.tar.gz.enc'
+          Invoke-WebRequest "https://github.com/JimLundin/sm-decomp/releases/download/ci-data/$env:ASSET" -OutFile $bundle
+          python -B .github/scripts/full_route.py restore $bundle
+          if ($LASTEXITCODE -ne 0) { throw 'Chain restore failed' }
+      - name: Replay the rooms in lockstep
         timeout-minutes: 140
         env:
           LLVM_PROFILE_FILE: ${{ github.workspace }}/profiles/%p-%m.profraw
         run: |
-          python -B .github/scripts/full_route.py chunk ${{ matrix.index }} target/full-route 2>&1 | Tee-Object -FilePath chunk.log
+          python -B .github/scripts/full_route.py run ${{ matrix.index }} 2>&1 | Tee-Object -FilePath rooms.log
           $code = $LASTEXITCODE
           "### ${{ matrix.name }}" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
-          Select-String -Path chunk.log -Pattern '^(chunk|Verified|FAIL|Progress)' | Select-Object -Last 3 | ForEach-Object { $_.Line } | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
-          if ($code -ne 0) { throw "Chunk failed ($code)" }
+          '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          Select-String -Path rooms.log -Pattern '^(job|PASS|FAIL|Corpus)' | ForEach-Object { $_.Line } | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          if ($code -ne 0) { throw "Rooms failed ($code)" }
       - uses: actions/upload-artifact@v4
         if: always()
         with:

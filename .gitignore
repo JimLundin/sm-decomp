@@ -13,3 +13,4 @@ __pycache__/
 /saves/
 *.smvchk
 *.log
+/movies/*.generated.toml
