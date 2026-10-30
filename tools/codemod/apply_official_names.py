@@ -2,18 +2,27 @@
 
     python -I tools/codemod/apply_official_names.py [--root DIR] [--check] [--no-fmt]
 
-One pass: every renamed identifier is looked up in a single map built before
-any file is touched, so a rename never feeds another. The map holds:
+One pass: every renamed identifier is looked up in maps built before any
+file is touched, so a rename never feeds another. Every map is an explicit
+old -> new table in tools/official_names.py, never derived from the current
+declarations, so a branch that still has old names converts the same way:
 
-- FUNCTIONS and IDENTIFIERS entries whose current identifier still occurs
-  in the workspace;
-- identifiers in the new crates' code (sm_game, sm_data, sm_runtime) whose
-  words contain an ENTITIES word sequence, rewritten in the same case style;
-- CASE_RULES names (constants.rs labels to SCREAMING_SNAKE_CASE);
-- LOCALS, applied only inside their file.
+- FUNCTIONS, IDENTIFIERS, CONSTANTS and ENTITY_IDENTIFIERS: whole identifiers,
+  wherever they occur;
+- LOCALS: whole identifiers, only inside their file;
+- RAM_NAMES: only at RAM-name positions (below), so a RAM name that is also an
+  unrelated item elsewhere (the `game_state` module, sm_data's `scrolls` field)
+  keeps that other meaning;
+- MENU_WORDS: `menu!(game.word ..)` arguments and `menu_state::Word::word`
+  paths, to the CamelCase variant.
 
-ALLOW_REMOVALS entries drop style lints from `#[allow(..)]` attributes;
-ALLOW_REASONS entries give the allows that stay a `reason = ".."`.
+RAM-name positions: arguments of the RAM_MACROS invocations (`word!`,
+`checked_word!`, `word_transfers!`, ...), `words::`/`word_arrays::`/`bytes::`
+paths and the file's aliases of those modules (`use ..::words as W`), names a
+file imports from them, and RAM_VARS's name strings in ram.rs.
+
+PATCHES are exact before/after text edits, applied first and only where the
+`before` text is present. ALLOW_REMOVALS drop style lints from `#[allow(..)]`.
 
 Where it replaces:
 
@@ -209,9 +218,15 @@ def encode(text):
 
 
 class Workspace:
-    def __init__(self, root):
+    def __init__(self, root, patches=()):
         self.root = root
-        self.rust = {p: decode(p.read_bytes()) for p in rust_files(root)}
+        self.original = {p: decode(p.read_bytes()) for p in rust_files(root)}
+        self.rust, self.patched, self.unpatched = {}, 0, 0
+        for p, text in self.original.items():
+            text, applied, pending = apply_patches(text, p.relative_to(root).as_posix(), patches)
+            self.rust[p] = text
+            self.patched += applied
+            self.unpatched += pending
         self.anchors = {p: decode(p.read_bytes()) for p in anchor_files(root)}
         self.spans = {p: rust_spans(t) for p, t in self.rust.items()}
         self.tokens = {}
@@ -236,33 +251,22 @@ def build_map(ws, table):
     problems = []
     notes = []
     explicit, kind = {}, {}
-    for group, entries in (("function", table.FUNCTIONS), ("identifier", getattr(table, "IDENTIFIERS", ()))):
+    groups = (("function", table.FUNCTIONS), ("identifier", getattr(table, "IDENTIFIERS", ())))
+    for group, entries in groups:
         for _, old, new, _ in entries:
             if old in explicit and explicit[old] != new:
                 problems.append(f"{old}: two targets {explicit[old]} and {new}")
             explicit[old], kind[old] = new, group
-    rules = sorted(((tuple(old), tuple(new)) for _, old, new, _ in table.ENTITIES), key=lambda r: -len(r[0]))
-    for old, new in case_rule_names(ws, table).items():
-        if old not in explicit:
-            # Entity words first, then the case: addr_kEproj_LavaSeahorseFireball -> ADDR_K_EPROJ_DRAGON_FIREBALL.
-            named = apply_entities(old, rules)
-            explicit[old], kind[old] = (screaming(named) if named else new), "case"
+    for group, entries in (("constant", getattr(table, "CONSTANTS", ())),
+                           ("entity", getattr(table, "ENTITY_IDENTIFIERS", ()))):
+        for old, new in entries:
+            if old in explicit and explicit[old] != new:
+                problems.append(f"{old}: two targets {explicit[old]} and {new}")
+            explicit[old], kind[old] = new, group
     mapping, origin = {}, {}
     for old, new in explicit.items():
         if old in ws.all_code:
             mapping[old], origin[old] = new, kind[old]
-    derived = {}
-    for ident in sorted(ws.new_crate_code):
-        if ident in explicit:
-            continue
-        new = apply_entities(ident, rules)
-        if new and new != ident:
-            derived[ident] = new
-    for old, new in derived.items():
-        mapping[old], origin[old] = new, "entity"
-        if new in ws.all_tokens and new not in mapping:
-            # Legal for distinct items (another enum's variant); file_conflicts() rejects real clashes.
-            notes.append(f"{old} -> {new}: {new} already names something elsewhere")
     for old, new in mapping.items():
         if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", new) or new in RUST_KEYWORDS or keyword.iskeyword(new):
             problems.append(f"{old} -> {new}: not a usable identifier")
@@ -363,40 +367,157 @@ def rewrite_comment(text, mapping, prose, previous=""):
     return "".join(out)
 
 
-def rewrite_rust(ws, p, mapping, prose, local=None, lints=(), reasons=None):
+def rewrite_rust(ws, p, mapping, prose, local=None, lints=(), positions=None, ram_strings=None):
+    """`positions` maps a code offset to its positional rename (RAM names, menu words)."""
     out = []
     names = dict(mapping, **local) if local else mapping
-    swap = lambda m: names.get(m.group(0), m.group(0))
+    positions = positions or {}
     use_prose = prose if is_new_crate(ws.root, p) else ()
     previous = ""
+    offset = 0
     for kind, text in ws.spans[p]:
         if kind == "code":
             if text.strip():
                 previous = ""
-            out.append(ID.sub(swap, text))
+            base = offset
+            out.append(ID.sub(lambda m: positions.get(base + m.start()) or names.get(m.group(0), m.group(0)), text))
         elif kind == "comment":
             out.append(rewrite_comment(text, names, use_prose, previous))
             previous = text
+        elif ram_strings and text[1:-1] in ram_strings and text[:1] == '"':
+            out.append('"' + ram_strings[text[1:-1]] + '"')
         elif "/" in text or "::" in text or ".rs" in text:
-            out.append(ID.sub(swap, text))
+            out.append(ID.sub(lambda m: names.get(m.group(0), m.group(0)), text))
         else:
             out.append(text)
+        offset += len(text)
     text = "".join(out)
-    text = remove_allows(text, lints) if lints else text
-    return add_reasons(text, reasons) if reasons else text
+    return remove_allows(text, lints) if lints else text
 
 
-def add_reasons(text, reasons):
-    """Give `#[allow(lint)]` attributes for each lint in `reasons` a `reason = ".."`, once."""
-    def fix(m):
-        items = [x.strip() for x in m.group(3).split(",") if x.strip()]
-        if any(x.startswith("reason") for x in items):
-            return m.group(0)
-        hit = [reasons[x] for x in items if x in reasons]
-        if not hit:
-            return m.group(0)
-        return f'{m.group(1)}#{m.group(2)}[allow({", ".join(items)}, reason = "{hit[0]}")]\n'
-    return ALLOW.sub(fix, text)
+RAM_MODULES = ("words", "word_arrays", "bytes")
+
+
+def bracket_end(code, start):
+    """Index just past the bracket group opening at `start`."""
+    pairs = {"(": ")", "[": "]", "{": "}"}
+    stack = [pairs[code[start]]]
+    i = start + 1
+    while i < len(code) and stack:
+        c = code[i]
+        if c in pairs:
+            stack.append(pairs[c])
+        elif c == stack[-1]:
+            stack.pop()
+        i += 1
+    return i
+
+
+def positional_renames(code, rel, ram_map, ram_macros, menu_words, module_aliases=()):
+    """Offsets in `code` (comments and strings blanked) of RAM names and menu words to rename."""
+    out = {}
+    if not ram_map and not menu_words:
+        return out
+    aliases = set(RAM_MODULES)
+    aliases |= set(re.findall(r"\b(?:words|word_arrays|bytes)\s+as\s+(\w+)", code))
+    # Aliases made anywhere: a child module reaches its parent's `w` through `use super::w`.
+    aliases |= set(module_aliases)
+    # Paths: words::NAME and alias::NAME.
+    for m in re.finditer(r"\b(\w+)\s*::\s*([A-Za-z_]\w*)\b", code):
+        if m.group(1) in aliases and m.group(2) in ram_map:
+            out[m.start(2)] = ram_map[m.group(2)]
+    # `use` imports from the RAM modules, and the file's bare uses of what they import
+    # (renamed with the import: `use ..::words::{a as b}` keeps `b`).
+    imported = set()
+    for u in re.finditer(r"\buse\b[^;]*;", code):
+        for m in re.finditer(r"\b(?:words|word_arrays|bytes)\s*::\s*(\{[^}]*\}|[A-Za-z_]\w*)", u.group(0)):
+            group_at = u.start() + m.start(1)
+            for item in re.finditer(r"[^,{}]+", m.group(1)):
+                first = re.match(r"\s*([A-Za-z_]\w*)", item.group(0))
+                if not first or first.group(1) not in ram_map:
+                    continue
+                out[group_at + item.start() + first.start(1)] = ram_map[first.group(1)]
+                if not re.search(r"\bas\b", item.group(0)):
+                    imported.add(first.group(1))
+    if imported:
+        for m in ID.finditer(code):
+            n = m.group(0)
+            if n in imported and not re.search(r"(?:\.|::)\s*$", code[max(0, m.start() - 3):m.start()]) \
+                    and not re.match(r"\s*(?:\(|!)", code[m.end():m.end() + 2]):
+                out.setdefault(m.start(), ram_map[n])
+    # Macro arguments, by the macro's shape: "access" (`word!(game.name ..)`, and the names
+    # listed at the top level: `word! { game, 0; a, b }`), "le" (`le(name, ..)` endpoints)
+    # and "decl" (the `[a, b]` lists of `ram_vars!`). Values (`= name`) are never names.
+    shapes = {}
+    for name, scope, shape in ram_macros:
+        if scope in ("", rel):
+            shapes[name] = shape
+    if shapes:
+        # The file's aliases of those macros (`use crate::ram::word as game_word`).
+        for original, alias in re.findall(r"\b(" + "|".join(map(re.escape, shapes)) + r")\s+as\s+(\w+)", code):
+            shapes[alias] = shapes[original]
+        pattern = r"\b(" + "|".join(map(re.escape, shapes)) + r")!\s*([\(\[\{])"
+        for m in re.finditer(pattern, code):
+            shape = shapes[m.group(1)]
+            start = m.start(2)
+            end = bracket_end(code, start)
+            depth = 0
+            i = start
+            while i < end:
+                c = code[i]
+                if c in "([{":
+                    depth += 1
+                    i += 1
+                    continue
+                if c in ")]}":
+                    depth -= 1
+                    i += 1
+                    continue
+                t = ID.match(code, i) if (c.isalpha() or c == "_") and (i == 0 or not (code[i - 1].isalnum() or code[i - 1] in "_$")) else None
+                if not t:
+                    i += 1
+                    continue
+                n, at = t.group(0), i
+                i = t.end()
+                if n not in ram_map:
+                    continue
+                before = code[start + 1:at].rstrip()
+                after = code[t.end():end].lstrip()
+                if shape == "le":
+                    ok = re.search(r"\ble\s*\($", before) is not None
+                elif shape == "decl":
+                    ok = depth == 2 and before[-1:] in ("[", ",") and after[:1] in (",", "]")
+                else:
+                    dotted = re.search(r"(?:^|[^\w$])\$?[A-Za-z_]\w*\s*\.$", before) is not None
+                    listed = depth == 1 and (before == "" or before[-1:] in (";", ",")) and (
+                        after[:1] in (",", ";", "[", "") or after[:1] in ")]}"
+                        or re.match(r"(?:[-+*/|&^]|<<|>>)?=(?!=)", after) is not None)
+                    ok = dotted or listed
+                if ok:
+                    out.setdefault(at, ram_map[n])
+    # Menu words: menu!(game.word ..) and menu_state::Word::word.
+    if menu_words:
+        for m in re.finditer(r"\bmenu!\s*\(\s*\$?\w+\s*\.\s*([A-Za-z_]\w*)", code):
+            if m.group(1) in menu_words:
+                out[m.start(1)] = menu_words[m.group(1)]
+        for m in re.finditer(r"\bmenu_state\s*::\s*Word\s*::\s*([A-Za-z_]\w*)", code):
+            if m.group(1) in menu_words:
+                out[m.start(1)] = menu_words[m.group(1)]
+    return out
+
+
+def apply_patches(text, rel, patches):
+    """Exact before/after edits for `rel`; (text, applied, pending) counts."""
+    applied = pending = 0
+    for path, before, after, _ in patches:
+        if path != rel:
+            continue
+        if before in text:
+            text = text.replace(before, after, 1)
+            applied += 1
+        elif after not in text:
+            pending += 1
+    return text, applied, pending
 
 
 ALLOW = re.compile(r"(?m)^([ \t]*)#(!?)\[allow\(([^()\]]*)\)\][ \t]*\n")
@@ -437,22 +558,6 @@ def screaming(name):
     return "_".join(x.upper() for x in parts if x)
 
 
-def case_rule_names(ws, table):
-    """Names declared by each CASE_RULES macro in its file, mapped to the rule's case."""
-    out = {}
-    for rel, macro, case in getattr(table, "CASE_RULES", ()):
-        path = ws.root / rel
-        if path not in ws.rust or case != "SCREAMING_SNAKE_CASE":
-            continue
-        code = "".join(t if k == "code" else " " for k, t in ws.spans[path])
-        name = re.escape(macro.rstrip("!"))
-        for m in re.finditer(name + r"!\s*\{[^;{}]*;([^{}]*)\}", code):
-            for n in re.findall(r"\b([A-Za-z_]\w*)\s*=", m.group(1)):
-                if screaming(n) != n:
-                    out[n] = screaming(n)
-    return out
-
-
 def unmapped_labels(ws, mapping):
     labels = set()
     for p, spans in ws.spans.items():
@@ -483,7 +588,7 @@ def main(argv=None):
     args = ap.parse_args(argv)
     root = args.root.resolve()
     table = load_table(root)
-    ws = Workspace(root)
+    ws = Workspace(root, tuple(getattr(table, "PATCHES", ())))
     mapping, origin, problems, notes = build_map(ws, table)
     problems += file_conflicts(ws, mapping)
     moves = planned_moves(ws, mapping)
@@ -499,13 +604,24 @@ def main(argv=None):
     allows = collections.defaultdict(set)
     for rel, lint in getattr(table, "ALLOW_REMOVALS", ()):
         allows[root / rel].add(lint)
-    reasons = collections.defaultdict(dict)
-    for rel, lint, reason in getattr(table, "ALLOW_REASONS", ()):
-        reasons[root / rel][lint] = reason
-    changed = {}
+    ram_map = dict(getattr(table, "RAM_NAMES", ()))
+    menu_words = dict(getattr(table, "MENU_WORDS", ()))
+    ram_macros = tuple(getattr(table, "RAM_MACROS", ()))
+    ram_strings = {old: new for old, new in ram_map.items()}
+    module_aliases = set()
     for p in ws.rust:
-        new = rewrite_rust(ws, p, mapping, prose, locals_by_file.get(p), allows.get(p, ()), reasons.get(p))
-        if new != ws.rust[p]:
+        code = "".join(t if k == "code" else " " * len(t) for k, t in ws.spans[p])
+        module_aliases |= set(re.findall(r"\b(?:words|word_arrays|bytes)\s+as\s+(\w+)", code))
+    changed = {}
+    positional = 0
+    for p in ws.rust:
+        rel = p.relative_to(root).as_posix()
+        code = "".join(t if k == "code" else " " * len(t) for k, t in ws.spans[p])
+        positions = positional_renames(code, rel, ram_map, ram_macros, menu_words, module_aliases)
+        positional += len(positions)
+        strings = ram_strings if rel == "crates/sm_game/src/ram.rs" else None
+        new = rewrite_rust(ws, p, mapping, prose, locals_by_file.get(p), allows.get(p, ()), positions, strings)
+        if new != ws.original[p]:
             changed[p] = new
     for p, t in ws.anchors.items():
         new = ID.sub(lambda m: mapping.get(m.group(0), m.group(0)), t)
@@ -514,8 +630,10 @@ def main(argv=None):
 
     kinds = collections.Counter(origin.values())
     print(f"renames: {len(mapping)} ({kinds['function']} functions, {kinds['identifier']} identifiers, "
-          f"{kinds['case']} case-rule constants, {kinds['entity']} entity-derived identifiers); "
+          f"{kinds['constant']} constants, {kinds['entity']} entity identifiers); "
           f"locals: {sum(len(v) for v in locals_by_file.values())} in {len(locals_by_file)} files")
+    print(f"positional renames (RAM names, menu words): {positional}; patches: {ws.patched} applied, "
+          f"{ws.unpatched} not applicable")
     print(f"moves: {len(moves)}; files to rewrite: {len(changed)}")
     for src, dst in moves:
         print(f"  move {src.relative_to(root).as_posix()} -> {dst.relative_to(root).as_posix()}")
