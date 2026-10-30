@@ -72,6 +72,7 @@ pub mod actors {
     pub mod shaktool;
     pub mod snapshot;
     pub mod state;
+    pub mod torizo;
 }
 pub mod enemy_projectiles {
     pub mod access;
