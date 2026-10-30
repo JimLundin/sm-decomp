@@ -14,8 +14,8 @@ use crate::actors::{
     draygon_death, draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep,
     elevator, escape_critters, etecoon, evir, fire_arc, fireflea, fune, gamet, geega, kago,
     kihunter, kraid, magdollite, metroid, mini_kraid, mochtroid, morph_ball_eye, multiviola, oum,
-    phantoon, phantoon_actions, powamp, puyo, reflec, ridley, rinka, roach, shaktool, sidehopper,
-    skree, skultera, space_pirates, statues, tatori, torizo, tripper, work_robot,
+    phantoon, phantoon_actions, polyp, powamp, puyo, reflec, ridley, rinka, roach, shaktool,
+    sidehopper, skree, skultera, space_pirates, statues, tatori, torizo, tripper, work_robot,
     wrecked_ship_spark, yapping_maw, yard, zeb, zebetites, zoa,
 };
 use crate::enemy_script::EnemyScript;
@@ -660,6 +660,8 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11789909 => pre_instruction(escape_critters::main_ai(game), game),
         10662880 => multiviola::initialize(game),
         10662927 => multiviola::main_ai(game),
+        10663280 => polyp::initialize(game),
+        10663311 => polyp::main_ai(game),
         _ => game.native_ai(ea),
     }
 }

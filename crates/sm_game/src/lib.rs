@@ -180,6 +180,7 @@ pub mod actors {
     pub mod phantoon;
     pub mod phantoon_actions;
     pub mod phantoon_motion;
+    pub mod polyp;
     pub mod population;
     pub mod powamp;
     pub mod puyo;

@@ -435,7 +435,6 @@ pub mod game {
     pub(crate) mod flies;
     pub(crate) mod lava_jumper;
     pub(crate) mod lava_seahorse_pair;
-    pub(crate) mod lavaquake;
     pub(crate) mod mother_brain_body;
     pub(crate) mod mother_brain_samus_vitals;
     pub(crate) mod mother_brain_visuals;
