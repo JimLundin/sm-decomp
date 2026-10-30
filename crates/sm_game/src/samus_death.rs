@@ -7,6 +7,7 @@ use crate::player_transitions as pt;
 use crate::ram::{RawRam, word};
 use crate::runtime_access::RuntimeAccess;
 use crate::scene::samus_body::Body;
+use crate::session_access::SessionAccess as _;
 use crate::sprite_output;
 use crate::visual_host::{Content, Record, Source};
 use crate::word_transfers;
@@ -41,9 +42,17 @@ pub fn begin_death<H: Host + ?Sized>(game: &mut H) -> CoroutineRet {
             game.queue_sound(0, 0x32, 6);
         }
         let frame = u16::from(FRAMES[usize::from(movement)]);
-        word!(game.samus_pose = if game.facing() == 4 { 0xd8 } else { 0xd7 });
-        game.finish_pose_change();
-        word! { game; samus_anim_frame_skip = 0; samus_anim_frame = frame; }
+        let pose = if game.facing() == 4 { 0xd8 } else { 0xd7 };
+        // The death pose and its animation start are Session-owned player state:
+        // set them on the lease that finishes the pose change.
+        let mut lease = game.runtime();
+        lease.session_mut().player.pose = pose;
+        crate::player_transitions::pose::finish_pose_change(&mut lease);
+        let player = &mut lease.session_mut().player;
+        player.transitions.animation_skip =
+            crate::player_transitions::state::AnimationSkip::from_raw(0);
+        player.animation_clock.frame = frame;
+        drop(lease);
         let layer1 = crate::camera::current(game).layer1;
         let x = game.player_x();
         let x = x.wrapping_sub(layer1[0]);
