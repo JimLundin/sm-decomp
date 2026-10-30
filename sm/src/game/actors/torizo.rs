@@ -1,16 +1,12 @@
 //! The Torizos run in `sm_game::actors::torizo`; movement, projectiles and the
 //! shot reaction come from here.
 #![forbid(unsafe_code)]
-use crate::game::actors::access::ActorKey as Key;
-use crate::game::actors::{self, api as actor_api};
-use crate::game::constants::bank_86::ADDR_K_EPROJ_BOMB_TORIZO_LOW_HEALTH_INITIAL_DROOL;
+use crate::game::constants::bank_86::addr_kEproj_BombTorizoLowHealthInitialDrool;
 use crate::game::constants::bank_aa::{
     ADDR_K_TORIZO_ILIST_B1C8, ADDR_K_TORIZO_ILIST_CDE1, ADDR_K_TORIZO_ILIST_CE43,
     ADDR_K_TORIZO_ILIST_CEA5, ADDR_K_TORIZO_ILIST_CEFF, ADDR_K_TORIZO_ILIST_D1F1,
     ADDR_K_TORIZO_ILIST_D2AD,
 };
-use crate::game::enemy_projectiles::spawn_with_enemy_gfx;
-use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 pub(crate) use sm_game::actors::torizo::*;
 
@@ -27,32 +23,6 @@ const _: () = {
             && LOW_HEALTH_DROOL == ADDR_K_EPROJ_BOMB_TORIZO_LOW_HEALTH_INITIAL_DROOL as u16
     );
 };
-
-impl Host for Game {
-    fn move_horizontal_ignoring_slopes(&mut self, k: u16, amount: i32) -> bool {
-        actor_api::move_horizontal(
-            &mut Runtime::new(self),
-            Key::from_legacy(k),
-            amount,
-            actor_api::SlopePolicy::Ignore,
-        ) == actor_api::MovementResult::Blocked
-    }
-
-    fn snap_to_slopes(&mut self, k: u16) {
-        actor_api::snap_to_slopes(&mut Runtime::new(self), Key::from_legacy(k));
-    }
-
-    fn spawn_projectile(&mut self, parameter: u16, k: u16, definition: u16) {
-        spawn_with_enemy_gfx(parameter, k, definition, self);
-    }
-
-    fn shot_reaction_only(&mut self) {
-        actors::combat::shot_reaction(
-            &mut Runtime::new(self),
-            actors::api::ShotHandling::ReactionOnly,
-        );
-    }
-}
 
 impl Ai for Game {
     fn run_function(&mut self, address: u32) {

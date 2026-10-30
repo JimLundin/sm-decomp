@@ -6,24 +6,21 @@
 //! movement functions are dispatched by the compat host, so their ids are
 //! unchanged.
 #![forbid(unsafe_code)]
+use crate::actors::boss_lease::BossLease;
+use crate::actors::deaths::Deaths;
+use crate::actors::host::{BossEffects, Shot, Slopes};
 use crate::actors::layouts::part_view;
+use crate::actors::session_slots::session_slot;
 use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE, K_ENEMY_PROPS_TANGIBLE,
 };
 use crate::enemy_script::EnemyScript;
-use crate::ram::{CompatibilityRam, RawRam as _, WorkRamAccess, slot, word};
+use crate::ram::word;
+use crate::records::Records;
 
-/// What the Torizos need beyond work RAM: actor movement, projectiles and the
-/// shared shot reaction, which the compatibility runtime still implements.
-pub trait Host: WorkRamAccess + CompatibilityRam + crate::player_position::PlayerPosition {
-    /// Move actor `k` by `amount` (16.16) horizontally, ignoring slopes; true when blocked.
-    fn move_horizontal_ignoring_slopes(&mut self, k: u16, amount: i32) -> bool;
-    fn snap_to_slopes(&mut self, k: u16);
-    /// Spawn projectile `definition` from actor `k` with `parameter`.
-    fn spawn_projectile(&mut self, parameter: u16, k: u16, definition: u16);
-    /// The common shot reaction, without death handling.
-    fn shot_reaction_only(&mut self);
-}
+/// A lease on a game with the Torizos' effects.
+pub trait Lease: BossLease<Game: Ai> {}
+impl<T: BossLease<Game: Ai> + ?Sized> Lease for T {}
 
 part_view! {
     /// A Torizo's view of its slot: its velocities and gravity (1/100h px a
@@ -88,37 +85,37 @@ const WALK_X_VELOCITIES: [i16; 20] = [
 /// faceless): one step at the X velocity for the step index in `jp`. A wall
 /// turns the Torizo round; otherwise it aligns with slopes and, facing away
 /// from Samus, starts the `pause` turn around timer. Was `torizo_stride`.
-pub fn walk(
+pub fn walk<L: Lease>(
     k: u16,
     jp: EnemyScript,
     blocked_left: u16,
     blocked_right: u16,
     pause: u16,
-    game: &mut impl Host,
+    game: &mut L,
 ) -> EnemyScript {
     let e = i32::from(k);
-    slot!(
+    session_slot!(
         game,
         TorizoSlot[e].x_velocity = WALK_X_VELOCITIES[(jp.word(0) >> 1) as usize] as u16
     );
-    let amount = (slot!(game, TorizoSlot[e].x_velocity) as i16 as i32) << 16;
-    let blocked = game.move_horizontal_ignoring_slopes(k, amount);
+    let amount = (session_slot!(game, TorizoSlot[e].x_velocity) as i16 as i32) << 16;
+    let blocked = game.move_horizontal(k, amount, Slopes::Ignore);
     if blocked {
-        slot!(game, TorizoSlot[e].turn_around_timer = 0);
-        if slot!(game, TorizoSlot[e].direction) & FACING_RIGHT != 0 {
+        session_slot!(game, TorizoSlot[e].turn_around_timer = 0);
+        if session_slot!(game, TorizoSlot[e].direction) & FACING_RIGHT != 0 {
             EnemyScript::jump(blocked_left)
         } else {
             EnemyScript::jump(blocked_right)
         }
     } else {
         game.snap_to_slopes(k);
-        if (slot!(game, TorizoSlot[e].direction) as i32
-            ^ (game.player_x() as i32 - slot!(game, TorizoSlot[e].base.x_pos) as i32))
+        if (session_slot!(game, TorizoSlot[e].direction) as i32
+            ^ (game.player_x() as i32 - session_slot!(game, TorizoSlot[e].base.x_pos) as i32))
             & SIGN
             == 0
-            && slot!(game, TorizoSlot[e].turn_around_timer) == 0
+            && session_slot!(game, TorizoSlot[e].turn_around_timer) == 0
         {
-            slot!(game, TorizoSlot[e].turn_around_timer = pause);
+            session_slot!(game, TorizoSlot[e].turn_around_timer = pause);
         }
         jp.offset(1)
     }
@@ -126,9 +123,9 @@ pub fn walk(
 
 /// Handle low-health initial drool ($AA:C620): in Crateria, now and then
 /// drool while health is low. Was `Torizo_C620`.
-pub fn drool_at_low_health(k: u16, game: &mut impl Host) {
+pub fn drool_at_low_health<L: Lease>(k: u16, game: &mut L) {
     if word!(game.area_index) == CRATERIA && word!(game.random_number) & DROOL_CHANCE == 0 {
-        let health: u16 = slot!(game, TorizoSlot[k as i32].base.health);
+        let health: u16 = session_slot!(game, TorizoSlot[k as i32].base.health);
         if health != 0 && health < LOW_HEALTH {
             game.spawn_projectile(health, k, LOW_HEALTH_DROOL);
         }
@@ -138,63 +135,65 @@ pub fn drool_at_low_health(k: u16, game: &mut impl Host) {
 /// Check if torizo is facing Samus ($AA:D3A7): the direction word XOR the
 /// Torizo's offset from Samus, whose bit 15 is clear when it faces her. Was
 /// `Torizo_Func_12`.
-pub fn facing_against_samus(k: u16, game: &mut impl Host) -> u16 {
+pub fn facing_against_samus<L: Lease>(k: u16, game: &mut L) -> u16 {
     let e = i32::from(k);
-    (slot!(game, TorizoSlot[e].direction) as i32
-        ^ (slot!(game, TorizoSlot[e].base.x_pos) as i32 - game.player_x() as i32)) as u16
+    (session_slot!(game, TorizoSlot[e].direction) as i32
+        ^ (session_slot!(game, TorizoSlot[e].base.x_pos) as i32 - game.player_x() as i32))
+        as u16
 }
 
 /// Golden Torizo shot reaction - damaged ($AA:D6A6): on death, start the death
 /// sequence. Was `Torizo_D6A6`.
-pub fn golden_damaged_shot_reaction(game: &mut impl Host) {
-    game.shot_reaction_only();
+pub fn golden_damaged_shot_reaction<L: Lease>(game: &mut L) {
+    game.shot_reaction(Shot::ReactionOnly);
     let e = word!(game.cur_enemy_index) as i32;
-    if slot!(game, TorizoSlot[e].base.health) == 0 {
-        slot!(
+    if session_slot!(game, TorizoSlot[e].base.health) == 0 {
+        session_slot!(
             game,
             TorizoSlot[e].base.current_instruction = instruction_list::DEATH_SEQUENCE
         );
-        slot!(game, TorizoSlot[e].base.instruction_timer = 1);
-        slot!(
+        session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
+        session_slot!(
             game,
-            TorizoSlot[e].damage = slot!(game, TorizoSlot[e].damage) | GUT_AND_FACE_BLOWN_UP
+            TorizoSlot[e].damage =
+                session_slot!(game, TorizoSlot[e].damage) | GUT_AND_FACE_BLOWN_UP
         );
-        slot!(
+        session_slot!(
             game,
             TorizoSlot[e].base.properties =
-                slot!(game, TorizoSlot[e].base.properties) | K_ENEMY_PROPS_TANGIBLE as u16
+                session_slot!(game, TorizoSlot[e].base.properties) | kEnemyProps_Tangible as u16
         );
     }
 }
 
 /// Golden Torizo shot reaction - normal - missile ($AA:D6D1): dodge it. Was
 /// `Torizo_D6D1`.
-pub fn golden_missile_reaction(k: u16, j: u16, game: &mut impl Host) {
+pub fn golden_missile_reaction<L: Lease>(k: u16, j: u16, game: &mut L) {
     word!(game.projectile_dir[(j >> 1)] &= !DELETE_PROJECTILE);
     let e = i32::from(k);
-    slot!(game, TorizoSlot[e].function = NO_FUNCTION);
-    slot!(game, TorizoSlot[e].base.instruction_timer = 1);
-    let list = if slot!(game, TorizoSlot[e].direction) & FACING_RIGHT != 0 {
+    session_slot!(game, TorizoSlot[e].function = NO_FUNCTION);
+    session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
+    let list = if session_slot!(game, TorizoSlot[e].direction) & FACING_RIGHT != 0 {
         instruction_list::DODGE_TURNING_RIGHT
     } else {
         instruction_list::DODGE_TURNING_LEFT
     };
-    slot!(game, TorizoSlot[e].base.current_instruction = list);
+    session_slot!(game, TorizoSlot[e].base.current_instruction = list);
 }
 
 /// Golden Torizo shot reaction - normal - super missile ($AA:D6F7): catch it
 /// when facing Samus, otherwise take damage. Was `Torizo_D6F7`.
-pub fn golden_super_missile_reaction(k: u16, j: u16, game: &mut impl Host) {
+pub fn golden_super_missile_reaction<L: Lease>(k: u16, j: u16, game: &mut L) {
     let e = word!(game.cur_enemy_index) as i32;
     if facing_against_samus(k, game) & SIGN as u16 == 0 {
-        slot!(
+        session_slot!(
             game,
-            TorizoSlot[e].damage = slot!(game, TorizoSlot[e].damage) | CAUGHT_SUPER_MISSILE
+            TorizoSlot[e].damage = session_slot!(game, TorizoSlot[e].damage) | CAUGHT_SUPER_MISSILE
         );
-        slot!(game, TorizoSlot[e].function = NO_FUNCTION);
+        session_slot!(game, TorizoSlot[e].function = NO_FUNCTION);
         word!(game.projectile_dir[(j >> 1)] |= DELETE_PROJECTILE);
-        slot!(game, TorizoSlot[e].base.instruction_timer = 1);
-        let parameter = slot!(game, TorizoSlot[e].direction);
+        session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
+        let parameter = session_slot!(game, TorizoSlot[e].direction);
         let list = match (
             parameter & BACKGROUND_LEG_FORWARD != 0,
             parameter & FACING_RIGHT != 0,
@@ -204,7 +203,7 @@ pub fn golden_super_missile_reaction(k: u16, j: u16, game: &mut impl Host) {
             (false, true) => instruction_list::CAUGHT_SUPER_MISSILE_RIGHT_RIGHT_LEG,
             (false, false) => instruction_list::CAUGHT_SUPER_MISSILE_LEFT_LEFT_LEG,
         };
-        slot!(game, TorizoSlot[e].base.current_instruction = list);
+        session_slot!(game, TorizoSlot[e].base.current_instruction = list);
     } else {
         golden_damaged_shot_reaction(game);
     }
@@ -212,9 +211,7 @@ pub fn golden_super_missile_reaction(k: u16, j: u16, game: &mut impl Host) {
 
 /// What the Torizos' AI needs beyond the movement and drool host: the shared
 /// boss effects, deaths, their palettes and the compat dispatch.
-pub trait Ai:
-    Host + crate::actors::host::BossEffects + crate::actors::deaths::Deaths + crate::records::Records
-{
+pub trait Ai: BossEffects + Deaths + Records + BossLease<Game = Self> {
     /// Run the bank $AA movement function at `address` for the current Torizo.
     fn run_function(&mut self, address: u32);
     /// Wake Torizo `k` once the Bomb Torizo's chozo statue finishes crumbling.
@@ -368,206 +365,205 @@ const STAND_UP_Y: [i16; 8] = [0, -6, -6, -7, 0, 0, 0, 0];
 const SIT_DOWN_X: [i16; 16] = [-9, -6, -7, 5, -16, -7, 0, 0, 9, 6, 7, -5, 16, 7, 0, 0];
 const SIT_DOWN_Y: [i16; 8] = [0, -6, -6, -7, 0, 0, 0, 0];
 
-fn quake<H: Ai>(game: &mut H) {
+fn quake<L: Lease>(game: &mut L) {
     word!(game.earthquake_type = 4);
     word!(game.earthquake_timer = 32);
 }
 
 /// Whether Samus is at least `distance` px from Torizo `k` horizontally.
-fn samus_at_least<H: Ai>(game: &mut H, k: u16, distance: u16) -> bool {
-    let delta =
-        crate::actors::host::ActorRuntime::player_delta(game, k, crate::actors::host::Axis::X);
+fn samus_at_least<L: Lease>(game: &mut L, k: u16, distance: u16) -> bool {
+    let delta = game.player_delta(k, crate::actors::host::Axis::X);
     (delta as i16).wrapping_abs() as u16 >= distance
 }
 
 /// The instruction list address of `jp` in the Torizo's bank.
-fn list_address<H: Ai>(game: &mut H, k: u16, jp: EnemyScript) -> u16 {
-    let bank = slot!(byte game, TorizoSlot[k as i32].base.bank[0]);
+fn list_address<L: Lease>(game: &mut L, k: u16, jp: EnemyScript) -> u16 {
+    let bank = session_slot!(byte game, TorizoSlot[k as i32].base.bank[0]);
     jp.offset_from(crate::enemy_script::bank_base(bank)) as i32 as u16
 }
 
-fn spawn<H: Ai>(game: &mut H, parameter: u16, k: u16, definition: u16) -> u16 {
-    crate::actors::host::ActorRuntime::spawn_projectile(game, parameter, k, definition)
-}
-
 /// Runs Torizo `k`'s function. Was `CallTorizoFunc`.
-pub fn run_torizo_function<H: Ai>(game: &mut H, function: u16, k: u16) {
+pub fn run_torizo_function<L: Lease>(game: &mut L, function: u16, k: u16) {
     match function {
         function::NOTHING => {}
         function::SIMPLE_MOVEMENT | function::GOLDEN_SIMPLE_MOVEMENT => simple_movement(k, game),
-        function::WAKE_WHEN_STATUE_CRUMBLES => game.wake_when_statue_crumbles(k),
+        function::WAKE_WHEN_STATUE_CRUMBLES => {
+            game.foreign(|game| game.wake_when_statue_crumbles(k))
+        }
         function::NORMAL_MOVEMENT => normal_movement(k, game),
         function::GOLDEN_WAKE_WHEN_SAMUS_BELOW_RIGHT => golden_wake(game),
         function::GOLDEN_NORMAL_MOVEMENT => golden_normal_movement(k, game),
-        _ => game.unreachable(),
+        _ => game.foreign(|game| game.unreachable()),
     }
 }
 
-fn run_movement<H: Ai>(game: &mut H, k: u16) {
-    let address = (BANK << 16) | slot!(game, TorizoSlot[k as i32].movement) as u32;
-    game.run_function(address);
+fn run_movement<L: Lease>(game: &mut L, k: u16) {
+    let address = (BANK << 16) | session_slot!(game, TorizoSlot[k as i32].movement) as u32;
+    game.foreign(|game| game.run_function(address));
 }
 
 /// Torizo function - simple movement ($AA:C6BF, Golden $AA:D5DF): drool and
 /// fall. Was `Torizo_Func_3`.
-pub fn simple_movement<H: Ai>(k: u16, game: &mut H) {
+pub fn simple_movement<L: Lease>(k: u16, game: &mut L) {
     drool_at_low_health(k, game);
     handle_falling(k, game);
 }
 
 /// Torizo function - normal movement ($AA:C6FF): blow up the gut, then the
 /// face, as health falls; else the movement function. Was `Torizo_Func_1`.
-fn normal_movement<H: Ai>(k: u16, game: &mut H) {
+fn normal_movement<L: Lease>(k: u16, game: &mut L) {
     drool_at_low_health(k, game);
     let e = i32::from(k);
-    if (slot!(game, TorizoSlot[e].damage) & GUT_BLOWN_UP) != 0
-        || slot!(game, TorizoSlot[e].base.health) >= GUT_HEALTH
+    if (session_slot!(game, TorizoSlot[e].damage) & GUT_BLOWN_UP) != 0
+        || session_slot!(game, TorizoSlot[e].base.health) >= GUT_HEALTH
     {
-        if (slot!(game, TorizoSlot[e].damage) & FACE_BLOWN_UP) != 0
-            || slot!(game, TorizoSlot[e].base.health) >= FACE_HEALTH
+        if (session_slot!(game, TorizoSlot[e].damage) & FACE_BLOWN_UP) != 0
+            || session_slot!(game, TorizoSlot[e].base.health) >= FACE_HEALTH
         {
             run_movement(game, k);
         } else {
-            let turn = if (slot!(game, TorizoSlot[e].direction) & FACING_RIGHT) != 0 {
+            let turn = if (session_slot!(game, TorizoSlot[e].direction) & FACING_RIGHT) != 0 {
                 list::FACELESS_TURNING_LEFT
             } else {
                 list::FACELESS_TURNING_RIGHT
             };
-            slot!(game, TorizoSlot[e].link = turn);
-            slot!(
+            session_slot!(game, TorizoSlot[e].link = turn);
+            session_slot!(
                 game,
                 TorizoSlot[e].base.current_instruction = list::BLOW_UP_FACE
             );
-            slot!(game, TorizoSlot[e].base.instruction_timer = 1);
+            session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
         }
     } else {
-        slot!(
+        session_slot!(
             game,
-            TorizoSlot[e].saved_list = slot!(game, TorizoSlot[e].base.current_instruction)
+            TorizoSlot[e].saved_list = session_slot!(game, TorizoSlot[e].base.current_instruction)
         );
-        slot!(
+        session_slot!(
             game,
             TorizoSlot[e].base.current_instruction = list::BLOW_UP_GUT
         );
-        slot!(game, TorizoSlot[e].base.instruction_timer = 1);
+        session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
     }
 }
 
 /// Torizo function - Golden Torizo - wake enemy if Samus is below and right
 /// of target position ($AA:D5C2). Was `Torizo_Func_9`.
-fn golden_wake<H: Ai>(game: &mut H) {
+fn golden_wake<L: Lease>(game: &mut L) {
     let e = word!(game.cur_enemy_index) as i32;
     if game.player_y() > GOLDEN_WAKE_Y && game.player_x() > GOLDEN_WAKE_X {
-        slot!(
+        session_slot!(
             game,
             TorizoSlot[e].base.current_instruction =
-                slot!(game, TorizoSlot[e].base.current_instruction).wrapping_add(1)
+                session_slot!(game, TorizoSlot[e].base.current_instruction).wrapping_add(1)
         );
-        slot!(
+        session_slot!(
             game,
             TorizoSlot[e].base.current_instruction =
-                slot!(game, TorizoSlot[e].base.current_instruction).wrapping_add(1)
+                session_slot!(game, TorizoSlot[e].base.current_instruction).wrapping_add(1)
         );
-        slot!(game, TorizoSlot[e].base.instruction_timer = 1);
+        session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
     }
 }
 
 /// Torizo function - Golden Torizo - normal movement ($AA:D5E6). Was
 /// `Torizo_D5E6`.
-fn golden_normal_movement<H: Ai>(k: u16, game: &mut H) {
+fn golden_normal_movement<L: Lease>(k: u16, game: &mut L) {
     drool_at_low_health(k, game);
     run_movement(game, k);
 }
 
 /// Make torizo jump forwards ($AA:C20A). Was `Torizo_C20A`.
-fn jump_forwards<H: Ai>(k: u16, game: &mut H) {
+fn jump_forwards<L: Lease>(k: u16, game: &mut L) {
     let e = i32::from(k);
-    let speed: i16 = if (slot!(game, TorizoSlot[e].direction) & FACING_RIGHT) != 0 {
+    let speed: i16 = if (session_slot!(game, TorizoSlot[e].direction) & FACING_RIGHT) != 0 {
         512
     } else {
         -512
     };
-    slot!(game, TorizoSlot[e].x_velocity = speed as u16);
-    slot!(game, TorizoSlot[e].y_velocity = -1472i32 as u16);
-    slot!(game, TorizoSlot[e].gravity = GRAVITY);
-    slot!(game, TorizoSlot[e].base.instruction_timer = 1);
+    session_slot!(game, TorizoSlot[e].x_velocity = speed as u16);
+    session_slot!(game, TorizoSlot[e].y_velocity = -1472i32 as u16);
+    session_slot!(game, TorizoSlot[e].gravity = GRAVITY);
+    session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
 }
 
 /// Make torizo jump backwards ($AA:C22D). Was `Torizo_C22D`.
-fn jump_backwards<H: Ai>(k: u16, game: &mut H) {
+fn jump_backwards<L: Lease>(k: u16, game: &mut L) {
     let e = i32::from(k);
-    let speed: i16 = if (slot!(game, TorizoSlot[e].direction) & FACING_RIGHT) != 0 {
+    let speed: i16 = if (session_slot!(game, TorizoSlot[e].direction) & FACING_RIGHT) != 0 {
         -768
     } else {
         768
     };
-    slot!(game, TorizoSlot[e].x_velocity = speed as u16);
-    slot!(game, TorizoSlot[e].y_velocity = -1152i32 as u16);
-    slot!(game, TorizoSlot[e].gravity = GRAVITY);
-    slot!(game, TorizoSlot[e].base.instruction_timer = 1);
+    session_slot!(game, TorizoSlot[e].x_velocity = speed as u16);
+    session_slot!(game, TorizoSlot[e].y_velocity = -1152i32 as u16);
+    session_slot!(game, TorizoSlot[e].gravity = GRAVITY);
+    session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
 }
 
 /// Handle falling ($AA:C643): fall, shaking the room on landing. Was
 /// `Torizo_C643`.
-pub fn handle_falling<H: Ai>(k: u16, game: &mut H) {
+pub fn handle_falling<L: Lease>(k: u16, game: &mut L) {
     let e = i32::from(k);
-    let amount = (slot!(game, TorizoSlot[e].y_velocity) as i16 as i32) << 8;
-    if crate::actors::host::ActorRuntime::move_vertical(game, k, amount) {
-        let speed: i16 = slot!(game, TorizoSlot[e].y_velocity) as i16;
+    let amount = (session_slot!(game, TorizoSlot[e].y_velocity) as i16 as i32) << 8;
+    if game.move_vertical(k, amount) {
+        let speed: i16 = session_slot!(game, TorizoSlot[e].y_velocity) as i16;
         if speed >= 0 && speed as u16 != LANDED_Y_VELOCITY {
             quake(game);
-            slot!(game, TorizoSlot[e].y_velocity = LANDED_Y_VELOCITY);
+            session_slot!(game, TorizoSlot[e].y_velocity = LANDED_Y_VELOCITY);
         }
     } else {
-        slot!(
+        session_slot!(
             game,
             TorizoSlot[e].y_velocity =
-                (slot!(game, TorizoSlot[e].y_velocity)).wrapping_add(GRAVITY)
+                (session_slot!(game, TorizoSlot[e].y_velocity)).wrapping_add(GRAVITY)
         );
     }
 }
 
 /// The walking movement: falls off ledges; at the turn timer's end it turns
 /// to `turn_left` or `turn_right`.
-fn walk_or_turn<H: Ai>(k: u16, game: &mut H, turn_left: u16, turn_right: u16) {
+fn walk_or_turn<L: Lease>(k: u16, game: &mut L, turn_left: u16, turn_right: u16) {
     let e = i32::from(k);
-    let timer: u16 = slot!(game, TorizoSlot[e].turn_around_timer);
+    let timer: u16 = session_slot!(game, TorizoSlot[e].turn_around_timer);
     if timer == 0 || {
         let left: u16 = timer.wrapping_sub(1);
-        slot!(game, TorizoSlot[e].turn_around_timer = left);
-        slot!(game, TorizoSlot[e].turn_around_timer) != 0
+        session_slot!(game, TorizoSlot[e].turn_around_timer = left);
+        session_slot!(game, TorizoSlot[e].turn_around_timer) != 0
     } {
-        let mut fall: u16 =
-            (crate::actors::host::abs16(slot!(game, TorizoSlot[e].x_velocity))).wrapping_add(1);
+        let mut fall: u16 = (game.foreign(|game| {
+            crate::actors::host::abs16(session_slot!(game, TorizoSlot[e].x_velocity))
+        }))
+        .wrapping_add(1);
         if fall >= 0x10 {
             fall = FALL_TOP_SPEED;
         }
-        if !crate::actors::host::ActorRuntime::move_vertical(game, k, (fall as i16 as i32) << 16) {
-            let falling = if (slot!(game, TorizoSlot[e].direction) & FACING_RIGHT) != 0 {
+        if !game.move_vertical(k, (fall as i16 as i32) << 16) {
+            let falling = if (session_slot!(game, TorizoSlot[e].direction) & FACING_RIGHT) != 0 {
                 list::FALLING_FACING_RIGHT
             } else {
                 list::FALLING_FACING_LEFT
             };
-            slot!(game, TorizoSlot[e].base.current_instruction = falling);
-            slot!(game, TorizoSlot[e].base.instruction_timer = 1);
-            slot!(game, TorizoSlot[e].y_velocity = LANDED_Y_VELOCITY);
-            slot!(game, TorizoSlot[e].x_velocity = 0);
+            session_slot!(game, TorizoSlot[e].base.current_instruction = falling);
+            session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
+            session_slot!(game, TorizoSlot[e].y_velocity = LANDED_Y_VELOCITY);
+            session_slot!(game, TorizoSlot[e].x_velocity = 0);
         }
     } else {
-        slot!(game, TorizoSlot[e].turn_around_timer = 0);
-        let turn = if (slot!(game, TorizoSlot[e].direction) & FACING_RIGHT) != 0 {
+        session_slot!(game, TorizoSlot[e].turn_around_timer = 0);
+        let turn = if (session_slot!(game, TorizoSlot[e].direction) & FACING_RIGHT) != 0 {
             turn_left
         } else {
             turn_right
         };
-        slot!(game, TorizoSlot[e].base.current_instruction = turn);
-        slot!(game, TorizoSlot[e].base.instruction_timer = 1);
+        session_slot!(game, TorizoSlot[e].base.current_instruction = turn);
+        session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
     }
 }
 
 /// Torizo movement function - walking ($AA:C752). Was `Torizo_Func_5`.
-pub fn walking<H: Ai>(k: u16, game: &mut H) {
-    if (slot!(game, TorizoSlot[k as i32].damage) & FACE_BLOWN_UP) != 0 {
+pub fn walking<L: Lease>(k: u16, game: &mut L) {
+    if (session_slot!(game, TorizoSlot[k as i32].damage) & FACE_BLOWN_UP) != 0 {
         walk_or_turn(
             k,
             game,
@@ -581,7 +577,7 @@ pub fn walking<H: Ai>(k: u16, game: &mut H) {
 
 /// Torizo movement function - Golden Torizo - walking ($AA:D5F1). Was
 /// `Torizo_D5F1`.
-pub fn golden_walking<H: Ai>(k: u16, game: &mut H) {
+pub fn golden_walking<L: Lease>(k: u16, game: &mut L) {
     walk_or_turn(
         k,
         game,
@@ -592,40 +588,40 @@ pub fn golden_walking<H: Ai>(k: u16, game: &mut H) {
 
 /// Torizo movement function - attacking ($AA:C828, Golden $AA:D5ED). Was
 /// `Torizo_Func_6`.
-pub fn attacking<H: Ai>(k: u16, game: &mut H) {
+pub fn attacking<L: Lease>(k: u16, game: &mut L) {
     handle_falling(k, game);
 }
 
 /// Torizo movement function - jumping/falling ($AA:C82C): until it lands,
 /// then back to the link list with a quake. Was `Torizo_Func_7`.
-pub fn jumping_or_falling<H: Ai>(k: u16, game: &mut H) {
+pub fn jumping_or_falling<L: Lease>(k: u16, game: &mut L) {
     let e = i32::from(k);
-    let amount = (slot!(game, TorizoSlot[e].x_velocity) as i16 as i32) << 8;
-    game.move_horizontal_ignoring_slopes(k, amount);
-    Host::snap_to_slopes(game, k);
-    let amount = (slot!(game, TorizoSlot[e].y_velocity) as i16 as i32) << 8;
-    if crate::actors::host::ActorRuntime::move_vertical(game, k, amount) {
-        slot!(
+    let amount = (session_slot!(game, TorizoSlot[e].x_velocity) as i16 as i32) << 8;
+    game.move_horizontal(k, amount, Slopes::Ignore);
+    game.snap_to_slopes(k);
+    let amount = (session_slot!(game, TorizoSlot[e].y_velocity) as i16 as i32) << 8;
+    if game.move_vertical(k, amount) {
+        session_slot!(
             game,
-            TorizoSlot[e].base.current_instruction = slot!(game, TorizoSlot[e].link)
+            TorizoSlot[e].base.current_instruction = session_slot!(game, TorizoSlot[e].link)
         );
-        slot!(game, TorizoSlot[e].base.instruction_timer = 1);
-        slot!(game, TorizoSlot[e].y_velocity = LANDED_Y_VELOCITY);
+        session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
+        session_slot!(game, TorizoSlot[e].y_velocity = LANDED_Y_VELOCITY);
         quake(game);
     } else {
-        slot!(
+        session_slot!(
             game,
-            TorizoSlot[e].y_velocity = (slot!(game, TorizoSlot[e].y_velocity))
-                .wrapping_add(slot!(game, TorizoSlot[e].gravity))
+            TorizoSlot[e].y_velocity = (session_slot!(game, TorizoSlot[e].y_velocity))
+                .wrapping_add(session_slot!(game, TorizoSlot[e].gravity))
         );
     }
 }
 
 /// Hurt AI - Bomb Torizo ($AA:C67E). Was `Torizo_Hurt`.
-pub fn hurt<H: Ai>(game: &mut H) {
+pub fn hurt<L: Lease>(game: &mut L) {
     let k = word!(game.cur_enemy_index);
     drool_at_low_health(k, game);
-    if slot!(
+    if session_slot!(
         game,
         TorizoSlot[word!(game.cur_enemy_index) as i32]
             .base
@@ -633,17 +629,17 @@ pub fn hurt<H: Ai>(game: &mut H) {
     ) & 1
         != 0
     {
-        game.flash_palette();
+        game.foreign(|game| game.flash_palette());
     } else {
-        game.restore_palette();
+        game.foreign(|game| game.restore_palette());
     }
 }
 
 /// Hurt AI - Golden Torizo ($AA:D3BA). Was `GoldTorizo_Hurt`.
-pub fn golden_hurt<H: Ai>(game: &mut H) {
+pub fn golden_hurt<L: Lease>(game: &mut L) {
     let k = word!(game.cur_enemy_index);
     drool_at_low_health(k, game);
-    if slot!(
+    if session_slot!(
         game,
         TorizoSlot[word!(game.cur_enemy_index) as i32]
             .base
@@ -651,7 +647,7 @@ pub fn golden_hurt<H: Ai>(game: &mut H) {
     ) & 1
         != 0
     {
-        game.flash_palette();
+        game.foreign(|game| game.flash_palette());
     } else {
         health_palette(word!(game.cur_enemy_index), game);
     }
@@ -659,44 +655,46 @@ pub fn golden_hurt<H: Ai>(game: &mut H) {
 
 /// Golden Torizo health-based palette handling ($AA:D3B2). Was
 /// `Torizo_Func_11`.
-fn health_palette<H: Ai>(k: u16, game: &mut H) {
-    let health = slot!(game, TorizoSlot[k as i32].base.health);
-    game.health_palette(health);
+fn health_palette<L: Lease>(k: u16, game: &mut L) {
+    let health = session_slot!(game, TorizoSlot[k as i32].base.health);
+    game.foreign(|game| game.health_palette(health));
 }
 
 /// Enemy touch - torizos ($AA:C977). Was `GoldTorizo_Touch`.
-pub fn touch<H: Ai>(game: &mut H) {
+pub fn touch<L: Lease>(game: &mut L) {
     game.contact_reaction(crate::actors::host::Death::LeavePending);
 }
 
 /// Enemy shot - torizo - normal ($AA:C97C): the Golden Torizo's reaction in
 /// Norfair; the Bomb Torizo is hurt when unlocked and not flashing, and dies
 /// at no health. Was `Torizo_Shot`.
-pub fn shot<H: Ai>(game: &mut H) {
+pub fn shot<L: Lease>(game: &mut L) {
     if word!(game.area_index) != 0 {
         golden_shot(game);
     } else {
         let e = word!(game.cur_enemy_index) as i32;
-        if slot!(game, TorizoSlot[e].animation_lock) | slot!(game, TorizoSlot[e].base.flash_timer)
+        if session_slot!(game, TorizoSlot[e].animation_lock)
+            | session_slot!(game, TorizoSlot[e].base.flash_timer)
             == 0
         {
             game.shot_reaction(crate::actors::host::Shot::ReactionOnly);
-            if slot!(game, TorizoSlot[e].base.health) == 0 {
-                slot!(game, TorizoSlot[e].function = function::NOTHING);
-                slot!(
+            if session_slot!(game, TorizoSlot[e].base.health) == 0 {
+                session_slot!(game, TorizoSlot[e].function = function::NOTHING);
+                session_slot!(
                     game,
                     TorizoSlot[e].base.current_instruction = instruction_list::DEATH_SEQUENCE
                 );
-                slot!(game, TorizoSlot[e].base.instruction_timer = 1);
-                slot!(
+                session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
+                session_slot!(
                     game,
                     TorizoSlot[e].damage =
-                        (slot!(game, TorizoSlot[e].damage)) | GUT_AND_FACE_BLOWN_UP
+                        (session_slot!(game, TorizoSlot[e].damage)) | GUT_AND_FACE_BLOWN_UP
                 );
-                slot!(
+                session_slot!(
                     game,
-                    TorizoSlot[e].base.properties = (slot!(game, TorizoSlot[e].base.properties))
-                        | (K_ENEMY_PROPS_TANGIBLE as u16)
+                    TorizoSlot[e].base.properties =
+                        (session_slot!(game, TorizoSlot[e].base.properties))
+                            | (kEnemyProps_Tangible as u16)
                 );
             }
         }
@@ -704,7 +702,7 @@ pub fn shot<H: Ai>(game: &mut H) {
 }
 
 /// Enemy shot - torizo - stand up / sit down ($AA:C9C2). Was `Torizo_Func_8`.
-pub fn standing_shot<H: Ai>(game: &mut H) {
+pub fn standing_shot<L: Lease>(game: &mut L) {
     if word!(game.area_index) != 0 {
         golden_standing_shot(game);
     }
@@ -712,10 +710,10 @@ pub fn standing_shot<H: Ai>(game: &mut H) {
 
 /// Golden Torizo shot reaction - stand up / sit down ($AA:D658). Was
 /// `Torizo_D658`.
-fn golden_standing_shot<H: Ai>(game: &mut H) {
+fn golden_standing_shot<L: Lease>(game: &mut L) {
     let e = word!(game.cur_enemy_index) as i32;
-    if slot!(game, TorizoSlot[e].base.flash_timer) == 0
-        && slot!(game, TorizoSlot[e].animation_lock) == 0
+    if session_slot!(game, TorizoSlot[e].base.flash_timer) == 0
+        && session_slot!(game, TorizoSlot[e].animation_lock) == 0
     {
         golden_damaged_shot_reaction(game);
     }
@@ -724,31 +722,32 @@ fn golden_standing_shot<H: Ai>(game: &mut H) {
 /// Golden Torizo shot reaction - normal ($AA:D667): missiles are dodged,
 /// super missiles caught; other shots stun and hurt it. Was
 /// `GoldTorizo_Shot`.
-pub fn golden_shot<H: Ai>(game: &mut H) {
+pub fn golden_shot<L: Lease>(game: &mut L) {
     let e = word!(game.cur_enemy_index) as i32;
-    if slot!(game, TorizoSlot[e].base.flash_timer) == 0 {
-        if slot!(game, TorizoSlot[e].animation_lock) != 0 {
+    if session_slot!(game, TorizoSlot[e].base.flash_timer) == 0 {
+        if session_slot!(game, TorizoSlot[e].animation_lock) != 0 {
             golden_damaged_shot_reaction(game);
             return;
         }
-        let stunned: bool = ((slot!(game, TorizoSlot[e].damage) & CAUGHT_SUPER_MISSILE) != 0) || {
-            let j: u16 = 2u16.wrapping_mul(word!(game.collision_detection_index));
-            let kind: u16 =
-                (word!(game.projectile_type[word!(game.collision_detection_index)])) & 0xf00;
-            slot!(game, TorizoSlot[e].shot_kind = kind);
-            if kind == 0x100 {
-                golden_missile_reaction(word!(game.cur_enemy_index), j, game);
-                return;
-            }
-            kind != 0x200 || {
-                golden_super_missile_reaction(word!(game.cur_enemy_index), j, game);
-                false
-            }
-        };
+        let stunned: bool =
+            ((session_slot!(game, TorizoSlot[e].damage) & CAUGHT_SUPER_MISSILE) != 0) || {
+                let j: u16 = 2u16.wrapping_mul(word!(game.collision_detection_index));
+                let kind: u16 =
+                    (word!(game.projectile_type[word!(game.collision_detection_index)])) & 0xf00;
+                session_slot!(game, TorizoSlot[e].shot_kind = kind);
+                if kind == 0x100 {
+                    golden_missile_reaction(word!(game.cur_enemy_index), j, game);
+                    return;
+                }
+                kind != 0x200 || {
+                    golden_super_missile_reaction(word!(game.cur_enemy_index), j, game);
+                    false
+                }
+            };
         if stunned {
-            slot!(
+            session_slot!(
                 game,
-                TorizoSlot[e].damage = (slot!(game, TorizoSlot[e].damage)) | STUNNED
+                TorizoSlot[e].damage = (session_slot!(game, TorizoSlot[e].damage)) | STUNNED
             );
             golden_damaged_shot_reaction(game);
         }
@@ -756,76 +755,76 @@ pub fn golden_shot<H: Ai>(game: &mut H) {
 }
 
 /// Main AI - Bomb Torizo ($AA:C6A4). Was `Torizo_Main`.
-pub fn main_ai<H: Ai>(game: &mut H) {
+pub fn main_ai<L: Lease>(game: &mut L) {
     let e = word!(game.cur_enemy_index) as i32;
-    let function = slot!(game, TorizoSlot[e].function);
+    let function = session_slot!(game, TorizoSlot[e].function);
     run_torizo_function(game, function, word!(game.cur_enemy_index));
 }
 
 /// Main AI - Golden Torizo ($AA:D369): counts Samus's space jump frames. Was
 /// `GoldTorizo_Main`.
-pub fn golden_main_ai<H: Ai>(game: &mut H) {
+pub fn golden_main_ai<L: Lease>(game: &mut L) {
     let e = word!(game.cur_enemy_index) as i32;
     if SPACE_JUMP_POSES.contains(&word!(game.samus_pose)) {
-        slot!(
+        session_slot!(
             game,
             TorizoSlot[e].space_jump_frames =
-                slot!(game, TorizoSlot[e].space_jump_frames).wrapping_add(1)
+                session_slot!(game, TorizoSlot[e].space_jump_frames).wrapping_add(1)
         );
     } else {
-        slot!(game, TorizoSlot[e].space_jump_frames = 0);
+        session_slot!(game, TorizoSlot[e].space_jump_frames = 0);
     }
-    let function = slot!(game, TorizoSlot[e].function);
+    let function = session_slot!(game, TorizoSlot[e].function);
     run_torizo_function(game, function, word!(game.cur_enemy_index));
 }
 
 /// Initialisation AI - torizos ($AA:C87F): gone once dead; else placed for
 /// its area with its palettes, the Golden Torizo's debug equipment, or the
 /// Bomb Torizo's haze. Was `Torizo_Init`.
-pub fn initialize<H: Ai>(game: &mut H) {
+pub fn initialize<L: Lease>(game: &mut L) {
     let e = word!(game.cur_enemy_index) as i32;
-    if game.boss_bit(TORIZO_DEAD) & 1 != 0 {
-        slot!(
+    if game.foreign(|game| game.boss_bit(TORIZO_DEAD)) & 1 != 0 {
+        session_slot!(
             game,
             TorizoSlot[e].base.properties =
-                (slot!(game, TorizoSlot[e].base.properties)) | (K_ENEMY_PROPS_DELETED as u16)
+                (session_slot!(game, TorizoSlot[e].base.properties)) | (kEnemyProps_Deleted as u16)
         );
         return;
     }
     let torizo = (word!(game.area_index) as i32 >> 1) as usize;
-    slot!(
+    session_slot!(
         game,
         TorizoSlot[e].base.properties =
-            (slot!(game, TorizoSlot[e].base.properties)) | START_PROPERTIES[torizo]
+            (session_slot!(game, TorizoSlot[e].base.properties)) | START_PROPERTIES[torizo]
     );
-    slot!(
+    session_slot!(
         game,
         TorizoSlot[e].base.extra_properties =
-            (slot!(game, TorizoSlot[e].base.extra_properties)) | 4
+            (session_slot!(game, TorizoSlot[e].base.extra_properties)) | 4
     );
-    slot!(game, TorizoSlot[e].base.x_width = START_X_RADIUS[torizo]);
-    slot!(game, TorizoSlot[e].base.y_height = START_Y_RADIUS[torizo]);
-    slot!(game, TorizoSlot[e].function = function::SIMPLE_MOVEMENT);
-    slot!(game, TorizoSlot[e].base.instruction_timer = 1);
-    slot!(game, TorizoSlot[e].base.timer = 0);
-    slot!(game, TorizoSlot[e].base.palette_index = 0);
-    slot!(game, TorizoSlot[e].movement = movement::NOTHING);
-    slot!(
+    session_slot!(game, TorizoSlot[e].base.x_width = START_X_RADIUS[torizo]);
+    session_slot!(game, TorizoSlot[e].base.y_height = START_Y_RADIUS[torizo]);
+    session_slot!(game, TorizoSlot[e].function = function::SIMPLE_MOVEMENT);
+    session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
+    session_slot!(game, TorizoSlot[e].base.timer = 0);
+    session_slot!(game, TorizoSlot[e].base.palette_index = 0);
+    session_slot!(game, TorizoSlot[e].movement = movement::NOTHING);
+    session_slot!(
         game,
         TorizoSlot[e].base.current_instruction =
             crate::torizo_tables::torizo(game, torizo as isize).instruction_list
     );
-    slot!(
+    session_slot!(
         game,
         TorizoSlot[e].base.spritemap_pointer = list::EXTENDED_SPRITEMAP
     );
-    slot!(game, TorizoSlot[e].base.x_pos = START_X[torizo]);
-    slot!(game, TorizoSlot[e].base.y_pos = START_Y[torizo]);
-    slot!(game, TorizoSlot[e].x_velocity = 0);
-    slot!(game, TorizoSlot[e].y_velocity = LANDED_Y_VELOCITY);
-    game.initialize_palette_targets();
+    session_slot!(game, TorizoSlot[e].base.x_pos = START_X[torizo]);
+    session_slot!(game, TorizoSlot[e].base.y_pos = START_Y[torizo]);
+    session_slot!(game, TorizoSlot[e].x_velocity = 0);
+    session_slot!(game, TorizoSlot[e].y_velocity = LANDED_Y_VELOCITY);
+    game.foreign(|game| game.initialize_palette_targets());
     if word!(game.area_index) != 0 {
-        game.set_palette_targets(Palettes::GoldenStart);
+        game.foreign(|game| game.set_palette_targets(Palettes::GoldenStart));
         if word!(game.joypad1_lastkeys) == DEBUG_KEYS {
             word!(game.samus_health = 700);
             word!(game.samus_max_health = 700);
@@ -843,70 +842,71 @@ pub fn initialize<H: Ai>(game: &mut H) {
             word!(game.collected_beams = 4111);
         }
     } else {
-        game.set_palette_targets(Palettes::BombStart);
-        game.spawn_haze();
+        game.foreign(|game| {
+            game.set_palette_targets(Palettes::BombStart);
+            game.spawn_haze();
+        });
     }
 }
 
 /// Instruction - enemy function = [[Y]] ($AA:B09C). Was `Torizo_Instr_3`.
-pub fn set_function<H: Ai>(k: u16, jp: EnemyScript, game: &mut H) -> EnemyScript {
-    slot!(game, TorizoSlot[k as i32].function = jp.word(0));
+pub fn set_function<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
+    session_slot!(game, TorizoSlot[k as i32].function = jp.word(0));
     jp.offset(1)
 }
 
 /// Instruction - mark Bomb Torizo gut blown up and spawn 6 Bomb Torizo
 /// low-health continuous drool enemy projectiles ($AA:B11D). Was
 /// `Torizo_Instr_31`.
-pub fn blow_up_gut<H: Ai>(k: u16, game: &mut H) {
+pub fn blow_up_gut<L: Lease>(k: u16, game: &mut L) {
     let e = i32::from(k);
-    slot!(
+    session_slot!(
         game,
-        TorizoSlot[e].damage = (slot!(game, TorizoSlot[e].damage)) | GUT_BLOWN_UP
+        TorizoSlot[e].damage = (session_slot!(game, TorizoSlot[e].damage)) | GUT_BLOWN_UP
     );
-    let mut parameter = spawn(
-        game,
-        slot!(game, TorizoSlot[e].damage),
+    let mut parameter = game.spawn_projectile(
+        session_slot!(game, TorizoSlot[e].damage),
         k,
         projectile::CONTINUOUS_DROOL,
     );
     for _ in 0..5 {
-        parameter = spawn(game, parameter, k, projectile::CONTINUOUS_DROOL);
+        parameter = game.spawn_projectile(parameter, k, projectile::CONTINUOUS_DROOL);
     }
 }
 
 /// Instruction - mark Bomb Torizo face blown up ($AA:B1BE). Was
 /// `Torizo_Instr_33`.
-pub fn blow_up_face<H: Ai>(k: u16, game: &mut H) {
+pub fn blow_up_face<L: Lease>(k: u16, game: &mut L) {
     let e = i32::from(k);
-    slot!(
+    session_slot!(
         game,
-        TorizoSlot[e].damage = (slot!(game, TorizoSlot[e].damage)) | FACE_BLOWN_UP
+        TorizoSlot[e].damage = (session_slot!(game, TorizoSlot[e].damage)) | FACE_BLOWN_UP
     );
 }
 
 /// Instruction - set enemy as visible ($AA:B224). Was `Torizo_Instr_36`.
-pub fn set_visible<H: Ai>(k: u16, game: &mut H) {
+pub fn set_visible<L: Lease>(k: u16, game: &mut L) {
     let e = i32::from(k);
-    slot!(
+    session_slot!(
         game,
-        TorizoSlot[e].base.properties = (slot!(game, TorizoSlot[e].base.properties) as i32
-            & !(K_ENEMY_PROPS_INVISIBLE as i32)) as u16
+        TorizoSlot[e].base.properties = (session_slot!(game, TorizoSlot[e].base.properties) as i32
+            & !(kEnemyProps_Invisible as i32)) as u16
     );
 }
 
 /// Instruction - set enemy as invisible ($AA:B22E). Was `Torizo_Instr_37`.
-pub fn set_invisible<H: Ai>(k: u16, game: &mut H) {
+pub fn set_invisible<L: Lease>(k: u16, game: &mut L) {
     let e = i32::from(k);
-    slot!(
+    session_slot!(
         game,
         TorizoSlot[e].base.properties =
-            (slot!(game, TorizoSlot[e].base.properties)) | (K_ENEMY_PROPS_INVISIBLE as u16)
+            (session_slot!(game, TorizoSlot[e].base.properties)) | (kEnemyProps_Invisible as u16)
     );
 }
 
 /// Instruction - set up palette transition to black ($AA:B238). Was
 /// `Torizo_Instr_35`.
-pub fn fade_to_black<H: Ai>(game: &mut H) {
+pub fn fade_to_black<L: Lease>(game: &mut L) {
     crate::word_transfers!(game, descending, 16;
         le(target_palettes, 175) <- value(0),
         le(target_palettes, 159) <- value(0),
@@ -915,49 +915,57 @@ pub fn fade_to_black<H: Ai>(game: &mut H) {
 
 /// Instruction - set boss bit, queue elevator music, spawn item drops
 /// ($AA:B24D). Was `Torizo_Instr_38`.
-pub fn defeated<H: Ai>(k: u16, game: &mut H) {
-    game.set_boss_bit(TORIZO_DEAD);
-    game.queue_music_delayed(ELEVATOR_MUSIC);
+pub fn defeated<L: Lease>(k: u16, game: &mut L) {
+    game.foreign(|game| {
+        game.set_boss_bit(TORIZO_DEAD);
+        game.queue_music_delayed(ELEVATOR_MUSIC);
+    });
     if word!(game.area_index) != 0 {
-        game.scatter_enemy_drop(crate::enemy_projectiles::drops::DropSource::GoldenTorizo, k);
+        game.foreign(|game| {
+            game.scatter_enemy_drop(crate::enemy_projectiles::drops::DropSource::GoldenTorizo, k)
+        });
     } else {
-        game.scatter_enemy_drop(crate::enemy_projectiles::drops::DropSource::BombTorizo, k);
+        game.foreign(|game| {
+            game.scatter_enemy_drop(crate::enemy_projectiles::drops::DropSource::BombTorizo, k)
+        });
     }
 }
 
 /// Instruction - advance gradual colour change ($AA:B271). Was
 /// `Torizo_Instr_6`.
-pub fn advance_colour_change<H: Ai>(game: &mut H) {
-    crate::palette_effects::fading::selected(0x600, game);
+pub fn advance_colour_change<L: Lease>(game: &mut L) {
+    game.foreign(|game| crate::palette_effects::fading::selected(0x600, game));
 }
 
 /// Instruction - set up palette transition to normal torizo ($AA:B94D). Was
 /// `Torizo_Instr_5`.
-pub fn fade_to_active<H: Ai>(game: &mut H) {
-    game.set_palette_targets(Palettes::BombActive);
+pub fn fade_to_active<L: Lease>(game: &mut L) {
+    game.foreign(|game| game.set_palette_targets(Palettes::BombActive));
 }
 
 /// Instruction - start fight music and Bomb Torizo belly palette FX
 /// ($AA:B951). Was `Torizo_Instr_9`.
-pub fn start_fight<H: Ai>(game: &mut H) {
-    game.queue_music_delayed(FIGHT_MUSIC);
-    game.spawn_palette_effect(BOMB_BELLY_GLOW);
+pub fn start_fight<L: Lease>(game: &mut L) {
+    game.foreign(|game| {
+        game.queue_music_delayed(FIGHT_MUSIC);
+        game.spawn_palette_effect(BOMB_BELLY_GLOW);
+    });
 }
 
 /// Instruction - set animation lock ($AA:C2C9). Was `Torizo_Instr_2`.
-pub fn lock_animation<H: Ai>(k: u16, game: &mut H) {
-    slot!(game, TorizoSlot[k as i32].animation_lock = ANIMATION_LOCKED);
+pub fn lock_animation<L: Lease>(k: u16, game: &mut L) {
+    session_slot!(game, TorizoSlot[k as i32].animation_lock = ANIMATION_LOCKED);
 }
 
 /// Instruction - clear animation lock ($AA:C2D1). Was `Torizo_Instr_8`.
-pub fn unlock_animation<H: Ai>(k: u16, game: &mut H) {
-    slot!(game, TorizoSlot[k as i32].animation_lock = 0);
+pub fn unlock_animation<L: Lease>(k: u16, game: &mut L) {
+    session_slot!(game, TorizoSlot[k as i32].animation_lock = 0);
 }
 
 /// Instruction - go to [[Y]] if face blown up, else [[Y]+2] for the Golden
 /// Torizo ($AA:C2D9). Was `Torizo_Instr_25`.
-pub fn branch_if_faceless<H: Ai>(k: u16, jp: EnemyScript, game: &mut H) -> EnemyScript {
-    if (slot!(game, TorizoSlot[k as i32].damage) & FACE_BLOWN_UP) != 0 {
+pub fn branch_if_faceless<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
+    if (session_slot!(game, TorizoSlot[k as i32].damage) & FACE_BLOWN_UP) != 0 {
         return EnemyScript::jump(jp.word(0));
     }
     if word!(game.area_index) != 0 {
@@ -969,57 +977,57 @@ pub fn branch_if_faceless<H: Ai>(k: u16, jp: EnemyScript, game: &mut H) -> Enemy
 
 /// Instruction - enemy link instruction = [[Y]] ($AA:C2ED). Was
 /// `Torizo_Instr_22`.
-pub fn set_link<H: Ai>(k: u16, jp: EnemyScript, game: &mut H) -> EnemyScript {
-    slot!(game, TorizoSlot[k as i32].link = jp.word(0));
+pub fn set_link<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
+    session_slot!(game, TorizoSlot[k as i32].link = jp.word(0));
     jp.offset(1)
 }
 
 /// Instruction - return ($AA:C2F7). Was `Torizo_Instr_19`.
-pub fn return_to_link<H: Ai>(k: u16, game: &mut H) -> EnemyScript {
-    EnemyScript::jump(slot!(game, TorizoSlot[k as i32].link))
+pub fn return_to_link<L: Lease>(k: u16, game: &mut L) -> EnemyScript {
+    EnemyScript::jump(session_slot!(game, TorizoSlot[k as i32].link))
 }
 
 /// Instruction - go to enemy gut explosion link instruction ($AA:C2FD). Was
 /// `Torizo_Instr_32`.
-pub fn return_from_gut_explosion<H: Ai>(k: u16, game: &mut H) -> EnemyScript {
-    EnemyScript::jump(slot!(game, TorizoSlot[k as i32].saved_list))
+pub fn return_from_gut_explosion<L: Lease>(k: u16, game: &mut L) -> EnemyScript {
+    EnemyScript::jump(session_slot!(game, TorizoSlot[k as i32].saved_list))
 }
 
 /// Instruction - spawn Bomb Torizo low-health explosions with parameter
 /// [[Y]] and sleep for 28h i-frames ($AA:C303). Was `Torizo_Instr_30`.
-pub fn low_health_explosions<H: Ai>(k: u16, jp: EnemyScript, game: &mut H) -> EnemyScript {
+pub fn low_health_explosions<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
     let parameter: u16 = jp.word(0);
     // Six, though the bank log names five.
     for _ in 0..=5 {
         game.spawn_room_projectile(projectile::LOW_HEALTH_EXPLOSION, parameter);
     }
     let e = i32::from(k);
-    slot!(
+    session_slot!(
         game,
         TorizoSlot[e].base.current_instruction = list_address(game, k, jp.offset(1))
     );
-    slot!(game, TorizoSlot[e].base.flash_timer = 40);
-    slot!(game, TorizoSlot[e].base.instruction_timer = 40);
+    session_slot!(game, TorizoSlot[e].base.flash_timer = 40);
+    session_slot!(game, TorizoSlot[e].base.instruction_timer = 40);
     EnemyScript::Stop
 }
 
 /// Instruction - spawn torizo death explosion and sleep for 1 i-frame
 /// ($AA:C32F). Was `Torizo_Instr_34`.
-pub fn death_explosion<H: Ai>(k: u16, jp: EnemyScript, game: &mut H) -> EnemyScript {
+pub fn death_explosion<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
     game.spawn_room_projectile(projectile::DEATH_EXPLOSION, DEATH_EXPLOSION_INSTRUCTION);
     let e = i32::from(k);
-    slot!(
+    session_slot!(
         game,
         TorizoSlot[e].base.current_instruction = list_address(game, k, jp)
     );
-    slot!(game, TorizoSlot[e].base.flash_timer = 1);
-    slot!(game, TorizoSlot[e].base.instruction_timer = 1);
+    session_slot!(game, TorizoSlot[e].base.flash_timer = 1);
+    session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
     EnemyScript::Stop
 }
 
 /// Instruction - spawn torizo landing dust clouds ($AA:C34A). Was
 /// `Torizo_Instr_24`.
-pub fn landing_dust<H: Ai>(game: &mut H) {
+pub fn landing_dust<L: Lease>(game: &mut L) {
     let left = game.spawn_room_projectile(
         projectile::LANDING_DUST_RIGHT_FOOT,
         LANDING_DUST_INSTRUCTION,
@@ -1029,75 +1037,76 @@ pub fn landing_dust<H: Ai>(game: &mut H) {
 
 /// Instruction - spawn low-health initial drool if health is low ($AA:C35B).
 /// Was `Torizo_Instr_12`.
-pub fn drool_if_low_health<H: Ai>(k: u16, game: &mut H) {
-    let health: u16 = slot!(game, TorizoSlot[k as i32].base.health);
+pub fn drool_if_low_health<L: Lease>(k: u16, game: &mut L) {
+    let health: u16 = session_slot!(game, TorizoSlot[k as i32].base.health);
     if health < GUT_HEALTH {
-        spawn(game, health, k, LOW_HEALTH_DROOL);
+        game.spawn_projectile(health, k, LOW_HEALTH_DROOL);
     }
 }
 
 /// Instruction - set torizo turning around flag ($AA:C36D). Was
 /// `Torizo_Instr_10`.
-pub fn start_turning<H: Ai>(k: u16, game: &mut H) {
+pub fn start_turning<L: Lease>(k: u16, game: &mut L) {
     let e = i32::from(k);
-    slot!(
+    session_slot!(
         game,
-        TorizoSlot[e].direction = (slot!(game, TorizoSlot[e].direction)) | TURNING_AROUND
+        TorizoSlot[e].direction = (session_slot!(game, TorizoSlot[e].direction)) | TURNING_AROUND
     );
 }
 
 /// Instructions - set stepped left/right with left/right foot state
 /// ($AA:C377, $AA:C38A, $AA:C3A0, $AA:C3B6): the step state is `state`, and
 /// the step counts. Was `Torizo_Instr_11`, `_29`, `_1` and `_28`.
-pub fn stepped<H: Ai>(k: u16, game: &mut H, state: u16) {
+pub fn stepped<L: Lease>(k: u16, game: &mut L, state: u16) {
     let e = i32::from(k);
-    slot!(
+    session_slot!(
         game,
-        TorizoSlot[e].direction = slot!(game, TorizoSlot[e].direction) & !STEP_STATE | state
+        TorizoSlot[e].direction =
+            session_slot!(game, TorizoSlot[e].direction) & !STEP_STATE | state
     );
-    slot!(
+    session_slot!(
         game,
-        TorizoSlot[e].steps = slot!(game, TorizoSlot[e].steps).wrapping_add(1)
+        TorizoSlot[e].steps = session_slot!(game, TorizoSlot[e].steps).wrapping_add(1)
     );
 }
 
 /// Instruction - standing up movement ($AA:C3CC). Was `Torizo_Instr_4`.
-pub fn stand_up<H: Ai>(k: u16, jp: EnemyScript, game: &mut H) -> EnemyScript {
+pub fn stand_up<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
     let step: u16 = jp.word(0);
     let e = i32::from(k);
-    slot!(
+    session_slot!(
         game,
-        TorizoSlot[e].base.x_pos = (slot!(game, TorizoSlot[e].base.x_pos))
+        TorizoSlot[e].base.x_pos = (session_slot!(game, TorizoSlot[e].base.x_pos))
             .wrapping_add((STAND_UP_X[(step >> 1) as usize]) as u16)
     );
-    slot!(
+    session_slot!(
         game,
-        TorizoSlot[e].base.y_pos = (slot!(game, TorizoSlot[e].base.y_pos))
+        TorizoSlot[e].base.y_pos = (session_slot!(game, TorizoSlot[e].base.y_pos))
             .wrapping_add((STAND_UP_Y[((step as i32 & 0xf) >> 1) as usize]) as u16)
     );
     jp.offset(1)
 }
 
 /// Instruction - sitting down movement ($AA:C41E). Was `Torizo_Instr_40`.
-pub fn sit_down<H: Ai>(k: u16, jp: EnemyScript, game: &mut H) -> EnemyScript {
+pub fn sit_down<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
     let step: u16 = jp.word(0);
     let e = i32::from(k);
-    slot!(
+    session_slot!(
         game,
-        TorizoSlot[e].base.x_pos = (slot!(game, TorizoSlot[e].base.x_pos))
+        TorizoSlot[e].base.x_pos = (session_slot!(game, TorizoSlot[e].base.x_pos))
             .wrapping_sub((SIT_DOWN_X[(step >> 1) as usize]) as u16)
     );
-    slot!(
+    session_slot!(
         game,
-        TorizoSlot[e].base.y_pos = (slot!(game, TorizoSlot[e].base.y_pos))
+        TorizoSlot[e].base.y_pos = (session_slot!(game, TorizoSlot[e].base.y_pos))
             .wrapping_sub((SIT_DOWN_Y[((step as i32 & 0xf) >> 1) as usize]) as u16)
     );
     jp.offset(1)
 }
 
 /// Instruction - go to [[Y]] if rising ($AA:C55A). Was `Torizo_Instr_23`.
-pub fn branch_if_rising<H: Ai>(k: u16, jp: EnemyScript, game: &mut H) -> EnemyScript {
-    if (slot!(game, TorizoSlot[k as i32].y_velocity) & 0x8000) != 0 {
+pub fn branch_if_rising<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
+    if (session_slot!(game, TorizoSlot[k as i32].y_velocity) & 0x8000) != 0 {
         EnemyScript::jump(jp.word(0))
     } else {
         jp.offset(1)
@@ -1106,19 +1115,23 @@ pub fn branch_if_rising<H: Ai>(k: u16, jp: EnemyScript, game: &mut H) -> EnemySc
 
 /// Instruction - call [[Y]] if Samus is less than 38h pixels in front
 /// ($AA:C567). Was `Torizo_Instr_14`.
-pub fn call_if_samus_close_in_front<H: Ai>(k: u16, jp: EnemyScript, game: &mut H) -> EnemyScript {
+pub fn call_if_samus_close_in_front<L: Lease>(
+    k: u16,
+    jp: EnemyScript,
+    game: &mut L,
+) -> EnemyScript {
     if samus_at_least(game, k, 0x38) {
         return jp.offset(1);
     }
     let e = i32::from(k);
-    if ((slot!(game, TorizoSlot[e].direction) as i32
-        ^ (game.player_x() as i32 - slot!(game, TorizoSlot[e].base.x_pos) as i32))
+    if ((session_slot!(game, TorizoSlot[e].direction) as i32
+        ^ (game.player_x() as i32 - session_slot!(game, TorizoSlot[e].base.x_pos) as i32))
         & SIGN)
         == 0
     {
         return jp.offset(1);
     }
-    slot!(
+    session_slot!(
         game,
         TorizoSlot[e].link = list_address(game, k, jp.offset(1))
     );
@@ -1127,7 +1140,7 @@ pub fn call_if_samus_close_in_front<H: Ai>(k: u16, jp: EnemyScript, game: &mut H
 
 /// Instruction - go to [[Y]] and jump backwards if Samus is within 20h
 /// pixels in front ($AA:C58B). Was `Torizo_Instr_15`.
-pub fn jump_back_if_samus_close<H: Ai>(k: u16, jp: EnemyScript, game: &mut H) -> EnemyScript {
+pub fn jump_back_if_samus_close<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
     if samus_at_least(game, k, 0x20) || (facing_against_samus(k, game) & 0x8000) != 0 {
         return jp.offset(1);
     }
@@ -1137,8 +1150,8 @@ pub fn jump_back_if_samus_close<H: Ai>(k: u16, jp: EnemyScript, game: &mut H) ->
 
 /// The attack choice: [[Y]] when Samus has few missiles or on a frame/position
 /// draw, else [[Y]+2], returning past both.
-fn choose_attack<H: Ai>(k: u16, jp: EnemyScript, game: &mut H, missiles: u16) -> EnemyScript {
-    slot!(
+fn choose_attack<L: Lease>(k: u16, jp: EnemyScript, game: &mut L, missiles: u16) -> EnemyScript {
+    session_slot!(
         game,
         TorizoSlot[k as i32].link = list_address(game, k, jp.offset(2))
     );
@@ -1157,61 +1170,62 @@ fn choose_attack<H: Ai>(k: u16, jp: EnemyScript, game: &mut H, missiles: u16) ->
 
 /// Instruction - call [[Y]] or [[Y]]+2 for Bomb Torizo attack ($AA:C5A4).
 /// Was `Torizo_Instr_26`.
-pub fn bomb_attack<H: Ai>(k: u16, jp: EnemyScript, game: &mut H) -> EnemyScript {
+pub fn bomb_attack<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
     choose_attack(k, jp, game, 5)
 }
 
 /// Instruction - call [[Y]] or [[Y]]+2 for Golden Torizo attack ($AA:D526).
 /// Was `Torizo_Instr_45`.
-pub fn golden_attack<H: Ai>(k: u16, jp: EnemyScript, game: &mut H) -> EnemyScript {
+pub fn golden_attack<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
     choose_attack(k, jp, game, 0x20)
 }
 
 /// Instruction - spawn Bomb Torizo's chozo orbs ($AA:C5CB). Was
 /// `Torizo_Instr_18`.
-pub fn bomb_chozo_orbs<H: Ai>(k: u16, game: &mut H) {
-    let mut parameter = spawn(game, BOMB_ORBS_INSTRUCTION, k, projectile::BOMB_CHOZO_ORBS);
-    parameter = spawn(game, parameter, k, projectile::BOMB_CHOZO_ORBS);
-    spawn(game, parameter, k, projectile::BOMB_CHOZO_ORBS);
+pub fn bomb_chozo_orbs<L: Lease>(k: u16, game: &mut L) {
+    let mut parameter =
+        game.spawn_projectile(BOMB_ORBS_INSTRUCTION, k, projectile::BOMB_CHOZO_ORBS);
+    parameter = game.spawn_projectile(parameter, k, projectile::BOMB_CHOZO_ORBS);
+    game.spawn_projectile(parameter, k, projectile::BOMB_CHOZO_ORBS);
 }
 
 /// Instruction - spawn Bomb Torizo sonic boom ($AA:C5E3). Was
 /// `Torizo_Instr_20`.
-pub fn bomb_sonic_boom<H: Ai>(k: u16, jp: EnemyScript, game: &mut H) -> EnemyScript {
-    spawn(game, jp.word(0), k, projectile::BOMB_SONIC_BOOM);
+pub fn bomb_sonic_boom<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
+    game.spawn_projectile(jp.word(0), k, projectile::BOMB_SONIC_BOOM);
     jp.offset(1)
 }
 
 /// Instruction - spawn Golden Torizo sonic boom ($AA:C5F2). Was
 /// `Torizo_Instr_44`.
-pub fn golden_sonic_boom<H: Ai>(k: u16, jp: EnemyScript, game: &mut H) -> EnemyScript {
-    spawn(game, jp.word(0), k, projectile::GOLDEN_SONIC_BOOM);
+pub fn golden_sonic_boom<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
+    game.spawn_projectile(jp.word(0), k, projectile::GOLDEN_SONIC_BOOM);
     jp.offset(1)
 }
 
 /// Instruction - spawn Bomb Torizo explosive swipe ($AA:C601). Was
 /// `Torizo_Instr_21`.
-pub fn explosive_swipe<H: Ai>(jp: EnemyScript, game: &mut H) -> EnemyScript {
+pub fn explosive_swipe<L: Lease>(jp: EnemyScript, game: &mut L) -> EnemyScript {
     game.spawn_room_projectile(projectile::EXPLOSIVE_SWIPE, jp.word(0));
     jp.offset(1)
 }
 
 /// Instruction - queue shot torizo sound effect ($AA:C610). Was
 /// `Torizo_Instr_17`.
-pub fn shot_sound<H: Ai>(game: &mut H) {
+pub fn shot_sound<L: Lease>(game: &mut L) {
     game.queue_sound(1, SHOT_SOUND, 6);
 }
 
 /// Instruction - queue torizo footsteps sound effect ($AA:C618). Was
 /// `Torizo_Instr_13`.
-pub fn footstep_sound<H: Ai>(game: &mut H) {
+pub fn footstep_sound<L: Lease>(game: &mut L) {
     game.queue_sound(1, FOOTSTEP_SOUND, 6);
 }
 
 /// Instruction - go to [[Y]] if not hit ground ($AA:CACE). Was
 /// `Torizo_Instr_39`.
-pub fn branch_if_airborne<H: Ai>(k: u16, jp: EnemyScript, game: &mut H) -> EnemyScript {
-    if slot!(game, TorizoSlot[k as i32].base.y_pos) == GOLDEN_GROUND_Y {
+pub fn branch_if_airborne<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
+    if session_slot!(game, TorizoSlot[k as i32].base.y_pos) == GOLDEN_GROUND_Y {
         jp.offset(1)
     } else {
         EnemyScript::jump(jp.word(0))
@@ -1220,42 +1234,44 @@ pub fn branch_if_airborne<H: Ai>(k: u16, jp: EnemyScript, game: &mut H) -> Enemy
 
 /// Instruction - load Golden Torizo palettes ($AA:CADE). Was
 /// `Torizo_Instr_41`.
-pub fn golden_palettes<H: Ai>(game: &mut H) {
-    game.set_palette_targets(Palettes::GoldenActive);
+pub fn golden_palettes<L: Lease>(game: &mut L) {
+    game.foreign(|game| game.set_palette_targets(Palettes::GoldenActive));
 }
 
 /// Instruction - start fight music and Golden Torizo belly palette FX
 /// ($AA:CAE2). Was `Torizo_Instr_42`.
-pub fn start_golden_fight<H: Ai>(k: u16, game: &mut H) {
-    game.queue_music_delayed(FIGHT_MUSIC);
+pub fn start_golden_fight<L: Lease>(k: u16, game: &mut L) {
+    game.foreign(|game| game.queue_music_delayed(FIGHT_MUSIC));
     let e = i32::from(k);
-    slot!(game, TorizoSlot[e].base.x_width = 18);
-    slot!(game, TorizoSlot[e].base.y_height = 48);
-    game.spawn_palette_effect(GOLDEN_BELLY_GLOW);
+    session_slot!(game, TorizoSlot[e].base.x_width = 18);
+    session_slot!(game, TorizoSlot[e].base.y_height = 48);
+    game.foreign(|game| game.spawn_palette_effect(GOLDEN_BELLY_GLOW));
 }
 
 /// Instruction - clear torizo caught super missile flag ($AA:CDD7). Was
 /// `Torizo_Instr_48`.
-pub fn clear_caught_super_missile<H: Ai>(k: u16, game: &mut H) {
+pub fn clear_caught_super_missile<L: Lease>(k: u16, game: &mut L) {
     let e = i32::from(k);
-    slot!(
+    session_slot!(
         game,
-        TorizoSlot[e].damage = slot!(game, TorizoSlot[e].damage) & !CAUGHT_SUPER_MISSILE
+        TorizoSlot[e].damage = session_slot!(game, TorizoSlot[e].damage) & !CAUGHT_SUPER_MISSILE
     );
 }
 
 /// Instruction - spawn Golden Torizo egg ($AA:D0E9). Was `Torizo_Instr_57`.
-pub fn spawn_egg<H: Ai>(game: &mut H) {
+pub fn spawn_egg<L: Lease>(game: &mut L) {
     game.spawn_room_projectile(projectile::GOLDEN_EGG, 0);
 }
 
 /// Instruction - go to [[Y]] if Golden Torizo egg is active ($AA:D0F3). Was
 /// `Torizo_Instr_58`.
-pub fn branch_if_egg_active<H: Ai>(jp: EnemyScript, game: &mut H) -> EnemyScript {
-    let active = crate::enemy_projectiles::table::with_slots(game, |slots| {
-        slots
-            .iter()
-            .any(|slot| slot.definition == projectile::GOLDEN_EGG)
+pub fn branch_if_egg_active<L: Lease>(jp: EnemyScript, game: &mut L) -> EnemyScript {
+    let active = game.foreign(|game| {
+        crate::enemy_projectiles::table::with_slots(game, |slots| {
+            slots
+                .iter()
+                .any(|slot| slot.definition == projectile::GOLDEN_EGG)
+        })
     });
     if active {
         EnemyScript::jump(jp.word(0))
@@ -1266,60 +1282,64 @@ pub fn branch_if_egg_active<H: Ai>(jp: EnemyScript, game: &mut H) -> EnemyScript
 
 /// Instruction - disable eye beam explosions ($AA:D17B). Was
 /// `Torizo_Instr_59`.
-pub fn disable_eye_beam_explosions<H: Ai>(k: u16, game: &mut H) {
+pub fn disable_eye_beam_explosions<L: Lease>(k: u16, game: &mut L) {
     let e = i32::from(k);
-    slot!(
+    session_slot!(
         game,
-        TorizoSlot[e].eye_beam = slot!(game, TorizoSlot[e].eye_beam) & !EYE_BEAM_EXPLODES
+        TorizoSlot[e].eye_beam = session_slot!(game, TorizoSlot[e].eye_beam) & !EYE_BEAM_EXPLODES
     );
 }
 
 /// Instruction - enable eye beam explosions ($AA:D187). Was
 /// `Torizo_Instr_62`.
-pub fn enable_eye_beam_explosions<H: Ai>(k: u16, game: &mut H) {
+pub fn enable_eye_beam_explosions<L: Lease>(k: u16, game: &mut L) {
     let e = i32::from(k);
-    slot!(
+    session_slot!(
         game,
-        TorizoSlot[e].eye_beam = (slot!(game, TorizoSlot[e].eye_beam)) | EYE_BEAM_EXPLODES
+        TorizoSlot[e].eye_beam = (session_slot!(game, TorizoSlot[e].eye_beam)) | EYE_BEAM_EXPLODES
     );
 }
 
 /// Instruction - unmark Golden Torizo stunned ($AA:D1E7). Was
 /// `Torizo_Instr_63`.
-pub fn clear_stunned<H: Ai>(k: u16, game: &mut H) {
+pub fn clear_stunned<L: Lease>(k: u16, game: &mut L) {
     let e = i32::from(k);
-    slot!(
+    session_slot!(
         game,
-        TorizoSlot[e].damage = slot!(game, TorizoSlot[e].damage) & !STUNNED
+        TorizoSlot[e].damage = session_slot!(game, TorizoSlot[e].damage) & !STUNNED
     );
 }
 
 /// Instruction - queue Golden Torizo egg released sound effect ($AA:D38F).
 /// Was `Torizo_Instr_56`.
-pub fn egg_released_sound<H: Ai>(game: &mut H) {
+pub fn egg_released_sound<L: Lease>(game: &mut L) {
     game.queue_sound(1, EGG_RELEASED_SOUND, 6);
 }
 
 /// Instruction - queue laser sound effect ($AA:D397). Was `Torizo_Instr_60`.
-pub fn laser_sound<H: Ai>(game: &mut H) {
+pub fn laser_sound<L: Lease>(game: &mut L) {
     game.queue_sound(1, LASER_SOUND, 6);
 }
 
 /// Instruction - queue torizo sonic boom sound effect ($AA:D39F). Was
 /// `Torizo_Instr_46`.
-pub fn sonic_boom_sound<H: Ai>(game: &mut H) {
+pub fn sonic_boom_sound<L: Lease>(game: &mut L) {
     game.queue_sound(1, SONIC_BOOM_SOUND, 6);
 }
 
 /// Instruction - spawn Golden Torizo super missile ($AA:D3E0). Was
 /// `Torizo_Instr_47`.
-pub fn golden_super_missile<H: Ai>(game: &mut H) {
+pub fn golden_super_missile<L: Lease>(game: &mut L) {
     game.spawn_room_projectile(projectile::GOLDEN_SUPER_MISSILE, 0);
 }
 
 /// Instruction - go to [[Y]] if Samus is a medium distance behind torizo and
 /// morphed ($AA:D3EA). Was `Torizo_Instr_49`.
-pub fn branch_if_samus_rolling_behind<H: Ai>(k: u16, jp: EnemyScript, game: &mut H) -> EnemyScript {
+pub fn branch_if_samus_rolling_behind<L: Lease>(
+    k: u16,
+    jp: EnemyScript,
+    game: &mut L,
+) -> EnemyScript {
     if (facing_against_samus(k, game) & 0x8000) == 0
         || !samus_at_least(game, k, 4)
         || samus_at_least(game, k, 0x28)
@@ -1327,32 +1347,32 @@ pub fn branch_if_samus_rolling_behind<H: Ai>(k: u16, jp: EnemyScript, game: &mut
     {
         return jp.offset(1);
     }
-    slot!(game, TorizoSlot[k as i32].steps = 0);
+    session_slot!(game, TorizoSlot[k as i32].steps = 0);
     EnemyScript::jump(jp.word(0))
 }
 
 /// Instruction - spawn Golden Torizo eye beam ($AA:D436). Was
 /// `Torizo_Instr_61`.
-pub fn eye_beam<H: Ai>(jp: EnemyScript, game: &mut H) -> EnemyScript {
+pub fn eye_beam<L: Lease>(jp: EnemyScript, game: &mut L) -> EnemyScript {
     game.spawn_room_projectile(projectile::GOLDEN_EYE_BEAM, jp.word(0));
     jp.offset(1)
 }
 
 /// Instruction - call [[Y]] with 25% chance if Samus is a medium distance in
 /// front of torizo ($AA:D445). Was `Torizo_Instr_53`.
-pub fn call_sometimes_if_samus_in_front<H: Ai>(
+pub fn call_sometimes_if_samus_in_front<L: Lease>(
     k: u16,
     jp: EnemyScript,
-    game: &mut H,
+    game: &mut L,
 ) -> EnemyScript {
     if (facing_against_samus(k, game) & 0x8000) != 0
         || !samus_at_least(game, k, 0x20)
         || samus_at_least(game, k, 0x60)
-        || (game.next_random() & 0x110) != 0
+        || (game.roll_random() & 0x110) != 0
     {
         return jp.offset(1);
     }
-    slot!(
+    session_slot!(
         game,
         TorizoSlot[k as i32].link = list_address(game, k, jp.offset(1))
     );
@@ -1361,15 +1381,19 @@ pub fn call_sometimes_if_samus_in_front<H: Ai>(
 
 /// Instruction - call [[Y]] with 25% chance if health <= 1928 ($AA:D474).
 /// Was `Torizo_Instr_55`.
-pub fn call_sometimes_at_low_health<H: Ai>(k: u16, jp: EnemyScript, game: &mut H) -> EnemyScript {
+pub fn call_sometimes_at_low_health<L: Lease>(
+    k: u16,
+    jp: EnemyScript,
+    game: &mut L,
+) -> EnemyScript {
     let e = i32::from(k);
-    if slot!(game, TorizoSlot[e].base.health) > GOLDEN_LOW_HEALTH
-        || (game.next_random() & 0x102) != 0
+    if session_slot!(game, TorizoSlot[e].base.health) > GOLDEN_LOW_HEALTH
+        || (game.roll_random() & 0x102) != 0
     {
         return jp.offset(1);
     }
-    slot!(game, TorizoSlot[e].steps = 0);
-    slot!(
+    session_slot!(game, TorizoSlot[e].steps = 0);
+    session_slot!(
         game,
         TorizoSlot[e].link = list_address(game, k, jp.offset(1))
     );
@@ -1378,14 +1402,18 @@ pub fn call_sometimes_at_low_health<H: Ai>(k: u16, jp: EnemyScript, game: &mut H
 
 /// Instruction - call [[Y]] if health >= 10800 and stunned ($AA:D49B). Was
 /// `Torizo_Instr_52`.
-pub fn call_if_stunned_at_high_health<H: Ai>(k: u16, jp: EnemyScript, game: &mut H) -> EnemyScript {
+pub fn call_if_stunned_at_high_health<L: Lease>(
+    k: u16,
+    jp: EnemyScript,
+    game: &mut L,
+) -> EnemyScript {
     let e = i32::from(k);
-    if slot!(game, TorizoSlot[e].base.health) <= GOLDEN_HIGH_HEALTH
-        || (slot!(game, TorizoSlot[e].damage) & STUNNED) == 0
+    if session_slot!(game, TorizoSlot[e].base.health) <= GOLDEN_HIGH_HEALTH
+        || (session_slot!(game, TorizoSlot[e].damage) & STUNNED) == 0
     {
         return jp.offset(1);
     }
-    slot!(
+    session_slot!(
         game,
         TorizoSlot[e].link = list_address(game, k, jp.offset(1))
     );
@@ -1396,7 +1424,7 @@ pub fn call_if_stunned_at_high_health<H: Ai>(k: u16, jp: EnemyScript, game: &mut
 /// pixels in front of Golden Torizo ($AA:D4BA): also while she space jumps
 /// for 360 frames or holds a shoulder button, on a random draw. Was
 /// `Torizo_Instr_50`.
-pub fn jump_forwards_if_samus_far<H: Ai>(k: u16, jp: EnemyScript, game: &mut H) -> EnemyScript {
+pub fn jump_forwards_if_samus_far<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
     if !samus_at_least(game, k, 0x70) {
         return jp.offset(1);
     }
@@ -1404,38 +1432,33 @@ pub fn jump_forwards_if_samus_far<H: Ai>(k: u16, jp: EnemyScript, game: &mut H) 
         return jp.offset(1);
     }
     let e = i32::from(k);
-    if slot!(game, TorizoSlot[e].space_jump_frames) <= 0x168
-        && ((word!(game.joypad1_lastkeys) & 0x300) == 0 || (game.next_random() & 0x101) == 0)
+    if session_slot!(game, TorizoSlot[e].space_jump_frames) <= 0x168
+        && ((word!(game.joypad1_lastkeys) & 0x300) == 0 || (game.roll_random() & 0x101) == 0)
     {
         return jp.offset(1);
     }
-    slot!(game, TorizoSlot[e].steps = 0);
+    session_slot!(game, TorizoSlot[e].steps = 0);
     jump_forwards(k, game);
     EnemyScript::jump(jp.word(0))
 }
 
 /// Instruction - spawn Golden Torizo's chozo orbs ($AA:D4F3). Was
 /// `Torizo_Instr_43`.
-pub fn golden_chozo_orbs<H: Ai>(k: u16, game: &mut H) {
-    spawn(
-        game,
-        GOLDEN_ORBS_INSTRUCTION,
-        k,
-        projectile::GOLDEN_CHOZO_ORBS,
-    );
+pub fn golden_chozo_orbs<L: Lease>(k: u16, game: &mut L) {
+    game.spawn_projectile(GOLDEN_ORBS_INSTRUCTION, k, projectile::GOLDEN_CHOZO_ORBS);
 }
 
 /// Instruction - go to [[Y]] and jump backwards if Samus is less than 20h
 /// pixels in front of Golden Torizo ($AA:D4FD), or after eight steps. Was
 /// `Torizo_Instr_51`.
-pub fn golden_jump_back<H: Ai>(k: u16, jp: EnemyScript, game: &mut H) -> EnemyScript {
+pub fn golden_jump_back<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScript {
     let e = i32::from(k);
-    if slot!(game, TorizoSlot[e].steps) < 8
+    if session_slot!(game, TorizoSlot[e].steps) < 8
         && (samus_at_least(game, k, 0x20) || (facing_against_samus(k, game) & 0x8000) != 0)
     {
         return jp.offset(1);
     }
-    slot!(game, TorizoSlot[e].steps = 0);
+    session_slot!(game, TorizoSlot[e].steps = 0);
     jump_backwards(k, game);
     EnemyScript::jump(jp.word(0))
 }
