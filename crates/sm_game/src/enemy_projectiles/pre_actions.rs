@@ -226,7 +226,7 @@ pub fn draygon_goop_stuck_to_samus_pre_instruction(k: u16, ctx: &mut impl Host) 
     EprojPowerBombCollision(k, ctx);
     if ctx.session().player.contact.contact_attack != 0
         || {
-            let mut v1: i32 = k as i32 >> 1;
+            let v1: i32 = k as i32 >> 1;
             enemy!(ctx, ctx.session().player.x => (v1) as isize, x);
             enemy!(ctx, (ctx.session().player.y as i32 + 4 * enemy!(ctx, (v1) as isize, behavior_b) as i32
                 - 12i32) as u16 => (v1) as isize, y);
@@ -251,7 +251,7 @@ pub fn draygon_goop_stuck_to_samus_pre_instruction(k: u16, ctx: &mut impl Host) 
 pub fn draygon_turret_projectile_fired_pre_instruction(k: u16, ctx: &mut impl Host) {
     EprojPowerBombCollision(k, ctx);
     move_along_angle(k, ctx);
-    let mut v1: i16 = outside_512_pixel_square(k, ctx) as i16;
+    let v1: i16 = outside_512_pixel_square(k, ctx) as i16;
     if v1 != 0 {
         enemy!(ctx, 0 => (k >> 1) as isize, definition);
     }
@@ -265,7 +265,7 @@ pub fn draygon_goop_pre_instruction(k: u16, ctx: &mut impl Host) {
         as i16)
         .unsigned_abs();
     if (v2 as i32 - 16i32) & 0x8000 != 0 && {
-        let mut v3: u16 = (((ctx.session().player.y as i32 - enemy!(ctx, (v1) as isize, y) as i32)
+        let v3: u16 = (((ctx.session().player.y as i32 - enemy!(ctx, (v1) as isize, y) as i32)
             as u16) as i16)
             .unsigned_abs();
         (v3 as i32 - 20i32) & 0x8000 != 0
@@ -316,7 +316,7 @@ pub fn crocomire_bridge_crumbling_pre_instruction(k: u16, ctx: &mut impl Host) {
 }
 
 pub fn ridleys_fireball_pre_instruction(k: u16, ctx: &mut impl Host) {
-    let mut v1: u16 = if move_horizontally_with_block_collision(k, ctx) & 1 != 0 {
+    let v1: u16 = if move_horizontally_with_block_collision(k, ctx) & 1 != 0 {
         -27042i32 as u16
     } else {
         if move_vertically_with_block_collision(k, ctx) & 1 == 0 {
@@ -444,7 +444,7 @@ pub fn mini_kraid_spikes_pre_instruction(k: u16, ctx: &mut impl Host) {
 }
 
 pub fn alcoon_fireball_pre_instruction(k: u16, ctx: &mut impl Host) {
-    let mut v2: u16 = 0;
+    let mut v2: u16;
     if move_vertically_with_block_collision(k, ctx) & 1 != 0
         || move_horizontally_with_block_collision(k, ctx) & 1 != 0
     {
@@ -469,11 +469,11 @@ pub fn alcoon_fireball_pre_instruction(k: u16, ctx: &mut impl Host) {
 }
 
 pub fn ceres_elevator_pad_pre_instruction(k: u16, ctx: &mut impl Host) {
-    let mut v3: bool = false;
+    let v3: bool;
     let v1: i32 = k as i32 >> 1;
     if enemy!(ctx, (v1) as isize, behavior_a) == 0
         || {
-            let mut v2: bool = enemy!(ctx, (v1) as isize, behavior_a) == 1;
+            let v2: bool = enemy!(ctx, (v1) as isize, behavior_a) == 1;
             v3 = ((enemy!(ctx, (v1) as isize, behavior_a)) as i16).wrapping_sub(1) < 0;
             enemy_decrement!(ctx, (v1) as isize, behavior_a);
             v2 as i32 != 0
@@ -539,8 +539,7 @@ pub fn bomb_torizos_chozo_orbs_pre_instruction(k: u16, ctx: &mut impl Host) {
 }
 
 pub fn golden_torizos_chozo_orbs_pre_instruction(k: u16, ctx: &mut impl Host) {
-    let mut v1: i32 = 0;
-    let mut v3: u16 = 0;
+    let v1: i32;
     if move_horizontally_with_block_collision(k, ctx) & 1 != 0 {
         enemy!(ctx, -(enemy!(ctx, (k >> 1) as isize, velocity_x) as i32) as u16 => (k >> 1) as isize, velocity_x);
     }
@@ -550,14 +549,10 @@ pub fn golden_torizos_chozo_orbs_pre_instruction(k: u16, ctx: &mut impl Host) {
             (enemy!(ctx, (v1) as isize, velocity_y) & 0x8000) == 0
         }
         && {
-            let mut v2: i16 = enemy!(ctx, (v1) as isize, velocity_x) as i16;
-            if v2 >= 0 {
-                v3 = (v2 as i32 - 64i32) as u16;
-            } else {
-                v3 = (v2 as i32 + 64) as u16;
-            };
+            let v2: i16 = enemy!(ctx, (v1) as isize, velocity_x) as i16;
+            let v3 = (v2 as i32 + if v2 >= 0 { -64 } else { 64 }) as u16;
             enemy!(ctx, v3 => (v1) as isize, velocity_x);
-            let mut v4: u16 = -(enemy!(ctx, (v1) as isize, velocity_y) as i32 >> 1i32) as u16;
+            let v4: u16 = -(enemy!(ctx, (v1) as isize, velocity_y) as i32 >> 1i32) as u16;
             enemy!(ctx, v4 => (v1) as isize, velocity_y);
             (v4 & 0xff80) == 0xff80
         }
@@ -593,18 +588,17 @@ pub fn torizo_sonic_boom_pre_instruction(k: u16, ctx: &mut impl Host) {
 }
 
 pub fn golden_torizo_egg_hatched_pre_instruction(k: u16, ctx: &mut impl Host) {
-    let mut v2: i16 = 0;
     if move_horizontally_with_block_collision(k, ctx) & 1 != 0 {
         let v3: i32 = k as i32 >> 1;
         enemy!(ctx, 0xb0dd => (v3) as isize, pre_action);
         enemy!(ctx, 0 => (v3) as isize, velocity_y);
     } else {
         let v1: i32 = k as i32 >> 1;
-        if (enemy!(ctx, (v1) as isize, behavior_a) & 0x8000) != 0 {
-            v2 = 48;
+        let v2: i16 = if (enemy!(ctx, (v1) as isize, behavior_a) & 0x8000) != 0 {
+            48
         } else {
-            v2 = -48i16;
-        }
+            -48
+        };
         enemy_add!(ctx, (v1) as isize, velocity_x, v2 as u16);
     };
 }
@@ -624,9 +618,9 @@ pub fn golden_torizo_egg_hit_wall_pre_instruction(k: u16, ctx: &mut impl Host) {
 }
 
 pub fn golden_torizo_super_missile_thrown_pre_instruction(k: u16, ctx: &mut impl Host) {
-    let mut v1: i32 = 0;
+    let v1: i32;
     if move_horizontally_with_block_collision(k, ctx) != 0 || {
-        let mut carry: u8 = move_vertically_with_block_collision(k, ctx);
+        let carry: u8 = move_vertically_with_block_collision(k, ctx);
         v1 = k as i32 >> 1;
         (enemy!(ctx, (v1) as isize, velocity_y) & 0x8000) == 0 && carry != 0
     } {
@@ -1001,7 +995,7 @@ pub fn bomb_torizo_drool_falling_pre_instruction(v0: u16, ctx: &mut impl Host) {
         enemy!(ctx, 1 => (v6) as isize, delay);
     } else {
         let v1: i32 = v0 as i32 >> 1;
-        let mut v2: i16 = enemy!(ctx, (v1) as isize, velocity_x) as i16;
+        let v2: i16 = enemy!(ctx, (v1) as isize, velocity_x) as i16;
         if v2 >= 0 {
             let mut v4: i16 = (v2).wrapping_sub(4);
             if v4 < 0 {
@@ -1104,7 +1098,7 @@ pub fn crocomire_spike_wall_pieces_pre_instruction(k: u16, ctx: &mut impl Host) 
         }
     }
     enemy!(ctx, v2 => (v1) as isize, behavior_a);
-    let mut v3: i8 = enemy_byte!(ctx, k as isize + 1, behavior_a) as i8;
+    let v3: i8 = enemy_byte!(ctx, k as isize + 1, behavior_a) as i8;
     let mut v4: bool = u8::overflowing_add(enemy_byte!(ctx, k as isize, velocity_x), v3 as u8).1;
     {
         let index = k as isize;
@@ -1117,7 +1111,7 @@ pub fn crocomire_spike_wall_pieces_pre_instruction(k: u16, ctx: &mut impl Host) 
         v5 = CROCOMIRE_SPIKE_WALL_PIECES_TAB3[k as usize] as u8;
     }
     enemy_byte!(ctx, k as isize + 1, velocity_x = v5);
-    let mut v6: i8 = enemy_byte!(ctx, k as isize, velocity_x) as i8;
+    let v6: i8 = enemy_byte!(ctx, k as isize, velocity_x) as i8;
     v4 = u8::overflowing_add(enemy_byte!(ctx, k as isize + 1, x_fraction), v6 as u8).1;
     {
         let index = k as isize + 1;
@@ -1125,10 +1119,10 @@ pub fn crocomire_spike_wall_pieces_pre_instruction(k: u16, ctx: &mut impl Host) 
         let value = (old as i32 + v6 as i32) as u8;
         enemy_byte!(ctx, index, x_fraction = value);
     }
-    let mut v7: i8 = enemy_byte!(ctx, k as isize + 1, velocity_x) as i8;
+    let v7: i8 = enemy_byte!(ctx, k as isize + 1, velocity_x) as i8;
     let v9: bool = v4;
     v4 = u8::overflowing_add(v4 as u8, v7 as u8).1;
-    let mut v8: i8 = (v9 as i32 + v7 as i32) as i8;
+    let v8: i8 = (v9 as i32 + v7 as i32) as i8;
     v4 = (v4 as i32 | u8::overflowing_add(enemy_byte!(ctx, k as isize, x), v8 as u8).1 as i32) != 0;
     {
         let index = k as isize;
@@ -1247,8 +1241,8 @@ pub fn phantoon_flame_rain_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let apply_gravity: bool = (enemy!(ctx, (v1) as isize, velocity_x) == 0)
         || ({
-            let mut v2: bool = enemy!(ctx, (v1) as isize, velocity_x) == 1;
-            let mut v3: bool =
+            let v2: bool = enemy!(ctx, (v1) as isize, velocity_x) == 1;
+            let v3: bool =
                 (enemy_add!(ctx, (v1) as isize, velocity_x, (-1i16) as u16) & 0x8000) != 0;
             (v2 || v3)
                 && ({
@@ -1461,7 +1455,7 @@ pub fn tourian_statue_soul_pre_instruction(k: u16, ctx: &mut impl Host) {
 /// A lavaquake rock rising and slowing. Was `Eproj_NorfairLavaquakeRocks_Func1`.
 pub fn polyp_rock_rise(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
-    let mut v2: i16 = (enemy!(ctx, (v1) as isize, velocity_y) as i32 - 2i32) as i16;
+    let v2: i16 = (enemy!(ctx, (v1) as isize, velocity_y) as i32 - 2i32) as i16;
     enemy!(ctx, v2 as u16 => (v1) as isize, velocity_y);
     if v2 >= 0 {
         for n in (1i32..=2).rev() {
@@ -1653,7 +1647,7 @@ pub fn falling_tube_burst(k: u16, ctx: &mut impl Host) {
 pub fn falling_tube_fall(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     enemy_add!(ctx, (v1) as isize, velocity_y, 6);
-    let mut v2: i16 = move_with_y_velocity(k, ctx) as i16;
+    let v2: i16 = move_with_y_velocity(k, ctx) as i16;
     if (v2 as i32 - 208i32) & 0x8000 == 0 {
         enemy!(ctx, 0 => (v1) as isize, definition);
         ctx.session_mut().enemy_projectiles.spawn.point = Point {

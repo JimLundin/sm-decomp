@@ -130,14 +130,14 @@ pub fn turret_bullet_step_direction(v0: u16, ctx: &mut impl Host) {
 
 pub fn is_turret_on_screen(k: u16, ctx: &mut impl Host) -> u8 {
     let v1: i32 = k as i32 >> 1;
-    let mut v2: i16 = enemy!(ctx, (v1) as isize, y) as i16;
+    let v2: i16 = enemy!(ctx, (v1) as isize, y) as i16;
     let result: u8 = 1;
     if v2 >= 0 {
-        let mut v3: i16 = (v2 as i32 + 16 - ctx.inputs().camera_y as i32) as i16;
+        let v3: i16 = (v2 as i32 + 16 - ctx.inputs().camera_y as i32) as i16;
         if v3 >= 0 && (v3 as i32 - 256i32) & 0x8000 != 0 {
-            let mut v4: i16 = enemy!(ctx, (v1) as isize, x) as i16;
+            let v4: i16 = enemy!(ctx, (v1) as isize, x) as i16;
             if v4 >= 0 {
-                let mut v5: i16 = (v4 as i32 + 4 - ctx.inputs().camera_x as i32) as i16;
+                let v5: i16 = (v4 as i32 + 4 - ctx.inputs().camera_x as i32) as i16;
                 if v5 >= 0 && (v5 as i32 - 264i32) & 0x8000 != 0 {
                     return 0;
                 }
@@ -253,9 +253,9 @@ pub fn check_for_blue_ring_collision_with_room(k: u16, ctx: &mut impl Host) -> u
     if (enemy!(ctx, (v1) as isize, y) as i32 - 32i32) & 0x8000 == 0
         && enemy!(ctx, (v1) as isize, y) < 0xd8
     {
-        let mut v2: i16 = enemy!(ctx, (v1) as isize, x) as i16;
+        let v2: i16 = enemy!(ctx, (v1) as isize, x) as i16;
         if v2 >= 0 {
-            let mut v3: i16 = (v2 as i32 - ctx.inputs().camera_x as i32) as i16;
+            let v3: i16 = (v2 as i32 - ctx.inputs().camera_x as i32) as i16;
             if v3 >= 0 && (v3 as i32 - 248i32) & 0x8000 != 0 {
                 return 0;
             }
@@ -360,10 +360,10 @@ pub fn is_off_screen(k: u16, ctx: &mut impl Host) -> u16 {
 /// Was `Eproj_FuncE722`.
 pub fn outside_512_pixel_square(k: u16, ctx: &mut impl Host) -> u16 {
     let v1: i32 = k as i32 >> 1;
-    let mut v2: i16 = enemy!(ctx, (v1) as isize, x) as i16;
+    let v2: i16 = enemy!(ctx, (v1) as isize, x) as i16;
     let result: u16 = 1;
     if v2 >= 0 && (v2 as i32 - 512i32) & 0x8000 != 0 {
-        let mut v3: i16 = enemy!(ctx, (v1) as isize, y) as i16;
+        let v3: i16 = enemy!(ctx, (v1) as isize, y) as i16;
         if v3 >= 0 && (v3 as i32 - 512i32) & 0x8000 != 0 {
             return 0;
         }

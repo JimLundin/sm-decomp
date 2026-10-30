@@ -211,7 +211,7 @@ pub fn init_ridleys_fireball(j: u16, ctx: &mut impl Host) {
 }
 
 pub fn init_phantoon_destroyable_flames(j: u16, ctx: &mut impl Host) {
-    let mut v1: i8 = ((ctx.session().enemy_projectiles.spawn.primary & 0xff00) >> 8) as i8;
+    let v1: i8 = ((ctx.session().enemy_projectiles.spawn.primary & 0xff00) >> 8) as i8;
     match v1 as i32 {
         0 => {
             let v2: i32 = j as i32 >> 1;
@@ -351,7 +351,6 @@ pub fn init_pirate_claw(j: u16, ctx: &mut impl Host) {
 }
 
 pub fn init_bomb_torizo_continuous_drool(j: u16, ctx: &mut impl Host) {
-    let mut v5: u16 = 0;
     let v1: i32 = j as i32 >> 1;
     enemy!(ctx, 0 => (v1) as isize, graphics);
     let value = native_setup_word(
@@ -363,22 +362,18 @@ pub fn init_bomb_torizo_continuous_drool(j: u16, ctx: &mut impl Host) {
     ctx.next_random();
     let v2 = ctx.inputs().current_enemy as i32 as u16;
     enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v2), Le).y.whole).wrapping_sub(5) => (v1) as isize, y);
-    let mut parameter_1: i16 = ctx.resolve_actor(Key::from_legacy(v2), Le).parameters[0] as i16;
-    let mut v4: u16 = if (parameter_1 as u16 & 0x4000) != 0 {
+    let parameter_1: i16 = ctx.resolve_actor(Key::from_legacy(v2), Le).parameters[0] as i16;
+    let v4: u16 = if (parameter_1 as u16 & 0x4000) != 0 {
         ctx.inputs().random & 0x1fe
     } else {
-        if parameter_1 < 0 {
-            v5 = 32;
-        } else {
-            v5 = 224;
-        }
+        let v5: u16 = if parameter_1 < 0 { 32 } else { 224 };
         (2 * (v5 as i32 + (ctx.inputs().random as i32 & 0xf) - 8i32)) as u16
     };
     let v6: i32 = v4 as i32 >> 1;
     enemy!(ctx, kSinCosTable8bit_Sext[(v6 + 64) as usize] as u16 => (v1) as isize, velocity_x);
     enemy!(ctx, kSinCosTable8bit_Sext[v6 as usize] as u16 => (v1) as isize, velocity_y);
     let v7 = ctx.inputs().current_enemy as i32 as u16;
-    let mut v8: u16 = if (ctx.resolve_actor(Key::from_legacy(v7), Le).parameters[0] & 0x8000) != 0 {
+    let v8: u16 = if (ctx.resolve_actor(Key::from_legacy(v7), Le).parameters[0] & 0x8000) != 0 {
         (ctx.resolve_actor(Key::from_legacy(v7), Le).x.whole).wrapping_add(8)
     } else {
         (ctx.resolve_actor(Key::from_legacy(v7), Le).x.whole as i32 - 8i32) as u16
@@ -406,7 +401,7 @@ pub fn init_bomb_torizo_explosive_swipe(j: u16, ctx: &mut impl Host) {
 
 pub fn init_bomb_torizo_statue_breaking(j: u16, ctx: &mut impl Host) {
     calculate_coordinates(ctx.session().mechanisms.selected, ctx);
-    let mut v1: i8 = ctx.session().enemy_projectiles.spawn.primary as i8;
+    let v1: i8 = ctx.session().enemy_projectiles.spawn.primary as i8;
     let v2: i32 = ctx.session().enemy_projectiles.spawn.primary as i32 >> 1;
     let v3: i32 = j as i32 >> 1;
     let value = native_setup_word(0xa7ab, v2 as isize, ctx);
@@ -814,10 +809,6 @@ pub fn init_botwoon_spit(j: u16, ctx: &mut impl Host) {
 }
 
 pub fn init_falling_spark(j: u16, ctx: &mut impl Host) {
-    static FALLING_SPARK_VELOCITIES: [u16; 14] = [
-        0xffff, 0xb800, 0xffff, 0xc000, 0xffff, 0xe000, 0xffff, 0xff00, 0, 0x100, 0, 0x2000, 0,
-        0x4000,
-    ];
     let v2: i32 = j as i32 >> 1;
     enemy!(ctx, ADDR_K_ENEMY_DEF_F353 as u16 => (v2) as isize, program);
     let v3 = ctx.inputs().current_enemy as i32 as u16;
@@ -1113,8 +1104,8 @@ pub fn init_bomb_torizo_initial_drool(j: u16, ctx: &mut impl Host) {
     enemy!(ctx, (ctx.inputs().random & 0x1f).wrapping_add(48) => (v1) as isize, velocity_y);
 
     ctx.next_random();
-    let mut v3: i16 = ((ctx.inputs().random) as i16) & (3i16);
-    let mut parameter_1: i16 = ctx.resolve_actor(Key::from_legacy(v2), Le).parameters[0] as i16;
+    let v3: i16 = ((ctx.inputs().random) as i16) & (3i16);
+    let parameter_1: i16 = ctx.resolve_actor(Key::from_legacy(v2), Le).parameters[0] as i16;
     if (parameter_1 as u16 & 0x4000) != 0 {
         enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v2), Le).x.whole as i32 + v3 as i32) as u16 => (v1) as isize, x);
         enemy!(ctx, 0 => (v1) as isize, velocity_x);
