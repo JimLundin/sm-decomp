@@ -13,13 +13,11 @@ pub enum Setup {
 }
 
 fn surface(c: &mut impl Host) {
-    {
-        c.session_mut().player.contact.momentum = 0;
-        c.session_mut().player.contact.speed_boost = 0;
-        c.session_mut().projectiles.controls.echo_sound = 0;
-        c.session_mut().player.contact.extra_run.fraction = 0;
-        c.session_mut().player.contact.extra_run.whole = 0;
-    };
+    c.session_mut().player.contact.momentum = 0;
+    c.session_mut().player.contact.speed_boost = 0;
+    c.session_mut().projectiles.controls.echo_sound = 0;
+    c.session_mut().player.contact.extra_run.fraction = 0;
+    c.session_mut().player.contact.extra_run.whole = 0;
     c.session_mut().player.contact.base_run.fraction &= 0x7fff;
     c.session_mut().player.contact.base_run.whole = 0;
     let suited = c.session().inventory.equipment.active & 0x20 != 0;
@@ -35,19 +33,15 @@ fn surface(c: &mut impl Host) {
         1 => {
             let limit = if suited { 0x380 } else { 0x280 };
             if limit < c.session().player.contact.y_speed.middle() {
-                {
-                    c.session_mut().player.contact.y_speed.fraction = 0;
-                    c.session_mut().player.contact.y_speed.whole = 0;
-                };
+                c.session_mut().player.contact.y_speed.fraction = 0;
+                c.session_mut().player.contact.y_speed.whole = 0;
                 c.session_mut().player.contact.y_speed.set_middle(limit);
             }
         }
         _ => {}
     }
-    {
-        c.session_mut().player.contact.external_y.fraction = 0;
-        c.session_mut().player.contact.external_y.whole = 0;
-    };
+    c.session_mut().player.contact.external_y.fraction = 0;
+    c.session_mut().player.contact.external_y.whole = 0;
     c.session_mut()
         .player
         .contact

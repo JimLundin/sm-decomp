@@ -171,9 +171,7 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + ?Sized>(
             object.a = position as u16;
             object.b = (position >> 16) as u16;
             if object.b == 0xff10 {
-                {
-                    game.spawn_hardcoded_plm(6, 12, 0xb773);
-                }
+                game.spawn_hardcoded_plm(6, 12, 0xb773);
                 game.set_event_happened(0xa);
                 advance_statue_program(object);
             }

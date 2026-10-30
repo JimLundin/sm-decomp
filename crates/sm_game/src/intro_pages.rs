@@ -178,13 +178,11 @@ pub fn spawn_marker<H: crate::menus::host::Host + ?Sized>(
 }
 
 fn page_input_ready<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> bool {
-    {
-        if word!(game.INTRO_JAPANESE_TEXT_TIMER) != 0 {
-            word!(game.INTRO_JAPANESE_TEXT_TIMER -= 1);
-            false
-        } else {
-            word!(game.JOYPAD1_NEWKEYS) != 0
-        }
+    if word!(game.INTRO_JAPANESE_TEXT_TIMER) != 0 {
+        word!(game.INTRO_JAPANESE_TEXT_TIMER -= 1);
+        false
+    } else {
+        word!(game.JOYPAD1_NEWKEYS) != 0
     }
 }
 
@@ -553,15 +551,13 @@ pub fn fade_out_to_ceres<H: crate::menus::host::Host + ?Sized>(restore_samus: bo
 }
 
 pub fn finish_pages<H: crate::menus::host::Host + ?Sized>(j: u16, game: &mut H) -> u16 {
-    {
-        crate::flow::set(
-            game,
-            crate::flow::Word::CinematicFunction,
-            (0x8bb72fi32) as u16,
-        );
-        word! { game, 1; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
-        j
-    }
+    crate::flow::set(
+        game,
+        crate::flow::Word::CinematicFunction,
+        (0x8bb72fi32) as u16,
+    );
+    word! { game, 1; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
+    j
 }
 
 // The text glow objects' tables, by byte offset (RAM map $19F7..$1A46).

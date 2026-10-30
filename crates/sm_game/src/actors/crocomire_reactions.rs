@@ -1131,9 +1131,7 @@ pub fn behind_wall_wait_for_samus<H: Host + ?Sized>(game: &mut H) {
     }
     game.queue_music_delayed(5);
     game.lease().write_slice_native(SCROLLS_3_4, 256);
-    {
-        game.spawn_plm(0x30, WALL_ROW, CREATE_INVISIBLE_WALL);
-    }
+    game.spawn_plm(0x30, WALL_ROW, CREATE_INVISIBLE_WALL);
     word!(game.CAMERA_DISTANCE_INDEX = 6);
     let mut runtime = game.lease();
     // Fixed, disjoint records; no callback or fallible operation between these writes.
@@ -1276,9 +1274,7 @@ pub fn skeleton_falls_apart<H: Host + ?Sized>(game: &mut H) {
             }
         });
     if finished {
-        {
-            game.spawn_plm(0x30, WALL_ROW, CLEAR_INVISIBLE_WALL);
-        }
+        game.spawn_plm(0x30, WALL_ROW, CLEAR_INVISIBLE_WALL);
         game.scatter_crocomire_drop(0);
         advance_death_sequence(game);
     }
@@ -1304,9 +1300,7 @@ pub fn unlock_camera<H: Host + ?Sized>(game: &mut H) {
         runtime.write_slice_native(SCROLLS_0_1, 257);
         runtime.write_slice_native(SCROLLS_2_3, 257);
     }
-    {
-        game.spawn_plm(0x1e, WALL_ROW, CLEAR_INVISIBLE_WALL);
-    }
+    game.spawn_plm(0x1e, WALL_ROW, CLEAR_INVISIBLE_WALL);
     advance_death_sequence(game);
 }
 
@@ -1422,9 +1416,7 @@ fn clear_tilemap<L: Lease + ?Sized>(game: &mut L) {
 /// Crocomire main AI - death sequence index 56h - dead due to room entry ($A4:8C90). Was
 /// `reset_scroll`.
 fn dead_from_room_entry<L: Lease + ?Sized>(game: &mut L) {
-    {
-        word! { game, 0; REG_BG2HOFS, REG_BG2VOFS }
-    }
+    word! { game, 0; REG_BG2HOFS, REG_BG2VOFS }
 }
 fn spawn_random_dust<L: Lease + ?Sized>(game: &mut L) {
     let random = word!(game.RANDOM_NUMBER);

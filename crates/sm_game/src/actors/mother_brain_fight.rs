@@ -2349,10 +2349,8 @@ pub fn body_unpause_hook(game: &mut impl State) -> CoroutineRet {
     COROUTINE_NONE as CoroutineRet
 }
 pub fn draw_brain_and_neck_hook(game: &mut impl Lease) {
-    {
-        draw_brain(game);
-        draw_neck(game);
-    }
+    draw_brain(game);
+    draw_neck(game);
 }
 pub fn body_phase1(game: &mut impl Lease) {
     {
@@ -2634,16 +2632,12 @@ pub fn aim_blue_rings(x: u16, y: u16, game: &mut impl State) {
         } else {
             ((v0 as i32 + 64) & 0x80 != 0)
                 || ({
-                    {
-                        v0 = u16::from_ne_bytes([16, v0.to_ne_bytes()[1]]);
-                    }
+                    v0 = u16::from_ne_bytes([16, v0.to_ne_bytes()[1]]);
                     false
                 })
         };
         if clamp_ring_angle {
-            {
-                v0 = u16::from_ne_bytes([72, v0.to_ne_bytes()[1]]);
-            }
+            v0 = u16::from_ne_bytes([72, v0.to_ne_bytes()[1]]);
         }
         session_slot!(game, MotherBrainBody[0i32].ring_target_angle = v0);
     }
@@ -2655,14 +2649,12 @@ crate::dispatch::forward_calls! { pub fn (game: &mut impl Lease);
         generate_body_explosions(8, ADDR_WORD_A9B109 as u16, 4, game);
 }
 pub fn explode_escape_door(game: &mut impl Lease) {
-    {
-        for v0 in 0u16..8 {
-            spawn_room_projectile(
-                ADDR_K_EPROJ_MOTHER_BRAIN_EXPLODED_ESCAPE_DOOR as u16,
-                v0,
-                game,
-            );
-        }
+    for v0 in 0u16..8 {
+        spawn_room_projectile(
+            ADDR_K_EPROJ_MOTHER_BRAIN_EXPLODED_ESCAPE_DOOR as u16,
+            v0,
+            game,
+        );
     }
 }
 pub fn samus_collision_detection(game: &mut impl Lease) {
@@ -2761,21 +2753,19 @@ pub fn determine_shot_reaction_type(game: &mut impl State) -> u16 {
         & 7) as usize] as u16
 }
 pub fn hurt_samus(game: &mut impl Lease) {
-    {
-        deal_contact_damage(game);
-        word!(game.SAMUS_INVINCIBILITY_TIMER = 96);
-        word!(game.SAMUS_KNOCKBACK_TIMER = 5);
-        word!(
-            game.KNOCKBACK_X_DIR = (((game.player_x()) as i16).wrapping_sub(
-                (session_slot!(
-                    game,
-                    MotherBrainBody[word!(game.CUR_ENEMY_INDEX) as i32]
-                        .base
-                        .x_pos
-                )) as i16,
-            ) >= 0) as u16
-        );
-    }
+    deal_contact_damage(game);
+    word!(game.SAMUS_INVINCIBILITY_TIMER = 96);
+    word!(game.SAMUS_KNOCKBACK_TIMER = 5);
+    word!(
+        game.KNOCKBACK_X_DIR = (((game.player_x()) as i16).wrapping_sub(
+            (session_slot!(
+                game,
+                MotherBrainBody[word!(game.CUR_ENEMY_INDEX) as i32]
+                    .base
+                    .x_pos
+            )) as i16,
+        ) >= 0) as u16
+    );
 }
 pub fn decide_phase2_attack_strategy(game: &mut impl Lease) -> u8 {
     {
@@ -2813,32 +2803,28 @@ pub fn decide_phase2_attack_strategy(game: &mut impl Lease) -> u8 {
     }
 }
 pub fn firing_bomb_decide_on_crouching(game: &mut impl Lease) {
-    {
-        if game.foreign(|game| game.next_random()) >= 0x8000 {
-            session_slot!(
-                game,
-                MotherBrainBody[0i32].function = function::FIRING_BOMB_CROUCH
-            );
-            firing_bomb_crouch(game);
-        } else {
-            firing_bomb_fire(game);
-        };
-    }
-}
-pub fn firing_bomb_fire(game: &mut impl State) {
-    {
-        let mut v0: u16 = animation::BRAIN_BOMB_PHASE_2;
-        let e: i32 = 0;
-        if session_slot!(game, MotherBrainBody[e].corpse_state) != 0 {
-            v0 = animation::BRAIN_BOMB_PHASE_3;
-        }
-        set_brain_instruction_list(v0, game);
+    if game.foreign(|game| game.next_random()) >= 0x8000 {
         session_slot!(
             game,
-            MotherBrainBody[e].function = function::FIRING_BOMB_FIRED_BOMB
+            MotherBrainBody[0i32].function = function::FIRING_BOMB_CROUCH
         );
-        session_slot!(game, MotherBrainBody[e].function_timer = 44);
+        firing_bomb_crouch(game);
+    } else {
+        firing_bomb_fire(game);
+    };
+}
+pub fn firing_bomb_fire(game: &mut impl State) {
+    let mut v0: u16 = animation::BRAIN_BOMB_PHASE_2;
+    let e: i32 = 0;
+    if session_slot!(game, MotherBrainBody[e].corpse_state) != 0 {
+        v0 = animation::BRAIN_BOMB_PHASE_3;
     }
+    set_brain_instruction_list(v0, game);
+    session_slot!(
+        game,
+        MotherBrainBody[e].function = function::FIRING_BOMB_FIRED_BOMB
+    );
+    session_slot!(game, MotherBrainBody[e].function_timer = 44);
 }
 pub fn firing_bomb_finish(game: &mut impl State) {
     let mut v0: u16 = function::PHASE_2_THINKING;
@@ -2878,27 +2864,23 @@ pub fn phase2_firing_hand_beam_wait_for_any_active_bombs(game: &mut impl State) 
 }
 pub fn phase2_firing_hand_beam_idle(_game: &mut impl State) {}
 pub fn phase2_firing_hand_beam_finish(game: &mut impl State) {
-    {
-        set_brain_instruction_list(animation::BRAIN_NEUTRAL_PHASE_2, game);
-        let e1: i32 = BRAIN;
-        session_slot!(game, MotherBrainBrain[e1].lower_motion = 2);
-        session_slot!(game, MotherBrainBrain[e1].upper_motion = 4);
-        let e: i32 = 0;
-        session_slot!(game, MotherBrainBody[e].hand_beam_phase = 0);
-        session_slot!(
-            game,
-            MotherBrainBody[e].function = function::PHASE_2_THINKING
-        );
-    }
+    set_brain_instruction_list(animation::BRAIN_NEUTRAL_PHASE_2, game);
+    let e1: i32 = BRAIN;
+    session_slot!(game, MotherBrainBrain[e1].lower_motion = 2);
+    session_slot!(game, MotherBrainBrain[e1].upper_motion = 4);
+    let e: i32 = 0;
+    session_slot!(game, MotherBrainBody[e].hand_beam_phase = 0);
+    session_slot!(
+        game,
+        MotherBrainBody[e].function = function::PHASE_2_THINKING
+    );
 }
 pub fn walk_backwards_slowly_and_retract_head(a: u16, game: &mut impl Lease) -> u8 {
-    {
-        let rv: u8 = make_walk_backwards(a, 0xa, game);
-        if rv != 0 {
-            retract_head(game);
-        }
-        rv
+    let rv: u8 = make_walk_backwards(a, 0xa, game);
+    if rv != 0 {
+        retract_head(game);
     }
+    rv
 }
 pub fn move_samus_towards_wall_due_to_rainbow_beam(game: &mut impl Lease) -> u8 {
     {
@@ -2914,13 +2896,11 @@ pub fn move_samus_towards_wall_due_to_rainbow_beam(game: &mut impl Lease) -> u8 
     }
 }
 pub fn move_samus_towards_middle_of_wall(game: &mut impl Lease) {
-    {
-        let mut v0: u16 = 64;
-        if (124i16).wrapping_sub((game.player_y()) as i16) < 0 {
-            v0 = -64i32 as u16;
-        }
-        move_samus_vertically_towards_ceiling_floor(v0, game);
+    let mut v0: u16 = 64;
+    if (124i16).wrapping_sub((game.player_y()) as i16) < 0 {
+        v0 = -64i32 as u16;
     }
+    move_samus_vertically_towards_ceiling_floor(v0, game);
 }
 pub fn move_samus_for_falling_after_rainbow_beam(game: &mut impl Lease) -> u8 {
     {
@@ -2941,37 +2921,33 @@ pub fn reset_body_rainbow_beam_palette_animation(game: &mut impl State) {
     session_slot!(game, MotherBrainBrain[BRAIN].beam_palette_index = 0);
 }
 pub fn write_default_palette(game: &mut impl State) {
-    {
-        copy_rom_colors_to_palette(
-            cgram::BG_PALETTE_4,
-            BANK,
-            (ADDR_K_MOTHER_BRAINS_BRAIN_PALETTE as i32 + 2) as u16,
-            0xf,
-            game,
-        );
-        copy_rom_colors_to_palette(
-            cgram::SPRITE_PALETTE_1,
-            BANK,
-            (ADDR_K_MOTHER_BRAINS_BRAIN_PALETTE as i32 + 2) as u16,
-            0xf,
-            game,
-        );
-        copy_rom_colors_to_palette(
-            cgram::SPRITE_PALETTE_3,
-            BANK,
-            (ADDR_K_MOTHER_BRAIN_PALETTE_0 as i32 + 2) as u16,
-            0xf,
-            game,
-        );
-    }
+    copy_rom_colors_to_palette(
+        cgram::BG_PALETTE_4,
+        BANK,
+        (ADDR_K_MOTHER_BRAINS_BRAIN_PALETTE as i32 + 2) as u16,
+        0xf,
+        game,
+    );
+    copy_rom_colors_to_palette(
+        cgram::SPRITE_PALETTE_1,
+        BANK,
+        (ADDR_K_MOTHER_BRAINS_BRAIN_PALETTE as i32 + 2) as u16,
+        0xf,
+        game,
+    );
+    copy_rom_colors_to_palette(
+        cgram::SPRITE_PALETTE_3,
+        BANK,
+        (ADDR_K_MOTHER_BRAIN_PALETTE_0 as i32 + 2) as u16,
+        0xf,
+        game,
+    );
 }
 pub fn write_phase2_death_palette(game: &mut impl Lease) {
-    {
-        write_mother_brain_palette(
-            mother_brain_tables::rainbow_beam_palette(game, 6).colors,
-            game,
-        );
-    }
+    write_mother_brain_palette(
+        mother_brain_tables::rainbow_beam_palette(game, 6).colors,
+        game,
+    );
 }
 pub fn spawn_baby_metroid_in_cutscene(game: &mut impl Lease) {
     session_slot!(
@@ -3007,15 +2983,13 @@ crate::dispatch::callback_dispatch! {
     }
 }
 pub fn maybe_stand_up_or_lean_down(game: &mut impl State) {
-    {
-        let mbn_var_02: u16 = session_slot!(game, MotherBrainBody[0i32].pose);
-        if mbn_var_02 != 0 {
-            if mbn_var_02 == 6 && (word!(game.RANDOM_NUMBER) as u8) >= 0xc0 {
-                make_stand_up(game);
-            }
-        } else if (word!(game.RANDOM_NUMBER) as u8) >= 0xc0 {
-            make_lean_down(game);
+    let mbn_var_02: u16 = session_slot!(game, MotherBrainBody[0i32].pose);
+    if mbn_var_02 != 0 {
+        if mbn_var_02 == 6 && (word!(game.RANDOM_NUMBER) as u8) >= 0xc0 {
+            make_stand_up(game);
         }
+    } else if (word!(game.RANDOM_NUMBER) as u8) >= 0xc0 {
+        make_lean_down(game);
     }
 }
 crate::dispatch::address_dispatch! {
@@ -3028,13 +3002,11 @@ crate::dispatch::address_dispatch! {
     }
 }
 pub fn phase3_walking_handler(game: &mut impl Lease) {
-    {
-        if session_slot!(game, MotherBrainBody[0i32].pose) == 0 {
-            run_walk_function(
-                ((session_slot!(game, MotherBrainBrain[BRAIN].walk_function)) as u32) | (BANK_BASE),
-                game,
-            );
-        }
+    if session_slot!(game, MotherBrainBody[0i32].pose) == 0 {
+        run_walk_function(
+            ((session_slot!(game, MotherBrainBrain[BRAIN].walk_function)) as u32) | (BANK_BASE),
+            game,
+        );
     }
 }
 pub fn set_walk_to_try_to_inch_forward(a: u16, game: &mut impl State) {
@@ -3175,29 +3147,27 @@ pub use crate::actors::mother_brain_neck::{
     handle_neck, retract_head, run_phase3 as phase3_neck_handler,
 };
 pub fn move_enemy_with_velocity(game: &mut impl State) {
-    {
-        let v0: i32 = word!(game.CUR_ENEMY_INDEX) as i32;
-        let ai_var_b: u16 = session_slot!(game, EnemyData[v0].ai_var_b);
-        let mut carry: i32 = session_slot!(byte game, EnemyData[v0].base.x_subpos[1]) as i32
-            + ai_var_b.to_ne_bytes()[0] as i32;
-        session_slot!(byte game, EnemyData[v0].base.x_subpos[1] = carry as u8);
-        session_slot!(
-            game,
-            EnemyData[v0].base.x_pos = (session_slot!(game, EnemyData[v0].base.x_pos) as i32
-                + ((ai_var_b >> 8) as i8 as i32 + (carry >> 8)))
-                as u16
-        );
-        let ai_var_c: u16 = session_slot!(game, EnemyData[v0].ai_var_c);
-        carry = session_slot!(byte game, EnemyData[v0].base.y_subpos[1]) as i32
-            + ai_var_c.to_ne_bytes()[0] as i32;
-        session_slot!(byte game, EnemyData[v0].base.y_subpos[1] = carry as u8);
-        session_slot!(
-            game,
-            EnemyData[v0].base.y_pos = (session_slot!(game, EnemyData[v0].base.y_pos) as i32
-                + ((ai_var_c >> 8) as i8 as i32 + (carry >> 8)))
-                as u16
-        );
-    }
+    let v0: i32 = word!(game.CUR_ENEMY_INDEX) as i32;
+    let ai_var_b: u16 = session_slot!(game, EnemyData[v0].ai_var_b);
+    let mut carry: i32 = session_slot!(byte game, EnemyData[v0].base.x_subpos[1]) as i32
+        + ai_var_b.to_ne_bytes()[0] as i32;
+    session_slot!(byte game, EnemyData[v0].base.x_subpos[1] = carry as u8);
+    session_slot!(
+        game,
+        EnemyData[v0].base.x_pos = (session_slot!(game, EnemyData[v0].base.x_pos) as i32
+            + ((ai_var_b >> 8) as i8 as i32 + (carry >> 8)))
+            as u16
+    );
+    let ai_var_c: u16 = session_slot!(game, EnemyData[v0].ai_var_c);
+    carry = session_slot!(byte game, EnemyData[v0].base.y_subpos[1]) as i32
+        + ai_var_c.to_ne_bytes()[0] as i32;
+    session_slot!(byte game, EnemyData[v0].base.y_subpos[1] = carry as u8);
+    session_slot!(
+        game,
+        EnemyData[v0].base.y_pos = (session_slot!(game, EnemyData[v0].base.y_pos) as i32
+            + ((ai_var_c >> 8) as i8 as i32 + (carry >> 8)))
+            as u16
+    );
 }
 pub fn set_body_instruction_list(a: u16, game: &mut impl State) {
     let e: i32 = 0;
@@ -3220,44 +3190,36 @@ pub fn set_enemy_instruction_list(k: u16, a: u16, game: &mut impl State) {
     session_slot!(game, EnemyData[v2].base.timer = 0);
 }
 pub fn make_walk_forwards(j: u16, a: u16, game: &mut impl State) -> u8 {
-    {
-        let e: i32 = 0;
-        if ((a) as i16).wrapping_sub((session_slot!(game, MotherBrainBody[e].base.x_pos)) as i16)
-            >= 0
-        {
-            if session_slot!(game, MotherBrainBody[e].pose) != 0 {
-                return 0;
-            }
-            if (session_slot!(game, MotherBrainBody[e].base.x_pos) as i32 - 128i32) & 0x8000 != 0 {
-                set_body_instruction_list(
-                    mother_brain_tables::walk_forwards(game, (j >> 1) as isize).instruction_list,
-                    game,
-                );
-                return 0;
-            }
+    let e: i32 = 0;
+    if ((a) as i16).wrapping_sub((session_slot!(game, MotherBrainBody[e].base.x_pos)) as i16) >= 0 {
+        if session_slot!(game, MotherBrainBody[e].pose) != 0 {
+            return 0;
         }
-        1
+        if (session_slot!(game, MotherBrainBody[e].base.x_pos) as i32 - 128i32) & 0x8000 != 0 {
+            set_body_instruction_list(
+                mother_brain_tables::walk_forwards(game, (j >> 1) as isize).instruction_list,
+                game,
+            );
+            return 0;
+        }
     }
+    1
 }
 pub fn make_walk_backwards(a: u16, j: u16, game: &mut impl State) -> u8 {
-    {
-        let e: i32 = 0;
-        if ((a) as i16).wrapping_sub((session_slot!(game, MotherBrainBody[e].base.x_pos)) as i16)
-            < 0
-        {
-            if session_slot!(game, MotherBrainBody[e].pose) != 0 {
-                return 0;
-            }
-            if (session_slot!(game, MotherBrainBody[e].base.x_pos) as i32 - 48i32) & 0x8000 == 0 {
-                set_body_instruction_list(
-                    mother_brain_tables::walk_backwards(game, (j >> 1) as isize).instruction_list,
-                    game,
-                );
-                return 0;
-            }
+    let e: i32 = 0;
+    if ((a) as i16).wrapping_sub((session_slot!(game, MotherBrainBody[e].base.x_pos)) as i16) < 0 {
+        if session_slot!(game, MotherBrainBody[e].pose) != 0 {
+            return 0;
         }
-        1
+        if (session_slot!(game, MotherBrainBody[e].base.x_pos) as i32 - 48i32) & 0x8000 == 0 {
+            set_body_instruction_list(
+                mother_brain_tables::walk_backwards(game, (j >> 1) as isize).instruction_list,
+                game,
+            );
+            return 0;
+        }
     }
+    1
 }
 pub fn make_stand_up(game: &mut impl State) -> u8 {
     {
@@ -3277,30 +3239,26 @@ pub fn make_stand_up(game: &mut impl State) -> u8 {
     }
 }
 pub fn make_crouch(game: &mut impl State) -> u8 {
-    {
-        let mbn_var_02: u16 = session_slot!(game, MotherBrainBody[0i32].pose);
-        if mbn_var_02 != 0 {
-            if mbn_var_02 == 3 {
-                return 1;
-            }
-        } else {
-            set_body_instruction_list(animation::BODY_CROUCH_SLOW, game);
+    let mbn_var_02: u16 = session_slot!(game, MotherBrainBody[0i32].pose);
+    if mbn_var_02 != 0 {
+        if mbn_var_02 == 3 {
+            return 1;
         }
-        0
+    } else {
+        set_body_instruction_list(animation::BODY_CROUCH_SLOW, game);
     }
+    0
 }
 pub fn make_lean_down(game: &mut impl State) -> u8 {
-    {
-        let mbn_var_02: u16 = session_slot!(game, MotherBrainBody[0i32].pose);
-        if mbn_var_02 != 0 {
-            if mbn_var_02 == 6 {
-                return 1;
-            }
-        } else {
-            set_body_instruction_list(animation::BODY_LEAN_DOWN, game);
+    let mbn_var_02: u16 = session_slot!(game, MotherBrainBody[0i32].pose);
+    if mbn_var_02 != 0 {
+        if mbn_var_02 == 6 {
+            return 1;
         }
-        0
+    } else {
+        set_body_instruction_list(animation::BODY_LEAN_DOWN, game);
     }
+    0
 }
 pub fn process_invincibility_palette(game: &mut impl State) {
     if session_slot!(game, MotherBrainBody[0i32].form) == 4 {
@@ -3316,31 +3274,27 @@ pub fn process_invincibility_palette(game: &mut impl State) {
     }
 }
 pub fn handle_room_palette(game: &mut impl Lease) {
-    {
-        let j: u16 = handle_room_palette_instruction_list(ROOM_PALETTE_INSTRUCTIONS, game);
-        if j != 0 {
-            write_room_palette(j, game);
-        }
+    let j: u16 = handle_room_palette_instruction_list(ROOM_PALETTE_INSTRUCTIONS, game);
+    if j != 0 {
+        write_room_palette(j, game);
     }
 }
 pub fn write_room_palette(j: u16, game: &mut impl State) {
-    {
-        copy_rom_colors_to_palette(cgram::BG_PALETTE_3_COLOUR_4, BANK, j, 12, game);
-        copy_rom_colors_to_palette(
-            cgram::BG_PALETTE_5_COLOUR_3,
-            BANK,
-            (j).wrapping_add(24),
-            12,
-            game,
-        );
-        copy_rom_colors_to_palette(
-            cgram::BG_PALETTE_7_COLOUR_3,
-            BANK,
-            (j).wrapping_add(24),
-            12,
-            game,
-        );
-    }
+    copy_rom_colors_to_palette(cgram::BG_PALETTE_3_COLOUR_4, BANK, j, 12, game);
+    copy_rom_colors_to_palette(
+        cgram::BG_PALETTE_5_COLOUR_3,
+        BANK,
+        (j).wrapping_add(24),
+        12,
+        game,
+    );
+    copy_rom_colors_to_palette(
+        cgram::BG_PALETTE_7_COLOUR_3,
+        BANK,
+        (j).wrapping_add(24),
+        12,
+        game,
+    );
 }
 pub fn handle_room_palette_instruction_list(a: u16, game: &mut impl Lease) -> u16 {
     {

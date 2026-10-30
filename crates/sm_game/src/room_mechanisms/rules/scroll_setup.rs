@@ -60,11 +60,9 @@ pub fn setup(c: &mut impl Host, slot: usize, kind: Setup) -> u8 {
                 .find(|&found| mechanism!(c, found, block) == block)
             else {
                 // Preserve the missing-scroll-target nonreturn after clearing the trigger block.
-                {
-                    c.diagnostic(Diagnostic::MissingScroll);
-                    loop {
-                        core::hint::spin_loop();
-                    }
+                c.diagnostic(Diagnostic::MissingScroll);
+                loop {
+                    core::hint::spin_loop();
                 }
             };
             if mechanism!(c, found, work0) & 0x8000 == 0 {

@@ -199,42 +199,40 @@ pub fn install<H: HudHost + ?Sized>(item: Item, game: &mut H) {
 
 /// Requires initialized display/DMA hardware and the native HUD definitions.
 pub fn initialize<H: HudHost + ?Sized>(game: &mut H) {
-    {
-        crate::display::sequence::register_writes! { game;
-            word(VMADDL as u16, TILEMAP_VRAM); word(VMAIN as u16, VRAM_INCREMENT_AFTER_HIGH);
-        }
-        setup_transfer(
-            u16::from_ne_bytes([1, 0x18]),
-            TOP_ROW_TILES,
-            TOP_ROW_BYTES,
-            game,
-        );
-        game.write_register(MDMAEN as u16, 2);
-        crate::word_transfers!(game, ascending, 96; le(HUD_TILEMAP, 0) <- table(INITIAL_TILES, 0));
-        for (item, mask) in [(Item::Xray, XRAY_SCOPE), (Item::Grapple, GRAPPLING_BEAM)] {
-            if game.equipped_items() & mask != 0 {
-                install(item, game);
-            }
-        }
-        for (index, item) in [Item::Missiles, Item::SuperMissiles, Item::PowerBombs]
-            .into_iter()
-            .enumerate()
-        {
-            if game.max_ammunition(index) != 0 {
-                install(item, game);
-            }
-        }
-        word! { game, 0; SAMUS_PREV_HEALTH, SAMUS_PREV_MISSILES, SAMUS_PREV_SUPER_MISSILES,
-        SAMUS_PREV_POWER_BOMBS, SAMUS_PREV_HUD_ITEM_INDEX, }
-        ammunition(true, game);
-        highlight(game.selected_item(), SELECTED_PALETTE, game);
-        highlight(
-            word!(game.SAMUS_PREV_HUD_ITEM_INDEX),
-            UNSELECTED_PALETTE,
-            game,
-        );
-        advance(game);
+    crate::display::sequence::register_writes! { game;
+        word(VMADDL as u16, TILEMAP_VRAM); word(VMAIN as u16, VRAM_INCREMENT_AFTER_HIGH);
     }
+    setup_transfer(
+        u16::from_ne_bytes([1, 0x18]),
+        TOP_ROW_TILES,
+        TOP_ROW_BYTES,
+        game,
+    );
+    game.write_register(MDMAEN as u16, 2);
+    crate::word_transfers!(game, ascending, 96; le(HUD_TILEMAP, 0) <- table(INITIAL_TILES, 0));
+    for (item, mask) in [(Item::Xray, XRAY_SCOPE), (Item::Grapple, GRAPPLING_BEAM)] {
+        if game.equipped_items() & mask != 0 {
+            install(item, game);
+        }
+    }
+    for (index, item) in [Item::Missiles, Item::SuperMissiles, Item::PowerBombs]
+        .into_iter()
+        .enumerate()
+    {
+        if game.max_ammunition(index) != 0 {
+            install(item, game);
+        }
+    }
+    word! { game, 0; SAMUS_PREV_HEALTH, SAMUS_PREV_MISSILES, SAMUS_PREV_SUPER_MISSILES,
+    SAMUS_PREV_POWER_BOMBS, SAMUS_PREV_HUD_ITEM_INDEX, }
+    ammunition(true, game);
+    highlight(game.selected_item(), SELECTED_PALETTE, game);
+    highlight(
+        word!(game.SAMUS_PREV_HUD_ITEM_INDEX),
+        UNSELECTED_PALETTE,
+        game,
+    );
+    advance(game);
 }
 
 fn ammunition<H: HudFrameHost + ?Sized>(initial: bool, game: &mut H) {

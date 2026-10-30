@@ -87,14 +87,12 @@ pub fn init_mini_kraid_spikes(j: u16, a: u16, ctx: &mut impl Host) {
 }
 
 pub fn init_kihunter_acid_spit(k: u16, j: u16, ctx: &mut impl Host) {
-    {
-        let v2: i32 = j as i32 >> 1;
-        enemy!(ctx, 0 => (v2) as isize, velocity_y);
-        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(k), Le).y.whole as i32 - 16i32) as u16 => (v2) as isize, y);
+    let v2: i32 = j as i32 >> 1;
+    enemy!(ctx, 0 => (v2) as isize, velocity_y);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(k), Le).y.whole as i32 - 16i32) as u16 => (v2) as isize, y);
 
-        enemy!(ctx, 0 => (v2) as isize, y_fraction);
-        enemy!(ctx, 0 => (v2) as isize, x_fraction);
-    }
+    enemy!(ctx, 0 => (v2) as isize, y_fraction);
+    enemy!(ctx, 0 => (v2) as isize, x_fraction);
 }
 
 pub fn init_work_robot_laser(k: u16, j: u16, ctx: &mut impl Host) {
@@ -139,14 +137,12 @@ pub fn init_work_robot_laser(k: u16, j: u16, ctx: &mut impl Host) {
 }
 
 pub fn init_shot_gate(j: u16, v1: u16, ctx: &mut impl Host) {
-    {
-        let v2: u16 = ctx.session().mechanisms.selected;
-        calculate_coordinates(ctx.session().mechanisms.selected, ctx);
-        let v3: i32 = j as i32 >> 1;
-        enemy!(ctx, block_index(v2, ctx) => (v3) as isize, behavior_a);
-        enemy!(ctx, (16u16).wrapping_mul(ctx.session().mechanisms.block_x) => (v3) as isize, x);
-        enemy!(ctx, (v1 as i32 + 16 * ctx.session().mechanisms.block_y as i32) as u16 => (v3) as isize, y);
-    }
+    let v2: u16 = ctx.session().mechanisms.selected;
+    calculate_coordinates(ctx.session().mechanisms.selected, ctx);
+    let v3: i32 = j as i32 >> 1;
+    enemy!(ctx, block_index(v2, ctx) => (v3) as isize, behavior_a);
+    enemy!(ctx, (16u16).wrapping_mul(ctx.session().mechanisms.block_x) => (v3) as isize, x);
+    enemy!(ctx, (v1 as i32 + 16 * ctx.session().mechanisms.block_y as i32) as u16 => (v3) as isize, y);
 }
 
 fn init_afterburn(j: u16, k: u16, handler: u16, ctx: &mut impl Host) {

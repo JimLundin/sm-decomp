@@ -96,11 +96,9 @@ impl CinematicObjects {
         while object >= 0 {
             checked_word!(game, layout.current; = object as u16);
             if checked_word!(game, layout.instructions + 2 * (object as usize >> 1);) != 0 {
-                {
-                    match self {
-                        Background => advance_cinematic_object::<0x8c>(self, object as u16, game),
-                        _ => advance_cinematic_object::<0x8b>(self, object as u16, game),
-                    }
+                match self {
+                    Background => advance_cinematic_object::<0x8c>(self, object as u16, game),
+                    _ => advance_cinematic_object::<0x8b>(self, object as u16, game),
                 }
                 // A callback may redirect the scan outside its original slot range.
                 object = i32::from(checked_word!(game, layout.current;));

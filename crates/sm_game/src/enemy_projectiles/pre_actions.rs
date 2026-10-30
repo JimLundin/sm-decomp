@@ -1403,14 +1403,12 @@ pub fn dragon_fireball_pre_instruction(k: u16, ctx: &mut impl Host) {
             velocity_y = (v6 as u16).wrapping_add(32)
         );
         if (v6).wrapping_add(32) >= 0 {
-            {
-                let instruction: u16 = (if (enemy!(ctx, (v1) as isize, velocity_x) & 0x8000) == 0 {
-                    ADDR_WORD_86B4E3 as i32
-                } else {
-                    ADDR_WORD_86B4D7 as i32
-                }) as u16;
-                start_instruction((v1 as usize) as isize, instruction, ctx);
-            }
+            let instruction: u16 = (if (enemy!(ctx, (v1) as isize, velocity_x) & 0x8000) == 0 {
+                ADDR_WORD_86B4E3 as i32
+            } else {
+                ADDR_WORD_86B4D7 as i32
+            }) as u16;
+            start_instruction((v1 as usize) as isize, instruction, ctx);
         }
     };
 }

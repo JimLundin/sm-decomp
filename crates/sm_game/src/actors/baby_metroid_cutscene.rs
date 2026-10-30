@@ -644,11 +644,9 @@ pub fn spawn_dust_cloud_at_brain_offset(xd: u16, yd: u16, game: &mut impl Lease)
     spawn_room_projectile(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 9, game);
 }
 pub fn spawn_three_dust_clouds_on_brain(game: &mut impl Lease) {
-    {
-        spawn_dust_cloud_at_brain_offset(-16i32 as u16, -8i32 as u16, game);
-        spawn_dust_cloud_at_brain_offset(0, -16i32 as u16, game);
-        spawn_dust_cloud_at_brain_offset(16, -8i32 as u16, game);
-    }
+    spawn_dust_cloud_at_brain_offset(-16i32 as u16, -8i32 as u16, game);
+    spawn_dust_cloud_at_brain_offset(0, -16i32 as u16, game);
+    spawn_dust_cloud_at_brain_offset(16, -8i32 as u16, game);
 }
 crate::dispatch::callback_dispatch! {
     pub fn run_rainbow_palette_function(ea: u32, k: u16, game: &mut impl Lease) => ea;
@@ -669,10 +667,8 @@ crate::dispatch::callback_dispatch! {
     }
 }
 pub fn handle_samus_rainbow_palette_animation(k: u16, game: &mut impl Lease) {
-    {
-        let r18: u16 = session_slot!(game, MotherBrainBrain[BRAIN].samus_rainbow_function);
-        run_rainbow_palette_function(((r18) as u32) | (BANK_BASE), k, game);
-    }
+    let r18: u16 = session_slot!(game, MotherBrainBrain[BRAIN].samus_rainbow_function);
+    run_rainbow_palette_function(((r18) as u32) | (BANK_BASE), k, game);
 }
 pub fn rainbow_palette_gradually_slow_down(game: &mut impl State) {
     let e: i32 = BRAIN;

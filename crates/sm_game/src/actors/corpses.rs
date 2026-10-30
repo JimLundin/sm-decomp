@@ -518,9 +518,7 @@ crate::dispatch::callback_dispatch! {
     }
 }
 pub fn torizo_corpse_graphics_drawn_hook(game: &mut impl Lease) {
-    {
-        add_spritemap_to_oam(ADDR_K_DEAD_TORIZO_SPRMAP_D761 as u16, 296, 187, 0, game);
-    }
+    add_spritemap_to_oam(ADDR_K_DEAD_TORIZO_SPRMAP_D761 as u16, 296, 187, 0, game);
 }
 pub fn torizo_corpse_wait_for_samus_collision(k: u16, game: &mut impl State) {
     if k == word!(game.ENEMY_INDEX_COLLIDING_DIRS[0])
@@ -991,9 +989,7 @@ pub fn process_corpse_rotting_vram_transfers(k: u16, game: &mut impl Lease) {
     word!(game.VRAM_WRITE_QUEUE_TAIL = v1);
 }
 pub fn sidehopper_corpse_rottable_contact(game: &mut impl State) {
-    {
-        corpse_contact_reaction(function::SIDEHOPPER_ROTTING, game);
-    }
+    corpse_contact_reaction(function::SIDEHOPPER_ROTTING, game);
 }
 pub fn corpse_contact_reaction(a: u16, game: &mut impl State) {
     let e: i32 = word!(game.CUR_ENEMY_INDEX) as i32;

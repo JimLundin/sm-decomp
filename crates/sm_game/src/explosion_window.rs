@@ -95,23 +95,21 @@ pub fn try_crystal_flash<H: Host + ?Sized>(game: &mut H) -> bool {
     game.initialize_crystal_flash()
 }
 pub fn finish_power_bomb<H: Host + ?Sized>(object: &mut HdmaObject, v0: u16, game: &mut H) {
+    if game.player_x() != word!(game.POWER_BOMB_EXPLOSION_X_POS)
+        || game.player_y() != word!(game.POWER_BOMB_EXPLOSION_Y_POS)
+        || !try_crystal_flash(game)
     {
-        if game.player_x() != word!(game.POWER_BOMB_EXPLOSION_X_POS)
-            || game.player_y() != word!(game.POWER_BOMB_EXPLOSION_Y_POS)
-            || !try_crystal_flash(game)
-        {
-            word!(game.POWER_BOMB_FLAG = 0);
-        }
-        word!(game.POWER_BOMB_EXPLOSION_STATUS = 0);
-        let v1: i32 = v0 as i32 >> 1;
-        // The right half is the next object, which stays on the host.
-        object.channels = 0;
-        word! { game, 0;
-            HDMA_OBJECT_CHANNELS_BITMASK[(v1 + 1)],
-            POWER_BOMB_PRE_EXPLOSION_FLASH_RADIUS, POWER_BOMB_EXPLOSION_RADIUS,
-        }
-        game.player_command(0x1e);
+        word!(game.POWER_BOMB_FLAG = 0);
     }
+    word!(game.POWER_BOMB_EXPLOSION_STATUS = 0);
+    let v1: i32 = v0 as i32 >> 1;
+    // The right half is the next object, which stays on the host.
+    object.channels = 0;
+    word! { game, 0;
+        HDMA_OBJECT_CHANNELS_BITMASK[(v1 + 1)],
+        POWER_BOMB_PRE_EXPLOSION_FLASH_RADIUS, POWER_BOMB_EXPLOSION_RADIUS,
+    }
+    game.player_command(0x1e);
 }
 pub fn set_power_bomb_blending<H: Host + ?Sized>(_k: u16, game: &mut H) {
     word!(game.FX_LAYER_BLENDING_CONFIG_C |= (0x8000u16));

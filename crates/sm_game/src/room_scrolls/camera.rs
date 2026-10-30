@@ -292,55 +292,49 @@ pub fn layer2_position<H: Host + ?Sized>(axis: Axis, game: &mut H) -> u8 {
 }
 
 pub fn calculate_scrolls<H: Host + ?Sized>(game: &mut H) {
-    {
-        word!(
-            game.REG_BG1HOFS = (game.session().room.camera.bg1_offset[0])
-                .wrapping_add(game.session().room.camera.layer1[0])
-        );
-        word!(
-            game.REG_BG1VOFS = (game.session().room.camera.bg1_offset[1])
-                .wrapping_add(game.session().room.camera.layer1[1])
-        );
-        word!(
-            game.REG_BG2HOFS = (game.session().room.camera.bg2_scroll[0])
-                .wrapping_add(game.session().room.camera.layer2[0])
-        );
-        word!(
-            game.REG_BG2VOFS = (game.session().room.camera.bg2_scroll[1])
-                .wrapping_add(game.session().room.camera.layer2[1])
-        );
-    }
+    word!(
+        game.REG_BG1HOFS = (game.session().room.camera.bg1_offset[0])
+            .wrapping_add(game.session().room.camera.layer1[0])
+    );
+    word!(
+        game.REG_BG1VOFS = (game.session().room.camera.bg1_offset[1])
+            .wrapping_add(game.session().room.camera.layer1[1])
+    );
+    word!(
+        game.REG_BG2HOFS = (game.session().room.camera.bg2_scroll[0])
+            .wrapping_add(game.session().room.camera.layer2[0])
+    );
+    word!(
+        game.REG_BG2VOFS = (game.session().room.camera.bg2_scroll[1])
+            .wrapping_add(game.session().room.camera.layer2[1])
+    );
 }
 
 pub fn calculate_blocks<H: Host + ?Sized>(game: &mut H) {
-    {
-        crate::probe::hit("camera.blocks");
-        game.session_mut().room.camera.bg1_block[0] = word!(game.REG_BG1HOFS) >> 4;
-        game.session_mut().room.camera.bg2_block[0] = word!(game.REG_BG2HOFS) >> 4;
-        game.session_mut().room.camera.layer1_block[0] =
-            ((game.session().room.camera.layer1[0] as i16) >> 4) as u16;
-        game.session_mut().room.camera.layer2_block[0] =
-            ((game.session().room.camera.layer2[0] as i16) >> 4) as u16;
-        game.session_mut().room.camera.bg1_block[1] = word!(game.REG_BG1VOFS) >> 4;
-        game.session_mut().room.camera.bg2_block[1] = word!(game.REG_BG2VOFS) >> 4;
-        game.session_mut().room.camera.layer1_block[1] =
-            ((game.session().room.camera.layer1[1] as i16) >> 4) as u16;
-        game.session_mut().room.camera.layer2_block[1] =
-            ((game.session().room.camera.layer2[1] as i16) >> 4) as u16;
-    }
+    crate::probe::hit("camera.blocks");
+    game.session_mut().room.camera.bg1_block[0] = word!(game.REG_BG1HOFS) >> 4;
+    game.session_mut().room.camera.bg2_block[0] = word!(game.REG_BG2HOFS) >> 4;
+    game.session_mut().room.camera.layer1_block[0] =
+        ((game.session().room.camera.layer1[0] as i16) >> 4) as u16;
+    game.session_mut().room.camera.layer2_block[0] =
+        ((game.session().room.camera.layer2[0] as i16) >> 4) as u16;
+    game.session_mut().room.camera.bg1_block[1] = word!(game.REG_BG1VOFS) >> 4;
+    game.session_mut().room.camera.bg2_block[1] = word!(game.REG_BG2VOFS) >> 4;
+    game.session_mut().room.camera.layer1_block[1] =
+        ((game.session().room.camera.layer1[1] as i16) >> 4) as u16;
+    game.session_mut().room.camera.layer2_block[1] =
+        ((game.session().room.camera.layer2[1] as i16) >> 4) as u16;
 }
 
 pub fn debug_position<H: Host + ?Sized>(game: &mut H) {
-    {
-        if (word!(game.JOYPAD2_NEW_KEYS) & 0x40) != 0 {
-            word!(game.DEBUG_SAVELOAD_SCROLLPOS_TOGGLE += 1);
-        }
-        if word!(game.DEBUG_SAVELOAD_SCROLLPOS_TOGGLE) & 1 != 0 {
-            set_layer1(game, 0, word!(game.DEBUG_SAVED_XSCROLL));
-            set_layer1(game, 1, word!(game.DEBUG_SAVED_YSCROLL));
-        } else {
-            word!(game.DEBUG_SAVED_XSCROLL = game.session().room.camera.layer1[0]);
-            word!(game.DEBUG_SAVED_YSCROLL = game.session().room.camera.layer1[1]);
-        };
+    if (word!(game.JOYPAD2_NEW_KEYS) & 0x40) != 0 {
+        word!(game.DEBUG_SAVELOAD_SCROLLPOS_TOGGLE += 1);
     }
+    if word!(game.DEBUG_SAVELOAD_SCROLLPOS_TOGGLE) & 1 != 0 {
+        set_layer1(game, 0, word!(game.DEBUG_SAVED_XSCROLL));
+        set_layer1(game, 1, word!(game.DEBUG_SAVED_YSCROLL));
+    } else {
+        word!(game.DEBUG_SAVED_XSCROLL = game.session().room.camera.layer1[0]);
+        word!(game.DEBUG_SAVED_YSCROLL = game.session().room.camera.layer1[1]);
+    };
 }

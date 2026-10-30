@@ -84,9 +84,7 @@ pub fn begin<H: Host + ?Sized>(game: &mut H) {
 }
 
 fn prepare_blocks<H: Host + ?Sized>(vertical: bool, delta: u16, game: &mut H) {
-    {
-        calculate_blocks(game);
-    }
+    calculate_blocks(game);
     game.session_mut().room.camera.previous_layer1_block[0] =
         game.session().room.camera.layer1_block[0];
     game.session_mut().room.camera.previous_layer2_block[0] =

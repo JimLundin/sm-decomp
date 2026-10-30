@@ -50,14 +50,12 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
             ],
         );
         // Each table is visible before its channel is configured.
-        {
-            crate::display::sequence::register_writes! { game;
-                byte(channel, INDIRECT_ONE_REGISTER); byte(channel + 1, window);
-                byte(channel + 2, table as u8); byte(channel + 3, ram::PAGE);
-                byte(channel + 4, ram::BANK); byte(channel + 7, ram::BANK);
-                byte(channel + 5, 0); byte(channel + 6, 0);
-                byte(channel + 8, 0); byte(channel + 9, 0); byte(channel + 10, 0);
-            }
+        crate::display::sequence::register_writes! { game;
+            byte(channel, INDIRECT_ONE_REGISTER); byte(channel + 1, window);
+            byte(channel + 2, table as u8); byte(channel + 3, ram::PAGE);
+            byte(channel + 4, ram::BANK); byte(channel + 7, ram::BANK);
+            byte(channel + 5, 0); byte(channel + 6, 0);
+            byte(channel + 8, 0); byte(channel + 9, 0); byte(channel + 10, 0);
         }
     }
 }

@@ -598,10 +598,8 @@ fn fade_out<H: Host>(entry: Entry, game: &mut H) -> CoroutineRet {
         word! { game, 0; SCREEN_FADE_DELAY, SCREEN_FADE_COUNTER }
         word!(game.GAME_STATE += 1);
         if matches!(entry, Entry::GameOverFadeOut) {
-            {
-                crate::menu!(game.MenuIndex = 0);
-                word!(game.DEBUG_DISABLE_SOUNDS = 0);
-            }
+            crate::menu!(game.MenuIndex = 0);
+            word!(game.DEBUG_DISABLE_SOUNDS = 0);
         }
     }
     0
@@ -618,10 +616,8 @@ fn exit_time_up<H: Host>(game: &mut H) -> CoroutineRet {
         }
         cancel_sound_effects(game, 15);
         if crate::progress::event_happened(&mut game.runtime(), 0xe) {
-            {
-                word!(game.GAME_OPTIONS_SCREEN_INDEX = 0);
-                crate::menu!(game.MenuIndex = 0);
-            }
+            word!(game.GAME_OPTIONS_SCREEN_INDEX = 0);
+            crate::menu!(game.MenuIndex = 0);
             word_transfers!(game, descending, 128; le(EPROJ_Y_SUBPOS, 142) <- value(0));
             word!(game.GAME_STATE = K_GAME_STATE_25_SAMUS_NO_HEALTH as u16);
         } else {
