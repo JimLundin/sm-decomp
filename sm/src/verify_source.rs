@@ -2240,6 +2240,14 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/hdma_objects.rs"),
     ),
     (
+        "sm/src/game/player_drawing.rs",
+        include_bytes!("game/player_drawing.rs"),
+    ),
+    (
+        "sm/src/game/visual_checks.rs",
+        include_bytes!("game/visual_checks.rs"),
+    ),
+    (
         "sm/src/game/visual_runtime.rs",
         include_bytes!("game/visual_runtime.rs"),
     ),

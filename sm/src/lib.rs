@@ -470,6 +470,7 @@ pub mod game {
     pub mod message_composition;
     pub(crate) mod mode7_transfers;
     pub(crate) mod moving_platforms;
+    pub(crate) mod player_drawing;
     pub(crate) mod prelude;
     pub(crate) mod room_visuals;
     pub mod scene;
@@ -479,6 +480,7 @@ pub mod game {
     pub(crate) use sm_game::shaktool_tables;
     pub(crate) use sm_game::shitroid_tables;
     pub(crate) use sm_game::torizo_corpse_tables;
+    pub(crate) mod visual_checks;
     pub(crate) mod vram_read_queue;
     pub(crate) mod xray_background;
 
