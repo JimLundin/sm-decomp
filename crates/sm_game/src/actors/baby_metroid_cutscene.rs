@@ -288,8 +288,7 @@ crate::dispatch::callback_dispatch! {
             set_enemy_instruction_list(k, ADDR_K_BABY_METROID_ILIST_CFA2 as u16, game);
             session_slot!(game, BabyMetroidInCutscene[e].palette_handler_delay = 10);
             session_slot!(game, BabyMetroidInCutscene[e].function = function::LET_GO_AND_SPAWN_DUST_CLOUDS);
-            session_slot!(game, BabyMetroidInCutscene[e].function_timer = 32);
-            session_slot! { game, BabyMetroidInCutscene[e]; x_velocity = 0, y_velocity = 0 }
+            session_slot! { game, BabyMetroidInCutscene[e]; function_timer = 32, x_velocity = 0, y_velocity = 0 }
         }
     };
     [11127129] move_up_to_ceiling [] {
@@ -458,8 +457,7 @@ crate::dispatch::callback_dispatch! {
         session_slot!(game, BabyMetroidInCutscene[e].base.x_pos = (session_slot!(game, MotherBrainBrain[BRAIN].base.x_pos)).wrapping_add((SHAKE_X_OFFSETS[v2 as usize]) as u16));
         session_slot!(game, BabyMetroidInCutscene[e].base.y_pos = (session_slot!(game, MotherBrainBrain[BRAIN].base.y_pos) as i32 + SHAKE_Y_OFFSETS[v2 as usize] as i32 - 24i32) as u16);
         if session_slot!(game, MotherBrainBody[0i32].corpse_state) != 0 {
-            session_slot!(game, BabyMetroidInCutscene[e].function = function::STOP_DRAINING);
-            session_slot!(game, BabyMetroidInCutscene[e].function_timer = 64);
+            session_slot! { game, BabyMetroidInCutscene[e]; function = function::STOP_DRAINING, function_timer = 64 }
         }
     };
     [11127115] let_go_and_spawn_dust_clouds [] {
@@ -471,8 +469,7 @@ crate::dispatch::callback_dispatch! {
         move_up_to_ceiling(k, game);
     };
     [11127235] move_to_samus [] {
-        session_slot!(game, BabyMetroidInCutscene[e].cry_enabled = 0);
-        session_slot!(game, BabyMetroidInCutscene[e].health_palette_enabled = 1);
+        session_slot! { game, BabyMetroidInCutscene[e]; cry_enabled = 0, health_palette_enabled = 1 }
         if (word!(game.RANDOM_NUMBER) & 0xfff) >= 0xfa0 {
             queue_sfx2_max6(sound::BABY_METROID_REMORSE, game);
         }
@@ -580,8 +577,7 @@ crate::dispatch::callback_dispatch! {
     }
     when (session_slot!(game, BabyMetroidInCutscene[e].function_timer) & 0x8000) != 0;
     [11126732] dash_onto_screen {
-        session_slot!(game, BabyMetroidInCutscene[e].angle = -10240i32 as u16);
-        session_slot!(game, BabyMetroidInCutscene[e].speed = 2560);
+        session_slot! { game, BabyMetroidInCutscene[e]; angle = -10240i32 as u16, speed = 2560 }
         session_slot!(game, BabyMetroidInCutscene[e].function = function::CURVE_TOWARDS_MOTHER_BRAIN_BRAIN);
         session_slot!(game, BabyMetroidInCutscene[e].function_timer = 10);
         curve_towards_brain(k, game);

@@ -520,12 +520,12 @@ crate::dispatch::callback_dispatch! {
 pub fn torizo_corpse_graphics_drawn_hook(game: &mut impl Lease) {
     add_spritemap_to_oam(ADDR_K_DEAD_TORIZO_SPRMAP_D761 as u16, 296, 187, 0, game);
 }
+/// Whether Samus collided with enemy `k` from any direction this frame.
+fn collided_with_samus(k: u16, game: &impl State) -> bool {
+    (0..4).any(|direction| k == word!(game.ENEMY_INDEX_COLLIDING_DIRS[direction]))
+}
 pub fn torizo_corpse_wait_for_samus_collision(k: u16, game: &mut impl State) {
-    if k == word!(game.ENEMY_INDEX_COLLIDING_DIRS[0])
-        || k == word!(game.ENEMY_INDEX_COLLIDING_DIRS[1])
-        || k == word!(game.ENEMY_INDEX_COLLIDING_DIRS[2])
-        || k == word!(game.ENEMY_INDEX_COLLIDING_DIRS[3])
-    {
+    if collided_with_samus(k, game) {
         session_slot!(
             game,
             DeadTorizo[0i32].function = function::TORIZO_PRE_ROT_DELAY
@@ -617,9 +617,7 @@ pub fn initialize_alive_sidehopper_corpse(game: &mut impl Lease) {
                 (session_slot!(game, Corpse[e].base.properties)) | ((K_ENEMY_PROPS_DELETED) as u16)
         );
     }
-    session_slot!(game, Corpse[e].drained_palette_index = 0);
-    session_slot!(game, Corpse[e].x_velocity = 96);
-    session_slot!(game, Corpse[e].y_velocity = 256);
+    session_slot! { game, Corpse[e]; drained_palette_index = 0, x_velocity = 96, y_velocity = 256 }
     session_slot!(game, Corpse[e].base.x_pos = 488);
     session_slot!(game, Corpse[e].base.y_pos = 184);
     session_slot!(
@@ -692,8 +690,7 @@ crate::dispatch::callback_dispatch! {
     };
     [11131152] sidehopper_corpse_start_idling [] {
         let e: i32 = k as i32;
-        session_slot!(game, Corpse[e].function = function::SIDEHOPPER_IDLING);
-        session_slot!(game, Corpse[e].function_timer = 64);
+        session_slot! { game, Corpse[e]; function = function::SIDEHOPPER_IDLING, function_timer = 64 }
     };
     [11131165] sidehopper_corpse_idling [] {
         let e: i32 = k as i32;
@@ -706,8 +703,7 @@ crate::dispatch::callback_dispatch! {
                 set_enemy_instruction_list(k, ADDR_K_DEAD_MONSTERS_ILIST_ECE3 as u16, game);
                 let v3: i32 = session_slot!(game, Corpse[e].hop) as i32;
                 let hop = corpse_tables::hop(game, v3 as isize);
-                session_slot!(game, Corpse[e].y_velocity = hop.y_velocity);
-                session_slot!(game, Corpse[e].x_velocity = hop.x_velocity);
+                session_slot! { game, Corpse[e]; y_velocity = hop.y_velocity, x_velocity = hop.x_velocity }
             }
         }
     };
@@ -818,11 +814,7 @@ pub fn sidehopper_corpse_horizontal_movement(k: u16, a: u16, game: &mut impl Lea
     };
 }
 pub fn corpse_wait_for_samus_collision(k: u16, j: u16, game: &mut impl State) {
-    if k == word!(game.ENEMY_INDEX_COLLIDING_DIRS[0])
-        || k == word!(game.ENEMY_INDEX_COLLIDING_DIRS[1])
-        || k == word!(game.ENEMY_INDEX_COLLIDING_DIRS[2])
-        || k == word!(game.ENEMY_INDEX_COLLIDING_DIRS[3])
-    {
+    if collided_with_samus(k, game) {
         session_slot!(game, Corpse[k as i32].function = j);
     }
 }
@@ -957,8 +949,7 @@ pub fn initialize_enemy_corpse_rotting(k: u16, j: u16, game: &mut impl Lease) {
     let mut v6: u16 = v5.word(8);
     let fresh5 = v6;
     v6 = v6.wrapping_sub(1);
-    session_slot!(game, Corpse[e].height = fresh5);
-    session_slot!(game, Corpse[e].last_row = v6);
+    session_slot! { game, Corpse[e]; height = fresh5, last_row = v6 }
     session_slot!(game, Corpse[e].second_last_row = (v6).wrapping_sub(1));
     initialize_corpse_rotting_data_table(v5.word(0) as usize, v5.word(8), game);
     run_corpse_rotting_initialization(((v5.word(10)) as u32) | (BANK_BASE), game);
