@@ -16,6 +16,7 @@ use crate::actors::host::{Death, Shot, Slopes, below};
 use crate::actors::layouts::{EnemyBase, same_words};
 use crate::actors::session_slots::session_slot;
 use crate::actors::{kraid_fingernails, kraid_lint, kraid_sinking};
+use crate::carry::{adc, sbc};
 use crate::cartridge::native_record;
 use crate::constants::enemy_properties::{
     K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE, K_ENEMY_PROPS_TANGIBLE,
@@ -2190,17 +2191,17 @@ pub fn main_ai<L: Lease + ?Sized>(game: &mut L) {
     palette(game);
     body_shots(game);
     body_touch(game);
-    word!(
-        game.REG_BG2HOFS = (session_slot!(game, Body[BODY].base.x_width) as i32
-            + word!(game.REG_BG1HOFS) as i32
-            - game.camera().bg1_offset[0] as i32
-            - session_slot!(game, Body[BODY].base.x_pos) as i32) as u16
+    // Each subtract's borrow carries into the next step, as the original's
+    // unpaired SBC/ADC chain does ($A7:AC30).
+    let (x, carry) = sbc(word!(game.REG_BG1HOFS), game.camera().bg1_offset[0], true);
+    let (x, carry) = sbc(x, session_slot!(game, Body[BODY].base.x_pos), carry);
+    word!(game.REG_BG2HOFS = adc(x, session_slot!(game, Body[BODY].base.x_width), carry).0);
+    let (y, carry) = sbc(
+        game.camera().layer1[1],
+        session_slot!(game, Body[BODY].base.y_pos),
+        true,
     );
-    word!(
-        game.REG_BG2VOFS = (game.camera().layer1[1] as i32
-            - session_slot!(game, Body[BODY].base.y_pos) as i32
-            + 152) as u16
-    );
+    word!(game.REG_BG2VOFS = adc(y, 152, carry).0);
     let function = session_slot!(game, Body[BODY].function);
     run_function(game, function);
 }

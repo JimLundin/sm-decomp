@@ -13,6 +13,7 @@ pub mod beam_definitions;
 pub mod beam_windows;
 pub mod boss_lists;
 pub mod camera;
+pub mod carry;
 pub mod cartridge;
 pub mod combat_rules;
 pub mod constants;
