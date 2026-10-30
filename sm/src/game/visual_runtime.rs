@@ -428,7 +428,9 @@ fn draw_player_with_cannon(runtime: &mut Runtime<'_>) {
     if mode != 0 && mode != 2 {
         player_projectiles::cannon::draw(runtime, cannon_tile, queue_cannon_tiles);
     }
-    runtime.foreign(crate::game::samus_animation::Samus_Draw);
+    runtime.owned_player_call(|runtime| {
+        sm_game::samus_drawing::draw_body(runtime, sm_game::scene::samus_body::Body::Normal)
+    });
     if mode == 2 {
         player_projectiles::cannon::draw(runtime, cannon_tile, queue_cannon_tiles);
     }
@@ -496,7 +498,7 @@ pub(crate) fn draw_player_frame(game: &mut Game) {
 }
 
 pub(crate) fn draw_player_frame_owned(h: &mut Runtime<'_>) {
-    use crate::game::{player_transitions::state::DrawMode, samus_animation as body};
+    use crate::game::player_transitions::state::DrawMode;
     player_projectiles::cannon::update(h);
     h.refresh_player_observations();
     match h.session().player.transitions.draw_handler {
@@ -508,7 +510,7 @@ pub(crate) fn draw_player_frame_owned(h: &mut Runtime<'_>) {
             let grapple = h.session().player.grapple;
             if mode == DrawMode::Normal || (grapple.wrapping_add(0x37aa) as i16) >= 0 {
                 h.owned_player_call(draw_player_with_cannon);
-                h.foreign(body::Samus_DrawEchoes);
+                h.owned_player_call(|runtime| sm_game::samus_drawing::draw_echoes(runtime));
             } else {
                 if matches!(grapple, 0xc703 | 0xc759) {
                     h.foreign(crate::game::grapple_swing::restore_start_positions);
@@ -522,16 +524,24 @@ pub(crate) fn draw_player_frame_owned(h: &mut Runtime<'_>) {
             }
         }
         DrawMode::ShinesparkEnd => {
-            h.foreign(body::Samus_Draw);
+            h.owned_player_call(|runtime| {
+                sm_game::samus_drawing::draw_body(runtime, sm_game::scene::samus_body::Body::Normal)
+            });
             for index in [2, 0] {
-                h.foreign(|game| body::Samus_DrawShinesparkCrashEchoes(index, game));
+                h.owned_player_call(|runtime| {
+                    sm_game::samus_drawing::draw_shinespark_crash_echoes(index, runtime)
+                });
             }
         }
         DrawMode::Frozen => {
-            h.foreign(body::Samus_DrawWhenNotAnimatingOrDying);
+            h.owned_player_call(|runtime| {
+                sm_game::samus_drawing::draw_body(runtime, sm_game::scene::samus_body::Body::Frozen)
+            });
         }
         DrawMode::Elevator if h.inputs().frame & 1 == 0 => {
-            h.foreign(body::Samus_DrawWhenNotAnimatingOrDying);
+            h.owned_player_call(|runtime| {
+                sm_game::samus_drawing::draw_body(runtime, sm_game::scene::samus_body::Body::Frozen)
+            });
         }
         DrawMode::Disabled | DrawMode::Empty | DrawMode::Elevator => {}
         DrawMode::Unknown(_) => {
