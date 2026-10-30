@@ -255,3 +255,4 @@ pub mod grapple_swing;
 pub mod room_state;
 pub mod runtime_access;
 pub mod samus_death;
+pub mod samus_drawing;
