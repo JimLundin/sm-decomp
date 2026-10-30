@@ -223,6 +223,9 @@ impl MenuRuntime for Game {
             InitializePhantoonWave => runtime.initialize_phantoon_wave(slot),
             InitializeEyeBeam => runtime.initialize_eye_beam(slot),
             ResetWave => runtime.reset_hdma_wave(slot),
+            InitializeWavePair { base, primary } => runtime.initialize_wave_pair(base, primary),
+            SetPhantoonMotion { direction, speed } => runtime.set_phantoon_motion(direction, speed),
+            ScrollWeather(weather) => runtime.scroll_weather_layers(slot, weather),
         }
     }
     fn retire_projectile(&mut self, slot: u16) {

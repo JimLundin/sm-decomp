@@ -4,7 +4,7 @@ use crate::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKe
 use crate::player_projectiles::access::Store;
 use crate::session_access::SessionAccess;
 use crate::visual_host::{Content, Record, Source};
-use crate::visual_state::{EyeBeamPhase, HazePhase, HdmaWave};
+use crate::visual_state::{EyeBeamPhase, HazePhase, HdmaWave, Weather};
 
 /// The session view these effects read and write. Its bytes are the live
 /// projection of RAM and the owned Session, as the compatibility Runtime keeps it.
@@ -366,6 +366,59 @@ pub trait HdmaEffects: Host {
         for (target, source) in [(0x74, 0x1914), (0x75, 0x1915), (0x76, 0x1920)] {
             self.set_byte(target, self.byte(source + usize::from(slot)));
         }
+    }
+
+    /// Scroll BG3 by the weather's phases and the camera, through the session view.
+    fn scroll_weather_layers(&mut self, slot: u16, weather: Weather) {
+        use crate::ram::words as ram;
+        let object = usize::from(slot as u8 & !1);
+        let phase_base = if matches!(weather, Weather::Spores) {
+            0x192c
+        } else {
+            0x1914
+        };
+        let rain = matches!(weather, Weather::Rain);
+        // Finish each axis, including rain's camera history, before reading the next.
+        for (axis, camera, output) in [
+            (0, ram::layer1_y_pos, ram::bg3_ypos),
+            (12, ram::layer1_x_pos, ram::bg3_xpos),
+        ] {
+            let phase = phase_base + object + axis;
+            let history = 0x1944 + object + axis;
+            let origin = if rain {
+                self.word(history).wrapping_sub(self.word(camera))
+            } else {
+                self.word(camera)
+            };
+            let scroll = origin.wrapping_add(self.byte(phase + 1) as i8 as u16);
+            self.write_slice_le(output, scroll);
+            let previous_phase = self.word(phase);
+            let delta = match (weather, axis) {
+                (Weather::Rain, 0) => 0u16.wrapping_sub(1536),
+                (_, 0) => 0u16.wrapping_sub(64),
+                (Weather::Rain, _) => self.word(0x1938 + object),
+                (Weather::Fog, _) => 80,
+                // Spores retain the original idempotent horizontal-phase store.
+                (Weather::Spores, _) => 0,
+            };
+            self.write_slice_le(phase, previous_phase.wrapping_add(delta));
+            if rain {
+                self.write_slice_le(history, self.word(camera));
+            }
+        }
+    }
+
+    /// Phantoon's motion parameters, set before its wave HDMA spawns.
+    fn set_phantoon_motion(&mut self, direction: u16, speed: u16) {
+        use crate::actors::access::AccessMode::Native;
+        self.edit_actor(Key::from_legacy(0x80), Native, |actor| {
+            actor.parameters[0] = direction
+        });
+        self.edit_actor(Key::from_legacy(0xc0), Native, |actor| {
+            actor.variables[3] = 0;
+            actor.variables[4] = 0;
+            actor.pre_instruction = speed;
+        });
     }
 }
 

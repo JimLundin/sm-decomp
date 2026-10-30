@@ -9,13 +9,22 @@ use crate::ram::RawRam as _;
 use crate::ram::{checked_word, word};
 
 /// The HDMA effects whose state the host's session view projects.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy)]
 pub enum HdmaEffect {
     /// Step the current object's program past its wait.
     AdvanceProgram,
     InitializePhantoonWave,
     InitializeEyeBeam,
     ResetWave,
+    InitializeWavePair {
+        base: usize,
+        primary: u16,
+    },
+    SetPhantoonMotion {
+        direction: u16,
+        speed: u16,
+    },
+    ScrollWeather(crate::visual_state::Weather),
 }
 use crate::cinematic::set_fixed_color;
 use crate::menus::prelude::SpawnHdmaObject_Args;

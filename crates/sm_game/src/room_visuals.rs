@@ -2,6 +2,7 @@
 // The original's names and assignment shapes are kept.
 #![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
 use crate::constants::bank_86::addr_kEproj_TourianStatueDustClouds;
+use crate::hdma_objects::{HdmaEffect, spawn_bg3_scroll, spawn_hdma};
 use crate::menus::prelude::SpawnHdmaObject_Args;
 #[allow(unused_imports)]
 use crate::ram::RawRam as _;
@@ -193,4 +194,59 @@ pub fn initialize_weather<H: crate::menus::host::Host + ?Sized>(weather: Weather
         game.spawn_bg3_scroll();
         game.spawn_animated_tiles(tiles as u16);
     }
+}
+
+pub fn initialize_ceres_elevator<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x40, 5, 0xd939), game);
+}
+
+pub fn initialize_draygon_layer<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x2c, 0xdf4f), game);
+    word!(game.room_loading_irq_handler = 12);
+    spawn_bg3_scroll(game);
+}
+
+pub fn initialize_morph_eye_beam<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x41, 0x26, 0xe8ec), game);
+}
+
+pub fn initialize_intro_crossfade<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x31, 0xec03), game);
+}
+
+pub fn initialize_phantoon_motion<H: crate::menus::host::Host + ?Sized>(
+    direction: u16,
+    speed: u16,
+    game: &mut H,
+) {
+    game.hdma_effect(HdmaEffect::SetPhantoonMotion { direction, speed }, 0);
+    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0xf, 0xe4a8), game);
+}
+
+pub fn initialize_intro_wave<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    word!(game.g_word_7E0D9C = 1);
+    crate::word_transfers!(game, ascending, 1; native(0xd9e) <- value(0x4000));
+    word!(game.loop_counter_transfer_enemies_to_vram = 8);
+    game.hdma_effect(
+        HdmaEffect::InitializeWavePair {
+            base: 0xd82,
+            primary: 0x9800,
+        },
+        0,
+    );
+    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0x11, 0xec8a), game);
+}
+
+pub fn scroll_weather<H: crate::menus::host::Host + ?Sized>(
+    slot: u16,
+    weather: Weather,
+    game: &mut H,
+) {
+    use crate::ram::checked_word;
+    game.ram().write_byte(0x5b, 92);
+    checked_word!(game.fx_layer_blending_config_c = checked_word!(game.fx_layer_blending_config_b));
+    if checked_word!(game.time_is_frozen_flag) != 0 {
+        return;
+    }
+    game.hdma_effect(HdmaEffect::ScrollWeather(weather), slot);
 }

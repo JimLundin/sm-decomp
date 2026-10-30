@@ -33,8 +33,10 @@ use crate::game::player_transitions::xray::BeamPhase;
 use crate::game::projectile_presentation_ram as sprite_output;
 pub(crate) use crate::game::room_visuals::{
     advance_fireflea_lighting, advance_tourian_statue, darken_fireflea_room,
-    initialize_bomb_torizo_haze, initialize_ceres_ridley, initialize_fireflea_lighting,
-    initialize_room_haze, initialize_title_gradient, initialize_tourian_statue, initialize_weather,
+    initialize_bomb_torizo_haze, initialize_ceres_elevator, initialize_ceres_ridley,
+    initialize_draygon_layer, initialize_fireflea_lighting, initialize_intro_wave,
+    initialize_morph_eye_beam, initialize_phantoon_motion, initialize_room_haze,
+    initialize_title_gradient, initialize_tourian_statue, initialize_weather, scroll_weather,
     shake_room_with_sound,
 };
 pub(crate) use crate::game::shooting_star_motion::{
@@ -50,7 +52,6 @@ use crate::game::{
 };
 use crate::ram_map::word;
 use crate::rtl::Unreachable;
-use sm_game::actors::access::{ActorAccess, ActorKey as Key};
 pub(crate) use sm_game::cinematic::{
     advance_cinematic_coordinate, capture_cinematic_palette, clear_cinematic_background,
     clear_cinematic_sprites, drift_cinematic_sprite, enable_cinematic_background,
@@ -71,41 +72,6 @@ use crate::{
     rom::RomRecord,
     types::SpawnHdmaObject_Args,
 };
-
-crate::forward_calls! { pub(crate) fn (game: &mut Game);
-    initialize_ceres_elevator => spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x40, 5, 0xd939), game);
-    initialize_draygon_layer => {
-        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x2c, 0xdf4f), game);
-        word!(game.room_loading_irq_handler = 12);
-        spawn_bg3_scroll(game);
-    };
-    initialize_morph_eye_beam => spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x41, 0x26, 0xe8ec), game);
-    initialize_intro_crossfade => spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x31, 0xec03), game);
-}
-
-pub(crate) fn initialize_phantoon_motion(direction: u16, speed: u16, game: &mut Game) {
-    use sm_game::actors::access::AccessMode::Native;
-    {
-        let mut runtime = Runtime::new(game);
-        runtime.edit_actor(Key::from_legacy(0x80), Native, |actor| {
-            actor.parameters[0] = direction
-        });
-        runtime.edit_actor(Key::from_legacy(0xc0), Native, |actor| {
-            actor.variables[3] = 0;
-            actor.variables[4] = 0;
-            actor.pre_instruction = speed;
-        });
-    }
-    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0xf, 0xe4a8), game);
-}
-
-pub(crate) fn initialize_intro_wave(game: &mut Game) {
-    word!(game.g_word_7E0D9C = 1);
-    word_transfers!(game, ascending, 1; native(0xd9e) <- value(0x4000));
-    word!(game.loop_counter_transfer_enemies_to_vram = 8);
-    Runtime::new(game).initialize_wave_pair(0xd82, 0x9800);
-    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0x11, 0xec8a), game);
-}
 
 pub(crate) fn advance_crocomire(game: &mut Game) {
     use crate::game::actors::crocomire_reactions::{self as crocomire};
@@ -486,51 +452,6 @@ pub(crate) mod samus_observer;
 
 // Shooting-star scratch records stay in RAM. Native scalar loads use from_le
 // on checked LE reads; only the original compound updates use LE arithmetic.
-pub(crate) fn scroll_weather(slot: u16, weather: Weather, game: &mut Game) {
-    use crate::ram_map::{checked_word, words as ram};
-    game.ram().write_byte(0x5b, 92);
-    checked_word!(game.fx_layer_blending_config_c = checked_word!(game.fx_layer_blending_config_b));
-    if checked_word!(game.time_is_frozen_flag) != 0 {
-        return;
-    }
-    let runtime = &mut Runtime::new(game);
-    let object = usize::from(slot as u8 & !1);
-    let phase_base = if matches!(weather, Weather::Spores) {
-        0x192c
-    } else {
-        0x1914
-    };
-    let rain = matches!(weather, Weather::Rain);
-    // Finish each axis, including rain's camera history, before reading the next.
-    for (axis, camera, output) in [
-        (0, ram::layer1_y_pos, ram::bg3_ypos),
-        (12, ram::layer1_x_pos, ram::bg3_xpos),
-    ] {
-        let phase = phase_base + object + axis;
-        let history = 0x1944 + object + axis;
-        let origin = if rain {
-            runtime.word(history).wrapping_sub(runtime.word(camera))
-        } else {
-            runtime.word(camera)
-        };
-        let scroll = origin.wrapping_add(runtime.byte(phase + 1) as i8 as u16);
-        runtime.write_slice_le(output, scroll);
-        let previous_phase = runtime.word(phase);
-        let delta = match (weather, axis) {
-            (Weather::Rain, 0) => 0u16.wrapping_sub(1536),
-            (_, 0) => 0u16.wrapping_sub(64),
-            (Weather::Rain, _) => runtime.word(0x1938 + object),
-            (Weather::Fog, _) => 80,
-            // Spores retain the original idempotent horizontal-phase store.
-            (Weather::Spores, _) => 0,
-        };
-        runtime.write_slice_le(phase, previous_phase.wrapping_add(delta));
-        if rain {
-            runtime.write_slice_le(history, runtime.word(camera));
-        }
-    }
-}
-
 // Keep bits 16..23 of the magnitude product before restoring the sine sign.
 impl sm_game::hdma_effects::Host for Runtime<'_> {
     fn byte(&self, at: usize) -> u8 {
