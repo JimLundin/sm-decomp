@@ -39,6 +39,55 @@ pub trait Host: crate::actors::host::BossEffects + crate::actors::host::LeaseAct
     fn scatter_crocomire_drop(&mut self, area: u16);
 }
 
+/// Death sequence indices the routines set or test.
+pub mod death {
+    pub const BEHIND_WALL_WAIT_FOR_SAMUS: u16 = 0x3e;
+    pub const SET_INDEX_56: u16 = 0x54;
+    pub const FLOWING_DOWN_THE_RIVER: u16 = 0x58;
+}
+
+const BANK: u32 = 0xa4;
+/// $A4:9BC5: the melting Crocomire tiles loading table: source, destination,
+/// size and bank words per entry, ended by FFFFh.
+const MELTING_TILES_SOURCE: u32 = 0xa4_9bc5;
+const MELTING_TILES_DESTINATION: u32 = 0xa4_9bc7;
+const MELTING_TILES_SIZE: u32 = 0xa4_9bc9;
+const MELTING_TILES_BANK: u32 = 0xa4_9bcb;
+/// $A4:98CA: the rumble table, ended by 8080h; $A4:9697: the melting X offsets.
+const RUMBLE_TABLE: u32 = 0xa4_98ca;
+const MELTING_X_OFFSETS: u32 = 0xa4_9697;
+/// Crocomire palettes ($A4:B87D): BG1/2 palette 7, the target sprite palettes
+/// 3 and 6, and sprite palettes 4 and 6.
+const PALETTE_BG_7: u32 = 0xa4_b89d;
+const PALETTE_TARGET_SPRITE_3: u32 = 0xa4_b8bd;
+const PALETTE_TARGET_SPRITE_6: u32 = 0xa4_b8dd;
+const PALETTE_SPRITE_4: u32 = 0xa4_b8fd;
+const PALETTE_SPRITE_6: u32 = 0xa4_b91d;
+/// $7E:C0EE: BG1/2 palette 7 colours 0-7.
+const BG_PALETTE_7_RAM: usize = 0xc0ee;
+/// Bank $84 PLMs: Crocomire's bridge and invisible walls.
+const CLEAR_BRIDGE: u16 = 0xb747;
+const CRUMBLE_BRIDGE_BLOCK: u16 = 0xb74b;
+const CLEAR_BRIDGE_BLOCK: u16 = 0xb74f;
+const CLEAR_INVISIBLE_WALL: u16 = 0xb753;
+const CREATE_INVISIBLE_WALL: u16 = 0xb757;
+/// $7E:9016: the death sequence's crumbling bridge index.
+const CRUMBLING_BRIDGE_INDEX: usize = 0x9016;
+/// $7E:069C-$7E:071D: the melting Y offsets, one per pixel column, and
+/// $7E:068C: the pixels to erase per column a frame.
+const MELTING_Y_OFFSETS: usize = 0x69c;
+const PIXELS_TO_ERASE: usize = 0x68c;
+/// $7E:CAE0: Crocomire's BG2 Y scroll indirect HDMA table.
+const SCROLL_HDMA_TABLE: usize = 0xcae0;
+/// The scroll bytes at $7E:CD20, written a pair at a time: 0 is red, 1 blue.
+const SCROLLS_0_1: usize = 0xcd20;
+const SCROLLS_2_3: usize = 0xcd22;
+const SCROLLS_3_4: usize = 0xcd23;
+const SCROLLS_4_5: usize = 0xcd24;
+/// Block rows of the invisible walls and of the bridge.
+const WALL_ROW: u8 = 3;
+const BRIDGE_ROW: u8 = 0xb;
+
 /// Crocomire's cry (74h), a big explosion (25h), the skeleton collapsing (75h)
 /// and the screen shaking (76h), library 2.
 const CRY_SOUND: u8 = 0x74;
@@ -93,7 +142,7 @@ pub fn fill_scroll<H: Host + ?Sized>(game: &mut H) {
 }
 pub fn melt_down<H: Host + ?Sized>(game: &mut H) {
     fill_scroll(game);
-    slot!(game, Crocomire[0].fight_flags, |old| old & !0x800);
+    slot!(game, Crocomire[0].fight_flags, |old| old & !flag::DAMAGED);
     update_background(word!(game.cur_enemy_index), game);
     let key = word!(game.cur_enemy_index) as i32;
     if slot!(game, Crocomire[key].base.y_pos) as i32 - 280 & 0x8000 != 0 {
@@ -200,9 +249,9 @@ pub fn update_palette<H: Host + ?Sized>(game: &mut H) {
         if slot!(game, Crocomire[0].base.flash_timer) != 0
             && (word!(game.random_enemy_counter) & 2) != 0
         {
-            crate::word_transfers!(game, descending, 8; native(0xc0ee) <- value(0x7fff));
+            crate::word_transfers!(game, descending, 8; native(BG_PALETTE_7_RAM) <- value(0x7fff));
         } else {
-            crate::word_transfers!(game, descending, 8; native(0xc0ee) <- rom(0xa4b89d, 7));
+            crate::word_transfers!(game, descending, 8; native(BG_PALETTE_7_RAM) <- rom(PALETTE_BG_7, 7));
         }
     }
 }
@@ -223,14 +272,14 @@ pub fn behind_wall_rumbling<H: Host + ?Sized>(game: &mut H) {
     let mut cursor = wall_counter(&runtime, 0);
     let image = runtime.leased_image().expect("ROM must be loaded");
     let target = image.table_word(
-        sm_data::cartridge::lorom_offset(0xa498ca) as usize,
+        sm_data::cartridge::lorom_offset(RUMBLE_TABLE) as usize,
         (cursor >> 1) as isize,
     );
     if target == 0x8080 {
         set_wall_counter(&mut runtime, 0x40, 0x8080);
         set_wall_counter(&mut runtime, 0, 128);
         drop(runtime);
-        crate::word_transfers!(game, descending, 16; le(palette_buffer, 191) <- rom(0xa4b91d, 15));
+        crate::word_transfers!(game, descending, 16; le(palette_buffer, 191) <- rom(PALETTE_SPRITE_6, 15));
         game.lease()
             .edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
                 enemy.variables[lane::DEATH_SEQUENCE_INDEX] =
@@ -260,13 +309,13 @@ pub fn behind_wall_rumbling<H: Host + ?Sized>(game: &mut H) {
         }
         cursor = cursor.wrapping_add(2);
         let countdown = image.table_word(
-            sm_data::cartridge::lorom_offset(0xa498ca) as usize,
+            sm_data::cartridge::lorom_offset(RUMBLE_TABLE) as usize,
             (cursor >> 1) as isize,
         );
         set_wall_counter(&mut runtime, 0x80, countdown);
         cursor = cursor.wrapping_add(2);
         let step = image.table_word(
-            sm_data::cartridge::lorom_offset(0xa498ca) as usize,
+            sm_data::cartridge::lorom_offset(RUMBLE_TABLE) as usize,
             (cursor >> 1) as isize,
         );
         set_wall_counter(&mut runtime, 0xc0, step);
@@ -295,7 +344,8 @@ fn contact<H: Host + ?Sized>(game: &mut H) {
 /// Enemy touch - Crocomire - claws ($A4:B93D).
 pub fn touch<H: Host + ?Sized>(game: &mut H) {
     contact(game);
-    slot!(game, Crocomire[0].fight_flags, |flags| flags | 0x4000);
+    slot!(game, Crocomire[0].fight_flags, |flags| flags
+        | flag::SAMUS_HIT_BY_CLAW);
     word!(game.extra_samus_x_displacement = -4i32 as u16);
 }
 /// Crocomire / Samus collision handling ($A4:8C95). Was `push_player`.
@@ -359,7 +409,7 @@ pub fn hit<H: Host + ?Sized>(game: &mut H) {
     }
     if advance {
         let count = next_hit_count(slot!(game, Crocomire[0].fight_flags));
-        if slot!(game, Crocomire[0].fight_flags) & 0x800 == 0 {
+        if slot!(game, Crocomire[0].fight_flags) & flag::DAMAGED == 0 {
             let mut delay = 8;
             if slot!(game, Crocomire[0].fight_function) == 8 {
                 delay = 8;
@@ -369,8 +419,10 @@ pub fn hit<H: Host + ?Sized>(game: &mut H) {
         }
         slot!(
             game,
-            Crocomire[0].fight_flags =
-                count | slot!(game, Crocomire[0].fight_flags) & 0xb7f0 | 0x800
+            Crocomire[0].fight_flags = count
+                | slot!(game, Crocomire[0].fight_flags)
+                    & !(flag::HIT_COUNT | flag::DAMAGED | flag::SAMUS_HIT_BY_CLAW)
+                | flag::DAMAGED
         );
         slot!(game, Crocomire[0].y_velocity = 10);
     }
@@ -491,7 +543,7 @@ fn load_melt_tilemap<H: Host + ?Sized>(table: u32, game: &mut H) {
 /// Crocomire main AI - death sequence index 10h - hop 3 - load melting tilemap ($A4:9341). Was
 /// `prepare_flesh_tilemap`.
 pub fn hop_3_load_melting_tilemap<H: Host + ?Sized>(game: &mut H) {
-    game.ram().write_byte(0x68c, 48);
+    game.ram().write_byte(PIXELS_TO_ERASE, 48);
     word!(game.croco_target_0688 = 48);
     let E: i32 = word!(game.cur_enemy_index) as i32;
     slot!(game, Crocomire[E].death_sequence_index, |old| old
@@ -529,7 +581,7 @@ pub fn hop_6_load_melting_tilemap<H: Host + ?Sized>(game: &mut H) {
     slot!(game, Crocomire[E].death_sequence_index, |old| old
         .wrapping_add(1));
     slot!(game, Crocomire[E].base.instruction_timer = 1);
-    game.ram().write_byte(0x68c, 48);
+    game.ram().write_byte(PIXELS_TO_ERASE, 48);
     word!(game.croco_target_0688 = 48);
     slot!(
         game,
@@ -550,7 +602,7 @@ macro_rules! native_graphics_word {
 pub fn queue_melt_graphics<H: Host + ?Sized>(offset: u16, live_size: bool, game: &mut H) {
     let entry = 0xd0 + usize::from(word!(game.vram_write_queue_tail));
     for (source, destination) in [(0, 0), (6, 2), (4, 4), (2, 5)] {
-        let value = native_graphics_word!(game, 0xa49bc5 + source, {
+        let value = native_graphics_word!(game, MELTING_TILES_SOURCE + source, {
             if source == 0 && live_size {
                 word!(game.g_word_7E068A)
             } else {
@@ -566,7 +618,7 @@ pub fn queue_melt_graphics<H: Host + ?Sized>(offset: u16, live_size: bool, game:
 pub fn upload_melting_tiles<H: Host + ?Sized>(game: &mut H) {
     let offset = word!(game.g_word_7E068A);
     let tail = word!(game.vram_write_queue_tail);
-    if native_graphics_word!(game, 0xa49bc5, word!(game.g_word_7E068A)) == 0xffff {
+    if native_graphics_word!(game, MELTING_TILES_SOURCE, word!(game.g_word_7E068A)) == 0xffff {
         let E: i32 = word!(game.cur_enemy_index) as i32;
         slot!(game, Crocomire[E].death_sequence_index, |old| old
             .wrapping_add(1));
@@ -589,19 +641,20 @@ pub fn load_melting_tiles<H: Host + ?Sized>(game: &mut H) {
     word! { game;
         g_word_7E0692 = 256;
         croco_cur_vline_idx = 0;
-        g_word_7E0698 = native_graphics_word!(game, 0xa49bc5, word!(game.croco_word_7E069A));
+        g_word_7E0698 = native_graphics_word!(game, MELTING_TILES_SOURCE, word!(game.croco_word_7E069A));
         g_word_7E0694 = word!(game.g_word_7E0698);
-        g_word_7E0696 = native_graphics_word!(game, 0xa49bc7, word!(game.croco_word_7E069A));
-        g_word_7E068E = native_graphics_word!(game, 0xa49bc9, word!(game.croco_word_7E069A));
+        g_word_7E0696 = native_graphics_word!(game, MELTING_TILES_DESTINATION, word!(game.croco_word_7E069A));
+        g_word_7E068E = native_graphics_word!(game, MELTING_TILES_SIZE, word!(game.croco_word_7E069A));
     }
-    let bank: u8 = native_graphics_word!(game, 0xa49bcb, word!(game.croco_word_7E069A)) as u8;
+    let bank: u8 =
+        native_graphics_word!(game, MELTING_TILES_BANK, word!(game.croco_word_7E069A)) as u8;
     let mut i: i32 = word!(game.croco_word_7E069A) as i32 + 8;
     loop {
-        let mut v2: u16 = native_graphics_word!(game, 0xa49bc5, i);
+        let mut v2: u16 = native_graphics_word!(game, MELTING_TILES_SOURCE, i);
         if v2 == 0xffff {
             break;
         }
-        let mut v3: u16 = native_graphics_word!(game, 0xa49bc7, i);
+        let mut v3: u16 = native_graphics_word!(game, MELTING_TILES_DESTINATION, i);
         for _ in 0..=word!(game.g_word_7E068E) {
             crate::word_transfers!(game, ascending, 1; native(v3) <- value(native_graphics_word!(game, (u32::from(bank) << 16) | u32::from(v2), 0)));
             v3 = (v3).wrapping_add(2);
@@ -619,7 +672,9 @@ pub fn power_bomb<H: Host + ?Sized>(game: &mut H) {
     if slot!(game, Crocomire[E].death_sequence_index) == 0 {
         slot!(game, Crocomire[E].step_counter = 3);
         if slot!(game, Crocomire[E].fight_function) != 24 {
-            slot!(game, Crocomire[E].fight_flags, |old| old & 0x3ff0 | 0x8000);
+            slot!(game, Crocomire[E].fight_flags, |old| old
+                & !(flag::HIT_COUNT | flag::SAMUS_HIT_BY_CLAW | flag::AWAKE)
+                | flag::AWAKE);
             slot!(game, Crocomire[E].y_velocity = 10);
             slot!(game, Crocomire[E].base.flash_timer, |old| old
                 .wrapping_add(4));
@@ -627,9 +682,9 @@ pub fn power_bomb<H: Host + ?Sized>(game: &mut H) {
             slot!(game, Crocomire[E].fight_function = 24);
             let mut spritemap_pointer: u16 = slot!(game, Crocomire[E].base.spritemap_pointer);
             let mut n: i32 =
-                native_graphics_word!(game, 0xa40000 | u32::from(spritemap_pointer), 0) as i32;
+                native_graphics_word!(game, BANK << 16 | u32::from(spritemap_pointer), 0) as i32;
             let instruction = loop {
-                let tag = native_graphics_word!(game, 0xa40000 | u32::from(spritemap_pointer), 6);
+                let tag = native_graphics_word!(game, BANK << 16 | u32::from(spritemap_pointer), 6);
                 if u32::from(tag) == addr_kCrocomire_BigSprmap_D600 {
                     break addr_kCrocomire_Ilist_BDAE as u16;
                 }
@@ -651,9 +706,9 @@ pub fn power_bomb<H: Host + ?Sized>(game: &mut H) {
 /// `approach_wall`.
 pub fn not_started<H: Host + ?Sized>(game: &mut H) {
     update_wall(game);
-    crate::word_transfers!(game, ascending, 1; native(0xcd24) <- value(257));
+    crate::word_transfers!(game, ascending, 1; native(SCROLLS_4_5) <- value(257));
     if game.player_x() as i32 - 1312i32 & 0x8000 == 0 {
-        crate::word_transfers!(game, ascending, 1; native(0xcd24) <- value(256));
+        crate::word_transfers!(game, ascending, 1; native(SCROLLS_4_5) <- value(256));
     }
     update_background(word!(game.cur_enemy_index), game);
 }
@@ -673,7 +728,7 @@ fn update_wall<H: Host + ?Sized>(game: &mut H) {
     } else if slot!(game, Crocomire[E0].base.x_pos) as i32 - 1568i32 & 0x8000 != 0 {
         if word!(game.g_word_7E9002) == 0 {
             word!(game.g_word_7E9002 = 1);
-            game.spawn_plm(0x61, 0xb, 0xb74b);
+            game.spawn_plm(0x61, BRIDGE_ROW, CRUMBLE_BRIDGE_BLOCK);
             game.set_projectile_spawn_point(1568, 176);
             game.spawn_room_projectile(addr_kEproj_DustCloudExplosion as u16, 0x15);
         }
@@ -684,8 +739,8 @@ fn update_wall<H: Host + ?Sized>(game: &mut H) {
         } else if x_pos as i32 - 1584i32 & 0x8000 != 0 {
             if word!(game.g_word_7E9006) == 0 {
                 word!(game.g_word_7E9006 = 1);
-                game.spawn_plm(0x62, 0xb, 0xb74b);
-                game.spawn_plm(0x63, 0xb, 0xb74b);
+                game.spawn_plm(0x62, BRIDGE_ROW, CRUMBLE_BRIDGE_BLOCK);
+                game.spawn_plm(0x63, BRIDGE_ROW, CRUMBLE_BRIDGE_BLOCK);
                 game.set_projectile_spawn_point(1584, 176);
                 game.spawn_room_projectile(addr_kEproj_DustCloudExplosion as u16, 0x15);
             }
@@ -704,8 +759,8 @@ fn update_wall<H: Host + ?Sized>(game: &mut H) {
                 slot!(game, Crocomire[key].unread_7802 = 0);
             }
             game.queue_sound(1, 0x3b, 6);
-            crate::word_transfers!(game, ascending, 1; native(0x9016) <- value(0));
-            game.spawn_plm(0x4e, 0x3, 0xb757);
+            crate::word_transfers!(game, ascending, 1; native(CRUMBLING_BRIDGE_INDEX) <- value(0));
+            game.spawn_plm(0x4e, WALL_ROW, CREATE_INVISIBLE_WALL);
             slot!(game, Crocomire[EK].base; current_instruction = addr_kCrocomire_Ilist_BFB0 as u16, instruction_timer = 1);
             slot!(game, Crocomire[EK].base.properties, |old| (old)
                 | ((kEnemyProps_Tangible) as u16));
@@ -726,7 +781,7 @@ fn update_wall<H: Host + ?Sized>(game: &mut H) {
 
 fn demolish_wall<H: Host + ?Sized>(game: &mut H) {
     for x in 0x61..=0x6a {
-        game.spawn_plm(x, 0xb, 0xb74f);
+        game.spawn_plm(x, BRIDGE_ROW, CLEAR_BRIDGE_BLOCK);
     }
     for (offset, y) in [176, 192, 176, 192, 192, 192, 192].into_iter().enumerate() {
         game.set_projectile_spawn_point(1536 + 16 * offset as u16, y);
@@ -799,13 +854,13 @@ pub fn behind_wall_no_more_rumbling<H: Host + ?Sized>(game: &mut H) {
         slot!(game, Crocomire[E].base.y_pos = 54);
         slot!(game, Crocomire[0x80i32].step_counter = 80);
         slot!(game, Crocomire[E]; y_velocity = 0, projectile_counter = 0);
-        game.spawn_plm(0x20, 0x3, 0xb753);
-        game.spawn_plm(0x1e, 0x3, 0xb757);
-        game.spawn_plm(0x70, 0xb, 0xb747);
+        game.spawn_plm(0x20, WALL_ROW, CLEAR_INVISIBLE_WALL);
+        game.spawn_plm(0x1e, WALL_ROW, CREATE_INVISIBLE_WALL);
+        game.spawn_plm(0x70, BRIDGE_ROW, CLEAR_BRIDGE);
         game.queue_sound(1, 0x29, 6);
         slot!(game, Crocomire[E].base; current_instruction = addr_kCrocomire_Ilist_E158 as u16, instruction_timer = 1);
         slot!(game, Crocomire[E].base.palette_index = 0);
-        crate::word_transfers!(game, descending, 16; le(palette_buffer, 159) <- rom(0xa4b8fd, 15));
+        crate::word_transfers!(game, descending, 16; le(palette_buffer, 159) <- rom(PALETTE_SPRITE_4, 15));
         game.clear_enemy_projectiles();
         let mut v8: u16 = 8;
         for _ in 0..8 {
@@ -880,7 +935,7 @@ pub fn melting<H: Host + ?Sized>(game: &mut H) {
     slot!(game, Crocomire[EK].death_sequence_index, |old| (old)
         .wrapping_add(2));
     let mut i: i32 = word!(game.croco_word_7E069A) as i32;
-    while native_graphics_word!(game, 0xa49bc5, i) != 0xffff {
+    while native_graphics_word!(game, MELTING_TILES_SOURCE, i) != 0xffff {
         i += 8;
     }
     word!(game.croco_word_7E069A = (i + 2) as u16);
@@ -891,16 +946,16 @@ pub fn melting<H: Host + ?Sized>(game: &mut H) {
 }
 
 fn erase_melt_columns<H: Host + ?Sized>(game: &mut H) -> u16 {
-    let mut n: i32 = game.ram().read_byte(0x68c) as i32;
+    let mut n: i32 = game.ram().read_byte(PIXELS_TO_ERASE) as i32;
     loop {
         if word!(game.croco_cur_vline_idx) > 48 {
             return 1;
         }
         let rr: i32 = game.native_image().read(
-            sm_data::cartridge::lorom_offset(0xa49697) as usize
+            sm_data::cartridge::lorom_offset(MELTING_X_OFFSETS) as usize
                 + usize::from(word!(game.croco_cur_vline_idx)),
         ) as i32;
-        if (game.ram().read_byte(0x69c + rr as usize) as i8)
+        if (game.ram().read_byte(MELTING_Y_OFFSETS + rr as usize) as i8)
             .wrapping_sub((word!(game.croco_target_0688)) as i8)
             < 0
         {
@@ -913,29 +968,29 @@ fn erase_melt_columns<H: Host + ?Sized>(game: &mut H) -> u16 {
     }
     // The top-of-loop return dominates this break; intervening reads do not change the index.
     let vline_idx: i32 = game.native_image().read(
-        sm_data::cartridge::lorom_offset(0xa49697) as usize
+        sm_data::cartridge::lorom_offset(MELTING_X_OFFSETS) as usize
             + usize::from(word!(game.croco_cur_vline_idx)),
     ) as i32;
     let mask: u8 = !(0x80u8 >> (vline_idx & 7));
     do_until! { n == 0 ;
-        let q: i32 = game.ram().read_byte(0x69c + vline_idx as usize) as i32;
+        let q: i32 = game.ram().read_byte(MELTING_Y_OFFSETS + vline_idx as usize) as i32;
         let j: i32 = 2 * (q & 7) + ((q & !(7i32)) << 6) + 4 * (vline_idx & !(7i32));
         // Melting tiles span the $4000 graphics buffer, beyond the menu backup prefix.
         for plane_offset in [0, 1, 16, 17] {
             let at = 0x4000 + j as usize + plane_offset;
             game.ram().write_byte(at, game.ram().read_byte(at) & mask);
         }
-        if game.ram().read_byte(0x69c + vline_idx as usize) == 48 {
+        if game.ram().read_byte(MELTING_Y_OFFSETS + vline_idx as usize) == 48 {
             break;
         }
-        let at = 0x69c + vline_idx as usize;
+        let at = MELTING_Y_OFFSETS + vline_idx as usize;
         game.ram().write_byte(at, game.ram().read_byte(at).wrapping_add(1));
         n -= 1;
     }
     let (v7, v8) = loop {
         let v7 = (word!(game.g_word_7E068A)).wrapping_add(word!(game.croco_word_7E069A));
         let v8 = word!(game.vram_write_queue_tail);
-        if native_graphics_word!(game, 0xa49bc5, v7) != 0xffff {
+        if native_graphics_word!(game, MELTING_TILES_SOURCE, v7) != 0xffff {
             break (v7, v8);
         }
         word!(game.g_word_7E068A = 0);
@@ -956,16 +1011,19 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
     } & 2)
         != 0
     {
-        crate::word_transfers!(game, ascending, 1; native(0xcd20) <- value(257));
-        crate::word_transfers!(game, ascending, 1; native(0xcd22) <- value(257));
+        crate::word_transfers!(game, ascending, 1; native(SCROLLS_0_1) <- value(257));
+        crate::word_transfers!(game, ascending, 1; native(SCROLLS_2_3) <- value(257));
         word!(game.croco_target_0688 = 0);
         let E: i32 = 0;
         slot!(game, Crocomire[E].base.properties, |old| old & 0x7bff
             | 0x400);
-        game.spawn_plm(0x20, 0x3, 0xb753);
-        game.spawn_plm(0x1e, 0x3, 0xb753);
-        game.spawn_plm(0x61, 0xb, 0xb747);
-        slot!(game, Crocomire[E].death_sequence_index = 84);
+        game.spawn_plm(0x20, WALL_ROW, CLEAR_INVISIBLE_WALL);
+        game.spawn_plm(0x1e, WALL_ROW, CLEAR_INVISIBLE_WALL);
+        game.spawn_plm(0x61, BRIDGE_ROW, CLEAR_BRIDGE);
+        slot!(
+            game,
+            Crocomire[E].death_sequence_index = death::SET_INDEX_56
+        );
         slot!(game, Crocomire[E].base; current_instruction = addr_kCrocomire_Ilist_E1CC as u16, instruction_timer = 1);
         slot!(game, Crocomire[E].base.x_pos = 576);
         slot!(game, Crocomire[E].base; y_pos = 144, y_height = 28, x_width = 40);
@@ -975,10 +1033,10 @@ pub fn initialize<H: Host + ?Sized>(game: &mut H) {
         word!(game.croco_word_7E069A = 0);
         let E_0: i32 = word!(game.cur_enemy_index) as i32;
         slot!(game, Crocomire[E_0]; death_sequence_index = 0, y_velocity = 0);
-        crate::word_transfers!(game, ascending, 1; native(0xcd20) <- value(0));
+        crate::word_transfers!(game, ascending, 1; native(SCROLLS_0_1) <- value(0));
         crate::word_transfers!(game, descending, 17;
-            le(target_palettes, 176) <- rom(0xa4b8bd, 16),
-            le(target_palettes, 224) <- rom(0xa4b8dd, 16),
+            le(target_palettes, 176) <- rom(PALETTE_TARGET_SPRITE_3, 16),
+            le(target_palettes, 224) <- rom(PALETTE_TARGET_SPRITE_6, 16),
         );
         slot!(game, Crocomire[E_0].fight_function = 4);
         word! {game; UNUSED_word_7E179E = 16; camera_distance_index = 2;
@@ -994,14 +1052,17 @@ pub fn hop_6_sinking<H: Host + ?Sized>(game: &mut H) {
     emit_lava_plume(game);
     melt_down(game);
     let E: i32 = 0;
-    if slot!(game, Crocomire[E].death_sequence_index) == 62 {
+    if slot!(game, Crocomire[E].death_sequence_index) == death::BEHIND_WALL_WAIT_FOR_SAMUS {
         game.queue_music_delayed(6);
-        slot!(game, Crocomire[E].death_sequence_index = 88);
+        slot!(
+            game,
+            Crocomire[E].death_sequence_index = death::FLOWING_DOWN_THE_RIVER
+        );
         slot!(
             game,
             Crocomire[E].base.current_instruction = addr_kCrocomire_Ilist_E1D2 as u16
         );
-        crate::word_transfers!(game, ascending, 1; native(0xcd24) <- value(257));
+        crate::word_transfers!(game, ascending, 1; native(SCROLLS_4_5) <- value(257));
         word!(game.debug_disable_minimap = 0);
         slot!(
             game,
@@ -1009,22 +1070,30 @@ pub fn hop_6_sinking<H: Host + ?Sized>(game: &mut H) {
                 slot!(game, Crocomire[0x40i32].base.properties) | (0x200u16)
         );
 
-        game.spawn_plm(0x4e, 0x3, 0xb753);
+        game.spawn_plm(0x4e, WALL_ROW, CLEAR_INVISIBLE_WALL);
         word! { game, 0; camera_distance_index, croco_target_0688 }
     }
 }
 
 /// Crocomire main AI - death sequence index 2 - falling ($A4:9136). Was `emit_melt_debris`.
 pub fn falling<H: Host + ?Sized>(game: &mut H) {
-    let v0: u16 = u16::from_ne_bytes([game.ram().read_byte(0x9016), game.ram().read_byte(0x9017)]);
-    if u16::from_ne_bytes([game.ram().read_byte(0x9016), game.ram().read_byte(0x9017)]) as i32
+    let v0: u16 = u16::from_ne_bytes([
+        game.ram().read_byte(CRUMBLING_BRIDGE_INDEX),
+        game.ram().read_byte(CRUMBLING_BRIDGE_INDEX + 1),
+    ]);
+    if u16::from_ne_bytes([
+        game.ram().read_byte(CRUMBLING_BRIDGE_INDEX),
+        game.ram().read_byte(CRUMBLING_BRIDGE_INDEX + 1),
+    ]) as i32
         - 22i32
         & 0x8000
         != 0
     {
-        let v1: u16 =
-            u16::from_ne_bytes([game.ram().read_byte(0x9016), game.ram().read_byte(0x9017)]);
-        checked_word!(game, 0x9016; += 2);
+        let v1: u16 = u16::from_ne_bytes([
+            game.ram().read_byte(CRUMBLING_BRIDGE_INDEX),
+            game.ram().read_byte(CRUMBLING_BRIDGE_INDEX + 1),
+        ]);
+        checked_word!(game, CRUMBLING_BRIDGE_INDEX; += 2);
         let parameter = game.crocomire_table_word(BRIDGE_DEBRIS_ADDRESS, (v0 >> 1) as isize);
         game.spawn_projectile(parameter, v1, addr_stru_868F9D as u16);
     }
@@ -1038,9 +1107,9 @@ pub fn behind_wall_wait_for_samus<H: Host + ?Sized>(game: &mut H) {
         return;
     }
     game.queue_music_delayed(5);
-    game.lease().write_slice_native(0xcd23, 256);
+    game.lease().write_slice_native(SCROLLS_3_4, 256);
     {
-        game.spawn_plm(0x30, 0x3, 0xb757);
+        game.spawn_plm(0x30, WALL_ROW, CREATE_INVISIBLE_WALL);
     }
     word!(game.camera_distance_index = 6);
     let mut runtime = game.lease();
@@ -1082,7 +1151,7 @@ pub fn flowing_down_the_river<H: Host + ?Sized>(game: &mut H) {
             if (enemy.x.whole as i16).wrapping_sub(480) < 0 {
                 enemy.x.whole = 480;
                 enemy.y.whole = 54;
-                enemy.variables[lane::DEATH_SEQUENCE_INDEX] = 62;
+                enemy.variables[lane::DEATH_SEQUENCE_INDEX] = death::BEHIND_WALL_WAIT_FOR_SAMUS;
             } else {
                 enemy.y.whole = 220;
             }
@@ -1185,7 +1254,7 @@ pub fn skeleton_falls_apart<H: Host + ?Sized>(game: &mut H) {
         });
     if finished {
         {
-            game.spawn_plm(0x30, 0x3, 0xb753);
+            game.spawn_plm(0x30, WALL_ROW, CLEAR_INVISIBLE_WALL);
         }
         game.scatter_crocomire_drop(0);
         advance_death_sequence(game);
@@ -1209,11 +1278,11 @@ pub fn set_index_4e<H: Host + ?Sized>(game: &mut H) {
 pub fn unlock_camera<H: Host + ?Sized>(game: &mut H) {
     {
         let mut runtime = game.lease();
-        runtime.write_slice_native(0xcd20, 257);
-        runtime.write_slice_native(0xcd22, 257);
+        runtime.write_slice_native(SCROLLS_0_1, 257);
+        runtime.write_slice_native(SCROLLS_2_3, 257);
     }
     {
-        game.spawn_plm(0x1e, 0x3, 0xb753);
+        game.spawn_plm(0x1e, WALL_ROW, CLEAR_INVISIBLE_WALL);
     }
     advance_death_sequence(game);
 }
@@ -1235,11 +1304,11 @@ pub fn prepare_scroll_hdma<H: Host + ?Sized>(game: &mut H) {
         game,
         Crocomire[0x80i32].step_counter = slot!(game, Crocomire[v4].base.x_pos)
     );
-    crate::word_transfers!(game, ascending, 1; native(0xcae0) <- value(255));
-    crate::word_transfers!(game, ascending, 1; native(0xcae1) <- value(-13584i32 as u16));
-    crate::word_transfers!(game, ascending, 1; native(0xcae3) <- value(225));
-    crate::word_transfers!(game, ascending, 1; native(0xcae4) <- value(-13330i32 as u16));
-    crate::word_transfers!(game, ascending, 1; native(0xcae6) <- value(0));
+    crate::word_transfers!(game, ascending, 1; native(SCROLL_HDMA_TABLE) <- value(255));
+    crate::word_transfers!(game, ascending, 1; native(SCROLL_HDMA_TABLE + 1) <- value(-13584i32 as u16));
+    crate::word_transfers!(game, ascending, 1; native(SCROLL_HDMA_TABLE + 3) <- value(225));
+    crate::word_transfers!(game, ascending, 1; native(SCROLL_HDMA_TABLE + 4) <- value(-13330i32 as u16));
+    crate::word_transfers!(game, ascending, 1; native(SCROLL_HDMA_TABLE + 6) <- value(0));
 }
 
 // Returned only for the two synchronous hardware phases of the fixed actor-0 driver.
