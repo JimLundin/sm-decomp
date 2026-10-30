@@ -14,7 +14,6 @@ pub(crate) use crate::game::intro_objects::{
     advance_intro_rinka, advance_zebes_destruction_zoom, advance_zebes_flight, advance_zebes_stars,
     launch_cinematic_sprite, wait_cinematic_scene,
 };
-use crate::game::projectile_presentation_ram as sprite_output;
 pub(crate) use crate::game::room_visuals::{
     advance_crocomire, align_crocomire_background, darken_fireflea_room,
     initialize_bomb_torizo_haze, initialize_ceres_elevator, initialize_ceres_ridley,
@@ -31,13 +30,14 @@ pub(crate) use crate::game::visual_checks::{
 };
 use crate::{
     game::{
-        animated_tiles, enemy_projectiles, palette_effects, player_projectiles,
+        enemy_projectiles, palette_effects, player_projectiles,
         session_runtime::Runtime,
         visual_host::{self, AnimationMember, PaletteMember, Source, StatueProjectile},
         visual_state::{PaletteBuffer, Upload},
     },
     rom::RomRecord,
 };
+use sm_game::lease::Lease;
 use sm_game::visual_host::session_aliases as aliases;
 
 impl visual_host::Content for Runtime<'_> {
@@ -110,18 +110,7 @@ impl visual_host::Effects for Runtime<'_> {
         crate::player_collision_movement_cases::observe_owned_cancel(values);
     }
     fn draw_samus_sprite(&mut self, index: u16, x: u16, y: u16) {
-        if self.has_owned_display() {
-            let producer = self
-                .session()
-                .presentation
-                .publications()
-                .expect("Samus publications")
-                .body;
-            self.draw_owned_samus(producer, index, (x, y));
-            return;
-        }
-        // Retain the complete native export/action/import interval, including null maps.
-        self.foreign(|game| sprite_output::samus(index, (x, y), game, &mut sprite_output::Native));
+        sm_game::lease::draw_samus_sprite(self, index, x, y);
     }
     fn draw_atmospheric_tile(&mut self, slot: usize, kind: u16) {
         sm_game::scene::atmosphere::draw_tile(
@@ -136,32 +125,21 @@ impl visual_host::Effects for Runtime<'_> {
         player_projectiles::host::Host::sound(self, channel, limit, sound);
     }
     fn music_delayed8(&mut self, track: u16) {
-        if self.has_owned_display() {
-            self.owned_call(|runtime| {
-                crate::game::music::requests::enqueue(track, 8, true, runtime)
-                    .expect("audio enqueue");
-            });
-            return;
-        }
-        self.foreign(|game| crate::game::music::QueueMusic_Delayed8(track, game));
+        sm_game::lease::music_delayed8(self, track);
     }
     fn resume_movement_sound(&mut self) {
         #[cfg(sm_verify_dll)]
         samus_observer::event("command", 0x1c);
-        self.foreign(|game| {
-            crate::game::session_runtime::player_command(0x1c, game);
-        });
+        Lease::native_player_command(self, 0x1c);
     }
     fn upload(&mut self, request: Upload) {
-        self.foreign(|game| animated_tiles::native::upload(request, game));
+        Lease::native_upload(self, request);
     }
     fn invalid_palette_instruction(&mut self) {
-        self.foreign(|game| {
-            crate::rtl::Unreachable(game);
-        });
+        Lease::native_unreachable(self);
     }
     fn invalid_animation_instruction(&mut self) -> u16 {
-        self.foreign(animated_tiles::native::unreachable)
+        Lease::native_animation_unreachable(self)
     }
     fn color_written(&mut self, _index: u16, _value: u16) {}
 }

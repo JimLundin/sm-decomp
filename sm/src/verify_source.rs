@@ -334,6 +334,14 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/hdma_dispatch.rs"),
     ),
     (
+        "crates/sm_game/src/lease.rs",
+        include_bytes!("../../crates/sm_game/src/lease.rs"),
+    ),
+    (
+        "crates/sm_game/src/music_requests.rs",
+        include_bytes!("../../crates/sm_game/src/music_requests.rs"),
+    ),
+    (
         "crates/sm_game/src/player_drawing.rs",
         include_bytes!("../../crates/sm_game/src/player_drawing.rs"),
     ),
@@ -516,10 +524,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/verification/gameplay_checkpoint_cases.rs",
         include_bytes!("verification/gameplay_checkpoint_cases.rs"),
-    ),
-    (
-        "sm/src/game/music_requests.rs",
-        include_bytes!("game/music_requests.rs"),
     ),
     (
         "sm/src/verification/persistent_session_cases.rs",

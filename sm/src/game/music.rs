@@ -2,8 +2,7 @@
 use crate::game_state::Game;
 use crate::ram_map::checked_word;
 
-#[path = "music_requests.rs"]
-pub(crate) mod requests;
+pub(crate) use sm_game::music_requests as requests;
 
 #[forbid(unsafe_code)]
 pub fn HasQueuedMusic(game: &mut Game) -> u8 {

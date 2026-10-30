@@ -1,8 +1,8 @@
 //! Ordered request algorithms over the actual audio state owner.
 #![forbid(unsafe_code)]
 
-use crate::game_state::persistent_session::{AudioHost, QueuedMusicMeaning, QueuedSoundMeaning};
-use sm_game::scene::state::DisplayError;
+use crate::scene::state::DisplayError;
+use crate::session_owners::{AudioHost, QueuedMusicMeaning, QueuedSoundMeaning};
 
 // Complete only after a successful numeric prefix. This neither publishes a
 // request nor supplies a meaning for a rejected slot; Legacy skips the closure.
@@ -43,7 +43,7 @@ fn callback<H: AudioHost>(
     result
 }
 
-pub(crate) fn enqueue(
+pub fn enqueue(
     track: u16,
     delay: u16,
     reject_full: bool,
@@ -66,7 +66,7 @@ pub(crate) fn enqueue(
     Ok(())
 }
 
-pub(crate) fn retire(host: &mut impl AudioHost) -> Result<(), DisplayError> {
+pub fn retire(host: &mut impl AudioHost) -> Result<(), DisplayError> {
     let read = host.audio_word(0x63b);
     let slot = usize::from(read >> 1);
     host.audio_store_word(0x619 + 2 * slot, 0);
@@ -76,7 +76,7 @@ pub(crate) fn retire(host: &mut impl AudioHost) -> Result<(), DisplayError> {
     Ok(())
 }
 
-pub(crate) fn has_queued_music(host: &impl AudioHost) -> u8 {
+pub fn has_queued_music(host: &impl AudioHost) -> u8 {
     u8::from(
         (0..8)
             .rev()
@@ -84,7 +84,7 @@ pub(crate) fn has_queued_music(host: &impl AudioHost) -> u8 {
     )
 }
 
-pub(crate) fn reset_delays(host: &mut impl AudioHost) -> Result<(), DisplayError> {
+pub fn reset_delays(host: &mut impl AudioHost) -> Result<(), DisplayError> {
     host.audio_store_word(0x63f, 0);
     for slot in 0..8 {
         host.audio_store_word(0x629 + 2 * slot, 0);
@@ -92,7 +92,7 @@ pub(crate) fn reset_delays(host: &mut impl AudioHost) -> Result<(), DisplayError
     complete(host)
 }
 
-pub(crate) fn clear_queue(host: &mut impl AudioHost) -> Result<(), DisplayError> {
+pub fn clear_queue(host: &mut impl AudioHost) -> Result<(), DisplayError> {
     for slot in (0..8).rev() {
         host.audio_store_word(0x619 + 2 * slot, 0);
         host.audio_store_word(0x629 + 2 * slot, 0);
@@ -112,12 +112,12 @@ pub(crate) fn clear_queue(host: &mut impl AudioHost) -> Result<(), DisplayError>
 /// The native wrapper retains bank upload and APU writes; owned callers provide
 /// their actual sound consumer. The meaning is the captured authored record;
 /// numeric compatibility values and post-callback fresh reads remain separate.
-pub(crate) enum MusicEffect {
+pub enum MusicEffect {
     UploadBank,
     WriteTrack(u8),
 }
 
-pub(crate) fn advance_music<H: AudioHost>(
+pub fn advance_music<H: AudioHost>(
     host: &mut H,
     mut effect: impl FnMut(MusicEffect, Option<&QueuedMusicMeaning>, &mut H) -> Result<(), DisplayError>,
 ) -> Result<(), DisplayError> {
@@ -184,7 +184,7 @@ pub(crate) fn advance_music<H: AudioHost>(
     complete(host)
 }
 
-pub(crate) fn queue_sfx(
+pub fn queue_sfx(
     channel: usize,
     sound: u8,
     max_queued: u8,
@@ -248,7 +248,7 @@ pub(crate) fn queue_sfx(
     Ok(u16::from_be_bytes([queued, sound]))
 }
 
-pub(crate) fn advance_sound_effects<H: AudioHost>(
+pub fn advance_sound_effects<H: AudioHost>(
     host: &mut H,
     mut write: impl FnMut(u8, u8, Option<&QueuedSoundMeaning>, &mut H) -> Result<(), DisplayError>,
 ) -> Result<(), DisplayError> {
@@ -320,7 +320,7 @@ pub(crate) fn advance_sound_effects<H: AudioHost>(
     complete(host)
 }
 
-pub(crate) fn reset_sound_queues(host: &mut impl AudioHost) -> Result<(), DisplayError> {
+pub fn reset_sound_queues(host: &mut impl AudioHost) -> Result<(), DisplayError> {
     for offset in 0x643..0x64c {
         host.audio_store_byte(offset, 0);
     }

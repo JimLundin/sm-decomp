@@ -945,7 +945,7 @@ impl sm_game::actors::statues::Host for Game {
     }
 }
 
-impl sm_game::player_drawing::Host for crate::game::session_runtime::Runtime<'_> {
+impl sm_game::lease::Lease for crate::game::session_runtime::Runtime<'_> {
     fn owned_call<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R {
         crate::game::session_runtime::Runtime::owned_call(self, action)
     }
@@ -955,6 +955,44 @@ impl sm_game::player_drawing::Host for crate::game::session_runtime::Runtime<'_>
     fn owned_player_call<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R {
         crate::game::session_runtime::Runtime::owned_player_call(self, action)
     }
+    fn has_owned_display(&self) -> bool {
+        crate::game::session_runtime::Runtime::has_owned_display(self)
+    }
+    fn draw_owned_samus(&mut self, index: u16, x: u16, y: u16) {
+        let producer = self
+            .session()
+            .presentation
+            .publications()
+            .expect("Samus publications")
+            .body;
+        crate::game::session_runtime::Runtime::draw_owned_samus(self, producer, index, (x, y));
+    }
+    fn native_samus_sprite(&mut self, index: u16, x: u16, y: u16) {
+        use crate::game::projectile_presentation_ram as sprite_output;
+        self.foreign(|game| sprite_output::samus(index, (x, y), game, &mut sprite_output::Native));
+    }
+    fn native_music_delayed8(&mut self, track: u16) {
+        self.foreign(|game| crate::game::music::QueueMusic_Delayed8(track, game));
+    }
+    fn native_player_command(&mut self, command: u16) {
+        self.foreign(|game| {
+            crate::game::session_runtime::player_command(command, game);
+        });
+    }
+    fn native_upload(&mut self, request: sm_game::visual_state::Upload) {
+        self.foreign(|game| crate::game::animated_tiles::native::upload(request, game));
+    }
+    fn native_unreachable(&mut self) {
+        self.foreign(|game| {
+            crate::rtl::Unreachable(game);
+        });
+    }
+    fn native_animation_unreachable(&mut self) -> u16 {
+        self.foreign(crate::game::animated_tiles::native::unreachable)
+    }
+}
+
+impl sm_game::player_drawing::Host for crate::game::session_runtime::Runtime<'_> {
     fn draw_flare(&mut self) {
         self.foreign(crate::game::player_projectiles::flare);
     }
@@ -972,9 +1010,6 @@ impl sm_game::player_drawing::Host for crate::game::session_runtime::Runtime<'_>
     }
     fn draw_projectiles(&mut self) {
         self.foreign(crate::game::player_projectiles::draw_projectiles);
-    }
-    fn invalid_draw_mode(&mut self) {
-        self.foreign(|game| crate::rtl::Unreachable(game));
     }
     fn finish_player_frame(&mut self) {
         self.owned_call(crate::game::session_runtime::finish_player_frame);
