@@ -14,7 +14,6 @@ use crate::game::sprite_effect_runtime as sprites;
 use crate::game_state::Game;
 use crate::types::{EnemyDef, Point16U};
 use core::mem::offset_of;
-pub(crate) use sm_game::actors::draygon_flight::*;
 use sm_game::actors::draygon_grab::{ENEMY_DEF_DAMAGE, ENEMY_DEF_HURT_AI_TIME};
 use sm_game::actors::draygon_host::Host;
 use sm_game::actors::host::BossEffects;
@@ -27,7 +26,7 @@ const _: () = assert!(
         && offset_of!(EnemyDef, damage) == ENEMY_DEF_DAMAGE
 );
 
-// The named bank $A5 functions are the ones `sm_a5` dispatches on.
+// The named bank $A5 functions are the ones the species table dispatches on.
 const _: () = {
     use sm_game::actors::draygon_host::function as f;
     const fn at(word: u16) -> u32 {

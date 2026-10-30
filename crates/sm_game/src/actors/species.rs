@@ -11,9 +11,9 @@
 use crate::actors::host::{ActorHost, ActorRuntime, Death, LeaseActors, Shot};
 use crate::actors::{
     botwoon, brinstar_pipe_bug, crocomire_reactions, dachora_run, draygon_death, draygon_eye,
-    draygon_flight, draygon_grab, draygon_host, escape_critters, etecoon, kraid, magdollite,
-    norfair_pipe_bug, phantoon, phantoon_actions, shaktool, space_pirates, statues, torizo,
-    yapping_maw, yellow_pipe_bug,
+    draygon_flight, draygon_grab, draygon_host, draygon_sweep, escape_critters, etecoon, kraid,
+    magdollite, norfair_pipe_bug, phantoon, phantoon_actions, shaktool, space_pirates, statues,
+    torizo, yapping_maw, yellow_pipe_bug,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -268,6 +268,57 @@ pub trait AiHost:
     fn native_ai(&mut self, ea: u32);
     /// Kill the current enemy with the grapple, through one lease.
     fn grapple_kill(&mut self);
+    /// Install Draygon's BG layers as its initialisation does.
+    fn install_draygon_layers(&mut self);
+    /// The original diagnostic Draygon's left swoop setup prints.
+    fn warn_draygon_swoop(&mut self);
+    /// A bank $A5 function Draygon's dispatch shares with Spore Spawn, whose
+    /// routines still run in the compatibility crate.
+    fn native_draygon_function(&mut self, ea: u32, k: u16);
+}
+
+/// The bank $A5 functions Draygon's parts run, keyed by address.
+fn draygon_function<H: AiHost>(ea: u32, k: u16, game: &mut H) {
+    match ea {
+        10848691 => {
+            draygon_flight::fire_wall_turret(game);
+            game.warn_draygon_swoop();
+            draygon_sweep::swoop_setup(false, game);
+        }
+        10848027 => draygon_flight::fight_intro(true, game),
+        10848139 => draygon_flight::fight_intro(false, game),
+        10850693 => draygon_death::drift_to_death_spot(game),
+        10850964 => draygon_death::wait_for_evirs(game),
+        10850987 => draygon_death::buried_by_evirs(game),
+        10849817 => draygon_grab::chase_samus(game),
+        10850064 => draygon_grab::repelled_by_grapple(game),
+        10850600 => draygon_grab::flail_tail_and_fly_straight_up(game),
+        10850644 => draygon_grab::fly_straight_up(game),
+        10848244 => draygon_sweep::swoop_setup(true, game),
+        10848433 => draygon_sweep::swoop(true, false, game),
+        10848546 => draygon_sweep::swoop_apex(true, game),
+        10848593 => draygon_sweep::swoop(true, true, game),
+        10848768 => draygon_sweep::swoop(false, false, game),
+        10848848 => draygon_sweep::swoop_apex(false, game),
+        10848912 => draygon_sweep::swoop(false, true, game),
+        10849034 => draygon_flight::goop_setup(true, game),
+        10849422 => draygon_flight::goop_setup(false, game),
+        10849106 => draygon_flight::goop_move_until_in_range(true, game),
+        10849492 => draygon_flight::goop_move_until_in_range(false, game),
+        10849198 => draygon_flight::goop_firing(true, game),
+        10849584 => draygon_flight::goop_firing(false, game),
+        10846283 => (),
+        10849331 => draygon_flight::goop_move_until_off_screen(true, game),
+        10849714 => draygon_flight::goop_move_until_off_screen(false, game),
+        10850078 => draygon_grab::move_to_target(k, game),
+        10850262 => draygon_grab::rising_spiral(k, game),
+        10850516 => draygon_grab::tail_whip(k, game),
+        10850565 => draygon_grab::final_tail_whips(k, game),
+        10850596 => draygon_grab::move_samus_with_draygon(k, game),
+        10863757 => draygon_eye::look_at_samus(k, false, game),
+        10863891 => draygon_eye::look_at_samus(k, true, game),
+        _ => game.native_draygon_function(ea, k),
+    }
 }
 
 /// An enemy species' AI routine, keyed by its address. Arms not here are in
@@ -395,6 +446,9 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         // Bank $B2: the space pirates.
         0xb20000..=0xb2ffff => space_pirates::dispatch_ai(ea, game),
         // Bank $A5.
+        10847879 => draygon_flight::initialize(|game: &mut H| game.install_draygon_layers(), game),
+        10847996 => draygon_flight::main_ai(true, draygon_function, game),
+        10863750 => draygon_flight::main_ai(false, draygon_function, game),
         10851661 => draygon_death::hurt_ai(game),
         10864025 => draygon_flight::initialize_tail_or_arms(false, game),
         10864045 => draygon_flight::initialize_tail_or_arms(true, game),

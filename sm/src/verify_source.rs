@@ -2087,22 +2087,9 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/demo_rooms.rs"),
     ),
     ("sm/src/game/sm_8b.rs", include_bytes!("game/sm_8b.rs")),
-    ("sm/src/game/sm_a5.rs", include_bytes!("game/sm_a5.rs")),
     (
         "sm/src/game/actors/spore_spawn.rs",
         include_bytes!("game/actors/spore_spawn.rs"),
-    ),
-    (
-        "sm/src/game/actors/draygon_grab.rs",
-        include_bytes!("game/actors/draygon_grab.rs"),
-    ),
-    (
-        "sm/src/game/actors/draygon_death.rs",
-        include_bytes!("game/actors/draygon_death.rs"),
-    ),
-    (
-        "sm/src/game/actors/draygon_sweep.rs",
-        include_bytes!("game/actors/draygon_sweep.rs"),
     ),
     (
         "sm/src/game/actors/draygon_flight.rs",
