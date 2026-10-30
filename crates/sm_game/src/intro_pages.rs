@@ -2,7 +2,7 @@
 //! Numeric callbacks select these operations; Game retains the cinematic state.
 // The original's names and assignment shapes are kept.
 #![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
-use crate::cinematic::CinematicLayer;
+use crate::cinematic_objects::CinematicObjects;
 use crate::imported::Imported;
 #[allow(unused_imports)]
 use crate::ram::RawRam as _;
@@ -143,11 +143,7 @@ pub fn create_japanese_text<H: crate::menus::host::Host + ?Sized>(
 ) -> u16 {
     word!(game.cinematicbg_var1 = 0);
     if word!(game.japanese_text_flag) != 0 {
-        game.spawn_cinematic_object(
-            CinematicLayer::Mode7,
-            object,
-            word!(game.japanese_text_flag),
-        );
+        CinematicObjects::Mode7.spawn(object, word!(game.japanese_text_flag), game);
     }
     j
 }
@@ -165,10 +161,10 @@ pub fn spawn_marker<H: crate::menus::host::Host + ?Sized>(
 ) -> u16 {
     reset_text_marker(game);
     if word!(game.japanese_text_flag) != 0 {
-        let failed = game.spawn_cinematic_object(
-            CinematicLayer::Sprites,
+        let failed = CinematicObjects::Sprites.spawn(
             addr_kCinematicSpriteObjectDef_8BCE73 as u16,
             word!(game.japanese_text_flag),
+            game,
         ) != 0;
         if let Some(object) = continuation {
             // The arrow leaves its palette in A; a full allocator leaves slot zero's instruction.
@@ -177,7 +173,7 @@ pub fn spawn_marker<H: crate::menus::host::Host + ?Sized>(
             } else {
                 0x0c00
             };
-            game.spawn_cinematic_object(CinematicLayer::Mode7, object, parameter);
+            CinematicObjects::Mode7.spawn(object, parameter, game);
             return j;
         }
     }
@@ -252,30 +248,31 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(scene: Scene, game: 
             word!(game.cinematic_var13 = 127);
             if mother_brain {
                 // The preceding $1A4B store leaves $007F in the ROM accumulator.
-                game.spawn_cinematic_sprite_at(
+                crate::cinematic_objects::spawn_cinematic_sprite_at(
                     addr_kCinematicSpriteObjectDef_8BCE55 as u16,
                     0,
                     0x7f,
+                    game,
                 );
                 // Palette left in A by the first sprite initializer.
-                game.spawn_cinematic_object(
-                    CinematicLayer::Sprites,
+                CinematicObjects::Sprites.spawn(
                     addr_kCinematicSpriteObjectDef_8BCF27 as u16,
                     0x0e00,
+                    game,
                 );
                 crate::word_transfers!(game, ascending, 224; le(level_data, 0) <- rom(0x8cbec3, 0));
                 crate::word_transfers!(game, ascending, 256; native(0x16402) <- value(0));
                 word!(game.hud_item_index = 1);
             } else {
-                game.spawn_cinematic_object(
-                    CinematicLayer::Sprites,
+                CinematicObjects::Sprites.spawn(
                     addr_kCinematicSpriteObjectDef_8BCE5B as u16,
                     0x7f,
+                    game,
                 );
-                game.spawn_cinematic_object(
-                    CinematicLayer::Sprites,
+                CinematicObjects::Sprites.spawn(
                     addr_kCinematicSpriteObjectDef_8BCE79 as u16,
                     0x0e00,
+                    game,
                 );
                 word!(game.cinematic_var11 = 0);
                 crate::word_transfers!(game, ascending, 384; le(level_data, 0) <- rom(0x8cc083, 0));
@@ -305,7 +302,7 @@ pub fn wait_for_scene<H: crate::menus::host::Host + ?Sized>(scene: Scene, game: 
             } else {
                 addr_kCinematicSpriteObjectDef_8BCE67
             };
-            game.spawn_cinematic_object(CinematicLayer::Sprites, object as u16, 0x7f);
+            CinematicObjects::Sprites.spawn(object as u16, 0x7f, game);
             Palette::Scientist
         }
     };
@@ -351,10 +348,10 @@ pub fn wait_for_music<H: crate::menus::host::Host + ?Sized>(next: u16, game: &mu
         } else {
             word! { game, 2; screen_fade_delay, screen_fade_counter }
             if next == 0xa84a {
-                game.spawn_cinematic_object(
-                    CinematicLayer::Background,
+                CinematicObjects::Background.spawn(
                     addr_kCinematicBgObjectDef_8BCF3F as u16,
                     0x4c00,
+                    game,
                 );
             }
         }
@@ -386,7 +383,7 @@ pub fn start_page<H: crate::menus::host::Host + ?Sized>(next: u16, j: u16, game:
 }
 
 pub fn show_page<H: crate::menus::host::Host + ?Sized>(object: u16, next: u16, game: &mut H) {
-    game.spawn_cinematic_object(CinematicLayer::Background, object, 0x4c00);
+    CinematicObjects::Background.spawn(object, 0x4c00, game);
     word!(game.cinematic_function = next);
     setup_page_palettes(game);
 }
@@ -481,11 +478,7 @@ pub fn wait_after_japanese_text<H: crate::menus::host::Host + ?Sized>(
 pub fn show_final_page<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     set_cinematic_tilemap_updates(true, game);
     clear_english_text(game);
-    game.spawn_cinematic_object(
-        CinematicLayer::Background,
-        addr_kCinematicBgObjectDef_8BCF5D as u16,
-        0x4c00,
-    );
+    CinematicObjects::Background.spawn(addr_kCinematicBgObjectDef_8BCF5D as u16, 0x4c00, game);
     word!(game.cinematic_function = (0x8ba390i32) as u16);
     reset_caret(game);
     game.queue_music_delayed8(0);

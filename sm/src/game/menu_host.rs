@@ -154,24 +154,6 @@ impl MenuRuntime for Game {
     fn set_message_box_das0l_value(&mut self, value: u16) {
         self.message_box_das0l_value = value;
     }
-    fn spawn_cinematic_object(
-        &mut self,
-        layer: sm_game::cinematic::CinematicLayer,
-        definition: u16,
-        parameter: u16,
-    ) -> u8 {
-        use sm_game::cinematic::CinematicLayer::*;
-        use visual_runtime::CinematicObjects;
-        let objects = match layer {
-            Background => CinematicObjects::Background,
-            Mode7 => CinematicObjects::Mode7,
-            Sprites => CinematicObjects::Sprites,
-        };
-        objects.spawn(definition, parameter, self)
-    }
-    fn spawn_cinematic_sprite_at(&mut self, definition: u16, slot: u16, parameter: u16) -> u8 {
-        visual_runtime::spawn_cinematic_sprite_at(definition, slot, parameter, self)
-    }
     fn assert_ram_pointer(&mut self, address: u16) {
         // SAFETY: the failure path reports through the C assertion binding and does not return.
         unsafe {
@@ -181,8 +163,17 @@ impl MenuRuntime for Game {
             };
         }
     }
-    fn advance_cinematic_background_pre(&mut self, command: u32, object: u16) {
-        visual_runtime::advance_cinematic_background_pre(command, object, self)
+    fn cinematic_sprite_pre_instruction(&mut self, pre: u32, object: u16) {
+        crate::game::sm_8b::CallCinematicSprPreInstr(pre, object, self)
+    }
+    fn cinematic_sprite_instruction(&mut self, command: u32, object: u16, operand: u16) -> u16 {
+        crate::game::sm_8b::CallCinematicSprInstr(command, object, operand, self)
+    }
+    fn enqueue_mode7_rom(&mut self, bank: u8, cursor: u16) {
+        crate::game::mode7_transfers::enqueue_rom(bank, cursor, self)
+    }
+    fn retire_projectile(&mut self, slot: u16) {
+        crate::game::player_projectiles::retire(slot, self)
     }
     fn spawn_palette_effect(&mut self, definition: u16) {
         crate::game::palette_effects::spawn(definition, self)
@@ -327,4 +318,65 @@ const _: () = {
         intro::addr_kCinematicSpriteObjectDef_8BCF27
             == bank::addr_kCinematicSpriteObjectDef_8BCF27 as u32
     );
+};
+
+// The cinematic engine's local copies of these bank $8B definitions must match.
+const _: () = {
+    use crate::game::sm_8b as bank;
+    use sm_game::cinematic_objects as engine;
+    assert!(
+        engine::addr_kCinematicSpriteObjectDef_8BA113
+            == bank::addr_kCinematicSpriteObjectDef_8BA113 as u32
+    );
+    assert!(
+        engine::addr_kCinematicSpriteObjectDef_8BCEB5
+            == bank::addr_kCinematicSpriteObjectDef_8BCEB5 as u32
+    );
+    assert!(
+        engine::addr_kCinematicSpriteObjectDef_8BEEB5
+            == bank::addr_kCinematicSpriteObjectDef_8BEEB5 as u32
+    );
+    assert!(
+        engine::addr_kCinematicSpriteObjectDef_8BEEBB
+            == bank::addr_kCinematicSpriteObjectDef_8BEEBB as u32
+    );
+    assert!(
+        engine::addr_kCinematicSpriteObjectDef_8BEEC1
+            == bank::addr_kCinematicSpriteObjectDef_8BEEC1 as u32
+    );
+    assert!(
+        engine::addr_kCinematicSpriteObjectDef_8BEECD
+            == bank::addr_kCinematicSpriteObjectDef_8BEECD as u32
+    );
+    assert!(
+        engine::addr_kCinematicSpriteObjectDef_8BEEF7
+            == bank::addr_kCinematicSpriteObjectDef_8BEEF7 as u32
+    );
+    assert!(
+        engine::addr_kCinematicSpriteObjectDef_8BEEFD
+            == bank::addr_kCinematicSpriteObjectDef_8BEEFD as u32
+    );
+    assert!(
+        engine::addr_kCinematicSpriteObjectDef_8BEF3F
+            == bank::addr_kCinematicSpriteObjectDef_8BEF3F as u32
+    );
+    assert!(
+        engine::addr_kCinematicSpriteObjectDef_8BEF6F
+            == bank::addr_kCinematicSpriteObjectDef_8BEF6F as u32
+    );
+    assert!(
+        engine::addr_kCinematicSpriteObjectDef_8BEF7B
+            == bank::addr_kCinematicSpriteObjectDef_8BEF7B as u32
+    );
+    assert!(
+        engine::addr_kCinematicSpriteObjectDef_8BEF75
+            == bank::addr_kCinematicSpriteObjectDef_8BEF75 as u32
+    );
+    assert!(engine::addr_loc_8BE1B4 == bank::addr_loc_8BE1B4 as u32);
+    assert!(engine::addr_kMode7ObjectDef_8BD401 == bank::addr_kMode7ObjectDef_8BD401 as u32);
+    assert!(engine::addr_kMode7ObjectDef_8BD407 == bank::addr_kMode7ObjectDef_8BD407 as u32);
+    assert!(engine::addr_kMode7ObjectDef_8BD413 == bank::addr_kMode7ObjectDef_8BD413 as u32);
+    assert!(engine::addr_kMode7ObjectDef_8BD41F == bank::addr_kMode7ObjectDef_8BD41F as u32);
+    assert!(engine::addr_kMode7ObjectDef_8BD42B == bank::addr_kMode7ObjectDef_8BD42B as u32);
+    assert!(engine::addr_kMode7ObjectDef_8BD437 == bank::addr_kMode7ObjectDef_8BD437 as u32);
 };

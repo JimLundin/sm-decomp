@@ -2,6 +2,7 @@
 // The original's names and assignment shapes are kept.
 #![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
 use crate::cinematic::*;
+use crate::cinematic_objects::CinematicObjects;
 use crate::menus::prelude::words;
 #[allow(unused_imports)]
 use crate::ram::RawRam as _;
@@ -201,7 +202,7 @@ pub fn advance_postcredits_samus_reveal<H: crate::menus::host::Host + ?Sized>(
         (false, false, false) => &[0xef63, 0xef5d, 0xef57],
     };
     for &definition in sprites {
-        game.spawn_cinematic_object(CinematicLayer::Sprites, definition, 0);
+        CinematicObjects::Sprites.spawn(definition, 0, game);
     }
     if initial {
         if !under_ten {

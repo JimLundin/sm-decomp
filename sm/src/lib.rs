@@ -443,6 +443,7 @@ pub mod game {
     pub(crate) mod beam_windows;
     pub mod constants;
     pub(crate) use sm_game::corpse_tables;
+    pub(crate) mod cinematic_objects;
     pub(crate) mod credits;
     pub(crate) mod decompression;
     pub(crate) mod demo_rooms;

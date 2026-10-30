@@ -1,8 +1,8 @@
 //! Title screen: Metroid palettes and cry, camera pans, skip and wait, sprite placement.
 // The original's names and assignment shapes are kept.
 #![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
-use crate::cinematic::CinematicLayer;
 use crate::cinematic::{add_native_pair, place_cinematic_sprite, set_cinematic_backdrop};
+use crate::cinematic_objects::CinematicObjects;
 use crate::constants::buttons::{kButton_A, kButton_B, kButton_Start};
 use crate::menus::prelude::words;
 #[allow(unused_imports)]
@@ -122,7 +122,7 @@ pub fn advance_title_pan<H: crate::menus::host::Host + ?Sized>(stage: usize, gam
             scrolling_text::PRESENTS,
             scrolling_text::METROID_3,
         ][stage];
-        game.spawn_cinematic_object(CinematicLayer::Sprites, definition, function::IDLE);
+        CinematicObjects::Sprites.spawn(definition, function::IDLE, game);
         set_cinematic_backdrop(false, game);
     }
     request_title_skip(game);

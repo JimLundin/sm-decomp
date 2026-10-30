@@ -286,10 +286,8 @@ pub fn GameState_1_OpeningCinematic_(game: &mut Game) -> CoroutineRet {
             ((word!(game.cinematic_function)) as u32) | (0x8b0000u32),
             game,
         );
-        unsafe {
-            CinematicSprites.advance(game);
-            CinematicMode7.advance(game);
-        }
+        CinematicSprites.advance(game);
+        CinematicMode7.advance(game);
         palette_effects::advance(game);
         draw_cinematic_sprites(false, game);
         request_title_skip(game);
@@ -409,11 +407,9 @@ pub fn GameState_37_CeresGoesBoomWithSamus_(game: &mut Game) -> CoroutineRet {
         }
         word!(game.cinematic_var12 += 1);
         handle_samus_during_intro(game);
-        unsafe {
-            CinematicSprites.advance(game);
-            CinematicMode7.advance(game);
-            CinematicBackground.advance(game);
-        }
+        CinematicSprites.advance(game);
+        CinematicMode7.advance(game);
+        CinematicBackground.advance(game);
         intro_pages::advance_text_glow(game);
         palette_effects::advance(game);
         unsafe { draw_intro_sprites(game) };
@@ -467,7 +463,7 @@ pub fn GameState_39_EndingAndCredits_(game: &mut Game) -> CoroutineRet {
             word!(game.cinematic_var11 += 1);
         }
         word!(game.cinematic_var12 += 1);
-        unsafe { CinematicSprites.advance(game) };
+        CinematicSprites.advance(game);
         MaybeHandleCinematicBgObjects(game);
         advance_credits(game);
         palette_effects::advance(game);
@@ -480,7 +476,7 @@ pub fn GameState_39_EndingAndCredits_(game: &mut Game) -> CoroutineRet {
 pub fn MaybeHandleCinematicBgObjects(game: &mut Game) {
     {
         if word!(game.cinematic_function) as i32 + 0x1afc & 0x8000 == 0 {
-            unsafe { CinematicBackground.advance(game) };
+            CinematicBackground.advance(game);
         }
     }
 }

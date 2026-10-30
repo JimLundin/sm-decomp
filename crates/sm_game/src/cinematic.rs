@@ -14,14 +14,6 @@ pub fn cinematic_native_record<const BANK: u8>(
     crate::menus::menu_tilemap::native_record((u32::from(BANK) << 16) | u32::from(cursor), game)
 }
 
-/// The three cinematic object layers.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum CinematicLayer {
-    Background,
-    Mode7,
-    Sprites,
-}
-
 pub fn advance_cinematic_fade<H: crate::menus::host::Host + ?Sized>(
     fade: crate::visual_state::CinematicFade,
     game: &mut H,
@@ -303,4 +295,17 @@ pub fn clear_cinematic_background<H: crate::menus::host::Host + ?Sized>(fill: u1
 
 pub fn scaled_cinematic_value(value: u16, scale: u16) -> u16 {
     ((i32::from(value as i16) * i32::from(scale as i16)) >> 8) as u16
+}
+
+/// Store one word of a Mode 7 queue entry at `tail + field`, in native byte order.
+pub fn write_mode7_word<H: crate::menus::host::Host + ?Sized>(
+    tail: u16,
+    field: usize,
+    value: u16,
+    game: &mut H,
+) {
+    let at = crate::display::transfer::MODE7_QUEUE + usize::from(tail) + field;
+    let bytes = value.to_ne_bytes();
+    game.ram().write_byte(at, bytes[0]);
+    game.ram().write_byte(at + 1, bytes[1]);
 }

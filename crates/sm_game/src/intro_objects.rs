@@ -2,6 +2,7 @@
 // The original's names and assignment shapes are kept.
 #![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
 use crate::cinematic::*;
+use crate::cinematic_objects::CinematicObjects;
 #[allow(unused_imports)]
 use crate::ram::RawRam as _;
 use crate::ram::{word, words as ram_words};
@@ -208,7 +209,7 @@ pub fn advance_intro_landing_mosaic<H: crate::menus::host::Host + ?Sized>(
                 (0xcf09, 0x0800), // Palette left in A by the preceding sprite initializer.
                 (0xceaf, 0x0800), // Palette left in A by the preceding sprite initializer.
             ] {
-                game.spawn_cinematic_object(CinematicLayer::Sprites, definition, parameter);
+                CinematicObjects::Sprites.spawn(definition, parameter, game);
             }
             word!(game.cinematic_function = 0xa38f);
         }

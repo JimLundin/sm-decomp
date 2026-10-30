@@ -40,17 +40,15 @@ pub trait MenuRuntime:
     /// Begin entering the room at the current load station.
     fn enter_load_station(&mut self);
     fn request_reset(&mut self);
-    /// Spawn a cinematic object; returns the original's failure flag.
-    fn spawn_cinematic_object(
-        &mut self,
-        layer: crate::cinematic::CinematicLayer,
-        definition: u16,
-        parameter: u16,
-    ) -> u8;
-    fn spawn_cinematic_sprite_at(&mut self, definition: u16, slot: u16, parameter: u16) -> u8;
     fn spawn_palette_effect(&mut self, definition: u16);
-    /// Run one cinematic background pre-instruction for `object`.
-    fn advance_cinematic_background_pre(&mut self, command: u32, object: u16);
+    /// Run bank $8B's cinematic sprite pre-instruction `pre` for `object`.
+    fn cinematic_sprite_pre_instruction(&mut self, pre: u32, object: u16);
+    /// Run bank $8B's cinematic sprite instruction; returns the next script cursor.
+    fn cinematic_sprite_instruction(&mut self, command: u32, object: u16, operand: u16) -> u16;
+    /// Append a ROM Mode 7 transfer list to the Mode 7 queue.
+    fn enqueue_mode7_rom(&mut self, bank: u8, cursor: u16);
+    /// Retire the player projectile in `slot`.
+    fn retire_projectile(&mut self, slot: u16);
     /// The original's `RomPtr_RAM` assertion on a RAM-table address.
     fn assert_ram_pointer(&mut self, address: u16);
     fn enable_display_nmi(&mut self, enabled: bool);

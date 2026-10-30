@@ -99,7 +99,7 @@ pub fn advance_credits<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     if word!(game.cinematic_var25) & 0x8000 != 0 {
         if word!(game.cinematic_var21) != 0 {
             let command = 0x8b0000 | u32::from(word!(game.cinematic_var24));
-            game.advance_cinematic_background_pre(command, 0);
+            crate::cinematic_objects::advance_cinematic_background_pre(command, 0, game);
             if !advance_credit_roll(game) {
                 game.rtl_unreachable();
             }
