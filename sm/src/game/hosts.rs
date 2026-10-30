@@ -330,7 +330,7 @@ const _: () = {
 
 impl sm_game::actors::phantoon::Host for Game {
     fn run_function(&mut self, address: u32) {
-        crate::game::sm_a7::run_phantoon_function(address, self);
+        crate::game::sm_a7::run_a7_function(address, self);
     }
 
     fn direction_to_player(&mut self) -> sm_game::actors::api::PlayerDirection {
@@ -493,5 +493,97 @@ impl sm_game::actors::kraid::Host for Game {
     #[cfg(sm_verify_dll)]
     fn observe_kraid_flags(&mut self, step: u8) {
         crate::kraid_flags_observer::observe(step, self);
+    }
+}
+
+// The named bank $A7 functions are the ones `DispatchEnemyPreInstr` dispatches on.
+const _: () = {
+    use crate::game::sm_a7::*;
+    use sm_game::actors::etecoon::function as f;
+    const fn at(word: u16) -> i32 {
+        0xa7_0000 | word as i32
+    }
+    assert!(at(f::INITIAL) == fnEtecoon_Func_4 && at(f::START_HOP_BOTTOM) == fnEtecoon_Func_5);
+    assert!(at(f::HOPPING_BOTTOM) == fnEtecoon_Func_6 && at(f::LOOK_AT_SAMUS) == fnEtecoon_Func_7);
+    assert!(at(f::RUNNING_LEFT) == fnEtecoon_Func_8 && at(f::RUNNING_RIGHT) == fnEtecoon_Func_9);
+    assert!(at(f::JUMPING) == fnEtecoon_Func_10 && at(f::WALL_JUMP) == fnEtecoon_Func_11);
+    assert!(
+        at(f::LANDED_FROM_JUMP) == fnEtecoon_Func_12
+            && at(f::RUN_TO_LEFT_RUN_UP) == fnEtecoon_Func_16
+    );
+    assert!(
+        at(f::RUN_TO_RIGHT_RUN_UP) == fnEtecoon_Func_17
+            && at(f::RUNNING_FOR_TUNNEL_JUMP) == fnEtecoon_Func_18
+    );
+    assert!(
+        at(f::TUNNEL_JUMP) == fnEtecoon_Func_19
+            && at(f::RUNNING_THROUGH_TUNNEL) == fnEtecoon_Func_20
+    );
+    assert!(
+        at(f::FALLING_FROM_TUNNEL_LEDGE) == fnEtecoon_Func_21
+            && at(f::HOPPING_TOP) == fnEtecoon_Func_22
+    );
+    assert!(
+        at(f::START_HOP_TOP) == fnEtecoon_Func_23
+            && at(f::HOP_UNTIL_SAMUS_NEAR) == fnEtecoon_Func_24
+    );
+    assert!(
+        at(f::RUNNING_FOR_FAILED_TUNNEL_JUMP) == fnEtecoon_Func_25
+            && at(f::FAILED_TUNNEL_JUMP) == fnEtecoon_Func_26
+    );
+};
+
+// The named instruction lists are the decompilation's addresses.
+const _: () = {
+    use crate::game::sm_a7::*;
+    use sm_game::actors::etecoon::instruction_list as l;
+    assert!(
+        l::LOOK_RIGHT_AND_RUN_LEFT == addr_kEtecoon_Ilist_E81E as u16
+            && l::RUNNING_LEFT == addr_stru_A7E828 as u16
+    );
+    assert!(
+        l::WALL_JUMP_LEFT == addr_kEtecoon_Ilist_E83C as u16
+            && l::HOPPING_FACING_LEFT == addr_kEtecoon_Ilist_E854 as u16
+    );
+    assert!(
+        l::HIT_CEILING == addr_stru_A7E862 as u16
+            && l::WALL_JUMP_LEFT_ELIGIBLE == addr_kEtecoon_Ilist_E870 as u16
+    );
+    assert!(
+        l::LOOK_LEFT_AND_RUN_RIGHT == addr_kEtecoon_Ilist_E876 as u16
+            && l::RUNNING_RIGHT == addr_stru_A7E880 as u16
+    );
+    assert!(
+        l::WALL_JUMP_RIGHT == addr_kEtecoon_Ilist_E894 as u16
+            && l::JUMPING_RIGHT == addr_stru_A7E898 as u16
+    );
+    assert!(
+        l::HOPPING_FACING_RIGHT == addr_kEtecoon_Ilist_E8AC as u16
+            && l::WALL_JUMP_RIGHT_ELIGIBLE == addr_kEtecoon_Ilist_E8C8 as u16
+    );
+    assert!(
+        l::INITIAL == addr_kEtecoon_Ilist_E8CE as u16
+            && l::FLEXING == addr_kEtecoon_Ilist_E8D6 as u16
+    );
+    assert!(l::NOTHING_SPRITEMAP == addr_kSpritemap_Nothing_A7 as u16);
+};
+
+impl sm_game::actors::etecoon::Host for Game {
+    fn run_function(&mut self, address: u32) {
+        crate::game::sm_a7::run_a7_function(address, self);
+    }
+
+    fn probe_horizontal(&mut self, k: u16, amount: i32) -> bool {
+        crate::game::actors::api::probe_horizontal(
+            &mut crate::game::session_runtime::Runtime::new(self),
+            sm_game::actors::access::ActorKey::from_legacy(k),
+            amount,
+        ) == crate::game::actors::api::MovementResult::Blocked
+    }
+
+    fn direction_to_player(&mut self) -> sm_game::actors::api::PlayerDirection {
+        crate::game::actors::api::direction_to_player(
+            &mut crate::game::session_runtime::Runtime::new(self),
+        )
     }
 }

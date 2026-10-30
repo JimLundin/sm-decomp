@@ -101,15 +101,6 @@ crate::game::constants::typed_constants! { i32;
     fnDachora_Func_7 = 0xa7f78f, fnDachora_Func_8 = 0xa7f806,
     fnDachora_Func_11 = 0xa7f935, fnDachora_Func_12 = 0xa7f98c,
 }
-static g_word_A7E900: u16 = 0xfffd;
-static g_word_A7E902: u16 = 0;
-static g_word_A7E906: u16 = 0;
-static g_word_A7E904: u16 = 0xfffc;
-static g_word_A7E908: u16 = 2;
-static g_word_A7E90A: u16 = 0;
-static g_word_A7E90C: u16 = 0xfffe;
-static g_word_A7E90E: u16 = 0;
-static g_word_A7E910: u16 = 0x40;
 static g_word_A7F4C9: u16 = 0x60;
 static g_word_A7F4CD: u16 = 0x78;
 static g_word_A7F4CF: u16 = 0x3c;
@@ -264,91 +255,6 @@ pub fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
 #[forbid(unsafe_code)]
 pub fn PauseHook_Kraid(game: &mut Game) {
     crate::game::vram_read_queue::enqueue(0x5d, 15872, 0x5000, 1024, false, game);
-}
-pub fn Etecoon_Func_1(k: u16, game: &mut Game) {
-    if word!(game.earthquake_timer) != 0 {
-        let E = (k as i32) as i32;
-        slot!(
-            game,
-            Enemy_Etecoon[E].parameter_2 =
-                ((slot!(byte game, Enemy_Etecoon[E].parameter_2[0])) as u16) | (0x8000u16)
-        );
-        slot!(
-            game,
-            Enemy_Etecoon[E].base.instruction_timer =
-                (slot!(game, Enemy_Etecoon[E].base.instruction_timer)).wrapping_add(128)
-        );
-    }
-}
-pub fn Etecoon_Func_2(k: u16, game: &mut Game) -> u8 {
-    let E = (k as i32) as i32;
-    {
-        let (actor, amount) = (
-            k,
-            (words!((
-                slot!(game, Enemy_Etecoon[E].var_C),
-                slot!(game, Enemy_Etecoon[E].var_D)
-            ))) as i32,
-        );
-        (actor_api::move_horizontal(
-            &mut Runtime::new(game),
-            Key::from_legacy(actor),
-            amount,
-            actor_api::SlopePolicy::Ignore,
-        ) == actor_api::MovementResult::Blocked) as u8
-    }
-}
-pub fn Etecoon_Func_3(k: u16, game: &mut Game) -> u8 {
-    let E = (k as i32) as i32;
-    let amt: i32 = (words!((
-        slot!(game, Enemy_Etecoon[E].var_A),
-        slot!(game, Enemy_Etecoon[E].var_B)
-    ))) as i32;
-    if slot!(game, Enemy_Etecoon[E].var_A) as i32 - 5i32 & 0x8000 != 0 {
-        slot!(
-            game,
-            Enemy_Etecoon[E](var_A, var_B) += words!(game.samus_y_accel, samus_y_subaccel)
-        );
-    }
-    {
-        let (actor, amount) = (k, amt);
-        (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount)
-            == actor_api::MovementResult::Blocked) as u8
-    }
-}
-static funcs_A2A79: [Func_Y_V; 3] = callback_table! { nonnull Func_Y_V;
-    Etecoon_Func_13, Etecoon_Func_14, Etecoon_Func_15,
-};
-pub fn Etecoon_Func_13(j: u16, game: &mut Game) {
-    let E = (j as i32) as i32;
-    slot!(game, Enemy_Etecoon[E].var_F = (0xa7ec97i32) as u16);
-    slot!(
-        game,
-        Enemy_Etecoon[E].base.current_instruction = addr_stru_A7E828 as u16
-    );
-    slot!(game, Enemy_Etecoon[E].var_C = g_word_A7E90C);
-    slot!(game, Enemy_Etecoon[E].var_D = g_word_A7E90E);
-}
-pub fn Etecoon_Func_14(j: u16, game: &mut Game) {
-    let E = (j as i32) as i32;
-    slot!(game, Enemy_Etecoon[E].var_F = (0xa7ecbbi32) as u16);
-    slot!(
-        game,
-        Enemy_Etecoon[E].base.current_instruction = addr_stru_A7E880 as u16
-    );
-    slot!(game, Enemy_Etecoon[E].var_C = g_word_A7E908);
-    slot!(game, Enemy_Etecoon[E].var_D = g_word_A7E90A);
-}
-pub fn Etecoon_Func_15(j: u16, game: &mut Game) {
-    let E = (j as i32) as i32;
-    slot!(game, Enemy_Etecoon[E].var_F = (0xa7ed75i32) as u16);
-    slot!(
-        game,
-        Enemy_Etecoon[E].base.current_instruction =
-            (slot!(game, Enemy_Etecoon[E].base.current_instruction)).wrapping_add(2)
-    );
-    slot!(game, Enemy_Etecoon[E].var_C = g_word_A7E908);
-    slot!(game, Enemy_Etecoon[E].var_D = g_word_A7E90A);
 }
 pub fn Dachora_Func_6(k: u16, game: &mut Game) -> i32 {
     let E = (k as i32) as i32;
@@ -514,24 +420,8 @@ crate::game::callback_dispatch! {
     [11001151] Phantoon_Hurt [] { sm_game::actors::phantoon::hurt(game); };
     [11001237] Phantoon_Touch [] { sm_game::actors::phantoon::touch(game); };
     [11001243] Phantoon_Shot [] { sm_game::actors::phantoon::shot(game); };
-    [11004178] Etecoon_Init [] {
-        let E = (word!(game.cur_enemy_index) as i32) as i32;
-        slot!(game, Enemy_Etecoon[E].base.properties = (slot!(game, Enemy_Etecoon[E].base.properties)) | ((kEnemyProps_DisableSamusColl) as u16));
-        slot!(game, Enemy_Etecoon[E].base.spritemap_pointer = addr_kSpritemap_Nothing_A7 as u16);
-        slot!(game, Enemy_Etecoon[E].base.instruction_timer = 1);
-        slot!(game, Enemy_Etecoon[E].base.timer = 0);
-        slot!(game, Enemy_Etecoon[E].base.current_instruction = addr_kEtecoon_Ilist_E8CE as u16);
-        slot!(game, Enemy_Etecoon[E].var_F = (0xa7e9afi32) as u16);
-        slot!(game, Enemy_Etecoon[E].var_E = -1i32 as u16);
-    };
-    [11004224] Etecoon_Main [] {
-        let E = (word!(game.cur_enemy_index) as i32) as i32;
-        if slot!(byte game, Enemy_Etecoon[E].parameter_2[1]) != 0 {
-            slot!(game, Enemy_Etecoon[E].parameter_2 = (slot!(game, Enemy_Etecoon[E].parameter_2)).wrapping_sub(256));
-        } else {
-            unsafe { actor_species_pre_instruction(((slot!(game, Enemy_Etecoon[E].var_F)) as u32) | (0xa70000u32), game) };
-        };
-    };
+    [11004178] Etecoon_Init [] { sm_game::actors::etecoon::initialize(game); };
+    [11004224] Etecoon_Main [] { sm_game::actors::etecoon::main_ai(game); };
     [11007197] Dachora_Init [] {
         let E = (word!(game.cur_enemy_index) as i32) as i32;
         slot!(game, Enemy_Dachora[E].base.properties = (slot!(game, Enemy_Dachora[E].base.properties)) | ((kEnemyProps_DisableSamusColl) as u16));
@@ -625,267 +515,23 @@ crate::game::callback_dispatch! {
     [11000454] Phantoon_DyingFadeOut [] { sm_game::actors::phantoon::dying_fade_out(game, k); };
     [11000535] Phantoon_AlmostDead [] { sm_game::actors::phantoon::almost_dead(game, k); };
     [11000637] Phantoon_Dead [] { sm_game::actors::phantoon::dead(game, k); };
-    [11004335] Etecoon_Func_4 [] {
-        if word!(game.door_transition_flag_enemies) == 0 {
-            let E = (k as i32) as i32;
-            if (slot!(game, Enemy_Etecoon[E].var_E) & 0x8000) == 0 {
-                let v2: bool = slot!(game, Enemy_Etecoon[E].var_E) == 1;
-                slot!(game, Enemy_Etecoon[E].var_E = slot!(game, Enemy_Etecoon[E].var_E).wrapping_sub(1));
-                let v3: bool = (slot!(game, Enemy_Etecoon[E].var_E) & 0x8000) != 0;
-                if v2 || v3 {
-                    slot!(game, Enemy_Etecoon[E].base.current_instruction = addr_kEtecoon_Ilist_E854 as u16);
-                    slot!(game, Enemy_Etecoon[E].var_F = (0xa7ea00i32) as u16);
-                    slot!(game, Enemy_Etecoon[E].var_E = 11);
-                }
-            } else if ({ let (actor, distance) = (k, 0x80); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 {
-                if (slot!(game, Enemy_Etecoon[E].parameter_2) & 3) == 0 {
-                    QueueSfx2_Max15(0x35, game);
-                }
-                slot!(game, Enemy_Etecoon[E].base; instruction_timer = 1, current_instruction = addr_kEtecoon_Ilist_E8D6 as u16);
-                slot!(game, Enemy_Etecoon[E].var_E = 256);
-            }
-        }
-    };
-    [11004471] Etecoon_Func_6 [] {
-        if Etecoon_Func_3(k, game) & 1 != 0 {
-            let E = (k as i32) as i32;
-            if (slot!(game, Enemy_Etecoon[E].var_A) & 0x8000) == 0 {
-                if ({ let (actor, distance) = (k, 0x40); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
-                    && ({ let (actor, distance) = (k, g_word_A7E910); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
-                {
-                    let v2: u16 = { match actor_api::direction_to_player(&mut Runtime::new(game)) { actor_api::PlayerDirection::Up=>0u16,actor_api::PlayerDirection::UpRight=>1u16,actor_api::PlayerDirection::Right=>2u16,actor_api::PlayerDirection::DownRight=>3u16,actor_api::PlayerDirection::Down=>4u16,actor_api::PlayerDirection::DownLeft=>6u16,actor_api::PlayerDirection::Left=>7u16,actor_api::PlayerDirection::UpLeft=>8u16 } };
-                    if v2 as i32 - 5i32 & 0x8000 != 0 {
-                        slot!(game, Enemy_Etecoon[E].base.current_instruction = addr_kEtecoon_Ilist_E81E as u16);
-                        slot!(game, Enemy_Etecoon[E].parameter_1 = 0);
-                    } else {
-                        slot!(game, Enemy_Etecoon[E].base.current_instruction = addr_kEtecoon_Ilist_E876 as u16);
-                        slot!(game, Enemy_Etecoon[E].parameter_1 = 1);
-                    }
-                    slot!(game, Enemy_Etecoon[E].var_E = 32);
-                    slot!(game, Enemy_Etecoon[E].base.instruction_timer = 1);
-                    slot!(game, Enemy_Etecoon[E].var_F = (0xa7eab5i32) as u16);
-                } else {
-                    slot!(game, Enemy_Etecoon[E].var_E = 11);
-                    slot!(game, Enemy_Etecoon[E].var_F = (0xa7ea00i32) as u16);
-                    slot!(game, Enemy_Etecoon[E].base; instruction_timer = 1, current_instruction = addr_kEtecoon_Ilist_E854 as u16);
-                }
-            } else {
-                slot!(game, Enemy_Etecoon[E]; var_A = 0, var_B = 0);
-                slot!(game, Enemy_Etecoon[E].base; instruction_timer = 3, current_instruction = addr_stru_A7E862 as u16);
-            }
-        }
-    };
-    [11004674] Etecoon_Func_8 [] {
-        if Etecoon_Func_2(k, game) & 1 != 0 {
-            let E = (k as i32) as i32;
-            slot!(game, Enemy_Etecoon[E].var_C = g_word_A7E908);
-            slot!(game, Enemy_Etecoon[E].var_D = g_word_A7E90A);
-            slot!(game, Enemy_Etecoon[E].var_F = (0xa7eb2ci32) as u16);
-            slot!(game, Enemy_Etecoon[E].base; instruction_timer = 1, current_instruction = addr_stru_A7E880 as u16);
-            slot!(game, Enemy_Etecoon[E].parameter_1 = 1);
-        }
-    };
-    [11004716] Etecoon_Func_9 [] {
-        if ({ let (actor, amount) = (k, ((32u32) << 16 | 0u16 as u32) as i32); (actor_api::probe_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            let E = (k as i32) as i32;
-            slot!(game, Enemy_Etecoon[E].base; instruction_timer = 1, current_instruction = addr_stru_A7E898 as u16);
-            slot!(game, Enemy_Etecoon[E].var_F = (0xa7eb50i32) as u16);
-        } else {
-            Etecoon_Func_2(k, game);
-        };
-    };
-    [11004752] Etecoon_Func_10 [] {
-        Etecoon_Func_1(k, game);
-        if Etecoon_Func_2(k, game) & 1 != 0 {
-            let E = (k as i32) as i32;
-            if slot!(game, Enemy_Etecoon[E].parameter_1) != 0 {
-                slot!(game, Enemy_Etecoon[E].base.current_instruction = addr_kEtecoon_Ilist_E870 as u16);
-                slot!(game, Enemy_Etecoon[E].parameter_1 = 0);
-            } else {
-                slot!(game, Enemy_Etecoon[E].base.current_instruction = addr_kEtecoon_Ilist_E8C8 as u16);
-                slot!(game, Enemy_Etecoon[E].parameter_1 = 1);
-            }
-            slot!(game, Enemy_Etecoon[E].base.instruction_timer = 1);
-            slot!(game, Enemy_Etecoon[E].var_F = (0xa7ebcdi32) as u16);
-            slot!(game, Enemy_Etecoon[E].var_E = 8);
-            if word!(game.samus_x_pos) as i32 - 256i32 & 0x8000 == 0 {
-                QueueSfx2_Max6(0x32, game);
-            }
-        } else if Etecoon_Func_3(k, game) & 1 != 0 {
-            let E_0 = (k as i32) as i32;
-            if slot!(game, Enemy_Etecoon[E_0].parameter_1) != 0 {
-                slot!(game, Enemy_Etecoon[E_0].base.current_instruction = addr_kEtecoon_Ilist_E854 as u16);
-            } else {
-                slot!(game, Enemy_Etecoon[E_0].base.current_instruction = addr_kEtecoon_Ilist_E8AC as u16);
-            }
-            slot!(game, Enemy_Etecoon[E_0].base.instruction_timer = 1);
-            slot!(game, Enemy_Etecoon[E_0]; var_E = 11, var_F = (0xa7ec1bi32) as u16, var_A = g_word_A7E900, var_B = g_word_A7E902);
-        }
-    };
-    [11004877] Etecoon_Func_11 [] {
-        Etecoon_Func_1(k, game);
-        let E = (k as i32) as i32;
-        let v2: bool = slot!(game, Enemy_Etecoon[E].var_E) == 1;
-        slot!(game, Enemy_Etecoon[E].var_E = slot!(game, Enemy_Etecoon[E].var_E).wrapping_sub(1));
-        let v3: bool = (slot!(game, Enemy_Etecoon[E].var_E) & 0x8000) != 0;
-        if v2 || v3 {
-            if slot!(game, Enemy_Etecoon[E].parameter_1) != 0 {
-                slot!(game, Enemy_Etecoon[E].base.current_instruction = addr_kEtecoon_Ilist_E894 as u16);
-                slot!(game, Enemy_Etecoon[E].var_C = g_word_A7E908);
-                slot!(game, Enemy_Etecoon[E].var_D = g_word_A7E90A);
-            } else {
-                slot!(game, Enemy_Etecoon[E].base.current_instruction = addr_kEtecoon_Ilist_E83C as u16);
-                slot!(game, Enemy_Etecoon[E].var_C = g_word_A7E90C);
-                slot!(game, Enemy_Etecoon[E].var_D = g_word_A7E90E);
-            }
-            slot!(game, Enemy_Etecoon[E].base.instruction_timer = 1);
-            slot!(game, Enemy_Etecoon[E].var_F = (0xa7eb50i32) as u16);
-            slot!(game, Enemy_Etecoon[E].var_A = g_word_A7E900);
-            slot!(game, Enemy_Etecoon[E].var_B = g_word_A7E902);
-        }
-    };
-    [11005079] Etecoon_Func_16 [] {
-        Etecoon_Func_2(k, game);
-        let E = (k as i32) as i32;
-        if slot!(game, Enemy_Etecoon[E].base.x_pos) as i32 - 537i32 & 0x8000 != 0 {
-            slot!(game, Enemy_Etecoon[E].var_E = 11);
-            slot!(game, Enemy_Etecoon[E].var_F = (0xa7edc7i32) as u16);
-            slot!(game, Enemy_Etecoon[E].base; instruction_timer = 1, current_instruction = addr_kEtecoon_Ilist_E854 as u16);
-        }
-    };
-    [11005115] Etecoon_Func_17 [] {
-        Etecoon_Func_2(k, game);
-        let E = (k as i32) as i32;
-        if slot!(game, Enemy_Etecoon[E].base.x_pos) as i32 - 600i32 & 0x8000 == 0 {
-            slot!(game, Enemy_Etecoon[E].var_E = 11);
-            slot!(game, Enemy_Etecoon[E].var_F = (0xa7edc7i32) as u16);
-            slot!(game, Enemy_Etecoon[E].base; instruction_timer = 1, current_instruction = addr_kEtecoon_Ilist_E854 as u16);
-        }
-    };
-    [11005151] Etecoon_Func_18 [] {
-        Etecoon_Func_2(k, game);
-        let E = (k as i32) as i32;
-        if slot!(game, Enemy_Etecoon[E].base.x_pos) as i32 - 600i32 & 0x8000 == 0 {
-            slot!(game, Enemy_Etecoon[E].var_F = (0xa7ed09i32) as u16);
-            slot!(game, Enemy_Etecoon[E].var_A = g_word_A7E904);
-            slot!(game, Enemy_Etecoon[E].var_B = g_word_A7E906);
-            slot!(game, Enemy_Etecoon[E].base; instruction_timer = 1, current_instruction = addr_stru_A7E898 as u16);
-        }
-    };
-    [11005193] Etecoon_Func_19 [] {
-        Etecoon_Func_2(k, game);
-        Etecoon_Func_3(k, game);
-        let E = (k as i32) as i32;
-        if slot!(game, Enemy_Etecoon[E].base.x_pos) as i32 - 680i32 & 0x8000 == 0 {
-            slot!(game, Enemy_Etecoon[E].base; instruction_timer = 1, current_instruction = addr_stru_A7E880 as u16);
-            slot!(game, Enemy_Etecoon[E].var_F = (0xa7ed2ai32) as u16);
-        }
-    };
-    [11005226] Etecoon_Func_20 [] {
-        Etecoon_Func_2(k, game);
-        let E = (k as i32) as i32;
-        if slot!(game, Enemy_Etecoon[E].base.x_pos) as i32 - 840i32 & 0x8000 == 0 {
-            slot!(game, Enemy_Etecoon[E].base; instruction_timer = 1, current_instruction = addr_stru_A7E898 as u16);
-            slot!(game, Enemy_Etecoon[E].var_F = (0xa7ed54i32) as u16);
-            slot!(game, Enemy_Etecoon[E].var_A = -1i32 as u16);
-            slot!(game, Enemy_Etecoon[E].var_B = g_word_A7E906);
-        }
-    };
-    [11005268] Etecoon_Func_21 [] {
-        Etecoon_Func_2(k, game);
-        if Etecoon_Func_3(k, game) & 1 != 0 {
-            let E = (k as i32) as i32;
-            slot!(game, Enemy_Etecoon[E].var_E = 11);
-            slot!(game, Enemy_Etecoon[E].base; instruction_timer = 1, current_instruction = addr_kEtecoon_Ilist_E854 as u16);
-            slot!(game, Enemy_Etecoon[E].var_F = (0xa7edc7i32) as u16);
-        }
-    };
-    [11005301] Etecoon_Func_22 [] {
-        Etecoon_Func_1(k, game);
-        if Etecoon_Func_3(k, game) & 1 != 0 {
-            let E = (k as i32) as i32;
-            if (slot!(game, Enemy_Etecoon[E].var_A) & 0x8000) == 0 {
-                slot!(game, Enemy_Etecoon[E].var_E = 11);
-                slot!(game, Enemy_Etecoon[E].base; instruction_timer = 1, current_instruction = addr_kEtecoon_Ilist_E854 as u16);
-                if (slot!(game, Enemy_Etecoon[E].parameter_2) & 2) != 0 && slot!(game, Enemy_Etecoon[E].base.x_pos) as i32 - 832i32 & 0x8000 != 0 {
-                    slot!(game, Enemy_Etecoon[E].var_F = (0xa7ee3ei32) as u16);
-                } else {
-                    slot!(game, Enemy_Etecoon[E].var_F = (0xa7edc7i32) as u16);
-                }
-            } else {
-                slot!(game, Enemy_Etecoon[E]; var_A = 0, var_B = 0);
-                slot!(game, Enemy_Etecoon[E].base; instruction_timer = 3, current_instruction = addr_stru_A7E862 as u16);
-            }
-        }
-    };
-    [11005383] Etecoon_Func_23 [] {
-        Etecoon_Func_1(k, game);
-        let E = (k as i32) as i32;
-        let v2: bool = slot!(game, Enemy_Etecoon[E].var_E) == 1;
-        slot!(game, Enemy_Etecoon[E].var_E = slot!(game, Enemy_Etecoon[E].var_E).wrapping_sub(1));
-        let v3: bool = (slot!(game, Enemy_Etecoon[E].var_E) & 0x8000) != 0;
-        if v2 || v3 {
-            let v4: u16 = (slot!(game, Enemy_Etecoon[E].parameter_1)).wrapping_add(256);
-            slot!(game, Enemy_Etecoon[E].parameter_1 = v4);
-            if (v4 as i32 & 0xff00) - 1024i32 & 0x8000 != 0 || {
-                slot!(game, Enemy_Etecoon[E].parameter_1 = slot!(byte game, Enemy_Etecoon[E].parameter_1[0]) as u16);
-                (slot!(game, Enemy_Etecoon[E].parameter_2) & 2) != 0
-            } {
-                slot!(game, Enemy_Etecoon[E].var_F = (0xa7ed75i32) as u16);
-                slot!(game, Enemy_Etecoon[E].base.current_instruction = (slot!(game, Enemy_Etecoon[E].base.current_instruction)).wrapping_add(2));
-            } else {
-                slot!(game, Enemy_Etecoon[E].var_F = (0xa7ee9ai32) as u16);
-                slot!(game, Enemy_Etecoon[E].base.current_instruction = addr_stru_A7E880 as u16);
-                slot!(game, Enemy_Etecoon[E].var_C = g_word_A7E908);
-                slot!(game, Enemy_Etecoon[E].var_D = g_word_A7E90A);
-            }
-            slot!(game, Enemy_Etecoon[E].var_A = g_word_A7E900);
-            slot!(game, Enemy_Etecoon[E].var_B = g_word_A7E902);
-            slot!(game, Enemy_Etecoon[E].base.instruction_timer = 1);
-            if word!(game.samus_x_pos) as i32 - 256i32 & 0x8000 == 0 {
-                QueueSfx2_Max6(0x33, game);
-            }
-        }
-    };
-    [11005502] Etecoon_Func_24 [] {
-        Etecoon_Func_1(k, game);
-        let E = (k as i32) as i32;
-        let v2: bool = slot!(game, Enemy_Etecoon[E].var_E) == 1;
-        slot!(game, Enemy_Etecoon[E].var_E = slot!(game, Enemy_Etecoon[E].var_E).wrapping_sub(1));
-        let v3: bool = (slot!(game, Enemy_Etecoon[E].var_E) & 0x8000) != 0;
-        if v2 || v3 {
-            if ({ let (actor, distance) = (k, 0x40); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 && ({ let (actor, distance) = (k, 0x30); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
-            {
-                slot!(game, Enemy_Etecoon[E].base.current_instruction = addr_stru_A7E880 as u16);
-                slot!(game, Enemy_Etecoon[E].var_F = (0xa7ecdfi32) as u16);
-            } else {
-                slot!(game, Enemy_Etecoon[E].var_A = g_word_A7E900);
-                slot!(game, Enemy_Etecoon[E].var_B = g_word_A7E902);
-                slot!(game, Enemy_Etecoon[E].base.current_instruction = (slot!(game, Enemy_Etecoon[E].base.current_instruction)).wrapping_add(2));
-                slot!(game, Enemy_Etecoon[E].var_F = (0xa7ed75i32) as u16);
-                if word!(game.samus_x_pos) as i32 - 256i32 & 0x8000 == 0 {
-                    QueueSfx2_Max6(0x33, game);
-                }
-            }
-            slot!(game, Enemy_Etecoon[E].base.instruction_timer = 1);
-        }
-    };
-    [11005594] Etecoon_Func_25 [] {
-        Etecoon_Func_2(k, game);
-        let E = (k as i32) as i32;
-        if slot!(game, Enemy_Etecoon[E].base.x_pos) as i32 - 600i32 & 0x8000 == 0 {
-            slot!(game, Enemy_Etecoon[E].var_F = (0xa7eeb8i32) as u16);
-            slot!(game, Enemy_Etecoon[E].base; instruction_timer = 1, current_instruction = addr_stru_A7E898 as u16);
-        }
-    };
-    [11005624] Etecoon_Func_26 [] {
-        Etecoon_Func_2(k, game);
-        if Etecoon_Func_3(k, game) & 1 != 0 {
-            let E = (k as i32) as i32;
-            slot!(game, Enemy_Etecoon[E]; var_C = g_word_A7E90C, var_D = g_word_A7E90E, var_F = (0xa7eb02i32) as u16, var_A = g_word_A7E900, var_B = g_word_A7E902);
-            slot!(game, Enemy_Etecoon[E].base; instruction_timer = 1, current_instruction = addr_stru_A7E828 as u16);
-        }
-    };
+    [11004335] Etecoon_Func_4 [] { sm_game::actors::etecoon::initial(game, k); };
+    [11004471] Etecoon_Func_6 [] { sm_game::actors::etecoon::hopping_bottom(game, k); };
+    [11004674] Etecoon_Func_8 [] { sm_game::actors::etecoon::running_left(game, k); };
+    [11004716] Etecoon_Func_9 [] { sm_game::actors::etecoon::running_right(game, k); };
+    [11004752] Etecoon_Func_10 [] { sm_game::actors::etecoon::jumping(game, k); };
+    [11004877] Etecoon_Func_11 [] { sm_game::actors::etecoon::wall_jump(game, k); };
+    [11005079] Etecoon_Func_16 [] { sm_game::actors::etecoon::run_to_left_run_up_point(game, k); };
+    [11005115] Etecoon_Func_17 [] { sm_game::actors::etecoon::run_to_right_run_up_point(game, k); };
+    [11005151] Etecoon_Func_18 [] { sm_game::actors::etecoon::running_for_tunnel_jump(game, k); };
+    [11005193] Etecoon_Func_19 [] { sm_game::actors::etecoon::tunnel_jump(game, k); };
+    [11005226] Etecoon_Func_20 [] { sm_game::actors::etecoon::running_through_tunnel(game, k); };
+    [11005268] Etecoon_Func_21 [] { sm_game::actors::etecoon::falling_from_tunnel_ledge(game, k); };
+    [11005301] Etecoon_Func_22 [] { sm_game::actors::etecoon::hopping_top(game, k); };
+    [11005383] Etecoon_Func_23 [] { sm_game::actors::etecoon::start_hop_top(game, k); };
+    [11005502] Etecoon_Func_24 [] { sm_game::actors::etecoon::hop_until_samus_near(game, k); };
+    [11005594] Etecoon_Func_25 [] { sm_game::actors::etecoon::running_for_failed_tunnel_jump(game, k); };
+    [11005624] Etecoon_Func_26 [] { sm_game::actors::etecoon::failed_tunnel_jump(game, k); };
     [11007344] Dachora_Func_2 [] {
         ({ let (actor, amount) = (k, ((1u32) << 16 | 0u16 as u32) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
         if ({ let (actor, distance) = (k, 0x40); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
@@ -1064,45 +710,11 @@ crate::game::callback_dispatch! {
     [10999799] Phantoon_SpawnRainingFireballs [] { sm_game::actors::phantoon::countdown(game, k, sm_game::actors::phantoon::function::SPAWN_FLAME_RAIN); };
     [10999924] Phantoon_MoveEnragedPhantoonToTopCenter [] { sm_game::actors::phantoon::countdown(game, k, sm_game::actors::phantoon::function::MOVE_TO_TOP_CENTRE); };
     [11000203] Phantoon_DyingPhantoonExplosions [] { sm_game::actors::phantoon::countdown(game, k, sm_game::actors::phantoon::function::DYING_EXPLOSIONS); };
-    @countdown [pub fn (k: u16, game: &mut Game)];
-    before {
-        let E = (k as i32) as i32;
-        let v2: bool = slot!(game, Enemy_Etecoon[E].var_E) == 1;
-        slot!(game, Enemy_Etecoon[E].var_E = slot!(game, Enemy_Etecoon[E].var_E).wrapping_sub(1));
-        let v3: bool = (slot!(game, Enemy_Etecoon[E].var_E) & 0x8000) != 0;
-    }
-    when v2 || v3;
-    [11004416] Etecoon_Func_5 {
-        slot!(game, Enemy_Etecoon[E].var_A = g_word_A7E900);
-        slot!(game, Enemy_Etecoon[E].var_B = g_word_A7E902);
-        slot!(game, Enemy_Etecoon[E].base; current_instruction = (slot!(game, Enemy_Etecoon[E].base.current_instruction)).wrapping_add(2), instruction_timer = 1);
-        slot!(game, Enemy_Etecoon[E].var_F = (0xa7ea37i32) as u16);
-        if word!(game.samus_x_pos) as i32 - 256i32 & 0x8000 == 0 {
-            QueueSfx2_Max6(0x33, game);
-        }
-    };
-    [11004597] Etecoon_Func_7 {
-        slot!(game, Enemy_Etecoon[E].base; current_instruction = (slot!(game, Enemy_Etecoon[E].base.current_instruction)).wrapping_add(2), instruction_timer = 1);
-        if slot!(game, Enemy_Etecoon[E].parameter_1) != 0 {
-            slot!(game, Enemy_Etecoon[E].var_C = g_word_A7E908);
-            slot!(game, Enemy_Etecoon[E].var_D = g_word_A7E90A);
-            slot!(game, Enemy_Etecoon[E].var_F = (0xa7eb2ci32) as u16);
-        } else {
-            slot!(game, Enemy_Etecoon[E].var_C = g_word_A7E90C);
-            slot!(game, Enemy_Etecoon[E].var_D = g_word_A7E90E);
-            slot!(game, Enemy_Etecoon[E].var_F = (0xa7eb02i32) as u16);
-        }
-        slot!(game, Enemy_Etecoon[E].var_A = g_word_A7E900);
-        slot!(game, Enemy_Etecoon[E].var_B = g_word_A7E902);
-    };
-    [11004955] Etecoon_Func_12 {
-        slot!(game, Enemy_Etecoon[E].var_A = g_word_A7E900);
-        slot!(game, Enemy_Etecoon[E].var_B = g_word_A7E902);
-        unsafe { funcs_A2A79[slot!(byte game, Enemy_Etecoon[E].parameter_2[0]) as usize](k, game) };
-        slot!(game, Enemy_Etecoon[k as i32].base.instruction_timer = 1);
-    };
+    [11004416] Etecoon_Func_5 [] { sm_game::actors::etecoon::start_hop_bottom(game, k); };
+    [11004597] Etecoon_Func_7 [] { sm_game::actors::etecoon::look_at_samus(game, k); };
+    [11004955] Etecoon_Func_12 [] { sm_game::actors::etecoon::landed_from_jump(game, k); };
 }
-/// Phantoon's main AI dispatch to its bank $A7 function.
-pub(crate) fn run_phantoon_function(address: u32, game: &mut Game) {
+/// Runs the bank $A7 function at `address` for the current enemy.
+pub(crate) fn run_a7_function(address: u32, game: &mut Game) {
     unsafe { actor_species_pre_instruction(address, game) };
 }
