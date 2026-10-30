@@ -37,22 +37,6 @@ macro_rules! type_aliases {
 }
 pub(crate) use type_aliases;
 
-// Declare consecutive record fields of one type without changing layout.
-macro_rules! typed_struct {
-    ($attributes:tt; $($visibility:vis $kind:ident $name:ident $fields:tt)+) => {
-        $($crate::typed_struct!(@attributes $attributes $visibility $kind $name $fields);)+
-    };
-    (@attributes [$(#[$metadata:meta])*] $visibility:vis $kind:ident $name:ident {
-        $($field_visibility:vis $($field:ident),+ : $field_type:ty;)*
-    }) => {
-        $(#[$metadata])*
-        $visibility $kind $name {
-            $($($field_visibility $field: $field_type,)*)*
-        }
-    };
-}
-pub(crate) use typed_struct;
-
 // The replay runner is shared with the sm_verify host.
 #[path = "../../../sm/src/verify.rs"]
 mod verify;

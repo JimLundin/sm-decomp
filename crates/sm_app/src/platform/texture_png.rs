@@ -2,14 +2,6 @@ use std::ffi::{c_char, c_void};
 
 #[link(name = "sm_stb_image", kind = "static", modifiers = "-bundle")]
 unsafe extern "C" {
-    fn stbi_load_from_memory(
-        data: *const u8,
-        length: i32,
-        width: *mut i32,
-        height: *mut i32,
-        channels: *mut i32,
-        requested_channels: i32,
-    ) -> *mut u8;
     fn stbi_load(
         filename: *const c_char,
         width: *mut i32,
