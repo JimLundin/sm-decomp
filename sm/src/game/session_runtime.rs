@@ -1964,7 +1964,8 @@ impl<'g> sm_game::grapple_swing::Host for Runtime<'g> {
         self.foreign(|game| sm_game::menus::host::MenuRuntime::rtl_unreachable(game))
     }
     fn grapple_pose_command(&mut self, command: u16) -> u16 {
-        self.foreign(|game| sm_game::menus::host::MenuRuntime::player_command(game, command))
+        // The command runs on this lease; no export, nested lease or re-import.
+        player_transitions_runtime::command_in(self, command)
     }
     fn multiply_with_scratch(&mut self, a: u16, b: u16) -> u32 {
         self.write_slice(0x5e9, &a.to_le_bytes());
