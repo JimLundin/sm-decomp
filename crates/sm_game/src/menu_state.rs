@@ -17,6 +17,17 @@
 //! projection while one is installed, the byte image otherwise, with the same
 //! bytes and order as the named word accesses it replaces. A consumer that
 //! moves onto a lease uses `session().menu` directly.
+//!
+//! **Raw writes.** A raw store outside a lease advances the RAM write epoch,
+//! which suspends the projection, so later reads see RAM and the next lease
+//! refuses a stale Session rather than exporting over the store. A lease host
+//! has no raw RAM: its byte stores go through `write_projected_byte`, and
+//! `foreign` exports before and imports after. Bulk writers that can cover
+//! $0727..$0764 are the boot clears, the hard reset fill, and the snapshot
+//! and seed loads. The clears and the fill are raw stores outside a lease;
+//! a snapshot load is followed by a checked Session adoption, and a seed load
+//! runs under a reference import. No `word_transfers!`, WRAM DMA, decompression,
+//! message box clear or save file transfer reaches the range.
 #![forbid(unsafe_code)]
 use crate::ram::CompatibilityRam;
 
