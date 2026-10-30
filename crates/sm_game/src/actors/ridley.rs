@@ -1346,7 +1346,9 @@ where
         };
         session_slot!(game, Ridley[RIDLEY].x_velocity = x_velocity as u16);
     }
-    let facing_away = ((session_slot!(game, Ridley[RIDLEY].x_velocity) as i32 ^ (session_slot!(game, Ridley[RIDLEY].base.x_pos) as i32 - word!(game.samus_x_pos) as i32))
+    let facing_away = ((session_slot!(game, Ridley[RIDLEY].x_velocity) as i32
+        ^ (session_slot!(game, Ridley[RIDLEY].base.x_pos) as i32
+            - word!(game.samus_x_pos) as i32))
         & 0x8000)
         == 0;
     let x = session_slot!(game, Ridley[RIDLEY].base.x_pos);
@@ -3661,7 +3663,8 @@ where
 {
     (((game.slot_byte(TAIL_RAM + 2 * tail::angle(5)) as i32
         + game.slot_byte(TAIL_RAM + 2 * tail::angle(6)) as i32
-        + 8) & 0xf0) as u8
+        + 8)
+        & 0xf0) as u8
         >> 4) as isize
 }
 

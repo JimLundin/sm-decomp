@@ -958,7 +958,8 @@ where
             .wrapping_add(session_slot!(game, Fingernail[BODY].base.x_pos));
         if (session_slot!(game, Fingernail[me].base.x_width) as i32
             + session_slot!(game, Fingernail[me].base.x_pos) as i32
-            - left as i32) & 0x8000
+            - left as i32)
+            & 0x8000
             == 0
             && (session_slot!(game, Fingernail[me].x_speed) & 0x8000) == 0
         {
@@ -1544,7 +1545,8 @@ where
             game,
             Fingernail[me].base.x_pos = ((session_slot!(game, Fingernail[BODY].base.x_pos) as i32
                 - session_slot!(game, Fingernail[BODY].base.x_width) as i32
-                - session_slot!(game, Fingernail[me].base.x_width) as i32) & 0xfff0) as u16
+                - session_slot!(game, Fingernail[me].base.x_width) as i32)
+                & 0xfff0) as u16
         );
         session_slot!(
             game,

@@ -25,6 +25,10 @@ jobs:
         run: rustup show
       - name: Format
         run: cargo fmt --check
+      - name: Keep committed text files on LF line endings
+        run: |
+          crlf=$(git ls-files --eol | awk '$1 == "i/crlf" || $1 == "i/mixed" { print $NF }')
+          if [ -n "$crlf" ]; then echo "Committed with CRLF line endings:"; echo "$crlf"; exit 1; fi
       - name: Lint target packages
         run: cargo clippy --locked -p sm_data -p sm_game -p sm_runtime --all-targets --no-deps
       - name: Progress
