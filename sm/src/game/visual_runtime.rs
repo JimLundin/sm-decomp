@@ -1,23 +1,15 @@
 //! Visual adapters on the one aggregate Session, with explicit legacy effects.
-pub(crate) use crate::game::cinematic::{
-    advance_cinematic_fade, clear_cinematic_colors, compose_cinematic_palette,
-    fade_cinematic_colors, prepare_cinematic_palette_fade, queue_cinematic_tilemap,
-    set_cinematic_blend,
-};
-pub(crate) use crate::game::cinematic_display::{
-    configure_cinematic_display, draw_intro_sprites, reset_cinematic_transform,
-};
+pub(crate) use crate::game::cinematic::advance_cinematic_fade;
+pub(crate) use crate::game::cinematic_display::draw_intro_sprites;
 pub(crate) use crate::game::cinematic_objects::{
-    CinematicObjects, advance_cinematic_background_pre, advance_intro_mother_brain,
-    draw_cinematic_sprites, execute_cinematic_sprite_instruction, spawn_cinematic_burst,
-    spawn_cinematic_sprite_at,
+    CinematicObjects, advance_intro_mother_brain, draw_cinematic_sprites,
+    execute_cinematic_sprite_instruction,
 };
-pub(crate) use crate::game::credits::{advance_credits, prepare_credit_roll};
-pub(crate) use crate::game::ending_graphics::advance_ending_logo_palette;
+pub(crate) use crate::game::credits::advance_credits;
 pub(crate) use crate::game::ending_screens::{
     advance_ending_gunship_spin, advance_ending_samus_jump, advance_ending_sprite_pair,
     advance_postcredits_samus_message, advance_postcredits_samus_reveal, advance_postcredits_zoom,
-    fade_ending_gunship_backdrop, move_ending_cloud, update_ending_critters, wait_ending_cloud,
+    move_ending_cloud, update_ending_critters, wait_ending_cloud,
 };
 pub(crate) use crate::game::hdma_objects::{
     clear_hdma, clear_hdma_channels, initialize_room_effects, set_hdma_enabled, spawn_bg3_scroll,
@@ -32,19 +24,16 @@ use crate::game::projectile_presentation_ram as sprite_output;
 pub(crate) use crate::game::room_visuals::{
     advance_crocomire, align_crocomire_background, darken_fireflea_room,
     initialize_bomb_torizo_haze, initialize_ceres_elevator, initialize_ceres_ridley,
-    initialize_draygon_layer, initialize_fireflea_lighting, initialize_intro_wave,
-    initialize_morph_eye_beam, initialize_phantoon_motion, initialize_room_haze,
-    initialize_tourian_statue, initialize_weather, shake_room_with_sound,
+    initialize_draygon_layer, initialize_fireflea_lighting, initialize_morph_eye_beam,
+    initialize_phantoon_motion, initialize_room_haze, initialize_tourian_statue,
+    initialize_weather, shake_room_with_sound,
 };
-pub(crate) use crate::game::shooting_star_motion::{
-    advance_shooting_stars, initialize_shooting_stars,
-};
+pub(crate) use crate::game::shooting_star_motion::advance_shooting_stars;
 pub(crate) use crate::game::title_screen::{
     advance_title_pan, advance_title_wait, request_title_skip,
 };
 pub(crate) use sm_game::cinematic::{
-    advance_cinematic_coordinate, capture_cinematic_palette, clear_cinematic_background,
-    clear_cinematic_sprites, drift_cinematic_sprite, fade_cinematic_fixed_color, set_fixed_color,
+    advance_cinematic_coordinate, drift_cinematic_sprite, set_fixed_color,
 };
 
 pub(crate) use crate::game::hosts::{draw_player_frame, update_beam_tiles_and_palette};

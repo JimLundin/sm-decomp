@@ -15,6 +15,4 @@ pub trait Host: crate::menus::host::Host + crate::display_refresh::Host {
     fn initialize_player(&mut self);
     fn use_cinematic_bindings(&mut self);
     fn disable_scanline_irq(&mut self);
-    /// Whether game event `event` has happened.
-    fn event_happened(&mut self, event: u16) -> bool;
 }

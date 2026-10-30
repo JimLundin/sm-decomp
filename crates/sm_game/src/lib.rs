@@ -27,6 +27,7 @@ pub mod drop_rules;
 pub mod effects;
 pub mod ending_graphics;
 pub mod ending_screens;
+pub mod ending_sequence;
 pub mod enemy_lists;
 pub mod enemy_population;
 pub mod escape_timer;

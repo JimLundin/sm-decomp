@@ -10,7 +10,7 @@ pub use crate::game::constants::samus_movement::*;
 pub use crate::game::constants::samus_poses::*;
 pub(crate) use crate::game_state::Game;
 pub(crate) use crate::ram_map::word;
-pub(crate) use crate::rtl::{MakePairU16, ReadRegWord, Unreachable, WriteReg, abs16, words};
+pub(crate) use crate::rtl::{MakePairU16, ReadRegWord, Unreachable, abs16, words};
 pub use crate::snes::registers::*;
 pub use crate::types::{
     Buttons, CheckEnemyColl_Result, CheckSolidEnemyColl_Result, CoroutineRet, DoorDef, EnemyBase,

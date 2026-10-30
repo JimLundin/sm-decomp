@@ -446,7 +446,6 @@ pub mod game {
     pub(crate) mod credits;
     pub(crate) mod decompression;
     pub(crate) mod demo_rooms;
-    pub(crate) mod ending_graphics;
     pub(crate) mod ending_screens;
     pub(crate) mod enemy_layouts;
     pub(crate) mod enemy_speeds;
