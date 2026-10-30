@@ -21,6 +21,8 @@ def seed_bundle(row):
                      'mother-brain-baby-metroid-drain', 'mother-brain-baby-metroid-sacrifice',
                      'mother-brain-escape-door'):
         return ('seeds-v1-mb-phases-13dd32bb039004ab.tar.gz.enc', '13dd32bb039004abe6a8a3225cc1dfe14421dab64bea27e8931b987603042caf')
+    if row['id'] in ('pause-menu-tour', 'options-menu-tour', 'boss-draygon-grab', 'credits-ending'):
+        return ('seeds-v1-coverage-54f838bfd8146bf7.tar.gz.enc', '54f838bfd8146bf76d631d567299b0721adbc1c4065584e9de5f3e19632ccb21')
     if row['id'] in ('pickup-reserve', 'save-death-reload', 'save-memory', 'music-fir-selector10'):
         return ('layout150-checkpoints-147-93986acd14dc9d66.tar.gz.enc', '8c8f84e903917a06d996624358a1783e80920e9fa2084c438eaa950843d68517')
     if 'checkpoint' in row:

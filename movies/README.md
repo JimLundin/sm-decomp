@@ -161,6 +161,11 @@ Raw movie timing can differ from native game steps. Use the
 for observed wait-step inputs, original-emulator seeds and special captures.
 A short replay does not establish completion of the published movie.
 
+Rows that test menus or other play the movies never reach use authored
+controller inputs. [authored_inputs.py](../tools/authored_inputs.py) holds their
+recipes and writes each input; a seeded recipe keeps the movie word latched at
+its seed as its first word.
+
 Keep ROMs, movies, input files, memory dumps, checkpoints and capture logs local
 and ignored by Git. Publish only permitted metadata or encrypted bundles;
 include no ROM, derived game data or decryption password in commits or logs.

@@ -1102,3 +1102,55 @@ input_sha256 = "968f37d5218ea77d18ba81e5022ceca78b0c53be6b22f3602895e08904901c2d
 start_frame = 110076
 frames = 1
 expect = ["state:8"]
+
+# Coverage rows for gameplay the 100% room chain does not reach.
+# tools/authored_inputs.py writes the authored inputs; see its recipes.
+
+# Seed303's latched movie word, then the pause-menu-tour recipe: map scrolling,
+# both tabs, manual reserve transfer, every equipment toggle, then unpause.
+[[segment]]
+id = "pause-menu-tour"
+pending = "awaiting the seeds-v1-coverage-54f838bfd8146bf7 ci-data upload"
+seed = "100-input-phase:303"
+seed_sha256 = "cbcebcf17718dc609535549e2418f47201e1ef76db49952cda452fc54084dd50"
+inputs = "authored-pause-menu-tour.inputs"
+input_sha256 = "f25e99ae0e1fdb5d4a40b90019ba216ead2694ae5d0061b1fea5f6e1fca97eb1"
+start_frame = 0
+frames = 1512
+expect = ["state:15", "state:18", "room:9A44"]
+
+# From power-on, the options-tour recipe: title, file select, controller
+# remapping, special settings, both languages, back to file select, start.
+[[segment]]
+id = "options-menu-tour"
+pending = "awaiting the seeds-v1-coverage-54f838bfd8146bf7 ci-data upload"
+inputs = "authored-options-tour.inputs"
+input_sha256 = "b06fcdb5eddf0784604c5e8e2c7d4a6f724ecffb62e762b82c799e0a75bc0128"
+start_frame = 0
+frames = 2310
+expect = ["state:2", "state:4", "state:30"]
+
+# The low% movie's Draygon fight: Draygon grabs Samus, who grapples a turret.
+[[segment]]
+id = "boss-draygon-grab"
+pending = "awaiting the seeds-v1-coverage-54f838bfd8146bf7 ci-data upload"
+seed = "low-input-phase:129"
+seed_sha256 = "987fcffbe5a3c0e86996b029eaf95b6b2341edec5927dd979faaa4c8c83777cf"
+inputs = "seed-draygon-grab.inputs"
+input_sha256 = "733d6f51465b761d6d6567d1807ba146faaf428b4da5ead6470b8c61862cf0e5"
+start_frame = 0
+frames = 3585
+expect = ["boss:draygon", "room:DA60", "room:D78F"]
+
+# seed-credits.inputs followed by 4,000 released words: the post-roll ending,
+# Samus, the clear time and the item percentage.
+[[segment]]
+id = "credits-ending"
+pending = "cinematic spawn parameter $7E1B9D-$7E1B9E differs from input frame 12144"
+seed = "100-credits:336"
+seed_sha256 = "30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+inputs = "seed-credits-ending.inputs"
+input_sha256 = "5b6ffc5db37ecd8f79aafbac3351af1ecda182a585df97634ee6a75b1980386c"
+start_frame = 0
+frames = 15900
+expect = ["credits-complete"]
