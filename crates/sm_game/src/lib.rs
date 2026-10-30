@@ -166,6 +166,7 @@ pub mod actors {
     pub mod magdollite;
     pub mod media;
     pub mod metroid;
+    pub mod mini_crocomire;
     pub mod mini_kraid;
     pub mod mochtroid;
     pub mod morph_ball_eye;

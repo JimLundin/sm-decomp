@@ -1222,7 +1222,6 @@ crate::game::callback_dispatch! {
         10676168 => [{ actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize); crate::game::lava_seahorse_pair::synchronize(game); }];
         10676174 => [{ actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize); crate::game::lava_seahorse_pair::synchronize(game); }];
         10676180 => [{ actors::combat::power_bomb_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize); crate::game::lava_seahorse_pair::synchronize(game); }];
-        10652077 => crate::game::mini_crocomire::initialize;
         10651420 => crate::game::goofball::initialize;
         10651548 => crate::game::goofball::advance;
         0xa30000..=0xa3ffff => [{ crate::rtl::Unreachable(game); }];
@@ -1248,8 +1247,6 @@ crate::game::address_dispatch! {
 
         10675796 | 10675885 | 10675953 | 10676020 | 10676041
             => [crate::game::lava_seahorse_pair::phase(k, ea as u16, game)];
-        10652227 => [crate::game::mini_crocomire::patrol(false, game)];
-        10652252 => [crate::game::mini_crocomire::patrol(true, game)];
         10659852 => [crate::game::gunship::phase(k, 0xa80c, game)];
         10660048 => [crate::game::gunship::phase(k, 0xa8d0, game)];
         10660162 => [crate::game::gunship::phase(k, 0xa942, game)];
@@ -1295,8 +1292,6 @@ crate::game::callback_dispatch! {
         10657578 => [{ crate::game::music::queue_sfx2_max6(0x34, game); j }];
         10657959 => [crate::game::enemy_projectiles::spawn_scripted(0xdafe, j, game)];
         10652030 => [crate::game::enemy_projectiles::spawn_scripted(0xdbf2, j, game)];
-        10652048 => [crate::game::mini_crocomire::resume(false, j, game)];
-        10652061 => [crate::game::mini_crocomire::resume(true, j, game)];
         10651846 => [crate::game::goofball::landed(j, game)];
         0xa30000..=0xa3ffff => [{ crate::rtl::Unreachable(game); EnemyScript::Stop }];
         10872671 => [{ actors::spore_spawn::increase_max_x_radius(game); j }];
