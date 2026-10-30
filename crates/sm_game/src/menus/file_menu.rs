@@ -465,7 +465,7 @@ fn copy_slot<H: Host + ?Sized>(game: &mut H) {
         );
         let row = ((4 * i32::from(word!(game.file_copy_destination_slot)) + 9) << 6) + 24;
         crate::word_transfers!(game, (2), 11;
-            native(0x3600 + row as usize) <- value(15),
+            native(menu_tilemap::MENU_TILEMAP + row as usize) <- value(menu_tilemap::BLANK_TILE),
             native(0x35c0 + row as usize) <- value(15),
         );
         menu_tilemap::set_palette(0, game);
@@ -562,7 +562,13 @@ fn turn_helmet<H: Host + ?Sized>(game: &mut H) {
 fn load_background<H: Host + ?Sized>(game: &mut H) {
     // This menu spans $3600..$3dff, beyond the pause-map union field.
     crate::word_transfers!(game, descending, 1024; native(0x3dfe) <- rom(0x8edc00, 1023));
-    menu_tilemap::upload(2048, 0x7e3600, 1, true, game);
+    menu_tilemap::upload(
+        menu_tilemap::MENU_TILEMAP_BYTES,
+        menu_tilemap::MENU_TILEMAP_SOURCE,
+        1,
+        true,
+        game,
+    );
     crate::menu!(game.menu_index += 1);
     word! {game; menu_selection_missile_animation_timer = 1; menu_selection_missile_animation_frame = 0; }
 }
