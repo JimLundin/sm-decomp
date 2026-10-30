@@ -34,20 +34,21 @@ pub fn finish_health_and_time<H: Host + ?Sized>(game: &mut H) {
     'carry: {
         for timer in (fields::game_time_frames..fields::game_time_hours).step_by(2) {
             checked_word!(game, timer; += 1);
-            if (checked_word!(game, timer;) as i32 - 60i32) & 0x8000 != 0 {
+            if (checked_word!(game, timer;).wrapping_sub(60) as i16) < 0 {
                 break 'carry;
             }
             checked_word!(game, timer; = 0);
         }
         word!(game.game_time_hours += 1);
     }
-    if (word!(game.game_time_hours) as i32 - 100i32) & 0x8000 == 0 {
+    if (word!(game.game_time_hours).wrapping_sub(100) as i16) >= 0 {
         word! { game, 59; game_time_frames, game_time_seconds, game_time_minutes }
         word!(game.game_time_hours = 99);
     }
 }
 
-static ROOM_SHAKES: [u16; 144] = [
+/// Each earthquake kind's BG1 x, BG1 y, BG2 x and BG2 y shake amplitudes.
+const ROOM_SHAKES: [u16; 144] = [
     1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 3, 0, 0, 0, 0, 3, 0, 0,
     3, 3, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 2, 0, 2, 0, 0, 2, 0, 2, 2, 2, 2, 2, 3, 0, 3, 0,
     0, 3, 0, 3, 3, 3, 3, 3, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 2, 0, 2, 0, 0, 2, 0, 2, 2, 2, 2, 2,
@@ -56,12 +57,14 @@ static ROOM_SHAKES: [u16; 144] = [
 ];
 
 pub fn finish_frame<H: Host + ?Sized>(game: &mut H) {
-    if crate::room_view::effects(game).earthquake_timer != 0
+    let quake = crate::room_view::effects(game);
+    if quake.earthquake_timer != 0
         && word!(game.time_is_frozen_flag) == 0
-        && (crate::room_view::effects(game).earthquake_kind as i16).wrapping_sub(36) < 0
+        && (quake.earthquake_kind as i16).wrapping_sub(36) < 0
     {
-        let index = usize::from(crate::room_view::effects(game).earthquake_kind) * 4;
-        let direction = if crate::room_view::effects(game).earthquake_timer & 2 != 0 {
+        let index = usize::from(quake.earthquake_kind) * 4;
+        // The shake alternates direction every two frames.
+        let direction = if quake.earthquake_timer & 2 != 0 {
             u16::MAX
         } else {
             1
@@ -80,11 +83,10 @@ pub fn finish_frame<H: Host + ?Sized>(game: &mut H) {
         crate::room_view::set_effect(
             game,
             crate::room_view::EffectWord::EarthquakeTimer,
-            crate::room_view::effects(game)
-                .earthquake_timer
-                .wrapping_sub(1),
+            quake.earthquake_timer.wrapping_sub(1),
         );
-        if (crate::room_view::effects(game).earthquake_kind as i16).wrapping_sub(18) >= 0 {
+        // Kinds from 18 also shake the active enemies.
+        if (quake.earthquake_kind as i16).wrapping_sub(18) >= 0 {
             crate::actors::scheduling::shake_active_enemies(&mut game.runtime());
         }
     }

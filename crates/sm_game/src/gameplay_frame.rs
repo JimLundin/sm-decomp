@@ -345,18 +345,15 @@ fn initialize<H: Host>(game: &mut H) -> CoroutineRet {
     if stage == 0 {
         let demo = u32::from(word!(game.game_state)) == kGameState_40_TransitionToDemo;
         if !demo {
-            match u32::from(word!(game.loading_game_state)) {
-                kLoadingGameState_1F_StartingAtCeres => {
-                    game.runtime().session_mut().room.area = 6;
-                    word!(game.load_station_index = 0);
-                    escape_timer::clear(game);
-                }
-                kLoadingGameState_22_EscapingCeres => {
-                    game.runtime().session_mut().room.area = 0;
-                    word!(game.load_station_index = 18);
-                    save_slots::load_area_map(game);
-                }
-                _ => {}
+            let loading = u32::from(word!(game.loading_game_state));
+            if loading == kLoadingGameState_1F_StartingAtCeres {
+                game.runtime().session_mut().room.area = 6;
+                word!(game.load_station_index = 0);
+                escape_timer::clear(game);
+            } else if loading == kLoadingGameState_22_EscapingCeres {
+                game.runtime().session_mut().room.area = 0;
+                word!(game.load_station_index = 18);
+                save_slots::load_area_map(game);
             }
         }
         display_refresh::initialize_gameplay(game);
