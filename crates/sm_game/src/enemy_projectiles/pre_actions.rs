@@ -1,6 +1,6 @@
 //! Owned enemy-projectile pre-actions; compatibility and effects stay at the execution edge.
 #![forbid(unsafe_code)]
-use super::access::{enemy, enemy_add, enemy_byte, enemy_decrement, read_member};
+use super::access::{enemy, enemy_add, enemy_byte, enemy_decrement, enemy_update, read_member};
 use super::addresses;
 use super::host::{EnemyMember as SlotField, Host, LoadedRecord};
 use super::pre_helpers::*;
@@ -280,12 +280,9 @@ pub fn draygon_goop_pre_instruction(k: u16, ctx: &mut impl Host) {
 pub fn crocomire_projectile_setup_pre_instruction(k: u16, ctx: &mut impl Host) {
     move_horizontally_with_block_collision(k, ctx);
     enemy!(ctx, 2560 => 0_isize, graphics);
-    {
-        let index = (k >> 1) as isize;
-        let old = enemy!(ctx, index, counter);
-        let value = ((old as i32) + (enemy!(ctx, (k >> 1) as isize, velocity_x) as i32)) as u16;
-        enemy!(ctx, index, counter = value);
-    };
+    enemy_update!(ctx, (k >> 1) as isize, counter, |old| ((old as i32)
+        + (enemy!(ctx, (k >> 1) as isize, velocity_x) as i32))
+        as u16);
     let x: u16 = -64i32 as u16;
     let y: u16 = {
         let record = ctx.loaded_record(0x86, 0x9059);
@@ -583,17 +580,12 @@ pub fn torizo_sonic_boom_pre_instruction(k: u16, ctx: &mut impl Host) {
         enemy!(ctx, enemy!(ctx, (v4) as isize, y) => (v4) as isize, behavior_b);
     } else {
         let v1: i32 = k as i32 >> 1;
-        {
-            let index = (v1) as isize;
-            let old = enemy!(ctx, index, velocity_x);
-            let value = ((old as i32)
-                + (if enemy!(ctx, (v1) as isize, velocity_x) & 0x8000 != 0 {
-                    -16i32
-                } else {
-                    16
-                })) as u16;
-            enemy!(ctx, index, velocity_x = value);
-        };
+        enemy_update!(ctx, (v1) as isize, velocity_x, |old| ((old as i32)
+            + (if enemy!(ctx, (v1) as isize, velocity_x) & 0x8000 != 0 {
+                -16i32
+            } else {
+                16
+            })) as u16);
         if (enemy!(ctx, (v1) as isize, velocity_x) & 0xf000) == 4096 {
             enemy!(ctx, 0 => (v1) as isize, definition);
         }
@@ -670,18 +662,11 @@ pub fn eye_door_projectile_moving_pre_instruction(k: u16, ctx: &mut impl Host) {
         || move_vertically_with_block_collision(k, ctx) & 1 != 0)
     {
         let v1: i32 = enemy!(ctx, (k >> 1) as isize, behavior_a) as i32 >> 1;
-        {
-            let index = (v3) as isize;
-            let old = enemy!(ctx, index, velocity_x);
-            let value = old.wrapping_add((kSinCosTable8bit_Sext[(v1 + 64) as usize] >> 4) as u16);
-            enemy!(ctx, index, velocity_x = value);
-        };
-        {
-            let index = (v3) as isize;
-            let old = enemy!(ctx, index, velocity_y);
-            let value = ((old as i32) + (kSinCosTable8bit_Sext[v1 as usize] as i32 >> 4)) as u16;
-            enemy!(ctx, index, velocity_y = value);
-        };
+        enemy_update!(ctx, (v3) as isize, velocity_x, |old| old
+            .wrapping_add((kSinCosTable8bit_Sext[(v1 + 64) as usize] >> 4) as u16));
+        enemy_update!(ctx, (v3) as isize, velocity_y, |old| ((old as i32)
+            + (kSinCosTable8bit_Sext[v1 as usize] as i32 >> 4))
+            as u16);
         let door = enemy!(ctx, (v3) as isize, behavior_b);
         if !crate::progress_flags::door_opened(ctx, door) {
             return;
@@ -1377,27 +1362,18 @@ pub fn golden_torizo_egg_bouncing_pre_instruction(k: u16, ctx: &mut impl Host) {
     } else {
         if move_horizontally_with_block_collision(k, ctx) & 1 != 0 {
             enemy!(ctx, -(enemy!(ctx, (v1) as isize, velocity_x) as i32) as u16 => (v1) as isize, velocity_x);
-            {
-                let index = (v1) as isize;
-                let old = enemy!(ctx, index, behavior_a);
-                let value = old ^ (0x8000);
-                enemy!(ctx, index, behavior_a = value);
-            };
+            enemy_update!(ctx, (v1) as isize, behavior_a, |old| old ^ (0x8000));
         }
         if move_vertically_with_block_collision(k, ctx) & 1 != 0
             && (enemy!(ctx, (v1) as isize, velocity_y) & 0x8000) == 0
         {
-            {
-                let index = (v1) as isize;
-                let old = enemy!(ctx, index, velocity_x);
-                let value = ((old as i32)
-                    + (if enemy!(ctx, (v1) as isize, velocity_x) & 0x8000 != 0 {
-                        32
-                    } else {
-                        -32i32
-                    })) as u16;
-                enemy!(ctx, index, velocity_x = value);
-            };
+            enemy_update!(ctx, (v1) as isize, velocity_x, |old| ((old as i32)
+                + (if enemy!(ctx, (v1) as isize, velocity_x) & 0x8000 != 0 {
+                    32
+                } else {
+                    -32i32
+                }))
+                as u16);
             enemy!(ctx, -(enemy!(ctx, (v1) as isize, velocity_y) as i32) as u16 => (v1) as isize, velocity_y);
         }
         enemy_add!(ctx, (v1) as isize, velocity_y, 48);
@@ -1542,12 +1518,7 @@ pub fn shaktool_attack_back_circle_moving_pre_instruction(k: u16, ctx: &mut impl
 
 pub fn mother_brain_turret_bullets_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
-    {
-        let index = (v1) as isize;
-        let old = enemy!(ctx, index, properties);
-        let value = old ^ (0x8000);
-        enemy!(ctx, index, properties = value);
-    };
+    enemy_update!(ctx, (v1) as isize, properties, |old| old ^ (0x8000));
     move_with_velocity(k, ctx);
     if ctx.ridley_offscreen(enemy!(ctx, (v1) as isize, x), enemy!(ctx, (v1) as isize, y)) & 1 != 0 {
         {
@@ -1754,23 +1725,13 @@ pub fn kago_bug_flag_when_far(k: u16, ctx: &mut impl Host) {
 
 pub fn powamp_spike_pre_instruction(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
-    {
-        let index = (v1) as isize;
-        let old = enemy!(ctx, index, velocity_x);
-        let value = ((old as i32)
-            + (WORD_86_D21_A[enemy!(ctx, (v1) as isize, behavior_a) as usize] as i32))
-            as u16;
-        enemy!(ctx, index, velocity_x = value);
-    };
+    enemy_update!(ctx, (v1) as isize, velocity_x, |old| ((old as i32)
+        + (WORD_86_D21_A[enemy!(ctx, (v1) as isize, behavior_a) as usize] as i32))
+        as u16);
     if move_horizontally_with_block_collision(k, ctx) & 1 != 0 || {
-        {
-            let index = (v1) as isize;
-            let old = enemy!(ctx, index, velocity_y);
-            let value = ((old as i32)
-                + (WORD_86_D22_A[enemy!(ctx, (v1) as isize, behavior_a) as usize] as i32))
-                as u16;
-            enemy!(ctx, index, velocity_y = value);
-        };
+        enemy_update!(ctx, (v1) as isize, velocity_y, |old| ((old as i32)
+            + (WORD_86_D22_A[enemy!(ctx, (v1) as isize, behavior_a) as usize] as i32))
+            as u16);
         move_vertically_with_block_collision(k, ctx) & 1 != 0
     } {
         enemy!(ctx, ADDR_OFF_86D218 as u16 => (v1) as isize, program);
@@ -1906,21 +1867,11 @@ pub fn botwoon_body_main(k: u16, ctx: &mut impl Host) {
 
 pub fn botwoon_body_hurt_flash(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
-    {
-        let index = (v1) as isize;
-        let old = enemy!(ctx, index, graphics);
-        let value = old | (0xe00);
-        enemy!(ctx, index, graphics = value);
-    };
+    enemy_update!(ctx, (v1) as isize, graphics, |old| old | (0xe00));
     if ctx.resolve_actor(Key::from_legacy(0), Le).flash != 0
         && (ctx.inputs().random_enemy_counter & 2) != 0
     {
-        {
-            let index = (v1) as isize;
-            let old = enemy!(ctx, index, graphics);
-            let value = old & (0xf1ff);
-            enemy!(ctx, index, graphics = value);
-        };
+        enemy_update!(ctx, (v1) as isize, graphics, |old| old & (0xf1ff));
     }
 }
 

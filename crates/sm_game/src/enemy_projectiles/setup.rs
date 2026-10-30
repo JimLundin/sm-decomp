@@ -1,6 +1,6 @@
 //! Complete enemy-projectile setup dispatch, using owned fields and explicit effects.
 #![forbid(unsafe_code)]
-use super::access::{enemy, enemy_byte};
+use super::access::{enemy, enemy_byte, enemy_update};
 use super::addresses;
 use super::coordinates::{calculate_coordinates, projectile_argument};
 use super::host::*;
@@ -426,11 +426,8 @@ pub fn init_bomb_torizo_statue_breaking(j: u16, ctx: &mut impl Host) {
     };
     enemy!(ctx, K_EPROJ_INIT_BOMB_TORIZO_STATUE_BREAKING_YVEL[v4 as usize] as u16 => (v3) as isize, velocity_y);
     enemy!(ctx, K_EPROJ_INIT_BOMB_TORIZO_STATUE_BREAKING_F[v4 as usize] as u16 => (v3) as isize, behavior_b);
-    {
-        let index = (v3 as usize) as isize;
-        let old = enemy!(ctx, index, properties);
-        enemy!(ctx, index, properties = old | (0x1000));
-    };
+    enemy_update!(ctx, (v3 as usize) as isize, properties, |old| old
+        | (0x1000));
 }
 
 pub fn init_projectile_ab07(j: u16, ctx: &mut impl Host) {
@@ -723,18 +720,12 @@ pub fn init_mother_brain_glass_shard(j: u16, ctx: &mut impl Host) {
         enemy!(ctx, value => (v2) as isize, y);
     };
 
-    {
-        let index = (v2) as isize;
-        let old = enemy!(ctx, index, x);
-        let value = ((old as i32) + ((ctx.next_random() as i32 & 0xf) - 8i32)) as u16;
-        enemy!(ctx, index, x = value);
-    };
-    {
-        let index = (v2) as isize;
-        let old = enemy!(ctx, index, y);
-        let value = ((old as i32) + ((ctx.next_random() as i32 & 0xf) - 8i32)) as u16;
-        enemy!(ctx, index, y = value);
-    };
+    enemy_update!(ctx, (v2) as isize, x, |old| ((old as i32)
+        + ((ctx.next_random() as i32 & 0xf) - 8i32))
+        as u16);
+    enemy_update!(ctx, (v2) as isize, y, |old| ((old as i32)
+        + ((ctx.next_random() as i32 & 0xf) - 8i32))
+        as u16);
 }
 
 pub fn init_mother_brain_glass_sparkle(j: u16, ctx: &mut impl Host) {
@@ -1213,22 +1204,12 @@ pub fn init_shaktool_attack_front_circle(j: u16, ctx: &mut impl Host) {
     enemy!(ctx, kSinCosTable8bit_Sext[(v4 + 64) as usize] as u16 => (v1) as isize, velocity_x);
     enemy!(ctx, kSinCosTable8bit_Sext[v4 as usize] as u16 => (v1) as isize, velocity_y);
     let v5: i32 = (v3 >> 5) as i32 >> 1;
-    {
-        let index = (v1) as isize;
-        let old = enemy!(ctx, index, x);
-        let value = ((old as i32)
-            + (K_EPROJ_INIT_SHAKTOOL_ATTACK_MIDDLE_BACK_CIRCLE_X[v5 as usize] as i32))
-            as u16;
-        enemy!(ctx, index, x = value);
-    };
-    {
-        let index = (v1) as isize;
-        let old = enemy!(ctx, index, y);
-        let value = ((old as i32)
-            + (K_EPROJ_INIT_SHAKTOOL_ATTACK_MIDDLE_BACK_CIRCLE_Y[v5 as usize] as i32))
-            as u16;
-        enemy!(ctx, index, y = value);
-    };
+    enemy_update!(ctx, (v1) as isize, x, |old| ((old as i32)
+        + (K_EPROJ_INIT_SHAKTOOL_ATTACK_MIDDLE_BACK_CIRCLE_X[v5 as usize] as i32))
+        as u16);
+    enemy_update!(ctx, (v1) as isize, y, |old| ((old as i32)
+        + (K_EPROJ_INIT_SHAKTOOL_ATTACK_MIDDLE_BACK_CIRCLE_Y[v5 as usize] as i32))
+        as u16);
 }
 
 pub fn init_mother_brain_turrets(j: u16, ctx: &mut impl Host) {
@@ -1620,12 +1601,7 @@ pub fn init_namihe_fune_fireball(j: u16, ctx: &mut impl Host) {
     copy_enemy_position(v2 as isize, v3, 0, ctx);
 
     if (ctx.resolve_actor(Key::from_legacy(v3), Le).parameters[0] & 0xf) != 0 {
-        {
-            let index = (v2) as isize;
-            let old = enemy!(ctx, index, y);
-            let value = ((old as i32) + (4)) as u16;
-            enemy!(ctx, index, y = value);
-        };
+        enemy_update!(ctx, (v2) as isize, y, |old| ((old as i32) + (4)) as u16);
     }
     let v4: i32 = (4 * (ctx.resolve_actor(Key::from_legacy(v3), Le).parameters[1] as u8) as i32)
         as u16 as i32

@@ -252,4 +252,14 @@ macro_rules! enemy_decrement {
         old
     }};
 }
-pub use crate::{enemy_add, enemy_decrement};
+/// Store `$update` of a member's old value; the old value is read first.
+#[macro_export]
+macro_rules! enemy_update {
+    ($h:ident, $index:expr, $member:ident, |$old:ident| $update:expr) => {{
+        let index: isize = $index;
+        let $old = $crate::enemy_projectiles::access::enemy!($h, index, $member);
+        let value: u16 = $update;
+        $crate::enemy_projectiles::access::enemy!($h, index, $member = value);
+    }};
+}
+pub use crate::{enemy_add, enemy_decrement, enemy_update};
