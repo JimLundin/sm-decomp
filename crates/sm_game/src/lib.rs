@@ -46,6 +46,7 @@ pub mod imported;
 pub mod intro_objects;
 pub mod intro_pages;
 pub mod intro_sequence;
+pub mod inventory;
 pub mod item_pickups;
 pub mod launch_motion;
 pub mod layer_blending;

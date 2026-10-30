@@ -1592,6 +1592,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/mother_brain_tables.rs"),
     ),
     (
+        "crates/sm_game/src/inventory.rs",
+        include_bytes!("../../crates/sm_game/src/inventory.rs"),
+    ),
+    (
         "crates/sm_game/src/item_pickups.rs",
         include_bytes!("../../crates/sm_game/src/item_pickups.rs"),
     ),
