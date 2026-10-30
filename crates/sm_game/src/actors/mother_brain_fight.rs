@@ -1850,6 +1850,7 @@ crate::dispatch::callback_dispatch! {
     };
     [11124280] drained_taken_aback [] {
         session_slot!(game, MotherBrainBody[e].form = 3);
+        crate::probe::hit("mother-brain.form-3");
         let e1: i32 = BRAIN;
         session_slot! { game, MotherBrainBrain[e1]; lower_motion = 8, upper_motion = 8 }
         session_slot!(game, MotherBrainBrain[e1].neck_speed = 1792);
@@ -1871,6 +1872,7 @@ crate::dispatch::callback_dispatch! {
             session_slot!(game, MotherBrainBody[e].corpse_state = 1);
             session_slot!(game, MotherBrainBrain[e1].breath_enabled = 0);
             session_slot!(game, MotherBrainBody[e].form = 2);
+            crate::probe::hit("mother-brain.drained");
             session_slot!(game, MotherBrainBody[e].function = function::PHASE_2_REVIVE_SELF_INANIMATE_GREY);
         }
     };
@@ -1918,6 +1920,7 @@ crate::dispatch::callback_dispatch! {
     };
     [11125199] phase3_recover_make_distance [] {
         session_slot!(game, MotherBrainBody[e].form = 4);
+        crate::probe::hit("mother-brain.form-4");
         session_slot!(game, MotherBrainBody[e].function = function::PHASE_3_RECOVER_FROM_CUTSCENE_SET_UP_FOR_FIGHTING);
         session_slot!(game, MotherBrainBody[e].function_timer = 32);
         make_walk_backwards((session_slot!(game, MotherBrainBody[e].base.x_pos)).wrapping_sub(14), 2, game);
@@ -2200,6 +2203,7 @@ crate::dispatch::callback_dispatch! {
             let e1: i32 = BRAIN;
             session_slot!(game, MotherBrainBrain[e1].brain_palette_enabled = 1);
             session_slot!(game, MotherBrainBody[e].form = 2);
+            crate::probe::hit("mother-brain.form-2");
             session_slot!(game, MotherBrainBrain[e1].drool_enabled = 1);
             session_slot! { game, MotherBrainBrain[e1]; lower_motion = 6, upper_motion = 6 }
             session_slot!(game, MotherBrainBrain[e1].neck_speed = 1280);
@@ -2364,6 +2368,7 @@ pub fn body_phase1(game: &mut impl Lease) {
         {
             let e: i32 = 0;
             session_slot! { game, MotherBrainBody[e]; delete_turrets = 1, form = 1 }
+            crate::probe::hit("mother-brain.form-1");
             game.foreign(|game| game.disable_minimap_for_boss());
             queue_music(music::SONG_1, game);
             game.foreign(|game| game.seal_wall());
