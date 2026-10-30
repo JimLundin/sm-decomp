@@ -1040,7 +1040,10 @@ pub fn run_function<H: Host + ?Sized>(game: &mut H, function: u16) {
             if is_dead(game) == 0 || word!(game.layer1_x_pos) != 0 {
                 hide_as_dead(game);
             }
-            word!(game.previous_layer1_x_block = -1i32 as u16);
+            crate::session_access::SessionAccess::session_mut(&mut game.runtime())
+                .room
+                .camera
+                .previous_layer1_block[0] = u16::MAX;
         }
         function::RAISE_LOAD_TILEMAP_BOTTOM => {
             restrict_samus_x(game);

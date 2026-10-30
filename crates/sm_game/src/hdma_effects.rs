@@ -363,16 +363,14 @@ pub trait HdmaEffects: Host {
         };
         let rain = matches!(weather, Weather::Rain);
         // Finish each axis, including rain's camera history, before reading the next.
-        for (axis, camera, output) in [
-            (0, ram::layer1_y_pos, ram::bg3_ypos),
-            (12, ram::layer1_x_pos, ram::bg3_xpos),
-        ] {
+        for (axis, camera, output) in [(0, 1, ram::bg3_ypos), (12, 0, ram::bg3_xpos)] {
             let phase = phase_base + object + axis;
             let history = 0x1944 + object + axis;
             let origin = if rain {
-                self.word(history).wrapping_sub(self.word(camera))
+                let layer1 = self.session().room.camera.layer1[camera];
+                self.word(history).wrapping_sub(layer1)
             } else {
-                self.word(camera)
+                self.session().room.camera.layer1[camera]
             };
             let scroll = origin.wrapping_add(self.byte(phase + 1) as i8 as u16);
             self.write_slice_le(output, scroll);
