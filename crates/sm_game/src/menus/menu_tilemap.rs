@@ -55,9 +55,10 @@ pub fn file_rows<H: Host + ?Sized>(emphasis: FileRowEmphasis, game: &mut H) {
         save_slots::load(slot, game);
         let dim = match emphasis {
             FileRowEmphasis::Occupied => word!(game.nonempty_save_slots) & (1 << slot) == 0,
-            FileRowEmphasis::Destination => word!(game.eproj_id[16]) == slot,
+            FileRowEmphasis::Destination => word!(game.file_copy_source_slot) == slot,
             FileRowEmphasis::Confirmation => {
-                word!(game.eproj_id[16]) != slot && word!(game.eproj_id[17]) != slot
+                word!(game.file_copy_source_slot) != slot
+                    && word!(game.file_copy_destination_slot) != slot
             }
         };
         set_palette(if dim { 1024 } else { 0 }, game);
@@ -103,17 +104,17 @@ pub fn main_menu<H: Host + ?Sized>(game: &mut H) {
     set_palette(0, game);
     load(0x688, addr_kMenuTilemap_Exit as u16, game);
     upload(2048, 0x7e3600, 0, true, game);
-    word!(game.cinematic_var5 = 1);
+    word!(game.menu_selection_missile_animation_timer = 1);
     word! { game, 0;
-        cinematic_var6, cinematic_var7, cinematic_var8, cinematic_var9, eproj_id[0], eproj_id[1],
-        eproj_id[2], eproj_id[3], eproj_id[4], eproj_id[5], eproj_id[10], eproj_id[6], eproj_id[11],
+        file_copy_arrow_palette_timer, slot_a_helmet_animation_timer, slot_b_helmet_animation_timer, slot_c_helmet_animation_timer, menu_selection_missile_animation_frame, UNUSED_menu_word_7E1999,
+        slot_a_helmet_animation_frame, slot_b_helmet_animation_frame, slot_c_helmet_animation_frame, menu_selection_missile_x_pos, menu_selection_missile_y_pos, UNUSED_menu_word_7E19A3, UNUSED_menu_word_7E19AD,
     }
-    word! { game, 100; eproj_id[7], eproj_id[8], eproj_id[9] }
-    word! {game; eproj_id[12] = 47; eproj_id[13] = 87; eproj_id[14] = 127; }
+    word! { game, 100; slot_a_helmet_x_pos, slot_b_helmet_x_pos, slot_c_helmet_x_pos }
+    word! {game; slot_a_helmet_y_pos = 47; slot_b_helmet_y_pos = 87; slot_c_helmet_y_pos = 127; }
     word! { game, 1; screen_fade_delay, screen_fade_counter }
     game.set_blank(false);
     word!(game.menu_index += 1);
-    word! { game, 0; eproj_id[15], eproj_id[16], eproj_id[17] }
+    word! { game, 0; file_copy_selection, file_copy_source_slot, file_copy_destination_slot }
 }
 
 /// Requires a live, exclusively accessed SNES backend.
@@ -328,7 +329,7 @@ pub fn controller_bindings<H: Host + ?Sized>(game: &mut H) {
         let address = 0x820000
             | u32::from(crate::menu_lists::binding_button_tilemap(
                 game,
-                word!(game.eproj_F[index + 13]) as isize,
+                word!(game.options_controller_bindings[index]) as isize,
             ));
         if address & 0x8000 == 0 {
             game.invalid_window(address);
@@ -344,8 +345,8 @@ pub fn controller_bindings<H: Host + ?Sized>(game: &mut H) {
     }
     let cleared_hint = [0, 0xe, 0xe, 0x10, 0x1f, 0x1f];
     for (index, destination) in [0x352e, 0x35ee].into_iter().enumerate() {
-        if word!(game.eproj_instr_list_ptr[index]) != 5
-            && word!(game.eproj_instr_list_ptr[index]) != 6
+        if word!(game.options_controller_bindings[index + 5]) != 5
+            && word!(game.options_controller_bindings[index + 5]) != 6
         {
             crate::word_transfers!(game, ascending, 3;
                 native(destination) <- table(cleared_hint, 0));

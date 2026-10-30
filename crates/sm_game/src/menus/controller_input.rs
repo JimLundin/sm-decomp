@@ -156,7 +156,7 @@ pub fn load_binding_choices<H: Host + ?Sized>(game: &mut H) {
             .iter()
             .position(|button| binding & button != 0)
             .unwrap_or(0);
-        word!(game.eproj_F[index + 13] = choice as u16);
+        word!(game.options_controller_bindings[index] = choice as u16);
     }
 }
 
@@ -170,7 +170,7 @@ pub fn reset_binding_choices<H: Host + ?Sized>(game: &mut H) {
 
 pub fn store_binding_choices<H: Host + ?Sized>(game: &mut H) -> u8 {
     for index in 0..7 {
-        let binding = BINDING_BUTTONS[word!(game.eproj_F[index + 13]) as usize];
+        let binding = BINDING_BUTTONS[word!(game.options_controller_bindings[index]) as usize];
         let address = crate::menu_lists::binding_address(game, index);
         crate::word_transfers!(game, ascending, 1; native(address) <- value(binding));
     }
@@ -204,8 +204,8 @@ pub fn remap_binding<H: Host + ?Sized>(game: &mut H) {
         }
     }
     let selected = word!(game.menu_option_index) as i32;
-    let previous = word!(game.eproj_F[selected + 13]);
-    word!(game.eproj_F[selected + 13] = choice as u16);
+    let previous = word!(game.options_controller_bindings[selected]);
+    word!(game.options_controller_bindings[selected] = choice as u16);
     crate::word_transfers!(game, ascending, 1;
         native(0x1b23 + 2 * ((next as isize >> 1) + 13)) <- value(previous));
     super::menu_tilemap::controller_bindings(game);

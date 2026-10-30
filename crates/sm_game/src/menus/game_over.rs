@@ -56,7 +56,7 @@ fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         }
         game.queue_music_delayed8(0);
         game.queue_music_delayed8(0xff03);
-        word! {game; cinematic_var5 = 1; eproj_id[0] = 0; }
+        word! {game; menu_selection_missile_animation_timer = 1; menu_selection_missile_animation_frame = 0; }
         crate::word_transfers!(game, ascending, 1024; native(0x3600) <- value(15));
         menu_tilemap::upload(2048, 0x7e3600, 0, true, game);
         menu_tilemap::set_palette(0, game);
@@ -85,7 +85,7 @@ fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         game.set_blank(false);
         word!(game.menu_index += 1);
         word! { game, 0; screen_fade_delay, screen_fade_counter, file_select_map_area_index }
-        word! {game; eproj_id[5] = 40; eproj_id[10] = 160; }
+        word! {game; menu_selection_missile_x_pos = 40; menu_selection_missile_y_pos = 160; }
     }
 }
 
@@ -141,7 +141,7 @@ fn choose<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     } else {
         160
     };
-    word! {game; eproj_id[5] = 40; eproj_id[10] = y; }
+    word! {game; menu_selection_missile_x_pos = 40; menu_selection_missile_y_pos = y; }
 }
 
 fn load_map<H: crate::menus::host::Host + ?Sized>(game: &mut H) {

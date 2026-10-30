@@ -152,10 +152,10 @@ fn reset_copy<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Occupied, game);
     select_first_slot(game);
     crate::sprite_output::file_slot_cursor(211, game);
-    word! { game, 0; eproj_id[16], eproj_id[17] }
+    word! { game, 0; file_copy_source_slot, file_copy_destination_slot }
 }
 fn select_first_slot<H: Host + ?Sized>(game: &mut H) {
-    word!(game.eproj_id[15] = (word!(game.nonempty_save_slots) | 8).trailing_zeros() as u16);
+    word!(game.file_copy_selection = (word!(game.nonempty_save_slots) | 8).trailing_zeros() as u16);
 }
 fn next_occupied_slot<H: Host + ?Sized>(game: &mut H) -> Option<u8> {
     let up = if word!(game.joypad1_newkeys) as i32 & kButton_Up as i32 != 0 {
@@ -165,7 +165,7 @@ fn next_occupied_slot<H: Host + ?Sized>(game: &mut H) -> Option<u8> {
     } else {
         return None;
     };
-    let mut slot = word!(game.eproj_id[15]) as u8;
+    let mut slot = word!(game.file_copy_selection) as u8;
     loop {
         if up {
             slot = slot.wrapping_sub(1);
@@ -197,8 +197,8 @@ fn choose_source<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
     };
     if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
         game.queue_sound(0, (0x37) as u8, 6);
-        if word!(game.eproj_id[15]) != 3 {
-            word!(game.eproj_id[16] = word!(game.eproj_id[15]));
+        if word!(game.file_copy_selection) != 3 {
+            word!(game.file_copy_source_slot = word!(game.file_copy_selection));
             word!(game.menu_index += 1);
             return;
         }
@@ -236,13 +236,13 @@ fn begin_destination<H: Host + ?Sized>(game: &mut H) {
     draw_destination(game);
     word!(game.menu_index += 1);
     let mut v0: u16 = 0;
-    while v0 == word!(game.eproj_id[16]) {
+    while v0 == word!(game.file_copy_source_slot) {
         v0 = v0.wrapping_add(1);
         if v0 as i32 - 3i32 & 0x8000 == 0 {
             break;
         }
     }
-    word!(game.eproj_id[15] = v0);
+    word!(game.file_copy_selection = v0);
     crate::sprite_output::file_slot_cursor(211, game);
 }
 fn draw_destination<H: Host + ?Sized>(game: &mut H) {
@@ -253,7 +253,7 @@ fn draw_destination<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::load(0x148, addr_kMenuTilemap_CopySamusToWhere as u16, game);
     set_native_word(
         0x3000 + 2 * 944,
-        (word!(game.eproj_id[16])).wrapping_add(8298),
+        (word!(game.file_copy_source_slot)).wrapping_add(8298),
         game,
     );
     menu_tilemap::load(0x688, addr_kMenuTilemap_Exit as u16, game);
@@ -265,8 +265,8 @@ fn choose_destination<H: Host + ?Sized>(game: &mut H) {
     crate::sprite_output::menu_selection(game);
     if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
         game.queue_sound(0, (0x37) as u8, 6);
-        if word!(game.eproj_id[15]) != 3 {
-            word!(game.eproj_id[17] = word!(game.eproj_id[15]));
+        if word!(game.file_copy_selection) != 3 {
+            word!(game.file_copy_destination_slot = word!(game.file_copy_selection));
             word!(game.menu_index += 1);
         } else {
             word!(game.menu_index += 5);
@@ -283,18 +283,18 @@ fn choose_destination<H: Host + ?Sized>(game: &mut H) {
             } else {
                 break 'move_selection;
             };
-            let mut slot = word!(game.eproj_id[15]);
-            do_until! { slot != word!(game.eproj_id[16]);
+            let mut slot = word!(game.file_copy_selection);
+            do_until! { slot != word!(game.file_copy_source_slot);
                 slot = slot.wrapping_add(step);
                 if step == u16::MAX && slot & 0x8000 != 0 || step == 1 && slot == 4 {
                     break 'move_selection;
                 }
             }
-            word!(game.eproj_id[15] = slot);
+            word!(game.file_copy_selection = slot);
         }
     } else {
         word!(game.menu_index -= 2);
-        word!(game.eproj_id[15] = word!(game.eproj_id[16]));
+        word!(game.file_copy_selection = word!(game.file_copy_source_slot));
         game.queue_sound(0, (0x37) as u8, 6);
         reset_copy(game);
         return;
@@ -309,28 +309,28 @@ fn begin_confirmation<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
         menu_tilemap::load(0x144, addr_kMenuTilemap_CopySamusToSamus as u16, game);
         set_native_word(
             0x3000 + 2 * 942,
-            word!(game.eproj_id[16]).wrapping_add(8298),
+            word!(game.file_copy_source_slot).wrapping_add(8298),
             game,
         );
         set_native_word(
             0x3000 + 2 * 955,
-            word!(game.eproj_id[17]).wrapping_add(8298),
+            word!(game.file_copy_destination_slot).wrapping_add(8298),
             game,
         );
     } else {
         menu_tilemap::load(0x140, addr_kMenuTilemap_ClearSamusA as u16, game);
         set_native_word(
             0x3000 + 2 * 949,
-            word!(game.eproj_id[16]).wrapping_add(8298),
+            word!(game.file_copy_source_slot).wrapping_add(8298),
             game,
         );
-        word!(game.eproj_id[17] = 3);
+        word!(game.file_copy_destination_slot = 3);
     }
     draw_confirmation(game);
     word!(game.menu_index += 1);
-    word!(game.eproj_id[15] = 0);
+    word!(game.file_copy_selection = 0);
     if COPY {
-        word!(game.cinematic_var6 = 8);
+        word!(game.file_copy_arrow_palette_timer = 8);
     }
 }
 fn draw_confirmation<H: Host + ?Sized>(game: &mut H) {
@@ -352,7 +352,7 @@ fn confirm_choice<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
         crate::sprite_output::file_copy_arrow(game);
     }
     if word!(game.joypad1_newkeys) as i32 & (kButton_Up as i32 | kButton_Down as i32) != 0 {
-        word!(game.eproj_id[15] ^= (1u16));
+        word!(game.file_copy_selection ^= (1u16));
         game.queue_sound(0, (0x37) as u8, 6);
     } else {
         let cancelled = if (word!(game.joypad1_newkeys) & 0x8000) != 0 {
@@ -363,7 +363,7 @@ fn confirm_choice<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
             false
         } else {
             game.queue_sound(0, (0x38) as u8, 6);
-            if word!(game.eproj_id[15]) == 0 {
+            if word!(game.file_copy_selection) == 0 {
                 word!(game.menu_index += 1);
                 return;
             }
@@ -377,10 +377,10 @@ fn confirm_choice<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
         if cancelled {
             if COPY {
                 word!(game.menu_index -= 3);
-                word!(game.eproj_id[15] = word!(game.eproj_id[17]));
+                word!(game.file_copy_selection = word!(game.file_copy_destination_slot));
             } else {
                 word!(game.menu_index -= 2);
-                word!(game.eproj_id[15] = word!(game.eproj_id[16]));
+                word!(game.file_copy_selection = word!(game.file_copy_source_slot));
             }
             game.queue_sound(0, (0x37) as u8, 6);
             if !COPY {
@@ -389,17 +389,17 @@ fn confirm_choice<const COPY: bool, H: Host + ?Sized>(game: &mut H) {
             return;
         }
     }
-    let y = if word!(game.eproj_id[15]) != 0 {
+    let y = if word!(game.file_copy_selection) != 0 {
         208
     } else {
         184
     };
-    word! {game; eproj_id[10] = y; eproj_id[5] = 94; }
+    word! {game; menu_selection_missile_y_pos = y; menu_selection_missile_x_pos = 94; }
 }
 fn animate_copy_arrow<H: Host + ?Sized>(game: &mut H) {
-    if word!(game.cinematic_var6) != 0 {
-        if word!(game.cinematic_var6 -= 1, reread) == 0 {
-            word!(game.cinematic_var6 = 4);
+    if word!(game.file_copy_arrow_palette_timer) != 0 {
+        if word!(game.file_copy_arrow_palette_timer -= 1, reread) == 0 {
+            word!(game.file_copy_arrow_palette_timer = 4);
             let v0: u16 = word!(game.palette_buffer[145]);
             crate::word_transfers!(game, ascending, 6; native(0xc122) <- native(0xc124));
             word!(game.palette_buffer[151] = v0);
@@ -413,17 +413,19 @@ fn copy_slot<H: Host + ?Sized>(game: &mut H) {
         crate::sprite_output::menu_selection(game);
         animate_copy_arrow(game);
         crate::sprite_output::file_copy_arrow(game);
-        let src_addr: u16 = save_slots::sram_offset(game, word!(game.eproj_id[16]) as isize);
-        let dst_addr: u16 = save_slots::sram_offset(game, word!(game.eproj_id[17]) as isize);
+        let src_addr: u16 =
+            save_slots::sram_offset(game, word!(game.file_copy_source_slot) as isize);
+        let dst_addr: u16 =
+            save_slots::sram_offset(game, word!(game.file_copy_destination_slot) as isize);
         game.sram().copy_within(
             src_addr as usize..src_addr as usize + 1628,
             dst_addr as usize,
         );
-        let v2: i32 = word!(game.eproj_id[16]) as i32;
+        let v2: i32 = word!(game.file_copy_source_slot) as i32;
         let v10: i32 = game.sram().word((2 * v2 + 0x1ff0) as usize) as i32;
         let v9: i32 = game.sram().word((2 * v2 + 0x1ff8) as usize) as i32;
         let v8: i32 = game.sram().word((2 * v2) as usize) as i32;
-        let v4: i32 = word!(game.eproj_id[17]) as i32;
+        let v4: i32 = word!(game.file_copy_destination_slot) as i32;
         game.sram().set_word(
             (2 * v4 + 8) as usize,
             game.sram().word((2 * v2 + 8) as usize),
@@ -433,8 +435,11 @@ fn copy_slot<H: Host + ?Sized>(game: &mut H) {
         game.sram().set_word((2 * v4 + 0x1ff0) as usize, v10 as u16);
         word!(game.menu_index += 1);
         crate::word_transfers!(game, ascending, 288; native(0x3b00) <- value(15));
-        word!(game.nonempty_save_slots |= (kBitShl_16bit[word!(game.eproj_id[17]) as usize]));
-        let row = ((4 * i32::from(word!(game.eproj_id[17])) + 9) << 6) + 24;
+        word!(
+            game.nonempty_save_slots |=
+                (kBitShl_16bit[word!(game.file_copy_destination_slot) as usize])
+        );
+        let row = ((4 * i32::from(word!(game.file_copy_destination_slot)) + 9) << 6) + 24;
         crate::word_transfers!(game, (2), 11;
             native(0x3600 + row as usize) <- value(15),
             native(0x35c0 + row as usize) <- value(15),
@@ -474,7 +479,7 @@ fn reset_clear<H: Host + ?Sized>(game: &mut H) {
     menu_tilemap::load(0x140, addr_kMenuTilemap_ClearWhichData as u16, game);
     menu_tilemap::load(0x688, addr_kMenuTilemap_Exit as u16, game);
     menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Occupied, game);
-    word!(game.eproj_id[16] = 0);
+    word!(game.file_copy_source_slot = 0);
     select_first_slot(game);
     crate::sprite_output::file_slot_cursor(211, game);
 }
@@ -483,22 +488,24 @@ fn clear_slot<H: Host + ?Sized>(game: &mut H) {
         static kBitShl_Not: [u16; 3] = [0xfffe, 0xfffd, 0xfffb];
         border(0x4a, game);
         let sram_addr: i32 =
-            save_slots::sram_offset(game, word!(game.eproj_id[16]) as isize) as i32;
+            save_slots::sram_offset(game, word!(game.file_copy_source_slot) as isize) as i32;
         game.sram()
             .fill(sram_addr as usize..sram_addr as usize + 1628, 0);
-        let _v1: u16 = (2u16).wrapping_mul(word!(game.eproj_id[16]));
-        let v2: i32 = word!(game.eproj_id[16]) as i32;
+        let _v1: u16 = (2u16).wrapping_mul(word!(game.file_copy_source_slot));
+        let v2: i32 = word!(game.file_copy_source_slot) as i32;
         game.sram().set_word((2 * v2) as usize, 0);
         game.sram().set_word((2 * v2 + 8) as usize, 0);
         game.sram().set_word((2 * v2 + 0x1ff0) as usize, 0);
         game.sram().set_word((2 * v2 + 0x1ff8) as usize, 0);
         word!(game.menu_index += 1);
         save_slots::initialize(game);
-        save_slots::load(word!(game.eproj_id[16]), game);
-        word!(game.area_index = word!(game.eproj_id[16]));
+        save_slots::load(word!(game.file_copy_source_slot), game);
+        word!(game.area_index = word!(game.file_copy_source_slot));
         load_area_map(game);
         crate::word_transfers!(game, ascending, 288; native(0x3b00) <- value(15));
-        word!(game.nonempty_save_slots &= (kBitShl_Not[word!(game.eproj_id[16]) as usize]));
+        word!(
+            game.nonempty_save_slots &= (kBitShl_Not[word!(game.file_copy_source_slot) as usize])
+        );
         menu_tilemap::set_palette(0, game);
         menu_tilemap::load(0x500, addr_kMenuTilemap_DataCleared as u16, game);
         menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Confirmation, game);
@@ -514,9 +521,12 @@ fn turn_helmet<H: Host + ?Sized>(game: &mut H) {
     border(0x48, game);
     crate::sprite_output::file_helmets(true, game);
     if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0
-        || word!(game.eproj_id[2]) == 7 && word!(game.cinematic_var7) == 0
-        || word!(game.eproj_id[3]) == 7 && word!(game.cinematic_var8) == 0
-        || word!(game.eproj_id[4]) == 7 && word!(game.cinematic_var9) == 0
+        || word!(game.slot_a_helmet_animation_frame) == 7
+            && word!(game.slot_a_helmet_animation_timer) == 0
+        || word!(game.slot_b_helmet_animation_frame) == 7
+            && word!(game.slot_b_helmet_animation_timer) == 0
+        || word!(game.slot_c_helmet_animation_frame) == 7
+            && word!(game.slot_c_helmet_animation_timer) == 0
     {
         word!(game.menu_index += 1);
     }
@@ -526,7 +536,7 @@ fn load_background<H: Host + ?Sized>(game: &mut H) {
     crate::word_transfers!(game, descending, 1024; native(0x3dfe) <- rom(0x8edc00, 1023));
     menu_tilemap::upload(2048, 0x7e3600, 1, true, game);
     word!(game.menu_index += 1);
-    word! {game; cinematic_var5 = 1; eproj_id[0] = 0; }
+    word! {game; menu_selection_missile_animation_timer = 1; menu_selection_missile_animation_frame = 0; }
 }
 fn initialize<H: Host + ?Sized>(game: &mut H) {
     {

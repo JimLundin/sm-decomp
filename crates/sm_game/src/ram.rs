@@ -576,6 +576,12 @@ ram_vars! {
     ];
     0x0198D, uint16 Scalar => [cinematic_var5];
     0x0198D, uint16 Scalar => [eproj_enable_flag];
+    // The file select menu's reuse of this region (RAM map, $198D..BC).
+    0x0198D stride 2, uint16 Scalar => [
+        menu_selection_missile_animation_timer, file_copy_arrow_palette_timer,
+        slot_a_helmet_animation_timer, slot_b_helmet_animation_timer,
+        slot_c_helmet_animation_timer
+    ];
     0x0198F, uint16 Scalar => [cinematic_var6];
     0x0198F, uint16 Scalar => [eproj_unk198F];
     0x01991, uint16 Scalar => [cinematic_var7];
@@ -586,6 +592,15 @@ ram_vars! {
     0x01995, uint16 Scalar => [eproj_unk1995];
     0x01997, uint16 Scalar => [cinematic_var10];
     0x01997, uint16 Array => [eproj_id];
+    0x01997 stride 2, uint16 Scalar => [
+        menu_selection_missile_animation_frame, UNUSED_menu_word_7E1999,
+        slot_a_helmet_animation_frame, slot_b_helmet_animation_frame,
+        slot_c_helmet_animation_frame, menu_selection_missile_x_pos, UNUSED_menu_word_7E19A3,
+        slot_a_helmet_x_pos, slot_b_helmet_x_pos, slot_c_helmet_x_pos,
+        menu_selection_missile_y_pos, UNUSED_menu_word_7E19AD, slot_a_helmet_y_pos,
+        slot_b_helmet_y_pos, slot_c_helmet_y_pos, file_copy_selection, file_copy_source_slot,
+        file_copy_destination_slot
+    ];
     0x01999 stride 2, uint16 Scalar => [g_word_7E1999, g_word_7E199B, g_word_7E199D, g_word_7E199F];
     0x019A1 stride 4, uint16 Array => [
         mode7_obj_instr_ptr, mode7_obj_preinstr_func, mode7_obj_instr_timer, mode7_obj_goto_timer
@@ -618,28 +633,29 @@ ram_vars! {
     0x01A5D, uint16 Array => [cinematicspr_whattodraw];
     0x01A6F, uint16 Array => [eproj_y_subpos];
     0x01A7D, uint16 Array => [cinematicbg_arr7];
-    0x01A8F, uint16 Scalar => [optionsmenu_index];
+    0x01A8F, uint16 Scalar => [options_object_index];
     0x01A93, uint16 Array => [eproj_y_pos];
-    0x01A93, uint16 Scalar => [options_menu_init_param];
+    0x01A93, uint16 Scalar => [options_object_init_param];
     0x01A9D, uint16 Array => [cinematicbg_arr8];
-    0x01A9D, uint16 Array => ["optionsmenu_cur_data"];
-    0x01AAD, uint16 Array => [optionsmenu_arr8];
+    0x01A9D, uint16 Array => [options_object_spritemaps];
+    0x01AAD, uint16 Array => [options_object_x_pos];
     0x01AB7, uint16 Array => [eproj_x_vel];
     0x01ABD, uint16 Array => [cinematicbg_arr9];
-    0x01ABD, uint16 Array => ["optionsmenu_arr9"];
-    0x01ACD, uint16 Array => [optionsmenu_arr10];
+    0x01ABD, uint16 Array => [options_object_y_pos];
+    0x01ACD, uint16 Array => [options_object_palettes];
     0x01ADB, uint16 Array => [eproj_y_vel];
     0x01ADD, uint16 Array => [cinematicspr_arr6];
-    0x01ADD stride 16, uint16 Array => ["optionsmenu_arr6", optionsmenu_arr7, cinematicspr_arr7];
-    0x01AFD, uint16 Array => ["optionsmenu_instr_ptr"];
+    0x01ADD stride 16, uint16 Array => [options_object_unused_a, options_object_unused_b, cinematicspr_arr7];
+    0x01AFD, uint16 Array => [options_object_instr_lists];
     0x01AFF, uint16 Array => [eproj_E];
-    0x01B0D, uint16 Array => [optionsmenu_arr1];
+    0x01B0D, uint16 Array => [options_object_preinstrs];
     0x01B1D, uint16 Array => [cinematicspr_instr_ptr];
-    0x01B1D, uint16 Array => ["optionsmenu_instr_timer"];
+    0x01B1D, uint16 Array => [options_object_instr_timers];
     0x01B23, uint16 Array => [eproj_F];
-    0x01B2D, uint16 Array => [optionsmenu_arr5];
+    0x01B2D, uint16 Array => [options_object_timers];
     0x01B3D, uint16 Array => [cinematicspr_preinstr_func];
-    0x01B3D, uint16 Array => ["optionsmenu_arr11"];
+    // Shoot, jump, run, item switch, item cancel, aim up, aim down.
+    0x01B3D, uint16 Array => [options_controller_bindings];
     0x01B47, uint16 Array => [eproj_instr_list_ptr];
     0x01B5D, uint16 Array => [cinematicspr_instr_timer];
     0x01B6B stride 18, uint16 Array => [

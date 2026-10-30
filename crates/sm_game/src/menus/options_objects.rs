@@ -6,15 +6,15 @@ use crate::ram::word;
 
 pub fn clear<H: Host + ?Sized>(game: &mut H) {
     crate::word_transfers!(game, descending, 8;
-        le(eproj_y_pos, 12) <- value(0),
-        le(eproj_y_vel, 24) <- value(0),
+        le(options_object_spritemaps, 7) <- value(0),
+        le(options_object_instr_lists, 7) <- value(0),
     );
 }
 
 pub fn spawn<H: Host + ?Sized>(parameter: u16, address: u16, game: &mut H) -> u8 {
-    word!(game.options_menu_init_param = parameter);
+    word!(game.options_object_init_param = parameter);
     let mut index = 14u16;
-    while word!(game.cinematicspr_arr7[index >> 1]) != 0 {
+    while word!(game.options_object_instr_lists[index >> 1]) != 0 {
         index = index.wrapping_sub(2);
         if index & 0x8000 != 0 {
             return 1;
@@ -22,17 +22,17 @@ pub fn spawn<H: Host + ?Sized>(parameter: u16, address: u16, game: &mut H) -> u8
     }
     let record = native_record(0x820000 | u32::from(address), game);
     let slot = index >> 1;
-    word! { game; optionsmenu_arr1[slot] = record.word(2);
-    cinematicspr_arr7[slot] = record.word(4); cinematicspr_instr_ptr[slot] = 1; }
+    word! { game; options_object_preinstrs[slot] = record.word(2);
+    options_object_instr_lists[slot] = record.word(4); options_object_instr_timers[slot] = 1; }
     word! { game, 0;
-        cinematicbg_arr8[slot], optionsmenu_arr5[slot], cinematicspr_arr6[slot], optionsmenu_arr7[slot],
+        options_object_spritemaps[slot], options_object_timers[slot], options_object_unused_a[slot], options_object_unused_b[slot],
     }
     let entry = record.word(0);
     match entry {
         0xf296 | 0xf419 => {
-            word! { game; optionsmenu_arr8[slot] = if entry == 0xf296 { 24 } else { 216 };
-            cinematicbg_arr9[slot] = if entry == 0xf296 { 56 } else { 16 };
-            optionsmenu_arr10[slot] = 3584; }
+            word! { game; options_object_x_pos[slot] = if entry == 0xf296 { 24 } else { 216 };
+            options_object_y_pos[slot] = if entry == 0xf296 { 56 } else { 16 };
+            options_object_palettes[slot] = 3584; }
         }
         0xf34b | 0xf353 | 0xf35b | 0xf363 => {
             let x: u16 = match entry {
@@ -42,7 +42,7 @@ pub fn spawn<H: Host + ?Sized>(parameter: u16, address: u16, game: &mut H) -> u8
             };
             let at = 0x1aad + 2 * usize::from(slot);
             game.ram().copy_in(at, &x.to_ne_bytes());
-            word! { game; cinematicbg_arr9[slot] = 16; optionsmenu_arr10[slot] = 3584; }
+            word! { game; options_object_y_pos[slot] = 16; options_object_palettes[slot] = 3584; }
         }
         _ => {
             game.unreachable_native();
@@ -54,23 +54,23 @@ pub fn spawn<H: Host + ?Sized>(parameter: u16, address: u16, game: &mut H) -> u8
 pub fn advance_and_draw<H: Host + ?Sized>(game: &mut H) {
     let mut index = 14i32;
     while index >= 0 {
-        word!(game.optionsmenu_index = index as u16);
-        if word!(game.cinematicspr_arr7[index >> 1]) != 0 {
+        word!(game.options_object_index = index as u16);
+        if word!(game.options_object_instr_lists[index >> 1]) != 0 {
             advance(index as u16, game);
-            index = i32::from(word!(game.optionsmenu_index));
+            index = i32::from(word!(game.options_object_index));
         }
         index -= 2;
     }
     for slot in (0..8).rev() {
-        if word!(game.cinematicbg_arr8[slot]) != 0 {
+        if word!(game.options_object_spritemaps[slot]) != 0 {
             crate::sprite_output::paletted(
                 0x82,
-                word!(game.cinematicbg_arr8[slot]),
+                word!(game.options_object_spritemaps[slot]),
                 (
-                    word!(game.optionsmenu_arr8[slot]),
-                    word!(game.cinematicbg_arr9[slot]),
+                    word!(game.options_object_x_pos[slot]),
+                    word!(game.options_object_y_pos[slot]),
                 ),
-                word!(game.optionsmenu_arr10[slot]),
+                word!(game.options_object_palettes[slot]),
                 crate::sprite_drawing::Clip::Bounded,
                 game,
             );
@@ -79,11 +79,11 @@ pub fn advance_and_draw<H: Host + ?Sized>(game: &mut H) {
 }
 
 fn end_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
-    word! { game; cinematicspr_instr_ptr[slot] = 1; cinematicspr_arr7[slot] = 0xf4b6; }
+    word! { game; options_object_instr_timers[slot] = 1; options_object_instr_lists[slot] = 0xf4b6; }
 }
 
 fn before_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
-    match word!(game.optionsmenu_arr1[slot]) {
+    match word!(game.options_object_preinstrs[slot]) {
         0xf2a9 => {
             if word!(game.game_state) == 2 {
                 let screen = word!(game.game_options_screen_index);
@@ -91,10 +91,10 @@ fn before_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
                 if table != 0 {
                     let address = table.wrapping_add(word!(game.menu_option_index).wrapping_mul(4));
                     let record = native_record(0x820000 | u32::from(address), game);
-                    word! { game; optionsmenu_arr8[slot] = record.word(0);
-                    cinematicbg_arr9[slot] = record.word(2); }
+                    word! { game; options_object_x_pos[slot] = record.word(0);
+                    options_object_y_pos[slot] = record.word(2); }
                 } else {
-                    word! { game; optionsmenu_arr8[slot] = 384; cinematicbg_arr9[slot] = 16; }
+                    word! { game; options_object_x_pos[slot] = 384; options_object_y_pos[slot] = 16; }
                 }
             } else {
                 end_script(slot, game);
@@ -113,10 +113,10 @@ fn before_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
                 end_script(slot, game)
             }
             9 => {
-                word!(game.cinematicbg_arr9[slot] -= 2);
+                word!(game.options_object_y_pos[slot] -= 2);
             }
             10 => {
-                word!(game.cinematicbg_arr9[slot] += 2);
+                word!(game.options_object_y_pos[slot] += 2);
             }
             _ => {}
         },
@@ -142,30 +142,30 @@ fn before_script<H: Host + ?Sized>(slot: u16, game: &mut H) {
 fn instruction<H: Host + ?Sized>(opcode: u16, slot: u16, address: u16, game: &mut H) -> u16 {
     match opcode {
         0x8c5a => {
-            word! { game, 0; cinematicbg_arr8[slot], cinematicspr_arr7[slot] }
+            word! { game, 0; options_object_spritemaps[slot], options_object_instr_lists[slot] }
             0
         }
         0x8c64 => {
-            word!(game.cinematicspr_arr7[slot] = address.wrapping_sub(2));
+            word!(game.options_object_instr_lists[slot] = address.wrapping_sub(2));
             0
         }
         0x8c6e | 0x8c93 => {
             let value = native_record(0x820000 | u32::from(address), game).word(0);
             if opcode == 0x8c6e {
-                word!(game.optionsmenu_arr1[slot] = value);
+                word!(game.options_object_preinstrs[slot] = value);
             } else {
-                word!(game.optionsmenu_arr5[slot] = value);
+                word!(game.options_object_timers[slot] = value);
             }
             address.wrapping_add(2)
         }
         0x8c79 => {
-            word!(game.optionsmenu_arr1[slot] = 0x8c81);
+            word!(game.options_object_preinstrs[slot] = 0x8c81);
             address
         }
         0x8c82 => native_record(0x820000 | u32::from(address), game).word(0),
         0x8c89 => {
-            let timer = word!(game.optionsmenu_arr5[slot]);
-            word!(game.optionsmenu_arr5[slot] -= 1);
+            let timer = word!(game.options_object_timers[slot]);
+            word!(game.options_object_timers[slot] -= 1);
             if timer == 1 {
                 address.wrapping_add(2)
             } else {
@@ -178,19 +178,19 @@ fn instruction<H: Host + ?Sized>(opcode: u16, slot: u16, address: u16, game: &mu
 
 fn advance<H: Host + ?Sized>(index: u16, game: &mut H) {
     before_script(index >> 1, game);
-    let index = word!(game.optionsmenu_index);
-    let slot = word!(game.optionsmenu_index) >> 1;
-    let timer = word!(game.cinematicspr_instr_ptr[slot]);
-    word!(game.cinematicspr_instr_ptr[slot] -= 1);
+    let index = word!(game.options_object_index);
+    let slot = word!(game.options_object_index) >> 1;
+    let timer = word!(game.options_object_instr_timers[slot]);
+    word!(game.options_object_instr_timers[slot] -= 1);
     if timer == 1 {
-        let mut address = word!(game.cinematicspr_arr7[slot]);
+        let mut address = word!(game.options_object_instr_lists[slot]);
         loop {
             let record = native_record(0x820000 | u32::from(address), game);
             if record.word(0) & 0x8000 == 0 {
                 let slot = index >> 1;
-                word! { game; cinematicspr_instr_ptr[slot] = record.word(0);
-                cinematicbg_arr8[slot] = record.word(2);
-                cinematicspr_arr7[slot] = address.wrapping_add(4); }
+                word! { game; options_object_instr_timers[slot] = record.word(0);
+                options_object_spritemaps[slot] = record.word(2);
+                options_object_instr_lists[slot] = address.wrapping_add(4); }
                 return;
             }
             address = instruction(record.word(0), index >> 1, address.wrapping_add(2), game);
