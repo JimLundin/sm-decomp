@@ -10,13 +10,13 @@ functions. With ROUTE_PROFDATA (the full 100% route) it also lists what the
 route executes that the corpus never does. Nothing ROM-derived is recorded;
 only source locations and counts.
 """
-import collections, json, re, subprocess, sys
+import collections, functools, json, os, re, subprocess, sys
 
 SCOPES = ("crates/sm_game/src/", "sm/src/game/")
 
 
 def scope_of(path):
-    path = path.replace("\\", "/")
+    path = os.path.normpath(path.replace("\\", "/")).replace("\\", "/")
     for scope in SCOPES:
         at = path.find(scope)
         if at >= 0:
@@ -40,6 +40,23 @@ def demangle(name):
     return "::".join(parts) or name
 
 
+@functools.cache
+def source_lines(path):
+    try:
+        return open(path, encoding="utf-8").read().splitlines()
+    except OSError:
+        return []
+
+
+def source_name(path, line, fallback):
+    """Name generic instantiations by their source definition (v0 symbols are unreadable)."""
+    for text in reversed(source_lines(path)[max(0, line - 4):line]):
+        match = re.search(r"\bfn\s+(\w+)", text)
+        if match:
+            return match.group(1)
+    return fallback
+
+
 def load(llvm_cov, profdata, obj):
     """Per-file (lines hit, lines, functions hit, functions) and per-function (count, size)."""
     exported = subprocess.run(
@@ -59,7 +76,8 @@ def load(llvm_cov, profdata, obj):
             continue
         regions = function.get("regions") or [[0, 0, 0, 0]]
         start, end = regions[0][0], max(region[2] for region in regions)
-        key = (path, start, demangle(function["name"]))
+        name = demangle(function["name"])
+        key = (path, start, source_name(path, start, name) if name.startswith("_R") else name)
         count, size = functions.get(key, (0, 0))
         functions[key] = (count + function["count"], max(size, end - start + 1))
     return files, functions
