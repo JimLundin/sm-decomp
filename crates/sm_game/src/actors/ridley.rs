@@ -586,6 +586,85 @@ pub fn homing_velocity(
     velocity
 }
 
+/// How Ridley's accelerations decelerate: by `force` + 8 more, or by a doubled
+/// step at Ceres.
+#[derive(Clone, Copy)]
+enum Deceleration {
+    Force(u16),
+    DoubleStep,
+}
+
+/// The 65816's 16-bit `ADC`: the sum and its carry out.
+fn adc(a: u16, b: u16, carry: bool) -> (u16, bool) {
+    let sum = u32::from(a) + u32::from(b) + u32::from(carry);
+    (sum as u16, sum > 0xffff)
+}
+
+/// The 65816's 16-bit `SBC`: the difference and its carry (no borrow) out.
+fn sbc(a: u16, b: u16, carry: bool) -> (u16, bool) {
+    let difference = i32::from(a) - i32::from(b) - i32::from(!carry);
+    (difference as u16, difference >= 0)
+}
+
+/// One axis of Ridley's accelerations toward `target`, with the carry the
+/// original chains through it: the position comparison's carry feeds the
+/// first step add or subtract that no `CLC`/`SEC` precedes, and each one's
+/// carry the next. So a step takes or adds one more when `position` and
+/// `target` compare differently signed and unsigned. The limit is the
+/// signed-difference test of [`homing_velocity`].
+fn chained_homing_velocity(
+    position: u16,
+    target: u16,
+    velocity: u16,
+    divisor: u8,
+    deceleration: Deceleration,
+    limit: u16,
+) -> u16 {
+    let (distance, mut carry) = sbc(position, target, true);
+    let distance = distance as i16;
+    let step = snes_divide(distance.unsigned_abs(), divisor).max(1);
+    let reversing = (velocity as i16 >= 0) == (distance > 0);
+    let mut velocity = velocity;
+    if distance > 0 {
+        if reversing {
+            match deceleration {
+                Deceleration::Force(force) => {
+                    velocity = velocity.wrapping_sub(force);
+                    (velocity, carry) = sbc(velocity, 8, true);
+                    (velocity, carry) = sbc(velocity, step, carry);
+                }
+                Deceleration::DoubleStep => {
+                    (velocity, carry) = sbc(velocity, step, carry);
+                    (velocity, carry) = sbc(velocity, step, carry);
+                }
+            }
+        }
+        velocity = sbc(velocity, step, carry).0;
+        if velocity.wrapping_add(limit) & 0x8000 != 0 {
+            velocity = 0u16.wrapping_sub(limit);
+        }
+    } else {
+        if reversing {
+            match deceleration {
+                Deceleration::Force(force) => {
+                    velocity = velocity.wrapping_add(force);
+                    (velocity, carry) = adc(velocity, 8, false);
+                    (velocity, carry) = adc(velocity, step, carry);
+                }
+                Deceleration::DoubleStep => {
+                    (velocity, carry) = adc(velocity, step, carry);
+                    (velocity, carry) = adc(velocity, step, carry);
+                }
+            }
+        }
+        velocity = adc(velocity, step, carry).0;
+        if velocity.wrapping_sub(limit) & 0x8000 == 0 {
+            velocity = limit;
+        }
+    }
+    velocity
+}
+
 /// Move the current enemy by its X and Y velocities: subpixels in the low
 /// bytes, pixels in the signed high bytes. Was `MoveEnemyWithVelocity`.
 fn move_with_velocity<L: Lease + ?Sized>(game: &mut L) {
@@ -2960,15 +3039,16 @@ pub fn accelerate_with_force<L: Lease + ?Sized>(
     let divisor = INERTIA[inertia as usize];
     accelerate_x(k, x, u16::from(divisor), force, game);
     let e = i32::from(k);
-    let distance = (session_slot!(game, Ridley[e].base.y_pos) as i16).wrapping_sub(y as i16);
-    if distance != 0 {
+    let position = session_slot!(game, Ridley[e].base.y_pos);
+    if position != y {
         session_slot!(
             game,
-            Ridley[e].y_velocity = homing_velocity(
-                distance,
+            Ridley[e].y_velocity = chained_homing_velocity(
+                position,
+                y,
                 session_slot!(game, Ridley[e].y_velocity),
                 divisor,
-                HomingReversal::ExtraForce(force.wrapping_add(8)),
+                Deceleration::Force(force),
                 1280,
             )
         );
@@ -2983,15 +3063,16 @@ const INERTIA: [u8; 16] = [
 /// Ridley X acceleration ($A6:D5A9). Was `Ridley_Func_105`.
 pub fn accelerate_x<L: Lease + ?Sized>(k: u16, x: u16, divisor: u16, force: u16, game: &mut L) {
     let e = i32::from(k);
-    let distance = (session_slot!(game, Ridley[e].base.x_pos) as i16).wrapping_sub(x as i16);
-    if distance != 0 {
+    let position = session_slot!(game, Ridley[e].base.x_pos);
+    if position != x {
         session_slot!(
             game,
-            Ridley[e].x_velocity = homing_velocity(
-                distance,
+            Ridley[e].x_velocity = chained_homing_velocity(
+                position,
+                x,
                 session_slot!(game, Ridley[e].x_velocity),
                 divisor as u8,
-                HomingReversal::ExtraForce(force.wrapping_add(8)),
+                Deceleration::Force(force),
                 1280,
             )
         );
@@ -3009,15 +3090,16 @@ pub fn ceres_accelerate<L: Lease + ?Sized>(k: u16, inertia: u16, x: u16, y: u16,
     let divisor = CERES_INERTIA[inertia as usize];
     ceres_accelerate_x(k, x, u16::from(divisor), game);
     let e = i32::from(k);
-    let distance = (session_slot!(game, Ridley[e].base.y_pos) as i16).wrapping_sub(y as i16);
-    if distance != 0 {
+    let position = session_slot!(game, Ridley[e].base.y_pos);
+    if position != y {
         session_slot!(
             game,
-            Ridley[e].y_velocity = homing_velocity(
-                distance,
+            Ridley[e].y_velocity = chained_homing_velocity(
+                position,
+                y,
                 session_slot!(game, Ridley[e].y_velocity),
                 divisor,
-                HomingReversal::DoubleStep,
+                Deceleration::DoubleStep,
                 1280,
             )
         );
@@ -3027,15 +3109,16 @@ pub fn ceres_accelerate<L: Lease + ?Sized>(k: u16, inertia: u16, x: u16, y: u16,
 /// Ceres Ridley X acceleration ($A6:D6A6). Was `Ridley_Func_107`.
 pub fn ceres_accelerate_x<L: Lease + ?Sized>(k: u16, x: u16, divisor: u16, game: &mut L) {
     let e = i32::from(k);
-    let distance = (session_slot!(game, Ridley[e].base.x_pos) as i16).wrapping_sub(x as i16);
-    if distance != 0 {
+    let position = session_slot!(game, Ridley[e].base.x_pos);
+    if position != x {
         session_slot!(
             game,
-            Ridley[e].x_velocity = homing_velocity(
-                distance,
+            Ridley[e].x_velocity = chained_homing_velocity(
+                position,
+                x,
                 session_slot!(game, Ridley[e].x_velocity),
                 divisor as u8,
-                HomingReversal::DoubleStep,
+                Deceleration::DoubleStep,
                 1280,
             )
         );
