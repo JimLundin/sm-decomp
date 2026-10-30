@@ -155,16 +155,13 @@ impl LiquidWords {
     pub fn read(ram: &(impl crate::ram::CompatibilityRam + ?Sized)) -> Self {
         let mut words = Self::default();
         for (at, word) in words.slots() {
-            *word =
-                u16::from_le_bytes([ram.compatibility_byte(at), ram.compatibility_byte(at + 1)]);
+            *word = crate::projection::word(ram, at);
         }
         words
     }
     pub fn write(mut self, ram: &mut (impl crate::ram::CompatibilityRam + ?Sized)) {
         for (at, word) in self.slots() {
-            let [low, high] = word.to_le_bytes();
-            ram.compatibility_write_byte(at, low);
-            ram.compatibility_write_byte(at + 1, high);
+            crate::projection::set_word(ram, at, *word);
         }
     }
 }

@@ -3,7 +3,7 @@
 //! otherwise a copy decoded from RAM and stored back if it changed.
 #![forbid(unsafe_code)]
 
-use crate::ram::{RawRam as _, WorkRamAccess};
+use crate::ram::WorkRamAccess;
 use crate::runtime_access::RuntimeAccess;
 use crate::session::{EnemyProjectile, EnemyProjectiles};
 
@@ -74,18 +74,15 @@ where
     if game.runtime_admissible() {
         return action(&mut game.runtime().session_mut().enemy_projectiles);
     }
-    let ram = game.ram();
     let mut projectiles = EnemyProjectiles::default();
     table_words(&mut projectiles, |at, word| {
-        *word = u16::from_le_bytes([ram.read_byte(at), ram.read_byte(at + 1)]);
+        *word = crate::projection::image_word(game, at);
     });
     let before = projectiles.clone();
     let result = action(&mut projectiles);
     if projectiles != before {
         table_words(&mut projectiles, |at, word| {
-            let [low, high] = word.to_le_bytes();
-            ram.write_byte(at, low);
-            ram.write_byte(at + 1, high);
+            crate::projection::set_image_word(game, at, *word);
         });
     }
     result
@@ -171,8 +168,7 @@ where
     if slot & 1 == 0 && index < SLOTS {
         with_slots(game, |slots| slots[index].definition = 0);
     } else {
-        game.ram()
-            .copy_in(0x1997 + usize::from(slot), &0u16.to_ne_bytes());
+        crate::projection::copy_into_image(game, 0x1997 + usize::from(slot), &0u16.to_ne_bytes());
     }
 }
 

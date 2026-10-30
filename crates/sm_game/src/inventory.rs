@@ -143,40 +143,20 @@ pub fn current<H: CompatibilityRam + ?Sized>(h: &H) -> Inventory {
 
 /// `word` as the host's projection holds it, low byte then high.
 pub fn get<H: CompatibilityRam + ?Sized>(h: &H, word: Word) -> u16 {
-    let at = word.address();
-    u16::from_le_bytes([h.compatibility_byte(at), h.compatibility_byte(at + 1)])
+    crate::projection::word(h, word.address())
 }
 
 /// Store `value` to `word`, low byte then high, as the named word store did.
 pub fn set<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, value: u16) {
-    let at = word.address();
-    for (lane, byte) in value.to_le_bytes().into_iter().enumerate() {
-        h.compatibility_write_byte(at + lane, byte);
-    }
+    crate::projection::set_word(h, word.address(), value);
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::projection::SessionProjection as Projection;
     use crate::room_entry::world::WorldBinding;
     use crate::session::Session;
-    use crate::session_encoding::projected_byte;
-
-    /// A host over a Session's projection, as the compat game's is while one
-    /// is installed.
-    struct Projection(Session);
-    impl CompatibilityRam for Projection {
-        fn compatibility_byte(&self, at: usize) -> u8 {
-            projected_byte(&self.0, at).expect("inventory byte is projected")
-        }
-        fn compatibility_write_byte(&mut self, at: usize, value: u8) {
-            assert!(crate::session_encoding::write_projected_byte(
-                &mut self.0,
-                at,
-                value
-            ));
-        }
-    }
 
     #[test]
     fn the_view_reads_and_stores_the_owned_inventory() {

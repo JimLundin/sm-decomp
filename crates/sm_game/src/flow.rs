@@ -38,7 +38,7 @@ pub struct Flow {
 
 /// The flow as the host's projection holds it.
 pub fn current<H: CompatibilityRam + ?Sized>(h: &H) -> Flow {
-    crate::session_encoding::flow(&|at| h.compatibility_byte(at))
+    crate::session_encoding::flow(&crate::projection::reader(h))
 }
 
 /// A flow word, by its RAM name.
@@ -53,8 +53,5 @@ pub enum Word {
 
 /// Store `value` to `word`, low byte then high, as the named word store did.
 pub fn set<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, value: u16) {
-    let at = crate::session_encoding::FLOW + 2 * word as usize;
-    for (lane, byte) in value.to_le_bytes().into_iter().enumerate() {
-        h.compatibility_write_byte(at + lane, byte);
-    }
+    crate::projection::set_word(h, crate::session_encoding::FLOW + 2 * word as usize, value);
 }

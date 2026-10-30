@@ -108,31 +108,27 @@ pub const WORDS: usize = 31;
 
 /// The menu state as the host's projection holds it.
 pub fn current<H: CompatibilityRam + ?Sized>(h: &H) -> MenuState {
-    crate::session_encoding::menu(&|at| h.compatibility_byte(at))
+    crate::session_encoding::menu(&crate::projection::reader(h))
 }
 
 /// `word` as the host's projection holds it, low byte then high.
 pub fn get<H: CompatibilityRam + ?Sized>(h: &H, word: Word) -> u16 {
-    let at = MENU + 2 * word as usize;
-    u16::from_le_bytes([h.compatibility_byte(at), h.compatibility_byte(at + 1)])
+    crate::projection::word(h, MENU + 2 * word as usize)
 }
 
 /// Store `value` to `word`, low byte then high, as the named word store did.
 pub fn set<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, value: u16) {
-    let at = MENU + 2 * word as usize;
-    for (lane, byte) in value.to_le_bytes().into_iter().enumerate() {
-        h.compatibility_write_byte(at + lane, byte);
-    }
+    crate::projection::set_word(h, MENU + 2 * word as usize, value);
 }
 
 /// Byte `lane` (0 low, 1 high) of `word` as the host's projection holds it.
 pub fn get_byte<H: CompatibilityRam + ?Sized>(h: &H, word: Word, lane: usize) -> u8 {
-    h.compatibility_byte(MENU + 2 * word as usize + lane)
+    crate::projection::byte(h, MENU + 2 * word as usize + lane)
 }
 
 /// Store byte `lane` (0 low, 1 high) of `word` through the host's projection.
 pub fn set_byte<H: CompatibilityRam + ?Sized>(h: &mut H, word: Word, lane: usize, value: u8) {
-    h.compatibility_write_byte(MENU + 2 * word as usize + lane, value);
+    crate::projection::set_byte(h, MENU + 2 * word as usize + lane, value);
 }
 
 /// Typed access to the menu words through the host's projected bytes, in the

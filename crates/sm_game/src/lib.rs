@@ -71,6 +71,7 @@ pub mod projectile_geometry;
 pub mod projectile_initialization;
 pub mod projectile_room;
 pub mod projectile_weapon_definitions;
+pub mod projection;
 pub mod ram;
 pub mod room_entry;
 pub mod save_file;
