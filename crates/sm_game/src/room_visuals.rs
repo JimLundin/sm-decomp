@@ -250,3 +250,52 @@ pub fn scroll_weather<H: crate::menus::host::Host + ?Sized>(
     }
     game.hdma_effect(HdmaEffect::ScrollWeather(weather), slot);
 }
+
+/// Crocomire's phase step, its scroll HDMA, Samus's collision and its palette.
+pub fn advance_crocomire<H>(game: &mut H)
+where
+    H: crate::menus::host::Host + crate::actors::crocomire_reactions::Host + ?Sized,
+{
+    use crate::actors::crocomire_reactions as crocomire;
+    use crate::actors::layouts::EnemyLayout72 as Crocomire;
+    use crate::ram::slot;
+    static DEFINITION: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x10, 0x9563);
+    if let Some(request) = crocomire::execute_phase(game) {
+        game.queue_sound(1, request as u16 as u8, 6);
+        crocomire::prepare_scroll_hdma(game);
+        slot!(
+            game,
+            Crocomire[0].var_1F = spawn_hdma(0xa4, &DEFINITION, game)
+        );
+    }
+    crocomire::samus_collision(game);
+    crocomire::update_palette(game);
+}
+
+/// Position Crocomire's second body part and align its BG2 image with the camera.
+pub fn align_crocomire_background<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+    use crate::actors::layouts::EnemyLayout72 as Crocomire;
+    use crate::ram::slot;
+    let primary = i32::from(word!(game.cur_enemy_index));
+    let secondary = i32::from(word!(game.cur_enemy_index)) + 64;
+    slot!(
+        game,
+        Crocomire[secondary].base.x_pos = slot!(game, Crocomire[secondary].var_A)
+            .wrapping_add(slot!(game, Crocomire[primary].base.x_pos))
+    );
+    slot!(
+        game,
+        Crocomire[secondary].base.y_pos = slot!(game, Crocomire[primary].base.y_pos)
+    );
+    let relative =
+        slot!(game, Crocomire[primary].base.x_pos).wrapping_sub(word!(game.layer1_x_pos)) as i16;
+    let offset = 51u16.wrapping_sub(relative as u16);
+    word!(
+        game.reg_BG2HOFS =
+            if (-128..384).contains(&relative) && (offset as i16).unsigned_abs() < 284 {
+                offset
+            } else {
+                256
+            }
+    );
+}

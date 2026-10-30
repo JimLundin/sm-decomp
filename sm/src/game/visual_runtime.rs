@@ -30,10 +30,11 @@ pub(crate) use crate::game::intro_objects::{
 };
 use crate::game::projectile_presentation_ram as sprite_output;
 pub(crate) use crate::game::room_visuals::{
-    darken_fireflea_room, initialize_bomb_torizo_haze, initialize_ceres_elevator,
-    initialize_ceres_ridley, initialize_draygon_layer, initialize_fireflea_lighting,
-    initialize_intro_wave, initialize_morph_eye_beam, initialize_phantoon_motion,
-    initialize_room_haze, initialize_title_gradient, initialize_tourian_statue, initialize_weather,
+    advance_crocomire, align_crocomire_background, darken_fireflea_room,
+    initialize_bomb_torizo_haze, initialize_ceres_elevator, initialize_ceres_ridley,
+    initialize_draygon_layer, initialize_fireflea_lighting, initialize_intro_wave,
+    initialize_morph_eye_beam, initialize_phantoon_motion, initialize_room_haze,
+    initialize_title_gradient, initialize_tourian_statue, initialize_weather,
     shake_room_with_sound,
 };
 pub(crate) use crate::game::shooting_star_motion::{
@@ -42,7 +43,6 @@ pub(crate) use crate::game::shooting_star_motion::{
 pub(crate) use crate::game::title_screen::{
     advance_title_pan, advance_title_wait, request_title_skip, start_title_pan,
 };
-use crate::ram_map::word;
 pub(crate) use sm_game::cinematic::{
     advance_cinematic_coordinate, capture_cinematic_palette, clear_cinematic_background,
     clear_cinematic_sprites, drift_cinematic_sprite, enable_cinematic_background,
@@ -58,25 +58,7 @@ use crate::{
     },
     game_state::Game,
     rom::RomRecord,
-    types::SpawnHdmaObject_Args,
 };
-
-pub(crate) fn advance_crocomire(game: &mut Game) {
-    use crate::game::actors::crocomire_reactions::{self as crocomire};
-    use crate::game::enemy_layouts::EnemyLayout72 as Crocomire;
-    use crate::ram_map::slot;
-    static DEFINITION: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x10, 0x9563);
-    if let Some(request) = crocomire::execute_phase(game) {
-        crate::game::music::QueueSfx2_Max6(request as u16, game);
-        crocomire::prepare_scroll_hdma(game);
-        slot!(
-            game,
-            Crocomire[0].var_1F = spawn_hdma(0xa4, &DEFINITION, game)
-        );
-    }
-    crocomire::samus_collision(game);
-    crocomire::update_palette(game);
-}
 
 impl visual_host::Content for Runtime<'_> {
     type Record = RomRecord;
@@ -492,31 +474,4 @@ pub(crate) fn project_cinematic_point_reads(
         x: projected_x.wrapping_add(read(0x80)),
         y: read(0x82).wrapping_sub(projected_y),
     }
-}
-
-/// Position Crocomire's second body part and align its BG2 image with the camera.
-pub(crate) fn align_crocomire_background(game: &mut Game) {
-    use crate::game::enemy_layouts::EnemyLayout72 as Crocomire;
-    use crate::ram_map::slot;
-    let primary = i32::from(word!(game.cur_enemy_index));
-    let secondary = i32::from(word!(game.cur_enemy_index)) + 64;
-    slot!(
-        game,
-        Crocomire[secondary].base.x_pos = slot!(game, Crocomire[secondary].var_A)
-            .wrapping_add(slot!(game, Crocomire[primary].base.x_pos))
-    );
-    slot!(
-        game,
-        Crocomire[secondary].base.y_pos = slot!(game, Crocomire[primary].base.y_pos)
-    );
-    let relative =
-        slot!(game, Crocomire[primary].base.x_pos).wrapping_sub(word!(game.layer1_x_pos)) as i16;
-    let offset = 51u16.wrapping_sub(relative as u16);
-    word!(
-        game.reg_BG2HOFS = if (-128..384).contains(&relative) && crate::rtl::abs16(offset) < 284 {
-            offset
-        } else {
-            256
-        }
-    );
 }
