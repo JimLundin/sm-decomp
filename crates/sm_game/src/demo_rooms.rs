@@ -1,11 +1,8 @@
 //! Attract-mode playback, room selection, placement and delayed setup.
 #![forbid(unsafe_code)]
-// The original's names and assignment shapes are kept.
-#![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
 use crate::imported::Imported;
 use crate::menus::menu_tilemap::native_record;
 use crate::menus::prelude::{EnemyData, do_until};
-#[allow(unused_imports)]
 use crate::ram::RawRam as _;
 use crate::ram::{slot, word};
 use sm_data::cartridge::{RomImage, lorom_offset};

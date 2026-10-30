@@ -1,11 +1,8 @@
 //! Title screen: Metroid palettes and cry, camera pans, skip and wait, sprite placement.
-// The original's names and assignment shapes are kept.
-#![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
 use crate::cinematic::{add_native_pair, place_cinematic_sprite, set_cinematic_backdrop};
 use crate::cinematic_objects::CinematicObjects;
 use crate::constants::buttons::{kButton_A, kButton_B, kButton_Start};
 use crate::menus::prelude::words;
-#[allow(unused_imports)]
 use crate::ram::RawRam as _;
 use crate::ram::{word, words as ram_words};
 

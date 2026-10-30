@@ -1,9 +1,6 @@
 //! Room, X-ray and Power Bomb layer/window composition.
-// The original's names and assignment shapes are kept.
-#![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
 use crate::constants::bank_8f::{addr_kRoom_a66a, addr_kRoom_cefb};
 use crate::menus::prelude::*;
-#[allow(unused_imports)]
 use crate::ram::RawRam as _;
 
 // W12SEL, W34SEL, WOBJSEL, TM, TS, TMW, TSW, CGWSEL and CGADSUB shadows.

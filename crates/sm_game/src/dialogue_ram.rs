@@ -1,11 +1,8 @@
 //! Compatibility encoding only; effects consume the model before touching RAM.
 #![forbid(unsafe_code)]
-// The original's names and assignment shapes are kept.
-#![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
 use crate::dialogue::{
     ChildContinuation, Continuation, Cycle, Dialogue, Input, Message, Phase, Selection,
 };
-#[allow(unused_imports)]
 use crate::ram::RawRam as _;
 use crate::ram::words as ram;
 

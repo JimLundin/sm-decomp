@@ -1,10 +1,7 @@
 //! Room visual effects: HDMA effect setup, Fireflea lighting, earthquakes, the Tourian statue and weather.
-// The original's names and assignment shapes are kept.
-#![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
 use crate::constants::bank_86::addr_kEproj_TourianStatueDustClouds;
 use crate::hdma_objects::{HdmaEffect, spawn_bg3_scroll, spawn_hdma};
 use crate::menus::prelude::SpawnHdmaObject_Args;
-#[allow(unused_imports)]
 use crate::ram::RawRam as _;
 use crate::ram::word;
 use crate::visual_state::{TourianStatuePhase, Weather};
