@@ -10,7 +10,7 @@ use super::{
     },
     installation,
 };
-use crate::game::{animated_tiles, enemy_projectiles, palette_effects, player_projectiles};
+use sm_game::{animated_tiles, enemy_projectiles, palette_effects, player_projectiles};
 use std::num::NonZeroU8;
 
 fn waiting(cause: EntryWait, value: u8) -> Option<EntryPoll> {
@@ -60,7 +60,7 @@ fn initial(h: &mut impl EntryHost) -> EntryPoll {
         animated_tiles::execution::clear(h.session_mut());
         h.call(L::WaitVblankClearHdma);
         h.call(L::InitializeRoomSpecialEffects);
-        crate::game::room_mechanisms::clear_session(h.session_mut());
+        sm_game::room_mechanisms::creation::clear_session(h.session_mut());
         enemy_projectiles::lifecycle::clear(h);
         palette_effects::execution::clear(h.session_mut());
         h.call(L::UpdateBeamTilesAndPalette);
@@ -238,7 +238,7 @@ fn more(h: &mut impl EntryHost) -> EntryPoll {
         enemy_projectiles::lifecycle::clear(h);
         animated_tiles::execution::clear(h.session_mut());
         palette_effects::execution::clear(h.session_mut());
-        crate::game::room_mechanisms::clear_session(h.session_mut());
+        sm_game::room_mechanisms::creation::clear_session(h.session_mut());
         installation::initialize_door_objects(h);
         h.call(L::LoadFxHeader);
         h.close_door();

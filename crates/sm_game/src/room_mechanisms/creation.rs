@@ -210,3 +210,11 @@ pub fn coordinates_from_block(session: &mut crate::session::Session, byte_block:
     let width = u16::from(session.room.width as u8);
     session.mechanisms.block_x = if width == 0 { block } else { block % width };
 }
+
+/// Empty every mechanism slot, last first, and restart graphics allocation.
+pub fn clear_session(session: &mut crate::session::Session) {
+    for slot in session.mechanisms.slots.iter_mut().rev() {
+        slot.header = 0;
+    }
+    session.mechanisms.next_graphics = 0;
+}

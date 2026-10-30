@@ -5,7 +5,7 @@ use super::{
     operations::Axis,
 };
 use {
-    crate::game::room_mechanisms::{self, Direction},
+    sm_game::room_mechanisms::rules::treadmill::{Direction, carry},
     sm_game::{
         player_projectiles::{content, host::Host as Projectiles},
         room_mechanisms::host::Host as Mechanisms,
@@ -29,7 +29,7 @@ fn special(h: &mut (impl Host + Projectiles + Mechanisms), bts: u8) {
     } else {
         assert!(bts < 80, "special-air BTS index out of bounds: {bts}");
         match bts {
-            8 | 9 => room_mechanisms::carry(
+            8 | 9 => carry(
                 h,
                 if bts == 8 {
                     Direction::Right

@@ -6,8 +6,8 @@ use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use sm_game::enemy_script::EnemyScript;
 use {
-    crate::game::enemy_projectiles::lifecycle::spawn_from_enemy,
     sm_game::enemy_projectiles::host::{Effects, ImportedAliases, ShotMember},
+    sm_game::enemy_projectiles::lifecycle::spawn_from_enemy,
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]

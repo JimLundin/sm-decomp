@@ -8,7 +8,6 @@ pub(crate) use sm_game::player_projectiles::host;
 pub(crate) use sm_game::player_projectiles::missiles;
 pub(crate) use sm_game::player_projectiles::motion;
 pub(crate) use sm_game::player_projectiles::preparation;
-pub(crate) use preparation::deselect as deselect_owned;
 pub(crate) use sm_game::player_projectiles::presentation;
 use crate::game::session as state;
 pub(crate) use sm_game::player_projectiles::weapons;

@@ -83,12 +83,7 @@ pub(crate) fn set_enabled(enabled: bool, game: &mut Game) {
 pub(crate) fn clear(game: &mut Game) {
     clear_session(Runtime::new(game).session_mut());
 }
-pub(crate) fn clear_session(session: &mut sm_game::session::Session) {
-    for slot in session.mechanisms.slots.iter_mut().rev() {
-        slot.header = 0;
-    }
-    session.mechanisms.next_graphics = 0;
-}
+pub(crate) use creation::clear_session;
 pub(crate) fn calculate_coordinates(k: u16, game: &mut Game) {
     creation::coordinates(&mut Runtime::new(game), usize::from(k >> 1));
 }

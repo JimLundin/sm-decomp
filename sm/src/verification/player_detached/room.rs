@@ -4,7 +4,6 @@ pub(crate) use sm_game::room_mechanisms::content;
 pub(crate) use sm_game::room_mechanisms::host;
 #[path = "room_rules.rs"]
 pub(crate) mod rules;
-pub(crate) use rules::treadmill::{Direction, carry};
 pub(crate) use sm_game::room_mechanisms::scheduler;
 pub(crate) fn command(h: &mut impl host::Host, id: u32, cursor: u16, handle: u16) {
     let record = h.loaded_record(host::ContentAddress {

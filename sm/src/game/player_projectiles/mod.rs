@@ -80,7 +80,6 @@ pub(crate) fn draw_flare(slot: u16, game: &mut Game) {
 pub(crate) fn restore_sound(game: &mut Game) {
     feedback::restore_sound(&mut Runtime::new(game));
 }
-pub(crate) use preparation::deselect as deselect_owned;
 pub(crate) fn initialize(
     slot: u16,
     kind: sm_game::projectile_initialization::Initialization,

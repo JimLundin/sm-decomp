@@ -5,7 +5,7 @@ use super::{
     state::*,
 };
 use {
-    crate::game::player_projectiles,
+    sm_game::player_projectiles,
     sm_game::{
         samus_palette, session::Session, visual_host::Effects as VisualEffects,
         visual_state::PaletteBuffer,
@@ -90,7 +90,7 @@ pub(crate) fn command<H: Host + player_projectiles::host::Host>(
                     VisualEffects::sound(h, 1, 15, 2);
                 }
             }
-            player_projectiles::deselect_owned(h);
+            player_projectiles::preparation::deselect(h);
             0
         }
         5 | 0x18 => {
@@ -102,7 +102,7 @@ pub(crate) fn command<H: Host + player_projectiles::host::Host>(
             h.session_mut().player.pose = 0x54;
             h.session_mut().player.transitions.animation_skip = AnimationSkip::from_raw(0);
             finish_pose_change(h);
-            player_projectiles::deselect_owned(h);
+            player_projectiles::preparation::deselect(h);
             handlers(h.session_mut(), 0xe713, FrameBetaMode::Drained);
             1
         }
@@ -215,7 +215,7 @@ pub(crate) fn command<H: Host + player_projectiles::host::Host>(
         }
         0x15 => {
             record_pose_history(h.session_mut());
-            player_projectiles::deselect_owned(h);
+            player_projectiles::preparation::deselect(h);
             frozen(h.session_mut());
             1
         }

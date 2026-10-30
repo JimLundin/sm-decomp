@@ -93,7 +93,7 @@ fn spit<A: Host>(_k: u16, jp: EnemyScript, h: &mut A) -> EnemyScript {
     });
     if let Some(index) = shot {
         let selected = h.session().actors.controls.selected;
-        crate::game::enemy_projectiles::lifecycle::spawn_from_enemy(
+        sm_game::enemy_projectiles::lifecycle::spawn_from_enemy(
             h,
             index,
             selected,

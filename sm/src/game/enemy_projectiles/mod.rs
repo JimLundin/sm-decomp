@@ -14,7 +14,6 @@ use sm_game::enemy_projectiles::attachments_spore_maw;
 mod attachments_spore_maw_facade;
 use sm_game::enemy_projectiles::attachments_waffle_botwoon;
 mod attachments_waffle_botwoon_facade;
-pub(crate) use drops::reset_room_metadata as reset_room_metadata_owned;
 use sm_game::enemy_projectiles::collision;
 use sm_game::enemy_projectiles::commands;
 use sm_game::enemy_projectiles::contact;

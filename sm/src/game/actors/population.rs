@@ -213,7 +213,7 @@ pub(in crate::game) fn install_population<H: ActorHost + sm_game::enemy_projecti
     h.session_mut().actors.controls.population_count = 0;
     h.session_mut().room.enemy_deaths = 0;
     h.session_mut().actors.controls.process_all = 0;
-    crate::game::enemy_projectiles::reset_room_metadata_owned(h);
+    sm_game::enemy_projectiles::drops::reset_room_metadata(h);
     let mut cursor = super::content::PopulationCursor::Legacy {
         bank: 0xa1,
         address: h.session().room.entry.enemy_population_key,

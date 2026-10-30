@@ -12,7 +12,10 @@ use super::{
 use sm_game::actors::state::Actor;
 use sm_game::geometry::Point;
 use {
-    crate::game::enemy_projectiles::{lifecycle, set_shot_direction, shot_word},
+    sm_game::enemy_projectiles::{
+        access::{set_shot_direction, shot_word},
+        lifecycle,
+    },
     sm_game::{
         combat_rules::{
             self as rules, GrappleOutcome, HealthResponse, LatchMode, Shot, ShotResponse,

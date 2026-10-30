@@ -206,7 +206,7 @@ impl Effects for Runtime<'_> {
         self.foreign(|game| crate::game::save_slots::save(slot, game));
     }
     fn enemy_projectile(&mut self, definition: u16, parameter: u16) {
-        crate::game::enemy_projectiles::lifecycle::spawn_room(self, definition, parameter);
+        sm_game::enemy_projectiles::lifecycle::spawn_room(self, definition, parameter);
     }
     fn wake_projectile_for_block(&mut self, block: u16) {
         if let Some(slot) = self
