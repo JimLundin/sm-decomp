@@ -468,19 +468,11 @@ fn next_demo<H: Host>(game: &mut H) -> CoroutineRet {
     } else if word!(game.SUBSTATE) != 0 {
         game.load_title_sequence_graphics();
         word!(game.EPROJ_X_POS[4] = 2);
-        crate::flow::set(
-            game,
-            crate::flow::Word::CinematicFunction,
-            (0x8b9a47i32) as u16,
-        );
+        crate::flow::set(game, crate::flow::Word::CinematicFunction, 0x9a47);
     } else {
         game.queue_music_delayed8(0);
         word!(game.DEBUG_DISABLE_SOUNDS = 0);
-        crate::flow::set(
-            game,
-            crate::flow::Word::CinematicFunction,
-            (0x8b9b68i32) as u16,
-        );
+        crate::flow::set(game, crate::flow::Word::CinematicFunction, 0x9b68);
     }
     0
 }
@@ -621,11 +613,7 @@ fn exit_time_up<H: Host>(game: &mut H) -> CoroutineRet {
             word!(game.GAME_STATE = K_GAME_STATE_25_SAMUS_NO_HEALTH as u16);
         } else {
             word!(game.GAME_STATE = K_GAME_STATE_37_CERES_GOES_BOOM_WITH_SAMUS as u16);
-            crate::flow::set(
-                game,
-                crate::flow::Word::CinematicFunction,
-                (0x8bc11bi32) as u16,
-            );
+            crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xc11b);
         }
     }
     0
@@ -838,19 +826,11 @@ fn finish_pass<H: Host>(entry: Entry, game: &mut H) {
                     word!(game.LOADING_GAME_STATE = K_LOADING_GAME_STATE_22_ESCAPING_CERES as u16);
                     word!(game.GAME_STATE = 34);
                     save_slots::save(word!(game.SELECTED_SAVE_SLOT), game);
-                    crate::flow::set(
-                        game,
-                        crate::flow::Word::CinematicFunction,
-                        (0x8bc11bi32) as u16,
-                    );
+                    crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xc11b);
                     word! { game, 0; CERES_STATUS, TIMER_STATUS }
                 } else {
                     word!(game.GAME_STATE = K_GAME_STATE_39_ENDING_AND_CREDITS as u16);
-                    crate::flow::set(
-                        game,
-                        crate::flow::Word::CinematicFunction,
-                        (0x8bd480i32) as u16,
-                    );
+                    crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xd480);
                     word!(game.TIMER_STATUS = 0);
                 }
                 game.queue_music_delayed8(0);

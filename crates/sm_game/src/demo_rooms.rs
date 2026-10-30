@@ -49,11 +49,7 @@ fn scene<H: crate::menus::host::Host + ?Sized>(game: &H, address: u16) -> Option
 
 pub fn reset<H: crate::menus::host::Host + ?Sized>(game: &mut H) -> u8 {
     word! { game, 0; UNUSED_WORD_7E0DF8, UNUSED_WORD_7E0DFA, UNUSED_WORD_7E0DFC }
-    crate::flow::set(
-        game,
-        crate::flow::Word::CinematicFunction,
-        (0x8b9b68i32) as u16,
-    );
+    crate::flow::set(game, crate::flow::Word::CinematicFunction, 0x9b68);
     crate::flow::set(game, crate::flow::Word::DemoSet, 0);
     if crate::flow::current(game).num_demo_sets == 4 {
         crate::flow::set(game, crate::flow::Word::DemoSet, 3);

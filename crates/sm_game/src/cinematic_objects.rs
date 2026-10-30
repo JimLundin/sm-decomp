@@ -196,10 +196,10 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             },
             9150233 => {
             crate::flow::set(game, crate::flow::Word::DemoTimer, 900);
-    crate::flow::set(game, crate::flow::Word::CinematicFunction, (0x8b9f29i32) as u16);
+    crate::flow::set(game, crate::flow::Word::CinematicFunction, 0x9f29);
             },
             9158818 => {
-            crate::flow::set(game, crate::flow::Word::CinematicFunction, (0x8bc0c5i32) as u16);
+            crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xc0c5);
             crate::screen_fade::set_both(game, 1, 1);
             },
             // The instruction's own address is in A at $F51D.
@@ -237,7 +237,7 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             game.ram().write_byte(0x5d, 100);
             game.ram().write_byte(0x59, 84);
             word!(game.CINEMATIC_FUNCTION_TIMER = 0);
-    crate::flow::set(game, crate::flow::Word::CinematicFunction, (0x8be58ai32) as u16);
+    crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xe58a);
                 },
             9171588 => {
             game.spawn_palette_effect(ending_effect::ZEBES_FADE_OUT);
@@ -268,16 +268,16 @@ pub fn execute_cinematic_sprite_instruction<H: crate::menus::host::Host + ?Sized
             game.ram().write_byte(0x6b, 0);
             word! { game, 0x7fff; PALETTE_BUFFER[0], PALETTE_BUFFER[128] }
             crate::word_transfers!(game, descending, 16; le(PALETTE_BUFFER, 31) <- value(0x7fff));
-            crate::flow::set(game, crate::flow::Word::CinematicFunction, (0x8bdb9ei32) as u16);
+            crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xdb9e);
     word!(game.CINEMATIC_FUNCTION_TIMER = 120);
                 },
             9172040 => {
             crate::screen_fade::set_both(game, 0, 0);
-            crate::flow::set(game, crate::flow::Word::CinematicFunction, (0x8bde64i32) as u16);
+            crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xde64);
                 },
             9172484 => {
             word!(game.CINEMATICBG_ARR9[(k >> 1)] = 3584);
-            crate::flow::set(game, crate::flow::Word::CinematicFunction, (0x8be3aei32) as u16);
+            crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xe3ae);
             set_cinematic_blend(17, 16, 2, -127i32 as u8, game);
             word! {game; CINEMATIC_X = -4i32 as u16; CINEMATIC_Y = -8i32 as u16;
                 CINEMATIC_FUNCTION_TIMER = 16; }
