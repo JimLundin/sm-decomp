@@ -6,7 +6,7 @@ use crate::actors::api::{self, Axis, MovementResult};
 use crate::actors::combat;
 use crate::enemy_projectiles::host::Effects;
 use crate::enemy_script::EnemyScript;
-use crate::ram::{CompatibilityRam, word, word_arrays as arrays, words as fields};
+use crate::ram::{CompatibilityRam, word_arrays as arrays, words as fields};
 use crate::session_access::SessionAccess;
 use sm_data::cartridge::RomRecord;
 
@@ -466,10 +466,10 @@ fn flinch_from_projectile<G: Pirates + ?Sized>(walking: bool, game: &mut G) -> b
     true
 }
 
-fn fire_laser<G: Pirates + ?Sized>(index: u16, right: bool, height: u16, game: &mut G) {
+fn fire_laser<G: Pirates + ?Sized>(right: bool, height: u16, game: &mut G) {
     let (x, y) = {
         let runtime = game.lease();
-        let actor = runtime.resolve_actor(Key::from_legacy(index), Native);
+        let actor = runtime.resolve_actor(current(&runtime), Native);
         (
             offset_x(actor.x.whole, 24, right),
             actor.y.whole.wrapping_sub(height),
@@ -1010,13 +1010,13 @@ pub fn dispatch_instruction<G: Pirates + ?Sized>(
                 .resolve_actor(Key::from_legacy(index), Native)
                 .definition;
             let value = runtime.legacy_native_record(0xa0, definition).word(6);
-            runtime.write_word_le(value, fields::CINEMATIC_X);
+            runtime.write_word_le(value, fields::EPROJ_INIT_PARAM_1);
             drop(runtime);
-            fire_laser(index, false, 16, game);
+            fire_laser(false, 16, game);
             script
         }
         instruction::FIRE_LASER_RIGHT => {
-            fire_laser(word!(game.CUR_ENEMY_INDEX), true, 16, game);
+            fire_laser(true, 16, game);
             script
         }
         instruction::WALL_SET_FUNCTION
@@ -1071,7 +1071,6 @@ pub fn dispatch_instruction<G: Pirates + ?Sized>(
         instruction::FIRE_LASER_LEFT_WITH_Y_OFFSET
         | instruction::FIRE_LASER_RIGHT_WITH_Y_OFFSET => {
             fire_laser(
-                word!(game.CUR_ENEMY_INDEX),
                 ea == instruction::FIRE_LASER_RIGHT_WITH_Y_OFFSET,
                 script.word(0),
                 game,
