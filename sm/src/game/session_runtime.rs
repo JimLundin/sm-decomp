@@ -1117,8 +1117,8 @@ impl Runtime<'_> {
 use crate::game::actors::{self, api as actor_api};
 use crate::game::moving_platforms::{self as mechanisms, Event, Kind};
 use crate::game::rippers::{self, Kind as RipperKind};
+use crate::game::sm_a9;
 use crate::game::{ground_patrol, large_snail};
-use crate::game::{sm_a6, sm_a9};
 use crate::types::EnemyData;
 use sm_game::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
 use sm_game::combat_rules::LatchMode;
@@ -1183,9 +1183,6 @@ crate::game::callback_dispatch! {
 
 
         10914607 => crate::game::spikey_platforms::initialize; 10914733 => crate::game::spikey_platforms::run;
-        10920181 => sm_a6::CeresRidley_Init; 10920584 => sm_a6::CeresRidley_Main;
-        10924583 => sm_a6::Ridley_Main;
-        10924682 => sm_a6::Ridley_Func_2; 10924695 => sm_a6::Ridley_Hurt;
 
 
 
@@ -1372,7 +1369,6 @@ crate::game::callback_dispatch! {
         10874348 => [actors::spore_spawn::touch(game)];
         10915836 => [crate::game::fire_geysers::initialize(game)];
         10915875 => [crate::game::fire_geysers::run(game)];
-        0xa60000..=0xa6ffff => [sm_a6::DispatchEnemyAi(ea, game)];
         0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyAi(ea, game)];
         0xb30000..=0xb3ffff => [{ crate::rtl::Unreachable(game); }];
     }
@@ -1566,7 +1562,6 @@ crate::game::callback_dispatch! {
         10942128 => [crate::game::ceres_doors::mark_open(k, false, j, game)];
         10942131 => [crate::game::ceres_doors::change_properties(k, 0, crate::game::ceres_doors::INVISIBLE, j, game)];
         10942141 => [crate::game::ceres_doors::play_open_sound(j, game)];
-        0xa60000..=0xa6ffff => [sm_a6::DispatchEnemyInstr(ea, k, j, game)];
 
         0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyInstr(ea, k, j, game)];
         11174004 => [{ crate::ram_map::slot!(game, EnemyData[k as i32].ai_preinstr = (0xaa807bi32) as u16); j }];

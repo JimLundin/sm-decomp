@@ -203,7 +203,7 @@ pub fn main<H: Host + ?Sized>(game: &mut H) {
     let game = &mut lease;
     session_slot!(game, Ridley[RIDLEY].base.health = 0x7fff);
     let function = session_slot!(game, Ridley[RIDLEY].function);
-    run_function_on(game, function);
+    run_function(game, function);
     if word!(game.ceres_status) == 0 {
         let moving = session_slot!(game, Ridley[RIDLEY].movement_enabled) != 0;
         if moving {
@@ -225,9 +225,20 @@ pub fn main<H: Host + ?Sized>(game: &mut H) {
     }
 }
 
-/// Run the bank $A6 function `function`, as `CallRidleyFunc` does: Ceres
-/// Ridley's on this lease, the rest on the game.
-fn run_function_on<L: BossLease + ?Sized>(game: &mut L, function: u16)
+/// Run the bank $A6 Ridley function `function`, Ceres Ridley's or Norfair
+/// Ridley's, on this lease. Was `CallRidleyFunc`.
+pub fn run_function<L: BossLease + ?Sized>(game: &mut L, function: u16)
+where
+    L::Game: Host,
+{
+    if !run_ceres_function(game, function) && !ridley::run_ridley_function(game, function) {
+        game.foreign(|game| game.unreachable());
+    }
+}
+
+/// Run Ceres Ridley's bank $A6 function `function`; false when it is not one
+/// of his.
+fn run_ceres_function<L: BossLease + ?Sized>(game: &mut L, function: u16) -> bool
 where
     L::Game: Host,
 {
@@ -259,8 +270,9 @@ where
         f::GETAWAY => {}
         f::SELF_DESTRUCT_ACTIVATED => self_destruct_activated(game),
         f::SELF_DESTRUCT_ACTIVATING => self_destruct_activating(game),
-        _ => game.foreign(|game| game.run_function(function)),
+        _ => return false,
     }
+    true
 }
 
 /// Randomly update Ridley tail curliness ($A6:A2BD): the ideal inter-segment

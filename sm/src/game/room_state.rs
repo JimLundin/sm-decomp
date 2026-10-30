@@ -590,7 +590,7 @@ unsafe fn advance_script(address: u32, h: &mut Runtime<'_>) {
             }
             9430385 => {
                 if h.word(ram::ceres_status) & 1 != 0 {
-                    h.foreign(|game| crate::game::sm_a6::HandleCeresRidleyGetawayCutscene(game));
+                    h.foreign(sm_game::actors::ceres_ridley::handle_getaway_if_active);
                 }
             }
             9430396 => {

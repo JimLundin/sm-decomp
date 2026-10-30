@@ -348,7 +348,7 @@ impl sm_game::actors::mother_brain_fight::Host for Game {
     }
 
     fn ridley_func_98(&mut self) {
-        crate::game::sm_a6::Ridley_Func_98(self);
+        sm_game::actors::ridley::deal_contact_damage(self);
     }
 
     fn move_samus_horizontally_towards_wall(&mut self, amount: u16) -> u8 {

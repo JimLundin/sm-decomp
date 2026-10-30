@@ -627,9 +627,8 @@ impl sm_game::actors::dachora_run::Host for Game {
     }
 }
 
-// The named bank $A6 functions are the ones `CallRidleyFunc` and
-// `CallRidleyFunc_var40` dispatch on; the two RTS terminators and Ceres
-// Ridley's targets are its other IDs.
+// The named bank $A6 functions are the decompilation's; the two RTS
+// terminators are its locret labels.
 const _: () = {
     use sm_game::actors::ridley::{baby_metroid_function as b, function as f};
     const fn at(word: u16) -> u32 {
@@ -657,14 +656,17 @@ const _: () = {
     assert!(at(f::LOWER_ACID_AND_RELEASE_SAMUS) == 10929544);
     assert!(at(f::START_FALLING_APART) == 10929576 && at(f::FALLING_APART) == 10929608);
     assert!(at(f::STILL_FALLING_APART) == 10929626);
-    assert!(at(b::NOTHING) == 10927897 && f::DEAD == crate::game::sm_a6::addr_locret_A6C600 as u16);
+    assert!(
+        at(b::NOTHING) == 10927897
+            && f::DEAD == crate::game::constants::bank_a6::addr_locret_A6C600 as u16
+    );
     assert!(at(f::CERES_LIFTOFF_ACCELERATING) == 10921647);
     assert!(at(f::CERES_REAL_RETREAT_RISING) == 10922353);
 };
 
 // The named instruction lists and tables are the decompilation's addresses.
 const _: () = {
-    use crate::game::sm_a6::*;
+    use crate::game::constants::bank_a6::*;
     use sm_game::actors::ridley::{
         actions, explosion_instruction_list as e, instruction_list as l, tail_data as t,
     };
@@ -697,19 +699,7 @@ const _: () = {
 
 impl sm_game::actors::ridley::Host for Game {
     fn run_function(&mut self, function: u16) {
-        crate::game::sm_a6::CallRidleyFunc(0xa6_0000 | u32::from(function), self);
-    }
-
-    fn run_baby_metroid_function(&mut self, function: u16) {
-        crate::game::sm_a6::CallRidleyFunc_var40(0xa6_0000 | u32::from(function), self);
-    }
-
-    fn run_baby_metroid_instruction(&mut self, instruction: u16, arguments: u16) -> u16 {
-        crate::game::sm_a6::CallBabyMetroidInstr(
-            0xa6_0000 | u32::from(instruction),
-            arguments,
-            self,
-        )
+        sm_game::actors::ceres_ridley::run_function(self, function);
     }
 
     fn spawn_population(&mut self, bank: u8, population: u16) -> u16 {
@@ -733,7 +723,7 @@ impl sm_game::actors::ridley::Host for Game {
     }
 
     fn warn_x_undefined(&mut self) {
-        crate::game::sm_a6::warn_x_undefined();
+        crate::c_library::print(c"Warning: X undefined\n");
     }
 
     fn move_liquid(&mut self, target: u16, velocity: u16, delay: u16) {
@@ -745,8 +735,8 @@ impl sm_game::actors::ridley::Host for Game {
     }
 }
 
-// The named Ceres Ridley functions are the ones `CallRidleyFunc` dispatches
-// on; the getaway's RTS is its external ID.
+// The named Ceres Ridley functions are the decompilation's; the getaway's
+// RTS is its locret label.
 const _: () = {
     use sm_game::actors::ceres_ridley::ceres_function as f;
     const fn at(word: u16) -> u32 {
@@ -771,7 +761,7 @@ const _: () = {
 // The named Ceres instruction lists, palettes and populations are the
 // decompilation's addresses.
 const _: () = {
-    use crate::game::sm_a6::*;
+    use crate::game::constants::bank_a6::*;
     use sm_game::actors::ceres_ridley::{ceres_data as d, ceres_instruction_list as l};
     assert!(
         l::INITIAL == addr_kRidley_Ilist_E538 as u16 && l::LUNGE == addr_kRidley_Ilist_E548 as u16

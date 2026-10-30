@@ -4,7 +4,7 @@
 use crate::game::actors::reflec;
 use crate::game::actors::{self, api};
 use crate::game::session_runtime::Runtime;
-use crate::game::{sm_a6, sm_a9};
+use crate::game::sm_a9;
 use crate::game_state::Game;
 
 impl sm_game::actors::species::SpeciesHost for Game {
@@ -32,7 +32,7 @@ impl sm_game::actors::species::ShotHost for Game {
             Dud => api::create_dud(&mut Runtime::new(self)),
             LargeSnail => crate::game::large_snail::shot(self),
             SporeSpawn => actors::spore_spawn::shot(self),
-            Ridley => sm_a6::Ridley_Shot(self),
+            Ridley => sm_game::actors::ridley::shot(self),
             MotherBrainBody => sm_a9::MotherBrainsBody_Shot(self),
             MotherBrainBrain => sm_a9::MotherBrainsBrain_Shot(self),
         }
@@ -44,7 +44,9 @@ impl sm_game::actors::species::DrawHookHost for Game {
         use sm_game::actors::species::NativeDrawHook::*;
         match hook {
             ReflecPalette => reflec::cycle_palette(self),
-            CeresRidleyBabyMetroidAndWings => sm_a6::Ridley_A2F2(self),
+            CeresRidleyBabyMetroidAndWings => {
+                sm_game::actors::ridley::draw_baby_metroid_and_door(self)
+            }
             WreckedShipRobotPalette => crate::game::actors::wrecked_ship_robots::palette(self),
             BlueFaceBlockPalette => sm_game::actors::blue_brinstar_face_block::cycle_palette(self),
             MotherBrainBrainAndNeck => sm_a9::MotherBrain_DrawBrainNeck_EnemyGfxDrawHook(self),

@@ -65,3 +65,10 @@ unsafe extern "C" {
     pub fn strtoul(__nptr: *const c_char, __endptr: *mut *mut c_char, __base: i32) -> c_ulong;
     pub fn time(__timer: *mut time_t) -> time_t;
 }
+
+/// Print the fixed `message` through the C library's stdout, as the
+/// original's debug lines do.
+pub(crate) fn print(message: &core::ffi::CStr) {
+    // The message has no conversions, so printf reads only the message.
+    unsafe { printf(message.as_ptr()) };
+}

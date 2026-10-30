@@ -48,11 +48,6 @@ pub trait Host:
 {
     /// Run the bank $A6 Ridley function at `function`, Norfair's or Ceres's.
     fn run_function(&mut self, function: u16);
-    /// Run the bank $A6 baby metroid function at `function`.
-    fn run_baby_metroid_function(&mut self, function: u16);
-    /// Run the bank $A6 baby metroid instruction at `instruction`, whose
-    /// arguments start at `arguments`; the next instruction's address.
-    fn run_baby_metroid_instruction(&mut self, instruction: u16, arguments: u16) -> u16;
     /// Spawn the enemy population at `bank:population`.
     fn spawn_population(&mut self, bank: u8, population: u16) -> u16;
     /// Mark the current area's boss bits `mask` as defeated.
@@ -277,6 +272,34 @@ pub mod function {
     pub const CERES_LIFTOFF_ACCELERATING: u16 = 0xa6af;
     /// Ceres Ridley's real retreat, once he holds the baby metroid again.
     pub const CERES_REAL_RETREAT_RISING: u16 = 0xa971;
+}
+
+/// Bank $A6 baby metroid instructions.
+pub mod baby_metroid_instruction {
+    pub const GOTO_IF_STILL: u16 = 0xbfc9;
+    pub const LOAD_PALETTE: u16 = 0xbfe1;
+    pub const GOTO_IF_MOVING: u16 = 0xbff2;
+    pub const GOTO: u16 = 0xbff8;
+}
+
+/// Bank $A6 Ridley instructions.
+pub mod instruction {
+    pub const ROAR: u16 = 0xe4be;
+    pub const STOP_ROARING: u16 = 0xe4ca;
+    pub const GOTO_IF_SAMUS_HEALTH_LOW: u16 = 0xe4d2;
+    pub const GOTO_BY_HOLDING_SAMUS: u16 = 0xe4ee;
+    pub const GOTO_IF_NOT_HOLDING_SAMUS: u16 = 0xe4f8;
+    pub const SET_FEET_DISTANCE: u16 = 0xe501;
+    pub const GOTO_IF_NOT_FACING_LEFT: u16 = 0xe517;
+    pub const MOVE_BY: u16 = 0xe51f;
+    pub const FLIP_LEFT: u16 = 0xe71c;
+    pub const FACE_FORWARD: u16 = 0xe727;
+    pub const FLIP_RIGHT: u16 = 0xe72f;
+    pub const CALCULATE_FIREBALL_VELOCITIES: u16 = 0xe84d;
+    pub const FIREBALL_WITH_AFTERBURN: u16 = 0xe904;
+    pub const FIREBALL_WITHOUT_AFTERBURN: u16 = 0xe909;
+    pub const START_CERES_LIFTOFF: u16 = 0xe969;
+    pub const START_NORFAIR_LIFTOFF: u16 = 0xe976;
 }
 
 /// Bank $A6 baby metroid functions, stored in `baby_metroid_function`.
@@ -669,7 +692,9 @@ pub fn main<H: Host + ?Sized>(game: &mut H) {
     set_tangibility(lease);
     lunge_if_power_bomb(lease);
     let function = session_slot!(lease, Ridley[RIDLEY].function);
-    run_function_on(lease, function);
+    if !run_ridley_function(lease, function) {
+        lease.foreign(|game| game.run_function(function));
+    }
     if session_slot!(lease, Ridley[RIDLEY].movement_enabled) != 0 {
         hurt_flash(lease);
         move_ridley(lease);
@@ -688,9 +713,9 @@ pub fn main<H: Host + ?Sized>(game: &mut H) {
     health_palette(lease);
 }
 
-/// Run the bank $A6 function `function`, as `CallRidleyFunc` does: Ridley's
-/// on this lease, Ceres Ridley's and the rest on the game.
-fn run_function_on<L: BossLease + ?Sized>(game: &mut L, function: u16)
+/// Run Ridley's bank $A6 function `function` on this lease; false when it
+/// is not one of Norfair Ridley's.
+pub(crate) fn run_ridley_function<L: BossLease + ?Sized>(game: &mut L, function: u16) -> bool
 where
     L::Game: Host,
 {
@@ -731,8 +756,9 @@ where
         function::FALLING_APART => falling_apart(game),
         function::STILL_FALLING_APART => still_falling_apart(game),
         function::DEAD => {}
-        _ => game.foreign(|game| game.run_function(function)),
+        _ => return false,
     }
+    true
 }
 
 /// Time is frozen AI - enemy $E17F (Ridley) ($A6:B28A). Was `Ridley_Func_2`.
@@ -1857,14 +1883,75 @@ where
     false
 }
 
+/// Run the bank $A6 baby metroid instruction `instruction`, whose arguments
+/// start at `arguments`; the next instruction's address.
+fn run_baby_metroid_instruction<L: BossLease + ?Sized>(
+    game: &mut L,
+    instruction: u16,
+    arguments: u16,
+) -> u16
+where
+    L::Game: Host,
+{
+    match instruction {
+        baby_metroid_instruction::GOTO_IF_STILL => baby_metroid_goto_if_still(arguments, game),
+        baby_metroid_instruction::LOAD_PALETTE => baby_metroid_load_palette(arguments, game),
+        baby_metroid_instruction::GOTO_IF_MOVING => baby_metroid_goto_if_moving(arguments, game),
+        baby_metroid_instruction::GOTO => baby_metroid_goto(arguments, game),
+        _ => {
+            game.foreign(|game| game.unreachable());
+            0
+        }
+    }
+}
+
+/// Run Ridley's bank $A6 instruction at `ea` with its arguments at `script`;
+/// the script back when it is not one of his.
+pub fn instruction<L: BossLease + ?Sized>(
+    ea: u32,
+    script: EnemyScript,
+    game: &mut L,
+) -> Result<EnemyScript, EnemyScript>
+where
+    L::Game: Host,
+{
+    if ea >> 16 != 0xa6 {
+        return Err(script);
+    }
+    Ok(match ea as u16 {
+        instruction::ROAR => roar(script, game),
+        instruction::STOP_ROARING => stop_roaring(script, game),
+        instruction::GOTO_IF_SAMUS_HEALTH_LOW => goto_if_samus_health_low(script, game),
+        instruction::GOTO_BY_HOLDING_SAMUS => goto_by_holding_samus(script, game),
+        instruction::GOTO_IF_NOT_HOLDING_SAMUS => goto_if_not_holding_samus(script, game),
+        instruction::SET_FEET_DISTANCE => set_feet_distance(script, game),
+        instruction::GOTO_IF_NOT_FACING_LEFT => goto_if_not_facing_left(script, game),
+        instruction::MOVE_BY => move_by(script, game),
+        instruction::FLIP_LEFT => flip_left(script, game),
+        instruction::FACE_FORWARD => face_forward(script, game),
+        instruction::FLIP_RIGHT => flip_right(script, game),
+        instruction::CALCULATE_FIREBALL_VELOCITIES => calculate_fireball_velocities(script, game),
+        instruction::FIREBALL_WITH_AFTERBURN => fireball_with_afterburn(script, game),
+        instruction::FIREBALL_WITHOUT_AFTERBURN => fireball_without_afterburn(script, game),
+        instruction::START_CERES_LIFTOFF => start_ceres_liftoff(script, game),
+        instruction::START_NORFAIR_LIFTOFF => start_norfair_liftoff(script, game),
+        _ => return Err(script),
+    })
+}
+
 /// Execute baby metroid function ($A6:BE93). Was `Ridley_Func_49`.
 pub fn run_baby_metroid_function<L: BossLease + ?Sized>(game: &mut L)
 where
     L::Game: Host,
 {
-    game.foreign(|game| {
-        game.run_baby_metroid_function(session_slot!(game, Ridley[RIDLEY].baby_metroid_function))
-    });
+    match session_slot!(game, Ridley[RIDLEY].baby_metroid_function) {
+        baby_metroid_function::HELD => baby_metroid_held(game),
+        baby_metroid_function::HELD_BY_FEET => baby_metroid_held_by_feet(game),
+        baby_metroid_function::START_FALLING => baby_metroid_start_falling(game),
+        baby_metroid_function::FALLING => baby_metroid_falling(game),
+        baby_metroid_function::NOTHING => {}
+        _ => game.foreign(|game| game.unreachable()),
+    }
 }
 
 /// Baby metroid function - held by Ridley ($A6:BE9C). Was `Ridley_Func_50`.
@@ -3706,9 +3793,7 @@ where
     }
     loop {
         if instruction {
-            cursor = game.foreign(|game| {
-                game.run_baby_metroid_instruction(entry.word(0), cursor.wrapping_add(2))
-            });
+            cursor = run_baby_metroid_instruction(game, entry.word(0), cursor.wrapping_add(2));
             instruction = false;
         } else {
             entry = crate::cartridge::native_record(0xa6, cursor, game);
