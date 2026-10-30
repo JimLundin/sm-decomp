@@ -29,6 +29,7 @@ pub mod hdma_objects;
 pub mod intro_palette;
 pub mod kraid;
 pub mod magdollite;
+pub mod menu_lists;
 pub mod message;
 pub mod mother_brain;
 pub mod pause_menu;

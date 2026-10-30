@@ -345,6 +345,76 @@ fn records_import_from_the_original_rom() {
             2 * boss_lists::DACHORA_PALETTE_STEPS
         ))
     );
+    check!(
+        "menu_lists::AREA_SELECT_COLOURS",
+        table::words::<{ menu_lists::AREA_SELECT_COLOUR_WORDS }>(&at(
+            menu_lists::AREA_SELECT_COLOURS,
+            2 * menu_lists::AREA_SELECT_COLOUR_WORDS
+        ))
+    );
+    check!(
+        "menu_lists::BINDING_DESTINATIONS",
+        table::words::<{ menu_lists::BINDING_ROWS }>(&at(
+            menu_lists::BINDING_DESTINATIONS,
+            2 * menu_lists::BINDING_ROWS
+        ))
+    );
+    check!(
+        "menu_lists::BINDING_BUTTON_TILEMAPS",
+        table::words::<{ menu_lists::BINDING_ROWS }>(&at(
+            menu_lists::BINDING_BUTTON_TILEMAPS,
+            2 * menu_lists::BINDING_ROWS
+        ))
+    );
+    check!(
+        "menu_lists::EQUIPMENT_BITS",
+        table::words::<{ menu_lists::EQUIPMENT_BIT_WORDS }>(&at(
+            menu_lists::EQUIPMENT_BITS,
+            2 * menu_lists::EQUIPMENT_BIT_WORDS
+        ))
+    );
+    check!(
+        "menu_lists::RESERVE_TANK_DESTINATIONS",
+        table::words::<{ menu_lists::RESERVE_TANKS }>(&at(
+            menu_lists::RESERVE_TANK_DESTINATIONS,
+            2 * menu_lists::RESERVE_TANKS
+        ))
+    );
+    check!(
+        "menu_lists::RESERVE_TANK_TILEMAPS",
+        table::words::<{ menu_lists::RESERVE_TANKS }>(&at(
+            menu_lists::RESERVE_TANK_TILEMAPS,
+            2 * menu_lists::RESERVE_TANKS
+        ))
+    );
+    check!(
+        "menu_lists::EQUIPMENT_TILEMAPS",
+        table::words::<{ menu_lists::EQUIPMENT_TILEMAP_WORDS }>(&at(
+            menu_lists::EQUIPMENT_TILEMAPS,
+            2 * menu_lists::EQUIPMENT_TILEMAP_WORDS
+        ))
+    );
+    check!(
+        "menu_lists::HYPER_BEAM_TILEMAPS",
+        table::words::<{ menu_lists::HYPER_BEAM_WEAPONS }>(&at(
+            menu_lists::HYPER_BEAM_TILEMAPS,
+            2 * menu_lists::HYPER_BEAM_WEAPONS
+        ))
+    );
+    check!(
+        "menu_lists::WIREFRAME_SUITS",
+        table::words::<{ menu_lists::WIREFRAMES }>(&at(
+            menu_lists::WIREFRAME_SUITS,
+            2 * menu_lists::WIREFRAMES
+        ))
+    );
+    check!(
+        "menu_lists::WIREFRAME_TILEMAPS",
+        table::words::<{ menu_lists::WIREFRAMES }>(&at(
+            menu_lists::WIREFRAME_TILEMAPS,
+            2 * menu_lists::WIREFRAMES
+        ))
+    );
     assert!(
         failures.is_empty(),
         "rejected the original ROM: {failures:?}"

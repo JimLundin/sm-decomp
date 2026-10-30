@@ -192,8 +192,7 @@ fn text_word<H: Host + ?Sized>(address: u16, game: &mut H) -> u16 {
 }
 
 pub fn area_label<H: Host + ?Sized>(game: &mut H) {
-    let address =
-        crate::cartridge::rom_table_word!(game, 0x82965f, word!(game.area_index) as isize);
+    let address = crate::gameplay_tables::area_label(game, word!(game.area_index) as isize);
     let label = native_record(0x820000 | u32::from(address), game);
     for index in 0..12 {
         let tile = label.word(2 * index) & 0xefff;
@@ -303,7 +302,7 @@ fn copy_area_colors<H: Host + ?Sized>(mut source: u16, mut destination: u16, gam
     for _ in 0..5 {
         word!(
             game.palette_buffer[destination >> 1] =
-                crate::cartridge::rom_table_word!(game, 0x81a40e, (source >> 1) as isize)
+                crate::menu_lists::area_select_colour(game, (source >> 1) as isize)
         );
         destination = destination.wrapping_add(2);
         source = source.wrapping_add(2);
@@ -316,12 +315,11 @@ pub fn clear<H: Host + ?Sized>(game: &mut H) {
 
 pub fn controller_bindings<H: Host + ?Sized>(game: &mut H) {
     for index in 0..7 {
-        let destination = crate::cartridge::rom_table_word!(game, 0x82f639, index);
+        let destination = crate::menu_lists::binding_destination(game, index);
         let address = 0x820000
-            | u32::from(crate::cartridge::rom_table_word!(
+            | u32::from(crate::menu_lists::binding_button_tilemap(
                 game,
-                0x82f647,
-                word!(game.eproj_F[index + 13]) as isize
+                word!(game.eproj_F[index + 13]) as isize,
             ));
         if address & 0x8000 == 0 {
             game.invalid_window(address);
@@ -431,8 +429,8 @@ pub fn recolor_native<H: Host + ?Sized>(
 pub fn equipment_icons<H: Host + ?Sized>(game: &mut H) {
     if word!(game.samus_max_reserve_health) != 0 {
         for index in 0..2 {
-            let destination = crate::cartridge::rom_table_word!(game, 0x82c068, index) as usize;
-            let source = crate::cartridge::rom_table_word!(game, 0x82c088, index);
+            let destination = crate::menu_lists::reserve_tank_destination(game, index) as usize;
+            let source = crate::menu_lists::reserve_tank_tilemap(game, index);
             copy_native_tiles(destination, source, 14, game);
         }
     }
@@ -452,16 +450,16 @@ pub fn equipment_icons<H: Host + ?Sized>(game: &mut H) {
         for index in 0..if hyper { 5 } else { count } {
             let destination = destinations.word(2 * index) as usize;
             if hyper {
-                let source = crate::cartridge::rom_table_word!(game, 0x82c0a8, index as isize);
+                let source = crate::menu_lists::hyper_beam_tilemap(game, index as isize);
                 copy_native_tiles(destination, source, 10, game);
             } else if at!(game, collected;)
-                & crate::cartridge::rom_table_word!(game, masks, index as isize)
+                & crate::menu_lists::equipment_bit(game, masks, index as isize)
                 != 0
             {
-                let source = crate::cartridge::rom_table_word!(game, tiles, index as isize);
+                let source = crate::menu_lists::equipment_tilemap(game, tiles, index as isize);
                 copy_native_tiles(destination, source, bytes, game);
                 if at!(game, equipped;)
-                    & crate::cartridge::rom_table_word!(game, masks, index as isize)
+                    & crate::menu_lists::equipment_bit(game, masks, index as isize)
                     == 0
                 {
                     recolor_native(destination, 3072, bytes / 2, game);
@@ -511,11 +509,11 @@ pub fn prepare_equipment_frame<H: Host + ?Sized>(game: &mut H) {
 pub fn equipment_wireframe<H: Host + ?Sized>(game: &mut H) {
     let mut cursor = 0u16;
     while word!(game.equipped_items) & 0x101
-        != crate::cartridge::rom_table_word!(game, 0x82b257, (cursor >> 1) as isize)
+        != crate::menu_lists::wireframe_suit(game, (cursor >> 1) as isize)
     {
         cursor = cursor.wrapping_add(2);
     }
-    let address = crate::cartridge::rom_table_word!(game, 0x82b25f, (cursor >> 1) as isize);
+    let address = crate::menu_lists::wireframe_tilemap(game, (cursor >> 1) as isize);
     let record = native_record(0x820000 | u32::from(address), game);
     let mut offset = 0;
     wireframe_rows(

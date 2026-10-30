@@ -107,6 +107,7 @@ pub trait Host:
     + crate::cartridge::NativeDiagnostics
     + crate::decompression::DecompressionHost
     + MenuRuntime
+    + crate::records::Records
 {
     type Sram: SaveRam + ?Sized;
     fn sram(&self) -> &Self::Sram;
