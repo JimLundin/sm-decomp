@@ -2,15 +2,17 @@
 //! explosions around it as it dies (bank $A9:B03E-$A9:BD44).
 #![forbid(unsafe_code)]
 use crate::actors::layouts::{EnemyLayout72 as Body, part_view};
+use crate::actors::mother_brain_fight::{Lease, State};
+use crate::actors::session_slots::session_slot;
+use crate::cartridge::NativeDiagnostics;
 use crate::cartridge::native_record;
 use crate::cartridge::rom_table_word;
 use crate::palette_copies::copy_rom_colors_to_palette;
-use crate::ram::RawRam as _;
-use crate::ram::slot;
+use crate::ram::CompatibilityRam;
 use sm_data::cartridge::lorom_offset;
 
-/// What Mother Brain's effects need beyond the common actor host.
-pub trait Host: crate::actors::host::ActorHost + crate::effects::SoundEffects {
+/// What Mother Brain's effects still reach in the compatibility runtime.
+pub trait Host {
     /// Where the next enemy projectile spawns.
     fn set_projectile_spawn_point(&mut self, x: u16, y: u16);
     /// Spawn a death explosion of `kind` at the projectile spawn point.
@@ -72,7 +74,7 @@ const EXPLODING_SOUND: u8 = 0x13;
 
 /// Write Mother Brain palette ($A9:BD1D) from `source` in bank $AD. Was
 /// `MotherBrain_WritePalette`.
-pub fn write_palette(source: u16, game: &mut (impl Host + ?Sized)) {
+pub fn write_palette(source: u16, game: &mut (impl CompatibilityRam + NativeDiagnostics + ?Sized)) {
     copy_rom_colors_to_palette(BODY_PALETTE, PALETTE_BANK, source, COLORS, game);
     copy_rom_colors_to_palette(SPRITE_PALETTE_1, PALETTE_BANK, source, COLORS, game);
     copy_rom_colors_to_palette(
@@ -88,11 +90,11 @@ pub fn write_palette(source: u16, game: &mut (impl Host + ?Sized)) {
 /// follow the chain from the animation index to its next nonzero link, store
 /// the link plus 2 and write the palette it names. Was
 /// `MotherBrain_HandleRainbowBeamPalette`.
-pub fn handle_rainbow_palette(game: &mut (impl Host + ?Sized)) {
-    if slot!(game, Body[BODY].base.frame_counter) & RAINBOW_FRAME_BIT == 0 {
+pub fn handle_rainbow_palette(game: &mut (impl State + ?Sized)) {
+    if session_slot!(game, Body[BODY].base.frame_counter) & RAINBOW_FRAME_BIT == 0 {
         return;
     }
-    let mut cursor = slot!(game, Brain[BRAIN].rainbow_palette_index);
+    let mut cursor = session_slot!(game, Brain[BRAIN].rainbow_palette_index);
     let mut link;
     loop {
         link = cursor;
@@ -102,7 +104,7 @@ pub fn handle_rainbow_palette(game: &mut (impl Host + ?Sized)) {
         }
     }
     let next = link.wrapping_add(2);
-    slot!(game, Brain[BRAIN].rainbow_palette_index = next);
+    session_slot!(game, Brain[BRAIN].rainbow_palette_index = next);
     // The palette word is read from the native image two bytes before `next`.
     let image = game.native_image();
     let at = (lorom_offset(RAINBOW_PALETTES) + next as isize - 2) as usize;
@@ -116,19 +118,32 @@ pub fn handle_rainbow_palette(game: &mut (impl Host + ?Sized)) {
 /// interval timer; when it expires, restart it at `interval` and spawn `count`
 /// explosions at the next row of offsets, each kind drawn from the three words
 /// at `kinds`. Was `MotherBrain_GenerateExplosions`.
-pub fn generate_explosions(interval: u16, kinds: u16, count: u16, game: &mut (impl Host + ?Sized)) {
-    let timer = slot!(game, Brain[BRAIN].explosion_timer).wrapping_sub(1);
-    slot!(game, Brain[BRAIN].explosion_timer = timer);
+pub fn generate_explosions(interval: u16, kinds: u16, count: u16, game: &mut impl Lease) {
+    let timer = session_slot!(game, Brain[BRAIN].explosion_timer).wrapping_sub(1);
+    session_slot!(game, Brain[BRAIN].explosion_timer = timer);
     if (timer as i16) >= 0 {
         return;
     }
-    slot!(game, Brain[BRAIN].explosion_timer = interval);
-    let row = slot!(game, Brain[BRAIN].explosion_index).wrapping_sub(1);
-    slot!(game, Brain[BRAIN].explosion_index = row);
+    session_slot!(game, Brain[BRAIN].explosion_timer = interval);
+    let row = session_slot!(game, Brain[BRAIN].explosion_index).wrapping_sub(1);
+    session_slot!(game, Brain[BRAIN].explosion_index = row);
     if (row as i16) < 0 {
-        slot!(game, Brain[BRAIN].explosion_index = LAST_EXPLOSION_ROW);
+        session_slot!(game, Brain[BRAIN].explosion_index = LAST_EXPLOSION_ROW);
     }
-    let mut position = EXPLOSION_ROW_BYTES.wrapping_mul(slot!(game, Brain[BRAIN].explosion_index));
+    let position =
+        EXPLOSION_ROW_BYTES.wrapping_mul(session_slot!(game, Brain[BRAIN].explosion_index));
+    game.foreign(|game| spawn_explosions(position, kinds, count, game));
+    game.queue_sound(2, EXPLODING_SOUND, 3);
+}
+
+/// Spawns `count` explosions from offset row byte `position`, each kind
+/// drawn from the three words at `kinds`.
+fn spawn_explosions(
+    mut position: u16,
+    kinds: u16,
+    count: u16,
+    game: &mut (impl Host + crate::actors::host::ActorHost + ?Sized),
+) {
     let mut remaining = count;
     loop {
         let current = remaining;
@@ -152,5 +167,4 @@ pub fn generate_explosions(interval: u16, kinds: u16, count: u16, game: &mut (im
             break;
         }
     }
-    game.queue_sound(2, EXPLODING_SOUND, 3);
 }
