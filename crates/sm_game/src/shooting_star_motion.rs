@@ -29,7 +29,7 @@ pub fn initialize_shooting_stars<H: crate::menus::host::Host + ?Sized>(game: &mu
 }
 
 pub fn advance_shooting_stars<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
-    if word!(game.eproj_pre_instr[1]) == 0 {
+    if word!(game.shooting_stars_enabled) == 0 {
         return;
     }
     for at in (0xe0c..0x108c).step_by(16) {

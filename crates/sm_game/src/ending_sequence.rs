@@ -185,7 +185,7 @@ pub fn setup<H: Host + ?Sized>(game: &mut H) {
     game.clear_palette_effects();
     game.set_palette_effects_enabled(true);
     game.enable_display_nmi(true);
-    word!(game.eproj_pre_instr[1] = 0);
+    word!(game.shooting_stars_enabled = 0);
     set_cinematic_blend(17, 1, 2, 17, game);
     for parameter in 0..2 {
         crate::cinematic_objects::spawn_cinematic_burst(

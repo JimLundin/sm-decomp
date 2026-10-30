@@ -567,6 +567,13 @@ pub fn finish_pages<H: crate::menus::host::Host + ?Sized>(j: u16, game: &mut H) 
     }
 }
 
+// The text glow objects' tables, by byte offset (RAM map $19F7..$1A46).
+const GLOW_POINTERS: usize = crate::ram::word_arrays::text_glow_instruction_pointers;
+const GLOW_TIMERS: usize = crate::ram::word_arrays::text_glow_timers;
+const GLOW_X: usize = crate::ram::word_arrays::text_glow_x_positions;
+const GLOW_Y: usize = crate::ram::word_arrays::text_glow_y_positions;
+const GLOW_PALETTES: usize = crate::ram::word_arrays::text_glow_palettes;
+
 pub fn spawn_text_glow<H: crate::menus::host::Host + ?Sized>(
     definition: u16,
     position: u16,
@@ -574,13 +581,13 @@ pub fn spawn_text_glow<H: crate::menus::host::Host + ?Sized>(
 ) {
     for slot in (0..8usize).rev() {
         let offset = 2 * slot;
-        if checked_word!(game, 0x19f7 + offset;) == 0 {
-            crate::word_transfers!(game, ascending, 1; native(0x19f7 + offset) <- value(definition));
-            word! {game; eproj_pre_instr[slot + 2] = 1;
-            eproj_pre_instr[slot + 10] = position as u8 as u16; }
+        if checked_word!(game, GLOW_POINTERS + offset;) == 0 {
+            crate::word_transfers!(game, ascending, 1; native(GLOW_POINTERS + offset) <- value(definition));
+            word! {game; text_glow_timers[slot] = 1;
+            text_glow_x_positions[slot] = position as u8 as u16; }
             crate::word_transfers!(game, ascending, 1;
-                native(0x1a27 + offset) <- value(u16::from(position.to_ne_bytes()[1])),
-                native(0x1a37 + offset) <- value(0),
+                native(GLOW_Y + offset) <- value(u16::from(position.to_ne_bytes()[1])),
+                native(GLOW_PALETTES + offset) <- value(0),
             );
             return;
         }
@@ -592,7 +599,7 @@ pub fn advance_text_glow<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     let mut object = 14i32;
     while object >= 0 {
         word!(game.cinematic_var19 = object as u16);
-        if checked_word!(game, 0x19f7 + object as usize;) != 0 {
+        if checked_word!(game, GLOW_POINTERS + object as usize;) != 0 {
             advance_text_glow_object(game);
             object = i32::from(word!(game.cinematic_var19));
         }
@@ -603,22 +610,22 @@ pub fn advance_text_glow<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
 #[forbid(unsafe_code)]
 fn advance_text_glow_object<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     let object = usize::from(word!(game.cinematic_var19));
-    let timer_at = 0x1a07 + (object & !1);
+    let timer_at = GLOW_TIMERS + (object & !1);
     let timer = checked_word!(game, timer_at;);
     checked_word!(game, timer_at; = timer.wrapping_sub(1));
     if timer != 1 {
         return;
     }
     let palette = u16::from_ne_bytes([
-        game.ram().read_byte(0x1a37 + object),
-        game.ram().read_byte(0x1a38 + object),
+        game.ram().read_byte(GLOW_PALETTES + object),
+        game.ram().read_byte(GLOW_PALETTES + object + 1),
     ]);
     let definition = u16::from_ne_bytes([
-        game.ram().read_byte(0x19f7 + object),
-        game.ram().read_byte(0x19f8 + object),
+        game.ram().read_byte(GLOW_POINTERS + object),
+        game.ram().read_byte(GLOW_POINTERS + object + 1),
     ]);
-    let mut row = 2 * u16::from(game.ram().read_byte(0x1a17 + (object & !1)))
-        + 64 * u16::from(game.ram().read_byte(0x1a27 + object));
+    let mut row = 2 * u16::from(game.ram().read_byte(GLOW_X + (object & !1)))
+        + 64 * u16::from(game.ram().read_byte(GLOW_Y + object));
     let (width, mut rows) = {
         let definition = crate::menus::menu_tilemap::native_record(
             (0x8cu32 << 16) | u32::from(definition),
@@ -647,15 +654,15 @@ fn advance_text_glow_object<H: crate::menus::host::Host + ?Sized>(game: &mut H) 
     }
     // Retirement rereads the live selector after the ordered tile writes.
     let selected = usize::from(word!(game.cinematic_var19));
-    let phase_at = 0x1a37 + selected;
+    let phase_at = GLOW_PALETTES + selected;
     if u16::from_ne_bytes([
         game.ram().read_byte(phase_at),
         game.ram().read_byte(phase_at + 1),
     ]) == 3072
     {
-        crate::word_transfers!(game, ascending, 1; native(0x19f7 + selected) <- value(0));
+        crate::word_transfers!(game, ascending, 1; native(GLOW_POINTERS + selected) <- value(0));
     } else {
         checked_word!(game, phase_at; = checked_word!(game, phase_at;).wrapping_add(1024));
-        crate::word_transfers!(game, ascending, 1; native(0x1a07 + (selected & !1)) <- value(5));
+        crate::word_transfers!(game, ascending, 1; native(GLOW_TIMERS + (selected & !1)) <- value(5));
     }
 }

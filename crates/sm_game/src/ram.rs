@@ -619,8 +619,16 @@ ram_vars! {
         cinematic_enable_objs, cinematic_enable_bg_tilemap, cinematicbg_var3, cinematic_var21,
         cinematic_var22, cinematic_var23, cinematic_var24, cinematic_var25, cinematic_var26
     ];
+    // Bank $8C indirect instruction pointers; text glow is spawned by the
+    // intro text pages' BG objects.
+    0x019F7, uint16 Array => [text_glow_instruction_pointers];
     0x01A03, uint16 Array => [eproj_pre_instr];
     0x01A03, uint16 Array => ["eproj_pre_instr"];
+    // The ending's and intro's reuse of this region (RAM map, non-gameplay block).
+    0x01A03 stride 2, uint16 Scalar => [last_credits_update_y, shooting_stars_enabled];
+    0x01A07 stride 16, uint16 Array => [
+        text_glow_timers, text_glow_x_positions, text_glow_y_positions, text_glow_palettes
+    ];
     0x01A27, uint16 Array => [eproj_x_subpos];
     0x01A37, uint16 Scalar => [cinematic_var20];
     0x01A47 stride 2, uint16 Scalar => [cinematic_var19, cinematic_var4, cinematic_var13];

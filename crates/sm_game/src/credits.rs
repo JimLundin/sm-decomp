@@ -19,7 +19,7 @@ pub fn prepare_credit_roll<H: crate::menus::host::Host + ?Sized>(
     }
     word!(game.cinematicbg_var3 = 18432);
     word! { game, 0;
-        eproj_pre_instr[0], cinematic_var7, cinematic_var8, cinematic_var9, cinematic_var10,
+        last_credits_update_y, cinematic_var7, cinematic_var8, cinematic_var9, cinematic_var10,
     }
     word!(game.cinematic_var25 |= 0x8000);
     word! { game, 3; screen_fade_delay, screen_fade_counter }
@@ -36,13 +36,13 @@ pub fn advance_credit_roll<H: crate::menus::host::Host + ?Sized>(game: &mut H) -
     let whole = u16::from_le(word!(game.cinematic_var10)).wrapping_add(u16::from(carry));
     word!(game.cinematic_var9 = fraction.to_le());
     word!(game.cinematic_var10 = whole.to_le());
-    if (i32::from(word!(game.cinematic_var10)) - i32::from(word!(game.eproj_pre_instr[0])) - 8)
+    if (i32::from(word!(game.cinematic_var10)) - i32::from(word!(game.last_credits_update_y)) - 8)
         & 0x8000
         != 0
     {
         return true;
     }
-    word!(game.eproj_pre_instr[0] = word!(game.cinematic_var10));
+    word!(game.last_credits_update_y = word!(game.cinematic_var10));
     let mut cursor = word!(game.cinematic_var21);
     loop {
         let record = cinematic_native_record::<0x8c>(cursor, game);
@@ -76,7 +76,7 @@ pub fn advance_credit_roll<H: crate::menus::host::Host + ?Sized>(game: &mut H) -
                 word! { game, 0;
                     screen_fade_delay, screen_fade_counter, cinematic_var9, cinematic_var10,
                 }
-                word!(game.eproj_pre_instr[1] = 1);
+                word!(game.shooting_stars_enabled = 1);
                 crate::flow::set(game, crate::flow::Word::CinematicFunction, 0xe0f4);
                 word!(game.cinematic_var4 = 60);
             }
