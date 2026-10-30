@@ -24,7 +24,7 @@ const ARMS_OUT_INDEX: u16 = 0x68;
 /// The right swoop ends at X 2A0h.
 const RIGHT_END_X: i32 = 0x2a0;
 
-fn write_y_position<S: BossState + ?Sized>(index: u16, value: u16, game: &mut S) {
+fn write_y_position<S: BossState>(index: u16, value: u16, game: &mut S) {
     let at = SWOOP_Y_POSITIONS + usize::from(index);
     let bytes = value.to_ne_bytes();
     game.set_slot_byte(at, bytes[0]);
@@ -32,7 +32,7 @@ fn write_y_position<S: BossState + ?Sized>(index: u16, value: u16, game: &mut S)
 }
 /// Calculate Draygon swoop Y positions ($A5:8817): fall with the swoop Y
 /// acceleration to the reset Y, then set the X speed that reaches Samus.
-fn calculate_swoop_y_positions<L: Lease + ?Sized>(game: &mut L) {
+fn calculate_swoop_y_positions<L: Lease>(game: &mut L) {
     let (mut height, mut velocity, mut index) = (SWOOP_START_Y, 0u16, 0u16);
     loop {
         velocity = velocity.wrapping_add(session_slot!(game, Draygon[BODY].swoop_y_acceleration));
@@ -58,7 +58,7 @@ fn calculate_swoop_y_positions<L: Lease + ?Sized>(game: &mut L) {
 }
 /// Draygon body function - swoop right ($A5:87F4) or left ($A5:89B3) - setup.
 /// Was `begin`.
-pub fn swoop_setup<L: Lease + ?Sized>(right: bool, game: &mut L) {
+pub fn swoop_setup<L: Lease>(right: bool, game: &mut L) {
     if right {
         fire_wall_turret(game);
         calculate_swoop_y_positions(game);
@@ -88,7 +88,7 @@ pub fn swoop_setup<L: Lease + ?Sized>(right: bool, game: &mut L) {
 }
 /// Draygon body function - swoop right ($A5:8922) or left ($A5:8A50) - apex:
 /// set the X speed that reaches the far side in the swoop's duration. Was `turn`.
-pub fn swoop_apex<S: BossState + ?Sized>(right: bool, game: &mut S) {
+pub fn swoop_apex<S: BossState>(right: bool, game: &mut S) {
     fire_wall_turret(game);
     let count = u32::from(session_slot!(game, Draygon[BODY].swoop_duration) >> 2);
     let x = session_slot!(game, Draygon[BODY].base.x_pos) as i32;
@@ -116,7 +116,7 @@ pub fn swoop_apex<S: BossState + ?Sized>(right: bool, game: &mut S) {
 /// Draygon body function - swoop right or left - descending ($A5:88B1,
 /// $A5:8A00) or, with `ascending`, ascending ($A5:8951, $A5:8A90): follow the
 /// swoop Y positions, then pick the next attack. Was `advance`.
-pub fn swoop<L: Lease + ?Sized>(right: bool, ascending: bool, game: &mut L) {
+pub fn swoop<L: Lease>(right: bool, ascending: bool, game: &mut L) {
     fire_wall_turret(game);
     if !right || !ascending {
         body_bubble(game);

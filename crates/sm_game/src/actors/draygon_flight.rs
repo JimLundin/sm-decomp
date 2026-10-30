@@ -12,8 +12,7 @@ use crate::actors::host::BossEffects as _;
 use crate::actors::session_slots::session_slot;
 use crate::enemy_script::EnemyScript;
 use crate::ram::CompatibilityRam as _;
-use crate::ram::RawRam as _;
-use crate::ram::{slot, word};
+use crate::ram::word;
 
 /// Sprite object 3Dh: Draygon foaming at the mouth, 20h px ahead of and 10h
 /// px above the body.
@@ -65,7 +64,7 @@ const RIGHT_RESET_X: u16 = 0x250;
 const RESET_Y: u16 = 0xffb0;
 
 /// Start `part`'s left or right instruction list, by `facing_key`'s facing.
-pub fn facing_animation<S: BossState + ?Sized>(
+pub fn facing_animation<S: BossState>(
     facing_key: i32,
     part_key: i32,
     instructions: [u16; 2],
@@ -77,7 +76,7 @@ pub fn facing_animation<S: BossState + ?Sized>(
 }
 /// On frames matching `frame_mask`, Draygon foams at the mouth. Was
 /// `shed_particle`.
-pub fn foam_at_mouth<L: Lease + ?Sized>(k: u16, frame_mask: u16, game: &mut L) {
+pub fn foam_at_mouth<L: Lease>(k: u16, frame_mask: u16, game: &mut L) {
     if session_slot!(game, Draygon[k as i32].base.frame_counter) & frame_mask == 0 {
         let dx = if session_slot!(game, Draygon[BODY].facing_right) != 0 {
             FOAM_X
@@ -91,7 +90,7 @@ pub fn foam_at_mouth<L: Lease + ?Sized>(k: u16, frame_mask: u16, game: &mut L) {
 }
 /// Handle firing wall turret ($A5:87AA): every 40h frames, a random turret of
 /// the last four fires unless destroyed. Was `turret`.
-pub fn fire_wall_turret<S: BossState + ?Sized>(game: &mut S) {
+pub fn fire_wall_turret<S: BossState>(game: &mut S) {
     if word!(game.nmi_frame_counter_word) & TURRET_FRAMES == 0 {
         let index = 2 * ((game.roll_random() & 3) + 2);
         if session_slot!(game, Draygon[index as i32].turret_destroyed) == 0 {
@@ -104,7 +103,7 @@ pub fn fire_wall_turret<S: BossState + ?Sized>(game: &mut S) {
 }
 /// Draygon body function - fight intro: the initial delay ($A5:871B, with
 /// `first`) or the dance ($A5:878B). Was `opening`.
-pub fn fight_intro<L: Lease + ?Sized>(first: bool, game: &mut L) {
+pub fn fight_intro<L: Lease>(first: bool, game: &mut L) {
     fire_wall_turret(game);
     let limit = if first { INTRO_DELAY } else { INTRO_DANCE };
     if session_slot!(game, Draygon[BODY].function_timer).wrapping_sub(limit) & SIGN != 0 {
@@ -167,10 +166,10 @@ pub fn fight_intro<L: Lease + ?Sized>(first: bool, game: &mut L) {
 }
 /// Initialisation AI - Draygon body ($A5:8687). Actor preparation and
 /// completion surround the existing synchronous HDMA install seam.
-pub fn initialize<H: Host + ?Sized>(install_layers: impl FnOnce(&mut H), game: &mut H) {
+pub fn initialize<L: Lease>(install_layers: impl FnOnce(&mut L), game: &mut L) {
     crate::word_transfers!(game, descending, 25; le(target_palettes, 168) <- rom(TARGET_PALETTES, 24));
     crate::word_transfers!(game, descending, 2048; le(tilemap_stuff, 2047) <- value(824));
-    slot!(
+    session_slot!(
         game,
         Draygon[word!(game.cur_enemy_index) as i32]
             .base
@@ -187,20 +186,20 @@ pub fn initialize<H: Host + ?Sized>(install_layers: impl FnOnce(&mut H), game: &
         (TAIL, list::TAIL_LEFT_FAKE_TAIL_WHIP),
         (ARMS, list::ARMS_LEFT_NEAR_SWOOP_APEX),
     ] {
-        slot!(game, Draygon[k].base.current_instruction = instruction);
+        session_slot!(game, Draygon[k].base.current_instruction = instruction);
     }
     word!(game.enemy_bg2_tilemap_size = BG2_TILEMAP_SIZE);
-    slot!(
+    session_slot!(
         game,
         Draygon[word!(game.cur_enemy_index) as i32].function = function::FIGHT_INTRO_INITIAL_DELAY
     );
     install_layers(game);
-    slot!(game, Draygon[BODY].turret_5_destroyed = 1);
-    game.disable_minimap_for_boss();
+    session_slot!(game, Draygon[BODY].turret_5_destroyed = 1);
+    game.foreign(|game| game.disable_minimap_for_boss());
 }
 /// Initialisation AI - Draygon tail ($A5:C599) or, with `arms`, arms ($A5:C5AD).
 /// Was `initialize_part`.
-pub fn initialize_tail_or_arms<S: BossState + ?Sized>(arms: bool, game: &mut S) {
+pub fn initialize_tail_or_arms<S: BossState>(arms: bool, game: &mut S) {
     let k = word!(game.cur_enemy_index) as i32;
     let instruction = if arms {
         list::ARMS_LEFT_IDLE
@@ -214,11 +213,7 @@ pub fn initialize_tail_or_arms<S: BossState + ?Sized>(arms: bool, game: &mut S) 
 }
 /// Main AI - Draygon body ($A5:86FC, with `body`) or eye ($A5:C486): run the
 /// part's function, then the body carries the other parts with it. Was `update`.
-pub fn main_ai<L: Lease + ?Sized>(
-    body: bool,
-    dispatch: impl FnOnce(u32, u16, &mut L::Game),
-    game: &mut L,
-) {
+pub fn main_ai<L: Lease>(body: bool, dispatch: impl FnOnce(u32, u16, &mut L::Game), game: &mut L) {
     if !body {
         return game.foreign(|game| {
             let k = word!(game.cur_enemy_index) as i32;
@@ -247,7 +242,7 @@ pub fn main_ai<L: Lease + ?Sized>(
 /// Run the bank $A5 body function `function` for part `k`, as the species
 /// table's dispatch does: the flight, swoop and grab functions on this lease, the rest
 /// through `fallback` on the game.
-fn run_function_on<L: Lease + ?Sized>(
+fn run_function_on<L: Lease>(
     game: &mut L,
     function: u16,
     k: u16,
@@ -288,7 +283,7 @@ fn run_function_on<L: Lease + ?Sized>(
 }
 /// Enemy graphics drawn hook - Draygon - set BG2 X/Y scroll ($A5:9342). Was
 /// `scroll_layer`.
-pub fn set_bg2_scroll<S: BossState + ?Sized>(game: &mut S) {
+pub fn set_bg2_scroll<S: BossState>(game: &mut S) {
     let x = i32::from(session_slot!(game, Draygon[BODY].graphics_x_displacement))
         + i32::from(game.camera().layer1[0])
         - i32::from(session_slot!(game, Draygon[BODY].base.x_pos))
@@ -301,7 +296,7 @@ pub fn set_bg2_scroll<S: BossState + ?Sized>(game: &mut S) {
     word!(game.reg_BG2VOFS = y as u16);
 }
 /// Oscillate around the goop height and move on.
-fn goop_glide<S: BossState + ?Sized>(right: bool, game: &mut S) {
+fn goop_glide<S: BossState>(right: bool, game: &mut S) {
     let angle = session_slot!(game, Draygon[BODY].goop_y_angle);
     session_slot!(
         game,
@@ -317,7 +312,7 @@ fn goop_glide<S: BossState + ?Sized>(right: bool, game: &mut S) {
     move_horizontally(right, game);
 }
 /// Move the body right, or left, by its X speed. Was `displace`.
-pub fn move_horizontally<S: BossState + ?Sized>(right: bool, game: &mut S) {
+pub fn move_horizontally<S: BossState>(right: bool, game: &mut S) {
     let high = session_slot!(game, Draygon[BODY].x_speed);
     let low = session_slot!(game, Draygon[BODY].x_subspeed);
     let speed = (u32::from(high) << 16) | u32::from(low);
@@ -333,7 +328,7 @@ fn beyond_right(x: u16) -> bool {
 }
 /// Draygon body function - goop right ($A5:8B0A) or left ($A5:8C8E) - setup.
 /// Was `begin`.
-pub fn goop_setup<S: BossState + ?Sized>(right: bool, game: &mut S) {
+pub fn goop_setup<S: BossState>(right: bool, game: &mut S) {
     if right {
         fire_wall_turret(game);
     }
@@ -361,7 +356,7 @@ pub fn goop_setup<S: BossState + ?Sized>(right: bool, game: &mut S) {
 }
 /// Every 128 frames of the current part, a bubble (sprite object 18h) 10h px
 /// left of and above the body.
-pub fn body_bubble<L: Lease + ?Sized>(game: &mut L) {
+pub fn body_bubble<L: Lease>(game: &mut L) {
     let k = word!(game.cur_enemy_index) as i32;
     if session_slot!(game, Draygon[k].base.frame_counter) & 0x7f == 0 {
         let x = session_slot!(game, Draygon[BODY].base.x_pos).wrapping_sub(BUBBLE_OFFSET);
@@ -371,7 +366,7 @@ pub fn body_bubble<L: Lease + ?Sized>(game: &mut L) {
 }
 /// Draygon body function - goop right ($A5:8B52) or left ($A5:8CD4) - move
 /// until Samus in range. Was `approach`.
-pub fn goop_move_until_in_range<L: Lease + ?Sized>(right: bool, game: &mut L) {
+pub fn goop_move_until_in_range<L: Lease>(right: bool, game: &mut L) {
     fire_wall_turret(game);
     body_bubble(game);
     let distance =
@@ -384,7 +379,7 @@ pub fn goop_move_until_in_range<L: Lease + ?Sized>(right: bool, game: &mut L) {
 }
 /// Draygon body function - goop right ($A5:8BAE) or left ($A5:8D30) - firing
 /// goops. Was `fire`.
-pub fn goop_firing<S: BossState + ?Sized>(right: bool, game: &mut S) {
+pub fn goop_firing<S: BossState>(right: bool, game: &mut S) {
     if right {
         fire_wall_turret(game);
     }
@@ -424,7 +419,7 @@ pub fn goop_firing<S: BossState + ?Sized>(right: bool, game: &mut S) {
 }
 /// Draygon body function - goop right ($A5:8C33) or left ($A5:8DB2) - move
 /// until off-screen. Was `exit`.
-pub fn goop_move_until_off_screen<L: Lease + ?Sized>(right: bool, game: &mut L) {
+pub fn goop_move_until_off_screen<L: Lease>(right: bool, game: &mut L) {
     body_bubble(game);
     if !right && word!(game.samus_x_speed_divisor) != 0 {
         session_slot!(game, Draygon[BODY].function = function::CHASE_SAMUS);
@@ -456,10 +451,7 @@ pub fn goop_move_until_off_screen<L: Lease + ?Sized>(right: bool, game: &mut L) 
 
 /// Instruction - Draygon instructions lists = [[Y]], [[Y] + 2], [[Y] + 4],
 /// [[Y] + 6] ($A5:94DD). Was `pose`.
-pub fn set_instruction_lists<S: BossState + ?Sized>(
-    script: EnemyScript,
-    game: &mut S,
-) -> EnemyScript {
+pub fn set_instruction_lists<S: BossState>(script: EnemyScript, game: &mut S) -> EnemyScript {
     for (k, offset) in [(BODY, 0), (EYE, 2), (TAIL, 4), (ARMS, 6)] {
         session_slot!(
             game,
@@ -473,23 +465,20 @@ pub fn set_instruction_lists<S: BossState + ?Sized>(
 }
 /// Instruction - displace Draygon body graphics [[Y]] px left, [[Y] + 2] px
 /// down ($A5:9E0A). Was `layer_offsets`.
-pub fn displace_graphics<S: BossState + ?Sized>(script: EnemyScript, game: &mut S) -> EnemyScript {
+pub fn displace_graphics<S: BossState>(script: EnemyScript, game: &mut S) -> EnemyScript {
     session_slot!(game, Draygon[BODY].graphics_x_displacement = script.word(0));
     session_slot!(game, Draygon[BODY].graphics_y_displacement = script.word(2));
     script.offset(2)
 }
 /// Instruction - paralyse Draygon tail and arms ($A5:98D3). Was `hide_parts`.
-pub fn paralyse_tail_and_arms<S: BossState + ?Sized>(
-    script: EnemyScript,
-    game: &mut S,
-) -> EnemyScript {
+pub fn paralyse_tail_and_arms<S: BossState>(script: EnemyScript, game: &mut S) -> EnemyScript {
     for k in [TAIL, ARMS] {
         session_slot!(game, Draygon[k].base; instruction_timer = 1, current_instruction = list::SLEEP);
     }
     script
 }
 /// Instruction - set Draygon body as intangible ($A5:98EF). Was `tangible`.
-pub fn set_intangible<S: BossState + ?Sized>(script: EnemyScript, game: &mut S) -> EnemyScript {
+pub fn set_intangible<S: BossState>(script: EnemyScript, game: &mut S) -> EnemyScript {
     session_slot!(game, Draygon[BODY].base.properties, |old| old | INTANGIBLE);
     script
 }
