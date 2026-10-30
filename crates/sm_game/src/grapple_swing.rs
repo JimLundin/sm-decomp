@@ -7,6 +7,7 @@ use crate::grapple_aim::{self, ConnectionSet};
 use crate::grapple_origins::{self, OriginSet};
 use crate::player_collision::operations as player_collision;
 use crate::player_transitions as pt;
+use crate::player_transitions::state::{HurtAction, InterruptionAction, PoseRequestWord};
 use crate::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::projectile_room::Axis;
 use crate::ram::{word, words as ram_words};
@@ -282,7 +283,8 @@ pub fn apply_special_angle<H: Host + ?Sized>(game: &mut H) -> u8 {
             return 0;
         }
     }
-    word!(game.samus_new_pose_interrupted = special_angle_word!(game, row, 2));
+    game.session_mut().player.transitions.interrupted =
+        PoseRequestWord::from_raw(special_angle_word!(game, row, 2));
     game.set_player_x(
         game.session()
             .player
@@ -298,7 +300,7 @@ pub fn apply_special_angle<H: Host + ?Sized>(game: &mut H) -> u8 {
             .wrapping_add(special_angle_word!(game, row, 6)),
     );
     game.session_mut().player.grapple = special_angle_word!(game, row, 8);
-    word!(game.samus_special_transgfx_index = 0);
+    game.session_mut().player.transitions.interruption = InterruptionAction::from_raw(0);
     game.session_mut().player.grapple_slow_scrolling = 0;
     clamp_previous_grapple_position!(game, player_x, previous_player_x, set_previous_player_x);
     clamp_previous_grapple_position!(game, player_y, previous_player_y, set_previous_player_y);
@@ -306,8 +308,9 @@ pub fn apply_special_angle<H: Host + ?Sized>(game: &mut H) -> u8 {
 }
 
 fn begin_connection<H: Host + ?Sized>(pose: u16, transition_graphics: u16, game: &mut H) {
-    word!(game.samus_new_pose_interrupted = pose);
-    word!(game.samus_special_transgfx_index = transition_graphics);
+    game.session_mut().player.transitions.interrupted = PoseRequestWord::from_raw(pose);
+    game.session_mut().player.transitions.interruption =
+        InterruptionAction::from_raw(transition_graphics);
     let angle = u16::swap_bytes(actor_api::angle_from_delta(
         (game.player_x()).wrapping_sub(game.session().player.grapple_endpoint.x),
         (game.player_y()).wrapping_sub(game.session().player.grapple_endpoint.y),
@@ -760,7 +763,7 @@ pub fn cancel_incompatible_pose<H: Host + ?Sized>(game: &mut H) {
                     return;
                 }
                 if word!(game.grapple_varCF6) != 0 {
-                    game.queue_sound(0, 7_u8, 6);
+                    game.queue_sound(0, (7) as u8, 6);
                     game.session_mut().player.grapple = (0x9bc51ei32) as u16;
                     return;
                 }
@@ -837,17 +840,18 @@ pub fn start_firing<H: Host + ?Sized>(game: &mut H) {
     game.with_lease(|lease| crate::samus_palette::write_beam_palette(lease, 2));
     word!(game.palette_buffer[223] = 32657);
     game.session_mut().player.grapple = (0x9bc703i32) as u16;
-    game.queue_sound(0, 5_u8, 1);
-    word! {game; flare_counter = 1; play_resume_charging_beam_sfx = 0; }
+    game.queue_sound(0, (5) as u8, 1);
+    game.session_mut().projectiles.controls.charge = 1;
+    word!(game.play_resume_charging_beam_sfx = 0);
     if word!(game.samus_movement_handler) as i32 == 0x90946e & 0xffff {
         word!(game.samus_movement_handler = (0x90a337i32) as u16);
     }
 }
 
 pub fn cancel<H: Host + ?Sized>(game: &mut H) {
-    game.queue_sound(0, 7_u8, 15);
+    game.queue_sound(0, (7) as u8, 15);
     if game.movement_type() == kMovementType_16_Grappling as u8 {
-        game.with_lease(pt::request_fallback_pose);
+        game.with_lease(|lease| pt::request_fallback_pose(lease));
     } else {
         game.grapple_pose_command(0x1c);
     }
@@ -855,7 +859,7 @@ pub fn cancel<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn release_stationary<H: Host + ?Sized>(game: &mut H) {
-    game.queue_sound(0, 7_u8, 15);
+    game.queue_sound(0, (7) as u8, 15);
     let pose = if game.session().player.pose == kPose_B2_FaceR_Grapple_Air as u16 {
         kPose_01_FaceR_Normal as u16
     } else if game.session().player.pose == kPose_B3_FaceL_Grapple_Air as u16 {
@@ -878,8 +882,9 @@ pub fn release_stationary<H: Host + ?Sized>(game: &mut H) {
             ))
         }
     };
-    word!(game.samus_new_pose_transitional = pose);
-    word! {game; samus_hurt_switch_index = 0; input_to_pose_calc = 1; }
+    game.session_mut().player.transitions.transitional = PoseRequestWord::from_raw(pose);
+    game.session_mut().player.transitions.hurt = HurtAction::from_raw(0);
+    word!(game.input_to_pose_calc = 1);
     word! { game, 0;
         samus_x_base_speed, samus_x_base_subspeed, samus_y_subspeed, samus_y_speed,
     }
@@ -887,13 +892,15 @@ pub fn release_stationary<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn release_walljump<H: Host + ?Sized>(game: &mut H) {
-    game.queue_sound(0, 7_u8, 15);
+    game.queue_sound(0, (7) as u8, 15);
     if game.facing() == 8 {
-        word!(game.samus_new_pose_transitional = kPose_84_FaceL_Walljump as u16);
+        game.session_mut().player.transitions.transitional =
+            PoseRequestWord::from_raw(kPose_84_FaceL_Walljump as u16);
     } else {
-        word!(game.samus_new_pose_transitional = kPose_83_FaceR_Walljump as u16);
+        game.session_mut().player.transitions.transitional =
+            PoseRequestWord::from_raw(kPose_83_FaceR_Walljump as u16);
     }
-    word!(game.samus_hurt_switch_index = 6);
+    game.session_mut().player.transitions.hurt = HurtAction::from_raw(6);
     game.session_mut().player.contact.acceleration_mode = 0;
     word!(game.samus_collides_with_solid_enemy = 0);
     word!(game.samus_is_falling_flag = 0);
@@ -909,13 +916,15 @@ pub fn release_walljump<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn release_swing<H: Host + ?Sized>(game: &mut H) {
-    game.queue_sound(0, 7_u8, 15);
+    game.queue_sound(0, (7) as u8, 15);
     if game.session().player.swing.angular_velocity & 0x8000 == 0 {
-        word!(game.samus_new_pose_transitional = kPose_52_FaceL_Jump_NoAim_MoveF as u16);
+        game.session_mut().player.transitions.transitional =
+            PoseRequestWord::from_raw(kPose_52_FaceL_Jump_NoAim_MoveF as u16);
     } else {
-        word!(game.samus_new_pose_transitional = kPose_51_FaceR_Jump_NoAim_MoveF as u16);
+        game.session_mut().player.transitions.transitional =
+            PoseRequestWord::from_raw(kPose_51_FaceR_Jump_NoAim_MoveF as u16);
     }
-    word!(game.samus_hurt_switch_index = 7);
+    game.session_mut().player.transitions.hurt = HurtAction::from_raw(7);
     finish_release(game);
 }
 
@@ -928,13 +937,13 @@ fn finish_release<H: Host + ?Sized>(game: &mut H) {
     game.session_mut().player.grapple_slow_scrolling = 0;
     word!(game.grapple_varCF6 = 0);
     game.session_mut().player.grapple_flags = 0;
-    word!(game.flare_counter = 0);
-    word!(game.flare_animation_frame = 0);
-    word!(game.flare_slow_sparks_anim_frame = 0);
-    word!(game.flare_fast_sparks_anim_frame = 0);
-    word!(game.flare_animation_timer = 0);
-    word!(game.flare_slow_sparks_anim_timer = 0);
-    word!(game.flare_fast_sparks_anim_timer = 0);
+    game.session_mut().projectiles.controls.charge = 0;
+    game.session_mut().projectiles.controls.flare_frames[0] = 0;
+    game.session_mut().projectiles.controls.flare_frames[1] = 0;
+    game.session_mut().projectiles.controls.flare_frames[2] = 0;
+    game.session_mut().projectiles.controls.flare_timers[0] = 0;
+    game.session_mut().projectiles.controls.flare_timers[1] = 0;
+    game.session_mut().projectiles.controls.flare_timers[2] = 0;
     let beams = word!(game.equipped_beams) & 0xfff;
     game.with_lease(|lease| crate::samus_palette::write_beam_palette(lease, beams));
     game.session_mut().player.grapple = (0x9bc4f0i32) as u16;
@@ -946,16 +955,16 @@ fn finish_release<H: Host + ?Sized>(game: &mut H) {
 }
 
 pub fn react_beam<H: Host + ?Sized>(game: &mut H) -> u8 {
-    game.with_lease(crate::player_collision::grapple::react_beam)
+    game.with_lease(|lease| crate::player_collision::grapple::react_beam(lease))
 }
 pub fn extend_beam<H: Host + ?Sized>(game: &mut H) -> u8 {
-    game.with_lease(crate::player_collision::grapple::extend_beam)
+    game.with_lease(|lease| crate::player_collision::grapple::extend_beam(lease))
 }
 pub fn start_rope_animation<H: Host + ?Sized>(game: &mut H) {
-    game.with_lease(crate::grapple_rope::start);
+    game.with_lease(|lease| crate::grapple_rope::start(lease));
 }
 pub fn draw_rope<H: Host + ?Sized>(game: &mut H) {
-    game.with_lease(crate::grapple_rope::draw);
+    game.with_lease(|lease| crate::grapple_rope::draw(lease));
 }
 
 fn connected_to_block<H: Host + ?Sized>(game: &mut H) -> bool {
@@ -1050,12 +1059,14 @@ fn dispatch<H: Host + ?Sized>(ea: u32, game: &mut H) {
                     != 0
             {
                 start_firing(game);
-            } else if word!(game.flare_counter) != 0 {
-                word! { game, 0;
-                    flare_counter, flare_animation_frame, flare_slow_sparks_anim_frame,
-                    flare_fast_sparks_anim_frame, flare_animation_timer, flare_slow_sparks_anim_timer,
-                    flare_fast_sparks_anim_timer,
-                }
+            } else if game.session().projectiles.controls.charge != 0 {
+                game.session_mut().projectiles.controls.charge = 0;
+                game.session_mut().projectiles.controls.flare_frames[0] = 0;
+                game.session_mut().projectiles.controls.flare_frames[1] = 0;
+                game.session_mut().projectiles.controls.flare_frames[2] = 0;
+                game.session_mut().projectiles.controls.flare_timers[0] = 0;
+                game.session_mut().projectiles.controls.flare_timers[1] = 0;
+                game.session_mut().projectiles.controls.flare_timers[2] = 0;
                 game.with_lease(|lease| {
                     crate::samus_palette::load_suit(
                         lease,
@@ -1077,7 +1088,7 @@ fn dispatch<H: Host + ?Sized>(ea: u32, game: &mut H) {
                 game.session_mut().player.grapple = 0xc856;
                 return;
             }
-            let contact = game.with_lease(actors::contacts::grapple_contact);
+            let contact = game.with_lease(|lease| actors::contacts::grapple_contact(lease));
             let outcome = match contact {
                 Some(contact) => {
                     game.with_lease(|lease| actors::combat::resolve_grapple(lease, contact))
@@ -1099,7 +1110,7 @@ fn dispatch<H: Host + ?Sized>(ea: u32, game: &mut H) {
                 game.session_mut().player.grapple = 0xc856;
                 return;
             }
-            game.queue_sound(0, 6_u8, 6);
+            game.queue_sound(0, (6) as u8, 6);
             connect_beam(game);
             game.session_mut().player.swing.length_delta = -8i32 as u16;
             game.session_mut().player.grapple_interaction_flags =
@@ -1109,7 +1120,7 @@ fn dispatch<H: Host + ?Sized>(ea: u32, game: &mut H) {
             let attached = shoot_held(game)
                 && ((ea == 0x9bc77e
                     && game
-                        .with_lease(actors::contacts::grapple_contact)
+                        .with_lease(|lease| actors::contacts::grapple_contact(lease))
                         .is_some_and(|contact| contact.has_reaction()))
                     || connected_to_block(game));
             if !attached {
@@ -1137,7 +1148,7 @@ fn dispatch<H: Host + ?Sized>(ea: u32, game: &mut H) {
                     return;
                 }
                 let keep_swinging: bool = if game
-                    .with_lease(actors::contacts::grapple_contact)
+                    .with_lease(|lease| actors::contacts::grapple_contact(lease))
                     .is_some_and(|contact| contact.has_reaction())
                 {
                     game.session_mut().player.grapple_flags =

@@ -1146,6 +1146,7 @@ mod player_lane_tests {
     //! lease, so the projection must serve each word from exactly that field: no
     //! earlier owner may claim the address, and writing it touches no other lane.
     use super::{projected_byte, write_projected_byte};
+    use crate::player_transitions::state::{HurtAction, InterruptionAction, PoseRequestWord};
     use crate::room_entry::world::WorldBinding;
     use crate::session::Session;
 
@@ -1192,6 +1193,37 @@ mod player_lane_tests {
         (0xd92, |s| &mut s.player.swing.probe.y),
         (0xd94, |s| &mut s.player.swing.probe_block.x),
         (0xd96, |s| &mut s.player.swing.probe_block.y),
+        (0xcd0, |s| &mut s.projectiles.controls.charge),
+        (0xcd6, |s| &mut s.projectiles.controls.flare_frames[0]),
+        (0xcd8, |s| &mut s.projectiles.controls.flare_frames[1]),
+        (0xcda, |s| &mut s.projectiles.controls.flare_frames[2]),
+        (0xcdc, |s| &mut s.projectiles.controls.flare_timers[0]),
+        (0xcde, |s| &mut s.projectiles.controls.flare_timers[1]),
+        (0xce0, |s| &mut s.projectiles.controls.flare_timers[2]),
+    ];
+    type RawLane = (usize, fn(&Session) -> u16, fn(&mut Session, u16));
+    /// Lossless raw-word transition requests the grapple stores by name.
+    const RAW_LANES: &[RawLane] = &[
+        (
+            0xa2a,
+            |s| s.player.transitions.interrupted.to_raw(),
+            |s, v| s.player.transitions.interrupted = PoseRequestWord::from_raw(v),
+        ),
+        (
+            0xa2c,
+            |s| s.player.transitions.transitional.to_raw(),
+            |s, v| s.player.transitions.transitional = PoseRequestWord::from_raw(v),
+        ),
+        (
+            0xa30,
+            |s| s.player.transitions.interruption.to_raw(),
+            |s, v| s.player.transitions.interruption = InterruptionAction::from_raw(v),
+        ),
+        (
+            0xa32,
+            |s| s.player.transitions.hurt.to_raw(),
+            |s, v| s.player.transitions.hurt = HurtAction::from_raw(v),
+        ),
     ];
 
     fn session() -> Session {
@@ -1226,6 +1258,22 @@ mod player_lane_tests {
                     assert_eq!(*other_field(&mut s), 0, "write {at:#x} touched {other:#x}");
                 }
             }
+        }
+    }
+
+    #[test]
+    fn raw_transition_lanes_project_from_their_fields() {
+        for (index, &(at, get, set)) in RAW_LANES.iter().enumerate() {
+            let value = 0x2468u16.wrapping_mul(index as u16 + 1) ^ 0x8003;
+            let mut s = session();
+            set(&mut s, value);
+            assert_eq!(projected_word(&s, at), Some(value), "read {at:#x}");
+
+            let mut s = session();
+            let [low, high] = value.to_le_bytes();
+            assert!(write_projected_byte(&mut s, at, low), "write {at:#x}");
+            assert!(write_projected_byte(&mut s, at + 1, high), "write {at:#x}");
+            assert_eq!(get(&s), value, "write {at:#x}");
         }
     }
 }
