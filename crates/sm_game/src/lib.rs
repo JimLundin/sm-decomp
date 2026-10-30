@@ -139,6 +139,7 @@ pub mod actors {
     pub mod magdollite;
     pub mod media;
     pub mod mini_kraid;
+    pub mod mochtroid;
     pub mod morph_ball_eye;
     pub mod mother_brain;
     pub mod mother_brain_effects;

@@ -1090,7 +1090,7 @@ crate::game::callback_dispatch! {
         10720486 => elevator::initialize; 10720554 => elevator::advance;
         10722463 => [falling_platforms::initialize(true, game)]; 10722490 => [falling_platforms::initialize(false, game)];
         10722582 => falling_platforms::advance; 10723080 => falling_platforms::shot;
-        10725245 => mochtroid::initialize; 10725264 => mochtroid::advance; 10725715 => mochtroid::touch;
+        10725245 => mochtroid::initialize; 10725264 => mochtroid::main_ai; 10725715 => mochtroid::touch;
 
         10720995 => [wall_crawlers::initialize(wall_crawlers::Kind::Crab, game)];
         10721595 => [wall_crawlers::initialize(wall_crawlers::Kind::Slug, game)];

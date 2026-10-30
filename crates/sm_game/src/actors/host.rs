@@ -144,7 +144,10 @@ pub fn abs16(value: u16) -> u16 {
 /// onto the leased game.
 pub trait ActorLease:
     crate::actors::access::ActorAccess
+    + crate::actors::effects::ActorHost
     + crate::enemy_projectiles::host::Host
+    + crate::room_mechanisms::host::Host
+    + crate::room_mechanisms::host::Effects
     + crate::player_position::PlayerPosition
 {
     type Game: BossEffects + ?Sized;

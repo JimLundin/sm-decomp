@@ -3,6 +3,7 @@
 pub(in crate::game) use sm_game::actors::access;
 pub(in crate::game) use sm_game::actors::api;
 pub(in crate::game) use sm_game::actors::blue_brinstar_face_block;
+pub(in crate::game) use sm_game::actors::mochtroid;
 pub(in crate::game) use sm_game::actors::morph_ball_eye;
 pub(in crate::game) use sm_game::actors::zoa;
 pub(in crate::game) mod bang;
@@ -20,7 +21,6 @@ pub(crate) mod identity;
 pub(in crate::game) mod kago;
 pub(in crate::game) mod maridia_snail;
 pub(crate) mod metroid;
-pub(in crate::game) mod mochtroid;
 #[cfg(sm_verify_dll)]
 #[path = "../../verification/actor_movement_candidate.rs"]
 pub(crate) mod movement_verification;
