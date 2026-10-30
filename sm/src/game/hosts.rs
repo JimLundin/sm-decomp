@@ -757,3 +757,85 @@ impl sm_game::actors::ridley::Host for Game {
         room.liquid_delay = delay;
     }
 }
+
+// The named Ceres Ridley functions are the ones `CallRidleyFunc` dispatches
+// on; the getaway's RTS is its external ID.
+const _: () = {
+    use sm_game::actors::ceres_ridley::ceres_function as f;
+    const fn at(word: u16) -> u32 {
+        0xa6_0000 | word as u32
+    }
+    assert!(at(f::TRANSITION_TO_FLYING) == 10920788 && at(f::INITIAL) == 10920795);
+    assert!(at(f::WAIT_TO_FADE_IN) == 10920823 && at(f::FADE_IN_EYE) == 10920841);
+    assert!(at(f::FADE_IN_BODY) == 10920927 && at(f::WAIT_TO_ROAR) == 10921045);
+    assert!(at(f::ROAR_BEFORE_FLYING) == 10921080 && at(f::LIFTOFF_DECELERATING) == 10921672);
+    assert!(at(f::HOVERING) == 10921704 && at(f::FIREBALLS_MOVE_TO_POSITION) == 10921858);
+    assert!(at(f::FIREBALLS_SHOOTING) == 10921977 && at(f::LUNGE_SETUP) == 10922044);
+    assert!(at(f::LUNGE) == 10922062 && at(f::SWOOP_SETUP) == 10922125);
+    assert!(at(f::SWOOP_MOVE_TO_POSITION) == 10922148 && at(f::SWOOP_AIMING_DOWN) == 10922196);
+    assert!(at(f::SWOOP_AIMING_LEFT) == 10922232 && at(f::SWOOP_AIMING_UP) == 10922275);
+    assert!(at(f::SWOOP_AIMING_UP_FASTER) == 10922311);
+    assert!(at(f::WRITE_PALETTES_AND_SPAWN_WALLS) == 10922400 && at(f::SET_UP_GETAWAY) == 10922513);
+    assert!(at(f::SELF_DESTRUCT_ACTIVATED) == 10922576);
+    assert!(at(f::SELF_DESTRUCT_ACTIVATING) == 10928206);
+    assert!(at(f::GETAWAY) == 10922575);
+};
+
+// The named Ceres instruction lists, palettes and populations are the
+// decompilation's addresses.
+const _: () = {
+    use crate::game::sm_a6::*;
+    use sm_game::actors::ceres_ridley::{ceres_data as d, ceres_instruction_list as l};
+    assert!(
+        l::INITIAL == addr_kRidley_Ilist_E538 as u16 && l::LUNGE == addr_kRidley_Ilist_E548 as u16
+    );
+    assert!(
+        l::FIGHT_INTRO_ROAR == addr_kRidley_Ilist_E690 as u16
+            && l::TRANSITION_TO_FLYING == addr_kRidley_Ilist_E91D as u16
+    );
+    assert!(l::BABY_METROID == addr_kBabyMetroid_Ilist_BF31 as u16);
+    assert!(
+        d::CERES_PALETTES == addr_word_A6E16F as u16
+            && d::NORFAIR_PALETTES == addr_word_A6E1CF as u16
+    );
+    assert!(
+        d::RETREAT_SPRITE_PALETTE == addr_word_A6A9E3 as u16
+            && d::RETREAT_BACKGROUND_PALETTE == addr_word_A6AA01 as u16
+    );
+    assert!(
+        d::GETAWAY_WALLS[0] == addr_stru_A6AA2F as u16
+            && d::GETAWAY_WALLS[1] == addr_stru_A6AA3F as u16
+    );
+};
+
+impl sm_game::actors::ceres_ridley::Host for Game {
+    fn boss_byte(&mut self, area: u16) -> u8 {
+        crate::game::gameplay_flag_runtime::boss_byte_at(area, self)
+    }
+
+    fn queue_mode7_transfer(&mut self, bank: u8, list: u16) {
+        crate::game::mode7_transfers::enqueue_rom(bank, list, self);
+    }
+
+    fn begin_ceres_push(&mut self) {
+        sm_game::player_movement::forced::begin_ceres_push(
+            crate::game::session_runtime::Runtime::new(self).session_mut(),
+        );
+    }
+
+    fn queue_escape_timer_tiles(&mut self) -> bool {
+        crate::game::rom_vram_entries::queue_escape_timer_tiles(self) & 1 != 0
+    }
+
+    fn queue_getaway_tiles(&mut self) {
+        crate::game::rom_vram_entries::queue_getaway_tiles(self);
+    }
+
+    fn queue_escape_tile_table(&mut self) {
+        crate::game::rom_vram_entries::queue_escape_tile_table(self);
+    }
+
+    fn type_escape_text(&mut self, tiles: u16) -> bool {
+        crate::game::escape_typewriter::type_escape_text(tiles, self) & 1 != 0
+    }
+}

@@ -91,6 +91,7 @@ pub mod actors {
     pub mod botwoon;
     pub mod botwoon_death;
     pub mod boulder;
+    pub mod ceres_ridley;
     pub mod codec;
     pub mod combat;
     pub mod contacts;

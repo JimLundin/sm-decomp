@@ -8,12 +8,12 @@
 //! three extra RAM blocks at $7E:7800, $7E:8000 and $7E:8800 over the same
 //! bytes as `EnemyLayout104`. The tail is seven segments of ten words in
 //! `tilemap_stuff` ($7E:2000), named in `tail`. Ceres Ridley's own functions
-//! and its escape sequence stay in `sm_a6`; `Host::run_function` dispatches
-//! both through the bank's function table.
+//! and its escape sequence are in `ceres_ridley`; `Host::run_function`
+//! dispatches both through the bank's function table.
 #![forbid(unsafe_code)]
 use crate::actors::api::angle_from_delta;
 use crate::actors::host::{Death, Shot, abs16};
-use crate::actors::layouts::part_view;
+use crate::actors::layouts::EnemyBase;
 use crate::actors::ridley_tables::{copy_words_to_ram_fan, pick_random_speed_row};
 use crate::constants::enemy_properties::{
     kEnemyProps_Deleted, kEnemyProps_Invisible, kEnemyProps_Tangible,
@@ -61,70 +61,170 @@ pub trait Host:
     fn move_liquid(&mut self, target: u16, velocity: u16, delay: u16);
 }
 
-part_view! {
-    /// Ridley's view of enemy 0 and his extra RAM. `fade_index` is also the
-    /// escape timer tile transfer pointer and `function_timer` the self
-    /// destruct sequence step in Ceres.
-    Ridley: EnemyLayout104 {
-        words: [
-            function, x_velocity, y_velocity, var_D, fade_index, function_timer, parameter_1,
-            parameter_2,
-        ],
-        pad1: [u8; 26696],
-        words: [
-            timer, fight_mode, movement_enabled, baby_metroid_instruction,
-            baby_metroid_instruction_timer, ribs_pointer, ribs_timer, wings_frame,
-            wings_timer_delta, wings_timer, swoop_angle, swoop_speed, palette, hit_counter,
-            whip_sound_counter, roaring, facing, var_11, acceleration_index, var_13,
-            grabbed_x_offset, grabbed_y_offset, var_16, target_x, target_y, fireball_x_velocity,
-            fireball_y_velocity, holding_samus, tail_damage, feet_distance_index,
-            intangibility_timer, hit_boundary,
-        ],
-        pad2: [u8; 1984],
-        words: [
-            min_y, max_y, min_x, max_x, grabbed_lag_timer, death_lunges, pogo_bounces,
-            small_explosion_timer, small_explosion_index, var_29, var_2A, var_2B, var_2C, var_2D,
-            var_2E, var_2F, var_30, var_31, var_32, var_33, var_34, var_35, var_36, var_37,
-            emergency_glow_index, var_39, var_3A, var_3B, var_3C, var_3D, var_3E, var_3F,
-        ],
-        pad3: [u8; 1984],
-        words: [
-            baby_metroid_function, var_41, baby_metroid_x, baby_metroid_y_subpixel,
-            baby_metroid_y, baby_metroid_unread, baby_metroid_y_velocity, var_47, var_48, var_49,
-            var_4A, var_4B, var_4C, var_4D, var_4E, var_4F, var_50, var_51, var_52, var_53,
-            var_54, var_55, var_56, var_57, var_58, var_59, var_5A, var_5B, var_5C, var_5D,
-            var_5E, var_5F,
-        ],
-    }
+/// Ridley's view of enemy 0 and his extra RAM blocks, Norfair's and Ceres's.
+/// `fade_index` is also the escape timer tile transfer pointer and the self
+/// destruct step's timer, `function_timer` the self destruct sequence step,
+/// and `swoop_angle` the getaway's mode 7 angle. The `pad_*` words are unused.
+#[derive(Clone, Copy)]
+#[repr(C)]
+pub struct Ridley {
+    pub base: EnemyBase,
+    pub function: u16,
+    pub x_velocity: u16,
+    pub y_velocity: u16,
+    pad_0fae: [u16; 1],
+    pub fade_index: u16,
+    pub function_timer: u16,
+    pub parameter_1: u16,
+    pub parameter_2: u16,
+    pad1: [u8; 26696],
+    pub timer: u16,
+    pub fight_mode: u16,
+    pub movement_enabled: u16,
+    pub baby_metroid_instruction: u16,
+    pub baby_metroid_instruction_timer: u16,
+    pub ribs_pointer: u16,
+    pub ribs_timer: u16,
+    pub wings_frame: u16,
+    pub wings_timer_delta: u16,
+    pub wings_timer: u16,
+    pub swoop_angle: u16,
+    pub swoop_speed: u16,
+    pub palette: u16,
+    pub hit_counter: u16,
+    pub whip_sound_counter: u16,
+    pub roaring: u16,
+    pub facing: u16,
+    pad_7822: [u16; 1],
+    pub acceleration_index: u16,
+    pad_7826: [u16; 1],
+    pub grabbed_x_offset: u16,
+    pub grabbed_y_offset: u16,
+    pad_782c: [u16; 1],
+    pub target_x: u16,
+    pub target_y: u16,
+    pub fireball_x_velocity: u16,
+    pub fireball_y_velocity: u16,
+    pub holding_samus: u16,
+    pub tail_damage: u16,
+    pub feet_distance_index: u16,
+    pub intangibility_timer: u16,
+    pub hit_boundary: u16,
+    pad2: [u8; 1984],
+    pub min_y: u16,
+    pub max_y: u16,
+    pub min_x: u16,
+    pub max_x: u16,
+    pub grabbed_lag_timer: u16,
+    pub death_lunges: u16,
+    pub pogo_bounces: u16,
+    pub small_explosion_timer: u16,
+    pub small_explosion_index: u16,
+    pad_8012: [u16; 7],
+    pub mode7_zoom: u16,
+    /// Set with the zoom, never read.
+    pub unread_8022: u16,
+    pub getaway_finished: u16,
+    pub getaway_index: u16,
+    pub mode7_x: u16,
+    pub mode7_y: u16,
+    pub baby_metroid_frame: u16,
+    pub mode7_wings_frame: u16,
+    pub emergency_glow_index: u16,
+    pad_8032: [u16; 2],
+    pub typewriter_list: u16,
+    pub typewriter_tilemap: u16,
+    pub typewriter_timer: u16,
+    pub typewriter_timer_reset: u16,
+    pub typewriter_stroke_timer: u16,
+    pad3: [u8; 1984],
+    pub baby_metroid_function: u16,
+    pad_8802: [u16; 1],
+    pub baby_metroid_x: u16,
+    pub baby_metroid_y_subpixel: u16,
+    pub baby_metroid_y: u16,
+    pub baby_metroid_unread: u16,
+    pub baby_metroid_y_velocity: u16,
+    pad_880e: [u16; 25],
 }
 
-part_view! {
-    /// An explosion enemy's view of its slot: `part` is its initialisation
-    /// index, the part of Ridley it starts on.
-    Explosion: EnemyLayout8 {
-        words: [var_A, x_velocity, y_velocity, var_D, var_E, lifetime, part, parameter_2],
-    }
+/// An explosion enemy's view of its slot: `part` is its initialisation index,
+/// the part of Ridley it starts on.
+#[derive(Clone, Copy)]
+#[repr(C)]
+pub struct Explosion {
+    pub base: EnemyBase,
+    pad_0fa8: [u16; 1],
+    pub x_velocity: u16,
+    pub y_velocity: u16,
+    pad_0fae: [u16; 2],
+    pub lifetime: u16,
+    pub part: u16,
+    pad_0fb6: [u16; 1],
 }
 
-part_view! {
-    /// The Ceres door's view of enemy 1, which Ridley's graphics hook draws.
-    CeresDoor: EnemyLayout8 {
-        words: [var_A, drawn_by_ridley, var_C, var_D, var_E, var_F, parameter_1, parameter_2],
-    }
+/// The Ceres door's view of enemy 1, which Ridley's graphics hook draws.
+#[derive(Clone, Copy)]
+#[repr(C)]
+pub struct CeresDoor {
+    pub base: EnemyBase,
+    pad_0fa8: [u16; 1],
+    pub drawn_by_ridley: u16,
+    pad_0fac: [u16; 6],
 }
 
-const RIDLEY: i32 = 0;
+/// Each view field is its layout's word.
+macro_rules! same_words {
+    ($view:ident: $layout:ident { $($field:ident = $word:ident),* $(,)? }) => {
+        const _: () = {
+            use ::core::mem::{offset_of, size_of};
+            use crate::actors::layouts::$layout as Layout;
+            assert!(size_of::<$view>() == size_of::<Layout>());
+            assert!(offset_of!($view, base) == offset_of!(Layout, base));
+            $(assert!(offset_of!($view, $field) == offset_of!(Layout, $word));)*
+        };
+    };
+}
+
+same_words!(Ridley: EnemyLayout104 {
+    function = var_A, x_velocity = var_B, y_velocity = var_C, fade_index = var_E,
+    function_timer = var_F, parameter_1 = parameter_1, parameter_2 = parameter_2,
+    timer = var_00, fight_mode = var_01, movement_enabled = var_02,
+    baby_metroid_instruction = var_03, baby_metroid_instruction_timer = var_04,
+    ribs_pointer = var_05, ribs_timer = var_06, wings_frame = var_07, wings_timer_delta = var_08,
+    wings_timer = var_09, swoop_angle = var_0A, swoop_speed = var_0B, palette = var_0C,
+    hit_counter = var_0D, whip_sound_counter = var_0E, roaring = var_0F, facing = var_10,
+    acceleration_index = var_12, grabbed_x_offset = var_14, grabbed_y_offset = var_15,
+    target_x = var_17, target_y = var_18, fireball_x_velocity = var_19,
+    fireball_y_velocity = var_1A, holding_samus = var_1B, tail_damage = var_1C,
+    feet_distance_index = var_1D, intangibility_timer = var_1E, hit_boundary = var_1F,
+    min_y = var_20, max_y = var_21, min_x = var_22, max_x = var_23, grabbed_lag_timer = var_24,
+    death_lunges = var_25, pogo_bounces = var_26, small_explosion_timer = var_27,
+    small_explosion_index = var_28, mode7_zoom = var_30, unread_8022 = var_31,
+    getaway_finished = var_32, getaway_index = var_33, mode7_x = var_34, mode7_y = var_35,
+    baby_metroid_frame = var_36, mode7_wings_frame = var_37, emergency_glow_index = var_38,
+    typewriter_list = var_3B, typewriter_tilemap = var_3C, typewriter_timer = var_3D,
+    typewriter_timer_reset = var_3E, typewriter_stroke_timer = var_3F,
+    baby_metroid_function = var_40, baby_metroid_x = var_42, baby_metroid_y_subpixel = var_43,
+    baby_metroid_y = var_44, baby_metroid_unread = var_45, baby_metroid_y_velocity = var_46,
+});
+same_words!(Explosion: EnemyLayout8 {
+    x_velocity = var_B, y_velocity = var_C, lifetime = var_F, part = parameter_1,
+});
+same_words!(CeresDoor: EnemyLayout8 { drawn_by_ridley = var_B });
+
+pub(crate) const RIDLEY: i32 = 0;
 const CERES_DOOR: i32 = 0x40;
 
 /// Ridley facing directions.
-const FACING_LEFT: u16 = 0;
+pub(crate) const FACING_LEFT: u16 = 0;
 const FACING_FORWARD: u16 = 1;
-const FACING_RIGHT: u16 = 2;
+pub(crate) const FACING_RIGHT: u16 = 2;
 /// The fight mode of the death sequence; 0 is the intro or retreat, 1 the
 /// fight and 2 dodging a power bomb.
 const DEATH_SEQUENCE: u16 = 0xffff;
 /// Ridley's area; anywhere else he is Ceres Ridley.
-const NORFAIR: u16 = 2;
+pub(crate) const NORFAIR: u16 = 2;
 /// Samus commands.
 const LOCK_SAMUS: u16 = 0;
 const UNLOCK_SAMUS: u16 = 1;
@@ -230,7 +330,7 @@ pub mod tail_data {
 /// Ridley's tail RAM as `tilemap_stuff` word indices: the shared words, then
 /// seven segments of ten words from $7E:2020. Segment 0 is the tail's base
 /// and segment 6 its tip; each field function takes the segment.
-mod tail {
+pub(crate) mod tail {
     pub const FUNCTION: usize = 0;
     pub const IDLE_WHIP: usize = 1;
     pub const WHIP_REQUEST: usize = 2;
@@ -330,7 +430,7 @@ pub struct Rect {
 
 /// Check for enemy collision with rectangle ($A9:EF06, as the Shitroid's):
 /// whether enemy `k`'s hitbox is clear of `rect`.
-fn separated_from_rect<H: Host + ?Sized>(k: u16, rect: Rect, game: &mut H) -> bool {
+pub(crate) fn separated_from_rect<H: Host + ?Sized>(k: u16, rect: Rect, game: &mut H) -> bool {
     let e = i32::from(k);
     let width = (slot!(game, Ridley[e].base.x_width) as i32 + rect.w as i32 + 1) as u16;
     let dx = abs16(rect.x.wrapping_sub(slot!(game, Ridley[e].base.x_pos)));
