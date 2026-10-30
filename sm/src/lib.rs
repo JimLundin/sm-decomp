@@ -449,7 +449,6 @@ pub mod game {
     pub mod projectile_contact;
     pub(crate) mod rio;
     pub(crate) mod rippers;
-    pub(crate) mod rising_falling;
     pub mod sm_a9;
     pub(crate) mod space_pirates;
     pub(crate) mod spikey_platforms;

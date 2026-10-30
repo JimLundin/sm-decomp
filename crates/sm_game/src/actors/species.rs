@@ -11,12 +11,12 @@
 use crate::actors::host::{ActorHost, ActorRuntime, Death, LeaseActors, Shot};
 use crate::actors::{
     alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, ceres_doors,
-    ceres_ridley, covern, crawlers, crocomire_reactions, dachora_run, draygon_death, draygon_eye,
-    draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator, escape_critters, etecoon,
-    evir, fire_arc, fireflea, fune, gamet, geega, kago, kraid, magdollite, metroid, mini_kraid,
-    mochtroid, morph_ball_eye, phantoon, phantoon_actions, reflec, ridley, roach, shaktool,
-    sidehopper, skree, skultera, space_pirates, statues, torizo, tripper, yapping_maw, zeb,
-    zebetites, zoa,
+    ceres_ridley, choot, covern, crawlers, crocomire_reactions, dachora_run, draygon_death,
+    draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator,
+    escape_critters, etecoon, evir, fire_arc, fireflea, fune, gamet, geega, kago, kraid,
+    magdollite, metroid, mini_kraid, mochtroid, morph_ball_eye, phantoon, phantoon_actions, reflec,
+    ridley, roach, shaktool, sidehopper, skree, skultera, space_pirates, statues, torizo, tripper,
+    yapping_maw, zeb, zebetites, zoa,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -532,6 +532,8 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         10738643 => reflec::initialize(game),
         10723661 => roach::initialize(game),
         10724048 => roach::main_ai(game),
+        10674038 => choot::initialize(game),
+        10674222 => choot::main_ai(game),
         10742351 => metroid::initialize(game),
         10742502 => metroid::frozen(game),
         10742579 => metroid::hurt(game),

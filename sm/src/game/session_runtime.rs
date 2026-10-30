@@ -1321,8 +1321,6 @@ crate::game::callback_dispatch! {
         10658809 => ground_patrol::initialize_shell;
         10658942 => ground_patrol::advance_shell;
         10659193 => ground_patrol::shot_shell;
-        10674038 => [crate::game::rising_falling::update(true, game)];
-        10674222 => [crate::game::rising_falling::update(false, game)];
         10675718 => crate::game::lava_seahorse_pair::initialize;
         10675790 => [actor_species_pre_instruction(crate::game::lava_seahorse_pair::pre_instruction(game), game)];
         10676168 => [{ actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize); crate::game::lava_seahorse_pair::synchronize(game); }];

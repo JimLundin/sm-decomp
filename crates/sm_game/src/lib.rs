@@ -115,6 +115,7 @@ pub mod actors {
     pub mod boulder;
     pub mod ceres_doors;
     pub mod ceres_ridley;
+    pub mod choot;
     pub mod codec;
     pub mod combat;
     pub mod contacts;
