@@ -2,7 +2,7 @@
 pub(crate) use crate::game::cinematic::{
     advance_cinematic_fade, clear_cinematic_colors, compose_cinematic_palette,
     fade_cinematic_colors, prepare_cinematic_palette_fade, queue_cinematic_tilemap,
-    set_cinematic_blend, set_cinematic_tilemap_updates,
+    set_cinematic_blend,
 };
 pub(crate) use crate::game::cinematic_display::{
     configure_cinematic_display, draw_intro_sprites, reset_cinematic_transform,
@@ -26,7 +26,7 @@ pub(crate) use crate::game::hdma_objects::{
 pub(crate) use crate::game::intro_objects::{
     advance_ceres_station, advance_intro_baby_pursuit, advance_intro_landing_mosaic,
     advance_intro_rinka, advance_zebes_destruction_zoom, advance_zebes_flight, advance_zebes_stars,
-    chase_intro_baby_y, launch_cinematic_sprite, update_cinematic_transform, wait_cinematic_scene,
+    launch_cinematic_sprite, update_cinematic_transform, wait_cinematic_scene,
 };
 use crate::game::projectile_presentation_ram as sprite_output;
 pub(crate) use crate::game::room_visuals::{
@@ -44,8 +44,7 @@ pub(crate) use crate::game::title_screen::{
 };
 pub(crate) use sm_game::cinematic::{
     advance_cinematic_coordinate, capture_cinematic_palette, clear_cinematic_background,
-    clear_cinematic_sprites, drift_cinematic_sprite, enable_cinematic_background,
-    fade_cinematic_fixed_color, set_fixed_color,
+    clear_cinematic_sprites, drift_cinematic_sprite, fade_cinematic_fixed_color, set_fixed_color,
 };
 
 pub(crate) use crate::game::hosts::{draw_player_frame, update_beam_tiles_and_palette};

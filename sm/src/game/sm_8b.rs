@@ -2,7 +2,6 @@ use super::intro_pages;
 use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8, QueueMusic_DelayedY};
 pub use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
-use crate::game::save_slots;
 use crate::game::sprite_drawing::Clip;
 use crate::game::visual_runtime::CinematicObjects::{
     Background as CinematicBackground, Mode7 as CinematicMode7, Sprites as CinematicSprites,
@@ -11,18 +10,17 @@ use crate::game::visual_runtime::advance_cinematic_coordinate;
 use crate::game::visual_runtime::{
     advance_ceres_station, advance_credits, advance_intro_baby_pursuit, advance_intro_rinka,
     advance_postcredits_samus_message, advance_shooting_stars, advance_zebes_destruction_zoom,
-    advance_zebes_stars, chase_intro_baby_y, draw_cinematic_sprites, draw_intro_sprites,
-    drift_cinematic_sprite, initialize_shooting_stars, launch_cinematic_sprite, move_ending_cloud,
-    prepare_credit_roll, request_title_skip, wait_cinematic_scene, wait_ending_cloud,
+    advance_zebes_stars, draw_cinematic_sprites, draw_intro_sprites, drift_cinematic_sprite,
+    initialize_shooting_stars, launch_cinematic_sprite, move_ending_cloud, prepare_credit_roll,
+    request_title_skip, wait_cinematic_scene, wait_ending_cloud,
 };
 use crate::game::visual_runtime::{advance_cinematic_background_pre, fade_cinematic_fixed_color};
 use crate::game::visual_runtime::{
     advance_cinematic_fade, capture_cinematic_palette, clear_cinematic_background,
-    clear_cinematic_colors, clear_cinematic_sprites, clear_hdma, compose_cinematic_palette,
-    configure_cinematic_display, enable_cinematic_background, fade_cinematic_colors,
-    prepare_cinematic_palette_fade, queue_cinematic_tilemap, reset_cinematic_transform,
-    set_cinematic_blend, set_cinematic_tilemap_updates, set_fixed_color, set_hdma_enabled,
-    spawn_cinematic_burst, spawn_cinematic_sprite_at, update_cinematic_transform,
+    clear_cinematic_colors, clear_cinematic_sprites, compose_cinematic_palette,
+    configure_cinematic_display, fade_cinematic_colors, prepare_cinematic_palette_fade,
+    queue_cinematic_tilemap, reset_cinematic_transform, set_cinematic_blend, set_fixed_color,
+    set_hdma_enabled, spawn_cinematic_burst, spawn_cinematic_sprite_at, update_cinematic_transform,
 };
 use sm_game::visual_state::{CinematicDisplay, CinematicFade, CinematicTilemap};
 
@@ -33,7 +31,6 @@ use crate::game::display_refresh::GraphicsAsset;
 use crate::game::explosion_window::spawn_power_bomb;
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::mode7_transfers::enqueue_rom;
-use crate::game::music::QueueSfx3_Max6;
 use crate::game::palette_effects;
 use crate::game::player_projectiles::prepare;
 use crate::game::session_runtime::initialize_player;
@@ -399,329 +396,21 @@ crate::game::callback_dispatch! {
     [9150091] CinematicFunc_Func7 [] { sm_game::title_sequence::zooming_out(game); };
     [9150290] CinematicFunc_Func10 [] { sm_game::title_sequence::to_file_select(game); };
     [9150382] CinematicFunc_Func9 [] { sm_game::title_sequence::to_demos(game); };
-    [9151381] CinematicFunction_Intro_Initial [] {
-        configure_cinematic_display(CinematicDisplay::Intro, game);
-        word! { game, 0; cur_irq_handler, irqhandler_next_handler, area_index }
-        word! { game, 16; room_width_in_blocks, room_height_in_blocks }
-        initialize_player(game);
-        crate::game::visual_runtime::update_beam_tiles_and_palette(game);
-        word! { game, 900; samus_max_missiles, samus_missiles }
-        word! {game; cinematic_var15 = 0; samus_draw_handler = ((0x90eb52i32) as u16); }
-        crate::game::controller_input::use_cinematic_bindings(game);
-        word! { game, 0; samus_invincibility_timer, samus_knockback_timer }
-        word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
-        word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce3e9, 0));
-        unsafe {
-            GraphicsAsset::Decompress(0x95f90e, 0x10000).load(game);
-            GraphicsAsset::Decompress(0x95d089, 0x18000).load(game);
-            GraphicsAsset::Decompress(0x9788cc, 0x19000).load(game);
-            GraphicsAsset::Decompress(0x96ff14, 0x19800).load(game);
-            GraphicsAsset::Decompress(0x95e4c2, 0x1b800).load(game);
-            GraphicsAsset::Decompress(0x978d12, 0x1e000).load(game);
-            GraphicsAsset::VramWords(0x7f0000, 0x0000, 0x8000).load(game);
-            GraphicsAsset::VramWords(0x7f8000, 0x4000, 0x900).load(game);
-            GraphicsAsset::VramWords(0x7f9000, 0x4800, 0x800).load(game);
-            GraphicsAsset::VramWords(0x7fe000, 0x4c00, 0x800).load(game);
-            GraphicsAsset::VramWords(0x7f9800, 0x5000, 0x2000).load(game);
-            GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x2000).load(game);
-            GraphicsAsset::VramWords(0x7fb800, 0x6e00, 0x2400).load(game);
-            GraphicsAsset::Decompress(0x95d713, 0x1a000).load(game);
-            crate::game::display_refresh::enable(true, game);
-        }
-        word! { game, 3; screen_fade_delay, screen_fade_counter }
-        set_hdma_enabled(true, game);
-        palette_effects::clear(game);
-        palette_effects::set_enabled(true, game);
-        word! { game, 0; door_def_ptr, layer1_x_pos, layer1_y_pos, cinematic_var16 }
-        word_transfers!(game, descending, 1024; cinematic_bg(1023) <- native(0x197fe));
-        word_transfers!(game, descending, 128; pause_map(127) <- rom(0x8cd81b, 127));
-        word! {game; cinematic_var11 = -1i32 as u16; cinematic_function = ((0x8ba5a7i32) as u16); }
-        QueueMusic_Delayed8(0, game);
-        QueueMusic_Delayed8(0xff3f, game);
-    };
-    [9152111] CinematicFunc_Intro_SetupTextPage2 [] {
-        intro_pages::clear_japanese_tiles(game);
-        unsafe {
-            GraphicsAsset::VramWords(0x7e4000, 0x4180, 0x600).load(game);
-            crate::rtl::write_register_and_mirror(TM as u16, 0x16, 0x69, false, game);
-        }
-        clear_cinematic_background(0x2f, game);
-        enable_cinematic_background(game);
-        set_cinematic_tilemap_updates(true, game);
-        word!(game.cinematicbg_var3 = addr_unk_604C00 as u16);
-        word_transfers!(game, descending, 128;
-            pause_map(127) <- value(15401),
-            pause_map(1023) <- value(15401),
-        );
-        word_transfers!(game, ascending, 128; pause_map(768) <- rom(0x8ba72b, 0));
-        let at = 0x3000 + core::mem::offset_of!(Ram3000, menu.menu_tilemap) + 286;
-        game.ram().copy_in(at, &472456233u32.to_ne_bytes());
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCE6D as u16, 0x1c29, game);
-        word!(game.cinematic_var4 = 127);
-        CinematicBackground.spawn(addr_kCinematicBgObjectDef_8BCF63 as u16, 0x4c00, game);
-        word! { game, 8; cinematic_var10, reg_BG2VOFS, reg_BG3VOFS }
-        intro_pages::clear_english_text(game);
-        intro_pages::reset_caret(game);
-        QueueMusic_Delayed8(0, game);
-        QueueMusic_Delayed8(0xff36, game);
-        QueueMusic_DelayedY(5, 0xe, game);
-        word!(game.cinematic_function = (0x8ba82bi32) as u16);
-    };
-    [9157792] CinematicFunction_Intro_Func54 [] {
-        configure_cinematic_display(CinematicDisplay::Station, game);
-        clear_cinematic_sprites(game);
-        word! { game, 0; cur_irq_handler, irqhandler_next_handler }
-        word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce5e9, 0));
-        unsafe {
-            GraphicsAsset::Decompress(0x95a82f, 0x10000).load(game);
-            GraphicsAsset::Decompress(0x96fe69, 0x14000).load(game);
-            GraphicsAsset::Decompress(0x96d10a, 0x15000).load(game);
-        }
-        (unsafe { GraphicsAsset::VramLowBytes(0x7f4000, 0x0000, 0x300)
-            .load_planes(0x8c, true, game) });
-        reset_cinematic_transform(56, 24, game);
-        word! {game; cinematic_var8 = -72i32 as u16; cinematic_var10 = -104i32 as u16;
-            cinematic_var5 = 224; cinematic_var6 = 512; }
-        palette_effects::clear(game);
-        palette_effects::set_enabled(true, game);
-        clear_cinematic_background(0, game);
-        word!(game.cinematicbg_var3 = 23552);
-        unsafe { crate::game::display_refresh::enable(true, game) };
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF0F as u16, 0, game);
-        word!(game.cinematic_function = (0x8bbde4i32) as u16);
-        QueueMusic_Delayed8(0xff2d, game);
-        QueueMusic_DelayedY(5, 0xe, game);
-    };
-    [9158116] CinematicFunction_Intro_Func55 [] {
-        if HasQueuedMusic(game) & 1 == 0 {
-            game.ram().write_byte(0x51, 15);
-            word!(game.cinematic_function = (0x8bbdf9i32) as u16);
-        }
-    };
-    [9158137] CinematicFunction_Intro_Func56 [] {
-        if word!(game.cinematic_var6) as i32 - 32i32 & 0x8000 != 0 {
-            game.ram().write_byte(0x6f, 0);
-            game.ram().write_byte(0x72, 49);
-            set_fixed_color([63, 95, -97i32 as u8], game);
-            clear_cinematic_sprites(game);
-            enqueue_rom(0x8b, addr_kCinematicFunction_Intro_Func56_M7 as u16, game);
-            word! {game; cinematic_var8 = -32i32 as u16; cinematic_var10 = -128i32 as u16;
-                cinematic_var5 = 32; }
-            CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF39 as u16,
-                0x0020, // The preceding $198D store leaves $0020 in A.
-                game,
-            );
-            CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCE85 as u16,
-                0x0800, // Palette left in A by the preceding sprite initializer.
-                game,
-            );
-            CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCE8B as u16,
-                0x0c00, // Palette left in A by the preceding sprite initializer.
-                game,
-            );
-            CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCE91 as u16, 1, game);
-            CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF0F as u16, 1, game);
-            word!(game.cinematic_function = (0x8bbfdai32) as u16);
-            palette_effects::spawn(addr_kPalfx_E1A8 as u16, game);
-            palette_effects::spawn(addr_kPalfx_E1AC as u16, game);
-        } else {
-            word!(game.cinematic_var6 -= 16);
-        };
-    };
-    [9158618] CinematicFunction_Intro_Func67 [] {
-        fade_cinematic_fixed_color(game);
-        words!(game.cinematic_var8, cinematic_var7 += -0x2000i32 as u32);
-        if word!(game.cinematic_var6) as i32 - 3072i32 & 0x8000 != 0 {
-            word!(game.cinematic_var6 += 16);
-        } else if word!(game.cinematic_var6) as i32 - 0x2000i32 & 0x8000 != 0 {
-            word!(game.cinematic_var6 += 32);
-        } else {
-            game.ram().write_byte(0x69, 17);
-            game.ram().write_byte(0x55, 1);
-            game.ram().write_byte(0x5f, 0);
-            game.ram().write_byte(0x58, 92);
-            game.ram().write_byte(0x5d, 6);
-            word!(game.cinematic_var6 = 256);
-            word! { game, 0;
-                cinematic_var5, cinematic_var7, cinematic_var8, cinematic_var9, cinematic_var10,
-            }
-            enable_cinematic_background(game);
-            set_cinematic_tilemap_updates(true, game);
-            CinematicBackground.spawn(addr_kCinematicBgObjectDef_8BCF69 as u16, 0x5c00, game);
-            word!(game.cinematic_function = (0x8ba38fi32) as u16);
-        };
-    };
-    [9158912] CinematicFunction_Intro_Func73 [] {
-        word! {game; loading_game_state = kGameState_31_SetUpNewGame as u16;
-            game_state = kGameState_31_SetUpNewGame as u16; area_index = 6;
-            load_station_index = 0; }
-        save_slots::save(word!(game.selected_save_slot), game);
-    };
-    [9158939] CinematicFunctionBlackoutFromCeres [] {
-        configure_cinematic_display(CinematicDisplay::Station, game);
-        word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
-        word! { game, 0; door_def_ptr, layer1_x_pos, layer1_y_pos }
-        word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce5e9, 0));
-        unsafe {
-            GraphicsAsset::Decompress(0x95a82f, 0x10000).load(game);
-            GraphicsAsset::Decompress(0x96fe69, 0x14000).load(game);
-            GraphicsAsset::Decompress(0x96d10a, 0x15000).load(game);
-        }
-        (unsafe { GraphicsAsset::VramLowBytes(0x7f4600, 0x0000, 0x600)
-            .load_planes(0x8c, false, game) });
-        unsafe {
-            GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x1a00).load(game);
-            reset_cinematic_transform(52, 48, game);
-        }
-        word! {game; cinematic_var8 = -44i32 as u16; cinematic_var10 = -112i32 as u16;
-            cinematic_var5 = 0; cinematic_var6 = 256; }
-        set_hdma_enabled(false, game);
-        clear_hdma(game);
-        palette_effects::clear(game);
-        palette_effects::set_enabled(true, game);
-        clear_cinematic_background(0x2f, game);
-        word!(game.cinematicbg_var3 = 0);
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCE7F as u16, 0, game);
-        spawn_cinematic_sprite_at(
-            addr_kCinematicSpriteObjectDef_8BCE8B as u16,
-            2,
-            0x0002,
-            game,
-        );
-        spawn_cinematic_sprite_at(
-            addr_kCinematicSpriteObjectDef_8BCE91 as u16,
-            0,
-            0x0000,
-            game,
-        );
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF33 as u16,
-            0x0800, // Palette left in A by the preceding sprite initializer.
-            game,
-        );
-        palette_effects::spawn(addr_kPalfx_E1B8 as u16, game);
-        unsafe { crate::game::display_refresh::enable(true, game) };
-        word! { game, 1; screen_fade_delay, screen_fade_counter }
-        word!(game.cinematic_function = (0x8bc2e4i32) as u16);
-        QueueMusic_Delayed8(0, game);
-        QueueMusic_Delayed8(0xff2d, game);
-        if word!(game.game_state) as i32 == kGameState_37_CeresGoesBoomWithSamus as i32 {
-            QueueMusic_DelayedY(8, 0xe, game);
-        } else {
-            QueueMusic_DelayedY(7, 0xe, game);
-        };
-    };
-    [9159396] CinematicFunction_Intro_Func74 [] {
-        if HasQueuedMusic(game) & 1 == 0 {
-            word!(game.cinematic_function = (0x8bc2f1i32) as u16);
-        }
-    };
-    [9159409] CinematicFunction_Intro_Func75 [] {
-        words!(game.cinematic_var10, cinematic_var9 += 4096);
-        words!(game.cinematic_var8, cinematic_var7 += -0x4000i32 as u32);
-        word!(game.cinematic_var6 += 1);
-        crate::game::display_refresh::fade(true, game);
-        if game.ram().read_byte(0x51) == 15 {
-            word! { game, 0; screen_fade_delay, screen_fade_counter }
-            word! {game; cinematic_function = ((0x8bc345i32) as u16); cinematic_var4 = 1;
-                cinematic_var13 = 0; }
-        }
-    };
-    [9159493] CinematicFunction_Intro_Func76 [] {
-        words!(game.cinematic_var10, cinematic_var9 += 4096);
-        words!(game.cinematic_var8, cinematic_var7 += -0x4000i32 as u32);
-        if word!(game.cinematic_var6) as i32 - 640i32 & 0x8000 != 0 {
-            word!(game.cinematic_var6 += 1);
-        } else {
-            word! { game;
-                power_bomb_explosion_x_pos =
-                    (word!(game.reg_M7X)).wrapping_sub(word!(game.cinematic_var8));
-                power_bomb_explosion_y_pos =
-                    (word!(game.reg_M7Y)).wrapping_sub(word!(game.cinematic_var10));
-            }
-            set_hdma_enabled(true, game);
-            spawn_power_bomb(game);
-            game.ram().write_byte(0x6f, 16);
-            game.ram().write_byte(0x72, 55);
-            word!(game.cinematic_var6 = 768);
-            CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF2D as u16, 0, game);
-            if word!(game.game_state) == 37 {
-                enqueue_rom(0x8b, addr_kCinematicFunction_Intro_Func76_M7_2 as u16, game);
-            } else {
-                enqueue_rom(0x8b, addr_kCinematicFunction_Intro_Func76_M7_0 as u16, game);
-            }
-            enqueue_rom(0x8b, addr_kCinematicFunction_Intro_Func76_M7_1 as u16, game);
-            word!(game.cinematic_function = (0x8bc5cai32) as u16);
-        };
-    };
-    [9160138] CinematicFunction_Intro_Func77 [] {
-        game.ram().write_byte(0x6f, 16);
-        game.ram().write_byte(0x72, 55);
-        word!(game.cinematic_var8 += 2);
-        word!(game.cinematic_var5 = (((word!(game.cinematic_var5)) as u8).wrapping_sub(1)) as u16);
-        if word!(game.cinematic_var6) as i32 - 16i32 & 0x8000 != 0 {
-            word! {game; cinematic_function = ((0x8bc610i32) as u16); cinematic_var4 = 192; }
-        } else {
-            word!(game.cinematic_var6 -= 16);
-        };
-    };
-    [9160231] CinematicFunction_Intro_Func85 [] {
-        crate::game::display_refresh::fade(false, game);
-        if game.ram().read_byte(0x51) == 0x80 {
-            unsafe { crate::game::display_refresh::enable(true, game) };
-            word! { game, 0; screen_fade_delay, screen_fade_counter }
-            if word!(game.game_state) as i32 == kGameState_37_CeresGoesBoomWithSamus as i32 {
-                QueueMusic_Delayed8(0, game);
-                word! { game, 0;
-                    hud_item_index, samus_auto_cancel_hud_item_index, samus_invincibility_timer,
-                    samus_knockback_timer,
-                }
-                clear_hdma(game);
-                crate::game::scanline_irq::disable(game);
-                word!(game.fx_layer_blending_config_a = 0);
-                game.ram().write_byte(0x6e, 0);
-                game.ram().write_byte(0x71, 0);
-                game.ram().write_byte(0x69, 16);
-                game.ram().write_byte(0x6b, 0);
-                game.ram().write_byte(0x6c, 0);
-                game.ram().write_byte(0x6d, 0);
-                game.ram().write_byte(0x55, 9);
-                word! { game, 0; game_options_screen_index, menu_index }
-                word_transfers!(game, descending, 128; le(cinematicbg_arr7, 135) <- value(0));
-                word!(game.game_state = kGameState_25_SamusNoHealth as u16);
-            } else {
-                word!(game.cinematic_function = (0x8bc699i32) as u16);
-            }
-        }
-    };
-    [9160345] CinematicFunction_Intro_Func86 [] {
-        configure_cinematic_display(CinematicDisplay::Landing, game);
-        word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
-        unsafe {
-            GraphicsAsset::Decompress(0x978adb, 0x19000).load(game);
-            GraphicsAsset::Decompress(0x96ec76, 0x15000).load(game);
-            GraphicsAsset::VramLowBytes(0x7f4300, 0x0000, 0x300).load(game);
-            GraphicsAsset::VramWords(0x7f9000, 0x5c00, 0x800).load(game);
-            GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
-            reset_cinematic_transform(56, 24, game);
-        }
-        word! { game, 0; cinematic_var8, cinematic_var10, cinematic_var5 }
-        word!(game.cinematic_var6 = 256);
-        set_hdma_enabled(false, game);
-        clear_hdma(game);
-        palette_effects::clear(game);
-        palette_effects::set_enabled(true, game);
-        game.ram().write_byte(0x57, -127i32 as u8);
-        palette_effects::spawn(addr_kPalfx_E1A8 as u16, game);
-        word!(game.cinematic_function = (0x8bc79ci32) as u16);
-        unsafe { crate::game::display_refresh::enable(true, game) };
-        word! { game, 1; screen_fade_delay, screen_fade_counter }
-    };
-    [9161439] CinematicFunction_Intro_Func95 [] {
-        game.ram().write_byte(0x51, 0x80);
-        word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
-        word!(game.game_state = kGameState_6_LoadingGameData as u16);
-        word!(game.samus_health = word!(game.samus_max_health));
-    };
+    [9151381] CinematicFunction_Intro_Initial [] { sm_game::intro_sequence::initial(game); };
+    [9152111] CinematicFunc_Intro_SetupTextPage2 [] { sm_game::intro_sequence::set_up_text_page_1(game); };
+    [9157792] CinematicFunction_Intro_Func54 [] { sm_game::intro_sequence::ceres_initial(game); };
+    [9158116] CinematicFunction_Intro_Func55 [] { sm_game::intro_sequence::ceres_wait_for_music(game); };
+    [9158137] CinematicFunction_Intro_Func56 [] { sm_game::intro_sequence::ceres_flying_into_camera(game); };
+    [9158618] CinematicFunction_Intro_Func67 [] { sm_game::intro_sequence::ceres_flying_into_ceres(game); };
+    [9158912] CinematicFunction_Intro_Func73 [] { sm_game::intro_sequence::start_game_at_ceres(game); };
+    [9158939] CinematicFunctionBlackoutFromCeres [] { sm_game::intro_sequence::boom_initial(game); };
+    [9159396] CinematicFunction_Intro_Func74 [] { sm_game::intro_sequence::boom_wait_for_music(game); };
+    [9159409] CinematicFunction_Intro_Func75 [] { sm_game::intro_sequence::boom_small_explosions(game); };
+    [9159493] CinematicFunction_Intro_Func76 [] { sm_game::intro_sequence::boom_explosions(game); };
+    [9160138] CinematicFunction_Intro_Func77 [] { sm_game::intro_sequence::boom_gunship_flying_away(game); };
+    [9160231] CinematicFunction_Intro_Func85 [] { sm_game::intro_sequence::boom_fade_out(game); };
+    [9160345] CinematicFunction_Intro_Func86 [] { sm_game::intro_sequence::zebes_initial(game); };
+    [9161439] CinematicFunction_Intro_Func95 [] { sm_game::intro_sequence::zebes_load_game_data(game); };
     [9163904] CinematicFunctionEscapeFromCebes [] {
         word! { game, 0; cur_irq_handler, irqhandler_next_handler }
         configure_cinematic_display(CinematicDisplay::Escape, game);
@@ -1044,32 +733,16 @@ crate::game::callback_dispatch! {
             crate::game::save_slots::record_completion(game);
         }
     };
+    [9151992] CinematicFunction_Intro_LastMetroidCaptivity [] { sm_game::intro_sequence::last_metroid_in_captivity(game); };
+    [9152019] CinematicFunc_Intro_QueueGalaxyIsAtPeace [] { sm_game::intro_sequence::galaxy_is_at_peace(game); };
+    [9152076] CinematicFunc_Intro_FadeOut [] { sm_game::intro_sequence::fade_out(game); };
+    [9160208] CinematicFunction_Intro_Func84 [] { sm_game::intro_sequence::boom_wait(game); };
+    [9161424] CinematicFunction_Intro_Func108 [] { sm_game::intro_sequence::zebes_hold(game); };
     @countdown [pub fn (game: &mut Game)];
     before {
         let v0: bool = (word!(game.cinematic_var4 -= 1, reread) & 0x8000) != 0;
     }
     when word!(game.cinematic_var4) == 0 || v0;
-    [9151992] CinematicFunction_Intro_LastMetroidCaptivity {
-        word! {game; cinematic_function = ((0x8ba613i32) as u16); cinematic_var4 = 200; }
-        QueueMusic_Delayed8(5, game);
-    };
-    [9152019] CinematicFunc_Intro_QueueGalaxyIsAtPeace {
-        QueueMusic_Delayed8(0, game);
-        QueueMusic_Delayed8(0xff42, game);
-        QueueMusic_DelayedY(5, 0xe, game);
-        word!(game.cinematic_function = (0x8ba639i32) as u16);
-    };
-    [9152076] CinematicFunc_Intro_FadeOut {
-        word!(game.cinematic_function = (0x8ba663i32) as u16);
-        word! { game, 2; screen_fade_delay, screen_fade_counter }
-    };
-    [9160208] CinematicFunction_Intro_Func84 {
-        word! { game, 1; screen_fade_delay, screen_fade_counter }
-        word!(game.cinematic_function = (0x8bc627i32) as u16);
-    };
-    [9161424] CinematicFunction_Intro_Func108 {
-        word!(game.cinematic_function = (0x8bcadei32) as u16);
-    };
     [9165726] CinematicFunction_Intro_Func119 {
         QueueMusic_Delayed8(0, game);
         QueueMusic_Delayed8(0xff3c, game);
@@ -1166,29 +839,10 @@ crate::game::callback_dispatch! {
     call (j, game); default { Unreachable(game); };
     @functions [pub fn (k: u16, game: &mut Game)];
     [9149647] sub_8B9CCF [] { sm_game::title_sequence::scrolling_1994(k, game); };
-    [9157389] CinematicFunction_Intro_Func52 [] {
-        let v1: bool = (word!(game.cinematic_var14 -= 1, reread) & 0x8000) != 0;
-        if word!(game.cinematic_var14) == 0 || v1 {
-            let v2: i32 = k as i32 >> 1;
-            word!(game.cinematicspr_preinstr_func[v2] = (0x8bbb24i32) as u16);
-            word! { game, 0; cinematic_var14, cinematic_var17, cinematicspr_goto_timer[v2] }
-        }
-    };
-    [9159817] CinematicSprPreInstr_C489 [] {
-        if word!(game.cinematic_function) as i32 == 0x8bc5ca & 0xffff {
-            word!(game.cinematicspr_preinstr_func[(k >> 1)] = (0x8b93d9i32) as u16);
-        } else {
-            let v1: bool = (word!(game.cinematic_var4 -= 1, reread) & 0x8000) != 0;
-            if word!(game.cinematic_var4) == 0 || v1 {
-                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCEC1 as u16,
-                    word!(game.cinematic_var13),
-                    game,
-                );
-                word!(game.cinematic_var4 = 12);
-                word!(game.cinematic_var13 = (word!(game.cinematic_var13) as i32 + 1 & 7) as u16);
-            }
-        };
-    };
+    [9157389] CinematicFunction_Intro_Func52 [] { sm_game::intro_sequence::baby_idling(k, game); };
+    [9159817] CinematicSprPreInstr_C489 [] { sm_game::intro_sequence::explosion_spawner(k, game); };
+    [9157214] CinematicFunction_Intro_Func50 [] { sm_game::intro_sequence::baby_waiting(k, game); };
+    [9157235] CinematicFunction_Intro_Func51 [] { sm_game::intro_sequence::baby_hatched(k, game); };
     @functions [pub fn (k: u16, game: &mut Game)];
     @prefix { let v1: i32 = k as i32 >> 1; };
     [9152916] SetSomeStuffForSpriteObject_7 [] {
@@ -1235,23 +889,6 @@ crate::game::callback_dispatch! {
         } else {
             word!(game.cinematicspr_goto_timer[v1] += 256);
         };
-    };
-    [9157214] CinematicFunction_Intro_Func50 [] {
-        if word!(game.cinematicspr_instr_ptr[(v1 + 1)]) as i32 + 0x3487 & 0x8000 == 0 {
-            word!(game.cinematicspr_preinstr_func[v1] = (0x8bba73i32) as u16);
-            word! { game, 0; cinematic_var14, cinematic_var17 }
-        }
-    };
-    [9157235] CinematicFunction_Intro_Func51 [] {
-        if word!(game.cinematicbg_arr8[v1]) == 145 {
-            spawn_cinematic_burst(0xcef1, 0..4, 0, game);
-            QueueSfx3_Max6(0x23, game);
-        }
-        chase_intro_baby_y(k, 32, game);
-        if (word!(game.cinematic_var17) & 0x8000) == 0 {
-            word!(game.cinematic_var14 = 128);
-            word!(game.cinematicspr_preinstr_func[v1] = (0x8bbb0di32) as u16);
-        }
     };
     [9171431] CinematicFunction_Intro_Func179 [] {
         if crate::game::visual_runtime::advance_ending_sprite_pair(v1 as usize, true, game) {
@@ -1344,3 +981,81 @@ impl sm_game::cinematic_host::Host for Game {
         CheckEventHappened(event, self) != 0
     }
 }
+
+// The named bank $8B functions, objects and lists are the decompilation's.
+const _: () = {
+    use sm_game::intro_sequence as i;
+    use sm_game::title_sequence as t;
+    const fn at(word: u16) -> u32 {
+        0x8b_0000 | word as u32
+    }
+    assert!(at(t::function::NOTHING) == fnCinematicFunctionNone as u32);
+    assert!(at(t::function::SETUP) == fnCinematicFunctionOpening as u32);
+    assert!(at(t::function::ZOOMING_OUT) == 9150091 && at(t::function::TO_FILE_SELECT) == 9150290);
+    assert!(at(t::function::TO_DEMOS) == 9150382 && at(t::function::WAITING) == 9150248);
+    assert!(at(t::function::TITLE_SCREEN) == 9150249 && at(t::NO_PRE_INSTRUCTION) == 9147353);
+    assert!(t::object::SCROLLING_1994 == addr_kCinematicSpriteObjectDef_8BA0EF as u16);
+    assert!(t::object::TITLE_LOGO == addr_kCinematicSpriteObjectDef_8BA107 as u16);
+    assert!(t::object::COPYRIGHT == addr_kCinematicSpriteObjectDef_8BA119 as u16);
+    assert!(t::object::DEMO_LOGO == addr_kCinematicSpriteObjectDef_8BA125 as u16);
+    assert!(t::object::BABY_METROID == addr_kMode7ObjBabyMetroidInTitle as u16);
+    assert!(
+        at(i::function::WAIT_FOR_MUSIC_AND_FADE_IN) == 0x8ba5a7
+            && at(i::function::PAGE_6_DRAWN) == 0x8ba38f
+    );
+    assert!(
+        at(i::function::GALAXY_IS_AT_PEACE) == 9152019
+            && at(i::function::WAIT_240_FRAMES) == 9152057
+    );
+    assert!(
+        at(i::function::WAIT_FOR_FADE_OUT) == 9152099
+            && at(i::function::SPAWN_TEXT_PAGE_1) == 9152555
+    );
+    assert!(
+        at(i::function::CERES_WAIT_FOR_MUSIC) == 9158116
+            && at(i::function::CERES_FLYING_INTO_CAMERA) == 9158137
+    );
+    assert!(
+        at(i::function::CERES_FLYING_INTO_CERES) == 9158618
+            && at(i::function::BOOM_WAIT_FOR_MUSIC) == 9159396
+    );
+    assert!(
+        at(i::function::BOOM_SMALL_EXPLOSIONS) == 9159409
+            && at(i::function::BOOM_EXPLOSIONS) == 9159493
+    );
+    assert!(
+        at(i::function::BOOM_GUNSHIP_FLYING_AWAY) == 9160138
+            && at(i::function::BOOM_WAIT_C0H_FRAMES) == 9160208
+    );
+    assert!(at(i::function::BOOM_FADE_OUT) == 9160231 && at(i::function::ZEBES_INITIAL) == 9160345);
+    assert!(
+        at(i::function::ZEBES_FADING_IN) == 9160604
+            && at(i::function::ZEBES_SLIDE_SCENE_AWAY) == 9161438
+    );
+    assert!(
+        at(i::pre_instruction::BABY_HATCHED) == 9157235
+            && at(i::pre_instruction::BABY_IDLING) == 9157389
+    );
+    assert!(
+        at(i::pre_instruction::BABY_DANCING) == 9157412
+            && at(i::pre_instruction::NOTHING) == 9147353
+    );
+    assert!(i::object::TEXT_CARET == addr_kCinematicSpriteObjectDef_8BCE6D as u16);
+    assert!(i::object::CERES_GUNSHIP == addr_kCinematicSpriteObjectDef_8BCE7F as u16);
+    assert!(i::object::CERES_UNDER_ATTACK == addr_kCinematicSpriteObjectDef_8BCE85 as u16);
+    assert!(i::object::CERES_SMALL_ASTEROIDS == addr_kCinematicSpriteObjectDef_8BCE8B as u16);
+    assert!(i::object::CERES_VORTEX == addr_kCinematicSpriteObjectDef_8BCE91 as u16);
+    assert!(i::object::CERES_EXPLOSION_2 == addr_kCinematicSpriteObjectDef_8BCEC1 as u16);
+    assert!(i::object::SLIME_DROPS == addr_kCinematicSpriteObjectDef_8BCEF1 as u16);
+    assert!(i::object::CERES_STARS == addr_kCinematicSpriteObjectDef_8BCF0F as u16);
+    assert!(i::object::CERES_EXPLOSION_GUNSHIP == addr_kCinematicSpriteObjectDef_8BCF2D as u16);
+    assert!(i::object::CERES_EXPLOSION_SPAWNER == addr_kCinematicSpriteObjectDef_8BCF33 as u16);
+    assert!(i::object::CERES_LARGE_ASTEROIDS == addr_kCinematicSpriteObjectDef_8BCF39 as u16);
+    assert!(i::object::SAMUS_BLINKING == addr_kCinematicBgObjectDef_8BCF63 as u16);
+    assert!(i::object::CERES_BG == addr_kCinematicBgObjectDef_8BCF69 as u16);
+    assert!(i::mode7::FLYING_INTO_CERES == addr_kCinematicFunction_Intro_Func56_M7 as u16);
+    assert!(i::mode7::BOOM == addr_kCinematicFunction_Intro_Func76_M7_0 as u16);
+    assert!(i::mode7::BOOM_GUNSHIP == addr_kCinematicFunction_Intro_Func76_M7_1 as u16);
+    assert!(i::mode7::BOOM_WITH_SAMUS == addr_kCinematicFunction_Intro_Func76_M7_2 as u16);
+    assert!(i::NEXT_PAGE_ARROW == 0x3000 + core::mem::offset_of!(Ram3000, menu.menu_tilemap) + 286);
+};
