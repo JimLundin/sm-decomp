@@ -5,6 +5,12 @@ pub enum Clip {
     None,
     Inside,
     Outside,
+    /// `Inside` and `Outside` for enemy spritemaps ($81:8B22 and $81:8B96). Both
+    /// lack a CLC before the Y add, so it takes the carry of the 16-bit X add:
+    /// an entry whose X wraps (an enemy straddling the left screen edge) is a
+    /// pixel lower.
+    EnemyInside,
+    EnemyOutside,
     Bounded,
     BoundedOutside,
 }
@@ -85,9 +91,17 @@ pub fn draw_with_publication<H: Host>(
         } else {
             host.write_byte(index, x as u8)?;
             extension(host, map, record, index, x)?;
-            let y = u16::from(position.1 as u8) + u16::from(map.y(record)?);
+            let x_carry = match clip {
+                Clip::EnemyInside | Clip::EnemyOutside => {
+                    position.0.overflowing_add(map.x(record)?).1
+                }
+                _ => false,
+            };
+            let y = u16::from(position.1 as u8) + u16::from(map.y(record)?) + u16::from(x_carry);
             let inside = (y & 0x100 == 0) == (map.y(record)? & 0x80 == 0);
-            let output_y = if matches!(clip, Clip::None) || inside == matches!(clip, Clip::Inside) {
+            let output_y = if matches!(clip, Clip::None)
+                || inside == matches!(clip, Clip::Inside | Clip::EnemyInside)
+            {
                 y as u8
             } else {
                 0xf0

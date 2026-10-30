@@ -98,8 +98,8 @@ impl<H: SpriteHost + ?Sized> objects::Host for NativeObjects<'_, H> {
     fn started(&mut self, clip: Clip) -> Result<(), Infallible> {
         crate::probe::hit(match clip {
             Clip::None => "sprites.wrap",
-            Clip::Inside => "sprites.inside",
-            Clip::Outside => "sprites.outside",
+            Clip::Inside | Clip::EnemyInside => "sprites.inside",
+            Clip::Outside | Clip::EnemyOutside => "sprites.outside",
             Clip::Bounded => "sprites.bounded",
             Clip::BoundedOutside => "sprites.bounded-outside",
         });
