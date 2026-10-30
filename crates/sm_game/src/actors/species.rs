@@ -248,6 +248,8 @@ pub trait AiHost:
 {
     /// An AI routine whose arm is still in the compatibility table.
     fn native_ai(&mut self, ea: u32);
+    /// Kill the current enemy with the grapple, through one lease.
+    fn grapple_kill(&mut self);
 }
 
 /// An enemy species' AI routine, keyed by its address. Arms not here are in
@@ -311,6 +313,14 @@ pub fn ai<H: AiHost + ?Sized>(ea: u32, game: &mut H) {
         10780717 => game.shot_reaction(Shot::Finalize),
         10783322 => crocomire_reactions::initialize(game),
         10795410 => crocomire_reactions::power_bomb(game),
+        // Bank $A8: the common grapple, contact, shot and frozen reactions.
+        11042826 => game.grapple_kill(),
+        11042831 | 11042846 => {
+            crate::actors::combat::select_frozen_ai(&mut LeaseActors::lease(game))
+        }
+        11042851 => game.contact_reaction(Death::Finalize),
+        11042861 => game.shot_reaction(Shot::Finalize),
+        11042881 => crate::actors::scheduling::update_frozen_enemy(&mut LeaseActors::lease(game)),
         // Bank $B2: the space pirates.
         0xb20000..=0xb2ffff => space_pirates::dispatch_ai(ea, game),
         // Bank $A5.
