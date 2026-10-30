@@ -645,11 +645,9 @@ pub fn spawn_one_dust_cloud_at(xd: u16, yd: u16, game: &mut impl Lease) {
     spawn_room_projectile(ADDR_K_EPROJ_DUST_CLOUD_EXPLOSION as u16, 9, game);
 }
 pub fn spawn_three_dust_clouds(game: &mut impl Lease) {
-    {
-        spawn_one_dust_cloud_at(-16i32 as u16, -8i32 as u16, game);
-        spawn_one_dust_cloud_at(0, -16i32 as u16, game);
-        spawn_one_dust_cloud_at(16, -8i32 as u16, game);
-    }
+    spawn_one_dust_cloud_at(-16i32 as u16, -8i32 as u16, game);
+    spawn_one_dust_cloud_at(0, -16i32 as u16, game);
+    spawn_one_dust_cloud_at(16, -8i32 as u16, game);
 }
 crate::dispatch::callback_dispatch! {
     pub fn run_rainbow_palette_function(ea: u32, k: u16, game: &mut impl Lease) => ea;
@@ -670,10 +668,8 @@ crate::dispatch::callback_dispatch! {
     }
 }
 pub fn handle_samus_rainbow_palette_animation(k: u16, game: &mut impl Lease) {
-    {
-        let r18: u16 = session_slot!(game, MotherBrainBrain[BRAIN].samus_rainbow_function);
-        run_rainbow_palette_function(((r18) as u32) | (BANK_BASE), k, game);
-    }
+    let r18: u16 = session_slot!(game, MotherBrainBrain[BRAIN].samus_rainbow_function);
+    run_rainbow_palette_function(((r18) as u32) | (BANK_BASE), k, game);
 }
 pub fn rainbow_gradually_slow_animation_down(game: &mut impl State) {
     let e: i32 = BRAIN;
@@ -691,33 +687,30 @@ pub fn rainbow_gradually_slow_animation_down(game: &mut impl State) {
     }
 }
 pub fn fade_baby_metroid_to_black(k: u16, game: &mut impl State) -> u8 {
-    {
-        let e: i32 = k as i32;
-        if (session_slot!(game, BabyMetroidInCutscene[e].base.y_pos) as i32 - 128i32) & 0x8000 != 0
-        {
-            return 0;
-        }
-        let v2: i16 =
-            ((session_slot!(game, BabyMetroidInCutscene[e].fade_timer)) as i16).wrapping_sub(1);
-        if v2 >= 0 {
-            session_slot!(game, BabyMetroidInCutscene[e].fade_timer = v2 as u16);
-            return 0;
-        }
-        session_slot!(game, BabyMetroidInCutscene[e].fade_timer = 8);
-        let v4: u16 = (session_slot!(game, BabyMetroidInCutscene[e].fade_index)).wrapping_add(1);
-        if (session_slot!(game, BabyMetroidInCutscene[e].fade_index) as i32 - 6i32) & 0x8000 == 0 {
-            return 1;
-        }
-        session_slot!(game, BabyMetroidInCutscene[e].fade_index = v4);
-        copy_rom_colors_to_palette(
-            cgram::SPRITE_PALETTE_7,
-            0xad,
-            baby_metroid_tables::fade_palette(game, v4 as isize).colors,
-            0xe,
-            game,
-        );
-        0
+    let e: i32 = k as i32;
+    if (session_slot!(game, BabyMetroidInCutscene[e].base.y_pos) as i32 - 128i32) & 0x8000 != 0 {
+        return 0;
     }
+    let v2: i16 =
+        ((session_slot!(game, BabyMetroidInCutscene[e].fade_timer)) as i16).wrapping_sub(1);
+    if v2 >= 0 {
+        session_slot!(game, BabyMetroidInCutscene[e].fade_timer = v2 as u16);
+        return 0;
+    }
+    session_slot!(game, BabyMetroidInCutscene[e].fade_timer = 8);
+    let v4: u16 = (session_slot!(game, BabyMetroidInCutscene[e].fade_index)).wrapping_add(1);
+    if (session_slot!(game, BabyMetroidInCutscene[e].fade_index) as i32 - 6i32) & 0x8000 == 0 {
+        return 1;
+    }
+    session_slot!(game, BabyMetroidInCutscene[e].fade_index = v4);
+    copy_rom_colors_to_palette(
+        cgram::SPRITE_PALETTE_7,
+        0xad,
+        baby_metroid_tables::fade_palette(game, v4 as isize).colors,
+        0xe,
+        game,
+    );
+    0
 }
 pub fn handle_enemy_blinking(k: u16, game: &mut impl State) {
     let e: i32 = k as i32;
@@ -760,54 +753,51 @@ pub fn accelerate_downwards(k: u16, game: &mut impl State) {
     );
 }
 pub fn update_speed_and_angle(k: u16, mut r18: u16, r20: u16, r22: u16, game: &mut impl State) {
-    {
-        let e: i32 = k as i32;
-        // Steer the speed 20h a frame towards `r22` and the angle by `r18`
-        // up to `r20`, then set the velocities along the angle.
-        if r22 != session_slot!(game, BabyMetroidInCutscene[e].speed) {
-            if ((r22) as i16)
-                .wrapping_sub((session_slot!(game, BabyMetroidInCutscene[e].speed)) as i16)
-                >= 0
-            {
-                let mut v2: u16 =
-                    (session_slot!(game, BabyMetroidInCutscene[e].speed)).wrapping_add(32);
-                if (v2 as i32 - r22 as i32) & 0x8000 == 0 {
-                    v2 = r22;
-                }
-                session_slot!(game, BabyMetroidInCutscene[e].speed = v2);
-            } else {
-                let mut v1: u16 =
-                    (session_slot!(game, BabyMetroidInCutscene[e].speed)).wrapping_sub(32);
-                if (v1 as i32 - r22 as i32) & 0x8000 != 0 {
-                    v1 = r22;
-                }
-                session_slot!(game, BabyMetroidInCutscene[e].speed = v1);
+    let e: i32 = k as i32;
+    // Steer the speed 20h a frame towards `r22` and the angle by `r18`
+    // up to `r20`, then set the velocities along the angle.
+    if r22 != session_slot!(game, BabyMetroidInCutscene[e].speed) {
+        if ((r22) as i16).wrapping_sub((session_slot!(game, BabyMetroidInCutscene[e].speed)) as i16)
+            >= 0
+        {
+            let mut v2: u16 =
+                (session_slot!(game, BabyMetroidInCutscene[e].speed)).wrapping_add(32);
+            if (v2 as i32 - r22 as i32) & 0x8000 == 0 {
+                v2 = r22;
             }
-        }
-        let mut v3: u16;
-        let use_target_angle: bool = if (r18 & 0x8000) != 0 {
-            v3 = (session_slot!(game, BabyMetroidInCutscene[e].angle)).wrapping_add(r18);
-            (v3 as i32 - r20 as i32) & 0x8000 != 0
+            session_slot!(game, BabyMetroidInCutscene[e].speed = v2);
         } else {
-            v3 = (session_slot!(game, BabyMetroidInCutscene[e].angle)).wrapping_add(r18);
-            (v3 as i32 - r20 as i32) & 0x8000 == 0
-        };
-        if use_target_angle {
-            v3 = r20;
+            let mut v1: u16 =
+                (session_slot!(game, BabyMetroidInCutscene[e].speed)).wrapping_sub(32);
+            if (v1 as i32 - r22 as i32) & 0x8000 != 0 {
+                v1 = r22;
+            }
+            session_slot!(game, BabyMetroidInCutscene[e].speed = v1);
         }
-        session_slot!(game, BabyMetroidInCutscene[e].angle = v3);
-        r18 = v3.to_ne_bytes()[1] as u16;
-        session_slot!(
-            game,
-            BabyMetroidInCutscene[e].x_velocity =
-                x_velocity_at_angle(session_slot!(game, BabyMetroidInCutscene[e].speed), r18)
-        );
-        session_slot!(
-            game,
-            BabyMetroidInCutscene[e].y_velocity =
-                y_velocity_at_angle(session_slot!(game, BabyMetroidInCutscene[e].speed), r18)
-        );
     }
+    let mut v3: u16;
+    let use_target_angle: bool = if (r18 & 0x8000) != 0 {
+        v3 = (session_slot!(game, BabyMetroidInCutscene[e].angle)).wrapping_add(r18);
+        (v3 as i32 - r20 as i32) & 0x8000 != 0
+    } else {
+        v3 = (session_slot!(game, BabyMetroidInCutscene[e].angle)).wrapping_add(r18);
+        (v3 as i32 - r20 as i32) & 0x8000 == 0
+    };
+    if use_target_angle {
+        v3 = r20;
+    }
+    session_slot!(game, BabyMetroidInCutscene[e].angle = v3);
+    r18 = v3.to_ne_bytes()[1] as u16;
+    session_slot!(
+        game,
+        BabyMetroidInCutscene[e].x_velocity =
+            x_velocity_at_angle(session_slot!(game, BabyMetroidInCutscene[e].speed), r18)
+    );
+    session_slot!(
+        game,
+        BabyMetroidInCutscene[e].y_velocity =
+            y_velocity_at_angle(session_slot!(game, BabyMetroidInCutscene[e].speed), r18)
+    );
 }
 crate::dispatch::instruction_callbacks! { pub fn (_k: u16, _jp: EnemyScript) -> EnemyScript;
     instruction_go_to_cfa2 [EnemyScript::jump(ADDR_K_BABY_METROID_ILIST_CFA2 as u16)] { };
