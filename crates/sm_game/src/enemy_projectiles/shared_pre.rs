@@ -272,14 +272,8 @@ pub fn Eproj_GetCollDetectRect(k: u16, ctx: &mut impl Host) -> CollisionRect {
 }
 
 pub fn Eproj_Earthqhake5(k: u16, ctx: &mut impl Host) {
-    {
-        let value = 10;
-        ctx.session_mut().feedback.earthquake_timer = value;
-    };
-    {
-        let value = 5;
-        ctx.session_mut().feedback.earthquake_kind = value;
-    };
+    ctx.session_mut().feedback.earthquake_timer = 10;
+    ctx.session_mut().feedback.earthquake_kind = 5;
     BlueRingContactExplosion(k, ctx);
 }
 

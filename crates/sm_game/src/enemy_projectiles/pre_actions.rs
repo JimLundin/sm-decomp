@@ -269,10 +269,7 @@ pub fn EprojPreInstr_8DCA(k: u16, ctx: &mut impl Host) {
         } & 0x8000)
             != 0
         {
-            {
-                let value = 0;
-                ctx.session_mut().player.speed_divisor = value;
-            };
+            ctx.session_mut().player.speed_divisor = 0;
         }
     }
 }
@@ -519,10 +516,7 @@ pub fn EprojPreInstr_CeresElevatorPad(k: u16, ctx: &mut impl Host) {
             value
         };
         if (fresh113 as i32 - 73i32) & 0x8000 == 0 {
-            {
-                let value = 72;
-                ctx.session_mut().player.y = value;
-            };
+            ctx.session_mut().player.y = 72;
             enemy!(ctx, 1 => (v1) as isize, delay);
             enemy!(ctx, addr_off_86A28B as u16 => (v1) as isize, program);
             ctx.resume_player_after_elevator();
@@ -1627,21 +1621,12 @@ pub fn Eproj_MoveToBlueRingSpawnPosition(k: u16, ctx: &mut impl Host) {
                 );
                 ctx.damage_player(damage);
             }
-            {
-                let value = 96;
-                ctx.session_mut().player.invincibility = value;
-            };
-            {
-                let value = 5;
-                ctx.session_mut().player.knockback_timer = value;
-            };
-            {
-                let value = (((ctx.session().player.x as i32
-                    - enemy!(ctx, (k >> 1) as isize, x) as i32)
-                    as i16)
-                    >= 0) as u16;
-                ctx.session_mut().player.knockback_x_direction = value;
-            };
+            ctx.session_mut().player.invincibility = 96;
+            ctx.session_mut().player.knockback_timer = 5;
+            ctx.session_mut().player.knockback_x_direction = (((ctx.session().player.x as i32
+                - enemy!(ctx, (k >> 1) as isize, x) as i32)
+                as i16)
+                >= 0) as u16;
         } else if CheckForBlueRingCollisionWithRoom(k, ctx) & 1 != 0 {
             Eproj_Earthqhake5(k, ctx);
         }

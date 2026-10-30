@@ -65,15 +65,9 @@ pub fn select(index: u16, h: &mut impl Host) -> u16 {
         .reserve_health
         .wrapping_add(h.session().inventory.health.current);
     if health < 30 {
-        {
-            let value = 1;
-            h.session_mut().enemy_projectiles.drop_bias = value;
-        };
+        h.session_mut().enemy_projectiles.drop_bias = 1;
     } else if health >= 50 {
-        {
-            let value = 0;
-            h.session_mut().enemy_projectiles.drop_bias = value;
-        };
+        h.session_mut().enemy_projectiles.drop_bias = 0;
     }
     let table = { h.loaded_record(0xb4, address) };
     let weights = Weights::new(
