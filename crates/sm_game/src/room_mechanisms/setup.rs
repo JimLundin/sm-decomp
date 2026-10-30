@@ -13,8 +13,6 @@ enum Diagnostic {
 }
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Setup<X> {
-    #[allow(dead_code)]
-    Noop,
     Return(u8),
     Diagnostic(Diagnostic),
     Door(super::rules::doors::Setup),
@@ -43,28 +41,8 @@ enum Setup<X> {
     Contact(Contact),
     External(X),
 }
-/// Captured at the encoded setup-word read, independently of the semantic action.
-#[derive(Clone, Copy, Debug, PartialEq)]
-struct Decoded {
-    original: u32,
-    action: Setup<u32>,
-}
-impl Decoded {
-    #[allow(dead_code)]
-    fn original(self) -> u32 {
-        self.original
-    }
-    fn action(self) -> Setup<u32> {
-        self.action
-    }
-}
-impl From<Decoded> for Setup<u32> {
-    fn from(value: Decoded) -> Self {
-        value.action
-    }
-}
-fn decode(original: u32) -> Decoded {
-    let action = match original {
+fn decode(original: u32) -> Setup<u32> {
+    match original {
         addresses::setup::SETUP_ITEM_EE4D => {
             Setup::Item(super::rules::item_setup::Setup::Initialize(
                 super::rules::item_setup::Container::Visible,
@@ -404,8 +382,7 @@ fn decode(original: u32) -> Decoded {
             Setup::Diagnostic(Diagnostic::UnsupportedB3E3)
         }
         a => Setup::External(a),
-    };
-    Decoded { original, action }
+    }
 }
 
 use super::host::{Contact as HostContact, Host};
@@ -416,8 +393,7 @@ pub fn setup(
     displacement: &mut HostContact<'_>,
     accumulator: u16,
 ) -> u8 {
-    match decode(original).action() {
-        Setup::Noop => 0,
+    match decode(original) {
         Setup::Return(value) => value,
         Setup::Diagnostic(_) => c.diagnostic(super::host::Diagnostic::UnsupportedSetup),
         Setup::External(_) => c.diagnostic(super::host::Diagnostic::Unreachable),
