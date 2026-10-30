@@ -838,6 +838,9 @@ def main():
                             help="use standalone rustc without SDL2; separate from Cargo artifacts")
     parser.add_argument("--rustc", default=shutil.which("rustc") or str(
         Path.home() / ".cargo" / "bin" / "rustc.exe"))
+    parser.add_argument("--oracle", choices=("patched", "faithful"),
+                        help="oracle ROM: snesrev's compatibility patches (default) or the "
+                        "original game logic (sets SM_ORACLE; see tools/snesrev_patches.py)")
     parser.add_argument("--audio-trace", type=Path,
                         help="stream ordered actual Cue/physical-oracle port outputs to a new file")
     parser.add_argument("--audio-trace-directory", type=Path,
@@ -855,6 +858,10 @@ def main():
         parser.error("--audio-trace-directory requires --corpus")
     if args.audio_trace is not None or args.audio_trace_directory is not None:
         os.environ["SM_VERIFY_PHYSICAL_AUDIO"] = "1"
+    if args.oracle is not None:
+        os.environ["SM_ORACLE"] = args.oracle
+    if os.environ.get("SM_ORACLE", "patched") not in ("patched", "faithful"):
+        parser.error("SM_ORACLE must be patched or faithful")
     producer = args.room_pack_export is not None
     if (args.room_pack_alternate or args.room_pack_changed) and not producer:
         parser.error("--room-pack-alternate/--room-pack-changed require --room-pack-export")

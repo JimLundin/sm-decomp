@@ -536,7 +536,8 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, context: &mut Execution
             0xdb => (*cpu).stopped = true,
             0xf4 => {
                 let w: u16 = fetch_word(cpu, context);
-                if w == 0xc2ae {
+                // snesrev clears Y when an enemy instruction terminates processing.
+                if w == 0xc2ae && !crate::oracle_mode::faithful() {
                     (*cpu).y = 0;
                 }
                 push_word(cpu, w, context);

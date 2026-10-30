@@ -12,13 +12,18 @@ on:
         description: Space-separated row ids (empty = full corpus / review waypoint)
         required: false
         default: ''
+      oracle:
+        description: Oracle ROM (patched = snesrev compatibility patches, faithful = original game logic)
+        type: choice
+        options: [patched, faithful]
+        default: patched
 
 permissions:
   contents: read
 
 # Finish the running corpus; retain the newest queued request.
 concurrency:
-  group: corpus-replay-${{ github.ref }}
+  group: corpus-replay-${{ github.ref }}-${{ inputs.oracle || 'patched' }}
   cancel-in-progress: false
 
 jobs:
@@ -120,6 +125,8 @@ jobs:
   segments:
     needs: [plan, build]
     runs-on: windows-2022
+    env:
+      SM_ORACLE: ${{ inputs.oracle || 'patched' }}
     timeout-minutes: ${{ matrix.kind == 'checkpoint' && 65 || 120 }}
     strategy:
       fail-fast: false

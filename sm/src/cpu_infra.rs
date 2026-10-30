@@ -1094,8 +1094,14 @@ pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
         )
         .install_startup(game.g_use_my_apu_code);
         RtlUpdateSnesPatchForBugfix(game);
+        // The faithful oracle keeps the original instructions and their hardware carry.
+        let carry_sites = if crate::oracle_mode::faithful() {
+            0
+        } else {
+            kPatchedCarrys.len()
+        };
         let mut i: size_t = 0 as size_t;
-        while i != (size_of::<[u32; 155]>() as usize).wrapping_div(size_of::<u32>() as usize) {
+        while i != carry_sites {
             let t_84: u8 = patch_image(kPatchedCarrys[i as usize], &mut game.execution_parts().1)
                 .byte(kPatchedCarrys[i as usize]);
             if t_84 != 0 {
@@ -1109,7 +1115,9 @@ pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
             }
             i = i.wrapping_add(1);
         }
-        install_startup_bug_hooks(&mut game.execution_parts().1);
+        if !crate::oracle_mode::faithful() {
+            install_startup_bug_hooks(&mut game.execution_parts().1);
+        }
         game.refresh_rom_records();
         game.g_snes
     }

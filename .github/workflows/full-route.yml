@@ -13,12 +13,18 @@ on:
   schedule:
     - cron: '41 2 * * *'
   workflow_dispatch:
+    inputs:
+      oracle:
+        description: Oracle ROM (patched = snesrev compatibility patches, faithful = original game logic)
+        type: choice
+        options: [patched, faithful]
+        default: patched
 
 permissions:
   contents: read
 
 concurrency:
-  group: full-route-${{ github.ref }}
+  group: full-route-${{ github.ref }}-${{ inputs.oracle || 'patched' }}
   cancel-in-progress: false
 
 jobs:
@@ -116,6 +122,8 @@ jobs:
   rooms:
     needs: [plan, build]
     runs-on: windows-2022
+    env:
+      SM_ORACLE: ${{ inputs.oracle || 'patched' }}
     timeout-minutes: 60
     strategy:
       fail-fast: false

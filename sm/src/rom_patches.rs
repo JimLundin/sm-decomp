@@ -2,6 +2,32 @@
 #![forbid(unsafe_code)]
 use crate::rom::RomImage;
 
+// Startup patches the faithful oracle leaves out (see `tools/snesrev_patches.py`).
+// Each address starts one patch of `install_startup`.
+/// Bug fixes and quirk removals.
+const BUG_FIX_PATCHES: [u32; 13] = [
+    0x84efd3, 0x848243, 0x86f4a6, 0x8685bd, 0xa8b237, 0xa2904b, 0xa29065, 0xa98c12, 0x82831e,
+    0x91c234, 0x809af3, 0xa7ff82, 0xa7b03a,
+];
+/// Removed waits for NMI; the frame-stepping oracle runs nested waits.
+const NMI_WAIT_PATCHES: [u32; 5] = [0x828533, 0x80837b, 0x80838e, 0x8bc11e, 0x8bd487];
+/// Removed message box lag frames and their music and sound effect steps.
+const MESSAGE_BOX_FRAME_PATCHES: [u32; 20] = [
+    0x858148, 0x8581b2, 0x8581ea, 0x858203, 0x858236, 0x8582b8, 0x858321, 0x85835a, 0x858532,
+    0x85856b, 0x858096, 0x8580b4, 0x8580dc, 0x8580f2, 0x85861c, 0x858651, 0x858692, 0x858696,
+    0x859660, 0x8583ba,
+];
+
+fn changes_game_logic(address: u32) -> bool {
+    [
+        &BUG_FIX_PATCHES[..],
+        &NMI_WAIT_PATCHES,
+        &MESSAGE_BOX_FRAME_PATCHES,
+    ]
+    .iter()
+    .any(|patches| patches.contains(&address))
+}
+
 pub struct RomPatches(RomImage);
 impl RomPatches {
     pub fn new(image: RomImage) -> Self {
@@ -19,6 +45,11 @@ impl RomPatches {
     fn bytes(&self, address: u32, bytes: &[u8]) {
         for (offset, &byte) in bytes.iter().enumerate() {
             self.write(address, offset, byte);
+        }
+    }
+    fn startup_bytes(&self, address: u32, bytes: &[u8]) {
+        if !(crate::oracle_mode::faithful() && changes_game_logic(address)) {
+            self.bytes(address, bytes);
         }
     }
     pub fn install_startup(&self, native_audio: bool) {
@@ -149,7 +180,7 @@ impl RomPatches {
             (0x8095e1, &[0x18; 4]),
         ];
         for &(address, bytes) in before_audio {
-            self.bytes(address, bytes);
+            self.startup_bytes(address, bytes);
         }
         if native_audio {
             self.bytes(0x808028, &[0x60]);
@@ -172,12 +203,15 @@ impl RomPatches {
             (0xa7b03a, &[0x22, 0x82, 0xff, 0xa7]),
         ];
         for &(address, bytes) in after_audio {
-            self.bytes(address, bytes);
+            self.startup_bytes(address, bytes);
         }
     }
     pub fn update_bugfix(&self, counter: u16) {
         self.bytes(0x8584a3, &[0x20, 0x50, 0x96, 0x60]);
-        let return_address = if counter < 1 { 0x8f } else { 0x8b };
+        // The original loop exits on held input; snesrev's first save version
+        // required a new press. The polled input byte is the only difference.
+        let faithful = crate::oracle_mode::faithful();
+        let return_address = if counter < 1 && !faithful { 0x8f } else { 0x8b };
         self.bytes(
             0x859650,
             &[
@@ -197,6 +231,9 @@ impl RomPatches {
                 0x60,
             ],
         );
-        self.bytes(0x8584cc, &[0x18, 0x18]);
+        // The original save confirmation polls input every second lag frame.
+        if !faithful {
+            self.bytes(0x8584cc, &[0x18, 0x18]);
+        }
     }
 }
