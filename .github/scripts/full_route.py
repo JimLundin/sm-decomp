@@ -6,7 +6,10 @@ input per native controller read, and lag frames shift the movie (run
 41047290647 passed lockstep while looping in Ceres). Instead every room of the
 100% capture starts from its captured original state (target/seeds/
 100-input-phase) with lag-aligned inputs that run into the next room, and must
-reach it. Every frame compares WRAM, VRAM, CGRAM, OAM, PPU state and pixels
+reach it. A room whose capture contains a no-update wait (the item fanfare's
+399 lag NMIs) stops at that wait: the original-emulator wait length differs
+from the oracle's, so later inputs land early and the room never ends (72 of
+79 local failures). Such a row only expects gameplay (state 8). Every frame compares WRAM, VRAM, CGRAM, OAM, PPU state and pixels
 against the original, as corpus rows do.
 
 Local (needs the ROM, the movie and the original capture with its lag logs):
@@ -58,28 +61,35 @@ def inputs():
     source = movie_inputs.load(MOVIE, pathlib.Path("rom/sm.smc"))
     with (SEEDS / "rooms.csv").open(newline="") as stream:
         files = {row["room_index"]: row["file"] for row in csv.DictReader(stream) if row["region"] == "wram"}
+    with (SEEDS / "lag.csv.events.csv").open(newline="") as stream:
+        waits = sorted(int(event["movie_frame"]) for event in csv.DictReader(stream)
+                       if event["kind"] == "no_update_enter")
     entries, rows = [], rooms()
     for position, row in enumerate(rows):
         index = int(row["room_index"])
         following = rows[position + 1] if position + 1 < len(rows) else None
         # Steps never exceed movie frames, so the span to the next seed always
         # runs into the next room; the captured end of the movie bounds the last.
-        count = (int(following["movie_frame"]) if following else MOVIE_FRAMES) - int(row["movie_frame"])
+        start = int(row["movie_frame"])
+        end = int(following["movie_frame"]) if following else MOVIE_FRAMES
+        wait = next((frame for frame in waits if start < frame < end), None)
+        ends = "no-update-wait" if wait else ("next-room" if following else "capture-end")
+        count = (wait or end) - start
         while True:
             try:
                 words = movie_inputs.seeded_wait_slice(source, SEEDS / "lag.csv", SEEDS / files[row["room_index"]], count)
                 break
             except ValueError as error:
-                if following or "capture ends" not in str(error) or count == 1:
+                if ends != "capture-end" or "capture ends" not in str(error) or count == 1:
                     raise
                 count -= 1
         data = "".join(f"{word:04X}\r\n" for word in words).encode("ascii")
         pathlib.Path(input_name(index)).write_bytes(data)
         entries.append({"room_index": index, "room": row["room"], "next_room": following["room"] if following else "",
-                        "steps": len(words), "input_sha256": hashlib.sha256(data).hexdigest()})
-        print(f"{index:4d} {row['room']} -> {entries[-1]['next_room'] or 'end'}: {len(words)} steps", flush=True)
+                        "ends": ends, "steps": len(words), "input_sha256": hashlib.sha256(data).hexdigest()})
+        print(f"{index:4d} {row['room']} -> {entries[-1]['next_room'] or 'end'} ({ends}): {len(words)} steps", flush=True)
     with CHAIN.open("w", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=list(entries[0]), lineterminator="\r\n")
+        writer = csv.DictWriter(stream, fieldnames=list(entries[0]), lineterminator="\n")
         writer.writeheader()
         writer.writerows(entries)
 
@@ -181,7 +191,7 @@ def run(job):
         index = int(entry["room_index"])
         name = f"chain-{index:04d}-{entry['room']}"
         ids.append(name)
-        expect = f"room:{entry['next_room']}" if entry["next_room"] else "state:8"
+        expect = f"room:{entry['next_room']}" if entry["ends"] == "next-room" else "state:8"
         lines += ["[[segment]]", f'id = "{name}"', f'seed = "{CAPTURE}:{index}"',
                   f'seed_sha256 = "{observation[entry["room_index"]]}"',
                   f'inputs = "{pathlib.Path(input_name(index)).name}"', f'input_sha256 = "{entry["input_sha256"]}"',
