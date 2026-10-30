@@ -1,6 +1,7 @@
 //! Game's implementations of the sm_game host traits whose modules moved.
 #![forbid(unsafe_code)]
 use crate::game_state::Game;
+use sm_game::inventory::{self, Word};
 
 impl sm_game::explosion_window::Host for Game {
     fn initialize_crystal_flash(&mut self) -> bool {
@@ -1024,45 +1025,29 @@ pub(crate) fn draw_player_frame(game: &mut Game) {
         .owned_player_call(sm_game::player_drawing::draw_player_frame);
 }
 
-/// The compat words the HUD read before it named them, read the same way.
+/// The HUD's values on the game: the inventory view over the projected bytes,
+/// and the named words for the HUD items and grapple, read the same way.
 impl sm_game::hud::HudPlayer for Game {
     fn health(&self) -> u16 {
-        let game = self;
-        sm_game::ram_word!(game.samus_health)
+        inventory::get(self, Word::Health)
     }
     fn max_health(&self) -> u16 {
-        let game = self;
-        sm_game::ram_word!(game.samus_max_health)
+        inventory::get(self, Word::MaxHealth)
     }
     fn ammunition(&self, index: usize) -> u16 {
-        let game = self;
-        let at = [
-            sm_game::ram::words::samus_missiles,
-            sm_game::ram::words::samus_super_missiles,
-            sm_game::ram::words::samus_power_bombs,
-        ][index];
-        sm_game::ram_checked_word!(game, at;)
+        inventory::get(self, Word::ammunition(index).0)
     }
     fn max_ammunition(&self, index: usize) -> u16 {
-        let game = self;
-        let at = [
-            sm_game::ram::words::samus_max_missiles,
-            sm_game::ram::words::samus_max_super_missiles,
-            sm_game::ram::words::samus_max_power_bombs,
-        ][index];
-        sm_game::ram_checked_word!(game, at;)
+        inventory::get(self, Word::ammunition(index).1)
     }
     fn reserve_health(&self) -> u16 {
-        let game = self;
-        sm_game::ram_word!(game.samus_reserve_health)
+        inventory::get(self, Word::ReserveHealth)
     }
     fn reserve_mode(&self) -> u16 {
-        let game = self;
-        sm_game::ram_word!(game.reserve_health_mode)
+        inventory::get(self, Word::ReserveMode)
     }
     fn equipped_items(&self) -> u16 {
-        let game = self;
-        sm_game::ram_word!(game.equipped_items)
+        inventory::get(self, Word::EquippedItems)
     }
     fn selected_item(&self) -> u16 {
         let game = self;
