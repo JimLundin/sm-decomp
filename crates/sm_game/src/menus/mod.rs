@@ -12,6 +12,6 @@ pub mod menu_window;
 pub mod options_objects;
 pub mod options_settings;
 pub mod pause_controls;
-mod prelude;
+pub(crate) mod prelude;
 pub mod reserve_tanks;
 pub mod save_slots;

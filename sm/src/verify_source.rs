@@ -286,6 +286,18 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/ram.rs"),
     ),
     (
+        "crates/sm_game/src/liquid_effects.rs",
+        include_bytes!("../../crates/sm_game/src/liquid_effects.rs"),
+    ),
+    (
+        "crates/sm_game/src/display/hdma_spawn.rs",
+        include_bytes!("../../crates/sm_game/src/display/hdma_spawn.rs"),
+    ),
+    (
+        "crates/sm_game/src/scrolling_sky.rs",
+        include_bytes!("../../crates/sm_game/src/scrolling_sky.rs"),
+    ),
+    (
         "crates/sm_game/src/menus/game_over.rs",
         include_bytes!("../../crates/sm_game/src/menus/game_over.rs"),
     ),

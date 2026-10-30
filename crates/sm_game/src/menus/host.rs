@@ -38,15 +38,16 @@ pub trait MenuRuntime {
     /// Begin entering the room at the current load station.
     fn enter_load_station(&mut self);
     fn request_reset(&mut self);
+    fn spawn_bg3_scroll(&mut self);
+    fn spawn_animated_tiles(&mut self, definition: u16);
+    fn shake_room_with_sound(&mut self, kind: u16);
     fn has_queued_music(&mut self) -> u8;
     fn queue_music_delayed8(&mut self, track: u16);
     /// Spawn an HDMA object from bank `bank`; returns its slot.
     fn spawn_hdma(
         &mut self,
         bank: u8,
-        dma_control: u8,
-        target_register: u8,
-        instruction_list: u16,
+        args: &crate::display::hdma_spawn::SpawnHdmaObject_Args,
     ) -> u16;
     /// The original's unreachable-state failure.
     fn rtl_unreachable(&mut self) -> bool;

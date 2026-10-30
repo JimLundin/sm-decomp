@@ -7,6 +7,7 @@ pub trait Registers {
     fn write_register(&mut self, register: u16, value: u8);
     fn write_register_word(&mut self, register: u16, value: u16);
     fn read_register_word(&mut self, register: u16) -> u16;
+    fn read_register(&mut self, register: u16) -> u8;
 }
 
 /// Write `value` to `register` and its RAM mirror at `mirror`, mirror first

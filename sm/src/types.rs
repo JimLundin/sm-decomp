@@ -167,11 +167,6 @@ crate::typed_struct! {
             y_offset_to_gfx, field_5, y_radius, field_7: u8;
     }
 
-    pub struct SpawnHdmaObject_Args {
-        pub dma_control, target_register: u8;
-        pub instruction_list: VoidP;
-    }
-
     pub struct TileTable {
         pub top_left, top_right, bottom_left, bottom_right: u16;
     }
@@ -755,15 +750,7 @@ impl SpawnHardcodedPlmArgs {
     }
 }
 
-impl SpawnHdmaObject_Args {
-    pub const fn new(dma_control: u8, target_register: u8, instruction_list: VoidP) -> Self {
-        Self {
-            dma_control,
-            target_register,
-            instruction_list,
-        }
-    }
-}
+pub use sm_game::display::hdma_spawn::SpawnHdmaObject_Args;
 
 /// Order in which the four destinations of a block are written.
 pub(crate) enum TileDrawOrder {

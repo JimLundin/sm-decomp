@@ -103,19 +103,20 @@ impl MenuRuntime for Game {
     fn queue_music_delayed8(&mut self, track: u16) {
         crate::game::music::QueueMusic_Delayed8(track, self)
     }
-    fn spawn_hdma(
-        &mut self,
-        bank: u8,
-        dma_control: u8,
-        target_register: u8,
-        instruction_list: u16,
-    ) -> u16 {
-        let args =
-            crate::types::SpawnHdmaObject_Args::new(dma_control, target_register, instruction_list);
-        visual_runtime::spawn_hdma(bank, &args, self)
+    fn spawn_hdma(&mut self, bank: u8, args: &crate::types::SpawnHdmaObject_Args) -> u16 {
+        visual_runtime::spawn_hdma(bank, args, self)
     }
     fn rtl_unreachable(&mut self) -> bool {
         crate::rtl::Unreachable(self)
+    }
+    fn spawn_bg3_scroll(&mut self) {
+        visual_runtime::spawn_bg3_scroll(self)
+    }
+    fn spawn_animated_tiles(&mut self, definition: u16) {
+        crate::game::animated_tiles::spawn(definition, self)
+    }
+    fn shake_room_with_sound(&mut self, kind: u16) {
+        visual_runtime::shake_room_with_sound(kind, self)
     }
     fn request_reset(&mut self) {
         Game::request_reset(self)
@@ -185,3 +186,7 @@ impl sm_game::decompression::DecompressionHost for Game {
         Game::read_rom_byte(self, address, offset)
     }
 }
+
+// The moved menus and screens address these records by layout.
+const _: () = assert!(core::mem::size_of::<crate::types::VramWriteEntry>() == 7);
+const _: () = assert!(core::mem::offset_of!(crate::types::PairU16, j) == 2);

@@ -8,6 +8,39 @@ pub use crate::display::registers::*;
 pub use crate::effects::{DisplayRefresh as _, SoundEffects as _};
 pub use crate::ram::{CompatibilityRam as _, RawRam as _, WorkRamAccess as _, word};
 
+pub use crate::display::hdma_spawn::SpawnHdmaObject_Args;
+
+/// A bank-local address, as the original's `VoidP`.
+pub type VoidP = u16;
+
+/// Join two words as `(hi << 16) | lo`, optionally as `i32`.
+macro_rules! words {
+    (i32, $game:ident.$hi:ident, $lo:ident $(,)?) => {
+        (($crate::ram::word!($game.$hi) as i32) << 16i32) | ($crate::ram::word!($game.$lo) as i32)
+    };
+    ($game:ident.$hi:ident, $lo:ident $(,)?) => {
+        (($crate::ram::word!($game.$hi) as u32) << 16i32) | ($crate::ram::word!($game.$lo) as u32)
+    };
+    (i32, ($hi:expr, $lo:expr $(,)?) $(,)?) => {
+        (($hi as i32) << 16i32) | ($lo as i32)
+    };
+    (($hi:expr, $lo:expr $(,)?) $(,)?) => {
+        (($hi as u32) << 16i32) | ($lo as u32)
+    };
+}
+pub(crate) use words;
+
+/// A word pair addressed as an enemy-slot record, as the original's `PairU16`.
+#[derive(Copy, Clone)]
+#[repr(C, packed)]
+pub struct PairU16 {
+    pub k: u16,
+    pub j: u16,
+}
+
+/// Bytes in one VRAM write queue record: size, 24-bit source, destination.
+pub const VRAM_WRITE_ENTRY_BYTES: usize = 7;
+
 /// The original coroutine result: nonzero yields to the frame loop.
 pub type CoroutineRet = u8;
 

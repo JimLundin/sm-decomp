@@ -79,7 +79,7 @@ fn initialize<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
         game.clear_hdma();
         game.set_hdma_enabled(true);
         for (register, script) in [(0x32, 0x927d), (0x31, 0x928d)] {
-            game.spawn_hdma(0x81, 0, register, script);
+            game.spawn_hdma(0x81, &SpawnHdmaObject_Args::new(0, register, script));
         }
         game.set_blank(false);
         word!(game.menu_index += 1);
