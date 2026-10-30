@@ -13,7 +13,7 @@ use crate::actors::{
     ceres_doors, ceres_ridley, choot, covern, crawlers, crocomire_reactions, dachora_run, dragon,
     draygon_death, draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep,
     elevator, escape_critters, etecoon, evir, fire_arc, fire_pillar, fireflea, flies, fune, gamet,
-    geega, geruta, kago, kihunter, kraid, magdollite, metroid, mini_crocomire, mini_kraid,
+    geega, geruta, gunship, kago, kihunter, kraid, magdollite, metroid, mini_crocomire, mini_kraid,
     mochtroid, morph_ball_eye, multiviola, oum, phantoon, phantoon_actions, polyp, powamp, puyo,
     reflec, ridley, rinka, rio, rippers, roach, shaktool, shutters, sidehopper, skree, skultera,
     space_pirates, squeept, statues, tatori, torizo, tripper, waver, work_robot,
@@ -548,6 +548,12 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11062220 => work_robot::initialize_deactivated(game),
         11062326 => work_robot::main_ai(game),
         11063668 => work_robot::touch(game),
+        10659396 => gunship::initialize_top(game),
+        10659538 => gunship::initialize_bottom(game),
+        10659673 => {
+            let function = gunship::main(game);
+            pre_instruction(function, game);
+        }
         11063693 => work_robot::shot_deactivated(game),
         11063698 => work_robot::shot(game),
         11065545 => bull::initialize(game),
@@ -773,6 +779,9 @@ pub fn pre_instruction<H: PreInstructionHost>(ea: u32, game: &mut H) {
         10736051 => yard::airborne(k, game),
         11059843 | 11059878 | 11059919 | 11060075 | 11060193 | 11060329 | 11060444 | 11060480
         | 11060509 | 11060584 | 11060585 | 11060639 => powamp::run(game, ea as u16, k),
+        10659852 | 10660048 | 10660162 | 10660176 | 10660231 | 10660285 | 10660431 | 10660445
+        | 10660500 | 10660514 | 10660639 | 10660704 | 10660718 | 10660773 | 10660807 | 10660891
+        | 10661079 | 10661134 | 10661165 => gunship::run(game, k, ea as u16),
         10657772 => cacatac::moving(true, game),
         10649723 => (),
         10652277 => (),
