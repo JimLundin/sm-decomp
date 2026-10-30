@@ -1456,6 +1456,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/enemy_script.rs"),
     ),
     (
+        "crates/sm_game/src/explosion_window.rs",
+        include_bytes!("../../crates/sm_game/src/explosion_window.rs"),
+    ),
+    (
         "sm/src/game/explosion_window.rs",
         include_bytes!("game/explosion_window.rs"),
     ),

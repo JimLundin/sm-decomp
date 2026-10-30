@@ -221,3 +221,6 @@ pub mod zebetite_data;
 // Translated scrolling code keeps the compat crate's lint policy for its original names.
 #[allow(non_upper_case_globals, unused_mut)]
 pub mod room_scrolls;
+// Translated window code keeps the compat crate's lint policy for its original names.
+#[allow(non_upper_case_globals, non_snake_case, unused_mut, unused_assignments)]
+pub mod explosion_window;
