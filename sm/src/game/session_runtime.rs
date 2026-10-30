@@ -576,20 +576,9 @@ impl<'g> Runtime<'g> {
         )
     }
 }
-fn botwoon_signal_address(enemy: u16, signal: actors::botwoon_death::Signal) -> usize {
-    use actors::botwoon_death::Signal::*;
-    let base = match signal {
-        PendingHit => 0x801e,
-        Active => 0x8020,
-        TailReady => 0x803c,
-        PreviousHealth => 0x8818,
-        BodyLanded => 0x883e,
-    };
-    base + usize::from(enemy)
-}
 impl actors::botwoon_death::Host for Runtime<'_> {
     fn native_death_signal(&self, enemy: u16, signal: actors::botwoon_death::Signal) -> u16 {
-        self.native_word(botwoon_signal_address(enemy, signal))
+        self.native_word(signal.address(enemy))
     }
     fn set_native_death_signal(
         &mut self,
@@ -597,13 +586,13 @@ impl actors::botwoon_death::Host for Runtime<'_> {
         signal: actors::botwoon_death::Signal,
         value: u16,
     ) {
-        let at = botwoon_signal_address(enemy, signal);
+        let at = signal.address(enemy);
         let [low, high] = value.to_ne_bytes();
         self.set_byte(at, low);
         self.set_byte(at + 1, high);
     }
     fn set_collapse_delay(&mut self, enemy: u16, value: u16) {
-        let at = 0x8004 + usize::from(enemy);
+        let at = actors::botwoon_death::collapse_delay_address(enemy);
         let [low, high] = value.to_ne_bytes();
         self.set_byte(at, low);
         self.set_byte(at + 1, high);
@@ -649,29 +638,6 @@ impl Drop for Runtime<'_> {
     fn drop(&mut self) {
         self.relinquish();
     }
-}
-fn shot_address(lane: ShotLane, raw: u16) -> usize {
-    let base = match lane {
-        ShotLane::X => 0xb64,
-        ShotLane::Y => 0xb78,
-        ShotLane::XFraction => 0xb8c,
-        ShotLane::YFraction => 0xba0,
-        ShotLane::XRadius => 0xbb4,
-        ShotLane::YRadius => 0xbc8,
-        ShotLane::XSpeed => 0xbdc,
-        ShotLane::YSpeed => 0xbf0,
-        ShotLane::Direction => 0xc04,
-        ShotLane::Kind => 0xc18,
-        ShotLane::Damage => 0xc2c,
-        ShotLane::Cursor => 0xc40,
-        ShotLane::Remaining => 0xc54,
-        ShotLane::Motion => 0xc68,
-        ShotLane::Variable => 0xc7c,
-        ShotLane::TrailTime => 0xc90,
-        ShotLane::Auxiliary => 0xca4,
-        ShotLane::Sprite => 0xcb8,
-    };
-    base + usize::from(raw & !1)
 }
 impl Host for Runtime<'_> {
     fn loaded_image(&self) -> Option<RomImage> {
@@ -826,10 +792,10 @@ impl Host for Runtime<'_> {
         self.byte(0x16402 + usize::from(cell))
     }
     fn alias_shot_read(&self, lane: ShotLane, raw: u16) -> u16 {
-        self.word(shot_address(lane, raw))
+        self.word(lane.address(raw))
     }
     fn alias_shot_write(&mut self, lane: ShotLane, raw: u16, value: u16, store: Store) {
-        self.store(shot_address(lane, raw), value, store);
+        self.store(lane.address(raw), value, store);
     }
     fn variable_byte(&self, raw: u16, high: bool) -> u8 {
         self.byte(0xc7c + usize::from(raw) + usize::from(high))

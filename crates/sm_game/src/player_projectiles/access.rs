@@ -21,6 +21,34 @@ pub enum ShotLane {
     Auxiliary,
     Sprite,
 }
+
+impl ShotLane {
+    /// Work-RAM address of this lane's word for the shot at selector `raw`; the
+    /// selector's low bit is ignored, as in the original word access.
+    pub fn address(self, raw: u16) -> usize {
+        let base = match self {
+            ShotLane::X => 0xb64,
+            ShotLane::Y => 0xb78,
+            ShotLane::XFraction => 0xb8c,
+            ShotLane::YFraction => 0xba0,
+            ShotLane::XRadius => 0xbb4,
+            ShotLane::YRadius => 0xbc8,
+            ShotLane::XSpeed => 0xbdc,
+            ShotLane::YSpeed => 0xbf0,
+            ShotLane::Direction => 0xc04,
+            ShotLane::Kind => 0xc18,
+            ShotLane::Damage => 0xc2c,
+            ShotLane::Cursor => 0xc40,
+            ShotLane::Remaining => 0xc54,
+            ShotLane::Motion => 0xc68,
+            ShotLane::Variable => 0xc7c,
+            ShotLane::TrailTime => 0xc90,
+            ShotLane::Auxiliary => 0xca4,
+            ShotLane::Sprite => 0xcb8,
+        };
+        base + usize::from(raw & !1)
+    }
+}
 #[derive(Clone, Copy)]
 pub enum Store {
     PrefixLe,

@@ -26,6 +26,25 @@ pub enum Signal {
     BodyLanded,
 }
 
+impl Signal {
+    /// Work-RAM address of this signal word for the actor at slot offset `enemy`.
+    pub fn address(self, enemy: u16) -> usize {
+        let base = match self {
+            Signal::PendingHit => 0x801e,
+            Signal::Active => 0x8020,
+            Signal::TailReady => 0x803c,
+            Signal::PreviousHealth => 0x8818,
+            Signal::BodyLanded => 0x883e,
+        };
+        base + usize::from(enemy)
+    }
+}
+
+/// Work-RAM address of the collapse delay word for the actor at `enemy`.
+pub fn collapse_delay_address(enemy: u16) -> usize {
+    0x8004 + usize::from(enemy)
+}
+
 /// Native actor accesses retain their full selector and ordered byte stores.
 /// Projectile capabilities retain their separate little-endian publication.
 pub trait Host: ActorAccess {
