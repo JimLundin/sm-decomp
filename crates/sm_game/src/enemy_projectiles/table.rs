@@ -5,7 +5,7 @@
 
 use crate::ram::{RawRam as _, WorkRamAccess};
 use crate::runtime_access::RuntimeAccess;
-use crate::session::EnemyProjectile;
+use crate::session::{EnemyProjectile, EnemyProjectiles};
 
 /// Projectile slots the original runs at once.
 pub const SLOTS: usize = 18;
@@ -46,30 +46,112 @@ pub(crate) fn slot_words(
     }
 }
 
+/// The table's scalar words the projectile host and the file select menu
+/// share, then every slot word.
+fn table_words(projectiles: &mut EnemyProjectiles, mut each: impl FnMut(usize, &mut u16)) {
+    each(0x198d, &mut projectiles.flags);
+    each(0x1991, &mut projectiles.selected);
+    each(0x1993, &mut projectiles.spawn.primary);
+    each(0x1995, &mut projectiles.spawn.secondary);
+    slot_words(&mut projectiles.slots, each);
+}
+
 /// Run `action` on the projectile slots.
 pub fn with_slots<H, T>(game: &mut H, action: impl FnOnce(&mut [EnemyProjectile; SLOTS]) -> T) -> T
 where
     H: WorkRamAccess + RuntimeAccess + ?Sized,
 {
+    with_projectiles(game, |projectiles| action(&mut projectiles.slots))
+}
+
+/// Run `action` on the projectile table. On the RAM copy only the words
+/// `table_words` lists are decoded and stored, so `action` must keep to them.
+pub fn with_projectiles<H, T>(game: &mut H, action: impl FnOnce(&mut EnemyProjectiles) -> T) -> T
+where
+    H: WorkRamAccess + RuntimeAccess + ?Sized,
+{
     use crate::session_access::SessionAccess;
     if game.runtime_admissible() {
-        return action(&mut game.runtime().session_mut().enemy_projectiles.slots);
+        return action(&mut game.runtime().session_mut().enemy_projectiles);
     }
     let ram = game.ram();
-    let mut slots = [EnemyProjectile::default(); SLOTS];
-    slot_words(&mut slots, |at, word| {
+    let mut projectiles = EnemyProjectiles::default();
+    table_words(&mut projectiles, |at, word| {
         *word = u16::from_le_bytes([ram.read_byte(at), ram.read_byte(at + 1)]);
     });
-    let before = slots;
-    let result = action(&mut slots);
-    if slots != before {
-        slot_words(&mut slots, |at, word| {
+    let before = projectiles.clone();
+    let result = action(&mut projectiles);
+    if projectiles != before {
+        table_words(&mut projectiles, |at, word| {
             let [low, high] = word.to_le_bytes();
             ram.write_byte(at, low);
             ram.write_byte(at + 1, high);
         });
     }
     result
+}
+
+/// The file select menu's reuse of the table (RAM map $198D..$19BC), by the
+/// RAM map's names. Helmet `n` is slot A, B or C's.
+pub struct FileSelect<'a>(pub &'a mut EnemyProjectiles);
+
+impl FileSelect<'_> {
+    /// $198D: `menu_selection_missile_animation_timer`.
+    pub fn missile_animation_timer(&mut self) -> &mut u16 {
+        &mut self.0.flags
+    }
+    /// $1991, $1993, $1995: `slot_[abc]_helmet_animation_timer`.
+    pub fn helmet_animation_timer(&mut self, helmet: usize) -> &mut u16 {
+        match helmet {
+            0 => &mut self.0.selected,
+            1 => &mut self.0.spawn.primary,
+            _ => &mut self.0.spawn.secondary,
+        }
+    }
+    /// $1997: `menu_selection_missile_animation_frame`.
+    pub fn missile_animation_frame(&mut self) -> &mut u16 {
+        &mut self.0.slots[0].definition
+    }
+    /// $199B..$199F: `slot_[abc]_helmet_animation_frame`.
+    pub fn helmet_animation_frame(&mut self, helmet: usize) -> &mut u16 {
+        &mut self.0.slots[2 + helmet].definition
+    }
+    /// $19A1: `menu_selection_missile_x_pos`.
+    pub fn missile_x(&mut self) -> &mut u16 {
+        &mut self.0.slots[5].definition
+    }
+    /// $19A5..$19A9: `slot_[abc]_helmet_x_pos`.
+    pub fn helmet_x(&mut self, helmet: usize) -> &mut u16 {
+        &mut self.0.slots[7 + helmet].definition
+    }
+    /// $19AB: `menu_selection_missile_y_pos`.
+    pub fn missile_y(&mut self) -> &mut u16 {
+        &mut self.0.slots[10].definition
+    }
+    /// $19AF..$19B3: `slot_[abc]_helmet_y_pos`.
+    pub fn helmet_y(&mut self, helmet: usize) -> &mut u16 {
+        &mut self.0.slots[12 + helmet].definition
+    }
+    /// $19B5: `file_copy_selection`.
+    pub fn file_copy_selection(&mut self) -> &mut u16 {
+        &mut self.0.slots[15].definition
+    }
+    /// $19B7: `file_copy_source_slot`.
+    pub fn file_copy_source_slot(&mut self) -> &mut u16 {
+        &mut self.0.slots[16].definition
+    }
+    /// $19B9: `file_copy_destination_slot`.
+    pub fn file_copy_destination_slot(&mut self) -> &mut u16 {
+        &mut self.0.slots[17].definition
+    }
+}
+
+/// Run `action` on the file select menu's view of the table.
+pub fn with_file_select<H, T>(game: &mut H, action: impl FnOnce(&mut FileSelect<'_>) -> T) -> T
+where
+    H: WorkRamAccess + RuntimeAccess + ?Sized,
+{
+    with_projectiles(game, |projectiles| action(&mut FileSelect(projectiles)))
 }
 
 /// Clear the definition of the projectile at byte slot `slot`, freeing it.

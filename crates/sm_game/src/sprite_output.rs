@@ -3,7 +3,6 @@
 #![allow(unused_assignments)]
 use crate::ram::RawRam as _;
 use crate::ram::checked_word as word;
-use crate::ram::word as game_word;
 use crate::sprite_drawing::{Clip, SpriteMap};
 use sm_data::cartridge::RomImage;
 
@@ -240,57 +239,90 @@ pub fn menu<H: SpriteHost + ?Sized>(index: u16, x: u16, y: u16, palette: u16, ga
     let address = crate::menu_lists::menu_spritemap(game, index as isize);
     paletted(0x82, address, (x, y), palette, Clip::None, game);
 }
+/// The menu sprites of the helmet's animation frames.
+const HELMET_SPRITES: [u16; 9] = [0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x33];
+/// Frames between helmet animation steps.
+const HELMET_FRAME_DELAY: u16 = 8;
+/// The helmet's resting frame once its animation finishes.
+const HELMET_RESTING_FRAME: u16 = 7;
+/// The palette of the file select menu's sprites.
+const FILE_SELECT_PALETTE: u16 = 0xe00;
+
 /// Advance each file helmet immediately before drawing it; idle menus clear each timer first.
-#[forbid(unsafe_code)]
 pub fn file_helmets<H: SpriteHost + ?Sized>(animate: bool, game: &mut H) {
-    const SPRITES: [u16; 9] = [0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x33];
-    for slot in 2..5 {
-        let timer = 0x198d + 2 * slot;
-        if !animate {
-            game.ram().fill(timer..timer + 2, 0);
-        }
-        let remaining =
-            u16::from_ne_bytes([game.ram().read_byte(timer), game.ram().read_byte(timer + 1)]);
-        if remaining != 0 {
-            let remaining = remaining.wrapping_sub(1);
-            game.ram().copy_in(timer, &remaining.to_ne_bytes());
-            if remaining == 0 {
-                game.ram().copy_in(timer, &8u16.to_ne_bytes());
-                let mut frame = word!(game.eproj_id[slot]).wrapping_add(1);
-                if i32::from(word!(game.eproj_id[slot])) - 7 & 0x8000 == 0 {
-                    game.ram().fill(timer..timer + 2, 0);
-                    frame = 7;
-                }
-                word!(game.eproj_id[slot] = frame);
+    use crate::enemy_projectiles::table::with_file_select;
+    for helmet in 0..3 {
+        let (frame, x, y) = with_file_select(game, |menu| {
+            if !animate {
+                *menu.helmet_animation_timer(helmet) = 0;
             }
-        }
-        // The doubled frame wraps before the sprite-table index is recovered.
-        let sprite = word!(game.eproj_id[slot]).wrapping_mul(2) >> 1;
-        menu(
-            SPRITES[usize::from(sprite)],
-            word!(game.eproj_id[slot + 5]),
-            word!(game.eproj_id[slot + 10]),
-            3584,
-            game,
-        );
+            let timer = *menu.helmet_animation_timer(helmet);
+            if timer != 0 {
+                let timer = timer - 1;
+                *menu.helmet_animation_timer(helmet) = timer;
+                if timer == 0 {
+                    advance_helmet(menu, helmet);
+                }
+            }
+            (
+                *menu.helmet_animation_frame(helmet),
+                *menu.helmet_x(helmet),
+                *menu.helmet_y(helmet),
+            )
+        });
+        // The original doubles the frame into a byte offset and halves it
+        // back, dropping bit 15.
+        let sprite = HELMET_SPRITES[usize::from(frame & 0x7fff)];
+        menu(sprite, x, y, FILE_SELECT_PALETTE, game);
     }
 }
 
-#[forbid(unsafe_code)]
-pub fn file_menu_cursor<H: SpriteHost + ?Sized>(game: &mut H) {
-    const POSITIONS: [u16; 12] = [
-        0x30, 0xe, 0x58, 0xe, 0x80, 0xe, 0xa3, 0xe, 0xbb, 0xe, 0xd3, 0xe,
-    ];
-    let index = usize::from(word!(game.selected_save_slot).wrapping_mul(4) >> 1);
-    word!(game.eproj_id[10] = POSITIONS[index]);
-    word!(game.eproj_id[5] = POSITIONS[index + 1]);
+/// Step helmet `helmet` to its next frame and restart its delay; a helmet
+/// on or past its resting frame stays there and stops.
+fn advance_helmet(menu: &mut crate::enemy_projectiles::table::FileSelect<'_>, helmet: usize) {
+    *menu.helmet_animation_timer(helmet) = HELMET_FRAME_DELAY;
+    let frame = *menu.helmet_animation_frame(helmet);
+    // The original's signed compare against 7 treats frames 7..=$8006 as finished.
+    if (HELMET_RESTING_FRAME..=0x8006).contains(&frame) {
+        *menu.helmet_animation_timer(helmet) = 0;
+        *menu.helmet_animation_frame(helmet) = HELMET_RESTING_FRAME;
+    } else {
+        *menu.helmet_animation_frame(helmet) = frame.wrapping_add(1);
+    }
 }
 
-#[forbid(unsafe_code)]
+/// The selection missile's (y, x) beside each file select row.
+const FILE_MENU_MISSILE_POSITIONS: [(u16, u16); 6] = [
+    (0x30, 0xe),
+    (0x58, 0xe),
+    (0x80, 0xe),
+    (0xa3, 0xe),
+    (0xbb, 0xe),
+    (0xd3, 0xe),
+];
+
+/// Place the selection missile beside the selected save slot's row.
+pub fn file_menu_cursor<H: SpriteHost + ?Sized>(game: &mut H) {
+    // The original doubles the row into a pair offset, dropping bit 14.
+    let row = usize::from(word!(game.selected_save_slot) & 0x3fff);
+    let (y, x) = FILE_MENU_MISSILE_POSITIONS[row];
+    crate::enemy_projectiles::table::with_file_select(game, |menu| {
+        *menu.missile_y() = y;
+        *menu.missile_x() = x;
+    });
+}
+
+/// The selection missile's x beside the file copy and clear rows.
+const FILE_SLOT_MISSILE_X: u16 = 22;
+
+/// Place the selection missile beside the file copy or clear selection;
+/// the fourth row, the exit, is at `exit_y`.
 pub fn file_slot_cursor<H: SpriteHost + ?Sized>(exit_y: u16, game: &mut H) {
-    let positions = [72, 104, 136, exit_y];
-    word!(game.eproj_id[10] = positions[usize::from(word!(game.eproj_id[15]))]);
-    word!(game.eproj_id[5] = 22);
+    let rows = [72, 104, 136, exit_y];
+    crate::enemy_projectiles::table::with_file_select(game, |menu| {
+        *menu.missile_y() = rows[usize::from(*menu.file_copy_selection())];
+        *menu.missile_x() = FILE_SLOT_MISSILE_X;
+    });
 }
 
 #[forbid(unsafe_code)]
@@ -319,49 +351,110 @@ pub fn with_base_tile<H: SpriteHost + ?Sized>(
     );
 }
 
-#[forbid(unsafe_code)]
+/// The menu sprites of the selection missile's animation frames.
+const MISSILE_SPRITES: [u16; 4] = [0x37, 0x36, 0x35, 0x34];
+/// Frames between selection missile animation steps.
+const MISSILE_FRAME_DELAY: u16 = 8;
+
+/// Animate and draw the menu selection missile.
 pub fn menu_selection<H: SpriteHost + ?Sized>(game: &mut H) {
-    const SPRITES: [u16; 4] = [0x37, 0x36, 0x35, 0x34];
-    if word!(game.cinematic_var5) != 0 && game_word!(game.cinematic_var5 -= 1, reread) == 0 {
-        word!(game.eproj_id[0] = (u16::from(game.ram().read_byte(0x1997)) + 1) & 3);
-        word!(game.cinematic_var5 = 8);
-    }
+    let (frame, x, y) = crate::enemy_projectiles::table::with_file_select(game, |menu| {
+        let timer = *menu.missile_animation_timer();
+        if timer != 0 {
+            *menu.missile_animation_timer() = timer - 1;
+            if timer == 1 {
+                // The original steps the frame's low byte.
+                let frame = *menu.missile_animation_frame() as u8;
+                *menu.missile_animation_frame() = (u16::from(frame) + 1) & 3;
+                *menu.missile_animation_timer() = MISSILE_FRAME_DELAY;
+            }
+        }
+        (
+            *menu.missile_animation_frame(),
+            *menu.missile_x(),
+            *menu.missile_y(),
+        )
+    });
     menu(
-        SPRITES[usize::from(word!(game.eproj_id[0]))],
-        word!(game.eproj_id[5]),
-        word!(game.eproj_id[10]),
-        3584,
+        MISSILE_SPRITES[usize::from(frame)],
+        x,
+        y,
+        FILE_SELECT_PALETTE,
         game,
     );
 }
 
-#[forbid(unsafe_code)]
-pub fn file_copy_arrow<H: SpriteHost + ?Sized>(game: &mut H) {
-    let mut v0: u16 = 0;
-    if ((word!(game.eproj_id[16])) as i16).wrapping_sub((word!(game.eproj_id[17])) as i16) >= 0 {
-        v0 = 3;
-        if word!(game.eproj_id[16]) as i32 - word!(game.eproj_id[17]) as i32 - 2i32 & 0x8000 != 0 {
-            v0 = 4;
-            if word!(game.eproj_id[16]) != 1 {
-                v0 = 5;
-            }
+/// The copy arrow's (sprite, x, y) rows, three words each.
+const COPY_ARROWS: u32 = 0x82bb0c;
+
+/// The copy arrow row for the source and destination save slots.
+fn copy_arrow(source: u16, destination: u16) -> u16 {
+    if (source as i16).wrapping_sub(destination as i16) >= 0 {
+        let adjacent = (i32::from(source) - i32::from(destination) - 2) & 0x8000 != 0;
+        match (adjacent, source) {
+            (false, _) => 3,
+            (true, 1) => 4,
+            (true, _) => 5,
         }
     } else {
-        v0 = 0;
-        if word!(game.eproj_id[17]) as i32 - word!(game.eproj_id[16]) as i32 - 2i32 & 0x8000 != 0 {
-            v0 = 1;
-            if word!(game.eproj_id[16]) != 0 {
-                v0 = 2;
+        let adjacent = (i32::from(destination) - i32::from(source) - 2) & 0x8000 != 0;
+        match (adjacent, source) {
+            (false, _) => 0,
+            (true, 0) => 1,
+            (true, _) => 2,
+        }
+    }
+}
+
+/// Draw the arrow from the file copy source slot to its destination.
+pub fn file_copy_arrow<H: SpriteHost + ?Sized>(game: &mut H) {
+    let (source, destination) = crate::enemy_projectiles::table::with_file_select(game, |menu| {
+        (
+            *menu.file_copy_source_slot(),
+            *menu.file_copy_destination_slot(),
+        )
+    });
+    let arrow = 3 * copy_arrow(source, destination) as isize;
+    let image = game.native_image();
+    let base = sm_data::cartridge::lorom_offset(COPY_ARROWS) as usize;
+    menu(
+        image.table_word(base, arrow),
+        image.table_word(base, arrow + 1),
+        image.table_word(base, arrow + 2),
+        0x200,
+        game,
+    );
+}
+
+#[cfg(test)]
+mod tests {
+    /// The original's nested branches, kept as the reference.
+    fn original_copy_arrow(source: u16, destination: u16) -> u16 {
+        if (source as i16).wrapping_sub(destination as i16) >= 0 {
+            if (i32::from(source) - i32::from(destination) - 2) & 0x8000 != 0 {
+                if source != 1 { 5 } else { 4 }
+            } else {
+                3
+            }
+        } else if (i32::from(destination) - i32::from(source) - 2) & 0x8000 != 0 {
+            if source != 0 { 2 } else { 1 }
+        } else {
+            0
+        }
+    }
+
+    #[test]
+    fn copy_arrow_matches_the_original_branches() {
+        let edges = (0..=0x300).chain(0x7f00..=0x8100).chain(0xfe00..=0xffff);
+        let values: Vec<u16> = edges.collect();
+        for &source in &values {
+            for &destination in &values {
+                assert_eq!(
+                    super::copy_arrow(source, destination),
+                    original_copy_arrow(source, destination),
+                    "{source:#x} {destination:#x}"
+                );
             }
         }
     }
-    let image = game.native_image();
-    let base = sm_data::cartridge::lorom_offset(0x82bb0c) as usize;
-    menu(
-        image.table_word(base, 3 * v0 as isize),
-        image.table_word(base, 3 * v0 as isize + 1),
-        image.table_word(base, 3 * v0 as isize + 2),
-        512,
-        game,
-    );
 }
