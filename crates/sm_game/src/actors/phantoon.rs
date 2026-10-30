@@ -665,12 +665,12 @@ pub fn main_ai<H: Host + ?Sized>(game: &mut H) {
         slot!(game, Mouth[MOUTH].base.y_pos = y);
         if slot!(game, Eye[EYE].background_held) == 0 {
             word!(
-                game.reg_BG2HOFS = (word!(game.layer1_x_pos) as i32
+                game.reg_BG2HOFS = (crate::camera::current(game).layer1[0] as i32
                     - slot!(game, Body[BODY].base.x_pos) as i32
                     + 40) as u16
             );
             word!(
-                game.reg_BG2VOFS = (word!(game.layer1_y_pos) as i32
+                game.reg_BG2VOFS = (crate::camera::current(game).layer1[1] as i32
                     - slot!(game, Body[BODY].base.y_pos) as i32
                     + 40) as u16
             );

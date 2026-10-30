@@ -799,14 +799,15 @@ fn cinematic_background_command<H: crate::menus::host::Host + ?Sized>(
 
 pub fn draw_cinematic_sprites<H: crate::menus::host::Host + ?Sized>(ending: bool, game: &mut H) {
     use crate::sprite_drawing::Clip;
+    let layer1 = crate::camera::current(game).layer1;
     for slot in (0..16usize).rev() {
         let sprite = word!(game.cinematicspr_whattodraw[slot]);
         if sprite == 0 {
             continue;
         }
         let palette = word!(game.cinematicbg_arr9[slot]);
-        let x = word!(game.cinematicbg_arr7[slot]).wrapping_sub(word!(game.layer1_x_pos));
-        let y = word!(game.cinematicbg_arr8[slot]).wrapping_sub(word!(game.layer1_y_pos));
+        let x = word!(game.cinematicbg_arr7[slot]).wrapping_sub(layer1[0]);
+        let y = word!(game.cinematicbg_arr8[slot]).wrapping_sub(layer1[1]);
         if y.wrapping_add(128) < 0x1ff {
             let clip = if y & 0xff00 != 0 {
                 Clip::BoundedOutside

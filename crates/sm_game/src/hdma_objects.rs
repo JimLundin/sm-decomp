@@ -165,8 +165,13 @@ pub fn initialize_room_effects<H: crate::menus::host::Host + ?Sized>(game: &mut 
     }
     word!(game.fx_layer_blending_config_a = 2);
     word! { game, 0;
-        reg_BG3HOFS, reg_BG3VOFS, layer2_x_pos, layer2_y_pos, room_loading_irq_handler,
+        reg_BG3HOFS, reg_BG3VOFS,
     }
+    crate::session_access::SessionAccess::session_mut(&mut game.runtime())
+        .room
+        .camera
+        .layer2 = [0, 0];
+    word!(game.room_loading_irq_handler = 0);
     crate::word_transfers! { game, ascending, 1;
         native(0x602) <- value(0x8800), native(0x605) <- value(0x8800),
         native(0x601) <- value(0x83e1), native(0x604) <- value(0x83e1),

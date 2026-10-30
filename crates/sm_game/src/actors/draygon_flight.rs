@@ -227,12 +227,12 @@ pub fn main_ai<H: Host + ?Sized>(
 /// `scroll_layer`.
 pub fn set_bg2_scroll<H: Host + ?Sized>(game: &mut H) {
     let x = i32::from(slot!(game, Draygon[BODY].graphics_x_displacement))
-        + i32::from(word!(game.layer1_x_pos))
+        + i32::from(crate::camera::current(game).layer1[0])
         - i32::from(slot!(game, Draygon[BODY].base.x_pos))
         - BG2_X_OFFSET;
     word!(game.reg_BG2HOFS = x as u16);
     let y = i32::from(slot!(game, Draygon[BODY].graphics_y_displacement))
-        + i32::from(word!(game.layer1_y_pos))
+        + i32::from(crate::camera::current(game).layer1[1])
         - i32::from(slot!(game, Draygon[BODY].base.y_pos))
         - BG2_Y_OFFSET;
     word!(game.reg_BG2VOFS = y as u16);

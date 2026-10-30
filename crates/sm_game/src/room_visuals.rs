@@ -172,7 +172,8 @@ pub fn advance_tourian_statue<H: crate::menus::host::Host + ?Sized>(
             crate::word_transfers!(game, ascending, 1; native(0xcd20) <- value(514));
         }
     }
-    let scroll = word!(game.layer1_y_pos).wrapping_add(word!(game.hdma_object_B[(slot >> 1)]));
+    let scroll =
+        crate::camera::current(game).layer1[1].wrapping_add(word!(game.hdma_object_B[(slot >> 1)]));
     crate::word_transfers!(game, ascending, 1; native(0x9e00) <- value(scroll));
 }
 
@@ -287,8 +288,8 @@ pub fn align_crocomire_background<H: crate::menus::host::Host + ?Sized>(game: &m
         game,
         Crocomire[secondary].base.y_pos = slot!(game, Crocomire[primary].base.y_pos)
     );
-    let relative =
-        slot!(game, Crocomire[primary].base.x_pos).wrapping_sub(word!(game.layer1_x_pos)) as i16;
+    let relative = slot!(game, Crocomire[primary].base.x_pos)
+        .wrapping_sub(crate::camera::current(game).layer1[0]) as i16;
     let offset = 51u16.wrapping_sub(relative as u16);
     word!(
         game.reg_BG2HOFS =

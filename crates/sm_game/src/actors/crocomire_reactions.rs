@@ -388,7 +388,7 @@ pub fn hit<H: Host + ?Sized>(game: &mut H) {
     let mut advance = ((slot!(game, Crocomire[0].base.x_pos) as i32
         - slot!(game, Crocomire[0].base.x_width) as i32
         - 256
-        - word!(game.layer1_x_pos) as i32) as i16)
+        - crate::camera::current(game).layer1[0] as i32) as i16)
         >= 0;
     if !advance {
         let projectile = word!(game.projectile_type[word!(game.collision_detection_index)]);
@@ -1545,7 +1545,10 @@ pub fn instruction<H: Host + ?Sized>(
                 ((actor.x.whole as i32
                     - actor.radius.x as i32
                     - 260
-                    - runtime.word(ram::layer1_x_pos) as i32) as i16)
+                    - crate::session_access::SessionAccess::session(&runtime)
+                        .room
+                        .camera
+                        .layer1[0] as i32) as i16)
                     < 0
             };
             if can_walk {

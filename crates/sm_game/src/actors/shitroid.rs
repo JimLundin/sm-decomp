@@ -7,7 +7,9 @@ use crate::effects::SoundEffects;
 use crate::ram::{CompatibilityRam, RawRam as _, WorkRamAccess, slot, word};
 
 /// What the Shitroid needs beyond work RAM and sound: hardcoded PLM spawns.
-pub trait Host: WorkRamAccess + CompatibilityRam + SoundEffects {
+pub trait Host:
+    WorkRamAccess + CompatibilityRam + SoundEffects + crate::runtime_access::RuntimeAccess
+{
     /// Spawn the PLM with `header` at block (`block_x`, `block_y`).
     fn spawn_hardcoded_plm(&mut self, block_x: u8, block_y: u8, header: u16);
 }
@@ -102,8 +104,8 @@ pub fn separated_from_rect(k: u16, rect: (u16, u16, u16, u16), game: &mut impl H
 /// the stop, pin it there, turn scrolls 1 and 3 red, raise the invisible walls,
 /// let the sidehopper live and enable the cry. Was `Shitroid_Func_4`.
 pub fn wait_for_camera(game: &mut impl Host) {
-    if word!(game.layer1_x_pos) as i32 - (i32::from(CAMERA_STOP_X) + 1) & SIGN != 0 {
-        word!(game.layer1_x_pos = CAMERA_STOP_X);
+    if crate::camera::current(game).layer1[0] as i32 - (i32::from(CAMERA_STOP_X) + 1) & SIGN != 0 {
+        crate::camera::set_layer1(&mut game.runtime(), 0, CAMERA_STOP_X);
         // Red is the scroll word's low byte with its high byte cleared.
         for scroll in SCROLLS {
             let value = u16::from(game.ram().read_byte(scroll));
@@ -126,11 +128,13 @@ pub fn is_off_screen(k: u16, game: &mut impl Host) -> u8 {
     let e = i32::from(k);
     let y_pos = slot!(game, Shitroid[e].base.y_pos) as i16;
     if y_pos >= 0 {
-        let y = (y_pos as i32 + SCREEN_Y_MARGIN - word!(game.layer1_y_pos) as i32) as i16;
+        let y =
+            (y_pos as i32 + SCREEN_Y_MARGIN - crate::camera::current(game).layer1[1] as i32) as i16;
         if y >= 0 && y as i32 - SCREEN_HEIGHT & SIGN != 0 {
             let x_pos = slot!(game, Shitroid[e].base.x_pos) as i16;
             if x_pos >= 0 {
-                let x = (x_pos as i32 + SCREEN_X_MARGIN - word!(game.layer1_x_pos) as i32) as i16;
+                let x = (x_pos as i32 + SCREEN_X_MARGIN
+                    - crate::camera::current(game).layer1[0] as i32) as i16;
                 if x >= 0 && x as i32 - SCREEN_WIDTH & SIGN != 0 {
                     return 0;
                 }

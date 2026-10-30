@@ -90,7 +90,11 @@ pub trait ActorRuntime {
 /// projectile placement, vector movement, Samus control and damage, boss
 /// flags, music, PLMs and the original failure path.
 pub trait BossEffects:
-    ActorHost + ActorRuntime + crate::effects::SoundEffects + crate::word_transfers::LoadedRom
+    ActorHost
+    + ActorRuntime
+    + crate::effects::SoundEffects
+    + crate::word_transfers::LoadedRom
+    + crate::runtime_access::RuntimeAccess
 {
     /// Create a sprite object of `kind` at (`x`, `y`); its handle.
     fn create_sprite(&mut self, x: u16, y: u16, kind: u16, appearance: u16) -> u16;

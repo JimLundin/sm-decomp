@@ -3179,12 +3179,11 @@ pub fn add_spritemap<H: Host + ?Sized>(spritemap: u16, x: u16, y: u16, palette: 
     let mut count = map.word(0) as i32;
     let mut entry = 2;
     let mut index = word!(game.oam_next_ptr) as i32;
+    let layer1 = crate::camera::current(game).layer1;
     loop {
-        let screen_y =
-            (y as i32 + map.byte(entry + 2) as i8 as i32 - word!(game.layer1_y_pos) as i32) as i16;
+        let screen_y = (y as i32 + map.byte(entry + 2) as i8 as i32 - layer1[1] as i32) as i16;
         if screen_y >= 0 && screen_y as i32 - 224 & 0x8000 != 0 {
-            let screen_x =
-                (x as i32 + map.word(entry) as i32 - word!(game.layer1_x_pos) as i32) as u16;
+            let screen_x = (x as i32 + map.word(entry) as i32 - layer1[0] as i32) as u16;
             let at = OAM + index as usize;
             game.ram().write_byte(at, screen_x as u8);
             game.ram().write_byte(at + 1, screen_y as u8);
@@ -3213,11 +3212,12 @@ pub fn add_spritemap<H: Host + ?Sized>(spritemap: u16, x: u16, y: u16, palette: 
 pub fn off_screen<H: Host + ?Sized>(game: &mut H) -> bool {
     let y = slot!(game, Ridley[RIDLEY].base.y_pos) as i16;
     if y >= 0 {
-        let screen_y = (y as i32 + 32 - word!(game.layer1_y_pos) as i32) as i16;
+        let screen_y = (y as i32 + 32 - crate::camera::current(game).layer1[1] as i32) as i16;
         if screen_y >= 0 && screen_y as i32 - 288 & 0x8000 != 0 {
             let x = slot!(game, Ridley[RIDLEY].base.x_pos) as i16;
             if x >= 0 {
-                let screen_x = (x as i32 + 32 - word!(game.layer1_x_pos) as i32) as i16;
+                let screen_x =
+                    (x as i32 + 32 - crate::camera::current(game).layer1[0] as i32) as i16;
                 if screen_x >= 0 && screen_x as i32 - 320 & 0x8000 != 0 {
                     return false;
                 }

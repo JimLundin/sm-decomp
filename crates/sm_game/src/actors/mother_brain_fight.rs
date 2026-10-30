@@ -1911,13 +1911,13 @@ pub fn MotherBrain_AddSpritemapToOam(j: u16, r18: u16, r20: u16, r22: u16, game:
     let mut n: i32 = source.word(0) as i32;
     let mut offset: usize = 2;
     let mut idx: i32 = word!(game.oam_next_ptr) as i32;
+    let layer1 = crate::camera::current(game).layer1;
     do_until! { n == 0 ;
-        let y: i16 =
-            (r20 as i32 + source.byte(offset + 2) as i8 as i32 - word!(game.layer1_y_pos) as i32) as i16;
+        let y: i16 = (r20 as i32 + source.byte(offset + 2) as i8 as i32 - layer1[1] as i32) as i16;
         if y >= 0 {
             let oam: usize = usize::try_from(0x370i32 + idx).expect("OAM entry outside RAM");
             let x: u16 =
-                (r18 as i32 + source.word(offset) as i32 - word!(game.layer1_x_pos) as i32) as u16;
+                (r18 as i32 + source.word(offset) as i32 - layer1[0] as i32) as u16;
             game.ram().write_byte(oam, x as u8);
             game.ram().write_byte(oam + 1, y as u8);
             set_native_word(oam + 2, r22 | source.word(offset + 3), game);
@@ -2387,7 +2387,7 @@ crate::dispatch::callback_dispatch! {
         }
         let v6: i32 = (flash_timer as i32 & 6) >> 1;
         let r18: u16 = (slot!(game, MotherBrainBrain[E].base.x_pos)).wrapping_add((g_word_A993BB[v6 as usize]) as u16);
-        if ((r18 as i32 + 32 - word!(game.layer1_x_pos) as i32) as i16) >= 0 {
+        if ((r18 as i32 + 32 - crate::camera::current(game).layer1[0] as i32) as i16) >= 0 {
             let r20: u16 = (slot!(game, MotherBrainBrain[E].base.y_pos)).wrapping_add((g_word_A993C3[v6 as usize]) as u16);
             MotherBrain_AddSpritemapToOam(v2, r18, r20, r22, game);
         }

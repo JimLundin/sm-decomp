@@ -117,7 +117,10 @@ where
         word!(game.bg3_xpos = word!(game.reg_BG1HOFS));
         crate::word_transfers!(game, ascending, 1; native(0x9c00) <- value(0));
         word!(game.bg3_ypos = 0);
-        let scroll = surface_scroll(word!(game.lava_acid_y_pos), word!(game.layer1_y_pos));
+        let scroll = surface_scroll(
+            word!(game.lava_acid_y_pos),
+            crate::camera::current(game).layer1[1],
+        );
         crate::word_transfers!(game, ascending, 1; native(0x9c02) <- value(scroll));
         if word!(game.fx_type) == 2 && (word!(game.lava_acid_y_pos) & 0x8000) == 0 {
             let v5: i32 = word!(game.hdma_object_index) as u8 as i32 >> 1;
@@ -134,7 +137,11 @@ where
             }
         }
         word!(game.random_number = u16::swap_bytes(word!(game.random_number)));
-        let v8 = table_height(word!(game.lava_acid_y_pos), word!(game.layer1_y_pos), false);
+        let v8 = table_height(
+            word!(game.lava_acid_y_pos),
+            crate::camera::current(game).layer1[1],
+            false,
+        );
         let pointer = (3 * ((v8 as i32 ^ 0x1ff) + 1 & 0x3ff) + 0xb62a) as u16;
         crate::word_transfers!(game, ascending, 1;
             native(0x18d8 + 2 * usize::from(word!(game.hdma_object_index) as u8 >> 1)) <- value(pointer));
@@ -151,10 +158,11 @@ where
         return;
     }
     step_liquid(game, crate::liquid::Surface::Water);
-    word!(game.bg3_ypos = surface_scroll(word!(game.fx_y_pos), word!(game.layer1_y_pos)));
+    let layer1 = crate::camera::current(game).layer1;
+    word!(game.bg3_ypos = surface_scroll(word!(game.fx_y_pos), layer1[1]));
     let v5: i32 = k as i32 >> 1;
-    let r20: u16 = (word!(game.layer1_x_pos))
-        .wrapping_add((game.ram().read_byte(0x192d + 2 * v5 as usize) as i8) as u16);
+    let r20: u16 =
+        layer1[0].wrapping_add((game.ram().read_byte(0x192d + 2 * v5 as usize) as i8) as u16);
     let remaining = word!(game.hdma_object_B[v5]);
     word!(game.hdma_object_B[v5] = remaining.wrapping_sub(1));
     if remaining == 1 {
@@ -170,7 +178,11 @@ where
     if (word!(game.fx_liquid_options) & 1) != 0 {
         word!(game.hdma_object_C[(k >> 1)] += 64);
     }
-    let v9 = table_height(word!(game.fx_y_pos), word!(game.layer1_y_pos), true);
+    let v9 = table_height(
+        word!(game.fx_y_pos),
+        crate::camera::current(game).layer1[1],
+        true,
+    );
     word!(
         game.hdma_object_table_pointers[(k >> 1)] =
             (3 * ((v9 as i32 ^ 0x1ff) + 1 & 0x3ff) + 0xc645) as u16
@@ -279,7 +291,11 @@ pub fn water_background<H: crate::menus::host::Host + ?Sized>(k: u16, game: &mut
     } else {
         water_wave(k, game);
     }
-    let height = table_height(word!(game.fx_y_pos), word!(game.layer1_y_pos), true);
+    let height = table_height(
+        word!(game.fx_y_pos),
+        crate::camera::current(game).layer1[1],
+        true,
+    );
     word!(
         game.hdma_object_table_pointers[(k as u8 >> 1)] = 3 * ((height ^ 0x1ff) & 0x3ff) + 0xcf46
     );

@@ -1032,12 +1032,12 @@ pub fn run_function<H: Host + ?Sized>(game: &mut H, function: u16) {
         }
         function::FADE_IN_BG6 => fade_in_bg6(game),
         function::FADE_IN_DEAD_WAS_ALIVE => {
-            if is_dead(game) == 0 || word!(game.layer1_x_pos) != 0 {
+            if is_dead(game) == 0 || crate::camera::current(game).layer1[0] != 0 {
                 hide_as_dead(game);
             }
         }
         function::FADE_IN_DEAD_WAS_DEAD => {
-            if is_dead(game) == 0 || word!(game.layer1_x_pos) != 0 {
+            if is_dead(game) == 0 || crate::camera::current(game).layer1[0] != 0 {
                 hide_as_dead(game);
             }
             crate::session_access::SessionAccess::session_mut(&mut game.runtime())
@@ -2121,11 +2121,11 @@ pub fn main_ai<H: Host + ?Sized>(game: &mut H) {
     word!(
         game.reg_BG2HOFS = (slot!(game, Body[BODY].base.x_width) as i32
             + word!(game.reg_BG1HOFS) as i32
-            - word!(game.bg1_x_offset) as i32
+            - crate::camera::current(game).bg1_offset[0] as i32
             - slot!(game, Body[BODY].base.x_pos) as i32) as u16
     );
     word!(
-        game.reg_BG2VOFS = (word!(game.layer1_y_pos) as i32
+        game.reg_BG2VOFS = (crate::camera::current(game).layer1[1] as i32
             - slot!(game, Body[BODY].base.y_pos) as i32
             + 152) as u16
     );
@@ -2134,11 +2134,12 @@ pub fn main_ai<H: Host + ?Sized>(game: &mut H) {
 
 /// The arm follows the body and shows only on screen. Was `KraidsArm_Main`.
 pub fn arm_main<H: Host + ?Sized>(game: &mut H) {
-    let screen_bottom: u16 = (word!(game.layer1_y_pos)).wrapping_add(224);
+    let layer1_y = crate::camera::current(game).layer1[1];
+    let screen_bottom: u16 = layer1_y.wrapping_add(224);
     let y: u16 = (slot!(game, Body[BODY].base.y_pos)).wrapping_sub(44);
     slot!(game, Part[ARM].base.y_pos = y);
     let mut properties: u16 = (slot!(game, Part[ARM].base.properties)) | 0x100;
-    if (y as i16).wrapping_sub((word!(game.layer1_y_pos)) as i16) >= 0
+    if (y as i16).wrapping_sub(layer1_y as i16) >= 0
         && (y as i16).wrapping_sub(screen_bottom as i16) < 0
     {
         properties = (slot!(game, Part[ARM].base.properties)) & 0xfeff;
@@ -2174,8 +2175,9 @@ pub fn foot_main<H: Host + ?Sized>(game: &mut H) {
     slot!(game, Part[FOOT].base.y_pos = y);
     let above: i16 = (y as i16).wrapping_sub(224);
     let mut properties: u16 = (slot!(game, Part[FOOT].base.properties)) & 0xfeff;
-    if (y as i16).wrapping_sub((word!(game.layer1_y_pos)) as i16) >= 0 {
-        if above.wrapping_sub((word!(game.layer1_y_pos)) as i16) >= 0 {
+    let layer1_y = crate::camera::current(game).layer1[1];
+    if (y as i16).wrapping_sub(layer1_y as i16) >= 0 {
+        if above.wrapping_sub(layer1_y as i16) >= 0 {
             properties |= 0x100;
         }
     } else {
