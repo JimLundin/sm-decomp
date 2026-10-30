@@ -1,6 +1,6 @@
 //! Maridia Snail crawling, falls and player reactions share one movement lifecycle.
 #![forbid(unsafe_code)]
-use crate::game::actors::{api, combat, wall_crawlers};
+use crate::game::actors::{api, combat};
 use crate::game::music::QueueSfx2_Max3;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
@@ -374,7 +374,7 @@ pub(crate) fn falling(raw: u16, game: &mut Game) {
             runtime.edit_actor(key, Native, |actor| {
                 actor.properties = actor.variables[2] | actor.properties & !3
             });
-            runtime.foreign(|game| wall_crawlers::prepare(raw, game));
+            runtime.foreign(|game| sm_game::actors::crawlers::common_initialisation(raw, game));
             runtime.edit_actor(key, Native, |actor| {
                 actor.pre_instruction = 0xcf5f;
                 actor.instruction = actor.variables[3];

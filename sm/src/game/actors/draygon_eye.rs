@@ -39,6 +39,10 @@ impl ActorLease for Runtime<'_> {
     fn lease_enemy_speed(&self, table: sm_data::enemy_speeds::SpeedTable, index: isize) -> u16 {
         Runtime::enemy_speed(self, table, index)
     }
+
+    fn lease_byte(&self, at: usize) -> u8 {
+        Runtime::byte(self, at)
+    }
 }
 
 impl LeaseActors for Game {
