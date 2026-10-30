@@ -209,3 +209,32 @@ impl sm_game::player_position::PlayerFacts for Game {
         self.ram().read_byte(0xcfd)
     }
 }
+
+// The falling tubes' bank $A9 functions are the ones `CallMotherBrainsTubesFalling` dispatched on.
+const _: () = {
+    use sm_game::actors::mother_brain_tubes::{self as tubes, function as f};
+    const fn at(word: u16) -> u32 {
+        0xa9_0000 | word as u32
+    }
+    assert!(at(f::FALL) == 11111304 && at(f::WAIT_TO_FALL) == 11111371);
+    assert!(at(f::FALL_WITH_BRAIN) == 11111382);
+    // MotherBrainBody_FakeDeath_Ascent_0_DrawBG1Row23.
+    assert!(at(tubes::BODY_ASCENT) == 11111559);
+    assert!(
+        tubes::DUST_CLOUD == sm_game::constants::bank_86::addr_kEproj_DustCloudExplosion as u16
+    );
+};
+
+impl sm_game::actors::mother_brain_tubes::Host for Game {
+    fn end_screen_flash(&mut self) {
+        crate::game::sm_a9::MotherBrain_Pal_EndScreenFlash(self);
+    }
+
+    fn start_earthquake(&mut self, kind: u16) {
+        crate::game::mother_brain_visuals::start_earthquake(kind, self);
+    }
+
+    fn setup_neck_for_fake_ascent(&mut self) {
+        crate::game::sm_a9::MotherBrain_SetupNeckForFakeAscent(self);
+    }
+}

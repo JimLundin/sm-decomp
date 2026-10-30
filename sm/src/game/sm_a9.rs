@@ -91,10 +91,6 @@ crate::game::constants::typed_constants! { i32;
 crate::game::constants::typed_constants! { u32;
     fnMotherBrainBody_FakeDeath_Descent_0_Pause = 11110429,
 }
-static g_word_A98B5D: [u16; 5] = [0x10, 0x10, 8, 8, 0x10];
-static g_word_A98B67: [u16; 5] = [0x20, 0x20, 0x18, 0x18, 0x20];
-static g_word_A98B71: [u16; 5] = [0xf8, 0xf8, 0xf0, 0xf0, 0xf6];
-static g_word_A98C61: [u16; 4] = [0xfff8, 2, 0xfffc, 6];
 static g_byte_A98F7D: [u8; 2] = [9, 0x12];
 static g_word_A98F7F: [u16; 8] = [0x3d, 0x54, 0x20, 0x35, 0x5a, 0x43, 0x67, 0x29];
 static g_word_A993BB: [i16; 4] = [0, -1, 0, 1];
@@ -1802,83 +1798,9 @@ pub fn MotherBrainsBody_FirstPhase_DoubleRet(game: &mut Game) {
         MotherBrain_SamusCollDetect(game);
     }
 }
-crate::game::callback_dispatch! {
-    pub fn CallMotherBrainsTubesFalling(ea: u32, k: u16, game: &mut Game) => ea;
-    call (k, game); default { Unreachable(game); };
-    @functions [pub fn (k: u16, game: &mut Game)];
-    @prefix { let E: i32 = k as i32; };
-    MotherBrainsTubesFalling_Main [] {
-        CallMotherBrainsTubesFalling(((slot!(game, Enemy_MotherBrainsTubesFalling[E].var_A)) as u32) | (0xa90000u32), k, game);
-    };
-    [11111304] MotherBrainsTubesFalling_Main_NonMain [] {
-        let v2: u16 = (slot!(game, Enemy_MotherBrainsTubesFalling[E].var_C)).wrapping_add(6);
-        slot!(game, Enemy_MotherBrainsTubesFalling[E].var_C = v2);
-        Enemy_IncreaseYpos(k, v2, game);
-        if ((slot!(game, Enemy_MotherBrainsTubesFalling[E].base.y_pos)) as i16).wrapping_sub((slot!(game, Enemy_MotherBrainsTubesFalling[E].var_B)) as i16) < 0 {
-            MotherBrainsTubesFalling_HandleSmoke(k, game);
-        } else {
-            MotherBrainsTubesFalling_Explode(k, game);
-        };
-    };
-    MotherBrainsTubesFalling_HandleSmoke [] {
-        slot!(game, Enemy_MotherBrainsTubesFalling[E].var_D = slot!(game, Enemy_MotherBrainsTubesFalling[E].var_D).wrapping_sub(1));
-        if (slot!(game, Enemy_MotherBrainsTubesFalling[E].var_D) & 0x8000) != 0 {
-            MotherBrainsTubesFalling_SpawnSmoke(k, game);
-        }
-    };
-    MotherBrainsTubesFalling_Explode [] {
-        slot!(game, Enemy_MotherBrainsTubesFalling[E].base.properties = (slot!(game, Enemy_MotherBrainsTubesFalling[E].base.properties)) | ((kEnemyProps_Deleted) as u16));
-        game.eproj_spawn_pt = Point16U {
-            x: slot!(game, Enemy_MotherBrainsTubesFalling[E].base.x_pos),
-            y: slot!(game, Enemy_MotherBrainsTubesFalling[E].base.y_pos),
-        };
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 3, game);
-        QueueSfx2_Max3(0x24, game);
-    };
-    [11111371] MotherBrainsTubesFalling_WaitToFall [] {
-        slot!(game, Enemy_MotherBrainsTubesFalling[E].parameter_2 = slot!(game, Enemy_MotherBrainsTubesFalling[E].parameter_2).wrapping_sub(1));
-        if (slot!(game, Enemy_MotherBrainsTubesFalling[E].parameter_2) & 0x8000) != 0 {
-            slot!(game, Enemy_MotherBrainsTubesFalling[E].var_A = (0xa98bd6i32) as u16);
-            MotherBrainsTubesFalling_Falling(k, game);
-        }
-    };
-    [11111382] MotherBrainsTubesFalling_Falling [] {
-        let v2: u16 = (slot!(game, Enemy_MotherBrainsTubesFalling[E].var_C)).wrapping_add(6);
-        slot!(game, Enemy_MotherBrainsTubesFalling[E].var_C = v2);
-        Enemy_IncreaseYpos(k, v2, game);
-        let ypos: u16 = slot!(game, Enemy_MotherBrainsTubesFalling[E].base.y_pos);
-        if ypos as i32 - 244i32 & 0x8000 == 0 {
-            slot!(game, Enemy_MotherBrainsTubesFalling[E].base.properties = (slot!(game, Enemy_MotherBrainsTubesFalling[E].base.properties)) | ((kEnemyProps_Invisible) as u16));
-        }
-        let E1: i32 = 0x40;
-        slot!(game, Enemy_MotherBrainsTubesFalling[E1].base.y_pos = (ypos).wrapping_sub(56));
-        if slot!(game, Enemy_MotherBrainsTubesFalling[E1].base.y_pos) as i32 - 0xc4i32 & 0x8000 != 0 {
-            MotherBrainsTubesFalling_HandleSmoke(k, game);
-        } else {
-            MotherBrain_Pal_EndScreenFlash(game);
-            mother_brain_visuals::start_earthquake(0x19, game);
-            word! { game, 0;
-                hdma_object_channels_bitmask[0], hdma_object_channels_bitmask[1],
-            }
-            slot!(game, Enemy_MotherBrainsTubesFalling[E1].base.y_pos = 196);
-            let E0: i32 = 0;
-            slot!(game, Enemy_MotherBrainsTubesFalling[E0].base.x_pos = 59);
-            slot!(game, Enemy_MotherBrainsTubesFalling[E0].base.y_pos = 279);
-            MotherBrain_SetupNeckForFakeAscent(game);
-            slot!(game, Enemy_MotherBrainsTubesFalling[E0].var_A = (0xa98c87i32) as u16);
-            MotherBrainsTubesFalling_Explode(word!(game.cur_enemy_index), game);
-        };
-    };
-    MotherBrainsTubesFalling_SpawnSmoke [] {
-        slot!(game, Enemy_MotherBrainsTubesFalling[E].var_D = 8);
-        let v2: u16 = (slot!(game, Enemy_MotherBrainsTubesFalling[E].var_E) as i32 + 1 & 3) as u16;
-        slot!(game, Enemy_MotherBrainsTubesFalling[E].var_E = v2);
-        game.eproj_spawn_pt = Point16U {
-            x: ((slot!(game, Enemy_MotherBrainsTubesFalling[E].base.x_pos)).wrapping_add(g_word_A98C61[v2 as usize])),
-            y: 208,
-        };
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9, game);
-    };
+/// The falling tubes run in `sm_game::actors::mother_brain_tubes`.
+pub fn MotherBrainsTubesFalling_Main(k: u16, game: &mut Game) {
+    sm_game::actors::mother_brain_tubes::main_ai(game, k);
 }
 pub fn MotherBrain_HandleNeckLower(game: &mut Game) {
     {
@@ -4876,15 +4798,7 @@ crate::game::callback_dispatch! {
             CallMotherBrainFunc(((slot!(game, EnemyData[v0 + core::mem::size_of::<EnemyData>() as i32].ai_var_A)) as u32) | (0xa90000u32), game);
         }
     };
-    [11111221] MotherBrainsTubesFalling_Init [] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        let v1: i32 = slot!(game, Enemy_MotherBrainsTubesFalling[E].parameter_1) as i32 >> 1;
-        slot!(game, Enemy_MotherBrainsTubesFalling[E].base.x_width = g_word_A98B5D[v1 as usize]);
-        slot!(game, Enemy_MotherBrainsTubesFalling[E].base.y_height = g_word_A98B67[v1 as usize]);
-        slot!(game, Enemy_MotherBrainsTubesFalling[E].var_B = g_word_A98B71[v1 as usize]);
-        slot! { game, Enemy_MotherBrainsTubesFalling[E]; var_D = 0, var_E = 0, var_C = 0 }
-        slot!(game, Enemy_MotherBrainsTubesFalling[E].var_A = mother_brain_tables::falling_tube(game, v1 as isize).function);
-    };
+    [11111221] MotherBrainsTubesFalling_Init [] { sm_game::actors::mother_brain_tubes::initialize(game); };
     [11121923] MotherBrainsBody_Shot [] {
         actors::combat::create_dud(&mut Runtime::new(game));
     };
