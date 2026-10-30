@@ -1210,7 +1210,7 @@ crate::game::callback_dispatch! {
         11072098 => crate::game::actors::ki_hunter::advance;
         11073281 => crate::game::actors::ki_hunter::shot;
         11111301 => [{
-                    sm_a9::tubes_falling_main_ai(crate::ram_map::word!(game.cur_enemy_index), game);
+                    sm_a9::tubes_falling_main(crate::ram_map::word!(game.cur_enemy_index), game);
                 }];
         11121927 => sm_a9::brain_shot;
 
@@ -1465,10 +1465,10 @@ crate::game::callback_dispatch! {
         11068957 | 11068970 => [crate::game::actors::wrecked_ship_spark::instruction(ea == 11068957, j, game)];
         11062537 | 11062692 | 11062762 | 11062917 | 11062987 | 11062991 | 11063146 | 11063216 | 11063371 | 11063441 | 11063490 | 11063494 | 11063506 | 11063552 | 11063559 | 11063601 | 11063613 | 11063659 => [crate::game::actors::wrecked_ship_robots::instruction(ea, k, j, game)];
         11072806 | 11072996 | 11073151 | 11073234 | 11073240 => [crate::game::actors::ki_hunter::instruction(ea, k, j, game)];
-        11128756 => [sm_game::actors::baby_metroid_cutscene::go_to_initial(k, j)];
-        11128778 => [sm_game::actors::baby_metroid_cutscene::go_to_draining_mother_brain(k, j)];
-        11139360 => [sm_game::actors::baby_metroid_encounter::go_to_normal(k, j)]; 11139382 => [sm_game::actors::baby_metroid_encounter::go_to_latched_on(k, j)];
-        11139472 => [sm_game::actors::baby_metroid_encounter::go_to_remorse(k, j)];
+        11128756 => [sm_game::actors::baby_metroid_cutscene::instruction_go_to_cfa2(k, j)];
+        11128778 => [sm_game::actors::baby_metroid_cutscene::instruction_go_to_cfb8(k, j)];
+        11139360 => [sm_game::actors::baby_metroid_encounter::instruction_go_to_f90e(k, j)]; 11139382 => [sm_game::actors::baby_metroid_encounter::instruction_go_to_f924(k, j)];
+        11139472 => [sm_game::actors::baby_metroid_encounter::instruction_go_to_f93a(k, j)];
         10664371 => [{
             crate::game::rinka::hide(k, false, game);
             j

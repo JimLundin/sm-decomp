@@ -165,6 +165,7 @@ pub mod actors {
     pub mod mother_brain_effects;
     pub mod mother_brain_fight;
     pub mod mother_brain_neck;
+    pub mod mother_brain_rainbow;
     pub mod mother_brain_tubes;
     pub mod movement;
     pub mod overlap;

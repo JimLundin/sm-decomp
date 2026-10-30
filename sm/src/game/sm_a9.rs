@@ -128,38 +128,38 @@ crate::game::callback_dispatch! {
     @external {
         11110023 => mother_brain_fight::initialize_body;
         11110149 => mother_brain_fight::initialize_brain;
-        11110206 => mother_brain_fight::body_main_ai;
+        11110206 => mother_brain_fight::main_ai_body;
         11110279 => mother_brain_fight::power_bomb_reaction;
-        11110283 => mother_brain_fight::brain_main_ai;
+        11110283 => mother_brain_fight::main_ai_brain;
         11111221 => sm_game::actors::mother_brain_tubes::initialize;
-        11121923 => mother_brain_fight::body_shot;
-        11122118 => mother_brain_fight::brain_touch;
+        11121923 => mother_brain_fight::shot_body;
+        11122118 => mother_brain_fight::touch_brain;
         11129608 => corpses::initialize_torizo_corpse;
-        11129704 => corpses::torizo_corpse_main_ai;
-        11129898 => corpses::torizo_corpse_power_bomb_reaction;
-        11129907 => corpses::torizo_corpse_touch_or_shot;
+        11129704 => corpses::main_ai_torizo_corpse;
+        11129898 => corpses::power_bomb_reaction_torizo_corpse;
+        11129907 => corpses::touch_or_shot_torizo_corpse;
         11130806 => corpses::initialize_sidehopper_corpse;
         11130953 => corpses::initialize_geemer_corpse;
         11130998 => corpses::initialize_ripper_corpse;
         11131039 => corpses::initialize_skree_corpse;
-        11131084 => corpses::sidehopper_corpse_power_bomb_reaction;
-        11131099 => corpses::corpse_main_ai;
-        11132141 => corpses::geemer_corpse_power_bomb_reaction;
-        11132152 => corpses::geemer_corpse_touch_or_shot;
-        11132157 => corpses::ripper_corpse_power_bomb_reaction;
-        11132168 => corpses::ripper_corpse_touch_or_shot;
-        11132173 => corpses::skree_corpse_power_bomb_reaction;
-        11132184 => corpses::skree_corpse_touch_or_shot;
-        11132189 => corpses::sidehopper_corpse_shot;
-        11132228 => corpses::sidehopper_corpse_touch;
-        11126544 => baby_metroid_cutscene::initialize;
-        11126649 => baby_metroid_cutscene::main_ai;
-        11128579 => baby_metroid_cutscene::touch;
-        11136823 => baby_metroid_encounter::initialize;
-        11136954 => baby_metroid_encounter::power_bomb_reaction;
-        11136965 => baby_metroid_encounter::main_ai;
-        11138953 => baby_metroid_encounter::touch;
-        11139138 => baby_metroid_encounter::shot;
+        11131084 => corpses::power_bomb_reaction_sidehopper_corpse;
+        11131099 => corpses::main_ai_dead_monsters;
+        11132141 => corpses::power_bomb_reaction_geemer_corpse;
+        11132152 => corpses::touch_or_shot_geemer_corpse;
+        11132157 => corpses::power_bomb_reaction_ripper_corpse;
+        11132168 => corpses::touch_or_shot_ripper_corpse;
+        11132173 => corpses::power_bomb_reaction_skree_corpse;
+        11132184 => corpses::touch_or_shot_skree_corpse;
+        11132189 => corpses::shot_sidehopper_corpse;
+        11132228 => corpses::touch_sidehopper_corpse;
+        11126544 => baby_metroid_cutscene::initialize_baby_metroid_in_cutscene;
+        11126649 => baby_metroid_cutscene::main_ai_baby_metroid_in_cutscene;
+        11128579 => baby_metroid_cutscene::touch_baby_metroid_in_cutscene;
+        11136823 => baby_metroid_encounter::initialize_baby_metroid;
+        11136954 => baby_metroid_encounter::power_bomb_reaction_baby_metroid;
+        11136965 => baby_metroid_encounter::main_ai_baby_metroid;
+        11138953 => baby_metroid_encounter::touch_baby_metroid;
+        11139138 => baby_metroid_encounter::shot_baby_metroid;
     }
 }
 
@@ -167,11 +167,11 @@ crate::game::callback_dispatch! {
     pub(crate) fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { match crate::game::mother_brain_body::dispatch_instruction(ea, j, game) { Some(script) => script, None => { crate::rtl::Unreachable(game); EnemyScript::Stop } } };
     @external {
-        11115208 => mother_brain_fight::spawn_projectile_at_offset;
-        11115247 => mother_brain_fight::spawn_hand_beam_projectile;
-        11115269 => mother_brain_fight::increment_hand_beam_attack_phase;
-        11136208 => corpses::sidehopper_corpse_end_hop;
-        11139476 => baby_metroid_encounter::branch_or_queue_remorse_sound;
+        11115208 => mother_brain_fight::instruction_spawn_dust_cloud_at_offset;
+        11115247 => mother_brain_fight::instruction_spawn_hand_beam_projectile;
+        11115269 => mother_brain_fight::instruction_increment_hand_beam_attack_phase;
+        11136208 => corpses::instruction_end_hop;
+        11139476 => baby_metroid_encounter::instruction_go_to_or_queue_remorse_sound;
     }
 }
 
@@ -198,6 +198,15 @@ impl baby_metroid_cutscene::Host for Game {
 impl corpses::Host for Game {
     fn dead_torizo_contact(&mut self) -> bool {
         actors::part_hitboxes::dead_torizo_contact(self)
+    }
+}
+
+// The game is its own lease: the fight's lease code runs on it directly
+// outside a frame's Session lease.
+impl sm_game::actors::mother_brain_fight::Lease for Game {
+    type Game = Game;
+    fn foreign<T>(&mut self, action: impl FnOnce(&mut Game) -> T) -> T {
+        action(self)
     }
 }
 
@@ -250,10 +259,6 @@ impl sm_game::actors::mother_brain_fight::Host for Game {
 
     fn seal_wall(&mut self) {
         unsafe { crate::game::mother_brain_visuals::seal_wall(self) };
-    }
-
-    fn calculate_rainbow_window(&mut self) {
-        sm_game::beam_windows::calculate_rainbow_window(self);
     }
 
     fn flicker_body(&mut self) {
@@ -347,7 +352,7 @@ impl sm_game::actors::mother_brain_fight::Host for Game {
         }
     }
 
-    fn ridley_func_98(&mut self) {
+    fn deal_contact_damage(&mut self) {
         sm_game::actors::ridley::deal_contact_damage(self);
     }
 

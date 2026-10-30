@@ -72,7 +72,11 @@ fn abs16(value: u16) -> u16 {
 
 /// Check for enemy collision with enemy ($A9:EED1): 1 when actor `k`'s and
 /// actor `j`'s hitboxes do not overlap. Was `BabyMetroid_Func_1`.
-pub fn separated_from_enemy(k: u16, j: u16, game: &mut impl Host) -> u8 {
+pub fn separated_from_enemy(
+    k: u16,
+    j: u16,
+    game: &mut (impl SlotAccess + CompatibilityRam + ?Sized),
+) -> u8 {
     let e = i32::from(j);
     let g = i32::from(k);
     let width = (session_slot!(game, BabyMetroid[g].base.x_width) as i32
@@ -97,7 +101,11 @@ pub fn separated_from_enemy(k: u16, j: u16, game: &mut impl Host) -> u8 {
 /// Check for enemy collision with rectangle ($A9:EF06): 1 when actor `k`'s
 /// hitbox does not overlap `rect`. Was `BabyMetroid_Func_2`.
 /// `rect` is (x, y, half width, half height).
-pub fn separated_from_rect(k: u16, rect: (u16, u16, u16, u16), game: &mut impl Host) -> u8 {
+pub fn separated_from_rect(
+    k: u16,
+    rect: (u16, u16, u16, u16),
+    game: &mut (impl SlotAccess + CompatibilityRam + ?Sized),
+) -> u8 {
     let (x, y, w, h) = rect;
     let e = i32::from(k);
     let width = (session_slot!(game, BabyMetroid[e].base.x_width) as i32 + w as i32 + 1) as u16;
@@ -136,7 +144,7 @@ pub fn wait_for_camera(game: &mut impl Host) {
 
 /// Check if enemy is vaguely on screen ($A9:F57A): 0 while actor `k` is within
 /// the screen margins, 1 otherwise. Was `BabyMetroid_CheckIfOnScreen`.
-pub fn is_off_screen(k: u16, game: &mut impl Host) -> u8 {
+pub fn is_off_screen(k: u16, game: &mut (impl SlotAccess + CompatibilityRam + ?Sized)) -> u8 {
     let e = i32::from(k);
     let y_pos = session_slot!(game, BabyMetroid[e].base.y_pos) as i16;
     if y_pos >= 0 {
@@ -159,7 +167,12 @@ pub fn is_off_screen(k: u16, game: &mut impl Host) -> u8 {
 /// Accelerate baby Metroid towards Y position ($A9:F5B5): accelerate the Y
 /// velocity by `acceleration` towards `target`, capped at 500h; 1 once there.
 /// Was `BabyMetroid_AccelerateTowardsY`.
-pub fn accelerate_towards_y(k: u16, target: u16, acceleration: u16, game: &mut impl Host) -> u16 {
+pub fn accelerate_towards_y(
+    k: u16,
+    target: u16,
+    acceleration: u16,
+    game: &mut (impl SlotAccess + CompatibilityRam + ?Sized),
+) -> u16 {
     let e = i32::from(k);
     let mut result: u16 = 0;
     let offset =
@@ -201,7 +214,12 @@ pub fn accelerate_towards_y(k: u16, target: u16, acceleration: u16, game: &mut i
 /// Accelerate baby Metroid towards X position ($A9:F615): accelerate the X
 /// velocity by `acceleration` towards `target`, capped at 500h; 1 once there.
 /// Was `BabyMetroid_AccelerateTowardsX`.
-pub fn accelerate_towards_x(k: u16, target: u16, acceleration: u16, game: &mut impl Host) -> u16 {
+pub fn accelerate_towards_x(
+    k: u16,
+    target: u16,
+    acceleration: u16,
+    game: &mut (impl SlotAccess + CompatibilityRam + ?Sized),
+) -> u16 {
     let e = i32::from(k);
     let mut result: u16 = 0;
     if (session_slot!(game, BabyMetroid[e].base.x_pos) as i16).wrapping_sub(target as i16) >= 0 {
@@ -238,7 +256,11 @@ pub fn accelerate_towards_x(k: u16, target: u16, acceleration: u16, game: &mut i
 
 /// Handle baby Metroid cry sound effect ($A9:F751): on palette frame 5, cry every
 /// fourth time while the cry is enabled. Was `BabyMetroid_HandleCrySoundEffect`.
-pub fn handle_cry(k: u16, a: u16, game: &mut impl Host) -> u16 {
+pub fn handle_cry(
+    k: u16,
+    a: u16,
+    game: &mut (impl SlotAccess + CompatibilityRam + SoundEffects + ?Sized),
+) -> u16 {
     if a == CRY_FRAME {
         let e = i32::from(k);
         if session_slot!(game, BabyMetroid[e].cry_enabled) != 0 {
