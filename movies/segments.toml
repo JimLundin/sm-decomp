@@ -1143,7 +1143,6 @@ expect = ["boss:draygon", "room:DA60", "room:D78F"]
 # Samus, the clear time and the item percentage.
 [[segment]]
 id = "credits-ending"
-pending = "cinematic spawn parameter $7E1B9D-$7E1B9E differs from input frame 12144"
 seed = "100-credits:336"
 seed_sha256 = "30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
 inputs = "seed-credits-ending.inputs"
