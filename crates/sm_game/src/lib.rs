@@ -148,6 +148,7 @@ pub mod actors {
     pub mod shaktool;
     pub mod shitroid;
     pub mod snapshot;
+    pub mod species;
     pub mod spore_spawn;
     pub mod staging;
     pub mod state;

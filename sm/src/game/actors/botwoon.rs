@@ -5,7 +5,7 @@ use crate::game::actors::api;
 use crate::game::enemy_projectiles::{self, scatter_drop};
 use crate::game::gameplay_flag_runtime::{SetBossBitForCurArea, boss_byte_at};
 use crate::game::imported::Imported;
-use crate::game::session_runtime::{Runtime, actor_b3_pre_instruction};
+use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::rom::RomImage;
 use crate::rtl::rom_table_word;
@@ -99,7 +99,7 @@ impl Host for Game {
     }
 
     fn b3_pre_instruction(&mut self, address: u32, k: u16) {
-        actor_b3_pre_instruction(address, k, self);
+        sm_game::actors::species::b3_pre_instruction(address, k, self);
     }
 
     fn record_botwoon_head(&mut self) {

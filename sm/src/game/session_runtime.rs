@@ -99,6 +99,12 @@ pub struct Runtime<'g> {
         std::sync::Arc<crate::game_state::persistent_session::SessionStartRequirements>,
     )>,
 }
+impl sm_game::actors::species::B3Host for Game {
+    fn unknown_routine(&mut self) {
+        crate::rtl::Unreachable(self);
+    }
+}
+
 impl<'g> Runtime<'g> {
     pub fn new(game: &'g mut Game) -> Self {
         #[cfg(sm_verify_dll)]
@@ -1214,13 +1220,13 @@ crate::game::callback_dispatch! {
         11766625 => crate::game::actors::norfair_pipe_bug::initialize;
         11766686 => [{
             let address = crate::game::actors::norfair_pipe_bug::state_address(game);
-            actor_pipe_bug_state(address, crate::ram_map::word!(game.cur_enemy_index), game);
+            sm_game::actors::species::pipe_bug_state(address, crate::ram_map::word!(game.cur_enemy_index), game);
             crate::game::actors::norfair_pipe_bug::reset_offscreen(game);
         }];
         11767628 => crate::game::actors::yellow_pipe_bug::initialize;
         11767726 => [{
             let address = crate::game::actors::yellow_pipe_bug::state_address(game);
-            actor_pipe_bug_state(address, crate::ram_map::word!(game.cur_enemy_index), game);
+            sm_game::actors::species::pipe_bug_state(address, crate::ram_map::word!(game.cur_enemy_index), game);
         }];
         11769219 => actors::botwoon::initialize;
         11769448 => [actors::botwoon::main_ai(&mut Runtime::new(game))];
@@ -1361,57 +1367,6 @@ crate::game::callback_dispatch! {
         0xb30000..=0xb3ffff => [{ crate::rtl::Unreachable(game); }];
     }
 }
-fn actor_pipe_bug_state(ea: u32, _k: u16, game: &mut Game) {
-    match ea {
-        11766733 => actors::norfair_pipe_bug::await_group(game),
-        11766783 => actors::norfair_pipe_bug::await_player(game),
-        11766950 => actors::norfair_pipe_bug::rise(game),
-        11767039 => actors::norfair_pipe_bug::settle(game),
-        11767052 => actors::norfair_pipe_bug::move_to_limit(-16, game),
-        11767118 => actors::norfair_pipe_bug::move_to_limit(-32, game),
-        11767184 => actors::norfair_pipe_bug::move_to_limit(16, game),
-        11767250 => actors::norfair_pipe_bug::move_to_limit(32, game),
-        11767316 => actors::norfair_pipe_bug::fly(2, game),
-        11767349 => actors::norfair_pipe_bug::fly(0, game),
-        11767386 => actors::norfair_pipe_bug::start_flight(game),
-        11767733 => actors::yellow_pipe_bug::detect_player(game),
-        11767797 => {
-            actors::yellow_pipe_bug::launch_delay(crate::ram_map::word!(game.cur_enemy_index), game)
-        }
-        11767848 => actors::yellow_pipe_bug::fly(true, game),
-        11767997 => actors::yellow_pipe_bug::fly(false, game),
-        11768154 => actors::yellow_pipe_bug::turn(true, game),
-        11768280 => actors::yellow_pipe_bug::turn(false, game),
-        _ => {
-            crate::rtl::Unreachable(game);
-        }
-    }
-}
-pub(crate) fn actor_b3_pre_instruction(ea: u32, k: u16, game: &mut Game) {
-    match ea {
-        11763835 => (),
-        11765888 => actors::brinstar_pipe_bug::await_view(k, game),
-        11765904 => actors::brinstar_pipe_bug::await_player(k, game),
-        11765987 => actors::brinstar_pipe_bug::rise(k, game),
-        11766044 => actors::brinstar_pipe_bug::fly(k, game),
-        11766142 => actors::brinstar_pipe_bug::cooldown(k, game),
-        11767039 => actors::norfair_pipe_bug::settle(game),
-        11789916 => actors::escape_critters::run_for_escape(k, game),
-        11789936 => actors::escape_critters::wait_to_express_gratitude(k, game),
-        11789952 => actors::escape_critters::run_around_aimlessly(k, game),
-        11771328 => actors::botwoon::head_moving_around(game),
-        11771517 => {
-            let address = actors::botwoon::head_set_spit_angle(game);
-            actor_b3_pre_instruction(address, crate::ram_map::word!(game.cur_enemy_index), game);
-        }
-        11771616 => actors::botwoon::head_spit(true, game),
-        11771700 => actors::botwoon::head_spit(false, game),
-        11771770 => actors::botwoon::head_cooldown(k, game),
-        _ => {
-            crate::rtl::Unreachable(game);
-        }
-    }
-}
 crate::game::address_dispatch! {
     pub(crate) unsafe fn actor_species_pre_instruction(ea: u32, game: &mut Game) => ea;
         setup { let k: u16 = crate::ram_map::word!(game.cur_enemy_index); }
@@ -1511,7 +1466,7 @@ crate::game::address_dispatch! {
         10661165 => [crate::game::gunship::phase(k, 0xad2d, game)];
         0xa70000..=0xa7ffff => [sm_a7::DispatchEnemyPreInstr(ea, k, game)];
         0xaa0000..=0xaaffff => [sm_aa::DispatchEnemyPreInstr(ea, k, game)];
-        0xb30000..=0xb3ffff => [actor_b3_pre_instruction(ea, k, game)];
+        0xb30000..=0xb3ffff => [sm_game::actors::species::b3_pre_instruction(ea, k, game)];
     }
 }
 crate::game::address_dispatch! {
