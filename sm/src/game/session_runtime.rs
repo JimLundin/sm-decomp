@@ -810,9 +810,9 @@ impl Host for Runtime<'_> {
         }
         content::captured(self.game.capture_native_rom(), address)
     }
-    fn sound(&mut self, bank: u8, limit: u8, sound: u16) {
+    fn sound(&mut self, bank: u8, limit: u8, sound: u16) -> u16 {
         if self.has_owned_display() {
-            self.owned_call(|runtime| {
+            return self.owned_call(|runtime| {
                 if !matches!(
                     (bank, limit),
                     (1, 6 | 9 | 15) | (2, 6) | (3, 3 | 6 | 9 | 15)
@@ -823,9 +823,8 @@ impl Host for Runtime<'_> {
                 #[cfg(sm_verify_dll)]
                 crate::game::visual_runtime::samus_observer::sound(channel, sound as u8, limit);
                 crate::game::music::requests::queue_sfx(channel, sound as u8, limit, runtime)
-                    .expect("audio sound enqueue");
+                    .expect("audio sound enqueue")
             });
-            return;
         }
         self.foreign(|g| {
             if !matches!(
@@ -834,8 +833,8 @@ impl Host for Runtime<'_> {
             ) {
                 unreachable!("unknown projectile sound queue");
             }
-            crate::game::music::queue_sfx(usize::from(bank - 1), sound as u8, limit, g);
-        });
+            crate::game::music::queue_sfx(usize::from(bank - 1), sound as u8, limit, g)
+        })
     }
     fn player_step(&mut self, step: PlayerStep) {
         if matches!(step, PlayerStep::SuitIndex) {

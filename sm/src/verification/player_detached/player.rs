@@ -13,7 +13,10 @@ impl Host for Composed {
         self.image.clone()
     }
     fn record(&mut self, bank: u8, cursor: u16) -> RomRecord {
-        if let Some(record) = self.on_player_record.and_then(|hook| hook(self, bank, cursor)) {
+        if let Some(record) = self
+            .on_player_record
+            .and_then(|hook| hook(self, bank, cursor))
+        {
             return record;
         }
         assert!(cursor & 0x8000 != 0, "unprepared low-window content");
@@ -25,8 +28,10 @@ impl Host for Composed {
     fn native_record(&mut self, bank: u8, cursor: u16) -> RomRecord {
         <Self as Host>::record(self, bank, cursor)
     }
-    fn sound(&mut self, bank: u8, limit: u8, sound: u16) {
+    fn sound(&mut self, bank: u8, limit: u8, sound: u16) -> u16 {
         self.events.push(Event::PlayerSound(bank, limit, sound));
+        // The detached harness has no sound queue: nothing is queued.
+        sound & 0xff
     }
     fn player_step(&mut self, step: PlayerStep) {
         match step {
@@ -89,7 +94,9 @@ impl Host for Composed {
         panic!("invalid prepared projectile damage")
     }
     fn unknown(&mut self) -> bool {
-        if let Some(hook) = self.on_player_unknown { return hook(self); }
+        if let Some(hook) = self.on_player_unknown {
+            return hook(self);
+        }
         panic!("unknown prepared projectile operation")
     }
     fn room_level(&self, cell: u16) -> u16 {

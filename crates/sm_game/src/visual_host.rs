@@ -62,7 +62,9 @@ pub trait Effects {
     fn draw_samus_sprite(&mut self, index: u16, x: u16, y: u16);
     /// Live frame and ordered OAM writes; kind was captured before timer callbacks.
     fn draw_atmospheric_tile(&mut self, slot: usize, kind: u16);
-    fn sound(&mut self, channel: u8, limit: u8, sound: u16);
+    /// Queue `sound`; returns the queue routine's accumulator (see the
+    /// player projectile host's `sound`).
+    fn sound(&mut self, channel: u8, limit: u8, sound: u16) -> u16;
     fn music_delayed8(&mut self, track: u16);
     /// Existing SamusCode_1C sound selection; synchronous external interval.
     fn resume_movement_sound(&mut self);

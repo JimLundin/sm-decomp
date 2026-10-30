@@ -109,17 +109,21 @@ fn speed_command<H: Host>(
     if counter as u8 != 0 {
         return program.byte(frame);
     }
-    let mut staged_counter = counter;
+    let mut stage = counter >> 8;
     if counter & 0x400 == 0 {
-        staged_counter = counter.wrapping_add(0x100);
+        let staged_counter = counter.wrapping_add(0x100);
         h.session_mut().player.contact.speed_boost = staged_counter;
+        stage = staged_counter >> 8;
         if staged_counter & 0x400 != 0 {
             h.session_mut().projectiles.controls.echo_sound = 1;
-            h.sound(3, 6, 3);
+            // $90:85AA takes the stage from A's high byte (XBA), which the
+            // sound queue at $80:914D has replaced: the queued count, or 3
+            // (the sound) when six are already queued.
+            stage = h.sound(3, 6, 3) >> 8;
         }
     }
     // Keep the source stage across sound, but acquire its table afterward.
-    let stage_offset = usize::from(staged_counter >> 8) * 2;
+    let stage_offset = usize::from(stage) * 2;
     let duration = table_word(h, AnimationTable::BoosterStageDurations, stage_offset);
     let live_counter = h.session().player.contact.speed_boost;
     h.session_mut().player.contact.speed_boost = duration | (live_counter & 0xff00);

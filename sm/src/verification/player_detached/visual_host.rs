@@ -95,11 +95,13 @@ impl Effects for Composed {
         }
     }
 
-    fn sound(&mut self, channel: u8, limit: u8, sound: u16) {
+    fn sound(&mut self, channel: u8, limit: u8, sound: u16) -> u16 {
         self.events.push(Event::Sound(channel, sound));
         if let Some(callback) = self.on_visual_sound {
             callback(self);
         }
+        // The detached harness has no sound queue: nothing is queued.
+        sound & 0xff
     }
     fn music_delayed8(&mut self, track: u16) {
         self.events.push(Event::Music(track));
