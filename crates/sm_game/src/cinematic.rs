@@ -191,6 +191,7 @@ pub fn cinematic_color_indices(mut offset: u16, count: u16) -> impl Iterator<Ite
     })
 }
 
+// Native split words retain low-before-high reads and writes.
 pub fn add_native_pair<H: crate::menus::host::Host + ?Sized>(
     high: usize,
     low: usize,

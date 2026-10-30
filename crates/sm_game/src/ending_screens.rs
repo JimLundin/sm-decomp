@@ -236,6 +236,7 @@ pub fn advance_postcredits_samus_message<H: crate::menus::host::Host + ?Sized>(
     }
 }
 
+// Cloud setup reads its parameter after the first position store, even for aliased slots.
 pub fn initialize_ending_cloud_band<H: crate::menus::host::Host + ?Sized>(
     object: u16,
     y: u16,

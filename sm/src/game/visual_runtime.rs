@@ -90,7 +90,6 @@ pub(crate) fn advance_crocomire(game: &mut Game) {
     crocomire::update_palette(game);
 }
 
-// Allocation publishes RAM first and checks the owned backend at each register byte.
 crate::game::address_dispatch! {
     pub(crate) unsafe fn run_hdma_call(ea: u32, k: u16, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
@@ -450,9 +449,6 @@ pub(crate) fn check_animation_guard(game: &mut Game) -> bool {
 #[path = "../verification/samus_palette_observer.rs"]
 pub(crate) mod samus_observer;
 
-// Shooting-star scratch records stay in RAM. Native scalar loads use from_le
-// on checked LE reads; only the original compound updates use LE arithmetic.
-// Keep bits 16..23 of the magnitude product before restoring the sine sign.
 impl sm_game::hdma_effects::Host for Runtime<'_> {
     fn byte(&self, at: usize) -> u8 {
         Runtime::byte(self, at)
@@ -546,16 +542,6 @@ pub(crate) fn draw_player_frame_owned(h: &mut Runtime<'_>) {
     h.owned_call(crate::game::session_runtime::finish_player_frame);
 }
 
-// Native split words retain low-before-high reads and writes.
-// Cloud setup reads its parameter after the first position store, even for aliased slots.
-pub(crate) fn cinematic_native_record<const BANK: u8>(cursor: u16, game: &mut Game) -> RomRecord {
-    let address = (u32::from(BANK) << 16) | u32::from(cursor);
-    if address & 0x8000 == 0 {
-        crate::game::session_runtime::native_rom_diagnostic(address, game);
-    }
-    player_projectiles::content::captured(game.capture_native_rom(), address)
-}
-
 pub(crate) fn project_cinematic_point(
     point: crate::types::Point16U,
     game: &mut Game,
@@ -580,7 +566,6 @@ pub(crate) fn project_cinematic_point_reads(
     }
 }
 
-// Hardware setup remains unsafe: Game construction alone does not attach a PPU.
 /// Position Crocomire's second body part and align its BG2 image with the camera.
 pub(crate) fn align_crocomire_background(game: &mut Game) {
     use crate::game::enemy_layouts::EnemyLayout72 as Crocomire;

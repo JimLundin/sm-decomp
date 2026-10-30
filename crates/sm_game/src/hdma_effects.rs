@@ -424,6 +424,7 @@ pub trait HdmaEffects: Host {
 
 impl<T: Host + ?Sized> HdmaEffects for T {}
 
+// Keep bits 16..23 of the magnitude product before restoring the sine sign.
 fn hdma_wave_offset(sample: i16, amplitude_low: u8, amplitude_high: u8) -> u16 {
     let amplitude = u16::from_le_bytes([amplitude_low, amplitude_high]);
     let product = u32::from(sample.unsigned_abs()) * u32::from(amplitude);

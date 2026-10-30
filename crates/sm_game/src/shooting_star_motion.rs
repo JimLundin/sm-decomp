@@ -7,6 +7,8 @@ use crate::ram::RawRam as _;
 use crate::ram::{checked_word, word};
 use sm_data::shooting_stars::TILE_ADDRESS as STAR_TILE_ADDRESS;
 
+// Shooting-star scratch records stay in RAM. Native scalar loads use from_le
+// on checked LE reads; only the original compound updates use LE arithmetic.
 pub fn initialize_shooting_stars<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
     for index in 0..40 {
         let at = 0xe0c + 16 * index;

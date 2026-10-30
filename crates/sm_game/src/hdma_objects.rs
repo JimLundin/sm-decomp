@@ -42,6 +42,7 @@ fn hdma_definition(args: &SpawnHdmaObject_Args) -> [u16; 2] {
     ]
 }
 
+// Allocation publishes RAM first and checks the owned backend at each register byte.
 pub fn spawn_hdma<H: crate::menus::host::Host + ?Sized>(
     bank: u8,
     args: &SpawnHdmaObject_Args,
