@@ -1023,3 +1023,57 @@ pub(crate) fn draw_player_frame(game: &mut Game) {
     crate::game::session_runtime::Runtime::new(game)
         .owned_player_call(sm_game::player_drawing::draw_player_frame);
 }
+
+/// The compat words the HUD read before it named them, read the same way.
+impl sm_game::hud::HudPlayer for Game {
+    fn health(&self) -> u16 {
+        let game = self;
+        sm_game::ram_word!(game.samus_health)
+    }
+    fn max_health(&self) -> u16 {
+        let game = self;
+        sm_game::ram_word!(game.samus_max_health)
+    }
+    fn ammunition(&self, index: usize) -> u16 {
+        let game = self;
+        let at = [
+            sm_game::ram::words::samus_missiles,
+            sm_game::ram::words::samus_super_missiles,
+            sm_game::ram::words::samus_power_bombs,
+        ][index];
+        sm_game::ram_checked_word!(game, at;)
+    }
+    fn max_ammunition(&self, index: usize) -> u16 {
+        let game = self;
+        let at = [
+            sm_game::ram::words::samus_max_missiles,
+            sm_game::ram::words::samus_max_super_missiles,
+            sm_game::ram::words::samus_max_power_bombs,
+        ][index];
+        sm_game::ram_checked_word!(game, at;)
+    }
+    fn reserve_health(&self) -> u16 {
+        let game = self;
+        sm_game::ram_word!(game.samus_reserve_health)
+    }
+    fn reserve_mode(&self) -> u16 {
+        let game = self;
+        sm_game::ram_word!(game.reserve_health_mode)
+    }
+    fn equipped_items(&self) -> u16 {
+        let game = self;
+        sm_game::ram_word!(game.equipped_items)
+    }
+    fn selected_item(&self) -> u16 {
+        let game = self;
+        sm_game::ram_word!(game.hud_item_index)
+    }
+    fn automatic_item(&self) -> u16 {
+        let game = self;
+        sm_game::ram_word!(game.samus_auto_cancel_hud_item_index)
+    }
+    fn grapple_function(&self) -> u16 {
+        let game = self;
+        sm_game::ram_word!(game.grapple_beam_function)
+    }
+}

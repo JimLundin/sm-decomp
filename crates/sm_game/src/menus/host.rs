@@ -121,6 +121,7 @@ pub trait MenuRuntime:
 pub trait Host:
     CompatibilityRam
     + crate::player_position::PlayerPosition
+    + crate::hud::HudPlayer
     + WorkRamAccess
     + LoadedRom
     + Registers
