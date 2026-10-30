@@ -178,6 +178,24 @@ impl MenuRuntime for Game {
     fn draw_projectiles(&mut self) {
         crate::game::player_projectiles::draw_projectiles(self)
     }
+    fn event_happened(&mut self, event: u16) -> u16 {
+        crate::game::gameplay_flag_runtime::CheckEventHappened(event, self)
+    }
+    fn set_event_happened(&mut self, event: u16) {
+        crate::game::gameplay_flag_runtime::SetEventHappened(event, self)
+    }
+    fn boss_bit_for_current_area(&mut self, bit: u16) -> u8 {
+        crate::game::gameplay_flag_runtime::CheckBossBitForCurArea(bit, self)
+    }
+    fn spawn_hardcoded_plm(&mut self, x: u8, y: u8, id: u16) {
+        crate::game::room_mechanisms::spawn_hardcoded(
+            crate::types::SpawnHardcodedPlmArgs::new(x, y, id),
+            self,
+        )
+    }
+    fn spawn_room_enemy_projectile(&mut self, definition: u16, parameter: u16) -> u16 {
+        crate::game::enemy_projectiles::SpawnEprojWithRoomGfx(definition, parameter, self)
+    }
     fn retire_projectile(&mut self, slot: u16) {
         crate::game::player_projectiles::retire(slot, self)
     }

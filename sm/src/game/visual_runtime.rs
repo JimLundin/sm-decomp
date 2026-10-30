@@ -27,6 +27,12 @@ pub(crate) use crate::game::intro_objects::{
 };
 use crate::game::player_transitions::xray::BeamPhase;
 use crate::game::projectile_presentation_ram as sprite_output;
+pub(crate) use crate::game::room_visuals::{
+    advance_fireflea_lighting, advance_tourian_statue, darken_fireflea_room,
+    initialize_bomb_torizo_haze, initialize_ceres_ridley, initialize_fireflea_lighting,
+    initialize_room_haze, initialize_title_gradient, initialize_tourian_statue, initialize_weather,
+    shake_room_with_sound,
+};
 pub(crate) use crate::game::shooting_star_motion::{
     advance_shooting_stars, initialize_shooting_stars,
 };
@@ -51,12 +57,7 @@ pub(crate) use sm_game::cinematic::{
 
 use crate::{
     game::{
-        animated_tiles,
-        constants::bank_86::addr_kEproj_TourianStatueDustClouds,
-        enemy_projectiles::{self, SpawnEprojWithRoomGfx},
-        gameplay_flag_runtime::{CheckEventHappened, SetEventHappened},
-        palette_effects, player_projectiles,
-        room_mechanisms::spawn_hardcoded,
+        animated_tiles, enemy_projectiles, palette_effects, player_projectiles,
         session_runtime::Runtime,
         visual_host::{self, AnimationMember, PaletteMember, Source, StatueProjectile},
         visual_state::{
@@ -65,7 +66,7 @@ use crate::{
     },
     game_state::Game,
     rom::RomRecord,
-    types::{SpawnHardcodedPlmArgs, SpawnHdmaObject_Args},
+    types::SpawnHdmaObject_Args,
 };
 
 pub(crate) fn spawn_bg3_scroll(game: &mut Game) {
@@ -83,25 +84,6 @@ crate::forward_calls! { pub(crate) fn (game: &mut Game);
     initialize_intro_crossfade => spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x31, 0xec03), game);
 }
 
-pub(crate) fn initialize_ceres_ridley(game: &mut Game) {
-    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x40, 5, 0xd906), game);
-    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x2c, 0xd91d), game);
-}
-
-pub(crate) fn initialize_bomb_torizo_haze(game: &mut Game) {
-    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(2, 0x32, 0xdd4a), game);
-    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x32, 0xdd62), game);
-}
-
-pub(crate) fn initialize_room_haze(game: &mut Game) {
-    let program = if crate::game::gameplay_flag_runtime::CheckBossBitForCurArea(1, game) & 1 != 0 {
-        0xdeeb
-    } else {
-        0xded3
-    };
-    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x40, 0x32, program), game);
-}
-
 pub(crate) fn initialize_phantoon_motion(direction: u16, speed: u16, game: &mut Game) {
     use sm_game::actors::access::AccessMode::Native;
     {
@@ -116,11 +98,6 @@ pub(crate) fn initialize_phantoon_motion(direction: u16, speed: u16, game: &mut 
         });
     }
     spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0xf, 0xe4a8), game);
-}
-
-pub(crate) fn initialize_title_gradient(game: &mut Game) {
-    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x32, 0xeb73), game);
-    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x31, 0xeb85), game);
 }
 
 pub(crate) fn initialize_intro_wave(game: &mut Game) {
@@ -863,174 +840,8 @@ pub(crate) fn advance_intro_crossfade(game: &mut Game) {
     }
 }
 
-const FIREFLEA_FLASH: [u16; 12] = [
-    0, 0x100, 0x200, 0x300, 0x400, 0x500, 0x600, 0x500, 0x400, 0x300, 0x200, 0x100,
-];
-const FIREFLEA_DARKNESS: [u16; 6] = [0, 0x600, 0xc00, 0x1200, 0x1800, 0x1900];
-
-pub(crate) fn darken_fireflea_room(game: &mut Game) {
-    if word!(game.fireflea_darkness_level).wrapping_sub(12) & 0x8000 != 0 {
-        word!(game.fireflea_darkness_level += 2);
-    }
-}
-
-pub(crate) fn initialize_fireflea_lighting(game: &mut Game) {
-    word! {game; fireflea_flashing_timer = 6; fireflea_flashing_index = 0; }
-    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0x11, 0xb0ac), game);
-    word_transfers!(game, ascending, 1; native(0x9e00) <- value(0));
-    word! { game, 0; UNUSED_word_7E177C, fireflea_darkness_level }
-    word!(game.UNUSED_word_7E1780 = 24);
-    word!(game.UNUSED_word_7E1782 = FIREFLEA_FLASH[0]);
-}
-
-pub(crate) fn advance_fireflea_lighting(game: &mut Game) {
-    word!(game.fx_layer_blending_config_c = word!(game.fx_layer_blending_config_c) & 0xff00 | 0xc);
-    if word!(game.time_is_frozen_flag) != 0 {
-        return;
-    }
-    if word!(game.fireflea_flashing_timer -= 1, reread) == 0 {
-        word!(game.fireflea_flashing_timer = 6);
-        let next = if word!(game.fireflea_darkness_level).wrapping_sub(10) & 0x8000 != 0 {
-            let next = word!(game.fireflea_flashing_index).wrapping_add(1);
-            if next >= 12 { 0 } else { next }
-        } else {
-            6
-        };
-        word!(game.fireflea_flashing_index = next);
-    }
-    let shade = (FIREFLEA_DARKNESS[usize::from(word!(game.fireflea_darkness_level) >> 1)]
-        .wrapping_add(FIREFLEA_FLASH[usize::from(word!(game.fireflea_flashing_index))])
-        >> 8) as u8;
-    game.ram().write_byte(0x75, shade | 0x80);
-    game.ram().write_byte(0x76, shade | 0x40);
-    game.ram().write_byte(0x74, shade | 0x20);
-}
-
 // Shooting-star scratch records stay in RAM. Native scalar loads use from_le
 // on checked LE reads; only the original compound updates use LE arithmetic.
-pub(crate) fn shake_room_with_sound(kind: u16, game: &mut Game) {
-    static SOUNDS: [u16; 17] = [
-        0x46, 1, 0x46, 3, 0x46, 2, 0x46, 1, 0x46, 1, 0x46, 2, 0x46, 2, 0x46, 1, 0x8000,
-    ];
-    if word!(game.earthquake_sfx_timer) & 0x8000 == 0
-        && word!(game.earthquake_sfx_timer -= 1, reread) & 0x8000 != 0
-    {
-        let mut index = word!(game.earthquake_sfx_index);
-        let mut sound = SOUNDS[usize::from(index >> 1)];
-        if sound & 0x8000 != 0 {
-            index = 0;
-            sound = SOUNDS[0];
-        }
-        crate::game::music::QueueSfx2_Max6(sound, game);
-        word!(
-            game.earthquake_sfx_timer = SOUNDS[usize::from(index >> 1) + 1]
-                .wrapping_add(index & 1)
-                .wrapping_add(word!(game.random_number) & 3)
-        );
-        word!(game.earthquake_sfx_index = index.wrapping_add(4));
-    }
-    word!(game.earthquake_type = kind);
-    word!(game.earthquake_timer |= 0x20);
-}
-
-pub(crate) fn initialize_tourian_statue(game: &mut Game) {
-    if CheckEventHappened(0xa, game) & 1 != 0 {
-        spawn_hardcoded(SpawnHardcodedPlmArgs::new(6, 12, 0xb777), game);
-        word_transfers!(game, ascending, 1; native(0xcd20) <- value(514));
-    }
-    game.ram().write_byte(0x59, 74);
-    word!(game.fx_rising_function_bank_88 = 0xc428);
-    word!(game.fx_y_pos = word!(game.fx_base_y_pos));
-    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0x11, 0xd856), game);
-    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0x10, 0xdcfa), game);
-    spawn_bg3_scroll(game);
-}
-
-pub(crate) unsafe fn advance_tourian_statue(
-    mut slot: u16,
-    phase: TourianStatuePhase,
-    game: &mut Game,
-) {
-    use TourianStatuePhase::*;
-    if matches!(phase, Shaking | Sinking) {
-        shake_room_with_sound(13, game);
-    }
-    match phase {
-        Waiting => {
-            if (6..=9).all(|event| CheckEventHappened(event, game) & 1 != 0) {
-                word!(game.tourian_entrance_statue_animstate |= 0x10);
-                if word!(game.tourian_entrance_statue_animstate) & 0x8000 == 0 {
-                    word!(game.hdma_object_C[(slot >> 1)] = 300);
-                    slot = word!(game.hdma_object_index);
-                    advance_statue_program(word!(game.hdma_object_index), game);
-                }
-            }
-        }
-        Shaking => {
-            let counter_slot = slot as u8;
-            if word!(game.hdma_object_C[(counter_slot >> 1)] -= 1, reread) & 0x8000 != 0 {
-                for _ in 0..4 {
-                    SpawnEprojWithRoomGfx(addr_kEproj_TourianStatueDustClouds as u16, 0, game);
-                }
-                advance_statue_program(u16::from(counter_slot), game);
-            }
-        }
-        Sinking => {
-            if word!(game.time_is_frozen_flag) != 0 {
-                return;
-            }
-            let low = 0x1914 + usize::from(slot & !1);
-            let high = 0x1920 + usize::from(slot & !1);
-            let fraction =
-                u16::from_ne_bytes([game.ram().read_byte(low), game.ram().read_byte(low + 1)]);
-            let whole =
-                u16::from_ne_bytes([game.ram().read_byte(high), game.ram().read_byte(high + 1)]);
-            let position = (u32::from(fraction) | u32::from(whole) << 16).wrapping_sub(0x4000);
-            word_transfers!(game, ascending, 1;
-                native(low) <- value(position as u16),
-                native(high) <- value((position >> 16) as u16),
-            );
-            if word!(game.hdma_object_B[(slot >> 1)]) == 0xff10 {
-                {
-                    spawn_hardcoded(SpawnHardcodedPlmArgs::new(6, 12, 0xb773), game);
-                }
-                SetEventHappened(0xa, game);
-                advance_statue_program(slot, game);
-            }
-        }
-        Finished => {
-            word!(game.tourian_entrance_statue_finished = 0x8000);
-            word_transfers!(game, ascending, 1; native(0xcd20) <- value(514));
-        }
-    }
-    let scroll = word!(game.layer1_y_pos).wrapping_add(word!(game.hdma_object_B[(slot >> 1)]));
-    word_transfers!(game, ascending, 1; native(0x9e00) <- value(scroll));
-}
-
-fn advance_statue_program(slot: u16, game: &mut Game) {
-    word!(game.hdma_object_instruction_timers[(slot >> 1)] = 1);
-    word!(game.hdma_object_instruction_list_pointers[(slot >> 1)] += 2);
-}
-
-pub(crate) fn initialize_weather(weather: Weather, game: &mut Game) {
-    use crate::game::constants::bank_87::{addr_kAnimtiles_Rain, addr_kAnimtiles_Spores};
-    let (control, program, tiles) = match weather {
-        Weather::Rain => (0x43, 0xd96c, Some(addr_kAnimtiles_Rain)),
-        Weather::Spores => (0x42, 0xda2d, Some(addr_kAnimtiles_Spores)),
-        Weather::Fog => (0x43, 0xdb19, None),
-    };
-    game.ram().write_byte(0x5b, 92);
-    spawn_hdma(
-        0x88,
-        &SpawnHdmaObject_Args::new(control, 0x11, program),
-        game,
-    );
-    if let Some(tiles) = tiles {
-        spawn_bg3_scroll(game);
-        animated_tiles::spawn(tiles as u16, game);
-    }
-}
-
 pub(crate) fn scroll_weather(slot: u16, weather: Weather, game: &mut Game) {
     use crate::ram_map::{checked_word, words as ram};
     game.ram().write_byte(0x5b, 92);

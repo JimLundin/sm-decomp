@@ -472,6 +472,7 @@ pub mod game {
     pub(crate) use sm_game::mother_brain_tables;
     pub(crate) mod moving_platforms;
     pub(crate) mod prelude;
+    pub(crate) mod room_visuals;
     pub mod scene;
     pub(crate) mod scrolling_sky;
     pub(crate) mod shooting_star_motion;

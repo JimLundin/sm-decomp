@@ -49,6 +49,14 @@ pub trait MenuRuntime:
     fn enqueue_mode7_rom(&mut self, bank: u8, cursor: u16);
     /// Retire the player projectile in `slot`.
     fn retire_projectile(&mut self, slot: u16);
+    /// Gameplay event and boss flags, as the original's checks return them.
+    fn event_happened(&mut self, event: u16) -> u16;
+    fn set_event_happened(&mut self, event: u16);
+    fn boss_bit_for_current_area(&mut self, bit: u16) -> u8;
+    /// Spawn the hardcoded PLM `id` at block (`x`, `y`).
+    fn spawn_hardcoded_plm(&mut self, x: u8, y: u8, id: u16);
+    /// Spawn an enemy projectile that uses the room's graphics; returns its slot.
+    fn spawn_room_enemy_projectile(&mut self, definition: u16, parameter: u16) -> u16;
     /// Draw Samus's current frame, then (separately) the player projectiles.
     fn draw_player_frame(&mut self);
     fn draw_projectiles(&mut self);

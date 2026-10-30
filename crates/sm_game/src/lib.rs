@@ -236,6 +236,7 @@ pub mod phantoon_tables;
 pub mod records;
 pub mod ridley_data;
 pub mod ridley_explosion_data;
+pub mod room_visuals;
 pub mod samus_palette;
 pub mod samus_periodic_damage;
 pub mod sand_heap;
