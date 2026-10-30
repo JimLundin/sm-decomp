@@ -756,28 +756,71 @@ pub enum Contact {
 /// inside a lease, the RAM image's on the game), named RAM words, the ROM
 /// records and native image, and sound. Routines written against it run on
 /// either.
-pub trait State:
-    SlotAccess
-    + crate::ram::CompatibilityRam
-    + crate::records::Records
-    + crate::cartridge::NativeDiagnostics
-    + crate::cartridge::LoadedImage
-    + crate::effects::SoundEffects
-    + crate::player_position::PlayerPosition
-    + SessionRam
-{
+pub trait State: crate::actors::boss_lease::BossState + OwnedWords + SessionRam {}
+impl<T> State for T where T: crate::actors::boss_lease::BossState + OwnedWords + SessionRam + ?Sized {}
+
+/// A word Mother Brain's code reads or writes that the Session owns: the
+/// player's health, reserve, invincibility, knockback, speed and palette
+/// frame, the projectiles' cooldown, bombs and shots, the collision index,
+/// the earthquake and the palette colours.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum OwnedWord {
+    SamusHealth,
+    MaxReserveHealth,
+    ReserveHealth,
+    Invincibility,
+    KnockbackTimer,
+    KnockbackDirection,
+    SpeedDivisor,
+    SamusYSpeed,
+    SamusPaletteFrame,
+    Cooldown,
+    BombCounter,
+    PowerBomb,
+    ShotX(usize),
+    ShotY(usize),
+    ShotKind(usize),
+    ShotDamage(usize),
+    CollisionIndex,
+    EarthquakeType,
+    EarthquakeTimer,
+    Color(usize),
 }
-impl<T> State for T where
-    T: SlotAccess
-        + crate::ram::CompatibilityRam
-        + crate::records::Records
-        + crate::cartridge::NativeDiagnostics
-        + crate::cartridge::LoadedImage
-        + crate::effects::SoundEffects
-        + crate::player_position::PlayerPosition
-        + SessionRam
-        + ?Sized
-{
+
+impl OwnedWord {
+    /// The work RAM word the Session field projects.
+    pub fn address(self) -> usize {
+        use crate::ram::{word_arrays as arrays, words};
+        match self {
+            Self::SamusHealth => words::SAMUS_HEALTH,
+            Self::MaxReserveHealth => words::SAMUS_MAX_RESERVE_HEALTH,
+            Self::ReserveHealth => words::SAMUS_RESERVE_HEALTH,
+            Self::Invincibility => words::SAMUS_INVINCIBILITY_TIMER,
+            Self::KnockbackTimer => words::SAMUS_KNOCKBACK_TIMER,
+            Self::KnockbackDirection => words::KNOCKBACK_X_DIR,
+            Self::SpeedDivisor => words::SAMUS_X_SPEED_DIVISOR,
+            Self::SamusYSpeed => words::SAMUS_Y_SPEED,
+            Self::SamusPaletteFrame => words::SPECIAL_SAMUS_PALETTE_FRAME,
+            Self::Cooldown => words::COOLDOWN_TIMER,
+            Self::BombCounter => words::BOMB_COUNTER,
+            Self::PowerBomb => words::POWER_BOMB_FLAG,
+            Self::ShotX(index) => arrays::PROJECTILE_X_POS + 2 * index,
+            Self::ShotY(index) => arrays::PROJECTILE_Y_POS + 2 * index,
+            Self::ShotKind(index) => arrays::PROJECTILE_TYPE + 2 * index,
+            Self::ShotDamage(index) => arrays::PROJECTILE_DAMAGE + 2 * index,
+            Self::CollisionIndex => words::COLLISION_DETECTION_INDEX,
+            Self::EarthquakeType => words::EARTHQUAKE_TYPE,
+            Self::EarthquakeTimer => words::EARTHQUAKE_TIMER,
+            Self::Color(index) => arrays::PALETTE_BUFFER + 2 * index,
+        }
+    }
+}
+
+/// The Session-owned words: the typed field inside a lease, the RAM image's
+/// word (as `word!` reads and stores it) on the game.
+pub trait OwnedWords {
+    fn owned(&self, word: OwnedWord) -> u16;
+    fn set_owned(&mut self, word: OwnedWord, value: u16);
 }
 
 /// A lease on the game for one frame of an AI: the state steps run on it, and
@@ -1097,7 +1140,7 @@ crate::dispatch::callback_dispatch! {
         session_slot!(game, MotherBrainBody[e0].base.y_pos = 279);
         word! {game; REG_BG2HOFS = -27i32 as u16; REG_BG2VOFS = -217i32 as u16; }
         queue_music(music::SONG_0, game);
-        word! {game; EARTHQUAKE_TYPE = 2; EARTHQUAKE_TIMER = 256; }
+        { game.set_owned(OwnedWord::EarthquakeType, 2); game.set_owned(OwnedWord::EarthquakeTimer, 256); }
         session_slot! { game, MotherBrainBrain[BRAIN]; neck_speed = 80, neck_moving = 1, lower_motion = 8, upper_motion = 6 };
         session_slot!(game, MotherBrainBody[e0].function = function::FAKE_DEATH_ASCENT_RAISE_MOTHER_BRAIN);
     };
@@ -1174,7 +1217,7 @@ crate::dispatch::callback_dispatch! {
                 game,
             );
             queue_music(music::SONG_2, game);
-            word! {game; EARTHQUAKE_TYPE = 5; EARTHQUAKE_TIMER = -1i32 as u16; }
+            { game.set_owned(OwnedWord::EarthquakeType, 5); game.set_owned(OwnedWord::EarthquakeTimer, -1i32 as u16); }
             spawn_palette_effect(ADDR_K_PALFX_FFC9 as u16, game);
             spawn_palette_effect(ADDR_K_PALFX_FFCD as u16, game);
             spawn_palette_effect(ADDR_K_PALFX_FFD1 as u16, game);
@@ -1213,8 +1256,8 @@ crate::dispatch::callback_dispatch! {
         spawn_plm(0, 0x6, plm::ESCAPE_DOOR, game);
     };
     [11121468] phase3_death_keep_earthquake_going [] {
-        if word!(game.EARTHQUAKE_TIMER) == 0 {
-            word!(game.EARTHQUAKE_TIMER -= 1);
+        if game.owned(OwnedWord::EarthquakeTimer) == 0 {
+            game.set_owned(OwnedWord::EarthquakeTimer, game.owned(OwnedWord::EarthquakeTimer).wrapping_sub(1));
         }
     };
     [11122561] firing_bomb_decide_on_walking [] {
@@ -1282,7 +1325,7 @@ crate::dispatch::callback_dispatch! {
         }
     };
     [11123025] phase2_firing_rainbow_beam_extend_neck_down [] {
-        word!(game.COOLDOWN_TIMER = 8);
+        game.set_owned(OwnedWord::Cooldown, 8);
         session_slot! { game, MotherBrainBrain[BRAIN]; lower_motion = 6, upper_motion = 6, neck_speed = 1280 }
         session_slot!(game, MotherBrainBody[BODY].function = function::PHASE_2_FIRING_RAINBOW_BEAM_START_FIRING_RAINBOW_BEAM);
         session_slot!(game, MotherBrainBody[BODY].function_timer = 16);
@@ -1290,10 +1333,10 @@ crate::dispatch::callback_dispatch! {
     };
     [11123061] phase2_firing_rainbow_beam_start_firing [] {
         aim_rainbow_beam_and_increase_width(game);
-        if word!(game.POWER_BOMB_FLAG) == 0 {
+        if game.owned(OwnedWord::PowerBomb) == 0 {
             session_slot!(game, MotherBrainBody[BODY].function_timer = session_slot!(game, MotherBrainBody[BODY].function_timer).wrapping_sub(1));
-            if (session_slot!(game, MotherBrainBody[BODY].function_timer) & 0x8000) != 0 && word!(game.POWER_BOMB_FLAG) == 0 {
-                word!(game.COOLDOWN_TIMER = 0);
+            if (session_slot!(game, MotherBrainBody[BODY].function_timer) & 0x8000) != 0 && game.owned(OwnedWord::PowerBomb) == 0 {
+                game.set_owned(OwnedWord::Cooldown, 0);
                 reset_body_rainbow_beam_palette_animation(game);
                 set_brain_instruction_list(animation::BRAIN_FIRING_RAINBOW_BEAM, game);
                 session_slot!(game, MotherBrainBody[BODY].beam_width = 512);
@@ -1301,7 +1344,7 @@ crate::dispatch::callback_dispatch! {
                 session_slot! { game, MotherBrainBrain[BRAIN]; neck_speed = 64, neck_moving = 1, lower_motion = 2, upper_motion = 4 };
                 session_slot! { game, MotherBrainBody[BODY]; cooldown = 0, explosion_timer = 0 }
                 let mut v4: u16 = 5;
-                if ((word!(game.SAMUS_HEALTH)) as i16).wrapping_sub(700) < 0 {
+                if ((game.owned(OwnedWord::SamusHealth)) as i16).wrapping_sub(700) < 0 {
                     v4 = 24;
                 }
                 run_samus_command(v4, game);
@@ -1328,14 +1371,14 @@ crate::dispatch::callback_dispatch! {
         move_samus_towards_wall_due_to_rainbow_beam(game);
         session_slot!(game, MotherBrainBody[BODY].function_timer = session_slot!(game, MotherBrainBody[BODY].function_timer).wrapping_sub(1));
         if (session_slot!(game, MotherBrainBody[BODY].function_timer) & 0x8000) != 0 {
-            word! { game, 8; EARTHQUAKE_TYPE, EARTHQUAKE_TIMER }
+            { game.set_owned(OwnedWord::EarthquakeType, 8); game.set_owned(OwnedWord::EarthquakeTimer, 8); }
             session_slot!(game, MotherBrainBody[BODY].function = function::PHASE_2_FIRING_RAINBOW_BEAM_START_DRAINING_SAMUS);
         }
     };
     [11123239] phase2_firing_rainbow_beam_start_draining_samus [] {
         session_slot!(game, MotherBrainBody[BODY].function = function::PHASE_2_FIRING_RAINBOW_BEAM_DRAINING_SAMUS);
         session_slot!(game, MotherBrainBody[BODY].function_timer = 299);
-        word! {game; EARTHQUAKE_TIMER = 299; EARTHQUAKE_TYPE = 8; }
+        { game.set_owned(OwnedWord::EarthquakeTimer, 299); game.set_owned(OwnedWord::EarthquakeType, 8); }
         phase2_firing_rainbow_beam_draining_samus(game);
     };
     [11123260] phase2_firing_rainbow_beam_draining_samus [] {
@@ -1364,14 +1407,14 @@ crate::dispatch::callback_dispatch! {
             session_slot! { game, MotherBrainBody[BODY]; beam_width = 512, cooldown = -256i32 as u16 }
             session_slot!(game, MotherBrainBody[BODY].explosion_timer = 0);
             game.foreign(|game| crate::hdma_objects::free_hdma_object(session_slot!(game, MotherBrainBody[BODY].hdma_object), game));
-            word!(game.EARTHQUAKE_TIMER = 0);
+            game.set_owned(OwnedWord::EarthquakeTimer, 0);
             set_brain_instruction_list(animation::BRAIN_NEUTRAL_PHASE_2, game);
             set_up_brain_normal_palette(game);
             write_default_palette(game);
             queue_sfx1_max6(sound::SILENCE_LIBRARY_1, game);
             session_slot!(game, MotherBrainBody[BODY].beam_sound_playing = 0);
             run_samus_command(samus_command::UNLOCK_SAMUS, game);
-            word!(game.COOLDOWN_TIMER = 8);
+            game.set_owned(OwnedWord::Cooldown, 8);
             session_slot!(game, MotherBrainBody[BODY].function = function::PHASE_2_FIRING_RAINBOW_BEAM_LET_SAMUS_FALL);
         }
     };
@@ -1387,7 +1430,7 @@ crate::dispatch::callback_dispatch! {
     };
     [11124037] phase2_finish_samus_off_lower_health [] {
         let v0: u16 = { let amount = 0x50; game.foreign(|game| game.suit_damage(amount)) };
-        if ((4 * v0 as i32 + 20 - word!(game.SAMUS_HEALTH) as i32) as i16) >= 0 {
+        if ((4 * v0 as i32 + 20 - game.owned(OwnedWord::SamusHealth) as i32) as i16) >= 0 {
             session_slot!(game, MotherBrainBody[0i32].function = function::PHASE_2_FINISH_SAMUS_OFF_STAND_UP);
         } else if (word!(game.RANDOM_NUMBER) & 0xfff) < 0xfa0 {
             if (session_slot!(game, MotherBrainBody[0i32].base.frame_counter) & 0x1f) == 0 {
@@ -1395,7 +1438,7 @@ crate::dispatch::callback_dispatch! {
             }
         } else {
             let mut v1: u16;
-            if ((({ let amount = 0xa0; game.foreign(|game| game.suit_damage(amount)) }) as i32 + 20 - word!(game.SAMUS_HEALTH) as i32)
+            if ((({ let amount = 0xa0; game.foreign(|game| game.suit_damage(amount)) }) as i32 + 20 - game.owned(OwnedWord::SamusHealth) as i32)
                 as i16)
                 >= 0
                 || {
@@ -1576,7 +1619,7 @@ crate::dispatch::callback_dispatch! {
         };
     };
     [11112013] fake_death_ascent_raise [] {
-        if !((word!(game.NMI_FRAME_COUNTER_WORD) & 3) != 0 || {
+        if !((game.frame() & 3) != 0 || {
             spawn_dust_clouds_for_ascent(game);
             word!(game.REG_BG2VOFS += 2);
             let v1: u16 = (session_slot!(game, MotherBrainBody[e].base.y_pos)).wrapping_sub(2);
@@ -1585,7 +1628,7 @@ crate::dispatch::callback_dispatch! {
         }) {
             word!(game.ENEMY_BG2_TILEMAP_SIZE = 320);
             session_slot!(game, MotherBrainBody[e].base.y_pos = 188);
-            word!(game.EARTHQUAKE_TIMER = 0);
+            game.set_owned(OwnedWord::EarthquakeTimer, 0);
             game.foreign(|game| crate::hdma_objects::free_hdma_object(session_slot!(game, MotherBrainBody[e].hdma_object), game));
             set_body_instruction_list(animation::BODY_STAND_UP_FROM_CROUCH_SLOW, game);
             session_slot!(game, MotherBrainBody[e].function = function::FAKE_DEATH_ASCENT_WAIT_UNTIL_MOTHER_BRAIN_HAS_FINISHED_UNCROUCHING);
@@ -1642,9 +1685,7 @@ crate::dispatch::callback_dispatch! {
                 game.foreign(|game| game.shot_reaction(crate::actors::host::Shot::ReactionOnly));
             }
         } else {
-            let v1: u16 = ((SessionRam::byte(game, crate::ram::word_arrays::PROJECTILE_TYPE + 2 * word!(game.COLLISION_DETECTION_INDEX) as usize + 1))
-                as u16)
-                & (7u16);
+            let v1: u16 = (collided_shot_kind(game) >> 8) & 7;
             if GLASS_HITS_BY_PROJECTILE[v1 as usize] != 0 {
                 add_glass_hits(
                     39,
@@ -2099,7 +2140,7 @@ crate::dispatch::callback_dispatch! {
         phase2_firing_rainbow_beam_extend_neck_down(game);
     };
     [11123462] phase2_firing_rainbow_beam_decide_next_action {
-        if (word!(game.SAMUS_HEALTH) as i32 - 400i32) & 0x8000 != 0 {
+        if (game.owned(OwnedWord::SamusHealth) as i32 - 400i32) & 0x8000 != 0 {
             make_walk_forwards(0xa, (session_slot!(game, MotherBrainBody[e].base.x_pos)).wrapping_add(16), game);
             session_slot!(game, MotherBrainBody[e].function = function::PHASE_2_FINISH_SAMUS_OFF_GET_SAMUS_TO_LOW_HEALTH);
         } else {
@@ -2286,7 +2327,7 @@ pub fn body_phase1(game: &mut impl Lease) {
     if check_event_happened(event::MOTHER_BRAINS_GLASS_DESTROYED, game) != 0 {
         session_slot!(
             game,
-            MotherBrainBrain[BRAIN].shake_timer = word!(game.EARTHQUAKE_TIMER)
+            MotherBrainBrain[BRAIN].shake_timer = game.owned(OwnedWord::EarthquakeTimer)
         );
         if (game.player_x() as i32 - 236i32) & 0x8000 != 0
             && session_slot!(game, MotherBrainBrain[BRAIN].base.health) == 0
@@ -2660,27 +2701,25 @@ pub fn phase2_or_phase3_shot_reaction(game: &mut impl State) {
     }
 }
 pub fn determine_shot_reaction_type(game: &mut impl State) -> u16 {
-    SHOT_REACTION_BY_PROJECTILE[(SessionRam::byte(
-        game,
-        crate::ram::word_arrays::PROJECTILE_TYPE
-            + 2 * word!(game.COLLISION_DETECTION_INDEX) as usize
-            + 1,
-    ) as i32
-        & 7) as usize] as u16
+    SHOT_REACTION_BY_PROJECTILE[usize::from((collided_shot_kind(game) >> 8) & 7)] as u16
+}
+/// The kind of the shot that hit the current enemy.
+pub(crate) fn collided_shot_kind(game: &impl State) -> u16 {
+    let shot = usize::from(game.owned(OwnedWord::CollisionIndex));
+    game.owned(OwnedWord::ShotKind(shot))
 }
 pub fn hurt_samus(game: &mut impl Lease) {
     deal_contact_damage(game);
-    word!(game.SAMUS_INVINCIBILITY_TIMER = 96);
-    word!(game.SAMUS_KNOCKBACK_TIMER = 5);
-    word!(
-        game.KNOCKBACK_X_DIR = (((game.player_x()) as i16).wrapping_sub(
+    game.set_owned(OwnedWord::Invincibility, 96);
+    game.set_owned(OwnedWord::KnockbackTimer, 5);
+    game.set_owned(
+        OwnedWord::KnockbackDirection,
+        (((game.player_x()) as i16).wrapping_sub(
             (session_slot!(
                 game,
-                MotherBrainBody[word!(game.CUR_ENEMY_INDEX) as i32]
-                    .base
-                    .x_pos
+                MotherBrainBody[game.current_enemy() as i32].base.x_pos
             )) as i16,
-        ) >= 0) as u16
+        ) >= 0) as u16,
     );
 }
 pub fn decide_phase2_attack_strategy(game: &mut impl Lease) -> u8 {
@@ -3042,7 +3081,7 @@ pub use crate::actors::mother_brain_neck::{
     handle_neck, retract_head, run_phase3 as phase3_neck_handler,
 };
 pub fn move_enemy_with_velocity(game: &mut impl State) {
-    let v0: i32 = word!(game.CUR_ENEMY_INDEX) as i32;
+    let v0: i32 = game.current_enemy() as i32;
     let ai_var_b: u16 = session_slot!(game, EnemyData[v0].ai_var_b);
     let mut carry: i32 = session_slot!(byte game, EnemyData[v0].base.x_subpos[1]) as i32
         + ai_var_b.to_ne_bytes()[0] as i32;
@@ -3157,9 +3196,11 @@ pub fn process_invincibility_palette(game: &mut impl State) {
         if flash_timer as i32 >> 1 != 0 && flash_timer & 1 == 0 {
             for i in (0i32..=28).rev().step_by(2) {
                 let v2: i32 = i >> 1;
-                let v3: u16 = word!(game.PALETTE_BUFFER[(v2 + 129)]);
-                word! {game; PALETTE_BUFFER[(v2 + 145)] = v3; PALETTE_BUFFER[(v2 + 177)] = v3;
-                PALETTE_BUFFER[(v2 + 65)] = v3; }
+                let color = |index: i32| OwnedWord::Color(index as usize);
+                let v3: u16 = game.owned(color(v2 + 129));
+                for index in [145, 177, 65] {
+                    game.set_owned(color(v2 + index), v3);
+                }
             }
         }
     }

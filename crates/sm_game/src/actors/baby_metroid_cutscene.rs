@@ -14,6 +14,7 @@ use crate::actors::baby_metroid_encounter::{
 use crate::actors::host::abs16;
 use crate::actors::layouts::part_view;
 use crate::actors::mother_brain::{BODY, BRAIN, MotherBrainBody, MotherBrainBrain};
+use crate::actors::mother_brain_fight::OwnedWord;
 use crate::actors::mother_brain_fight::{
     BANK, BANK_BASE, Lease as FightLease, State, cgram, music, samus_command, sound,
 };
@@ -500,7 +501,7 @@ crate::dispatch::callback_dispatch! {
         session_slot!(game, BabyMetroidInCutscene[e].base.x_pos = (game.player_x()).wrapping_add((SHAKE_X_OFFSETS[v2 as usize]) as u16));
         session_slot!(game, BabyMetroidInCutscene[e].base.y_pos = (game.player_y() as i32 + SHAKE_Y_OFFSETS[v2 as usize] as i32 - 20i32) as u16);
         if !game.foreign(|game| game.heal_by_baby_metroid()) {
-            word!(game.SAMUS_RESERVE_HEALTH = word!(game.SAMUS_MAX_RESERVE_HEALTH));
+            game.set_owned(OwnedWord::ReserveHealth, game.owned(OwnedWord::MaxReserveHealth));
             session_slot!(game, BabyMetroidInCutscene[e].function = function::IDLE_UNTIL_RUN_OUT_OF_HEALTH);
             session_slot!(game, BabyMetroidInCutscene[e].palette_function = function::PALETTE_NONE);
         }
@@ -666,11 +667,11 @@ pub fn rainbow_palette_gradually_slow_down(game: &mut impl State) {
         MotherBrainBrain[e].samus_rainbow_counter = (rainbow_counter).wrapping_add(768)
     );
     if rainbow_counter >= 0xfd00 {
-        let mut v2: u16 = (word!(game.SPECIAL_SAMUS_PALETTE_FRAME)).wrapping_add(1);
-        if (word!(game.SPECIAL_SAMUS_PALETTE_FRAME) as i32 - 9i32) & 0x8000 == 0 {
+        let mut v2: u16 = (game.owned(OwnedWord::SamusPaletteFrame)).wrapping_add(1);
+        if (game.owned(OwnedWord::SamusPaletteFrame) as i32 - 9i32) & 0x8000 == 0 {
             v2 = 10;
         }
-        word!(game.SPECIAL_SAMUS_PALETTE_FRAME = v2);
+        game.set_owned(OwnedWord::SamusPaletteFrame, v2);
     }
 }
 pub fn fade_to_black(k: u16, game: &mut impl State) -> u8 {
@@ -797,7 +798,7 @@ crate::dispatch::instruction_callbacks! { pub fn (_k: u16, _jp: EnemyScript) -> 
     go_to_draining_mother_brain [EnemyScript::jump(ADDR_K_BABY_METROID_ILIST_CFB8 as u16)] { };
 }
 pub fn initialize(game: &mut impl State) {
-    let e: i32 = word!(game.CUR_ENEMY_INDEX) as i32;
+    let e: i32 = game.current_enemy() as i32;
     session_slot!(
         game,
         BabyMetroidInCutscene[e].base.properties =
@@ -835,27 +836,27 @@ pub fn main_ai(game: &mut impl Host) {
     cutscene_frame(&mut game.lease());
 }
 fn cutscene_frame(game: &mut impl Lease) {
-    let e: i32 = word!(game.CUR_ENEMY_INDEX) as i32;
+    let e: i32 = game.current_enemy() as i32;
     session_slot!(game, BabyMetroidInCutscene[e].base.shake_timer = 0);
     run_cutscene_function(
         ((session_slot!(game, BabyMetroidInCutscene[e].function)) as u32) | (BANK_BASE),
-        word!(game.CUR_ENEMY_INDEX),
+        game.current_enemy(),
         game,
     );
     move_enemy_with_velocity(game);
-    flashing(word!(game.CUR_ENEMY_INDEX), game);
-    handle_health_based_palette(word!(game.CUR_ENEMY_INDEX), game);
+    flashing(game.current_enemy(), game);
+    handle_health_based_palette(game.current_enemy(), game);
     let r18: u16 = session_slot!(
         game,
-        BabyMetroidInCutscene[word!(game.CUR_ENEMY_INDEX) as i32].palette_function
+        BabyMetroidInCutscene[game.current_enemy() as i32].palette_function
     );
     run_palette_function(((r18) as u32) | (BANK_BASE), game);
 }
 pub fn touch(game: &mut impl State) {
-    let e: i32 = word!(game.CUR_ENEMY_INDEX) as i32;
+    let e: i32 = game.current_enemy() as i32;
     if session_slot!(game, BabyMetroidInCutscene[e].function) == function::LATCH_ONTO_SAMUS
         && accelerate_towards_point(
-            word!(game.CUR_ENEMY_INDEX),
+            game.current_enemy(),
             0x10,
             game.player_x(),
             (game.player_y()).wrapping_sub(20),

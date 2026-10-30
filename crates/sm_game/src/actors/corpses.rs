@@ -466,7 +466,7 @@ crate::dispatch::instruction_callbacks! {
         }
     };
     normal_corpse_rotting_finished [] {
-        let v0: i32 = word!(game.CUR_ENEMY_INDEX) as i32;
+        let v0: i32 = game.current_enemy() as i32;
         {
             let (x, y) = ((session_slot!(game, Corpse[v0].base.x_pos) as i32 + (word!(game.RANDOM_NUMBER) as i32 & 0x1a) - 14i32) as u16, ((session_slot!(game, Corpse[v0].base.y_pos)).wrapping_add(16)));
             game.foreign(|game| crate::actors::host::BossEffects::set_projectile_spawn_point(game, x, y));
@@ -512,7 +512,7 @@ crate::dispatch::callback_dispatch! {
     };
     @external {
         11129773 => [{
-                    torizo_corpse_wait_for_samus_collision(word!(game.CUR_ENEMY_INDEX), game);
+                    torizo_corpse_wait_for_samus_collision(game.current_enemy(), game);
                 }];
         11129799 => [()];
     }
@@ -602,7 +602,7 @@ pub fn copy_line_of_sand_heap_tile_data(a: u16, game: &mut impl State) {
     }
 }
 pub fn initialize_alive_sidehopper_corpse(game: &mut impl Lease) {
-    let e: i32 = word!(game.CUR_ENEMY_INDEX) as i32;
+    let e: i32 = game.current_enemy() as i32;
     session_slot!(
         game,
         Corpse[e].base.properties = (session_slot!(game, Corpse[e].base.properties) as i32 & 0x77ff
@@ -627,14 +627,14 @@ pub fn initialize_alive_sidehopper_corpse(game: &mut impl Lease) {
     session_slot!(game, Corpse[e].base.palette_index = 512);
     session_slot!(game, Corpse[e].base.y_height = 21);
     set_enemy_instruction_list(
-        word!(game.CUR_ENEMY_INDEX),
+        game.current_enemy(),
         ADDR_K_DEAD_MONSTERS_ILIST_ECE3 as u16,
         game,
     );
-    initialize_enemy_corpse_rotting(word!(game.CUR_ENEMY_INDEX), ADDR_STRU_A9DD68 as u16, game);
+    initialize_enemy_corpse_rotting(game.current_enemy(), ADDR_STRU_A9DD68 as u16, game);
 }
 pub fn initialize_dead_sidehopper_corpse(game: &mut impl Lease) {
-    let e: i32 = word!(game.CUR_ENEMY_INDEX) as i32;
+    let e: i32 = game.current_enemy() as i32;
     session_slot!(game, Corpse[e].drained_palette_index = -1i32 as u16);
     session_slot!(
         game,
@@ -642,11 +642,11 @@ pub fn initialize_dead_sidehopper_corpse(game: &mut impl Lease) {
     );
     session_slot!(game, Corpse[e].base.palette_index = 3584);
     set_enemy_instruction_list(
-        word!(game.CUR_ENEMY_INDEX),
+        game.current_enemy(),
         ADDR_K_DEAD_MONSTERS_ILIST_ECEF as u16,
         game,
     );
-    initialize_enemy_corpse_rotting(word!(game.CUR_ENEMY_INDEX), ADDR_STRU_A9DD78 as u16, game);
+    initialize_enemy_corpse_rotting(game.current_enemy(), ADDR_STRU_A9DD78 as u16, game);
 }
 
 macro_rules! initialize_rotting_enemy_corpse {
@@ -657,12 +657,12 @@ macro_rules! initialize_rotting_enemy_corpse {
         session_slot!($game, Corpse[$enemy].function = $function);
         let v2: i32 = session_slot!($game, Corpse[$enemy].parameter_1) as i32 >> 1;
         set_enemy_instruction_list(
-            word!($game.CUR_ENEMY_INDEX),
+            $game.current_enemy(),
             corpse_tables::variant($game, $corpse, v2 as isize).instruction_list,
             $game,
         );
         initialize_enemy_corpse_rotting(
-            word!($game.CUR_ENEMY_INDEX),
+            $game.current_enemy(),
             corpse_tables::variant($game, $corpse, v2 as isize).rotting,
             $game,
         );
@@ -675,7 +675,7 @@ crate::dispatch::callback_dispatch! {
     @body checked;
     @functions [pub fn (k: u16, game: &mut impl Lease)];
     [11131106] sidehopper_corpse_wait_for_activation [] {
-        if (word!(game.LAYER1_X_POS) as i32 - 513i32) & 0x8000 != 0 {
+        if (game.camera().layer1[0] as i32 - 513i32) & 0x8000 != 0 {
             session_slot!(game, Corpse[k as i32].function = function::SIDEHOPPER_HOPPING);
             sidehopper_corpse_hopping(k, game);
         }
@@ -720,7 +720,7 @@ crate::dispatch::callback_dispatch! {
                 0xf,
                 game,
             );
-            let v3: u16 = word!(game.CUR_ENEMY_INDEX);
+            let v3: u16 = game.current_enemy();
             let v5: u16 = (session_slot!(game, Corpse[e].drained_palette_index)).wrapping_add(1);
             session_slot!(game, Corpse[e].drained_palette_index = v5);
             if v5 >= 8 {
@@ -734,17 +734,17 @@ crate::dispatch::callback_dispatch! {
     [11131578] sidehopper_corpse_rotting [] {
         let v1: u8 = process_corpse_rotting(k, game);
         if v1 & 1 == 0 {
-            session_slot!(game, Corpse[word!(game.CUR_ENEMY_INDEX) as i32].function = function::SIDEHOPPER_DEAD_WAIT_FOR_SAMUS_COLLISION);
+            session_slot!(game, Corpse[game.current_enemy() as i32].function = function::SIDEHOPPER_DEAD_WAIT_FOR_SAMUS_COLLISION);
         }
-        let vram_transfers: u16 = session_slot!(game, Corpse[word!(game.CUR_ENEMY_INDEX) as i32].vram_transfers);
+        let vram_transfers: u16 = session_slot!(game, Corpse[game.current_enemy() as i32].vram_transfers);
         process_corpse_rotting_vram_transfers(vram_transfers, game);
     };
     [11131600] geemer_rotting [] {
         let v1: u8 = process_corpse_rotting(k, game);
         if v1 & 1 == 0 {
-            session_slot!(game, Corpse[word!(game.CUR_ENEMY_INDEX) as i32].function = function::CORPSE_ROTTED);
+            session_slot!(game, Corpse[game.current_enemy() as i32].function = function::CORPSE_ROTTED);
         }
-        let vram_transfers: u16 = session_slot!(game, Corpse[word!(game.CUR_ENEMY_INDEX) as i32].vram_transfers);
+        let vram_transfers: u16 = session_slot!(game, Corpse[game.current_enemy() as i32].vram_transfers);
         process_corpse_rotting_vram_transfers(vram_transfers, game);
     };
     @forward [pub fn (k: u16, game: &mut impl State)];
@@ -976,7 +976,7 @@ pub fn sidehopper_corpse_rottable_contact(game: &mut impl State) {
     corpse_contact_reaction(function::SIDEHOPPER_ROTTING, game);
 }
 pub fn corpse_contact_reaction(a: u16, game: &mut impl State) {
-    let e: i32 = word!(game.CUR_ENEMY_INDEX) as i32;
+    let e: i32 = game.current_enemy() as i32;
     session_slot!(game, Corpse[e].function = a);
     session_slot!(
         game,
@@ -1109,8 +1109,7 @@ pub fn torizo_corpse_touch_or_shot(game: &mut impl State) {
     session_slot!(game, DeadTorizo[e].function = function::TORIZO_ROTTING);
 }
 pub fn initialize_sidehopper_corpse(game: &mut impl Lease) {
-    let dsr_parameter_1: u16 =
-        session_slot!(game, Corpse[word!(game.CUR_ENEMY_INDEX) as i32].parameter_1);
+    let dsr_parameter_1: u16 = session_slot!(game, Corpse[game.current_enemy() as i32].parameter_1);
     if dsr_parameter_1 != 0 {
         if dsr_parameter_1 != 2 {
             bank_unreachable(game);
@@ -1121,7 +1120,7 @@ pub fn initialize_sidehopper_corpse(game: &mut impl Lease) {
     };
 }
 pub fn initialize_geemer_corpse(game: &mut impl Lease) {
-    let v1: i32 = word!(game.CUR_ENEMY_INDEX) as i32;
+    let v1: i32 = game.current_enemy() as i32;
     initialize_rotting_enemy_corpse!(
         v1,
         function::GEEMER_WAIT_FOR_SAMUS_COLLISION,
@@ -1130,7 +1129,7 @@ pub fn initialize_geemer_corpse(game: &mut impl Lease) {
     );
 }
 pub fn initialize_ripper_corpse(game: &mut impl Lease) {
-    let v1: i32 = word!(game.CUR_ENEMY_INDEX) as i32;
+    let v1: i32 = game.current_enemy() as i32;
     initialize_rotting_enemy_corpse!(
         v1,
         function::RIPPER_WAIT_FOR_SAMUS_COLLISION,
@@ -1139,7 +1138,7 @@ pub fn initialize_ripper_corpse(game: &mut impl Lease) {
     );
 }
 pub fn initialize_skree_corpse(game: &mut impl Lease) {
-    let v1: i32 = word!(game.CUR_ENEMY_INDEX) as i32;
+    let v1: i32 = game.current_enemy() as i32;
     initialize_rotting_enemy_corpse!(
         v1,
         function::SKREE_WAIT_FOR_SAMUS_COLLISION,
@@ -1150,7 +1149,7 @@ pub fn initialize_skree_corpse(game: &mut impl Lease) {
 pub fn sidehopper_corpse_power_bomb_reaction(game: &mut impl Lease) {
     if session_slot!(
         game,
-        Corpse[word!(game.CUR_ENEMY_INDEX) as i32].drained_palette_index
+        Corpse[game.current_enemy() as i32].drained_palette_index
     ) >= 8
     {
         sidehopper_corpse_shot(game);
@@ -1159,18 +1158,15 @@ pub fn sidehopper_corpse_power_bomb_reaction(game: &mut impl Lease) {
     };
 }
 pub fn corpse_main_ai(game: &mut impl Lease) {
-    let e: i32 = word!(game.CUR_ENEMY_INDEX) as i32;
+    let e: i32 = game.current_enemy() as i32;
     run_dead_monster_function(
         ((session_slot!(game, Corpse[e].function)) as u32) | (BANK_BASE),
-        word!(game.CUR_ENEMY_INDEX),
+        game.current_enemy(),
         game,
     );
 }
 pub fn power_bomb_reaction_geemer_corpse(game: &mut impl State) {
-    if (session_slot!(
-        game,
-        Corpse[word!(game.CUR_ENEMY_INDEX) as i32].base.properties
-    ) as i32
+    if (session_slot!(game, Corpse[game.current_enemy() as i32].base.properties) as i32
         & K_ENEMY_PROPS_TANGIBLE as i32)
         == 0
     {
@@ -1181,10 +1177,7 @@ pub fn touch_or_shot_geemer_corpse(game: &mut impl State) {
     corpse_contact_reaction(function::GEEMER_ROTTING, game);
 }
 pub fn ripper_corpse_power_bomb_reaction(game: &mut impl State) {
-    if (session_slot!(
-        game,
-        Corpse[word!(game.CUR_ENEMY_INDEX) as i32].base.properties
-    ) as i32
+    if (session_slot!(game, Corpse[game.current_enemy() as i32].base.properties) as i32
         & K_ENEMY_PROPS_TANGIBLE as i32)
         == 0
     {
@@ -1195,10 +1188,7 @@ pub fn ripper_corpse_touch_or_shot(game: &mut impl State) {
     corpse_contact_reaction(function::RIPPER_ROTTING, game);
 }
 pub fn skree_corpse_power_bomb_reaction(game: &mut impl State) {
-    if (session_slot!(
-        game,
-        Corpse[word!(game.CUR_ENEMY_INDEX) as i32].base.properties
-    ) as i32
+    if (session_slot!(game, Corpse[game.current_enemy() as i32].base.properties) as i32
         & K_ENEMY_PROPS_TANGIBLE as i32)
         == 0
     {
@@ -1209,7 +1199,7 @@ pub fn skree_corpse_touch_or_shot(game: &mut impl State) {
     corpse_contact_reaction(function::SKREE_ROTTING, game);
 }
 pub fn sidehopper_corpse_shot(game: &mut impl State) {
-    let e: i32 = word!(game.CUR_ENEMY_INDEX) as i32;
+    let e: i32 = game.current_enemy() as i32;
     if !((session_slot!(game, Corpse[e].base.properties) as i32 & K_ENEMY_PROPS_TANGIBLE as i32)
         != 0
         || session_slot!(game, Corpse[e].drained_palette_index) < 8)
@@ -1220,7 +1210,7 @@ pub fn sidehopper_corpse_shot(game: &mut impl State) {
 pub fn sidehopper_corpse_touch(game: &mut impl Lease) {
     if session_slot!(
         game,
-        Corpse[word!(game.CUR_ENEMY_INDEX) as i32].drained_palette_index
+        Corpse[game.current_enemy() as i32].drained_palette_index
     ) < 8
     {
         game.foreign(|game| game.contact_reaction(Death::LeavePending));

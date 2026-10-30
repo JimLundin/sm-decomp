@@ -210,6 +210,21 @@ impl sm_game::actors::mother_brain_fight::Lease for Game {
     }
 }
 
+// On the game the Session-owned words are their RAM words, read and stored
+// as word! does.
+impl sm_game::actors::mother_brain_fight::OwnedWords for Game {
+    fn owned(&self, word: sm_game::actors::mother_brain_fight::OwnedWord) -> u16 {
+        let at = word.address();
+        u16::from_le_bytes([self.compatibility_byte(at), self.compatibility_byte(at + 1)])
+    }
+    fn set_owned(&mut self, word: sm_game::actors::mother_brain_fight::OwnedWord, value: u16) {
+        let at = word.address();
+        let [low, high] = value.to_le_bytes();
+        self.compatibility_write_byte(at, low);
+        self.compatibility_write_byte(at + 1, high);
+    }
+}
+
 impl sm_game::actors::mother_brain_fight::Host for Game {
     type Lease<'a> = crate::game::session_runtime::Runtime<'a>;
     fn lease(&mut self) -> crate::game::session_runtime::Runtime<'_> {

@@ -561,6 +561,20 @@ impl<'g> Runtime<'g> {
             self.word(at)
         }
     }
+    /// Store a Session field while this lease is current; the projected word
+    /// at `at`, low byte then high, otherwise.
+    pub(crate) fn store_owned_session(
+        &mut self,
+        field: impl FnOnce(&mut Session) -> &mut u16,
+        at: usize,
+        value: u16,
+    ) {
+        if self.persistent_is_current() {
+            *field(self.session_mut()) = value;
+        } else {
+            self.write_word_le(value, at);
+        }
+    }
     pub(crate) fn owned_player(
         &self,
         field: impl Fn(&sm_game::session::Player) -> u16,

@@ -186,6 +186,76 @@ impl sm_game::actors::mother_brain_fight::Lease for Runtime<'_> {
         Runtime::foreign(self, action)
     }
 }
+use sm_game::actors::mother_brain_fight::OwnedWord;
+
+// Mother Brain's Session-owned words: the typed Session field that projects
+// each RAM word. One table serves the read and the store.
+macro_rules! mother_brain_owned {
+    ($session:ident, $word:ident $(, $reference:tt)*) => {{
+        use OwnedWord::*;
+        match $word {
+            SamusHealth => $($reference)* $session.inventory.health.current,
+            MaxReserveHealth => $($reference)* $session.inventory.reserve_capacity,
+            ReserveHealth => $($reference)* $session.inventory.reserve_health,
+            Invincibility => $($reference)* $session.player.invincibility,
+            KnockbackTimer => $($reference)* $session.player.knockback_timer,
+            KnockbackDirection => $($reference)* $session.player.knockback_x_direction,
+            SpeedDivisor => $($reference)* $session.player.speed_divisor,
+            SamusYSpeed => $($reference)* $session.player.contact.y_speed.whole,
+            SamusPaletteFrame => $($reference)* $session.player.palette_frame,
+            Cooldown => $($reference)* $session.projectiles.controls.cooldown,
+            BombCounter => $($reference)* $session.projectiles.bomb_count,
+            PowerBomb => $($reference)* $session.projectiles.power_bomb.flag,
+            ShotX(index) => $($reference)* $session.projectiles.shots[index].x,
+            ShotY(index) => $($reference)* $session.projectiles.shots[index].y,
+            ShotKind(index) => $($reference)* $session.projectiles.shots[index].kind,
+            ShotDamage(index) => $($reference)* $session.projectiles.shots[index].damage,
+            CollisionIndex => $($reference)* $session.room.collision_detection_index,
+            EarthquakeType => $($reference)* $session.feedback.earthquake_kind,
+            EarthquakeTimer => $($reference)* $session.feedback.earthquake_timer,
+            Color(_) => unreachable!("colours go through the visual owner"),
+        }
+    }};
+}
+/// Whether the typed owner holds `word`; a shot past the table keeps the
+/// projected word the original addressed.
+fn in_owner(word: OwnedWord) -> bool {
+    use OwnedWord::*;
+    match word {
+        ShotX(index) | ShotY(index) | ShotKind(index) | ShotDamage(index) => index < 10,
+        Color(index) => index < 256,
+        _ => true,
+    }
+}
+impl sm_game::actors::mother_brain_fight::OwnedWords for Runtime<'_> {
+    fn owned(&self, word: OwnedWord) -> u16 {
+        let at = word.address();
+        if !in_owner(word) {
+            return self.word(at);
+        }
+        self.owned_session(
+            |session| match word {
+                OwnedWord::Color(index) => session.presentation.visual().colors[index],
+                _ => mother_brain_owned!(session, word),
+            },
+            at,
+        )
+    }
+    fn set_owned(&mut self, word: OwnedWord, value: u16) {
+        let at = word.address();
+        if !in_owner(word) {
+            return self.write_word_le(value, at);
+        }
+        self.store_owned_session(
+            |session| match word {
+                OwnedWord::Color(index) => &mut session.presentation.visual_mut().colors[index],
+                _ => mother_brain_owned!(session, word, &, mut),
+            },
+            at,
+            value,
+        );
+    }
+}
 impl sm_game::actors::session_slots::SessionSlots for Runtime<'_> {
     fn projected_slot_byte(&self, at: usize) -> u8 {
         self.byte(at)

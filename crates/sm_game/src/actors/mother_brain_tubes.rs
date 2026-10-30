@@ -11,7 +11,6 @@ use crate::actors::mother_brain_fight::Lease;
 use crate::actors::session_slots::session_slot;
 use crate::constants::enemy_properties::{K_ENEMY_PROPS_DELETED, K_ENEMY_PROPS_INVISIBLE};
 use crate::mother_brain_tables;
-use crate::ram::word;
 // The game's traits, for the calls made on it through `foreign`.
 use crate::actors::host::{ActorRuntime as _, BossEffects as _};
 
@@ -75,7 +74,7 @@ const BRAIN: i32 = 0x40;
 pub const BODY_ASCENT: u16 = 0x8c87;
 
 fn current(game: &impl Lease) -> i32 {
-    word!(game.CUR_ENEMY_INDEX) as i32
+    game.current_enemy() as i32
 }
 
 /// Sets up a tube from its kind. Was `MotherBrainsTubesFalling_Init`.
@@ -206,7 +205,7 @@ fn fall_with_brain(game: &mut impl Lease, k: u16) {
         session_slot!(game, Tube[BODY].base.y_pos = BODY_Y);
         crate::actors::mother_brain_neck::setup_for_fake_ascent(game);
         session_slot!(game, Tube[BODY].function = BODY_ASCENT);
-        let current = word!(game.CUR_ENEMY_INDEX);
+        let current = game.current_enemy();
         burst(game, current);
     }
 }
