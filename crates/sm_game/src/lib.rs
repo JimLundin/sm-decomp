@@ -148,6 +148,7 @@ pub mod actors {
     pub mod spore_spawn;
     pub mod staging;
     pub mod state;
+    pub mod statues;
     pub mod torizo;
     pub mod yapping_maw;
     pub mod zebetites;

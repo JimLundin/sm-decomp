@@ -905,3 +905,53 @@ impl sm_game::actors::ceres_doors::Host for Game {
         crate::game::mode7_transfers::enqueue_rom(bank, list, self);
     }
 }
+
+// The named bank $AA functions and instruction lists are the decompilation's.
+const _: () = {
+    use crate::game::sm_aa::*;
+    use sm_game::actors::statues::{function as f, instruction_list as l};
+    const fn at(word: u16) -> i32 {
+        0xaa_0000 | word as i32
+    }
+    assert!(at(f::LOWER_NORFAIR) == 11199557 && at(f::WRECKED_SHIP) == 11200430);
+    assert!(at(f::NOTHING) == fnnullsub_276);
+    assert!(l::LOWER_NORFAIR_ACTIVATED == addr_kShaktool_Ilist_E3A7 as u16);
+    assert!(l::WRECKED_SHIP_ACTIVATED == addr_kShaktool_Ilist_E461 as u16);
+    assert!(l::NOTHING_SPRITEMAP == addr_kSpritemap_Nothing_AA as u16);
+};
+
+impl sm_game::actors::statues::Host for Game {
+    fn run_function(&mut self, address: u32) {
+        crate::game::sm_aa::run_aa_function(address, self);
+    }
+
+    fn boss_word_native(&mut self, area: u16) -> u16 {
+        crate::game::gameplay_flag_runtime::boss_word_at(
+            area,
+            sm_game::gameplay_flag_host::BossWordOrder::Native,
+            self,
+        )
+    }
+
+    fn start_lowering_acid(&mut self) {
+        let mut runtime = crate::game::session_runtime::Runtime::new(self);
+        let room = &mut runtime.session_mut().room;
+        room.liquid_delay = 32;
+        room.liquid_velocity = 64;
+    }
+
+    fn lower_acid(&mut self) {
+        crate::game::room_mechanisms::lower_acid(self);
+    }
+
+    fn select_block_at(&mut self, x: u16, y: u16) {
+        crate::game::actors::api::select_block_at(
+            &mut crate::game::session_runtime::Runtime::new(self),
+            sm_game::geometry::Point { x, y },
+        );
+    }
+
+    fn spawn_collision_plm(&mut self, header: u16) {
+        crate::game::sm_aa::spawn_collision_plm(header, self);
+    }
+}

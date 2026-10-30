@@ -3,16 +3,13 @@ use crate::game::actors::api as actor_api;
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_84::*;
 pub use crate::game::constants::bank_86::*;
-use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
-use crate::game::statue_tables;
 use crate::game::torizo_tables;
 use crate::ram_map::slot;
 use sm_game::actors::access::ActorKey as Key;
 use sm_game::enemy_script::{EnemyScript, bank_base};
-use sm_game::gameplay_flag_host::BossWordOrder;
 use {
     crate::game::enemy_projectiles::scatter_drop as scatter,
     sm_game::enemy_projectiles::drops::DropSource,
@@ -21,11 +18,10 @@ use {
 use crate::game::gameplay_flag_runtime::{CheckBossBitForCurArea, SetBossBitForCurArea};
 use crate::game::music::QueueSfx2_Max6;
 use crate::game::palette_effects::fading::selected;
-use crate::game::room_mechanisms::{spawn_collision, spawn_hardcoded};
+use crate::game::room_mechanisms::spawn_collision;
 
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::palette_effects::{self, torizo};
-use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::visual_runtime::initialize_bomb_torizo_haze;
 
 pub use crate::types::Consts_AA;
@@ -63,22 +59,6 @@ static g_word_AAC963: [i16; 2] = [0xb3, 0x90];
 static g_word_AAC96B: [i16; 2] = [0x2800, 0x2800];
 static g_word_AAC96F: [i16; 2] = [0x12, 0x12];
 static g_word_AAC973: [i16; 2] = [0x30, 0x29];
-static kChozoStatue_Palette: [u16; 16] = [
-    0x3800, 0x633f, 0x4a9f, 0x2ddf, 0x6739, 0x4e73, 0x318c, 0x18c6, 0x27ff, 0x1af7, 0xdce, 0xc6,
-    0x3fff, 0x2b39, 0x7fff, 0,
-];
-static kChozoStatue_Palettes: [u16; 16] = [
-    0x3800, 0x633f, 0x4a9f, 0x2ddf, 0x4210, 0x318c, 0x2108, 0x1084, 0x27ff, 0x1af7, 0xdce, 0xc6,
-    0x3fff, 0x2b39, 0x5294, 0,
-];
-static kChozoStatue_Palettes2: [u16; 16] = [
-    0x3800, 0x633f, 0x4a9f, 0x2ddf, 0x2f7c, 0x2295, 0x118d, 0x8e8, 0x27ff, 0x1af7, 0xdce, 0xc6,
-    0x3fff, 0x2b39, 0x73df, 0x43,
-];
-static kChozoStatue_Palettes3: [u16; 16] = [
-    0x3800, 0x633f, 0x4a9f, 0x2ddf, 0x2295, 0x118d, 0x8e8, 0x85, 0x27ff, 0x1af7, 0xdce, 0xc6,
-    0x3fff, 0x2b39, 0x5294, 1,
-];
 pub fn Torizo_Instr_7(_k: u16, jp: EnemyScript) -> EnemyScript {
     jp
 }
@@ -250,15 +230,6 @@ pub fn Torizo_Func_8(game: &mut Game) {
 }
 pub use self::Torizo_Func_3 as Torizo_Func_10;
 pub use self::Torizo_Instr_7 as Shaktool_Instr_6;
-pub fn sub_AAE784(game: &mut Game) {
-    {
-        word_transfers!(game, descending, 16;
-            le(target_palettes, 175) <- table(kChozoStatue_Palettes3, 15),
-            le(target_palettes, 159) <- table(kChozoStatue_Palettes2, 15),
-        );
-        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xc, 0x1d, 0xd6d6 as VoidP), game);
-    }
-}
 
 crate::game::callback_dispatch! {
     pub(crate) fn DispatchEnemyAi(ea: u32, game: &mut Game) => ea;
@@ -303,70 +274,14 @@ crate::game::callback_dispatch! {
             Torizo_Func_11(word!(game.cur_enemy_index), game);
         };
     };
-    [11196360] TourianEntranceStatue_Init [] {
-        let v0: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, EnemyData[v0].palette_index = 0);
-        slot!(game, EnemyData[v0].instruction_timer = 1);
-        slot!(game, EnemyData[v0].timer = 0);
-        let v1: u16 = statue_tables::tourian_statue(
-            game,
-            (slot!(game, EnemyData[v0].parameter_1) >> 1) as isize,
-        )
-        .instruction_list;
-        slot!(game, EnemyData[v0].current_instruction = v1);
-        if slot!(game, EnemyData[v0].parameter_1) == 0 {
-            SpawnEprojWithRoomGfx(addr_kEproj_TourianStatueBaseDecoration as u16, 0, game);
-            SpawnEprojWithRoomGfx(addr_kEproj_TourianStatueRidley as u16, 0, game);
-            SpawnEprojWithRoomGfx(addr_kEproj_TourianStatuePhantoon as u16, 0, game);
-        }
-        word_transfers!(game, descending, 16;
-            le(target_palettes, 255) <- rom(0xaad785, 15),
-            le(target_palettes, 175) <- rom(0xaad765, 15),
-        );
-    };
+    [11196360] TourianEntranceStatue_Init [] { sm_game::actors::statues::initialize_tourian_statue(game); };
     [11197603] Shaktool_Hurt [] { actors::shaktool::main_ai(game); };
     [11198019] Shaktool_Init [] { actors::shaktool::initialize(game); };
     [11198255] Shaktool_Touch [] { actors::shaktool::touch(game); };
     [11198260] Shaktool_Shot [] { actors::shaktool::shot(game); };
-    [11200278] N00bTubeCracks_Init [] {
-        word_transfers!(game, descending, 32; le(target_palettes, 175) <- rom(0xaae2dd, 31));
-    };
-    [11200293] ChozoStatue_Init [] {
-        let v0: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, EnemyData[v0].properties = (slot!(game, EnemyData[v0].properties) as i32
-            | (kEnemyProps_DisableSamusColl as i32
-                | kEnemyProps_ProcessedOffscreen as i32
-                | 0x8000)) as u16);
-        slot!(game, EnemyData[v0].spritemap_pointer = addr_kSpritemap_Nothing_AA as u16);
-        slot!(game, EnemyData[v0].instruction_timer = 1);
-        slot!(game, EnemyData[v0].timer = 0);
-        slot!(game, EnemyData[v0].ai_preinstr = (0xaae7a6i32) as u16);
-        slot!(game, EnemyData[v0].parameter_1 = 0);
-        slot!(game, EnemyData[v0].palette_index = 0);
-        slot!(game, EnemyData[0i32].layer = 0);
-        let parameter_2: u16 = slot!(game, EnemyData[v0].parameter_2);
-        slot!(game, EnemyData[v0].current_instruction = statue_tables::chozo_statue(game, (parameter_2 >> 1) as isize).instruction_list);
-        if parameter_2 != 0 {
-            sub_AAE784(game);
-        } else {
-            word_transfers!(game, descending, 16;
-                le(target_palettes, 175) <- table(kChozoStatue_Palettes, 15),
-                le(target_palettes, 159) <- table(kChozoStatue_Palette, 15),
-            );
-            spawn_hardcoded(
-                SpawnHardcodedPlmArgs::new(0x4a, 0x17, 0xd6ee as VoidP),
-                game,
-            );
-            spawn_hardcoded(
-                SpawnHardcodedPlmArgs::new(0x17, 0x1d, 0xd6fc as VoidP),
-                game,
-            );
-        };
-    };
-    [11200423] ChozoStatue_Main [] {
-        let v0: i32 = word!(game.cur_enemy_index) as i32;
-        unsafe { actor_species_pre_instruction(((slot!(game, EnemyData[v0].ai_preinstr)) as u32) | (0xaa0000u32), game) };
-    };
+    [11200278] N00bTubeCracks_Init [] { sm_game::actors::statues::initialize_tube_cracks(game); };
+    [11200293] ChozoStatue_Init [] { sm_game::actors::statues::initialize_chozo_statue(game); };
+    [11200423] ChozoStatue_Main [] { sm_game::actors::statues::main_ai(game); };
     @functions [pub fn (game: &mut Game)];
     @prefix { let E: i32 = word!(game.cur_enemy_index) as i32; };
     [11191972] Torizo_Main [] {
@@ -891,74 +806,21 @@ crate::game::callback_dispatch! {
     [11196755] Shaktool_Instr_5 [] { actors::shaktool::raise(k, jp, game) };
     [11196858] Shaktool_Instr_1 [] { actors::shaktool::reset_functions(k, jp, game) };
     @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11199529] Shaktool_Instr_9 [jp] {
-        {
-            let mut runtime = crate::game::session_runtime::Runtime::new(game);
-            let room = &mut runtime.session_mut().room;
-            room.liquid_delay = 32;
-            room.liquid_velocity = 64;
-        }
-    };
-    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11199542] Shaktool_Instr_11 [jp] { crate::game::room_mechanisms::lower_acid(game); };
-    [11199549] Shaktool_Instr_10 [jp] { CallSomeSamusCode(1, game); };
-    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11199871] Shaktool_Instr_8 [jp] { QueueSfx2_Max6(0x1c, game); };
-    [11199879] Shaktool_Instr_13 [jp] { QueueSfx2_Max6(0x4b, game); };
+    [11199529] Shaktool_Instr_9 [jp] { sm_game::actors::statues::start_lowering_acid(game); };
+    [11199542] Shaktool_Instr_11 [jp] { sm_game::actors::statues::set_lowered_acid(game); };
+    [11199549] Shaktool_Instr_10 [jp] { sm_game::actors::statues::unlock_samus(game); };
+    [11199871] Shaktool_Instr_8 [jp] { sm_game::actors::statues::grab_sound(game); };
+    [11199879] Shaktool_Instr_13 [jp] { sm_game::actors::statues::footstep_sound(game); };
+    [11200240] Shaktool_Instr_14 [jp] { sm_game::actors::statues::release_samus(game); };
     @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11199887] Shaktool_Instr_12 [jp.offset(1)] {
-        let e: i32 = k as i32;
-        let arg: u16 = jp.word(0);
-        ({ let (x, y) = ((slot!(game, Enemy_Shaktool[e].base.x_pos)).wrapping_add(arg), (slot!(game, Enemy_Shaktool[e].base.y_pos)).wrapping_add(28)); actor_api::select_block_at(&mut Runtime::new(game), sm_game::geometry::Point { x, y }) });
-        if ({
-            let index = word!(game.room_width_in_blocks) as i32 + word!(game.cur_block_index) as i32;
-            let at = 0x10002usize + 2 * index as usize;
-            u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])
-        } & 0xf000)
-            == 0xa000
-        {
-            unsafe { spawn_collision(addr_kPlmHeader_D113 as u16, game) };
-            SpawnEprojWithRoomGfx(
-                addr_kEproj_WreckedShipChozoSpikeFootsteps_1 as u16,
-                arg,
-                game,
-            );
-        }
-    };
-    [11199960] Shaktool_Instr_7 [jp.offset(1)] {
-        let E: i32 = k as i32;
-        slot!(game, Enemy_Shaktool[E].var_C = jp.word(0));
-        ({ let (actor, amount) = (k, (statue_tables::movement(game, (slot!(game, Enemy_Shaktool[E].var_C) >> 1) as isize).x_velocity as i16 as i32)
-                << 8); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 });
-        ({ let (actor, amount) = (k, (abs16(statue_tables::movement(
-                game,
-                (slot!(game, Enemy_Shaktool[E].var_C) >> 1) as isize
-            ).x_velocity) as i16 as i32)
-                << 8); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
-        ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
-        let v6: i32 = slot!(game, Enemy_Shaktool[E].var_C) as i32 >> 1;
-        let movement = statue_tables::movement(game, v6 as isize);
-        word! { game;
-            samus_x_pos = (movement.samus_x_offset)
-                .wrapping_add(slot!(game, Enemy_Shaktool[E].base.x_pos));
-            samus_y_pos = (movement.samus_y_offset)
-                .wrapping_add(slot!(game, Enemy_Shaktool[E].base.y_pos));
-        }
-    };
-    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11200240] Shaktool_Instr_14 [jp] {
-        CallSomeSamusCode(1, game);
-        game.ram().copy_in(0xcd26, &0u16.to_ne_bytes());
-        game.ram().copy_in(0xcd28, &0u16.to_ne_bytes());
-        game.ram().copy_in(0xcd29, &0u16.to_ne_bytes());
-        game.ram().copy_in(0xcd2d, &1u16.to_ne_bytes());
-        spawn_hardcoded(
-            SpawnHardcodedPlmArgs::new(0x17, 0x1d, 0xd6fc as VoidP),
-            game,
-        );
-    };
+    [11199887] Shaktool_Instr_12 [] { sm_game::actors::statues::spike_clearing_footstep(game, k, jp) };
+    [11199960] Shaktool_Instr_7 [] { sm_game::actors::statues::movement(game, k, jp) };
 }
 
+/// Spawns the collision PLM with `header` at the selected block.
+pub(crate) fn spawn_collision_plm(header: u16, game: &mut Game) {
+    unsafe { spawn_collision(header, game) };
+}
 /// Runs the bank $AA function at `address` for the current enemy.
 pub(crate) fn run_aa_function(address: u32, game: &mut Game) {
     unsafe { actor_species_pre_instruction(address, game) };
@@ -971,24 +833,8 @@ crate::game::callback_dispatch! {
     [11192360 | 11195885] Torizo_Func_6 [] {
         Torizo_C643(k, game);
     };
-    [11199557] sub_AAE445 [] {
-        let v1: i32 = k as i32;
-        if slot!(game, EnemyData[v1].parameter_1) != 0 {
-            slot!(game, EnemyData[v1].current_instruction = addr_kShaktool_Ilist_E3A7 as u16);
-            slot!(game, EnemyData[v1].instruction_timer = 1);
-        }
-    };
-    [11200430] Shaktool_PreInstr_0 [] {
-        if (gameplay_flag_runtime::boss_word_at(word!(game.area_index), BossWordOrder::Native, game) & 1) != 0 {
-            let E: i32 = k as i32;
-            if slot!(game, Enemy_Shaktool[E].parameter_1) != 0 {
-                slot!(game, Enemy_Shaktool[E].base.current_instruction = addr_kShaktool_Ilist_E461 as u16);
-                slot!(game, Enemy_Shaktool[E].base.instruction_timer = 1);
-                slot!(game, Enemy_Shaktool[E].var_A = -256i32 as u16);
-                slot!(game, Enemy_Shaktool[E].var_B = 256);
-            }
-        }
-    };
+    [11199557] sub_AAE445 [] { sm_game::actors::statues::lower_norfair(game, k); };
+    [11200430] Shaktool_PreInstr_0 [] { sm_game::actors::statues::wrecked_ship(game, k); };
     [11197612] Shaktool_DCAC [] { actors::shaktool::arm_piece(k, game); };
     [11197655] Shaktool_DCD7 [] { actors::shaktool::head(k, game); };
     [11197733] Shaktool_DD25 [] { actors::shaktool::final_piece(k, game); };
