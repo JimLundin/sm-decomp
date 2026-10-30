@@ -7,9 +7,9 @@ fn CallEprojInit(ea: u32, k: u16, game: &mut Game) {
 fn CallEprojPreInstr(ea: u32, k: u16, game: &mut Game) {
     super::super::with_execution(game, |ctx| super::super::pre_actions::dispatch(ea, k, ctx));
 }
-fn Eproj_FuncE73E_MoveXY(k: u16, game: &mut Game) {
+fn move_along_angle(k: u16, game: &mut Game) {
     super::super::with_execution(game, |ctx| {
-        super::super::pre_actions::Eproj_FuncE73E_MoveXY(k, ctx)
+        super::super::pre_actions::move_along_angle(k, ctx)
     });
 }
 use crate::game_state::Game;
@@ -72,8 +72,8 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         slot(game, a::eproj_y_subpos, index, 1);
         {
             CallEprojInit(8842182, index, game);
-            Eproj_FuncE73E_MoveXY(index, game);
-            Eproj_FuncE73E_MoveXY(index, game);
+            move_along_angle(index, game);
+            move_along_angle(index, game);
         }
     } else {
         let variant = (id - 60) as usize % 8;

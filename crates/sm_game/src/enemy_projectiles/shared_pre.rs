@@ -18,10 +18,9 @@ pub struct CollisionRect {
     pub h: u16,
 }
 
-pub use self::EprojPreInstr_NorfairLavaquakeRocks_Inner2 as EprojPreInstrHelper_DBF2_Func2;
-pub use super::pre_actions::Eproj_NorfairLavaquakeRocks_Func3 as EprojPreInstr_DBF2_MoveX2;
-pub use super::pre_actions::Eproj_NorfairLavaquakeRocks_Func3 as Eproj_LavaThrownByLavaman_MoveX2;
 pub use super::pre_actions::EprojPreInstr_DBF2_MoveX1 as Eproj_LavaThrownByLavaman_MoveX1;
+pub use super::pre_actions::lavaquake_rock_move_x as EprojPreInstr_DBF2_MoveX2;
+pub use super::pre_actions::lavaquake_rock_move_x as Eproj_LavaThrownByLavaman_MoveX2;
 pub use super::pre_actions::sub_869DA5 as sub_86C42E;
 
 pub fn plant_pre<H: Host>(index: usize, k: u16, ctx: &mut H) {
@@ -49,16 +48,16 @@ pub fn Math_MultByCos(a: u16, angle: u16) -> u16 {
 
 pub fn CallNorfairLavaquakeRocksFunc(ea: u32, k: u16, ctx: &mut impl Host) {
     match ea {
-        8829974 => Eproj_NorfairLavaquakeRocks_Func1(k, ctx),
-        8830095 => Eproj_NorfairLavaquakeRocks_Func2(k, ctx),
+        8829974 => lavaquake_rock_rise(k, ctx),
+        8830095 => lavaquake_rock_fall(k, ctx),
         _ => ctx.unreachable(),
     }
 }
 
 pub fn CallMotherBrainTubeFallingFunc(ea: u32, k: u16, ctx: &mut impl Host) {
     match ea {
-        8834026 => MotherBrainTubeFallingFunc_GenerateExplosion(k, ctx),
-        8834056 => MotherBrainTubeFallingFunc_Falling(k, ctx),
+        8834026 => falling_tube_burst(k, ctx),
+        8834056 => falling_tube_fall(k, ctx),
         _ => ctx.unreachable(),
     }
 }
@@ -90,7 +89,9 @@ pub fn CallBotwoonEprojFunc(ea: u32, k: u16, ctx: &mut impl Host) {
     }
 }
 
-pub fn EprojPreInstr_NorfairLavaquakeRocks_Inner2(k: u16, ctx: &mut impl Host) -> u16 {
+/// Whether the projectile is outside the 256-pixel camera view.
+/// Was `EprojPreInstr_NorfairLavaquakeRocks_Inner2` (also `EprojPreInstrHelper_DBF2_Func2`).
+pub fn outside_camera_view(k: u16, ctx: &mut impl Host) -> u16 {
     let v1: i32 = k as i32 >> 1;
     (((enemy!(ctx, (v1) as isize, x) as i32 - ctx.inputs().camera_x as i32) as i16) < 0
         || ((ctx.inputs().camera_x as i32 + 256 - enemy!(ctx, (v1) as isize, x) as i32) as i16) < 0
@@ -99,7 +100,8 @@ pub fn EprojPreInstr_NorfairLavaquakeRocks_Inner2(k: u16, ctx: &mut impl Host) -
         as u16
 }
 
-pub fn Eproj_MotherBrainRoomTurretBullets_Func2(v0: u16, ctx: &mut impl Host) {
+/// Steps a turret bullet's direction. Was `Eproj_MotherBrainRoomTurretBullets_Func2`.
+pub fn turret_bullet_step_direction(v0: u16, ctx: &mut impl Host) {
     let r20: u8 = (enemy_byte!(ctx, v0 as isize + 1, y_fraction) as i32
         + enemy_byte!(ctx, v0 as isize, y_fraction) as i32
         & 7) as u8;
@@ -356,11 +358,9 @@ pub fn SpawnMotherBrainDeathBeam(x: u16, ctx: &mut impl Host) {
     );
 }
 
-pub use super::pre_actions::EprojPreInstr_NorfairLavaquakeRocks_Inner as EprojPreInstrHelper_SpikeShootingPlantSpikes_Func1;
+pub use super::pre_actions::despawn_off_screen as Eproj_NamiFuneFireball_After;
 
-pub use super::pre_actions::EprojPreInstr_NorfairLavaquakeRocks_Inner as Eproj_NamiFuneFireball_After;
-
-pub use super::pre_actions::EprojPreInstr_NorfairLavaquakeRocks_Inner as sub_86E0A4;
+pub use super::pre_actions::despawn_off_screen as sub_86E0A4;
 
 pub fn CheckIfEprojIsOffScreen(k: u16, ctx: &mut impl Host) -> u16 {
     if (enemy!(ctx, (k >> 1) as isize, x).wrapping_sub(ctx.inputs().camera_x) as i16) < 0 {
@@ -382,7 +382,9 @@ pub fn CheckIfEprojIsOffScreen(k: u16, ctx: &mut impl Host) -> u16 {
     )
 }
 
-pub fn Eproj_FuncE722(k: u16, ctx: &mut impl Host) -> u16 {
+/// Whether the projectile is outside the room's top-left 512-pixel square.
+/// Was `Eproj_FuncE722`.
+pub fn outside_512_pixel_square(k: u16, ctx: &mut impl Host) -> u16 {
     let v1: i32 = k as i32 >> 1;
     let mut v2: i16 = enemy!(ctx, (v1) as isize, x) as i16;
     let result: u16 = 1;
@@ -401,7 +403,7 @@ pub fn QueueSmallExplosionSfx(ctx: &mut impl Host) {
     ctx.queue_sound(2, 6, 0x24);
 }
 
-pub use super::pre_actions::EprojPreInstr_NorfairLavaquakeRocks_Inner as sub_86EC0C;
+pub use super::pre_actions::despawn_off_screen as sub_86EC0C;
 
 pub use super::pre_actions::EprojPreInstr_SpikeShootingPlantSpikes_MoveX1 as EprojInit_NamiFuneFireball_MoveX1;
 

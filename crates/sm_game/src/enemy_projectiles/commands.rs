@@ -404,8 +404,8 @@ pub fn dispatch(ea: u32, k: u16, script: &EnemyScript, h: &mut impl Host) -> Ene
             script.advance(0)
         }
         8835420 => {
-            super::pre_actions::EprojPreInstr_KagosBugs_Func1(k, h);
-            super::pre_actions::EprojPreInstr_KagosBugs_Func2(k, h);
+            super::pre_actions::kago_bug_cry_countdown(k, h);
+            super::pre_actions::kago_bug_flag_when_far(k, h);
             let mut direction = (h.inputs().random & 0x300).wrapping_add(2048);
             enemy!(h, slot, velocity_y = direction.wrapping_neg());
             let enemy = enemy!(h, slot, behavior_b);

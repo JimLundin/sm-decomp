@@ -57,7 +57,7 @@ pub fn dispatch(ea: u32, k: u16, ctx: &mut impl Host) {
         8828692 => EprojPreInstr_EyeDoorSweat(k, ctx),
         8829303 => EprojPreInstr_TourianStatueUnlockingParticleWaterSplash(k, ctx),
         8829495 => EprojPreInstr_TourianStatueStuff(k, ctx),
-        8830238 => EprojPreInstr_NorfairLavaquakeRocks_Inner(k, ctx),
+        8830238 => despawn_off_screen(k, ctx),
         8829967 => EprojPreInstr_NorfairLavaquakeRocks(k, ctx),
         8830943 => EprojPreInstr_MotherBrainRoomTurrets(k, ctx),
         8832200 => EprojPreInstr_MotherBrainBomb(k, ctx),
@@ -75,7 +75,7 @@ pub fn dispatch(ea: u32, k: u16, ctx: &mut impl Host) {
         8837802 => EprojPreInstr_SpikeShootingPlantSpikes_8_MoveX1Y2(k, ctx),
         8837818 => EprojPreInstr_SpikeShootingPlantSpikes_9_MoveX2Y2(k, ctx),
         8837595 => EprojPreInstr_SpikeShootingPlantSpikes(k, ctx),
-        8838070 => EprojPreInstr_DBF2_Func1(k, ctx),
+        8838070 => despawn_off_screen(k, ctx),
         8837979 => EprojPreInstr_DBF2(k, ctx),
         8838470 => EprojPreInstr_SporeSpawners(k, ctx),
         8841856 => EprojPreInstr_BotwoonsBody(k, ctx),
@@ -115,8 +115,8 @@ pub fn dispatch(ea: u32, k: u16, ctx: &mut impl Host) {
         8835029 => sub_86CFD5(k, ctx),
         8835046 => sub_86CFE6(k, ctx),
         8835064 => sub_86CFF8(k, ctx),
-        8835251 => EprojPreInstr_KagosBugs_Func1(k, ctx),
-        8835556 => EprojPreInstr_KagosBugs_Func2(k, ctx),
+        8835251 => kago_bug_cry_countdown(k, ctx),
+        8835556 => kago_bug_flag_when_far(k, ctx),
         8835683 => EprojPreInstr_MaridiaFloatersSpikes(k, ctx),
         8836031 => EprojPreInstr_WreckedShipRobotLaser(k, ctx),
         8837055 => sub_86D7BF(k, ctx),
@@ -145,7 +145,7 @@ pub fn dispatch(ea: u32, k: u16, ctx: &mut impl Host) {
         8829775 => (),
         8829894 => (),
         8830250 => {
-            EprojPreInstr_NorfairLavaquakeRocks_Inner2(k, ctx);
+            outside_camera_view(k, ctx);
         }
         8833699 => (),
         8835063 => (),
@@ -243,8 +243,8 @@ pub fn EprojPreInstr_8DCA(k: u16, ctx: &mut impl Host) {
 
 pub fn EprojPreInstr_DraygonsTurret_8DFF(k: u16, ctx: &mut impl Host) {
     EprojPowerBombCollision(k, ctx);
-    Eproj_FuncE73E_MoveXY(k, ctx);
-    let mut v1: i16 = Eproj_FuncE722(k, ctx) as i16;
+    move_along_angle(k, ctx);
+    let mut v1: i16 = outside_512_pixel_square(k, ctx) as i16;
     if v1 != 0 {
         enemy!(ctx, 0 => (k >> 1) as isize, definition);
     }
@@ -252,7 +252,7 @@ pub fn EprojPreInstr_DraygonsTurret_8DFF(k: u16, ctx: &mut impl Host) {
 
 pub fn EprojPreInstr_DraygonsGunk_8E0F(k: u16, ctx: &mut impl Host) {
     EprojPowerBombCollision(k, ctx);
-    Eproj_FuncE73E_MoveXY(k, ctx);
+    move_along_angle(k, ctx);
     let v1: i32 = k as i32 >> 1;
     let v2: u16 = (((ctx.session().player.x as i32 - enemy!(ctx, (v1) as isize, x) as i32) as u16)
         as i16)
@@ -267,7 +267,7 @@ pub fn EprojPreInstr_DraygonsGunk_8E0F(k: u16, ctx: &mut impl Host) {
             enemy!(ctx, 0x8c38 => (v1) as isize, program);
             enemy!(ctx, 1 => (v1) as isize, delay);
         }
-    } else if Eproj_FuncE722(k, ctx) != 0 {
+    } else if outside_512_pixel_square(k, ctx) != 0 {
         enemy!(ctx, 0 => (v1) as isize, definition);
     }
 }
@@ -730,8 +730,10 @@ pub fn EprojPreInstr_TourianStatueStuff(k: u16, ctx: &mut impl Host) {
     EprojPreInstr_BA42(k, ctx);
 }
 
-pub fn EprojPreInstr_NorfairLavaquakeRocks_Inner(k: u16, ctx: &mut impl Host) {
-    if EprojPreInstr_NorfairLavaquakeRocks_Inner2(k, ctx) != 0 {
+/// Despawns the projectile once it leaves the camera view.
+/// Was `EprojPreInstr_NorfairLavaquakeRocks_Inner` (also `EprojPreInstr_DBF2_Func1`).
+pub fn despawn_off_screen(k: u16, ctx: &mut impl Host) {
+    if outside_camera_view(k, ctx) != 0 {
         enemy!(ctx, 0 => (k >> 1) as isize, definition);
     }
 }
@@ -742,7 +744,7 @@ pub fn EprojPreInstr_NorfairLavaquakeRocks(k: u16, ctx: &mut impl Host) {
         k,
         ctx,
     );
-    EprojPreInstr_NorfairLavaquakeRocks_Inner(k, ctx);
+    despawn_off_screen(k, ctx);
 }
 
 pub fn EprojPreInstr_MotherBrainRoomTurrets(k: u16, ctx: &mut impl Host) {
@@ -764,7 +766,7 @@ pub fn EprojPreInstr_MotherBrainRoomTurrets(k: u16, ctx: &mut impl Host) {
         let mut v2: bool = fresh89 == 1;
         if v2 {
             Eproj_SetXvelRandom(k, ctx);
-            Eproj_MotherBrainRoomTurretBullets_Func2(k, ctx);
+            turret_bullet_step_direction(k, ctx);
             let v3: i32 = k as i32 >> 1;
             enemy!(ctx, turret_instruction(enemy_byte!(ctx, v3 as isize * 2, y_fraction) as isize, ctx) => (v3) as isize, program);
             enemy!(ctx, 1 => (v3) as isize, delay);
@@ -874,8 +876,8 @@ pub fn EprojPreInstr_MotherBrainGlassShatteringShard(k: u16, ctx: &mut impl Host
 }
 
 pub fn EprojPreInstr_KagosBugs(k: u16, ctx: &mut impl Host) {
-    EprojPreInstr_KagosBugs_Func1(k, ctx);
-    EprojPreInstr_KagosBugs_Func2(k, ctx);
+    kago_bug_cry_countdown(k, ctx);
+    kago_bug_flag_when_far(k, ctx);
     let v1: i32 = k as i32 >> 1;
     if enemy!(ctx, (v1) as isize, behavior_c) != 0 {
         let _fresh71 = enemy_add!(ctx, (v1 as usize) as isize, behavior_c, u16::MAX);
@@ -886,8 +888,8 @@ pub fn EprojPreInstr_KagosBugs(k: u16, ctx: &mut impl Host) {
 }
 
 pub fn EprojPreInstr_D0EC(k: u16, ctx: &mut impl Host) {
-    EprojPreInstr_KagosBugs_Func1(k, ctx);
-    EprojPreInstr_KagosBugs_Func2(k, ctx);
+    kago_bug_cry_countdown(k, ctx);
+    kago_bug_flag_when_far(k, ctx);
     let reset_vertical_speed: bool = if EprojBlockCollisition_Horiz(k, ctx) != 0 {
         enemy!(ctx, 0 => (k >> 1) as isize, velocity_x);
         true
@@ -981,13 +983,7 @@ pub fn EprojPreInstr_SpikeShootingPlantSpikes(k: u16, ctx: &mut impl Host) {
         k,
         ctx,
     );
-    EprojPreInstrHelper_SpikeShootingPlantSpikes_Func1(k, ctx);
-}
-
-pub fn EprojPreInstr_DBF2_Func1(k: u16, ctx: &mut impl Host) {
-    if EprojPreInstrHelper_DBF2_Func2(k, ctx) != 0 {
-        enemy!(ctx, 0 => (k >> 1) as isize, definition);
-    }
+    despawn_off_screen(k, ctx);
 }
 
 pub fn EprojPreInstr_DBF2(k: u16, ctx: &mut impl Host) {
@@ -996,7 +992,7 @@ pub fn EprojPreInstr_DBF2(k: u16, ctx: &mut impl Host) {
         k,
         ctx,
     );
-    EprojPreInstr_DBF2_Func1(k, ctx);
+    despawn_off_screen(k, ctx);
 }
 
 pub fn EprojPreInstr_SporeSpawners(k: u16, ctx: &mut impl Host) {
@@ -1028,7 +1024,7 @@ pub fn EprojPreInstr_BotwoonsBody(k: u16, ctx: &mut impl Host) {
 }
 
 pub fn EprojPreInstr_BotwoonsSpit(k: u16, ctx: &mut impl Host) {
-    Eproj_FuncE73E_MoveXY(k, ctx);
+    move_along_angle(k, ctx);
     sub_86EC0C(k, ctx);
 }
 
@@ -1070,8 +1066,8 @@ pub fn sub_86A887(v0: u16, ctx: &mut impl Host) {
 }
 
 pub fn EprojPreInstr_D128(v0: u16, ctx: &mut impl Host) {
-    EprojPreInstr_KagosBugs_Func1(v0, ctx);
-    EprojPreInstr_KagosBugs_Func2(v0, ctx);
+    kago_bug_cry_countdown(v0, ctx);
+    kago_bug_flag_when_far(v0, ctx);
     if EprojBlockCollisition_Horiz(v0, ctx) & 1 != 0 {
         enemy!(ctx, 0 => (v0 >> 1) as isize, velocity_x);
     } else if EprojBlockCollisition_Vertical(v0, ctx) & 1 != 0 {
@@ -1518,7 +1514,8 @@ pub fn EprojPreInstr_TourianStatueSoul(k: u16, ctx: &mut impl Host) {
     enemy_add!(ctx, (v1) as isize, velocity_y, (-128i16) as u16);
 }
 
-pub fn Eproj_NorfairLavaquakeRocks_Func1(k: u16, ctx: &mut impl Host) {
+/// A lavaquake rock rising and slowing. Was `Eproj_NorfairLavaquakeRocks_Func1`.
+pub fn lavaquake_rock_rise(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let mut v2: i16 = (enemy!(ctx, (v1) as isize, velocity_y) as i32 - 2i32) as i16;
     enemy!(ctx, v2 as u16 => (v1) as isize, velocity_y);
@@ -1531,7 +1528,7 @@ pub fn Eproj_NorfairLavaquakeRocks_Func1(k: u16, ctx: &mut impl Host) {
             let t: i32 = 8 * v3 as i32 + 4 >> 1;
             apply_lavaquake_sample(v1 as isize, t, ctx);
         }
-        Eproj_NorfairLavaquakeRocks_Func3(k, ctx);
+        lavaquake_rock_move_x(k, ctx);
     } else {
         {
             enemy!(ctx, 0 => (v1) as isize, velocity_y);
@@ -1540,7 +1537,8 @@ pub fn Eproj_NorfairLavaquakeRocks_Func1(k: u16, ctx: &mut impl Host) {
     };
 }
 
-pub fn Eproj_NorfairLavaquakeRocks_Func2(k: u16, ctx: &mut impl Host) {
+/// A lavaquake rock falling, capped at speed 64. Was `Eproj_NorfairLavaquakeRocks_Func2`.
+pub fn lavaquake_rock_fall(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let v2: u16 = (enemy!(ctx, (v1) as isize, velocity_y) as i32 + 2) as u16;
     enemy!(ctx, v2 => (v1) as isize, velocity_y);
@@ -1551,10 +1549,11 @@ pub fn Eproj_NorfairLavaquakeRocks_Func2(k: u16, ctx: &mut impl Host) {
         let t: i32 = 8 * (enemy!(ctx, (v1) as isize, velocity_y) as i32 - n + 1) >> 1;
         apply_lavaquake_sample(v1 as isize, t, ctx);
     }
-    Eproj_NorfairLavaquakeRocks_Func3(k, ctx);
+    lavaquake_rock_move_x(k, ctx);
 }
 
-pub use self::EprojPreInstr_SpikeShootingPlantSpikes_MoveX2 as Eproj_NorfairLavaquakeRocks_Func3;
+/// A lavaquake rock's horizontal move. Was `Eproj_NorfairLavaquakeRocks_Func3`.
+pub use self::EprojPreInstr_SpikeShootingPlantSpikes_MoveX2 as lavaquake_rock_move_x;
 
 pub fn EprojPreInstr_BE12(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
@@ -1720,7 +1719,9 @@ pub fn EprojPreInstr_TimeBombSetJapaneseText(k: u16, ctx: &mut impl Host) {
     }
 }
 
-pub fn MotherBrainTubeFallingFunc_GenerateExplosion(k: u16, ctx: &mut impl Host) {
+/// A falling tube bursting into dust, then falling.
+/// Was `MotherBrainTubeFallingFunc_GenerateExplosion`.
+pub fn falling_tube_burst(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     ctx.session_mut().enemy_projectiles.spawn.point = Point {
         x: enemy!(ctx, (v1) as isize, x),
@@ -1728,10 +1729,12 @@ pub fn MotherBrainTubeFallingFunc_GenerateExplosion(k: u16, ctx: &mut impl Host)
     };
     SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9, ctx);
     enemy!(ctx, (0x86cc08 & 0xffff) as u16 => (v1) as isize, behavior_a);
-    MotherBrainTubeFallingFunc_Falling(k, ctx);
+    falling_tube_fall(k, ctx);
 }
 
-pub fn MotherBrainTubeFallingFunc_Falling(k: u16, ctx: &mut impl Host) {
+/// A falling tube's fall, ending in dust below the floor.
+/// Was `MotherBrainTubeFallingFunc_Falling`.
+pub fn falling_tube_fall(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     enemy_add!(ctx, (v1) as isize, velocity_y, 6);
     let mut v2: i16 = MoveEprojWithVelocityY(k, ctx) as i16;
@@ -1774,7 +1777,8 @@ pub fn sub_86CFF8(k: u16, ctx: &mut impl Host) {
     };
 }
 
-pub fn EprojPreInstr_KagosBugs_Func1(k: u16, ctx: &mut impl Host) {
+/// Counts down to the Kago bug's cry. Was `EprojPreInstr_KagosBugs_Func1`.
+pub fn kago_bug_cry_countdown(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let v2: u16 = enemy!(ctx, (v1 as usize) as isize, behavior_a);
     if v2 != 0 {
@@ -1786,7 +1790,9 @@ pub fn EprojPreInstr_KagosBugs_Func1(k: u16, ctx: &mut impl Host) {
     }
 }
 
-pub fn EprojPreInstr_KagosBugs_Func2(k: u16, ctx: &mut impl Host) {
+/// Flags the Kago bug once it is 23 pixels or more from its Kago.
+/// Was `EprojPreInstr_KagosBugs_Func2`.
+pub fn kago_bug_flag_when_far(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let enemy_index = enemy!(ctx, (v1) as isize, behavior_b);
     let v3: u16 = (((ctx.resolve_actor(Key::from_legacy(enemy_index), Le).x.whole)
@@ -1908,7 +1914,8 @@ pub fn EprojPreInstr_E605(k: u16, ctx: &mut impl Host) {
     };
 }
 
-pub fn Eproj_FuncE73E_MoveXY(k: u16, ctx: &mut impl Host) {
+/// Moves along the projectile's angle on both axes. Was `Eproj_FuncE73E_MoveXY`.
+pub fn move_along_angle(k: u16, ctx: &mut impl Host) {
     let index = (k >> 1) as isize;
     integrate_angle_axis(
         index,
