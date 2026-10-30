@@ -280,7 +280,10 @@ macro_rules! scalar_words {
         $f(0x0d14,$($borrow)* $s.player.grapple_offset[1].whole);
         $f(0x0d22,$($borrow)* $s.player.grapple_velocity.x);
         $f(0x0d24,$($borrow)* $s.player.grapple_velocity.y);
+        $f(0x0cfc,$($borrow)* $s.player.swing.mirrored_angle);
         $f(0x0d00,$($borrow)* $s.player.swing.length_delta);
+        $f(0x0d3e,$($borrow)* $s.player.swing.start_animation_timer);
+        $f(0x0d40,$($borrow)* $s.player.swing.start_animation_tiles);
         $f(0x0d16,$($borrow)* $s.player.swing.start.x);
         $f(0x0d18,$($borrow)* $s.player.swing.start.y);
         $f(0x0d26,$($borrow)* $s.player.swing.angular_velocity);
@@ -1177,7 +1180,10 @@ mod player_lane_tests {
         (0xb12, |s| &mut s.player.previous_position.x.fraction),
         (0xb14, |s| &mut s.player.previous_position.y.whole),
         (0xb16, |s| &mut s.player.previous_position.y.fraction),
+        (0xcfc, |s| &mut s.player.swing.mirrored_angle),
         (0xd00, |s| &mut s.player.swing.length_delta),
+        (0xd3e, |s| &mut s.player.swing.start_animation_timer),
+        (0xd40, |s| &mut s.player.swing.start_animation_tiles),
         (0xd16, |s| &mut s.player.swing.start.x),
         (0xd18, |s| &mut s.player.swing.start.y),
         (0xd26, |s| &mut s.player.swing.angular_velocity),

@@ -56,6 +56,8 @@ pub trait Host:
 /// follow the $7E RAM map; the swing itself is bank $9B.
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct SwingState {
+    /// $0CFC: the end angle's mirror of $0CFA, indexing the swing offsets ($9B:C1C2).
+    pub mirrored_angle: u16,
     /// $0D00: change applied to the beam length.
     pub length_delta: u16,
     /// $0D16/$0D18: the beam's start position.
@@ -80,6 +82,10 @@ pub struct SwingState {
     pub probe: crate::geometry::Point,
     /// $0D94/$0D96: the swing collision probe's block ($94:A957).
     pub probe_block: crate::geometry::Point,
+    /// $0D3E: the beam start animation timer.
+    pub start_animation_timer: u16,
+    /// $0D40: the beam start animation's tile pointer (bank $9A).
+    pub start_animation_tiles: u16,
 }
 
 fn abs16(value: u16) -> u16 {
