@@ -34,7 +34,6 @@ use crate::game::sm_a7::{
     UnpauseHook_Kraid_IsDead,
 };
 use crate::game::sm_a9::MotherBrainsBody_UnpauseHook;
-use crate::ram_map::{checked_word, words as ram};
 use crate::types::Func_V_Coroutine;
 use {
     crate::game::room_entry::{self},
@@ -55,6 +54,7 @@ enum FrameEntry {
     Debug,
 }
 use FrameEntry::{Advance, Callback, Debug, Demo, Door, Null, Options, Unused};
+use sm_game::gameplay_rules::{finish_frame, finish_health_and_time};
 
 static GAME_STATE_ENTRIES: [FrameEntry; 45] = callback_table! { FrameEntry;
     {Callback(demo_rooms::reset)}, {Callback(GameState_1_OpeningCinematic_)}, {Options},
@@ -690,85 +690,4 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
         }
         0 as CoroutineRet
     }
-}
-
-fn finish_health_and_time(game: &mut Game) {
-    if (word!(game.samus_health) as i16) <= 0 {
-        if (word!(game.reserve_health_mode) & 1) != 0 && word!(game.samus_reserve_health) != 0 {
-            word!(game.time_is_frozen_flag = 0x8000);
-            word!(game.game_state = kGameState_27_ReserveTanksAuto as u16);
-            player_command(0x1b, game);
-        } else if word!(game.game_state) as i32 != kGameState_8_MainGameplay as i32 {
-            return;
-        } else {
-            word!(game.time_is_frozen_flag = 0x8000);
-            player_command(0x11, game);
-            word!(game.game_state = kGameState_19_SamusNoHealth as u16);
-        }
-    }
-    // Clock words are frames, seconds, minutes, then hours in ascending RAM order.
-    'carry: {
-        for timer in (ram::game_time_frames..ram::game_time_hours).step_by(2) {
-            checked_word!(game, timer; += 1);
-            if checked_word!(game, timer;) as i32 - 60i32 & 0x8000 != 0 {
-                break 'carry;
-            }
-            checked_word!(game, timer; = 0);
-        }
-        word!(game.game_time_hours += 1);
-    }
-    if word!(game.game_time_hours) as i32 - 100i32 & 0x8000 == 0 {
-        word! { game, 59; game_time_frames, game_time_seconds, game_time_minutes }
-        word!(game.game_time_hours = 99);
-    }
-}
-
-static kRoomShakes: [u16; 144] = [
-    1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 3, 0, 0, 0, 0, 3, 0, 0,
-    3, 3, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 2, 0, 2, 0, 0, 2, 0, 2, 2, 2, 2, 2, 3, 0, 3, 0,
-    0, 3, 0, 3, 3, 3, 3, 3, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 2, 0, 2, 0, 0, 2, 0, 2, 2, 2, 2, 2,
-    3, 0, 3, 0, 0, 3, 0, 3, 3, 3, 3, 3, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 2, 0, 0, 0, 0, 2,
-    0, 0, 2, 2, 0, 0, 3, 0, 0, 0, 0, 3, 0, 0, 3, 3,
-];
-
-fn finish_frame(game: &mut Game) {
-    if word!(game.earthquake_timer) != 0
-        && word!(game.time_is_frozen_flag) == 0
-        && (word!(game.earthquake_type) as i16).wrapping_sub(36) < 0
-    {
-        let index = usize::from(word!(game.earthquake_type)) * 4;
-        let direction = if word!(game.earthquake_timer) & 2 != 0 {
-            u16::MAX
-        } else {
-            1
-        };
-        for (offset, register) in [
-            ram::reg_BG1HOFS,
-            ram::reg_BG1VOFS,
-            ram::reg_BG2HOFS,
-            ram::reg_BG2VOFS,
-        ]
-        .into_iter()
-        .enumerate()
-        {
-            checked_word!(game, register; += kRoomShakes[index + offset].wrapping_mul(direction));
-        }
-        word!(game.earthquake_timer -= 1);
-        if (word!(game.earthquake_type) as i16).wrapping_sub(18) >= 0 {
-            actors::scheduling::shake_active_enemies(&mut Runtime::new(game));
-        }
-    }
-    word!(game.frame_counter_every_frame += 1);
-    for timer in [
-        ram::samus_invincibility_timer,
-        ram::samus_knockback_timer,
-        ram::projectile_invincibility_timer,
-    ] {
-        let remaining = checked_word!(game, timer;);
-        if remaining != 0 {
-            checked_word!(game, timer; = remaining - 1);
-        }
-    }
-    word!(game.interactive_enemy_indexes[0] = u16::MAX);
-    word!(game.active_enemy_indexes[0] = u16::MAX);
 }
