@@ -94,11 +94,11 @@ impl Content for Runtime<'_> {
     }
 }
 pub(crate) fn command(a: u16, game: &mut crate::game_state::Game) -> u16 {
-    crate::game::player_transitions::command(
-        &mut Runtime::new(game),
-        a,
-        Runtime::finish_ceres_arrival,
-    )
+    command_in(&mut Runtime::new(game), a)
+}
+/// Run Samus pose command `a` on a lease that is already open.
+pub(crate) fn command_in(runtime: &mut Runtime<'_>, a: u16) -> u16 {
+    crate::game::player_transitions::command(runtime, a, Runtime::finish_ceres_arrival)
 }
 
 impl Effects for Runtime<'_> {
