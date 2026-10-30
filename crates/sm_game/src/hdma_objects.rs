@@ -158,17 +158,33 @@ fn channel(slot: usize) -> u16 {
     0x20 + 0x10 * slot as u16
 }
 
-pub fn set_hdma_enabled<H: crate::menus::host::Host + ?Sized>(enabled: bool, game: &mut H) {
-    let flags = checked_word!(game.hdma_objects_enable_flag);
-    checked_word!(game.hdma_objects_enable_flag = (flags & 0x7fff) | (u16::from(enabled) << 15));
+/// Set or clear the flag that runs the objects each frame (bit 15).
+pub fn set_hdma_enabled<H>(enabled: bool, game: &mut H)
+where
+    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
+{
+    with_table(game, |table| {
+        table.enabled = (table.enabled & 0x7fff) | (u16::from(enabled) << 15);
+    });
 }
 
-pub fn clear_hdma_channels<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+/// Free every object and clear the HDMA channel enable mirror.
+pub fn clear_hdma_channels<H>(game: &mut H)
+where
+    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
+{
     game.ram().write_byte(0x85, 0);
-    crate::word_transfers!(game, descending, 6; le(hdma_object_channels_bitmask, 5) <- value(0));
+    with_table(game, |table| {
+        for object in table.objects.iter_mut().rev() {
+            object.channels = 0;
+        }
+    });
 }
 
-pub fn clear_hdma<H: crate::menus::host::Host + ?Sized>(game: &mut H) {
+pub fn clear_hdma<H>(game: &mut H)
+where
+    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
+{
     {
         crate::display::sequence::register_writes! { game;
             byte(MDMAEN as u16, 0); byte(HDMAEN as u16, 0);
