@@ -554,6 +554,20 @@ macro_rules! scalar_words {
         $f(0xd91a,$($borrow)* $s.room.loaded_items);
         $f(0xcea,$($borrow)* $s.room.power_bomb_radius);
         for index in 0..4 { $f(0x7e1+index*2,$($borrow)* $s.room.main_variables[index]); }
+        for axis in 0..2 {
+            $f(0x8f7+axis*2,$($borrow)* $s.room.camera.layer1_block[axis]);
+            $f(0x8fb+axis*2,$($borrow)* $s.room.camera.layer2_block[axis]);
+            $f(0x8ff+axis*2,$($borrow)* $s.room.camera.previous_layer1_block[axis]);
+            $f(0x903+axis*2,$($borrow)* $s.room.camera.previous_layer2_block[axis]);
+            $f(0x907+axis*2,$($borrow)* $s.room.camera.bg1_block[axis]);
+            $f(0x90b+axis*2,$($borrow)* $s.room.camera.bg2_block[axis]);
+            $f(0x90f+axis*4,$($borrow)* $s.room.camera.layer1_fraction[axis]);
+            $f(0x911+axis*4,$($borrow)* $s.room.camera.layer1[axis]);
+            $f(0x917+axis*2,$($borrow)* $s.room.camera.layer2[axis]);
+            $f(0x91d+axis*2,$($borrow)* $s.room.camera.bg1_offset[axis]);
+            $f(0x921+axis*2,$($borrow)* $s.room.camera.bg2_scroll[axis]);
+            $f(0xb0a+axis*4,$($borrow)* $s.room.camera.ideal_layer1[axis]);
+        }
         $f(0x5f5,$($borrow)* $s.feedback.sound_disabled);
         $f(0x5f7,$($borrow)* $s.minimap.disabled);
         for row in 0..3 {

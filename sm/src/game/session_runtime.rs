@@ -551,6 +551,12 @@ impl<'g> Runtime<'g> {
         });
         // Preserve observation refresh timing while A5A is owned by Session.
         self.inputs.transitions.frame_gamma = self.session().player.transitions.frame_gamma;
+        // The camera observations are Session camera words; refresh them from
+        // the store just made, as the legacy RAM read did before they were owned.
+        let camera = self.session().room.camera;
+        self.inputs.camera_x = camera.layer1[0];
+        self.inputs.camera_y = camera.layer1[1];
+        self.inputs.background_page_x = camera.bg1_offset[0];
     }
     pub(crate) fn write_slice(&mut self, at: usize, bytes: &[u8]) {
         let end = at.checked_add(bytes.len()).expect("aggregate write extent");

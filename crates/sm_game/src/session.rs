@@ -372,6 +372,7 @@ pub struct Room {
     /// The room main code's variables at $07E1..$07E9, as the little-endian
     /// words of the byte image. Rooms give them their own meanings.
     pub main_variables: [u16; 4],
+    pub camera: crate::camera::Camera,
 }
 impl Room {
     /// Main-code variable `index` as the original's native-order load reads it.
@@ -450,6 +451,7 @@ impl Room {
             collision_detection_index: 0,
             slope_behavior: 0,
             main_variables: [0; 4],
+            camera: Default::default(),
         }
     }
 }

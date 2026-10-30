@@ -11,6 +11,7 @@ pub(crate) use sm_data::cartridge as rom;
 
 pub mod beam_definitions;
 pub mod boss_lists;
+pub mod camera;
 pub mod cartridge;
 pub mod combat_rules;
 pub mod constants;
