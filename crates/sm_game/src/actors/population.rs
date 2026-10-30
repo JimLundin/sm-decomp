@@ -358,11 +358,8 @@ fn spawn_from_cursor<H: ActorHost + crate::enemy_projectiles::host::Host>(
         }
     };
     let mut sequence = SpawnSequence::new(index, 0, parts);
-    #[allow(
-        unused_assignments,
-        reason = "Kept as written; the loop always assigns before use."
-    )]
-    let mut last_handle = None;
+    // Each part assigns its handle; the loop only exits after one.
+    let mut last_handle;
     loop {
         let key = ActorKey::from_legacy(index);
         let capture = h.capture_actor_population(&cursor);
