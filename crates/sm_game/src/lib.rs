@@ -33,6 +33,7 @@ pub mod ending_sequence;
 pub mod enemy_lists;
 pub mod enemy_population;
 pub mod escape_timer;
+pub mod escape_typewriter;
 pub mod external_inputs;
 pub mod flow;
 pub mod gameplay_flag_state;

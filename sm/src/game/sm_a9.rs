@@ -300,14 +300,6 @@ impl sm_game::actors::mother_brain_fight::Host for Game {
         corpses::process_corpse_rotting_vram_transfers(k, self);
     }
 
-    fn start_zebes_escape_typewriter(&mut self) {
-        crate::game::escape_typewriter::start_zebes_escape_typewriter(self);
-    }
-
-    fn type_escape_text(&mut self, tiles: u16) -> u8 {
-        crate::game::escape_typewriter::type_escape_text(tiles, self)
-    }
-
     fn set_boss_bit_for_current_area(&mut self, mask: u16) {
         crate::game::gameplay_flag_runtime::set_boss_bits_for_current_area(mask, self);
     }

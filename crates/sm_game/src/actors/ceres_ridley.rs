@@ -32,7 +32,7 @@ impl<T: BossLease<Game: Host> + ?Sized> Lease for T {}
 
 /// What Ceres Ridley needs beyond Ridley's host: the boss flags, the mode 7
 /// transfers, the getaway push and the escape sequence's tiles and text.
-pub trait Host: ridley::Host {
+pub trait Host: ridley::Host + crate::escape_typewriter::Host {
     /// The boss bits for `area`.
     fn boss_byte(&mut self, area: u16) -> u8;
     /// Queue the bank `bank` mode 7 transfer list at `list`.
@@ -45,8 +45,6 @@ pub trait Host: ridley::Host {
     fn queue_getaway_tiles(&mut self);
     /// Queue the Japanese "self destruct sequence" text tilemaps.
     fn queue_escape_tile_table(&mut self);
-    /// Type the next escape text character at tiles `tiles`; true once done.
-    fn type_escape_text(&mut self, tiles: u16) -> bool;
 }
 
 /// Bank $A6 Ceres Ridley functions, stored in the body's `function` word.
@@ -962,7 +960,7 @@ pub fn japanese_text_appears<L: Lease + ?Sized>(game: &mut L) {
 /// text ($A6:C104). Was `Ridley_C104`.
 pub fn type_self_destruct_text<L: Lease + ?Sized>(game: &mut L) {
     ridley::emergency_text_glow(game);
-    if game.foreign(|game| game.type_escape_text(ESCAPE_TEXT_TILES)) {
+    if game.foreign(|game| crate::escape_typewriter::handle_text(game, ESCAPE_TEXT_TILES)) {
         next_step(game);
     }
 }

@@ -133,6 +133,35 @@ pub fn drain_readbacks(host: &mut (impl TransferHost + ?Sized)) {
 /// cursor advances linearly, without bank wrap.
 pub const TILEMAP_QUEUE: usize = 0xd0;
 
+/// The tilemap queue's bytes and its tail ($7E:0330), the byte offset of its next record.
+pub trait TilemapQueue {
+    fn tilemap_queue_tail(&self) -> u16;
+    fn set_tilemap_queue_tail(&mut self, tail: u16);
+    fn set_tilemap_queue_byte(&mut self, at: usize, value: u8);
+}
+
+/// Append `upload` at the tilemap queue's tail and advance the tail past it. The
+/// destination word carries `column`, as the queue's records do.
+pub fn queue_tilemap(host: &mut (impl TilemapQueue + ?Sized), upload: TilemapUpload) {
+    let tail = host.tilemap_queue_tail();
+    let [size_low, size_high] = upload.bytes.to_le_bytes();
+    let [source_low, source_high] = upload.source.address.to_le_bytes();
+    let [destination_low, destination_high] = upload.vram_address.to_le_bytes();
+    let record = [
+        size_low,
+        size_high,
+        source_low,
+        source_high,
+        upload.source.bank,
+        destination_low,
+        destination_high,
+    ];
+    for (offset, byte) in record.into_iter().enumerate() {
+        host.set_tilemap_queue_byte(TILEMAP_QUEUE + usize::from(tail) + offset, byte);
+    }
+    host.set_tilemap_queue_tail(tail.wrapping_add(7));
+}
+
 pub fn drain_tilemaps(host: &mut (impl TransferHost + ?Sized)) {
     let mut entry = TILEMAP_QUEUE;
     loop {
