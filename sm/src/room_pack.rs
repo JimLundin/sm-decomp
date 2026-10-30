@@ -9,7 +9,7 @@ use std::{
     sync::Arc,
 };
 use {
-    crate::game::room_entry::PreparedRoomAssets,
+    sm_game::room_entry::prepared_assets::PreparedRoomAssets,
     sm_game::room_entry::world::{
         ArrivalDefinition, BackgroundCommand, BackgroundTarget, CompatibilityKeys, DoorListId,
         ExitDefinition, ExitId, LegacyAddress24, LegacyStartSite, ResourceId, ResourceKey,

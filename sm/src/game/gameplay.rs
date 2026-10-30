@@ -18,7 +18,6 @@ use crate::game::pause_controls;
 use crate::game::pause_controls::fade_in as pause_fade_in;
 use crate::game::player_projectiles::prepare;
 use crate::game::prelude::*;
-use crate::game::room_entry::{self, ArrivalRequest, EntrySignal, StartSite};
 use crate::game::room_mechanisms::run;
 use crate::game::room_scrolls::advance_camera;
 use crate::game::room_scrolls::{debug_position, update_scrolls};
@@ -37,6 +36,12 @@ use crate::game::sm_a7::{
 use crate::game::sm_a9::MotherBrainsBody_UnpauseHook;
 use crate::ram_map::{checked_word, words as ram};
 use crate::types::Func_V_Coroutine;
+use {
+    crate::game::room_entry::{self},
+    sm_game::room_entry::api::ArrivalRequest,
+    sm_game::room_entry::api::EntrySignal,
+    sm_game::room_entry::api::StartSite,
+};
 
 #[derive(Clone, Copy)]
 enum FrameEntry {

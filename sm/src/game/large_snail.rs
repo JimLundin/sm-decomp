@@ -1,6 +1,6 @@
 //! Large Snail movement and its ordered carrying/resistance interaction with Samus.
 #![forbid(unsafe_code)]
-use crate::game::actors::{animation, api, combat};
+use crate::game::actors::{api, combat};
 use crate::game::enemy_speeds::SpeedTable;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
@@ -16,7 +16,7 @@ fn location(raw: u16) -> (Key, usize) {
 }
 fn animate(runtime: &mut Runtime<'_>) {
     let raw = usize::from(selected(runtime));
-    animation::restart_from_native_cache(runtime, raw, 0xa2cb77);
+    crate::game::actors::restart_from_native_cache(runtime, raw, 0xa2cb77);
 }
 fn near(runtime: &mut Runtime<'_>, axis: api::Axis, distance: u16) -> bool {
     let key = Key::from_legacy(selected(runtime));

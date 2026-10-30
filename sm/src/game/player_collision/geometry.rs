@@ -8,8 +8,8 @@ use super::{
 use sm_game::contact_rules::collision_span as span;
 use sm_game::projectile_geometry::{SLOPE_FACTORS, SLOPE_HEIGHTS, square_slope_occupied};
 use {
-    crate::game::room_entry::EntryPoll,
     sm_game::actors::overlap::axis_overlaps,
+    sm_game::room_entry::api::EntryPoll,
     sm_game::{
         actors::access::{AccessMode::LittleEndian, ActorKey},
         session::{Player, Point},

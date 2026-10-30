@@ -3,9 +3,6 @@
 #![forbid(unsafe_code)]
 use crate::game::constants::{bank_86::*, enemy_properties::*};
 use crate::game::enemy_layouts::EnemyLayout104 as Boss;
-use crate::game::enemy_projectiles::{
-    DropSource, SpawnEprojWithGfx, SpawnEprojWithRoomGfx, scatter_drop,
-};
 use crate::game::enemy_speeds::enemy_speed;
 use crate::game::gameplay_flag_runtime::{SetBossBitForCurArea, boss_byte_at};
 use crate::game::imported::Imported;
@@ -31,6 +28,10 @@ use {
         access::{AccessMode::Native, ActorAccess, ActorKey as Key},
         botwoon_death,
     },
+};
+use {
+    crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx, scatter_drop},
+    sm_game::enemy_projectiles::drops::DropSource,
 };
 
 fn initialize_living(e: i32, game: &mut Game) {

@@ -1,8 +1,11 @@
 use crate::game::actors;
-use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::Runtime;
 use sm_game::enemy_script::EnemyScript;
+use {
+    crate::game::enemy_projectiles::scatter_drop as scatter,
+    sm_game::enemy_projectiles::drops::DropSource,
+};
 
 use crate::game::music::{QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::sprite_effect_runtime as sprite_effects;

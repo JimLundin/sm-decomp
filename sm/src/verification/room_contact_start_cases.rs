@@ -60,7 +60,7 @@ pub(crate) fn run(operation: Operation, g: &mut Game) -> Option<i32> {
                 .displacement,
             ),
             Operation::Station => {
-                crate::game::room_entry::begin(
+                sm_game::room_entry::selection::begin(
                     &mut crate::game::session_runtime::Runtime::new(g),
                     crate::game::room_entry::ArrivalRequest::Start(
                         crate::game::room_entry::StartSite::CurrentLoadStation,

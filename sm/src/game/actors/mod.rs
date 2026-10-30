@@ -33,6 +33,7 @@ pub(crate) mod torizo;
 pub(in crate::game) mod wall_crawlers;
 
 mod runtime;
+pub(crate) use runtime::restart_from_native_cache;
 
 mod content_runtime;
 

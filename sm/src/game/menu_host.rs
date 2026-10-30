@@ -1,10 +1,10 @@
 //! The compatibility runtime as the `sm_game::menus` host.
-use crate::game::room_entry::{ArrivalRequest, StartSite};
 use crate::game::session_runtime::Runtime;
 use crate::game::visual_runtime;
 use crate::game_state::Game;
 use crate::save_ram::SaveRam;
 use sm_game::menus::host::{Host, MenuRuntime};
+use {sm_game::room_entry::api::ArrivalRequest, sm_game::room_entry::api::StartSite};
 
 impl sm_game::menus::host::SaveRam for SaveRam {
     fn word(&self, at: usize) -> u16 {
@@ -83,7 +83,7 @@ impl MenuRuntime for Game {
         crate::game::gameplay_flag_runtime::boss_byte_at(area, self)
     }
     fn enter_load_station(&mut self) {
-        crate::game::room_entry::begin(
+        sm_game::room_entry::selection::begin(
             &mut Runtime::new(self),
             ArrivalRequest::Start(StartSite::CurrentLoadStation),
         );

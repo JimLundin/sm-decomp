@@ -3,7 +3,6 @@ use crate::game::actors::api as actor_api;
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_84::*;
 pub use crate::game::constants::bank_86::*;
-use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
@@ -15,6 +14,10 @@ use crate::ram_map::slot;
 use sm_game::actors::access::ActorKey as Key;
 use sm_game::enemy_script::{EnemyScript, bank_base};
 use sm_game::gameplay_flag_host::BossWordOrder;
+use {
+    crate::game::enemy_projectiles::scatter_drop as scatter,
+    sm_game::enemy_projectiles::drops::DropSource,
+};
 
 use crate::game::gameplay_flag_runtime::{CheckBossBitForCurArea, SetBossBitForCurArea};
 use crate::game::music::QueueSfx2_Max6;

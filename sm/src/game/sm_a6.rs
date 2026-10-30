@@ -3,7 +3,6 @@ use crate::game::actors::api as actor_api;
 use crate::game::ceres_door_data;
 use crate::game::ceres_doors;
 use crate::game::ceres_ridley_tables;
-use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::fire_geysers;
 use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
@@ -22,6 +21,10 @@ use sm_data::ridley_explosion::{
 };
 use sm_game::actors::access::ActorKey as Key;
 use sm_game::enemy_script::EnemyScript;
+use {
+    crate::game::enemy_projectiles::scatter_drop as scatter,
+    sm_game::enemy_projectiles::drops::DropSource,
+};
 
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a6::*;

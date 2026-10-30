@@ -1,7 +1,6 @@
 //! Metroid pursuit, attachment, recoil and sprite partners share one lifecycle.
 #![forbid(unsafe_code)]
 use crate::game::actors::{api, combat, scheduling};
-use crate::game::enemy_projectiles::{DropSource, scatter_drop};
 use crate::game::session_runtime::{Runtime, player_command};
 use crate::game::sprite_effect_runtime as sprites;
 use crate::game_state::Game;
@@ -11,6 +10,7 @@ use sm_game::enemy_projectiles::host::Effects;
 use sm_game::enemy_script::EnemyScript;
 use sm_game::player_projectiles::content::table;
 use sm_game::session_access::SessionAccess;
+use {crate::game::enemy_projectiles::scatter_drop, sm_game::enemy_projectiles::drops::DropSource};
 
 fn extra(key: Key) -> usize {
     0x7800 + usize::from(key.byte_index())
