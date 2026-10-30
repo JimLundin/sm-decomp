@@ -91,6 +91,7 @@ pub mod actors {
     pub mod api;
     pub mod botwoon;
     pub mod botwoon_death;
+    pub mod brinstar_pipe_bug;
     pub mod boulder;
     pub mod ceres_doors;
     pub mod ceres_ridley;
@@ -133,6 +134,7 @@ pub mod actors {
     pub mod mother_brain_neck;
     pub mod mother_brain_tubes;
     pub mod movement;
+    pub mod norfair_pipe_bug;
     pub mod overlap;
     pub mod phantoon;
     pub mod phantoon_actions;
@@ -152,6 +154,7 @@ pub mod actors {
     pub mod statues;
     pub mod torizo;
     pub mod yapping_maw;
+    pub mod yellow_pipe_bug;
     pub mod zebetites;
 }
 pub mod enemy_projectiles;
