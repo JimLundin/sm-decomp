@@ -1,6 +1,5 @@
 //! Runs in `sm_game::actors::kraid_fingernails`.
 #![forbid(unsafe_code)]
-pub(crate) use sm_game::actors::kraid_fingernails::*;
 
 // The named bank $A7 functions are the ones `sm_a7` dispatches on.
 const _: () = {

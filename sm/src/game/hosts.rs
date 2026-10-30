@@ -345,3 +345,151 @@ impl sm_game::actors::phantoon::Host for Game {
         crate::game::visual_runtime::initialize_phantoon_motion(direction, speed, self);
     }
 }
+
+// The named bank $A7 functions are the ones the original `CallKraidFunc` dispatched on.
+const _: () = {
+    use sm_game::actors::kraid::function as f;
+    const fn at(word: u16) -> u32 {
+        0xa7_0000 | word as u32
+    }
+    assert!(
+        at(f::GETS_BIG_BREAK_CEILING) == 10988621 && at(f::GETS_BIG_SET_BG2_PRIORITY) == 10988858
+    );
+    assert!(
+        at(f::GETS_BIG_FINISH_BG2_TILEMAP) == 10988897 && at(f::GETS_BIG_DRAW_ROOM_BG) == 10988942
+    );
+    assert!(at(f::GETS_BIG_FADE_IN_ROOM_BG) == 10989091 && at(f::MAIN_LOOP_THINKING) == 10989220);
+    assert!(at(f::GETS_BIG_THINKING) == 10989252 && at(f::MOUTH_OPEN) == 10989284);
+    assert!(at(f::INIT_EYE_GLOW) == 10991295 && at(f::GLOW_EYE) == 10991319);
+    assert!(at(f::UNGLOW_EYE) == 10991421 && at(f::NOTHING) == 10991665);
+    assert!(at(f::LINT_PRODUCE) == 10991666 && at(f::LINT_CHARGE) == 10991720);
+    assert!(at(f::LINT_FIRE) == 10991771 && at(f::FINGERNAIL_WAIT_FOR_LINT) == 10991879);
+    assert!(at(f::ALIGN_TO_KRAID) == 10991907 && at(f::HANDLE_FUNCTION_TIMER) == 10991917);
+    assert!(
+        at(f::DECREMENT_FUNCTION_TIMER) == 10991935 && at(f::FOOT_FIRST_PHASE_THINKING) == 10991968
+    );
+    assert!(at(f::PROCESS_SCRIPT_AND_TIMER) == 10991973 && at(f::FOOT_IDLE) == 10992173);
+    assert!(
+        at(f::FOOT_SECOND_PHASE_THINKING) == 10992174 && at(f::FOOT_WALK_BACKWARDS) == 10992453
+    );
+    assert!(at(f::FOOT_WALK_TO_START) == 10992494 && at(f::FOOT_SECOND_PHASE_INIT) == 10992548);
+    assert!(at(f::FOOT_WALK_FORWARD) == 10992558 && at(f::ATTACK_WITH_MOUTH_OPEN) == 10992618);
+    assert!(at(f::FINGERNAIL_INIT) == 10992992 && at(f::FINGERNAIL_FIRE) == 10993294);
+    assert!(at(f::FOOT_PREPARE_LUNGE) == 10993453 && at(f::FOOT_LUNGE_FORWARD) == 10993501);
+    assert!(
+        at(f::FOOT_RETREAT_FROM_LUNGE) == 10993579 && at(f::GETS_BIG_RELEASE_CAMERA) == 10993825
+    );
+    assert!(at(f::DEATH_INIT) == 10994528 && at(f::DEATH_FADE_OUT) == 10994681);
+    assert!(at(f::DEATH_BG2_TOP_HALF) == 10994852 && at(f::DEATH_BG2_BOTTOM_HALF) == 10994888);
+    assert!(
+        at(f::DEATH_SINK_THROUGH_FLOOR) == 10994999 && at(f::FADE_IN_CLEAR_BG2_TOP) == 10995477
+    );
+    assert!(
+        at(f::FADE_IN_CLEAR_BG2_BOTTOM) == 10995537 && at(f::FADE_IN_LOAD_BG3_TILES_1) == 10995575
+    );
+    assert!(
+        at(f::FADE_IN_LOAD_BG3_TILES_2) == 10995619 && at(f::FADE_IN_LOAD_BG3_TILES_3) == 10995657
+    );
+    assert!(at(f::FADE_IN_LOAD_BG3_TILES_4) == 10995695 && at(f::FADE_IN_BG6) == 10995733);
+    assert!(at(f::FADE_IN_DEAD_WAS_ALIVE) == 10995779 && at(f::FADE_IN_DEAD_WAS_DEAD) == 10995793);
+    assert!(at(f::RESTRICT_SAMUS_X) == 10995813 && at(f::RAISE_THROUGH_FLOOR) == 10995819);
+    assert!(
+        at(f::RAISE_LOAD_TILEMAP_BOTTOM) == 10995866 && at(f::RAISE_QUAKE_EVERY_16) == 10995936
+    );
+    assert!(at(f::RAISE_QUAKE_EVERY_8) == 10995970 && at(f::RAISE) == 10996004);
+};
+
+// The named instruction lists, spritemaps and scripts are the decompilation's addresses.
+const _: () = {
+    use crate::game::sm_a7::*;
+    use sm_game::actors::kraid::animation as a;
+    assert!(
+        a::FOOT_IDLE == addr_kKraid_Ilist_86E7 as u16
+            && a::FOOT_STAND == addr_kKraid_Ilist_86ED as u16
+    );
+    assert!(
+        a::FOOT_WALK_FORWARD == addr_kKraid_Ilist_86F3 as u16
+            && a::FOOT_WALK_FORWARD_END == addr_off_A787BB as u16
+    );
+    assert!(
+        a::FOOT_LUNGE == addr_kKraid_Ilist_87BD as u16
+            && a::FOOT_WALK_BACKWARD_END == addr_off_A78885 as u16
+    );
+    assert!(
+        a::FOOT_WALK_BACKWARD == addr_kKraid_Ilist_8887 as u16
+            && a::ARM_IDLE == addr_kKraid_Ilist_89F3 as u16
+    );
+    assert!(
+        a::ARM_SWIPE == addr_kKraid_Ilist_8A41 as u16
+            && a::ARM_RAISED == addr_kKraid_Ilist_8AA4 as u16
+    );
+    assert!(
+        a::ARM_DYING == addr_kKraid_Ilist_8AF0 as u16
+            && a::LINT_HIDDEN == addr_kKraid_Ilist_8AFE as u16
+    );
+    assert!(
+        a::LINT_SHOWN == addr_kKraid_Ilist_8B04 as u16
+            && a::FINGERNAIL == addr_kKraid_Ilist_8B0A as u16
+    );
+    assert!(
+        a::LINT_SPRITEMAP == addr_kKraid_Sprmap_8C6C as u16
+            && a::LINT_HIDDEN_SPRITEMAP == addr_kKraid_Sprmap_A5DF as u16
+    );
+    assert!(a::SCRIPT_IDLE == addr_stru_A796DA as u16 && a::SCRIPT_GLOW == addr_stru_A7974A as u16);
+    assert!(a::SCRIPT_DYING == addr_stru_A79764 as u16 && a::ROOM_BG == addr_kKraidsRoomBg as u16);
+    assert!(
+        a::TILEMAP_0 == addr_kKraidTilemaps_0 as u16
+            && a::TILEMAP_1 == addr_kKraidTilemaps_1 as u16
+    );
+    assert!(
+        a::TILEMAP_2 == addr_kKraidTilemaps_2 as u16
+            && a::TILEMAP_3 == addr_kKraidTilemaps_3 as u16
+    );
+    assert!(sm_game::actors::kraid::NO_SHOT_AI == fnnullsub_170_A7 as u16);
+};
+
+impl sm_game::actors::kraid::Host for Game {
+    fn queue_kraid_tilemap(&mut self, tail: u16, source: u16) {
+        // The two fixed tail reads have no intervening effects and select the same entry.
+        crate::game::display_refresh::queue_native_transfer(
+            tail,
+            704,
+            |_| source,
+            0xa7,
+            |game| ((game.ram().read_byte(0x59) as i32 & 0xfc) << 8) as u16,
+            self,
+        );
+    }
+
+    fn touches_player_from_above(&mut self, k: u16) -> bool {
+        crate::game::actors::api::touches_player_from_above(
+            &crate::game::session_runtime::Runtime::new(self),
+            sm_game::actors::access::ActorKey::from_legacy(k),
+        )
+    }
+
+    fn boss_word_native(&mut self, area: u16) -> u16 {
+        crate::game::gameplay_flag_runtime::boss_word_at(
+            area,
+            sm_game::gameplay_flag_host::BossWordOrder::Native,
+            self,
+        )
+    }
+
+    fn set_boss_word_native(&mut self, area: u16, value: u16) {
+        crate::game::gameplay_flag_runtime::set_boss_word_native(area, value, self);
+    }
+
+    fn set_shot_ai(&mut self, enemy_ptr: u16, shot_ai: u16) {
+        crate::game::sm_a7::set_kraid_shot_ai(enemy_ptr, shot_ai, self);
+    }
+
+    fn print_x_undefined(&mut self) {
+        crate::game::sm_a7::print_x_undefined();
+    }
+
+    #[cfg(sm_verify_dll)]
+    fn observe_kraid_flags(&mut self, step: u8) {
+        crate::kraid_flags_observer::observe(step, self);
+    }
+}

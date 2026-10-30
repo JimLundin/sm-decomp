@@ -105,6 +105,7 @@ pub mod actors {
     pub mod fixture;
     pub mod host;
     pub mod identity;
+    pub mod kraid;
     pub mod kraid_fingernails;
     pub mod kraid_lint;
     pub mod kraid_sinking;
