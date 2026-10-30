@@ -1,6 +1,7 @@
 //! X-ray background capture, hidden-block overlay and restoration.
 #![forbid(unsafe_code)]
 use crate::display_refresh::enqueue_readback;
+use crate::hdma::HdmaObject;
 use crate::player_transitions::xray::BlendPhase;
 use crate::ram::{RawRam, word};
 use crate::runtime_access::{RuntimeAccess, SessionView};
@@ -104,19 +105,13 @@ fn copy_background<H: Host + ?Sized>(game: &mut H) {
     }
 }
 
-pub fn freeze_and_backup<H: Host + ?Sized>(k: u16, game: &mut H) {
+/// Back up BG2's scroll in A and B and the layer blending byte in C's low
+/// byte; `restore_left` puts them back.
+pub fn freeze_and_backup<H: Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
     game.ram().write_byte(0xa78, 1);
-    let index = usize::from(k as u8);
-    game.ram()
-        .write_byte(0x1914 + index, word!(game.reg_BG2HOFS) as u8);
-    game.ram()
-        .write_byte(0x1915 + index, game.ram().read_byte(0xb6));
-    game.ram()
-        .write_byte(0x1920 + index, word!(game.reg_BG2VOFS) as u8);
-    game.ram()
-        .write_byte(0x1921 + index, game.ram().read_byte(0xb8));
-    game.ram()
-        .write_byte(0x192c + index, game.ram().read_byte(0x59));
+    object.a = u16::from_le_bytes([word!(game.reg_BG2HOFS) as u8, game.ram().read_byte(0xb6)]);
+    object.b = u16::from_le_bytes([word!(game.reg_BG2VOFS) as u8, game.ram().read_byte(0xb8)]);
+    object.c = (object.c & 0xff00) | u16::from(game.ram().read_byte(0x59));
 }
 pub fn capture_bg1_right<H: Host + ?Sized>(game: &mut H) {
     enqueue_readback(0x58, 1024, 0x6800, 2048, false, game);
@@ -403,7 +398,7 @@ pub fn set_backdrop<H: Host + ?Sized>(game: &mut H) {
         word!(game.palette_buffer[0] = 3171);
     }
 }
-pub fn restore_left<H: Host + ?Sized>(_k: u16, game: &mut H) {
+pub fn restore_left<H: Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
     word_transfers!(game, ascending, 1; native(0xa88) <- value(1));
     game.ram().write_byte(0xa8a, 0x98);
     word_transfers!(game, ascending, 1; native(0xa8b) <- value(0));
@@ -413,27 +408,22 @@ pub fn restore_left<H: Host + ?Sized>(_k: u16, game: &mut H) {
     word!(game.hdma_table_1[0] = 255);
     game.apply_xray_blending(BlendPhase::Restore);
     word!(game.palette_buffer[0] = 0);
-    let v2: i32 = word!(game.hdma_object_index) as i32 >> 1;
-    word!(game.reg_BG2HOFS = word!(game.hdma_object_A[v2]));
-    word!(game.reg_BG2VOFS = word!(game.hdma_object_B[v2]));
-    game.ram().write_byte(
-        0x59,
-        game.ram()
-            .read_byte(0x192c + usize::from(word!(game.hdma_object_index))),
-    );
+    word!(game.reg_BG2HOFS = object.a);
+    word!(game.reg_BG2VOFS = object.b);
+    game.ram().write_byte(0x59, object.c as u8);
     if (word!(game.vram_write_queue_tail) as i16).wrapping_sub(240) < 0 {
         upload_screen(0x5000, 0, game);
         word!(game.demo_input_pre_instr += 1);
     }
 }
-pub fn restore_right<H: Host + ?Sized>(_k: u16, game: &mut H) {
+pub fn restore_right<H: Host + ?Sized>(game: &mut H) {
     game.apply_xray_blending(BlendPhase::Restore);
     if (word!(game.vram_write_queue_tail) as i16).wrapping_sub(240) < 0 {
         upload_screen(0x5800, 1, game);
         word!(game.demo_input_pre_instr += 1);
     }
 }
-pub fn finish_restore<H: Host + ?Sized>(_k: u16, game: &mut H) {
+pub fn finish_restore<H: Host + ?Sized>(object: &mut HdmaObject, game: &mut H) {
     game.apply_xray_blending(BlendPhase::Restore);
     if word!(game.time_is_frozen_flag) != 0 {
         word! { game, 0;
@@ -447,8 +437,7 @@ pub fn finish_restore<H: Host + ?Sized>(_k: u16, game: &mut H) {
             demo_input_prev, demo_input_prev_new, demo_backup_prev_controller_input,
         }
         game.finish_xray();
-        word_transfers!(game, ascending, 1;
-            native(0x18b4 + 2 * usize::from(word!(game.hdma_object_index) >> 1)) <- value(0));
+        object.channels = 0;
         game.queue_sound(0, 0xa, 6);
         if (word!(game.fx_type) as u8) != 36 {
             game.ram().write_byte(0x76, 0x80);

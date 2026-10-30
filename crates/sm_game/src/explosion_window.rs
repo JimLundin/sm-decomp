@@ -107,7 +107,7 @@ pub fn try_crystal_flash<H: Host + ?Sized>(game: &mut H) -> bool {
     );
     game.initialize_crystal_flash()
 }
-pub fn finish_power_bomb<H: Host + ?Sized>(v0: u16, game: &mut H) {
+pub fn finish_power_bomb<H: Host + ?Sized>(object: &mut HdmaObject, v0: u16, game: &mut H) {
     {
         if game.player_x() != word!(game.power_bomb_explosion_x_pos)
             || game.player_y() != word!(game.power_bomb_explosion_y_pos)
@@ -117,8 +117,10 @@ pub fn finish_power_bomb<H: Host + ?Sized>(v0: u16, game: &mut H) {
         }
         word!(game.power_bomb_explosion_status = 0);
         let v1: i32 = v0 as i32 >> 1;
+        // The right half is the next object, which stays on the host.
+        object.channels = 0;
         word! { game, 0;
-            hdma_object_channels_bitmask[v1], hdma_object_channels_bitmask[(v1 + 1)],
+            hdma_object_channels_bitmask[(v1 + 1)],
             power_bomb_pre_explosion_flash_radius, power_bomb_explosion_radius,
         }
         game.player_command(0x1e);
@@ -399,15 +401,13 @@ pub fn begin_crystal_flash<H: Host + ?Sized>(game: &mut H) {
     begin_pre_flash(game);
     game.queue_sound(0, (1) as u8, 6);
 }
-pub fn finish_crystal_flash<H: Host + ?Sized>(k: u16, game: &mut H) {
-    {
-        let v0: u16 = k;
-        word! { game, 0; power_bomb_flag, power_bomb_explosion_status }
-        let v1: i32 = v0 as i32 >> 1;
-        word! { game, 0;
-            hdma_object_channels_bitmask[v1], hdma_object_channels_bitmask[(v1 + 1)],
-            power_bomb_pre_explosion_flash_radius, power_bomb_explosion_radius,
-        }
+pub fn finish_crystal_flash<H: Host + ?Sized>(object: &mut HdmaObject, k: u16, game: &mut H) {
+    word! { game, 0; power_bomb_flag, power_bomb_explosion_status }
+    // The right half is the next object, which stays on the host.
+    object.channels = 0;
+    word! { game, 0;
+        hdma_object_channels_bitmask[(k as i32 >> 1) + 1],
+        power_bomb_pre_explosion_flash_radius, power_bomb_explosion_radius,
     }
 }
 #[forbid(unsafe_code)]

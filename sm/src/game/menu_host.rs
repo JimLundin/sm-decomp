@@ -206,9 +206,6 @@ impl MenuRuntime for Game {
         // SAFETY: HDMA updates run from the frame loop with the backend installed.
         unsafe { crate::game::music::HandleMusicQueue(self) }
     }
-    fn hdma_call(&mut self, address: u32, slot: u16) {
-        sm_game::hdma_dispatch::hdma_call(address, slot, self)
-    }
     fn hdma_effect(&mut self, effect: sm_game::hdma_objects::HdmaEffect, slot: u16) {
         use sm_game::hdma_effects::HdmaEffects;
         use sm_game::hdma_objects::HdmaEffect::*;

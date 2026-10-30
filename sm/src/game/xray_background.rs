@@ -3,7 +3,9 @@
 use crate::game::player_transitions::xray::BlendPhase;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
-pub(crate) use sm_game::xray_background::{restore_left, restore_right, reveal_room_block};
+pub(crate) use sm_game::xray_background::{
+    finish_restore, restore_left, restore_right, reveal_room_block,
+};
 
 impl sm_game::xray_background::Host for Game {
     fn xray_blend_mask(&mut self) -> u16 {
@@ -29,9 +31,6 @@ impl sm_game::xray_background::Host for Game {
 
 pub unsafe fn build_overlay(game: &mut Game) {
     sm_game::xray_background::build_overlay(game);
-}
-pub unsafe fn finish_restore(k: u16, game: &mut Game) {
-    sm_game::xray_background::finish_restore(k, game);
 }
 pub unsafe fn reveal_room_items(game: &mut Game) {
     sm_game::xray_background::reveal_room_items(&mut Runtime::new(game));

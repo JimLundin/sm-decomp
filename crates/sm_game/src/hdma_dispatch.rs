@@ -182,7 +182,7 @@ pub const HDMA_PRE_ACTIONS: [(u32, HdmaPreAction); 59] = [
 ];
 
 /// Run the indirect call at `address` for HDMA object `k`.
-pub fn hdma_call<H>(address: u32, k: u16, game: &mut H)
+fn hdma_call<H>(address: u32, k: u16, game: &mut H)
 where
     H: Host + explosion_window::Host + xray_background::Host + ?Sized,
 {
@@ -197,11 +197,11 @@ where
         BeginPrescaledPreFlash => explosion_window::begin_prescaled_pre_flash(game),
         BeginExplosion => explosion_window::begin_explosion(game),
         BeginPrescaledExplosion => explosion_window::begin_prescaled_explosion(game),
-        FinishPowerBomb => explosion_window::finish_power_bomb(k, game),
+        FinishPowerBomb | FinishCrystalFlash | FreezeAndBackup => {
+            unreachable!("run_call runs {target:?}")
+        }
         BeginCrystalFlash => explosion_window::begin_crystal_flash(game),
-        FinishCrystalFlash => explosion_window::finish_crystal_flash(k, game),
         Nothing => {}
-        FreezeAndBackup => xray_background::freeze_and_backup(k, game),
         CaptureBg1Right => xray_background::capture_bg1_right(game),
         CaptureBg1Left => xray_background::capture_bg1_left(game),
         BuildOverlay => xray_background::build_overlay(game),
@@ -210,6 +210,27 @@ where
         UploadRight => xray_background::upload_right(game),
         SetBackdrop => xray_background::set_backdrop(game),
         InitializeSuitPickup => game.hdma_effect(HdmaEffect::InitializeSuitPickup, k),
+    }
+}
+
+/// Run the HDMA call at `address` for object `index`, as `run_pre_action`.
+pub(crate) fn run_call<I>(address: u32, index: usize, it: &mut I)
+where
+    I: crate::hdma_program::Interpreter,
+    I::Game: DispatchHost,
+{
+    let slot = 2 * index as u16;
+    match HDMA_CALLS.iter().find(|(at, _)| *at == address) {
+        Some((_, HdmaCall::FreezeAndBackup)) => {
+            it.with_object(index, xray_background::freeze_and_backup)
+        }
+        Some((_, HdmaCall::FinishPowerBomb)) => it.with_object(index, |object, game| {
+            explosion_window::finish_power_bomb(object, slot, game)
+        }),
+        Some((_, HdmaCall::FinishCrystalFlash)) => it.with_object(index, |object, game| {
+            explosion_window::finish_crystal_flash(object, slot, game)
+        }),
+        _ => it.foreign(|game| hdma_call(address, slot, game)),
     }
 }
 
@@ -239,6 +260,8 @@ where
         WaterBackground => it.with_object(index, liquid_effects::water_background),
         WaterWave => it.with_object(index, liquid_effects::water_wave),
         WaterFlat => it.foreign(liquid_effects::water_flat),
+        RestoreLeft => it.with_object(index, xray_background::restore_left),
+        FinishRestore => it.with_object(index, xray_background::finish_restore),
         SkyHorizontalScroll => it.with_object(index, scrolling_sky::update_horizontal_scroll),
         PowerBombAfterglow => it.with_object(index, explosion_window::power_bomb_afterglow),
         CrystalFlashAfterglow => it.with_object(index, explosion_window::crystal_flash_afterglow),
@@ -281,6 +304,8 @@ fn host_pre_action<H: DispatchHost + ?Sized>(target: HdmaPreAction, k: u16, game
     use HdmaPreAction::*;
     match target {
         Nothing
+        | RestoreLeft
+        | FinishRestore
         | LavaSurface
         | LavaBackground
         | WaterSurface
@@ -304,9 +329,7 @@ fn host_pre_action<H: DispatchHost + ?Sized>(target: HdmaPreAction, k: u16, game
         XrayBeamInitial => game.hdma_effect(HdmaEffect::AdvanceXrayBeam(BeamPhase::Initial), k),
         XrayBeamWidening => game.hdma_effect(HdmaEffect::AdvanceXrayBeam(BeamPhase::Widening), k),
         XrayBeamFull => game.hdma_effect(HdmaEffect::AdvanceXrayBeam(BeamPhase::Full), k),
-        RestoreLeft => xray_background::restore_left(k, game),
-        RestoreRight => xray_background::restore_right(k, game),
-        FinishRestore => xray_background::finish_restore(k, game),
+        RestoreRight => xray_background::restore_right(game),
         PowerBombBlending => explosion_window::set_power_bomb_blending(k, game),
         CrystalFlashBlending => explosion_window::set_crystal_flash_blending(k, game),
         SkyVerticalScroll => scrolling_sky::update_vertical_scroll(k, game),

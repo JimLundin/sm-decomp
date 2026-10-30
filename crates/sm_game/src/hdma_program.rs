@@ -29,6 +29,19 @@ pub trait HdmaLease:
     fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
 }
 
+/// Run `action` on the lease's host with the object the interpreter is
+/// running lent to it, as `Interpreter::with_object`.
+pub fn with_current_object<L: HdmaLease + ?Sized, T>(
+    lease: &mut L,
+    action: impl FnOnce(&mut HdmaObject, &mut L::Game) -> T,
+) -> T {
+    let index = usize::from(lease.session().hdma.selected >> 1);
+    let mut object = lease.session().hdma.objects[index];
+    let result = lease.foreign(|game| action(&mut object, game));
+    lease.session_mut().hdma.objects[index] = object;
+    result
+}
+
 /// A host that can lease its Session to the interpreter.
 pub trait LeaseHdma: crate::runtime_access::RuntimeAccess {
     type Lease<'a>: HdmaLease
@@ -209,7 +222,7 @@ fn execute<I: Interpreter>(opcode: u32, index: usize, script: Script, it: &mut I
         8947076 => it.objects().objects[index].pre_instruction = 0x858a,
         8947124 => {
             let address = script.load24(0);
-            it.foreign(|game| game.hdma_call(address, slot));
+            crate::hdma_dispatch::run_call(address, index, it);
             return script.advance(3);
         }
         8947180 | 8947185 | 8947207 | 8947215 => {

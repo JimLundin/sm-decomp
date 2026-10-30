@@ -55,8 +55,6 @@ pub trait MenuRuntime:
     fn handle_music_queue(&mut self);
     /// Compose this frame's layer blending through the session view.
     fn update_layer_blending(&mut self);
-    /// Run HDMA call `address` for object `slot`.
-    fn hdma_call(&mut self, address: u32, slot: u16);
     /// Run an HDMA effect through the session view.
     fn hdma_effect(&mut self, effect: crate::hdma_objects::HdmaEffect, slot: u16);
     /// Gameplay event and boss flags, as the original's checks return them.

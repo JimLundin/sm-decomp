@@ -477,14 +477,15 @@ impl Runtime<'_> {
 
     pub(crate) fn advance_xray_background(&mut self) {
         use crate::game::xray_background::{finish_restore, restore_left, restore_right};
+        use sm_game::hdma_program::with_current_object;
         self.apply_xray_blending(BlendPhase::Beam);
         let stages: [fn(&mut Self); 6] = [
             |r| r.advance_xray_beam(BeamPhase::Initial),
             |r| r.advance_xray_beam(BeamPhase::Widening),
             |r| r.advance_xray_beam(BeamPhase::Full),
-            |r| r.foreign(|game| restore_left(6, game)),
-            |r| r.foreign(|game| restore_right(8, game)),
-            |r| r.foreign(|game| unsafe { finish_restore(10, game) }),
+            |r| with_current_object(r, restore_left),
+            |r| r.foreign(restore_right),
+            |r| with_current_object(r, finish_restore),
         ];
         // Retain the six-entry bounds check after the blending writes.
         stages[usize::from(self.session().player.demo.pre_action)](self);
