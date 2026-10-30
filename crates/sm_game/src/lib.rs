@@ -114,6 +114,7 @@ pub mod actors {
     pub mod botwoon;
     pub mod botwoon_death;
     pub mod boulder;
+    pub mod bull;
     pub mod cacatac;
     pub mod ceres_doors;
     pub mod ceres_ridley;
@@ -202,6 +203,7 @@ pub mod actors {
     pub mod torizo;
     pub mod tripper;
     pub mod work_robot;
+    pub mod wrecked_ship_spark;
     pub mod yapping_maw;
     pub mod zeb;
     pub mod zebetites;

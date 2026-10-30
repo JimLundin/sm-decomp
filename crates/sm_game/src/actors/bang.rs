@@ -3,7 +3,7 @@
 use crate::actors::access::{AccessMode::Native, ActorAccess};
 use crate::actors::api;
 use crate::actors::combat::{self, current_slot};
-use crate::actors::host::{ActorLease, LeaseActors};
+use crate::actors::host::{ActorLease, LeaseActors, sign_extend8};
 use crate::actors::layouts::part_view;
 use crate::enemy_projectiles::access::shot_word;
 use crate::enemy_projectiles::host::ShotMember;
@@ -79,13 +79,6 @@ const SIGN: u16 = 0x8000;
 
 /// Sign-extend the low byte when bit 7 is set; otherwise keep the high byte,
 /// as the original did.
-fn sign_extend8(value: u16) -> u16 {
-    if value & 0x80 != 0 {
-        value | 0xff00
-    } else {
-        value
-    }
-}
 /// Set bang instruction list: start the list for the new index if it changed.
 fn set_instruction_list(runtime: &mut impl ActorLease) {
     let bang = current_slot(runtime);

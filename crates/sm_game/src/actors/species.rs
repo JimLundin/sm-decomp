@@ -9,13 +9,14 @@
 //! routine here means moving its arm.
 use crate::actors::host::{ActorHost, ActorRuntime, Death, LeaseActors, Shot};
 use crate::actors::{
-    alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, cacatac, ceres_doors,
-    ceres_ridley, choot, covern, crawlers, crocomire_reactions, dachora_run, draygon_death,
-    draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep, elevator,
-    escape_critters, etecoon, evir, fire_arc, fireflea, fune, gamet, geega, kago, kraid,
+    alcoon, atomic, bang, beetom, blue_brinstar_face_block, botwoon, boulder, bull, cacatac,
+    ceres_doors, ceres_ridley, choot, covern, crawlers, crocomire_reactions, dachora_run,
+    draygon_death, draygon_eye, draygon_flight, draygon_grab, draygon_host, draygon_sweep,
+    elevator, escape_critters, etecoon, evir, fire_arc, fireflea, fune, gamet, geega, kago, kraid,
     magdollite, metroid, mini_kraid, mochtroid, morph_ball_eye, oum, phantoon, phantoon_actions,
     puyo, reflec, ridley, rinka, roach, shaktool, sidehopper, skree, skultera, space_pirates,
-    statues, tatori, torizo, tripper, work_robot, yapping_maw, zeb, zebetites, zoa,
+    statues, tatori, torizo, tripper, work_robot, wrecked_ship_spark, yapping_maw, zeb, zebetites,
+    zoa,
 };
 use crate::enemy_script::EnemyScript;
 use crate::ram::word;
@@ -549,6 +550,11 @@ pub fn ai<H: AiHost>(ea: u32, game: &mut H) {
         11063668 => work_robot::touch(game),
         11063693 => work_robot::shot_deactivated(game),
         11063698 => work_robot::shot(game),
+        11065545 => bull::initialize(game),
+        11065611 => bull::main_ai(game),
+        11066132 => bull::shot(game),
+        11068983 => wrecked_ship_spark::initialize(game),
+        11069070 => wrecked_ship_spark::main_ai(game),
         10663876 => {
             if !rinka::main_ai(game) {
                 game.unknown_routine();
@@ -808,6 +814,7 @@ pub fn instruction<H: InstructionHost>(
         10722422 | 10722444 => tripper::set_x_movement(true, j, game),
         10725992 => sidehopper::queue_sound(j, game),
         10657941 => cacatac::resume_moving(k, j, game),
+        11068957 | 11068970 => wrecked_ship_spark::set_intangible(game, ea == 11068957, j),
         11062537 | 11062692 | 11062762 | 11062917 | 11062987 | 11062991 | 11063146 | 11063216
         | 11063371 | 11063441 | 11063490 | 11063494 | 11063506 | 11063552 | 11063559 | 11063601
         | 11063613 | 11063659 => work_robot::instruction(ea, k, j, game),
