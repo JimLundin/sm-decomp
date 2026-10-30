@@ -559,12 +559,6 @@ impl sm_game::actors::etecoon::Host for Game {
             amount,
         ) == crate::game::actors::api::MovementResult::Blocked
     }
-
-    fn direction_to_player(&mut self) -> sm_game::actors::api::PlayerDirection {
-        crate::game::actors::api::direction_to_player(
-            &mut crate::game::session_runtime::Runtime::new(self),
-        )
-    }
 }
 
 // The named bank $A7 functions are the ones `DispatchEnemyPreInstr` dispatches on.
