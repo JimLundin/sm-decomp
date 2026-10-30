@@ -1,11 +1,10 @@
 //! Phantoon's figure-8 flight and its casual flames (bank $A7:CFCA-$A7:D2D0).
 #![forbid(unsafe_code)]
-use crate::actors::host::ActorHost;
+use crate::actors::boss_lease::BossState;
 use crate::actors::layouts::part_view;
 use crate::actors::phantoon_actions::Mouth;
+use crate::actors::session_slots::session_slot;
 use crate::cartridge::rom_table_word;
-use crate::ram::RawRam as _;
-use crate::ram::slot;
 use sm_data::cartridge::RomRecord;
 
 part_view! {
@@ -43,7 +42,7 @@ const SPAWN_FLAME: u16 = 0xcceb;
 const NEW_PATTERN: u16 = u16::MAX;
 const SIGN: u16 = 0x8000;
 
-fn native_record(address: u16, game: &mut (impl ActorHost + ?Sized)) -> RomRecord {
+fn native_record(address: u16, game: &mut (impl BossState + ?Sized)) -> RomRecord {
     crate::cartridge::native_record(BANK, address, game)
 }
 
@@ -80,33 +79,33 @@ fn stage(reversed: bool, stage: u16) -> Stage {
 
 /// Update figure-8 Phantoon speed ($A7:D114), or its reverse ($A7:D193):
 /// accelerate, then slow, through the movement stages.
-fn update_speed(reversed: bool, game: &mut (impl ActorHost + ?Sized)) {
+fn update_speed(reversed: bool, game: &mut (impl BossState + ?Sized)) {
     let Stage {
         acceleration,
         bound,
         clamp,
         lower,
         restart,
-    } = stage(reversed, slot!(game, Body[BODY].movement_stage));
-    slot!(
+    } = stage(reversed, session_slot!(game, Body[BODY].movement_stage));
+    session_slot!(
         game,
         Body[BODY](speed, speed_subpixel) += acceleration as u32
     );
     let reached = if lower {
-        slot!(game, Body[BODY].speed) == bound
-            || (slot!(game, Body[BODY].speed) as i16).wrapping_sub(bound as i16) < 0
+        session_slot!(game, Body[BODY].speed) == bound
+            || (session_slot!(game, Body[BODY].speed) as i16).wrapping_sub(bound as i16) < 0
     } else {
-        (slot!(game, Body[BODY].speed) as i16).wrapping_sub(bound as i16) >= 0
+        (session_slot!(game, Body[BODY].speed) as i16).wrapping_sub(bound as i16) >= 0
     };
     if reached {
-        slot!(game, Body[BODY].speed = clamp);
-        slot!(game, Body[BODY].speed_subpixel = 0);
-        slot!(
+        session_slot!(game, Body[BODY].speed = clamp);
+        session_slot!(game, Body[BODY].speed_subpixel = 0);
+        session_slot!(
             game,
             Body[BODY].movement_stage = if restart {
                 0
             } else {
-                slot!(game, Body[BODY].movement_stage).wrapping_add(1)
+                session_slot!(game, Body[BODY].movement_stage).wrapping_add(1)
             }
         );
     }
@@ -123,8 +122,8 @@ fn offset_position(position: u16, byte: u8, reversed: bool) -> u16 {
 
 /// Move Phantoon in figure-8 ($A7:D215), or in reverse ($A7:D271): one step
 /// of the movement data for each pixel of speed.
-fn move_in_figure_eight(reversed: bool, game: &mut (impl ActorHost + ?Sized)) {
-    let speed = slot!(game, Body[BODY].speed);
+fn move_in_figure_eight(reversed: bool, game: &mut (impl BossState + ?Sized)) {
+    let speed = session_slot!(game, Body[BODY].speed);
     let mut remaining = i32::from(if reversed {
         (-i32::from(speed)) as u16
     } else {
@@ -132,35 +131,43 @@ fn move_in_figure_eight(reversed: bool, game: &mut (impl ActorHost + ?Sized)) {
     });
     while remaining != 0 {
         let record = native_record(
-            (2 * i32::from(slot!(game, Body[BODY].movement_index)) + i32::from(MOVEMENT_DATA))
-                as u16,
+            (2 * i32::from(session_slot!(game, Body[BODY].movement_index))
+                + i32::from(MOVEMENT_DATA)) as u16,
             game,
         );
         // Each position read precedes its lazy ROM byte; X is stored before Y.
-        slot!(
+        session_slot!(
             game,
-            Body[BODY].base.x_pos =
-                offset_position(slot!(game, Body[BODY].base.x_pos), record.byte(0), reversed)
+            Body[BODY].base.x_pos = offset_position(
+                session_slot!(game, Body[BODY].base.x_pos),
+                record.byte(0),
+                reversed
+            )
         );
-        slot!(
+        session_slot!(
             game,
-            Body[BODY].base.y_pos =
-                offset_position(slot!(game, Body[BODY].base.y_pos), record.byte(1), reversed)
+            Body[BODY].base.y_pos = offset_position(
+                session_slot!(game, Body[BODY].base.y_pos),
+                record.byte(1),
+                reversed
+            )
         );
-        slot!(
+        session_slot!(
             game,
             Body[BODY].movement_index = if reversed {
-                slot!(game, Body[BODY].movement_index).wrapping_sub(1)
+                session_slot!(game, Body[BODY].movement_index).wrapping_sub(1)
             } else {
-                slot!(game, Body[BODY].movement_index).wrapping_add(1)
+                session_slot!(game, Body[BODY].movement_index).wrapping_add(1)
             }
         );
         if reversed {
-            if slot!(game, Body[BODY].movement_index) & SIGN != 0 {
-                slot!(game, Body[BODY].movement_index = (STEPS - 1) as u16);
+            if session_slot!(game, Body[BODY].movement_index) & SIGN != 0 {
+                session_slot!(game, Body[BODY].movement_index = (STEPS - 1) as u16);
             }
-        } else if (i32::from(slot!(game, Body[BODY].movement_index)) - STEPS) & SIGN as i32 == 0 {
-            slot!(game, Body[BODY].movement_index = 0);
+        } else if (i32::from(session_slot!(game, Body[BODY].movement_index)) - STEPS) & SIGN as i32
+            == 0
+        {
+            session_slot!(game, Body[BODY].movement_index = 0);
         }
         remaining -= 1;
     }
@@ -169,52 +176,53 @@ fn move_in_figure_eight(reversed: bool, game: &mut (impl ActorHost + ?Sized)) {
 /// Handle casual flames ($A7:CFCA): count down the flame timer; at zero, step
 /// through the pattern's timers, setting the mouth to spawn a flame, or pick a
 /// new pattern once it is spent.
-fn handle_casual_flames(object: u16, game: &mut (impl ActorHost + ?Sized)) {
+fn handle_casual_flames(object: u16, game: &mut (impl BossState + ?Sized)) {
     let mouth = i32::from(object) + MOUTH_OFFSET;
-    let expired = slot!(game, Mouth[mouth].casual_flame_timer) == 1;
-    slot!(
+    let expired = session_slot!(game, Mouth[mouth].casual_flame_timer) == 1;
+    session_slot!(
         game,
         Mouth[mouth].casual_flame_timer =
-            slot!(game, Mouth[mouth].casual_flame_timer).wrapping_sub(1)
+            session_slot!(game, Mouth[mouth].casual_flame_timer).wrapping_sub(1)
     );
-    let underflow = slot!(game, Mouth[mouth].casual_flame_timer) & SIGN != 0;
+    let underflow = session_slot!(game, Mouth[mouth].casual_flame_timer) & SIGN != 0;
     if expired || underflow {
-        if slot!(game, Mouth[mouth].casual_flame_pattern_index) & SIGN == 0 {
-            let expired = slot!(game, Mouth[mouth].casual_flame_pattern_index) == 1;
-            slot!(
+        if session_slot!(game, Mouth[mouth].casual_flame_pattern_index) & SIGN == 0 {
+            let expired = session_slot!(game, Mouth[mouth].casual_flame_pattern_index) == 1;
+            session_slot!(
                 game,
                 Mouth[mouth].casual_flame_pattern_index =
-                    slot!(game, Mouth[mouth].casual_flame_pattern_index).wrapping_sub(1)
+                    session_slot!(game, Mouth[mouth].casual_flame_pattern_index).wrapping_sub(1)
             );
-            let underflow = slot!(game, Mouth[mouth].casual_flame_pattern_index) & SIGN != 0;
+            let underflow =
+                session_slot!(game, Mouth[mouth].casual_flame_pattern_index) & SIGN != 0;
             let address = if expired || underflow {
-                slot!(game, Mouth[mouth].casual_flame_pattern_index = NEW_PATTERN);
+                session_slot!(game, Mouth[mouth].casual_flame_pattern_index = NEW_PATTERN);
                 rom_table_word!(
                     game,
                     CASUAL_FLAME_TIMERS,
-                    slot!(game, Mouth[mouth].casual_flame_pattern) as isize
+                    session_slot!(game, Mouth[mouth].casual_flame_pattern) as isize
                 )
             } else {
                 // The live index read precedes the loaded-image capture and live pattern read.
-                (2 * i32::from(slot!(game, Mouth[mouth].casual_flame_pattern_index))
+                (2 * i32::from(session_slot!(game, Mouth[mouth].casual_flame_pattern_index))
                     + i32::from(rom_table_word!(
                         game,
                         CASUAL_FLAME_TIMERS,
-                        slot!(game, Mouth[mouth].casual_flame_pattern) as isize
+                        session_slot!(game, Mouth[mouth].casual_flame_pattern) as isize
                     ))) as u16
             };
-            slot!(
+            session_slot!(
                 game,
                 Mouth[mouth].casual_flame_timer = native_record(address, game).word(2)
             );
-            slot!(game, Mouth[mouth].base; instruction_timer = 1, current_instruction = SPAWN_FLAME);
+            session_slot!(game, Mouth[mouth].base; instruction_timer = 1, current_instruction = SPAWN_FLAME);
         } else {
-            let pattern = game.next_random() & CASUAL_FLAME_PATTERN_BITS;
-            slot!(game, Mouth[mouth].casual_flame_pattern = pattern);
+            let pattern = game.roll_random() & CASUAL_FLAME_PATTERN_BITS;
+            session_slot!(game, Mouth[mouth].casual_flame_pattern = pattern);
             let address = rom_table_word!(game, CASUAL_FLAME_TIMERS, pattern as isize);
             let count = native_record(address, game).word(0);
-            slot!(game, Mouth[mouth].casual_flame_pattern_index = count);
-            slot!(
+            session_slot!(game, Mouth[mouth].casual_flame_pattern_index = count);
+            session_slot!(
                 game,
                 Mouth[mouth].casual_flame_timer =
                     native_record((2 * i32::from(count) + i32::from(address)) as u16, game).word(2)
@@ -225,8 +233,8 @@ fn handle_casual_flames(object: u16, game: &mut (impl ActorHost + ?Sized)) {
 
 /// Adjust speed and move Phantoon in figure-8 ($A7:D0F1), then handle its
 /// casual flames. Was `advance_figure_eight`.
-pub fn fly_figure_eight(object: u16, game: &mut (impl ActorHost + ?Sized)) {
-    let reversed = slot!(game, Eye[EYE].movement_reversed) != 0;
+pub fn fly_figure_eight(object: u16, game: &mut (impl BossState + ?Sized)) {
+    let reversed = session_slot!(game, Eye[EYE].movement_reversed) != 0;
     update_speed(reversed, game);
     move_in_figure_eight(reversed, game);
     handle_casual_flames(object, game);
