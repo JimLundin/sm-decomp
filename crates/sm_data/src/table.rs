@@ -4,6 +4,17 @@
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct LengthError(pub usize);
 
+impl LengthError {
+    /// Whether `bytes` holds exactly `expected` bytes.
+    pub(crate) fn check(bytes: &[u8], expected: usize) -> Result<(), Self> {
+        if bytes.len() == expected {
+            Ok(())
+        } else {
+            Err(Self(bytes.len()))
+        }
+    }
+}
+
 /// `ROWS` records, each built from one row of little-endian words.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Rows<T, const ROWS: usize>(Box<[T; ROWS]>);
@@ -33,9 +44,7 @@ impl<T: Copy, const ROWS: usize> Rows<T, ROWS> {
         words: usize,
         row: impl Fn(&dyn Fn(usize) -> u16, usize) -> T,
     ) -> Result<Self, LengthError> {
-        if bytes.len() != ROWS * words * 2 {
-            return Err(LengthError(bytes.len()));
-        }
+        LengthError::check(bytes, ROWS * words * 2)?;
         let word = |at: usize| u16::from_le_bytes([bytes[2 * at], bytes[2 * at + 1]]);
         Ok(Self(Box::new(core::array::from_fn(|index| {
             row(&word, index)

@@ -15,9 +15,7 @@ pub struct RotationStep {
     pub mode7_a: u16,
 }
 
-/// The importer was given a byte count other than `BYTES`.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct LengthError(pub usize);
+pub use crate::table::LengthError;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Rotation {
@@ -26,9 +24,7 @@ pub struct Rotation {
 
 impl Rotation {
     pub fn import(bytes: &[u8]) -> Result<Self, LengthError> {
-        if bytes.len() != BYTES {
-            return Err(LengthError(bytes.len()));
-        }
+        LengthError::check(bytes, BYTES)?;
         let word = |at: usize| u16::from_le_bytes([bytes[at], bytes[at + 1]]);
         Ok(Self {
             steps: Box::new(core::array::from_fn(|step| RotationStep {

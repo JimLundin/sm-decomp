@@ -36,9 +36,7 @@ pub struct BeamOrigin {
     pub previous_y: u16,
 }
 
-/// The importer was given a byte count other than `BYTES`.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct LengthError(pub usize);
+pub use crate::table::LengthError;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct GrappleOrigins {
@@ -47,9 +45,7 @@ pub struct GrappleOrigins {
 
 impl GrappleOrigins {
     pub fn import(bytes: &[u8]) -> Result<Self, LengthError> {
-        if bytes.len() != BYTES {
-            return Err(LengthError(bytes.len()));
-        }
+        LengthError::check(bytes, BYTES)?;
         let word = |at: usize| u16::from_le_bytes([bytes[at], bytes[at + 1]]);
         Ok(Self {
             sets: core::array::from_fn(|set| {

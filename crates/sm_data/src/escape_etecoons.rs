@@ -17,9 +17,7 @@ pub struct EscapeEtecoon {
     pub x_velocity: u16,
 }
 
-/// The importer was given a byte count other than `BYTES`.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct LengthError(pub usize);
+pub use crate::table::LengthError;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EscapeEtecoons {
@@ -28,9 +26,7 @@ pub struct EscapeEtecoons {
 
 impl EscapeEtecoons {
     pub fn import(bytes: &[u8]) -> Result<Self, LengthError> {
-        if bytes.len() != BYTES {
-            return Err(LengthError(bytes.len()));
-        }
+        LengthError::check(bytes, BYTES)?;
         let column = |table: usize, etecoon: usize| {
             let at = 2 * (ETECOONS * table + etecoon);
             u16::from_le_bytes([bytes[at], bytes[at + 1]])

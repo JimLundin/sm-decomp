@@ -9,9 +9,7 @@ pub const ADDRESS: u32 = 0xb7_a800;
 /// Two rows of sixteen 32-byte tiles.
 pub const BYTES: usize = 0x400;
 
-/// The importer was given a byte count other than `BYTES`.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct LengthError(pub usize);
+pub use crate::table::LengthError;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SandHeapTiles {

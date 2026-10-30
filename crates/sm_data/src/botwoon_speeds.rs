@@ -13,9 +13,7 @@ pub struct BotwoonSpeed {
     pub body_travel_time: u16,
 }
 
-/// The importer was given a byte count other than `BYTES`.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct LengthError(pub usize);
+pub use crate::table::LengthError;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct BotwoonSpeeds {
@@ -24,9 +22,7 @@ pub struct BotwoonSpeeds {
 
 impl BotwoonSpeeds {
     pub fn import(bytes: &[u8]) -> Result<Self, LengthError> {
-        if bytes.len() != BYTES {
-            return Err(LengthError(bytes.len()));
-        }
+        LengthError::check(bytes, BYTES)?;
         let word = |at: usize| u16::from_le_bytes([bytes[at], bytes[at + 1]]);
         Ok(Self {
             levels: core::array::from_fn(|level| BotwoonSpeed {

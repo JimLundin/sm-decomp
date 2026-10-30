@@ -18,9 +18,7 @@ pub struct ShootingStar {
     pub start_delay: u16,
 }
 
-/// The importer was given a byte count other than `BYTES`.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct LengthError(pub usize);
+pub use crate::table::LengthError;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ShootingStars {
@@ -29,9 +27,7 @@ pub struct ShootingStars {
 
 impl ShootingStars {
     pub fn import(bytes: &[u8]) -> Result<Self, LengthError> {
-        if bytes.len() != BYTES {
-            return Err(LengthError(bytes.len()));
-        }
+        LengthError::check(bytes, BYTES)?;
         let word = |at: usize| u16::from_le_bytes([bytes[at], bytes[at + 1]]);
         Ok(Self {
             stars: Box::new(core::array::from_fn(|star| ShootingStar {
