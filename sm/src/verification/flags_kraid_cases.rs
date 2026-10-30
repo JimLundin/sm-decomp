@@ -1,6 +1,7 @@
 //! Actual even-area Kraid read/store callers, including palette and music prefixes.
 //! The same source is used for predecessor and candidate; no odd typed read here.
-use crate::{game::sm_a7, game_state::Game};
+use crate::game_state::Game;
+use sm_game::actors::kraid;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 pub(crate) const CASES: u32 = 8;
 fn put(bytes: &mut [u8], at: usize, value: u16) {
@@ -54,7 +55,7 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
         let mut output = b"KRDF1".to_vec();
         output.extend_from_slice(&id.to_le_bytes());
         record(&mut output, 0, 0, &game);
-        let result = sm_a7::Kraid_CheckIfDead(&mut game);
+        let result = kraid::is_dead(&mut *game);
         assert_eq!(result, dead, "flags.kraid.read.initial");
         assert_eq!(
             (0..game.ram().len())
@@ -66,7 +67,7 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
         );
         record(&mut output, 1, result, &game);
         if id >= 6 {
-            sm_a7::Kraid_FadeInBg_FadeInBp6(&mut game);
+            kraid::fade_in_bg6(&mut *game);
             // Last interpolation step copies actual target colours and returns
             // before music, native boss read/store and enemy transition.
             let targets = expected[0xc2c0..0xc2e0].to_vec();
@@ -84,7 +85,7 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
             assert!(!game.g_fail, "flags.kraid.palette.diagnostic");
             record(&mut output, 2, 0, &game);
         }
-        sm_a7::Kraid_FadeInBg_FadeInBp6(&mut game);
+        kraid::fade_in_bg6(&mut *game);
         put(&mut expected, 0xc400, 0);
         put(&mut expected, 0xc402, 12);
         put(&mut expected, 0x619, 3);
@@ -106,7 +107,7 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
         );
         assert!(!game.g_fail, "flags.kraid.completion.diagnostic");
         record(&mut output, 3, 0, &game);
-        let result = sm_a7::Kraid_CheckIfDead(&mut game);
+        let result = kraid::is_dead(&mut *game);
         assert_eq!(result, 1, "flags.kraid.read.after_completion");
         assert_eq!(
             (0..game.ram().len())

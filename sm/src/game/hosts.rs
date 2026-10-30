@@ -286,12 +286,15 @@ const _: () = {
     );
     assert!(at(f::DYING_EXPLOSIONS) == 11000203 && at(f::WAVY_DYING_CRY) == 11000401);
     assert!(at(f::DYING_FADE_OUT) == 11000454 && at(f::ALMOST_DEAD) == 11000535);
-    assert!(at(f::DEAD) == 11000637 && f::NOTHING == crate::game::sm_a7::fnnullsub_237 as u16);
+    assert!(
+        at(f::DEAD) == 11000637
+            && f::NOTHING == crate::game::constants::bank_a7::fnnullsub_237 as u16
+    );
 };
 
 // The named instruction lists are the decompilation's `kKraid_Ilist_CCxx`.
 const _: () = {
-    use crate::game::sm_a7::*;
+    use crate::game::constants::bank_a7::*;
     use sm_game::actors::phantoon::animation as a;
     assert!(
         a::BODY_INVULNERABLE == addr_kKraid_Ilist_CC41 as u16
@@ -313,7 +316,7 @@ const _: () = {
 
 impl sm_game::actors::phantoon::Host for Game {
     fn run_function(&mut self, address: u32) {
-        crate::game::sm_a7::run_a7_function(address, self);
+        crate::game::session_runtime::run_a7_function(address, self);
     }
 
     fn direction_to_player(&mut self) -> sm_game::actors::api::PlayerDirection {
@@ -386,7 +389,7 @@ const _: () = {
 
 // The named instruction lists, spritemaps and scripts are the decompilation's addresses.
 const _: () = {
-    use crate::game::sm_a7::*;
+    use crate::game::constants::bank_a7::*;
     use sm_game::actors::kraid::animation as a;
     assert!(
         a::FOOT_IDLE == addr_kKraid_Ilist_86E7 as u16
@@ -466,11 +469,11 @@ impl sm_game::actors::kraid::Host for Game {
     }
 
     fn set_shot_ai(&mut self, enemy_ptr: u16, shot_ai: u16) {
-        crate::game::sm_a7::set_kraid_shot_ai(enemy_ptr, shot_ai, self);
+        crate::game::session_runtime::set_kraid_shot_ai(enemy_ptr, shot_ai, self);
     }
 
     fn print_x_undefined(&mut self) {
-        crate::game::sm_a7::print_x_undefined();
+        crate::game::session_runtime::print_x_undefined();
     }
 
     #[cfg(sm_verify_dll)]
@@ -481,7 +484,7 @@ impl sm_game::actors::kraid::Host for Game {
 
 // The named bank $A7 functions are the ones `DispatchEnemyPreInstr` dispatches on.
 const _: () = {
-    use crate::game::sm_a7::*;
+    use crate::game::constants::bank_a7::*;
     use sm_game::actors::etecoon::function as f;
     const fn at(word: u16) -> i32 {
         0xa7_0000 | word as i32
@@ -518,7 +521,7 @@ const _: () = {
 
 // The named instruction lists are the decompilation's addresses.
 const _: () = {
-    use crate::game::sm_a7::*;
+    use crate::game::constants::bank_a7::*;
     use sm_game::actors::etecoon::instruction_list as l;
     assert!(
         l::LOOK_RIGHT_AND_RUN_LEFT == addr_kEtecoon_Ilist_E81E as u16
@@ -553,7 +556,7 @@ const _: () = {
 
 impl sm_game::actors::etecoon::Host for Game {
     fn run_function(&mut self, address: u32) {
-        crate::game::sm_a7::run_a7_function(address, self);
+        crate::game::session_runtime::run_a7_function(address, self);
     }
 
     fn probe_horizontal(&mut self, k: u16, amount: i32) -> bool {
@@ -573,7 +576,7 @@ impl sm_game::actors::etecoon::Host for Game {
 
 // The named bank $A7 functions are the ones `DispatchEnemyPreInstr` dispatches on.
 const _: () = {
-    use crate::game::sm_a7::*;
+    use crate::game::constants::bank_a7::*;
     use sm_game::actors::dachora_run::function as f;
     const fn at(word: u16) -> i32 {
         0xa7_0000 | word as i32
@@ -588,7 +591,7 @@ const _: () = {
 
 // The named instruction lists are the decompilation's addresses.
 const _: () = {
-    use crate::game::sm_a7::*;
+    use crate::game::constants::bank_a7::*;
     use sm_game::actors::dachora_run::instruction_list as l;
     assert!(
         l::RUNNING_LEFT == addr_kDachora_Ilist_F345 as u16
@@ -619,7 +622,7 @@ const _: () = {
 
 impl sm_game::actors::dachora_run::Host for Game {
     fn run_function(&mut self, address: u32) {
-        crate::game::sm_a7::run_a7_function(address, self);
+        crate::game::session_runtime::run_a7_function(address, self);
     }
 }
 

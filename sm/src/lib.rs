@@ -478,7 +478,6 @@ pub mod game {
     pub(crate) mod rising_falling;
     pub mod sm_a5;
     pub mod sm_a6;
-    pub mod sm_a7;
     pub mod sm_a9;
     pub(crate) mod space_pirates;
     pub(crate) mod spikey_platforms;

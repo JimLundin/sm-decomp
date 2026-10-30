@@ -8,10 +8,10 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             let fade = case::seed(id, game)?;
             observer::begin(id);
             if fade {
-                crate::game::sm_a7::Kraid_FadeInBg_FadeInBp6(game);
+                sm_game::actors::kraid::fade_in_bg6(game);
             } else {
                 observer::observe(0, game);
-                let result = crate::game::sm_a7::Kraid_CheckIfDead(game);
+                let result = sm_game::actors::kraid::is_dead(game);
                 observer::observe_result(1, result, game);
             }
             observer::take(if fade { 4 } else { 2 })

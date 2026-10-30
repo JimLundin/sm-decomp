@@ -372,6 +372,79 @@ pub mod bank_a6 {
     }
 }
 
+pub mod bank_a7 {
+    use super::Consts_A7;
+
+    crate::constants::typed_constants! { Consts_A7;
+        addr_kDachora_Ilist_F4C1 = 62657, addr_kDachora_Ilist_F4B9 = 62649,
+        addr_kDachora_Ilist_F4B3 = 62643, addr_kDachora_Ilist_F48B = 62603,
+        addr_kDachora_Ilist_F45B = 62555, addr_kDachora_Ilist_F407 = 62471,
+        addr_kDachora_Ilist_F3FF = 62463, addr_kDachora_Ilist_F3F7 = 62455,
+        addr_kDachora_Ilist_F3C9 = 62409, addr_kDachora_Ilist_F399 = 62361,
+        addr_kDachora_Ilist_F345 = 62277, addr_kDachora_Palette = 61989,
+        addr_kEtecoon_Ilist_E8D6 = 59606, addr_kEtecoon_Ilist_E8CE = 59598,
+        addr_kEtecoon_Ilist_E8C8 = 59592, addr_kEtecoon_Ilist_E8AC = 59564,
+        addr_stru_A7E898 = 59544, addr_kEtecoon_Ilist_E894 = 59540,
+        addr_stru_A7E880 = 59520, addr_kEtecoon_Ilist_E876 = 59510,
+        addr_kEtecoon_Ilist_E870 = 59504, addr_stru_A7E862 = 59490,
+        addr_kEtecoon_Ilist_E854 = 59476, addr_kEtecoon_Ilist_E83C = 59452,
+        addr_stru_A7E828 = 59432, addr_kEtecoon_Ilist_E81E = 59422,
+        addr_kKraid_Ilist_CC9D = 52381, addr_kKraid_Ilist_CC91 = 52369,
+        addr_kKraid_Ilist_CC81 = 52353, addr_kKraid_Ilist_CC53 = 52307,
+        addr_kKraid_Ilist_CC4D = 52301, addr_kKraid_Ilist_CC47 = 52295,
+        addr_kKraid_Ilist_CC41 = 52289, addr_locret_A7B831 = 47153,
+        addr_kKraidsRoomBg = 42774, addr_kKraid_Sprmap_A5DF = 42463,
+        addr_kKraidTilemaps_3 = 41160, addr_kKraidTilemaps_2 = 40392,
+        addr_kKraidTilemaps_1 = 39624, addr_kKraidTilemaps_0 = 38856,
+        addr_stru_A79764 = 38756, addr_stru_A7974A = 38730,
+        addr_stru_A796DA = 38618, addr_kKraid_Sprmap_8C6C = 35948,
+        addr_kKraid_Ilist_8B0A = 35594, addr_kKraid_Ilist_8B04 = 35588,
+        addr_kKraid_Ilist_8AFE = 35582, addr_kKraid_Ilist_8AF0 = 35568,
+        addr_kKraid_Ilist_8AA4 = 35492, addr_kKraid_Ilist_8A41 = 35393,
+        addr_kKraid_Ilist_89F3 = 35315, addr_kKraid_Ilist_8887 = 34951,
+        addr_off_A78885 = 34949, addr_kKraid_Ilist_87BD = 34749,
+        addr_off_A787BB = 34747, addr_kKraid_Ilist_86F3 = 34547,
+        addr_kKraid_Ilist_86ED = 34541, addr_kKraid_Ilist_86E7 = 34535,
+        addr_kSpritemap_Nothing_A7 = 32845,
+    }
+
+    crate::constants::typed_constants! { i32;
+        fnnullsub_170_A7 = 0xa7804c,
+        fnUnpauseHook_Kraid_IsDead = 0xa7c1fb, fnUnpauseHook_Kraid_IsAlive = 0xa7c24e,
+        fnKraid_UnpauseHook_IsSinking = 0xa7c2a0, fnPauseHook_Kraid = 0xa7c325,
+        fnnullsub_237 = 0xa7d4a8, fnPhantoon_Spawn8FireballsInCircleAtStart = 0xa7d4a9,
+        fnPhantoon_WaitBetweenSpawningAndSpinningFireballs = 0xa7d4ee, fnPhantoon_SpawnFireballsBeforeFight = 0xa7d508,
+        fnPhantoon_WavyFadeIn = 0xa7d54a, fnPhantoon_PickPatternForRound1 = 0xa7d596,
+        fnPhantoon_MovePhantoonInFigure8ThenOpenEye = 0xa7d5e7, fnPhantoon_EyeFollowsSamusUntilTimerRunsOut = 0xa7d60d,
+        fnPhantoon_BecomesSolidAndBodyVuln = 0xa7d65c, fnPhantoon_IsSwooping = 0xa7d678,
+        fnPhantoon_FadeoutWithSwoop = 0xa7d6b9, fnPhantoon_WaitAfterFadeOut = 0xa7d6d4,
+        fnPhantoon_MoveLeftOrRightAndPickEyeOpenPatt = 0xa7d6e2, fnPhantoon_FadeInBeforeFigure8 = 0xa7d72d,
+        fnPhantoon_BecomeSolidAfterRainingFireballs = 0xa7d73f, fnPhantoon_FadeInDuringFireballRain = 0xa7d767,
+        fnPhantoon_FollowSamusWithEyeDuringFireballRain = 0xa7d788, fnPhantoon_FadeOutDuringFireballRain = 0xa7d7d5,
+        fnPhantoon_SpawnRainingFireballs = 0xa7d7f7, fnPhantoon_FadeOutBeforeFirstFireballRain = 0xa7d82a,
+        fnPhantoon_FadeOutBeforeEnrage = 0xa7d85c, fnPhantoon_MoveEnragedPhantoonToTopCenter = 0xa7d874,
+        fnPhantoon_FadeInEnragedPhantoon = 0xa7d891, fnPhantoon_Enraged = 0xa7d8ac,
+        fnPhantoon_FadeoutAfterEnrage = 0xa7d916, fnPhantoon_CompleteSwoopAfterFatalShot = 0xa7d92e,
+        fnPhantoon_DyingPhantoonFadeInOut = 0xa7d948, fnPhantoon_DyingPhantoonExplosions = 0xa7d98b,
+        fnPhantoon_WavyDyingPhantoonAndCry = 0xa7da51, fnPhantoon_DyingFadeOut = 0xa7da86,
+        fnPhantoon_AlmostDead = 0xa7dad7, fnPhantoon_Dead = 0xa7db3d,
+        fnEtecoon_Func_4 = 0xa7e9af, fnEtecoon_Func_5 = 0xa7ea00,
+        fnEtecoon_Func_6 = 0xa7ea37, fnEtecoon_Func_7 = 0xa7eab5,
+        fnEtecoon_Func_8 = 0xa7eb02, fnEtecoon_Func_9 = 0xa7eb2c,
+        fnEtecoon_Func_10 = 0xa7eb50, fnEtecoon_Func_11 = 0xa7ebcd,
+        fnEtecoon_Func_12 = 0xa7ec1b, fnEtecoon_Func_16 = 0xa7ec97,
+        fnEtecoon_Func_17 = 0xa7ecbb, fnEtecoon_Func_18 = 0xa7ecdf,
+        fnEtecoon_Func_19 = 0xa7ed09, fnEtecoon_Func_20 = 0xa7ed2a,
+        fnEtecoon_Func_21 = 0xa7ed54, fnEtecoon_Func_22 = 0xa7ed75,
+        fnEtecoon_Func_23 = 0xa7edc7, fnEtecoon_Func_24 = 0xa7ee3e,
+        fnEtecoon_Func_25 = 0xa7ee9a, fnEtecoon_Func_26 = 0xa7eeb8,
+        fnDachora_Func_2 = 0xa7f570, fnDachora_Func_3 = 0xa7f5bc,
+        fnDachora_Func_4 = 0xa7f5ed, fnDachora_Func_5 = 0xa7f65e,
+        fnDachora_Func_7 = 0xa7f78f, fnDachora_Func_8 = 0xa7f806,
+        fnDachora_Func_11 = 0xa7f935, fnDachora_Func_12 = 0xa7f98c,
+    }
+}
+
 pub mod bank_a9 {
     use super::Consts_A9;
 

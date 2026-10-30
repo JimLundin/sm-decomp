@@ -118,6 +118,27 @@ fn reflec_shot(game: &mut Game) {
     }
 }
 
+/// The original "X undefined" debug message Kraid's foot and fingernails
+/// print. Was in bank $A7.
+pub(crate) fn print_x_undefined() {
+    unsafe { crate::c_library::printf(c"X undefined\n".as_ptr()) };
+}
+
+/// Sets the shot AI of Kraid's enemy definition at `enemy_ptr`. Was in bank $A7.
+pub(crate) fn set_kraid_shot_ai(enemy_ptr: u16, shot_ai: u16, game: &mut Game) {
+    (unsafe { crate::rtl::rom_record(0xa0, enemy_ptr, game) }).set_word(
+        core::mem::offset_of!(crate::game::prelude::EnemyDef, shot_ai),
+        shot_ai,
+    );
+    #[cfg(sm_verify_dll)]
+    crate::verify_probe::hit("actors.kraid.shot_ai.disabled");
+}
+
+/// Runs the bank $A7 function at `address` for the current enemy. Was in bank $A7.
+pub(crate) fn run_a7_function(address: u32, game: &mut Game) {
+    unsafe { actor_species_pre_instruction(address, game) };
+}
+
 /// Magdollite's diagnostic for an undefined lava height. Was in bank $A8.
 fn warn_lava_height(value: i32) {
     unsafe { crate::c_library::printf(c"Y undefined %d!\n".as_ptr(), value) };
@@ -1061,7 +1082,7 @@ use crate::game::actors::{self, api as actor_api};
 use crate::game::moving_platforms::{self as mechanisms, Event, Kind};
 use crate::game::rippers::{self, Kind as RipperKind};
 use crate::game::{ground_patrol, large_snail};
-use crate::game::{sm_a5, sm_a6, sm_a7, sm_a9};
+use crate::game::{sm_a5, sm_a6, sm_a9};
 use crate::types::EnemyData;
 use sm_game::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
 use sm_game::combat_rules::LatchMode;
@@ -1360,7 +1381,6 @@ crate::game::callback_dispatch! {
 
         0xa50000..=0xa5ffff => [sm_a5::DispatchEnemyAi(ea, game)];
         0xa60000..=0xa6ffff => [sm_a6::DispatchEnemyAi(ea, game)];
-        0xa70000..=0xa7ffff => [sm_a7::DispatchEnemyAi(ea, game)];
         0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyAi(ea, game)];
         0xb30000..=0xb3ffff => [{ crate::rtl::Unreachable(game); }];
     }
@@ -1450,7 +1470,6 @@ crate::game::address_dispatch! {
         10661079 => [crate::game::gunship::phase(k, 0xacd7, game)];
         10661134 => [crate::game::gunship::phase(k, 0xad0e, game)];
         10661165 => [crate::game::gunship::phase(k, 0xad2d, game)];
-        0xa70000..=0xa7ffff => [sm_a7::DispatchEnemyPreInstr(ea, k, game)];
     }
 }
 crate::game::callback_dispatch! {
@@ -1482,7 +1501,6 @@ crate::game::callback_dispatch! {
         10734712 => [maridia_snail::instruction(k, 4, j, game)];
         10742437 => [metroid::sound(false, j, game)]; 10742449 => [metroid::sound(true, j, game)];
         10741344 | 10739650 => [wall_crawlers::set_state(k, j, game)];
-        10991155 => [sm_a7::Kraid_Instr_1(k, j)];
         11048485 | 11048497 | 11048522 | 11048547 | 11048572 | 11048597 | 11048628 => [crate::game::actors::fune::instruction(ea, j, game)];
         11056990 => [j];
         11068957 | 11068970 => [crate::game::actors::wrecked_ship_spark::instruction(ea == 11068957, j, game)];
@@ -1543,7 +1561,6 @@ crate::game::callback_dispatch! {
         0xa30000..=0xa3ffff => [{ crate::rtl::Unreachable(game); EnemyScript::Stop }];
         0xa50000..=0xa5ffff => [sm_a5::DispatchEnemyInstr(ea, k, j, game)];
         0xa60000..=0xa6ffff => [sm_a6::DispatchEnemyInstr(ea, k, j, game)];
-        0xa70000..=0xa7ffff => [sm_a7::DispatchEnemyInstr(ea, k, j, game)];
 
         0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyInstr(ea, k, j, game)];
         11174004 => [{ crate::ram_map::slot!(game, EnemyData[k as i32].ai_preinstr = (0xaa807bi32) as u16); j }];

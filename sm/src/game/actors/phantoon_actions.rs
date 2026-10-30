@@ -1,6 +1,5 @@
 //! Phantoon's actions run in `sm_game::actors::phantoon_actions`.
 #![forbid(unsafe_code)]
-pub(crate) use sm_game::actors::phantoon_actions::spawn_casual_flame;
 
 // The destroyable flames are the decompilation's projectile.
 const _: () = assert!(
