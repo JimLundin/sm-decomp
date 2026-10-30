@@ -134,6 +134,13 @@ jobs:
           New-Item -ItemType Directory -Force -Path verifier | Out-Null
           Copy-Item target/verify-dll/sm_verify.dll verifier/
           Copy-Item -Recurse (Split-Path -Parent $env:LIBRARY_PATH) verifier/sdk
+      - name: Run the target packages' unit and integration tests instrumented
+        # Their coverage of crates/sm_game is reported next to the corpus's.
+        env:
+          RUSTFLAGS: -C instrument-coverage -C link-dead-code -L ${{ runner.temp }}/profiler
+        run: |
+          python -B .github/scripts/coverage_tests.py verifier/unit
+          if ($LASTEXITCODE -ne 0) { throw 'Instrumented target-package tests failed' }
       - uses: actions/upload-artifact@v4
         with:
           name: verifier
@@ -417,7 +424,17 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw 'Route profile merge failed' }
             $compare = @('route.profdata')
           }
-          python -B tools/coverage_summary.py (Join-Path $env:LLVM_BIN 'llvm-cov.exe') corpus.profdata verifier/sm_verify.dll coverage.md @compare
+          # The target packages' tests, alone and together with the corpus.
+          $unit = @(Get-ChildItem -Recurse -Filter *.profraw verifier/unit/profiles | ForEach-Object { $_.FullName })
+          if ($unit.Count -eq 0) { throw 'No unit-test coverage profiles were produced' }
+          $unit | Out-File -FilePath unit-profiles.txt -Encoding ascii
+          & (Join-Path $env:LLVM_BIN 'llvm-profdata.exe') merge -sparse -f unit-profiles.txt -o unit.profdata
+          if ($LASTEXITCODE -ne 0) { throw 'Unit-test profile merge failed' }
+          & (Join-Path $env:LLVM_BIN 'llvm-profdata.exe') merge -sparse corpus.profdata unit.profdata -o combined.profdata
+          if ($LASTEXITCODE -ne 0) { throw 'Combined profile merge failed' }
+          $objects = @(Get-Content verifier/unit/objects.txt | ForEach-Object { '--unit-object'; (Join-Path 'verifier/unit/bin' $_) })
+          $tests = @('--unit', 'unit.profdata', '--combined', 'combined.profdata') + $objects
+          python -B tools/coverage_summary.py (Join-Path $env:LLVM_BIN 'llvm-cov.exe') corpus.profdata verifier/sm_verify.dll coverage.md @compare @tests
           if ($LASTEXITCODE -ne 0) { throw 'Coverage summary failed' }
           Get-Content coverage.md -TotalCount 80 | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
       - uses: actions/upload-artifact@v4

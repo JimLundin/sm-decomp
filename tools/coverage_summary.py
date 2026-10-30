@@ -2,12 +2,15 @@
 """Summarise corpus source coverage of the instrumented verifier DLL.
 
 Usage: coverage_summary.py LLVM_COV PROFDATA OBJECT OUTPUT.md [ROUTE_PROFDATA]
+           [--unit UNIT_PROFDATA --combined COMBINED_PROFDATA --unit-object TEST_BINARY...]
 
 Reads `llvm-cov export` in memory and writes a markdown report covering the
 engine sources only (crates/sm_game and sm/src/game): per-module line and
 function coverage, files never executed, and the largest never-executed
 functions. With ROUTE_PROFDATA (the full 100% route) it also lists what the
-route executes that the corpus never does. Nothing ROM-derived is recorded;
+route executes that the corpus never does. With --unit, it also reports the
+target packages' unit and integration tests alone and together with the corpus
+(their test binaries are extra llvm-cov objects). Nothing ROM-derived is recorded;
 only source locations and counts.
 """
 import collections, functools, json, os, re, subprocess, sys
@@ -57,10 +60,11 @@ def source_name(path, line, fallback):
     return fallback
 
 
-def load(llvm_cov, profdata, obj):
+def load(llvm_cov, profdata, obj, *others):
     """Per-file (lines hit, lines, functions hit, functions) and per-function (count, size)."""
+    extra = [argument for other in others for argument in ("-object", other)]
     exported = subprocess.run(
-        [llvm_cov, "export", f"-instr-profile={profdata}", obj, "-skip-expansions"],
+        [llvm_cov, "export", f"-instr-profile={profdata}", obj, *extra, "-skip-expansions"],
         check=True, capture_output=True, text=True).stdout
     data = json.loads(exported)["data"][0]
     files = {}
@@ -87,9 +91,26 @@ def percent(hit, total):
     return f"{100 * hit / total:5.1f}%" if total else "  n/a"
 
 
+def totals(files):
+    """Lines hit, lines, functions hit, functions over `files`."""
+    return [sum(value[i] for value in files.values()) for i in range(4)]
+
+
 def main():
-    llvm_cov, profdata, obj, output = sys.argv[1:5]
-    route = sys.argv[5] if len(sys.argv) > 5 else None
+    arguments = sys.argv[1:]
+    options = {"--unit": None, "--combined": None}
+    objects = []
+    positional = []
+    while arguments:
+        argument = arguments.pop(0)
+        if argument == "--unit-object":
+            objects.append(arguments.pop(0))
+        elif argument in options:
+            options[argument] = arguments.pop(0)
+        else:
+            positional.append(argument)
+    llvm_cov, profdata, obj, output = positional[:4]
+    route = positional[4] if len(positional) > 4 else None
     files, functions = load(llvm_cov, profdata, obj)
     if not files:
         raise SystemExit("no engine sources in the coverage mapping (were .lcovfun records linked?)")
@@ -109,9 +130,33 @@ def main():
         rfhit = sum(v[2] for v in route_files.values())
         out += [f"Full 100% route alone: lines {rhit}/{total} ({percent(rhit, total).strip()}); "
                 f"functions {rfhit}/{ftotal} ({percent(rfhit, ftotal).strip()}).", ""]
-    out += ["## By module", "", "| Module | Lines | Functions |", "| --- | --- | --- |"]
+    if options["--unit"]:
+        unit_files, _ = load(llvm_cov, options["--unit"], *objects)
+        both, _ = load(llvm_cov, options["--combined"], obj, *objects)
+        uh, ut, ufh, uft = totals({path: value for path, value in unit_files.items()
+                                   if path.startswith("crates/sm_game/")})
+        ch, ct, cfh, cft = totals(both)
+        out += [f"Unit and integration tests alone (crates/sm_game): lines {uh}/{ut} "
+                f"({percent(uh, ut).strip()}); functions {ufh}/{uft} ({percent(ufh, uft).strip()}).",
+                f"Corpus and tests together: lines {ch}/{ct} ({percent(ch, ct).strip()}); "
+                f"functions {cfh}/{cft} ({percent(cfh, cft).strip()}).", ""]
+        combined_modules = collections.defaultdict(lambda: [0, 0, 0, 0])
+        for path, value in both.items():
+            module = path.rsplit("/", 1)[0] if path.count("/") > 3 else path
+            combined_modules[module] = [a + b for a, b in zip(combined_modules[module], value)]
+    else:
+        combined_modules = None
+    if combined_modules is not None:
+        out += ["## By module", "", "| Module | Lines | Functions | Lines with tests |",
+                "| --- | --- | --- | --- |"]
+    else:
+        out += ["## By module", "", "| Module | Lines | Functions |", "| --- | --- | --- |"]
     for module, (lh, lt, fh, ft) in sorted(modules.items(), key=lambda item: item[1][0] / max(item[1][1], 1)):
-        out.append(f"| `{module}` | {percent(lh, lt)} of {lt} | {percent(fh, ft)} of {ft} |")
+        row = f"| `{module}` | {percent(lh, lt)} of {lt} | {percent(fh, ft)} of {ft} |"
+        if combined_modules is not None:
+            th, tt = combined_modules[module][:2]
+            row += f" {percent(th, tt)} of {tt} |"
+        out.append(row)
     never = sorted((path for path, value in files.items() if value[0] == 0 and value[1]), key=lambda p: -files[p][1])
     out += ["", f"## Files never executed ({len(never)})", ""]
     out += [f"- `{path}` ({files[path][1]} lines)" for path in never]

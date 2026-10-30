@@ -52,7 +52,14 @@ jobs:
           deps=$(cargo tree -p sm_data -e normal --prefix none --format '{p}' | tail -n +2 || true)
           if [ -n "$deps" ]; then echo "sm_data has forbidden dependencies:"; echo "$deps"; exit 1; fi
       - name: Test target packages
-        run: cargo test --locked -p sm_data -p sm_game -p sm_runtime
+        # Unit, integration (tests/*.rs) and doc tests of all three packages.
+        # The summary lists every test binary and fails if one expected from
+        # the packages' sources did not run, so an unbuilt test file shows up.
+        run: |
+          if cargo test --locked -p sm_data -p sm_game -p sm_runtime --no-fail-fast > test.log 2>&1; then status=0; else status=$?; fi
+          cat test.log
+          python3 .github/scripts/test_summary.py test.log crates/sm_data crates/sm_game crates/sm_runtime || status=1
+          exit $status
       - name: Check every sm_data record imports from the original ROM
         # A record that rejects the cartridge leaves the game on its original ROM
         # reads, so replays would pass without exercising it. The log can hold
