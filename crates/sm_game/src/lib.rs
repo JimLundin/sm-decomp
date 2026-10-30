@@ -113,6 +113,7 @@ pub mod actors {
     pub mod contacts;
     pub mod content;
     pub mod corpses;
+    pub mod coven;
     pub mod crocomire_attack;
     pub mod crocomire_reactions;
     pub mod dachora;

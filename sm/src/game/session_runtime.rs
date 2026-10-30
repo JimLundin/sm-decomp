@@ -1144,8 +1144,8 @@ crate::game::callback_dispatch! {
         }];
         11048675 => crate::game::actors::fune::initialize;
         11048752 => crate::game::actors::fune::main_ai;
-        11049710 => crate::game::actors::wrecked_ship_ghost::initialize;
-        11049788 => crate::game::actors::wrecked_ship_ghost::advance;
+        11049710 => crate::game::actors::coven::initialize;
+        11049788 => crate::game::actors::coven::main_ai;
         11051537 => [{
             if !crate::game::actors::yapping_maw::main_ai(game, |operand, game| {
                 crate::rtl::WriteReg(crate::rtl::WRMPYA as u16, operand, game);
