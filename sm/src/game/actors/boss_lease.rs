@@ -1,12 +1,12 @@
 //! `sm_game::actors::boss_lease` for Game, over the RAM image and its effects,
 //! and for Runtime, on the leased Session.
 #![forbid(unsafe_code)]
-use super::{api, combat};
+use super::{api, combat, queries};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use sm_game::actors::boss_lease::{BossLease, BossState, LeaseBoss};
 use sm_game::actors::host::{ActorRuntime, BossEffects, Death, Shot};
-use sm_game::geometry::Point;
+use sm_game::geometry::{Point, Vector32};
 
 fn death(death: Death) -> api::DeathHandling {
     match death {
@@ -53,6 +53,24 @@ impl BossState for Game {
     }
     fn camera(&mut self) -> sm_game::camera::Camera {
         sm_game::camera::current(self)
+    }
+    fn scaled_cosine(&mut self, phase: u16, amplitude: u16) -> u16 {
+        BossEffects::actor_cosine(self, phase, amplitude)
+    }
+    fn scaled_sine(&mut self, phase: u16, amplitude: u16) -> u16 {
+        BossEffects::actor_sine(self, phase, amplitude)
+    }
+    fn direction_step(&mut self, phase: u16, amplitude: u16) -> Vector32 {
+        BossEffects::actor_direction_vector(self, phase, amplitude)
+    }
+    fn step_along(&mut self, phase: u16, vector: Vector32) {
+        BossEffects::apply_vector(self, phase, vector);
+    }
+    fn set_step_scratch(&mut self, value: u16) {
+        BossEffects::set_enemy_scratch(self, value);
+    }
+    fn actor_record(&mut self, bank: u8, address: u16) -> crate::rom::RomRecord {
+        BossEffects::actor_legacy_record(self, bank, address)
     }
 }
 
@@ -101,6 +119,31 @@ impl BossState for Runtime<'_> {
     }
     fn camera(&mut self) -> sm_game::camera::Camera {
         self.session().room.camera
+    }
+    fn scaled_cosine(&mut self, phase: u16, amplitude: u16) -> u16 {
+        (queries::sine_product(self, amplitude, phase.wrapping_add(64) as u8 as u16) >> 16) as u16
+    }
+    fn scaled_sine(&mut self, phase: u16, amplitude: u16) -> u16 {
+        (queries::sine_product(self, amplitude, phase.wrapping_add(0x80) as u8 as u16) >> 16) as u16
+    }
+    fn direction_step(&mut self, phase: u16, amplitude: u16) -> Vector32 {
+        // $A0:B7EE, the sine table the game's direction vector reads.
+        let game = &*self;
+        let [x, y] = [0x40u16, 0x80].map(|offset| {
+            let index = (phase.wrapping_add(offset) & 0x7f) as isize;
+            u32::from(sm_game::cartridge::rom_table_word!(game, 0xa0b7ee, index))
+                * u32::from(amplitude)
+        });
+        Vector32 { x, y }
+    }
+    fn step_along(&mut self, phase: u16, vector: Vector32) {
+        api::apply_vector(self, phase, vector);
+    }
+    fn set_step_scratch(&mut self, value: u16) {
+        self.session_mut().compatibility_enemy_scratch = value;
+    }
+    fn actor_record(&mut self, bank: u8, address: u16) -> crate::rom::RomRecord {
+        self.actor_legacy_record(bank, address)
     }
 }
 

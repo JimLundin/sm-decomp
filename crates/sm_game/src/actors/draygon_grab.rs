@@ -2,12 +2,16 @@
 //! letting her go (bank $A5:8E19-$A5:94DC, $A5:9B9A).
 //! Boss-specific words retain their native compatibility layout; no player copy exists.
 #![forbid(unsafe_code)]
+use crate::actors::boss_lease::{BossLease, BossState};
 use crate::actors::draygon_flight::{facing_animation, fire_wall_turret, foam_at_mouth};
 use crate::actors::draygon_host::{
     ARMS, BODY, Draygon, GRAPPLE_DROPPED, Host, INTANGIBLE, SIGN, TAIL, abs16, function,
     instruction_list as list,
 };
+use crate::actors::host::BossEffects as _;
 use crate::actors::queries::angle_from_delta;
+use crate::actors::session_slots::session_slot;
+
 use crate::enemy_script::EnemyScript;
 use crate::ram::RawRam as _;
 use crate::ram::{slot, word};
@@ -61,31 +65,31 @@ const DUST_CLOUD_Y: u16 = 0x10;
 const QUARTER_TURN: u8 = 0x40;
 
 /// Move 2 px a frame along the angle to (`dx`, `dy`).
-fn pursue<H: Host + ?Sized>(dx: u16, dy: u16, game: &mut H) {
+fn pursue<S: BossState + ?Sized>(dx: u16, dy: u16, game: &mut S) {
     let angle = QUARTER_TURN.wrapping_sub(angle_from_delta(dx, dy) as u8) as u16;
-    game.set_enemy_scratch(angle);
-    let vector = game.actor_direction_vector(angle, 2);
-    game.apply_vector(angle, vector);
+    game.set_step_scratch(angle);
+    let vector = game.direction_step(angle, 2);
+    game.step_along(angle, vector);
 }
 /// While the grapple is connected to a block, flash and run the hurt AI.
-fn hurt_by_grapple<H: Host + ?Sized>(game: &mut H) -> bool {
+fn hurt_by_grapple<S: BossState + ?Sized>(game: &mut S) -> bool {
     if word!(game.samus_grapple_flags) & GRAPPLE_CONNECTED == 0 {
         return false;
     }
-    let definition = slot!(game, Draygon[BODY].base.enemy_ptr);
+    let definition = session_slot!(game, Draygon[BODY].base.enemy_ptr);
     let duration = game
-        .actor_legacy_record(ENEMY_DEF_BANK, definition)
+        .actor_record(ENEMY_DEF_BANK, definition)
         .byte(ENEMY_DEF_HURT_AI_TIME);
-    slot!(
+    session_slot!(
         game,
         Draygon[BODY].base.flash_timer = u16::from(duration).wrapping_add(FLASH_EXTRA)
     );
-    slot!(game, Draygon[BODY].base.ai_handler_bits, |old| old
+    session_slot!(game, Draygon[BODY].base.ai_handler_bits, |old| old
         | HURT_AI);
     true
 }
-fn hold_offset<H: Host + ?Sized>(k: i32, game: &mut H) -> u16 {
-    if slot!(game, Draygon[k].facing_right) == 0 {
+fn hold_offset<S: BossState + ?Sized>(k: i32, game: &mut S) -> u16 {
+    if session_slot!(game, Draygon[k].facing_right) == 0 {
         0u16.wrapping_sub(HOLD_X)
     } else {
         HOLD_X
@@ -93,21 +97,24 @@ fn hold_offset<H: Host + ?Sized>(k: i32, game: &mut H) -> u16 {
 }
 /// Draygon body function - chase Samus ($A5:8E19): fly at Samus and grab her,
 /// unless the grapple repels Draygon. Was `acquire`.
-pub fn chase_samus<H: Host + ?Sized>(game: &mut H) {
+pub fn chase_samus<L: BossLease + ?Sized>(game: &mut L)
+where
+    L::Game: Host,
+{
     fire_wall_turret(game);
     if word!(game.samus_x_speed_divisor) == 0 {
-        slot!(game, Draygon[BODY].function = function::FLY_STRAIGHT_UP);
+        session_slot!(game, Draygon[BODY].function = function::FLY_STRAIGHT_UP);
         return;
     }
-    slot!(game, Draygon[BODY].base.properties, |old| old | INTANGIBLE);
+    session_slot!(game, Draygon[BODY].base.properties, |old| old | INTANGIBLE);
     let dx = hold_offset(BODY, game);
     let distance = abs16(
-        slot!(game, Draygon[BODY].base.x_pos)
+        session_slot!(game, Draygon[BODY].base.x_pos)
             .wrapping_add(dx)
             .wrapping_sub(game.player_x()),
     );
     if distance.wrapping_sub(GRAB_RANGE) & SIGN != 0
-        && abs16(slot!(game, Draygon[BODY].base.y_pos).wrapping_sub(game.player_y()))
+        && abs16(session_slot!(game, Draygon[BODY].base.y_pos).wrapping_sub(game.player_y()))
             .wrapping_sub(GRAB_RANGE)
             & SIGN
             != 0
@@ -118,12 +125,18 @@ pub fn chase_samus<H: Host + ?Sized>(game: &mut H) {
             [list::ARMS_LEFT_GRAB, list::ARMS_RIGHT_GRAB],
             game,
         );
-        if game.command_player(GRAB_COMMAND) != 0 {
-            slot!(game, Draygon[BODY].function = function::REPELLED_BY_GRAPPLE);
+        let direction = u16::from(session_slot!(game, Draygon[BODY].facing_right) != 0);
+        let repelled = game.foreign(|game| {
+            let repelled = game.command_player(GRAB_COMMAND) != 0;
+            if !repelled {
+                game.grab_samus(direction);
+            }
+            repelled
+        });
+        if repelled {
+            session_slot!(game, Draygon[BODY].function = function::REPELLED_BY_GRAPPLE);
         } else {
-            let direction = u16::from(slot!(game, Draygon[BODY].facing_right) != 0);
-            game.grab_samus(direction);
-            slot!(game, Draygon[BODY]; spiral_x = TARGET_X, spiral_y = TARGET_Y,
+            session_slot!(game, Draygon[BODY]; spiral_x = TARGET_X, spiral_y = TARGET_Y,
                 spiral_x_radius = 0, spiral_x_subradius = 0, spiral_angle = SPIRAL_ANGLE,
                 spiral_angle_delta = SPIRAL_ANGLE_DELTA,
                 function = function::GRABBED_MOVING_TO_TARGET);
@@ -131,35 +144,35 @@ pub fn chase_samus<H: Host + ?Sized>(game: &mut H) {
     } else {
         let dx = game
             .player_x()
-            .wrapping_sub(slot!(game, Draygon[BODY].base.x_pos));
+            .wrapping_sub(session_slot!(game, Draygon[BODY].base.x_pos));
         let dy = game
             .player_y()
-            .wrapping_sub(slot!(game, Draygon[BODY].base.y_pos));
+            .wrapping_sub(session_slot!(game, Draygon[BODY].base.y_pos));
         pursue(dx, dy, game);
     }
 }
 /// Draygon body function - repelled by grapple ($A5:8F10). Was `cancel_grapple`.
-pub fn repelled_by_grapple<H: Host + ?Sized>(game: &mut H) {
+pub fn repelled_by_grapple<S: BossState + ?Sized>(game: &mut S) {
     word!(game.grapple_beam_function = GRAPPLE_DROPPED);
-    slot!(
+    session_slot!(
         game,
         Draygon[BODY].function = function::FLAIL_TAIL_AND_FLY_STRAIGHT_UP
     );
 }
 /// Draygon body function - grabbed Samus - moving to target position
 /// ($A5:8F1E), then roar. Was `center`.
-pub fn move_to_target<H: Host + ?Sized>(k: u16, game: &mut H) {
+pub fn move_to_target<S: BossState + ?Sized>(k: u16, game: &mut S) {
     if hurt_by_grapple(game) {
         return;
     }
-    let dx = abs16(slot!(game, Draygon[BODY].base.x_pos).wrapping_sub(TARGET_X));
+    let dx = abs16(session_slot!(game, Draygon[BODY].base.x_pos).wrapping_sub(TARGET_X));
     if dx.wrapping_sub(TARGET_RANGE) & SIGN != 0
-        && abs16(slot!(game, Draygon[BODY].base.y_pos).wrapping_sub(TARGET_Y))
+        && abs16(session_slot!(game, Draygon[BODY].base.y_pos).wrapping_sub(TARGET_Y))
             .wrapping_sub(TARGET_RANGE)
             & SIGN
             != 0
     {
-        slot!(
+        session_slot!(
             game,
             Draygon[BODY].function = function::GRABBED_RISING_SPIRAL
         );
@@ -169,10 +182,10 @@ pub fn move_to_target<H: Host + ?Sized>(k: u16, game: &mut H) {
             [list::BODY_LEFT_ROAR, list::BODY_RIGHT_ROAR],
             game,
         );
-        slot!(game, Draygon[BODY].base.properties, |old| old | INTANGIBLE);
+        session_slot!(game, Draygon[BODY].base.properties, |old| old | INTANGIBLE);
     } else {
-        let dx = TARGET_X.wrapping_sub(slot!(game, Draygon[BODY].base.x_pos));
-        let dy = TARGET_Y.wrapping_sub(slot!(game, Draygon[BODY].base.y_pos));
+        let dx = TARGET_X.wrapping_sub(session_slot!(game, Draygon[BODY].base.x_pos));
+        let dy = TARGET_Y.wrapping_sub(session_slot!(game, Draygon[BODY].base.y_pos));
         pursue(dx, dy, game);
         move_samus_with_draygon(k, game);
     }
@@ -180,59 +193,64 @@ pub fn move_to_target<H: Host + ?Sized>(k: u16, game: &mut H) {
 /// Draygon body function - grabbed Samus - rising spiral movement ($A5:8FD6):
 /// widen and raise the spiral, now and then whipping the tail, until it is wide
 /// or high enough for the final tail whips. Was `orbit`.
-pub fn rising_spiral<H: Host + ?Sized>(k: u16, game: &mut H) {
+pub fn rising_spiral<L: BossLease + ?Sized>(k: u16, game: &mut L)
+where
+    L::Game: Host,
+{
     if hurt_by_grapple(game) {
         return;
     }
     if word!(game.random_number) as u8 == 0 {
-        slot!(game, Draygon[BODY]; tail_whip_timer = TAIL_WHIP_FRAMES,
+        session_slot!(game, Draygon[BODY]; tail_whip_timer = TAIL_WHIP_FRAMES,
             function = function::GRABBED_TAIL_WHIP);
         return;
     }
-    slot!(
+    session_slot!(
         game,
         Draygon[BODY].base.x_pos =
-            slot!(game, Draygon[BODY].spiral_x).wrapping_add(game.actor_cosine(
-                slot!(game, Draygon[BODY].spiral_angle),
-                slot!(game, Draygon[BODY].spiral_x_radius),
+            session_slot!(game, Draygon[BODY].spiral_x).wrapping_add(game.scaled_cosine(
+                session_slot!(game, Draygon[BODY].spiral_angle),
+                session_slot!(game, Draygon[BODY].spiral_x_radius),
             ))
     );
-    slot!(
+    session_slot!(
         game,
         Draygon[BODY].base.y_pos =
-            slot!(game, Draygon[BODY].spiral_y).wrapping_add(game.actor_sine(
-                slot!(game, Draygon[BODY].spiral_angle),
-                slot!(game, Draygon[BODY].spiral_x_radius) >> 2,
+            session_slot!(game, Draygon[BODY].spiral_y).wrapping_add(game.scaled_sine(
+                session_slot!(game, Draygon[BODY].spiral_angle),
+                session_slot!(game, Draygon[BODY].spiral_x_radius) >> 2,
             ))
     );
     foam_at_mouth(k, SPIRAL_FOAM_FRAMES, game);
-    slot!(
+    session_slot!(
         game,
         Draygon[BODY](spiral_x_radius, spiral_x_subradius) += SPIRAL_GROWTH
     );
     let mut finished =
-        slot!(game, Draygon[BODY].spiral_x_radius).wrapping_sub(MAX_SPIRAL_RADIUS) & SIGN == 0;
+        session_slot!(game, Draygon[BODY].spiral_x_radius).wrapping_sub(MAX_SPIRAL_RADIUS) & SIGN
+            == 0;
     if !finished {
-        let delta = slot!(game, Draygon[BODY].spiral_angle_delta).wrapping_sub(1);
-        slot!(game, Draygon[BODY].spiral_angle_delta = delta);
-        let angle = slot!(game, Draygon[BODY].spiral_angle).to_ne_bytes()[0];
-        slot!(
+        let delta = session_slot!(game, Draygon[BODY].spiral_angle_delta).wrapping_sub(1);
+        session_slot!(game, Draygon[BODY].spiral_angle_delta = delta);
+        let angle = session_slot!(game, Draygon[BODY].spiral_angle).to_ne_bytes()[0];
+        session_slot!(
             game,
             Draygon[BODY].spiral_angle = u16::from(angle.wrapping_add(delta.to_ne_bytes()[1]))
         );
-        let subpixel = slot!(game, Draygon[BODY].spiral_y_subpixel);
-        slot!(
+        let subpixel = session_slot!(game, Draygon[BODY].spiral_y_subpixel);
+        session_slot!(
             game,
             Draygon[BODY].spiral_y_subpixel = subpixel.wrapping_sub(SPIRAL_RISE_SUBPIXEL)
         );
-        let y = (((u32::from(slot!(game, Draygon[BODY].spiral_y)) << 16) | u32::from(subpixel))
-            .wrapping_sub(SPIRAL_RISE)
+        let y = (((u32::from(session_slot!(game, Draygon[BODY].spiral_y)) << 16)
+            | u32::from(subpixel))
+        .wrapping_sub(SPIRAL_RISE)
             >> 16) as u16;
-        slot!(game, Draygon[BODY].spiral_y = y);
+        session_slot!(game, Draygon[BODY].spiral_y = y);
         finished = y.wrapping_sub(SPIRAL_TOP) & SIGN != 0;
     }
     if finished {
-        slot!(
+        session_slot!(
             game,
             Draygon[BODY].function = function::GRABBED_FINAL_TAIL_WHIPS_START
         );
@@ -241,12 +259,12 @@ pub fn rising_spiral<H: Host + ?Sized>(k: u16, game: &mut H) {
     }
 }
 /// Draygon body function - grabbed Samus - tail whip ($A5:90D4). Was `pause`.
-pub fn tail_whip<H: Host + ?Sized>(k: u16, game: &mut H) {
+pub fn tail_whip<S: BossState + ?Sized>(k: u16, game: &mut S) {
     move_samus_with_draygon(k, game);
-    let remaining = slot!(game, Draygon[BODY].tail_whip_timer).wrapping_sub(1);
-    slot!(game, Draygon[BODY].tail_whip_timer = remaining);
+    let remaining = session_slot!(game, Draygon[BODY].tail_whip_timer).wrapping_sub(1);
+    session_slot!(game, Draygon[BODY].tail_whip_timer = remaining);
     if remaining == 0 {
-        slot!(
+        session_slot!(
             game,
             Draygon[BODY].function = function::GRABBED_RISING_SPIRAL
         );
@@ -261,7 +279,7 @@ pub fn tail_whip<H: Host + ?Sized>(k: u16, game: &mut H) {
 }
 /// Draygon body function - grabbed Samus - final tail whips - start ($A5:9105).
 /// Was `start_release`.
-pub fn final_tail_whips<H: Host + ?Sized>(k: u16, game: &mut H) {
+pub fn final_tail_whips<S: BossState + ?Sized>(k: u16, game: &mut S) {
     move_samus_with_draygon(k, game);
     facing_animation(
         k as i32,
@@ -272,7 +290,7 @@ pub fn final_tail_whips<H: Host + ?Sized>(k: u16, game: &mut H) {
         ],
         game,
     );
-    slot!(
+    session_slot!(
         game,
         Draygon[BODY].function = function::GRABBED_FINAL_TAIL_WHIPS_ONGOING
     );
@@ -280,23 +298,26 @@ pub fn final_tail_whips<H: Host + ?Sized>(k: u16, game: &mut H) {
 /// Move Samus with Draygon ($A5:94A9), which is also the final tail whips'
 /// ongoing function ($A5:9124): hold her, and fly up once she is released.
 /// Was `attach`.
-pub fn move_samus_with_draygon<H: Host + ?Sized>(k: u16, game: &mut H) {
+pub fn move_samus_with_draygon<S: BossState + ?Sized>(k: u16, game: &mut S) {
     let dx = hold_offset(k as i32, game);
-    game.set_player_x(slot!(game, Draygon[BODY].base.x_pos).wrapping_add(dx));
-    game.set_player_y(slot!(game, Draygon[BODY].base.y_pos).wrapping_add(HOLD_Y));
-    game.correct_previous_position();
+    game.set_player_x(session_slot!(game, Draygon[BODY].base.x_pos).wrapping_add(dx));
+    game.set_player_y(session_slot!(game, Draygon[BODY].base.y_pos).wrapping_add(HOLD_Y));
+    crate::player_position::correct_previous_position(game);
     if word!(game.samus_grapple_flags) & SAMUS_RELEASED != 0 {
         word!(game.samus_grapple_flags = 0);
-        slot!(game, Draygon[BODY].function = function::FLY_STRAIGHT_UP);
+        session_slot!(game, Draygon[BODY].function = function::FLY_STRAIGHT_UP);
     }
 }
 /// Draygon body function - flail tail and fly straight up ($A5:9128). Was
 /// `release`.
-pub fn flail_tail_and_fly_straight_up<H: Host + ?Sized>(game: &mut H) {
-    game.release_samus();
+pub fn flail_tail_and_fly_straight_up<L: BossLease + ?Sized>(game: &mut L)
+where
+    L::Game: Host,
+{
+    game.foreign(|game| game.release_samus());
     word!(game.samus_grapple_flags = 0);
-    slot!(game, Draygon[BODY].function = function::FLY_STRAIGHT_UP);
-    slot!(game, Draygon[BODY].base.properties, |old| old & !INTANGIBLE);
+    session_slot!(game, Draygon[BODY].function = function::FLY_STRAIGHT_UP);
+    session_slot!(game, Draygon[BODY].base.properties, |old| old & !INTANGIBLE);
     facing_animation(
         BODY,
         TAIL,
@@ -306,15 +327,15 @@ pub fn flail_tail_and_fly_straight_up<H: Host + ?Sized>(game: &mut H) {
 }
 /// Draygon body function - fly straight up ($A5:9154), then swoop right again.
 /// Was `depart`.
-pub fn fly_straight_up<H: Host + ?Sized>(game: &mut H) {
+pub fn fly_straight_up<S: BossState + ?Sized>(game: &mut S) {
     fire_wall_turret(game);
-    let y = (slot!(game, Draygon[BODY].base.y_pos) as i16).wrapping_sub(RISE);
-    slot!(game, Draygon[BODY].base.y_pos = y as u16);
+    let y = (session_slot!(game, Draygon[BODY].base.y_pos) as i16).wrapping_sub(RISE);
+    session_slot!(game, Draygon[BODY].base.y_pos = y as u16);
     if y < 0 {
-        slot!(game, Draygon[BODY].base.properties, |old| old & !INTANGIBLE);
-        slot!(game, Draygon[BODY]; function = function::SWOOP_RIGHT_SETUP, function_timer = 0);
-        slot!(game, Draygon[BODY].base; x_pos = slot!(game, Draygon[BODY].left_reset_x),
-            y_pos = slot!(game, Draygon[BODY].reset_y));
+        session_slot!(game, Draygon[BODY].base.properties, |old| old & !INTANGIBLE);
+        session_slot!(game, Draygon[BODY]; function = function::SWOOP_RIGHT_SETUP, function_timer = 0);
+        session_slot!(game, Draygon[BODY].base; x_pos = session_slot!(game, Draygon[BODY].left_reset_x),
+            y_pos = session_slot!(game, Draygon[BODY].reset_y));
     }
 }
 

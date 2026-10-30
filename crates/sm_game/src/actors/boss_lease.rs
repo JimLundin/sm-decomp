@@ -24,6 +24,7 @@ pub trait BossState:
     + crate::cartridge::LoadedImage
     + crate::cartridge::NativeDiagnostics
     + crate::records::Records
+    + crate::player_position::PlayerPosition
 {
     /// The shared shot reaction for the current actor.
     fn react_to_shot(&mut self, shot: Shot);
@@ -45,6 +46,18 @@ pub trait BossState:
     fn player_direction(&mut self) -> crate::actors::api::PlayerDirection;
     /// The room camera.
     fn camera(&mut self) -> crate::camera::Camera;
+    /// The high word of `amplitude` times the cosine of `phase`.
+    fn scaled_cosine(&mut self, phase: u16, amplitude: u16) -> u16;
+    /// The high word of `amplitude` times the sine of `phase`.
+    fn scaled_sine(&mut self, phase: u16, amplitude: u16) -> u16;
+    /// The (x, y) step of `amplitude` along direction `phase`.
+    fn direction_step(&mut self, phase: u16, amplitude: u16) -> crate::geometry::Vector32;
+    /// Move the current actor by `vector` along `phase`.
+    fn step_along(&mut self, phase: u16, vector: crate::geometry::Vector32);
+    /// The enemy scratch word the vector movement reads.
+    fn set_step_scratch(&mut self, value: u16);
+    /// The actor content record at `bank:address`, as the original actor read.
+    fn actor_record(&mut self, bank: u8, address: u16) -> sm_data::cartridge::RomRecord;
 }
 
 /// A lease on a boss's game. The game is its own lease, whose `foreign` runs

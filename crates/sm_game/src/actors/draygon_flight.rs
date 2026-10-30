@@ -2,11 +2,15 @@
 //! instructions its body scripts call (bank $A5:8687-$A5:9E0A).
 //! Extended motion words stay native compatibility state until the whole boss migrates.
 #![forbid(unsafe_code)]
+use crate::actors::boss_lease::{BossLease, BossState};
 use crate::actors::draygon_host::{
     ARMS, BANK, BODY, Draygon, EYE, Host, INTANGIBLE, SIGN, TAIL, abs16, function,
     instruction_list as list,
 };
+use crate::actors::host::BossEffects as _;
+use crate::actors::session_slots::session_slot;
 use crate::enemy_script::EnemyScript;
+use crate::ram::CompatibilityRam as _;
 use crate::ram::RawRam as _;
 use crate::ram::{slot, word};
 
@@ -15,6 +19,9 @@ use crate::ram::{slot, word};
 const FOAM: u16 = 0x3d;
 const FOAM_X: u16 = 0x20;
 const FOAM_Y: u16 = 0x10;
+/// Sprite object 18h: a bubble.
+const BUBBLE: u16 = 0x18;
+const BUBBLE_OFFSET: u16 = 0x10;
 /// $A5:87DC: each wall turret's projectile spawn position; the turrets fire
 /// Draygon's wall turret projectile ($86:8E5E) at 3 px a frame, every 40h
 /// frames.
@@ -57,69 +64,78 @@ const RIGHT_RESET_X: u16 = 0x250;
 const RESET_Y: u16 = 0xffb0;
 
 /// Start `part`'s left or right instruction list, by `facing_key`'s facing.
-pub fn facing_animation<H: Host + ?Sized>(
+pub fn facing_animation<S: BossState + ?Sized>(
     facing_key: i32,
     part_key: i32,
     instructions: [u16; 2],
-    game: &mut H,
+    game: &mut S,
 ) {
-    let instruction = instructions[usize::from(slot!(game, Draygon[facing_key].facing_right) != 0)];
-    slot!(game, Draygon[part_key].base; current_instruction = instruction, instruction_timer = 1);
+    let instruction =
+        instructions[usize::from(session_slot!(game, Draygon[facing_key].facing_right) != 0)];
+    session_slot!(game, Draygon[part_key].base; current_instruction = instruction, instruction_timer = 1);
 }
 /// On frames matching `frame_mask`, Draygon foams at the mouth. Was
 /// `shed_particle`.
-pub fn foam_at_mouth<H: Host + ?Sized>(k: u16, frame_mask: u16, game: &mut H) {
-    if slot!(game, Draygon[k as i32].base.frame_counter) & frame_mask == 0 {
-        let dx = if slot!(game, Draygon[BODY].facing_right) != 0 {
+pub fn foam_at_mouth<L: BossLease + ?Sized>(k: u16, frame_mask: u16, game: &mut L)
+where
+    L::Game: Host,
+{
+    if session_slot!(game, Draygon[k as i32].base.frame_counter) & frame_mask == 0 {
+        let dx = if session_slot!(game, Draygon[BODY].facing_right) != 0 {
             FOAM_X
         } else {
             0u16.wrapping_sub(FOAM_X)
         };
-        let x = slot!(game, Draygon[BODY].base.x_pos).wrapping_add(dx);
-        let y = slot!(game, Draygon[BODY].base.y_pos).wrapping_sub(FOAM_Y);
-        game.create_sprite(x, y, FOAM, 0);
+        let x = session_slot!(game, Draygon[BODY].base.x_pos).wrapping_add(dx);
+        let y = session_slot!(game, Draygon[BODY].base.y_pos).wrapping_sub(FOAM_Y);
+        game.foreign(|game| game.create_sprite(x, y, FOAM, 0));
     }
 }
 /// Handle firing wall turret ($A5:87AA): every 40h frames, a random turret of
 /// the last four fires unless destroyed. Was `turret`.
-pub fn fire_wall_turret<H: Host + ?Sized>(game: &mut H) {
+pub fn fire_wall_turret<S: BossState + ?Sized>(game: &mut S) {
     if word!(game.nmi_frame_counter_word) & TURRET_FRAMES == 0 {
-        let index = 2 * ((game.next_random() & 3) + 2);
-        if slot!(game, Draygon[index as i32].turret_destroyed) == 0 {
+        let index = 2 * ((game.roll_random() & 3) + 2);
+        if session_slot!(game, Draygon[index as i32].turret_destroyed) == 0 {
             let x = crate::cartridge::rom_table_word!(game, TURRET_POSITIONS, index as isize);
             let y = crate::cartridge::rom_table_word!(game, TURRET_POSITIONS, index as isize + 1);
-            game.set_projectile_spawn_point(x, y);
-            game.spawn_projectile(TURRET_SPEED, index, TURRET_PROJECTILE);
+            game.place_projectile_spawn(x, y);
+            game.spawn_actor_eproj(TURRET_SPEED, index, TURRET_PROJECTILE);
         }
     }
 }
 /// Draygon body function - fight intro: the initial delay ($A5:871B, with
 /// `first`) or the dance ($A5:878B). Was `opening`.
-pub fn fight_intro<H: Host + ?Sized>(first: bool, game: &mut H) {
+pub fn fight_intro<L: BossLease + ?Sized>(first: bool, game: &mut L)
+where
+    L::Game: Host,
+{
     fire_wall_turret(game);
     let limit = if first { INTRO_DELAY } else { INTRO_DANCE };
-    if slot!(game, Draygon[BODY].function_timer).wrapping_sub(limit) & SIGN != 0 {
+    if session_slot!(game, Draygon[BODY].function_timer).wrapping_sub(limit) & SIGN != 0 {
         if first {
-            if slot!(game, Draygon[BODY].function_timer) == 0 {
+            if session_slot!(game, Draygon[BODY].function_timer) == 0 {
                 let at = VRAM_WRITE_QUEUE + usize::from(word!(game.vram_write_queue_tail));
                 let [size, source, bank, destination] = INTRO_TRANSFER;
                 // The native bank word deliberately overlaps the destination's low byte.
-                game.write_native_words(&[
-                    (at, size),
-                    (at + 2, source),
-                    (at + 4, bank),
-                    (at + 5, destination),
-                ]);
-                word!(game.vram_write_queue_tail += QUEUE_ENTRY_BYTES);
-                game.draygon_spawn_trails();
+                game.foreign(|game| {
+                    game.write_native_words(&[
+                        (at, size),
+                        (at + 2, source),
+                        (at + 4, bank),
+                        (at + 5, destination),
+                    ]);
+                    word!(game.vram_write_queue_tail += QUEUE_ENTRY_BYTES);
+                    game.draygon_spawn_trails();
+                });
             }
         } else {
-            game.draygon_trajectory();
+            game.foreign(|game| game.draygon_trajectory());
         }
-        slot!(game, Draygon[BODY].function_timer, |old| old
+        session_slot!(game, Draygon[BODY].function_timer, |old| old
             .wrapping_add(1));
     } else {
-        slot!(
+        session_slot!(
             game,
             Draygon[BODY].function = if first {
                 function::FIGHT_INTRO_DANCE
@@ -127,27 +143,27 @@ pub fn fight_intro<H: Host + ?Sized>(first: bool, game: &mut H) {
                 function::SWOOP_RIGHT_SETUP
             }
         );
-        slot!(game, Draygon[BODY].function_timer = 0);
+        session_slot!(game, Draygon[BODY].function_timer = 0);
         if first {
-            let x = slot!(game, Draygon[BODY].base.x_pos);
-            slot!(game, Draygon[BODY].left_reset_x = x);
-            slot!(
+            let x = session_slot!(game, Draygon[BODY].base.x_pos);
+            session_slot!(game, Draygon[BODY].left_reset_x = x);
+            session_slot!(
                 game,
                 Draygon[BODY].right_reset_x = x.wrapping_add(RIGHT_RESET_OFFSET)
             );
-            slot!(
+            session_slot!(
                 game,
-                Draygon[BODY].reset_y = slot!(game, Draygon[BODY].base.y_pos)
+                Draygon[BODY].reset_y = session_slot!(game, Draygon[BODY].base.y_pos)
             );
-            slot!(
+            session_slot!(
                 game,
-                Draygon[BODY].base.x_pos = slot!(game, Draygon[BODY].left_reset_x)
+                Draygon[BODY].base.x_pos = session_slot!(game, Draygon[BODY].left_reset_x)
             );
-            slot!(
+            session_slot!(
                 game,
-                Draygon[BODY].base.y_pos = slot!(game, Draygon[BODY].reset_y)
+                Draygon[BODY].base.y_pos = session_slot!(game, Draygon[BODY].reset_y)
             );
-            slot!(
+            session_slot!(
                 game,
                 Draygon[BODY].swoop_y_acceleration = INITIAL_SWOOP_Y_ACCELERATION
             );
@@ -189,16 +205,16 @@ pub fn initialize<H: Host + ?Sized>(install_layers: impl FnOnce(&mut H), game: &
 }
 /// Initialisation AI - Draygon tail ($A5:C599) or, with `arms`, arms ($A5:C5AD).
 /// Was `initialize_part`.
-pub fn initialize_tail_or_arms<H: Host + ?Sized>(arms: bool, game: &mut H) {
+pub fn initialize_tail_or_arms<S: BossState + ?Sized>(arms: bool, game: &mut S) {
     let k = word!(game.cur_enemy_index) as i32;
     let instruction = if arms {
         list::ARMS_LEFT_IDLE
     } else {
         list::TAIL_LEFT_FAKE_TAIL_WHIP
     };
-    slot!(game, Draygon[k].base; current_instruction = instruction, palette_index = PALETTE_7);
+    session_slot!(game, Draygon[k].base; current_instruction = instruction, palette_index = PALETTE_7);
     if arms {
-        slot!(game, Draygon[k].base.layer = 2);
+        session_slot!(game, Draygon[k].base.layer = 2);
     }
 }
 /// Main AI - Draygon body ($A5:86FC, with `body`) or eye ($A5:C486): run the
@@ -208,45 +224,99 @@ pub fn main_ai<H: Host + ?Sized>(
     dispatch: impl FnOnce(u32, u16, &mut H),
     game: &mut H,
 ) {
-    let k = word!(game.cur_enemy_index) as i32;
-    let state = u32::from(BANK) << 16 | u32::from(slot!(game, Draygon[k].function));
-    dispatch(state, word!(game.cur_enemy_index), game);
     if !body {
+        let k = word!(game.cur_enemy_index) as i32;
+        let state = u32::from(BANK) << 16 | u32::from(slot!(game, Draygon[k].function));
+        dispatch(state, word!(game.cur_enemy_index), game);
         return;
     }
-    let x = slot!(game, Draygon[BODY].base.x_pos);
+    // One lease per frame; the body's function runs on it, the effects that
+    // need the game in foreign calls.
+    let mut lease = game.lease_boss();
+    let game = &mut lease;
+    let k = word!(game.cur_enemy_index);
+    let function = session_slot!(game, Draygon[k as i32].function);
+    run_function_on(game, function, k, |game| {
+        dispatch(u32::from(BANK) << 16 | u32::from(function), k, game)
+    });
+    let x = session_slot!(game, Draygon[BODY].base.x_pos);
     for k in [EYE, TAIL, ARMS] {
-        slot!(game, Draygon[k].base.x_pos = x);
+        session_slot!(game, Draygon[k].base.x_pos = x);
     }
-    let y = slot!(game, Draygon[BODY].base.y_pos);
+    let y = session_slot!(game, Draygon[BODY].base.y_pos);
     for k in [EYE, TAIL, ARMS] {
-        slot!(game, Draygon[k].base.y_pos = y);
+        session_slot!(game, Draygon[k].base.y_pos = y);
+    }
+}
+
+/// Run the bank $A5 body function `function` for part `k`, as `sm_a5`'s
+/// dispatch does: the flight, swoop and grab functions on this lease, the rest
+/// through `fallback` on the game.
+fn run_function_on<L: BossLease + ?Sized>(
+    game: &mut L,
+    function: u16,
+    k: u16,
+    fallback: impl FnOnce(&mut L::Game),
+) where
+    L::Game: Host,
+{
+    use crate::actors::{draygon_grab as grab, draygon_sweep as sweep};
+    match function {
+        function::FIGHT_INTRO_INITIAL_DELAY => fight_intro(true, game),
+        function::FIGHT_INTRO_DANCE => fight_intro(false, game),
+        function::SWOOP_RIGHT_SETUP => sweep::swoop_setup(true, game),
+        function::SWOOP_RIGHT_DESCENDING => sweep::swoop(true, false, game),
+        function::SWOOP_RIGHT_APEX => sweep::swoop_apex(true, game),
+        function::SWOOP_RIGHT_ASCENDING => sweep::swoop(true, true, game),
+        function::SWOOP_LEFT_DESCENDING => sweep::swoop(false, false, game),
+        function::SWOOP_LEFT_APEX => sweep::swoop_apex(false, game),
+        function::SWOOP_LEFT_ASCENDING => sweep::swoop(false, true, game),
+        function::GOOP_RIGHT_SETUP => goop_setup(true, game),
+        function::GOOP_LEFT_SETUP => goop_setup(false, game),
+        function::GOOP_RIGHT_MOVE_UNTIL_IN_RANGE => goop_move_until_in_range(true, game),
+        function::GOOP_LEFT_MOVE_UNTIL_IN_RANGE => goop_move_until_in_range(false, game),
+        function::GOOP_RIGHT_FIRING => goop_firing(true, game),
+        function::GOOP_LEFT_FIRING => goop_firing(false, game),
+        function::GOOP_RIGHT_MOVE_UNTIL_OFF_SCREEN => goop_move_until_off_screen(true, game),
+        function::GOOP_LEFT_MOVE_UNTIL_OFF_SCREEN => goop_move_until_off_screen(false, game),
+        function::CHASE_SAMUS => grab::chase_samus(game),
+        function::REPELLED_BY_GRAPPLE => grab::repelled_by_grapple(game),
+        function::GRABBED_MOVING_TO_TARGET => grab::move_to_target(k, game),
+        function::GRABBED_RISING_SPIRAL => grab::rising_spiral(k, game),
+        function::GRABBED_TAIL_WHIP => grab::tail_whip(k, game),
+        function::GRABBED_FINAL_TAIL_WHIPS_START => grab::final_tail_whips(k, game),
+        function::GRABBED_FINAL_TAIL_WHIPS_ONGOING => grab::move_samus_with_draygon(k, game),
+        function::FLAIL_TAIL_AND_FLY_STRAIGHT_UP => grab::flail_tail_and_fly_straight_up(game),
+        function::FLY_STRAIGHT_UP => grab::fly_straight_up(game),
+        function::NONE => {}
+        // The left swoop setup's diagnostic, the death and anything else.
+        _ => game.foreign(fallback),
     }
 }
 /// Enemy graphics drawn hook - Draygon - set BG2 X/Y scroll ($A5:9342). Was
 /// `scroll_layer`.
-pub fn set_bg2_scroll<H: Host + ?Sized>(game: &mut H) {
-    let x = i32::from(slot!(game, Draygon[BODY].graphics_x_displacement))
-        + i32::from(crate::camera::current(game).layer1[0])
-        - i32::from(slot!(game, Draygon[BODY].base.x_pos))
+pub fn set_bg2_scroll<S: BossState + ?Sized>(game: &mut S) {
+    let x = i32::from(session_slot!(game, Draygon[BODY].graphics_x_displacement))
+        + i32::from(game.camera().layer1[0])
+        - i32::from(session_slot!(game, Draygon[BODY].base.x_pos))
         - BG2_X_OFFSET;
     word!(game.reg_BG2HOFS = x as u16);
-    let y = i32::from(slot!(game, Draygon[BODY].graphics_y_displacement))
-        + i32::from(crate::camera::current(game).layer1[1])
-        - i32::from(slot!(game, Draygon[BODY].base.y_pos))
+    let y = i32::from(session_slot!(game, Draygon[BODY].graphics_y_displacement))
+        + i32::from(game.camera().layer1[1])
+        - i32::from(session_slot!(game, Draygon[BODY].base.y_pos))
         - BG2_Y_OFFSET;
     word!(game.reg_BG2VOFS = y as u16);
 }
 /// Oscillate around the goop height and move on.
-fn goop_glide<H: Host + ?Sized>(right: bool, game: &mut H) {
-    let angle = slot!(game, Draygon[BODY].goop_y_angle);
-    slot!(
+fn goop_glide<S: BossState + ?Sized>(right: bool, game: &mut S) {
+    let angle = session_slot!(game, Draygon[BODY].goop_y_angle);
+    session_slot!(
         game,
         Draygon[BODY].base.y_pos = game
-            .actor_cosine(angle, GOOP_Y_AMPLITUDE)
+            .scaled_cosine(angle, GOOP_Y_AMPLITUDE)
             .wrapping_add(GOOP_Y)
     );
-    slot!(
+    session_slot!(
         game,
         Draygon[BODY].goop_y_angle,
         |old| (old as u8).wrapping_add(1) as u16
@@ -254,38 +324,38 @@ fn goop_glide<H: Host + ?Sized>(right: bool, game: &mut H) {
     move_horizontally(right, game);
 }
 /// Move the body right, or left, by its X speed. Was `displace`.
-pub fn move_horizontally<H: Host + ?Sized>(right: bool, game: &mut H) {
-    let high = slot!(game, Draygon[BODY].x_speed);
-    let low = slot!(game, Draygon[BODY].x_subspeed);
+pub fn move_horizontally<S: BossState + ?Sized>(right: bool, game: &mut S) {
+    let high = session_slot!(game, Draygon[BODY].x_speed);
+    let low = session_slot!(game, Draygon[BODY].x_subspeed);
     let speed = (u32::from(high) << 16) | u32::from(low);
     let delta = if right {
         speed
     } else {
         (-(speed as i32)) as u32
     };
-    slot!(game, Draygon[BODY].base(x_pos, x_subpos) += delta);
+    session_slot!(game, Draygon[BODY].base(x_pos, x_subpos) += delta);
 }
 fn beyond_right(x: u16) -> bool {
     x as i16 >= 0 && x.wrapping_sub(OFF_SCREEN_RIGHT) & SIGN == 0
 }
 /// Draygon body function - goop right ($A5:8B0A) or left ($A5:8C8E) - setup.
 /// Was `begin`.
-pub fn goop_setup<H: Host + ?Sized>(right: bool, game: &mut H) {
+pub fn goop_setup<S: BossState + ?Sized>(right: bool, game: &mut S) {
     if right {
         fire_wall_turret(game);
     }
-    slot!(
+    session_slot!(
         game,
         Draygon[BODY].base.x_pos = if right {
             GOOP_START_X
         } else {
-            slot!(game, Draygon[BODY].right_reset_x)
+            session_slot!(game, Draygon[BODY].right_reset_x)
         }
     );
-    slot!(game, Draygon[BODY].base.y_pos = GOOP_Y);
-    slot!(game, Draygon[BODY]; x_subspeed = 0, x_speed = 1, goop_y_angle = 0);
-    slot!(game, Draygon[ARMS].base; current_instruction = list::ARMS_RIGHT_NEAR_SWOOP_APEX, instruction_timer = 1);
-    slot!(
+    session_slot!(game, Draygon[BODY].base.y_pos = GOOP_Y);
+    session_slot!(game, Draygon[BODY]; x_subspeed = 0, x_speed = 1, goop_y_angle = 0);
+    session_slot!(game, Draygon[ARMS].base; current_instruction = list::ARMS_RIGHT_NEAR_SWOOP_APEX, instruction_timer = 1);
+    session_slot!(
         game,
         Draygon[BODY].function = if right {
             function::GOOP_RIGHT_MOVE_UNTIL_IN_RANGE
@@ -293,49 +363,66 @@ pub fn goop_setup<H: Host + ?Sized>(right: bool, game: &mut H) {
             function::GOOP_LEFT_MOVE_UNTIL_IN_RANGE
         }
     );
-    slot!(game, Draygon[BODY].base; current_instruction = if right { list::BODY_RIGHT_RESET } else { list::BODY_LEFT_RESET }, instruction_timer = 1);
-    slot!(game, Draygon[BODY].facing_right = u16::from(right));
+    session_slot!(game, Draygon[BODY].base; current_instruction = if right { list::BODY_RIGHT_RESET } else { list::BODY_LEFT_RESET }, instruction_timer = 1);
+    session_slot!(game, Draygon[BODY].facing_right = u16::from(right));
+}
+/// Every 128 frames of the current part, a bubble (sprite object 18h) 10h px
+/// left of and above the body.
+pub fn body_bubble<L: BossLease + ?Sized>(game: &mut L)
+where
+    L::Game: Host,
+{
+    let k = word!(game.cur_enemy_index) as i32;
+    if session_slot!(game, Draygon[k].base.frame_counter) & 0x7f == 0 {
+        let x = session_slot!(game, Draygon[BODY].base.x_pos).wrapping_sub(BUBBLE_OFFSET);
+        let y = session_slot!(game, Draygon[BODY].base.y_pos).wrapping_sub(BUBBLE_OFFSET);
+        game.foreign(|game| game.create_sprite(x, y, BUBBLE, 0));
+    }
 }
 /// Draygon body function - goop right ($A5:8B52) or left ($A5:8CD4) - move
 /// until Samus in range. Was `approach`.
-pub fn goop_move_until_in_range<H: Host + ?Sized>(right: bool, game: &mut H) {
+pub fn goop_move_until_in_range<L: BossLease + ?Sized>(right: bool, game: &mut L)
+where
+    L::Game: Host,
+{
     fire_wall_turret(game);
-    game.draygon_body_bubble();
-    let distance = abs16(slot!(game, Draygon[BODY].base.x_pos).wrapping_sub(game.player_x()));
+    body_bubble(game);
+    let distance =
+        abs16(session_slot!(game, Draygon[BODY].base.x_pos).wrapping_sub(game.player_x()));
     if distance.wrapping_sub(GOOP_RANGE) & SIGN != 0 {
-        slot!(game, Draygon[BODY]; function = if right { function::GOOP_RIGHT_FIRING } else { function::GOOP_LEFT_FIRING }, goop_counter = GOOPS);
+        session_slot!(game, Draygon[BODY]; function = if right { function::GOOP_RIGHT_FIRING } else { function::GOOP_LEFT_FIRING }, goop_counter = GOOPS);
     } else {
         goop_glide(right, game);
     }
 }
 /// Draygon body function - goop right ($A5:8BAE) or left ($A5:8D30) - firing
 /// goops. Was `fire`.
-pub fn goop_firing<H: Host + ?Sized>(right: bool, game: &mut H) {
+pub fn goop_firing<S: BossState + ?Sized>(right: bool, game: &mut S) {
     if right {
         fire_wall_turret(game);
     }
     if word!(game.samus_x_speed_divisor) == 0 {
         let mut leave = false;
         if word!(game.random_number) & GOOP_CHANCE == 0 {
-            let remaining = slot!(game, Draygon[BODY].goop_counter).wrapping_sub(1);
-            slot!(game, Draygon[BODY].goop_counter = remaining);
+            let remaining = session_slot!(game, Draygon[BODY].goop_counter).wrapping_sub(1);
+            session_slot!(game, Draygon[BODY].goop_counter = remaining);
             leave = remaining == 0;
             if !leave {
-                slot!(game, Draygon[BODY].base; current_instruction = if right { list::BODY_RIGHT_FIRE_GOOP } else { list::BODY_LEFT_FIRE_GOOP }, instruction_timer = 1);
+                session_slot!(game, Draygon[BODY].base; current_instruction = if right { list::BODY_RIGHT_FIRE_GOOP } else { list::BODY_LEFT_FIRE_GOOP }, instruction_timer = 1);
             }
         }
         if !leave {
             goop_glide(right, game);
             // The left pass tests unsigned x_pos < 0, so its left-edge test never
             // succeeds. The left exit below intentionally uses the signed comparison.
-            let x = slot!(game, Draygon[BODY].base.x_pos);
+            let x = session_slot!(game, Draygon[BODY].base.x_pos);
             if !right || !beyond_right(x) {
                 return;
             }
         }
         if word!(game.samus_x_speed_divisor) == 0 {
-            slot!(game, Draygon[ARMS].base; current_instruction = if right { list::ARMS_RIGHT_IDLE } else { list::ARMS_LEFT_IDLE }, instruction_timer = 1);
-            slot!(
+            session_slot!(game, Draygon[ARMS].base; current_instruction = if right { list::ARMS_RIGHT_IDLE } else { list::ARMS_LEFT_IDLE }, instruction_timer = 1);
+            session_slot!(
                 game,
                 Draygon[BODY].function = if right {
                     function::GOOP_RIGHT_MOVE_UNTIL_OFF_SCREEN
@@ -346,25 +433,28 @@ pub fn goop_firing<H: Host + ?Sized>(right: bool, game: &mut H) {
             return;
         }
     }
-    slot!(game, Draygon[BODY].function = function::CHASE_SAMUS);
+    session_slot!(game, Draygon[BODY].function = function::CHASE_SAMUS);
 }
 /// Draygon body function - goop right ($A5:8C33) or left ($A5:8DB2) - move
 /// until off-screen. Was `exit`.
-pub fn goop_move_until_off_screen<H: Host + ?Sized>(right: bool, game: &mut H) {
-    game.draygon_body_bubble();
+pub fn goop_move_until_off_screen<L: BossLease + ?Sized>(right: bool, game: &mut L)
+where
+    L::Game: Host,
+{
+    body_bubble(game);
     if !right && word!(game.samus_x_speed_divisor) != 0 {
-        slot!(game, Draygon[BODY].function = function::CHASE_SAMUS);
+        session_slot!(game, Draygon[BODY].function = function::CHASE_SAMUS);
         return;
     }
     goop_glide(right, game);
-    let x = slot!(game, Draygon[BODY].base.x_pos);
+    let x = session_slot!(game, Draygon[BODY].base.x_pos);
     let finished = if right {
         beyond_right(x)
     } else {
         (x as i16) < 0 && x.wrapping_add(OFF_SCREEN_LEFT) & SIGN != 0
     };
     if finished {
-        slot!(
+        session_slot!(
             game,
             Draygon[BODY].function = if right {
                 function::SWOOP_LEFT_SETUP
@@ -372,44 +462,50 @@ pub fn goop_move_until_off_screen<H: Host + ?Sized>(right: bool, game: &mut H) {
                 function::SWOOP_RIGHT_SETUP
             }
         );
-        slot!(game, Draygon[BODY].base; x_pos = if right { RIGHT_RESET_X } else { GOOP_START_X }, y_pos = RESET_Y);
-        slot!(
+        session_slot!(game, Draygon[BODY].base; x_pos = if right { RIGHT_RESET_X } else { GOOP_START_X }, y_pos = RESET_Y);
+        session_slot!(
             game,
-            Draygon[BODY].function_timer = slot!(game, Draygon[BODY].swoop_duration)
+            Draygon[BODY].function_timer = session_slot!(game, Draygon[BODY].swoop_duration)
         );
     }
 }
 
 /// Instruction - Draygon instructions lists = [[Y]], [[Y] + 2], [[Y] + 4],
 /// [[Y] + 6] ($A5:94DD). Was `pose`.
-pub fn set_instruction_lists<H: Host + ?Sized>(script: EnemyScript, game: &mut H) -> EnemyScript {
+pub fn set_instruction_lists<S: BossState + ?Sized>(
+    script: EnemyScript,
+    game: &mut S,
+) -> EnemyScript {
     for (k, offset) in [(BODY, 0), (EYE, 2), (TAIL, 4), (ARMS, 6)] {
-        slot!(
+        session_slot!(
             game,
             Draygon[k].base.current_instruction = script.word(offset)
         );
     }
     for k in [BODY, EYE, TAIL, ARMS] {
-        slot!(game, Draygon[k].base.instruction_timer = 1);
+        session_slot!(game, Draygon[k].base.instruction_timer = 1);
     }
     script.offset(4)
 }
 /// Instruction - displace Draygon body graphics [[Y]] px left, [[Y] + 2] px
 /// down ($A5:9E0A). Was `layer_offsets`.
-pub fn displace_graphics<H: Host + ?Sized>(script: EnemyScript, game: &mut H) -> EnemyScript {
-    slot!(game, Draygon[BODY].graphics_x_displacement = script.word(0));
-    slot!(game, Draygon[BODY].graphics_y_displacement = script.word(2));
+pub fn displace_graphics<S: BossState + ?Sized>(script: EnemyScript, game: &mut S) -> EnemyScript {
+    session_slot!(game, Draygon[BODY].graphics_x_displacement = script.word(0));
+    session_slot!(game, Draygon[BODY].graphics_y_displacement = script.word(2));
     script.offset(2)
 }
 /// Instruction - paralyse Draygon tail and arms ($A5:98D3). Was `hide_parts`.
-pub fn paralyse_tail_and_arms<H: Host + ?Sized>(script: EnemyScript, game: &mut H) -> EnemyScript {
+pub fn paralyse_tail_and_arms<S: BossState + ?Sized>(
+    script: EnemyScript,
+    game: &mut S,
+) -> EnemyScript {
     for k in [TAIL, ARMS] {
-        slot!(game, Draygon[k].base; instruction_timer = 1, current_instruction = list::SLEEP);
+        session_slot!(game, Draygon[k].base; instruction_timer = 1, current_instruction = list::SLEEP);
     }
     script
 }
 /// Instruction - set Draygon body as intangible ($A5:98EF). Was `tangible`.
-pub fn set_intangible<H: Host + ?Sized>(script: EnemyScript, game: &mut H) -> EnemyScript {
-    slot!(game, Draygon[BODY].base.properties, |old| old | INTANGIBLE);
+pub fn set_intangible<S: BossState + ?Sized>(script: EnemyScript, game: &mut S) -> EnemyScript {
+    session_slot!(game, Draygon[BODY].base.properties, |old| old | INTANGIBLE);
     script
 }

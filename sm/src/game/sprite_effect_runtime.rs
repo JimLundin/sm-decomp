@@ -213,15 +213,6 @@ pub(crate) fn draygon_random_sprite(definition: u16, game: &mut Game) {
     create_sprite(x, y, definition, 0, game);
 }
 #[forbid(unsafe_code)]
-pub(crate) fn draygon_body_bubble(game: &mut Game) {
-    let k = word!(game.cur_enemy_index) as i32;
-    if slot!(game, Draygon[k].base.frame_counter) & 0x7f == 0 {
-        let x = slot!(game, Draygon[0].base.x_pos).wrapping_sub(16);
-        let y = slot!(game, Draygon[0].base.y_pos).wrapping_sub(16);
-        create_sprite(x, y, 24, 0, game);
-    }
-}
-#[forbid(unsafe_code)]
 pub(crate) fn draygon_death_bubble(game: &mut Game) {
     if word!(game.nmi_frame_counter_word) & 7 == 0 {
         let x = (game.next_random() & 0x7f) + 192;

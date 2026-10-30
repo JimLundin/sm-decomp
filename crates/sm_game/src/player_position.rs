@@ -40,3 +40,29 @@ pub trait PlayerFacts {
     /// The grapple beam's mirrored end angle, high byte ($0CFD).
     fn grapple_mirrored_angle(&self) -> u8;
 }
+
+/// Keep Samus's previous position within 12 px of her position, Y then X, as
+/// the game's previous-position correction does.
+pub fn correct_previous_position<P: PlayerPosition + ?Sized>(game: &mut P) {
+    let position = game.player_y();
+    if let Some(previous) = corrected(position, game.previous_player_y()) {
+        game.set_previous_player_y(previous);
+    }
+    let position = game.player_x();
+    if let Some(previous) = corrected(position, game.previous_player_x()) {
+        game.set_previous_player_x(previous);
+    }
+}
+
+fn corrected(position: u16, previous: u16) -> Option<u16> {
+    let delta = position.wrapping_sub(previous);
+    if (delta as i16).unsigned_abs().wrapping_sub(12) & 0x8000 != 0 {
+        return None;
+    }
+    let correction = if delta & 0x8000 == 0 {
+        12
+    } else {
+        (-12i16) as u16
+    };
+    Some(position.wrapping_add(correction))
+}
