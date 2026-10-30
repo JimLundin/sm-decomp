@@ -395,8 +395,14 @@ pub fn run_torizo_function<L: Lease>(game: &mut L, function: u16, k: u16) {
 }
 
 fn run_movement<L: Lease>(game: &mut L, k: u16) {
-    let address = (BANK << 16) | session_slot!(game, TorizoSlot[k as i32].movement) as u32;
-    game.foreign(|game| game.run_function(address));
+    match session_slot!(game, TorizoSlot[k as i32].movement) {
+        movement::WALKING => walking(k, game),
+        movement::JUMPING_OR_FALLING => jumping_or_falling(k, game),
+        movement::GOLDEN_WALKING => golden_walking(k, game),
+        movement::ATTACKING | movement::GOLDEN_ATTACKING => attacking(k, game),
+        movement::NOTHING => {}
+        other => game.foreign(|game| game.run_function((BANK << 16) | u32::from(other))),
+    }
 }
 
 /// Torizo function - simple movement ($AA:C6BF, Golden $AA:D5DF): drool and
@@ -756,11 +762,8 @@ pub fn main_ai<L: Lease>(game: &mut L) {
 pub fn golden_main_ai<L: Lease>(game: &mut L) {
     let e = word!(game.cur_enemy_index) as i32;
     if SPACE_JUMP_POSES.contains(&word!(game.samus_pose)) {
-        session_slot!(
-            game,
-            TorizoSlot[e].space_jump_frames =
-                session_slot!(game, TorizoSlot[e].space_jump_frames).wrapping_add(1)
-        );
+        session_slot!(game, TorizoSlot[e].space_jump_frames, |old| old
+            .wrapping_add(1));
     } else {
         session_slot!(game, TorizoSlot[e].space_jump_frames = 0);
     }

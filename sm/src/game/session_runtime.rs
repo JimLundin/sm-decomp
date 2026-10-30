@@ -1486,6 +1486,8 @@ impl Runtime<'_> {
             10924583 => self.owned_call(sm_game::actors::ridley::main),
             10988577 => self.owned_call(sm_game::actors::kraid::main_ai),
             10997414 => self.owned_call(sm_game::actors::phantoon::main_ai),
+            11191972 => self.owned_call(sm_game::actors::torizo::main_ai),
+            11195241 => self.owned_call(sm_game::actors::torizo::golden_main_ai),
             10847996 | 10863750 => self.owned_call(|runtime| {
                 use sm_game::actors::{draygon_flight, species};
                 draygon_flight::main_ai(routine == 10847996, species::draygon_function, runtime)
