@@ -729,6 +729,10 @@ impl Host for Runtime<'_> {
             self.owned_call(player_transitions_runtime::dispatch_input);
             return;
         }
+        if matches!(step, PlayerStep::Grapple) {
+            self.owned_call(|runtime| sm_game::grapple_swing::update(runtime));
+            return;
+        }
         self.foreign(|g| {
             match step {
                 PlayerStep::Radius => set_player_radius(g),
@@ -736,7 +740,7 @@ impl Host for Runtime<'_> {
                 PlayerStep::SuitIndex => unreachable!("suit index handled by shared owner"),
                 PlayerStep::Acceleration => unreachable!("acceleration handled by shared owner"),
                 PlayerStep::InsideBlock => unreachable!("inside block handled by shared owner"),
-                PlayerStep::Grapple => crate::game::grapple_swing::update(g),
+                PlayerStep::Grapple => unreachable!("grapple handled by shared owner"),
                 PlayerStep::Xray => unreachable!("X-ray handled by shared owner"),
                 PlayerStep::RestoreControl => {
                     crate::game::session_runtime::player_command(0x14, g);
@@ -1894,5 +1898,91 @@ pub(crate) fn legacy_assertion(drawing: bool) -> ! {
                 c"void ProcessEnemyInstructions(void)".as_ptr(),
             );
         }
+    }
+}
+
+// The grapple runs as one owned-Session lease: its RAM words, Samus facts and
+// player rules read and write the lease, and only its game-side effects (sound,
+// unreachable failure, pose command) go out through foreign.
+impl sm_game::ram::CompatibilityRam for Runtime<'_> {
+    fn compatibility_byte(&self, at: usize) -> u8 {
+        Runtime::byte(self, at)
+    }
+    fn compatibility_write_byte(&mut self, at: usize, value: u8) {
+        Runtime::set_byte(self, at, value)
+    }
+}
+impl sm_game::effects::SoundEffects for Runtime<'_> {
+    fn queue_sound(&mut self, channel: usize, sound: u8, max_queued: u8) {
+        self.foreign(|game| crate::game::music::queue_sfx(channel, sound, max_queued, game));
+    }
+}
+impl sm_game::cartridge::LoadedImage for Runtime<'_> {
+    fn loaded_image(&self) -> &crate::rom::RomImage {
+        self.game.loaded_rom.as_ref().expect("ROM must be loaded")
+    }
+}
+impl sm_game::cartridge::NativeImage for Runtime<'_> {
+    fn native_image(&self) -> crate::rom::RomImage {
+        self.game.capture_native_rom()
+    }
+}
+impl sm_game::records::Records for Runtime<'_> {
+    fn records(&self) -> &sm_game::records::RomRecords {
+        &self.game.records
+    }
+}
+impl sm_game::player_position::PlayerFacts for Runtime<'_> {
+    fn facing(&self) -> u8 {
+        Runtime::byte(self, 0xa1e)
+    }
+    fn movement_type(&self) -> u8 {
+        Runtime::byte(self, 0xa1f)
+    }
+    fn grapple_angle(&self) -> u8 {
+        Runtime::byte(self, 0xcfb)
+    }
+    fn grapple_mirrored_angle(&self) -> u8 {
+        Runtime::byte(self, 0xcfd)
+    }
+}
+impl<'g> sm_game::grapple_swing::Host for Runtime<'g> {
+    type Lease<'a>
+        = Runtime<'g>
+    where
+        Self: 'a;
+    fn with_lease<'s, R>(&'s mut self, action: impl FnOnce(&mut Self::Lease<'s>) -> R) -> R {
+        action(self)
+    }
+    fn grapple_unreachable(&mut self) -> bool {
+        self.foreign(|game| sm_game::menus::host::MenuRuntime::rtl_unreachable(game))
+    }
+    fn grapple_pose_command(&mut self, command: u16) -> u16 {
+        self.foreign(|game| sm_game::menus::host::MenuRuntime::player_command(game, command))
+    }
+    fn multiply_with_scratch(&mut self, a: u16, b: u16) -> u32 {
+        self.write_slice(0x5e9, &a.to_le_bytes());
+        self.write_slice(0x5eb, &b.to_le_bytes());
+        (a as u32).wrapping_mul(b as u32)
+    }
+    fn player_bottom(&self) -> u16 {
+        use sm_game::player_position::PlayerPosition as _;
+        let y = self.player_y();
+        // SamusPoseParams has eight bytes, with y_radius at byte 6.
+        let pose_offset = usize::from(Runtime::word(self, 0xa1c)) * 8;
+        let radius = self.game.read_rom_byte(0x91b629, pose_offset + 6);
+        y.wrapping_add(u16::from(radius)).wrapping_sub(1)
+    }
+    fn settle_grapple(&mut self) {
+        crate::game::player_collision::operations::settle_after_grapple(self);
+    }
+    fn block_behavior_word(&self, index: usize) -> i16 {
+        let at = 0x16402 + index;
+        i16::from_ne_bytes([Runtime::byte(self, at), Runtime::byte(self, at + 1)])
+    }
+    fn periodic_damage(&self) -> (u16, u16) {
+        let low = u16::from_ne_bytes([Runtime::byte(self, 0xa4e), Runtime::byte(self, 0xa4f)]);
+        let high = u16::from_ne_bytes([Runtime::byte(self, 0xa50), Runtime::byte(self, 0xa51)]);
+        (low, high)
     }
 }
