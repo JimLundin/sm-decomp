@@ -14,6 +14,10 @@
 //! a store leaves are the ones the RAM image would hold, so neighbour-slot and
 //! off-table paths behave exactly as they do through `slot!`.
 //!
+//! Routines shared between a lease and a host that still holds the RAM image
+//! are written against [`SlotAccess`], which both implement: the RAM image's
+//! native-order bytes there, the Session here.
+//!
 //! Words are native order in the RAM image and little-endian in the Session;
 //! the two agree on the little-endian hosts the actor codec borrows directly.
 #![forbid(unsafe_code)]
@@ -28,6 +32,15 @@ fn extended_index(at: usize) -> Option<(usize, usize)> {
     }
 }
 
+/// Slot words and bytes, by RAM address: the Session's inside a lease, the RAM
+/// image's on a host that still holds it.
+pub trait SlotAccess {
+    fn slot_word(&self, at: usize) -> u16;
+    fn set_slot_word(&mut self, at: usize, value: u16);
+    fn slot_byte(&self, at: usize) -> u8;
+    fn set_slot_byte(&mut self, at: usize, value: u8);
+}
+
 /// Slot words and bytes on the Session. The extended RAM is served here; the
 /// host serves the other slot bytes through its projection, which also keeps
 /// its observations (enemy 0's health) current.
@@ -36,6 +49,9 @@ pub trait SessionSlots: SessionAccess {
     fn projected_slot_byte(&self, at: usize) -> u8;
     /// Store the projected byte at `at`.
     fn store_projected_slot_byte(&mut self, at: usize, value: u8);
+}
+
+impl<T: SessionSlots + ?Sized> SlotAccess for T {
     fn slot_word(&self, at: usize) -> u16 {
         if let Some((block, index)) = extended_index(at) {
             return self.session().actors.extended.blocks[block][index];
@@ -77,13 +93,13 @@ macro_rules! session_slot {
         match ($value, $crate::ram_slot!(@at $layout, $slot, $($field).+)) {
             (value, at) => {
                 let value: ::core::primitive::u8 = value;
-                $crate::actors::session_slots::SessionSlots::set_slot_byte(
+                $crate::actors::session_slots::SlotAccess::set_slot_byte(
                     $h, at + ($lane) as usize, value)
             }
         }
     };
     (byte $h:ident, $layout:ident[$slot:expr] $(.$field:ident)+ [$lane:expr]) => {
-        $crate::actors::session_slots::SessionSlots::slot_byte(
+        $crate::actors::session_slots::SlotAccess::slot_byte(
             &*$h, $crate::ram_slot!(@at $layout, $slot, $($field).+) + ($lane) as usize)
     };
     // Ordered word stores to several fields; the slot is re-evaluated per store.
@@ -100,9 +116,9 @@ macro_rules! session_slot {
         match $crate::ram_slot!(@at $layout, $slot, $($field).+) {
             at => {
                 $crate::ram::word_field::<$layout>(|record| record $(.$field)+);
-                let $old = $crate::actors::session_slots::SessionSlots::slot_word(&*$h, at);
+                let $old = $crate::actors::session_slots::SlotAccess::slot_word(&*$h, at);
                 let value: ::core::primitive::u16 = $value;
-                $crate::actors::session_slots::SessionSlots::set_slot_word($h, at, value);
+                $crate::actors::session_slots::SlotAccess::set_slot_word($h, at, value);
             }
         }
     };
@@ -110,7 +126,7 @@ macro_rules! session_slot {
         match ($value, $crate::ram_slot!(@at $layout, $slot, $($field).+)) {
             (value, at) => {
                 $crate::ram::word_field::<$layout>(|record| record $(.$field)+);
-                $crate::actors::session_slots::SessionSlots::set_slot_word($h, at, value);
+                $crate::actors::session_slots::SlotAccess::set_slot_word($h, at, value);
             }
         }
     };
@@ -118,7 +134,7 @@ macro_rules! session_slot {
         match $crate::ram_slot!(@at $layout, $slot, $($field).+) {
             at => {
                 $crate::ram::word_field::<$layout>(|record| record $(.$field)+);
-                $crate::actors::session_slots::SessionSlots::slot_word(&*$h, at)
+                $crate::actors::session_slots::SlotAccess::slot_word(&*$h, at)
             }
         }
     };

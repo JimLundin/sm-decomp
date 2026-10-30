@@ -2674,6 +2674,24 @@ impl sm_game::ram::RawRam for WorkRam {
     }
 }
 
+/// Slot words on the RAM image, native order, as `slot!` reads and stores them.
+impl sm_game::actors::session_slots::SlotAccess for Game {
+    fn slot_word(&self, at: usize) -> u16 {
+        u16::from_ne_bytes([self.ram().read_byte(at), self.ram().read_byte(at + 1)])
+    }
+    fn set_slot_word(&mut self, at: usize, value: u16) {
+        let bytes = value.to_ne_bytes();
+        self.ram().write_byte(at, bytes[0]);
+        self.ram().write_byte(at + 1, bytes[1]);
+    }
+    fn slot_byte(&self, at: usize) -> u8 {
+        self.ram().read_byte(at)
+    }
+    fn set_slot_byte(&mut self, at: usize, value: u8) {
+        self.ram().write_byte(at, value);
+    }
+}
+
 impl sm_game::ram::WorkRamAccess for Game {
     type Ram = WorkRam;
     fn ram(&self) -> &WorkRam {

@@ -15,6 +15,7 @@ use crate::actors::api::angle_from_delta;
 use crate::actors::host::{Death, Shot, abs16};
 use crate::actors::layouts::{EnemyBase, same_words};
 use crate::actors::ridley_tables::{copy_words_to_ram_fan, pick_random_speed_row};
+use crate::actors::session_slots::{SlotAccess, session_slot};
 use crate::constants::enemy_properties::{
     kEnemyProps_Deleted, kEnemyProps_Invisible, kEnemyProps_Tangible,
 };
@@ -39,6 +40,7 @@ pub trait Host:
     + crate::records::Records
     + crate::cartridge::NativeImage
     + crate::sprite_output::SpriteHost
+    + SlotAccess
 {
     /// Run the bank $A6 Ridley function at `function`, Norfair's or Ceres's.
     fn run_function(&mut self, function: u16);
@@ -59,6 +61,23 @@ pub trait Host:
     fn warn_x_undefined(&mut self);
     /// Move the room's liquid to `target` at `velocity` after `delay` frames.
     fn move_liquid(&mut self, target: u16, velocity: u16, delay: u16);
+    /// The lease Ridley's main AI runs its state steps in.
+    type Lease<'a>: Lease<Game = Self>
+    where
+        Self: 'a;
+    fn lease(&mut self) -> Self::Lease<'_>;
+}
+
+/// What Ridley's state steps read and write: his slot words and the named RAM
+/// words, on the Session inside a lease and on the RAM image otherwise.
+pub trait State: SlotAccess + crate::ram::CompatibilityRam {}
+impl<T: SlotAccess + crate::ram::CompatibilityRam + ?Sized> State for T {}
+
+/// A lease on Ridley's game: the state steps run on it, and `foreign` runs the
+/// rest on the game it leases.
+pub trait Lease: State {
+    type Game: Host + ?Sized;
+    fn foreign<T>(&mut self, action: impl FnOnce(&mut Self::Game) -> T) -> T;
 }
 
 /// Ridley's view of enemy 0 and his extra RAM blocks, Norfair's and Ceres's.
@@ -612,28 +631,33 @@ pub fn draw_baby_metroid_and_door<H: Host + ?Sized>(game: &mut H) {
 
 /// Main AI - enemy $E17F (Ridley) ($A6:B227). Was `Ridley_Main`.
 pub fn main<H: Host + ?Sized>(game: &mut H) {
-    let mut lag = (slot!(game, Ridley[RIDLEY].grabbed_lag_timer) as i16).wrapping_sub(4);
+    let mut lease = game.lease();
+    let lease = &mut lease;
+    let mut lag = (session_slot!(lease, Ridley[RIDLEY].grabbed_lag_timer) as i16).wrapping_sub(4);
     if lag < 0 {
         lag = 0;
     }
-    slot!(game, Ridley[RIDLEY].grabbed_lag_timer = lag as u16);
-    set_tangibility(game);
-    lunge_if_power_bomb(game);
-    game.run_function(slot!(game, Ridley[RIDLEY].function));
-    if slot!(game, Ridley[RIDLEY].movement_enabled) != 0 {
-        hurt_flash(game);
-        move_ridley(game);
-        update_wings(game);
-        handle_tail(game);
-        tail_projectile_collision(game);
-        draw_tail(game);
-        draw_wings(game);
-        handle_ribs(game);
-        if slot!(game, Ridley[RIDLEY].holding_samus) != 0 {
-            move_samus_with_feet(game);
-        }
+    session_slot!(lease, Ridley[RIDLEY].grabbed_lag_timer = lag as u16);
+    set_tangibility(lease);
+    lunge_if_power_bomb(lease);
+    let function = session_slot!(lease, Ridley[RIDLEY].function);
+    lease.foreign(|game| game.run_function(function));
+    if session_slot!(lease, Ridley[RIDLEY].movement_enabled) != 0 {
+        hurt_flash(lease);
+        move_ridley(lease);
+        update_wings(lease);
+        lease.foreign(|game| {
+            handle_tail(game);
+            tail_projectile_collision(game);
+            draw_tail(game);
+            draw_wings(game);
+            handle_ribs(game);
+            if slot!(game, Ridley[RIDLEY].holding_samus) != 0 {
+                move_samus_with_feet(game);
+            }
+        });
     }
-    health_palette(game);
+    lease.foreign(|game| health_palette(game));
 }
 
 /// Time is frozen AI - enemy $E17F (Ridley) ($A6:B28A). Was `Ridley_Func_2`.
@@ -1086,7 +1110,7 @@ pub fn tail_hits_floor<H: Host + ?Sized>(game: &mut H) -> bool {
 }
 
 /// Set neutral Ridley tail ($A6:B84D). Was `Ridley_Func_24`.
-pub fn set_neutral_tail<H: Host + ?Sized>(game: &mut H) {
+pub fn set_neutral_tail<S: State + ?Sized>(game: &mut S) {
     word! { game, 1; tilemap_stuff[tail::FUNCTION], tilemap_stuff[tail::ANGLE_DELTA] }
 }
 
@@ -1404,8 +1428,8 @@ pub fn release_samus<H: Host + ?Sized>(game: &mut H) {
 /// Set Ridley tangibility ($A6:BCB4): intangible off-screen while fighting,
 /// and tangible again when the intangibility timer runs out. Was
 /// `Ridley_Func_39`.
-pub fn set_tangibility<H: Host + ?Sized>(game: &mut H) {
-    let mode = slot!(game, Ridley[RIDLEY].fight_mode) as i16;
+pub fn set_tangibility<S: State + ?Sized>(game: &mut S) {
+    let mode = session_slot!(game, Ridley[RIDLEY].fight_mode) as i16;
     if mode < 0 {
         return;
     }
@@ -1416,24 +1440,24 @@ pub fn set_tangibility<H: Host + ?Sized>(game: &mut H) {
         }
         set_tangible(game, true);
     }
-    let timer = slot!(game, Ridley[RIDLEY].intangibility_timer);
+    let timer = session_slot!(game, Ridley[RIDLEY].intangibility_timer);
     if timer != 0 {
         let timer = timer.wrapping_sub(1);
-        slot!(game, Ridley[RIDLEY].intangibility_timer = timer);
-        if timer == 0 && (slot!(game, Ridley[RIDLEY].fight_mode) & 0x8000) == 0 {
+        session_slot!(game, Ridley[RIDLEY].intangibility_timer = timer);
+        if timer == 0 && (session_slot!(game, Ridley[RIDLEY].fight_mode) & 0x8000) == 0 {
             set_tangible(game, true);
         }
     }
 }
 
-fn set_tangible<H: Host + ?Sized>(game: &mut H, tangible: bool) {
-    let properties = slot!(game, Ridley[RIDLEY].base.properties);
+fn set_tangible<S: State + ?Sized>(game: &mut S, tangible: bool) {
+    let properties = session_slot!(game, Ridley[RIDLEY].base.properties);
     let properties = if tangible {
         (properties as i32 & !(kEnemyProps_Tangible as i32)) as u16
     } else {
         properties | kEnemyProps_Tangible as u16
     };
-    slot!(game, Ridley[RIDLEY].base.properties = properties);
+    session_slot!(game, Ridley[RIDLEY].base.properties = properties);
 }
 
 /// Check if Samus is morphed or spin jumping / damage boosting ($A6:BCF1):
@@ -1464,15 +1488,15 @@ pub fn samus_in_pogo_zone<H: Host + ?Sized>(game: &mut H) -> bool {
 
 /// Lunge if power bomb active and not holding Samus ($A6:BD2C). Was
 /// `Ridley_Func_42`.
-pub fn lunge_if_power_bomb<H: Host + ?Sized>(game: &mut H) {
-    let mode = slot!(game, Ridley[RIDLEY].fight_mode) as i16;
+pub fn lunge_if_power_bomb<S: State + ?Sized>(game: &mut S) {
+    let mode = session_slot!(game, Ridley[RIDLEY].fight_mode) as i16;
     if mode > 0
         && mode != 2
         && word!(game.power_bomb_flag) != 0
-        && slot!(game, Ridley[RIDLEY].holding_samus) == 0
+        && session_slot!(game, Ridley[RIDLEY].holding_samus) == 0
     {
         set_neutral_tail(game);
-        slot!(game, Ridley[RIDLEY].function = function::LUNGE);
+        session_slot!(game, Ridley[RIDLEY].function = function::LUNGE);
     }
 }
 
@@ -2734,14 +2758,14 @@ pub fn ceres_health_palette<H: Host + ?Sized>(game: &mut H) {
 
 /// Ridley hurt flash handling ($A6:D4DA): the spritemap palette flashes to
 /// palette 0 while the flash timer runs. Was `Ridley_Func_102`.
-pub fn hurt_flash<H: Host + ?Sized>(game: &mut H) {
+pub fn hurt_flash<S: State + ?Sized>(game: &mut S) {
     let mut palette = 3584;
-    if slot!(game, Ridley[RIDLEY].base.flash_timer) >= 2
+    if session_slot!(game, Ridley[RIDLEY].base.flash_timer) >= 2
         && (word!(game.random_enemy_counter) as i32 + 1 & 2) != 0
     {
         palette = 0;
     }
-    slot!(game, Ridley[RIDLEY].palette = palette);
+    session_slot!(game, Ridley[RIDLEY].palette = palette);
 }
 
 /// Check for collision with non-air block ($A6:D4F9): whether the level data
@@ -2906,63 +2930,63 @@ pub fn calculate_swoop_velocities<H: Host + ?Sized>(
 /// Move Ridley ($A6:D86B): the current enemy by its velocities, clamped to
 /// Ridley's bounds; `hit_boundary` records the side hit (1 left, 2 right, 4
 /// top, 8 bottom). Was `Ridley_Func_112`.
-pub fn move_ridley<H: Host + ?Sized>(game: &mut H) {
-    slot!(game, Ridley[RIDLEY].hit_boundary = 0);
+pub fn move_ridley<S: State + ?Sized>(game: &mut S) {
+    session_slot!(game, Ridley[RIDLEY].hit_boundary = 0);
     let k = word!(game.cur_enemy_index);
     let e = word!(game.cur_enemy_index) as i32;
-    let carry = slot!(byte game, Ridley[e].base.x_subpos[1]) as i32
-        + slot!(byte game, Ridley[e].x_velocity[0]) as i32;
-    slot!(byte game, Ridley[e].base.x_subpos[1] = carry as u8);
-    let mut x = (slot!(game, Ridley[e].base.x_pos) as i32
-        + (slot!(game, Ridley[e].x_velocity) >> 8) as i8 as i32
+    let carry = session_slot!(byte game, Ridley[e].base.x_subpos[1]) as i32
+        + session_slot!(byte game, Ridley[e].x_velocity[0]) as i32;
+    session_slot!(byte game, Ridley[e].base.x_subpos[1] = carry as u8);
+    let mut x = (session_slot!(game, Ridley[e].base.x_pos) as i32
+        + (session_slot!(game, Ridley[e].x_velocity) >> 8) as i8 as i32
         + (carry >> 8)) as u16;
-    if (x as i16).wrapping_sub(slot!(game, Ridley[RIDLEY].min_x) as i16) >= 0 {
-        if (x as i16).wrapping_sub(slot!(game, Ridley[RIDLEY].max_x) as i16) >= 0 {
-            slot!(game, Ridley[e].x_velocity = 0);
-            slot!(game, Ridley[RIDLEY].hit_boundary = 2);
-            x = slot!(game, Ridley[RIDLEY].max_x);
+    if (x as i16).wrapping_sub(session_slot!(game, Ridley[RIDLEY].min_x) as i16) >= 0 {
+        if (x as i16).wrapping_sub(session_slot!(game, Ridley[RIDLEY].max_x) as i16) >= 0 {
+            session_slot!(game, Ridley[e].x_velocity = 0);
+            session_slot!(game, Ridley[RIDLEY].hit_boundary = 2);
+            x = session_slot!(game, Ridley[RIDLEY].max_x);
         }
-        slot!(game, Ridley[e].base.x_pos = x);
+        session_slot!(game, Ridley[e].base.x_pos = x);
     } else {
         ceres_earthquake(k, game);
-        slot!(
+        session_slot!(
             game,
-            Ridley[e].base.x_pos = slot!(game, Ridley[RIDLEY].min_x)
+            Ridley[e].base.x_pos = session_slot!(game, Ridley[RIDLEY].min_x)
         );
-        slot!(game, Ridley[e].x_velocity = 0);
-        slot!(game, Ridley[RIDLEY].hit_boundary = 1);
+        session_slot!(game, Ridley[e].x_velocity = 0);
+        session_slot!(game, Ridley[RIDLEY].hit_boundary = 1);
     }
-    let carry = slot!(byte game, Ridley[e].base.y_subpos[1]) as i32
-        + slot!(byte game, Ridley[e].y_velocity[0]) as i32;
-    slot!(byte game, Ridley[e].base.y_subpos[1] = carry as u8);
-    let mut y = (slot!(game, Ridley[e].base.y_pos) as i32
-        + (slot!(game, Ridley[e].y_velocity) >> 8) as i8 as i32
+    let carry = session_slot!(byte game, Ridley[e].base.y_subpos[1]) as i32
+        + session_slot!(byte game, Ridley[e].y_velocity[0]) as i32;
+    session_slot!(byte game, Ridley[e].base.y_subpos[1] = carry as u8);
+    let mut y = (session_slot!(game, Ridley[e].base.y_pos) as i32
+        + (session_slot!(game, Ridley[e].y_velocity) >> 8) as i8 as i32
         + (carry >> 8)) as u16;
-    if (y as i16).wrapping_sub(slot!(game, Ridley[RIDLEY].min_y) as i16) >= 0 {
-        if (y as i16).wrapping_sub(slot!(game, Ridley[RIDLEY].max_y) as i16) >= 0 {
-            slot!(game, Ridley[e].y_velocity = 0);
-            slot!(game, Ridley[RIDLEY].hit_boundary = 8);
-            y = slot!(game, Ridley[RIDLEY].max_y);
+    if (y as i16).wrapping_sub(session_slot!(game, Ridley[RIDLEY].min_y) as i16) >= 0 {
+        if (y as i16).wrapping_sub(session_slot!(game, Ridley[RIDLEY].max_y) as i16) >= 0 {
+            session_slot!(game, Ridley[e].y_velocity = 0);
+            session_slot!(game, Ridley[RIDLEY].hit_boundary = 8);
+            y = session_slot!(game, Ridley[RIDLEY].max_y);
         }
-        slot!(game, Ridley[e].base.y_pos = y);
+        session_slot!(game, Ridley[e].base.y_pos = y);
     } else {
-        slot!(
+        session_slot!(
             game,
-            Ridley[e].base.y_pos = slot!(game, Ridley[RIDLEY].min_y)
+            Ridley[e].base.y_pos = session_slot!(game, Ridley[RIDLEY].min_y)
         );
-        slot!(game, Ridley[e].y_velocity = 0);
-        slot!(game, Ridley[RIDLEY].hit_boundary = 4);
+        session_slot!(game, Ridley[e].y_velocity = 0);
+        session_slot!(game, Ridley[RIDLEY].hit_boundary = 4);
     }
 }
 
 /// Trigger Ceres Ridley earthquake if moving fast enough ($A6:D914): enemy `k`
 /// hitting the left wall at 280h or more, outside Norfair. Was
 /// `Ridley_Func_113`.
-pub fn ceres_earthquake<H: Host + ?Sized>(k: u16, game: &mut H) {
+pub fn ceres_earthquake<S: State + ?Sized>(k: u16, game: &mut S) {
     if word!(game.area_index) != NORFAIR {
         let e = i32::from(k);
-        let speed =
-            abs16(slot!(game, Ridley[e].x_velocity)).max(abs16(slot!(game, Ridley[e].y_velocity)));
+        let speed = abs16(session_slot!(game, Ridley[e].x_velocity))
+            .max(abs16(session_slot!(game, Ridley[e].y_velocity)));
         if speed >= 0x280 {
             let kind = if word!(game.area_index) == NORFAIR {
                 24
@@ -2995,30 +3019,30 @@ fn in_right_half<H: Host + ?Sized>(game: &H) -> bool {
 
 /// Update Ridley wings animation ($A6:D97D): ten frames, faster at speed.
 /// Was `Ridley_Func_115`.
-pub fn update_wings<H: Host + ?Sized>(game: &mut H) {
+pub fn update_wings<S: State + ?Sized>(game: &mut S) {
     wings_animation_timer(game);
-    let timer = (slot!(game, Ridley[RIDLEY].wings_timer) as i16)
-        .wrapping_sub(slot!(game, Ridley[RIDLEY].wings_timer_delta) as i16);
-    slot!(game, Ridley[RIDLEY].wings_timer = timer as u16);
+    let timer = (session_slot!(game, Ridley[RIDLEY].wings_timer) as i16)
+        .wrapping_sub(session_slot!(game, Ridley[RIDLEY].wings_timer_delta) as i16);
+    session_slot!(game, Ridley[RIDLEY].wings_timer = timer as u16);
     if timer < 0 {
-        slot!(game, Ridley[RIDLEY].wings_timer = 32);
-        let mut frame = slot!(game, Ridley[RIDLEY].wings_frame).wrapping_add(1);
+        session_slot!(game, Ridley[RIDLEY].wings_timer = 32);
+        let mut frame = session_slot!(game, Ridley[RIDLEY].wings_frame).wrapping_add(1);
         if frame >= 0xa {
             frame = 0;
         }
-        slot!(game, Ridley[RIDLEY].wings_frame = frame);
+        session_slot!(game, Ridley[RIDLEY].wings_frame = frame);
     }
 }
 
 /// Calculate Ridley wings animation timer ($A6:D9A8): the timer delta from
 /// the larger velocity, halved while rising. Was `Ridley_Func_116`.
-pub fn wings_animation_timer<H: Host + ?Sized>(game: &mut H) {
+pub fn wings_animation_timer<S: State + ?Sized>(game: &mut S) {
     /// The wings timer deltas ($A6:D9ED), by speed.
     const DELTAS: [u16; 8] = [0xc, 0xe, 0x10, 0x12, 0x1c, 0x20, 0x28, 0x30];
-    let x_speed = abs16(slot!(game, Ridley[RIDLEY].x_velocity));
-    let sum = x_speed.wrapping_add(abs16(slot!(game, Ridley[RIDLEY].y_velocity)));
+    let x_speed = abs16(session_slot!(game, Ridley[RIDLEY].x_velocity));
+    let sum = x_speed.wrapping_add(abs16(session_slot!(game, Ridley[RIDLEY].y_velocity)));
     if sum == 0 {
-        slot!(game, Ridley[RIDLEY].wings_timer_delta = 0);
+        session_slot!(game, Ridley[RIDLEY].wings_timer_delta = 0);
         return;
     }
     let mut speed = sum.wrapping_sub(x_speed);
@@ -3027,10 +3051,10 @@ pub fn wings_animation_timer<H: Host + ?Sized>(game: &mut H) {
     }
     let index = ((4 * speed as i32 & 0xf00) >> 8).min(7);
     let mut delta = DELTAS[index as usize];
-    if (slot!(game, Ridley[RIDLEY].y_velocity) & 0x8000) == 0 {
+    if (session_slot!(game, Ridley[RIDLEY].y_velocity) & 0x8000) == 0 {
         delta >>= 1;
     }
-    slot!(game, Ridley[RIDLEY].wings_timer_delta = delta);
+    session_slot!(game, Ridley[RIDLEY].wings_timer_delta = delta);
 }
 
 /// Initialise Ridley ribs animation ($A6:D9FD). Was `Ridley_Func_117`.
@@ -3209,12 +3233,12 @@ pub fn add_spritemap<H: Host + ?Sized>(spritemap: u16, x: u16, y: u16, palette: 
 
 /// Check if Ridley is on screen ($A6:DE7A): true when he is off it, with a
 /// 20h px margin. Was `Ridley_Func_121`.
-pub fn off_screen<H: Host + ?Sized>(game: &mut H) -> bool {
-    let y = slot!(game, Ridley[RIDLEY].base.y_pos) as i16;
+pub fn off_screen<S: State + ?Sized>(game: &mut S) -> bool {
+    let y = session_slot!(game, Ridley[RIDLEY].base.y_pos) as i16;
     if y >= 0 {
         let screen_y = (y as i32 + 32 - crate::camera::current(game).layer1[1] as i32) as i16;
         if screen_y >= 0 && screen_y as i32 - 288 & 0x8000 != 0 {
-            let x = slot!(game, Ridley[RIDLEY].base.x_pos) as i16;
+            let x = session_slot!(game, Ridley[RIDLEY].base.x_pos) as i16;
             if x >= 0 {
                 let screen_x =
                     (x as i32 + 32 - crate::camera::current(game).layer1[0] as i32) as i16;
