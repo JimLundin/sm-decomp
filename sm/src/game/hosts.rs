@@ -40,37 +40,6 @@ impl sm_game::hdma_program::HdmaLease for crate::game::session_runtime::Runtime<
     }
 }
 
-impl sm_game::grapple_swing::Host for Game {
-    type Lease<'a> = crate::game::session_runtime::Runtime<'a>;
-    fn with_lease<'s, R>(&'s mut self, action: impl FnOnce(&mut Self::Lease<'s>) -> R) -> R {
-        action(&mut crate::game::session_runtime::Runtime::new(self))
-    }
-    fn grapple_unreachable(&mut self) -> bool {
-        sm_game::menus::host::MenuRuntime::rtl_unreachable(self)
-    }
-    fn grapple_pose_command(&mut self, command: u16) -> u16 {
-        sm_game::menus::host::MenuRuntime::player_command(self, command)
-    }
-    fn multiply_with_scratch(&mut self, a: u16, b: u16) -> u32 {
-        Game::multiply_with_scratch(self, a, b)
-    }
-    fn player_bottom(&self) -> u16 {
-        crate::game::session_runtime::player_bottom(self)
-    }
-    fn settle_grapple(&mut self) {
-        crate::game::session_runtime::settle_grapple(self)
-    }
-    fn block_behavior_word(&self, index: usize) -> i16 {
-        let at = 0x16402 + index;
-        i16::from_ne_bytes([self.ram().read_byte(at), self.ram().read_byte(at + 1)])
-    }
-    fn periodic_damage(&self) -> (u16, u16) {
-        let low = u16::from_ne_bytes([self.ram().read_byte(0xa4e), self.ram().read_byte(0xa4f)]);
-        let high = u16::from_ne_bytes([self.ram().read_byte(0xa50), self.ram().read_byte(0xa51)]);
-        (low, high)
-    }
-}
-
 impl sm_game::runtime_access::SessionRam for crate::game::session_runtime::Runtime<'_> {
     fn byte(&self, at: usize) -> u8 {
         crate::game::session_runtime::Runtime::byte(self, at)
