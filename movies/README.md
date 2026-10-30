@@ -1,10 +1,18 @@
 # Verify gameplay
 
 The replay runner compares Rust gameplay with the ROM oracle frame by frame.
-[segments.toml](segments.toml) defines the scenarios, inputs and required events.
-Follow the [build guide](../docs/ITERATION.md) first; commands below run from the
+Each frame starts from the same state and input; the original ROM runs on the
+emulated 65816 and the Rust game runs on the same emulated hardware. WRAM,
+SRAM, VRAM, CGRAM, OAM, PPU registers and port state, and the rendered image
+must match. The [README](../README.md#verification) lists what this does not
+cover.
+
+[segments.toml](segments.toml) defines the scenarios (rows), their inputs and
+required events: 87 rows, 152,728 selected frames. Follow the
+[build guide](../docs/ITERATION.md) first; commands below run from the
 repository root with Python 3.11+ (`python3` on systems without `python`).
-You need your own unheadered ROM at `rom/sm.smc`.
+You need your own unheadered ROM at `rom/sm.smc`. The verifier builds only on
+Windows x86-64 GNU.
 
 ## Run a scenario
 
@@ -27,13 +35,14 @@ OpenSSL and the matching ROM are required to restore them. For Crocomire:
 
 ```powershell
 New-Item -ItemType Directory -Force target | Out-Null
-Invoke-WebRequest 'https://github.com/JimLundin/sm-decomp/releases/download/ci-data/Core67-b54e-full22.tar.gz.enc' -OutFile target/checkpoints.enc
-python tools/ci_seed_data.py restore target/checkpoints.enc --rom rom/sm.smc --sha256 9124be2e202d908aee762871f29927629e6e7e41b98c08e86f54e660d03a2b23 --segment boss-crocomire
+Invoke-WebRequest 'https://github.com/JimLundin/sm-decomp/releases/download/ci-data/layout150-f158-full22.tar.gz.enc' -OutFile target/checkpoints.enc
+python tools/ci_seed_data.py restore target/checkpoints.enc --rom rom/sm.smc --sha256 723ccef6ac6df45f31d5179ba5d9569184de0fb5c678266365d3eaf62d3c10b9 --segment boss-crocomire
 ```
 
-That bundle contains all thirteen checkpoint-backed rows. Original-emulator
-room seeds use separate bundles; the current asset names, hashes and exact
-row-to-bundle mapping are in [`seed_bundle` in the workflow](../.github/workflows/segments.yml).
+Fourteen rows start from checkpoints: that bundle holds ten of them and
+`layout150-checkpoints-147` the other four. Original-emulator room seeds use
+separate bundles. The current asset names, hashes and exact row-to-bundle
+mapping are in `seed_bundle` in [plan_corpus.py](../.github/scripts/plan_corpus.py).
 Restore each bundle with only its matching `--segment` selections. Restoration
 checks hashes and refuses to replace different existing files.
 Add `--runtime-only` when you only need to replay existing rows; it restores
@@ -61,6 +70,52 @@ Loaded item or boss flags do not satisfy fresh-event expectations. Checkpoint
 compatibility includes ROM, inputs and runtime state; a rejected checkpoint may
 regenerate from boot. A failed comparison or missing required event stays a failure.
 Both save rows retain the full Kago approach before their selected save windows.
+
+## Checks in CI
+
+CI holds the ROM in repository secrets and keeps every ROM-derived file
+(inputs, checkpoints, logs) private to the runner.
+
+| Workflow | Runs | What it does |
+| --- | --- | --- |
+| [ci.yml](../.github/workflows/ci.yml) | Every pull request and push to main | Format, progress reports, dependency direction, target-crate tests, the ROM import check below, the Windows native and desktop build, verifier unit tests and detached composition checks |
+| [segments.yml](../.github/workflows/segments.yml) | Every 3 hours, on dispatch, and after a push to main that deletes a legacy bank file | The corpus: rows grouped by seed bundle or input into at most 6 parallel shards; checkpoint rows have a 60-minute limit |
+| [full-route.yml](../.github/workflows/full-route.yml) | Nightly and on dispatch | The whole 100% TAS |
+| [coverage.yml](../.github/workflows/coverage.yml) | Manual | The corpus with coverage instrumentation |
+
+To run selected corpus rows on a branch, dispatch `segments.yml` with
+space-separated row IDs; unknown IDs fail. An empty selection runs the full
+corpus. A change lands after PR CI and a full corpus pass on its exact head.
+
+### ROM import check
+
+`ci.yml` restores the ROM and runs `cargo test -p sm_data --test rom_import`
+with `SM_ROM` set. The test imports every `sm_data` record from the real
+cartridge. A record that rejects it would leave the game on its old ROM reads,
+so replays would pass without exercising it. The log is filtered to pass/fail,
+the rejected record names and error kinds, and the failing assertion's source
+location, because it can hold ROM-derived values. When adding a record to
+`sm_data`, add it to [rom_import.rs](../crates/sm_data/tests/rom_import.rs);
+run it locally as shown in the [build guide](../docs/ITERATION.md#target-crates-on-any-platform).
+
+### Full route
+
+`full-route.yml` imports `movies/100.inputs` from the 100% movie in
+[manifest.toml](manifest.toml) (222,788 frames) and checks its hash. A
+`boundaries` job replays the original from boot and saves a checkpoint every
+20,000 frames; these are cached per source. Each chunk then replays in lockstep
+from its boundary with the same per-frame comparison as the corpus, at most 6
+in parallel. Dispatch with `regenerate` to rebuild the boundary checkpoints.
+[full_route.py](../.github/scripts/full_route.py) holds the steps.
+
+### Coverage
+
+`coverage.yml` builds the verifier with `-C instrument-coverage`, runs the
+selected rows (all by default), merges the profiles and summarises line and
+function coverage of `crates/sm_game` and `sm/src/game` with
+[coverage_summary.py](../tools/coverage_summary.py). The `coverage` artifact
+lists files and the largest functions the corpus never executes; no
+ROM-derived data is recorded. It is manual and does not gate landing.
 
 ## Import or capture other inputs
 

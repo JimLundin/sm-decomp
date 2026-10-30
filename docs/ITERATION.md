@@ -1,29 +1,63 @@
 # Build and run
 
-## Getting started
-
-Install [rustup](https://rustup.rs/), Python 3.11+ and SDL2 development libraries
-(`apt install libsdl2-dev` on Debian/Ubuntu). The project uses Rust edition 2024;
-[rust-toolchain.toml](../rust-toolchain.toml) selects the compiler.
-
-Build the pinned libraries using [native dependencies](NATIVE_DEPENDENCIES.md)
-and the separate [PNG decoder recipe](PNG_DEPENDENCY.md).
-The Python installers require an explicit `--target`: `x86_64-windows-gnu`, or
-`x86_64-linux-gnu` for LakeSnes, configuration and music. The desktop installer
-currently accepts only the Windows target. Use matching SDL2 headers and libraries.
-Their source
-caches default under `%LOCALAPPDATA%` on Windows or `$XDG_CACHE_HOME`/`~/.cache`
-on Linux; `--prefix` overrides the cache. Keep archives for different targets in
-separate directories on `LIBRARY_PATH`. Upstream versions and
-licenses are collected in [third-party notices](../THIRD_PARTY_NOTICES.md).
+## Requirements
 
 Supply an unheadered Super Metroid (Japan, USA) (En,Ja) ROM at `rom/sm.smc`
-(SHA-1 `da957f0d63d14cb441d215462904c4fa8519c613`). No ROM or game data is included.
-From the repository root:
+(SHA-1 `da957f0d63d14cb441d215462904c4fa8519c613`). No ROM or game data is
+included. Commands below run from the repository root.
+
+Install [rustup](https://rustup.rs/); [rust-toolchain.toml](../rust-toolchain.toml)
+selects the stable compiler with rustfmt and clippy. The project uses Rust
+edition 2024.
+
+## Target crates on any platform
+
+`sm_data`, `sm_game` and `sm_runtime` have no native dependencies:
 
 ```sh
-cargo run --release -- rom/sm.smc
+cargo fmt --check
+cargo test -p sm_data -p sm_game -p sm_runtime
 ```
+
+The ROM import check needs an absolute ROM path, because Cargo runs the test
+from the package directory:
+
+```sh
+SM_ROM="$PWD/rom/sm.smc" cargo test -p sm_data --test rom_import
+```
+
+Without `SM_ROM` the test prints a notice and passes without checking.
+Do not publish its output; failures can contain ROM-derived values.
+
+## Desktop game and verifier (Windows)
+
+The desktop game (`sm_app`) and the verifier (`sm`) currently build only for
+Windows x86-64 with the GNU toolchain: the native desktop bridge relies on
+Windows' 32-bit `long`. CI uses the same setup in the `build` job of
+[ci.yml](../.github/workflows/ci.yml). You need:
+
+- the `stable-x86_64-pc-windows-gnu` Rust toolchain and a MinGW-w64 GCC linker;
+- Python 3.11 or newer;
+- Zig 0.15.2 for Windows x86-64 and the SDL2 2.32.10 MinGW development SDK;
+- the pinned native archives, built as described in
+  [native dependencies](NATIVE_DEPENDENCIES.md) and the
+  [PNG decoder recipe](PNG_DEPENDENCY.md).
+
+Build the archives into one native-library directory and put it on
+`LIBRARY_PATH` together with SDL2's `lib` directory. The build needs
+`libsm_desktop.a`, `liblakesnes_cpu.a`, `liblakesnes_backend.a`,
+`libsm_config.a` and `libsm_stb_image.a`. Then:
+
+```sh
+cargo build --release -p sm_app
+cargo run --release -p sm_app -- rom/sm.smc
+```
+
+The binary is `target/release/sm.exe`. Its command line is
+`sm [--config FILE] [--debug] [ROM] [--room-pack PATH]`; the ROM defaults to
+`sm.smc`. `--room-pack` loads a prepared room pack. On Windows the ROM path
+must be ASCII; a relative ROM path also needs an ASCII working directory
+unless `--config` is supplied. Room-pack paths may contain Unicode.
 
 Settings and controls are in [`sm.ini`](../sm.ini): arrows move; X/Z/S/A map to
 SNES A/B/X/Y; C/V are L/R; Enter is Start; right Shift is Select.
@@ -32,7 +66,6 @@ See [Verify gameplay](../movies/README.md) for headless replay.
 
 ## Windows shell setup
 
-Use the `stable-x86_64-pc-windows-gnu` Rust toolchain and a matching SDL2 MinGW SDK.
 If tools are missing from PATH, point this shell at their installed locations:
 
 ```powershell
@@ -45,9 +78,10 @@ Get-Command cargo,rustc,python,sh
 Adjust the Python path for your installation. `LIBRARY_PATH` must contain the
 required native archives as well as SDL2. Rebuild stale archives with their
 pinned installers; never edit source stamps to make an old archive appear current.
-The DLL/ctypes path supports local verification when executable launches are
-restricted. Follow existing host restrictions without changing security settings.
-Project work order and resource limits are maintained in [PLAN](PLAN.md).
+The DLL/ctypes path of `tools/verify_dll.py` supports local verification when
+executable launches are restricted. Follow existing host restrictions without
+changing security settings. Project work order and resource limits are
+maintained in [PLAN](PLAN.md).
 
 ## Capture and replay reference
 
