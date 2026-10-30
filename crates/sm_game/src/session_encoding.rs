@@ -1090,3 +1090,77 @@ pub fn inputs(bytes: &impl Fn(usize) -> u8) -> ExternalInputs {
         grapple_y: w(ram::y_pos_of_start_of_grapple_beam_prevframe),
     }
 }
+
+#[cfg(test)]
+mod player_lane_tests {
+    //! The grapple writes these words as named `Session::player` fields inside a
+    //! lease, so the projection must serve each word from exactly that field: no
+    //! earlier owner may claim the address, and writing it touches no other lane.
+    use super::{projected_byte, write_projected_byte};
+    use crate::room_entry::world::WorldBinding;
+    use crate::session::Session;
+
+    type Lane = (usize, fn(&mut Session) -> &mut u16);
+    const LANES: &[Lane] = &[
+        (0xd32, |s| &mut s.player.grapple),
+        (0xcfe, |s| &mut s.player.grapple_length),
+        (0xcf4, |s| &mut s.player.grapple_flags),
+        (0xcfa, |s| &mut s.player.grapple_angle),
+        (0xa1c, |s| &mut s.player.pose),
+        (0xd08, |s| &mut s.player.grapple_endpoint.x),
+        (0xd0c, |s| &mut s.player.grapple_endpoint.y),
+        (0xd34, |s| &mut s.player.grapple_direction),
+        (0xa96, |s| &mut s.player.animation_clock.frame),
+        (0xa94, |s| &mut s.player.animation_clock.remaining),
+        (0xa64, |s| &mut s.player.grapple_interaction_flags),
+        (0xcf8, |s| &mut s.player.grapple_slow_scrolling),
+        (0xa9e, |s| &mut s.player.transitions.grapple_walljump_timer),
+        (0x18a8, |s| &mut s.player.invincibility),
+        (0xb36, |s| &mut s.player.contact.y_direction),
+        (0xb4a, |s| &mut s.player.contact.acceleration_mode),
+        (0xb00, |s| &mut s.player.contact.radius),
+        (0xaf6, |s| &mut s.player.x),
+        (0xaf8, |s| &mut s.player.x_fraction),
+        (0xafa, |s| &mut s.player.y),
+        (0xafc, |s| &mut s.player.y_fraction),
+        (0xb10, |s| &mut s.player.previous_position.x.whole),
+        (0xb12, |s| &mut s.player.previous_position.x.fraction),
+        (0xb14, |s| &mut s.player.previous_position.y.whole),
+        (0xb16, |s| &mut s.player.previous_position.y.fraction),
+    ];
+
+    fn session() -> Session {
+        Session::with_world(WorldBinding::canonical_legacy())
+    }
+    fn projected_word(s: &Session, at: usize) -> Option<u16> {
+        Some(u16::from_le_bytes([
+            projected_byte(s, at)?,
+            projected_byte(s, at + 1)?,
+        ]))
+    }
+
+    #[test]
+    fn player_lanes_project_from_their_fields() {
+        for (index, &(at, field)) in LANES.iter().enumerate() {
+            let value = 0x1357u16.wrapping_mul(index as u16 + 1) ^ 0x8001;
+            let mut s = session();
+            *field(&mut s) = value;
+            assert_eq!(projected_word(&s, at), Some(value), "read {at:#x}");
+
+            let mut s = session();
+            let [low, high] = value.to_le_bytes();
+            assert!(write_projected_byte(&mut s, at, low), "write {at:#x}");
+            assert!(
+                write_projected_byte(&mut s, at + 1, high),
+                "write {:#x}",
+                at + 1
+            );
+            assert_eq!(*field(&mut s), value, "write {at:#x}");
+            for &(other, other_field) in LANES {
+                if other != at {
+                    assert_eq!(*other_field(&mut s), 0, "write {at:#x} touched {other:#x}");
+                }
+            }
+        }
+    }
+}
