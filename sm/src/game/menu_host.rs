@@ -246,6 +246,9 @@ impl Host for Game {
     fn intro_palette(&self) -> &Option<sm_game::intro_pages::ImportedIntroPalette> {
         &self.intro_palette
     }
+    fn visual_tables(&self) -> &sm_game::visual_tables::ImportedTables {
+        &self.visual_tables
+    }
     fn area_select_palettes(&self) -> &Option<sm_game::menus::menu_tilemap::ImportedAreaPalettes> {
         &self.area_select_palettes
     }

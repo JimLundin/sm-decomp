@@ -228,7 +228,7 @@ pub struct Game {
     /// Imported from `native_rom` by `register_native_rom`; see game::demo_rooms.
     pub(crate) demo_scenes: Option<crate::game::demo_rooms::ImportedScenes>,
     /// Imported from `loaded_rom` by `register_rom`; see game::visual_runtime.
-    pub(crate) visual_tables: crate::game::visual_runtime::ImportedTables,
+    pub(crate) visual_tables: sm_game::visual_tables::ImportedTables,
     /// Imported from `loaded_rom` by `register_rom`; see game::map_menu.
     pub(crate) pause_menu: crate::game::map_menu::ImportedTables,
     /// Imported from `loaded_rom` by `register_rom`; see game::actors::crocomire_reactions.
@@ -1233,7 +1233,7 @@ impl Game {
         self.records.torizo_corpse_tables = sm_game::torizo_corpse_tables::import(image);
         self.records.shitroid_tables = sm_game::shitroid_tables::import(image);
         self.records.mother_brain_tables = sm_game::mother_brain_tables::import(image);
-        self.visual_tables = crate::game::visual_runtime::import(image);
+        self.visual_tables = sm_game::visual_tables::import(image);
         self.pause_menu = crate::game::map_menu::import(image);
         self.crocomire = crate::game::actors::crocomire_reactions::import(image);
         self.magdollite = crate::game::actors::magdollite::import(image);

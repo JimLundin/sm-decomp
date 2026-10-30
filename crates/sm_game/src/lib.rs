@@ -66,6 +66,7 @@ pub mod sprite_effect_state;
 pub mod sprite_output;
 pub mod title_screen;
 pub mod visual_state;
+pub mod visual_tables;
 pub mod word_transfers;
 pub mod xray_background;
 
