@@ -131,6 +131,9 @@ pub fn capture_bg1_right<H: Host + ?Sized>(game: &mut H) {
 pub fn capture_bg1_left<H: Host + ?Sized>(game: &mut H) {
     enqueue_readback(0x58, 0, 0x6000, 2048, false, game);
 }
+/// Copy the visible BG1 into the overlay and reveal the hidden blocks of its
+/// 16 rows of 17 blocks, then the room's revealed items, and queue the BG2
+/// readback.
 pub fn build_overlay<H: Host + ?Sized>(game: &mut H) {
     copy_background(game);
     if (camera(game).layer1[1] >> 12) != 0 {
@@ -211,34 +214,43 @@ fn write_neighbor<R: SessionView>(destination: u16, tile: u16, offsets: [usize; 
     }
 }
 
-pub fn reveal_left_neighbor<R: SessionView>(dst_r22: u16, r34: u16, game: &mut R) {
-    if r34 == 0 {
+/// Reveal the part of a two-wide block left of the screen that overhangs the
+/// first column at `destination`.
+pub fn reveal_left_neighbor<R: SessionView>(destination: u16, row_block: u16, game: &mut R) {
+    if row_block == 0 {
         return;
     }
-    let Some(descriptor) = block_definition(r34.wrapping_sub(1), game) else {
+    let Some(descriptor) = block_definition(row_block.wrapping_sub(1), game) else {
         return;
     };
     if descriptor.native_word(0) != 0xcf4e {
         if descriptor.native_word(0) != 0xcf6f {
             return;
         }
-        write_neighbor(dst_r22, descriptor.native_word(8), [64, 65, 96, 97], game);
+        write_neighbor(
+            destination,
+            descriptor.native_word(8),
+            [64, 65, 96, 97],
+            game,
+        );
     }
-    write_neighbor(dst_r22, descriptor.native_word(4), [0, 1, 32, 33], game);
+    write_neighbor(destination, descriptor.native_word(4), [0, 1, 32, 33], game);
 }
 
-fn follow_extension<R: SessionView>(dst_r22: u16, r36: u16, which_dir: bool, game: &mut R) {
+/// Follow an extension block's chain to the block it extends and reveal that
+/// block's tile at `destination`, starting vertically when `vertical`.
+fn follow_extension<R: SessionView>(destination: u16, block: u16, vertical: bool, game: &mut R) {
     let width = game.session().room.width;
-    let mut y = (r36 as i32 / width as i32) as u16;
-    let mut x = (r36 as i32 % width as i32) as u16;
-    let mut kind = level(game, usize::from(r36)) & 0xf000;
-    let mut step = behavior(game, i32::from(r36)) as i8 as i32;
+    let mut y = (block as i32 / width as i32) as u16;
+    let mut x = (block as i32 % width as i32) as u16;
+    let mut kind = level(game, usize::from(block)) & 0xf000;
+    let mut step = behavior(game, i32::from(block)) as i8 as i32;
     if step != 0 {
-        let mut vertical = which_dir;
+        let mut vertical = vertical;
         loop {
             let variable = if vertical { &mut y } else { &mut x };
             if ((*variable as i32 + step) as i16) < 0 {
-                write_block(dst_r22, 0xff, [0, 1, 32, 33], game);
+                write_block(destination, 0xff, [0, 1, 32, 33], game);
                 return;
             }
             *variable = (*variable as i32 + step) as u16;
@@ -267,7 +279,7 @@ fn follow_extension<R: SessionView>(dst_r22: u16, r36: u16, which_dir: bool, gam
             {
                 let address = entries.native_word(offset + 2).wrapping_add(2);
                 let tile = native_record(0x91, address, game).native_word(0);
-                write_block(dst_r22, tile, [0, 1, 32, 33], game);
+                write_block(destination, tile, [0, 1, 32, 33], game);
                 return;
             }
             offset += 4;
@@ -277,7 +289,7 @@ fn follow_extension<R: SessionView>(dst_r22: u16, r36: u16, which_dir: bool, gam
 
 fn dispatch_reveal<R: SessionView>(
     ea: u32,
-    jp: &<R as Content>::Record,
+    descriptor: &<R as Content>::Record,
     columns_left: u16,
     destination: u16,
     block: u16,
@@ -307,8 +319,12 @@ fn dispatch_reveal<R: SessionView>(
             if column == 1 && columns_left == 1 {
                 continue;
             }
-            let index = if repeat_tile { 0 } else { row * width + column };
-            let tile = jp.native_word(2 + 2 * index);
+            let tile_offset = if repeat_tile {
+                2
+            } else {
+                2 + 2 * (row * width + column)
+            };
+            let tile = descriptor.native_word(tile_offset);
             let base = row * 64 + column * 2;
             write_block(
                 destination,
@@ -320,31 +336,30 @@ fn dispatch_reveal<R: SessionView>(
     }
 }
 
-pub fn reveal_block<R: SessionView>(r18: u16, r22: u16, r36: u16, game: &mut R) {
-    if let Some(jp) = block_definition(r36, game) {
+/// Reveal hidden block `block` at `destination`, `columns_left` columns from
+/// the screen's right edge.
+pub fn reveal_block<R: SessionView>(columns_left: u16, destination: u16, block: u16, game: &mut R) {
+    if let Some(descriptor) = block_definition(block, game) {
         dispatch_reveal(
-            u32::from(jp.native_word(0)) | 0x910000,
-            &jp,
-            r18,
-            r22,
-            r36,
+            u32::from(descriptor.native_word(0)) | 0x910000,
+            &descriptor,
+            columns_left,
+            destination,
+            block,
             game,
         );
     }
 }
 
-pub fn reveal_room_block<R: SessionView>(a: u16, k: u16, j: u16, game: &mut R) {
+/// Reveal room item block `tile` at room block (`x`, `y`) when it is on screen.
+pub fn reveal_room_block<R: SessionView>(tile: u16, x: u16, y: u16, game: &mut R) {
     let layer1 = game.session().room.camera.layer1;
-    let r24: u16 = (k as i32 - (layer1[0] as i32 >> 4)) as u16;
-    let r26: u16 = (j as i32 - (layer1[1] as i32 >> 4)) as u16;
-    if r24 & 0x8000 == 0
-        && (r24 as i32 - 16i32) & 0x8000 != 0
-        && r26 & 0x8000 == 0
-        && (r26 as i32 - 16i32) & 0x8000 != 0
-    {
-        let r22: u16 = (4 * (r24 as i32 + 32 * r26 as i32)) as u16;
-        let offsets = [0, 1, 32, 33].map(|corner| corner ^ usize::from((a & 0x800) >> 6));
-        write_block(r22, a & 0x3ff, offsets, game);
+    let screen_x = (x as i32 - (layer1[0] as i32 >> 4)) as u16;
+    let screen_y = (y as i32 - (layer1[1] as i32 >> 4)) as u16;
+    if screen_x < 16 && screen_y < 16 {
+        let destination = 4 * (screen_x + 32 * screen_y);
+        let offsets = [0, 1, 32, 33].map(|corner| corner ^ usize::from((tile & 0x800) >> 6));
+        write_block(destination, tile & 0x3ff, offsets, game);
     }
 }
 pub fn capture_bg2_right<H: Host + ?Sized>(game: &mut H) {

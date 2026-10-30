@@ -86,8 +86,9 @@ pub fn advance_ceres_elevator<H: MainCodeHost + ?Sized>(h: &mut H) {
         let room = &mut h.session_mut().room;
         room.main_variables[1] = room.main_variables[1].wrapping_sub(1);
         if (room.main_native(1) as i16) < 0 {
-            let v0: i32 = ((6u16).wrapping_mul(room.main_native(0))) as i32 >> 1;
-            let step = h.ceres_rotation_step(v0 as isize);
+            // Each rotation step is three words.
+            let step_word = 6u16.wrapping_mul(room.main_native(0)) >> 1;
+            let step = h.ceres_rotation_step(step_word as isize);
             h.session_mut().room.set_main_native(1, step.frames);
             h.write_word_le(step.mode7_b, fields::reg_M7B);
             h.write_word_le(-(h.word(fields::reg_M7B) as i32) as u16, fields::reg_M7C);
