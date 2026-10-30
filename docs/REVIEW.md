@@ -82,6 +82,18 @@ M seams and cycle cuts, B bank retirement.
    actors) under the existing interval rules; (d) B resumes sm_8b, sm_a3,
    sm_a5..sm_a9 and sm_aa, retiring straight into `sm_game` domain modules.
    *Exit per domain:* it compiles in `sm_game` and its corpus rows pass.
+
+   **Phase 2 ratchets (review, 2026-10-30; flagged in two consecutive reviews).**
+   `cycle_report.py`'s `sm_game_ram` total sites rose from 3,932 to 6,933 and
+   coupled files from 67 to 111 between `9325dd0` and `54f1c79`, because moves
+   carried `word!`/`slot!` addressing into `sm_game`; production grew 155,275 to
+   172,456 while game code moved (moves add 1.3-1.9x lines of lease/host glue).
+   From now: (1) no landing may raise `sm_game_ram` total sites or coupled
+   files; a move that brings RAM-addressed code must convert at least as many
+   sites to typed `Session` fields in the same landing; make `cycle_report.py`
+   fail CI on an increase over a checked-in baseline. (2) A move is line-neutral
+   or smaller in production lines; host/lease adapters added to make it compile
+   count against it. (3) Each landing's PR description states both deltas.
 3. **Gate 1 vertical slice.** Morph room 9E9F: `Session::open` from prepared
    content, the full Morph1200 inputs, `sm_runtime` renderer and sequencer, a
    minimal `sm_app`, headless replay in `sm_tools`, compared to the oracle
