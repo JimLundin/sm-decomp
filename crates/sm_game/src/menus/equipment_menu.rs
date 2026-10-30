@@ -51,8 +51,8 @@ fn category<H: Host + ?Sized>(game: &H, index: isize) -> Category {
 
 pub fn update<H: Host + ?Sized>(game: &mut H) {
     let category = crate::menu!(game.pausemenu_equipment_category_item) as u8;
-    let NAVIGATE: [fn(&mut H); 4] = [reserves, beams, suits, boots];
-    NAVIGATE[usize::from(category)](game);
+    let navigate: [fn(&mut H); 4] = [reserves, beams, suits, boots];
+    navigate[usize::from(category)](game);
     match category {
         0 => menu_tilemap::update_reserve_arrow(game),
         1 => {
@@ -76,7 +76,7 @@ pub fn update<H: Host + ?Sized>(game: &mut H) {
 }
 
 fn reserves<H: Host + ?Sized>(game: &mut H) {
-    let ACTIONS: [fn(&mut H); 2] = [
+    let actions: [fn(&mut H); 2] = [
         |game| super::reserve_tanks::toggle_mode(game),
         |game| super::reserve_tanks::transfer_manual(game),
     ];

@@ -1,6 +1,4 @@
 //! The pause, map, equipment, file and options menus, over a `Host`.
-// The modules keep the original's names and assignment shapes.
-#![allow(non_snake_case, non_upper_case_globals, unused_mut, unused_assignments)]
 pub mod controller_input;
 pub mod equipment_menu;
 pub mod file_menu;

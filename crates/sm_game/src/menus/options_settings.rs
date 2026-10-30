@@ -64,9 +64,9 @@ pub fn main_menu<H: Host + ?Sized>(game: &mut H) {
         word!(game.game_options_screen_index = 11);
     } else if word!(game.joypad1_newkeys) & (kButton_A | kButton_Start) as u16 != 0 {
         game.queue_sound(0, 0x38_u8, 6);
-        let ACTIONS: [fn(&mut H); 5] =
+        let actions: [fn(&mut H); 5] =
             [start, toggle_language, toggle_language, dissolve, dissolve];
-        ACTIONS[usize::from(word!(game.menu_option_index))](game);
+        actions[usize::from(word!(game.menu_option_index))](game);
     }
 }
 
@@ -141,8 +141,8 @@ pub fn special<H: Host + ?Sized>(game: &mut H) {
         != 0
     {
         game.queue_sound(0, 0x38_u8, 6);
-        let ACTIONS: [fn(&mut H); 3] = [toggle_special, toggle_special, back];
-        ACTIONS[usize::from(word!(game.menu_option_index))](game);
+        let actions: [fn(&mut H); 3] = [toggle_special, toggle_special, back];
+        actions[usize::from(word!(game.menu_option_index))](game);
     }
 }
 
@@ -214,7 +214,7 @@ pub fn controller<H: Host + ?Sized>(game: &mut H) {
     } else if word!(game.joypad1_newkeys) != 0 {
         game.queue_sound(0, 0x38_u8, 6);
         let remap: fn(&mut H) = |game| super::controller_input::remap_binding(game);
-        let ACTIONS: [fn(&mut H); 9] = [
+        let actions: [fn(&mut H); 9] = [
             remap,
             remap,
             remap,
@@ -225,7 +225,7 @@ pub fn controller<H: Host + ?Sized>(game: &mut H) {
             accept_bindings,
             reset_bindings,
         ];
-        ACTIONS[usize::from(word!(game.menu_option_index))](game);
+        actions[usize::from(word!(game.menu_option_index))](game);
     } else if word!(game.joypad2_new_keys) != 0
         && word!(game.menu_option_index) == 8
         && (i32::from(word!(game.debug_invincibility)) - 16) & 0x8000 != 0

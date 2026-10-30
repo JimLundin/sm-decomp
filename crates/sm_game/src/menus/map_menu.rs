@@ -536,8 +536,7 @@ fn choose_room<H: Host + ?Sized>(game: &mut H) {
                 remaining -= 1;
             }
             let stations = station_coordinates(word!(game.area_index), game);
-            let mut station_offset: i16 =
-                (4i16).wrapping_mul((word!(game.load_station_index)) as i16);
+            let station_offset: i16 = (4i16).wrapping_mul((word!(game.load_station_index)) as i16);
             let station_x: u16 = stations.table_word((station_offset >> 1) as isize);
             let station_y: u16 = stations
                 .image
@@ -551,7 +550,7 @@ fn choose_room<H: Host + ?Sized>(game: &mut H) {
                     true
                 };
                 if inspect_terminal {
-                    let mut terminator: i16 = stations.image.table_word(
+                    let terminator: i16 = stations.image.table_word(
                         stations.base,
                         (2 * word!(game.load_station_index) as i32) as isize,
                     ) as i16;
@@ -568,7 +567,7 @@ fn choose_room<H: Host + ?Sized>(game: &mut H) {
                         continue;
                     }
                 }
-                let mut is_unlocked: i8 = ((unlocked) as i8) & (1i8);
+                let is_unlocked: i8 = ((unlocked) as i8) & (1i8);
                 unlocked >>= 1;
                 if is_unlocked == 0
                     || stations.image.table_word(

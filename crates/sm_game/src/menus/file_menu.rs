@@ -48,7 +48,7 @@ const PALETTE_BUFFER: usize = crate::ram::word_arrays::palette_buffer;
 /// The MOSAIC mirror and the BG1SC mirror after it, read as one word.
 const MOSAIC: usize = crate::ram::mirror::MOSAIC;
 
-static kBitShl: [u8; 3] = [1, 2, 4];
+static BIT_SHL: [u8; 3] = [1, 2, 4];
 
 /// Requires a live, exclusively accessed backend for screen and graphics transitions.
 /// The native ROM allocation must cover every referenced menu text and save-map record.
@@ -226,7 +226,7 @@ fn next_occupied_slot<H: Host + ?Sized>(game: &mut H) -> Option<u8> {
                 return Some(slot);
             }
         }
-        if kBitShl[slot as usize] as u16 & word!(game.nonempty_save_slots) != 0 {
+        if BIT_SHL[slot as usize] as u16 & word!(game.nonempty_save_slots) != 0 {
             return Some(slot);
         }
     }
@@ -448,7 +448,7 @@ fn animate_copy_arrow<H: Host + ?Sized>(game: &mut H) {
 }
 fn copy_slot<H: Host + ?Sized>(game: &mut H) {
     {
-        static kBitShl_16bit: [u16; 3] = [1, 2, 4];
+        static BIT_SHL_16BIT: [u16; 3] = [1, 2, 4];
         border(0x49, game);
         crate::sprite_output::menu_selection(game);
         animate_copy_arrow(game);
@@ -486,7 +486,7 @@ fn copy_slot<H: Host + ?Sized>(game: &mut H) {
         );
         crate::menu!(game.menu_index += 1);
         crate::word_transfers!(game, ascending, 288; native(0x3b00) <- value(15));
-        word!(game.nonempty_save_slots |= (kBitShl_16bit[copy_destination(game) as usize]));
+        word!(game.nonempty_save_slots |= (BIT_SHL_16BIT[copy_destination(game) as usize]));
         let row = ((4 * i32::from(copy_destination(game)) + 9) << 6) + 24;
         crate::word_transfers!(game, (2), 11;
             native(menu_tilemap::MENU_TILEMAP + row as usize) <- value(menu_tilemap::BLANK_TILE),
@@ -533,7 +533,7 @@ fn reset_clear<H: Host + ?Sized>(game: &mut H) {
 }
 fn clear_slot<H: Host + ?Sized>(game: &mut H) {
     {
-        static kBitShl_Not: [u16; 3] = [0xfffe, 0xfffd, 0xfffb];
+        static BIT_SHL_NOT: [u16; 3] = [0xfffe, 0xfffd, 0xfffb];
         border(0x4a, game);
         let source = copy_source(game);
         let sram_addr: i32 = save_slots::sram_offset(game, source as isize) as i32;
@@ -555,7 +555,7 @@ fn clear_slot<H: Host + ?Sized>(game: &mut H) {
         word!(game.area_index = copy_source(game));
         load_area_map(game);
         crate::word_transfers!(game, ascending, 288; native(0x3b00) <- value(15));
-        word!(game.nonempty_save_slots &= (kBitShl_Not[copy_source(game) as usize]));
+        word!(game.nonempty_save_slots &= (BIT_SHL_NOT[copy_source(game) as usize]));
         menu_tilemap::set_palette(0, game);
         menu_tilemap::load(0x500, addr_kMenuTilemap_DataCleared as u16, game);
         menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Confirmation, game);
