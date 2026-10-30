@@ -1,5 +1,3 @@
-pub(in crate::game) use access::{set_shot_direction, shot_word};
-use sm_game::enemy_projectiles::access;
 mod actor_runtime;
 mod effects_runtime;
 mod graphics_runtime;

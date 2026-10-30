@@ -43,6 +43,10 @@ impl ActorLease for Runtime<'_> {
     fn lease_byte(&self, at: usize) -> u8 {
         Runtime::byte(self, at)
     }
+
+    fn owned_lease_call<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R {
+        Runtime::owned_call(self, action)
+    }
 }
 
 impl LeaseActors for Game {

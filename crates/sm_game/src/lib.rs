@@ -167,6 +167,7 @@ pub mod actors {
     pub mod phantoon_motion;
     pub mod population;
     pub mod queries;
+    pub mod reflec;
     pub mod ridley;
     pub mod ridley_tables;
     pub mod roach;

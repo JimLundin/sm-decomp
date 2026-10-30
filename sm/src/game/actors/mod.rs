@@ -11,6 +11,7 @@ pub(in crate::game) use sm_game::actors::elevator;
 pub(in crate::game) use sm_game::actors::kago;
 pub(in crate::game) use sm_game::actors::mochtroid;
 pub(in crate::game) use sm_game::actors::morph_ball_eye;
+pub(in crate::game) use sm_game::actors::reflec;
 pub(in crate::game) use sm_game::actors::roach;
 pub(in crate::game) use sm_game::actors::skree;
 pub(in crate::game) use sm_game::actors::tripper;
@@ -31,7 +32,6 @@ pub(crate) mod movement_verification;
 #[cfg(sm_verify_dll)]
 #[path = "../../verification/actor_population_animation_entry.rs"]
 pub(crate) mod reference_population_animation;
-pub(in crate::game) mod reflec;
 pub(crate) mod shaktool;
 pub(in crate::game) mod sidehopper;
 pub(in crate::game) mod skultera;

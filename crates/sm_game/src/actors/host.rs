@@ -158,6 +158,7 @@ pub trait ActorLease:
     + crate::room_mechanisms::host::Effects
     + crate::player_position::PlayerPosition
     + crate::actors::session_slots::SessionSlots
+    + crate::player_projectiles::host::Host
 {
     type Game: BossEffects + ?Sized;
     /// The compatibility word at `at`, through the session projection.
@@ -178,6 +179,9 @@ pub trait ActorLease:
     fn lease_enemy_speed(&self, table: sm_data::enemy_speeds::SpeedTable, index: isize) -> u16;
     /// The byte at `at`, through the session projection.
     fn lease_byte(&self, at: usize) -> u8;
+    /// Run `action` on the lease as an owned Session call: the lease is
+    /// exported first and relinquished if `action` does not complete.
+    fn owned_lease_call<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R;
 }
 
 /// A host that can lease its actors; each `lease` is one original `Runtime`.

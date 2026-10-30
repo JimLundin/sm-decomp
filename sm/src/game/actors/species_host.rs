@@ -43,7 +43,7 @@ impl sm_game::actors::species::DrawHookHost for Game {
     fn native_draw_hook(&mut self, hook: sm_game::actors::species::NativeDrawHook) {
         use sm_game::actors::species::NativeDrawHook::*;
         match hook {
-            ReflecPalette => reflec::palette(self),
+            ReflecPalette => reflec::cycle_palette(self),
             CeresRidleyBabyMetroidAndWings => sm_a6::Ridley_A2F2(self),
             WreckedShipRobotPalette => crate::game::actors::wrecked_ship_robots::palette(self),
             BlueFaceBlockPalette => sm_game::actors::blue_brinstar_face_block::cycle_palette(self),
