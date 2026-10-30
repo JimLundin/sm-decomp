@@ -1155,7 +1155,6 @@ expect = ["credits-complete"]
 # Low% seed85's latched word, then the volcano-room recipe.
 [[segment]]
 id = "volcano-room-lavaquake"
-pending = "awaiting the seeds-v1-offroute-4b5962a5bc7f6aaa ci-data upload"
 seed = "low-input-phase:85"
 seed_sha256 = "0f9feb22036939dfedd5048f1fc7d3d2d6ebd5ca8760e6e0719ad3739c48842d"
 inputs = "authored-volcano-room.inputs"
@@ -1168,7 +1167,6 @@ expect = ["room:AE74", "room:AE32"]
 # stays caught, so Draygon spirals up and tail-whips her until the reserve refills.
 [[segment]]
 id = "boss-draygon-tail-whip"
-pending = "awaiting the seeds-v1-offroute-4b5962a5bc7f6aaa ci-data upload"
 seed = "low-input-phase:129"
 seed_sha256 = "987fcffbe5a3c0e86996b029eaf95b6b2341edec5927dd979faaa4c8c83777cf"
 inputs = "authored-draygon-held.inputs"
