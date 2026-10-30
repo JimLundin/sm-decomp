@@ -646,7 +646,7 @@ crate::dispatch::callback_dispatch! {
     @body checked;
     @functions [pub fn (k: u16, game: &mut impl Host)];
     [11131106] DeadSidehopper_Alive_WaitForActivate [] {
-        if word!(game.layer1_x_pos) as i32 - 513i32 & 0x8000 != 0 {
+        if crate::camera::current(game).layer1[0] as i32 - 513i32 & 0x8000 != 0 {
             session_slot!(game, Corpse[k as i32].function = function::SIDEHOPPER_HOPPING);
             DeadSidehopper_Activated(k, game);
         }

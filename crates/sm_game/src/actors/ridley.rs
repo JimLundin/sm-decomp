@@ -3421,11 +3421,12 @@ pub fn add_spritemap<L: Lease + ?Sized>(
 pub fn off_screen<S: State + ?Sized>(game: &mut S) -> bool {
     let y = session_slot!(game, Ridley[RIDLEY].base.y_pos) as i16;
     if y >= 0 {
-        let screen_y = (y as i32 + 32 - word!(game.layer1_y_pos) as i32) as i16;
+        let layer1 = crate::camera::current(game).layer1;
+        let screen_y = (y as i32 + 32 - layer1[1] as i32) as i16;
         if screen_y >= 0 && below(screen_y as u16, 288) {
             let x = session_slot!(game, Ridley[RIDLEY].base.x_pos) as i16;
             if x >= 0 {
-                let screen_x = (x as i32 + 32 - word!(game.layer1_x_pos) as i32) as i16;
+                let screen_x = (x as i32 + 32 - layer1[0] as i32) as i16;
                 if screen_x >= 0 && below(screen_x as u16, 320) {
                     return false;
                 }

@@ -655,7 +655,7 @@ pub fn BabyMetroid_Init(game: &mut impl Host) {
     session_slot! { game, BabyMetroid[E].base; current_instruction = addr_kBabyMetroid_Ilist_F90E as u16, instruction_timer = 1 }
     session_slot!(game, BabyMetroid[E].base.timer = 0);
     let mut v2: u16 = function::WAIT_FOR_CAMERA;
-    if (word!(game.layer1_x_pos) & 0x8000) != 0 {
+    if (crate::camera::current(game).layer1[0] & 0x8000) != 0 {
         session_slot!(
             game,
             BabyMetroid[E].base.properties = (session_slot!(game, BabyMetroid[E].base.properties)
