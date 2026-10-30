@@ -40,16 +40,13 @@ enum Direction {
 }
 
 /// What the beam window reads beyond Mother Brain's state: the loaded
-/// cartridge's edge gradients.
-pub trait Host: State + LoadedImage {}
-impl<T: State + LoadedImage + ?Sized> Host for T {}
+/// cartridge's edge gradients, and the Session's HDMA objects.
+pub trait Host: State + LoadedImage + crate::session_access::SessionAccess {}
+impl<T: State + LoadedImage + crate::session_access::SessionAccess + ?Sized> Host for T {}
 
-/// $7E:0998, $7E:186E, $7E:18B2 and $7E:1914: the game state, the beam's
-/// layer blending, the current HDMA object and its colour index.
+/// $7E:0998 and $7E:186E: the game state and the beam's layer blending.
 const GAME_STATE: usize = crate::ram::words::game_state;
 const LAYER_BLENDING: usize = crate::ram::words::fx_layer_blending_config_c;
-const HDMA_OBJECT_INDEX: usize = crate::ram::words::hdma_object_index;
-const COLOUR_INDEX: usize = crate::ram::word_arrays::hdma_object_A;
 
 /// The edge gradient for `angle`: |tan(angle * pi / 80h)| * 100h ($91:C9D4).
 fn gradient(game: &mut impl Host, angle: isize) -> u16 {
@@ -344,8 +341,6 @@ const BEAM_BLENDING: u16 = 0x24;
 /// Game states: death sequence start, and reserve tanks auto.
 const DEATH_SEQUENCE_START: u16 = 0x13;
 const RESERVE_TANKS_AUTO: u16 = 0x1b;
-/// $7E:18B4: the HDMA objects' channel table.
-const HDMA_OBJECT_CHANNELS: usize = 0x18b4;
 
 /// Initialise rainbow beam ($88:E767): a greenish blue backdrop, the beam's
 /// layer blending, the indirect header's first row and the first three
@@ -368,8 +363,9 @@ pub fn initialize_hdma(game: &mut impl Host) {
 /// step the rainbow.
 pub fn advance_hdma(game: &mut impl Host) {
     if game.word(GAME_STATE) == DEATH_SEQUENCE_START {
-        let at = HDMA_OBJECT_CHANNELS + 2 * usize::from(game.word(HDMA_OBJECT_INDEX) >> 1);
-        write(game, at as isize, 0);
+        // Delete the HDMA object being run.
+        let hdma = &mut game.session_mut().hdma;
+        hdma.objects[usize::from(hdma.selected >> 1)].channels = 0;
     } else {
         game.write_word_le(BEAM_BLENDING, LAYER_BLENDING);
         if game.word(GAME_STATE) != RESERVE_TANKS_AUTO {
@@ -393,15 +389,13 @@ fn rainbow_colour(game: &mut impl Host, index: isize) -> u16 {
 /// Set rainbow beam colour math subscreen backdrop colour ($88:E7ED): the
 /// next colour of the rainbow, wrapping to its first at the end marker.
 fn set_backdrop_colour(game: &mut impl Host) {
-    let index = (game.word(COLOUR_INDEX) >> 1) as isize;
-    let mut colour = rainbow_colour(game, index);
+    // The colour index is HDMA object 0's A, a byte offset into the rainbow.
+    let index = game.session().hdma.objects[0].a;
+    let mut colour = rainbow_colour(game, (index >> 1) as isize);
     if colour & 0x8000 == 0 {
-        for _ in 0..4 {
-            let index = game.word(COLOUR_INDEX).wrapping_add(1);
-            game.write_word_le(index, COLOUR_INDEX);
-        }
+        game.session_mut().hdma.objects[0].a = index.wrapping_add(4);
     } else {
-        game.write_word_le(0, COLOUR_INDEX);
+        game.session_mut().hdma.objects[0].a = 0;
         colour = rainbow_colour(game, 0);
     }
     game.set_byte(BACKDROP, ((colour as u8) & 0x1f) | 0x20);

@@ -210,17 +210,12 @@ impl MenuRuntime for Game {
     fn hdma_effect(&mut self, effect: sm_game::hdma_objects::HdmaEffect, slot: u16) {
         use sm_game::hdma_effects::HdmaEffects;
         use sm_game::hdma_objects::HdmaEffect::*;
-        match effect {
-            InitializeRainbowBeam => {
-                return sm_game::actors::mother_brain_rainbow::initialize_hdma(self);
-            }
-            AdvanceRainbowBeam => {
-                return sm_game::actors::mother_brain_rainbow::advance_hdma(self);
-            }
-            _ => {}
-        }
         let mut runtime = Runtime::new(self);
         match effect {
+            InitializeRainbowBeam => {
+                sm_game::actors::mother_brain_rainbow::initialize_hdma(&mut runtime)
+            }
+            AdvanceRainbowBeam => sm_game::actors::mother_brain_rainbow::advance_hdma(&mut runtime),
             AdvanceProgram => runtime.advance_hdma_program(),
             InitializePhantoonWave => runtime.initialize_phantoon_wave(slot),
             InitializeEyeBeam => runtime.initialize_eye_beam(slot),
@@ -238,7 +233,6 @@ impl MenuRuntime for Game {
             AdvanceXrayBeam(phase) => runtime.advance_xray_beam(phase),
             InitializeSuitPickup => runtime.initialize_suit_pickup_hdma(),
             AdvanceSuitPickup { gravity } => runtime.advance_suit_pickup(gravity),
-            InitializeRainbowBeam | AdvanceRainbowBeam => unreachable!(),
         }
     }
     fn retire_projectile(&mut self, slot: u16) {
