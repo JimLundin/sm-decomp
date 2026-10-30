@@ -102,6 +102,7 @@ pub(crate) mod collision_composed_actor;
 #[path = "../../verification/actor_composed_checks.rs"]
 pub(crate) mod composed_checks;
 
+pub(in crate::game) mod atomic;
 pub(in crate::game) mod brinstar_pipe_bug;
 pub(in crate::game) mod crocomire_attack;
 pub(crate) mod crocomire_reactions;
@@ -120,7 +121,6 @@ pub(in crate::game) mod maridia_puffer;
 pub(in crate::game) mod norfair_pipe_bug;
 pub(crate) mod spore_spawn;
 pub(in crate::game) mod wrecked_ship_ghost;
-pub(in crate::game) mod wrecked_ship_orbs;
 pub(in crate::game) mod wrecked_ship_robots;
 pub(in crate::game) mod wrecked_ship_spark;
 pub(crate) mod yapping_maw;

@@ -714,8 +714,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/actors/brinstar_pipe_bug.rs"),
     ),
     (
-        "sm/src/game/actors/wrecked_ship_orbs.rs",
-        include_bytes!("game/actors/wrecked_ship_orbs.rs"),
+        "sm/src/game/actors/atomic.rs",
+        include_bytes!("game/actors/atomic.rs"),
     ),
     (
         "sm/src/game/equipment_menu.rs",
@@ -2964,6 +2964,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "crates/sm_game/src/actors/actor_identity_checks.rs",
         include_bytes!("../../crates/sm_game/src/actors/actor_identity_checks.rs"),
+    ),
+    (
+        "crates/sm_game/src/actors/atomic.rs",
+        include_bytes!("../../crates/sm_game/src/actors/atomic.rs"),
     ),
     (
         "crates/sm_game/src/actors/blue_brinstar_face_block.rs",
