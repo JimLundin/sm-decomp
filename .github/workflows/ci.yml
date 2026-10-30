@@ -94,7 +94,7 @@ jobs:
           ROM_44: ${{ secrets.SM_ROM_44 }}
         run: |
           python3 -B .github/scripts/prepare_rom.py
-          if SM_ROM=rom/sm.smc cargo test --locked -p sm_data --test rom_import > rom_import.log 2>&1; then status=0; else status=$?; fi
+          if SM_ROM="$PWD/rom/sm.smc" cargo test --locked -p sm_data --test rom_import > rom_import.log 2>&1; then status=0; else status=$?; fi
           grep -E 'rejected the original ROM|panicked at' rom_import.log > rom_import.failures || true
           rm -rf rom rom_import.log
           if [ "$status" -ne 0 ]; then
