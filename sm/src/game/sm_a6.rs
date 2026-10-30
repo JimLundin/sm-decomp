@@ -19,7 +19,6 @@ use crate::ram_map::slot;
 use sm_data::ridley_explosion::{
     HAND_ADDRESS, LEGS_ADDRESS, MOUTH_ADDRESS, TORSO_ADDRESS, WINGS_ADDRESS,
 };
-use sm_game::actors::access::ActorKey as Key;
 use sm_game::enemy_script::EnemyScript;
 use {
     crate::game::enemy_projectiles::scatter_drop as scatter,
@@ -93,7 +92,6 @@ crate::game::constants::typed_constants! { i32;
 static g_word_A695F6: [u16; 4] = [0x190, 0xf0, 0xf0, 0x190];
 static g_word_A695FE: [u16; 4] = [0xffe8, 0xfff4, 0x18, 0xc];
 static g_word_A69606: [u16; 4] = [0x180, 0x100, 0x100, 0x180];
-static g_word_A69A48: [u16; 8] = [0xfe00, 0xfb00, 0xfc00, 0xfb00, 0x200, 0xfb00, 0x400, 0xfb00];
 static g_word_A6B288: u16 = 8;
 static g_word_A6BBEB: [u16; 3] = [0x40, 0, 0xd0];
 static g_word_A6BC62: [u16; 3] = [0xb0, 0, 0x50];
@@ -133,74 +131,6 @@ crate::game::callback_dispatch! {
     [10917506] NuclearWaffle_Func_2 [] {
         crate::game::enemy_projectiles::advance_waffle_orbit(game);
     };
-}
-pub fn FakeKraid_Func_1(k: u16, j: u16, game: &mut Game) {
-    let ET: i32 = k as i32 + j as i32;
-    let fkd_var_03: u16 = slot!(game, Enemy_FakeKraid[ET].var_03);
-    if fkd_var_03 != 0 {
-        slot!(
-            game,
-            Enemy_FakeKraid[ET].var_03 = (fkd_var_03).wrapping_sub(1)
-        );
-    } else {
-        slot!(
-            game,
-            Enemy_FakeKraid[ET].var_03 = ((word!(game.random_number) as i32 & 0x3f) + 16) as u16
-        );
-        let E: i32 = k as i32;
-        slot!(game, Enemy_FakeKraid[E].var_06 = j);
-        let mut v6: u16 = addr_kEproj_MiniKraidSpikesLeft as u16;
-        let fkd_var_C: i16 = slot!(game, Enemy_FakeKraid[E].var_C) as i16;
-        if fkd_var_C >= 0 {
-            v6 = addr_kEproj_MiniKraidSpikesRight as u16;
-        }
-        SpawnEprojWithGfx(fkd_var_C as u16, k, v6, game);
-        if u16::from(actor_api::current_outside_screen(&Runtime::new(game))) == 0 {
-            QueueSfx2_Max6(0x3f, game);
-        }
-    };
-}
-pub fn FakeKraid_InstrHelper_45(_k: u16, j: u16, a: u16, game: &mut Game) {
-    let ka: u16 = word!(game.cur_enemy_index);
-    let E: i32 = word!(game.cur_enemy_index) as i32;
-    slot!(game, Enemy_FakeKraid[E].var_02 = a);
-    let v5: i32 = j as i32 >> 1;
-    slot!(game, Enemy_FakeKraid[E].var_00 = g_word_A69A48[v5 as usize]);
-    let v6: u16 = g_word_A69A48[(v5 + 1) as usize];
-    slot!(game, Enemy_FakeKraid[E].var_01 = v6);
-    SpawnEprojWithGfx(
-        v6,
-        word!(game.cur_enemy_index),
-        addr_kEproj_MiniKraidSpit as u16,
-        game,
-    );
-    slot!(
-        game,
-        Enemy_FakeKraid[E].var_00 = g_word_A69A48[(v5 + 2) as usize]
-    );
-    let v8: u16 = g_word_A69A48[(v5 + 3) as usize];
-    slot!(game, Enemy_FakeKraid[E].var_01 = v8);
-    SpawnEprojWithGfx(v8, ka, addr_kEproj_MiniKraidSpit as u16, game);
-}
-pub fn FakeKraid_9C50(game: &mut Game) {
-    if slot!(
-        game,
-        Enemy_FakeKraid[word!(game.cur_enemy_index) as i32]
-            .base
-            .health
-    ) == 0
-    {
-        // The death animation remains in the ROM spawn parameter for all four drops.
-        let death_animation = 3;
-        ({
-            let (_ignored_key, animation) = (word!(game.cur_enemy_index), death_animation);
-            actors::combat::die(
-                &mut Runtime::new(game),
-                actors::api::DeathKind::Normal { animation },
-            )
-        });
-        scatter(DropSource::MiniKraid, word!(game.cur_enemy_index), game);
-    }
 }
 
 pub fn CeresRidley_Func_1(game: &mut Game) {
@@ -3820,53 +3750,10 @@ crate::game::callback_dispatch! {
         let E: i32 = word!(game.cur_enemy_index) as i32;
         CallNuclearWaffleFunc(((slot!(game, Enemy_NuclearWaffle[E].var_A)) as u32) | (0xa60000u32), game);
     };
-    [10918488] FakeKraid_Init [] {
-        let mut v0: u16 = ((word!(game.random_number) as i32 & 3) + 2) as u16;
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, Enemy_FakeKraid[E].var_D = v0);
-        slot!(game, Enemy_FakeKraid[E].var_E = v0);
-        v0 = (v0).wrapping_add(64);
-        slot!(game, Enemy_FakeKraid[E].var_03 = v0);
-        v0 = (v0).wrapping_add(32);
-        slot!(game, Enemy_FakeKraid[E].var_04 = v0);
-        slot!(game, Enemy_FakeKraid[E].var_05 = (v0).wrapping_sub(48));
-        slot!(game, Enemy_FakeKraid[E].var_07 = 0);
-        slot!(game, Enemy_FakeKraid[E].base.properties = (slot!(game, Enemy_FakeKraid[E].base.properties)) | ((kEnemyProps_DisableSamusColl) as u16));
-        slot!(game, Enemy_FakeKraid[E].base.instruction_timer = 1);
-        slot!(game, Enemy_FakeKraid[E].base.timer = 0);
-        slot!(game, Enemy_FakeKraid[E].var_B = -4i32 as u16);
-        slot!(game, Enemy_FakeKraid[E].var_C = -4i32 as u16);
-        let mut v2: u16 = addr_stru_A699AE as u16;
-        if ((slot!(game, Enemy_FakeKraid[E].base.x_pos)) as i16).wrapping_sub((word!(game.samus_x_pos)) as i16) < 0 {
-            slot!(game, Enemy_FakeKraid[E]; var_B = 4, var_C = 4);
-            v2 = addr_stru_A699FC as u16;
-        }
-        slot!(game, Enemy_FakeKraid[E].base.current_instruction = v2);
-    };
-    [10918594] FakeKraid_Main [] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        let fkd_var_07: u16 = slot!(game, Enemy_FakeKraid[E].var_07);
-        let mut v3: u16 = (fkd_var_07).wrapping_add(2);
-        if fkd_var_07 as i32 - 4i32 & 0x8000 == 0 {
-            v3 = 0;
-        }
-        slot!(game, Enemy_FakeKraid[E].var_07 = v3);
-        FakeKraid_Func_1(word!(game.cur_enemy_index), fkd_var_07, game);
-    };
-    [10918946] FakeKraid_Touch [] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        word!(game.special_death_item_drop_x_origin_pos = slot!(game, Enemy_FakeKraid[E].base.x_pos));
-        word!(game.special_death_item_drop_y_origin_pos = slot!(game, Enemy_FakeKraid[E].base.y_pos));
-        actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
-        FakeKraid_9C50(game);
-    };
-    [10918969] FakeKraid_Shot [] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        word!(game.special_death_item_drop_x_origin_pos = slot!(game, Enemy_FakeKraid[E].base.x_pos));
-        word!(game.special_death_item_drop_y_origin_pos = slot!(game, Enemy_FakeKraid[E].base.y_pos));
-        actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::ReactionOnly);
-        FakeKraid_9C50(game);
-    };
+    [10918488] FakeKraid_Init [] { sm_game::actors::mini_kraid::initialize(game); };
+    [10918594] FakeKraid_Main [] { sm_game::actors::mini_kraid::main_ai(game); };
+    [10918946] FakeKraid_Touch [] { sm_game::actors::mini_kraid::touch(game); };
+    [10918969] FakeKraid_Shot [] { sm_game::actors::mini_kraid::shot(game); };
     [10920659] CeresRidley_Hurt [] {
         Ridley_Func_102(game);
         sub_A6DB2A(game);
@@ -4122,61 +4009,15 @@ crate::game::callback_dispatch! {
     pub(crate) fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
     @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10918694] FakeKraid_Instr_2 [jp] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        if slot!(game, Enemy_FakeKraid[E].var_E) != 0 {
-            slot!(game, Enemy_FakeKraid[E].var_E = slot!(game, Enemy_FakeKraid[E].var_E).wrapping_sub(1));
-        }
-        let fresh1 = slot!(game, Enemy_FakeKraid[E].var_D);
-        slot!(game, Enemy_FakeKraid[E].var_D = slot!(game, Enemy_FakeKraid[E].var_D).wrapping_sub(1));
-        let reverse_direction: bool = if fresh1 == 1 {
-            slot!(game, Enemy_FakeKraid[E].var_D = ((word!(game.random_number) as i32 & 3) + 7) as u16);
-            true
-        } else {
-            !(({ let (actor, amount) = (word!(game.cur_enemy_index), (slot!(game, Enemy_FakeKraid[E].var_B) as i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) == 0)
-        };
-        if reverse_direction {
-            slot!(game, Enemy_FakeKraid[E].var_B = -(slot!(game, Enemy_FakeKraid[E].var_B) as i32) as u16);
-        }
-        slot!(game, Enemy_FakeKraid[E].var_C = -4i32 as u16);
-        if ((slot!(game, Enemy_FakeKraid[E].base.x_pos)) as i16).wrapping_sub((word!(game.samus_x_pos)) as i16) < 0 {
-            slot!(game, Enemy_FakeKraid[E].var_C = 4);
-        }
-    };
+    [10918694] FakeKraid_Instr_2 [jp] { sm_game::actors::mini_kraid::step(game); };
     @functions [pub fn (_k: u16, _jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10918772] FakeKraid_Instr_1 [] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        if slot!(game, Enemy_FakeKraid[E].var_E) != 0 {
-            if (slot!(game, Enemy_FakeKraid[E].var_C) & 0x8000) != 0 {
-                if (slot!(game, Enemy_FakeKraid[word!(game.cur_enemy_index) as i32].var_B) & 0x8000) == 0
-                {
-                    return EnemyScript::jump(addr_stru_A699C6 as u16);
-                }
-                EnemyScript::jump(addr_stru_A699AE as u16)
-            } else {
-                if (slot!(game, Enemy_FakeKraid[E].var_B) & 0x8000) != 0 {
-                    return EnemyScript::jump(addr_stru_A69A14 as u16);
-                }
-                EnemyScript::jump(addr_stru_A699FC as u16)
-            }
-        } else {
-            slot!(game, Enemy_FakeKraid[E].var_E = ((word!(game.random_number) as i32 & 3) + 3) as u16);
-            if (slot!(game, Enemy_FakeKraid[E].var_C) & 0x8000) != 0 {
-                return EnemyScript::jump(addr_kFakeKraid_Ilist_99DC as u16);
-            }
-            EnemyScript::jump(addr_kFakeKraid_Ilist_9A2A as u16)
-        }
-    };
+    [10918772] FakeKraid_Instr_1 [] { sm_game::actors::mini_kraid::choose_animation(game) };
     @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10918834] FakeKraid_Instr_3 [jp] {
-        if u16::from(actor_api::current_outside_screen(&Runtime::new(game))) == 0 {
-            QueueSfx2_Max6(0x16, game);
-        }
-    };
-    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10918852] FakeKraid_Instr_4 [jp] { FakeKraid_InstrHelper_45(k, 0, 0xfffc, game); };
-    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10918914] FakeKraid_Instr_5 [jp] { FakeKraid_InstrHelper_45(k, 8, 4, game); };
+    [10918834] FakeKraid_Instr_3 [jp] { sm_game::actors::mini_kraid::roar(game); };
+    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    [10918852] FakeKraid_Instr_4 [jp] { sm_game::actors::mini_kraid::spit_left(game); };
+    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    [10918914] FakeKraid_Instr_5 [jp] { sm_game::actors::mini_kraid::spit_right(game); };
     @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10937534] Ridley_Instr_5 [jp] {
         slot!(game, Enemy_Ridley[0].var_0F = 89);

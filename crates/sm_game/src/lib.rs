@@ -101,6 +101,7 @@ pub mod actors {
     pub mod layouts;
     pub mod magdollite;
     pub mod media;
+    pub mod mini_kraid;
     pub mod mother_brain_effects;
     pub mod movement;
     pub mod overlap;

@@ -69,3 +69,19 @@ impl sm_game::actors::boulder::Host for Game {
         crate::game::enemy_speeds::word32(&self.enemy_speeds32, &self.capture_native_rom(), offset)
     }
 }
+
+impl sm_game::actors::mini_kraid::Host for Game {
+    fn normal_death(&mut self, animation: u16) {
+        crate::game::actors::combat::die(
+            &mut crate::game::session_runtime::Runtime::new(self),
+            crate::game::actors::api::DeathKind::Normal { animation },
+        );
+    }
+    fn scatter_enemy_drop(
+        &mut self,
+        source: sm_game::enemy_projectiles::drops::DropSource,
+        index: u16,
+    ) {
+        crate::game::enemy_projectiles::scatter_drop(source, index, self);
+    }
+}
