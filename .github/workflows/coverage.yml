@@ -45,7 +45,6 @@ jobs:
     env:
       RUSTUP_TOOLCHAIN: stable-x86_64-pc-windows-gnu
       CARGO_INCREMENTAL: '0'
-      RUSTFLAGS: -C instrument-coverage
     defaults:
       run:
         shell: pwsh
@@ -112,7 +111,15 @@ jobs:
           & $env:SM_ZIG ar rcs "$env:LIBRARY_PATH/libsm_stb_image.a" "$codec/stb_image.o"
           if ($LASTEXITCODE -ne 0) { throw 'PNG archive creation failed' }
           Copy-Item -LiteralPath THIRD_PARTY_NOTICES.md -Destination "$env:LIBRARY_PATH/THIRD_PARTY_NOTICES.md"
+      - name: Build the profiler runtime the GNU toolchain does not ship
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python -B tools/profiler_runtime.py --zig $env:SM_ZIG --out "$env:RUNNER_TEMP/profiler"
+          if ($LASTEXITCODE -ne 0) { throw 'Profiler runtime build failed' }
       - name: Build the verifier DLL (direct, as the local Fast loop does)
+        env:
+          RUSTFLAGS: -C instrument-coverage -L crate=${{ runner.temp }}/profiler
         run: |
           python tools/verify_dll.py --build-only --direct
           if ($LASTEXITCODE -ne 0) { throw 'Verifier DLL build failed' }
