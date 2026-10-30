@@ -69,6 +69,7 @@ pub mod actors {
     pub mod dachora;
     pub mod drawing;
     pub mod effects;
+    pub mod escape_animals;
     #[doc(hidden)] // Shared verification world for compat and detached checks.
     pub mod fixture;
     pub mod host;
