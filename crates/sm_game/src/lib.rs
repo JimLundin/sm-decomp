@@ -168,6 +168,7 @@ pub mod actors {
     pub mod queries;
     pub mod ridley;
     pub mod ridley_tables;
+    pub mod roach;
     pub mod scene;
     pub mod scheduling;
     pub mod session_slots;

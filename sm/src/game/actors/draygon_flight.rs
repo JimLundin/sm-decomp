@@ -121,6 +121,14 @@ impl BossEffects for Game {
         actor_sine(phase, amplitude, self)
     }
 
+    fn actor_cosine_full(&mut self, phase: u16, amplitude: u16) -> u32 {
+        crate::game::session_runtime::actor_cosine_full(phase, amplitude, self)
+    }
+
+    fn actor_sine_full(&mut self, phase: u16, amplitude: u16) -> u32 {
+        crate::game::session_runtime::actor_sine_full(phase, amplitude, self)
+    }
+
     fn actor_direction_vector(&mut self, phase: u16, amplitude: u16) -> Vector32 {
         actor_direction_vector(phase, amplitude, self)
     }
