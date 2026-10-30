@@ -13,12 +13,12 @@
 #![allow(unused_mut, unused_assignments, clippy::all)]
 use crate::actors::host::{Death, Slopes};
 use crate::actors::layouts::part_view;
+use crate::actors::mother_brain_fight::{BANK, BANK_BASE, Lease, State, cgram, sound};
 use crate::actors::mother_brain_fight::{
     Enemy_SetInstrList, MotherBrain_AddSpritemapToOam, MotherBrain_CorpseRottingFinished,
     MoveEnemyWithVelocity, QueueSfx2_Max3, QueueSfx2_Max6, SpawnEprojWithRoomGfx, Unreachable,
     native_word, set_graphics_drawn_hook, set_native_word,
 };
-use crate::actors::mother_brain_fight::{Lease, State};
 use crate::actors::session_slots::session_slot;
 use crate::constants::bank_86::*;
 use crate::constants::bank_a9::*;
@@ -425,7 +425,7 @@ crate::dispatch::instruction_callbacks! {
         }
         SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0xa, game);
         if (word!(game.random_enemy_counter) & 7) == 0 {
-            QueueSfx2_Max6(0x10, game);
+            QueueSfx2_Max6(sound::LAVA_ACID_DAMAGE, game);
         }
     };
     CorpseRottingRotEntryFinishedHook [] {
@@ -436,7 +436,7 @@ crate::dispatch::instruction_callbacks! {
         }
         SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0xa, game);
         if (word!(game.random_enemy_counter) & 7) == 0 {
-            QueueSfx2_Max3(0x10, game);
+            QueueSfx2_Max3(sound::LAVA_ACID_DAMAGE, game);
         }
     };
 }
@@ -689,8 +689,8 @@ crate::dispatch::callback_dispatch! {
         if v2 >= 8 {
             session_slot!(game, Corpse[E].drained_palette_timer = 0);
             copy_rom_colors_to_palette(
-                0x122,
-                0xa9,
+                cgram::SPRITE_PALETTE_1,
+                BANK,
                 (32 * (session_slot!(game, Corpse[E].drained_palette_index) as i32 - 1i32) - 0x1434i32) as u16,
                 0xf,
                 game,
@@ -842,7 +842,7 @@ pub fn ProcessCorpseRotting(k: u16, game: &mut impl Host) -> u8 {
                     }
                     CopyMoveCorpseRottingRotEntry(
                         native_record(
-                            0xa90000
+                            BANK_BASE
                                 | u32::from(session_slot!(game, Corpse[E0].active_row_offsets)),
                             game,
                         ),
@@ -857,7 +857,7 @@ pub fn ProcessCorpseRotting(k: u16, game: &mut impl Host) -> u8 {
                 let v11: usize = rot_entry_at as usize;
                 CopyMoveCorpseRottingRotEntry(
                     native_record(
-                        0xa90000 | u32::from(session_slot!(game, Corpse[E].active_row_offsets)),
+                        BANK_BASE | u32::from(session_slot!(game, Corpse[E].active_row_offsets)),
                         game,
                     ),
                     native_word(v11, game),
@@ -870,7 +870,7 @@ pub fn ProcessCorpseRotting(k: u16, game: &mut impl Host) -> u8 {
                 } else {
                     CallCorpseRottingFinish(
                         ((session_slot!(game, Corpse[E].active_finished_hook)) as u32)
-                            | (0xa90000u32),
+                            | (BANK_BASE),
                         game,
                     );
                     if v15 >= session_slot!(game, Corpse[0i32].active_last_row) {
@@ -897,13 +897,13 @@ pub fn CopyMoveCorpseRottingRotEntry(r20: RomRecord, a: u16, r18: u16, game: &mu
     let v6: u16 = (r20.table_word((v1 >> 1) as isize) as i32 + 2 * v2 as i32) as u16;
     if v2 >= 6 {
         CallCorpseRottingMove(
-            ((r18) as u32) | (0xa90000u32),
+            ((r18) as u32) | (BANK_BASE),
             (session_slot!(game, Corpse[E].active_next_row_offset)).wrapping_add(v6),
             v6,
             game,
         );
     } else {
-        CallCorpseRottingMove(((r18) as u32) | (0xa90000u32), v6, v6, game);
+        CallCorpseRottingMove(((r18) as u32) | (BANK_BASE), v6, v6, game);
     };
 }
 pub fn InitializeCorpseRottingDataTable(mut table: usize, a: u16, game: &mut impl Host) {
@@ -918,14 +918,14 @@ pub fn InitializeCorpseRottingDataTable(mut table: usize, a: u16, game: &mut imp
     }
 }
 pub fn InitializeEnemyCorpseRotting(k: u16, j: u16, game: &mut impl Host) {
-    let v2 = native_record(0xa90000 | u32::from(j), game);
+    let v2 = native_record(BANK_BASE | u32::from(j), game);
     let E: i32 = k as i32;
     session_slot! { game, Corpse[E]; rot_table = v2.word(0), vram_transfers = v2.word(2), copy_function = v2.word(4), move_function = v2.word(6), finished_hook = v2.word(14) };
     let v4: u16 = v2.word(12);
     session_slot!(game, Corpse[E].row_offsets = v4);
     session_slot!(
         game,
-        Corpse[E].next_row_offset = native_record(0xa90000 | u32::from(v4), game)
+        Corpse[E].next_row_offset = native_record(BANK_BASE | u32::from(v4), game)
             .word(2)
             .wrapping_sub(12)
     );
@@ -937,10 +937,10 @@ pub fn InitializeEnemyCorpseRotting(k: u16, j: u16, game: &mut impl Host) {
     session_slot!(game, Corpse[E].last_row = v6);
     session_slot!(game, Corpse[E].second_last_row = (v6).wrapping_sub(1));
     InitializeCorpseRottingDataTable(v5.word(0) as usize, v5.word(8), game);
-    CallCorpseRottingInit(((v5.word(10)) as u32) | (0xa90000u32), game);
+    CallCorpseRottingInit(((v5.word(10)) as u32) | (BANK_BASE), game);
 }
 pub fn ProcessCorpseRottingVramTransfers(k: u16, game: &mut impl Host) {
-    let p = native_record(0xa90000 | u32::from(k), game);
+    let p = native_record(BANK_BASE | u32::from(k), game);
     let mut offset = 0;
     let mut v1: u16 = word!(game.vram_write_queue_tail);
     let mut v2: u16 = p.word(offset);
@@ -1074,7 +1074,7 @@ pub fn DeadTorizo_Main(game: &mut impl Host) {
     set_graphics_drawn_hook(DRAW_DEAD_TORIZO_HOOK, game);
     let torizo_function = session_slot!(game, DeadTorizo[E].function);
     game.foreign(|game| {
-        CallDeadTorizoFuncA((torizo_function as u32) | (0xa90000u32), game);
+        CallDeadTorizoFuncA((torizo_function as u32) | (BANK_BASE), game);
         DeadTorizo_Func_1(game);
     });
 }
@@ -1147,7 +1147,7 @@ pub fn DeadSidehopper_Powerbomb(game: &mut impl Host) {
 pub fn DeadSidehopper_Main(game: &mut impl Host) {
     let E: i32 = word!(game.cur_enemy_index) as i32;
     CallDeadSidehopperFunc(
-        ((session_slot!(game, Corpse[E].function)) as u32) | (0xa90000u32),
+        ((session_slot!(game, Corpse[E].function)) as u32) | (BANK_BASE),
         word!(game.cur_enemy_index),
         game,
     );

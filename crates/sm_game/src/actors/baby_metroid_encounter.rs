@@ -13,11 +13,13 @@ use crate::actors::baby_metroid::BabyMetroid;
 use crate::actors::corpses::Corpse;
 use crate::actors::host::abs16;
 use crate::actors::mother_brain_fight::{
+    BANK, BANK_BASE, Lease, State, cgram, music, samus_command, sound,
+};
+use crate::actors::mother_brain_fight::{
     CallSomeSamusCode, Enemy_SetInstrList, MoveEnemyWithVelocity, QueueMusic_Delayed8,
     QueueSfx2_Max6, SpawnHardcodedPlmArgs, Unreachable, VoidP, g_word_A993BB, g_word_A993C3,
     player_mother_brain, spawn_hardcoded,
 };
-use crate::actors::mother_brain_fight::{Lease, State};
 use crate::actors::ridley::{HomingReversal, homing_velocity};
 use crate::actors::session_slots::session_slot;
 use crate::constants::bank_a9::*;
@@ -213,7 +215,7 @@ crate::dispatch::callback_dispatch! {
         );
     };
     [11137550] BabyMetroid_Func_15 [] {
-        CallSomeSamusCode(0x12, game);
+        CallSomeSamusCode(samus_command::ENABLE_BLUE_FLASHING, game);
         session_slot!(game, BabyMetroid[0i32].function = function::DRAINING_SAMUS);
         BabyMetroid_Func_16(k, game);
     };
@@ -229,7 +231,7 @@ crate::dispatch::callback_dispatch! {
         let E: i32 = word!(game.cur_enemy_index) as i32;
         session_slot!(game, BabyMetroid[E].function_timer = session_slot!(game, BabyMetroid[E].function_timer).wrapping_sub(1));
         if (session_slot!(game, BabyMetroid[E].function_timer) & 0x8000) != 0 {
-            QueueSfx2_Max6(0x7d, game);
+            QueueSfx2_Max6(sound::BABY_METROID_GUILTY, game);
             session_slot!(game, BabyMetroid[E].function = function::GO_LEFT_GUILTILY);
             session_slot!(game, BabyMetroid[E].function_timer = 88);
             session_slot! { game, BabyMetroid[E].base; current_instruction = addr_kBabyMetroid_Ilist_F924 as u16, instruction_timer = 1 }
@@ -239,7 +241,7 @@ crate::dispatch::callback_dispatch! {
     };
     @functions [pub fn (k: u16, game: &mut impl Host)];
     [11137888] BabyMetroid_Func_22 [] {
-        QueueSfx2_Max6(0x52, game);
+        QueueSfx2_Max6(sound::BABY_METROID_REMORSE, game);
         session_slot!(game, BabyMetroid[k as i32].function = function::FLEEING);
         BabyMetroid_Func_23(game);
     };
@@ -335,10 +337,10 @@ crate::dispatch::callback_dispatch! {
             session_slot! { game, BabyMetroid[E]; x_velocity = 0, y_velocity = 0 }
             Enemy_SetInstrList(k, addr_kBabyMetroid_Ilist_F906 as u16, game);
             session_slot!(game, BabyMetroid[E].palette_handler_delay = 10);
-            CallSomeSamusCode(0x13, game);
+            CallSomeSamusCode(samus_command::DISABLE_BLUE_FLASHING, game);
             player_mother_brain(0, game);
             session_slot!(game, BabyMetroid[E].cry_enabled = 0);
-            QueueMusic_Delayed8(7, game);
+            QueueMusic_Delayed8(music::SONG_2, game);
         } else {
             word! {game; cooldown_timer = 8; bomb_counter = 5; samus_x_speed_divisor = 2; }
             if word!(game.samus_y_speed) as i32 - 4i32 & 0x8000 == 0 {
@@ -373,7 +375,7 @@ crate::dispatch::callback_dispatch! {
     }
     when (session_slot!(game, BabyMetroid[E].function_timer) & 0x8000) != 0;
     [11137079] BabyMetroid_Func_6 {
-        QueueMusic_Delayed8(5, game);
+        QueueMusic_Delayed8(music::SONG_0, game);
         session_slot!(game, BabyMetroid[E].function = function::RUSH_TO_MIDDLE_OF_ROOM);
         BabyMetroid_Func_7(k, game);
     };
@@ -630,7 +632,7 @@ pub fn BabyMetroid_HandleCutscenePalette_Common(r22: u16, r18: u16, game: &mut i
                 v3 as u16,
                 game,
             );
-            copy_rom_colors_to_palette(r18, 0xa9, (r22 as i32 + 8 * v4 as i32) as u16, 4, game);
+            copy_rom_colors_to_palette(r18, BANK, (r22 as i32 + 8 * v4 as i32) as u16, 4, game);
         };
     }
 }
@@ -667,17 +669,23 @@ pub fn BabyMetroid_Init(game: &mut impl Host) {
     session_slot! { game, BabyMetroid[E]; x_velocity = 0, y_velocity = 0 }
     session_slot!(game, BabyMetroid[E].palette_handler_delay = 10);
     session_slot!(game, BabyMetroid[E].contact_enabled = 0);
-    copy_rom_colors_to_target_palette(0xa9, 0x120, addr_word_A9F8C6 as u16, 0x10, game);
     copy_rom_colors_to_target_palette(
-        0xa9,
-        0x140,
+        BANK,
+        cgram::SPRITE_PALETTE_1_COLOUR_0,
+        addr_word_A9F8C6 as u16,
+        0x10,
+        game,
+    );
+    copy_rom_colors_to_target_palette(
+        BANK,
+        cgram::SPRITE_PALETTE_2_COLOUR_0,
         addr_kBabyMetroidInCutscene_Palette as u16,
         0x10,
         game,
     );
     copy_rom_colors_to_target_palette(
-        0xa9,
-        0x1e0,
+        BANK,
+        cgram::SPRITE_PALETTE_7_COLOUR_0,
         addr_kDeadSidehopper_Palette_0 as u16,
         0x10,
         game,
@@ -702,7 +710,7 @@ pub fn BabyMetroid_Main(game: &mut impl Host) {
     session_slot!(lease, BabyMetroid[E].base.health = 0x7fff);
     let baby_function = session_slot!(lease, BabyMetroid[E].function);
     let k = word!(lease.cur_enemy_index);
-    run_baby_metroid_function((baby_function as u32) | (0xa90000u32), k, lease);
+    run_baby_metroid_function((baby_function as u32) | (BANK_BASE), k, lease);
     MoveEnemyWithVelocity(lease);
     if word!(lease.palette_change_num) == 0 {
         lease.foreign(|game| BabyMetroid_HandleNormalPalette(game));
@@ -788,6 +796,6 @@ pub fn BabyMetroid_Instr_5(_k: u16, jp: EnemyScript, game: &mut impl Host) -> En
     if (word!(game.random_number) & 0x8000) == 0 {
         return EnemyScript::jump(jp.word(0));
     }
-    QueueSfx2_Max6(0x52, game);
+    QueueSfx2_Max6(sound::BABY_METROID_REMORSE, game);
     jp.offset(1)
 }
