@@ -38,6 +38,9 @@ impl sm_game::runtime_access::RuntimeAccess for Game {
     fn runtime(&mut self) -> Self::Runtime<'_> {
         crate::game::session_runtime::Runtime::new(self)
     }
+    fn runtime_admissible(&self) -> bool {
+        self.session_lease_admissible()
+    }
 }
 
 impl sm_game::grapple_swing::Host for Game {

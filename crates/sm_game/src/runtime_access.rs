@@ -75,4 +75,10 @@ pub trait RuntimeAccess {
         Self: 'a;
     /// A fresh owned-Session view; publication happens when it is dropped.
     fn runtime(&mut self) -> Self::Runtime<'_>;
+    /// Whether `runtime` can open now. It cannot while a retained persistent
+    /// Session is out of date with RAM (opening would poison it) or while the
+    /// Samus runtime rejects import; callers then use the RAM bridge.
+    fn runtime_admissible(&self) -> bool {
+        true
+    }
 }

@@ -43,17 +43,39 @@ fn step_liquid<H>(game: &mut H, surface: crate::liquid::Surface)
 where
     H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
 {
-    use crate::session_access::SessionAccess;
-    let effects = crate::liquid::step(&mut game.runtime().session_mut().room, surface);
+    let effects = with_liquid(game, |words| crate::liquid::step(words, surface));
     if effects.shake {
         game.shake_room_with_sound(21);
     }
     if effects.unknown_handler {
         game.rtl_unreachable();
+        with_liquid(game, |words| {
+            crate::liquid::advance_tide(words);
+            crate::liquid::place_surface(words, surface);
+        });
+    }
+}
+
+/// Run `update` on the liquid words: on the owned Room under one lease, or on
+/// the RAM bridge when a lease is not admissible. Both store the same bytes.
+fn with_liquid<H, R>(game: &mut H, update: impl FnOnce(&mut crate::liquid::LiquidWords) -> R) -> R
+where
+    H: crate::menus::host::Host + crate::runtime_access::RuntimeAccess + ?Sized,
+{
+    use crate::liquid::LiquidWords;
+    use crate::session_access::SessionAccess;
+    if game.runtime_admissible() {
         let mut runtime = game.runtime();
         let room = &mut runtime.session_mut().room;
-        crate::liquid::advance_tide(room);
-        crate::liquid::place_surface(room, surface);
+        let mut words = LiquidWords::of(room);
+        let result = update(&mut words);
+        words.store(room);
+        result
+    } else {
+        let mut words = LiquidWords::read(game);
+        let result = update(&mut words);
+        words.write(game);
+        result
     }
 }
 fn surface_scroll(position: u16, camera: u16) -> u16 {

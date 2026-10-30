@@ -92,6 +92,83 @@ pub struct Liquid {
     pub base_fraction: u16,
 }
 
+/// The liquid words one frame reads and writes: `Room`'s five plus `Liquid`.
+/// Taken from the owned Room under a lease, or read from compatibility RAM
+/// when a lease is not admissible; the same frame logic runs on either.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct LiquidWords {
+    /// $1978.
+    pub height: u16,
+    /// $197A.
+    pub target: u16,
+    /// $197C.
+    pub velocity: u16,
+    /// $197E.
+    pub options: u16,
+    /// $1980.
+    pub delay: u16,
+    pub liquid: Liquid,
+}
+
+impl LiquidWords {
+    pub fn of(room: &Room) -> Self {
+        Self {
+            height: room.liquid_height,
+            target: room.liquid_target,
+            velocity: room.liquid_velocity,
+            options: room.liquid_options,
+            delay: room.liquid_delay,
+            liquid: room.liquid,
+        }
+    }
+    pub fn store(&self, room: &mut Room) {
+        room.liquid_height = self.height;
+        room.liquid_target = self.target;
+        room.liquid_velocity = self.velocity;
+        room.liquid_options = self.options;
+        room.liquid_delay = self.delay;
+        room.liquid = self.liquid;
+    }
+    /// The words at their compatibility addresses, little-endian as the
+    /// encoder stores them.
+    fn slots(&mut self) -> [(usize, &mut u16); 16] {
+        let l = &mut self.liquid;
+        [
+            (0x195c, &mut l.surface.fraction),
+            (0x195e, &mut l.surface.whole),
+            (0x1960, &mut l.lava_acid.fraction),
+            (0x1962, &mut l.lava_acid.whole),
+            (0x1964, &mut l.tilemap),
+            (0x196c, &mut l.rising),
+            (0x196e, &mut l.kind),
+            (0x1970, &mut l.offset.fraction),
+            (0x1972, &mut l.offset.whole),
+            (0x1974, &mut l.tide_phase),
+            (0x1976, &mut l.base_fraction),
+            (0x1978, &mut self.height),
+            (0x197a, &mut self.target),
+            (0x197c, &mut self.velocity),
+            (0x197e, &mut self.options),
+            (0x1980, &mut self.delay),
+        ]
+    }
+    pub fn read(ram: &(impl crate::ram::CompatibilityRam + ?Sized)) -> Self {
+        let mut words = Self::default();
+        for (at, word) in words.slots() {
+            *word =
+                u16::from_le_bytes([ram.compatibility_byte(at), ram.compatibility_byte(at + 1)]);
+        }
+        words
+    }
+    pub fn write(mut self, ram: &mut (impl crate::ram::CompatibilityRam + ?Sized)) {
+        for (at, word) in self.slots() {
+            let [low, high] = word.to_le_bytes();
+            ram.compatibility_write_byte(at, low);
+            ram.compatibility_write_byte(at + 1, high);
+        }
+    }
+}
+
 /// The bank $88 handlers in `Liquid::rising`: lava and acid ("hot") liquids and
 /// water each idle, count down `Room::liquid_delay`, then move to the target.
 pub mod rising {
@@ -114,45 +191,46 @@ pub struct MotionEffects {
 
 /// Advance the base height toward its target; true once there, or when the
 /// target is disabled (bit 15 set).
-fn move_toward_target(room: &mut Room) -> bool {
-    if room.liquid_target & 0x8000 != 0 {
+fn move_toward_target(words: &mut LiquidWords) -> bool {
+    if words.target & 0x8000 != 0 {
         return true;
     }
-    let rising = room.liquid_velocity & 0x8000 != 0;
-    let velocity = ((room.liquid_velocity as i16 as i32) << 8) as u32;
-    let base = (u32::from(room.liquid_height) << 16) | u32::from(room.liquid.base_fraction);
+    let rising = words.velocity & 0x8000 != 0;
+    let velocity = ((words.velocity as i16 as i32) << 8) as u32;
+    let base = (u32::from(words.height) << 16) | u32::from(words.liquid.base_fraction);
     let mut position = (velocity.wrapping_add(base) >> 16) as u16;
     // Only the fraction word takes the 32-bit sum; the whole is set below.
-    room.liquid.base_fraction = u32::from(room.liquid.base_fraction).wrapping_add(velocity) as u16;
+    words.liquid.base_fraction =
+        u32::from(words.liquid.base_fraction).wrapping_add(velocity) as u16;
     if position & 0x8000 != 0 {
         position = if rising { 0 } else { 0xffff };
     }
-    room.liquid_height = position;
+    words.height = position;
     let reached = if rising {
-        room.liquid_target >= position
+        words.target >= position
     } else {
-        room.liquid_target < position
+        words.target < position
     };
     if reached {
-        room.liquid_height = room.liquid_target;
-        room.liquid.base_fraction = 0;
+        words.height = words.target;
+        words.liquid.base_fraction = 0;
     }
     reached
 }
 
 /// One frame of the rising state machine.
-pub fn advance_motion(room: &mut Room) -> MotionEffects {
+pub fn advance_motion(words: &mut LiquidWords) -> MotionEffects {
     use rising::*;
-    let state = room.liquid.rising;
+    let state = words.liquid.rising;
     let mut effects = MotionEffects {
         shake: matches!(state, HOT_DELAY | HOT_MOVING),
         unknown_handler: false,
     };
     match state {
         HOT_IDLE | WATER_IDLE => {
-            let velocity = room.liquid_velocity;
-            let target = room.liquid_target;
-            let base = room.liquid_height;
+            let velocity = words.velocity;
+            let target = words.target;
+            let base = words.height;
             if velocity != 0
                 && if velocity & 0x8000 == 0 {
                     target > base
@@ -160,7 +238,7 @@ pub fn advance_motion(room: &mut Room) -> MotionEffects {
                     target < base
                 }
             {
-                room.liquid.rising = if state == HOT_IDLE {
+                words.liquid.rising = if state == HOT_IDLE {
                     HOT_DELAY
                 } else {
                     WATER_DELAY
@@ -168,9 +246,9 @@ pub fn advance_motion(room: &mut Room) -> MotionEffects {
             }
         }
         HOT_DELAY | WATER_DELAY => {
-            room.liquid_delay = room.liquid_delay.wrapping_sub(1);
-            if room.liquid_delay == 0 {
-                room.liquid.rising = if state == HOT_DELAY {
+            words.delay = words.delay.wrapping_sub(1);
+            if words.delay == 0 {
+                words.liquid.rising = if state == HOT_DELAY {
                     HOT_MOVING
                 } else {
                     WATER_MOVING
@@ -178,9 +256,9 @@ pub fn advance_motion(room: &mut Room) -> MotionEffects {
             }
         }
         HOT_MOVING | WATER_MOVING => {
-            if move_toward_target(room) {
-                room.liquid_velocity = 0;
-                room.liquid.rising = if state == HOT_MOVING {
+            if move_toward_target(words) {
+                words.velocity = 0;
+                words.liquid.rising = if state == HOT_MOVING {
                     HOT_IDLE
                 } else {
                     WATER_IDLE
@@ -194,11 +272,11 @@ pub fn advance_motion(room: &mut Room) -> MotionEffects {
 
 /// One frame of the tide: a sine offset in amplitude 8 (options bit 15 read
 /// across the velocity/options words) or 32 (bit 14), else none.
-pub fn advance_tide(room: &mut Room) {
+pub fn advance_tide(words: &mut LiquidWords) {
     // The control word straddles the velocity's high byte and the options' low byte.
     let control = u16::from_ne_bytes([
-        room.liquid_velocity.to_le_bytes()[1],
-        room.liquid_options.to_le_bytes()[0],
+        words.velocity.to_le_bytes()[1],
+        words.options.to_le_bytes()[0],
     ]);
     let (amplitude, sign_mask, positive_step, negative_step) = if control & 0x8000 != 0 {
         (8u16, 0x1000, 288, 192)
@@ -207,20 +285,20 @@ pub fn advance_tide(room: &mut Room) {
     } else {
         return;
     };
-    room.liquid.offset = Position::default();
+    words.liquid.offset = Position::default();
     let sine =
-        crate::projectile_geometry::SINE_COSINE[usize::from(room.liquid.tide_phase >> 8)] as u16;
+        crate::projectile_geometry::SINE_COSINE[usize::from(words.liquid.tide_phase >> 8)] as u16;
     let product = amplitude.wrapping_mul(sine);
     if sine & sign_mask != 0 {
-        room.liquid.offset.whole = room.liquid.offset.whole.wrapping_sub(1);
+        words.liquid.offset.whole = words.liquid.offset.whole.wrapping_sub(1);
     }
     // The product is stored as a native word at $1971: the fraction's high
     // byte and the whole's low byte.
     let [low, high] = product.to_ne_bytes();
-    let offset = &mut room.liquid.offset;
+    let offset = &mut words.liquid.offset;
     offset.fraction = u16::from_le_bytes([offset.fraction.to_le_bytes()[0], low]);
     offset.whole = u16::from_le_bytes([high, offset.whole.to_le_bytes()[1]]);
-    room.liquid.tide_phase = room.liquid.tide_phase.wrapping_add(if sine & 0x8000 == 0 {
+    words.liquid.tide_phase = words.liquid.tide_phase.wrapping_add(if sine & 0x8000 == 0 {
         positive_step
     } else {
         negative_step
@@ -237,10 +315,10 @@ pub enum Surface {
 
 /// Store the base height plus the tide offset as the surface, as the original
 /// native word stores did.
-pub fn place_surface(room: &mut Room, surface: Surface) {
+pub fn place_surface(words: &mut LiquidWords, surface: Surface) {
     let offset =
-        (u32::from(room.liquid.offset.whole) << 16) | u32::from(room.liquid.offset.fraction);
-    let base = (u32::from(room.liquid_height) << 16) | u32::from(room.liquid.base_fraction);
+        (u32::from(words.liquid.offset.whole) << 16) | u32::from(words.liquid.offset.fraction);
+    let base = (u32::from(words.height) << 16) | u32::from(words.liquid.base_fraction);
     let position = offset.wrapping_add(base);
     let native = |value: u16| u16::from_le_bytes(value.to_ne_bytes());
     let stored = Position {
@@ -248,18 +326,18 @@ pub fn place_surface(room: &mut Room, surface: Surface) {
         fraction: native(position as u16),
     };
     match surface {
-        Surface::LavaAcid => room.liquid.lava_acid = stored,
-        Surface::Water => room.liquid.surface = stored,
+        Surface::LavaAcid => words.liquid.lava_acid = stored,
+        Surface::Water => words.liquid.surface = stored,
     }
 }
 
 /// One frame of motion, tide and surface. Stops before the tide when the
 /// handler is unknown, so the caller can report it with the original's prefix.
-pub fn step(room: &mut Room, surface: Surface) -> MotionEffects {
-    let effects = advance_motion(room);
+pub fn step(words: &mut LiquidWords, surface: Surface) -> MotionEffects {
+    let effects = advance_motion(words);
     if !effects.unknown_handler {
-        advance_tide(room);
-        place_surface(room, surface);
+        advance_tide(words);
+        place_surface(words, surface);
     }
     effects
 }

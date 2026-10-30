@@ -1913,6 +1913,18 @@ impl Game {
         self.persistent_session = SessionSlot::Ready(Box::new(session));
         Ok(())
     }
+    /// Whether `Runtime::new` would succeed now, without changing any state:
+    /// the Samus runtime admits import, and any retained persistent Session
+    /// is current with RAM.
+    pub(crate) fn session_lease_admissible(&self) -> bool {
+        use persistent_session::SessionSlot;
+        self.preflight_samus_runtime().is_ok()
+            && match &self.persistent_session {
+                SessionSlot::Legacy => true,
+                SessionSlot::Ready(_) => self.persistent_ram_epoch == self.ram.write_epoch(),
+                SessionSlot::Leased | SessionSlot::Failed(_) => false,
+            }
+    }
     pub(crate) fn lease_persistent_session(
         &mut self,
     ) -> Result<Option<persistent_session::PersistentSession>, DisplayError> {
