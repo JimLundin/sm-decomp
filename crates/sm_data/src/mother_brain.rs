@@ -129,7 +129,6 @@ pub fn import_health_palettes(bytes: &[u8]) -> Result<HealthPalettes, LengthErro
 /// at the first word with bit 15 set.
 pub const RAINBOW_ADDRESS: u32 = 0x88_e833;
 pub const RAINBOW_WORDS: usize = 83;
-pub const RAINBOW_BYTES: usize = 2 * RAINBOW_WORDS;
 
 pub type RainbowColors = Rows<u16, RAINBOW_WORDS>;
 

@@ -23,12 +23,9 @@ pub const MVOLL: DspReg = 12;
 pub use crate::types::DspReg;
 // The output allocations are external to NativePlayerState. Capture their links
 // before borrowing sequencing state; writes never reenter the player owner.
-unsafe fn write_register(hist: *mut DspRegWriteHistory, dsp: *mut Dsp, mut reg: u8, value: u8) {
+unsafe fn write_register(hist: *mut DspRegWriteHistory, dsp: *mut Dsp, reg: u8, value: u8) {
     unsafe {
         if !hist.is_null() && (*hist).count < 256 {
-            if (*hist).count == 9 && reg as i32 == 0x5d {
-                reg = (reg as i32 + 0) as u8;
-            }
             (*hist).addr[(*hist).count as usize] = reg;
             (*hist).val[(*hist).count as usize] = value;
             (*hist).count = (*hist).count.wrapping_add(1);
