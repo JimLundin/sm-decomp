@@ -295,10 +295,7 @@ pub fn activate_shinespark<L: Lease>(game: &mut L, k: u16) {
             session_slot!(game, Echo[me + echo].lifetime = 0);
         }
         session_slot!(game, Dachora[me]; acceleration = 0, subacceleration = 0);
-        session_slot!(
-            game,
-            Dachora[me].base.y_pos = (session_slot!(game, Dachora[me].base.y_pos)).wrapping_sub(8)
-        );
+        session_slot!(game, Dachora[me].base.y_pos, |old| old.wrapping_sub(8));
         game.queue_sound(1, SHINESPARK_SOUND, 6);
         let echo_list = if session_slot!(game, Dachora[me].facing_right) != 0 {
             list::ECHO_FACING_RIGHT

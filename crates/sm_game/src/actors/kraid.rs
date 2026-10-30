@@ -456,10 +456,7 @@ pub fn is_dead<L: Lease + ?Sized>(game: &mut L) -> u16 {
 /// Was `Kraid_SetEnemyPropsToDead`.
 fn hide_as_dead<L: Lease + ?Sized>(game: &mut L) {
     let me = current(game);
-    session_slot!(
-        game,
-        Part[me].base.properties = session_slot!(game, Part[me].base.properties) & 0x50ff | 0x700
-    );
+    session_slot!(game, Part[me].base.properties, |old| old & 0x50ff | 0x700);
 }
 
 /// Decompresses BG2's graphics and tilemap and sets the tilemap's priority
@@ -553,10 +550,7 @@ fn process_script<L: Lease + ?Sized>(game: &mut L) -> u16 {
     let result: u16 = session_slot!(game, Body[BODY].script_delay);
     if result != 0 {
         let delay = session_slot!(game, Body[BODY].script_delay);
-        session_slot!(
-            game,
-            Body[BODY].script_delay = session_slot!(game, Body[BODY].script_delay).wrapping_sub(1)
-        );
+        session_slot!(game, Body[BODY].script_delay, |old| old.wrapping_sub(1));
         if delay == 1 {
             return execute_script(game);
         }
@@ -578,10 +572,7 @@ fn execute_script<L: Lease + ?Sized>(game: &mut L) -> u16 {
                     script_call::DYING_CRY => game.queue_sound(1, DYING_CRY_SOUND, 15),
                     _ => game.foreign(|game| game.unreachable()),
                 }
-                session_slot!(
-                    game,
-                    Body[BODY].script = (session_slot!(game, Body[BODY].script)).wrapping_add(2)
-                );
+                session_slot!(game, Body[BODY].script, |old| old.wrapping_add(2));
             } else {
                 session_slot!(game, Body[BODY].script_delay = result);
                 session_slot!(game, Body[BODY].script = script.wrapping_add(8));
@@ -699,10 +690,7 @@ fn mouth_shots<S: BossState + ?Sized>(game: &mut S) {
                 session_slot!(game, Body[BODY].script),
                 animation::SCRIPT_IDLE_END,
             ) {
-                session_slot!(
-                    game,
-                    Body[BODY].script = (session_slot!(game, Body[BODY].script)).wrapping_add(60)
-                );
+                session_slot!(game, Body[BODY].script, |old| old.wrapping_add(60));
             }
         }
     }
@@ -778,10 +766,7 @@ fn lint_main<L: Lease + ?Sized>(game: &mut L, k: u16) {
 /// The lint slides out of Kraid's belly. Was `KraidLint_ProduceLint`.
 fn produce_lint<L: Lease + ?Sized>(game: &mut L, k: u16) {
     let me = k as i32;
-    session_slot!(
-        game,
-        Part[me].base.properties = (session_slot!(game, Part[me].base.properties)) & 0xfaff
-    );
+    session_slot!(game, Part[me].base.properties, |old| old & 0xfaff);
     session_slot!(
         game,
         Part[me].base.x_pos = (session_slot!(game, Part[me].x_offset) as i32
@@ -811,10 +796,7 @@ fn charge_lint<L: Lease + ?Sized>(game: &mut L, k: u16) {
             - session_slot!(game, Part[me].progress) as i32) as u16
     );
     let left = session_slot!(game, Part[me].timer);
-    session_slot!(
-        game,
-        Part[me].timer = session_slot!(game, Part[me].timer).wrapping_sub(1)
-    );
+    session_slot!(game, Part[me].timer, |old| old.wrapping_sub(1));
     if left == 1 {
         session_slot!(game, Part[me].function = function::LINT_FIRE);
         game.queue_sound(2, LINT_SOUND, 6);
@@ -865,10 +847,7 @@ fn fingernail_wait_for_lint<L: Lease + ?Sized>(game: &mut L, k: u16) {
     if !below(session_slot!(game, Part[TOP_LINT].base.x_pos), 256) {
         let me = k as i32;
         session_slot!(game, Part[me].function = session_slot!(game, Part[me].next));
-        session_slot!(
-            game,
-            Part[me].base.properties = (session_slot!(game, Part[me].base.properties)) & 0xfaff
-        );
+        session_slot!(game, Part[me].base.properties, |old| old & 0xfaff);
     }
 }
 
@@ -878,10 +857,7 @@ fn handle_function_timer<L: Lease + ?Sized>(game: &mut L, k: u16) {
     let me = k as i32;
     if session_slot!(game, Part[me].timer) != 0 && {
         let left = session_slot!(game, Part[me].timer);
-        session_slot!(
-            game,
-            Part[me].timer = session_slot!(game, Part[me].timer).wrapping_sub(1)
-        );
+        session_slot!(game, Part[me].timer, |old| old.wrapping_sub(1));
         left == 1
     } {
         session_slot!(game, Part[me].function = session_slot!(game, Part[me].next));
@@ -1235,14 +1211,8 @@ fn break_ceiling<L: Lease + ?Sized>(game: &mut L) {
     if (session_slot!(game, Body[BODY].base.y_pos) & 2) != 0 {
         step = -1i32 as u16;
     }
-    session_slot!(
-        game,
-        Body[BODY].base.x_pos = (session_slot!(game, Body[BODY].base.x_pos)).wrapping_add(step)
-    );
-    session_slot!(
-        game,
-        Body[BODY].base.y_pos = session_slot!(game, Body[BODY].base.y_pos).wrapping_sub(1)
-    );
+    session_slot!(game, Body[BODY].base.x_pos, |old| old.wrapping_add(step));
+    session_slot!(game, Body[BODY].base.y_pos, |old| old.wrapping_sub(1));
     // A platform breaks every four pixels risen, nine in all.
     if (session_slot!(game, Body[BODY].base.y_pos) & 3) == 0 {
         let platform: u16 = session_slot!(game, Body[BODY].timer);
@@ -1254,10 +1224,7 @@ fn break_ceiling<L: Lease + ?Sized>(game: &mut L) {
             if let Some(&(block_x, plm)) = CEILING_PLATFORMS.get(broken) {
                 game.foreign(|game| game.spawn_plm(block_x, 0x12, plm));
             }
-            session_slot!(
-                game,
-                Body[BODY].timer = (session_slot!(game, Body[BODY].timer)).wrapping_add(2)
-            );
+            session_slot!(game, Body[BODY].timer, |old| old.wrapping_add(2));
         }
     }
     if below(session_slot!(game, Body[BODY].base.y_pos), 296) {
@@ -1273,10 +1240,7 @@ fn set_bg2_priority<L: Lease + ?Sized>(game: &mut L) {
     for v0 in (0u16..4096).step_by(2) {
         word!(game.tilemap_stuff[(v0 >> 1)] |= 0x2000);
     }
-    session_slot!(
-        game,
-        Part[ARM].base.properties = session_slot!(game, Part[ARM].base.properties) & !(0x400)
-    );
+    session_slot!(game, Part[ARM].base.properties, |old| old & !(0x400));
     session_slot!(
         game,
         Body[BODY].function = function::GETS_BIG_FINISH_BG2_TILEMAP
@@ -1371,10 +1335,7 @@ fn decrement_function_timer<L: Lease + ?Sized>(game: &mut L) {
     let me = current(game);
     if session_slot!(game, Part[me].timer) != 0 {
         let left = session_slot!(game, Part[me].timer);
-        session_slot!(
-            game,
-            Part[me].timer = session_slot!(game, Part[me].timer).wrapping_sub(1)
-        );
+        session_slot!(game, Part[me].timer, |old| old.wrapping_sub(1));
         if left == 1 {
             session_slot!(game, Part[me].function = session_slot!(game, Part[me].next));
             session_slot!(game, Part[me].base; current_instruction = animation::FOOT_WALK_BACKWARD, instruction_timer = 1);
@@ -1599,10 +1560,7 @@ fn death_bg2_bottom_half<L: Lease + ?Sized>(game: &mut L) {
         Body[BODY].function = function::DEATH_SINK_THROUGH_FLOOR
     );
     word!(game.boss_death_quake_sound_timer = 43);
-    session_slot!(
-        game,
-        Body[BODY].base.properties = (session_slot!(game, Body[BODY].base.properties)) | 0x8000
-    );
+    session_slot!(game, Body[BODY].base.properties, |old| old | 0x8000);
     word!(game.earthquake_type = 1);
     word!(game.earthquake_timer = 256);
     session_slot!(game, Part[ARM].base; current_instruction = animation::ARM_RAISED, instruction_timer = 1);
@@ -1617,10 +1575,7 @@ pub fn sink_through_floor<L: Lease + ?Sized>(game: &mut L) {
     process_script(game);
     sound_every_half_second(game);
     handle_sinking(game);
-    session_slot!(
-        game,
-        Body[BODY].base.y_pos = session_slot!(game, Body[BODY].base.y_pos).wrapping_add(1)
-    );
+    session_slot!(game, Body[BODY].base.y_pos, |old| old.wrapping_add(1));
     if !below(session_slot!(game, Body[BODY].base.y_pos), 608) {
         session_slot!(
             game,
@@ -1790,10 +1745,7 @@ fn body_shots<S: BossState + ?Sized>(game: &mut S) {
         function::DEATH_SINK_THROUGH_FLOOR,
     ) {
         session_slot!(game, Body[BODY].mouth_hit_ready = 0);
-        session_slot!(
-            game,
-            Body[BODY].mouth_flags = session_slot!(game, Body[BODY].mouth_flags) & !(1)
-        );
+        session_slot!(game, Body[BODY].mouth_flags, |old| old & !(1));
         let mut hits: u16 = 0;
         let frame = kraid_record(
             (session_slot!(game, Body[BODY].script)).wrapping_sub(8),
@@ -1878,10 +1830,8 @@ fn body_shots<S: BossState + ?Sized>(game: &mut S) {
 /// Flashes when hurt and shows the health palette. Was `Kraid_Palette_Handling`.
 fn palette<S: BossState + ?Sized>(game: &mut S) {
     if below(session_slot!(game, Body[BODY].base.health), 1) {
-        session_slot!(
-            game,
-            Body[BODY].hurt_frame = session_slot!(game, Body[BODY].base.health)
-        );
+        let copied = session_slot!(game, Body[BODY].base.health);
+        session_slot!(game, Body[BODY].hurt_frame = copied);
     } else {
         let update: bool = (session_slot!(game, Body[BODY].hurt_frame) != 0)
             && ({
@@ -2064,10 +2014,7 @@ fn first_phase<L: Lease + ?Sized>(game: &mut L) {
                     (session_slot!(game, Part[lint].base.properties)) | 0x100
             );
         }
-        session_slot!(
-            game,
-            Part[ARM].base.properties = (session_slot!(game, Part[ARM].base.properties)) | 0x400
-        );
+        session_slot!(game, Part[ARM].base.properties, |old| old | 0x400);
     }
 }
 
@@ -2195,10 +2142,8 @@ pub fn initialize_arm<L: Lease + ?Sized>(game: &mut L) {
     if is_dead(game) != 0 {
         hide_as_dead(game);
     } else {
-        session_slot!(
-            game,
-            Part[ARM].base.palette_index = session_slot!(game, Part[BODY].base.palette_index)
-        );
+        let copied = session_slot!(game, Part[BODY].base.palette_index);
+        session_slot!(game, Part[ARM].base.palette_index = copied);
         session_slot!(game, Part[ARM].function = function::FOOT_IDLE);
         session_slot!(game, Part[ARM].base; current_instruction = animation::ARM_RAISED, instruction_timer = 1);
         session_slot!(game, Part[ARM].progress = 0);
@@ -2211,10 +2156,8 @@ pub fn initialize_lint<L: Lease + ?Sized>(game: &mut L, lint: i32) {
     if is_dead(game) != 0 {
         hide_as_dead(game);
     } else {
-        session_slot!(
-            game,
-            Part[lint].base.palette_index = session_slot!(game, Part[BODY].base.palette_index)
-        );
+        let copied = session_slot!(game, Part[BODY].base.palette_index);
+        session_slot!(game, Part[lint].base.palette_index = copied);
         session_slot!(game, Part[lint].base; instruction_timer = 0x7fff, current_instruction = animation::LINT_HIDDEN);
         session_slot!(
             game,
@@ -2279,10 +2222,8 @@ pub fn arm_main<L: Lease + ?Sized>(game: &mut L) {
         properties = (session_slot!(game, Part[ARM].base.properties)) & 0xfeff;
     }
     session_slot!(game, Part[ARM].base.properties = properties);
-    session_slot!(
-        game,
-        Part[ARM].base.x_pos = session_slot!(game, Body[BODY].base.x_pos)
-    );
+    let copied = session_slot!(game, Body[BODY].base.x_pos);
+    session_slot!(game, Part[ARM].base.x_pos = copied);
     if session_slot!(byte game, Body[BODY].mouth_flags[1]) != 0 {
         session_slot!(
             game,
@@ -2301,10 +2242,8 @@ pub fn lint_main_ai<L: Lease + ?Sized>(game: &mut L, lint: i32) {
 
 /// The foot follows the body and shows only on screen. Was `KraidsFoot_Main`.
 pub fn foot_main<L: Lease + ?Sized>(game: &mut L) {
-    session_slot!(
-        game,
-        Part[FOOT].base.x_pos = session_slot!(game, Part[BODY].base.x_pos)
-    );
+    let copied = session_slot!(game, Part[BODY].base.x_pos);
+    session_slot!(game, Part[FOOT].base.x_pos = copied);
     let y: u16 = (session_slot!(game, Part[BODY].base.y_pos)).wrapping_add(100);
     session_slot!(game, Part[FOOT].base.y_pos = y);
     let above: i16 = (y as i16).wrapping_sub(224);
@@ -2366,19 +2305,13 @@ pub fn arm_swipe_when_hurt<L: Lease + ?Sized>(game: &mut L) -> Option<u16> {
 
 /// Instruction: Kraid steps up a pixel. Was `Kraid_Instr_DecYpos`.
 pub fn step_up<L: Lease + ?Sized>(game: &mut L) {
-    session_slot!(
-        game,
-        Body[BODY].base.y_pos = session_slot!(game, Body[BODY].base.y_pos).wrapping_sub(1)
-    );
+    session_slot!(game, Body[BODY].base.y_pos, |old| old.wrapping_sub(1));
 }
 
 /// Instruction: Kraid steps down a pixel, shaking the room. Was
 /// `Kraid_Instr_IncrYpos_Shake`.
 pub fn step_down_and_shake<L: Lease + ?Sized>(game: &mut L) {
-    session_slot!(
-        game,
-        Body[BODY].base.y_pos = session_slot!(game, Body[BODY].base.y_pos).wrapping_add(1)
-    );
+    session_slot!(game, Body[BODY].base.y_pos, |old| old.wrapping_add(1));
     word!(game.earthquake_type = 1);
     word!(game.earthquake_timer = 10);
 }

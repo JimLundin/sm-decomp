@@ -80,10 +80,8 @@ pub fn swoop_setup<L: Lease>(right: bool, game: &mut L) {
     session_slot!(game, Draygon[BODY].base; current_instruction = if right { list::BODY_RIGHT_RESET } else { list::BODY_LEFT_RESET }, instruction_timer = 1);
     session_slot!(game, Draygon[BODY].facing_right = u16::from(right));
     if !right {
-        session_slot!(
-            game,
-            Draygon[BODY].function_timer = session_slot!(game, Draygon[BODY].swoop_duration)
-        );
+        let copied = session_slot!(game, Draygon[BODY].swoop_duration);
+        session_slot!(game, Draygon[BODY].function_timer = copied);
     }
 }
 /// Draygon body function - swoop right ($A5:8922) or left ($A5:8A50) - apex:
@@ -176,9 +174,7 @@ pub fn swoop<L: Lease>(right: bool, ascending: bool, game: &mut L) {
             y_pos = session_slot!(game, Draygon[BODY].reset_y));
     } else {
         session_slot!(game, Draygon[BODY].function = function::GOOP_RIGHT_SETUP);
-        session_slot!(
-            game,
-            Draygon[BODY].base.x_pos = session_slot!(game, Draygon[BODY].left_reset_x)
-        );
+        let copied = session_slot!(game, Draygon[BODY].left_reset_x);
+        session_slot!(game, Draygon[BODY].base.x_pos = copied);
     }
 }

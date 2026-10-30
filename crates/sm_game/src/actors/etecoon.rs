@@ -109,10 +109,7 @@ const HOP_SOUND: u8 = 0x33;
 fn timer_expired<L: Lease>(game: &mut L, k: u16) -> bool {
     let me = k as i32;
     let last = session_slot!(game, Etecoon[me].timer) == 1;
-    session_slot!(
-        game,
-        Etecoon[me].timer = session_slot!(game, Etecoon[me].timer).wrapping_sub(1)
-    );
+    session_slot!(game, Etecoon[me].timer, |old| old.wrapping_sub(1));
     let negative = (session_slot!(game, Etecoon[me].timer) & 0x8000) != 0;
     last || negative
 }
@@ -196,10 +193,7 @@ pub fn initialize<L: Lease>(game: &mut L) {
 pub fn main_ai<L: Lease>(game: &mut L) {
     let me = word!(game.cur_enemy_index) as i32;
     if session_slot!(byte game, Etecoon[me].route[1]) != 0 {
-        session_slot!(
-            game,
-            Etecoon[me].route = (session_slot!(game, Etecoon[me].route)).wrapping_sub(256)
-        );
+        session_slot!(game, Etecoon[me].route, |old| old.wrapping_sub(256));
     } else {
         let address = (BANK << 16) | session_slot!(game, Etecoon[me].function) as u32;
         game.foreign(|game| game.run_function(address));

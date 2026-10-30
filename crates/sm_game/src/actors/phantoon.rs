@@ -265,10 +265,7 @@ fn palette_source(index: i32) -> isize {
 fn timer_expired<S: BossState + ?Sized>(game: &mut S, k: u16) -> bool {
     let me = k as i32;
     let last = session_slot!(game, Body[me].timer) == 1;
-    session_slot!(
-        game,
-        Body[me].timer = session_slot!(game, Body[me].timer).wrapping_sub(1)
-    );
+    session_slot!(game, Body[me].timer, |old| old.wrapping_sub(1));
     let negative = (session_slot!(game, Body[me].timer) & 0x8000) != 0;
     last || negative
 }
@@ -276,10 +273,7 @@ fn timer_expired<S: BossState + ?Sized>(game: &mut S, k: u16) -> bool {
 /// Counts down the eye's timer; true when it runs out.
 fn eye_timer_expired<S: BossState + ?Sized>(game: &mut S) -> bool {
     let last = session_slot!(game, Eye[EYE].timer) == 1;
-    session_slot!(
-        game,
-        Eye[EYE].timer = session_slot!(game, Eye[EYE].timer).wrapping_sub(1)
-    );
+    session_slot!(game, Eye[EYE].timer, |old| old.wrapping_sub(1));
     let negative = (session_slot!(game, Eye[EYE].timer) & 0x8000) != 0;
     last || negative
 }
@@ -556,10 +550,7 @@ fn fade_step_toward_target<S: BossState + ?Sized>(game: &mut S) -> u8 {
                 )
             );
         }
-        session_slot!(
-            game,
-            Eye[EYE].fade_step = session_slot!(game, Eye[EYE].fade_step).wrapping_add(1)
-        );
+        session_slot!(game, Eye[EYE].fade_step, |old| old.wrapping_add(1));
         0
     } else {
         session_slot!(game, Eye[EYE].fade_step = 0);
@@ -580,10 +571,7 @@ fn fade_step_toward_health<S: BossState + ?Sized>(game: &mut S) -> u8 {
                 transition_color(session_slot!(game, Eye[EYE].fade_step), from, colour, game);
             set_native_word(game, palette_source((base as i32 >> 1) + 112), value);
         }
-        session_slot!(
-            game,
-            Eye[EYE].fade_step = session_slot!(game, Eye[EYE].fade_step).wrapping_add(1)
-        );
+        session_slot!(game, Eye[EYE].fade_step, |old| old.wrapping_add(1));
         0
     } else {
         session_slot!(game, Eye[EYE].fade_step = 0);
@@ -607,10 +595,7 @@ fn fade_step_toward_powered_on<S: BossState + ?Sized>(game: &mut S) -> u8 {
                 )
             );
         }
-        session_slot!(
-            game,
-            Eye[EYE].fade_step = session_slot!(game, Eye[EYE].fade_step).wrapping_add(1)
-        );
+        session_slot!(game, Eye[EYE].fade_step, |old| old.wrapping_add(1));
         0
     } else {
         session_slot!(game, Eye[EYE].fade_step = 0);
@@ -703,14 +688,10 @@ pub fn initialize_part<S: BossState + ?Sized>(game: &mut S) {
     );
     session_slot!(game, Body[me].base.instruction_timer = 1);
     session_slot!(game, Body[me].base.timer = 0);
-    session_slot!(
-        game,
-        Body[me].base.palette_index = session_slot!(game, Body[BODY].base.palette_index)
-    );
-    session_slot!(
-        game,
-        Body[me].base.vram_tiles_index = session_slot!(game, Body[BODY].base.vram_tiles_index)
-    );
+    let copied = session_slot!(game, Body[BODY].base.palette_index);
+    session_slot!(game, Body[me].base.palette_index = copied);
+    let copied = session_slot!(game, Body[BODY].base.vram_tiles_index);
+    session_slot!(game, Body[me].base.vram_tiles_index = copied);
     session_slot!(
         game,
         Body[me].base.current_instruction = crate::boss_lists::phantoon_flame_instruction_list(
@@ -944,10 +925,7 @@ pub fn wavy_fade_in<S: BossState + ?Sized>(game: &mut S, k: u16) {
     } else {
         let me = k as i32;
         let last: bool = session_slot!(game, Body[me].timer) == 1;
-        session_slot!(
-            game,
-            Body[me].timer = session_slot!(game, Body[me].timer).wrapping_sub(1)
-        );
+        session_slot!(game, Body[me].timer, |old| old.wrapping_sub(1));
         let negative: bool = (session_slot!(game, Body[me].timer) & 0x8000) != 0;
         if last || negative {
             session_slot!(game, Mouth[MOUTH].wave_shrinking = 1);
@@ -1302,10 +1280,7 @@ pub fn almost_dead<S: BossState + ?Sized>(game: &mut S, k: u16) {
 pub fn dead<L: Lease + ?Sized>(game: &mut L, k: u16) {
     let me = k as i32;
     if session_slot!(game, Body[me].timer) != 0 {
-        session_slot!(
-            game,
-            Body[me].timer = session_slot!(game, Body[me].timer).wrapping_sub(1)
-        );
+        session_slot!(game, Body[me].timer, |old| old.wrapping_sub(1));
     } else if (word!(game.nmi_frame_counter_word) & 3) == 0 {
         session_slot!(game, Eye[EYE].fade_steps = 12);
         if fade_step_toward_powered_on(game) & 1 != 0 {

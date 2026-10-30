@@ -2121,15 +2121,9 @@ pub fn explosion_main<L: Lease + ?Sized>(game: &mut L) {
         speed as i32
     };
     session_slot!(game, Explosion[e].x_velocity = x_velocity as u16);
-    session_slot!(
-        game,
-        Explosion[e].y_velocity = session_slot!(game, Explosion[e].y_velocity).wrapping_add(4)
-    );
+    session_slot!(game, Explosion[e].y_velocity, |old| old.wrapping_add(4));
     move_with_velocity(game);
-    session_slot!(
-        game,
-        Explosion[e].lifetime = session_slot!(game, Explosion[e].lifetime).wrapping_sub(1)
-    );
+    session_slot!(game, Explosion[e].lifetime, |old| old.wrapping_sub(1));
     if (session_slot!(game, Explosion[e].lifetime) & 0x8000) != 0 {
         game.foreign(|game| game.normal_death(0));
     }
@@ -3127,10 +3121,8 @@ pub fn move_ridley<S: State + ?Sized>(game: &mut S) {
         session_slot!(game, Ridley[e].base.x_pos = x);
     } else {
         ceres_earthquake(k, game);
-        session_slot!(
-            game,
-            Ridley[e].base.x_pos = session_slot!(game, Ridley[RIDLEY].min_x)
-        );
+        let copied = session_slot!(game, Ridley[RIDLEY].min_x);
+        session_slot!(game, Ridley[e].base.x_pos = copied);
         session_slot!(game, Ridley[e].x_velocity = 0);
         session_slot!(game, Ridley[RIDLEY].hit_boundary = 1);
     }
@@ -3148,10 +3140,8 @@ pub fn move_ridley<S: State + ?Sized>(game: &mut S) {
         }
         session_slot!(game, Ridley[e].base.y_pos = y);
     } else {
-        session_slot!(
-            game,
-            Ridley[e].base.y_pos = session_slot!(game, Ridley[RIDLEY].min_y)
-        );
+        let copied = session_slot!(game, Ridley[RIDLEY].min_y);
+        session_slot!(game, Ridley[e].base.y_pos = copied);
         session_slot!(game, Ridley[e].y_velocity = 0);
         session_slot!(game, Ridley[RIDLEY].hit_boundary = 4);
     }

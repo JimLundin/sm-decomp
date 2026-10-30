@@ -186,10 +186,7 @@ pub fn golden_missile_reaction<L: Lease>(k: u16, j: u16, game: &mut L) {
 pub fn golden_super_missile_reaction<L: Lease>(k: u16, j: u16, game: &mut L) {
     let e = word!(game.cur_enemy_index) as i32;
     if facing_against_samus(k, game) & SIGN as u16 == 0 {
-        session_slot!(
-            game,
-            TorizoSlot[e].damage = session_slot!(game, TorizoSlot[e].damage) | CAUGHT_SUPER_MISSILE
-        );
+        session_slot!(game, TorizoSlot[e].damage, |old| old | CAUGHT_SUPER_MISSILE);
         session_slot!(game, TorizoSlot[e].function = NO_FUNCTION);
         word!(game.projectile_dir[(j >> 1)] |= DELETE_PROJECTILE);
         session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
@@ -435,10 +432,8 @@ fn normal_movement<L: Lease>(k: u16, game: &mut L) {
             session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
         }
     } else {
-        session_slot!(
-            game,
-            TorizoSlot[e].saved_list = session_slot!(game, TorizoSlot[e].base.current_instruction)
-        );
+        let copied = session_slot!(game, TorizoSlot[e].base.current_instruction);
+        session_slot!(game, TorizoSlot[e].saved_list = copied);
         session_slot!(
             game,
             TorizoSlot[e].base.current_instruction = list::BLOW_UP_GUT
@@ -601,10 +596,8 @@ pub fn jumping_or_falling<L: Lease>(k: u16, game: &mut L) {
     game.snap_to_slopes(k);
     let amount = (session_slot!(game, TorizoSlot[e].y_velocity) as i16 as i32) << 8;
     if game.move_vertical(k, amount) {
-        session_slot!(
-            game,
-            TorizoSlot[e].base.current_instruction = session_slot!(game, TorizoSlot[e].link)
-        );
+        let copied = session_slot!(game, TorizoSlot[e].link);
+        session_slot!(game, TorizoSlot[e].base.current_instruction = copied);
         session_slot!(game, TorizoSlot[e].base.instruction_timer = 1);
         session_slot!(game, TorizoSlot[e].y_velocity = LANDED_Y_VELOCITY);
         quake(game);
@@ -745,10 +738,7 @@ pub fn golden_shot<L: Lease>(game: &mut L) {
                 }
             };
         if stunned {
-            session_slot!(
-                game,
-                TorizoSlot[e].damage = (session_slot!(game, TorizoSlot[e].damage)) | STUNNED
-            );
+            session_slot!(game, TorizoSlot[e].damage, |old| old | STUNNED);
             golden_damaged_shot_reaction(game);
         }
     }
@@ -860,10 +850,7 @@ pub fn set_function<L: Lease>(k: u16, jp: EnemyScript, game: &mut L) -> EnemyScr
 /// `Torizo_Instr_31`.
 pub fn blow_up_gut<L: Lease>(k: u16, game: &mut L) {
     let e = i32::from(k);
-    session_slot!(
-        game,
-        TorizoSlot[e].damage = (session_slot!(game, TorizoSlot[e].damage)) | GUT_BLOWN_UP
-    );
+    session_slot!(game, TorizoSlot[e].damage, |old| old | GUT_BLOWN_UP);
     let mut parameter = game.spawn_projectile(
         session_slot!(game, TorizoSlot[e].damage),
         k,
@@ -878,10 +865,7 @@ pub fn blow_up_gut<L: Lease>(k: u16, game: &mut L) {
 /// `Torizo_Instr_33`.
 pub fn blow_up_face<L: Lease>(k: u16, game: &mut L) {
     let e = i32::from(k);
-    session_slot!(
-        game,
-        TorizoSlot[e].damage = (session_slot!(game, TorizoSlot[e].damage)) | FACE_BLOWN_UP
-    );
+    session_slot!(game, TorizoSlot[e].damage, |old| old | FACE_BLOWN_UP);
 }
 
 /// Instruction - set enemy as visible ($AA:B224). Was `Torizo_Instr_36`.
@@ -1048,10 +1032,7 @@ pub fn drool_if_low_health<L: Lease>(k: u16, game: &mut L) {
 /// `Torizo_Instr_10`.
 pub fn start_turning<L: Lease>(k: u16, game: &mut L) {
     let e = i32::from(k);
-    session_slot!(
-        game,
-        TorizoSlot[e].direction = (session_slot!(game, TorizoSlot[e].direction)) | TURNING_AROUND
-    );
+    session_slot!(game, TorizoSlot[e].direction, |old| old | TURNING_AROUND);
 }
 
 /// Instructions - set stepped left/right with left/right foot state
@@ -1064,10 +1045,7 @@ pub fn stepped<L: Lease>(k: u16, game: &mut L, state: u16) {
         TorizoSlot[e].direction =
             session_slot!(game, TorizoSlot[e].direction) & !STEP_STATE | state
     );
-    session_slot!(
-        game,
-        TorizoSlot[e].steps = session_slot!(game, TorizoSlot[e].steps).wrapping_add(1)
-    );
+    session_slot!(game, TorizoSlot[e].steps, |old| old.wrapping_add(1));
 }
 
 /// Instruction - standing up movement ($AA:C3CC). Was `Torizo_Instr_4`.
@@ -1252,10 +1230,8 @@ pub fn start_golden_fight<L: Lease>(k: u16, game: &mut L) {
 /// `Torizo_Instr_48`.
 pub fn clear_caught_super_missile<L: Lease>(k: u16, game: &mut L) {
     let e = i32::from(k);
-    session_slot!(
-        game,
-        TorizoSlot[e].damage = session_slot!(game, TorizoSlot[e].damage) & !CAUGHT_SUPER_MISSILE
-    );
+    session_slot!(game, TorizoSlot[e].damage, |old| old
+        & !CAUGHT_SUPER_MISSILE);
 }
 
 /// Instruction - spawn Golden Torizo egg ($AA:D0E9). Was `Torizo_Instr_57`.
@@ -1284,30 +1260,21 @@ pub fn branch_if_egg_active<L: Lease>(jp: EnemyScript, game: &mut L) -> EnemyScr
 /// `Torizo_Instr_59`.
 pub fn disable_eye_beam_explosions<L: Lease>(k: u16, game: &mut L) {
     let e = i32::from(k);
-    session_slot!(
-        game,
-        TorizoSlot[e].eye_beam = session_slot!(game, TorizoSlot[e].eye_beam) & !EYE_BEAM_EXPLODES
-    );
+    session_slot!(game, TorizoSlot[e].eye_beam, |old| old & !EYE_BEAM_EXPLODES);
 }
 
 /// Instruction - enable eye beam explosions ($AA:D187). Was
 /// `Torizo_Instr_62`.
 pub fn enable_eye_beam_explosions<L: Lease>(k: u16, game: &mut L) {
     let e = i32::from(k);
-    session_slot!(
-        game,
-        TorizoSlot[e].eye_beam = (session_slot!(game, TorizoSlot[e].eye_beam)) | EYE_BEAM_EXPLODES
-    );
+    session_slot!(game, TorizoSlot[e].eye_beam, |old| old | EYE_BEAM_EXPLODES);
 }
 
 /// Instruction - unmark Golden Torizo stunned ($AA:D1E7). Was
 /// `Torizo_Instr_63`.
 pub fn clear_stunned<L: Lease>(k: u16, game: &mut L) {
     let e = i32::from(k);
-    session_slot!(
-        game,
-        TorizoSlot[e].damage = session_slot!(game, TorizoSlot[e].damage) & !STUNNED
-    );
+    session_slot!(game, TorizoSlot[e].damage, |old| old & !STUNNED);
 }
 
 /// Instruction - queue Golden Torizo egg released sound effect ($AA:D38F).

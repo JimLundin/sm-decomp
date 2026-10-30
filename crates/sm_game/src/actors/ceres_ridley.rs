@@ -459,10 +459,7 @@ pub fn fade_in_background<L: Lease + ?Sized>(step: u16, game: &mut L) -> bool {
 /// Ridley function - liftoff - accelerating ($A6:A6AF). Was
 /// `CeresRidley_Func_9`.
 pub fn liftoff_accelerating<L: Lease + ?Sized>(game: &mut L) {
-    session_slot!(
-        game,
-        Ridley[RIDLEY].y_velocity = session_slot!(game, Ridley[RIDLEY].y_velocity).wrapping_sub(16)
-    );
+    session_slot!(game, Ridley[RIDLEY].y_velocity, |old| old.wrapping_sub(16));
     if below(session_slot!(game, Ridley[RIDLEY].base.y_pos), 112) {
         session_slot!(
             game,
@@ -475,10 +472,7 @@ pub fn liftoff_accelerating<L: Lease + ?Sized>(game: &mut L) {
 /// Ridley function - liftoff - decelerating ($A6:A6C8). Was
 /// `CeresRidley_Func_10`.
 pub fn liftoff_decelerating<L: Lease + ?Sized>(game: &mut L) {
-    session_slot!(
-        game,
-        Ridley[RIDLEY].y_velocity = session_slot!(game, Ridley[RIDLEY].y_velocity).wrapping_add(20)
-    );
+    session_slot!(game, Ridley[RIDLEY].y_velocity, |old| old.wrapping_add(20));
     if below(session_slot!(game, Ridley[RIDLEY].base.y_pos), 80) {
         session_slot!(game, Ridley[RIDLEY].function = ceres_function::HOVERING);
         session_slot!(game, Ridley[RIDLEY].fight_mode = 1);
@@ -555,14 +549,10 @@ pub fn fireballs_move_to_position<L: Lease + ?Sized>(game: &mut L) {
             session_slot!(game, Ridley[RIDLEY].function = ceres_function::SWOOP_SETUP);
         }
     } else if below(session_slot!(game, Ridley[RIDLEY].base.y_pos), 128) {
-        session_slot!(
-            game,
-            Ridley[RIDLEY].target_x = session_slot!(game, Ridley[RIDLEY].base.x_pos)
-        );
-        session_slot!(
-            game,
-            Ridley[RIDLEY].target_y = session_slot!(game, Ridley[RIDLEY].base.y_pos)
-        );
+        let copied = session_slot!(game, Ridley[RIDLEY].base.x_pos);
+        session_slot!(game, Ridley[RIDLEY].target_x = copied);
+        let copied = session_slot!(game, Ridley[RIDLEY].base.y_pos);
+        session_slot!(game, Ridley[RIDLEY].target_y = copied);
         ridley::set_instruction_list(instruction_list::SHOOT_FIREBALLS, game);
         session_slot!(
             game,

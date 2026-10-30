@@ -145,18 +145,12 @@ pub fn fight_intro<L: Lease>(first: bool, game: &mut L) {
                 game,
                 Draygon[BODY].right_reset_x = x.wrapping_add(RIGHT_RESET_OFFSET)
             );
-            session_slot!(
-                game,
-                Draygon[BODY].reset_y = session_slot!(game, Draygon[BODY].base.y_pos)
-            );
-            session_slot!(
-                game,
-                Draygon[BODY].base.x_pos = session_slot!(game, Draygon[BODY].left_reset_x)
-            );
-            session_slot!(
-                game,
-                Draygon[BODY].base.y_pos = session_slot!(game, Draygon[BODY].reset_y)
-            );
+            let copied = session_slot!(game, Draygon[BODY].base.y_pos);
+            session_slot!(game, Draygon[BODY].reset_y = copied);
+            let copied = session_slot!(game, Draygon[BODY].left_reset_x);
+            session_slot!(game, Draygon[BODY].base.x_pos = copied);
+            let copied = session_slot!(game, Draygon[BODY].reset_y);
+            session_slot!(game, Draygon[BODY].base.y_pos = copied);
             session_slot!(
                 game,
                 Draygon[BODY].swoop_y_acceleration = INITIAL_SWOOP_Y_ACCELERATION
@@ -442,10 +436,8 @@ pub fn goop_move_until_off_screen<L: Lease>(right: bool, game: &mut L) {
             }
         );
         session_slot!(game, Draygon[BODY].base; x_pos = if right { RIGHT_RESET_X } else { GOOP_START_X }, y_pos = RESET_Y);
-        session_slot!(
-            game,
-            Draygon[BODY].function_timer = session_slot!(game, Draygon[BODY].swoop_duration)
-        );
+        let copied = session_slot!(game, Draygon[BODY].swoop_duration);
+        session_slot!(game, Draygon[BODY].function_timer = copied);
     }
 }
 
