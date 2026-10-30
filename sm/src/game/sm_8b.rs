@@ -349,14 +349,7 @@ impl sm_game::cinematic_host::Host for Game {
         line: u32,
         function: &'static [u8],
     ) -> ! {
-        unsafe {
-            crate::c_library::__assert_fail(
-                expression.as_ptr() as *const core::ffi::c_char,
-                b"src/sm_8b.c\0".as_ptr() as *const core::ffi::c_char,
-                line,
-                function.as_ptr() as *const core::ffi::c_char,
-            )
-        }
+        crate::c_library::assertion_failed(expression, b"src/sm_8b.c\0", line, function)
     }
 }
 

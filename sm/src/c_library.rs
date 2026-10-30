@@ -3,6 +3,30 @@
 use crate::types::{__mode_t, FILE, size_t, time_t};
 use ::core::ffi::{c_char, c_double, c_long, c_ulong, c_void};
 
+/// The original C assertion failure for NUL-terminated literal diagnostics.
+pub fn assertion_failed(
+    assertion: &'static [u8],
+    file: &'static [u8],
+    line: u32,
+    function: &'static [u8],
+) -> ! {
+    assert!(
+        [assertion, file, function]
+            .iter()
+            .all(|text| text.last() == Some(&0)),
+        "assertion diagnostics must be NUL-terminated"
+    );
+    // SAFETY: each pointer is a NUL-terminated static byte string.
+    unsafe {
+        __assert_fail(
+            assertion.as_ptr().cast(),
+            file.as_ptr().cast(),
+            line,
+            function.as_ptr().cast(),
+        )
+    }
+}
+
 unsafe extern "C" {
     pub fn __assert_fail(
         __assertion: *const c_char,
