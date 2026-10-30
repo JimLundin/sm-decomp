@@ -49,9 +49,7 @@ pub(crate) use sm_game::cinematic::{
     fade_cinematic_fixed_color, set_cinematic_backdrop, set_fixed_color,
 };
 
-pub(crate) use crate::game::player_drawing::{
-    draw_player_frame, draw_player_frame_owned, update_beam_tiles_and_palette,
-};
+pub(crate) use crate::game::hosts::{draw_player_frame, update_beam_tiles_and_palette};
 pub(crate) use crate::game::visual_checks::{
     check_animation_guard, check_palette_guard, samus_observer,
 };

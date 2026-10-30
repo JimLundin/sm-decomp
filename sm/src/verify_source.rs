@@ -330,6 +330,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("../../crates/sm_game/src/hdma_dispatch.rs"),
     ),
     (
+        "crates/sm_game/src/player_drawing.rs",
+        include_bytes!("../../crates/sm_game/src/player_drawing.rs"),
+    ),
+    (
         "crates/sm_game/src/hdma_effects.rs",
         include_bytes!("../../crates/sm_game/src/hdma_effects.rs"),
     ),
@@ -2242,10 +2246,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/hdma_objects.rs",
         include_bytes!("game/hdma_objects.rs"),
-    ),
-    (
-        "sm/src/game/player_drawing.rs",
-        include_bytes!("game/player_drawing.rs"),
     ),
     (
         "sm/src/game/visual_checks.rs",

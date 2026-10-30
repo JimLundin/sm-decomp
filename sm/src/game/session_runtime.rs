@@ -1602,7 +1602,7 @@ impl Runtime<'_> {
                 result => result.map(|_| ()),
             };
             ready.expect("Samus import rejected");
-            crate::game::visual_runtime::draw_player_frame_owned(runtime);
+            sm_game::player_drawing::draw_player_frame(runtime);
         });
     }
     pub(crate) fn actor_draw_compatible(

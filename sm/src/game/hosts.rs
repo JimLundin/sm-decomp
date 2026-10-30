@@ -953,3 +953,52 @@ impl sm_game::actors::statues::Host for Game {
         crate::game::sm_aa::spawn_collision_plm(header, self);
     }
 }
+
+impl sm_game::player_drawing::Host for crate::game::session_runtime::Runtime<'_> {
+    fn owned_call<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R {
+        crate::game::session_runtime::Runtime::owned_call(self, action)
+    }
+    fn refresh_player_observations(&mut self) {
+        crate::game::session_runtime::Runtime::refresh_player_observations(self)
+    }
+    fn owned_player_call<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R {
+        crate::game::session_runtime::Runtime::owned_player_call(self, action)
+    }
+    fn draw_flare(&mut self) {
+        self.foreign(crate::game::player_projectiles::flare);
+    }
+    fn draw_grapple_flare(&mut self) {
+        self.foreign(crate::game::player_projectiles::grapple_flare);
+    }
+    fn restore_grapple_start_positions(&mut self) {
+        self.foreign(crate::game::grapple_swing::restore_start_positions);
+    }
+    fn update_grapple_tiles(&mut self) {
+        self.foreign(crate::game::grapple_swing::update_tiles);
+    }
+    fn draw_grapple_rope(&mut self) {
+        self.foreign(crate::game::grapple_swing::draw_rope);
+    }
+    fn draw_projectiles(&mut self) {
+        self.foreign(crate::game::player_projectiles::draw_projectiles);
+    }
+    fn invalid_draw_mode(&mut self) {
+        self.foreign(|game| crate::rtl::Unreachable(game));
+    }
+    fn finish_player_frame(&mut self) {
+        self.owned_call(crate::game::session_runtime::finish_player_frame);
+    }
+}
+
+/// Queue the active beam's tiles and write its palette on a fresh lease.
+pub(crate) fn update_beam_tiles_and_palette(game: &mut Game) {
+    sm_game::player_drawing::update_beam_tiles_and_palette(
+        &mut crate::game::session_runtime::Runtime::new(game),
+    );
+}
+
+/// Draw Samus's frame on a fresh lease, inside the player driver's owned call.
+pub(crate) fn draw_player_frame(game: &mut Game) {
+    crate::game::session_runtime::Runtime::new(game)
+        .owned_player_call(sm_game::player_drawing::draw_player_frame);
+}

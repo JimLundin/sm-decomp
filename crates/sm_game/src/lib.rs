@@ -54,6 +54,7 @@ pub mod message_boxes;
 pub mod message_composition;
 pub mod palette_copies;
 pub mod persistent_session;
+pub mod player_drawing;
 pub mod probe;
 pub mod progress;
 pub mod projectile_block_reactions;

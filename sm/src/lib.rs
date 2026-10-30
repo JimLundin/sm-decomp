@@ -470,7 +470,6 @@ pub mod game {
     pub mod message_composition;
     pub(crate) mod mode7_transfers;
     pub(crate) mod moving_platforms;
-    pub(crate) mod player_drawing;
     pub(crate) mod prelude;
     pub(crate) mod room_visuals;
     pub mod scene;
@@ -519,7 +518,7 @@ pub mod game {
     pub(crate) mod escape_timer;
     pub(crate) mod goofball;
     pub(crate) mod gunship;
-    mod hosts;
+    pub(crate) mod hosts;
     pub(crate) mod hud;
     pub(crate) mod maridia_turtles;
     pub(crate) mod mini_crocomire;
