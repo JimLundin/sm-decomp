@@ -180,12 +180,6 @@ impl ActorEffects for Runtime<'_> {
     }
 }
 impl ActorHost for Runtime<'_> {}
-impl sm_game::actors::ridley::Lease for Runtime<'_> {
-    type Game = crate::game_state::Game;
-    fn foreign<T>(&mut self, action: impl FnOnce(&mut crate::game_state::Game) -> T) -> T {
-        Runtime::foreign(self, action)
-    }
-}
 impl sm_game::actors::mother_brain_fight::Lease for Runtime<'_> {
     type Game = crate::game_state::Game;
     fn foreign<T>(&mut self, action: impl FnOnce(&mut crate::game_state::Game) -> T) -> T {
